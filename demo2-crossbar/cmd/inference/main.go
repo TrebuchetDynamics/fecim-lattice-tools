@@ -10,8 +10,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/ironlattice/vis/demo2-inference/pkg/crossbar"
-	"github.com/ironlattice/vis/demo2-inference/pkg/network"
+	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
+	"ironlattice-vis/demo2-crossbar/pkg/network"
 )
 
 func main() {
