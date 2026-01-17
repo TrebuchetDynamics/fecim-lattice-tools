@@ -3,7 +3,6 @@ package render
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
@@ -48,10 +47,6 @@ type VulkanRenderer struct {
 	imageAvailableSem vk.Semaphore
 	renderFinishedSem vk.Semaphore
 	inFlightFence     vk.Fence
-
-	// Vertex data
-	vertexBuffer       vk.Buffer
-	vertexBufferMemory vk.DeviceMemory
 
 	// Callbacks
 	onUpdate func()
@@ -245,8 +240,8 @@ func (r *VulkanRenderer) isDeviceSuitable(device vk.PhysicalDevice) bool {
 
 	// Check swapchain support
 	var formatCount, presentModeCount uint32
-	vk.GetPhysicalDeviceSurfaceFormatsKHR(device, r.surface, &formatCount, nil)
-	vk.GetPhysicalDeviceSurfacePresentModesKHR(device, r.surface, &presentModeCount, nil)
+	vk.GetPhysicalDeviceSurfaceFormats(device, r.surface, &formatCount, nil)
+	vk.GetPhysicalDeviceSurfacePresentModes(device, r.surface, &presentModeCount, nil)
 
 	return formatCount > 0 && presentModeCount > 0
 }
@@ -260,13 +255,14 @@ func (r *VulkanRenderer) findQueueFamilies(device vk.PhysicalDevice) (graphics, 
 	graphicsFound, presentFound := false, false
 
 	for i, qf := range queueFamilies {
+		qf.Deref()
 		if qf.QueueFlags&vk.QueueFlags(vk.QueueGraphicsBit) != 0 {
 			graphics = uint32(i)
 			graphicsFound = true
 		}
 
 		var presentSupport vk.Bool32
-		vk.GetPhysicalDeviceSurfaceSupportKHR(device, uint32(i), r.surface, &presentSupport)
+		vk.GetPhysicalDeviceSurfaceSupport(device, uint32(i), r.surface, &presentSupport)
 		if presentSupport == vk.True {
 			present = uint32(i)
 			presentFound = true
@@ -298,8 +294,6 @@ func (r *VulkanRenderer) createLogicalDevice() error {
 		queueCreateInfos = append(queueCreateInfos, queueCreateInfo)
 	}
 
-	deviceFeatures := vk.PhysicalDeviceFeatures{}
-
 	deviceExtensions := []string{
 		vk.KhrSwapchainExtensionName + "\x00",
 	}
@@ -308,7 +302,6 @@ func (r *VulkanRenderer) createLogicalDevice() error {
 		SType:                   vk.StructureTypeDeviceCreateInfo,
 		QueueCreateInfoCount:    uint32(len(queueCreateInfos)),
 		PQueueCreateInfos:       queueCreateInfos,
-		PEnabledFeatures:        &deviceFeatures,
 		EnabledExtensionCount:   uint32(len(deviceExtensions)),
 		PpEnabledExtensionNames: deviceExtensions,
 	}
@@ -329,15 +322,15 @@ func (r *VulkanRenderer) createLogicalDevice() error {
 }
 
 func (r *VulkanRenderer) createSwapchain() error {
-	var capabilities vk.SurfaceCapabilitiesKHR
-	vk.GetPhysicalDeviceSurfaceCapabilitiesKHR(r.physicalDevice, r.surface, &capabilities)
+	var capabilities vk.SurfaceCapabilities
+	vk.GetPhysicalDeviceSurfaceCapabilities(r.physicalDevice, r.surface, &capabilities)
 	capabilities.Deref()
 
 	// Choose format
 	var formatCount uint32
-	vk.GetPhysicalDeviceSurfaceFormatsKHR(r.physicalDevice, r.surface, &formatCount, nil)
-	formats := make([]vk.SurfaceFormatKHR, formatCount)
-	vk.GetPhysicalDeviceSurfaceFormatsKHR(r.physicalDevice, r.surface, &formatCount, formats)
+	vk.GetPhysicalDeviceSurfaceFormats(r.physicalDevice, r.surface, &formatCount, nil)
+	formats := make([]vk.SurfaceFormat, formatCount)
+	vk.GetPhysicalDeviceSurfaceFormats(r.physicalDevice, r.surface, &formatCount, formats)
 
 	chosenFormat := formats[0]
 	for _, format := range formats {
@@ -359,8 +352,8 @@ func (r *VulkanRenderer) createSwapchain() error {
 		imageCount = capabilities.MaxImageCount
 	}
 
-	createInfo := vk.SwapchainCreateInfoKHR{
-		SType:            vk.StructureTypeSwapchainCreateInfoKhr,
+	createInfo := vk.SwapchainCreateInfo{
+		SType:            vk.StructureTypeSwapchainCreateInfo,
 		Surface:          r.surface,
 		MinImageCount:    imageCount,
 		ImageFormat:      chosenFormat.Format,
@@ -383,15 +376,15 @@ func (r *VulkanRenderer) createSwapchain() error {
 	}
 
 	var swapchain vk.Swapchain
-	if result := vk.CreateSwapchainKHR(r.device, &createInfo, nil, &swapchain); result != vk.Success {
+	if result := vk.CreateSwapchain(r.device, &createInfo, nil, &swapchain); result != vk.Success {
 		return fmt.Errorf("failed to create swapchain: %d", result)
 	}
 	r.swapchain = swapchain
 
 	// Get swapchain images
-	vk.GetSwapchainImagesKHR(r.device, r.swapchain, &imageCount, nil)
+	vk.GetSwapchainImages(r.device, r.swapchain, &imageCount, nil)
 	r.swapchainImages = make([]vk.Image, imageCount)
-	vk.GetSwapchainImagesKHR(r.device, r.swapchain, &imageCount, r.swapchainImages)
+	vk.GetSwapchainImages(r.device, r.swapchain, &imageCount, r.swapchainImages)
 
 	return nil
 }
@@ -482,7 +475,7 @@ func (r *VulkanRenderer) createRenderPass() error {
 }
 
 func (r *VulkanRenderer) createGraphicsPipeline() error {
-	// For now, create a minimal pipeline without actual shaders
+	// For now, create a minimal pipeline layout without actual shaders
 	// Real implementation would load compiled SPIR-V shaders
 
 	pipelineLayoutInfo := vk.PipelineLayoutCreateInfo{
@@ -665,8 +658,8 @@ func (r *VulkanRenderer) drawFrame() error {
 
 	// Acquire next image
 	var imageIndex uint32
-	result := vk.AcquireNextImageKHR(r.device, r.swapchain, ^uint64(0), r.imageAvailableSem, vk.NullFence, &imageIndex)
-	if result != vk.Success && result != vk.SuboptimalKhr {
+	result := vk.AcquireNextImage(r.device, r.swapchain, ^uint64(0), r.imageAvailableSem, vk.NullFence, &imageIndex)
+	if result != vk.Success && result != vk.Suboptimal {
 		return fmt.Errorf("failed to acquire swapchain image: %d", result)
 	}
 
@@ -698,8 +691,8 @@ func (r *VulkanRenderer) drawFrame() error {
 
 	// Present
 	swapchains := []vk.Swapchain{r.swapchain}
-	presentInfo := vk.PresentInfoKHR{
-		SType:              vk.StructureTypePresentInfoKhr,
+	presentInfo := vk.PresentInfo{
+		SType:              vk.StructureTypePresentInfo,
 		WaitSemaphoreCount: 1,
 		PWaitSemaphores:    signalSemaphores,
 		SwapchainCount:     1,
@@ -707,7 +700,7 @@ func (r *VulkanRenderer) drawFrame() error {
 		PImageIndices:      []uint32{imageIndex},
 	}
 
-	vk.QueuePresentKHR(r.presentQueue, &presentInfo)
+	vk.QueuePresent(r.presentQueue, &presentInfo)
 
 	return nil
 }
@@ -742,12 +735,12 @@ func (r *VulkanRenderer) Cleanup() {
 			vk.DestroyImageView(r.device, iv, nil)
 		}
 
-		vk.DestroySwapchainKHR(r.device, r.swapchain, nil)
+		vk.DestroySwapchain(r.device, r.swapchain, nil)
 		vk.DestroyDevice(r.device, nil)
 	}
 
 	if r.instance != nil {
-		vk.DestroySurfaceKHR(r.instance, r.surface, nil)
+		vk.DestroySurface(r.instance, r.surface, nil)
 		vk.DestroyInstance(r.instance, nil)
 	}
 
@@ -763,17 +756,4 @@ func safeString(s string) string {
 		return s + "\x00"
 	}
 	return s
-}
-
-// safeBytes converts string to null-terminated byte slice for Vulkan
-func safeBytes(s string) []byte {
-	return []byte(safeString(s))
-}
-
-// sliceToPtr converts a slice to an unsafe pointer (used for Vulkan structs)
-func sliceToPtr[T any](s []T) unsafe.Pointer {
-	if len(s) == 0 {
-		return nil
-	}
-	return unsafe.Pointer(&s[0])
 }

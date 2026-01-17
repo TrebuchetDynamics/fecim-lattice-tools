@@ -7,9 +7,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"ironlattice-vis/demo1-hysteresis/pkg/render"
 	"ironlattice-vis/demo1-hysteresis/pkg/simulation"
 )
 
@@ -94,29 +96,53 @@ func runHeadless(engine *simulation.Engine) {
 }
 
 func runGraphical(engine *simulation.Engine) {
-	// TODO: Implement Vulkan-based graphical interface
-	//
-	// This will include:
-	// 1. Window creation with GLFW
-	// 2. Vulkan device initialization
-	// 3. Real-time P-E curve rendering
-	// 4. Interactive voltage control
-	// 5. Cell polarization color display
-
-	fmt.Println("Graphical mode not yet implemented.")
-	fmt.Println()
-	fmt.Println("To use the simulation, run with --headless flag:")
-	fmt.Println("  ./hysteresis --headless")
-	fmt.Println()
-	fmt.Println("Coming soon:")
-	fmt.Println("  - Real-time P-E hysteresis curve")
-	fmt.Println("  - Interactive voltage slider")
-	fmt.Println("  - Cell color = polarization state")
-	fmt.Println("  - 30 discrete state demonstration")
+	fmt.Println("Starting Vulkan-based graphical interface...")
+	fmt.Println("Press ESC or close window to exit.")
 	fmt.Println()
 
-	// For now, run headless
-	runHeadless(engine)
+	// Create Vulkan renderer
+	config := render.DefaultConfig()
+	renderer := render.NewVulkanRenderer(config)
 
-	os.Exit(0)
+	// Create hysteresis plot
+	material := ferroelectric.DefaultHZO()
+	Emax := material.Ec * 1.5
+	Pmax := material.Ps * 1.2
+	plot := render.NewHysteresisPlot(Emax, Pmax)
+	renderer.SetHysteresisPlot(plot)
+
+	// Set up update callback
+	frameCount := 0
+	engine.Start()
+	renderer.SetUpdateCallback(func() {
+		// Step simulation
+		engine.Step()
+		state := engine.State()
+
+		// Update renderer with new polarization
+		renderer.UpdatePolarization(state.NormPol)
+
+		// Add point to plot
+		plot.AddPoint(state.ElectricField, state.Polarization)
+
+		frameCount++
+	})
+
+	// Initialize Vulkan
+	if err := renderer.Initialize(); err != nil {
+		log.Printf("Failed to initialize Vulkan renderer: %v", err)
+		fmt.Println()
+		fmt.Println("Vulkan initialization failed. Running in headless mode instead.")
+		fmt.Println()
+		runHeadless(engine)
+		os.Exit(0)
+	}
+	defer renderer.Cleanup()
+
+	// Run render loop
+	if err := renderer.Run(); err != nil {
+		log.Fatalf("Renderer error: %v", err)
+	}
+
+	fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)
 }
