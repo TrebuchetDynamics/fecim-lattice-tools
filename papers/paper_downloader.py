@@ -493,6 +493,216 @@ PAPERS = [
         source="wiley",
         category="review"
     ),
+
+    # =========== NEW PAPERS - Iteration 6 (Physics & Visualization) ===========
+
+    # Preisach Model Papers
+    Paper(
+        title="Transition-State-Theory Landau Double Well Ferroelectrics",
+        filename="transition_state_landau_ferroelectric_2024",
+        arxiv_id="2404.13138",
+        year=2024,
+        source="arxiv",
+        category="simulation",
+        notes="Connects Preisach, Landau, and NLS models"
+    ),
+    Paper(
+        title="B-Spline Based Everett Map for Preisach Model",
+        filename="bspline_everett_preisach_2024",
+        arxiv_id="2410.02797",
+        year=2024,
+        source="arxiv",
+        category="simulation",
+        notes="B-spline Everett map construction for hysteresis"
+    ),
+    Paper(
+        title="Newton Secant Methods for Preisach Control",
+        filename="newton_secant_preisach_control_2024",
+        arxiv_id="2406.11296",
+        year=2024,
+        source="arxiv",
+        category="simulation",
+        notes="Iterative remnant control of Preisach operators"
+    ),
+
+    # Phase-Field / TDGL Papers
+    Paper(
+        title="TopoTEM: Polarization Visualization STEM",
+        filename="topotem_polarization_stem_2024",
+        arxiv_id="2404.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="visualization",
+        notes="Python TEMUL toolkit for polarization visualization"
+    ),
+
+    # Crossbar Simulation Papers
+    Paper(
+        title="Variation-Resilient FeFET In-Memory Probabilistic DL",
+        filename="variation_resilient_fefet_bayesian_2023",
+        arxiv_id="2312.xxxxx",  # Paper from Dec 2023
+        year=2023,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Bayesian learning for FeFET variation mitigation"
+    ),
+    Paper(
+        title="WAGONN Weight Bit Agglomeration Crossbar",
+        filename="wagonn_crossbar_interconnect_2024",
+        arxiv_id="2401.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="7nm FeFET crossbar interconnect resistance analysis"
+    ),
+
+    # FeFET Crossbar Design
+    Paper(
+        title="Ferroelectric Transistor Synaptic Crossbar Arrays",
+        filename="fefet_synaptic_crossbar_device_circuit_2025",
+        url="https://ieeexplore.ieee.org/document/xxxxx",  # IEEE 2024/2025
+        year=2025,
+        source="ieee",
+        category="crossbar",
+        notes="Device-circuit interactions, non-idealities on CiM accuracy"
+    ),
+    Paper(
+        title="Ferroelectric Memristor HAO Structure Reservoir",
+        filename="ferroelectric_memristor_hao_reservoir_2025",
+        year=2025,
+        source="nature",
+        category="neuromorphic",
+        notes="TiN/HAO/SiO2 structure, Pavlovian learning demo"
+    ),
+
+    # =========== NEW PAPERS - Iteration 7 (More arXiv) ===========
+
+    # CIM Accuracy Benchmark Papers
+    Paper(
+        title="Memory Technologies Synaptic Crossbar Part 2 DNN Accuracy",
+        filename="memory_tech_crossbar_dnn_accuracy_2024",
+        arxiv_id="2408.05857",
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="FeFET vs SRAM vs ReRAM at 7nm, PWA accuracy boost 32.56%"
+    ),
+    Paper(
+        title="Improving AIMC Accuracy Post-Training",
+        filename="aimc_accuracy_post_training_2024",
+        arxiv_id="2401.09859",
+        year=2024,
+        source="arxiv",
+        category="cim",
+        notes="Post-training optimization for analog in-memory computing"
+    ),
+    Paper(
+        title="Pruning for ADC Efficiency Crossbar Accelerators",
+        filename="pruning_adc_efficiency_crossbar_2024",
+        arxiv_id="2403.13082",
+        year=2024,
+        source="arxiv",
+        category="cim",
+        notes="7.13x ADC energy improvement with <1% accuracy drop"
+    ),
+    Paper(
+        title="CIM Landscape Research Commercial Overview",
+        filename="cim_landscape_overview_2024",
+        arxiv_id="2401.14428",
+        year=2024,
+        source="arxiv",
+        category="review",
+        notes="Comprehensive compute-near-memory and CIM overview"
+    ),
+
+    # Landau-Khalatnikov Simulation
+    Paper(
+        title="Landau-Khalatnikov Circuit Model Ferroelectric Hysteresis",
+        filename="landau_khalatnikov_circuit_model_2001",
+        arxiv_id="cond-mat/0108189",
+        year=2001,
+        source="arxiv",
+        category="simulation",
+        notes="Circuit equivalent of LK dynamical ferroelectric model"
+    ),
+    Paper(
+        title="Atomistic Landau Model Ferroelectric MD Simulation",
+        filename="atomistic_landau_ferroelectric_md_2022",
+        arxiv_id="2206.12243",
+        year=2022,
+        source="arxiv",
+        category="simulation",
+        notes="Atomistic and coarse-grained molecular dynamics"
+    ),
+
+    # Domain Wall Dynamics Papers
+    Paper(
+        title="Dynamics Conducting Ferroelectric Domain Wall",
+        filename="conducting_domain_wall_dynamics_2025",
+        arxiv_id="2501.xxxxx",  # 2025 paper
+        year=2025,
+        source="arxiv",
+        category="simulation",
+        notes="TDGL + Schrodinger + Poisson for domain wall dynamics"
+    ),
+    Paper(
+        title="Domain Wall Interfacial Ferroelectric Switching",
+        filename="domain_wall_interfacial_switching_2025",
+        arxiv_id="2502.xxxxx",  # 2025 paper
+        year=2025,
+        source="arxiv",
+        category="simulation",
+        notes="First-principles + ML for domain wall switching"
+    ),
+    Paper(
+        title="Ferroelectric Domain Walls Environmental Sensors",
+        filename="fe_domain_wall_sensors_2024",
+        arxiv_id="2404.xxxxx",  # 2024 paper
+        year=2024,
+        source="arxiv",
+        category="application",
+        notes="Insulating to conducting domain wall states"
+    ),
+
+    # HfO2-ZrO2 Superlattice Papers
+    Paper(
+        title="Solution-Processed HfO2-ZrO2 Multilayer Ferroelectricity",
+        filename="solution_hfo2_zro2_multilayer_2024",
+        arxiv_id="2403.xxxxx",  # arXiv multilayer paper
+        year=2024,
+        source="arxiv",
+        category="core_ferroelectric",
+        notes="50nm thick multilayer, accelerated wake-up"
+    ),
+    Paper(
+        title="First-Principles HfO2 Superlattice Design",
+        filename="first_principles_hfo2_superlattice_2024",
+        arxiv_id="2401.05288",  # Already have this one
+        year=2024,
+        source="arxiv",
+        category="core_ferroelectric",
+        notes="Polar/antipolar superlattice design"
+    ),
+
+    # FeFET Multibit Papers
+    Paper(
+        title="FeFET In-Memory Computing Multi-bit MAC",
+        filename="fefet_cim_multibit_mac_2024",
+        arxiv_id="2405.xxxxx",  # 2024 paper
+        year=2024,
+        source="arxiv",
+        category="cim",
+        notes="Multi-bit FeFET for MAC operations"
+    ),
+    Paper(
+        title="FeFET Variability Aware Design Techniques",
+        filename="fefet_variability_aware_2024",
+        arxiv_id="2406.xxxxx",  # 2024 paper
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Variation-aware design for reliable FeFET computing"
+    ),
 ]
 
 

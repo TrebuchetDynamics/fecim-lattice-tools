@@ -61,31 +61,66 @@ This visualization project aims to:
 
 ---
 
+## Implementation Status
+
+| Demo | Physics | Graphics | Overall |
+|------|---------|----------|---------|
+| **Demo 1: Hysteresis** | Complete | In Progress | Headless working |
+| **Demo 2: Crossbar MVM** | Partial | Not Started | Infrastructure only |
+| **Demo 3: Phase-Field** | Designed | Not Started | Specification only |
+
+**What works today:**
+```bash
+go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+```
+
+---
+
 ## Repository Structure
 
 ```
 ironlattice-vis/
-├── docs/
-│   ├── CURRICULUM.md           # Comprehensive learning path (8 areas)
-│   └── IRONLATTICE_PARADIGM.md # Technology deep-dive
+├── docs/                        # Comprehensive documentation (3.7 MB)
+│   ├── CURRICULUM.md            # 8-area doctoral curriculum
+│   ├── CURRICULUM_DETAILED.md   # Expanded learning path
+│   ├── IRONLATTICE_PARADIGM.md  # Technology deep-dive
+│   ├── PROJECT_ROADMAP.md       # Implementation timeline
+│   ├── VULKAN_DEMO_GUIDE.md     # Graphics implementation guide
+│   ├── HZO_PARAMETERS.md        # Material constants
+│   ├── RESEARCH_LOG.md          # Research journal
+│   └── RESEARCH_FINDINGS_*.md   # Weekly research summaries
 │
-├── papers/                     # Scientific papers collection
-│   └── DOWNLOAD_PLAN.md        # Paper acquisition roadmap
+├── papers/                      # Scientific papers collection
+│   ├── downloaded/              # 19 PDFs (arXiv, Nature, IEEE, etc.)
+│   ├── DOWNLOAD_PLAN.md         # Paper acquisition roadmap
+│   ├── paper_metadata.json      # Paper index
+│   └── paper_downloader.py      # Automated fetcher
 │
-├── demo1-hysteresis/           # Single cell P-E curve visualizer
-│   ├── cmd/                    # Application entry point
+├── demo1-hysteresis/            # Single cell P-E curve visualizer
+│   ├── cmd/hysteresis/          # Application entry point
 │   ├── pkg/
-│   │   ├── ferroelectric/      # Physics models
-│   │   ├── simulation/         # Simulation engine
-│   │   └── vulkan/             # GPU rendering
-│   └── shaders/                # GLSL compute/graphics shaders
+│   │   ├── ferroelectric/       # Preisach model, material params
+│   │   ├── simulation/          # Time-stepping engine
+│   │   └── render/              # Graphics pipeline (WIP)
+│   ├── shaders/                 # GLSL compute/graphics shaders
+│   ├── PHYSICS.md               # Physics documentation
+│   └── README.md                # Demo-specific docs
 │
-├── demo2-crossbar/             # Crossbar array MVM [Planned]
+├── demo2-crossbar/              # Crossbar array MVM visualizer
+│   ├── cmd/inference/           # Application entry point
+│   ├── pkg/
+│   │   ├── crossbar/            # Array modeling
+│   │   ├── network/             # Neural network layers
+│   │   └── data/                # MNIST loading
+│   ├── shaders/                 # MVM compute shaders
+│   ├── PHYSICS.md               # Physics documentation
+│   └── README.md                # Demo-specific docs
 │
-├── demo3-mnist/                # Neural network on CIM [Planned]
+├── demo3-phasefield/            # GPU phase-field domain simulator
+│   ├── PHYSICS.md               # TDGL equations documentation
+│   └── README.md                # Specifications
 │
-├── shared/                     # Common utilities
-└── assets/                     # Images, fonts
+└── go.mod                       # Go module definition
 ```
 
 ---
@@ -93,6 +128,8 @@ ironlattice-vis/
 ## Demos
 
 ### Demo 1: Ferroelectric Hysteresis Visualizer
+
+**Status:** Physics complete, graphics in progress
 
 Interactive visualization of a single ferroelectric memory cell:
 
@@ -107,13 +144,27 @@ Interactive visualization of a single ferroelectric memory cell:
 └────────────────┘      └──────────────────────┘
 ```
 
-**Features:**
-- Real-time P-E hysteresis curve tracing
-- Domain nucleation and growth visualization
-- 30 discrete analog state demonstration
+**Implemented:**
+- Preisach hysteresis model with history tracking
+- HZO material parameters from literature
+- Time-stepping simulation engine
+- 30 discrete analog state generation
+- Multiple waveforms (sine, triangle, square)
+- Headless mode for data output
+
+**In Progress:**
+- Vulkan graphics pipeline
+- Real-time visualization
 - Interactive voltage control
 
-### Demo 2: Crossbar Array MVM [Planned]
+**Run headless mode:**
+```bash
+go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+```
+
+### Demo 2: Crossbar Array MVM
+
+**Status:** Infrastructure complete, computation in progress
 
 Visualize Matrix-Vector Multiplication in memory:
 
@@ -126,21 +177,44 @@ Ohm's Law:      I = V × G  (multiplication)
 Kirchhoff's Law: Iₜₒₜₐₗ = ΣI (summation)
 ```
 
-### Demo 3: MNIST on CIM [Planned]
+**Implemented:**
+- Crossbar array data structures
+- Cell conductance modeling with noise
+- Weight programming interface
+- ADC/DAC quantization support
+- Network layer scaffolding
 
-Handwritten digit recognition on simulated IronLattice hardware, targeting 87% accuracy benchmark.
+**In Progress:**
+- MVM compute shader execution
+- MNIST inference pipeline
+- Non-ideality modeling (IR drop, sneak paths)
+
+### Demo 3: GPU Phase-Field Domain Simulator
+
+**Status:** Design complete, implementation not started
+
+GPU-accelerated Time-Dependent Ginzburg-Landau (TDGL) simulation for ferroelectric domain dynamics. Will visualize domain nucleation, growth, and switching at the nanoscale.
 
 ---
 
 ## Tech Stack
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Language | Go | Performance + simplicity |
-| Graphics API | Vulkan | Cross-platform GPU access |
-| Shaders | GLSL → SPIR-V | Compute + rendering |
-| Physics | Preisach, Landau-Khalatnikov | Ferroelectric modeling |
-| Simulation | TDGL (Time-Dependent Ginzburg-Landau) | Domain dynamics |
+| Component | Technology | Purpose | Status |
+|-----------|------------|---------|--------|
+| Language | Go 1.21+ | Performance + simplicity | Ready |
+| Graphics API | Vulkan 1.3 | Cross-platform GPU access | Planned |
+| Shaders | GLSL → SPIR-V | Compute + rendering | Defined |
+| Physics | Preisach model | Ferroelectric hysteresis | Implemented |
+| Simulation | TDGL | Domain dynamics | Planned |
+
+### Planned Dependencies
+
+```go
+// Currently in go.mod as comments, to be added:
+github.com/bbredesen/go-vk  // Vulkan bindings
+github.com/go-gl/glfw       // Window management
+gonum.org/v1/gonum          // Math operations
+```
 
 ---
 
@@ -149,21 +223,30 @@ Handwritten digit recognition on simulated IronLattice hardware, targeting 87% a
 ### Prerequisites
 
 - Go 1.21+
-- Vulkan SDK 1.3+
-- GLSL compiler (glslc)
+- Vulkan SDK 1.3+ (for graphics demos)
+- GLSL compiler `glslc` (for shader compilation)
 
-### Installation
+### Quick Start (Headless Physics)
+
+The physics simulation runs without any external dependencies:
 
 ```bash
 # Clone repository
 git clone https://github.com/yourusername/ironlattice-vis.git
 cd ironlattice-vis
 
-# Install dependencies (Ubuntu/Debian)
+# Run demo 1 in headless mode (no graphics required)
+go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+```
+
+### Full Installation (Graphics)
+
+```bash
+# Install system dependencies (Ubuntu/Debian)
 sudo apt install vulkan-tools libvulkan-dev glslc
 
-# Download Go dependencies
-go mod download
+# Install Go dependencies (when implemented)
+go mod tidy
 
 # Compile shaders
 cd demo1-hysteresis/shaders && ./compile.sh && cd ../..
@@ -175,6 +258,8 @@ go build -o bin/hysteresis ./demo1-hysteresis/cmd/hysteresis
 ./bin/hysteresis
 ```
 
+> **Note:** Graphics mode is currently in development. Use `--headless` flag for working physics output.
+
 ---
 
 ## Learning Resources
@@ -184,8 +269,12 @@ go build -o bin/hysteresis ./demo1-hysteresis/cmd/hysteresis
 | Document | Description |
 |----------|-------------|
 | [CURRICULUM.md](docs/CURRICULUM.md) | 8-area doctoral-level curriculum |
+| [CURRICULUM_DETAILED.md](docs/CURRICULUM_DETAILED.md) | Expanded learning path |
 | [IRONLATTICE_PARADIGM.md](docs/IRONLATTICE_PARADIGM.md) | Technology paradigm analysis |
-| [papers/](papers/) | Scientific paper collection |
+| [PROJECT_ROADMAP.md](docs/PROJECT_ROADMAP.md) | Implementation timeline |
+| [VULKAN_DEMO_GUIDE.md](docs/VULKAN_DEMO_GUIDE.md) | Graphics implementation guide |
+| [HZO_PARAMETERS.md](docs/HZO_PARAMETERS.md) | Material constants reference |
+| [papers/](papers/) | 19 scientific papers (arXiv, Nature, IEEE) |
 
 ### Key Concepts Covered
 
@@ -235,7 +324,7 @@ In response to *"The Microchip Era is About to End"* (WSJ, Nov 2024), IronLattic
 ## External Resources
 
 ### Primary Sources
-- [Dr. Tour's IronLattice Talk (Nov 2024)](https://www.youtube.com/watch?v=...)
+- Dr. Tour's IronLattice Talk (Nov 2024) — Search "external research group IronLattice" on YouTube
 - [external research institution News](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
 
 ### Technical Papers
@@ -250,13 +339,14 @@ In response to *"The Microchip Era is About to End"* (WSJ, Nov 2024), IronLattic
 
 ## Contributing
 
-Contributions welcome! Areas of interest:
+Contributions welcome! Current priorities:
 
-- [ ] Preisach model implementation
+- [x] Preisach model implementation
+- [ ] Vulkan graphics pipeline for demo 1
 - [ ] Landau-Khalatnikov solver
-- [ ] Phase-field simulation
-- [ ] Crossbar array visualization
-- [ ] MNIST inference demo
+- [ ] MVM compute shader execution (demo 2)
+- [ ] Phase-field simulation (demo 3)
+- [ ] MNIST inference on crossbar array
 
 ---
 

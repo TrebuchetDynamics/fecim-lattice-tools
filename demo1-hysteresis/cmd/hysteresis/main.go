@@ -7,7 +7,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"

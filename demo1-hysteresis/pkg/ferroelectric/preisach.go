@@ -75,7 +75,6 @@ func (p *PreisachModel) calculatePolarization(E float64) float64 {
 	// where delta controls the switching sharpness
 
 	Ps := p.material.Ps
-	Ec := p.EcMean
 	delta := p.EcSigma * 2 // Transition width
 
 	// Calculate effective coercive field based on history
