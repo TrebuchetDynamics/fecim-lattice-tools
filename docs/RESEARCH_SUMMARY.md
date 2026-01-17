@@ -36,7 +36,8 @@ Consolidated summary of research findings across all documentation.
 | Part 5 | Latest FeFET, Tour Lab research sample, photonic hybrids, edge AI, variability | 30+ |
 | Part 6 | CIM compilers, thermal management, applications, code analysis | 25+ |
 | Part 7 | Research groups, patents, testing methods, commercialization | 20+ |
-| **Total** | **Comprehensive coverage** | **175+ papers** |
+| Part 8 | **Vulkan GPU compute, Go bindings, real-time hysteresis visualization** | 20+ |
+| **Total** | **Comprehensive coverage** | **195+ papers** |
 
 ---
 
@@ -225,8 +226,10 @@ trainingConfig := &TrainingConfig{
 5. `docs/RESEARCH_FINDINGS_2026_PART5.md` - research sample, photonics, edge AI, variability
 6. `docs/RESEARCH_FINDINGS_2026_PART6.md` - Compilers, thermal, applications
 7. `docs/RESEARCH_FINDINGS_2026_PART7.md` - Research groups, patents, testing
-8. `docs/CURRICULUM_DETAILED.md` - Implementation guide
-9. `papers/DOWNLOAD_PLAN.md` - Paper collection (290+ URLs)
+8. `docs/RESEARCH_FINDINGS_2026_PART8.md` - **Vulkan GPU compute, Go bindings**
+9. `docs/VULKAN_DEMO_GUIDE.md` - **Demo1 Vulkan implementation guide**
+10. `docs/CURRICULUM_DETAILED.md` - Implementation guide
+11. `papers/DOWNLOAD_PLAN.md` - Paper collection (310+ URLs)
 
 ### Key External Sources
 - Rice Innovation: https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants

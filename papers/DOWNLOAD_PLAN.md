@@ -738,6 +738,55 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 
 ---
 
+## Priority 50: Vulkan & Go GPU Computing (NEW - Iteration 13)
+
+### Go Vulkan Bindings
+
+| Resource | URL | Type |
+|----------|-----|------|
+| go-vk Official | https://github.com/bbredesen/go-vk | Library |
+| vulkan-go | https://github.com/vulkan-go/vulkan | Library |
+| Go Vulkan Tutorial | https://github.com/nicholasblaskey/go-vk-tutorial | Tutorial |
+| GLFW Go Bindings | https://github.com/go-gl/glfw | Library |
+
+### Vulkan Compute Resources
+
+| Resource | URL | Year | Type |
+|----------|-----|------|------|
+| Vulkan Tutorial - Compute | https://vulkan-tutorial.com/Compute_Shader | Current | Tutorial |
+| vkGuide Compute Shaders | https://vkguide.dev/docs/gpudriven/compute_shaders | Current | Guide |
+| Vulkan Compute Example (C++) | https://github.com/Glavnokoman/vulkan-compute-example | Current | Code |
+| Baked Bits Vulkan Compute | https://bakedbits.dev/vulkan-compute | Current | Tutorial |
+| GLFW Vulkan Integration | https://www.glfw.org/docs/latest/vulkan_guide.html | Current | Docs |
+
+### Preisach Model Code (2025)
+
+| Resource | URL | Language |
+|----------|-----|----------|
+| Heracles Compact Model | arXiv (March 2025) | Verilog-A |
+| pfecapRevision | https://github.com/DavidTobar456/pfecapRevision | Verilog-A |
+| MATLAB Preisach | https://github.com/... (various) | MATLAB |
+| Python Preisach | https://github.com/raphaelvogel/preisach | Python |
+
+### GPU Phase-Field Simulation
+
+| Resource | URL | Year |
+|----------|-----|------|
+| FerroX GitHub | https://github.com/AMReX-Microelectronics/FerroX | Current |
+| FerroX Paper | https://arxiv.org/abs/2210.15668 | 2022 |
+| FerroX Visualization | https://zenodo.org/records/7221895 | 2022 |
+| AMReX Framework | https://github.com/AMReX-Codes/amrex | Current |
+
+### Real-Time Scientific Visualization
+
+| Resource | URL | Description |
+|----------|-----|-------------|
+| Datoviz | https://datoviz.org/ | Vulkan visualization |
+| Cyrille Rossant Blog | https://rossant.net/ | Datoviz creator |
+| Kompute | https://github.com/KomputeProject/kompute | Vulkan GPGPU |
+
+---
+
 ## Summary Statistics
 
 | Category | Sections | Papers/URLs |
@@ -752,8 +801,9 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 | Latest/research sample/Photonic/Edge | 39-43 | ~35 |
 | Compilers/Thermal/Apps | 44-46 | ~20 |
 | Groups/Patents/Testing | 47-49 | ~20 |
-| **Total** | **49 sections** | **~290 URLs** |
+| Vulkan/Go GPU | 50 | ~20 |
+| **Total** | **50 sections** | **~310 URLs** |
 
 ---
 
-*Last updated: Iteration 12 - January 2026*
+*Last updated: Iteration 13 - January 2026*
