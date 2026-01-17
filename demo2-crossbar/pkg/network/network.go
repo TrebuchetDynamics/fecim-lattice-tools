@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/ironlattice/vis/demo2-inference/pkg/crossbar"
+	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
 )
 
 // Config contains neural network configuration.
