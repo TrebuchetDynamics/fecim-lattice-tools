@@ -4,6 +4,54 @@ A curated collection of open-source tools relevant to the IronLattice demos.
 
 ---
 
+## Why IronLattice-vis? (What's Missing)
+
+### The Gap in Existing Tools
+
+| Existing Tool | What It Does | What It DOESN'T Do |
+|---------------|--------------|-------------------|
+| **CrossSim** | Simulates accuracy | No real-time visualization, no physics animation |
+| **WaCPro** | Programs crossbars | No ferroelectric physics, no hysteresis |
+| **PEtra** | Measures real hardware | No simulation, requires physical lab equipment |
+| **ferro_scripts** | Generates P-E curves | No GPU, no interactivity, no visualization |
+| **Preisachmodel** | Computes hysteresis | Text output only, no graphics |
+| **FerroX** | GPU phase-field | C++/Fortran, no Go, no real-time vis |
+
+### What IronLattice-vis Adds
+
+| Our Unique Value | Why It Matters |
+|------------------|----------------|
+| **Real-time GPU visualization** | See physics happening live, not just static plots |
+| **Interactive demos** | Drag sliders, click cells, watch immediate effects |
+| **All-in-one package** | Hysteresis + Crossbar + Phase-field in unified Go codebase |
+| **Vulkan-native** | Modern GPU API, not legacy OpenGL or CPU-only |
+| **Educational focus** | Designed to TEACH, not just compute |
+| **IronLattice-specific** | Tuned to HZO parameters from Dr. Tour's research |
+
+### The Specific Gaps We Fill
+
+```
+                     Existing Tools                 IronLattice-vis
+                     ──────────────                 ───────────────
+Hysteresis:          Static matplotlib plots   →   Live GPU animation
+Crossbar:            Accuracy numbers only     →   Current flow animation  
+Phase-field:         Batch simulation          →   Real-time domain dancing
+Integration:         Separate Python scripts   →   Unified Go + Vulkan
+Audience:            Researchers only          →   Anyone can understand
+```
+
+### Our Vision
+
+**Existing tools answer:** "What's the accuracy?" (numbers)
+**IronLattice-vis answers:** "What does it LOOK like?" (visualization)
+
+We're not replacing CrossSim or FerroX - we're making their science **visible and interactive** for:
+- Students learning ferroelectrics
+- Investors understanding IronLattice technology  
+- Engineers debugging device behavior
+- Anyone curious about compute-in-memory
+
+---
 ## 1. CrossSim (Sandia National Laboratories)
 
 **Repository:** https://github.com/sandialabs/cross-sim  
