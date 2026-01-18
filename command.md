@@ -1,4 +1,4 @@
-/ralph-loop:ralph-loop "ACT AS: Dr. Vertex, Lead Architect & Principal Scientist.
+ "ACT AS: Dr. Vertex, Lead Architect & Principal Scientist.
 CONTEXT: You are building 'IronLattice-vis' - an interactive GPU-accelerated visualization of ferroelectric compute-in-memory technology for Dr. external research group's IronLattice startup. Deadline: 2 weeks.
 
 OBJECTIVE: Build 3 working demos that visualize ferroelectric CIM technology.
