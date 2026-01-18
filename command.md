@@ -1,47 +1,142 @@
 /ralph-loop:ralph-loop "ACT AS: Dr. Vertex, Lead Architect & Principal Scientist.
-CONTEXT: You are managing the 'IronLattice' repository. The file tree is massive, but much of 'demo2' is likely scaffold/stubs.
-OBJECTIVE: Turn the scaffolding into a functional, GPU-accelerated simulation engine by Sunday night.
+CONTEXT: You are building 'IronLattice-vis' - an interactive GPU-accelerated visualization of ferroelectric compute-in-memory technology for Dr. external research group's IronLattice startup. Deadline: 2 weeks.
+
+OBJECTIVE: Build 3 working demos that visualize ferroelectric CIM technology.
+
+--- THE VISION ---
+We are visualizing the technology that will replace GPUs for AI computation.
+- 30 discrete polarization levels (not just 0/1)
+- Square hysteresis loops (IronLattice's key innovation)
+- Compute-in-memory (no Von Neumann bottleneck)
+- Target: 87% MNIST accuracy (matching Dr. Tour's results)
 
 --- CRITICAL RESOURCES ---
-1. REFERENCE CODE: '~/git/ComplexChaos/fractals/' (Your 'Gold Standard' for Vulkan/Compute).
-2. LITERATURE: 'papers/downloaded/' (Ground truth for Physics equations).
+1. REFERENCE CODE: '~/git/ComplexChaos/fractals/' (Vulkan/Compute gold standard)
+2. LITERATURE: 'papers/downloaded/' (Physics equations)
+3. EXISTING TOOLS: CrossSim, Preisachmodel, ferro_scripts (reference implementations)
 
---- EXECUTION CURRICULUM ---
+--- BUILD ORDER ---
 
-PHASE 0: ARCHITECTURAL CONSOLIDATION (The 'Cleanup')
-1. AUDIT 'demo2-crossbar/pkg/layers/'. There are too many specialized files (e.g., 'cryo_olfactory_cim.go').
-   - TASK: Identify the *Generic Crossbar MVM* logic. Focus ONLY on 'convolution.go' and 'mvm.comp' for now. Ignore the exotic files.
-   - GOAL: Ensure we can run ONE clean Matrix-Vector Multiplication pass on the GPU before worrying about 'tactile federated learning'.
+PHASE 1: DEMO 1 - SINGLE FERROELECTRIC CELL (Days 1-3)
+Goal: User controls electric field, sees polarization response with 30 discrete levels.
 
-PHASE 1: TRANSFER LEARNING (Visuals)
-1. VISUALIZATION UPGRADE (Demo 3):
-   - READ '~/git/ComplexChaos/fractals/'. Analyze how you implemented the Raymarching Loop and SDFs.
-   - PORT that logic to 'demo3-phasefield/shaders/tdgl.comp'.
-   - TRANSFORMATION: Instead of 'Distance Estimation' to a fractal, map the raymarcher to sample the 'Order Parameter' density grid. Render it as a Volumetric Cloud (Heatmap: Blue=-P, Red=+P).
+1. PHYSICS ENGINE:
+   - IMPLEMENT Preisach model in 'demo1-hysteresis/pkg/ferroelectric/preisach.go'
+     * Array of hysterons with (alpha, beta) thresholds
+     * P = Σ hysteron states
+   - IMPLEMENT Landau-Khalatnikov in 'demo1-hysteresis/pkg/ferroelectric/landau.go'
+     * Free energy: F(P) = αP² + βP⁴ - E·P
+     * Dynamics: dP/dt = -γ · dF/dP
+   - VERIFY equations against papers. Add LaTeX comments citing sources.
 
-PHASE 2: THE PHYSICS ENGINE (Demo 1 & 3)
-1. VERIFY EQUATIONS:
-   - READ 'papers/downloaded/nature/physical_reality_preisach_2018.pdf' and 'landau_khalatnikov_circuit_model_2001.pdf'.
-   - CHECK 'pkg/physics/landau.go': Does the free energy derivative match the paper? If not, CORRECT IT.
-   - ADD LaTeX comments in the code citing the specific equation from the PDF (e.g., // Eq. 3 from Shin et al.).
+2. 30 DISCRETE LEVELS:
+   - Map polarization range [-Pr, +Pr] to 30 levels
+   - Visualize as color gradient (level 1 = blue, level 30 = red)
+   - Show current level number on screen
 
-PHASE 3: SILICON REALISM (Demo 2)
-1. IMPLEMENT 'mvm.comp' (Compute Shader):
-   - It must accept: Input Vector (V), Conductance Matrix (G), and Output Vector (I).
-   - IMPLEMENT Kirchhoff's Law: I_j = Sum(V_i * G_ij).
-   - ADD NON-IDEALITIES: Introduce a 'noise_buffer' uniform to simulate conductance drift and read noise, making it physically accurate to analog hardware.
+3. VISUALIZATION:
+   - Real-time P-E hysteresis curve (X = Electric Field, Y = Polarization)
+   - Animated dot tracing the curve as E changes
+   - Show square loop characteristic (IronLattice's advantage)
 
-PHASE 4: THE INTERFACE (Demo 1)
-1. Build the 'Lab Bench' GUI (ImGui/Nuklear).
-2. CONNECT the UI sliders to the 'Hysteresis' struct in real-time.
-   - Slider A: 'Electric Field (E)'
-   - Slider B: 'Temperature (T)' -> Modifies the Landau coefficients.
-   - The loop must warp instantly when sliders move.
+4. INTERACTIVITY:
+   - Slider: Electric Field (E) from -Emax to +Emax
+   - Slider: Sweep speed
+   - Button: Auto-sweep (trace full loop)
+   - Display: Current P value, current level (1-30)
+
+PHASE 2: DEMO 2 - CROSSBAR ARRAY (Days 4-6)
+Goal: Visualize matrix-vector multiplication happening in memory.
+
+1. CROSSBAR STRUCTURE:
+   - IMPLEMENT 'demo2-crossbar/pkg/crossbar/array.go'
+     * N×M grid of ferroelectric cells
+     * Each cell holds conductance G derived from polarization level
+     * G = G_min + (level/30) × (G_max - G_min)
+
+2. MVM COMPUTE SHADER:
+   - IMPLEMENT 'demo2-crossbar/shaders/mvm.comp'
+     * Input: Voltage vector V[N]
+     * Weights: Conductance matrix G[N×M] (30 levels each)
+     * Output: Current vector I[M]
+     * Kirchhoff's Law: I_j = Σ(V_i × G_ij)
+   - ADD non-idealities: conductance noise, IR drop (optional)
+
+3. VISUALIZATION:
+   - Grid of cells, color = level (1-30)
+   - Animate voltage flowing in from left (horizontal lines)
+   - Animate current flowing down columns (vertical lines)
+   - Brightness = signal magnitude
+   - Show input vector, weight matrix, output vector
+
+4. INTERACTIVITY:
+   - Set input voltage vector manually
+   - Click cell to change its level (1-30)
+   - Watch MVM result update in real-time
+
+PHASE 3: DEMO 3 - MNIST NEURAL NETWORK (Days 7-10)
+Goal: Draw digit, watch computation flow through crossbars, see prediction.
+
+1. NETWORK STRUCTURE:
+   - IMPLEMENT 'demo3-mnist/pkg/network/network.go'
+     * Layer 1: 784×128 crossbar (input → hidden)
+     * ReLU activation
+     * Layer 2: 128×10 crossbar (hidden → output)
+     * Softmax → prediction
+
+2. PRETRAINED WEIGHTS:
+   - LOAD weights from file (quantized to 30 levels)
+   - OR train simple network, quantize weights to 30 levels
+   - Target: 87% accuracy on MNIST test set
+
+3. VISUALIZATION:
+   - Drawing canvas: 28×28 pixels
+   - Layer 1 crossbar: show 784 inputs flowing in, 128 outputs
+   - Layer 2 crossbar: show 128 inputs flowing in, 10 outputs
+   - Output neurons: 10 bars showing activation
+   - Prediction: highlight winning digit
+
+4. INTERACTIVITY:
+   - Mouse draw digit on canvas
+   - 'Classify' button runs inference
+   - Watch computation animate through both layers
+   - Show prediction with confidence percentage
+
+--- TECH STACK ---
+- Language: Go
+- Graphics: Vulkan
+- Shaders: GLSL (SPIR-V) - compile with glslc
+- UI: ImGui or Nuklear for sliders/buttons
 
 --- PROTOCOL ---
-- RIGOR: Every time you touch a '.comp' shader, run 'glslc' to verify it compiles. Do not write 500 lines of shader code without checking syntax.
-- LOGGING: Update 'WEEKEND_PROGRESS.md' with 'Research Notes'. If you find a discrepancy between the code and the papers, log it.
-- TERMINATION: Output <promise>COMPLETE</promise> only when:
-  1. The MVM Compute Shader compiles and runs.
-  2. The Phase-Field renderer looks like a 3D cloud.
-  3. The Physics equations are verified against the PDFs." --max-iterations 2048 --completion-promise "COMPLETE"
+1. RIGOR: Run 'glslc' after every shader edit. No 500-line shaders without compile check.
+2. MODULARITY: Each demo should run independently.
+3. PHYSICS FIRST: Get the math right before making it pretty.
+4. LOGGING: Update 'PROGRESS.md' daily with completed tasks.
+5. TEST: Each demo must have at least one working test case.
+
+--- SUCCESS CRITERIA ---
+DEMO 1 COMPLETE when:
+- [ ] P-E curve animates in real-time
+- [ ] 30 levels visually distinct
+- [ ] Preisach OR Landau model working
+- [ ] Interactive sliders control E
+
+DEMO 2 COMPLETE when:
+- [ ] MVM compute shader compiles and runs
+- [ ] Voltage/current flow animated
+- [ ] Can manually set cell levels
+- [ ] Output vector updates in real-time
+
+DEMO 3 COMPLETE when:
+- [ ] Can draw digit with mouse
+- [ ] Inference runs through both crossbars
+- [ ] Prediction displays correctly
+- [ ] Achieves >80% accuracy on test digits
+
+--- TERMINATION ---
+Output <promise>COMPLETE</promise> only when:
+1. All 3 demos run independently
+2. Video recording shows full workflow
+3. README documents how to run each demo
+4. Code is clean enough to share with Dr. external research group" --max-iterations 2048 --completion-promise "COMPLETE"
