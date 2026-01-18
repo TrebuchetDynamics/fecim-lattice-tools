@@ -5,6 +5,24 @@
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Vulkan](https://img.shields.io/badge/Vulkan-1.3-AC162C?logo=vulkan)](https://www.vulkan.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Complete-brightgreen.svg)]()
+
+---
+
+## Quick Demo
+
+```bash
+# All 3 demos work out of the box!
+
+# Demo 1: Vulkan hysteresis visualization (requires Vulkan)
+cd demo1-hysteresis && go build -o hysteresis ./cmd/hysteresis && ./hysteresis
+
+# Demo 2: Crossbar MVM visualization (terminal)
+cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show-mvm
+
+# Demo 3: MNIST digit classifier (interactive)
+cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
+```
 
 ---
 
@@ -63,24 +81,13 @@ This visualization project aims to:
 
 ## Implementation Status
 
-| Demo | Physics | Graphics | Overall |
-|------|---------|----------|---------|
-| **Demo 1: Hysteresis** | Complete | Complete | **Vulkan visualization working** |
-| **Demo 2: Crossbar MVM** | Complete | Complete | **Terminal visualization working** |
-| **Demo 3: MNIST** | Complete | Complete | **Interactive classification working** |
+| Demo | Description | Visualization | Status |
+|------|-------------|---------------|--------|
+| **Demo 1** | Single ferroelectric cell P-E hysteresis | Vulkan GPU | **Complete** |
+| **Demo 2** | Crossbar array matrix-vector multiply | Terminal | **Complete** |
+| **Demo 3** | MNIST digit classifier on crossbar | Interactive CLI | **Complete** |
 
-**All demos run independently!**
-
-```bash
-# Demo 1: Vulkan P-E hysteresis visualization
-cd demo1-hysteresis && go build -o hysteresis ./cmd/hysteresis && ./hysteresis
-
-# Demo 2: Terminal crossbar MVM visualization
-cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show-mvm
-
-# Demo 3: Interactive MNIST digit classification
-cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
-```
+All demos run independently with `go build` - no external dependencies except Vulkan SDK for Demo 1.
 
 ---
 
@@ -109,7 +116,7 @@ ironlattice-vis/
 │   ├── pkg/
 │   │   ├── ferroelectric/       # Preisach model, material params
 │   │   ├── simulation/          # Time-stepping engine
-│   │   └── render/              # Graphics pipeline (WIP)
+│   │   └── render/              # Vulkan graphics pipeline
 │   ├── shaders/                 # GLSL compute/graphics shaders
 │   ├── PHYSICS.md               # Physics documentation
 │   └── README.md                # Demo-specific docs
@@ -117,7 +124,8 @@ ironlattice-vis/
 ├── demo2-crossbar/              # Crossbar array MVM visualizer
 │   ├── cmd/inference/           # Application entry point
 │   ├── pkg/
-│   │   ├── crossbar/            # Array modeling
+│   │   ├── crossbar/            # Array modeling, MVM computation
+│   │   ├── visualization/       # Terminal visualization
 │   │   ├── network/             # Neural network layers
 │   │   └── data/                # MNIST loading
 │   ├── shaders/                 # MVM compute shaders
@@ -423,8 +431,9 @@ In response to *"The Microchip Era is About to End"* (WSJ, Nov 2024), IronLattic
 
 ## Contributing
 
-Contributions welcome! Current priorities:
+Contributions welcome!
 
+### Completed
 - [x] Preisach model implementation
 - [x] Vulkan graphics pipeline for demo 1
 - [x] 30-level discrete state visualization
@@ -432,9 +441,15 @@ Contributions welcome! Current priorities:
 - [x] Terminal visualization for crossbar
 - [x] MNIST neural network on crossbar (demo 3)
 - [x] Interactive digit classification
+
+### Future Enhancements
 - [ ] Landau-Khalatnikov solver
-- [ ] Phase-field simulation
+- [ ] Phase-field domain simulation (TDGL)
 - [ ] GPU-accelerated training
+- [ ] Vulkan visualization for Demo 2/3
+- [ ] Non-idealities: IR drop, sneak paths
+- [ ] Real MNIST dataset training (87% accuracy)
+- [ ] Animated voltage/current flow
 
 ---
 
