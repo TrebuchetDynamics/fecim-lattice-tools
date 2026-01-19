@@ -111,7 +111,10 @@ func main() {
 	input := createSampleDigit7()
 
 	// Run inference
-	output := net.Forward(input)
+	output, err := net.Forward(input)
+	if err != nil {
+		log.Fatalf("Inference failed: %v", err)
+	}
 
 	// Find prediction
 	maxIdx := 0
@@ -146,7 +149,11 @@ func runBenchmark(net *network.Network, batchSize int) {
 	// Run inference
 	var totalOps int64
 	for _, input := range inputs {
-		net.Forward(input)
+		_, err := net.Forward(input)
+		if err != nil {
+			log.Printf("Inference error: %v", err)
+			continue
+		}
 		totalOps += net.GetOpsCount()
 	}
 

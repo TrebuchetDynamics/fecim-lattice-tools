@@ -2,9 +2,12 @@ package training
 
 import (
 	"math/rand"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
+	"ironlattice-vis/demo3-mnist/pkg/mnist"
 )
 
 // TestNetworkCreation verifies network initialization
@@ -219,5 +222,73 @@ func TestSaveLoadWeights(t *testing.T) {
 					i, j, origWeights[i][j], loadedWeights[i][j])
 			}
 		}
+	}
+}
+
+// TestMNISTAccuracy verifies pretrained network achieves >= 85% on MNIST test set.
+// This test validates the IronLattice 30-level quantized weights maintain accuracy.
+func TestMNISTAccuracy(t *testing.T) {
+	// Find the data directory relative to the test file
+	// The test runs from the package directory, so we need to go up to demo3-mnist
+	dataDir := filepath.Join("..", "..", "data")
+
+	// Check if pretrained weights exist
+	weightsFile := filepath.Join(dataDir, "pretrained_weights.json")
+	if _, err := os.Stat(weightsFile); os.IsNotExist(err) {
+		t.Skip("Pretrained weights not found, skipping accuracy test")
+	}
+
+	// Check if MNIST test data exists
+	testImageFile := filepath.Join(dataDir, "t10k-images-idx3-ubyte.gz")
+	if _, err := os.Stat(testImageFile); os.IsNotExist(err) {
+		t.Skip("MNIST test data not found, skipping accuracy test")
+	}
+
+	// Create network with same architecture as pretrained model
+	layer1, err := crossbar.NewArray(&crossbar.Config{
+		Rows: 128, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create layer1: %v", err)
+	}
+
+	layer2, err := crossbar.NewArray(&crossbar.Config{
+		Rows: 10, Cols: 128, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create layer2: %v", err)
+	}
+
+	net := NewMNISTNetwork(layer1, layer2)
+
+	// Load pretrained weights
+	err = net.LoadWeights(weightsFile)
+	if err != nil {
+		t.Fatalf("Failed to load weights: %v", err)
+	}
+
+	// Load MNIST test set
+	testImages, testLabels, err := mnist.LoadMNIST(dataDir, false)
+	if err != nil {
+		t.Fatalf("Failed to load MNIST test data: %v", err)
+	}
+
+	t.Logf("Loaded %d test images", len(testImages))
+
+	// Evaluate accuracy
+	accuracy := net.Evaluate(testImages, testLabels)
+	accuracyPercent := accuracy * 100
+
+	t.Logf("MNIST test accuracy: %.2f%%", accuracyPercent)
+
+	// Assert accuracy >= 85% (IronLattice target is 87%, we allow some margin)
+	minAccuracy := 85.0
+	if accuracyPercent < minAccuracy {
+		t.Errorf("Accuracy %.2f%% is below minimum required %.2f%%", accuracyPercent, minAccuracy)
+	}
+
+	// Log if we exceed the IronLattice reported 87% target
+	if accuracyPercent >= 87.0 {
+		t.Logf("Exceeds IronLattice target accuracy of 87%%")
 	}
 }

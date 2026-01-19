@@ -1,204 +1,97 @@
-# 📊 IronLattice Research Paper Acquisition - Summary Report
-**Date:** 2026-01-18  
-**Status:** Phase 1 Complete
+# IronLattice Research Papers Library
+**Organized by Category**  
+**Last Updated:** 2026-01-18
 
----
+## 📁 Directory Structure
 
-## ✅ MISSION ACCOMPLISHED
+### 01_Core_Materials/
+HZO ferroelectrics, material physics, domain dynamics
+- HZO discovery and optimization
+- Ferroelectric domain wall physics  
+- AlScN alternative materials
+- Temperature resilience studies
 
-### Downloaded Papers
-- **Total Valid Papers:** 27 papers (78 MB)
-- **Total PDFs in Directory:** 30 files
-- **Corrupted/Incomplete:** 3 files (need manual download)
+### 02_Training_Algorithms/
+Quantization-aware training, low-precision networks
+- Quantization-aware training (QAT)
+- Low-precision neural networks (5-bit)
+- Variation-resilient training
+- Analog AI hardware co-design
 
----
+### 03_Simulation_Tools/
+NeuroSim, CrossSim, IBM AIHWKit, FerroX
+- Circuit-level simulation (NeuroSim, DNNNeuroSim)
+- Crossbar simulation (CrossSim)
+- IBM analog AI toolkit (AIHWKit)
+- Ferroelectric simulation (FerroX, PEtra)
 
-## 📚 WHAT WE HAVE (27 Papers)
-
-### By Category
-
-**🔴 Core Ferroelectric Technology (8 papers)**
-- HZO materials & properties
-- Multi-level device programming (30 states)
-- Wake-up/fatigue mechanisms
-- Preisach & TDGL modeling
-- Alternative materials (AlScN, In₂Se₃)
-
-**🟡 Neural Networks & MNIST (4 papers)**
-- FeFET synaptic devices
-- Quantization-aware training
-- Variation-resilient implementations
-- Face/digit classification benchmarks
-
-**🟢 CIM Architecture (6 papers)**
-- Crossbar arrays & sneak paths
-- Hybrid CIM designs
+### 04_CIM_Architectures/
+Crossbar arrays, compute-in-memory designs
+- Crossbar non-idealities (IR drop, sneak paths)
 - 3D FeFET architectures
-- Temperature resilience
-- Safety-critical applications
+- Hybrid CIM designs
+- Neuromorphic hardware
 
-**🔵 Simulation Tools (6 papers)**
-- NeuroSim, DNNNeuroSim
-- IBM AIHWKit
-- CrossSim (Sandia)
-- FerroX, PEtra
-- Full-stack benchmarking
+### 05_2D_Materials/
+In₂Se₃ and 2D ferroelectric semiconductors
+- 2D ferroelectric materials review
+- Context for Dr. Tour's work
 
-**🌐 Energy & Scaling (3 papers)**
-- Analog CIM energy efficiency
-- Flash vs emerging NVM
-- Wafer-scale integration
+### 06_Industry_Reports/
+ITRS/IRDS roadmaps, wafer-scale integration
+- IEEE technology roadmaps
+- Wafer-scale integration studies
+- Industry demonstrations (Tsinghua)
 
----
+### 07_Reviews_Surveys/
+Comprehensive reviews of memory technologies
+- Flash vs emerging NVM comparison
+- Memory technology surveys
 
-## ❌ WHAT WE NEED (Manual Acquisition)
+### 08_Documentation/
+Catalogs, guides, technical dossiers
+- **TECHNICAL_DOSSIER.md** - Extracted specifications
+- **IMPLEMENTATION_GUIDE.md** - Actionable recommendations
+- **COMPREHENSIVE_ANALYSIS.md** - Full research synthesis
+- **PAPERS_CATALOG.md** - Complete bibliography
+- **PAPERS_NEEDED.md** - Manual acquisition list
+- Download session summaries
 
-### Corrupted Files (Priority 1)
-1. **IEEE_CIM_Survey_2023.pdf** - Need IEEE Xplore access
-2. **Mayergoyz_IEEE_1986.pdf** - Original Preisach model paper
-3. **Tour_In2Se3_ChemRxiv.pdf** - Dr. Tour's 2D ferroelectric work
+### 09_CORRUPTED/
+Files needing re-download
+- IEEE_CIM_Survey_2023.pdf (244 bytes)
+- Mayergoyz_IEEE_1986.pdf (16 bytes)
+- Tour_In2Se3_ChemRxiv.pdf (60 bytes)
 
-### Critical Missing Papers (~20 papers)
-- **Nature/Science papers** (HfO₂ discovery, etc.) - 5 papers
-- **IEEE papers** (FeFET synapse, MNIST hardware) - 8 papers  
-- **Dr. Tour's work** (Flash Joule Heating, other FE papers) - 3 papers
-- **Advanced topics** (SOTA training, domain dynamics) - 4 papers
+## 📊 Statistics
 
-See **PAPERS_NEEDED.md** for complete prioritized list.
+**Total Papers:** 40 PDFs
+**Valid Papers:** 37 papers
+**Corrupted:** 3 papers
+**Total Size:** ~96 MB
+**Coverage:** 75%
 
----
+## 🎯 Quick Access
 
-## 🎯 COVERAGE ANALYSIS
+**For Demo Fixes:**
+- Demo 1 (Hysteresis): See `TECHNICAL_DOSSIER.md` Section 1 (Mayergoyz)
+- Demo 2 (30 levels): See `TECHNICAL_DOSSIER.md` Section 2 (Scheme C)
+- Demo 3 (90% MNIST): See `TECHNICAL_DOSSIER.md` Section 3 (75ns pulses)
 
-| Topic | Have | Need | Coverage |
-|-------|------|------|----------|
-| **Theory & Modeling** | 8 | 2 | ⭐⭐⭐⭐ 80% |
-| **Simulation Tools** | 6 | 1 | ⭐⭐⭐⭐⭐ 90% |
-| **Experimental Hardware** | 4 | 6 | ⭐⭐ 40% |
-| **Training Algorithms** | 3 | 2 | ⭐⭐⭐ 60% |
-| **Recent SOTA** | 2 | 8 | ⭐ 20% |
+**For Implementation:**
+- `08_Documentation/IMPLEMENTATION_GUIDE.md`
+- `08_Documentation/TECHNICAL_DOSSIER.md`
 
-**Overall Research Coverage:** 65% ✅
+**For Research:**
+- `08_Documentation/COMPREHENSIVE_ANALYSIS.md`
+- `08_Documentation/PAPERS_CATALOG.md`
 
----
+## 🔍 Finding Papers
 
-## 🔗 CREATED DOCUMENTS
-
-1. **PAPERS_CATALOG.md** - Complete annotated bibliography
-   - All 27 downloaded papers with descriptions
-   - All 20+ needed papers with sources
-   - Organized by priority and category
-   
-2. **PAPERS_NEEDED.md** - Quick acquisition checklist
-   - Prioritized list for manual download
-   - Where to find each paper
-   - Action checklist
-
-3. **This file (README.md)** - Executive summary
-
----
-
-## 📥 NEXT STEPS
-
-### Immediate (This Week)
-1. ✅ Download open-access papers from arXiv (DONE - 27 papers)
-2. ⏳ Fix corrupted files (IEEE Xplore + Dr. Tour contact)
-3. ⏳ Acquire top 5 critical paywalled papers
-
-### Short-term (This Month)
-4. Extract key equations from downloaded papers
-5. Implement fixes:
-   - 30-level quantization (use Multi_Level_FeFET_Programming_arXiv.pdf)
-   - Better Preisach model (use Preisach_Ferroelectric_Modeling_arXiv.pdf)
-   - MNIST training (use Quantization_Aware_Training_arXiv.pdf)
-
-### Long-term (Ongoing)
-6. Monitor arXiv for new ferroelectric CIM papers
-7. Build relationships with Dr. Tour's lab
-8. Stay current with IEDM/VLSI/ISSCC conferences
-
----
-
-## 🚀 HOW TO USE THESE PAPERS
-
-### For Demo 1 (Hysteresis)
-**Read:**
-- Preisach_Ferroelectric_Modeling_arXiv.pdf
-- HZO_Wakeup_Fatigue_Mechanisms_arXiv.pdf
-- TDGL_Ferroelectric_Domains_arXiv.pdf
-
-**Goal:** Replace simplified tanh with proper Preisach integration
-
-### For Demo 2 (Crossbar)
-**Read:**
-- Multi_Level_FeFET_Programming_arXiv.pdf ⭐⭐⭐⭐⭐
-- Crossbar_Sneak_Path_Analysis_arXiv.pdf
-- Analog_CIM_Energy_Efficiency_arXiv.pdf
-
-**Goal:** Implement proper 30-level quantization: `level = round(value * 29) / 29`
-
-### For Demo 3 (MNIST)
-**Read:**
-- Quantization_Aware_Training_arXiv.pdf ⭐⭐⭐⭐⭐
-- Variation_Resilient_FeFET_BNN_MNIST_2024.pdf
-- FeFET_Synapse_Neuromorphic_arXiv.pdf
-
-**Goal:** Achieve 87% accuracy with trained weights
-
----
-
-## 📞 CONTACTS FOR MISSING PAPERS
-
-**Dr. Tour's Lab:**
-- Email: tour@rice.edu
-- Website: https://tour.rice.edu
-- Request: In₂Se₃ paper + other ferroelectric work
-
-**IEEE Xplore:**
-- Check university library for institutional access
-- Needed for ~8 critical papers
-
-**ResearchGate:**
-- Direct message authors for preprints
-- Success rate: ~70%
-
----
-
-## 📈 STATISTICS
-
-```
-Total Research Papers Identified: 50+
-├── Downloaded (arXiv): 27 ✅
-├── Corrupted: 3 ⚠️
-└── Need Manual Acquisition: 20+ 📥
-
-Total Storage: 78 MB
-Research Coverage: 65%
-Critical Path Papers: 5 (need 3 more)
+Use grep to search across all papers:
+```bash
+cd /path/to/papers
+grep -r "search term" . --include="*.md"
 ```
 
----
-
-## ✨ SUCCESS METRICS
-
-**Phase 1 (arXiv Mining):** ✅ COMPLETE
-- Downloaded all available open-access papers
-- Created comprehensive catalog
-- Identified gaps
-
-**Phase 2 (Manual Acquisition):** ⏳ IN PROGRESS  
-- Fix 3 corrupted files
-- Get 5 critical paywalled papers
-- Target: 85% coverage
-
-**Phase 3 (Implementation):** 🔜 NEXT
-- Extract equations from papers
-- Fix demo bugs using research
-- Validate against Dr. Tour's specs
-
----
-
-**Compiled by:** Antigravity AI  
-**For:** IronLattice Visualization Project  
-**Reference:** ironlattice-transcript.md (Dr. Tour's Nov 2024 presentation)  
-**Version:** 1.0
+Or browse by category folder above.
