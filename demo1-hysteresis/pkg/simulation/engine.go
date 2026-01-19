@@ -3,6 +3,7 @@ package simulation
 
 import (
 	"math"
+	"sync"
 	"time"
 
 	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
@@ -29,9 +30,12 @@ type Engine struct {
 	state    *State
 
 	// Simulation parameters
-	dt       float64 // Time step (s)
-	running  bool
-	paused   bool
+	dt float64 // Time step (s)
+
+	// Thread-safe state (protected by mu)
+	mu      sync.RWMutex
+	running bool
+	paused  bool
 
 	// Waveform generation
 	waveform  WaveformType
@@ -74,27 +78,46 @@ func newState(maxHistory int) *State {
 
 // Start begins the simulation loop.
 func (e *Engine) Start() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.running = true
 	e.paused = false
 }
 
 // Stop halts the simulation.
 func (e *Engine) Stop() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.running = false
 }
 
 // Pause toggles the paused state.
 func (e *Engine) Pause() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.paused = !e.paused
 }
 
 // IsPaused returns true if simulation is paused.
 func (e *Engine) IsPaused() bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 	return e.paused
 }
 
+// IsRunning returns true if simulation is running.
+func (e *Engine) IsRunning() bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.running
+}
+
 // Step advances the simulation by one time step.
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) Step() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if !e.running || e.paused {
 		return
 	}
@@ -211,11 +234,11 @@ func (e *Engine) RunRealtime(updateCallback func(*State), targetFPS int) {
 	stepsPerFrame := int(1.0 / (e.dt * float64(targetFPS)))
 
 	for range ticker.C {
-		if !e.running {
+		if !e.IsRunning() {
 			break
 		}
 
-		if !e.paused {
+		if !e.IsPaused() {
 			// Run multiple physics steps per frame
 			for i := 0; i < stepsPerFrame; i++ {
 				e.Step()
@@ -224,7 +247,10 @@ func (e *Engine) RunRealtime(updateCallback func(*State), targetFPS int) {
 
 		// Call the update callback
 		if updateCallback != nil {
-			updateCallback(e.state)
+			e.mu.RLock()
+			state := e.state
+			e.mu.RUnlock()
+			updateCallback(state)
 		}
 	}
 }

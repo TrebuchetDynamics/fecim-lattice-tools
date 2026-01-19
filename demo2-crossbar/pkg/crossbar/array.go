@@ -7,6 +7,10 @@ import (
 	"math/rand"
 )
 
+// IronLatticeLevels is the number of discrete analog states per Dr. Tour's specs.
+// "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
+const IronLatticeLevels = 30
+
 // Config contains crossbar array configuration.
 type Config struct {
 	Rows       int     // Number of rows (word lines)
@@ -65,19 +69,35 @@ func NewArray(cfg *Config) (*Array, error) {
 }
 
 // ProgramWeight programs a weight value to a specific cell.
+// Weights are automatically quantized to 30 discrete IronLattice levels.
 func (a *Array) ProgramWeight(row, col int, weight float64) error {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		return fmt.Errorf("cell index out of range: (%d, %d)", row, col)
 	}
 
-	// Clamp weight to valid range
-	weight = math.Max(0, math.Min(1, weight))
+	// Quantize to 30 IronLattice levels
+	quantized := QuantizeTo30Levels(weight)
 
-	a.cells[row][col].Conductance = weight
+	a.cells[row][col].Conductance = quantized
 	a.cells[row][col].SwitchingCount++
 	a.totalWrites++
 
 	return nil
+}
+
+// QuantizeTo30Levels quantizes a value to exactly 30 discrete levels (0-29).
+// This matches IronLattice's 30 discrete analog states.
+func QuantizeTo30Levels(value float64) float64 {
+	// Clamp to [0, 1]
+	value = math.Max(0, math.Min(1, value))
+	// Quantize to 30 levels (0-29)
+	level := math.Round(value * float64(IronLatticeLevels-1))
+	return level / float64(IronLatticeLevels-1)
+}
+
+// GetLevel returns the discrete level (0-29) for a conductance value.
+func GetLevel(conductance float64) int {
+	return int(math.Round(conductance * float64(IronLatticeLevels-1)))
 }
 
 // ProgramWeightMatrix programs an entire weight matrix to the array.
@@ -161,21 +181,21 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 }
 
 // quantizeDAC applies DAC quantization to input voltage.
+// Uses IronLattice 30 levels for analog computation.
 func (a *Array) quantizeDAC(value float64) float64 {
 	// Clamp to [0, 1]
 	value = math.Max(0, math.Min(1, value))
-	// Quantize
-	quantized := math.Round(value*float64(a.dacLevels-1)) / float64(a.dacLevels-1)
-	return quantized
+	// Use IronLattice 30-level quantization
+	return QuantizeTo30Levels(value)
 }
 
 // quantizeADC applies ADC quantization to output current.
+// Uses IronLattice 30 levels for analog computation.
 func (a *Array) quantizeADC(value float64) float64 {
 	// Clamp to [0, 1]
 	value = math.Max(0, math.Min(1, value))
-	// Quantize
-	quantized := math.Round(value*float64(a.adcLevels-1)) / float64(a.adcLevels-1)
-	return quantized
+	// Use IronLattice 30-level quantization
+	return QuantizeTo30Levels(value)
 }
 
 // GetStats returns array statistics.

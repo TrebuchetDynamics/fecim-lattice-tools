@@ -165,12 +165,138 @@ func (cd *CellDisplay) GetColor() Color {
 	return cd.ColorMap.PolarizationToColor(cd.Polarization)
 }
 
+// IronLatticeLevels is the number of discrete analog states per Dr. Tour's specs.
+// "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
+const IronLatticeLevels = 30
+
+// LevelIndicator displays the 30 discrete IronLattice levels.
+type LevelIndicator struct {
+	// Position and size (normalized 0-1)
+	X, Y          float64
+	Width, Height float64
+
+	// Current level (0-29)
+	CurrentLevel int
+
+	// Color scheme
+	ActiveColor   Color // Color for current level
+	InactiveColor Color // Color for other levels
+	BorderColor   Color
+}
+
+// NewLevelIndicator creates a new level indicator display.
+func NewLevelIndicator() *LevelIndicator {
+	return &LevelIndicator{
+		X:             0.02,
+		Y:             0.1,
+		Width:         0.08,
+		Height:        0.8,
+		CurrentLevel:  15, // Middle level
+		ActiveColor:   Color{0.2, 0.7, 0.3, 1.0}, // Green for active
+		InactiveColor: Color{0.3, 0.3, 0.3, 0.5}, // Gray for inactive
+		BorderColor:   Color{0.2, 0.2, 0.2, 1.0},
+	}
+}
+
+// SetFromPolarization sets the level from normalized polarization (-1 to +1).
+func (li *LevelIndicator) SetFromPolarization(normP float64) {
+	// Map [-1, 1] to [0, 29]
+	normalized := (normP + 1.0) / 2.0 // [0, 1]
+	li.CurrentLevel = int(math.Round(normalized * float64(IronLatticeLevels-1)))
+	if li.CurrentLevel < 0 {
+		li.CurrentLevel = 0
+	}
+	if li.CurrentLevel >= IronLatticeLevels {
+		li.CurrentLevel = IronLatticeLevels - 1
+	}
+}
+
+// GetLevelVertices generates vertices for the 30-level indicator bar.
+func (li *LevelIndicator) GetLevelVertices() []PlotVertex {
+	var vertices []PlotVertex
+
+	// Each level is a small horizontal bar
+	levelHeight := li.Height / float64(IronLatticeLevels)
+	barWidth := li.Width * 0.8
+	barX := li.X + li.Width*0.1
+
+	for level := 0; level < IronLatticeLevels; level++ {
+		// Calculate Y position (level 0 at bottom, level 29 at top)
+		barY := li.Y + float64(level)*levelHeight
+
+		// Choose color based on whether this is the active level
+		var color Color
+		if level == li.CurrentLevel {
+			color = li.ActiveColor
+		} else {
+			color = li.InactiveColor
+		}
+
+		// Convert to NDC
+		x1 := float32(barX*2 - 1)
+		y1 := float32(barY*2 - 1)
+		x2 := float32((barX+barWidth)*2 - 1)
+		y2 := float32((barY+levelHeight*0.85)*2 - 1) // 85% height for gap
+
+		colorArr := [4]float32{color.R, color.G, color.B, color.A}
+
+		// Two triangles forming a quad
+		vertices = append(vertices,
+			PlotVertex{Position: [2]float32{x1, y1}, Color: colorArr},
+			PlotVertex{Position: [2]float32{x2, y1}, Color: colorArr},
+			PlotVertex{Position: [2]float32{x1, y2}, Color: colorArr},
+			PlotVertex{Position: [2]float32{x2, y1}, Color: colorArr},
+			PlotVertex{Position: [2]float32{x2, y2}, Color: colorArr},
+			PlotVertex{Position: [2]float32{x1, y2}, Color: colorArr},
+		)
+	}
+
+	// Add border around entire indicator
+	borderColor := [4]float32{li.BorderColor.R, li.BorderColor.G, li.BorderColor.B, li.BorderColor.A}
+	bx1 := float32(li.X*2 - 1)
+	by1 := float32(li.Y*2 - 1)
+	bx2 := float32((li.X+li.Width)*2 - 1)
+	by2 := float32((li.Y+li.Height)*2 - 1)
+
+	vertices = append(vertices,
+		// Top edge
+		PlotVertex{Position: [2]float32{bx1, by2}, Color: borderColor},
+		PlotVertex{Position: [2]float32{bx2, by2}, Color: borderColor},
+		// Right edge
+		PlotVertex{Position: [2]float32{bx2, by2}, Color: borderColor},
+		PlotVertex{Position: [2]float32{bx2, by1}, Color: borderColor},
+		// Bottom edge
+		PlotVertex{Position: [2]float32{bx2, by1}, Color: borderColor},
+		PlotVertex{Position: [2]float32{bx1, by1}, Color: borderColor},
+		// Left edge
+		PlotVertex{Position: [2]float32{bx1, by1}, Color: borderColor},
+		PlotVertex{Position: [2]float32{bx1, by2}, Color: borderColor},
+	)
+
+	return vertices
+}
+
+// QuantizeTo30Levels quantizes a value to exactly 30 discrete levels.
+// Matches the crossbar package implementation for consistency.
+func QuantizeTo30Levels(value float64) float64 {
+	value = math.Max(0, math.Min(1, value))
+	level := math.Round(value * float64(IronLatticeLevels-1))
+	return level / float64(IronLatticeLevels-1)
+}
+
+// GetLevel returns the discrete level (0-29) for a normalized value.
+func GetLevel(value float64) int {
+	value = math.Max(0, math.Min(1, value))
+	return int(math.Round(value * float64(IronLatticeLevels-1)))
+}
+
 // Renderer is the main rendering interface.
 // TODO: Implement with actual Vulkan calls using go-vk or vgpu.
 type Renderer struct {
 	config  *Config
 	plot    *HysteresisPlot
 	cell    *CellDisplay
+	levels  *LevelIndicator // 30-level indicator per Dr. Tour's specs
 	running bool
 
 	// Callbacks
@@ -182,6 +308,7 @@ func NewRenderer(config *Config) *Renderer {
 	return &Renderer{
 		config: config,
 		cell:   NewCellDisplay(),
+		levels: NewLevelIndicator(),
 	}
 }
 
@@ -195,9 +322,20 @@ func (r *Renderer) SetUpdateCallback(fn func()) {
 	r.onUpdate = fn
 }
 
-// UpdatePolarization updates the cell polarization display.
+// UpdatePolarization updates the cell polarization display and 30-level indicator.
 func (r *Renderer) UpdatePolarization(normP float64) {
 	r.cell.Polarization = normP
+	r.levels.SetFromPolarization(normP)
+}
+
+// GetCurrentLevel returns the current discrete level (0-29).
+func (r *Renderer) GetCurrentLevel() int {
+	return r.levels.CurrentLevel
+}
+
+// GetLevelIndicator returns the level indicator for direct access.
+func (r *Renderer) GetLevelIndicator() *LevelIndicator {
+	return r.levels
 }
 
 // Initialize sets up the Vulkan context and window.
