@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -64,6 +65,19 @@ type App struct {
 	frequency float64
 	simTime   float64
 
+	// Random Walk state
+	rwTargetLevel int     // Target level (1-30)
+	rwCurrentE    float64 // Current E-field
+	rwStepTimer   float64 // Time until next random level
+	rwStepDelay   float64 // How often to pick new level
+
+	// Write/Read Demo state
+	wrdPhase       int     // 0=write, 1=hold, 2=read, 3=display
+	wrdTargetLevel int     // Target level to write
+	wrdReadLevel   int     // Level read back
+	wrdPhaseTimer  float64 // Time in current phase
+	wrdWriteE      float64 // E-field during write
+
 	// UI components
 	plot           *PEPlot
 	levelIndicator *LevelIndicator
@@ -72,10 +86,20 @@ type App struct {
 	eFieldLabel    *widget.Label
 	pLabel         *widget.Label
 	levelLabel     *widget.Label
+	modeLabel      *widget.Label // WRITE/READ mode indicator
 	materialSelect *widget.Select
 	waveformSelect *widget.Select
 	statusLabel    *widget.Label
 	pauseBtn       *widget.Button
+
+	// Educational slide and log
+	slideTitle    *widget.Label
+	slideText     *widget.Label
+	logText       *widget.Label
+	logEntries    []string
+	maxLogLines   int
+	lastLogPhase  int // Track phase changes to avoid duplicate logs
+	lastRWTarget  int // Track Random Walk target changes
 }
 
 // WaveformType represents the input waveform
@@ -86,6 +110,8 @@ const (
 	WaveformSine
 	WaveformTriangle
 	WaveformSquare
+	WaveformRandomWalk
+	WaveformWriteReadDemo
 )
 
 func (w WaveformType) String() string {
@@ -98,6 +124,10 @@ func (w WaveformType) String() string {
 		return "Triangle Wave"
 	case WaveformSquare:
 		return "Square Wave"
+	case WaveformRandomWalk:
+		return "Random Walk"
+	case WaveformWriteReadDemo:
+		return "Write/Read Demo"
 	default:
 		return "Unknown"
 	}
@@ -115,16 +145,22 @@ func NewApp() *App {
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
 
 	return &App{
-		material:   mat,
-		preisach:   preisach,
-		materials:  materials,
-		matIndex:   0,
-		maxHistory: 500,
-		eHistory:   make([]float64, 0, 500),
-		pHistory:   make([]float64, 0, 500),
-		autoMode:   true,
-		waveform:   WaveformSine,
-		frequency:  0.5, // 0.5 Hz default
+		material:       mat,
+		preisach:       preisach,
+		materials:      materials,
+		matIndex:       0,
+		maxHistory:     500,
+		eHistory:       make([]float64, 0, 500),
+		pHistory:       make([]float64, 0, 500),
+		autoMode:       true,
+		waveform:       WaveformSine,
+		frequency:      0.5, // 0.5 Hz default
+		rwTargetLevel:  25,
+		rwStepDelay:    2.5, // 2.5 seconds between random level changes
+		wrdTargetLevel: 28,  // Start high for dramatic first write
+		maxLogLines:    12,
+		logEntries:     make([]string, 0, 12),
+		lastLogPhase:   -1,
 	}
 }
 
@@ -173,6 +209,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create info panel
 	info := a.createInfoPanel()
 
+	// Create educational slide panel
+	slidePanel := a.createSlidePanel()
+
+	// Create log panel
+	logPanel := a.createLogPanel()
+
 	// Cell container with label
 	cellContainer := container.NewVBox(
 		widget.NewLabelWithStyle("Memory Cell", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
@@ -180,13 +222,29 @@ func (a *App) createUI() fyne.CanvasObject {
 		widget.NewLabelWithStyle("This is the cell", fyne.TextAlignCenter, fyne.TextStyle{Italic: true}),
 	)
 
-	// Right panel with controls and info (scrollable)
-	rightPanel := container.NewScroll(container.NewVBox(
+	// Left column of right panel: Controls + Info (15% of 1280 = ~190px)
+	leftCol := container.NewVBox(
 		controls,
 		widget.NewSeparator(),
 		info,
+	)
+	leftColFixed := container.New(&fixedWidthLayout{width: 190}, leftCol)
+
+	// Right column of right panel: Slide + Log (12% of 1280 = ~155px)
+	rightCol := container.NewVBox(
+		slidePanel,
+		widget.NewSeparator(),
+		logPanel,
+	)
+	rightColFixed := container.New(&fixedWidthLayout{width: 155}, rightCol)
+
+	// Right panel with two columns side by side (scrollable)
+	rightPanel := container.NewScroll(container.NewHBox(
+		leftColFixed,
+		widget.NewSeparator(),
+		rightColFixed,
 	))
-	rightPanel.SetMinSize(fyne.NewSize(220, 0))
+	rightPanel.SetMinSize(fyne.NewSize(360, 0))
 
 	// Left side: cell (fixed width)
 	leftSide := container.NewHBox(
@@ -277,8 +335,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.eFieldLabel = widget.NewLabel("E-field: 0.00 MV/cm")
 
 	// Waveform selector
-	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Square Wave"}
+	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Square Wave", "Random Walk", "Write/Read Demo"}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
+		a.mu.Lock()
+		defer a.mu.Unlock()
 		switch s {
 		case "Manual":
 			a.waveform = WaveformManual
@@ -296,6 +356,22 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.waveform = WaveformSquare
 			a.autoMode = true
 			a.eFieldSlider.Disable()
+		case "Random Walk":
+			a.waveform = WaveformRandomWalk
+			a.autoMode = true
+			a.eFieldSlider.Disable()
+			// Reset random walk state
+			a.rwStepTimer = 0
+			a.rwCurrentE = a.electricField
+			a.rwTargetLevel = rand.Intn(30) + 1
+		case "Write/Read Demo":
+			a.waveform = WaveformWriteReadDemo
+			a.autoMode = true
+			a.eFieldSlider.Disable()
+			// Reset write/read demo state
+			a.wrdPhase = 0
+			a.wrdPhaseTimer = 0
+			a.wrdTargetLevel = rand.Intn(30) + 1
 		}
 	})
 	a.waveformSelect.SetSelected("Sine Wave")
@@ -407,6 +483,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("P: 0.00 µC/cm²")
 	a.levelLabel = widget.NewLabel("Level: 15/30")
+	a.modeLabel = widget.NewLabelWithStyle("Mode: READ", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	return container.NewVBox(
 		widget.NewLabelWithStyle("Current State", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
@@ -414,6 +491,8 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		a.eFieldLabel,
 		a.pLabel,
 		a.levelLabel,
+		widget.NewSeparator(),
+		a.modeLabel,
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("Material Parameters", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
@@ -423,6 +502,96 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewLabel(fmt.Sprintf("τ: %.1f ns", a.material.Tau*1e9)),
 		widget.NewLabel(fmt.Sprintf("Endurance: %.0e", a.material.EnduranceCycles)),
 	)
+}
+
+func (a *App) createSlidePanel() fyne.CanvasObject {
+	a.slideTitle = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	a.slideText = widget.NewLabel(a.getSlideText())
+	a.slideText.Wrapping = fyne.TextWrapWord
+
+	return container.NewVBox(
+		a.slideTitle,
+		widget.NewSeparator(),
+		a.slideText,
+	)
+}
+
+func (a *App) createLogPanel() fyne.CanvasObject {
+	a.logText = widget.NewLabel("Memory operations will\nappear here...")
+	a.logText.Wrapping = fyne.TextWrapWord
+
+	return container.NewVBox(
+		widget.NewLabelWithStyle("Memory Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+		a.logText,
+	)
+}
+
+func (a *App) getSlideText() string {
+	switch a.waveform {
+	case WaveformManual:
+		return "MANUAL MODE\n\n" +
+			"Drag the slider to apply\n" +
+			"an electric field (E).\n\n" +
+			"Watch the polarization (P)\n" +
+			"respond with hysteresis:\n" +
+			"it 'remembers' its history."
+	case WaveformSine:
+		return "SINE WAVE\n\n" +
+			"Continuous E-field sweep\n" +
+			"traces the full hysteresis\n" +
+			"loop.\n\n" +
+			"Notice: P lags behind E.\n" +
+			"This lag IS the memory."
+	case WaveformTriangle:
+		return "TRIANGLE WAVE\n\n" +
+			"Linear ramps show how\n" +
+			"polarization switches at\n" +
+			"the coercive field (Ec).\n\n" +
+			"Orange lines = ±Ec\n" +
+			"Teal lines = ±Pr"
+	case WaveformSquare:
+		return "SQUARE WAVE\n\n" +
+			"Instant jumps between\n" +
+			"±Emax show switching\n" +
+			"dynamics.\n\n" +
+			"The cell flips between\n" +
+			"states rapidly."
+	case WaveformRandomWalk:
+		return "RANDOM WALK\n\n" +
+			"Picks random target levels\n" +
+			"and ramps to reach them.\n\n" +
+			"This shows multi-level\n" +
+			"storage: not just 0/1,\n" +
+			"but 30 distinct states!"
+	case WaveformWriteReadDemo:
+		return "WRITE/READ DEMO\n\n" +
+			"1. WRITE: E > Ec sets state\n" +
+			"2. HOLD: E = 0, P persists!\n" +
+			"3. READ: E < Ec, no change\n\n" +
+			"This is non-volatile memory:\n" +
+			"data survives power-off."
+	default:
+		return "Select a waveform mode\nto see explanation."
+	}
+}
+
+func (a *App) addLogEntry(entry string) {
+	a.logEntries = append(a.logEntries, entry)
+	if len(a.logEntries) > a.maxLogLines {
+		a.logEntries = a.logEntries[1:]
+	}
+}
+
+func (a *App) getLogText() string {
+	if len(a.logEntries) == 0 {
+		return "Waiting for operations..."
+	}
+	result := ""
+	for _, e := range a.logEntries {
+		result += e + "\n"
+	}
+	return result
 }
 
 func (a *App) simulationLoop() {
@@ -472,6 +641,121 @@ func (a *App) simulationLoop() {
 				} else {
 					a.electricField = -Emax
 				}
+			case WaveformRandomWalk:
+				// Random Walk: pick random target levels and ramp to them
+				// Frequency controls how often we pick new targets
+				stepDelay := 1.5 / a.frequency // Higher freq = faster changes
+				a.rwStepTimer += dt
+				if a.rwStepTimer >= stepDelay {
+					a.rwStepTimer = 0
+					oldTarget := a.rwTargetLevel
+					a.rwTargetLevel = rand.Intn(30) + 1 // Random level 1-30
+					// Log target change
+					a.addLogEntry(fmt.Sprintf("-> Target: %d (was %d)", a.rwTargetLevel, oldTarget))
+				}
+				// Calculate E needed to reach that level
+				// Level 1-30 maps to E-field: must exceed Ec to cause switching
+				// Level 1 = -Emax (negative saturation)
+				// Level 15-16 = near 0
+				// Level 30 = +Emax (positive saturation)
+				targetNormP := (float64(a.rwTargetLevel) - 15.5) / 14.5 // -1 to +1
+				targetE := targetNormP * Emax
+				// Ramp toward target - speed scales with frequency
+				rampSpeed := 1.5 * Emax * a.frequency // Faster freq = faster ramp
+				diff := targetE - a.rwCurrentE
+				step := rampSpeed * dt
+				if math.Abs(diff) < step {
+					a.rwCurrentE = targetE
+				} else if diff > 0 {
+					a.rwCurrentE += step
+				} else {
+					a.rwCurrentE -= step
+				}
+				a.electricField = a.rwCurrentE
+			case WaveformWriteReadDemo:
+				// Write/Read Demo: demonstrates write then read cycle
+				// Key insight: To write level N, we need E > Ec to cause switching
+				// Level 1-15 = negative P (need negative E past -Ec)
+				// Level 16-30 = positive P (need positive E past +Ec)
+				a.wrdPhaseTimer += dt
+				phaseDuration := 1.0 / a.frequency // Scale with frequency
+
+				// Calculate write E-field: must exceed Ec, scaled by how far from center
+				// Map level 1-30 to E-field: level 1 = -Emax, level 30 = +Emax
+				targetNormP := (float64(a.wrdTargetLevel) - 15.5) / 14.5 // -1 to +1
+				// E-field must exceed Ec to cause switching, so scale appropriately
+				a.wrdWriteE = targetNormP * Emax
+
+				// Ramp rate scales with frequency
+				rampRate := 2.0 * Emax * a.frequency
+
+				switch a.wrdPhase {
+				case 0: // WRITE phase - ramp to write voltage (must exceed Ec)
+					diff := a.wrdWriteE - a.electricField
+					step := rampRate * dt
+					if math.Abs(diff) < step {
+						a.electricField = a.wrdWriteE
+					} else if diff > 0 {
+						a.electricField += step
+					} else {
+						a.electricField -= step
+					}
+					if a.wrdPhaseTimer > phaseDuration {
+						a.wrdPhase = 1
+						a.wrdPhaseTimer = 0
+					}
+				case 1: // HOLD phase - return to zero (polarization persists!)
+					step := rampRate * dt
+					if math.Abs(a.electricField) < step {
+						a.electricField = 0
+					} else if a.electricField > 0 {
+						a.electricField -= step
+					} else {
+						a.electricField += step
+					}
+					if a.wrdPhaseTimer > phaseDuration*0.7 && math.Abs(a.electricField) < 0.01*Emax {
+						a.wrdPhase = 2
+						a.wrdPhaseTimer = 0
+					}
+				case 2: // READ phase - small pulse below Ec (doesn't change state)
+					readE := a.material.Ec * 0.4 // Below Ec - won't switch
+					if a.wrdWriteE < 0 {
+						readE = -readE
+					}
+					step := rampRate * 0.5 * dt
+					diff := readE - a.electricField
+					if math.Abs(diff) < step {
+						a.electricField = readE
+					} else if diff > 0 {
+						a.electricField += step
+					} else {
+						a.electricField -= step
+					}
+					if a.wrdPhaseTimer > phaseDuration*0.5 {
+						a.wrdReadLevel = a.discreteLevel + 1
+						a.wrdPhase = 3
+						a.wrdPhaseTimer = 0
+					}
+				case 3: // DISPLAY phase - return to zero, show result
+					step := rampRate * 0.5 * dt
+					if math.Abs(a.electricField) < step {
+						a.electricField = 0
+					} else if a.electricField > 0 {
+						a.electricField -= step
+					} else {
+						a.electricField += step
+					}
+					if a.wrdPhaseTimer > phaseDuration*1.2 {
+						// Pick new target - alternate between high and low for drama
+						if a.wrdTargetLevel > 15 {
+							a.wrdTargetLevel = rand.Intn(10) + 1 // Low: 1-10
+						} else {
+							a.wrdTargetLevel = rand.Intn(10) + 21 // High: 21-30
+						}
+						a.wrdPhase = 0
+						a.wrdPhaseTimer = 0
+					}
+				}
 			}
 		}
 
@@ -517,18 +801,87 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		a.pLabel.SetText(fmt.Sprintf("P: %.2f µC/cm²", pol*100))
 		a.levelLabel.SetText(fmt.Sprintf("Level: %d/30", level+1))
 
+		// Update WRITE/READ mode indicator based on E vs Ec
+		// Use visual markers to distinguish modes
+		if math.Abs(eField) > a.material.Ec {
+			a.modeLabel.SetText("Mode: [WRITE] |E|>Ec")
+		} else {
+			a.modeLabel.SetText("Mode: (READ) |E|<Ec")
+		}
+
 		// Update slider position for auto modes
 		if a.autoMode {
 			a.eFieldSlider.SetValue(eField / a.material.Ec)
 		}
 
-		// Update status
+		// Update status and logging
 		if a.paused {
 			a.statusLabel.SetText("⏸ Paused")
 		} else {
-			frac := a.preisach.GetSwitchedFraction() * 100
-			a.statusLabel.SetText(fmt.Sprintf("● Running | t=%.2fs | Switched: %.1f%%", a.simTime, frac))
+			a.mu.RLock()
+			waveform := a.waveform
+			wrdPhase := a.wrdPhase
+			wrdTarget := a.wrdTargetLevel
+			wrdRead := a.wrdReadLevel
+			rwTarget := a.rwTargetLevel
+			lastPhase := a.lastLogPhase
+			a.mu.RUnlock()
+
+			switch waveform {
+			case WaveformRandomWalk:
+				a.statusLabel.SetText(fmt.Sprintf("● Random Walk | Target: %d | Current: %d", rwTarget, level+1))
+			case WaveformWriteReadDemo:
+				var phaseStr string
+				// Log phase transitions
+				if wrdPhase != lastPhase {
+					a.mu.Lock()
+					a.lastLogPhase = wrdPhase
+					switch wrdPhase {
+					case 0:
+						a.addLogEntry(fmt.Sprintf(">> WRITE(%d)", wrdTarget))
+					case 1:
+						a.addLogEntry(fmt.Sprintf("   HOLD @ %d", level+1))
+					case 2:
+						a.addLogEntry(fmt.Sprintf("<< READ..."))
+					case 3:
+						status := "OK"
+						if wrdRead != wrdTarget {
+							status = "~"
+						}
+						a.addLogEntry(fmt.Sprintf("   Got: %d [%s]", wrdRead, status))
+					}
+					a.mu.Unlock()
+				}
+
+				switch wrdPhase {
+				case 0:
+					phaseStr = fmt.Sprintf("WRITING %d...", wrdTarget)
+				case 1:
+					phaseStr = "HOLDING..."
+				case 2:
+					phaseStr = "READING..."
+				case 3:
+					match := ""
+					if wrdRead == wrdTarget {
+						match = " OK"
+					}
+					phaseStr = fmt.Sprintf("Wrote: %d, Read: %d%s", wrdTarget, wrdRead, match)
+				}
+				a.statusLabel.SetText(fmt.Sprintf("● Write/Read Demo | %s", phaseStr))
+			default:
+				frac := a.preisach.GetSwitchedFraction() * 100
+				a.statusLabel.SetText(fmt.Sprintf("● Running | t=%.2fs | Switched: %.1f%%", a.simTime, frac))
+			}
 		}
+
+		// Update slide text based on current waveform
+		a.slideText.SetText(a.getSlideText())
+
+		// Update log text
+		a.mu.RLock()
+		logText := a.getLogText()
+		a.mu.RUnlock()
+		a.logText.SetText(logText)
 
 		// Update plot
 		a.plot.SetData(eHist, pHist, eField, pol)
@@ -627,59 +980,90 @@ func (r *peplotRenderer) Refresh() {
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
-	// Margins
-	margin := float32(40)
-	plotW := size.Width - 2*margin
-	plotH := size.Height - 2*margin
+	// Margins - larger to accommodate axis labels
+	marginLeft := float32(50)
+	marginRight := float32(20)
+	marginTop := float32(25)
+	marginBottom := float32(35)
+	plotW := size.Width - marginLeft - marginRight
+	plotH := size.Height - marginTop - marginBottom
 
-	// Grid lines
-	for i := 0; i <= 10; i++ {
-		t := float32(i) / 10.0
+	// Grid lines (5 divisions each direction from center)
+	numDivisions := 4 // divisions on each side of center
+	for i := -numDivisions; i <= numDivisions; i++ {
+		t := float32(i) / float32(numDivisions)
 
 		// Vertical grid line
-		x := margin + t*plotW
+		x := marginLeft + plotW/2 + t*plotW/2
 		vLine := canvas.NewLine(colorGrid)
-		vLine.Position1 = fyne.NewPos(x, margin)
-		vLine.Position2 = fyne.NewPos(x, margin+plotH)
-		vLine.StrokeWidth = 1
+		vLine.Position1 = fyne.NewPos(x, marginTop)
+		vLine.Position2 = fyne.NewPos(x, marginTop+plotH)
+		if i == 0 {
+			vLine.StrokeWidth = 2
+			vLine.StrokeColor = colorAxis
+		} else {
+			vLine.StrokeWidth = 1
+		}
 		r.objects = append(r.objects, vLine)
 
 		// Horizontal grid line
-		y := margin + t*plotH
+		y := marginTop + plotH/2 - t*plotH/2
 		hLine := canvas.NewLine(colorGrid)
-		hLine.Position1 = fyne.NewPos(margin, y)
-		hLine.Position2 = fyne.NewPos(margin+plotW, y)
-		hLine.StrokeWidth = 1
+		hLine.Position1 = fyne.NewPos(marginLeft, y)
+		hLine.Position2 = fyne.NewPos(marginLeft+plotW, y)
+		if i == 0 {
+			hLine.StrokeWidth = 2
+			hLine.StrokeColor = colorAxis
+		} else {
+			hLine.StrokeWidth = 1
+		}
 		r.objects = append(r.objects, hLine)
+
+		// X-axis tick labels (E-field in MV/cm)
+		if i != 0 {
+			eVal := float64(t) * r.plot.eMax / 1e8 // Convert to MV/cm
+			eTickLabel := canvas.NewText(fmt.Sprintf("%.1f", eVal), color.RGBA{180, 180, 180, 255})
+			eTickLabel.TextSize = 10
+			eTickLabel.Move(fyne.NewPos(x-12, marginTop+plotH+3))
+			r.objects = append(r.objects, eTickLabel)
+		}
+
+		// Y-axis tick labels (P in µC/cm²)
+		if i != 0 {
+			pVal := float64(t) * r.plot.pMax * 100 // Convert to µC/cm²
+			pTickLabel := canvas.NewText(fmt.Sprintf("%.0f", pVal), color.RGBA{180, 180, 180, 255})
+			pTickLabel.TextSize = 10
+			pTickLabel.Move(fyne.NewPos(marginLeft-28, y-6))
+			r.objects = append(r.objects, pTickLabel)
+		}
 	}
 
-	// Axes
-	centerX := margin + plotW/2
-	centerY := margin + plotH/2
+	// Center coordinates
+	centerX := marginLeft + plotW/2
+	centerY := marginTop + plotH/2
 
-	xAxis := canvas.NewLine(colorAxis)
-	xAxis.Position1 = fyne.NewPos(margin, centerY)
-	xAxis.Position2 = fyne.NewPos(margin+plotW, centerY)
-	xAxis.StrokeWidth = 2
-	r.objects = append(r.objects, xAxis)
+	// Zero labels
+	zeroLabelX := canvas.NewText("0", color.RGBA{180, 180, 180, 255})
+	zeroLabelX.TextSize = 10
+	zeroLabelX.Move(fyne.NewPos(centerX-4, marginTop+plotH+3))
+	r.objects = append(r.objects, zeroLabelX)
 
-	yAxis := canvas.NewLine(colorAxis)
-	yAxis.Position1 = fyne.NewPos(centerX, margin)
-	yAxis.Position2 = fyne.NewPos(centerX, margin+plotH)
-	yAxis.StrokeWidth = 2
-	r.objects = append(r.objects, yAxis)
+	zeroLabelY := canvas.NewText("0", color.RGBA{180, 180, 180, 255})
+	zeroLabelY.TextSize = 10
+	zeroLabelY.Move(fyne.NewPos(marginLeft-15, centerY-6))
+	r.objects = append(r.objects, zeroLabelY)
 
-	// Axis labels
+	// Axis title labels
 	eLabel := canvas.NewText("E (MV/cm)", color.RGBA{200, 200, 200, 255})
-	eLabel.TextSize = 14
+	eLabel.TextSize = 12
 	eLabel.TextStyle = fyne.TextStyle{Bold: true}
-	eLabel.Move(fyne.NewPos(margin+plotW-70, centerY+8))
+	eLabel.Move(fyne.NewPos(marginLeft+plotW-65, centerY-18))
 	r.objects = append(r.objects, eLabel)
 
 	pLabelText := canvas.NewText("P (µC/cm²)", color.RGBA{200, 200, 200, 255})
-	pLabelText.TextSize = 14
+	pLabelText.TextSize = 12
 	pLabelText.TextStyle = fyne.TextStyle{Bold: true}
-	pLabelText.Move(fyne.NewPos(centerX+8, margin-5))
+	pLabelText.Move(fyne.NewPos(centerX+8, marginTop-2))
 	r.objects = append(r.objects, pLabelText)
 
 	// Ec markers (vertical dashed lines at ±Ec)
@@ -690,24 +1074,24 @@ func (r *peplotRenderer) Refresh() {
 
 	// +Ec marker
 	ecPosLine := canvas.NewLine(color.RGBA{255, 150, 0, 180})
-	ecPosLine.Position1 = fyne.NewPos(ecPosX, margin)
-	ecPosLine.Position2 = fyne.NewPos(ecPosX, margin+plotH)
+	ecPosLine.Position1 = fyne.NewPos(ecPosX, marginTop)
+	ecPosLine.Position2 = fyne.NewPos(ecPosX, marginTop+plotH)
 	ecPosLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecPosLine)
 	ecPosLabel := canvas.NewText("+Ec", color.RGBA{255, 150, 0, 255})
-	ecPosLabel.TextSize = 11
-	ecPosLabel.Move(fyne.NewPos(ecPosX-12, margin+plotH+2))
+	ecPosLabel.TextSize = 10
+	ecPosLabel.Move(fyne.NewPos(ecPosX-10, marginTop+plotH+18))
 	r.objects = append(r.objects, ecPosLabel)
 
 	// -Ec marker
 	ecNegLine := canvas.NewLine(color.RGBA{255, 150, 0, 180})
-	ecNegLine.Position1 = fyne.NewPos(ecNegX, margin)
-	ecNegLine.Position2 = fyne.NewPos(ecNegX, margin+plotH)
+	ecNegLine.Position1 = fyne.NewPos(ecNegX, marginTop)
+	ecNegLine.Position2 = fyne.NewPos(ecNegX, marginTop+plotH)
 	ecNegLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecNegLine)
 	ecNegLabel := canvas.NewText("-Ec", color.RGBA{255, 150, 0, 255})
-	ecNegLabel.TextSize = 11
-	ecNegLabel.Move(fyne.NewPos(ecNegX-10, margin+plotH+2))
+	ecNegLabel.TextSize = 10
+	ecNegLabel.Move(fyne.NewPos(ecNegX-10, marginTop+plotH+18))
 	r.objects = append(r.objects, ecNegLabel)
 
 	// Pr markers (horizontal dashed lines at ±Pr)
@@ -718,33 +1102,33 @@ func (r *peplotRenderer) Refresh() {
 
 	// +Pr marker
 	prPosLine := canvas.NewLine(color.RGBA{0, 200, 150, 180})
-	prPosLine.Position1 = fyne.NewPos(margin, prPosY)
-	prPosLine.Position2 = fyne.NewPos(margin+plotW, prPosY)
+	prPosLine.Position1 = fyne.NewPos(marginLeft, prPosY)
+	prPosLine.Position2 = fyne.NewPos(marginLeft+plotW, prPosY)
 	prPosLine.StrokeWidth = 2
 	r.objects = append(r.objects, prPosLine)
 	prPosLabel := canvas.NewText("+Pr", color.RGBA{0, 200, 150, 255})
-	prPosLabel.TextSize = 11
-	prPosLabel.Move(fyne.NewPos(margin-25, prPosY-6))
+	prPosLabel.TextSize = 10
+	prPosLabel.Move(fyne.NewPos(marginLeft-35, prPosY-6))
 	r.objects = append(r.objects, prPosLabel)
 
 	// -Pr marker
 	prNegLine := canvas.NewLine(color.RGBA{0, 200, 150, 180})
-	prNegLine.Position1 = fyne.NewPos(margin, prNegY)
-	prNegLine.Position2 = fyne.NewPos(margin+plotW, prNegY)
+	prNegLine.Position1 = fyne.NewPos(marginLeft, prNegY)
+	prNegLine.Position2 = fyne.NewPos(marginLeft+plotW, prNegY)
 	prNegLine.StrokeWidth = 2
 	r.objects = append(r.objects, prNegLine)
 	prNegLabel := canvas.NewText("-Pr", color.RGBA{0, 200, 150, 255})
-	prNegLabel.TextSize = 11
-	prNegLabel.Move(fyne.NewPos(margin-22, prNegY-6))
+	prNegLabel.TextSize = 10
+	prNegLabel.Move(fyne.NewPos(marginLeft-32, prNegY-6))
 	r.objects = append(r.objects, prNegLabel)
 
 	// Plot the hysteresis data
 	if len(r.plot.eData) > 1 {
 		for i := 1; i < len(r.plot.eData); i++ {
 			// Map data to screen coordinates
-			x1 := margin + plotW/2 + float32(r.plot.eData[i-1]/r.plot.eMax)*plotW/2
+			x1 := marginLeft + plotW/2 + float32(r.plot.eData[i-1]/r.plot.eMax)*plotW/2
 			y1 := centerY - float32(r.plot.pData[i-1]/r.plot.pMax)*plotH/2
-			x2 := margin + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
+			x2 := marginLeft + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
 			y2 := centerY - float32(r.plot.pData[i]/r.plot.pMax)*plotH/2
 
 			// Color based on age (fade effect)
@@ -767,7 +1151,7 @@ func (r *peplotRenderer) Refresh() {
 	}
 
 	// Current position marker
-	markerX := margin + plotW/2 + float32(r.plot.currentE/r.plot.eMax)*plotW/2
+	markerX := marginLeft + plotW/2 + float32(r.plot.currentE/r.plot.eMax)*plotW/2
 	markerY := centerY - float32(r.plot.currentP/r.plot.pMax)*plotH/2
 
 	marker := canvas.NewCircle(colorWarning)
@@ -1105,4 +1489,30 @@ func (t *ironLatticeTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 
 func (t *ironLatticeTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
+}
+
+// ============================================================
+// Fixed Width Layout
+// ============================================================
+
+// fixedWidthLayout is a custom layout that enforces a fixed width
+type fixedWidthLayout struct {
+	width float32
+}
+
+func (l *fixedWidthLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	minH := float32(0)
+	for _, o := range objects {
+		if o.Visible() {
+			minH = fyne.Max(minH, o.MinSize().Height)
+		}
+	}
+	return fyne.NewSize(l.width, minH)
+}
+
+func (l *fixedWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Resize(fyne.NewSize(l.width, size.Height))
+		o.Move(fyne.NewPos(0, 0))
+	}
 }
