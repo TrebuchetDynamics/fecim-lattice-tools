@@ -53,9 +53,9 @@ Think of IronLattice memory like carving into clay:
 
 ---
 
-## The "Stubborn Magnet" Inside
+## The "Stubborn Magnets" Inside
 
-Inside the memory, there are tiny particles that act like **stubborn magnets**:
+Inside the memory, there are **millions of tiny switches** that act like stubborn magnets — each one slightly different!
 
 ```
     Before you push:        After you push:
@@ -74,13 +74,18 @@ Inside the memory, there are tiny particles that act like **stubborn magnets**:
     (and I'll STAY this way until you push me again!)
 ```
 
-These tiny magnets are called **electric dipoles**. When you push them (with voltage), they flip. And they **stay flipped** even after you stop pushing!
+These tiny switches are called **hysterons** (from the Greek word for "lag behind"). Each one:
+- Flips UP at one voltage (say, +1.2V)
+- Flips DOWN at a DIFFERENT voltage (say, -0.8V)
+- **Stays put** in between!
+
+**The key:** Each hysteron has slightly different flip voltages. When you add up millions of them, you get the smooth loop shape!
 
 ---
 
 ## Why Does It Make That Loop Shape?
 
-When you slowly push and pull on these stubborn magnets, something interesting happens:
+When you slowly push and pull on these stubborn switches, something interesting happens:
 
 ```
                     PUSH HARD →
@@ -103,17 +108,28 @@ When you slowly push and pull on these stubborn magnets, something interesting h
                     ← PULL HARD
 ```
 
-**The loop happens because:**
-1. Push a little → magnets start to flip
-2. Push harder → more magnets flip
-3. Push really hard → ALL magnets flipped!
-4. Stop pushing → magnets STAY where they are (memory!)
-5. Pull back → magnets start flipping the other way
-6. Keep pulling → more flip
+**The loop EMERGES because each hysteron flips at different voltages:**
+1. Push a little → the "easy" hysterons start to flip (low threshold)
+2. Push harder → more hysterons flip (medium threshold)
+3. Push really hard → even the "stubborn" ones flip (high threshold)
+4. Stop pushing → all hysterons STAY where they are (memory!)
+5. Pull back → they DON'T flip immediately (different threshold going down!)
+6. Keep pulling → now they start flipping the other way
 7. Pull really hard → ALL flipped the other way
 8. Stop → they stay again!
 
-**The key insight:** The path going UP is different from the path going DOWN. This is called **hysteresis** (history matters!).
+**The key insight:** Each hysteron has a GAP between its "flip up" and "flip down" voltage. This gap creates hysteresis!
+
+```
+One hysteron example:
+         Flip UP at +1.2V
+              │
+    ──────────┼──────────────  E
+              │         │
+              │    Flip DOWN at -0.8V
+              │         │
+    [───GAP───]  ← In this gap, it REMEMBERS its state!
+```
 
 ---
 
@@ -218,3 +234,18 @@ cd demo1-hysteresis
 ## One Sentence Summary
 
 > **Demo 1 shows how a special crystal can remember 30 different states without power, like a magic dimmer switch that never forgets where you left it.**
+
+---
+
+## Technical Note: What's Actually Running
+
+For the curious, here's what the demo actually computes:
+
+| What you see | What's really happening |
+|--------------|------------------------|
+| The loop shape | ~450 hysterons, each with different thresholds, summed together |
+| The smooth curve | Hysterons distributed as a 2D Gaussian around ±Ec |
+| The 30 levels | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
+| Memory effect | Each hysteron stays put between its thresholds |
+
+The physics is real — the loop is **emergent**, not drawn!

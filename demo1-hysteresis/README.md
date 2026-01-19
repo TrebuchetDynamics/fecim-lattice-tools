@@ -41,10 +41,14 @@ demo1-hysteresis/
 
 ## Physics Model
 
-Uses the **Preisach hysteresis model** with:
-- Hyperbolic tangent switching function
-- Minor loop support via turning point history
-- HZO material parameters (Ps=25μC/cm², Ec=1.0MV/cm)
+Uses the **Mayergoyz Preisach hysteresis model** with:
+- Bistable hysterons distributed on the Preisach (α, β) plane
+- Gaussian distribution centered at ±Ec with 20% spread
+- Hysteresis emergent from hysteron memory (state persists between thresholds)
+- 30 discrete levels via linear P discretization: `Level = round((P/Ps + 1) × 14.5)`
+- HZO material parameters (Ps=30μC/cm², Ec=1.0MV/cm)
+
+**Note:** Switching time τ is defined but not used in real-time visualization (quasistatic approximation — valid at low frequencies).
 
 ## Visualization
 

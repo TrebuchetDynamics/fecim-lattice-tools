@@ -308,3 +308,150 @@ With this understanding, Demo 1 shows:
 2. **The 30 States** - See which analog level you're at based on P value
 3. **Minor Loops** - Reverse direction partway and see the inner loops form
 4. **Material Comparison** - Different Ec, Ps values → different loop shapes
+
+---
+
+## Part 7: How Demo 1 Actually Implements the Physics
+
+This section documents exactly what the code does — verified by source analysis.
+
+### Core Model: Mayergoyz Preisach
+
+The demo uses the **classical Preisach model** (not tanh approximation). The implementation is in `pkg/ferroelectric/preisach_advanced.go`.
+
+**Key insight:** The macroscopic P-E loop EMERGES from many microscopic hysterons, each with its own switching thresholds.
+
+### Hysteron Definition
+
+```go
+type Hysteron struct {
+    Alpha float64 // Field where hysteron switches UP (+1)
+    Beta  float64 // Field where hysteron switches DOWN (-1)
+    State int     // Current state: +1 or -1 (persists between thresholds)
+}
+```
+
+### How P is Calculated from E
+
+The core physics happens in `Update()` (lines 166-192):
+
+```go
+func (m *MayergoyzPreisach) Update(E float64) float64 {
+    // Step 1: Update each hysteron's state
+    for i := range m.hysterons {
+        if E >= m.hysterons[i].Alpha {
+            m.hysterons[i].State = +1  // Switch UP
+        } else if E <= m.hysterons[i].Beta {
+            m.hysterons[i].State = -1  // Switch DOWN
+        }
+        // Between Beta and Alpha: state UNCHANGED (memory effect!)
+    }
+
+    // Step 2: Sum contributions: P = Σ μ(αᵢ, βᵢ) × γᵢ
+    m.polarization = 0
+    for i, h := range m.hysterons {
+        m.polarization += m.distribution[i][0] * float64(h.State)
+    }
+
+    return m.polarization
+}
+```
+
+### Where Hysteresis Comes From
+
+**The hysteresis is EMERGENT, not forced.** Here's why:
+
+1. Each hysteron has Alpha > Beta (e.g., α = +1.1 Ec, β = -0.9 Ec)
+2. When E increases past Alpha → hysteron switches to +1
+3. When E decreases past Beta → hysteron switches to -1
+4. **Between Beta and Alpha: the state PERSISTS** — this is the memory
+
+```
+For one hysteron with α = 1.2, β = -1.0:
+
+          E increasing →
+State: -1 ─────────────┬───────── +1
+                       │α=1.2
+                       │
+          ← E decreasing
+State: +1 ─────────────────────┬─ -1
+                              │β=-1.0
+
+The gap between α and β is where hysteresis lives!
+```
+
+### Hysteron Distribution (Why the Loop is Square-ish)
+
+Hysterons are distributed on the Preisach plane with a 2D Gaussian:
+
+```go
+AlphaMean:   material.Ec,        // Centers positive thresholds at +Ec
+BetaMean:    -material.Ec,       // Centers negative thresholds at -Ec
+AlphaSigma:  material.Ec * 0.2,  // 20% spread
+BetaSigma:   material.Ec * 0.2,  // 20% spread
+```
+
+**Narrow σ (20%) = sharp switching = square loop.**
+A wider σ would give a more slanted/soft loop.
+
+### How 30 Levels Are Discretized
+
+The continuous polarization P is mapped to discrete levels in the GUI loop (`gui.go:416`):
+
+```go
+a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * 29))
+```
+
+Where `normalizedP = P / Ps` ranges from -1 to +1.
+
+| Normalized P | Level |
+|--------------|-------|
+| -1.0 (−Ps)   | 0     |
+| 0.0          | 15    |
+| +1.0 (+Ps)   | 29    |
+
+**Formula:** `Level = round((P/Ps + 1) × 14.5)` = 0 to 29
+
+### Does τ (Switching Time) Affect the Visualization?
+
+**No — the real-time loop uses instantaneous switching.**
+
+The simulation runs at 60 FPS (`dt ≈ 16ms`) and calls:
+```go
+a.polarization = a.preisach.Update(a.electricField)
+```
+
+This `Update()` switches hysterons instantaneously when E crosses their thresholds.
+
+The τ = 10 ns switching time IS defined in the material and there IS a `SimulateDomainSwitching()` function using KAI (Kolmogorov-Avrami-Ishibashi) dynamics:
+
+```go
+// KAI model: progress = 1 - exp(-(t/τ)^n)
+// n = 2.0 (Avrami exponent for 2D domain growth)
+```
+
+But this function is **not called** during the interactive visualization loop. This is physically reasonable: at 1 Hz cycling, τ = 10 ns is negligible (the system is always in equilibrium).
+
+### Temperature Dependence
+
+The coercive field scales with temperature:
+
+```go
+Ec(T) = Ec₀ × (1 - T/Tc)^0.5
+```
+
+Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material loses ferroelectricity (Ec → 0).
+
+---
+
+## Summary: What's Real vs. Simplified
+
+| Aspect | Implementation | Status |
+|--------|---------------|--------|
+| P from E | Preisach model (hysteron sum) | ✅ Physics-accurate |
+| Hysteresis | Emergent from hysteron memory | ✅ Physics-accurate |
+| Loop shape | From Gaussian distribution (σ=20%) | ✅ Emergent, not forced |
+| 30 levels | Linear discretization of P | ✅ Simple & correct |
+| Minor loops | Implicit via hysteron states | ✅ Works correctly |
+| τ switching | Defined but not used in viz | ⚠️ Quasistatic approx |
+| Temperature | Ec(T) scaling implemented | ✅ Physics-accurate |

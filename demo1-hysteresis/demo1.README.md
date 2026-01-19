@@ -101,14 +101,34 @@ GPU-accelerated visualization (advanced):
 The demo implements the **Mayergoyz Preisach model** following classical hysteresis theory:
 
 ```
-P(E) = ∫∫ μ(α, β) γ_αβ dα dβ
+P(E) = ∫∫ μ(α, β) γ_αβ dα dβ  →  Discretized: P = Σ μᵢ × γᵢ
 ```
 
 Where:
-- `μ(α, β)` — Preisach distribution function (Gaussian)
+- `μ(α, β)` — Preisach distribution function (2D Gaussian centered at ±Ec)
 - `γ_αβ` — Hysteron state (+1 or -1)
-- `α` — Up-switching field
-- `β` — Down-switching field
+- `α` — Up-switching threshold (hysteron switches to +1 when E ≥ α)
+- `β` — Down-switching threshold (hysteron switches to -1 when E ≤ β)
+
+### How Hysteresis Emerges (Verified in Code)
+
+Each hysteron is a bistable switch:
+```go
+if E >= Alpha { State = +1 }      // Switch UP
+else if E <= Beta { State = -1 }  // Switch DOWN
+// Between Beta and Alpha: State UNCHANGED (memory effect!)
+```
+
+**The loop is EMERGENT**, not drawn. The gap between α and β creates hysteresis.
+
+### 30-Level Discretization (Verified in Code)
+
+Continuous polarization mapped to discrete levels:
+```go
+discreteLevel = round((P/Ps + 1) / 2 * 29)  // 0 to 29
+```
+
+Linear spacing in polarization, not voltage thresholds.
 
 ### Key Parameters (HZO Materials)
 
@@ -117,8 +137,10 @@ Where:
 | Pr (µC/cm²) | 25 | 45 | 30 |
 | Ps (µC/cm²) | 30 | 50 | 35 |
 | Ec (MV/cm) | 1.2 | 0.8 | 1.0 |
-| τ (ns) | 1.0 | 0.5 | 1.0 |
+| τ (ns) | 1.0 | 0.5 | 10* |
 | Endurance | 10¹⁰ | 10¹² | 10¹¹ |
+
+*τ is defined but NOT used in real-time visualization (quasistatic approximation).
 
 ### Temperature Dependence
 
@@ -128,6 +150,18 @@ Ec(T) = Ec₀ × (1 - T/Tc)^0.5
 ```
 
 Where Tc ≈ 723K (450°C) for HZO.
+
+### What's Simulated vs. Displayed
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Preisach hysterons | ✅ Active | ~450 hysterons on 30×30 grid |
+| Gaussian μ(α,β) | ✅ Active | σ = 20% of Ec |
+| Hysteresis loop | ✅ Emergent | Not forced/drawn |
+| 30 discrete levels | ✅ Active | Linear in P |
+| τ switching dynamics | ⚠️ Defined | Not used in real-time loop |
+| KAI domain growth | ⚠️ Defined | Available via `SimulateDomainSwitching()` |
+| Fatigue/wake-up | ✅ Active | Very low rate (1e-10) |
 
 ---
 
