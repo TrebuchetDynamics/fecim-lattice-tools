@@ -22,8 +22,8 @@ type ModelMetadata struct {
 	Custom      map[string]string `json:"custom,omitempty"`
 }
 
-// LayerWeights stores weights for a single layer.
-type LayerWeights struct {
+// SerializedLayer stores weights for a single layer in model serialization.
+type SerializedLayer struct {
 	Name     string        `json:"name"`
 	Type     string        `json:"type"` // "linear", "conv2d", "attention", etc.
 	Shape    []int         `json:"shape"`
@@ -34,8 +34,8 @@ type LayerWeights struct {
 
 // Model represents a complete neural network model for serialization.
 type Model struct {
-	Metadata ModelMetadata  `json:"metadata"`
-	Layers   []LayerWeights `json:"layers"`
+	Metadata ModelMetadata    `json:"metadata"`
+	Layers   []SerializedLayer `json:"layers"`
 }
 
 // NewModel creates a new model for serialization.
@@ -47,7 +47,7 @@ func NewModel(name, architecture string) *Model {
 			Architecture: architecture,
 			Custom:       make(map[string]string),
 		},
-		Layers: make([]LayerWeights, 0),
+		Layers: make([]SerializedLayer, 0),
 	}
 }
 
@@ -69,7 +69,7 @@ func (m *Model) AddLayer(name, layerType string, weights [][]float64, biases []f
 	m.Metadata.TotalParams += params
 	m.Metadata.NumLayers++
 
-	m.Layers = append(m.Layers, LayerWeights{
+	m.Layers = append(m.Layers, SerializedLayer{
 		Name:    name,
 		Type:    layerType,
 		Shape:   shape,
@@ -92,8 +92,8 @@ func (m *Model) SaveJSON(path string) error {
 	return encoder.Encode(m)
 }
 
-// LoadJSON loads model from JSON file.
-func LoadJSON(path string) (*Model, error) {
+// LoadModelJSON loads model from JSON file.
+func LoadModelJSON(path string) (*Model, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
@@ -149,7 +149,7 @@ func (m *Model) SaveBinary(path string) error {
 
 	// Write each layer
 	for _, layer := range m.Layers {
-		if err := writeLayerBinary(gzWriter, &layer); err != nil {
+		if err := writeSerializedLayerBinary(gzWriter, &layer); err != nil {
 			return fmt.Errorf("failed to write layer %s: %w", layer.Name, err)
 		}
 	}
@@ -157,7 +157,7 @@ func (m *Model) SaveBinary(path string) error {
 	return nil
 }
 
-func writeLayerBinary(w io.Writer, layer *LayerWeights) error {
+func writeSerializedLayerBinary(w io.Writer, layer *SerializedLayer) error {
 	// Write layer name
 	nameBytes := []byte(layer.Name)
 	if err := binary.Write(w, binary.LittleEndian, uint32(len(nameBytes))); err != nil {
@@ -219,8 +219,8 @@ func writeLayerBinary(w io.Writer, layer *LayerWeights) error {
 	return nil
 }
 
-// LoadBinary loads model from binary format.
-func LoadBinary(path string) (*Model, error) {
+// LoadModelBinary loads model from binary format.
+func LoadModelBinary(path string) (*Model, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
@@ -273,9 +273,9 @@ func LoadBinary(path string) (*Model, error) {
 	}
 
 	// Read each layer
-	model.Layers = make([]LayerWeights, numLayers)
+	model.Layers = make([]SerializedLayer, numLayers)
 	for i := uint32(0); i < numLayers; i++ {
-		layer, err := readLayerBinary(gzReader)
+		layer, err := readSerializedLayerBinary(gzReader)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read layer %d: %w", i, err)
 		}
@@ -285,8 +285,8 @@ func LoadBinary(path string) (*Model, error) {
 	return model, nil
 }
 
-func readLayerBinary(r io.Reader) (*LayerWeights, error) {
-	layer := &LayerWeights{
+func readSerializedLayerBinary(r io.Reader) (*SerializedLayer, error) {
+	layer := &SerializedLayer{
 		Extra: make(map[string]interface{}),
 	}
 
@@ -452,8 +452,8 @@ func QuantizeModel(model *Model, bits int) *QuantizedModel {
 }
 
 // DequantizeLayer converts quantized layer back to float64.
-func (qw *QuantizedLayerWeights) Dequantize() LayerWeights {
-	layer := LayerWeights{
+func (qw *QuantizedLayerWeights) Dequantize() SerializedLayer {
+	layer := SerializedLayer{
 		Name:    qw.Name,
 		Type:    qw.Type,
 		Shape:   qw.Shape,
@@ -486,7 +486,7 @@ type CrossbarMapping struct {
 }
 
 // GenerateCrossbarMapping creates mapping for deploying weights to crossbar tiles.
-func GenerateCrossbarMapping(layer *LayerWeights, tileRows, tileCols int) *CrossbarMapping {
+func GenerateCrossbarMapping(layer *SerializedLayer, tileRows, tileCols int) *CrossbarMapping {
 	mapping := &CrossbarMapping{
 		LayerName: layer.Name,
 		TileSize:  [2]int{tileRows, tileCols},
