@@ -395,6 +395,78 @@ func softmax(x []float64) []float64 {
 	return result
 }
 
+// GetHiddenActivations returns the hidden layer activations for an input.
+func (n *MNISTNetwork) GetHiddenActivations(input []float64) []float64 {
+	return n.forwardHidden(input)
+}
+
+// GetLayerActivations returns activations from all layers for visualization.
+func (n *MNISTNetwork) GetLayerActivations(input []float64) ([]float64, []float64, []float64) {
+	hidden := n.forwardHidden(input)
+	output := n.forwardOutput(hidden)
+	probs := softmax(output)
+	return input, hidden, probs
+}
+
+// ComputeConfusionMatrix computes a confusion matrix for the given dataset.
+func (n *MNISTNetwork) ComputeConfusionMatrix(images [][]float64, labels []int) [][]int {
+	matrix := make([][]int, 10)
+	for i := range matrix {
+		matrix[i] = make([]int, 10)
+	}
+
+	for i, img := range images {
+		pred, _ := n.Predict(img)
+		actual := labels[i]
+		if actual >= 0 && actual < 10 && pred >= 0 && pred < 10 {
+			matrix[actual][pred]++
+		}
+	}
+
+	return matrix
+}
+
+// GetPerClassMetrics returns precision, recall, F1 for each class.
+func (n *MNISTNetwork) GetPerClassMetrics(confMatrix [][]int) ([]float64, []float64, []float64) {
+	precision := make([]float64, 10)
+	recall := make([]float64, 10)
+	f1 := make([]float64, 10)
+
+	for i := 0; i < 10; i++ {
+		// True positives
+		tp := float64(confMatrix[i][i])
+
+		// False positives (predicted as i but was something else)
+		var fp float64
+		for j := 0; j < 10; j++ {
+			if j != i {
+				fp += float64(confMatrix[j][i])
+			}
+		}
+
+		// False negatives (was i but predicted as something else)
+		var fn float64
+		for j := 0; j < 10; j++ {
+			if j != i {
+				fn += float64(confMatrix[i][j])
+			}
+		}
+
+		// Calculate metrics
+		if tp+fp > 0 {
+			precision[i] = tp / (tp + fp)
+		}
+		if tp+fn > 0 {
+			recall[i] = tp / (tp + fn)
+		}
+		if precision[i]+recall[i] > 0 {
+			f1[i] = 2 * precision[i] * recall[i] / (precision[i] + recall[i])
+		}
+	}
+
+	return precision, recall, f1
+}
+
 // QuantizeWeightsTo30Levels requantizes all weights to exactly 30 levels.
 // Note: ProgramWeight now automatically quantizes, so this is mainly for explicit re-quantization.
 func (n *MNISTNetwork) QuantizeWeightsTo30Levels() {

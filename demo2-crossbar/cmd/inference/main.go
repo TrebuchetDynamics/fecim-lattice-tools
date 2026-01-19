@@ -26,6 +26,9 @@ func main() {
 	benchmark := flag.Bool("benchmark", false, "Run inference benchmark")
 	showArray := flag.Bool("show-array", false, "Show crossbar array state")
 	showMVM := flag.Bool("show-mvm", false, "Show MVM operation")
+	showIRDrop := flag.Bool("show-irdrop", false, "Show IR drop analysis")
+	showSneak := flag.Bool("show-sneak", false, "Show sneak path analysis")
+	showNonidealities := flag.Bool("show-nonidealities", false, "Show all non-ideality effects")
 	flag.Parse()
 
 	fmt.Println("============================================")
@@ -83,6 +86,76 @@ func main() {
 
 		vis.ShowCrossbarState()
 		vis.ShowMVMOperation(input, output)
+		return
+	}
+
+	// Show IR drop analysis
+	if *showIRDrop || *showNonidealities {
+		programRandomWeights(array)
+
+		// Create input vector
+		input := make([]float64, *arraySize)
+		for i := range input {
+			input[i] = rand.Float64()
+		}
+
+		// Analyze IR drop
+		wireParams := crossbar.DefaultWireParams()
+		irAnalysis := array.AnalyzeIRDrop(input, wireParams)
+
+		vis.ShowCrossbarState()
+		vis.ShowIRDropAnalysis(irAnalysis)
+
+		if !*showNonidealities {
+			return
+		}
+	}
+
+	// Show sneak path analysis
+	if *showSneak || *showNonidealities {
+		programRandomWeights(array)
+
+		// Select a cell in the middle for analysis
+		selectedRow := *arraySize / 2
+		selectedCol := *arraySize / 2
+
+		// Analyze sneak paths
+		sneakAnalysis := array.AnalyzeSneakPaths(selectedRow, selectedCol)
+
+		if !*showIRDrop && !*showNonidealities {
+			vis.ShowCrossbarState()
+		}
+		vis.ShowSneakPathAnalysis(sneakAnalysis, selectedRow, selectedCol)
+
+		if !*showNonidealities {
+			return
+		}
+	}
+
+	// Show complete non-idealities comparison
+	if *showNonidealities {
+		fmt.Println("\n=== MVM Comparison: Ideal vs With Non-Idealities ===")
+
+		// Create input
+		input := make([]float64, *arraySize)
+		for i := range input {
+			input[i] = rand.Float64()
+		}
+
+		// Ideal MVM
+		idealOutput, err := array.MVM(input)
+		if err != nil {
+			log.Fatalf("MVM failed: %v", err)
+		}
+
+		// MVM with IR drop
+		wireParams := crossbar.DefaultWireParams()
+		actualOutput, irAnalysis, err := array.MVMWithIRDrop(input, wireParams)
+		if err != nil {
+			log.Fatalf("MVM with IR drop failed: %v", err)
+		}
+
+		vis.ShowMVMWithNonidealities(input, idealOutput, actualOutput, irAnalysis)
 		return
 	}
 

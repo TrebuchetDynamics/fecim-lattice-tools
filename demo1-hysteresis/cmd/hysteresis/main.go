@@ -56,8 +56,8 @@ func main() {
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 	fmt.Println("\nMaterial Parameters:")
-	fmt.Printf("  Remanent Polarization (Pr): %.1f μC/cm²\n", m.Pr*1e4)
-	fmt.Printf("  Saturation Polarization (Ps): %.1f μC/cm²\n", m.Ps*1e4)
+	fmt.Printf("  Remanent Polarization (Pr): %.1f μC/cm²\n", m.Pr*100)
+	fmt.Printf("  Saturation Polarization (Ps): %.1f μC/cm²\n", m.Ps*100)
 	fmt.Printf("  Coercive Field (Ec): %.2f MV/cm\n", m.Ec/1e8)
 	fmt.Printf("  Coercive Voltage (Vc): %.2f V\n", m.CoerciveVoltage())
 	fmt.Printf("  Film Thickness: %.0f nm\n", m.Thickness*1e9)
@@ -66,33 +66,58 @@ func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 }
 
 func runHeadless(engine *simulation.Engine) {
-	fmt.Println("Running headless simulation...")
+	fmt.Println("Running enhanced terminal visualization...")
 	fmt.Println()
 
-	// Generate hysteresis loop data
-	E, P := engine.GetHysteresisData()
+	// Get material
+	material := ferroelectric.DefaultHZO()
 
-	fmt.Println("Hysteresis Loop Data (E, P):")
-	fmt.Println("-----------------------------")
+	// Create advanced Preisach model
+	model := ferroelectric.NewMayergoyzPreisach(material, 40)
 
-	// Print a subset of points
-	step := len(E) / 20
-	for i := 0; i < len(E); i += step {
-		fmt.Printf("  E: %+8.2e V/m, P: %+8.4f (normalized)\n", E[i], P[i])
-	}
+	// Create renderer
+	renderer := ferroelectric.NewPERenderer()
 
+	// Generate and render P-E loop
+	Emax := material.Ec * 2
+	E, P := model.GetHysteresisLoop(Emax, 100)
+	fmt.Println(renderer.RenderPELoop(E, P, material))
+
+	// Render domain states
+	alphas, betas, states := model.GetPreisachPlane()
+	fmt.Println(renderer.RenderDomainStates(alphas, betas, states))
+
+	// Render discrete states
+	discreteStates := model.DiscreteStates(30)
+	fmt.Println(renderer.RenderDiscreteStates(discreteStates))
+
+	// Render switching dynamics
+	times, pols, switched := model.SimulateDomainSwitching(Emax, 10*material.Tau, 50)
+	fmt.Println(renderer.RenderSwitchingDynamics(times, pols, switched, material))
+
+	// Render temperature dependence
+	fmt.Println(renderer.RenderTemperatureDependence(material))
+
+	// Render material comparison
+	fmt.Println(renderer.RenderMaterialComparison())
+
+	// Summary
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                     SIMULATION SUMMARY")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println()
-	fmt.Println("Discrete States (30-level analog):")
-	fmt.Println("-----------------------------------")
-
-	model := ferroelectric.NewPreisachModel(ferroelectric.DefaultHZO())
-	states := model.DiscreteStates(30)
-	for i, s := range states {
-		fmt.Printf("  State %2d: P = %+.4f C/m²\n", i, s)
-	}
-
+	fmt.Printf("  Material: %s\n", material.Name)
+	fmt.Printf("  Remanent Polarization: %.1f µC/cm²\n", material.Pr*100)
+	fmt.Printf("  Coercive Field: %.2f MV/cm\n", material.Ec/1e8)
+	fmt.Printf("  Switching Time: %.2f ns\n", material.Tau*1e9)
+	fmt.Printf("  Endurance: %.0e cycles\n", material.EnduranceCycles)
+	fmt.Printf("  30 Discrete States: %.1f bits/cell\n", 4.91)
 	fmt.Println()
-	fmt.Println("Simulation complete.")
+	fmt.Println("─────────────────────────────────────────────────────────────")
+	fmt.Println("  \"It's got 30 discrete states. So it's not 0-1-0-1.\"")
+	fmt.Println("  - Dr. external research group")
+	fmt.Println("─────────────────────────────────────────────────────────────")
+	fmt.Println()
 }
 
 func runGraphical(engine *simulation.Engine) {

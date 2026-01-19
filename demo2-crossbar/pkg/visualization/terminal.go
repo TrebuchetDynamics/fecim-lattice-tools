@@ -265,3 +265,248 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// ShowIRDropAnalysis displays IR drop heatmap and statistics.
+func (v *TerminalVisualizer) ShowIRDropAnalysis(analysis *crossbar.IRDropAnalysis) {
+	fmt.Println("\n=== IR Drop Analysis ===")
+	fmt.Println("Wire resistance effects on voltage distribution")
+
+	// Get normalized IR drop map
+	irMap := analysis.GetIRDropMap()
+
+	rows := len(irMap)
+	cols := len(irMap[0])
+	maxRows := min(rows, 20)
+	maxCols := min(cols, 40)
+
+	// Header
+	fmt.Println("\nIR Drop Heatmap (darker = more drop):")
+	fmt.Print("     ")
+	for j := 0; j < maxCols; j += 2 {
+		fmt.Printf("%2d", j%100)
+	}
+	fmt.Println()
+
+	// Heatmap
+	for i := 0; i < maxRows; i++ {
+		fmt.Printf("%3d |", i)
+		for j := 0; j < maxCols; j++ {
+			char := v.irDropToChar(irMap[i][j])
+			if v.useColor {
+				color := v.irDropToColor(irMap[i][j])
+				fmt.Printf("%s%s\033[0m", color, char)
+			} else {
+				fmt.Print(char)
+			}
+		}
+		fmt.Println("|")
+	}
+
+	if rows > maxRows {
+		fmt.Printf("    ... (%d more rows)\n", rows-maxRows)
+	}
+
+	// Statistics
+	fmt.Println("\nIR Drop Statistics:")
+	fmt.Printf("  Max IR Drop:      %.2f%% (at cell [%d,%d])\n",
+		analysis.MaxIRDrop*100, analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
+	fmt.Printf("  Avg IR Drop:      %.2f%%\n", analysis.AvgIRDrop*100)
+	fmt.Printf("  Variance:         %.4f\n", analysis.IRDropVariance)
+
+	// Legend
+	fmt.Println("\n  Legend: ░ Low drop  ▒ Medium  ▓ High  █ Severe")
+
+	// Impact assessment
+	fmt.Println("\n  Impact Assessment:")
+	if analysis.MaxIRDrop < 0.05 {
+		fmt.Println("  ✓ IR drop is minimal - excellent voltage uniformity")
+	} else if analysis.MaxIRDrop < 0.10 {
+		fmt.Println("  ⚠ Moderate IR drop - may affect accuracy at edges")
+	} else {
+		fmt.Println("  ✗ Severe IR drop - consider wider metal lines")
+	}
+}
+
+// ShowSneakPathAnalysis displays sneak path current analysis.
+func (v *TerminalVisualizer) ShowSneakPathAnalysis(analysis *crossbar.SneakPathAnalysis, selectedRow, selectedCol int) {
+	fmt.Println("\n=== Sneak Path Analysis ===")
+	fmt.Printf("Selected cell: [%d, %d]\n", selectedRow, selectedCol)
+
+	// Get normalized sneak map
+	sneakMap := analysis.GetSneakMap()
+
+	rows := len(sneakMap)
+	cols := len(sneakMap[0])
+	maxRows := min(rows, 20)
+	maxCols := min(cols, 40)
+
+	// Header
+	fmt.Println("\nSneak Current Map (brighter = more sneak):")
+	fmt.Print("     ")
+	for j := 0; j < maxCols; j += 2 {
+		fmt.Printf("%2d", j%100)
+	}
+	fmt.Println()
+
+	// Heatmap
+	for i := 0; i < maxRows; i++ {
+		fmt.Printf("%3d |", i)
+		for j := 0; j < maxCols; j++ {
+			if i == selectedRow && j == selectedCol {
+				// Mark selected cell
+				if v.useColor {
+					fmt.Print("\033[92m★\033[0m")
+				} else {
+					fmt.Print("★")
+				}
+			} else {
+				char := v.sneakToChar(sneakMap[i][j])
+				if v.useColor {
+					color := v.sneakToColor(sneakMap[i][j])
+					fmt.Printf("%s%s\033[0m", color, char)
+				} else {
+					fmt.Print(char)
+				}
+			}
+		}
+		fmt.Println("|")
+	}
+
+	if rows > maxRows {
+		fmt.Printf("    ... (%d more rows)\n", rows-maxRows)
+	}
+
+	// Statistics
+	fmt.Println("\nSneak Path Statistics:")
+	fmt.Printf("  Signal Current:    %.4f (normalized)\n", analysis.TotalSignal)
+	fmt.Printf("  Total Sneak:       %.4f (normalized)\n", analysis.TotalSneak)
+	fmt.Printf("  Max Sneak/Signal:  %.2f%%\n", analysis.MaxSneakRatio*100)
+	fmt.Printf("  Avg Sneak/Signal:  %.2f%%\n", analysis.AvgSneakRatio*100)
+
+	// Signal-to-noise assessment
+	if analysis.TotalSignal > 0 {
+		snr := analysis.TotalSignal / (analysis.TotalSneak + 1e-10)
+		fmt.Printf("  Signal/Sneak:      %.1f:1\n", snr)
+	}
+
+	// Legend
+	fmt.Println("\n  Legend: · None  ░ Low  ▒ Medium  ▓ High  ★ Selected")
+
+	// Impact assessment
+	fmt.Println("\n  Impact Assessment:")
+	if analysis.MaxSneakRatio < 0.01 {
+		fmt.Println("  ✓ Sneak paths negligible - excellent isolation")
+	} else if analysis.MaxSneakRatio < 0.05 {
+		fmt.Println("  ⚠ Moderate sneak paths - consider selector devices")
+	} else {
+		fmt.Println("  ✗ Significant sneak paths - 1T1R or selector required")
+	}
+}
+
+// ShowMVMWithNonidealities shows MVM operation with non-ideality effects.
+func (v *TerminalVisualizer) ShowMVMWithNonidealities(input, idealOutput, actualOutput []float64, irAnalysis *crossbar.IRDropAnalysis) {
+	fmt.Println("\n=== MVM with Non-Idealities ===")
+
+	// Show comparison
+	maxOutput := min(len(idealOutput), 16)
+
+	fmt.Println("\nIdeal vs Actual Output Comparison:")
+	fmt.Println("  Idx    Ideal    Actual   Error")
+	fmt.Println("  " + strings.Repeat("─", 36))
+
+	var totalError float64
+	for i := 0; i < maxOutput; i++ {
+		err := math.Abs(idealOutput[i] - actualOutput[i])
+		totalError += err * err
+		errBar := strings.Repeat("█", int(err*50))
+		if v.useColor {
+			if err > 0.1 {
+				fmt.Printf("  %3d   %.3f    %.3f   \033[91m%.3f %s\033[0m\n",
+					i, idealOutput[i], actualOutput[i], err, errBar)
+			} else {
+				fmt.Printf("  %3d   %.3f    %.3f   \033[92m%.3f %s\033[0m\n",
+					i, idealOutput[i], actualOutput[i], err, errBar)
+			}
+		} else {
+			fmt.Printf("  %3d   %.3f    %.3f   %.3f %s\n",
+				i, idealOutput[i], actualOutput[i], err, errBar)
+		}
+	}
+
+	if len(idealOutput) > maxOutput {
+		fmt.Printf("  ... (%d more outputs)\n", len(idealOutput)-maxOutput)
+	}
+
+	// Summary
+	rmse := math.Sqrt(totalError / float64(len(idealOutput)))
+	fmt.Printf("\n  RMSE: %.4f\n", rmse)
+	fmt.Printf("  Max IR Drop: %.2f%%\n", irAnalysis.MaxIRDrop*100)
+
+	// Visual comparison bars
+	fmt.Println("\nOutput Vector Comparison:")
+	fmt.Print("  Ideal:  [")
+	for i := 0; i < min(len(idealOutput), 20); i++ {
+		bar := v.valueToBar(idealOutput[i])
+		if v.useColor {
+			fmt.Printf("\033[94m%s\033[0m", bar)
+		} else {
+			fmt.Print(bar)
+		}
+	}
+	fmt.Println("]")
+
+	fmt.Print("  Actual: [")
+	for i := 0; i < min(len(actualOutput), 20); i++ {
+		bar := v.valueToBar(actualOutput[i])
+		if v.useColor {
+			fmt.Printf("\033[93m%s\033[0m", bar)
+		} else {
+			fmt.Print(bar)
+		}
+	}
+	fmt.Println("]")
+}
+
+func (v *TerminalVisualizer) irDropToChar(value float64) string {
+	if value < 0.2 {
+		return "░"
+	} else if value < 0.4 {
+		return "▒"
+	} else if value < 0.7 {
+		return "▓"
+	}
+	return "█"
+}
+
+func (v *TerminalVisualizer) irDropToColor(value float64) string {
+	if value < 0.2 {
+		return "\033[92m" // Green (low drop)
+	} else if value < 0.4 {
+		return "\033[93m" // Yellow
+	} else if value < 0.7 {
+		return "\033[91m" // Red
+	}
+	return "\033[95m" // Magenta (severe)
+}
+
+func (v *TerminalVisualizer) sneakToChar(value float64) string {
+	if value < 0.1 {
+		return "·"
+	} else if value < 0.3 {
+		return "░"
+	} else if value < 0.6 {
+		return "▒"
+	}
+	return "▓"
+}
+
+func (v *TerminalVisualizer) sneakToColor(value float64) string {
+	if value < 0.1 {
+		return "\033[90m" // Dark gray (none)
+	} else if value < 0.3 {
+		return "\033[94m" // Blue
+	} else if value < 0.6 {
+		return "\033[93m" // Yellow
+	}
+	return "\033[91m" // Red (high sneak)
+}

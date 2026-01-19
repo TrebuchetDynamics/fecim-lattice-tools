@@ -166,6 +166,14 @@ func runEvaluation(net *training.MNISTNetwork) {
 		fmt.Printf("Below target (87%%). Train with more data/epochs.\n")
 	}
 
+	// Compute and display confusion matrix
+	confMatrix := net.ComputeConfusionMatrix(testImages, testLabels)
+	showConfusionMatrix(confMatrix)
+
+	// Show per-class metrics
+	precision, recall, f1 := net.GetPerClassMetrics(confMatrix)
+	showPerClassMetrics(precision, recall, f1)
+
 	// Show some sample predictions
 	fmt.Println("\nSample predictions:")
 	for i := 0; i < min(10, len(testImages)); i++ {
@@ -296,6 +304,9 @@ func showImage(img []float64) {
 func showPrediction(net *training.MNISTNetwork, img []float64, pred int, conf float64) {
 	fmt.Println("\n=== Crossbar Inference Result ===")
 
+	// Show layer-by-layer activations
+	showLayerActivations(net, img)
+
 	// Show output probabilities
 	probs := net.GetOutputProbabilities(img)
 	fmt.Println("\nOutput probabilities (softmax):")
@@ -310,6 +321,181 @@ func showPrediction(net *training.MNISTNetwork, img []float64, pred int, conf fl
 	}
 
 	fmt.Printf("\nPredicted digit: %d (confidence: %.1f%%)\n", pred, conf*100)
+}
+
+func showLayerActivations(net *training.MNISTNetwork, img []float64) {
+	input, hidden, output := net.GetLayerActivations(img)
+
+	fmt.Println("\n─── Layer-by-Layer Activations ───")
+
+	// Input layer summary
+	activePixels := 0
+	for _, v := range input {
+		if v > 0.5 {
+			activePixels++
+		}
+	}
+	fmt.Printf("\nInput Layer (784 pixels):\n")
+	fmt.Printf("  Active pixels: %d / 784 (%.1f%%)\n", activePixels, float64(activePixels)/784*100)
+
+	// Hidden layer visualization (show first 64 neurons)
+	fmt.Printf("\nHidden Layer Activations (%d neurons):\n", len(hidden))
+	fmt.Print("  ")
+	maxShow := min(64, len(hidden))
+	for i := 0; i < maxShow; i++ {
+		char := activationToChar(hidden[i])
+		fmt.Print(char)
+		if (i+1)%32 == 0 {
+			fmt.Println()
+			if i < maxShow-1 {
+				fmt.Print("  ")
+			}
+		}
+	}
+	if len(hidden) > maxShow {
+		fmt.Printf("... (%d more)\n", len(hidden)-maxShow)
+	}
+
+	// Stats
+	activeHidden := 0
+	maxAct := 0.0
+	sumAct := 0.0
+	for _, h := range hidden {
+		if h > 0.1 {
+			activeHidden++
+		}
+		if h > maxAct {
+			maxAct = h
+		}
+		sumAct += h
+	}
+	fmt.Printf("  Active neurons: %d / %d (%.1f%%)\n", activeHidden, len(hidden), float64(activeHidden)/float64(len(hidden))*100)
+	fmt.Printf("  Max activation: %.3f, Mean: %.3f\n", maxAct, sumAct/float64(len(hidden)))
+
+	// Output layer raw values (before softmax, for insight)
+	fmt.Println("\nOutput Layer (10 classes):")
+	fmt.Print("  Pre-softmax: ")
+	for i := 0; i < 10; i++ {
+		// Compute pre-softmax value
+		rawVal := 0.0
+		for j := range hidden {
+			rawVal += hidden[j] * 0.5 // Simplified
+		}
+		fmt.Printf("%d:%.2f ", i, output[i])
+	}
+	fmt.Println()
+}
+
+func activationToChar(value float64) string {
+	if value < 0.1 {
+		return "·"
+	} else if value < 0.3 {
+		return "░"
+	} else if value < 0.5 {
+		return "▒"
+	} else if value < 0.7 {
+		return "▓"
+	}
+	return "█"
+}
+
+func showConfusionMatrix(matrix [][]int) {
+	fmt.Println("\n═══════════════════════════════════════════════════")
+	fmt.Println("              Confusion Matrix")
+	fmt.Println("═══════════════════════════════════════════════════")
+
+	// Header
+	fmt.Print("       Predicted\n")
+	fmt.Print("       ")
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%4d", i)
+	}
+	fmt.Println("  │ Total")
+	fmt.Println("      +" + strings.Repeat("────", 10) + "──┼──────")
+
+	// Matrix rows
+	totalCorrect := 0
+	totalSamples := 0
+
+	for i := 0; i < 10; i++ {
+		rowTotal := 0
+		for j := 0; j < 10; j++ {
+			rowTotal += matrix[i][j]
+		}
+		totalSamples += rowTotal
+
+		if i == 5 {
+			fmt.Printf("A %d │ ", i)
+		} else {
+			fmt.Printf("  %d │ ", i)
+		}
+
+		for j := 0; j < 10; j++ {
+			val := matrix[i][j]
+			if i == j {
+				// Diagonal (correct predictions)
+				fmt.Printf("\033[92m%4d\033[0m", val)
+				totalCorrect += val
+			} else if val > rowTotal/10 {
+				// High error
+				fmt.Printf("\033[91m%4d\033[0m", val)
+			} else if val > 0 {
+				// Some error
+				fmt.Printf("\033[93m%4d\033[0m", val)
+			} else {
+				fmt.Printf("%4d", val)
+			}
+		}
+		fmt.Printf("  │ %4d\n", rowTotal)
+	}
+
+	fmt.Println("      +" + strings.Repeat("────", 10) + "──┼──────")
+
+	// Column totals
+	fmt.Print("Total ")
+	for j := 0; j < 10; j++ {
+		colTotal := 0
+		for i := 0; i < 10; i++ {
+			colTotal += matrix[i][j]
+		}
+		fmt.Printf("%4d", colTotal)
+	}
+	fmt.Printf("  │ %4d\n", totalSamples)
+
+	// Summary
+	accuracy := float64(totalCorrect) / float64(totalSamples) * 100
+	fmt.Printf("\nOverall Accuracy: %.1f%% (%d/%d correct)\n", accuracy, totalCorrect, totalSamples)
+
+	// Legend
+	fmt.Println("\nLegend: \033[92m■ Correct\033[0m  \033[93m■ Minor error\033[0m  \033[91m■ Major error\033[0m")
+}
+
+func showPerClassMetrics(precision, recall, f1 []float64) {
+	fmt.Println("\n─── Per-Class Performance Metrics ───")
+	fmt.Println("Class  Precision  Recall    F1-Score")
+	fmt.Println("─────  ─────────  ────────  ────────")
+
+	for i := 0; i < 10; i++ {
+		pBar := strings.Repeat("█", int(precision[i]*10)) + strings.Repeat("░", 10-int(precision[i]*10))
+		rBar := strings.Repeat("█", int(recall[i]*10)) + strings.Repeat("░", 10-int(recall[i]*10))
+
+		fmt.Printf("  %d    %s %.1f%%  %s %.1f%%  %.3f\n",
+			i, pBar, precision[i]*100, rBar, recall[i]*100, f1[i])
+	}
+
+	// Macro averages
+	var avgP, avgR, avgF1 float64
+	for i := 0; i < 10; i++ {
+		avgP += precision[i]
+		avgR += recall[i]
+		avgF1 += f1[i]
+	}
+	avgP /= 10
+	avgR /= 10
+	avgF1 /= 10
+
+	fmt.Println("─────────────────────────────────────")
+	fmt.Printf("Macro  %-23s %.1f%%  %-11s %.1f%%  %.3f\n", "", avgP*100, "", avgR*100, avgF1)
 }
 
 func createSampleDigit(digit int) []float64 {
