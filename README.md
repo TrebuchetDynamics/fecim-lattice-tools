@@ -9,6 +9,10 @@
 
 ---
 
+> ⚠️ **IMPORTANT DISCLAIMER**: IronLattice is at **TRL 4** (lab validation only). Performance claims in this visualization project include both **verified hardware results** (87% MNIST) and **simulation results** that may exceed real hardware capabilities. Energy claims (10M× vs NAND) are from Dr. Tour's presentation and have not been independently verified. See [HONESTY_AUDIT.md](opensource/papers/08_Documentation/HONESTY_AUDIT.md) for details.
+
+---
+
 ## Vision: 8 Demos, Complete Story
 
 ```
@@ -29,7 +33,7 @@
 |------|---------|----------|--------|
 | **1. Hysteresis** | Single cell physics | Everyone | ✅ Complete |
 | **2. Crossbar MVM** | Compute-in-memory | Engineers | ✅ Complete |
-| **3. MNIST** | AI application | Investors | ✅ Complete (95.8%) |
+| **3. MNIST** | AI application | Investors | ✅ Complete (sim) |
 | **4. Peripherals** | Full system | Foundries | 🔲 Planned |
 | **5. Thermal** | Heat analysis | Engineers | 🔲 Planned |
 | **6. Multi-Layer 3D** | Architecture | Designers | 🔲 Planned |
@@ -47,7 +51,7 @@ cd demo1-hysteresis && go build -o hysteresis ./cmd/hysteresis && ./hysteresis
 # Demo 2: Crossbar MVM visualization (terminal)
 cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show-mvm
 
-# Demo 3: MNIST digit classifier (95.8% accuracy!)
+# Demo 3: MNIST digit classifier (simulation)
 cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
 ```
 
@@ -60,12 +64,14 @@ IronLattice represents a paradigm shift: **computation directly in memory** usin
 > *"This could lower the requirements in a data center by 80 to 90% of the energy requirements."*
 > — Dr. external research group
 
-| Spec | Target | Achieved |
-|------|--------|----------|
-| Analog states | 30 discrete levels | ✅ 30 levels |
-| MNIST accuracy | 87% | ✅ **95.8%** |
-| Energy vs NAND | 10,000,000× lower | Simulated |
-| Energy vs DRAM | 1,000× lower | Simulated |
+| Spec | IronLattice Hardware | Our Simulation |
+|------|---------------------|----------------|
+| Analog states | 30 levels | ✅ 30 levels |
+| MNIST accuracy | **87%** (88% max) | Variable* |
+| Energy vs NAND | 10M× (claimed) | N/A |
+| Energy vs DRAM | 1000× (claimed) | N/A |
+
+*\*Simulation accuracy varies; idealized conditions may exceed hardware reality.*
 
 ---
 
@@ -126,7 +132,9 @@ Matrix form:    I = G × V (one clock cycle!)
 
 ### Demo 3: MNIST Neural Network ✅
 
-**Purpose:** See real AI application — **95.8% accuracy achieved!**
+**Purpose:** See real AI application
+
+> **Note:** IronLattice hardware achieved **87%** with **88% theoretical max** (Dr. Tour). Our simulation may exceed this due to idealized conditions (no real IR drop, sneak paths, or process variation).
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐
@@ -286,7 +294,7 @@ Variation:         Write 15: [14, 15, 15, 16, 15, 14]
 ironlattice-vis/
 ├── demo1-hysteresis/     ✅ Single cell P-E curve
 ├── demo2-crossbar/       ✅ Crossbar MVM visualization
-├── demo3-mnist/          ✅ MNIST classifier (95.8%)
+├── demo3-mnist/          ✅ MNIST classifier (simulation)
 ├── demo4-circuits/       🔲 Peripheral circuits
 ├── demo5-thermal/        🔲 Thermal simulation
 ├── demo6-multilayer/     🔲 3D multi-layer
@@ -319,7 +327,7 @@ Demo 8: "This is why it beats everything else"
 ### Phase 1: Core Demos ✅ Complete
 - Demo 1: Hysteresis ✅
 - Demo 2: Crossbar MVM ✅
-- Demo 3: MNIST (95.8% accuracy) ✅
+- Demo 3: MNIST (simulation) ✅
 
 ### Phase 2: System Integration
 - Demo 4: Peripheral Circuits

@@ -68,21 +68,42 @@ func GPUAccelerator() *Architecture {
 }
 
 // IronLatticeChip creates an IronLattice compute-in-memory architecture.
+//
+// ⚠️ WARNING: ESTIMATED VALUES - NO BASIS IN DR. TOUR'S PRESENTATION ⚠️
+//
+// IronLattice is at TRL 4 (lab validation only). Dr. Tour did NOT disclose:
+//   - TDP (power consumption)
+//   - TOPS (performance)
+//   - TOPS/W (efficiency)
+//   - Chip area
+//   - Any chip-level specifications
+//
+// The values below are ESTIMATES/GUESSES for visualization purposes only.
+// They should NOT be presented as facts or used for investment decisions.
+//
+// VERIFIED claims from Dr. Tour (Nov 2024):
+//   - 30 discrete analog states (VERIFIED)
+//   - 87% MNIST accuracy with 88% theoretical max (VERIFIED)
+//   - "10M× lower energy than NAND" (CLAIMED, NOT VERIFIED)
+//   - "1M× faster than NAND" (CLAIMED, NOT VERIFIED)
+//   - "80-90% data center energy reduction" (CLAIMED, NOT VERIFIED)
+//
+// See opensource/papers/08_Documentation/HONESTY_AUDIT.md for full analysis.
 func IronLatticeChip() *Architecture {
 	return &Architecture{
 		Name:            "IronLattice CIM",
-		Description:     "Ferroelectric compute-in-memory with 30-level cells",
+		Description:     "Ferroelectric compute-in-memory with 30-level cells (ESTIMATED SPECS - TRL4)",
 		Technology:      "FeFET Crossbar",
-		ProcessNode:     45, // Current node
-		ChipArea:        50, // Much smaller
-		TDP:             5,  // Very low power
-		PeakTOPS:        50, // High effective TOPS
-		MemoryBW:        0,  // No memory bottleneck (compute-in-memory)
-		MemorySize:      1,  // Weights stored in-situ
-		TOPSPerWatt:     10, // Very high efficiency
-		TOPSPerMM2:      1.0,
-		ManufactureCost: 0.3, // Cheaper to manufacture
-		PowerCost:       0.04,
+		ProcessNode:     45,   // ESTIMATED - not disclosed
+		ChipArea:        50,   // ESTIMATED - not disclosed by IronLattice
+		TDP:             5,    // ESTIMATED - not disclosed by IronLattice
+		PeakTOPS:        50,   // ESTIMATED - not disclosed by IronLattice
+		MemoryBW:        0,    // Compute-in-memory eliminates bottleneck (correct concept)
+		MemorySize:      1,    // ESTIMATED - weights stored in-situ
+		TOPSPerWatt:     10,   // ESTIMATED - derived from estimates above
+		TOPSPerMM2:      1.0,  // ESTIMATED - derived from estimates above
+		ManufactureCost: 0.3,  // ESTIMATED - not disclosed
+		PowerCost:       0.04, // ESTIMATED - not disclosed
 	}
 }
 

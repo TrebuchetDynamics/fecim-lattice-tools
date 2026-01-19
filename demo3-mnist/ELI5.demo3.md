@@ -152,14 +152,16 @@ Binary brain:               30-level brain:
 
 ---
 
-## The Results: 95.8% Accuracy!
+## The Results: Hardware vs Simulation
 
-Our chip correctly identifies handwritten digits **95.8% of the time**.
+**Important distinction:**
+- **IronLattice HARDWARE:** Dr. Tour achieved **87%** with **88% theoretical maximum**
+- **Our SIMULATION:** May show higher because it's idealized (no real chip noise)
 
 For context:
 - Random guessing: 10% (1 in 10)
-- Dr. Tour's target: 87%
-- **We achieved: 95.8%**
+- **IronLattice hardware: 87%** (what was actually measured!)
+- Theoretical maximum: 88% (Dr. Tour stated this limit)
 - Perfect human: ~98%
 
 ```
@@ -168,14 +170,18 @@ For context:
     ▲
     │  Random: 10%
     │
-    │          Dr. Tour Target: 87%
+    │          IronLattice HARDWARE: 87%
     │                    ▼
     █████████████████████████████████░░░░░░░
 
-    │                      We achieved: 95.8%
-    │                           ▼
-    ██████████████████████████████████████░░
+    │          Theoretical max: 88%
+    │                     ▼
+    ██████████████████████████████████░░░░░░
+
+    (Our simulation may exceed this because it's idealized)
 ```
+
+> ⚠️ **Why simulation can exceed hardware:** Real chips have IR drop, sneak paths, device variation, and ADC/DAC noise that our simulation doesn't fully capture.
 
 ---
 
@@ -279,7 +285,7 @@ cd demo3-mnist
 | Neural Network | A system of "experts" that vote on what they see |
 | Training | Showing examples and adjusting weights when wrong |
 | Weights | How much each "pipe" in the grid matters |
-| Accuracy | How often the chip guesses correctly (95.8%!) |
+| Accuracy | How often the chip guesses correctly (87% hardware) |
 | Confusion Matrix | A chart showing where mistakes happen |
 
 ---
@@ -288,10 +294,10 @@ cd demo3-mnist
 
 1. **We showed a chip 60,000 handwritten numbers.**
 2. **It learned patterns by adjusting its 100,000 internal "pipe widths."**
-3. **Now it can recognize new numbers it's never seen with 95.8% accuracy!**
+3. **Now it can recognize new numbers it's never seen — IronLattice hardware achieves 87%!**
 
 ---
 
 ## One Sentence Summary
 
-> **Demo 3 shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — and now it's right 95.8% of the time!**
+> **Demo 3 shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — IronLattice hardware achieves 87% accuracy (88% theoretical max)!**

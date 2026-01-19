@@ -80,6 +80,23 @@ func printHeader() {
 	fmt.Println("║     CPU+DRAM vs GPU vs IronLattice Compute-in-Memory         ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
+
+	// IMPORTANT: Print warning banner about estimated specifications
+	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
+	fmt.Println("║  ⚠️  WARNING: IRONLATTICE SPECIFICATIONS ARE ESTIMATED ⚠️     ║")
+	fmt.Println("╠══════════════════════════════════════════════════════════════╣")
+	fmt.Println("║  IronLattice is at TRL 4 (lab validation only).             ║")
+	fmt.Println("║  Dr. Tour did NOT disclose chip-level specs (TDP, TOPS).    ║")
+	fmt.Println("║                                                              ║")
+	fmt.Println("║  The IronLattice values below are ESTIMATES for demo        ║")
+	fmt.Println("║  purposes only. Do NOT use for investment decisions.        ║")
+	fmt.Println("║                                                              ║")
+	fmt.Println("║  VERIFIED: 30 analog levels, 87% MNIST (88% max)            ║")
+	fmt.Println("║  CLAIMED:  10M× vs NAND, 80-90% DC savings (unverified)     ║")
+	fmt.Println("║                                                              ║")
+	fmt.Println("║  See: opensource/papers/08_Documentation/HONESTY_AUDIT.md   ║")
+	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
+	fmt.Println()
 }
 
 func showArchitectureSpecs(renderer *comparison.Renderer, archs []*comparison.Architecture) {

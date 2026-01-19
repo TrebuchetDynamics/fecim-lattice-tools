@@ -256,9 +256,9 @@ Our demos tell a compelling story but contain several claims that:
 
 ## Verification Checklist
 
-- [ ] Remove or disclaim 95.8% MNIST accuracy
-- [ ] Add TRL4 warnings to Demo 8 comparisons
-- [ ] Split material parameters into "demonstrated" vs "target"
-- [ ] Add "unverified claim" labels to energy comparisons
-- [ ] Review all README files for unsupported claims
-- [ ] Add prominent disclaimer to main README
+- [x] Remove or disclaim 95.8% MNIST accuracy (2026-01-19: Fixed in README.md, command.md, demo3.README.md, ELI5.demo3.md)
+- [x] Add TRL4 warnings to Demo 8 comparisons (2026-01-19: Added warning banner to main.go and comments to architecture.go)
+- [x] Split material parameters into "demonstrated" vs "target" (2026-01-19: Updated IronLatticeMaterial() to use demonstrated values, added IronLatticeMaterialTarget())
+- [x] Add "unverified claim" labels to energy comparisons (2026-01-19: Added UNVERIFIED labels to command.md specs table)
+- [x] Review all README files for unsupported claims (2026-01-19: Fixed main README.md, command.md)
+- [x] Add prominent disclaimer to main README (2026-01-19: Added TRL4 disclaimer banner to README.md)

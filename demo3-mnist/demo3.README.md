@@ -12,9 +12,11 @@ Demo 3 demonstrates neural network inference on the MNIST handwritten digit data
 
 1. **End-to-End Inference** — Complete 784→128→10 neural network on crossbar arrays
 2. **30-Level Weights** — Analog synaptic weights using FeFET conductance states
-3. **95.8% Accuracy** — Exceeds Dr. Tour's 87% target (theoretical max ~88%)
+3. **Simulation vs Hardware** — See note below on accuracy expectations
 4. **Layer-by-Layer Visualization** — Activation heatmaps, confusion matrix, per-class metrics
 5. **Interactive Digit Drawing** — Draw digits and see real-time classification
+
+> ⚠️ **IMPORTANT:** IronLattice hardware achieved **87%** with a **88% theoretical maximum** (Dr. Tour). This simulation uses idealized conditions and may report higher accuracy because it doesn't capture all physical non-idealities (IR drop, sneak paths, real device variation, ADC/DAC noise).
 
 ## Quick Start
 
@@ -323,9 +325,9 @@ demo3-mnist/
 This demo answers the question: **"What can we build with this?"**
 
 1. **Real AI Application** — MNIST is the "Hello World" of neural networks
-2. **Competitive Accuracy** — 95.8% rivals digital implementations
+2. **Hardware Accuracy** — IronLattice achieves 87% on physical hardware (88% theoretical max)
 3. **Analog Precision** — 30 levels is sufficient for practical neural networks
-4. **Energy Efficiency** — Crossbar inference is orders of magnitude more efficient
+4. **Energy Efficiency** — Crossbar inference is orders of magnitude more efficient (claimed)
 5. **Beyond Binary** — Not just 0/1 but rich continuous weight space
 
 ---

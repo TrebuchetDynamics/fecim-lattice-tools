@@ -101,28 +101,61 @@ func OptimizedHZO() *HZOMaterial {
 
 // IronLatticeMaterial returns parameters matching IronLattice specifications.
 // Based on Dr. Tour's Nov 2024 presentation data.
+//
+// ⚠️ HONESTY NOTE: Some parameters are TARGETS not DEMONSTRATED values.
+// Dr. Tour's presentation (Nov 2024) disclosed:
+//
+// VERIFIED/DEMONSTRATED:
+//   - 30 discrete analog states (VERIFIED)
+//   - 87% MNIST accuracy with 88% theoretical max (VERIFIED)
+//   - 10^9 endurance cycles DEMONSTRATED
+//   - 10^7 seconds retention DEMONSTRATED (~116 days)
+//
+// TARGET (NOT YET ACHIEVED):
+//   - 10^12 endurance cycles (stated as target, not demonstrated)
+//   - 100 year retention (not demonstrated)
+//
+// ESTIMATED (NOT DISCLOSED):
+//   - Pr, Ps, Ec (using standard HZO literature values)
+//   - Tau (slides showed 10ns, using 10ns not 1ns)
+//   - All other parameters are literature-based estimates
+//
+// See: opensource/papers/08_Documentation/HONESTY_AUDIT.md
 func IronLatticeMaterial() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "IronLattice HZO",
-		Pr:              30e-2,     // 30 μC/cm²
-		Ps:              35e-2,     // 35 μC/cm²
-		Ec:              1.0e8,     // 1.0 MV/cm
-		Epsilon:         32,
-		EpsilonLF:       40,
-		LossAngle:       0.01,      // Low loss
-		Thickness:       10e-9,
-		Area:            45e-9 * 45e-9, // 45nm pitch cell
-		Tau:             1e-9,
+		Pr:              30e-2,     // 30 μC/cm² - ESTIMATED (not disclosed)
+		Ps:              35e-2,     // 35 μC/cm² - ESTIMATED (not disclosed)
+		Ec:              1.0e8,     // 1.0 MV/cm - ESTIMATED (not disclosed)
+		Epsilon:         32,        // ESTIMATED
+		EpsilonLF:       40,        // ESTIMATED
+		LossAngle:       0.01,      // Low loss - ESTIMATED
+		Thickness:       10e-9,     // ESTIMATED
+		Area:            45e-9 * 45e-9, // 45nm pitch cell - ESTIMATED
+		Tau:             10e-9,     // 10 ns (from Tour's slides, not 1ns)
 		Tau0:            1e-13,
 		Ea:              0.6,
 		Alpha:           2.0,
 		CurieTemp:       723,
 		TempCoeffEc:     -1.8e5,
 		TempCoeffPr:     -4e-5,
-		EnduranceCycles: 1e11,      // Very high endurance
-		RetentionTime:   3.15e9,    // 100 years
+		EnduranceCycles: 1e9,       // 10^9 DEMONSTRATED (10^12 is TARGET)
+		RetentionTime:   1e7,       // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
 	}
+}
+
+// IronLatticeMaterialTarget returns IronLattice TARGET specifications.
+// ⚠️ WARNING: These are GOALS not demonstrated performance.
+// Dr. Tour explicitly stated: "We still have to get this up to the
+// required 10^12 cycles."
+func IronLatticeMaterialTarget() *HZOMaterial {
+	mat := IronLatticeMaterial()
+	mat.Name = "IronLattice HZO (TARGET - NOT DEMONSTRATED)"
+	mat.EnduranceCycles = 1e12      // TARGET - not yet achieved
+	mat.RetentionTime = 3.15e9     // TARGET - 100 years (not demonstrated)
+	mat.Tau = 1e-9                 // TARGET - 1ns (demonstrated ~10ns)
+	return mat
 }
 
 // CoerciveVoltage returns the coercive voltage for a given thickness.
