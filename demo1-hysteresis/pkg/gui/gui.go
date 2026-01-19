@@ -124,7 +124,7 @@ func NewApp() *App {
 		pHistory:   make([]float64, 0, 500),
 		autoMode:   true,
 		waveform:   WaveformSine,
-		frequency:  1.0, // 1 Hz for smooth animation
+		frequency:  0.5, // 0.5 Hz default
 	}
 }
 
@@ -161,11 +161,11 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create P-E plot
 	a.plot = NewPEPlot(a.material.Ec*2.5, a.material.Ps*1.2)
-	a.plot.SetMinSize(fyne.NewSize(500, 450))
+	a.plot.SetMinSize(fyne.NewSize(400, 350))
 
 	// Create level indicator
 	a.levelIndicator = NewLevelIndicator()
-	a.levelIndicator.SetMinSize(fyne.NewSize(70, 450))
+	a.levelIndicator.SetMinSize(fyne.NewSize(70, 350))
 
 	// Create controls panel
 	controls := a.createControlsPanel()
@@ -180,34 +180,46 @@ func (a *App) createUI() fyne.CanvasObject {
 		widget.NewLabelWithStyle("This is the cell", fyne.TextAlignCenter, fyne.TextStyle{Italic: true}),
 	)
 
-	// Layout: [Cell | Plot | Level | Controls/Info]
-	plotContainer := container.NewBorder(
-		widget.NewLabelWithStyle("P-E Hysteresis Loop", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		nil, nil, nil,
-		a.plot,
-	)
-
-	levelContainer := container.NewBorder(
-		widget.NewLabelWithStyle("30 Levels", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%.1f bits/cell", math.Log2(30))),
-		nil, nil,
-		a.levelIndicator,
-	)
-
+	// Right panel with controls and info (scrollable)
 	rightPanel := container.NewScroll(container.NewVBox(
 		controls,
 		widget.NewSeparator(),
 		info,
 	))
+	rightPanel.SetMinSize(fyne.NewSize(220, 0))
 
-	mainLayout := container.NewHBox(
+	// Left side: cell (fixed width)
+	leftSide := container.NewHBox(
 		cellContainer,
 		widget.NewSeparator(),
-		plotContainer,
-		widget.NewSeparator(),
-		levelContainer,
-		widget.NewSeparator(),
-		rightPanel,
+	)
+
+	// Plot and level indicator side by side with shared title row
+	plotTitle := widget.NewLabelWithStyle("P-E Hysteresis Loop", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	levelTitle := widget.NewLabelWithStyle("30 Levels", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	levelBits := widget.NewLabel(fmt.Sprintf("%.1f bits", math.Log2(30)))
+
+	// Plot + level in same row (level has fixed width)
+	plotAndLevel := container.NewBorder(
+		nil, nil,
+		nil,
+		a.levelIndicator,
+		a.plot,
+	)
+
+	// Titles row
+	titlesRow := container.NewBorder(
+		nil, nil,
+		nil,
+		container.NewVBox(levelTitle, levelBits),
+		plotTitle,
+	)
+
+	// Center area with titles on top
+	centerArea := container.NewBorder(
+		titlesRow,
+		nil, nil, nil,
+		plotAndLevel,
 	)
 
 	// Status bar at bottom
@@ -216,6 +228,14 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 		a.statusLabel,
 		layout.NewSpacer(),
+	)
+
+	// Main layout: left fixed, center expands, right fixed
+	mainLayout := container.NewBorder(
+		nil, nil,
+		leftSide,
+		rightPanel,
+		centerArea,
 	)
 
 	return container.NewBorder(
@@ -329,10 +349,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 
 	// Frequency slider
-	freqSlider := widget.NewSlider(0.01, 5.0)
+	freqSlider := widget.NewSlider(0.01, 1.0)
 	freqSlider.Step = 0.01
-	freqSlider.Value = 1.0
-	freqLabel := widget.NewLabel("Frequency: 1.00 Hz")
+	freqSlider.Value = 0.5
+	freqLabel := widget.NewLabel("Frequency: 0.50 Hz")
 	freqSlider.OnChanged = func(v float64) {
 		a.frequency = v
 		freqLabel.SetText(fmt.Sprintf("Frequency: %.2f Hz", v))
@@ -346,6 +366,11 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	trailSlider.OnChanged = func(v float64) {
 		a.mu.Lock()
 		a.maxHistory = int(v)
+		// Immediately trim if history exceeds new max
+		if len(a.eHistory) > a.maxHistory {
+			a.eHistory = a.eHistory[len(a.eHistory)-a.maxHistory:]
+			a.pHistory = a.pHistory[len(a.pHistory)-a.maxHistory:]
+		}
 		a.mu.Unlock()
 		trailLabel.SetText(fmt.Sprintf("Trail: %d pts", int(v)))
 	}
