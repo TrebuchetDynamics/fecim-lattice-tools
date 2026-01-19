@@ -20,6 +20,9 @@ func main() {
 	showTIA := flag.Bool("tia", false, "Show TIA (Transimpedance Amplifier) details")
 	showPump := flag.Bool("pump", false, "Show Charge Pump details")
 	showAll := flag.Bool("all", false, "Show all peripheral circuits")
+	showLinearity := flag.Bool("linearity", false, "Show INL/DNL linearity analysis")
+	showTiming := flag.Bool("timing", false, "Show timing diagrams")
+	showPower := flag.Bool("power", false, "Show power breakdown")
 	demoLevel := flag.Int("level", 15, "Demo level for conversion (0-29)")
 	flag.Parse()
 
@@ -46,8 +49,23 @@ func main() {
 		showChargePumpDemo()
 	}
 
+	// Show linearity analysis
+	if *showLinearity || *showAll {
+		showLinearityAnalysis()
+	}
+
+	// Show timing diagrams
+	if *showTiming || *showAll {
+		showTimingDiagram()
+	}
+
+	// Show power breakdown
+	if *showPower || *showAll {
+		showPowerBreakdown()
+	}
+
 	// If no specific flag, show brief overview of all
-	if !*showDAC && !*showADC && !*showTIA && !*showPump && !*showAll {
+	if !*showDAC && !*showADC && !*showTIA && !*showPump && !*showAll && !*showLinearity && !*showTiming && !*showPower {
 		showBriefOverview(*demoLevel)
 	}
 
@@ -284,4 +302,282 @@ func showBriefOverview(level int) {
 
 	fmt.Println("Run with --all for detailed view of all circuits")
 	fmt.Println("Or use --dac, --adc, --tia, --pump for specific circuits")
+	fmt.Println("   --linearity: INL/DNL analysis")
+	fmt.Println("   --timing: Timing diagrams")
+	fmt.Println("   --power: Power breakdown")
+}
+
+func showLinearityAnalysis() {
+	fmt.Println("┌─────────────────────────────────────────────┐")
+	fmt.Println("│        INL/DNL Linearity Analysis           │")
+	fmt.Println("└─────────────────────────────────────────────┘")
+	fmt.Println()
+
+	dac := peripherals.DefaultDAC()
+	adc := peripherals.DefaultADC()
+
+	// DAC INL/DNL
+	dacAnalysis := dac.AnalyzeINLDNL()
+	fmt.Println("DAC Linearity (5-bit):")
+	fmt.Println()
+	fmt.Println("INL Plot (Integral Nonlinearity in LSB):")
+	showINLPlot(dacAnalysis.INLValues, 30)
+	fmt.Printf("  Max INL: %.3f LSB at code %d\n", dacAnalysis.MaxINL, dacAnalysis.WorstCode)
+	fmt.Println()
+
+	fmt.Println("DNL Plot (Differential Nonlinearity in LSB):")
+	showDNLPlot(dacAnalysis.DNLValues, 30)
+	fmt.Printf("  Max DNL: +%.3f / %.3f LSB\n", dacAnalysis.MaxDNL, dacAnalysis.MinDNL)
+	fmt.Println()
+
+	// ADC INL/DNL
+	adcAnalysis := adc.AnalyzeINLDNL()
+	fmt.Println("ADC Linearity (5-bit SAR):")
+	fmt.Println()
+	fmt.Println("INL Plot:")
+	showINLPlot(adcAnalysis.INLValues, 30)
+	fmt.Printf("  Max INL: %.3f LSB at code %d\n", adcAnalysis.MaxINL, adcAnalysis.WorstCode)
+	fmt.Println()
+
+	fmt.Println("DNL Plot:")
+	showDNLPlot(adcAnalysis.DNLValues, 30)
+	fmt.Printf("  Max DNL: +%.3f / %.3f LSB\n", adcAnalysis.MaxDNL, adcAnalysis.MinDNL)
+	fmt.Println()
+
+	// Monotonicity check
+	fmt.Println("Monotonicity Check:")
+	dacMonotonic := checkMonotonicity(dacAnalysis.DNLValues)
+	adcMonotonic := checkMonotonicity(adcAnalysis.DNLValues)
+	fmt.Printf("  DAC: %s (DNL > -1 LSB everywhere)\n", passFailMark(dacMonotonic))
+	fmt.Printf("  ADC: %s (DNL > -1 LSB everywhere)\n", passFailMark(adcMonotonic))
+	fmt.Println()
+}
+
+func showINLPlot(inl []float64, levels int) {
+	// Scale: -1 to +1 LSB
+	width := 50
+	center := width / 2
+
+	fmt.Printf("  +1.0 LSB %s┐\n", strings.Repeat(" ", center-5))
+	for i := 0; i < levels; i++ {
+		// Map INL to position
+		pos := center + int(inl[i]*float64(center))
+		if pos < 0 {
+			pos = 0
+		}
+		if pos >= width {
+			pos = width - 1
+		}
+
+		line := make([]rune, width)
+		for j := range line {
+			line[j] = '·'
+		}
+		line[center] = '│'
+		line[pos] = '●'
+
+		fmt.Printf("  %2d: %s\n", i, string(line))
+	}
+	fmt.Printf("  -1.0 LSB %s┘\n", strings.Repeat(" ", center-5))
+}
+
+func showDNLPlot(dnl []float64, levels int) {
+	// Scale: -1 to +1 LSB
+	width := 50
+	center := width / 2
+
+	fmt.Printf("  +1.0 LSB %s┐\n", strings.Repeat(" ", center-5))
+	for i := 1; i < levels; i++ {
+		// Map DNL to position
+		pos := center + int(dnl[i]*float64(center))
+		if pos < 0 {
+			pos = 0
+		}
+		if pos >= width {
+			pos = width - 1
+		}
+
+		line := make([]rune, width)
+		for j := range line {
+			line[j] = '·'
+		}
+		line[center] = '│'
+		line[pos] = '■'
+
+		fmt.Printf("  %2d: %s\n", i, string(line))
+	}
+	fmt.Printf("  -1.0 LSB %s┘\n", strings.Repeat(" ", center-5))
+}
+
+func checkMonotonicity(dnl []float64) bool {
+	for _, d := range dnl {
+		if d < -1.0 {
+			return false
+		}
+	}
+	return true
+}
+
+func passFailMark(pass bool) string {
+	if pass {
+		return "✓ PASS"
+	}
+	return "✗ FAIL"
+}
+
+func showTimingDiagram() {
+	fmt.Println("┌─────────────────────────────────────────────┐")
+	fmt.Println("│           Timing Diagram                    │")
+	fmt.Println("└─────────────────────────────────────────────┘")
+	fmt.Println()
+
+	dac := peripherals.DefaultDAC()
+	adc := peripherals.DefaultADC()
+	tia := peripherals.DefaultTIA()
+	pump := peripherals.DefaultChargePump()
+
+	timing := peripherals.AnalyzeTiming(dac, adc, tia, pump)
+
+	// ASCII timing diagram
+	fmt.Println("Write Cycle:")
+	fmt.Println("  ┌───────────────────────────────────────────────────────┐")
+	fmt.Println("  │  DAC   │   Pump   │    FeFET Write    │    Verify     │")
+	fmt.Println("  │ Settle │   Rise   │      Pulse        │     Read      │")
+	fmt.Println("  └───────────────────────────────────────────────────────┘")
+	fmt.Printf("  │%.0fns │ %.0fns   │     100ns         │     50ns      │\n",
+		timing.DACSettle*1e9, timing.PumpRise*1e9)
+	fmt.Println()
+
+	fmt.Println("Read Cycle:")
+	fmt.Println("  ┌───────────────────────────────────────────────────────┐")
+	fmt.Println("  │  Apply  │   TIA    │    ADC     │    Process    │")
+	fmt.Println("  │  Vread  │  Settle  │   Convert  │    Output     │")
+	fmt.Println("  └───────────────────────────────────────────────────────┘")
+	fmt.Printf("  │  10ns   │ %.0fns   │   %.0fns    │     5ns       │\n",
+		timing.TIASettle*1e9, timing.ADCConvert*1e9)
+	fmt.Println()
+
+	// Waveform visualization
+	fmt.Println("Signal Waveforms:")
+	fmt.Println()
+	fmt.Println("  CLK     ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐")
+	fmt.Println("          ─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─")
+	fmt.Println()
+	fmt.Println("  WREN    ────┐                   ┌────────")
+	fmt.Println("              └───────────────────┘")
+	fmt.Println()
+	fmt.Println("  VWL     ────────┐           ┌───────────")
+	fmt.Println("                  └───────────┘")
+	fmt.Println()
+	fmt.Println("  VDAC    ────────────┬───────┬───────────")
+	fmt.Println("          ────────────┘       └───────────")
+	fmt.Println()
+	fmt.Println("  VPUMP            ╱‾‾‾‾‾‾‾‾‾‾╲")
+	fmt.Println("          ────────╱            ╲──────────")
+	fmt.Println()
+
+	// Timing summary
+	fmt.Println("Timing Summary:")
+	fmt.Printf("  Write Time: %.1f ns\n", timing.WriteTime*1e9)
+	fmt.Printf("  Read Time:  %.1f ns\n", timing.ReadTime*1e9)
+	fmt.Printf("  Cycle Time: %.1f ns\n", timing.CycleTime*1e9)
+	fmt.Printf("  Max Throughput: %.2f GOPS\n", timing.MaxThroughput/1e9)
+	fmt.Println()
+}
+
+func showPowerBreakdown() {
+	fmt.Println("┌─────────────────────────────────────────────┐")
+	fmt.Println("│           Power Breakdown                   │")
+	fmt.Println("└─────────────────────────────────────────────┘")
+	fmt.Println()
+
+	dac := peripherals.DefaultDAC()
+	adc := peripherals.DefaultADC()
+	tia := peripherals.DefaultTIA()
+	pump := peripherals.DefaultChargePump()
+
+	timing := peripherals.AnalyzeTiming(dac, adc, tia, pump)
+	power := peripherals.AnalyzePower(dac, adc, tia, pump, timing)
+
+	// Energy breakdown
+	fmt.Println("Energy per Operation:")
+	fmt.Printf("  DAC:   %6.2f fJ  %s %.0f%%\n", power.DACEnergy*1e15,
+		makeBarChart(power.DACFraction, 30), power.DACFraction*100)
+	fmt.Printf("  ADC:   %6.2f fJ  %s %.0f%%\n", power.ADCEnergy*1e15,
+		makeBarChart(power.ADCFraction, 30), power.ADCFraction*100)
+	fmt.Printf("  TIA:   %6.2f fJ  %s %.0f%%\n", power.TIAEnergy*1e15,
+		makeBarChart(power.TIAFraction, 30), power.TIAFraction*100)
+	fmt.Printf("  Pump:  %6.2f fJ  %s %.0f%%\n", power.PumpEnergy*1e15,
+		makeBarChart(power.PumpFraction, 30), power.PumpFraction*100)
+	fmt.Println("  " + strings.Repeat("─", 45))
+	fmt.Printf("  Total: %6.2f fJ\n", power.TotalEnergy*1e15)
+	fmt.Println()
+
+	// Power consumption at max throughput
+	fmt.Println("Power at Max Throughput:")
+	fmt.Printf("  DAC:   %6.2f µW\n", power.DACPower*1e6)
+	fmt.Printf("  ADC:   %6.2f µW\n", power.ADCPower*1e6)
+	fmt.Printf("  TIA:   %6.2f µW\n", power.TIAPower*1e6)
+	fmt.Printf("  Pump:  %6.2f µW\n", power.PumpPower*1e6)
+	fmt.Println("  " + strings.Repeat("─", 20))
+	fmt.Printf("  Total: %6.2f µW\n", power.TotalPower*1e6)
+	fmt.Println()
+
+	// Pie chart visualization (ASCII)
+	fmt.Println("Energy Distribution:")
+	fmt.Println()
+	showAsciiPieChart(map[string]float64{
+		"DAC":  power.DACFraction,
+		"ADC":  power.ADCFraction,
+		"TIA":  power.TIAFraction,
+		"Pump": power.PumpFraction,
+	})
+	fmt.Println()
+
+	// Comparison with digital
+	fmt.Println("Efficiency Comparison:")
+	digitalEnergy := 1e-12 // 1 pJ typical for digital multiply-accumulate
+	cimEnergy := power.TotalEnergy
+	improvement := digitalEnergy / cimEnergy
+	fmt.Printf("  Digital MAC:     ~1000 fJ\n")
+	fmt.Printf("  CIM Operation:   %.0f fJ\n", cimEnergy*1e15)
+	fmt.Printf("  Improvement:     %.0fx more efficient\n", improvement)
+	fmt.Println()
+}
+
+func makeBarChart(fraction float64, width int) string {
+	filled := int(fraction * float64(width))
+	if filled > width {
+		filled = width
+	}
+	return "[" + strings.Repeat("█", filled) + strings.Repeat("░", width-filled) + "]"
+}
+
+func showAsciiPieChart(data map[string]float64) {
+	// Simple horizontal bar representation instead of actual pie
+	fmt.Println("  ┌" + strings.Repeat("─", 50) + "┐")
+	pos := 0
+	totalWidth := 50
+	for name, frac := range data {
+		segWidth := int(frac * float64(totalWidth))
+		if segWidth < 1 && frac > 0 {
+			segWidth = 1
+		}
+		char := "█"
+		switch name {
+		case "DAC":
+			char = "█"
+		case "ADC":
+			char = "▓"
+		case "TIA":
+			char = "▒"
+		case "Pump":
+			char = "░"
+		}
+		fmt.Printf("  │%s%s", strings.Repeat(char, segWidth),
+			strings.Repeat(" ", totalWidth-segWidth-pos))
+		fmt.Printf("│ %s: %.0f%%\n", name, frac*100)
+		pos += segWidth
+	}
+	fmt.Println("  └" + strings.Repeat("─", 50) + "┘")
 }
