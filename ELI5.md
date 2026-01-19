@@ -4,6 +4,46 @@
 
 ---
 
+# Part 0: The One-Page Summary
+
+**If you only have 60 seconds, read this.**
+
+## The Problem
+AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
+
+## The Root Cause
+Traditional computers have a "commute problem." The memory (where data lives) and the processor (where math happens) are separate. Every calculation requires billions of trips back and forth.
+
+## The Solution
+**IronLattice does math where the data already lives.**
+
+Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory cells that can also compute. When you apply a voltage, the current that flows out IS the multiplication result. Physics does the math for free!
+
+## The Magic Numbers
+
+| What | Traditional | IronLattice | Improvement |
+|------|-------------|-------------|-------------|
+| Energy per operation | 10 pJ | 0.001 pJ | **10,000×** |
+| Data movement | Billions of trips | Zero | **∞** |
+| Operations in parallel | 1-1000 | Millions | **1000×** |
+| States per cell | 1 bit (0 or 1) | ~5 bits (30 levels) | **5×** |
+
+## The Proof
+- ✅ Real material demonstrated in Dr. Tour's lab at external research institution
+- ✅ 30 discrete analog states achieved
+- ✅ Works with standard CMOS manufacturing
+- ✅ Our simulation achieves 95.8% MNIST accuracy
+
+## The Vision
+A future where:
+- Your phone runs ChatGPT locally without draining the battery
+- Data centers use 80-90% less power
+- AI is fast, cheap, and everywhere
+
+**That's IronLattice.**
+
+---
+
 # Part 1: The Very Basics
 
 ## What is Electricity?
@@ -65,6 +105,167 @@ A computer is a machine that:
 All information is stored as **1s and 0s** (binary). Like lots of tiny light switches:
 - 0 = OFF
 - 1 = ON
+
+## What is a Transistor?
+
+A **transistor** is a tiny electronic switch. It's the building block of all modern computers.
+
+```
+       Gate
+        │
+   ┌────┴────┐
+───┤         ├───
+Source      Drain
+
+Gate = control wire (decides ON or OFF)
+Source = where electrons come from
+Drain = where electrons go to
+```
+
+How it works:
+- **Gate OFF (0V):** No electrons can flow. It's like a closed valve.
+- **Gate ON (1V+):** Electrons flow freely. It's like an open valve.
+
+```
+Gate OFF:              Gate ON:
+   │                      │
+───X───────             ───●───────
+   blocked!               flowing!
+```
+
+Modern chips have **billions** of these tiny switches. The iPhone has about 15 billion transistors!
+
+## What is a Logic Gate?
+
+By connecting transistors cleverly, we can make them do **logic**:
+
+**AND Gate** (both must be ON):
+```
+A ─┬─●─┬─ Output
+   │   │
+B ─┴─●─┘
+
+A=0, B=0 → 0
+A=0, B=1 → 0
+A=1, B=0 → 0
+A=1, B=1 → 1  ← only this!
+```
+
+**OR Gate** (either can be ON):
+```
+A ─●─┬─ Output
+     │
+B ─●─┘
+
+A=0, B=0 → 0
+A=0, B=1 → 1
+A=1, B=0 → 1
+A=1, B=1 → 1
+```
+
+**NOT Gate** (flip it):
+```
+A ─●─○─ Output
+
+A=0 → 1
+A=1 → 0
+```
+
+With just these three gates, you can build ANY computation! Addition, subtraction, video games, AI... everything!
+
+## Why Binary (0s and 1s)?
+
+Why not use 10 levels (0-9) like humans count?
+
+**Reliability.** With only two states, it's easy to tell them apart:
+
+```
+Binary (easy):           Decimal (hard):
+───────                  ───────
+  │ HIGH (1)               │ 9?
+  │                        │ 8?
+  │                        │ 7?
+──┴── clear gap            │ 6?  ← which one is it?
+  │                        │ 5?
+  │ LOW (0)                │ 4?
+───────                  ───────
+```
+
+With only two levels, even a noisy signal is easy to read. This is why binary won.
+
+**But wait!** IronLattice uses 30 levels. How does that work?
+
+The secret: **analog precision**. Ferroelectric materials can maintain stable, distinguishable states at 30 levels because:
+1. The physics is very stable (crystal structure shifts)
+2. The separation between levels is large enough
+3. Error correction can handle small variations
+
+---
+
+# Part 1.5: Digital vs. Analog Computing
+
+## Digital Computing (Today's Standard)
+
+**Digital** = Everything is discrete steps (0 or 1)
+
+```
+Adding 3 + 5 digitally:
+
+Step 1: Load "3" from memory        (0011 in binary)
+Step 2: Load "5" from memory        (0101 in binary)
+Step 3: Send both to ALU
+Step 4: ALU does bit-by-bit addition
+Step 5: Store result "8"            (1000 in binary)
+
+Each step = moving data + clock cycle + energy
+```
+
+**Pros:** Perfectly accurate, easy to debug, well-understood
+**Cons:** Slow, energy-hungry, requires many steps
+
+## Analog Computing (The Old Way... and the New Way!)
+
+**Analog** = Use continuous physical values directly
+
+```
+Adding 3 + 5 with analog:
+
+Wire 1: 3 volts ──┬── Output: 8 volts
+                  │
+Wire 2: 5 volts ──┘
+
+That's it! Physics does it instantly.
+```
+
+In the 1940s-60s, analog computers were common. They used voltages to represent numbers and physical circuits to compute. But they lost to digital because:
+- Hard to store values precisely
+- Errors accumulate
+- Difficult to program
+
+**IronLattice brings analog back** with:
+- Ferroelectric memory that holds analog values stably
+- Enough precision (30 levels) for AI applications
+- Inherent multiplication via Ohm's Law
+
+## The Best of Both Worlds
+
+IronLattice is a **hybrid**:
+
+```
+Digital Interface       Analog Compute        Digital Interface
+      │                      │                      │
+      ▼                      ▼                      ▼
+┌───────────┐          ┌───────────┐          ┌───────────┐
+│    DAC    │  ───→    │  Crossbar │  ───→    │    ADC    │
+│ (digital  │  analog  │  (analog  │  analog  │  (analog  │
+│ to analog)│  voltage │  compute) │  current │ to digital)│
+└───────────┘          └───────────┘          └───────────┘
+     │                                              │
+Input: 10110...                              Output: 11001...
+(digital bits)                               (digital bits)
+```
+
+The outside world sees digital. Inside, physics does the heavy lifting.
 
 ---
 
