@@ -33,8 +33,8 @@ Physics ──→ Computation ──→ Application ──→ Engineering ──
 | 1 | Hysteresis | Single cell physics | Everyone | ✅ Complete |
 | 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ Complete |
 | 3 | MNIST | AI application | Investors | ✅ Complete (95.8%) |
-| 4 | Peripherals | Full system | Foundries | 🔲 Planned |
-| 5 | Thermal | Heat analysis | Engineers | 🔲 Planned |
+| 4 | Peripherals | Full system | Foundries | ✅ Complete |
+| 5 | Thermal | Heat analysis | Engineers | ✅ Complete |
 | 6 | Multi-Layer 3D | Architecture | Designers | 🔲 Planned |
 | 7 | Non-Idealities | Real-world issues | Engineers | 🔲 Planned |
 | 8 | Comparison | Why IronLattice wins | Investors | 🔲 Planned |
@@ -67,9 +67,9 @@ Physics ──→ Computation ──→ Application ──→ Engineering ──
 
 ---
 
-## Phase 2: System Integration (Next)
+## Phase 2: System Integration ✅ COMPLETE
 
-### Demo 4: Peripheral Circuits 🔲
+### Demo 4: Peripheral Circuits ✅
 
 **Purpose:** Show investors/foundries the full chip system
 
@@ -96,14 +96,14 @@ Level: [22]               Current: [67 μA]
 └─────────────────┘
 ```
 
-**Features to implement:**
-- [ ] DAC visualization: Digital → Write voltage (5-bit, 30 levels)
-- [ ] Charge pump: 1V → ±1.5V for write operations
-- [ ] TIA (Transimpedance Amplifier): Current → Voltage conversion
-- [ ] ADC visualization: Analog → Digital level (5-bit)
-- [ ] Noise injection visualization
-- [ ] Show CMOS compatibility (standard process)
-- [ ] Energy consumption display per operation
+**Features implemented:**
+- [x] DAC visualization: Digital → Write voltage (5-bit, 30 levels)
+- [x] Charge pump: 1V → ±1.5V for write operations
+- [x] TIA (Transimpedance Amplifier): Current → Voltage conversion
+- [x] ADC visualization: Analog → Digital level (5-bit)
+- [x] Noise injection visualization
+- [x] Show CMOS compatibility (standard process)
+- [x] Energy consumption display per operation
 
 **Technical approach:**
 ```go
@@ -121,7 +121,7 @@ func (d *DAC) Convert(level int) float64 {
 
 ---
 
-### Demo 5: Thermal Simulation 🔲
+### Demo 5: Thermal Simulation ✅
 
 **Purpose:** Show engineers heat management is solved
 
@@ -138,14 +138,14 @@ Top View (Heat Map)        Side View
 25°C ░▒▓█ 85°C
 ```
 
-**Features to implement:**
-- [ ] 2D heat map visualization (terminal or Vulkan)
-- [ ] Real-time heat diffusion simulation
-- [ ] Multi-layer heat coupling
-- [ ] Hotspot identification and highlighting
-- [ ] Thermal throttling warning system
-- [ ] Workload-dependent heat generation
-- [ ] Show IronLattice's low-power advantage
+**Features implemented:**
+- [x] 2D heat map visualization (terminal with color)
+- [x] Real-time heat diffusion simulation
+- [x] Multi-layer heat coupling
+- [x] Hotspot identification and highlighting
+- [x] Thermal throttling warning system
+- [x] Workload-dependent heat generation
+- [x] Show IronLattice's low-power advantage (1000x cooler!)
 
 **Technical approach:**
 ```go
@@ -265,19 +265,21 @@ func AnalyzeSneakPaths(array *crossbar.Array, targetCell [2]int) [][]float64 {
 
 ## Code Quality Tasks
 
-### Critical Bugs ✅ MOSTLY COMPLETED
+### Critical Bugs ✅ COMPLETED
 - [x] **Race conditions** (engine.go) - Added sync.RWMutex
 - [x] **O(n³) weight updates** (network.go) - Fetch matrix once
-- [ ] **Panics in production** (network/network.go:117) - Replace with error returns
+- [x] **Panics in production** (network/network.go:117) - Replaced with error returns
 
-### Test Coverage ✅ 19 TESTS
+### Test Coverage ✅ 54 TESTS
 - [x] 30-level quantization tests (7 tests)
 - [x] MVM output verification (included in array_test.go)
 - [x] Engine thread-safety tests (5 tests)
 - [x] Network forward/backward tests (7 tests)
 - [x] Weight save/load roundtrip (included in network_test.go)
-- [ ] MNIST accuracy >= 85% on test set
-- [ ] P-E curve hysteresis verification
+- [x] MNIST accuracy >= 85% on test set (95.8% achieved)
+- [x] P-E curve hysteresis verification (7 tests)
+- [x] Peripheral circuits tests (9 tests)
+- [x] Thermal simulation tests (17 tests)
 
 ---
 
@@ -304,8 +306,8 @@ ironlattice-vis/
 ├── demo1-hysteresis/     ✅ Single cell P-E curve
 ├── demo2-crossbar/       ✅ Crossbar MVM visualization
 ├── demo3-mnist/          ✅ MNIST classifier (95.8%)
-├── demo4-circuits/       🔲 Peripheral circuits
-├── demo5-thermal/        🔲 Thermal simulation
+├── demo4-circuits/       ✅ Peripheral circuits (DAC, ADC, TIA, Charge Pump)
+├── demo5-thermal/        ✅ Thermal simulation (1000x cooler operation)
 ├── demo6-multilayer/     🔲 3D multi-layer
 ├── demo7-nonidealities/  🔲 Real-world issues
 ├── demo8-comparison/     🔲 Technology comparison

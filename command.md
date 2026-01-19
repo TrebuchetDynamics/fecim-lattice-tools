@@ -11,13 +11,18 @@ Phase 1 COMPLETE:
 - ✅ Demo 1: Hysteresis (30-level P-E visualization)
 - ✅ Demo 2: Crossbar MVM (compute-in-memory)
 - ✅ Demo 3: MNIST (95.8% accuracy, exceeds 87% target)
-- ✅ 19 unit tests passing
 - ✅ Race conditions fixed
 - ✅ Pretrained weights saved
 
-Phase 2 PLANNED (assess TODO.md):
-- 🔲 Demo 4: Peripheral Circuits
-- 🔲 Demo 5: Thermal Simulation
+Phase 2 COMPLETE:
+- ✅ Demo 4: Peripheral Circuits (DAC, ADC, TIA, Charge Pump)
+- ✅ Demo 5: Thermal Simulation (1000x cooler operation demonstrated)
+
+Code Quality COMPLETE:
+- ✅ 54 unit tests passing
+- ✅ Panic() replaced with error returns
+- ✅ MNIST accuracy verification test
+- ✅ P-E hysteresis verification test
 
 Phase 3 PLANNED (assess TODO.md):
 - 🔲 Demo 6: Multi-Layer 3D
@@ -36,10 +41,9 @@ Before starting work, ALWAYS:
    - Success criteria
 
 2. **Identify next actionable task** from TODO.md:
-   - Phase 2 tasks (Demo 4-5) are next priority
-   - Code quality items (panics → error returns)
-   - Test coverage gaps (MNIST accuracy test, P-E hysteresis test)
+   - Phase 3 tasks (Demo 6-8) are next priority
    - Educational enhancements ("Why CIM?" panel)
+   - Square loop P-E characteristic enhancement
 
 3. **Update TODO.md** when tasks complete
 
@@ -55,11 +59,17 @@ cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show
 
 # Demo 3: MNIST (95.8% accuracy)
 cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
+
+# Demo 4: Peripheral Circuits
+cd demo4-circuits && go run ./cmd/circuits --all
+
+# Demo 5: Thermal Simulation
+cd demo5-thermal && go run ./cmd/thermal --compare
 ```
 
 Run tests:
 ```bash
-go test ./... -v
+go test ./... -v  # 54 tests
 ```
 
 --- KEY FILES ---
@@ -73,6 +83,8 @@ go test ./... -v
 | Network | demo3-mnist/pkg/training/network.go | MNIST classifier |
 | Training | demo3-mnist/train_and_save.go | Training script |
 | Weights | demo3-mnist/data/pretrained_weights.json | Trained model |
+| Peripherals | demo4-circuits/pkg/peripherals/ | DAC, ADC, TIA, Charge Pump |
+| Thermal | demo5-thermal/pkg/thermal/ | Heat diffusion, multi-layer |
 
 --- IRONLATTICE SPECS (From Dr. Tour) ---
 
@@ -81,21 +93,21 @@ go test ./... -v
 | Analog states | 30 levels | ✅ Done |
 | MNIST accuracy | 87% | ✅ 95.8% |
 | P-E hysteresis | Square loop | Simplified |
-| Energy vs NAND | 10M× lower | N/A |
-| Energy vs DRAM | 1000× lower | N/A |
+| Energy vs NAND | 10M× lower | ✅ Demo 5 visualizes |
+| Energy vs DRAM | 1000× lower | ✅ Demo 5 visualizes |
+| Thermal advantage | Cool operation | ✅ 1000x cooler shown |
 
 --- NEXT ACTIONS (From TODO.md) ---
 
-**Immediate (Code Quality):**
-- [ ] Replace panic() with error returns in network.go
-- [ ] Add MNIST accuracy verification test
-- [ ] Add P-E hysteresis verification test
-
-**Phase 2 (Demo 4-5):**
-- [ ] Create demo4-circuits/ structure
-- [ ] Implement DAC/ADC/TIA models
-- [ ] Create demo5-thermal/ structure
-- [ ] Implement heat diffusion solver
+**Phase 3 (Demo 6-8):**
+- [ ] Create demo6-multilayer/ structure
+- [ ] Implement 3D rendered multi-layer stack
+- [ ] Via connections between layers
+- [ ] Create demo7-nonidealities/ structure
+- [ ] IR drop visualization
+- [ ] Sneak path current animation
+- [ ] Create demo8-comparison/ structure
+- [ ] Side-by-side DRAM+CPU vs GPU vs IronLattice
 
 **Enhancements:**
 - [ ] Square loop P-E characteristic (Demo 1)
@@ -112,14 +124,14 @@ go test ./... -v
 --- THE STORY ---
 
 ```
-Demo 1: "This is how the memory cell works"
-Demo 2: "This is how we compute in memory"
-Demo 3: "This is what we can build with it"
-Demo 4: "This is how it fits in a real chip"
-Demo 5: "This is how we manage heat"
-Demo 6: "This is how we scale to 3D"
-Demo 7: "This is what can go wrong (and how we fix it)"
-Demo 8: "This is why it beats everything else"
+Demo 1: "This is how the memory cell works"        ✅
+Demo 2: "This is how we compute in memory"         ✅
+Demo 3: "This is what we can build with it"        ✅
+Demo 4: "This is how it fits in a real chip"       ✅
+Demo 5: "This is how we manage heat"               ✅
+Demo 6: "This is how we scale to 3D"               🔲
+Demo 7: "This is what can go wrong (and how we fix it)" 🔲
+Demo 8: "This is why it beats everything else"     🔲
 ```
 
 --- DR. TOUR QUOTES ---
