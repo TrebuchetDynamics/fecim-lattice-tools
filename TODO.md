@@ -9,8 +9,8 @@
 
 | Metric | Target | Current Status |
 |--------|--------|----------------|
-| Discrete analog states | **30 levels** | ✅ **FIXED** - Using 30 levels |
-| MNIST accuracy | **87%** (88% theoretical max) | ✅ **95.8%** - Exceeds target |
+| Discrete analog states | **30 levels** | ✅ Implemented |
+| MNIST accuracy | **87%** (88% theoretical max) | ✅ **95.8%** achieved |
 | Energy vs NAND | 10,000,000× lower | N/A (simulation) |
 | Energy vs DRAM | 1,000× lower | N/A (simulation) |
 | P-E hysteresis | Square loop characteristic | Simplified tanh model |
@@ -19,211 +19,312 @@
 
 ---
 
-## Priority 1: Core IronLattice Features
+## 8-Demo Roadmap
 
-### 30 Discrete Analog States (CRITICAL) ✅ COMPLETED
-> "It's got 30 discrete states. So it's not 0-1-0-1. And we have 30 discrete states that we can access." — Dr. Tour
+```
+Demo 1 ──→ Demo 2 ──→ Demo 3 ──→ Demo 4 ──→ Demo 5 ──→ Demo 6 ──→ Demo 7 ──→ Demo 8
+(cell)    (array)    (app)     (system)  (thermal)  (3D)      (real)    (compare)
 
-- [x] **Fix quantization in `array.go`** ✅
-  - Added `IronLatticeLevels = 30` constant
-  - `ProgramWeight` now auto-quantizes to 30 levels
-  - Added `QuantizeTo30Levels()` and `GetLevel()` functions
-- [x] ADC/DAC now use 30-level quantization ✅
-- [x] Visualize all 30 levels distinctly in Demo 1 level bar ✅
-  - Added `LevelIndicator` struct in render.go
-- [ ] Show level number (1-30) in Demo 3 weight display
+Physics ──→ Computation ──→ Application ──→ Engineering ──→ Production Reality
+```
 
-### 87% MNIST Accuracy (CRITICAL) ✅ COMPLETED
-> "We're at 87% validation here... theoretical is 88% is the theoretical maximum." — Dr. Tour
-
-- [x] **Train network to achieve 87% accuracy** ✅ **Achieved 95.8%!**
-  - [x] Downloaded real MNIST dataset (60k train, 10k test)
-  - [x] Implemented proper training loop with mini-batch SGD
-  - [x] Saved pretrained weights to `demo3-mnist/data/pretrained_weights.json`
-  - [x] Added unit tests for network operations
-- [x] Fixed training math issues ✅
-  - [x] Fixed O(n³) weight update bug (fetch matrix once outside loops)
-  - [x] Implemented separate SimpleNetwork for float training
-  - [x] Quantize to 30 levels after training
-- [ ] Add `--verify` flag to Demo 3 that tests against MNIST test set
-
-### Ferroelectric P-E Hysteresis (HIGH)
-> "These are the polarization curves that we've got here" — Dr. Tour (showing square loops)
-
-- [ ] **Improve Preisach model or document limitations**
-  - Current: Simplified tanh approximation
-  - IronLattice shows: Square hysteresis loops (their key advantage)
-- [ ] Add toggle between "ideal square loop" and "realistic model"
-- [ ] Show 30 discrete polarization states on P-E curve
-- [ ] Visualize "wake-up → stable operation → fatigue" cycle behavior
+| Demo | Name | Purpose | Audience | Status |
+|------|------|---------|----------|--------|
+| 1 | Hysteresis | Single cell physics | Everyone | ✅ Complete |
+| 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ Complete |
+| 3 | MNIST | AI application | Investors | ✅ Complete (95.8%) |
+| 4 | Peripherals | Full system | Foundries | 🔲 Planned |
+| 5 | Thermal | Heat analysis | Engineers | 🔲 Planned |
+| 6 | Multi-Layer 3D | Architecture | Designers | 🔲 Planned |
+| 7 | Non-Idealities | Real-world issues | Engineers | 🔲 Planned |
+| 8 | Comparison | Why IronLattice wins | Investors | 🔲 Planned |
 
 ---
 
-## Priority 2: Compute-in-Memory Demonstration
+## Phase 1: Core Demos ✅ COMPLETE
 
-### Matrix-Vector Multiplication Visualization
-> "Computation memory in the same device... no more busing information back and forth" — Dr. Tour
+### Demo 1: Ferroelectric Hysteresis ✅
+- [x] P-E hysteresis curve visible
+- [x] 30 discrete levels clearly shown (LevelIndicator)
+- [x] Interactive E-field control
+- [x] Preisach model with HZO parameters
+- [x] Thread-safe simulation engine
+- [ ] Square loop characteristic (IronLattice advantage) - enhancement
 
-- [ ] **Enhance Demo 2 to show CIM principle clearly**
-  - [ ] Animate: "Input voltages → Conductance matrix → Output currents"
-  - [ ] Show Kirchhoff's law: I = Σ(V × G) happening in parallel
-  - [ ] Contrast with von Neumann: "Traditional: Memory ↔ CPU ↔ Memory"
-- [ ] Add energy comparison display
-  - "Traditional: X operations, Y data transfers"
-  - "CIM: Single parallel operation, zero transfers"
+### Demo 2: Crossbar MVM ✅
+- [x] Matrix-vector multiplication works
+- [x] 30-level conductance states
+- [x] Input/output visualization
+- [x] Terminal display with color coding
+- [ ] Animated voltage/current flow - enhancement
 
-### Neural Network on Crossbar
-> "We've done the compute in memory. We've put this on the MNIST system." — Dr. Tour
-
-- [ ] Visualize inference flow through both crossbar layers
-- [ ] Show 784 inputs → 128 hidden → 10 outputs
-- [ ] Display post-synaptic currents (PSC) like in Dr. Tour's slides
-- [ ] Add potentiation/depression demonstration (LTP/LTD)
-
----
-
-## Priority 3: Code Quality & Correctness
-
-### Critical Bugs ✅ MOSTLY COMPLETED
-- [x] **Race conditions** (`engine.go`) ✅
-  - Added `sync.RWMutex` to Engine struct
-  - Protected `e.running`, `e.paused` in Start/Stop/Pause/Step
-  - Added thread-safe `IsRunning()` and `IsPaused()` methods
-- [ ] **Panics in production** (`network/network.go:117`)
-  - Replace `panic()` with error returns
-- [x] **O(n³) weight updates** (`training/network.go`) ✅
-  - Fetch matrix once outside loops in updateLayer1/updateLayer2
-
-### Test Coverage ✅ ADDED
-> Previously: 0 tests, Now: 19 tests
-
-- [x] Add test: 30-level quantization produces exactly 30 distinct values ✅
-- [x] Add test: MVM output matches manual calculation ✅
-- [x] Add test: Engine thread-safety with race detector ✅
-- [x] Add test: Network forward/backward pass ✅
-- [x] Add test: Weight save/load roundtrip ✅
-- [ ] Add test: MNIST accuracy >= 85% on test set
-- [ ] Add test: P-E curve exhibits hysteresis (not just a function)
+### Demo 3: MNIST Classification ✅
+- [x] Can classify handwritten digits
+- [x] **Achieves 87% accuracy** → **95.8%!**
+- [x] Uses 30 discrete weight levels
+- [x] Interactive drawing/testing
+- [x] Pretrained weights saved to data/pretrained_weights.json
 
 ---
 
-## Priority 4: Educational Value
+## Phase 2: System Integration (Next)
 
-### Demonstrate IronLattice Advantages
-> "This could lower the requirements in a data center by 80 to 90% of the energy requirements." — Dr. Tour
+### Demo 4: Peripheral Circuits 🔲
 
-- [ ] Add "Why CIM?" educational panel
-  - Traditional: Separate memory and compute, constant data movement
-  - IronLattice: Same device does both, physics does the math
-- [ ] Show energy comparison (even if simulated)
-- [ ] Explain 30 states vs binary: "~5 bits per cell vs 1 bit"
+**Purpose:** Show investors/foundries the full chip system
 
-### Market Context (Optional)
-- [ ] Add comparison table from Dr. Tour's slides:
-  - vs NAND Flash: 10M× energy, 1M× speed, 90% voltage
-  - vs DRAM: 1000× energy, zero refresh
-- [ ] Show TRL progression: "We are here (TRL 4) → Production (TRL 9)"
+```
+WRITE PATH                 READ PATH
 
----
+Level: [22]               Current: [67 μA]
+    │                          ↑
+    ▼                          │
+┌───────┐                  ┌───────┐
+│  DAC  │                  │  TIA  │
+│ 5-bit │                  │       │
+└───┬───┘                  └───┬───┘
+    │                          ↑
+    ▼                          │
+┌───────┐                  ┌───────┐
+│ Charge│                  │  ADC  │
+│ Pump  │                  │ 5-bit │
+└───┬───┘                  └───────┘
+    │
+    ▼
+┌─────────────────┐
+│    CROSSBAR     │
+└─────────────────┘
+```
 
-## Deprioritized (Nice to Have)
+**Features to implement:**
+- [ ] DAC visualization: Digital → Write voltage (5-bit, 30 levels)
+- [ ] Charge pump: 1V → ±1.5V for write operations
+- [ ] TIA (Transimpedance Amplifier): Current → Voltage conversion
+- [ ] ADC visualization: Analog → Digital level (5-bit)
+- [ ] Noise injection visualization
+- [ ] Show CMOS compatibility (standard process)
+- [ ] Energy consumption display per operation
 
-### Future Enhancements
-- [ ] Landau-Khalatnikov solver (complex, not essential for demo)
-- [ ] Phase-field domain simulation (TDGL) - mentioned in README but not in Dr. Tour's demo
-- [ ] GPU-accelerated training
-- [ ] Vulkan visualization for Demo 2/3 (terminal works fine for educational)
-- [ ] Non-idealities: IR drop, sneak paths (advanced topics)
-
-### Code Cleanup
-- [ ] Remove 151 unused layer files in `demo2-crossbar/pkg/layers/`
-- [ ] Consolidate duplicate network code
-- [ ] Add godoc comments
-- [ ] Improve error messages
-
----
-
-## Quick Wins
-
+**Technical approach:**
 ```go
-// 1. Fix 30-level quantization (array.go) - MOST IMPORTANT
-const IronLatticeLevels = 30
-
-func (a *Array) quantizeToIronLattice(value float64) float64 {
-    value = math.Max(0, math.Min(1, value))
-    level := math.Round(value * float64(IronLatticeLevels-1))
-    return level / float64(IronLatticeLevels-1)
+// pkg/peripherals/dac.go
+type DAC struct {
+    Bits       int     // 5 bits for 30 levels
+    VrefHigh   float64 // +1.5V
+    VrefLow    float64 // -1.5V
 }
 
-// 2. Add accuracy verification (main.go)
-func verifyAccuracy(net *MNISTNetwork) {
-    testImages, testLabels, _ := mnist.LoadMNIST("data", false)
-    acc := net.Evaluate(testImages, testLabels)
-    fmt.Printf("MNIST Test Accuracy: %.1f%% (Target: 87%%)\n", acc*100)
-    if acc >= 0.87 {
-        fmt.Println("✓ IronLattice target ACHIEVED!")
-    }
-}
-
-// 3. Fix race condition (engine.go)
-type Engine struct {
-    mu      sync.RWMutex
-    running bool
-    paused  bool
-    state   *State
-}
-
-func (e *Engine) IsRunning() bool {
-    e.mu.RLock()
-    defer e.mu.RUnlock()
-    return e.running
+func (d *DAC) Convert(level int) float64 {
+    return d.VrefLow + float64(level)/float64((1<<d.Bits)-1)*(d.VrefHigh-d.VrefLow)
 }
 ```
 
 ---
 
-## Success Criteria (From Dr. Tour's Demo)
+### Demo 5: Thermal Simulation 🔲
 
-### Demo 1: Ferroelectric Cell ✅
-- [x] P-E hysteresis curve visible
-- [x] **30 discrete levels clearly shown** ✅ (Added LevelIndicator)
-- [ ] Square loop characteristic (IronLattice advantage)
-- [x] Interactive E-field control
+**Purpose:** Show engineers heat management is solved
 
-### Demo 2: Crossbar MVM ✅
-- [x] Matrix-vector multiplication works
-- [x] **30-level conductance states** ✅ (Fixed quantization)
-- [x] Input/output visualization
-- [ ] Shows "compute happens in memory" concept
+```
+Top View (Heat Map)        Side View
 
-### Demo 3: MNIST Classification ✅
-- [x] Can classify handwritten digits
-- [x] **Achieves 87% accuracy** ✅ **95.8%!**
-- [x] Uses 30 discrete weight levels ✅
-- [x] Interactive drawing/testing
-- [x] Pretrained weights saved to data/pretrained_weights.json ✅
+░░░▒▒▓▓████▓▓▒▒░░░        ███ Layer 3
+░░▒▒▓██████████▓▒▒░░       ↕ heat
+░▒▓████████████████▓▒░     ███ Layer 2
+░░▒▒▓██████████▓▒▒░░       ↕ heat
+░░░▒▒▓▓████▓▓▒▒░░░         ███ Layer 1
+                           ░░░ Heat Sink
+
+25°C ░▒▓█ 85°C
+```
+
+**Features to implement:**
+- [ ] 2D heat map visualization (terminal or Vulkan)
+- [ ] Real-time heat diffusion simulation
+- [ ] Multi-layer heat coupling
+- [ ] Hotspot identification and highlighting
+- [ ] Thermal throttling warning system
+- [ ] Workload-dependent heat generation
+- [ ] Show IronLattice's low-power advantage
+
+**Technical approach:**
+```go
+// pkg/thermal/simulation.go
+type ThermalSim struct {
+    Grid        [][]float64 // Temperature grid
+    Conductivity float64    // Thermal conductivity
+    AmbientTemp  float64    // 25°C
+    MaxTemp      float64    // 85°C threshold
+}
+
+func (t *ThermalSim) Step(powerMap [][]float64, dt float64) {
+    // Heat diffusion equation: dT/dt = α∇²T + Q
+}
+```
 
 ---
 
-## Timeline
+## Phase 3: Full Vision
 
-### This Week
-1. [ ] Fix 30-level quantization everywhere
-2. [ ] Download MNIST dataset, train to 87%
-3. [ ] Add accuracy verification test
-4. [ ] Fix race conditions
+### Demo 6: Multi-Layer 3D Architecture 🔲
 
-### Next Week
-5. [ ] Improve P-E visualization (show 30 states)
-6. [ ] Add educational CIM explanation
-7. [ ] Save pretrained weights file
-8. [ ] Add basic test coverage
+**Purpose:** Show designers the scalable architecture
 
-### Month 2
-9. [ ] Polish demos for presentation quality
-10. [ ] Add energy comparison displays
-11. [ ] Document physics accurately
-12. [ ] Create demo video
+```
+         ╔════════════════════╗
+        ╱ Layer 3: 64×10     ╱│
+       ╔════════════════════╗ │
+      ╱ Layer 2: 128×64    ╱│ │
+     ╔════════════════════╗ │ │
+     ║ Layer 1: 784×128   ║ │╱
+     ║  ●  ●  ●  ●  ●  ● ║╱
+     ╚════════════════════╝
+              ↑
+          Input (784)
+```
+
+**Features to implement:**
+- [ ] 3D rendered multi-layer stack (Vulkan)
+- [ ] Via connections between layers
+- [ ] Heat overlay integration (from Demo 5)
+- [ ] Exploded view mode for inspection
+- [ ] Design space exploration (layer sizes)
+- [ ] Data flow animation through layers
+- [ ] Memory density calculations
+
+---
+
+### Demo 7: Non-Idealities 🔲
+
+**Purpose:** Show engineers we understand real-world challenges
+
+```
+IR Drop:           1.0V → 0.95V → 0.90V → 0.85V
+Sneak Paths:       Current shortcuts through array
+Conductance Drift: Level 15 → Level 14.8 (1 week)
+Variation:         Write 15: [14, 15, 15, 16, 15, 14]
+```
+
+**Features to implement:**
+- [ ] IR drop visualization across array
+- [ ] Sneak path current animation
+- [ ] Conductance drift over simulated time
+- [ ] Cycle-to-cycle variation (write noise)
+- [ ] Device-to-device variation
+- [ ] Impact on accuracy (real-time display)
+- [ ] Mitigation strategies visualization
+
+**Technical approach:**
+```go
+// pkg/nonidealities/irdrop.go
+func ComputeIRDrop(array *crossbar.Array, wireResistance float64) [][]float64 {
+    // Model voltage drop: V(x) = V0 - I*R*x
+}
+
+// pkg/nonidealities/sneakpath.go
+func AnalyzeSneakPaths(array *crossbar.Array, targetCell [2]int) [][]float64 {
+    // Find parasitic current paths
+}
+```
+
+---
+
+### Demo 8: Technology Comparison 🔲
+
+**Purpose:** Investor pitch — why IronLattice wins
+
+```
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│    DRAM     │  │    GPU      │  │ IronLattice │
+│    +CPU     │  │   (CUDA)    │  │    (CIM)    │
+├─────────────┤  ├─────────────┤  ├─────────────┤
+│ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
+│ Energy: 100 │  │ Energy: 50  │  │ Energy: 0.1 │
+│ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
+└─────────────┘  └─────────────┘  └─────────────┘
+```
+
+**Features to implement:**
+- [ ] Side-by-side comparison animation
+- [ ] DRAM+CPU vs GPU vs IronLattice
+- [ ] Time metric comparison
+- [ ] Energy metric comparison
+- [ ] Operation count comparison
+- [ ] Scalable matrix size demonstration
+- [ ] Data center savings projection
+
+**Comparison metrics:**
+| Metric | DRAM+CPU | GPU | IronLattice |
+|--------|----------|-----|-------------|
+| Memory bandwidth | 100 GB/s | 1 TB/s | ∞ (in-situ) |
+| Energy per MAC | 10 pJ | 1 pJ | 0.001 pJ |
+| Latency | 100 ns | 10 ns | 1 ns |
+| Data movement | O(n²) | O(n²) | 0 |
+
+---
+
+## Code Quality Tasks
+
+### Critical Bugs ✅ MOSTLY COMPLETED
+- [x] **Race conditions** (engine.go) - Added sync.RWMutex
+- [x] **O(n³) weight updates** (network.go) - Fetch matrix once
+- [ ] **Panics in production** (network/network.go:117) - Replace with error returns
+
+### Test Coverage ✅ 19 TESTS
+- [x] 30-level quantization tests (7 tests)
+- [x] MVM output verification (included in array_test.go)
+- [x] Engine thread-safety tests (5 tests)
+- [x] Network forward/backward tests (7 tests)
+- [x] Weight save/load roundtrip (included in network_test.go)
+- [ ] MNIST accuracy >= 85% on test set
+- [ ] P-E curve hysteresis verification
+
+---
+
+## Educational Enhancements
+
+### "Why CIM?" Panel
+> "This could lower the requirements in a data center by 80 to 90%." — Dr. Tour
+
+- [ ] Traditional architecture diagram (memory ↔ CPU bottleneck)
+- [ ] CIM architecture diagram (compute happens in memory)
+- [ ] Energy comparison visualization
+- [ ] "30 states vs binary: ~5 bits per cell vs 1 bit" explanation
+
+### Market Context
+- [ ] Comparison table from Dr. Tour's slides
+- [ ] TRL progression: "We are here (TRL 4) → Production (TRL 9)"
+
+---
+
+## Repository Structure
+
+```
+ironlattice-vis/
+├── demo1-hysteresis/     ✅ Single cell P-E curve
+├── demo2-crossbar/       ✅ Crossbar MVM visualization
+├── demo3-mnist/          ✅ MNIST classifier (95.8%)
+├── demo4-circuits/       🔲 Peripheral circuits
+├── demo5-thermal/        🔲 Thermal simulation
+├── demo6-multilayer/     🔲 3D multi-layer
+├── demo7-nonidealities/  🔲 Real-world issues
+├── demo8-comparison/     🔲 Technology comparison
+├── docs/                 Documentation
+├── papers/               Scientific papers
+└── go.mod
+```
+
+---
+
+## Success Criteria
+
+### From Dr. Tour's Presentation
+- [x] 30 discrete levels (not binary)
+- [x] 87% MNIST accuracy (achieved 95.8%)
+- [x] Compute-in-memory demonstration
+- [ ] Square hysteresis loops (IronLattice advantage)
+- [ ] Full system with peripherals
+- [ ] Comparison showing 1000× energy advantage
 
 ---
 
@@ -231,7 +332,7 @@ func (e *Engine) IsRunning() bool {
 
 - **Primary Source**: Dr. external research group, IronLattice presentation (Nov 2024)
 - **Key Paper**: Shin, J., et al. "BEOL-Compatible Superlattice FEFET Analog Synapse" IEEE (2022)
-- **MNIST Benchmark**: 88% theoretical maximum, 87% achieved by IronLattice
+- **MNIST Benchmark**: 88% theoretical maximum, 87% achieved by IronLattice, **95.8% by this demo**
 - **30 States**: Post-synaptic current with 30 discrete levels (LTP/LTD demonstration)
 
 ---
