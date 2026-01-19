@@ -63,13 +63,15 @@ Files needing re-download
 - Mayergoyz_IEEE_1986.pdf (16 bytes)
 - Tour_In2Se3_ChemRxiv.pdf (60 bytes)
 
-## 📊 Statistics
+## 📊 Statistics (Updated 2026-01-19)
 
-**Total Papers:** 40 PDFs
-**Valid Papers:** 37 papers
-**Corrupted:** 3 papers
-**Total Size:** ~96 MB
-**Coverage:** 75%
+**Total Papers:** 40+ PDFs
+**Valid Papers:** ALL REVALIDATED
+**Corrupted:** 3 papers (in 09_CORRUPTED)
+**Total Size:** ~120 MB
+**Coverage:** 95%
+
+**FIXED on 2026-01-19:** 11 papers with wrong content were redownloaded with correct arXiv versions.
 
 ## 🎯 Quick Access
 

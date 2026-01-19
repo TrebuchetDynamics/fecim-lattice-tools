@@ -2,6 +2,12 @@
 // hysteresis in HfO2-ZrO2 superlattice materials.
 //
 // This is Demo 1 of the IronLattice Visualizer project.
+//
+// Run modes:
+//   - Default: Fyne GUI with real-time P-E curve animation (recommended)
+//   - --tui: Terminal user interface (for SSH/remote)
+//   - --headless: ASCII terminal output (static, no interactivity)
+//   - --vulkan: Vulkan-based graphical interface (advanced)
 package main
 
 import (
@@ -11,46 +17,108 @@ import (
 	"os"
 
 	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"ironlattice-vis/demo1-hysteresis/pkg/gui"
 	"ironlattice-vis/demo1-hysteresis/pkg/render"
 	"ironlattice-vis/demo1-hysteresis/pkg/simulation"
+	"ironlattice-vis/demo1-hysteresis/pkg/tui"
 )
 
 func main() {
 	// Command line flags
 	optimized := flag.Bool("optimized", false, "Use optimized superlattice parameters")
 	freq := flag.Float64("freq", 1e6, "Waveform frequency in Hz")
-	headless := flag.Bool("headless", false, "Run in headless mode (no graphics)")
+	headless := flag.Bool("headless", false, "Run in headless mode (static ASCII output)")
+	tuiMode := flag.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
+	vulkan := flag.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
 	flag.Parse()
 
-	fmt.Println("===========================================")
-	fmt.Println("  IronLattice Hysteresis Visualizer")
-	fmt.Println("  Demo 1: Ferroelectric P-E Curve")
-	fmt.Println("===========================================")
-	fmt.Println()
+	// Determine run mode based on flags
+	if *headless {
+		// Headless mode - static ASCII output
+		fmt.Println("===========================================")
+		fmt.Println("  IronLattice Hysteresis Visualizer")
+		fmt.Println("  Demo 1: Ferroelectric P-E Curve")
+		fmt.Println("===========================================")
+		fmt.Println()
 
-	// Select material parameters
-	var material *ferroelectric.HZOMaterial
-	if *optimized {
-		material = ferroelectric.OptimizedHZO()
-		fmt.Println("Using: Optimized HfO2/ZrO2 Superlattice")
-	} else {
-		material = ferroelectric.DefaultHZO()
-		fmt.Println("Using: Default HZO Parameters")
+		var material *ferroelectric.HZOMaterial
+		if *optimized {
+			material = ferroelectric.OptimizedHZO()
+			fmt.Println("Using: Optimized HfO2/ZrO2 Superlattice")
+		} else {
+			material = ferroelectric.DefaultHZO()
+			fmt.Println("Using: Default HZO Parameters")
+		}
+
+		printMaterialInfo(material)
+		engine := simulation.NewEngine(material)
+		engine.SetFrequency(*freq)
+		runHeadless(engine)
+		return
 	}
 
-	// Print material parameters
-	printMaterialInfo(material)
+	if *tuiMode {
+		// Terminal UI mode
+		if err := tui.Run(); err != nil {
+			log.Printf("TUI error: %v\n", err)
+			fmt.Println("\nFalling back to headless mode...")
 
-	// Create simulation engine
-	engine := simulation.NewEngine(material)
-	engine.SetFrequency(*freq)
+			var material *ferroelectric.HZOMaterial
+			if *optimized {
+				material = ferroelectric.OptimizedHZO()
+			} else {
+				material = ferroelectric.DefaultHZO()
+			}
+			engine := simulation.NewEngine(material)
+			engine.SetFrequency(*freq)
+			runHeadless(engine)
+		}
+		return
+	}
 
-	if *headless {
-		// Run headless simulation and print results
-		runHeadless(engine)
-	} else {
-		// Run with graphics
+	if *vulkan {
+		// Vulkan graphical mode
+		fmt.Println("===========================================")
+		fmt.Println("  IronLattice Hysteresis Visualizer")
+		fmt.Println("  Demo 1: Ferroelectric P-E Curve (Vulkan)")
+		fmt.Println("===========================================")
+		fmt.Println()
+
+		var material *ferroelectric.HZOMaterial
+		if *optimized {
+			material = ferroelectric.OptimizedHZO()
+			fmt.Println("Using: Optimized HfO2/ZrO2 Superlattice")
+		} else {
+			material = ferroelectric.DefaultHZO()
+			fmt.Println("Using: Default HZO Parameters")
+		}
+
+		printMaterialInfo(material)
+		engine := simulation.NewEngine(material)
+		engine.SetFrequency(*freq)
 		runGraphical(engine)
+		return
+	}
+
+	// Default: Fyne GUI mode (recommended)
+	if err := gui.Run(); err != nil {
+		log.Printf("GUI error: %v\n", err)
+		fmt.Println("\nFalling back to TUI mode...")
+
+		if err := tui.Run(); err != nil {
+			log.Printf("TUI error: %v\n", err)
+			fmt.Println("\nFalling back to headless mode...")
+
+			var material *ferroelectric.HZOMaterial
+			if *optimized {
+				material = ferroelectric.OptimizedHZO()
+			} else {
+				material = ferroelectric.DefaultHZO()
+			}
+			engine := simulation.NewEngine(material)
+			engine.SetFrequency(*freq)
+			runHeadless(engine)
+		}
 	}
 }
 
