@@ -12,23 +12,64 @@ Focus: Physical Accuracy, Visuals, UX/UI
 
 --- DEMO 1-4 FOCUS (Phase 4 Priority) ---
 
-## Demo 1: Hysteresis (Memory Cell Physics) - ENHANCED
+## Demo 1: Hysteresis (Memory Cell Physics) - ENHANCED + FYNE GUI
 
 **Implemented Features:**
 - Fixed unit conversions (C/m² to μC/cm² uses *100, NOT *1e4)
-- Enhanced terminal visualization with P-E loop
+- Mayergoyz Preisach model with full hysteron distribution
 - Preisach plane visualization
 - Temperature dependence modeling
 - 30 discrete levels clearly shown (LevelIndicator)
-- Interactive E-field control
 - Thread-safe simulation engine
 
-**Run Command:**
+**NEW: Fyne GUI Application (2026-01-19)**
+- Real-time P-E hysteresis curve with smooth canvas animation
+- Custom `PEPlot` widget with grid, axes, fade trail effect
+- 30-level color-gradient state indicator (`LevelIndicator`)
+- Material selector dropdown (Default HZO, Optimized, IronLattice)
+- Waveform selector (Sine, Triangle, Square, Manual)
+- E-field slider for manual control
+- Frequency slider (0.1-5 Hz animation speed)
+- Pause/Resume and Reset buttons
+- IronLattice dark theme (cyan/coral branding)
+- Live parameter display panel with Pr, Ps, Ec, τ
+
+**Go Packages Used:**
+- `fyne.io/fyne/v2` - Cross-platform GUI (primary)
+- `charmbracelet/bubbletea` - Terminal UI fallback
+- `charmbracelet/lipgloss` - Terminal styling
+- Custom widgets: `PEPlot`, `LevelIndicator`
+
+**Run Commands:**
 ```bash
-cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+cd demo1-hysteresis && go build ./cmd/hysteresis
+
+# Fyne GUI (default, recommended)
+./hysteresis
+
+# Terminal UI (for SSH/remote)
+./hysteresis --tui
+
+# Headless ASCII output
+./hysteresis --headless
+
+# Vulkan graphics (advanced)
+./hysteresis --vulkan
 ```
 
-**Tests:** 7 tests passing (ferroelectric package)
+**GUI Package Structure:**
+```
+demo1-hysteresis/pkg/
+├── gui/gui.go           # Fyne GUI with PEPlot, LevelIndicator
+├── tui/tui.go           # Terminal UI (bubbletea)
+├── ferroelectric/       # Physics engine (Preisach model)
+├── simulation/          # Time-stepping engine
+└── render/              # Vulkan backend
+```
+
+**Documentation:** `demo1-hysteresis/demo1.README.md`
+
+**Tests:** 25 tests passing (ferroelectric: 20, simulation: 5)
 
 ---
 
@@ -97,7 +138,7 @@ demo2-crossbar/pkg/gui/
 
 ---
 
-## Demo 3: MNIST (Neural Network) - ENHANCED
+## Demo 3: MNIST (Neural Network) - ENHANCED + FYNE GUI
 
 **Implemented Features:**
 - Layer-by-layer activation visualization (input, hidden, output layers)
@@ -108,9 +149,40 @@ demo2-crossbar/pkg/gui/
 - 30 discrete weight levels
 - Pretrained weights saved to data/pretrained_weights.json
 
-**Run Command:**
+**NEW: Fyne GUI Application (2026-01-19)**
+- Interactive 28x28 digit drawing canvas with soft brush
+- Real-time neural network inference as you draw
+- Layer activation visualization (input → hidden → output)
+- Output probability bar chart with predicted class highlighting
+- Confusion matrix with clickable cells
+- Per-class metrics panel (precision, recall, F1)
+- Class statistics panel showing TP, FP, FN
+- Two tabbed views: "Draw & Predict" and "Evaluation Metrics"
+- Load random test digits from MNIST dataset
+- IronLattice dark theme (cyan/coral branding)
+
+**Go Packages Used:**
+- `fyne.io/fyne/v2` - Cross-platform GUI toolkit
+- Custom widgets: `DigitCanvas`, `LayerActivationView`, `ConfusionMatrix`, `MetricsPanel`
+
+**Run Commands:**
 ```bash
+# Terminal version (original)
 cd demo3-mnist && go run ./cmd/mnist
+
+# NEW: Fyne GUI version
+cd demo3-mnist && ./mnist-gui
+# Or build fresh:
+go build -o demo3-mnist/mnist-gui ./demo3-mnist/cmd/mnist-gui
+```
+
+**GUI Package Structure:**
+```
+demo3-mnist/pkg/gui/
+├── app.go          # Main application, layout, callbacks
+├── canvas.go       # DigitCanvas - 28x28 interactive drawing
+├── activations.go  # LayerActivationView, OutputBarChart
+└── metrics.go      # ConfusionMatrix, MetricsPanel, ClassStatsPanel
 ```
 
 **Tests:** 9 tests passing (training package)
@@ -145,11 +217,30 @@ cd demo4-circuits && go run ./cmd/circuits --power
 ## THE STORY (Demos 1-4)
 
 ```
-Demo 1: "This is how the memory cell works"              ENHANCED
+Demo 1: "This is how the memory cell works"              ENHANCED + FYNE GUI
 Demo 2: "This is how we compute in memory"               ENHANCED + FYNE GUI
-Demo 3: "This is what we can build with it"              ENHANCED
+Demo 3: "This is what we can build with it"              ENHANCED + FYNE GUI
 Demo 4: "This is how it fits in a real chip"             ENHANCED
 ```
+
+---
+
+## QUICK START - Demo 1 Fyne GUI
+
+```bash
+# Run the interactive hysteresis visualization
+cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+```
+
+**GUI Features:**
+| Feature | Description |
+|---------|-------------|
+| P-E Plot | Real-time hysteresis curve with fade trail |
+| Level Indicator | 30-level color gradient bar |
+| Material Dropdown | HZO variants selection |
+| Waveform Dropdown | Sine, Triangle, Square, Manual |
+| E-field Slider | Manual control (in Manual mode) |
+| Frequency Slider | 0.1-5 Hz animation speed |
 
 ---
 
@@ -177,6 +268,34 @@ cd demo2-crossbar && ./crossbar-gui
 - Right-click to clear selection
 - Tabs switch between Conductance, IR Drop, and Sneak Path views
 - Yellow border highlights selected/worst-case cells
+
+---
+
+## QUICK START - Demo 3 Fyne GUI
+
+```bash
+# Run the interactive MNIST neural network
+cd demo3-mnist && ./mnist-gui
+# Or build fresh:
+go build -o demo3-mnist/mnist-gui ./demo3-mnist/cmd/mnist-gui && ./demo3-mnist/mnist-gui
+```
+
+**GUI Features:**
+| Feature | Description |
+|---------|-------------|
+| Digit Canvas | 28x28 interactive drawing with soft brush |
+| Layer View | Input → Hidden → Output activation visualization |
+| Output Chart | 10-class probability bar chart |
+| Confusion Matrix | Clickable matrix with green diagonal (correct) |
+| Metrics Panel | Precision, recall, F1 per class |
+| Random Test | Load random MNIST test digits |
+| Evaluate All | Run full evaluation with metrics |
+
+**Drawing Interaction:**
+- Draw digits with mouse (soft brush with falloff)
+- Right-click to clear canvas
+- Real-time inference updates as you draw
+- Prediction and confidence shown immediately
 
 ---
 
@@ -245,14 +364,78 @@ These files are byte-sized stubs, need manual re-acquisition:
 
 ---
 
+## PROPOSED PAPERS TO DOWNLOAD (Priority Order)
+
+### CRITICAL - Fix Corrupted Downloads First
+
+| Paper | Source | Why Needed |
+|-------|--------|------------|
+| **Mayergoyz IEEE 1986** | IEEE Xplore | Original Preisach model mathematics - CRITICAL for Demo 1 hysteresis |
+| **IEEE_CIM_Survey_2023** | IEEE Xplore | "Compute-in-Memory: Recent Trends" - comprehensive overview |
+| **Tour_In2Se3_ChemRxiv** | ChemRxiv or tour@rice.edu | Flash Joule Heating synthesis for 2D ferroelectrics |
+
+### HIGH PRIORITY - For Demo Fixes
+
+| Paper | Source | Demo | Why Needed |
+|-------|--------|------|------------|
+| **Oh et al. IEEE EDL 2017** | IEEE Xplore | Demo 2 | "32 levels of Conductance States" - **Scheme C pulse programming details** |
+| **Jerry et al. IEDM 2017** | IEEE Xplore | Demo 3 | "FeFET Synapse 90% MNIST" - **75ns pulse width optimization** |
+| **Böscke et al. APL 2011** | AIP Publishing | Demo 1 | "Ferroelectricity in HfO₂ Thin Films" - **foundational HfO₂ physics** |
+
+### MEDIUM PRIORITY - Enhancement Papers
+
+| Paper | Source | Purpose |
+|-------|--------|---------|
+| "Symmetric weight updates in FeFET" | IEEE IEDM | Potentiation/depression symmetry |
+| "1T1R FeFET array architecture" | Various | Sneak path suppression |
+| "QAT for analog AI accelerators" | arXiv | Quantization-aware training |
+| "Domain wall dynamics in HZO" | IEEE EDL | Domain-level animation physics |
+
+### NICE TO HAVE
+
+| Paper | Source | Purpose |
+|-------|--------|---------|
+| "Preisach-NN self-calibration" | Various | Adaptive hysteresis modeling |
+| "Spiking neural networks on FeFET" | IEEE | Alternative inference mode |
+| "Wafer-scale FeFET integration" | IEDM | Manufacturing scalability |
+
+---
+
+## DEMO IMPROVEMENTS SUMMARY (From Literature Analysis)
+
+### Demo 1 Improvements (Hysteresis)
+1. **Stack-based voltage history tracking** - Implement "wiping-out" property per Mayergoyz
+2. **Minor loop visualization** - Show nested loops when reversing before saturation
+3. **Preisach-NN self-calibration** - Learn μ(α,β) from device measurements
+4. **Domain wall dynamics animation** - Visualize grain-by-grain switching
+
+### Demo 2 Improvements (Crossbar MVM)
+1. **Scheme C incremental amplitude pulses** - Replace constant pulses with V_prog[n] = V_start + n×ΔV
+2. **Enhanced IR drop model** - More accurate wire resistance modeling
+3. **Sneak path suppression visualization** - Show 1T1R vs passive array comparison
+4. **Conductance linearity verification** - Plot target vs actual with ±3σ margins
+
+### Demo 3 Improvements (MNIST)
+1. **75ns pulse width optimization** - Optimal balance for symmetric updates
+2. **Quantization-aware training (QAT)** - Simulate hardware during training
+3. **On-chip training visualization** - Show real-time weight evolution
+4. **Noise robustness analysis** - Accuracy vs device variation plots
+
+---
+
 ## IRONLATTICE SPECS (From Dr. Tour)
 
-| Spec | Target | Status |
-|------|--------|--------|
-| Analog states | 30 levels | Implemented in all demos |
-| MNIST accuracy | 87% | 95.8% achieved |
+| Spec | IronLattice Claim | Demo Status |
+|------|-------------------|-------------|
+| Analog states | 30 levels | Correctly implemented |
+| MNIST accuracy (hardware) | **87%** (88% theoretical max) | Simulation varies by noise |
 | P-E hysteresis | Square loop | Preisach model + LK |
 | Thermal advantage | Cool operation | 1000x cooler (Demo 5) |
+| Endurance | 10^9 demonstrated, 10^12 target | 10^11 in model |
+| Energy vs NAND | 10,000,000x lower | Documented, not visualized |
+| Energy vs DRAM | 1,000x lower | Documented, not visualized |
+
+**Note:** Dr. Tour stated 87% MNIST accuracy on **physical hardware** with 88% as the **theoretical maximum** for their architecture. Software simulations may exceed this.
 
 ---
 
@@ -265,7 +448,7 @@ go test ./...
 
 | Package | Tests |
 |---------|-------|
-| ferroelectric | 7 |
+| ferroelectric | 20 |
 | simulation | 5 |
 | crossbar | 14 |
 | training (mnist) | 9 |

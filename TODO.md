@@ -1,354 +1,421 @@
-# IronLattice-vis TODO
+# IronLattice-vis Strategic TODO
 
-> Based on Dr. external research group's November 2024 presentation on IronLattice technology.
-> Source: ironlattice-transcript.md
+> **Mission:** Create world-class visualization demos to help Dr. external research group pitch IronLattice to investors, engineers, and foundry partners.
+>
+> **Source:** Dr. Tour's November 2024 presentation (ironlattice-transcript.md)
+
+---
+
+## STRATEGIC CONTEXT
+
+### Dr. Tour's Pitch Narrative
+
+```
+"There's no more busing information back and forth to memory.
+It's all done in the same device. Computation memory in the same device.
+This could lower the requirements in a data center by 80 to 90%."
+                                                    — Dr. external research group
+```
+
+### Phased Market Entry Strategy (Critical for Demos!)
+
+```
+PHASE 1               PHASE 2               PHASE 3
+┌─────────────┐      ┌─────────────┐      ┌─────────────────┐
+│  Replace    │  →   │  Replace    │  →   │  Full Compute-  │
+│  NAND Flash │      │  DRAM       │      │  in-Memory      │
+└─────────────┘      └─────────────┘      └─────────────────┘
+  Easy entry           No refresh           80-90% energy
+  No SW changes        1000× lower E        savings
+```
+
+### Target Audiences
+
+| Audience | What They Care About | Key Demos |
+|----------|---------------------|-----------|
+| **Investors** | ROI, market size ($711B by 2030), energy crisis | Demo 3, 8, Market |
+| **Engineers** | Physics accuracy, real-world issues | Demo 1, 2, 5, 7 |
+| **Foundries** | CMOS compatibility, process flow | Demo 4, Integration |
+| **Strategic Partners** | Competitive advantage, restricted access details | Demo 8, Comparison |
 
 ---
 
 ## IronLattice Key Specs (From Dr. Tour)
 
-| Metric | Target | Current Status |
-|--------|--------|----------------|
-| Discrete analog states | **30 levels** | ✅ Implemented |
-| MNIST accuracy | **87%** (88% theoretical max) | ✅ **95.8%** achieved |
-| Energy vs NAND | 10,000,000× lower | N/A (simulation) |
-| Energy vs DRAM | 1,000× lower | N/A (simulation) |
-| P-E hysteresis | Square loop characteristic | Simplified tanh model |
-| CMOS compatible | Standard fab | N/A |
-| TRL | 4 (lab validation) | Demo/educational |
+| Metric | Target | Demo Status | Notes |
+|--------|--------|-------------|-------|
+| Discrete analog states | **30 levels** | ✅ All demos | "Not 0-1-0-1" |
+| MNIST accuracy | **87%** (88% max) | ✅ **95.8%** | Exceeds target! |
+| Energy vs NAND | 10,000,000× lower | 🔲 Demo 8 | Key pitch metric |
+| Energy vs DRAM | 1,000× lower | 🔲 Demo 8 | Zero refresh |
+| Speed vs NAND | 1,000,000× faster | 🔲 Demo 8 | 10ns switching |
+| Data center savings | **80-90%** | 🔲 Demo 8 | Headline metric |
+| P-E hysteresis | Square loop | ✅ Demo 1 | Preisach model |
+| CMOS compatible | Standard fab | ✅ Demo 4 | No exotic materials |
+| TRL | 4 → 9 | 📊 Progress | Lab validation |
+| Endurance target | 10^12 cycles | 🔲 | In progress |
 
 ---
 
 ## 8-Demo Roadmap
 
 ```
-Demo 1 ──→ Demo 2 ──→ Demo 3 ──→ Demo 4 ──→ Demo 5 ──→ Demo 6 ──→ Demo 7 ──→ Demo 8
-(cell)    (array)    (app)     (system)  (thermal)  (3D)      (real)    (compare)
+THE IRONLATTICE STORY
 
-Physics ──→ Computation ──→ Application ──→ Engineering ──→ Production Reality
+Demo 1        Demo 2        Demo 3        Demo 4
+"This is      "This is      "This is      "This is how
+how the       how we        what we       it fits in
+memory        compute       can build     a real chip"
+cell works"   in memory"    with it"
+
+     ↓             ↓             ↓             ↓
+┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
+│   P-E   │   │Crossbar │   │  MNIST  │   │Peripheral│
+│Hysteresis│   │   MVM   │   │   87%   │   │ Circuits │
+│ 30 levels│   │ W × V=I │   │ accuracy│   │DAC/ADC/TIA│
+└─────────┘   └─────────┘   └─────────┘   └─────────┘
+     ↓             ↓             ↓             ↓
+  PHYSICS      COMPUTE     APPLICATION     SYSTEM
+
+Demo 5        Demo 6        Demo 7        Demo 8
+"1000×        "Scalable     "We handle    "Why IronLattice
+cooler than   3D            real-world    wins vs everyone
+competition"  architecture" challenges"   else"
+
+     ↓             ↓             ↓             ↓
+┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
+│ Thermal │   │Multi-   │   │ Non-    │   │Comparison│
+│   Map   │   │ Layer   │   │idealities│   │DRAM/GPU/ │
+│ 25°-85°C│   │  3D     │   │IR/Sneak │   │IronLattice│
+└─────────┘   └─────────┘   └─────────┘   └─────────┘
+     ↓             ↓             ↓             ↓
+ THERMAL      ARCHITECTURE   ENGINEERING   INVESTOR PITCH
 ```
 
-| Demo | Name | Purpose | Audience | Status |
-|------|------|---------|----------|--------|
-| 1 | Hysteresis | Single cell physics | Everyone | ✅ Complete |
-| 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ Complete |
-| 3 | MNIST | AI application | Investors | ✅ Complete (95.8%) |
-| 4 | Peripherals | Full system | Foundries | ✅ Complete |
-| 5 | Thermal | Heat analysis | Engineers | ✅ Complete |
-| 6 | Multi-Layer 3D | Architecture | Designers | 🔲 Planned |
-| 7 | Non-Idealities | Real-world issues | Engineers | 🔲 Planned |
-| 8 | Comparison | Why IronLattice wins | Investors | 🔲 Planned |
+### Demo Status
+
+| Demo | Name | Purpose | Audience | Status | GUI |
+|------|------|---------|----------|--------|-----|
+| 1 | Hysteresis | Memory cell physics | Everyone | ✅ | ✅ Fyne |
+| 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ | ✅ Fyne |
+| 3 | MNIST | AI application | Investors | ✅ 95.8% | ✅ Fyne |
+| 4 | Peripherals | Full system | Foundries | ✅ | 🔲 CLI |
+| 5 | Thermal | Heat analysis | Engineers | ✅ | 🔲 CLI |
+| 6 | Multi-Layer | 3D Architecture | Designers | 🔲 | 🔲 |
+| 7 | Non-Idealities | Real issues | Engineers | ✅ IR/Sneak | 🔲 |
+| 8 | Comparison | Why IL wins | Investors | 🔲 | 🔲 |
 
 ---
 
-## Phase 1: Core Demos ✅ COMPLETE
+## PHASE 4: HYPER IMPROVEMENTS (Current Focus)
 
-### Demo 1: Ferroelectric Hysteresis ✅
-- [x] P-E hysteresis curve visible
-- [x] 30 discrete levels clearly shown (LevelIndicator)
-- [x] Interactive E-field control
-- [x] Preisach model with HZO parameters
-- [x] Thread-safe simulation engine
-- [ ] Square loop characteristic (IronLattice advantage) - enhancement
+### Priority 1: Investor-Ready Demos
 
-### Demo 2: Crossbar MVM ✅
-- [x] Matrix-vector multiplication works
-- [x] 30-level conductance states
-- [x] Input/output visualization
-- [x] Terminal display with color coding
-- [ ] Animated voltage/current flow - enhancement
+#### Demo 8: Technology Comparison (CRITICAL FOR PITCH)
 
-### Demo 3: MNIST Classification ✅
-- [x] Can classify handwritten digits
-- [x] **Achieves 87% accuracy** → **95.8%!**
-- [x] Uses 30 discrete weight levels
-- [x] Interactive drawing/testing
-- [x] Pretrained weights saved to data/pretrained_weights.json
+**Purpose:** The slide Dr. Tour shows investors — why IronLattice wins
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    COMPUTE PERFORMANCE COMPARISON                 │
+├────────────────┬─────────────┬─────────────┬─────────────────────┤
+│    Metric      │  DRAM+CPU   │    GPU      │    IronLattice      │
+├────────────────┼─────────────┼─────────────┼─────────────────────┤
+│ Time (MVM)     │   100 μs    │   10 μs     │      0.01 μs        │
+│ Energy/MAC     │   10 pJ     │   1 pJ      │      0.001 pJ       │
+│ Data Movement  │   O(n²)     │   O(n²)     │        0            │
+│ Memory Refresh │   Yes       │   Yes       │       None          │
+│ CMOS Compatible│   Yes       │   Yes       │       Yes           │
+└────────────────┴─────────────┴─────────────┴─────────────────────┘
+                                               ↑
+                                         10,000,000× better
+```
+
+**Implement:**
+- [ ] Side-by-side animated comparison (3 columns)
+- [ ] Energy meter filling up (show 10M× difference)
+- [ ] Time bar racing (show 1M× faster)
+- [ ] Data center savings calculator ($$$)
+- [ ] "If X data centers switch, save Y TWh/year"
+
+#### Demo 8b: Competitive Matrix (From Dr. Tour's Slides)
+
+| Feature | IronLattice | 3D NAND | ReRAM (Weebit) | PCRAM | Google TPU | Intel Loihi |
+|---------|-------------|---------|----------------|-------|------------|-------------|
+| Write/Read Energy | ✅ | ❌ | ✅ | 🟡 | ❌ | ✅ |
+| Write/Read Speed | ✅ | ❌ | ✅ | ❌ | ✅ | 🟡 |
+| Endurance | ✅ | ❌ | ❌ | 🟡 | ✅ | 🟡 |
+| CMOS Compatible | ✅ | ✅ | 🟡 | 🟡 | ✅ | 🟡 |
+| Memory/Logic Unified | ✅ | ❌ | 🟡 | 🟡 | ❌ | 🟡 |
+| 30+ Analog States | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+
+**Only IronLattice has ✅ across ALL categories**
 
 ---
 
-## Phase 2: System Integration ✅ COMPLETE
+### Priority 2: Engineer-Ready Demos
 
-### Demo 4: Peripheral Circuits ✅
+#### Demo 1-4: Add Fyne GUIs ✅ DONE
 
-**Purpose:** Show investors/foundries the full chip system
+- [x] Demo 1: Hysteresis Fyne GUI (PEPlot, LevelIndicator)
+- [x] Demo 2: Crossbar Fyne GUI (Heatmap, IR Drop, Sneak Paths)
+- [x] Demo 3: MNIST Fyne GUI (DigitCanvas, LayerActivation, ConfusionMatrix)
+- [ ] Demo 4: Peripherals Fyne GUI (Circuit diagrams, timing, power)
+- [ ] Demo 5: Thermal Fyne GUI (Heat map, 3D view)
 
-```
-WRITE PATH                 READ PATH
+#### Demo 7: Non-Idealities (Show We Understand Real Challenges)
 
-Level: [22]               Current: [67 μA]
-    │                          ↑
-    ▼                          │
-┌───────┐                  ┌───────┐
-│  DAC  │                  │  TIA  │
-│ 5-bit │                  │       │
-└───┬───┘                  └───┬───┘
-    │                          ↑
-    ▼                          │
-┌───────┐                  ┌───────┐
-│ Charge│                  │  ADC  │
-│ Pump  │                  │ 5-bit │
-└───┬───┘                  └───────┘
-    │
-    ▼
-┌─────────────────┐
-│    CROSSBAR     │
-└─────────────────┘
-```
+**Already Implemented:**
+- [x] IR drop analysis with wire resistance
+- [x] Sneak path current analysis
+- [x] MVM with non-idealities comparison
 
-**Features implemented:**
-- [x] DAC visualization: Digital → Write voltage (5-bit, 30 levels)
-- [x] Charge pump: 1V → ±1.5V for write operations
-- [x] TIA (Transimpedance Amplifier): Current → Voltage conversion
-- [x] ADC visualization: Analog → Digital level (5-bit)
-- [x] Noise injection visualization
-- [x] Show CMOS compatibility (standard process)
-- [x] Energy consumption display per operation
-
-**Technical approach:**
-```go
-// pkg/peripherals/dac.go
-type DAC struct {
-    Bits       int     // 5 bits for 30 levels
-    VrefHigh   float64 // +1.5V
-    VrefLow    float64 // -1.5V
-}
-
-func (d *DAC) Convert(level int) float64 {
-    return d.VrefLow + float64(level)/float64((1<<d.Bits)-1)*(d.VrefHigh-d.VrefLow)
-}
-```
-
----
-
-### Demo 5: Thermal Simulation ✅
-
-**Purpose:** Show engineers heat management is solved
-
-```
-Top View (Heat Map)        Side View
-
-░░░▒▒▓▓████▓▓▒▒░░░        ███ Layer 3
-░░▒▒▓██████████▓▒▒░░       ↕ heat
-░▒▓████████████████▓▒░     ███ Layer 2
-░░▒▒▓██████████▓▒▒░░       ↕ heat
-░░░▒▒▓▓████▓▓▒▒░░░         ███ Layer 1
-                           ░░░ Heat Sink
-
-25°C ░▒▓█ 85°C
-```
-
-**Features implemented:**
-- [x] 2D heat map visualization (terminal with color)
-- [x] Real-time heat diffusion simulation
-- [x] Multi-layer heat coupling
-- [x] Hotspot identification and highlighting
-- [x] Thermal throttling warning system
-- [x] Workload-dependent heat generation
-- [x] Show IronLattice's low-power advantage (1000x cooler!)
-
-**Technical approach:**
-```go
-// pkg/thermal/simulation.go
-type ThermalSim struct {
-    Grid        [][]float64 // Temperature grid
-    Conductivity float64    // Thermal conductivity
-    AmbientTemp  float64    // 25°C
-    MaxTemp      float64    // 85°C threshold
-}
-
-func (t *ThermalSim) Step(powerMap [][]float64, dt float64) {
-    // Heat diffusion equation: dT/dt = α∇²T + Q
-}
-```
-
----
-
-## Phase 3: Full Vision
-
-### Demo 6: Multi-Layer 3D Architecture 🔲
-
-**Purpose:** Show designers the scalable architecture
-
-```
-         ╔════════════════════╗
-        ╱ Layer 3: 64×10     ╱│
-       ╔════════════════════╗ │
-      ╱ Layer 2: 128×64    ╱│ │
-     ╔════════════════════╗ │ │
-     ║ Layer 1: 784×128   ║ │╱
-     ║  ●  ●  ●  ●  ●  ● ║╱
-     ╚════════════════════╝
-              ↑
-          Input (784)
-```
-
-**Features to implement:**
-- [ ] 3D rendered multi-layer stack (Vulkan)
-- [ ] Via connections between layers
-- [ ] Heat overlay integration (from Demo 5)
-- [ ] Exploded view mode for inspection
-- [ ] Design space exploration (layer sizes)
-- [ ] Data flow animation through layers
-- [ ] Memory density calculations
-
----
-
-### Demo 7: Non-Idealities 🔲
-
-**Purpose:** Show engineers we understand real-world challenges
-
-```
-IR Drop:           1.0V → 0.95V → 0.90V → 0.85V
-Sneak Paths:       Current shortcuts through array
-Conductance Drift: Level 15 → Level 14.8 (1 week)
-Variation:         Write 15: [14, 15, 15, 16, 15, 14]
-```
-
-**Features to implement:**
-- [ ] IR drop visualization across array
-- [ ] Sneak path current animation
-- [ ] Conductance drift over simulated time
+**Still Needed:**
+- [ ] Conductance drift over time simulation
 - [ ] Cycle-to-cycle variation (write noise)
 - [ ] Device-to-device variation
-- [ ] Impact on accuracy (real-time display)
 - [ ] Mitigation strategies visualization
-
-**Technical approach:**
-```go
-// pkg/nonidealities/irdrop.go
-func ComputeIRDrop(array *crossbar.Array, wireResistance float64) [][]float64 {
-    // Model voltage drop: V(x) = V0 - I*R*x
-}
-
-// pkg/nonidealities/sneakpath.go
-func AnalyzeSneakPaths(array *crossbar.Array, targetCell [2]int) [][]float64 {
-    // Find parasitic current paths
-}
-```
+- [ ] "Worst case" vs "typical" accuracy comparison
 
 ---
 
-### Demo 8: Technology Comparison 🔲
+### Priority 3: Foundry-Ready Demos
 
-**Purpose:** Investor pitch — why IronLattice wins
+#### Demo 4: Enhanced Peripheral Circuits
 
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    DRAM     │  │    GPU      │  │ IronLattice │
-│    +CPU     │  │   (CUDA)    │  │    (CIM)    │
-├─────────────┤  ├─────────────┤  ├─────────────┤
-│ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
-│ Energy: 100 │  │ Energy: 50  │  │ Energy: 0.1 │
-│ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
-└─────────────┘  └─────────────┘  └─────────────┘
-```
+**For Foundry Partners (TSMC, Samsung, etc.):**
+- [ ] CMOS process flow diagram
+- [ ] Layer stack visualization (HZO superlattice)
+- [ ] Standard tool compatibility (ALD, PVD)
+- [ ] No exotic materials checklist
+- [ ] Integration with existing BEOL process
 
-**Features to implement:**
-- [ ] Side-by-side comparison animation
-- [ ] DRAM+CPU vs GPU vs IronLattice
-- [ ] Time metric comparison
-- [ ] Energy metric comparison
-- [ ] Operation count comparison
-- [ ] Scalable matrix size demonstration
-- [ ] Data center savings projection
+#### Wafer-Scale Vision (George Gilder Response)
 
-**Comparison metrics:**
-| Metric | DRAM+CPU | GPU | IronLattice |
-|--------|----------|-----|-------------|
-| Memory bandwidth | 100 GB/s | 1 TB/s | ∞ (in-situ) |
-| Energy per MAC | 10 pJ | 1 pJ | 0.001 pJ |
-| Latency | 100 ns | 10 ns | 1 ns |
-| Data movement | O(n²) | O(n²) | 0 |
-
----
-
-## Code Quality Tasks
-
-### Critical Bugs ✅ COMPLETED
-- [x] **Race conditions** (engine.go) - Added sync.RWMutex
-- [x] **O(n³) weight updates** (network.go) - Fetch matrix once
-- [x] **Panics in production** (network/network.go:117) - Replaced with error returns
-
-### Test Coverage ✅ 54 TESTS
-- [x] 30-level quantization tests (7 tests)
-- [x] MVM output verification (included in array_test.go)
-- [x] Engine thread-safety tests (5 tests)
-- [x] Network forward/backward tests (7 tests)
-- [x] Weight save/load roundtrip (included in network_test.go)
-- [x] MNIST accuracy >= 85% on test set (95.8% achieved)
-- [x] P-E curve hysteresis verification (7 tests)
-- [x] Peripheral circuits tests (9 tests)
-- [x] Thermal simulation tests (17 tests)
-
----
-
-## Educational Enhancements
-
-### "Why CIM?" Panel
-> "This could lower the requirements in a data center by 80 to 90%." — Dr. Tour
-
-- [ ] Traditional architecture diagram (memory ↔ CPU bottleneck)
-- [ ] CIM architecture diagram (compute happens in memory)
-- [ ] Energy comparison visualization
-- [ ] "30 states vs binary: ~5 bits per cell vs 1 bit" explanation
-
-### Market Context
-- [ ] Comparison table from Dr. Tour's slides
-- [ ] TRL progression: "We are here (TRL 4) → Production (TRL 9)"
-
----
-
-## Repository Structure
+From Dr. Tour's response to WSJ article "The Microchip Era Is About to End":
 
 ```
-ironlattice-vis/
-├── demo1-hysteresis/     ✅ Single cell P-E curve
-├── demo2-crossbar/       ✅ Crossbar MVM visualization
-├── demo3-mnist/          ✅ MNIST classifier (95.8%)
-├── demo4-circuits/       ✅ Peripheral circuits (DAC, ADC, TIA, Charge Pump)
-├── demo5-thermal/        ✅ Thermal simulation (1000x cooler operation)
-├── demo6-multilayer/     🔲 3D multi-layer
-├── demo7-nonidealities/  🔲 Real-world issues
-├── demo8-comparison/     🔲 Technology comparison
-├── docs/                 Documentation
-├── papers/               Scientific papers
-└── go.mod
+WAFER-SCALE BENEFITS OF IRONLATTICE
+
+1. Memory Bottleneck Solved     → CIM eliminates data movement
+2. Packaging Complexity Reduced → Fewer chips, simpler interconnects
+3. Thermal Management           → 1000× cooler operation
+4. Full Wafer Integration       → Ferroelectric enables dense circuits
 ```
 
----
-
-## Success Criteria
-
-### From Dr. Tour's Presentation
-- [x] 30 discrete levels (not binary)
-- [x] 87% MNIST accuracy (achieved 95.8%)
-- [x] Compute-in-memory demonstration
-- [ ] Square hysteresis loops (IronLattice advantage)
-- [ ] Full system with peripherals
-- [ ] Comparison showing 1000× energy advantage
+- [ ] Create "Wafer-Scale Vision" demo
+- [ ] Show how CIM solves Gilder's 3 stress factors
+- [ ] Animate data center of the future (box-sized, not warehouse)
 
 ---
 
-## References
+## MARKET CONTEXT (For Investor Demos)
 
-- **Primary Source**: Dr. external research group, IronLattice presentation (Nov 2024)
-- **Key Paper**: Shin, J., et al. "BEOL-Compatible Superlattice FEFET Analog Synapse" IEEE (2022)
-- **MNIST Benchmark**: 88% theoretical maximum, 87% achieved by IronLattice, **95.8% by this demo**
-- **30 States**: Post-synaptic current with 30 discrete levels (LTP/LTD demonstration)
+### Market Size ($711B by 2030)
+
+```
+                           2025         2030
+┌────────────────────┬───────────┬────────────┐
+│ NAND Flash         │   $78B    │    $98B    │
+├────────────────────┼───────────┼────────────┤
+│ DRAM               │  $143B    │   $220B    │
+├────────────────────┼───────────┼────────────┤
+│ AI Semiconductors  │  $163B    │   $403B    │
+├────────────────────┼───────────┼────────────┤
+│ TOTAL              │  $384B    │   $721B    │
+└────────────────────┴───────────┴────────────┘
+                        ↑
+              IronLattice can address ALL of these
+```
+
+### Why Now?
+
+- Companies investing $150B+ in data centers
+- Existing solutions "not scalable, not CMOS compatible, not cost effective"
+- Flash memory is 25 years old — "it's about time" for disruption
+- Energy crisis in AI compute is existential
 
 ---
 
-## Notes from Dr. Tour's Presentation
+## TRL PROGRESSION VISUALIZATION
+
+```
+TRL 1  TRL 2  TRL 3  TRL 4  TRL 5  TRL 6  TRL 7  TRL 8  TRL 9
+  ○      ○      ○      ●      ○      ○      ○      ○      ○
+                       ↑
+                  WE ARE HERE
+               "Component validation
+                in lab environment"
+
+  Basic  →  Proof  →  Lab  →  Prototype  →  Demo  →  Production
+Research   Concept   Demo     in Real       in     Ready
+                              Environment   Real
+```
+
+- [ ] Add TRL progress bar to all demos
+- [ ] Show "path to commercialization"
+- [ ] Highlight what each TRL milestone requires
+
+---
+
+## TEAM & CONTACT STRATEGY
+
+### Current Team (From Transcript)
+
+| Role | Name | Background |
+|------|------|------------|
+| Founder & Chief Scientist | Dr. external research group | external research institution, 700+ publications |
+| Co-Founder & CTO | Dr. Jaeho Shin | Device engineer, invented superlattice |
+| CEO | Tawfik Jarjour | 13 years Accenture, semiconductor industry |
+| Advisor (Patents) | Dr. Fred Flitsch | Former IBM, 35-40 years experience |
+| Advisor (Investment) | John Jaggers | Computing systems investor |
+| Advisor (Foundry) | Dr. Yoontak Hwuang | Semiconductor commercialization |
+| Advisor (Manufacturing) | Sandeep Davé | Foundry expert |
+
+### How This Project Can Help
+
+**Value Proposition for IronLattice Team:**
+
+1. **Investor Presentations**
+   - Interactive demos > static slides
+   - "Show, don't tell" the technology
+   - Web-deployable for remote pitches
+
+2. **Engineer Recruitment**
+   - Demos show technical depth
+   - Attract top talent who want to work on cutting-edge CIM
+
+3. **Foundry Discussions**
+   - Visual process flow explanations
+   - CMOS compatibility proof points
+
+4. **restricted access Partner Meetings**
+   - Customizable comparison charts
+   - Confidential data can be plugged in
+
+### Potential Contribution Path
+
+```
+STEP 1: Perfect the demos (current work)
+        ↓
+STEP 2: Share portfolio with team (LinkedIn, email)
+        ↓
+STEP 3: Offer to present demos in investor meetings
+        ↓
+STEP 4: Propose visualization engineer role
+        ↓
+STEP 5: Join external research institution / IronLattice team
+```
+
+**Contact:**
+- Dr. Tour's lab: tour@rice.edu
+- IronLattice: (company forming)
+- LinkedIn: Connect with Tawfik Jarjour (CEO)
+
+---
+
+## IMMEDIATE ACTION ITEMS
+
+### This Week
+
+- [x] Complete Demo 3 Fyne GUI (MNIST with digit drawing)
+- [ ] Update command.md with all improvements
+- [ ] Create Demo 8 skeleton (comparison framework)
+- [ ] Build technical briefing mode (simplified UI)
+
+### This Month
+
+- [ ] Demo 4 Fyne GUI (peripheral circuits visualization)
+- [ ] Demo 5 Fyne GUI (thermal heat map)
+- [ ] Demo 8 complete (side-by-side comparison animation)
+- [ ] Web deployment (WASM or electron)
+- [ ] Create pitch video (~2 min demo reel)
+
+### Portfolio Deliverable
+
+- [ ] README.md with GIF screenshots
+- [ ] Single command to run all demos
+- [ ] Professional documentation
+- [ ] Contact/contribution section
+
+---
+
+## SUCCESS METRICS
+
+### Demo Quality
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| All tests passing | 100% | ✅ 110+ tests |
+| GUI for Demos 1-4 | 4/4 | 3/4 |
+| MNIST accuracy | ≥87% | ✅ 95.8% |
+| Documentation | Complete | 80% |
+| Build time | <30s | ✅ |
+
+### Pitch Readiness
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| Can run full demo in 5 min | Yes | ~80% |
+| Investor-friendly UI | Yes | 🔲 |
+| Comparison charts implemented | Yes | 🔲 |
+| Web-deployable | Yes | 🔲 |
+
+---
+
+## DR. TOUR'S KEY QUOTES (For Demo Annotations)
 
 > "It's got **30 discrete states**. So it's not 0-1-0-1."
 
-> "We're at **87% validation** here... theoretical is 88% is the theoretical maximum."
+> "We're at **87% validation** here... theoretical is 88%."
 
 > "**Compute in memory** where the same device does the memory and the computation."
 
-> "This could lower the requirements in a data center by **80 to 90%** of the energy requirements."
+> "This could lower the requirements in a data center by **80 to 90%**."
 
 > "Works on a **standard CMOS line** and can translate just like that."
 
 > "There's **no exotic materials** in here. There's no graphene."
+
+> "We haven't raised a penny to date... we really want to move with the **best strategy**."
+
+---
+
+## WEEBIT NANO PRECEDENT
+
+Dr. Tour's previous success story (from transcript):
+
+> "This company Weebit—this is another memory that came out of my lab.
+> We started this company in 2015 out of my lab and it's selling now
+> on the market. It's got three big customers."
+
+**Lesson:** Dr. Tour has a track record of spinning out successful memory companies.
+
+**Opportunity:** IronLattice is his next one — and this time they're not missing neuromorphic computing.
+
+---
+
+## FILE STRUCTURE
+
+```
+ironlattice-vis/
+├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
+├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
+├── demo3-mnist/          ✅ MNIST 95.8% + Fyne GUI
+├── demo4-circuits/       ✅ Peripherals (CLI only)
+├── demo5-thermal/        ✅ Thermal sim (CLI only)
+├── demo6-multilayer/     🔲 3D multi-layer
+├── demo7-nonidealities/  ✅ IR drop + sneak paths (in demo2)
+├── demo8-comparison/     🔲 Technology comparison
+├── docs/                 Documentation
+├── papers/               Scientific papers (40+)
+├── opensource/papers/    Additional papers
+├── command.md            Session context
+├── TODO.md               This file
+└── ironlattice-transcript.md  Dr. Tour's presentation
+```
+
+---
+
+*Last updated: 2026-01-19*
+*Goal: Help Dr. Tour visualize IronLattice for investors, engineers, and foundries*

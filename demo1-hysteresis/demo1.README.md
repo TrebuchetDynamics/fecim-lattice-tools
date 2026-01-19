@@ -87,14 +87,6 @@ Static ASCII output for terminals without interactivity:
 ./hysteresis --headless
 ```
 
-Displays:
-- P-E hysteresis loop as ASCII art
-- Preisach plane domain states
-- 30 discrete states table
-- Switching dynamics
-- Temperature dependence
-- Material comparison
-
 ### 4. Vulkan Graphics Mode
 
 GPU-accelerated visualization (advanced):
@@ -102,22 +94,9 @@ GPU-accelerated visualization (advanced):
 ./hysteresis --vulkan
 ```
 
-Features shader-based rendering with 60 FPS animation.
-
-## Command Line Options
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| (none) | GUI | Run Fyne GUI mode (recommended) |
-| `--tui` | `false` | Run terminal UI mode |
-| `--headless` | `false` | Run headless ASCII mode |
-| `--vulkan` | `false` | Run Vulkan graphics mode |
-| `--optimized` | `false` | Use optimized superlattice parameters |
-| `--freq` | `1e6` | Waveform frequency in Hz |
-
 ## Physics Model
 
-### Preisach Hysteresis Model
+### Preisach Hysteresis Model (Mayergoyz Framework)
 
 The demo implements the **Mayergoyz Preisach model** following classical hysteresis theory:
 
@@ -149,6 +128,79 @@ Ec(T) = Ec₀ × (1 - T/Tc)^0.5
 ```
 
 Where Tc ≈ 723K (450°C) for HZO.
+
+---
+
+## Proposed Improvements (From Literature Analysis)
+
+### 1. Stack-Based Voltage History Tracking (Priority: HIGH)
+
+**Reference:** Mayergoyz, I.D. "Mathematical Models of Hysteresis" IEEE Trans. Mag. (1986)
+
+**Current Gap:** Basic Preisach model may not fully track "wiping-out" property.
+
+**Improvement:** Implement stack-based algorithm to track voltage reversal points:
+- Record voltage extrema {u₁, u₂, ..., uₙ}
+- Dynamically update Preisach integral boundaries
+- Track S⁺(t) and S⁻(t) regions on Preisach triangle
+- Implement geometric interface updates
+
+```go
+// Proposed enhancement
+type EnhancedPreisachModel struct {
+    grid [100][100]float64  // μ(α,β) distribution
+    state [100][100]int     // ±1 for each hysteron
+    voltageStack []float64   // Local extrema history (wiping-out)
+}
+```
+
+### 2. Minor Loop Visualization (Priority: MEDIUM)
+
+**Reference:** Physical Reality Preisach Model (Nature 2018)
+
+**Improvement:** Visualize minor loops when user reverses direction before saturation:
+- Show nested loops forming on P-E plot
+- Color-code minor vs major loops
+- Display Preisach plane state during partial cycles
+
+### 3. Preisach Neural Network Self-Calibration (Priority: LOW)
+
+**Reference:** B-Spline Everett Map Preisach (arXiv:2410.02797)
+
+**Improvement:** Implement Preisach-NN architecture:
+- Layer 1: Stop operator neurons (one per hysteron)
+- Layer 2: Linear summation with learned weights
+- Benefit: Self-calibrating model learns μ(α,β) from device measurements
+
+### 4. Domain Wall Dynamics Visualization (Priority: LOW)
+
+**Reference:** TDGL_Ferroelectric_Domains_arXiv.pdf (FerroX framework)
+
+**Improvement:** Add domain nucleation/propagation animation:
+- Show domains switching during field application
+- Visualize grain-by-grain switching in polycrystalline HZO
+
+---
+
+## Papers Supporting This Demo
+
+### Currently Available
+| Paper | Location | Relevance |
+|-------|----------|-----------|
+| Preisach_Ferroelectric_Modeling_arXiv.pdf | opensource/papers/01_Core_Materials/ | Hysteresis loop modeling |
+| HZO_Ferroelectric_Discovery_arXiv.pdf | opensource/papers/01_Core_Materials/ | HZO polarization switching |
+| TDGL_Ferroelectric_Domains_arXiv.pdf | opensource/papers/01_Core_Materials/ | FerroX TDGL framework |
+| newton_secant_preisach_control_2024.pdf | papers/downloaded/arxiv/ | B-Spline Everett Preisach |
+| physical_reality_preisach_2018.pdf | papers/downloaded/nature/ | Domain physics |
+
+### Recommended for Download
+| Paper | Source | Why Needed |
+|-------|--------|------------|
+| **Mayergoyz IEEE 1986** | IEEE Xplore | Original Preisach mathematics (CORRUPTED - needs re-download) |
+| **Böscke et al. APL 2011** | AIP Publishing | HfO₂ ferroelectric discovery - mechanical confinement mechanism |
+| **Domain wall dynamics in HZO** | IEEE EDL | For domain-level animation physics |
+
+---
 
 ## Architecture
 
@@ -182,12 +234,6 @@ demo1-hysteresis/
 |---------|---------|------------|
 | [fyne-io/fyne/v2](https://github.com/fyne-io/fyne) | Cross-platform GUI | Native look, canvas drawing, widgets, dark theme support |
 
-Fyne provides:
-- **Canvas API** for custom P-E curve rendering
-- **Widget system** for sliders, dropdowns, buttons
-- **Theme support** with IronLattice custom dark theme
-- **Cross-platform** builds for Windows, macOS, Linux
-
 ### TUI Libraries (Terminal Fallback)
 
 | Package | Purpose | Why Chosen |
@@ -203,14 +249,7 @@ Fyne provides:
 | [vulkan-go/vulkan](https://github.com/vulkan-go/vulkan) | GPU rendering | Modern Vulkan API for shader-based graphics |
 | [go-gl/glfw](https://github.com/go-gl/glfw) | Windowing | Cross-platform window creation |
 
-### Recommended Additional Packages
-
-For future enhancements:
-
-| Package | Purpose |
-|---------|---------|
-| [gonum/gonum](https://github.com/gonum/gonum) | Numerical computing (matrix ops, FFT) |
-| [guptarohit/asciigraph](https://github.com/guptarohit/asciigraph) | ASCII line graphs |
+---
 
 ## The Story This Demo Tells
 
@@ -221,6 +260,8 @@ This demo answers the question: **"How does the memory cell work?"**
 3. **30 Discrete States** — By controlling voltage precisely, we can store 30 distinct levels
 4. **Non-Volatile** — Polarization persists without power (shown by remanent polarization Pr)
 5. **Fast Switching** — ~1 ns switching time enables high-speed operation
+
+---
 
 ## Tests
 
@@ -243,6 +284,8 @@ Test coverage:
 - Material parameter validation
 - Preisach model reset
 - Normalized polarization bounds
+
+---
 
 ## Troubleshooting
 
@@ -290,27 +333,17 @@ Recompile shaders:
 cd shaders && ./compile.sh
 ```
 
-### Building on Windows
-
-Fyne requires CGO on Windows. Install:
-1. [MSYS2](https://www.msys2.org/)
-2. Run: `pacman -S mingw-w64-x86_64-gcc`
-3. Add to PATH: `C:\msys64\mingw64\bin`
-
-### Performance issues
-
-For smoother animation, try:
-```bash
-# Reduce simulation frequency
-./hysteresis --freq 1e5
-```
+---
 
 ## References
 
-1. Mayergoyz, I.D. "Mathematical Models of Hysteresis" (1991)
-2. Park et al. "Ferroelectricity in Doped Hafnium Oxide" Adv. Mater. (2015)
-3. Dr. external research group, "IronLattice Presentation" (Nov 2024)
-4. Bartic et al. "Preisach Model for Ferroelectric Capacitors" J. Appl. Phys. (2001)
+1. Mayergoyz, I.D. "Mathematical Models of Hysteresis" IEEE Trans. Mag. (1986) - **CRITICAL**
+2. Böscke et al. "Ferroelectricity in HfO₂ Thin Films" APL (2011) - **FOUNDATIONAL**
+3. Park et al. "Ferroelectricity in Doped Hafnium Oxide" Adv. Mater. (2015)
+4. Dr. external research group, "IronLattice Presentation" (Nov 2024)
+5. Bartic et al. "Preisach Model for Ferroelectric Capacitors" J. Appl. Phys. (2001)
+
+---
 
 ## License
 
