@@ -1,0 +1,893 @@
+Asymmetric Resonant Ferroelectric Tunnel Junctions for Simultaneous
+High Tunnel Electroresistance and Low Resistance-Area Product
+Balram Khattar,1 Adarsh Tripathi,1 Manmohan Brahma,2 and Abhishek Sharma3
+1) Department of Electrical Engineering, Indian Institute of Technology Ropar, Rupnagar 140001,
+
+India
+2) Academy of Scientific and Innovative Research (AcSIR), 201002, Ghaziabad, India
+3) School of Computing and Electrical Engineering, Indian Institute of Technology Mandi, Mandi 175005,
+India
+
+arXiv:2504.11137v1 [cond-mat.mes-hall] 15 Apr 2025
+
+(*Electronic mail: abhi@iitmandi.ac.in)
+(Dated: 16 April 2025)
+
+Ferroelectric tunnel junctions offer potential for non-volatile memory with low power, fast switching, and
+scalability, but their performance is limited by a high resistance-area product and a low tunnel electroresistance ratio. To address these challenges, we propose a doped HfO2 -based, silicon-compatible asymmetric
+resonant ferroelectric tunnel junction design with a quantum well embedded between two ferroelectric layers, replacing the conventional metal-ferroelectric-metal structure. Using a self-consistent coupling of the
+non-equilibrium Green’s function method with a Preisach-based model, we demonstrate that the quantum
+well enhances resonant tunneling effects, leading to a simultaneous reduction in the resistance-area product and a boost in the tunnel electroresistance ratio. The low-resistance state becomes more robust, while
+the high-resistance state is suppressed, improving readout speed and reducing power usage. We observed
+that incorporating a 2 nm quantum well significantly enhances the tunnel electroresistance ratio, achieving
+a peaking value of approximately 6.15 × 104 %, while simultaneously minimizing the resistance-area product to 4.71 × 101 Ω-cm2 at 0.175 V. Additionally, the device exhibits negative differential resistance, further
+enhancing its functionality. Our results confirm that this design enables scalable, energy-efficient, and highperformance non-volatile memory, making it a strong candidate for future memory technologies.
+Ferroelectric Tunnel Junctions (FTJs) are emerging as key
+components in next-generation electronic devices due to their
+ability to modulate resistance states using an ultrathin ferroelectric (FE) barrier.1,2 These devices consist of two different conductive electrodes that are sandwiched between a
+thin layer of FE material, acting as the barrier for tunneling. The electrodes screening length leads to polarizationdependent band bending, which modifies the effective barrier height and, in turn, influences the tunneling electroresistance (TER).3 The change in resistance, crucial for FTJ
+operation, is directly governed by the reversal of polarization in the FE layer, leading to two distinct resistance
+states: a low-resistance state (LRS) and a high-resistance
+state (HRS). The TER ratio, which quantifies this effect, is
+defined as: TER ratio (in %) = [(LRS − HRS)/LRS] × 100.4
+These unique properties make FTJs highly suitable for applications in non-volatile memory, logic circuits, and neuromorphic computing.5,6 Their ability to store data in distinct resistance states provides an energy-efficient alternative to traditional memory technologies, paving the way for advancements in high-performance, low-power electronic devices.7
+The integration of doped HfO2 into existing semiconductor
+fabrication processes enables seamless scalability for practical applications.8–10 However, implementing doped HfO2 based FTJs in crossbar arrays based memory design presents
+challenges, particularly in readout performance.7,11 Addressing these challenges requires enhancing the TER ratio while
+maintaining a low resistance-area (RA) product, enabling
+FTJs with enhanced energy efficiency, device miniaturization,
+high packing density, and long-term reliability. A high TER
+
+ratio is crucial for clear resistance state differentiation, which
+is essential for reliable data storage, accurate readout, and robust logic operations. Simultaneously, a low RA product particularly important for scaling down device dimensions while
+maintaining high packing density in FTJ-based memory arrays. As devices shrink, a high TER ratio ensures stable operation, while a low RA prevents excessive resistance that could
+hinder current flow. Balancing these factors is key to developing ultra-low-power, high-speed, and high-density nonvolatile memory architectures.
+Various microscopic processes influence the tunneling barrier in FTJs, including those occurring at the interfaces,
+within the electrodes, and inside the FE layer. Asymmetry in these structures—achieved through careful selection
+of electrodes4,12 , composite barrier layers13 , and interface
+engineering14 —plays a crucial role in enhancing the TER ratio. To optimize the TER ratio and RA product, several studies
+have explored different FTJ configurations. Zhuravlev et al.
+(2005, 2009) conducted theoretical analyses metal-FE-metal
+(MFM) stack (SrRuO3 /PbZr0.52 Ti0.48 O3 /Pt) and metal-FEIL-metal (MFIM) structures incorporating BaTiO3 as the FE
+layer and SrTiO3 as the nonpolar dielectric. Their theoretical
+models predicted significant enhancements in the TER ratio
+while offering a considerable RA product at large TER ratio
+values.15,16 Expanding on this, Chang et al. (2017) conducted
+theoretical calculations on MFM and MFIM stacks using inorganic (BaTiO3 ) and organic (PVDF, polyvinylidene fluoride) FE materials, demonstrating a strong correlation with experimental results.17 By employing the Landau-Khalatnikov
+approach integrated with the nonequilibrium Green’s func-
+
+2
+tion (NEGF) formalism, they observed a relatively low TER
+ratio, highlighting the need for further optimization. Similarly, Zheng et al. (2022) investigated resonant band engineering in FTJs, evaluating both RA and TER ratio parameters. Using perovskite-based BaTiO3 FEs with a BaSnO3 dielectric layer, they demonstrated polarization-dependent RT,
+achieving a substantial TER with a low RA product.18 While
+these studies have shown promising results, a common limitation remains—the inherent incompatibility of perovskitebased FEs with CMOS technology, posing challenges for
+practical integration. More recently, Chang et al. (2023)
+explored HfO2 -doped FEs for resonant FTJs design by integrating the Preisach-based model with the transfer matrix
+method. Although the proposed resonant FTJs are CMOScompatible, they exhibit a relatively low TER ratio and a high
+RA product.19
+
+TiN
+
+(b)
+
+HZO
+
+TiO2 HZO TiN
+FE1
+
+TE
+
+0
+
+qw2
+
+qw1
+
+m1
+
+IL
+
+0
+
+BE
+
+eVa Ef2
+
+Ef1
+
+L x-axis
+
+m2
+
+FE2
+
+(a)
+
+tqw
+
+tfe1
+1
+
+Position (nm)
+
+tfe2
+
+2
+
+L
+
+FIG. 1. (a) Schematic of TiN/HZO/TiO2 /HZO/TiN stack FTJ and
+(b) the energy band diagram for multilayer FTJ with one QW.
+
+Hence, in this work, we develop a Preisach-based model integrated with the NEGF formalism to present a design guideline for the simultaneous enhancement of the TER ratio and
+reduction of the RA product through resonant band engineering, achieved via appropriate material selection and precise
+tuning of quantum well (QW) thickness. Our work utilizes
+HfO2 -doped FEs to ensure CMOS compatibility while optimizing both TER ratio and RA product—key factors for seamless integration into practical electronic devices. By incorporating a low-barrier insulating layer (IL) within the FE barriers, we can effectively tailor the electronic transport characteristics of FTJs. The addition of an IL, such as TiO2 , which has
+been shown to improve the FE characteristics of HZO films,
+plays a crucial role in enhancing the TER ratio in HfO2 -based
+FTJs.20,21 This IL introduces resonant states within the energy
+gap of the barrier, which can be modulated through FE polarization. By carefully selecting the QW thickness, the resonant
+states can be tuned to optimize the transition between direct
+and resonant tunneling transport modes, further improving the
+TER ratio and RA product. This precise band engineering
+significantly enhances the resistance ratio of FTJs, providing
+a practical approach to meeting industry performance standards. To explore this mechanism, we investigate RT effects in
+FTJs with a QW structure, employing a Preisach-based model
+integrated with the NEGF formalism. By leveraging this integrated modeling approach, we accurately assess the impact
+of QW thickness on the TER ratio and RA characteristics of
+FTJs, offering critical insights into optimizing barrier design
+and material properties for improved device efficiency.
+
+The schematic layout of the TiN/HZO/TiO2 /HZO/TiN
+multilayer stack FTJ is depicted in Fig. 1(a). The IL TiO2 ,
+with a thickness of tqw , is positioned between two FE HZO
+(Hf0.5 Zr0.5 O2 ) layers with thicknesses tfe1 and tfe2 . We have
+implemented the asymmetrical barrier in FTJ, utilizing the
+same material, TiN, for the top electrode (TE) and bottom
+electrode (BE). The FE thickness tfe is the total sum of FE
+thicknesses tfe1 and tfe2 in the MFIFM FTJ. The corresponding
+energy band diagram is shown in Fig. 1(b). The IL is performing as a QW that enables RT in the MFIFM FTJ structure. We
+consider a Thomas-Fermi model of screening for determining
+the distribution of screening charge and potential profile at the
+metal-FE interface. The screening potential at the metal-FE
+interface is represented by the following Eq.22–24
+
+σλ
+
+− s m1 e(x/λm1 ) ,
+if x ≤ 0
+
+εm1 εo
+Vm1(m2) (x) =
+(1)
+
+
+ σs λm2 e[−(x−L)/λm2 ] , if x ≥ L
+εm2 εo
+where σs represents the surface charge density at the metalFE interfaces, λm1 (εm1 ) and λm2 (εm2 ) denote the effective
+lengths of screening (relative dielectric constants) for the TE
+and BE electrodes, respectively, and εo signifies the permittivity of free space. The boundary conditions allow us to determine the surface charge density, which can be expressed
+as17
+σs = εo εfe,i Efe,i + Pfe,i = εo εqw Eqw
+
+(2)
+
+Here, i designates 1 and 2 for the FE1 and FE2 layers, reSet Va
+
+Preisach-based model :
+
+σs=σs+𝝙σ's
+
+Initialize σs
+
+Potential drops across FE layers :
+where i = 1 and 2, for FE1 and FE2 layer
+
+Self consistent
+calculation of Vfe,i & Pfe,i
+
+Coupling Strength between
+nearest neighbors :
+
+Self Energies :
+
+No
+Calculate σs'
+Wave Vectors :
+Hamiltonian :
+
+|σs - σs'|
+< tolerance
+Yes
+End
+
+Green's Functions :
+
+Current Density :
+
+Calculate current
+density by NEGF
+
+Transmission Coefficient :
+Fermi Functions :
+Here,
+
+FIG. 2. The computation of the self-consistent current for multilayer FTJ by using the integration of a Preisach-based model with
+the NEGF formalism.
+
+spectively, Pfe,i , Efe,i and εfe,i are polarization, electric field,
+and the relative dielectric constant of FEi layers. The voltage
+drop across this structure is determined as
+Vm1 (0) + Vm2 (L) + Vfe1 + Vfe2 + Vqw = Va + Vbi
+
+(3)
+
+where, Vm1 (0) = −σs λm1 /εm1 εo and Vm2 (L) = σs λm2 /εm2 εo
+are the potential drops at locations 0 and L, respectively. Vfe1 ,
+Vfe2 and Vqw are the voltage drops across the FE1, FE2 layer,
+
+3
+and QW, respectively. The applied voltage is represented by
+Va , whereas Vbi indicates the built-in potential, which can be
+expressed as
+Vbi = φm2 − φm1 − φqw2 + φqw1
+
+(4)
+
+where, φm1 , φqw1 , φqw2 , and φm2 represent the barrier heights
+at the interface positions 0, ℓ1 , ℓ2 , and L, respectively [as illustrated in Fig. 1(b)]. The total FE potential can be expressed
+as Vfe = Vfe1 + Vfe2 . From Eq. (2), the potential drop Vqw
+across the QW can be represented as Vqw = σs tqw /εo εqw , with
+εqw denoting the relative permittivity of the IL layer. The characteristics dependent on the thickness of the FE material are
+given as25
+Ps,i = hs tfe,i ,
+
+Pr,i = hr tfe,i ,
+
+Ec,i = hc t−0.61
+fe,i
+
+where, ky and kz represent the electron wave vectors within
+the transverse plane, while f1 and f2 denote the Fermi-Dirac
+distribution functions associated with the TE and BE, respectively. Further, 'e' signifies the electron charge, and
+'h' refers to Planck’s constant. Figure 3(a) shows that the simulation approaches were thoroughly examined by comparing
+the simulated transmission-energy curve of a double-barrier
+structure with a single QW (HZO/Ta2 O5 /HZO) with existing data.19 This comparison showed perfect alignment, confirming model accuracy. The transmission-energy curve for
+a structure (AlAs/GaAs/AlAs) with a single QW, where RT
+is observed, was replicated and agreed with simulated results
+[Fig. 3(b)].30 The excellent agreement between the simulated
+and reference results highlights the robustness and reliability
+of the approach.
+
+(5)
+(a)
+
+10 6
+
+10 11
+10 14
+0.0
+
+Transmission
+
+Transmission
+
+10 3
+
+10 8
+LRS
+HRS
+LRS [Ref. 19]
+
+HRS [Ref. 19]
+@0V
+0.5 1.0 1.5 2.0
+Energy-Ef (eV)
+
+AlAs
+
+GaAs
+
+AlAs
+
+GaAs
+
+GaAs
+
+Ref. [30]
+10 9
+Sim. This Work
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+
+Energy-Ef (eV)
+
+FIG. 3. Comparison of simulated (a) and (b) Transmission-Energy
+curve with references.19,30
+
+consistent current for multilayer FTJ employs the integration
+of a Preisach-based model with the NEGF formalism, as depicted in Fig. 2. The self-consistent solution of Eq. (1) to
+(6) determines the electrostatic potential, FE polarization, and
+surface charge density for each Va value. This process continues iteratively until the difference between the updated and
+initial σs reaches satisfactory convergence. The NEGF technique, suitable for quantum transport phenomena, evaluates
+the transmission coefficient Tm and current density J following the calculation of the energy band profiles. The Landauer
+formula is subsequently utilized to calculate the current density, which is defined as31–33
+2e
+Ah
+ky ,kz
+
+J=− ∑
+
+Z
+
+Tm (E) [f1 (E) − f2 (E)] dE
+
+0.25 0.00
+
+Va (V)
+
+0.25
+
+1
+100.50
+
+0.50
+
+(7)
+
+0.25 0.00
+
+Va (V)
+
+0.25
+
+0.50
+
+(d)
+
+106
+
+10 2
+
+Transmission
+
+RA ( cm2)
+
+102
+100
+0.50
+
+100
+
+10 5
+
+102
+
+10 6
+
+104
+
+(b)
+
+10 2
+
+103
+
+10 4
+
+8
+10 0.50
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+104
+
+(6)
+
+where Vc,i is the coercive voltage. The calculation of the self(a)
+
+105
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+TER ratio (%)
+
+10 2
+
+(c)
+
+
+
+ 
+Vfe,i ± Vc,i
+Ps,i + Pr,i
+·
+Pfe,i = Ps,i tanh ln
+Ps,i − Pr,i
+2Vc,i
+
+(b)
+
+100
+
+J (A/cm2)
+
+where, Ps,i , Pr,i , and Ec,i are the FEs saturated polarization,
+remanent polarization, and coercive field, respectively. Pr,i
+and Ps,i are proportional to FE thickness tfe,i , and Ec,i are inversely proportional to tfe,i following a slope of -0.61, which
+is in agreement with the scaling value of −2/3.26 The proportionality factors in relation of Ps,i , Pr,i , and Ec,i are represented
+by the constants hs , hr and hc , respectively. FE polarization
+charge density Pfe,i is given by the Preisach-based model,27–29
+
+Va (V)
+
+0.25
+
+10 8
+
+10 11
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+0.25 0.00
+
+10 5
+
+0.50
+
+@0V
+10 14
+0.0 0.5
+
+1.0
+
+tqw = 0.5nm
+tqw = 1.0nm
+tqw = 2.0nm
+
+1.5
+
+Energy-Ef (eV)
+
+2.0
+
+FIG. 4. (a) Read current density-voltage (J-V) curves for the
+TiN/HZO/TiO2 /HZO/TiN (MFIFM) stack for Va =±0.5V. Corresponding Fig. (b) shows the TER ratio (%), (c) RA product, and (d)
+transmission characteristics (0V) at different values of thickness tqw .
+Here, in Fig. (a), (c), and (d), bold and dashed lines indicate the LRS
+and HRS, respectively.
+
+In the simulation framework, we utilize the following parameter values: The electron affinity χ is set at 2.8 eV for
+HZO34 and 4.0 eV for TiO2 ,35 and the metal TiN is characterized by a work function Φm 36 of 4.3 eV with a screening length37 (λm1 = λm2 ) of 0.5Å. The materials HZO38 ,
+TiO2 39 and TiN40 exhibited relative permittivities of 25, 48,
+and 3, respectively. The effective electron masses are considered as 0.14mo for HZO41 and 0.5mo for TiO2 .42 The thickness of the HZO, is defined at 4nm, exhibiting a spontaneous
+polarization of Ps = 5.5µC/cm2 , a remanent polarization of
+Pr = 5µC/cm2 , and a coercive field of Ec = 1MV/cm.37 The
+thicknesses of the FE layers, denoted as tfe1 and tfe2 , have been
+determined at 3 and 1 nm, respectively. The parameters hs , hr ,
+and hc can derive using these values as standards [Eq. (5)].
+We begin with investigating the impact of different QW thicknesses on the performance of the MFIFM FTJ. This investigation governs an essential stage in understanding the ways
+
+4
+(a)
+
+(b)
+
+Energy (eV)
+
+J (A/cm2)
+
+(c)
+
+1
+
+8 ×10
+
+0
+
+Va (V)
+
+1
+
+LRS
+
+@ 0.86 V
+
+1.0
+
+@ 0.86 V
+
+0.5
+0.0
+0.5
+TiN
+
+2
+
+4
+
+1.0
+
+HZO
+
+HZO
+
+LRS
+HRS
+
+TiN
+
+0.0 2.5 5.0 7.5
+
+10 7 10 4 10 1
+
+Position (nm) Transmission
+
+(d)
+LRS
+HRS
+
+106
+
+TER ratio (%)
+
+RA ( cm2)
+
+TER ratio (%)
+
+6
+4
+2
+0
+
+LRS
+
+1.5
+
+TiO2
+
+105
+103
+101
+10 1
+10 3
+10 5
+10 7 2
+
+103
+100
+
+10 3
+
+2
+
+1
+
+0
+
+Va (V)
+
+1
+
+2
+
+2
+
+1
+
+0
+
+Va (V)
+
+1
+
+2
+
+FIG. 5. (a) Current density-voltage (J-V) characteristics with sweep
+voltage ±2V of MFIFM stack (TiN/HZO/TiO2 /HZO/TiN) FTJ at
+tqw = 2nm. (b) Band diagram and transmission curve when the current peak takes place at 0.86V. (c) TER ratio (%) and (d) RA product
+characteristics.
+
+Figs. 5(c) and 5(d) depict the TER ratio and RA product for
+the multi-barrier stack FTJ. While TER ratio shows a significant enhancement at lower bias voltages, peaking approximately 6.15 × 104 % at 0.175V with the low RA product is
+measured to be 4.71 × 101 Ω-cm2 enabling better readout and
+cross-section scaling for high density.43
+(a)
+
+(b)
+
+4
+
+Va vs Pfe1
+Va vs Pfe2
+Vfe1 vs Pfe1
+Vfe2 vs Pfe2
+
+2
+
+s , Polarization ( C/cm2)
+
+Polarization ( C/cm2)
+
+that structural parameters affect device characteristics. Figure 4(a) illustrates current density-voltage (J-V) characteristics for both LRS and HRS of the TiN/HZO/TiO2 /HZO/TiN
+stack, with Va kept at ±0.5V across QW thicknesses of 0.5,
+1, and 2 nm. A notable distinction in the current density has
+been observed between LRS and HRS when the QW thickness is set at 2 nm. As the thickness of the well tqw increases
+in a single QW FTJ, the tunneling currents are affected by the
+interaction between direct and resonant tunneling. Initially,
+increasing tqw (at 1nm) widens the barrier, reducing direct tunneling and thereby lowering the current density in both LRS
+and HRS. However, as the quantized energy levels shift closer
+to the Fermi level, Ef , RT is enhanced, causing the higher current density in LRS. This leads to a significant boost in the
+TER ratio, improving the performance of the device. Furthermore, with an increase in current density in LRS attributed to
+enhanced RT, there is a reduction in the RA product, leading
+to improved readability and power efficiency.
+Figs. 4(b) and 4(c) illustrate the characteristics of TER ratio and the RA product, respectively. We have taken 0.15V
+applied voltage as a reference point to compare these characteristics. At tqw =0.5 nm, the TER ratio and RA product
+are 1.34 × 102 % and 3.12 × 102 Ω-cm2 , respectively, and
+at tqw =1nm, we found the TER ratio and RA product are
+approximately 3.48 × 102 % and 1.20 × 103 Ω-cm2 , respectively. The TER ratio and RA product are found to be approximately 6.11 × 104 % and 6.68 × 101 Ω-cm2 , respectively,
+for tqw =2nm. Consequently, at tqw = 2nm, the TER ratio is
+enhanced by approximately 1.75 × 102 times, while the RA
+product is reduced by nearly 5 × 10−2 times compared to a
+QW thickness of 1 nm. As shown in Fig. 4(d), tqw increases
+from 0.5 to 2 nm, the transmission characteristics undergo
+notable changes. At tqw =0.5 nm, the QW is extremely narrow, supporting only a single resonant state, which results in
+a broad transmission peak at higher energy levels. The strong
+coupling between the barriers leads to a relatively wide peak
+with moderate transmission. As the QW width increases to
+1 nm, additional quantized states form within the well, creating multiple sharper transmission peaks. These peaks shift
+to lower energy levels as the confined energy levels decrease
+with the increasing well width. Consequently, the transmission probability at resonant energies also increases, enabling
+more efficient electron tunneling. At 2 nm, the well accommodates even more resonant states, causing the transmission
+peaks to become denser and more distinct. The energy spacing
+between the peaks continues to decrease as quantum confinement weakens. This results in higher overall transmission, as
+more electrons can tunnel resonantly through the structure.
+Next, we analyze the J-V characteristics over a voltage
+sweep range of ±2V with tqw =2 nm, as illustrated in Fig. 5(a).
+The band diagram and transmission at 0.86V, where the current peak occurs, are illustrated in Fig. 5(b). The resonant peak near 0.86V highlights the dominance of RT, generated by the alignment of the resonant peak with the Fermi
+level, while the negative differential resistance (NDR) effect
+is observed at this voltage. This illustrates that when the
+Fermi energy Ef in the electrode aligns with the quantized energy levels of the structure, the current reaches a maximum.
+
+0
+2
+4
+
+4
+
+2
+
+0
+
+Voltage (V)
+
+2
+
+4
+
+15
+10
+
+Vfe1 vs s
+Vfe2 vs s
+Vfe1 vs Pfe1
+Vfe2 vs Pfe2
+
+5
+0
+5
+10
+15
+
+1.5 1.0 0.5 0.0 0.5 1.0 1.5
+
+Voltage (V)
+
+FIG. 6. Hysteresis characteristics of TiN/HZO/TiO2 /HZO/TiN
+(MFIFM) stack at QW thickness tqw =2nm. (a) Polarization–Voltage
+(P–V) curves showing FE switching behavior. (b) Polarization and
+surface charge density (σs ) as functions of voltage.
+
+Following this, Fig. 6 shows the hysteresis behavior of the
+MFIFM structure at tqw = 2nm. Fig. 6(a) presents the Va –Pfe,i
+hysteresis loops, along with the corresponding FE voltages
+(Vfe,i ) under an applied sweep. Fig. 6(b) illustrates the dependence of polarization and σs on the FE voltages. The J–V
+characteristics of the MFIFM structure reflect polarization
+switching in the FE layers [Fig. 5(a)]. Around Va = ±1.6V,
+the polarization difference is minimal, indicating aligned polarization states. At lower voltages, a mismatch in polarization
+creates an internal field imbalance, resulting in distinct LRS
+and HRS. While the polarization hysteresis remains symmet-
+
+5
+ric, the unequal thicknesses of the FE layers introduce structural asymmetry, resulting in an asymmetric J–V loop.
+Figure 7(a) illustrates the effect of the QW position (tqw =2
+nm) while varying the thickness of the second FE layer defined as tfe2 = (tfe1 − 4)nm. The read voltage Vr is set to
+0.15V, a value that is sufficiently low to ensure that the polarization stays constant throughout the read process. It is observed that as the thickness tfe2 increases, the ON state current exhibits an initial increase, followed by a decrease to approximately zero once the thickness reaches 2 nm. The observed behavior can be linked to the asymmetry of the barrier,
+which arises from the differences in tfe1 and tfe2 . The changes
+noted in both the ON and OFF states (LRS and HRS) are a
+direct result of this asymmetry. Fig. 7(b) illustrates the effect of the screening length, particularly with varying values
+of λm2 , while maintaining λm1 constant for the MFIFM FTJ.
+Differences in screening length characteristics lead to a notable increase in the TER ratio at a read voltage of 0.15 V. The
+resulting asymmetry in interfacial screening further enhances
+the TER ratio, highlighting the vital role of material properties
+in achieving maximum device efficiency.
+
+ON
+OFF
+
+J (A/cm2)
+
+100
+
+TER ratio (%)
+
+10 2
+10 4
+10 6
+10 8
+
+10 100
+
+@ 0.15 V
+
+1
+
+2
+3
+tfe2 (nm)
+
+106
+105
+104
+103
+102
+101
+0
+410
+
+(b)
+
+107
+
+105
+104
+103
+
+TER ratio (%)
+
+102
+
+TER ratio (%)
+RA
+
+(a)
+
+106
+
+@ 0.15 V
+
+ON
+OFF
+105
+TER ratio (%)
+
+102
+101
+1000
+
+1
+
+2
+
+m2 (Å)
+
+3
+
+4
+410
+
+FIG. 7. Impact on the performance of multilayer MFIFM FTJ due
+to (a) QW position with varying tfe2 = (tfe1 − 4)nm at read voltage
+Vr = 0.15V and (b) screening length with varying λm2 , and λm1 is
+fixed at 0.5 Å at Vr = 0.15V.
+
+In conclusion, we have examined a multilayer FTJ design
+that uses a QW between two FE layers in place of the conventional metal-ferroelectric-metal arrangement. Through a selfconsistent coupling of NEGF with the Preisach-based model,
+we show that the QW enhances resonance effects, resulting in
+a notable increase in the TER ratio and a notable drop in the
+RA product. The NDR effect enhances the functionality of
+the device. The potential applications are thus in logic components, programmable resistors, and improved non-volatile
+memory. Future research in FE materials and QW characteristics could thus lead to more effective, scalable devices for
+neuromorphic computing and next-generation electronics.
+1 S. H. Park, H. J. Lee, M. H. Park, J. Kim, and H. W. Jang, J. Phys. D: Appl.
+
+Phys. 57(25), 253002 (2024).
+2 H. Kohlstedt, N. Pertsev, J. Rodríguez Contreras, and R. Waser, Phys. Rev.
+
+B 72(12), 125341 (2005).
+3 K.-F. Luo, Z. Ma, D. Sando, Q. Zhang, and N. Valanoor, ACS nano 19(7),
+
+6622–6647 (2025).
+4 M. Kobayashi, Y. Tagawa, F. Mo, T. Saraya,
+
+and T. Hiramoto, IEEE J.
+Electron Devices Soc. 7, 134–139 (2019).
+5 E. Covi, H. Mulaosmanovic, B. Max, S. Slesazeck, and T. Mikolajick,
+Neuromorphic Comput. and Eng. 2(1), 012002 (2022).
+
+6 J. Hwang, Y. Goh, and S. Jeon, Small 20(9), 2305271 (2024).
+7 N. Jao, Y. Xiao, A. K. Saha, S. K. Gupta, and V. Narayanan, IEEE J. Explor.
+
+Solid-State Comput. Devices and Circuits 7(2), 115–122 (2021).
+8 Y. Goh, J. Hwang, Y. Lee, M. Kim, and S. Jeon, Appl. Phys. Lett. 117(24),
+
+242901 (2020).
+9 F. Ambriz-Vargas, G. Kolhatkar, R. Thomas, R. Nouar, A. Sarkissian,
+
+C. Gomez-Yáñez, M. Gauthier, and A. Ruediger, Appl. Phys. Lett. 110(9),
+093106 (2017).
+10 B. Max, M. Hoffmann, H. Mulaosmanovic, S. Slesazeck, and T. Mikolajick, ACS Appl. Electron. Mater. 2(12), 4023–4033 (2020).
+11 R. Athle and M. Borg, Adv.Intell. Syst. 6(3), 2300554 (2024).
+12 J. Yoon, S. Hong, Y. W. Song, J.-H. Ahn, and S.-E. Ahn, Appl. Phys. Lett.
+115(15), 153502 (2019).
+13 L. Wang, M. R. Cho, Y. J. Shin, J. R. Kim, S. Das, J.-G. Yoon, J.-S. Chung,
+and T. W. Noh, Nano letters 16(6), 3911–3918 (2016).
+14 H. Lu, A. Lipatov, S. Ryu, D. Kim, H. Lee, M. Y. Zhuravlev, C.-B. Eom,
+E. Y. Tsymbal, A. Sinitskii, and A. Gruverman, Nat. commun. 5(1), 5518
+(2014).
+15 M. Y. Zhuravlev, R. F. Sabirianov, S. Jaswal, and E. Y. Tsymbal, Phys. Rev.
+Lett. 94(24), 246802 (2005).
+16 M. Y. Zhuravlev, Y. Wang, S. Maekawa, and E. Y. Tsymbal, Appl. Phys.
+Lett. 95(5), 052902 (2009).
+17 S.-C. Chang, A. Naeemi, D. E. Nikonov, and A. Gruverman, Phys. Rev.
+Appl. 7(2), 024005 (2017).
+18 X. Zheng, Y. Yang, Q. Zhang, J. Li, and X. Liu, Appl. Phys. Lett. 121(13),
+132902 (2022).
+19 P. Chang and Y. Xie, IEEE Electron Device Lett. 44(1), 168–171 (2023).
+20 J. Hwang, Y. Goh, and S. Jeon, IEEE Trans. on Electron Devices 68(2),
+841–845 (2020).
+21 H. Joh, T. Jung, and S. Jeon, IEEE Trans. on Electron Devices 68(5), 2538–
+2542 (2021).
+22 C. Kittel and P. McEuen, Introduction to solid state physics (John Wiley &
+Sons, 2018).
+23 T. Sandu, C. Tibeica, R. Plugaru, O. Nedelcu, and N. Plugaru, Nanomaterials 12(10), 1682 (2022).
+24 D. Pantel and M. Alexe, Phys. Rev. B 82(13), 134105 (2010).
+25 J. Lyu, I. Fina, R. Solanas, J. Fontcuberta, and F. Sánchez, ACS Appl.
+Electron. Mater. 1(2), 220–228 (2019).
+26 V. Janovec, Czechoslovak J. Phys. 8, 3–15 (1958).
+27 S. Miller, R. Nasby, J. Schwank, M. Rodgers, and P. Dressendorfer, J. Appl.
+Phys. 12(23), 6463–6471 (1990).
+28 A. Sutor, S. J. Rupitsch, and R. Lerch, Appl. Phys. A 100(2), 425–430
+(2010).
+29 I. D. Mayergoyz and G. Friedman, IEEE trans. on Magnetics 24(1), 212–
+217 (1988).
+30 Y. Ando and T. Itoh, J. Appl. Phys. 61(4), 1497–1502 (1987).
+31 Z. Zhou, L. Jiao, J. Zhou, Q. Kong, S. Luo, C. Sun, Z. Zheng, X. Wang,
+D. Zhang, G. Liu, et al., IEEE Electron Device Lett. 43(1), 158–161 (2021).
+32 S. Datta, (Cambridge university press, 2005).
+33 A. Sharma, A. Tulapurkar, and B. Muralidharan, IEEE Trans. on Electron
+Devices 63(11), 4527–4534 (2016).
+34 Z. Fan, J. Xiao, J. Wang, L. Zhang, J. Deng, Z. Liu, Z. Dong, J. Wang, and
+J. Chen, Appl. Phys. Lett. 108(23), 232905 (2016).
+35 J. Robertson, J. Vac. Sci. Technol. A 31(5), 050821 (2013).
+36 F. Fillot, T. Morel, S. Minoret, I. Matko, S. Maîtrejean, B. Guillaumot,
+B. Chenevier, and T. Billon, Microelectron. Eng. 82(3-4), 248–253 (2005).
+37 P. Chang and Y. Xie, IEEE Trans. on Electron Devices 70(5), 2282–2290
+(2023).
+38 R. Materlik, C. Künneth, and A. Kersch, J. Appl. Phys. 117(13), 134109
+(2015).
+39 S. Mondal, A. Kumar, et al., Superlattices and Microstruct. 100, 876–885
+(2016).
+40 S. Tripura Sundari, R. Ramaseshan, F. Jose, S. Dash, and A. Tyagi, J. Appl.
+Phys. 115(3) (2014).
+41 S. Monaghan, P. Hurley, K. Cherkaoui, M. Negara, and A. Schenk, SolidState Electronics 53(4), 438–444 (2009).
+42 J. Gulomov, O. Accouche, R. Aliev, R. Ghandour, and I. Gulomova, IEEE
+Access 11, 38970–38981 (2023).
+43 M. Abuwasib, H. Lu, T. Li, P. Buragohain, H. Lee, C.-B. Eom, A. Gruverman, and U. Singisetti, Appl. Phys. Lett. 108(15), 152904 (2016).
+
+

@@ -107,14 +107,14 @@ func (n *Network) computeLayerSizes() []int {
 }
 
 // Forward performs forward inference through the network.
-func (n *Network) Forward(input []float64) []float64 {
+func (n *Network) Forward(input []float64) ([]float64, error) {
 	activation := input
 
 	for i, layer := range n.layers {
 		// Matrix-vector multiplication on crossbar
 		output, err := layer.array.MVM(activation)
 		if err != nil {
-			panic(fmt.Sprintf("MVM failed at layer %d: %v", i, err))
+			return nil, fmt.Errorf("MVM failed at layer %d: %w", i, err)
 		}
 
 		// Add biases
@@ -133,7 +133,7 @@ func (n *Network) Forward(input []float64) []float64 {
 		n.opsCount += int64(layer.inputSize * layer.outputSize)
 	}
 
-	return activation
+	return activation, nil
 }
 
 // GetOpsCount returns the total MAC operations performed.

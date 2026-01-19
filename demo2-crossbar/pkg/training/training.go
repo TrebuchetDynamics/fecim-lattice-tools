@@ -291,7 +291,7 @@ func (t *Trainer) applyHardwareConstraints(w float64) float64 {
 
 	// Quantize if enabled
 	if t.config.QuantizeBits > 0 {
-		levels := float64(1 << uint(t.config.QuantizeBits))
+		levels := float64(int(1) << uint(t.config.QuantizeBits))
 		w = math.Round(w*levels) / levels
 	}
 

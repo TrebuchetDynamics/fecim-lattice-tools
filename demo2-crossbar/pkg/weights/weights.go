@@ -341,7 +341,7 @@ func (l *LayerWeights) QuantizeWeights(bits int, symmetric bool) {
 		}
 	}
 
-	levels := float64(1 << bits)
+	levels := float64(int(1) << uint(bits))
 	var scale, zeroPoint float64
 
 	if symmetric {
