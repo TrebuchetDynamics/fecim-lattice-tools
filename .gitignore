@@ -1,0 +1,13 @@
+# Go binaries
+demo1-hysteresis/hysteresis
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Output of go coverage
+*.out
