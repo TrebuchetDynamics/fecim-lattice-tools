@@ -247,3 +247,20 @@
 - **CrossSim**: Supports custom Python functions for device errors and lookup tables. Defined in `inference_config.py`.
 - **IBM AIHWKit**: Robust support for "Custom Resistive Devices" via `PulsedDevice` class. Allows defining custom update behaviors in Python.
 - **Conclusion**: We CAN build custom AlScN/FeFET models in these tools without waiting for official support.
+
+## 21. FTJ Device Parameters (Extracted from Verified Paper)
+**Source:** "Asymmetric Resonant Ferroelectric Tunnel Junctions for Simultaneous High Tunnel Electroresistance and Low Resistance-Area Product" (arXiv:2504.11137)
+**Device Structure:** TiN / HZO (3nm) / TiO2 (Quantum Well) / HZO (1nm) / TiN
+**Key Parameters:**
+- **HZO Thickness:** 4 nm total (3nm + 1nm split)
+- **Quantum Well (TiO2):** ~2 nm (optimal for resonance)
+- **Polarization (Ps):** 5.5 μC/cm²
+- **Remanent Polarization (Pr):** 5.0 μC/cm²
+- **Coercive Field (Ec):** 1 MV/cm
+- **Performance:**
+    - **TER Ratio:** ~6.15 × 10⁴ %
+    - **RA Product:** 47.1 Ω·cm² @ 0.175V
+- **Material Properties (for Simulation):**
+    - **HZO:** Affinity = 2.8 eV, Dielectric Constant = 25, Eff. Mass = 0.14m₀
+    - **TiO2:** Affinity = 4.0 eV, Dielectric Constant = 48, Eff. Mass = 0.5m₀
+    - **TiN:** Work Function = 4.3 eV

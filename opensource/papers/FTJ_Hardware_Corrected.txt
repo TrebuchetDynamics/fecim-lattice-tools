@@ -1,1070 +1,893 @@
-                                         Published as a conference paper at ICLR 2020
+Asymmetric Resonant Ferroelectric Tunnel Junctions for Simultaneous
+High Tunnel Electroresistance and Low Resistance-Area Product
+Balram Khattar,1 Adarsh Tripathi,1 Manmohan Brahma,2 and Abhishek Sharma3
+1) Department of Electrical Engineering, Indian Institute of Technology Ropar, Rupnagar 140001,
+
+India
+2) Academy of Scientific and Innovative Research (AcSIR), 201002, Ghaziabad, India
+3) School of Computing and Electrical Engineering, Indian Institute of Technology Mandi, Mandi 175005,
+India
+
+arXiv:2504.11137v1 [cond-mat.mes-hall] 15 Apr 2025
+
+(*Electronic mail: abhi@iitmandi.ac.in)
+(Dated: 16 April 2025)
 
+Ferroelectric tunnel junctions offer potential for non-volatile memory with low power, fast switching, and
+scalability, but their performance is limited by a high resistance-area product and a low tunnel electroresistance ratio. To address these challenges, we propose a doped HfO2 -based, silicon-compatible asymmetric
+resonant ferroelectric tunnel junction design with a quantum well embedded between two ferroelectric layers, replacing the conventional metal-ferroelectric-metal structure. Using a self-consistent coupling of the
+non-equilibrium Green’s function method with a Preisach-based model, we demonstrate that the quantum
+well enhances resonant tunneling effects, leading to a simultaneous reduction in the resistance-area product and a boost in the tunnel electroresistance ratio. The low-resistance state becomes more robust, while
+the high-resistance state is suppressed, improving readout speed and reducing power usage. We observed
+that incorporating a 2 nm quantum well significantly enhances the tunnel electroresistance ratio, achieving
+a peaking value of approximately 6.15 × 104 %, while simultaneously minimizing the resistance-area product to 4.71 × 101 Ω-cm2 at 0.175 V. Additionally, the device exhibits negative differential resistance, further
+enhancing its functionality. Our results confirm that this design enables scalable, energy-efficient, and highperformance non-volatile memory, making it a strong candidate for future memory technologies.
+Ferroelectric Tunnel Junctions (FTJs) are emerging as key
+components in next-generation electronic devices due to their
+ability to modulate resistance states using an ultrathin ferroelectric (FE) barrier.1,2 These devices consist of two different conductive electrodes that are sandwiched between a
+thin layer of FE material, acting as the barrier for tunneling. The electrodes screening length leads to polarizationdependent band bending, which modifies the effective barrier height and, in turn, influences the tunneling electroresistance (TER).3 The change in resistance, crucial for FTJ
+operation, is directly governed by the reversal of polarization in the FE layer, leading to two distinct resistance
+states: a low-resistance state (LRS) and a high-resistance
+state (HRS). The TER ratio, which quantifies this effect, is
+defined as: TER ratio (in %) = [(LRS − HRS)/LRS] × 100.4
+These unique properties make FTJs highly suitable for applications in non-volatile memory, logic circuits, and neuromorphic computing.5,6 Their ability to store data in distinct resistance states provides an energy-efficient alternative to traditional memory technologies, paving the way for advancements in high-performance, low-power electronic devices.7
+The integration of doped HfO2 into existing semiconductor
+fabrication processes enables seamless scalability for practical applications.8–10 However, implementing doped HfO2 based FTJs in crossbar arrays based memory design presents
+challenges, particularly in readout performance.7,11 Addressing these challenges requires enhancing the TER ratio while
+maintaining a low resistance-area (RA) product, enabling
+FTJs with enhanced energy efficiency, device miniaturization,
+high packing density, and long-term reliability. A high TER
+
+ratio is crucial for clear resistance state differentiation, which
+is essential for reliable data storage, accurate readout, and robust logic operations. Simultaneously, a low RA product particularly important for scaling down device dimensions while
+maintaining high packing density in FTJ-based memory arrays. As devices shrink, a high TER ratio ensures stable operation, while a low RA prevents excessive resistance that could
+hinder current flow. Balancing these factors is key to developing ultra-low-power, high-speed, and high-density nonvolatile memory architectures.
+Various microscopic processes influence the tunneling barrier in FTJs, including those occurring at the interfaces,
+within the electrodes, and inside the FE layer. Asymmetry in these structures—achieved through careful selection
+of electrodes4,12 , composite barrier layers13 , and interface
+engineering14 —plays a crucial role in enhancing the TER ratio. To optimize the TER ratio and RA product, several studies
+have explored different FTJ configurations. Zhuravlev et al.
+(2005, 2009) conducted theoretical analyses metal-FE-metal
+(MFM) stack (SrRuO3 /PbZr0.52 Ti0.48 O3 /Pt) and metal-FEIL-metal (MFIM) structures incorporating BaTiO3 as the FE
+layer and SrTiO3 as the nonpolar dielectric. Their theoretical
+models predicted significant enhancements in the TER ratio
+while offering a considerable RA product at large TER ratio
+values.15,16 Expanding on this, Chang et al. (2017) conducted
+theoretical calculations on MFM and MFIM stacks using inorganic (BaTiO3 ) and organic (PVDF, polyvinylidene fluoride) FE materials, demonstrating a strong correlation with experimental results.17 By employing the Landau-Khalatnikov
+approach integrated with the nonequilibrium Green’s func-
+
+2
+tion (NEGF) formalism, they observed a relatively low TER
+ratio, highlighting the need for further optimization. Similarly, Zheng et al. (2022) investigated resonant band engineering in FTJs, evaluating both RA and TER ratio parameters. Using perovskite-based BaTiO3 FEs with a BaSnO3 dielectric layer, they demonstrated polarization-dependent RT,
+achieving a substantial TER with a low RA product.18 While
+these studies have shown promising results, a common limitation remains—the inherent incompatibility of perovskitebased FEs with CMOS technology, posing challenges for
+practical integration. More recently, Chang et al. (2023)
+explored HfO2 -doped FEs for resonant FTJs design by integrating the Preisach-based model with the transfer matrix
+method. Although the proposed resonant FTJs are CMOScompatible, they exhibit a relatively low TER ratio and a high
+RA product.19
+
+TiN
+
+(b)
+
+HZO
+
+TiO2 HZO TiN
+FE1
+
+TE
+
+0
+
+qw2
+
+qw1
+
+m1
+
+IL
+
+0
+
+BE
+
+eVa Ef2
+
+Ef1
+
+L x-axis
+
+m2
+
+FE2
+
+(a)
+
+tqw
+
+tfe1
+1
+
+Position (nm)
+
+tfe2
+
+2
+
+L
+
+FIG. 1. (a) Schematic of TiN/HZO/TiO2 /HZO/TiN stack FTJ and
+(b) the energy band diagram for multilayer FTJ with one QW.
+
+Hence, in this work, we develop a Preisach-based model integrated with the NEGF formalism to present a design guideline for the simultaneous enhancement of the TER ratio and
+reduction of the RA product through resonant band engineering, achieved via appropriate material selection and precise
+tuning of quantum well (QW) thickness. Our work utilizes
+HfO2 -doped FEs to ensure CMOS compatibility while optimizing both TER ratio and RA product—key factors for seamless integration into practical electronic devices. By incorporating a low-barrier insulating layer (IL) within the FE barriers, we can effectively tailor the electronic transport characteristics of FTJs. The addition of an IL, such as TiO2 , which has
+been shown to improve the FE characteristics of HZO films,
+plays a crucial role in enhancing the TER ratio in HfO2 -based
+FTJs.20,21 This IL introduces resonant states within the energy
+gap of the barrier, which can be modulated through FE polarization. By carefully selecting the QW thickness, the resonant
+states can be tuned to optimize the transition between direct
+and resonant tunneling transport modes, further improving the
+TER ratio and RA product. This precise band engineering
+significantly enhances the resistance ratio of FTJs, providing
+a practical approach to meeting industry performance standards. To explore this mechanism, we investigate RT effects in
+FTJs with a QW structure, employing a Preisach-based model
+integrated with the NEGF formalism. By leveraging this integrated modeling approach, we accurately assess the impact
+of QW thickness on the TER ratio and RA characteristics of
+FTJs, offering critical insights into optimizing barrier design
+and material properties for improved device efficiency.
+
+The schematic layout of the TiN/HZO/TiO2 /HZO/TiN
+multilayer stack FTJ is depicted in Fig. 1(a). The IL TiO2 ,
+with a thickness of tqw , is positioned between two FE HZO
+(Hf0.5 Zr0.5 O2 ) layers with thicknesses tfe1 and tfe2 . We have
+implemented the asymmetrical barrier in FTJ, utilizing the
+same material, TiN, for the top electrode (TE) and bottom
+electrode (BE). The FE thickness tfe is the total sum of FE
+thicknesses tfe1 and tfe2 in the MFIFM FTJ. The corresponding
+energy band diagram is shown in Fig. 1(b). The IL is performing as a QW that enables RT in the MFIFM FTJ structure. We
+consider a Thomas-Fermi model of screening for determining
+the distribution of screening charge and potential profile at the
+metal-FE interface. The screening potential at the metal-FE
+interface is represented by the following Eq.22–24
+
+σλ
+
+− s m1 e(x/λm1 ) ,
+if x ≤ 0
+
+εm1 εo
+Vm1(m2) (x) =
+(1)
+
+
+ σs λm2 e[−(x−L)/λm2 ] , if x ≥ L
+εm2 εo
+where σs represents the surface charge density at the metalFE interfaces, λm1 (εm1 ) and λm2 (εm2 ) denote the effective
+lengths of screening (relative dielectric constants) for the TE
+and BE electrodes, respectively, and εo signifies the permittivity of free space. The boundary conditions allow us to determine the surface charge density, which can be expressed
+as17
+σs = εo εfe,i Efe,i + Pfe,i = εo εqw Eqw
+
+(2)
+
+Here, i designates 1 and 2 for the FE1 and FE2 layers, reSet Va
+
+Preisach-based model :
+
+σs=σs+𝝙σ's
+
+Initialize σs
+
+Potential drops across FE layers :
+where i = 1 and 2, for FE1 and FE2 layer
+
+Self consistent
+calculation of Vfe,i & Pfe,i
+
+Coupling Strength between
+nearest neighbors :
+
+Self Energies :
 
+No
+Calculate σs'
+Wave Vectors :
+Hamiltonian :
 
+|σs - σs'|
+< tolerance
+Yes
+End
 
-                                         F EDERATED LEARNING WITH MATCHED AVERAGING
-                                          Hongyi Wang ∗                                                      Mikhail Yurochkin
-                                          Department of Computer Sciences                                    IBM Research
-                                          University of Wisconsin-Madison                                    MIT-IBM Watson AI Lab
-                                          hongyiwang@cs.wisc.edu                                             mikhail.yurochkin@ibm.com
+Green's Functions :
 
-                                          Yuekai Sun                                       Dimitris Papailiopoulos
-                                          Department of Statistics                         Department of Electrical and Computer Engineering
-                                          University of Michigan                           University of Wisconsin-Madison
-                                          yuekai@umich.edu                                 dimitris@papail.io
-arXiv:2002.06440v1 [cs.LG] 15 Feb 2020
+Current Density :
 
+Calculate current
+density by NEGF
 
+Transmission Coefficient :
+Fermi Functions :
+Here,
+
+FIG. 2. The computation of the self-consistent current for multilayer FTJ by using the integration of a Preisach-based model with
+the NEGF formalism.
+
+spectively, Pfe,i , Efe,i and εfe,i are polarization, electric field,
+and the relative dielectric constant of FEi layers. The voltage
+drop across this structure is determined as
+Vm1 (0) + Vm2 (L) + Vfe1 + Vfe2 + Vqw = Va + Vbi
 
+(3)
 
-                                          Yasaman Khazaeni
-                                          IBM Research
-                                          yasaman.khazaeni@us.ibm.com
+where, Vm1 (0) = −σs λm1 /εm1 εo and Vm2 (L) = σs λm2 /εm2 εo
+are the potential drops at locations 0 and L, respectively. Vfe1 ,
+Vfe2 and Vqw are the voltage drops across the FE1, FE2 layer,
 
+3
+and QW, respectively. The applied voltage is represented by
+Va , whereas Vbi indicates the built-in potential, which can be
+expressed as
+Vbi = φm2 − φm1 − φqw2 + φqw1
 
-
-                                                                                        A BSTRACT
-
-                                                      Federated learning allows edge devices to collaboratively learn a shared model
-                                                      while keeping the training data on device, decoupling the ability to do model
-                                                      training from the need to store the data in the cloud. We propose the Federated
-                                                      matched averaging (FedMA) algorithm designed for federated learning of mod-
-                                                      ern neural network architectures e.g. convolutional neural networks (CNNs) and
-                                                      LSTMs. FedMA constructs the shared global model in a layer-wise manner by
-                                                      matching and averaging hidden elements (i.e. channels for convolution layers;
-                                                      hidden states for LSTM; neurons for fully connected layers) with similar feature
-                                                      extraction signatures. Our experiments indicate that FedMA not only outperforms
-                                                      popular state-of-the-art federated learning algorithms on deep CNN and LSTM
-                                                      architectures trained on real world datasets, but also reduces the overall commu-
-                                                      nication burden.1
-
-
-                                         1       I NTRODUCTION
-
-                                         Edge devices such as mobile phones, sensors in a sensor network, or vehicles have access to a
-                                         wealth of data. However, due to data privacy concerns, network bandwidth limitation, and device
-                                         availability, it’s impractical to gather all the data from the edge devices at the data center and conduct
-                                         centralized training. To address these concerns, federated learning is emerging (McMahan et al.,
-                                         2017; Li et al., 2019; Smith et al., 2017; Caldas et al., 2018; Bonawitz et al., 2019; Kairouz et al.,
-                                         2019) as a paradigm that allows local clients to collaboratively train a shared global model.
-                                         The typical federated learning paradigm involves two stages: (i) clients train models with their
-                                         local datasets independently, and (ii) the data center gathers the locally trained models and aggre-
-                                         gates them to obtain a shared global model. One of the standard aggregation methods is FedAvg
-                                         (McMahan et al., 2017) where parameters of local models are averaged element-wise with weights
-                                         proportional to sizes of the client datasets. FedProx (Sahu et al., 2018) adds a proximal term to
-                                         the client cost functions, thereby limiting the impact of local updates by keeping them close to
-                                         the global model. Agnostic Federated Learning (AFL) (Mohri et al., 2019), as another variant of
-                                         FedAvg, optimizes a centralized distribution that is a mixture of the client distributions.
-                                         One shortcoming of FedAvg is coordinate-wise averaging of weights may have drastic detrimental
-                                         effects on the performance of the averaged model and adds significantly to the communication bur-
-                                         den. This issue arises due to the permutation invariance of neural network (NN) parameters, i.e. for
-                                             ∗
-                                                 Work performed while doing an internship at IBM Research.
-                                             1
-                                                 Code is available at https://github.com/IBM/FedMA
-
-
-                                                                                              1
-Published as a conference paper at ICLR 2020
-
-
-
-
-                    100        98 97 99 99 99 99 99                                                    9999    99
-                                                                                          100              9394                                                1-Round FedAvg
-                                                                                                     89                             91
-                                                                                     87
-                                                                          83 84 85                                                                             Avg Local Acc
-                     80                                                                    80    78
-
-
-
-
-      Testset Acc
-                                                                     76                                                    7574                                PFNM
-                                                           68
-                                                                                                                              6467                             Ensemble
-                     60                                                                    60                                                                  FedMA
-                                                                                                                                                          51
-                                                                                                                                                  46
-                                                                                                                     41                             4039       # of Layer-Round
-                     40                                                                    40                                                35         36     FedAvg
-                                                                20
-                                                                                                                                              24               # of Layer-Round
-                     20   13
-                                                                                           20                            13                                    FedProx
-                                                      10                                        11                  10                   8
-                                                                                                                                                               Entire Data
-                      0                                                                     0                                                                  Training
-                           LeNet on                    VGG9 on                                        LeNet               VGG9              LSTM
-                            MNIST                      CIFAR-10                                       MNIST              CIFAR-10        Shakespeare
-
-                          (a) Homogeneous                                                                                  (b) Heterogeneous
-Figure 1: Comparison among various federated learning methods with limited number of communications on
-LeNet trained on MNIST; VGG-9 trained on CIFAR-10 dataset; LSTM trained on Shakespeare dataset over:
-(a) homogeneous data partition (b) heterogeneous data partition.
-
-
-any given NN, there are many variants of it that only differ in the ordering of parameters. Prob-
-abilistic Federated Neural Matching (PFNM) (Yurochkin et al., 2019b) addresses this problem by
-matching the neurons of client NNs before averaging them. PFNM further utilizes Bayesian non-
-parametric methods to adapt to global model size and to heterogeneity in the data. As a result, PFNM
-has better performance and communication efficiency than FedAvg. Unfortunately, the method only
-works with simple architectures (e.g. fully connected feedforward networks).
-
-Our contribution In this work, we demonstrate how PFNM can be applied to CNNs and LSTMs,
-but we find that it only gives very minor improvements over weight averaging. To address this
-issue, we propose Federated Matched Averaging (FedMA), a new layers-wise federated learning
-algorithm for modern CNNs and LSTMs that appeal to Bayesian nonparametric methods to adapt
-to heterogeniety in the data. We show empirically that FedMA not only reduces the communcations
-burden, but also outperforms state-of-the-art federated learning algorithms.
-
-2     F EDERATED M ATCHED AVERAGING OF NEURAL NETWORKS
-In this section we will discuss permutation invariance classes of prominent neural network archi-
-tectures and establish the appropriate notion of averaging in the parameter space of NNs. We will
-begin with the simplest case of a single hidden layer fully connected network, moving on to deep
-architectures and, finally, convolutional and recurrent architectures.
-
-Permutation invariance of fully connected architectures A basic fully connected (FC) NN can
-be formulated as ŷ = σ(xW1 )W2 (without loss of generality, biases are omitted to simplify no-
-tation), where σ is the non-linearity (applied entry-wise). Expanding the preceding expression
-      PL
-ŷ =     i=1 W2,i· σ(hx, W1,·i i), where i· and ·i denote ith row and column correspondingly and
-L is the number of hidden units. Summation is a permutation invariant operation, hence for any
-{W1 , W2 } there are L! practically equivalent parametrizations if this basic NN. It is then more ap-
-propriate to write
-                                      ŷ = σ(xW1 Π)ΠT W2 , where Π is any L × L permutation matrix.                                                                               (1)
-Recall that permutation matrix is an orthogonal matrix that acts on rows when applied on the
-left and on columns when applied on the right. Suppose {W1 , W2 } are optimal weights, then
-weights obtained from training on two homogeneous datasets Xj , Xj 0 are {W1 Πj , ΠTj W2 } and
-{W1 Πj 0 , ΠTj0 W2 }. It is now easy to see why naive averaging in the parameter space is not ap-
-propriate: with high probability Πj 6= Πj 0 and (W1 Πj + W1 Πj 0 )/2 6= W1 Π for any Π. To
-meaningfully average neural networks in the weight space we should first undo the permutation
-(W1 Πj ΠTj + W1 Πj 0 ΠTj0 )/2 = W1 .
-
-2.1   M ATCHED AVERAGING FORMULATION
-
-In this section we formulate practical notion of parameter averaging under the permutation invari-
-ance. Let wjl be lth neuron learned on dataset j (i.e. lth column of W (1) Πj in the previous example),
-
-
-                                                                                                              2
-Published as a conference paper at ICLR 2020
-
-
-
-
-θi denote the ith neuron in the global model, and c(·, ·) be an appropriate similarity function between
-a pair of neurons. Solution to the following optimization problem are the required permutations:
-                      L X
-                      X                                                 X                          X
-                                         j                                       j                       j
-               min
-                j
-                                    min πli c(wjl , θi ) s.t.                   πli = 1 ∀ j, l;         πli = 1 ∀ i, j.   (2)
-               {πli } i=1            θi
-                              j,l                                           i                       l
-                 j
-Then ΠTjli = πli   and given weights {Wj,1 , Wj,2 }Jj=1 provided by J clients, we compute the fed-
-erated neural network weights W1 = J1 j Wj,1 ΠTj and W2 = J1 j Πj Wj,2 . We refer to this
-                                           P                           P
-approach as matched averaging due to relation of equation 2 to the maximum bipartite matching
-problem. We note that if c(·, ·) is squared Euclidean distance, we recover objective function similar
-                                                                                              j
-to k-means clustering, however it has additional constraints on the “cluster assignments” πli   neces-
-sary to ensure that they form permutation matrices. In a special case where all local neural networks
-and the global model are assumed to have same number of hidden neurons, solving equation 2 is
-equivalent to finding a Wasserstein barycenter (Agueh & Carlier, 2011) of the empirical distributions
-over the weights of local neural networks. Concurrent work of Singh & Jaggi (2019) explores the
-Wasserstein barycenter variant of equation 2.
-
-Solving matched averaging Objective function in equation 2 can be optimized using an iterative
-                                                                                                       j0
-procedure: applying the Hungarian matching algorithm (Kuhn, 1955) to find permutation {πli                }l,i
-                                                                  j
-corresponding to dataset j 0 , holding other permutations {πli      }l,i,j6=j 0 fixed and iterating over the
-datasets. Important aspect of Federated Learning that we should consider here is the data hetero-
-geneity. Every client will learn a collection of feature extractors, i.e. neural network weights, rep-
-resenting their individual data modality. As a consequence, feature extractors learned across clients
-may overlap only partially. To account for thisP we allow the size of the global model L to be an un-
-known variable satisfying maxj Lj ≤ L ≤ j Lj where Lj is the number of neurons learned from
-dataset j. That is, global model is at least as big as the largest of the local models and at most as big
-as the concatenation of all the local models. Next we show that matched averaging with adaptive
-global model size remains amendable to iterative Hungarian algorithm with a special cost.
-                                                     j
-At each iteration, given current estimates of {πli     }l,i,j6=j 0 , we find a corresponding global model
-                   P        j              L
-{θi = arg minθi j6=j 0 ,l πli c(wjl , θi )}i=1 (this is typically a closed-form expression or a simple
-optimization sub-problem, e.g. a mean if c(·, ·) is Euclidean) and then we will use Hungarian al-
-                                                             Lj 0
-gorithm to match this global model to neurons {wj 0 l }l=1          of the dataset j 0 to obtain a new global
-model with L ≤ L ≤ L + Lj 0 neurons. Due to data heterogeneity, local model j 0 may have neurons
-                   0
-
-not present in the global model built from other local models, therefore we want to avoid “poor”
-matches by saying that if the optimal match has cost larger than some threshold value , instead of
-matching we create a new global neuron from the corresponding local one. We also want a modest
-size global model and therefore penalize its size with some increasing function f (L0 ). This intuition
-is formalized in the following extended maximum bipartite matching formulation:
-                          L+Lj 0 Lj 0
-                           X X               0     0      X         0                 X
-                                           j
-               min
-                0
-                                          πli Clij s.t.            j
-                                                                  πli = 1 ∀ l;                  j
-                                                                                               πli ∈ {0, 1} ∀ i, where
-                j
-              {πli }l,i    i=1      j=1                       i                            l                              (3)
-                                                          
-                                                   0          c(w , θi ), i ≤ L
-                                                                  j0l
-                                                 Clij =
-                                                               + f (i),  L < i ≤ L + Lj 0 .
-                                                                                       0
-                                                             j
-The size of the new global model is then L0 = max{i : πli       = 1, l = 1, . . . , Lj 0 }. We note some
-technical details: after the optimization is done, each corresponding ΠTj is of size Lj × L and is not
-a permutation matrix in a classical sense when Lj 6= L. Its functionality is however similar: taking
-                                          (1)
-matrix product with a weight matrix Wj ΠTj implies permuting the weights to align with weights
-learned on the other datasets and padding with “dummy” neurons having zero weights (alternatively
-                         (1)
-we can pad weights Wj first and complete ΠTj with missing rows to recover a proper permutation
-matrix). This “dummy” neurons should also be discounted when taking average. Without loss of
-generality, in the subsequent presentation we will ignore these technicalities to simplify the notation.
-To complete the matched averaging optimization procedure it remains to specify similarity c(·, ·),
-threshold  and model size penalty f (·). Yurochkin et al. (2019a;b;c) studied fusion, i.e. aggregation,
-
-
-                                                                        3
-Published as a conference paper at ICLR 2020
-
-
-
-
-of model parameters in a range of applications. The most relevant to our setting is Probabilistic
-Federated Neural Matching (PFNM) (Yurochkin et al., 2019b). They arrived at a special case of
-equation 3 to compute maximum a posteriori estimate (MAP) of their Bayesian nonparametric model
-based on the Beta-Bernoulli process (BBP) (Thibaux & Jordan, 2007), where similarity c(wjl , θi )
-is the corresponding posterior probability of jth client neuron l generated from a Gaussian with
-mean θi , and  and f (·) are guided by the Indian Buffet Process prior (Ghahramani & Griffiths,
-2005). Instead of making heuristic choices, this formulation provides a model-based specification
-of equation 3. We refer to a procedure for solving equation 2 with the setup from Yurochkin et al.
-(2019b) as BBP-MAP. We note that their PFNM is only applicable to fully connected architectures
-limiting its practicality. Our matched averaging perspective allows to formulate averaging of widely
-used architectures such as CNNs and LSTMs as instances of equation 2 and utilize the BBP-MAP
-as a solver.
-
-2.2   P ERMUTATION INVARIANCE OF KEY ARCHITECTURES
-
-Before moving onto the convolutional and recurrent architectures, we discuss permutation invariance
-in deep fully connected networks and corresponding matched averaging approach. We will utilize
-this as a building block for handling LSTMs and CNN architectures such as VGG (Simonyan &
-Zisserman, 2014) widely used in practice.
-
-Permutation invariance of deep FCs We extend equation 1 to recursively define deep FC net-
-work:
-                               xn = σ(xn−1 ΠTn−1 Wn Πn ),                              (4)
-where n = 1, . . . , N is the layer index, Π0 is identity indicating non-ambiguity in the ordering of
-input features x = x0 and ΠN is identity for the same in output classes. Conventionally σ(·) is any
-non-linearity except for ŷ = xN where it is the identity function (or softmax if we want probabilities
-instead of logits). When N = 2, we recover a single hidden layer variant from equation 1. To
-perform matched averaging of deep FCs obtained from J clients we need to find permutations for
-every layer of every client. Unfortunately, permutations within any consecutive pair of intermediate
-layers are coupled leading to a NP-hard combinatorial optimization problem. Instead we consider
-recursive (in layers) matched averaging formulation. Suppose we have {Πj,n−1 }, then plugging
-{ΠTj,n−1 Wj,n } into equation 2 we find {Πj,n } and move onto next layer. The recursion base for this
-procedure is {Πj,0 }, which we know is an identity permutation for any j.
-
-Permutation invariance of CNNs The key observation in understanding permutation invariance
-of CNNs is that instead of neurons, channels define the invariance. To be more concrete, let
-                                                                             in          out
-Conv(x, W ) define convolutional operation on input x with weights W ∈ RC ×w×h×C , where
-  in   out
-C ,C       are the numbers of input/output channels and w, h are the width and height of the filters.
-Applying any permutation to the output dimension of the weights and then same permutation to the
-input channel dimension of the subsequent layer will not change the corresponding CNN’s forward
-pass. Analogous to equation 4 we can write:
-                                 xn = σ(Conv(xn−1 , ΠTn−1 Wn Πn )).                                   (5)
-Note that this formulation permits pooling operations as those act within channels. To apply matched
-                                                                                   out
-                                                                                 Cn
-averaging for the nth CNN layer we form inputs to equation 2 as {wjl ∈ RD }l=1         , j = 1, . . . , J,
-where D is the flattened Cnin × w × h dimension of ΠTj,n−1 Wj,n . This result can be alternatively
-derived taking the IM 2 COL perspective. Similar to FCs, we can recursively perform matched averag-
-ing on deep CNNs. The immediate consequence of our result is the extension of PFNM (Yurochkin
-et al., 2019b) to CNNs. Empirically, see Figure 1, we found that this extension performs well on
-MNIST with a simpler CNN architecture such as LeNet (LeCun et al., 1998) (4 layers) and signif-
-icantly outperforms coordinate-wise weight averaging (1 round FedAvg). However, it breaks down
-for more complex architecture, e.g. VGG-9 (Simonyan & Zisserman, 2014) (9 layers), needed to
-obtain good quality prediction on a more challenging CIFAR-10.
-
-Permutation invariance of LSTMs Permutation invariance in the recurrent architectures is as-
-sociated with the ordering of the hidden states. At a first glance it appears similar to fully con-
-nected architecture, however the important difference is associated with the permutation invariance
-
-
-                                                    4
-Published as a conference paper at ICLR 2020
-
-
-
-
-of the hidden-to-hidden weights H ∈ RL×L , where L is the number of hidden states. In particu-
-lar, permutation of the hidden states affects both rows and columns of H. Consider a basic RNN
-ht = σ(ht−1 H + xt W ), where W are the input-to-hidden weights. To account for the permutation
-invariance of the hidden states, we notice that dimensions of ht should be permuted in the same way
-for any t, hence
-                                  ht = σ(ht−1 ΠT HΠ + xt W Π).                                     (6)
-
-To match RNNs, the basic sub-problem is to align hidden-to-hidden weights of two clients with
-Euclidean similarity, which requires minimizing kΠT Hj Π − Hj 0 k22 over permutations Π. This
-is a quadratic assignment problem known to be NP-hard (Loiola et al., 2007). Fortunately, the
-same permutation appears in an already familiar context of input-to-hidden matching of W Π. Our
-matched averaging RNN solution is to utilize equation 2 plugging-in input-to-hidden weights  {Wj }
-to find {Πj }. Then federated hidden-to-hidden weights are computed as H = J1 j Πj Hh ΠTj
-                                                                                     P
-and input-to-hidden weights are computed as before. We note that Gromov-Wasserstein distance
-(Gromov, 2007) from the optimal transport literature corresponds to a similar quadratic assignment
-problem. It may be possible to incorporate hidden-to-hidden weights H into the matching algorithm
-by exploring connections to approximate algorithms for computing Gromov-Wasserstein barycenter
-(Peyré et al., 2016). We leave this possibility for future work.
-To finalize matched averaging of LSTMs, we discuss several specifics of the architecture. LSTMs
-have multiple cell states, each having its individual hidden-to-hidden and input-to-hidden weights.
-In out matched averaging we stack input-to-hidden weights into SD × L weight matrix (S is the
-number of cell states; D is input dimension and L is the number of hidden states) when computing
-the permutation matrices and then average all weights as described previously. LSTMs also often
-have an embedding layer, which we handle like a fully connected layer. Finally, we process deep
-LSTMs in the recursive manner similar to deep FCs.
-
-
-2.3   F EDERATED M ATCHED AVERAGING (F ED MA) ALGORITHM
-
-Defining the permutation invariance classes of CNNs and LSTMs allows us to extend PFNM
-(Yurochkin et al., 2019b) to these architectures, however our empirical study in Figure 1 demon-
-strates that such extension fails on deep architectures necessary to solve more complex tasks. Our
-results suggest that recursive handling of layers with matched averaging may entail poor overall
-solution. To alleviate this problem and utilize the strength of matched averaging on “shallow” archi-
-tectures, we propose the following layer-wise matching scheme. First, data center gathers only the
-weights of the first layers from the clients and performs one-layer matching described previously
-to obtain the first layer weights of the federated model. Data center then broadcasts these weights
-to the clients, which proceed to train all consecutive layers on their datasets, keeping the matched
-federated layers frozen. This procedure is then repeated up to the last layer for which we conduct
-a weighted averaging based on the class proportions of data points per client. We summarize our
-Federated Matched Averaging (FedMA) in Algorithm 1. The FedMA approach requires communi-
-cation rounds equal to the number of layers in a network. In Figure 1 we show that with layer-wise
-matching FedMA performs well on the deeper VGG-9 CNN as well as LSTMs. In the more chal-
-lenging heterogeneous setting, FedMA outperforms FedAvg, FedProx trained with same number of
-communication rounds (4 for LeNet and LSTM and 9 for VGG-9) and other baselines, i.e. client
-individual CNNs and their ensemble.
-
-FedMA with communication We’ve shown that in the heterogeneous data scenario FedMA out-
-performs other federated learning approaches, however it still lags in performance behind the entire
-data training. Of course the entire data training is not possible under the federated learning con-
-straints, but it serves as performance upper bound we should strive to achieve. To further improve
-the performance of our method, we propose FedMA with communication, where local clients receive
-the matched global model at the beginning of a new round and reconstruct their local models with
-the size equal to the original local models (e.g. size of a VGG-9) based on the matching results of
-the previous round. This procedure allows to keep the size of the global model small in contrast
-to a naive strategy of utilizing full matched global model as a starting point across clients on every
-round.
-
-
-                                                  5
-Published as a conference paper at ICLR 2020
-
-
-
-
-Algorithm 1: Federated Matched Averaging (FedMA)
-Input : local weights of N -layer architectures {Wj,1 , . . . , Wj,N }Jj=1 from J clients
-Output: global weights {W1 , . . . , WN }
-n = 1;
-while n ≤ N do
-   if n < N then                            
-       {Πj }Jj=1 = BBP-MAP {Wj,n }Jj=1 ;              // call BBP-MAP to solve Eq. 2
-               1               T
-                  P
-       Wn = J j Wj,n Πj ;
-   else
-              PK P
-       Wn = k=1 j pjk Wjl,n where pk is fraction of data points with label k on worker j;
-   end
-   for j ∈ {1, . . . , J} do
-       Wj,n+1 ← Πj Wj,n+1 ;                     // permutate the next-layer weights
-       Train {Wj,n+1 , . . . , Wj,L } with Wn frozen;
-   end
-   n = n + 1;
-end
-
-
-3   E XPERIMENTS
-
-We present an empirical study of FedMA with communication and compare it with state-of-the-art
-methods i.e. FedAvg (McMahan et al., 2017) and FedProx (Sahu et al., 2018); analyze the perfor-
-mance under the growing number of clients and visualize the matching behavior of FedMA to study
-its interpretability. Our experimental studies are conducted over three real world datasets. Summary
-information about the datasets and associated models can be found in supplement Table 3.
-
-Experimental Setup We implemented FedMA and the considered baseline methods in PyTorch
-(Paszke et al., 2017). We deploy our empirical study under a simulated federated learning environ-
-ment where we treat one centralized node in the distributed cluster as the data center and the other
-nodes as local clients. All nodes in our experiments are deployed on p3.2xlarge instances on Ama-
-zon EC2. We assume the data center samples all the clients to join the training process for every
-communication round for simplicity.
-For the CIFAR-10 dataset, we use data augmentation (random crops, and flips) and normalize each
-individual image (details provided in the Supplement). We note that we ignore all batch normaliza-
-tion (Ioffe & Szegedy, 2015) layers in the VGG architecture and leave it for future work.
-For CIFAR-10, we considered two data partition strategies to simulate federated learning scenario:
-(i) homogeneous partition where each local client has approximately equal proportion of each of
-the classes; (ii) heterogeneous partition for which number of data points and class proportions are
-unbalanced. We simulated a heterogeneous partition into J clients by sampling pk ∼ DirJ (0.5)
-and allocating a pk,j proportion of the training instances of class k to local client j. We use the
-original test set in CIFAR-10 as our global test set for comparing performance of all methods. For
-the Shakespeare dataset, we treat each speaking role as a client (Caldas et al., 2018) resulting in a
-natural heterogeneous partition. We preprocess the Shakespeare dataset by filtering out the clients
-with less than 10k datapoints and sampling a random subset of J = 66 clients. We allocate 80% of
-the data for training and amalgamate the remaining data into a global test set.
-
-Communication Efficiency and Convergence Rate In this experiment we study performance of
-FedMA with communication. Our goal is to compare our method to FedAvg and FedProx in terms
-of the total message size exchanged between data center and clients (in Gigabytes) and the number
-of communication rounds (recall that completing one FedMA pass requires number of rounds equal
-to the number of layers in the local models) needed for the global model to achieve good perfor-
-mance on the test data. We also compare to the performance of an ensemble method. We evaluate
-all methods under the heterogeneous federated learning scenario on CIFAR-10 with J = 16 clients
-with VGG-9 local models and on Shakespeare dataset with J = 66 clients with 1-layer LSTM net-
-
-
-                                                 6
-Published as a conference paper at ICLR 2020
-
-
-
-
-                    0.5                                                        0.5
-
-                    0.4                                                        0.4
-
-
-
-         Test Acc
-
-
-
-
-                                                                    Test Acc
-                                                 FedAvg                                                                 FedAvg
-                    0.3                          FedProx                       0.3                                      FedProx
-                                                 FedMA                                                                  FedMA
-                    0.2                          Ensemble                      0.2                                      Ensemble
-                                                 Entire Data                                                            Entire Data
-                                                 Training                                                               Training
-                    0.1                                                        0.1
-                           0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6                           0       5          10    15   20   25    30
-                                Amount of Comm. (GB)                                                 Round of Comm.
-                    (a) LSTM, Shakespeare; message size                          (b) LSTM, Shakespeare; rounds
-
-                     0.9                                                      0.90
-                     0.8                                                      0.85
-                     0.7                                                      0.80
-
-
-
-
-                                                                   Test Acc
-          Test Acc
-
-
-
-
-                     0.6                                                                                                FedAvg
-                                                 FedAvg                       0.75
-                     0.5                                                                                                FedProx
-                                                 FedProx                      0.70                                      FedMA
-                     0.4                         FedMA
-                                                                              0.65                                      Ensemble
-                     0.3                         Ensemble
-                                                                                                                        Entire Data
-                     0.2                         Entire Data                  0.60                                      Training
-                                                 Training
-                     0.1                                                      0.55
-                                                                                         0       20          40    60    80     10
-                            1    2   3   4   5    6    7       8                                                                   0
-                                Amount of Comm. (GB)                                                 Round of Comm.
-                     (c) VGG-9, CIFAR-10; message size                           (d) VGG-9, CIFAR-10; rounds
-
-Figure 2: Convergence rates of various methods in two federated learning scenarios: training VGG-9 on
-CIFAR-10 with J = 16 clients and training LSTM on Shakespeare dataset with J = 66 clients.
-
-
-
-work. We fix the total rounds of communication allowed for FedMA, FedAvg, and FedProx i.e. 11
-rounds for FedMA and 99/33 rounds for FedAvg and FedProx for the VGG-9/LSTM experiments
-respectively. We notice that number of local training epochs is a common parameter shared by the
-three considered methods, we thus tune this parameter (denoted E; comprehensive analysis will be
-presented in the next experiment) and report the convergence rate under E that yields the best final
-model accuracy over the global test set. We also notice that there is another hyper-parameter in
-FedProx i.e. the coefficient µ associated with the proxy term, we also tune the parameter using grid
-search and report the best µ we found (0.001) for both VGG-9 and LSTM experiments. FedMA out-
-performs FedAvg and FedProx in all scenarios (Figure 2) with its advantage especially pronounced
-when we evaluate convergence as a function of the message size in Figures 2(a) and 2(c). Final
-performance of all trained models is summarized in Tables 1 and 2.
-
-Effect of local training epochs As studied in previous           0.86
-work (McMahan et al., 2017; Caldas et al., 2018; Sahu et al.,    0.85
-2018), the number of local training epochs E can affect          0.84
-                                                                                                 Test Acc
-
-
-
-
-the performance of FedAvg and sometimes lead to diver-           0.83                      FedAvg
-                                                                                           FedProx
-gence. We conduct an experimental study on the effect of         0.82
-                                                                                           FedMA
-E over FedAvg, FedProx, and FedMA on VGG-9 trained on            0.81
-CIFAR-10 under heterogeneous setup. The candidate local          0.80
-epochs we consider are E ∈ {10, 20, 50, 70, 100, 150}. For       0.79
-
-each of the candidate E, we run FedMA for 6 rounds while                20 40 60 80 10 12 14
-                                                                                         0   0   0
-FedAvg and FedProx for 54 rounds and report the final ac-                      Local Epoch
-curacy that each methods achieves. The result is shown in Figure 3: The effect of number of local
-Figure 3. We observe that training longer benefits FedMA, training epochs on various methods.
-supporting our assumption that FedMA performs best on lo-
-cal models with higher quality. For FedAvg, longer local training leads to deterioration of the final
-accuracy, which matches the observations made in the previous literature (McMahan et al., 2017;
-Caldas et al., 2018; Sahu et al., 2018). FedProx only partially alleviates this problem. The result
-
-
-                                                                   7
-Published as a conference paper at ICLR 2020
-
-
-
-
-of this experiment suggests that FedMA is the only method that local clients can use to train their
-model as long as they want.
-
-           Table 1: Trained models summary for VGG-9 trained on CIFAR-10 as shown in Figure 2
-
-
-                           Method               FedAvg         FedProx     Ensemble                 FedMA
-
-                    Final Accuracy(%)            86.29          85.32              75.29              87.53
-                    Best local epoch(E)            20            20                      N/A           150
-                     Model growth rate            1×             1×                      16×         1.11×
-
-
-          Table 2: Trained models summary for LSTM trained on Shakespeare as shown in Figure 2
-
-
-                           Method               FedAvg         FedProx     Ensemble                 FedMA
-
-                    Final Accuracy(%)            46.63          45.83              46.06              49.07
-                    Best local epoch(E)             2            5                       N/A             5
-                     Model growth rate            1×             1×                      66×         1.06×
-
-
-Handling data bias Real world data often exhibit multimodality within each class, e.g. geo-
-diversity. It has been shown that an observable amerocentric and eurocentric bias is present in the
-widely used ImageNet dataset (Shankar et al., 2017; Russakovsky et al., 2015). Classifiers trained
-on such data “learn” these biases and perform poorly on the under-represented domains (modalities)
-since correlation between the corresponding dominating domain and class can prevent the classifier
-from learning meaningful relations between features and classes. For example, classifier trained
-on amerocentric and eurocentric data may learn to associate white color dress with a “bride” class,
-therefore underperforming on the wedding images taken in countries where wedding traditions are
-different (Doshi, 2018).
-                                                                                               Local Acc:Client0   Entire Data Training
-                                                                           Local Acc:Client1        Oversampling
-The data bias scenario is an important aspect of federated                 Ensemble                 FedMA
-learning, however it received little to no attention in the prior          FedAvg                   Color Balanced
-                                                                           FedProx                  No Bias
-federated learning works. In this study we argue that FedMA
-                                                                                                               87.8 88.5
-can handle this type of problem. If we view each domain,                                                  81.6
-                                                                    80                     75.1 75.9 76.6
-                                                                           Testset Acc
-
-
-
-
-                                                                                 74.9
-e.g. geographic region, as one client, local models will not                          66.0
-
-be affected by the aggregate data biases and learn meaning-         60
-                                                                       46.8 44.6
-ful relations between features and classes. FedMA can then          40
-be used to learn a good global model without biases. We             20
-have already demonstrated strong performance of FedMA on             0
-federated learning problems with heterogeneous data across                              Methods
-clients and this scenario is very similar. To verify this con- Figure 4: Performance on skewed
-jecture we conduct the following experiment.                      CIFAR-10 dataset.
-
-We simulate the skewed domain problem with CIFAR-10 dataset by randomly selecting 5 classes
-and making 95% training images in those classes to be grayscale. For the remaining 5 we turn
-only 5% of the corresponding images into grayscale. By doing so, we create 5 grayscale images
-dominated classes and 5 colored images dominated classes. In the test set, there is half grayscale and
-half colored images for each class. We anticipate entire data training to pick up the uninformative
-correlations between greyscale and certain classes, leading to poor test performance without these
-correlations. In Figure 4 we see that entire data training performs poorly in comparison to the regular
-(i.e. No Bias) training and testing on CIFAR-10 dataset without any grayscaling. This experiment
-was motivated by Olga Russakovsky’s talk at ICML 2019.
-Next we compare the federated learning based approaches. We split the images from color domi-
-nated classes and grayscale dominated classes into 2 clients. We then conduct FedMA with com-
-munication, FedAvg, and FedProx with these 2 clients. FedMA noticeably outperforms the entire
-
-
-                                                           8
-Published as a conference paper at ICLR 2020
-
-
-
-
- 0                                      0                                     0                                     0                                                    0
-
- 5                                      5                                     5                                     5                                                    5
-
- 10                                     10                                    10                                    10                                                   10
-
- 15                                     15                                    15                                    15                                                   15
-
- 20                                     20                                    20                                    20                                                   20
-
- 25                                     25                                    25                                    25                                                   25
-
- 30                                     30                                    30                                    30                                                   30
-      0    5   10   15   20   25   30        0   5   10   15   20   25   30        0   5   10   15   20   25   30        0           5          10   15   20   25   30        0   5   10   15   20   25   30
-
-          (a) Raw input1                 (b) FedMA filter 0                    (c) Client1, filter 0 (d) Client2, filter 23 (e) FedAvg filter 0
- 0                                      0                                     0                                     0                                                    0
-
- 5                                      5                                     5                                     5                                                    5
-
- 10                                     10                                    10                                    10                                                   10
-
- 15                                     15                                    15                                    15                                                   15
-
- 20                                     20                                    20                                    20                                                   20
-
- 25                                     25                                    25                                    25                                                   25
-
- 30                                     30                                    30                                    30                                                   30
-      0    5   10   15   20   25   30        0   5   10   15   20   25   30        0   5   10   15   20   25   30        0           5          10   15   20   25   30        0   5   10   15   20   25   30
-
-    (f) Raw input2     (g) FedMA filter 0 (h) Client 1, filter0 (i) Client 2, filter23 (j) FedAvg filter0
-Figure 5: Representations generated by the first convolution layers of locally trained models, FedMA global
-model and the FedAvg global model.
-
-
-data training and other federated learning approach as shown in Figure 4. This result suggests that
-FedMA may be of interest beyond learning under the federated learning constraints, where entire
-data training is the performance upper bound, but also to eliminate data biases and outperform entire
-data training.
-We consider two additional approaches to eliminate data bias without the federated learning con-
-straints. One way to alleviate data bias is to selectively collect more data to debias the dataset. In the
-context of our experiment, this means getting more colored images for grayscale dominated classes
-and more grayscale images for color dominated classes. We simulate this scenario by simply doing
-a full data training where each class in both train and test images has equal amount of grayscale and
-color images. This procedure, Color Balanced, performs well, but selective collection of new data
-in practice may be expensive or even not possible. Instead of collecting new data, one may consider
-oversampling from the available data to debias. In Oversampling, we sample the underrepresented
-domain (via sampling with replacement) to make the proportion of color and grayscale images to be
-equal for each class (oversampled images are also passed through the data augmentation pipeline,
-e.g. random flipping and cropping, to further enforce the data diversity). Such procedure may be
-prone to overfitting the oversampled images and we see that this approach only provides marginal
-improvement of the model accuracy compared to centralized training over the skewed dataset and
-performs noticeably worse than FedMA.
-
-
-Data efficiency It is known that deep learning models per-           Local Avg Accs    9-Round FedAvg
-form better when more training data is available. However,           Ensemble          9-Round FedProx
-                                                                     FedMA             Entire Data training
-under the federated learning constraints, data efficiency has
-                                                                                                                             Testset Accuracy
-
-
-
-
-not been studied to the best of our knowledge. The challenge   80
-here is that when new clients join the federated system, they  70
-each bring their own version of the data distribution, which,  60
-if not handled properly, may deteriorate the performance de-   50
-spite the growing data size across the clients. To simulate    40
-this scenario we first partition the entire training CIFAR-10     5       10        15       20         25
-dataset into 5 homogeneous pieces. We then partition each               Number of Clients
-homogeneous data piece further into 5 sub-pieces hetero- Figure 6: Data efficiency under the in-
-geneously. Using this strategy, we partition the CIFAR-10 creasing number of clients.
-training set into 25 heterogeneous small sub-datasets con-
-taining approximately 2k points each. We conduct a 5-step experimental study: starting from a
-randomly selected homogeneous piece consisting of 5 associated heterogeneous sub-pieces, we
-simulate a 5-client federated learning heterogeneous problem. For each consecutive step, we add
-one of the remaining homogeneous data pieces consisting of 5 new clients with heterogeneous sub-
-datasets. Results are presented in Figure 6. Performance of FedMA (with a single pass) improves
-
-
-                                                                                                9
-Published as a conference paper at ICLR 2020
-
-
-
-
-when new clients are added to the federated learning system, while FedAvg with 9 communication
-rounds deteriorates.
-
-Interpretability One of the strengths of FedMA is that it utilizes communication rounds more ef-
-ficiently than FedAvg. Instead of directly averaging weights element-wise, FedMA identifies match-
-ing groups of convolutional filters and then averages them into the global convolutional filters. It’s
-natural to ask “How does the matched filters look like?”. In Figure 5 we visualize the represen-
-tations generated by a pair of matched local filters, aggregated global filter, and the filter returned
-by the FedAvg method over the same input image. Matched filters and the global filter found with
-FedMA are extracting the same feature of the input image, i.e. filter 0 of client 1 and filter 23 of
-client 2 are extracting the position of the legs of the horse, and the corresponding matched global
-filter 0 does the same. For the FedAvg, global filter 0 is the average of filter 0 of client 1 and filter 0
-of client 2, which clearly tampers the leg extraction functionality of filter 0 of client 1.
-
-4    C ONCLUSION
-
-We presented Federated Matched Averaging (FedMA), a layer-wise federated learning algorithm
-designed for modern CNNs and LSTMs architectures that accounts for permutation invariance of
-the neurons and permits global model size adaptation. Our method significantly outperforms prior
-federated learning algorithms in terms of its convergence when measured by the size of messages
-exchanged between server and the clients during training. We demonstrated that FedMA can effi-
-ciently utilize well-trained local modals, a property desired in many federated learning applications,
-but lacking in the prior approaches. We have also presented an example where FedMA can help to
-resolve some of the data biases and outperform aggregate data training.
-In the future work we want to extend FedMA to improve federated learning of LSTMs using approxi-
-mate quadratic assignment solutions from the optimal transport literature, and enable additional deep
-learning building blocks, e.g. residual connections and batch normalization layers. We also believe
-it is important to explore fault tolerance of FedMA and study its performance on the larger datasets,
-particularly ones with biases preventing efficient training even when the data can be aggregated, e.g.
-Inclusive Images (Doshi, 2018).
-
-R EFERENCES
-Martial Agueh and Guillaume Carlier. Barycenters in the wasserstein space. SIAM Journal on
- Mathematical Analysis, 43(2):904–924, 2011.
-
-Keith Bonawitz, Hubert Eichner, Wolfgang Grieskamp, Dzmitry Huba, Alex Ingerman, Vladimir
-  Ivanov, Chloe Kiddon, Jakub Konecny, Stefano Mazzocchi, H Brendan McMahan, et al. Towards
-  federated learning at scale: System design. arXiv preprint arXiv:1902.01046, 2019.
-
-Sebastian Caldas, Peter Wu, Tian Li, Jakub Konečnỳ, H Brendan McMahan, Virginia Smith, and
-  Ameet Talwalkar. Leaf: A benchmark for federated settings. arXiv preprint arXiv:1812.01097,
-  2018.
-
-Tulsee Doshi. Introducing the inclusive images competition, 2018.
-
-Zoubin Ghahramani and Thomas L Griffiths. Infinite latent feature models and the Indian buffet
-  process. In Advances in Neural Information Processing Systems, pp. 475–482, 2005.
-
-Mikhail Gromov. Metric structures for Riemannian and non-Riemannian spaces. Springer Science
- & Business Media, 2007.
-
-Sergey Ioffe and Christian Szegedy. Batch normalization: Accelerating deep network training by
-  reducing internal covariate shift. arXiv preprint arXiv:1502.03167, 2015.
-
-Peter Kairouz, H Brendan McMahan, Brendan Avent, Aurélien Bellet, Mehdi Bennis, Arjun Nitin
-  Bhagoji, Keith Bonawitz, Zachary Charles, Graham Cormode, Rachel Cummings, et al. Advances
-  and open problems in federated learning. arXiv preprint arXiv:1912.04977, 2019.
-
-
-                                                    10
-Published as a conference paper at ICLR 2020
-
-
-
-
-Harold W Kuhn. The Hungarian method for the assignment problem. Naval Research Logistics
-  (NRL), 2(1-2):83–97, 1955.
-Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner, et al. Gradient-based learning applied
-  to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.
-Tian Li, Anit Kumar Sahu, Ameet Talwalkar, and Virginia Smith. Federated learning: Challenges,
-  methods, and future directions. arXiv preprint arXiv:1908.07873, 2019.
-Eliane Maria Loiola, Nair Maria Maia de Abreu, Paulo Oswaldo Boaventura-Netto, Peter Hahn, and
-  Tania Querido. A survey for the quadratic assignment problem. European journal of operational
-  research, 176(2):657–690, 2007.
-Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas.
-  Communication-efficient learning of deep networks from decentralized data. In Artificial Intelli-
-  gence and Statistics, pp. 1273–1282, 2017.
-Mehryar Mohri, Gary Sivek, and Ananda Theertha Suresh. Agnostic federated learning. In Interna-
- tional Conference on Machine Learning, pp. 4615–4625, 2019.
-Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary DeVito,
-  Zeming Lin, Alban Desmaison, Luca Antiga, and Adam Lerer. Automatic differentiation in
-  pytorch. In NIPS-W, 2017.
-Gabriel Peyré, Marco Cuturi, and Justin Solomon. Gromov-wasserstein averaging of kernel and
-  distance matrices. In International Conference on Machine Learning, pp. 2664–2672, 2016.
-Sashank J. Reddi, Satyen Kale, and Sanjiv Kumar. On the convergence of adam and beyond. In
-  International Conference on Learning Representations, 2018. URL https://openreview.
-  net/forum?id=ryQu7f-RZ.
-Olga Russakovsky. Strategies for mitigating social bias in deep learning systems. Invited talk at
-  Identifying and Understanding Deep Learning Phenomena workshop, ICML 2019.
-Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean Ma, Zhiheng
-  Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, et al. Imagenet large scale visual
-  recognition challenge. International journal of computer vision, 115(3):211–252, 2015.
-Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, and Virginia Smith.
-  On the convergence of federated optimization in heterogeneous networks. arXiv preprint
-  arXiv:1812.06127, 2018.
-Shreya Shankar, Yoni Halpern, Eric Breck, James Atwood, Jimbo Wilson, and D Sculley. No classi-
-  fication without representation: Assessing geodiversity issues in open data sets for the developing
-  world. arXiv preprint arXiv:1711.08536, 2017.
-Karen Simonyan and Andrew Zisserman. Very deep convolutional networks for large-scale image
-  recognition. arXiv preprint arXiv:1409.1556, 2014.
-Sidak Pal Singh and Martin Jaggi.         Model fusion via optimal transport.        arXiv preprint
-  arXiv:1910.05653, 2019.
-Virginia Smith, Chao-Kai Chiang, Maziar Sanjabi, and Ameet S Talwalkar. Federated multi-task
-  learning. In Advances in Neural Information Processing Systems, pp. 4424–4434, 2017.
-Romain Thibaux and Michael I Jordan. Hierarchical Beta processes and the Indian buffet process.
-  In Artificial Intelligence and Statistics, pp. 564–571, 2007.
-Mikhail Yurochkin, Mayank Agarwal, Soumya Ghosh, Kristjan Greenewald, and Nghia Hoang. Sta-
- tistical model aggregation via parameter matching. In Advances in Neural Information Processing
- Systems, pp. 10954–10964, 2019a.
-Mikhail Yurochkin, Mayank Agarwal, Soumya Ghosh, Kristjan Greenewald, Nghia Hoang, and
- Yasaman Khazaeni. Bayesian nonparametric federated learning of neural networks. In Interna-
- tional Conference on Machine Learning, pp. 7252–7261, 2019b.
-
-
-                                                 11
-Published as a conference paper at ICLR 2020
-
-
-
-
-Mikhail Yurochkin, Zhiwei Fan, Aritra Guha, Paraschos Koutris, and XuanLong Nguyen. Scalable
- inference of topic evolution via models for latent geometric structures. In Advances in Neural
- Information Processing Systems, pp. 5949–5959, 2019c.
-
-
-
-
-                                               12
-Published as a conference paper at ICLR 2020
-
-
-
-
-A     S UMMARY OF THE DATASETS USED IN THE EXPERIMENTS
-
-The details of the datasets and hyper-parameters used in our experiments are summarized in Table
-3. In conducting the “freezing and retraining” process of FedMA, we notice when retraining the last
-FC layer while keeping all previous layers frozen, the initial learning rate we use for SGD doesn’t
-lead to a good convergence (this is only for the VGG-9 architecture). To fix this issue, we divide
-the initial learning rate by 10 i.e. using 10−4 for the last FC layer retraining and allow the clients to
-retrain for 3 times more epochs. We also switch off the `2 weight decay during the “freezing and
-retraining” process of FedMA except for the last FC layer where we use a `2 weight decay of 10−4 .
-For language task, we observe SGD with a constant learning rate works well for all considered
-methods.
-In our experiments, we use FedAvg and FedProx variants without the shared initialization since
-those would likely be more realistic when trying to aggregate locally pre-trained models. And
-FedMA still performs well in practical scenarios where local clients won’t be able to share the
-random initialization.
-
-           Table 3: The datasets used and their associated learning models and hyper-parameters.
-
-
-         Method          MNIST           CIFAR-10            Shakespeare (McMahan et al., 2017)
-
-       # Data points     60, 000           50, 000                         1, 017, 981
-          Model           LeNet            VGG-9                             LSTM
-         # Classes          10                10                               80
-       # Parameters       431k             3, 491k                            293k
-        Optimizer                     SGD                                     SGD
-      Hyper-params.      Init lr: 0.01, 0.001 (last layer)                lr: 0.8(const)
-                                         momentum: 0.9, `2 weight decay: 10−4
-
-
-
-
-B     D ETAILS OF M ODEL A RCHITECTURES AND H YPER - PARAMETERS
-
-The details of the model architectures we used in the experiments are summarized in this section.
-Specifically, details of the VGG-9 model architecture we used can be found in Table 4 and details of
-the 1-layer LSTM model used in our experimental study can be found in Table 5.
-
-
-C     DATA AUGMENTATION AND NORMALIZATION DETAILS
-
-In preprocessing the images in CIFAR-10 dataset, we follow the standard data augmentation
-and normalization process. For data augmentation, random cropping and horizontal random
-flipping are used. Each color channels are normalized with mean and standard deviation by
-µr = 0.491372549, µg = 0.482352941, µb = 0.446666667, σr = 0.247058824, σg =
-0.243529412, σb = 0.261568627. Each channel pixel is normalized by subtracting the mean value
-in this color channel and then divided by the standard deviation of this color channel.
-
-
-D     E XTRA E XPERIMENTAL D ETAILS
-
-D.1   S HAPES OF F INAL G LOBAL M ODEL
-
-Here we report the shapes of final global VGG and LSTM models returned by FedMA with com-
-munication.
-
-
-                                                     13
-Published as a conference paper at ICLR 2020
-
-
-
-
-Table 4: Detailed information of the VGG-9 architecture used in our experiments, all non-linear activation
-function in this architecture is ReLU; the shapes for convolution layers follows (Cin , Cout , c, c)
-
-
-                     Parameter                   Shape           Layer hyper-parameter
-
-                layer1.conv1.weight         3 × 32 × 3 × 3            stride:1;padding:1
-                 layer1.conv1.bias                32                        N/A
-                layer2.conv2.weight        32 × 64 × 3 × 3            stride:1;padding:1
-                 layer2.conv2.bias                64                        N/A
-                    pooling.max                  N/A                kernel size:2;stride:2
-                layer3.conv3.weight        64 × 128 × 3 × 3           stride:1;padding:1
-                 layer3.conv3.bias                128                       N/A
-                layer4.conv4.weight       128 × 128 × 3 × 3           stride:1;padding:1
-                 layer4.conv4.bias                128                       N/A
-                    pooling.max                  N/A                kernel size:2;stride:2
-                      dropout                    N/A                       p = 5%
-                layer5.conv5.weight       128 × 256 × 3 × 3           stride:1;padding:1
-                  layer5.conv5.bias              256                          N/A
-                layer6.conv6.weight       256 × 256 × 3 × 3           stride:1;padding:1
-                 layer6.conv6.bias                256                       N/A
-                    pooling.max                  N/A                kernel size:2;stride:2
-                      dropout                    N/A                      p = 10%
-                 layer7.fc7.weight            4096 × 512                    N/A
-                   layer7.fc7.bias                512                       N/A
-                 layer8.fc8.weight            512 × 512                     N/A
-                   layer8.fc8.bias                512                       N/A
-                      dropout                    N/A                      p = 10%
-                 layer9.fc9.weight             512 × 10                     N/A
-                   layer9.fc9.bias                10                        N/A
-
-
-
-
-                 Table 5: Detailed information of the LSTM architecture in our experiment
-
-                                        Parameter            Shape
-
-                                     encoder.weight          80 × 8
-                                     lstm.weight.ih.l0     1024 × 8
-                                   lstm.weight.hh.l0      1024 × 256
-                                      lstm.bias.ih.l0         1024
-                                      lstm.bias.hh.l0         1024
-                                     decoder.weight        80 × 256
-                                       decoder.bias            80
-
-
-
-
-                                                    14
-Published as a conference paper at ICLR 2020
-
-
-
-
-                 Table 6: Detailed information of the LSTM architecture in our experiment
-
-               Parameter                    Shape        Growth rate (#global / #original params)
-
-             encoder.weight                80 × 21                  2.63 × (1, 680/640)
-            lstm.weight.ih.l0             1028 × 21               2.64 × (21, 588/8, 192)
-            lstm.weight.hh.l0            1028 × 257             1.01 × (264, 196/262, 144)
-              lstm.bias.ih.l0                1028                 1.004 × (1, 028/1, 024)
-             lstm.bias.hh.l0                 1028                 1.004 × (1, 028/1, 024)
-             decoder.weight                80 × 257              1.004 × (20, 560/20, 480)
-              decoder.bias                    80                             1×
-
-      Total Number of Parameters           310, 160             1.06× (310, 160/293, 584)
-
-
-Table 7: Detailed information of the final global VGG-9 model returned by FRB; the shapes for convolution
-layers follows (Cin , Cout , c, c)
-
-            Parameter                       Shape            Growth rate (#global / #original params)
-
-      layer1.conv1.weight              3 × 47 × 3 × 3                   1.47 × (1, 269/864)
-        layer1.conv1.bias                     47                           1.47 × (47/32)
-      layer2.conv2.weight              47 × 79 × 3 × 3               1.81 × (33, 417/18, 432)
-        layer2.conv2.bias                     79                           1.23 × (79/64)
-      layer3.conv3.weight             79 × 143 × 3 × 3               1.38 × (101, 673/73, 728)
-        layer3.conv3.bias                     143                        1.12 × (143/128)
-      layer4.conv4.weight            143 × 143 × 3 × 3              1.24 × (184, 041/147, 456)
-        layer4.conv4.bias                     143                        1.12 × (143/128)
-      layer5.conv5.weight            143 × 271 × 3 × 3              1.18 × (348, 777/294, 912)
-        layer5.conv5.bias                     271                        1.06 × (271/256)
-      layer6.conv6.weight            271 × 271 × 3 × 3              1.12 × (660, 969/589, 824)
-        layer6.conv6.bias                     271                        1.06 × (271/256)
-        layer7.fc7.weight                4336 × 527              1.09 × (2, 285, 072/2, 097, 152)
-         layer7.fc7.bias                      527                        1.02 × (527/512)
-        layer8.fc8.weight                 527 × 527                 1.05×, (277, 729/262, 144)
-         layer8.fc8.bias                      527                        1.02 × (527/512)
-        layer9.fc9.weight                  527 × 10                    1.02 × (5, 270/5, 120)
-          layer9.fc9.bias                     10                                1×
-
- Total Number of Parameters               3, 900, 235             1.11× (3, 900, 235/3, 491, 530)
-
-
-
-D.2    H YPER - PARAMETERS FOR BBP-MAP
-
-We follow FPNM (Yurochkin et al., 2019b) to choose the hyper-parameters of BBP-MAP, which
-controls the choices of θi , , and the f (·) as discussed in Section 2. More specifically, there are three
-parameters to choose i.e. 1) σ02 , the prior variance of weights of the global neural network; 2) γ0 ,
-which controls discovery of new hidden states. Increasing γ0 leads to a larger final global model; 3)
-σ 2 is the variance of the local neural network weights around corresponding global network weights.
-We empirically analyze the different choices of the three hyper-parameters and find the choice of
-
-
-                                                    15
-Published as a conference paper at ICLR 2020
-
-
-
-
-γ0 = 7, σ02 = 1, σ 2 = 1 for VGG-9 on CIFAR-10 dataset and γ0 = 10−3 , σ02 = 1, σ 2 = 1 for
-LSTM on Shakespeare dataset lead to good performance in our experimental studies.
-
-E       P RACTICAL C ONSIDERATIONS
-Following from the discussion in PFNM, here we briefly discuss the time complexity of FedMA.
-For simplicity, we focus on a single-layer matching and assume all participating clients train the
-same model architecture. The complexity for matching the entire model follows trivially from this
-discussion. The worst case complexity is achieved when no hidden states are matched and is equal
-to O(D · (JL)2 ) for building the cost matrix and O((JL)3 ) for running the Hungarian algorithm
-where the definitions of D, J, and L follow the discussion in Section 2. The best complexity per
-layer is (achieved when all hidden states are matched) O(D ·L2 +L3 ). Practically, when the number
-of participating clients i.e. J is large and each client trains a big model, the speed of our algorithm
-can be relatively slow.
-To seed up the Hungarian algorithm. Although there isn’t any algorithm that achieves lower com-
-plexity, better implementation improves the constant significantly. In our experiments, we used an
-implementation based on shortest path augmentation i.e. lapsolver 2 . Empirically, we observed
-that this implementation of the Hungarian algorithm leads to orders of magnitude speed ups over the
-vanilla implementation.
-
-F       H YPER - PARAMETERS FOR THE H ANDLING DATA B IAS E XPERIMENTS
-In conducting the “handling data bias” experiments. We re-tune the local epoch E for both FedAvg
-and FedProx. The considered candidates of E are {5, 10, 20, 30}. We observe that a relatively
-large choice of E can easily lead to poor convergence of FedAvg. While FedProx tolerates larger
-choices of E better, a smaller E can always lead to good convergence. We use E = 5 for both
-FedAvg and FedProx in our experiments. For FedMA, we choose E = 50 since it leads to a
-good convergence. For the “oversampling” baseline, we found that using SGD to train VGG-9 over
-oversampled dataset doesn’t lead to a good convergence. Moreover, when using constant learning
-rate, SGD can lead to model divergence. Thus we use AMSG RAD (Reddi et al., 2018) method
-for the “oversampling” baseline and train for 800 epochs. To make the comparison fair, we use
-AMSG RAD for all other centralized baselines to get the reported results in our experiments. Most
-of them converges when training for 200 epochs. We also test the performance of the “Entire Data
-Training”, “Color Balanced”, and “No Bias” baselines over SGD. We use learning rate 0.01 and `2
-weight decay at 10−4 and train for 200 epochs for those three baselines. It seems the “Entire Data
-Training” and ”No Bias” baselines converges to a slightly better accuracy i.e. 78.71% and 91.23%
-respectively (compared to 75.91% and 88.5% for AMSG RAD). But the “Color Balanced” doesn’t
-seem to converge better accuracy (we get 87.79% accuracy for SGD and 87.81% for AMSG RAD).
-
-
-
-
-    2
-        https://github.com/cheind/py-lapsolver
-
-
-                                                  16
+(4)
+
+where, φm1 , φqw1 , φqw2 , and φm2 represent the barrier heights
+at the interface positions 0, ℓ1 , ℓ2 , and L, respectively [as illustrated in Fig. 1(b)]. The total FE potential can be expressed
+as Vfe = Vfe1 + Vfe2 . From Eq. (2), the potential drop Vqw
+across the QW can be represented as Vqw = σs tqw /εo εqw , with
+εqw denoting the relative permittivity of the IL layer. The characteristics dependent on the thickness of the FE material are
+given as25
+Ps,i = hs tfe,i ,
+
+Pr,i = hr tfe,i ,
+
+Ec,i = hc t−0.61
+fe,i
+
+where, ky and kz represent the electron wave vectors within
+the transverse plane, while f1 and f2 denote the Fermi-Dirac
+distribution functions associated with the TE and BE, respectively. Further, 'e' signifies the electron charge, and
+'h' refers to Planck’s constant. Figure 3(a) shows that the simulation approaches were thoroughly examined by comparing
+the simulated transmission-energy curve of a double-barrier
+structure with a single QW (HZO/Ta2 O5 /HZO) with existing data.19 This comparison showed perfect alignment, confirming model accuracy. The transmission-energy curve for
+a structure (AlAs/GaAs/AlAs) with a single QW, where RT
+is observed, was replicated and agreed with simulated results
+[Fig. 3(b)].30 The excellent agreement between the simulated
+and reference results highlights the robustness and reliability
+of the approach.
+
+(5)
+(a)
+
+10 6
+
+10 11
+10 14
+0.0
+
+Transmission
+
+Transmission
+
+10 3
+
+10 8
+LRS
+HRS
+LRS [Ref. 19]
+
+HRS [Ref. 19]
+@0V
+0.5 1.0 1.5 2.0
+Energy-Ef (eV)
+
+AlAs
+
+GaAs
+
+AlAs
+
+GaAs
+
+GaAs
+
+Ref. [30]
+10 9
+Sim. This Work
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+
+Energy-Ef (eV)
+
+FIG. 3. Comparison of simulated (a) and (b) Transmission-Energy
+curve with references.19,30
+
+consistent current for multilayer FTJ employs the integration
+of a Preisach-based model with the NEGF formalism, as depicted in Fig. 2. The self-consistent solution of Eq. (1) to
+(6) determines the electrostatic potential, FE polarization, and
+surface charge density for each Va value. This process continues iteratively until the difference between the updated and
+initial σs reaches satisfactory convergence. The NEGF technique, suitable for quantum transport phenomena, evaluates
+the transmission coefficient Tm and current density J following the calculation of the energy band profiles. The Landauer
+formula is subsequently utilized to calculate the current density, which is defined as31–33
+2e
+Ah
+ky ,kz
+
+J=− ∑
+
+Z
+
+Tm (E) [f1 (E) − f2 (E)] dE
+
+0.25 0.00
+
+Va (V)
+
+0.25
+
+1
+100.50
+
+0.50
+
+(7)
+
+0.25 0.00
+
+Va (V)
+
+0.25
+
+0.50
+
+(d)
+
+106
+
+10 2
+
+Transmission
+
+RA ( cm2)
+
+102
+100
+0.50
+
+100
+
+10 5
+
+102
+
+10 6
+
+104
+
+(b)
+
+10 2
+
+103
+
+10 4
+
+8
+10 0.50
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+104
+
+(6)
+
+where Vc,i is the coercive voltage. The calculation of the self(a)
+
+105
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+TER ratio (%)
+
+10 2
+
+(c)
+
+
+
+ 
+Vfe,i ± Vc,i
+Ps,i + Pr,i
+·
+Pfe,i = Ps,i tanh ln
+Ps,i − Pr,i
+2Vc,i
+
+(b)
+
+100
+
+J (A/cm2)
+
+where, Ps,i , Pr,i , and Ec,i are the FEs saturated polarization,
+remanent polarization, and coercive field, respectively. Pr,i
+and Ps,i are proportional to FE thickness tfe,i , and Ec,i are inversely proportional to tfe,i following a slope of -0.61, which
+is in agreement with the scaling value of −2/3.26 The proportionality factors in relation of Ps,i , Pr,i , and Ec,i are represented
+by the constants hs , hr and hc , respectively. FE polarization
+charge density Pfe,i is given by the Preisach-based model,27–29
+
+Va (V)
+
+0.25
+
+10 8
+
+10 11
+
+tqw = 0.5 nm
+tqw = 1 nm
+tqw = 2 nm
+
+0.25 0.00
+
+10 5
+
+0.50
+
+@0V
+10 14
+0.0 0.5
+
+1.0
+
+tqw = 0.5nm
+tqw = 1.0nm
+tqw = 2.0nm
+
+1.5
+
+Energy-Ef (eV)
+
+2.0
+
+FIG. 4. (a) Read current density-voltage (J-V) curves for the
+TiN/HZO/TiO2 /HZO/TiN (MFIFM) stack for Va =±0.5V. Corresponding Fig. (b) shows the TER ratio (%), (c) RA product, and (d)
+transmission characteristics (0V) at different values of thickness tqw .
+Here, in Fig. (a), (c), and (d), bold and dashed lines indicate the LRS
+and HRS, respectively.
+
+In the simulation framework, we utilize the following parameter values: The electron affinity χ is set at 2.8 eV for
+HZO34 and 4.0 eV for TiO2 ,35 and the metal TiN is characterized by a work function Φm 36 of 4.3 eV with a screening length37 (λm1 = λm2 ) of 0.5Å. The materials HZO38 ,
+TiO2 39 and TiN40 exhibited relative permittivities of 25, 48,
+and 3, respectively. The effective electron masses are considered as 0.14mo for HZO41 and 0.5mo for TiO2 .42 The thickness of the HZO, is defined at 4nm, exhibiting a spontaneous
+polarization of Ps = 5.5µC/cm2 , a remanent polarization of
+Pr = 5µC/cm2 , and a coercive field of Ec = 1MV/cm.37 The
+thicknesses of the FE layers, denoted as tfe1 and tfe2 , have been
+determined at 3 and 1 nm, respectively. The parameters hs , hr ,
+and hc can derive using these values as standards [Eq. (5)].
+We begin with investigating the impact of different QW thicknesses on the performance of the MFIFM FTJ. This investigation governs an essential stage in understanding the ways
+
+4
+(a)
+
+(b)
+
+Energy (eV)
+
+J (A/cm2)
+
+(c)
+
+1
+
+8 ×10
+
+0
+
+Va (V)
+
+1
+
+LRS
+
+@ 0.86 V
+
+1.0
+
+@ 0.86 V
+
+0.5
+0.0
+0.5
+TiN
+
+2
+
+4
+
+1.0
+
+HZO
+
+HZO
+
+LRS
+HRS
+
+TiN
+
+0.0 2.5 5.0 7.5
+
+10 7 10 4 10 1
+
+Position (nm) Transmission
+
+(d)
+LRS
+HRS
+
+106
+
+TER ratio (%)
+
+RA ( cm2)
+
+TER ratio (%)
+
+6
+4
+2
+0
+
+LRS
+
+1.5
+
+TiO2
+
+105
+103
+101
+10 1
+10 3
+10 5
+10 7 2
+
+103
+100
+
+10 3
+
+2
+
+1
+
+0
+
+Va (V)
+
+1
+
+2
+
+2
+
+1
+
+0
+
+Va (V)
+
+1
+
+2
+
+FIG. 5. (a) Current density-voltage (J-V) characteristics with sweep
+voltage ±2V of MFIFM stack (TiN/HZO/TiO2 /HZO/TiN) FTJ at
+tqw = 2nm. (b) Band diagram and transmission curve when the current peak takes place at 0.86V. (c) TER ratio (%) and (d) RA product
+characteristics.
+
+Figs. 5(c) and 5(d) depict the TER ratio and RA product for
+the multi-barrier stack FTJ. While TER ratio shows a significant enhancement at lower bias voltages, peaking approximately 6.15 × 104 % at 0.175V with the low RA product is
+measured to be 4.71 × 101 Ω-cm2 enabling better readout and
+cross-section scaling for high density.43
+(a)
+
+(b)
+
+4
+
+Va vs Pfe1
+Va vs Pfe2
+Vfe1 vs Pfe1
+Vfe2 vs Pfe2
+
+2
+
+s , Polarization ( C/cm2)
+
+Polarization ( C/cm2)
+
+that structural parameters affect device characteristics. Figure 4(a) illustrates current density-voltage (J-V) characteristics for both LRS and HRS of the TiN/HZO/TiO2 /HZO/TiN
+stack, with Va kept at ±0.5V across QW thicknesses of 0.5,
+1, and 2 nm. A notable distinction in the current density has
+been observed between LRS and HRS when the QW thickness is set at 2 nm. As the thickness of the well tqw increases
+in a single QW FTJ, the tunneling currents are affected by the
+interaction between direct and resonant tunneling. Initially,
+increasing tqw (at 1nm) widens the barrier, reducing direct tunneling and thereby lowering the current density in both LRS
+and HRS. However, as the quantized energy levels shift closer
+to the Fermi level, Ef , RT is enhanced, causing the higher current density in LRS. This leads to a significant boost in the
+TER ratio, improving the performance of the device. Furthermore, with an increase in current density in LRS attributed to
+enhanced RT, there is a reduction in the RA product, leading
+to improved readability and power efficiency.
+Figs. 4(b) and 4(c) illustrate the characteristics of TER ratio and the RA product, respectively. We have taken 0.15V
+applied voltage as a reference point to compare these characteristics. At tqw =0.5 nm, the TER ratio and RA product
+are 1.34 × 102 % and 3.12 × 102 Ω-cm2 , respectively, and
+at tqw =1nm, we found the TER ratio and RA product are
+approximately 3.48 × 102 % and 1.20 × 103 Ω-cm2 , respectively. The TER ratio and RA product are found to be approximately 6.11 × 104 % and 6.68 × 101 Ω-cm2 , respectively,
+for tqw =2nm. Consequently, at tqw = 2nm, the TER ratio is
+enhanced by approximately 1.75 × 102 times, while the RA
+product is reduced by nearly 5 × 10−2 times compared to a
+QW thickness of 1 nm. As shown in Fig. 4(d), tqw increases
+from 0.5 to 2 nm, the transmission characteristics undergo
+notable changes. At tqw =0.5 nm, the QW is extremely narrow, supporting only a single resonant state, which results in
+a broad transmission peak at higher energy levels. The strong
+coupling between the barriers leads to a relatively wide peak
+with moderate transmission. As the QW width increases to
+1 nm, additional quantized states form within the well, creating multiple sharper transmission peaks. These peaks shift
+to lower energy levels as the confined energy levels decrease
+with the increasing well width. Consequently, the transmission probability at resonant energies also increases, enabling
+more efficient electron tunneling. At 2 nm, the well accommodates even more resonant states, causing the transmission
+peaks to become denser and more distinct. The energy spacing
+between the peaks continues to decrease as quantum confinement weakens. This results in higher overall transmission, as
+more electrons can tunnel resonantly through the structure.
+Next, we analyze the J-V characteristics over a voltage
+sweep range of ±2V with tqw =2 nm, as illustrated in Fig. 5(a).
+The band diagram and transmission at 0.86V, where the current peak occurs, are illustrated in Fig. 5(b). The resonant peak near 0.86V highlights the dominance of RT, generated by the alignment of the resonant peak with the Fermi
+level, while the negative differential resistance (NDR) effect
+is observed at this voltage. This illustrates that when the
+Fermi energy Ef in the electrode aligns with the quantized energy levels of the structure, the current reaches a maximum.
+
+0
+2
+4
+
+4
+
+2
+
+0
+
+Voltage (V)
+
+2
+
+4
+
+15
+10
+
+Vfe1 vs s
+Vfe2 vs s
+Vfe1 vs Pfe1
+Vfe2 vs Pfe2
+
+5
+0
+5
+10
+15
+
+1.5 1.0 0.5 0.0 0.5 1.0 1.5
+
+Voltage (V)
+
+FIG. 6. Hysteresis characteristics of TiN/HZO/TiO2 /HZO/TiN
+(MFIFM) stack at QW thickness tqw =2nm. (a) Polarization–Voltage
+(P–V) curves showing FE switching behavior. (b) Polarization and
+surface charge density (σs ) as functions of voltage.
+
+Following this, Fig. 6 shows the hysteresis behavior of the
+MFIFM structure at tqw = 2nm. Fig. 6(a) presents the Va –Pfe,i
+hysteresis loops, along with the corresponding FE voltages
+(Vfe,i ) under an applied sweep. Fig. 6(b) illustrates the dependence of polarization and σs on the FE voltages. The J–V
+characteristics of the MFIFM structure reflect polarization
+switching in the FE layers [Fig. 5(a)]. Around Va = ±1.6V,
+the polarization difference is minimal, indicating aligned polarization states. At lower voltages, a mismatch in polarization
+creates an internal field imbalance, resulting in distinct LRS
+and HRS. While the polarization hysteresis remains symmet-
+
+5
+ric, the unequal thicknesses of the FE layers introduce structural asymmetry, resulting in an asymmetric J–V loop.
+Figure 7(a) illustrates the effect of the QW position (tqw =2
+nm) while varying the thickness of the second FE layer defined as tfe2 = (tfe1 − 4)nm. The read voltage Vr is set to
+0.15V, a value that is sufficiently low to ensure that the polarization stays constant throughout the read process. It is observed that as the thickness tfe2 increases, the ON state current exhibits an initial increase, followed by a decrease to approximately zero once the thickness reaches 2 nm. The observed behavior can be linked to the asymmetry of the barrier,
+which arises from the differences in tfe1 and tfe2 . The changes
+noted in both the ON and OFF states (LRS and HRS) are a
+direct result of this asymmetry. Fig. 7(b) illustrates the effect of the screening length, particularly with varying values
+of λm2 , while maintaining λm1 constant for the MFIFM FTJ.
+Differences in screening length characteristics lead to a notable increase in the TER ratio at a read voltage of 0.15 V. The
+resulting asymmetry in interfacial screening further enhances
+the TER ratio, highlighting the vital role of material properties
+in achieving maximum device efficiency.
+
+ON
+OFF
+
+J (A/cm2)
+
+100
+
+TER ratio (%)
+
+10 2
+10 4
+10 6
+10 8
+
+10 100
+
+@ 0.15 V
+
+1
+
+2
+3
+tfe2 (nm)
+
+106
+105
+104
+103
+102
+101
+0
+410
+
+(b)
+
+107
+
+105
+104
+103
+
+TER ratio (%)
+
+102
+
+TER ratio (%)
+RA
+
+(a)
+
+106
+
+@ 0.15 V
+
+ON
+OFF
+105
+TER ratio (%)
+
+102
+101
+1000
+
+1
+
+2
+
+m2 (Å)
+
+3
+
+4
+410
+
+FIG. 7. Impact on the performance of multilayer MFIFM FTJ due
+to (a) QW position with varying tfe2 = (tfe1 − 4)nm at read voltage
+Vr = 0.15V and (b) screening length with varying λm2 , and λm1 is
+fixed at 0.5 Å at Vr = 0.15V.
+
+In conclusion, we have examined a multilayer FTJ design
+that uses a QW between two FE layers in place of the conventional metal-ferroelectric-metal arrangement. Through a selfconsistent coupling of NEGF with the Preisach-based model,
+we show that the QW enhances resonance effects, resulting in
+a notable increase in the TER ratio and a notable drop in the
+RA product. The NDR effect enhances the functionality of
+the device. The potential applications are thus in logic components, programmable resistors, and improved non-volatile
+memory. Future research in FE materials and QW characteristics could thus lead to more effective, scalable devices for
+neuromorphic computing and next-generation electronics.
+1 S. H. Park, H. J. Lee, M. H. Park, J. Kim, and H. W. Jang, J. Phys. D: Appl.
+
+Phys. 57(25), 253002 (2024).
+2 H. Kohlstedt, N. Pertsev, J. Rodríguez Contreras, and R. Waser, Phys. Rev.
+
+B 72(12), 125341 (2005).
+3 K.-F. Luo, Z. Ma, D. Sando, Q. Zhang, and N. Valanoor, ACS nano 19(7),
+
+6622–6647 (2025).
+4 M. Kobayashi, Y. Tagawa, F. Mo, T. Saraya,
+
+and T. Hiramoto, IEEE J.
+Electron Devices Soc. 7, 134–139 (2019).
+5 E. Covi, H. Mulaosmanovic, B. Max, S. Slesazeck, and T. Mikolajick,
+Neuromorphic Comput. and Eng. 2(1), 012002 (2022).
+
+6 J. Hwang, Y. Goh, and S. Jeon, Small 20(9), 2305271 (2024).
+7 N. Jao, Y. Xiao, A. K. Saha, S. K. Gupta, and V. Narayanan, IEEE J. Explor.
+
+Solid-State Comput. Devices and Circuits 7(2), 115–122 (2021).
+8 Y. Goh, J. Hwang, Y. Lee, M. Kim, and S. Jeon, Appl. Phys. Lett. 117(24),
+
+242901 (2020).
+9 F. Ambriz-Vargas, G. Kolhatkar, R. Thomas, R. Nouar, A. Sarkissian,
+
+C. Gomez-Yáñez, M. Gauthier, and A. Ruediger, Appl. Phys. Lett. 110(9),
+093106 (2017).
+10 B. Max, M. Hoffmann, H. Mulaosmanovic, S. Slesazeck, and T. Mikolajick, ACS Appl. Electron. Mater. 2(12), 4023–4033 (2020).
+11 R. Athle and M. Borg, Adv.Intell. Syst. 6(3), 2300554 (2024).
+12 J. Yoon, S. Hong, Y. W. Song, J.-H. Ahn, and S.-E. Ahn, Appl. Phys. Lett.
+115(15), 153502 (2019).
+13 L. Wang, M. R. Cho, Y. J. Shin, J. R. Kim, S. Das, J.-G. Yoon, J.-S. Chung,
+and T. W. Noh, Nano letters 16(6), 3911–3918 (2016).
+14 H. Lu, A. Lipatov, S. Ryu, D. Kim, H. Lee, M. Y. Zhuravlev, C.-B. Eom,
+E. Y. Tsymbal, A. Sinitskii, and A. Gruverman, Nat. commun. 5(1), 5518
+(2014).
+15 M. Y. Zhuravlev, R. F. Sabirianov, S. Jaswal, and E. Y. Tsymbal, Phys. Rev.
+Lett. 94(24), 246802 (2005).
+16 M. Y. Zhuravlev, Y. Wang, S. Maekawa, and E. Y. Tsymbal, Appl. Phys.
+Lett. 95(5), 052902 (2009).
+17 S.-C. Chang, A. Naeemi, D. E. Nikonov, and A. Gruverman, Phys. Rev.
+Appl. 7(2), 024005 (2017).
+18 X. Zheng, Y. Yang, Q. Zhang, J. Li, and X. Liu, Appl. Phys. Lett. 121(13),
+132902 (2022).
+19 P. Chang and Y. Xie, IEEE Electron Device Lett. 44(1), 168–171 (2023).
+20 J. Hwang, Y. Goh, and S. Jeon, IEEE Trans. on Electron Devices 68(2),
+841–845 (2020).
+21 H. Joh, T. Jung, and S. Jeon, IEEE Trans. on Electron Devices 68(5), 2538–
+2542 (2021).
+22 C. Kittel and P. McEuen, Introduction to solid state physics (John Wiley &
+Sons, 2018).
+23 T. Sandu, C. Tibeica, R. Plugaru, O. Nedelcu, and N. Plugaru, Nanomaterials 12(10), 1682 (2022).
+24 D. Pantel and M. Alexe, Phys. Rev. B 82(13), 134105 (2010).
+25 J. Lyu, I. Fina, R. Solanas, J. Fontcuberta, and F. Sánchez, ACS Appl.
+Electron. Mater. 1(2), 220–228 (2019).
+26 V. Janovec, Czechoslovak J. Phys. 8, 3–15 (1958).
+27 S. Miller, R. Nasby, J. Schwank, M. Rodgers, and P. Dressendorfer, J. Appl.
+Phys. 12(23), 6463–6471 (1990).
+28 A. Sutor, S. J. Rupitsch, and R. Lerch, Appl. Phys. A 100(2), 425–430
+(2010).
+29 I. D. Mayergoyz and G. Friedman, IEEE trans. on Magnetics 24(1), 212–
+217 (1988).
+30 Y. Ando and T. Itoh, J. Appl. Phys. 61(4), 1497–1502 (1987).
+31 Z. Zhou, L. Jiao, J. Zhou, Q. Kong, S. Luo, C. Sun, Z. Zheng, X. Wang,
+D. Zhang, G. Liu, et al., IEEE Electron Device Lett. 43(1), 158–161 (2021).
+32 S. Datta, (Cambridge university press, 2005).
+33 A. Sharma, A. Tulapurkar, and B. Muralidharan, IEEE Trans. on Electron
+Devices 63(11), 4527–4534 (2016).
+34 Z. Fan, J. Xiao, J. Wang, L. Zhang, J. Deng, Z. Liu, Z. Dong, J. Wang, and
+J. Chen, Appl. Phys. Lett. 108(23), 232905 (2016).
+35 J. Robertson, J. Vac. Sci. Technol. A 31(5), 050821 (2013).
+36 F. Fillot, T. Morel, S. Minoret, I. Matko, S. Maîtrejean, B. Guillaumot,
+B. Chenevier, and T. Billon, Microelectron. Eng. 82(3-4), 248–253 (2005).
+37 P. Chang and Y. Xie, IEEE Trans. on Electron Devices 70(5), 2282–2290
+(2023).
+38 R. Materlik, C. Künneth, and A. Kersch, J. Appl. Phys. 117(13), 134109
+(2015).
+39 S. Mondal, A. Kumar, et al., Superlattices and Microstruct. 100, 876–885
+(2016).
+40 S. Tripura Sundari, R. Ramaseshan, F. Jose, S. Dash, and A. Tyagi, J. Appl.
+Phys. 115(3) (2014).
+41 S. Monaghan, P. Hurley, K. Cherkaoui, M. Negara, and A. Schenk, SolidState Electronics 53(4), 438–444 (2009).
+42 J. Gulomov, O. Accouche, R. Aliev, R. Ghandour, and I. Gulomova, IEEE
+Access 11, 38970–38981 (2023).
+43 M. Abuwasib, H. Lu, T. Li, P. Buragohain, H. Lee, C.-B. Eom, A. Gruverman, and U. Singisetti, Appl. Phys. Lett. 108(15), 152904 (2016).
+
 

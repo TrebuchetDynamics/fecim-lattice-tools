@@ -1,0 +1,283 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"strings"
+
+	"ironlattice-vis/demo8-comparison/pkg/comparison"
+)
+
+func main() {
+	// Flags
+	showAll := flag.Bool("all", false, "Show all comparisons")
+	showSpecs := flag.Bool("specs", false, "Show architecture specifications")
+	showInference := flag.Bool("inference", false, "Show inference comparison")
+	showDataCenter := flag.Bool("datacenter", false, "Show data center comparison")
+	showAdvantages := flag.Bool("advantages", false, "Show IronLattice advantages")
+	workloadName := flag.String("workload", "mnist", "Workload: mnist, resnet, bert, gpt2, llm")
+	targetTP := flag.Float64("throughput", 10000, "Target throughput (inferences/sec)")
+	noColor := flag.Bool("no-color", false, "Disable color output")
+
+	flag.Parse()
+
+	// Default to all if nothing specified
+	if !*showSpecs && !*showInference && !*showDataCenter && !*showAdvantages {
+		*showAll = true
+	}
+
+	renderer := comparison.NewRenderer()
+	renderer.UseColor = !*noColor
+
+	// Select workload
+	var workload comparison.Workload
+	switch *workloadName {
+	case "mnist":
+		workload = comparison.MNISTWorkload()
+	case "resnet":
+		workload = comparison.ResNet50Workload()
+	case "bert":
+		workload = comparison.BERTBaseWorkload()
+	case "gpt2":
+		workload = comparison.GPT2Workload()
+	case "llm":
+		workload = comparison.LLMWorkload()
+	default:
+		workload = comparison.MNISTWorkload()
+	}
+
+	// Run comparison
+	comp := comparison.CompareArchitectures(workload, 1, *targetTP)
+	advantages := comparison.CalculateAdvantages(comp)
+
+	// Header
+	printHeader()
+
+	if *showAll || *showSpecs {
+		showArchitectureSpecs(renderer, comp.Architectures)
+	}
+
+	if *showAll || *showInference {
+		showInferenceComparison(renderer, comp, workload)
+	}
+
+	if *showAll || *showDataCenter {
+		showDataCenterComparison(renderer, comp, *targetTP)
+	}
+
+	if *showAll || *showAdvantages {
+		showIronLatticeAdvantages(renderer, advantages)
+	}
+
+	// Summary
+	printSummary(comp, advantages)
+}
+
+func printHeader() {
+	fmt.Println()
+	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
+	fmt.Println("║         IRONLATTICE TECHNOLOGY COMPARISON                    ║")
+	fmt.Println("║     CPU+DRAM vs GPU vs IronLattice Compute-in-Memory         ║")
+	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
+	fmt.Println()
+}
+
+func showArchitectureSpecs(renderer *comparison.Renderer, archs []*comparison.Architecture) {
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                  ARCHITECTURE SPECIFICATIONS")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println()
+
+	fmt.Println(renderer.RenderArchitectureSpecs(archs))
+
+	// Visual comparison
+	fmt.Println("Power Consumption (TDP):")
+	fmt.Println(strings.Repeat("─", 60))
+	labels := make([]string, len(archs))
+	powers := make([]float64, len(archs))
+	for i, a := range archs {
+		labels[i] = a.Name[:min(18, len(a.Name))]
+		powers[i] = a.TDP
+	}
+	fmt.Println(renderer.RenderBarChart("", labels, powers, "W", true))
+
+	fmt.Println("Chip Area:")
+	fmt.Println(strings.Repeat("─", 60))
+	areas := make([]float64, len(archs))
+	for i, a := range archs {
+		areas[i] = a.ChipArea
+	}
+	fmt.Println(renderer.RenderBarChart("", labels, areas, "mm²", true))
+
+	fmt.Println("Energy Efficiency (TOPS/W):")
+	fmt.Println(strings.Repeat("─", 60))
+	efficiency := make([]float64, len(archs))
+	for i, a := range archs {
+		efficiency[i] = a.TOPSPerWatt
+	}
+	fmt.Println(renderer.RenderBarChart("", labels, efficiency, "TOPS/W", false))
+}
+
+func showInferenceComparison(renderer *comparison.Renderer, comp comparison.ComparisonResult, workload comparison.Workload) {
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                   INFERENCE COMPARISON")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println()
+
+	fmt.Println(renderer.RenderInferenceComparison(comp.Results, workload))
+
+	// Visual comparisons
+	labels := make([]string, len(comp.Results))
+	latencies := make([]float64, len(comp.Results))
+	energies := make([]float64, len(comp.Results))
+	throughputs := make([]float64, len(comp.Results))
+
+	for i, r := range comp.Results {
+		labels[i] = r.Architecture[:min(18, len(r.Architecture))]
+		latencies[i] = r.Latency
+		energies[i] = r.Energy
+		throughputs[i] = r.Throughput
+	}
+
+	fmt.Println("\nLatency per Inference:")
+	fmt.Println(renderer.RenderBarChart("", labels, latencies, "ms", true))
+
+	fmt.Println("Energy per Inference:")
+	fmt.Println(renderer.RenderBarChart("", labels, energies, "mJ", true))
+
+	fmt.Println("Throughput:")
+	fmt.Println(renderer.RenderBarChart("", labels, throughputs, "inf/s", false))
+}
+
+func showDataCenterComparison(renderer *comparison.Renderer, comp comparison.ComparisonResult, targetTP float64) {
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                  DATA CENTER COMPARISON")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println()
+
+	fmt.Println(renderer.RenderDataCenterComparison(comp.DataCenter, targetTP))
+
+	// Visual comparisons
+	labels := make([]string, len(comp.DataCenter))
+	powers := make([]float64, len(comp.DataCenter))
+	tcos := make([]float64, len(comp.DataCenter))
+	co2s := make([]float64, len(comp.DataCenter))
+
+	for i, m := range comp.DataCenter {
+		labels[i] = m.Architecture[:min(18, len(m.Architecture))]
+		powers[i] = m.TotalPower
+		tcos[i] = m.TCO
+		co2s[i] = m.CO2Emissions
+	}
+
+	fmt.Println("\nTotal Power Consumption:")
+	fmt.Println(renderer.RenderBarChart("", labels, powers, "kW", true))
+
+	fmt.Println("Total Cost of Ownership (Annual):")
+	fmt.Println(renderer.RenderBarChart("", labels, tcos, "$/yr", true))
+
+	fmt.Println("CO2 Emissions (Daily):")
+	fmt.Println(renderer.RenderBarChart("", labels, co2s, "kg/day", true))
+}
+
+func showIronLatticeAdvantages(renderer *comparison.Renderer, advantages comparison.IronLatticeAdvantage) {
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                  IRONLATTICE ADVANTAGES")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println()
+
+	fmt.Println(renderer.RenderAdvantages(advantages))
+
+	// Key advantage summary
+	fmt.Println("\nKey Advantage Summary:")
+	fmt.Println(strings.Repeat("─", 60))
+	fmt.Printf("  ⚡ %.0fx more energy efficient than GPU\n", advantages.VsGPU.EnergyReduction)
+	fmt.Printf("  📐 %.0fx smaller chip area than GPU\n", advantages.VsGPU.AreaReduction)
+	fmt.Printf("  🔋 %.0fx lower power than GPU\n", advantages.VsGPU.PowerReduction)
+	fmt.Printf("  💰 %.0fx lower TCO than CPU\n", advantages.VsCPU.CostReduction)
+	fmt.Println()
+}
+
+func printSummary(comp comparison.ComparisonResult, adv comparison.IronLatticeAdvantage) {
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("                         SUMMARY")
+	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println()
+
+	fmt.Printf("Workload: %s\n", comp.Workload.Name)
+	fmt.Printf("Operations: %s MACs\n", formatNumber(float64(comp.Workload.TotalOps)))
+	fmt.Println()
+
+	// Find IronLattice metrics
+	var ironDC comparison.DataCenterMetrics
+	for _, dc := range comp.DataCenter {
+		if dc.Architecture == "IronLattice CIM" {
+			ironDC = dc
+		}
+	}
+
+	fmt.Println("IronLattice delivers:")
+	fmt.Println(strings.Repeat("─", 60))
+	fmt.Printf("  • %.0fx energy reduction vs traditional CPU\n", adv.VsCPU.EnergyReduction)
+	fmt.Printf("  • %.0fx throughput improvement vs traditional CPU\n", adv.VsCPU.ThroughputIncrease)
+	fmt.Printf("  • %.0fx power reduction vs GPU accelerator\n", adv.VsGPU.PowerReduction)
+	fmt.Printf("  • %.0fx area reduction vs GPU accelerator\n", adv.VsGPU.AreaReduction)
+	fmt.Printf("  • %.0fx lower annual TCO\n", adv.VsCPU.CostReduction)
+	fmt.Printf("  • %.1f kg CO2 reduction per day\n",
+		comp.DataCenter[0].CO2Emissions-ironDC.CO2Emissions)
+	fmt.Println()
+
+	// Calculate total savings
+	cpuTCO := comp.DataCenter[0].TCO
+	annualSavings := cpuTCO - ironDC.TCO
+	percentSavings := annualSavings / cpuTCO * 100
+
+	fmt.Println("Data Center Impact:")
+	fmt.Println(strings.Repeat("─", 60))
+	fmt.Printf("  Total Power Reduction:    %.1f kW → %.1f kW\n",
+		comp.DataCenter[0].TotalPower, ironDC.TotalPower)
+	fmt.Printf("  Annual TCO Savings:       $%.0f (%.0f%% reduction)\n",
+		annualSavings, percentSavings)
+	fmt.Printf("  Carbon Footprint:         %.0f%% reduction\n",
+		(1-ironDC.CO2Emissions/comp.DataCenter[0].CO2Emissions)*100)
+	fmt.Println()
+
+	// Why IronLattice wins
+	fmt.Println("Why IronLattice Wins:")
+	fmt.Println(strings.Repeat("─", 60))
+	fmt.Println("  ✓ Compute-in-Memory: No von Neumann bottleneck")
+	fmt.Println("  ✓ 30 Analog Levels: High information density")
+	fmt.Println("  ✓ Ferroelectric: Non-volatile, low power switching")
+	fmt.Println("  ✓ Parallel MVM: Massively parallel matrix operations")
+	fmt.Println("  ✓ Low Voltage: Minimal energy per operation")
+	fmt.Println()
+
+	// Dr. Tour quote
+	fmt.Println("─────────────────────────────────────────────────────────────")
+	fmt.Println("  \"This could lower the requirements in a data center")
+	fmt.Println("   by 80 to 90%.\" - Dr. external research group")
+	fmt.Println()
+	fmt.Printf("  Achieved: %.0f%% reduction in this comparison\n", percentSavings)
+	fmt.Println("─────────────────────────────────────────────────────────────")
+	fmt.Println()
+}
+
+func formatNumber(n float64) string {
+	if n >= 1e12 {
+		return fmt.Sprintf("%.1fT", n/1e12)
+	} else if n >= 1e9 {
+		return fmt.Sprintf("%.1fB", n/1e9)
+	} else if n >= 1e6 {
+		return fmt.Sprintf("%.1fM", n/1e6)
+	} else if n >= 1e3 {
+		return fmt.Sprintf("%.1fK", n/1e3)
+	}
+	return fmt.Sprintf("%.0f", n)
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

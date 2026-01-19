@@ -258,10 +258,10 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv IronLatticeAdv
 	sb.WriteString(fmt.Sprintf("  Annual TCO:           $%.0f\n", ironDC.TCO))
 	sb.WriteString("\n")
 
-	sb.WriteString("vs CPU:  %.0fx energy, %.0fx throughput, %.0fx lower TCO\n",
-		adv.VsCPU.EnergyReduction, adv.VsCPU.ThroughputIncrease, adv.VsCPU.CostReduction)
-	sb.WriteString("vs GPU:  %.0fx energy, %.0fx smaller, %.0fx lower power\n",
-		adv.VsGPU.EnergyReduction, adv.VsGPU.AreaReduction, adv.VsGPU.PowerReduction)
+	sb.WriteString(fmt.Sprintf("vs CPU:  %.0fx energy, %.0fx throughput, %.0fx lower TCO\n",
+		adv.VsCPU.EnergyReduction, adv.VsCPU.ThroughputIncrease, adv.VsCPU.CostReduction))
+	sb.WriteString(fmt.Sprintf("vs GPU:  %.0fx energy, %.0fx smaller, %.0fx lower power\n",
+		adv.VsGPU.EnergyReduction, adv.VsGPU.AreaReduction, adv.VsGPU.PowerReduction))
 	sb.WriteString("\n")
 
 	// Dr. Tour quote
