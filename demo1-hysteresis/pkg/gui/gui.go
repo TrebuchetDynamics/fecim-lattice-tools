@@ -139,7 +139,7 @@ func (a *App) run() error {
 	a.fyneApp.Settings().SetTheme(&ironLatticeTheme{})
 
 	a.mainWindow = a.fyneApp.NewWindow("IronLattice Hysteresis Visualizer - Demo 1")
-	a.mainWindow.Resize(fyne.NewSize(1200, 800))
+	a.mainWindow.Resize(fyne.NewSize(1280, 900))
 
 	// Create UI components
 	content := a.createUI()
