@@ -201,75 +201,75 @@ func (e *MNISTEducationalPanel) SetContent(title, content string) {
 
 // SetInferenceExplanation sets content for inference phases.
 func (e *MNISTEducationalPanel) SetInferenceExplanation(phase int) {
-	var content string
+	var title, content string
 	switch phase {
 	case 1:
-		content = "NEURAL NETWORK INFERENCE\n\n" +
-			"1. Input pixels (784)\n" +
-			"   fed to crossbar\n\n" +
-			"28×28 = 784 grayscale\n" +
-			"values normalized 0-1"
+		title = "Phase 1: Input"
+		content = "Your drawing → 784 pixels\n\n" +
+			"Each pixel becomes a voltage.\n" +
+			"All 784 applied at once.\n\n" +
+			"Traditional CPU: sequential\n" +
+			"FeCIM: ALL AT ONCE"
 	case 2:
-		content = "NEURAL NETWORK INFERENCE\n\n" +
-			"2. Hidden layer (128)\n" +
-			"   MVM: I = G × V\n\n" +
+		title = "Phase 2: Hidden Layer"
+		content = "MVM: I = G × V\n\n" +
 			"100,352 multiplications\n" +
-			"in ONE clock cycle!"
+			"in ONE clock cycle!\n\n" +
+			"Physics does the math.\n" +
+			"No fetching from memory."
 	case 3:
-		content = "NEURAL NETWORK INFERENCE\n\n" +
-			"3. Output layer (10)\n" +
-			"   MVM: I = G × V\n\n" +
-			"1,280 more MACs\n" +
-			"Softmax → probabilities"
-	default:
-		content = "NEURAL NETWORK INFERENCE\n\n" +
-			"Layer Flow:\n" +
-			"Input (784) →\n" +
-			"Hidden (128) →\n" +
-			"Output (10)\n\n" +
+		title = "Phase 3: Output"
+		content = "10 outputs = 10 digits\n\n" +
+			"Highest score wins.\n\n" +
 			"Total: 101,632 MACs\n" +
-			"in 2 clock cycles"
+			"Just 2 clock cycles.\n\n" +
+			"That's compute-in-memory."
+	default:
+		title = "Inference Complete"
+		content = "784 → 128 → 10\n\n" +
+			"101,632 operations\n" +
+			"2 clock cycles\n" +
+			"Near-zero energy\n\n" +
+			"Draw another digit!"
 	}
-	e.SetContent("Compute-in-Memory", content)
+	e.SetContent(title, content)
 }
 
 // SetDrawingExplanation sets content for drawing mode.
 func (e *MNISTEducationalPanel) SetDrawingExplanation() {
-	content := "DRAW A DIGIT\n\n" +
-		"• Click and drag to draw\n" +
-		"• Right-click to clear\n\n" +
-		"The network runs inference\n" +
-		"in real-time as you draw.\n\n" +
-		"28×28 pixels → 784 inputs\n" +
-		"Each pixel is normalized\n" +
-		"to range 0.0 - 1.0"
-	e.SetContent("Drawing Input", content)
+	content := "Click and drag to draw.\n" +
+		"Right-click to clear.\n\n" +
+		"As you draw, the network\n" +
+		"runs inference instantly.\n\n" +
+		"28×28 = 784 inputs\n" +
+		"Normalized 0.0 to 1.0\n\n" +
+		"Watch the layers light up!"
+	e.SetContent("Draw a Digit", content)
 }
 
 // SetEvaluationExplanation sets content for evaluation.
 func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
-	content := "FULL EVALUATION\n\n" +
-		"Testing on MNIST dataset:\n" +
-		"• 10,000 test images\n" +
-		"• Ground truth labels\n\n" +
-		"FeCIM Target:\n" +
-		"87% accuracy\n" +
+	content := "Testing on 1000 digits...\n\n" +
+		"Each digit runs through\n" +
+		"the full network.\n\n" +
+		"Target: 87% accuracy\n" +
 		"(88% theoretical max)\n\n" +
 		"\"We're at 87% validation\n" +
-		"here\" — Dr. external research group"
-	e.SetContent("Network Accuracy", content)
+		"here\" — Dr. Tour"
+	e.SetContent("Evaluating Network", content)
 }
 
 // SetIdleExplanation sets content for idle state.
 func (e *MNISTEducationalPanel) SetIdleExplanation() {
-	content := "MNIST RECOGNITION\n\n" +
-		"\"We're at 87% validation\n" +
-		"here\"\n\n" +
-		"— Dr. external research group\n\n" +
-		"Architecture: 784→128→10\n" +
-		"30 discrete analog levels\n" +
-		"Compute-in-memory"
-	e.SetContent("What You're Seeing", content)
+	content := "Draw a digit (0-9) or\n" +
+		"click Random Test.\n\n" +
+		"The FeCIM chip recognizes\n" +
+		"handwritten numbers with\n" +
+		"87% accuracy.\n\n" +
+		"784 → 128 → 10 neurons\n" +
+		"30 analog levels per cell\n" +
+		"2 clock cycles total"
+	e.SetContent("MNIST Recognition", content)
 }
 
 // MinSize returns the minimum size.
@@ -480,28 +480,49 @@ func (r *predictionRenderer) Refresh() {
 		predText = fmt.Sprintf("%d", pred)
 	}
 	predLabel := canvas.NewText(predText, color.White)
-	fontSize := size.Height * 0.45
-	if fontSize > 48 {
-		fontSize = 48
+	fontSize := size.Height * 0.35
+	if fontSize > 42 {
+		fontSize = 42
 	}
-	if fontSize < 20 {
-		fontSize = 20
+	if fontSize < 18 {
+		fontSize = 18
 	}
 	predLabel.TextSize = fontSize
 	predLabel.TextStyle = fyne.TextStyle{Bold: true}
 	textW := fontSize * 0.6
-	predLabel.Move(fyne.NewPos((size.Width-textW)/2, size.Height*0.25))
+	predLabel.Move(fyne.NewPos((size.Width-textW)/2, size.Height*0.18))
 	r.objects = append(r.objects, predLabel)
 
-	// Confidence
+	// Confidence meter bar - visual indicator
+	meterPadding := float32(10)
+	meterHeight := float32(8)
+	meterY := size.Height*0.55 + 5
+	meterWidth := size.Width - 2*meterPadding
+
+	// Meter background (track)
+	meterBg := canvas.NewRectangle(color.RGBA{50, 50, 70, 255})
+	meterBg.Resize(fyne.NewSize(meterWidth, meterHeight))
+	meterBg.Move(fyne.NewPos(meterPadding, meterY))
+	r.objects = append(r.objects, meterBg)
+
+	// Meter fill (confidence level)
+	if pred >= 0 && conf > 0 {
+		fillWidth := meterWidth * float32(conf)
+		meterFill := canvas.NewRectangle(borderColor)
+		meterFill.Resize(fyne.NewSize(fillWidth, meterHeight))
+		meterFill.Move(fyne.NewPos(meterPadding, meterY))
+		r.objects = append(r.objects, meterFill)
+	}
+
+	// Confidence text below meter
 	confText := fmt.Sprintf("%.1f%%", conf*100)
 	if pred < 0 {
 		confText = "-"
 	}
 	confLabel := canvas.NewText(confText, borderColor)
-	confLabel.TextSize = 12
+	confLabel.TextSize = 11
 	confLabelW := float32(40)
-	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, size.Height-18))
+	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, meterY+meterHeight+4))
 	r.objects = append(r.objects, confLabel)
 }
 

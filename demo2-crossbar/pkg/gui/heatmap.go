@@ -8,8 +8,12 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
+
+// Compile-time interface checks
+var _ desktop.Hoverable = (*CrossbarHeatmap)(nil)
 
 // CrossbarHeatmap is a custom widget for visualizing crossbar array states.
 type CrossbarHeatmap struct {
@@ -169,7 +173,7 @@ func (h *CrossbarHeatmap) TappedSecondary(*fyne.PointEvent) {
 }
 
 // MouseMoved tracks mouse position for hover info.
-func (h *CrossbarHeatmap) MouseMoved(e *fyne.PointEvent) {
+func (h *CrossbarHeatmap) MouseMoved(e *desktop.MouseEvent) {
 	size := h.Size()
 	cellW := float64(size.Width-40) / float64(h.cols)
 	cellH := float64(size.Height-40) / float64(h.rows)
@@ -186,7 +190,7 @@ func (h *CrossbarHeatmap) MouseMoved(e *fyne.PointEvent) {
 }
 
 // MouseIn is called when mouse enters the widget.
-func (h *CrossbarHeatmap) MouseIn(*fyne.PointEvent) {}
+func (h *CrossbarHeatmap) MouseIn(*desktop.MouseEvent) {}
 
 // MouseOut is called when mouse leaves the widget.
 func (h *CrossbarHeatmap) MouseOut() {

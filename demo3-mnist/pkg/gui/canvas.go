@@ -100,6 +100,55 @@ func (dc *DigitCanvas) generateImage(w, h int) image.Image {
 	cellW := float64(w) / 28.0
 	cellH := float64(h) / 28.0
 
+	// Check if canvas is empty
+	isEmpty := true
+	for py := 0; py < 28 && isEmpty; py++ {
+		for px := 0; px < 28; px++ {
+			if dc.pixels[py][px] > 0.01 {
+				isEmpty = false
+				break
+			}
+		}
+	}
+
+	// Draw "Draw here" hint when empty
+	if isEmpty && w > 50 && h > 50 {
+		hintColor := color.RGBA{60, 80, 100, 255}
+		// Draw a simple hand-draw icon (circle with finger pointer suggestion)
+		cx, cy := w/2, h/2
+		radius := w / 6
+		if h/6 < radius {
+			radius = h / 6
+		}
+		// Draw dashed circle hint
+		for angle := 0.0; angle < 360; angle += 15 {
+			rad := angle * math.Pi / 180
+			x := cx + int(float64(radius)*math.Cos(rad))
+			y := cy + int(float64(radius)*math.Sin(rad))
+			if x >= 0 && x < w && y >= 0 && y < h {
+				img.Set(x, y, hintColor)
+				if x+1 < w {
+					img.Set(x+1, y, hintColor)
+				}
+				if y+1 < h {
+					img.Set(x, y+1, hintColor)
+				}
+			}
+		}
+		// Draw small dot at center to suggest "draw here"
+		dotSize := 4
+		for dy := -dotSize; dy <= dotSize; dy++ {
+			for dx := -dotSize; dx <= dotSize; dx++ {
+				if dx*dx+dy*dy <= dotSize*dotSize {
+					px, py := cx+dx, cy+dy
+					if px >= 0 && px < w && py >= 0 && py < h {
+						img.Set(px, py, hintColor)
+					}
+				}
+			}
+		}
+	}
+
 	// Draw pixels
 	for py := 0; py < 28; py++ {
 		for px := 0; px < 28; px++ {

@@ -1,0 +1,18 @@
+// Demo 8: Architecture Comparison GUI
+//
+// This demo provides an interactive comparison of FeCIM vs traditional
+// CPU and GPU architectures for neural network inference.
+//
+// IMPORTANT: FeCIM specifications are CLAIMED by Dr. Tour but NOT
+// independently verified. CPU/GPU specs are from published datasheets.
+// This is TRL 4 technology - lab validation only.
+package main
+
+import (
+	"multilayer-ferroelectric-cim-visualizer/demo8-comparison/pkg/gui"
+)
+
+func main() {
+	app := gui.NewComparisonApp()
+	app.Run()
+}
