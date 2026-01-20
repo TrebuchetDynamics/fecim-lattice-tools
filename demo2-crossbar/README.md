@@ -96,7 +96,7 @@ void main() {
 | 24×24 FE Memristor | 98.78% | ScienceDirect 2025 |
 | Multi-Level FeFET 28nm | 96.6% | Nature Comms 2023 |
 | FTJ Crossbar | 92% | SemiEngineering 2024 |
-| IronLattice Target | 87% | Dr. Tour presentation |
+| Ferroelectric CIM Target | 87% | Dr. Tour presentation |
 
 ## Dependencies
 

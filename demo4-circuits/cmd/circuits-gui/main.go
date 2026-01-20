@@ -6,7 +6,7 @@
 package main
 
 import (
-	"ironlattice-vis/demo4-circuits/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/demo4-circuits/pkg/gui"
 )
 
 func main() {

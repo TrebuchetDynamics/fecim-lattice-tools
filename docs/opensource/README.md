@@ -1,10 +1,10 @@
 # Open Source Ferroelectric & Crossbar Simulation Tools
 
-A curated collection of open-source tools relevant to the IronLattice demos.
+A curated collection of open-source tools relevant to the Ferroelectric CIM demos.
 
 ---
 
-## Why IronLattice-vis? (What's Missing)
+## Why Ferroelectric CIM-vis? (What's Missing)
 
 ### The Gap in Existing Tools
 
@@ -17,7 +17,7 @@ A curated collection of open-source tools relevant to the IronLattice demos.
 | **Preisachmodel** | Computes hysteresis | Text output only, no graphics |
 | **FerroX** | GPU phase-field | C++/Fortran, no Go, no real-time vis |
 
-### What IronLattice-vis Adds
+### What Ferroelectric CIM-vis Adds
 
 | Our Unique Value | Why It Matters |
 |------------------|----------------|
@@ -26,12 +26,12 @@ A curated collection of open-source tools relevant to the IronLattice demos.
 | **All-in-one package** | Hysteresis + Crossbar + Phase-field in unified Go codebase |
 | **Vulkan-native** | Modern GPU API, not legacy OpenGL or CPU-only |
 | **Educational focus** | Designed to TEACH, not just compute |
-| **IronLattice-specific** | Tuned to HZO parameters from Dr. Tour's research |
+| **Ferroelectric CIM-specific** | Tuned to HZO parameters from Dr. Tour's research |
 
 ### The Specific Gaps We Fill
 
 ```
-                     Existing Tools                 IronLattice-vis
+                     Existing Tools                 Ferroelectric CIM-vis
                      ──────────────                 ───────────────
 Hysteresis:          Static matplotlib plots   →   Live GPU animation
 Crossbar:            Accuracy numbers only     →   Current flow animation  
@@ -43,11 +43,11 @@ Audience:            Researchers only          →   Anyone can understand
 ### Our Vision
 
 **Existing tools answer:** "What's the accuracy?" (numbers)
-**IronLattice-vis answers:** "What does it LOOK like?" (visualization)
+**Ferroelectric CIM-vis answers:** "What does it LOOK like?" (visualization)
 
 We're not replacing CrossSim or FerroX - we're making their science **visible and interactive** for:
 - Students learning ferroelectrics
-- Investors understanding IronLattice technology  
+- Investors understanding Ferroelectric CIM technology  
 - Engineers debugging device behavior
 - Anyone curious about compute-in-memory
 
@@ -79,7 +79,7 @@ pytorch==2.2.1
 cupy==12.3.0  # for GPU
 ```
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 - **Demo 2 (Crossbar):** Reference implementation for MVM simulation
 - **Demo 2 (Non-idealities):** Built-in models for IR drop, variation
 - Tutorials for ISCA 2024 and NICE 2024 conferences
@@ -118,7 +118,7 @@ Open-source GUI application for waveform generation and crossbar programming, de
 - Start Delay, Column Min/Max Voltage
 - Writing Waveform selection
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 - **Demo 2 (Crossbar):** Reference for waveform/pulse visualization
 - **Hardware integration:** Could connect to real AWG for testing
 
@@ -153,7 +153,7 @@ Open-source and versatile PE loop tracer designed for polymeric piezoelectrics l
 - Fabrication process optimization
 - Flexible/wearable ultrasound transducers
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 - **Demo 1 (Hysteresis):** Reference for P-E loop visualization
 - **Measurement methodology:** Understanding real-world PE loop measurement
 
@@ -195,7 +195,7 @@ cd ferro_scripts
 python hysteresis.py parameters.yaml
 ```
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 - **Demo 1 (Hysteresis):** Algorithm reference for P-E loop generation
 - **Alternative model:** Comparison to Preisach approach
 
@@ -221,7 +221,7 @@ Forward and numerically inverted Preisach model implementation based on the form
 3. "Removing numerical instabilities in Preisach model using genetic algorithms" - Consolo et al.
 4. "Analytical Approximation of Preisach Distribution Functions" - Janos Fuezi (IEEE TMag 2003)
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 - **Demo 1 (Hysteresis):** Direct reference for Preisach implementation
 - **Already have:** Similar implementation in `demo1-hysteresis/pkg/ferroelectric/preisach.go`
 

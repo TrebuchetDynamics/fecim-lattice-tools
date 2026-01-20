@@ -1,4 +1,4 @@
-# IronLattice Weekend Progress Log
+# Ferroelectric CIM Weekend Progress Log
 
 ## Session Started: 2026-01-17
 
@@ -21,7 +21,7 @@
 - Reviewed existing shader files (hysteresis.vert/frag, mvm.comp)
 
 **Issues Found:**
-1. Demo 2 main.go uses wrong import paths (`github.com/ironlattice/vis/demo2-inference/pkg/...`)
+1. Demo 2 main.go uses wrong import paths (`github.com/ferroelectric-cim/vis/demo2-inference/pkg/...`)
 2. No go.sum file - dependencies not resolved
 3. Demo 3 has no code structure at all
 
@@ -35,7 +35,7 @@
 ### Entry 2: Demo 1 & Demo 2 Build Fixes
 
 **Completed:**
-- Fixed Demo 2 import paths (changed from `github.com/ironlattice/vis/demo2-inference/pkg/...` to `ironlattice-vis/demo2-crossbar/pkg/...`)
+- Fixed Demo 2 import paths (changed from `github.com/ferroelectric-cim/vis/demo2-inference/pkg/...` to `multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/...`)
 - Added dependencies to go.mod (glfw, vulkan-go, gonum)
 - Both Demo 1 and Demo 2 now compile successfully with `go build`
 

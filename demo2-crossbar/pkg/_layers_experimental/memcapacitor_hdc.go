@@ -953,8 +953,8 @@ func (tcam *TernaryCAM) GetSearchEnergy() float64 {
 // IRONLATTICE MEMCAPACITOR-HDC INTEGRATION
 // ============================================================================
 
-// IronLatticeHDCConfig configures IronLattice HDC system
-type IronLatticeHDCConfig struct {
+// FeCIMHDCConfig configures FeCIM HDC system
+type FeCIMHDCConfig struct {
 	// Memcapacitor parameters
 	MemcapConfig    *MemcapacitorConfig
 
@@ -969,9 +969,9 @@ type IronLatticeHDCConfig struct {
 	TargetAccuracy  float64
 }
 
-// DefaultIronLatticeHDCConfig returns IronLattice-optimized configuration
-func DefaultIronLatticeHDCConfig() *IronLatticeHDCConfig {
-	return &IronLatticeHDCConfig{
+// DefaultFeCIMHDCConfig returns FeCIM-optimized configuration
+func DefaultFeCIMHDCConfig() *FeCIMHDCConfig {
+	return &FeCIMHDCConfig{
 		MemcapConfig:   LowVoltageMemcapacitorConfig(),
 		Dimensions:     10000,
 		NumClasses:     26,
@@ -982,9 +982,9 @@ func DefaultIronLatticeHDCConfig() *IronLatticeHDCConfig {
 	}
 }
 
-// IronLatticeHDCSystem implements complete IronLattice HDC system
-type IronLatticeHDCSystem struct {
-	Config       *IronLatticeHDCConfig
+// FeCIMHDCSystem implements complete FeCIM HDC system
+type FeCIMHDCSystem struct {
+	Config       *FeCIMHDCConfig
 	Encoder      *HDCEncoder
 	Classifier   *HDCClassifier
 	Accelerator  *FeFETHDCAccelerator
@@ -996,10 +996,10 @@ type IronLatticeHDCSystem struct {
 	AccuracyHistory  []float64
 }
 
-// NewIronLatticeHDCSystem creates an IronLattice HDC system
-func NewIronLatticeHDCSystem(config *IronLatticeHDCConfig) *IronLatticeHDCSystem {
+// NewFeCIMHDCSystem creates an FeCIM HDC system
+func NewFeCIMHDCSystem(config *FeCIMHDCConfig) *FeCIMHDCSystem {
 	if config == nil {
-		config = DefaultIronLatticeHDCConfig()
+		config = DefaultFeCIMHDCConfig()
 	}
 
 	hvConfig := &HypervectorConfig{
@@ -1017,7 +1017,7 @@ func NewIronLatticeHDCSystem(config *IronLatticeHDCConfig) *IronLatticeHDCSystem
 		EnergyPerOp: 0.5,
 	}
 
-	sys := &IronLatticeHDCSystem{
+	sys := &FeCIMHDCSystem{
 		Config:      config,
 		Encoder:    NewHDCEncoder(hvConfig, config.NGramSize),
 		Classifier: NewHDCClassifier(hvConfig),
@@ -1035,7 +1035,7 @@ func NewIronLatticeHDCSystem(config *IronLatticeHDCConfig) *IronLatticeHDCSystem
 }
 
 // TrainOnSequence trains the system on labeled sequences
-func (sys *IronLatticeHDCSystem) TrainOnSequence(sequences [][]string, labels []string) {
+func (sys *FeCIMHDCSystem) TrainOnSequence(sequences [][]string, labels []string) {
 	for i, seq := range sequences {
 		encoded := sys.Encoder.EncodeSequence(seq, sys.Config.NGramSize)
 		sys.Classifier.Train(labels[i], encoded)
@@ -1052,7 +1052,7 @@ func (sys *IronLatticeHDCSystem) TrainOnSequence(sequences [][]string, labels []
 }
 
 // getUniqueLabels returns unique labels from slice
-func (sys *IronLatticeHDCSystem) getUniqueLabels(labels []string) []string {
+func (sys *FeCIMHDCSystem) getUniqueLabels(labels []string) []string {
 	seen := make(map[string]bool)
 	var unique []string
 
@@ -1067,7 +1067,7 @@ func (sys *IronLatticeHDCSystem) getUniqueLabels(labels []string) []string {
 }
 
 // Inference performs HDC inference on a sequence
-func (sys *IronLatticeHDCSystem) Inference(sequence []string) (string, float64) {
+func (sys *FeCIMHDCSystem) Inference(sequence []string) (string, float64) {
 	// Encode sequence
 	encoded := sys.Encoder.EncodeSequence(sequence, sys.Config.NGramSize)
 
@@ -1085,7 +1085,7 @@ func (sys *IronLatticeHDCSystem) Inference(sequence []string) (string, float64) 
 }
 
 // GetSystemMetrics returns comprehensive system metrics
-func (sys *IronLatticeHDCSystem) GetSystemMetrics() map[string]interface{} {
+func (sys *FeCIMHDCSystem) GetSystemMetrics() map[string]interface{} {
 	accMetrics := sys.Accelerator.GetPerformanceMetrics()
 
 	// Calculate system-level efficiency
@@ -1105,7 +1105,7 @@ func (sys *IronLatticeHDCSystem) GetSystemMetrics() map[string]interface{} {
 }
 
 // ExportConfiguration exports system configuration
-func (sys *IronLatticeHDCSystem) ExportConfiguration() ([]byte, error) {
+func (sys *FeCIMHDCSystem) ExportConfiguration() ([]byte, error) {
 	export := map[string]interface{}{
 		"config":  sys.Config,
 		"metrics": sys.GetSystemMetrics(),

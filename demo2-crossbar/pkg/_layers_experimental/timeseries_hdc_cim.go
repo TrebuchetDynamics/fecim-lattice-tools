@@ -1,5 +1,5 @@
 // timeseries_hdc_cim.go - Neuromorphic Time-Series Processing and Hyperdimensional Computing
-// Part of IronLattice educational demonstrations
+// Part of FeCIM educational demonstrations
 //
 // This module implements:
 // 1. Reservoir computing with memristors (echo state networks, liquid state machines)

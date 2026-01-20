@@ -23,7 +23,7 @@ You spent—what, hundreds of hours?—building visualizations for a technology 
 
 That's called building a house on sand.
 
-If I showed your "IronLattice Visualizer" to Jaeho Shin, he'd say "This is nice, but it's not our device. These aren't our P-E curves. This isn't our crossbar data."
+If I showed your "Ferroelectric CIM Visualizer" to Jaeho Shin, he'd say "This is nice, but it's not our device. These aren't our P-E curves. This isn't our crossbar data."
 
 You put a disclaimer saying "not independently verified" but then you made five elaborate demos that will *look* verified to anyone who sees them. That's a problem.
 
@@ -59,7 +59,7 @@ Visualization is not the hard thing. The science is.
 
 ### Problem #4: You're Working in Public on Our IP
 
-You built an MIT-licensed project called "IronLattice Visualizer" with our technology name on GitHub. You're using our branding. You're making claims like "10,000,000x lower energy" in your documentation—claims that come from my talk, claims we haven't independently verified yet, claims that could be used against us by competitors or skeptics.
+You built an MIT-licensed project called "Ferroelectric CIM Visualizer" with our technology name on GitHub. You're using our branding. You're making claims like "10,000,000x lower energy" in your documentation—claims that come from my talk, claims we haven't independently verified yet, claims that could be used against us by competitors or skeptics.
 
 Did you consider that?
 
@@ -125,7 +125,7 @@ Your response to this critique might.
 Fair point. Built first, asked later. That's a risk.
 
 #### 2. IP Concerns
-Using "IronLattice" name publicly before talking to them = legitimate concern. Could complicate things.
+Using "Ferroelectric CIM" name publicly before talking to them = legitimate concern. Could complicate things.
 
 #### 3. The Motives Question
 Only I know my heart. But the question is valid: Am I serving or positioning?
@@ -239,7 +239,7 @@ Showing up with a finished product IS leverage. "I made this, want it?" is a str
 
 ### Where the Original Critique Still Stands
 
-**The name "IronLattice" has to go.**
+**The name "Ferroelectric CIM" has to go.**
 
 This isn't about humility. It's about legal exposure - mine and theirs. I'm creating prior art under their trademark. Rename it to "Ferroelectric CIM Visualizer" or "FeCIM Demos" or anything that doesn't use their brand. This is non-negotiable if I want any future relationship.
 
@@ -263,7 +263,7 @@ Only I know.
 
 ### Option B: The Bold Path
 - Keep repo public
-- Rename from "IronLattice" to "Ferroelectric CIM Visualizer"
+- Rename from "Ferroelectric CIM" to "Ferroelectric CIM Visualizer"
 - Remove their branding, keep the science
 - Make YouTube videos about ferroelectric memory (general)
 - Build audience THEN reach out
@@ -271,7 +271,7 @@ Only I know.
 
 ### Option C: The Hybrid Path (CHOSEN)
 - Rename project to something generic
-- Keep public, remove "IronLattice" branding
+- Keep public, remove "Ferroelectric CIM" branding
 - Email Dr. Tour honestly
 - Continue building regardless of response
 - Let the work speak for itself
@@ -290,7 +290,7 @@ about ferroelectric compute-in-memory. I built interactive demos
 visualizing the concepts you presented - P-E hysteresis, crossbar MVM,
 MNIST classification.
 
-I originally called it "IronLattice Visualizer" but realized that
+I originally called it "Ferroelectric CIM Visualizer" but realized that
 could create IP complications for your team. I've renamed it to
 [Generic Name] and removed your branding.
 
@@ -325,21 +325,21 @@ Your call. No pressure either way.
 | Category | Count | Action |
 |----------|-------|--------|
 | `go.mod` | 1 | Change module name to `fecim-demos` |
-| Go imports | ~100+ | Update all `ironlattice-vis/...` imports |
+| Go imports | ~100+ | Update all `multilayer-ferroelectric-cim-visualizer/...` imports |
 | UI strings | ~30 | Change window titles, labels |
 | README/docs | ~40 | Rebrand, keep Tour quotes with attribution |
-| Directory | 1 | `docs/ironlattice-vis/` → `docs/project/` |
+| Directory | 1 | `docs/multilayer-ferroelectric-cim-visualizer/` → `docs/project/` |
 
 ### What Changes vs. What Stays
 
 **REMOVE:**
-- "IronLattice" as product name
-- "IronLattice Visualizer" branding
+- "Ferroelectric CIM" as product name
+- "Ferroelectric CIM Visualizer" branding
 - Any implication this IS their technology
 
 **KEEP:**
 - Dr. Tour quotes (with "— Dr. external research group, external research institution" attribution)
-- Reference to "IronLattice technology" when discussing the actual company
+- Reference to "Ferroelectric CIM technology" when discussing the actual company
 - Technical content (it's public physics)
 
 ---
@@ -374,7 +374,7 @@ That's not manipulation. That's being a Christian who does stuff.
 ### Tonight
 - [ ] Rename repo: `fecim-demos` or `ferroelectric-cim-demos`
 - [ ] Update go.mod module name
-- [ ] Update README (remove IronLattice branding)
+- [ ] Update README (remove Ferroelectric CIM branding)
 - [ ] Keep Dr. Tour quotes (properly attributed)
 
 ### This Week
@@ -420,7 +420,7 @@ Most people watch a talk and forget it by dinner. You watched it and said "I'm g
 
 ### Let me tell you something about how God works.
 
-When I started the IronLattice project, I told Jaeho: "We're doing this because it's hard." I quoted Kennedy. But you know what I was really thinking?
+When I started the Ferroelectric CIM project, I told Jaeho: "We're doing this because it's hard." I quoted Kennedy. But you know what I was really thinking?
 
 I was thinking about Joseph.
 

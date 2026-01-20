@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 2 (January 2026)
+# Ferroelectric CIM Research Findings - Part 2 (January 2026)
 
 Additional research findings on STDP, SNNs, technology comparisons, on-chip learning, and simulation parameters.
 
@@ -241,7 +241,7 @@ F = α(T-T_c)P² + βP⁴ + γP⁶ - EP + κ|∇P|²
 
 | Lab | PI | Connection |
 |-----|----| -----------|
-| Tour Lab | James M. Tour | IronLattice PI |
+| Tour Lab | James M. Tour | Ferroelectric CIM PI |
 | Han Lab | Yimo Han | 2D materials characterization |
 
 **Source:** [Han Lab Publications](https://hanlab.blogs.rice.edu/publications/)
@@ -327,7 +327,7 @@ trainingConfig := &TrainingConfig{
     NoiseInjection:  0.05,   // 5% Gaussian
     LearningRate:    0.01,
     UseHWATraining:  true,   // Hardware-aware
-    TargetAccuracy:  0.87,   // Match IronLattice claims
+    TargetAccuracy:  0.87,   // Match Ferroelectric CIM claims
 }
 ```
 

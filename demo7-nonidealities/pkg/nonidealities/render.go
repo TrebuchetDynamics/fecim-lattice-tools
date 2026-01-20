@@ -218,7 +218,7 @@ func (r *Renderer) RenderTechComparison(comparisons map[string]DriftStats) strin
 	sb.WriteString(strings.Repeat("─", 60) + "\n")
 
 	// Order matters for display
-	order := []string{"IronLattice (FeFET)", "Flash", "RRAM", "PCM"}
+	order := []string{"FeCIM (FeFET)", "Flash", "RRAM", "PCM"}
 
 	for _, name := range order {
 		stats, ok := comparisons[name]
@@ -238,11 +238,11 @@ func (r *Renderer) RenderTechComparison(comparisons map[string]DriftStats) strin
 			bar, strings.Repeat(" ", 20-barWidth)))
 	}
 
-	// Highlight IronLattice advantage
-	if ironStats, ok := comparisons["IronLattice (FeFET)"]; ok {
+	// Highlight FeCIM advantage
+	if ironStats, ok := comparisons["FeCIM (FeFET)"]; ok {
 		if rramStats, ok := comparisons["RRAM"]; ok {
 			advantage := rramStats.MaxDriftPercent / ironStats.MaxDriftPercent
-			sb.WriteString(fmt.Sprintf("\nIronLattice advantage: %.0fx lower drift than RRAM!\n", advantage))
+			sb.WriteString(fmt.Sprintf("\nFeCIM advantage: %.0fx lower drift than RRAM!\n", advantage))
 		}
 	}
 
@@ -329,7 +329,7 @@ func (r *Renderer) RenderDriftStats(stats DriftStats) string {
 		name  string
 		coeff float64
 	}{
-		{"IronLattice (FeFET)", stats.TechnologyComparison.FeFETDrift},
+		{"FeCIM (FeFET)", stats.TechnologyComparison.FeFETDrift},
 		{"Flash", stats.TechnologyComparison.FlashDrift},
 		{"RRAM", stats.TechnologyComparison.RRAMDrift},
 		{"PCM", stats.TechnologyComparison.PCMDrift},
@@ -345,7 +345,7 @@ func (r *Renderer) RenderDriftStats(stats DriftStats) string {
 		sb.WriteString(fmt.Sprintf("  %-20s [%s] %.3f\n", tech.name, bar, tech.coeff))
 	}
 
-	sb.WriteString(fmt.Sprintf("\nIronLattice: %.0fx better retention than RRAM!\n",
+	sb.WriteString(fmt.Sprintf("\nFeCIM: %.0fx better retention than RRAM!\n",
 		stats.TechnologyComparison.FeFETAdvantage))
 
 	return sb.String()
@@ -421,7 +421,7 @@ func (r *Renderer) RenderSummary(irStats IRDropStats, sneakStats SneakPathStats,
 		driftStats.RetentionPrediction, driftSeverity))
 
 	sb.WriteString("\n")
-	sb.WriteString("IronLattice Advantages:\n")
+	sb.WriteString("FeCIM Advantages:\n")
 	sb.WriteString("  • Ferroelectric polarization enables excellent retention\n")
 	sb.WriteString("  • 30 discrete levels provide noise margin\n")
 	sb.WriteString("  • Low operating voltages reduce IR drop effects\n")

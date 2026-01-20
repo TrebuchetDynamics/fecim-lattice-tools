@@ -6,7 +6,7 @@ import (
 )
 
 // DriftSimulator models conductance drift over time in memory devices.
-// While IronLattice (ferroelectric) has much better retention than
+// While FeCIM (ferroelectric) has much better retention than
 // other technologies, we model small drift effects for completeness.
 type DriftSimulator struct {
 	Rows         int         // Number of rows
@@ -262,7 +262,7 @@ type DriftStats struct {
 
 // TechDriftComparison compares drift across technologies.
 type TechDriftComparison struct {
-	FeFETDrift  float64 // IronLattice (FeFET) drift coefficient
+	FeFETDrift  float64 // FeCIM (FeFET) drift coefficient
 	RRAMDrift   float64 // RRAM drift coefficient
 	PCMDrift    float64 // Phase-change memory drift coefficient
 	FlashDrift  float64 // Flash memory drift coefficient
@@ -380,7 +380,7 @@ func CompareTechnologies(rows, cols int, simulationTime float64) map[string]Drif
 		driftCoeff  float64
 		readDisturb float64
 	}{
-		"IronLattice (FeFET)": {0.001, 1e-6},
+		"FeCIM (FeFET)": {0.001, 1e-6},
 		"RRAM":                {0.05, 1e-4},
 		"PCM":                 {0.1, 1e-3},
 		"Flash":               {0.02, 1e-5},

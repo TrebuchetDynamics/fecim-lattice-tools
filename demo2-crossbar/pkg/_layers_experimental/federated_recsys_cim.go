@@ -1,5 +1,5 @@
 // federated_recsys_cim.go - Federated Learning and Recommendation Systems for CIM
-// Part of the IronLattice CIM simulation framework
+// Part of the FeCIM CIM simulation framework
 // Iteration 130: Privacy-preserving FL + Embedding-based RecSys on CIM
 
 package layers

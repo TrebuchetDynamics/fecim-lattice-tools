@@ -1,9 +1,9 @@
-# IronLattice Presentation Transcript
+# Ferroelectric CIM Presentation Transcript
 ## Dr. external research group - First Public Presentation
 
 **Source:** Jesus and Science YouTube Channel  
 **Date:** November 2024 (references Nov 3rd WSJ article)  
-**Context:** First public disclosure of IronLattice technology
+**Context:** First public disclosure of Ferroelectric CIM technology
 
 ---
 
@@ -91,7 +91,7 @@ It's got **30 discrete states**. So we have all these intermediate states. So it
 
 ## Competitive Positioning
 
-And if you look at where we are on this, this is IronLattice. I think we really can address well:
+And if you look at where we are on this, this is Ferroelectric CIM. I think we really can address well:
 - The read/write energy
 - The read/write speed  
 - The endurance cycles
@@ -108,7 +108,7 @@ I told them at the time early on I said we've got to start looking at this for n
 ### Market Disruption Potential
 And then if we look at the DRAM market disruption—again we're doing quite well on the DRAM disruption. And I think that we can handle that quite well. 
 
-And then again this AI compute market disruptions—if we look at IronLattice and where we compare to Google and Intel and Mythic AI, **we're actually in discussions with one of these companies right now** in all restricted access discussions and **with a second large company in the country** as well.
+And then again this AI compute market disruptions—if we look at Ferroelectric CIM and where we compare to Google and Intel and Mythic AI, **we're actually in discussions with one of these companies right now** in all restricted access discussions and **with a second large company in the country** as well.
 
 ---
 
@@ -163,7 +163,7 @@ With that, I will open it up for questions if there are any.
 
 ### Slide 1: Title & Overview
 
-**IronLattice enables ultra-low-power (ULP) AI computing**
+**Ferroelectric CIM enables ultra-low-power (ULP) AI computing**
 
 Key Points:
 - ⚡ Ultra low power AI through compute in memory
@@ -171,7 +171,7 @@ Key Points:
 - 💰 Capital light, fab friendly path using standard materials and techniques
 
 **Branding:**
-- IronLattice logo features a lattice/grid pattern design
+- Ferroelectric CIM logo features a lattice/grid pattern design
 - Prepared for: CSM (Christian Stewardship Ministries)
 - Source: jesusandscience.org
 
@@ -203,7 +203,7 @@ Three critical failures:
 **Our Solution: How we will enable a breakthrough in Computing**
 > "We've engineered a single device that acts as both ultra fast, non-volatile memory and an intelligent logic gate."
 
-#### The IronLattice Device Architecture
+#### The Ferroelectric CIM Device Architecture
 
 **Two Device Structures Shown:**
 
@@ -230,7 +230,7 @@ Three critical failures:
 - ✅ Unified Memory that is fast, dense, and persistent
 - ✅ True Compute-in-Memory
 
-*Source: IronLattice*
+*Source: Ferroelectric CIM*
 
 ---
 
@@ -248,7 +248,7 @@ Actual AI Ultra Training and Computing Server
 - **DRAM:** DRAM (4TB) and GPUs
 - **Processor:** 2 Intel Xeon Processors
 
-#### IronLattice Benefits
+#### Ferroelectric CIM Benefits
 
 **Increase Performance and Efficiency (NAND)**
 - 10,000,000 × lower read / write energy
@@ -262,7 +262,7 @@ Actual AI Ultra Training and Computing Server
 **Future AI-Compute Replacement**
 - Merging compute and storage leads to a large reduction in system power
 
-> "IronLattice will enable lower power consumption"
+> "Ferroelectric CIM will enable lower power consumption"
 
 *Source: Dell Computing user sheet [08]*
 
@@ -272,7 +272,7 @@ Actual AI Ultra Training and Computing Server
 
 **Solution in Practice: Revolutionizing Edge AI (Apple iPhone 16 Pro)**
 
-> "IronLattice can fundamentally extend device battery life and enable higher AI compute workloads on the edge"
+> "Ferroelectric CIM can fundamentally extend device battery life and enable higher AI compute workloads on the edge"
 
 #### iPhone 16 Pro with Edge AI Capabilities
 
@@ -285,7 +285,7 @@ Actual AI Ultra Training and Computing Server
 - **DRAM:** Apple A18 Pro processor combines the functions of the DRAM, Processor, and GPU but they remain 3 distinct units
 - **Processor:** (Integrated in A18)
 
-#### IronLattice Benefits (Same as Data Center)
+#### Ferroelectric CIM Benefits (Same as Data Center)
 
 **Storage power savings (NAND)**
 - 10,000,000 × lower read / write energy
@@ -299,7 +299,7 @@ Actual AI Ultra Training and Computing Server
 **Future AI-Compute Replacement**
 - Merging compute and storage leads to a large reduction in system power
 
-> "IronLattice will enable lower power consumption"
+> "Ferroelectric CIM will enable lower power consumption"
 
 *Source: iFixit [03]*
 
@@ -366,7 +366,7 @@ Actual AI Ultra Training and Computing Server
 
 ### Slide 8: Electrical Performance - Switching Speed
 
-**IronLattice Electrical performance (Switching speed)**
+**Ferroelectric CIM Electrical performance (Switching speed)**
 
 #### Endurance Testing
 
@@ -394,7 +394,7 @@ Actual AI Ultra Training and Computing Server
 
 ### Slide 9: Electrical Performance - Stability
 
-**IronLattice Electrical performance (Stability)**
+**Ferroelectric CIM Electrical performance (Stability)**
 
 #### Polarization vs. Electric Field (P-E) Curves
 
@@ -429,7 +429,7 @@ Actual AI Ultra Training and Computing Server
 
 ### Slide 10: Compute-in-Memory Applications
 
-**IronLattice Compute-in-memory applications**
+**Ferroelectric CIM Compute-in-memory applications**
 
 #### Post-Synaptic Current Demonstrations
 
@@ -477,7 +477,7 @@ Actual AI Ultra Training and Computing Server
 
 #### Competitive Comparison Matrix
 
-| Feature | **IronLattice** | **3D NAND Flash** | **ReRAM (e.g., Weebit)** | **PCRAM (e.g., IBM)** |
+| Feature | **Ferroelectric CIM** | **3D NAND Flash** | **ReRAM (e.g., Weebit)** | **PCRAM (e.g., IBM)** |
 |---------|----------------|-------------------|--------------------------|----------------------|
 | **Write/Read Energy** | ✅ | ❌ | ✅ | 🟡 |
 | **Write/Read Speed** | ✅ | ❌ | ✅ | ❌ |
@@ -491,7 +491,7 @@ Actual AI Ultra Training and Computing Server
 - 🟡 = Technology is working towards this capability (yellow checkmark)
 - ❌ = Does not have or struggles with this feature
 
-**IronLattice Advantage:** Only technology with green checkmarks across ALL categories
+**Ferroelectric CIM Advantage:** Only technology with green checkmarks across ALL categories
 
 ---
 
@@ -499,11 +499,11 @@ Actual AI Ultra Training and Computing Server
 
 **AI Compute Market Disruption: Enabling True Ultra-Low-Power AI**
 
-> "Today's AI chips force a trade-off between power-hungry designs and impractical exotic architectures. IronLattice offers the high-path around exotic, impractical exotic architectures, without compromise on efficiency"
+> "Today's AI chips force a trade-off between power-hungry designs and impractical exotic architectures. Ferroelectric CIM offers the high-path around exotic, impractical exotic architectures, without compromise on efficiency"
 
 #### Competitive Comparison Matrix
 
-| Feature | **IronLattice** | **Google TPU v6e** | **Intel Loihi 2** | **Mythic AI** |
+| Feature | **Ferroelectric CIM** | **Google TPU v6e** | **Intel Loihi 2** | **Mythic AI** |
 |---------|----------------|-------------------|------------------|--------------|
 | **Architecture** | ✅ | ✅ | ✅ | ✅ |
 | **Memory / Logic Integration** | ✅ | ❌ | 🟡 | 🟡 |
@@ -517,15 +517,15 @@ Actual AI Ultra Training and Computing Server
 - ❌ = Limitation or does not have this feature
 
 **Key Differentiators:**
-- **Memory/Logic Integration:** IronLattice is the only solution with TRUE compute-in-memory (green)
-- **CMOS Compatibility:** Only IronLattice and Google TPU are fully CMOS compatible
-- **All-around Excellence:** IronLattice is the only technology with green across ALL categories
+- **Memory/Logic Integration:** Ferroelectric CIM is the only solution with TRUE compute-in-memory (green)
+- **CMOS Compatibility:** Only Ferroelectric CIM and Google TPU are fully CMOS compatible
+- **All-around Excellence:** Ferroelectric CIM is the only technology with green across ALL categories
 
 ---
 
 ### Slide 13: George Gilder WSJ Article
 
-**IronLattice - Industry Context**
+**Ferroelectric CIM - Industry Context**
 
 **Wall Street Journal Opinion Article:**
 
@@ -536,13 +536,13 @@ Actual AI Ultra Training and Computing Server
 **By George Gilder**  
 **Nov 3, 2025 1:34 pm ET**
 
-**Significance:** This influential Wall Street Journal opinion piece by technology futurist George Gilder frames the broader industry context for IronLattice's technology, arguing that the traditional microchip paradigm is reaching its limits and wafer-scale integration is the future.
+**Significance:** This influential Wall Street Journal opinion piece by technology futurist George Gilder frames the broader industry context for Ferroelectric CIM's technology, arguing that the traditional microchip paradigm is reaching its limits and wafer-scale integration is the future.
 
 ---
 
 ### Slide 14: Wafer-Scale Computing Analysis (Part 1)
 
-**IronLattice - Full Wafer processing – "*The End of the Microchip*"**
+**Ferroelectric CIM - Full Wafer processing – "*The End of the Microchip*"**
 
 **In the Wall Street Journal article by George Gilder, "The Microchip Era Is About to End," several technological and practical factors are identified, including three fundamental drivers for wafer scale circuitry:**
 
@@ -572,7 +572,7 @@ Actual AI Ultra Training and Computing Server
 
 ### Slide 15: Wafer-Scale Computing Analysis (Part 2)
 
-**IronLattice - Full Wafer processing – "*The End of the Microchip*"**
+**Ferroelectric CIM - Full Wafer processing – "*The End of the Microchip*"**
 
 **How our ferroelectric memory & CIM devices support full wafer ICs --- while simultaneously solving the core problems that limit today's chips**
 
@@ -595,7 +595,7 @@ Actual AI Ultra Training and Computing Server
 
 ### Slide 16: Wafer-Scale Computing Analysis (Part 3)
 
-**IronLattice - Full Wafer processing – "*The End of the Microchip*"**
+**Ferroelectric CIM - Full Wafer processing – "*The End of the Microchip*"**
 
 **How our ferroelectric memory & CIM devices support full wafer ICs --- while simultaneously solving the core problems that limit today's chips**
 
@@ -622,7 +622,7 @@ Actual AI Ultra Training and Computing Server
 
 **Meet the Team**
 
-> "We brought together the top semiconductor, academic, and business minds to get IronLattice launched"
+> "We brought together the top semiconductor, academic, and business minds to get Ferroelectric CIM launched"
 
 #### Core Team (Left Side)
 
@@ -719,7 +719,7 @@ And so, we don't do classified work. And the way we succeed is we share informat
 
 ### 🔬 Core Technology
 
-**Technology Name:** IronLattice  
+**Technology Name:** Ferroelectric CIM  
 **Architecture:** Compute-in-Memory (CIM)  
 **Core Innovation:** Ferroelectric super lattice that performs both memory storage AND computation in the same device
 
@@ -805,7 +805,7 @@ And so, we don't do classified work. And the way we succeed is we share informat
 - **Tophik Jarur** - Business lead, former student, 13 years at Accenture working with major manufacturers
 
 #### Advisory Board
-- **Fred** - 35-40 years experience, former IBM patent expert, bolstered IronLattice patent portfolio
+- **Fred** - 35-40 years experience, former IBM patent expert, bolstered Ferroelectric CIM patent portfolio
 - **John** - Major investor in computing systems
 - **Two unnamed advisers** - Semiconductor industry and foundry experts
 
@@ -923,7 +923,7 @@ And so, we don't do classified work. And the way we succeed is we share informat
   3. Memory bottleneck
   4. Packaging complexity
 
-**IronLattice Response:**
+**Ferroelectric CIM Response:**
 - Ferroelectric CIM can support full wafer-scale integration
 - Solves core problems Gilder identified
 - "If industry moves to wafer scale, this technology vector can be enhanced and possibly enabled by our devices"
@@ -972,7 +972,7 @@ And so, we don't do classified work. And the way we succeed is we share informat
 
 ### 🎯 Value Proposition Summary
 
-**Why IronLattice Matters:**
+**Why Ferroelectric CIM Matters:**
 
 1. **Energy Crisis Solution:** AI is consuming unsustainable amounts of electricity; 80-90% reduction addresses existential constraint
 2. **CMOS Compatible:** Works with existing $trillions of fab infrastructure

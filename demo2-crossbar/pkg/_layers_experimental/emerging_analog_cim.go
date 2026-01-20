@@ -1,5 +1,5 @@
 // emerging_analog_cim.go - Emerging Memory Technologies and Analog Gradient Descent for CIM
-// Part of the IronLattice CIM simulation framework
+// Part of the FeCIM CIM simulation framework
 // Iteration 129: PCM, MRAM, FTJ comparison + Analog in-memory training
 
 package layers

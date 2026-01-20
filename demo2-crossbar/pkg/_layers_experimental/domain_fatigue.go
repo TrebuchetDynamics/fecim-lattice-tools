@@ -1167,8 +1167,8 @@ func (array *DomainAwareCIMArray) GetArrayStatistics() map[string]interface{} {
 // IRONLATTICE DOMAIN-AWARE INTEGRATION
 // ============================================================================
 
-// IronLatticeDomainConfig configures IronLattice domain-aware simulation
-type IronLatticeDomainConfig struct {
+// FeCIMDomainConfig configures FeCIM domain-aware simulation
+type FeCIMDomainConfig struct {
 	// Material parameters (HZO superlattice)
 	FerroThickness float64 // nm
 	GrainSize      float64 // nm
@@ -1187,9 +1187,9 @@ type IronLatticeDomainConfig struct {
 	EnablePulseEng   bool
 }
 
-// DefaultIronLatticeDomainConfig returns IronLattice-optimized configuration
-func DefaultIronLatticeDomainConfig() *IronLatticeDomainConfig {
-	return &IronLatticeDomainConfig{
+// DefaultFeCIMDomainConfig returns FeCIM-optimized configuration
+func DefaultFeCIMDomainConfig() *FeCIMDomainConfig {
+	return &FeCIMDomainConfig{
 		FerroThickness:  8.0,
 		GrainSize:       15.0, // 10-20 nm typical
 		VacancyConc:     2.0,
@@ -1202,9 +1202,9 @@ func DefaultIronLatticeDomainConfig() *IronLatticeDomainConfig {
 	}
 }
 
-// IronLatticeDomainArray implements IronLattice domain-aware CIM array
-type IronLatticeDomainArray struct {
-	Config       *IronLatticeDomainConfig
+// FeCIMDomainArray implements FeCIM domain-aware CIM array
+type FeCIMDomainArray struct {
+	Config       *FeCIMDomainConfig
 	Array        *DomainAwareCIMArray
 	PulseEng     *PulseEngineer
 	FatigueDesign *FatigueFreeDesign
@@ -1216,10 +1216,10 @@ type IronLatticeDomainArray struct {
 	Throughput   float64 // TOPS
 }
 
-// NewIronLatticeDomainArray creates an IronLattice domain-aware array
-func NewIronLatticeDomainArray(rows, cols int, config *IronLatticeDomainConfig) *IronLatticeDomainArray {
+// NewFeCIMDomainArray creates an FeCIM domain-aware array
+func NewFeCIMDomainArray(rows, cols int, config *FeCIMDomainConfig) *FeCIMDomainArray {
 	if config == nil {
-		config = DefaultIronLatticeDomainConfig()
+		config = DefaultFeCIMDomainConfig()
 	}
 
 	array := NewDomainAwareCIMArray(rows, cols)
@@ -1234,7 +1234,7 @@ func NewIronLatticeDomainArray(rows, cols int, config *IronLatticeDomainConfig) 
 		pulseEng = NewPulseEngineer(DefaultPulseEngineeringConfig(), sim)
 	}
 
-	return &IronLatticeDomainArray{
+	return &FeCIMDomainArray{
 		Config:        config,
 		Array:         array,
 		PulseEng:      pulseEng,
@@ -1246,7 +1246,7 @@ func NewIronLatticeDomainArray(rows, cols int, config *IronLatticeDomainConfig) 
 }
 
 // ProgramWeights programs weight matrix with domain-aware precision
-func (ila *IronLatticeDomainArray) ProgramWeights(weights [][]float64) error {
+func (ila *FeCIMDomainArray) ProgramWeights(weights [][]float64) error {
 	if len(weights) != ila.Array.Rows {
 		return fmt.Errorf("weight matrix row count mismatch")
 	}
@@ -1273,7 +1273,7 @@ func (ila *IronLatticeDomainArray) ProgramWeights(weights [][]float64) error {
 }
 
 // Inference performs inference with domain-aware degradation modeling
-func (ila *IronLatticeDomainArray) Inference(input []float64) ([]float64, error) {
+func (ila *FeCIMDomainArray) Inference(input []float64) ([]float64, error) {
 	// Apply pulse engineering if needed
 	if ila.PulseEng != nil && ila.Array.TotalCycles > int64(ila.PulseEng.Simulator.Config.WakeUpCycles) {
 		// Periodic fatigue reset
@@ -1294,7 +1294,7 @@ func (ila *IronLatticeDomainArray) Inference(input []float64) ([]float64, error)
 }
 
 // applyReliabilityCorrection applies corrections based on array state
-func (ila *IronLatticeDomainArray) applyReliabilityCorrection(output []float64) {
+func (ila *FeCIMDomainArray) applyReliabilityCorrection(output []float64) {
 	stats := ila.Array.GetArrayStatistics()
 	stateDistribution := stats["state_distribution"].(map[WakeUpState]int)
 
@@ -1311,7 +1311,7 @@ func (ila *IronLatticeDomainArray) applyReliabilityCorrection(output []float64) 
 }
 
 // GetReliabilityReport returns comprehensive reliability report
-func (ila *IronLatticeDomainArray) GetReliabilityReport() map[string]interface{} {
+func (ila *FeCIMDomainArray) GetReliabilityReport() map[string]interface{} {
 	arrayStats := ila.Array.GetArrayStatistics()
 
 	// Calculate expected remaining lifetime
@@ -1343,7 +1343,7 @@ func (ila *IronLatticeDomainArray) GetReliabilityReport() map[string]interface{}
 }
 
 // ExportConfiguration exports configuration for documentation
-func (ila *IronLatticeDomainArray) ExportConfiguration() ([]byte, error) {
+func (ila *FeCIMDomainArray) ExportConfiguration() ([]byte, error) {
 	export := map[string]interface{}{
 		"config":           ila.Config,
 		"array_size":       []int{ila.Array.Rows, ila.Array.Cols},
@@ -1446,7 +1446,7 @@ func repeatChar(c rune, n int) string {
 
 // DomainFatigueBenchmark runs comprehensive domain/fatigue benchmarks
 type DomainFatigueBenchmark struct {
-	Config    *IronLatticeDomainConfig
+	Config    *FeCIMDomainConfig
 	Results   []BenchmarkResult
 }
 
@@ -1461,7 +1461,7 @@ type BenchmarkResult struct {
 }
 
 // NewDomainFatigueBenchmark creates benchmark suite
-func NewDomainFatigueBenchmark(config *IronLatticeDomainConfig) *DomainFatigueBenchmark {
+func NewDomainFatigueBenchmark(config *FeCIMDomainConfig) *DomainFatigueBenchmark {
 	return &DomainFatigueBenchmark{
 		Config:  config,
 		Results: make([]BenchmarkResult, 0),
@@ -1470,7 +1470,7 @@ func NewDomainFatigueBenchmark(config *IronLatticeDomainConfig) *DomainFatigueBe
 
 // RunEnduranceBenchmark tests endurance over cycling
 func (dfb *DomainFatigueBenchmark) RunEnduranceBenchmark(maxCycles int64, checkpoints []int64) {
-	array := NewIronLatticeDomainArray(32, 32, dfb.Config)
+	array := NewFeCIMDomainArray(32, 32, dfb.Config)
 
 	// Sort checkpoints
 	sort.Slice(checkpoints, func(i, j int) bool {

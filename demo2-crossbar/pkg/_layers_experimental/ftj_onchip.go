@@ -1265,7 +1265,7 @@ func FTJComparisonTable() string {
 │ CMOS Compatible     │ ✓         │ ✓         │ Partial   │ ✗                 │
 │ Self-Rectifying     │ ✓         │ ✓         │ ✗         │ ✗                 │
 ├─────────────────────┴───────────┴───────────┴───────────┴───────────────────┤
-│ IronLattice Target: HZO and HZH Superlattice (CMOS-compatible, high TER)    │
+│ FeCIM Target: HZO and HZH Superlattice (CMOS-compatible, high TER)    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Key Advantages:                                                              │
 │ • Non-filamentary switching (reliable MLC)                                  │
@@ -1305,32 +1305,32 @@ func OnChipLearningComparisonTable() string {
 `
 }
 
-// IronLatticeFTJOnChipSystem integrates all components
-type IronLatticeFTJOnChipSystem struct {
+// FeCIMFTJOnChipSystem integrates all components
+type FeCIMFTJOnChipSystem struct {
 	TrainingSystem *OnChipTrainingSystem
 	InferenceXbar  *FTJCrossbar
 	Mode           string // "training", "inference", "hybrid"
 }
 
-// NewIronLatticeFTJOnChipSystem creates integrated system
-func NewIronLatticeFTJOnChipSystem(layerSizes []int) *IronLatticeFTJOnChipSystem {
+// NewFeCIMFTJOnChipSystem creates integrated system
+func NewFeCIMFTJOnChipSystem(layerSizes []int) *FeCIMFTJOnChipSystem {
 	config := &OnChipTrainingConfig{
 		LayerSizes:     layerSizes,
 		FTJConfig:      SuperlatticeConfig(),
 		LearningConfig: DefaultOnChipLearningConfig(),
 	}
 
-	return &IronLatticeFTJOnChipSystem{
+	return &FeCIMFTJOnChipSystem{
 		TrainingSystem: NewOnChipTrainingSystem(config),
 		Mode:           "hybrid",
 	}
 }
 
 // GetSystemSummary returns system summary
-func (sys *IronLatticeFTJOnChipSystem) GetSystemSummary() string {
+func (sys *FeCIMFTJOnChipSystem) GetSystemSummary() string {
 	metrics := sys.TrainingSystem.GetMetrics()
 
-	return fmt.Sprintf(`IronLattice FTJ On-Chip Learning System
+	return fmt.Sprintf(`FeCIM FTJ On-Chip Learning System
 ========================================
 Mode: %s
 Algorithm: %s

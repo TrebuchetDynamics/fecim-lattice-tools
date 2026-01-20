@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/rand"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 )
 
 // Config contains neural network configuration.

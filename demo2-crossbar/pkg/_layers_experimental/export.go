@@ -147,7 +147,7 @@ func (me *ModelExporter) exportCHeader(filename string) error {
 	fmt.Fprintf(file, "#include <stdint.h>\n\n")
 
 	// Write model info
-	fmt.Fprintf(file, "// Model exported from IronLattice CIM Simulator\n")
+	fmt.Fprintf(file, "// Model exported from FeCIM CIM Simulator\n")
 	fmt.Fprintf(file, "// Layers: %d\n", len(me.Model.Layers))
 	fmt.Fprintf(file, "// Quantization: %d bits\n\n", me.Config.QuantBits)
 
@@ -425,7 +425,7 @@ type ONNXLikeTensor struct {
 func (me *ModelExporter) exportONNXLike(filename string) error {
 	model := &ONNXLikeModel{
 		IRVersion:    8,
-		ProducerName: "IronLattice-CIM-Exporter",
+		ProducerName: "FeCIM-CIM-Exporter",
 		Graph: ONNXLikeGraph{
 			Nodes:        make([]ONNXLikeNode, 0),
 			Inputs:       make([]ONNXLikeTensor, 0),
@@ -533,7 +533,7 @@ func (me *ModelExporter) exportVerilogParams(filename string) error {
 	defer file.Close()
 
 	// Write module header
-	fmt.Fprintf(file, "// IronLattice CIM Model Parameters\n")
+	fmt.Fprintf(file, "// FeCIM CIM Model Parameters\n")
 	fmt.Fprintf(file, "// Generated for FPGA/ASIC deployment\n\n")
 
 	// Write package
@@ -823,7 +823,7 @@ type LayerSummary struct {
 // GetModelInfo returns model information
 func (me *ModelExporter) GetModelInfo() *ModelInfo {
 	info := &ModelInfo{
-		Name:         "IronLattice-Model",
+		Name:         "FeCIM-Model",
 		Version:      me.Model.Version,
 		NumLayers:    len(me.Model.Layers),
 		LayerSummary: make([]LayerSummary, len(me.Model.Layers)),

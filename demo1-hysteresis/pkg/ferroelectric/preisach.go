@@ -199,7 +199,7 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 }
 
 // DiscreteStates returns polarization values for N discrete analog states.
-// This demonstrates the 30-state capability of IronLattice.
+// This demonstrates the 30-state capability of FeCIM.
 func (p *PreisachModel) DiscreteStates(N int) []float64 {
 	states := make([]float64, N)
 	Ps := p.material.Ps

@@ -2,7 +2,7 @@ Subject: Ferroelectric CIM visualization project
 
 Dr. Tour,
 
-I watched your COSM talk on IronLattice and couldn't stop thinking about it.
+I watched your COSM talk on Ferroelectric CIM and couldn't stop thinking about it.
 So I built something.
 
 Five interactive demos visualizing ferroelectric compute-in-memory - P-E
@@ -10,7 +10,7 @@ hysteresis, crossbar MVM, MNIST classification, peripheral circuits, and
 thermal simulation. All based on published ferroelectric physics and your
 public presentation.
 
-I originally called it "IronLattice Visualizer" but renamed it to avoid
+I originally called it "Ferroelectric CIM Visualizer" but renamed it to avoid
 any IP complications for your team. Your branding is removed.
 
 I'm a Christian, and your work on Jesus and science resonates with me -

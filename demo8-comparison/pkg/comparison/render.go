@@ -175,11 +175,11 @@ func (r *Renderer) RenderDataCenterComparison(metrics []DataCenterMetrics, targe
 	return sb.String()
 }
 
-// RenderAdvantages renders IronLattice advantages.
-func (r *Renderer) RenderAdvantages(adv IronLatticeAdvantage) string {
+// RenderAdvantages renders FeCIM advantages.
+func (r *Renderer) RenderAdvantages(adv FeCIMAdvantage) string {
 	var sb strings.Builder
 
-	sb.WriteString("IronLattice Advantages:\n")
+	sb.WriteString("FeCIM Advantages:\n")
 	sb.WriteString(strings.Repeat("═", r.Width) + "\n\n")
 
 	// vs CPU
@@ -227,7 +227,7 @@ func (r *Renderer) RenderAdvantages(adv IronLatticeAdvantage) string {
 }
 
 // RenderSummary renders comparison summary.
-func (r *Renderer) RenderSummary(comparison ComparisonResult, adv IronLatticeAdvantage) string {
+func (r *Renderer) RenderSummary(comparison ComparisonResult, adv FeCIMAdvantage) string {
 	var sb strings.Builder
 
 	sb.WriteString("\n")
@@ -236,11 +236,11 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv IronLatticeAdv
 	sb.WriteString("╚══════════════════════════════════════════════════════════════════╝\n")
 	sb.WriteString("\n")
 
-	// Find IronLattice results
+	// Find FeCIM results
 	var ironResult InferenceResult
 	var ironDC DataCenterMetrics
 	for i, arch := range comparison.Architectures {
-		if arch.Name == "IronLattice CIM" {
+		if arch.Name == "FeCIM CIM" {
 			ironResult = comparison.Results[i]
 			ironDC = comparison.DataCenter[i]
 		}
@@ -249,7 +249,7 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv IronLatticeAdv
 	sb.WriteString(fmt.Sprintf("Workload: %s (%s MACs)\n\n", comparison.Workload.Name,
 		formatNumber(float64(comparison.Workload.TotalOps))))
 
-	sb.WriteString("IronLattice Key Metrics:\n")
+	sb.WriteString("FeCIM Key Metrics:\n")
 	sb.WriteString(strings.Repeat("─", 60) + "\n")
 	sb.WriteString(fmt.Sprintf("  Inference Latency:    %s\n", formatLatency(ironResult.Latency)))
 	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", formatEnergy(ironResult.Energy)))

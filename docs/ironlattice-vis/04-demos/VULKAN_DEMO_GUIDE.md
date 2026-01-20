@@ -143,7 +143,7 @@ func NewInstance(appName string, enableValidation bool) (*Instance, error) {
         SType:              vk.STRUCTURE_TYPE_APPLICATION_INFO,
         PApplicationName:   appName,
         ApplicationVersion: vk.MAKE_VERSION(1, 0, 0),
-        PEngineName:        "IronLattice",
+        PEngineName:        "Ferroelectric CIM",
         EngineVersion:      vk.MAKE_VERSION(1, 0, 0),
         ApiVersion:         vk.API_VERSION_1_3,
     }
@@ -674,8 +674,8 @@ package main
 import (
     "log"
     
-    "ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
-    "ironlattice-vis/demo1-hysteresis/pkg/vulkan"
+    "multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
+    "multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/vulkan"
     
     "github.com/go-gl/glfw/v3.3/glfw"
 )
@@ -691,14 +691,14 @@ func runVulkanMode(material *ferroelectric.HZOMaterial) error {
     glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
     glfw.WindowHint(glfw.Resizable, glfw.False)
     
-    window, err := glfw.CreateWindow(1280, 720, "IronLattice Hysteresis Demo", nil, nil)
+    window, err := glfw.CreateWindow(1280, 720, "Ferroelectric CIM Hysteresis Demo", nil, nil)
     if err != nil {
         return err
     }
     defer window.Destroy()
     
     // Initialize Vulkan
-    instance, err := vulkan.NewInstance("IronLattice Demo1", true)
+    instance, err := vulkan.NewInstance("Ferroelectric CIM Demo1", true)
     if err != nil {
         return err
     }

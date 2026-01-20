@@ -1,5 +1,5 @@
 // Package layers provides ferroelectric memcapacitor and stochastic computing
-// simulation for IronLattice CIM architectures.
+// simulation for FeCIM CIM architectures.
 //
 // This module simulates:
 // - Ferroelectric memcapacitors (FeCap) for ultra-low power CIM
@@ -772,8 +772,8 @@ func (snn *StochasticNeuralNet) GetAccuracy() float64 {
 // INTEGRATED MEMCAPACITOR + STOCHASTIC SYSTEM
 // ============================================================================
 
-// IronLatticeMemcapStochastic combines memcapacitor CIM with stochastic computing
-type IronLatticeMemcapStochastic struct {
+// FeCIMMemcapStochastic combines memcapacitor CIM with stochastic computing
+type FeCIMMemcapStochastic struct {
 	MemcapConfig    *MemcapConfig
 	StochasticConfig *StochasticConfig
 
@@ -792,12 +792,12 @@ type IronLatticeMemcapStochastic struct {
 	TotalEnergyFJ    float64
 }
 
-// NewIronLatticeMemcapStochastic creates an integrated system
-func NewIronLatticeMemcapStochastic(arraySize int, layerSizes []int) *IronLatticeMemcapStochastic {
+// NewFeCIMMemcapStochastic creates an integrated system
+func NewFeCIMMemcapStochastic(arraySize int, layerSizes []int) *FeCIMMemcapStochastic {
 	memcapCfg := DefaultMemcapConfig()
 	stochasticCfg := DefaultStochasticConfig()
 
-	system := &IronLatticeMemcapStochastic{
+	system := &FeCIMMemcapStochastic{
 		MemcapConfig:     memcapCfg,
 		StochasticConfig: stochasticCfg,
 		HybridThreshold:  0.1, // Switch to stochastic when precision <10% matters
@@ -812,7 +812,7 @@ func NewIronLatticeMemcapStochastic(arraySize int, layerSizes []int) *IronLattic
 }
 
 // Inference performs inference using hybrid approach
-func (sys *IronLatticeMemcapStochastic) Inference(input []float64, precisionRequired float64) []float64 {
+func (sys *FeCIMMemcapStochastic) Inference(input []float64, precisionRequired float64) []float64 {
 	if precisionRequired > sys.HybridThreshold {
 		// Use deterministic memcapacitor computing for high precision
 		sys.DeterministicOps++
@@ -843,7 +843,7 @@ func (sys *IronLatticeMemcapStochastic) Inference(input []float64, precisionRequ
 }
 
 // GenerateRandomWeights uses TRNG for weight initialization
-func (sys *IronLatticeMemcapStochastic) GenerateRandomWeights(rows, cols int) [][]float64 {
+func (sys *FeCIMMemcapStochastic) GenerateRandomWeights(rows, cols int) [][]float64 {
 	weights := make([][]float64, rows)
 	for i := 0; i < rows; i++ {
 		weights[i] = make([]float64, cols)
@@ -860,7 +860,7 @@ func (sys *IronLatticeMemcapStochastic) GenerateRandomWeights(rows, cols int) []
 }
 
 // GetPerformanceReport returns system performance metrics
-func (sys *IronLatticeMemcapStochastic) GetPerformanceReport() map[string]interface{} {
+func (sys *FeCIMMemcapStochastic) GetPerformanceReport() map[string]interface{} {
 	totalOps := sys.DeterministicOps + sys.StochasticOps
 	if totalOps == 0 {
 		totalOps = 1
@@ -1079,7 +1079,7 @@ func GenerateStochasticComparison() string {
 // RunMemcapStochasticDemo demonstrates memcapacitor and stochastic computing
 func RunMemcapStochasticDemo() {
 	fmt.Println("╔═══════════════════════════════════════════════════════════╗")
-	fmt.Println("║  IronLattice Memcapacitor & Stochastic Computing Demo     ║")
+	fmt.Println("║  FeCIM Memcapacitor & Stochastic Computing Demo     ║")
 	fmt.Println("╚═══════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
@@ -1169,7 +1169,7 @@ func RunMemcapStochasticDemo() {
 
 	// 8. Integrated system
 	fmt.Println("8. Integrated Hybrid System:")
-	system := NewIronLatticeMemcapStochastic(16, []int{16, 32, 16})
+	system := NewFeCIMMemcapStochastic(16, []int{16, 32, 16})
 
 	// Run mixed precision inferences
 	for i := 0; i < 100; i++ {

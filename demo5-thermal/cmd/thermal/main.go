@@ -7,7 +7,7 @@
 // - Multi-layer thermal coupling
 // - Hotspot identification
 // - Thermal throttling warning system
-// - IronLattice's low-power thermal advantage
+// - FeCIM's low-power thermal advantage
 package main
 
 import (
@@ -16,21 +16,21 @@ import (
 	"strings"
 	"time"
 
-	"ironlattice-vis/demo5-thermal/pkg/thermal"
+	"multilayer-ferroelectric-cim-visualizer/demo5-thermal/pkg/thermal"
 )
 
 func main() {
 	// Command-line flags
 	showSingle := flag.Bool("single", false, "Show single layer simulation")
 	showMulti := flag.Bool("multi", false, "Show multi-layer simulation")
-	showCompare := flag.Bool("compare", false, "Compare IronLattice vs traditional thermal")
+	showCompare := flag.Bool("compare", false, "Compare FeCIM vs traditional thermal")
 	showAll := flag.Bool("all", false, "Show all thermal demonstrations")
 	animate := flag.Bool("animate", false, "Animate heat diffusion (terminal)")
 	steps := flag.Int("steps", 100, "Number of simulation steps")
 	flag.Parse()
 
 	fmt.Println("================================================")
-	fmt.Println("  IronLattice Demo 5: Thermal Simulation")
+	fmt.Println("  FeCIM Demo 5: Thermal Simulation")
 	fmt.Println("  Heat Management for Ferroelectric CIM")
 	fmt.Println("================================================")
 	fmt.Println()
@@ -56,7 +56,7 @@ func main() {
 
 	fmt.Println()
 	fmt.Println("================================================")
-	fmt.Println("  IronLattice: 1000x lower power = cool operation")
+	fmt.Println("  FeCIM: 1000x lower power = cool operation")
 	fmt.Println("  \"This could lower data center requirements")
 	fmt.Println("   by 80 to 90%\" — Dr. external research group")
 	fmt.Println("================================================")
@@ -157,7 +157,7 @@ func showMultiLayerDemo(steps int) {
 	mlSim.Reset()
 	renderer := thermal.DefaultRenderer()
 
-	fmt.Println("3-Layer IronLattice Stack:")
+	fmt.Println("3-Layer FeCIM Stack:")
 	fmt.Println("  Layer 3: BEOL Interconnects (Cu, 100 W/m·K)")
 	fmt.Println("  Layer 2: Crossbar Array (HZO/Metal, 50 W/m·K)")
 	fmt.Println("  Layer 1: Silicon Substrate (Si, 150 W/m·K)")
@@ -219,7 +219,7 @@ func showMultiLayerDemo(steps int) {
 
 func showComparisonDemo() {
 	fmt.Println("┌─────────────────────────────────────────────┐")
-	fmt.Println("│    IronLattice vs Traditional Thermal       │")
+	fmt.Println("│    FeCIM vs Traditional Thermal       │")
 	fmt.Println("└─────────────────────────────────────────────┘")
 	fmt.Println()
 
@@ -230,15 +230,15 @@ func showComparisonDemo() {
 	traditional.Reset()
 
 	// Power densities based on Dr. Tour's claims
-	// IronLattice: ~0.001 pJ/MAC → 1000x lower
+	// FeCIM: ~0.001 pJ/MAC → 1000x lower
 	// Traditional: ~1-10 pJ/MAC
 	fmt.Println("Power Comparison (from Dr. Tour's presentation):")
-	fmt.Println("  IronLattice: ~0.001 pJ per MAC operation")
+	fmt.Println("  FeCIM: ~0.001 pJ per MAC operation")
 	fmt.Println("  Traditional: ~1-10 pJ per MAC operation")
 	fmt.Println("  Ratio: 1000-10,000× lower power!")
 	fmt.Println()
 
-	ironLatticePower := 1e4   // W/m² - very low power density (IronLattice advantage)
+	ironLatticePower := 1e4   // W/m² - very low power density (FeCIM advantage)
 	traditionalPower := 1e7  // W/m² - typical high-performance CMOS
 
 	// Apply uniform workload
@@ -260,7 +260,7 @@ func showComparisonDemo() {
 	// Display results
 	renderer := thermal.DefaultRenderer()
 
-	fmt.Println("IronLattice Heat Map:")
+	fmt.Println("FeCIM Heat Map:")
 	renderer.MinTemp = 25
 	renderer.MaxTemp = 85
 	fmt.Println(renderer.Render(ironLattice))
@@ -292,13 +292,13 @@ func showComparisonDemo() {
 
 	fmt.Println("Temperature Rise Comparison:")
 	fmt.Println("───────────────────────────────────────")
-	fmt.Printf("  IronLattice:  %.2f°C above ambient\n", ilTempRise)
+	fmt.Printf("  FeCIM:  %.2f°C above ambient\n", ilTempRise)
 	fmt.Printf("  Traditional: %.2f°C above ambient\n", tradTempRise)
 
 	if ilTempRise > 0.01 {
 		fmt.Printf("  Reduction: %.0fx cooler operation!\n", tradTempRise/ilTempRise)
 	} else {
-		fmt.Println("  IronLattice: Essentially at ambient temperature!")
+		fmt.Println("  FeCIM: Essentially at ambient temperature!")
 	}
 	fmt.Println()
 
@@ -349,7 +349,7 @@ func showBriefOverview(steps int) {
 	}
 	fmt.Println()
 
-	fmt.Println("IronLattice Thermal Advantage:")
+	fmt.Println("FeCIM Thermal Advantage:")
 	fmt.Println("  • 1000× lower power → negligible heating")
 	fmt.Println("  • No thermal throttling required")
 	fmt.Println("  • Higher density integration possible")
@@ -357,6 +357,6 @@ func showBriefOverview(steps int) {
 	fmt.Println()
 
 	fmt.Println("Run with --all for detailed thermal analysis")
-	fmt.Println("Run with --compare for IronLattice vs traditional comparison")
+	fmt.Println("Run with --compare for FeCIM vs traditional comparison")
 	fmt.Println("Run with --animate for real-time heat diffusion visualization")
 }

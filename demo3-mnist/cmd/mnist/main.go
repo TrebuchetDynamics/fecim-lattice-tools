@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo3-mnist/pkg/mnist"
-	"ironlattice-vis/demo3-mnist/pkg/training"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("================================================")
-	fmt.Println("  IronLattice Demo 3: MNIST Digit Recognition")
+	fmt.Println("  FeCIM Demo 3: MNIST Digit Recognition")
 	fmt.Println("  Ferroelectric Compute-in-Memory Neural Network")
 	fmt.Println("================================================")
 	fmt.Printf("\nConfiguration:\n")
@@ -42,7 +42,7 @@ func main() {
 	fmt.Printf("  Hidden layer: %d neurons\n", *hiddenSize)
 	fmt.Printf("  Output layer: 10 classes (digits 0-9)\n")
 	fmt.Printf("  Device noise: %.2f%%\n", *noiseLevel*100)
-	fmt.Printf("  Discrete levels: 30 (IronLattice advantage)\n")
+	fmt.Printf("  Discrete levels: 30 (FeCIM advantage)\n")
 	fmt.Printf("  Target accuracy: 87%%\n")
 
 	// Create crossbar arrays for each layer

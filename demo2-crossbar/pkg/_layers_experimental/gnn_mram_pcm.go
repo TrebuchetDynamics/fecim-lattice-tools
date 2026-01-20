@@ -1556,7 +1556,7 @@ func NewMemoryComparison() *MemoryComparison {
 		"RetentionYears":     10.0,
 		"EnergyPerBitFJ":     1.0,
 		"CellAreaF2":         6.0,
-		"CIMEffTOPSW":        500.0, // IronLattice target
+		"CIMEffTOPSW":        500.0, // FeCIM target
 	}
 
 	return mc

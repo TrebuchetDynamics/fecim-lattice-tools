@@ -1,5 +1,5 @@
 // edge_neuromorphic_cim.go - Edge AI and Neuromorphic Sensor Fusion with FeFET CIM
-// Part of IronLattice educational demonstrations
+// Part of FeCIM educational demonstrations
 // Research iteration 140: TinyML, keyword spotting, event cameras, in-sensor computing
 
 package layers

@@ -1,4 +1,4 @@
-# IronLattice Visualizer
+# Ferroelectric CIM Visualizer
 
 **GPU-Accelerated Ferroelectric Compute-in-Memory Demos**
 
@@ -10,7 +10,7 @@
 
 ---
 
-> **DISCLAIMER**: IronLattice is at **TRL 4** (lab validation only). Hardware achieved **87% MNIST** (88% theoretical max). Energy claims (10M× vs NAND) are from Dr. Tour's presentation and have not been independently verified. See [HONESTY_AUDIT.md](docs/opensource/papers/08_Documentation/HONESTY_AUDIT.md).
+> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation only). Hardware achieved **87% MNIST** (88% theoretical max). Energy claims (10M× vs NAND) are from Dr. Tour's presentation and have not been independently verified. See [HONESTY_AUDIT.md](docs/opensource/papers/08_Documentation/HONESTY_AUDIT.md).
 
 ---
 
@@ -57,12 +57,12 @@ go test ./...
 
 ---
 
-## Why IronLattice Matters
+## Why Ferroelectric CIM Matters
 
 > *"This could lower data center energy by 80 to 90%."*
 > — Dr. external research group, external research institution
 
-| What | Traditional | IronLattice |
+| What | Traditional | Ferroelectric CIM |
 |------|-------------|-------------|
 | Memory states | 2 (0/1) | **30 levels** |
 | Compute location | Separate CPU/GPU | **In the memory** |
@@ -94,7 +94,7 @@ go test ./...
 - Real-time P-E hysteresis curve with fade trail
 - 30 discrete levels visualized
 - Mayergoyz Preisach model
-- Material selector (Default HZO, Optimized, IronLattice)
+- Material selector (Default HZO, Optimized, Ferroelectric CIM)
 - Waveform modes (Sine, Triangle, Square, Manual)
 
 ---
@@ -127,7 +127,7 @@ go test ./...
 
 **Purpose:** See real AI application
 
-> **Note:** IronLattice hardware achieved **87%** with **88% theoretical max** (Dr. Tour). Our simulation uses idealized conditions and may exceed real hardware.
+> **Note:** Ferroelectric CIM hardware achieved **87%** with **88% theoretical max** (Dr. Tour). Our simulation uses idealized conditions and may exceed real hardware.
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐
@@ -220,11 +220,11 @@ Top View (Heat Map)        Side View
 
 ### Demo 8: Technology Comparison 🔲
 
-**Purpose:** Investor pitch — why IronLattice wins (PRIORITY)
+**Purpose:** Investor pitch — why Ferroelectric CIM wins (PRIORITY)
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    DRAM     │  │    GPU      │  │ IronLattice │
+│    DRAM     │  │    GPU      │  │ Ferroelectric CIM │
 │    +CPU     │  │   (CUDA)    │  │    (CIM)    │
 ├─────────────┤  ├─────────────┤  ├─────────────┤
 │ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
@@ -252,7 +252,7 @@ Top View (Heat Map)        Side View
 ## Repository Structure
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── demo1-hysteresis/     ✅ Single cell P-E curve (Fyne GUI)
 ├── demo2-crossbar/       ✅ Crossbar MVM (Fyne GUI)
 ├── demo3-mnist/          ✅ MNIST classifier (Fyne GUI)
@@ -267,7 +267,7 @@ ironlattice-vis/
 
 ---
 
-## The Team Behind IronLattice
+## The Team Behind Ferroelectric CIM
 
 | Person | Role |
 |--------|------|
@@ -295,7 +295,7 @@ ironlattice-vis/
 
 MIT License
 
-IronLattice is a trademark of its respective owners at external research institution. This is an independent educational visualization project with no affiliation.
+Ferroelectric CIM is a trademark of its respective owners at external research institution. This is an independent educational visualization project with no affiliation.
 
 ---
 

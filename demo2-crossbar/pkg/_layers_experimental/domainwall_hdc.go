@@ -980,8 +980,8 @@ func (hdc *HDCClassifier) EvaluateAccuracy(samples [][]interface{}, labels []int
 // INTEGRATED IRONLATTICE SYSTEM
 // =============================================================================
 
-// IronLatticeDWHDCSystem combines domain wall synapses with HDC
-type IronLatticeDWHDCSystem struct {
+// FeCIMDWHDCSystem combines domain wall synapses with HDC
+type FeCIMDWHDCSystem struct {
 	// Domain wall components
 	DWConfig    *DomainWallConfig
 	DWCrossbar  *DomainWallCrossbar
@@ -1000,17 +1000,17 @@ type IronLatticeDWHDCSystem struct {
 	AccuracyPercent  float64
 }
 
-// IronLatticeDWHDCConfig configures the integrated system
-type IronLatticeDWHDCConfig struct {
+// FeCIMDWHDCConfig configures the integrated system
+type FeCIMDWHDCConfig struct {
 	DWConfig   *DomainWallConfig
 	HDCConfig  *HDCConfig
 	Mode       string
 	ArraySize  int
 }
 
-// DefaultIronLatticeDWHDCConfig returns default configuration
-func DefaultIronLatticeDWHDCConfig() *IronLatticeDWHDCConfig {
-	return &IronLatticeDWHDCConfig{
+// DefaultFeCIMDWHDCConfig returns default configuration
+func DefaultFeCIMDWHDCConfig() *FeCIMDWHDCConfig {
+	return &FeCIMDWHDCConfig{
 		DWConfig:  DefaultDomainWallConfig(),
 		HDCConfig: DefaultHDCConfig(),
 		Mode:      "hybrid",
@@ -1018,13 +1018,13 @@ func DefaultIronLatticeDWHDCConfig() *IronLatticeDWHDCConfig {
 	}
 }
 
-// NewIronLatticeDWHDCSystem creates the integrated system
-func NewIronLatticeDWHDCSystem(config *IronLatticeDWHDCConfig) *IronLatticeDWHDCSystem {
+// NewFeCIMDWHDCSystem creates the integrated system
+func NewFeCIMDWHDCSystem(config *FeCIMDWHDCConfig) *FeCIMDWHDCSystem {
 	if config == nil {
-		config = DefaultIronLatticeDWHDCConfig()
+		config = DefaultFeCIMDWHDCConfig()
 	}
 
-	sys := &IronLatticeDWHDCSystem{
+	sys := &FeCIMDWHDCSystem{
 		DWConfig:      config.DWConfig,
 		DWCrossbar:    NewDomainWallCrossbar(config.DWConfig, config.ArraySize, config.ArraySize),
 		HDCConfig:     config.HDCConfig,
@@ -1039,27 +1039,27 @@ func NewIronLatticeDWHDCSystem(config *IronLatticeDWHDCConfig) *IronLatticeDWHDC
 }
 
 // TrainHDC trains the HDC component
-func (sys *IronLatticeDWHDCSystem) TrainHDC(samples [][]interface{}, labels []interface{}) error {
+func (sys *FeCIMDWHDCSystem) TrainHDC(samples [][]interface{}, labels []interface{}) error {
 	return sys.HDClassifier.Train(samples, labels)
 }
 
 // PredictHDC performs HDC classification
-func (sys *IronLatticeDWHDCSystem) PredictHDC(sample []interface{}) (interface{}, float64) {
+func (sys *FeCIMDWHDCSystem) PredictHDC(sample []interface{}) (interface{}, float64) {
 	return sys.HDClassifier.Predict(sample)
 }
 
 // ForwardDW performs forward pass through domain wall crossbar
-func (sys *IronLatticeDWHDCSystem) ForwardDW(input []float64) ([]float64, error) {
+func (sys *FeCIMDWHDCSystem) ForwardDW(input []float64) ([]float64, error) {
 	return sys.DWCrossbar.Forward(input)
 }
 
 // TrainDWWeights sets weights in domain wall crossbar
-func (sys *IronLatticeDWHDCSystem) TrainDWWeights(weights [][]float64) error {
+func (sys *FeCIMDWHDCSystem) TrainDWWeights(weights [][]float64) error {
 	return sys.DWCrossbar.SetWeights(weights)
 }
 
 // ApplySTDP applies STDP learning to domain wall synapses
-func (sys *IronLatticeDWHDCSystem) ApplySTDP(preSpikes, postSpikes []float64, currentTimeMs float64) {
+func (sys *FeCIMDWHDCSystem) ApplySTDP(preSpikes, postSpikes []float64, currentTimeMs float64) {
 	for i := 0; i < sys.DWCrossbar.Rows; i++ {
 		for j := 0; j < sys.DWCrossbar.Cols; j++ {
 			synapse := sys.DWCrossbar.Synapses[i][j]
@@ -1083,7 +1083,7 @@ func (sys *IronLatticeDWHDCSystem) ApplySTDP(preSpikes, postSpikes []float64, cu
 }
 
 // GetMetrics returns system performance metrics
-func (sys *IronLatticeDWHDCSystem) GetMetrics() map[string]float64 {
+func (sys *FeCIMDWHDCSystem) GetMetrics() map[string]float64 {
 	totalConductance := 0.0
 	totalCycles := int64(0)
 	totalFatigue := 0.0
@@ -1120,7 +1120,7 @@ func btof(b bool) float64 {
 }
 
 // Serialize returns JSON representation
-func (sys *IronLatticeDWHDCSystem) Serialize() ([]byte, error) {
+func (sys *FeCIMDWHDCSystem) Serialize() ([]byte, error) {
 	data := map[string]interface{}{
 		"mode":             sys.Mode,
 		"dw_rows":          sys.DWCrossbar.Rows,
@@ -1138,7 +1138,7 @@ func (sys *IronLatticeDWHDCSystem) Serialize() ([]byte, error) {
 
 // DWHDCBenchmark benchmarks the integrated system
 type DWHDCBenchmark struct {
-	System           *IronLatticeDWHDCSystem
+	System           *FeCIMDWHDCSystem
 	TestCases        int
 	DWLatencyUS      float64
 	HDCLatencyUS     float64
@@ -1148,7 +1148,7 @@ type DWHDCBenchmark struct {
 }
 
 // NewDWHDCBenchmark creates a benchmark
-func NewDWHDCBenchmark(system *IronLatticeDWHDCSystem) *DWHDCBenchmark {
+func NewDWHDCBenchmark(system *FeCIMDWHDCSystem) *DWHDCBenchmark {
 	return &DWHDCBenchmark{
 		System:    system,
 		TestCases: 1000,
@@ -1690,14 +1690,14 @@ func ErrorToleranceDemo() string {
 
 // ComprehensiveSystemDemo runs full system demonstration
 func ComprehensiveSystemDemo() string {
-	result := "IronLattice Domain Wall + HDC System Demo\n"
+	result := "FeCIM Domain Wall + HDC System Demo\n"
 	result += "==========================================\n\n"
 
-	config := DefaultIronLatticeDWHDCConfig()
+	config := DefaultFeCIMDWHDCConfig()
 	config.ArraySize = 32
 	config.HDCConfig.Dimension = 5000
 
-	system := NewIronLatticeDWHDCSystem(config)
+	system := NewFeCIMDWHDCSystem(config)
 
 	// Domain wall demo
 	result += "1. Domain Wall Crossbar Initialization\n"
@@ -1759,11 +1759,11 @@ func ComprehensiveSystemDemo() string {
 	return result
 }
 
-// IronLattice integration comparison table
-func IronLatticeComparisonTable() string {
+// FeCIM integration comparison table
+func FeCIMComparisonTable() string {
 	return `
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│         IronLattice Domain Wall + HDC Performance Comparison                │
+│         FeCIM Domain Wall + HDC Performance Comparison                │
 ├──────────────────────┬───────────────┬───────────────┬──────────────────────┤
 │ Metric               │ Domain Wall   │ FeFET HDC     │ Combined Hybrid      │
 ├──────────────────────┼───────────────┼───────────────┼──────────────────────┤
@@ -1781,7 +1781,7 @@ func IronLatticeComparisonTable() string {
 │ • FeFET HDC: Classification, pattern matching, language processing          │
 │ • Hybrid: Multi-modal sensing, lifelong learning, edge AI                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ IronLattice Advantages:                                                      │
+│ FeCIM Advantages:                                                      │
 │ • HfO₂/ZrO₂ superlattice: CMOS-compatible, scalable                         │
 │ • Flash Joule heating: Rapid synthesis, industrial scalability              │
 │ • Combined compute paradigms: Best of analog CIM + symbolic computing       │

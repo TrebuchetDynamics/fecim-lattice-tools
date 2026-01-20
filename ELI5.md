@@ -1,4 +1,4 @@
-# IronLattice: The Complete ELI5 Guide
+# Ferroelectric CIM: The Complete ELI5 Guide
 
 **Goal:** After reading this, a 5-year-old could become the lead engineer.
 
@@ -8,7 +8,7 @@
 
 **If you only have 60 seconds, read this.**
 
-> ⚠️ **DISCLAIMER:** IronLattice is at **TRL 4** (lab validation). Energy claims (10M× vs NAND, 80-90% DC savings) are from Dr. Tour's presentation and have NOT been independently verified.
+> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation). Energy claims (10M× vs NAND, 80-90% DC savings) are from Dr. Tour's presentation and have NOT been independently verified.
 
 ## The Problem
 AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
@@ -17,13 +17,13 @@ AI is eating the world, but it's also eating all the electricity. Data centers a
 Traditional computers have a "commute problem." The memory (where data lives) and the processor (where math happens) are separate. Every calculation requires billions of trips back and forth.
 
 ## The Solution
-**IronLattice does math where the data already lives.**
+**Ferroelectric CIM does math where the data already lives.**
 
 Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory cells that can also compute. When you apply a voltage, the current that flows out IS the multiplication result. Physics does the math for free!
 
 ## The Magic Numbers
 
-| What | Traditional | IronLattice | Improvement |
+| What | Traditional | Ferroelectric CIM | Improvement |
 |------|-------------|-------------|-------------|
 | Energy per operation | 10 pJ | 0.001 pJ | **10,000×*** |
 | Data movement | Billions of trips | Zero | **∞** |
@@ -44,7 +44,7 @@ A future where:
 - Data centers use 80-90% less power
 - AI is fast, cheap, and everywhere
 
-**That's IronLattice.**
+**That's Ferroelectric CIM.**
 
 ---
 
@@ -197,7 +197,7 @@ Binary (easy):           Decimal (hard):
 
 With only two levels, even a noisy signal is easy to read. This is why binary won.
 
-**But wait!** IronLattice uses 30 levels. How does that work?
+**But wait!** Ferroelectric CIM uses 30 levels. How does that work?
 
 The secret: **analog precision**. Ferroelectric materials can maintain stable, distinguishable states at 30 levels because:
 1. The physics is very stable (crystal structure shifts)
@@ -246,14 +246,14 @@ In the 1940s-60s, analog computers were common. They used voltages to represent 
 - Errors accumulate
 - Difficult to program
 
-**IronLattice brings analog back** with:
+**Ferroelectric CIM brings analog back** with:
 - Ferroelectric memory that holds analog values stably
 - Enough precision (30 levels) for AI applications
 - Inherent multiplication via Ohm's Law
 
 ## The Best of Both Worlds
 
-IronLattice is a **hybrid**:
+Ferroelectric CIM is a **hybrid**:
 
 ```
 Digital Interface       Analog Compute        Digital Interface
@@ -331,7 +331,7 @@ What a waste!
 
 ---
 
-# Part 3: The IronLattice Solution
+# Part 3: The Ferroelectric CIM Solution
 
 ## Compute-in-Memory: Think Where You Store
 
@@ -524,7 +524,7 @@ When you push and release, the polarization traces a loop:
 
 **Key insight:** Going up is NOT the same as going down! The material remembers where it came from.
 
-## 30 Analog States (The IronLattice Advantage)
+## 30 Analog States (The Ferroelectric CIM Advantage)
 
 By stopping at different points, HZO can store 30 different levels:
 
@@ -545,7 +545,7 @@ Polarization
 ```
 
 Regular memory: 1 bit (ON/OFF)
-IronLattice: ~5 bits (30 states ≈ 2⁵)
+Ferroelectric CIM: ~5 bits (30 states ≈ 2⁵)
 
 > "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
 
@@ -691,7 +691,7 @@ The magic is in Step 2 and 3: alternating HfO₂ and ZrO₂ creates the special 
 
 # Part 7.5: The Competition (Other Memory Technologies)
 
-IronLattice isn't the only compute-in-memory technology. Here's how it compares:
+Ferroelectric CIM isn't the only compute-in-memory technology. Here's how it compares:
 
 ## The Contenders
 
@@ -750,7 +750,7 @@ Parallel (low R):      Anti-parallel (high R):
 - Large cell size
 - Magnetic interference concerns
 
-### 4. FeRAM/FeFET (Ferroelectric - IronLattice!)
+### 4. FeRAM/FeFET (Ferroelectric - Ferroelectric CIM!)
 **How it works:** Crystal structure shifts
 
 ```
@@ -775,7 +775,7 @@ Polarization UP:        Polarization DOWN:
 
 ## Head-to-Head Comparison
 
-| Property | ReRAM | PCM | MRAM | **HZO (IronLattice)** |
+| Property | ReRAM | PCM | MRAM | **HZO (Ferroelectric CIM)** |
 |----------|-------|-----|------|----------------------|
 | Analog levels | 2-4 | 4-8 | 2 | **30** |
 | Write energy | Medium | High | Low | **Very Low** |
@@ -785,19 +785,19 @@ Polarization UP:        Polarization DOWN:
 | CMOS compatible | Yes | Yes | Needs MTJ | **Yes** |
 | Maturity | Medium | High | Medium | **Emerging** |
 
-## Why IronLattice Wins for AI
+## Why Ferroelectric CIM Wins for AI
 
 The killer feature is **30 analog levels**:
 
 ```
 AI Weight Storage Comparison:
 
-ReRAM (2 levels):     PCM (4 levels):      IronLattice (30 levels):
+ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30 levels):
 █░                    █░░░                 █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 1 bit                 2 bits               ~5 bits
 
 To store same information:
-ReRAM: 5 cells        PCM: 2-3 cells       IronLattice: 1 cell!
+ReRAM: 5 cells        PCM: 2-3 cells       Ferroelectric CIM: 1 cell!
 ```
 
 More levels per cell = fewer cells needed = smaller chips = less energy!
@@ -851,7 +851,7 @@ Input Image (28×28 pixels):          Output:
 "That's a 3!"
 ```
 
-## IronLattice MNIST Performance
+## Ferroelectric CIM MNIST Performance
 
 > "We're at 87% validation here... theoretical is 88% is the theoretical maximum." — Dr. Tour
 
@@ -861,11 +861,11 @@ Input Image (28×28 pixels):          Output:
 
 Start with random weights → show lots of examples → adjust weights to reduce errors → repeat millions of times
 
-IronLattice can potentially do training 1000× faster than regular computers!
+Ferroelectric CIM can potentially do training 1000× faster than regular computers!
 
 ## Step-by-Step: A Complete MNIST Inference
 
-Let's walk through exactly what happens when you draw a "3" and IronLattice recognizes it:
+Let's walk through exactly what happens when you draw a "3" and Ferroelectric CIM recognizes it:
 
 ### Step 1: Capture the Image
 ```
@@ -966,7 +966,7 @@ Traditional computer:
 - Each one: fetch → multiply → store → repeat
 - Total: ~500,000+ memory accesses
 
-IronLattice:
+Ferroelectric CIM:
 - Layer 1: 1 analog operation (all 100,352 at once)
 - Layer 2: 1 analog operation (all 1,280 at once)
 - Total: 2 parallel operations!
@@ -1056,9 +1056,9 @@ Top View (Heat Map)        Side View
 25°C ░▒▓█ 85°C
 ```
 
-## IronLattice Advantage
+## Ferroelectric CIM Advantage
 
-Because IronLattice uses so much less energy:
+Because Ferroelectric CIM uses so much less energy:
 - Less heat generated
 - Smaller cooling systems
 - More chips per data center
@@ -1086,7 +1086,7 @@ Demo 8: "This is why it beats everything else"     ✅ CLI
 **What it shows:**
 - P-E hysteresis curve in real-time with fade trail
 - 30 discrete levels visualized
-- Material selector (Default HZO, Optimized, IronLattice)
+- Material selector (Default HZO, Optimized, Ferroelectric CIM)
 - Waveform modes (Sine, Triangle, Square, Manual)
 
 **Who it's for:** Everyone (educational foundation)
@@ -1145,7 +1145,7 @@ Run: cd demo4-circuits && go run ./cmd/circuits --all
 - 2D heat map visualization
 - Real-time heat diffusion
 - Hotspot identification
-- IronLattice's low-power advantage
+- Ferroelectric CIM's low-power advantage
 
 **Who it's for:** Design engineers, thermal analysts
 
@@ -1184,7 +1184,7 @@ Run: cd demo7-nonidealities && go run ./cmd/nonidealities --all
 ## Demo 8: Technology Comparison ✅ CLI
 
 **What it shows:**
-- Side-by-side: DRAM+CPU vs GPU vs IronLattice
+- Side-by-side: DRAM+CPU vs GPU vs Ferroelectric CIM
 - Multiple workloads: MNIST, ResNet, BERT, GPT-2, LLM
 - Data center TCO, power, CO2 projections
 - **Includes honesty disclaimer about estimated specs**
@@ -1197,7 +1197,7 @@ Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    DRAM     │  │    GPU      │  │ IronLattice │
+│    DRAM     │  │    GPU      │  │ Ferroelectric CIM │
 │    +CPU     │  │   (CUDA)    │  │    (CIM)    │
 ├─────────────┤  ├─────────────┤  ├─────────────┤
 │ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
@@ -1205,7 +1205,7 @@ Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
 │ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
 └─────────────┘  └─────────────┘  └─────────────┘
 
-⚠️  IronLattice specs are ESTIMATES (TRL 4, lab only)
+⚠️  Ferroelectric CIM specs are ESTIMATES (TRL 4, lab only)
 ```
 
 ---
@@ -1213,7 +1213,7 @@ Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
 # Part 12: The Code Structure
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 │
 ├── demo1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
 │   ├── cmd/hysteresis/    ← Main program
@@ -1386,7 +1386,7 @@ Timeline of Computing:
        Energy dominated by data transfer
 
 2020s: Compute-in-memory emerges
-       IronLattice and others say:
+       Ferroelectric CIM and others say:
        "Why keep moving data? Compute where it lives!"
 ```
 
@@ -1422,13 +1422,13 @@ Several things converged:
 4. **Power crisis** - Data centers hitting sustainability limits
 5. **Physics** - Digital scaling hitting atomic limits
 
-IronLattice is arriving at exactly the right moment.
+Ferroelectric CIM is arriving at exactly the right moment.
 
 ---
 
 # Part 15: The People
 
-## The IronLattice Team
+## The Ferroelectric CIM Team
 
 | Person | Role | What They Do |
 |--------|------|--------------|
@@ -1461,7 +1461,7 @@ IronLattice is arriving at exactly the right moment.
 
 ## Comparison
 
-| Metric | DRAM+CPU | GPU | IronLattice |
+| Metric | DRAM+CPU | GPU | Ferroelectric CIM |
 |--------|----------|-----|-------------|
 | Memory bandwidth | 100 GB/s | 1 TB/s | ∞ (in-situ) |
 | Energy per MAC | 10 pJ | 1 pJ | 0.001 pJ |
@@ -1530,7 +1530,7 @@ AI is transforming everything, but it's hitting a wall:
 - Too slow
 - Too expensive
 
-IronLattice breaks through that wall by doing math where the data lives.
+Ferroelectric CIM breaks through that wall by doing math where the data lives.
 
 ## The Impact
 
@@ -1549,7 +1549,7 @@ These demos help tell that story.
 
 # Part 20: Real-World Applications
 
-## Where Will IronLattice Be Used?
+## Where Will Ferroelectric CIM Be Used?
 
 ### 1. Smartphones and Wearables
 ```
@@ -1563,7 +1563,7 @@ Current phone AI:
 │      Uses network + data center    │
 └────────────────────────────────────┘
 
-With IronLattice:
+With Ferroelectric CIM:
 ┌────────────────────────────────────┐
 │ "Hey Siri"                         │
 │      │                             │
@@ -1589,7 +1589,7 @@ With IronLattice:
         │           └─────────┘           │
         ▼                                 ▼
 ┌───────────────┐               ┌───────────────┐
-│ Traditional   │               │  IronLattice  │
+│ Traditional   │               │  Ferroelectric CIM  │
 │ Processing    │               │  Processing   │
 ├───────────────┤               ├───────────────┤
 │ 500W power    │               │ 50W power     │
@@ -1621,10 +1621,10 @@ Current data center:
 │  Total: 140 MW (power a small city)         │
 └─────────────────────────────────────────────┘
 
-With IronLattice:
+With Ferroelectric CIM:
 ┌─────────────────────────────────────────────┐
 │  ⚡⚡                                        │
-│  ████                                       │ IronLattice
+│  ████                                       │ Ferroelectric CIM
 │  🌡️ (warm)                                  │
 │  ❄️ (minimal cooling)                       │
 │                                             │
@@ -1650,7 +1650,7 @@ Traditional:
 │ Processing: Basic│
 └──────────────────┘
 
-With IronLattice:
+With Ferroelectric CIM:
 ┌──────────────────┐
 │ Battery: 10 years│  ← Life-changing!
 │ Size: Rice grain │
@@ -1667,7 +1667,7 @@ Smart home sensors, industrial monitors, agricultural sensors...
 Traditional: Send all data to cloud → process → send back
 Problem: Latency, bandwidth, privacy, cost
 
-With IronLattice: Process on device → send only important insights
+With Ferroelectric CIM: Process on device → send only important insights
 Result: Real-time, private, bandwidth-efficient
 ```
 
@@ -1679,7 +1679,7 @@ Robot arm needs to:
 3. Execute movement
 
 Traditional: 500ms total (noticeable delay)
-IronLattice: 50ms total (feels instant)
+Ferroelectric CIM: 50ms total (feels instant)
 
 The difference between clumsy and graceful!
 ```
@@ -1710,13 +1710,13 @@ Lifting an apple 1 meter            ~1 J
 Typing one key                      ~0.01 J
 Traditional CPU multiply-add        ~10 pJ
 GPU multiply-add                    ~1 pJ
-IronLattice multiply-add            ~0.001 pJ (1 fJ!)
+Ferroelectric CIM multiply-add            ~0.001 pJ (1 fJ!)
 
 To put it in perspective:
 - The energy in one AA battery could power:
   - ~100 million traditional multiply-adds
   - ~1 billion GPU multiply-adds
-  - ~1 trillion IronLattice multiply-adds!
+  - ~1 trillion Ferroelectric CIM multiply-adds!
 ```
 
 ## Why Energy Efficiency Matters
@@ -1736,7 +1736,7 @@ ChatGPT handles ~100 million queries/day
 - $10,000/day electricity
 - 50,000 kg CO₂/day
 
-With IronLattice (100× efficiency):
+With Ferroelectric CIM (100× efficiency):
 - 1,000 kWh/day
 - $100/day electricity
 - 500 kg CO₂/day
@@ -1773,10 +1773,10 @@ A: Dr. Tour's hardware achieved 87% MNIST accuracy (88% theoretical max). State-
 This is acceptable for many applications; techniques like quantization-aware training help.
 
 **Q: Can it do training, or just inference?**
-A: Both! Training requires writing new weights, which HZO handles well. The crossbar can compute gradients using the same physics. However, most near-term applications will focus on inference (training once on powerful hardware, deploying to IronLattice).
+A: Both! Training requires writing new weights, which HZO handles well. The crossbar can compute gradients using the same physics. However, most near-term applications will focus on inference (training once on powerful hardware, deploying to Ferroelectric CIM).
 
 **Q: What about large language models like GPT?**
-A: LLMs are a perfect fit because they're dominated by matrix multiplications. An IronLattice chip could accelerate transformer inference significantly. The challenge is scale—GPT-4 has ~1 trillion parameters, requiring many crossbar arrays working together.
+A: LLMs are a perfect fit because they're dominated by matrix multiplications. An Ferroelectric CIM chip could accelerate transformer inference significantly. The challenge is scale—GPT-4 has ~1 trillion parameters, requiring many crossbar arrays working together.
 
 **Q: Does temperature affect it?**
 A: Yes, but HZO is remarkably stable. Ferroelectric properties persist across typical operating temperatures (-40°C to 125°C). This is better than many competing technologies.
@@ -1792,7 +1792,7 @@ A: Major players include:
 - **Intel**: Invested in ReRAM
 - **IBM**: PCM research
 - **Startups**: Mythic (ReRAM), Syntiant (mixed-signal), Rain AI
-IronLattice's advantage is the 30-level HZO specifically.
+Ferroelectric CIM's advantage is the 30-level HZO specifically.
 
 **Q: What's the market size?**
 A: AI accelerator market is projected at $100+ billion by 2030. Memory market is $150+ billion. Compute-in-memory could capture significant share of both.
@@ -1876,7 +1876,7 @@ Step 6: Packaging
 CMOS = Complementary Metal-Oxide-Semiconductor
 (The standard way chips are made since ~1980)
 
-If IronLattice needs new equipment:
+If Ferroelectric CIM needs new equipment:
 ┌──────────────────────────────────────┐
 │ New factory: $20 billion            │
 │ New machines: Custom, expensive      │
@@ -1884,7 +1884,7 @@ If IronLattice needs new equipment:
 │ Risk: VERY HIGH                      │
 └──────────────────────────────────────┘
 
-Since IronLattice IS CMOS compatible:
+Since Ferroelectric CIM IS CMOS compatible:
 ┌──────────────────────────────────────┐
 │ New factory: $0 (use existing)       │
 │ New machines: Just add HZO deposition│
@@ -1893,7 +1893,7 @@ Since IronLattice IS CMOS compatible:
 └──────────────────────────────────────┘
 
 This is huge! Samsung, TSMC, Intel can adopt
-IronLattice without rebuilding everything.
+Ferroelectric CIM without rebuilding everything.
 ```
 
 ---
@@ -1932,7 +1932,7 @@ IronLattice without rebuilding everything.
 - SPICE simulators - For circuit-level modeling
 - NeuroSim - For neuromorphic computing simulation
 
-## IronLattice-Specific
+## Ferroelectric CIM-Specific
 
 ### In This Repository
 - `/docs/STRATEGIC_VALUE.md` - Business analysis
@@ -2015,7 +2015,7 @@ Fix: Reduce array size for testing
 
 ## The Good
 
-IronLattice technology could bring enormous benefits:
+Ferroelectric CIM technology could bring enormous benefits:
 
 ```
 Environmental:
@@ -2133,7 +2133,7 @@ The technology itself is neutral. How it's used depends on the humans building a
 
 ---
 
-# Part 28: The IronLattice Manifesto
+# Part 28: The Ferroelectric CIM Manifesto
 
 ## What We Believe
 

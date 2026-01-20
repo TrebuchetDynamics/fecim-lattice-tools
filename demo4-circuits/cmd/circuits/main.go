@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ironlattice-vis/demo4-circuits/pkg/peripherals"
+	"multilayer-ferroelectric-cim-visualizer/demo4-circuits/pkg/peripherals"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("================================================")
-	fmt.Println("  IronLattice Demo 4: Peripheral Circuits")
+	fmt.Println("  FeCIM Demo 4: Peripheral Circuits")
 	fmt.Println("  Full System Integration for CIM")
 	fmt.Println("================================================")
 	fmt.Println()
@@ -137,7 +137,7 @@ func showDACDemo(level int) {
 	fmt.Println()
 
 	// Show voltage ladder
-	fmt.Println("Voltage Ladder (30 IronLattice levels):")
+	fmt.Println("Voltage Ladder (30 FeCIM levels):")
 	fmt.Println()
 	for i := 0; i < 30; i++ {
 		v := dac.Convert(i)

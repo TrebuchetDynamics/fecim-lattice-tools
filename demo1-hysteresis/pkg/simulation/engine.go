@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
 )
 
 // State represents the current simulation state.

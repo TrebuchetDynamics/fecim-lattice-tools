@@ -1059,8 +1059,8 @@ func (c *Ferro2DCrossbar) ApplySTDPUpdate(preSpikes, postSpikes []float64, learn
 // IRONLATTICE NC-2D SYSTEM INTEGRATION
 // =============================================================================
 
-// IronLatticeNC2DConfig configures integrated NC and 2D ferroelectric system
-type IronLatticeNC2DConfig struct {
+// FeCIMNC2DConfig configures integrated NC and 2D ferroelectric system
+type FeCIMNC2DConfig struct {
 	// NC-FET configuration
 	NCFETEnabled bool
 	NCFETConfig  *NCFETConfig
@@ -1078,9 +1078,9 @@ type IronLatticeNC2DConfig struct {
 	TargetEfficiency float64 // TOPS/W
 }
 
-// DefaultIronLatticeNC2DConfig returns default configuration
-func DefaultIronLatticeNC2DConfig() *IronLatticeNC2DConfig {
-	return &IronLatticeNC2DConfig{
+// DefaultFeCIMNC2DConfig returns default configuration
+func DefaultFeCIMNC2DConfig() *FeCIMNC2DConfig {
+	return &FeCIMNC2DConfig{
 		NCFETEnabled:     true,
 		NCFETConfig:      DefaultNCFETConfig(),
 		Ferro2DEnabled:   true,
@@ -1092,9 +1092,9 @@ func DefaultIronLatticeNC2DConfig() *IronLatticeNC2DConfig {
 	}
 }
 
-// IronLatticeNC2DSystem represents integrated NC and 2D ferroelectric CIM
-type IronLatticeNC2DSystem struct {
-	Config *IronLatticeNC2DConfig
+// FeCIMNC2DSystem represents integrated NC and 2D ferroelectric CIM
+type FeCIMNC2DSystem struct {
+	Config *FeCIMNC2DConfig
 
 	// Components
 	NCFETs     []*NCFET
@@ -1113,13 +1113,13 @@ type IronLatticeNC2DSystem struct {
 	SpeedVsCMOS      float64 // speedup factor
 }
 
-// NewIronLatticeNC2DSystem creates integrated NC-2D ferroelectric system
-func NewIronLatticeNC2DSystem(config *IronLatticeNC2DConfig) *IronLatticeNC2DSystem {
+// NewFeCIMNC2DSystem creates integrated NC-2D ferroelectric system
+func NewFeCIMNC2DSystem(config *FeCIMNC2DConfig) *FeCIMNC2DSystem {
 	if config == nil {
-		config = DefaultIronLatticeNC2DConfig()
+		config = DefaultFeCIMNC2DConfig()
 	}
 
-	sys := &IronLatticeNC2DSystem{
+	sys := &FeCIMNC2DSystem{
 		Config:   config,
 		NCFETs:   make([]*NCFET, 0),
 		NCSRAMCiM: make([]*NCSRAMCiMCell, 0),
@@ -1158,7 +1158,7 @@ func NewIronLatticeNC2DSystem(config *IronLatticeNC2DConfig) *IronLatticeNC2DSys
 }
 
 // calculateSystemMetrics computes overall system performance
-func (s *IronLatticeNC2DSystem) calculateSystemMetrics() {
+func (s *FeCIMNC2DSystem) calculateSystemMetrics() {
 	config := s.Config
 
 	// Energy efficiency from NC-FET
@@ -1191,7 +1191,7 @@ func (s *IronLatticeNC2DSystem) calculateSystemMetrics() {
 }
 
 // RunInference performs neural network inference
-func (s *IronLatticeNC2DSystem) RunInference(inputs [][]float64, weights [][][]float64) [][]float64 {
+func (s *FeCIMNC2DSystem) RunInference(inputs [][]float64, weights [][][]float64) [][]float64 {
 	outputs := make([][]float64, len(inputs))
 
 	for i, input := range inputs {
@@ -1213,7 +1213,7 @@ func (s *IronLatticeNC2DSystem) RunInference(inputs [][]float64, weights [][][]f
 }
 
 // TrainWithSTDP performs on-chip STDP learning
-func (s *IronLatticeNC2DSystem) TrainWithSTDP(preSpikes, postSpikes [][]float64, epochs int, learningRate float64) {
+func (s *FeCIMNC2DSystem) TrainWithSTDP(preSpikes, postSpikes [][]float64, epochs int, learningRate float64) {
 	for epoch := 0; epoch < epochs; epoch++ {
 		for i := range preSpikes {
 			if i < len(postSpikes) {
@@ -1224,7 +1224,7 @@ func (s *IronLatticeNC2DSystem) TrainWithSTDP(preSpikes, postSpikes [][]float64,
 }
 
 // GetPerformanceSummary returns human-readable performance summary
-func (s *IronLatticeNC2DSystem) GetPerformanceSummary() map[string]interface{} {
+func (s *FeCIMNC2DSystem) GetPerformanceSummary() map[string]interface{} {
 	summary := make(map[string]interface{})
 
 	summary["target_vdd"] = s.Config.TargetVDD
@@ -1519,10 +1519,10 @@ func RunComprehensiveBenchmark() map[string]interface{} {
 	results["ferro2d_benchmarks"] = GetFerro2DBenchmarks()
 
 	// Full system performance
-	sysConfig := DefaultIronLatticeNC2DConfig()
+	sysConfig := DefaultFeCIMNC2DConfig()
 	sysConfig.TargetVDD = 0.3 // ultra-low voltage
 
-	sys := NewIronLatticeNC2DSystem(sysConfig)
+	sys := NewFeCIMNC2DSystem(sysConfig)
 
 	// Generate test data
 	testInputs := make([][]float64, 10)

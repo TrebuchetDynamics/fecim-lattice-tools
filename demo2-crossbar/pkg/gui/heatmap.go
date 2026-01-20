@@ -82,7 +82,7 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 	h.Refresh()
 }
 
-// SetColormap changes the colormap (viridis, plasma, coolwarm, ironlattice).
+// SetColormap changes the colormap (viridis, plasma, coolwarm, fecim).
 func (h *CrossbarHeatmap) SetColormap(name string) {
 	h.colormap = name
 	h.Refresh()
@@ -245,8 +245,8 @@ func (h *CrossbarHeatmap) valueToColor(t float64) color.RGBA {
 		return plasmaColor(t)
 	case "coolwarm":
 		return coolwarmColor(t)
-	case "ironlattice":
-		return ironlatticeColor(t)
+	case "fecim":
+		return fecimColor(t)
 	default:
 		return viridisColor(t)
 	}
@@ -299,9 +299,9 @@ func coolwarmColor(t float64) color.RGBA {
 	}
 }
 
-// IronLattice custom colormap: purple (low) -> blue -> cyan -> green -> yellow -> red (high)
-func ironlatticeColor(t float64) color.RGBA {
-	// 30-level inspired colormap matching IronLattice's discrete states
+// FeCIM custom colormap: purple (low) -> blue -> cyan -> green -> yellow -> red (high)
+func fecimColor(t float64) color.RGBA {
+	// 30-level inspired colormap matching FeCIM's discrete states
 	if t < 0.2 {
 		s := t * 5
 		return color.RGBA{

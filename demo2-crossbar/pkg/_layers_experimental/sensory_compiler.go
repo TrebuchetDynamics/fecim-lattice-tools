@@ -1,5 +1,5 @@
 // sensory_compiler.go - Neuromorphic Sensory Systems and CIM Compiler/Mapping
-// IronLattice Ferroelectric CIM Educational Simulation
+// FeCIM Ferroelectric CIM Educational Simulation
 //
 // This module implements:
 // 1. Neuromorphic Sensory Systems:

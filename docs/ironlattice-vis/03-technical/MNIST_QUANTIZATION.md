@@ -266,7 +266,7 @@ func LevelToConductance(level int, numLevels int, Gmin, Gmax float64) float64 {
     return Gmin + ratio*(Gmax-Gmin)
 }
 
-// For IronLattice HZO:
+// For Ferroelectric CIM HZO:
 // Gmin ≈ 1 μS (low conductance state)
 // Gmax ≈ 100 μS (high conductance state)
 
@@ -276,7 +276,7 @@ type CrossbarConfig struct {
     Gmax      float64 // maximum conductance (Siemens)
 }
 
-func DefaultIronLatticeConfig() CrossbarConfig {
+func DefaultFerroelectric CIMConfig() CrossbarConfig {
     return CrossbarConfig{
         NumLevels: 30,
         Gmin:      1e-6,   // 1 μS
@@ -295,8 +295,8 @@ package main
 
 import (
     "fmt"
-    "ironlattice-vis/pkg/weights"
-    "ironlattice-vis/pkg/crossbar"
+    "multilayer-ferroelectric-cim-visualizer/pkg/weights"
+    "multilayer-ferroelectric-cim-visualizer/pkg/crossbar"
 )
 
 func main() {
@@ -306,7 +306,7 @@ func main() {
         panic(err)
     }
     
-    // Quantize to 30 levels (IronLattice)
+    // Quantize to 30 levels (Ferroelectric CIM)
     q30 := weights.Quantize(w, 30)
     fmt.Printf("Quantized to %d levels\n", q30.NumLevels)
     
@@ -316,7 +316,7 @@ func main() {
     q64 := weights.Quantize(w, 64)  // 6-bit
     
     // Convert to conductance for crossbar
-    config := crossbar.DefaultIronLatticeConfig()
+    config := crossbar.DefaultFerroelectric CIMConfig()
     config.NumLevels = 30
     
     // Example: get conductance for a weight
@@ -350,7 +350,7 @@ func TestQuantizationAccuracy(original *NetworkWeights, testData []TestSample) {
 // Levels:   4 | Accuracy: 78.00%
 // Levels:   8 | Accuracy: 84.00%
 // Levels:  16 | Accuracy: 86.00%
-// Levels:  30 | Accuracy: 87.00%  ← IronLattice target
+// Levels:  30 | Accuracy: 87.00%  ← Ferroelectric CIM target
 // Levels:  64 | Accuracy: 87.50%
 // Levels: 128 | Accuracy: 87.80%
 // Levels: 256 | Accuracy: 88.00%  ← theoretical max
@@ -361,7 +361,7 @@ func TestQuantizationAccuracy(original *NetworkWeights, testData []TestSample) {
 ## File Structure
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── scripts/
 │   ├── train_mnist.py       # Train simple MLP
 │   └── export_weights.py    # Export to JSON
@@ -394,7 +394,7 @@ ironlattice-vis/
 ## Key Function
 
 ```go
-q := weights.Quantize(floatWeights, 30)  // IronLattice
+q := weights.Quantize(floatWeights, 30)  // Ferroelectric CIM
 q := weights.Quantize(floatWeights, 8)   // Compare to 3-bit
 q := weights.Quantize(floatWeights, 256) // Compare to 8-bit
 ```

@@ -55,7 +55,7 @@ type DeviceModel struct {
 	Variability    float64 // Device-to-device variation (%)
 }
 
-// HZODeviceModel returns IronLattice HZO FeFET parameters
+// HZODeviceModel returns FeCIM HZO FeFET parameters
 func HZODeviceModel() DeviceModel {
 	return DeviceModel{
 		Type:           "HZO-FeFET",

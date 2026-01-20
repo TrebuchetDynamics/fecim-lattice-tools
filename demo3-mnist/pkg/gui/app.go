@@ -15,8 +15,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo3-mnist/pkg/training"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
 
 // MNISTApp is the main application for the MNIST demo.
@@ -66,7 +66,7 @@ func NewMNISTApp() *MNISTApp {
 	ma := &MNISTApp{}
 
 	// Create Fyne app
-	ma.fyneApp = app.NewWithID("com.ironlattice.mnist-demo")
+	ma.fyneApp = app.NewWithID("com.fecim.mnist-demo")
 	ma.fyneApp.Settings().SetTheme(theme.DarkTheme())
 
 	// Find data directory
@@ -128,7 +128,7 @@ func findDataDir() string {
 
 // Run starts the GUI application.
 func (ma *MNISTApp) Run() {
-	ma.window = ma.fyneApp.NewWindow("IronLattice Demo 3: MNIST Neural Network")
+	ma.window = ma.fyneApp.NewWindow("FeCIM Demo 3: MNIST Neural Network")
 	ma.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
@@ -210,7 +210,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Title and header with Dr. Tour quote
-	titleLabel := widget.NewLabel("IronLattice MNIST Neural Network")
+	titleLabel := widget.NewLabel("FeCIM MNIST Neural Network")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
@@ -306,7 +306,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 			widget.NewSeparator(),
 			ma.statusLabel,
 			layout.NewSpacer(),
-			widget.NewLabel("IronLattice Ferroelectric CIM | 30 Discrete Levels"),
+			widget.NewLabel("FeCIM Ferroelectric CIM | 30 Discrete Levels"),
 		),
 	)
 

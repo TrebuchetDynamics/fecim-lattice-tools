@@ -1,4 +1,4 @@
-# IronLattice Demo Opportunities Analysis
+# Ferroelectric CIM Demo Opportunities Analysis
 
 Analysis of research to identify Vulkan/Go visualization/simulation tool opportunities. Demos ordered by complexity (easiest first).
 

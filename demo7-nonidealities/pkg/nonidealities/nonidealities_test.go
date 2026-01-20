@@ -309,7 +309,7 @@ func TestCompareTechnologies(t *testing.T) {
 	results := CompareTechnologies(8, 8, 10000)
 
 	// Should have all technologies
-	expectedTechs := []string{"IronLattice (FeFET)", "RRAM", "PCM", "Flash"}
+	expectedTechs := []string{"FeCIM (FeFET)", "RRAM", "PCM", "Flash"}
 	for _, tech := range expectedTechs {
 		if _, ok := results[tech]; !ok {
 			t.Errorf("Missing technology: %s", tech)
@@ -317,9 +317,9 @@ func TestCompareTechnologies(t *testing.T) {
 	}
 
 	// FeFET should have best retention
-	fefetRetention := results["IronLattice (FeFET)"].RetentionPrediction
+	fefetRetention := results["FeCIM (FeFET)"].RetentionPrediction
 	for name, stats := range results {
-		if name != "IronLattice (FeFET)" && stats.RetentionPrediction > fefetRetention {
+		if name != "FeCIM (FeFET)" && stats.RetentionPrediction > fefetRetention {
 			t.Errorf("%s has better retention than FeFET", name)
 		}
 	}

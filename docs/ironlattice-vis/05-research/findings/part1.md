@@ -1,10 +1,10 @@
-# IronLattice Research Findings - January 2026
+# Ferroelectric CIM Research Findings - January 2026
 
-This document compiles research findings on IronLattice ferroelectric CIM technology, Dr. external research group's work, and related curriculum topics.
+This document compiles research findings on Ferroelectric CIM ferroelectric CIM technology, Dr. external research group's work, and related curriculum topics.
 
 ---
 
-## 1. IronLattice Company Status
+## 1. Ferroelectric CIM Company Status
 
 ### Funding & Recognition
 - **One Small Step Grant (2025):** $50,000 from Rice Innovation, Cycle 4
@@ -78,7 +78,7 @@ This document compiles research findings on IronLattice ferroelectric CIM techno
 | Multi-level FeFET | 32×32 | 96.6% | 2023 | [Nature Comms](https://www.nature.com/articles/s41467-023-42110-y) |
 | 2D SnS2 FeFET | - | 94% | 2024 | [Wiley](https://advanced.onlinelibrary.wiley.com/doi/10.1002/advs.202308588) |
 | FTJ crossbar | - | 92% | 2024 | [SemiEngineering](https://semiengineering.com/ferroelectric-tunnel-junctions-in-crossbar-array-analog-in-memory-compute-accelerators/) |
-| **IronLattice (claimed)** | - | **87%** | 2025 | COSM 2025 |
+| **Ferroelectric CIM (claimed)** | - | **87%** | 2025 | COSM 2025 |
 
 ### Key Performance Metrics for Synaptic Devices
 
@@ -225,7 +225,7 @@ The superlattice approach (ferroelectric/dielectric/ferroelectric layers) provid
 ### Demo 3: MNIST Inference
 - **Status:** Planned
 - **Network:** 784×128×10 (single hidden layer)
-- **Target Accuracy:** 87% (matching IronLattice claims)
+- **Target Accuracy:** 87% (matching Ferroelectric CIM claims)
 - **Features:** Noise injection, weight quantization
 
 ---
@@ -233,14 +233,14 @@ The superlattice approach (ferroelectric/dielectric/ferroelectric layers) provid
 ## 8. Key External Resources
 
 ### Conference Presentations
-- COSM 2025: Dr. Tour on IronLattice breakthrough
+- COSM 2025: Dr. Tour on Ferroelectric CIM breakthrough
 - IEEE IEDM 2025: FeFET session (Dec 2025)
 - Stanford EE Seminar (Feb 2025): Ferroelectric AI hardware
 
 ### Research Groups
 | Group | Institution | Focus |
 |-------|-------------|-------|
-| Tour Lab | external research institution | IronLattice, flash synthesis |
+| Tour Lab | external research institution | Ferroelectric CIM, flash synthesis |
 | Salahuddin Group | UC Berkeley | FerroX, NC-FETs |
 | Datta Group | Georgia Tech | FeFET reliability |
 | IBM Research | Zurich | AIHWKit, PCM arrays |

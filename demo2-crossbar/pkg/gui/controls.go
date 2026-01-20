@@ -7,7 +7,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -33,6 +32,9 @@ type ControlPanel struct {
 	noiseLabel     *widget.Label
 	adcBitsLabel   *widget.Label
 
+	// Fixed size
+	minSize fyne.Size
+
 	// Callbacks
 	OnArraySizeChanged func(size int)
 	OnNoiseChanged     func(noise float64)
@@ -47,7 +49,9 @@ type ControlPanel struct {
 
 // NewControlPanel creates a new control panel.
 func NewControlPanel() *ControlPanel {
-	cp := &ControlPanel{}
+	cp := &ControlPanel{
+		minSize: fyne.NewSize(200, 350), // Fixed size
+	}
 
 	// Array size slider (8 to 128)
 	cp.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
@@ -89,14 +93,14 @@ func NewControlPanel() *ControlPanel {
 
 	// Colormap selector
 	cp.ColormapSelect = widget.NewSelect(
-		[]string{"ironlattice", "viridis", "plasma", "coolwarm"},
+		[]string{"fecim", "viridis", "plasma", "coolwarm"},
 		func(s string) {
 			if cp.OnColormapChanged != nil {
 				cp.OnColormapChanged(s)
 			}
 		},
 	)
-	cp.ColormapSelect.SetSelected("ironlattice")
+	cp.ColormapSelect.SetSelected("fecim")
 
 	// Demo mode selector
 	cp.DemoModeSelect = widget.NewSelect(
@@ -139,51 +143,24 @@ func NewControlPanel() *ControlPanel {
 	return cp
 }
 
+// MinSize returns minimum size - small to allow flexible layout.
+func (cp *ControlPanel) MinSize() fyne.Size {
+	return fyne.NewSize(180, 200)
+}
+
 // CreateRenderer implements fyne.Widget.
 func (cp *ControlPanel) CreateRenderer() fyne.WidgetRenderer {
-	// IronLattice specs info
-	specsLabel := widget.NewLabel("IronLattice Specs:")
-	specsLabel.TextStyle = fyne.TextStyle{Bold: true}
-
-	specsInfo := widget.NewLabel(
-		"• 30 Discrete Analog Levels\n" +
-		"• 87% MNIST Target Accuracy\n" +
-		"• Ferroelectric Memory Cells\n" +
-		"• Compute-in-Memory Architecture",
-	)
-
+	// Simplified content to fit in fixed height
 	content := container.NewVBox(
-		widget.NewLabel("Demo Mode:"),
-		cp.DemoModeSelect,
-
-		widget.NewSeparator(),
-		widget.NewLabel("Crossbar Configuration"),
-
-		cp.arraySizeLabel,
-		cp.ArraySizeSlider,
-
-		cp.noiseLabel,
-		cp.NoiseSlider,
-
-		cp.adcBitsLabel,
-		cp.ADCBitsSlider,
-
-		widget.NewLabel("Colormap:"),
-		cp.ColormapSelect,
-
-		widget.NewSeparator(),
-		widget.NewLabel("Actions"),
-
 		cp.RunMVMButton,
 		cp.AnalyzeIRButton,
 		cp.AnalyzeSneakButton,
 		cp.ResetButton,
-
 		widget.NewSeparator(),
-		specsLabel,
-		specsInfo,
-
-		layout.NewSpacer(),
+		cp.arraySizeLabel,
+		cp.ArraySizeSlider,
+		widget.NewLabel("Colormap:"),
+		cp.ColormapSelect,
 	)
 
 	return widget.NewSimpleRenderer(content)
@@ -194,31 +171,39 @@ type StatsPanel struct {
 	widget.BaseWidget
 
 	// Labels
-	titleLabel     *widget.Label
-	statsText      *widget.Label
-	progressBar    *widget.ProgressBar
+	titleLabel  *widget.Label
+	statsText   *widget.Label
+	progressBar *widget.ProgressBar
 
 	// Data
 	title    string
 	stats    string
 	progress float64
+	minSize  fyne.Size
 }
 
 // NewStatsPanel creates a new statistics panel.
 func NewStatsPanel(title string) *StatsPanel {
 	sp := &StatsPanel{
-		title: title,
+		title:   title,
+		minSize: fyne.NewSize(200, 250), // Fixed size to prevent resize
 	}
 
 	sp.titleLabel = widget.NewLabel(title)
 	sp.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	sp.statsText = widget.NewLabel("No data")
+	sp.statsText.Wrapping = fyne.TextWrapOff // Prevent resize on content change
 	sp.progressBar = widget.NewProgressBar()
 	sp.progressBar.Hide()
 
 	sp.ExtendBaseWidget(sp)
 	return sp
+}
+
+// MinSize returns minimum size - small to allow flexible layout.
+func (sp *StatsPanel) MinSize() fyne.Size {
+	return fyne.NewSize(180, 150)
 }
 
 // SetStats updates the statistics display.
@@ -327,7 +312,7 @@ func (ivp *InputVectorPanel) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(content)
 }
 
-// LevelIndicator shows the 30 discrete IronLattice levels.
+// LevelIndicator shows the 30 discrete FeCIM levels.
 type LevelIndicator struct {
 	widget.BaseWidget
 

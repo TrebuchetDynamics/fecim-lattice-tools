@@ -1,5 +1,5 @@
 // transformer_adc_cim.go - Transformer/LLM CIM Acceleration and ADC Optimization
-// IronLattice Visualization Project - Iteration 123
+// FeCIM Visualization Project - Iteration 123
 //
 // This module implements simulation models for:
 // 1. Transformer/LLM CIM acceleration architectures

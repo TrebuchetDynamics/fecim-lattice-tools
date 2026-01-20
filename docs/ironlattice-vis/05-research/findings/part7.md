@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 7 (January 2026)
+# Ferroelectric CIM Research Findings - Part 7 (January 2026)
 
 Research groups, patent landscape, testing methodologies, and commercialization timeline.
 
@@ -12,7 +12,7 @@ Research groups, patent landscape, testing methodologies, and commercialization 
 |-------------|-----------|----|-----------|
 | **Georgia Tech** | Lab for Emerging Devices & Circuits | Prof. Shimeng Yu | FeFET reliability, CIM |
 | **UC Berkeley** | Salahuddin Group | Prof. Sayeef Salahuddin | NC-FET, FerroX |
-| **external research institution** | Tour Lab | Prof. external research group | IronLattice, research sample synthesis |
+| **external research institution** | Tour Lab | Prof. external research group | Ferroelectric CIM, research sample synthesis |
 | **Stanford** | Wong Group | Prof. H.-S. Philip Wong | Memory architecttic |
 | **MIT** | del Alamo Group | Prof. Jesús del Alamo | III-V FeFET |
 | **Purdue** | Datta Group | Prof. Sumeet Gupta | CIM reliability |
@@ -291,11 +291,11 @@ Pr = (P - U) / 2 = true remanent polarization
 
 ---
 
-## 7. IronLattice Positioning
+## 7. Ferroelectric CIM Positioning
 
 ### Competitive Analysis
 
-| Aspect | IronLattice | FMC | Others |
+| Aspect | Ferroelectric CIM | FMC | Others |
 |--------|-------------|-----|--------|
 | Structure | HZO superlattice | Standard HZO | Various |
 | Funding | $50K (seed) | €100M (C-round) | Variable |

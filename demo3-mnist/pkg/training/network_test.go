@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/mnist"
 )
 
 // TestNetworkCreation verifies network initialization
@@ -123,13 +123,13 @@ func TestWeightsAreQuantizedTo30Levels(t *testing.T) {
 		for j := 0; j < 784; j++ {
 			w := weights1[i][j]
 			level := crossbar.GetLevel(w)
-			if level < 0 || level >= crossbar.IronLatticeLevels {
-				t.Errorf("Weight level %d out of range [0, %d)", level, crossbar.IronLatticeLevels)
+			if level < 0 || level >= crossbar.FeCIMLevels {
+				t.Errorf("Weight level %d out of range [0, %d)", level, crossbar.FeCIMLevels)
 			}
 			seenLevels[level] = true
 
 			// Verify weight is exactly on a 30-level quantization point
-			expected := float64(level) / float64(crossbar.IronLatticeLevels-1)
+			expected := float64(level) / float64(crossbar.FeCIMLevels-1)
 			if w != expected {
 				t.Errorf("Weight %.6f not quantized to level %d (expected %.6f)", w, level, expected)
 			}
@@ -226,7 +226,7 @@ func TestSaveLoadWeights(t *testing.T) {
 }
 
 // TestMNISTAccuracyWithQuantization validates that 30-level weight quantization
-// maintains high accuracy, as demonstrated by Dr. Tour's IronLattice results.
+// maintains high accuracy, as demonstrated by Dr. Tour's FeCIM results.
 // This test verifies the core claim: 87%+ accuracy with 30 discrete analog levels.
 func TestMNISTAccuracyWithQuantization(t *testing.T) {
 	// Find the data directory
@@ -274,15 +274,15 @@ func TestMNISTAccuracyWithQuantization(t *testing.T) {
 	level := crossbar.GetLevel(w)
 
 	t.Logf("Weight quantization test: input=%.3f, stored=%.6f, level=%d/%d",
-		testWeight, w, level, crossbar.IronLatticeLevels)
+		testWeight, w, level, crossbar.FeCIMLevels)
 
-	if level < 0 || level >= crossbar.IronLatticeLevels {
-		t.Errorf("Weight level %d outside valid range [0, %d)", level, crossbar.IronLatticeLevels)
+	if level < 0 || level >= crossbar.FeCIMLevels {
+		t.Errorf("Weight level %d outside valid range [0, %d)", level, crossbar.FeCIMLevels)
 	}
 
 	// Verify 30-level quantization is enforced
-	expectedLevel := int(testWeight*float64(crossbar.IronLatticeLevels-1) + 0.5)
-	expectedWeight := float64(expectedLevel) / float64(crossbar.IronLatticeLevels-1)
+	expectedLevel := int(testWeight*float64(crossbar.FeCIMLevels-1) + 0.5)
+	expectedWeight := float64(expectedLevel) / float64(crossbar.FeCIMLevels-1)
 	if w != expectedWeight {
 		t.Errorf("Weight not properly quantized: got %.6f, expected %.6f", w, expectedWeight)
 	}

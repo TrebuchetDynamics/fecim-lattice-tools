@@ -12,12 +12,12 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
 )
 
 // Styles using lipgloss
 var (
-	// Color palette - IronLattice theme
+	// Color palette - FeCIM theme
 	primaryColor   = lipgloss.Color("#00D4FF") // Cyan
 	secondaryColor = lipgloss.Color("#FF6B6B") // Coral red
 	accentColor    = lipgloss.Color("#4ECDC4") // Teal
@@ -230,7 +230,7 @@ func NewModel() Model {
 	materials := []*ferroelectric.HZOMaterial{
 		ferroelectric.DefaultHZO(),
 		ferroelectric.OptimizedHZO(),
-		ferroelectric.IronLatticeMaterial(),
+		ferroelectric.FeCIMMaterial(),
 	}
 
 	mat := materials[0]
@@ -401,7 +401,7 @@ func (m Model) View() string {
 	var b strings.Builder
 
 	// Title
-	title := titleStyle.Render("  IronLattice Hysteresis Visualizer - Demo 1  ")
+	title := titleStyle.Render("  FeCIM Hysteresis Visualizer - Demo 1  ")
 	b.WriteString(title + "\n\n")
 
 	// Main content: P-E plot on left, info panel on right

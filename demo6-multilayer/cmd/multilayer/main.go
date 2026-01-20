@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"ironlattice-vis/demo6-multilayer/pkg/multilayer"
+	"multilayer-ferroelectric-cim-visualizer/demo6-multilayer/pkg/multilayer"
 )
 
 func main() {
@@ -166,14 +166,14 @@ func printEnergyComparison(stack *multilayer.Stack) {
 	cimWidth := 1 // Minimum bar
 	tradWidth := maxWidth
 
-	fmt.Printf("IronLattice:  [%s] %.3f pJ\n",
+	fmt.Printf("FeCIM:  [%s] %.3f pJ\n",
 		strings.Repeat("█", cimWidth)+strings.Repeat(" ", maxWidth-cimWidth),
 		totalCIM)
 	fmt.Printf("Traditional:  [%s] %.1f pJ\n",
 		strings.Repeat("█", tradWidth),
 		totalTraditional)
 	fmt.Println()
-	fmt.Printf("IronLattice achieves %.0fx energy reduction!\n", totalTraditional/totalCIM)
+	fmt.Printf("FeCIM achieves %.0fx energy reduction!\n", totalTraditional/totalCIM)
 	fmt.Println()
 
 	// Data flow advantage

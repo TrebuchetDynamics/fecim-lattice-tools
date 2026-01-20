@@ -21,7 +21,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		Width:        1280,
 		Height:       720,
-		Title:        "IronLattice Hysteresis Visualizer",
+		Title:        "FeCIM Hysteresis Visualizer",
 		TargetFPS:    60,
 		VSync:        true,
 		Antialiasing: true,
@@ -172,11 +172,11 @@ func (cd *CellDisplay) GetColor() Color {
 	return cd.ColorMap.PolarizationToColor(cd.Polarization)
 }
 
-// IronLatticeLevels is the number of discrete analog states per Dr. Tour's specs.
+// FeCIMLevels is the number of discrete analog states per Dr. Tour's specs.
 // "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
-const IronLatticeLevels = 30
+const FeCIMLevels = 30
 
-// LevelIndicator displays the 30 discrete IronLattice levels.
+// LevelIndicator displays the 30 discrete FeCIM levels.
 type LevelIndicator struct {
 	// Position and size (normalized 0-1)
 	X, Y          float64
@@ -209,12 +209,12 @@ func NewLevelIndicator() *LevelIndicator {
 func (li *LevelIndicator) SetFromPolarization(normP float64) {
 	// Map [-1, 1] to [0, 29]
 	normalized := (normP + 1.0) / 2.0 // [0, 1]
-	li.CurrentLevel = int(math.Round(normalized * float64(IronLatticeLevels-1)))
+	li.CurrentLevel = int(math.Round(normalized * float64(FeCIMLevels-1)))
 	if li.CurrentLevel < 0 {
 		li.CurrentLevel = 0
 	}
-	if li.CurrentLevel >= IronLatticeLevels {
-		li.CurrentLevel = IronLatticeLevels - 1
+	if li.CurrentLevel >= FeCIMLevels {
+		li.CurrentLevel = FeCIMLevels - 1
 	}
 }
 
@@ -223,11 +223,11 @@ func (li *LevelIndicator) GetLevelVertices() []PlotVertex {
 	var vertices []PlotVertex
 
 	// Each level is a small horizontal bar
-	levelHeight := li.Height / float64(IronLatticeLevels)
+	levelHeight := li.Height / float64(FeCIMLevels)
 	barWidth := li.Width * 0.8
 	barX := li.X + li.Width*0.1
 
-	for level := 0; level < IronLatticeLevels; level++ {
+	for level := 0; level < FeCIMLevels; level++ {
 		// Calculate Y position (level 0 at bottom, level 29 at top)
 		barY := li.Y + float64(level)*levelHeight
 
@@ -287,14 +287,14 @@ func (li *LevelIndicator) GetLevelVertices() []PlotVertex {
 // Matches the crossbar package implementation for consistency.
 func QuantizeTo30Levels(value float64) float64 {
 	value = math.Max(0, math.Min(1, value))
-	level := math.Round(value * float64(IronLatticeLevels-1))
-	return level / float64(IronLatticeLevels-1)
+	level := math.Round(value * float64(FeCIMLevels-1))
+	return level / float64(FeCIMLevels-1)
 }
 
 // GetLevel returns the discrete level (0-29) for a normalized value.
 func GetLevel(value float64) int {
 	value = math.Max(0, math.Min(1, value))
-	return int(math.Round(value * float64(IronLatticeLevels-1)))
+	return int(math.Round(value * float64(FeCIMLevels-1)))
 }
 
 // Renderer is the main rendering interface.

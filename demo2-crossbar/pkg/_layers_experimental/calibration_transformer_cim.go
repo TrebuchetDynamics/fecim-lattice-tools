@@ -1,5 +1,5 @@
 // Package layers provides calibration and transformer CIM simulation
-// for IronLattice ferroelectric compute-in-memory systems.
+// for FeCIM ferroelectric compute-in-memory systems.
 //
 // This module implements:
 // - Write-verify calibration algorithms

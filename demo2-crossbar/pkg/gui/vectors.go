@@ -373,7 +373,7 @@ func (c *ComparisonChart) generateImage(w, h int) image.Image {
 	return img
 }
 
-// DiscreteLevel30Indicator shows the 30 IronLattice levels graphically.
+// DiscreteLevel30Indicator shows the 30 FeCIM levels graphically.
 type DiscreteLevel30Indicator struct {
 	widget.BaseWidget
 
@@ -410,7 +410,7 @@ func (d *DiscreteLevel30Indicator) CreateRenderer() fyne.WidgetRenderer {
 	levelLabel.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
-		widget.NewLabel("30 Discrete IronLattice Levels"),
+		widget.NewLabel("30 Discrete FeCIM Levels"),
 		d.raster,
 		levelLabel,
 	)
@@ -448,9 +448,9 @@ func (d *DiscreteLevel30Indicator) generateImage(w, h int) image.Image {
 
 		var barColor color.RGBA
 		if i <= d.level {
-			// Active level - use IronLattice colormap
+			// Active level - use FeCIM colormap
 			t := float64(i) / 29.0
-			barColor = ironlatticeColor(t)
+			barColor = fecimColor(t)
 		} else {
 			// Inactive level - dim
 			barColor = color.RGBA{60, 60, 70, 255}

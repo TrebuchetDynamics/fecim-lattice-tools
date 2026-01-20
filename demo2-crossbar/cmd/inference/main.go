@@ -10,9 +10,9 @@ import (
 	"log"
 	"math/rand"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo2-crossbar/pkg/network"
-	"ironlattice-vis/demo2-crossbar/pkg/visualization"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/network"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/visualization"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("============================================")
-	fmt.Println("  IronLattice Demo 2: Crossbar Array MVM")
+	fmt.Println("  FeCIM Demo 2: Crossbar Array MVM")
 	fmt.Println("  Ferroelectric Compute-in-Memory")
 	fmt.Println("============================================")
 	fmt.Printf("\nConfiguration:\n")

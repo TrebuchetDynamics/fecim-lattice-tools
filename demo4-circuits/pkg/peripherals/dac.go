@@ -16,7 +16,7 @@ type DAC struct {
 	SettleTime float64 // Settling time (ns)
 }
 
-// DefaultDAC returns a DAC configured for IronLattice 30-level operation.
+// DefaultDAC returns a DAC configured for FeCIM 30-level operation.
 func DefaultDAC() *DAC {
 	return &DAC{
 		Bits:       5,     // 32 levels, we use 30

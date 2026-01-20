@@ -1,8 +1,8 @@
 # Scientific Papers Download Plan
 
-## Dr. external research group - Key Publications for IronLattice Project
+## Dr. external research group - Key Publications for Ferroelectric CIM Project
 
-This document tracks scientific papers relevant to the IronLattice ferroelectric compute-in-memory visualization project.
+This document tracks scientific papers relevant to the Ferroelectric CIM ferroelectric compute-in-memory visualization project.
 
 ---
 
@@ -162,9 +162,9 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 
 ---
 
-## Priority 7: external research group & IronLattice (NEW - Iteration 4)
+## Priority 7: external research group & Ferroelectric CIM (NEW - Iteration 4)
 
-### IronLattice Company Information
+### Ferroelectric CIM Company Information
 | Resource | URL | Description |
 |----------|-----|-------------|
 | Rice Innovation Grant | https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants | $50K One Small Step Grant |
@@ -175,7 +175,7 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 
 ### Key Personnel
 - **James M. Tour** - T.T. and W.F. Chao Professor of Chemistry, external research institution
-- **Jaeho Shin** - Postdoc, IronLattice lead, 10+ years semiconductor device fabrication
+- **Jaeho Shin** - Postdoc, Ferroelectric CIM lead, 10+ years semiconductor device fabrication
 
 ### Tour Lab Neuromorphic Papers
 | Paper | Authors | Year | Source | Status |
@@ -191,7 +191,7 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 5. **~30 discrete analog states** per cell
 6. **Non-volatile** operation
 
-### IronLattice Technology
+### Ferroelectric CIM Technology
 - HfO₂/ZrO₂ superlattice ferroelectric devices
 - Analog, nonvolatile in-memory computation
 - Targets AI workloads
@@ -329,7 +329,7 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 |-------|-----|------|-------|
 | IEEE IEDM 2025 | https://static1.squarespace.com/static/67a3eee4385dfb3390804f02/t/690e4eca5393d146db3b608c/1762545355037/IEDM+2025+Final+Program-v4.pdf | Dec 2025 | 100 Years of FETs |
 | Stanford EE Seminar | https://ee.stanford.edu/event/02-19-2025/ferroelectric-devices-circuits-and-architectures-ai-hardware-design | Feb 2025 | FE AI Hardware |
-| COSM 2025 Discussion | https://forum.level1techs.com/t/new-chip-tech-claims-1million-faster-than-nand/243943 | Nov 2025 | IronLattice claims |
+| COSM 2025 Discussion | https://forum.level1techs.com/t/new-chip-tech-claims-1million-faster-than-nand/243943 | Nov 2025 | Ferroelectric CIM claims |
 
 ---
 

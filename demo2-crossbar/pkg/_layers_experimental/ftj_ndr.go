@@ -834,8 +834,8 @@ func (syn *FTJSynapse) GetWeight() float64 {
 // IRONLATTICE FTJ INTEGRATION
 // =============================================================================
 
-// IronLatticeFTJConfig configures HZO-based FTJ for IronLattice
-type IronLatticeFTJConfig struct {
+// FeCIMFTJConfig configures HZO-based FTJ for FeCIM
+type FeCIMFTJConfig struct {
 	// HZO superlattice properties
 	HfZrRatio          float64 // Typically 0.5 for Hf0.5Zr0.5O2
 	SuperlatticeRepeat int     // Number of HfO2/ZrO2 repeats
@@ -852,9 +852,9 @@ type IronLatticeFTJConfig struct {
 	TargetRetention    float64 // Target retention (seconds)
 }
 
-// DefaultIronLatticeFTJConfig returns IronLattice-optimized FTJ config
-func DefaultIronLatticeFTJConfig() IronLatticeFTJConfig {
-	return IronLatticeFTJConfig{
+// DefaultFeCIMFTJConfig returns FeCIM-optimized FTJ config
+func DefaultFeCIMFTJConfig() FeCIMFTJConfig {
+	return FeCIMFTJConfig{
 		HfZrRatio:          0.5,
 		SuperlatticeRepeat: 4,
 		LayerThickness:     1.25, // nm
@@ -867,17 +867,17 @@ func DefaultIronLatticeFTJConfig() IronLatticeFTJConfig {
 	}
 }
 
-// IronLatticeFTJArray implements IronLattice-optimized FTJ array
-type IronLatticeFTJArray struct {
-	Config      IronLatticeFTJConfig
+// FeCIMFTJArray implements FeCIM-optimized FTJ array
+type FeCIMFTJArray struct {
+	Config      FeCIMFTJConfig
 	Crossbar    *FTJCrossbar
 	SynapticOps int64
 	TotalEnergy float64
 }
 
-// NewIronLatticeFTJArray creates IronLattice FTJ array
-func NewIronLatticeFTJArray(rows, cols int, config IronLatticeFTJConfig) *IronLatticeFTJArray {
-	// Create FTJ config based on IronLattice parameters
+// NewFeCIMFTJArray creates FeCIM FTJ array
+func NewFeCIMFTJArray(rows, cols int, config FeCIMFTJConfig) *FeCIMFTJArray {
+	// Create FTJ config based on FeCIM parameters
 	ftjConfig := FTJConfig{
 		Material:             MaterialHZO,
 		FerroelectricThickness: config.TotalThickness,
@@ -903,27 +903,27 @@ func NewIronLatticeFTJArray(rows, cols int, config IronLatticeFTJConfig) *IronLa
 		StuckOffRatio:  0.0001,
 	}
 
-	return &IronLatticeFTJArray{
+	return &FeCIMFTJArray{
 		Config:   config,
 		Crossbar: NewFTJCrossbar(cbConfig),
 	}
 }
 
 // Forward performs synaptic operation
-func (ila *IronLatticeFTJArray) Forward(input []float64) []float64 {
+func (ila *FeCIMFTJArray) Forward(input []float64) []float64 {
 	output := ila.Crossbar.MVM(input)
 	ila.SynapticOps += int64(ila.Crossbar.Config.Rows * ila.Crossbar.Config.Cols)
 	return output
 }
 
 // GetEnergyPerSpike returns energy per synaptic operation
-func (ila *IronLatticeFTJArray) GetEnergyPerSpike() float64 {
+func (ila *FeCIMFTJArray) GetEnergyPerSpike() float64 {
 	// Based on research: 1.8 pJ per spike for 3D FTJ
 	return 1.8 // pJ
 }
 
 // GetPerformanceMetrics returns array performance
-func (ila *IronLatticeFTJArray) GetPerformanceMetrics() map[string]float64 {
+func (ila *FeCIMFTJArray) GetPerformanceMetrics() map[string]float64 {
 	terMean, terStd, terMax := ila.Crossbar.GetTERStatistics()
 
 	return map[string]float64{

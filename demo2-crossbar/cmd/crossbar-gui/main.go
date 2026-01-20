@@ -8,13 +8,13 @@
 // - IR drop analysis with heatmap overlay
 // - Sneak path current analysis
 // - Real-time MVM operations
-// - 30 discrete IronLattice levels
+// - 30 discrete FeCIM levels
 //
 // Run with: go run ./cmd/crossbar-gui
 package main
 
 import (
-	"ironlattice-vis/demo2-crossbar/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/gui"
 )
 
 func main() {

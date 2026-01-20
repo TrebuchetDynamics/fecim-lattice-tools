@@ -1,5 +1,5 @@
 #!/bin/bash
-# IronLattice Paper Download Script
+# Ferroelectric CIM Paper Download Script
 # Downloads scientific papers from various open-access sources
 
 set -euo pipefail
@@ -74,7 +74,7 @@ download_pdf() {
 try_unpaywall() {
     local doi="$1"
     local output="$2"
-    local email="ironlattice@example.com"
+    local email="ferroelectric-cim@example.com"
 
     log_info "Checking Unpaywall for DOI: $doi"
 
@@ -368,7 +368,7 @@ download_semantic_scholar() {
 download_all_papers() {
     echo ""
     echo "========================================"
-    echo "  IronLattice Paper Downloader"
+    echo "  Ferroelectric CIM Paper Downloader"
     echo "========================================"
     echo ""
 

@@ -39,8 +39,8 @@ func TestNewStack(t *testing.T) {
 	if len(stack.Layers) != 0 {
 		t.Errorf("Expected 0 layers, got %d", len(stack.Layers))
 	}
-	if stack.Technology != "IronLattice" {
-		t.Errorf("Expected 'IronLattice', got '%s'", stack.Technology)
+	if stack.Technology != "FeCIM" {
+		t.Errorf("Expected 'FeCIM', got '%s'", stack.Technology)
 	}
 }
 

@@ -32,7 +32,7 @@ func TestDACConversion(t *testing.T) {
 	}
 }
 
-// TestDACLevels verifies 30 IronLattice levels.
+// TestDACLevels verifies 30 FeCIM levels.
 func TestDACLevels(t *testing.T) {
 	dac := DefaultDAC()
 

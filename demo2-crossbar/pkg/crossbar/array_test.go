@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TestQuantizeTo30LevelsProducesExactly30Values verifies IronLattice spec:
+// TestQuantizeTo30LevelsProducesExactly30Values verifies FeCIM spec:
 // "It's got 30 discrete states." — Dr. Tour
 func TestQuantizeTo30LevelsProducesExactly30Values(t *testing.T) {
 	seen := make(map[float64]bool)
@@ -17,8 +17,8 @@ func TestQuantizeTo30LevelsProducesExactly30Values(t *testing.T) {
 		seen[quantized] = true
 	}
 
-	if len(seen) != IronLatticeLevels {
-		t.Errorf("Expected exactly %d discrete levels, got %d", IronLatticeLevels, len(seen))
+	if len(seen) != FeCIMLevels {
+		t.Errorf("Expected exactly %d discrete levels, got %d", FeCIMLevels, len(seen))
 	}
 }
 
@@ -56,8 +56,8 @@ func TestQuantizeTo30LevelsSpecificValues(t *testing.T) {
 
 // TestGetLevelReturns0To29 verifies level indices are 0-29
 func TestGetLevelReturns0To29(t *testing.T) {
-	for i := 0; i < IronLatticeLevels; i++ {
-		conductance := float64(i) / float64(IronLatticeLevels-1)
+	for i := 0; i < FeCIMLevels; i++ {
+		conductance := float64(i) / float64(FeCIMLevels-1)
 		level := GetLevel(conductance)
 		if level != i {
 			t.Errorf("GetLevel(%v) = %d, expected %d", conductance, level, i)

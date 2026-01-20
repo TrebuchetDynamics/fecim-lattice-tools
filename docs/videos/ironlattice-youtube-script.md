@@ -1,6 +1,6 @@
-# IronLattice YouTube Video Script
+# Ferroelectric CIM YouTube Video Script
 
-**Video Title:** "The Future of AI Computing: Inside IronLattice's Ferroelectric Technology"  
+**Video Title:** "The Future of AI Computing: Inside Ferroelectric CIM's Ferroelectric Technology"  
 **Duration:** ~8-10 minutes  
 **Target Audience:** Tech enthusiasts, investors, students, AI/ML engineers
 
@@ -18,10 +18,10 @@
 **NARRATOR:**
 > "Right now, training a single large AI model uses as much electricity as 100 American homes... for an entire YEAR. And it's getting worse."
 
-### [Show IronLattice logo animation]
+### [Show Ferroelectric CIM logo animation]
 
 **NARRATOR:**
-> "Today, I'm going to show you a technology that could make AI computing 10 million times more efficient. It's called IronLattice, and by the end of this video, you'll understand exactly how it works—because you're going to SEE it in action."
+> "Today, I'm going to show you a technology that could make AI computing 10 million times more efficient. It's called Ferroelectric CIM, and by the end of this video, you'll understand exactly how it works—because you're going to SEE it in action."
 
 ---
 
@@ -98,7 +98,7 @@
 ### [Voltage goes to zero, polarization stays high]
 
 **NARRATOR:**
-> "It STAYS. The material remembers. That's non-volatile memory—it keeps the data even with no power. But here's what makes IronLattice special..."
+> "It STAYS. The material remembers. That's non-volatile memory—it keeps the data even with no power. But here's what makes Ferroelectric CIM special..."
 
 ### [Show 30-state visualization]
 
@@ -146,7 +146,7 @@
 ### [Infographic with key statistics]
 
 **NARRATOR:**
-> "Let's talk numbers. IronLattice technology promises:"
+> "Let's talk numbers. Ferroelectric CIM technology promises:"
 
 ### [Animated counter for each stat]
 
@@ -175,7 +175,7 @@
 ### [Final logo animation]
 
 **NARRATOR:**
-> "IronLattice. Computing at the speed of light, with the efficiency of the brain."
+> "Ferroelectric CIM. Computing at the speed of light, with the efficiency of the brain."
 
 ---
 
@@ -220,7 +220,7 @@ If expanded version or Q&A:
    - 30 states is enough for inference accuracy
 
 2. **"When will this be available?"**
-   - Research phase now, IronLattice targeting commercial applications
+   - Research phase now, Ferroelectric CIM targeting commercial applications
    - CMOS compatibility means faster path to market
 
 3. **"How does this compare to quantum computing?"**
@@ -228,7 +228,7 @@ If expanded version or Q&A:
    - CIM works at room temperature, today's fabs
 
 4. **"Can I invest?"**
-   - IronLattice is a external research institution spinout
+   - Ferroelectric CIM is a external research institution spinout
    - Check their website for updates
 
 ---
@@ -245,6 +245,6 @@ If expanded version or Q&A:
 ## TAGS
 
 ```
-#IronLattice #ComputeInMemory #AIHardware #Ferroelectric #NeuromorphicComputing 
+#Ferroelectric CIM #ComputeInMemory #AIHardware #Ferroelectric #NeuromorphicComputing 
 #JamesTour #RiceUniversity #FutureOfAI #EdgeAI #TechExplained #DeepTech
 ```

@@ -1,5 +1,5 @@
 // Package layers provides federated learning and neuromorphic vision sensor
-// implementations for IronLattice ferroelectric CIM systems.
+// implementations for FeCIM ferroelectric CIM systems.
 //
 // Based on research findings:
 // - Ferroelectric-memristor hybrid memory for training AND inference (Nature Electronics 2025)
@@ -9,7 +9,7 @@
 // - SPIDR: SNN accelerator for event-based perception
 // - AI-native robotic vision with in-sensor computing
 //
-// Reference: IronLattice Research Log Sections 278-279
+// Reference: FeCIM Research Log Sections 278-279
 package layers
 
 import (
@@ -1140,8 +1140,8 @@ func (nvp *NeuromorphicVisionPipeline) ProcessEventWindow(events []*DVSEvent) []
 // INTEGRATED IRONLATTICE FEDERATED VISION SYSTEM
 // ============================================================================
 
-// IronLatticeFederatedVision integrates federated learning with neuromorphic vision
-type IronLatticeFederatedVision struct {
+// FeCIMFederatedVision integrates federated learning with neuromorphic vision
+type FeCIMFederatedVision struct {
 	// Configuration
 	FedConfig    *FederatedConfig
 	DVSConfig    *DVSConfig
@@ -1163,13 +1163,13 @@ type IronLatticeFederatedVision struct {
 	CommunicationCost float64
 }
 
-// NewIronLatticeFederatedVision creates the integrated system
-func NewIronLatticeFederatedVision(
+// NewFeCIMFederatedVision creates the integrated system
+func NewFeCIMFederatedVision(
 	fedConfig *FederatedConfig,
 	dvsConfig *DVSConfig,
 	scimitarConfig *SCIMITARConfig,
 	layerSizes []int,
-) *IronLatticeFederatedVision {
+) *FeCIMFederatedVision {
 
 	// Create server
 	server := NewFederatedServer(fedConfig, layerSizes)
@@ -1186,7 +1186,7 @@ func NewIronLatticeFederatedVision(
 	// Create gradient compressor
 	compressor := NewGradientCompressor(fedConfig)
 
-	return &IronLatticeFederatedVision{
+	return &FeCIMFederatedVision{
 		FedConfig:       fedConfig,
 		DVSConfig:       dvsConfig,
 		SCIMConfig:      scimitarConfig,
@@ -1198,7 +1198,7 @@ func NewIronLatticeFederatedVision(
 }
 
 // RunFederatedRound executes one round of federated learning
-func (ilfv *IronLatticeFederatedVision) RunFederatedRound(
+func (ilfv *FeCIMFederatedVision) RunFederatedRound(
 	clientData map[int][][]float64,
 	clientLabels map[int][]int,
 ) error {
@@ -1260,7 +1260,7 @@ func (ilfv *IronLatticeFederatedVision) RunFederatedRound(
 }
 
 // applyDifferentialPrivacy adds DP noise to gradients
-func (ilfv *IronLatticeFederatedVision) applyDifferentialPrivacy(gradients []float64) []float64 {
+func (ilfv *FeCIMFederatedVision) applyDifferentialPrivacy(gradients []float64) []float64 {
 	// Clip gradients
 	norm := 0.0
 	for _, g := range gradients {
@@ -1286,7 +1286,7 @@ func (ilfv *IronLatticeFederatedVision) applyDifferentialPrivacy(gradients []flo
 }
 
 // distributeGlobalModel sends global model to all clients
-func (ilfv *IronLatticeFederatedVision) distributeGlobalModel() {
+func (ilfv *FeCIMFederatedVision) distributeGlobalModel() {
 	globalFlat := ilfv.Server.flattenWeights()
 
 	for _, client := range ilfv.Clients {
@@ -1307,7 +1307,7 @@ func (ilfv *IronLatticeFederatedVision) distributeGlobalModel() {
 }
 
 // ProcessVisionInput processes DVS events and runs inference
-func (ilfv *IronLatticeFederatedVision) ProcessVisionInput(
+func (ilfv *FeCIMFederatedVision) ProcessVisionInput(
 	clientIdx int,
 	frame [][]float64,
 	timestamp float64,
@@ -1356,7 +1356,7 @@ func (ilfv *IronLatticeFederatedVision) ProcessVisionInput(
 }
 
 // GetStatistics returns system statistics
-func (ilfv *IronLatticeFederatedVision) GetStatistics() map[string]float64 {
+func (ilfv *FeCIMFederatedVision) GetStatistics() map[string]float64 {
 	avgCompressionRatio := 0.0
 	if len(ilfv.Compressor.CompressionRatios) > 0 {
 		for _, r := range ilfv.Compressor.CompressionRatios {
@@ -1377,7 +1377,7 @@ func (ilfv *IronLatticeFederatedVision) GetStatistics() map[string]float64 {
 }
 
 // Preset configurations for common scenarios
-func IronLatticeFederatedVisionPreset(scenario string) (*FederatedConfig, *DVSConfig, *SCIMITARConfig) {
+func FeCIMFederatedVisionPreset(scenario string) (*FederatedConfig, *DVSConfig, *SCIMITARConfig) {
 	switch scenario {
 	case "edge_surveillance":
 		// Low-power edge deployment for surveillance

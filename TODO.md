@@ -1,8 +1,8 @@
-# IronLattice-vis Strategic TODO
+# Ferroelectric CIM-vis Strategic TODO
 
-> **Mission:** Create world-class visualization demos to help Dr. external research group pitch IronLattice to investors, engineers, and foundry partners.
+> **Mission:** Create world-class visualization demos to help Dr. external research group pitch Ferroelectric CIM to investors, engineers, and foundry partners.
 >
-> **Source:** Dr. Tour's November 2024 presentation (ironlattice-transcript.md)
+> **Source:** Dr. Tour's November 2024 presentation (ferroelectric-cim-transcript.md)
 
 ---
 
@@ -40,7 +40,7 @@ PHASE 1               PHASE 2               PHASE 3
 
 ---
 
-## IronLattice Key Specs (From Dr. Tour)
+## Ferroelectric CIM Key Specs (From Dr. Tour)
 
 | Metric | Target | Demo Status | Notes |
 |--------|--------|-------------|-------|
@@ -78,7 +78,7 @@ cell works"   in memory"    with it"
   PHYSICS      COMPUTE     APPLICATION     SYSTEM
 
 Demo 5        Demo 6        Demo 7        Demo 8
-"1000×        "Scalable     "We handle    "Why IronLattice
+"1000×        "Scalable     "We handle    "Why Ferroelectric CIM
 cooler than   3D            real-world    wins vs everyone
 competition"  architecture" challenges"   else"
 
@@ -86,7 +86,7 @@ competition"  architecture" challenges"   else"
 ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
 │ Thermal │   │Multi-   │   │ Non-    │   │Comparison│
 │   Map   │   │ Layer   │   │idealities│   │DRAM/GPU/ │
-│ 25°-85°C│   │  3D     │   │IR/Sneak │   │IronLattice│
+│ 25°-85°C│   │  3D     │   │IR/Sneak │   │Ferroelectric CIM│
 └─────────┘   └─────────┘   └─────────┘   └─────────┘
      ↓             ↓             ↓             ↓
  THERMAL      ARCHITECTURE   ENGINEERING   INVESTOR PITCH
@@ -113,13 +113,13 @@ competition"  architecture" challenges"   else"
 
 #### Demo 8: Technology Comparison (CRITICAL FOR PITCH)
 
-**Purpose:** The slide Dr. Tour shows investors — why IronLattice wins
+**Purpose:** The slide Dr. Tour shows investors — why Ferroelectric CIM wins
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                    COMPUTE PERFORMANCE COMPARISON                 │
 ├────────────────┬─────────────┬─────────────┬─────────────────────┤
-│    Metric      │  DRAM+CPU   │    GPU      │    IronLattice      │
+│    Metric      │  DRAM+CPU   │    GPU      │    Ferroelectric CIM      │
 ├────────────────┼─────────────┼─────────────┼─────────────────────┤
 │ Time (MVM)     │   100 μs    │   10 μs     │      0.01 μs        │
 │ Energy/MAC     │   10 pJ     │   1 pJ      │      0.001 pJ       │
@@ -140,7 +140,7 @@ competition"  architecture" challenges"   else"
 
 #### Demo 8b: Competitive Matrix (From Dr. Tour's Slides)
 
-| Feature | IronLattice | 3D NAND | ReRAM (Weebit) | PCRAM | Google TPU | Intel Loihi |
+| Feature | Ferroelectric CIM | 3D NAND | ReRAM (Weebit) | PCRAM | Google TPU | Intel Loihi |
 |---------|-------------|---------|----------------|-------|------------|-------------|
 | Write/Read Energy | ✅ | ❌ | ✅ | 🟡 | ❌ | ✅ |
 | Write/Read Speed | ✅ | ❌ | ✅ | ❌ | ✅ | 🟡 |
@@ -149,7 +149,7 @@ competition"  architecture" challenges"   else"
 | Memory/Logic Unified | ✅ | ❌ | 🟡 | 🟡 | ❌ | 🟡 |
 | 30+ Analog States | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
 
-**Only IronLattice has ✅ across ALL categories**
+**Only Ferroelectric CIM has ✅ across ALL categories**
 
 ---
 
@@ -225,7 +225,7 @@ WAFER-SCALE BENEFITS OF IRONLATTICE
 │ TOTAL              │  $384B    │   $721B    │
 └────────────────────┴───────────┴────────────┘
                         ↑
-              IronLattice can address ALL of these
+              Ferroelectric CIM can address ALL of these
 ```
 
 ### Why Now?
@@ -274,7 +274,7 @@ Research   Concept   Demo     in Real       in     Ready
 
 ### How This Project Can Help
 
-**Value Proposition for IronLattice Team:**
+**Value Proposition for Ferroelectric CIM Team:**
 
 1. **Investor Presentations**
    - Interactive demos > static slides
@@ -304,12 +304,12 @@ STEP 3: Offer to present demos in investor meetings
         ↓
 STEP 4: Propose visualization engineer role
         ↓
-STEP 5: Join external research institution / IronLattice team
+STEP 5: Join external research institution / Ferroelectric CIM team
 ```
 
 **Contact:**
 - Dr. Tour's lab: tour@rice.edu
-- IronLattice: (company forming)
+- Ferroelectric CIM: (company forming)
 - LinkedIn: Connect with Tawfik Jarjour (CEO)
 
 ---
@@ -391,14 +391,14 @@ Dr. Tour's previous success story (from transcript):
 
 **Lesson:** Dr. Tour has a track record of spinning out successful memory companies.
 
-**Opportunity:** IronLattice is his next one — and this time they're not missing neuromorphic computing.
+**Opportunity:** Ferroelectric CIM is his next one — and this time they're not missing neuromorphic computing.
 
 ---
 
 ## FILE STRUCTURE
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
 ├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
 ├── demo3-mnist/          ✅ MNIST 95.8% + Fyne GUI
@@ -412,10 +412,10 @@ ironlattice-vis/
 ├── opensource/papers/    Additional papers
 ├── command.md            Session context
 ├── TODO.md               This file
-└── ironlattice-transcript.md  Dr. Tour's presentation
+└── ferroelectric-cim-transcript.md  Dr. Tour's presentation
 ```
 
 ---
 
 *Last updated: 2026-01-19*
-*Goal: Help Dr. Tour visualize IronLattice for investors, engineers, and foundries*
+*Goal: Help Dr. Tour visualize Ferroelectric CIM for investors, engineers, and foundries*

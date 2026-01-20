@@ -1,5 +1,5 @@
 // Package layers provides BEOL (Back-End-Of-Line) ferroelectric integration
-// and endurance/wake-up optimization for IronLattice CIM architectures.
+// and endurance/wake-up optimization for FeCIM CIM architectures.
 //
 // This module simulates:
 // - BEOL-compatible FeFET fabrication with low thermal budget (<400°C)
@@ -629,8 +629,8 @@ func (o *SuperlatticeOptimizer) GenerateVacancyProfile(numPoints int) []float64 
 // INTEGRATED BEOL + ENDURANCE SYSTEM
 // ============================================================================
 
-// IronLatticeBEOLSystem combines BEOL integration with endurance optimization
-type IronLatticeBEOLSystem struct {
+// FeCIMBEOLSystem combines BEOL integration with endurance optimization
+type FeCIMBEOLSystem struct {
 	BEOLConfig      *BEOLConfig
 	EnduranceConfig *EnduranceConfig
 	SLConfig        *SuperlatticeConfig
@@ -648,13 +648,13 @@ type IronLatticeBEOLSystem struct {
 	ThermalHeadroom   float64
 }
 
-// NewIronLatticeBEOLSystem creates an integrated BEOL + endurance system
-func NewIronLatticeBEOLSystem(numLayers, arraySize int) *IronLatticeBEOLSystem {
+// NewFeCIMBEOLSystem creates an integrated BEOL + endurance system
+func NewFeCIMBEOLSystem(numLayers, arraySize int) *FeCIMBEOLSystem {
 	beolConfig := DefaultBEOLConfig()
 	endConfig := DefaultEnduranceConfig()
 	slConfig := DefaultSuperlatticeConfig()
 
-	system := &IronLatticeBEOLSystem{
+	system := &FeCIMBEOLSystem{
 		BEOLConfig:      beolConfig,
 		EnduranceConfig: endConfig,
 		SLConfig:        slConfig,
@@ -685,7 +685,7 @@ func NewIronLatticeBEOLSystem(numLayers, arraySize int) *IronLatticeBEOLSystem {
 }
 
 // calculateSystemMetrics updates system-level metrics
-func (s *IronLatticeBEOLSystem) calculateSystemMetrics() {
+func (s *FeCIMBEOLSystem) calculateSystemMetrics() {
 	totalPr := 0.0
 	healthy := 0
 	minEndurance := 1.0
@@ -715,7 +715,7 @@ func (s *IronLatticeBEOLSystem) calculateSystemMetrics() {
 }
 
 // RunInference runs inference with cycling/fatigue simulation
-func (s *IronLatticeBEOLSystem) RunInference(input []float64, numIterations int) [][]float64 {
+func (s *FeCIMBEOLSystem) RunInference(input []float64, numIterations int) [][]float64 {
 	results := make([][]float64, numIterations)
 
 	cyclesPerInference := 100.0 // Cycles per inference operation
@@ -742,7 +742,7 @@ func (s *IronLatticeBEOLSystem) RunInference(input []float64, numIterations int)
 }
 
 // applyRecovery applies fatigue recovery to all devices
-func (s *IronLatticeBEOLSystem) applyRecovery() {
+func (s *FeCIMBEOLSystem) applyRecovery() {
 	for i := range s.WakeUpStates {
 		for j := range s.WakeUpStates[i] {
 			s.WakeUpStates[i][j].RecoverFatigue()
@@ -751,7 +751,7 @@ func (s *IronLatticeBEOLSystem) applyRecovery() {
 }
 
 // GetHealthReport returns detailed system health information
-func (s *IronLatticeBEOLSystem) GetHealthReport() map[string]interface{} {
+func (s *FeCIMBEOLSystem) GetHealthReport() map[string]interface{} {
 	// Calculate Pr distribution
 	prValues := make([]float64, 0, s.TotalDevices)
 	for i := range s.WakeUpStates {
@@ -1162,13 +1162,13 @@ func GenerateM3DStackDiagram(stack *M3DStack) string {
 // RunBEOLEnduranceDemo demonstrates BEOL + endurance simulation
 func RunBEOLEnduranceDemo() {
 	fmt.Println("╔═══════════════════════════════════════════════════════╗")
-	fmt.Println("║  IronLattice BEOL Integration & Endurance Simulation  ║")
+	fmt.Println("║  FeCIM BEOL Integration & Endurance Simulation  ║")
 	fmt.Println("╚═══════════════════════════════════════════════════════╝")
 	fmt.Println()
 
 	// 1. Create integrated system
 	fmt.Println("1. Creating Monolithic 3D FeFET CIM System...")
-	system := NewIronLatticeBEOLSystem(4, 64)
+	system := NewFeCIMBEOLSystem(4, 64)
 
 	fmt.Printf("   • %d total FeFET devices\n", system.TotalDevices)
 	fmt.Printf("   • BEOL thermal limit: %.0f°C\n", system.BEOLConfig.MaxTemperatureC)

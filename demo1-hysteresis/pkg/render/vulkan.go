@@ -245,9 +245,9 @@ func (r *VulkanRenderer) createInstance() error {
 
 	appInfo := vk.ApplicationInfo{
 		SType:              vk.StructureTypeApplicationInfo,
-		PApplicationName:   safeString("IronLattice Hysteresis"),
+		PApplicationName:   safeString("FeCIM Hysteresis"),
 		ApplicationVersion: vk.MakeVersion(1, 0, 0),
-		PEngineName:        safeString("IronLattice"),
+		PEngineName:        safeString("FeCIM"),
 		EngineVersion:      vk.MakeVersion(1, 0, 0),
 		ApiVersion:         vk.ApiVersion11,
 	}

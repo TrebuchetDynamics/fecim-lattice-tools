@@ -42,7 +42,7 @@ Compute-in-Memory:
     10-1000× more energy efficient!
 ```
 
-This is what IronLattice does with **crossbar arrays**.
+This is what Ferroelectric CIM does with **crossbar arrays**.
 
 ---
 
@@ -74,7 +74,7 @@ A crossbar is a grid of horizontal and vertical wires with a **memory cell at ea
 
 ### What's at Each Intersection?
 
-Each cell is a programmable resistor/conductor. For IronLattice, it's a ferroelectric device:
+Each cell is a programmable resistor/conductor. For Ferroelectric CIM, it's a ferroelectric device:
 
 ```
 One cell:
@@ -263,7 +263,7 @@ Quantized output: 0.71 (rounded down)
 | MRAM (magnetic) | Fast, endurance | Low density, complex |
 | **FeFET/FTJ** | Low power, CMOS-compatible, no heat | Newer technology |
 
-**IronLattice uses ferroelectric** because:
+**Ferroelectric CIM uses ferroelectric** because:
 - ✅ No Joule heating (displacement current, not filament)
 - ✅ Self-rectifying possible (reduces sneak paths)
 - ✅ CMOS-compatible (same fab as regular chips)

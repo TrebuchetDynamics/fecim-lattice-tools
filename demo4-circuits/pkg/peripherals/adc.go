@@ -25,7 +25,7 @@ const (
 	ADCTypeSigmaDelta         // Sigma-Delta (oversampling)
 )
 
-// DefaultADC returns an ADC configured for IronLattice read operations.
+// DefaultADC returns an ADC configured for FeCIM read operations.
 func DefaultADC() *ADC {
 	return &ADC{
 		Bits:          5,     // 32 levels, we use 30

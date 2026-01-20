@@ -1018,8 +1018,8 @@ func (c *FerroKVCache) GetAllValues(layer, head, maxPosition int) [][]float64 {
 // IRONLATTICE CAM-ATTENTION SYSTEM
 // =============================================================================
 
-// IronLatticeCAMAttentionConfig configures integrated system
-type IronLatticeCAMAttentionConfig struct {
+// FeCIMCAMAttentionConfig configures integrated system
+type FeCIMCAMAttentionConfig struct {
 	// TCAM configuration
 	TCAMEnabled  bool
 	TCAMConfig   *FeTCAMConfig
@@ -1037,9 +1037,9 @@ type IronLatticeCAMAttentionConfig struct {
 	KVCacheConfig  *KVCacheConfig
 }
 
-// DefaultIronLatticeCAMAttentionConfig returns default configuration
-func DefaultIronLatticeCAMAttentionConfig() *IronLatticeCAMAttentionConfig {
-	return &IronLatticeCAMAttentionConfig{
+// DefaultFeCIMCAMAttentionConfig returns default configuration
+func DefaultFeCIMCAMAttentionConfig() *FeCIMCAMAttentionConfig {
+	return &FeCIMCAMAttentionConfig{
 		TCAMEnabled:      true,
 		TCAMConfig:       DefaultFeTCAMConfig(),
 		ACAMEnabled:      true,
@@ -1051,9 +1051,9 @@ func DefaultIronLatticeCAMAttentionConfig() *IronLatticeCAMAttentionConfig {
 	}
 }
 
-// IronLatticeCAMAttention represents integrated CAM and attention system
-type IronLatticeCAMAttention struct {
-	Config *IronLatticeCAMAttentionConfig
+// FeCIMCAMAttention represents integrated CAM and attention system
+type FeCIMCAMAttention struct {
+	Config *FeCIMCAMAttentionConfig
 
 	// Components
 	TCAM       *FeTCAM
@@ -1069,13 +1069,13 @@ type IronLatticeCAMAttention struct {
 	EnergyVsBaseline float64 // improvement factor
 }
 
-// NewIronLatticeCAMAttention creates integrated system
-func NewIronLatticeCAMAttention(config *IronLatticeCAMAttentionConfig) *IronLatticeCAMAttention {
+// NewFeCIMCAMAttention creates integrated system
+func NewFeCIMCAMAttention(config *FeCIMCAMAttentionConfig) *FeCIMCAMAttention {
 	if config == nil {
-		config = DefaultIronLatticeCAMAttentionConfig()
+		config = DefaultFeCIMCAMAttentionConfig()
 	}
 
-	sys := &IronLatticeCAMAttention{
+	sys := &FeCIMCAMAttention{
 		Config: config,
 	}
 
@@ -1103,7 +1103,7 @@ func NewIronLatticeCAMAttention(config *IronLatticeCAMAttentionConfig) *IronLatt
 }
 
 // calculateSystemMetrics computes overall performance
-func (s *IronLatticeCAMAttention) calculateSystemMetrics() {
+func (s *FeCIMCAMAttention) calculateSystemMetrics() {
 	s.TotalEnergy = 0
 	s.TotalLatency = 0
 	s.MemoryFootprint = 0
@@ -1133,7 +1133,7 @@ func (s *IronLatticeCAMAttention) calculateSystemMetrics() {
 }
 
 // RunDatabaseSearch performs TCAM-based database search
-func (s *IronLatticeCAMAttention) RunDatabaseSearch(queries [][]int) [][]int {
+func (s *FeCIMCAMAttention) RunDatabaseSearch(queries [][]int) [][]int {
 	if s.TCAM == nil {
 		return nil
 	}
@@ -1148,7 +1148,7 @@ func (s *IronLatticeCAMAttention) RunDatabaseSearch(queries [][]int) [][]int {
 }
 
 // RunNearestNeighborSearch performs ACAM-based NN search
-func (s *IronLatticeCAMAttention) RunNearestNeighborSearch(queries [][]float64) [][]int {
+func (s *FeCIMCAMAttention) RunNearestNeighborSearch(queries [][]float64) [][]int {
 	if s.ACAM == nil {
 		return nil
 	}
@@ -1163,7 +1163,7 @@ func (s *IronLatticeCAMAttention) RunNearestNeighborSearch(queries [][]float64) 
 }
 
 // RunTransformerInference performs attention-based inference
-func (s *IronLatticeCAMAttention) RunTransformerInference(input [][]float64) [][]float64 {
+func (s *FeCIMCAMAttention) RunTransformerInference(input [][]float64) [][]float64 {
 	if s.Attention == nil {
 		return nil
 	}
@@ -1185,7 +1185,7 @@ func (s *IronLatticeCAMAttention) RunTransformerInference(input [][]float64) [][
 }
 
 // GetPerformanceSummary returns human-readable performance summary
-func (s *IronLatticeCAMAttention) GetPerformanceSummary() map[string]interface{} {
+func (s *FeCIMCAMAttention) GetPerformanceSummary() map[string]interface{} {
 	summary := make(map[string]interface{})
 
 	summary["total_energy_fj"] = s.TotalEnergy
@@ -1372,8 +1372,8 @@ func RunComprehensiveBenchmarkCAMAttention() map[string]interface{} {
 	results["attention_benchmarks"] = GetAttentionBenchmarks()
 
 	// Full system simulation
-	sysConfig := DefaultIronLatticeCAMAttentionConfig()
-	sys := NewIronLatticeCAMAttention(sysConfig)
+	sysConfig := DefaultFeCIMCAMAttentionConfig()
+	sys := NewFeCIMCAMAttention(sysConfig)
 
 	// Generate test data
 	testQueries := make([][]int, 100)

@@ -37,30 +37,30 @@ func TestGPUAccelerator(t *testing.T) {
 	}
 }
 
-// TestIronLatticeChip verifies IronLattice architecture creation.
-func TestIronLatticeChip(t *testing.T) {
-	iron := IronLatticeChip()
+// TestFeCIMChip verifies FeCIM architecture creation.
+func TestFeCIMChip(t *testing.T) {
+	iron := FeCIMChip()
 
-	if iron.Name != "IronLattice CIM" {
-		t.Errorf("Expected 'IronLattice CIM', got '%s'", iron.Name)
+	if iron.Name != "FeCIM CIM" {
+		t.Errorf("Expected 'FeCIM CIM', got '%s'", iron.Name)
 	}
 	if iron.Technology != "FeFET Crossbar" {
 		t.Errorf("Expected 'FeFET Crossbar', got '%s'", iron.Technology)
 	}
 }
 
-// TestIronLatticeEfficiency verifies IronLattice is most efficient.
-func TestIronLatticeEfficiency(t *testing.T) {
+// TestFeCIMEfficiency verifies FeCIM is most efficient.
+func TestFeCIMEfficiency(t *testing.T) {
 	cpu := TraditionalCPU()
 	gpu := GPUAccelerator()
-	iron := IronLatticeChip()
+	iron := FeCIMChip()
 
-	// IronLattice should have highest TOPS/W
+	// FeCIM should have highest TOPS/W
 	if iron.TOPSPerWatt <= cpu.TOPSPerWatt {
-		t.Error("IronLattice should have higher TOPS/W than CPU")
+		t.Error("FeCIM should have higher TOPS/W than CPU")
 	}
 	if iron.TOPSPerWatt <= gpu.TOPSPerWatt {
-		t.Error("IronLattice should have higher TOPS/W than GPU")
+		t.Error("FeCIM should have higher TOPS/W than GPU")
 	}
 }
 
@@ -93,7 +93,7 @@ func TestResNet50Workload(t *testing.T) {
 
 // TestRunInference verifies inference simulation.
 func TestRunInference(t *testing.T) {
-	arch := IronLatticeChip()
+	arch := FeCIMChip()
 	workload := MNISTWorkload()
 
 	result := arch.RunInference(workload.TotalOps, 1)
@@ -109,46 +109,46 @@ func TestRunInference(t *testing.T) {
 	}
 }
 
-// TestIronLatticeLowestLatency verifies IronLattice has good latency.
-func TestIronLatticeLowestLatency(t *testing.T) {
+// TestFeCIMLowestLatency verifies FeCIM has good latency.
+func TestFeCIMLowestLatency(t *testing.T) {
 	workload := MNISTWorkload()
 
 	cpu := TraditionalCPU()
-	iron := IronLatticeChip()
+	iron := FeCIMChip()
 
 	cpuResult := cpu.RunInference(workload.TotalOps, 1)
 	ironResult := iron.RunInference(workload.TotalOps, 1)
 
-	// IronLattice should have lower latency than CPU
+	// FeCIM should have lower latency than CPU
 	if ironResult.Latency >= cpuResult.Latency {
-		t.Error("IronLattice should have lower latency than CPU")
+		t.Error("FeCIM should have lower latency than CPU")
 	}
 }
 
-// TestIronLatticeLowestEnergy verifies IronLattice has lowest energy.
-func TestIronLatticeLowestEnergy(t *testing.T) {
+// TestFeCIMLowestEnergy verifies FeCIM has lowest energy.
+func TestFeCIMLowestEnergy(t *testing.T) {
 	workload := MNISTWorkload()
 
 	cpu := TraditionalCPU()
 	gpu := GPUAccelerator()
-	iron := IronLatticeChip()
+	iron := FeCIMChip()
 
 	cpuResult := cpu.RunInference(workload.TotalOps, 1)
 	gpuResult := gpu.RunInference(workload.TotalOps, 1)
 	ironResult := iron.RunInference(workload.TotalOps, 1)
 
-	// IronLattice should have lowest energy
+	// FeCIM should have lowest energy
 	if ironResult.Energy >= cpuResult.Energy {
-		t.Error("IronLattice should use less energy than CPU")
+		t.Error("FeCIM should use less energy than CPU")
 	}
 	if ironResult.Energy >= gpuResult.Energy {
-		t.Error("IronLattice should use less energy than GPU")
+		t.Error("FeCIM should use less energy than GPU")
 	}
 }
 
 // TestScaleToDataCenter verifies data center scaling.
 func TestScaleToDataCenter(t *testing.T) {
-	arch := IronLatticeChip()
+	arch := FeCIMChip()
 	workload := MNISTWorkload()
 	targetThroughput := 10000.0 // 10K inferences/sec
 
@@ -165,20 +165,20 @@ func TestScaleToDataCenter(t *testing.T) {
 	}
 }
 
-// TestIronLatticeLowestTCO verifies IronLattice has lowest TCO.
-func TestIronLatticeLowestTCO(t *testing.T) {
+// TestFeCIMLowestTCO verifies FeCIM has lowest TCO.
+func TestFeCIMLowestTCO(t *testing.T) {
 	workload := MNISTWorkload()
 	targetThroughput := 10000.0
 
 	cpuMetrics := ScaleToDataCenter(TraditionalCPU(), targetThroughput, workload)
 	gpuMetrics := ScaleToDataCenter(GPUAccelerator(), targetThroughput, workload)
-	ironMetrics := ScaleToDataCenter(IronLatticeChip(), targetThroughput, workload)
+	ironMetrics := ScaleToDataCenter(FeCIMChip(), targetThroughput, workload)
 
 	if ironMetrics.TCO >= cpuMetrics.TCO {
-		t.Error("IronLattice should have lower TCO than CPU")
+		t.Error("FeCIM should have lower TCO than CPU")
 	}
 	if ironMetrics.TCO >= gpuMetrics.TCO {
-		t.Error("IronLattice should have lower TCO than GPU")
+		t.Error("FeCIM should have lower TCO than GPU")
 	}
 }
 
@@ -204,7 +204,7 @@ func TestCalculateAdvantages(t *testing.T) {
 	comparison := CompareArchitectures(workload, 1, 10000.0)
 	advantages := CalculateAdvantages(comparison)
 
-	// All advantages should be > 1 (IronLattice is better)
+	// All advantages should be > 1 (FeCIM is better)
 	if advantages.VsCPU.EnergyReduction <= 1 {
 		t.Error("Energy reduction vs CPU should be > 1")
 	}
@@ -223,7 +223,7 @@ func TestRenderer(t *testing.T) {
 	archs := []*Architecture{
 		TraditionalCPU(),
 		GPUAccelerator(),
-		IronLatticeChip(),
+		FeCIMChip(),
 	}
 
 	// Test architecture specs render
@@ -233,7 +233,7 @@ func TestRenderer(t *testing.T) {
 	}
 
 	// Test bar chart render
-	labels := []string{"CPU", "GPU", "IronLattice"}
+	labels := []string{"CPU", "GPU", "FeCIM"}
 	values := []float64{100, 50, 5}
 	chart := renderer.RenderBarChart("Power (W)", labels, values, "W", true)
 	if len(chart) == 0 {
@@ -250,7 +250,7 @@ func TestLargeWorkloads(t *testing.T) {
 		GPT2Workload(),
 	}
 
-	iron := IronLatticeChip()
+	iron := FeCIMChip()
 
 	for _, w := range workloads {
 		result := iron.RunInference(w.TotalOps, 1)
@@ -289,11 +289,11 @@ func TestCO2Emissions(t *testing.T) {
 	targetThroughput := 10000.0
 
 	cpuMetrics := ScaleToDataCenter(TraditionalCPU(), targetThroughput, workload)
-	ironMetrics := ScaleToDataCenter(IronLatticeChip(), targetThroughput, workload)
+	ironMetrics := ScaleToDataCenter(FeCIMChip(), targetThroughput, workload)
 
-	// IronLattice should have lower CO2 emissions
+	// FeCIM should have lower CO2 emissions
 	if ironMetrics.CO2Emissions >= cpuMetrics.CO2Emissions {
-		t.Error("IronLattice should have lower CO2 emissions")
+		t.Error("FeCIM should have lower CO2 emissions")
 	}
 
 	// CO2 should be proportional to power
@@ -324,13 +324,13 @@ func TestFormatFunctions(t *testing.T) {
 	}
 }
 
-// TestIronLattice80PercentReduction verifies Dr. Tour's claim.
-func TestIronLattice80PercentReduction(t *testing.T) {
+// TestFeCIM80PercentReduction verifies Dr. Tour's claim.
+func TestFeCIM80PercentReduction(t *testing.T) {
 	workload := ResNet50Workload()
 	targetThroughput := 100000.0 // 100K inferences/sec
 
 	cpuMetrics := ScaleToDataCenter(TraditionalCPU(), targetThroughput, workload)
-	ironMetrics := ScaleToDataCenter(IronLatticeChip(), targetThroughput, workload)
+	ironMetrics := ScaleToDataCenter(FeCIMChip(), targetThroughput, workload)
 
 	// Calculate power reduction percentage
 	powerReduction := (1 - ironMetrics.TotalPower/cpuMetrics.TotalPower) * 100

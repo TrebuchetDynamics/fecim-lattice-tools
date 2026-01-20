@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"os"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 )
 
 // MNISTNetwork represents a 2-layer neural network for MNIST classification.
@@ -487,5 +487,5 @@ func (n *MNISTNetwork) QuantizeWeightsTo30Levels() {
 		}
 	}
 
-	fmt.Println("Weights quantized to 30 discrete levels (IronLattice format)")
+	fmt.Println("Weights quantized to 30 discrete levels (FeCIM format)")
 }

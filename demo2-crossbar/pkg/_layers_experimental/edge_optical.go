@@ -1,5 +1,5 @@
 // Package layers provides edge AI deployment and optical-electronic hybrid
-// compute-in-memory implementations for IronLattice ferroelectric CIM technology.
+// compute-in-memory implementations for FeCIM ferroelectric CIM technology.
 //
 // This module implements:
 // - TinyML deployment pipeline with model compression
@@ -808,8 +808,8 @@ func (pr *PhotonicReservoir) Process(input []float64) []float64 {
 // INTEGRATED EDGE-OPTICAL SYSTEM
 // =============================================================================
 
-// IronLatticeEdgeOpticalConfig configures integrated system
-type IronLatticeEdgeOpticalConfig struct {
+// FeCIMEdgeOpticalConfig configures integrated system
+type FeCIMEdgeOpticalConfig struct {
 	EdgeConfig    *EdgeDeviceConfig
 	PhotonicConfig *PhotonicConfig
 
@@ -828,9 +828,9 @@ type IronLatticeEdgeOpticalConfig struct {
 	TargetAccuracy  float64
 }
 
-// DefaultIronLatticeEdgeOpticalConfig returns standard configuration
-func DefaultIronLatticeEdgeOpticalConfig() *IronLatticeEdgeOpticalConfig {
-	return &IronLatticeEdgeOpticalConfig{
+// DefaultFeCIMEdgeOpticalConfig returns standard configuration
+func DefaultFeCIMEdgeOpticalConfig() *FeCIMEdgeOpticalConfig {
+	return &FeCIMEdgeOpticalConfig{
 		EdgeConfig:     FeFETEdgeDevice(),
 		PhotonicConfig: FeFETPhotonicConfig(),
 		UseEdgeFeFET:   true,
@@ -844,9 +844,9 @@ func DefaultIronLatticeEdgeOpticalConfig() *IronLatticeEdgeOpticalConfig {
 	}
 }
 
-// IronLatticeEdgeOptical implements the integrated system
-type IronLatticeEdgeOptical struct {
-	Config *IronLatticeEdgeOpticalConfig
+// FeCIMEdgeOptical implements the integrated system
+type FeCIMEdgeOptical struct {
+	Config *FeCIMEdgeOpticalConfig
 
 	// Components
 	Compressor      *ModelCompressor
@@ -871,13 +871,13 @@ type IronLatticeEdgeOptical struct {
 	EnergyVsCPU     float64
 }
 
-// NewIronLatticeEdgeOptical creates a new integrated system
-func NewIronLatticeEdgeOptical(config *IronLatticeEdgeOpticalConfig) *IronLatticeEdgeOptical {
+// NewFeCIMEdgeOptical creates a new integrated system
+func NewFeCIMEdgeOptical(config *FeCIMEdgeOpticalConfig) *FeCIMEdgeOptical {
 	if config == nil {
-		config = DefaultIronLatticeEdgeOpticalConfig()
+		config = DefaultFeCIMEdgeOpticalConfig()
 	}
 
-	system := &IronLatticeEdgeOptical{
+	system := &FeCIMEdgeOptical{
 		Config: config,
 	}
 
@@ -898,7 +898,7 @@ func NewIronLatticeEdgeOptical(config *IronLatticeEdgeOpticalConfig) *IronLattic
 }
 
 // PrepareModel compresses and prepares model for deployment
-func (sys *IronLatticeEdgeOptical) PrepareModel(profile *ModelProfile) {
+func (sys *FeCIMEdgeOptical) PrepareModel(profile *ModelProfile) {
 	if sys.Compressor != nil {
 		sys.Model = sys.Compressor.CompressModel(profile)
 		sys.Deployer = NewEdgeDeployer(sys.Config.EdgeConfig, sys.Model)
@@ -907,7 +907,7 @@ func (sys *IronLatticeEdgeOptical) PrepareModel(profile *ModelProfile) {
 }
 
 // RunInference performs inference using the hybrid system
-func (sys *IronLatticeEdgeOptical) RunInference(input []float64) []float64 {
+func (sys *FeCIMEdgeOptical) RunInference(input []float64) []float64 {
 	var output []float64
 
 	if sys.Config.UseHybrid {
@@ -937,7 +937,7 @@ func (sys *IronLatticeEdgeOptical) RunInference(input []float64) []float64 {
 }
 
 // CalculateMetrics computes overall system performance
-func (sys *IronLatticeEdgeOptical) CalculateMetrics() {
+func (sys *FeCIMEdgeOptical) CalculateMetrics() {
 	// Latency: combine photonic and FeFET
 	photonicLatency := 0.0
 	if sys.PhotonicArray != nil {
@@ -985,7 +985,7 @@ func (sys *IronLatticeEdgeOptical) CalculateMetrics() {
 }
 
 // GetStatistics returns system performance statistics
-func (sys *IronLatticeEdgeOptical) GetStatistics() map[string]float64 {
+func (sys *FeCIMEdgeOptical) GetStatistics() map[string]float64 {
 	stats := make(map[string]float64)
 
 	stats["total_latency_ms"] = sys.TotalLatencyMS
@@ -1015,11 +1015,11 @@ func (sys *IronLatticeEdgeOptical) GetStatistics() map[string]float64 {
 }
 
 // Benchmark runs performance comparison
-func (sys *IronLatticeEdgeOptical) Benchmark() *EdgeOpticalBenchmark {
+func (sys *FeCIMEdgeOptical) Benchmark() *EdgeOpticalBenchmark {
 	sys.CalculateMetrics()
 
 	return &EdgeOpticalBenchmark{
-		SystemConfig:     "IronLattice Edge-Optical Hybrid",
+		SystemConfig:     "FeCIM Edge-Optical Hybrid",
 		TotalLatencyMS:   sys.TotalLatencyMS,
 		TotalPowerMW:     sys.TotalPowerMW,
 		EnergyUJ:         sys.EnergyPerInfUJ,

@@ -1,5 +1,5 @@
 // Package layers provides power management and spiking neural network simulation
-// for IronLattice ferroelectric compute-in-memory systems.
+// for FeCIM ferroelectric compute-in-memory systems.
 //
 // This module implements:
 // - CIM power management (power gating, standby modes)

@@ -249,7 +249,7 @@ func (r *StackRenderer) RenderMetrics(stack *Stack) string {
 		totalCIM += e.TotalEnergy
 		totalTraditional += e.TotalEnergy * e.TraditionalComp
 	}
-	sb.WriteString(fmt.Sprintf("  IronLattice:      %.3f pJ\n", totalCIM))
+	sb.WriteString(fmt.Sprintf("  FeCIM:      %.3f pJ\n", totalCIM))
 	sb.WriteString(fmt.Sprintf("  Traditional:      %.1f pJ\n", totalTraditional))
 	sb.WriteString(fmt.Sprintf("  Advantage:        %.0fx lower energy!\n", totalTraditional/totalCIM))
 	sb.WriteString("\n")

@@ -1,5 +1,5 @@
 // Package layers provides spiking neural network (SNN) and mixed-precision
-// quantization implementations for IronLattice ferroelectric CIM technology.
+// quantization implementations for FeCIM ferroelectric CIM technology.
 //
 // This module implements:
 // - Leaky Integrate-and-Fire (LIF) neurons with FeFET synapses
@@ -1378,8 +1378,8 @@ func (cim2pq *CIM2PQQuantizer) mutate(g *QuantizationGenome) {
 // INTEGRATED SNN + MIXED-PRECISION SYSTEM
 // =============================================================================
 
-// IronLatticeSNNMPQConfig configures integrated system
-type IronLatticeSNNMPQConfig struct {
+// FeCIMSNNMPQConfig configures integrated system
+type FeCIMSNNMPQConfig struct {
 	SNNCrossbarConfig  *SNNCrossbarConfig
 	MPQConfig          *MixedPrecisionConfig
 	CMQConfig          *CMQConfig
@@ -1397,9 +1397,9 @@ type IronLatticeSNNMPQConfig struct {
 	TargetEnergy       float64 // Target energy (fJ/op)
 }
 
-// DefaultIronLatticeSNNMPQConfig returns standard system settings
-func DefaultIronLatticeSNNMPQConfig() *IronLatticeSNNMPQConfig {
-	return &IronLatticeSNNMPQConfig{
+// DefaultFeCIMSNNMPQConfig returns standard system settings
+func DefaultFeCIMSNNMPQConfig() *FeCIMSNNMPQConfig {
+	return &FeCIMSNNMPQConfig{
 		SNNCrossbarConfig: &SNNCrossbarConfig{
 			Rows:          64,
 			Cols:          64,
@@ -1422,9 +1422,9 @@ func DefaultIronLatticeSNNMPQConfig() *IronLatticeSNNMPQConfig {
 	}
 }
 
-// IronLatticeSNNMPQ implements integrated SNN + mixed-precision system
-type IronLatticeSNNMPQ struct {
-	Config *IronLatticeSNNMPQConfig
+// FeCIMSNNMPQ implements integrated SNN + mixed-precision system
+type FeCIMSNNMPQ struct {
+	Config *FeCIMSNNMPQConfig
 
 	// Components
 	SNNCrossbar   *SNNCrossbar
@@ -1444,13 +1444,13 @@ type IronLatticeSNNMPQ struct {
 	OverallImprovement float64 // Combined improvement
 }
 
-// NewIronLatticeSNNMPQ creates a new integrated system
-func NewIronLatticeSNNMPQ(config *IronLatticeSNNMPQConfig) *IronLatticeSNNMPQ {
+// NewFeCIMSNNMPQ creates a new integrated system
+func NewFeCIMSNNMPQ(config *FeCIMSNNMPQConfig) *FeCIMSNNMPQ {
 	if config == nil {
-		config = DefaultIronLatticeSNNMPQConfig()
+		config = DefaultFeCIMSNNMPQConfig()
 	}
 
-	system := &IronLatticeSNNMPQ{
+	system := &FeCIMSNNMPQ{
 		Config: config,
 	}
 
@@ -1471,7 +1471,7 @@ func NewIronLatticeSNNMPQ(config *IronLatticeSNNMPQConfig) *IronLatticeSNNMPQ {
 }
 
 // OptimizeSystem runs full optimization pipeline
-func (sys *IronLatticeSNNMPQ) OptimizeSystem(
+func (sys *FeCIMSNNMPQ) OptimizeSystem(
 	weights [][][]float64,
 	gradients [][][]float64,
 	evalFunc func(weights [][][]float64, precisions []int) float64,
@@ -1532,7 +1532,7 @@ func (sys *IronLatticeSNNMPQ) OptimizeSystem(
 }
 
 // computeSystemMetrics calculates overall system performance
-func (sys *IronLatticeSNNMPQ) computeSystemMetrics() {
+func (sys *FeCIMSNNMPQ) computeSystemMetrics() {
 	// SNN energy improvement (typically 10-100x over ANN)
 	if sys.Config.EnableSNN && sys.SNNCrossbar != nil {
 		// Event-driven SNN is much more efficient for sparse inputs
@@ -1558,7 +1558,7 @@ func (sys *IronLatticeSNNMPQ) computeSystemMetrics() {
 }
 
 // RunSNNInference performs SNN-based inference
-func (sys *IronLatticeSNNMPQ) RunSNNInference(
+func (sys *FeCIMSNNMPQ) RunSNNInference(
 	input []float64,
 	duration float64,
 ) []float64 {
@@ -1593,7 +1593,7 @@ func (sys *IronLatticeSNNMPQ) RunSNNInference(
 }
 
 // QuantizeModel applies mixed-precision quantization to model
-func (sys *IronLatticeSNNMPQ) QuantizeModel(
+func (sys *FeCIMSNNMPQ) QuantizeModel(
 	weights [][][]float64,
 ) [][][]float64 {
 	if sys.MPQuantizer == nil {
@@ -1614,7 +1614,7 @@ func (sys *IronLatticeSNNMPQ) QuantizeModel(
 }
 
 // GetStatistics returns system performance statistics
-func (sys *IronLatticeSNNMPQ) GetStatistics() map[string]float64 {
+func (sys *FeCIMSNNMPQ) GetStatistics() map[string]float64 {
 	stats := make(map[string]float64)
 
 	stats["total_energy_fJ"] = sys.TotalEnergy

@@ -1,6 +1,6 @@
 # Demo 1: Ferroelectric Hysteresis Visualization
 
-**IronLattice Visualizer - Ferroelectric P-E Curve**
+**Ferroelectric CIM Visualizer - Ferroelectric P-E Curve**
 
 > *"It's got 30 discrete states. So it's not 0-1-0-1."* — Dr. external research group
 
@@ -11,12 +11,12 @@
 
 ## Overview
 
-Demo 1 provides an interactive visualization of ferroelectric hysteresis in HfO2-ZrO2 (HZO) superlattice materials. This demo illustrates the fundamental physics of ferroelectric memory cells that enable IronLattice's compute-in-memory technology.
+Demo 1 provides an interactive visualization of ferroelectric hysteresis in HfO2-ZrO2 (HZO) superlattice materials. This demo illustrates the fundamental physics of ferroelectric memory cells that enable Ferroelectric CIM's compute-in-memory technology.
 
 ### What This Demo Shows
 
 1. **P-E Hysteresis Loop** — The characteristic polarization-electric field curve of ferroelectric materials
-2. **30 Discrete States** — How IronLattice achieves multi-level cell (MLC) storage with ~4.9 bits/cell
+2. **30 Discrete States** — How Ferroelectric CIM achieves multi-level cell (MLC) storage with ~4.9 bits/cell
 3. **Preisach Hysteresis Model** — Physics-accurate simulation of domain switching
 4. **Real-time Simulation** — Interactive control of electric field and waveforms
 5. **Write/Read Operations** — Demonstrates non-volatile memory behavior
@@ -43,7 +43,7 @@ go build -o hysteresis ./cmd/demo
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│  IronLattice Ferroelectric Hysteresis Visualization                                       │
+│  Ferroelectric CIM Ferroelectric Hysteresis Visualization                                       │
 │  "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. external research group                     │
 ├───────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                           │
@@ -146,7 +146,7 @@ Linear spacing in polarization, not voltage thresholds.
 
 ### Key Parameters (HZO Materials)
 
-| Parameter | Default HZO | Optimized | IronLattice |
+| Parameter | Default HZO | Optimized | Ferroelectric CIM |
 |-----------|-------------|-----------|-------------|
 | Pr (µC/cm²) | 25 | 45 | 30 |
 | Ps (µC/cm²) | 30 | 50 | 35 |
@@ -242,11 +242,11 @@ sudo pacman -S mesa libxcursor libxrandr libxinerama libxi
 1. Mayergoyz, I.D. "Mathematical Models of Hysteresis" IEEE Trans. Mag. (1986)
 2. Böscke et al. "Ferroelectricity in HfO₂ Thin Films" APL (2011)
 3. Park et al. "Ferroelectricity in Doped Hafnium Oxide" Adv. Mater. (2015)
-4. Dr. external research group, "IronLattice Presentation" (Nov 2024)
+4. Dr. external research group, "Ferroelectric CIM Presentation" (Nov 2024)
 5. Bartic et al. "Preisach Model for Ferroelectric Capacitors" J. Appl. Phys. (2001)
 
 ---
 
 ## License
 
-Part of the IronLattice Visualizer project.
+Part of the Ferroelectric CIM Visualizer project.

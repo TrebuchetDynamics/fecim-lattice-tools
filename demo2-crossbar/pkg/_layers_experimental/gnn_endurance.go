@@ -1,5 +1,5 @@
 // gnn_endurance.go - GNN CIM Acceleration and Ferroelectric Endurance Enhancement
-// IronLattice Ferroelectric CIM Educational Simulation
+// FeCIM Ferroelectric CIM Educational Simulation
 //
 // This module implements:
 // 1. Graph Neural Network (GNN) Acceleration:

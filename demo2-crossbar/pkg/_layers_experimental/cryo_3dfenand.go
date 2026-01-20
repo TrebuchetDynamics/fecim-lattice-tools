@@ -1,5 +1,5 @@
 // Package layers provides cryogenic ferroelectric computing and 3D FeNAND
-// array simulation for IronLattice CIM systems.
+// array simulation for FeCIM CIM systems.
 //
 // Based on research findings:
 // - Cryogenic HZO FeFET: 75 µC/cm² Pr at 4K, 6-8V memory window (Adv. Elec. Mat. 2024)
@@ -9,7 +9,7 @@
 // - Ultra-low power FeFET: 5-bit/cell, 96% power savings (Nature 2025)
 // - Hybrid FeNAND paradigm for next-gen memory (arXiv Dec 2025)
 //
-// Reference: IronLattice Research Log Sections 282-283
+// Reference: FeCIM Research Log Sections 282-283
 package layers
 
 import (
@@ -718,8 +718,8 @@ func (bnn *BayesianNNSupport) ProgramSampledWeights(sampled [][]float64) error {
 // INTEGRATED IRONLATTICE CRYOGENIC 3D SYSTEM
 // ============================================================================
 
-// IronLatticeCryo3D integrates cryogenic computing with 3D FeNAND
-type IronLatticeCryo3D struct {
+// FeCIMCryo3D integrates cryogenic computing with 3D FeNAND
+type FeCIMCryo3D struct {
 	// Configuration
 	CryoConfig   *CryogenicConfig
 	FeNANDConfig *FeNANDConfig
@@ -747,9 +747,9 @@ type QuantumGateControl struct {
 	Fidelity      float64
 }
 
-// NewIronLatticeCryo3D creates the integrated system
-func NewIronLatticeCryo3D(cryoConfig *CryogenicConfig, fenandConfig *FeNANDConfig) *IronLatticeCryo3D {
-	system := &IronLatticeCryo3D{
+// NewFeCIMCryo3D creates the integrated system
+func NewFeCIMCryo3D(cryoConfig *CryogenicConfig, fenandConfig *FeNANDConfig) *FeCIMCryo3D {
+	system := &FeCIMCryo3D{
 		CryoConfig:   cryoConfig,
 		FeNANDConfig: fenandConfig,
 		CryoCrossbar: NewCryogenicCrossbar(cryoConfig, 64, 64),
@@ -768,7 +768,7 @@ func NewIronLatticeCryo3D(cryoConfig *CryogenicConfig, fenandConfig *FeNANDConfi
 }
 
 // RunCryogenicInference runs inference on cryogenic crossbar
-func (ilc *IronLatticeCryo3D) RunCryogenicInference(input []float64) ([]float64, error) {
+func (ilc *FeCIMCryo3D) RunCryogenicInference(input []float64) ([]float64, error) {
 	// Run MVM on cryogenic crossbar
 	output := ilc.CryoCrossbar.ComputeMVM(input)
 
@@ -787,7 +787,7 @@ func (ilc *IronLatticeCryo3D) RunCryogenicInference(input []float64) ([]float64,
 }
 
 // RunHighDensityInference runs inference on 3D FeNAND
-func (ilc *IronLatticeCryo3D) RunHighDensityInference(input []float64, outputSize int) []float64 {
+func (ilc *FeCIMCryo3D) RunHighDensityInference(input []float64, outputSize int) []float64 {
 	output := ilc.FeNANDArray.ComputeLayerMVM(input, outputSize)
 
 	ilc.TotalInferences++
@@ -801,7 +801,7 @@ func (ilc *IronLatticeCryo3D) RunHighDensityInference(input []float64, outputSiz
 }
 
 // RunBayesianInference runs Bayesian inference with uncertainty
-func (ilc *IronLatticeCryo3D) RunBayesianInference(input []float64, numSamples int) ([]float64, []float64) {
+func (ilc *FeCIMCryo3D) RunBayesianInference(input []float64, numSamples int) ([]float64, []float64) {
 	outputSize := ilc.BayesianNN.Array.Config.CellsPerString
 	allOutputs := make([][]float64, numSamples)
 
@@ -845,7 +845,7 @@ func (ilc *IronLatticeCryo3D) RunBayesianInference(input []float64, numSamples i
 }
 
 // AddQuantumGateControl adds a quantum gate control interface
-func (ilc *IronLatticeCryo3D) AddQuantumGateControl(gateID int, voltage float64) error {
+func (ilc *FeCIMCryo3D) AddQuantumGateControl(gateID int, voltage float64) error {
 	if !ilc.QuantumControlReady {
 		return fmt.Errorf("system not ready for quantum control (temp: %.1fK)", ilc.CryoConfig.TemperatureK)
 	}
@@ -862,7 +862,7 @@ func (ilc *IronLatticeCryo3D) AddQuantumGateControl(gateID int, voltage float64)
 }
 
 // GetStatistics returns system statistics
-func (ilc *IronLatticeCryo3D) GetStatistics() map[string]interface{} {
+func (ilc *FeCIMCryo3D) GetStatistics() map[string]interface{} {
 	stats := make(map[string]interface{})
 
 	stats["temperature_K"] = ilc.CryoConfig.TemperatureK
@@ -880,7 +880,7 @@ func (ilc *IronLatticeCryo3D) GetStatistics() map[string]interface{} {
 }
 
 // Preset configurations
-func IronLatticeCryo3DPreset(scenario string) (*CryogenicConfig, *FeNANDConfig) {
+func FeCIMCryo3DPreset(scenario string) (*CryogenicConfig, *FeNANDConfig) {
 	switch scenario {
 	case "quantum_control":
 		// For quantum computing control electronics

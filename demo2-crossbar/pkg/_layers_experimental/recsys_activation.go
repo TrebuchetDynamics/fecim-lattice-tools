@@ -1,5 +1,5 @@
 // recsys_activation.go - Recommendation System CIM and Low-Power Activation Functions
-// IronLattice Ferroelectric CIM Educational Simulation
+// FeCIM Ferroelectric CIM Educational Simulation
 //
 // This module implements:
 // 1. Recommendation System CIM Acceleration:

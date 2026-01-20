@@ -13,16 +13,16 @@ import (
 	"math/rand"
 	"time"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo3-mnist/pkg/mnist"
-	"ironlattice-vis/demo3-mnist/pkg/training"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	fmt.Println("============================================")
-	fmt.Println("IronLattice MNIST Training (MNISTNetwork)")
+	fmt.Println("FeCIM MNIST Training (MNISTNetwork)")
 	fmt.Println("Target: 87% accuracy (Dr. Tour's spec)")
 	fmt.Println("30 discrete analog levels")
 	fmt.Println("============================================")
@@ -125,7 +125,7 @@ func main() {
 	fmt.Printf("Final Test Accuracy: %.1f%% (Target: 87%%)\n", finalAcc*100)
 
 	if finalAcc >= 0.87 {
-		fmt.Println("✓ IronLattice target ACHIEVED!")
+		fmt.Println("✓ FeCIM target ACHIEVED!")
 	} else if finalAcc >= 0.85 {
 		fmt.Println("~ Close to target (within 2%)")
 	}

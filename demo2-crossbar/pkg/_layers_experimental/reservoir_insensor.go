@@ -1302,8 +1302,8 @@ func RunReservoirBenchmarks() []ReservoirBenchmark {
 // INTEGRATION WITH IRONLATTICE
 // =============================================================================
 
-// IronLatticeReservoirConfig configures HZO-based reservoir
-type IronLatticeReservoirConfig struct {
+// FeCIMReservoirConfig configures HZO-based reservoir
+type FeCIMReservoirConfig struct {
 	// HZO parameters
 	HfZrRatio      float64 // Hf:Zr ratio
 	FilmThickness  float64 // nm
@@ -1319,9 +1319,9 @@ type IronLatticeReservoirConfig struct {
 	Temperature    float64 // K
 }
 
-// DefaultIronLatticeReservoirConfig returns IronLattice-optimized config
-func DefaultIronLatticeReservoirConfig() IronLatticeReservoirConfig {
-	return IronLatticeReservoirConfig{
+// DefaultFeCIMReservoirConfig returns FeCIM-optimized config
+func DefaultFeCIMReservoirConfig() FeCIMReservoirConfig {
+	return FeCIMReservoirConfig{
 		HfZrRatio:      0.5,  // 50:50 for optimal orthorhombic
 		FilmThickness:  10,   // 10nm for FeFET
 		GrainSize:      20,   // 20nm grains
@@ -1333,17 +1333,17 @@ func DefaultIronLatticeReservoirConfig() IronLatticeReservoirConfig {
 	}
 }
 
-// IronLatticeReservoir implements HZO-based reservoir for IronLattice
-type IronLatticeReservoir struct {
-	Config      IronLatticeReservoirConfig
+// FeCIMReservoir implements HZO-based reservoir for FeCIM
+type FeCIMReservoir struct {
+	Config      FeCIMReservoirConfig
 	FeFETs      []*FeFETDevice
 	ReadoutWeights [][]float64
 	MemoryCapacity float64
 }
 
-// NewIronLatticeReservoir creates IronLattice HZO reservoir
-func NewIronLatticeReservoir(config IronLatticeReservoirConfig) *IronLatticeReservoir {
-	ilr := &IronLatticeReservoir{
+// NewFeCIMReservoir creates FeCIM HZO reservoir
+func NewFeCIMReservoir(config FeCIMReservoirConfig) *FeCIMReservoir {
+	ilr := &FeCIMReservoir{
 		Config: config,
 		FeFETs: make([]*FeFETDevice, config.NumDevices),
 	}
@@ -1358,8 +1358,8 @@ func NewIronLatticeReservoir(config IronLatticeReservoirConfig) *IronLatticeRese
 	return ilr
 }
 
-// Process processes input through IronLattice reservoir
-func (ilr *IronLatticeReservoir) Process(input []float64) []float64 {
+// Process processes input through FeCIM reservoir
+func (ilr *FeCIMReservoir) Process(input []float64) []float64 {
 	states := make([]float64, len(ilr.FeFETs))
 
 	for i, fet := range ilr.FeFETs {
@@ -1397,7 +1397,7 @@ func (ilr *IronLatticeReservoir) Process(input []float64) []float64 {
 }
 
 // GetExpectedMemoryCapacity returns expected MC based on HZO properties
-func (ilr *IronLatticeReservoir) GetExpectedMemoryCapacity() float64 {
+func (ilr *FeCIMReservoir) GetExpectedMemoryCapacity() float64 {
 	// HZO provides good retention for reservoir states
 	// Expected 50-60 with leaky-FeFET mode
 	baseCapacity := 30.0

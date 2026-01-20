@@ -312,7 +312,7 @@ func TestConductanceRange(t *testing.T) {
 
 	states := model.DiscreteStates(30)
 
-	// Check conductance range (should be 1-100 µS for IronLattice)
+	// Check conductance range (should be 1-100 µS for FeCIM)
 	Gmin := states[0].Conductance
 	Gmax := states[29].Conductance
 

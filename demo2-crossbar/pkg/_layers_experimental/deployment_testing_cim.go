@@ -1,5 +1,5 @@
 // deployment_testing_cim.go - CIM Deployment Frameworks and Testing/Validation
-// IronLattice Visualization Project - Iteration 143
+// FeCIM Visualization Project - Iteration 143
 //
 // This module implements deployment pipelines and testing methodologies for
 // compute-in-memory systems, including ONNX model conversion, edge deployment,

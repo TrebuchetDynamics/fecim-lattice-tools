@@ -1,18 +1,18 @@
-# The IronLattice Protocol: Solid-State Physics, Neuromorphic Architecture, and the Compute-in-Memory Revolution via Ferroelectric Superlattices
+# The Ferroelectric CIM Protocol: Solid-State Physics, Neuromorphic Architecture, and the Compute-in-Memory Revolution via Ferroelectric Superlattices
 
 ---
 
 ## Executive Summary
 
-The semiconductor industry stands at a technological precipice defined by two existential barriers: the end of Dennard scaling and the Von Neumann "Memory Wall." While transistor density has followed Moore's Law, the energy efficiency of data movement has stagnated, making the transfer of information between memory (DRAM) and processor (CPU/GPU) the dominant bottleneck for Artificial Intelligence (AI) workloads. In this context, the emerging IronLattice technology, incubated in Dr. external research group's laboratory at external research institution and led by Dr. Jaeho Shin, proposes a radical paradigm shift: Compute-in-Memory (CIM) based on ferroelectric oxide superlattices.
+The semiconductor industry stands at a technological precipice defined by two existential barriers: the end of Dennard scaling and the Von Neumann "Memory Wall." While transistor density has followed Moore's Law, the energy efficiency of data movement has stagnated, making the transfer of information between memory (DRAM) and processor (CPU/GPU) the dominant bottleneck for Artificial Intelligence (AI) workloads. In this context, the emerging Ferroelectric CIM technology, incubated in Dr. external research group's laboratory at external research institution and led by Dr. Jaeho Shin, proposes a radical paradigm shift: Compute-in-Memory (CIM) based on ferroelectric oxide superlattices.
 
-This technical report, designed as an exhaustive doctoral-level compendium, breaks down the fundamental physics, device engineering, AI algorithms, and simulation strategies necessary to understand and build IronLattice technology. Unlike conventional solid alloys, IronLattice uses an atomically precise HfO₂/ZrO₂ superlattice structure to stabilize the polar orthorhombic phase (Pca2₁), enabling analog synaptic devices with unprecedented linearity, endurance, and energy efficiency.
+This technical report, designed as an exhaustive doctoral-level compendium, breaks down the fundamental physics, device engineering, AI algorithms, and simulation strategies necessary to understand and build Ferroelectric CIM technology. Unlike conventional solid alloys, Ferroelectric CIM uses an atomically precise HfO₂/ZrO₂ superlattice structure to stabilize the polar orthorhombic phase (Pca2₁), enabling analog synaptic devices with unprecedented linearity, endurance, and energy efficiency.
 
 ---
 
 ## AREA 1: SOLID-STATE PHYSICS IN HAFNIUM OXIDES
 
-The foundation of IronLattice technology is not digital electronics, but advanced materials physics. To understand how a memory can perform calculations, we must first understand how hafnium dioxide (HfO₂), a standard dielectric material, transforms into an intelligent material capable of remembering its electrical history.
+The foundation of Ferroelectric CIM technology is not digital electronics, but advanced materials physics. To understand how a memory can perform calculations, we must first understand how hafnium dioxide (HfO₂), a standard dielectric material, transforms into an intelligent material capable of remembering its electrical history.
 
 ### 1.1 Crystallography and Phase Stabilization
 
@@ -20,9 +20,9 @@ Historically, HfO₂ has been used in the CMOS industry solely as an amorphous o
 
 #### 1.1.1 The Elusive Orthorhombic Phase (Pca2₁)
 
-The fundamental discovery enabling IronLattice is the kinetic stabilization of a metastable phase: the orthorhombic phase with space group Pca2₁. In this structure, oxygen atoms are displaced from their high-symmetry positions, creating two distinct oxygen sublattices: oxygen coordinated in three (3C) and four (4C) positions. The collective displacement of 3C oxygen anions along the c-axis breaks centrosymmetry and generates spontaneous polarization (Pₛ).
+The fundamental discovery enabling Ferroelectric CIM is the kinetic stabilization of a metastable phase: the orthorhombic phase with space group Pca2₁. In this structure, oxygen atoms are displaced from their high-symmetry positions, creating two distinct oxygen sublattices: oxygen coordinated in three (3C) and four (4C) positions. The collective displacement of 3C oxygen anions along the c-axis breaks centrosymmetry and generates spontaneous polarization (Pₛ).
 
-The thermodynamics of this phase are precarious. The free energy difference between the monoclinic phase (non-polar, stable) and the orthorhombic phase (polar, metastable) is small, but the activation barrier for transformation is high. To stabilize the Pca2₁ phase necessary for IronLattice, entropy and strain engineering strategies are employed:
+The thermodynamics of this phase are precarious. The free energy difference between the monoclinic phase (non-polar, stable) and the orthorhombic phase (polar, metastable) is small, but the activation barrier for transformation is high. To stabilize the Pca2₁ phase necessary for Ferroelectric CIM, entropy and strain engineering strategies are employed:
 
 - **Grain Size Effect:** The orthorhombic phase has a lower surface energy than the monoclinic phase. Therefore, in nanocrystalline grains (<10 nm) or ultrathin films, the Pca2₁ phase becomes energetically favorable due to the surface contribution to the total Gibbs free energy.
 
@@ -32,7 +32,7 @@ The thermodynamics of this phase are precarious. The free energy difference betw
 
 ### 1.2 Ferroelectricity Mechanisms and Domains
 
-Ferroelectricity in IronLattice manifests through the ability to invert the polarization vector by applying an external electric field greater than the coercive field (Eᶜ). However, at the microscopic level, this process is not uniform.
+Ferroelectricity in Ferroelectric CIM manifests through the ability to invert the polarization vector by applying an external electric field greater than the coercive field (Eᶜ). However, at the microscopic level, this process is not uniform.
 
 #### 1.2.1 Domain Dynamics and Domain Walls
 
@@ -44,7 +44,7 @@ The switching process, which constitutes writing a bit or updating a synaptic we
 
 2. **Growth:** Nuclei rapidly expand in the field direction (longitudinal growth) and more slowly laterally, moving domain walls through the crystal until they coalesce.
 
-Understanding this dynamics is crucial for analog computing. While a digital memory seeks complete and rapid switching, IronLattice exploits partial switching. By controlling the time or amplitude of the voltage pulse, domain wall propagation can be stopped at intermediate points, creating a mixture of "up" and "down" domains. The macroscopic average of this mixed polarization defines the analog conductance state (the "weight") of the device.
+Understanding this dynamics is crucial for analog computing. While a digital memory seeks complete and rapid switching, Ferroelectric CIM exploits partial switching. By controlling the time or amplitude of the voltage pulse, domain wall propagation can be stopped at intermediate points, creating a mixture of "up" and "down" domains. The macroscopic average of this mixed polarization defines the analog conductance state (the "weight") of the device.
 
 ### 1.3 The Ferroelectric Hysteresis Curve
 
@@ -60,7 +60,7 @@ The area enclosed within the hysteresis loop represents the energy dissipated pe
 
 ### 1.4 Physics of HfO₂/ZrO₂ Superlattices
 
-Here lies IronLattice's central innovation and Dr. Jaeho Shin's work. While the general industry uses solid solutions (HZO, a random mixture of Hf and Zr atoms), IronLattice employs Superlattices.
+Here lies Ferroelectric CIM's central innovation and Dr. Jaeho Shin's work. While the general industry uses solid solutions (HZO, a random mixture of Hf and Zr atoms), Ferroelectric CIM employs Superlattices.
 
 #### 1.4.1 Superlattice vs. Solid Solution
 
@@ -76,17 +76,17 @@ A superlattice consists of alternating discrete layers of HfO₂ and ZrO₂ (for
 
 ## AREA 2: SEMICONDUCTOR DEVICES AND MEMORIES
 
-The material physics must be encapsulated in a functional device. Compatibility with the CMOS (Complementary Metal-Oxide-Semiconductor) process is the economic imperative that separates IronLattice from niche technologies.
+The material physics must be encapsulated in a functional device. Compatibility with the CMOS (Complementary Metal-Oxide-Semiconductor) process is the economic imperative that separates Ferroelectric CIM from niche technologies.
 
 ### 2.1 CMOS Integration and Scalability
 
-IronLattice benefits from hafnium oxide already being an omnipresent material in modern chip foundries, used as a gate dielectric in advanced logic transistors. Unlike traditional ferroelectrics containing lead or bismuth (lethal contaminants for silicon), HZO is "CMOS-friendly."
+Ferroelectric CIM benefits from hafnium oxide already being an omnipresent material in modern chip foundries, used as a gate dielectric in advanced logic transistors. Unlike traditional ferroelectrics containing lead or bismuth (lethal contaminants for silicon), HZO is "CMOS-friendly."
 
-The fabrication of an IronLattice superlattice is typically performed via Atomic Layer Deposition (ALD). This process allows angstrom-level thickness control, sequentially depositing Hafnium and Zirconium precursors. Integration can be "Front-End-of-Line" (FEOL), building memory directly alongside logic transistors, or "Back-End-of-Line" (BEOL), depositing memory in the upper metallic interconnection layers, allowing memory to be stacked on logic for extreme densities.
+The fabrication of an Ferroelectric CIM superlattice is typically performed via Atomic Layer Deposition (ALD). This process allows angstrom-level thickness control, sequentially depositing Hafnium and Zirconium precursors. Integration can be "Front-End-of-Line" (FEOL), building memory directly alongside logic transistors, or "Back-End-of-Line" (BEOL), depositing memory in the upper metallic interconnection layers, allowing memory to be stacked on logic for extreme densities.
 
 ### 2.2 Device Architecture: FeFET
 
-There are several ways to build a ferroelectric memory, but for Artificial Intelligence in-memory (CIM) applications, the Ferroelectric Field-Effect Transistor (FeFET) is the superior architecture chosen by IronLattice.
+There are several ways to build a ferroelectric memory, but for Artificial Intelligence in-memory (CIM) applications, the Ferroelectric Field-Effect Transistor (FeFET) is the superior architecture chosen by Ferroelectric CIM.
 
 #### 2.2.1 FeFET vs. FeRAM vs. FTJ
 
@@ -100,11 +100,11 @@ There are several ways to build a ferroelectric memory, but for Artificial Intel
 
 #### 2.2.2 The Depolarization Field Challenge
 
-A critical challenge in FeFETs is the depolarization field (Eₐₑₚ). When no voltage is applied, polarization charges in the ferroelectric induce opposite charges in the semiconductor, creating an internal electric field that fights to depolarize the material, threatening data retention. IronLattice superlattices, through engineering of intercalated dielectric layers, help mitigate this effect by stabilizing domains through electrostatic coupling between layers.
+A critical challenge in FeFETs is the depolarization field (Eₐₑₚ). When no voltage is applied, polarization charges in the ferroelectric induce opposite charges in the semiconductor, creating an internal electric field that fights to depolarize the material, threatening data retention. Ferroelectric CIM superlattices, through engineering of intercalated dielectric layers, help mitigate this effect by stabilizing domains through electrostatic coupling between layers.
 
 ### 2.3 Non-Volatile Memory Comparison
 
-To position IronLattice in the market, comparing its fundamental metrics with competing technologies is crucial.
+To position Ferroelectric CIM in the market, comparing its fundamental metrics with competing technologies is crucial.
 
 | Technology | Physical Mechanism | Endurance (Cycles) | Write Speed | Write Energy | Analog CIM Suitability |
 |------------|-------------------|-------------------|-------------|--------------|----------------------|
@@ -112,9 +112,9 @@ To position IronLattice in the market, comparing its fundamental metrics with co
 | ReRAM | Conductive Filament | 10⁶ - 10⁹ | Fast (ns) | Medium | Medium (Noise and stochasticity problems) |
 | PCM | Phase Change (Heat) | 10⁸ | Medium | Very High (melting) | Medium (Resistance drift) |
 | MRAM | Magnetic Spin | >10¹⁵ | Very Fast | Low | Low (Very small resistance window, ~200%) |
-| **IronLattice (FeFET)** | Superlattice Polarization | >10¹⁰ - 10¹² | Fast (ns) | Very Low (Electric Field) | High (Superior linearity, analog states) |
+| **Ferroelectric CIM (FeFET)** | Superlattice Polarization | >10¹⁰ - 10¹² | Fast (ns) | Very Low (Electric Field) | High (Superior linearity, analog states) |
 
-**Strategic Insight:** While MRAM wins in infinite endurance, it lacks the dynamic range (Rₒff/Rₒₙ) necessary to store multiple bits per cell (analog weights). ReRAM has dynamic range, but its filamentary nature is noisy and difficult to control for linear updates. IronLattice (superlattice FeFET) occupies the "sweet spot": high endurance, low consumption (field switching, not current), and excellent analog control thanks to the superlattice's domain dynamics.
+**Strategic Insight:** While MRAM wins in infinite endurance, it lacks the dynamic range (Rₒff/Rₒₙ) necessary to store multiple bits per cell (analog weights). ReRAM has dynamic range, but its filamentary nature is noisy and difficult to control for linear updates. Ferroelectric CIM (superlattice FeFET) occupies the "sweet spot": high endurance, low consumption (field switching, not current), and excellent analog control thanks to the superlattice's domain dynamics.
 
 ---
 
@@ -126,11 +126,11 @@ Classical computer architecture separates the processing unit (CPU/GPU) from mem
 
 ### 3.2 The Crossbar Matrix and Kirchhoff's Laws
 
-IronLattice solves this problem by eliminating data movement. Computation occurs within memory using a crossbar array architecture.
+Ferroelectric CIM solves this problem by eliminating data movement. Computation occurs within memory using a crossbar array architecture.
 
 #### 3.2.1 Analog Matrix-Vector Multiplication (MVM)
 
-The fundamental AI operation is multiplying a weight matrix (W) by an input vector (X): Y = W × X. In IronLattice, this is performed instantaneously by leveraging the laws of physics:
+The fundamental AI operation is multiplying a weight matrix (W) by an input vector (X): Y = W × X. In Ferroelectric CIM, this is performed instantaneously by leveraging the laws of physics:
 
 - **Ohm's Law (Multiplication):** Each FeFET memory cell stores a weight as a conductance Gᵢⱼ. The input is applied as a voltage Vᵢ on the word line. The resulting current through the cell is Iᵢⱼ = Vᵢ × Gᵢⱼ.
 
@@ -140,10 +140,10 @@ This allows performing a complete matrix multiplication in a single clock step (
 
 ### 3.3 Analog Computing Challenges
 
-Despite its efficiency, analog computing introduces noise. Precision is not infinite as in digital (32/64 bits). IronLattice must manage:
+Despite its efficiency, analog computing introduces noise. Precision is not infinite as in digital (32/64 bits). Ferroelectric CIM must manage:
 
 - **Read/Write Noise:** Thermal and electronic variations.
-- **Converter Consumption (ADC/DAC):** To communicate with the rest of the digital system, analog signals must be converted. High-precision Analog-to-Digital Converters (ADC) are costly in area and energy. Therefore, IronLattice benefits from operating with low precision (INT4, INT8) where ADC requirements are lower.
+- **Converter Consumption (ADC/DAC):** To communicate with the rest of the digital system, analog signals must be converted. High-precision Analog-to-Digital Converters (ADC) are costly in area and energy. Therefore, Ferroelectric CIM benefits from operating with low precision (INT4, INT8) where ADC requirements are lower.
 
 ---
 
@@ -151,7 +151,7 @@ Despite its efficiency, analog computing introduces noise. Precision is not infi
 
 ### 4.1 Mapping Algorithms to Hardware
 
-IronLattice hardware is designed to accelerate Deep Neural Networks (DNNs). The trained synaptic weights of a model (for example, a Transformer or CNN) are transferred to the conductance states of the FeFETs. Since conductance is always positive, device pairs (differential conductance G⁺ - G⁻) are typically used to represent positive and negative weights.
+Ferroelectric CIM hardware is designed to accelerate Deep Neural Networks (DNNs). The trained synaptic weights of a model (for example, a Transformer or CNN) are transferred to the conductance states of the FeFETs. Since conductance is always positive, device pairs (differential conductance G⁺ - G⁻) are typically used to represent positive and negative weights.
 
 ### 4.2 Linearity and Symmetry in Training
 
@@ -160,17 +160,17 @@ For a chip to not only execute (inference) but also learn (online training), wei
 - **Linearity:** An identical voltage pulse should cause the same conductance change (ΔG) regardless of the device's current state.
 - **Symmetry:** The ease of increasing the weight (Potentiation) should equal the ease of decreasing it (Depression).
 
-Most emerging technologies fail here. IronLattice superlattices, however, have demonstrated superior linearity and symmetry (see Figure S53). The multilayer structure moderates domain switching, avoiding abrupt changes and allowing gradual and controlled weight updating, essential for the Backpropagation algorithm to converge correctly.
+Most emerging technologies fail here. Ferroelectric CIM superlattices, however, have demonstrated superior linearity and symmetry (see Figure S53). The multilayer structure moderates domain switching, avoiding abrupt changes and allowing gradual and controlled weight updating, essential for the Backpropagation algorithm to converge correctly.
 
 ### 4.3 Noise-Aware Training
 
-Since analog hardware is intrinsically noisy, IronLattice employs Noise-Aware Training techniques. During the model training phase (in software), deliberate Gaussian noise is injected into weights and activations, simulating the physical imperfections of the chip (cycle-to-cycle variability, read noise). This forces the neural network to find robust and flat solutions in the optimization landscape, so that when the model is loaded onto the physical IronLattice chip, its performance does not degrade despite the device's real noise.
+Since analog hardware is intrinsically noisy, Ferroelectric CIM employs Noise-Aware Training techniques. During the model training phase (in software), deliberate Gaussian noise is injected into weights and activations, simulating the physical imperfections of the chip (cycle-to-cycle variability, read noise). This forces the neural network to find robust and flat solutions in the optimization landscape, so that when the model is loaded onto the physical Ferroelectric CIM chip, its performance does not degrade despite the device's real noise.
 
 ### 4.4 Neuromorphic Computing and SNNs
 
-Beyond conventional Deep Learning, IronLattice enables Spiking Neural Networks (SNNs). These networks more faithfully mimic the biological brain, communicating through voltage spikes dispersed over time.
+Beyond conventional Deep Learning, Ferroelectric CIM enables Spiking Neural Networks (SNNs). These networks more faithfully mimic the biological brain, communicating through voltage spikes dispersed over time.
 
-**STDP Plasticity:** IronLattice devices can implement Spike-Timing Dependent Plasticity (STDP), a biological learning rule where the synaptic connection strengthens if the input precedes the output. The intrinsic temporal dynamics of ferroelectric polarization and pulse interaction in the FeFET allow STDP implementation naturally without complex external circuitry.
+**STDP Plasticity:** Ferroelectric CIM devices can implement Spike-Timing Dependent Plasticity (STDP), a biological learning rule where the synaptic connection strengthens if the input precedes the output. The intrinsic temporal dynamics of ferroelectric polarization and pulse interaction in the FeFET allow STDP implementation naturally without complex external circuitry.
 
 ---
 
@@ -237,7 +237,7 @@ Using Vulkan's graphics pipeline, these simulations are rendered in real time. T
 
 ## AREA 8: PRACTICAL APPLICATIONS
 
-The ultimate test of any technology is its real-world utility. IronLattice targets multiple high-value application domains.
+The ultimate test of any technology is its real-world utility. Ferroelectric CIM targets multiple high-value application domains.
 
 ### 8.1 Edge AI Inference
 
@@ -263,7 +263,7 @@ Spiking Neural Networks (SNNs) represent the next frontier:
 - Temporal coding (information in spike timing)
 - Massive parallelism (like biological brains)
 
-**IronLattice Fit:**
+**Ferroelectric CIM Fit:**
 - FeFET polarization dynamics naturally mimic membrane potential
 - STDP learning rules implementable in hardware
 - Energy per spike: ~2 fJ (approaching biological efficiency)
@@ -322,7 +322,7 @@ Theory must materialize into a product. The path from university laboratory to m
 
 ### 9.1 Manufacturing Processes and Metrology
 
-IronLattice manufacturing is based on standard industry tools, reducing adoption risk.
+Ferroelectric CIM manufacturing is based on standard industry tools, reducing adoption risk.
 
 - **ALD (Atomic Layer Deposition):** This is the critical process. It requires high-purity organometallic precursors and optimized purge times to create sharp HfO₂/ZrO₂ interfaces without diffusive intermixing.
 - **Rapid Thermal Annealing (RTA):** The thermal treatment to crystallize the Pca2₁ phase must be compatible with the BEOL thermal budget (<450°C) to not damage the underlying copper transistors. Superlattice use helps reduce this required crystallization temperature.
@@ -330,18 +330,18 @@ IronLattice manufacturing is based on standard industry tools, reducing adoption
 
 ### 9.2 Commercial Strategy and Intellectual Property
 
-IronLattice, as a spin-off from external research group and Jaeho Shin's laboratory, possesses a strategic advantage: intellectual property (IP) over the specific superlattice architecture for neuromorphic applications.
+Ferroelectric CIM, as a spin-off from external research group and Jaeho Shin's laboratory, possesses a strategic advantage: intellectual property (IP) over the specific superlattice architecture for neuromorphic applications.
 
 - **Patents:** Key patents protect the exact composition, layer thicknesses, and operation methods to achieve high linearity.
-- **The Valley of Death:** The transition from TRL 3 (Lab proof of concept) to TRL 7 (Prototype in operational environment) requires intensive capital. IronLattice has secured initial funding ("One Small Step Grant"), but long-term success will depend on alliances with major manufacturers (Foundries like TSMC or GlobalFoundries) that need to integrate high-density non-volatile memory in their advanced logic nodes for Edge AI applications.
+- **The Valley of Death:** The transition from TRL 3 (Lab proof of concept) to TRL 7 (Prototype in operational environment) requires intensive capital. Ferroelectric CIM has secured initial funding ("One Small Step Grant"), but long-term success will depend on alliances with major manufacturers (Foundries like TSMC or GlobalFoundries) that need to integrate high-density non-volatile memory in their advanced logic nodes for Edge AI applications.
 
 ---
 
 ## CONCLUSION: MASTERING IRONLATTICE
 
-This curriculum spans from the movement of an oxygen atom in a crystal lattice to the execution of massive language models on a chip. Mastering these nine areas not only provides the knowledge to build IronLattice but grants a comprehensive vision of the future of computing.
+This curriculum spans from the movement of an oxygen atom in a crystal lattice to the execution of massive language models on a chip. Mastering these nine areas not only provides the knowledge to build Ferroelectric CIM but grants a comprehensive vision of the future of computing.
 
-Ferroelectric superlattice technology represents a rare convergence of new physics, manufacturing compatibility, and urgent market need. By replacing data movement with materials physics, IronLattice has the potential to redefine computational efficiency for the age of artificial intelligence. Armed with this deep knowledge, you are positioned not only to observe this revolution but to lead it.
+Ferroelectric superlattice technology represents a rare convergence of new physics, manufacturing compatibility, and urgent market need. By replacing data movement with materials physics, Ferroelectric CIM has the potential to redefine computational efficiency for the age of artificial intelligence. Armed with this deep knowledge, you are positioned not only to observe this revolution but to lead it.
 
 ---
 
@@ -358,7 +358,7 @@ Ferroelectric superlattice technology represents a rare convergence of new physi
 
 ### Table 2: Vulkan Compute Pipeline Architecture for TDGL
 
-| Stage | Vulkan Object | Function in IronLattice Simulation |
+| Stage | Vulkan Object | Function in Ferroelectric CIM Simulation |
 |-------|---------------|-----------------------------------|
 | Memory | VkDeviceMemory | Stores the polarization grid (Pᵢⱼₖ) in VRAM. |
 | Buffer | VkBuffer (Storage) | Interface for shader to read/write cell states. |

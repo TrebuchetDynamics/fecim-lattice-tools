@@ -251,9 +251,9 @@ func TestMultiLayerGlobalStats(t *testing.T) {
 	}
 }
 
-// TestIronLatticeLowPower demonstrates IronLattice thermal advantage.
-func TestIronLatticeLowPower(t *testing.T) {
-	// IronLattice: ~0.001 pJ per MAC → very low power density
+// TestFeCIMLowPower demonstrates FeCIM thermal advantage.
+func TestFeCIMLowPower(t *testing.T) {
+	// FeCIM: ~0.001 pJ per MAC → very low power density
 	// Traditional: ~10 pJ per MAC → high power density (10,000x more)
 
 	ironLatticeSim := DefaultThermalSim()
@@ -263,8 +263,8 @@ func TestIronLatticeLowPower(t *testing.T) {
 
 	// Apply typical workload power densities for CIM arrays
 	// Traditional CIM/GPU: ~10-100 W/cm² = 1e5 - 1e6 W/m²
-	// IronLattice: 1000-10000x lower
-	ironLatticePower := 1e4   // W/m² (very low - IronLattice advantage)
+	// FeCIM: 1000-10000x lower
+	ironLatticePower := 1e4   // W/m² (very low - FeCIM advantage)
 	traditionalPower := 1e7  // W/m² (high - typical CMOS)
 
 	for y := 8; y < 24; y++ {
@@ -281,21 +281,21 @@ func TestIronLatticeLowPower(t *testing.T) {
 	ironLatticeMax := ironLatticeSim.GetMaxTemperature()
 	traditionalMax := traditionalSim.GetMaxTemperature()
 
-	// IronLattice should be significantly cooler
+	// FeCIM should be significantly cooler
 	if ironLatticeMax >= traditionalMax {
-		t.Errorf("IronLattice should be cooler: IL=%.2f°C, Traditional=%.2f°C",
+		t.Errorf("FeCIM should be cooler: IL=%.2f°C, Traditional=%.2f°C",
 			ironLatticeMax, traditionalMax)
 	}
 
 	// Log the results
 	ilRise := ironLatticeMax - ironLatticeSim.AmbientTemp
 	tradRise := traditionalMax - traditionalSim.AmbientTemp
-	t.Logf("IronLattice: %.2f°C (rise: %.2f°C)", ironLatticeMax, ilRise)
+	t.Logf("FeCIM: %.2f°C (rise: %.2f°C)", ironLatticeMax, ilRise)
 	t.Logf("Traditional: %.2f°C (rise: %.2f°C)", traditionalMax, tradRise)
 	if ilRise > 0.01 {
-		t.Logf("Temperature ratio: %.0fx cooler with IronLattice", tradRise/ilRise)
+		t.Logf("Temperature ratio: %.0fx cooler with FeCIM", tradRise/ilRise)
 	} else {
-		t.Log("IronLattice: Essentially no heating!")
+		t.Log("FeCIM: Essentially no heating!")
 	}
 }
 

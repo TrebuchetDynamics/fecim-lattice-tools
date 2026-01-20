@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
 
-// Training script to achieve 87% accuracy per IronLattice specs.
+// Training script to achieve 87% accuracy per FeCIM specs.
 // Uses accumulated gradients to overcome 30-level quantization.
 // Run with: go run train_and_save.go
 package main
@@ -13,9 +13,9 @@ import (
 	"math/rand"
 	"time"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
-	"ironlattice-vis/demo3-mnist/pkg/mnist"
-	"ironlattice-vis/demo3-mnist/pkg/training"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
 
 // SimpleNetwork is a minimal neural network for MNIST
@@ -264,7 +264,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	fmt.Println("============================================")
-	fmt.Println("IronLattice MNIST Training")
+	fmt.Println("FeCIM MNIST Training")
 	fmt.Println("Target: 87% accuracy (Dr. Tour's spec)")
 	fmt.Println("30 discrete analog levels")
 	fmt.Println("============================================")
@@ -364,7 +364,7 @@ func main() {
 	fmt.Printf("\nFinal Test Accuracy (float): %.1f%% (Target: 87%%)\n", finalAcc*100)
 
 	if finalAcc >= 0.87 {
-		fmt.Println("✓ IronLattice target ACHIEVED!")
+		fmt.Println("✓ FeCIM target ACHIEVED!")
 	} else if finalAcc >= 0.85 {
 		fmt.Println("~ Close to target (within 2%)")
 	} else {

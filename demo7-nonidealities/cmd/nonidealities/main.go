@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ironlattice-vis/demo7-nonidealities/pkg/nonidealities"
+	"multilayer-ferroelectric-cim-visualizer/demo7-nonidealities/pkg/nonidealities"
 )
 
 func main() {
@@ -175,7 +175,7 @@ func analyzeDrift(renderer *nonidealities.Renderer, size int) {
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println()
 
-	// Create drift simulator for IronLattice (FeFET)
+	// Create drift simulator for FeCIM (FeFET)
 	d := nonidealities.NewDriftSimulator(size, size, 30)
 
 	// Set some initial weight pattern
@@ -188,7 +188,7 @@ func analyzeDrift(renderer *nonidealities.Renderer, size int) {
 
 	// Simulate 10000 seconds (about 2.8 hours) with snapshots
 	fmt.Println("Simulating conductance drift over time...")
-	fmt.Printf("Technology: IronLattice (FeFET), Drift Coefficient: %.4f\n\n", d.DriftCoeff)
+	fmt.Printf("Technology: FeCIM (FeFET), Drift Coefficient: %.4f\n\n", d.DriftCoeff)
 
 	numSteps := 50
 	dt := 200.0 // 200 seconds per step = 10000 seconds total
@@ -223,7 +223,7 @@ func compareTechnologies(renderer *nonidealities.Renderer, size int) {
 		"Technology", "Drift Coeff", "Avg Drift", "Level Errors", "Retention")
 	fmt.Println(strings.Repeat("─", 70))
 
-	order := []string{"IronLattice (FeFET)", "Flash", "RRAM", "PCM"}
+	order := []string{"FeCIM (FeFET)", "Flash", "RRAM", "PCM"}
 	for _, name := range order {
 		stats := results[name]
 		fmt.Printf("%-20s %12.4f %11.4f%% %12d %11.2f%%\n",
@@ -249,22 +249,22 @@ func printSummary(size int) {
 	fmt.Println("1. IR DROP")
 	fmt.Println("   • Worst case in far corner from drivers")
 	fmt.Println("   • Mitigated by wider metal lines (2x width → ~50% reduction)")
-	fmt.Println("   • IronLattice low voltages minimize IR drop effects")
+	fmt.Println("   • FeCIM low voltages minimize IR drop effects")
 	fmt.Println()
 
 	fmt.Println("2. SNEAK PATHS")
 	fmt.Println("   • 3-cell sneak paths through parallel resistive network")
 	fmt.Println("   • Selector devices provide 1000x improvement")
-	fmt.Println("   • IronLattice non-volatile state enables selector-free operation")
+	fmt.Println("   • FeCIM non-volatile state enables selector-free operation")
 	fmt.Println()
 
 	fmt.Println("3. CONDUCTANCE DRIFT")
 	fmt.Println("   • FeFET: 0.001 drift coefficient (50x better than RRAM)")
-	fmt.Println("   • 10-year retention: >99.9% for IronLattice")
+	fmt.Println("   • 10-year retention: >99.9% for FeCIM")
 	fmt.Println("   • 30 discrete levels provide margin for small drift")
 	fmt.Println()
 
-	fmt.Println("IronLattice Advantages:")
+	fmt.Println("FeCIM Advantages:")
 	fmt.Println("─────────────────────────────────────────────────────────────")
 	fmt.Println("  ✓ Ferroelectric polarization → excellent retention")
 	fmt.Println("  ✓ Low operating voltage → reduced IR drop")

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document compiles experimentally measured ferroelectric parameters for Hafnium-Zirconium Oxide (HZO) thin films from literature, for use in IronLattice simulations.
+This document compiles experimentally measured ferroelectric parameters for Hafnium-Zirconium Oxide (HZO) thin films from literature, for use in Ferroelectric CIM simulations.
 
 ---
 
@@ -80,7 +80,7 @@ This document compiles experimentally measured ferroelectric parameters for Hafn
 
 | Configuration | Pᵣ | Eᶜ | Endurance | Source |
 |---------------|----|----|-----------|--------|
-| 2nm Hf / 2nm Zr | Enhanced | Lower | >10¹⁰ | IronLattice |
+| 2nm Hf / 2nm Zr | Enhanced | Lower | >10¹⁰ | Ferroelectric CIM |
 | Optimized SL | Higher | Lower | >10¹² | Target |
 
 ### Benefits of Superlattice vs. Solid Solution

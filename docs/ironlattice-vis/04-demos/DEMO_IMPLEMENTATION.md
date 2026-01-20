@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the implementation strategy for the three IronLattice visualization demos.
+This document outlines the implementation strategy for the three Ferroelectric CIM visualization demos.
 
 ---
 
@@ -119,7 +119,7 @@ Visualize Matrix-Vector Multiplication in a ferroelectric crossbar array.
 | 24×24 FE Memristor | 98.78% | [ScienceDirect 2025](https://www.sciencedirect.com/science/article/abs/pii/S2211285525004963) |
 | Multi-Level FeFET 28nm | 96.6% | [Nature Comms 2023](https://www.nature.com/articles/s41467-023-42110-y) |
 | Ferroelectric Tunnel Junction | 92% | [SemiEngineering 2024](https://semiengineering.com/ferroelectric-tunnel-junctions-in-crossbar-array-analog-in-memory-compute-accelerators/) |
-| IronLattice Target | 87% | Dr. Tour's presentation |
+| Ferroelectric CIM Target | 87% | Dr. Tour's presentation |
 
 ### Non-Idealities to Model
 
@@ -199,7 +199,7 @@ Animation: Current flow during MVM
 ## Demo 3: MNIST on CIM
 
 ### Goal
-Handwritten digit recognition on simulated IronLattice hardware.
+Handwritten digit recognition on simulated Ferroelectric CIM hardware.
 
 ### Architecture
 
@@ -240,7 +240,7 @@ Output: 10 classes (digits 0-9)
 
 ### Noise-Aware Training
 
-To achieve 87% accuracy matching IronLattice benchmarks:
+To achieve 87% accuracy matching Ferroelectric CIM benchmarks:
 
 ```python
 # During training (PyTorch)
@@ -287,7 +287,7 @@ import "cogentcore.org/core/vgpu"
 
 func initVulkan() *vgpu.GPU {
     gpu := vgpu.NewGPU()
-    gpu.Config("IronLattice Visualizer")
+    gpu.Config("Ferroelectric CIM Visualizer")
     return gpu
 }
 ```

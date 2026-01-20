@@ -1,12 +1,12 @@
 # Demo 3: MNIST Digit Recognition on Ferroelectric Crossbar
 
-**IronLattice Visualizer - Neural Network Inference**
+**Ferroelectric CIM Visualizer - Neural Network Inference**
 
 > *"We're at 87% validation here... theoretical is 88%."* — Dr. external research group
 
 ## Overview
 
-Demo 3 demonstrates neural network inference on the MNIST handwritten digit dataset using ferroelectric crossbar arrays. This demo shows how IronLattice's 30-level analog weights enable efficient AI computation with high accuracy.
+Demo 3 demonstrates neural network inference on the MNIST handwritten digit dataset using ferroelectric crossbar arrays. This demo shows how Ferroelectric CIM's 30-level analog weights enable efficient AI computation with high accuracy.
 
 ### What This Demo Shows
 
@@ -16,7 +16,7 @@ Demo 3 demonstrates neural network inference on the MNIST handwritten digit data
 4. **Layer-by-Layer Visualization** — Activation heatmaps, confusion matrix, per-class metrics
 5. **Interactive Digit Drawing** — Draw digits and see real-time classification
 
-> ⚠️ **IMPORTANT:** IronLattice hardware achieved **87%** with a **88% theoretical maximum** (Dr. Tour). This simulation uses idealized conditions and may report higher accuracy because it doesn't capture all physical non-idealities (IR drop, sneak paths, real device variation, ADC/DAC noise).
+> ⚠️ **IMPORTANT:** Ferroelectric CIM hardware achieved **87%** with a **88% theoretical maximum** (Dr. Tour). This simulation uses idealized conditions and may report higher accuracy because it doesn't capture all physical non-idealities (IR drop, sneak paths, real device variation, ADC/DAC noise).
 
 ## Quick Start
 
@@ -148,7 +148,7 @@ Evaluate trained network on test set:
 | Input size | 784 (28×28) | MNIST image pixels |
 | Hidden size | 128 | Configurable via `--hidden` |
 | Output size | 10 | Digits 0-9 |
-| Weight precision | 30 levels (~5 bits) | IronLattice advantage |
+| Weight precision | 30 levels (~5 bits) | Ferroelectric CIM advantage |
 | Activation | ReLU | max(0, x) |
 | Output | Softmax | Probability distribution |
 
@@ -239,9 +239,9 @@ def backward_pass(loss):
 
 ## Performance Results
 
-### IronLattice Hardware vs. Simulation
+### Ferroelectric CIM Hardware vs. Simulation
 
-| Metric | IronLattice Hardware | This Simulation |
+| Metric | Ferroelectric CIM Hardware | This Simulation |
 |--------|---------------------|-----------------|
 | **Measured Accuracy** | **87%** | Variable (depends on noise) |
 | Theoretical Maximum | 88% | ~98% (float32 baseline) |
@@ -259,18 +259,18 @@ The 88% theoretical maximum is specific to their hardware architecture constrain
 | Software (float32) | 98.5% | Baseline, no quantization |
 | Jerry et al. FeFET hardware (75ns) | 90.0% | IEDM 2017 |
 | Multi-Level FeFET 28nm (sim) | 96.6% | Nature Comms 2023 |
-| **IronLattice Hardware** | **87%** | **Dr. Tour (Nov 2024)** |
-| **IronLattice Theoretical Max** | **88%** | **Dr. Tour stated limit** |
+| **Ferroelectric CIM Hardware** | **87%** | **Dr. Tour (Nov 2024)** |
+| **Ferroelectric CIM Theoretical Max** | **88%** | **Dr. Tour stated limit** |
 
 ### Why Simulation Can Exceed Hardware
 
-Our simulation may achieve higher accuracy than IronLattice's 87% because:
+Our simulation may achieve higher accuracy than Ferroelectric CIM's 87% because:
 1. **Idealized noise** — Configurable device variation (default may be optimistic)
 2. **Perfect voltage control** — No IR drop in simplified MVM model
 3. **No sneak paths** — Simplified crossbar model
 4. **Clean quantization** — No ADC/DAC non-linearities
 
-To match IronLattice hardware results, increase noise parameter:
+To match Ferroelectric CIM hardware results, increase noise parameter:
 ```bash
 ./mnist --train --noise 0.15  # Higher noise for realistic simulation
 ```
@@ -325,7 +325,7 @@ demo3-mnist/
 This demo answers the question: **"What can we build with this?"**
 
 1. **Real AI Application** — MNIST is the "Hello World" of neural networks
-2. **Hardware Accuracy** — IronLattice achieves 87% on physical hardware (88% theoretical max)
+2. **Hardware Accuracy** — Ferroelectric CIM achieves 87% on physical hardware (88% theoretical max)
 3. **Analog Precision** — 30 levels is sufficient for practical neural networks
 4. **Energy Efficiency** — Crossbar inference is orders of magnitude more efficient (claimed)
 5. **Beyond Binary** — Not just 0/1 but rich continuous weight space
@@ -394,11 +394,11 @@ wget http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
 
 1. Jerry et al. "FeFET Analog Synapse for DNN Training" IEDM (2017) - **75ns optimization**
 2. LeCun et al. "MNIST Database of Handwritten Digits"
-3. Dr. external research group, "IronLattice Presentation" (Nov 2024) - **87% target**
+3. Dr. external research group, "Ferroelectric CIM Presentation" (Nov 2024) - **87% target**
 4. DNNNeuroSim V2.0, arXiv:2003.06471 - Benchmark framework
 
 ---
 
 ## License
 
-Part of the IronLattice Visualizer project.
+Part of the Ferroelectric CIM Visualizer project.

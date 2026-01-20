@@ -16,7 +16,7 @@ type ChargePump struct {
 	Efficiency     float64 // Power conversion efficiency
 }
 
-// DefaultChargePump returns a charge pump for IronLattice write operations.
+// DefaultChargePump returns a charge pump for FeCIM write operations.
 func DefaultChargePump() *ChargePump {
 	return &ChargePump{
 		InputVoltage:   1.0,     // 1V CMOS supply

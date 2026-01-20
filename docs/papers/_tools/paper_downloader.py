@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-IronLattice Paper Downloader
+Ferroelectric CIM Paper Downloader
 Advanced paper downloading with API support, parallel downloads, and metadata extraction.
 """
 
@@ -1063,7 +1063,7 @@ def download_arxiv(paper: Paper) -> bool:
 
 def try_unpaywall(doi: str) -> Optional[str]:
     """Try to get open access URL from Unpaywall."""
-    email = "ironlattice@example.com"
+    email = "ferroelectric-cim@example.com"
     url = f"https://api.unpaywall.org/v2/{doi}?email={email}"
 
     try:
@@ -1237,7 +1237,7 @@ def download_all():
         (DOWNLOAD_DIR / source).mkdir(parents=True, exist_ok=True)
 
     print("=" * 60)
-    print("  IronLattice Paper Downloader")
+    print("  Ferroelectric CIM Paper Downloader")
     print("=" * 60)
 
     successful = 0
@@ -1315,7 +1315,7 @@ def list_papers():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="IronLattice Paper Downloader",
+        description="Ferroelectric CIM Paper Downloader",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

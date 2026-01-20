@@ -1,5 +1,5 @@
 // cryo_reram_cim.go - Cryogenic CIM Operation and ReRAM Variability Simulation
-// IronLattice Visualization Project - Iteration 122
+// FeCIM Visualization Project - Iteration 122
 //
 // This module implements simulation models for:
 // 1. Cryogenic RRAM/memristor operation (4K, 1.4K temperatures)

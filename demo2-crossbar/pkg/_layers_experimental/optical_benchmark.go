@@ -916,8 +916,8 @@ func (mpb *MLPerfTinyBenchmark) Run() *MLPerfPowerResult {
 // IRONLATTICE OPTICAL-CIM INTEGRATION
 // =============================================================================
 
-// IronLatticeOpticalConfig configures HZO-based optical CIM
-type IronLatticeOpticalConfig struct {
+// FeCIMOpticalConfig configures HZO-based optical CIM
+type FeCIMOpticalConfig struct {
 	// HZO ferroelectric properties
 	HZOThickness      float64 // nm
 	HZOCoerciveField  float64 // MV/cm
@@ -934,13 +934,13 @@ type IronLatticeOpticalConfig struct {
 	SwitchingEnergy   float64 // fJ
 }
 
-// DefaultIronLatticeOpticalConfig returns IronLattice-optimized config
-func DefaultIronLatticeOpticalConfig() IronLatticeOpticalConfig {
-	return IronLatticeOpticalConfig{
+// DefaultFeCIMOpticalConfig returns FeCIM-optimized config
+func DefaultFeCIMOpticalConfig() FeCIMOpticalConfig {
+	return FeCIMOpticalConfig{
 		HZOThickness:     10,
 		HZOCoerciveField: 1.0,
 		HZOPolarization:  25,
-		HZOEndurance:     1e12, // IronLattice advantage
+		HZOEndurance:     1e12, // FeCIM advantage
 
 		WaveguideMaterial: "LiNbO3",
 		PockelsCoeff:      30.8,
@@ -951,17 +951,17 @@ func DefaultIronLatticeOpticalConfig() IronLatticeOpticalConfig {
 	}
 }
 
-// IronLatticeOpticalCIM combines HZO ferroelectric with photonic computing
-type IronLatticeOpticalCIM struct {
-	Config          IronLatticeOpticalConfig
+// FeCIMOpticalCIM combines HZO ferroelectric with photonic computing
+type FeCIMOpticalCIM struct {
+	Config          FeCIMOpticalConfig
 	PhotonicMemory  *PockelsMemoryArray
 	PhotonicCompute *TFLNPhotonicComputer
 	Benchmarks      map[string]*CIMBenchmarkResult
 }
 
-// NewIronLatticeOpticalCIM creates integrated optical CIM system
-func NewIronLatticeOpticalCIM(arraySize int, config IronLatticeOpticalConfig) *IronLatticeOpticalCIM {
-	// Create Pockels memory with IronLattice HZO
+// NewFeCIMOpticalCIM creates integrated optical CIM system
+func NewFeCIMOpticalCIM(arraySize int, config FeCIMOpticalConfig) *FeCIMOpticalCIM {
+	// Create Pockels memory with FeCIM HZO
 	memConfig := PockelsMemoryConfig{
 		FerroelectricMaterial: "HZO",
 		Thickness:             config.HZOThickness,
@@ -976,7 +976,7 @@ func NewIronLatticeOpticalCIM(arraySize int, config IronLatticeOpticalConfig) *I
 		Endurance:             config.HZOEndurance,
 	}
 
-	iloc := &IronLatticeOpticalCIM{
+	iloc := &FeCIMOpticalCIM{
 		Config:         config,
 		PhotonicMemory: NewPockelsMemoryArray(arraySize, arraySize, memConfig),
 		Benchmarks:     make(map[string]*CIMBenchmarkResult),
@@ -990,7 +990,7 @@ func NewIronLatticeOpticalCIM(arraySize int, config IronLatticeOpticalConfig) *I
 }
 
 // RunBenchmarkSuite executes comprehensive benchmarks
-func (iloc *IronLatticeOpticalCIM) RunBenchmarkSuite() map[string]*CIMBenchmarkResult {
+func (iloc *FeCIMOpticalCIM) RunBenchmarkSuite() map[string]*CIMBenchmarkResult {
 	tasks := []string{"mnist", "cifar10", "cifar100"}
 
 	for _, task := range tasks {
@@ -1018,7 +1018,7 @@ func (iloc *IronLatticeOpticalCIM) RunBenchmarkSuite() map[string]*CIMBenchmarkR
 }
 
 // GetComparisonTable returns comparison with other technologies
-func (iloc *IronLatticeOpticalCIM) GetComparisonTable() []map[string]interface{} {
+func (iloc *FeCIMOpticalCIM) GetComparisonTable() []map[string]interface{} {
 	return []map[string]interface{}{
 		{
 			"Technology":    "RRAM CIM",
@@ -1042,7 +1042,7 @@ func (iloc *IronLatticeOpticalCIM) GetComparisonTable() []map[string]interface{}
 			"Latency_us":    0.001,
 		},
 		{
-			"Technology":    "IronLattice Optical",
+			"Technology":    "FeCIM Optical",
 			"TOPS_W":        50000,
 			"Endurance":     1e12,
 			"Precision_bit": 4,

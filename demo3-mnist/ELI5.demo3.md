@@ -17,7 +17,7 @@ When you see a handwritten number, your brain:
 2. Compares them to numbers you've seen before
 3. Decides "That looks most like a 7!"
 
-### How IronLattice Recognizes a "7"
+### How Ferroelectric CIM Recognizes a "7"
 
 The chip does something similar:
 1. Looks at all 784 pixels (28×28 image)
@@ -96,7 +96,7 @@ Show it a "7" → Chip says "7" (correct!)
 
 ---
 
-## Why IronLattice Is Special Here
+## Why Ferroelectric CIM Is Special Here
 
 ### Normal AI Training
 
@@ -110,16 +110,16 @@ Regular computers train AI by:
 
 **Problem:** All that moving uses TONS of energy!
 
-### IronLattice Training
+### Ferroelectric CIM Training
 
-IronLattice does it all in one place:
+Ferroelectric CIM does it all in one place:
 1. Weights ARE the memory (the pipe grid)
 2. Math happens right there (physics!)
 3. Update weights in place
 4. No moving needed!
 
 ```
-    Regular:                 IronLattice:
+    Regular:                 Ferroelectric CIM:
 
     Memory ←→ Processor      ┌───────────┐
        ↑          ↓          │ Memory +  │
@@ -155,12 +155,12 @@ Binary brain:               30-level brain:
 ## The Results: Hardware vs Simulation
 
 **Important distinction:**
-- **IronLattice HARDWARE:** Dr. Tour achieved **87%** with **88% theoretical maximum**
+- **Ferroelectric CIM HARDWARE:** Dr. Tour achieved **87%** with **88% theoretical maximum**
 - **Our SIMULATION:** May show higher because it's idealized (no real chip noise)
 
 For context:
 - Random guessing: 10% (1 in 10)
-- **IronLattice hardware: 87%** (what was actually measured!)
+- **Ferroelectric CIM hardware: 87%** (what was actually measured!)
 - Theoretical maximum: 88% (Dr. Tour stated this limit)
 - Perfect human: ~98%
 
@@ -170,7 +170,7 @@ For context:
     ▲
     │  Random: 10%
     │
-    │          IronLattice HARDWARE: 87%
+    │          Ferroelectric CIM HARDWARE: 87%
     │                    ▼
     █████████████████████████████████░░░░░░░
 
@@ -294,10 +294,10 @@ cd demo3-mnist
 
 1. **We showed a chip 60,000 handwritten numbers.**
 2. **It learned patterns by adjusting its 100,000 internal "pipe widths."**
-3. **Now it can recognize new numbers it's never seen — IronLattice hardware achieves 87%!**
+3. **Now it can recognize new numbers it's never seen — Ferroelectric CIM hardware achieves 87%!**
 
 ---
 
 ## One Sentence Summary
 
-> **Demo 3 shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — IronLattice hardware achieves 87% accuracy (88% theoretical max)!**
+> **Demo 3 shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — Ferroelectric CIM hardware achieves 87% accuracy (88% theoretical max)!**

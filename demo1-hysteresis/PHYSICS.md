@@ -193,7 +193,7 @@ Normal flash memory: ON or OFF (1 or 0)
  -Pr ├────● State 0 ("OFF")
 ```
 
-### Analog Memory (IronLattice)
+### Analog Memory (Ferroelectric CIM)
 
 Ferroelectrics can be set to IN-BETWEEN values!
 

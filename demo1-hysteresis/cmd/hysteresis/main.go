@@ -1,7 +1,7 @@
 // Command hysteresis provides an interactive visualization of ferroelectric
 // hysteresis in HfO2-ZrO2 superlattice materials.
 //
-// This is Demo 1 of the IronLattice Visualizer project.
+// This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
 //   - Default: Fyne GUI with real-time P-E curve animation (recommended)
@@ -16,11 +16,11 @@ import (
 	"log"
 	"os"
 
-	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
-	"ironlattice-vis/demo1-hysteresis/pkg/gui"
-	"ironlattice-vis/demo1-hysteresis/pkg/render"
-	"ironlattice-vis/demo1-hysteresis/pkg/simulation"
-	"ironlattice-vis/demo1-hysteresis/pkg/tui"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/render"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/simulation"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/tui"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 	if *headless {
 		// Headless mode - static ASCII output
 		fmt.Println("===========================================")
-		fmt.Println("  IronLattice Hysteresis Visualizer")
+		fmt.Println("  FeCIM Hysteresis Visualizer")
 		fmt.Println("  Demo 1: Ferroelectric P-E Curve")
 		fmt.Println("===========================================")
 		fmt.Println()
@@ -79,7 +79,7 @@ func main() {
 	if *vulkan {
 		// Vulkan graphical mode
 		fmt.Println("===========================================")
-		fmt.Println("  IronLattice Hysteresis Visualizer")
+		fmt.Println("  FeCIM Hysteresis Visualizer")
 		fmt.Println("  Demo 1: Ferroelectric P-E Curve (Vulkan)")
 		fmt.Println("===========================================")
 		fmt.Println()

@@ -704,12 +704,12 @@ const (
 	TargetSpiNNaker2                       // SpiNNaker 2
 	TargetXylo                             // SynSense Xylo
 	TargetSpeck                            // SynSense Speck
-	TargetIronLattice                      // IronLattice CIM
+	TargetFeCIM                      // FeCIM CIM
 )
 
 // String returns target name
 func (t HardwareTarget) String() string {
-	names := []string{"Loihi2", "SpiNNaker2", "Xylo", "Speck", "IronLattice"}
+	names := []string{"Loihi2", "SpiNNaker2", "Xylo", "Speck", "FeCIM"}
 	if int(t) < len(names) {
 		return names[t]
 	}
@@ -781,8 +781,8 @@ func GetHardwareSpec(target HardwareTarget) *HardwareSpec {
 			PowerPerCoreUW:   50,
 			LatencyNS:        50,
 		},
-		TargetIronLattice: {
-			Target:           TargetIronLattice,
+		TargetFeCIM: {
+			Target:           TargetFeCIM,
 			NumCores:         64,
 			NeuronsPerCore:   256,
 			SynapsesPerCore:  65536,
@@ -1252,8 +1252,8 @@ Hardware Utilization:
 // INTEGRATED IRONLATTICE CAM + COMPILER SYSTEM
 // =============================================================================
 
-// IronLatticeCAMCompiler combines CAM acceleration with SNN compilation
-type IronLatticeCAMCompiler struct {
+// FeCIMCAMCompiler combines CAM acceleration with SNN compilation
+type FeCIMCAMCompiler struct {
 	CAM          *FeFETCAMArray
 	Compiler     *NIRCompiler
 	FewShotCAM   *FewShotCAM
@@ -1263,8 +1263,8 @@ type IronLatticeCAMCompiler struct {
 	UseNIRCompile bool
 }
 
-// IronLatticeCAMCompilerConfig configuration
-type IronLatticeCAMCompilerConfig struct {
+// FeCIMCAMCompilerConfig configuration
+type FeCIMCAMCompilerConfig struct {
 	CAMEntries      int
 	CAMWidth        int
 	CAMCellType     CAMCellType
@@ -1272,21 +1272,21 @@ type IronLatticeCAMCompilerConfig struct {
 	EnableFewShot   bool
 }
 
-// DefaultIronLatticeCAMCompilerConfig returns default config
-func DefaultIronLatticeCAMCompilerConfig() *IronLatticeCAMCompilerConfig {
-	return &IronLatticeCAMCompilerConfig{
+// DefaultFeCIMCAMCompilerConfig returns default config
+func DefaultFeCIMCAMCompilerConfig() *FeCIMCAMCompilerConfig {
+	return &FeCIMCAMCompilerConfig{
 		CAMEntries:     256,
 		CAMWidth:       64,
 		CAMCellType:    CAMCellCFeFET,
-		CompilerTarget: TargetIronLattice,
+		CompilerTarget: TargetFeCIM,
 		EnableFewShot:  true,
 	}
 }
 
-// NewIronLatticeCAMCompiler creates the integrated system
-func NewIronLatticeCAMCompiler(config *IronLatticeCAMCompilerConfig) *IronLatticeCAMCompiler {
+// NewFeCIMCAMCompiler creates the integrated system
+func NewFeCIMCAMCompiler(config *FeCIMCAMCompilerConfig) *FeCIMCAMCompiler {
 	if config == nil {
-		config = DefaultIronLatticeCAMCompilerConfig()
+		config = DefaultFeCIMCAMCompilerConfig()
 	}
 
 	camConfig := DefaultCAMConfig()
@@ -1294,7 +1294,7 @@ func NewIronLatticeCAMCompiler(config *IronLatticeCAMCompilerConfig) *IronLattic
 	camConfig.EntryWidth = config.CAMWidth
 	camConfig.CellType = config.CAMCellType
 
-	sys := &IronLatticeCAMCompiler{
+	sys := &FeCIMCAMCompiler{
 		CAM:           NewFeFETCAMArray(camConfig),
 		UseCAMAccel:   true,
 		UseNIRCompile: true,
@@ -1307,14 +1307,14 @@ func NewIronLatticeCAMCompiler(config *IronLatticeCAMCompilerConfig) *IronLattic
 	return sys
 }
 
-// CompileNetwork compiles a network for IronLattice
-func (sys *IronLatticeCAMCompiler) CompileNetwork(graph *NIRGraph) (*MappingResult, error) {
-	sys.Compiler = NewNIRCompiler(graph, TargetIronLattice)
+// CompileNetwork compiles a network for FeCIM
+func (sys *FeCIMCAMCompiler) CompileNetwork(graph *NIRGraph) (*MappingResult, error) {
+	sys.Compiler = NewNIRCompiler(graph, TargetFeCIM)
 	return sys.Compiler.Compile()
 }
 
 // AccelerateSearch uses CAM for pattern matching
-func (sys *IronLatticeCAMCompiler) AccelerateSearch(patterns [][]int, query []int) []int {
+func (sys *FeCIMCAMCompiler) AccelerateSearch(patterns [][]int, query []int) []int {
 	// Store patterns in CAM
 	for i, pattern := range patterns {
 		if i < sys.CAM.Config.NumEntries {
@@ -1327,7 +1327,7 @@ func (sys *IronLatticeCAMCompiler) AccelerateSearch(patterns [][]int, query []in
 }
 
 // FewShotClassify performs few-shot classification
-func (sys *IronLatticeCAMCompiler) FewShotClassify(support [][]float64, labels []interface{}, query []float64) (interface{}, float64) {
+func (sys *FeCIMCAMCompiler) FewShotClassify(support [][]float64, labels []interface{}, query []float64) (interface{}, float64) {
 	if sys.FewShotCAM == nil {
 		return nil, 0
 	}
@@ -1343,7 +1343,7 @@ func (sys *IronLatticeCAMCompiler) FewShotClassify(support [][]float64, labels [
 }
 
 // GetSystemMetrics returns combined metrics
-func (sys *IronLatticeCAMCompiler) GetSystemMetrics() map[string]interface{} {
+func (sys *FeCIMCAMCompiler) GetSystemMetrics() map[string]interface{} {
 	metrics := make(map[string]interface{})
 
 	metrics["cam"] = sys.CAM.GetMetrics()
@@ -1455,7 +1455,7 @@ func NIRCompilationDemo() string {
 	result += "  Output: 10 LIF neurons\n\n"
 
 	// Compile to different targets
-	targets := []HardwareTarget{TargetLoihi2, TargetSpiNNaker2, TargetXylo, TargetIronLattice}
+	targets := []HardwareTarget{TargetLoihi2, TargetSpiNNaker2, TargetXylo, TargetFeCIM}
 
 	for _, target := range targets {
 		compiler := NewNIRCompiler(graph, target)
@@ -1549,7 +1549,7 @@ func CAMComparisonTable() string {
 │ Key Applications:                                                            │
 │ • TCAM: Network routing, packet classification, exact pattern matching      │
 │ • ACAM: Few-shot learning, nearest neighbor search, ML inference           │
-│ • IronLattice: Hybrid TCAM+ACAM for flexible pattern matching              │
+│ • FeCIM: Hybrid TCAM+ACAM for flexible pattern matching              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ FeFET Advantages:                                                            │
 │ • 3.5× lower write energy than CMOS TCAM                                    │
@@ -1567,7 +1567,7 @@ func NIRTargetComparisonTable() string {
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │         Neuromorphic Hardware Compilation Targets                            │
 ├─────────────────┬───────────┬───────────┬───────────┬───────────┬───────────┤
-│ Feature         │ Loihi 2   │ SpiNNaker2│ Xylo      │ Speck     │ IronLattice│
+│ Feature         │ Loihi 2   │ SpiNNaker2│ Xylo      │ Speck     │ FeCIM│
 ├─────────────────┼───────────┼───────────┼───────────┼───────────┼───────────┤
 │ Cores           │ 128       │ 153       │ 1         │ 1         │ 64        │
 │ Neurons/Core    │ 8,192     │ 1,000     │ 1,000     │ 328       │ 256       │
@@ -1589,11 +1589,11 @@ func NIRTargetComparisonTable() string {
 
 // ComprehensiveSystemDemo runs full demonstration
 func CAMCompilerSystemDemo() string {
-	result := "IronLattice CAM + Compiler System Demo\n"
+	result := "FeCIM CAM + Compiler System Demo\n"
 	result += "========================================\n\n"
 
-	config := DefaultIronLatticeCAMCompilerConfig()
-	system := NewIronLatticeCAMCompiler(config)
+	config := DefaultFeCIMCAMCompilerConfig()
+	system := NewFeCIMCAMCompiler(config)
 
 	// CAM demonstration
 	result += "1. CAM Pattern Storage\n"

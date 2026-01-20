@@ -1,4 +1,4 @@
-# Research Log - IronLattice Project
+# Research Log - Ferroelectric CIM Project
 
 ## Iteration 1 - January 2026
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 2. IronLattice Company Updates
+## 2. Ferroelectric CIM Company Updates
 
 ### external research institution One Small Step Grant (2025)
 - **Source:** [Rice News](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
@@ -257,7 +257,7 @@ layout(std140, binding = 0) buffer CellBuffer {
 - MFIM devices
 - MFISM devices
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 FerroX provides a reference implementation for:
 - TDGL solver architecture
 - GPU parallelization strategies
@@ -293,7 +293,7 @@ FerroX provides a reference implementation for:
 - Solves TDGL + Poisson + Semiconductor charge equations
 - 15× GPU speedup over CPU
 
-### Usage for IronLattice
+### Usage for Ferroelectric CIM
 Can reference for:
 - TDGL solver implementation
 - GPU parallelization patterns
@@ -427,7 +427,7 @@ layer = AnalogLinear(784, 256, rpu_config=rpu_config)
 - Hybrid memory/compute technology
 - CMOS-compatible fabrication
 
-### IronLattice Team
+### Ferroelectric CIM Team
 - **Lead:** Jaeho Shin (10+ years semiconductor experience)
 - **Advisor:** Tawfik Jarjour (Rice alum)
 - **PI:** Dr. external research group
@@ -438,7 +438,7 @@ layer = AnalogLinear(784, 256, rpu_config=rpu_config)
 
 ---
 
-## 16. IronLattice Patent Status
+## 16. Ferroelectric CIM Patent Status
 
 ### Current Status
 - external research institution owns IP (presently unlicensed per public records)
@@ -454,7 +454,7 @@ layer = AnalogLinear(784, 256, rpu_config=rpu_config)
 - [USPTO Patent Search](https://www.uspto.gov/patents/search)
 
 ### Note
-Detailed IronLattice patents may be pending or under provisional protection. Specific HfO₂/ZrO₂ superlattice claims not found in public searches as of Jan 2026.
+Detailed Ferroelectric CIM patents may be pending or under provisional protection. Specific HfO₂/ZrO₂ superlattice claims not found in public searches as of Jan 2026.
 
 ---
 
@@ -463,7 +463,7 @@ Detailed IronLattice patents may be pending or under provisional protection. Spe
 ### New Findings
 1. **ADC/DAC:** Light-CIM achieves 2.5% ADC power via fully analog tiles
 2. **Noise Training:** IBM AIHWKit provides comprehensive PyTorch toolkit
-3. **COSM 2025:** Talk available on YouTube, highlights IronLattice claims
+3. **COSM 2025:** Talk available on YouTube, highlights Ferroelectric CIM claims
 4. **Patents:** IP owned by Rice, specific claims not yet public
 
 ### Documents Updated
@@ -596,7 +596,7 @@ Use Datoviz or similar Vulkan approach for:
 | Ferroelectric FET | 200+ | ~7.6 | Space charge + oxidation |
 | 2D FeFET | >128 | >7 | HZO + 2D semiconductor |
 
-### IronLattice 30-State Claim
+### Ferroelectric CIM 30-State Claim
 Dr. Tour's presentation mentions 30 discrete states, consistent with literature showing 32-state (5-bit) operation via incremental pulse schemes.
 
 ### Key Requirements for Multi-Level
@@ -620,7 +620,7 @@ Multi-level achieved by stopping domain wall propagation at intermediate points,
 1. **STDP:** 48 aJ/spike, 10⁴× faster than biology
 2. **FerroX TDGL:** Predictor-corrector, MLMG Poisson, 15× GPU speedup
 3. **Visualization:** Datoviz achieves 30M vertices @ 200 FPS
-4. **Multi-level:** 32+ states demonstrated, matches IronLattice claims
+4. **Multi-level:** 32+ states demonstrated, matches Ferroelectric CIM claims
 
 ### Code Status
 - Demo 1 Go skeleton: Complete
@@ -630,7 +630,7 @@ Multi-level achieved by stopping domain wall propagation at intermediate points,
 ### Iteration 4 Topics
 1. [ ] Add Vulkan rendering code using Datoviz patterns
 2. [x] Research crossbar array routing algorithms
-3. [x] Find IronLattice COSM 2025 video for exact claims
+3. [x] Find Ferroelectric CIM COSM 2025 video for exact claims
 4. [x] Implement P-E curve plotting in Go
 5. [x] Research ADC quantization noise models
 
@@ -726,10 +726,10 @@ Re-training with hardware awareness greatly improves analog inference accuracy.
 
 ---
 
-## 19. IronLattice at COSM 2025 (Iteration 4)
+## 19. Ferroelectric CIM at COSM 2025 (Iteration 4)
 
 ### Conference Details
-Dr. external research group presented IronLattice ferroelectric CIM technology at COSM 2025 conference.
+Dr. external research group presented Ferroelectric CIM ferroelectric CIM technology at COSM 2025 conference.
 
 ### Key Claims from Presentation
 1. **10⁶× faster** than NAND flash
@@ -792,7 +792,7 @@ See `demo1-hysteresis/pkg/render/render.go` and new `plot.go` file.
 ### Research Completed
 1. **Sneak Path Mitigation:** FCM arrays, MIFS (145×145 scaling), bilayer devices
 2. **ADC Optimization:** 2-3 bit resolution via PSQ training, 40-64× energy savings
-3. **IronLattice COSM 2025:** Confirmed 10⁶× claims, Rice spin-out, $50K grant
+3. **Ferroelectric CIM COSM 2025:** Confirmed 10⁶× claims, Rice spin-out, $50K grant
 4. **P-E Plotting:** Data structures and utilities implemented
 
 ### Code Status
@@ -923,7 +923,7 @@ Generates `.spv` files for Vulkan pipeline creation.
 ### Research Completed
 1. **Sneak Path Mitigation:** FCM arrays, MIFS (145×145 scaling), bilayer devices
 2. **ADC Optimization:** 2-3 bit resolution via PSQ training, 40-64× energy savings
-3. **IronLattice COSM 2025:** Confirmed 10⁶× claims, Rice spin-out, $50K grant
+3. **Ferroelectric CIM COSM 2025:** Confirmed 10⁶× claims, Rice spin-out, $50K grant
 4. **P-E Plotting:** Data structures and utilities implemented
 5. **Weight Mapping:** COMPASS compiler, hierarchical partitioning, 1.78× throughput
 6. **GLSL Shaders:** Complete set for cell and curve visualization
@@ -975,7 +975,7 @@ Precision: SINGLE | DOUBLE
 Features: Embedded boundaries, SUNDIALS ODE, MPI
 ```
 
-### Integration with IronLattice-Vis
+### Integration with Ferroelectric CIM-Vis
 Possible integration approaches:
 
 1. **Data Pipeline:** Export FerroX simulation results → Import into Go visualizer
@@ -1058,7 +1058,7 @@ Recent Nature paper demonstrates enhanced storage and endurance with dual-bit ar
 ### All Research Topics Completed
 1. ✅ Sneak Path Mitigation: FCM arrays, MIFS (145×145), bilayer devices
 2. ✅ ADC Optimization: 2-3 bit via PSQ, 40-64× energy savings
-3. ✅ IronLattice COSM 2025: 10⁶× claims confirmed, Rice spin-out
+3. ✅ Ferroelectric CIM COSM 2025: 10⁶× claims confirmed, Rice spin-out
 4. ✅ P-E Plotting: plot.go with vertex generation
 5. ✅ Weight Mapping: COMPASS compiler, 1.78× throughput
 6. ✅ GLSL Shaders: Complete visualization pipeline
@@ -1223,7 +1223,7 @@ Direct YouTube search for "COSM 2025 external research group" did not return ind
 
 ### Known Information
 - Presentation occurred at COSM 2025 Technology Summit
-- Dr. external research group presented IronLattice ferroelectric CIM
+- Dr. external research group presented Ferroelectric CIM ferroelectric CIM
 - Video reportedly available on YouTube
 - Claims: 10⁶× faster, 10⁶× lower energy than NAND
 
@@ -1234,7 +1234,7 @@ Direct YouTube search for "COSM 2025 external research group" did not return ind
 ### Alternative Search Suggestions
 1. Search YouTube directly for "external research group COSM 2025"
 2. Check Discovery Institute channels (COSM organizer)
-3. Search "IronLattice compute in memory"
+3. Search "Ferroelectric CIM compute in memory"
 
 ---
 
@@ -1459,7 +1459,7 @@ New FWF method:
 2. **2D materials:** Boron nitride (2D BN), boron carbon nitride
 3. **Turbostratic graphene:** Misaligned layers for easy dispersion
 
-### Relevance to IronLattice
+### Relevance to Ferroelectric CIM
 research sample could enable scalable synthesis of:
 - Ferroelectric thin films
 - HfO₂/ZrO₂ precursors
@@ -2088,7 +2088,7 @@ metrics.PrintPerClassMetrics()
 
 **Reference:** [Science Advances - CMOS-compatible FeFET CIM](https://www.science.org/doi/full/10.1126/sciadv.abm8537)
 
-### IronLattice Claims Context
+### Ferroelectric CIM Claims Context
 Dr. Tour's claim of 10⁶× energy reduction is aggressive but directionally supported by:
 - CIM eliminates memory-compute data bus (dominant energy)
 - Analog MAC vs digital multiply-accumulate
@@ -3085,9 +3085,9 @@ Recent advances (Nature Comm 2025):
 
 ---
 
-## 55. Dr. external research group & IronLattice Research (Iteration 11)
+## 55. Dr. external research group & Ferroelectric CIM Research (Iteration 11)
 
-### IronLattice Company
+### Ferroelectric CIM Company
 - **Origin:** Spin-off from external research group's lab at external research institution
 - **Technology:** Superlattice-based ferroelectric device for analog CIM
 - **Funding:** $50,000 One Small Step Grant (2025)
@@ -3122,7 +3122,7 @@ Recent advances (Nature Comm 2025):
 
 **Application:** Learning and forecasting time-series information
 
-### Why In₂Se₃ for IronLattice?
+### Why In₂Se₃ for Ferroelectric CIM?
 - Ferroelectricity in 2D quintuple layers
 - Room-temperature operation
 - Compatible with flash Joule heating synthesis
@@ -3293,7 +3293,7 @@ Single fused operation, no runtime BN overhead.
 
 ### Research Completed
 1. ✅ FeFET reliability: endurance mechanisms, optimization strategies
-2. ✅ Dr. external research group/IronLattice: Jaeho Shin's In₂Se₃ work documented
+2. ✅ Dr. external research group/Ferroelectric CIM: Jaeho Shin's In₂Se₃ work documented
 3. ✅ ANN-to-SNN conversion: methods, ferroelectric implementations
 4. ✅ Batch normalization: fusion, in-memory, alternatives
 5. ✅ Normalization layers implemented
@@ -4500,7 +4500,7 @@ Optimized synaptic characteristics for NN:
 
 ---
 
-## 75. IronLattice and Flash-Within-Flash Synthesis (Iteration 15)
+## 75. Ferroelectric CIM and Flash-Within-Flash Synthesis (Iteration 15)
 
 ### Dr. external research group - Recent Recognition
 
@@ -4518,7 +4518,7 @@ Published in Nature Chemistry (August 2024):
   - WSe2 (tungsten diselenide)
   - α-In2Se3 (indium selenide)
 
-### IronLattice Startup
+### Ferroelectric CIM Startup
 
 external research institution spin-out:
 - **Technology**: Superlattice-based ferroelectric device
@@ -4685,7 +4685,7 @@ Compressed with gzip for ~60-70% size reduction.
 ### Research Completed
 1. ✅ 3D FeFET/FeNAND: 5-bit MLC, 96% power saving, BNN support
 2. ✅ FTJ synapses: 128 states, 2.75% C2C variation, self-rectifying
-3. ✅ IronLattice/FWF: α-In2Se3 synthesis, Dr. Jaeho Shin research
+3. ✅ Ferroelectric CIM/FWF: α-In2Se3 synthesis, Dr. Jaeho Shin research
 4. ✅ Weight pruning: magnitude, structured, block, SWS, gradual
 5. ✅ Model serialization: JSON, binary, quantization, crossbar mapping
 
@@ -4910,7 +4910,7 @@ Ferroelectric Sensor Layer
 - Temperature/mechanical constraints
 - Integration complexity
 
-### IronLattice Relevance
+### Ferroelectric CIM Relevance
 
 HZO superlattice materials could enable:
 - On-chip energy scavenging
@@ -6386,7 +6386,7 @@ FeFETs for quantum computing interfaces:
 
 ### 2D Material FeFETs
 
-**α-In₂Se₃ (IronLattice target)**:
+**α-In₂Se₃ (Ferroelectric CIM target)**:
 - Room-temperature ferroelectricity
 - Van der Waals integration
 - Flash Joule synthesis capability
@@ -6465,7 +6465,7 @@ Structure: Metal/Graphene/HfO₂/Graphene/Metal
 
 #### 4. HZO Superlattice
 
-**IronLattice approach**:
+**Ferroelectric CIM approach**:
 - HfO₂/ZrO₂ nanolaminates
 - Controlled strain engineering
 - Enhanced orthorhombic phase stability
@@ -6726,7 +6726,7 @@ PIS: Sensor + Processor integrated (eliminates data movement)
 └────────────────────────────────────────────┘
 ```
 
-### α-In₂Se₃ Hierarchical AI Vision (IronLattice Material)
+### α-In₂Se₃ Hierarchical AI Vision (Ferroelectric CIM Material)
 
 2D ferroelectric semiconductor transistor enabling dual functionality:
 
@@ -7056,7 +7056,7 @@ HfO₂-based memristors for reservoir:
 
 ### Multimodal 2D Reservoir (Nano Letters 2024)
 
-α-In₂Se₃ transistor (IronLattice material):
+α-In₂Se₃ transistor (Ferroelectric CIM material):
 - Integrated perception + computing-in-memory
 - Multimode deep-reservoir computing
 - Adjustable nonlinear transformation
@@ -7290,7 +7290,7 @@ FeDiode memory demonstration:
 
 ### 2D Ferroelectric Materials
 
-**α-In₂Se₃ (IronLattice target):**
+**α-In₂Se₃ (Ferroelectric CIM target):**
 - Room-temperature ferroelectricity at atomic thickness
 - Van der Waals integration
 - Switchable out-of-plane and in-plane polarization
@@ -10796,7 +10796,7 @@ Dr. external research group's lab at external research institution developed Fla
 | Reliability | Robust under repeated pulses |
 | Programming | Gate voltage modulated |
 
-### IronLattice Connection
+### Ferroelectric CIM Connection
 
 **Flash Joule Heating Applications:**
 1. **In₂Se₃ synthesis:** Ferroelectric channel material
@@ -10804,9 +10804,9 @@ Dr. external research group's lab at external research institution developed Fla
 3. **Battery materials:** Li-ion recovery via research sample
 4. **Graphene production:** Foundational research sample application
 
-**IronLattice Paradigm:**
+**Ferroelectric CIM Paradigm:**
 - Tour lab: Material synthesis via research sample
-- IronLattice: Device integration for CIM
+- Ferroelectric CIM: Device integration for CIM
 - Combined: Full stack from synthesis to compute
 
 ### Recent Publications (2024-2025)
@@ -16757,9 +16757,9 @@ Recent achievements:
 
 Storage density: >100 Mbit/mm² demonstrated
 
-### HZO Superlattice (IronLattice Approach)
+### HZO Superlattice (Ferroelectric CIM Approach)
 
-external research institution/IronLattice technology:
+external research institution/Ferroelectric CIM technology:
 - Alternating HfO₂/ZrO₂ layers
 - Reduced coercive field (~0.85 MV/cm)
 - Enhanced endurance (10¹⁰ cycles)
@@ -16855,8 +16855,8 @@ fmt.Printf("  Pr ratio: %.1fx\n", comparison.PrRatio)
 fmt.Printf("  Ec ratio: %.1fx\n", comparison.EcRatio)
 fmt.Printf("  Memory window ratio: %.1fx\n", comparison.MemoryWindowRatio)
 
-// IronLattice superlattice
-fmt.Printf("\nIronLattice Superlattice:\n")
+// Ferroelectric CIM superlattice
+fmt.Printf("\nFerroelectric CIM Superlattice:\n")
 fmt.Printf("  Pr: %.0f µC/cm²\n", superlattice.RemanentPolarization)
 fmt.Printf("  Ec: %.0f kV/cm (reduced)\n", superlattice.CoerciveField)
 fmt.Printf("  Endurance: %.0e cycles\n", superlattice.EnduranceCycles)
@@ -26991,7 +26991,7 @@ Energy per MAC (pJ):
 │ Google Coral                │ ~0.5    │
 │ Mythic Analog CIM           │ ~0.5    │
 │ GreenWaves GAP9             │ ~0.33   │
-│ IronLattice HZO (projected) │ <0.1    │
+│ Ferroelectric CIM HZO (projected) │ <0.1    │
 └─────────────────────────────┴─────────┘
 ```
 
@@ -27060,10 +27060,10 @@ func (ep *EdgePruner) blockPrune(weights []float32, mask []bool) {
 }
 ```
 
-### IronLattice Edge Deployment Vision
+### Ferroelectric CIM Edge Deployment Vision
 
 ```
-IronLattice HZO for Edge:
+Ferroelectric CIM HZO for Edge:
 - Target: <0.1 pJ/MAC
 - FeFET-based analog weights
 - Multi-level cell storage
@@ -27134,7 +27134,7 @@ Projected specifications:
 | MAX78000 energy | ~1 pJ/MAC |
 | Mythic analog efficiency | 100× vs digital |
 | GAP9 energy | 0.33 pJ/MAC |
-| IronLattice target | <0.1 pJ/MAC |
+| Ferroelectric CIM target | <0.1 pJ/MAC |
 | Ping-pong memory saving | 2× largest layer |
 
 ### Key References Added
@@ -27212,7 +27212,7 @@ type DeviceModel struct {
     Variability    float64  // % D2D variation
 }
 
-// IronLattice HZO FeFET parameters
+// Ferroelectric CIM HZO FeFET parameters
 HZO_FeFET := DeviceModel{
     Type:           "HZO-FeFET",
     ROn:            10e3,        // 10 kΩ
@@ -27685,7 +27685,7 @@ AWS Trainium3 (Upcoming):
 - `demo2-inference/pkg/layers/hil_multichip.go` (~1050 lines)
   - HILMode, StackLevel enums
   - DeviceModel (RRAM, PCM, FeFET, SRAM)
-  - HZODeviceModel (IronLattice parameters)
+  - HZODeviceModel (Ferroelectric CIM parameters)
   - CircuitModel (ADC, DAC, sense amp)
   - ArrayModel (crossbar with IR drop)
   - HILTestConfig, HILTestResult
@@ -28528,10 +28528,10 @@ func (fjh *FJHSimulator) Simulate(precursor Precursor) *SynthesisProduct {
 }
 ```
 
-### IronLattice Integration
+### Ferroelectric CIM Integration
 
 ```
-research sample for IronLattice CIM:
+research sample for Ferroelectric CIM CIM:
 1. Graphene electrodes
    - research sample synthesis from waste carbon
    - Low-resistance contacts
@@ -28576,7 +28576,7 @@ Manufacturing Advantages:
 7. ✅ Turbostratic graphene synthesis (3000K, 10ms)
 8. ✅ Flash-Within-Flash (FWF) compound synthesis
 9. ✅ HZO phase engineering via research sample
-10. ✅ IronLattice manufacturing integration
+10. ✅ Ferroelectric CIM manufacturing integration
 
 ### Code Artifacts
 - `demo2-inference/pkg/layers/kvcache_fjh.go` (~900 lines)
@@ -28768,7 +28768,7 @@ type TimeSeriesTask struct {
 ### HZO FeFET Reservoir Parameters
 
 ```
-IronLattice HZO Reservoir:
+Ferroelectric CIM HZO Reservoir:
 ┌────────────────────┬────────────────┐
 │ Parameter          │ Value          │
 ├────────────────────┼────────────────┤
@@ -28999,7 +28999,7 @@ Sony 3D Vision Chip:
 - Full vision pipeline on-chip
 ```
 
-### IronLattice In-Sensor Integration
+### Ferroelectric CIM In-Sensor Integration
 
 ```
 HZO-Based In-Sensor CIM:
@@ -29008,7 +29008,7 @@ HZO-Based In-Sensor CIM:
 │  (standard CMOS or IGZO)               │
 ├────────────────────────────────────────┤
 │  Layer 2: HZO FeFET CIM Array          │
-│  - IronLattice HZO superlattice        │
+│  - Ferroelectric CIM HZO superlattice        │
 │  - 6-bit weight precision              │
 │  - 10^12 endurance                     │
 │  - In-memory MAC operations            │
@@ -29058,7 +29058,7 @@ Advantages vs RRAM:
   - M3DSAIL monolithic 3D integration
   - RetinomorphicSensor (bio-inspired)
   - SpectralCNNChip (optical computing)
-  - IronLatticeReservoir (HZO-based)
+  - Ferroelectric CIMReservoir (HZO-based)
   - Benchmark suites for comparison
 
 ### Key Numbers This Iteration
@@ -29447,10 +29447,10 @@ Trade-off: Higher precision → better
 accuracy but lower energy efficiency
 ```
 
-### IronLattice Benchmark Integration
+### Ferroelectric CIM Benchmark Integration
 
 ```
-IronLattice Optical CIM Targets:
+Ferroelectric CIM Optical CIM Targets:
 ┌─────────────────────┬────────────────┐
 │ Metric              │ Target         │
 ├─────────────────────┼────────────────┤
@@ -29490,7 +29490,7 @@ Advantages:
 7. ✅ MLPerf Power benchmark (5.64 mW minimum)
 8. ✅ CIM benchmark considerations and metrics
 9. ✅ Hardware platform comparisons (Loihi, Akida, etc.)
-10. ✅ IronLattice optical-CIM integration design
+10. ✅ Ferroelectric CIM optical-CIM integration design
 
 ### Code Artifacts
 - `demo2-inference/pkg/layers/optical_benchmark.go` (~1000 lines)
@@ -29502,7 +29502,7 @@ Advantages:
   - HardwareSpec for multiple platforms
   - CIMBenchmarkConfig, CIMBenchmarkResult
   - MLPerfTinyBenchmark, MLPerfPowerResult
-  - IronLatticeOpticalCIM integration
+  - Ferroelectric CIMOpticalCIM integration
 
 ### Key Numbers This Iteration
 
@@ -29899,7 +29899,7 @@ NDR Technologies:
 Quantum well RTD best for reliability
 ```
 
-### IronLattice NDR Integration
+### Ferroelectric CIM NDR Integration
 
 ```
 Ferroelectric NDR Concept:
@@ -29959,7 +29959,7 @@ Benefits:
   - FitzHughNagumoNeuron with 9 behaviors
   - OscillatorNetwork with Kuramoto sync
   - FTJSynapse with STDP
-  - IronLatticeFTJArray integration
+  - Ferroelectric CIMFTJArray integration
   - FTJ and NDR benchmarks
 
 ### Key Numbers This Iteration
@@ -30398,7 +30398,7 @@ FeFET vs FeCap Fatigue:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Domain-Aware CIM Integration
+### Ferroelectric CIM Domain-Aware CIM Integration
 
 ```
 Domain-Aware CIM Array Design:
@@ -30464,7 +30464,7 @@ Domain-Aware CIM Array Design:
   - ElectricalPulse, PulseEngineer
   - FatigueFreeInterface, FatigueFreeDesign
   - DomainAwareCIMCell, DomainAwareCIMArray
-  - IronLatticeDomainArray integration
+  - Ferroelectric CIMDomainArray integration
   - DomainVisualization utilities
   - DomainFatigueBenchmark suite
 
@@ -30898,10 +30898,10 @@ Application Domains:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice HDC Integration
+### Ferroelectric CIM HDC Integration
 
 ```
-IronLattice Memcapacitor-HDC System:
+Ferroelectric CIM Memcapacitor-HDC System:
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │  Architecture:                                              │
@@ -30964,7 +30964,7 @@ IronLattice Memcapacitor-HDC System:
   - HDCClassifier with associative memory
   - FeFETHDCAccelerator with CAM search
   - TernaryCAM for parallel pattern matching
-  - IronLatticeHDCSystem integration
+  - Ferroelectric CIMHDCSystem integration
   - MemcapacitorBenchmark and HDCBenchmark suites
 
 ### Key Numbers This Iteration
@@ -31472,10 +31472,10 @@ When to Use Analog vs Digital vs Hybrid:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Hybrid Integration
+### Ferroelectric CIM Hybrid Integration
 
 ```
-IronLattice Stochastic-Hybrid System:
+Ferroelectric CIM Stochastic-Hybrid System:
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │  Components:                                                │
@@ -31541,7 +31541,7 @@ IronLattice Stochastic-Hybrid System:
   - HybridCIMArray (AnalogUnit + DigitalUnit)
   - BooleanLogicUnit for digital processing
   - FELIXAccelerator with bit decomposition
-  - IronLatticeStochasticSystem integration
+  - Ferroelectric CIMStochasticSystem integration
   - StochasticBenchmark suite
 
 ### Key Numbers This Iteration
@@ -31790,11 +31790,11 @@ Research demonstrates NC-FET enhanced SRAM for CiM:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice NC-CIM Integration
+### Ferroelectric CIM NC-CIM Integration
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  NC-Enhanced IronLattice Architecture                       │
+│  NC-Enhanced Ferroelectric CIM Architecture                       │
 │                                                             │
 │  ┌─────────────────────────────────────────────┐           │
 │  │              Ultra-Low Voltage Core          │           │
@@ -31809,7 +31809,7 @@ Research demonstrates NC-FET enhanced SRAM for CiM:
 │  │           HZO Ferroelectric Layer            │           │
 │  │      (NC for input amplification)            │           │
 │  ├─────────────────────────────────────────────┤           │
-│  │         IronLattice Crossbar Array           │           │
+│  │         Ferroelectric CIM Crossbar Array           │           │
 │  │      (Analog weight storage & MVM)           │           │
 │  └─────────────────────────────────────────────┘           │
 │                                                             │
@@ -32119,11 +32119,11 @@ Research demonstrates NC-FET enhanced SRAM for CiM:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice 2D Integration Roadmap
+### Ferroelectric CIM 2D Integration Roadmap
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  IronLattice + 2D Ferroelectric Integration                │
+│  Ferroelectric CIM + 2D Ferroelectric Integration                │
 │                                                             │
 │  Phase 1: Material Characterization                         │
 │  ┌─────────────────────────────────────┐                   │
@@ -32192,7 +32192,7 @@ Research demonstrates NC-FET enhanced SRAM for CiM:
   - VdWFeFET heterostructure device
   - OneT1MCell for neuromorphic arrays
   - Ferro2DCrossbar with MVM and STDP
-  - IronLatticeNC2DSystem integration
+  - Ferroelectric CIMNC2DSystem integration
   - NCFETBenchmark and Ferro2DBenchmark utilities
 
 ### Key Numbers This Iteration
@@ -32711,11 +32711,11 @@ Self-attention is the computational core of transformers, but creates memory bot
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Attention Integration
+### Ferroelectric CIM Attention Integration
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  IronLattice Transformer Architecture                       │
+│  Ferroelectric CIM Transformer Architecture                       │
 │                                                             │
 │  ┌─────────────────────────────────────────────┐           │
 │  │                Input Embedding               │           │
@@ -32792,7 +32792,7 @@ Self-attention is the computational core of transformers, but creates memory bot
   - AttentionCrossbar with Q/K/V projections
   - ReCATEngine cascaded crossbar
   - FerroKVCache with 3D integration
-  - IronLatticeCAMAttention integrated system
+  - Ferroelectric CIMCAMAttention integrated system
   - CAMBenchmark and AttentionBenchmark utilities
 
 ### Key Numbers This Iteration
@@ -33484,7 +33484,7 @@ Mixed-precision quantization (MPQ) assigns different bit-widths to different lay
   - MixedPrecisionQuantizer (Hessian, LieQ, GAQ)
   - CMQQuantizer (group-wise, noise-aware)
   - CIM2PQQuantizer (evolutionary search)
-  - IronLatticeSNNMPQ integrated system
+  - Ferroelectric CIMSNNMPQ integrated system
 
 ### Key Numbers This Iteration
 
@@ -34026,7 +34026,7 @@ Optical computing offers the promise of near-speed-of-light computation with min
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Edge-Optical Integration Vision
+### Ferroelectric CIM Edge-Optical Integration Vision
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -34109,7 +34109,7 @@ Optical computing offers the promise of near-speed-of-light computation with min
   - FerroelectricRingResonator memory
   - PCMPhotonicCell for optical weights
   - PhotonicReservoir computing
-  - IronLatticeEdgeOptical integrated system
+  - Ferroelectric CIMEdgeOptical integrated system
 
 ### Key Numbers This Iteration
 
@@ -34299,7 +34299,7 @@ Privacy guarantees for sensitive applications:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Federated Learning Vision
+### Ferroelectric CIM Federated Learning Vision
 
 Target deployment scenarios:
 1. **Edge Surveillance:** 10 clients, low power, high compression
@@ -34609,7 +34609,7 @@ The `federated_vision.go` module implements:
   - SCIMITARCore with CSR sparse weights
   - InSensorProcessor for photocurrent compute
   - NeuromorphicVisionPipeline integration
-  - IronLatticeFederatedVision unified system
+  - Ferroelectric CIMFederatedVision unified system
   - Preset configurations (edge, autonomous, medical)
 
 ### Key Numbers This Iteration
@@ -35048,7 +35048,7 @@ Configurable precision for energy-accuracy tradeoff:
   - FeFETCAM (BCAM, TCAM modes)
   - CombinationEncodingCAM (CECAM)
   - AnalogCAM for similarity search
-  - IronLatticeHILCAM integrated system
+  - Ferroelectric CIMHILCAM integrated system
   - Preset configurations (validation, genome, few-shot)
 
 ### Key Numbers This Iteration
@@ -35451,7 +35451,7 @@ Solution: Control grain size through doping concentration to favor o/t phases.
   - CryogenicCrossbar for quantum proximity
   - FeNANDCell/String/Array (3D vertical)
   - BayesianNNSupport for probabilistic inference
-  - IronLatticeCryo3D integrated system
+  - Ferroelectric CIMCryo3D integrated system
   - Preset configurations (quantum, space, AI)
 
 ### Key Numbers This Iteration
@@ -35906,7 +35906,7 @@ High-endurance ferroelectrics enable:
   - SuperlatticeOptimizer for bilayer optimization
   - FatiguePredictionModel for lifetime estimation
   - ProcessWindowAnalyzer for BEOL compatibility
-  - IronLatticeBEOLSystem integrated simulation
+  - Ferroelectric CIMBEOLSystem integrated simulation
   - Visualization helpers for endurance plots
 
 ### Key Numbers This Iteration
@@ -36300,7 +36300,7 @@ Ferroelectric FETs naturally implement reservoir computing:
   - FerroelectricPBit with domain stochasticity
   - FerroTRNG with entropy/Hamming metrics
   - StochasticNeuralNet with bitstream operations
-  - IronLatticeMemcapStochastic hybrid system
+  - Ferroelectric CIMMemcapStochastic hybrid system
   - Visualization helpers for C-V curves and distributions
 
 ### Key Numbers This Iteration
@@ -36676,7 +36676,7 @@ Ferroelectric DVS (Dynamic Vision Sensor) benefits:
   - STDPLayer for learning-enabled processing
   - InSensorProcessor for event-driven encoding
   - MultimodalFusionEngine with attention
-  - IronLatticePlasticitySensor integrated system
+  - Ferroelectric CIMPlasticitySensor integrated system
   - Visualization helpers for STDP window, PPF, fusion
 
 ### Key Numbers This Iteration
@@ -37137,7 +37137,7 @@ HDC's distributed representation provides inherent error tolerance:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### IronLattice Integration
+### Ferroelectric CIM Integration
 
 Combining domain wall synapses with HDC creates a powerful hybrid:
 
@@ -37182,7 +37182,7 @@ Combining domain wall synapses with HDC creates a powerful hybrid:
   - FeFETXORArray, FeFETMAJArray, FeFETCAMArray
   - ItemMemory, NGramEncoder, AssociativeMemory
   - HDCClassifier for end-to-end classification
-  - IronLatticeDWHDCSystem integrated hybrid
+  - Ferroelectric CIMDWHDCSystem integrated hybrid
   - DWHDCBenchmark for performance evaluation
   - Visualization helpers for domain walls and hypervectors
   - Demo functions: SpamFilteringDemo, ErrorToleranceDemo, etc.
@@ -37406,7 +37406,7 @@ The Neuromorphic Intermediate Representation (NIR) provides a unified instructio
 │   ├─────────┤   ├──→│   NIR   │←──┤   ├─────────────┤                      │
 │   │ Rockpool│ ──┤   │  Graph  │   ├── │   Speck     │                      │
 │   ├─────────┤   │   └─────────┘   │   ├─────────────┤                      │
-│   │ Sinabs  │ ──┤                  └── │ IronLattice │                      │
+│   │ Sinabs  │ ──┤                  └── │ Ferroelectric CIM │                      │
 │   ├─────────┤   │                      └─────────────┘                      │
 │   │ Nengo   │ ──┤                                                           │
 │   ├─────────┤   │   Benefit: m + n interfaces instead of m × n             │
@@ -37505,7 +37505,7 @@ The Neuromorphic Intermediate Representation (NIR) provides a unified instructio
 | SpiNNaker 2 | 153 | 1,000 | 10K | 200 µW | 1 µs |
 | Xylo | 1 | 1,000 | 65K | 500 µW | 100 ns |
 | Speck | 1 | 328 | 16K | 50 µW | 50 ns |
-| IronLattice | 64 | 256 | 65K | 10 µW | 10 ns |
+| Ferroelectric CIM | 64 | 256 | 65K | 10 µW | 10 ns |
 
 ### Compilation Optimizations
 
@@ -37557,9 +37557,9 @@ The Neuromorphic Intermediate Representation (NIR) provides a unified instructio
 5. ✅ Few-shot learning acceleration with ACAM
 6. ✅ NIR (Neuromorphic Intermediate Representation) primitives
 7. ✅ GMap simulated annealing mapping algorithm
-8. ✅ Multi-target compilation (Loihi, SpiNNaker, Xylo, IronLattice)
+8. ✅ Multi-target compilation (Loihi, SpiNNaker, Xylo, Ferroelectric CIM)
 9. ✅ Network partitioning and load balancing
-10. ✅ Integrated CAM + compiler IronLattice system
+10. ✅ Integrated CAM + compiler Ferroelectric CIM system
 
 ### Code Artifacts
 - `demo2-inference/pkg/layers/cam_compiler.go` (~1200 lines)
@@ -37571,7 +37571,7 @@ The Neuromorphic Intermediate Representation (NIR) provides a unified instructio
   - NetworkPartitioner with greedy algorithm
   - AnnealingMapper with simulated annealing
   - NIRCompiler with validation/optimization
-  - IronLatticeCAMCompiler integrated system
+  - Ferroelectric CIMCAMCompiler integrated system
   - Demo and visualization functions
 
 ### Key Numbers This Iteration
@@ -37952,7 +37952,7 @@ Meta-learning enables rapid adaptation to new tasks:
   - LocalLearningTrainer with Hebbian updates
   - MetaLearner for learning-to-learn
   - OnChipTrainingSystem integrated pipeline
-  - IronLatticeFTJOnChipSystem complete system
+  - Ferroelectric CIMFTJOnChipSystem complete system
   - Demo and comparison functions
 
 ### Key Numbers This Iteration
@@ -40696,7 +40696,7 @@ Multi-Head Attention CIM Mapping:
 │  │                                                               │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │                                                                     │
-│  Solution 3: Hybrid (IronLattice Approach)                         │
+│  Solution 3: Hybrid (Ferroelectric CIM Approach)                         │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │                                                               │  │
 │  │  • Group heads by shared dimensions                          │  │

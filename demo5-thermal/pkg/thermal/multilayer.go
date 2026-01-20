@@ -36,7 +36,7 @@ func NewMultiLayerSim(numLayers, width, height int) *MultiLayerSim {
 	}
 }
 
-// DefaultMultiLayerSim creates a 3-layer simulation matching IronLattice architecture.
+// DefaultMultiLayerSim creates a 3-layer simulation matching FeCIM architecture.
 func DefaultMultiLayerSim() *MultiLayerSim {
 	sim := NewMultiLayerSim(3, 32, 32)
 

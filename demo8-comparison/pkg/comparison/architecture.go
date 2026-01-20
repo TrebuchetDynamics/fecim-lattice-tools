@@ -67,11 +67,11 @@ func GPUAccelerator() *Architecture {
 	}
 }
 
-// IronLatticeChip creates an IronLattice compute-in-memory architecture.
+// FeCIMChip creates an FeCIM compute-in-memory architecture.
 //
 // ⚠️ WARNING: ESTIMATED VALUES - NO BASIS IN DR. TOUR'S PRESENTATION ⚠️
 //
-// IronLattice is at TRL 4 (lab validation only). Dr. Tour did NOT disclose:
+// FeCIM is at TRL 4 (lab validation only). Dr. Tour did NOT disclose:
 //   - TDP (power consumption)
 //   - TOPS (performance)
 //   - TOPS/W (efficiency)
@@ -89,15 +89,15 @@ func GPUAccelerator() *Architecture {
 //   - "80-90% data center energy reduction" (CLAIMED, NOT VERIFIED)
 //
 // See opensource/papers/08_Documentation/HONESTY_AUDIT.md for full analysis.
-func IronLatticeChip() *Architecture {
+func FeCIMChip() *Architecture {
 	return &Architecture{
-		Name:            "IronLattice CIM",
+		Name:            "FeCIM CIM",
 		Description:     "Ferroelectric compute-in-memory with 30-level cells (ESTIMATED SPECS - TRL4)",
 		Technology:      "FeFET Crossbar",
 		ProcessNode:     45,   // ESTIMATED - not disclosed
-		ChipArea:        50,   // ESTIMATED - not disclosed by IronLattice
-		TDP:             5,    // ESTIMATED - not disclosed by IronLattice
-		PeakTOPS:        50,   // ESTIMATED - not disclosed by IronLattice
+		ChipArea:        50,   // ESTIMATED - not disclosed by FeCIM
+		TDP:             5,    // ESTIMATED - not disclosed by FeCIM
+		PeakTOPS:        50,   // ESTIMATED - not disclosed by FeCIM
 		MemoryBW:        0,    // Compute-in-memory eliminates bottleneck (correct concept)
 		MemorySize:      1,    // ESTIMATED - weights stored in-situ
 		TOPSPerWatt:     10,   // ESTIMATED - derived from estimates above
@@ -321,7 +321,7 @@ func CompareArchitectures(workload Workload, batchSize int, targetThroughput flo
 	architectures := []*Architecture{
 		TraditionalCPU(),
 		GPUAccelerator(),
-		IronLatticeChip(),
+		FeCIMChip(),
 	}
 
 	results := make([]InferenceResult, len(architectures))
@@ -341,8 +341,8 @@ func CompareArchitectures(workload Workload, batchSize int, targetThroughput flo
 	}
 }
 
-// IronLatticeAdvantage calculates IronLattice advantages over other architectures.
-type IronLatticeAdvantage struct {
+// FeCIMAdvantage calculates FeCIM advantages over other architectures.
+type FeCIMAdvantage struct {
 	VsCPU struct {
 		EnergyReduction    float64
 		LatencyReduction   float64
@@ -359,9 +359,9 @@ type IronLatticeAdvantage struct {
 	}
 }
 
-// CalculateAdvantages calculates IronLattice advantages.
-func CalculateAdvantages(comparison ComparisonResult) IronLatticeAdvantage {
-	var adv IronLatticeAdvantage
+// CalculateAdvantages calculates FeCIM advantages.
+func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
+	var adv FeCIMAdvantage
 
 	var cpuResult, gpuResult, ironResult InferenceResult
 	var cpuDC, gpuDC, ironDC DataCenterMetrics
@@ -377,7 +377,7 @@ func CalculateAdvantages(comparison ComparisonResult) IronLatticeAdvantage {
 			gpuResult = comparison.Results[i]
 			gpuDC = comparison.DataCenter[i]
 			gpuArch = arch
-		case "IronLattice CIM":
+		case "FeCIM CIM":
 			ironResult = comparison.Results[i]
 			ironDC = comparison.DataCenter[i]
 			ironArch = arch

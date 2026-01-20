@@ -1,5 +1,5 @@
 // multimodal_gnn_cim.go - Multi-modal Sensor Fusion and GNN Acceleration for CIM
-// Part of the IronLattice CIM simulation framework
+// Part of the FeCIM CIM simulation framework
 // Iteration 128: Multi-modal fusion (visual, audio, tactile, LiDAR) + GNN on ReRAM
 
 package layers

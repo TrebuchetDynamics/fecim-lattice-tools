@@ -362,7 +362,7 @@ func (m *MayergoyzPreisach) SimulateDomainSwitching(Eapplied float64, duration f
 	return times, pols, switched
 }
 
-// DiscreteStates returns the 30 programmable states for IronLattice.
+// DiscreteStates returns the 30 programmable states for FeCIM.
 func (m *MayergoyzPreisach) DiscreteStates(N int) []DiscreteState {
 	states := make([]DiscreteState, N)
 	Ps := m.material.Ps
@@ -409,7 +409,7 @@ type DiscreteState struct {
 // Based on ferroelectric FET model where polarization modulates threshold.
 func (m *MayergoyzPreisach) polarizationToConductance(P float64) float64 {
 	// Simplified model: G = G0 + ΔG * (P/Ps)
-	// IronLattice: 1µS to 100µS range
+	// FeCIM: 1µS to 100µS range
 	G0 := 50e-6  // 50 µS baseline
 	deltaG := 49e-6 // ±49 µS range
 

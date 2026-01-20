@@ -1174,8 +1174,8 @@ func max(a, b int) int {
 // IRONLATTICE INTEGRATED SYSTEM
 // =============================================================================
 
-// IronLatticeInterconnectECC represents the complete IronLattice multi-die system
-type IronLatticeInterconnectECC struct {
+// FeCIMInterconnectECC represents the complete FeCIM multi-die system
+type FeCIMInterconnectECC struct {
 	// Core system
 	CIMSystem *CIMInterconnectECCSystem
 
@@ -1195,9 +1195,9 @@ type IronLatticeInterconnectECC struct {
 	TargetEfficiency float64 // TOPS/W
 }
 
-// NewIronLatticeInterconnectECC creates an IronLattice multi-die system
-func NewIronLatticeInterconnectECC(numChiplets, arraySize int) *IronLatticeInterconnectECC {
-	system := &IronLatticeInterconnectECC{
+// NewFeCIMInterconnectECC creates an FeCIM multi-die system
+func NewFeCIMInterconnectECC(numChiplets, arraySize int) *FeCIMInterconnectECC {
+	system := &FeCIMInterconnectECC{
 		CIMSystem:        NewCIMInterconnectECCSystem(numChiplets, arraySize),
 		ECCScheme:        "MAC-ECC",
 		InterconnectType: "UCIe-3.0",
@@ -1216,7 +1216,7 @@ func NewIronLatticeInterconnectECC(numChiplets, arraySize int) *IronLatticeInter
 }
 
 // ExportJSON exports system configuration
-func (ils *IronLatticeInterconnectECC) ExportJSON() ([]byte, error) {
+func (ils *FeCIMInterconnectECC) ExportJSON() ([]byte, error) {
 	export := map[string]interface{}{
 		"num_chiplets":      ils.CIMSystem.NumChiplets,
 		"array_size":        ils.CIMSystem.ArraySize,

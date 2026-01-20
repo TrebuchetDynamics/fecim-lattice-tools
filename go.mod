@@ -1,4 +1,4 @@
-module ironlattice-vis
+module multilayer-ferroelectric-cim-visualizer
 
 go 1.24.0
 

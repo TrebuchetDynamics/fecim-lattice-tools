@@ -10,7 +10,7 @@ type Layer struct {
 	Name       string  // Layer name (e.g., "Input", "Hidden1", "Output")
 	Rows       int     // Number of rows (inputs)
 	Cols       int     // Number of columns (outputs)
-	Levels     int     // Number of discrete conductance levels (30 for IronLattice)
+	Levels     int     // Number of discrete conductance levels (30 for FeCIM)
 	Weights    [][]int // Weight matrix (discrete levels 0-29)
 	Activation string  // Activation function ("relu", "sigmoid", "none")
 }
@@ -20,7 +20,7 @@ type Stack struct {
 	Layers      []*Layer // Ordered layers from input to output
 	Name        string   // Stack name
 	TotalVias   int      // Total via connections between layers
-	Technology  string   // "IronLattice" or "Traditional"
+	Technology  string   // "FeCIM" or "Traditional"
 	CellPitch   float64  // Cell pitch in nm
 	LayerHeight float64  // Layer height in nm
 }
@@ -50,7 +50,7 @@ func NewStack(name string) *Stack {
 	return &Stack{
 		Name:        name,
 		Layers:      make([]*Layer, 0),
-		Technology:  "IronLattice",
+		Technology:  "FeCIM",
 		CellPitch:   45.0, // 45nm cell pitch
 		LayerHeight: 50.0, // 50nm per layer
 	}
@@ -131,7 +131,7 @@ func (s *Stack) TotalParameters() int {
 	return s.TotalCells() // Each cell stores one weight
 }
 
-// BitsPerCell returns effective bits per cell for IronLattice.
+// BitsPerCell returns effective bits per cell for FeCIM.
 func (s *Stack) BitsPerCell() float64 {
 	if len(s.Layers) == 0 {
 		return 0
@@ -282,7 +282,7 @@ func (s *Stack) AnalyzeDataFlow() []DataFlowStats {
 		macs := layer.Rows * layer.Cols
 
 		// Traditional: Need to move weights + inputs + outputs
-		// IronLattice: Weights in-situ, only move inputs + outputs
+		// FeCIM: Weights in-situ, only move inputs + outputs
 		traditionalData := layer.Rows*layer.Cols*4 + layer.Rows*4 + layer.Cols*4
 		cimData := layer.Rows*4 + layer.Cols*4
 
@@ -313,7 +313,7 @@ type EnergyEstimate struct {
 func (s *Stack) EstimateEnergy() []EnergyEstimate {
 	estimates := make([]EnergyEstimate, len(s.Layers))
 
-	// IronLattice: ~0.001 pJ per MAC
+	// FeCIM: ~0.001 pJ per MAC
 	// Traditional: ~1-10 pJ per MAC
 	cimMACEnergy := 0.001        // pJ
 	traditionalMACEnergy := 5.0  // pJ

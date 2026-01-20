@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 3 (January 2026)
+# Ferroelectric CIM Research Findings - Part 3 (January 2026)
 
 Additional research on CAM architectures, transformer acceleration, reliability, and commercialization.
 
@@ -182,7 +182,7 @@ Transformer-based ALBERT model demonstrated on ferroelectric CIM:
 | Texas Instruments | Established | Industrial FeRAM | Production |
 | Infineon | Established | Secure MCUs | Production |
 | Weebit Nano | Startup | ReRAM/FeRAM | GF 22FDX tape-out |
-| **IronLattice** | Rice spinout | AI CIM | $50K (seed) |
+| **Ferroelectric CIM** | Rice spinout | AI CIM | $50K (seed) |
 
 ### Commercialization Timeline
 
@@ -205,11 +205,11 @@ Transformer-based ALBERT model demonstrated on ferroelectric CIM:
 
 ---
 
-## 5. IronLattice Competitive Position
+## 5. Ferroelectric CIM Competitive Position
 
 ### Technology Differentiators
 
-| Aspect | IronLattice | Competitors |
+| Aspect | Ferroelectric CIM | Competitors |
 |--------|-------------|-------------|
 | Structure | HZO superlattice | Solid-solution HZO |
 | Analog states | ~30 levels | Typically 8-16 |
@@ -291,7 +291,7 @@ Phase 3: Full CIM (2029+)
 
 | Topic | Documents | Papers | URLs |
 |-------|-----------|--------|------|
-| Core IronLattice | Part 1 | 30+ | 50+ |
+| Core Ferroelectric CIM | Part 1 | 30+ | 50+ |
 | STDP/SNN/Training | Part 2 | 25+ | 40+ |
 | CAM/Transformer/Mfg | Part 3 | 20+ | 35+ |
 | **Total** | **3 docs** | **75+** | **125+** |

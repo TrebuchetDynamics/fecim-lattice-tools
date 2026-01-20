@@ -447,11 +447,11 @@ func NewAlBNMaterial() *FerroelectricMaterial {
 	}
 }
 
-// NewHZOSuperlattice creates HZO superlattice (IronLattice)
+// NewHZOSuperlattice creates HZO superlattice (FeCIM)
 func NewHZOSuperlattice() *FerroelectricMaterial {
 	return &FerroelectricMaterial{
 		Type:                  MaterialHZOSuperlattice,
-		Name:                  "HfO2/ZrO2 Superlattice (IronLattice)",
+		Name:                  "HfO2/ZrO2 Superlattice (FeCIM)",
 		RemanentPolarization:  45,    // Enhanced vs standard HZO
 		SaturationPolarization: 60,
 		CoerciveField:         850,   // Reduced Ec

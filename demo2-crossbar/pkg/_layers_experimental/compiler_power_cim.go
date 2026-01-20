@@ -1,5 +1,5 @@
 // compiler_power_cim.go - CIM Compiler/Mapping and Power Management Simulation
-// IronLattice Visualization Project - Iteration 124
+// FeCIM Visualization Project - Iteration 124
 //
 // This module implements simulation models for:
 // 1. CIM compiler and neural network mapping strategies

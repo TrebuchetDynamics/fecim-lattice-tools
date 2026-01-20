@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ironlattice-vis/demo8-comparison/pkg/comparison"
+	"multilayer-ferroelectric-cim-visualizer/demo8-comparison/pkg/comparison"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	showSpecs := flag.Bool("specs", false, "Show architecture specifications")
 	showInference := flag.Bool("inference", false, "Show inference comparison")
 	showDataCenter := flag.Bool("datacenter", false, "Show data center comparison")
-	showAdvantages := flag.Bool("advantages", false, "Show IronLattice advantages")
+	showAdvantages := flag.Bool("advantages", false, "Show FeCIM advantages")
 	workloadName := flag.String("workload", "mnist", "Workload: mnist, resnet, bert, gpt2, llm")
 	targetTP := flag.Float64("throughput", 10000, "Target throughput (inferences/sec)")
 	noColor := flag.Bool("no-color", false, "Disable color output")
@@ -66,7 +66,7 @@ func main() {
 	}
 
 	if *showAll || *showAdvantages {
-		showIronLatticeAdvantages(renderer, advantages)
+		showFeCIMAdvantages(renderer, advantages)
 	}
 
 	// Summary
@@ -77,7 +77,7 @@ func printHeader() {
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
 	fmt.Println("║         IRONLATTICE TECHNOLOGY COMPARISON                    ║")
-	fmt.Println("║     CPU+DRAM vs GPU vs IronLattice Compute-in-Memory         ║")
+	fmt.Println("║     CPU+DRAM vs GPU vs FeCIM Compute-in-Memory         ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
@@ -85,10 +85,10 @@ func printHeader() {
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
 	fmt.Println("║  ⚠️  WARNING: IRONLATTICE SPECIFICATIONS ARE ESTIMATED ⚠️     ║")
 	fmt.Println("╠══════════════════════════════════════════════════════════════╣")
-	fmt.Println("║  IronLattice is at TRL 4 (lab validation only).             ║")
+	fmt.Println("║  FeCIM is at TRL 4 (lab validation only).             ║")
 	fmt.Println("║  Dr. Tour did NOT disclose chip-level specs (TDP, TOPS).    ║")
 	fmt.Println("║                                                              ║")
-	fmt.Println("║  The IronLattice values below are ESTIMATES for demo        ║")
+	fmt.Println("║  The FeCIM values below are ESTIMATES for demo        ║")
 	fmt.Println("║  purposes only. Do NOT use for investment decisions.        ║")
 	fmt.Println("║                                                              ║")
 	fmt.Println("║  VERIFIED: 30 analog levels, 87% MNIST (88% max)            ║")
@@ -197,7 +197,7 @@ func showDataCenterComparison(renderer *comparison.Renderer, comp comparison.Com
 	fmt.Println(renderer.RenderBarChart("", labels, co2s, "kg/day", true))
 }
 
-func showIronLatticeAdvantages(renderer *comparison.Renderer, advantages comparison.IronLatticeAdvantage) {
+func showFeCIMAdvantages(renderer *comparison.Renderer, advantages comparison.FeCIMAdvantage) {
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println("                  IRONLATTICE ADVANTAGES")
 	fmt.Println("═══════════════════════════════════════════════════════════════")
@@ -215,7 +215,7 @@ func showIronLatticeAdvantages(renderer *comparison.Renderer, advantages compari
 	fmt.Println()
 }
 
-func printSummary(comp comparison.ComparisonResult, adv comparison.IronLatticeAdvantage) {
+func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantage) {
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println("                         SUMMARY")
 	fmt.Println("═══════════════════════════════════════════════════════════════")
@@ -225,15 +225,15 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.IronLatticeAd
 	fmt.Printf("Operations: %s MACs\n", formatNumber(float64(comp.Workload.TotalOps)))
 	fmt.Println()
 
-	// Find IronLattice metrics
+	// Find FeCIM metrics
 	var ironDC comparison.DataCenterMetrics
 	for _, dc := range comp.DataCenter {
-		if dc.Architecture == "IronLattice CIM" {
+		if dc.Architecture == "FeCIM CIM" {
 			ironDC = dc
 		}
 	}
 
-	fmt.Println("IronLattice delivers:")
+	fmt.Println("FeCIM delivers:")
 	fmt.Println(strings.Repeat("─", 60))
 	fmt.Printf("  • %.0fx energy reduction vs traditional CPU\n", adv.VsCPU.EnergyReduction)
 	fmt.Printf("  • %.0fx throughput improvement vs traditional CPU\n", adv.VsCPU.ThroughputIncrease)
@@ -259,8 +259,8 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.IronLatticeAd
 		(1-ironDC.CO2Emissions/comp.DataCenter[0].CO2Emissions)*100)
 	fmt.Println()
 
-	// Why IronLattice wins
-	fmt.Println("Why IronLattice Wins:")
+	// Why FeCIM wins
+	fmt.Println("Why FeCIM Wins:")
 	fmt.Println(strings.Repeat("─", 60))
 	fmt.Println("  ✓ Compute-in-Memory: No von Neumann bottleneck")
 	fmt.Println("  ✓ 30 Analog Levels: High information density")

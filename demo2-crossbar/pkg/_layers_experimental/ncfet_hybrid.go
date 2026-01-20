@@ -958,8 +958,8 @@ Hybrid CIM Advantages:
 // IRONLATTICE NC-FET HYBRID SYSTEM
 // =============================================================================
 
-// IronLatticeNCFETHybrid represents IronLattice-optimized system
-type IronLatticeNCFETHybrid struct {
+// FeCIMNCFETHybrid represents FeCIM-optimized system
+type FeCIMNCFETHybrid struct {
 	// Core system
 	System *NCFETHybridCIMSystem
 
@@ -976,9 +976,9 @@ type IronLatticeNCFETHybrid struct {
 	SpeedEnhancement float64 // × vs baseline
 }
 
-// NewIronLatticeNCFETHybrid creates an IronLattice NC-FET hybrid system
-func NewIronLatticeNCFETHybrid(rows, cols int) *IronLatticeNCFETHybrid {
-	system := &IronLatticeNCFETHybrid{
+// NewFeCIMNCFETHybrid creates an FeCIM NC-FET hybrid system
+func NewFeCIMNCFETHybrid(rows, cols int) *FeCIMNCFETHybrid {
+	system := &FeCIMNCFETHybrid{
 		System: NewNCFETHybridCIMSystem(rows, cols),
 	}
 
@@ -996,7 +996,7 @@ func NewIronLatticeNCFETHybrid(rows, cols int) *IronLatticeNCFETHybrid {
 }
 
 // ExportJSON exports system configuration
-func (ils *IronLatticeNCFETHybrid) ExportJSON() ([]byte, error) {
+func (ils *FeCIMNCFETHybrid) ExportJSON() ([]byte, error) {
 	export := map[string]interface{}{
 		"hzo_parameters": map[string]float64{
 			"fe_thickness_nm":     ils.HZOParameters.FEThickness,

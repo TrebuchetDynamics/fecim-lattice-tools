@@ -1,4 +1,4 @@
-# IronLattice Competitive Landscape & Research Intelligence
+# Ferroelectric CIM Competitive Landscape & Research Intelligence
 
 **Last Updated:** January 2026  
 **Purpose:** Comprehensive competitor analysis, collaborator mapping, and technology landscape
@@ -17,7 +17,7 @@
 
 ---
 
-## Part 1: IronLattice Direct Competitors
+## Part 1: Ferroelectric CIM Direct Competitors
 
 ### Tier 1: Ferroelectric Memory Startups
 
@@ -32,8 +32,8 @@
 | **Timeline** | Products expected 2027 |
 | **Investors** | HTGF, Robert Bosch Venture Capital |
 
-**Competitive Position vs IronLattice:**
-- FMC focuses on DRAM replacement, IronLattice on CIM
+**Competitive Position vs Ferroelectric CIM:**
+- FMC focuses on DRAM replacement, Ferroelectric CIM on CIM
 - Both use HfO₂-based ferroelectrics
 - FMC is 2 years ahead in funding/commercialization
 
@@ -327,11 +327,11 @@
 
 ---
 
-## Part 7: IronLattice Positioning
+## Part 7: Ferroelectric CIM Positioning
 
 ### Unique Value Proposition
 
-| Competitor Approach | IronLattice Differentiator |
+| Competitor Approach | Ferroelectric CIM Differentiator |
 |--------------------|---------------------------|
 | FMC: DRAM replacement | Compute-in-Memory (neural networks) |
 | IBM: PCM-based | HfO₂/ZrO₂ superlattice (CMOS compatible) |

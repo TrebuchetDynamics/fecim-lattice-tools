@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 4 (January 2026)
+# Ferroelectric CIM Research Findings - Part 4 (January 2026)
 
 Additional research on negative capacitance, reservoir computing, 3D integration, security applications, and Vulkan implementation.
 
@@ -129,7 +129,7 @@ where:
 - >10⁷ endurance cycles
 - Vertical gate-all-around structure
 
-**Implications for IronLattice:**
+**Implications for Ferroelectric CIM:**
 - Validates multi-level analog storage in 3D
 - Path to high-density CIM arrays
 - Compatible with BEOL integration strategy
@@ -313,7 +313,7 @@ func (c *TDGLCompute) Initialize(nx, ny uint32) error {
         SType:              vk.STRUCTURE_TYPE_APPLICATION_INFO,
         PApplicationName:   "TDGL Simulator",
         ApplicationVersion: vk.MAKE_VERSION(1, 0, 0),
-        PEngineName:        "IronLattice",
+        PEngineName:        "Ferroelectric CIM",
         EngineVersion:      vk.MAKE_VERSION(1, 0, 0),
         ApiVersion:         vk.API_VERSION_1_2,
     }
@@ -466,7 +466,7 @@ Week 11-12:
 
 ### Technology Synergies
 
-| Technology | Benefit for IronLattice |
+| Technology | Benefit for Ferroelectric CIM |
 |------------|------------------------|
 | NC-FET | Lower operating voltage |
 | Reservoir | Simplified training |

@@ -14,7 +14,7 @@
 package main
 
 import (
-	"ironlattice-vis/demo3-mnist/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/gui"
 )
 
 func main() {

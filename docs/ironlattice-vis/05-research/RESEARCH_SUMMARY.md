@@ -1,4 +1,4 @@
-# IronLattice Research Summary - January 2026
+# Ferroelectric CIM Research Summary - January 2026
 
 Consolidated summary of research findings across all documentation.
 
@@ -6,7 +6,7 @@ Consolidated summary of research findings across all documentation.
 
 ## Executive Overview
 
-### IronLattice Technology
+### Ferroelectric CIM Technology
 
 **Company:** external research institution spinout (Tour Lab)
 **Funding:** $50K One Small Step Grant (2025)
@@ -90,7 +90,7 @@ trainingConfig := &TrainingConfig{
 | RRAM crossbar | 98.1% | 2024 |
 | Multi-level FeFET | 96.6% | 2023 |
 | All-ferroelectric SNN | 94.9% | 2024 |
-| **IronLattice (claimed)** | **87%** | 2025 |
+| **Ferroelectric CIM (claimed)** | **87%** | 2025 |
 
 ### Energy Comparison (per MAC)
 
@@ -174,7 +174,7 @@ trainingConfig := &TrainingConfig{
 | GlobalFoundries | FeFET eNVM | 28nm/22nm FDSOI |
 | TSMC | OS-FeFET | BEOL research |
 | Samsung | HZO FeFET | Pilot production |
-| **IronLattice** | AI CIM | $50K seed |
+| **Ferroelectric CIM** | AI CIM | $50K seed |
 
 ### Market Projections
 

@@ -21,9 +21,9 @@ Problem 4: 8 × 2 = 16  ✓ Done!
 ...doing them ONE BY ONE (slow!)
 ```
 
-### IronLattice (All at Once)
+### Ferroelectric CIM (All at Once)
 
-IronLattice is like having thousands of calculators working together:
+Ferroelectric CIM is like having thousands of calculators working together:
 ```
 Problem 1: 5 × 3 = 15  ─┐
 Problem 2: 2 × 7 = 14   │
@@ -111,7 +111,7 @@ Neural networks (the brains of AI) are basically just **lots and lots of multipl
 
 **Normal computer:** Does 101,632 multiplications one by one 😓
 
-**IronLattice:** Does them all at once in the grid! ⚡
+**Ferroelectric CIM:** Does them all at once in the grid! ⚡
 
 ---
 
@@ -225,7 +225,7 @@ cd demo2-crossbar
 | Method | Energy per Multiplication |
 |--------|--------------------------|
 | GPU (moving data around) | ~1000 fJ |
-| **IronLattice (in-place)** | **~10 fJ** |
+| **Ferroelectric CIM (in-place)** | **~10 fJ** |
 
 **100× more efficient!** That's why data centers could use 80-90% less power.
 

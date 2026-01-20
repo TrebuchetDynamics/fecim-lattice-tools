@@ -1,5 +1,5 @@
 // photonic_gnn_cim.go - Photonic-Electronic Hybrid CIM and GNN Accelerators
-// Part of IronLattice educational demonstrations
+// Part of FeCIM educational demonstrations
 //
 // This module implements:
 // 1. Photonic compute-in-memory with silicon photonics (MZI, MRR)

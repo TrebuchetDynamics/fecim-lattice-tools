@@ -1,10 +1,10 @@
-/ralph-loop:ralph-loop "## IronLattice Demo Upgrade - Live Slide Pattern
+/ralph-loop:ralph-loop "## Ferroelectric CIM Demo Upgrade - Live Slide Pattern
 
 MISSION: Upgrade demos to 'live presentation slides' following Demo 1 pattern.
 
 REFERENCE FILES:
 - PLAYBOOK.md (project handbook)
-- ironlattice-transcript.md (Dr. Tour's presentation)
+- ferroelectric-cim-transcript.md (Dr. Tour's presentation)
 - TODO.md (task tracking)
 
 CURRENT PRIORITY: Demo 2 (Crossbar MVM) → Demo 3 (MNIST) → Demo 4 (Circuits)

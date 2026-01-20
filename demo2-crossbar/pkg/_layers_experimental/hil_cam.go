@@ -1,5 +1,5 @@
 // Package layers provides hardware-in-the-loop (HIL) testing frameworks and
-// ferroelectric content-addressable memory (CAM) implementations for IronLattice CIM.
+// ferroelectric content-addressable memory (CAM) implementations for FeCIM CIM.
 //
 // Based on research findings:
 // - NeuroSim: Validated CIM simulator framework (Frontiers AI 2021)
@@ -9,7 +9,7 @@
 // - TAP-CAM: Tunable approximate matching engine (2025)
 // - High-temperature FeFET CAM (Adv. Intelligent Systems 2024)
 //
-// Reference: IronLattice Research Log Sections 280-281
+// Reference: FeCIM Research Log Sections 280-281
 package layers
 
 import (
@@ -948,8 +948,8 @@ func (acam *AnalogCAM) SearchAnalog(query []float64) ([]int, []float64) {
 // INTEGRATED IRONLATTICE HIL-CAM SYSTEM
 // ============================================================================
 
-// IronLatticeHILCAM integrates HIL testing with CAM functionality
-type IronLatticeHILCAM struct {
+// FeCIMHILCAM integrates HIL testing with CAM functionality
+type FeCIMHILCAM struct {
 	// Configuration
 	HILConfig *HILConfig
 	CAMConfig *FeFETCAMConfig
@@ -977,9 +977,9 @@ type ValidationResult struct {
 	Configuration  string
 }
 
-// NewIronLatticeHILCAM creates the integrated system
-func NewIronLatticeHILCAM(hilConfig *HILConfig, camConfig *FeFETCAMConfig) *IronLatticeHILCAM {
-	return &IronLatticeHILCAM{
+// NewFeCIMHILCAM creates the integrated system
+func NewFeCIMHILCAM(hilConfig *HILConfig, camConfig *FeFETCAMConfig) *FeCIMHILCAM {
+	return &FeCIMHILCAM{
 		HILConfig:         hilConfig,
 		CAMConfig:         camConfig,
 		Validator:         NewNeuroSimValidator(hilConfig, 64, 64),
@@ -992,7 +992,7 @@ func NewIronLatticeHILCAM(hilConfig *HILConfig, camConfig *FeFETCAMConfig) *Iron
 }
 
 // RunValidation runs a complete validation cycle
-func (ilhc *IronLatticeHILCAM) RunValidation(
+func (ilhc *FeCIMHILCAM) RunValidation(
 	testInputs [][]float64,
 	testLabels []int,
 	weights [][][]float64,
@@ -1018,7 +1018,7 @@ func (ilhc *IronLatticeHILCAM) RunValidation(
 }
 
 // RunCAMSearch performs CAM-based associative search
-func (ilhc *IronLatticeHILCAM) RunCAMSearch(query []float64, searchType string) ([]int, error) {
+func (ilhc *FeCIMHILCAM) RunCAMSearch(query []float64, searchType string) ([]int, error) {
 	ilhc.TotalSearches++
 
 	switch searchType {
@@ -1039,7 +1039,7 @@ func (ilhc *IronLatticeHILCAM) RunCAMSearch(query []float64, searchType string) 
 }
 
 // FewShotClassify performs few-shot learning classification using CAM
-func (ilhc *IronLatticeHILCAM) FewShotClassify(
+func (ilhc *FeCIMHILCAM) FewShotClassify(
 	supportSet [][]float64,
 	supportLabels []int,
 	querySet [][]float64,
@@ -1064,7 +1064,7 @@ func (ilhc *IronLatticeHILCAM) FewShotClassify(
 }
 
 // GenomeReadMapping performs genome read mapping using CAM
-func (ilhc *IronLatticeHILCAM) GenomeReadMapping(
+func (ilhc *FeCIMHILCAM) GenomeReadMapping(
 	referenceGenome [][]float64,
 	reads [][]float64,
 	maxMismatches int,
@@ -1094,7 +1094,7 @@ func (ilhc *IronLatticeHILCAM) GenomeReadMapping(
 }
 
 // GetStatistics returns system statistics
-func (ilhc *IronLatticeHILCAM) GetStatistics() map[string]interface{} {
+func (ilhc *FeCIMHILCAM) GetStatistics() map[string]interface{} {
 	stats := make(map[string]interface{})
 
 	stats["total_validations"] = ilhc.TotalValidations
@@ -1118,7 +1118,7 @@ func (ilhc *IronLatticeHILCAM) GetStatistics() map[string]interface{} {
 }
 
 // Preset configurations
-func IronLatticeHILCAMPreset(scenario string) (*HILConfig, *FeFETCAMConfig) {
+func FeCIMHILCAMPreset(scenario string) (*HILConfig, *FeFETCAMConfig) {
 	switch scenario {
 	case "high_accuracy_validation":
 		return &HILConfig{

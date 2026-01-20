@@ -1,8 +1,8 @@
-# IronLattice-vis Playbook
+# Ferroelectric CIM-vis Playbook
 
-**MISSION:** Create world-class visualization demos to help Dr. external research group pitch IronLattice to investors, engineers, and foundry partners.
+**MISSION:** Create world-class visualization demos to help Dr. external research group pitch Ferroelectric CIM to investors, engineers, and foundry partners.
 
-**PRIMARY REFERENCE:** `ironlattice-transcript.md` (Dr. Tour's Nov 2024 presentation)
+**PRIMARY REFERENCE:** `ferroelectric-cim-transcript.md` (Dr. Tour's Nov 2024 presentation)
 **TASK TRACKING:** `TODO.md` (authoritative task list)
 **PAPERS:** `opensource/papers/08_Documentation/PAPERS_NEEDED.md`
 
@@ -47,7 +47,7 @@ cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 
 # Demo 3: MNIST Neural Network (draw digits, simulation)
-# NOTE: IronLattice hardware = 87%, theoretical max = 88%
+# NOTE: Ferroelectric CIM hardware = 87%, theoretical max = 88%
 cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 
 # Demo 4: Peripheral Circuits (CLI - linearity, timing, power)
@@ -92,7 +92,7 @@ sudo dnf install gcc libX11-devel libXcursor-devel libXrandr-devel libXinerama-d
 - Temperature dependence modeling
 - Thread-safe simulation engine
 - Real-time P-E hysteresis curve with fade trail
-- Material selector (Default HZO, Optimized, IronLattice)
+- Material selector (Default HZO, Optimized, Ferroelectric CIM)
 - Waveform selector (Sine, Triangle, Square, Manual)
 
 **Run:**
@@ -117,7 +117,7 @@ cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 - Interactive heatmap with click-to-select cells
 - Three tabbed views: Conductance, IR Drop, Sneak Paths
 - 30 discrete conductance levels
-- Custom "IronLattice" colormap
+- Custom "Ferroelectric CIM" colormap
 
 **Run:**
 ```bash
@@ -135,7 +135,7 @@ cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-g
 
 **Story:** "This is what we can build with it"
 
-> ⚠️ **HARDWARE vs SIMULATION:** IronLattice hardware achieved **87%** with **88% theoretical maximum** (per Dr. Tour). Our simulation uses idealized conditions and may exceed real hardware capabilities.
+> ⚠️ **HARDWARE vs SIMULATION:** Ferroelectric CIM hardware achieved **87%** with **88% theoretical maximum** (per Dr. Tour). Our simulation uses idealized conditions and may exceed real hardware capabilities.
 
 **Implemented Features:**
 - Simulation accuracy varies (idealized, may exceed hardware)
@@ -193,7 +193,7 @@ cd demo4-circuits && go run ./cmd/circuits --power
 - Multi-layer heat coupling
 - Hotspot identification
 - Thermal throttling warnings
-- IronLattice's low-power advantage
+- Ferroelectric CIM's low-power advantage
 
 **Run:**
 ```bash
@@ -206,7 +206,7 @@ cd demo5-thermal && go run ./cmd/thermal --realtime
 
 ## Demo 8: Technology Comparison 🔲 PRIORITY
 
-**Story:** "Why IronLattice wins vs everyone else"
+**Story:** "Why Ferroelectric CIM wins vs everyone else"
 
 **Purpose:** The slide Dr. Tour shows investors
 
@@ -214,7 +214,7 @@ cd demo5-thermal && go run ./cmd/thermal --realtime
 ┌──────────────────────────────────────────────────────────────────┐
 │                    COMPUTE PERFORMANCE COMPARISON                 │
 ├────────────────┬─────────────┬─────────────┬─────────────────────┤
-│    Metric      │  DRAM+CPU   │    GPU      │    IronLattice      │
+│    Metric      │  DRAM+CPU   │    GPU      │    Ferroelectric CIM      │
 ├────────────────┼─────────────┼─────────────┼─────────────────────┤
 │ Energy vs NAND │     1×      │    0.1×     │   0.0000001× (10M×) │
 │ Speed vs NAND  │     1×      │    100×     │   1,000,000×        │
@@ -235,7 +235,7 @@ cd demo5-thermal && go run ./cmd/thermal --realtime
 
 ## IRONLATTICE SPECS (From Dr. Tour)
 
-| Spec | IronLattice Hardware | Our Simulation | Verification |
+| Spec | Ferroelectric CIM Hardware | Our Simulation | Verification |
 |------|---------------------|----------------|--------------|
 | Analog states | **30 levels** | ✅ 30 levels | VERIFIED |
 | MNIST accuracy | **87%** (88% max) | Variable | ⚠️ SIM ONLY |
@@ -246,7 +246,7 @@ cd demo5-thermal && go run ./cmd/thermal --realtime
 | CMOS compatible | Standard fab | ✅ Modeled | VERIFIED |
 | TRL | **4 (lab only)** | — | VERIFIED |
 
-> ⚠️ Energy claims are from Dr. Tour's presentation and have not been independently verified. IronLattice is at TRL 4 (lab validation), not production.
+> ⚠️ Energy claims are from Dr. Tour's presentation and have not been independently verified. Ferroelectric CIM is at TRL 4 (lab validation), not production.
 
 ---
 
@@ -300,7 +300,7 @@ go test ./...   # 110+ tests passing
 ## FILE STRUCTURE
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
 ├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
 ├── demo3-mnist/          ✅ MNIST (simulation) + Fyne GUI
@@ -313,7 +313,7 @@ ironlattice-vis/
 ├── opensource/papers/    Additional papers + PAPERS_NEEDED.md
 ├── PLAYBOOK.md           This file (project handbook)
 ├── TODO.md               Strategic task list
-└── ironlattice-transcript.md  Dr. Tour's presentation
+└── ferroelectric-cim-transcript.md  Dr. Tour's presentation
 ```
 
 ---
@@ -481,7 +481,7 @@ Each demo should have multiple **waveform/demo modes**:
 │  │  1: ░░░░░░░░░░  1%                 │├───────────────────────────────────┤│
 │  │  ...                               ││ HARDWARE ACCURACY                 ││
 │  │  7: ████████████████████  95% ←WIN ││                                   ││
-│  │  8: ░░░░░░░░░░  2%                 ││ IronLattice: 87%                  ││
+│  │  8: ░░░░░░░░░░  2%                 ││ Ferroelectric CIM: 87%                  ││
 │  │  9: ░░░░░░░░░░  0%                 ││ Theoretical: 88%                  ││
 │  └─────────────────────────────────────┘│ (Simulation may exceed this)     ││
 │                                         └───────────────────────────────────┘│
@@ -504,7 +504,7 @@ Each demo should have multiple **waveform/demo modes**:
 1. **Layer Activation View** - Show activations flowing through network
 2. **Confidence Bars** - Animated bars for each digit (0-9)
 3. **Educational Panel** - "1. Your drawing becomes 784 pixels..."
-4. **Hardware Accuracy Callout** - "IronLattice: 87% (88% max)"
+4. **Hardware Accuracy Callout** - "Ferroelectric CIM: 87% (88% max)"
 5. **MVM Counter** - "100,352 multiplications in 1 cycle!"
 6. **Operation Log** - ">> Classify: input → hidden → output"
 
@@ -667,7 +667,7 @@ func (l *OperationLog) Add(entry string) {
 Dr. Tour's previous spinout (2015):
 > "This company Weebit—this is another memory that came out of my lab... it's selling now on the market with three big customers."
 
-**IronLattice is his next one.**
+**Ferroelectric CIM is his next one.**
 
 ---
 

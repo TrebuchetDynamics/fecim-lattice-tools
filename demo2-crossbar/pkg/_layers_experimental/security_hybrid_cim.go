@@ -1,5 +1,5 @@
 // Package layers provides security primitives and hybrid digital-analog CIM
-// simulation for IronLattice ferroelectric compute-in-memory systems.
+// simulation for FeCIM ferroelectric compute-in-memory systems.
 //
 // This module implements:
 // - Physically Unclonable Functions (PUFs)

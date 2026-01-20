@@ -1,5 +1,5 @@
 // security_multichip_cim.go - CIM Security and Multi-Chip Integration
-// IronLattice Visualization Project - Iteration 144
+// FeCIM Visualization Project - Iteration 144
 //
 // This module implements security mechanisms (PUF, watermarking, attack detection)
 // and multi-chip/chiplet integration for compute-in-memory systems.

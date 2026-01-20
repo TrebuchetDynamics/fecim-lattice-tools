@@ -1,8 +1,8 @@
-# IronLattice Visualization Project Roadmap
+# Ferroelectric CIM Visualization Project Roadmap
 
 ## Project Overview
 
-This project provides educational demonstrations and simulations for IronLattice ferroelectric compute-in-memory (CIM) technology, based on HfO₂/ZrO₂ superlattice materials developed at external research institution.
+This project provides educational demonstrations and simulations for Ferroelectric CIM ferroelectric compute-in-memory (CIM) technology, based on HfO₂/ZrO₂ superlattice materials developed at external research institution.
 
 ---
 
@@ -140,9 +140,9 @@ Based on literature:
 
 ## Research Integration
 
-### IronLattice Technology Mapping
+### Ferroelectric CIM Technology Mapping
 
-| IronLattice Feature | Demo Component |
+| Ferroelectric CIM Feature | Demo Component |
 |---------------------|----------------|
 | HZO superlattice | Material parameters in preisach.go |
 | Analog CIM | Crossbar array simulation |
@@ -163,7 +163,7 @@ Based on literature:
 ## File Structure
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── demo1-hysteresis/
 │   ├── cmd/hysteresis/main.go
 │   ├── pkg/
@@ -391,7 +391,7 @@ ironlattice-vis/
 
 ## Contributing
 
-This project is part of the IronLattice educational initiative. Key areas for contribution:
+This project is part of the Ferroelectric CIM educational initiative. Key areas for contribution:
 - Additional neural network architectures
 - Visualization improvements
 - Documentation and tutorials
@@ -401,7 +401,7 @@ This project is part of the IronLattice educational initiative. Key areas for co
 
 ## References
 
-- external research institution IronLattice: [One Small Step Grant](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
+- external research institution Ferroelectric CIM: [One Small Step Grant](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
 - Dr. external research group Lab: [Google Scholar](https://scholar.google.com/citations?user=YwoecRMAAAAJ)
 - HfO₂ Ferroelectric Roadmap: [APL Materials](https://pubs.aip.org/aip/apm/article/11/8/089201/2908480)
 

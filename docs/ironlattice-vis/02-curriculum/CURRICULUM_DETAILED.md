@@ -1,4 +1,4 @@
-# IronLattice Curriculum - Detailed Technical Guide
+# Ferroelectric CIM Curriculum - Detailed Technical Guide
 
 This document provides in-depth technical details for each curriculum area, with implementation guidance for the visualization demos.
 
@@ -627,7 +627,7 @@ Input (28×28=784) → FC Layer (128) → ReLU → FC Layer (10) → Softmax
 ```
 
 **Target Metrics:**
-- Accuracy: 87% (matching IronLattice claims)
+- Accuracy: 87% (matching Ferroelectric CIM claims)
 - Weight precision: 4-5 bits
 - Noise injection: Gaussian σ = 0.05
 

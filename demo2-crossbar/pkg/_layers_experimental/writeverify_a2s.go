@@ -1544,8 +1544,8 @@ func (sys *CIMWriteVerifyA2SSystem) ExportJSON() ([]byte, error) {
 // IRONLATTICE INTEGRATED SYSTEM
 // =============================================================================
 
-// IronLatticeWriteVerifyA2S integrates all components for IronLattice
-type IronLatticeWriteVerifyA2S struct {
+// FeCIMWriteVerifyA2S integrates all components for FeCIM
+type FeCIMWriteVerifyA2S struct {
 	// Core system
 	CIMSystem *CIMWriteVerifyA2SSystem
 
@@ -1567,8 +1567,8 @@ type IronLatticeWriteVerifyA2S struct {
 	WriteLatency        float64 // ns per weight
 }
 
-// NewIronLatticeWriteVerifyA2S creates an IronLattice-optimized system
-func NewIronLatticeWriteVerifyA2S(rows, cols int) *IronLatticeWriteVerifyA2S {
+// NewFeCIMWriteVerifyA2S creates an FeCIM-optimized system
+func NewFeCIMWriteVerifyA2S(rows, cols int) *FeCIMWriteVerifyA2S {
 	// Configure for HZO ferroelectric
 	writeConfig := &WriteVerifyConfig{
 		MemoryType:       "FeFET",
@@ -1603,7 +1603,7 @@ func NewIronLatticeWriteVerifyA2S(rows, cols int) *IronLatticeWriteVerifyA2S {
 		JitterLevel:      0.05,
 	}
 
-	system := &IronLatticeWriteVerifyA2S{
+	system := &FeCIMWriteVerifyA2S{
 		CIMSystem: NewCIMWriteVerifyA2SSystem(rows, cols, writeConfig, spikeConfig),
 	}
 
@@ -1626,7 +1626,7 @@ func NewIronLatticeWriteVerifyA2S(rows, cols int) *IronLatticeWriteVerifyA2S {
 }
 
 // Inference performs complete inference with spike encoding
-func (ils *IronLatticeWriteVerifyA2S) Inference(inputs []float64) []float64 {
+func (ils *FeCIMWriteVerifyA2S) Inference(inputs []float64) []float64 {
 	// Encode inputs
 	trains := ils.CIMSystem.EncodeInputs(inputs, ils.OptimalEncodingScheme)
 
@@ -1637,17 +1637,17 @@ func (ils *IronLatticeWriteVerifyA2S) Inference(inputs []float64) []float64 {
 }
 
 // ProgramModel programs weights using optimal write scheme
-func (ils *IronLatticeWriteVerifyA2S) ProgramModel(weights [][]float64) {
+func (ils *FeCIMWriteVerifyA2S) ProgramModel(weights [][]float64) {
 	useSTW := ils.OptimalWriteScheme == "STW"
 	ils.CIMSystem.ProgramWeights(weights, useSTW)
 }
 
 // GetPerformanceReport returns performance summary
-func (ils *IronLatticeWriteVerifyA2S) GetPerformanceReport() string {
+func (ils *FeCIMWriteVerifyA2S) GetPerformanceReport() string {
 	stats := ils.CIMSystem.GetStatistics()
 
 	report := fmt.Sprintf(`
-IronLattice Write-Verify + A2S System Performance
+FeCIM Write-Verify + A2S System Performance
 ==================================================
 Array Size: %s
 Write Success Rate: %.1f%%

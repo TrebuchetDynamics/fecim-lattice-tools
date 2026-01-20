@@ -1,6 +1,6 @@
-# IronLattice Documentation
+# Ferroelectric CIM Documentation
 
-Technical documentation for IronLattice ferroelectric compute-in-memory visualization project.
+Technical documentation for Ferroelectric CIM ferroelectric compute-in-memory visualization project.
 
 ## Quick Links
 
@@ -14,7 +14,7 @@ Technical documentation for IronLattice ferroelectric compute-in-memory visualiz
 ## Directory Structure
 
 ```
-ironlattice-vis/
+multilayer-ferroelectric-cim-visualizer/
 ├── 01-start/           # Project management & getting started
 │   ├── PLAYBOOK.md         # Main handbook - start here
 │   ├── PROJECT_ROADMAP.md  # Milestones & goals

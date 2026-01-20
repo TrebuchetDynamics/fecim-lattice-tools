@@ -20,7 +20,7 @@ type INLDNLAnalysis struct {
 func (d *DAC) AnalyzeINLDNL() *INLDNLAnalysis {
 	levels := d.Levels()
 	if levels > 32 {
-		levels = 32 // Limit for IronLattice 30 levels
+		levels = 32 // Limit for FeCIM 30 levels
 	}
 
 	analysis := &INLDNLAnalysis{

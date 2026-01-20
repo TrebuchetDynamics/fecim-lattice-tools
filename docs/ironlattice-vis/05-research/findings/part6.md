@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 6 (January 2026)
+# Ferroelectric CIM Research Findings - Part 6 (January 2026)
 
 Additional research on CIM compilers, thermal management, application domains, and implementation analysis.
 
@@ -170,7 +170,7 @@ For 3D stacked arrays:
 
 ---
 
-## 4. IronLattice Demo Code Analysis
+## 4. Ferroelectric CIM Demo Code Analysis
 
 ### Demo 1: Hysteresis Visualizer
 
@@ -325,7 +325,7 @@ The `pkg/layers/` directory contains extensive neural network layer implementati
 ```
 Future Architecture:
 ┌─────────────────────────────────────┐
-│          IronLattice API            │
+│          Ferroelectric CIM API            │
 ├─────────────────────────────────────┤
 │    ONNX/PyTorch Model Import        │
 ├─────────────────────────────────────┤
@@ -344,7 +344,7 @@ Future Architecture:
 | Unit tests | Individual functions | >80% |
 | Integration | End-to-end inference | Critical paths |
 | Benchmark | Performance metrics | Key operations |
-| Validation | Against published results | IronLattice claims |
+| Validation | Against published results | Ferroelectric CIM claims |
 
 ---
 
@@ -359,7 +359,7 @@ Future Architecture:
 | Automotive | 20+ | Commercial stage |
 | Medical | 15+ | Early research |
 
-### IronLattice Differentiation
+### Ferroelectric CIM Differentiation
 
 1. **Superlattice structure** - Better endurance than solid-solution HZO
 2. **Tour Lab synthesis** - Unique research sample/FWF material preparation

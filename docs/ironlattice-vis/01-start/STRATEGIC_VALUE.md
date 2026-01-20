@@ -1,14 +1,14 @@
-# IronLattice-vis: Strategic Value Report
+# Ferroelectric CIM-vis: Strategic Value Report
 
 ---
 
 ## Executive Summary
 
-IronLattice-vis is an 8-demo GPU-accelerated visualization suite that fills critical gaps in Dr. external research group's commercialization pipeline. This tool addresses needs across investor relations, foundry partnerships, talent recruitment, and design exploration—all areas where the current 3-person team lacks bandwidth and specialized capability.
+Ferroelectric CIM-vis is an 8-demo GPU-accelerated visualization suite that fills critical gaps in Dr. external research group's commercialization pipeline. This tool addresses needs across investor relations, foundry partnerships, talent recruitment, and design exploration—all areas where the current 3-person team lacks bandwidth and specialized capability.
 
 ---
 
-## The IronLattice Team Today
+## The Ferroelectric CIM Team Today
 
 | Person | Role | Focus |
 |--------|------|-------|
@@ -161,7 +161,7 @@ IronLattice-vis is an 8-demo GPU-accelerated visualization suite that fills crit
 
 ### Demo 8: Technology Comparison
 
-**What it shows:** DRAM+CPU vs GPU vs IronLattice—side by side race
+**What it shows:** DRAM+CPU vs GPU vs Ferroelectric CIM—side by side race
 
 **Who needs it:**
 
@@ -273,7 +273,7 @@ With us: Anyone can learn from the demos
 | Berkeley (FerroX) | C++ phase-field | We have interactivity |
 | Academic papers | Static figures | We have animation |
 | Big tech (Intel, Samsung) | Internal tools | We're open source |
-| **Nobody** | IronLattice-specific tools | **We built it** |
+| **Nobody** | Ferroelectric CIM-specific tools | **We built it** |
 
 ---
 
@@ -285,7 +285,7 @@ With us: Anyone can learn from the demos
 | GPU programming | Must know Vulkan/compute shaders |
 | Visualization skills | Must design intuitive interfaces |
 | CIM understanding | Must grasp compute-in-memory |
-| Motivation | Must care about IronLattice specifically |
+| Motivation | Must care about Ferroelectric CIM specifically |
 | Time | Must invest weeks without guarantee |
 
 **Intersection of all these:** Almost nobody.
@@ -391,7 +391,7 @@ Foundation for collaboration
 
 ## Conclusion
 
-IronLattice-vis is not a "nice to have."
+Ferroelectric CIM-vis is not a "nice to have."
 
 It is a **force multiplier** for a 3-person team trying to:
 - Raise millions

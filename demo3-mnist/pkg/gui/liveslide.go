@@ -245,7 +245,7 @@ func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
 		"Testing on MNIST dataset:\n" +
 		"• 10,000 test images\n" +
 		"• Ground truth labels\n\n" +
-		"IronLattice Target:\n" +
+		"FeCIM Target:\n" +
 		"87% accuracy\n" +
 		"(88% theoretical max)\n\n" +
 		"\"We're at 87% validation\n" +

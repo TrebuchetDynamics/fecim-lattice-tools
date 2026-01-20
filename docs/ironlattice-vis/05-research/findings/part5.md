@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 5 (January 2026)
+# Ferroelectric CIM Research Findings - Part 5 (January 2026)
 
 Additional research on latest FeFET advances, Tour Lab publications, photonic hybrids, edge AI deployment, and variability compensation.
 
@@ -114,7 +114,7 @@ Amorphous Carbon → Turbostratic Graphene → Ordered Graphite
 | Application | Neuromorphic FeFET |
 | MNIST Accuracy | 87% |
 
-**Connection to IronLattice:** This work by Jaeho Shin demonstrates the synthesis-to-device pipeline for ferroelectric neuromorphic applications.
+**Connection to Ferroelectric CIM:** This work by Jaeho Shin demonstrates the synthesis-to-device pipeline for ferroelectric neuromorphic applications.
 
 **Source:** [ACS Nano](https://pubs.acs.org/doi/10.1021/acsnano.5c01234)
 
@@ -344,7 +344,7 @@ Key insight: Variation dispersion depends on conductance state (not fixed across
 | Training methods | 3-4 | Algorithm development |
 | Photonic hybrids | 3 | Early research |
 
-### IronLattice Positioning
+### Ferroelectric CIM Positioning
 
 | Advantage | Status |
 |-----------|--------|

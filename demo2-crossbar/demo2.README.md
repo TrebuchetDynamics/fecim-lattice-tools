@@ -1,12 +1,12 @@
 # Demo 2: Crossbar Array MVM Visualization
 
-**IronLattice Visualizer - Compute-in-Memory Crossbar**
+**Ferroelectric CIM Visualizer - Compute-in-Memory Crossbar**
 
 > *"Compute in memory where the same device does the memory and the computation."* — Dr. external research group
 
 ## Overview
 
-Demo 2 provides an interactive visualization of Matrix-Vector Multiplication (MVM) in a ferroelectric crossbar array. This demo illustrates how IronLattice performs analog neural network inference using physical Ohm's law and Kirchhoff's current law, achieving massive parallelism.
+Demo 2 provides an interactive visualization of Matrix-Vector Multiplication (MVM) in a ferroelectric crossbar array. This demo illustrates how Ferroelectric CIM performs analog neural network inference using physical Ohm's law and Kirchhoff's current law, achieving massive parallelism.
 
 ### What This Demo Shows
 
@@ -45,7 +45,7 @@ Cross-platform native GUI featuring:
   - Array size (8×8 to 128×128)
   - Noise level (0-20%)
   - ADC resolution (4-10 bits)
-- **Custom "IronLattice" colormap** matching 30 discrete levels
+- **Custom "Ferroelectric CIM" colormap** matching 30 discrete levels
 - **30-level discrete indicator widget**
 - **Vector bar charts** for input/output visualization
 - **One-click MVM, IR Drop, and Sneak Path analysis**
@@ -58,7 +58,7 @@ Cross-platform native GUI featuring:
 | Array Size Slider | Resize crossbar (8×8 to 128×128) |
 | Noise Slider | Device-to-device variation (0-20%) |
 | ADC Bits Slider | ADC resolution (4-10 bits) |
-| Colormap Dropdown | ironlattice, viridis, plasma, coolwarm |
+| Colormap Dropdown | ferroelectric-cim, viridis, plasma, coolwarm |
 | Run MVM | Execute matrix-vector multiplication |
 | Analyze IR Drop | Show voltage drop heatmap |
 | Analyze Sneak Paths | Show sneak current map |
@@ -331,10 +331,10 @@ Test coverage:
 | 24×24 FE Memristor (sim) | 98.78% | ScienceDirect 2025 |
 | Multi-Level FeFET 28nm (sim) | 96.6% | Nature Comms 2023 |
 | FTJ Crossbar (sim) | 92% | SemiEngineering 2024 |
-| **IronLattice Hardware** | **87%** | Dr. Tour presentation |
-| **Theoretical Max (IronLattice)** | **88%** | Dr. Tour presentation |
+| **Ferroelectric CIM Hardware** | **87%** | Dr. Tour presentation |
+| **Theoretical Max (Ferroelectric CIM)** | **88%** | Dr. Tour presentation |
 
-**Important Note:** Dr. Tour stated that IronLattice achieves **87% accuracy on physical hardware** with a theoretical maximum of **88%** for their architecture. Our simulation (Demo 3) may achieve higher accuracy because it doesn't capture all hardware non-idealities. The 87% figure represents actual measured performance on ferroelectric crossbar arrays.
+**Important Note:** Dr. Tour stated that Ferroelectric CIM achieves **87% accuracy on physical hardware** with a theoretical maximum of **88%** for their architecture. Our simulation (Demo 3) may achieve higher accuracy because it doesn't capture all hardware non-idealities. The 87% figure represents actual measured performance on ferroelectric crossbar arrays.
 
 ---
 
@@ -365,11 +365,11 @@ For large arrays (>64×64):
 
 1. Oh et al. "HfZrOₓ FeFET Synapse with 32 levels" IEEE EDL (2017) - **CRITICAL for Scheme C**
 2. Crossbar Array Tutorial, arXiv:2204.09543 - **Non-idealities modeling**
-3. Dr. external research group, "IronLattice Presentation" (Nov 2024)
+3. Dr. external research group, "Ferroelectric CIM Presentation" (Nov 2024)
 4. IBM AIHWKit documentation - CIM simulation methodology
 
 ---
 
 ## License
 
-Part of the IronLattice Visualizer project.
+Part of the Ferroelectric CIM Visualizer project.

@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"ironlattice-vis/demo4-circuits/pkg/peripherals"
+	"multilayer-ferroelectric-cim-visualizer/demo4-circuits/pkg/peripherals"
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.
@@ -65,7 +65,7 @@ func NewCircuitsApp() *CircuitsApp {
 	}
 
 	// Create Fyne app
-	ca.fyneApp = app.NewWithID("com.ironlattice.circuits-demo")
+	ca.fyneApp = app.NewWithID("com.fecim.circuits-demo")
 	ca.fyneApp.Settings().SetTheme(theme.DarkTheme())
 
 	// Initialize peripheral components
@@ -79,7 +79,7 @@ func NewCircuitsApp() *CircuitsApp {
 
 // Run starts the GUI application.
 func (ca *CircuitsApp) Run() {
-	ca.window = ca.fyneApp.NewWindow("IronLattice Demo 4: Peripheral Circuits")
+	ca.window = ca.fyneApp.NewWindow("FeCIM Demo 4: Peripheral Circuits")
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
@@ -163,7 +163,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Title and header with Dr. Tour quote
-	titleLabel := widget.NewLabel("IronLattice Peripheral Circuits")
+	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
@@ -232,7 +232,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 			widget.NewSeparator(),
 			ca.statusLabel,
 			layout.NewSpacer(),
-			widget.NewLabel("IronLattice Ferroelectric CIM | Standard CMOS"),
+			widget.NewLabel("FeCIM Ferroelectric CIM | Standard CMOS"),
 		),
 	)
 

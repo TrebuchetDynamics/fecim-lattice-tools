@@ -99,7 +99,7 @@ func OptimizedHZO() *HZOMaterial {
 	}
 }
 
-// IronLatticeMaterial returns parameters matching IronLattice specifications.
+// FeCIMMaterial returns parameters matching FeCIM specifications.
 // Based on Dr. Tour's Nov 2024 presentation data.
 //
 // ⚠️ HONESTY NOTE: Some parameters are TARGETS not DEMONSTRATED values.
@@ -121,9 +121,9 @@ func OptimizedHZO() *HZOMaterial {
 //   - All other parameters are literature-based estimates
 //
 // See: opensource/papers/08_Documentation/HONESTY_AUDIT.md
-func IronLatticeMaterial() *HZOMaterial {
+func FeCIMMaterial() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "IronLattice HZO",
+		Name:            "FeCIM HZO",
 		Pr:              30e-2,     // 30 μC/cm² - ESTIMATED (not disclosed)
 		Ps:              35e-2,     // 35 μC/cm² - ESTIMATED (not disclosed)
 		Ec:              1.0e8,     // 1.0 MV/cm - ESTIMATED (not disclosed)
@@ -145,13 +145,13 @@ func IronLatticeMaterial() *HZOMaterial {
 	}
 }
 
-// IronLatticeMaterialTarget returns IronLattice TARGET specifications.
+// FeCIMMaterialTarget returns FeCIM TARGET specifications.
 // ⚠️ WARNING: These are GOALS not demonstrated performance.
 // Dr. Tour explicitly stated: "We still have to get this up to the
 // required 10^12 cycles."
-func IronLatticeMaterialTarget() *HZOMaterial {
-	mat := IronLatticeMaterial()
-	mat.Name = "IronLattice HZO (TARGET - NOT DEMONSTRATED)"
+func FeCIMMaterialTarget() *HZOMaterial {
+	mat := FeCIMMaterial()
+	mat.Name = "FeCIM HZO (TARGET - NOT DEMONSTRATED)"
 	mat.EnduranceCycles = 1e12      // TARGET - not yet achieved
 	mat.RetentionTime = 3.15e9     // TARGET - 100 years (not demonstrated)
 	mat.Tau = 1e-9                 // TARGET - 1ns (demonstrated ~10ns)

@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 )
 
 // TerminalVisualizer provides ASCII/Unicode visualization of crossbar operations.

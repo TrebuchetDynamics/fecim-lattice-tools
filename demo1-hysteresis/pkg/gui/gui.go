@@ -18,16 +18,16 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
 )
 
-// Colors - IronLattice theme
+// Colors - FeCIM theme
 var (
 	colorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan
 	colorSecondary  = color.RGBA{255, 107, 107, 255} // Coral red
 	colorAccent     = color.RGBA{78, 205, 196, 255}  // Teal
 	colorWarning    = color.RGBA{255, 230, 109, 255} // Yellow
-	colorBackground = color.RGBA{0, 50, 100, 255}    // IronLattice blue #003264
+	colorBackground = color.RGBA{0, 50, 100, 255}    // FeCIM blue #003264
 	colorGrid       = color.RGBA{0, 70, 130, 128}    // Grid lines (lighter blue)
 	colorAxis       = color.RGBA{150, 180, 200, 255} // Axis lines
 	colorPositive   = color.RGBA{255, 100, 100, 255} // Positive polarization
@@ -138,7 +138,7 @@ func NewApp() *App {
 	materials := []*ferroelectric.HZOMaterial{
 		ferroelectric.DefaultHZO(),
 		ferroelectric.OptimizedHZO(),
-		ferroelectric.IronLatticeMaterial(),
+		ferroelectric.FeCIMMaterial(),
 	}
 
 	mat := materials[0]
@@ -174,7 +174,7 @@ func (a *App) run() error {
 	a.fyneApp = app.New()
 	a.fyneApp.Settings().SetTheme(&ironLatticeTheme{})
 
-	a.mainWindow = a.fyneApp.NewWindow("IronLattice Hysteresis Visualizer - Demo 1")
+	a.mainWindow = a.fyneApp.NewWindow("FeCIM Hysteresis Visualizer - Demo 1")
 	a.mainWindow.Resize(fyne.NewSize(1280, 900))
 
 	// Create UI components
@@ -292,7 +292,7 @@ func (a *App) createUI() fyne.CanvasObject {
 
 func (a *App) createHeader() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle(
-		"IronLattice Ferroelectric Hysteresis Visualization",
+		"FeCIM Ferroelectric Hysteresis Visualization",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
@@ -363,7 +363,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.waveformSelect.SetSelected("Sine Wave")
 
 	// Material selector
-	matNames := []string{"Default HZO", "Optimized Superlattice", "IronLattice HZO"}
+	matNames := []string{"Default HZO", "Optimized Superlattice", "FeCIM HZO"}
 	a.materialSelect = widget.NewSelect(matNames, func(s string) {
 		var idx int
 		switch s {
@@ -371,7 +371,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			idx = 0
 		case "Optimized Superlattice":
 			idx = 1
-		case "IronLattice HZO":
+		case "FeCIM HZO":
 			idx = 2
 		}
 		a.mu.Lock()
@@ -1622,7 +1622,7 @@ type ironLatticeTheme struct{}
 func (t *ironLatticeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
-		return colorBackground // IronLattice blue #003264
+		return colorBackground // FeCIM blue #003264
 	case theme.ColorNameForeground:
 		return color.RGBA{230, 230, 230, 255}
 	case theme.ColorNamePrimary:

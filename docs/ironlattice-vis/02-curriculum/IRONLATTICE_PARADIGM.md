@@ -1,4 +1,4 @@
-# The IronLattice Paradigm: Ferroelectric Superlattice Architectures for Neuromorphic Compute-In-Memory
+# The Ferroelectric CIM Paradigm: Ferroelectric Superlattice Architectures for Neuromorphic Compute-In-Memory
 
 ---
 
@@ -6,7 +6,7 @@
 
 The global computational infrastructure stands at a precipice defined by a thermodynamic crisis. As Artificial Intelligence (AI) models transition from experimental curiosities to the backbone of the global economy, the energy required to train and deploy these systems has escalated exponentially. The current trajectory of AI development, driven by Large Language Models (LLMs) and generative networks scaling into the trillions of parameters, is fundamentally at odds with the physical limitations of the incumbent hardware architecture.
 
-This report provides an exhaustive technical analysis of "IronLattice," a breakthrough ferroelectric Compute-In-Memory (CiM) technology developed by Dr. external research group and his team at external research institution. By shifting the computational paradigm from digital data shuttling to analog in-situ processing, this technology promises to reduce the energy consumption of AI inference by over 90%, addressing the single most critical bottleneck in modern computing.
+This report provides an exhaustive technical analysis of "Ferroelectric CIM," a breakthrough ferroelectric Compute-In-Memory (CiM) technology developed by Dr. external research group and his team at external research institution. By shifting the computational paradigm from digital data shuttling to analog in-situ processing, this technology promises to reduce the energy consumption of AI inference by over 90%, addressing the single most critical bottleneck in modern computing.
 
 ### 1.1 The Energy Implications of the Von Neumann Bottleneck
 
@@ -14,9 +14,9 @@ For over seventy years, the digital world has operated on the von Neumann archit
 
 In modern AI workloads, the "memory wall" has become the dominant factor in power consumption. Research indicates that accessing a single piece of data from off-chip DRAM consumes between 100 to 1,000 times more energy than the floating-point operation performed on that data. Consequently, in large-scale inference tasks, over 90% of the total energy budget is expended not on "thinking" (calculation), but on "moving" (data transport). This inefficiency creates a hard ceiling for the deployment of AI at the edge—on drones, satellites, and mobile devices—where power budgets are measured in milliwatts rather than kilowatts.
 
-### 1.2 The IronLattice Solution
+### 1.2 The Ferroelectric CIM Solution
 
-Dr. Tour's solution, commercialized through the startup IronLattice, attacks this problem at the device physics level. By utilizing ferroelectric superlattices based on Hafnium Oxide (HfO₂) and Zirconium Oxide (ZrO₂), the Tour Group has developed a hardware architecture where memory cells double as computational units. This Compute-In-Memory approach eliminates the data bus entirely for the weight matrices of neural networks. The computation is performed in the analog domain, utilizing the intrinsic physical properties of the material to perform multiplication and accumulation instantly and in parallel.
+Dr. Tour's solution, commercialized through the startup Ferroelectric CIM, attacks this problem at the device physics level. By utilizing ferroelectric superlattices based on Hafnium Oxide (HfO₂) and Zirconium Oxide (ZrO₂), the Tour Group has developed a hardware architecture where memory cells double as computational units. This Compute-In-Memory approach eliminates the data bus entirely for the weight matrices of neural networks. The computation is performed in the analog domain, utilizing the intrinsic physical properties of the material to perform multiplication and accumulation instantly and in parallel.
 
 This report dissects the underlying physics of these ferroelectric superlattices, benchmarks them against industry incumbents like NAND Flash and Google's TPU, and outlines the commercial and theological context of Dr. Tour's work.
 
@@ -24,15 +24,15 @@ This report dissects the underlying physics of these ferroelectric superlattices
 
 ## 2. The Architecture of Efficiency: Deconstructing Compute-In-Memory
 
-To appreciate the magnitude of the IronLattice innovation, one must understand the mechanics of Compute-In-Memory (CiM) and how it diverges from the digital logic that has defined the silicon era.
+To appreciate the magnitude of the Ferroelectric CIM innovation, one must understand the mechanics of Compute-In-Memory (CiM) and how it diverges from the digital logic that has defined the silicon era.
 
 ### 2.1 Principles of Analog Compute-In-Memory
 
-Traditional digital accelerators (like GPUs or TPUs) simulate neural networks. They store weights as binary numbers (0s and 1s) and use logic gates to perform binary multiplication. In contrast, the IronLattice architecture physically emulates the neural network.
+Traditional digital accelerators (like GPUs or TPUs) simulate neural networks. They store weights as binary numbers (0s and 1s) and use logic gates to perform binary multiplication. In contrast, the Ferroelectric CIM architecture physically emulates the neural network.
 
 #### 2.1.1 The Crossbar Array Topology
 
-The core structure of the IronLattice device is the crossbar array. In this grid, word lines (rows) and bit lines (columns) intersect. At each intersection sits a ferroelectric memory device.
+The core structure of the Ferroelectric CIM device is the crossbar array. In this grid, word lines (rows) and bit lines (columns) intersect. At each intersection sits a ferroelectric memory device.
 
 - **Weights as Conductance:** The "weight" of a neural connection is stored not as a digital number, but as the physical conductance (G) of the ferroelectric device. By tuning the polarization state of the ferroelectric material, the conductance can be set to a specific analog value.
 
@@ -50,9 +50,9 @@ The claim of a 90% reduction in energy usage is derived from a comparative analy
 
 - **Baseline (Von Neumann):** In a standard GPU, fetching a 32-bit weight from DRAM requires ~640 picojoules (pJ). The Multiply-Accumulate (MAC) operation itself takes only ~3-5 pJ. Thus, data movement accounts for >99% of the energy in memory-bound workloads.
 
-- **IronLattice (CiM):** In the CiM architecture, the "fetch" energy is eliminated. The energy cost is limited to the dynamic power dissipated by the current flowing through the array and the peripheral analog-to-digital converters (ADCs). Because ferroelectric switching is purely field-driven (utilizing displacement current rather than conduction current during programming), the write energy is also exceptionally low compared to current-driven technologies like MRAM or ReRAM.
+- **Ferroelectric CIM (CiM):** In the CiM architecture, the "fetch" energy is eliminated. The energy cost is limited to the dynamic power dissipated by the current flowing through the array and the peripheral analog-to-digital converters (ADCs). Because ferroelectric switching is purely field-driven (utilizing displacement current rather than conduction current during programming), the write energy is also exceptionally low compared to current-driven technologies like MRAM or ReRAM.
 
-It is important to nuance this claim by noting that while hardware innovations like IronLattice target a 90% reduction via architectural efficiency, concurrent research in algorithmic efficiency also targets similar reductions. The synergy of hardware CiM (IronLattice) with algorithmic compression offers a potential combined efficiency gain of over 99% compared to unoptimized, GPU-based baselines.
+It is important to nuance this claim by noting that while hardware innovations like Ferroelectric CIM target a 90% reduction via architectural efficiency, concurrent research in algorithmic efficiency also targets similar reductions. The synergy of hardware CiM (Ferroelectric CIM) with algorithmic compression offers a potential combined efficiency gain of over 99% compared to unoptimized, GPU-based baselines.
 
 ---
 
@@ -66,7 +66,7 @@ Ferroelectricity is the property of a material to possess a spontaneous electric
 
 ### 3.2 The Superlattice Innovation
 
-The "IronLattice" technology leverages a superlattice structure—alternating atomic-scale layers of HfO₂ and ZrO₂ (e.g., 2nm HfO₂ / 2nm ZrO₂). This layering provides several critical advantages over solid-solution alloys:
+The "Ferroelectric CIM" technology leverages a superlattice structure—alternating atomic-scale layers of HfO₂ and ZrO₂ (e.g., 2nm HfO₂ / 2nm ZrO₂). This layering provides several critical advantages over solid-solution alloys:
 
 #### 3.2.1 Strain Engineering and Phase Stabilization
 
@@ -74,7 +74,7 @@ In a solid solution (random mix of Hf and Zr atoms), the crystal phase is diffic
 
 #### 3.2.2 Eliminating the "Wake-up" Effect
 
-A major drawback of traditional ferroelectric HfO₂ is the "wake-up" effect, where the device must be cycled thousands of times before it achieves its full polarization. This is due to the slow redistribution of oxygen vacancies. The IronLattice superlattice structure, with its frequent interfaces, inhibits the long-range diffusion of defects. Research indicates that these superlattice devices exhibit robust ferroelectricity from the very first cycle, eliminating the need for wake-up cycling and simplifying the manufacturing test process.
+A major drawback of traditional ferroelectric HfO₂ is the "wake-up" effect, where the device must be cycled thousands of times before it achieves its full polarization. This is due to the slow redistribution of oxygen vacancies. The Ferroelectric CIM superlattice structure, with its frequent interfaces, inhibits the long-range diffusion of defects. Research indicates that these superlattice devices exhibit robust ferroelectricity from the very first cycle, eliminating the need for wake-up cycling and simplifying the manufacturing test process.
 
 #### 3.2.3 Endurance and Fatigue Recovery
 
@@ -82,39 +82,39 @@ A major drawback of traditional ferroelectric HfO₂ is the "wake-up" effect, wh
 
 ### 3.3 Manufacturing: Flash-Within-Flash Synthesis
 
-While the superlattice structure implies precision deposition (like Atomic Layer Deposition, ALD), the Tour group is famous for "Flash Joule Heating" (research sample). Snippets indicate that the group has developed a "Flash-within-Flash" technique to synthesize high-purity chalcogenides and potentially oxide precursors rapidly. While the primary superlattice devices for chips are likely made via ALD for precision, the research sample method may be utilized for creating bulk source materials or potentially for novel 2D ferroelectric layers (like Indium Selenide) that could be integrated into future iterations of the IronLattice technology.
+While the superlattice structure implies precision deposition (like Atomic Layer Deposition, ALD), the Tour group is famous for "Flash Joule Heating" (research sample). Snippets indicate that the group has developed a "Flash-within-Flash" technique to synthesize high-purity chalcogenides and potentially oxide precursors rapidly. While the primary superlattice devices for chips are likely made via ALD for precision, the research sample method may be utilized for creating bulk source materials or potentially for novel 2D ferroelectric layers (like Indium Selenide) that could be integrated into future iterations of the Ferroelectric CIM technology.
 
 ---
 
-## 4. IronLattice: The Entity and the Innovation
+## 4. Ferroelectric CIM: The Entity and the Innovation
 
-The transition from academic breakthrough to commercial product is facilitated by the startup company IronLattice, spun out of external research institution.
+The transition from academic breakthrough to commercial product is facilitated by the startup company Ferroelectric CIM, spun out of external research institution.
 
 ### 4.1 Company Profile
 
 | Attribute | Details |
 |-----------|---------|
-| **Name** | IronLattice |
+| **Name** | Ferroelectric CIM |
 | **Origin** | external research institution, Tour Lab (Department of Chemistry/Nanoengineering) |
 | **Core Technology** | Neuromorphic AI computing devices based on ferroelectric superlattice structures |
 | **Leadership** | Led by Jaeho Shin, a postdoctoral researcher with over a decade of expertise in semiconductor device fabrication and neuromorphic architectures. Advised by Tawfik Jarjour, a Rice alumnus with extensive industry experience in semiconductor manufacturing. |
 | **Funding Status** | Recipient of the external research institution "One Small Step" Grant (Cycle 4, 2025), securing non-dilutive capital to advance the Technology Readiness Level (TRL) from lab prototype to commercial viability. |
 
-### 4.2 The "IronLattice" Device Class
+### 4.2 The "Ferroelectric CIM" Device Class
 
-The term "IronLattice" is likely a double entendre: referencing the "ferro" (iron-like) magnetic hysteresis behavior of the material and the rigid crystal lattice of the oxide superstructures. The specific device is described as a superlattice-based ferroelectric device enabling analog, non-volatile in-memory computation.
+The term "Ferroelectric CIM" is likely a double entendre: referencing the "ferro" (iron-like) magnetic hysteresis behavior of the material and the rigid crystal lattice of the oxide superstructures. The specific device is described as a superlattice-based ferroelectric device enabling analog, non-volatile in-memory computation.
 
-Unlike purely digital memory companies, IronLattice is explicitly targeting the neuromorphic and analog compute space. This suggests the commercial product will be an IP block (Intellectual Property) or a standalone accelerator chip designed to be integrated with standard CMOS logic, providing a dedicated "AI co-processor" functionality that handles the heavy lifting of matrix math at a fraction of the power of the main CPU.
+Unlike purely digital memory companies, Ferroelectric CIM is explicitly targeting the neuromorphic and analog compute space. This suggests the commercial product will be an IP block (Intellectual Property) or a standalone accelerator chip designed to be integrated with standard CMOS logic, providing a dedicated "AI co-processor" functionality that handles the heavy lifting of matrix math at a fraction of the power of the main CPU.
 
 ---
 
 ## 5. Competitive Landscape and Comparative Analysis
 
-The AI hardware landscape is crowded and fiercely competitive. To understand IronLattice's value proposition, we must benchmark it against both traditional memories and emerging AI accelerators.
+The AI hardware landscape is crowded and fiercely competitive. To understand Ferroelectric CIM's value proposition, we must benchmark it against both traditional memories and emerging AI accelerators.
 
 ### 5.1 Comparative Matrix
 
-| Feature | IronLattice (Fe-Superlattice) | NAND Flash | DRAM | Google TPU (Digital) | Intel Loihi 2 | Mythic.AI |
+| Feature | Ferroelectric CIM (Fe-Superlattice) | NAND Flash | DRAM | Google TPU (Digital) | Intel Loihi 2 | Mythic.AI |
 |---------|------------------------------|------------|------|---------------------|---------------|-----------|
 | **Physics Principle** | Ferroelectric Polarization | Charge Trapping (Floating Gate) | Capacitor Charge | Digital Logic (Systolic Array) | Spiking Neural Network (Digital) | Flash-based Analog Compute |
 | **Write Speed** | < 100 ns | Slow (~100 μs) | Fast (~10 ns) | N/A | Fast | Slow |
@@ -130,43 +130,43 @@ The AI hardware landscape is crowded and fiercely competitive. To understand Iro
 
 NAND Flash is the incumbent non-volatile memory. While dense and cheap, it relies on trapping electrons through a thick oxide, which requires high voltages (>10V) and causes physical damage to the insulator over time (wear-out).
 
-**IronLattice Advantage:** IronLattice uses ferroelectric switching, which is purely electrostatic. It moves atoms slightly within the unit cell rather than forcing electrons through an insulator. This results in switching energies orders of magnitude lower than Flash and endurance ratings millions of times higher. For AI training, where weights are updated frequently, Flash is unusable; IronLattice is viable.
+**Ferroelectric CIM Advantage:** Ferroelectric CIM uses ferroelectric switching, which is purely electrostatic. It moves atoms slightly within the unit cell rather than forcing electrons through an insulator. This results in switching energies orders of magnitude lower than Flash and endurance ratings millions of times higher. For AI training, where weights are updated frequently, Flash is unusable; Ferroelectric CIM is viable.
 
 #### 5.2.2 DRAM (Working Memory)
 
 DRAM is fast but volatile; it loses data when power is cut. It also requires constant "refresh" cycles, consuming significant static power.
 
-**IronLattice Advantage:** IronLattice is non-volatile. An edge device (like a smart sensor) can power down completely to save battery, wake up instantly, and resume processing without reloading data from disk. DRAM cannot do this.
+**Ferroelectric CIM Advantage:** Ferroelectric CIM is non-volatile. An edge device (like a smart sensor) can power down completely to save battery, wake up instantly, and resume processing without reloading data from disk. DRAM cannot do this.
 
 #### 5.2.3 Google TPU (Digital Accelerator)
 
 The TPU is the state-of-the-art for digital AI. It is highly optimized but still adheres to the von Neumann separation of HBM (High Bandwidth Memory) and compute cores.
 
-**IronLattice Advantage:** The TPU burns kilowatts of power moving data back and forth. IronLattice performs the math inside the memory array, theoretically offering 10-100x better TOPs/Watt (Tera-Operations per Second per Watt) efficiency for inference workloads.
+**Ferroelectric CIM Advantage:** The TPU burns kilowatts of power moving data back and forth. Ferroelectric CIM performs the math inside the memory array, theoretically offering 10-100x better TOPs/Watt (Tera-Operations per Second per Watt) efficiency for inference workloads.
 
 #### 5.2.4 Intel Loihi 2 (Neuromorphic)
 
 Loihi is a digital implementation of a Spiking Neural Network (SNN). It simulates neurons using SRAM and logic gates.
 
-**IronLattice Advantage:** Loihi requires multiple transistors (6-12) to store a single bit of SRAM, and many more to simulate a neuron. IronLattice can store a multi-bit weight in a single ferroelectric device. This density advantage allows IronLattice to pack larger models into a smaller physical footprint.
+**Ferroelectric CIM Advantage:** Loihi requires multiple transistors (6-12) to store a single bit of SRAM, and many more to simulate a neuron. Ferroelectric CIM can store a multi-bit weight in a single ferroelectric device. This density advantage allows Ferroelectric CIM to pack larger models into a smaller physical footprint.
 
 #### 5.2.5 Mythic.AI (Analog Flash)
 
 Mythic.AI also pursues analog compute-in-memory but uses older Flash memory technology.
 
-**IronLattice Advantage:** Mythic is bound by the limitations of Flash—high write voltage and low endurance. This limits Mythic primarily to inference-only applications where weights are static. IronLattice's high endurance (10⁹+ cycles) opens the door for on-chip training and continuous learning, where the AI model updates itself in the field—a capability Mythic struggles to support.
+**Ferroelectric CIM Advantage:** Mythic is bound by the limitations of Flash—high write voltage and low endurance. This limits Mythic primarily to inference-only applications where weights are static. Ferroelectric CIM's high endurance (10⁹+ cycles) opens the door for on-chip training and continuous learning, where the AI model updates itself in the field—a capability Mythic struggles to support.
 
 ---
 
 ## 6. Strategic Applications in Edge and Cloud Computing
 
-The unique combination of non-volatility, analog precision, and extreme energy efficiency positions IronLattice to disrupt several key markets.
+The unique combination of non-volatility, analog precision, and extreme energy efficiency positions Ferroelectric CIM to disrupt several key markets.
 
 ### 6.1 Edge Computing and IoT: The Primary Frontier
 
 This is the most immediate application. Billions of IoT devices (cameras, wearables, industrial sensors) collect vast amounts of data but lack the power to process it.
 
-**Use Case:** A battery-powered security camera that uses an IronLattice chip to identify faces locally. Because the chip is non-volatile, it sleeps at near-zero power and wakes up only when an event is detected.
+**Use Case:** A battery-powered security camera that uses an Ferroelectric CIM chip to identify faces locally. Because the chip is non-volatile, it sleeps at near-zero power and wakes up only when an event is detected.
 
 **Energy Impact:** The 90% energy reduction allows such devices to run for months on a coin cell battery rather than days.
 
@@ -174,19 +174,19 @@ This is the most immediate application. Billions of IoT devices (cameras, wearab
 
 While training (creating the model) is computationally intensive, inference (using the model) accounts for the majority of data center cycles.
 
-**Use Case:** Large Language Model (LLM) inference. Serving millions of ChatGPT queries requires massive memory bandwidth. IronLattice cards could replace GPU inference farms, utilizing the "in-memory" architecture to deliver answers with significantly lower latency and electricity costs.
+**Use Case:** Large Language Model (LLM) inference. Serving millions of ChatGPT queries requires massive memory bandwidth. Ferroelectric CIM cards could replace GPU inference farms, utilizing the "in-memory" architecture to deliver answers with significantly lower latency and electricity costs.
 
 ### 6.3 Neuromorphic and "Spiking" Systems
 
 The analog nature of ferroelectric conductance mimics the biological synapse's plasticity.
 
-**Use Case:** Autonomous robotics. Robots need to adapt to new environments (one-shot learning) rather than relying on pre-trained static models. IronLattice allows for "Hebbian learning" (neurons that fire together, wire together) to be implemented directly in hardware, enabling robots to learn movement patterns in real-time.
+**Use Case:** Autonomous robotics. Robots need to adapt to new environments (one-shot learning) rather than relying on pre-trained static models. Ferroelectric CIM allows for "Hebbian learning" (neurons that fire together, wire together) to be implemented directly in hardware, enabling robots to learn movement patterns in real-time.
 
 ### 6.4 Radiation-Hardened Environments (Space)
 
 Ferroelectric materials are inherently resistant to ionizing radiation, unlike charge-based Flash or DRAM which suffer from bit-flips in space.
 
-**Use Case:** Satellite constellations (like Starlink) processing imagery in orbit. IronLattice provides the density of Flash with the radiation tolerance required for long-term orbital missions.
+**Use Case:** Satellite constellations (like Starlink) processing imagery in orbit. Ferroelectric CIM provides the density of Flash with the radiation tolerance required for long-term orbital missions.
 
 ---
 
@@ -204,7 +204,7 @@ The switching of polarization in HZO superlattices is not instant; it involves t
 
 Standard circuit simulators (like SPICE) cannot handle the scale of a full AI chip (millions of devices).
 
-**Contribution:** Creating behavioral models (e.g., in Verilog-A or Python/PyTorch) that abstract the complex physics of the IronLattice device into a "synaptic" transfer function. You could build a GPU-accelerated emulator that runs a neural network on a "virtual" IronLattice chip, injecting realistic noise, hysteresis, and variability derived from your physics models. This "hardware-software co-design" is critical for verifying that a neural network will actually work on the physical chip before it is manufactured.
+**Contribution:** Creating behavioral models (e.g., in Verilog-A or Python/PyTorch) that abstract the complex physics of the Ferroelectric CIM device into a "synaptic" transfer function. You could build a GPU-accelerated emulator that runs a neural network on a "virtual" Ferroelectric CIM chip, injecting realistic noise, hysteresis, and variability derived from your physics models. This "hardware-software co-design" is critical for verifying that a neural network will actually work on the physical chip before it is manufactured.
 
 ### 7.3 Visualization of Device Physics
 
@@ -212,7 +212,7 @@ Standard circuit simulators (like SPICE) cannot handle the scale of a full AI ch
 
 ### 7.4 Benchmarking and "Noise-Aware" Training
 
-**Contribution:** Analog hardware is noisy. You can contribute by developing training algorithms that are "noise-aware." By training a neural network on a GPU that simulates the specific noise profile of the IronLattice device, you can produce AI models that are robust to the hardware's imperfections, maximizing the accuracy of the final system.
+**Contribution:** Analog hardware is noisy. You can contribute by developing training algorithms that are "noise-aware." By training a neural network on a GPU that simulates the specific noise profile of the Ferroelectric CIM device, you can produce AI models that are robust to the hardware's imperfections, maximizing the accuracy of the final system.
 
 ---
 
@@ -240,25 +240,25 @@ Tour applies a forensic/historical methodology to the resurrection of Jesus. He 
 
 ### 8.4 Integration in Practice
 
-Tour does not shy away from mixing these worlds. He holds Bible studies with students and peers, offers to meet personally via Zoom with any non-believer to discuss the resurrection, and uses his scientific platform to advocate for a worldview that accommodates both rigorous material science (like IronLattice) and metaphysical truth.
+Tour does not shy away from mixing these worlds. He holds Bible studies with students and peers, offers to meet personally via Zoom with any non-believer to discuss the resurrection, and uses his scientific platform to advocate for a worldview that accommodates both rigorous material science (like Ferroelectric CIM) and metaphysical truth.
 
 ---
 
 ## 9. Conclusion
 
-The "IronLattice" technology represents a pivotal moment in the evolution of computing. By synthesizing the durability of superlattice materials with the efficiency of analog physics, Dr. external research group and his team at external research institution have engineered a potential solution to the AI energy crisis. This technology does not merely iterate on the past; it dismantles the Von Neumann bottleneck that has constrained computing for seventy years.
+The "Ferroelectric CIM" technology represents a pivotal moment in the evolution of computing. By synthesizing the durability of superlattice materials with the efficiency of analog physics, Dr. external research group and his team at external research institution have engineered a potential solution to the AI energy crisis. This technology does not merely iterate on the past; it dismantles the Von Neumann bottleneck that has constrained computing for seventy years.
 
 ### Key Insights
 
-- **Physics as Compute:** IronLattice marks a transition from simulating math with logic gates to performing math with material physics. This shift is essential for reducing the energy cost of AI by the targeted 90%.
+- **Physics as Compute:** Ferroelectric CIM marks a transition from simulating math with logic gates to performing math with material physics. This shift is essential for reducing the energy cost of AI by the targeted 90%.
 
 - **Material Mastery:** The innovation is fundamentally one of material science—specifically, the ability to control the phase and strain of HfO₂-ZrO₂ superlattices to achieve stability and endurance that raw materials lack.
 
-- **Commercial Realism:** With the formation of the IronLattice startup, seed funding, and leadership by experienced device physicists like Jaeho Shin, the technology is moving rapidly from academic curiosity to commercial prototype.
+- **Commercial Realism:** With the formation of the Ferroelectric CIM startup, seed funding, and leadership by experienced device physicists like Jaeho Shin, the technology is moving rapidly from academic curiosity to commercial prototype.
 
 - **A Holistic Worldview:** The development of this technology occurs alongside Dr. Tour's vigorous defense of theistic faith, illustrating a career defined by the pursuit of truth in both the physical properties of atoms and the metaphysical questions of existence.
 
-For the computational physicist, IronLattice offers a rich, unmapped territory. The need to simulate, visualize, and optimize these quantum-mechanical devices for macroscopic AI workloads is urgent. As the industry pivots toward "Green AI," the contributions of those who can bridge the gap between the Ginzburg-Landau equations and the PyTorch command line will be instrumental in defining the next era of human computation.
+For the computational physicist, Ferroelectric CIM offers a rich, unmapped territory. The need to simulate, visualize, and optimize these quantum-mechanical devices for macroscopic AI workloads is urgent. As the industry pivots toward "Green AI," the contributions of those who can bridge the gap between the Ginzburg-Landau equations and the PyTorch command line will be instrumental in defining the next era of human computation.
 
 ---
 

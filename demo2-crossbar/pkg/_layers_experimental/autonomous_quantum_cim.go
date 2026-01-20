@@ -1,5 +1,5 @@
 // autonomous_quantum_cim.go - CIM for Autonomous Systems and Quantum-CIM Hybrid Integration
-// Part of IronLattice educational demonstrations
+// Part of FeCIM educational demonstrations
 // Research iteration 139: Voxel-CIM, sensor fusion, quantum memristors, Ising machines
 
 package layers

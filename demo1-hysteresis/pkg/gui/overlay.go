@@ -84,7 +84,7 @@ func (o *Overlay) renderStatusBar() string {
 		status = "⏸ PAUSED"
 	}
 
-	return fmt.Sprintf("IronLattice Lab Bench │ %s │ t = %.3f µs",
+	return fmt.Sprintf("FeCIM Lab Bench │ %s │ t = %.3f µs",
 		status,
 		o.SimulationTime*1e6,
 	)

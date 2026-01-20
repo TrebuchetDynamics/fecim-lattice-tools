@@ -116,7 +116,7 @@ func TestCoerciveFieldSwitching(t *testing.T) {
 	}
 }
 
-// TestDiscreteStatesCount verifies 30 discrete states for IronLattice.
+// TestDiscreteStatesCount verifies 30 discrete states for FeCIM.
 func TestDiscreteStatesCount(t *testing.T) {
 	material := DefaultHZO()
 	model := NewPreisachModel(material)

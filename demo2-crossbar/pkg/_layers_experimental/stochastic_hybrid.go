@@ -1067,8 +1067,8 @@ func (felix *FELIXAccelerator) GetEfficiency() float64 {
 // IRONLATTICE STOCHASTIC-HYBRID INTEGRATION
 // ============================================================================
 
-// IronLatticeStochasticConfig configures IronLattice stochastic-hybrid system
-type IronLatticeStochasticConfig struct {
+// FeCIMStochasticConfig configures FeCIM stochastic-hybrid system
+type FeCIMStochasticConfig struct {
 	// Stochastic computing
 	EnableStochastic  bool
 	BitStreamLength   int
@@ -1087,9 +1087,9 @@ type IronLatticeStochasticConfig struct {
 	TRNGBitRate       float64
 }
 
-// DefaultIronLatticeStochasticConfig returns default configuration
-func DefaultIronLatticeStochasticConfig() *IronLatticeStochasticConfig {
-	return &IronLatticeStochasticConfig{
+// DefaultFeCIMStochasticConfig returns default configuration
+func DefaultFeCIMStochasticConfig() *FeCIMStochasticConfig {
+	return &FeCIMStochasticConfig{
 		EnableStochastic:  true,
 		BitStreamLength:   256,
 		EnableBayesian:    true,
@@ -1102,9 +1102,9 @@ func DefaultIronLatticeStochasticConfig() *IronLatticeStochasticConfig {
 	}
 }
 
-// IronLatticeStochasticSystem implements complete stochastic-hybrid system
-type IronLatticeStochasticSystem struct {
-	Config      *IronLatticeStochasticConfig
+// FeCIMStochasticSystem implements complete stochastic-hybrid system
+type FeCIMStochasticSystem struct {
+	Config      *FeCIMStochasticConfig
 	TRNG        *FerroelectricTRNG
 	FeBiM       *FeBiMEngine
 	HybridCIM   *HybridCIMArray
@@ -1115,13 +1115,13 @@ type IronLatticeStochasticSystem struct {
 	TotalEnergy    float64 // fJ
 }
 
-// NewIronLatticeStochasticSystem creates the complete system
-func NewIronLatticeStochasticSystem(config *IronLatticeStochasticConfig) *IronLatticeStochasticSystem {
+// NewFeCIMStochasticSystem creates the complete system
+func NewFeCIMStochasticSystem(config *FeCIMStochasticConfig) *FeCIMStochasticSystem {
 	if config == nil {
-		config = DefaultIronLatticeStochasticConfig()
+		config = DefaultFeCIMStochasticConfig()
 	}
 
-	sys := &IronLatticeStochasticSystem{
+	sys := &FeCIMStochasticSystem{
 		Config: config,
 	}
 
@@ -1155,7 +1155,7 @@ func NewIronLatticeStochasticSystem(config *IronLatticeStochasticConfig) *IronLa
 }
 
 // StochasticInference performs stochastic neural network inference
-func (sys *IronLatticeStochasticSystem) StochasticInference(input []float64, weights [][]float64) ([]float64, error) {
+func (sys *FeCIMStochasticSystem) StochasticInference(input []float64, weights [][]float64) ([]float64, error) {
 	// Program weights
 	if err := sys.HybridCIM.ProgramWeights(weights); err != nil {
 		return nil, err
@@ -1174,7 +1174,7 @@ func (sys *IronLatticeStochasticSystem) StochasticInference(input []float64, wei
 }
 
 // BayesianInference performs Bayesian inference
-func (sys *IronLatticeStochasticSystem) BayesianInference(priors []float64, likelihoods [][]float64) []float64 {
+func (sys *FeCIMStochasticSystem) BayesianInference(priors []float64, likelihoods [][]float64) []float64 {
 	if sys.FeBiM == nil {
 		return priors
 	}
@@ -1193,7 +1193,7 @@ func (sys *IronLatticeStochasticSystem) BayesianInference(priors []float64, like
 }
 
 // GenerateRandomBits generates random bits using TRNG
-func (sys *IronLatticeStochasticSystem) GenerateRandomBits(count int) []bool {
+func (sys *FeCIMStochasticSystem) GenerateRandomBits(count int) []bool {
 	if sys.TRNG == nil {
 		// Fallback to pseudo-random
 		bits := make([]bool, count)
@@ -1207,7 +1207,7 @@ func (sys *IronLatticeStochasticSystem) GenerateRandomBits(count int) []bool {
 }
 
 // GetSystemMetrics returns comprehensive system metrics
-func (sys *IronLatticeStochasticSystem) GetSystemMetrics() map[string]interface{} {
+func (sys *FeCIMStochasticSystem) GetSystemMetrics() map[string]interface{} {
 	metrics := map[string]interface{}{
 		"config":           sys.Config,
 		"inference_count":  sys.InferenceCount,
@@ -1234,7 +1234,7 @@ func (sys *IronLatticeStochasticSystem) GetSystemMetrics() map[string]interface{
 }
 
 // ExportConfiguration exports system configuration
-func (sys *IronLatticeStochasticSystem) ExportConfiguration() ([]byte, error) {
+func (sys *FeCIMStochasticSystem) ExportConfiguration() ([]byte, error) {
 	return json.MarshalIndent(sys.GetSystemMetrics(), "", "  ")
 }
 

@@ -16,9 +16,9 @@ Think of regular computer memory like writing on a whiteboard:
 - ✅ You can write and erase quickly
 - ❌ If you turn off the lights (power), everything disappears!
 
-### IronLattice Memory (Ferroelectric)
+### Ferroelectric CIM Memory (Ferroelectric)
 
-Think of IronLattice memory like carving into clay:
+Think of Ferroelectric CIM memory like carving into clay:
 - ✅ You can change it when you want
 - ✅ It stays even when you walk away (no power needed!)
 - ✅ AND you can make 30 different depths of carving, not just "carved" or "not carved"
@@ -36,7 +36,7 @@ Think of IronLattice memory like carving into clay:
     OFF ●────────────────
 ```
 
-### IronLattice Switch (30 Levels)
+### Ferroelectric CIM Switch (30 Levels)
 ```
   Bright ●────────────────  Level 30
          ●────────────────  Level 29
@@ -146,7 +146,7 @@ Think of it like a parking garage:
 └─────────────────┘
 ```
 
-**IronLattice (30 levels):**
+**Ferroelectric CIM (30 levels):**
 ```
 ┌─────────────────┐
 │  Floor 30       │
@@ -218,13 +218,13 @@ This is why ferroelectric memory is special — you can read it without destroyi
 - Data has to travel back and forth constantly
 - Uses LOTS of electricity (like driving to work every day)
 
-**IronLattice Way:**
+**Ferroelectric CIM Way:**
 - Data AND math happen in the SAME place
 - No traveling needed
 - Uses very little electricity (like working from home!)
 
 ```
-Old Way:                          IronLattice:
+Old Way:                          Ferroelectric CIM:
 ┌────────┐      ┌────────┐       ┌─────────────────┐
 │ Memory │ ←──→ │  CPU   │       │ Memory + Math   │
 └────────┘      └────────┘       │   ALL IN ONE!   │

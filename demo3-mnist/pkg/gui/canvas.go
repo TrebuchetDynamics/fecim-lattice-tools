@@ -105,7 +105,7 @@ func (dc *DigitCanvas) generateImage(w, h int) image.Image {
 		for px := 0; px < 28; px++ {
 			value := dc.pixels[py][px]
 			if value > 0 {
-				// Use IronLattice cyan-to-white gradient
+				// Use FeCIM cyan-to-white gradient
 				intensity := uint8(value * 255)
 				c := color.RGBA{
 					R: uint8(float64(intensity) * 0.7),

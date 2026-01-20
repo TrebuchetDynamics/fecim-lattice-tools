@@ -1,5 +1,5 @@
 // Package layers provides ferroelectric synaptic plasticity rules and
-// neuromorphic sensor fusion for IronLattice CIM architectures.
+// neuromorphic sensor fusion for FeCIM CIM architectures.
 //
 // This module simulates:
 // - Spike-Timing Dependent Plasticity (STDP) with FeFET synapses
@@ -739,8 +739,8 @@ func (e *MultimodalFusionEngine) UpdateAttention(importanceScores map[SensorModa
 // INTEGRATED PLASTICITY + SENSOR FUSION SYSTEM
 // ============================================================================
 
-// IronLatticePlasticitySensor combines plasticity and sensor fusion
-type IronLatticePlasticitySensor struct {
+// FeCIMPlasticitySensor combines plasticity and sensor fusion
+type FeCIMPlasticitySensor struct {
 	PlasticityConfig *PlasticityConfig
 	SensorConfig     *SensorFusionConfig
 
@@ -759,12 +759,12 @@ type IronLatticePlasticitySensor struct {
 	TotalLatency     float64 // ms
 }
 
-// NewIronLatticePlasticitySensor creates an integrated system
-func NewIronLatticePlasticitySensor(numClasses int) *IronLatticePlasticitySensor {
+// NewFeCIMPlasticitySensor creates an integrated system
+func NewFeCIMPlasticitySensor(numClasses int) *FeCIMPlasticitySensor {
 	plasticityConfig := DefaultPlasticityConfig()
 	sensorConfig := DefaultSensorFusionConfig()
 
-	system := &IronLatticePlasticitySensor{
+	system := &FeCIMPlasticitySensor{
 		PlasticityConfig: plasticityConfig,
 		SensorConfig:     sensorConfig,
 		NumClasses:       numClasses,
@@ -782,7 +782,7 @@ func NewIronLatticePlasticitySensor(numClasses int) *IronLatticePlasticitySensor
 }
 
 // Inference performs multimodal inference with plasticity
-func (s *IronLatticePlasticitySensor) Inference(inputs map[SensorModality]*SensorInput, currentTime float64) int {
+func (s *FeCIMPlasticitySensor) Inference(inputs map[SensorModality]*SensorInput, currentTime float64) int {
 	dt := 1.0 // 1 ms time step
 
 	// Process each modality
@@ -821,7 +821,7 @@ func (s *IronLatticePlasticitySensor) Inference(inputs map[SensorModality]*Senso
 }
 
 // Train performs online learning on labeled data
-func (s *IronLatticePlasticitySensor) Train(inputs map[SensorModality]*SensorInput, label int, currentTime float64) {
+func (s *FeCIMPlasticitySensor) Train(inputs map[SensorModality]*SensorInput, label int, currentTime float64) {
 	// Forward pass
 	prediction := s.Inference(inputs, currentTime)
 
@@ -847,7 +847,7 @@ func (s *IronLatticePlasticitySensor) Train(inputs map[SensorModality]*SensorInp
 }
 
 // GetAccuracy returns classification accuracy
-func (s *IronLatticePlasticitySensor) GetAccuracy() float64 {
+func (s *FeCIMPlasticitySensor) GetAccuracy() float64 {
 	if s.InferenceCount == 0 {
 		return 0
 	}
@@ -855,7 +855,7 @@ func (s *IronLatticePlasticitySensor) GetAccuracy() float64 {
 }
 
 // GetPerformanceReport returns detailed performance metrics
-func (s *IronLatticePlasticitySensor) GetPerformanceReport() map[string]interface{} {
+func (s *FeCIMPlasticitySensor) GetPerformanceReport() map[string]interface{} {
 	// Calculate fusion layer statistics
 	fusionLTP := 0
 	fusionLTD := 0
@@ -1068,7 +1068,7 @@ func GeneratePPFPlot(synapse *FeFETSynapse, numPulses int) string {
 // RunPlasticitySensorDemo demonstrates plasticity and sensor fusion
 func RunPlasticitySensorDemo() {
 	fmt.Println("╔═══════════════════════════════════════════════════════════╗")
-	fmt.Println("║  IronLattice Synaptic Plasticity & Sensor Fusion Demo     ║")
+	fmt.Println("║  FeCIM Synaptic Plasticity & Sensor Fusion Demo     ║")
 	fmt.Println("╚═══════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
@@ -1109,7 +1109,7 @@ func RunPlasticitySensorDemo() {
 
 	// 5. Integrated system test
 	fmt.Println("5. Integrated Plasticity + Sensor Fusion System:")
-	system := NewIronLatticePlasticitySensor(10) // 10 classes
+	system := NewFeCIMPlasticitySensor(10) // 10 classes
 
 	// Generate synthetic multimodal data
 	for i := 0; i < 100; i++ {

@@ -1,4 +1,4 @@
-# IronLattice Research Findings - Part 8 (January 2026)
+# Ferroelectric CIM Research Findings - Part 8 (January 2026)
 
 Vulkan GPU Compute, Go Bindings, Real-Time Hysteresis Visualization, and Demo1 Implementation.
 
