@@ -194,11 +194,11 @@ func NewEducationalPanel() *EducationalPanel {
 	e := &EducationalPanel{
 		title:   "What You're Seeing",
 		content: "Select an operation to see\nwhat's happening.",
-		minSize: fyne.NewSize(150, 80),
+		minSize: fyne.NewSize(220, 280), // Larger size to fit content
 	}
 	e.titleLabel = widget.NewLabelWithStyle(e.title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	e.contentLabel = widget.NewLabel(e.content)
-	e.contentLabel.Wrapping = fyne.TextWrapWord
+	e.contentLabel.Wrapping = fyne.TextWrapOff
 	e.ExtendBaseWidget(e)
 	return e
 }
@@ -307,7 +307,9 @@ func (e *EducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 		e.contentLabel,
 	)
 
-	return widget.NewSimpleRenderer(box)
+	// Use padded container with border
+	padded := container.NewPadded(box)
+	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, nil, nil, padded))
 }
 
 // OperationLog shows timestamped operation history.
@@ -560,7 +562,7 @@ func NewKeyStatBox(label, value string) *KeyStatBox {
 	k := &KeyStatBox{
 		label:   label,
 		value:   value,
-		minSize: fyne.NewSize(120, 40),
+		minSize: fyne.NewSize(220, 60),
 	}
 	k.labelWidget = widget.NewLabel(label)
 	k.labelWidget.Alignment = fyne.TextAlignCenter
@@ -585,5 +587,6 @@ func (k *KeyStatBox) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (k *KeyStatBox) CreateRenderer() fyne.WidgetRenderer {
 	box := container.NewVBox(k.labelWidget, k.valueWidget)
-	return widget.NewSimpleRenderer(box)
+	padded := container.NewPadded(box)
+	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, nil, nil, padded))
 }

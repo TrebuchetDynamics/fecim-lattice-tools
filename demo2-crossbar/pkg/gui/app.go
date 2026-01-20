@@ -72,6 +72,12 @@ type CrossbarApp struct {
 	ioDisplay        *InputOutputDisplay
 	keyStat          *KeyStatBox
 
+	// Simple left panel labels (replacing custom widgets)
+	eduTitleLabel   *widget.Label
+	eduContentLabel *widget.Label
+	keyStatLabel    *widget.Label
+	keyStatValue    *widget.Label
+
 	// Status
 	statusLabel *widget.Label
 	infoLabel   *widget.Label
@@ -121,7 +127,8 @@ func NewCrossbarApp() *CrossbarApp {
 func (ca *CrossbarApp) Run() {
 	debug.Println("App: Creating window")
 	ca.window = ca.fyneApp.NewWindow("IronLattice Demo 2: Crossbar Array MVM")
-	ca.window.Resize(fyne.NewSize(1400, 900))
+	ca.window.Resize(fyne.NewSize(1200, 800))
+	ca.window.SetFixedSize(true) // Prevent window resize
 
 	// Create main layout
 	debug.Println("App: Creating main layout")
@@ -171,6 +178,16 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.ioDisplay = NewInputOutputDisplay()
 	ca.keyStat = NewKeyStatBox("N² Operations", fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
 
+	// Create simple left panel labels with FIXED text (no dynamic updates to prevent resize)
+	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
+	ca.keyStatLabel = widget.NewLabel("N² Operations")
+	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
+	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+
+	// Disable text wrapping to prevent resize
+	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
+
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
@@ -202,18 +219,21 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Right panel (controls + stats) - compact, fixed width
+	// Right panel (controls + stats) - fixed width
 	rightPanel := container.NewVBox(
 		ca.controlPanel,
 		widget.NewSeparator(),
 		ca.statsPanel,
 	)
 
-	// Left panel (educational + key stat) - compact, fixed width
+	// Left panel using simple labels (no custom widgets)
 	leftPanel := container.NewVBox(
-		ca.educationalPanel,
+		ca.eduTitleLabel,
 		widget.NewSeparator(),
-		ca.keyStat,
+		ca.eduContentLabel,
+		widget.NewSeparator(),
+		ca.keyStatLabel,
+		ca.keyStatValue,
 	)
 
 	// Simple status footer
@@ -315,6 +335,17 @@ func (ca *CrossbarApp) updateStatus(status string) {
 	ca.statusLabel.SetText("Status: " + status)
 }
 
+// setEducationalContent updates the left panel educational content.
+func (ca *CrossbarApp) setEducationalContent(title, content string) {
+	ca.eduTitleLabel.SetText(title)
+	ca.eduContentLabel.SetText(content)
+}
+
+// setKeyStatValue updates the key stat display.
+func (ca *CrossbarApp) setKeyStatValue(value string) {
+	ca.keyStatValue.SetText(value)
+}
+
 // updateInfoLabel updates the info label with current config.
 func (ca *CrossbarApp) updateInfoLabel() {
 	ca.infoLabel.SetText(fmt.Sprintf(
@@ -354,7 +385,7 @@ func (ca *CrossbarApp) runMVM() {
 	debug.Println("runMVM: Setting mode to Compute")
 	ca.modeIndicator.SetMode(DemoModeCompute)
 	debug.Println("runMVM: Setting MVM explanation phase 1")
-	ca.educationalPanel.SetMVMExplanation(1)
+	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n1. Input voltages V applied\n   to column lines\n\nEach voltage drives current\nthrough ALL cells in column.")
 	debug.Println("runMVM: Updating status")
 	ca.updateStatus("COMPUTE | Applying input voltages...")
 	debug.Println("runMVM: Adding to operation log")
@@ -372,7 +403,7 @@ func (ca *CrossbarApp) runMVM() {
 
 	// Phase 2: Computing
 	debug.Println("runMVM: Setting MVM explanation phase 2")
-	ca.educationalPanel.SetMVMExplanation(2)
+	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n2. Current flows through\n   ALL cells simultaneously\n\nI = G × V (Ohm's Law)\nEach cell multiplies!")
 	ca.operationLog.Add("MVM: Computing I = G × V")
 
 	// Perform MVM
@@ -392,7 +423,7 @@ func (ca *CrossbarApp) runMVM() {
 
 	// Phase 3: Results
 	debug.Println("runMVM: Setting MVM explanation phase 3")
-	ca.educationalPanel.SetMVMExplanation(3)
+	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n3. Row currents collected\n   = dot product result\n\nN² multiplications in\nONE clock cycle!")
 
 	// Update stats
 	var sumInput, sumOutput float64
@@ -420,7 +451,7 @@ func (ca *CrossbarApp) runMVM() {
 
 	// Update key stat
 	debug.Println("runMVM: Updating key stat")
-	ca.keyStat.SetValue(fmt.Sprintf("%d MACs in 1 cycle", macOps))
+	ca.setKeyStatValue(fmt.Sprintf("%d MACs in 1 cycle", macOps))
 
 	// Log completion
 	debug.Println("runMVM: Logging completion")
@@ -438,7 +469,7 @@ func (ca *CrossbarApp) runMVM() {
 func (ca *CrossbarApp) analyzeIRDrop() {
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeIRDrop)
-	ca.educationalPanel.SetIRDropExplanation()
+	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
 	ca.updateStatus("IR DROP | Analyzing voltage drops...")
 	ca.operationLog.Add("IR Drop: Starting analysis")
 
@@ -483,7 +514,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
 
 	// Update key stat and log
-	ca.keyStat.SetValue(fmt.Sprintf("Max: %.1f%% drop", analysis.MaxIRDrop*100))
+	ca.setKeyStatValue(fmt.Sprintf("Max: %.1f%% drop", analysis.MaxIRDrop*100))
 	ca.operationLog.AddWithResult("IR Drop", fmt.Sprintf("%.1f%% max", analysis.MaxIRDrop*100), analysis.MaxIRDrop < 0.1)
 
 	ca.updateStatus(fmt.Sprintf("IR DROP | Complete: Max %.2f%% at [%d,%d]",
@@ -495,7 +526,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 func (ca *CrossbarApp) analyzeSneakPaths() {
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeSneakPath)
-	ca.educationalPanel.SetSneakPathExplanation()
+	ca.setEducationalContent("Non-Ideality: Sneak Paths", "SNEAK PATH ANALYSIS\n\nCurrent can flow through\nunintended paths in passive\ncrossbar arrays.\n\nMitigation strategies:\n• Selector devices\n• 1T1R architecture\n• Threshold switching")
 	ca.updateStatus("SNEAK | Analyzing parasitic paths...")
 	ca.operationLog.Add("Sneak Path: Starting analysis")
 
@@ -539,7 +570,7 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	))
 
 	// Update key stat and log
-	ca.keyStat.SetValue(fmt.Sprintf("SNR: %.1f:1", snr))
+	ca.setKeyStatValue(fmt.Sprintf("SNR: %.1f:1", snr))
 	ca.operationLog.AddWithResult("Sneak Path", fmt.Sprintf("%.1f%% ratio", analysis.MaxSneakRatio*100), analysis.MaxSneakRatio < 0.05)
 
 	ca.updateStatus(fmt.Sprintf("SNEAK | Complete: SNR %.1f:1 at [%d,%d]",
@@ -565,10 +596,10 @@ func (ca *CrossbarApp) resetArray() {
 	ca.statsPanel.SetStats("Array reset with new random weights.\n\nSelect a cell or run an analysis.")
 
 	// Update key stat
-	ca.keyStat.SetValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
+	ca.setKeyStatValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
 
 	ca.operationLog.AddWithResult("Reset", fmt.Sprintf("%dx%d array", ca.config.Rows, ca.config.Cols), true)
-	ca.educationalPanel.SetIdleExplanation()
+	ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
 	ca.updateStatus("● IDLE | Array reset with random weights")
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
@@ -593,7 +624,7 @@ func (ca *CrossbarApp) onDemoModeChanged(mode string) {
 		ca.startAutoDemoLoop()
 	case "Step-by-Step":
 		ca.operationLog.Add("Mode: Step-by-Step (manual)")
-		ca.educationalPanel.SetContent("Step-by-Step Mode",
+		ca.setEducationalContent("Step-by-Step Mode",
 			"Click each button to see\nthe operation explained.\n\n"+
 				"Recommended order:\n"+
 				"1. Run MVM\n"+
@@ -602,7 +633,7 @@ func (ca *CrossbarApp) onDemoModeChanged(mode string) {
 				"4. Reset Array")
 	case "Manual":
 		ca.operationLog.Add("Mode: Manual")
-		ca.educationalPanel.SetIdleExplanation()
+		ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
 	}
 }
 
@@ -614,7 +645,7 @@ func (ca *CrossbarApp) startAutoDemoLoop() {
 	ca.autoDemoTimer = time.NewTicker(3 * time.Second)
 
 	ca.operationLog.Add("Mode: Auto Demo started")
-	ca.educationalPanel.SetContent("Auto Demo Mode",
+	ca.setEducationalContent("Auto Demo Mode",
 		"Watch the demo cycle through\nall operations automatically.\n\n"+
 			"Operations:\n"+
 			"1. MVM Computation\n"+

@@ -111,6 +111,8 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 	h.selectedRow = -1
 	h.selectedCol = -1
 	h.showSelection = false
+	h.minVal = 0
+	h.maxVal = 1 // Reset to default range
 
 	// Reinitialize data
 	h.data = make([][]float64, rows)
