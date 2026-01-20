@@ -4,6 +4,7 @@ package gui
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -47,6 +48,12 @@ type CrossbarApp struct {
 	// Current state
 	lastInput  []float64
 	lastOutput []float64
+
+	// Auto demo state
+	autoDemo      bool
+	autoDemoStep  int
+	autoDemoTimer *time.Ticker
+	stopAutoDemo  chan bool
 }
 
 // NewCrossbarApp creates and initializes the crossbar demo application.
@@ -221,6 +228,7 @@ func (ca *CrossbarApp) setupControlCallbacks() {
 		ca.conductanceHeatmap.SetColormap(colormap)
 	}
 
+	ca.controlPanel.OnDemoModeChanged = ca.onDemoModeChanged
 	ca.controlPanel.OnRunMVM = ca.runMVM
 	ca.controlPanel.OnAnalyzeIR = ca.analyzeIRDrop
 	ca.controlPanel.OnAnalyzeSneak = ca.analyzeSneakPaths
@@ -293,6 +301,8 @@ func (ca *CrossbarApp) updateInfoLabel() {
 
 // onCellTapped handles clicks on heatmap cells.
 func (ca *CrossbarApp) onCellTapped(row, col int) {
+	ca.modeIndicator.SetMode(DemoModeRead)
+
 	matrix := ca.array.GetConductanceMatrix()
 	value := matrix[row][col]
 	level := int(value * 29)
@@ -301,18 +311,24 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 
 	ca.statsPanel.SetStats(fmt.Sprintf(
 		"Selected Cell: [%d, %d]\n"+
-		"Conductance: %.4f\n"+
-		"Level: %d / 29\n"+
-		"Quantized Value: %.4f",
+			"Conductance: %.4f\n"+
+			"Level: %d / 29\n"+
+			"Quantized Value: %.4f",
 		row, col, value, level, float64(level)/29.0,
 	))
 
-	ca.updateStatus(fmt.Sprintf("Cell [%d,%d] selected - Level %d", row, col, level))
+	ca.operationLog.Add(fmt.Sprintf("Read [%d,%d] → Level %d", row, col, level))
+	ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30", row, col, level+1))
+	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // runMVM performs matrix-vector multiplication.
 func (ca *CrossbarApp) runMVM() {
-	ca.updateStatus("Running MVM operation...")
+	// Update mode and educational panel
+	ca.modeIndicator.SetMode(DemoModeCompute)
+	ca.educationalPanel.SetMVMExplanation(1)
+	ca.updateStatus("COMPUTE | Applying input voltages...")
+	ca.operationLog.Add("MVM: Generating input vector")
 
 	// Create random input
 	input := make([]float64, ca.config.Cols)
@@ -320,14 +336,25 @@ func (ca *CrossbarApp) runMVM() {
 		input[i] = rand.Float64()
 	}
 	ca.lastInput = input
+	ca.ioDisplay.SetInput(input)
+
+	// Phase 2: Computing
+	ca.educationalPanel.SetMVMExplanation(2)
+	ca.operationLog.Add("MVM: Computing I = G × V")
 
 	// Perform MVM
 	output, err := ca.array.MVM(input)
 	if err != nil {
-		ca.updateStatus(fmt.Sprintf("MVM Error: %v", err))
+		ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
+		ca.operationLog.AddWithResult("MVM", err.Error(), false)
+		ca.modeIndicator.SetMode(DemoModeIdle)
 		return
 	}
 	ca.lastOutput = output
+	ca.ioDisplay.SetOutput(output)
+
+	// Phase 3: Results
+	ca.educationalPanel.SetMVMExplanation(3)
 
 	// Update stats
 	var sumInput, sumOutput float64
@@ -339,24 +366,37 @@ func (ca *CrossbarApp) runMVM() {
 	}
 
 	reads, writes := ca.array.GetStats()
+	macOps := ca.config.Rows * ca.config.Cols
 
 	ca.statsPanel.SetStats(fmt.Sprintf(
 		"MVM Complete!\n"+
-		"Input Sum: %.4f\n"+
-		"Output Sum: %.4f\n"+
-		"Total Reads: %d\n"+
-		"Total Writes: %d\n"+
-		"MAC Operations: %d",
+			"Input Sum: %.4f\n"+
+			"Output Sum: %.4f\n"+
+			"Total Reads: %d\n"+
+			"Total Writes: %d\n"+
+			"MAC Operations: %d",
 		sumInput, sumOutput, reads, writes,
-		ca.config.Rows*ca.config.Cols,
+		macOps,
 	))
 
-	ca.updateStatus("MVM complete - Ready for analysis")
+	// Update key stat
+	ca.keyStat.SetValue(fmt.Sprintf("%d MACs in 1 cycle", macOps))
+
+	// Log completion
+	ca.operationLog.AddWithResult("MVM", fmt.Sprintf("%d ops", macOps), true)
+
+	// Update status and return to idle
+	ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel multiplications", macOps))
+	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // analyzeIRDrop performs IR drop analysis.
 func (ca *CrossbarApp) analyzeIRDrop() {
-	ca.updateStatus("Analyzing IR drop...")
+	// Update mode and educational panel
+	ca.modeIndicator.SetMode(DemoModeIRDrop)
+	ca.educationalPanel.SetIRDropExplanation()
+	ca.updateStatus("IR DROP | Analyzing voltage drops...")
+	ca.operationLog.Add("IR Drop: Starting analysis")
 
 	// Use last input or create new one
 	input := ca.lastInput
@@ -366,6 +406,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 			input[i] = rand.Float64()
 		}
 		ca.lastInput = input
+		ca.ioDisplay.SetInput(input)
 	}
 
 	// Analyze IR drop
@@ -379,14 +420,14 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	// Update stats
 	ca.statsPanel.SetStats(fmt.Sprintf(
 		"IR Drop Analysis\n"+
-		"Max IR Drop: %.2f%%\n"+
-		"Avg IR Drop: %.2f%%\n"+
-		"Variance: %.6f\n"+
-		"Worst Cell: [%d, %d]\n\n"+
-		"Wire Parameters:\n"+
-		"Word Line R: %.1f Ω/cell\n"+
-		"Bit Line R: %.1f Ω/cell\n"+
-		"Contact R: %.1f Ω",
+			"Max IR Drop: %.2f%%\n"+
+			"Avg IR Drop: %.2f%%\n"+
+			"Variance: %.6f\n"+
+			"Worst Cell: [%d, %d]\n\n"+
+			"Wire Parameters:\n"+
+			"Word Line R: %.1f Ω/cell\n"+
+			"Bit Line R: %.1f Ω/cell\n"+
+			"Contact R: %.1f Ω",
 		analysis.MaxIRDrop*100,
 		analysis.AvgIRDrop*100,
 		analysis.IRDropVariance,
@@ -397,12 +438,22 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	// Highlight worst cell
 	ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
 
-	ca.updateStatus(fmt.Sprintf("IR drop analysis complete - Max drop: %.2f%%", analysis.MaxIRDrop*100))
+	// Update key stat and log
+	ca.keyStat.SetValue(fmt.Sprintf("Max: %.1f%% drop", analysis.MaxIRDrop*100))
+	ca.operationLog.AddWithResult("IR Drop", fmt.Sprintf("%.1f%% max", analysis.MaxIRDrop*100), analysis.MaxIRDrop < 0.1)
+
+	ca.updateStatus(fmt.Sprintf("IR DROP | Complete: Max %.2f%% at [%d,%d]",
+		analysis.MaxIRDrop*100, analysis.WorstCaseCell[0], analysis.WorstCaseCell[1]))
+	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // analyzeSneakPaths performs sneak path analysis.
 func (ca *CrossbarApp) analyzeSneakPaths() {
-	ca.updateStatus("Analyzing sneak paths...")
+	// Update mode and educational panel
+	ca.modeIndicator.SetMode(DemoModeSneakPath)
+	ca.educationalPanel.SetSneakPathExplanation()
+	ca.updateStatus("SNEAK | Analyzing parasitic paths...")
+	ca.operationLog.Add("Sneak Path: Starting analysis")
 
 	// Select center cell
 	selectedRow := ca.config.Rows / 2
@@ -427,13 +478,13 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	// Update stats
 	ca.statsPanel.SetStats(fmt.Sprintf(
 		"Sneak Path Analysis\n"+
-		"Selected Cell: [%d, %d]\n"+
-		"Signal Current: %.6f\n"+
-		"Total Sneak: %.6f\n"+
-		"Max Sneak/Signal: %.2f%%\n"+
-		"Avg Sneak/Signal: %.2f%%\n"+
-		"Signal/Sneak Ratio: %.1f:1\n\n"+
-		"Impact Assessment:\n%s",
+			"Selected Cell: [%d, %d]\n"+
+			"Signal Current: %.6f\n"+
+			"Total Sneak: %.6f\n"+
+			"Max Sneak/Signal: %.2f%%\n"+
+			"Avg Sneak/Signal: %.2f%%\n"+
+			"Signal/Sneak Ratio: %.1f:1\n\n"+
+			"Impact Assessment:\n%s",
 		selectedRow, selectedCol,
 		analysis.TotalSignal,
 		analysis.TotalSneak,
@@ -443,20 +494,39 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 		getImpactAssessment(analysis.MaxSneakRatio),
 	))
 
-	ca.updateStatus(fmt.Sprintf("Sneak path analysis complete - Max ratio: %.2f%%", analysis.MaxSneakRatio*100))
+	// Update key stat and log
+	ca.keyStat.SetValue(fmt.Sprintf("SNR: %.1f:1", snr))
+	ca.operationLog.AddWithResult("Sneak Path", fmt.Sprintf("%.1f%% ratio", analysis.MaxSneakRatio*100), analysis.MaxSneakRatio < 0.05)
+
+	ca.updateStatus(fmt.Sprintf("SNEAK | Complete: SNR %.1f:1 at [%d,%d]",
+		snr, selectedRow, selectedCol))
+	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // resetArray resets the array with new random weights.
 func (ca *CrossbarApp) resetArray() {
+	ca.modeIndicator.SetMode(DemoModeWrite)
+	ca.updateStatus("WRITE | Programming random weights...")
+	ca.operationLog.Add("Reset: Programming new weights")
+
 	ca.programRandomWeights()
 	ca.updateConductanceDisplay()
 	ca.lastInput = nil
 	ca.lastOutput = nil
+	ca.ioDisplay.SetInput(nil)
+	ca.ioDisplay.SetOutput(nil)
 	ca.conductanceHeatmap.ClearSelection()
 	ca.irDropHeatmap.ClearSelection()
 	ca.sneakPathHeatmap.ClearSelection()
 	ca.statsPanel.SetStats("Array reset with new random weights.\n\nSelect a cell or run an analysis.")
-	ca.updateStatus("Array reset with random weights")
+
+	// Update key stat
+	ca.keyStat.SetValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
+
+	ca.operationLog.AddWithResult("Reset", fmt.Sprintf("%dx%d array", ca.config.Rows, ca.config.Cols), true)
+	ca.educationalPanel.SetIdleExplanation()
+	ca.updateStatus("● IDLE | Array reset with random weights")
+	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // getImpactAssessment returns a text assessment of sneak path severity.
@@ -467,4 +537,102 @@ func getImpactAssessment(maxRatio float64) string {
 		return "⚠ Moderate sneak paths\n  Consider selector devices"
 	}
 	return "✗ Significant sneak paths\n  1T1R or selector required"
+}
+
+// onDemoModeChanged handles demo mode selection changes.
+func (ca *CrossbarApp) onDemoModeChanged(mode string) {
+	// Stop any existing auto demo
+	ca.stopAutoDemoLoop()
+
+	switch mode {
+	case "Auto Demo":
+		ca.startAutoDemoLoop()
+	case "Step-by-Step":
+		ca.operationLog.Add("Mode: Step-by-Step (manual)")
+		ca.educationalPanel.SetContent("Step-by-Step Mode",
+			"Click each button to see\nthe operation explained.\n\n"+
+				"Recommended order:\n"+
+				"1. Run MVM\n"+
+				"2. Analyze IR Drop\n"+
+				"3. Analyze Sneak Paths\n"+
+				"4. Reset Array")
+	case "Manual":
+		ca.operationLog.Add("Mode: Manual")
+		ca.educationalPanel.SetIdleExplanation()
+	}
+}
+
+// startAutoDemoLoop starts the automatic demo loop.
+func (ca *CrossbarApp) startAutoDemoLoop() {
+	ca.autoDemo = true
+	ca.autoDemoStep = 0
+	ca.stopAutoDemo = make(chan bool)
+	ca.autoDemoTimer = time.NewTicker(3 * time.Second)
+
+	ca.operationLog.Add("Mode: Auto Demo started")
+	ca.educationalPanel.SetContent("Auto Demo Mode",
+		"Watch the demo cycle through\nall operations automatically.\n\n"+
+			"Operations:\n"+
+			"1. MVM Computation\n"+
+			"2. IR Drop Analysis\n"+
+			"3. Sneak Path Analysis\n"+
+			"4. Reset & Repeat")
+
+	go ca.autoDemoLoop()
+}
+
+// stopAutoDemoLoop stops the automatic demo loop.
+func (ca *CrossbarApp) stopAutoDemoLoop() {
+	if ca.autoDemo {
+		ca.autoDemo = false
+		if ca.stopAutoDemo != nil {
+			close(ca.stopAutoDemo)
+		}
+		if ca.autoDemoTimer != nil {
+			ca.autoDemoTimer.Stop()
+		}
+		ca.operationLog.Add("Mode: Auto Demo stopped")
+	}
+}
+
+// autoDemoLoop runs the automatic demonstration.
+func (ca *CrossbarApp) autoDemoLoop() {
+	// Run first operation immediately
+	ca.runAutoDemoStep()
+
+	for {
+		select {
+		case <-ca.stopAutoDemo:
+			return
+		case <-ca.autoDemoTimer.C:
+			if !ca.autoDemo {
+				return
+			}
+			ca.runAutoDemoStep()
+		}
+	}
+}
+
+// runAutoDemoStep executes one step of the auto demo.
+func (ca *CrossbarApp) runAutoDemoStep() {
+	switch ca.autoDemoStep {
+	case 0:
+		fyne.Do(func() {
+			ca.runMVM()
+		})
+	case 1:
+		fyne.Do(func() {
+			ca.analyzeIRDrop()
+		})
+	case 2:
+		fyne.Do(func() {
+			ca.analyzeSneakPaths()
+		})
+	case 3:
+		fyne.Do(func() {
+			ca.resetArray()
+		})
+	}
+
+	ca.autoDemoStep = (ca.autoDemoStep + 1) % 4
 }

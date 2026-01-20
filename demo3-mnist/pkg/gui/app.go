@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -27,12 +28,20 @@ type MNISTApp struct {
 	network *training.MNISTNetwork
 
 	// GUI components
-	digitCanvas        *DigitCanvas
-	layerView          *LayerActivationView
-	confusionMatrix    *ConfusionMatrix
-	metricsPanel       *MetricsPanel
-	classStatsPanel    *ClassStatsPanel
-	outputChart        *OutputBarChart
+	digitCanvas     *DigitCanvas
+	layerView       *LayerActivationView
+	confusionMatrix *ConfusionMatrix
+	metricsPanel    *MetricsPanel
+	classStatsPanel *ClassStatsPanel
+	outputChart     *OutputBarChart
+
+	// Live Slide components
+	modeIndicator      *MNISTModeIndicator
+	educationalPanel   *MNISTEducationalPanel
+	operationLog       *MNISTOperationLog
+	predictionDisplay  *PredictionDisplay
+	keyStat            *MNISTKeyStat
+	demoModeSelect     *widget.Select
 
 	// Labels
 	statusLabel     *widget.Label
@@ -45,6 +54,11 @@ type MNISTApp struct {
 
 	// Data directory
 	dataDir string
+
+	// Auto demo state
+	autoDemo      bool
+	autoDemoTimer *time.Ticker
+	stopAutoDemo  chan bool
 }
 
 // NewMNISTApp creates and initializes the MNIST demo application.
@@ -142,8 +156,23 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.metricsPanel = NewMetricsPanel()
 	ma.classStatsPanel = NewClassStatsPanel()
 
+	// Create Live Slide components
+	ma.modeIndicator = NewMNISTModeIndicator()
+	ma.educationalPanel = NewMNISTEducationalPanel()
+	ma.educationalPanel.SetIdleExplanation()
+	ma.operationLog = NewMNISTOperationLog()
+	ma.predictionDisplay = NewPredictionDisplay()
+	ma.keyStat = NewMNISTKeyStat("Target Accuracy", "87%")
+
+	// Demo mode selector
+	ma.demoModeSelect = widget.NewSelect(
+		[]string{"Manual", "Auto Demo", "Step-by-Step"},
+		ma.onDemoModeChanged,
+	)
+	ma.demoModeSelect.SetSelected("Manual")
+
 	// Status labels
-	ma.statusLabel = widget.NewLabel("Status: Ready")
+	ma.statusLabel = widget.NewLabel("● IDLE | Ready to draw or load test data")
 	ma.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	ma.predictionLabel = widget.NewLabel("Prediction: -")
@@ -154,7 +183,9 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	// Control buttons
 	clearBtn := widget.NewButton("Clear Canvas", func() {
 		ma.digitCanvas.Clear()
-		ma.updateStatus("Canvas cleared")
+		ma.predictionDisplay.SetPrediction(-1, 0)
+		ma.operationLog.Add("Canvas cleared")
+		ma.updateStatus("● IDLE | Canvas cleared")
 	})
 
 	randomBtn := widget.NewButton("Random Test", func() {
@@ -178,36 +209,41 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		evalBtn,
 	)
 
-	// Title and header
+	// Title and header with Dr. Tour quote
 	titleLabel := widget.NewLabel("IronLattice MNIST Neural Network")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	subtitleLabel := widget.NewLabel("Ferroelectric Compute-in-Memory with 30 Discrete Analog States")
-	subtitleLabel.Alignment = fyne.TextAlignCenter
+	quoteLabel := widget.NewLabel("\"We're at 87% validation here\" — Dr. external research group")
+	quoteLabel.Alignment = fyne.TextAlignCenter
+	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
 
-	specsLabel := widget.NewLabel("Architecture: 784 -> 128 -> 10 | Target: 87% | 30 Levels")
+	specsLabel := widget.NewLabel("Architecture: 784 -> 128 -> 10 | Target: 87% (88% theoretical max) | 30 Levels")
 	specsLabel.Alignment = fyne.TextAlignCenter
 
 	header := container.NewVBox(
 		titleLabel,
-		subtitleLabel,
+		quoteLabel,
 		specsLabel,
 		widget.NewSeparator(),
 	)
 
-	// Left panel: Drawing canvas + prediction
+	// Left panel: Drawing canvas + prediction display
 	canvasLabel := widget.NewLabel("Draw a Digit (0-9)")
 	canvasLabel.TextStyle = fyne.TextStyle{Bold: true}
 	canvasLabel.Alignment = fyne.TextAlignCenter
 
 	predictionBox := container.NewVBox(
 		widget.NewSeparator(),
+		ma.predictionDisplay,
 		ma.predictionLabel,
 		ma.confidenceLabel,
 	)
 
 	leftPanel := container.NewVBox(
+		widget.NewLabel("Demo Mode:"),
+		ma.demoModeSelect,
+		widget.NewSeparator(),
 		canvasLabel,
 		container.NewCenter(ma.digitCanvas),
 		predictionBox,
@@ -228,8 +264,17 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		ma.outputChart,
 	)
 
-	// Right panel: Confusion matrix + metrics
-	rightPanel := container.NewVBox(
+	// Right panel (educational): Educational + Log + Key Stat
+	educationalRight := container.NewVBox(
+		ma.educationalPanel,
+		widget.NewSeparator(),
+		ma.operationLog,
+		widget.NewSeparator(),
+		ma.keyStat,
+	)
+
+	// Metrics panel for evaluation tab
+	metricsRight := container.NewVBox(
 		ma.confusionMatrix,
 		widget.NewSeparator(),
 		ma.metricsPanel,
@@ -239,22 +284,26 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 
 	// Tabs for different views
 	drawTab := container.NewTabItem("Draw & Predict",
-		container.NewHSplit(
+		container.NewBorder(
+			nil, nil,
 			container.NewPadded(leftPanel),
+			container.NewPadded(educationalRight),
 			container.NewPadded(centerPanel),
 		),
 	)
 
 	metricsTab := container.NewTabItem("Evaluation Metrics",
-		container.NewPadded(rightPanel),
+		container.NewPadded(metricsRight),
 	)
 
 	tabs := container.NewAppTabs(drawTab, metricsTab)
 
-	// Footer
+	// Footer with mode indicator and status
 	footer := container.NewVBox(
 		widget.NewSeparator(),
 		container.NewHBox(
+			ma.modeIndicator,
+			widget.NewSeparator(),
 			ma.statusLabel,
 			layout.NewSpacer(),
 			widget.NewLabel("IronLattice Ferroelectric CIM | 30 Discrete Levels"),
@@ -263,11 +312,11 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 
 	// Main content
 	mainContent := container.NewBorder(
-		header,  // top
-		footer,  // bottom
-		nil,     // left
-		nil,     // right
-		tabs,    // center
+		header, // top
+		footer, // bottom
+		nil,    // left
+		nil,    // right
+		tabs,   // center
 	)
 
 	return mainContent
@@ -275,25 +324,42 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 
 // onDigitChanged handles canvas drawing updates.
 func (ma *MNISTApp) onDigitChanged(pixels []float64) {
+	ma.modeIndicator.SetMode(MNISTModeInference)
+	ma.educationalPanel.SetInferenceExplanation(1)
+
 	// Run inference
 	input, hidden, probs := ma.network.GetLayerActivations(pixels)
+
+	ma.educationalPanel.SetInferenceExplanation(2)
 
 	// Update visualization
 	ma.layerView.SetActivations(input, hidden, probs)
 	ma.outputChart.SetValues(probs)
 
+	ma.educationalPanel.SetInferenceExplanation(3)
+
 	// Update prediction
 	pred, conf := ma.network.Predict(pixels)
 	ma.predictionLabel.SetText(fmt.Sprintf("Prediction: %d", pred))
 	ma.confidenceLabel.SetText(fmt.Sprintf("Confidence: %.1f%%", conf*100))
+	ma.predictionDisplay.SetPrediction(pred, conf)
+
+	// Log and update status
+	ma.operationLog.AddPrediction(pred, conf)
+	ma.updateStatus(fmt.Sprintf("INFERENCE | Prediction: %d (%.1f%% confidence)", pred, conf*100))
+	ma.modeIndicator.SetMode(MNISTModeIdle)
 }
 
 // loadRandomTestDigit loads a random digit from test data.
 func (ma *MNISTApp) loadRandomTestDigit() {
+	ma.modeIndicator.SetMode(MNISTModeLoading)
+	ma.operationLog.Add("Loading random test digit")
+
 	if len(ma.testImages) == 0 {
 		ma.loadTestData()
 		if len(ma.testImages) == 0 {
-			ma.updateStatus("No test data available")
+			ma.updateStatus("● IDLE | No test data available")
+			ma.modeIndicator.SetMode(MNISTModeIdle)
 			return
 		}
 	}
@@ -305,12 +371,15 @@ func (ma *MNISTApp) loadRandomTestDigit() {
 	ma.digitCanvas.SetPixels(pixels)
 	ma.onDigitChanged(pixels)
 
-	ma.updateStatus(fmt.Sprintf("Loaded test digit (label: %d)", label))
+	ma.operationLog.Add(fmt.Sprintf("Loaded digit #%d (label: %d)", idx, label))
+	ma.updateStatus(fmt.Sprintf("LOADING | Loaded test digit #%d (true label: %d)", idx, label))
 }
 
 // loadTestData loads MNIST test data.
 func (ma *MNISTApp) loadTestData() {
-	ma.updateStatus("Loading test data...")
+	ma.modeIndicator.SetMode(MNISTModeLoading)
+	ma.updateStatus("LOADING | Loading test data...")
+	ma.operationLog.Add("Loading MNIST test data")
 
 	// Try to load from IDX files
 	testImagesPath := filepath.Join(ma.dataDir, "t10k-images-idx3-ubyte")
@@ -319,8 +388,10 @@ func (ma *MNISTApp) loadTestData() {
 	images, labels, err := loadMNISTData(testImagesPath, testLabelsPath)
 	if err != nil {
 		// Fall back to generating synthetic data for demo
-		ma.updateStatus("Using synthetic test data")
+		ma.operationLog.Add("Using synthetic data (MNIST not found)")
+		ma.updateStatus("LOADING | Using synthetic test data")
 		ma.testImages, ma.testLabels = generateSyntheticData(100)
+		ma.modeIndicator.SetMode(MNISTModeIdle)
 		return
 	}
 
@@ -333,20 +404,27 @@ func (ma *MNISTApp) loadTestData() {
 		ma.testLabels = labels
 	}
 
-	ma.updateStatus(fmt.Sprintf("Loaded %d test samples", len(ma.testImages)))
+	ma.operationLog.Add(fmt.Sprintf("Loaded %d samples", len(ma.testImages)))
+	ma.updateStatus(fmt.Sprintf("● IDLE | Loaded %d test samples", len(ma.testImages)))
+	ma.modeIndicator.SetMode(MNISTModeIdle)
 }
 
 // evaluateNetwork runs evaluation on test data.
 func (ma *MNISTApp) evaluateNetwork() {
+	ma.modeIndicator.SetMode(MNISTModeEvaluating)
+	ma.educationalPanel.SetEvaluationExplanation()
+	ma.operationLog.Add("Starting full evaluation")
+
 	if len(ma.testImages) == 0 {
 		ma.loadTestData()
 		if len(ma.testImages) == 0 {
-			ma.updateStatus("No test data for evaluation")
+			ma.updateStatus("● IDLE | No test data for evaluation")
+			ma.modeIndicator.SetMode(MNISTModeIdle)
 			return
 		}
 	}
 
-	ma.updateStatus("Evaluating network...")
+	ma.updateStatus(fmt.Sprintf("EVALUATING | Testing on %d samples...", len(ma.testImages)))
 
 	// Compute confusion matrix
 	confMatrix := ma.network.ComputeConfusionMatrix(ma.testImages, ma.testLabels)
@@ -373,7 +451,13 @@ func (ma *MNISTApp) evaluateNetwork() {
 	accuracy := ma.confusionMatrix.GetAccuracy()
 	ma.metricsPanel.SetMetrics(precArr, recArr, f1Arr, accuracy)
 
-	ma.updateStatus(fmt.Sprintf("Evaluation complete. Accuracy: %.1f%%", accuracy*100))
+	// Update key stat
+	ma.keyStat.SetValue(fmt.Sprintf("%.1f%%", accuracy*100))
+
+	// Log result
+	ma.operationLog.Add(fmt.Sprintf("Accuracy: %.1f%% on %d samples", accuracy*100, len(ma.testImages)))
+	ma.updateStatus(fmt.Sprintf("● IDLE | Evaluation complete: %.1f%% accuracy", accuracy*100))
+	ma.modeIndicator.SetMode(MNISTModeIdle)
 }
 
 // onConfusionCellTapped handles clicks on the confusion matrix.
@@ -513,4 +597,85 @@ func generateSyntheticData(count int) ([][]float64, []int) {
 	}
 
 	return images, labels
+}
+
+// onDemoModeChanged handles demo mode selection changes.
+func (ma *MNISTApp) onDemoModeChanged(mode string) {
+	// Stop any existing auto demo
+	ma.stopAutoDemoLoop()
+
+	switch mode {
+	case "Auto Demo":
+		ma.startAutoDemoLoop()
+	case "Step-by-Step":
+		ma.operationLog.Add("Mode: Step-by-Step (manual)")
+		ma.educationalPanel.SetContent("Step-by-Step Mode",
+			"Follow along manually:\n\n"+
+				"1. Draw a digit OR\n"+
+				"   click Random Test\n\n"+
+				"2. Watch the network\n"+
+				"   layers activate\n\n"+
+				"3. See the prediction\n"+
+				"   and confidence\n\n"+
+				"4. Click Evaluate All\n"+
+				"   for full accuracy test")
+	case "Manual":
+		ma.operationLog.Add("Mode: Manual")
+		ma.educationalPanel.SetIdleExplanation()
+	}
+}
+
+// startAutoDemoLoop starts the automatic demo loop.
+func (ma *MNISTApp) startAutoDemoLoop() {
+	ma.autoDemo = true
+	ma.stopAutoDemo = make(chan bool)
+	ma.autoDemoTimer = time.NewTicker(2 * time.Second)
+
+	ma.operationLog.Add("Mode: Auto Demo started")
+	ma.educationalPanel.SetContent("Auto Demo Mode",
+		"Watch the demo cycle\nthrough test digits.\n\n"+
+			"The network will:\n"+
+			"1. Load random digit\n"+
+			"2. Run inference\n"+
+			"3. Show prediction\n"+
+			"4. Repeat\n\n"+
+			"Target: 87% accuracy")
+
+	go ma.autoDemoLoop()
+}
+
+// stopAutoDemoLoop stops the automatic demo loop.
+func (ma *MNISTApp) stopAutoDemoLoop() {
+	if ma.autoDemo {
+		ma.autoDemo = false
+		if ma.stopAutoDemo != nil {
+			close(ma.stopAutoDemo)
+		}
+		if ma.autoDemoTimer != nil {
+			ma.autoDemoTimer.Stop()
+		}
+		ma.operationLog.Add("Mode: Auto Demo stopped")
+	}
+}
+
+// autoDemoLoop runs the automatic demonstration.
+func (ma *MNISTApp) autoDemoLoop() {
+	// Run first operation immediately
+	fyne.Do(func() {
+		ma.loadRandomTestDigit()
+	})
+
+	for {
+		select {
+		case <-ma.stopAutoDemo:
+			return
+		case <-ma.autoDemoTimer.C:
+			if !ma.autoDemo {
+				return
+			}
+			fyne.Do(func() {
+				ma.loadRandomTestDigit()
+			})
+		}
+	}
 }

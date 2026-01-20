@@ -99,7 +99,7 @@ competition"  architecture" challenges"   else"
 | 1 | Hysteresis | Memory cell physics | Everyone | ✅ | ✅ Fyne |
 | 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ | ✅ Fyne |
 | 3 | MNIST | AI application | Investors | ✅ 95.8% | ✅ Fyne |
-| 4 | Peripherals | Full system | Foundries | ✅ | 🔲 CLI |
+| 4 | Peripherals | Full system | Foundries | ✅ | ✅ Fyne |
 | 5 | Thermal | Heat analysis | Engineers | ✅ | 🔲 CLI |
 | 6 | Multi-Layer | 3D Architecture | Designers | 🔲 | 🔲 |
 | 7 | Non-Idealities | Real issues | Engineers | ✅ IR/Sneak | 🔲 |
@@ -158,9 +158,9 @@ competition"  architecture" challenges"   else"
 #### Demo 1-4: Add Fyne GUIs ✅ DONE
 
 - [x] Demo 1: Hysteresis Fyne GUI (PEPlot, LevelIndicator)
-- [x] Demo 2: Crossbar Fyne GUI (Heatmap, IR Drop, Sneak Paths)
-- [x] Demo 3: MNIST Fyne GUI (DigitCanvas, LayerActivation, ConfusionMatrix)
-- [ ] Demo 4: Peripherals Fyne GUI (Circuit diagrams, timing, power)
+- [x] Demo 2: Crossbar Fyne GUI (Heatmap, IR Drop, Sneak Paths) + Live Slide upgrade
+- [x] Demo 3: MNIST Fyne GUI (DigitCanvas, LayerActivation, ConfusionMatrix) + Live Slide upgrade
+- [x] Demo 4: Peripherals Fyne GUI (Circuit diagrams, timing, power) + Live Slide upgrade
 - [ ] Demo 5: Thermal Fyne GUI (Heat map, 3D view)
 
 #### Demo 7: Non-Idealities (Show We Understand Real Challenges)
@@ -347,7 +347,7 @@ STEP 5: Join external research institution / IronLattice team
 | Metric | Target | Current |
 |--------|--------|---------|
 | All tests passing | 100% | ✅ 110+ tests |
-| GUI for Demos 1-4 | 4/4 | 3/4 |
+| GUI for Demos 1-4 | 4/4 | ✅ 4/4 |
 | MNIST accuracy | ≥87% | ✅ 95.8% |
 | Documentation | Complete | 80% |
 | Build time | <30s | ✅ |
@@ -402,7 +402,7 @@ ironlattice-vis/
 ├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
 ├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
 ├── demo3-mnist/          ✅ MNIST 95.8% + Fyne GUI
-├── demo4-circuits/       ✅ Peripherals (CLI only)
+├── demo4-circuits/       ✅ Peripherals + Fyne GUI
 ├── demo5-thermal/        ✅ Thermal sim (CLI only)
 ├── demo6-multilayer/     🔲 3D multi-layer
 ├── demo7-nonidealities/  ✅ IR drop + sneak paths (in demo2)

@@ -20,23 +20,25 @@ type ControlPanel struct {
 	NoiseSlider      *widget.Slider
 	ADCBitsSlider    *widget.Slider
 	ColormapSelect   *widget.Select
+	DemoModeSelect   *widget.Select
 
 	// Buttons
-	RunMVMButton     *widget.Button
-	AnalyzeIRButton  *widget.Button
+	RunMVMButton       *widget.Button
+	AnalyzeIRButton    *widget.Button
 	AnalyzeSneakButton *widget.Button
-	ResetButton      *widget.Button
+	ResetButton        *widget.Button
 
 	// Labels for current values
-	arraySizeLabel   *widget.Label
-	noiseLabel       *widget.Label
-	adcBitsLabel     *widget.Label
+	arraySizeLabel *widget.Label
+	noiseLabel     *widget.Label
+	adcBitsLabel   *widget.Label
 
 	// Callbacks
 	OnArraySizeChanged func(size int)
 	OnNoiseChanged     func(noise float64)
 	OnADCBitsChanged   func(bits int)
 	OnColormapChanged  func(colormap string)
+	OnDemoModeChanged  func(mode string)
 	OnRunMVM           func()
 	OnAnalyzeIR        func()
 	OnAnalyzeSneak     func()
@@ -96,6 +98,17 @@ func NewControlPanel() *ControlPanel {
 	)
 	cp.ColormapSelect.SetSelected("ironlattice")
 
+	// Demo mode selector
+	cp.DemoModeSelect = widget.NewSelect(
+		[]string{"Manual", "Auto Demo", "Step-by-Step"},
+		func(s string) {
+			if cp.OnDemoModeChanged != nil {
+				cp.OnDemoModeChanged(s)
+			}
+		},
+	)
+	cp.DemoModeSelect.SetSelected("Manual")
+
 	// Action buttons
 	cp.RunMVMButton = widget.NewButton("Run MVM", func() {
 		if cp.OnRunMVM != nil {
@@ -140,8 +153,11 @@ func (cp *ControlPanel) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	content := container.NewVBox(
-		widget.NewLabel("Crossbar Configuration"),
+		widget.NewLabel("Demo Mode:"),
+		cp.DemoModeSelect,
+
 		widget.NewSeparator(),
+		widget.NewLabel("Crossbar Configuration"),
 
 		cp.arraySizeLabel,
 		cp.ArraySizeSlider,
