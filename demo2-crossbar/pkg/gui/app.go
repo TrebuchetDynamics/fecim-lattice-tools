@@ -361,32 +361,70 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Right panel - controls at top, stats in scroll at bottom
-	controlsBox := container.NewVBox(
+	// Right panel - improved layout with better spacing and grouping
+
+	// Action buttons group
+	actionLabel := widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	actionsGroup := container.NewVBox(
+		actionLabel,
 		ca.runMVMButton,
 		ca.resetButton,
+	)
+
+	// Array settings group - collapsible style header
+	settingsLabel := widget.NewLabelWithStyle("Array Settings", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	settingsGroup := container.NewVBox(
 		widget.NewSeparator(),
+		settingsLabel,
 		ca.arraySizeLabel,
 		ca.arraySizeSlider,
+	)
+
+	// Noise/ADC group
+	signalLabel := widget.NewLabelWithStyle("Signal Quality", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	signalGroup := container.NewVBox(
+		widget.NewSeparator(),
+		signalLabel,
 		ca.noiseLabel,
 		ca.noiseSlider,
 		ca.adcBitsLabel,
 		ca.adcBitsSlider,
-		widget.NewLabel("Colormap:"),
+	)
+
+	// Display settings group
+	displayLabel := widget.NewLabelWithStyle("Display", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	displayGroup := container.NewVBox(
+		widget.NewSeparator(),
+		displayLabel,
 		ca.colormapSelect,
 	)
 
-	// Stats in scroll container to prevent resize issues
-	statsScroll := container.NewVScroll(ca.statsLabel)
-	statsScroll.SetMinSize(fyne.NewSize(180, 100))
-
-	rightPanel := container.NewBorder(
-		controlsBox,      // top - fixed controls
-		nil,              // bottom
-		nil,              // left
-		nil,              // right
-		statsScroll,      // center - scrollable stats
+	// Combined controls with scroll for overflow
+	controlsBox := container.NewVBox(
+		actionsGroup,
+		settingsGroup,
+		signalGroup,
+		displayGroup,
 	)
+	controlsScroll := container.NewVScroll(controlsBox)
+	controlsScroll.SetMinSize(fyne.NewSize(180, 250))
+
+	// Stats section with header
+	statsHeader := widget.NewLabelWithStyle("Analysis Results", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	statsSection := container.NewBorder(
+		container.NewVBox(widget.NewSeparator(), statsHeader),
+		nil, nil, nil,
+		ca.statsLabel,
+	)
+	statsScroll := container.NewVScroll(statsSection)
+	statsScroll.SetMinSize(fyne.NewSize(180, 120))
+
+	// Use VSplit for controls and stats
+	rightPanel := container.NewVSplit(
+		controlsScroll,
+		statsScroll,
+	)
+	rightPanel.SetOffset(0.6) // 60% controls, 40% stats
 
 	// Left panel using simple labels (no custom widgets)
 	leftPanel := container.NewVBox(

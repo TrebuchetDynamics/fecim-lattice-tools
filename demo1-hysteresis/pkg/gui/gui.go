@@ -318,7 +318,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.mu.Unlock()
 		}
 	}
-	a.eFieldLabel = widget.NewLabel("E-field: 0.00 MV/cm")
+	a.eFieldLabel = widget.NewLabel("E: 0.00 MV/cm")
 
 	// Waveform selector
 	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Square Wave", "Random Walk", "Write/Read Demo"}
@@ -414,7 +414,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	freqSlider := widget.NewSlider(0.01, 1.0)
 	freqSlider.Step = 0.01
 	freqSlider.Value = 0.5
-	freqLabel := widget.NewLabel("Frequency: 0.50 Hz")
+	freqLabel := widget.NewLabel("Freq: 0.50 Hz")
 	freqSlider.OnChanged = func(v float64) {
 		a.mu.Lock()
 		a.frequency = v
@@ -423,14 +423,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
 		a.mu.Unlock()
-		freqLabel.SetText(fmt.Sprintf("Frequency: %.2f Hz", v))
+		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
 	}
 
 	// Trail length slider
 	trailSlider := widget.NewSlider(50, 2000)
 	trailSlider.Step = 50
 	trailSlider.Value = float64(a.maxHistory)
-	trailLabel := widget.NewLabel(fmt.Sprintf("Trail: %d pts", a.maxHistory))
+	trailLabel := widget.NewLabel(fmt.Sprintf("Trail: %d", a.maxHistory))
 	trailSlider.OnChanged = func(v float64) {
 		a.mu.Lock()
 		a.maxHistory = int(v)
@@ -440,29 +440,43 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.pHistory = a.pHistory[len(a.pHistory)-a.maxHistory:]
 		}
 		a.mu.Unlock()
-		trailLabel.SetText(fmt.Sprintf("Trail: %d pts", int(v)))
+		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
-	return container.NewVBox(
-		widget.NewLabelWithStyle("Controls", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
-		widget.NewLabel("Material:"),
+	// Grouped sections for cleaner layout
+	// Simulation Mode group
+	modeGroup := container.NewVBox(
+		widget.NewLabelWithStyle("Mode", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		a.materialSelect,
-		widget.NewSeparator(),
-		widget.NewLabel("Waveform:"),
 		a.waveformSelect,
-		widget.NewSeparator(),
-		widget.NewLabel("E-field (×Ec):"),
+	)
+
+	// E-field control group
+	eFieldGroup := container.NewVBox(
+		widget.NewLabelWithStyle("E-field (×Ec)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		a.eFieldSlider,
 		a.eFieldLabel,
-		widget.NewSeparator(),
-		freqLabel,
+	)
+
+	// Timing group - frequency and trail on same rows
+	timingGroup := container.NewVBox(
+		widget.NewLabelWithStyle("Timing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		container.NewGridWithColumns(2, freqLabel, trailLabel),
 		freqSlider,
-		widget.NewSeparator(),
-		trailLabel,
 		trailSlider,
+	)
+
+	// Action buttons
+	actionGroup := container.NewHBox(a.pauseBtn, resetBtn)
+
+	return container.NewVBox(
+		modeGroup,
 		widget.NewSeparator(),
-		container.NewHBox(a.pauseBtn, resetBtn),
+		eFieldGroup,
+		widget.NewSeparator(),
+		timingGroup,
+		widget.NewSeparator(),
+		actionGroup,
 	)
 }
 
@@ -470,24 +484,31 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("P: 0.00 µC/cm²")
 	a.levelLabel = widget.NewLabel("Level: 15/30")
 	a.modeIndicator = NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(180, 55))
+	a.modeIndicator.SetMinSize(fyne.NewSize(160, 50))
+
+	// State display - compact 2-column grid
+	stateGrid := container.NewGridWithColumns(2,
+		widget.NewLabel("P:"), a.pLabel,
+		widget.NewLabel("Level:"), a.levelLabel,
+	)
+
+	// Material params - compact display
+	matParams := widget.NewLabel(fmt.Sprintf(
+		"Pr=%.0f Ps=%.0f µC/cm²\nEc=%.2f MV/cm τ=%.0fns\nEndurance: %.0e",
+		a.material.Pr*100, a.material.Ps*100,
+		a.material.Ec/1e8, a.material.Tau*1e9,
+		a.material.EnduranceCycles,
+	))
+	matParams.Wrapping = fyne.TextWrapOff
 
 	return container.NewVBox(
-		widget.NewLabelWithStyle("Current State", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
-		a.eFieldLabel,
-		a.pLabel,
-		a.levelLabel,
+		widget.NewLabelWithStyle("State", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		stateGrid,
 		widget.NewSeparator(),
 		a.modeIndicator,
 		widget.NewSeparator(),
-		widget.NewLabelWithStyle("Material Parameters", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
-		widget.NewLabel(fmt.Sprintf("Pr: %.1f µC/cm²", a.material.Pr*100)),
-		widget.NewLabel(fmt.Sprintf("Ps: %.1f µC/cm²", a.material.Ps*100)),
-		widget.NewLabel(fmt.Sprintf("Ec: %.2f MV/cm", a.material.Ec/1e8)),
-		widget.NewLabel(fmt.Sprintf("τ: %.1f ns", a.material.Tau*1e9)),
-		widget.NewLabel(fmt.Sprintf("Endurance: %.0e", a.material.EnduranceCycles)),
+		widget.NewLabelWithStyle("Material", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		matParams,
 	)
 }
 

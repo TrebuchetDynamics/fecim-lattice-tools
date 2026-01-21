@@ -4,11 +4,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Build launcher if it doesn't exist
-if [ ! -f "launcher" ]; then
-    echo "Building launcher..."
-    go build -o launcher ./cmd/launcher
-fi
+# Build all demos
+echo "Building all demos..."
+./scripts/build-all.sh
 
 # Run launcher
 ./launcher

@@ -272,29 +272,29 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	// Info label with network specs
 	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Target: 87%")
 
-	// Control buttons
-	clearBtn := widget.NewButton("Clear Canvas", func() {
+	// Control buttons - organized into groups
+	clearBtn := widget.NewButton("Clear", func() {
 		ma.digitCanvas.Clear()
 		ma.predictionDisplay.SetPrediction(-1, 0)
 		ma.operationLog.Add("Canvas cleared")
 		ma.updateStatus("● IDLE | Canvas cleared")
 	})
 
-	randomBtn := widget.NewButton("Random Test", func() {
+	randomBtn := widget.NewButton("Random", func() {
 		ma.loadRandomTestDigit()
 	})
 
-	evalBtn := widget.NewButton("Evaluate All", func() {
+	evalBtn := widget.NewButton("Evaluate", func() {
 		ma.evaluateNetwork()
 	})
 	evalBtn.Importance = widget.HighImportance
 
-	loadTestBtn := widget.NewButton("Load Test Data", func() {
+	loadTestBtn := widget.NewButton("Load Data", func() {
 		ma.loadTestData()
 	})
 
-	// Buttons container
-	buttonBox := container.NewHBox(
+	// Buttons in 2x2 grid for compactness
+	buttonGrid := container.NewGridWithColumns(2,
 		clearBtn,
 		randomBtn,
 		loadTestBtn,
@@ -335,7 +335,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	// Left panel with scroll for proper sizing
 	leftPanel := container.NewBorder(
 		container.NewVBox(
-			widget.NewLabel("Demo Mode:"),
+			widget.NewLabelWithStyle("Mode", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			ma.demoModeSelect,
 			widget.NewSeparator(),
 			canvasLabel,
@@ -343,7 +343,8 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		container.NewVBox(
 			predictionBox,
 			widget.NewSeparator(),
-			buttonBox,
+			widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+			buttonGrid,
 		),
 		nil, nil,
 		container.NewCenter(ma.digitCanvas),
