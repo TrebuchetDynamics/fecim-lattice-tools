@@ -131,14 +131,14 @@ func (ma *MultilayerApp) createMainLayout() fyne.CanvasObject {
 	// Header
 	header := ma.createHeader()
 
-	// Left panel: Stack selector and layer list
-	leftPanel := ma.createLeftPanel()
-
-	// Center: 3D Stack visualization
+	// Center: 3D Stack visualization (create first so callbacks can update it)
 	centerPanel := ma.createCenterPanel()
 
 	// Right panel: Metrics and energy comparison
 	rightPanel := ma.createRightPanel()
+
+	// Left panel: Stack selector and layer list (create after so callbacks work)
+	leftPanel := ma.createLeftPanel()
 
 	// Status bar
 	ma.statusLabel = widget.NewLabel("Ready")
@@ -187,7 +187,9 @@ func (ma *MultilayerApp) createLeftPanel() fyne.CanvasObject {
 		}
 		ma.updateStackView()
 		ma.updateMetrics()
-		ma.statusLabel.SetText("Loaded: " + s)
+		if ma.statusLabel != nil {
+			ma.statusLabel.SetText("Loaded: " + s)
+		}
 		debug.Printf("Stack changed to: %s", s)
 	})
 	ma.stackSelect.SetSelected("Demo Stack (16-8-4)")
@@ -270,6 +272,9 @@ func (ma *MultilayerApp) createRightPanel() fyne.CanvasObject {
 }
 
 func (ma *MultilayerApp) updateStackView() {
+	if ma.stackView == nil {
+		return
+	}
 	ma.stackView.Objects = nil
 
 	if ma.stack == nil || len(ma.stack.Layers) == 0 {
@@ -355,7 +360,7 @@ func (ma *MultilayerApp) updateStackView() {
 }
 
 func (ma *MultilayerApp) updateMetrics() {
-	if ma.stack == nil {
+	if ma.stack == nil || ma.metricsLabel == nil || ma.energyBars == nil {
 		return
 	}
 

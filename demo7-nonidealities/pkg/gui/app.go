@@ -488,6 +488,9 @@ FeCIM 10-year retention: >99.9%`
 }
 
 func (na *NonIdealitiesApp) updateIRDrop() {
+	if na.irHeatmap == nil {
+		return
+	}
 	na.irHeatmap.Objects = nil
 
 	cellSize := float32(20)
@@ -530,6 +533,9 @@ func (na *NonIdealitiesApp) updateIRDrop() {
 }
 
 func (na *NonIdealitiesApp) updateSneakPaths() {
+	if na.sneakHeatmap == nil {
+		return
+	}
 	na.sneakHeatmap.Objects = nil
 
 	cellSize := float32(20)
@@ -586,6 +592,9 @@ func (na *NonIdealitiesApp) updateSneakPaths() {
 }
 
 func (na *NonIdealitiesApp) updateDrift() {
+	if na.driftChart == nil {
+		return
+	}
 	na.driftChart.Objects = nil
 
 	if len(na.driftSim.DriftHistory) == 0 {

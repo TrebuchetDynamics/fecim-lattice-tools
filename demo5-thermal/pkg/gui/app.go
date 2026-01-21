@@ -529,7 +529,10 @@ Headroom: %.1f°C`,
 
 	ta.statsLabel.SetText(stats)
 
-	// Check warning
+	// Check warning (statusLabel might not be created yet)
+	if ta.statusLabel == nil {
+		return
+	}
 	warning := ta.multiSim.CheckStackWarning()
 	if warning != nil {
 		ta.statusLabel.SetText(fmt.Sprintf("[Level %d] %s - Max: %.1f°C",

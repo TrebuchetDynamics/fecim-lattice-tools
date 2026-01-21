@@ -417,5 +417,8 @@ func (ca *ComparisonApp) getWorkloadMACs() int {
 
 // updateStatus updates the status label.
 func (ca *ComparisonApp) updateStatus(status string) {
+	if ca.statusLabel == nil {
+		return
+	}
 	ca.statusLabel.SetText("Status: " + status)
 }
