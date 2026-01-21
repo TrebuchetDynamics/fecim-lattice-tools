@@ -64,14 +64,15 @@ func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 
 // DemoApp holds the demo instances
 type DemoApp struct {
-	demo1 *demo1gui.EmbeddedApp
-	demo2 *demo2gui.EmbeddedCrossbarApp
-	demo3 *demo3gui.EmbeddedMNISTApp
-	demo4 *demo4gui.EmbeddedCircuitsApp
-	demo5 *demo5gui.EmbeddedThermalApp
-	demo6 *demo6gui.EmbeddedMultilayerApp
-	demo7 *demo7gui.EmbeddedNonIdealitiesApp
-	demo8 *demo8gui.EmbeddedComparisonApp
+	demo1    *demo1gui.EmbeddedApp
+	demo2    *demo2gui.EmbeddedCrossbarApp
+	demo3    *demo3gui.EmbeddedMNISTApp
+	demo3b   *demo3gui.EmbeddedDualModeApp // FP vs CIM comparison
+	demo4    *demo4gui.EmbeddedCircuitsApp
+	demo5    *demo5gui.EmbeddedThermalApp
+	demo6    *demo6gui.EmbeddedMultilayerApp
+	demo7    *demo7gui.EmbeddedNonIdealitiesApp
+	demo8    *demo8gui.EmbeddedComparisonApp
 }
 
 func main() {
@@ -85,14 +86,15 @@ func main() {
 
 	// Create demo instances
 	demos := &DemoApp{
-		demo1: demo1gui.NewEmbeddedApp(),
-		demo2: demo2gui.NewEmbeddedCrossbarApp(),
-		demo3: demo3gui.NewEmbeddedMNISTApp(),
-		demo4: demo4gui.NewEmbeddedCircuitsApp(),
-		demo5: demo5gui.NewEmbeddedThermalApp(),
-		demo6: demo6gui.NewEmbeddedMultilayerApp(),
-		demo7: demo7gui.NewEmbeddedNonIdealitiesApp(),
-		demo8: demo8gui.NewEmbeddedComparisonApp(),
+		demo1:  demo1gui.NewEmbeddedApp(),
+		demo2:  demo2gui.NewEmbeddedCrossbarApp(),
+		demo3:  demo3gui.NewEmbeddedMNISTApp(),
+		demo3b: demo3gui.NewEmbeddedDualModeApp(),
+		demo4:  demo4gui.NewEmbeddedCircuitsApp(),
+		demo5:  demo5gui.NewEmbeddedThermalApp(),
+		demo6:  demo6gui.NewEmbeddedMultilayerApp(),
+		demo7:  demo7gui.NewEmbeddedNonIdealitiesApp(),
+		demo8:  demo8gui.NewEmbeddedComparisonApp(),
 	}
 
 	// Create tabs container (will be populated below)
@@ -109,6 +111,7 @@ func main() {
 	demo1Content := demos.demo1.BuildContent(fyneApp, window)
 	demo2Content := demos.demo2.BuildContent(fyneApp, window)
 	demo3Content := demos.demo3.BuildContent(fyneApp, window)
+	demo3bContent := demos.demo3b.BuildContent(fyneApp, window)
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
 	demo6Content := demos.demo6.BuildContent(fyneApp, window)
@@ -121,6 +124,7 @@ func main() {
 		container.NewTabItem("1. Hysteresis", container.NewMax(demo1Content)),
 		container.NewTabItem("2. Crossbar", container.NewMax(demo2Content)),
 		container.NewTabItem("3. MNIST", container.NewMax(demo3Content)),
+		container.NewTabItem("3b. MNIST FP/CIM", container.NewMax(demo3bContent)),
 		container.NewTabItem("4. Circuits", container.NewMax(demo4Content)),
 		container.NewTabItem("5. Thermal", container.NewMax(demo5Content)),
 		container.NewTabItem("6. 3D Stack", container.NewMax(demo6Content)),
@@ -141,6 +145,8 @@ func main() {
 			demos.demo2.Stop()
 		case 3:
 			demos.demo3.Stop()
+		case 31: // 3b
+			demos.demo3b.Stop()
 		case 4:
 			demos.demo4.Stop()
 		case 5:
@@ -164,6 +170,9 @@ func main() {
 		case "3. MNIST":
 			currentDemo = 3
 			demos.demo3.Start()
+		case "3b. MNIST FP/CIM":
+			currentDemo = 31
+			demos.demo3b.Start()
 		case "4. Circuits":
 			currentDemo = 4
 			demos.demo4.Start()
@@ -194,6 +203,7 @@ func main() {
 	demos.demo1.Stop()
 	demos.demo2.Stop()
 	demos.demo3.Stop()
+	demos.demo3b.Stop()
 	demos.demo4.Stop()
 	demos.demo5.Stop()
 	demos.demo6.Stop()

@@ -1,0 +1,226 @@
+// Package core provides the dual-mode inference engine for FeCIM MNIST demo.
+// It implements both full-precision (FP) and compute-in-memory (CIM) paths
+// to demonstrate the impact of 30-level ferroelectric quantization.
+package core
+
+import "math"
+
+// FeCIMLevels is the number of discrete conductance levels in FeCIM hardware.
+// This is the key physical constraint from Dr. Tour's research.
+const FeCIMLevels = 30
+
+// QuantizeWeights quantizes FP weights to N discrete levels
+// using symmetric range [-W_max, +W_max] with linear mapping.
+func QuantizeWeights(fpWeights [][]float64, levels int) [][]float64 {
+	if levels < 2 {
+		panic("levels must be >= 2")
+	}
+
+	rows := len(fpWeights)
+	if rows == 0 {
+		return fpWeights
+	}
+	cols := len(fpWeights[0])
+	if cols == 0 {
+		return fpWeights
+	}
+
+	// 1. Find global max magnitude (symmetric)
+	wMax := 0.0
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if abs := math.Abs(fpWeights[i][j]); abs > wMax {
+				wMax = abs
+			}
+		}
+	}
+
+	if wMax == 0 {
+		return fpWeights // All zeros
+	}
+
+	// 2. Quantize to integer bins [0, levels-1]
+	quantized := make([][]float64, rows)
+	levelStep := 2.0 * wMax / float64(levels-1) // Level spacing
+
+	for i := 0; i < rows; i++ {
+		quantized[i] = make([]float64, cols)
+		for j := 0; j < cols; j++ {
+			// Map [-wMax, +wMax] → [0, 1]
+			normalized := (fpWeights[i][j] + wMax) / (2.0 * wMax)
+
+			// Quantize to bin
+			bin := int(math.Round(normalized * float64(levels-1)))
+
+			// Clamp
+			if bin < 0 {
+				bin = 0
+			}
+			if bin >= levels {
+				bin = levels - 1
+			}
+
+			// Map back to [-wMax, +wMax]
+			quantized[i][j] = -wMax + float64(bin)*levelStep
+		}
+	}
+
+	return quantized
+}
+
+// QuantizeBias quantizes bias vector to N discrete levels.
+func QuantizeBias(fpBias []float64, levels int) []float64 {
+	if len(fpBias) == 0 {
+		return fpBias
+	}
+	// Wrap as 2D array for code reuse
+	wrapped := [][]float64{fpBias}
+	quantized := QuantizeWeights(wrapped, levels)
+	return quantized[0]
+}
+
+// QuantizationStats returns quantization metrics for analysis.
+type QuantizationStats struct {
+	OriginalRange  float64 // [-W_max, +W_max]
+	QuantizedRange float64
+	LevelSpacing   float64
+	NumDistinct    int     // Unique values after quantization
+	MSE            float64 // Mean squared error
+	PSNR           float64 // Peak signal-to-noise ratio (dB)
+	MaxError       float64 // Maximum absolute error
+}
+
+// ComputeQuantizationStats computes metrics comparing original and quantized weights.
+func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats {
+	stats := QuantizationStats{}
+
+	if len(original) == 0 || len(original[0]) == 0 {
+		return stats
+	}
+
+	rows := len(original)
+	cols := len(original[0])
+
+	// Find range of original weights
+	oMin, oMax := original[0][0], original[0][0]
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if original[i][j] < oMin {
+				oMin = original[i][j]
+			}
+			if original[i][j] > oMax {
+				oMax = original[i][j]
+			}
+		}
+	}
+	stats.OriginalRange = oMax - oMin
+
+	// Find range of quantized weights
+	qMin, qMax := quantized[0][0], quantized[0][0]
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if quantized[i][j] < qMin {
+				qMin = quantized[i][j]
+			}
+			if quantized[i][j] > qMax {
+				qMax = quantized[i][j]
+			}
+		}
+	}
+	stats.QuantizedRange = qMax - qMin
+
+	// Count distinct values
+	distinctMap := make(map[float64]bool)
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			distinctMap[quantized[i][j]] = true
+		}
+	}
+	stats.NumDistinct = len(distinctMap)
+
+	// Calculate level spacing
+	if stats.NumDistinct > 1 {
+		stats.LevelSpacing = stats.QuantizedRange / float64(stats.NumDistinct-1)
+	}
+
+	// Calculate MSE and max error
+	sumSquaredError := 0.0
+	maxAbsError := 0.0
+	count := float64(rows * cols)
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			diff := original[i][j] - quantized[i][j]
+			sumSquaredError += diff * diff
+			if absErr := math.Abs(diff); absErr > maxAbsError {
+				maxAbsError = absErr
+			}
+		}
+	}
+
+	stats.MSE = sumSquaredError / count
+	stats.MaxError = maxAbsError
+
+	// Calculate PSNR (Peak Signal-to-Noise Ratio)
+	// PSNR = 10 * log10(MAX^2 / MSE)
+	if stats.MSE > 0 {
+		maxVal := math.Max(math.Abs(oMin), math.Abs(oMax))
+		stats.PSNR = 10 * math.Log10(maxVal*maxVal/stats.MSE)
+	} else {
+		stats.PSNR = math.Inf(1) // Perfect reconstruction
+	}
+
+	return stats
+}
+
+// AddGaussianNoise adds Gaussian noise to values with given standard deviation.
+// noiseLevel is specified as σ/μ (coefficient of variation).
+func AddGaussianNoise(values []float64, noiseLevel float64, rng *RandomSource) []float64 {
+	if noiseLevel <= 0 {
+		return values
+	}
+
+	result := make([]float64, len(values))
+	for i, v := range values {
+		// Noise proportional to absolute value (multiplicative noise)
+		sigma := math.Abs(v) * noiseLevel
+		if sigma > 0 {
+			result[i] = v + rng.NormFloat64()*sigma
+		} else {
+			result[i] = v
+		}
+	}
+	return result
+}
+
+// RandomSource provides deterministic random number generation.
+type RandomSource struct {
+	seed uint64
+}
+
+// NewRandomSource creates a new random source with given seed.
+func NewRandomSource(seed uint64) *RandomSource {
+	return &RandomSource{seed: seed}
+}
+
+// NormFloat64 returns a normally distributed float64 using Box-Muller transform.
+func (r *RandomSource) NormFloat64() float64 {
+	u1 := r.Float64()
+	u2 := r.Float64()
+	// Box-Muller transform
+	return math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
+}
+
+// Float64 returns a uniformly distributed float64 in [0, 1).
+func (r *RandomSource) Float64() float64 {
+	// Simple xorshift64 PRNG
+	r.seed ^= r.seed << 13
+	r.seed ^= r.seed >> 7
+	r.seed ^= r.seed << 17
+	return float64(r.seed) / float64(math.MaxUint64)
+}
+
+// Intn returns a random int in [0, n).
+func (r *RandomSource) Intn(n int) int {
+	return int(r.Float64() * float64(n))
+}

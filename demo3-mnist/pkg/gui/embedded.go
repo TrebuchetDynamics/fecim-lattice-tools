@@ -80,3 +80,13 @@ func (e *EmbeddedMNISTApp) Start() {
 func (e *EmbeddedMNISTApp) Stop() {
 	e.stopAutoDemoLoop()
 }
+
+// EmbeddedDualModeApp holds the state for the dual-mode (FP vs CIM) MNIST demo.
+type EmbeddedDualModeApp struct {
+	*DualModeApp
+}
+
+// NewEmbeddedDualModeApp creates a new embedded dual-mode MNIST GUI application.
+func NewEmbeddedDualModeApp() *EmbeddedDualModeApp {
+	return &EmbeddedDualModeApp{DualModeApp: NewDualModeApp()}
+}
