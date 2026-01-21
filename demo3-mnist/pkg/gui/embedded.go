@@ -90,3 +90,19 @@ type EmbeddedDualModeApp struct {
 func NewEmbeddedDualModeApp() *EmbeddedDualModeApp {
 	return &EmbeddedDualModeApp{DualModeApp: NewDualModeApp()}
 }
+
+// BuildContent creates the UI content for embedding in a tab.
+// The fyne.App instance must be provided by the parent.
+func (e *EmbeddedDualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	return e.DualModeApp.BuildContent(fyneApp, parentWindow)
+}
+
+// Start initializes anything that needs to run after UI is visible.
+func (e *EmbeddedDualModeApp) Start() {
+	e.DualModeApp.Start()
+}
+
+// Stop cleans up any running processes.
+func (e *EmbeddedDualModeApp) Stop() {
+	e.DualModeApp.Stop()
+}

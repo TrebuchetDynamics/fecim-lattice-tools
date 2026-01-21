@@ -37,6 +37,7 @@ type DualModeApp struct {
 	noiseLabel   *widget.Label
 	adcSelect    *widget.Select
 	dacSelect    *widget.Select
+	hiddenSelect *widget.Select
 
 	// Result panel components
 	fpPredLabel  *widget.Label
@@ -68,6 +69,9 @@ type DualModeApp struct {
 
 	// Last inference result for refresh
 	lastPixels []float64
+
+	// Guided Tour
+	tour *GuidedTour
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -169,7 +173,47 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	specs := widget.NewLabel("Architecture: 784 -> 128 -> 10 | FeCIM: 30 Discrete Levels | Target: 87%")
 	specs.Alignment = fyne.TextAlignCenter
 
-	return container.NewVBox(title, subtitle, specs, widget.NewSeparator())
+	// Tour and info buttons
+	tourBtn := widget.NewButton("Start Guided Tour", func() {
+		if app.tour == nil {
+			app.tour = NewGuidedTour(app)
+		}
+		app.tour.Start()
+	})
+	tourBtn.Importance = widget.HighImportance
+
+	why30Btn := widget.NewButton("Why 30?", func() {
+		ShowWhy30LevelsDialog(app.window)
+	})
+
+	realityBtn := widget.NewButton("Hardware Reality", func() {
+		ShowHardwareRealityDialog(app.window)
+	})
+
+	failuresBtn := widget.NewButton("Failure Modes", func() {
+		ShowFailureModesDialog(app.window)
+	})
+
+	aboutBtn := widget.NewButton("About", func() {
+		ShowAboutDialog(app.window)
+	})
+
+	buttonRow := container.NewHBox(
+		tourBtn,
+		widget.NewSeparator(),
+		why30Btn,
+		realityBtn,
+		failuresBtn,
+		aboutBtn,
+	)
+
+	return container.NewVBox(
+		title,
+		subtitle,
+		specs,
+		container.NewCenter(buttonRow),
+		widget.NewSeparator(),
+	)
 }
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).
@@ -319,6 +363,15 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	adcDacRow := container.NewGridWithColumns(4, adcLabel, app.adcSelect, dacLabel, app.dacSelect)
 
+	// Hidden size selector
+	hiddenLabel := widget.NewLabel("Hidden Size:")
+	app.hiddenSelect = widget.NewSelect([]string{"64", "128", "256"}, func(s string) {
+		var size int
+		fmt.Sscanf(s, "%d", &size)
+		app.changeHiddenSize(size)
+	})
+	app.hiddenSelect.SetSelected("128")
+
 	// Preset buttons
 	presetLabel := widget.NewLabel("Failure Mode Presets:")
 	idealBtn := widget.NewButton("Ideal", func() { app.applyPreset(30, 0.01, 8, 8) })
@@ -334,12 +387,15 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.runQuickTest()
 	})
 
+	hiddenRow := container.NewHBox(hiddenLabel, app.hiddenSelect)
+
 	return container.NewVBox(
 		label,
 		widget.NewSeparator(),
 		levelsRow,
 		noiseRow,
 		adcDacRow,
+		hiddenRow,
 		widget.NewSeparator(),
 		presetLabel,
 		presetRow,
@@ -652,10 +708,14 @@ func (app *DualModeApp) updateWeightHeatmap() {
 	var weights [][]float64
 	if app.weightLayer == 0 {
 		weights, _, _, _ = app.network.GetQuantWeights()
-		app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+		if len(weights) > 0 && len(weights[0]) > 0 {
+			app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+		}
 	} else {
 		_, weights, _, _ = app.network.GetQuantWeights()
-		app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+		if len(weights) > 0 && len(weights[0]) > 0 {
+			app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+		}
 	}
 
 	if len(weights) > 0 && len(weights[0]) > 0 {
@@ -676,4 +736,33 @@ func (app *DualModeApp) updateWeightHeatmap() {
 		app.weightRangeLabel.SetText(fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax))
 		app.weightLevelsLabel.SetText(fmt.Sprintf("Distinct levels: %d (FeCIM max: 30)", len(distinctMap)))
 	}
+}
+
+// changeHiddenSize changes the network hidden layer size.
+// This requires loading different pretrained weights.
+func (app *DualModeApp) changeHiddenSize(size int) {
+	// Map size to weight file
+	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
+	weightsPath := filepath.Join(app.dataDir, weightsFile)
+
+	// Check if file exists, fallback to default
+	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
+		// Try default weights file
+		weightsPath = filepath.Join(app.dataDir, "pretrained_weights.json")
+		app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
+	}
+
+	// Create new network with specified hidden size
+	app.network = core.NewDualModeNetwork(784, size, 10)
+
+	// Load weights
+	if err := app.network.LoadWeights(weightsPath); err != nil {
+		app.statusLabel.SetText(fmt.Sprintf("Error loading weights: %v", err))
+		return
+	}
+
+	// Reset results and update heatmap
+	app.resetResults()
+	app.updateWeightHeatmap()
+	app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", size))
 }
