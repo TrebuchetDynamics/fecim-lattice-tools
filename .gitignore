@@ -13,3 +13,4 @@ demo1-hysteresis/hysteresis
 *.out
 /logs
 shared/logging/
+fecim-visualizer
