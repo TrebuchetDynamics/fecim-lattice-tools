@@ -128,14 +128,14 @@ func (ta *ThermalApp) createMainLayout() fyne.CanvasObject {
 	// Header
 	header := ta.createHeader()
 
-	// Left panel: Controls
-	leftPanel := ta.createControlPanel()
-
-	// Center: Heatmap visualization
+	// Center: Heatmap visualization (create first so controls can update it)
 	centerPanel := ta.createCenterPanel()
 
 	// Right panel: Stats and comparison
 	rightPanel := ta.createRightPanel()
+
+	// Left panel: Controls (create after heatmap so callbacks work)
+	leftPanel := ta.createControlPanel()
 
 	// Status bar
 	ta.statusLabel = widget.NewLabel("Ready - Run simulation to see thermal evolution")
@@ -423,11 +423,10 @@ func temperatureToRGB(ratio float64) (uint8, uint8, uint8) {
 }
 
 func (ta *ThermalApp) updateHeatmap() {
-	ta.heatmapView.Objects = nil
-
-	if ta.singleSim == nil {
+	if ta.heatmapView == nil || ta.singleSim == nil {
 		return
 	}
+	ta.heatmapView.Objects = nil
 
 	grid := ta.singleSim.GetGridCopy()
 	height := len(grid)
@@ -491,7 +490,7 @@ func (ta *ThermalApp) updateHeatmap() {
 }
 
 func (ta *ThermalApp) updateStats() {
-	if ta.singleSim == nil {
+	if ta.singleSim == nil || ta.statsLabel == nil || ta.multiSim == nil {
 		return
 	}
 
@@ -542,6 +541,9 @@ Headroom: %.1f°C`,
 }
 
 func (ta *ThermalApp) updateComparisonPanel() {
+	if ta.comparisonPanel == nil {
+		return
+	}
 	ta.comparisonPanel.Objects = nil
 
 	// Power comparison data
