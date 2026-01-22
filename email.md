@@ -9,7 +9,7 @@ Subject: Open-source FeCIM design tool - matches your 87% MNIST, exports to ngsp
 
 Dr. Tour,
 
-After watching your COSM presentation on ferroelectric compute-in-memory, I built a visualization and design suite for FeCIM arrays.
+After watching your COSM presentation - "the same device does the memory and the computation" - I built a visualization and design suite for FeCIM arrays.
 
 The project includes six modules:
 
