@@ -1,5 +1,4 @@
 # Go binaries
-demo1-hysteresis/hysteresis
 *.exe
 *.exe~
 *.dll
