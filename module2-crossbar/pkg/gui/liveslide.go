@@ -285,10 +285,9 @@ func (e *EducationalPanel) SetSneakPathExplanation() {
 // SetIdleExplanation sets content for idle state.
 func (e *EducationalPanel) SetIdleExplanation() {
 	content := "CROSSBAR MVM\n\n" +
-		"\"Compute in memory where\n" +
+		"Compute in memory where\n" +
 		"the same device does memory\n" +
-		"and computation.\"\n\n" +
-		"— Dr. external research group\n\n" +
+		"and computation.\n\n" +
 		"Click a button to start\n" +
 		"a demonstration."
 	e.SetContent("What You're Seeing", content)
@@ -505,27 +504,27 @@ func (d *InputOutputDisplay) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(box)
 }
 
-// QuoteBox displays a Dr. Tour quote.
+// QuoteBox displays a centered italic text.
 type QuoteBox struct {
 	widget.BaseWidget
 
-	quote   string
+	text    string
 	minSize fyne.Size
 }
 
 // NewQuoteBox creates a new quote box.
-func NewQuoteBox(quote string) *QuoteBox {
+func NewQuoteBox(text string) *QuoteBox {
 	q := &QuoteBox{
-		quote:   quote,
+		text:    text,
 		minSize: fyne.NewSize(200, 30),
 	}
 	q.ExtendBaseWidget(q)
 	return q
 }
 
-// SetQuote updates the quote.
-func (q *QuoteBox) SetQuote(quote string) {
-	q.quote = quote
+// SetQuote updates the text.
+func (q *QuoteBox) SetQuote(text string) {
+	q.text = text
 	q.Refresh()
 }
 
@@ -537,7 +536,7 @@ func (q *QuoteBox) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (q *QuoteBox) CreateRenderer() fyne.WidgetRenderer {
 	label := widget.NewLabelWithStyle(
-		fmt.Sprintf("\"%s\" — Dr. external research group", q.quote),
+		q.text,
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Italic: true},
 	)

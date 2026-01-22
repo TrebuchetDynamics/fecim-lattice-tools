@@ -118,14 +118,9 @@ func (app *TabbedCrossbarApp) createHeader() fyne.CanvasObject {
 	subtitle := widget.NewLabel("Ideal Operation | IR Drop | Sneak Paths | Conductance Drift")
 	subtitle.Alignment = fyne.TextAlignCenter
 
-	quote := widget.NewLabel(`"We handle real-world challenges better than competition" — FeCIM Advantage`)
-	quote.Alignment = fyne.TextAlignCenter
-	quote.TextStyle = fyne.TextStyle{Italic: true}
-
 	return container.NewVBox(
 		container.NewCenter(title),
 		container.NewCenter(subtitle),
-		container.NewCenter(quote),
 		widget.NewSeparator(),
 	)
 }

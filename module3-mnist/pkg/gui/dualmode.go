@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
@@ -141,10 +142,7 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	zone4 := app.createWeightZone()
 
 	// Status footer
-	footer := container.NewVBox(
-		widget.NewSeparator(),
-		app.statusLabel,
-	)
+	footer := app.statusLabel
 
 	// Arrange zones in 2x2 grid
 	topRow := container.NewGridWithColumns(2, zone1, zone2)
@@ -170,12 +168,8 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 
 // createHeader creates the title and info header.
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
-	title := widget.NewLabel("MNIST FeCIM Demo - FP vs CIM Comparison")
+	title := widget.NewLabel("MNIST FeCIM | 784→128→10 | 30 Levels | 87%")
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Alignment = fyne.TextAlignCenter
-
-	specs := widget.NewLabel("784 → 128 → 10 | 30 Levels | Target: 87%")
-	specs.Alignment = fyne.TextAlignCenter
 
 	// Info buttons
 	tourBtn := widget.NewButton("Tour", func() {
@@ -190,11 +184,11 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 		ShowWhy30LevelsDialog(app.window)
 	})
 
-	realityBtn := widget.NewButton("Hardware Reality", func() {
+	realityBtn := widget.NewButton("HW Reality", func() {
 		ShowHardwareRealityDialog(app.window)
 	})
 
-	failuresBtn := widget.NewButton("Failure Modes", func() {
+	failuresBtn := widget.NewButton("Failures", func() {
 		ShowFailureModesDialog(app.window)
 	})
 
@@ -204,24 +198,19 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 
 	buttonRow := container.NewHBox(
 		tourBtn,
-		widget.NewSeparator(),
 		why30Btn,
 		realityBtn,
 		failuresBtn,
 		aboutBtn,
 	)
 
-	return container.NewVBox(
-		container.NewHBox(title, widget.NewLabel(" | "), specs),
-		container.NewCenter(buttonRow),
-	)
+	return container.NewHBox(title, layout.NewSpacer(), buttonRow)
 }
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).
 func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
-	label := widget.NewLabel("Draw Digit Here")
+	label := widget.NewLabel("Draw Digit")
 	label.TextStyle = fyne.TextStyle{Bold: true}
-	label.Alignment = fyne.TextAlignCenter
 
 	app.digitCanvas = NewDigitCanvas()
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
@@ -231,35 +220,33 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 		app.resetResults()
 	})
 
-	randomBtn := widget.NewButton("Random Sample", func() {
+	randomBtn := widget.NewButton("Random", func() {
 		app.loadRandomSample()
 	})
 
 	buttons := container.NewHBox(clearBtn, randomBtn)
 
 	return container.NewVBox(
-		label,
+		container.NewHBox(label, layout.NewSpacer(), buttons),
 		container.NewCenter(app.digitCanvas),
-		buttons,
 	)
 }
 
 // createResultsZone creates the FP vs CIM results zone (Zone 2).
 func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
-	label := widget.NewLabel("Inference Results")
+	label := widget.NewLabel("Results")
 	label.TextStyle = fyne.TextStyle{Bold: true}
-	label.Alignment = fyne.TextAlignCenter
 
 	// FP results
-	fpLabel := widget.NewLabel("Digital (FP)")
+	fpLabel := widget.NewLabel("FP")
 	fpLabel.TextStyle = fyne.TextStyle{Bold: true}
-	app.fpPredLabel = widget.NewLabel("Prediction: -")
+	app.fpPredLabel = widget.NewLabel("-")
 	app.fpConfBar = widget.NewProgressBar()
 
 	// CIM results
-	cimLabel := widget.NewLabel("FeCIM (Analog)")
+	cimLabel := widget.NewLabel("CIM")
 	cimLabel.TextStyle = fyne.TextStyle{Bold: true}
-	app.cimPredLabel = widget.NewLabel("Prediction: -")
+	app.cimPredLabel = widget.NewLabel("-")
 	app.cimConfBar = widget.NewProgressBar()
 
 	// Agreement
@@ -270,10 +257,7 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	cimBox := container.NewVBox(cimLabel, app.cimPredLabel, app.cimConfBar)
 	comparison := container.NewGridWithColumns(2, fpBox, cimBox)
 
-	// Probability distribution bars
-	probLabel := widget.NewLabel("Class Probabilities (FP top, CIM bottom)")
-	probLabel.TextStyle = fyne.TextStyle{Monospace: true}
-
+	// Probability distribution bars (5 per row for 0-9)
 	probGrid := container.NewGridWithColumns(5)
 	for i := 0; i < 10; i++ {
 		app.fpProbBars[i] = widget.NewProgressBar()
@@ -289,25 +273,19 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	app.energyLabel = widget.NewLabel("Energy: -")
 
 	return container.NewVBox(
-		label,
+		container.NewHBox(label, layout.NewSpacer(), app.agreementLabel, app.energyLabel),
 		comparison,
-		app.agreementLabel,
-		widget.NewSeparator(),
-		probLabel,
 		probGrid,
-		widget.NewSeparator(),
-		app.energyLabel,
 	)
 }
 
 // createControlsZone creates the hardware control panel (Zone 3).
 func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
-	label := widget.NewLabel("Hardware Configuration")
+	label := widget.NewLabel("Hardware Config")
 	label.TextStyle = fyne.TextStyle{Bold: true}
-	label.Alignment = fyne.TextAlignCenter
 
 	// Levels slider
-	levelsTitle := widget.NewLabel("Weight Levels (FeCIM = 30):")
+	levelsTitle := widget.NewLabel("Levels:")
 	app.levelsLabel = widget.NewLabel("30")
 	app.levelsSlider = widget.NewSlider(1, 30)
 	app.levelsSlider.Step = 1
@@ -323,7 +301,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	levelsRow := container.NewBorder(nil, nil, levelsTitle, app.levelsLabel, app.levelsSlider)
 
 	// Noise slider
-	noiseTitle := widget.NewLabel("Noise Level (sigma/mu):")
+	noiseTitle := widget.NewLabel("Noise:")
 	app.noiseLabel = widget.NewLabel("0.01")
 	app.noiseSlider = widget.NewSlider(0.0, 0.20)
 	app.noiseSlider.Step = 0.01
@@ -337,10 +315,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	}
 	noiseRow := container.NewBorder(nil, nil, noiseTitle, app.noiseLabel, app.noiseSlider)
 
-	// ADC/DAC selects
-	adcLabel := widget.NewLabel("ADC Bits:")
-	dacLabel := widget.NewLabel("DAC Bits:")
-
+	// ADC/DAC + Hidden selects on one row
 	bitOptions := []string{"3", "4", "5", "6", "7", "8", "10", "12", "16"}
 	app.adcSelect = widget.NewSelect(bitOptions, func(s string) {
 		var bits int
@@ -362,10 +337,6 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 	app.dacSelect.SetSelected("8")
 
-	adcDacRow := container.NewGridWithColumns(4, adcLabel, app.adcSelect, dacLabel, app.dacSelect)
-
-	// Hidden size selector
-	hiddenLabel := widget.NewLabel("Hidden Size:")
 	app.hiddenSelect = widget.NewSelect([]string{"64", "128", "256"}, func(s string) {
 		var size int
 		fmt.Sscanf(s, "%d", &size)
@@ -373,50 +344,45 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 	app.hiddenSelect.SetSelected("128")
 
+	selectsRow := container.NewGridWithColumns(6,
+		widget.NewLabel("ADC:"), app.adcSelect,
+		widget.NewLabel("DAC:"), app.dacSelect,
+		widget.NewLabel("Hidden:"), app.hiddenSelect,
+	)
+
 	// Preset buttons
-	presetLabel := widget.NewLabel("Failure Mode Presets:")
 	idealBtn := widget.NewButton("Ideal", func() { app.applyPreset(30, 0.01, 8, 8) })
-	quantCliffBtn := widget.NewButton("Quant Cliff", func() { app.applyPreset(2, 0.01, 8, 8) })
+	quantCliffBtn := widget.NewButton("QuantCliff", func() { app.applyPreset(2, 0.01, 8, 8) })
 	noisyBtn := widget.NewButton("Noisy", func() { app.applyPreset(30, 0.15, 6, 8) })
-	brokenBtn := widget.NewButton("Broken ADC", func() { app.applyPreset(30, 0.01, 3, 8) })
+	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPreset(30, 0.01, 3, 8) })
 
 	presetRow := container.NewGridWithColumns(4, idealBtn, quantCliffBtn, noisyBtn, brokenBtn)
 
 	// Quick test
 	app.testResultLabel = widget.NewLabel("")
-	app.testButton = widget.NewButton("Run Quick Test (200 samples)", func() {
+	app.testButton = widget.NewButton("Test (200)", func() {
 		app.runQuickTest()
 	})
 
-	hiddenRow := container.NewHBox(hiddenLabel, app.hiddenSelect)
-
 	return container.NewVBox(
-		label,
-		widget.NewSeparator(),
+		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testResultLabel),
 		levelsRow,
 		noiseRow,
-		adcDacRow,
-		hiddenRow,
-		widget.NewSeparator(),
-		presetLabel,
+		selectsRow,
 		presetRow,
-		widget.NewSeparator(),
-		app.testButton,
-		app.testResultLabel,
 	)
 }
 
 // createWeightZone creates the weight visualization zone (Zone 4).
 func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
-	label := widget.NewLabel("Crossbar Weight Map")
+	label := widget.NewLabel("Weights")
 	label.TextStyle = fyne.TextStyle{Bold: true}
-	label.Alignment = fyne.TextAlignCenter
 
-	// Layer selector
+	// Layer selector as horizontal radio
 	layerSelect := widget.NewRadioGroup(
-		[]string{"Input -> Hidden (784x128)", "Hidden -> Output (128x10)"},
+		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
 		func(s string) {
-			if s == "Input -> Hidden (784x128)" {
+			if s == "Layer1 (784x128)" {
 				app.weightLayer = 0
 			} else {
 				app.weightLayer = 1
@@ -424,9 +390,10 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 			app.updateWeightHeatmap()
 		},
 	)
-	layerSelect.SetSelected("Input -> Hidden (784x128)")
+	layerSelect.Horizontal = true
+	layerSelect.SetSelected("Layer1 (784x128)")
 
-	// Info labels
+	// Info labels (combined into one)
 	app.weightDimLabel = widget.NewLabel("")
 	app.weightRangeLabel = widget.NewLabel("")
 	app.weightLevelsLabel = widget.NewLabel("")
@@ -435,18 +402,10 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
 	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
 
-	// Color legend
-	legendLabel := widget.NewLabel("Blue = negative, White = zero, Red = positive")
-	legendLabel.TextStyle = fyne.TextStyle{Monospace: true}
-
 	return container.NewVBox(
-		label,
-		layerSelect,
-		app.weightDimLabel,
-		app.weightRangeLabel,
-		app.weightLevelsLabel,
+		container.NewHBox(label, layout.NewSpacer(), layerSelect),
+		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
 		container.NewCenter(app.weightHeatmap),
-		legendLabel,
 	)
 }
 
