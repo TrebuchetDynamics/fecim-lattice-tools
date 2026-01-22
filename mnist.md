@@ -163,7 +163,7 @@ type InferenceResult struct {
 ### 2.2 Quantization Function (Correct Implementation)
 
 ```go
-// demo3-mnist/pkg/core/quantize.go
+// module3-mnist/pkg/core/quantize.go
 
 package core
 
@@ -252,7 +252,7 @@ func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats
 ### 2.3 Dual Inference Engine
 
 ```go
-// demo3-mnist/pkg/core/inference.go
+// module3-mnist/pkg/core/inference.go
 
 package core
 
@@ -440,7 +440,7 @@ func klDivergence(p, q []float64) float64 {
 ### 3.1 Complete Fyne Layout Code
 
 ```go
-// demo3-mnist/pkg/gui/main_window.go
+// module3-mnist/pkg/gui/main_window.go
 
 package gui
 
@@ -545,7 +545,7 @@ func (app *MNISTApp) createMainLayout() fyne.CanvasObject {
 ### 3.2 Zone 2: Result Panel (Detailed)
 
 ```go
-// demo3-mnist/pkg/gui/result_panel.go
+// module3-mnist/pkg/gui/result_panel.go
 
 package gui
 
@@ -681,7 +681,7 @@ func (rp *ResultPanel) Update(result *core.InferenceResult) {
 ### 3.3 Zone 3: Control Panel (Hardware Knobs)
 
 ```go
-// demo3-mnist/pkg/gui/control_panel.go
+// module3-mnist/pkg/gui/control_panel.go
 
 package gui
 
@@ -924,7 +924,7 @@ func (cp *ControlPanel) runQuickTest() {
 ### 3.4 Zone 4: Weight Visualization Panel
 
 ```go
-// demo3-mnist/pkg/gui/weight_panel.go
+// module3-mnist/pkg/gui/weight_panel.go
 
 package gui
 
@@ -1215,7 +1215,7 @@ Step 7/7: "FeCIM balances precision and noise"
 ### 5.1 File Structure
 
 ```
-demo3-mnist/
+module3-mnist/
 ├── cmd/
 │   └── mnist-gui/
 │       └── main.go
@@ -1265,7 +1265,7 @@ demo3-mnist/
 ### 5.2 Testing Strategy
 
 ```go
-// demo3-mnist/pkg/core/quantize_test.go
+// module3-mnist/pkg/core/quantize_test.go
 
 package core
 
@@ -1441,7 +1441,7 @@ This demo shows how a 784→128→10 neural network runs on ferroelectric crossb
 ## Quick Start
 
 ```bash
-cd demo3-mnist
+cd module3-mnist
 go build -o mnist-gui ./cmd/mnist-gui
 ./mnist-gui
 ```
@@ -1844,7 +1844,7 @@ MIT License - See LICENSE file
 
 ```bash
 # Run all tests with coverage
-cd demo3-mnist
+cd module3-mnist
 go test ./... -cover -v
 
 # Expected output:

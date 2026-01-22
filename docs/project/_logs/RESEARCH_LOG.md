@@ -783,7 +783,7 @@ type HysteresisPlot struct {
 - **Cell display:** Adjacent ferroelectric cell color-coded by P
 
 ### Plot Utilities Added
-See `demo1-hysteresis/pkg/render/render.go` and new `plot.go` file.
+See `module1-hysteresis/pkg/render/render.go` and new `plot.go` file.
 
 ---
 
@@ -899,7 +899,7 @@ Created four GLSL shaders for the hysteresis visualizer:
 
 ### Shader Files
 ```
-demo1-hysteresis/shaders/
+module1-hysteresis/shaders/
 ├── cell.vert          # Cell vertex shader
 ├── cell.frag          # Cell fragment shader
 ├── hysteresis.vert    # Curve vertex shader
@@ -910,7 +910,7 @@ demo1-hysteresis/shaders/
 
 ### Compilation
 ```bash
-cd demo1-hysteresis/shaders
+cd module1-hysteresis/shaders
 ./compile.sh
 ```
 
@@ -1067,7 +1067,7 @@ Recent Nature paper demonstrates enhanced storage and endurance with dual-bit ar
 
 ### Code Artifacts Created
 ```
-demo1-hysteresis/
+module1-hysteresis/
 ├── cmd/hysteresis/main.go
 ├── pkg/
 │   ├── ferroelectric/

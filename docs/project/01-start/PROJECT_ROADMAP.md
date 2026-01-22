@@ -17,13 +17,13 @@ This project provides educational demonstrations and simulations for Ferroelectr
   - GPU-accelerated rendering (Vulkan shaders)
   - Real-time parameter adjustment
 - **Files:**
-  - `demo1-hysteresis/cmd/hysteresis/main.go`
-  - `demo1-hysteresis/pkg/ferroelectric/preisach.go`
-  - `demo1-hysteresis/pkg/ferroelectric/material.go`
-  - `demo1-hysteresis/pkg/render/render.go`
-  - `demo1-hysteresis/pkg/render/plot.go`
-  - `demo1-hysteresis/shaders/cell.vert`, `cell.frag`
-  - `demo1-hysteresis/shaders/hysteresis.vert`, `hysteresis.frag`
+  - `module1-hysteresis/cmd/hysteresis/main.go`
+  - `module1-hysteresis/pkg/ferroelectric/preisach.go`
+  - `module1-hysteresis/pkg/ferroelectric/material.go`
+  - `module1-hysteresis/pkg/render/render.go`
+  - `module1-hysteresis/pkg/render/plot.go`
+  - `module1-hysteresis/shaders/cell.vert`, `cell.frag`
+  - `module1-hysteresis/shaders/hysteresis.vert`, `hysteresis.frag`
 
 #### Demo 2: Neural Network Inference
 - **Purpose:** Demonstrate CIM-based neural network inference
@@ -164,7 +164,7 @@ Based on literature:
 
 ```
 multilayer-ferroelectric-cim-visualizer/
-├── demo1-hysteresis/
+├── module1-hysteresis/
 │   ├── cmd/hysteresis/main.go
 │   ├── pkg/
 │   │   ├── ferroelectric/

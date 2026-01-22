@@ -399,14 +399,14 @@ Dr. Tour's previous success story (from transcript):
 
 ```
 multilayer-ferroelectric-cim-visualizer/
-├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
-├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
-├── demo3-mnist/          ✅ MNIST 95.8% + Fyne GUI
-├── demo4-circuits/       ✅ Peripherals + Fyne GUI
+├── module1-hysteresis/     ✅ P-E curve + Fyne GUI
+├── module2-crossbar/       ✅ Crossbar MVM + Fyne GUI
+├── module3-mnist/          ✅ MNIST 95.8% + Fyne GUI
+├── module4-circuits/       ✅ Peripherals + Fyne GUI
 ├── demo5-thermal/        ✅ Thermal sim (CLI only)
 ├── demo6-multilayer/     🔲 3D multi-layer
 ├── demo7-nonidealities/  ✅ IR drop + sneak paths (in demo2)
-├── demo8-comparison/     🔲 Technology comparison
+├── module5-comparison/     🔲 Technology comparison
 ├── docs/                 Documentation
 ├── papers/               Scientific papers (40+)
 ├── opensource/papers/    Additional papers

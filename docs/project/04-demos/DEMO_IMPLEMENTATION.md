@@ -32,7 +32,7 @@ Interactive visualization of a single ferroelectric memory cell showing P-E hyst
 ### Architecture
 
 ```
-demo1-hysteresis/
+module1-hysteresis/
 ├── cmd/
 │   └── hysteresis/
 │       └── main.go           # Entry point
@@ -133,7 +133,7 @@ Visualize Matrix-Vector Multiplication in a ferroelectric crossbar array.
 ### Architecture
 
 ```
-demo2-crossbar/
+module2-crossbar/
 ├── cmd/
 │   └── crossbar/
 │       └── main.go
@@ -204,7 +204,7 @@ Handwritten digit recognition on simulated Ferroelectric CIM hardware.
 ### Architecture
 
 ```
-demo3-mnist/
+module3-mnist/
 ├── cmd/
 │   └── mnist/
 │       └── main.go

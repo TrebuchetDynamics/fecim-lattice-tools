@@ -15,23 +15,23 @@ cd "$PROJECT_ROOT"
 
 # Build Demo 1: Hysteresis
 echo "[1/8] Building Demo 1: Hysteresis..."
-go build -o demo1-hysteresis/hysteresis ./demo1-hysteresis/cmd/hysteresis
-echo "  -> demo1-hysteresis/hysteresis"
+go build -o module1-hysteresis/hysteresis ./module1-hysteresis/cmd/hysteresis
+echo "  -> module1-hysteresis/hysteresis"
 
 # Build Demo 2: Crossbar
 echo "[2/8] Building Demo 2: Crossbar MVM..."
-go build -o demo2-crossbar/crossbar-gui ./demo2-crossbar/cmd/crossbar-gui
-echo "  -> demo2-crossbar/crossbar-gui"
+go build -o module2-crossbar/crossbar-gui ./module2-crossbar/cmd/crossbar-gui
+echo "  -> module2-crossbar/crossbar-gui"
 
 # Build Demo 3: MNIST
 echo "[3/8] Building Demo 3: MNIST..."
-go build -o demo3-mnist/mnist-gui ./demo3-mnist/cmd/mnist-gui
-echo "  -> demo3-mnist/mnist-gui"
+go build -o module3-mnist/mnist-gui ./module3-mnist/cmd/mnist-gui
+echo "  -> module3-mnist/mnist-gui"
 
 # Build Demo 4: Circuits
 echo "[4/8] Building Demo 4: Circuits..."
-go build -o demo4-circuits/circuits-gui ./demo4-circuits/cmd/circuits-gui
-echo "  -> demo4-circuits/circuits-gui"
+go build -o module4-circuits/circuits-gui ./module4-circuits/cmd/circuits-gui
+echo "  -> module4-circuits/circuits-gui"
 
 # Build Demo 6: Multilayer 3D Stack
 echo "[5/8] Building Demo 6: 3D Stack..."
@@ -45,8 +45,8 @@ echo "  -> demo7-nonidealities/nonidealities-gui"
 
 # Build Demo 8: Comparison
 echo "[7/8] Building Demo 8: Comparison..."
-go build -o demo8-comparison/comparison-gui ./demo8-comparison/cmd/comparison-gui
-echo "  -> demo8-comparison/comparison-gui"
+go build -o module5-comparison/comparison-gui ./module5-comparison/cmd/comparison-gui
+echo "  -> module5-comparison/comparison-gui"
 
 # Build Launcher
 echo "[8/8] Building Launcher..."

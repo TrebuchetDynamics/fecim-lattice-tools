@@ -223,7 +223,7 @@ Forward and numerically inverted Preisach model implementation based on the form
 
 ### Relevance to Ferroelectric CIM
 - **Demo 1 (Hysteresis):** Direct reference for Preisach implementation
-- **Already have:** Similar implementation in `demo1-hysteresis/pkg/ferroelectric/preisach.go`
+- **Already have:** Similar implementation in `module1-hysteresis/pkg/ferroelectric/preisach.go`
 
 ### Clone & Install
 ```bash

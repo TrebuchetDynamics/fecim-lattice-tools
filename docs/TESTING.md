@@ -4,13 +4,13 @@
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| demo1-hysteresis/pkg/ferroelectric | 7 | ✅ PASS |
-| demo1-hysteresis/pkg/simulation | 4 | ✅ PASS |
-| demo2-crossbar/pkg/crossbar | 29 | ✅ PASS |
-| demo3-mnist/pkg/core | 33 | ✅ PASS |
-| demo3-mnist/pkg/training | 3 | ✅ PASS |
-| demo4-circuits/pkg/peripherals | 9 | ✅ PASS |
-| demo8-comparison/pkg/comparison | 19 | ✅ PASS |
+| module1-hysteresis/pkg/ferroelectric | 7 | ✅ PASS |
+| module1-hysteresis/pkg/simulation | 4 | ✅ PASS |
+| module2-crossbar/pkg/crossbar | 29 | ✅ PASS |
+| module3-mnist/pkg/core | 33 | ✅ PASS |
+| module3-mnist/pkg/training | 3 | ✅ PASS |
+| module4-circuits/pkg/peripherals | 9 | ✅ PASS |
+| module5-comparison/pkg/comparison | 19 | ✅ PASS |
 | shared/logging | 6 | ✅ PASS |
 | shared/theme | 5 | ✅ PASS |
 | cmd/fecim-visualizer | 2 | ✅ PASS |
@@ -23,23 +23,23 @@
 go test ./...
 
 # Run tests for active demos only
-go test ./cmd/... ./demo1-hysteresis/... ./demo2-crossbar/... ./demo3-mnist/... ./demo4-circuits/... ./demo8-comparison/... ./shared/...
+go test ./cmd/... ./module1-hysteresis/... ./module2-crossbar/... ./module3-mnist/... ./module4-circuits/... ./module5-comparison/... ./shared/...
 
 # Run with verbose output
-go test -v ./demo2-crossbar/pkg/crossbar/...
+go test -v ./module2-crossbar/pkg/crossbar/...
 
 # Run specific test
-go test -v -run TestFeCIM30LevelPhysics ./demo3-mnist/pkg/core/...
+go test -v -run TestFeCIM30LevelPhysics ./module3-mnist/pkg/core/...
 
 # Run benchmarks
-go test -bench=. ./demo2-crossbar/pkg/crossbar/...
+go test -bench=. ./module2-crossbar/pkg/crossbar/...
 ```
 
 ## Test Categories
 
 ### 1. Physics Tests
 
-**Location:** `demo2-crossbar/pkg/crossbar/physics_test.go`, `demo3-mnist/pkg/core/physics_test.go`
+**Location:** `module2-crossbar/pkg/crossbar/physics_test.go`, `module3-mnist/pkg/core/physics_test.go`
 
 #### FeCIM 30-Level Quantization
 - `TestFeCIM30LevelPhysics` - Verifies max 30 discrete levels (Dr. Tour's spec)
@@ -76,7 +76,7 @@ go test -bench=. ./demo2-crossbar/pkg/crossbar/...
 
 ### 2. Calculation Tests
 
-**Location:** `demo3-mnist/pkg/core/physics_test.go`
+**Location:** `module3-mnist/pkg/core/physics_test.go`
 
 - `TestSoftmaxNumericalStability` - Handles ±500 logits without NaN/Inf
 - `TestReLUCorrectness` - ReLU(x) = max(0, x) validation
@@ -86,7 +86,7 @@ go test -bench=. ./demo2-crossbar/pkg/crossbar/...
 
 ### 3. Integration Tests
 
-**Location:** `demo3-mnist/pkg/core/integration_test.go`
+**Location:** `module3-mnist/pkg/core/integration_test.go`
 
 - `TestFullInferencePipeline` - Complete 784→128→10 inference
 - `TestPresetConfigurations` - 4 failure mode presets
@@ -95,7 +95,7 @@ go test -bench=. ./demo2-crossbar/pkg/crossbar/...
 
 ### 4. UI/UX Tests
 
-**Location:** `demo3-mnist/pkg/core/integration_test.go`
+**Location:** `module3-mnist/pkg/core/integration_test.go`
 
 - `TestNetworkConfigBounds` - Parameter bounds validation
 - `TestRequantizeWeightsIdempotent` - Consistent re-quantization
@@ -111,11 +111,11 @@ go test -bench=. ./demo2-crossbar/pkg/crossbar/...
 **Workaround:** GUI testing is done manually. Core logic is tested independently.
 
 **Affected packages:**
-- `demo1-hysteresis/pkg/gui`
-- `demo2-crossbar/pkg/gui`
-- `demo3-mnist/pkg/gui`
-- `demo4-circuits/pkg/gui`
-- `demo8-comparison/pkg/gui`
+- `module1-hysteresis/pkg/gui`
+- `module2-crossbar/pkg/gui`
+- `module3-mnist/pkg/gui`
+- `module4-circuits/pkg/gui`
+- `module5-comparison/pkg/gui`
 
 ### 2. Drift Model Precision
 
@@ -144,7 +144,7 @@ go test -bench=. ./demo2-crossbar/pkg/crossbar/...
 ## Benchmarks
 
 ```bash
-go test -bench=. ./demo2-crossbar/pkg/crossbar/... ./demo3-mnist/pkg/core/...
+go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/...
 ```
 
 | Benchmark | Operations/sec | Notes |

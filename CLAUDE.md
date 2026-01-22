@@ -69,7 +69,7 @@ const FeCIMLevels = 30  // Always use for quantization
 ### Quantization
 Always quantize to 30 levels for FeCIM simulation:
 ```go
-import "multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
+import "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
 quantized := crossbar.QuantizeTo30Levels(value)  // value in [0,1]
 ```
 
@@ -78,8 +78,8 @@ quantized := crossbar.QuantizeTo30Levels(value)  // value in [0,1]
 | Task | File | Key Functions |
 |------|------|---------------|
 | Add new demo | `cmd/fecim-visualizer/main.go` | Add to DemoApp struct, create tab |
-| Modify crossbar | `demo2-crossbar/pkg/crossbar/array.go` | MVM(), VMM(), ProgramWeight() |
-| Modify hysteresis | `demo1-hysteresis/pkg/ferroelectric/preisach.go` | Update(), GetHysteresisLoop() |
+| Modify crossbar | `module2-crossbar/pkg/crossbar/array.go` | MVM(), VMM(), ProgramWeight() |
+| Modify hysteresis | `module1-hysteresis/pkg/ferroelectric/preisach.go` | Update(), GetHysteresisLoop() |
 | Change theme | `shared/theme/theme.go` | Color constants |
 | Add logging | `shared/logging/logging.go` | NewLogger() |
 
@@ -108,7 +108,7 @@ Where G is conductance matrix (weights), V_in is input voltage.
 
 ```bash
 go test ./...                          # All tests
-go test ./demo2-crossbar/pkg/crossbar  # Crossbar tests
+go test ./module2-crossbar/pkg/crossbar  # Crossbar tests
 go test -v -run TestPreisach           # Specific test
 ```
 
@@ -122,16 +122,16 @@ go test -v -run TestPreisach           # Specific test
 5. Add to `launcher.go` demo list
 
 ### Modify Crossbar Behavior
-Edit `demo2-crossbar/pkg/crossbar/array.go`:
+Edit `module2-crossbar/pkg/crossbar/array.go`:
 - `MVM()` for matrix-vector multiply
 - `quantizeDAC()`/`quantizeADC()` for quantization
 - `ProgramWeight()` for cell programming
 
 ### Add Non-Ideality
-Edit `demo2-crossbar/pkg/crossbar/nonidealities.go`:
+Edit `module2-crossbar/pkg/crossbar/nonidealities.go`:
 - Add analysis struct (e.g., `DriftAnalysis`)
 - Add method (e.g., `Array.AnalyzeDrift()`)
-- Update GUI in `demo2-crossbar/pkg/gui/app.go`
+- Update GUI in `module2-crossbar/pkg/gui/app.go`
 
 ## Dependencies
 
@@ -164,4 +164,4 @@ Edit `demo2-crossbar/pkg/crossbar/nonidealities.go`:
 
 ## Experimental Code
 
-The `demo2-crossbar/pkg/_layers_experimental/` directory contains research code for advanced features (attention, transformers, federated learning, etc.). This code is not integrated into the main demos.
+The `module2-crossbar/pkg/_layers_experimental/` directory contains research code for advanced features (attention, transformers, federated learning, etc.). This code is not integrated into the main demos.

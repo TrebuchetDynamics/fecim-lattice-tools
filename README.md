@@ -284,15 +284,15 @@ Neural Network Weights          Physical Crossbar Array
 multilayer-ferroelectric-cim-visualizer/
 ├── cmd/
 │   └── fecim-visualizer/  ✅ Unified GUI (ALL 6 MODULES)
-├── demo1-hysteresis/      ✅ Single cell P-E curve
-├── demo2-crossbar/        ✅ Crossbar MVM + Non-Idealities (4 tabs)
-├── demo3-mnist/           ✅ MNIST classifier (FP vs CIM)
-├── demo4-circuits/        ✅ Peripheral circuits
-├── demo6-eda/             ✅ FeCIM Design Suite (EDA tooling)
-├── demo8-comparison/      ✅ Technology comparison (Module 5)
+├── module1-hysteresis/      ✅ Single cell P-E curve
+├── module2-crossbar/        ✅ Crossbar MVM + Non-Idealities (4 tabs)
+├── module3-mnist/           ✅ MNIST classifier (FP vs CIM)
+├── module4-circuits/        ✅ Peripheral circuits
+├── module6-eda/             ✅ FeCIM Design Suite (EDA tooling)
+├── module5-comparison/      ✅ Technology comparison (Module 5)
 ├── shared/                Shared packages (theme, logging)
 ├── docs/
-│   └── archive/           Archived demos
+│   └── archive/           Archived modules
 └── go.mod
 ```
 
@@ -339,6 +339,6 @@ Ferroelectric CIM is a trademark of its respective owners at external research i
 
 ---
 
-*6 world-class demos. The future of computing is here.*
+*6 world-class modules. The future of computing is here.*
 
 *Built with Go, Fyne, and curiosity.*

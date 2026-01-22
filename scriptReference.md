@@ -16,7 +16,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   ├── theme/theme.go             # FeCIM color theme (ColorPrimary, ColorBackground, etc.)
 │   └── logging/logging.go         # Shared logger with file + stdout output
 │
-├── demo1-hysteresis/              # Demo 1: P-E Hysteresis Curve
+├── module1-hysteresis/              # Demo 1: P-E Hysteresis Curve
 │   ├── cmd/hysteresis/main.go     # Standalone entry point
 │   ├── pkg/ferroelectric/
 │   │   └── preisach.go            # Preisach hysteresis model
@@ -29,7 +29,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   └── pkg/tui/                   # Terminal UI mode
 │   └── shaders/                   # SPIR-V compute/vertex/fragment shaders
 │
-├── demo2-crossbar/                # Demo 2: Crossbar Array MVM
+├── module2-crossbar/                # Demo 2: Crossbar Array MVM
 │   ├── cmd/crossbar-gui/main.go   # Standalone entry point
 │   ├── pkg/crossbar/
 │   │   ├── array.go               # Core crossbar array implementation
@@ -44,7 +44,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   │   └── liveslide.go           # Live slide components
 │   └── shaders/                   # MVM compute shaders
 │
-├── demo3-mnist/                   # Demo 3: MNIST Neural Network
+├── module3-mnist/                   # Demo 3: MNIST Neural Network
 │   ├── pkg/mnist/loader.go        # MNIST data loading
 │   ├── pkg/training/network.go    # Neural network implementation
 │   ├── pkg/gui/
@@ -55,7 +55,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   │   └── embedded.go            # EmbeddedMNISTApp
 │   └── data/                      # MNIST dataset (gzipped)
 │
-├── demo4-circuits/                # Demo 4: Peripheral Circuits
+├── module4-circuits/                # Demo 4: Peripheral Circuits
 │   ├── pkg/peripherals/
 │   │   ├── adc.go                 # ADC circuit model
 │   │   ├── dac.go                 # DAC circuit model
@@ -95,7 +95,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   │   ├── app.go                 # NonIdealitiesApp
 │   │   └── embedded.go            # EmbeddedNonIdealitiesApp
 │
-├── demo8-comparison/              # Demo 8: Technology Comparison
+├── module5-comparison/              # Demo 8: Technology Comparison
 │   ├── pkg/comparison/
 │   │   ├── architecture.go        # Memory architecture comparison
 │   │   └── render.go              # Comparison charts
@@ -111,7 +111,7 @@ multilayer-ferroelectric-cim-visualizer/
 ## Key Constants
 
 ```go
-// demo2-crossbar/pkg/crossbar/array.go:11
+// module2-crossbar/pkg/crossbar/array.go:11
 const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 ```
 
@@ -127,7 +127,7 @@ const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 | launcher.go:23 | `GetDemos()` | Returns DemoInfo slice for all 8 demos |
 | launcher.go:275 | `CreateLauncherContent()` | Creates home tab with clickable demo cards |
 
-### Demo 1: Hysteresis (demo1-hysteresis/)
+### Demo 1: Hysteresis (module1-hysteresis/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -139,7 +139,7 @@ const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 | pkg/gui/overlay.go:51 | `RenderText()` | Render lab bench status overlay |
 | pkg/render/vulkan.go | `VulkanRenderer` | GPU-accelerated rendering |
 
-### Demo 2: Crossbar (demo2-crossbar/)
+### Demo 2: Crossbar (module2-crossbar/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -159,7 +159,7 @@ const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 | pkg/gui/heatmap.go | `CrossbarHeatmap` | Interactive conductance heatmap widget |
 | pkg/gui/embedded.go | `EmbeddedCrossbarApp` | Embeddable version for unified GUI |
 
-### Demo 3: MNIST (demo3-mnist/)
+### Demo 3: MNIST (module3-mnist/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -169,7 +169,7 @@ const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 | pkg/gui/canvas.go | `DrawingCanvas` | Custom drawing widget for digit input |
 | pkg/gui/app.go | `MNISTApp` | Main MNIST demo application |
 
-### Demo 4: Circuits (demo4-circuits/)
+### Demo 4: Circuits (module4-circuits/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -203,7 +203,7 @@ const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
 | pkg/nonidealities/irdrop.go | `IRDropModel` | Wire resistance voltage drop |
 | pkg/nonidealities/sneakpath.go | `SneakPathModel` | Parasitic current paths |
 
-### Demo 8: Comparison (demo8-comparison/)
+### Demo 8: Comparison (module5-comparison/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -262,12 +262,12 @@ func (app *EmbeddedXxxApp) Stop() { ... }   // Called when tab deselected
 
 | Need | File:Line | Function |
 |------|-----------|----------|
-| Quantize to 30 levels | demo2-crossbar/pkg/crossbar/array.go:90 | `QuantizeTo30Levels()` |
-| Create crossbar array | demo2-crossbar/pkg/crossbar/array.go:45 | `NewArray()` |
-| Run MVM | demo2-crossbar/pkg/crossbar/array.go:123 | `Array.MVM()` |
-| Create Preisach model | demo1-hysteresis/pkg/ferroelectric/preisach.go:30 | `NewPreisachModel()` |
-| Get P-E loop data | demo1-hysteresis/pkg/ferroelectric/preisach.go:168 | `GetHysteresisLoop()` |
-| IR drop analysis | demo2-crossbar/pkg/crossbar/nonidealities.go | `AnalyzeIRDrop()` |
-| Sneak path analysis | demo2-crossbar/pkg/crossbar/nonidealities.go | `AnalyzeSneakPaths()` |
+| Quantize to 30 levels | module2-crossbar/pkg/crossbar/array.go:90 | `QuantizeTo30Levels()` |
+| Create crossbar array | module2-crossbar/pkg/crossbar/array.go:45 | `NewArray()` |
+| Run MVM | module2-crossbar/pkg/crossbar/array.go:123 | `Array.MVM()` |
+| Create Preisach model | module1-hysteresis/pkg/ferroelectric/preisach.go:30 | `NewPreisachModel()` |
+| Get P-E loop data | module1-hysteresis/pkg/ferroelectric/preisach.go:168 | `GetHysteresisLoop()` |
+| IR drop analysis | module2-crossbar/pkg/crossbar/nonidealities.go | `AnalyzeIRDrop()` |
+| Sneak path analysis | module2-crossbar/pkg/crossbar/nonidealities.go | `AnalyzeSneakPaths()` |
 | FeCIM theme colors | shared/theme/theme.go:12 | `ColorPrimary`, `ColorBackground` |
 | Create logger | shared/logging/logging.go:19 | `NewLogger()` |

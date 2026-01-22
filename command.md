@@ -10,13 +10,13 @@ PHASE 1: Setup (Do First)
 ---
 
 1. Create project:
-   mkdir -p demo6-eda/cmd/eda-gui
-   mkdir -p demo6-eda/pkg/compiler
-   mkdir -p demo6-eda/pkg/export
-   mkdir -p demo6-eda/pkg/gui/tabs
-   mkdir -p demo6-eda/data
-   cd demo6-eda
-   go mod init demo6-eda
+   mkdir -p module6-eda/cmd/eda-gui
+   mkdir -p module6-eda/pkg/compiler
+   mkdir -p module6-eda/pkg/export
+   mkdir -p module6-eda/pkg/gui/tabs
+   mkdir -p module6-eda/data
+   cd module6-eda
+   go mod init module6-eda
    go get fyne.io/fyne/v2@latest
 
 2. Create pkg/compiler/types.go

@@ -41,17 +41,17 @@ cooler"       3D stack"     challenges"   wins"
 
 ```bash
 # Demo 1: Ferroelectric Hysteresis (P-E curve, 30 levels)
-cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+cd module1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 
 # Demo 2: Crossbar MVM (IR drop, sneak paths, heatmaps)
-cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
+cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 
 # Demo 3: MNIST Neural Network (draw digits, simulation)
 # NOTE: Ferroelectric CIM hardware = 87%, theoretical max = 88%
-cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
+cd module3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 
 # Demo 4: Peripheral Circuits (CLI - linearity, timing, power)
-cd demo4-circuits && go run ./cmd/circuits --all
+cd module4-circuits && go run ./cmd/circuits --all
 
 # Demo 5: Thermal Simulation (CLI - heat maps)
 cd demo5-thermal && go run ./cmd/thermal --realtime
@@ -97,10 +97,10 @@ sudo dnf install gcc libX11-devel libXcursor-devel libXrandr-devel libXinerama-d
 
 **Run:**
 ```bash
-cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+cd module1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 ```
 
-**GUI Package:** `demo1-hysteresis/pkg/gui/`
+**GUI Package:** `module1-hysteresis/pkg/gui/`
 - Custom widgets: `PEPlot`, `LevelIndicator`
 
 **Tests:** 25 passing
@@ -121,10 +121,10 @@ cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 
 **Run:**
 ```bash
-cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
+cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 ```
 
-**GUI Package:** `demo2-crossbar/pkg/gui/`
+**GUI Package:** `module2-crossbar/pkg/gui/`
 - Custom widgets: `CrossbarHeatmap`, `VectorBarChart`, `DiscreteLevel30Indicator`
 
 **Tests:** 14 passing
@@ -148,10 +148,10 @@ cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-g
 
 **Run:**
 ```bash
-cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
+cd module3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 ```
 
-**GUI Package:** `demo3-mnist/pkg/gui/`
+**GUI Package:** `module3-mnist/pkg/gui/`
 - Custom widgets: `DigitCanvas`, `LayerActivationView`, `ConfusionMatrix`, `MetricsPanel`
 
 **Tests:** 9 passing
@@ -173,10 +173,10 @@ cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 
 **Run:**
 ```bash
-cd demo4-circuits && go run ./cmd/circuits --all
-cd demo4-circuits && go run ./cmd/circuits --linearity
-cd demo4-circuits && go run ./cmd/circuits --timing
-cd demo4-circuits && go run ./cmd/circuits --power
+cd module4-circuits && go run ./cmd/circuits --all
+cd module4-circuits && go run ./cmd/circuits --linearity
+cd module4-circuits && go run ./cmd/circuits --timing
+cd module4-circuits && go run ./cmd/circuits --power
 ```
 
 **Tests:** 9 passing
@@ -301,14 +301,14 @@ go test ./...   # 110+ tests passing
 
 ```
 multilayer-ferroelectric-cim-visualizer/
-├── demo1-hysteresis/     ✅ P-E curve + Fyne GUI
-├── demo2-crossbar/       ✅ Crossbar MVM + Fyne GUI
-├── demo3-mnist/          ✅ MNIST (simulation) + Fyne GUI
-├── demo4-circuits/       ✅ Peripherals (CLI)
+├── module1-hysteresis/     ✅ P-E curve + Fyne GUI
+├── module2-crossbar/       ✅ Crossbar MVM + Fyne GUI
+├── module3-mnist/          ✅ MNIST (simulation) + Fyne GUI
+├── module4-circuits/       ✅ Peripherals (CLI)
 ├── demo5-thermal/        ✅ Thermal sim (CLI)
 ├── demo6-multilayer/     🔲 3D multi-layer
 ├── demo7-nonidealities/  ✅ (integrated in demo2)
-├── demo8-comparison/     🔲 Technology comparison
+├── module5-comparison/     🔲 Technology comparison
 ├── papers/               Scientific papers
 ├── opensource/papers/    Additional papers + PAPERS_NEEDED.md
 ├── PLAYBOOK.md           This file (project handbook)

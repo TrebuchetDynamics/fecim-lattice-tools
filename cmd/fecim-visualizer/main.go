@@ -19,11 +19,11 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 
-	demo1gui "multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/gui"
-	demo2gui "multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/gui"
-	demo3gui "multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/gui"
-	demo4gui "multilayer-ferroelectric-cim-visualizer/demo4-circuits/pkg/gui"
-	demo5gui "multilayer-ferroelectric-cim-visualizer/demo8-comparison/pkg/gui"
+	demo1gui "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui"
+	demo2gui "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui"
+	demo3gui "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/gui"
+	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
+	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
 )
 
 // FeCIM theme colors

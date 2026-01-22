@@ -71,7 +71,7 @@ vulkaninfo --summary
 ## 2. Project Structure
 
 ```
-demo1-hysteresis/
+module1-hysteresis/
 ├── cmd/
 │   └── hysteresis/
 │       └── main.go                 # Entry point
@@ -674,8 +674,8 @@ package main
 import (
     "log"
     
-    "multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/ferroelectric"
-    "multilayer-ferroelectric-cim-visualizer/demo1-hysteresis/pkg/vulkan"
+    "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+    "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/vulkan"
     
     "github.com/go-gl/glfw/v3.3/glfw"
 )

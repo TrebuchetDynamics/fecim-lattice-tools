@@ -26,7 +26,7 @@
 3. Demo 3 has no code structure at all
 
 **Next Steps:**
-1. Fix import paths in demo2-crossbar/cmd/inference/main.go
+1. Fix import paths in module2-crossbar/cmd/inference/main.go
 2. Add required dependencies to go.mod
 3. Create Demo 3 directory structure and TDGL solver scaffold
 
@@ -35,20 +35,20 @@
 ### Entry 2: Demo 1 & Demo 2 Build Fixes
 
 **Completed:**
-- Fixed Demo 2 import paths (changed from `github.com/ferroelectric-cim/vis/demo2-inference/pkg/...` to `multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/...`)
+- Fixed Demo 2 import paths (changed from `github.com/ferroelectric-cim/vis/demo2-inference/pkg/...` to `multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/...`)
 - Added dependencies to go.mod (glfw, vulkan-go, gonum)
 - Both Demo 1 and Demo 2 now compile successfully with `go build`
 
 **Build Status:**
-- `go build ./demo1-hysteresis/cmd/hysteresis` ✅ SUCCESS
-- `go build ./demo2-crossbar/cmd/inference` ✅ SUCCESS
+- `go build ./module1-hysteresis/cmd/hysteresis` ✅ SUCCESS
+- `go build ./module2-crossbar/cmd/inference` ✅ SUCCESS
 
 ---
 
 ### Entry 3: Demo 1 Vulkan Renderer Implementation
 
 **Completed:**
-- Created `demo1-hysteresis/pkg/render/vulkan.go` with full Vulkan pipeline
+- Created `module1-hysteresis/pkg/render/vulkan.go` with full Vulkan pipeline
 - Implemented VulkanRenderer struct with GLFW window and Vulkan initialization
 - Implemented swapchain creation, render pass, framebuffers, command buffers
 - Implemented render loop with dynamic clear color based on polarization state
@@ -67,14 +67,14 @@
 **Note:** Full line/triangle rendering requires compiled SPIR-V shaders. Current implementation demonstrates working Vulkan pipeline with dynamic clear color.
 
 **Build Status:**
-- `go build ./demo1-hysteresis/cmd/hysteresis` ✅ SUCCESS
+- `go build ./module1-hysteresis/cmd/hysteresis` ✅ SUCCESS
 
 ---
 
 ### Entry 4: Demo 2 CPU Reference MVM
 
 **Completed:**
-- Created `demo2-crossbar/pkg/crossbar/reference.go` with CPU reference implementation
+- Created `module2-crossbar/pkg/crossbar/reference.go` with CPU reference implementation
 - Implemented `CPUReference.MVM()` for baseline matrix-vector multiplication
 - Implemented `CPUReference.MVMWithQuantization()` with DAC/ADC quantization
 - Implemented `CPUReference.MVMWithNoise()` with device noise simulation
@@ -84,8 +84,8 @@
 **Note:** The existing layers/weights packages have pre-existing redeclaration errors. These are unrelated to my changes and affect optional advanced functionality only.
 
 **Build Status:**
-- `go build ./demo2-crossbar/cmd/inference` ✅ SUCCESS
-- `go build ./demo2-crossbar/pkg/crossbar` ✅ SUCCESS
+- `go build ./module2-crossbar/cmd/inference` ✅ SUCCESS
+- `go build ./module2-crossbar/pkg/crossbar` ✅ SUCCESS
 
 ---
 
@@ -153,7 +153,7 @@ Current implementation in `demo3-phasefield/pkg/physics/landau.go`:
 ### Entry 7: Phase 0 - Demo 2 Architecture Audit
 
 **Layers Directory Analysis:**
-The `demo2-crossbar/pkg/layers/` directory contains 100+ files including:
+The `module2-crossbar/pkg/layers/` directory contains 100+ files including:
 - Core layers: `convolution.go`, `activations.go`, `normalization.go`
 - Exotic/research: `cryo_olfactory_cim.go`, `tactile_federated.go`, `photonic.go`
 
@@ -183,7 +183,7 @@ Created `demo3-phasefield/shaders/volume_render.comp` (290 lines):
 - **Shader compiles:** `glslangValidator -V volume_render.comp` ✅
 
 **PHASE 3: Enhanced mvm.comp with Physics Non-Idealities**
-Rewrote `demo2-crossbar/shaders/mvm.comp` (203 lines) with:
+Rewrote `module2-crossbar/shaders/mvm.comp` (203 lines) with:
 - **Kirchhoff's Current Law**: I_j = Sum_i(V_i * G_ij)
 - **Conductance Drift Model**: G(t) = G_0 * (t/t_0)^(-nu) (PCM/RRAM)
 - **IR Drop Model**: Voltage drop along word/bit lines
@@ -194,7 +194,7 @@ Rewrote `demo2-crossbar/shaders/mvm.comp` (203 lines) with:
 - **Shader compiles:** `glslangValidator -V mvm.comp` ✅
 
 **PHASE 4: Lab Bench GUI System**
-Created `demo1-hysteresis/pkg/gui/` package:
+Created `module1-hysteresis/pkg/gui/` package:
 
 1. `labench.go` - Interactive control interface:
    - Keyboard-driven control (E/D for E-field, T/G for temperature, F/V for frequency)
@@ -222,8 +222,8 @@ Created `demo1-hysteresis/pkg/gui/` package:
    - Help display on 'H' key
 
 **Build Status:**
-- `go build ./demo1-hysteresis/...` ✅ SUCCESS
-- `go build ./demo2-crossbar/...` ✅ SUCCESS
+- `go build ./module1-hysteresis/...` ✅ SUCCESS
+- `go build ./module2-crossbar/...` ✅ SUCCESS
 - `go build ./demo3-phasefield/...` ✅ SUCCESS
 
 ---
@@ -240,10 +240,10 @@ All three demos have been advanced from "Planned" to "Functional":
 
 **All builds pass:**
 ```
-go build ./demo1-hysteresis/cmd/hysteresis ✅
-go build ./demo2-crossbar/cmd/inference ✅
+go build ./module1-hysteresis/cmd/hysteresis ✅
+go build ./module2-crossbar/cmd/inference ✅
 go build ./demo3-phasefield/cmd/phasefield ✅
-glslangValidator -V demo2-crossbar/shaders/mvm.comp ✅
+glslangValidator -V module2-crossbar/shaders/mvm.comp ✅
 glslangValidator -V demo3-phasefield/shaders/volume_render.comp ✅
 ```
 

@@ -1092,7 +1092,7 @@ Demo 8: "This is why it beats everything else"     ✅ CLI
 **Who it's for:** Everyone (educational foundation)
 
 ```
-Run: cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+Run: cd module1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 ```
 
 ## Demo 2: Crossbar MVM ✅ Fyne GUI
@@ -1106,7 +1106,7 @@ Run: cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 **Who it's for:** Engineers, AI researchers
 
 ```
-Run: cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
+Run: cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 ```
 
 ## Demo 3: MNIST Neural Network ✅ Fyne GUI
@@ -1122,7 +1122,7 @@ Run: cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./cross
 **Who it's for:** Investors, media, conferences
 
 ```
-Run: cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
+Run: cd module3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 ```
 
 ## Demo 4: Peripheral Circuits ✅ CLI
@@ -1136,7 +1136,7 @@ Run: cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 **Who it's for:** Foundry partners, system designers
 
 ```
-Run: cd demo4-circuits && go run ./cmd/circuits --all
+Run: cd module4-circuits && go run ./cmd/circuits --all
 ```
 
 ## Demo 5: Thermal Simulation ✅ CLI
@@ -1192,7 +1192,7 @@ Run: cd demo7-nonidealities && go run ./cmd/nonidealities --all
 **Who it's for:** Investors, executives
 
 ```
-Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
+Run: cd module5-comparison && go run ./cmd/comparison --all --workload=bert
 ```
 
 ```
@@ -1215,23 +1215,23 @@ Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
 ```
 multilayer-ferroelectric-cim-visualizer/
 │
-├── demo1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
+├── module1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
 │   ├── cmd/hysteresis/    ← Main program
 │   ├── pkg/ferroelectric/ ← Preisach model
 │   └── shaders/           ← Vulkan graphics
 │
-├── demo2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
+├── module2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
 │   ├── cmd/crossbar-gui/  ← Main program
 │   ├── pkg/crossbar/      ← Array model (30 levels)
 │   └── pkg/gui/           ← IR drop, sneak paths tabs
 │
-├── demo3-mnist/           ✅ MNIST classifier (Fyne GUI)
+├── module3-mnist/           ✅ MNIST classifier (Fyne GUI)
 │   ├── cmd/mnist-gui/     ← Interactive demo
 │   ├── pkg/training/      ← Neural network
 │   ├── pkg/mnist/         ← Data loading
 │   └── data/              ← MNIST dataset
 │
-├── demo4-circuits/        ✅ Peripheral circuits (CLI)
+├── module4-circuits/        ✅ Peripheral circuits (CLI)
 │   ├── cmd/circuits/      ← DAC/ADC/TIA demo
 │   └── pkg/peripherals/   ← Circuit models
 │
@@ -1247,7 +1247,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   ├── cmd/nonidealities/ ← Standalone analysis
 │   └── pkg/nonidealities/ ← IR drop, sneak, drift
 │
-├── demo8-comparison/      ✅ Technology comparison (CLI)
+├── module5-comparison/      ✅ Technology comparison (CLI)
 │   ├── cmd/comparison/    ← CPU vs GPU vs CIM
 │   └── pkg/comparison/    ← Workloads, metrics
 │
@@ -1987,7 +1987,7 @@ Fix: Use X11 forwarding
 Problem: "Weights not found"
 Cause: Haven't trained yet
 Fix: Run training first
-     cd demo3-mnist
+     cd module3-mnist
      go run train_and_save.go
 
 Problem: Low accuracy (<90%)
@@ -2304,8 +2304,8 @@ Improvement: 10,000×!
 │  States:        30 levels    (not binary!)                │
 │  MNIST:         87% hardware (88% theoretical max)        │
 │                                                            │
-│  GUI Demos:     demo1-hysteresis, demo2-crossbar,         │
-│                 demo3-mnist (Fyne)                        │
+│  GUI Demos:     module1-hysteresis, module2-crossbar,         │
+│                 module3-mnist (Fyne)                        │
 │  CLI Demos:     demo4-8 (go run ./cmd/...)                │
 │  Run Tests:     go test ./... (130+ tests)                │
 │                                                            │

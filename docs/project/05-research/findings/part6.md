@@ -174,7 +174,7 @@ For 3D stacked arrays:
 
 ### Demo 1: Hysteresis Visualizer
 
-**Location:** `demo1-hysteresis/`
+**Location:** `module1-hysteresis/`
 
 #### Preisach Model Implementation
 
