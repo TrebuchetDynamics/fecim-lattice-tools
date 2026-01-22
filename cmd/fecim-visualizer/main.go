@@ -27,7 +27,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -487,14 +486,6 @@ func main() {
 		fyneApp.Quit()
 	})
 
-	// Create toolbar with screenshot, record, and close buttons on the right
-	toolbarButtons := container.NewHBox(
-		layout.NewSpacer(),
-		screenshotBtn,
-		recordBtn,
-		closeBtn,
-	)
-
 	// Track current demo for start/stop
 	currentDemo := 0
 
@@ -541,18 +532,62 @@ func main() {
 		}
 	}
 
-	// Create main content with toolbar at top right
-	// Use Border layout to put toolbar above tabs
-	mainContent := container.NewBorder(
-		toolbarButtons, // top
-		nil,            // bottom
-		nil,            // left
-		nil,            // right
-		tabs,           // center
+	// Put toolbar buttons on the right side of the tab bar (same row)
+	// We'll position them absolutely in the top-right corner
+	tabs.SetTabLocation(container.TabLocationTop)
+
+	// Create overlay container with buttons in top-right
+	buttonOverlay := container.NewWithoutLayout(
+		screenshotBtn,
+		recordBtn,
+		closeBtn,
 	)
 
-	// Set window content
+	// Position buttons in top-right corner (will be updated on resize)
+	updateButtonPositions := func() {
+		size := window.Canvas().Size()
+		btnWidth := float32(120)
+		btnHeight := float32(32)
+		spacing := float32(5)
+
+		closeBtn.Resize(fyne.NewSize(btnHeight, btnHeight))
+		closeBtn.Move(fyne.NewPos(size.Width-btnHeight-10, 5))
+
+		recordBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
+		recordBtn.Move(fyne.NewPos(size.Width-btnHeight-btnWidth-spacing-10, 5))
+
+		screenshotBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
+		screenshotBtn.Move(fyne.NewPos(size.Width-btnHeight-2*btnWidth-2*spacing-10, 5))
+	}
+
+	// Initial position
+	updateButtonPositions()
+
+	// Stack tabs with button overlay
+	mainContent := container.NewStack(
+		tabs,
+		buttonOverlay,
+	)
+
+	// Set window content and add resize callback
 	window.SetContent(mainContent)
+	window.Canvas().SetOnTypedRune(nil) // Dummy to ensure canvas is initialized
+
+	// Update button positions on window resize
+	go func() {
+		lastSize := window.Canvas().Size()
+		for {
+			time.Sleep(100 * time.Millisecond)
+			currentSize := window.Canvas().Size()
+			if currentSize != lastSize {
+				lastSize = currentSize
+				fyne.Do(func() {
+					updateButtonPositions()
+					buttonOverlay.Refresh()
+				})
+			}
+		}
+	}()
 
 	// Run the application
 	window.ShowAndRun()

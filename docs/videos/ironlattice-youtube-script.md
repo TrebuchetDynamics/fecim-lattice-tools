@@ -1,250 +1,346 @@
-# Ferroelectric CIM YouTube Video Script
+# FeCIM Tool Demo: Video Script for Dr. Tour & Team
 
-**Video Title:** "The Future of AI Computing: Inside Ferroelectric CIM's Ferroelectric Technology"  
-**Duration:** ~8-10 minutes  
-**Target Audience:** Tech enthusiasts, investors, students, AI/ML engineers
+**Title:** "FeCIM Visualization Suite - Private Demo"
 
----
+**Duration:** 8 minutes
 
-## INTRO (0:00 - 0:45)
+**Audience:** Dr. Tour, Dr. Jaeho Shin, Tawfik Jarjour
 
-### [HOOK - Screen recording of Demo 1 hysteresis animation]
-
-**NARRATOR:**
-> "What if I told you that the next revolution in AI computing isn't about faster chips—it's about chips that think like your brain?"
-
-### [Cut to AI data center footage, power meters spinning]
-
-**NARRATOR:**
-> "Right now, training a single large AI model uses as much electricity as 100 American homes... for an entire YEAR. And it's getting worse."
-
-### [Show Ferroelectric CIM logo animation]
-
-**NARRATOR:**
-> "Today, I'm going to show you a technology that could make AI computing 10 million times more efficient. It's called Ferroelectric CIM, and by the end of this video, you'll understand exactly how it works—because you're going to SEE it in action."
+**Tone:** Professional, direct, no fluff
 
 ---
 
-## SECTION 1: THE PROBLEM (0:45 - 2:00)
+## OPENING (0:00 - 0:30)
 
-### [Animation showing CPU and RAM with data traveling between them]
+### [Screen: Your MNIST demo ready. You draw a "7". It recognizes it.]
 
-**NARRATOR:**
-> "Here's the dirty secret of modern computing: 90% of the energy your computer uses isn't doing math—it's moving data back and forth."
+**YOU:**
+> "Dr. Tour, Dr. Shin, Mr. Jarjour—"
 
-### [Show visual: Tiny person walking between "Memory" and "Processor" buildings, getting tired]
+> "I watched your COSM presentation. 30 discrete states. 87% MNIST. Compute-in-memory. I built a tool to visualize and demonstrate all of it."
 
-**NARRATOR:**
-> "Imagine you're a chef, but your ingredients are stored a mile away from your kitchen. Every time you need salt, you walk a mile there, grab it, walk a mile back, use it, then walk BACK to return it. That's how computers work."
+### [Beat. Show the "7" result.]
 
-### [Cut to screen recording of Demo 2 - crossbar array]
-
-**NARRATOR:**
-> "This is called the 'von Neumann bottleneck'—named after the brilliant scientist who designed computers this way in the 1940s. It made sense then. It doesn't anymore."
-
-### [Show comparison graphic]
-
-**NARRATOR:**
-> "For AI workloads, this problem is catastrophic. A single neural network inference might require BILLIONS of memory accesses. Each one wastes energy."
+**YOU:**
+> "This is what I want to show you. Eight minutes."
 
 ---
 
-## SECTION 2: THE SOLUTION - COMPUTE IN MEMORY (2:00 - 3:30)
+## MODULE 1: HYSTERESIS (0:30 - 1:45)
 
-### [Animation: Kitchen transforms to have stove built into pantry]
+### [Switch to Module 1: P-E curve]
 
-**NARRATOR:**
-> "What if the memory ITSELF could do the math? No walking. No waiting. Just instant computation right where the data lives."
+**YOU:**
+> "You said: 'It's not 0-1-0-1. It's got 30 discrete states.'"
 
-### [Show Demo 2 crossbar array visualization]
+> "This is the hysteresis visualization."
 
-**NARRATOR:**
-> "This is called Compute-in-Memory, and this is what it looks like. You're looking at a crossbar array—a grid of wires with a memory cell at each intersection."
+### [Trace the P-E curve in real-time]
 
-### [Highlight cells lighting up as voltages are applied]
+**YOU:**
+> "Preisach model. As I sweep the electric field, the polarization follows the hysteresis loop. When I stop—"
 
-**NARRATOR:**
-> "Watch what happens when I apply input voltages to the columns..."
+### [Stop. Polarization holds.]
 
-### [Show current flowing animation]
+**YOU:**
+> "—it remembers. Non-volatile."
 
-**NARRATOR:**
-> "The currents flow through each cell simultaneously. And here's the magic: each cell MULTIPLIES the voltage by its stored weight. The currents on each row ADD UP automatically. That's matrix-vector multiplication—the core operation of ALL neural networks—happening in a single analog step."
+### [Show 30 levels bar]
 
-### [Show comparison: CPU doing sequential operations vs crossbar doing parallel]
+**YOU:**
+> "30 stable states. Each one is a programmable conductance level. That's your 4.9 bits per cell."
 
-**NARRATOR:**
-> "A regular CPU would need to do a million sequential operations. The crossbar does it all at once, using nothing but physics. Ohm's Law becomes your processor."
+### [Show material selector briefly]
 
----
-
-## SECTION 3: THE MAGIC MATERIAL (3:30 - 5:00)
-
-### [Cut to Demo 1 - Hysteresis curve visualization]
-
-**NARRATOR:**
-> "But what makes those memory cells work? This is where it gets really interesting."
-
-### [Show P-E loop being traced in real-time]
-
-**NARRATOR:**
-> "You're looking at the signature of a ferroelectric material. This S-shaped loop is called a 'hysteresis curve.' Let me show you what it means."
-
-### [Interactive voltage slider moving]
-
-**NARRATOR:**
-> "As I increase the voltage, the polarization—think of it as tiny molecular 'arrows' inside the crystal—all point in one direction. Now watch what happens when I remove the voltage..."
-
-### [Voltage goes to zero, polarization stays high]
-
-**NARRATOR:**
-> "It STAYS. The material remembers. That's non-volatile memory—it keeps the data even with no power. But here's what makes Ferroelectric CIM special..."
-
-### [Show 30-state visualization]
-
-**NARRATOR:**
-> "Regular memory is binary—on or off, one or zero. This material can hold THIRTY different states. See these levels? Each one is a distinct, stable polarization value. That means instead of storing 1 bit per cell, we store nearly 5 bits. And for AI, we can store analog weights directly—no conversion needed."
-
-### [Show HZO crystal structure animation]
-
-**NARRATOR:**
-> "The material is called HZO—Hafnium-Zirconium-Oxide. It's the same stuff used in modern chip manufacturing, which means we can build this in existing factories. No new infrastructure required."
+**YOU:**
+> "I've parameterized for different ferroelectric behaviors. Your superlattice would need calibration with real data—but the framework is here."
 
 ---
 
-## SECTION 4: INSIDE THE CRYSTAL (5:00 - 6:30)
+## MODULE 2: CROSSBAR MVM (1:45 - 3:30)
 
-### [Cut to Demo 3 - Phase-field domain visualization]
+### [Switch to Module 2: Crossbar visualization]
 
-**NARRATOR:**
-> "Now let's go even deeper. What's actually happening INSIDE this crystal when it switches?"
+**YOU:**
+> "You said: 'The same device does the memory and the computation.'"
 
-### [Show 3D domain structure - regions of up and down polarization]
+> "This is that computation."
 
-**NARRATOR:**
-> "The crystal isn't uniform. It breaks into regions called 'domains'—shown here in blue and red. Blue arrows point up, red arrows point down."
+### [Show crossbar grid, cells colored by conductance]
 
-### [Apply voltage, watch domains grow and shrink]
+**YOU:**
+> "Each intersection is a FeFET cell. Color indicates conductance—blue is low, red is high. These are your weights."
 
-**NARRATOR:**
-> "When I apply a voltage, watch the domains. See how the blue regions expand and the red regions shrink? That boundary between them—the domain wall—is actually moving through the crystal."
+### [Apply input voltages. Show currents summing.]
 
-### [Slow-motion domain wall motion]
+**YOU:**
+> "I apply input voltages to the columns. Ohm's Law at each cell: current equals voltage times conductance. Kirchhoff's Law at each row: currents sum."
 
-**NARRATOR:**
-> "This is a real physics simulation running in real-time on the GPU. We're solving something called the Time-Dependent Ginzburg-Landau equation—the same physics used by research labs around the world."
+### [Show matrix equation appearing]
 
-### [Show nucleation event]
+**YOU:**
+> "That's matrix-vector multiplication. One analog step. No data movement."
 
-**NARRATOR:**
-> "And look—right there—a new domain just nucleated. That's the beginning of switching. Understanding where and how this happens is key to building reliable memory devices."
+### [Switch to IR Drop tab]
 
----
+**YOU:**
+> "But you know it's not ideal. Here's IR drop."
 
-## SECTION 5: THE NUMBERS (6:30 - 7:30)
+### [Show voltage gradient heatmap]
 
-### [Infographic with key statistics]
+**YOU:**
+> "Wire resistance causes voltage to drop across the array. Corner cells see different voltages than edge cells. Error accumulates."
 
-**NARRATOR:**
-> "Let's talk numbers. Ferroelectric CIM technology promises:"
+### [Switch to Sneak Path tab]
 
-### [Animated counter for each stat]
+**YOU:**
+> "Sneak paths. Current flows backwards through unselected cells."
 
-**NARRATOR:**
-> "10 million times less energy than traditional computing. One million times faster for AI workloads. 30 analog states per cell—5x the information density. 10 trillion write cycles—that's basically infinite endurance. And most importantly: CMOS compatible. It works with existing chip factories."
+### [Show interference visualization]
 
-### [Show Dr. Tour presentation clip or image]
+**YOU:**
+> "This is why selector devices matter. I can toggle different on/off ratios to show the impact."
 
-**NARRATOR:**
-> "This technology comes from Dr. external research group's lab at external research institution. His team demonstrated 87% accuracy on handwritten digit recognition using ferroelectric synaptic devices. That's not a simulation—that's real hardware."
+### [Quick toggle: 10:1 vs 1000:1]
 
----
-
-## SECTION 6: WHY THIS MATTERS (7:30 - 8:30)
-
-### [Show AI applications montage: self-driving cars, medical imaging, robotics]
-
-**NARRATOR:**
-> "So why should you care? Because the future of AI isn't in the cloud. It's at the edge—in your phone, your car, your medical devices. And those devices can't afford to burn gigawatts of power."
-
-### [Return to all three demos side by side]
-
-**NARRATOR:**
-> "What you've seen today is more than just pretty visualizations. It's a window into how the next generation of computing will work. Memory that computes. Physics that thinks. Crystals that learn."
-
-### [Final logo animation]
-
-**NARRATOR:**
-> "Ferroelectric CIM. Computing at the speed of light, with the efficiency of the brain."
+**YOU:**
+> "Your engineers know this. Now they can show it to investors in 30 seconds."
 
 ---
 
-## OUTRO (8:30 - 9:00)
+## MODULE 3: MNIST - THE FLAGSHIP (3:30 - 5:15)
 
-### [Call to action screen]
+### [Switch to Module 3: MNIST demo]
 
-**NARRATOR:**
-> "If you want to learn more, check out the links in the description. All the code for these demos is open source—you can run them yourself." 
+**YOU:**
+> "You reported 87% on MNIST with 88% theoretical max."
 
-> "Like this video if you learned something new. Subscribe if you want to see more deep dives into emerging technology. And drop a comment: What application of compute-in-memory are you most excited about?"
+> "This matches that."
 
-### [End screen with subscribe button and related videos]
+### [Show the neural network architecture]
 
----
+**YOU:**
+> "Two-layer network. 784 inputs—28×28 pixels. 128 hidden neurons. 10 outputs. The weights are quantized to 30 levels."
 
-## B-ROLL SHOT LIST
+### [Draw a clear "3"]
 
-| Timestamp | Visual | Purpose |
-|-----------|--------|---------|
-| 0:00 | Demo 1 hysteresis animation | Hook |
-| 0:15 | AI data center, power meters | Problem scale |
-| 0:45 | CPU/RAM data flow animation | Von Neumann explanation |
-| 2:00 | Demo 2 crossbar grid | Solution intro |
-| 2:30 | Current flow animation | MVM visualization |
-| 3:30 | Demo 1 P-E curve | Material intro |
-| 4:30 | 30-state bar graph | Analog advantage |
-| 5:00 | Demo 3 domain structure | Deep physics |
-| 5:30 | Domain wall motion | Switching dynamics |
-| 6:30 | Infographic counters | Key statistics |
-| 7:30 | AI applications montage | Why it matters |
-| 8:30 | All demos composite | Final summary |
+**YOU:**
+> "I draw a 3."
 
----
+### [Watch it compute. Result appears.]
 
-## KEY TALKING POINTS
+**YOU:**
+> "87% confidence. Correct."
 
-If expanded version or Q&A:
+### [Draw "7", "5", "9" quickly. All correct.]
 
-1. **"But isn't analog computing noisy?"**
-   - Yes, but neural networks are naturally noise-tolerant
-   - 30 states is enough for inference accuracy
+**YOU:**
+> "7. 5. 9."
 
-2. **"When will this be available?"**
-   - Research phase now, Ferroelectric CIM targeting commercial applications
-   - CMOS compatibility means faster path to market
+### [Toggle FP32 vs CIM comparison]
 
-3. **"How does this compare to quantum computing?"**
-   - Different problems: quantum = optimization, CIM = neural networks
-   - CIM works at room temperature, today's fabs
+**YOU:**
+> "Here's the key for investor demos. Side-by-side comparison. Full precision floating point versus your 30-level quantization."
 
-4. **"Can I invest?"**
-   - Ferroelectric CIM is a external research institution spinout
-   - Check their website for updates
+### [Show where they differ]
+
+**YOU:**
+> "When they match—quantization isn't hurting you. When they differ—this shows why 87% instead of 99%. It's honest. It builds credibility."
+
+### [Show failure mode preset]
+
+**YOU:**
+> "I added presets. 'Ideal.' 'Noisy.' 'Broken ADC.' Investors can see what degrades accuracy and why your 87% is impressive—not easy."
 
 ---
 
-## THUMBNAIL IDEAS
+## MODULE 4: PERIPHERAL CIRCUITS (5:15 - 6:30)
 
-1. Brain made of circuitry with "10 MILLION X" text
-2. Split image: burning data center vs cool chip
-3. Hysteresis loop with "💡 AI REVOLUTION" text
-4. Crossbar array with glowing connections
+### [Switch to Module 4]
+
+**YOU:**
+> "A crossbar alone isn't a chip. You need DACs, ADCs, TIAs. This shows the full system."
+
+### [Show WRITE mode]
+
+**YOU:**
+> "Write mode. I select a cell, choose a target level—say 22 out of 30."
+
+### [Show voltage calculation]
+
+**YOU:**
+> "The tool calculates programming voltage. 4.2 volts. 50 nanosecond pulse. The ferroelectric switches."
+
+### [Show READ mode briefly]
+
+**YOU:**
+> "Read mode. Low voltage—stays below threshold. Doesn't disturb the cell. Current flows through TIA to ADC. Digital output."
+
+### [Show COMPUTE mode]
+
+**YOU:**
+> "Compute mode. This is inference. Digital inputs convert through DACs. Voltages hit the crossbar. Currents sum. TIAs convert to voltage. ADCs digitize. Full pipeline. 20 nanoseconds."
+
+### [Show timing diagram]
+
+**YOU:**
+> "Timing diagram. DAC settling: 5ns. Crossbar: 5ns. ADC: 10ns. Total: 20ns."
+
+> "A GPU doing the same matrix multiply takes 500 nanoseconds minimum. Plus memory bandwidth."
 
 ---
 
-## TAGS
+## MODULE 5: COMPARISON (6:30 - 7:30)
+
+### [Switch to Module 5]
+
+**YOU:**
+> "You said: 'This could lower data center energy by 80 to 90%.'"
+
+> "This is how I visualize that claim."
+
+### [Show energy comparison bar chart]
+
+**YOU:**
+> "Energy per MAC operation. CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. Ferroelectric CIM: under 1 picojoule."
+
+> "Three orders of magnitude. That's your 80-90%."
+
+### [Show competitive matrix]
+
+**YOU:**
+> "Competitive comparison. NAND, ReRAM, PCM, MRAM. Only FeCIM has checkmarks across every category."
+
+### [Point to each row]
+
+**YOU:**
+> "Energy. Speed. Endurance. Voltage. Density. CMOS compatibility."
+
+> "This is your investor slide. Interactive. They can ask 'what about ReRAM?' and you show them."
+
+### [Show market size briefly]
+
+**YOU:**
+> "Market context. NAND: 80 billion. DRAM: 140 billion. AI semiconductors: 160 billion growing to 400 billion by 2030."
+
+> "Your phased entry strategy—NAND first, then DRAM, then full CIM—this visualizes that path."
+
+---
+
+## CLOSING (7:30 - 8:00)
+
+### [Back to MNIST demo. Draw one more digit. It works.]
+
+**YOU:**
+> "Dr. Tour, you said you're at TRL 4. Lab validation. You're talking to foundries. You're preparing for investor discussions."
+
+> "This tool exists to help with that."
+
+### [Beat.]
+
+**YOU:**
+> "Five modules. Education. Investor demos. Foundry conversations. Engineer onboarding."
+
+> "Module 6—design automation—is early. I know I might be naive about the complexities of real production flows."
+
+> "But I'm working to make it an insightful tool for design exploration. And I'm ready to learn what you actually need."
+
+### [Beat.]
+
+**YOU:**
+> "The models are based on published physics and your public presentation. They'd need calibration with your actual device data to be accurate."
+
+> "I built the framework. You have the measurements."
+
+### [Show contact info]
+
+**YOU:**
+> "Private repo. If you want access, send GitHub usernames. If you want something specific built, tell me what you need."
+
+> "FeCIM Maintainers. Monterrey, Mexico."
+
+### [End.]
+
+---
+
+## WHY THIS SCRIPT WORKS
+
+| Element | Purpose |
+|---------|---------|
+| Opens with MNIST demo | Hook—shows it works immediately |
+| Quotes Dr. Tour directly | Shows you listened, builds connection |
+| Module by module | Organized, easy to follow |
+| Acknowledges limitations | "Needs calibration"—honest, builds trust |
+| Ties to their needs | Investors, foundries, engineers |
+| Ends with clear offer | "Send usernames"—specific call to action |
+| 8 minutes exactly | Respects their time |
+
+---
+
+## RECORDING NOTES
 
 ```
-#Ferroelectric CIM #ComputeInMemory #AIHardware #Ferroelectric #NeuromorphicComputing 
-#JamesTour #RiceUniversity #FutureOfAI #EdgeAI #TechExplained #DeepTech
+PACE:
+─────
+- Speak slower than normal
+- Pause after each module transition
+- Let the visuals breathe
+- Don't rush the MNIST demo
+
+VISUALS:
+────────
+- Clean desktop
+- Full screen app
+- Zoom in on important parts
+- Mouse guides attention
+
+TONE:
+─────
+- Professional, not salesy
+- Confident, not arrogant
+- Helpful, not desperate
+- Direct, not rambling
+
+TEST BEFORE RECORDING:
+──────────────────────
+- MNIST demo works perfectly
+- All modules launch without errors
+- No notifications pop up
+- Audio is clean
 ```
+
+---
+
+## THE KEY QUOTES TO HIT
+
+From Dr. Tour's talk, reference these:
+
+1. > "It's got 30 discrete states. So it's not 0-1-0-1."
+   
+   → Your Module 1 shows this
+
+2. > "The same device does the memory and the computation."
+   
+   → Your Module 2 shows this
+
+3. > "We're at 87% validation here... theoretical is 88%."
+   
+   → Your Module 3 matches this
+
+4. > "This could lower the requirements in a data center by 80 to 90%."
+   
+   → Your Module 5 visualizes this
+
+**You're not explaining FeCIM to them. They invented it.**
+
+**You're showing them YOU understood it well enough to build tools for it.**
+
+---
+
+## ONE SENTENCE
+
+**"I watched your presentation, I understood the physics, I built the visualization—here's how it can help you close deals."**
+
+---
+
+**Record it. Send it. See what happens.** 🦁

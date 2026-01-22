@@ -591,92 +591,165 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 
 	matrix := ca.array.GetConductanceMatrix()
 	value := matrix[row][col]
-	level := int(value * 29)
+	level := crossbar.GetLevel(value)
 
 	ca.levelIndicator.SetLevel(level)
 
-	ca.statsLabel.SetText(fmt.Sprintf(
-		"Selected Cell: [%d, %d]\n"+
-			"Conductance: %.4f\n"+
-			"Level: %d / 29\n"+
-			"Quantized Value: %.4f",
-		row, col, value, level, float64(level)/29.0,
-	))
+	// Generate comprehensive tooltip
+	tooltip := ConductanceTooltip(row, col, value, ca.array)
 
-	ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30", row, col, level+1))
+	// Display in stats label (formatted for readability)
+	ca.statsLabel.SetText(tooltip)
+
+	ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30 (%.2f µS)",
+		row, col, level, value*99+1))
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // onCellHover handles mouse hover over heatmap cells.
 func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells to see values")
+		ca.hoverInfoLabel.SetText("Hover over cells to see detailed physics data")
 		return
 	}
-	level := int(value * 29)
-	ca.hoverInfoLabel.SetText(fmt.Sprintf("[%d,%d] G=%.4f L%d/29 Layer1", row, col, value, level))
+	level := crossbar.GetLevel(value)
+	conductanceUS := value*99 + 1
+	resistance := 1.0 / (conductanceUS * 1e-6) / 1000.0  // kΩ
+
+	ca.hoverInfoLabel.SetText(fmt.Sprintf(
+		"[%d,%d] │ L%d/29 (%.1f%%) │ G=%.2f µS │ R=%.1f kΩ │ %s %.6f",
+		row, col, level, float64(level)/29.0*100, conductanceUS, resistance,
+		"Norm:", value))
 }
 
 // onIRDropCellTapped handles clicks on IR Drop heatmap.
 func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 	ca.irDropHeatmap.SetSelection(row, col)
-	// Get the displayed value from the heatmap data
-	ca.statsLabel.SetText(fmt.Sprintf(
-		"IR Drop Cell: [%d, %d]\n\n"+
-			"Click Run MVM to update\n"+
-			"IR Drop analysis.",
-		row, col,
-	))
+
+	// Generate comprehensive IR drop tooltip
+	tooltip := IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
+	ca.statsLabel.SetText(tooltip)
+
+	// Update status with key info
+	if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
+		col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
+		effectiveV := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
+		dropPercent := (1.0 - effectiveV) * 100
+		ca.updateStatus(fmt.Sprintf("IR DROP | Cell [%d,%d]: %.3f V (%.1f%% drop)",
+			row, col, effectiveV, dropPercent))
+	}
 }
 
 // onIRDropCellHover handles hover on IR Drop heatmap.
 func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells")
+		ca.hoverInfoLabel.SetText("Hover over cells for IR drop details")
 		return
 	}
-	// Get conductance from array
-	conductance := ca.array.GetConductanceMatrix()[row][col]
-	level := int(conductance * 29)
 
-	// Get voltage from analysis if available
-	voltageStr := "N/A"
+	conductance := ca.array.GetConductanceMatrix()[row][col]
+	level := crossbar.GetLevel(conductance)
+	conductanceUS := conductance*99 + 1
+
+	// Get detailed voltage info if available
 	if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
 		col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
-		voltage := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
-		voltageStr = fmt.Sprintf("%.3fV", voltage)
-	}
+		effectiveV := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
+		wlV := ca.lastIRDropAnalysis.WordLineVoltages[row][col]
+		blV := ca.lastIRDropAnalysis.BitLineVoltages[row][col]
+		dropPercent := (1.0 - effectiveV) * 100
 
-	ca.hoverInfoLabel.SetText(fmt.Sprintf("[%d,%d] G=%.3f L%d V=%s Drop=%.1f%% Layer1",
-		row, col, conductance, level, voltageStr, value*100))
+		// Calculate distance from drivers
+		rowDist := col
+		colDist := len(ca.lastIRDropAnalysis.EffectiveVoltage) - 1 - row
+
+		ca.hoverInfoLabel.SetText(fmt.Sprintf(
+			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1fµS L%d │ Dist=[%d,%d]",
+			row, col, effectiveV, dropPercent, wlV, blV, conductanceUS, level, rowDist, colDist))
+	} else {
+		ca.hoverInfoLabel.SetText(fmt.Sprintf(
+			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for IR drop analysis",
+			row, col, conductanceUS, level))
+	}
 }
 
 // onSneakCellTapped handles clicks on Sneak Path heatmap.
 func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 	ca.sneakPathHeatmap.SetSelection(row, col)
-	ca.statsLabel.SetText(fmt.Sprintf(
-		"Sneak Path Cell: [%d, %d]\n\n"+
-			"Click Run MVM to update\n"+
-			"Sneak Path analysis.",
-		row, col,
-	))
+
+	// Get selected target cell (typically center)
+	selectedRow := ca.config.Rows / 2
+	selectedCol := ca.config.Cols / 2
+	if ca.lastSneakAnalysis != nil {
+		// Use actual selected cell from last analysis
+		// For now, use center
+	}
+
+	// Generate comprehensive sneak path tooltip
+	tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, selectedRow, selectedCol, ca.array)
+	ca.statsLabel.SetText(tooltip)
+
+	// Update status with key info
+	if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
+		col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {
+		sneakCurrent := ca.lastSneakAnalysis.SneakCurrents[row][col]
+		sneakRatio := 0.0
+		if ca.lastSneakAnalysis.TotalSignal > 0 {
+			sneakRatio = sneakCurrent / ca.lastSneakAnalysis.TotalSignal * 100
+		}
+		ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f µA (%.2f%% of signal)",
+			row, col, sneakCurrent*1e6, sneakRatio))
+	}
 }
 
 // onSneakCellHover handles hover on Sneak Path heatmap.
 func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells")
+		ca.hoverInfoLabel.SetText("Hover over cells for sneak path details")
 		return
 	}
-	// Get conductance from array
+
 	conductance := ca.array.GetConductanceMatrix()[row][col]
-	level := int(conductance * 29)
+	level := crossbar.GetLevel(conductance)
+	conductanceUS := conductance*99 + 1
 
-	// Get original sneak current (before sqrt transform)
-	sneakCurrent := value * value // Undo sqrt transform
+	// Get selected cell (center)
+	selectedRow := ca.config.Rows / 2
+	selectedCol := ca.config.Cols / 2
 
-	ca.hoverInfoLabel.SetText(fmt.Sprintf("[%d,%d] G=%.3f L%d Sneak=%.4f Layer1",
-		row, col, conductance, level, sneakCurrent))
+	// Get detailed sneak info if available
+	if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
+		col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {
+		sneakCurrent := ca.lastSneakAnalysis.SneakCurrents[row][col]
+		sneakRatio := 0.0
+		if ca.lastSneakAnalysis.TotalSignal > 0 {
+			sneakRatio = sneakCurrent / ca.lastSneakAnalysis.TotalSignal * 100
+		}
+
+		// Determine path type
+		pathType := "DIAG"
+		if row == selectedRow && col == selectedCol {
+			pathType = "TGT"
+		} else if row == selectedRow {
+			pathType = "ROW"
+		} else if col == selectedCol {
+			pathType = "COL"
+		}
+
+		// SNR in dB
+		snrDB := -100.0
+		if sneakCurrent > 0 && ca.lastSneakAnalysis.TotalSignal > 0 {
+			snrDB = 20 * math.Log10(ca.lastSneakAnalysis.TotalSignal / sneakCurrent)
+		}
+
+		ca.hoverInfoLabel.SetText(fmt.Sprintf(
+			"[%d,%d] │ %s sneak │ I=%.3fµA (%.2f%%) │ SNR=%.1fdB │ G=%.1fµS L%d",
+			row, col, pathType, sneakCurrent*1e6, sneakRatio, snrDB, conductanceUS, level))
+	} else {
+		ca.hoverInfoLabel.SetText(fmt.Sprintf(
+			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for sneak analysis",
+			row, col, conductanceUS, level))
+	}
 }
 
 // runMVM performs matrix-vector multiplication with animation.

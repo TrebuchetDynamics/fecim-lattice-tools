@@ -302,8 +302,15 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	controlsScroll := container.NewVScroll(controlsBox)
 	controlsScroll.SetMinSize(fyne.NewSize(200, 300))
 
+	// Stats label for cell analysis
+	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick a cell or Run MVM.")
+	ca.statsLabel.Wrapping = fyne.TextWrapOff
+	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
 	// Metrics and comparison section
 	metricsSection := container.NewVBox(
+		widget.NewSeparator(),
+		ca.statsLabel,
 		widget.NewSeparator(),
 		metricsPanel,
 		widget.NewSeparator(),
@@ -326,6 +333,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Status footer
 	ca.modeIndicator = NewModeIndicatorBox()
+	ca.levelIndicator = NewLevelIndicator()
 	simpleFooter := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),

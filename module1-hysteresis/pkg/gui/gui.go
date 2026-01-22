@@ -404,6 +404,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Unlock()
 	})
 
+	// ELI5 (Explain Like I'm 5) button
+	eli5Btn := widget.NewButton("ELI5", func() {
+		a.showELI5Dialog()
+	})
+	eli5Btn.Importance = widget.LowImportance
+
 	// Frequency slider
 	freqSlider := widget.NewSlider(0.01, 1.0)
 	freqSlider.Step = 0.01
@@ -462,6 +468,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		layout.NewSpacer(),
 		a.pauseBtn,
 		resetBtn,
+		eli5Btn,
 		layout.NewSpacer(),
 	)
 
@@ -949,6 +956,61 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		a.cellViz.SetLevel(level)
 		a.cellViz.Refresh()
 	})
+}
+
+// showELI5Dialog displays a compact explanation of hysteresis concepts
+func (a *App) showELI5Dialog() {
+	// Create content with key concepts from the ELI5 guide
+	content := widget.NewLabel(
+		"HYSTERESIS EXPLAINED LIKE YOU'RE 5\n\n" +
+			"🔁 What is Hysteresis?\n" +
+			"Like a rubber band that \"remembers\" being stretched.\n" +
+			"The path going UP is different from the path coming DOWN.\n\n" +
+			"💾 Why It Matters for Memory?\n" +
+			"• Regular memory (DRAM): Like a whiteboard - erase & gone\n" +
+			"• FeCIM memory: Like carving in clay - stays after power off!\n\n" +
+			"📊 The P-E Loop:\n" +
+			"• E = Electric Field (the \"push\" you apply)\n" +
+			"• P = Polarization (material's response)\n" +
+			"• When E = 0, P stays at ±Pr → MEMORY!\n\n" +
+			"🎚️ Why 30 Levels?\n" +
+			"• Binary: Like a light switch (ON/OFF) = 1 bit\n" +
+			"• FeCIM: Like a dimmer with 30 positions = ~5 bits\n" +
+			"• Same chip, 5× more storage!\n\n" +
+			"📝 Write vs Read:\n" +
+			"• WRITE: |E| > Ec → Data changes\n" +
+			"• READ: |E| < Ec → Data unchanged, just sense\n" +
+			"• HOLD: E = 0 → Data persists (no power!)\n\n" +
+			"🎯 The Key Insight:\n" +
+			"Hysteresis isn't a bug - it's the FEATURE that\n" +
+			"enables memory! The loop REMEMBERS which\n" +
+			"way you pushed it.\n\n" +
+			"📚 Full Documentation:\n" +
+			"See docs/hysteresis/hysteresis.ELI5.md for\n" +
+			"detailed explanations with diagrams.")
+	content.Wrapping = fyne.TextWrapWord
+
+	// Create scrollable container
+	scroll := container.NewScroll(content)
+	scroll.SetMinSize(fyne.NewSize(600, 500))
+
+	// Create dialog (declare as var first so button callback can reference it)
+	var dialog *widget.PopUp
+	closeBtn := widget.NewButton("Got it!", func() {
+		if dialog != nil {
+			dialog.Hide()
+		}
+	})
+
+	dialog = widget.NewModalPopUp(
+		container.NewVBox(
+			container.NewPadded(scroll),
+			closeBtn,
+		),
+		a.mainWindow.Canvas(),
+	)
+
+	dialog.Show()
 }
 
 // ============================================================

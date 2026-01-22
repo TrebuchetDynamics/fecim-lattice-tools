@@ -270,22 +270,6 @@ func (r *demoCardRenderer) Destroy() {}
 func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	demos := GetDemos()
 
-	// Title - large and prominent using canvas text
-	titleText := canvas.NewText("FeCIM Visualization Suite", color.RGBA{255, 255, 255, 255})
-	titleText.TextSize = 28
-	titleText.TextStyle = fyne.TextStyle{Bold: true}
-	titleText.Alignment = fyne.TextAlignCenter
-
-	// Subtitle with narrative
-	subtitleText := canvas.NewText("6 Demos: Physics → Compute → Application → System → Business → Design", color.RGBA{0, 212, 255, 255})
-	subtitleText.TextSize = 18
-	subtitleText.Alignment = fyne.TextAlignCenter
-
-	header := container.NewVBox(
-		container.NewCenter(titleText),
-		container.NewCenter(subtitleText),
-	)
-
 	// Create demo cards
 	cards := make([]fyne.CanvasObject, len(demos))
 	for i, demo := range demos {
@@ -304,19 +288,20 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		container.New(layout.NewGridLayoutWithColumns(3), cards[3], cards[4], cards[5]),
 	)
 
-	// Key metrics in footer - larger text
-	metricsText := canvas.NewText("30 Levels (4.9 bits) | 87% MNIST | 10M× vs NAND | 1000× vs DRAM | TRL 4  —  Click any card to explore", color.RGBA{180, 200, 220, 255})
-	metricsText.TextSize = 16
+	// Compact footer with all info on one line
+	metricsText := canvas.NewText("6 Demos: Physics ⇒ Compute ⇒ Application ⇒ System ⇒ Business ⇒ Design | 30 Levels (4.9 bits) | 87% MNIST | 10M× vs NAND | 1000× vs DRAM | TRL 4  —  Click any card to explore", color.RGBA{180, 200, 220, 255})
+	metricsText.TextSize = 14
 	metricsText.Alignment = fyne.TextAlignCenter
 
 	footer := container.NewVBox(
+		widget.NewSeparator(),
 		container.NewCenter(metricsText),
 	)
 
-	// Use border layout - grid expands to fill center
+	// Use border layout - grid expands to fill center (no header to save space)
 	return container.NewBorder(
-		header,
-		footer,
+		nil,    // no header - saves vertical space
+		footer, // footer with compact info
 		nil, nil,
 		container.NewPadded(grid),
 	)
