@@ -13,12 +13,21 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
+	"image/png"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 
 	demo1gui "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui"
 	demo2gui "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui"
@@ -66,6 +75,133 @@ func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 
 func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
+}
+
+// RecordingState manages FFmpeg video recording
+type RecordingState struct {
+	mu          sync.Mutex
+	isRecording bool
+	cmd         *exec.Cmd
+	outputFile  string
+}
+
+func newRecordingState() *RecordingState {
+	return &RecordingState{}
+}
+
+// takeScreenshot captures the current window and saves it as PNG
+func takeScreenshot(window fyne.Window) string {
+	// Create screenshots directory if it doesn't exist
+	screenshotDir := "screenshots"
+	if err := os.MkdirAll(screenshotDir, 0755); err != nil {
+		fmt.Println("Error creating screenshots directory:", err)
+		return ""
+	}
+
+	// Generate filename with timestamp
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	filename := filepath.Join(screenshotDir, fmt.Sprintf("fecim_screenshot_%s.png", timestamp))
+
+	// Capture the canvas
+	img := window.Canvas().Capture()
+
+	// Create the file
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("Error creating screenshot file:", err)
+		return ""
+	}
+	defer file.Close()
+
+	// Encode as PNG
+	if err := png.Encode(file, img); err != nil {
+		fmt.Println("Error encoding screenshot:", err)
+		return ""
+	}
+
+	fmt.Println("Screenshot saved:", filename)
+	return filename
+}
+
+// startRecording begins FFmpeg screen recording
+func (rs *RecordingState) startRecording(window fyne.Window) error {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+
+	if rs.isRecording {
+		return fmt.Errorf("already recording")
+	}
+
+	// Create recordings directory if it doesn't exist
+	recordingDir := "recordings"
+	if err := os.MkdirAll(recordingDir, 0755); err != nil {
+		return fmt.Errorf("error creating recordings directory: %w", err)
+	}
+
+	// Generate filename with timestamp
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	rs.outputFile = filepath.Join(recordingDir, fmt.Sprintf("fecim_recording_%s.mp4", timestamp))
+
+	// Get window position and size for recording
+	// On Linux with X11, we use x11grab
+	// The window position needs to be obtained - for now we'll record the full screen
+	// and let the user crop or we can try to get window geometry
+
+	// FFmpeg command for screen recording on Linux (X11)
+	// Using :0.0 as display, recording full screen
+	// Users can adjust the -video_size and -i parameters as needed
+	rs.cmd = exec.Command("ffmpeg",
+		"-y",                       // Overwrite output file
+		"-f", "x11grab",            // X11 screen capture
+		"-framerate", "30",         // 30 FPS
+		"-video_size", "1920x1080", // Default screen size (adjust as needed)
+		"-i", ":0.0",               // Display :0, screen 0
+		"-c:v", "libx264",          // H.264 codec
+		"-preset", "ultrafast",     // Fast encoding for real-time
+		"-crf", "23",               // Quality (lower = better, 18-28 is good range)
+		"-pix_fmt", "yuv420p",      // Pixel format for compatibility
+		rs.outputFile,
+	)
+
+	// Start FFmpeg in background
+	if err := rs.cmd.Start(); err != nil {
+		return fmt.Errorf("error starting FFmpeg: %w", err)
+	}
+
+	rs.isRecording = true
+	fmt.Println("Recording started:", rs.outputFile)
+	return nil
+}
+
+// stopRecording stops the FFmpeg recording
+func (rs *RecordingState) stopRecording() (string, error) {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+
+	if !rs.isRecording {
+		return "", fmt.Errorf("not recording")
+	}
+
+	// Send 'q' to FFmpeg to stop gracefully
+	if rs.cmd != nil && rs.cmd.Process != nil {
+		// FFmpeg responds to SIGINT for graceful stop
+		rs.cmd.Process.Signal(os.Interrupt)
+
+		// Wait for process to finish
+		rs.cmd.Wait()
+	}
+
+	rs.isRecording = false
+	outputFile := rs.outputFile
+	fmt.Println("Recording stopped:", outputFile)
+	return outputFile, nil
+}
+
+// IsRecording returns current recording state
+func (rs *RecordingState) IsRecording() bool {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+	return rs.isRecording
 }
 
 // DemoApp holds the demo instances
@@ -143,6 +279,73 @@ func main() {
 		container.NewTabItem("6. EDA", container.NewMax(demo6Content)),
 	)
 
+	// Create recording state
+	recordingState := newRecordingState()
+
+	// Create screenshot button
+	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
+		filename := takeScreenshot(window)
+		if filename != "" {
+			// Show brief notification in window title
+			originalTitle := window.Title()
+			window.SetTitle("Screenshot saved: " + filename)
+			go func() {
+				time.Sleep(2 * time.Second)
+				fyne.Do(func() {
+					window.SetTitle(originalTitle)
+				})
+			}()
+		}
+	})
+
+	// Create record button with toggle functionality
+	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
+	recordBtn.OnTapped = func() {
+		if recordingState.IsRecording() {
+			// Stop recording
+			outputFile, err := recordingState.stopRecording()
+			if err != nil {
+				fmt.Println("Error stopping recording:", err)
+				return
+			}
+			recordBtn.SetText("Record")
+			recordBtn.SetIcon(theme.MediaRecordIcon())
+			// Show brief notification
+			originalTitle := window.Title()
+			window.SetTitle("Recording saved: " + outputFile)
+			go func() {
+				time.Sleep(2 * time.Second)
+				fyne.Do(func() {
+					window.SetTitle(originalTitle)
+				})
+			}()
+		} else {
+			// Start recording
+			if err := recordingState.startRecording(window); err != nil {
+				fmt.Println("Error starting recording:", err)
+				// Show error in title briefly
+				originalTitle := window.Title()
+				window.SetTitle("Recording error: " + err.Error())
+				go func() {
+					time.Sleep(2 * time.Second)
+					fyne.Do(func() {
+						window.SetTitle(originalTitle)
+					})
+				}()
+				return
+			}
+			recordBtn.SetText("Stop")
+			recordBtn.SetIcon(theme.MediaStopIcon())
+		}
+	}
+
+	// Create toolbar with screenshot and record buttons on the right
+	toolbarButtons := container.NewHBox(
+		layout.NewSpacer(),
+		screenshotBtn,
+		recordBtn,
+	)
+
 	// Track current demo for start/stop
 	currentDemo := 0
 
@@ -189,8 +392,18 @@ func main() {
 		}
 	}
 
+	// Create main content with toolbar at top right
+	// Use Border layout to put toolbar above tabs
+	mainContent := container.NewBorder(
+		toolbarButtons, // top
+		nil,            // bottom
+		nil,            // left
+		nil,            // right
+		tabs,           // center
+	)
+
 	// Set window content
-	window.SetContent(tabs)
+	window.SetContent(mainContent)
 
 	// Run the application
 	window.ShowAndRun()
@@ -202,4 +415,9 @@ func main() {
 	demos.demo4.Stop()
 	demos.demo5.Stop()
 	demos.demo6.Stop()
+
+	// Stop recording if still running
+	if recordingState.IsRecording() {
+		recordingState.stopRecording()
+	}
 }
