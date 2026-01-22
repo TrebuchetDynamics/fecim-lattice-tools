@@ -120,6 +120,9 @@ func (app *DualModeApp) Stop() {
 
 // createMainLayout builds the 4-zone layout per the plan.
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
+	// Status label must be created first (used by callbacks in controls zone)
+	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random Sample'.")
+
 	// Header
 	header := app.createHeader()
 
@@ -136,7 +139,6 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	zone4 := app.createWeightZone()
 
 	// Status footer
-	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random Sample'.")
 	footer := container.NewVBox(
 		widget.NewSeparator(),
 		app.statusLabel,

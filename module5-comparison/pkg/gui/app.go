@@ -26,7 +26,7 @@ func init() {
 	os.MkdirAll(logsDir, 0755)
 
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-comparison-demo08.log")
+	logPath := filepath.Join(logsDir, timestamp+"-comparison-module05.log")
 
 	var err error
 	logFile, err = os.Create(logPath)

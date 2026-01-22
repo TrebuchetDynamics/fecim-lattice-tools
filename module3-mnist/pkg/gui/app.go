@@ -32,7 +32,7 @@ func init() {
 
 	// Create log file with datetime
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-mnist-demo03.log")
+	logPath := filepath.Join(logsDir, timestamp+"-mnist-module03.log")
 
 	var err error
 	logFile, err = os.Create(logPath)
