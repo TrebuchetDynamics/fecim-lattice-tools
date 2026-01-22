@@ -94,8 +94,30 @@ func newRecordingState() *RecordingState {
 	return &RecordingState{}
 }
 
+// sectionNameFromTab converts tab text to a filename-friendly section name
+func sectionNameFromTab(tabText string) string {
+	switch tabText {
+	case "Home":
+		return "home"
+	case "1. Hysteresis":
+		return "module01-hysteresis"
+	case "2. Crossbar+":
+		return "module02-crossbar"
+	case "3. MNIST":
+		return "module03-mnist"
+	case "4. Circuits":
+		return "module04-circuits"
+	case "5. Comparison":
+		return "module05-comparison"
+	case "6. EDA":
+		return "module06-eda"
+	default:
+		return "unknown"
+	}
+}
+
 // takeScreenshot captures the current window and saves it as PNG
-func takeScreenshot(window fyne.Window) string {
+func takeScreenshot(window fyne.Window, sectionName string) string {
 	// Create screenshots directory if it doesn't exist
 	screenshotDir := "screenshots"
 	if err := os.MkdirAll(screenshotDir, 0755); err != nil {
@@ -103,9 +125,9 @@ func takeScreenshot(window fyne.Window) string {
 		return ""
 	}
 
-	// Generate filename with timestamp
+	// Generate filename with timestamp and section name
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	filename := filepath.Join(screenshotDir, fmt.Sprintf("fecim_screenshot_%s.png", timestamp))
+	filename := filepath.Join(screenshotDir, fmt.Sprintf("fecim_%s_%s.png", sectionName, timestamp))
 
 	// Capture the canvas
 	img := window.Canvas().Capture()
@@ -362,7 +384,12 @@ func main() {
 
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
-		filename := takeScreenshot(window)
+		// Get current section name from selected tab
+		sectionName := "home"
+		if tabs.Selected() != nil {
+			sectionName = sectionNameFromTab(tabs.Selected().Text)
+		}
+		filename := takeScreenshot(window, sectionName)
 		if filename != "" {
 			// Show brief notification in window title
 			originalTitle := window.Title()
