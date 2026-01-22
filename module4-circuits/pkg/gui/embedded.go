@@ -3,7 +3,10 @@
 package gui
 
 import (
+	"math/rand"
+
 	"fyne.io/fyne/v2"
+
 	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
 )
 
@@ -15,7 +18,19 @@ type EmbeddedCircuitsApp struct {
 // NewEmbeddedCircuitsApp creates a new embedded circuits app (for use in unified visualizer)
 func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca := &CircuitsApp{
-		currentLevel: 15,
+		arrayRows:   DefaultSize,
+		arrayCols:   DefaultSize,
+		quantLevels: FeCIMLevels,
+		dacBits:     DefaultDACBits,
+		adcBits:     DefaultADCBits,
+		vMin:        2.0,
+		vMax:        5.0,
+		pulseWidth:  50.0,
+		readVoltage: 0.5,
+		tiaGain:     10.0,
+		selectedRow: 3,
+		selectedCol: 5,
+		targetLevel: 15,
 	}
 
 	// Initialize peripheral components
@@ -23,6 +38,21 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca.adc = peripherals.DefaultADC()
 	ca.tia = peripherals.DefaultTIA()
 	ca.pump = peripherals.DefaultChargePump()
+
+	// Initialize array
+	ca.arrayWeights = make([][]int, ca.arrayRows)
+	for i := range ca.arrayWeights {
+		ca.arrayWeights[i] = make([]int, ca.arrayCols)
+		for j := range ca.arrayWeights[i] {
+			ca.arrayWeights[i][j] = rand.Intn(ca.quantLevels)
+		}
+	}
+
+	ca.inputVector = make([]int, ca.arrayCols)
+	ca.outputVector = make([]float64, ca.arrayRows)
+	for j := range ca.inputVector {
+		ca.inputVector[j] = rand.Intn(256)
+	}
 
 	return &EmbeddedCircuitsApp{CircuitsApp: ca}
 }
@@ -33,25 +63,34 @@ func (e *EmbeddedCircuitsApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Create UI components
+	// Create main tabbed layout (same as standalone)
 	content := e.createMainLayout()
-
-	// Initialize displays
-	e.updateValues()
-	e.updateStatus("Ready. Select a circuit or run a cycle.")
 
 	return content
 }
 
-// Start begins any background processes
+// Start begins any background processes when the tab is selected
 func (e *EmbeddedCircuitsApp) Start() {
-	// Start auto demo if it was set
-	if e.demoModeSelect != nil && e.demoModeSelect.Selected == "Auto Demo" {
-		e.startAutoDemoLoop()
+	// Refresh all canvases when tab is selected
+	e.refreshWriteArray()
+	e.refreshWritePulse()
+	e.refreshReadZone()
+	e.refreshTimingDiagrams()
+	if e.computeArrayCanvas != nil {
+		e.computeArrayCanvas.Refresh()
+	}
+	if e.compArchCanvas != nil {
+		e.compArchCanvas.Refresh()
+	}
+	if e.compTimingCanvas != nil {
+		e.compTimingCanvas.Refresh()
+	}
+	if e.compEnergyCanvas != nil {
+		e.compEnergyCanvas.Refresh()
 	}
 }
 
-// Stop ends any background processes
+// Stop ends any background processes when the tab is deselected
 func (e *EmbeddedCircuitsApp) Stop() {
-	e.stopAutoDemoLoop()
+	// Nothing to stop in current implementation
 }
