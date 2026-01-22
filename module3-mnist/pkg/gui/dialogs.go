@@ -63,7 +63,7 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewLabelWithStyle("Why 87% and Not 98%?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
 		widget.NewLabel("Simulation (this demo): Can achieve 95-98% under ideal conditions."),
-		widget.NewLabel("FeCIM Hardware (Dr. Tour): 87% measured, 88% theoretical max."),
+		widget.NewLabel("FeCIM Hardware: 87% measured, 88% theoretical max."),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("The Gap Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -161,10 +161,6 @@ func ShowAboutDialog(window fyne.Window) {
 		widget.NewLabel("87% Hardware Target"),
 		widget.NewSeparator(),
 
-		widget.NewLabel("\"We're at 87% validation here... theoretical is 88%.\""),
-		widget.NewLabel("— Dr. external research group, external research institution (Nov 2024)"),
-		widget.NewSeparator(),
-
 		widget.NewLabelWithStyle("This Demo Answers:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("1. What are 30 analog levels? (Physics + advantage)"),
 		widget.NewLabel("2. Why does FeCIM achieve 87%? (Reality vs simulation)"),
@@ -180,7 +176,6 @@ func ShowAboutDialog(window fyne.Window) {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("• Dr. external research group, external research institution (2024)"),
 		widget.NewLabel("• Jerry et al., IEDM 2017 (FeFET Synapse)"),
 		widget.NewLabel("• MNIST Dataset - Yann LeCun"),
 		widget.NewSeparator(),

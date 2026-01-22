@@ -45,7 +45,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 	gt.steps = []TourStep{
 		{
 			Title:       "Step 1/7: Welcome to FeCIM Demo",
-			Description: "This neural network classifies handwritten digits.\n\nBut instead of running on a GPU, it runs on a ferroelectric crossbar chip.\n\nDr. external research group's team at Rice achieved 87% accuracy on hardware.\n\nLet's see how it works!",
+			Description: "This neural network classifies handwritten digits.\n\nBut instead of running on a GPU, it runs on a ferroelectric crossbar chip.\n\nFeCIM hardware achieves 87% accuracy with 30 analog levels.\n\nLet's see how it works!",
 			Action:      func() { gt.app.applyPreset(30, 0.01, 8, 8) },
 			Duration:    5 * time.Second,
 		},

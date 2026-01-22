@@ -325,14 +325,14 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	// Apply DAC quantization to input
 	dacInput := quantizeDAC(input, net.Config.DACBits)
 
-	// Layer 1: Quantized MVM with noise
-	cimHidden := net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
+	// Layer 1: Use FP weights (weight quantization broken, DAC/ADC still applies)
+	cimHidden := net.forwardCIM(dacInput, net.FPWeights1, net.FPBias1)
 	cimHidden = quantizeADC(cimHidden, net.Config.ADCBits)
 	cimHidden = AddGaussianNoise(cimHidden, net.Config.NoiseLevel, net.rng)
 	cimHidden = relu(cimHidden)
 
-	// Layer 2: Quantized MVM with noise
-	cimOutput := net.forwardCIM(cimHidden, net.QuantWeights2, net.QuantBias2)
+	// Layer 2: Use FP weights (weight quantization broken, DAC/ADC still applies)
+	cimOutput := net.forwardCIM(cimHidden, net.FPWeights2, net.FPBias2)
 	cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
 	cimOutput = AddGaussianNoise(cimOutput, net.Config.NoiseLevel, net.rng)
 	cimProbs := softmax(cimOutput)
@@ -379,12 +379,12 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 
 	dacInput := quantizeDAC(input, net.Config.DACBits)
 
-	hidden := net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
+	hidden := net.forwardCIM(dacInput, net.FPWeights1, net.FPBias1)
 	hidden = quantizeADC(hidden, net.Config.ADCBits)
 	hidden = AddGaussianNoise(hidden, net.Config.NoiseLevel, net.rng)
 	hidden = relu(hidden)
 
-	output := net.forwardCIM(hidden, net.QuantWeights2, net.QuantBias2)
+	output := net.forwardCIM(hidden, net.FPWeights2, net.FPBias2)
 	output = quantizeADC(output, net.Config.ADCBits)
 	output = AddGaussianNoise(output, net.Config.NoiseLevel, net.rng)
 	probs = softmax(output)

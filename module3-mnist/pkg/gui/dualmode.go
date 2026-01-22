@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
 )
 
 // DualModeApp provides dual-path inference visualization (FP vs CIM).
@@ -173,15 +174,11 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Alignment = fyne.TextAlignCenter
 
-	subtitle := widget.NewLabel("\"We're at 87% validation here... theoretical is 88%.\" - Dr. external research group")
-	subtitle.Alignment = fyne.TextAlignCenter
-	subtitle.TextStyle = fyne.TextStyle{Italic: true}
-
-	specs := widget.NewLabel("Architecture: 784 -> 128 -> 10 | FeCIM: 30 Discrete Levels | Target: 87%")
+	specs := widget.NewLabel("784 → 128 → 10 | 30 Levels | Target: 87%")
 	specs.Alignment = fyne.TextAlignCenter
 
-	// Tour and info buttons
-	tourBtn := widget.NewButton("Start Guided Tour", func() {
+	// Info buttons
+	tourBtn := widget.NewButton("Tour", func() {
 		if app.tour == nil {
 			app.tour = NewGuidedTour(app)
 		}
@@ -215,11 +212,8 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	)
 
 	return container.NewVBox(
-		title,
-		subtitle,
-		specs,
+		container.NewHBox(title, widget.NewLabel(" | "), specs),
 		container.NewCenter(buttonRow),
-		widget.NewSeparator(),
 	)
 }
 
@@ -557,11 +551,9 @@ func (app *DualModeApp) loadRandomSample() {
 
 // loadTestData loads MNIST test data.
 func (app *DualModeApp) loadTestData() {
-	testImagesPath := filepath.Join(app.dataDir, "t10k-images-idx3-ubyte")
-	testLabelsPath := filepath.Join(app.dataDir, "t10k-labels-idx1-ubyte")
-
-	images, labels, err := loadMNISTData(testImagesPath, testLabelsPath)
+	images, labels, err := mnist.LoadMNIST(app.dataDir, false) // false = test set
 	if err != nil {
+		fmt.Printf("Failed to load MNIST test data: %v\n", err)
 		app.testImages, app.testLabels = generateSyntheticData(200)
 		return
 	}
