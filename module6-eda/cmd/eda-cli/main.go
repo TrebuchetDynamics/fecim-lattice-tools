@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"module6-eda/pkg/compiler"
-	"module6-eda/pkg/export"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
 )
 
 type WeightsFile struct {

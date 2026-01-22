@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"module6-eda/pkg/compiler"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 )
 
 // ExportJSON writes the crossbar mapping to a JSON file

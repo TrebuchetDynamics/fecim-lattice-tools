@@ -4,7 +4,7 @@ package main
 import (
 	"fyne.io/fyne/v2/app"
 
-	"module6-eda/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"module6-eda/pkg/gui/tabs"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
 )
 
 // CreateMainWindow creates the main application window

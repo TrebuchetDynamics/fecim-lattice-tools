@@ -1,7 +1,7 @@
 // pkg/gui/tabs/state.go
 package tabs
 
-import "module6-eda/pkg/compiler"
+import "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 
 // AppState holds shared state across tabs
 type AppState struct {

@@ -19,7 +19,7 @@ type DemoInfo struct {
 	Ready       bool
 }
 
-// GetDemos returns all demo information (5 consolidated demos)
+// GetDemos returns all demo information (6 consolidated demos)
 func GetDemos() []DemoInfo {
 	return []DemoInfo{
 		{
@@ -55,6 +55,13 @@ func GetDemos() []DemoInfo {
 			Title:       "Comparison",
 			Subtitle:    "Why FeCIM Wins",
 			Description: "The business case: energy efficiency, competitive matrix, data center savings calculator",
+			Ready:       true,
+		},
+		{
+			Number:      6,
+			Title:       "EDA",
+			Subtitle:    "Design Suite",
+			Description: "Bridge to open-source EDA: weight compiler, layout visualization, SPICE export for ngspice/KLayout",
 			Ready:       true,
 		},
 	}
@@ -263,7 +270,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 
 	// Subtitle with narrative
 	subtitleLabel := widget.NewLabelWithStyle(
-		"5 World-Class Demos: Physics → Compute → Application → System → Business",
+		"6 World-Class Demos: Physics → Compute → Application → System → Business → Design",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
@@ -283,7 +290,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		}
 	}
 	progressLabel := widget.NewLabelWithStyle(
-		"5/5 Demos Ready",
+		"6/6 Demos Ready",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
@@ -308,21 +315,21 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		})
 	}
 
-	// Grid layout: 3 columns for 5 demos (2-3 rows)
+	// Grid layout: 3 columns for 6 demos (2 rows)
 	// Row 1: Demo 1, 2, 3
-	// Row 2: Demo 4, 5
+	// Row 2: Demo 4, 5, 6
 	row1 := container.New(layout.NewGridLayoutWithColumns(3),
 		cards[0], cards[1], cards[2],
 	)
 	row2 := container.New(layout.NewGridLayoutWithColumns(3),
-		cards[3], cards[4], layout.NewSpacer(),
+		cards[3], cards[4], cards[5],
 	)
 
 	grid := container.NewVBox(row1, row2)
 
 	// Instructions at bottom
 	instructionsLabel := widget.NewLabelWithStyle(
-		"Click on any demo card to explore. All 5 demos are fully functional!",
+		"Click on any demo card to explore. All 6 demos are fully functional!",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Italic: true},
 	)
@@ -336,7 +343,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 
 	// Narrative flow
 	narrativeLabel := widget.NewLabelWithStyle(
-		"The FeCIM Story: Cell → Crossbar → AI → Chip → Business Case",
+		"The FeCIM Story: Cell → Crossbar → AI → Chip → Business → Design",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)

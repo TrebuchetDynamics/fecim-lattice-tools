@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"module6-eda/pkg/export"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
 )
 
 // MakeExportTab creates the export tab UI

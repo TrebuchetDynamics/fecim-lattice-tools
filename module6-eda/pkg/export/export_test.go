@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"module6-eda/pkg/compiler"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 )
 
 func getTestMapping() *compiler.CrossbarMapping {

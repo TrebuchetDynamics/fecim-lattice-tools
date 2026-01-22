@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"module6-eda/pkg/compiler"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 )
 
 // MakeLayoutTab creates the layout visualization tab

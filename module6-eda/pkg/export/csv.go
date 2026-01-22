@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"module6-eda/pkg/compiler"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 )
 
 // ExportCSV writes the crossbar mapping to a CSV file

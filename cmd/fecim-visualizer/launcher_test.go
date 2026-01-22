@@ -9,12 +9,12 @@ import (
 func TestGetDemos(t *testing.T) {
 	demos := GetDemos()
 
-	// Should have 5 consolidated demos
-	if len(demos) != 5 {
-		t.Errorf("Expected 5 demos, got %d", len(demos))
+	// Should have 6 consolidated demos
+	if len(demos) != 6 {
+		t.Errorf("Expected 6 demos, got %d", len(demos))
 	}
 
-	// Verify demo numbers are 1-5
+	// Verify demo numbers are 1-6
 	for i, demo := range demos {
 		expectedNum := i + 1
 		if demo.Number != expectedNum {
@@ -22,7 +22,7 @@ func TestGetDemos(t *testing.T) {
 		}
 	}
 
-	// All demos 1-5 should be ready
+	// All demos 1-6 should be ready
 	for _, demo := range demos {
 		if !demo.Ready {
 			t.Errorf("Demo %d should be ready", demo.Number)
@@ -224,8 +224,8 @@ func TestAllDemosReady(t *testing.T) {
 		}
 	}
 
-	// All 5 demos should be ready
-	if readyCount != 5 {
-		t.Errorf("Expected 5 ready demos, got %d", readyCount)
+	// All 6 demos should be ready
+	if readyCount != 6 {
+		t.Errorf("Expected 6 ready demos, got %d", readyCount)
 	}
 }

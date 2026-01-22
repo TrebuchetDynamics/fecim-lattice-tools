@@ -1,14 +1,15 @@
 // Command fecim-visualizer provides a unified GUI application with all FeCIM demos as tabs.
 //
 // This is the main entry point for the FeCIM Visualization Suite.
-// It combines all 5 demos into a single application with tab navigation.
+// It combines all 6 demos into a single application with tab navigation.
 //
-// The 5-Demo Story:
+// The 6-Demo Story:
 //   Demo 1: The Memory Cell (Hysteresis) - How the cell works
 //   Demo 2: The Crossbar Computer (MVM + Non-Idealities) - How we compute
 //   Demo 3: The AI Brain (MNIST) - What we can build
 //   Demo 4: The Chip System (Circuits) - How it fits in a chip
 //   Demo 5: Why FeCIM Wins (Comparison) - The business case
+//   Demo 6: EDA Design Suite - Bridge to open-source EDA tools
 package main
 
 import (
@@ -24,6 +25,7 @@ import (
 	demo3gui "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/gui"
 	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
 	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
+	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 )
 
 // FeCIM theme colors
@@ -68,12 +70,12 @@ func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 
 // DemoApp holds the demo instances
 type DemoApp struct {
-	demo1  *demo1gui.EmbeddedApp                // Hysteresis
-	demo2  *demo2gui.EmbeddedTabbedCrossbarApp  // Crossbar + Non-Idealities (merged)
-	demo3  *demo3gui.EmbeddedMNISTApp           // MNIST (basic)
-	demo3b *demo3gui.EmbeddedDualModeApp        // MNIST FP vs CIM
-	demo4  *demo4gui.EmbeddedCircuitsApp        // Circuits
-	demo5  *demo5gui.EmbeddedComparisonApp      // Comparison (technical briefing)
+	demo1 *demo1gui.EmbeddedApp               // Hysteresis
+	demo2 *demo2gui.EmbeddedTabbedCrossbarApp // Crossbar + Non-Idealities (merged)
+	demo3 *demo3gui.EmbeddedDualModeApp       // MNIST FP vs CIM (full-featured)
+	demo4 *demo4gui.EmbeddedCircuitsApp       // Circuits
+	demo5 *demo5gui.EmbeddedComparisonApp     // Comparison (technical briefing)
+	demo6 *demo6gui.EmbeddedEDAApp            // EDA Design Suite
 }
 
 func main() {
@@ -82,17 +84,17 @@ func main() {
 	fyneApp.Settings().SetTheme(&feCIMTheme{})
 
 	// Create main window
-	window := fyneApp.NewWindow("FeCIM Visualization Suite - 5 World-Class Demos")
+	window := fyneApp.NewWindow("FeCIM Visualization Suite - 6 World-Class Demos")
 	window.Resize(fyne.NewSize(1400, 900))
 
 	// Create demo instances
 	demos := &DemoApp{
-		demo1:  demo1gui.NewEmbeddedApp(),
-		demo2:  demo2gui.NewEmbeddedTabbedCrossbarApp(), // New tabbed version with non-idealities
-		demo3:  demo3gui.NewEmbeddedMNISTApp(),
-		demo3b: demo3gui.NewEmbeddedDualModeApp(),
-		demo4:  demo4gui.NewEmbeddedCircuitsApp(),
-		demo5:  demo5gui.NewEmbeddedComparisonApp(),
+		demo1: demo1gui.NewEmbeddedApp(),
+		demo2: demo2gui.NewEmbeddedTabbedCrossbarApp(), // Tabbed version with non-idealities
+		demo3: demo3gui.NewEmbeddedDualModeApp(),       // Full-featured MNIST with FP vs CIM
+		demo4: demo4gui.NewEmbeddedCircuitsApp(),
+		demo5: demo5gui.NewEmbeddedComparisonApp(),
+		demo6: demo6gui.NewEmbeddedEDAApp(),
 	}
 
 	// Create tabs container (will be populated below)
@@ -102,7 +104,7 @@ func main() {
 	launcherContent := CreateLauncherContent(func(demoNum int) {
 		if tabs != nil {
 			// Map demo number to tab index
-			// Home=0, Demo1=1, Demo2=2, Demo3=3, Demo3b=4, Demo4=5, Demo5=6
+			// Home=0, Demo1=1, Demo2=2, Demo3=3, Demo4=4, Demo5=5, Demo6=6
 			tabIndex := 0
 			switch demoNum {
 			case 1:
@@ -112,8 +114,10 @@ func main() {
 			case 3:
 				tabIndex = 3
 			case 4:
-				tabIndex = 5
+				tabIndex = 4
 			case 5:
+				tabIndex = 5
+			case 6:
 				tabIndex = 6
 			}
 			tabs.SelectIndex(tabIndex)
@@ -124,19 +128,19 @@ func main() {
 	demo1Content := demos.demo1.BuildContent(fyneApp, window)
 	demo2Content := demos.demo2.BuildContent(fyneApp, window)
 	demo3Content := demos.demo3.BuildContent(fyneApp, window)
-	demo3bContent := demos.demo3b.BuildContent(fyneApp, window)
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
+	demo6Content := demos.demo6.BuildContent(fyneApp, window)
 
-	// Create tabs - 5 demos total (plus home and MNIST variant)
+	// Create tabs - 6 demos total (plus home)
 	tabs = container.NewAppTabs(
 		container.NewTabItem("Home", launcherContent),
 		container.NewTabItem("1. Hysteresis", container.NewMax(demo1Content)),
 		container.NewTabItem("2. Crossbar+", container.NewMax(demo2Content)),
 		container.NewTabItem("3. MNIST", container.NewMax(demo3Content)),
-		container.NewTabItem("3b. MNIST FP/CIM", container.NewMax(demo3bContent)),
 		container.NewTabItem("4. Circuits", container.NewMax(demo4Content)),
 		container.NewTabItem("5. Comparison", container.NewMax(demo5Content)),
+		container.NewTabItem("6. EDA", container.NewMax(demo6Content)),
 	)
 
 	// Track current demo for start/stop
@@ -152,12 +156,12 @@ func main() {
 			demos.demo2.Stop()
 		case 3:
 			demos.demo3.Stop()
-		case 31: // 3b
-			demos.demo3b.Stop()
 		case 4:
 			demos.demo4.Stop()
 		case 5:
 			demos.demo5.Stop()
+		case 6:
+			demos.demo6.Stop()
 		}
 
 		// Start new demo
@@ -171,15 +175,15 @@ func main() {
 		case "3. MNIST":
 			currentDemo = 3
 			demos.demo3.Start()
-		case "3b. MNIST FP/CIM":
-			currentDemo = 31
-			demos.demo3b.Start()
 		case "4. Circuits":
 			currentDemo = 4
 			demos.demo4.Start()
 		case "5. Comparison":
 			currentDemo = 5
 			demos.demo5.Start()
+		case "6. EDA":
+			currentDemo = 6
+			demos.demo6.Start()
 		default:
 			currentDemo = 0
 		}
@@ -195,7 +199,7 @@ func main() {
 	demos.demo1.Stop()
 	demos.demo2.Stop()
 	demos.demo3.Stop()
-	demos.demo3b.Stop()
 	demos.demo4.Stop()
 	demos.demo5.Stop()
+	demos.demo6.Stop()
 }
