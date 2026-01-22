@@ -60,6 +60,10 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	// Create before/after toggle
 	beforeAfter := NewBeforeAfterToggle(ca.config.Rows, ca.config.Cols)
 
+	// Wire up before/after cell interaction handlers
+	beforeAfter.OnCellTapped = ca.onBeforeAfterCellTapped
+	beforeAfter.OnCellHover = ca.onBeforeAfterCellHover
+
 	// Store references for updates
 	ca.metricsPanel = metricsPanel
 	ca.comparisonBadge = compBadge
@@ -502,6 +506,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 		// Update IR drop heatmap
 		if mvmResult.IRDropAnalysis != nil {
+			ca.lastIRDropAnalysis = mvmResult.IRDropAnalysis // Store for hover/tap info
 			irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
 			ca.irDropHeatmap.SetData(irMap)
 			ca.irDropHeatmap.SetSelection(
@@ -512,6 +517,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 		// Update sneak path heatmap
 		if mvmResult.SneakPathAnalysis != nil {
+			ca.lastSneakAnalysis = mvmResult.SneakPathAnalysis // Store for hover/tap info
 			sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
 			// Apply sqrt for better visibility
 			for i := range sneakMap {
@@ -567,4 +573,113 @@ func (ca *CrossbarApp) exportData() {
 	} else {
 		ca.updateStatus(fmt.Sprintf("Exported: %s (run MVM for analysis)", weightsPath))
 	}
+}
+
+// onBeforeAfterCellTapped handles clicks on the Ideal vs Actual comparison heatmaps.
+func (ca *CrossbarApp) onBeforeAfterCellTapped(row, col int, isIdeal bool) {
+	if ca.beforeAfterToggle == nil {
+		return
+	}
+
+	var idealVal, actualVal float64
+	if ca.beforeAfterToggle.idealData != nil && row < len(ca.beforeAfterToggle.idealData) &&
+		col < len(ca.beforeAfterToggle.idealData[0]) {
+		idealVal = ca.beforeAfterToggle.idealData[row][col]
+	}
+	if ca.beforeAfterToggle.actualData != nil && row < len(ca.beforeAfterToggle.actualData) &&
+		col < len(ca.beforeAfterToggle.actualData[0]) {
+		actualVal = ca.beforeAfterToggle.actualData[row][col]
+	}
+
+	idealLevel := crossbar.GetLevel(idealVal)
+	actualLevel := crossbar.GetLevel(actualVal)
+	diff := idealVal - actualVal
+	diffPercent := 0.0
+	if idealVal > 0 {
+		diffPercent = (diff / idealVal) * 100
+	}
+
+	source := "Actual"
+	if isIdeal {
+		source = "Ideal"
+	}
+
+	tooltip := fmt.Sprintf(
+		"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
+			"CELL [%d, %d] - IDEAL vs ACTUAL\n"+
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
+			"Clicked: %s heatmap\n\n"+
+			"Ideal Value:\n"+
+			"  Conductance:  %.4f (L%d/29)\n"+
+			"  Current:      %.2f µA\n\n"+
+			"Actual Value:\n"+
+			"  Conductance:  %.4f (L%d/29)\n"+
+			"  Current:      %.2f µA\n\n"+
+			"Degradation:\n"+
+			"  Difference:   %.4f (%.1f%%)\n"+
+			"  Level shift:  %d levels\n\n"+
+			"Impact:\n"+
+			"  %s\n",
+		row, col,
+		source,
+		idealVal, idealLevel, idealVal*99+1,
+		actualVal, actualLevel, actualVal*99+1,
+		math.Abs(diff), math.Abs(diffPercent),
+		int(math.Abs(float64(idealLevel-actualLevel))),
+		ca.assessDegradationImpact(diffPercent),
+	)
+
+	ca.statsLabel.SetText(tooltip)
+	ca.updateStatus(fmt.Sprintf("COMPARISON | Cell [%d,%d]: Ideal L%d → Actual L%d (%.1f%% change)",
+		row, col, idealLevel, actualLevel, diffPercent))
+}
+
+// onBeforeAfterCellHover handles hover on the Ideal vs Actual comparison heatmaps.
+func (ca *CrossbarApp) onBeforeAfterCellHover(row, col int, value float64, isIdeal bool) {
+	if row < 0 || col < 0 {
+		ca.hoverInfoLabel.SetText("Hover over cells to compare ideal vs actual values")
+		return
+	}
+
+	if ca.beforeAfterToggle == nil {
+		return
+	}
+
+	var idealVal, actualVal float64
+	if ca.beforeAfterToggle.idealData != nil && row < len(ca.beforeAfterToggle.idealData) &&
+		col < len(ca.beforeAfterToggle.idealData[0]) {
+		idealVal = ca.beforeAfterToggle.idealData[row][col]
+	}
+	if ca.beforeAfterToggle.actualData != nil && row < len(ca.beforeAfterToggle.actualData) &&
+		col < len(ca.beforeAfterToggle.actualData[0]) {
+		actualVal = ca.beforeAfterToggle.actualData[row][col]
+	}
+
+	idealLevel := crossbar.GetLevel(idealVal)
+	actualLevel := crossbar.GetLevel(actualVal)
+	diff := math.Abs(idealVal - actualVal)
+
+	source := "Actual"
+	if isIdeal {
+		source = "Ideal"
+	}
+
+	ca.hoverInfoLabel.SetText(fmt.Sprintf(
+		"[%d,%d] %s │ Ideal: L%d (%.3f) │ Actual: L%d (%.3f) │ Δ=%.4f (%d levels)",
+		row, col, source, idealLevel, idealVal, actualLevel, actualVal, diff, int(math.Abs(float64(idealLevel-actualLevel)))))
+}
+
+// assessDegradationImpact returns a qualitative assessment of degradation.
+func (ca *CrossbarApp) assessDegradationImpact(diffPercent float64) string {
+	absDiff := math.Abs(diffPercent)
+	if absDiff < 1 {
+		return "Negligible - within noise margin"
+	} else if absDiff < 5 {
+		return "Minor - acceptable for most applications"
+	} else if absDiff < 10 {
+		return "Moderate - may affect precision tasks"
+	} else if absDiff < 20 {
+		return "Significant - requires compensation"
+	}
+	return "Critical - exceeds tolerance limits"
 }

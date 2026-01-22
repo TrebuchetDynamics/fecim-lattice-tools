@@ -89,10 +89,10 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 	currentLoss := idealCurrent - actualCurrent
 	currentLossPercent := (currentLoss / idealCurrent) * 100
 
-	// Distance from drivers
-	rowDist := col  // Distance from word line driver (left)
-	colDist := len(irAnalysis.EffectiveVoltage) - 1 - row  // Distance from bit line driver (bottom)
-	totalDist := rowDist + colDist
+	// Distance from drivers (WL driver on left, BL sense amp at top)
+	wlDist := col // Distance from word line driver (left)
+	blDist := row // Distance from bit line sense amp (top)
+	totalDist := wlDist + blDist
 	maxDist := (len(irAnalysis.EffectiveVoltage[0]) - 1) + (len(irAnalysis.EffectiveVoltage) - 1)
 	distPercent := float64(totalDist) / float64(maxDist) * 100
 
@@ -129,8 +129,8 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		"  Actual current:     %.2f µA\n"+
 		"  Current loss:       %.2f µA (%.1f%%)\n\n"+
 		"Position Analysis:\n"+
-		"  Row distance:       %d cells from WL driver\n"+
-		"  Col distance:       %d cells from BL driver\n"+
+		"  WL distance:        %d cells from left driver\n"+
+		"  BL distance:        %d cells from top sense amp\n"+
 		"  Total distance:     %d (%.1f%% of max)\n"+
 		"  Worst case cell:    [%d, %d] (%.2f%% drop)\n\n"+
 		"Array Statistics:\n"+
@@ -155,8 +155,8 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		idealCurrent,
 		actualCurrent,
 		currentLoss, currentLossPercent,
-		rowDist,
-		colDist,
+		wlDist,
+		blDist,
 		totalDist, distPercent,
 		irAnalysis.WorstCaseCell[0], irAnalysis.WorstCaseCell[1],
 		irAnalysis.MaxIRDrop*100,

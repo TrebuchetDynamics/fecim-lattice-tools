@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -308,7 +309,7 @@ func (d *DataCenterCalculator) SetResults(
 	cpuCost, gpuCost, fecimCost float64,
 ) {
 	d.workloadLabel.SetText(fmt.Sprintf("Workload: %s", workload))
-	d.macsLabel.SetText(fmt.Sprintf("MACs/inference: %s", formatNumber(float64(macs))))
+	d.macsLabel.SetText(fmt.Sprintf("MACs/inference: %s", formatNumberWithSuffix(float64(macs))))
 	d.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", inferences))
 
 	d.cpuEnergyLabel.SetText(fmt.Sprintf("CPU: %.2f µJ/inf [1]", cpuEnergy))
@@ -449,8 +450,8 @@ func (v *VerifiedClaimsTable) MinSize() fyne.Size {
 	return fyne.NewSize(200, 280)
 }
 
-// formatNumber formats large numbers with K, M, B, T suffixes.
-func formatNumber(n float64) string {
+// formatNumberWithSuffix formats large numbers with K, M, B, T suffixes.
+func formatNumberWithSuffix(n float64) string {
 	switch {
 	case n >= 1e12:
 		return fmt.Sprintf("%.1fT", n/1e12)
@@ -463,4 +464,200 @@ func formatNumber(n float64) string {
 	default:
 		return fmt.Sprintf("%.0f", n)
 	}
+}
+
+// DataCenterTransformation shows before/after data center comparison.
+type DataCenterTransformation struct {
+	widget.BaseWidget
+
+	mu             sync.RWMutex
+	beforePowerW   float64
+	afterPowerW    float64
+	savingsPercent float64
+	animProgress   float64
+	raster         *canvas.Raster
+	minSize        fyne.Size
+}
+
+// NewDataCenterTransformation creates a new transformation visual.
+func NewDataCenterTransformation() *DataCenterTransformation {
+	d := &DataCenterTransformation{
+		beforePowerW:   1000,
+		afterPowerW:    100,
+		savingsPercent: 90,
+		minSize:        fyne.NewSize(450, 120),
+	}
+	d.ExtendBaseWidget(d)
+	return d
+}
+
+// SetValues updates the before/after values.
+func (d *DataCenterTransformation) SetValues(beforeW, afterW float64) {
+	d.mu.Lock()
+	d.beforePowerW = beforeW
+	d.afterPowerW = afterW
+	if beforeW > 0 {
+		d.savingsPercent = (beforeW - afterW) / beforeW * 100
+	}
+	d.mu.Unlock()
+	d.Refresh()
+}
+
+// UpdateAnimation advances the animation.
+func (d *DataCenterTransformation) UpdateAnimation(dt float64) {
+	d.mu.Lock()
+	d.animProgress += dt
+	d.mu.Unlock()
+}
+
+// MinSize returns minimum size.
+func (d *DataCenterTransformation) MinSize() fyne.Size {
+	return d.minSize
+}
+
+// CreateRenderer implements fyne.Widget.
+func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
+	d.raster = canvas.NewRaster(d.generateImage)
+	return widget.NewSimpleRenderer(d.raster)
+}
+
+// generateImage creates the transformation visual.
+func (d *DataCenterTransformation) generateImage(w, h int) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+	// Background
+	bgColor := color.RGBA{25, 35, 55, 255}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			img.Set(x, y, bgColor)
+		}
+	}
+
+	if w < 300 || h < 80 {
+		return img
+	}
+
+	d.mu.RLock()
+	beforePower := d.beforePowerW
+	afterPower := d.afterPowerW
+	savings := d.savingsPercent
+	animProgress := d.animProgress
+	d.mu.RUnlock()
+
+	midX := w / 2
+
+	// Title
+	d.drawTextOnImage(img, "DATA CENTER TRANSFORMATION", midX-90, 8, color.RGBA{0, 212, 255, 255}, 11)
+
+	// LEFT: Before (GPU)
+	d.drawTextOnImage(img, "BEFORE (GPU)", 20, 25, color.RGBA{200, 100, 100, 255}, 10)
+
+	// Server rack icons (simplified as rectangles)
+	rackY := 45
+	rackH := 40
+	rackW := 15
+	beforeRacks := 10
+
+	for i := 0; i < beforeRacks; i++ {
+		rackX := 20 + i*(rackW+3)
+		rackColor := color.RGBA{150, 80, 80, 255}
+		// Draw rack
+		for dy := 0; dy < rackH; dy++ {
+			for dx := 0; dx < rackW; dx++ {
+				img.Set(rackX+dx, rackY+dy, rackColor)
+			}
+		}
+		// Highlight lines (server slots)
+		for slot := 0; slot < 4; slot++ {
+			slotY := rackY + 5 + slot*10
+			for dx := 2; dx < rackW-2; dx++ {
+				img.Set(rackX+dx, slotY, color.RGBA{200, 100, 100, 255})
+			}
+		}
+	}
+
+	// Power label
+	powerText := fmt.Sprintf("%.0f W", beforePower)
+	d.drawTextOnImage(img, powerText, 20, rackY+rackH+8, color.RGBA{255, 200, 100, 255}, 10)
+
+	// ARROW
+	arrowX := midX - 30
+	arrowY := h / 2
+	arrowColor := color.RGBA{100, 200, 150, 255}
+
+	// Animated arrow
+	arrowAlpha := uint8(150 + int(50*((animProgress*2)-float64(int(animProgress*2)))))
+	arrowColor.A = arrowAlpha
+
+	for ax := 0; ax < 40; ax++ {
+		img.Set(arrowX+ax, arrowY, arrowColor)
+		img.Set(arrowX+ax, arrowY+1, arrowColor)
+	}
+	// Arrow head
+	for ay := -5; ay <= 5; ay++ {
+		headX := arrowX + 40 - absIntWidget(ay)
+		img.Set(headX, arrowY+ay, arrowColor)
+	}
+
+	// RIGHT: After (FeCIM)
+	d.drawTextOnImage(img, "AFTER (FeCIM)", midX+30, 25, color.RGBA{100, 200, 150, 255}, 10)
+
+	// Fewer server racks
+	afterRacks := max(1, int(float64(beforeRacks)*(1-savings/100)))
+	for i := 0; i < afterRacks; i++ {
+		rackX := midX + 30 + i*(rackW+3)
+		rackColor := color.RGBA{80, 150, 100, 255}
+		// Draw rack
+		for dy := 0; dy < rackH; dy++ {
+			for dx := 0; dx < rackW; dx++ {
+				img.Set(rackX+dx, rackY+dy, rackColor)
+			}
+		}
+		// Highlight lines
+		for slot := 0; slot < 4; slot++ {
+			slotY := rackY + 5 + slot*10
+			for dx := 2; dx < rackW-2; dx++ {
+				img.Set(rackX+dx, slotY, color.RGBA{100, 200, 150, 255})
+			}
+		}
+	}
+
+	// Power label
+	afterPowerText := fmt.Sprintf("%.0f W", afterPower)
+	d.drawTextOnImage(img, afterPowerText, midX+30, rackY+rackH+8, color.RGBA{100, 255, 150, 255}, 10)
+
+	// Savings headline
+	savingsText := fmt.Sprintf("%.0f%% LESS INFRASTRUCTURE", savings)
+	d.drawTextOnImage(img, savingsText, midX+afterRacks*(rackW+3)+50, h/2-5, color.RGBA{0, 212, 255, 255}, 11)
+
+	return img
+}
+
+// drawTextOnImage draws simple text on an image (placeholder for font rendering).
+func (d *DataCenterTransformation) drawTextOnImage(img *image.RGBA, text string, x, y int, c color.RGBA, fontSize int) {
+	charWidth := fontSize / 2
+	for i, ch := range text {
+		if ch == ' ' {
+			continue
+		}
+		cx := x + i*charWidth
+		for dy := 0; dy < fontSize; dy++ {
+			for dx := 0; dx < charWidth-1; dx++ {
+				if cy := y + dy; cy >= 0 && cy < img.Bounds().Dy() {
+					if ccx := cx + dx; ccx >= 0 && ccx < img.Bounds().Dx() {
+						if dy > 1 && dy < fontSize-2 && dx > 0 && dx < charWidth-2 {
+							img.Set(ccx, cy, c)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func absIntWidget(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

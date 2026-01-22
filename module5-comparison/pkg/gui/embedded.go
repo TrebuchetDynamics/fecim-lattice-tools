@@ -62,12 +62,22 @@ func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne
 	return content
 }
 
-// Start begins any background processes
+// Start begins any background processes (called when tab is selected)
 func (e *EmbeddedComparisonApp) Start() {
-	// No continuous processes
+	if e.running {
+		return // Already running
+	}
+
+	e.running = true
+	e.paused = false
+	go e.animationLoop()
+
+	debug.Println("EmbeddedComparisonApp: Animation started")
 }
 
-// Stop ends any background processes
+// Stop ends any background processes (called when tab is deselected)
 func (e *EmbeddedComparisonApp) Stop() {
-	// No cleanup needed
+	e.running = false
+
+	debug.Println("EmbeddedComparisonApp: Animation stopped")
 }

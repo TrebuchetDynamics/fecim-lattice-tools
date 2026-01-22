@@ -62,18 +62,22 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 	}
 
 	// Simple analytical model for IR drop
-	// For a more accurate model, use iterative relaxation
+	// Driver topology: WL drivers on LEFT, BL sense amps/ground at TOP
+	// This matches display convention where row 0 is at top
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			// Word line voltage drop (cumulative from driver)
+			// Word line voltage drop (cumulative from left driver)
+			// Drop increases with column index j (farther from driver)
 			wlDrop := float64(j) * params.RwordLine * a.estimateCurrent(i, input)
 			wlVoltage[i][j] = 1.0 - wlDrop // Assuming 1V input normalized
 
-			// Bit line voltage (ground reference with cumulative drop)
-			blDrop := float64(rows-1-i) * params.RbitLine * a.estimateColumnCurrent(j, input)
+			// Bit line voltage (sense amp/ground at top, row 0)
+			// Drop increases with row index i (farther from sense amp)
+			blDrop := float64(i) * params.RbitLine * a.estimateColumnCurrent(j, input)
 			blVoltage[i][j] = blDrop // Voltage above ground
 
-			// Effective voltage across cell
+			// Effective voltage across cell = WL voltage - BL voltage
+			// Worst case is bottom-right (max i, max j): both drops are maximum
 			effVoltage[i][j] = wlVoltage[i][j] - blVoltage[i][j]
 			if effVoltage[i][j] < 0 {
 				effVoltage[i][j] = 0
@@ -159,6 +163,11 @@ type SneakPathAnalysis struct {
 
 // AnalyzeSneakPaths analyzes sneak path currents in the array.
 // Sneak paths occur when unselected cells create parallel current paths.
+//
+// Physical model for passive crossbar when reading cell (selectedRow, selectedCol):
+// - Same row: current leaks from selected WL through cell to unselected BL
+// - Same column: current from unselected WLs leaks through cell to selected BL
+// - Off-diagonal: three-cell sneak path forms a complete loop
 func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
@@ -176,49 +185,63 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 
 	var totalSneak float64
 
-	// Three-cell sneak path model
-	// Sneak path: selected WL -> unselected cell -> unselected BL -> selected column
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			if i == selectedRow && j == selectedCol {
 				continue // Skip selected cell
 			}
 
-			// Calculate sneak path through this cell
 			var sneakG float64
 
 			if i == selectedRow {
-				// Same row: sneak through this cell and back
-				for k := 0; k < cols; k++ {
-					if k != j && k != selectedCol {
-						g1 := a.cells[i][k].Conductance
-						g2 := a.cells[selectedRow][selectedCol].Conductance
-						// Series combination
-						if g1 > 0 && g2 > 0 {
-							sneakG += (g1 * g2) / (g1 + g2) * 0.1
-						}
-					}
-				}
-			} else if j == selectedCol {
-				// Same column: sneak through other rows
+				// Same row as selected cell (but different column)
+				// Sneak path: selected WL → this cell → BL j → return path
+				// The cell's conductance directly contributes to sneak current
+				// Higher conductance = more current leaks to this BL
+				cellG := a.cells[i][j].Conductance
+
+				// Sum return paths through all cells in column j (except this row)
+				var returnPathG float64
 				for k := 0; k < rows; k++ {
-					if k != i && k != selectedRow {
-						g1 := a.cells[k][j].Conductance
-						g2 := a.cells[i][selectedCol].Conductance
-						if g1 > 0 && g2 > 0 {
-							sneakG += (g1 * g2) / (g1 + g2) * 0.1
-						}
+					if k != selectedRow {
+						returnPathG += a.cells[k][j].Conductance
 					}
 				}
+
+				// Series combination: this cell in series with parallel return paths
+				if cellG > 0 && returnPathG > 0 {
+					sneakG = (cellG * returnPathG) / (cellG + returnPathG)
+				}
+
+			} else if j == selectedCol {
+				// Same column as selected cell (but different row)
+				// Sneak path: WL i → cells in row i → return to this cell → selected BL
+				// Current from other word lines can leak through this cell
+				cellG := a.cells[i][j].Conductance
+
+				// Sum paths from other columns in this row
+				var feedPathG float64
+				for k := 0; k < cols; k++ {
+					if k != selectedCol {
+						feedPathG += a.cells[i][k].Conductance
+					}
+				}
+
+				// Series combination: feed paths in series with this cell
+				if cellG > 0 && feedPathG > 0 {
+					sneakG = (cellG * feedPathG) / (cellG + feedPathG)
+				}
+
 			} else {
-				// General three-cell path
-				g1 := a.cells[selectedRow][j].Conductance // Same row, different col
-				g2 := a.cells[i][j].Conductance           // Diagonal cell
-				g3 := a.cells[i][selectedCol].Conductance // Same col, different row
+				// Off-diagonal cell: three-cell sneak path
+				// Path: selected WL → cell(sr,j) → BL j → cell(i,j) → WL i → cell(i,sc) → selected BL
+				g1 := a.cells[selectedRow][j].Conductance // Entry point on selected row
+				g2 := a.cells[i][j].Conductance           // This cell (corner of path)
+				g3 := a.cells[i][selectedCol].Conductance // Exit point on selected column
 
 				if g1 > 0 && g2 > 0 && g3 > 0 {
-					// Three resistors in series
-					sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3) * 0.01
+					// Three conductances in series: G_total = 1/(1/g1 + 1/g2 + 1/g3)
+					sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
 				}
 			}
 

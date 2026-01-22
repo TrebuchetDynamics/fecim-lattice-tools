@@ -75,6 +75,12 @@ type DualModeApp struct {
 
 	// Guided Tour
 	tour *GuidedTour
+
+	// P1 Enhancement Widgets
+	quantizationWidget   *QuantizationWidget   // P1.1: Shows weight quantization
+	energyWidget         *EnergyWidget         // P1.3: Energy tracking
+	comparisonCard       *ComparisonCard       // P1.2: Enhanced FP vs CIM comparison
+	dualProbabilityChart *DualProbabilityChart // P1.2: Probability divergence chart
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -144,19 +150,24 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Status footer
 	footer := app.statusLabel
 
-	// Arrange zones in 2x2 grid
-	topRow := container.NewGridWithColumns(2, zone1, zone2)
-	bottomRow := container.NewGridWithColumns(2, zone3, zone4)
+	// Arrange zones using expandable splits to fill available space
+	// Left column: Drawing (top) + Controls (bottom)
+	leftSplit := container.NewVSplit(zone1, zone3)
+	leftSplit.SetOffset(0.35) // 35% drawing, 65% controls
+
+	// Right column: Results (top) + Weights (bottom)
+	rightSplit := container.NewVSplit(zone2, zone4)
+	rightSplit.SetOffset(0.55) // 55% results, 45% weights
+
+	// Main horizontal split
+	mainSplit := container.NewHSplit(leftSplit, rightSplit)
+	mainSplit.SetOffset(0.35) // 35% left, 65% right
 
 	mainContent := container.NewBorder(
 		header,
 		footer,
 		nil, nil,
-		container.NewVBox(
-			topRow,
-			widget.NewSeparator(),
-			bottomRow,
-		),
+		mainSplit,
 	)
 
 	// Mark as initialized and trigger initial setup
@@ -233,17 +244,18 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 }
 
 // createResultsZone creates the FP vs CIM results zone (Zone 2).
+// Enhanced with P1 widgets for better visualization.
 func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	label := widget.NewLabel("Results")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// FP results
+	// FP results (legacy - kept for compatibility)
 	fpLabel := widget.NewLabel("FP")
 	fpLabel.TextStyle = fyne.TextStyle{Bold: true}
 	app.fpPredLabel = widget.NewLabel("-")
 	app.fpConfBar = widget.NewProgressBar()
 
-	// CIM results
+	// CIM results (legacy - kept for compatibility)
 	cimLabel := widget.NewLabel("CIM")
 	cimLabel.TextStyle = fyne.TextStyle{Bold: true}
 	app.cimPredLabel = widget.NewLabel("-")
@@ -252,12 +264,12 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	// Agreement
 	app.agreementLabel = widget.NewLabel("")
 
-	// Side by side
+	// Side by side (legacy compact view)
 	fpBox := container.NewVBox(fpLabel, app.fpPredLabel, app.fpConfBar)
 	cimBox := container.NewVBox(cimLabel, app.cimPredLabel, app.cimConfBar)
 	comparison := container.NewGridWithColumns(2, fpBox, cimBox)
 
-	// Probability distribution bars (5 per row for 0-9)
+	// Probability distribution bars (legacy - 5 per row for 0-9)
 	probGrid := container.NewGridWithColumns(5)
 	for i := 0; i < 10; i++ {
 		app.fpProbBars[i] = widget.NewProgressBar()
@@ -272,11 +284,35 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	// Energy
 	app.energyLabel = widget.NewLabel("Energy: -")
 
-	return container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), app.agreementLabel, app.energyLabel),
-		comparison,
-		probGrid,
+	// P1.2: Enhanced Comparison Card
+	app.comparisonCard = NewComparisonCard()
+
+	// P1.2: Dual Probability Chart with divergence highlighting
+	app.dualProbabilityChart = NewDualProbabilityChart()
+
+	// Create tabbed view: Enhanced (new) vs Classic (legacy)
+	// Use Border layout so probability chart expands to fill space
+	enhancedTab := container.NewBorder(
+		app.comparisonCard, // Top: comparison card (fixed height)
+		nil, nil, nil,
+		container.NewMax(app.dualProbabilityChart), // Center: probability chart (expands)
 	)
+
+	classicTab := container.NewBorder(
+		container.NewVBox(
+			container.NewHBox(label, layout.NewSpacer(), app.agreementLabel, app.energyLabel),
+			comparison,
+		),
+		nil, nil, nil,
+		container.NewMax(container.NewVBox(probGrid)), // Probability grid expands
+	)
+
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Enhanced", enhancedTab),
+		container.NewTabItem("Classic", classicTab),
+	)
+
+	return tabs
 }
 
 // createControlsZone creates the hardware control panel (Zone 3).
@@ -364,13 +400,37 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.runQuickTest()
 	})
 
-	return container.NewVBox(
+	// P1.1: Quantization Visualization Widget
+	app.quantizationWidget = NewQuantizationWidget()
+
+	// P1.3: Energy Tracking Widget
+	app.energyWidget = NewEnergyWidget(784, 128, 10)
+
+	// Controls header (compact, fixed height)
+	controlsHeader := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testResultLabel),
 		levelsRow,
 		noiseRow,
 		selectsRow,
 		presetRow,
 	)
+
+	// P1 widgets that expand to fill space (shown in Config tab)
+	p1ExpandingContent := container.NewVSplit(
+		app.quantizationWidget,
+		app.energyWidget,
+	)
+	p1ExpandingContent.SetOffset(0.5) // Equal split
+
+	// Config tab: controls at top, P1 widgets fill remaining space
+	// This eliminates the need for a separate Quantization tab and uses the space better
+	configTab := container.NewBorder(
+		controlsHeader,
+		nil, nil, nil,
+		p1ExpandingContent,
+	)
+
+	return configTab
 }
 
 // createWeightZone creates the weight visualization zone (Zone 4).
@@ -402,10 +462,16 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
 	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
 
-	return container.NewVBox(
+	// Use Border layout with Max to fill available space
+	header := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), layerSelect),
 		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
-		container.NewCenter(app.weightHeatmap),
+	)
+
+	return container.NewBorder(
+		header,
+		nil, nil, nil,
+		container.NewMax(app.weightHeatmap), // Expand to fill available space
 	)
 }
 
@@ -419,29 +485,32 @@ func (app *DualModeApp) onDigitChanged(pixels []float64) {
 func (app *DualModeApp) runInference(pixels []float64) {
 	result := app.network.Infer(pixels)
 
+	// Get quantized weights for P1.1 visualization
+	quantWeights, _, _, _ := app.network.GetQuantWeights()
+
 	fyne.Do(func() {
-		// Update FP results
+		// Update FP results (legacy)
 		app.fpPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.FPPrediction, result.FPConfidence*100))
 		app.fpConfBar.SetValue(result.FPConfidence)
 
-		// Update CIM results
+		// Update CIM results (legacy)
 		app.cimPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.CIMPrediction, result.CIMConfidence*100))
 		app.cimConfBar.SetValue(result.CIMConfidence)
 
-		// Update agreement
+		// Update agreement (legacy)
 		if result.Agree {
 			app.agreementLabel.SetText("PREDICTIONS MATCH")
 		} else {
 			app.agreementLabel.SetText(fmt.Sprintf("DISAGREEMENT (KL=%.3f)", result.Disagreement))
 		}
 
-		// Update probability bars
+		// Update probability bars (legacy)
 		for i := 0; i < 10; i++ {
 			app.fpProbBars[i].SetValue(result.FPProbabilities[i])
 			app.cimProbBars[i].SetValue(result.CIMProbabilities[i])
 		}
 
-		// Update energy
+		// Update energy (legacy)
 		gpuEnergy := result.EnergyUsed * 10000 // Estimated 10,000x for GPU
 		app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f uJ (FeCIM) vs %.0f mJ (GPU) = %.0fx savings",
 			result.EnergyUsed, gpuEnergy/1000, 10000.0))
@@ -451,6 +520,50 @@ func (app *DualModeApp) runInference(pixels []float64) {
 			result.FPPrediction, result.FPConfidence*100,
 			result.CIMPrediction, result.CIMConfidence*100,
 			map[bool]string{true: "MATCH", false: "MISMATCH"}[result.Agree]))
+
+		// === P1 ENHANCEMENTS ===
+
+		// P1.1: Update quantization visualization with sample weights
+		if app.quantizationWidget != nil && len(quantWeights) > 0 {
+			app.quantizationWidget.SetNumLevels(app.network.GetNumLevels())
+			app.quantizationWidget.UpdateWithWeights(quantWeights, 5) // Show 5 sample weights
+		}
+
+		// P1.2: Update enhanced comparison card
+		if app.comparisonCard != nil {
+			compResult := &ComparisonResult{
+				FPPrediction:     result.FPPrediction,
+				FPConfidence:     result.FPConfidence,
+				FPProbabilities:  result.FPProbabilities,
+				CIMPrediction:    result.CIMPrediction,
+				CIMConfidence:    result.CIMConfidence,
+				CIMProbabilities: result.CIMProbabilities,
+				Match:            result.Agree,
+				ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
+				EnergyFeCIM:      result.EnergyUsed * 1e6, // Convert to nJ
+				EnergyGPU:        result.EnergyUsed * 1e6 * 10000, // 10,000x for GPU
+				EnergyRatio:      10000.0,
+			}
+			if compResult.ConfidenceDelta < 0 {
+				compResult.ConfidenceDelta = -compResult.ConfidenceDelta
+			}
+			app.comparisonCard.SetResult(compResult)
+		}
+
+		// P1.2: Update dual probability chart
+		if app.dualProbabilityChart != nil {
+			app.dualProbabilityChart.SetProbabilities(
+				result.FPProbabilities,
+				result.CIMProbabilities,
+				result.FPPrediction,
+				result.CIMPrediction,
+			)
+		}
+
+		// P1.3: Record inference in energy widget
+		if app.energyWidget != nil {
+			app.energyWidget.RecordInference()
+		}
 	})
 }
 
@@ -468,6 +581,18 @@ func (app *DualModeApp) resetResults() {
 		app.cimProbBars[i].SetValue(0)
 	}
 	app.statusLabel.SetText("Ready. Draw a digit or click 'Random Sample'.")
+
+	// Clear P1 widgets
+	if app.quantizationWidget != nil {
+		app.quantizationWidget.Clear()
+	}
+	if app.comparisonCard != nil {
+		app.comparisonCard.Clear()
+	}
+	if app.dualProbabilityChart != nil {
+		app.dualProbabilityChart.Clear()
+	}
+	// Note: Energy widget is not cleared to keep session totals
 }
 
 // applyPreset sets hardware parameters to a failure mode preset.

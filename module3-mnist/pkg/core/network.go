@@ -255,6 +255,13 @@ func (net *DualModeNetwork) SetNumLevels(levels int) {
 	net.requantizeWeightsLocked()
 }
 
+// GetNumLevels returns the current quantization levels.
+func (net *DualModeNetwork) GetNumLevels() int {
+	net.mu.RLock()
+	defer net.mu.RUnlock()
+	return net.Config.NumLevels
+}
+
 // SetNoiseLevel updates the noise level for CIM inference.
 func (net *DualModeNetwork) SetNoiseLevel(noise float64) {
 	net.mu.Lock()

@@ -99,7 +99,15 @@ type ComparisonApp struct {
 	gpuSpec   EnergySpec
 	fecimSpec EnergySpec
 
-	// GUI components
+	// Animation state
+	running          bool
+	paused           bool
+	simTime          float64
+	presentationMode PresentationMode
+	currentPhase     AutoDemoPhase
+	phaseTimer       float64
+
+	// GUI components - Original
 	energyChart      *EnergyBarChart
 	archDiagram      *ArchitectureDiagram
 	calculator       *DataCenterCalculator
@@ -108,10 +116,22 @@ type ComparisonApp struct {
 	operationLog     *ComparisonOperationLog
 	modeIndicator    *ComparisonModeIndicator
 
+	// GUI components - New hero visualizations
+	energyRace       *AnimatedEnergyRace
+	memoryWall       *MemoryWallAnimation
+	marketChart      *MarketOpportunityChart
+	competitiveMatrix *CompetitiveMatrix
+	phasedStrategy   *PhasedStrategyDiagram
+	analogStates     *AnalogStatesComparison
+	weebitCard       *WeebitNanoCard
+	dcTransformation *DataCenterTransformation
+
 	// Controls
 	workloadSelect   *widget.Select
 	inferencesSlider *widget.Slider
 	inferencesLabel  *widget.Label
+	modeSelect       *widget.Select
+	pauseBtn         *widget.Button
 
 	// Status
 	statusLabel *widget.Label
@@ -164,7 +184,7 @@ func NewComparisonApp() *ComparisonApp {
 // Run starts the GUI application.
 func (ca *ComparisonApp) Run() {
 	debug.Println("App: Creating window")
-	ca.window = ca.fyneApp.NewWindow("FeCIM Demo 8: Architecture Comparison")
+	ca.window = ca.fyneApp.NewWindow("FeCIM Demo 5: Architecture Comparison")
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	content := ca.createMainLayout()
@@ -173,13 +193,161 @@ func (ca *ComparisonApp) Run() {
 	ca.updateCalculations()
 	ca.updateStatus("Ready. Select workload and adjust parameters.")
 
+	// Start animation loop
+	ca.running = true
+	go ca.animationLoop()
+
 	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
+	ca.running = false
+}
+
+// animationLoop runs the main animation at 60 FPS.
+func (ca *ComparisonApp) animationLoop() {
+	ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS
+	defer ticker.Stop()
+
+	lastTime := time.Now()
+
+	for ca.running {
+		<-ticker.C
+
+		if ca.paused {
+			lastTime = time.Now()
+			continue
+		}
+
+		dt := time.Since(lastTime).Seconds()
+		lastTime = time.Now()
+		ca.simTime += dt
+
+		// Update animated widgets
+		if ca.energyRace != nil {
+			ca.energyRace.UpdateAnimation(dt)
+		}
+		if ca.memoryWall != nil {
+			ca.memoryWall.UpdateAnimation(dt)
+		}
+		if ca.marketChart != nil {
+			ca.marketChart.UpdateAnimation(dt)
+		}
+		if ca.phasedStrategy != nil {
+			ca.phasedStrategy.UpdateAnimation(dt)
+		}
+		if ca.analogStates != nil {
+			ca.analogStates.UpdateAnimation(dt)
+		}
+		if ca.dcTransformation != nil {
+			ca.dcTransformation.UpdateAnimation(dt)
+		}
+
+		// Handle auto-demo mode phase transitions
+		if ca.presentationMode == PresentationModeAuto {
+			ca.phaseTimer += dt
+			phaseDuration := ca.currentPhase.PhaseDuration().Seconds()
+			if ca.phaseTimer >= phaseDuration {
+				ca.phaseTimer = 0
+				ca.currentPhase = AutoDemoPhase((int(ca.currentPhase) + 1) % int(AutoDemoPhaseCount))
+				ca.onPhaseChanged()
+			}
+		}
+
+		// Refresh UI on main thread
+		fyne.Do(func() {
+			if ca.energyRace != nil {
+				ca.energyRace.Refresh()
+			}
+			if ca.memoryWall != nil {
+				ca.memoryWall.Refresh()
+			}
+			if ca.marketChart != nil {
+				ca.marketChart.Refresh()
+			}
+			if ca.phasedStrategy != nil {
+				ca.phasedStrategy.Refresh()
+			}
+			if ca.analogStates != nil {
+				ca.analogStates.Refresh()
+			}
+			if ca.dcTransformation != nil {
+				ca.dcTransformation.Refresh()
+			}
+			ca.updateStatusForMode()
+		})
+	}
+}
+
+// onPhaseChanged handles auto-demo phase transitions.
+func (ca *ComparisonApp) onPhaseChanged() {
+	debug.Printf("Auto-demo phase changed to: %s", ca.currentPhase.String())
+
+	// Update educational panel for new phase
+	if ca.educationalPanel != nil {
+		ca.educationalPanel.SetPhase(ca.currentPhase)
+	}
+
+	// Update phased strategy diagram
+	if ca.phasedStrategy != nil {
+		ca.phasedStrategy.SetPhase(int(ca.currentPhase) % 3)
+	}
+
+	// Reset animations for certain phases
+	switch ca.currentPhase {
+	case AutoDemoPhaseEnergyRace:
+		if ca.energyRace != nil {
+			ca.energyRace.Reset()
+		}
+	case AutoDemoPhaseMarket:
+		if ca.marketChart != nil {
+			ca.marketChart.Reset()
+		}
+	}
+}
+
+// updateStatusForMode updates the status based on current mode.
+func (ca *ComparisonApp) updateStatusForMode() {
+	if ca.statusLabel == nil {
+		return
+	}
+
+	switch ca.presentationMode {
+	case PresentationModeAuto:
+		remaining := ca.currentPhase.PhaseDuration().Seconds() - ca.phaseTimer
+		ca.statusLabel.SetText(fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining))
+	case PresentationModeInvestor:
+		ca.statusLabel.SetText("Mode: Technical Briefing")
+	case PresentationModeEngineer:
+		ca.statusLabel.SetText("Mode: Technical Deep-Dive")
+	default:
+		// Manual mode - keep existing status
+	}
+}
+
+// SetPresentationMode sets the current presentation mode.
+func (ca *ComparisonApp) SetPresentationMode(mode PresentationMode) {
+	ca.presentationMode = mode
+	ca.phaseTimer = 0
+	ca.currentPhase = AutoDemoPhaseEnergyRace
+
+	// Update educational panel
+	if ca.educationalPanel != nil {
+		ca.educationalPanel.SetPresentationMode(mode)
+	}
+
+	// Reset animations
+	if ca.energyRace != nil {
+		ca.energyRace.Reset()
+	}
+	if ca.marketChart != nil {
+		ca.marketChart.Reset()
+	}
+
+	debug.Printf("Presentation mode set to: %s", mode.String())
 }
 
 // createMainLayout builds the main application layout.
 func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
-	// Create components
+	// Create original components
 	ca.energyChart = NewEnergyBarChart()
 	ca.archDiagram = NewArchitectureDiagram()
 	ca.calculator = NewDataCenterCalculator()
@@ -188,8 +356,38 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.operationLog = NewComparisonOperationLog()
 	ca.modeIndicator = NewComparisonModeIndicator()
 
+	// Create new hero visualizations
+	ca.energyRace = NewAnimatedEnergyRace()
+	ca.memoryWall = NewMemoryWallAnimation()
+	ca.marketChart = NewMarketOpportunityChart()
+	ca.competitiveMatrix = NewCompetitiveMatrix()
+	ca.phasedStrategy = NewPhasedStrategyDiagram()
+	ca.analogStates = NewAnalogStatesComparison()
+	ca.weebitCard = NewWeebitNanoCard()
+	ca.dcTransformation = NewDataCenterTransformation()
+
 	// Set initial energy values
 	ca.energyChart.SetValues(ca.cpuSpec, ca.gpuSpec, ca.fecimSpec)
+
+	// Mode selector
+	ca.modeSelect = widget.NewSelect(
+		[]string{"Manual", "Auto Demo", "Investor", "Engineer"},
+		func(s string) {
+			mode := PresentationModeFromString(s)
+			ca.SetPresentationMode(mode)
+		},
+	)
+	ca.modeSelect.SetSelected("Manual")
+
+	// Pause button
+	ca.pauseBtn = widget.NewButton("Pause", func() {
+		ca.paused = !ca.paused
+		if ca.paused {
+			ca.pauseBtn.SetText("Resume")
+		} else {
+			ca.pauseBtn.SetText("Pause")
+		}
+	})
 
 	// Workload selector
 	ca.workloadSelect = widget.NewSelect(
@@ -218,17 +416,24 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	})
 	calcBtn.Importance = widget.HighImportance
 
-	// Header
+	// Header with mode selector
 	titleLabel := widget.NewLabel("FeCIM Architecture Comparison")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
+	modeLabel := widget.NewLabel("Mode:")
 	header := container.NewVBox(
-		titleLabel,
+		container.NewHBox(
+			titleLabel,
+			layout.NewSpacer(),
+			modeLabel,
+			ca.modeSelect,
+			ca.pauseBtn,
+		),
 		widget.NewSeparator(),
 	)
 
-	// Left panel: Controls
+	// Left panel: Controls + Verified Claims + Weebit Card
 	controlsLabel := widget.NewLabel("Configuration")
 	controlsLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -244,42 +449,47 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		calcBtn,
 		widget.NewSeparator(),
 		ca.verifiedTable,
-	)
-
-	// Center panel: Charts
-	energyLabel := widget.NewLabel("Energy per MAC Operation (fJ)")
-	energyLabel.TextStyle = fyne.TextStyle{Bold: true}
-	energyLabel.Alignment = fyne.TextAlignCenter
-
-	archLabel := widget.NewLabel("Architecture Comparison")
-	archLabel.TextStyle = fyne.TextStyle{Bold: true}
-	archLabel.Alignment = fyne.TextAlignCenter
-
-	calcLabel := widget.NewLabel("Data Center Calculator")
-	calcLabel.TextStyle = fyne.TextStyle{Bold: true}
-	calcLabel.Alignment = fyne.TextAlignCenter
-
-	centerTop := container.NewVBox(
-		energyLabel,
-		ca.energyChart,
-	)
-
-	centerMid := container.NewVBox(
 		widget.NewSeparator(),
-		archLabel,
-		ca.archDiagram,
+		ca.weebitCard,
 	)
 
-	centerBottom := container.NewVBox(
+	// Center panel: Hero visualizations + Charts
+	heroSection := container.NewVBox(
+		widget.NewLabelWithStyle("Energy Race", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		ca.energyRace,
 		widget.NewSeparator(),
-		calcLabel,
+		widget.NewLabelWithStyle("Memory Wall Problem", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		ca.memoryWall,
+	)
+
+	marketSection := container.NewVBox(
+		widget.NewSeparator(),
+		ca.marketChart,
+	)
+
+	competitiveSection := container.NewHBox(
+		container.NewVBox(ca.competitiveMatrix),
+		container.NewVBox(ca.phasedStrategy),
+	)
+
+	calculatorSection := container.NewVBox(
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Data Center Calculator", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		ca.calculator,
+		ca.dcTransformation,
+	)
+
+	analogSection := container.NewVBox(
+		widget.NewSeparator(),
+		ca.analogStates,
 	)
 
 	centerPanel := container.NewVBox(
-		centerTop,
-		centerMid,
-		centerBottom,
+		heroSection,
+		marketSection,
+		competitiveSection,
+		calculatorSection,
+		analogSection,
 	)
 
 	// Right panel: Educational + Log
@@ -303,14 +513,14 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 
 	// Main layout using HSplit
 	leftCenterSplit := container.NewHSplit(
-		container.NewPadded(leftPanel),
+		container.NewScroll(container.NewPadded(leftPanel)),
 		container.NewScroll(centerPanel),
 	)
-	leftCenterSplit.SetOffset(0.25)
+	leftCenterSplit.SetOffset(0.20)
 
 	mainSplit := container.NewHSplit(
 		leftCenterSplit,
-		container.NewPadded(rightPanel),
+		container.NewScroll(container.NewPadded(rightPanel)),
 	)
 	mainSplit.SetOffset(0.75)
 

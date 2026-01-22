@@ -532,6 +532,11 @@ type BeforeAfterToggle struct {
 	leftHeatmap  *CrossbarHeatmap
 	rightHeatmap *CrossbarHeatmap
 	toggleGroup  *widget.RadioGroup
+
+	// Callbacks for cell interactions
+	// isIdeal indicates if the tap/hover is on the ideal (left) or actual (right) heatmap
+	OnCellTapped func(row, col int, isIdeal bool)
+	OnCellHover  func(row, col int, value float64, isIdeal bool)
 }
 
 // NewBeforeAfterToggle creates a new comparison widget.
@@ -544,6 +549,30 @@ func NewBeforeAfterToggle(rows, cols int) *BeforeAfterToggle {
 
 	b.leftHeatmap.SetColormap("fecim")
 	b.rightHeatmap.SetColormap("fecim")
+
+	// Wire up cell tap callbacks
+	b.leftHeatmap.OnCellTapped = func(row, col int) {
+		if b.OnCellTapped != nil {
+			b.OnCellTapped(row, col, true) // true = ideal/left
+		}
+	}
+	b.rightHeatmap.OnCellTapped = func(row, col int) {
+		if b.OnCellTapped != nil {
+			b.OnCellTapped(row, col, false) // false = actual/right
+		}
+	}
+
+	// Wire up cell hover callbacks
+	b.leftHeatmap.OnCellHover = func(row, col int, value float64) {
+		if b.OnCellHover != nil {
+			b.OnCellHover(row, col, value, true)
+		}
+	}
+	b.rightHeatmap.OnCellHover = func(row, col int, value float64) {
+		if b.OnCellHover != nil {
+			b.OnCellHover(row, col, value, false)
+		}
+	}
 
 	b.ExtendBaseWidget(b)
 	return b

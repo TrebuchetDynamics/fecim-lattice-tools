@@ -150,6 +150,10 @@ type CrossbarApp struct {
 	lastIRDropAnalysis *crossbar.IRDropAnalysis
 	lastSneakAnalysis  *crossbar.SneakPathAnalysis
 
+	// Persistent cell selection (synced across all heatmaps)
+	selectedRow int
+	selectedCol int
+
 	// Vector visualization
 	mvmVis *MVMVisualization
 
@@ -585,9 +589,33 @@ func (ca *CrossbarApp) updateInfoLabel() {
 	))
 }
 
+// syncSelection updates the app-level selection and syncs it to all heatmaps.
+func (ca *CrossbarApp) syncSelection(row, col int) {
+	ca.selectedRow = row
+	ca.selectedCol = col
+
+	// Sync to all heatmaps
+	if ca.conductanceHeatmap != nil {
+		ca.conductanceHeatmap.SetSelection(row, col)
+	}
+	if ca.irDropHeatmap != nil {
+		ca.irDropHeatmap.SetSelection(row, col)
+	}
+	if ca.sneakPathHeatmap != nil {
+		ca.sneakPathHeatmap.SetSelection(row, col)
+	}
+	if ca.beforeAfterToggle != nil && ca.beforeAfterToggle.leftHeatmap != nil {
+		ca.beforeAfterToggle.leftHeatmap.SetSelection(row, col)
+		ca.beforeAfterToggle.rightHeatmap.SetSelection(row, col)
+	}
+}
+
 // onCellTapped handles clicks on heatmap cells.
 func (ca *CrossbarApp) onCellTapped(row, col int) {
 	ca.modeIndicator.SetMode(DemoModeRead)
+
+	// Sync selection across all heatmaps
+	ca.syncSelection(row, col)
 
 	matrix := ca.array.GetConductanceMatrix()
 	value := matrix[row][col]
@@ -659,13 +687,13 @@ func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 		blV := ca.lastIRDropAnalysis.BitLineVoltages[row][col]
 		dropPercent := (1.0 - effectiveV) * 100
 
-		// Calculate distance from drivers
-		rowDist := col
-		colDist := len(ca.lastIRDropAnalysis.EffectiveVoltage) - 1 - row
+		// Calculate distance from drivers (WL driver on left, BL sense amp at top)
+		wlDist := col // Distance from left WL driver
+		blDist := row // Distance from top BL sense amp
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1fµS L%d │ Dist=[%d,%d]",
-			row, col, effectiveV, dropPercent, wlV, blV, conductanceUS, level, rowDist, colDist))
+			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1fµS L%d │ Dist=[WL:%d,BL:%d]",
+			row, col, effectiveV, dropPercent, wlV, blV, conductanceUS, level, wlDist, blDist))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
 			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for IR drop analysis",

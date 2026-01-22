@@ -36,6 +36,94 @@ func (m ComparisonMode) String() string {
 	}
 }
 
+// PresentationMode represents the presentation/demo mode.
+type PresentationMode int
+
+const (
+	PresentationModeManual   PresentationMode = iota // User controls navigation
+	PresentationModeAuto                             // Self-running 30s per section
+	PresentationModeInvestor                         // Large numbers, minimal jargon
+	PresentationModeEngineer                         // Technical deep-dive
+)
+
+func (p PresentationMode) String() string {
+	switch p {
+	case PresentationModeManual:
+		return "Manual"
+	case PresentationModeAuto:
+		return "Auto Demo"
+	case PresentationModeInvestor:
+		return "Investor"
+	case PresentationModeEngineer:
+		return "Engineer"
+	default:
+		return "Unknown"
+	}
+}
+
+// PresentationModeFromString converts string to PresentationMode.
+func PresentationModeFromString(s string) PresentationMode {
+	switch s {
+	case "Manual":
+		return PresentationModeManual
+	case "Auto Demo":
+		return PresentationModeAuto
+	case "Investor":
+		return PresentationModeInvestor
+	case "Engineer":
+		return PresentationModeEngineer
+	default:
+		return PresentationModeManual
+	}
+}
+
+// AutoDemoPhase represents phases in the auto demo sequence.
+type AutoDemoPhase int
+
+const (
+	AutoDemoPhaseEnergyRace AutoDemoPhase = iota
+	AutoDemoPhaseMarket
+	AutoDemoPhaseCompetitive
+	AutoDemoPhaseStrategy
+	AutoDemoPhaseCalculator
+	AutoDemoPhaseCount // Total number of phases
+)
+
+func (p AutoDemoPhase) String() string {
+	switch p {
+	case AutoDemoPhaseEnergyRace:
+		return "Energy Comparison"
+	case AutoDemoPhaseMarket:
+		return "Market Opportunity"
+	case AutoDemoPhaseCompetitive:
+		return "Competitive Matrix"
+	case AutoDemoPhaseStrategy:
+		return "Phased Strategy"
+	case AutoDemoPhaseCalculator:
+		return "Calculator Demo"
+	default:
+		return "Unknown"
+	}
+}
+
+// PhaseDuration returns the duration for each auto-demo phase.
+func (p AutoDemoPhase) PhaseDuration() time.Duration {
+	switch p {
+	case AutoDemoPhaseEnergyRace:
+		return 10 * time.Second
+	case AutoDemoPhaseMarket:
+		return 10 * time.Second
+	case AutoDemoPhaseCompetitive:
+		return 10 * time.Second
+	case AutoDemoPhaseStrategy:
+		return 10 * time.Second
+	case AutoDemoPhaseCalculator:
+		return 15 * time.Second
+	default:
+		return 10 * time.Second
+	}
+}
+
 // ComparisonModeIndicator shows the current mode.
 type ComparisonModeIndicator struct {
 	widget.BaseWidget
@@ -150,18 +238,22 @@ func (r *comparisonModeRenderer) Destroy() {}
 type ComparisonEducationalPanel struct {
 	widget.BaseWidget
 
-	mu      sync.RWMutex
-	title   string
-	content string
-	minSize fyne.Size
+	mu               sync.RWMutex
+	title            string
+	content          string
+	minSize          fyne.Size
+	presentationMode PresentationMode
+	currentPhase     AutoDemoPhase
 }
 
 // NewComparisonEducationalPanel creates a new educational panel.
 func NewComparisonEducationalPanel() *ComparisonEducationalPanel {
 	e := &ComparisonEducationalPanel{
-		title:   "Why CIM Wins",
-		content: "Compute-in-memory eliminates\nthe memory bottleneck.",
-		minSize: fyne.NewSize(200, 200),
+		title:            "Why CIM Wins",
+		content:          "Compute-in-memory eliminates\nthe memory bottleneck.",
+		minSize:          fyne.NewSize(200, 200),
+		presentationMode: PresentationModeManual,
+		currentPhase:     AutoDemoPhaseEnergyRace,
 	}
 	e.ExtendBaseWidget(e)
 	return e
@@ -174,6 +266,138 @@ func (e *ComparisonEducationalPanel) SetContent(title, content string) {
 	e.content = content
 	e.mu.Unlock()
 	e.Refresh()
+}
+
+// SetPresentationMode sets the current presentation mode.
+func (e *ComparisonEducationalPanel) SetPresentationMode(mode PresentationMode) {
+	e.mu.Lock()
+	e.presentationMode = mode
+	e.mu.Unlock()
+	e.updateForMode()
+}
+
+// SetPhase sets the current auto-demo phase.
+func (e *ComparisonEducationalPanel) SetPhase(phase AutoDemoPhase) {
+	e.mu.Lock()
+	e.currentPhase = phase
+	e.mu.Unlock()
+	e.updateForPhase()
+}
+
+// updateForMode updates content based on presentation mode.
+func (e *ComparisonEducationalPanel) updateForMode() {
+	e.mu.RLock()
+	mode := e.presentationMode
+	e.mu.RUnlock()
+
+	switch mode {
+	case PresentationModeInvestor:
+		e.SetContent("Scenario Summary",
+			"THE PITCH\n\n"+
+				"$711B market by 2030\n"+
+				"100× energy reduction\n"+
+				"CMOS compatible fab\n"+
+				"Proven research team\n\n"+
+				"PHASE 1: NAND Replacement\n"+
+				"Drop-in compatible\n"+
+				"Low adoption risk\n\n"+
+				"TRL 4 → TRL 9 path clear")
+
+	case PresentationModeEngineer:
+		e.SetContent("Technical Deep-Dive",
+			"PHYSICS\n\n"+
+				"HfO2-ZrO2 superlattice\n"+
+				"Pr ≈ 25 µC/cm²\n"+
+				"Ec ≈ 1 MV/cm\n"+
+				"30 analog levels\n\n"+
+				"CROSSBAR ARRAY\n"+
+				"MVM in O(1) time\n"+
+				"Kirchhoff's law\n"+
+				"I = G × V summation\n\n"+
+				"NON-IDEALITIES\n"+
+				"IR drop, sneak paths\n"+
+				"Conductance drift")
+
+	default:
+		e.SetContent("Why CIM Wins",
+			"THE MEMORY WALL\n\n"+
+				"Traditional CPUs/GPUs:\n"+
+				"Data moves between\n"+
+				"memory and processor.\n"+
+				"This wastes energy.\n\n"+
+				"Compute-in-Memory:\n"+
+				"Computation happens\n"+
+				"WHERE data lives.\n"+
+				"No movement = no waste.")
+	}
+}
+
+// updateForPhase updates content based on auto-demo phase.
+func (e *ComparisonEducationalPanel) updateForPhase() {
+	e.mu.RLock()
+	phase := e.currentPhase
+	mode := e.presentationMode
+	e.mu.RUnlock()
+
+	var title, content string
+
+	switch phase {
+	case AutoDemoPhaseEnergyRace:
+		title = "Energy Comparison"
+		if mode == PresentationModeInvestor {
+			content = "THE HEADLINE\n\n" +
+				"100× less energy\n" +
+				"than current GPUs\n\n" +
+				"= 90% cost reduction\n" +
+				"= 10× more inference\n" +
+				"= same power budget"
+		} else {
+			content = "ENERGY PER MAC\n\n" +
+				"CPU + DRAM: ~1000 fJ\n" +
+				"GPU + HBM: ~100 fJ\n" +
+				"FeCIM: ~1-10 fJ*\n\n" +
+				"* TRL 4 claims"
+		}
+
+	case AutoDemoPhaseMarket:
+		title = "Market Opportunity"
+		content = "$711B BY 2030\n\n" +
+			"NAND Flash: $98B\n" +
+			"DRAM: $220B\n" +
+			"AI Semiconductor: $403B\n\n" +
+			"FeCIM addresses ALL THREE"
+
+	case AutoDemoPhaseCompetitive:
+		title = "Competitive Position"
+		content = "VS COMPETITION\n\n" +
+			"Google TPU: Not in-memory\n" +
+			"Intel Loihi: Non-CMOS\n" +
+			"Mythic AI: Not scalable\n\n" +
+			"FeCIM: ✓ In-memory\n" +
+			"       ✓ CMOS fab\n" +
+			"       ✓ Scalable"
+
+	case AutoDemoPhaseStrategy:
+		title = "Phased Strategy"
+		content = "COMMERCIALIZATION\n\n" +
+			"Phase 1: NAND replacement\n" +
+			"  → Drop-in compatible\n\n" +
+			"Phase 2: DRAM displacement\n" +
+			"  → No refresh needed\n\n" +
+			"Phase 3: Full CIM\n" +
+			"  → 80-90% energy savings"
+
+	case AutoDemoPhaseCalculator:
+		title = "Real Impact"
+		content = "DATA CENTER SAVINGS\n\n" +
+			"At 10,000 inferences/sec:\n\n" +
+			"GPU: $X,XXX/month\n" +
+			"FeCIM: $XXX/month\n\n" +
+			"Try the calculator\n" +
+			"with your workload!"
+	}
+
+	e.SetContent(title, content)
 }
 
 // SetComparison sets comparison explanation.
