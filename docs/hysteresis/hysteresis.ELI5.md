@@ -1,618 +1,487 @@
-# EDA Explained Like I'm 5
+# Hysteresis Explained Like I'm 5
 
-**Electronic Design Automation for Ferroelectric Compute-in-Memory**
-
----
-
-## Part 1: What is EDA? (The Simple Version)
-
-### The Lego Analogy
-
-Imagine you want to build the world's most amazing Lego castle. You have an idea in your head, but you need to:
-
-1. **Draw your plan** (so you don't forget what goes where)
-2. **Check if your pieces fit** (you can't put a round peg in a square hole)
-3. **Make sure it won't fall down** (physics matters!)
-4. **Give instructions to the Lego factory** (so they can make your special pieces)
-
-**EDA is like having a super-smart robot helper that does all of this for computer chips.**
-
-```
-Your Idea --> EDA Tools --> Real Chip
-   Brain        Robot        Diamond
-```
-
-### The Journey from Idea to Chip
-
-| Step | What Happens | Lego Equivalent |
-|------|--------------|-----------------|
-| **Design** | You describe what you want | "I want a castle with 4 towers" |
-| **Synthesis** | Computer figures out the pieces needed | Robot counts all the bricks |
-| **Place & Route** | Pieces get arranged and connected | Putting bricks on the baseplate |
-| **Verify** | Check everything works | Making sure doors open, towers don't fall |
-| **Manufacture** | Send to factory | Lego factory makes your custom set |
+**Understanding Ferroelectric Memory Through Simple Analogies**
 
 ---
 
-## Part 2: The Key EDA Tools (Meet the Robots)
+## Part 1: What is Hysteresis? (The Rubber Band)
 
-### 2.1 Yosys - The Translator Robot
+### The Simplest Explanation
 
-**What it does:** Turns your description into a shopping list of parts.
+Imagine you have a rubber band. When you stretch it and let go:
+- It doesn't snap back to EXACTLY where it started
+- It "remembers" being stretched for a moment
+- The path going UP is different from the path coming DOWN
 
-**Simple example:**
-```
-You say: "I want a light that turns on when BOTH switches are flipped"
-
-Yosys says: "Okay, you need an AND gate. Here's part #SKY130_AND2"
-```
-
-**Real life:** You write code (Verilog), Yosys converts it to actual transistor gates.
-
-### 2.2 OpenROAD - The Architect Robot
-
-**What it does:** Takes your shopping list and arranges everything on the chip.
-
-Think of it like Tetris, but:
-- Every piece must connect to the right neighbors
-- Wires can't cross badly
-- Everything must fit in the box
-
-**The sub-robots inside OpenROAD:**
-
-| Robot | Job |
-|-------|-----|
-| RePlAce | Roughly places all the pieces |
-| OpenDP | Fine-tunes placement |
-| TritonCTS | Makes sure the clock reaches everywhere on time |
-| TritonRoute | Draws all the wires |
-
-### 2.3 Magic VLSI - The Inspector Robot
-
-**What it does:** Checks if your chip follows the factory's rules.
-
-**Example rules:**
-- "Wires must be at least 0.13 micrometers apart" (or they'll short circuit)
-- "Transistors need this much space around them" (or they won't work)
-
-**If Magic finds a problem:** "DRC ERROR: Wire too close on layer Metal1!"
-
-### 2.4 ngspice - The Simulator Robot
-
-**What it does:** Pretends to run electricity through your design to see if it works.
-
-**Like a video game for circuits:**
-- You set up the circuit
-- You "press play"
-- It shows you what the voltages and currents do over time
-
-**For FeCIM:** We use special "Verilog-A models" that teach ngspice how ferroelectric materials behave (the hysteresis loop!).
-
-### 2.5 KLayout/GDSFactory - The Artist Robots
-
-**What they do:** Draw the actual shapes that will be printed on silicon.
-
-**Think of it like:**
-- KLayout = Photoshop for chips
-- GDSFactory = Writing a Python script that draws for you
-
-**Output:** A GDSII file (like a PDF, but for chip factories)
-
----
-
-## Part 3: What's a PDK? (The Recipe Book)
-
-### PDK = Process Design Kit
-
-**Analogy:** If you want to bake cookies at a specific bakery, you need THEIR recipe book that tells you:
-- What ingredients they have
-- What oven temperatures work
-- What cookie shapes fit their trays
-
-**A PDK tells EDA tools:**
-
-| Information | Example |
-|-------------|---------|
-| What transistors are available | "We have NMOS and PMOS, sizes 0.13um to 10um" |
-| How to draw them | "NMOS needs poly over active with N+ implant" |
-| Physical rules | "Metal1 minimum width: 0.14um" |
-| Electrical behavior | "This transistor has 0.4V threshold" |
-
-### Open PDKs Available
-
-| PDK | Factory | Node | Special Feature |
-|-----|---------|------|-----------------|
-| SKY130 | SkyWater | 130nm | Free, lots of tutorials |
-| GF180MCU | GlobalFoundries | 180nm | High voltage (good for FeFET!) |
-| IHP SG13G2 | IHP Germany | 130nm | Has RRAM/memristor support! |
-
-**Problem for FeCIM:** None of these have FeFET devices built-in. We have to add our own models.
-
----
-
-## Part 4: The FeCIM Challenge (Why It's Hard)
-
-### Normal Chips vs. FeCIM Chips
-
-| Aspect | Normal Digital Chip | FeCIM Chip |
-|--------|--------------------:|:-----------|
-| Signals | 0 or 1 (binary) | 0 to 29 (30 levels!) |
-| Memory | Separate from compute | Memory IS the computer |
-| Design | Highly automated | Mostly manual |
-| Tools | Mature, production-ready | Research-grade |
-
-### The Crossbar Array - Our Special Challenge
+**That's hysteresis!** The output (position) depends not just on the input (pull), but on what happened BEFORE.
 
 ```
-        Columns (Bit Lines)
-          |   |   |   |
-        +-+-+-+-+-+-+-+-+
-Row 1 --| * | * | * | * |   <-- Each * is a FeFET
-        +---+---+---+---+       storing a weight
-Row 2 --| * | * | * | * |
-        +---+---+---+---+
-Row 3 --| * | * | * | * |
-        +-+-+-+-+-+-+-+-+
-          |   |   |   |
-         Output currents
-         (sum of weights x inputs)
-```
+Stretching:              Releasing:
 
-**Why EDA tools struggle:**
+   ↑                        ↓
+   │    ●───→               │    ●
+   │   ╱                    │     ╲
+   │  ╱                     │      ╲
+   │ ╱                      │       ╲
+   ●                        │        ●
+                            ↓
 
-1. **No FeFET in the library** - We have to model it ourselves
-2. **Analog behavior** - Tools expect digital 0/1, not 30 levels
-3. **Array effects** - IR-drop and sneak paths need special analysis
-4. **No auto-router** - We can't just click "route" for a crossbar
-
----
-
-## Part 5: The Open-Source EDA Flow (Step by Step)
-
-### The Complete Picture
-
-```
-+-------------------------------------------------------------+
-|                    YOUR BRAIN (The Idea)                     |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 1: DESIGN ENTRY                                        |
-|  +-------------+    +-------------+                          |
-|  |   Verilog   |    |   Xschem    |                          |
-|  |  (Digital)  |    |  (Analog)   |                          |
-|  +-------------+    +-------------+                          |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 2: SIMULATION (Does it work on paper?)                 |
-|  +-------------+    +-------------+                          |
-|  |  Verilator  |    |   ngspice   |                          |
-|  |  (Digital)  |    |  (Analog)   |                          |
-|  +-------------+    +-------------+                          |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 3: SYNTHESIS (What parts do we need?)                  |
-|  +-----------------------------------------+                 |
-|  |                YOSYS                     |                 |
-|  |   Verilog --> Gate-level netlist         |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 4: PLACE & ROUTE (Where does everything go?)           |
-|  +-----------------------------------------+                 |
-|  |              OpenROAD                    |                 |
-|  |   Floorplan --> Place --> CTS --> Route |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 5: VERIFICATION (Did we mess up?)                      |
-|  +-----------+  +-----------+  +-----------+                 |
-|  |   Magic   |  |  Netgen   |  |  OpenSTA  |                 |
-|  |   (DRC)   |  |   (LVS)   |  |  (Timing) |                 |
-|  +-----------+  +-----------+  +-----------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 6: TAPE-OUT (Send to factory!)                         |
-|  +-----------------------------------------+                 |
-|  |              GDSII File                  |                 |
-|  |   --> Tiny Tapeout / IHP / SkyWater     |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                    REAL CHIP!                                |
-+-------------------------------------------------------------+
+   Different paths!
 ```
 
 ---
 
-## Part 6: Module 6 - Our Bridge to EDA
+## Part 2: Why Does It Matter for Computers?
 
-### What Module 6 Does
+### Regular Memory (Like a Whiteboard)
 
-Our FeCIM Design Suite (Module 6) fills the gap between neural network weights and EDA tools:
-
-```
-Neural Network Weights (from training)
-            |
-            v
-    +-------------------+
-    |    MODULE 6       |
-    |  FeCIM Compiler   |
-    |                   |
-    |  * Quantize to    |
-    |    30 levels      |
-    |  * Map to cells   |
-    |  * Calculate      |
-    |    conductances   |
-    +-------------------+
-            |
-            v
-    +-------+-------+--------+
-    | JSON  |  CSV  | SPICE  |
-    +-------+-------+--------+
-        |       |       |
-        v       v       v
-      Docs    Excel   ngspice
-```
-
-### The Quantization Magic
+Write something → Erase → Gone forever
 
 ```
-Original weight: 0.7342...
-
-Step 1: Scale to [0, 29]
-        0.7342 x 29 = 21.29
-
-Step 2: Round to integer
-        21.29 --> 21
-
-Step 3: Map to conductance
-        Level 21 --> 72.4 uS
-
-Step 4: Calculate programming voltage
-        V_prog = f(conductance) = 2.1V
-
-Result: Cell assignment
-        Row 5, Col 3, Level 21, G=72.4uS, V=2.1V
+┌──────────────┐     Power off     ┌──────────────┐
+│  Hello!      │  ──────────────→  │              │
+└──────────────┘                   └──────────────┘
+     (data)                          (empty!)
 ```
+
+### Ferroelectric Memory (Like Carving in Clay)
+
+Write something → Turn off power → Still there!
+
+```
+┌──────────────┐     Power off     ┌──────────────┐
+│  ⌒ Hello! ⌒  │  ──────────────→  │  ⌒ Hello! ⌒  │
+└──────────────┘                   └──────────────┘
+   (carved in)                      (still there!)
+```
+
+**The hysteresis loop is what makes this work!**
 
 ---
 
-## Part 7: Production-Ready EDA for FeCIM
+## Part 3: The P-E Loop (The Magic Graph)
 
-### What Would a Professional FeCIM EDA Suite Need?
+### What Are P and E?
 
-This section outlines the requirements for a **production-grade** EDA toolchain specifically designed for Ferroelectric Compute-in-Memory.
+| Letter | Stands For | Simple Meaning |
+|--------|------------|----------------|
+| **E** | Electric Field | The "push" you apply (like pressing a button) |
+| **P** | Polarization | The "response" of the material (like the button position) |
+
+### The Loop Explained
+
+```
+                           ③ MAXIMUM (all tiny magnets aligned)
+                              ╭───────╮
+         P                   ╱         ╲
+         ↑                  │           │
+         │     ②           │           │     ④
+     +Pr ├────────●         │           │        ← MEMORY STATE
+         │       ╱           │           │         (P when E=0)
+         │      ╱             ╲         ╱
+         │     ●───────────────●───────●
+         ├─────┼───────────────┼───────┼────→ E
+         │     │      ①        │       │
+     -Pr ├────────────────────●        │        ← OTHER MEMORY STATE
+         │      ╲             ╱         │
+         │       ╲           │           │
+         │        ╲         ╱
+         │         ╰───────╯
+                       ⑤
+
+              -Ec    0    +Ec
+                     ↑
+              SWITCHING POINT
+        (need this much push to flip)
+```
+
+### Walking Around the Loop (Like a Hike)
+
+| Step | What's Happening | Hiking Analogy |
+|------|------------------|----------------|
+| ① | Start at +Pr, no push applied | Standing at the top of a hill |
+| ② | Push harder (+E increases) | Climbing higher |
+| ③ | Maximum! Can't go higher | At the peak |
+| ④ | Stop pushing, come back to +Pr | Slide back to stable ledge |
+| ⑤ | Push the other way (-E) | Go down the other side |
+| ⑥ | Cross through -Ec | Pass the "sticky point" |
+| ⑦ | Reach -Pr | Stable on the other side! |
+
+**The magic:** When you stop pushing (E = 0), you stay at either +Pr or -Pr. That's MEMORY!
 
 ---
 
-### 7.1 Core Requirements Checklist
+## Part 4: Why 30 Levels, Not Just 2?
 
-#### A. Device Modeling Layer
+### Binary Memory (Regular)
+
+Like a light switch: ON or OFF
+
+```
+      │
+  ON  ●
+      │
+      │
+      │
+  OFF ●
+      │
+```
+
+**1 bit of information**
+
+### Ferroelectric Memory (FeCIM)
+
+Like a dimmer switch with 30 positions!
+
+```
+      │
+  30  ●
+  29  ●
+  28  ●
+   ⋮  ⋮
+  16  ●
+  15  ●
+   ⋮  ⋮
+   2  ●
+   1  ●
+   0  ●
+      │
+```
+
+**~5 bits of information (log₂(30) ≈ 4.9)**
+
+### Why This Matters
+
+| Memory Type | Bits per Cell | Cells for 1 MB |
+|-------------|---------------|----------------|
+| Binary | 1 bit | 8,388,608 cells |
+| FeCIM (30 levels) | ~5 bits | ~1,677,722 cells |
+
+**Same storage, 5x fewer cells!**
+
+---
+
+## Part 5: The Hysteron Concept (The Stubborn Magnets)
+
+### What's a Hysteron?
+
+Think of a tiny magnet that:
+- Flips UP at one voltage (say +1.2V)
+- Flips DOWN at a DIFFERENT voltage (say -0.8V)
+- **Stays put** in between!
+
+```
+              UP at +1.2V
+                  │
+    ──────────────┼──────────────  Voltage
+                  │         │
+                  │    DOWN at -0.8V
+                  │         │
+    [────GAP────]  ← In this gap, it REMEMBERS!
+```
+
+### Material = Millions of Hysterons
+
+Each with slightly different flip voltages:
+
+```
+Hysteron 1: flips at +1.0V / -0.9V
+Hysteron 2: flips at +1.3V / -0.7V
+Hysteron 3: flips at +0.9V / -1.1V
+    ⋮
+Hysteron 450: flips at +1.1V / -0.8V
+
+Add them all up → Smooth hysteresis loop!
+```
+
+**The loop shape EMERGES from the distribution of hysterons. It's not drawn — it's physics!**
+
+---
+
+## Part 6: Write vs Read (The Sticky Threshold)
+
+### The Key Insight
+
+There's a magic voltage called **Ec** (coercive field):
+- Push HARDER than Ec → Things change (WRITE)
+- Push SOFTER than Ec → Things stay the same (READ)
+
+```
+         |←───── READ ZONE ─────→|←── WRITE ──→|
+         |     (safe sensing)    |  (changes!) |
+         |                       |             |
+    ─────┼───────────────────────┼─────────────┼────→ Voltage
+         0                      Ec           Emax
+```
+
+### In Practice
+
+| Operation | Voltage | What Happens |
+|-----------|---------|--------------|
+| **WRITE** | > Ec | Polarization changes, new data stored |
+| **READ** | < Ec | Polarization unchanged, just sense it |
+| **HOLD** | = 0 | Polarization stays (memory!) |
+
+---
+
+## Part 7: The Perfect Hysteresis Module for FeCIM
+
+### What Should It Do?
+
+A production-ready hysteresis simulation module for FeCIM would need these capabilities:
+
+---
+
+### 7.1 Core Hysteresis Model Requirements
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Native FeFET models** | Built-in Preisach/L-K models, not add-ons | Missing |
-| **Multi-level state support** | 30+ discrete states per cell | Custom only |
-| **Temperature dependence** | Ec, Pr variation with T | In research |
-| **History-dependent behavior** | Minor loop tracking | Verilog-A only |
-| **Fatigue/endurance modeling** | Cycle-dependent degradation | Missing |
-| **Retention modeling** | Time-dependent polarization loss | Missing |
-| **Statistical variation** | D2D, C2C variability models | Limited |
+| **Preisach model** | Physics-accurate hysteron-based simulation | ✅ Implemented |
+| **Emergent loops** | Loop shape comes from math, not drawn | ✅ Implemented |
+| **Minor loops** | Partial cycles close correctly | ✅ Implemented |
+| **History tracking** | Remember previous turning points | ✅ Implemented |
+| **30-level quantization** | Discrete states for FeCIM | ✅ Implemented |
 
 **What "production-ready" looks like:**
 ```python
-fefet_model = FeFET(
-    technology="HZO_superlattice",
+model = FeCIMHysteresis(
+    material="HZO_superlattice",
+    Pr=25e-6,           # C/cm²
+    Ps=30e-6,           # C/cm²
     Ec=1.0e6,           # V/cm
-    Pr=25e-6,           # C/cm^2
     levels=30,
-    endurance=1e12,
-    retention_years=10,
-    temperature=300,    # Kelvin
-    variation_sigma=0.05
+    model_type="mayergoyz_preisach"
 )
+
+# Apply field, get polarization with full history tracking
+P = model.update(E)
+
+# Get discrete level
+level = model.get_level()  # 0-29
 ```
 
-#### B. Array-Level Simulation
+---
+
+### 7.2 Temperature and Environmental Effects
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **IR-drop analysis** | Voltage drop across metal lines | Manual |
-| **Sneak path analysis** | Parasitic current paths | Manual |
-| **Thermal simulation** | Self-heating in dense arrays | Missing |
-| **Scalable simulation** | 256x256+ arrays in <1 hour | Too slow |
-| **GPU acceleration** | Parallel matrix operations | Research |
-| **Mixed-signal co-sim** | Digital control + analog array | Limited |
+| **Temperature-dependent Ec** | Ec(T) = Ec₀ × (1 - T/Tc)^0.5 | ✅ Implemented |
+| **Temperature-dependent Pr** | Pr(T) scaling | ✅ Implemented |
+| **Curie temperature** | Loss of ferroelectricity above Tc | ✅ Implemented |
+| **Real-time T adjustment** | GUI slider for temperature | ⚠️ Model ready, GUI missing |
 
 **What "production-ready" looks like:**
 ```python
-array = CrossbarArray(256, 256, fefet_model)
-array.simulate_mvm(
-    inputs=input_vector,
-    include_ir_drop=True,
-    include_sneak_paths=True,
-    temperature_map=thermal_sim.get_map(),
-    variation_instance=42  # Monte Carlo seed
-)
-# Completes in <10 seconds on GPU
+model.set_temperature(350)  # Kelvin
+# Ec and Pr automatically adjust
+
+# Above Curie temperature
+model.set_temperature(800)  # > Tc = 723K
+# Returns Ec = 0, Pr = 0 (no ferroelectricity)
 ```
 
-#### C. Compiler and Mapping
+---
+
+### 7.3 Switching Dynamics
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **ONNX/PyTorch import** | Direct NN model ingestion | Manual |
-| **Automatic tiling** | Split large layers across arrays | Research |
-| **Weight mapping optimization** | Minimize quantization error | Basic |
-| **Differential pair encoding** | Positive/negative weights | Available |
-| **Sparsity exploitation** | Skip zero weights | Limited |
-| **Bit-slicing support** | Multi-array precision | Research |
+| **KAI model** | Kolmogorov-Avrami-Ishibashi switching | ✅ Implemented |
+| **Switching time τ** | ~1-10 ns for HZO | ✅ Parameter defined |
+| **Time-resolved simulation** | P(t) during switching | ✅ SimulateDomainSwitching() |
+| **Time-resolved visualization** | See switching happen | ⚠️ Implemented but not in GUI |
 
 **What "production-ready" looks like:**
 ```python
-compiler = FeCIMCompiler(
-    model="resnet50.onnx",
-    target_array_size=(128, 128),
-    quantization_bits=5,    # log2(30) ~ 5
-    mapping_strategy="differential_pair",
-    optimize_for="energy"   # or "accuracy" or "throughput"
+# Simulate switching dynamics
+times, P_values, switched_count = model.simulate_switching(
+    E_applied=2*Ec,
+    duration=100e-9,  # 100 ns
+    steps=1000
 )
-mapping = compiler.compile()
-# Outputs: array assignments, programming sequences, accuracy estimate
+
+# KAI model: P(t) = Ps × (1 - exp(-(t/τ)^n))
+# n = 2.0 for 2D domain growth
 ```
 
-#### D. Layout and Physical Design
+---
+
+### 7.4 Reliability Effects (Wake-up and Fatigue)
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Crossbar array generator** | Parametric layout creation | Scripts |
-| **Peripheral synthesis** | ADC/DAC/driver auto-generation | Manual |
-| **Array-aware P&R** | Understand CIM constraints | Missing |
-| **3D stack support** | Multi-layer CIM design | Missing |
-| **Design rule checking** | CIM-specific DRC rules | Missing |
-| **Parasitic extraction** | R/C extraction for arrays | Limited |
+| **Wake-up modeling** | Pr increases first ~100 cycles | ✅ Basic |
+| **Fatigue modeling** | Pr decreases after many cycles | ✅ Basic |
+| **Cycle counting** | Track total cycles | ✅ Implemented |
+| **Live degradation display** | Show Pr vs. cycle count | ⚠️ Model ready, GUI missing |
 
 **What "production-ready" looks like:**
 ```python
-layout = FeCIMLayoutGenerator(
-    array_size=(64, 64),
-    cell_type="1T1FeFET",
-    pdk="IHP_SG13G2",
-    peripherals={
-        "row_driver": "5bit_DAC",
-        "column_readout": "6bit_SAR_ADC",
-        "mux": "8:1"
-    }
-)
-gds = layout.generate()
-drc_result = layout.run_drc()
-lvs_result = layout.run_lvs(schematic)
+# After cycling
+for _ in range(1000):
+    model.full_cycle()
+
+cycles, degradation, wakeup = model.get_fatigue_state()
+# cycles = 1000
+# degradation = 0.00001% (very low for HZO superlattice)
+# wakeup = 1.0 (fully woken up)
+
+# Pr after N cycles
+Pr_aged = model.material.EnduranceAtCycles(1e10)
+# Returns ~90% of original Pr
 ```
 
-#### E. Verification and Sign-off
+---
+
+### 7.5 Multi-Level Programming
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Functional verification** | NN accuracy on hardware model | Custom |
-| **Monte Carlo analysis** | Statistical yield prediction | Limited |
-| **Worst-case analysis** | Corner simulations (PVT) | Manual |
-| **Reliability analysis** | MTTF, wear-out prediction | Missing |
-| **Power analysis** | Static + dynamic power | Basic |
-| **Timing analysis** | Read/write/compute latency | Manual |
+| **30 discrete levels** | Linear in polarization | ✅ Implemented |
+| **Level-to-voltage mapping** | V_prog for each level | ✅ DiscreteStates() |
+| **Level-to-conductance** | G for crossbar integration | ✅ Implemented |
+| **Programming sequence** | Write-verify cycles | ⚠️ Not visualized |
 
 **What "production-ready" looks like:**
 ```python
-verification = FeCIMVerification(design)
+states = model.get_discrete_states(30)
 
-# Functional
-accuracy = verification.run_inference(
-    model="mnist_cnn",
-    test_set=mnist_test,
-    include_nonidealities=True
-)
-# Returns: 94.2% (vs 96.5% ideal)
-
-# Statistical
-yield_result = verification.monte_carlo(
-    n_samples=10000,
-    vary=["device_variation", "ir_drop", "adc_noise"]
-)
-# Returns: 3-sigma yield = 98.7%
-
-# Reliability
-mttf = verification.reliability_analysis(
-    workload="inference_continuous",
-    temperature=85  # Celsius
-)
-# Returns: MTTF = 8.3 years
+for state in states:
+    print(f"Level {state.level}:")
+    print(f"  Polarization: {state.polarization} C/m²")
+    print(f"  Normalized P: {state.normalized_p}")  # -1 to +1
+    print(f"  Program V: {state.voltage} V")
+    print(f"  Conductance: {state.conductance} S")
 ```
 
-#### F. Integration and Ecosystem
+---
+
+### 7.6 Preisach Plane Visualization
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Standard file formats** | LEF/DEF, GDSII, OASIS | Available |
-| **PDK integration** | SKY130, GF180, IHP support | Limited |
-| **Cloud execution** | Scalable simulation | Missing |
-| **Version control** | Design history tracking | Git works |
-| **Collaboration** | Multi-user design | Limited |
-| **Documentation gen** | Auto-generate datasheets | Missing |
+| **Hysteron grid** | Show α-β plane | ✅ GetPreisachPlane() |
+| **State coloring** | +1 vs -1 hysterons | ✅ Returns states |
+| **Distribution weights** | Show μ(α,β) | ✅ GetDistribution() |
+| **Interactive display** | Watch hysterons flip | ⚠️ Model ready, GUI missing |
 
----
+**What "production-ready" looks like:**
+```python
+alphas, betas, states = model.get_preisach_plane()
 
-### 7.2 The Ideal FeCIM EDA Stack (Vision)
-
-```
-+------------------------------------------------------------------+
-|                     FeCIM EDA Suite 2026                          |
-+------------------------------------------------------------------+
-|                                                                   |
-|  +-------------------------------------------------------------+ |
-|  |                    FRONTEND                                  | |
-|  |  * ONNX/PyTorch/TensorFlow model import                     | |
-|  |  * Architecture exploration (CiMLoop integration)           | |
-|  |  * Energy/area/accuracy trade-off visualization             | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                    COMPILER                                  | |
-|  |  * Automatic weight quantization (30 levels)                | |
-|  |  * Optimal array tiling and mapping                         | |
-|  |  * Programming sequence generation                          | |
-|  |  * Bit-slicing for high precision                           | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                DEVICE SIMULATOR                              | |
-|  |  * Native FeFET models (Preisach, L-K, TCAD-calibrated)     | |
-|  |  * GPU-accelerated array simulation                         | |
-|  |  * IR-drop, sneak path, thermal coupling                    | |
-|  |  * Monte Carlo variation analysis                           | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                PHYSICAL DESIGN                               | |
-|  |  * Parametric crossbar generator                            | |
-|  |  * Peripheral circuit synthesis (ADC/DAC/drivers)           | |
-|  |  * CIM-aware place & route                                  | |
-|  |  * 3D stack support                                         | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                VERIFICATION                                  | |
-|  |  * DRC/LVS with CIM-specific rules                          | |
-|  |  * Functional verification (NN accuracy)                    | |
-|  |  * Reliability sign-off (endurance, retention)              | |
-|  |  * Power/timing analysis                                    | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                TAPE-OUT                                      | |
-|  |  * GDSII/OASIS export                                       | |
-|  |  * Foundry DRC deck validation                              | |
-|  |  * Test structure generation                                | |
-|  |  * Shuttle submission automation                            | |
-|  +-------------------------------------------------------------+ |
-|                                                                   |
-+------------------------------------------------------------------+
+# Visualize: scatter plot colored by state
+# α on y-axis, β on x-axis
+# Blue = -1 (down), Red = +1 (up)
+# Valid region: α > β (lower triangle)
 ```
 
 ---
 
-### 7.3 Gap Analysis: Current vs. Production-Ready
+### 7.7 Export and Integration
 
-| Capability | Open Source Today | Production Requirement | Gap |
-|------------|-------------------|------------------------|-----|
-| FeFET modeling | Verilog-A add-on | Native, calibrated | Large |
-| Array simulation | SPICE (slow) | GPU, <10s for 256x256 | Large |
-| Compiler | Basic quantization | Full ONNX pipeline | Medium |
-| Layout generation | Python scripts | Parametric generator | Medium |
-| Peripheral design | Manual | Synthesized | Large |
-| DRC/LVS | Generic CMOS | CIM-specific rules | Medium |
-| Verification | Manual | Automated, statistical | Large |
-| Documentation | Manual | Auto-generated | Small |
+| Requirement | Description | Current State |
+|-------------|-------------|---------------|
+| **P-E loop export** | Save loop data (CSV/JSON) | ⚠️ Easy to add |
+| **SPICE model export** | Generate Verilog-A parameters | ⚠️ Missing |
+| **Crossbar integration** | Feed conductances to Module 2 | ✅ Via 30-level |
+| **NeuroSim format** | Export for architecture sim | ⚠️ Missing |
 
-### 7.4 Estimated Development Effort
+**What "production-ready" looks like:**
+```python
+# Export P-E loop
+model.export_loop("hysteresis_loop.csv")
 
-| Component | Effort (Person-Years) | Priority |
-|-----------|----------------------:|----------|
-| Native FeFET PDK module | 2-3 | Critical |
-| GPU array simulator | 1-2 | High |
-| ONNX compiler frontend | 1 | High |
-| Parametric layout generator | 1-2 | High |
-| Peripheral synthesis | 2-3 | Medium |
-| Verification framework | 1-2 | Medium |
-| Cloud infrastructure | 1 | Low |
-| **Total** | **10-15** | |
+# Export for SPICE
+model.export_verilog_a_params("fefet_params.json")
+# Output: {"Pr": 0.25, "Ps": 0.30, "Ec": 1.2e8, ...}
 
----
-
-### 7.5 Commercial EDA Comparison
-
-| Vendor | Product | FeCIM Support | Cost |
-|--------|---------|---------------|------|
-| **Cadence** | Virtuoso, Spectre | Verilog-A models | $$$$ |
-| **Synopsys** | HSPICE, Sentaurus TCAD | TCAD simulation | $$$$ |
-| **Siemens** | Calibre, AMS | DRC/LVS | $$$$ |
-| **Keysight** | ADS | RF/analog sim | $$$ |
-| **Open Source** | ngspice, OpenROAD | Basic, extendable | Free |
-
-**Reality:** Even commercial tools require significant customization for FeCIM. No turnkey solution exists.
-
----
-
-### 7.6 Our Project's Contribution
-
-Module 6 (FeCIM Design Suite) addresses key gaps:
-
-| Gap | Our Solution | Status |
-|-----|--------------|--------|
-| Weight-to-cell mapping | 30-level compiler | Done |
-| SPICE export | ngspice-compatible netlist | Done |
-| Visualization | Interactive crossbar view | Done |
-| Documentation | JSON/CSV export | Done |
-| Architecture exploration | CiMLoop YAML (planned) | Next |
-| Layout generation | GDSFactory (planned) | Next |
-
----
-
-### 7.7 The "Dream" Production FeCIM EDA Tool
-
-If someone built the ultimate FeCIM EDA tool, here's what using it would feel like:
-
-```
-$ fecim-eda new-project my_ai_chip
-
-$ fecim-eda import-model resnet18.onnx
-  [OK] Model loaded: 11.7M parameters
-  [OK] Estimated: 47 crossbar arrays (128x128)
-  [OK] Estimated energy: 0.3 mJ/inference
-  [OK] Estimated accuracy: 94.2% (vs 95.1% FP32)
-
-$ fecim-eda optimize --target energy
-  [OK] Optimized mapping: 0.18 mJ/inference (-40%)
-  [OK] Accuracy impact: 93.8% (-0.4%)
-
-$ fecim-eda simulate --monte-carlo 1000
-  [OK] Mean accuracy: 93.2% +/- 0.8%
-  [OK] 3-sigma yield: 99.1%
-  [OK] IR-drop worst case: 4.2%
-
-$ fecim-eda layout --pdk IHP_SG13G2
-  [OK] Generated 47 array macros
-  [OK] Synthesized 47 ADCs, 47 DACs, 1 controller
-  [OK] Total area: 12.4 mm^2
-  [OK] DRC: PASS
-  [OK] LVS: PASS
-
-$ fecim-eda export --gdsii my_ai_chip.gds
-  [OK] Ready for IHP shuttle submission!
-
-$ fecim-eda docs --generate
-  [OK] Generated datasheet: my_ai_chip_datasheet.pdf
-  [OK] Generated test plan: my_ai_chip_test.md
+# Export for NeuroSim
+model.export_neurosim_config("neurosim_device.json")
 ```
 
-**This doesn't exist yet.** But every tool we build gets us closer.
+---
+
+### 7.8 Visualization Requirements
+
+| Requirement | Description | Current State |
+|-------------|-------------|---------------|
+| **Real-time P-E plot** | 60 FPS loop tracing | ✅ Implemented |
+| **30-level bar** | Show current discrete state | ✅ Implemented |
+| **WRITE/READ indicator** | Mode based on |E| vs Ec | ✅ Implemented |
+| **Temperature control** | Slider to adjust T | ⚠️ Missing in GUI |
+| **Preisach plane** | Hysteron state heatmap | ⚠️ Model ready, GUI missing |
+| **Fatigue tracker** | Cycle count and degradation | ⚠️ Model ready, GUI missing |
+
+---
+
+### 7.9 The "Dream" Hysteresis Module
+
+If someone built the ultimate ferroelectric hysteresis simulation:
+
+```
+$ fecim-hysteresis interactive
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│  FeCIM Hysteresis Simulator v2.0                                           │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌─────────────────┐  ┌─────────────────────┐  ┌────────────────────┐    │
+│  │   P-E LOOP      │  │   PREISACH PLANE    │  │   PARAMETERS       │    │
+│  │                 │  │                     │  │                    │    │
+│  │      ╭───╮      │  │   α ↑               │  │  Material: HZO     │    │
+│  │     ╱     ╲     │  │     ███░░░░░        │  │  Pr: 25 µC/cm²     │    │
+│  │    │   ●   │    │  │     ██░░░░░░        │  │  Ec: 1.2 MV/cm     │    │
+│  │     ╲     ╱     │  │     █░░░░░░░ → β    │  │  T: 300 K ────●    │    │
+│  │      ╰───╯      │  │                     │  │  Cycles: 1.2M      │    │
+│  │                 │  │  ██ = switched UP   │  │  Wakeup: 100%      │    │
+│  │  Level: 24/30   │  │  ░░ = switched DOWN │  │  Fatigue: 0.01%    │    │
+│  │  Mode: [READ]   │  │                     │  │                    │    │
+│  └─────────────────┘  └─────────────────────┘  └────────────────────┘    │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  SWITCHING DYNAMICS (KAI Model)                                      │  │
+│  │                                                                      │  │
+│  │  P ┼ ─────────────────────────●●●●●●●●●●●●●●●●●                      │  │
+│  │    │                      ●●●●                                       │  │
+│  │    │                   ●●●                                           │  │
+│  │    │               ●●●●                                              │  │
+│  │    │         ●●●●●●                                                  │  │
+│  │    ├──●●●●●───────────────────────────────────────────→ t            │  │
+│  │    0                                               τ=10ns            │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  [Manual] [Sine] [Triangle] [Square] [Random] [Write/Read Demo]          │
+│                                                                           │
+│  Export: [P-E Loop] [Verilog-A] [NeuroSim] [SPICE]                       │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 7.10 Gap Analysis: Current vs. Perfect
+
+| Feature | Current | Perfect | Gap |
+|---------|---------|---------|-----|
+| Preisach model | ✅ Complete | ✅ | None |
+| Temperature GUI | ⚠️ Model only | Slider + display | Small |
+| Preisach plane viz | ⚠️ Model only | Heatmap in GUI | Medium |
+| Switching dynamics viz | ⚠️ Model only | Animation | Medium |
+| Fatigue tracking GUI | ⚠️ Model only | Live counter | Small |
+| SPICE export | ❌ | Verilog-A params | Medium |
+| NeuroSim export | ❌ | Config file | Medium |
+
+### 7.11 Development Effort Estimate
+
+| Enhancement | Effort | Priority |
+|-------------|--------|----------|
+| Temperature slider in GUI | 2 hours | High |
+| Preisach plane heatmap | 4 hours | Medium |
+| Switching dynamics plot | 4 hours | Medium |
+| Fatigue counter display | 1 hour | Low |
+| Verilog-A export | 8 hours | High |
+| NeuroSim export | 4 hours | Medium |
+| **Total** | ~23 hours | |
 
 ---
 
@@ -620,48 +489,41 @@ $ fecim-eda docs --generate
 
 | Term | Simple Definition |
 |------|-------------------|
-| **EDA** | Computer programs that help design chips |
-| **PDK** | Recipe book from the chip factory |
-| **RTL** | Code that describes what a chip should do |
-| **Synthesis** | Converting code to actual parts |
-| **Place & Route** | Arranging parts and drawing wires |
-| **DRC** | Checking if the design follows factory rules |
-| **LVS** | Checking if the layout matches the schematic |
-| **GDSII** | File format for chip layouts (like PDF for chips) |
-| **Verilog** | Programming language for describing hardware |
-| **Verilog-A** | Extension for describing analog behavior |
-| **SPICE** | Simulator that predicts circuit behavior |
-| **Netlist** | List of all parts and connections |
-| **Tapeout** | Sending your design to be manufactured |
-| **FeFET** | Transistor with ferroelectric memory built-in |
-| **Crossbar** | Grid of memory cells that can do math |
-| **MVM** | Matrix-Vector Multiply (the math crossbars do) |
-| **Quantization** | Reducing precision (like rounding) |
-| **IR-drop** | Voltage loss in wires (like water pressure dropping in long pipes) |
-| **Sneak path** | Unwanted current going the wrong way |
-| **Monte Carlo** | Testing with random variations to check robustness |
-| **MTTF** | Mean Time To Failure (how long before it breaks) |
-| **PVT** | Process, Voltage, Temperature (things that vary) |
+| **Hysteresis** | Output depends on history, not just current input |
+| **Polarization (P)** | How much tiny magnets are aligned inside |
+| **Electric Field (E)** | The "push" from applied voltage |
+| **Coercive Field (Ec)** | The push needed to flip the magnets |
+| **Remanent (Pr)** | Polarization when you stop pushing (the memory!) |
+| **Saturation (Ps)** | Maximum possible polarization |
+| **Hysteron** | One tiny bistable switch with two flip points |
+| **Preisach Model** | Math model using many hysterons |
+| **Minor Loop** | Going partway around the loop and back |
+| **KAI Model** | How fast the magnets flip over time |
+| **Wake-up** | Polarization increasing during first cycles |
+| **Fatigue** | Polarization decreasing after many cycles |
+| **Curie Temperature** | Temperature where ferroelectricity disappears |
 
 ---
 
-## Part 9: Where to Learn More
+## Part 9: Learning Resources
 
-### Beginner Resources
-- **Zero to ASIC Course**: zerotoasiccourse.com
-- **Tiny Tapeout Guides**: tinytapeout.com/digital_design
-- **Matt Venn's YouTube**: Open source chip design tutorials
+### Beginner
 
-### Intermediate Resources
-- **OpenROAD Documentation**: openroad.readthedocs.io
-- **SkyWater PDK Docs**: skywater-pdk.readthedocs.io
-- **ngspice Manual**: ngspice.sourceforge.io
+- **This demo!** Run `go run ./cmd/hysteresis` in module1-hysteresis
+- **ELI5.module1.md** in the module directory
+- **YouTube:** "Ferroelectric memory explained"
 
-### Advanced Resources
-- **Our EDA Research Meta-Study**: `docs/eda/eda.research.md`
-- **Open Source EDA Analysis**: `docs/eda/eda.opensource.md`
-- **CiMLoop Paper**: arxiv.org/abs/2405.07259
-- **NeuroSim Documentation**: GitHub neurosim repo
+### Intermediate
+
+- **PHYSICS.md** in module1-hysteresis
+- **hysteresis.research.md** for paper references
+- **hysteresis.opensource.md** for tools
+
+### Advanced
+
+- **preisach_advanced.go** source code
+- **Mayergoyz "Mathematical Models of Hysteresis" (1986)**
+- **Park et al. "Ferroelectricity in Doped Hafnium Oxide" (2015)**
 
 ---
 
@@ -669,55 +531,68 @@ $ fecim-eda docs --generate
 
 ### The Bottom Line
 
-**EDA tools are like robot assistants that help turn chip ideas into reality.**
+**Hysteresis is what makes ferroelectric memory work.**
 
-For FeCIM specifically:
+1. **The loop shape** comes from millions of tiny switches (hysterons)
+2. **The memory** comes from the gap between "flip up" and "flip down" voltages
+3. **30 levels** give us ~5x more storage than binary
+4. **Write vs Read** is controlled by the Ec threshold
 
-1. **Open-source tools exist** but need customization
-2. **The main gaps** are FeFET models and array-level simulation
-3. **Our Module 6** bridges the gap between neural networks and EDA
-4. **Production-ready FeCIM EDA** would need ~10-15 person-years of development
-5. **IHP's open PDK** is currently the best path to real silicon
+### What Demo 1 Shows
 
-### The Journey So Far
+| Feature | What It Demonstrates |
+|---------|---------------------|
+| P-E Loop | How polarization responds to field |
+| 30 Levels | Multi-level storage capability |
+| WRITE/READ | Threshold-based memory operations |
+| Minor Loops | History-dependent behavior |
+| Material Compare | Different HZO variants |
 
-```
-Where we started:     Neural network weights in Python
-Where we are now:     30-level compiler with SPICE export
-Where we're going:    Full layout generation and tape-out
-```
+### The Key Insight
 
-### What Makes FeCIM EDA Different
+> **Hysteresis isn't a bug — it's the feature that enables memory!**
 
-| Standard EDA | FeCIM EDA Needs |
-|--------------|-----------------|
-| Binary signals (0/1) | 30 analog levels |
-| Logic gates | Crossbar arrays |
-| Auto place & route | Manual array layout |
-| Standard transistors | Custom FeFET models |
-| Digital verification | Analog + NN accuracy |
-| Single-run simulation | Monte Carlo statistics |
-
-### The Key Takeaway
-
-**Building production-ready FeCIM EDA is hard, but possible.**
-
-The pieces exist:
-- ngspice can simulate FeFET with Verilog-A
-- GDSFactory can generate crossbar layouts
-- OpenROAD can handle the digital parts
-- IHP has a fab that supports emerging memory
-
-What's missing is the **integration** - and that's what we're building.
+The fact that the path up is different from the path down means the system REMEMBERS which way you pushed it. That's the foundation of all non-volatile ferroelectric memory.
 
 ---
 
-**The dream:** Click a button, get a FeCIM chip that runs your AI model.
+### Quick Reference Card
 
-**The reality:** We're building the tools to make that dream possible, one piece at a time.
+```
+┌─────────────────────────────────────────────────────────────┐
+│              HYSTERESIS QUICK REFERENCE                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  KEY EQUATION:                                              │
+│     P = Σ μ(α,β) × γ(α,β)   [Preisach model]               │
+│                                                             │
+│  KEY VALUES (HZO):                                          │
+│     Pr = 25 µC/cm²   (remanent polarization)               │
+│     Ps = 30 µC/cm²   (saturation polarization)             │
+│     Ec = 1.2 MV/cm   (coercive field)                      │
+│     τ  = 1-10 ns     (switching time)                      │
+│     Tc = 723 K       (Curie temperature)                   │
+│                                                             │
+│  OPERATIONS:                                                │
+│     WRITE: |E| > Ec   → P changes                          │
+│     READ:  |E| < Ec   → P unchanged                        │
+│     HOLD:  E = 0      → P persists (MEMORY!)               │
+│                                                             │
+│  LEVELS:                                                    │
+│     Level = round((P/Ps + 1) × 14.5)   [0 to 29]          │
+│     Bits/cell = log₂(30) ≈ 4.9                             │
+│                                                             │
+│  TEMPERATURE:                                               │
+│     Ec(T) = Ec₀ × (1 - T/Tc)^0.5                           │
+│     T > Tc → No ferroelectricity                           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-*"The best way to predict the future is to invent it." - Alan Kay*
+*"The memory is in the loop."*
 
-*And the best way to invent the future of computing is to build the tools that make it possible.*
+---
+
+*This document is part of the FeCIM Visualizer project. For research details, see `hysteresis.research.md`. For open-source tools, see `hysteresis.opensource.md`.*

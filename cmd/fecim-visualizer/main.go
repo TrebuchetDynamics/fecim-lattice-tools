@@ -70,12 +70,12 @@ func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 
 // DemoApp holds the demo instances
 type DemoApp struct {
-	demo1 *demo1gui.EmbeddedApp               // Hysteresis
-	demo2 *demo2gui.EmbeddedTabbedCrossbarApp // Crossbar + Non-Idealities (merged)
-	demo3 *demo3gui.EmbeddedDualModeApp       // MNIST FP vs CIM (full-featured)
-	demo4 *demo4gui.EmbeddedCircuitsApp       // Circuits
-	demo5 *demo5gui.EmbeddedComparisonApp     // Comparison (technical briefing)
-	demo6 *demo6gui.EmbeddedEDAApp            // EDA Design Suite
+	demo1 *demo1gui.EmbeddedApp             // Hysteresis
+	demo2 *demo2gui.EmbeddedCrossbarApp     // Crossbar (original single-view)
+	demo3 *demo3gui.EmbeddedDualModeApp     // MNIST FP vs CIM (full-featured)
+	demo4 *demo4gui.EmbeddedCircuitsApp     // Circuits
+	demo5 *demo5gui.EmbeddedComparisonApp   // Comparison (technical briefing)
+	demo6 *demo6gui.EmbeddedEDAApp          // EDA Design Suite
 }
 
 func main() {
@@ -90,8 +90,8 @@ func main() {
 	// Create demo instances
 	demos := &DemoApp{
 		demo1: demo1gui.NewEmbeddedApp(),
-		demo2: demo2gui.NewEmbeddedTabbedCrossbarApp(), // Tabbed version with non-idealities
-		demo3: demo3gui.NewEmbeddedDualModeApp(),       // Full-featured MNIST with FP vs CIM
+		demo2: demo2gui.NewEmbeddedCrossbarApp(), // Original single-view crossbar
+		demo3: demo3gui.NewEmbeddedDualModeApp(), // Full-featured MNIST with FP vs CIM
 		demo4: demo4gui.NewEmbeddedCircuitsApp(),
 		demo5: demo5gui.NewEmbeddedComparisonApp(),
 		demo6: demo6gui.NewEmbeddedEDAApp(),
