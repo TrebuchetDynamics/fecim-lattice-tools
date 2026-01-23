@@ -1,4 +1,4 @@
-/ralph-loop "Act as Dr. Tour and Dr. Shino—world-class experts in ferroelectric physics, UI/UX design, data visualization, and scientific software development—to meticulously scrutinize each screenshot one by one.
+/ralph-loop:/ralph-loop "Act as Dr. Tour and Dr. Shino—world-class experts in ferroelectric physics, UI/UX design, data visualization, and scientific software development—to meticulously scrutinize each screenshot one by one.
 
 QUICK START - DO THIS FIRST:
 1. Run: ls <local-path> to see all 67 screenshots
@@ -217,3 +217,23 @@ FALLBACK IF APPROACHING ITERATION LIMIT:
 - An incomplete document WITH fixes is FAILURE
 
 Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 20000 --completion-promise "DONE HYPER ANALYSIS"
+
+---
+
+## Error Log
+
+**Date:** 2026-01-23
+
+Context limit reached during hyper analysis. Attempted `/compact` but received error:
+
+```
+Error: Error during compaction: Error: API Error: 400
+{"type":"error","error":{"type":"invalid_request_error",
+"message":"messages.5.content.11.image.source.base64.data:
+At least one of the image dimensions exceed max allowed size
+for many-image requests: 2000 pixels"},"request_id":"req_011CXQaPMj64op9KzBnBmswU"}
+```
+
+**Root Cause:** Screenshots with dimensions exceeding 2000 pixels cannot be compacted in conversations with many images.
+
+**Resolution:** Used `/clear` instead to start fresh session.
