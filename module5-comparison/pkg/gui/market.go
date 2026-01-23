@@ -4,7 +4,6 @@ package gui
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"math"
 	"sync"
@@ -30,7 +29,7 @@ var marketData = []MarketSegment{
 	{Name: "AI Semiconductor", Y2025: 163, Y2030: 403, Color: color.RGBA{100, 200, 150, 255}},
 }
 
-// MarketOpportunityChart shows the market opportunity visualization.
+// MarketOpportunityChart shows the market opportunity visualization using Fyne widgets.
 type MarketOpportunityChart struct {
 	widget.BaseWidget
 
@@ -39,21 +38,20 @@ type MarketOpportunityChart struct {
 	pulsePhase   float64
 	minSize      fyne.Size
 
-	raster       *canvas.Raster
-	titleText    *canvas.Text
-	totalText    *canvas.Text
-	subtextLine1 *canvas.Text
-	subtextLine2 *canvas.Text
-	yearLabels   []*canvas.Text
-	segLabels    []*canvas.Text
+	container *fyne.Container
+	totalText *canvas.Text
+	bars2025  []*canvas.Rectangle
+	bars2030  []*canvas.Rectangle
+	values    []*widget.Label
 }
 
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:    fyne.NewSize(500, 180),
-		yearLabels: make([]*canvas.Text, 2),
-		segLabels:  make([]*canvas.Text, len(marketData)),
+		minSize:  fyne.NewSize(350, 120),
+		bars2025: make([]*canvas.Rectangle, len(marketData)),
+		bars2030: make([]*canvas.Rectangle, len(marketData)),
+		values:   make([]*widget.Label, len(marketData)),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -90,175 +88,82 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
-	m.raster = canvas.NewRaster(m.generateBars)
-
-	m.titleText = canvas.NewText("MARKET OPPORTUNITY ($B)", color.RGBA{0, 212, 255, 255})
-	m.titleText.TextSize = 13
-	m.titleText.TextStyle = fyne.TextStyle{Bold: true}
-
-	m.totalText = canvas.NewText("$711B by 2030", color.RGBA{0, 212, 255, 255})
-	m.totalText.TextSize = 14
+	m.totalText = canvas.NewText("$721B by 2030", color.RGBA{0, 212, 255, 255})
+	m.totalText.TextSize = 12
 	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
 
-	m.subtextLine1 = canvas.NewText("FeCIM can", color.RGBA{150, 150, 150, 255})
-	m.subtextLine1.TextSize = 10
-
-	m.subtextLine2 = canvas.NewText("address ALL", color.RGBA{100, 200, 150, 255})
-	m.subtextLine2.TextSize = 10
-
-	m.yearLabels[0] = canvas.NewText("2025", color.RGBA{150, 150, 150, 255})
-	m.yearLabels[0].TextSize = 10
-	m.yearLabels[1] = canvas.NewText("2030", color.RGBA{200, 200, 200, 255})
-	m.yearLabels[1].TextSize = 10
+	var segmentWidgets []fyne.CanvasObject
+	maxVal := float32(450.0)
+	barHeight := float32(50)
 
 	for i, seg := range marketData {
-		m.segLabels[i] = canvas.NewText(seg.Name, color.RGBA{180, 180, 180, 255})
-		m.segLabels[i].TextSize = 9
+		shortName := seg.Name
+		if len(shortName) > 6 {
+			shortName = shortName[:6]
+		}
+		segLabel := widget.NewLabel(shortName)
+
+		darkColor := color.RGBA{seg.Color.R / 2, seg.Color.G / 2, seg.Color.B / 2, 255}
+		m.bars2025[i] = canvas.NewRectangle(darkColor)
+		m.bars2025[i].SetMinSize(fyne.NewSize(15, barHeight*float32(seg.Y2025)/maxVal))
+
+		m.bars2030[i] = canvas.NewRectangle(seg.Color)
+		m.bars2030[i].SetMinSize(fyne.NewSize(15, barHeight*float32(seg.Y2030)/maxVal))
+
+		m.values[i] = widget.NewLabel(fmt.Sprintf("$%.0fB", seg.Y2030))
+
+		barPair := container.NewHBox(m.bars2025[i], m.bars2030[i])
+		segCol := container.NewVBox(segLabel, barPair, m.values[i])
+		segmentWidgets = append(segmentWidgets, segCol)
 	}
 
-	return &marketChartRenderer{widget: m}
+	barsRow := container.NewHBox(segmentWidgets...)
+	m.container = container.NewVBox(container.NewCenter(m.totalText), barsRow)
+	return widget.NewSimpleRenderer(m.container)
 }
 
-type marketChartRenderer struct {
-	widget *MarketOpportunityChart
-}
+// Refresh updates the widget display.
+func (m *MarketOpportunityChart) Refresh() {
+	m.mu.RLock()
+	progress := m.animProgress
+	pulsePhase := m.pulsePhase
+	m.mu.RUnlock()
 
-func (r *marketChartRenderer) MinSize() fyne.Size {
-	return r.widget.minSize
-}
-
-func (r *marketChartRenderer) Layout(size fyne.Size) {
-	r.widget.raster.Resize(size)
-
-	// Title at top center
-	r.widget.titleText.Move(fyne.NewPos(size.Width/2-100, 5))
-
-	// Total and subtext on left
-	r.widget.totalText.Move(fyne.NewPos(10, size.Height/2-10))
-	r.widget.subtextLine1.Move(fyne.NewPos(15, size.Height/2+15))
-	r.widget.subtextLine2.Move(fyne.NewPos(15, size.Height/2+30))
-
-	// Year labels at bottom
-	chartStartX := float32(100)
-	chartWidth := size.Width - 120
-	r.widget.yearLabels[0].Move(fyne.NewPos(chartStartX+10, size.Height-20))
-	r.widget.yearLabels[1].Move(fyne.NewPos(chartStartX+chartWidth-40, size.Height-20))
-
-	// Segment labels
-	barGroupWidth := chartWidth / float32(len(marketData))
-	for i := range marketData {
-		r.widget.segLabels[i].Move(fyne.NewPos(chartStartX+float32(i)*barGroupWidth+5, size.Height-35))
+	if m.totalText == nil {
+		return
 	}
-}
 
-func (r *marketChartRenderer) Refresh() {
-	r.widget.mu.RLock()
-	progress := r.widget.animProgress
-	pulsePhase := r.widget.pulsePhase
-	r.widget.mu.RUnlock()
-
-	// Pulse total text
+	// Pulse total text when done
 	if progress >= 1.0 {
 		pulse := 0.7 + math.Sin(pulsePhase)*0.3
-		r.widget.totalText.Color = color.RGBA{
+		m.totalText.Color = color.RGBA{
 			0,
 			uint8(212 * pulse),
 			uint8(255 * pulse),
 			255,
 		}
 	} else {
-		r.widget.totalText.Color = color.RGBA{0, 0, 0, 0} // Hidden until done
+		m.totalText.Color = color.RGBA{0, 150, 200, 255}
 	}
 
-	r.widget.raster.Refresh()
-	canvas.Refresh(r.widget.totalText)
-}
-
-func (r *marketChartRenderer) Objects() []fyne.CanvasObject {
-	objects := []fyne.CanvasObject{
-		r.widget.raster,
-		r.widget.titleText,
-		r.widget.totalText,
-		r.widget.subtextLine1,
-		r.widget.subtextLine2,
-	}
-	for _, lbl := range r.widget.yearLabels {
-		objects = append(objects, lbl)
-	}
-	for _, lbl := range r.widget.segLabels {
-		objects = append(objects, lbl)
-	}
-	return objects
-}
-
-func (r *marketChartRenderer) Destroy() {}
-
-// generateBars creates just the bar graphics.
-func (m *MarketOpportunityChart) generateBars(w, h int) image.Image {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-
-	bgColor := color.RGBA{25, 35, 55, 255}
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			img.Set(x, y, bgColor)
-		}
-	}
-
-	if w < 200 || h < 100 {
-		return img
-	}
-
-	m.mu.RLock()
-	progress := m.animProgress
-	m.mu.RUnlock()
-
-	labelWidth := 100
-	chartWidth := w - labelWidth - 20
-	barGroupWidth := chartWidth / len(marketData)
-	maxVal := 450.0
-
-	chartStartX := labelWidth
-	chartStartY := 30
-	chartHeight := h - chartStartY - 45
+	// Update bar heights based on progress
+	maxVal := float32(450.0)
+	barHeight := float32(80)
 
 	for i, seg := range marketData {
-		groupX := chartStartX + i*barGroupWidth
+		bar2025Height := barHeight * float32(seg.Y2025) / maxVal * float32(progress)
+		m.bars2025[i].SetMinSize(fyne.NewSize(25, max(2, bar2025Height)))
 
-		bar2025Height := int(float64(chartHeight) * (seg.Y2025 / maxVal) * progress)
-		bar2025X := groupX + 10
-		bar2025Y := chartStartY + chartHeight - bar2025Height
-		barWidth := (barGroupWidth - 30) / 2
+		bar2030Height := barHeight * float32(seg.Y2030) / maxVal * float32(progress)
+		m.bars2030[i].SetMinSize(fyne.NewSize(25, max(2, bar2030Height)))
 
-		darkColor := color.RGBA{seg.Color.R / 2, seg.Color.G / 2, seg.Color.B / 2, 255}
-		for dy := 0; dy < bar2025Height; dy++ {
-			for dx := 0; dx < barWidth; dx++ {
-				img.Set(bar2025X+dx, bar2025Y+dy, darkColor)
-			}
-		}
+		m.values[i].SetText(fmt.Sprintf("$%.0fB", seg.Y2030*progress))
 
-		bar2030Height := int(float64(chartHeight) * (seg.Y2030 / maxVal) * progress)
-		bar2030X := groupX + 10 + barWidth + 5
-		bar2030Y := chartStartY + chartHeight - bar2030Height
-
-		for dy := 0; dy < bar2030Height; dy++ {
-			for dx := 0; dx < barWidth; dx++ {
-				img.Set(bar2030X+dx, bar2030Y+dy, seg.Color)
-			}
-		}
-
-		// Growth arrow
-		if bar2025Height > 0 && bar2030Height > 0 {
-			arrowColor := color.RGBA{100, 255, 150, 200}
-			for ay := bar2025Y; ay > bar2030Y; ay -= 3 {
-				img.Set(bar2025X+barWidth/2, ay, arrowColor)
-			}
-			for ax := -3; ax <= 3; ax++ {
-				img.Set(bar2030X+barWidth/2+ax, bar2030Y+5, arrowColor)
-			}
-		}
+		canvas.Refresh(m.bars2025[i])
+		canvas.Refresh(m.bars2030[i])
 	}
 
-	return img
+	canvas.Refresh(m.totalText)
 }
 
 // Competitor represents a competitor in the matrix.
@@ -293,17 +198,17 @@ func NewCompetitiveMatrix() *CompetitiveMatrix {
 
 // MinSize returns minimum size.
 func (c *CompetitiveMatrix) MinSize() fyne.Size {
-	return fyne.NewSize(400, 160)
+	return fyne.NewSize(350, 130)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	header := container.NewGridWithColumns(5,
-		widget.NewLabelWithStyle("Technology", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Energy/MAC", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("In-Memory", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("CMOS", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Scalable", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Tech"),
+		widget.NewLabel("Energy"),
+		widget.NewLabel("Mem"),
+		widget.NewLabel("CMOS"),
+		widget.NewLabel("Scale"),
 	)
 
 	rows := container.NewVBox()
@@ -312,12 +217,9 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		if comp.Highlight {
 			nameLabel.TextStyle = fyne.TextStyle{Bold: true}
 		}
-
-		energyLabel := widget.NewLabel(comp.Energy)
-
 		row := container.NewGridWithColumns(5,
 			nameLabel,
-			energyLabel,
+			widget.NewLabel(comp.Energy),
 			createStatusLabel(comp.InMemory),
 			createStatusLabel(comp.CMOS),
 			createStatusLabel(comp.Scalable),
@@ -325,19 +227,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		rows.Add(row)
 	}
 
-	disclaimer := widget.NewLabel("* TRL 4 - Lab validation only")
-	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
-
-	content := container.NewVBox(
-		widget.NewLabelWithStyle("Competitive Comparison", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
-		header,
-		widget.NewSeparator(),
-		rows,
-		widget.NewSeparator(),
-		disclaimer,
-	)
-
+	content := container.NewVBox(header, rows)
 	return widget.NewSimpleRenderer(content)
 }
 

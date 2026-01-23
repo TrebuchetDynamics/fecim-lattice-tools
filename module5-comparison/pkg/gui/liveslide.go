@@ -346,17 +346,19 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 		title = "Energy Comparison"
 		if mode == PresentationModeInvestor {
 			content = "THE HEADLINE\n\n" +
-				"100× less energy\n" +
-				"than current GPUs\n\n" +
+				"1000× less energy\n" +
+				"than current CPUs\n" +
+				"100× less than GPUs\n\n" +
 				"= 90% cost reduction\n" +
 				"= 10× more inference\n" +
 				"= same power budget"
 		} else {
 			content = "ENERGY PER MAC\n\n" +
-				"CPU + DRAM: ~1000 fJ\n" +
-				"GPU + HBM: ~100 fJ\n" +
-				"FeCIM: ~1-10 fJ*\n\n" +
-				"* TRL 4 claims"
+				"CPU + DRAM: 1000 pJ\n" +
+				"GPU + HBM: 100 pJ\n" +
+				"FeCIM: ~1 pJ*\n\n" +
+				"* TRL 4 claims\n" +
+				"(1 pJ = 1000 fJ)"
 		}
 
 	case AutoDemoPhaseMarket:

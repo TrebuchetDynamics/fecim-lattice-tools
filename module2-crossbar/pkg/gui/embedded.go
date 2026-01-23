@@ -83,7 +83,12 @@ func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindo
 
 // Start initializes anything that needs to run after UI is visible
 func (e *EmbeddedCrossbarApp) Start() {
-	// Nothing to start for crossbar demo - it's event-driven
+	// Auto-run MVM once on first visit to populate all analysis data
+	if !e.hasRunInitialMVM {
+		e.hasRunInitialMVM = true
+		// Run enhanced MVM to populate IR drop, sneak path, and other analysis
+		e.runEnhancedMVM()
+	}
 }
 
 // Stop cleans up any running processes

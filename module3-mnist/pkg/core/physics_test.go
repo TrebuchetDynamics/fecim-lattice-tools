@@ -306,6 +306,64 @@ func TestEnergyCalculation(t *testing.T) {
 		result.EnergyUsed, expectedMACs, result.EnergyUsed*1e6/float64(expectedMACs))
 }
 
+// TestEnergyScalesWithLevels verifies that energy changes with quantization levels.
+// More levels = more bits = higher energy per MAC.
+func TestEnergyScalesWithLevels(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize weights
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = 0.1
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = 0.1
+		}
+	}
+
+	input := make([]float64, 784)
+	for i := range input {
+		input[i] = 0.5
+	}
+
+	// Test energy at different levels
+	levelsToTest := []int{2, 8, 16, 30}
+	var prevEnergy float64
+
+	for _, levels := range levelsToTest {
+		net.SetNumLevels(levels)
+		result := net.Infer(input)
+
+		t.Logf("Levels=%2d: Energy=%.4f µJ (%.2f fJ/MAC)",
+			levels, result.EnergyUsed, result.EnergyUsed*1e6/101632)
+
+		// Energy should increase with more levels
+		if prevEnergy > 0 && result.EnergyUsed <= prevEnergy {
+			t.Errorf("Energy should increase with more levels: %d levels (%.4f µJ) <= previous (%.4f µJ)",
+				levels, result.EnergyUsed, prevEnergy)
+		}
+		prevEnergy = result.EnergyUsed
+	}
+
+	// Verify 30-level is about 5x more energy than 2-level
+	// (log2(30) ≈ 4.9 bits vs log2(2) = 1 bit)
+	net.SetNumLevels(2)
+	result2 := net.Infer(input)
+	net.SetNumLevels(30)
+	result30 := net.Infer(input)
+
+	ratio := result30.EnergyUsed / result2.EnergyUsed
+	expectedRatio := 4.9 // log2(30) / log2(2)
+
+	if ratio < expectedRatio*0.8 || ratio > expectedRatio*1.2 {
+		t.Errorf("Energy ratio 30/2 levels = %.2f, expected ~%.2f", ratio, expectedRatio)
+	}
+
+	t.Logf("Energy ratio (30 levels / 2 levels) = %.2fx (expected ~%.1fx)", ratio, expectedRatio)
+}
+
 // =============================================================================
 // DUAL-MODE INFERENCE TESTS
 // =============================================================================

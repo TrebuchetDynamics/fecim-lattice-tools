@@ -119,15 +119,18 @@ type CircuitsApp struct {
 
 	// Tab-specific GUI components
 	// Tab 1: Write
-	writeRowSelect    *widget.Select
-	writeColSelect    *widget.Select
-	writeLevelSlider  *widget.Slider
-	writeLevelLabel   *widget.Label
-	writeArrayCanvas  *canvas.Raster
-	writeDataPath     *fyne.Container
-	writePulseCanvas  *canvas.Raster
-	writeMappingLabel *widget.Label
-	writeStatusLabel  *widget.Label
+	writeRowSelect       *widget.Select
+	writeColSelect       *widget.Select
+	writeLevelSlider     *widget.Slider
+	writeLevelLabel      *widget.Label
+	writeArrayCanvas     *canvas.Raster
+	writeDataPath        *fyne.Container
+	writeDigitalLabel    *widget.Label // Label for digital box value
+	writeDACLabel        *widget.Label // Label for DAC box value
+	writeFeFETLabel      *widget.Label // Label for FeFET box value
+	writePulseCanvas     *canvas.Raster
+	writeMappingLabel    *widget.Label
+	writeStatusLabel     *widget.Label
 
 	// Tab 2: Read
 	readRowSelect     *widget.Select
@@ -541,10 +544,14 @@ func (ca *CircuitsApp) createWriteCellSection() fyne.CanvasObject {
 }
 
 func (ca *CircuitsApp) createWriteDataPathSection() fyne.CanvasObject {
-	// Create visual boxes for the data path
-	digitalBox := ca.createLabeledBox("DIGITAL", "Level: --", colorPrimary)
-	dacBox := ca.createLabeledBox("DAC", "5-bit", colorDAC)
-	fefetBox := ca.createLabeledBox("FeFET", "Cell --,--", colorArrayCell)
+	// Create visual boxes for the data path with stored label references
+	ca.writeDigitalLabel = widget.NewLabel("Level:15\n01111")
+	ca.writeDACLabel = widget.NewLabel("3.55V")
+	ca.writeFeFETLabel = widget.NewLabel("[3,5]\n52.2µS")
+
+	digitalBox := ca.createLabeledBoxWithLabel("DIGITAL", ca.writeDigitalLabel, colorPrimary)
+	dacBox := ca.createLabeledBoxWithLabel("DAC", ca.writeDACLabel, colorDAC)
+	fefetBox := ca.createLabeledBoxWithLabel("FeFET", ca.writeFeFETLabel, colorArrayCell)
 
 	arrow1 := widget.NewLabel("→")
 	arrow2 := widget.NewLabel("→")
@@ -579,6 +586,22 @@ func (ca *CircuitsApp) createLabeledBox(title, value string, bgColor color.Color
 	return container.NewStack(bg, container.NewCenter(content))
 }
 
+func (ca *CircuitsApp) createLabeledBoxWithLabel(title string, valueLbl *widget.Label, bgColor color.Color) *fyne.Container {
+	titleLbl := widget.NewLabel(title)
+	titleLbl.TextStyle = fyne.TextStyle{Bold: true}
+	titleLbl.Alignment = fyne.TextAlignCenter
+
+	valueLbl.Alignment = fyne.TextAlignCenter
+
+	bg := canvas.NewRectangle(bgColor)
+	bg.SetMinSize(fyne.NewSize(100, 60))
+	bg.CornerRadius = 5
+
+	content := container.NewVBox(titleLbl, valueLbl)
+
+	return container.NewStack(bg, container.NewCenter(content))
+}
+
 func (ca *CircuitsApp) updateWriteDataPath() {
 	ca.mu.RLock()
 	level := ca.targetLevel
@@ -598,46 +621,15 @@ func (ca *CircuitsApp) updateWriteDataPath() {
 	// Binary representation
 	binary := fmt.Sprintf("%05b", level)
 
-	// Update the data path display
-	if ca.writeDataPath != nil && len(ca.writeDataPath.Objects) >= 5 {
-		// Update digital box
-		if digitalBox, ok := ca.writeDataPath.Objects[0].(*fyne.Container); ok {
-			if stack, ok := digitalBox.Objects[1].(*fyne.Container); ok {
-				if vbox, ok := stack.Objects[0].(*fyne.Container); ok {
-					if len(vbox.Objects) >= 2 {
-						if lbl, ok := vbox.Objects[1].(*widget.Label); ok {
-							lbl.SetText(fmt.Sprintf("Level:%d\n%s", level, binary))
-						}
-					}
-				}
-			}
-		}
-
-		// Update DAC box
-		if dacBox, ok := ca.writeDataPath.Objects[2].(*fyne.Container); ok {
-			if stack, ok := dacBox.Objects[1].(*fyne.Container); ok {
-				if vbox, ok := stack.Objects[0].(*fyne.Container); ok {
-					if len(vbox.Objects) >= 2 {
-						if lbl, ok := vbox.Objects[1].(*widget.Label); ok {
-							lbl.SetText(fmt.Sprintf("%.2fV", voltage))
-						}
-					}
-				}
-			}
-		}
-
-		// Update FeFET box
-		if fefetBox, ok := ca.writeDataPath.Objects[4].(*fyne.Container); ok {
-			if stack, ok := fefetBox.Objects[1].(*fyne.Container); ok {
-				if vbox, ok := stack.Objects[0].(*fyne.Container); ok {
-					if len(vbox.Objects) >= 2 {
-						if lbl, ok := vbox.Objects[1].(*widget.Label); ok {
-							lbl.SetText(fmt.Sprintf("[%d,%d]\n%.1fµS", row, col, conductance))
-						}
-					}
-				}
-			}
-		}
+	// Update the data path display using direct label references
+	if ca.writeDigitalLabel != nil {
+		ca.writeDigitalLabel.SetText(fmt.Sprintf("Level:%d\n%s", level, binary))
+	}
+	if ca.writeDACLabel != nil {
+		ca.writeDACLabel.SetText(fmt.Sprintf("%.2fV", voltage))
+	}
+	if ca.writeFeFETLabel != nil {
+		ca.writeFeFETLabel.SetText(fmt.Sprintf("[%d,%d]\n%.1fµS", row, col, conductance))
 	}
 }
 
@@ -764,7 +756,7 @@ func (ca *CircuitsApp) refreshWritePulse() {
 
 func (ca *CircuitsApp) createWriteArraySection() fyne.CanvasObject {
 	ca.writeArrayCanvas = canvas.NewRaster(ca.drawWriteArray)
-	ca.writeArrayCanvas.SetMinSize(fyne.NewSize(400, 300))
+	ca.writeArrayCanvas.SetMinSize(fyne.NewSize(500, 350))
 	return ca.writeArrayCanvas
 }
 
@@ -792,23 +784,32 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 		return img
 	}
 
-	// Calculate cell size
+	// Calculate cell size (use square cells like crossbar module)
 	margin := 40
 	cellW := (w - 2*margin) / cols
 	cellH := (h - 2*margin) / rows
+	cellSize := cellW
+	if cellH < cellSize {
+		cellSize = cellH
+	}
+	if cellSize > 40 {
+		cellSize = 40
+	}
+	if cellSize < 8 {
+		cellSize = 8
+	}
 
-	if cellW > 40 {
-		cellW = 40
-	}
-	if cellH > 40 {
-		cellH = 40
-	}
+	// Center the grid in the available space
+	gridW := cols * cellSize
+	gridH := rows * cellSize
+	offsetX := (w - gridW) / 2
+	offsetY := (h - gridH) / 2
 
 	// Draw cells
 	for r := 0; r < rows && r < len(weights); r++ {
 		for c := 0; c < cols && c < len(weights[r]); c++ {
-			x0 := margin + c*cellW
-			y0 := margin + r*cellH
+			x0 := offsetX + c*cellSize
+			y0 := offsetY + r*cellSize
 
 			level := weights[r][c]
 			intensity := float64(level) / float64(levels-1)
@@ -824,7 +825,7 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 			}
 
 			cellColor := color.RGBA{cr, cg, cb, 255}
-			drawRect(img, x0+2, y0+2, cellW-4, cellH-4, cellColor)
+			drawRect(img, x0+2, y0+2, cellSize-4, cellSize-4, cellColor)
 		}
 	}
 
@@ -850,30 +851,63 @@ func (ca *CircuitsApp) getMappingText() string {
 	target := ca.targetLevel
 	ca.mu.RUnlock()
 
-	text := "Level │ Voltage │ Conductance │ Resistance\n"
-	text += "──────┼─────────┼─────────────┼────────────\n"
+	text := "LEVEL-TO-VOLTAGE MAPPING TABLE\n"
+	text += "================================\n\n"
+	text += "Level   Voltage   Conductance   Resistance\n"
+	text += "-----   -------   -----------   ----------\n"
 
-	// Show a sample of levels including the target
-	sampleLevels := []int{0, levels / 4, levels / 2, target, levels - 1}
+	// Show more levels for better visibility (8 levels)
+	sampleLevels := []int{0, 4, 8, 12, 15, 20, 25, levels - 1}
+
+	// Always include target if not already present
+	hasTarget := false
+	for _, l := range sampleLevels {
+		if l == target {
+			hasTarget = true
+			break
+		}
+	}
+	if !hasTarget {
+		// Insert target in sorted position
+		newLevels := make([]int, 0, len(sampleLevels)+1)
+		inserted := false
+		for _, l := range sampleLevels {
+			if !inserted && target < l {
+				newLevels = append(newLevels, target)
+				inserted = true
+			}
+			newLevels = append(newLevels, l)
+		}
+		if !inserted {
+			newLevels = append(newLevels, target)
+		}
+		sampleLevels = newLevels
+	}
+
 	seen := make(map[int]bool)
 
 	for _, l := range sampleLevels {
-		if seen[l] {
+		if seen[l] || l >= levels {
 			continue
 		}
 		seen[l] = true
 
 		voltage := vMin + float64(l)/float64(levels-1)*(vMax-vMin)
-		conductance := 1.0 + float64(l)/float64(levels-1)*99.0 // 1-100 µS
-		resistance := 1000.0 / conductance                     // kΩ
+		conductance := 1.0 + float64(l)/float64(levels-1)*99.0 // 1-100 uS
+		resistance := 1000.0 / conductance                     // kO
 
 		marker := "  "
 		if l == target {
-			marker = "→ "
+			marker = "> "
 		}
-		text += fmt.Sprintf("%s%3d  │ %5.2fV  │   %5.1f µS  │  %6.1f kΩ\n",
+		text += fmt.Sprintf("%s%2d      %5.2fV      %5.1f uS      %6.1f kO\n",
 			marker, l, voltage, conductance, resistance)
 	}
+
+	text += "\n================================\n"
+	text += fmt.Sprintf("TARGET: Level %d = %.2fV\n", target,
+		vMin+float64(target)/float64(levels-1)*(vMax-vMin))
+	text += fmt.Sprintf("Range: %.1fV to %.1fV (%d levels)\n", vMin, vMax, levels)
 
 	return text
 }
@@ -1139,41 +1173,99 @@ func (ca *CircuitsApp) drawReadZone(w, h int) image.Image {
 		}
 	}
 
-	margin := 50
-	plotH := h - 2*margin
-	plotW := w - 2*margin
+	marginLeft := 50
+	marginRight := 20
+	marginTop := 15
+	marginBottom := 15
+	plotH := h - marginTop - marginBottom
+	plotW := w - marginLeft - marginRight
 
-	writeZoneColor := color.RGBA{200, 50, 50, 200}
-	readZoneColor := color.RGBA{50, 150, 50, 200}
+	writeZoneColor := color.RGBA{200, 50, 50, 180}
+	readZoneColor := color.RGBA{50, 150, 50, 180}
 	threshColor := color.RGBA{255, 200, 0, 255}
 	cyanColor := color.RGBA{0, 255, 255, 255}
+	labelColor := color.RGBA{255, 255, 255, 255}
+	axisColor := color.RGBA{150, 150, 150, 255}
 
-	// Write zone (> 2V)
-	writeZoneTop := margin
-	writeZoneBottom := margin + plotH*30/100
-	drawRect(img, margin, writeZoneTop, plotW, writeZoneBottom-writeZoneTop, writeZoneColor)
+	// Y-axis voltage scale (5V at top, 0V at bottom)
+	maxVoltage := 5.0
+
+	// Helper to convert voltage to Y position
+	voltageToY := func(v float64) int {
+		return marginTop + int((maxVoltage-v)/maxVoltage*float64(plotH))
+	}
+
+	// Write zone (> 2V) - red danger zone
+	writeZoneTop := voltageToY(maxVoltage)
+	writeZoneBottom := voltageToY(2.0)
+	drawRect(img, marginLeft, writeZoneTop, plotW, writeZoneBottom-writeZoneTop, writeZoneColor)
+
+	// Transition zone (1V - 2V) - neutral
+	// (no special coloring, just background)
+
+	// Read zone (< 1V) - green safe zone
+	readZoneTop := voltageToY(1.0)
+	readZoneBottom := voltageToY(0.0)
+	drawRect(img, marginLeft, readZoneTop, plotW, readZoneBottom-readZoneTop, readZoneColor)
 
 	// Threshold line (2V)
-	thresholdY := margin + plotH*40/100
-	for x := margin; x < margin+plotW; x++ {
+	thresholdY := voltageToY(2.0)
+	for x := marginLeft; x < marginLeft+plotW; x++ {
 		for dy := -1; dy <= 1; dy++ {
-			img.Set(x, thresholdY+dy, threshColor)
+			if thresholdY+dy >= marginTop && thresholdY+dy < h-marginBottom {
+				img.Set(x, thresholdY+dy, threshColor)
+			}
 		}
 	}
 
-	// Read zone (< 1V)
-	readZoneTop := margin + plotH*60/100
-	readZoneBottom := h - margin
-	drawRect(img, margin, readZoneTop, plotW, readZoneBottom-readZoneTop, readZoneColor)
+	// Zone labels (right side of zones)
+	drawSimpleText(img, "WRITE ZONE", marginLeft+10, writeZoneTop+15, labelColor)
+	drawSimpleText(img, "> 2.0V DANGER", marginLeft+10, writeZoneTop+28, color.RGBA{255, 150, 150, 255})
 
-	// Current read voltage indicator
-	readY := h - margin - int(readV/5.0*float64(plotH))
-	for x := margin; x < margin+plotW; x++ {
+	drawSimpleText(img, "2.0V THRESHOLD", marginLeft+plotW-110, thresholdY-10, threshColor)
+
+	drawSimpleText(img, "READ ZONE", marginLeft+10, readZoneTop+15, labelColor)
+	drawSimpleText(img, "< 1.0V SAFE", marginLeft+10, readZoneTop+28, color.RGBA{150, 255, 150, 255})
+
+	// Y-axis with voltage scale
+	for y := marginTop; y <= h-marginBottom; y++ {
+		img.Set(marginLeft-1, y, axisColor)
+	}
+
+	// Voltage labels on Y-axis
+	voltageMarkers := []float64{0.0, 1.0, 2.0, 3.0, 4.0, 5.0}
+	for _, v := range voltageMarkers {
+		y := voltageToY(v)
+		// Tick mark
+		for dx := 0; dx < 5; dx++ {
+			img.Set(marginLeft-5+dx, y, axisColor)
+		}
+		// Voltage label
+		label := fmt.Sprintf("%.1fV", v)
+		drawSimpleText(img, label, 5, y-3, axisColor)
+	}
+
+	// Current read voltage indicator line
+	readY := voltageToY(readV)
+	for x := marginLeft; x < marginLeft+plotW; x++ {
 		for dy := -2; dy <= 2; dy++ {
 			y := readY + dy
-			if y >= margin && y < h-margin {
+			if y >= marginTop && y < h-marginBottom {
 				img.Set(x, y, cyanColor)
 			}
+		}
+	}
+
+	// Current voltage value label next to indicator
+	voltageLabel := fmt.Sprintf("%.2fV", readV)
+	drawSimpleText(img, voltageLabel, marginLeft+plotW-50, readY-10, cyanColor)
+
+	// Arrow indicator on left side
+	for i := 0; i < 8; i++ {
+		img.Set(marginLeft-8+i, readY, cyanColor)
+		if i < 4 {
+			img.Set(marginLeft-8+i, readY-i, cyanColor)
+			img.Set(marginLeft-8+i, readY+i, cyanColor)
 		}
 	}
 
@@ -1452,7 +1544,7 @@ func (ca *CircuitsApp) updateComputeInputs() {
 
 func (ca *CircuitsApp) createComputeVizSection() fyne.CanvasObject {
 	ca.computeArrayCanvas = canvas.NewRaster(ca.drawComputeViz)
-	ca.computeArrayCanvas.SetMinSize(fyne.NewSize(500, 300))
+	ca.computeArrayCanvas.SetMinSize(fyne.NewSize(450, 350))
 	return ca.computeArrayCanvas
 }
 
@@ -1478,32 +1570,55 @@ func (ca *CircuitsApp) drawComputeViz(w, h int) image.Image {
 	dacColor := color.RGBA{150, 100, 200, 255}
 	adcColor := color.RGBA{100, 200, 150, 255}
 
-	// DACs on left
-	dacX := 30
-	dacW := 60
-	dacSpacing := (h - 40) / cols
-
-	// Array in center
-	arrayX := dacX + dacW + 40
-	arrayW := 200
-	arrayH := h - 80
-	cellW := arrayW / cols
-	cellH := arrayH / rows
-
-	// ADCs on right
-	adcX := arrayX + arrayW + 40
-
-	// Draw DACs
-	for i := 0; i < cols && i < len(inputs); i++ {
-		y := 30 + i*dacSpacing
-		drawRect(img, dacX, y, dacW, 30, dacColor)
+	// Calculate square cell size for array (use min of both dimensions)
+	maxArrayW := w - 260 // Leave space for DACs and ADCs
+	maxArrayH := h - 80
+	cellW := maxArrayW / cols
+	cellH := maxArrayH / rows
+	cellSize := cellW
+	if cellH < cellSize {
+		cellSize = cellH
+	}
+	if cellSize > 30 {
+		cellSize = 30
+	}
+	if cellSize < 12 {
+		cellSize = 12
 	}
 
-	// Draw array
+	// Array dimensions
+	arrayW := cols * cellSize
+	arrayH := rows * cellSize
+
+	// Center layout horizontally
+	totalW := 60 + 20 + arrayW + 20 + 60 // DAC + gap + array + gap + ADC
+	startX := (w - totalW) / 2
+	if startX < 10 {
+		startX = 10
+	}
+
+	dacX := startX
+	dacW := 60
+	arrayX := dacX + dacW + 20
+	adcX := arrayX + arrayW + 20
+
+	// Vertical centering
+	arrayY := (h - arrayH) / 2
+	if arrayY < 30 {
+		arrayY = 30
+	}
+
+	// Draw DACs (one per column input)
+	for i := 0; i < cols && i < len(inputs); i++ {
+		y := arrayY + i*cellSize + (cellSize-24)/2
+		drawRect(img, dacX, y, dacW, 24, dacColor)
+	}
+
+	// Draw array with square cells
 	for r := 0; r < rows && r < len(weights); r++ {
 		for c := 0; c < cols && c < len(weights[r]); c++ {
-			x0 := arrayX + c*cellW
-			y0 := 40 + r*cellH
+			x0 := arrayX + c*cellSize
+			y0 := arrayY + r*cellSize
 
 			level := weights[r][c]
 			intensity := float64(level) / 29.0
@@ -1513,14 +1628,14 @@ func (ca *CircuitsApp) drawComputeViz(w, h int) image.Image {
 			cb := uint8((1 - intensity) * 200)
 			cellColor := color.RGBA{cr, cg, cb, 255}
 
-			drawRect(img, x0+2, y0+2, cellW-4, cellH-4, cellColor)
+			drawRect(img, x0+2, y0+2, cellSize-4, cellSize-4, cellColor)
 		}
 	}
 
-	// Draw ADCs
+	// Draw ADCs (one per row output)
 	for i := 0; i < rows && i < len(outputs); i++ {
-		y := 40 + i*cellH
-		drawRect(img, adcX, y, 60, 30, adcColor)
+		y := arrayY + i*cellSize + (cellSize-24)/2
+		drawRect(img, adcX, y, 60, 24, adcColor)
 	}
 
 	return img
@@ -1726,6 +1841,8 @@ func (ca *CircuitsApp) createCompArchSection() fyne.CanvasObject {
 func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
+	labelColor := color.RGBA{255, 255, 255, 255}
+	arrowColor := color.RGBA{255, 200, 100, 255}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -1735,19 +1852,64 @@ func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	}
 
 	sectionH := h / 3
+	boxW := 80
+	boxH := sectionH - 25
 
-	// CPU + DRAM section
-	drawRect(img, 20, 10, 80, sectionH-20, colorCPU)
-	drawRect(img, 150, 10, 80, sectionH-20, colorCPU)
+	// Row 1: CPU + DRAM section
+	cpuX, cpuY := 30, 12
+	dramX := cpuX + boxW + 70
 
-	// GPU + HBM section
-	y := sectionH
-	drawRect(img, 20, y+10, 80, sectionH-20, colorGPU)
-	drawRect(img, 150, y+10, 80, sectionH-20, colorGPU)
+	drawRect(img, cpuX, cpuY, boxW, boxH, colorCPU)
+	drawSimpleText(img, "CPU", cpuX+25, cpuY+boxH/2-3, labelColor)
 
-	// FeFET CIM section
-	y = 2 * sectionH
-	drawRect(img, 20, y+10, 210, sectionH-20, colorFeFET)
+	drawRect(img, dramX, cpuY, boxW, boxH, color.RGBA{180, 80, 80, 255})
+	drawSimpleText(img, "DRAM", dramX+20, cpuY+boxH/2-3, labelColor)
+
+	// Arrow between CPU and DRAM
+	arrowY := cpuY + boxH/2
+	for x := cpuX + boxW + 5; x < dramX-5; x++ {
+		img.Set(x, arrowY, arrowColor)
+		img.Set(x, arrowY-1, arrowColor)
+	}
+	// Arrowhead
+	for i := 0; i < 6; i++ {
+		img.Set(dramX-5-i, arrowY-i, arrowColor)
+		img.Set(dramX-5-i, arrowY+i, arrowColor)
+	}
+	drawSimpleText(img, "Data Bus", cpuX+boxW+15, arrowY-12, arrowColor)
+
+	// Row 2: GPU + HBM section
+	gpuY := sectionH + 8
+	drawRect(img, cpuX, gpuY, boxW, boxH, colorGPU)
+	drawSimpleText(img, "GPU", cpuX+25, gpuY+boxH/2-3, labelColor)
+
+	drawRect(img, dramX, gpuY, boxW, boxH, color.RGBA{80, 180, 80, 255})
+	drawSimpleText(img, "HBM", dramX+25, gpuY+boxH/2-3, labelColor)
+
+	// Arrow between GPU and HBM
+	arrowY = gpuY + boxH/2
+	for x := cpuX + boxW + 5; x < dramX-5; x++ {
+		img.Set(x, arrowY, arrowColor)
+		img.Set(x, arrowY-1, arrowColor)
+	}
+	for i := 0; i < 6; i++ {
+		img.Set(dramX-5-i, arrowY-i, arrowColor)
+		img.Set(dramX-5-i, arrowY+i, arrowColor)
+	}
+	drawSimpleText(img, "Data Bus", cpuX+boxW+15, arrowY-12, arrowColor)
+
+	// Row 3: FeFET CIM section (unified)
+	fefetY := 2*sectionH + 5
+	fefetW := dramX + boxW - cpuX
+	drawRect(img, cpuX, fefetY, fefetW, boxH, colorFeFET)
+	drawSimpleText(img, "FeFET CIM", cpuX+fefetW/2-35, fefetY+boxH/2-10, labelColor)
+	drawSimpleText(img, "No Data Movement", cpuX+fefetW/2-55, fefetY+boxH/2+5, color.RGBA{0, 255, 200, 255})
+
+	// Right side labels
+	rightX := w - 90
+	drawSimpleText(img, "Von Neumann", rightX, cpuY+boxH/2-3, colorCPU)
+	drawSimpleText(img, "Near Memory", rightX, gpuY+boxH/2-3, colorGPU)
+	drawSimpleText(img, "In Memory", rightX, fefetY+boxH/2-3, colorFeFET)
 
 	return img
 }
@@ -1762,6 +1924,8 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
 	axisColor := color.RGBA{200, 200, 200, 255}
+	labelColor := color.RGBA{255, 255, 255, 255}
+	valueColor := color.RGBA{200, 200, 150, 255}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -1770,28 +1934,67 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 		}
 	}
 
-	margin := 60
+	marginLeft := 60
+	marginRight := 80
 	barH := 25
-	spacing := 40
+	spacing := 35
+	maxBarW := w - marginLeft - marginRight
 
 	// CPU bar (500ns - full width)
-	drawRect(img, margin, 20, w-margin-50, barH, colorCPU)
+	cpuY := 15
+	cpuW := maxBarW
+	drawSimpleText(img, "CPU", 10, cpuY+8, colorCPU)
+	drawRect(img, marginLeft, cpuY, cpuW, barH, colorCPU)
+	drawSimpleText(img, "500ns", marginLeft+cpuW+5, cpuY+8, valueColor)
 
 	// GPU bar (50ns - 10% width)
-	gpuW := (w - margin - 50) * 50 / 500
-	drawRect(img, margin, 20+spacing, gpuW, barH, colorGPU)
+	gpuY := cpuY + spacing
+	gpuW := maxBarW * 50 / 500
+	if gpuW < 30 {
+		gpuW = 30
+	}
+	drawSimpleText(img, "GPU", 10, gpuY+8, colorGPU)
+	drawRect(img, marginLeft, gpuY, gpuW, barH, colorGPU)
+	drawSimpleText(img, "50ns", marginLeft+gpuW+5, gpuY+8, valueColor)
 
 	// FeFET bar (20ns - 4% width)
-	fefetW := (w - margin - 50) * 20 / 500
-	if fefetW < 40 {
-		fefetW = 40
+	fefetY := gpuY + spacing
+	fefetW := maxBarW * 20 / 500
+	if fefetW < 20 {
+		fefetW = 20
 	}
-	drawRect(img, margin, 20+2*spacing, fefetW, barH, colorFeFET)
+	drawSimpleText(img, "FeFET", 5, fefetY+8, colorFeFET)
+	drawRect(img, marginLeft, fefetY, fefetW, barH, colorFeFET)
+	drawSimpleText(img, "20ns", marginLeft+fefetW+5, fefetY+8, valueColor)
 
-	// Axis
-	axisY := h - 20
-	for x := margin; x < w-50; x++ {
+	// Speedup annotation
+	drawSimpleText(img, "25x faster!", w-80, fefetY+8, color.RGBA{0, 255, 200, 255})
+
+	// X-axis
+	axisY := h - 25
+	for x := marginLeft; x < w-marginRight; x++ {
 		img.Set(x, axisY, axisColor)
+	}
+
+	// Axis label
+	drawSimpleText(img, "Time (ns)", w/2-30, axisY+10, labelColor)
+
+	// Scale markers
+	scaleMarkers := []struct {
+		pct   int
+		label string
+	}{
+		{0, "0"},
+		{50, "250"},
+		{100, "500"},
+	}
+
+	for _, sm := range scaleMarkers {
+		x := marginLeft + sm.pct*maxBarW/100
+		for dy := 0; dy < 5; dy++ {
+			img.Set(x, axisY+dy, axisColor)
+		}
+		drawSimpleText(img, sm.label, x-len(sm.label)*3, axisY+10, axisColor)
 	}
 
 	return img
@@ -1806,6 +2009,9 @@ func (ca *CircuitsApp) createCompEnergySection() fyne.CanvasObject {
 func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
+	axisColor := color.RGBA{200, 200, 200, 255}
+	labelColor := color.RGBA{255, 255, 255, 255}
+	valueColor := color.RGBA{200, 200, 150, 255}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -1814,21 +2020,53 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 		}
 	}
 
-	margin := 60
-	barH := 30
-	spacing := 50
+	marginLeft := 60
+	marginRight := 100
+	barH := 28
+	spacing := 45
+	maxBarW := w - marginLeft - marginRight
 
-	// CPU bar (1000 pJ - full width)
-	cpuW := w - margin - 50
-	drawRect(img, margin, 20, cpuW, barH, colorCPU)
+	// CPU bar (64,000 pJ - full width)
+	cpuY := 20
+	cpuW := maxBarW
+	drawSimpleText(img, "CPU", 10, cpuY+8, colorCPU)
+	drawRect(img, marginLeft, cpuY, cpuW, barH, colorCPU)
+	drawSimpleText(img, "64000 pJ", marginLeft+cpuW+5, cpuY+8, valueColor)
 
-	// GPU bar (100 pJ - 10% width)
-	gpuW := cpuW * 100 / 1000
-	drawRect(img, margin, 20+spacing, gpuW, barH, colorGPU)
+	// GPU bar (6,400 pJ - 10% width)
+	gpuY := cpuY + spacing
+	gpuW := maxBarW * 6400 / 64000
+	if gpuW < 30 {
+		gpuW = 30
+	}
+	drawSimpleText(img, "GPU", 10, gpuY+8, colorGPU)
+	drawRect(img, marginLeft, gpuY, gpuW, barH, colorGPU)
+	drawSimpleText(img, "6400 pJ", marginLeft+gpuW+5, gpuY+8, valueColor)
 
-	// FeFET bar (0.05 pJ - tiny)
-	fefetW := 20 // Minimum visible
-	drawRect(img, margin, 20+2*spacing, fefetW, barH, colorFeFET)
+	// FeFET bar (3.2 pJ - tiny, need minimum visible)
+	fefetY := gpuY + spacing
+	fefetW := maxBarW * 32 / 64000 // 3.2 pJ scaled
+	if fefetW < 8 {
+		fefetW = 8 // Minimum visible
+	}
+	drawSimpleText(img, "FeFET", 5, fefetY+8, colorFeFET)
+	drawRect(img, marginLeft, fefetY, fefetW, barH, colorFeFET)
+	drawSimpleText(img, "3.2 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
+
+	// Energy savings annotation
+	drawSimpleText(img, "20000x savings!", w-120, fefetY+8, color.RGBA{0, 255, 200, 255})
+
+	// X-axis
+	axisY := h - 30
+	for x := marginLeft; x < w-marginRight; x++ {
+		img.Set(x, axisY, axisColor)
+	}
+
+	// Axis label
+	drawSimpleText(img, "Energy per 8x8 MVM", w/2-60, axisY+12, labelColor)
+
+	// Scale note (log scale would be better but linear for illustration)
+	drawSimpleText(img, "[Linear scale - FeFET bar scaled up for visibility]", 10, h-12, color.RGBA{120, 120, 140, 255})
 
 	return img
 }
@@ -1948,6 +2186,8 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
 	cyanColor := color.RGBA{0, 255, 255, 255}
+	labelColor := color.RGBA{180, 180, 200, 255}
+	timeColor := color.RGBA{255, 200, 100, 255}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -1957,8 +2197,9 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 	}
 
 	marginLeft := 80
-	signalH := 25
-	spacing := 30
+	marginBottom := 25
+	signalH := 22
+	spacing := 27
 
 	signals := []struct {
 		name string
@@ -1972,9 +2213,17 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 		{"DONE", []int{85, 95}},
 	}
 
+	plotW := w - marginLeft - 20
+
+	// Draw signal labels on left margin
 	for i, sig := range signals {
-		y := 20 + i*spacing
-		plotW := w - marginLeft - 20
+		y := 10 + i*spacing
+		drawSimpleText(img, sig.name, 5, y+8, labelColor)
+	}
+
+	// Draw signals
+	for i, sig := range signals {
+		y := 10 + i*spacing
 		prevHigh := false
 
 		for pct := 0; pct <= 100; pct++ {
@@ -2008,6 +2257,42 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 		}
 	}
 
+	// Draw time axis at bottom
+	axisY := h - marginBottom
+	axisColor := color.RGBA{150, 150, 150, 255}
+	for x := marginLeft; x < w-20; x++ {
+		img.Set(x, axisY, axisColor)
+	}
+
+	// Time markers: 0ns, 17ns, 35ns, 52ns, 70ns
+	timeMarkers := []struct {
+		pct   int
+		label string
+	}{
+		{0, "0ns"},
+		{25, "17ns"},
+		{50, "35ns"},
+		{75, "52ns"},
+		{100, "70ns"},
+	}
+
+	for _, tm := range timeMarkers {
+		x := marginLeft + tm.pct*plotW/100
+		// Draw tick mark
+		for dy := 0; dy < 5; dy++ {
+			img.Set(x, axisY+dy, axisColor)
+		}
+		// Draw label
+		labelX := x - len(tm.label)*3
+		if labelX < marginLeft {
+			labelX = marginLeft
+		}
+		drawSimpleText(img, tm.label, labelX, axisY+7, timeColor)
+	}
+
+	// Total time label
+	drawSimpleText(img, "70ns total", w-80, axisY+7, color.RGBA{0, 255, 200, 255})
+
 	return img
 }
 
@@ -2021,6 +2306,8 @@ func (ca *CircuitsApp) drawTimingRead(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
 	cyanColor := color.RGBA{0, 255, 255, 255}
+	labelColor := color.RGBA{180, 180, 200, 255}
+	timeColor := color.RGBA{255, 200, 100, 255}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -2030,13 +2317,22 @@ func (ca *CircuitsApp) drawTimingRead(w, h int) image.Image {
 	}
 
 	marginLeft := 80
-	spacing := 30
+	marginBottom := 25
+	spacing := 27
 
 	signals := []string{"CLK", "V_READ", "I_SENSE", "ADC_EN", "DATA_OUT"}
+	plotW := w - marginLeft - 20
 
+	// Draw signal labels on left margin
 	for i, name := range signals {
-		y := 20 + i*spacing
-		plotW := w - marginLeft - 20
+		y := 10 + i*spacing
+		drawSimpleText(img, name, 5, y+8, labelColor)
+	}
+
+	// Draw signals
+	for i, name := range signals {
+		y := 10 + i*spacing
+		prevLineY := -1
 
 		for pct := 0; pct <= 100; pct++ {
 			x := marginLeft + pct*plotW/100
@@ -2075,9 +2371,55 @@ func (ca *CircuitsApp) drawTimingRead(w, h int) image.Image {
 				}
 			}
 
+			// Draw vertical transition
+			if prevLineY != -1 && lineY != prevLineY {
+				minY := min(lineY, prevLineY)
+				maxY := max(lineY, prevLineY)
+				for py := minY; py <= maxY; py++ {
+					img.Set(x, py, cyanColor)
+				}
+			}
+			prevLineY = lineY
+
 			img.Set(x, lineY, cyanColor)
 		}
 	}
+
+	// Draw time axis at bottom
+	axisY := h - marginBottom
+	axisColor := color.RGBA{150, 150, 150, 255}
+	for x := marginLeft; x < w-20; x++ {
+		img.Set(x, axisY, axisColor)
+	}
+
+	// Time markers: 0ns, 5ns, 10ns, 15ns, 20ns
+	timeMarkers := []struct {
+		pct   int
+		label string
+	}{
+		{0, "0ns"},
+		{25, "5ns"},
+		{50, "10ns"},
+		{75, "15ns"},
+		{100, "20ns"},
+	}
+
+	for _, tm := range timeMarkers {
+		x := marginLeft + tm.pct*plotW/100
+		// Draw tick mark
+		for dy := 0; dy < 5; dy++ {
+			img.Set(x, axisY+dy, axisColor)
+		}
+		// Draw label
+		labelX := x - len(tm.label)*3
+		if labelX < marginLeft {
+			labelX = marginLeft
+		}
+		drawSimpleText(img, tm.label, labelX, axisY+7, timeColor)
+	}
+
+	// Total time label
+	drawSimpleText(img, "20ns total", w-80, axisY+7, color.RGBA{0, 255, 200, 255})
 
 	return img
 }
@@ -2092,6 +2434,8 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	bgColor := color.RGBA{0, 40, 80, 255}
 	cyanColor := color.RGBA{0, 255, 255, 255}
+	labelColor := color.RGBA{180, 180, 200, 255}
+	phaseColor := color.RGBA{200, 150, 255, 200}
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -2101,13 +2445,22 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 	}
 
 	marginLeft := 100
-	spacing := 30
+	marginBottom := 35
+	spacing := 25
 
 	signals := []string{"CLK", "INPUT_VALID", "DAC_ALL", "ARRAY_SETTLE", "ADC_ALL", "OUTPUT_VALID"}
+	plotW := w - marginLeft - 20
 
+	// Draw signal labels on left margin
 	for i, name := range signals {
-		y := 20 + i*spacing
-		plotW := w - marginLeft - 20
+		y := 8 + i*spacing
+		drawSimpleText(img, name, 5, y+6, labelColor)
+	}
+
+	// Draw signals
+	for i, name := range signals {
+		y := 8 + i*spacing
+		prevLineY := -1
 
 		for pct := 0; pct <= 100; pct++ {
 			x := marginLeft + pct*plotW/100
@@ -2118,43 +2471,115 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 				if (pct/8)%2 == 0 && pct < 95 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			case "INPUT_VALID":
 				if pct >= 5 && pct <= 85 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			case "DAC_ALL":
 				if pct >= 10 && pct <= 35 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			case "ARRAY_SETTLE":
 				if pct >= 35 && pct <= 60 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			case "ADC_ALL":
 				if pct >= 55 && pct <= 90 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			case "OUTPUT_VALID":
 				if pct >= 90 {
 					lineY = y + 5
 				} else {
-					lineY = y + 20
+					lineY = y + 18
 				}
 			}
+
+			// Draw vertical transition
+			if prevLineY != -1 && lineY != prevLineY {
+				minY := min(lineY, prevLineY)
+				maxY := max(lineY, prevLineY)
+				for py := minY; py <= maxY; py++ {
+					img.Set(x, py, cyanColor)
+				}
+			}
+			prevLineY = lineY
 
 			img.Set(x, lineY, cyanColor)
 		}
 	}
+
+	// Draw phase markers at bottom
+	phaseY := h - marginBottom - 8
+	phases := []struct {
+		startPct int
+		endPct   int
+		label    string
+	}{
+		{10, 35, "DAC 5ns"},
+		{35, 60, "ARRAY 5ns"},
+		{55, 90, "ADC 10ns"},
+	}
+
+	for _, phase := range phases {
+		startX := marginLeft + phase.startPct*plotW/100
+		endX := marginLeft + phase.endPct*plotW/100
+		midX := (startX + endX) / 2
+
+		// Draw phase bracket
+		for x := startX; x <= endX; x++ {
+			img.Set(x, phaseY, phaseColor)
+		}
+		// Vertical edges
+		for dy := 0; dy < 4; dy++ {
+			img.Set(startX, phaseY-dy, phaseColor)
+			img.Set(endX, phaseY-dy, phaseColor)
+		}
+
+		// Draw phase label
+		labelX := midX - len(phase.label)*3
+		drawSimpleText(img, phase.label, labelX, phaseY+3, phaseColor)
+	}
+
+	// Draw time axis at bottom
+	axisY := h - 15
+	axisColor := color.RGBA{150, 150, 150, 255}
+	for x := marginLeft; x < w-20; x++ {
+		img.Set(x, axisY, axisColor)
+	}
+
+	// Time markers: 0ns, 5ns, 10ns, 15ns, 20ns
+	timeMarkers := []struct {
+		pct   int
+		label string
+	}{
+		{0, "0ns"},
+		{25, "5ns"},
+		{50, "10ns"},
+		{75, "15ns"},
+		{100, "20ns"},
+	}
+
+	for _, tm := range timeMarkers {
+		x := marginLeft + tm.pct*plotW/100
+		// Draw tick mark
+		for dy := 0; dy < 4; dy++ {
+			img.Set(x, axisY+dy, axisColor)
+		}
+	}
+
+	// Total time label
+	drawSimpleText(img, "20ns total", w-80, axisY-2, color.RGBA{0, 255, 200, 255})
 
 	return img
 }
@@ -2369,4 +2794,119 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// ============================================================================
+// BITMAP FONT TEXT RENDERING
+// ============================================================================
+
+// drawSimpleText draws text using a simple bitmap font.
+func drawSimpleText(img *image.RGBA, text string, x, y int, c color.Color) {
+	charWidth := 7
+	for i, ch := range text {
+		cx := x + i*charWidth
+		drawSimpleChar(img, ch, cx, y, c)
+	}
+}
+
+// drawSimpleChar draws a single character.
+func drawSimpleChar(img *image.RGBA, ch rune, x, y int, c color.Color) {
+	// Basic 5x7 font patterns
+	patterns := map[rune][]string{
+		'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
+		'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
+		'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
+		'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
+		'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
+		'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
+		'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
+		'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
+		'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
+		'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
+		'.': {"00000", "00000", "00000", "00000", "00000", "01100", "01100"},
+		'-': {"00000", "00000", "00000", "11111", "00000", "00000", "00000"},
+		':': {"00000", "01100", "01100", "00000", "01100", "01100", "00000"},
+		'%': {"11001", "11010", "00100", "01000", "01011", "10011", "00000"},
+		' ': {"00000", "00000", "00000", "00000", "00000", "00000", "00000"},
+		'x': {"00000", "00000", "10001", "01010", "00100", "01010", "10001"},
+		'n': {"00000", "00000", "10110", "11001", "10001", "10001", "10001"},
+		'J': {"00111", "00010", "00010", "00010", "00010", "10010", "01100"},
+		'G': {"01110", "10001", "10000", "10111", "10001", "10001", "01110"},
+		'P': {"11110", "10001", "10001", "11110", "10000", "10000", "10000"},
+		'U': {"10001", "10001", "10001", "10001", "10001", "10001", "01110"},
+		'F': {"11111", "10000", "10000", "11110", "10000", "10000", "10000"},
+		'e': {"00000", "00000", "01110", "10001", "11111", "10000", "01110"},
+		'C': {"01110", "10001", "10000", "10000", "10000", "10001", "01110"},
+		'I': {"01110", "00100", "00100", "00100", "00100", "00100", "01110"},
+		'M': {"10001", "11011", "10101", "10101", "10001", "10001", "10001"},
+		'E': {"11111", "10000", "10000", "11110", "10000", "10000", "11111"},
+		'R': {"11110", "10001", "10001", "11110", "10100", "10010", "10001"},
+		'O': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
+		'N': {"10001", "11001", "10101", "10011", "10001", "10001", "10001"},
+		'S': {"01110", "10001", "10000", "01110", "00001", "10001", "01110"},
+		's': {"00000", "00000", "01110", "10000", "01110", "00001", "11110"},
+		'i': {"00100", "00000", "01100", "00100", "00100", "00100", "01110"},
+		'o': {"00000", "00000", "01110", "10001", "10001", "10001", "01110"},
+		'c': {"00000", "00000", "01110", "10000", "10000", "10001", "01110"},
+		'f': {"00110", "01000", "01000", "11100", "01000", "01000", "01000"},
+		'r': {"00000", "00000", "10110", "11001", "10000", "10000", "10000"},
+		'a': {"00000", "00000", "01110", "00001", "01111", "10001", "01111"},
+		't': {"00100", "00100", "01110", "00100", "00100", "00100", "00011"},
+		'h': {"10000", "10000", "10110", "11001", "10001", "10001", "10001"},
+		'm': {"00000", "00000", "11010", "10101", "10101", "10001", "10001"},
+		'd': {"00001", "00001", "01101", "10011", "10001", "10001", "01111"},
+		'v': {"00000", "00000", "10001", "10001", "10001", "01010", "00100"},
+		'y': {"00000", "00000", "10001", "10001", "01111", "00001", "01110"},
+		'k': {"10000", "10000", "10010", "10100", "11000", "10100", "10010"},
+		'g': {"00000", "00000", "01111", "10001", "01111", "00001", "01110"},
+		'W': {"10001", "10001", "10001", "10101", "10101", "10101", "01010"},
+		'p': {"00000", "00000", "11110", "10001", "11110", "10000", "10000"},
+		'!': {"00100", "00100", "00100", "00100", "00100", "00000", "00100"},
+		'(': {"00010", "00100", "01000", "01000", "01000", "00100", "00010"},
+		')': {"01000", "00100", "00010", "00010", "00010", "00100", "01000"},
+		'_': {"00000", "00000", "00000", "00000", "00000", "00000", "11111"},
+		'A': {"01110", "10001", "10001", "11111", "10001", "10001", "10001"},
+		'B': {"11110", "10001", "10001", "11110", "10001", "10001", "11110"},
+		'D': {"11100", "10010", "10001", "10001", "10001", "10010", "11100"},
+		'H': {"10001", "10001", "10001", "11111", "10001", "10001", "10001"},
+		'K': {"10001", "10010", "10100", "11000", "10100", "10010", "10001"},
+		'L': {"10000", "10000", "10000", "10000", "10000", "10000", "11111"},
+		'T': {"11111", "00100", "00100", "00100", "00100", "00100", "00100"},
+		'V': {"10001", "10001", "10001", "10001", "10001", "01010", "00100"},
+		'X': {"10001", "10001", "01010", "00100", "01010", "10001", "10001"},
+		'Y': {"10001", "10001", "01010", "00100", "00100", "00100", "00100"},
+		'Z': {"11111", "00001", "00010", "00100", "01000", "10000", "11111"},
+		'b': {"10000", "10000", "11110", "10001", "10001", "10001", "11110"},
+		'l': {"01100", "00100", "00100", "00100", "00100", "00100", "01110"},
+		'u': {"00000", "00000", "10001", "10001", "10001", "10011", "01101"},
+		'w': {"00000", "00000", "10001", "10001", "10101", "10101", "01010"},
+		'z': {"00000", "00000", "11111", "00010", "00100", "01000", "11111"},
+		'[': {"01110", "01000", "01000", "01000", "01000", "01000", "01110"},
+		']': {"01110", "00010", "00010", "00010", "00010", "00010", "01110"},
+		'/': {"00001", "00010", "00010", "00100", "01000", "01000", "10000"},
+		'=': {"00000", "00000", "11111", "00000", "11111", "00000", "00000"},
+		'+': {"00000", "00100", "00100", "11111", "00100", "00100", "00000"},
+		'<': {"00010", "00100", "01000", "10000", "01000", "00100", "00010"},
+		'>': {"01000", "00100", "00010", "00001", "00010", "00100", "01000"},
+		',': {"00000", "00000", "00000", "00000", "00110", "00100", "01000"},
+		'q': {"00000", "00000", "01111", "10001", "01111", "00001", "00001"},
+		'j': {"00010", "00000", "00110", "00010", "00010", "10010", "01100"},
+	}
+
+	pattern, ok := patterns[ch]
+	if !ok {
+		return
+	}
+
+	for dy, row := range pattern {
+		for dx, pixel := range row {
+			if pixel == '1' {
+				px := x + dx
+				py := y + dy
+				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+					img.Set(px, py, c)
+				}
+			}
+		}
+	}
 }

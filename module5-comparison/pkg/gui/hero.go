@@ -1,10 +1,9 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
-// This file contains hero visualizations for the technical briefing.
+// This file contains hero visualizations for the comparison demo.
 package gui
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"math"
 	"sync"
@@ -12,7 +11,16 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+)
+
+// Energy values in picojoules per MAC (from docs/videos/ironlattice-youtube-script.md)
+// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
+const (
+	cpuEnergyPJ   = 1000.0 // 1000 pJ/MAC
+	gpuEnergyPJ   = 100.0  // 100 pJ/MAC
+	fecimEnergyPJ = 1.0    // ~1 pJ/MAC (conservative estimate for claimed "<1 pJ")
 )
 
 // AnimatedEnergyRace shows animated energy comparison bars.
@@ -21,47 +29,29 @@ type AnimatedEnergyRace struct {
 
 	mu           sync.RWMutex
 	animProgress float64 // 0-1 for bar growth
-	cpuEnergy    float64 // Target: 1000 fJ
-	gpuEnergy    float64 // Target: 100 fJ
-	fecimEnergy  float64 // Target: 10 fJ
-	showWinner   bool    // Pulse FeCIM when true
-	logScale     bool    // Use logarithmic scale
-	pulsePhase   float64 // For winner pulse animation
-	minSize      fyne.Size
+	showWinner   bool
+	pulsePhase   float64
 
 	// UI elements
-	raster        *canvas.Raster
-	titleText     *canvas.Text
-	cpuLabel      *canvas.Text
-	gpuLabel      *canvas.Text
-	fecimLabel    *canvas.Text
-	cpuValue      *canvas.Text
-	gpuValue      *canvas.Text
-	fecimValue    *canvas.Text
-	headlineText  *canvas.Text
-	sourceText    *canvas.Text
+	container    *fyne.Container
+	cpuBar       *canvas.Rectangle
+	gpuBar       *canvas.Rectangle
+	fecimBar     *canvas.Rectangle
+	cpuValue     *widget.Label
+	gpuValue     *widget.Label
+	fecimValue   *widget.Label
+	headlineText *canvas.Text
 }
 
 // NewAnimatedEnergyRace creates a new energy race visualization.
 func NewAnimatedEnergyRace() *AnimatedEnergyRace {
-	e := &AnimatedEnergyRace{
-		cpuEnergy:   1000,
-		gpuEnergy:   100,
-		fecimEnergy: 10,
-		logScale:    false,
-		minSize:     fyne.NewSize(550, 180),
-	}
+	e := &AnimatedEnergyRace{}
 	e.ExtendBaseWidget(e)
 	return e
 }
 
-// SetLogScale enables/disables logarithmic scale.
-func (e *AnimatedEnergyRace) SetLogScale(log bool) {
-	e.mu.Lock()
-	e.logScale = log
-	e.mu.Unlock()
-	e.Refresh()
-}
+// SetLogScale enables/disables logarithmic scale (placeholder).
+func (e *AnimatedEnergyRace) SetLogScale(log bool) {}
 
 // UpdateAnimation advances the animation by dt seconds.
 func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
@@ -81,7 +71,7 @@ func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
 	}
 }
 
-// Reset resets the animation to start.
+// Reset resets the animation.
 func (e *AnimatedEnergyRace) Reset() {
 	e.mu.Lock()
 	e.animProgress = 0
@@ -93,201 +83,113 @@ func (e *AnimatedEnergyRace) Reset() {
 
 // MinSize returns minimum size.
 func (e *AnimatedEnergyRace) MinSize() fyne.Size {
-	return e.minSize
+	return fyne.NewSize(400, 140)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
-	e.raster = canvas.NewRaster(e.generateBars)
+	barHeight := float32(18)
+	trackWidth := float32(400) // Reference width for CPU (1000 pJ)
 
-	e.titleText = canvas.NewText("ENERGY PER MAC OPERATION", color.RGBA{0, 212, 255, 255})
-	e.titleText.TextSize = 14
-	e.titleText.TextStyle = fyne.TextStyle{Bold: true}
+	// LINEAR SCALE: CPU=100%, GPU=10%, FeCIM=0.1%
+	labelWidth := float32(80)
+	valueWidth := float32(70)
 
-	e.cpuLabel = canvas.NewText("CPU+DRAM", color.RGBA{200, 200, 200, 255})
-	e.cpuLabel.TextSize = 11
+	// CPU row - full width (1000 pJ reference)
+	cpuLabel := widget.NewLabel("CPU+DRAM")
+	cpuLabel.TextStyle = fyne.TextStyle{Bold: true}
+	cpuLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), cpuLabel)
+	e.cpuBar = canvas.NewRectangle(color.RGBA{220, 80, 80, 255})
+	e.cpuBar.SetMinSize(fyne.NewSize(trackWidth, barHeight))
+	e.cpuValue = widget.NewLabel("1000 pJ")
+	e.cpuValue.TextStyle = fyne.TextStyle{Bold: true}
+	cpuValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.cpuValue)
+	cpuRow := container.NewHBox(cpuLabelBox, e.cpuBar, cpuValueBox)
 
-	e.gpuLabel = canvas.NewText("GPU+HBM", color.RGBA{200, 200, 200, 255})
-	e.gpuLabel.TextSize = 11
+	// GPU row - 10% width (100 pJ = 10× less)
+	gpuLabel := widget.NewLabel("GPU+HBM")
+	gpuLabel.TextStyle = fyne.TextStyle{Bold: true}
+	gpuLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), gpuLabel)
+	e.gpuBar = canvas.NewRectangle(color.RGBA{220, 180, 80, 255})
+	e.gpuBar.SetMinSize(fyne.NewSize(trackWidth*0.1, barHeight)) // 10% of CPU
+	e.gpuValue = widget.NewLabel("100 pJ")
+	e.gpuValue.TextStyle = fyne.TextStyle{Bold: true}
+	gpuValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.gpuValue)
+	gpuRow := container.NewHBox(gpuLabelBox, e.gpuBar, gpuValueBox)
 
-	e.fecimLabel = canvas.NewText("FeCIM", color.RGBA{200, 200, 200, 255})
-	e.fecimLabel.TextSize = 11
+	// FeCIM row - 0.1% width (1 pJ = 1000× less) - minimum 4px visible
+	fecimLabel := widget.NewLabel("FeCIM*")
+	fecimLabel.TextStyle = fyne.TextStyle{Bold: true}
+	fecimLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), fecimLabel)
+	e.fecimBar = canvas.NewRectangle(color.RGBA{80, 220, 120, 255})
+	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001), barHeight)) // 0.1% of CPU, min 4px
+	e.fecimValue = widget.NewLabel("~1 pJ")
+	e.fecimValue.TextStyle = fyne.TextStyle{Bold: true}
+	fecimValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.fecimValue)
+	fecimRow := container.NewHBox(fecimLabelBox, e.fecimBar, fecimValueBox)
 
-	e.cpuValue = canvas.NewText("1000 fJ", color.RGBA{200, 100, 100, 255})
-	e.cpuValue.TextSize = 11
-
-	e.gpuValue = canvas.NewText("100 fJ", color.RGBA{200, 180, 100, 255})
-	e.gpuValue.TextSize = 11
-
-	e.fecimValue = canvas.NewText("10 fJ", color.RGBA{100, 200, 150, 255})
-	e.fecimValue.TextSize = 11
-
-	e.headlineText = canvas.NewText("100x LESS ENERGY", color.RGBA{0, 212, 255, 255})
-	e.headlineText.TextSize = 12
+	// Headline
+	e.headlineText = canvas.NewText("1000× LESS ENERGY", color.RGBA{0, 212, 255, 255})
+	e.headlineText.TextSize = 14
 	e.headlineText.TextStyle = fyne.TextStyle{Bold: true}
 
-	e.sourceText = canvas.NewText("* FeCIM: Dr. Tour claims (TRL 4, not verified)", color.RGBA{150, 150, 150, 255})
-	e.sourceText.TextSize = 9
+	// Scale note
+	scaleNote := widget.NewLabel("(Linear scale)")
+	scaleNote.TextStyle = fyne.TextStyle{Italic: true}
 
-	return &energyRaceRenderer{widget: e}
+	e.container = container.NewVBox(
+		cpuRow,
+		gpuRow,
+		fecimRow,
+		container.NewHBox(container.NewCenter(e.headlineText), layout.NewSpacer(), scaleNote),
+	)
+
+	return widget.NewSimpleRenderer(e.container)
 }
 
-type energyRaceRenderer struct {
-	widget *AnimatedEnergyRace
-}
-
-func (r *energyRaceRenderer) MinSize() fyne.Size {
-	return r.widget.minSize
-}
-
-func (r *energyRaceRenderer) Layout(size fyne.Size) {
-	r.widget.raster.Resize(size)
-
-	// Title at top center
-	r.widget.titleText.Move(fyne.NewPos(size.Width/2-100, 5))
-
-	// Bar labels on left
-	barHeight := (size.Height - 60) / 3
-	startY := float32(35)
-
-	r.widget.cpuLabel.Move(fyne.NewPos(10, startY+barHeight/2-6))
-	r.widget.gpuLabel.Move(fyne.NewPos(10, startY+barHeight+10+barHeight/2-6))
-	r.widget.fecimLabel.Move(fyne.NewPos(10, startY+2*(barHeight+10)+barHeight/2-6))
-
-	// Value labels on right
-	r.widget.cpuValue.Move(fyne.NewPos(size.Width-70, startY+barHeight/2-6))
-	r.widget.gpuValue.Move(fyne.NewPos(size.Width-70, startY+barHeight+10+barHeight/2-6))
-	r.widget.fecimValue.Move(fyne.NewPos(size.Width-70, startY+2*(barHeight+10)+barHeight/2-6))
-
-	// Headline at bottom center
-	r.widget.headlineText.Move(fyne.NewPos(size.Width/2-70, size.Height-35))
-
-	// Source at bottom
-	r.widget.sourceText.Move(fyne.NewPos(10, size.Height-15))
-}
-
-func (r *energyRaceRenderer) Refresh() {
-	r.widget.mu.RLock()
-	progress := r.widget.animProgress
-	showWinner := r.widget.showWinner
-	pulsePhase := r.widget.pulsePhase
-	r.widget.mu.RUnlock()
-
-	// Update value labels
-	r.widget.cpuValue.Text = fmt.Sprintf("%.0f fJ", 1000*progress)
-	r.widget.gpuValue.Text = fmt.Sprintf("%.0f fJ", 100*progress)
-	r.widget.fecimValue.Text = fmt.Sprintf("%.1f fJ", 10*progress)
-
-	// Pulse headline
-	if showWinner {
-		pulse := 0.7 + math.Sin(pulsePhase)*0.3
-		r.widget.headlineText.Color = color.RGBA{
-			0,
-			uint8(212 * pulse),
-			uint8(255 * pulse),
-			255,
-		}
-	} else {
-		r.widget.headlineText.Color = color.RGBA{0, 0, 0, 0} // Hidden
-	}
-
-	r.widget.raster.Refresh()
-	canvas.Refresh(r.widget.titleText)
-	canvas.Refresh(r.widget.cpuValue)
-	canvas.Refresh(r.widget.gpuValue)
-	canvas.Refresh(r.widget.fecimValue)
-	canvas.Refresh(r.widget.headlineText)
-}
-
-func (r *energyRaceRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{
-		r.widget.raster,
-		r.widget.titleText,
-		r.widget.cpuLabel,
-		r.widget.gpuLabel,
-		r.widget.fecimLabel,
-		r.widget.cpuValue,
-		r.widget.gpuValue,
-		r.widget.fecimValue,
-		r.widget.headlineText,
-		r.widget.sourceText,
-	}
-}
-
-func (r *energyRaceRenderer) Destroy() {}
-
-// generateBars creates just the bar graphics (no text).
-func (e *AnimatedEnergyRace) generateBars(w, h int) image.Image {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-
-	bgColor := color.RGBA{25, 35, 55, 255}
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			img.Set(x, y, bgColor)
-		}
-	}
-
-	if w < 100 || h < 80 {
-		return img
-	}
-
+// Refresh updates the widget display.
+func (e *AnimatedEnergyRace) Refresh() {
 	e.mu.RLock()
 	progress := e.animProgress
 	showWinner := e.showWinner
 	pulsePhase := e.pulsePhase
 	e.mu.RUnlock()
 
-	labelWidth := 80
-	valueWidth := 80
-	barAreaWidth := w - labelWidth - valueWidth - 20
-	barHeight := (h - 60) / 3
-	barSpacing := 10
-	startX := labelWidth + 5
-	startY := 35
-
-	bars := []struct {
-		energy float64
-		color  color.RGBA
-	}{
-		{1000, color.RGBA{200, 100, 100, 255}},
-		{100, color.RGBA{200, 180, 100, 255}},
-		{10, color.RGBA{100, 200, 150, 255}},
+	if e.cpuBar == nil {
+		return
 	}
 
-	maxEnergy := 1000.0
+	// LINEAR scale bar widths: CPU=100%, GPU=10%, FeCIM=0.1%
+	barHeight := float32(18)
+	trackWidth := float32(400)
+	e.cpuBar.SetMinSize(fyne.NewSize(trackWidth*float32(progress), barHeight))
+	e.gpuBar.SetMinSize(fyne.NewSize(trackWidth*0.1*float32(progress), barHeight))
+	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001*float32(progress)), barHeight))
 
-	for i, bar := range bars {
-		y := startY + i*(barHeight+barSpacing)
-
-		barWidth := int(float64(barAreaWidth) * (bar.energy / maxEnergy) * progress)
-
-		// Track
-		trackColor := color.RGBA{40, 50, 70, 255}
-		for dy := 0; dy < barHeight; dy++ {
-			for dx := 0; dx < barAreaWidth; dx++ {
-				img.Set(startX+dx, y+dy, trackColor)
-			}
-		}
-
-		// Bar
-		barColor := bar.color
-		if i == 2 && showWinner {
-			pulse := math.Sin(pulsePhase) * 0.3
-			barColor = color.RGBA{
-				uint8(min(255, int(float64(bar.color.R)*(1+pulse)))),
-				uint8(min(255, int(float64(bar.color.G)*(1+pulse)))),
-				uint8(min(255, int(float64(bar.color.B)*(1+pulse)))),
-				255,
-			}
-		}
-		for dy := 0; dy < barHeight; dy++ {
-			for dx := 0; dx < barWidth; dx++ {
-				img.Set(startX+dx, y+dy, barColor)
-			}
-		}
+	// Update value labels - show final values after animation
+	if progress > 0.9 {
+		e.cpuValue.SetText("1000 pJ")
+		e.gpuValue.SetText("100 pJ")
+		e.fecimValue.SetText("~1 pJ")
+	} else {
+		e.cpuValue.SetText(fmt.Sprintf("%.0f pJ", cpuEnergyPJ*progress))
+		e.gpuValue.SetText(fmt.Sprintf("%.0f pJ", gpuEnergyPJ*progress))
+		e.fecimValue.SetText(fmt.Sprintf("%.1f pJ", fecimEnergyPJ*progress))
 	}
 
-	return img
+	// Headline visibility and pulse
+	if showWinner {
+		pulse := 0.7 + math.Sin(pulsePhase)*0.3
+		e.headlineText.Color = color.RGBA{0, uint8(212 * pulse), uint8(255 * pulse), 255}
+	} else {
+		e.headlineText.Color = color.RGBA{0, 0, 0, 0} // Hidden until animation complete
+	}
+
+	canvas.Refresh(e.cpuBar)
+	canvas.Refresh(e.gpuBar)
+	canvas.Refresh(e.fecimBar)
+	canvas.Refresh(e.headlineText)
+	e.container.Refresh()
 }
 
 // MemoryWallAnimation shows data movement visualization.
@@ -295,46 +197,18 @@ type MemoryWallAnimation struct {
 	widget.BaseWidget
 
 	mu            sync.RWMutex
-	packets       []Packet
 	dataMovements int
 	simTime       float64
-	minSize       fyne.Size
+	pulsePhase    float64
 
-	raster         *canvas.Raster
-	vonNeumannText *canvas.Text
-	cimText        *canvas.Text
-	cpuText        *canvas.Text
-	dramText       *canvas.Text
-	computeText1   *canvas.Text
-	computeText2   *canvas.Text
-	vsText         *canvas.Text
-	counterText    *canvas.Text
-	wasteText      *canvas.Text
-	zeroMoveText   *canvas.Text
-	zeroWasteText  *canvas.Text
-}
-
-// Packet represents a data packet moving between CPU and memory.
-type Packet struct {
-	x, y   float64
-	vx     float64
-	active bool
+	container   *fyne.Container
+	counterText *widget.Label
+	arrowText   *canvas.Text
 }
 
 // NewMemoryWallAnimation creates a new memory wall visualization.
 func NewMemoryWallAnimation() *MemoryWallAnimation {
-	m := &MemoryWallAnimation{
-		packets: make([]Packet, 0, 10),
-		minSize: fyne.NewSize(500, 130),
-	}
-	for i := 0; i < 5; i++ {
-		m.packets = append(m.packets, Packet{
-			x:      float64(50 + i*30),
-			y:      float64(50 + (i%3)*15),
-			vx:     100 + float64(i*20),
-			active: true,
-		})
-	}
+	m := &MemoryWallAnimation{}
 	m.ExtendBaseWidget(m)
 	return m
 }
@@ -345,19 +219,11 @@ func (m *MemoryWallAnimation) UpdateAnimation(dt float64) {
 	defer m.mu.Unlock()
 
 	m.simTime += dt
+	m.pulsePhase += dt * 3.0
 
-	for i := range m.packets {
-		if !m.packets[i].active {
-			continue
-		}
-		m.packets[i].x += m.packets[i].vx * dt
-		if m.packets[i].x > 180 {
-			m.packets[i].vx = -m.packets[i].vx
-			m.dataMovements++
-		} else if m.packets[i].x < 50 {
-			m.packets[i].vx = -m.packets[i].vx
-			m.dataMovements++
-		}
+	// Simulate data movements
+	if int(m.simTime*10)%3 == 0 {
+		m.dataMovements++
 	}
 }
 
@@ -366,313 +232,80 @@ func (m *MemoryWallAnimation) Reset() {
 	m.mu.Lock()
 	m.simTime = 0
 	m.dataMovements = 0
-	for i := range m.packets {
-		m.packets[i].x = float64(50 + i*30)
-		m.packets[i].vx = 100 + float64(i*20)
-	}
+	m.pulsePhase = 0
 	m.mu.Unlock()
 	m.Refresh()
 }
 
 // MinSize returns minimum size.
 func (m *MemoryWallAnimation) MinSize() fyne.Size {
-	return m.minSize
+	return fyne.NewSize(400, 80)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (m *MemoryWallAnimation) CreateRenderer() fyne.WidgetRenderer {
-	m.raster = canvas.NewRaster(m.generateGraphics)
+	// Von Neumann side
+	cpuBox := canvas.NewRectangle(color.RGBA{180, 80, 80, 255})
+	cpuBox.SetMinSize(fyne.NewSize(40, 30))
+	cpuLabel := widget.NewLabel("CPU")
 
-	m.vonNeumannText = canvas.NewText("VON NEUMANN", color.RGBA{200, 100, 100, 255})
-	m.vonNeumannText.TextSize = 11
-	m.vonNeumannText.TextStyle = fyne.TextStyle{Bold: true}
+	m.arrowText = canvas.NewText("<->", color.RGBA{255, 200, 100, 255})
+	m.arrowText.TextSize = 14
 
-	m.cimText = canvas.NewText("COMPUTE-IN-MEMORY", color.RGBA{100, 200, 150, 255})
-	m.cimText.TextSize = 11
-	m.cimText.TextStyle = fyne.TextStyle{Bold: true}
+	memBox := canvas.NewRectangle(color.RGBA{80, 80, 180, 255})
+	memBox.SetMinSize(fyne.NewSize(40, 30))
+	memLabel := widget.NewLabel("MEM")
 
-	m.cpuText = canvas.NewText("CPU", color.RGBA{255, 255, 255, 255})
-	m.cpuText.TextSize = 10
+	vonNeumann := container.NewHBox(
+		container.NewStack(cpuBox, container.NewCenter(cpuLabel)),
+		m.arrowText,
+		container.NewStack(memBox, container.NewCenter(memLabel)),
+	)
+	m.counterText = widget.NewLabel("Moves: 0")
 
-	m.dramText = canvas.NewText("DRAM", color.RGBA{255, 255, 255, 255})
-	m.dramText.TextSize = 10
+	// VS divider
+	vsText := canvas.NewText("VS", color.RGBA{0, 212, 255, 255})
+	vsText.TextSize = 14
 
-	m.computeText1 = canvas.NewText("COMPUTE", color.RGBA{255, 255, 255, 255})
-	m.computeText1.TextSize = 10
+	// CIM side
+	cimBox := canvas.NewRectangle(color.RGBA{80, 180, 120, 255})
+	cimBox.SetMinSize(fyne.NewSize(70, 30))
+	cimLabel := widget.NewLabel("CIM")
+	cimStack := container.NewStack(cimBox, container.NewCenter(cimLabel))
+	zeroLabel := widget.NewLabel("Zero Movement")
 
-	m.computeText2 = canvas.NewText("HERE", color.RGBA{255, 255, 255, 255})
-	m.computeText2.TextSize = 10
+	m.container = container.NewHBox(
+		container.NewVBox(container.NewCenter(vonNeumann), m.counterText),
+		layout.NewSpacer(),
+		vsText,
+		layout.NewSpacer(),
+		container.NewVBox(container.NewCenter(cimStack), zeroLabel),
+	)
 
-	m.vsText = canvas.NewText("VS", color.RGBA{0, 212, 255, 255})
-	m.vsText.TextSize = 12
-	m.vsText.TextStyle = fyne.TextStyle{Bold: true}
-
-	m.counterText = canvas.NewText("Data Moves: 0", color.RGBA{255, 200, 100, 255})
-	m.counterText.TextSize = 10
-
-	m.wasteText = canvas.NewText("(ENERGY WASTE)", color.RGBA{255, 100, 100, 200})
-	m.wasteText.TextSize = 9
-
-	m.zeroMoveText = canvas.NewText("Zero Data Movement", color.RGBA{100, 255, 150, 255})
-	m.zeroMoveText.TextSize = 10
-
-	m.zeroWasteText = canvas.NewText("= Zero Waste", color.RGBA{100, 200, 150, 200})
-	m.zeroWasteText.TextSize = 9
-
-	return &memoryWallRenderer{widget: m}
+	return widget.NewSimpleRenderer(m.container)
 }
 
-type memoryWallRenderer struct {
-	widget *MemoryWallAnimation
-}
-
-func (r *memoryWallRenderer) MinSize() fyne.Size {
-	return r.widget.minSize
-}
-
-func (r *memoryWallRenderer) Layout(size fyne.Size) {
-	r.widget.raster.Resize(size)
-	midX := size.Width / 2
-
-	r.widget.vonNeumannText.Move(fyne.NewPos(30, 5))
-	r.widget.cimText.Move(fyne.NewPos(midX+30, 5))
-
-	r.widget.cpuText.Move(fyne.NewPos(45, 45))
-	r.widget.dramText.Move(fyne.NewPos(170, 45))
-
-	r.widget.computeText1.Move(fyne.NewPos(midX+75, 40))
-	r.widget.computeText2.Move(fyne.NewPos(midX+85, 55))
-
-	r.widget.vsText.Move(fyne.NewPos(midX-15, size.Height/2-8))
-
-	r.widget.counterText.Move(fyne.NewPos(30, size.Height-30))
-	r.widget.wasteText.Move(fyne.NewPos(30, size.Height-15))
-
-	r.widget.zeroMoveText.Move(fyne.NewPos(midX+50, size.Height-30))
-	r.widget.zeroWasteText.Move(fyne.NewPos(midX+70, size.Height-15))
-}
-
-func (r *memoryWallRenderer) Refresh() {
-	r.widget.mu.RLock()
-	dataMovements := r.widget.dataMovements
-	r.widget.mu.RUnlock()
-
-	r.widget.counterText.Text = fmt.Sprintf("Data Moves: %d", dataMovements)
-	r.widget.raster.Refresh()
-	canvas.Refresh(r.widget.counterText)
-}
-
-func (r *memoryWallRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{
-		r.widget.raster,
-		r.widget.vonNeumannText,
-		r.widget.cimText,
-		r.widget.cpuText,
-		r.widget.dramText,
-		r.widget.computeText1,
-		r.widget.computeText2,
-		r.widget.vsText,
-		r.widget.counterText,
-		r.widget.wasteText,
-		r.widget.zeroMoveText,
-		r.widget.zeroWasteText,
-	}
-}
-
-func (r *memoryWallRenderer) Destroy() {}
-
-// generateGraphics creates the memory wall graphics (boxes and packets, no text).
-func (m *MemoryWallAnimation) generateGraphics(w, h int) image.Image {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-
-	bgColor := color.RGBA{25, 35, 55, 255}
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			img.Set(x, y, bgColor)
-		}
-	}
-
-	if w < 200 || h < 80 {
-		return img
-	}
-
+// Refresh updates the widget display.
+func (m *MemoryWallAnimation) Refresh() {
 	m.mu.RLock()
-	packets := make([]Packet, len(m.packets))
-	copy(packets, m.packets)
+	dataMovements := m.dataMovements
+	pulsePhase := m.pulsePhase
 	m.mu.RUnlock()
 
-	midX := w / 2
-
-	// CPU Box
-	cpuX, cpuY := 30, 35
-	cpuW, cpuH := 60, 35
-	drawBoxFilledHero(img, cpuX, cpuY, cpuW, cpuH, color.RGBA{200, 100, 100, 255}, color.RGBA{100, 50, 50, 255})
-
-	// DRAM Box
-	memX, memY := 160, 35
-	memW, memH := 60, 35
-	drawBoxFilledHero(img, memX, memY, memW, memH, color.RGBA{100, 100, 200, 255}, color.RGBA{50, 50, 100, 255})
-
-	// Data bus
-	busY := cpuY + cpuH/2
-	for x := cpuX + cpuW; x < memX; x++ {
-		img.Set(x, busY, color.RGBA{100, 100, 100, 255})
-		img.Set(x, busY+1, color.RGBA{100, 100, 100, 255})
+	if m.counterText != nil {
+		m.counterText.SetText(fmt.Sprintf("Moves: %d", dataMovements))
 	}
 
-	// Packets
-	for _, p := range packets {
-		if !p.active {
-			continue
-		}
-		px := int(p.x)
-		py := int(p.y)
-		packetColor := color.RGBA{255, 100, 100, 255}
-		glowColor := color.RGBA{255, 50, 50, 100}
-		for dy := -3; dy <= 3; dy++ {
-			for dx := -3; dx <= 3; dx++ {
-				if px+dx > 0 && px+dx < midX-30 && py+dy > 0 && py+dy < h {
-					img.Set(px+dx, py+dy, glowColor)
-				}
-			}
-		}
-		for dy := -2; dy <= 2; dy++ {
-			for dx := -2; dx <= 2; dx++ {
-				if px+dx > 0 && px+dx < midX-30 && py+dy > 0 && py+dy < h {
-					img.Set(px+dx, py+dy, packetColor)
-				}
-			}
-		}
-	}
-
-	// Divider
-	divColor := color.RGBA{0, 100, 150, 255}
-	for y := 10; y < h-10; y++ {
-		img.Set(midX-10, y, divColor)
-	}
-
-	// CIM Box
-	cimX, cimY := midX+50, 35
-	cimW, cimH := 100, 45
-	drawBoxFilledHero(img, cimX, cimY, cimW, cimH, color.RGBA{100, 200, 150, 255}, color.RGBA{50, 100, 75, 255})
-
-	return img
-}
-
-func drawBoxFilledHero(img *image.RGBA, x, y, width, height int, borderColor, fillColor color.RGBA) {
-	for dy := 2; dy < height-2; dy++ {
-		for dx := 2; dx < width-2; dx++ {
-			img.Set(x+dx, y+dy, fillColor)
-		}
-	}
-	for dx := 0; dx < width; dx++ {
-		img.Set(x+dx, y, borderColor)
-		img.Set(x+dx, y+1, borderColor)
-		img.Set(x+dx, y+height-1, borderColor)
-		img.Set(x+dx, y+height-2, borderColor)
-	}
-	for dy := 0; dy < height; dy++ {
-		img.Set(x, y+dy, borderColor)
-		img.Set(x+1, y+dy, borderColor)
-		img.Set(x+width-1, y+dy, borderColor)
-		img.Set(x+width-2, y+dy, borderColor)
+	if m.arrowText != nil {
+		pulse := 0.5 + math.Sin(pulsePhase)*0.5
+		m.arrowText.Color = color.RGBA{255, uint8(150 + 100*pulse), uint8(50 + 50*pulse), 255}
+		canvas.Refresh(m.arrowText)
 	}
 }
 
-// formatNumberHero formats numbers with commas.
-func formatNumberHero(n float64) string {
-	intVal := int(n)
-	if intVal == 0 {
-		return "0"
-	}
-
-	negative := intVal < 0
-	if negative {
-		intVal = -intVal
-	}
-
-	result := ""
-	digits := 0
-	for intVal > 0 {
-		if digits > 0 && digits%3 == 0 {
-			result = "," + result
-		}
-		result = string(rune('0'+intVal%10)) + result
-		intVal /= 10
-		digits++
-	}
-
-	if negative {
-		result = "-" + result
-	}
-
-	return result
-}
-
-// SimplifiedEnergyRace is a simpler version using pure Fyne widgets
-type SimplifiedEnergyRace struct {
-	widget.BaseWidget
-	container *fyne.Container
-}
-
-// NewSimplifiedEnergyRace creates energy comparison using Fyne widgets
-func NewSimplifiedEnergyRace() *SimplifiedEnergyRace {
-	s := &SimplifiedEnergyRace{}
-
-	title := widget.NewLabelWithStyle("ENERGY PER MAC OPERATION", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-
-	// Create progress bars
-	cpuBar := widget.NewProgressBar()
-	cpuBar.Max = 1000
-	cpuBar.SetValue(1000)
-
-	gpuBar := widget.NewProgressBar()
-	gpuBar.Max = 1000
-	gpuBar.SetValue(100)
-
-	fecimBar := widget.NewProgressBar()
-	fecimBar.Max = 1000
-	fecimBar.SetValue(10)
-
-	cpuRow := container.NewBorder(nil, nil,
-		widget.NewLabel("CPU+DRAM"),
-		widget.NewLabel("1000 fJ"),
-		cpuBar,
-	)
-
-	gpuRow := container.NewBorder(nil, nil,
-		widget.NewLabel("GPU+HBM"),
-		widget.NewLabel("100 fJ"),
-		gpuBar,
-	)
-
-	fecimRow := container.NewBorder(nil, nil,
-		widget.NewLabel("FeCIM"),
-		widget.NewLabel("10 fJ*"),
-		fecimBar,
-	)
-
-	headline := widget.NewLabelWithStyle("100x LESS ENERGY", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	source := widget.NewLabel("* FeCIM: Dr. Tour claims (TRL 4, not verified)")
-	source.TextStyle = fyne.TextStyle{Italic: true}
-
-	s.container = container.NewVBox(
-		title,
-		cpuRow,
-		gpuRow,
-		fecimRow,
-		headline,
-		source,
-	)
-
-	s.ExtendBaseWidget(s)
-	return s
-}
-
-func (s *SimplifiedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(s.container)
-}
-
-func (s *SimplifiedEnergyRace) MinSize() fyne.Size {
-	return fyne.NewSize(400, 150)
+// Packet represents a data packet (kept for compatibility).
+type Packet struct {
+	x, y   float64
+	vx     float64
+	active bool
 }

@@ -73,6 +73,9 @@ type DualModeApp struct {
 	// Last inference result for refresh
 	lastPixels []float64
 
+	// QAT (Quantization-Aware Training) weight tracking
+	currentQATLevel int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
+
 	// Guided Tour
 	tour *GuidedTour
 
@@ -86,13 +89,14 @@ type DualModeApp struct {
 // NewDualModeApp creates a new dual-mode MNIST application.
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
-		dataDir: findDataDir(),
+		dataDir:         findDataDir(),
+		currentQATLevel: 30, // Default QAT level
 	}
 
 	// Create network
 	app.network = core.NewDualModeNetwork(784, 128, 10)
 
-	// Load pretrained weights
+	// Load pretrained weights (default 30-level QAT weights)
 	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := app.network.LoadWeights(weightsPath); err != nil {
@@ -320,15 +324,21 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	label := widget.NewLabel("Hardware Config")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Levels slider
+	// Levels slider (2-31, covers all QAT-trained levels)
 	levelsTitle := widget.NewLabel("Levels:")
 	app.levelsLabel = widget.NewLabel("30")
-	app.levelsSlider = widget.NewSlider(1, 30)
+	app.levelsSlider = widget.NewSlider(2, 31)
 	app.levelsSlider.Step = 1
 	app.levelsSlider.Value = 30
 	app.levelsSlider.OnChanged = func(v float64) {
-		app.levelsLabel.SetText(fmt.Sprintf("%d", int(v)))
-		app.network.SetNumLevels(int(v))
+		levels := int(v)
+		app.levelsLabel.SetText(fmt.Sprintf("%d", levels))
+
+		// Check if we should load level-specific QAT weights
+		bestLevel := core.GetBestMatchingWeightsLevel(levels)
+		app.tryLoadQATWeights(bestLevel)
+
+		app.network.SetNumLevels(levels)
 		app.updateWeightHeatmap()
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
@@ -392,11 +402,12 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	noisyBtn := widget.NewButton("Noisy", func() { app.applyPresetWithMode(30, 0.15, 6, 8, false) })
 	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPresetWithMode(30, 0.01, 3, 8, false) })
 
-	// Tour Mode button (single-layer, matches Dr. Tour's ~87% demo)
-	tour87Btn := widget.NewButton("Tour87%", func() { app.applyPresetWithMode(30, 0.01, 8, 8, true) })
-	tour87Btn.Importance = widget.HighImportance // Highlight this button
+	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
+	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87% with 88% theoretical max)
+	tourBtn := widget.NewButton("Tour", func() { app.applyPresetWithMode(30, 0.01, 8, 8, true) })
+	tourBtn.Importance = widget.HighImportance // Highlight this button
 
-	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tour87Btn)
+	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
 
 	// Quick test
 	app.testResultLabel = widget.NewLabel("")
@@ -619,7 +630,7 @@ func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, 
 
 	// Update status to indicate Tour Mode
 	if singleLayer {
-		app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~87% max accuracy")
+		app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
 	}
 
 	app.updateWeightHeatmap()
@@ -871,4 +882,36 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	app.resetResults()
 	app.updateWeightHeatmap()
 	app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", size))
+}
+
+// tryLoadQATWeights attempts to load QAT weights optimized for the given level.
+// Only reloads if the optimal weights are different from currently loaded.
+func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
+	// Check if we already have optimal weights loaded
+	if app.currentQATLevel == targetLevel {
+		return
+	}
+
+	// Find the weights file for this level
+	weightsPath := core.GetWeightsFilename(app.dataDir, targetLevel)
+
+	// Check if the file exists
+	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
+		// No level-specific weights, keep current
+		return
+	}
+
+	// Load the new weights
+	if err := app.network.LoadWeights(weightsPath); err != nil {
+		// Failed to load, keep current
+		return
+	}
+
+	// Update tracking
+	app.currentQATLevel = targetLevel
+
+	// Update status
+	if app.statusLabel != nil {
+		app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
+	}
 }

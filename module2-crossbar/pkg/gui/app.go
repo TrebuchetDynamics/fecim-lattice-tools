@@ -103,6 +103,11 @@ type CrossbarApp struct {
 	irDropHeatmap      *CrossbarHeatmap
 	sneakPathHeatmap   *CrossbarHeatmap
 
+	// Color legends for each heatmap
+	condLegend   *ColorLegend
+	irLegend     *ColorLegend
+	sneakLegend  *ColorLegend
+
 	controlPanel   *ControlPanel
 	statsPanel     *StatsPanel
 	levelIndicator *LevelIndicator
@@ -138,6 +143,11 @@ type CrossbarApp struct {
 	colormapSelect  *widget.Select
 	statsLabel      *widget.Label
 
+	// Track colormap per tab
+	condColormap   string
+	irColormap     string
+	sneakColormap  string
+
 	// Status
 	statusLabel    *widget.Label
 	infoLabel      *widget.Label
@@ -165,6 +175,9 @@ type CrossbarApp struct {
 	autoDemoStep  int
 	autoDemoTimer *time.Ticker
 	stopAutoDemo  chan bool
+
+	// First visit flag for auto-run MVM
+	hasRunInitialMVM bool
 }
 
 // NewCrossbarApp creates and initializes the crossbar demo application.

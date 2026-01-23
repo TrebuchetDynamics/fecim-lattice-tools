@@ -108,7 +108,7 @@ func sectionNameFromTab(tabText string) string {
 		return "module04-circuits"
 	case "5. Comparison":
 		return "module05-comparison"
-	case "6. EDA":
+	case "6. EDA (Work In Progress)":
 		return "module06-eda"
 	default:
 		return "unknown"
@@ -375,7 +375,7 @@ func main() {
 		container.NewTabItem("3. MNIST", container.NewMax(demo3Content)),
 		container.NewTabItem("4. Circuits", container.NewMax(demo4Content)),
 		container.NewTabItem("5. Comparison", container.NewMax(demo5Content)),
-		container.NewTabItem("6. EDA", container.NewMax(demo6Content)),
+		container.NewTabItem("6. EDA (Work In Progress)", container.NewMax(demo6Content)),
 	)
 
 	// Create recording state
@@ -524,7 +524,7 @@ func main() {
 		case "5. Comparison":
 			currentDemo = 5
 			demos.demo5.Start()
-		case "6. EDA":
+		case "6. EDA (Work In Progress)":
 			currentDemo = 6
 			demos.demo6.Start()
 		default:

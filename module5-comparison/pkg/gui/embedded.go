@@ -18,44 +18,43 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 		currentInferences: 10000,
 	}
 
-	// Initialize energy specs with HONEST numbers and sources
+	// Initialize energy specs using constants from app.go
+	// Source: docs/videos/ironlattice-youtube-script.md line 205
+	// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
 	ca.cpuSpec = EnergySpec{
 		Name:          "CPU + DRAM",
-		EnergyFJ:      1000, // ~1000 fJ/MAC
+		EnergyFJ:      cpuEnergyPJPerMAC * 1000, // 1,000,000 fJ/MAC
 		Source:        "Intel/AMD published specs",
 		Verified:      true,
-		SourceDetails: "Includes memory access energy. Intel Xeon specs, AMD EPYC specs.",
+		SourceDetails: "Includes memory access energy (~640 pJ for DRAM fetch + ~3-5 pJ for MAC).",
 	}
 
 	ca.gpuSpec = EnergySpec{
 		Name:          "GPU + HBM",
-		EnergyFJ:      100, // ~100 fJ/MAC
+		EnergyFJ:      gpuEnergyPJPerMAC * 1000, // 100,000 fJ/MAC
 		Source:        "NVIDIA H100 specifications",
 		Verified:      true,
-		SourceDetails: "H100 SXM: 700W TDP, ~3958 TFLOPS FP16. ~177 fJ/FLOP.",
+		SourceDetails: "H100 SXM: 700W TDP, ~3958 TFLOPS FP16. HBM access dominates.",
 	}
 
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
-		EnergyFJ:      10, // ~1-10 fJ/MAC (claimed)
+		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
 		Source:        "Dr. Tour's presentation (NOT independently verified)",
 		Verified:      false,
-		SourceDetails: "Claimed: '10M× lower energy than NAND'. TRL 4 - lab only.",
+		SourceDetails: "Claimed: 'under 1 picojoule'. TRL 4 - lab only.",
 	}
 
 	return &EmbeddedComparisonApp{ComparisonApp: ca}
 }
 
 // BuildContent creates the UI content for embedding in a tab
-// The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Create UI components
 	content := e.createMainLayout()
 
-	// Initialize calculations
 	e.updateCalculations()
 	e.updateStatus("Ready. Select workload and adjust parameters.")
 
@@ -65,7 +64,7 @@ func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne
 // Start begins any background processes (called when tab is selected)
 func (e *EmbeddedComparisonApp) Start() {
 	if e.running {
-		return // Already running
+		return
 	}
 
 	e.running = true

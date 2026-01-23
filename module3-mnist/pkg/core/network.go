@@ -2,29 +2,39 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
 // NetworkConfig holds configuration for the CIM inference path.
 type NetworkConfig struct {
-	NumLevels   int     // Quantization levels (1-30)
+	NumLevels   int     // Quantization levels (1-30) - used when PerLayerQuant is false
 	NoiseLevel  float64 // Noise as σ/μ coefficient (0.0-0.20)
 	ADCBits     int     // ADC resolution (3-16)
 	DACBits     int     // DAC resolution (3-16)
 	EnableSneak bool    // Enable sneak path simulation
 	IRDrop      bool    // Enable IR drop simulation
 	SingleLayer bool    // Tour Mode: use single-layer (784→10) like Dr. Tour's demo
+
+	// Per-layer PTQ configuration
+	PerLayerQuant bool // Enable per-layer quantization levels
+	Layer1Levels  int  // Quantization levels for layer 1 (hidden layer)
+	Layer2Levels  int  // Quantization levels for layer 2 (output layer)
 }
 
 // DefaultNetworkConfig returns the default configuration for optimal FeCIM operation.
 func DefaultNetworkConfig() *NetworkConfig {
 	return &NetworkConfig{
-		NumLevels:  30,   // FeCIM supports 30 levels
-		NoiseLevel: 0.01, // Low noise
-		ADCBits:    8,    // 8-bit ADC
-		DACBits:    8,    // 8-bit DAC
+		NumLevels:     30,   // FeCIM supports 30 levels
+		NoiseLevel:    0.01, // Low noise
+		ADCBits:       8,    // 8-bit ADC
+		DACBits:       8,    // 8-bit DAC
+		PerLayerQuant: false,
+		Layer1Levels:  30, // Default same as NumLevels
+		Layer2Levels:  30, // Default same as NumLevels
 	}
 }
 
@@ -144,8 +154,46 @@ type WeightsFile struct {
 	// Single-layer weights (Tour Mode: 784→10 direct)
 	SingleLayerWeights [][]float64 `json:"single_layer_weights,omitempty"`
 	SingleLayerBias    []float64   `json:"single_layer_bias,omitempty"`
-	L2Scale       float64     `json:"l2_scale"`
-	L2Offset      float64     `json:"l2_offset"`
+	L2Scale            float64     `json:"l2_scale"`
+	L2Offset           float64     `json:"l2_offset"`
+	// Quantization level the weights were trained for (QAT) - legacy uniform
+	QuantLevels int `json:"quant_levels,omitempty"`
+	// Per-layer PTQ quantization levels
+	Layer1QuantLevels int `json:"layer1_quant_levels,omitempty"`
+	Layer2QuantLevels int `json:"layer2_quant_levels,omitempty"`
+}
+
+// AvailableQATLevels lists the quantization levels we have trained weights for.
+var AvailableQATLevels = []int{10, 20, 29, 30, 31}
+
+// GetWeightsFilename returns the appropriate weights filename for a quantization level.
+// Returns the exact match if available, otherwise returns the default 30-level weights.
+func GetWeightsFilename(dataDir string, levels int) string {
+	// Check for exact match first
+	for _, l := range AvailableQATLevels {
+		if l == levels && l != 30 {
+			return filepath.Join(dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+		}
+	}
+	// Default to 30-level weights (backward compatible)
+	return filepath.Join(dataDir, "pretrained_weights.json")
+}
+
+// GetBestMatchingWeightsLevel returns the closest available QAT level for a given target.
+func GetBestMatchingWeightsLevel(targetLevels int) int {
+	bestMatch := 30
+	bestDiff := 1000
+	for _, l := range AvailableQATLevels {
+		diff := targetLevels - l
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff < bestDiff {
+			bestDiff = diff
+			bestMatch = l
+		}
+	}
+	return bestMatch
 }
 
 // LoadWeights loads pretrained weights from a JSON file.
@@ -257,6 +305,17 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 		}
 	}
 
+	// Check for per-layer quantization levels in the weights file
+	if wf.Layer1QuantLevels > 0 && wf.Layer2QuantLevels > 0 {
+		// File contains per-layer PTQ configuration
+		net.Config.Layer1Levels = wf.Layer1QuantLevels
+		net.Config.Layer2Levels = wf.Layer2QuantLevels
+	} else if wf.QuantLevels > 0 {
+		// Legacy uniform quantization
+		net.Config.Layer1Levels = wf.QuantLevels
+		net.Config.Layer2Levels = wf.QuantLevels
+	}
+
 	// Initialize quantized weights based on current config
 	net.requantizeWeightsLocked()
 
@@ -271,31 +330,67 @@ func (net *DualModeNetwork) RequantizeWeights() {
 	net.requantizeWeightsLocked()
 }
 
+// LoadWeightsForLevel loads weights optimized for a specific quantization level.
+// It looks for level-specific weight files (e.g., pretrained_weights_20.json)
+// and falls back to the default 30-level weights if not found.
+func (net *DualModeNetwork) LoadWeightsForLevel(dataDir string, levels int) error {
+	// Find the best matching weights file
+	bestLevel := GetBestMatchingWeightsLevel(levels)
+	filename := GetWeightsFilename(dataDir, bestLevel)
+
+	// Check if the file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		// Fall back to default weights
+		filename = filepath.Join(dataDir, "pretrained_weights.json")
+	}
+
+	return net.LoadWeights(filename)
+}
+
 // requantizeWeightsLocked performs quantization (must hold lock).
 func (net *DualModeNetwork) requantizeWeightsLocked() {
-	levels := net.Config.NumLevels
-	if levels < 2 {
-		levels = 2
+	// Determine quantization levels for each layer
+	var l1Levels, l2Levels int
+
+	if net.Config.PerLayerQuant {
+		// Use per-layer quantization levels
+		l1Levels = net.Config.Layer1Levels
+		l2Levels = net.Config.Layer2Levels
+	} else {
+		// Use uniform quantization levels
+		l1Levels = net.Config.NumLevels
+		l2Levels = net.Config.NumLevels
 	}
-	if levels > 30 {
-		levels = 30
+
+	// Clamp levels to valid range
+	if l1Levels < 2 {
+		l1Levels = 2
+	}
+	if l1Levels > 31 {
+		l1Levels = 31
+	}
+	if l2Levels < 2 {
+		l2Levels = 2
+	}
+	if l2Levels > 31 {
+		l2Levels = 31
 	}
 
-	// Quantize layer 1 weights
-	net.QuantWeights1 = QuantizeWeights(net.FPWeights1, levels)
+	// Quantize layer 1 weights with layer1 levels
+	net.QuantWeights1 = QuantizeWeights(net.FPWeights1, l1Levels)
 
-	// Quantize layer 2 weights
-	net.QuantWeights2 = QuantizeWeights(net.FPWeights2, levels)
+	// Quantize layer 2 weights with layer2 levels
+	net.QuantWeights2 = QuantizeWeights(net.FPWeights2, l2Levels)
 
-	// Quantize single-layer weights (Tour Mode)
+	// Quantize single-layer weights (Tour Mode) - use l1 levels for input layer
 	if len(net.SingleLayerWeights) > 0 {
-		net.QuantSingleLayerWeights = QuantizeWeights(net.SingleLayerWeights, levels)
-		net.QuantSingleLayerBias = QuantizeBias(net.SingleLayerBias, levels)
+		net.QuantSingleLayerWeights = QuantizeWeights(net.SingleLayerWeights, l1Levels)
+		net.QuantSingleLayerBias = QuantizeBias(net.SingleLayerBias, l1Levels)
 	}
 
-	// Quantize biases
-	net.QuantBias1 = QuantizeBias(net.FPBias1, levels)
-	net.QuantBias2 = QuantizeBias(net.FPBias2, levels)
+	// Quantize biases with corresponding layer levels
+	net.QuantBias1 = QuantizeBias(net.FPBias1, l1Levels)
+	net.QuantBias2 = QuantizeBias(net.FPBias2, l2Levels)
 }
 
 // SetNumLevels updates the quantization levels and re-quantizes weights.
@@ -368,6 +463,94 @@ func (net *DualModeNetwork) SetSingleLayer(enabled bool) {
 	net.mu.Lock()
 	defer net.mu.Unlock()
 	net.Config.SingleLayer = enabled
+}
+
+// SetPerLayerQuant enables/disables per-layer quantization mode.
+// When enabled, Layer1Levels and Layer2Levels are used instead of NumLevels.
+func (net *DualModeNetwork) SetPerLayerQuant(enabled bool) {
+	net.mu.Lock()
+	defer net.mu.Unlock()
+	net.Config.PerLayerQuant = enabled
+	net.requantizeWeightsLocked()
+}
+
+// IsPerLayerQuant returns whether per-layer quantization is enabled.
+func (net *DualModeNetwork) IsPerLayerQuant() bool {
+	net.mu.RLock()
+	defer net.mu.RUnlock()
+	return net.Config.PerLayerQuant
+}
+
+// SetLayer1Levels sets the quantization levels for layer 1 (hidden layer).
+func (net *DualModeNetwork) SetLayer1Levels(levels int) {
+	net.mu.Lock()
+	defer net.mu.Unlock()
+
+	if levels < 2 {
+		levels = 2
+	}
+	if levels > 30 {
+		levels = 30
+	}
+	net.Config.Layer1Levels = levels
+	if net.Config.PerLayerQuant {
+		net.requantizeWeightsLocked()
+	}
+}
+
+// GetLayer1Levels returns the current layer 1 quantization levels.
+func (net *DualModeNetwork) GetLayer1Levels() int {
+	net.mu.RLock()
+	defer net.mu.RUnlock()
+	return net.Config.Layer1Levels
+}
+
+// SetLayer2Levels sets the quantization levels for layer 2 (output layer).
+func (net *DualModeNetwork) SetLayer2Levels(levels int) {
+	net.mu.Lock()
+	defer net.mu.Unlock()
+
+	if levels < 2 {
+		levels = 2
+	}
+	if levels > 30 {
+		levels = 30
+	}
+	net.Config.Layer2Levels = levels
+	if net.Config.PerLayerQuant {
+		net.requantizeWeightsLocked()
+	}
+}
+
+// GetLayer2Levels returns the current layer 2 quantization levels.
+func (net *DualModeNetwork) GetLayer2Levels() int {
+	net.mu.RLock()
+	defer net.mu.RUnlock()
+	return net.Config.Layer2Levels
+}
+
+// SetPerLayerLevels sets quantization levels for both layers at once.
+func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
+	net.mu.Lock()
+	defer net.mu.Unlock()
+
+	if layer1 < 2 {
+		layer1 = 2
+	}
+	if layer1 > 30 {
+		layer1 = 30
+	}
+	if layer2 < 2 {
+		layer2 = 2
+	}
+	if layer2 > 30 {
+		layer2 = 30
+	}
+
+	net.Config.Layer1Levels = layer1
+	net.Config.Layer2Levels = layer2
+	net.Config.PerLayerQuant = true
+	net.requantizeWeightsLocked()
 }
 
 // IsSingleLayer returns whether single-layer (Tour Mode) is enabled.
@@ -464,8 +647,52 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	result.Agree = (result.FPPrediction == result.CIMPrediction)
 	result.Disagreement = klDivergence(result.FPProbabilities, result.CIMProbabilities)
 
-	// Energy calculation (Jerry et al. IEDM 2017: ~50 fJ/MAC)
-	result.EnergyUsed = float64(totalMACs) * 50e-15 * 1e6 // Convert to μJ
+	// Energy calculation (Jerry et al. IEDM 2017: ~50 fJ/MAC at 30 levels)
+	// Energy scales with bits of precision: ~10 fJ/bit per MAC
+	// bits = log2(levels), so energy = 10 * log2(levels) fJ/MAC
+	// At 30 levels (~4.9 bits): 10 * 4.9 ≈ 50 fJ/MAC (matches literature)
+	// At 2 levels (1 bit): 10 * 1 = 10 fJ/MAC (5x more efficient)
+	//
+	// With per-layer quantization, calculate energy for each layer separately
+	var totalEnergy float64
+	if net.Config.SingleLayer {
+		// Single layer uses Layer1Levels (or NumLevels if not per-layer)
+		levels := net.Config.NumLevels
+		if net.Config.PerLayerQuant {
+			levels = net.Config.Layer1Levels
+		}
+		bitsPerCell := math.Log2(float64(levels))
+		if bitsPerCell < 1 {
+			bitsPerCell = 1
+		}
+		energyPerMAC := 10e-15 * bitsPerCell
+		totalEnergy = float64(totalMACs) * energyPerMAC * 1e6
+	} else {
+		// Two layers: calculate energy separately
+		macs1 := net.InputSize * net.HiddenSize
+		macs2 := net.HiddenSize * net.OutputSize
+
+		l1Levels := net.Config.NumLevels
+		l2Levels := net.Config.NumLevels
+		if net.Config.PerLayerQuant {
+			l1Levels = net.Config.Layer1Levels
+			l2Levels = net.Config.Layer2Levels
+		}
+
+		bits1 := math.Log2(float64(l1Levels))
+		if bits1 < 1 {
+			bits1 = 1
+		}
+		bits2 := math.Log2(float64(l2Levels))
+		if bits2 < 1 {
+			bits2 = 1
+		}
+
+		energy1 := float64(macs1) * 10e-15 * bits1 * 1e6 // Layer 1 energy in μJ
+		energy2 := float64(macs2) * 10e-15 * bits2 * 1e6 // Layer 2 energy in μJ
+		totalEnergy = energy1 + energy2
+	}
+	result.EnergyUsed = totalEnergy
 
 	return result
 }
@@ -655,6 +882,22 @@ func (net *DualModeNetwork) GetQuantizationStats() (layer1Stats, layer2Stats Qua
 
 	layer1Stats = ComputeQuantizationStats(net.FPWeights1, net.QuantWeights1)
 	layer2Stats = ComputeQuantizationStats(net.FPWeights2, net.QuantWeights2)
+	return
+}
+
+// GetPerLayerQuantInfo returns the current per-layer quantization configuration.
+func (net *DualModeNetwork) GetPerLayerQuantInfo() (enabled bool, l1Levels, l2Levels int) {
+	net.mu.RLock()
+	defer net.mu.RUnlock()
+
+	enabled = net.Config.PerLayerQuant
+	if enabled {
+		l1Levels = net.Config.Layer1Levels
+		l2Levels = net.Config.Layer2Levels
+	} else {
+		l1Levels = net.Config.NumLevels
+		l2Levels = net.Config.NumLevels
+	}
 	return
 }
 

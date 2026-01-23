@@ -493,28 +493,77 @@ func (w *AccuracyWaterfall) generateImage(width, height int) image.Image {
 		}
 	}
 
-	// Draw waterfall bars
+	// Draw waterfall bars - proper step-down visualization
 	stepWidth := chartWidth / (len(w.steps) + 1)
-	for i, step := range w.steps {
-		x := marginLeft + (i+1)*stepWidth - stepWidth/2
-		barWidth := stepWidth - 10
-		y := marginTop + chartHeight - int(float64(chartHeight)*(step.Accuracy-minAcc)/(maxAcc-minAcc))
+	barWidth := stepWidth - 20
+	if barWidth < 20 {
+		barWidth = 20
+	}
 
-		// Draw bar
-		for bx := x; bx < x+barWidth; bx++ {
-			for by := y; by < marginTop+chartHeight; by++ {
-				img.Set(bx, by, step.Color)
+	for i, step := range w.steps {
+		x := marginLeft + (i+1)*stepWidth - barWidth/2
+
+		// Calculate Y positions
+		currentY := marginTop + chartHeight - int(float64(chartHeight)*(step.Accuracy-minAcc)/(maxAcc-minAcc))
+
+		// Get previous accuracy (100% for first step)
+		prevAcc := 100.0
+		if i > 0 {
+			prevAcc = w.steps[i-1].Accuracy
+		}
+		prevY := marginTop + chartHeight - int(float64(chartHeight)*(prevAcc-minAcc)/(maxAcc-minAcc))
+
+		// Draw the "remaining" bar (from current accuracy to bottom) in muted color
+		mutedColor := color.RGBA{step.Color.R / 3, step.Color.G / 3, step.Color.B / 3, 255}
+		for bx := x; bx < x+barWidth && bx < width-marginRight; bx++ {
+			for by := currentY; by < marginTop+chartHeight; by++ {
+				img.Set(bx, by, mutedColor)
+			}
+		}
+
+		// Draw the "loss" portion (from previous to current) in bright color
+		if step.Loss > 0 {
+			for bx := x; bx < x+barWidth && bx < width-marginRight; bx++ {
+				for by := prevY; by < currentY; by++ {
+					img.Set(bx, by, step.Color)
+				}
+			}
+		} else {
+			// First bar - draw full bar to current accuracy
+			for bx := x; bx < x+barWidth && bx < width-marginRight; bx++ {
+				for by := currentY; by < marginTop+chartHeight; by++ {
+					img.Set(bx, by, step.Color)
+				}
+			}
+		}
+
+		// Draw connector line from previous bar to this bar's top
+		if i > 0 {
+			connectorColor := color.RGBA{150, 150, 150, 200}
+			prevX := marginLeft + i*stepWidth + barWidth/2
+			for cx := prevX; cx < x; cx++ {
+				img.Set(cx, prevY, connectorColor)
+				img.Set(cx, prevY+1, connectorColor)
 			}
 		}
 
 		// Draw border
 		borderColor := color.RGBA{200, 200, 200, 255}
-		for bx := x; bx < x+barWidth; bx++ {
-			img.Set(bx, y, borderColor)
+		for bx := x; bx < x+barWidth && bx < width-marginRight; bx++ {
+			img.Set(bx, currentY, borderColor)
+			img.Set(bx, marginTop+chartHeight-1, borderColor)
 		}
-		for by := y; by < marginTop+chartHeight; by++ {
+		for by := currentY; by < marginTop+chartHeight; by++ {
 			img.Set(x, by, borderColor)
-			img.Set(x+barWidth-1, by, borderColor)
+			if x+barWidth-1 < width-marginRight {
+				img.Set(x+barWidth-1, by, borderColor)
+			}
+		}
+
+		// Draw accuracy value text (simplified as small marker)
+		markerColor := color.RGBA{255, 255, 255, 255}
+		for dx := -2; dx <= 2; dx++ {
+			img.Set(x+barWidth/2+dx, currentY-3, markerColor)
 		}
 	}
 

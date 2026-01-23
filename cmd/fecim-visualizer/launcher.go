@@ -17,6 +17,7 @@ type DemoInfo struct {
 	Subtitle    string
 	Description string
 	Ready       bool
+	WIP         bool // Work in progress - show indicator but still accessible
 }
 
 // GetDemos returns all demo information (6 consolidated demos)
@@ -63,6 +64,7 @@ func GetDemos() []DemoInfo {
 			Subtitle:    "Design Suite",
 			Description: "Bridge to open-source EDA: weight compiler, layout visualization, SPICE export for ngspice/KLayout",
 			Ready:       true,
+			WIP:         true,
 		},
 	}
 }
@@ -196,13 +198,31 @@ func (r *demoCardRenderer) Refresh() {
 	subtitle.Move(fyne.NewPos(badgeX+badgeSize+16, 18+titleSize+6))
 	r.objects = append(r.objects, subtitle)
 
-	// Status indicator - small green dot for ready
+	// Status indicator - WIP badge or green dot
 	if info.Ready {
-		dotSize := float32(12)
-		statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
-		statusDot.Resize(fyne.NewSize(dotSize, dotSize))
-		statusDot.Move(fyne.NewPos(size.Width-dotSize-12, 12))
-		r.objects = append(r.objects, statusDot)
+		if info.WIP {
+			// Work In Progress badge - orange rounded rectangle with text
+			badgeWidth := float32(110)
+			badgeHeight := float32(20)
+			wipBg := canvas.NewRectangle(color.RGBA{255, 165, 0, 255}) // Orange
+			wipBg.Resize(fyne.NewSize(badgeWidth, badgeHeight))
+			wipBg.Move(fyne.NewPos(size.Width-badgeWidth-10, 10))
+			wipBg.CornerRadius = 4
+			r.objects = append(r.objects, wipBg)
+
+			wipText := canvas.NewText("Work In Progress", color.RGBA{0, 0, 0, 255})
+			wipText.TextSize = 11
+			wipText.TextStyle = fyne.TextStyle{Bold: true}
+			wipText.Move(fyne.NewPos(size.Width-badgeWidth-10+6, 13))
+			r.objects = append(r.objects, wipText)
+		} else {
+			// Green dot for ready
+			dotSize := float32(12)
+			statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
+			statusDot.Resize(fyne.NewSize(dotSize, dotSize))
+			statusDot.Move(fyne.NewPos(size.Width-dotSize-12, 12))
+			r.objects = append(r.objects, statusDot)
+		}
 	}
 
 	// Description - larger and clearer
