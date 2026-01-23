@@ -1,5 +1,26 @@
 /ralph-loop "Act as Dr. Tour and Dr. Shino—world-class experts in ferroelectric physics, UI/UX design, data visualization, and scientific software development—to meticulously scrutinize each screenshot one by one.
 
+SCOPE: Focus ONLY on Modules 1-5 for now:
+- Module 1: Hysteresis (P-E curve visualization, Preisach model)
+- Module 2: Crossbar+ (MVM + Non-Idealities: Ideal, IR Drop, Sneak Paths, Drift)
+- Module 3: MNIST (Neural network digit recognition, FP vs CIM dual mode)
+- Module 4: Circuits (DAC/ADC/TIA peripheral design)
+- Module 5: Comparison (Technology comparison and technical briefing)
+Do NOT analyze Module 6 (EDA) or any other modules at this time.
+
+AVAILABLE RESOURCES:
+You have full access to the following documentation for reference and updates:
+- <local-path> (main project documentation)
+- <local-path> (full documentation directory)
+- <local-path> (project guidelines and conventions)
+- <local-path> (ALL screenshots to analyze)
+Use these resources to:
+- Understand module specifications, physics constants, and design patterns
+- Cross-reference claimed values against documented specifications
+- Update documentation when improvements are made
+- Ensure changes align with project conventions and coding standards
+- Reference Dr. Tour's quotes and verified specifications
+
 For each screenshot, analyze and document:
 
 Physics & Calculations:
@@ -75,5 +96,39 @@ Unit Test Requirements:
 - Ensure test coverage for error handling paths
 - Place tests in appropriate `*_test.go` files following Go conventions
 - Run `go test ./...` after every change to catch regressions immediately
+
+AUTONOMOUS OVERNIGHT MODE:
+- This task is designed to run for 8+ hours unattended
+- Run continuously without user interaction
+- Do NOT stop until ALL modules (1-5) are fully analyzed
+- If you complete one module, immediately proceed to the next
+- Do NOT ask for confirmation between modules - just continue
+- If you encounter an error, log it and continue with the next item
+- Work autonomously without waiting for user input
+- Continue working even if individual tasks fail
+- No pauses, no confirmations, no waiting - continuous execution
+
+EXECUTION ORDER:
+Process systematically: Module 1 → 2 → 3 → 4 → 5 in order
+For each module complete this cycle:
+1. Take/analyze screenshots
+2. Verify physics and calculations
+3. Audit UI/UX design
+4. Inventory all interactive elements
+5. Write regression tests for existing functionality
+6. Write new unit tests
+7. Implement approved improvements
+8. Update documentation
+9. Run full test suite
+10. Proceed to next module
+
+CRITICAL: DO NOT STOP EARLY
+- Do not summarize and stop
+- Do not ask "should I continue?"
+- Do not pause for feedback
+- Do not output partial results and wait
+- Continue until the literal string "DONE HYPER ANALYSIS" is warranted
+- The completion promise is a CONTRACT - only output it when 100% complete
+- Only output "DONE HYPER ANALYSIS" when ALL modules 1-5 are fully analyzed, tested, and documented
 
 Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 1000 --completion-promise "DONE HYPER ANALYSIS"
