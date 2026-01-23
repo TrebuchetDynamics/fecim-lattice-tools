@@ -1,723 +1,451 @@
-# EDA Explained Like I'm 5
+# EDA Research Meta-Study for FeCIM Project
 
-**Electronic Design Automation for Ferroelectric Compute-in-Memory**
+**A Comprehensive Analysis of 310+ Papers and Resources**
 
----
-
-## Part 1: What is EDA? (The Simple Version)
-
-### The Lego Analogy
-
-Imagine you want to build the world's most amazing Lego castle. You have an idea in your head, but you need to:
-
-1. **Draw your plan** (so you don't forget what goes where)
-2. **Check if your pieces fit** (you can't put a round peg in a square hole)
-3. **Make sure it won't fall down** (physics matters!)
-4. **Give instructions to the Lego factory** (so they can make your special pieces)
-
-**EDA is like having a super-smart robot helper that does all of this for computer chips.**
-
-```
-Your Idea --> EDA Tools --> Real Chip
-   Brain        Robot        Diamond
-```
-
-### The Journey from Idea to Chip
-
-| Step | What Happens | Lego Equivalent |
-|------|--------------|-----------------|
-| **Design** | You describe what you want | "I want a castle with 4 towers" |
-| **Synthesis** | Computer figures out the pieces needed | Robot counts all the bricks |
-| **Place & Route** | Pieces get arranged and connected | Putting bricks on the baseplate |
-| **Verify** | Check everything works | Making sure doors open, towers don't fall |
-| **Manufacture** | Send to factory | Lego factory makes your custom set |
+*Last Updated: January 2026*
 
 ---
 
-## Part 2: The Key EDA Tools (Meet the Robots)
+## Executive Summary
 
-### 2.1 Yosys - The Translator Robot
+This meta-study synthesizes research from 310+ papers, tools, and resources collected across the FeCIM Visualizer project. The analysis identifies key findings, emerging trends, and actionable recommendations for integrating ferroelectric compute-in-memory (FeCIM) designs with open-source EDA tools.
 
-**What it does:** Turns your description into a shopping list of parts.
+### Key Findings
 
-**Simple example:**
-```
-You say: "I want a light that turns on when BOTH switches are flipped"
-
-Yosys says: "Okay, you need an AND gate. Here's part #SKY130_AND2"
-```
-
-**Real life:** You write code (Verilog), Yosys converts it to actual transistor gates.
-
-### 2.2 OpenROAD - The Architect Robot
-
-**What it does:** Takes your shopping list and arranges everything on the chip.
-
-Think of it like Tetris, but:
-- Every piece must connect to the right neighbors
-- Wires can't cross badly
-- Everything must fit in the box
-
-**The sub-robots inside OpenROAD:**
-
-| Robot | Job |
-|-------|-----|
-| RePlAce | Roughly places all the pieces |
-| OpenDP | Fine-tunes placement |
-| TritonCTS | Makes sure the clock reaches everywhere on time |
-| TritonRoute | Draws all the wires |
-
-### 2.3 Magic VLSI - The Inspector Robot
-
-**What it does:** Checks if your chip follows the factory's rules.
-
-**Example rules:**
-- "Wires must be at least 0.13 micrometers apart" (or they'll short circuit)
-- "Transistors need this much space around them" (or they won't work)
-
-**If Magic finds a problem:** "DRC ERROR: Wire too close on layer Metal1!"
-
-### 2.4 ngspice - The Simulator Robot
-
-**What it does:** Pretends to run electricity through your design to see if it works.
-
-**Like a video game for circuits:**
-- You set up the circuit
-- You "press play"
-- It shows you what the voltages and currents do over time
-
-**For FeCIM:** We use special "Verilog-A models" that teach ngspice how ferroelectric materials behave (the hysteresis loop!).
-
-### 2.5 KLayout/GDSFactory - The Artist Robots
-
-**What they do:** Draw the actual shapes that will be printed on silicon.
-
-**Think of it like:**
-- KLayout = Photoshop for chips
-- GDSFactory = Writing a Python script that draws for you
-
-**Output:** A GDSII file (like a PDF, but for chip factories)
+1. **Open-source EDA is production-ready for digital CMOS** but requires custom integration for FeFET/CIM designs
+2. **The FeFET modeling gap is closing** with OpenVAF and Verilog-A compact models enabling SPICE simulation
+3. **Architecture-level tools (NeuroSim, CiMLoop) are mature** and can guide design decisions before circuit implementation
+4. **IHP's open PDK with RRAM support** provides the closest path to fabricating CIM arrays in the open ecosystem
+5. **30-level quantization** used in this project aligns with state-of-the-art MLC FeFET demonstrations
 
 ---
 
-## Part 3: What's a PDK? (The Recipe Book)
+## 1. Paper Corpus Overview
 
-### PDK = Process Design Kit
+### 1.1 Distribution by Topic
 
-**Analogy:** If you want to bake cookies at a specific bakery, you need THEIR recipe book that tells you:
-- What ingredients they have
-- What oven temperatures work
-- What cookie shapes fit their trays
+| Category | Papers | Key Sources |
+|----------|--------|-------------|
+| FeFET/HfO₂ Materials | 45+ | Nature, Adv. Materials, J. Applied Physics |
+| CIM Architecture | 40+ | ISSCC, VLSI, IEEE JSSC |
+| Simulation Tools | 35+ | arXiv, GitHub, Academic |
+| EDA/RTL-to-GDSII | 30+ | OpenROAD, OpenLane, WOSET |
+| Neuromorphic/SNN | 30+ | Frontiers, Nature Communications |
+| ADC/DAC Design | 25+ | ICCAD, DAC, IEEE |
+| Non-Idealities | 25+ | Science China, ResearchGate |
+| 3D Integration | 20+ | Nature, Science Advances |
+| Transformers/LLM | 15+ | arXiv, Nature Computational Science |
+| Photonic CIM | 15+ | MIT, Lightmatter, IEEE |
+| Security/PUF | 10+ | IEEE, ACS |
 
-**A PDK tells EDA tools:**
-
-| Information | Example |
-|-------------|---------|
-| What transistors are available | "We have NMOS and PMOS, sizes 0.13um to 10um" |
-| How to draw them | "NMOS needs poly over active with N+ implant" |
-| Physical rules | "Metal1 minimum width: 0.14um" |
-| Electrical behavior | "This transistor has 0.4V threshold" |
-
-### Open PDKs Available
-
-| PDK | Factory | Node | Special Feature |
-|-----|---------|------|-----------------|
-| SKY130 | SkyWater | 130nm | Free, lots of tutorials |
-| GF180MCU | GlobalFoundries | 180nm | High voltage (good for FeFET!) |
-| IHP SG13G2 | IHP Germany | 130nm | Has RRAM/memristor support! |
-
-**Problem for FeCIM:** None of these have FeFET devices built-in. We have to add our own models.
-
----
-
-## Part 4: The FeCIM Challenge (Why It's Hard)
-
-### Normal Chips vs. FeCIM Chips
-
-| Aspect | Normal Digital Chip | FeCIM Chip |
-|--------|--------------------:|:-----------|
-| Signals | 0 or 1 (binary) | 0 to 29 (30 levels!) |
-| Memory | Separate from compute | Memory IS the computer |
-| Design | Highly automated | Mostly manual |
-| Tools | Mature, production-ready | Research-grade |
-
-### The Crossbar Array - Our Special Challenge
+### 1.2 Publication Timeline
 
 ```
-        Columns (Bit Lines)
-          |   |   |   |
-        +-+-+-+-+-+-+-+-+
-Row 1 --| * | * | * | * |   <-- Each * is a FeFET
-        +---+---+---+---+       storing a weight
-Row 2 --| * | * | * | * |
-        +---+---+---+---+
-Row 3 --| * | * | * | * |
-        +-+-+-+-+-+-+-+-+
-          |   |   |   |
-         Output currents
-         (sum of weights x inputs)
-```
-
-**Why EDA tools struggle:**
-
-1. **No FeFET in the library** - We have to model it ourselves
-2. **Analog behavior** - Tools expect digital 0/1, not 30 levels
-3. **Array effects** - IR-drop and sneak paths need special analysis
-4. **No auto-router** - We can't just click "route" for a crossbar
-
----
-
-## Part 5: The Open-Source EDA Flow (Step by Step)
-
-### The Complete Picture
-
-```
-+-------------------------------------------------------------+
-|                    YOUR BRAIN (The Idea)                     |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 1: DESIGN ENTRY                                        |
-|  +-------------+    +-------------+                          |
-|  |   Verilog   |    |   Xschem    |                          |
-|  |  (Digital)  |    |  (Analog)   |                          |
-|  +-------------+    +-------------+                          |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 2: SIMULATION (Does it work on paper?)                 |
-|  +-------------+    +-------------+                          |
-|  |  Verilator  |    |   ngspice   |                          |
-|  |  (Digital)  |    |  (Analog)   |                          |
-|  +-------------+    +-------------+                          |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 3: SYNTHESIS (What parts do we need?)                  |
-|  +-----------------------------------------+                 |
-|  |                YOSYS                     |                 |
-|  |   Verilog --> Gate-level netlist         |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 4: PLACE & ROUTE (Where does everything go?)           |
-|  +-----------------------------------------+                 |
-|  |              OpenROAD                    |                 |
-|  |   Floorplan --> Place --> CTS --> Route |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 5: VERIFICATION (Did we mess up?)                      |
-|  +-----------+  +-----------+  +-----------+                 |
-|  |   Magic   |  |  Netgen   |  |  OpenSTA  |                 |
-|  |   (DRC)   |  |   (LVS)   |  |  (Timing) |                 |
-|  +-----------+  +-----------+  +-----------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|  STEP 6: TAPE-OUT (Send to factory!)                         |
-|  +-----------------------------------------+                 |
-|  |              GDSII File                  |                 |
-|  |   --> Tiny Tapeout / IHP / SkyWater     |                 |
-|  +-----------------------------------------+                 |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                    REAL CHIP!                                |
-+-------------------------------------------------------------+
+2020-2021: Foundation papers (NeuroSim validation, OpenLane)
+2022-2023: CIM accelerator demonstrations, FeFET modeling advances
+2024:      LLM/Transformer CIM, 3D integration, mature tools
+2025:      Production deployments, IHP shuttles, analog attention
+2026:      Full-stack systems, commercial viability
 ```
 
 ---
 
-## Part 6: Module 6 - Our Bridge to EDA
+## 2. Critical Findings by Research Area
 
-### What Module 6 Does
+### 2.1 FeFET Device Physics
 
-Our FeCIM Design Suite (Module 6) fills the gap between neural network weights and EDA tools:
+**Consensus Points:**
+- HfO₂-ZrO₂ superlattices achieve >10¹² cycle endurance (vs. 10⁴-10⁵ for standard HfO₂)
+- Coercive field Ec ≈ 1 MV/cm; Remanent polarization Pr ≈ 25 µC/cm²
+- 30 discrete analog states demonstrated in MLC FeFET (aligned with project's quantization)
+- Temperature effects require Verilog-A models with history tracking
 
+**Key Papers:**
+| Paper | Finding | Relevance |
+|-------|---------|-----------|
+| HfO₂-ZrO₂ Superlattice (Shin, Tour) | 10¹² endurance | Direct project foundation |
+| University of Oulu Thesis (2025) | Cadence Verilog-A FeCap model | Simulation methodology |
+| Sub-3nm FeFET FinFET (2024) | 85.2% power reduction | Future node scaling |
+
+**Gap Identified:** No open PDK includes native FeFET devices. Custom Verilog-A models required.
+
+### 2.2 CIM Architecture and Simulation
+
+**Consensus Points:**
+- Matrix-Vector Multiply (MVM) in O(1) via Kirchhoff's law is the core operation
+- IR-drop and sneak paths are dominant non-idealities (up to 20% accuracy loss)
+- ADC resolution is the primary energy bottleneck (6-8 bits typical)
+- Architecture exploration tools (CiMLoop) are 1000× faster than SPICE
+
+**Tool Comparison:**
+
+| Tool | Level | Speed | Accuracy | Open Source |
+|------|-------|-------|----------|-------------|
+| NeuroSim | Circuit macro | Medium | <5% vs silicon | Yes |
+| CiMLoop | System | Fast | Statistical | Yes |
+| FAST | Array | Fast | Good | Partial |
+| ngspice | Transistor | Slow | High | Yes |
+| HSPICE | Transistor | Slow | High | No |
+
+**Recommended Workflow:**
 ```
-Neural Network Weights (from training)
-            |
-            v
-    +-------------------+
-    |    MODULE 6       |
-    |  FeCIM Compiler   |
-    |                   |
-    |  * Quantize to    |
-    |    30 levels      |
-    |  * Map to cells   |
-    |  * Calculate      |
-    |    conductances   |
-    +-------------------+
-            |
-            v
-    +-------+-------+--------+
-    | JSON  |  CSV  | SPICE  |
-    +-------+-------+--------+
-        |       |       |
-        v       v       v
-      Docs    Excel   ngspice
+1. CiMLoop → Architecture exploration (minutes)
+2. NeuroSim → Energy/area estimation (hours)
+3. ngspice + Verilog-A → Cell verification (hours)
+4. Full array → Only for critical paths
 ```
 
-### The Quantization Magic
+### 2.3 Open-Source EDA Readiness
 
+**Production-Ready:**
+- Yosys (synthesis) - Tape-out proven
+- OpenROAD (P&R) - Used by Infineon, Intel
+- Magic VLSI (DRC/LVS) - SKY130 sign-off tool
+- GDSFactory (layout scripting) - v9.31 with KLayout backend
+- ngspice + OpenVAF - Verilog-A FeFET simulation
+
+**Gaps for FeCIM:**
+| Gap | Status | Workaround |
+|-----|--------|------------|
+| FeFET in PDK | Not available | Custom Verilog-A + ngspice OSDI |
+| Crossbar compiler | None open-source | Module 6 fills this gap |
+| Large array simulation | O(N²) SPICE | NeuroSim/CiMLoop for estimation |
+| Automated CIM layout | Manual/scripted | GDSFactory + KLayout Python |
+
+### 2.4 ADC/DAC Design for CIM
+
+**Key Findings:**
+- 4-6 bit ADC sufficient for most neural networks (vs 8-bit overkill)
+- ADC consumes 30-60% of total CIM energy
+- Current-mode SAR ADCs eliminate TIA (3mW @ 100 MSps)
+- ADC-less architectures emerging (HCiM achieves 28× energy reduction)
+
+**Design Space:**
+
+| ADC Type | Resolution | Energy | Speed | CIM Suitability |
+|----------|------------|--------|-------|-----------------|
+| Flash | 4-6 bit | High | Fast | Good for inference |
+| SAR | 6-8 bit | Medium | Medium | General purpose |
+| VCO-based | 5-6 bit | Low | Medium | Energy-efficient |
+| ADC-less | N/A | Lowest | Varies | Emerging |
+
+**Implication for Project:** Demo 4 (Circuits) should model 5-6 bit ADC as baseline.
+
+### 2.5 Non-Ideality Compensation
+
+**Ranked by Impact:**
+1. **IR-Drop** (5-20% accuracy loss) - Mitigated by CAFM scheme, activation modulation
+2. **Device Variation** (3-10% loss) - Mitigated by noise-aware training (AIHWKIT)
+3. **Sneak Paths** (2-8% loss) - Mitigated by 1T1R/self-rectifying cells
+4. **Drift** (1-5% loss) - Mitigated by periodic refresh
+
+**Best Practices from Literature:**
+```go
+// Pseudo-code for non-ideality-aware inference
+result := idealMVM(weights, inputs)
+result = applyIRDropCompensation(result, arraySize)
+result = applyVariationNoise(result, sigma=0.05)
+return quantizeADC(result, bits=6)
 ```
-Original weight: 0.7342...
 
-Step 1: Scale to [0, 29]
-        0.7342 x 29 = 21.29
+### 2.6 Transformer/LLM on CIM
 
-Step 2: Round to integer
-        21.29 --> 21
+**Breakthrough Finding (2025):**
+- Analog IMC attention mechanism achieves **70,000× energy reduction** vs digital
+- **100× speed-up** compared to GPU for attention computation
+- Key insight: Attention's MatMul is naturally suited to crossbar MVM
 
-Step 3: Map to conductance
-        Level 21 --> 72.4 uS
+**Architectural Implications:**
+| Component | CIM Suitability | Challenge |
+|-----------|-----------------|-----------|
+| QKV projection | Excellent | Weight precision |
+| Attention MatMul | Excellent | Dynamic range |
+| FFN layers | Excellent | Standard MVM |
+| Softmax | Poor | Non-linear |
+| LayerNorm | Poor | Division required |
 
-Step 4: Calculate programming voltage
-        V_prog = f(conductance) = 2.1V
+**Implication for Project:** Future Demo could show attention mechanism on FeCIM.
 
-Result: Cell assignment
-        Row 5, Col 3, Level 21, G=72.4uS, V=2.1V
-```
+### 2.7 Fabrication Pathways
+
+**Open Shuttle Options (2026):**
+
+| Shuttle | Process | FeCIM Suitability | Cost |
+|---------|---------|-------------------|------|
+| Tiny Tapeout IHP | 130nm BiCMOS | High (RRAM support) | ~$100 |
+| Tiny Tapeout SKY130 | 130nm CMOS | Medium (HV modules) | ~$100 |
+| IHP Direct | 130nm SG13S | Highest (memristor PDK) | Research |
+| GF180MCU | 180nm | Medium (10V HV) | Via Efabless |
+
+**Recommended Path:**
+1. Simulate with ngspice + custom FeFET model
+2. Layout with GDSFactory/KLayout
+3. Tape out peripheral circuits on IHP (CMOS)
+4. FeFET array: Research fab partnership or post-processing
 
 ---
 
-## Part 7: Production-Ready EDA for FeCIM
+## 3. Synthesis: State-of-the-Art Benchmarks
 
-### What Would a Professional FeCIM EDA Suite Need?
+### 3.1 MNIST Accuracy on CIM Hardware
 
-This section outlines the requirements for a **production-grade** EDA toolchain specifically designed for Ferroelectric Compute-in-Memory.
+| Implementation | Accuracy | Array Size | Technology |
+|----------------|----------|------------|------------|
+| Ferroelectric memristor RC (2025) | 98.78% | 32×32 | HfO₂ |
+| Multi-level FeFET crossbar (2023) | 96.6% | 64×64 | 28nm |
+| FTJ crossbar (2024) | 92% | 128×128 | HfO₂ |
+| Tour Lab In₂Se₃ (2024) | 87% | Research | Flash synthesis |
+| **This Project (Demo 3)** | **87%** | **Simulated** | **30-level** |
 
----
+**Observation:** Project's simulated 87% accuracy matches real Tour Lab demonstration.
 
-### 7.1 Core Requirements Checklist
+### 3.2 Energy Efficiency Comparison
 
-#### A. Device Modeling Layer
+| Technology | TOPS/W | Source |
+|------------|--------|--------|
+| GPU (A100) | 0.3 | NVIDIA |
+| TPU v4 | 1.5 | Google |
+| Digital ASIC | 5-10 | Various |
+| SRAM CIM | 10-50 | ISSCC 2024 |
+| RRAM CIM | 50-150 | Nature 2024 |
+| FeFET CIM | 100-500 | Projected |
+| Analog Attention | 1000+ | Nature Comp Sci 2025 |
 
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **Native FeFET models** | Built-in Preisach/L-K models, not add-ons | Missing |
-| **Multi-level state support** | 30+ discrete states per cell | Custom only |
-| **Temperature dependence** | Ec, Pr variation with T | In research |
-| **History-dependent behavior** | Minor loop tracking | Verilog-A only |
-| **Fatigue/endurance modeling** | Cycle-dependent degradation | Missing |
-| **Retention modeling** | Time-dependent polarization loss | Missing |
-| **Statistical variation** | D2D, C2C variability models | Limited |
+### 3.3 Endurance vs. Retention Trade-off
 
-**What "production-ready" looks like:**
-```python
-fefet_model = FeFET(
-    technology="HZO_superlattice",
-    Ec=1.0e6,           # V/cm
-    Pr=25e-6,           # C/cm^2
-    levels=30,
-    endurance=1e12,
-    retention_years=10,
-    temperature=300,    # Kelvin
-    variation_sigma=0.05
-)
-```
-
-#### B. Array-Level Simulation
-
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **IR-drop analysis** | Voltage drop across metal lines | Manual |
-| **Sneak path analysis** | Parasitic current paths | Manual |
-| **Thermal simulation** | Self-heating in dense arrays | Missing |
-| **Scalable simulation** | 256x256+ arrays in <1 hour | Too slow |
-| **GPU acceleration** | Parallel matrix operations | Research |
-| **Mixed-signal co-sim** | Digital control + analog array | Limited |
-
-**What "production-ready" looks like:**
-```python
-array = CrossbarArray(256, 256, fefet_model)
-array.simulate_mvm(
-    inputs=input_vector,
-    include_ir_drop=True,
-    include_sneak_paths=True,
-    temperature_map=thermal_sim.get_map(),
-    variation_instance=42  # Monte Carlo seed
-)
-# Completes in <10 seconds on GPU
-```
-
-#### C. Compiler and Mapping
-
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **ONNX/PyTorch import** | Direct NN model ingestion | Manual |
-| **Automatic tiling** | Split large layers across arrays | Research |
-| **Weight mapping optimization** | Minimize quantization error | Basic |
-| **Differential pair encoding** | Positive/negative weights | Available |
-| **Sparsity exploitation** | Skip zero weights | Limited |
-| **Bit-slicing support** | Multi-array precision | Research |
-
-**What "production-ready" looks like:**
-```python
-compiler = FeCIMCompiler(
-    model="resnet50.onnx",
-    target_array_size=(128, 128),
-    quantization_bits=5,    # log2(30) ~ 5
-    mapping_strategy="differential_pair",
-    optimize_for="energy"   # or "accuracy" or "throughput"
-)
-mapping = compiler.compile()
-# Outputs: array assignments, programming sequences, accuracy estimate
-```
-
-#### D. Layout and Physical Design
-
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **Crossbar array generator** | Parametric layout creation | Scripts |
-| **Peripheral synthesis** | ADC/DAC/driver auto-generation | Manual |
-| **Array-aware P&R** | Understand CIM constraints | Missing |
-| **3D stack support** | Multi-layer CIM design | Missing |
-| **Design rule checking** | CIM-specific DRC rules | Missing |
-| **Parasitic extraction** | R/C extraction for arrays | Limited |
-
-**What "production-ready" looks like:**
-```python
-layout = FeCIMLayoutGenerator(
-    array_size=(64, 64),
-    cell_type="1T1FeFET",
-    pdk="IHP_SG13G2",
-    peripherals={
-        "row_driver": "5bit_DAC",
-        "column_readout": "6bit_SAR_ADC",
-        "mux": "8:1"
-    }
-)
-gds = layout.generate()
-drc_result = layout.run_drc()
-lvs_result = layout.run_lvs(schematic)
-```
-
-#### E. Verification and Sign-off
-
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **Functional verification** | NN accuracy on hardware model | Custom |
-| **Monte Carlo analysis** | Statistical yield prediction | Limited |
-| **Worst-case analysis** | Corner simulations (PVT) | Manual |
-| **Reliability analysis** | MTTF, wear-out prediction | Missing |
-| **Power analysis** | Static + dynamic power | Basic |
-| **Timing analysis** | Read/write/compute latency | Manual |
-
-**What "production-ready" looks like:**
-```python
-verification = FeCIMVerification(design)
-
-# Functional
-accuracy = verification.run_inference(
-    model="mnist_cnn",
-    test_set=mnist_test,
-    include_nonidealities=True
-)
-# Returns: 94.2% (vs 96.5% ideal)
-
-# Statistical
-yield_result = verification.monte_carlo(
-    n_samples=10000,
-    vary=["device_variation", "ir_drop", "adc_noise"]
-)
-# Returns: 3-sigma yield = 98.7%
-
-# Reliability
-mttf = verification.reliability_analysis(
-    workload="inference_continuous",
-    temperature=85  # Celsius
-)
-# Returns: MTTF = 8.3 years
-```
-
-#### F. Integration and Ecosystem
-
-| Requirement | Description | Current State |
-|-------------|-------------|---------------|
-| **Standard file formats** | LEF/DEF, GDSII, OASIS | Available |
-| **PDK integration** | SKY130, GF180, IHP support | Limited |
-| **Cloud execution** | Scalable simulation | Missing |
-| **Version control** | Design history tracking | Git works |
-| **Collaboration** | Multi-user design | Limited |
-| **Documentation gen** | Auto-generate datasheets | Missing |
+| Device | Endurance (cycles) | Retention | MLC States |
+|--------|-------------------|-----------|------------|
+| NAND Flash | 10³-10⁴ | 10 years | 4 (TLC) |
+| RRAM | 10⁶-10¹² | 10 years | 2-4 |
+| PCM | 10⁸-10⁹ | 10 years | 2-4 |
+| FeFET (standard) | 10⁴-10⁵ | 10 years | 4-8 |
+| FeFET (superlattice) | 10¹⁰-10¹² | 10 years | 30 |
+| STT-MRAM | 10¹⁵ | 10 years | 2 |
 
 ---
 
-### 7.2 The Ideal FeCIM EDA Stack (Vision)
+## 4. Recommendations for FeCIM Project
+
+### 4.1 Immediate Actions
+
+1. **Integrate CiMLoop export in Module 6**
+   - Export YAML configuration for architecture exploration
+   - Validate energy/area estimates before circuit design
+
+2. **Enhance SPICE export with realistic models**
+   - Include Verilog-A FeFET model (Preisach-based)
+   - Add IR-drop network for large arrays
+   - Reference: University of Oulu thesis methodology
+
+3. **Add ADC-aware quantization to Demo 3**
+   - Implement 5-6 bit ADC noise model
+   - Show accuracy vs. ADC resolution trade-off
+
+### 4.2 Medium-Term Enhancements
+
+1. **Implement IR-drop visualization in Demo 2**
+   - Show voltage drop across array
+   - Demonstrate CAFM compensation scheme
+
+2. **Add attention mechanism demo**
+   - Visualize QKV projection on crossbar
+   - Show energy comparison vs. digital
+
+3. **GDSFactory layout generation**
+   - Procedurally generate crossbar arrays
+   - Export as OpenLane macro
+
+### 4.3 Research Directions
+
+1. **On-chip learning simulation**
+   - Implement hardware backprop (per Science Advances 2024)
+   - Show weight update dynamics
+
+2. **3D integration modeling**
+   - Simulate multi-layer crossbar stacks
+   - Model thermal effects
+
+3. **Security/PUF applications**
+   - Leverage FeFET stochasticity for PUF
+   - Demonstrate hardware key generation
+
+---
+
+## 5. Tool Integration Roadmap
+
+### 5.1 Current State (Module 6)
 
 ```
-+------------------------------------------------------------------+
-|                     FeCIM EDA Suite 2026                          |
-+------------------------------------------------------------------+
-|                                                                   |
-|  +-------------------------------------------------------------+ |
-|  |                    FRONTEND                                  | |
-|  |  * ONNX/PyTorch/TensorFlow model import                     | |
-|  |  * Architecture exploration (CiMLoop integration)           | |
-|  |  * Energy/area/accuracy trade-off visualization             | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                    COMPILER                                  | |
-|  |  * Automatic weight quantization (30 levels)                | |
-|  |  * Optimal array tiling and mapping                         | |
-|  |  * Programming sequence generation                          | |
-|  |  * Bit-slicing for high precision                           | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                DEVICE SIMULATOR                              | |
-|  |  * Native FeFET models (Preisach, L-K, TCAD-calibrated)     | |
-|  |  * GPU-accelerated array simulation                         | |
-|  |  * IR-drop, sneak path, thermal coupling                    | |
-|  |  * Monte Carlo variation analysis                           | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                PHYSICAL DESIGN                               | |
-|  |  * Parametric crossbar generator                            | |
-|  |  * Peripheral circuit synthesis (ADC/DAC/drivers)           | |
-|  |  * CIM-aware place & route                                  | |
-|  |  * 3D stack support                                         | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                VERIFICATION                                  | |
-|  |  * DRC/LVS with CIM-specific rules                          | |
-|  |  * Functional verification (NN accuracy)                    | |
-|  |  * Reliability sign-off (endurance, retention)              | |
-|  |  * Power/timing analysis                                    | |
-|  +-------------------------------------------------------------+ |
-|                              |                                    |
-|                              v                                    |
-|  +-------------------------------------------------------------+ |
-|  |                TAPE-OUT                                      | |
-|  |  * GDSII/OASIS export                                       | |
-|  |  * Foundry DRC deck validation                              | |
-|  |  * Test structure generation                                | |
-|  |  * Shuttle submission automation                            | |
-|  +-------------------------------------------------------------+ |
-|                                                                   |
-+------------------------------------------------------------------+
+Neural Network Weights
+        ↓
+Module 6 Compiler (30-level quantization)
+        ↓
+Cell Assignments (row, col, G, V_prog)
+        ↓
+Export: JSON / CSV / SPICE
 ```
 
----
-
-### 7.3 Gap Analysis: Current vs. Production-Ready
-
-| Capability | Open Source Today | Production Requirement | Gap |
-|------------|-------------------|------------------------|-----|
-| FeFET modeling | Verilog-A add-on | Native, calibrated | Large |
-| Array simulation | SPICE (slow) | GPU, <10s for 256x256 | Large |
-| Compiler | Basic quantization | Full ONNX pipeline | Medium |
-| Layout generation | Python scripts | Parametric generator | Medium |
-| Peripheral design | Manual | Synthesized | Large |
-| DRC/LVS | Generic CMOS | CIM-specific rules | Medium |
-| Verification | Manual | Automated, statistical | Large |
-| Documentation | Manual | Auto-generated | Small |
-
-### 7.4 Estimated Development Effort
-
-| Component | Effort (Person-Years) | Priority |
-|-----------|----------------------:|----------|
-| Native FeFET PDK module | 2-3 | Critical |
-| GPU array simulator | 1-2 | High |
-| ONNX compiler frontend | 1 | High |
-| Parametric layout generator | 1-2 | High |
-| Peripheral synthesis | 2-3 | Medium |
-| Verification framework | 1-2 | Medium |
-| Cloud infrastructure | 1 | Low |
-| **Total** | **10-15** | |
-
----
-
-### 7.5 Commercial EDA Comparison
-
-| Vendor | Product | FeCIM Support | Cost |
-|--------|---------|---------------|------|
-| **Cadence** | Virtuoso, Spectre | Verilog-A models | $$$$ |
-| **Synopsys** | HSPICE, Sentaurus TCAD | TCAD simulation | $$$$ |
-| **Siemens** | Calibre, AMS | DRC/LVS | $$$$ |
-| **Keysight** | ADS | RF/analog sim | $$$ |
-| **Open Source** | ngspice, OpenROAD | Basic, extendable | Free |
-
-**Reality:** Even commercial tools require significant customization for FeCIM. No turnkey solution exists.
-
----
-
-### 7.6 Our Project's Contribution
-
-Module 6 (FeCIM Design Suite) addresses key gaps:
-
-| Gap | Our Solution | Status |
-|-----|--------------|--------|
-| Weight-to-cell mapping | 30-level compiler | Done |
-| SPICE export | ngspice-compatible netlist | Done |
-| Visualization | Interactive crossbar view | Done |
-| Documentation | JSON/CSV export | Done |
-| Architecture exploration | CiMLoop YAML (planned) | Next |
-| Layout generation | GDSFactory (planned) | Next |
-
----
-
-### 7.7 The "Dream" Production FeCIM EDA Tool
-
-If someone built the ultimate FeCIM EDA tool, here's what using it would feel like:
+### 5.2 Enhanced Flow (Proposed)
 
 ```
-$ fecim-eda new-project my_ai_chip
-
-$ fecim-eda import-model resnet18.onnx
-  [OK] Model loaded: 11.7M parameters
-  [OK] Estimated: 47 crossbar arrays (128x128)
-  [OK] Estimated energy: 0.3 mJ/inference
-  [OK] Estimated accuracy: 94.2% (vs 95.1% FP32)
-
-$ fecim-eda optimize --target energy
-  [OK] Optimized mapping: 0.18 mJ/inference (-40%)
-  [OK] Accuracy impact: 93.8% (-0.4%)
-
-$ fecim-eda simulate --monte-carlo 1000
-  [OK] Mean accuracy: 93.2% +/- 0.8%
-  [OK] 3-sigma yield: 99.1%
-  [OK] IR-drop worst case: 4.2%
-
-$ fecim-eda layout --pdk IHP_SG13G2
-  [OK] Generated 47 array macros
-  [OK] Synthesized 47 ADCs, 47 DACs, 1 controller
-  [OK] Total area: 12.4 mm^2
-  [OK] DRC: PASS
-  [OK] LVS: PASS
-
-$ fecim-eda export --gdsii my_ai_chip.gds
-  [OK] Ready for IHP shuttle submission!
-
-$ fecim-eda docs --generate
-  [OK] Generated datasheet: my_ai_chip_datasheet.pdf
-  [OK] Generated test plan: my_ai_chip_test.md
+Neural Network (PyTorch/ONNX)
+        ↓
+CiMLoop (Architecture exploration)
+        ↓
+Module 6 Compiler (Enhanced)
+   ├── YAML → CiMLoop validation
+   ├── SPICE → ngspice + OpenVAF (.osdi)
+   ├── Python → GDSFactory layout
+   └── JSON/CSV → Documentation
+        ↓
+GDSFactory
+        ↓
+OpenLane (as macro)
+        ↓
+IHP Shuttle → Silicon
 ```
 
-**This doesn't exist yet.** But every tool we build gets us closer.
+### 5.3 Required Tool Versions
+
+| Tool | Minimum Version | Purpose |
+|------|-----------------|---------|
+| ngspice | 43+ | OSDI support |
+| OpenVAF | 24.6.0+ | OSDI 0.4 API |
+| GDSFactory | 9.31+ | KLayout backend |
+| OpenLane | 2.x | Python-based flow |
+| CiMLoop | Latest | MIT repo |
+| NeuroSim | V2.1 | PyTorch interface |
 
 ---
 
-## Part 8: Glossary (Big Words Made Simple)
+## 6. Key Research Groups to Follow
 
-| Term | Simple Definition |
-|------|-------------------|
-| **EDA** | Computer programs that help design chips |
-| **PDK** | Recipe book from the chip factory |
-| **RTL** | Code that describes what a chip should do |
-| **Synthesis** | Converting code to actual parts |
-| **Place & Route** | Arranging parts and drawing wires |
-| **DRC** | Checking if the design follows factory rules |
-| **LVS** | Checking if the layout matches the schematic |
-| **GDSII** | File format for chip layouts (like PDF for chips) |
-| **Verilog** | Programming language for describing hardware |
-| **Verilog-A** | Extension for describing analog behavior |
-| **SPICE** | Simulator that predicts circuit behavior |
-| **Netlist** | List of all parts and connections |
-| **Tapeout** | Sending your design to be manufactured |
-| **FeFET** | Transistor with ferroelectric memory built-in |
-| **Crossbar** | Grid of memory cells that can do math |
-| **MVM** | Matrix-Vector Multiply (the math crossbars do) |
-| **Quantization** | Reducing precision (like rounding) |
-| **IR-drop** | Voltage loss in wires (like water pressure dropping in long pipes) |
-| **Sneak path** | Unwanted current going the wrong way |
-| **Monte Carlo** | Testing with random variations to check robustness |
-| **MTTF** | Mean Time To Failure (how long before it breaks) |
-| **PVT** | Process, Voltage, Temperature (things that vary) |
+| Institution | Focus | Key Contacts |
+|-------------|-------|--------------|
+| **external research institution (Tour Lab)** | HfO₂-ZrO₂ superlattice, FeCIM company | Dr. external research group, Dr. Jaeho Shin |
+| **Georgia Tech** | NeuroSim, CIM benchmarking | Prof. Shimeng Yu |
+| **MIT** | CiMLoop, photonic computing | Prof. Murmann |
+| **IBM Research** | PCM AIMC, AIHWKIT | Zurich/Almaden labs |
+| **ETH Zurich** | Open-source RISC-V, IHP shuttles | PULP team |
+| **Stanford** | Memristor arrays | Prof. H.-S. Philip Wong |
+| **IMEC** | FeFET process development | Leuven, Belgium |
 
 ---
 
-## Part 9: Where to Learn More
+## 7. Bibliography (Categorized)
 
-### Beginner Resources
-- **Zero to ASIC Course**: zerotoasiccourse.com
-- **Tiny Tapeout Guides**: tinytapeout.com/digital_design
-- **Matt Venn's YouTube**: Open source chip design tutorials
+### 7.1 Core FeFET/HfO₂ Papers
 
-### Intermediate Resources
-- **OpenROAD Documentation**: openroad.readthedocs.io
-- **SkyWater PDK Docs**: skywater-pdk.readthedocs.io
-- **ngspice Manual**: ngspice.sourceforge.io
+1. Shin et al., "Atomic-scale ferroic HfO2-ZrO2 superlattice gate stack," 2021
+2. Shin, Tour et al., "BEOL-Compatible Superlattice FEFET Analog Synapse," IEEE 2022
+3. "HfO₂-based FeFETs: From materials to applications," J. Applied Physics, 2025
+4. "Ferroelectric Hafnium Oxide: A Potential Game-Changer," Adv. Electronic Materials, 2025
+5. "Progress in computational understanding of HfO₂ ferroelectrics," npj Comp. Materials, 2024
 
-### Advanced Resources
-- **Our EDA Research Meta-Study**: `docs/eda/eda.research.md`
-- **Open Source EDA Analysis**: `docs/eda/eda.opensource.md`
-- **CiMLoop Paper**: arxiv.org/abs/2405.07259
-- **NeuroSim Documentation**: GitHub neurosim repo
+### 7.2 CIM Architecture
+
+6. "Memory Is All You Need: CIM Architectures for LLM Inference," arXiv 2024
+7. "A compute-in-memory chip based on RRAM," Nature 2022
+8. "Architecture and Programming of Analog IMC Accelerators," IBM/IPDPS 2024
+9. "Fast and robust analog in-memory DNN training," Nature Communications 2024
+10. "CINM (Cinnamon): Compilation Infrastructure for CIM," ACM ASPLOS 2024
+
+### 7.3 Simulation Tools
+
+11. "NeuroSim V1.5: Improved Software Backbone," arXiv 2025
+12. "CiMLoop: A Flexible, Accurate, and Fast CIM Modeling Tool," MIT 2024
+13. "FerroX: GPU-accelerated phase-field simulator," Comp. Phys. Comm. 2023
+14. "IBM AIHWKIT: Analog AI Hardware Kit," APL Machine Learning 2023
+15. "COMPASS Compiler Framework for CIM," arXiv 2025
+
+### 7.4 Open-Source EDA
+
+16. "OpenLANE: The Open-Source Digital ASIC Implementation Flow," WOSET 2020
+17. "Empowering innovation: OpenROAD and the future of open-source EDA," 2024
+18. "GDSFactory Documentation v9.31.0," 2025
+19. "Basilisk: End-to-End Open-Source RISC-V SoC in IHP," arXiv 2024
+20. "IHP Open Source PDK Documentation," 2025
+
+### 7.5 ADC/DAC and Readout
+
+21. "HCiM: ADC-Less Hybrid Analog-Digital CIM Accelerator," ASP-DAC 2025
+22. "Current-Mode SAR ADC for Memristor Readout," MEMRISYS 2024
+23. "Memristor-based adaptive ADC for CIM," Nature Communications 2025
+24. "Readout Circuit Design for RRAM Array-Based CIM," MDPI Electronics 2024
+25. "Review of SRAM-based Compute-in-Memory Circuits," arXiv 2024
+
+### 7.6 Non-Idealities
+
+26. "Optimizing hardware-software co-design for memristor crossbars," Science China 2025
+27. "Hardware implementation of memristor-based ANNs," Nature Communications 2024
+28. "Sneak path solutions review," RSC Nanoscale Advances 2020
+29. "Hardware-Aware Quantization for Accurate Memristor NNs," ICCAD 2024
+30. "Model quantization for computing-in-memory: a survey," Science China 2025
+
+### 7.7 Transformers/LLM on CIM
+
+31. "Analog IMC attention mechanism for fast LLMs," Nature Computational Science 2025
+32. "Efficient memristor accelerator for transformer self-attention," Scientific Reports 2024
+33. "ALBERT on FeFET," Nature Communications 2025
+34. "Analog and Digital Hybrid Attention Accelerator," arXiv/IEEE 2024
+35. "HARDSEA: Hybrid Analog-ReRAM Digital-SRAM," IEEE TVLSI 2024
+
+### 7.8 Neuromorphic/SNN
+
+36. "Memristor-Based Spiking Neuromorphic Systems," MDPI Nanomaterials 2025
+37. "Fully memristive SNN for energy-efficient graph learning," Science 2025
+38. "The road to commercial success for neuromorphic technologies," Nature Communications 2025
+39. "Roadmap to Neuromorphic Computing with Emerging Technologies," arXiv 2024
+40. "Enabling Efficient Processing of SNNs with On-Chip Learning," arXiv 2025
+
+### 7.9 3D Integration
+
+41. "M3D-LIME: Monolithic 3D integration of RRAM hybrid memory," Nature Communications 2023
+42. "Eq-CIM: Monolithic 3D IGZO-RRAM-SRAM architecture," Science China 2025
+43. "M3D-MP4: Multi-Layer CNT-CMOS/RRAM Mixed-Precision CIM," IEEE 2025
+44. "3D Stacked IGZO 2T0C DRAM for CIM," Science Advances 2025
+45. "Monolithic 3D integration for energy-efficient computing," ScienceDirect 2024
+
+### 7.10 Photonic CIM
+
+46. "MIT Photonic Processor for Ultrafast AI," Nature Photonics 2024
+47. "MAFT-ONN: Photonic Processor for 6G," MIT News 2025
+48. "Lightmatter Photonic AI Processor," 2025
+49. "Photonics for Neuromorphic Computing: Fundamentals," Advanced Materials 2025
+50. "Optical computing accelerators: Principle and perspective," Frontiers of Physics 2025
 
 ---
 
-## Part 10: Summary
+## 8. Glossary
 
-### The Bottom Line
-
-**EDA tools are like robot assistants that help turn chip ideas into reality.**
-
-For FeCIM specifically:
-
-1. **Open-source tools exist** but need customization
-2. **The main gaps** are FeFET models and array-level simulation
-3. **Our Module 6** bridges the gap between neural networks and EDA
-4. **Production-ready FeCIM EDA** would need ~10-15 person-years of development
-5. **IHP's open PDK** is currently the best path to real silicon
-
-### The Journey So Far
-
-```
-Where we started:     Neural network weights in Python
-Where we are now:     30-level compiler with SPICE export
-Where we're going:    Full layout generation and tape-out
-```
-
-### What Makes FeCIM EDA Different
-
-| Standard EDA | FeCIM EDA Needs |
-|--------------|-----------------|
-| Binary signals (0/1) | 30 analog levels |
-| Logic gates | Crossbar arrays |
-| Auto place & route | Manual array layout |
-| Standard transistors | Custom FeFET models |
-| Digital verification | Analog + NN accuracy |
-| Single-run simulation | Monte Carlo statistics |
-
-### The Key Takeaway
-
-**Building production-ready FeCIM EDA is hard, but possible.**
-
-The pieces exist:
-- ngspice can simulate FeFET with Verilog-A
-- GDSFactory can generate crossbar layouts
-- OpenROAD can handle the digital parts
-- IHP has a fab that supports emerging memory
-
-What's missing is the **integration** - and that's what we're building.
+| Term | Definition |
+|------|------------|
+| **FeFET** | Ferroelectric Field-Effect Transistor |
+| **CIM** | Compute-in-Memory |
+| **MVM** | Matrix-Vector Multiply |
+| **HZO** | Hafnium Zirconium Oxide (HfₓZr₁₋ₓO₂) |
+| **OSDI** | Open Source Device Interface |
+| **PDK** | Process Design Kit |
+| **GDSII** | Graphic Data System II (layout format) |
+| **LVS** | Layout Versus Schematic |
+| **DRC** | Design Rule Check |
+| **SAR** | Successive Approximation Register (ADC type) |
+| **TIA** | Transimpedance Amplifier |
+| **CAFM** | Crossbar Aware Forward Mapping |
+| **BEOL** | Back-End-Of-Line (metal layers) |
 
 ---
 
-**The dream:** Click a button, get a FeCIM chip that runs your AI model.
+## 9. Appendix: Paper Collection Locations
 
-**The reality:** We're building the tools to make that dream possible, one piece at a time.
+| Topic | Location in Project |
+|-------|---------------------|
+| Simulation Tools PDFs | `docs/papers/by-topic/03-simulation-tools/` |
+| Paper URLs | `docs/papers/DOWNLOAD_PLAN.md` |
+| Papers Needing Manual Download | `docs/papers/by-topic/PAPERS_NEEDED.md` |
+| EDA Tool Documentation | `docs/eda/eda.opensource.md` |
+| Research Findings | `docs/project/05-research/findings/` |
 
 ---
 
-*"The best way to predict the future is to invent it." - Alan Kay*
-
-*And the best way to invent the future of computing is to build the tools that make it possible.*
+*This meta-study synthesizes research from 310+ papers and resources. For the complete paper collection and detailed references, see the documents listed in Appendix 9.*
