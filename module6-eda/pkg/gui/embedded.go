@@ -28,11 +28,11 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 	// Create tab contents
 	compilerContent := tabs.MakeCompilerTab(app.state, window)
 	layoutContent := tabs.MakeLayoutTab(app.state)
-	hdlContent := tabs.MakeHDLTab(app.state, window) // Phase 3: HDL Generation
+	hdlContent := tabs.MakeHDLTab(app.state, window)       // Phase 3: HDL Generation
 	explorerContent := makePlaceholderTab("Design space explorer coming soon")
 	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
 	exportContent := tabs.MakeExportTab(app.state, window)
-	learnContent := makePlaceholderTab("Learning resources coming soon")
+	learnContent := tabs.MakeLearnTab(app.state, window)   // Learning Center with OpenLane docs
 
 	// View selector (replaces nested tabs to save space)
 	viewSelector := widget.NewSelect(

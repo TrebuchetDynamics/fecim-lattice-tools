@@ -21,11 +21,11 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	// Create tab contents
 	compilerContent := tabs.MakeCompilerTab(state, w)
 	layoutContent := tabs.MakeLayoutTab(state)
-	hdlContent := tabs.MakeHDLTab(state, w) // Phase 3: HDL Generation
+	hdlContent := tabs.MakeHDLTab(state, w)       // Phase 3: HDL Generation
 	explorerContent := makePlaceholderTab("Design space explorer coming soon")
 	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
 	exportContent := tabs.MakeExportTab(state, w)
-	learnContent := makePlaceholderTab("Learning resources coming soon")
+	learnContent := tabs.MakeLearnTab(state, w)   // Learning Center with OpenLane docs
 
 	// View selector (replaces nested tabs to save space)
 	viewSelector := widget.NewSelect(
