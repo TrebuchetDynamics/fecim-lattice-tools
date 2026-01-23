@@ -256,13 +256,24 @@ Neural Network Weights          Physical Crossbar Array
    Floating Point                 30-Level Cells
 ```
 
-**Features:**
-- **Compiler Tab:** Load weights, configure array, compile to cells
-- **Layout Tab:** Visual crossbar grid (color-coded by conductance)
-- **Export Tab:** JSON, CSV, and SPICE netlist generation
-- Quantization to 30 FeCIM levels
-- PSNR and utilization statistics
+**7-Tab Interface:**
+
+| Tab | Name | Purpose |
+|-----|------|---------|
+| 1 | **Compiler** | NN weights → 30-level conductance cells |
+| 2 | **Layout** | Visual crossbar grid (color-coded by conductance) |
+| 3 | **HDL** | Verilog netlist + DEF placement generation |
+| 4 | **Explorer** | Design space "what-if" analysis (placeholder) |
+| 5 | **Simulate** | ngspice simulation bridge (placeholder) |
+| 6 | **Export** | Multi-format output (JSON, CSV, SPICE, Verilog, DEF) |
+| 7 | **Learn** | Interactive OpenLane/OpenROAD documentation |
+
+**Key Features:**
+- Quantization to 30 FeCIM levels with PSNR statistics
+- **Verilog/DEF export** for OpenLane integration
+- Support for passive crossbar and 1T1R architectures
 - CLI tool for automated/headless compilation
+- Integrated OpenLane configuration reference
 
 ---
 
