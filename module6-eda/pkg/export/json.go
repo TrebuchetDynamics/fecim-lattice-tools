@@ -8,9 +8,11 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 )
 
-// ExportJSON writes the crossbar mapping to a JSON file
-func ExportJSON(mapping *compiler.CrossbarMapping, path string) error {
-	data, err := json.MarshalIndent(mapping, "", "  ")
+// ExportJSON writes the array design to a JSON file.
+// Works with all operation modes (Storage, Memory, Compute).
+// The output includes full configuration, all cell assignments, and design statistics.
+func ExportJSON(design *compiler.ArrayDesign, path string) error {
+	data, err := json.MarshalIndent(design, "", "  ")
 	if err != nil {
 		return err
 	}

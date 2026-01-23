@@ -1,22 +1,38 @@
 # Module 6: FeCIM Design Suite
 
-**EDA Bridge Tool for Ferroelectric Compute-in-Memory Crossbar Arrays**
+**Universal EDA Tool for Ferroelectric Compute-in-Memory Chip Design**
 
-Transform neural network weights into physical chip layouts ready for OpenLane/OpenROAD fabrication flow.
+Generate physical chip layouts for FeCIM arrays ready for OpenLane/OpenROAD fabrication flow.
 
 ## Overview
 
-The FeCIM Design Suite bridges the gap between neural network training and physical chip implementation. It compiles floating-point weights into 30-level ferroelectric memory cells, generates industry-standard output files (Verilog, DEF, SPICE), and provides an educational interface to understand the OpenLane digital flow.
+The FeCIM Design Suite is a universal chip design tool supporting three distinct FeCIM operation modes:
+
+| Mode | Application | Description |
+|------|-------------|-------------|
+| **Storage** | NAND Flash Replacement | High-density non-volatile storage (30 levels/cell = ~4.9 bits) |
+| **Memory** | DRAM Replacement | High-speed zero-refresh memory (~10ns access) |
+| **Compute** | AI Accelerator | Analog compute-in-memory for neural network inference |
 
 ```
-Neural Network Weights          Physical Crossbar Array
-
-┌─────────────────┐             ┌─────────────────┐
-│  0.5  -0.3  0.8 │   Compile   │ G₁₅  G₈   G₂₂  │
-│ -0.2   0.6  0.1 │ ─────────→  │ G₁₁  G₁₈  G₅   │
-│  0.9  -0.7  0.4 │             │ G₂₆  G₃   G₁₄  │
-└─────────────────┘             └─────────────────┘
-   Floating Point                 30-Level Cells
+┌─────────────────────────────────────────────────────────────────────┐
+│                    FeCIM Design Suite                                │
+├────────────────────┬────────────────────┬────────────────────────────┤
+│   Storage Mode     │   Memory Mode      │   Compute Mode             │
+│   ─────────────    │   ───────────      │   ────────────             │
+│   NAND replacement │   DRAM replacement │   AI accelerator           │
+│   No weights       │   No weights       │   Weights optional         │
+│   10+ year retain  │   10ns access      │   Analog MVM               │
+└────────────────────┴────────────────────┴────────────────────────────┘
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │   Generated Outputs     │
+                 │   - Verilog netlist     │
+                 │   - DEF placement       │
+                 │   - SPICE netlist       │
+                 │   - JSON/CSV data       │
+                 └─────────────────────────┘
 ```
 
 ## Quick Start
@@ -31,8 +47,19 @@ go test ./... -v
 # Launch GUI
 go run ./cmd/eda-gui
 
-# Or use CLI for automation
-go run ./cmd/eda-cli -input data/sample_weights_8x8.json -rows 8 -cols 8
+# CLI examples for each mode:
+
+# Storage mode - High-density non-volatile storage (no weights needed)
+go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -name storage_array
+
+# Memory mode - High-speed DRAM replacement (no weights needed)
+go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -name memory_array
+
+# Compute mode - AI accelerator with pre-trained weights
+go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64
+
+# Compute mode - Unprogrammed array (weights loaded later)
+go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -name cim_array
 ```
 
 ## Architecture: 7-Tab Interface
@@ -53,19 +80,31 @@ go run ./cmd/eda-cli -input data/sample_weights_8x8.json -rows 8 -cols 8
 
 ### Tab 1: Compiler
 
-Converts floating-point neural network weights to physical FeCIM cell assignments.
+Generates FeCIM array designs for three operation modes.
+
+**Operation Modes:**
+
+| Mode | Purpose | Weights Required |
+|------|---------|------------------|
+| Storage | NAND-like non-volatile storage | No - cells programmed during use |
+| Memory | DRAM-like high-speed memory | No - cells programmed during use |
+| Compute | AI accelerator (CIM) | Optional - can pre-load trained weights |
 
 **Inputs:**
-- JSON weight matrix file
+- Operation mode (Storage, Memory, or Compute)
 - Array dimensions (rows × cols)
+- Technology selection (SKY130, GF180MCU, IHP_SG13G2)
+- Architecture (passive or 1T1R)
 - Quantization levels (default: 30)
 - Conductance range (G_min, G_max in μS)
+- [Compute only] Optional weight matrix for pre-programming
 
 **Outputs:**
 - Cell assignments with level, conductance, and resistance
-- Compilation statistics (utilization, PSNR, level histogram)
+- Design statistics (area, power, throughput)
+- For compute with weights: quantization metrics (PSNR, MSE)
 
-**Key Formulas:**
+**Key Formulas (Compute mode with weights):**
 ```
 Quantization:  level = round((weight + maxWeight) / (2 * maxWeight) × (Levels-1))
 Conductance:   G = G_min + (level / (Levels-1)) × (G_max - G_min)  [μS]
@@ -185,19 +224,32 @@ See [docs/INTEGRATION.md](docs/INTEGRATION.md) for detailed OpenLane integration
 
 ## CLI Tool
 
-For automated/headless compilation:
+For automated/headless design generation:
 
 ```bash
-# Basic usage
-go run ./cmd/eda-cli -input weights.json -rows 64 -cols 64
+# Storage mode - no weights needed
+go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -output ./storage_chip
 
-# Full options
+# Memory mode - no weights needed
+go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -output ./memory_chip
+
+# Compute mode with pre-trained weights
+go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64 -output ./ai_chip
+
+# Compute mode without weights (array programmed later)
+go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -output ./blank_cim
+
+# Full options example
 go run ./cmd/eda-cli \
+  -mode compute \
   -input data/sample_weights_8x8.json \
   -output ./output \
+  -name my_design \
   -rows 8 \
   -cols 8 \
   -levels 30 \
+  -tech SKY130 \
+  -arch passive \
   -vdd 1.8 \
   -json=true \
   -csv=true \
@@ -210,14 +262,20 @@ go run ./cmd/eda-cli \
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-input` | (required) | Input weights JSON file |
+| `-mode` | compute | Operation mode: storage, memory, or compute |
+| `-input` | (optional) | Input weights JSON file (compute mode only) |
 | `-output` | `.` | Output directory |
+| `-name` | fecim_crossbar | Design name for output files |
 | `-rows` | 128 | Array rows |
 | `-cols` | 128 | Array columns |
-| `-levels` | 30 | Quantization levels (FeCIM standard: 30) |
+| `-levels` | 30 | Conductance levels (FeCIM standard: 30) |
+| `-tech` | SKY130 | Technology: SKY130, GF180MCU, IHP_SG13G2 |
+| `-arch` | passive | Architecture: passive or 1T1R |
 | `-vdd` | 1.8 | Supply voltage for SPICE |
-| `-json` | true | Export JSON mapping |
-| `-csv` | true | Export CSV table |
+| `-gmin` | 1.0 | Min conductance (μS) |
+| `-gmax` | 100.0 | Max conductance (μS) |
+| `-json` | true | Export JSON design file |
+| `-csv` | true | Export CSV cell assignments |
 | `-spice` | true | Export SPICE netlist |
 | `-verilog` | true | Export Verilog netlist |
 | `-def` | true | Export DEF placement |
@@ -234,9 +292,14 @@ module6-eda/
 │   └── lattice-gen/main.go    # Lattice generator CLI
 ├── pkg/
 │   ├── compiler/
-│   │   ├── types.go           # Data structures (CompileConfig, CellAssignment)
-│   │   ├── compiler.go        # Compile() - weight-to-level conversion
-│   │   └── compiler_test.go   # Unit tests
+│   │   ├── types.go           # Core types:
+│   │   │                      #   - OperationMode (Storage/Memory/Compute)
+│   │   │                      #   - ArrayConfig, ArrayDesign
+│   │   │                      #   - CellAssignment, DesignStats
+│   │   ├── compiler.go        # Design generation:
+│   │   │                      #   - GenerateDesign() - new 3-mode API
+│   │   │                      #   - Compile() - legacy weight-only API
+│   │   └── compiler_test.go   # Unit tests for all modes
 │   ├── export/
 │   │   ├── verilog.go         # Verilog netlist generation
 │   │   ├── def.go             # DEF placement file generation
@@ -352,12 +415,14 @@ endmodule
 ## Roadmap
 
 ### Implemented
-- [x] Weight-to-conductance compiler
+- [x] **Three operation modes** (Storage, Memory, Compute)
+- [x] Weight-to-conductance compiler (compute mode)
+- [x] Array design generation (all modes)
 - [x] Visual crossbar layout
 - [x] Verilog/DEF generation
 - [x] Multi-format export (JSON, CSV, SPICE)
 - [x] OpenLane documentation (Learn tab)
-- [x] CLI tool
+- [x] CLI tool with mode selection
 
 ### In Progress
 - [ ] OpenLane flow integration testing

@@ -1,0 +1,34 @@
+{
+  "DESIGN_NAME": "fecim_crossbar_16x16",
+  "VERILOG_FILES": "dir::src/crossbar.v",
+
+  "CLOCK_PERIOD": 10,
+  "CLOCK_PORT": "CLK",
+  "CLOCK_NET": "CLK",
+
+  "PDK": "sky130A",
+  "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+
+  "EXTRA_LEFS": "dir::cells/fecim_bit.lef",
+  "EXTRA_GDS_FILES": "dir::cells/fecim_bit.gds",
+  "EXTRA_LIBS": "dir::cells/fecim_bit.lib",
+  "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bit.v",
+
+  "SYNTH_ELABORATE_ONLY": 1,
+
+  "FP_SIZING": "absolute",
+  "DIE_AREA": "0 0 100 100",
+  "DESIGN_IS_CORE": 0,
+
+  "PLACEMENT_CURRENT_DEF": "dir::src/crossbar.def",
+  "PL_SKIP_INITIAL_PLACEMENT": 1,
+
+  "FP_PDN_ENABLE_RAILS": 0,
+
+  "RUN_CTS": 0,
+  "RUN_FILL_INSERTION": 1,
+
+  "QUIT_ON_MAGIC_DRC": 0,
+  "QUIT_ON_LVS_ERROR": 0,
+  "QUIT_ON_TR_DRC": 0
+}

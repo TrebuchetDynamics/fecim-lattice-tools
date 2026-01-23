@@ -1,0 +1,140 @@
+# Contributing to FeCIM Macro Compiler
+
+Thank you for your interest in contributing to the FeCIM Visualizer project.
+
+## Quick Start for Contributors
+
+1. **Fork** the repository
+2. **Clone** your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/multilayer-ferroelectric-cim-visualizer.git
+   cd multilayer-ferroelectric-cim-visualizer
+   ```
+3. **Install dependencies:**
+   ```bash
+   sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev  # Linux
+   go mod download
+   ```
+4. **Create a feature branch:**
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+5. **Make changes and test:**
+   ```bash
+   go test ./...
+   go build ./...
+   ```
+6. **Commit and push:**
+   ```bash
+   git commit -m "feat: add feature"
+   git push origin feature/your-feature
+   ```
+7. **Open a Pull Request** on GitHub
+
+## Code Standards
+
+### Go Code
+- Run `gofmt` before committing
+- Add tests for new features (maintain >80% coverage)
+- Follow [Effective Go](https://go.dev/doc/effective_go) guidelines
+- Use meaningful variable and function names
+
+### Documentation
+- Update documentation for user-facing changes
+- Add godoc comments to exported functions
+- Keep README files up to date
+
+### Testing
+```bash
+# Run all tests
+go test ./...
+
+# Run with verbose output
+go test ./... -v
+
+# Run specific module tests
+go test ./module2-crossbar/pkg/crossbar -v
+```
+
+## Commit Message Format
+
+```
+<type>: <subject>
+
+<body>
+
+Co-Authored-By: Your Name <email@example.com>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `test`: Adding tests
+- `refactor`: Code refactoring
+- `style`: Formatting, missing semicolons, etc.
+- `chore`: Maintenance tasks
+
+**Examples:**
+```
+feat: add IR drop visualization to crossbar module
+
+Implements heatmap overlay showing voltage distribution
+across the crossbar array during MVM operations.
+```
+
+```
+fix: correct quantization formula for negative weights
+
+The symmetric quantization was not properly handling
+weights at the boundary conditions.
+```
+
+## Project Structure
+
+```
+multilayer-ferroelectric-cim-visualizer/
+├── cmd/fecim-visualizer/     # Unified GUI entry point
+├── module1-hysteresis/       # P-E curve visualization
+├── module2-crossbar/         # Crossbar MVM + non-idealities
+├── module3-mnist/            # MNIST inference demo
+├── module4-circuits/         # Peripheral circuits
+├── module5-comparison/       # Technology comparison
+├── module6-eda/              # EDA tooling (main development)
+├── shared/                   # Shared packages
+└── docs/                     # Documentation
+```
+
+## Module 6 Development (Priority)
+
+Module 6 (FeCIM Design Suite) is the main focus for current development:
+
+```
+module6-eda/
+├── pkg/compiler/     # Weight compilation logic
+├── pkg/export/       # Verilog, DEF, SPICE export
+├── pkg/gui/          # Fyne GUI tabs
+└── examples/         # Working examples
+```
+
+**Key areas needing contribution:**
+- [ ] Custom FeCIM cell design in Magic VLSI
+- [ ] Liberty timing model generation
+- [ ] ngspice simulation integration
+- [ ] Design space explorer (Tab 4)
+
+## Getting Help
+
+- **Questions:** Open an issue with `[Question]` prefix
+- **Bugs:** Open an issue with `[Bug]` prefix and reproduction steps
+- **Features:** Open an issue with `[Feature]` prefix for discussion first
+
+## Code of Conduct
+
+- Be respectful and constructive
+- Focus on the technical merits of contributions
+- Help newcomers learn
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
