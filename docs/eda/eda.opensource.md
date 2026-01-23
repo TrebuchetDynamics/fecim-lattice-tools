@@ -1,6 +1,8 @@
 # The Open-Source EDA Ecosystem
 
-**A Comprehensive Analysis for CMOS and Emerging Memory Technologies**
+**An Overview for CMOS and Emerging Memory Technologies**
+
+> **Disclaimer:** This document collects publicly available information about open-source EDA tools. It is not affiliated with or endorsed by any of the tools, projects, or organizations mentioned.
 
 ---
 
@@ -8,7 +10,7 @@
 
 The semiconductor industry stands at a pivotal juncture characterized by the decoupling of design capabilities from proprietary, capital-intensive infrastructure. Historically, the design and fabrication of Integrated Circuits (ICs) were the exclusive domain of large integrated device manufacturers (IDMs) and well-funded fabless design houses, protected by high barriers to entry including expensive Electronic Design Automation (EDA) licenses and restrictive Non-Disclosure Agreements (NDAs). This paradigm has been disrupted by the Free and Open Source Silicon (FOSSi) movement, which advocates for the democratization of chip design through open-source tools, open Process Design Kits (PDKs), and accessible shuttle programs.
 
-For researchers and engineers working at the bleeding edge of computing architecture—specifically Compute-in-Memory (CIM) and Ferroelectric Field-Effect Transistor (FeFET) based systems—this open ecosystem presents both unprecedented opportunities and significant technical gaps. Standard Digital Logic flows (RTL-to-GDSII) have matured to production readiness for standard CMOS, yet the tools required for emerging non-volatile memory technologies remain fragmented. This report provides an exhaustive analysis of the current open-source EDA landscape, evaluating its readiness for CMOS digital design and identifying the specific tooling deficits for FeCIM architectures. It synthesizes data from academic research, software repositories, and industry reports to construct a roadmap for integrating custom educational visualizers with professional-grade open-source silicon flows.
+For researchers and engineers working on Compute-in-Memory (CIM) and Ferroelectric Field-Effect Transistor (FeFET) based systems, this open ecosystem presents both opportunities and significant technical gaps. Standard Digital Logic flows (RTL-to-GDSII) have matured to production readiness for standard CMOS, yet the tools required for emerging non-volatile memory technologies remain fragmented. This document provides an overview of the current open-source EDA landscape, noting its readiness for CMOS digital design and identifying tooling gaps for FeCIM architectures. Information is collected from academic research, software repositories, and industry reports.
 
 ---
 
@@ -340,9 +342,11 @@ The ecosystem is sustained by a mix of commercial entities and non-profit founda
 
 - **Native FeFET Fabrication:** The open PDKs (SKY130/GF180) are CMOS-only. "Taping out" a FeFET design today effectively means taping out the CMOS control circuitry with empty slots (or standard transistors) where the FeFETs would go, or establishing a private partnership with a research fab (like Fraunhofer or extensive post-processing).
 
-### The Strategic Opportunity
+### Educational Tool Opportunity
 
-Your project—a "FeCIM Visualizer and Compiler"—fills the most critical void. By automating the generation of SPICE netlists (for verification) and GDSII layouts (for implementation) from a high-level GUI, you provide the missing link that transforms raw open-source tools into a domain-specific FeCIM design suite.
+This project—a "FeCIM Visualizer and Compiler"—aims to help bridge this gap for educational purposes. By generating SPICE netlists and basic layout scripts from a GUI, it provides a learning tool for understanding how FeCIM designs might integrate with open-source EDA flows.
+
+**Important:** This is educational/research software, not a production design tool. Generated files require significant validation before any real use.
 
 ---
 

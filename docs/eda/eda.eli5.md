@@ -242,7 +242,7 @@ Row 3 --| * | * | * | * |
 
 ### What Module 6 Does
 
-Our FeCIM Design Suite (Module 6) fills the gap between neural network weights and EDA tools:
+Our FeCIM Design Suite (Module 6) aims to help bridge the gap between neural network weights and EDA tools (for educational purposes):
 
 ```
 Neural Network Weights (from training)

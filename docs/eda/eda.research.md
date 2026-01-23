@@ -1,14 +1,16 @@
-# EDA Research Meta-Study for FeCIM Project
+# EDA Research Collection for FeCIM Project
 
-**A Comprehensive Analysis of 310+ Papers and Resources**
+**A Reference Collection of 310+ Papers and Resources**
 
 *Last Updated: January 2026*
 
 ---
 
-## Executive Summary
+## Overview
 
-This meta-study synthesizes research from 310+ papers, tools, and resources collected across the FeCIM Visualizer project. The analysis identifies key findings, emerging trends, and actionable recommendations for integrating ferroelectric compute-in-memory (FeCIM) designs with open-source EDA tools.
+This document collects and references 310+ papers, tools, and resources gathered during the FeCIM Visualizer project. It organizes findings by topic and provides links to original sources for those interested in FeCIM/CIM research.
+
+**Important Disclaimer:** This is a literature collection, not original research. The papers and tools listed here are the work of their respective authors and institutions. We have not validated claims made in these papers.
 
 ### Key Findings
 
@@ -108,7 +110,7 @@ This meta-study synthesizes research from 310+ papers, tools, and resources coll
 | Gap | Status | Workaround |
 |-----|--------|------------|
 | FeFET in PDK | Not available | Custom Verilog-A + ngspice OSDI |
-| Crossbar compiler | None open-source | Module 6 fills this gap |
+| Crossbar compiler | None open-source | Module 6 attempts this (educational) |
 | Large array simulation | O(N²) SPICE | NeuroSim/CiMLoop for estimation |
 | Automated CIM layout | Manual/scripted | GDSFactory + KLayout Python |
 
@@ -195,9 +197,8 @@ return quantizeADC(result, bits=6)
 | Multi-level FeFET crossbar (2023) | 96.6% | 64×64 | 28nm |
 | FTJ crossbar (2024) | 92% | 128×128 | HfO₂ |
 | Tour Lab In₂Se₃ (2024) | 87% | Research | Flash synthesis |
-| **This Project (Demo 3)** | **87%** | **Simulated** | **30-level** |
 
-**Observation:** Project's simulated 87% accuracy matches real Tour Lab demonstration.
+**Note:** Our Demo 3 simulation uses 30-level quantization but has **not been validated against real hardware**. The Tour Lab result is from actual physical devices.
 
 ### 3.2 Energy Efficiency Comparison
 
@@ -448,4 +449,4 @@ IHP Shuttle → Silicon
 
 ---
 
-*This meta-study synthesizes research from 310+ papers and resources. For the complete paper collection and detailed references, see the documents listed in Appendix 9.*
+*This document references 310+ papers and resources collected during the project. For the complete paper collection and detailed references, see the documents listed in Appendix 9. All papers remain the intellectual property of their respective authors and institutions.*

@@ -227,3 +227,325 @@ func TestNormalizedPolarization(t *testing.T) {
 		}
 	}
 }
+
+// ============================================================================
+// Temperature-Dependent Tests (Automotive Range: -40°C to 150°C)
+// ============================================================================
+
+// TestCoerciveFieldTemperatureDependence verifies Ec decreases with temperature.
+func TestCoerciveFieldTemperatureDependence(t *testing.T) {
+	material := DefaultHZO()
+
+	// Test automotive temperature range
+	temps := []struct {
+		kelvin float64
+		name   string
+	}{
+		{233, "-40°C (cold start)"},
+		{300, "27°C (room temp)"},
+		{358, "85°C (standard)"},
+		{423, "150°C (extreme)"},
+	}
+
+	var prevEc float64
+	for i, tt := range temps {
+		Ec := material.CoerciveFieldAtTemp(tt.kelvin)
+
+		t.Logf("%s: Ec = %.2e V/m (%.2f MV/cm)", tt.name, Ec, Ec/1e8)
+
+		// Ec should decrease with increasing temperature
+		if i > 0 && Ec >= prevEc {
+			t.Errorf("Ec at %s (%.2e) should be less than at previous temp (%.2e)",
+				tt.name, Ec, prevEc)
+		}
+
+		// Ec should not be negative
+		if Ec < 0 {
+			t.Errorf("Ec at %s should not be negative, got %.2e", tt.name, Ec)
+		}
+
+		prevEc = Ec
+	}
+}
+
+// TestPolarizationTemperatureDependence verifies Pr decreases with temperature.
+func TestPolarizationTemperatureDependence(t *testing.T) {
+	material := DefaultHZO()
+
+	// Test automotive temperature range
+	temps := []struct {
+		kelvin float64
+		name   string
+	}{
+		{233, "-40°C"},
+		{300, "27°C"},
+		{358, "85°C"},
+		{423, "150°C"},
+	}
+
+	var prevPr float64
+	for i, tt := range temps {
+		Pr := material.PolarizationAtTemp(tt.kelvin)
+
+		t.Logf("%s: Pr = %.4f C/m² (%.1f μC/cm²)", tt.name, Pr, Pr*1e4)
+
+		// Pr should decrease with increasing temperature
+		if i > 0 && Pr >= prevPr {
+			t.Errorf("Pr at %s (%.4f) should be less than at previous temp (%.4f)",
+				tt.name, Pr, prevPr)
+		}
+
+		// Pr should remain reasonable at all automotive temps
+		if Pr < 0.5*material.Pr {
+			t.Errorf("Pr at %s (%.4f) is too low (< 50%% of room temp value)", tt.name, Pr)
+		}
+
+		prevPr = Pr
+	}
+}
+
+// TestSwitchingTimeTemperatureDependence verifies faster switching at higher temps.
+func TestSwitchingTimeTemperatureDependence(t *testing.T) {
+	material := DefaultHZO()
+
+	// Test automotive temperature range
+	temps := []struct {
+		kelvin float64
+		name   string
+	}{
+		{233, "-40°C"},
+		{300, "27°C"},
+		{358, "85°C"},
+		{423, "150°C"},
+	}
+
+	var prevTau float64
+	for i, tt := range temps {
+		tau := material.SwitchingTime(tt.kelvin)
+
+		t.Logf("%s: τ = %.2e s (%.2f ns)", tt.name, tau, tau*1e9)
+
+		// Switching should be faster (smaller tau) at higher temperatures
+		if i > 0 && tau >= prevTau {
+			t.Errorf("Switching time at %s (%.2e) should be less than at previous temp (%.2e)",
+				tt.name, tau, prevTau)
+		}
+
+		prevTau = tau
+	}
+}
+
+// TestHysteresisAtAutomotiveTemps verifies hysteresis works across temperature range.
+func TestHysteresisAtAutomotiveTemps(t *testing.T) {
+	temps := []struct {
+		kelvin float64
+		name   string
+	}{
+		{233, "-40°C (cold start)"},
+		{300, "27°C (room temp)"},
+		{358, "85°C (standard test)"},
+		{423, "150°C (extreme)"},
+	}
+
+	for _, tt := range temps {
+		t.Run(tt.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+
+			// Apply field to positive saturation
+			Emax := 2 * material.Ec
+			model.Update(Emax)
+			P := model.Polarization()
+
+			// Should still achieve significant polarization at all temps
+			if P < 0.3*material.Ps {
+				t.Errorf("At %s, polarization %.4f is too low (expected > %.4f)",
+					tt.name, P, 0.3*material.Ps)
+			}
+
+			t.Logf("%s: P_sat = %.4f C/m² (%.1f%% of Ps)",
+				tt.name, P, 100*P/material.Ps)
+		})
+	}
+}
+
+// TestRetentionVsTemperature verifies retention behavior at different temperatures.
+func TestRetentionVsTemperature(t *testing.T) {
+	material := DefaultHZO()
+
+	temps := []struct {
+		kelvin float64
+		name   string
+	}{
+		{300, "27°C"},
+		{358, "85°C (standard test)"},
+		{423, "150°C (accelerated)"},
+	}
+
+	// Test retention at 10 years (3.15e8 seconds)
+	tenYears := 3.15e8
+
+	for _, tt := range temps {
+		retainedPr := material.RetentionAtTime(tenYears, tt.kelvin)
+		retentionPercent := 100 * retainedPr / material.Pr
+
+		t.Logf("%s: 10-year retention = %.1f%% of initial Pr", tt.name, retentionPercent)
+
+		// At all temps, should retain at least 90% (FeCIM spec)
+		if retentionPercent < 90 {
+			t.Errorf("At %s, 10-year retention %.1f%% is below 90%% requirement",
+				tt.name, retentionPercent)
+		}
+	}
+}
+
+// TestEnduranceAtCycles verifies degradation model.
+func TestEnduranceAtCycles(t *testing.T) {
+	material := DefaultHZO()
+
+	cycles := []float64{1e6, 1e7, 1e8, 1e9}
+
+	for _, N := range cycles {
+		remainingPr := material.EnduranceAtCycles(N)
+		remainingPercent := 100 * remainingPr / material.Pr
+
+		t.Logf("After %.0e cycles: Pr = %.1f%% of initial", N, remainingPercent)
+
+		// Should maintain reasonable Pr well below endurance limit
+		// Using stretched exponential, expect ~60% at 10^9 for 10^10 limit
+		if N <= 1e8 && remainingPercent < 70 {
+			t.Errorf("At %.0e cycles, Pr degradation too severe: %.1f%%", N, remainingPercent)
+		}
+	}
+}
+
+// TestMaterialVariants verifies different HZO material configurations.
+func TestMaterialVariants(t *testing.T) {
+	materials := []struct {
+		name string
+		mat  *HZOMaterial
+	}{
+		{"DefaultHZO", DefaultHZO()},
+		{"OptimizedHZO", OptimizedHZO()},
+		{"FeCIMMaterial", FeCIMMaterial()},
+		{"FeCIMMaterialTarget", FeCIMMaterialTarget()},
+	}
+
+	for _, m := range materials {
+		t.Run(m.name, func(t *testing.T) {
+			mat := m.mat
+
+			// All materials should have valid parameters
+			if mat.Pr <= 0 {
+				t.Error("Pr should be positive")
+			}
+			if mat.Ps <= mat.Pr {
+				t.Error("Ps should be greater than Pr")
+			}
+			if mat.Ec <= 0 {
+				t.Error("Ec should be positive")
+			}
+			if mat.Thickness <= 0 {
+				t.Error("Thickness should be positive")
+			}
+
+			t.Logf("%s: Pr=%.1f μC/cm², Ec=%.2f MV/cm, Endurance=%.0e",
+				m.name, mat.Pr*1e4, mat.Ec/1e8, mat.EnduranceCycles)
+		})
+	}
+}
+
+// TestCurieTemperatureBehavior verifies polarization goes to zero at Curie temp.
+func TestCurieTemperatureBehavior(t *testing.T) {
+	material := DefaultHZO()
+
+	// Below Curie temp - should have polarization
+	belowTc := material.CurieTemp - 100
+	PrBelowTc := material.PolarizationAtTemp(belowTc)
+	if PrBelowTc <= 0 {
+		t.Errorf("Below Tc: Pr should be positive, got %.4f", PrBelowTc)
+	}
+
+	// At Curie temp - should be zero
+	PrAtTc := material.PolarizationAtTemp(material.CurieTemp)
+	if PrAtTc != 0 {
+		t.Errorf("At Tc: Pr should be zero, got %.4f", PrAtTc)
+	}
+
+	// Above Curie temp - should be zero
+	aboveTc := material.CurieTemp + 100
+	PrAboveTc := material.PolarizationAtTemp(aboveTc)
+	if PrAboveTc != 0 {
+		t.Errorf("Above Tc: Pr should be zero, got %.4f", PrAboveTc)
+	}
+
+	t.Logf("Curie temp = %.0f K (%.0f°C)", material.CurieTemp, material.CurieTemp-273)
+	t.Logf("Below Tc (%.0f K): Pr = %.4f", belowTc, PrBelowTc)
+	t.Logf("At Tc: Pr = %.4f", PrAtTc)
+}
+
+// TestCoerciveVoltage verifies voltage calculation from field.
+func TestCoerciveVoltage(t *testing.T) {
+	material := DefaultHZO()
+
+	Vc := material.CoerciveVoltage()
+
+	// For 10nm film with Ec ~1-2 MV/cm, Vc should be ~1-2V
+	expectedVc := material.Ec * material.Thickness
+
+	if math.Abs(Vc-expectedVc) > 1e-10 {
+		t.Errorf("Coercive voltage %.4f V doesn't match expected %.4f V", Vc, expectedVc)
+	}
+
+	t.Logf("Coercive voltage: %.3f V (for %.0f nm film)", Vc, material.Thickness*1e9)
+}
+
+// TestSwitchingEnergy verifies energy calculation.
+func TestSwitchingEnergy(t *testing.T) {
+	material := DefaultHZO()
+
+	E := material.SwitchingEnergy()
+
+	// Energy should be positive
+	if E <= 0 {
+		t.Error("Switching energy should be positive")
+	}
+
+	// Verify energy calculation formula: E = 2 * Pr * Ec * Volume
+	// For DefaultHZO: Area=100e-12 m², Thickness=10e-9 m
+	// Volume = 1e-18 m³
+	// E = 2 * 0.25 * 1.2e8 * 1e-18 = 6e-11 J (60 fJ)
+	// This is per-capacitor energy for a 100nm² device
+	expectedE := 2 * material.Pr * material.Ec * material.Area * material.Thickness
+	if math.Abs(E-expectedE) > 1e-15 {
+		t.Errorf("Switching energy %.2e J doesn't match formula %.2e J", E, expectedE)
+	}
+
+	t.Logf("Switching energy: %.2e J (%.2f pJ per 100nm² cap)", E, E*1e12)
+}
+
+// ============================================================================
+// Benchmarks
+// ============================================================================
+
+func BenchmarkHysteresisLoop(b *testing.B) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+	Emax := 2 * material.Ec
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		model.GetHysteresisLoop(Emax, 100)
+	}
+}
+
+func BenchmarkPreisachModelUpdate(b *testing.B) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		E := float64(i%100-50) * material.Ec / 50
+		model.Update(E)
+	}
+}

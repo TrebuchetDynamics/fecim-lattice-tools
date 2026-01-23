@@ -1,24 +1,23 @@
-# Ferroelectric CIM-vis: Strategic Value Report
+# Ferroelectric CIM-vis: Educational Value Overview
 
 ---
 
-## Executive Summary
+## Overview
 
-Ferroelectric CIM-vis is an 8-demo GPU-accelerated visualization suite that fills critical gaps in Dr. external research group's commercialization pipeline. This tool addresses needs across investor relations, foundry partnerships, talent recruitment, and design exploration—all areas where the current 3-person team lacks bandwidth and specialized capability.
+Ferroelectric CIM-vis is an educational visualization suite for understanding ferroelectric compute-in-memory (FeCIM) technology. It provides interactive demonstrations of device physics, array operations, and neural network inference based on published research.
+
+**Important:** This is educational/research software, not a production design tool. It is not affiliated with or endorsed by any research institution.
 
 ---
 
-## The Ferroelectric CIM Team Today
+## Target Audiences
 
-| Person | Role | Focus |
-|--------|------|-------|
-| Dr. external research group | Principal Investigator | Science, vision, fundraising |
-| Dr. Jaeho Shin | Device Engineer | Fabrication, lab validation |
-| Tawfik Jarjour | Commercialization | Business, partnerships, strategy |
-
-**What they do well:** Invent, validate, strategize
-
-**What they lack time for:** Visualize, simulate, explore, educate
+| Audience | Value |
+|----------|-------|
+| Students | Learn FeCIM concepts interactively |
+| Educators | Teaching tool for emerging memory courses |
+| Researchers | Explore CIM architectures |
+| Hobbyists | Understand how compute-in-memory works |
 
 ---
 
