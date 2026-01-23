@@ -24,18 +24,22 @@ type ColorLegend struct {
 	levels    int
 	showTicks bool
 
+	// Enhanced: show numeric values at tick marks
+	showTickValues bool
+
 	raster *canvas.Raster
 }
 
 // NewColorLegend creates a new color legend widget.
 func NewColorLegend(minLabel, maxLabel, unit string, levels int) *ColorLegend {
 	l := &ColorLegend{
-		minLabel:  minLabel,
-		maxLabel:  maxLabel,
-		unit:      unit,
-		levels:    levels,
-		colormap:  "viridis",
-		showTicks: levels == 30, // Show tick marks for 30-level FeCIM
+		minLabel:       minLabel,
+		maxLabel:       maxLabel,
+		unit:           unit,
+		levels:         levels,
+		colormap:       "viridis",
+		showTicks:      levels == 30, // Show tick marks for 30-level FeCIM
+		showTickValues: true,         // Show numeric values at tick marks
 	}
 	l.ExtendBaseWidget(l)
 	return l
@@ -70,18 +74,33 @@ func (l *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 	unitText.TextSize = 9
 	unitText.Alignment = fyne.TextAlignCenter
 
+	// Create tick labels for intermediate values (every 10 levels for 30-level FeCIM)
+	var tickLabels []*canvas.Text
+	if l.showTickValues && l.levels == 30 {
+		// Show labels at 0, 10, 20, 29
+		tickValues := []int{0, 10, 20}
+		for _, v := range tickValues {
+			label := canvas.NewText(fmt.Sprintf("%d", v), color.RGBA{180, 180, 180, 255})
+			label.TextSize = 9
+			label.Alignment = fyne.TextAlignLeading
+			tickLabels = append(tickLabels, label)
+		}
+	}
+
 	return &colorLegendRenderer{
-		legend:   l,
-		raster:   l.raster,
-		minText:  minText,
-		maxText:  maxText,
-		unitText: unitText,
+		legend:     l,
+		raster:     l.raster,
+		minText:    minText,
+		maxText:    maxText,
+		unitText:   unitText,
+		tickLabels: tickLabels,
 	}
 }
 
 // MinSize returns the minimum size.
 func (l *ColorLegend) MinSize() fyne.Size {
-	return fyne.NewSize(60, 100)
+	// Increased width to accommodate tick value labels
+	return fyne.NewSize(80, 150)
 }
 
 // generateImage creates the legend gradient.
@@ -155,18 +174,32 @@ func (l *ColorLegend) generateImage(w, h int) image.Image {
 }
 
 type colorLegendRenderer struct {
-	legend   *ColorLegend
-	raster   *canvas.Raster
-	minText  *canvas.Text
-	maxText  *canvas.Text
-	unitText *canvas.Text
+	legend     *ColorLegend
+	raster     *canvas.Raster
+	minText    *canvas.Text
+	maxText    *canvas.Text
+	unitText   *canvas.Text
+	tickLabels []*canvas.Text // Labels for intermediate tick values
 }
 
 func (r *colorLegendRenderer) Layout(size fyne.Size) {
 	r.raster.Resize(size)
-	r.maxText.Move(fyne.NewPos(35, 5))
-	r.unitText.Move(fyne.NewPos(0, 20))
-	r.minText.Move(fyne.NewPos(35, size.Height-15))
+	r.maxText.Move(fyne.NewPos(38, 25))
+	r.unitText.Move(fyne.NewPos(0, 5))
+	r.minText.Move(fyne.NewPos(38, size.Height-20))
+
+	// Position tick labels (0, 10, 20 for 30-level FeCIM)
+	if len(r.tickLabels) > 0 && r.legend.levels == 30 {
+		barY := float32(30)
+		barHeight := size.Height - 60
+		tickValues := []int{0, 10, 20}
+		for i, label := range r.tickLabels {
+			// Calculate Y position based on level value
+			t := float64(tickValues[i]) / 29.0
+			y := barY + barHeight*(1.0-float32(t)) - 5
+			label.Move(fyne.NewPos(38, y))
+		}
+	}
 }
 
 func (r *colorLegendRenderer) MinSize() fyne.Size {
@@ -181,10 +214,17 @@ func (r *colorLegendRenderer) Refresh() {
 	r.minText.Refresh()
 	r.maxText.Refresh()
 	r.unitText.Refresh()
+	for _, label := range r.tickLabels {
+		label.Refresh()
+	}
 }
 
 func (r *colorLegendRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{r.raster, r.minText, r.maxText, r.unitText}
+	objects := []fyne.CanvasObject{r.raster, r.minText, r.maxText, r.unitText}
+	for _, label := range r.tickLabels {
+		objects = append(objects, label)
+	}
+	return objects
 }
 
 func (r *colorLegendRenderer) Destroy() {}
@@ -393,10 +433,19 @@ func (b *ComparisonBadge) generateImage(w, h int) image.Image {
 type AccuracyWaterfall struct {
 	widget.BaseWidget
 
-	steps       []WaterfallStep
+	steps          []WaterfallStep
 	targetAccuracy float64
 
 	raster *canvas.Raster
+
+	// Y-axis labels (0%, 20%, 40%, 60%, 80%, 100%)
+	yAxisLabels []*canvas.Text
+	// Bar value labels (accuracy % above each bar)
+	barLabels []*canvas.Text
+	// Step labels (X-axis labels)
+	stepLabels []*canvas.Text
+	// Target label
+	targetLabel *canvas.Text
 }
 
 // WaterfallStep represents one degradation step.
@@ -432,12 +481,35 @@ func (w *AccuracyWaterfall) SetTarget(target float64) {
 // CreateRenderer implements fyne.Widget.
 func (w *AccuracyWaterfall) CreateRenderer() fyne.WidgetRenderer {
 	w.raster = canvas.NewRaster(w.generateImage)
-	return widget.NewSimpleRenderer(w.raster)
+
+	// Create Y-axis labels (0%, 20%, 40%, 60%, 80%, 100%)
+	labelColor := color.RGBA{180, 180, 180, 255}
+	w.yAxisLabels = make([]*canvas.Text, 6)
+	for i := 0; i <= 5; i++ {
+		pct := i * 20
+		label := canvas.NewText(fmt.Sprintf("%d%%", pct), labelColor)
+		label.TextSize = 9
+		label.Alignment = fyne.TextAlignTrailing
+		w.yAxisLabels[i] = label
+	}
+
+	// Create target label
+	w.targetLabel = canvas.NewText(fmt.Sprintf("Target: %.0f%%", w.targetAccuracy), color.RGBA{255, 200, 0, 255})
+	w.targetLabel.TextSize = 9
+	w.targetLabel.Alignment = fyne.TextAlignLeading
+
+	// Bar and step labels will be created/updated when data is set
+	w.barLabels = make([]*canvas.Text, 0)
+	w.stepLabels = make([]*canvas.Text, 0)
+
+	return &waterfallRenderer{
+		waterfall: w,
+	}
 }
 
 // MinSize returns minimum size.
 func (w *AccuracyWaterfall) MinSize() fyne.Size {
-	return fyne.NewSize(300, 200)
+	return fyne.NewSize(350, 250)
 }
 
 // generateImage creates the waterfall chart.
@@ -570,6 +642,133 @@ func (w *AccuracyWaterfall) generateImage(width, height int) image.Image {
 	return img
 }
 
+// waterfallRenderer is a custom renderer for AccuracyWaterfall with labels.
+type waterfallRenderer struct {
+	waterfall *AccuracyWaterfall
+}
+
+func (r *waterfallRenderer) Layout(size fyne.Size) {
+	r.waterfall.raster.Resize(size)
+
+	// Layout Y-axis labels
+	marginLeft := float32(80)
+	marginTop := float32(30)
+	marginBottom := float32(40)
+	chartHeight := size.Height - marginTop - marginBottom
+
+	for i, label := range r.waterfall.yAxisLabels {
+		pct := float64(i) * 20.0
+		y := marginTop + chartHeight*(1.0-float32(pct)/100.0) - 5
+		label.Move(fyne.NewPos(5, y))
+	}
+
+	// Layout target label
+	if r.waterfall.targetAccuracy > 0 {
+		targetY := marginTop + chartHeight*(1.0-float32(r.waterfall.targetAccuracy)/100.0) - 5
+		r.waterfall.targetLabel.Move(fyne.NewPos(marginLeft+5, targetY-12))
+	}
+
+	// Layout bar value labels
+	if len(r.waterfall.steps) > 0 && len(r.waterfall.barLabels) == len(r.waterfall.steps) {
+		marginRight := float32(20)
+		chartWidth := size.Width - marginLeft - marginRight
+		stepWidth := chartWidth / float32(len(r.waterfall.steps)+1)
+
+		for i, label := range r.waterfall.barLabels {
+			x := marginLeft + float32(i+1)*stepWidth - 15
+			y := marginTop + chartHeight*(1.0-float32(r.waterfall.steps[i].Accuracy)/100.0) - 18
+			if y < marginTop-10 {
+				y = marginTop - 10
+			}
+			label.Move(fyne.NewPos(x, y))
+		}
+	}
+
+	// Layout step labels
+	if len(r.waterfall.steps) > 0 && len(r.waterfall.stepLabels) == len(r.waterfall.steps) {
+		marginRight := float32(20)
+		chartWidth := size.Width - marginLeft - marginRight
+		stepWidth := chartWidth / float32(len(r.waterfall.steps)+1)
+
+		for i, label := range r.waterfall.stepLabels {
+			x := marginLeft + float32(i+1)*stepWidth - 25
+			y := size.Height - marginBottom + 5
+			label.Move(fyne.NewPos(x, y))
+		}
+	}
+}
+
+func (r *waterfallRenderer) MinSize() fyne.Size {
+	return r.waterfall.MinSize()
+}
+
+func (r *waterfallRenderer) Refresh() {
+	// Update bar labels based on current steps
+	w := r.waterfall
+
+	// Recreate bar labels if needed
+	if len(w.barLabels) != len(w.steps) {
+		w.barLabels = make([]*canvas.Text, len(w.steps))
+		for i, step := range w.steps {
+			label := canvas.NewText(fmt.Sprintf("%.1f%%", step.Accuracy), color.White)
+			label.TextSize = 9
+			label.Alignment = fyne.TextAlignCenter
+			w.barLabels[i] = label
+		}
+	} else {
+		for i, step := range w.steps {
+			w.barLabels[i].Text = fmt.Sprintf("%.1f%%", step.Accuracy)
+		}
+	}
+
+	// Recreate step labels if needed
+	if len(w.stepLabels) != len(w.steps) {
+		w.stepLabels = make([]*canvas.Text, len(w.steps))
+		for i, step := range w.steps {
+			// Shorten label names for display
+			shortLabel := step.Label
+			if len(shortLabel) > 10 {
+				shortLabel = shortLabel[:10]
+			}
+			label := canvas.NewText(shortLabel, color.RGBA{150, 150, 150, 255})
+			label.TextSize = 8
+			label.Alignment = fyne.TextAlignCenter
+			w.stepLabels[i] = label
+		}
+	}
+
+	// Update target label
+	w.targetLabel.Text = fmt.Sprintf("Target: %.0f%%", w.targetAccuracy)
+
+	w.raster.Refresh()
+}
+
+func (r *waterfallRenderer) Objects() []fyne.CanvasObject {
+	objects := []fyne.CanvasObject{r.waterfall.raster}
+
+	// Add Y-axis labels
+	for _, label := range r.waterfall.yAxisLabels {
+		objects = append(objects, label)
+	}
+
+	// Add target label
+	objects = append(objects, r.waterfall.targetLabel)
+
+	// Add bar labels
+	for _, label := range r.waterfall.barLabels {
+		objects = append(objects, label)
+	}
+
+	// Add step labels
+	for _, label := range r.waterfall.stepLabels {
+		objects = append(objects, label)
+	}
+
+	return objects
+}
+
+func (r *waterfallRenderer) Destroy() {}
+
 // BeforeAfterToggle shows side-by-side comparison of ideal vs actual.
 type BeforeAfterToggle struct {
 	widget.BaseWidget
@@ -581,6 +780,9 @@ type BeforeAfterToggle struct {
 	leftHeatmap  *CrossbarHeatmap
 	rightHeatmap *CrossbarHeatmap
 	toggleGroup  *widget.RadioGroup
+
+	// Statistical metrics display
+	statsLabel *widget.Label
 
 	// Callbacks for cell interactions
 	// isIdeal indicates if the tap/hover is on the ideal (left) or actual (right) heatmap
@@ -632,6 +834,7 @@ func (b *BeforeAfterToggle) SetData(ideal, actual [][]float64) {
 	b.idealData = ideal
 	b.actualData = actual
 	b.updateDisplay()
+	b.updateStatsLabel()
 }
 
 // SetMode changes the display mode.
@@ -681,6 +884,55 @@ func (b *BeforeAfterToggle) computeDifference() [][]float64 {
 	return diff
 }
 
+// computeStats calculates RMSE, MAE, and Max difference between ideal and actual.
+func (b *BeforeAfterToggle) computeStats() (rmse, mae, maxDiff float64) {
+	if b.idealData == nil || b.actualData == nil {
+		return 0, 0, 0
+	}
+
+	rows := len(b.idealData)
+	if rows == 0 {
+		return 0, 0, 0
+	}
+	cols := len(b.idealData[0])
+	n := float64(rows * cols)
+
+	var sumSq, sumAbs float64
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			diff := b.idealData[i][j] - b.actualData[i][j]
+			absDiff := math.Abs(diff)
+			sumSq += diff * diff
+			sumAbs += absDiff
+			if absDiff > maxDiff {
+				maxDiff = absDiff
+			}
+		}
+	}
+
+	rmse = math.Sqrt(sumSq / n)
+	mae = sumAbs / n
+	return rmse, mae, maxDiff
+}
+
+// updateStatsLabel updates the statistics display.
+func (b *BeforeAfterToggle) updateStatsLabel() {
+	if b.statsLabel == nil {
+		return
+	}
+
+	rmse, mae, maxDiff := b.computeStats()
+
+	// Convert to level units (0-29 scale)
+	rmseLevel := rmse * 29
+	maeLevel := mae * 29
+	maxDiffLevel := maxDiff * 29
+
+	statsText := fmt.Sprintf("RMSE: %.3f (%.2f levels) | MAE: %.3f (%.2f levels) | Max Δ: %.3f (%.2f levels)",
+		rmse, rmseLevel, mae, maeLevel, maxDiff, maxDiffLevel)
+	b.statsLabel.SetText(statsText)
+}
+
 // CreateRenderer implements fyne.Widget.
 func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	b.toggleGroup = widget.NewRadioGroup(
@@ -697,6 +949,11 @@ func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	)
 	b.toggleGroup.SetSelected("Split View")
 
+	// Statistics label for RMSE, MAE, Max Diff
+	b.statsLabel = widget.NewLabel("Statistics: Run comparison to see metrics")
+	b.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	b.statsLabel.Alignment = fyne.TextAlignCenter
+
 	leftLabel := widget.NewLabelWithStyle("Ideal (No Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	rightLabel := widget.NewLabelWithStyle("Actual (With Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
@@ -706,7 +963,13 @@ func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	splitView := container.NewHSplit(leftPane, rightPane)
 	splitView.SetOffset(0.5)
 
-	content := container.NewBorder(b.toggleGroup, nil, nil, nil, splitView)
+	// Top controls with toggle and stats
+	topControls := container.NewVBox(
+		b.toggleGroup,
+		b.statsLabel,
+	)
+
+	content := container.NewBorder(topControls, nil, nil, nil, splitView)
 
 	return widget.NewSimpleRenderer(content)
 }

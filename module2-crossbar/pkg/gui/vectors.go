@@ -23,6 +23,7 @@ type VectorBarChart struct {
 	barColor color.Color
 	maxVal   float64
 	minVal   float64
+	unit     string // Y-axis unit label (e.g., "V", "µA", "mS")
 
 	raster *canvas.Raster
 }
@@ -67,6 +68,12 @@ func (v *VectorBarChart) SetLabels(labels []string) {
 	v.Refresh()
 }
 
+// SetUnit sets the Y-axis unit label.
+func (v *VectorBarChart) SetUnit(unit string) {
+	v.unit = unit
+	v.Refresh()
+}
+
 // CreateRenderer implements fyne.Widget.
 func (v *VectorBarChart) CreateRenderer() fyne.WidgetRenderer {
 	v.raster = canvas.NewRaster(v.generateImage)
@@ -75,15 +82,40 @@ func (v *VectorBarChart) CreateRenderer() fyne.WidgetRenderer {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	content := container.NewBorder(
-		titleLabel, // top
-		nil,        // bottom
-		nil,        // left
-		nil,        // right
-		v.raster,   // center
+	// Y-axis labels showing min/max values and unit
+	maxLabel := widget.NewLabel("")
+	maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	minLabel := widget.NewLabel("")
+	minLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	yAxisLabels := container.NewVBox(
+		maxLabel,
+		widget.NewLabel(""), // spacer
+		minLabel,
 	)
 
-	return widget.NewSimpleRenderer(content)
+	chartWithAxis := container.NewBorder(
+		nil,         // top
+		nil,         // bottom
+		yAxisLabels, // left - Y-axis labels
+		nil,         // right
+		v.raster,    // center
+	)
+
+	content := container.NewBorder(
+		titleLabel,    // top
+		nil,           // bottom
+		nil,           // left
+		nil,           // right
+		chartWithAxis, // center
+	)
+
+	return &vectorBarChartRenderer{
+		chart:    v,
+		content:  content,
+		maxLabel: maxLabel,
+		minLabel: minLabel,
+	}
 }
 
 // MinSize returns the minimum size.
@@ -149,6 +181,41 @@ func (v *VectorBarChart) generateImage(w, h int) image.Image {
 	return img
 }
 
+// vectorBarChartRenderer is a custom renderer for VectorBarChart with Y-axis labels.
+type vectorBarChartRenderer struct {
+	chart    *VectorBarChart
+	content  fyne.CanvasObject
+	maxLabel *widget.Label
+	minLabel *widget.Label
+}
+
+func (r *vectorBarChartRenderer) Layout(size fyne.Size) {
+	r.content.Resize(size)
+}
+
+func (r *vectorBarChartRenderer) MinSize() fyne.Size {
+	return r.chart.MinSize()
+}
+
+func (r *vectorBarChartRenderer) Refresh() {
+	// Update Y-axis labels with current min/max values and unit
+	unit := r.chart.unit
+	if unit == "" {
+		unit = ""
+	}
+	if r.chart.maxVal != 0 || r.chart.minVal != 0 {
+		r.maxLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.maxVal, unit))
+		r.minLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.minVal, unit))
+	}
+	r.content.Refresh()
+}
+
+func (r *vectorBarChartRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{r.content}
+}
+
+func (r *vectorBarChartRenderer) Destroy() {}
+
 // MVMVisualization shows the matrix-vector multiplication process.
 type MVMVisualization struct {
 	widget.BaseWidget
@@ -163,9 +230,15 @@ type MVMVisualization struct {
 
 // NewMVMVisualization creates a new MVM visualization.
 func NewMVMVisualization() *MVMVisualization {
+	inputChart := NewVectorBarChart("Input Vector (V)", color.RGBA{100, 150, 255, 255})
+	inputChart.SetUnit(" V") // Voltage unit
+
+	outputChart := NewVectorBarChart("Output Vector (I)", color.RGBA{255, 200, 100, 255})
+	outputChart.SetUnit(" µA") // Current unit
+
 	m := &MVMVisualization{
-		inputChart:  NewVectorBarChart("Input Vector (V)", color.RGBA{100, 150, 255, 255}),
-		outputChart: NewVectorBarChart("Output Vector (I)", color.RGBA{255, 200, 100, 255}),
+		inputChart:  inputChart,
+		outputChart: outputChart,
 	}
 	m.ExtendBaseWidget(m)
 	return m

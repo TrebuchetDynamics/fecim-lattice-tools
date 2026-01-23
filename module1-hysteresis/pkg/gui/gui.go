@@ -3,10 +3,13 @@
 package gui
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -71,12 +74,16 @@ type App struct {
 	rwStepTimer   float64 // Time until next random level
 	rwStepDelay   float64 // How often to pick new level
 
-	// Write/Read Demo state
-	wrdPhase       int     // 0=write, 1=hold, 2=read, 3=display
-	wrdTargetLevel int     // Target level to write
+	// Write/Read Demo state (improved physics)
+	wrdPhase       int     // 0=saturate, 1=settle, 2=hold, 3=read, 4=display
+	wrdTargetLevel int     // Target level to write (1-30)
 	wrdReadLevel   int     // Level read back
 	wrdPhaseTimer  float64 // Time in current phase
 	wrdWriteE      float64 // E-field during write
+	wrdSaturateE   float64 // Saturation E-field (±Emax)
+	wrdSettleE     float64 // Settle E-field (determines final level)
+	wrdStartLevel  int     // Level at start of write cycle
+	wrdDebugLog    *WriteReadDebugLog
 
 	// UI components
 	plot           *PEPlot
@@ -130,6 +137,93 @@ func (w WaveformType) String() string {
 		return "Write/Read Demo"
 	default:
 		return "Unknown"
+	}
+}
+
+// WriteReadDebugLog stores debug data for write/read operations
+type WriteReadDebugLog struct {
+	Timestamp   string             `json:"timestamp"`
+	Material    string             `json:"material"`
+	Ec          float64            `json:"ec_v_per_m"`
+	EcMVcm      float64            `json:"ec_mv_per_cm"`
+	Ps          float64            `json:"ps_c_per_m2"`
+	Cycles      []WriteReadCycle   `json:"cycles"`
+}
+
+// WriteReadCycle stores one complete write/read cycle
+type WriteReadCycle struct {
+	CycleNum     int                `json:"cycle_num"`
+	TargetLevel  int                `json:"target_level"`
+	StartLevel   int                `json:"start_level"`
+	ReadLevel    int                `json:"read_level"`
+	Success      bool               `json:"success"`
+	Phases       []WriteReadPhase   `json:"phases"`
+}
+
+// WriteReadPhase stores data for one phase of the write/read cycle
+type WriteReadPhase struct {
+	Phase       string    `json:"phase"`
+	Duration    float64   `json:"duration_s"`
+	EFieldStart float64   `json:"e_field_start_mv_cm"`
+	EFieldEnd   float64   `json:"e_field_end_mv_cm"`
+	EFieldPeak  float64   `json:"e_field_peak_mv_cm"`
+	PStart      float64   `json:"p_start_uc_cm2"`
+	PEnd        float64   `json:"p_end_uc_cm2"`
+	LevelStart  int       `json:"level_start"`
+	LevelEnd    int       `json:"level_end"`
+	Samples     []PhaseDataPoint `json:"samples,omitempty"`
+}
+
+// PhaseDataPoint stores a single data point during a phase
+type PhaseDataPoint struct {
+	Time   float64 `json:"t"`
+	E      float64 `json:"e"`
+	P      float64 `json:"p"`
+	Level  int     `json:"level"`
+}
+
+// saveDebugLog saves the debug log to a JSON file
+func (a *App) saveDebugLog() {
+	if a.wrdDebugLog == nil || len(a.wrdDebugLog.Cycles) == 0 {
+		return
+	}
+
+	// Create logs directory if it doesn't exist
+	logsDir := "logs"
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		fmt.Printf("Error creating logs dir: %v\n", err)
+		return
+	}
+
+	// Generate filename with timestamp
+	filename := filepath.Join(logsDir, fmt.Sprintf("hysteresis-%s.json",
+		time.Now().Format("2006-01-02T15-04-05")))
+
+	// Marshal to JSON
+	data, err := json.MarshalIndent(a.wrdDebugLog, "", "  ")
+	if err != nil {
+		fmt.Printf("Error marshaling debug log: %v\n", err)
+		return
+	}
+
+	// Write to file
+	if err := os.WriteFile(filename, data, 0644); err != nil {
+		fmt.Printf("Error writing debug log: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Debug log saved to: %s\n", filename)
+}
+
+// initDebugLog initializes the debug log
+func (a *App) initDebugLog() {
+	a.wrdDebugLog = &WriteReadDebugLog{
+		Timestamp: time.Now().Format(time.RFC3339),
+		Material:  a.material.Name,
+		Ec:        a.material.Ec,
+		EcMVcm:    a.material.Ec / 1e8,
+		Ps:        a.material.Ps,
+		Cycles:    make([]WriteReadCycle, 0),
 	}
 }
 
@@ -348,10 +442,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.waveform = WaveformWriteReadDemo
 			a.autoMode = true
 			a.eFieldSlider.Disable()
-			// Reset write/read demo state
+			// Reset write/read demo state with improved physics
 			a.wrdPhase = 0
 			a.wrdPhaseTimer = 0
 			a.wrdTargetLevel = rand.Intn(30) + 1
+			a.wrdStartLevel = a.discreteLevel + 1
+			// Initialize debug log
+			a.initDebugLog()
 		}
 	})
 	a.waveformSelect.SetSelected("Sine Wave")
@@ -601,36 +698,46 @@ func (a *App) getSlideText() string {
 	case WaveformWriteReadDemo:
 		var phaseExplanation string
 		switch wrdPhase {
-		case 0: // WRITE
-			phaseExplanation = fmt.Sprintf("██ WRITING LEVEL %d ██\n\n"+
-				"Electric field E > Ec.\n"+
-				"Domains are switching.\n"+
-				"Polarization is changing.\n\n"+
-				"This is how we STORE data.", wrdTarget)
-		case 1: // HOLD
-			phaseExplanation = fmt.Sprintf("░░ HOLDING LEVEL %d ░░\n\n"+
-				"E-field is zero.\n"+
+		case 0: // SATURATE
+			phaseExplanation = fmt.Sprintf("▓▓ SATURATE → %d ▓▓\n\n"+
+				"|E| >> Ec (maximum field)\n"+
+				"ALL domains switching.\n"+
+				"Reaching full saturation.\n\n"+
+				"Step 1: Establish baseline.", wrdTarget)
+		case 1: // SETTLE
+			phaseExplanation = fmt.Sprintf("██ SETTLE → %d ██\n\n"+
+				"Reversing field direction.\n"+
+				"Creating MINOR LOOP.\n"+
+				"Partial domain switching.\n\n"+
+				"Step 2: Set target level.", wrdTarget)
+		case 2: // HOLD
+			phaseExplanation = fmt.Sprintf("░░ HOLD LEVEL %d ░░\n\n"+
+				"E-field returning to zero.\n"+
 				"Polarization PERSISTS.\n"+
-				"No power needed to retain.\n\n"+
-				"This is NON-VOLATILE memory.", level)
-		case 2: // READ
+				"No power needed.\n\n"+
+				"Step 3: Non-volatile storage!", level)
+		case 3: // READ
 			phaseExplanation = fmt.Sprintf("▒▒ READING LEVEL %d ▒▒\n\n"+
-				"Small E-field (E < Ec).\n"+
-				"Polarization unchanged.\n"+
-				"We sense, not alter.\n\n"+
-				"Infinite read endurance.", level)
-		case 3: // DISPLAY
-			phaseExplanation = fmt.Sprintf("✓ READ COMPLETE: %d\n\n"+
-				"Data retrieved successfully!\n"+
-				"State unchanged after read.\n\n"+
-				"Next: Writing new level...", level)
+				"Small sense pulse |E| < Ec.\n"+
+				"State UNCHANGED.\n"+
+				"Measuring polarization.\n\n"+
+				"Step 4: Non-destructive read.", level)
+		case 4: // DISPLAY
+			status := "✓ SUCCESS"
+			if level != wrdTarget {
+				status = fmt.Sprintf("~ Got %d (target %d)", level, wrdTarget)
+			}
+			phaseExplanation = fmt.Sprintf("%s\n\n"+
+				"Target: %d\n"+
+				"Read: %d\n\n"+
+				"Next: Writing new level...", status, wrdTarget, level)
 		}
 		return phaseExplanation + "\n\n─────────────────\n" +
-			"WHY THIS MATTERS\n\n" +
-			"vs DRAM: 1000× less energy\n" +
-			"vs Flash: 10⁷× faster\n" +
-			"30 levels = 4.9 bits/cell\n" +
-			"Non-volatile: no refresh"
+			"WRITE PHYSICS:\n" +
+			"1. SATURATE: |E| >> Ec\n" +
+			"2. SETTLE: Minor loop\n" +
+			"3. HOLD: E = 0 (persists!)\n" +
+			"4. READ: |E| < Ec (safe)"
 
 	default:
 		return "Select a waveform mode\nto see explanation."
@@ -737,38 +844,87 @@ func (a *App) simulationLoop() {
 				}
 				a.electricField = a.rwCurrentE
 			case WaveformWriteReadDemo:
-				// Write/Read Demo: demonstrates write then read cycle
-				// Key insight: To write level N, we need E > Ec to cause switching
-				// Level 1-15 = negative P (need negative E past -Ec)
-				// Level 16-30 = positive P (need positive E past +Ec)
+				// IMPROVED Write/Read Demo with correct ferroelectric physics
+				//
+				// Key insight: To write ANY level, you must first SATURATE then SETTLE
+				// 1. SATURATE: Apply large |E| >> Ec to fully switch all hysterons
+				// 2. SETTLE: Apply opposite field to create minor loop and set level
+				// 3. HOLD: E = 0, polarization persists (non-volatile!)
+				// 4. READ: Small sense pulse |E| < Ec, doesn't disturb state
+				//
+				// Phase mapping:
+				// 0 = SATURATE (ramp to ±Emax)
+				// 1 = SETTLE (ramp to settling field to set target level)
+				// 2 = HOLD (return to zero)
+				// 3 = READ (small sense pulse)
+				// 4 = DISPLAY (show result, pick next target)
+
 				a.wrdPhaseTimer += dt
-				phaseDuration := 1.0 / a.frequency // Scale with frequency
+				phaseDuration := 1.0 / a.frequency
+				rampRate := 2.5 * Emax * a.frequency
+				Ec := a.material.Ec
 
-				// Calculate write E-field: must exceed Ec, scaled by how far from center
-				// Map level 1-30 to E-field: level 1 = -Emax, level 30 = +Emax
-				targetNormP := (float64(a.wrdTargetLevel) - 15.5) / 14.5 // -1 to +1
-				// E-field must exceed Ec to cause switching, so scale appropriately
-				a.wrdWriteE = targetNormP * Emax
+				// Calculate target normalized polarization (-1 to +1)
+				// Level 1 = -1 (negative saturation)
+				// Level 15-16 = ~0 (intermediate)
+				// Level 30 = +1 (positive saturation)
+				targetNormP := (float64(a.wrdTargetLevel) - 15.5) / 14.5
 
-				// Ramp rate scales with frequency
-				rampRate := 2.0 * Emax * a.frequency
+				// Determine saturation direction and settle field
+				// For positive targets: saturate positive, settle negative
+				// For negative targets: saturate negative, settle positive
+				if targetNormP >= 0 {
+					a.wrdSaturateE = Emax // Positive saturation
+					// Settle field: partial negative field to create minor loop
+					// More negative field → lower final level
+					// The relationship is approximately: final P ≈ Ps * tanh((E_settle + Ec) / delta)
+					// For level 30: settle at ~0 (stay at positive saturation)
+					// For level 16: settle at ~ -Ec (intermediate)
+					settleRatio := 1.0 - (float64(a.wrdTargetLevel-16) / 14.0) // 0 to 1 for levels 16-30
+					a.wrdSettleE = -Ec * (0.5 + settleRatio*1.0) // Range: -0.5*Ec to -1.5*Ec
+				} else {
+					a.wrdSaturateE = -Emax // Negative saturation
+					// For negative targets, settle with positive field
+					// For level 1: settle at ~0 (stay at negative saturation)
+					// For level 15: settle at ~ +Ec (intermediate)
+					settleRatio := float64(a.wrdTargetLevel-1) / 14.0 // 0 to 1 for levels 1-15
+					a.wrdSettleE = Ec * (0.5 + settleRatio*1.0) // Range: 0.5*Ec to 1.5*Ec
+				}
 
 				switch a.wrdPhase {
-				case 0: // WRITE phase - ramp to write voltage (must exceed Ec)
-					diff := a.wrdWriteE - a.electricField
+				case 0: // SATURATE phase - ramp to saturation voltage (±Emax)
+					diff := a.wrdSaturateE - a.electricField
 					step := rampRate * dt
 					if math.Abs(diff) < step {
-						a.electricField = a.wrdWriteE
+						a.electricField = a.wrdSaturateE
 					} else if diff > 0 {
 						a.electricField += step
 					} else {
 						a.electricField -= step
 					}
-					if a.wrdPhaseTimer > phaseDuration {
+					// Transition when we've reached saturation and held briefly
+					if a.wrdPhaseTimer > phaseDuration*0.6 && math.Abs(a.electricField-a.wrdSaturateE) < 0.01*Emax {
 						a.wrdPhase = 1
 						a.wrdPhaseTimer = 0
 					}
-				case 1: // HOLD phase - return to zero (polarization persists!)
+
+				case 1: // SETTLE phase - ramp to settling field (creates minor loop)
+					diff := a.wrdSettleE - a.electricField
+					step := rampRate * 0.7 * dt // Slower for precision
+					if math.Abs(diff) < step {
+						a.electricField = a.wrdSettleE
+					} else if diff > 0 {
+						a.electricField += step
+					} else {
+						a.electricField -= step
+					}
+					// Transition when we've reached settle field
+					if a.wrdPhaseTimer > phaseDuration*0.5 && math.Abs(a.electricField-a.wrdSettleE) < 0.01*Emax {
+						a.wrdPhase = 2
+						a.wrdPhaseTimer = 0
+					}
+
+				case 2: // HOLD phase - return to zero (polarization persists!)
 					step := rampRate * dt
 					if math.Abs(a.electricField) < step {
 						a.electricField = 0
@@ -777,16 +933,18 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField += step
 					}
-					if a.wrdPhaseTimer > phaseDuration*0.7 && math.Abs(a.electricField) < 0.01*Emax {
-						a.wrdPhase = 2
+					// Transition when at zero
+					if a.wrdPhaseTimer > phaseDuration*0.5 && math.Abs(a.electricField) < 0.01*Emax {
+						a.wrdPhase = 3
 						a.wrdPhaseTimer = 0
 					}
-				case 2: // READ phase - small pulse below Ec (doesn't change state)
-					readE := a.material.Ec * 0.4 // Below Ec - won't switch
-					if a.wrdWriteE < 0 {
-						readE = -readE
+
+				case 3: // READ phase - small sense pulse below Ec
+					readE := Ec * 0.3 // Well below Ec - won't switch
+					if a.wrdSaturateE < 0 {
+						readE = -readE // Match polarity of written state
 					}
-					step := rampRate * 0.5 * dt
+					step := rampRate * 0.4 * dt
 					diff := readE - a.electricField
 					if math.Abs(diff) < step {
 						a.electricField = readE
@@ -795,13 +953,37 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField -= step
 					}
-					if a.wrdPhaseTimer > phaseDuration*0.5 {
+					// Capture read level and transition
+					if a.wrdPhaseTimer > phaseDuration*0.4 {
 						a.wrdReadLevel = a.discreteLevel + 1
-						a.wrdPhase = 3
+						a.wrdPhase = 4
 						a.wrdPhaseTimer = 0
+
+						// Log this cycle for debugging
+						if a.wrdDebugLog != nil {
+							cycle := WriteReadCycle{
+								CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
+								TargetLevel: a.wrdTargetLevel,
+								StartLevel:  a.wrdStartLevel,
+								ReadLevel:   a.wrdReadLevel,
+								Success:     a.wrdReadLevel == a.wrdTargetLevel,
+								Phases: []WriteReadPhase{
+									{Phase: "SATURATE", EFieldPeak: a.wrdSaturateE / 1e8},
+									{Phase: "SETTLE", EFieldEnd: a.wrdSettleE / 1e8},
+									{Phase: "READ", EFieldPeak: readE / 1e8, LevelEnd: a.wrdReadLevel},
+								},
+							}
+							a.wrdDebugLog.Cycles = append(a.wrdDebugLog.Cycles, cycle)
+
+							// Save after every 5 cycles
+							if len(a.wrdDebugLog.Cycles)%5 == 0 {
+								go a.saveDebugLog()
+							}
+						}
 					}
-				case 3: // DISPLAY phase - return to zero, show result
-					step := rampRate * 0.5 * dt
+
+				case 4: // DISPLAY phase - return to zero, show result
+					step := rampRate * 0.4 * dt
 					if math.Abs(a.electricField) < step {
 						a.electricField = 0
 					} else if a.electricField > 0 {
@@ -809,12 +991,15 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField += step
 					}
-					if a.wrdPhaseTimer > phaseDuration*1.2 {
-						// Pick new target - alternate between high and low for drama
+					// Transition to next cycle
+					if a.wrdPhaseTimer > phaseDuration*0.8 {
+						// Record start level for next cycle
+						a.wrdStartLevel = a.discreteLevel + 1
+						// Pick new target - alternate between high and low
 						if a.wrdTargetLevel > 15 {
-							a.wrdTargetLevel = rand.Intn(10) + 1 // Low: 1-10
+							a.wrdTargetLevel = rand.Intn(12) + 2 // Low: 2-13 (avoid extremes)
 						} else {
-							a.wrdTargetLevel = rand.Intn(10) + 21 // High: 21-30
+							a.wrdTargetLevel = rand.Intn(12) + 18 // High: 18-29 (avoid extremes)
 						}
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
@@ -893,40 +1078,46 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 				a.statusLabel.SetText(fmt.Sprintf("● Random Walk | Target: %d | Current: %d", rwTarget, level+1))
 			case WaveformWriteReadDemo:
 				var phaseStr string
-				// Log phase transitions
+				// Log phase transitions (now 5 phases: SATURATE, SETTLE, HOLD, READ, DISPLAY)
 				if wrdPhase != lastPhase {
 					a.mu.Lock()
 					a.lastLogPhase = wrdPhase
 					switch wrdPhase {
 					case 0:
-						a.addLogEntry(fmt.Sprintf("WRITE → %d", wrdTarget))
+						a.addLogEntry(fmt.Sprintf("SATURATE → %d", wrdTarget))
 					case 1:
-						a.addLogEntry(fmt.Sprintf("HOLD  → %d", level+1))
+						a.addLogEntry(fmt.Sprintf("SETTLE  → %d", wrdTarget))
 					case 2:
-						a.addLogEntry("READ  ...")
+						a.addLogEntry(fmt.Sprintf("HOLD    → %d", level+1))
 					case 3:
+						a.addLogEntry("READ    ...")
+					case 4:
 						status := "✓"
 						if wrdRead != wrdTarget {
-							status = "~"
+							status = fmt.Sprintf("~ (got %d)", wrdRead)
 						}
-						a.addLogEntry(fmt.Sprintf("READ  → %d %s", wrdRead, status))
+						a.addLogEntry(fmt.Sprintf("RESULT  → %d %s", wrdTarget, status))
 					}
 					a.mu.Unlock()
 				}
 
 				switch wrdPhase {
 				case 0:
-					phaseStr = fmt.Sprintf("WRITING %d...", wrdTarget)
+					phaseStr = fmt.Sprintf("SATURATING → %d...", wrdTarget)
 				case 1:
-					phaseStr = "HOLDING..."
+					phaseStr = fmt.Sprintf("SETTLING → %d...", wrdTarget)
 				case 2:
-					phaseStr = "READING..."
+					phaseStr = fmt.Sprintf("HOLDING %d...", level+1)
 				case 3:
+					phaseStr = "READING..."
+				case 4:
 					match := ""
 					if wrdRead == wrdTarget {
-						match = " OK"
+						match = " ✓"
+					} else {
+						match = fmt.Sprintf(" (target: %d)", wrdTarget)
 					}
-					phaseStr = fmt.Sprintf("Wrote: %d, Read: %d%s", wrdTarget, wrdRead, match)
+					phaseStr = fmt.Sprintf("Read: %d%s", wrdRead, match)
 				}
 				a.statusLabel.SetText(fmt.Sprintf("● Write/Read Demo | %s", phaseStr))
 			default:
