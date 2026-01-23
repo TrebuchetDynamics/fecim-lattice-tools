@@ -6,24 +6,60 @@
 
 cd "$(dirname "$0")" || exit 1
 
-# Periodic mode: commit and push every hour
+# Periodic mode: commit and push every hour (runs in background)
 if [[ "$1" == "--periodically" ]]; then
-    echo "Starting periodic commit-push mode (every hour)..."
-    echo "Press Ctrl+C to stop."
+    LOGFILE="$(dirname "$0")/commit-push.log"
+    PIDFILE="$(dirname "$0")/.commit-push.pid"
 
-    while true; do
-        git add -A
-        # Only commit if there are staged changes
-        if ! git diff --cached --quiet; then
-            git commit -m "Auto-commit (periodic) at $(date '+%Y-%m-%d %H:%M:%S')"
-            git push
-            echo "Commit and push completed at $(date)"
+    # Check if already running
+    if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "Periodic commit-push is already running (PID: $(cat "$PIDFILE"))"
+        echo "Use '$0 --stop' to stop it."
+        exit 1
+    fi
+
+    echo "Starting periodic commit-push mode (every hour) in background..."
+
+    nohup bash -c "
+        cd \"$(dirname "$0")\" || exit 1
+        echo \$\$ > \"$PIDFILE\"
+        while true; do
+            git add -A
+            if ! git diff --cached --quiet; then
+                git commit -m \"Auto-commit (periodic) at \$(date '+%Y-%m-%d %H:%M:%S')\"
+                git push
+                echo \"Commit and push completed at \$(date)\"
+            else
+                echo \"No changes to commit at \$(date)\"
+            fi
+            echo \"Next commit-push in 1 hour...\"
+            sleep 3600
+        done
+    " > "$LOGFILE" 2>&1 &
+
+    sleep 0.5  # Wait for PID file to be written
+    echo "Running in background (PID: $(cat "$PIDFILE"))"
+    echo "Log file: $LOGFILE"
+    echo "Use '$0 --stop' to stop it."
+    exit 0
+fi
+
+# Stop periodic mode
+if [[ "$1" == "--stop" ]]; then
+    PIDFILE="$(dirname "$0")/.commit-push.pid"
+    if [[ -f "$PIDFILE" ]]; then
+        PID=$(cat "$PIDFILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            kill "$PID"
+            rm -f "$PIDFILE"
+            echo "Stopped periodic commit-push (PID: $PID)"
         else
-            echo "No changes to commit at $(date)"
+            rm -f "$PIDFILE"
+            echo "Process was not running (stale PID file removed)"
         fi
-        echo "Next commit-push in 1 hour..."
-        sleep 3600
-    done
+    else
+        echo "No periodic commit-push is running"
+    fi
     exit 0
 fi
 
@@ -31,9 +67,11 @@ fi
 if [[ $# -ne 1 ]] || [[ ! "$1" =~ ^-[0-9]+$ ]]; then
     echo "Usage: $0 -<hours>"
     echo "       $0 --periodically"
+    echo "       $0 --stop"
     echo "Examples:"
     echo "  $0 -12           (commit and push in 12 hours)"
-    echo "  $0 --periodically (commit and push every hour)"
+    echo "  $0 --periodically (commit and push every hour in background)"
+    echo "  $0 --stop        (stop periodic mode)"
     exit 1
 fi
 

@@ -85,17 +85,22 @@ Regression & Stability (DO NOT BREAK EXISTING FUNCTIONALITY):
 - Maintain backwards compatibility for any public APIs or interfaces
 
 Unit Test Requirements:
-- For every feature, calculation, or interactive element identified, write corresponding unit tests
+- Focus on TESTABLE LOGIC ONLY (skip GUI widget callbacks - Fyne GUI is hard to unit test)
 - FIRST: Write tests for existing functionality to lock in current behavior (regression tests)
 - Test physics calculations with known values and edge cases
 - Test quantization functions (30-level FeCIM) with boundary conditions
 - Test crossbar MVM operations with various matrix sizes
 - Test hysteresis/Preisach model state transitions
-- Test GUI widget callbacks and state changes
-- Test input validation for sliders, text fields, and dropdowns
-- Ensure test coverage for error handling paths
+- Test core package functions in pkg/core/, pkg/crossbar/, pkg/ferroelectric/
 - Place tests in appropriate `*_test.go` files following Go conventions
-- Run `go test ./...` after every change to catch regressions immediately
+- Run `go test ./...` after changes - if tests fail, log the failure and continue (don't block)
+
+WORKLOAD ESTIMATE:
+- 67 screenshots to analyze across 5 modules
+- ~10-step cycle per module = 50+ major operations
+- Estimated iterations needed: 500-800
+- Buffer for errors/retries: 200 iterations
+- Total allocated: 1000 iterations (should be sufficient)
 
 AUTONOMOUS OVERNIGHT MODE:
 - This task is designed to run for 8+ hours unattended
@@ -108,6 +113,12 @@ AUTONOMOUS OVERNIGHT MODE:
 - Continue working even if individual tasks fail
 - No pauses, no confirmations, no waiting - continuous execution
 
+OUTPUT LOCATION:
+Write ALL findings to: <local-path>
+- Continuously append to this file as you work
+- Use clear markdown sections for each module
+- Include timestamps for each major section completed
+
 EXECUTION ORDER:
 Process systematically: Module 1 → 2 → 3 → 4 → 5 in order
 For each module complete this cycle:
@@ -117,7 +128,14 @@ For each module complete this cycle:
 4. Inventory all interactive elements
 5. Write regression tests for existing functionality
 6. Write new unit tests
-7. Implement approved improvements
+7. Implement SAFE improvements ONLY:
+   - Cosmetic fixes (spacing, alignment, colors)
+   - Typo corrections in labels and text
+   - Obvious bugs with clear fixes
+   - DO NOT implement architectural changes
+   - DO NOT refactor working code
+   - DO NOT change core algorithms or physics models
+   - When in doubt, DOCUMENT the issue instead of fixing it
 8. Update documentation
 9. Run full test suite
 10. Proceed to next module
@@ -130,5 +148,10 @@ CRITICAL: DO NOT STOP EARLY
 - Continue until the literal string "DONE HYPER ANALYSIS" is warranted
 - The completion promise is a CONTRACT - only output it when 100% complete
 - Only output "DONE HYPER ANALYSIS" when ALL modules 1-5 are fully analyzed, tested, and documented
+
+FALLBACK IF APPROACHING ITERATION LIMIT:
+- If you sense you're running low on iterations, prioritize completing analysis and documentation
+- Tests and safe fixes are secondary to having a complete written analysis
+- Ensure HYPER_ANALYSIS_REPORT.md is fully written before iterations run out
 
 Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 1000 --completion-promise "DONE HYPER ANALYSIS"
