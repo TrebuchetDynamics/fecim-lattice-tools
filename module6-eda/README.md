@@ -66,10 +66,10 @@ go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -name cim_array
 
 | Tab | Name | Status | Purpose |
 |-----|------|--------|---------|
-| 1 | **Compiler** | Implemented | NN weights → 30-level conductance cells |
-| 2 | **Layout** | Implemented | Visual crossbar grid (color-coded by conductance) |
-| 3 | **HDL** | Implemented | Verilog netlist + DEF placement preview |
-| 4 | **Explorer** | Placeholder | Design space "what-if" analysis |
+| 1 | **Configure** | Implemented | Array design parameters (mode, size, peripherals) |
+| 2 | **Layout** | Implemented | Visual crossbar grid with cell placement |
+| 3 | **HDL** | Implemented | Verilog netlist + DEF placement generation |
+| 4 | **Explorer** | Placeholder | Design space analysis (area/power/speed) |
 | 5 | **Simulate** | Placeholder | ngspice simulation bridge |
 | 6 | **Export** | Implemented | Multi-format output (JSON, CSV, SPICE, Verilog, DEF) |
 | 7 | **Learn** | Implemented | Interactive OpenLane/OpenROAD documentation |
@@ -78,24 +78,41 @@ go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -name cim_array
 
 ## Tab Details
 
-### Tab 1: Compiler
+### Tab 1: Configure Array
 
-Generates FeCIM array designs for three operation modes.
+Configure FeCIM array parameters for your target application.
 
-**Operation Modes:**
+**Mode Selection:**
 
-| Mode | Purpose | Weights Required |
-|------|---------|------------------|
-| Storage | NAND-like non-volatile storage | No - cells programmed during use |
-| Memory | DRAM-like high-speed memory | No - cells programmed during use |
-| Compute | AI accelerator (CIM) | Optional - can pre-load trained weights |
+```
+┌──────────────────────────────────────────────────────────┐
+│ MODE SELECTION                                           │
+├─────────────┬────────────────┬────────────────────────────┤
+│  Storage    │    Memory      │    Compute                │
+│  ─────────  │    ──────      │    ───────                │
+│  NAND-like  │    DRAM-like   │    AI Accelerator         │
+│  No weights │    No weights  │    Weights optional       │
+│  30 lvl/cell│    10ns access │    Analog MVM             │
+└─────────────┴────────────────┴────────────────────────────┘
+```
+
+**Configuration Steps:**
+1. **Select mode:** Storage / Memory / Compute
+2. **Set array size:** rows × cols (e.g., 256×256)
+3. **Choose technology:** SKY130 / GF180MCU / IHP_SG13G2
+4. **Select architecture:** passive or 1T1R
+5. **Configure peripherals:** DAC bits, ADC bits, TIA gain
+6. **[Compute only]** Optionally load pre-trained weights
+
+**Key Point:** For Storage and Memory modes, **NO weights are needed**.
+FeFET cells are rewritable — data is programmed during device operation.
 
 **Inputs:**
 - Operation mode (Storage, Memory, or Compute)
 - Array dimensions (rows × cols)
 - Technology selection (SKY130, GF180MCU, IHP_SG13G2)
 - Architecture (passive or 1T1R)
-- Quantization levels (default: 30)
+- Conductance levels (default: 30)
 - Conductance range (G_min, G_max in μS)
 - [Compute only] Optional weight matrix for pre-programming
 

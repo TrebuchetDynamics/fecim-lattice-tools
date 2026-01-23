@@ -107,12 +107,15 @@ multilayer-ferroelectric-cim-visualizer/
 
 ## Module 6 Development (Priority)
 
-Module 6 (FeCIM Design Suite) is the main focus for current development:
+Module 6 (FeCIM Design Suite) is a **universal chip design tool** supporting:
+- **Storage chips** (NAND replacement) — no AI involved
+- **Memory chips** (DRAM replacement) — no AI involved
+- **Compute chips** (AI accelerator) — weights optional
 
 ```
 module6-eda/
-├── pkg/compiler/     # Weight compilation logic
-├── pkg/export/       # Verilog, DEF, SPICE export
+├── pkg/compiler/     # Array design generation (all three modes)
+├── pkg/export/       # Verilog, DEF, SPICE, GDS export
 ├── pkg/gui/          # Fyne GUI tabs
 └── examples/         # Working examples
 ```
@@ -122,6 +125,8 @@ module6-eda/
 - [ ] Liberty timing model generation
 - [ ] ngspice simulation integration
 - [ ] Design space explorer (Tab 4)
+- [ ] Storage mode: Data retention optimization
+- [ ] Memory mode: Speed/bandwidth optimization
 
 ## Getting Help
 

@@ -1,8 +1,16 @@
-# Scientific Validation: Iron Lattice Design Suite
+# Scientific Validation: FeCIM Design Suite
 
-The claims made in the Iron Lattice Design Suite are based on peer-reviewed research from the Tour Group at external research institution and the broader Open Source EDA community.
+The FeCIM Design Suite is based on peer-reviewed research from the Tour Group at external research institution and the broader open-source EDA community.
 
-## 1. Core Device Physics (Iron Lattice)
+## Core Technology: FeFET Physics
+
+The ferroelectric field-effect transistors (FeFETs) used in this design suite are based on:
+- HfO₂-ZrO₂ (HZO) superlattice structures
+- In₂Se₃ (indium selenide) 2D ferroelectrics via Flash Joule Heating
+- 30 discrete analog conductance states
+- Rewritable with 10⁶ to 10¹² cycle endurance
+
+## 1. Core Device Physics
 *Research validating the underlying materials and manufacturing process.*
 
 *   **The 30-State Device:** *"Flash In2Se3 for Neuromorphic Computing"* (Shin, Tour, et al., 2025). [View](https://www.researchgate.net/publication/388360521_Flash_In2Se3_for_neuromorphic_computing)

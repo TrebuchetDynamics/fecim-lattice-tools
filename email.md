@@ -29,8 +29,10 @@ After watching your COSM presentation - "the same device does the memory and the
    → FeCIM wins every category, investor-ready charts
 
 **In development:**
-- Module 6: FeCIM Design Suite - crossbar compiler, SPICE netlist export, GDSII output
-  → Working toward "OpenROAD for Analog" - click a button, get a routed FeFET crossbar
+- Module 6: FeCIM Design Suite - universal chip design tool
+  → Design storage chips (NAND), memory chips (DRAM), or AI chips (CIM)
+  → Generates Verilog, DEF, SPICE, ready for OpenLane fabrication flow
+  → "Hello World": 4×4 storage array in 3 commands, no AI weights needed
 
 **The value:** Interactive demos > PowerPoint slides.
 When an investor draws a "7" and watches your crossbar recognize it in real-time, that's worth more than 50 slides explaining the technology.

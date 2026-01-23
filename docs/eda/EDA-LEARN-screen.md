@@ -1,15 +1,55 @@
-# Iron Lattice Design Suite: Production Grade EDA
+# FeCIM Design Suite: Universal Chip Design Tool
 
 ## The Open-Source Foundry
 
-This is not a toy. This is not just a "translator" for AI weights.
-**This is the open-source production tool for the Iron Lattice platform.**
+This is not just an AI compiler. This is not limited to neural networks.
+**This is a universal EDA tool for designing FeCIM-based chips.**
 
-### From Module 4 to Silicon
-In **Module 4**, you modeled the *circuit behavior* (Schematics).
+### From Simulation to Silicon
+In **Modules 1-5**, you modeled the *circuit behavior* (Physics, Arrays, Inference).
 In **Module 6**, we generate the *manufacturing files* (Layouts) to build it.
 
-**Module 6 turns your Module 4 circuits into physical reality.**
+**Module 6 turns your designs into physical reality.**
+
+---
+
+## Three Chip Types
+
+### 1. Storage Chips (NAND Replacement)
+Design high-density non-volatile storage arrays.
+- **No AI involved** — pure storage like NAND Flash
+- 30 levels per cell = 4.9 bits storage density
+- Optimized for retention time and endurance
+- **No weights needed** — data written by user/controller
+
+```bash
+go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -name storage_chip
+```
+
+### 2. Memory Chips (DRAM Replacement)
+Design high-speed, zero-refresh memory.
+- **No AI involved** — pure memory like DRAM
+- 10ns access time, non-volatile
+- Optimized for speed and bandwidth
+- **No weights needed** — data written by CPU
+
+```bash
+go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -name memory_chip
+```
+
+### 3. Compute Chips (AI Accelerator)
+Design analog compute-in-memory for neural networks.
+- AI/ML inference acceleration
+- Matrix-vector multiply in hardware
+- **Weights optional** — can pre-program or load later
+
+```bash
+# With pre-trained weights
+go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64
+
+# Without weights (programmed later)
+go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -name cim_chip
+```
 
 ---
 
@@ -19,9 +59,9 @@ We do not make empty claims. Our technology is grounded in peer-reviewed researc
 
 > **[View Full Reference List](REFERENCES.md)**
 
-*   **The Physics:** "Flash In2Se3 for Neuromorphic Computing" (Shin et al., 2025) validates our **30-state analog memory**.
-*   **The Manufacturing:** "Stoichiometric Engineering... by Flash-within-Flash" validates our **Capital Light** process.
-*   **The Market:** "The Microchip Era Is About to End" (WSJ, Gilder 2025) validates the **Wafer Scale** vision.
+* **The Physics:** "Flash In2Se3 for Neuromorphic Computing" (Shin et al., 2025) validates our **30-state analog memory**.
+* **The Manufacturing:** "Stoichiometric Engineering... by Flash-within-Flash" validates our **Capital Light** process.
+* **The Market:** "The Microchip Era Is About to End" (WSJ, Gilder 2025) validates the **Wafer Scale** vision.
 
 ---
 
@@ -29,23 +69,11 @@ We do not make empty claims. Our technology is grounded in peer-reviewed researc
 
 We enable the design of three distinct classes of next-generation silicon:
 
-### 1. High-Density Storage (NAND Replacement)
-Design multi-terabit non-volatile storage arrays.
-*   **EDA Goal:** Optimize for **Retention** and **Density**.
-*   **The Spec:** 10,000,000x lower energy than Flash. 90% lower voltage.
-*   **Output:** GDSII layouts for dense 3D vertical strings.
-
-### 2. High-Speed Memory (DRAM Replacement)
-Design ultra-fast, restoration-free memory cost-optimized for caches.
-*   **EDA Goal:** Optimize for **Speed** (10ns switching) and **Endurance** ($10^{12}$ cycles).
-*   **The Spec:** Zero refresh cycles. Non-volatile.
-*   **Output:** SPICE netlists for sense amplifiers and row drivers.
-
-### 3. Neuromorphic GPUs (The "AI Killer")
-Design massively parallel Compute-in-Memory accelerators.
-*   **EDA Goal:** Maximize **Analog Precision** (30 states) and **Throughput**.
-*   **The Spec:** Matrix-Vector Multiplication *inside* the array.
-*   **Output:** Configurable connect-logic for the 30-state lattice.
+| Mode | EDA Goal | Output Files |
+|------|----------|--------------|
+| **Storage** | Optimize retention, density | GDSII, DEF, Verilog |
+| **Memory** | Optimize speed (10ns), endurance | SPICE, DEF, Verilog |
+| **Compute** | Optimize analog precision, throughput | All formats + weights map |
 
 ---
 
@@ -53,27 +81,28 @@ Design massively parallel Compute-in-Memory accelerators.
 
 This suite guides you through the full semiconductor design lifecycle:
 
-### Phase 1: Architecture (Tabs 1 & 3)
-*   **Configure Physics:** Choose your superlattice composition (Storage Mode vs Compute Mode).
-*   **Define Topology:** Set array dimensions (e.g., 256x256 tiles) and peripheral circuitry.
+### Phase 1: Configure (Tab 1)
+* **Select Mode:** Choose Storage, Memory, or Compute
+* **Define Topology:** Set array dimensions (e.g., 256x256) and peripheral circuitry
+* **Choose Technology:** SKY130, GF180MCU, or IHP_SG13G2
 
-### Phase 2: Synthesis (Tab 1)
-*   **Compile:** Map your logic (or data retention requirements) to the physical lattice.
-*   **Quantize:** For AI, map weights to the 30 discrete conductance levels:
-    *   `Conductance = 1.0 + (Level / 29) * 99.0` ($\mu S$)
+### Phase 2: Design Generation (Tab 1)
+* **Generate Array:** Create cell assignments for all modes
+* **[Compute only] Quantize:** Map weights to 30 discrete conductance levels:
+    * `Conductance = G_min + (Level / 29) * (G_max - G_min)` (μS)
 
-### Phase 3: Validation (Tab 4)
-*   **SPICE Simulation:** Run physics-accurate `ngspice` models to prove timing, power, and signal integrity before spending millions on fabrication.
+### Phase 3: Validation (Tab 5)
+* **SPICE Simulation:** Run physics-accurate `ngspice` models to prove timing, power, and signal integrity
 
-### Phase 4: Tapeout (Tab 5)
-*   **Export GDSII:** Generate the final geometric files for the standard CMOS foundry.
-*   **Capital Light:** Ready for standard manufacturing lines.
+### Phase 4: Tapeout (Tab 6)
+* **Export Files:** Generate Verilog, DEF, SPICE for OpenLane flow
+* **OpenLane Integration:** Ready for SKY130 fabrication
 
 ---
 
 ## Why Open Source?
 
-The Iron Lattice revolution is about **democratizing access** to post-silicon performance. By providing a production-grade EDA tool, we empower every engineer to design the future of:
-*   **The Data Center** (Pizza-box sized supercomputers)
-*   **The Edge** (Extending battery life by orders of magnitude)
-*   **The Wafer** (Full wafer-scale integration)
+The FeCIM revolution is about **democratizing access** to post-CMOS performance. By providing a production-grade EDA tool, we empower every engineer to design the future of:
+* **Storage** — Replace NAND Flash with 10,000,000x lower energy
+* **Memory** — Replace DRAM with zero-refresh non-volatile memory
+* **Compute** — Analog AI accelerators that outperform GPUs

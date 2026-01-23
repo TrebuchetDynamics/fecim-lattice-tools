@@ -241,39 +241,54 @@ Competitive Matrix (Only FeCIM has ✅ everywhere)
 
 ---
 
-### Module 6: FeCIM Design Suite ✅ (EDA TOOLING)
+### Module 6: FeCIM Design Suite ✅ (CHIP DESIGN TOOL)
 
-**Purpose:** Bridge from simulation to silicon — "The Chip Builder"
+**Purpose:** Design FeCIM chips for fabrication — "The Universal Chip Designer"
 
 ```
-Neural Network Weights          Physical Crossbar Array
+User Specification          Physical Chip Layout         Fabrication Files
 
-┌─────────────────┐             ┌─────────────────┐
-│  0.5  -0.3  0.8 │   Compile   │ G₁₅  G₈   G₂₂  │
-│ -0.2   0.6  0.1 │ ─────────→  │ G₁₁  G₁₈  G₅   │
-│  0.9  -0.7  0.4 │             │ G₂₆  G₃   G₁₄  │
-└─────────────────┘             └─────────────────┘
-   Floating Point                 30-Level Cells
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│ Mode: Storage   │         │  4×4 FeFET      │         │ .v (Verilog)    │
+│ Size: 256×256   │ Design  │  Array Grid     │ Export  │ .def (Layout)   │
+│ Tech: SKY130    │ ──────→ │  WL/BL Routes   │ ──────→ │ .sp (SPICE)     │
+│                 │         │  30 Levels/Cell │         │ .gds (Silicon)  │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+```
+
+**Three Design Modes:**
+
+| Mode | Application | Weights? | Use Case |
+|------|-------------|----------|----------|
+| **Storage** | NAND Replacement | No | High-density storage (30 levels = 4.9 bits/cell) |
+| **Memory** | DRAM Replacement | No | Fast zero-refresh memory (10ns access) |
+| **Compute** | AI Accelerator | Optional | Analog MVM for neural networks |
+
+**"Hello World" Example:**
+```bash
+# Design a 4×4 storage chip (like NAND Flash) - NO weights needed
+go run ./cmd/eda-cli -mode storage -rows 4 -cols 4 -name hello_storage
+# Output: 16 FeFET cells, Verilog netlist, DEF layout, SPICE model
 ```
 
 **7-Tab Interface:**
 
 | Tab | Name | Purpose |
 |-----|------|---------|
-| 1 | **Compiler** | NN weights → 30-level conductance cells |
-| 2 | **Layout** | Visual crossbar grid (color-coded by conductance) |
+| 1 | **Configure** | Array parameters (mode, size, tech) - NO weights required |
+| 2 | **Layout** | Visual crossbar grid with cell placement |
 | 3 | **HDL** | Verilog netlist + DEF placement generation |
-| 4 | **Explorer** | Design space "what-if" analysis (placeholder) |
-| 5 | **Simulate** | ngspice simulation bridge (placeholder) |
+| 4 | **Explorer** | Design space analysis (area/power/speed) |
+| 5 | **Simulate** | ngspice validation bridge (placeholder) |
 | 6 | **Export** | Multi-format output (JSON, CSV, SPICE, Verilog, DEF) |
 | 7 | **Learn** | Interactive OpenLane/OpenROAD documentation |
 
 **Key Features:**
-- Quantization to 30 FeCIM levels with PSNR statistics
+- **Three operation modes:** Storage, Memory, and Compute
+- Weights are **optional** — only for Compute mode pre-programming
 - **Verilog/DEF export** for OpenLane integration
 - Support for passive crossbar and 1T1R architectures
-- CLI tool for automated/headless compilation
-- Integrated OpenLane configuration reference
+- CLI tool for automated design generation
 
 ---
 
