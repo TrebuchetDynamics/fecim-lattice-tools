@@ -13,7 +13,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
@@ -42,24 +44,24 @@ type DualModeApp struct {
 	hiddenSelect *widget.Select
 
 	// Result panel components
-	fpPredLabel  *widget.Label
-	fpConfBar    *widget.ProgressBar
-	cimPredLabel *widget.Label
-	cimConfBar   *widget.ProgressBar
+	fpPredLabel    *widget.Label
+	fpConfBar      *widget.ProgressBar
+	cimPredLabel   *widget.Label
+	cimConfBar     *widget.ProgressBar
 	agreementLabel *widget.Label
-	energyLabel  *widget.Label
-	fpProbBars   [10]*widget.ProgressBar
-	cimProbBars  [10]*widget.ProgressBar
+	energyLabel    *widget.Label
+	fpProbBars     [10]*widget.ProgressBar
+	cimProbBars    [10]*widget.ProgressBar
 
 	// Weight visualization
-	weightHeatmap *canvas.Raster
-	weightLayer   int // 0 = layer 1, 1 = layer 2
-	weightDimLabel *widget.Label
-	weightRangeLabel *widget.Label
+	weightHeatmap     *canvas.Raster
+	weightLayer       int // 0 = layer 1, 1 = layer 2
+	weightDimLabel    *widget.Label
+	weightRangeLabel  *widget.Label
 	weightLevelsLabel *widget.Label
 
 	// Quick test
-	testButton *widget.Button
+	testButton      *widget.Button
 	testResultLabel *widget.Label
 
 	// Test data
@@ -344,7 +346,11 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 			app.runInference(app.lastPixels)
 		}
 	}
-	levelsRow := container.NewBorder(nil, nil, levelsTitle, app.levelsLabel, app.levelsSlider)
+	levelsRow := container.NewBorder(nil, nil,
+		container.NewHBox(levelsTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n30 levels = ~4.9 bits of precision (FeCIM standard).p", app.window)
+		})),
+		app.levelsLabel, app.levelsSlider)
 
 	// Noise slider
 	noiseTitle := widget.NewLabel("Noise:")
@@ -359,7 +365,11 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 			app.runInference(app.lastPixels)
 		}
 	}
-	noiseRow := container.NewBorder(nil, nil, noiseTitle, app.noiseLabel, app.noiseSlider)
+	noiseRow := container.NewBorder(nil, nil,
+		container.NewHBox(noiseTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+			dialog.ShowInformation("Read Noise", "Gaussian noise added to analog read operations.\nSimulates thermal noise and device variability.\n0.01 = 1% noise (standard).", app.window)
+		})),
+		app.noiseLabel, app.noiseSlider)
 
 	// ADC/DAC + Hidden selects on one row
 	bitOptions := []string{"3", "4", "5", "6", "7", "8", "10", "12", "16"}
@@ -477,9 +487,13 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
 	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
 
+	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
+		app.showZoomedHeatmap()
+	})
+
 	// Use Border layout with Max to fill available space
 	header := container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), layerSelect),
+		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
 		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
 	)
 
@@ -555,7 +569,7 @@ func (app *DualModeApp) runInference(pixels []float64) {
 				CIMProbabilities: result.CIMProbabilities,
 				Match:            result.Agree,
 				ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
-				EnergyFeCIM:      result.EnergyUsed * 1e6, // Convert to nJ
+				EnergyFeCIM:      result.EnergyUsed * 1e6,         // Convert to nJ
 				EnergyGPU:        result.EnergyUsed * 1e6 * 10000, // 10,000x for GPU
 				EnergyRatio:      10000.0,
 			}
@@ -914,4 +928,29 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	if app.statusLabel != nil {
 		app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
 	}
+}
+
+// showZoomedHeatmap opens a new window with a larger view of the weight heatmap.
+func (app *DualModeApp) showZoomedHeatmap() {
+	w := app.fyneApp.NewWindow("Weight Matrix Detail")
+	w.Resize(fyne.NewSize(800, 600))
+
+	// Create a new raster that uses the same drawing function
+	// We wrap it to ensure it uses the current App state (which it does via method receiver)
+	heatmap := canvas.NewRaster(app.drawWeightHeatmap)
+
+	// Add a close button
+	closeBtn := widget.NewButton("Close", func() {
+		w.Close()
+	})
+
+	content := container.NewBorder(
+		nil,
+		container.NewHBox(layout.NewSpacer(), closeBtn),
+		nil, nil,
+		container.NewMax(heatmap),
+	)
+
+	w.SetContent(content)
+	w.Show()
 }

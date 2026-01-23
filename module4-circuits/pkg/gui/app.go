@@ -99,38 +99,38 @@ type CircuitsApp struct {
 	pump *peripherals.ChargePump
 
 	// Configuration state
-	mu             sync.RWMutex
-	arrayRows      int
-	arrayCols      int
-	quantLevels    int
-	dacBits        int
-	adcBits        int
-	vMin           float64 // Min write voltage
-	vMax           float64 // Max write voltage
-	pulseWidth     float64 // ns
-	readVoltage    float64 // Read voltage (safe zone)
-	tiaGain        float64 // TIA gain (kOhm)
-	selectedRow    int
-	selectedCol    int
-	targetLevel    int
-	arrayWeights   [][]int // Current programmed levels
-	inputVector    []int   // Input vector for compute
-	outputVector   []float64
+	mu           sync.RWMutex
+	arrayRows    int
+	arrayCols    int
+	quantLevels  int
+	dacBits      int
+	adcBits      int
+	vMin         float64 // Min write voltage
+	vMax         float64 // Max write voltage
+	pulseWidth   float64 // ns
+	readVoltage  float64 // Read voltage (safe zone)
+	tiaGain      float64 // TIA gain (kOhm)
+	selectedRow  int
+	selectedCol  int
+	targetLevel  int
+	arrayWeights [][]int // Current programmed levels
+	inputVector  []int   // Input vector for compute
+	outputVector []float64
 
 	// Tab-specific GUI components
 	// Tab 1: Write
-	writeRowSelect       *widget.Select
-	writeColSelect       *widget.Select
-	writeLevelSlider     *widget.Slider
-	writeLevelLabel      *widget.Label
-	writeArrayCanvas     *canvas.Raster
-	writeDataPath        *fyne.Container
-	writeDigitalLabel    *widget.Label // Label for digital box value
-	writeDACLabel        *widget.Label // Label for DAC box value
-	writeFeFETLabel      *widget.Label // Label for FeFET box value
-	writePulseCanvas     *canvas.Raster
-	writeMappingLabel    *widget.Label
-	writeStatusLabel     *widget.Label
+	writeRowSelect    *widget.Select
+	writeColSelect    *widget.Select
+	writeLevelSlider  *widget.Slider
+	writeLevelLabel   *widget.Label
+	writeArrayCanvas  *canvas.Raster
+	writeDataPath     *fyne.Container
+	writeDigitalLabel *widget.Label // Label for digital box value
+	writeDACLabel     *widget.Label // Label for DAC box value
+	writeFeFETLabel   *widget.Label // Label for FeFET box value
+	writePulseCanvas  *canvas.Raster
+	writeMappingLabel *widget.Label
+	writeStatusLabel  *widget.Label
 
 	// Tab 2: Read
 	readRowSelect     *widget.Select
@@ -141,14 +141,15 @@ type CircuitsApp struct {
 	readZoneCanvas    *canvas.Raster
 	readResultsLabel  *widget.Label
 	readStatusLabel   *widget.Label
+	readCalcLabel     *widget.Label // Added for dynamic calculation display
 
 	// Tab 3: Compute
-	computeInputs       []*widget.Entry
+	computeInputs        []*widget.Entry
 	computeVoltageLabels []*widget.Label
-	computeArrayCanvas  *canvas.Raster
-	computeOutputLabels []*widget.Label
-	computeMathLabel    *widget.Label
-	computeStatusLabel  *widget.Label
+	computeArrayCanvas   *canvas.Raster
+	computeOutputLabels  []*widget.Label
+	computeMathLabel     *widget.Label
+	computeStatusLabel   *widget.Label
 
 	// Tab 4: Comparison
 	compArchCanvas   *canvas.Raster
@@ -158,11 +159,11 @@ type CircuitsApp struct {
 	compStatusLabel  *widget.Label
 
 	// Tab 5: Timing
-	timingOpSelect     *widget.Select
-	timingWriteCanvas  *canvas.Raster
-	timingReadCanvas   *canvas.Raster
+	timingOpSelect      *widget.Select
+	timingWriteCanvas   *canvas.Raster
+	timingReadCanvas    *canvas.Raster
 	timingComputeCanvas *canvas.Raster
-	timingStatusLabel  *widget.Label
+	timingStatusLabel   *widget.Label
 
 	// Tab 6: Specs
 	specArraySizeSelect  *widget.Select
@@ -734,6 +735,18 @@ func (ca *CircuitsApp) drawWritePulse(w, h int) image.Image {
 		}
 	}
 
+	// Axis labels
+	// Y-axis label
+	drawScaledText(img, "Voltage (V)", marginLeft-40, marginTop-8, 1, axisColor)
+
+	// X-axis label
+	drawScaledText(img, "Time (ns)", w-marginRight-50, h-marginBottom+15, 1, axisColor)
+
+	// Values
+	drawSimpleText(img, fmt.Sprintf("%.1fV", vMax), 5, marginTop+5, axisColor)
+	drawSimpleText(img, fmt.Sprintf("%.1fV", vMin), 5, yThreshold+5, axisColor)
+	drawSimpleText(img, "0V", 25, y0V-5, axisColor)
+
 	return img
 }
 
@@ -1137,18 +1150,22 @@ func (ca *CircuitsApp) createReadDataPathSection() fyne.CanvasObject {
 	)
 
 	// Calculation box
-	calcLabel := widget.NewLabel(
+	ca.readCalcLabel = widget.NewLabel(
 		"I = G × V = -- µS × -- V = -- µA\n" +
 			"V_tia = I × R = -- µA × -- kΩ = -- mV\n" +
 			"ADC = (-- mV / 1000 mV) × 255 = --\n" +
 			"Level = round(-- / 255 × 29) = --",
 	)
+	// Use monospace for better alignment
+	ca.readCalcLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	return container.NewVBox(
 		ca.readDataPath,
 		widget.NewSeparator(),
 		widget.NewLabel("Calculation:"),
-		calcLabel,
+		widget.NewSeparator(),
+		widget.NewLabel("Calculation:"),
+		ca.readCalcLabel,
 	)
 }
 
@@ -1345,6 +1362,18 @@ func (ca *CircuitsApp) onReadCell() {
 	))
 
 	ca.readStatusLabel.SetText(fmt.Sprintf("Read cell [%d,%d]: Level %d", row, col, decodedLevel))
+
+	// Update formula calculation display
+	ca.readCalcLabel.SetText(fmt.Sprintf(
+		"I     = G × V     = %.1f µS × %.2f V = %.1f µA\n"+
+			"V_tia = I × R     = %.1f µA × %.0f kΩ = %.0f mV\n"+
+			"ADC   = V_tia/Vref = %.0f / 1000 × 255 = %d\n"+
+			"Level = ADC/Max   = %d / 255 × 29  = %d",
+		conductance, readV, current,
+		current, tiaGain, tiaVoltage,
+		tiaVoltage, adcRaw,
+		adcRaw, decodedLevel,
+	))
 }
 
 func (ca *CircuitsApp) onReadAllCells() {
@@ -2750,18 +2779,19 @@ Noise:             < 1 uA RMS`
 }
 
 func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
-	specs := `Material:          HfZrO2 (HZO)
-Thickness:         10 nm
-Levels:            30 discrete states
-Conductance:       1 uS to 100 uS
-Read Voltage:      0.5 V (safe zone)
-Write Voltage:     2.0 V to 5.0 V
-Write Time:        50 ns
-Endurance:         10^12 cycles
-Retention:         10 years
-Cell Size:         ~0.01 um^2`
-
-	return widget.NewLabel(specs)
+	grid := container.NewGridWithColumns(2,
+		widget.NewLabelWithStyle("Material:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("HfZrO2 (HZO)"),
+		widget.NewLabelWithStyle("Thickness:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10 nm"),
+		widget.NewLabelWithStyle("Levels:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("30 discrete states"),
+		widget.NewLabelWithStyle("Conductance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("1 uS to 100 uS"),
+		widget.NewLabelWithStyle("Read Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("0.5 V (safe zone)"),
+		widget.NewLabelWithStyle("Write Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("2.0 V to 5.0 V"),
+		widget.NewLabelWithStyle("Write Time:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("50 ns"),
+		widget.NewLabelWithStyle("Endurance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10^12 cycles"),
+		widget.NewLabelWithStyle("Retention:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10 years"),
+		widget.NewLabelWithStyle("Cell Size:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("~0.01 um^2"),
+	)
+	return grid
 }
 
 func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
@@ -2802,98 +2832,26 @@ func max(a, b int) int {
 
 // drawSimpleText draws text using a simple bitmap font.
 func drawSimpleText(img *image.RGBA, text string, x, y int, c color.Color) {
-	charWidth := 7
-	for i, ch := range text {
-		cx := x + i*charWidth
-		drawSimpleChar(img, ch, cx, y, c)
-	}
+	drawScaledText(img, text, x, y, 1, c)
 }
 
 // drawSimpleChar draws a single character.
 func drawSimpleChar(img *image.RGBA, ch rune, x, y int, c color.Color) {
-	// Basic 5x7 font patterns
-	patterns := map[rune][]string{
-		'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
-		'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
-		'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
-		'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
-		'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
-		'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
-		'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
-		'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
-		'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
-		'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
-		'.': {"00000", "00000", "00000", "00000", "00000", "01100", "01100"},
-		'-': {"00000", "00000", "00000", "11111", "00000", "00000", "00000"},
-		':': {"00000", "01100", "01100", "00000", "01100", "01100", "00000"},
-		'%': {"11001", "11010", "00100", "01000", "01011", "10011", "00000"},
-		' ': {"00000", "00000", "00000", "00000", "00000", "00000", "00000"},
-		'x': {"00000", "00000", "10001", "01010", "00100", "01010", "10001"},
-		'n': {"00000", "00000", "10110", "11001", "10001", "10001", "10001"},
-		'J': {"00111", "00010", "00010", "00010", "00010", "10010", "01100"},
-		'G': {"01110", "10001", "10000", "10111", "10001", "10001", "01110"},
-		'P': {"11110", "10001", "10001", "11110", "10000", "10000", "10000"},
-		'U': {"10001", "10001", "10001", "10001", "10001", "10001", "01110"},
-		'F': {"11111", "10000", "10000", "11110", "10000", "10000", "10000"},
-		'e': {"00000", "00000", "01110", "10001", "11111", "10000", "01110"},
-		'C': {"01110", "10001", "10000", "10000", "10000", "10001", "01110"},
-		'I': {"01110", "00100", "00100", "00100", "00100", "00100", "01110"},
-		'M': {"10001", "11011", "10101", "10101", "10001", "10001", "10001"},
-		'E': {"11111", "10000", "10000", "11110", "10000", "10000", "11111"},
-		'R': {"11110", "10001", "10001", "11110", "10100", "10010", "10001"},
-		'O': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
-		'N': {"10001", "11001", "10101", "10011", "10001", "10001", "10001"},
-		'S': {"01110", "10001", "10000", "01110", "00001", "10001", "01110"},
-		's': {"00000", "00000", "01110", "10000", "01110", "00001", "11110"},
-		'i': {"00100", "00000", "01100", "00100", "00100", "00100", "01110"},
-		'o': {"00000", "00000", "01110", "10001", "10001", "10001", "01110"},
-		'c': {"00000", "00000", "01110", "10000", "10000", "10001", "01110"},
-		'f': {"00110", "01000", "01000", "11100", "01000", "01000", "01000"},
-		'r': {"00000", "00000", "10110", "11001", "10000", "10000", "10000"},
-		'a': {"00000", "00000", "01110", "00001", "01111", "10001", "01111"},
-		't': {"00100", "00100", "01110", "00100", "00100", "00100", "00011"},
-		'h': {"10000", "10000", "10110", "11001", "10001", "10001", "10001"},
-		'm': {"00000", "00000", "11010", "10101", "10101", "10001", "10001"},
-		'd': {"00001", "00001", "01101", "10011", "10001", "10001", "01111"},
-		'v': {"00000", "00000", "10001", "10001", "10001", "01010", "00100"},
-		'y': {"00000", "00000", "10001", "10001", "01111", "00001", "01110"},
-		'k': {"10000", "10000", "10010", "10100", "11000", "10100", "10010"},
-		'g': {"00000", "00000", "01111", "10001", "01111", "00001", "01110"},
-		'W': {"10001", "10001", "10001", "10101", "10101", "10101", "01010"},
-		'p': {"00000", "00000", "11110", "10001", "11110", "10000", "10000"},
-		'!': {"00100", "00100", "00100", "00100", "00100", "00000", "00100"},
-		'(': {"00010", "00100", "01000", "01000", "01000", "00100", "00010"},
-		')': {"01000", "00100", "00010", "00010", "00010", "00100", "01000"},
-		'_': {"00000", "00000", "00000", "00000", "00000", "00000", "11111"},
-		'A': {"01110", "10001", "10001", "11111", "10001", "10001", "10001"},
-		'B': {"11110", "10001", "10001", "11110", "10001", "10001", "11110"},
-		'D': {"11100", "10010", "10001", "10001", "10001", "10010", "11100"},
-		'H': {"10001", "10001", "10001", "11111", "10001", "10001", "10001"},
-		'K': {"10001", "10010", "10100", "11000", "10100", "10010", "10001"},
-		'L': {"10000", "10000", "10000", "10000", "10000", "10000", "11111"},
-		'T': {"11111", "00100", "00100", "00100", "00100", "00100", "00100"},
-		'V': {"10001", "10001", "10001", "10001", "10001", "01010", "00100"},
-		'X': {"10001", "10001", "01010", "00100", "01010", "10001", "10001"},
-		'Y': {"10001", "10001", "01010", "00100", "00100", "00100", "00100"},
-		'Z': {"11111", "00001", "00010", "00100", "01000", "10000", "11111"},
-		'b': {"10000", "10000", "11110", "10001", "10001", "10001", "11110"},
-		'l': {"01100", "00100", "00100", "00100", "00100", "00100", "01110"},
-		'u': {"00000", "00000", "10001", "10001", "10001", "10011", "01101"},
-		'w': {"00000", "00000", "10001", "10001", "10101", "10101", "01010"},
-		'z': {"00000", "00000", "11111", "00010", "00100", "01000", "11111"},
-		'[': {"01110", "01000", "01000", "01000", "01000", "01000", "01110"},
-		']': {"01110", "00010", "00010", "00010", "00010", "00010", "01110"},
-		'/': {"00001", "00010", "00010", "00100", "01000", "01000", "10000"},
-		'=': {"00000", "00000", "11111", "00000", "11111", "00000", "00000"},
-		'+': {"00000", "00100", "00100", "11111", "00100", "00100", "00000"},
-		'<': {"00010", "00100", "01000", "10000", "01000", "00100", "00010"},
-		'>': {"01000", "00100", "00010", "00001", "00010", "00100", "01000"},
-		',': {"00000", "00000", "00000", "00000", "00110", "00100", "01000"},
-		'q': {"00000", "00000", "01111", "10001", "01111", "00001", "00001"},
-		'j': {"00010", "00000", "00110", "00010", "00010", "10010", "01100"},
-	}
+	drawScaledChar(img, ch, x, y, 1, c)
+}
 
-	pattern, ok := patterns[ch]
+// drawScaledText draws text with a scaling factor.
+func drawScaledText(img *image.RGBA, text string, x, y int, scale int, c color.Color) {
+	charWidth := 7 * scale
+	for i, ch := range text {
+		cx := x + i*charWidth
+		drawScaledChar(img, ch, cx, y, scale, c)
+	}
+}
+
+// drawScaledChar draws a single character with scaling.
+func drawScaledChar(img *image.RGBA, ch rune, x, y int, scale int, c color.Color) {
+	pattern, ok := fontPatterns[ch]
 	if !ok {
 		return
 	}
@@ -2901,12 +2859,99 @@ func drawSimpleChar(img *image.RGBA, ch rune, x, y int, c color.Color) {
 	for dy, row := range pattern {
 		for dx, pixel := range row {
 			if pixel == '1' {
-				px := x + dx
-				py := y + dy
-				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-					img.Set(px, py, c)
+				// Draw scaled pixel
+				for sy := 0; sy < scale; sy++ {
+					for sx := 0; sx < scale; sx++ {
+						px := x + dx*scale + sx
+						py := y + dy*scale + sy
+						if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+							img.Set(px, py, c)
+						}
+					}
 				}
 			}
 		}
 	}
+}
+
+// Basic 5x7 font patterns
+var fontPatterns = map[rune][]string{
+	'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
+	'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
+	'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
+	'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
+	'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
+	'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
+	'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
+	'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
+	'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
+	'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
+	'.': {"00000", "00000", "00000", "00000", "00000", "01100", "01100"},
+	'-': {"00000", "00000", "00000", "11111", "00000", "00000", "00000"},
+	':': {"00000", "01100", "01100", "00000", "01100", "01100", "00000"},
+	'%': {"11001", "11010", "00100", "01000", "01011", "10011", "00000"},
+	' ': {"00000", "00000", "00000", "00000", "00000", "00000", "00000"},
+	'x': {"00000", "00000", "10001", "01010", "00100", "01010", "10001"},
+	'n': {"00000", "00000", "10110", "11001", "10001", "10001", "10001"},
+	'J': {"00111", "00010", "00010", "00010", "00010", "10010", "01100"},
+	'G': {"01110", "10001", "10000", "10111", "10001", "10001", "01110"},
+	'P': {"11110", "10001", "10001", "11110", "10000", "10000", "10000"},
+	'U': {"10001", "10001", "10001", "10001", "10001", "10001", "01110"},
+	'F': {"11111", "10000", "10000", "11110", "10000", "10000", "10000"},
+	'e': {"00000", "00000", "01110", "10001", "11111", "10000", "01110"},
+	'C': {"01110", "10001", "10000", "10000", "10000", "10001", "01110"},
+	'I': {"01110", "00100", "00100", "00100", "00100", "00100", "01110"},
+	'M': {"10001", "11011", "10101", "10101", "10001", "10001", "10001"},
+	'E': {"11111", "10000", "10000", "11110", "10000", "10000", "11111"},
+	'R': {"11110", "10001", "10001", "11110", "10100", "10010", "10001"},
+	'O': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
+	'N': {"10001", "11001", "10101", "10011", "10001", "10001", "10001"},
+	'S': {"01110", "10001", "10000", "01110", "00001", "10001", "01110"},
+	's': {"00000", "00000", "01110", "10000", "01110", "00001", "11110"},
+	'i': {"00100", "00000", "01100", "00100", "00100", "00100", "01110"},
+	'o': {"00000", "00000", "01110", "10001", "10001", "10001", "01110"},
+	'c': {"00000", "00000", "01110", "10000", "10000", "10001", "01110"},
+	'f': {"00110", "01000", "01000", "11100", "01000", "01000", "01000"},
+	'r': {"00000", "00000", "10110", "11001", "10000", "10000", "10000"},
+	'a': {"00000", "00000", "01110", "00001", "01111", "10001", "01111"},
+	't': {"00100", "00100", "01110", "00100", "00100", "00100", "00011"},
+	'h': {"10000", "10000", "10110", "11001", "10001", "10001", "10001"},
+	'm': {"00000", "00000", "11010", "10101", "10101", "10001", "10001"},
+	'd': {"00001", "00001", "01101", "10011", "10001", "10001", "01111"},
+	'v': {"00000", "00000", "10001", "10001", "10001", "01010", "00100"},
+	'y': {"00000", "00000", "10001", "10001", "01111", "00001", "01110"},
+	'k': {"10000", "10000", "10010", "10100", "11000", "10100", "10010"},
+	'g': {"00000", "00000", "01111", "10001", "01111", "00001", "01110"},
+	'W': {"10001", "10001", "10001", "10101", "10101", "10101", "01010"},
+	'p': {"00000", "00000", "11110", "10001", "11110", "10000", "10000"},
+	'!': {"00100", "00100", "00100", "00100", "00100", "00000", "00100"},
+	'(': {"00010", "00100", "01000", "01000", "01000", "00100", "00010"},
+	')': {"01000", "00100", "00010", "00010", "00010", "00100", "01000"},
+	'_': {"00000", "00000", "00000", "00000", "00000", "00000", "11111"},
+	'A': {"01110", "10001", "10001", "11111", "10001", "10001", "10001"},
+	'B': {"11110", "10001", "10001", "11110", "10001", "10001", "11110"},
+	'D': {"11100", "10010", "10001", "10001", "10001", "10010", "11100"},
+	'H': {"10001", "10001", "10001", "11111", "10001", "10001", "10001"},
+	'K': {"10001", "10010", "10100", "11000", "10100", "10010", "10001"},
+	'L': {"10000", "10000", "10000", "10000", "10000", "10000", "11111"},
+	'T': {"11111", "00100", "00100", "00100", "00100", "00100", "00100"},
+	'V': {"10001", "10001", "10001", "10001", "10001", "01010", "00100"},
+	'X': {"10001", "10001", "01010", "00100", "01010", "10001", "10001"},
+	'Y': {"10001", "10001", "01010", "00100", "00100", "00100", "00100"},
+	'Z': {"11111", "00001", "00010", "00100", "01000", "10000", "11111"},
+	'b': {"10000", "10000", "11110", "10001", "10001", "10001", "11110"},
+	'l': {"01100", "00100", "00100", "00100", "00100", "00100", "01110"},
+	'u': {"00000", "00000", "10001", "10001", "10001", "10011", "01101"},
+	'w': {"00000", "00000", "10001", "10001", "10101", "10101", "01010"},
+	'z': {"00000", "00000", "11111", "00010", "00100", "01000", "11111"},
+	'[': {"01110", "01000", "01000", "01000", "01000", "01000", "01110"},
+	']': {"01110", "00010", "00010", "00010", "00010", "00010", "01110"},
+	'/': {"00001", "00010", "00010", "00100", "01000", "01000", "10000"},
+	'=': {"00000", "00000", "11111", "00000", "11111", "00000", "00000"},
+	'+': {"00000", "00100", "00100", "11111", "00100", "00100", "00000"},
+	'<': {"00010", "00100", "01000", "10000", "01000", "00100", "00010"},
+	'>': {"01000", "00100", "00010", "00001", "00010", "00100", "01000"},
+	',': {"00000", "00000", "00000", "00000", "00110", "00100", "01000"},
+	'q': {"00000", "00000", "01111", "10001", "01111", "00001", "00001"},
+	'j': {"00010", "00000", "00110", "00010", "00010", "10010", "01100"},
 }

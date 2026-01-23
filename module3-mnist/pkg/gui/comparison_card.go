@@ -17,12 +17,12 @@ import (
 
 // ComparisonResult holds the results of FP vs CIM comparison.
 type ComparisonResult struct {
-	FPPrediction   int
-	FPConfidence   float64
+	FPPrediction    int
+	FPConfidence    float64
 	FPProbabilities []float64
 
-	CIMPrediction   int
-	CIMConfidence   float64
+	CIMPrediction    int
+	CIMConfidence    float64
 	CIMProbabilities []float64
 
 	Match           bool
@@ -498,9 +498,9 @@ func (dpc *DualProbabilityChart) generateImage(w, h int) image.Image {
 	groupWidth := chartWidth / 10
 	barWidth := (groupWidth - 4) / 2
 
-	fpColor := color.RGBA{100, 150, 255, 255}     // Blue
-	cimColor := color.RGBA{100, 255, 180, 255}   // Green
-	warnColor := color.RGBA{255, 200, 100, 255}  // Yellow for divergence
+	fpColor := color.RGBA{100, 150, 255, 255}   // Blue
+	cimColor := color.RGBA{100, 255, 180, 255}  // Green
+	warnColor := color.RGBA{255, 200, 100, 255} // Yellow for divergence
 
 	for i := 0; i < 10; i++ {
 		groupX := padding + i*groupWidth
@@ -555,15 +555,15 @@ func (dpc *DualProbabilityChart) generateImage(w, h int) image.Image {
 		}
 
 		// Digit label
-		labelX := groupX + groupWidth/2 - 3
-		labelY := h - 10
-		drawSimpleChar(img, rune('0'+i), labelX, labelY, color.RGBA{150, 150, 170, 255})
+		labelX := groupX + groupWidth/2 - 6 // Adjusted for scale 2
+		labelY := h - 15
+		drawScaledChar(img, rune('0'+i), labelX, labelY, 2, color.RGBA{150, 150, 170, 255})
 	}
 
 	// Legend
 	legendY := 5
-	drawSimpleText(img, "FP", padding, legendY, fpColor)
-	drawSimpleText(img, "CIM", padding+30, legendY, cimColor)
+	drawScaledText(img, "FP", padding, legendY, 2, fpColor)
+	drawScaledText(img, "CIM", padding+60, legendY, 2, cimColor)
 
 	return img
 }

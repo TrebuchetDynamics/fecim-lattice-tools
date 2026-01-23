@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -89,7 +90,7 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	m.totalText = canvas.NewText("$721B by 2030", color.RGBA{0, 212, 255, 255})
-	m.totalText.TextSize = 12
+	m.totalText.TextSize = 24 // Increased size
 	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
 
 	var segmentWidgets []fyne.CanvasObject
@@ -118,7 +119,12 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	barsRow := container.NewHBox(segmentWidgets...)
-	m.container = container.NewVBox(container.NewCenter(m.totalText), barsRow)
+
+	citation := widget.NewLabel("Source: Gartner 2025 AI Semiconductor Forecast")
+	citation.TextStyle = fyne.TextStyle{Italic: true}
+	citation.Alignment = fyne.TextAlignCenter
+
+	m.container = container.NewVBox(container.NewCenter(m.totalText), barsRow, citation)
 	return widget.NewSimpleRenderer(m.container)
 }
 
@@ -231,20 +237,18 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(content)
 }
 
-// createStatusLabel creates a label showing status (checkmark, cross, or partial).
-func createStatusLabel(status int) *widget.Label {
-	var text string
+// createStatusLabel creates an icon showing status.
+func createStatusLabel(status int) fyne.CanvasObject {
+	var icon fyne.Resource
 	switch status {
 	case 0:
-		text = "X"
+		icon = theme.CancelIcon()
 	case 1:
-		text = "~"
+		icon = theme.WarningIcon()
 	case 2:
-		text = "Y"
+		icon = theme.ConfirmIcon()
 	}
-	label := widget.NewLabel(text)
-	label.Alignment = fyne.TextAlignCenter
-	return label
+	return widget.NewIcon(icon)
 }
 
 // formatNumberMarket formats numbers with commas.
