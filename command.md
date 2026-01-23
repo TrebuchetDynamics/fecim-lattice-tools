@@ -102,10 +102,10 @@ Unit Test Requirements:
 
 WORKLOAD ESTIMATE:
 - 67 screenshots to analyze across 5 modules
-- ~10-step cycle per module = 50+ major operations
-- Estimated iterations needed: 500-800
-- Buffer for errors/retries: 200 iterations
-- Total allocated: 1000 iterations (should be sufficient)
+- ~5-step cycle per module = 25+ major operations
+- Estimated iterations needed: 2000-5000
+- Buffer for thorough analysis, tests, and fixes: 15000 iterations
+- Total allocated: 20000 iterations (PLENTY of runway - be thorough!)
 
 AUTONOMOUS OVERNIGHT MODE:
 - This task is designed to run for 8+ hours unattended
@@ -115,6 +115,22 @@ AUTONOMOUS OVERNIGHT MODE:
 - Do NOT ask for confirmation between modules - just continue
 - Work autonomously without waiting for user input
 - No pauses, no confirmations, no waiting - continuous execution
+
+ZERO USER INTERACTION REQUIRED:
+- You have ALL information needed to complete this task
+- Do NOT use any tools that require user confirmation
+- Do NOT generate questions - make reasonable assumptions instead
+- If ambiguous, choose the most conservative/safe option and document why
+- All resources are already provided - no need to ask for more
+
+PACING GUIDANCE:
+- You have ~20000 iterations for ~67 screenshots + tests + documentation
+- Budget: ~200+ iterations per screenshot analysis - BE THOROUGH
+- Take time to analyze each screenshot deeply
+- Write comprehensive tests for each module
+- Implement safe fixes where appropriate
+- Quality AND Completeness for this overnight run
+- Still maintain momentum - don't loop infinitely on any single issue
 
 ERROR RECOVERY (NEVER STOP ON ERRORS):
 - If a screenshot fails to load: log it, skip it, continue to next screenshot
@@ -129,6 +145,11 @@ CHECKPOINTING (SAVE PROGRESS FREQUENTLY):
 - After completing EACH screenshot analysis, append findings to HYPER_ANALYSIS_REPORT.md immediately
 - After completing EACH module, write a "## Module X COMPLETE" section
 - This ensures partial progress is saved even if something fails later
+
+PROGRESS HEARTBEAT:
+- Every 10 screenshots, output: "PROGRESS: X/67 screenshots complete"
+- Every module completion, output: "MODULE X COMPLETE - Proceeding to Module X+1"
+- This helps verify the agent is still working if checked on
 
 OUTPUT LOCATION:
 Write ALL findings to: <local-path>
@@ -169,6 +190,23 @@ CRITICAL: DO NOT STOP EARLY
 - The completion promise is a CONTRACT - only output it when 100% complete
 - Only output "DONE HYPER ANALYSIS" when ALL modules 1-5 are fully analyzed, tested, and documented
 
+TERMINATION RULES:
+- The ONLY valid stopping condition is: ALL 5 modules complete AND documented
+- Partial completion is NOT a valid stopping point
+- "I've made good progress" is NOT a valid stopping point
+- "Here's what I found so far" is NOT a valid stopping point
+- Running into difficulties is NOT a valid stopping point
+- KEEP GOING until "DONE HYPER ANALYSIS" is truly earned
+
+COMMON PITFALLS TO AVOID:
+- Do NOT spend iterations asking clarifying questions
+- Do NOT regenerate the same content multiple times
+- Do NOT get stuck in loops on broken files - skip and continue
+- Do NOT try to fix complex bugs - document them only
+- Do NOT refactor working code - document suggestions only
+- Do NOT repeat analysis you've already done
+- Do NOT output long explanations - be concise, save iterations
+
 FALLBACK IF APPROACHING ITERATION LIMIT:
 - If you sense you're running low on iterations, prioritize in this order:
   1. HIGHEST: Complete HYPER_ANALYSIS_REPORT.md with all screenshot analyses
@@ -178,4 +216,4 @@ FALLBACK IF APPROACHING ITERATION LIMIT:
 - A complete analysis document WITHOUT fixes is SUCCESS
 - An incomplete document WITH fixes is FAILURE
 
-Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 1000 --completion-promise "DONE HYPER ANALYSIS"
+Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 20000 --completion-promise "DONE HYPER ANALYSIS"

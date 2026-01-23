@@ -520,6 +520,143 @@ func BenchmarkQuantize30Levels(b *testing.B) {
 	}
 }
 
+// =============================================================================
+// PER-LAYER PTQ TESTS
+// =============================================================================
+
+// TestPerLayerQuantization verifies that per-layer quantization works correctly.
+func TestPerLayerQuantization(t *testing.T) {
+	net := NewDualModeNetwork(16, 8, 4)
+
+	// Initialize weights
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = float64((i+j)%10-5) / 10.0
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = float64((i*2+j*3)%10-5) / 10.0
+		}
+	}
+	net.FPBias1 = make([]float64, 8)
+	net.FPBias2 = make([]float64, 4)
+
+	// Test uniform quantization first
+	net.SetNumLevels(30)
+	net.SetPerLayerQuant(false)
+	net.RequantizeWeights()
+
+	stats1Uniform, stats2Uniform := net.GetQuantizationStats()
+	t.Logf("Uniform 30-level: L1 distinct=%d, L2 distinct=%d",
+		stats1Uniform.NumDistinct, stats2Uniform.NumDistinct)
+
+	// Test per-layer quantization with different levels
+	net.SetPerLayerLevels(30, 10) // Layer1: 30 levels, Layer2: 10 levels
+
+	stats1PerLayer, stats2PerLayer := net.GetQuantizationStats()
+	t.Logf("Per-layer (30,10): L1 distinct=%d, L2 distinct=%d",
+		stats1PerLayer.NumDistinct, stats2PerLayer.NumDistinct)
+
+	// Layer 2 should have fewer distinct values with fewer levels
+	if stats2PerLayer.NumDistinct > 10 {
+		t.Errorf("Layer 2 should have at most 10 distinct values, got %d", stats2PerLayer.NumDistinct)
+	}
+
+	// Layer 1 should still use up to 30 levels
+	if stats1PerLayer.NumDistinct > 30 {
+		t.Errorf("Layer 1 should have at most 30 distinct values, got %d", stats1PerLayer.NumDistinct)
+	}
+}
+
+// TestPerLayerQuantizationEnergyCalculation verifies energy calculation with per-layer PTQ.
+func TestPerLayerQuantizationEnergyCalculation(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize simple weights
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = 0.1
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = 0.1
+		}
+	}
+
+	input := make([]float64, 784)
+	for i := range input {
+		input[i] = 0.5
+	}
+
+	// Test uniform 30-level quantization
+	net.SetNumLevels(30)
+	net.SetPerLayerQuant(false)
+	net.RequantizeWeights()
+	resultUniform := net.Infer(input)
+
+	// Test per-layer with different levels
+	net.SetPerLayerLevels(30, 8) // Layer1: 30 levels (4.9 bits), Layer2: 8 levels (3 bits)
+	resultPerLayer := net.Infer(input)
+
+	// Per-layer should use less energy (layer 2 uses fewer bits)
+	t.Logf("Uniform (30,30): Energy=%.4f µJ", resultUniform.EnergyUsed)
+	t.Logf("Per-layer (30,8): Energy=%.4f µJ", resultPerLayer.EnergyUsed)
+
+	// Layer 2 has 128*10 = 1280 MACs out of 101632 total (1.3%)
+	// So energy difference should be small but measurable
+	if resultPerLayer.EnergyUsed >= resultUniform.EnergyUsed {
+		t.Errorf("Per-layer (30,8) should use less energy than uniform (30,30)")
+	}
+}
+
+// TestPerLayerQuantizationConfig verifies the config getters/setters work correctly.
+func TestPerLayerQuantizationConfig(t *testing.T) {
+	net := NewDualModeNetwork(16, 8, 4)
+
+	// Default should not have per-layer enabled
+	if net.IsPerLayerQuant() {
+		t.Error("PerLayerQuant should be disabled by default")
+	}
+
+	// Enable per-layer and set levels
+	net.SetPerLayerLevels(20, 15)
+
+	enabled, l1, l2 := net.GetPerLayerQuantInfo()
+	if !enabled {
+		t.Error("PerLayerQuant should be enabled after SetPerLayerLevels")
+	}
+	if l1 != 20 {
+		t.Errorf("Layer1Levels should be 20, got %d", l1)
+	}
+	if l2 != 15 {
+		t.Errorf("Layer2Levels should be 15, got %d", l2)
+	}
+
+	// Test individual setters
+	net.SetLayer1Levels(25)
+	if net.GetLayer1Levels() != 25 {
+		t.Errorf("Layer1Levels should be 25 after SetLayer1Levels")
+	}
+
+	net.SetLayer2Levels(10)
+	if net.GetLayer2Levels() != 10 {
+		t.Errorf("Layer2Levels should be 10 after SetLayer2Levels")
+	}
+
+	// Test clamping
+	net.SetLayer1Levels(100) // Should clamp to 30
+	if net.GetLayer1Levels() > 30 {
+		t.Error("Layer1Levels should be clamped to max 30")
+	}
+
+	net.SetLayer2Levels(1) // Should clamp to 2
+	if net.GetLayer2Levels() < 2 {
+		t.Error("Layer2Levels should be clamped to min 2")
+	}
+}
+
 func BenchmarkDualModeInference(b *testing.B) {
 	net := NewDualModeNetwork(784, 128, 10)
 
