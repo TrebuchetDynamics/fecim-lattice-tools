@@ -32,8 +32,8 @@ func MakeDEFExportTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 		content := generateDEF(*cfg)
 		defPreview.SetText(content)
 
-		filename := fmt.Sprintf("output/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
-		os.MkdirAll("output", 0755)
+		filename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+		os.MkdirAll("output/exports", 0755)
 		os.WriteFile(filename, []byte(content), 0644)
 
 		// Update visualization
@@ -45,7 +45,7 @@ func MakeDEFExportTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 
 	// Validate button
 	validateBtn := widget.NewButton("Validate DEF", func() {
-		filename := fmt.Sprintf("output/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+		filename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
 		err := validation.ValidateDEF(filename)
 		if err != nil {
 			statusLabel.SetText("❌ " + err.Error())

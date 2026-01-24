@@ -40,15 +40,15 @@ func MakeVerilogExportTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 			instances, lines, size,
 		))
 
-		filename := fmt.Sprintf("output/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-		os.MkdirAll("output", 0755)
+		filename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+		os.MkdirAll("output/exports", 0755)
 		os.WriteFile(filename, []byte(content), 0644)
 		statusLabel.SetText("✅ " + filename)
 	})
 
 	// Validate button (requires yosys)
 	validateBtn := widget.NewButton("Validate with Yosys", func() {
-		arrayPath := fmt.Sprintf("output/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+		arrayPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
 		cellPath := "cells/fecim_bitcell/fecim_bitcell.v"
 
 		err := validation.ValidateVerilogWithCell(arrayPath, cellPath)
@@ -72,8 +72,8 @@ func MakeVerilogExportTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 			statusLabel.SetText("❌ Generate Verilog first")
 			return
 		}
-		filename := fmt.Sprintf("output/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-		os.MkdirAll("output", 0755)
+		filename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+		os.MkdirAll("output/exports", 0755)
 		os.WriteFile(filename, []byte(preview.Text), 0644)
 		statusLabel.SetText("✅ Saved to " + filename)
 	})

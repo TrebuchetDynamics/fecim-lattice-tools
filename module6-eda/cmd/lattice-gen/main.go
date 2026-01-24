@@ -14,7 +14,7 @@ import (
 func main() {
 	rows := flag.Int("rows", 4, "Number of rows")
 	cols := flag.Int("cols", 4, "Number of columns")
-	outputDir := flag.String("output", ".", "Output directory")
+	outputDir := flag.String("output", "output/lattices", "Output directory")
 	flag.Parse()
 
 	// Create output directory if needed

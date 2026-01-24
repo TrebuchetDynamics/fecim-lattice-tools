@@ -39,7 +39,7 @@ func main() {
 	inputFile := flag.String("input", "", "Input weights JSON file (optional, compute mode only)")
 
 	// Output
-	outputDir := flag.String("output", ".", "Output directory")
+	outputDir := flag.String("output", "output/exports", "Output directory")
 	designName := flag.String("name", "fecim_array", "Design name for output files")
 
 	// Array parameters

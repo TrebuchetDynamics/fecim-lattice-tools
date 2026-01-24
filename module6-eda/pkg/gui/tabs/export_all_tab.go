@@ -46,7 +46,7 @@ func MakeExportAllTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 	runBtn := widget.NewButton("▶ RUN COMPLETE FLOW", func() {
 		go func() {
 			designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
-			outputDir := fmt.Sprintf("output/%s", designName)
+			outputDir := fmt.Sprintf("output/exports/%s", designName)
 			os.MkdirAll(outputDir, 0755)
 			os.MkdirAll(outputDir+"/cells", 0755)
 

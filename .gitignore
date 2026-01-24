@@ -19,3 +19,11 @@ train-network
 train-single-layer
 cmd/fecim-visualizer/logs/OpenLane/
 /OpenLane
+
+# Output directory (keep structure, ignore generated files)
+/output/exports/*
+/output/lattices/*
+/output/examples/*
+!/output/.gitkeep
+!/output/README.md
+!/output/*/
