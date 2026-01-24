@@ -15,6 +15,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 var lsDebug = stdlog.New(os.Stdout, "[WIDGET] ", stdlog.Ltime|stdlog.Lmicroseconds)
@@ -107,10 +109,12 @@ func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeIndicatorBoxRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("modeIndicatorBoxRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *modeIndicatorBoxRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("modeIndicatorBoxRenderer", r.indicator.Size())
 	r.layoutWithSize(r.indicator.Size())
 }
 

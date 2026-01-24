@@ -8,6 +8,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // DemoInfo holds information about a demo
@@ -115,11 +117,13 @@ func (r *demoCardRenderer) MinSize() fyne.Size {
 
 func (r *demoCardRenderer) Layout(size fyne.Size) {
 	// Layout positions objects - use the passed size parameter
+	sharedwidgets.DebugLayoutCall("demoCardRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *demoCardRenderer) Refresh() {
 	// Refresh uses current widget size
+	sharedwidgets.DebugRefreshCall("demoCardRenderer", r.card.Size())
 	r.layoutWithSize(r.card.Size())
 }
 
