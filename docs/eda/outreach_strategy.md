@@ -90,7 +90,7 @@ I spent the past 6 days building a complete design automation suite to address t
 6. **FeCIM EDA Design Suite** [Architecturally complete, implementation in progress]:
    - Compiler: Neural network weights → conductance mappings + programming voltages
    - SPICE Export: ngspice-compatible netlists with OpenVAF FeFET models
-   - GDSII Export: KLayout/GDSFactory integration for physical layout
+   - Layout Export: DEF/Verilog generation for seamless OpenLane integration
    - Design Space Explorer: Array sizing, ADC/DAC resolution trade-offs
    - Complete automation: PyTorch/TensorFlow → tape-out ready files
 
