@@ -131,379 +131,210 @@ external research institution, Dr. external research group, or any foundry.`)
 func makeOpenLaneFlowContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("The OpenLane RTL-to-GDSII Flow", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`OpenLane is an open-source flow that takes hardware
-descriptions and produces manufacturable chip layouts.
+	// Visual flow diagram
+	flowDiagram := OpenLaneFlowDiagram(false)
 
-THE COMPLETE FLOW:
-==================
+	description := widget.NewLabel(`OpenLane automates the journey from Verilog to GDSII.
 
-  STAGE 1: SYNTHESIS (Yosys)
-  --------------------------
-  Input:  Verilog code (behavioral description)
-  Output: Gate-level netlist (standard cells)
-  Tool:   Yosys
+THE STAGES EXPLAINED:
+---------------------
+1. SYNTHESIS (Yosys)
+   Converts behavioral Verilog to gate-level netlist
+   Example: "a & b" -> sky130_fd_sc_hd__and2_1
 
-  Example: "assign out = a & b;"
-        -> sky130_fd_sc_hd__and2_1
+2. FLOORPLAN
+   Defines die area and I/O pin locations
 
-            |
-            v
+3. PLACEMENT (RePlAce + OpenDP)
+   Assigns X,Y coordinates to every cell
 
-  STAGE 2: FLOORPLANNING
-  ----------------------
-  Input:  Netlist + constraints
-  Output: Die area, I/O pin locations
-  Tool:   OpenROAD init_floorplan
+4. CTS (Clock Tree Synthesis)
+   Distributes clock signal evenly
+   Note: FeCIM arrays often skip this
 
-  Defines the chip boundary and where
-  external connections will be placed.
+5. ROUTING (TritonRoute)
+   Draws metal wire connections
 
-            |
-            v
-
-  STAGE 3: PLACEMENT (RePlAce + OpenDP)
-  -------------------------------------
-  Input:  Floorplan + netlist
-  Output: X,Y coordinates for every cell
-  Tool:   OpenROAD place_cells
-
-  Positions cells to minimize wire length
-  while meeting timing constraints.
-
-            |
-            v
-
-  STAGE 4: CLOCK TREE SYNTHESIS (TritonCTS)
-  -----------------------------------------
-  Input:  Placed design + clock constraints
-  Output: Balanced clock distribution
-  Tool:   OpenROAD cts
-
-  Note: FeCIM arrays often don't need this
-  (no synchronous clock in the memory array).
-
-            |
-            v
-
-  STAGE 5: ROUTING (TritonRoute)
-  ------------------------------
-  Input:  Placed cells + netlist
-  Output: Metal wire connections
-  Tool:   OpenROAD route
-
-  Draws actual metal paths between cells
-  on multiple metal layers.
-
-            |
-            v
-
-  STAGE 6: SIGNOFF & GDSII
-  ------------------------
-  Input:  Routed design
-  Output: GDSII file (factory-ready)
-  Tools:  Magic (DRC), Netgen (LVS)
-
-  Verifies design rules and extracts
-  the final manufacturing format.
+6. SIGNOFF & GDSII
+   DRC/LVS verification, final output
 
 REFERENCES:
------------
-  * OpenLane Docs: openlane.readthedocs.io
-  * OpenLane Paper: WOSET 2020
-  * OpenROAD: openroad.readthedocs.io`)
-	content.Wrapping = fyne.TextWrapWord
+  * openlane.readthedocs.io
+  * OpenLane Paper: WOSET 2020`)
+	description.Wrapping = fyne.TextWrapWord
 
-	return container.NewVBox(title, widget.NewSeparator(), content)
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		flowDiagram,
+		widget.NewSeparator(),
+		description,
+	)
 }
 
 func makeWhereWeFitContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("Where the FeCIM Array Builder Fits In", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`Our tool generates files that plug into OpenLane
-at specific points in the flow.
+	// Visual flow diagram with our contribution highlighted
+	flowDiagram := OpenLaneFlowDiagram(true)
 
-THE STANDARD OPENLANE FLOW:
-===========================
+	// Isometric crossbar visualization
+	crossbarTitle := widget.NewLabelWithStyle("Why We Pre-Place: The Crossbar Structure", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	crossbarDiagram := IsometricCrossbar(4, 4, true)
 
-  [Verilog]
-      |
-      v
-  +-------------+
-  | SYNTHESIS   |  <-- Yosys converts RTL to gates
-  +-------------+
-      |
-      v
-  +-------------+
-  | FLOORPLAN   |  <-- Define die area
-  +-------------+
-      |
-      v
-  +-------------+
-  | PLACEMENT   |  <-- Position cells
-  +-------------+
-      |
-      v
-  +-------------+
-  | ROUTING     |  <-- Connect with wires
-  +-------------+
-      |
-      v
-  [GDSII]
-
-
-WHERE WE INJECT OUR FILES:
-==========================
-
-  [Our LEF]  -----> Defines cell geometry
-                    (size, pin locations)
-
-  [Our LIB]  -----> Defines timing
-                    (PLACEHOLDER values!)
-
-  [Our Verilog] --> Used by synthesis
-                    (behavioral model only)
-
-  [Our DEF]  -----> PRE-PLACED cells
-                    (skips auto-placement)
-
-  [Our Config] ---> OpenLane settings
-
+	description := widget.NewLabel(`OUR FILES AND WHERE THEY GO:
+-----------------------------
+  Our Verilog -> Input to Synthesis
+  Our LEF     -> Defines cell geometry for Floorplan
+  Our DEF     -> REPLACES Placement (FIXED positions)
+  Our LIB     -> Timing info (placeholder values!)
 
 THE KEY INSIGHT:
-================
-Standard OpenLane doesn't understand crossbar arrays.
-Auto-placement would scatter our cells randomly.
+----------------
+Standard auto-placement would scatter our cells randomly.
+We provide a DEF with FIXED positions to maintain the
+regular grid structure that enables:
 
-We provide a DEF file with FIXED positions so cells
-stay in the regular grid structure that FeCIM needs:
-
-   BL[0] BL[1] BL[2] BL[3]
-     |     |     |     |
-WL[0]-*-----*-----*-----*-
-     |     |     |     |
-WL[1]-*-----*-----*-----*-
-     |     |     |     |
-WL[2]-*-----*-----*-----*-
-     |     |     |     |
-
-This regular structure enables:
-  * Matrix-vector multiply by Kirchhoff's law
+  * Matrix-vector multiply (I = G x V)
   * Predictable IR-drop modeling
   * Uniform sneak path analysis
 
-
 WHAT OPENLANE STILL DOES:
-=========================
+-------------------------
   * Routing (connecting our pre-placed cells)
-  * DRC checking
-  * Final GDSII generation
+  * DRC checking (design rule verification)
+  * Final GDSII generation`)
+	description.Wrapping = fyne.TextWrapWord
 
-We provide the WHAT (cells + positions).
-OpenLane figures out the HOW (wires + verification).`)
-	content.Wrapping = fyne.TextWrapWord
-
-	return container.NewVBox(title, widget.NewSeparator(), content)
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		flowDiagram,
+		widget.NewSeparator(),
+		crossbarTitle,
+		crossbarDiagram,
+		widget.NewSeparator(),
+		description,
+	)
 }
 
 func makeWhatWeGenerateContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("What Files We Generate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`The Array Builder generates several EDA file formats.
-Each serves a specific purpose in the OpenLane flow.
+	intro := widget.NewLabel("The Array Builder generates EDA files for OpenLane integration:")
+	intro.Wrapping = fyne.TextWrapWord
 
-FILE 1: LEF (Library Exchange Format)
-=====================================
-Purpose: Defines cell GEOMETRY (abstract view)
+	// File format preview cards in a grid
+	lefCard := LEFPreviewCard()
+	defCard := DEFPreviewCard()
+	verilogCard := VerilogPreviewCard()
 
-  VERSION 5.8 ;
-  MACRO fecim_bitcell
-    CLASS CORE ;
-    SIZE 0.460 BY 2.720 ;        <- Cell dimensions
-    PIN WL
-      DIRECTION INPUT ;
-      PORT LAYER met1 ;          <- Pin on metal 1
-        RECT 0 1.2 0.14 1.48 ;
-      END
-    END WL
-    PIN BL
-      DIRECTION INOUT ;
-      PORT LAYER met2 ;          <- Pin on metal 2
-    END BL
-  END fecim_bitcell
+	cardsRow1 := container.NewHBox(lefCard, defCard)
+	cardsRow2 := container.NewHBox(verilogCard)
 
-Note: This is an ABSTRACT - no transistors drawn.
-Real layout requires Magic VLSI or KLayout design.
+	description := widget.NewLabel(`FILE PURPOSES:
+--------------
+LEF (Library Exchange Format)
+  Defines cell GEOMETRY - size and pin locations
+  This is an ABSTRACT view, no transistors
 
+DEF (Design Exchange Format)
+  Physical PLACEMENT with X,Y coordinates
+  FIXED keyword prevents auto-placement
 
-FILE 2: Liberty (.lib) Timing Library
-=====================================
-Purpose: Defines cell TIMING for synthesis
+Verilog Netlist
+  Structural description of the array
+  Cells are black boxes (behavioral only)
 
-  library(fecim_lib) {
-    cell(fecim_bitcell) {
-      pin(WL) {
-        direction : input;
-        capacitance : 0.002;     <- PLACEHOLDER!
-      }
-      timing() {
-        rise_transition : 0.1;   <- PLACEHOLDER!
-      }
-    }
-  }
+Liberty (.lib)
+  Timing information for synthesis
+  WARNING: All values are PLACEHOLDERS!
 
-WARNING: All timing values are PLACEHOLDERS.
-Real characterization needs SPICE simulation
-with validated FeFET device models.
+OpenLane Config (JSON)
+  Points OpenLane to our custom files
 
+IMPORTANT DISCLAIMERS:
+----------------------
+* LEF is abstract - no real layout
+* Liberty timing values need SPICE characterization
+* Verilog doesn't model FeFET physics
+* Real fabrication requires validated cells`)
+	description.Wrapping = fyne.TextWrapWord
 
-FILE 3: Verilog Netlist
-=======================
-Purpose: Structural description for synthesis
-
-  module fecim_array_4x4 (
-    input  [3:0] WL,
-    inout  [3:0] BL
-  );
-    fecim_bitcell cell_0_0 (.WL(WL[0]), .BL(BL[0]));
-    fecim_bitcell cell_0_1 (.WL(WL[0]), .BL(BL[1]));
-    // ... 16 cells total
-  endmodule
-
-Note: This is BEHAVIORAL only - cells are black boxes.
-The actual FeFET physics are NOT modeled here.
-
-
-FILE 4: DEF (Design Exchange Format)
-====================================
-Purpose: Physical PLACEMENT of cells
-
-  VERSION 5.8 ;
-  DESIGN fecim_array_4x4 ;
-  UNITS DISTANCE MICRONS 1000 ;
-  DIEAREA ( 0 0 ) ( 31840 40880 ) ;
-
-  COMPONENTS 16 ;
-    - cell_0_0 fecim_bitcell + FIXED ( 10000 10000 ) N ;
-    - cell_0_1 fecim_bitcell + FIXED ( 10460 10000 ) N ;
-    // ... with X,Y in database units (nm)
-  END COMPONENTS
-
-The FIXED keyword tells OpenLane:
-"Don't move these cells - I placed them deliberately."
-
-
-FILE 5: OpenLane Config
-=======================
-Purpose: Configure the OpenLane flow
-
-  {
-    "DESIGN_NAME": "fecim_array_4x4",
-    "EXTRA_LEFS": ["fecim_bitcell.lef"],
-    "EXTRA_LIBS": ["fecim_bitcell.lib"],
-    "FP_DEF_TEMPLATE": "fecim_array_4x4.def"
-  }
-
-Tells OpenLane to use our custom cells and
-start with our pre-placed DEF file.`)
-	content.Wrapping = fyne.TextWrapWord
-
-	return container.NewVBox(title, widget.NewSeparator(), content)
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		intro,
+		cardsRow1,
+		cardsRow2,
+		widget.NewSeparator(),
+		description,
+	)
 }
 
 func makeCellTypesContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("Cell Types: Passive vs 1T1R", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`The Array Builder supports two crossbar architectures.
+	// Visual crossbar (passive)
+	crossbarTitle := widget.NewLabelWithStyle("Passive Crossbar Structure", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	crossbar := IsometricCrossbar(3, 3, true)
 
-PASSIVE CROSSBAR
-================
-Structure:
-       BL[0]  BL[1]  BL[2]
-         |      |      |
-  WL[0]--*------*------*--
-         |      |      |
-  WL[1]--*------*------*--
-         |      |      |
-
+	content := widget.NewLabel(`PASSIVE CROSSBAR
+----------------
   * = FeFET device (no select transistor)
 
-Ports: WL[], BL[], VDD, VSS
-Cell Size: 0.46 x 2.72 um (SKY130 site)
+  Ports: WL[], BL[], VDD, VSS
+  Cell Size: 0.46 x 2.72 um (SKY130 site)
 
-Advantages:
-  + Simple structure
-  + Dense packing (smaller cells)
+  + Simple, dense packing
   + Lower fabrication complexity
-
-Disadvantages:
   - SNEAK PATH CURRENTS
-  - Read accuracy degrades with array size
   - Limited to small arrays (~32x32)
 
 
 1T1R (1 Transistor + 1 Resistor)
-================================
-Structure:
-       BL[0]  BL[1]  SL[0]  SL[1]
-         |      |      |      |
-  WL[0]--T------T------+------+--
-         |      |      |      |
-         R      R      |      |
-         |      |      |      |
-  WL[1]--T------T------+------+--
-         |      |      |      |
-         R      R      |      |
+--------------------------------
+  Each cell has a select transistor
+  that isolates it when not selected.
 
-  T = Select transistor (gate on WL)
-  R = FeFET memory element
+  Ports: WL[], BL[], SL[], VDD, VSS
+  Cell Size: 0.92 x 2.72 um (2x width)
 
-Ports: WL[], BL[], SL[], VDD, VSS
-Cell Size: 0.92 x 2.72 um (2x passive width)
-
-Advantages:
-  + No sneak paths (transistor isolates cells)
-  + Scales to large arrays (128x128+)
-  + Better read accuracy
-
-Disadvantages:
+  + No sneak paths
+  + Scales to 128x128+
   - Larger cell area (2x)
-  - More complex routing (SL lines)
-  - Higher fabrication complexity
+  - More complex routing
 
 
 THE SNEAK PATH PROBLEM
-======================
+----------------------
 In passive arrays, reading cell (0,0):
 
-  Apply V to WL[0], ground BL[0]
+  INTENDED: WL[0] -> Cell(0,0) -> BL[0]
 
-  INTENDED path:  WL[0] -> Cell(0,0) -> BL[0]
+  SNEAK:    WL[0] -> Cell(0,1) -> BL[1]
+                  -> Cell(1,1) -> Cell(1,0) -> BL[0]
 
-  SNEAK path:     WL[0] -> Cell(0,1) -> BL[1]
-                        -> Cell(1,1) -> WL[1]
-                        -> Cell(1,0) -> BL[0]
-
-This parasitic current corrupts the read signal.
-Error grows as N^2 for NxN arrays.
+Error grows as N^2 for NxN arrays!
 
 
 RECOMMENDATION
-==============
-  Array Size    |  Recommended
-  --------------|---------------
-  <= 16x16      |  Passive
-  32x32         |  Either (depends on accuracy needs)
-  >= 64x64      |  1T1R
+--------------
+  <= 16x16   -> Passive
+  32x32      -> Either
+  >= 64x64   -> 1T1R
 
-
-REFERENCES
-==========
-  * Sneak paths: RSC Nanoscale Advances 2020
-  * 1T1R for CIM: IEEE JSSC multiple papers
-  * IR-drop: Science China 2025`)
+REFERENCES: RSC Nanoscale Advances 2020, IEEE JSSC`)
 	content.Wrapping = fyne.TextWrapWord
 
-	return container.NewVBox(title, widget.NewSeparator(), content)
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		crossbarTitle,
+		crossbar,
+		widget.NewSeparator(),
+		content,
+	)
 }
 
 func makeReferencesContent() fyne.CanvasObject {
