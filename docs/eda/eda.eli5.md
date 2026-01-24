@@ -240,54 +240,48 @@ Row 3 --| * | * | * | * |
 
 ## Part 6: Module 6 - Our Bridge to EDA
 
-### What Module 6 Does
+### What Module 6 Actually Does
 
-Our FeCIM Design Suite (Module 6) aims to help bridge the gap between neural network weights and EDA tools (for educational purposes):
+Our FeCIM Design Suite (Module 6) is an **Array Builder** that generates EDA files for OpenLane integration (for educational purposes):
 
 ```
-Neural Network Weights (from training)
+User Configuration (array size, cell type)
             |
             v
     +-------------------+
     |    MODULE 6       |
-    |  FeCIM Compiler   |
+    |   Array Builder   |
     |                   |
-    |  * Quantize to    |
-    |    30 levels      |
-    |  * Map to cells   |
-    |  * Calculate      |
-    |    conductances   |
+    |  * Define cell    |
+    |    dimensions     |
+    |  * Configure      |
+    |    array size     |
+    |  * Generate EDA   |
+    |    file formats   |
     +-------------------+
             |
             v
-    +-------+-------+--------+
-    | JSON  |  CSV  | SPICE  |
-    +-------+-------+--------+
-        |       |       |
-        v       v       v
-      Docs    Excel   ngspice
+    +-------+-------+--------+--------+
+    |  LEF  |  LIB  | Verilog|  DEF   |
+    +-------+-------+--------+--------+
+        |       |       |        |
+        v       v       v        v
+     Layout  Timing  Netlist  Placement
+    Abstract  (*)    Model      File
+
+    (*) Placeholder values - not characterized!
 ```
 
-### The Quantization Magic
+### What It Generates
 
-```
-Original weight: 0.7342...
+| File | Purpose | Status |
+|------|---------|--------|
+| `.lef` | Cell abstract (size, pins) | Works |
+| `.lib` | Timing library | **Placeholder values** |
+| `.v` | Verilog behavioral model | Pass-through only |
+| `.def` | Placement definition | Works |
 
-Step 1: Scale to [0, 29]
-        0.7342 x 29 = 21.29
-
-Step 2: Round to integer
-        21.29 --> 21
-
-Step 3: Map to conductance
-        Level 21 --> 72.4 uS
-
-Step 4: Calculate programming voltage
-        V_prog = f(conductance) = 2.1V
-
-Result: Cell assignment
-        Row 5, Col 3, Level 21, G=72.4uS, V=2.1V
-```
+**Important:** The timing values are placeholders. Real FeFET characterization requires SPICE simulation with validated device models.
 
 ---
 
@@ -562,16 +556,24 @@ mttf = verification.reliability_analysis(
 
 ### 7.6 Our Project's Contribution
 
-Module 6 (FeCIM Design Suite) addresses key gaps:
+Module 6 (FeCIM Design Suite) is an **Array Builder for OpenLane**:
 
-| Gap | Our Solution | Status |
-|-----|--------------|--------|
-| Weight-to-cell mapping | 30-level compiler | Done |
-| SPICE export | ngspice-compatible netlist | Done |
-| Visualization | Interactive crossbar view | Done |
-| Documentation | JSON/CSV export | Done |
-| Architecture exploration | CiMLoop YAML (planned) | Next |
-| Layout generation | GDSFactory (planned) | Next |
+| Capability | Our Solution | Status |
+|------------|--------------|--------|
+| Cell definition | LEF/Liberty/Verilog generator | Done (placeholder timing) |
+| Array configuration | Parametric array builder | Done |
+| Placement files | DEF export | Done |
+| OpenLane integration | config.json generation | Done |
+| Syntax validation | Yosys integration | Done |
+
+**What Module 6 does NOT do (yet):**
+
+| Gap | Status | What's Needed |
+|-----|--------|---------------|
+| Weight-to-cell mapping | Not implemented | Would need ONNX import + quantization |
+| Real timing values | Placeholder only | FeFET SPICE characterization |
+| Physical layout | Abstract only | Magic/KLayout design |
+| Device models | None | Verilog-A FeFET model |
 
 ---
 
@@ -682,9 +684,9 @@ For FeCIM specifically:
 ### The Journey So Far
 
 ```
-Where we started:     Neural network weights in Python
-Where we are now:     30-level compiler with SPICE export
-Where we're going:    Full layout generation and tape-out
+Where we started:     Wanting to integrate FeCIM with EDA tools
+Where we are now:     Array builder generating OpenLane-compatible files
+Where we're going:    Real device models and physical layout
 ```
 
 ### What Makes FeCIM EDA Different

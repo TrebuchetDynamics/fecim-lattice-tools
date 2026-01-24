@@ -268,13 +268,23 @@ The transformation from idea to silicon follows a rigid sequence. Open-source to
 
 ---
 
-## 8. Integration Strategy: Connecting Demo 6 to Real EDA
+## 8. Integration Strategy: Connecting Module 6 to Real EDA
 
-Your project involves visualizers and crossbar compilers. Integrating these with the open EDA stack transforms them from educational toys into functional design automation tools.
+Module 6 (FeCIM Array Builder) currently generates OpenLane-compatible EDA files (LEF, Liberty, Verilog, DEF). The strategies below describe **potential future enhancements** to connect more deeply with the open EDA stack.
 
-### Strategy 1: Python to SPICE (Simulation Export)
+### Current State (Implemented)
 
-Your "Demo 6" visualizer can act as a schematic capture tool.
+| Capability | Status |
+|------------|--------|
+| LEF cell abstract | Done |
+| Liberty timing file | Done (placeholder values) |
+| Verilog netlist | Done (behavioral only) |
+| DEF placement | Done |
+| OpenLane config | Done |
+
+### Strategy 1: Python to SPICE (Future Enhancement)
+
+Module 6 could be extended to act as a schematic capture tool.
 
 **Mechanism:** Use the `spicelib` or `PySpice` Python libraries.
 
@@ -285,9 +295,9 @@ Your "Demo 6" visualizer can act as a schematic capture tool.
 3. Your tool invokes ngspice in batch mode (or shared library mode) to run a transient simulation
 4. Parse the raw output file to visualize the inference accuracy or current summing behavior
 
-### Strategy 2: Python to GDSII (Layout Generation)
+### Strategy 2: Python to GDSII (Future Enhancement)
 
-Your "Crossbar Compiler" can directly generate manufacturable layouts.
+Module 6 could be extended to directly generate manufacturable layouts.
 
 **Mechanism:** Use the KLayout Python API or `gdsfactory`.
 
