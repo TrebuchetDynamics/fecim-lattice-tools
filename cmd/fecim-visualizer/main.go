@@ -13,9 +13,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
-	"image/color"
 	"image/png"
 	"io"
 	"os"
@@ -27,6 +27,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -36,47 +37,13 @@ import (
 	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
 	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
-// FeCIM theme colors
-var (
-	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
-)
-
-// feCIMTheme implements fyne.Theme for consistent FeCIM branding
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return colorBackground
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return colorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255}
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255}
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255}
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
-}
+// Global logger for the main application
+var log *logging.Logger
 
 // RecordingState manages FFmpeg video recording using canvas capture
 type RecordingState struct {
@@ -313,19 +280,97 @@ type DemoApp struct {
 	demo6 *demo6gui.EmbeddedEDAApp          // EDA Design Suite
 }
 
+// Preference keys for window state persistence
+const (
+	prefKeyWindowWidth  = "window_width"
+	prefKeyWindowHeight = "window_height"
+	prefKeyLastTab      = "last_tab"
+
+	// Default window dimensions
+	defaultWindowWidth  = 1400
+	defaultWindowHeight = 900
+)
+
+// loadWindowSize loads saved window dimensions from preferences
+func loadWindowSize(prefs fyne.Preferences) fyne.Size {
+	w := prefs.FloatWithFallback(prefKeyWindowWidth, defaultWindowWidth)
+	h := prefs.FloatWithFallback(prefKeyWindowHeight, defaultWindowHeight)
+
+	// Clamp to reasonable minimum size
+	if w < 800 {
+		w = 800
+	}
+	if h < 600 {
+		h = 600
+	}
+
+	// Round to even integers and add 2-pixel buffer to prevent Fyne/Wayland
+	// resize oscillation caused by MinSize floating-point rounding
+	w = float64(int(w+1) / 2 * 2)
+	h = float64(int(h+1) / 2 * 2)
+
+	return fyne.NewSize(float32(w), float32(h))
+}
+
+// saveWindowSize saves current window dimensions to preferences
+func saveWindowSize(prefs fyne.Preferences, size fyne.Size) {
+	// Round to even integers to prevent floating-point drift
+	w := float64(int(size.Width+1) / 2 * 2)
+	h := float64(int(size.Height+1) / 2 * 2)
+	prefs.SetFloat(prefKeyWindowWidth, w)
+	prefs.SetFloat(prefKeyWindowHeight, h)
+}
+
+// saveLastTab saves the currently selected tab index
+func saveLastTab(prefs fyne.Preferences, tabIndex int) {
+	prefs.SetInt(prefKeyLastTab, tabIndex)
+}
+
+// loadLastTab loads the last selected tab index
+func loadLastTab(prefs fyne.Preferences) int {
+	return prefs.IntWithFallback(prefKeyLastTab, 0)
+}
+
 func main() {
+	// Parse command-line flags
+	verbosityFlag := flag.String("verbosity", "off", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
+	flag.Parse()
+
+	// Set global verbosity level
+	verbosity := logging.ParseVerbosityFlag(*verbosityFlag)
+	logging.SetVerbosity(verbosity)
+
+	// Initialize global logger
+	log = logging.NewLogger("fecim-visualizer")
+	defer log.Close()
+
+	log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))
+
 	// Create Fyne app
 	fyneApp := app.NewWithID("com.fecim.visualizer")
-	fyneApp.Settings().SetTheme(&feCIMTheme{})
+	fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
-	// Create main window
+	// Load saved window size from preferences
+	prefs := fyneApp.Preferences()
+	savedSize := loadWindowSize(prefs)
+	log.Debug("Loaded window size from preferences: %.0fx%.0f", savedSize.Width, savedSize.Height)
+
+	// Create main window with saved size
 	window := fyneApp.NewWindow("FeCIM Visualization Suite - 6 World-Class Demos")
-	window.Resize(fyne.NewSize(1400, 900))
+	window.Resize(savedSize)
 
-	// Create demo instances
+	// Create demo instances with error handling
+	demo2, err := demo2gui.NewEmbeddedCrossbarApp()
+	if err != nil {
+		log.Printf("[ERROR] Failed to create crossbar demo: %v", err)
+		dialog.ShowError(fmt.Errorf("crossbar demo initialization failed: %w", err), window)
+		// Create a placeholder - the demo tab will show an error
+		demo2 = nil
+	}
+
 	demos := &DemoApp{
 		demo1: demo1gui.NewEmbeddedApp(),
-		demo2: demo2gui.NewEmbeddedCrossbarApp(), // Original single-view crossbar
+		demo2: demo2,                             // Original single-view crossbar (may be nil on error)
 		demo3: demo3gui.NewEmbeddedDualModeApp(), // Full-featured MNIST with FP vs CIM
 		demo4: demo4gui.NewEmbeddedCircuitsApp(),
 		demo5: demo5gui.NewEmbeddedComparisonApp(),
@@ -361,7 +406,15 @@ func main() {
 
 	// Build content for each demo
 	demo1Content := demos.demo1.BuildContent(fyneApp, window)
-	demo2Content := demos.demo2.BuildContent(fyneApp, window)
+
+	// Handle potentially nil demo2 (initialization error)
+	var demo2Content fyne.CanvasObject
+	if demos.demo2 != nil {
+		demo2Content = demos.demo2.BuildContent(fyneApp, window)
+	} else {
+		demo2Content = container.NewCenter(widget.NewLabel("Crossbar demo failed to initialize. Check logs for details."))
+	}
+
 	demo3Content := demos.demo3.BuildContent(fyneApp, window)
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
@@ -383,6 +436,7 @@ func main() {
 
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
+		log.Button("Screenshot")
 		// Get current section name from selected tab
 		sectionName := "home"
 		if tabs.Selected() != nil {
@@ -390,6 +444,7 @@ func main() {
 		}
 		filename := takeScreenshot(window, sectionName)
 		if filename != "" {
+			log.Debug("Screenshot saved: %s", filename)
 			// Show brief notification in window title
 			originalTitle := window.Title()
 			window.SetTitle("Screenshot saved: " + filename)
@@ -403,10 +458,16 @@ func main() {
 	})
 
 	// Create record button with toggle functionality
+	// Use a separate label for recording time to prevent button resize
 	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
+	recordTimeLabel := widget.NewLabel("")
+	recordTimeLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	recordTimeLabel.Hide() // Hidden until recording starts
 	var recordingTimerStop chan struct{}
 	recordBtn.OnTapped = func() {
+		log.Button("Record")
 		if recordingState.IsRecording() {
+			log.Debug("Stopping recording...")
 			// Stop the timer goroutine
 			if recordingTimerStop != nil {
 				close(recordingTimerStop)
@@ -415,11 +476,14 @@ func main() {
 			// Stop recording
 			outputFile, err := recordingState.stopRecording()
 			if err != nil {
+				log.Debug("Error stopping recording: %v", err)
 				fmt.Println("Error stopping recording:", err)
 				return
 			}
+			log.Debug("Recording saved: %s", outputFile)
 			recordBtn.SetText("Record")
 			recordBtn.SetIcon(theme.MediaRecordIcon())
+			recordTimeLabel.Hide()
 			// Show brief notification
 			originalTitle := window.Title()
 			window.SetTitle("Recording saved: " + outputFile)
@@ -430,6 +494,7 @@ func main() {
 				})
 			}()
 		} else {
+			log.Debug("Starting recording...")
 			// Start recording
 			if err := recordingState.startRecording(window); err != nil {
 				fmt.Println("Error starting recording:", err)
@@ -444,7 +509,9 @@ func main() {
 				}()
 				return
 			}
+			recordBtn.SetText("Stop")
 			recordBtn.SetIcon(theme.MediaStopIcon())
+			recordTimeLabel.Show()
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			go func() {
@@ -459,7 +526,7 @@ func main() {
 					case <-displayTicker.C:
 						fyne.Do(func() {
 							now := time.Now()
-							recordBtn.SetText(now.Format("02 Jan 06 15:04:05.000"))
+							recordTimeLabel.SetText(now.Format("15:04:05"))
 						})
 					case <-screenshotTicker.C:
 						// Take screenshot on main thread
@@ -476,14 +543,11 @@ func main() {
 		}
 	}
 
-	// Create close button
+	// Create close button (triggers close intercept for proper state saving)
 	closeBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
-		// Stop recording if active
-		if recordingState.IsRecording() {
-			recordingState.stopRecording()
-		}
-		// Close the application
-		fyneApp.Quit()
+		log.Button("Close")
+		// Trigger the close intercept which handles state saving
+		window.Close()
 	})
 
 	// Track current demo for start/stop
@@ -491,19 +555,30 @@ func main() {
 
 	// Handle tab changes - start/stop simulations as needed
 	tabs.OnSelected = func(tab *container.TabItem) {
+		log.TabChange(tab.Text)
+		sharedwidgets.DebugInteraction(fmt.Sprintf("Tab changed to '%s'", tab.Text))
+
 		// Stop previous demo
 		switch currentDemo {
 		case 1:
+			log.Debug("Stopping demo1 (Hysteresis)")
 			demos.demo1.Stop()
 		case 2:
-			demos.demo2.Stop()
+			log.Debug("Stopping demo2 (Crossbar+)")
+			if demos.demo2 != nil {
+				demos.demo2.Stop()
+			}
 		case 3:
+			log.Debug("Stopping demo3 (MNIST)")
 			demos.demo3.Stop()
 		case 4:
+			log.Debug("Stopping demo4 (Circuits)")
 			demos.demo4.Stop()
 		case 5:
+			log.Debug("Stopping demo5 (Comparison)")
 			demos.demo5.Stop()
 		case 6:
+			log.Debug("Stopping demo6 (EDA)")
 			demos.demo6.Stop()
 		}
 
@@ -511,90 +586,113 @@ func main() {
 		switch tab.Text {
 		case "1. Hysteresis":
 			currentDemo = 1
+			log.Debug("Starting demo1 (Hysteresis)")
 			demos.demo1.Start()
 		case "2. Crossbar+":
 			currentDemo = 2
-			demos.demo2.Start()
+			log.Debug("Starting demo2 (Crossbar+)")
+			if demos.demo2 != nil {
+				demos.demo2.Start()
+			}
 		case "3. MNIST":
 			currentDemo = 3
+			log.Debug("Starting demo3 (MNIST)")
 			demos.demo3.Start()
 		case "4. Circuits":
 			currentDemo = 4
+			log.Debug("Starting demo4 (Circuits)")
 			demos.demo4.Start()
 		case "5. Comparison":
 			currentDemo = 5
+			log.Debug("Starting demo5 (Comparison)")
 			demos.demo5.Start()
 		case "6. EDA (Work In Progress)":
 			currentDemo = 6
+			log.Debug("Starting demo6 (EDA)")
 			demos.demo6.Start()
 		default:
 			currentDemo = 0
 		}
 	}
 
-	// Put toolbar buttons on the right side of the tab bar (same row)
-	// We'll position them absolutely in the top-right corner
 	tabs.SetTabLocation(container.TabLocationTop)
 
-	// Create overlay container with buttons in top-right
-	buttonOverlay := container.NewWithoutLayout(
-		screenshotBtn,
-		recordBtn,
-		closeBtn,
+	// Create toolbar with buttons aligned right
+	toolbar := container.NewBorder(
+		nil, nil, nil,
+		container.NewHBox(screenshotBtn, recordBtn, recordTimeLabel, closeBtn),
+		widget.NewLabel(""), // Spacer
 	)
 
-	// Position buttons in top-right corner (will be updated on resize)
-	updateButtonPositions := func() {
-		size := window.Canvas().Size()
-		btnWidth := float32(120)
-		btnHeight := float32(32)
-		spacing := float32(5)
+	// Stack tabs with toolbar on top
+	mainContent := container.NewBorder(
+		toolbar, nil, nil, nil,
+		tabs,
+	)
 
-		closeBtn.Resize(fyne.NewSize(btnHeight, btnHeight))
-		closeBtn.Move(fyne.NewPos(size.Width-btnHeight-10, 5))
+	window.SetContent(mainContent)
 
-		recordBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
-		recordBtn.Move(fyne.NewPos(size.Width-btnHeight-btnWidth-spacing-10, 5))
-
-		screenshotBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
-		screenshotBtn.Move(fyne.NewPos(size.Width-btnHeight-2*btnWidth-2*spacing-10, 5))
+	// Start window resize tracking for debugging (if FYNE_DEBUG_RESIZE is set)
+	if sharedwidgets.DebugResize {
+		go func() {
+			var lastSize fyne.Size
+			ticker := time.NewTicker(100 * time.Millisecond)
+			defer ticker.Stop()
+			for range ticker.C {
+				currentSize := window.Canvas().Size()
+				if currentSize.Width != lastSize.Width || currentSize.Height != lastSize.Height {
+					sharedwidgets.DebugWindowResize(currentSize)
+					lastSize = currentSize
+				}
+			}
+		}()
+		log.Info("Resize debugging enabled - set FYNE_DEBUG_RESIZE=1")
 	}
 
-	// Initial position
-	updateButtonPositions()
+	// Set close intercept to save final state
+	window.SetCloseIntercept(func() {
+		log.Info("Application closing, saving state...")
 
-	// Stack tabs with button overlay
-	mainContent := container.NewStack(
-		tabs,
-		buttonOverlay,
-	)
+		// Save final window size
+		finalSize := window.Canvas().Size()
+		saveWindowSize(prefs, finalSize)
+		log.Debug("Final window size saved: %.0fx%.0f", finalSize.Width, finalSize.Height)
 
-	// Set window content and add resize callback
-	window.SetContent(mainContent)
-	window.Canvas().SetOnTypedRune(nil) // Dummy to ensure canvas is initialized
-
-	// Update button positions on window resize
-	go func() {
-		lastSize := window.Canvas().Size()
-		for {
-			time.Sleep(100 * time.Millisecond)
-			currentSize := window.Canvas().Size()
-			if currentSize != lastSize {
-				lastSize = currentSize
-				fyne.Do(func() {
-					updateButtonPositions()
-					buttonOverlay.Refresh()
-				})
+		// Save current tab index
+		if tabs.Selected() != nil {
+			for i, tab := range tabs.Items {
+				if tab == tabs.Selected() {
+					saveLastTab(prefs, i)
+					log.Debug("Last tab saved: %d (%s)", i, tab.Text)
+					break
+				}
 			}
 		}
-	}()
+
+		// Stop recording if active
+		if recordingState.IsRecording() {
+			recordingState.stopRecording()
+		}
+
+		// Close the window
+		window.Close()
+	})
+
+	// Restore last selected tab
+	lastTabIndex := loadLastTab(prefs)
+	if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
+		tabs.SelectIndex(lastTabIndex)
+		log.Debug("Restored last tab: %d", lastTabIndex)
+	}
 
 	// Run the application
 	window.ShowAndRun()
 
 	// Cleanup all demos on exit
 	demos.demo1.Stop()
-	demos.demo2.Stop()
+	if demos.demo2 != nil {
+		demos.demo2.Stop()
+	}
 	demos.demo3.Stop()
 	demos.demo4.Stop()
 	demos.demo5.Stop()

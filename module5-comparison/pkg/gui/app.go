@@ -3,81 +3,23 @@ package gui
 
 import (
 	"fmt"
-	"image/color"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 )
 
-var debug *log.Logger
-var logFile *os.File
+// Package-level logger using shared logging infrastructure
+var debug *logging.Logger
 
 func init() {
-	logsDir := "<local-path>"
-	os.MkdirAll(logsDir, 0755)
-
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-comparison-module05.log")
-
-	var err error
-	logFile, err = os.Create(logPath)
-	if err != nil {
-		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
-		debug.Printf("Failed to create log file: %v, using stdout", err)
-		return
-	}
-
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
-	debug.Printf("Logging to: %s", logPath)
-}
-
-// FeCIM theme colors
-var (
-	colorBackground = color.RGBA{0, 50, 100, 255}
-	colorPrimary    = color.RGBA{0, 212, 255, 255}
-)
-
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return colorBackground
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return colorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255}
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255}
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255}
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
+	debug = logging.NewLogger("comparison-app")
 }
 
 // Energy specs - sourced from docs/videos/ironlattice-youtube-script.md line 205:
@@ -140,7 +82,8 @@ type ComparisonApp struct {
 	pauseBtn         *widget.Button
 
 	// Status
-	statusLabel *widget.Label
+	statusLabel     *widget.Label
+	lastStatusText  string // Cache to avoid redundant SetText calls
 
 	// Current settings
 	currentWorkload   string
@@ -156,7 +99,7 @@ func NewComparisonApp() *ComparisonApp {
 	}
 
 	ca.fyneApp = app.NewWithID("com.fecim.comparison-demo")
-	ca.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	ca.fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	// Initialize energy specs (convert pJ to fJ: multiply by 1000)
 	ca.cpuSpec = EnergySpec{
@@ -208,9 +151,9 @@ func (ca *ComparisonApp) Run() {
 	ca.running = false
 }
 
-// animationLoop runs the main animation at 60 FPS.
+// animationLoop runs the main animation at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs).
 func (ca *ComparisonApp) animationLoop() {
-	ticker := time.NewTicker(16 * time.Millisecond)
+	ticker := time.NewTicker(33 * time.Millisecond)
 	defer ticker.Stop()
 
 	lastTime := time.Now()
@@ -313,14 +256,21 @@ func (ca *ComparisonApp) updateStatusForMode() {
 		return
 	}
 
+	var newText string
 	switch ca.presentationMode {
 	case PresentationModeAuto:
 		remaining := ca.currentPhase.PhaseDuration().Seconds() - ca.phaseTimer
-		ca.statusLabel.SetText(fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining))
+		newText = fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining)
 	case PresentationModeInvestor:
-		ca.statusLabel.SetText("Mode: Technical Briefing")
+		newText = "Mode: Technical Briefing"
 	case PresentationModeEngineer:
-		ca.statusLabel.SetText("Mode: Technical Deep-Dive")
+		newText = "Mode: Technical Deep-Dive"
+	}
+
+	// Use caching to avoid redundant SetText calls that trigger layout recalculations
+	if newText != "" && newText != ca.lastStatusText {
+		ca.statusLabel.SetText(newText)
+		ca.lastStatusText = newText
 	}
 }
 

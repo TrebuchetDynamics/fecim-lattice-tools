@@ -32,6 +32,11 @@ type AnimatedEnergyRace struct {
 	showWinner   bool
 	pulsePhase   float64
 
+	// Cached values to avoid redundant SetText calls (prevents resize loops)
+	lastCpuText   string
+	lastGpuText   string
+	lastFecimText string
+
 	// UI elements
 	container    *fyne.Container
 	cpuBar       *canvas.Rectangle
@@ -78,7 +83,9 @@ func (e *AnimatedEnergyRace) Reset() {
 	e.showWinner = false
 	e.pulsePhase = 0
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // MinSize returns minimum size.
@@ -167,14 +174,28 @@ func (e *AnimatedEnergyRace) Refresh() {
 	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001*float32(progress)), barHeight))
 
 	// Update value labels - show final values after animation
+	// Use caching to avoid redundant SetText calls that trigger layout recalculations
+	var cpuText, gpuText, fecimText string
 	if progress > 0.9 {
-		e.cpuValue.SetText("1000 pJ")
-		e.gpuValue.SetText("100 pJ")
-		e.fecimValue.SetText("~1 pJ")
+		cpuText = "1000 pJ"
+		gpuText = "100 pJ"
+		fecimText = "~1 pJ"
 	} else {
-		e.cpuValue.SetText(fmt.Sprintf("%.0f pJ", cpuEnergyPJ*progress))
-		e.gpuValue.SetText(fmt.Sprintf("%.0f pJ", gpuEnergyPJ*progress))
-		e.fecimValue.SetText(fmt.Sprintf("%.1f pJ", fecimEnergyPJ*progress))
+		cpuText = fmt.Sprintf("%.0f pJ", cpuEnergyPJ*progress)
+		gpuText = fmt.Sprintf("%.0f pJ", gpuEnergyPJ*progress)
+		fecimText = fmt.Sprintf("%.1f pJ", fecimEnergyPJ*progress)
+	}
+	if cpuText != e.lastCpuText {
+		e.cpuValue.SetText(cpuText)
+		e.lastCpuText = cpuText
+	}
+	if gpuText != e.lastGpuText {
+		e.gpuValue.SetText(gpuText)
+		e.lastGpuText = gpuText
+	}
+	if fecimText != e.lastFecimText {
+		e.fecimValue.SetText(fecimText)
+		e.lastFecimText = fecimText
 	}
 
 	// Headline visibility and pulse
@@ -234,7 +255,9 @@ func (m *MemoryWallAnimation) Reset() {
 	m.dataMovements = 0
 	m.pulsePhase = 0
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns minimum size.

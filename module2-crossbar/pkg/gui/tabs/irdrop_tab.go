@@ -96,8 +96,12 @@ func (t *IRDropTab) Content() fyne.CanvasObject {
 		t.statusLabel.SetText("IR drop simulation reset")
 	})
 
+	// Wrap stats in scroll to prevent layout resize
+	statsScroll := container.NewVScroll(t.statsLabel)
+	statsScroll.SetMinSize(fyne.NewSize(200, 150))
+
 	rightPanel := container.NewVBox(
-		t.statsLabel,
+		statsScroll,
 		widget.NewSeparator(),
 		widget.NewLabel("Mitigation Strategies:"),
 		mitigate2xBtn,
@@ -197,7 +201,8 @@ impact compared to DRAM/SRAM.`,
 		severity)
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapWord
+	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 }
 
 func (t *IRDropTab) getIRSeverity(maxError float64) string {

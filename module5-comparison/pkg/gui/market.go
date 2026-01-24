@@ -39,6 +39,9 @@ type MarketOpportunityChart struct {
 	pulsePhase   float64
 	minSize      fyne.Size
 
+	// Cached values to avoid redundant SetText calls (prevents resize loops)
+	lastValues []string
+
 	container *fyne.Container
 	totalText *canvas.Text
 	bars2025  []*canvas.Rectangle
@@ -49,10 +52,11 @@ type MarketOpportunityChart struct {
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:  fyne.NewSize(350, 120),
-		bars2025: make([]*canvas.Rectangle, len(marketData)),
-		bars2030: make([]*canvas.Rectangle, len(marketData)),
-		values:   make([]*widget.Label, len(marketData)),
+		minSize:    fyne.NewSize(350, 120),
+		bars2025:   make([]*canvas.Rectangle, len(marketData)),
+		bars2030:   make([]*canvas.Rectangle, len(marketData)),
+		values:     make([]*widget.Label, len(marketData)),
+		lastValues: make([]string, len(marketData)),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -79,7 +83,9 @@ func (m *MarketOpportunityChart) Reset() {
 	m.animProgress = 0
 	m.pulsePhase = 0
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns minimum size.
@@ -163,7 +169,12 @@ func (m *MarketOpportunityChart) Refresh() {
 		bar2030Height := barHeight * float32(seg.Y2030) / maxVal * float32(progress)
 		m.bars2030[i].SetMinSize(fyne.NewSize(25, max(2, bar2030Height)))
 
-		m.values[i].SetText(fmt.Sprintf("$%.0fB", seg.Y2030*progress))
+		// Use caching to avoid redundant SetText calls
+		newText := fmt.Sprintf("$%.0fB", seg.Y2030*progress)
+		if newText != m.lastValues[i] {
+			m.values[i].SetText(newText)
+			m.lastValues[i] = newText
+		}
 
 		canvas.Refresh(m.bars2025[i])
 		canvas.Refresh(m.bars2030[i])

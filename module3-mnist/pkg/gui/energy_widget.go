@@ -129,7 +129,9 @@ func (ew *EnergyWidget) RecordInference() {
 
 	// Update stats label
 	ew.updateStatsLabel()
-	ew.Refresh()
+	fyne.Do(func() {
+		ew.Refresh()
+	})
 }
 
 func (ew *EnergyWidget) updateStatsLabel() {
@@ -170,7 +172,9 @@ func (ew *EnergyWidget) Reset() {
 	ew.mu.Unlock()
 
 	ew.statsLabel.SetText("Waiting for inference...")
-	ew.Refresh()
+	fyne.Do(func() {
+		ew.Refresh()
+	})
 }
 
 // GetEfficiencyRatio returns the current efficiency ratio (GPU/FeCIM).

@@ -12,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // ComparisonMode represents the current demo mode.
@@ -148,7 +150,9 @@ func (m *ComparisonModeIndicator) SetMode(mode ComparisonMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -164,6 +168,7 @@ func (m *ComparisonModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type comparisonModeRenderer struct {
 	indicator *ComparisonModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *comparisonModeRenderer) MinSize() fyne.Size {
@@ -171,16 +176,44 @@ func (r *comparisonModeRenderer) MinSize() fyne.Size {
 }
 
 func (r *comparisonModeRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("comparisonModeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *comparisonModeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("comparisonModeRenderer", r.indicator.Size())
+	size := r.indicator.Size()
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
+}
+
+func (r *comparisonModeRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	var bgColor, borderColor color.RGBA
 	var modeText string
@@ -265,7 +298,9 @@ func (e *ComparisonEducationalPanel) SetContent(title, content string) {
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // SetPresentationMode sets the current presentation mode.
@@ -435,10 +470,14 @@ func (e *ComparisonEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 	contentLabel := widget.NewLabel(content)
 	contentLabel.Wrapping = fyne.TextWrapWord
 
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 160))
+
 	box := container.NewVBox(
 		titleLabel,
 		widget.NewSeparator(),
-		contentLabel,
+		contentScroll,
 	)
 
 	return widget.NewSimpleRenderer(box)
@@ -490,11 +529,13 @@ func (o *ComparisonOperationLog) Add(entry string) {
 }
 
 func (o *ComparisonOperationLog) updateContent() {
-	if len(o.entries) == 0 {
-		o.contentLabel.SetText("Ready for calculations...")
-		return
+	text := "Ready for calculations..."
+	if len(o.entries) > 0 {
+		text = strings.Join(o.entries, "\n")
 	}
-	o.contentLabel.SetText(strings.Join(o.entries, "\n"))
+	fyne.Do(func() {
+		o.contentLabel.SetText(text)
+	})
 }
 
 // MinSize returns the minimum size.
@@ -504,10 +545,14 @@ func (o *ComparisonOperationLog) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (o *ComparisonOperationLog) CreateRenderer() fyne.WidgetRenderer {
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(o.contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 120))
+
 	box := container.NewVBox(
 		o.titleLabel,
 		widget.NewSeparator(),
-		o.contentLabel,
+		contentScroll,
 	)
 	return widget.NewSimpleRenderer(box)
 }

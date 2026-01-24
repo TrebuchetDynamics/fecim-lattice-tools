@@ -20,7 +20,15 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 )
+
+// Package-level logger for MNIST GUI (named mnistLog to avoid conflict with app.go's debug logger)
+var mnistLog *logging.Logger
+
+func init() {
+	mnistLog = logging.NewLogger("mnist")
+}
 
 // DualModeApp provides dual-path inference visualization (FP vs CIM).
 type DualModeApp struct {
@@ -61,8 +69,9 @@ type DualModeApp struct {
 	weightLevelsLabel *widget.Label
 
 	// Quick test
-	testButton      *widget.Button
-	testResultLabel *widget.Label
+	testButton       *widget.Button
+	testResultLabel  *widget.Label
+	testProgressBar  *widget.ProgressBar
 
 	// Test data
 	testImages [][]float64
@@ -102,8 +111,10 @@ func NewDualModeApp() *DualModeApp {
 	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := app.network.LoadWeights(weightsPath); err != nil {
-			fmt.Printf("Warning: Failed to load weights: %v\n", err)
+			mnistLog.Printf("Warning: Failed to load weights from %s: %v", weightsPath, err)
 		}
+	} else {
+		mnistLog.Printf("Note: No pretrained weights found at %s, using random initialization", weightsPath)
 	}
 
 	return app
@@ -233,11 +244,13 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
 
 	clearBtn := widget.NewButton("Clear", func() {
+		mnistLog.Button("Clear")
 		app.digitCanvas.Clear()
 		app.resetResults()
 	})
 
 	randomBtn := widget.NewButton("Random", func() {
+		mnistLog.Button("Random")
 		app.loadRandomSample()
 	})
 
@@ -333,6 +346,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.levelsSlider.Step = 1
 	app.levelsSlider.Value = 30
 	app.levelsSlider.OnChanged = func(v float64) {
+		mnistLog.SliderChange("Levels", v)
 		levels := int(v)
 		app.levelsLabel.SetText(fmt.Sprintf("%d", levels))
 
@@ -359,6 +373,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.noiseSlider.Step = 0.01
 	app.noiseSlider.Value = 0.01
 	app.noiseSlider.OnChanged = func(v float64) {
+		mnistLog.SliderChange("Noise", v)
 		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
 		app.network.SetNoiseLevel(v)
 		if len(app.lastPixels) > 0 {
@@ -374,6 +389,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	// ADC/DAC + Hidden selects on one row
 	bitOptions := []string{"3", "4", "5", "6", "7", "8", "10", "12", "16"}
 	app.adcSelect = widget.NewSelect(bitOptions, func(s string) {
+		mnistLog.Selection("ADC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
 		app.network.SetADCBits(bits)
@@ -384,6 +400,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.adcSelect.SetSelected("8")
 
 	app.dacSelect = widget.NewSelect(bitOptions, func(s string) {
+		mnistLog.Selection("DAC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
 		app.network.SetDACBits(bits)
@@ -394,6 +411,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.dacSelect.SetSelected("8")
 
 	app.hiddenSelect = widget.NewSelect([]string{"64", "128", "256"}, func(s string) {
+		mnistLog.Selection("Hidden", s)
 		var size int
 		fmt.Sscanf(s, "%d", &size)
 		app.changeHiddenSize(size)
@@ -407,21 +425,24 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	)
 
 	// Preset buttons (first row: standard presets)
-	idealBtn := widget.NewButton("Ideal", func() { app.applyPresetWithMode(30, 0.01, 8, 8, false) })
-	quantCliffBtn := widget.NewButton("QuantCliff", func() { app.applyPresetWithMode(2, 0.01, 8, 8, false) })
-	noisyBtn := widget.NewButton("Noisy", func() { app.applyPresetWithMode(30, 0.15, 6, 8, false) })
-	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPresetWithMode(30, 0.01, 3, 8, false) })
+	idealBtn := widget.NewButton("Ideal", func() { mnistLog.Button("Preset:Ideal"); app.applyPresetWithMode(30, 0.01, 8, 8, false) })
+	quantCliffBtn := widget.NewButton("QuantCliff", func() { mnistLog.Button("Preset:QuantCliff"); app.applyPresetWithMode(2, 0.01, 8, 8, false) })
+	noisyBtn := widget.NewButton("Noisy", func() { mnistLog.Button("Preset:Noisy"); app.applyPresetWithMode(30, 0.15, 6, 8, false) })
+	brokenBtn := widget.NewButton("BrokenADC", func() { mnistLog.Button("Preset:BrokenADC"); app.applyPresetWithMode(30, 0.01, 3, 8, false) })
 
 	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
 	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87% with 88% theoretical max)
-	tourBtn := widget.NewButton("Tour", func() { app.applyPresetWithMode(30, 0.01, 8, 8, true) })
+	tourBtn := widget.NewButton("Tour", func() { mnistLog.Button("Preset:Tour"); app.applyPresetWithMode(30, 0.01, 8, 8, true) })
 	tourBtn.Importance = widget.HighImportance // Highlight this button
 
 	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
 
-	// Quick test
+	// Quick test with progress bar
 	app.testResultLabel = widget.NewLabel("")
+	app.testProgressBar = widget.NewProgressBar()
+	app.testProgressBar.Hide() // Hidden until test starts
 	app.testButton = widget.NewButton("Test (200)", func() {
+		mnistLog.Button("Test200")
 		app.runQuickTest()
 	})
 
@@ -433,7 +454,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	// Controls header (compact, fixed height)
 	controlsHeader := container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testResultLabel),
+		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testProgressBar, app.testResultLabel),
 		levelsRow,
 		noiseRow,
 		selectsRow,
@@ -631,27 +652,31 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 
 // applyPresetWithMode sets hardware parameters with optional Tour Mode (single-layer).
 func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
-	app.levelsSlider.SetValue(float64(levels))
-	app.noiseSlider.SetValue(noise)
-	app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
-	app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
-
+	// Update network parameters (thread-safe, not UI)
 	app.network.SetNumLevels(levels)
 	app.network.SetNoiseLevel(noise)
 	app.network.SetADCBits(adcBits)
 	app.network.SetDACBits(dacBits)
 	app.network.SetSingleLayer(singleLayer)
 
-	// Update status to indicate Tour Mode
-	if singleLayer {
-		app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
-	}
+	// Update UI elements on main thread
+	fyne.Do(func() {
+		app.levelsSlider.SetValue(float64(levels))
+		app.noiseSlider.SetValue(noise)
+		app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
+		app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
 
-	app.updateWeightHeatmap()
+		// Update status to indicate Tour Mode
+		if singleLayer {
+			app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
+		}
 
-	if len(app.lastPixels) > 0 {
-		app.runInference(app.lastPixels)
-	}
+		app.updateWeightHeatmap()
+
+		if len(app.lastPixels) > 0 {
+			app.runInference(app.lastPixels)
+		}
+	})
 }
 
 // loadRandomSample loads a random test sample.
@@ -659,7 +684,9 @@ func (app *DualModeApp) loadRandomSample() {
 	if len(app.testImages) == 0 {
 		app.loadTestData()
 		if len(app.testImages) == 0 {
-			app.statusLabel.SetText("No test data available")
+			fyne.Do(func() {
+				app.statusLabel.SetText("No test data available")
+			})
 			return
 		}
 	}
@@ -668,17 +695,23 @@ func (app *DualModeApp) loadRandomSample() {
 	pixels := app.testImages[idx]
 	label := app.testLabels[idx]
 
-	app.digitCanvas.SetPixels(pixels)
-	app.statusLabel.SetText(fmt.Sprintf("Loaded sample #%d (true label: %d)", idx, label))
-	app.onDigitChanged(pixels)
+	fyne.Do(func() {
+		app.digitCanvas.SetPixels(pixels)
+		app.statusLabel.SetText(fmt.Sprintf("Loaded sample #%d (true label: %d)", idx, label))
+		app.onDigitChanged(pixels)
+	})
 }
 
 // loadTestData loads MNIST test data.
 func (app *DualModeApp) loadTestData() {
 	images, labels, err := mnist.LoadMNIST(app.dataDir, false) // false = test set
 	if err != nil {
-		fmt.Printf("Failed to load MNIST test data: %v\n", err)
+		mnistLog.Printf("Failed to load MNIST test data: %v, using synthetic data", err)
 		app.testImages, app.testLabels = generateSyntheticData(200)
+		// Notify user that we're using synthetic data
+		fyne.Do(func() {
+			app.statusLabel.SetText("Using synthetic test data (MNIST not found)")
+		})
 		return
 	}
 
@@ -693,11 +726,18 @@ func (app *DualModeApp) loadTestData() {
 
 // runQuickTest runs inference on 200 samples and reports accuracy.
 func (app *DualModeApp) runQuickTest() {
-	app.testButton.Disable()
-	app.testResultLabel.SetText("Testing...")
+	fyne.Do(func() {
+		app.testButton.Disable()
+		app.testResultLabel.SetText("")
+		app.testProgressBar.Show()
+		app.testProgressBar.SetValue(0)
+	})
 
 	go func() {
 		if len(app.testImages) == 0 {
+			fyne.Do(func() {
+				app.testResultLabel.SetText("Loading test data...")
+			})
 			app.loadTestData()
 		}
 
@@ -710,6 +750,9 @@ func (app *DualModeApp) runQuickTest() {
 		cimCorrect := 0
 		agreements := 0
 
+		// Update progress every 10 samples to avoid UI overload
+		updateInterval := 10
+
 		for i := 0; i < n; i++ {
 			result := app.network.Infer(app.testImages[i])
 			if result.FPPrediction == app.testLabels[i] {
@@ -721,6 +764,16 @@ func (app *DualModeApp) runQuickTest() {
 			if result.Agree {
 				agreements++
 			}
+
+			// Update progress bar at intervals
+			if (i+1)%updateInterval == 0 || i == n-1 {
+				progress := float64(i+1) / float64(n)
+				current := i + 1
+				fyne.Do(func() {
+					app.testProgressBar.SetValue(progress)
+					app.testResultLabel.SetText(fmt.Sprintf("Testing %d/%d...", current, n))
+				})
+			}
 		}
 
 		fpAcc := float64(fpCorrect) / float64(n) * 100
@@ -728,6 +781,7 @@ func (app *DualModeApp) runQuickTest() {
 		agreeRate := float64(agreements) / float64(n) * 100
 
 		fyne.Do(func() {
+			app.testProgressBar.Hide()
 			app.testResultLabel.SetText(fmt.Sprintf(
 				"FP: %.1f%% | CIM: %.1f%% | Agreement: %.1f%% | Target: 87%%",
 				fpAcc, cimAcc, agreeRate))
@@ -827,7 +881,9 @@ func (app *DualModeApp) updateWeightHeatmap() {
 		return
 	}
 	if app.weightHeatmap != nil {
-		app.weightHeatmap.Refresh()
+		fyne.Do(func() {
+			app.weightHeatmap.Refresh()
+		})
 	}
 
 	// Update info labels
@@ -888,7 +944,10 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 
 	// Load weights
 	if err := app.network.LoadWeights(weightsPath); err != nil {
-		app.statusLabel.SetText(fmt.Sprintf("Error loading weights: %v", err))
+		app.statusLabel.SetText("Error loading weights")
+		if app.window != nil {
+			dialog.ShowError(fmt.Errorf("failed to load weights from %s: %w", weightsPath, err), app.window)
+		}
 		return
 	}
 

@@ -2,9 +2,7 @@
 package tabs
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -13,85 +11,30 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
-// WeightsFile represents the JSON structure for loading weights
-type WeightsFile struct {
-	Name    string      `json:"name"`
-	Rows    int         `json:"rows"`
-	Cols    int         `json:"cols"`
-	Weights [][]float64 `json:"weights"`
-}
-
-// MakeCompilerTab creates the compiler tab UI
+// MakeCompilerTab creates the array builder tab UI
 func MakeCompilerTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	// Get state
 	appState := state.(*AppState)
 
-	// Source section
-	sourceLabel := widget.NewLabel("No weights loaded")
-	sourceLabel.Wrapping = fyne.TextWrapWord
+	// Status section
+	statusLabel := widget.NewLabel("Configure array geometry to begin.")
+	statusLabel.Wrapping = fyne.TextWrapWord
 
-	var loadedWeights [][]float64
-
-	loadButton := widget.NewButton("Load Weights (JSON)", func() {
-		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
-			if err != nil || reader == nil {
-				return
-			}
-			defer reader.Close()
-
-			data, err := os.ReadFile(reader.URI().Path())
-			if err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-
-			var wf WeightsFile
-			if err := json.Unmarshal(data, &wf); err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-
-			loadedWeights = wf.Weights
-			appState.WeightsLoaded = true
-
-			// Find weight range
-			wMin, wMax := loadedWeights[0][0], loadedWeights[0][0]
-			for _, row := range loadedWeights {
-				for _, v := range row {
-					if v < wMin {
-						wMin = v
-					}
-					if v > wMax {
-						wMax = v
-					}
-				}
-			}
-
-			sourceLabel.SetText(fmt.Sprintf("Loaded: %s\nSize: %dx%d\nWeights: %d values\nRange: [%.4f, %.4f]",
-				wf.Name, len(loadedWeights), len(loadedWeights[0]),
-				len(loadedWeights)*len(loadedWeights[0]), wMin, wMax))
-		}, w)
-	})
-
-	sourceSection := container.NewVBox(
-		widget.NewLabel("SOURCE"),
-		loadButton,
-		sourceLabel,
-	)
-
-	// Config section
+	// Config section - Geometry
 	rowsEntry := widget.NewEntry()
 	rowsEntry.SetText("128")
-	rowsEntry.SetPlaceHolder("Array Rows")
+	rowsEntry.SetPlaceHolder("Rows")
 
 	colsEntry := widget.NewEntry()
 	colsEntry.SetText("128")
-	colsEntry.SetPlaceHolder("Array Cols")
+	colsEntry.SetPlaceHolder("Cols")
 
+	// Config section - Device Params
 	levelsEntry := widget.NewEntry()
-	levelsEntry.SetText("30")
+	levelsEntry.SetText("30") // Standard from transcript
 	levelsEntry.SetPlaceHolder("Levels (2-30)")
 
 	gMinEntry := widget.NewEntry()
@@ -111,11 +54,11 @@ func MakeCompilerTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	vMaxEntry.SetPlaceHolder("V_prog_max (V)")
 
 	configForm := container.NewVBox(
-		widget.NewLabel("TARGET CONFIGURATION"),
+		widget.NewLabel("ARRAY CONFIGURATION"),
 		container.NewGridWithColumns(2,
 			widget.NewLabel("Array Rows:"), rowsEntry,
 			widget.NewLabel("Array Cols:"), colsEntry,
-			widget.NewLabel("Levels:"), levelsEntry,
+			widget.NewLabel("Analog Levels:"), levelsEntry,
 			widget.NewLabel("G_min (μS):"), gMinEntry,
 			widget.NewLabel("G_max (μS):"), gMaxEntry,
 			widget.NewLabel("V_prog_min (V):"), vMinEntry,
@@ -124,23 +67,24 @@ func MakeCompilerTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	)
 
 	// Results section
-	resultsLabel := widget.NewLabel("Compile to see results...")
+	resultsLabel := widget.NewLabel("Generate design to see stats...")
 	resultsLabel.Wrapping = fyne.TextWrapWord
 
-	compileButton := widget.NewButton("COMPILE", func() {
-		if !appState.WeightsLoaded || loadedWeights == nil {
-			dialog.ShowError(fmt.Errorf("please load weights first"), w)
-			return
-		}
-
+	generateButton := widget.NewButton("GENERATE DESIGN", func() {
+		sharedwidgets.DebugInteraction("Compiler GENERATE DESIGN button pressed")
 		// Parse config
-		rows, _ := strconv.Atoi(rowsEntry.Text)
-		cols, _ := strconv.Atoi(colsEntry.Text)
-		levels, _ := strconv.Atoi(levelsEntry.Text)
+		rows, errR := strconv.Atoi(rowsEntry.Text)
+		cols, errC := strconv.Atoi(colsEntry.Text)
+		levels, errL := strconv.Atoi(levelsEntry.Text)
 		gMin, _ := strconv.ParseFloat(gMinEntry.Text, 64)
 		gMax, _ := strconv.ParseFloat(gMaxEntry.Text, 64)
 		vMin, _ := strconv.ParseFloat(vMinEntry.Text, 64)
 		vMax, _ := strconv.ParseFloat(vMaxEntry.Text, 64)
+
+		if errR != nil || errC != nil || errL != nil {
+			dialog.ShowError(fmt.Errorf("invalid numeric inputs"), w)
+			return
+		}
 
 		config := compiler.CompileConfig{
 			ArrayRows: rows,
@@ -153,41 +97,45 @@ func MakeCompilerTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 			TPulse:    50.0,
 		}
 
-		// Compile
-		mapping, err := compiler.Compile(loadedWeights, config)
+		// Compile (Generate Blank Array)
+		// We pass nil for weights to trigger blank generation
+		mapping, err := compiler.Compile(nil, config) 
 		if err != nil {
 			dialog.ShowError(err, w)
 			return
 		}
 
 		appState.CurrentMapping = mapping
-		appState.Compiled = true
+		appState.Compiled = true // "Compiled" means "Generated" in this context
+
+		statusLabel.SetText(fmt.Sprintf("Design Generated: %dx%d (%d levels)", 
+			rows, cols, levels))
 
 		// Display results
+		// Estimate area: cell pitch is roughly 0.5um x 0.5um = 0.25um^2 per cell
+		// Total area = cells * 0.25e-6 mm^2
+		areaMM2 := float64(mapping.Stats.TotalCells) * 0.25 * 1e-6 
+
 		resultsLabel.SetText(fmt.Sprintf(
-			"COMPILED SUCCESSFULLY\n\n"+
-				"Statistics:\n"+
-				"  Cells used: %d / %d (%.1f%%)\n"+
-				"  Unique levels: %d of %d\n"+
-				"  Weight range: [%.4f, %.4f]\n"+
-				"  Quant MSE: %.6f\n"+
-				"  Quant PSNR: %.2f dB\n",
-			mapping.Stats.UsedCells, mapping.Stats.TotalCells, mapping.Stats.Utilization*100,
-			mapping.Stats.UniqueLevels, config.Levels,
-			mapping.Stats.WeightMin, mapping.Stats.WeightMax,
-			mapping.Stats.QuantMSE, mapping.Stats.QuantPSNR))
+			"DESIGN STATISTICS\n\n"+
+				"  Geometry:      %d x %d\n"+
+				"  Total Cells:   %d\n"+
+				"  Analog States: %d (30-layer Superlattice)\n"+
+				"  Est. Area:     %.6f mm² (Core)\n"+
+				"  Est. Power:    < 10 μW (Standby)\n",
+			rows, cols, mapping.Stats.TotalCells,
+			config.Levels, areaMM2))
 	})
 
 	resultsSection := container.NewVBox(
-		compileButton,
+		generateButton,
 		widget.NewSeparator(),
-		widget.NewLabel("COMPILATION RESULTS"),
 		resultsLabel,
 	)
 
 	// Main layout
 	content := container.NewVBox(
-		sourceSection,
+		statusLabel,
 		widget.NewSeparator(),
 		configForm,
 		widget.NewSeparator(),

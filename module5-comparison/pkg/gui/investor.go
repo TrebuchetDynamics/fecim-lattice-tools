@@ -45,7 +45,9 @@ func (p *PhasedStrategyDiagram) SetPhase(phase int) {
 	p.mu.Lock()
 	p.currentPhase = phase % 3
 	p.mu.Unlock()
-	p.Refresh()
+	fyne.Do(func() {
+		p.Refresh()
+	})
 }
 
 // UpdateAnimation advances the animation.

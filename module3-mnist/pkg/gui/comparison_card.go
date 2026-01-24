@@ -72,7 +72,9 @@ func (cc *ComparisonCard) SetResult(result *ComparisonResult) {
 		}
 	}
 
-	cc.Refresh()
+	fyne.Do(func() {
+		cc.Refresh()
+	})
 }
 
 // Clear resets the card to idle state.
@@ -81,7 +83,9 @@ func (cc *ComparisonCard) Clear() {
 	cc.result = nil
 	cc.mu.Unlock()
 	cc.statusLabel.SetText("Draw a digit to compare predictions")
-	cc.Refresh()
+	fyne.Do(func() {
+		cc.Refresh()
+	})
 }
 
 // MinSize returns the minimum size for the widget.
@@ -424,7 +428,9 @@ func (dpc *DualProbabilityChart) SetProbabilities(fpProbs, cimProbs []float64, f
 		}
 	}
 
-	dpc.Refresh()
+	fyne.Do(func() {
+		dpc.Refresh()
+	})
 }
 
 // Clear resets the chart.
@@ -436,7 +442,9 @@ func (dpc *DualProbabilityChart) Clear() {
 	dpc.fpPred = -1
 	dpc.cimPred = -1
 	dpc.mu.Unlock()
-	dpc.Refresh()
+	fyne.Do(func() {
+		dpc.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.

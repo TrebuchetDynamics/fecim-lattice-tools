@@ -21,6 +21,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Constants
@@ -243,7 +244,7 @@ func (ca *CircuitsApp) Run() {
 
 // createMainLayout builds the main application layout with tabs.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
-	// Create tab contents
+	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
 	writeTabContent := ca.createWriteTab()
 	readTabContent := ca.createReadTab()
 	computeTabContent := ca.createComputeTab()
@@ -251,34 +252,50 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	timingTabContent := ca.createTimingTab()
 	specsTabContent := ca.createSpecsTab()
 
+	// All views for Hide/Show toggling
+	viewNames := []string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"}
+	allViews := []fyne.CanvasObject{
+		writeTabContent, readTabContent, computeTabContent,
+		comparisonTabContent, timingTabContent, specsTabContent,
+	}
+
 	// View selector dropdown (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(
-		[]string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"},
-		nil,
-	)
+	viewSelector := widget.NewSelect(viewNames, nil)
 	viewSelector.SetSelected("WRITE")
 
-	// Content container
-	contentContainer := container.NewMax(writeTabContent)
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer := container.NewStack(allViews...)
 
-	// Update view based on selection
+	// Track current view
+	currentView := ""
+
+	// Update view based on selection using Hide/Show (avoids layout cascades)
 	viewSelector.OnChanged = func(view string) {
-		switch view {
-		case "WRITE":
-			contentContainer.Objects[0] = writeTabContent
-		case "READ":
-			contentContainer.Objects[0] = readTabContent
-		case "COMPUTE":
-			contentContainer.Objects[0] = computeTabContent
-		case "COMPARISON":
-			contentContainer.Objects[0] = comparisonTabContent
-		case "TIMING":
-			contentContainer.Objects[0] = timingTabContent
-		case "SPECS":
-			contentContainer.Objects[0] = specsTabContent
+		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
+		if view == currentView {
+			return
 		}
-		contentContainer.Refresh()
+		currentView = view
+
+		// Hide all views, then show selected
+		for i, v := range allViews {
+			if viewNames[i] == view {
+				v.Show()
+			} else {
+				v.Hide()
+			}
+		}
 	}
+
+	// Initialize: show first view, hide others
+	for i, v := range allViews {
+		if i == 0 {
+			v.Show()
+		} else {
+			v.Hide()
+		}
+	}
+	currentView = "WRITE"
 
 	// Header with inline view selector
 	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits Visualizer")
@@ -763,7 +780,9 @@ func drawRect(img *image.RGBA, x, y, rectW, rectH int, c color.Color) {
 
 func (ca *CircuitsApp) refreshWritePulse() {
 	if ca.writePulseCanvas != nil {
-		ca.writePulseCanvas.Refresh()
+		fyne.Do(func() {
+			ca.writePulseCanvas.Refresh()
+		})
 	}
 }
 
@@ -847,7 +866,9 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 
 func (ca *CircuitsApp) refreshWriteArray() {
 	if ca.writeArrayCanvas != nil {
-		ca.writeArrayCanvas.Refresh()
+		fyne.Do(func() {
+			ca.writeArrayCanvas.Refresh()
+		})
 	}
 }
 
@@ -1291,7 +1312,9 @@ func (ca *CircuitsApp) drawReadZone(w, h int) image.Image {
 
 func (ca *CircuitsApp) refreshReadZone() {
 	if ca.readZoneCanvas != nil {
-		ca.readZoneCanvas.Refresh()
+		fyne.Do(func() {
+			ca.readZoneCanvas.Refresh()
+		})
 	}
 }
 
@@ -2145,15 +2168,17 @@ func (ca *CircuitsApp) onRunComparison() {
 	ca.compStatusLabel.SetText("Running comparison for 8×8 MVM...")
 
 	// Refresh canvases
-	if ca.compArchCanvas != nil {
-		ca.compArchCanvas.Refresh()
-	}
-	if ca.compTimingCanvas != nil {
-		ca.compTimingCanvas.Refresh()
-	}
-	if ca.compEnergyCanvas != nil {
-		ca.compEnergyCanvas.Refresh()
-	}
+	fyne.Do(func() {
+		if ca.compArchCanvas != nil {
+			ca.compArchCanvas.Refresh()
+		}
+		if ca.compTimingCanvas != nil {
+			ca.compTimingCanvas.Refresh()
+		}
+		if ca.compEnergyCanvas != nil {
+			ca.compEnergyCanvas.Refresh()
+		}
+	})
 
 	ca.compStatusLabel.SetText("Comparison complete: FeFET wins by 20,000x energy efficiency!")
 }
@@ -2614,15 +2639,17 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 }
 
 func (ca *CircuitsApp) refreshTimingDiagrams() {
-	if ca.timingWriteCanvas != nil {
-		ca.timingWriteCanvas.Refresh()
-	}
-	if ca.timingReadCanvas != nil {
-		ca.timingReadCanvas.Refresh()
-	}
-	if ca.timingComputeCanvas != nil {
-		ca.timingComputeCanvas.Refresh()
-	}
+	fyne.Do(func() {
+		if ca.timingWriteCanvas != nil {
+			ca.timingWriteCanvas.Refresh()
+		}
+		if ca.timingReadCanvas != nil {
+			ca.timingReadCanvas.Refresh()
+		}
+		if ca.timingComputeCanvas != nil {
+			ca.timingComputeCanvas.Refresh()
+		}
+	})
 }
 
 // ============================================================================

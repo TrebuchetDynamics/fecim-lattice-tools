@@ -4,6 +4,7 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +13,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MNISTMode represents the current demo mode.
@@ -67,7 +69,9 @@ func (m *MNISTModeIndicator) SetMode(mode MNISTMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // GetMode returns the current mode.
@@ -90,6 +94,7 @@ func (m *MNISTModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type mnistModeRenderer struct {
 	indicator *MNISTModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *mnistModeRenderer) MinSize() fyne.Size {
@@ -97,16 +102,43 @@ func (r *mnistModeRenderer) MinSize() fyne.Size {
 }
 
 func (r *mnistModeRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("mnistModeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *mnistModeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("mnistModeRenderer", r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (mode changes)
+	r.layoutWithSize(size)
+}
+
+func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Colors based on mode
 	var bgColor, borderColor color.RGBA
@@ -161,6 +193,9 @@ func (r *mnistModeRenderer) Refresh() {
 	textWidth := float32(len(modeText)) * fontSize * 0.6
 	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-fontSize)/2))
 	r.objects = append(r.objects, text)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) Objects() []fyne.CanvasObject {
@@ -196,7 +231,9 @@ func (e *MNISTEducationalPanel) SetContent(title, content string) {
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // SetInferenceExplanation sets content for inference phases.
@@ -286,10 +323,14 @@ func (e *MNISTEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 	contentLabel := widget.NewLabel(content)
 	contentLabel.Wrapping = fyne.TextWrapWord
 
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 140))
+
 	box := container.NewVBox(
 		titleLabel,
 		widget.NewSeparator(),
-		contentLabel,
+		contentScroll,
 	)
 
 	return widget.NewSimpleRenderer(box)
@@ -355,11 +396,13 @@ func (o *MNISTOperationLog) Clear() {
 }
 
 func (o *MNISTOperationLog) updateContent() {
-	if len(o.entries) == 0 {
-		o.contentLabel.SetText("Waiting for operations...")
-		return
+	text := "Waiting for operations..."
+	if len(o.entries) > 0 {
+		text = strings.Join(o.entries, "\n")
 	}
-	o.contentLabel.SetText(strings.Join(o.entries, "\n"))
+	fyne.Do(func() {
+		o.contentLabel.SetText(text)
+	})
 }
 
 // MinSize returns the minimum size.
@@ -369,10 +412,14 @@ func (o *MNISTOperationLog) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (o *MNISTOperationLog) CreateRenderer() fyne.WidgetRenderer {
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(o.contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(140, 90))
+
 	box := container.NewVBox(
 		o.titleLabel,
 		widget.NewSeparator(),
-		o.contentLabel,
+		contentScroll,
 	)
 	return widget.NewSimpleRenderer(box)
 }
@@ -404,7 +451,9 @@ func (p *PredictionDisplay) SetPrediction(pred int, conf float64) {
 	p.prediction = pred
 	p.confidence = conf
 	p.mu.Unlock()
-	p.Refresh()
+	fyne.Do(func() {
+		p.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -420,6 +469,7 @@ func (p *PredictionDisplay) CreateRenderer() fyne.WidgetRenderer {
 type predictionRenderer struct {
 	display *PredictionDisplay
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *predictionRenderer) MinSize() fyne.Size {
@@ -427,17 +477,44 @@ func (r *predictionRenderer) MinSize() fyne.Size {
 }
 
 func (r *predictionRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("predictionRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *predictionRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("predictionRenderer", r.display.Size())
+	size := r.display.Size()
+	// Always re-layout on Refresh for this dynamic widget (prediction changes)
+	r.layoutWithSize(size)
+}
+
+func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.display.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.display.mu.RLock()
 	pred := r.display.prediction
 	conf := r.display.confidence
 	r.display.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.display.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.display.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background
 	bgColor := color.RGBA{30, 30, 45, 255}
@@ -522,6 +599,9 @@ func (r *predictionRenderer) Refresh() {
 	confLabelW := float32(40)
 	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, meterY+meterHeight+4))
 	r.objects = append(r.objects, confLabel)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) Objects() []fyne.CanvasObject {
@@ -556,7 +636,9 @@ func (k *MNISTKeyStat) SetValue(value string) {
 	k.mu.Lock()
 	k.value = value
 	k.mu.Unlock()
-	k.Refresh()
+	fyne.Do(func() {
+		k.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.

@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // VectorBarChart displays a vector as a bar chart.
@@ -59,19 +61,36 @@ func (v *VectorBarChart) SetValues(values []float64) {
 		v.maxVal = v.minVal + 1
 	}
 
-	v.Refresh()
+	// Skip refresh during startup stabilization to prevent resize oscillation
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // SetLabels sets the bar labels.
 func (v *VectorBarChart) SetLabels(labels []string) {
 	v.labels = labels
-	v.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // SetUnit sets the Y-axis unit label.
 func (v *VectorBarChart) SetUnit(unit string) {
 	v.unit = unit
-	v.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -183,14 +202,22 @@ func (v *VectorBarChart) generateImage(w, h int) image.Image {
 
 // vectorBarChartRenderer is a custom renderer for VectorBarChart with Y-axis labels.
 type vectorBarChartRenderer struct {
-	chart    *VectorBarChart
-	content  fyne.CanvasObject
-	maxLabel *widget.Label
-	minLabel *widget.Label
+	chart       *VectorBarChart
+	content     fyne.CanvasObject
+	maxLabel    *widget.Label
+	minLabel    *widget.Label
+	cache       sharedwidgets.LayoutCache // Shared utility for safe layout
+	lastMaxText string                    // Cache to avoid redundant SetText calls
+	lastMinText string
 }
 
 func (r *vectorBarChartRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("vectorBarChartRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.content.Resize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *vectorBarChartRenderer) MinSize() fyne.Size {
@@ -198,14 +225,20 @@ func (r *vectorBarChartRenderer) MinSize() fyne.Size {
 }
 
 func (r *vectorBarChartRenderer) Refresh() {
-	// Update Y-axis labels with current min/max values and unit
+	sharedwidgets.DebugRefreshCall("vectorBarChartRenderer", r.chart.Size())
+	// Update Y-axis labels with current min/max values and unit - only if changed
 	unit := r.chart.unit
-	if unit == "" {
-		unit = ""
-	}
 	if r.chart.maxVal != 0 || r.chart.minVal != 0 {
-		r.maxLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.maxVal, unit))
-		r.minLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.minVal, unit))
+		maxText := fmt.Sprintf("%.2f%s", r.chart.maxVal, unit)
+		minText := fmt.Sprintf("%.2f%s", r.chart.minVal, unit)
+		if maxText != r.lastMaxText {
+			r.maxLabel.SetText(maxText)
+			r.lastMaxText = maxText
+		}
+		if minText != r.lastMinText {
+			r.minLabel.SetText(minText)
+			r.lastMinText = minText
+		}
 	}
 	r.content.Refresh()
 }
@@ -323,7 +356,9 @@ func (c *ComparisonChart) SetData(ideal, actual []float64) {
 		c.rmse = math.Sqrt(sumSq / float64(len(ideal)))
 	}
 
-	c.Refresh()
+	fyne.Do(func() {
+		c.Refresh()
+	})
 }
 
 // GetRMSE returns the root mean square error.
@@ -467,7 +502,9 @@ func NewDiscreteLevel30Indicator() *DiscreteLevel30Indicator {
 func (d *DiscreteLevel30Indicator) SetValue(value float64) {
 	d.value = clamp(value, 0, 1)
 	d.level = int(math.Round(d.value * 29))
-	d.Refresh()
+	fyne.Do(func() {
+		d.Refresh()
+	})
 }
 
 // GetLevel returns the current discrete level (0-29).

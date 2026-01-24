@@ -8,6 +8,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // DemoInfo holds information about a demo
@@ -107,6 +109,7 @@ func (c *DemoCard) CreateRenderer() fyne.WidgetRenderer {
 type demoCardRenderer struct {
 	card    *DemoCard
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *demoCardRenderer) MinSize() fyne.Size {
@@ -114,13 +117,45 @@ func (r *demoCardRenderer) MinSize() fyne.Size {
 }
 
 func (r *demoCardRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("demoCardRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *demoCardRenderer) Refresh() {
-	r.objects = r.objects[:0]
+	sharedwidgets.DebugRefreshCall("demoCardRenderer", r.card.Size())
 	size := r.card.Size()
+	// Always rebuild if objects are empty (first render) or size changed
+	if len(r.objects) == 0 || r.cache.ShouldLayout(size) {
+		r.layoutWithSize(size)
+		if size.Width > 0 && size.Height > 0 {
+			r.cache.MarkLayout(size)
+		}
+	}
+}
+
+func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.card.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
+	r.objects = r.objects[:0]
 	info := r.card.info
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.card.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background color based on ready state
 	var bgColor, borderColor, textColor, descColor color.RGBA
@@ -259,6 +294,8 @@ func (r *demoCardRenderer) Refresh() {
 		r.objects = append(r.objects, lineText)
 	}
 
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func splitWords(s string) []string {

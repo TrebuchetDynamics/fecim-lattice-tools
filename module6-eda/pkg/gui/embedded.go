@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
 )
 
@@ -23,67 +24,44 @@ func NewEmbeddedEDAApp() *EmbeddedEDAApp {
 	}
 }
 
-// BuildContent creates the UI content for embedding in the main app
-func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Create tab contents
-	compilerContent := tabs.MakeCompilerTab(app.state, window)
-	layoutContent := tabs.MakeLayoutTab(app.state)
-	hdlContent := tabs.MakeHDLTab(app.state, window)       // Phase 3: HDL Generation
-	explorerContent := makePlaceholderTab("Design space explorer coming soon")
-	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
-	exportContent := tabs.MakeExportTab(app.state, window)
-	learnContent := tabs.MakeLearnTab(app.state, window)   // Learning Center with OpenLane docs
-
-	// View selector (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(
-		[]string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"},
-		nil,
-	)
-	viewSelector.SetSelected("Compiler")
-
-	// Content container
-	contentContainer := container.NewMax(compilerContent)
-
-	// Update view based on selection
-	viewSelector.OnChanged = func(view string) {
-		switch view {
-		case "Compiler":
-			contentContainer.Objects[0] = compilerContent
-		case "Layout":
-			contentContainer.Objects[0] = layoutContent
-		case "HDL":
-			contentContainer.Objects[0] = hdlContent
-		case "Explorer":
-			contentContainer.Objects[0] = explorerContent
-		case "Simulate":
-			contentContainer.Objects[0] = simulateContent
-		case "Export":
-			contentContainer.Objects[0] = exportContent
-		case "Learn":
-			contentContainer.Objects[0] = learnContent
-		}
-		contentContainer.Refresh()
+// CreateModuleContent creates the embedded module6 content
+func CreateModuleContent() fyne.CanvasObject {
+	// Shared array configuration
+	arrayConfig := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
 	}
 
-	// Header with inline view selector
-	banner := widget.NewLabel("PREVIEW: Bridge to open-source EDA tools (ngspice, KLayout, CiMLoop)")
-	banner.Alignment = fyne.TextAlignCenter
-
-	headerRow := container.NewHBox(
-		widget.NewLabel("View:"),
-		viewSelector,
-		widget.NewSeparator(),
-		banner,
+	// Create 7 tabs matching new architecture
+	return container.NewAppTabs(
+		container.NewTabItem("1. Cell Builder", tabs.MakeCellBuilderTab()),
+		container.NewTabItem("2. Array Builder", tabs.MakeArrayBuilderTab(arrayConfig)),
+		container.NewTabItem("3. Verilog Export", tabs.MakeVerilogExportTab(arrayConfig)),
+		container.NewTabItem("4. DEF Export", tabs.MakeDEFExportTab(arrayConfig)),
+		container.NewTabItem("5. Validation", tabs.MakeValidationTab(arrayConfig)),
+		container.NewTabItem("6. Learn", createLearnTabStub()),
+		container.NewTabItem("7. Export All", tabs.MakeExportAllTab(arrayConfig)),
 	)
+}
 
-	header := container.NewVBox(
-		headerRow,
-		widget.NewSeparator(),
-	)
+// createLearnTabStub creates a simplified Learn tab for embedded mode
+func createLearnTabStub() fyne.CanvasObject {
+	return container.NewCenter(widget.NewLabel("Learn tab - see standalone module6-eda app"))
+}
 
-	app.content = container.NewBorder(header, nil, nil, nil, contentContainer)
+// BuildContent creates the UI content for embedding in the main app
+func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
+	// Use the simplified CreateModuleContent for embedded view
+	app.content = CreateModuleContent()
 	return app.content
 }
+
+
 
 // Start is called when this demo tab is selected
 func (app *EmbeddedEDAApp) Start() {

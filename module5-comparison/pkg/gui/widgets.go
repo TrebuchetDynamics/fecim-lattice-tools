@@ -36,7 +36,9 @@ func (e *EnergyBarChart) SetValues(cpu, gpu, fecim EnergySpec) {
 	e.cpuSpec = cpu
 	e.gpuSpec = gpu
 	e.fecimSpec = fecim
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -334,7 +336,9 @@ func (d *DataCenterCalculator) SetResults(
 	savingsVsGPU := (gpuCost - fecimCost) / gpuCost * 100
 	d.savingsLabel.SetText(fmt.Sprintf("Savings vs GPU: %.0f%% (if claims hold)*", savingsVsGPU))
 
-	d.Refresh()
+	fyne.Do(func() {
+		d.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -575,7 +579,9 @@ func (d *DataCenterTransformation) SetValues(beforeW, afterW float64) {
 		d.savingsPercent = (beforeW - afterW) / beforeW * 100
 	}
 	d.mu.Unlock()
-	d.Refresh()
+	fyne.Do(func() {
+		d.Refresh()
+	})
 }
 
 // UpdateAnimation advances the animation (not used in widget version).

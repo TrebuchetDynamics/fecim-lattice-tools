@@ -2,17 +2,55 @@
 package logging
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
-// Logger wraps log.Logger with demo-specific configuration
+// Verbosity levels for logging
+type VerbosityLevel int
+
+const (
+	VerbosityOff   VerbosityLevel = 0 // No debug logging
+	VerbosityInfo  VerbosityLevel = 1 // Basic info (startup, shutdown)
+	VerbosityDebug VerbosityLevel = 2 // Debug (button clicks, value changes)
+	VerbosityTrace VerbosityLevel = 3 // Trace (every UI update, simulation tick)
+)
+
+// Global verbosity level - set via SetVerbosity()
+var (
+	globalVerbosity VerbosityLevel = VerbosityOff
+	verbosityMu     sync.RWMutex
+)
+
+// SetVerbosity sets the global verbosity level
+func SetVerbosity(level VerbosityLevel) {
+	verbosityMu.Lock()
+	globalVerbosity = level
+	verbosityMu.Unlock()
+}
+
+// GetVerbosity returns the current global verbosity level
+func GetVerbosity() VerbosityLevel {
+	verbosityMu.RLock()
+	defer verbosityMu.RUnlock()
+	return globalVerbosity
+}
+
+// IsVerbose returns true if verbosity is at least the specified level
+func IsVerbose(level VerbosityLevel) bool {
+	return GetVerbosity() >= level
+}
+
+// Logger wraps log.Logger with demo-specific configuration and verbosity support
 type Logger struct {
 	*log.Logger
-	logFile *os.File
+	logFile  *os.File
+	demoName string
 }
 
 // NewLogger creates a new logger for the specified demo
@@ -22,7 +60,8 @@ func NewLogger(demoName string) *Logger {
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
 		// Fallback to stdout only
 		return &Logger{
-			Logger: log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			Logger:   log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			demoName: demoName,
 		}
 	}
 
@@ -34,15 +73,17 @@ func NewLogger(demoName string) *Logger {
 	if err != nil {
 		// Fallback to stdout only
 		return &Logger{
-			Logger: log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			Logger:   log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			demoName: demoName,
 		}
 	}
 
 	// Write to both file and stdout
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
 	logger := &Logger{
-		Logger:  log.New(multiWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
-		logFile: logFile,
+		Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+		logFile:  logFile,
+		demoName: demoName,
 	}
 	logger.Printf("Logging to: %s", logPath)
 	return logger
@@ -52,6 +93,108 @@ func NewLogger(demoName string) *Logger {
 func (l *Logger) Close() {
 	if l.logFile != nil {
 		l.logFile.Close()
+	}
+}
+
+// Info logs at INFO level (verbosity >= 1)
+func (l *Logger) Info(format string, args ...interface{}) {
+	if IsVerbose(VerbosityInfo) {
+		l.Printf("[INFO] "+format, args...)
+	}
+}
+
+// Debug logs at DEBUG level (verbosity >= 2) - for button clicks, value changes
+func (l *Logger) Debug(format string, args ...interface{}) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] "+format, args...)
+	}
+}
+
+// Trace logs at TRACE level (verbosity >= 3) - for frequent updates
+func (l *Logger) Trace(format string, args ...interface{}) {
+	if IsVerbose(VerbosityTrace) {
+		l.Printf("[TRACE] "+format, args...)
+	}
+}
+
+// Button logs a button click event at DEBUG level
+func (l *Logger) Button(buttonName string) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] BUTTON: %s clicked", buttonName)
+	}
+}
+
+// ValueChange logs a value change event at DEBUG level
+func (l *Logger) ValueChange(widgetName string, oldValue, newValue interface{}) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] VALUE: %s changed from %v to %v", widgetName, oldValue, newValue)
+	}
+}
+
+// Selection logs a selection change event at DEBUG level
+func (l *Logger) Selection(widgetName string, selected string) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] SELECT: %s = %q", widgetName, selected)
+	}
+}
+
+// SliderChange logs a slider value change at DEBUG level
+func (l *Logger) SliderChange(sliderName string, value float64) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] SLIDER: %s = %.4f", sliderName, value)
+	}
+}
+
+// TabChange logs a tab selection change at DEBUG level
+func (l *Logger) TabChange(tabName string) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] TAB: switched to %q", tabName)
+	}
+}
+
+// CheckboxChange logs a checkbox state change at DEBUG level
+func (l *Logger) CheckboxChange(checkboxName string, checked bool) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] CHECKBOX: %s = %v", checkboxName, checked)
+	}
+}
+
+// EntryChange logs a text entry change at DEBUG level
+func (l *Logger) EntryChange(entryName string, text string) {
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] ENTRY: %s = %q", entryName, text)
+	}
+}
+
+// ParseVerbosityFlag parses a verbosity string into a VerbosityLevel
+func ParseVerbosityFlag(s string) VerbosityLevel {
+	switch s {
+	case "0", "off", "none":
+		return VerbosityOff
+	case "1", "info":
+		return VerbosityInfo
+	case "2", "debug":
+		return VerbosityDebug
+	case "3", "trace", "all":
+		return VerbosityTrace
+	default:
+		return VerbosityOff
+	}
+}
+
+// VerbosityString returns a human-readable string for the verbosity level
+func VerbosityString(level VerbosityLevel) string {
+	switch level {
+	case VerbosityOff:
+		return "off"
+	case VerbosityInfo:
+		return "info"
+	case VerbosityDebug:
+		return "debug"
+	case VerbosityTrace:
+		return "trace"
+	default:
+		return fmt.Sprintf("unknown(%d)", level)
 	}
 }
 

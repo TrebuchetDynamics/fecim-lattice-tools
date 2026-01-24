@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"log"
+	stdlog "log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -22,7 +22,7 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training"
 )
 
-var debug *log.Logger
+var debug *stdlog.Logger
 var logFile *os.File
 
 func init() {
@@ -38,14 +38,14 @@ func init() {
 	logFile, err = os.Create(logPath)
 	if err != nil {
 		// Fallback to stdout if file creation fails
-		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+		debug = stdlog.New(os.Stdout, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
 		debug.Printf("Failed to create log file: %v, using stdout", err)
 		return
 	}
 
 	// Write to both file and stdout
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+	debug = stdlog.New(multiWriter, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
 	debug.Printf("Logging to: %s", logPath)
 }
 
@@ -424,23 +424,34 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		),
 	)
 
-	// Content container (will be swapped based on button selection)
-	contentContainer = container.NewMax(mainSplit)
+	// Content views - pre-created to avoid layout cascades on Wayland/Sway
+	drawView := container.NewMax(mainSplit)
+	metricsView := container.NewMax(metricsSplit)
 
-	// Setup view switching logic
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer = container.NewStack(drawView, metricsView)
+
+	// Track current view to avoid redundant updates
+	currentView := -1
+
+	// Setup view switching logic using Hide/Show (avoids layout cascades)
 	updateView := func(view int) {
+		if view == currentView {
+			return // No change needed
+		}
+		currentView = view
+
 		if view == 0 {
 			drawBtn.Importance = widget.HighImportance
 			metricsBtn.Importance = widget.MediumImportance
-			contentContainer.Objects[0] = container.NewMax(mainSplit)
+			metricsView.Hide()
+			drawView.Show()
 		} else {
 			drawBtn.Importance = widget.MediumImportance
 			metricsBtn.Importance = widget.HighImportance
-			contentContainer.Objects[0] = container.NewMax(metricsSplit)
+			drawView.Hide()
+			metricsView.Show()
 		}
-		drawBtn.Refresh()
-		metricsBtn.Refresh()
-		contentContainer.Refresh()
 	}
 
 	drawBtn.OnTapped = func() { updateView(0) }

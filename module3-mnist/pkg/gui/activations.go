@@ -46,19 +46,25 @@ func NewLayerActivationView() *LayerActivationView {
 // SetInput sets the input layer (28x28 = 784 values).
 func (lav *LayerActivationView) SetInput(input []float64) {
 	lav.inputLayer = input
-	lav.Refresh()
+	fyne.Do(func() {
+		lav.Refresh()
+	})
 }
 
 // SetHidden sets the hidden layer activations.
 func (lav *LayerActivationView) SetHidden(hidden []float64) {
 	lav.hiddenLayer = hidden
-	lav.Refresh()
+	fyne.Do(func() {
+		lav.Refresh()
+	})
 }
 
 // SetOutput sets the output layer (10 class probabilities).
 func (lav *LayerActivationView) SetOutput(output []float64) {
 	lav.outputLayer = output
-	lav.Refresh()
+	fyne.Do(func() {
+		lav.Refresh()
+	})
 }
 
 // SetActivations sets all layer activations at once.
@@ -66,7 +72,9 @@ func (lav *LayerActivationView) SetActivations(input, hidden, output []float64) 
 	lav.inputLayer = input
 	lav.hiddenLayer = hidden
 	lav.outputLayer = output
-	lav.Refresh()
+	fyne.Do(func() {
+		lav.Refresh()
+	})
 }
 
 // GetPrediction returns the predicted class and confidence.
@@ -409,7 +417,9 @@ func (obc *OutputBarChart) SetValues(values []float64) {
 		}
 	}
 
-	obc.Refresh()
+	fyne.Do(func() {
+		obc.Refresh()
+	})
 }
 
 // GetPrediction returns the predicted class.

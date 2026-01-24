@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // ColorLegend displays a vertical color legend for heatmaps.
@@ -48,14 +50,24 @@ func NewColorLegend(minLabel, maxLabel, unit string, levels int) *ColorLegend {
 // SetColormap changes the colormap.
 func (l *ColorLegend) SetColormap(name string) {
 	l.colormap = name
-	l.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		l.Refresh()
+	})
 }
 
 // SetLabels updates the min/max labels.
 func (l *ColorLegend) SetLabels(minLabel, maxLabel string) {
 	l.minLabel = minLabel
 	l.maxLabel = maxLabel
-	l.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		l.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -180,9 +192,19 @@ type colorLegendRenderer struct {
 	maxText    *canvas.Text
 	unitText   *canvas.Text
 	tickLabels []*canvas.Text // Labels for intermediate tick values
+	cache      sharedwidgets.LayoutCache // Shared utility for safe layout
+	// Cache label values to avoid redundant refreshes
+	lastMinLabel string
+	lastMaxLabel string
+	lastUnit     string
 }
 
 func (r *colorLegendRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("colorLegendRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.cache.MarkLayout(size)
 	r.raster.Resize(size)
 	r.maxText.Move(fyne.NewPos(38, 25))
 	r.unitText.Move(fyne.NewPos(0, 5))
@@ -207,15 +229,32 @@ func (r *colorLegendRenderer) MinSize() fyne.Size {
 }
 
 func (r *colorLegendRenderer) Refresh() {
-	r.minText.Text = r.legend.minLabel
-	r.maxText.Text = r.legend.maxLabel
-	r.unitText.Text = r.legend.unit
-	r.raster.Refresh()
-	r.minText.Refresh()
-	r.maxText.Refresh()
-	r.unitText.Refresh()
-	for _, label := range r.tickLabels {
-		label.Refresh()
+	sharedwidgets.DebugRefreshCall("colorLegendRenderer", r.legend.Size())
+	// Only refresh text if values actually changed
+	needsRefresh := false
+	if r.legend.minLabel != r.lastMinLabel {
+		r.minText.Text = r.legend.minLabel
+		r.lastMinLabel = r.legend.minLabel
+		needsRefresh = true
+	}
+	if r.legend.maxLabel != r.lastMaxLabel {
+		r.maxText.Text = r.legend.maxLabel
+		r.lastMaxLabel = r.legend.maxLabel
+		needsRefresh = true
+	}
+	if r.legend.unit != r.lastUnit {
+		r.unitText.Text = r.legend.unit
+		r.lastUnit = r.legend.unit
+		needsRefresh = true
+	}
+	if needsRefresh {
+		r.raster.Refresh()
+		r.minText.Refresh()
+		r.maxText.Refresh()
+		r.unitText.Refresh()
+		for _, label := range r.tickLabels {
+			label.Refresh()
+		}
 	}
 }
 
@@ -270,7 +309,12 @@ func (m *MetricsPanel) UpdateMetrics(idealAcc, actualAcc, fecimE, gpuE float64, 
 	m.efficiency = gpuE / fecimE
 	m.macOps = macs
 	m.latency = lat
-	m.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -385,7 +429,12 @@ func (b *ComparisonBadge) UpdateValues(fecimVal, gpuVal string, improvement stri
 	b.fecimValue = fecimVal
 	b.gpuValue = gpuVal
 	b.improvement = improvement
-	b.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		b.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -469,13 +518,23 @@ func NewAccuracyWaterfall() *AccuracyWaterfall {
 // SetSteps updates the waterfall steps.
 func (w *AccuracyWaterfall) SetSteps(steps []WaterfallStep) {
 	w.steps = steps
-	w.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		w.Refresh()
+	})
 }
 
 // SetTarget sets the target accuracy line.
 func (w *AccuracyWaterfall) SetTarget(target float64) {
 	w.targetAccuracy = target
-	w.Refresh()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		w.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -645,9 +704,15 @@ func (w *AccuracyWaterfall) generateImage(width, height int) image.Image {
 // waterfallRenderer is a custom renderer for AccuracyWaterfall with labels.
 type waterfallRenderer struct {
 	waterfall *AccuracyWaterfall
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *waterfallRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("waterfallRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.cache.MarkLayout(size)
 	r.waterfall.raster.Resize(size)
 
 	// Layout Y-axis labels
@@ -703,6 +768,7 @@ func (r *waterfallRenderer) MinSize() fyne.Size {
 }
 
 func (r *waterfallRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("waterfallRenderer", r.waterfall.Size())
 	// Update bar labels based on current steps
 	w := r.waterfall
 

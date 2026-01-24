@@ -4,7 +4,8 @@ package gui
 
 import (
 	"fmt"
-	"log"
+	"image/color"
+	stdlog "log"
 	"os"
 	"strings"
 	"sync"
@@ -14,10 +15,11 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
-var lsDebug = log.New(os.Stdout, "[WIDGET] ", log.Ltime|log.Lmicroseconds)
+var lsDebug = stdlog.New(os.Stdout, "[WIDGET] ", stdlog.Ltime|stdlog.Lmicroseconds)
 
 // DemoMode represents the current demo mode.
 type DemoMode int
@@ -75,8 +77,13 @@ func (m *ModeIndicatorBox) SetMode(mode DemoMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	lsDebug.Println("ModeIndicator: Calling Refresh")
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 	lsDebug.Println("ModeIndicator: Refresh done")
 }
 
@@ -100,6 +107,7 @@ func (m *ModeIndicatorBox) CreateRenderer() fyne.WidgetRenderer {
 type modeIndicatorBoxRenderer struct {
 	indicator *ModeIndicatorBox
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
@@ -107,16 +115,44 @@ func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeIndicatorBoxRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("modeIndicatorBoxRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeIndicatorBoxRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("modeIndicatorBoxRenderer", r.indicator.Size())
+	size := r.indicator.Size()
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
+}
+
+func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Colors based on mode
 	var bgColor, borderColor color.RGBA
@@ -210,8 +246,10 @@ func (e *EducationalPanel) SetContent(title, content string) {
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.titleLabel.SetText(title)
-	e.contentLabel.SetText(content)
+	fyne.Do(func() {
+		e.titleLabel.SetText(title)
+		e.contentLabel.SetText(content)
+	})
 	lsDebug.Println("EducationalPanel: SetContent done")
 }
 
@@ -220,7 +258,9 @@ func (e *EducationalPanel) SetPhase(phase int) {
 	e.mu.Lock()
 	e.phase = phase
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // SetMVMExplanation sets content for MVM operation.
@@ -376,11 +416,13 @@ func (o *OperationLog) Clear() {
 }
 
 func (o *OperationLog) updateContent() {
-	if len(o.entries) == 0 {
-		o.contentLabel.SetText("Waiting for operations...")
-		return
+	text := "Waiting for operations..."
+	if len(o.entries) > 0 {
+		text = strings.Join(o.entries, "\n")
 	}
-	o.contentLabel.SetText(strings.Join(o.entries, "\n"))
+	fyne.Do(func() {
+		o.contentLabel.SetText(text)
+	})
 }
 
 // MinSize returns the minimum size.
@@ -390,10 +432,14 @@ func (o *OperationLog) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (o *OperationLog) CreateRenderer() fyne.WidgetRenderer {
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(o.contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(140, 40))
+
 	box := container.NewVBox(
 		o.titleLabel,
 		widget.NewSeparator(),
-		o.contentLabel,
+		contentScroll,
 	)
 	return widget.NewSimpleRenderer(box)
 }
@@ -482,9 +528,11 @@ func (d *InputOutputDisplay) updateDisplay() {
 	output := d.outputValues
 	d.mu.RUnlock()
 
-	d.inputContent.SetText(d.formatVector(input, "V"))
-	d.outputContent.SetText(d.formatVector(output, "I"))
-	d.Refresh()
+	fyne.Do(func() {
+		d.inputContent.SetText(d.formatVector(input, "V"))
+		d.outputContent.SetText(d.formatVector(output, "I"))
+		d.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -525,7 +573,9 @@ func NewQuoteBox(text string) *QuoteBox {
 // SetQuote updates the text.
 func (q *QuoteBox) SetQuote(text string) {
 	q.text = text
-	q.Refresh()
+	fyne.Do(func() {
+		q.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -575,7 +625,9 @@ func (k *KeyStatBox) SetValue(value string) {
 	k.mu.Lock()
 	k.value = value
 	k.mu.Unlock()
-	k.valueWidget.SetText(value)
+	fyne.Do(func() {
+		k.valueWidget.SetText(value)
+	})
 }
 
 // MinSize returns the minimum size.

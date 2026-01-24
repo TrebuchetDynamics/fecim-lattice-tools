@@ -15,8 +15,9 @@ type EmbeddedCrossbarApp struct {
 	*CrossbarApp
 }
 
-// NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application
-func NewEmbeddedCrossbarApp() *EmbeddedCrossbarApp {
+// NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application.
+// Returns an error if the crossbar array cannot be initialized.
+func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 	ca := &CrossbarApp{
 		selectedRow: -1, // No selection initially
 		selectedCol: -1,
@@ -35,7 +36,7 @@ func NewEmbeddedCrossbarApp() *EmbeddedCrossbarApp {
 	var err error
 	ca.array, err = crossbar.NewArray(ca.config)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create crossbar array: %v", err))
+		return nil, fmt.Errorf("failed to create crossbar array: %w", err)
 	}
 
 	// Program initial random weights
@@ -47,7 +48,7 @@ func NewEmbeddedCrossbarApp() *EmbeddedCrossbarApp {
 		}
 	}
 
-	return &EmbeddedCrossbarApp{CrossbarApp: ca}
+	return &EmbeddedCrossbarApp{CrossbarApp: ca}, nil
 }
 
 // BuildContent creates the UI content for embedding in a tab

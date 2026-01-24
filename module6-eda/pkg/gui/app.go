@@ -7,59 +7,95 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
 )
 
 // CreateMainWindow creates the main application window
 func CreateMainWindow(app fyne.App) fyne.Window {
-	w := app.NewWindow("Demo 6: FeCIM Design Suite (Preview)")
-	w.Resize(fyne.NewSize(1200, 800))
+	w := app.NewWindow("Module 6: FeCIM Design Suite - EDA")
+	w.Resize(fyne.NewSize(1400, 900))
 
-	// Shared state
-	state := &tabs.AppState{}
+	// Shared array configuration (used across tabs 2-7)
+	arrayConfig := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
 
 	// Create tab contents
-	compilerContent := tabs.MakeCompilerTab(state, w)
-	layoutContent := tabs.MakeLayoutTab(state)
-	hdlContent := tabs.MakeHDLTab(state, w)       // Phase 3: HDL Generation
-	explorerContent := makePlaceholderTab("Design space explorer coming soon")
-	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
-	exportContent := tabs.MakeExportTab(state, w)
-	learnContent := tabs.MakeLearnTab(state, w)   // Learning Center with OpenLane docs
+	cellBuilderContent := tabs.MakeCellBuilderTab()                   // Tab 1
+	arrayBuilderContent := tabs.MakeArrayBuilderTab(arrayConfig)     // Tab 2
+	verilogContent := tabs.MakeVerilogExportTab(arrayConfig)         // Tab 3
+	defContent := tabs.MakeDEFExportTab(arrayConfig)                 // Tab 4
+	validationContent := tabs.MakeValidationTab(arrayConfig)         // Tab 5
+	learnContent := tabs.MakeLearnTab(&tabs.AppState{}, w)           // Tab 6 (existing)
+	exportAllContent := tabs.MakeExportAllTab(arrayConfig)           // Tab 7
 
-	// View selector (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(
-		[]string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"},
-		nil,
-	)
-	viewSelector.SetSelected("Compiler")
+	// View names for selector
+	viewNames := []string{
+		"1. Cell Builder",
+		"2. Array Builder",
+		"3. Verilog Export",
+		"4. DEF Export",
+		"5. Validation",
+		"6. Learn",
+		"7. Export All",
+	}
+	
+	allViews := []fyne.CanvasObject{
+		cellBuilderContent,
+		arrayBuilderContent,
+		verilogContent,
+		defContent,
+		validationContent,
+		learnContent,
+		exportAllContent,
+	}
 
-	// Content container
-	contentContainer := container.NewMax(compilerContent)
+	// View selector dropdown
+	viewSelector := widget.NewSelect(viewNames, nil)
+	viewSelector.SetSelected("1. Cell Builder")
+
+	// Content container using Stack
+	contentContainer := container.NewStack(allViews...)
+
+	// Track current view
+	currentView := ""
 
 	// Update view based on selection
 	viewSelector.OnChanged = func(view string) {
-		switch view {
-		case "Compiler":
-			contentContainer.Objects[0] = compilerContent
-		case "Layout":
-			contentContainer.Objects[0] = layoutContent
-		case "HDL":
-			contentContainer.Objects[0] = hdlContent
-		case "Explorer":
-			contentContainer.Objects[0] = explorerContent
-		case "Simulate":
-			contentContainer.Objects[0] = simulateContent
-		case "Export":
-			contentContainer.Objects[0] = exportContent
-		case "Learn":
-			contentContainer.Objects[0] = learnContent
+		if view == currentView {
+			return
 		}
-		contentContainer.Refresh()
+		currentView = view
+
+		// Hide all views, then show selected
+		for i, v := range allViews {
+			if viewNames[i] == view {
+				v.Show()
+			} else {
+				v.Hide()
+			}
+		}
 	}
 
+	// Initialize: show first view, hide others
+	for i, v := range allViews {
+		if i == 0 {
+			v.Show()
+		} else {
+			v.Hide()
+		}
+	}
+	currentView = "1. Cell Builder"
+
 	// Header with inline view selector
-	banner := widget.NewLabel("PREVIEW: Bridge to open-source EDA tools (ngspice, KLayout, CiMLoop)")
+	banner := widget.NewLabel("Generate fabrication-ready files for OpenLane/SKY130")
 	banner.Alignment = fyne.TextAlignCenter
 
 	headerRow := container.NewHBox(
@@ -80,6 +116,3 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	return w
 }
 
-func makePlaceholderTab(message string) fyne.CanvasObject {
-	return container.NewCenter(widget.NewLabel(message))
-}

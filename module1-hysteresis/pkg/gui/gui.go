@@ -22,7 +22,16 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
+
+// Package-level logger for hysteresis GUI
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("hysteresis")
+}
 
 // Colors - FeCIM theme
 var (
@@ -330,17 +339,29 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewPadded(container.NewCenter(a.cellViz)),
 	)
 
-	// Right panel - consolidated with better spacing
-	rightPanel := container.NewVBox(
-		container.NewPadded(controls),
-		a.createSectionDivider(),
+	// Right panel - controls stay outside scroll to avoid Select popup issues
+	scrollableContent := container.NewVBox(
 		container.NewPadded(info),
 		a.createSectionDivider(),
 		container.NewPadded(slidePanel),
 		a.createSectionDivider(),
 		container.NewPadded(logPanel),
 	)
-	rightScroll := container.NewScroll(rightPanel)
+	rightScroll := container.NewScroll(scrollableContent)
+
+	// Controls at top (with Select widgets), scroll below
+	// Use a min size container to prevent resize when dropdown opens
+	controlsWithMinWidth := container.New(&fixedMinWidthLayout{minWidth: 280},
+		container.NewVBox(
+			container.NewPadded(controls),
+			a.createSectionDivider(),
+		),
+	)
+	rightArea := container.NewBorder(
+		controlsWithMinWidth,
+		nil, nil, nil,
+		rightScroll,
+	)
 
 	// Plot + level in same row (level has fixed width)
 	plotAndLevel := container.NewBorder(
@@ -361,13 +382,14 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
-	// Main layout: Cell (14%) | Plot (54%) | Right Panel (32%)
-	mainLayout := container.New(
-		&percentHBoxLayout{weights: []float32{0.14, 0.54, 0.32}},
-		cellContainer,
-		centerArea,
-		rightScroll,
-	)
+	// Main layout: Cell | Plot | Right Panel using HSplit for stability
+	// Inner split: Plot (left, 63% of remaining) | Right Panel (right, 37% of remaining)
+	innerSplit := container.NewHSplit(centerArea, rightArea)
+	innerSplit.SetOffset(0.63) // ~54/(54+32) = 0.63
+
+	// Outer split: Cell (left, 14%) | Inner (right, 86%)
+	mainLayout := container.NewHSplit(cellContainer, innerSplit)
+	mainLayout.SetOffset(0.14)
 
 	return container.NewBorder(
 		nil, // No header - cleaner look
@@ -395,7 +417,7 @@ func (a *App) createHeader() fyne.CanvasObject {
 }
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
-	// E-field slider
+	// E-field slider (no logging - too frequent)
 	a.eFieldSlider = widget.NewSlider(-2, 2)
 	a.eFieldSlider.Step = 0.01
 	a.eFieldSlider.Value = 0
@@ -411,6 +433,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Waveform selector
 	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Square Wave", "Random Walk", "Write/Read Demo"}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
+		fmt.Printf("[hysteresis] Waveform callback called: %s\n", s)
+		log.Selection("Waveform", s)
 		a.mu.Lock()
 		defer a.mu.Unlock()
 		switch s {
@@ -456,6 +480,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Material selector
 	matNames := []string{"Default HZO", "Optimized Superlattice", "FeCIM HZO"}
 	a.materialSelect = widget.NewSelect(matNames, func(s string) {
+		log.Selection("Material", s)
 		var idx int
 		switch s {
 		case "Default HZO":
@@ -480,14 +505,17 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.pauseBtn = widget.NewButton("Pause", func() {
 		a.paused = !a.paused
 		if a.paused {
+			log.Button("Pause (now paused)")
 			a.pauseBtn.SetText("Resume")
 		} else {
+			log.Button("Resume (now running)")
 			a.pauseBtn.SetText("Pause")
 		}
 	})
 
 	// Reset button
 	resetBtn := widget.NewButton("Reset", func() {
+		log.Button("Reset")
 		a.mu.Lock()
 		a.preisach.Reset()
 		a.electricField = 0
@@ -503,6 +531,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 	// ELI5 (Explain Like I'm 5) button
 	eli5Btn := widget.NewButton("ELI5", func() {
+		log.Button("ELI5")
 		a.showELI5Dialog()
 	})
 	eli5Btn.Importance = widget.LowImportance
@@ -513,6 +542,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	freqSlider.Value = 0.5
 	freqLabel := widget.NewLabel("Freq: 0.50 Hz")
 	freqSlider.OnChanged = func(v float64) {
+		log.SliderChange("Frequency", v)
 		a.mu.Lock()
 		a.frequency = v
 		// Reset trail when frequency changes
@@ -529,6 +559,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	trailSlider.Value = float64(a.maxHistory)
 	trailLabel := widget.NewLabel(fmt.Sprintf("Trail: %d", a.maxHistory))
 	trailSlider.OnChanged = func(v float64) {
+		log.SliderChange("TrailLength", v)
 		a.mu.Lock()
 		a.maxHistory = int(v)
 		// Immediately trim if history exceeds new max
@@ -569,11 +600,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
+	// Add spacer at end to absorb any extra vertical space
 	return container.NewVBox(
 		modeGroup,
 		eFieldGroup,
 		timingGroup,
 		actionGroup,
+		layout.NewSpacer(),
 	)
 }
 
@@ -1264,6 +1297,7 @@ func (p *PEPlot) CreateRenderer() fyne.WidgetRenderer {
 type peplotRenderer struct {
 	plot    *PEPlot
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *peplotRenderer) MinSize() fyne.Size {
@@ -1271,16 +1305,33 @@ func (r *peplotRenderer) MinSize() fyne.Size {
 }
 
 func (r *peplotRenderer) Layout(size fyne.Size) {
-	// Layout is handled in Refresh, so we must trigger it when resized
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("peplotRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *peplotRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("peplotRenderer", r.plot.Size())
+	// Always re-layout on Refresh for this dynamic widget (data changes)
+	// layoutWithSize handles size validation and cache marking internally
+	r.layoutWithSize(r.plot.Size())
+}
+
+func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.plot.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.plot.mu.RLock()
 	defer r.plot.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.plot.Size()
 
 	// Background with subtle border
 	bg := canvas.NewRectangle(color.RGBA{0, 40, 90, 255})
@@ -1548,6 +1599,9 @@ func (r *peplotRenderer) Refresh() {
 	markerInner.Resize(fyne.NewSize(6, 6))
 	markerInner.Move(fyne.NewPos(markerX-3, markerY-3))
 	r.objects = append(r.objects, markerInner)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *peplotRenderer) Objects() []fyne.CanvasObject {
@@ -1600,21 +1654,51 @@ func (l *LevelIndicator) CreateRenderer() fyne.WidgetRenderer {
 type levelRenderer struct {
 	indicator *LevelIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *levelRenderer) MinSize() fyne.Size {
 	return r.indicator.minSize
 }
 
-func (r *levelRenderer) Layout(size fyne.Size) {}
+func (r *levelRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("levelRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+}
 
 func (r *levelRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("levelRenderer", r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (level changes)
+	r.layoutWithSize(size)
+}
+
+func (r *levelRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.indicator.mu.RLock()
 	level := r.indicator.level
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background with subtle border
 	border := canvas.NewRectangle(color.RGBA{0, 100, 180, 255})
@@ -1723,6 +1807,9 @@ func (r *levelRenderer) Refresh() {
 			r.objects = append(r.objects, label)
 		}
 	}
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) Objects() []fyne.CanvasObject {
@@ -1775,6 +1862,7 @@ func (c *CellVisualizer) CreateRenderer() fyne.WidgetRenderer {
 type cellRenderer struct {
 	cell    *CellVisualizer
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *cellRenderer) MinSize() fyne.Size {
@@ -1782,16 +1870,43 @@ func (r *cellRenderer) MinSize() fyne.Size {
 }
 
 func (r *cellRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("cellRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *cellRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("cellRenderer", r.cell.Size())
+	size := r.cell.Size()
+	// Always re-layout on Refresh for this dynamic widget (level changes)
+	r.layoutWithSize(size)
+}
+
+func (r *cellRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.cell.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.cell.mu.RLock()
 	level := r.cell.level
 	r.cell.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.cell.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.cell.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background with subtle gradient effect
 	bg := canvas.NewRectangle(color.RGBA{0, 35, 70, 255})
@@ -1922,6 +2037,9 @@ func (r *cellRenderer) Refresh() {
 	stateLabelW := float32(len(stateText)) * 7
 	stateLabel.Move(fyne.NewPos(cellX+(cellSize-stateLabelW)/2, labelY+18))
 	r.objects = append(r.objects, stateLabel)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *cellRenderer) Objects() []fyne.CanvasObject {
@@ -1974,6 +2092,7 @@ func (m *ModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type modeRenderer struct {
 	indicator *ModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *modeRenderer) MinSize() fyne.Size {
@@ -1981,16 +2100,43 @@ func (r *modeRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	sharedwidgets.DebugLayoutCall("modeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
 }
 
 func (r *modeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("modeRenderer", r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (mode changes)
+	r.layoutWithSize(size)
+}
+
+func (r *modeRenderer) layoutWithSize(size fyne.Size) {
+	// Use minSize if provided size is invalid (for initial render)
+	if size.Width <= 0 || size.Height <= 0 {
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
+	}
+
 	r.indicator.mu.RLock()
 	isWrite := r.indicator.isWrite
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Box colors
 	var bgColor, borderColor color.RGBA
@@ -2034,6 +2180,9 @@ func (r *modeRenderer) Refresh() {
 	condLabelW := float32(len(conditionText)) * 8
 	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, 40))
 	r.objects = append(r.objects, condLabel)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeRenderer) Objects() []fyne.CanvasObject {
@@ -2105,6 +2254,31 @@ func (l *fixedWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
+// fixedMinWidthLayout enforces a minimum width but allows expansion
+type fixedMinWidthLayout struct {
+	minWidth float32
+}
+
+func (l *fixedMinWidthLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	minH := float32(0)
+	for _, o := range objects {
+		if o.Visible() {
+			minH = fyne.Max(minH, o.MinSize().Height)
+		}
+	}
+	return fyne.NewSize(l.minWidth, minH)
+}
+
+func (l *fixedMinWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		// Only use the given width, but respect child's MinSize for height
+		// This prevents vertical stretching
+		childMinSize := o.MinSize()
+		o.Resize(fyne.NewSize(size.Width, childMinSize.Height))
+		o.Move(fyne.NewPos(0, 0))
+	}
+}
+
 // ============================================================
 // Percentage-Based HBox Layout
 // ============================================================
@@ -2122,7 +2296,8 @@ func (l *percentHBoxLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 			minH = fyne.Max(minH, o.MinSize().Height)
 		}
 	}
-	return fyne.NewSize(100, minH) // Minimal width, will expand
+	// Return fixed minimum to prevent layout recalculation issues
+	return fyne.NewSize(100, minH)
 }
 
 func (l *percentHBoxLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {

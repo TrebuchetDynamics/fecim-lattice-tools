@@ -51,7 +51,9 @@ func (cm *ConfusionMatrix) SetMatrix(matrix [10][10]int) {
 			cm.total += matrix[i][j]
 		}
 	}
-	cm.Refresh()
+	fyne.Do(func() {
+		cm.Refresh()
+	})
 }
 
 // GetAccuracy returns the overall accuracy.
@@ -150,7 +152,9 @@ func (cm *ConfusionMatrix) Tapped(e *fyne.PointEvent) {
 	if row >= 0 && row < 10 && col >= 0 && col < 10 {
 		cm.selectedRow = row
 		cm.selectedCol = col
-		cm.Refresh()
+		fyne.Do(func() {
+			cm.Refresh()
+		})
 
 		if cm.OnCellTapped != nil {
 			cm.OnCellTapped(row, col, cm.matrix[row][col])
@@ -298,7 +302,9 @@ func (mp *MetricsPanel) SetMetrics(precision, recall, f1 [10]float64, accuracy f
 	}
 	mp.avgF1 = sum / 10.0
 
-	mp.Refresh()
+	fyne.Do(func() {
+		mp.Refresh()
+	})
 }
 
 // SetFromConfusionMatrix calculates metrics from a confusion matrix.
@@ -457,7 +463,9 @@ func (csp *ClassStatsPanel) SetClass(class int, precision, recall, f1 float64, t
 	csp.fp = fp
 	csp.fn = fn
 	csp.support = support
-	csp.Refresh()
+	fyne.Do(func() {
+		csp.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
