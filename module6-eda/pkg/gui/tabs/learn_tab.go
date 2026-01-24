@@ -275,38 +275,36 @@ IMPORTANT DISCLAIMERS:
 func makeCellTypesContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("Cell Types: Passive vs 1T1R", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	// Visual crossbar (passive)
-	crossbarTitle := widget.NewLabelWithStyle("Passive Crossbar Structure", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	crossbar := IsometricCrossbar(3, 3, true)
+	// Visual crossbar diagrams side by side
+	passiveDiagram := IsometricCrossbar(3, 3, true)
+	oneToneRDiagram := Isometric1T1RCrossbar(3, 3)
 
-	content := widget.NewLabel(`PASSIVE CROSSBAR
+	// Put both diagrams in a horizontal box
+	diagramsRow := container.NewHBox(passiveDiagram, oneToneRDiagram)
+
+	passiveContent := widget.NewLabel(`PASSIVE CROSSBAR
 ----------------
-  * = FeFET device (no select transistor)
-
   Ports: WL[], BL[], VDD, VSS
   Cell Size: 0.46 x 2.72 um (SKY130 site)
 
   + Simple, dense packing
   + Lower fabrication complexity
   - SNEAK PATH CURRENTS
-  - Limited to small arrays (~32x32)
+  - Limited to small arrays (~32x32)`)
+	passiveContent.Wrapping = fyne.TextWrapWord
 
-
-1T1R (1 Transistor + 1 Resistor)
+	oneToneRContent := widget.NewLabel(`1T1R (1 Transistor + 1 Resistor)
 --------------------------------
-  Each cell has a select transistor
-  that isolates it when not selected.
-
   Ports: WL[], BL[], SL[], VDD, VSS
   Cell Size: 0.92 x 2.72 um (2x width)
 
-  + No sneak paths
-  + Scales to 128x128+
+  + No sneak paths (transistor isolates)
+  + Scales to 128x128+ arrays
   - Larger cell area (2x)
-  - More complex routing
+  - More complex routing`)
+	oneToneRContent.Wrapping = fyne.TextWrapWord
 
-
-THE SNEAK PATH PROBLEM
+	sneakPath := widget.NewLabel(`THE SNEAK PATH PROBLEM
 ----------------------
 In passive arrays, reading cell (0,0):
 
@@ -321,19 +319,21 @@ Error grows as N^2 for NxN arrays!
 RECOMMENDATION
 --------------
   <= 16x16   -> Passive
-  32x32      -> Either
-  >= 64x64   -> 1T1R
+  32x32      -> Either (depends on accuracy needs)
+  >= 64x64   -> 1T1R required
 
 REFERENCES: RSC Nanoscale Advances 2020, IEEE JSSC`)
-	content.Wrapping = fyne.TextWrapWord
+	sneakPath.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		crossbarTitle,
-		crossbar,
+		diagramsRow,
 		widget.NewSeparator(),
-		content,
+		passiveContent,
+		oneToneRContent,
+		widget.NewSeparator(),
+		sneakPath,
 	)
 }
 

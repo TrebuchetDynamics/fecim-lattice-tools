@@ -33,27 +33,28 @@ var (
 
 // OpenLaneFlowDiagram creates a visual pipeline diagram
 func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
-	// Diagram dimensions
-	boxW := float32(100)
-	boxH := float32(50)
-	spacing := float32(30)
-	startX := float32(20)
-	startY := float32(60)
+	// Diagram dimensions - INCREASED 40%
+	boxW := float32(120)
+	boxH := float32(55)
+	spacing := float32(25)
+	startX := float32(30)
+	startY := float32(50)
 
 	objects := []fyne.CanvasObject{}
 
 	// Title
 	title := canvas.NewText("OpenLane RTL-to-GDSII Flow", colorText)
-	title.TextSize = 16
+	title.TextSize = 18
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Move(fyne.NewPos(startX, 10))
+	title.Move(fyne.NewPos(startX, 8))
 	objects = append(objects, title)
 
 	// Subtitle
 	if showOurContribution {
-		subtitle := canvas.NewText("Cyan = Our Array Builder contribution", colorBoxOurs)
-		subtitle.TextSize = 12
-		subtitle.Move(fyne.NewPos(startX, 32))
+		subtitle := canvas.NewText("CYAN = Our Array Builder files inject here", colorBoxOurs)
+		subtitle.TextSize = 13
+		subtitle.TextStyle = fyne.TextStyle{Bold: true}
+		subtitle.Move(fyne.NewPos(startX, 30))
 		objects = append(objects, subtitle)
 	}
 
@@ -70,8 +71,8 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 		{"Placement", "RePlAce", false, startX + 3*(boxW+spacing), startY},
 	}
 
-	// Row 2 (reversed flow)
-	row2Y := startY + boxH + spacing + 20
+	// Row 2 (reversed flow) - more vertical space
+	row2Y := startY + boxH + spacing + 30
 	stages = append(stages, []struct {
 		name    string
 		tool    string
@@ -107,15 +108,15 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 
 		// Stage name
 		nameText := canvas.NewText(stage.name, colorText)
-		nameText.TextSize = 12
+		nameText.TextSize = 13
 		nameText.TextStyle = fyne.TextStyle{Bold: true}
-		nameText.Move(fyne.NewPos(stage.x+8, stage.y+8))
+		nameText.Move(fyne.NewPos(stage.x+10, stage.y+10))
 		objects = append(objects, nameText)
 
 		// Tool name
 		toolText := canvas.NewText(stage.tool, colorTextMuted)
-		toolText.TextSize = 10
-		toolText.Move(fyne.NewPos(stage.x+8, stage.y+28))
+		toolText.TextSize = 11
+		toolText.Move(fyne.NewPos(stage.x+10, stage.y+30))
 		objects = append(objects, toolText)
 
 		// Draw arrows between stages
@@ -164,9 +165,9 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 		objects = append(objects, vLabel)
 	}
 
-	// Container with fixed size
+	// Container with fixed size - INCREASED
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(500, 220))
+	cont.Resize(fyne.NewSize(620, 250))
 
 	return cont
 }
@@ -221,18 +222,18 @@ func createArrowDown(x1, y1, x2, y2 float32) []fyne.CanvasObject {
 func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
-	// Isometric projection parameters
-	cellSize := float32(30)
+	// Isometric projection parameters - INCREASED 40%
+	cellSize := float32(42)
 	isoAngle := float32(30 * math.Pi / 180) // 30 degrees
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
 
 	// Starting position
-	startX := float32(150)
-	startY := float32(50)
+	startX := float32(180)
+	startY := float32(60)
 
-	// Layer separation (Z height)
-	layerGap := float32(40)
+	// Layer separation (Z height) - INCREASED
+	layerGap := float32(55)
 
 	// Convert grid coordinates to isometric
 	toIso := func(gridX, gridY, z float32) (float32, float32) {
@@ -242,8 +243,8 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	}
 
 	// Title
-	title := canvas.NewText("Crossbar Array Structure (Isometric View)", colorText)
-	title.TextSize = 14
+	title := canvas.NewText("PASSIVE Crossbar Structure", colorText)
+	title.TextSize = 16
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Move(fyne.NewPos(20, 10))
 	objects = append(objects, title)
@@ -254,7 +255,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		x2, y2 := toIso(float32(cols), float32(i), 0)
 
 		line := canvas.NewLine(colorWL)
-		line.StrokeWidth = 3
+		line.StrokeWidth = 4
 		line.Position1 = fyne.NewPos(x1, y1)
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
@@ -262,8 +263,9 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		// WL label
 		if showLabels && i < rows {
 			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
-			label.TextSize = 10
-			label.Move(fyne.NewPos(x1-25, y1-5))
+			label.TextSize = 12
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-35, y1-5))
 			objects = append(objects, label)
 		}
 	}
@@ -274,7 +276,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		x2, y2 := toIso(float32(j), float32(rows), layerGap)
 
 		line := canvas.NewLine(colorBL)
-		line.StrokeWidth = 3
+		line.StrokeWidth = 4
 		line.Position1 = fyne.NewPos(x1, y1)
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
@@ -282,8 +284,9 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		// BL label
 		if showLabels && j < cols {
 			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
-			label.TextSize = 10
-			label.Move(fyne.NewPos(x1-5, y1-20))
+			label.TextSize = 12
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-5, y1-25))
 			objects = append(objects, label)
 		}
 	}
@@ -298,57 +301,220 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 
 			// Vertical connector (the FeFET)
 			pillar := canvas.NewLine(colorFeFET)
-			pillar.StrokeWidth = 4
+			pillar.StrokeWidth = 5
 			pillar.Position1 = fyne.NewPos(x1, y1)
 			pillar.Position2 = fyne.NewPos(x2, y2)
 			objects = append(objects, pillar)
 
-			// Small circle at center to represent the device
+			// Larger circle at center to represent the device
 			midX := (x1 + x2) / 2
 			midY := (y1 + y2) / 2
 			device := canvas.NewCircle(colorFeFET)
-			device.Resize(fyne.NewSize(8, 8))
-			device.Move(fyne.NewPos(midX-4, midY-4))
+			device.Resize(fyne.NewSize(12, 12))
+			device.Move(fyne.NewPos(midX-6, midY-6))
+			objects = append(objects, device)
+		}
+	}
+
+	// Legend - moved down
+	legendY := float32(240)
+	legendX := float32(20)
+
+	// WL legend
+	wlBox := canvas.NewRectangle(colorWL)
+	wlBox.Resize(fyne.NewSize(20, 12))
+	wlBox.Move(fyne.NewPos(legendX, legendY))
+	objects = append(objects, wlBox)
+	wlText := canvas.NewText("Word Lines (WL) - Row Select", colorTextMuted)
+	wlText.TextSize = 12
+	wlText.Move(fyne.NewPos(legendX+25, legendY-2))
+	objects = append(objects, wlText)
+
+	// BL legend
+	blBox := canvas.NewRectangle(colorBL)
+	blBox.Resize(fyne.NewSize(20, 12))
+	blBox.Move(fyne.NewPos(legendX, legendY+18))
+	objects = append(objects, blBox)
+	blText := canvas.NewText("Bit Lines (BL) - Data/Output", colorTextMuted)
+	blText.TextSize = 12
+	blText.Move(fyne.NewPos(legendX+25, legendY+16))
+	objects = append(objects, blText)
+
+	// FeFET legend
+	feBox := canvas.NewCircle(colorFeFET)
+	feBox.Resize(fyne.NewSize(14, 14))
+	feBox.Move(fyne.NewPos(legendX+3, legendY+36))
+	objects = append(objects, feBox)
+	feText := canvas.NewText("FeFET Device (stores weight/data)", colorTextMuted)
+	feText.TextSize = 12
+	feText.Move(fyne.NewPos(legendX+25, legendY+36))
+	objects = append(objects, feText)
+
+	cont := container.NewWithoutLayout(objects...)
+	cont.Resize(fyne.NewSize(420, 310))
+
+	return cont
+}
+
+// Isometric1T1RCrossbar creates an isometric view of a 1T1R crossbar array
+func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
+	objects := []fyne.CanvasObject{}
+
+	// Isometric projection parameters
+	cellSize := float32(42)
+	isoAngle := float32(30 * math.Pi / 180)
+	cosA := float32(math.Cos(float64(isoAngle)))
+	sinA := float32(math.Sin(float64(isoAngle)))
+
+	startX := float32(180)
+	startY := float32(60)
+	layerGap := float32(55)
+
+	toIso := func(gridX, gridY, z float32) (float32, float32) {
+		x := startX + (gridX-gridY)*cellSize*cosA
+		y := startY + (gridX+gridY)*cellSize*sinA - z
+		return x, y
+	}
+
+	// Title
+	title := canvas.NewText("1T1R Crossbar Structure", colorText)
+	title.TextSize = 16
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Move(fyne.NewPos(20, 10))
+	objects = append(objects, title)
+
+	subtitle := canvas.NewText("(Transistor isolates each cell - NO sneak paths)", colorHighlight)
+	subtitle.TextSize = 12
+	subtitle.Move(fyne.NewPos(20, 30))
+	objects = append(objects, subtitle)
+
+	// Draw WL layer (bottom)
+	for i := 0; i <= rows; i++ {
+		x1, y1 := toIso(0, float32(i), 0)
+		x2, y2 := toIso(float32(cols), float32(i), 0)
+
+		line := canvas.NewLine(colorWL)
+		line.StrokeWidth = 4
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+
+		if i < rows {
+			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
+			label.TextSize = 12
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-35, y1-5))
+			objects = append(objects, label)
+		}
+	}
+
+	// Draw BL layer (top)
+	for j := 0; j <= cols; j++ {
+		x1, y1 := toIso(float32(j), 0, layerGap)
+		x2, y2 := toIso(float32(j), float32(rows), layerGap)
+
+		line := canvas.NewLine(colorBL)
+		line.StrokeWidth = 4
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+
+		if j < cols {
+			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
+			label.TextSize = 12
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-5, y1-25))
+			objects = append(objects, label)
+		}
+	}
+
+	// Source Line color (green)
+	colorSL := color.RGBA{100, 255, 100, 255}
+
+	// Draw SL layer (middle - unique to 1T1R)
+	slZ := layerGap / 2
+	for j := 0; j <= cols; j++ {
+		x1, y1 := toIso(float32(j), 0, slZ)
+		x2, y2 := toIso(float32(j), float32(rows), slZ)
+
+		line := canvas.NewLine(colorSL)
+		line.StrokeWidth = 3
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+
+		if j < cols {
+			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL)
+			label.TextSize = 10
+			label.Move(fyne.NewPos(x2+5, y2-5))
+			objects = append(objects, label)
+		}
+	}
+
+	// Draw 1T1R cells (transistor symbol + FeFET)
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			x1, y1 := toIso(float32(j)+0.5, float32(i)+0.5, 0)
+			xMid, yMid := toIso(float32(j)+0.5, float32(i)+0.5, slZ)
+			x2, y2 := toIso(float32(j)+0.5, float32(i)+0.5, layerGap)
+
+			// Bottom part (transistor) - square symbol
+			transistor := canvas.NewRectangle(colorHighlight)
+			transistor.Resize(fyne.NewSize(10, 10))
+			transistor.Move(fyne.NewPos(x1-5, y1-5))
+			objects = append(objects, transistor)
+
+			// Line from transistor to FeFET
+			conn := canvas.NewLine(colorFeFET)
+			conn.StrokeWidth = 3
+			conn.Position1 = fyne.NewPos(x1, y1)
+			conn.Position2 = fyne.NewPos(x2, y2)
+			objects = append(objects, conn)
+
+			// FeFET device (circle at top)
+			device := canvas.NewCircle(colorFeFET)
+			device.Resize(fyne.NewSize(12, 12))
+			device.Move(fyne.NewPos(xMid-6, yMid-6))
 			objects = append(objects, device)
 		}
 	}
 
 	// Legend
-	legendY := float32(180)
+	legendY := float32(240)
 	legendX := float32(20)
 
-	// WL legend
-	wlBox := canvas.NewRectangle(colorWL)
-	wlBox.Resize(fyne.NewSize(15, 10))
-	wlBox.Move(fyne.NewPos(legendX, legendY))
-	objects = append(objects, wlBox)
-	wlText := canvas.NewText("Word Lines (WL) - Row Select", colorTextMuted)
-	wlText.TextSize = 10
-	wlText.Move(fyne.NewPos(legendX+20, legendY-2))
-	objects = append(objects, wlText)
+	// Transistor legend
+	tBox := canvas.NewRectangle(colorHighlight)
+	tBox.Resize(fyne.NewSize(14, 14))
+	tBox.Move(fyne.NewPos(legendX+3, legendY))
+	objects = append(objects, tBox)
+	tText := canvas.NewText("Select Transistor (gate on WL)", colorTextMuted)
+	tText.TextSize = 12
+	tText.Move(fyne.NewPos(legendX+25, legendY))
+	objects = append(objects, tText)
 
-	// BL legend
-	blBox := canvas.NewRectangle(colorBL)
-	blBox.Resize(fyne.NewSize(15, 10))
-	blBox.Move(fyne.NewPos(legendX, legendY+15))
-	objects = append(objects, blBox)
-	blText := canvas.NewText("Bit Lines (BL) - Data/Output", colorTextMuted)
-	blText.TextSize = 10
-	blText.Move(fyne.NewPos(legendX+20, legendY+13))
-	objects = append(objects, blText)
+	// SL legend
+	slBox := canvas.NewRectangle(colorSL)
+	slBox.Resize(fyne.NewSize(20, 12))
+	slBox.Move(fyne.NewPos(legendX, legendY+18))
+	objects = append(objects, slBox)
+	slText := canvas.NewText("Source Lines (SL) - Current path", colorTextMuted)
+	slText.TextSize = 12
+	slText.Move(fyne.NewPos(legendX+25, legendY+18))
+	objects = append(objects, slText)
 
 	// FeFET legend
 	feBox := canvas.NewCircle(colorFeFET)
-	feBox.Resize(fyne.NewSize(10, 10))
-	feBox.Move(fyne.NewPos(legendX+2, legendY+30))
+	feBox.Resize(fyne.NewSize(14, 14))
+	feBox.Move(fyne.NewPos(legendX+3, legendY+36))
 	objects = append(objects, feBox)
-	feText := canvas.NewText("FeFET Device (stores weight/data)", colorTextMuted)
-	feText.TextSize = 10
-	feText.Move(fyne.NewPos(legendX+20, legendY+28))
+	feText := canvas.NewText("FeFET Device (stores weight)", colorTextMuted)
+	feText.TextSize = 12
+	feText.Move(fyne.NewPos(legendX+25, legendY+36))
 	objects = append(objects, feText)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(350, 250))
+	cont.Resize(fyne.NewSize(420, 310))
 
 	return cont
 }
@@ -359,28 +525,33 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 
 // FileFormatCard creates a styled card showing file format examples
 func FileFormatCard(title, format, content string) fyne.CanvasObject {
-	// Header
+	// Header - LARGER
 	headerBg := canvas.NewRectangle(colorBoxOurs)
-	headerBg.Resize(fyne.NewSize(280, 25))
-	headerBg.CornerRadius = 4
+	headerBg.Resize(fyne.NewSize(340, 32))
+	headerBg.CornerRadius = 6
 
 	titleText := canvas.NewText(title+" (."+format+")", colorBgDark)
-	titleText.TextSize = 12
+	titleText.TextSize = 14
 	titleText.TextStyle = fyne.TextStyle{Bold: true}
-	titleText.Move(fyne.NewPos(8, 4))
+	titleText.Move(fyne.NewPos(12, 6))
 
-	// Content area
-	contentBg := canvas.NewRectangle(color.RGBA{0, 20, 40, 255})
-	contentBg.Resize(fyne.NewSize(280, 100))
-	contentBg.Move(fyne.NewPos(0, 25))
+	// Content area - LARGER
+	contentBg := canvas.NewRectangle(color.RGBA{0, 25, 50, 255})
+	contentBg.Resize(fyne.NewSize(340, 140))
+	contentBg.Move(fyne.NewPos(0, 32))
+	contentBg.CornerRadius = 4
 
-	// Code content
-	codeText := widget.NewLabel(content)
-	codeText.Wrapping = fyne.TextWrapOff
-	codeText.Move(fyne.NewPos(8, 30))
+	// Code content with monospace style
+	codeLabel := widget.NewLabel(content)
+	codeLabel.Wrapping = fyne.TextWrapOff
+	codeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	card := container.NewWithoutLayout(headerBg, titleText, contentBg, codeText)
-	card.Resize(fyne.NewSize(280, 125))
+	codeContainer := container.NewPadded(codeLabel)
+	codeContainer.Move(fyne.NewPos(4, 36))
+	codeContainer.Resize(fyne.NewSize(332, 132))
+
+	card := container.NewWithoutLayout(headerBg, titleText, contentBg, codeContainer)
+	card.Resize(fyne.NewSize(340, 175))
 
 	return card
 }
