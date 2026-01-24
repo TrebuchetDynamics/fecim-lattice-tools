@@ -11,7 +11,22 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/validate"
 )
+
+// MakeExportTab creates the export tab UI
+func MakeExportTab(state interface{}, w fyne.Window) fyne.CanvasObject {
+	appState := state.(*AppState)
+
+	// Export format checkboxes
+	jsonCheck := widget.NewCheck("JSON (mapping)", nil)
+	jsonCheck.SetChecked(true)
+
+	csvCheck := widget.NewCheck("CSV (cell data)", nil)
+	csvCheck.SetChecked(true)
+
+	spiceCheck := widget.NewCheck("SPICE (circuit)", nil)
+	spiceCheck.SetChecked(true)
 
 	defCheck := widget.NewCheck("DEF (placement)", nil)
 	defCheck.SetChecked(true)
@@ -56,9 +71,9 @@ import (
 			dialog.ShowError(fmt.Errorf("please export Verilog first"), w)
 			return
 		}
-		
+
 		validateOutput.SetText("Running Yosys check on " + lastVerilogPath + "...")
-		
+
 		// Run validation
 		output, err := validate.RunYosysCheck(lastVerilogPath)
 		if err != nil {
@@ -161,7 +176,7 @@ import (
 		widget.NewSeparator(),
 		widget.NewLabel("VALIDATION"),
 		validateButton,
-		container.NewScroll(validateOutput), // Wrap validation output in scroll
+		container.NewScroll(validateOutput),
 	)
 
 	// Main layout

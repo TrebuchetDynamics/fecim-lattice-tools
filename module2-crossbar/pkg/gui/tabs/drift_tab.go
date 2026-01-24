@@ -104,8 +104,12 @@ func (t *DriftTab) Content() fyne.CanvasObject {
 		t.showTechComparison()
 	})
 
+	// Wrap stats in scroll to prevent layout resize
+	statsScroll := container.NewVScroll(t.statsLabel)
+	statsScroll.SetMinSize(fyne.NewSize(200, 150))
+
 	rightPanel := container.NewVBox(
-		t.statsLabel,
+		statsScroll,
 		widget.NewSeparator(),
 		widget.NewLabel("Time Simulation:"),
 		sim1HourBtn,
@@ -245,7 +249,8 @@ minimal drift over time.`,
 		stats.TechnologyComparison.FeFETDrift)
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapWord
+	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 }
 
 func (t *DriftTab) showTechComparison() {

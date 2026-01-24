@@ -101,8 +101,12 @@ func (t *SneakTab) Content() fyne.CanvasObject {
 		t.statusLabel.SetText("Sneak path simulation reset")
 	})
 
+	// Wrap stats in scroll to prevent layout resize
+	statsScroll := container.NewVScroll(t.statsLabel)
+	statsScroll.SetMinSize(fyne.NewSize(200, 150))
+
 	rightPanel := container.NewVBox(
-		t.statsLabel,
+		statsScroll,
 		widget.NewSeparator(),
 		widget.NewLabel("Mitigation Strategies:"),
 		selector100Btn,
@@ -222,7 +226,8 @@ corrupt the target cell reading.
 		severity)
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapWord
+	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 }
 
 func (t *SneakTab) getSneakSeverity(snr float64) string {

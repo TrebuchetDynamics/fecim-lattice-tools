@@ -102,7 +102,12 @@ Output = G × V
 This is the theoretical best case.`
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapWord
+	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	// Wrap stats in scroll to prevent layout resize
+	statsScroll := container.NewVScroll(t.statsLabel)
+	statsScroll.SetMinSize(fyne.NewSize(200, 150))
 
 	controls := container.NewVBox(
 		widget.NewLabel("Array Size:"),
@@ -113,7 +118,7 @@ This is the theoretical best case.`
 		widget.NewSeparator(),
 		runMVMBtn,
 		widget.NewSeparator(),
-		t.statsLabel,
+		statsScroll,
 	)
 
 	content := container.NewHSplit(

@@ -114,13 +114,27 @@ func (r *demoCardRenderer) MinSize() fyne.Size {
 }
 
 func (r *demoCardRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	// Layout positions objects - use the passed size parameter
+	r.layoutWithSize(size)
 }
 
 func (r *demoCardRenderer) Refresh() {
+	// Refresh uses current widget size
+	r.layoutWithSize(r.card.Size())
+}
+
+func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = r.objects[:0]
-	size := r.card.Size()
 	info := r.card.info
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.card.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background color based on ready state
 	var bgColor, borderColor, textColor, descColor color.RGBA

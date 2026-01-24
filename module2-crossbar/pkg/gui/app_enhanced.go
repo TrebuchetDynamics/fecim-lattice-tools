@@ -377,8 +377,8 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	rightPanel := container.NewVSplit(controlsScroll, metricsScroll)
 	rightPanel.SetOffset(0.5)
 
-	// Left panel
-	leftPanel := container.NewVBox(
+	// Left panel - wrap in scroll to prevent layout resize on content change
+	leftPanelContent := container.NewVBox(
 		ca.eduTitleLabel,
 		widget.NewSeparator(),
 		ca.eduContentLabel,
@@ -386,6 +386,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		ca.keyStatLabel,
 		ca.keyStatValue,
 	)
+	leftPanel := container.NewVScroll(leftPanelContent)
 
 	// Status footer
 	ca.modeIndicator = NewModeIndicatorBox()

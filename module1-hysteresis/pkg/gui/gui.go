@@ -599,11 +599,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
+	// Add spacer at end to absorb any extra vertical space
 	return container.NewVBox(
 		modeGroup,
 		eFieldGroup,
 		timingGroup,
 		actionGroup,
+		layout.NewSpacer(),
 	)
 }
 
@@ -1301,16 +1303,18 @@ func (r *peplotRenderer) MinSize() fyne.Size {
 }
 
 func (r *peplotRenderer) Layout(size fyne.Size) {
-	// Layout is handled in Refresh, so we must trigger it when resized
-	r.Refresh()
+	r.layoutWithSize(size)
 }
 
 func (r *peplotRenderer) Refresh() {
+	r.layoutWithSize(r.plot.Size())
+}
+
+func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.plot.mu.RLock()
 	defer r.plot.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.plot.Size()
 
 	// Background with subtle border
 	bg := canvas.NewRectangle(color.RGBA{0, 40, 90, 255})
@@ -1636,15 +1640,29 @@ func (r *levelRenderer) MinSize() fyne.Size {
 	return r.indicator.minSize
 }
 
-func (r *levelRenderer) Layout(size fyne.Size) {}
+func (r *levelRenderer) Layout(size fyne.Size) {
+	r.layoutWithSize(size)
+}
 
 func (r *levelRenderer) Refresh() {
+	r.layoutWithSize(r.indicator.Size())
+}
+
+func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	r.indicator.mu.RLock()
 	level := r.indicator.level
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background with subtle border
 	border := canvas.NewRectangle(color.RGBA{0, 100, 180, 255})
@@ -1812,16 +1830,28 @@ func (r *cellRenderer) MinSize() fyne.Size {
 }
 
 func (r *cellRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	r.layoutWithSize(size)
 }
 
 func (r *cellRenderer) Refresh() {
+	r.layoutWithSize(r.cell.Size())
+}
+
+func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 	r.cell.mu.RLock()
 	level := r.cell.level
 	r.cell.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.cell.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.cell.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Background with subtle gradient effect
 	bg := canvas.NewRectangle(color.RGBA{0, 35, 70, 255})
@@ -2011,16 +2041,28 @@ func (r *modeRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	r.layoutWithSize(size)
 }
 
 func (r *modeRenderer) Refresh() {
+	r.layoutWithSize(r.indicator.Size())
+}
+
+func (r *modeRenderer) layoutWithSize(size fyne.Size) {
 	r.indicator.mu.RLock()
 	isWrite := r.indicator.isWrite
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Box colors
 	var bgColor, borderColor color.RGBA
@@ -2152,7 +2194,10 @@ func (l *fixedMinWidthLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func (l *fixedMinWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	for _, o := range objects {
-		o.Resize(size)
+		// Only use the given width, but respect child's MinSize for height
+		// This prevents vertical stretching
+		childMinSize := o.MinSize()
+		o.Resize(fyne.NewSize(size.Width, childMinSize.Height))
 		o.Move(fyne.NewPos(0, 0))
 	}
 }

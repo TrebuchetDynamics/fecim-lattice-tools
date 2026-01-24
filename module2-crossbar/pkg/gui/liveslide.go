@@ -107,16 +107,28 @@ func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeIndicatorBoxRenderer) Layout(size fyne.Size) {
-	r.Refresh()
+	r.layoutWithSize(size)
 }
 
 func (r *modeIndicatorBoxRenderer) Refresh() {
+	r.layoutWithSize(r.indicator.Size())
+}
+
+func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
-	size := r.indicator.Size()
+
+	// Constrain to minimum size to prevent growing
+	minSize := r.indicator.minSize
+	if size.Width > minSize.Width {
+		size.Width = minSize.Width
+	}
+	if size.Height > minSize.Height {
+		size.Height = minSize.Height
+	}
 
 	// Colors based on mode
 	var bgColor, borderColor color.RGBA

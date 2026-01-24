@@ -449,7 +449,11 @@ func main() {
 	})
 
 	// Create record button with toggle functionality
+	// Use a separate label for recording time to prevent button resize
 	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
+	recordTimeLabel := widget.NewLabel("")
+	recordTimeLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	recordTimeLabel.Hide() // Hidden until recording starts
 	var recordingTimerStop chan struct{}
 	recordBtn.OnTapped = func() {
 		log.Button("Record")
@@ -470,6 +474,7 @@ func main() {
 			log.Debug("Recording saved: %s", outputFile)
 			recordBtn.SetText("Record")
 			recordBtn.SetIcon(theme.MediaRecordIcon())
+			recordTimeLabel.Hide()
 			// Show brief notification
 			originalTitle := window.Title()
 			window.SetTitle("Recording saved: " + outputFile)
@@ -495,7 +500,9 @@ func main() {
 				}()
 				return
 			}
+			recordBtn.SetText("Stop")
 			recordBtn.SetIcon(theme.MediaStopIcon())
+			recordTimeLabel.Show()
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			go func() {
@@ -510,7 +517,7 @@ func main() {
 					case <-displayTicker.C:
 						fyne.Do(func() {
 							now := time.Now()
-							recordBtn.SetText(now.Format("02 Jan 06 15:04:05.000"))
+							recordTimeLabel.SetText(now.Format("15:04:05"))
 						})
 					case <-screenshotTicker.C:
 						// Take screenshot on main thread
@@ -603,7 +610,7 @@ func main() {
 	// Create toolbar with buttons aligned right
 	toolbar := container.NewBorder(
 		nil, nil, nil,
-		container.NewHBox(screenshotBtn, recordBtn, closeBtn),
+		container.NewHBox(screenshotBtn, recordBtn, recordTimeLabel, closeBtn),
 		widget.NewLabel(""), // Spacer
 	)
 
