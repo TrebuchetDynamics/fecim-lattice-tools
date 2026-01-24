@@ -614,36 +614,46 @@ func main() {
 		closeBtn,
 	)
 
+	// Get button width for current breakpoint (no side effects)
+	getButtonWidth := func() float32 {
+		switch currentBreakpoint {
+		case widgets.BreakpointSM:
+			return float32(32) // Square icon buttons
+		case widgets.BreakpointMD:
+			return float32(80) // Shortened labels
+		default:
+			return float32(120) // Full labels
+		}
+	}
+
+	// Update button labels based on breakpoint (only call when breakpoint changes)
+	updateButtonLabels := func() {
+		switch currentBreakpoint {
+		case widgets.BreakpointSM:
+			screenshotBtn.SetText("")
+			if !recordingState.IsRecording() {
+				recordBtn.SetText("")
+			}
+		case widgets.BreakpointMD:
+			screenshotBtn.SetText("Shot")
+			if !recordingState.IsRecording() {
+				recordBtn.SetText("Rec")
+			}
+		default:
+			screenshotBtn.SetText("Screenshot")
+			if !recordingState.IsRecording() {
+				recordBtn.SetText("Record")
+			}
+		}
+	}
+
 	// Position buttons in top-right corner (will be updated on resize)
-	// Button sizing adapts to breakpoint (smaller on mobile)
+	// Only handles positioning, not text changes
 	updateButtonPositions := func() {
 		size := window.Canvas().Size()
 		btnHeight := float32(32)
 		spacing := float32(5)
-
-		// Responsive button width based on breakpoint
-		var btnWidth float32
-		switch currentBreakpoint {
-		case widgets.BreakpointSM:
-			// Small screens: icon-only buttons (hide text)
-			btnWidth = btnHeight // Square icon buttons
-			screenshotBtn.SetText("")
-			recordBtn.SetText("") // Will show icon or time during recording
-		case widgets.BreakpointMD:
-			// Medium screens: shortened labels
-			btnWidth = 80
-			if !recordingState.IsRecording() {
-				screenshotBtn.SetText("Shot")
-				recordBtn.SetText("Rec")
-			}
-		default:
-			// Large/XL screens: full labels
-			btnWidth = 120
-			if !recordingState.IsRecording() {
-				screenshotBtn.SetText("Screenshot")
-				recordBtn.SetText("Record")
-			}
-		}
+		btnWidth := getButtonWidth()
 
 		closeBtn.Resize(fyne.NewSize(btnHeight, btnHeight))
 		closeBtn.Move(fyne.NewPos(size.Width-btnHeight-10, 5))
@@ -655,7 +665,8 @@ func main() {
 		screenshotBtn.Move(fyne.NewPos(size.Width-btnHeight-2*btnWidth-2*spacing-10, 5))
 	}
 
-	// Initial position
+	// Initial labels and position
+	updateButtonLabels()
 	updateButtonPositions()
 
 	// Stack tabs with button overlay
@@ -688,14 +699,10 @@ func main() {
 		currentBreakpoint = newBreakpoint
 		log.Debug("Breakpoint changed to %s (width: %.0f)", widgets.BreakpointName(newBreakpoint), size.Width)
 
-		// Update button layout for new breakpoint
+		// Update button labels and layout for new breakpoint
+		updateButtonLabels()
 		updateButtonPositions()
 		buttonOverlay.Refresh()
-
-		// Could add more responsive behaviors here:
-		// - Adjust tab layout (tabs on side vs top)
-		// - Show/hide secondary panels
-		// - Change font sizes, etc.
 	})
 
 	// Add resize and responsive detectors to the main content stack
