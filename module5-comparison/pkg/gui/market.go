@@ -83,7 +83,9 @@ func (m *MarketOpportunityChart) Reset() {
 	m.animProgress = 0
 	m.pulsePhase = 0
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns minimum size.

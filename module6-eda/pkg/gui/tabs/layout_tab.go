@@ -35,7 +35,9 @@ func MakeLayoutTab(state interface{}) fyne.CanvasObject {
 		// Build grid visualization
 		grid := buildGrid(appState.CurrentMapping, cellInfo)
 		gridContainer.Objects = []fyne.CanvasObject{grid}
-		gridContainer.Refresh()
+		fyne.Do(func() {
+			gridContainer.Refresh()
+		})
 		cellInfo.SetText("Grid loaded. Click a cell for details.")
 	})
 

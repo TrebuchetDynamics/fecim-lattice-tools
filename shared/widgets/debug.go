@@ -4,6 +4,8 @@ package widgets
 import (
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,13 +17,53 @@ var (
 	// DebugLayout enables verbose layout logging when FYNE_DEBUG_LAYOUT env var is set
 	DebugLayout = os.Getenv("FYNE_DEBUG_LAYOUT") != ""
 
+	// DebugResize enables resize-specific debugging (more verbose)
+	DebugResize = os.Getenv("FYNE_DEBUG_RESIZE") != ""
+
 	// Track layout call counts for detecting infinite loops
 	layoutCallCounts = make(map[string]int)
 	layoutMu         sync.Mutex
 
 	// Last layout time for detecting rapid layout cycles
 	lastLayoutTime = make(map[string]time.Time)
+
+	// Track window sizes to detect resize events
+	lastWindowSize fyne.Size
+	windowResizeMu sync.Mutex
+
+	// Track recent Refresh() calls to find the culprit
+	recentRefreshCalls []refreshCall
+	refreshCallsMu     sync.Mutex
 )
+
+type refreshCall struct {
+	widget    string
+	timestamp time.Time
+	stack     string
+}
+
+// getShortStack returns a shortened stack trace for debugging
+func getShortStack() string {
+	if !DebugResize {
+		return ""
+	}
+	buf := make([]byte, 4096)
+	n := runtime.Stack(buf, false)
+	lines := strings.Split(string(buf[:n]), "\n")
+	// Get relevant lines (skip runtime internals)
+	var relevant []string
+	for i, line := range lines {
+		if strings.Contains(line, "ironlattice-vis") && !strings.Contains(line, "debug.go") {
+			if i+1 < len(lines) {
+				relevant = append(relevant, strings.TrimSpace(line))
+			}
+			if len(relevant) >= 3 {
+				break
+			}
+		}
+	}
+	return strings.Join(relevant, " -> ")
+}
 
 // DebugLog logs a layout-related message if debug mode is enabled.
 // Use for tracking Layout(), Refresh(), and MinSize() calls.

@@ -83,7 +83,9 @@ func (e *AnimatedEnergyRace) Reset() {
 	e.showWinner = false
 	e.pulsePhase = 0
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // MinSize returns minimum size.
@@ -253,7 +255,9 @@ func (m *MemoryWallAnimation) Reset() {
 	m.dataMovements = 0
 	m.pulsePhase = 0
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns minimum size.

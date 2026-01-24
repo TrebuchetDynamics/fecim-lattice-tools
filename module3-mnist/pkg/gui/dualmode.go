@@ -881,7 +881,9 @@ func (app *DualModeApp) updateWeightHeatmap() {
 		return
 	}
 	if app.weightHeatmap != nil {
-		app.weightHeatmap.Refresh()
+		fyne.Do(func() {
+			app.weightHeatmap.Refresh()
+		})
 	}
 
 	// Update info labels

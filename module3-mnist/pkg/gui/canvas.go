@@ -46,7 +46,9 @@ func (dc *DigitCanvas) Clear() {
 			dc.pixels[i][j] = 0
 		}
 	}
-	dc.Refresh()
+	fyne.Do(func() {
+		dc.Refresh()
+	})
 	dc.notifyChange()
 }
 
@@ -68,7 +70,9 @@ func (dc *DigitCanvas) SetPixels(pixels []float64) {
 			dc.pixels[i][j] = pixels[i*28+j]
 		}
 	}
-	dc.Refresh()
+	fyne.Do(func() {
+		dc.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -261,7 +265,9 @@ func (dc *DigitCanvas) draw(pos fyne.Position) {
 		}
 	}
 
-	dc.Refresh()
+	fyne.Do(func() {
+		dc.Refresh()
+	})
 	dc.notifyChange()
 }
 

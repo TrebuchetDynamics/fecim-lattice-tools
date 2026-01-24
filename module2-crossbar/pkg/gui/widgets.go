@@ -50,14 +50,18 @@ func NewColorLegend(minLabel, maxLabel, unit string, levels int) *ColorLegend {
 // SetColormap changes the colormap.
 func (l *ColorLegend) SetColormap(name string) {
 	l.colormap = name
-	l.Refresh()
+	fyne.Do(func() {
+		l.Refresh()
+	})
 }
 
 // SetLabels updates the min/max labels.
 func (l *ColorLegend) SetLabels(minLabel, maxLabel string) {
 	l.minLabel = minLabel
 	l.maxLabel = maxLabel
-	l.Refresh()
+	fyne.Do(func() {
+		l.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -274,7 +278,9 @@ func (m *MetricsPanel) UpdateMetrics(idealAcc, actualAcc, fecimE, gpuE float64, 
 	m.efficiency = gpuE / fecimE
 	m.macOps = macs
 	m.latency = lat
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -389,7 +395,9 @@ func (b *ComparisonBadge) UpdateValues(fecimVal, gpuVal string, improvement stri
 	b.fecimValue = fecimVal
 	b.gpuValue = gpuVal
 	b.improvement = improvement
-	b.Refresh()
+	fyne.Do(func() {
+		b.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -473,13 +481,17 @@ func NewAccuracyWaterfall() *AccuracyWaterfall {
 // SetSteps updates the waterfall steps.
 func (w *AccuracyWaterfall) SetSteps(steps []WaterfallStep) {
 	w.steps = steps
-	w.Refresh()
+	fyne.Do(func() {
+		w.Refresh()
+	})
 }
 
 // SetTarget sets the target accuracy line.
 func (w *AccuracyWaterfall) SetTarget(target float64) {
 	w.targetAccuracy = target
-	w.Refresh()
+	fyne.Do(func() {
+		w.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.

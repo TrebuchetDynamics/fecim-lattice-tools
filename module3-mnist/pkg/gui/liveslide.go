@@ -69,7 +69,9 @@ func (m *MNISTModeIndicator) SetMode(mode MNISTMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // GetMode returns the current mode.
@@ -217,7 +219,9 @@ func (e *MNISTEducationalPanel) SetContent(title, content string) {
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // SetInferenceExplanation sets content for inference phases.
@@ -435,7 +439,9 @@ func (p *PredictionDisplay) SetPrediction(pred int, conf float64) {
 	p.prediction = pred
 	p.confidence = conf
 	p.mu.Unlock()
-	p.Refresh()
+	fyne.Do(func() {
+		p.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -606,7 +612,9 @@ func (k *MNISTKeyStat) SetValue(value string) {
 	k.mu.Lock()
 	k.value = value
 	k.mu.Unlock()
-	k.Refresh()
+	fyne.Do(func() {
+		k.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.

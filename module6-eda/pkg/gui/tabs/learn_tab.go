@@ -64,7 +64,9 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 			content = makeOverviewContent()
 		}
 		contentScroll.Content = content
-		contentScroll.Refresh()
+		fyne.Do(func() {
+			contentScroll.Refresh()
+		})
 	}
 
 	// Select first topic by default

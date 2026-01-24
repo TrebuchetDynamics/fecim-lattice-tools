@@ -778,7 +778,9 @@ func drawRect(img *image.RGBA, x, y, rectW, rectH int, c color.Color) {
 
 func (ca *CircuitsApp) refreshWritePulse() {
 	if ca.writePulseCanvas != nil {
-		ca.writePulseCanvas.Refresh()
+		fyne.Do(func() {
+			ca.writePulseCanvas.Refresh()
+		})
 	}
 }
 
@@ -862,7 +864,9 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 
 func (ca *CircuitsApp) refreshWriteArray() {
 	if ca.writeArrayCanvas != nil {
-		ca.writeArrayCanvas.Refresh()
+		fyne.Do(func() {
+			ca.writeArrayCanvas.Refresh()
+		})
 	}
 }
 
@@ -1306,7 +1310,9 @@ func (ca *CircuitsApp) drawReadZone(w, h int) image.Image {
 
 func (ca *CircuitsApp) refreshReadZone() {
 	if ca.readZoneCanvas != nil {
-		ca.readZoneCanvas.Refresh()
+		fyne.Do(func() {
+			ca.readZoneCanvas.Refresh()
+		})
 	}
 }
 
@@ -2160,15 +2166,17 @@ func (ca *CircuitsApp) onRunComparison() {
 	ca.compStatusLabel.SetText("Running comparison for 8×8 MVM...")
 
 	// Refresh canvases
-	if ca.compArchCanvas != nil {
-		ca.compArchCanvas.Refresh()
-	}
-	if ca.compTimingCanvas != nil {
-		ca.compTimingCanvas.Refresh()
-	}
-	if ca.compEnergyCanvas != nil {
-		ca.compEnergyCanvas.Refresh()
-	}
+	fyne.Do(func() {
+		if ca.compArchCanvas != nil {
+			ca.compArchCanvas.Refresh()
+		}
+		if ca.compTimingCanvas != nil {
+			ca.compTimingCanvas.Refresh()
+		}
+		if ca.compEnergyCanvas != nil {
+			ca.compEnergyCanvas.Refresh()
+		}
+	})
 
 	ca.compStatusLabel.SetText("Comparison complete: FeFET wins by 20,000x energy efficiency!")
 }
@@ -2629,15 +2637,17 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 }
 
 func (ca *CircuitsApp) refreshTimingDiagrams() {
-	if ca.timingWriteCanvas != nil {
-		ca.timingWriteCanvas.Refresh()
-	}
-	if ca.timingReadCanvas != nil {
-		ca.timingReadCanvas.Refresh()
-	}
-	if ca.timingComputeCanvas != nil {
-		ca.timingComputeCanvas.Refresh()
-	}
+	fyne.Do(func() {
+		if ca.timingWriteCanvas != nil {
+			ca.timingWriteCanvas.Refresh()
+		}
+		if ca.timingReadCanvas != nil {
+			ca.timingReadCanvas.Refresh()
+		}
+		if ca.timingComputeCanvas != nil {
+			ca.timingComputeCanvas.Refresh()
+		}
+	})
 }
 
 // ============================================================================

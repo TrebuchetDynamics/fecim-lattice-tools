@@ -7,44 +7,67 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
 )
 
 // CreateMainWindow creates the main application window
 func CreateMainWindow(app fyne.App) fyne.Window {
-	w := app.NewWindow("Demo 6: FeCIM Design Suite (Preview)")
-	w.Resize(fyne.NewSize(1200, 800))
+	w := app.NewWindow("Module 6: FeCIM Design Suite - EDA")
+	w.Resize(fyne.NewSize(1400, 900))
 
-	// Shared state
-	state := &tabs.AppState{}
-
-	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	compilerContent := tabs.MakeCompilerTab(state, w)
-	layoutContent := tabs.MakeLayoutTab(state)
-	hdlContent := tabs.MakeHDLTab(state, w)       // Phase 3: HDL Generation
-	explorerContent := makePlaceholderTab("Design space explorer coming soon")
-	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
-	exportContent := tabs.MakeExportTab(state, w)
-	learnContent := tabs.MakeLearnTab(state, w)   // Learning Center with OpenLane docs
-
-	// All views for Hide/Show toggling
-	viewNames := []string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"}
-	allViews := []fyne.CanvasObject{
-		compilerContent, layoutContent, hdlContent,
-		explorerContent, simulateContent, exportContent, learnContent,
+	// Shared array configuration (used across tabs 2-7)
+	arrayConfig := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
 	}
 
-	// View selector (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(viewNames, nil)
-	viewSelector.SetSelected("Compiler")
+	// Create tab contents
+	cellBuilderContent := tabs.MakeCellBuilderTab()                   // Tab 1
+	arrayBuilderContent := tabs.MakeArrayBuilderTab(arrayConfig)     // Tab 2
+	verilogContent := tabs.MakeVerilogExportTab(arrayConfig)         // Tab 3
+	defContent := tabs.MakeDEFExportTab(arrayConfig)                 // Tab 4
+	validationContent := tabs.MakeValidationTab(arrayConfig)         // Tab 5
+	learnContent := tabs.MakeLearnTab(&tabs.AppState{}, w)           // Tab 6 (existing)
+	exportAllContent := tabs.MakeExportAllTab(arrayConfig)           // Tab 7
 
-	// Content container using Stack - all views layered, visibility toggled
+	// View names for selector
+	viewNames := []string{
+		"1. Cell Builder",
+		"2. Array Builder",
+		"3. Verilog Export",
+		"4. DEF Export",
+		"5. Validation",
+		"6. Learn",
+		"7. Export All",
+	}
+	
+	allViews := []fyne.CanvasObject{
+		cellBuilderContent,
+		arrayBuilderContent,
+		verilogContent,
+		defContent,
+		validationContent,
+		learnContent,
+		exportAllContent,
+	}
+
+	// View selector dropdown
+	viewSelector := widget.NewSelect(viewNames, nil)
+	viewSelector.SetSelected("1. Cell Builder")
+
+	// Content container using Stack
 	contentContainer := container.NewStack(allViews...)
 
 	// Track current view
 	currentView := ""
 
-	// Update view based on selection using Hide/Show (avoids layout cascades)
+	// Update view based on selection
 	viewSelector.OnChanged = func(view string) {
 		if view == currentView {
 			return
@@ -69,10 +92,10 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 			v.Hide()
 		}
 	}
-	currentView = "Compiler"
+	currentView = "1. Cell Builder"
 
 	// Header with inline view selector
-	banner := widget.NewLabel("PREVIEW: Bridge to open-source EDA tools (ngspice, KLayout, CiMLoop)")
+	banner := widget.NewLabel("Generate fabrication-ready files for OpenLane/SKY130")
 	banner.Alignment = fyne.TextAlignCenter
 
 	headerRow := container.NewHBox(
@@ -93,6 +116,3 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	return w
 }
 
-func makePlaceholderTab(message string) fyne.CanvasObject {
-	return container.NewCenter(widget.NewLabel(message))
-}

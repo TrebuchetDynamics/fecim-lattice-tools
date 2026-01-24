@@ -357,7 +357,9 @@ func (li *LevelIndicator) SetLevel(level int) {
 		level = li.levels - 1
 	}
 	li.currentLevel = level
-	li.Refresh()
+	fyne.Do(func() {
+		li.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.

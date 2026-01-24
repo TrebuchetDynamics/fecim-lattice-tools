@@ -76,18 +76,20 @@ func (e *EmbeddedCircuitsApp) Start() {
 	e.refreshWritePulse()
 	e.refreshReadZone()
 	e.refreshTimingDiagrams()
-	if e.computeArrayCanvas != nil {
-		e.computeArrayCanvas.Refresh()
-	}
-	if e.compArchCanvas != nil {
-		e.compArchCanvas.Refresh()
-	}
-	if e.compTimingCanvas != nil {
-		e.compTimingCanvas.Refresh()
-	}
-	if e.compEnergyCanvas != nil {
-		e.compEnergyCanvas.Refresh()
-	}
+	fyne.Do(func() {
+		if e.computeArrayCanvas != nil {
+			e.computeArrayCanvas.Refresh()
+		}
+		if e.compArchCanvas != nil {
+			e.compArchCanvas.Refresh()
+		}
+		if e.compTimingCanvas != nil {
+			e.compTimingCanvas.Refresh()
+		}
+		if e.compEnergyCanvas != nil {
+			e.compEnergyCanvas.Refresh()
+		}
+	})
 }
 
 // Stop ends any background processes when the tab is deselected

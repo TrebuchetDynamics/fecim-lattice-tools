@@ -60,7 +60,9 @@ func (qw *QuantizationWidget) SetNumLevels(levels int) {
 	qw.mu.Lock()
 	qw.numLevels = levels
 	qw.mu.Unlock()
-	qw.Refresh()
+	fyne.Do(func() {
+		qw.Refresh()
+	})
 }
 
 // UpdateWithWeights samples random weights and shows their quantization.
@@ -139,7 +141,9 @@ func (qw *QuantizationWidget) UpdateWithWeights(weights [][]float64, count int) 
 	qw.infoLabel.SetText(fmt.Sprintf("Precision loss: %.2f%% | Impact: %s | Levels: %d",
 		qw.totalError*100, impactText, qw.numLevels))
 
-	qw.Refresh()
+	fyne.Do(func() {
+		qw.Refresh()
+	})
 }
 
 // Clear resets the widget to idle state.
@@ -150,7 +154,9 @@ func (qw *QuantizationWidget) Clear() {
 	qw.mu.Unlock()
 
 	qw.infoLabel.SetText("Draw a digit to see quantization")
-	qw.Refresh()
+	fyne.Do(func() {
+		qw.Refresh()
+	})
 }
 
 // MinSize returns the minimum size for the widget.

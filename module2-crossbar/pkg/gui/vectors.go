@@ -61,19 +61,25 @@ func (v *VectorBarChart) SetValues(values []float64) {
 		v.maxVal = v.minVal + 1
 	}
 
-	v.Refresh()
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // SetLabels sets the bar labels.
 func (v *VectorBarChart) SetLabels(labels []string) {
 	v.labels = labels
-	v.Refresh()
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // SetUnit sets the Y-axis unit label.
 func (v *VectorBarChart) SetUnit(unit string) {
 	v.unit = unit
-	v.Refresh()
+	fyne.Do(func() {
+		v.Refresh()
+	})
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -327,7 +333,9 @@ func (c *ComparisonChart) SetData(ideal, actual []float64) {
 		c.rmse = math.Sqrt(sumSq / float64(len(ideal)))
 	}
 
-	c.Refresh()
+	fyne.Do(func() {
+		c.Refresh()
+	})
 }
 
 // GetRMSE returns the root mean square error.
@@ -471,7 +479,9 @@ func NewDiscreteLevel30Indicator() *DiscreteLevel30Indicator {
 func (d *DiscreteLevel30Indicator) SetValue(value float64) {
 	d.value = clamp(value, 0, 1)
 	d.level = int(math.Round(d.value * 29))
-	d.Refresh()
+	fyne.Do(func() {
+		d.Refresh()
+	})
 }
 
 // GetLevel returns the current discrete level (0-29).
