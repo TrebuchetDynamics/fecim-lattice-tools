@@ -708,66 +708,63 @@ UNTIL NOW.
 
 ---
 
-## Tab 1: Crossbar Compiler
+## Tab 1: Array Builder (Hardware Definition)
 
 ### Purpose
 ```
-INPUT:  Neural network weights (from Demo 3)
-OUTPUT: Physical cell assignments + programming parameters
+INPUT:  Geometry (Rows x Cols) + Device Physics
+OUTPUT: Initialized Crossbar Structure (Blank or Reset State)
 
-LIKE: Translator between AI and hardware
+LIKE: A CAD tool for declaring the hardware canvas.
 ```
 
 ### User Interface
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ TAB 1: CROSSBAR COMPILER                                   │
+│ TAB 1: ARRAY BUILDER                                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐│
-│ │ SOURCE                                                  ││
+│ │ ARRAY CONFIGURATION                                     ││
 │ │                                                         ││
-│ │ Load from: [Demo 3 MNIST ▼]                            ││
-│ │ Layer:     [Layer 1: 784×128 ▼]                        ││
-│ │ Weights:   100,352 values loaded ✓                     ││
-│ │ Range:     [-0.847, +0.923]                            ││
-│ └─────────────────────────────────────────────────────────┘│
-│                                                             │
-│ ┌─────────────────────────────────────────────────────────┐│
-│ │ TARGET CONFIGURATION                                    ││
+│ │ Geometry:                                               ││
+│ │ ├── Rows:      [ 128 ]                                 ││
+│ │ └── Cols:      [ 128 ]                                 ││
 │ │                                                         ││
-│ │ Array Size:    [128 ▼] rows × [784 ▼] cols             ││
-│ │ Levels:        [30 ▼] (FeCIM standard)                 ││
-│ │ Mapping:       [Row-Major ▼]                           ││
+│ │ Technology Node:                                        ││
+│ │ └── PDK:       [ SKY130 (Open Source) ▼ ]              ││
 │ │                                                         ││
-│ │ FeFET Parameters:                                       ││
-│ │ ├── G_min:     1.0 μS                                  ││
+│ │ Device Physics (Fixed):                                 ││
+│ │ ├── Type:      FeFET Superlattice                      ││
+│ │ └── States:    30 Discrete Levels (5-bit)              ││
+│ │                                                         ││
+│ │ Programming:                                            ││
+│ │ ├── G_min:     1.0 μS (Reset State)                    ││
 │ │ ├── G_max:     100.0 μS                                ││
-│ │ ├── V_program: 2.0 - 5.0 V                             ││
-│ │ └── t_pulse:   50 ns                                   ││
+│ │ └── V_prog:    2.0 - 5.0 V                             ││
 │ └─────────────────────────────────────────────────────────┘│
 │                                                             │
-│                    [🔨 COMPILE]                             │
+│                  [ 🏗️ GENERATE DESIGN ]                     │
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐│
-│ │ COMPILATION RESULTS                                     ││
+│ │ DESIGN STATISTICS                                       ││
 │ │                                                         ││
-│ │ ✅ Compiled successfully                                ││
+│ │ ✅ Design Generated: fecim_128x128                      ││
 │ │                                                         ││
-│ │ Statistics:                                             ││
-│ │ ├── Cells used:      100,352 / 100,352 (100%)         ││
-│ │ ├── Unique levels:   28 of 30                          ││
-│ │ ├── G_avg:           45.2 μS                           ││
-│ │ ├── V_prog range:    2.1 - 4.8 V                       ││
-│ │ └── Est. program time: 5.02 ms (serial)                ││
+│ │ Physical Stats:                                         ││
+│ │ ├── Total Cells:     16,384                             ││
+│ │ ├── Active Area:     0.0416 mm² (est)                   ││
+│ │ ├── Array Density:   ~390 kCells/mm²                    ││
+│ │ └── Aspect Ratio:    1:1                                ││
 │ │                                                         ││
-│ │ Weight Distribution:                                    ││
-│ │ [histogram visualization]                               ││
+│ │ Operational Stats:                                      ││
+│ │ ├── Standby Power:   < 16 μW                            ││
+│ │ └── Max Throughput:  1.6 TOPS (at 100MHz)               ││
 │ │                                                         ││
 │ └─────────────────────────────────────────────────────────┘│
 │                                                             │
-│ [View Cell Map] [Export JSON] [→ Send to Layout]          │
+│ [ → Proceed to Export ]                                   │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -779,25 +776,25 @@ LIKE: Translator between AI and hardware
 
 package compiler
 
-import (
-    "fmt"
-    "math"
-)
+// GenerateDesign creates the physical array specification
+func GenerateDesign(config *ArrayConfig) (*ArrayDesign, error) {
+    // 1. Validate Geometry
+    if config.ArrayRows <= 0 || config.ArrayCols <= 0 {
+        return nil, fmt.Errorf("invalid dimensions")
+    }
 
-// ============================================
-// DATA STRUCTURES
-// ============================================
-
-// CompileConfig holds compilation parameters
-type CompileConfig struct {
-    // Array dimensions
-    ArrayRows int
-    ArrayCols int
+    // 2. Initialize Blank Array
+    // Create cells initialized to G_min (Reset state)
+    // Enforce 30-level quantization capability
+    design := GenerateBlank(config)
     
-    // Quantization
-    Levels int // 1-30
+    // 3. Calculate Physics-based Stats
+    // Area = (PitchX * PitchY) * Count
+    // Power = Leakage * Count
     
-    // Mapping strategy
+    return design, nil
+}
+```
     Strategy MappingStrategy
     
     // FeFET physical parameters

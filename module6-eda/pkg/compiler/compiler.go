@@ -6,16 +6,70 @@ import (
 	"math"
 )
 
-// Compile transforms a weight matrix into crossbar cell assignments
-// If weights is nil, generates a blank array based on Config dimensions
-func Compile(weights [][]float64, config CompileConfig) (*CrossbarMapping, error) {
-	if weights == nil {
-		return GenerateBlank(config), nil
+// GenerateDesign is the main entry point.
+// Transforms configuration into a physical array design.
+// If config.ComputeConfig.InitialWeights is provided, performs mapping.
+// Otherwise, generates a blank initialized array.
+func GenerateDesign(config *ArrayConfig) (*ArrayDesign, error) {
+	// Check for Compute Mode with Weights
+	if config.Mode == ModeCompute && 
+	   config.ComputeConfig != nil && 
+	   config.ComputeConfig.InitialWeights != nil {
+		return mapWeights(config)
 	}
 
-	// Validate weights dimensions
+	// Default: Generate Blank Array
+	return GenerateBlank(config), nil
+}
+
+// GenerateBlank creates an initialized array without weights
+func GenerateBlank(config *ArrayConfig) *ArrayDesign {
+	// Use config dimensions
+	rows := config.ArrayRows
+	cols := config.ArrayCols
+	
+	// Pre-allocate for performance
+	cells := make([]CellAssignment, 0, rows*cols)
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			// Initialize to reset state (Level 0)
+			cells = append(cells, CellAssignment{
+				Row:         i,
+				Col:         j,
+				Level:       0,
+				Conductance: config.GMin,
+				Resistance:  1e6 / config.GMin, // Ohm
+				ProgramV:    config.VProgMin,
+			})
+		}
+	}
+
+	// Calculate area estimates
+	// Standard cell area (SKY130 ref) ~ 0.25um^2 = 0.25e-6 mm^2
+	// Pitch is in microns. Area = (Pitch * Height) * 1e-6 mm^2
+	cellAreaMM2 := (config.CellPitch * config.RowHeight) * 1e-6
+	totalAreaMM2 := float64(rows*cols) * cellAreaMM2
+
+	return &ArrayDesign{
+		Config: config,
+		Cells:  cells,
+		Stats: DesignStats{
+			TotalCells:     rows * cols,
+			ActiveCells:    0, // None programmed/used
+			AreaMM2:        totalAreaMM2,
+			PowerMW:        0.01, // 10uW standby estimate
+			ThroughputGOPS: 0.0,
+		},
+	}
+}
+
+// mapWeights handles the compute-mode mapping logic
+func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
+	weights := config.ComputeConfig.InitialWeights
+	
 	if len(weights) == 0 || len(weights[0]) == 0 {
-		return nil, fmt.Errorf("empty weight matrix")
+		return nil, fmt.Errorf("empty weight matrix provided")
 	}
 
 	rows := len(weights)
@@ -26,41 +80,34 @@ func Compile(weights [][]float64, config CompileConfig) (*CrossbarMapping, error
 			rows, cols, config.ArrayRows, config.ArrayCols)
 	}
 
-	// Find weight range for symmetric quantization
+	// Find weight range for quantization
 	wMin, wMax := weights[0][0], weights[0][0]
 	for i := range weights {
 		for j := range weights[i] {
-			if weights[i][j] < wMin {
-				wMin = weights[i][j]
-			}
-			if weights[i][j] > wMax {
-				wMax = weights[i][j]
-			}
+			if weights[i][j] < wMin { wMin = weights[i][j] }
+			if weights[i][j] > wMax { wMax = weights[i][j] }
 		}
 	}
 	wAbsMax := math.Max(math.Abs(wMin), math.Abs(wMax))
-	if wAbsMax == 0 {
-		wAbsMax = 1.0 // Avoid divide by zero
-	}
+	if wAbsMax == 0 { wAbsMax = 1.0 }
 
-	// Compile each weight
 	var cells []CellAssignment
 	var mseSum float64
 	levelsUsed := make(map[int]bool)
 
+	// Iterate over physical array dimensions
 	for i := 0; i < config.ArrayRows; i++ {
 		for j := 0; j < config.ArrayCols; j++ {
-			// Default values for unused cells
 			var w float64 = 0.0
 			var level int = 0
 			var conductance float64 = config.GMin
 			var progV float64 = config.VProgMin
 
-			// If within weight matrix bounds
+			// Map if within weight matrix bounds
 			if i < rows && j < cols {
 				w = weights[i][j]
 
-				// Quantize: map [-wAbsMax, +wAbsMax] to [0, Levels-1]
+				// Quantize
 				normalized := (w + wAbsMax) / (2 * wAbsMax)
 				level = int(math.Round(normalized * float64(config.Levels-1)))
 				level = clamp(level, 0, config.Levels-1)
@@ -71,81 +118,69 @@ func Compile(weights [][]float64, config CompileConfig) (*CrossbarMapping, error
 				qValue := -wAbsMax + qNorm*(2*wAbsMax)
 				mseSum += (w - qValue) * (w - qValue)
 
-				// specific mapping
 				conductance = config.GMin + qNorm*(config.GMax-config.GMin)
 				progV = config.VProgMin + qNorm*(config.VProgMax-config.VProgMin)
 			}
 
 			cells = append(cells, CellAssignment{
-				Row:         i,
-				Col:         j,
-				WeightValue: w,
-				QuantLevel:  level,
-				Conductance: conductance,
-				ProgramV:    progV,
+				Row:           i,
+				Col:           j,
+				Level:         level,
+				Conductance:   conductance,
+				Resistance:    1e6 / conductance,
+				ProgramV:      progV,
+				InitialWeight: w,
 			})
 		}
 	}
 
-	// Calculate statistics
+	// Stats
 	numWeights := rows * cols
 	mse := mseSum / float64(numWeights)
 	psnr := 100.0
 	if mse > 1e-9 {
 		psnr = 10 * math.Log10((wAbsMax*wAbsMax)/mse)
 	}
+	
+	totalAreaMM2 := float64(config.ArrayRows * config.ArrayCols) * (config.CellPitch * config.RowHeight) * 1e-6
 
-	return &CrossbarMapping{
+	return &ArrayDesign{
 		Config: config,
 		Cells:  cells,
-		Stats: Stats{
-			TotalCells:   config.ArrayRows * config.ArrayCols,
-			UsedCells:    numWeights,
-			Utilization:  float64(numWeights) / float64(config.ArrayRows*config.ArrayCols),
-			WeightMin:    wMin,
-			WeightMax:    wMax,
-			QuantMSE:     mse,
-			QuantPSNR:    psnr,
-			UniqueLevels: len(levelsUsed),
+		Stats: DesignStats{
+			TotalCells:     config.ArrayRows * config.ArrayCols,
+			ActiveCells:    numWeights,
+			AreaMM2:        totalAreaMM2,
+			PowerMW:        0.1, // Estimate active power
+			QuantMSE:       mse,
+			QuantPSNR:      psnr,
+			WeightMin:      wMin,
+			WeightMax:      wMax,
 		},
 	}, nil
 }
 
-// GenerateBlank creates an initialized array without weights
-func GenerateBlank(config CompileConfig) *CrossbarMapping {
-	var cells []CellAssignment
+// Compile is the Legacy wrapper for backward compatibility
+// Deprecated: Use GenerateDesign instead
+func Compile(weights [][]float64, legacyConfig CompileConfig) (*CrossbarMapping, error) {
+	// Convert legacy config to new ArrayConfig
+	// Note: CompileConfig is aliased to ArrayConfig in types.go, so casting works directly
+	// or we just use it as is if it's the exact same struct layout.
+	// However, since ArrayConfig added fields (StorageConfig, etc), we should be careful.
+	// Since types.go says 'type CompileConfig = ArrayConfig', they are identical types.
 	
-	// Pre-allocate for performance
-	cells = make([]CellAssignment, 0, config.ArrayRows*config.ArrayCols)
-
-	for i := 0; i < config.ArrayRows; i++ {
-		for j := 0; j < config.ArrayCols; j++ {
-			// Initialize to GMin / Level 0 (Reset State)
-			cells = append(cells, CellAssignment{
-				Row:         i,
-				Col:         j,
-				WeightValue: 0.0,
-				QuantLevel:  0,
-				Conductance: config.GMin,
-				ProgramV:    config.VProgMin,
-			})
+	config := &legacyConfig // Pointer to the config
+	
+	// If weights provided, attach them to the config for mapping
+	if weights != nil {
+		config.Mode = ModeCompute
+		config.ComputeConfig = &ComputeArrayConfig{
+			InitialWeights: weights,
+			QuantLevels:    config.Levels,
 		}
 	}
 
-	return &CrossbarMapping{
-		Config: config,
-		Cells:  cells,
-		Stats: Stats{
-			TotalCells:   config.ArrayRows * config.ArrayCols,
-			UsedCells:    0,
-			Utilization:  0.0,
-			WeightMin:    0.0,
-			WeightMax:    0.0,
-			QuantMSE:     0.0,
-			QuantPSNR:    0.0,
-			UniqueLevels: 1, // Only level 0 used
-		},
-	}
+	return GenerateDesign(config)
 }
 
 func clamp(v, min, max int) int {
