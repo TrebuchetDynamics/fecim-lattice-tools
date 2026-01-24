@@ -5,7 +5,6 @@ package gui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
@@ -25,7 +24,7 @@ func NewEmbeddedEDAApp() *EmbeddedEDAApp {
 }
 
 // CreateModuleContent creates the embedded module6 content
-func CreateModuleContent() fyne.CanvasObject {
+func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 	// Shared array configuration
 	arrayConfig := &config.ArrayConfig{
 		Rows:         4,
@@ -44,20 +43,15 @@ func CreateModuleContent() fyne.CanvasObject {
 		container.NewTabItem("3. Verilog Export", tabs.MakeVerilogExportTab(arrayConfig)),
 		container.NewTabItem("4. DEF Export", tabs.MakeDEFExportTab(arrayConfig)),
 		container.NewTabItem("5. Validation", tabs.MakeValidationTab(arrayConfig)),
-		container.NewTabItem("6. Learn", createLearnTabStub()),
+		container.NewTabItem("6. Learn", tabs.MakeLearnTab(nil, window)),
 		container.NewTabItem("7. Export All", tabs.MakeExportAllTab(arrayConfig)),
 	)
 }
 
-// createLearnTabStub creates a simplified Learn tab for embedded mode
-func createLearnTabStub() fyne.CanvasObject {
-	return container.NewCenter(widget.NewLabel("Learn tab - see standalone module6-eda app"))
-}
-
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Use the simplified CreateModuleContent for embedded view
-	app.content = CreateModuleContent()
+	// Use CreateModuleContent with full Learn tab
+	app.content = CreateModuleContent(window)
 	return app.content
 }
 
