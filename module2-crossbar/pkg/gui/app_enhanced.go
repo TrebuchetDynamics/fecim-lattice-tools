@@ -313,6 +313,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
 	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
+	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// Title and header
 	titleLabel := widget.NewLabel("FeCIM Crossbar Array Visualization")
@@ -400,12 +401,14 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	// Status footer
 	ca.modeIndicator = NewModeIndicatorBox()
 	ca.levelIndicator = NewLevelIndicator()
+	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
+	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(450, 20), ca.hoverInfoLabel)
 	simpleFooter := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		ca.hoverInfoLabel,
+		hoverInfoContainer,
 		widget.NewSeparator(),
 		ca.infoLabel,
 	)

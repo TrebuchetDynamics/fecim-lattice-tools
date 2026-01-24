@@ -287,6 +287,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Hover info label - shows cell info on mouse hover
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
 	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
+	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// Create tabbed heatmap view - use Max to fill available space
 	ca.tabs = container.NewAppTabs(
@@ -421,12 +423,14 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Simple status footer with hover info
+	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
+	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(450, 20), ca.hoverInfoLabel)
 	simpleFooter := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		ca.hoverInfoLabel,
+		hoverInfoContainer,
 		widget.NewSeparator(),
 		ca.infoLabel,
 	)
