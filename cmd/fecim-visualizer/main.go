@@ -1,6 +1,6 @@
 // Command fecim-visualizer provides a unified GUI application with all FeCIM demos as tabs.
 //
-// This is the main entry point for the FeCIM Visualization Suite.
+// This is the main entry point for FeCIM Lattice Tools.
 // It combines all 6 demos into a single application with tab navigation.
 //
 // The 6-Demo Story:
@@ -356,7 +356,7 @@ func main() {
 	log.Debug("Loaded window size from preferences: %.0fx%.0f", savedSize.Width, savedSize.Height)
 
 	// Create main window with saved size
-	window := fyneApp.NewWindow("FeCIM Visualization Suite - 6 World-Class Demos")
+	window := fyneApp.NewWindow("FeCIM Lattice Tools")
 	window.Resize(savedSize)
 
 	// Create demo instances with error handling

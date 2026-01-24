@@ -4,11 +4,23 @@ package ferroelectric
 import "math"
 
 // HZOMaterial contains material parameters for Hafnium-Zirconium Oxide.
-// Values are based on literature measurements for HfO2-ZrO2 superlattices.
+//
+// THREE-TIER MATERIAL SYSTEM:
+//
+//	DefaultHZO()           - Baseline: Standard Si-doped HZO from literature
+//	FeCIMMaterial()        - FeCIM: Dr. Tour's DEMONSTRATED values (conservative)
+//	FeCIMMaterialTarget()  - FeCIM: Dr. Tour's stated TARGETS (aspirational)
+//	LiteratureSuperlattice() - Academic: Best-case from Cheema et al. 2020
+//
+// For honest educational visualization, prefer FeCIMMaterial() which uses
+// only demonstrated values. Use LiteratureSuperlattice() to show what
+// superlattice engineering CAN theoretically achieve.
+//
 // References:
 // - Park et al., Adv. Mater. 2015 (HZO ferroelectricity)
 // - Müller et al., Nano Lett. 2012 (HfO2 ferroelectric properties)
 // - Pesic et al., Adv. Funct. Mater. 2016 (wake-up, fatigue)
+// - Cheema et al., Nature 2020 (superlattice enhancement)
 type HZOMaterial struct {
 	Name string // Material name/identifier
 
@@ -46,6 +58,9 @@ type HZOMaterial struct {
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
+// This is the BASELINE for comparison - standard HZO without superlattice enhancement.
+// Use this to show how FeCIM's superlattice improves over conventional HZO.
+//
 // Based on literature values for 10nm ALD-deposited films.
 // Ref: Park et al., Adv. Mater. 27, 1811 (2015)
 func DefaultHZO() *HZOMaterial {
@@ -72,12 +87,18 @@ func DefaultHZO() *HZOMaterial {
 	}
 }
 
-// OptimizedHZO returns parameters for optimized superlattice HZO.
-// HfO2/ZrO2 superlattice with enhanced properties.
-// Ref: Cheema et al., Nature 580, 478 (2020)
-func OptimizedHZO() *HZOMaterial {
+// LiteratureSuperlattice returns parameters from academic literature for
+// HfO2/ZrO2 superlattices. These are THEORETICAL BEST values from published
+// research, NOT IronLattice/FeCIM demonstrated performance.
+//
+// Use this mode to understand what superlattice engineering CAN achieve
+// according to academic papers. For FeCIM-specific values, use FeCIMMaterial().
+//
+// Ref: Cheema et al., Nature 580, 478 (2020) - "Enhanced ferroelectricity
+// in ultrathin films grown directly on silicon"
+func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO Superlattice",
+		Name:            "Literature Superlattice (Cheema 2020)",
 		Pr:              45e-2, // 45 μC/cm² (superlattice enhanced)
 		Ps:              50e-2, // 50 μC/cm²
 		Ec:              0.8e8, // 0.8 MV/cm (reduced by negative capacitance)
@@ -93,10 +114,16 @@ func OptimizedHZO() *HZOMaterial {
 		CurieTemp:       773, // Higher Tc
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e12, // Better endurance
-		RetentionTime:   1e10, // Excellent retention
+		EnduranceCycles: 1e12, // Literature best-case
+		RetentionTime:   1e10, // Literature best-case
 		ImrintField:     0.5e6,
 	}
+}
+
+// OptimizedHZO is deprecated. Use LiteratureSuperlattice() instead.
+// Kept for backwards compatibility.
+func OptimizedHZO() *HZOMaterial {
+	return LiteratureSuperlattice()
 }
 
 // FeCIMMaterial returns parameters matching FeCIM specifications.
