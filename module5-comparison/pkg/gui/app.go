@@ -3,6 +3,7 @@ package gui
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -49,7 +50,8 @@ type ComparisonApp struct {
 	gpuSpec   EnergySpec
 	fecimSpec EnergySpec
 
-	// Animation state
+	// Animation state (protected by animMu)
+	animMu           sync.RWMutex
 	running          bool
 	paused           bool
 	simTime          float64
@@ -143,12 +145,16 @@ func (ca *ComparisonApp) Run() {
 	ca.updateStatus("Ready. Select workload and adjust parameters.")
 
 	// Start animation loop
+	ca.animMu.Lock()
 	ca.running = true
+	ca.animMu.Unlock()
 	go ca.animationLoop()
 
 	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
+	ca.animMu.Lock()
 	ca.running = false
+	ca.animMu.Unlock()
 }
 
 // animationLoop runs the main animation at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs).
@@ -158,17 +164,30 @@ func (ca *ComparisonApp) animationLoop() {
 
 	lastTime := time.Now()
 
-	for ca.running {
+	for {
 		<-ticker.C
 
-		if ca.paused {
+		// Check if we should stop
+		ca.animMu.RLock()
+		running := ca.running
+		paused := ca.paused
+		ca.animMu.RUnlock()
+
+		if !running {
+			return
+		}
+
+		if paused {
 			lastTime = time.Now()
 			continue
 		}
 
 		dt := time.Since(lastTime).Seconds()
 		lastTime = time.Now()
+
+		ca.animMu.Lock()
 		ca.simTime += dt
+		ca.animMu.Unlock()
 
 		// Update animated widgets
 		if ca.energyRace != nil {
@@ -191,14 +210,20 @@ func (ca *ComparisonApp) animationLoop() {
 		}
 
 		// Handle auto-demo mode
+		ca.animMu.Lock()
 		if ca.presentationMode == PresentationModeAuto {
 			ca.phaseTimer += dt
 			phaseDuration := ca.currentPhase.PhaseDuration().Seconds()
 			if ca.phaseTimer >= phaseDuration {
 				ca.phaseTimer = 0
 				ca.currentPhase = AutoDemoPhase((int(ca.currentPhase) + 1) % int(AutoDemoPhaseCount))
+				ca.animMu.Unlock()
 				ca.onPhaseChanged()
+			} else {
+				ca.animMu.Unlock()
 			}
+		} else {
+			ca.animMu.Unlock()
 		}
 
 		// Refresh UI
@@ -228,17 +253,21 @@ func (ca *ComparisonApp) animationLoop() {
 
 // onPhaseChanged handles auto-demo phase transitions.
 func (ca *ComparisonApp) onPhaseChanged() {
-	debug.Printf("Auto-demo phase changed to: %s", ca.currentPhase.String())
+	ca.animMu.RLock()
+	phase := ca.currentPhase
+	ca.animMu.RUnlock()
+
+	debug.Printf("Auto-demo phase changed to: %s", phase.String())
 
 	if ca.educationalPanel != nil {
-		ca.educationalPanel.SetPhase(ca.currentPhase)
+		ca.educationalPanel.SetPhase(phase)
 	}
 
 	if ca.phasedStrategy != nil {
-		ca.phasedStrategy.SetPhase(int(ca.currentPhase) % 3)
+		ca.phasedStrategy.SetPhase(int(phase) % 3)
 	}
 
-	switch ca.currentPhase {
+	switch phase {
 	case AutoDemoPhaseEnergyRace:
 		if ca.energyRace != nil {
 			ca.energyRace.Reset()
@@ -256,11 +285,17 @@ func (ca *ComparisonApp) updateStatusForMode() {
 		return
 	}
 
+	ca.animMu.RLock()
+	mode := ca.presentationMode
+	phase := ca.currentPhase
+	timer := ca.phaseTimer
+	ca.animMu.RUnlock()
+
 	var newText string
-	switch ca.presentationMode {
+	switch mode {
 	case PresentationModeAuto:
-		remaining := ca.currentPhase.PhaseDuration().Seconds() - ca.phaseTimer
-		newText = fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining)
+		remaining := phase.PhaseDuration().Seconds() - timer
+		newText = fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", phase.String(), remaining)
 	case PresentationModeInvestor:
 		newText = "Mode: Technical Briefing"
 	case PresentationModeEngineer:
@@ -276,9 +311,11 @@ func (ca *ComparisonApp) updateStatusForMode() {
 
 // SetPresentationMode sets the current presentation mode.
 func (ca *ComparisonApp) SetPresentationMode(mode PresentationMode) {
+	ca.animMu.Lock()
 	ca.presentationMode = mode
 	ca.phaseTimer = 0
 	ca.currentPhase = AutoDemoPhaseEnergyRace
+	ca.animMu.Unlock()
 
 	if ca.educationalPanel != nil {
 		ca.educationalPanel.SetPresentationMode(mode)
@@ -320,8 +357,11 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 
 	// Pause button
 	ca.pauseBtn = widget.NewButton("Pause", func() {
+		ca.animMu.Lock()
 		ca.paused = !ca.paused
-		if ca.paused {
+		paused := ca.paused
+		ca.animMu.Unlock()
+		if paused {
 			ca.pauseBtn.SetText("Resume")
 		} else {
 			ca.pauseBtn.SetText("Pause")

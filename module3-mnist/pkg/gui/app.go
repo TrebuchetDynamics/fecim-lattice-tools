@@ -2,6 +2,7 @@
 package gui
 
 import (
+	"context"
 	"fmt"
 	"image/color"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -127,10 +129,12 @@ type MNISTApp struct {
 	// Data directory
 	dataDir string
 
-	// Auto demo state
-	autoDemo      bool
-	autoDemoTimer *time.Ticker
-	stopAutoDemo  chan bool
+	// Auto demo state (protected by autoDemoMu)
+	autoDemoMu     sync.Mutex
+	autoDemo       bool
+	autoDemoTimer  *time.Ticker
+	autoDemoCtx    context.Context
+	autoDemoCancel context.CancelFunc
 }
 
 // NewMNISTApp creates and initializes the MNIST demo application.
@@ -831,8 +835,11 @@ func (ma *MNISTApp) onDemoModeChanged(mode string) {
 
 // startAutoDemoLoop starts the automatic demo loop.
 func (ma *MNISTApp) startAutoDemoLoop() {
+	ma.autoDemoMu.Lock()
+	defer ma.autoDemoMu.Unlock()
+
 	ma.autoDemo = true
-	ma.stopAutoDemo = make(chan bool)
+	ma.autoDemoCtx, ma.autoDemoCancel = context.WithCancel(context.Background())
 	ma.autoDemoTimer = time.NewTicker(2 * time.Second)
 
 	ma.operationLog.Add("Mode: Auto Demo started")
@@ -845,25 +852,32 @@ func (ma *MNISTApp) startAutoDemoLoop() {
 			"4. Repeat\n\n"+
 			"Target: 87% accuracy")
 
-	go ma.autoDemoLoop()
+	go ma.autoDemoLoop(ma.autoDemoCtx)
 }
 
 // stopAutoDemoLoop stops the automatic demo loop.
 func (ma *MNISTApp) stopAutoDemoLoop() {
-	if ma.autoDemo {
-		ma.autoDemo = false
-		if ma.stopAutoDemo != nil {
-			close(ma.stopAutoDemo)
-		}
-		if ma.autoDemoTimer != nil {
-			ma.autoDemoTimer.Stop()
-		}
-		ma.operationLog.Add("Mode: Auto Demo stopped")
+	ma.autoDemoMu.Lock()
+	defer ma.autoDemoMu.Unlock()
+
+	if !ma.autoDemo {
+		return
 	}
+
+	ma.autoDemo = false
+	if ma.autoDemoCancel != nil {
+		ma.autoDemoCancel()
+		ma.autoDemoCancel = nil
+	}
+	if ma.autoDemoTimer != nil {
+		ma.autoDemoTimer.Stop()
+		ma.autoDemoTimer = nil
+	}
+	ma.operationLog.Add("Mode: Auto Demo stopped")
 }
 
 // autoDemoLoop runs the automatic demonstration.
-func (ma *MNISTApp) autoDemoLoop() {
+func (ma *MNISTApp) autoDemoLoop(ctx context.Context) {
 	// Run first operation immediately
 	fyne.Do(func() {
 		ma.loadRandomTestDigit()
@@ -871,10 +885,14 @@ func (ma *MNISTApp) autoDemoLoop() {
 
 	for {
 		select {
-		case <-ma.stopAutoDemo:
+		case <-ctx.Done():
 			return
 		case <-ma.autoDemoTimer.C:
-			if !ma.autoDemo {
+			ma.autoDemoMu.Lock()
+			running := ma.autoDemo
+			ma.autoDemoMu.Unlock()
+
+			if !running {
 				return
 			}
 			fyne.Do(func() {
