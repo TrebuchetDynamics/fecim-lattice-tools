@@ -152,13 +152,17 @@ func (gt *GuidedTour) Stop() {
 	default:
 	}
 
-	if gt.tourDialog != nil {
-		gt.tourDialog.Hide()
-	}
+	fyne.Do(func() {
+		if gt.tourDialog != nil {
+			gt.tourDialog.Hide()
+		}
+	})
 
 	// Reset to ideal settings
 	gt.app.applyPreset(30, 0.01, 8, 8)
-	gt.app.statusLabel.SetText("Tour ended. Ready to explore!")
+	fyne.Do(func() {
+		gt.app.statusLabel.SetText("Tour ended. Ready to explore!")
+	})
 }
 
 // nextStep advances to the next step.
@@ -201,29 +205,33 @@ func (gt *GuidedTour) showCurrentStep() {
 func (gt *GuidedTour) finishTour() {
 	gt.isRunning = false
 
-	if gt.tourDialog != nil {
-		gt.tourDialog.Hide()
-	}
+	fyne.Do(func() {
+		if gt.tourDialog != nil {
+			gt.tourDialog.Hide()
+		}
 
-	// Show completion dialog
-	completionContent := container.NewVBox(
-		widget.NewLabel("Tour Complete!"),
-		widget.NewSeparator(),
-		widget.NewLabel("Key Takeaways:"),
-		widget.NewLabel("• 30 analog levels enable 87% accuracy"),
-		widget.NewLabel("• Binary (2 levels) fails completely (~50%)"),
-		widget.NewLabel("• Noise must be controlled for accuracy"),
-		widget.NewLabel("• FeCIM uses 10,000x less energy than GPU"),
-		widget.NewSeparator(),
-		widget.NewLabel("Now explore the presets yourself!"),
-	)
+		// Show completion dialog
+		completionContent := container.NewVBox(
+			widget.NewLabel("Tour Complete!"),
+			widget.NewSeparator(),
+			widget.NewLabel("Key Takeaways:"),
+			widget.NewLabel("• 30 analog levels enable 87% accuracy"),
+			widget.NewLabel("• Binary (2 levels) fails completely (~50%)"),
+			widget.NewLabel("• Noise must be controlled for accuracy"),
+			widget.NewLabel("• FeCIM uses 10,000x less energy than GPU"),
+			widget.NewSeparator(),
+			widget.NewLabel("Now explore the presets yourself!"),
+		)
 
-	completionDialog := dialog.NewCustom("Tour Complete!", "Close", completionContent, gt.app.window)
-	completionDialog.Show()
+		completionDialog := dialog.NewCustom("Tour Complete!", "Close", completionContent, gt.app.window)
+		completionDialog.Show()
+	})
 
 	// Reset to ideal settings
 	gt.app.applyPreset(30, 0.01, 8, 8)
-	gt.app.statusLabel.SetText("Tour complete! Explore the presets.")
+	fyne.Do(func() {
+		gt.app.statusLabel.SetText("Tour complete! Explore the presets.")
+	})
 }
 
 // IsRunning returns whether the tour is currently running.

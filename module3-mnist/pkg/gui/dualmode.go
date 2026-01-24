@@ -652,27 +652,31 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 
 // applyPresetWithMode sets hardware parameters with optional Tour Mode (single-layer).
 func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
-	app.levelsSlider.SetValue(float64(levels))
-	app.noiseSlider.SetValue(noise)
-	app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
-	app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
-
+	// Update network parameters (thread-safe, not UI)
 	app.network.SetNumLevels(levels)
 	app.network.SetNoiseLevel(noise)
 	app.network.SetADCBits(adcBits)
 	app.network.SetDACBits(dacBits)
 	app.network.SetSingleLayer(singleLayer)
 
-	// Update status to indicate Tour Mode
-	if singleLayer {
-		app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
-	}
+	// Update UI elements on main thread
+	fyne.Do(func() {
+		app.levelsSlider.SetValue(float64(levels))
+		app.noiseSlider.SetValue(noise)
+		app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
+		app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
 
-	app.updateWeightHeatmap()
+		// Update status to indicate Tour Mode
+		if singleLayer {
+			app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
+		}
 
-	if len(app.lastPixels) > 0 {
-		app.runInference(app.lastPixels)
-	}
+		app.updateWeightHeatmap()
+
+		if len(app.lastPixels) > 0 {
+			app.runInference(app.lastPixels)
+		}
+	})
 }
 
 // loadRandomSample loads a random test sample.
@@ -680,7 +684,9 @@ func (app *DualModeApp) loadRandomSample() {
 	if len(app.testImages) == 0 {
 		app.loadTestData()
 		if len(app.testImages) == 0 {
-			app.statusLabel.SetText("No test data available")
+			fyne.Do(func() {
+				app.statusLabel.SetText("No test data available")
+			})
 			return
 		}
 	}
@@ -689,9 +695,11 @@ func (app *DualModeApp) loadRandomSample() {
 	pixels := app.testImages[idx]
 	label := app.testLabels[idx]
 
-	app.digitCanvas.SetPixels(pixels)
-	app.statusLabel.SetText(fmt.Sprintf("Loaded sample #%d (true label: %d)", idx, label))
-	app.onDigitChanged(pixels)
+	fyne.Do(func() {
+		app.digitCanvas.SetPixels(pixels)
+		app.statusLabel.SetText(fmt.Sprintf("Loaded sample #%d (true label: %d)", idx, label))
+		app.onDigitChanged(pixels)
+	})
 }
 
 // loadTestData loads MNIST test data.
@@ -718,10 +726,12 @@ func (app *DualModeApp) loadTestData() {
 
 // runQuickTest runs inference on 200 samples and reports accuracy.
 func (app *DualModeApp) runQuickTest() {
-	app.testButton.Disable()
-	app.testResultLabel.SetText("")
-	app.testProgressBar.Show()
-	app.testProgressBar.SetValue(0)
+	fyne.Do(func() {
+		app.testButton.Disable()
+		app.testResultLabel.SetText("")
+		app.testProgressBar.Show()
+		app.testProgressBar.SetValue(0)
+	})
 
 	go func() {
 		if len(app.testImages) == 0 {

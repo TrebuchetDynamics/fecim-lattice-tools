@@ -95,7 +95,10 @@ func (h *CrossbarHeatmap) rateLimitedRefresh() {
 		h.lastRefresh = now
 		h.refreshPending = false
 		h.refreshMu.Unlock()
-		h.BaseWidget.Refresh() // Call actual Fyne refresh
+		// Use fyne.Do for thread safety in case called from background goroutine
+		fyne.Do(func() {
+			h.BaseWidget.Refresh()
+		})
 		return
 	}
 

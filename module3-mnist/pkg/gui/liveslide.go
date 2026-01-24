@@ -307,10 +307,14 @@ func (e *MNISTEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 	contentLabel := widget.NewLabel(content)
 	contentLabel.Wrapping = fyne.TextWrapWord
 
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 140))
+
 	box := container.NewVBox(
 		titleLabel,
 		widget.NewSeparator(),
-		contentLabel,
+		contentScroll,
 	)
 
 	return widget.NewSimpleRenderer(box)
@@ -376,11 +380,13 @@ func (o *MNISTOperationLog) Clear() {
 }
 
 func (o *MNISTOperationLog) updateContent() {
-	if len(o.entries) == 0 {
-		o.contentLabel.SetText("Waiting for operations...")
-		return
+	text := "Waiting for operations..."
+	if len(o.entries) > 0 {
+		text = strings.Join(o.entries, "\n")
 	}
-	o.contentLabel.SetText(strings.Join(o.entries, "\n"))
+	fyne.Do(func() {
+		o.contentLabel.SetText(text)
+	})
 }
 
 // MinSize returns the minimum size.
@@ -390,10 +396,14 @@ func (o *MNISTOperationLog) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (o *MNISTOperationLog) CreateRenderer() fyne.WidgetRenderer {
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(o.contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(140, 90))
+
 	box := container.NewVBox(
 		o.titleLabel,
 		widget.NewSeparator(),
-		o.contentLabel,
+		contentScroll,
 	)
 	return widget.NewSimpleRenderer(box)
 }

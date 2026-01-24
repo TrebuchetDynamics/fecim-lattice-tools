@@ -150,7 +150,9 @@ func (m *ComparisonModeIndicator) SetMode(mode ComparisonMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
-	m.Refresh()
+	fyne.Do(func() {
+		m.Refresh()
+	})
 }
 
 // MinSize returns the minimum size.
@@ -286,7 +288,9 @@ func (e *ComparisonEducationalPanel) SetContent(title, content string) {
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.Refresh()
+	fyne.Do(func() {
+		e.Refresh()
+	})
 }
 
 // SetPresentationMode sets the current presentation mode.
@@ -456,10 +460,14 @@ func (e *ComparisonEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 	contentLabel := widget.NewLabel(content)
 	contentLabel.Wrapping = fyne.TextWrapWord
 
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 160))
+
 	box := container.NewVBox(
 		titleLabel,
 		widget.NewSeparator(),
-		contentLabel,
+		contentScroll,
 	)
 
 	return widget.NewSimpleRenderer(box)
@@ -511,11 +519,13 @@ func (o *ComparisonOperationLog) Add(entry string) {
 }
 
 func (o *ComparisonOperationLog) updateContent() {
-	if len(o.entries) == 0 {
-		o.contentLabel.SetText("Ready for calculations...")
-		return
+	text := "Ready for calculations..."
+	if len(o.entries) > 0 {
+		text = strings.Join(o.entries, "\n")
 	}
-	o.contentLabel.SetText(strings.Join(o.entries, "\n"))
+	fyne.Do(func() {
+		o.contentLabel.SetText(text)
+	})
 }
 
 // MinSize returns the minimum size.
@@ -525,10 +535,14 @@ func (o *ComparisonOperationLog) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (o *ComparisonOperationLog) CreateRenderer() fyne.WidgetRenderer {
+	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
+	contentScroll := container.NewScroll(o.contentLabel)
+	contentScroll.SetMinSize(fyne.NewSize(190, 120))
+
 	box := container.NewVBox(
 		o.titleLabel,
 		widget.NewSeparator(),
-		o.contentLabel,
+		contentScroll,
 	)
 	return widget.NewSimpleRenderer(box)
 }

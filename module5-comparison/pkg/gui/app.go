@@ -82,7 +82,8 @@ type ComparisonApp struct {
 	pauseBtn         *widget.Button
 
 	// Status
-	statusLabel *widget.Label
+	statusLabel     *widget.Label
+	lastStatusText  string // Cache to avoid redundant SetText calls
 
 	// Current settings
 	currentWorkload   string
@@ -150,9 +151,9 @@ func (ca *ComparisonApp) Run() {
 	ca.running = false
 }
 
-// animationLoop runs the main animation at 60 FPS.
+// animationLoop runs the main animation at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs).
 func (ca *ComparisonApp) animationLoop() {
-	ticker := time.NewTicker(16 * time.Millisecond)
+	ticker := time.NewTicker(33 * time.Millisecond)
 	defer ticker.Stop()
 
 	lastTime := time.Now()
@@ -255,14 +256,21 @@ func (ca *ComparisonApp) updateStatusForMode() {
 		return
 	}
 
+	var newText string
 	switch ca.presentationMode {
 	case PresentationModeAuto:
 		remaining := ca.currentPhase.PhaseDuration().Seconds() - ca.phaseTimer
-		ca.statusLabel.SetText(fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining))
+		newText = fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", ca.currentPhase.String(), remaining)
 	case PresentationModeInvestor:
-		ca.statusLabel.SetText("Mode: Technical Briefing")
+		newText = "Mode: Technical Briefing"
 	case PresentationModeEngineer:
-		ca.statusLabel.SetText("Mode: Technical Deep-Dive")
+		newText = "Mode: Technical Deep-Dive"
+	}
+
+	// Use caching to avoid redundant SetText calls that trigger layout recalculations
+	if newText != "" && newText != ca.lastStatusText {
+		ca.statusLabel.SetText(newText)
+		ca.lastStatusText = newText
 	}
 }
 
