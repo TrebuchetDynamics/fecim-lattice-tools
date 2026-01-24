@@ -2,91 +2,29 @@
 package gui
 
 import (
+	"context"
 	"fmt"
-	"image/color"
-	"io"
-	"log"
 	"math"
 	"math/rand"
-	"os"
-	"path/filepath"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 )
 
-// FeCIM theme colors - same as demo1
-var (
-	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
-)
-
-// feCIMTheme implements fyne.Theme for consistent FeCIM branding
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return colorBackground // FeCIM blue #003264
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return colorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255} // Separator lines
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
-}
-
-var debug *log.Logger
-var logFile *os.File
+// Package-level logger using shared logging infrastructure
+var debug *logging.Logger
 
 func init() {
-	// Create logs directory
-	logsDir := "<local-path>"
-	os.MkdirAll(logsDir, 0755)
-
-	// Create log file with datetime
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-crossbar-module02.log")
-
-	var err error
-	logFile, err = os.Create(logPath)
-	if err != nil {
-		// Fallback to stdout if file creation fails
-		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
-		debug.Printf("Failed to create log file: %v, using stdout", err)
-		return
-	}
-
-	// Write to both file and stdout
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
-	debug.Printf("Logging to: %s", logPath)
+	debug = logging.NewLogger("crossbar-app")
 }
 
 // CrossbarApp is the main application for the crossbar demo.
@@ -153,14 +91,19 @@ type CrossbarApp struct {
 	infoLabel      *widget.Label
 	hoverInfoLabel *widget.Label
 
-	// Current state
+	// Mutex for protecting state accessed by multiple goroutines
+	// Protects: lastInput, lastOutput, lastMVMResult, lastIRDropAnalysis,
+	// lastSneakAnalysis, selectedRow, selectedCol
+	stateMu sync.RWMutex
+
+	// Current state (protected by stateMu)
 	lastInput          []float64
 	lastOutput         []float64
 	lastMVMResult      *crossbar.MVMResult
 	lastIRDropAnalysis *crossbar.IRDropAnalysis
 	lastSneakAnalysis  *crossbar.SneakPathAnalysis
 
-	// Persistent cell selection (synced across all heatmaps)
+	// Persistent cell selection (synced across all heatmaps, protected by stateMu)
 	selectedRow int
 	selectedCol int
 
@@ -170,23 +113,27 @@ type CrossbarApp struct {
 	// Tabs container for programmatic switching
 	tabs *container.AppTabs
 
+	// Auto demo cancellation context (replaces chan bool)
+	autoCtx    context.Context
+	autoCancel context.CancelFunc
+
 	// Auto demo state
 	autoDemo      bool
 	autoDemoStep  int
 	autoDemoTimer *time.Ticker
-	stopAutoDemo  chan bool
 
 	// First visit flag for auto-run MVM
 	hasRunInitialMVM bool
 }
 
 // NewCrossbarApp creates and initializes the crossbar demo application.
-func NewCrossbarApp() *CrossbarApp {
+// Returns an error if the crossbar array cannot be created.
+func NewCrossbarApp() (*CrossbarApp, error) {
 	ca := &CrossbarApp{}
 
 	// Create Fyne app
 	ca.fyneApp = app.NewWithID("com.fecim.crossbar-demo")
-	ca.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	ca.fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	// Initialize with default config
 	ca.config = &crossbar.Config{
@@ -201,13 +148,13 @@ func NewCrossbarApp() *CrossbarApp {
 	var err error
 	ca.array, err = crossbar.NewArray(ca.config)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create crossbar array: %v", err))
+		return nil, fmt.Errorf("failed to create crossbar array: %w", err)
 	}
 
 	// Program initial random weights
 	ca.programRandomWeights()
 
-	return ca
+	return ca, nil
 }
 
 // Run starts the GUI application.
@@ -668,14 +615,19 @@ func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 	// Sync selection across all heatmaps
 	ca.syncSelection(row, col)
 
+	// Protected read of lastIRDropAnalysis
+	ca.stateMu.RLock()
+	analysis := ca.lastIRDropAnalysis
+	ca.stateMu.RUnlock()
+
 	// Generate comprehensive IR drop tooltip
-	tooltip := IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
+	tooltip := IRDropTooltip(row, col, analysis, ca.array)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
-	if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
-		col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
-		effectiveV := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
+	if analysis != nil && row < len(analysis.EffectiveVoltage) &&
+		col < len(analysis.EffectiveVoltage[0]) {
+		effectiveV := analysis.EffectiveVoltage[row][col]
 		dropPercent := (1.0 - effectiveV) * 100
 		ca.updateStatus(fmt.Sprintf("IR DROP | Cell [%d,%d]: %.3f V (%.1f%% drop)",
 			row, col, effectiveV, dropPercent))
@@ -693,12 +645,17 @@ func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 	level := crossbar.GetLevel(conductance)
 	conductanceUS := conductance*99 + 1
 
+	// Protected read of lastIRDropAnalysis
+	ca.stateMu.RLock()
+	analysis := ca.lastIRDropAnalysis
+	ca.stateMu.RUnlock()
+
 	// Get detailed voltage info if available
-	if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
-		col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
-		effectiveV := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
-		wlV := ca.lastIRDropAnalysis.WordLineVoltages[row][col]
-		blV := ca.lastIRDropAnalysis.BitLineVoltages[row][col]
+	if analysis != nil && row < len(analysis.EffectiveVoltage) &&
+		col < len(analysis.EffectiveVoltage[0]) {
+		effectiveV := analysis.EffectiveVoltage[row][col]
+		wlV := analysis.WordLineVoltages[row][col]
+		blV := analysis.BitLineVoltages[row][col]
 		dropPercent := (1.0 - effectiveV) * 100
 
 		// Calculate distance from drivers (WL driver on left, BL sense amp at top)
@@ -724,17 +681,22 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 	sneakTargetRow := ca.config.Rows / 2
 	sneakTargetCol := ca.config.Cols / 2
 
+	// Protected read of lastSneakAnalysis
+	ca.stateMu.RLock()
+	analysis := ca.lastSneakAnalysis
+	ca.stateMu.RUnlock()
+
 	// Generate comprehensive sneak path tooltip
-	tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, sneakTargetRow, sneakTargetCol, ca.array)
+	tooltip := SneakPathTooltip(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
-	if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
-		col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {
-		sneakCurrent := ca.lastSneakAnalysis.SneakCurrents[row][col]
+	if analysis != nil && row < len(analysis.SneakCurrents) &&
+		col < len(analysis.SneakCurrents[0]) {
+		sneakCurrent := analysis.SneakCurrents[row][col]
 		sneakRatio := 0.0
-		if ca.lastSneakAnalysis.TotalSignal > 0 {
-			sneakRatio = sneakCurrent / ca.lastSneakAnalysis.TotalSignal * 100
+		if analysis.TotalSignal > 0 {
+			sneakRatio = sneakCurrent / analysis.TotalSignal * 100
 		}
 		ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f µA (%.2f%% of signal)",
 			row, col, sneakCurrent*1e6, sneakRatio))
@@ -756,13 +718,18 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 	selectedRow := ca.config.Rows / 2
 	selectedCol := ca.config.Cols / 2
 
+	// Protected read of lastSneakAnalysis
+	ca.stateMu.RLock()
+	analysis := ca.lastSneakAnalysis
+	ca.stateMu.RUnlock()
+
 	// Get detailed sneak info if available
-	if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
-		col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {
-		sneakCurrent := ca.lastSneakAnalysis.SneakCurrents[row][col]
+	if analysis != nil && row < len(analysis.SneakCurrents) &&
+		col < len(analysis.SneakCurrents[0]) {
+		sneakCurrent := analysis.SneakCurrents[row][col]
 		sneakRatio := 0.0
-		if ca.lastSneakAnalysis.TotalSignal > 0 {
-			sneakRatio = sneakCurrent / ca.lastSneakAnalysis.TotalSignal * 100
+		if analysis.TotalSignal > 0 {
+			sneakRatio = sneakCurrent / analysis.TotalSignal * 100
 		}
 
 		// Determine path type
@@ -777,8 +744,8 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 
 		// SNR in dB
 		snrDB := -100.0
-		if sneakCurrent > 0 && ca.lastSneakAnalysis.TotalSignal > 0 {
-			snrDB = 20 * math.Log10(ca.lastSneakAnalysis.TotalSignal / sneakCurrent)
+		if sneakCurrent > 0 && analysis.TotalSignal > 0 {
+			snrDB = 20 * math.Log10(analysis.TotalSignal / sneakCurrent)
 		}
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
@@ -804,7 +771,12 @@ func (ca *CrossbarApp) runMVM() {
 	for i := range input {
 		input[i] = rand.Float64()
 	}
+
+	// Protected write to lastInput
+	ca.stateMu.Lock()
 	ca.lastInput = input
+	ca.stateMu.Unlock()
+
 	ca.mvmVis.SetInput(input)
 
 	// Run animated MVM in goroutine
@@ -854,7 +826,11 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 		})
 		return
 	}
+
+	// Protected write to lastOutput
+	ca.stateMu.Lock()
 	ca.lastOutput = output
+	ca.stateMu.Unlock()
 
 	// Phase 3: Output currents collected (300ms)
 	fyne.Do(func() {
@@ -926,7 +902,11 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 // runIRDropAnalysis updates IR drop heatmap silently (no tab switch).
 func (ca *CrossbarApp) runIRDropAnalysis() {
+	// Protected read of lastInput
+	ca.stateMu.RLock()
 	input := ca.lastInput
+	ca.stateMu.RUnlock()
+
 	if input == nil || len(input) != ca.config.Cols {
 		input = make([]float64, ca.config.Cols)
 		for i := range input {
@@ -936,7 +916,12 @@ func (ca *CrossbarApp) runIRDropAnalysis() {
 
 	params := crossbar.DefaultWireParams()
 	analysis := ca.array.AnalyzeIRDrop(input, params)
-	ca.lastIRDropAnalysis = analysis // Store for hover info
+
+	// Protected write to lastIRDropAnalysis
+	ca.stateMu.Lock()
+	ca.lastIRDropAnalysis = analysis
+	ca.stateMu.Unlock()
+
 	irMap := analysis.GetIRDropMap()
 	ca.irDropHeatmap.SetData(irMap)
 	ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
@@ -948,7 +933,12 @@ func (ca *CrossbarApp) runSneakPathAnalysis() {
 	selectedCol := ca.config.Cols / 2
 
 	analysis := ca.array.AnalyzeSneakPaths(selectedRow, selectedCol)
-	ca.lastSneakAnalysis = analysis // Store for hover info
+
+	// Protected write to lastSneakAnalysis
+	ca.stateMu.Lock()
+	ca.lastSneakAnalysis = analysis
+	ca.stateMu.Unlock()
+
 	sneakMap := analysis.GetSneakMap()
 
 	// Apply sqrt transformation for better visibility
@@ -972,7 +962,8 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
 	ca.updateStatus("IR DROP | Analyzing voltage drops...")
 
-	// Use last input or create new one
+	// Protected read/write of lastInput
+	ca.stateMu.Lock()
 	input := ca.lastInput
 	if input == nil || len(input) != ca.config.Cols {
 		input = make([]float64, ca.config.Cols)
@@ -981,6 +972,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 		}
 		ca.lastInput = input
 	}
+	ca.stateMu.Unlock()
 
 	// Analyze IR drop
 	params := crossbar.DefaultWireParams()
@@ -1100,8 +1092,12 @@ func (ca *CrossbarApp) resetArray() {
 
 	ca.programRandomWeights()
 	ca.updateConductanceDisplay()
+
+	// Protected clear of state
+	ca.stateMu.Lock()
 	ca.lastInput = nil
 	ca.lastOutput = nil
+	ca.stateMu.Unlock()
 	ca.conductanceHeatmap.ClearSelection()
 	ca.irDropHeatmap.ClearSelection()
 	ca.sneakPathHeatmap.ClearSelection()
@@ -1147,9 +1143,14 @@ func (ca *CrossbarApp) onDemoModeChanged(mode string) {
 
 // startAutoDemoLoop starts the automatic demo loop.
 func (ca *CrossbarApp) startAutoDemoLoop() {
+	// Cancel any existing auto demo
+	if ca.autoCancel != nil {
+		ca.autoCancel()
+	}
+
 	ca.autoDemo = true
 	ca.autoDemoStep = 0
-	ca.stopAutoDemo = make(chan bool)
+	ca.autoCtx, ca.autoCancel = context.WithCancel(context.Background())
 	ca.autoDemoTimer = time.NewTicker(3 * time.Second)
 
 	ca.setEducationalContent("Auto Demo Mode",
@@ -1160,30 +1161,32 @@ func (ca *CrossbarApp) startAutoDemoLoop() {
 			"3. Sneak Path Analysis\n"+
 			"4. Reset & Repeat")
 
-	go ca.autoDemoLoop()
+	go ca.autoDemoLoop(ca.autoCtx)
 }
 
 // stopAutoDemoLoop stops the automatic demo loop.
 func (ca *CrossbarApp) stopAutoDemoLoop() {
 	if ca.autoDemo {
 		ca.autoDemo = false
-		if ca.stopAutoDemo != nil {
-			close(ca.stopAutoDemo)
+		if ca.autoCancel != nil {
+			ca.autoCancel()
+			ca.autoCancel = nil
 		}
 		if ca.autoDemoTimer != nil {
 			ca.autoDemoTimer.Stop()
+			ca.autoDemoTimer = nil
 		}
 	}
 }
 
 // autoDemoLoop runs the automatic demonstration.
-func (ca *CrossbarApp) autoDemoLoop() {
+func (ca *CrossbarApp) autoDemoLoop(ctx context.Context) {
 	// Run first operation immediately
 	ca.runAutoDemoStep()
 
 	for {
 		select {
-		case <-ca.stopAutoDemo:
+		case <-ctx.Done():
 			return
 		case <-ca.autoDemoTimer.C:
 			if !ca.autoDemo {

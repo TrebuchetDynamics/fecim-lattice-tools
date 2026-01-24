@@ -4,7 +4,8 @@ package gui
 
 import (
 	"fmt"
-	"log"
+	"image/color"
+	stdlog "log"
 	"os"
 	"strings"
 	"sync"
@@ -14,10 +15,9 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
 )
 
-var lsDebug = log.New(os.Stdout, "[WIDGET] ", log.Ltime|log.Lmicroseconds)
+var lsDebug = stdlog.New(os.Stdout, "[WIDGET] ", stdlog.Ltime|stdlog.Lmicroseconds)
 
 // DemoMode represents the current demo mode.
 type DemoMode int

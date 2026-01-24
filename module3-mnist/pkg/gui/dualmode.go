@@ -20,7 +20,15 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 )
+
+// Package-level logger for MNIST GUI (named mnistLog to avoid conflict with app.go's debug logger)
+var mnistLog *logging.Logger
+
+func init() {
+	mnistLog = logging.NewLogger("mnist")
+}
 
 // DualModeApp provides dual-path inference visualization (FP vs CIM).
 type DualModeApp struct {
@@ -233,11 +241,13 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
 
 	clearBtn := widget.NewButton("Clear", func() {
+		mnistLog.Button("Clear")
 		app.digitCanvas.Clear()
 		app.resetResults()
 	})
 
 	randomBtn := widget.NewButton("Random", func() {
+		mnistLog.Button("Random")
 		app.loadRandomSample()
 	})
 
@@ -333,6 +343,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.levelsSlider.Step = 1
 	app.levelsSlider.Value = 30
 	app.levelsSlider.OnChanged = func(v float64) {
+		mnistLog.SliderChange("Levels", v)
 		levels := int(v)
 		app.levelsLabel.SetText(fmt.Sprintf("%d", levels))
 
@@ -359,6 +370,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.noiseSlider.Step = 0.01
 	app.noiseSlider.Value = 0.01
 	app.noiseSlider.OnChanged = func(v float64) {
+		mnistLog.SliderChange("Noise", v)
 		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
 		app.network.SetNoiseLevel(v)
 		if len(app.lastPixels) > 0 {
@@ -374,6 +386,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	// ADC/DAC + Hidden selects on one row
 	bitOptions := []string{"3", "4", "5", "6", "7", "8", "10", "12", "16"}
 	app.adcSelect = widget.NewSelect(bitOptions, func(s string) {
+		mnistLog.Selection("ADC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
 		app.network.SetADCBits(bits)
@@ -384,6 +397,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.adcSelect.SetSelected("8")
 
 	app.dacSelect = widget.NewSelect(bitOptions, func(s string) {
+		mnistLog.Selection("DAC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
 		app.network.SetDACBits(bits)
@@ -394,6 +408,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.dacSelect.SetSelected("8")
 
 	app.hiddenSelect = widget.NewSelect([]string{"64", "128", "256"}, func(s string) {
+		mnistLog.Selection("Hidden", s)
 		var size int
 		fmt.Sscanf(s, "%d", &size)
 		app.changeHiddenSize(size)
@@ -407,14 +422,14 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	)
 
 	// Preset buttons (first row: standard presets)
-	idealBtn := widget.NewButton("Ideal", func() { app.applyPresetWithMode(30, 0.01, 8, 8, false) })
-	quantCliffBtn := widget.NewButton("QuantCliff", func() { app.applyPresetWithMode(2, 0.01, 8, 8, false) })
-	noisyBtn := widget.NewButton("Noisy", func() { app.applyPresetWithMode(30, 0.15, 6, 8, false) })
-	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPresetWithMode(30, 0.01, 3, 8, false) })
+	idealBtn := widget.NewButton("Ideal", func() { mnistLog.Button("Preset:Ideal"); app.applyPresetWithMode(30, 0.01, 8, 8, false) })
+	quantCliffBtn := widget.NewButton("QuantCliff", func() { mnistLog.Button("Preset:QuantCliff"); app.applyPresetWithMode(2, 0.01, 8, 8, false) })
+	noisyBtn := widget.NewButton("Noisy", func() { mnistLog.Button("Preset:Noisy"); app.applyPresetWithMode(30, 0.15, 6, 8, false) })
+	brokenBtn := widget.NewButton("BrokenADC", func() { mnistLog.Button("Preset:BrokenADC"); app.applyPresetWithMode(30, 0.01, 3, 8, false) })
 
 	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
 	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87% with 88% theoretical max)
-	tourBtn := widget.NewButton("Tour", func() { app.applyPresetWithMode(30, 0.01, 8, 8, true) })
+	tourBtn := widget.NewButton("Tour", func() { mnistLog.Button("Preset:Tour"); app.applyPresetWithMode(30, 0.01, 8, 8, true) })
 	tourBtn.Importance = widget.HighImportance // Highlight this button
 
 	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
@@ -422,6 +437,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	// Quick test
 	app.testResultLabel = widget.NewLabel("")
 	app.testButton = widget.NewButton("Test (200)", func() {
+		mnistLog.Button("Test200")
 		app.runQuickTest()
 	})
 

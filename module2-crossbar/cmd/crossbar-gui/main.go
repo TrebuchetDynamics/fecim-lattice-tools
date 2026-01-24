@@ -29,6 +29,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui"
 )
@@ -68,7 +69,11 @@ func main() {
 		return
 	}
 
-	app := gui.NewCrossbarApp()
+	app, err := gui.NewCrossbarApp()
+	if err != nil {
+		fmt.Printf("Error: Failed to initialize crossbar app: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *enhanced {
 		fmt.Println("Starting FeCIM Crossbar Visualizer (Enhanced Mode)")

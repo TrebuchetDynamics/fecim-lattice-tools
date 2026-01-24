@@ -13,9 +13,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
-	"image/color"
 	"image/png"
 	"io"
 	"os"
@@ -27,6 +27,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -36,47 +37,12 @@ import (
 	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
 	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 )
 
-// FeCIM theme colors
-var (
-	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
-)
-
-// feCIMTheme implements fyne.Theme for consistent FeCIM branding
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return colorBackground
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return colorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255}
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255}
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255}
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
-}
+// Global logger for the main application
+var log *logging.Logger
 
 // RecordingState manages FFmpeg video recording using canvas capture
 type RecordingState struct {
@@ -314,18 +280,40 @@ type DemoApp struct {
 }
 
 func main() {
+	// Parse command-line flags
+	verbosityFlag := flag.String("verbosity", "off", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
+	flag.Parse()
+
+	// Set global verbosity level
+	verbosity := logging.ParseVerbosityFlag(*verbosityFlag)
+	logging.SetVerbosity(verbosity)
+
+	// Initialize global logger
+	log = logging.NewLogger("fecim-visualizer")
+	defer log.Close()
+
+	log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))
+
 	// Create Fyne app
 	fyneApp := app.NewWithID("com.fecim.visualizer")
-	fyneApp.Settings().SetTheme(&feCIMTheme{})
+	fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	// Create main window
 	window := fyneApp.NewWindow("FeCIM Visualization Suite - 6 World-Class Demos")
 	window.Resize(fyne.NewSize(1400, 900))
 
-	// Create demo instances
+	// Create demo instances with error handling
+	demo2, err := demo2gui.NewEmbeddedCrossbarApp()
+	if err != nil {
+		log.Printf("[ERROR] Failed to create crossbar demo: %v", err)
+		dialog.ShowError(fmt.Errorf("crossbar demo initialization failed: %w", err), window)
+		// Create a placeholder - the demo tab will show an error
+		demo2 = nil
+	}
+
 	demos := &DemoApp{
 		demo1: demo1gui.NewEmbeddedApp(),
-		demo2: demo2gui.NewEmbeddedCrossbarApp(), // Original single-view crossbar
+		demo2: demo2,                             // Original single-view crossbar (may be nil on error)
 		demo3: demo3gui.NewEmbeddedDualModeApp(), // Full-featured MNIST with FP vs CIM
 		demo4: demo4gui.NewEmbeddedCircuitsApp(),
 		demo5: demo5gui.NewEmbeddedComparisonApp(),
@@ -361,7 +349,15 @@ func main() {
 
 	// Build content for each demo
 	demo1Content := demos.demo1.BuildContent(fyneApp, window)
-	demo2Content := demos.demo2.BuildContent(fyneApp, window)
+
+	// Handle potentially nil demo2 (initialization error)
+	var demo2Content fyne.CanvasObject
+	if demos.demo2 != nil {
+		demo2Content = demos.demo2.BuildContent(fyneApp, window)
+	} else {
+		demo2Content = container.NewCenter(widget.NewLabel("Crossbar demo failed to initialize. Check logs for details."))
+	}
+
 	demo3Content := demos.demo3.BuildContent(fyneApp, window)
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
@@ -383,6 +379,7 @@ func main() {
 
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
+		log.Button("Screenshot")
 		// Get current section name from selected tab
 		sectionName := "home"
 		if tabs.Selected() != nil {
@@ -390,6 +387,7 @@ func main() {
 		}
 		filename := takeScreenshot(window, sectionName)
 		if filename != "" {
+			log.Debug("Screenshot saved: %s", filename)
 			// Show brief notification in window title
 			originalTitle := window.Title()
 			window.SetTitle("Screenshot saved: " + filename)
@@ -406,7 +404,9 @@ func main() {
 	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
 	var recordingTimerStop chan struct{}
 	recordBtn.OnTapped = func() {
+		log.Button("Record")
 		if recordingState.IsRecording() {
+			log.Debug("Stopping recording...")
 			// Stop the timer goroutine
 			if recordingTimerStop != nil {
 				close(recordingTimerStop)
@@ -415,9 +415,11 @@ func main() {
 			// Stop recording
 			outputFile, err := recordingState.stopRecording()
 			if err != nil {
+				log.Debug("Error stopping recording: %v", err)
 				fmt.Println("Error stopping recording:", err)
 				return
 			}
+			log.Debug("Recording saved: %s", outputFile)
 			recordBtn.SetText("Record")
 			recordBtn.SetIcon(theme.MediaRecordIcon())
 			// Show brief notification
@@ -430,6 +432,7 @@ func main() {
 				})
 			}()
 		} else {
+			log.Debug("Starting recording...")
 			// Start recording
 			if err := recordingState.startRecording(window); err != nil {
 				fmt.Println("Error starting recording:", err)
@@ -478,6 +481,8 @@ func main() {
 
 	// Create close button
 	closeBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
+		log.Button("Close")
+		log.Info("Application closing...")
 		// Stop recording if active
 		if recordingState.IsRecording() {
 			recordingState.stopRecording()
@@ -491,19 +496,29 @@ func main() {
 
 	// Handle tab changes - start/stop simulations as needed
 	tabs.OnSelected = func(tab *container.TabItem) {
+		log.TabChange(tab.Text)
+
 		// Stop previous demo
 		switch currentDemo {
 		case 1:
+			log.Debug("Stopping demo1 (Hysteresis)")
 			demos.demo1.Stop()
 		case 2:
-			demos.demo2.Stop()
+			log.Debug("Stopping demo2 (Crossbar+)")
+			if demos.demo2 != nil {
+				demos.demo2.Stop()
+			}
 		case 3:
+			log.Debug("Stopping demo3 (MNIST)")
 			demos.demo3.Stop()
 		case 4:
+			log.Debug("Stopping demo4 (Circuits)")
 			demos.demo4.Stop()
 		case 5:
+			log.Debug("Stopping demo5 (Comparison)")
 			demos.demo5.Stop()
 		case 6:
+			log.Debug("Stopping demo6 (EDA)")
 			demos.demo6.Stop()
 		}
 
@@ -511,21 +526,29 @@ func main() {
 		switch tab.Text {
 		case "1. Hysteresis":
 			currentDemo = 1
+			log.Debug("Starting demo1 (Hysteresis)")
 			demos.demo1.Start()
 		case "2. Crossbar+":
 			currentDemo = 2
-			demos.demo2.Start()
+			log.Debug("Starting demo2 (Crossbar+)")
+			if demos.demo2 != nil {
+				demos.demo2.Start()
+			}
 		case "3. MNIST":
 			currentDemo = 3
+			log.Debug("Starting demo3 (MNIST)")
 			demos.demo3.Start()
 		case "4. Circuits":
 			currentDemo = 4
+			log.Debug("Starting demo4 (Circuits)")
 			demos.demo4.Start()
 		case "5. Comparison":
 			currentDemo = 5
+			log.Debug("Starting demo5 (Comparison)")
 			demos.demo5.Start()
 		case "6. EDA (Work In Progress)":
 			currentDemo = 6
+			log.Debug("Starting demo6 (EDA)")
 			demos.demo6.Start()
 		default:
 			currentDemo = 0
@@ -594,7 +617,9 @@ func main() {
 
 	// Cleanup all demos on exit
 	demos.demo1.Stop()
-	demos.demo2.Stop()
+	if demos.demo2 != nil {
+		demos.demo2.Stop()
+	}
 	demos.demo3.Stop()
 	demos.demo4.Stop()
 	demos.demo5.Stop()

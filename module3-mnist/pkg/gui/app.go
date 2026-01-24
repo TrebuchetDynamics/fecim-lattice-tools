@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"log"
+	stdlog "log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -22,7 +22,7 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training"
 )
 
-var debug *log.Logger
+var debug *stdlog.Logger
 var logFile *os.File
 
 func init() {
@@ -38,14 +38,14 @@ func init() {
 	logFile, err = os.Create(logPath)
 	if err != nil {
 		// Fallback to stdout if file creation fails
-		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+		debug = stdlog.New(os.Stdout, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
 		debug.Printf("Failed to create log file: %v, using stdout", err)
 		return
 	}
 
 	// Write to both file and stdout
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+	debug = stdlog.New(multiWriter, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
 	debug.Printf("Logging to: %s", logPath)
 }
 

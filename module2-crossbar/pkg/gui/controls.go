@@ -8,7 +8,16 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 )
+
+// Package-level logger for crossbar GUI
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("crossbar")
+}
 
 // ControlPanel provides interactive controls for the crossbar demo.
 type ControlPanel struct {
@@ -59,6 +68,7 @@ func NewControlPanel() *ControlPanel {
 	cp.ArraySizeSlider.Step = 8
 	cp.ArraySizeSlider.Value = 64
 	cp.ArraySizeSlider.OnChanged = func(v float64) {
+		log.SliderChange("ArraySize", v)
 		size := int(v)
 		cp.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %dx%d", size, size))
 		if cp.OnArraySizeChanged != nil {
@@ -72,6 +82,7 @@ func NewControlPanel() *ControlPanel {
 	cp.NoiseSlider.Step = 0.5
 	cp.NoiseSlider.Value = 2
 	cp.NoiseSlider.OnChanged = func(v float64) {
+		log.SliderChange("Noise", v)
 		cp.noiseLabel.SetText(fmt.Sprintf("Noise: %.1f%%", v))
 		if cp.OnNoiseChanged != nil {
 			cp.OnNoiseChanged(v / 100.0)
@@ -84,6 +95,7 @@ func NewControlPanel() *ControlPanel {
 	cp.ADCBitsSlider.Step = 1
 	cp.ADCBitsSlider.Value = 6
 	cp.ADCBitsSlider.OnChanged = func(v float64) {
+		log.SliderChange("ADCBits", v)
 		bits := int(v)
 		cp.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
 		if cp.OnADCBitsChanged != nil {
@@ -95,6 +107,7 @@ func NewControlPanel() *ControlPanel {
 	cp.ColormapSelect = widget.NewSelect(
 		[]string{"fecim", "viridis", "plasma", "coolwarm"},
 		func(s string) {
+			log.Selection("Colormap", s)
 			if cp.OnColormapChanged != nil {
 				cp.OnColormapChanged(s)
 			}
@@ -106,6 +119,7 @@ func NewControlPanel() *ControlPanel {
 	cp.DemoModeSelect = widget.NewSelect(
 		[]string{"Manual", "Auto Demo", "Step-by-Step"},
 		func(s string) {
+			log.Selection("DemoMode", s)
 			if cp.OnDemoModeChanged != nil {
 				cp.OnDemoModeChanged(s)
 			}
@@ -115,6 +129,7 @@ func NewControlPanel() *ControlPanel {
 
 	// Action buttons
 	cp.RunMVMButton = widget.NewButton("Run MVM", func() {
+		log.Button("RunMVM")
 		if cp.OnRunMVM != nil {
 			cp.OnRunMVM()
 		}
@@ -122,18 +137,21 @@ func NewControlPanel() *ControlPanel {
 	cp.RunMVMButton.Importance = widget.HighImportance
 
 	cp.AnalyzeIRButton = widget.NewButton("Analyze IR Drop", func() {
+		log.Button("AnalyzeIRDrop")
 		if cp.OnAnalyzeIR != nil {
 			cp.OnAnalyzeIR()
 		}
 	})
 
 	cp.AnalyzeSneakButton = widget.NewButton("Analyze Sneak Paths", func() {
+		log.Button("AnalyzeSneakPaths")
 		if cp.OnAnalyzeSneak != nil {
 			cp.OnAnalyzeSneak()
 		}
 	})
 
 	cp.ResetButton = widget.NewButton("Reset Array", func() {
+		log.Button("ResetArray")
 		if cp.OnReset != nil {
 			cp.OnReset()
 		}

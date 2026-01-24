@@ -22,7 +22,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 )
+
+// Package-level logger for hysteresis GUI
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("hysteresis")
+}
 
 // Colors - FeCIM theme
 var (
@@ -330,17 +338,29 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewPadded(container.NewCenter(a.cellViz)),
 	)
 
-	// Right panel - consolidated with better spacing
-	rightPanel := container.NewVBox(
-		container.NewPadded(controls),
-		a.createSectionDivider(),
+	// Right panel - controls stay outside scroll to avoid Select popup issues
+	scrollableContent := container.NewVBox(
 		container.NewPadded(info),
 		a.createSectionDivider(),
 		container.NewPadded(slidePanel),
 		a.createSectionDivider(),
 		container.NewPadded(logPanel),
 	)
-	rightScroll := container.NewScroll(rightPanel)
+	rightScroll := container.NewScroll(scrollableContent)
+
+	// Controls at top (with Select widgets), scroll below
+	// Use a min size container to prevent resize when dropdown opens
+	controlsWithMinWidth := container.New(&fixedMinWidthLayout{minWidth: 280},
+		container.NewVBox(
+			container.NewPadded(controls),
+			a.createSectionDivider(),
+		),
+	)
+	rightArea := container.NewBorder(
+		controlsWithMinWidth,
+		nil, nil, nil,
+		rightScroll,
+	)
 
 	// Plot + level in same row (level has fixed width)
 	plotAndLevel := container.NewBorder(
@@ -361,13 +381,14 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
-	// Main layout: Cell (14%) | Plot (54%) | Right Panel (32%)
-	mainLayout := container.New(
-		&percentHBoxLayout{weights: []float32{0.14, 0.54, 0.32}},
-		cellContainer,
-		centerArea,
-		rightScroll,
-	)
+	// Main layout: Cell | Plot | Right Panel using HSplit for stability
+	// Inner split: Plot (left, 63% of remaining) | Right Panel (right, 37% of remaining)
+	innerSplit := container.NewHSplit(centerArea, rightArea)
+	innerSplit.SetOffset(0.63) // ~54/(54+32) = 0.63
+
+	// Outer split: Cell (left, 14%) | Inner (right, 86%)
+	mainLayout := container.NewHSplit(cellContainer, innerSplit)
+	mainLayout.SetOffset(0.14)
 
 	return container.NewBorder(
 		nil, // No header - cleaner look
@@ -395,7 +416,7 @@ func (a *App) createHeader() fyne.CanvasObject {
 }
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
-	// E-field slider
+	// E-field slider (no logging - too frequent)
 	a.eFieldSlider = widget.NewSlider(-2, 2)
 	a.eFieldSlider.Step = 0.01
 	a.eFieldSlider.Value = 0
@@ -411,6 +432,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Waveform selector
 	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Square Wave", "Random Walk", "Write/Read Demo"}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
+		fmt.Printf("[hysteresis] Waveform callback called: %s\n", s)
+		log.Selection("Waveform", s)
 		a.mu.Lock()
 		defer a.mu.Unlock()
 		switch s {
@@ -456,6 +479,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Material selector
 	matNames := []string{"Default HZO", "Optimized Superlattice", "FeCIM HZO"}
 	a.materialSelect = widget.NewSelect(matNames, func(s string) {
+		log.Selection("Material", s)
 		var idx int
 		switch s {
 		case "Default HZO":
@@ -480,14 +504,17 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.pauseBtn = widget.NewButton("Pause", func() {
 		a.paused = !a.paused
 		if a.paused {
+			log.Button("Pause (now paused)")
 			a.pauseBtn.SetText("Resume")
 		} else {
+			log.Button("Resume (now running)")
 			a.pauseBtn.SetText("Pause")
 		}
 	})
 
 	// Reset button
 	resetBtn := widget.NewButton("Reset", func() {
+		log.Button("Reset")
 		a.mu.Lock()
 		a.preisach.Reset()
 		a.electricField = 0
@@ -503,6 +530,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 	// ELI5 (Explain Like I'm 5) button
 	eli5Btn := widget.NewButton("ELI5", func() {
+		log.Button("ELI5")
 		a.showELI5Dialog()
 	})
 	eli5Btn.Importance = widget.LowImportance
@@ -513,6 +541,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	freqSlider.Value = 0.5
 	freqLabel := widget.NewLabel("Freq: 0.50 Hz")
 	freqSlider.OnChanged = func(v float64) {
+		log.SliderChange("Frequency", v)
 		a.mu.Lock()
 		a.frequency = v
 		// Reset trail when frequency changes
@@ -529,6 +558,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	trailSlider.Value = float64(a.maxHistory)
 	trailLabel := widget.NewLabel(fmt.Sprintf("Trail: %d", a.maxHistory))
 	trailSlider.OnChanged = func(v float64) {
+		log.SliderChange("TrailLength", v)
 		a.mu.Lock()
 		a.maxHistory = int(v)
 		// Immediately trim if history exceeds new max
@@ -2105,6 +2135,28 @@ func (l *fixedWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
+// fixedMinWidthLayout enforces a minimum width but allows expansion
+type fixedMinWidthLayout struct {
+	minWidth float32
+}
+
+func (l *fixedMinWidthLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	minH := float32(0)
+	for _, o := range objects {
+		if o.Visible() {
+			minH = fyne.Max(minH, o.MinSize().Height)
+		}
+	}
+	return fyne.NewSize(l.minWidth, minH)
+}
+
+func (l *fixedMinWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Resize(size)
+		o.Move(fyne.NewPos(0, 0))
+	}
+}
+
 // ============================================================
 // Percentage-Based HBox Layout
 // ============================================================
@@ -2122,7 +2174,8 @@ func (l *percentHBoxLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 			minH = fyne.Max(minH, o.MinSize().Height)
 		}
 	}
-	return fyne.NewSize(100, minH) // Minimal width, will expand
+	// Return fixed minimum to prevent layout recalculation issues
+	return fyne.NewSize(100, minH)
 }
 
 func (l *percentHBoxLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
