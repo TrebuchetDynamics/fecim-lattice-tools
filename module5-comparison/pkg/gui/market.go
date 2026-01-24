@@ -18,16 +18,17 @@ import (
 // MarketSegment represents a market segment with growth data.
 type MarketSegment struct {
 	Name  string
-	Y2025 float64 // Billion USD
-	Y2030 float64 // Billion USD
+	Y2024 float64 // Billion USD (historical baseline)
+	Y2026 float64 // Billion USD (near-term forecast)
+	Y2030 float64 // Billion USD (long-term forecast)
 	Color color.RGBA
 }
 
 // marketData holds the market opportunity data.
 var marketData = []MarketSegment{
-	{Name: "NAND Flash", Y2025: 78, Y2030: 98, Color: color.RGBA{200, 100, 100, 255}},
-	{Name: "DRAM", Y2025: 143, Y2030: 220, Color: color.RGBA{100, 150, 200, 255}},
-	{Name: "AI Semiconductor", Y2025: 163, Y2030: 403, Color: color.RGBA{100, 200, 150, 255}},
+	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{200, 100, 100, 255}},
+	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{100, 150, 200, 255}},
+	{Name: "AI Semiconductor", Y2024: 140, Y2026: 220, Y2030: 403, Color: color.RGBA{100, 200, 150, 255}},
 }
 
 // MarketOpportunityChart shows the market opportunity visualization using Fyne widgets.
@@ -44,7 +45,8 @@ type MarketOpportunityChart struct {
 
 	container *fyne.Container
 	totalText *canvas.Text
-	bars2025  []*canvas.Rectangle
+	bars2024  []*canvas.Rectangle
+	bars2026  []*canvas.Rectangle
 	bars2030  []*canvas.Rectangle
 	values    []*widget.Label
 }
@@ -53,7 +55,8 @@ type MarketOpportunityChart struct {
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
 		minSize:    fyne.NewSize(350, 120),
-		bars2025:   make([]*canvas.Rectangle, len(marketData)),
+		bars2024:   make([]*canvas.Rectangle, len(marketData)),
+		bars2026:   make([]*canvas.Rectangle, len(marketData)),
 		bars2030:   make([]*canvas.Rectangle, len(marketData)),
 		values:     make([]*widget.Label, len(marketData)),
 		lastValues: make([]string, len(marketData)),
@@ -110,23 +113,27 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		}
 		segLabel := widget.NewLabel(shortName)
 
-		darkColor := color.RGBA{seg.Color.R / 2, seg.Color.G / 2, seg.Color.B / 2, 255}
-		m.bars2025[i] = canvas.NewRectangle(darkColor)
-		m.bars2025[i].SetMinSize(fyne.NewSize(15, barHeight*float32(seg.Y2025)/maxVal))
+		darkestColor := color.RGBA{seg.Color.R / 3, seg.Color.G / 3, seg.Color.B / 3, 255}
+		m.bars2024[i] = canvas.NewRectangle(darkestColor)
+		m.bars2024[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2024)/maxVal))
+
+		mediumColor := color.RGBA{seg.Color.R * 2 / 3, seg.Color.G * 2 / 3, seg.Color.B * 2 / 3, 255}
+		m.bars2026[i] = canvas.NewRectangle(mediumColor)
+		m.bars2026[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2026)/maxVal))
 
 		m.bars2030[i] = canvas.NewRectangle(seg.Color)
-		m.bars2030[i].SetMinSize(fyne.NewSize(15, barHeight*float32(seg.Y2030)/maxVal))
+		m.bars2030[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2030)/maxVal))
 
 		m.values[i] = widget.NewLabel(fmt.Sprintf("$%.0fB", seg.Y2030))
 
-		barPair := container.NewHBox(m.bars2025[i], m.bars2030[i])
-		segCol := container.NewVBox(segLabel, barPair, m.values[i])
+		barGroup := container.NewHBox(m.bars2024[i], m.bars2026[i], m.bars2030[i])
+		segCol := container.NewVBox(segLabel, barGroup, m.values[i])
 		segmentWidgets = append(segmentWidgets, segCol)
 	}
 
 	barsRow := container.NewHBox(segmentWidgets...)
 
-	citation := widget.NewLabel("Source: Gartner 2025 AI Semiconductor Forecast")
+	citation := widget.NewLabel("Source: Gartner 2026 AI Semiconductor Forecast")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
@@ -163,11 +170,14 @@ func (m *MarketOpportunityChart) Refresh() {
 	barHeight := float32(80)
 
 	for i, seg := range marketData {
-		bar2025Height := barHeight * float32(seg.Y2025) / maxVal * float32(progress)
-		m.bars2025[i].SetMinSize(fyne.NewSize(25, max(2, bar2025Height)))
+		bar2024Height := barHeight * float32(seg.Y2024) / maxVal * float32(progress)
+		m.bars2024[i].SetMinSize(fyne.NewSize(20, max(2, bar2024Height)))
+
+		bar2026Height := barHeight * float32(seg.Y2026) / maxVal * float32(progress)
+		m.bars2026[i].SetMinSize(fyne.NewSize(20, max(2, bar2026Height)))
 
 		bar2030Height := barHeight * float32(seg.Y2030) / maxVal * float32(progress)
-		m.bars2030[i].SetMinSize(fyne.NewSize(25, max(2, bar2030Height)))
+		m.bars2030[i].SetMinSize(fyne.NewSize(20, max(2, bar2030Height)))
 
 		// Use caching to avoid redundant SetText calls
 		newText := fmt.Sprintf("$%.0fB", seg.Y2030*progress)
@@ -176,7 +186,8 @@ func (m *MarketOpportunityChart) Refresh() {
 			m.lastValues[i] = newText
 		}
 
-		canvas.Refresh(m.bars2025[i])
+		canvas.Refresh(m.bars2024[i])
+		canvas.Refresh(m.bars2026[i])
 		canvas.Refresh(m.bars2030[i])
 	}
 
@@ -185,20 +196,21 @@ func (m *MarketOpportunityChart) Refresh() {
 
 // Competitor represents a competitor in the matrix.
 type Competitor struct {
-	Name      string
-	Energy    string
-	InMemory  int // 0=no, 1=partial, 2=yes
-	CMOS      int
-	Scalable  int
-	Highlight bool
+	Name        string
+	Energy      string
+	InMemory    int // 0=no, 1=partial, 2=yes
+	CMOS        int
+	Scalable    int
+	Highlight   bool
+	IsEstimated bool // True if energy value is estimated
 }
 
 // competitors data for the competitive matrix.
 var competitors = []Competitor{
-	{"FeCIM", "1-10 fJ*", 2, 2, 2, true},
-	{"Google TPU", "~100 fJ", 0, 2, 2, false},
-	{"Intel Loihi 2", "~10 fJ", 2, 0, 0, false},
-	{"Mythic AI", "~5 fJ", 2, 0, 1, false},
+	{"FeCIM", "1-10 fJ*", 2, 2, 2, true, true},
+	{"Google TPU", "~100 fJ", 0, 2, 2, false, false},
+	{"Intel Loihi 2", "~10 fJ", 2, 0, 0, false, false},
+	{"IBM Analog AI", "~10 fJ", 2, 1, 1, false, true},
 }
 
 // CompetitiveMatrix shows competitive comparison.
@@ -220,6 +232,9 @@ func (c *CompetitiveMatrix) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
+	// Amber color for estimated values
+	estimatedAmber := color.RGBA{255, 191, 0, 255}
+
 	header := container.NewGridWithColumns(5,
 		widget.NewLabel("Tech"),
 		widget.NewLabel("Energy"),
@@ -234,9 +249,20 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		if comp.Highlight {
 			nameLabel.TextStyle = fyne.TextStyle{Bold: true}
 		}
+
+		// Render energy value in amber if estimated
+		var energyWidget fyne.CanvasObject
+		if comp.IsEstimated {
+			energyText := canvas.NewText(comp.Energy, estimatedAmber)
+			energyText.TextSize = 14
+			energyWidget = energyText
+		} else {
+			energyWidget = widget.NewLabel(comp.Energy)
+		}
+
 		row := container.NewGridWithColumns(5,
 			nameLabel,
-			widget.NewLabel(comp.Energy),
+			energyWidget,
 			createStatusLabel(comp.InMemory),
 			createStatusLabel(comp.CMOS),
 			createStatusLabel(comp.Scalable),

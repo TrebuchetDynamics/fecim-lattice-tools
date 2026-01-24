@@ -27,6 +27,9 @@ type Architecture struct {
 	// Cost factors
 	ManufactureCost float64 // Relative manufacturing cost
 	PowerCost       float64 // Power consumption cost factor
+
+	// Data quality
+	IsEstimated bool // True if values are estimates/projections (not verified)
 }
 
 // TraditionalCPU creates a traditional CPU + DRAM architecture.
@@ -104,6 +107,7 @@ func FeCIMChip() *Architecture {
 		TOPSPerMM2:      1.0,  // ESTIMATED - derived from estimates above
 		ManufactureCost: 0.3,  // ESTIMATED - not disclosed
 		PowerCost:       0.04, // ESTIMATED - not disclosed
+		IsEstimated:     true, // TRL 4 - specs are estimates/projections
 	}
 }
 

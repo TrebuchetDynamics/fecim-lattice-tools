@@ -15,6 +15,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// estimatedColor is used for unverified/estimated values (amber)
+var estimatedColor = color.RGBA{255, 191, 0, 255}
+
 // Energy values in picojoules per MAC (from docs/videos/ironlattice-youtube-script.md)
 // "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
 const (
@@ -125,9 +128,13 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	gpuRow := container.NewHBox(gpuLabelBox, e.gpuBar, gpuValueBox)
 
 	// FeCIM row - 0.1% width (1 pJ = 1000× less) - minimum 4px visible
-	fecimLabel := widget.NewLabel("FeCIM*")
+	fecimLabel := widget.NewLabel("FeCIM")
 	fecimLabel.TextStyle = fyne.TextStyle{Bold: true}
-	fecimLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), fecimLabel)
+	fecimAsterisk := canvas.NewText("*", estimatedColor)
+	fecimAsterisk.TextSize = 14
+	fecimAsterisk.TextStyle = fyne.TextStyle{Bold: true}
+	fecimLabelWithAsterisk := container.NewHBox(fecimLabel, fecimAsterisk)
+	fecimLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), fecimLabelWithAsterisk)
 	e.fecimBar = canvas.NewRectangle(color.RGBA{80, 220, 120, 255})
 	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001), barHeight)) // 0.1% of CPU, min 4px
 	e.fecimValue = widget.NewLabel("~1 pJ")
@@ -144,11 +151,17 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	scaleNote := widget.NewLabel("(Linear scale)")
 	scaleNote.TextStyle = fyne.TextStyle{Italic: true}
 
+	// Legend for estimated indicator
+	estimatedNote := canvas.NewText("* = Estimated (TRL 4)", estimatedColor)
+	estimatedNote.TextSize = 10
+	estimatedNote.TextStyle = fyne.TextStyle{Italic: true}
+
 	e.container = container.NewVBox(
 		cpuRow,
 		gpuRow,
 		fecimRow,
 		container.NewHBox(container.NewCenter(e.headlineText), layout.NewSpacer(), scaleNote),
+		container.NewHBox(layout.NewSpacer(), estimatedNote),
 	)
 
 	return widget.NewSimpleRenderer(e.container)

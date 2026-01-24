@@ -6,9 +6,7 @@ package tabs
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -125,7 +123,15 @@ This project is not affiliated with or endorsed by
 external research institution, Dr. external research group, or any foundry.`)
 	intro.Wrapping = fyne.TextWrapWord
 
-	return container.NewVBox(title, widget.NewSeparator(), intro)
+	modesVisual := OperationModesVisual()
+
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		intro,
+		widget.NewSeparator(),
+		modesVisual,
+	)
 }
 
 func makeOpenLaneFlowContent() fyne.CanvasObject {
@@ -228,9 +234,10 @@ func makeWhatWeGenerateContent() fyne.CanvasObject {
 	lefCard := LEFPreviewCard()
 	defCard := DEFPreviewCard()
 	verilogCard := VerilogPreviewCard()
+	libertyCard := LibertyPreviewCard()
 
 	cardsRow1 := container.NewHBox(lefCard, defCard)
-	cardsRow2 := container.NewHBox(verilogCard)
+	cardsRow2 := container.NewHBox(verilogCard, libertyCard)
 
 	description := widget.NewLabel(`FILE PURPOSES:
 --------------
@@ -304,6 +311,8 @@ func makeCellTypesContent() fyne.CanvasObject {
   - More complex routing`)
 	oneToneRContent.Wrapping = fyne.TextWrapWord
 
+	comparisonTable := CellComparisonTable()
+
 	sneakPath := widget.NewLabel(`THE SNEAK PATH PROBLEM
 ----------------------
 In passive arrays, reading cell (0,0):
@@ -330,6 +339,8 @@ REFERENCES: RSC Nanoscale Advances 2020, IEEE JSSC`)
 		widget.NewSeparator(),
 		diagramsRow,
 		widget.NewSeparator(),
+		comparisonTable,
+		widget.NewSeparator(),
 		passiveContent,
 		oneToneRContent,
 		widget.NewSeparator(),
@@ -340,66 +351,10 @@ REFERENCES: RSC Nanoscale Advances 2020, IEEE JSSC`)
 func makeReferencesContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`All claims in this tool are backed by published research.
+	// Use the visual references card
+	refsCard := ReferencesCard()
 
-OPENLANE / EDA
-==============
-[1] "OpenLANE: The Open-Source Digital ASIC Flow"
-    WOSET 2020
-    https://woset-workshop.github.io/PDFs/2020/a21.pdf
-    -> Our DEF/Verilog formats follow this spec
-
-[2] OpenLane Documentation
-    https://openlane.readthedocs.io/
-    -> Configuration variables we generate
-
-[3] LEF/DEF 5.8 Specification
-    Si2/OpenAccess Coalition
-    -> File format standards we follow
-
-
-SKYWATER PDK
-============
-[4] SkyWater SKY130 Process Design Kit
-    https://skywater-pdk.readthedocs.io/
-    -> Cell dimensions: 0.46um site, 2.72um height
-    -> Metal layer specs for pin placement
-
-[5] SKY130 Standard Cells
-    https://github.com/google/skywater-pdk
-    -> LEF/Liberty format examples
-
-
-FECIM DEVICE PHYSICS
-====================
-[6] Shin et al. "Flash In2Se3 for Neuromorphic Computing"
-    Advanced Electronic Materials, 2025
-    -> 30 discrete analog states
-
-[7] Tour Group HfO2-ZrO2 Superlattice Research
-    external research institution
-    -> Ferroelectric switching dynamics
-
-[8] "Roadmap on Ferroelectric Hafnia/Zirconia"
-    APL Materials, 2023
-    -> HfO2/ZrO2 material properties
-
-
-CIM ARCHITECTURE
-================
-[9] "Sneak Path Solutions for Crossbar Arrays"
-    RSC Nanoscale Advances, 2020
-    -> Passive vs 1T1R trade-offs
-
-[10] "Optimizing Hardware-Software Co-Design"
-     Science China, 2025
-     -> IR-drop and non-ideality analysis
-
-[11] NeuroSim (Georgia Tech)
-     -> Circuit-level CIM modeling methodology
-
-
-DISCLAIMER
+	disclaimer := widget.NewLabel(`DISCLAIMER
 ==========
 This project is NOT affiliated with or endorsed by:
   * external research institution
@@ -408,18 +363,9 @@ This project is NOT affiliated with or endorsed by:
   * Google
   * Any foundry or research institution
 
-All references are to publicly available
-published research. We implement SIMULATIONS
-based on this published data, not validated
-against actual hardware.
+All references are to publicly available published research.
+For full reference list with DOIs, see: docs/eda/REFERENCES.md`)
+	disclaimer.Wrapping = fyne.TextWrapWord
 
-For the full reference list with DOIs and
-paper links, see: docs/eda/REFERENCES.md`)
-	content.Wrapping = fyne.TextWrapWord
-
-	// Add a visual separator
-	line := canvas.NewLine(theme.ForegroundColor())
-	line.StrokeWidth = 1
-
-	return container.NewVBox(title, widget.NewSeparator(), content)
+	return container.NewVBox(title, widget.NewSeparator(), refsCard, widget.NewSeparator(), disclaimer)
 }

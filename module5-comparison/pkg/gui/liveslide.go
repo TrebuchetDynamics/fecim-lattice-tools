@@ -409,7 +409,7 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 		content = "VS COMPETITION\n\n" +
 			"Google TPU: Not in-memory\n" +
 			"Intel Loihi: Non-CMOS\n" +
-			"Mythic AI: Not scalable\n\n" +
+			"IBM Analog AI: Research only\n\n" +
 			"FeCIM: ✓ In-memory\n" +
 			"       ✓ CMOS fab\n" +
 			"       ✓ Scalable"

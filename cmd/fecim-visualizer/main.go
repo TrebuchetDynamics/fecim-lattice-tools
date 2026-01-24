@@ -450,6 +450,7 @@ func main() {
 	fmt.Println("[STARTUP] demo6 content built")
 
 	// Create tabs - 6 demos total (plus home)
+	fmt.Println("[STARTUP] Creating tabs...")
 	tabs = container.NewAppTabs(
 		container.NewTabItem("Home", launcherContent),
 		container.NewTabItem("1. Hysteresis", container.NewMax(demo1Content)),
@@ -459,9 +460,12 @@ func main() {
 		container.NewTabItem("5. Comparison", container.NewMax(demo5Content)),
 		container.NewTabItem("6. EDA (Work In Progress)", container.NewMax(demo6Content)),
 	)
+	fmt.Println("[STARTUP] Tabs created")
+	fmt.Println("[STARTUP] Creating recording state...")
 
 	// Create recording state
 	recordingState := newRecordingState()
+	fmt.Println("[STARTUP] Creating buttons...")
 
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
@@ -644,9 +648,11 @@ func main() {
 		}
 	}
 
-	tabs.SetTabLocation(container.TabLocationTop)
+	// NOTE: SetTabLocation commented out - deadlocks during startup
+	// tabs.SetTabLocation(container.TabLocationTop)
 
 	// Create toolbar with buttons aligned right
+	fmt.Println("[STARTUP] Creating toolbar...")
 	toolbar := container.NewBorder(
 		nil, nil, nil,
 		container.NewHBox(screenshotBtn, recordBtn, recordTimeLabel, closeBtn),
@@ -654,12 +660,28 @@ func main() {
 	)
 
 	// Stack tabs with toolbar on top
+	fmt.Println("[STARTUP] Creating main content...")
 	mainContent := container.NewBorder(
 		toolbar, nil, nil, nil,
 		tabs,
 	)
 
-	window.SetContent(mainContent)
+	// Set content in a deferred way to avoid fyne.Do() deadlock
+	// First set a placeholder, then set real content after event loop starts
+	fmt.Println("[STARTUP] Setting placeholder content...")
+	loadingLabel := widget.NewLabel("Loading FeCIM Visualizer...")
+	window.SetContent(container.NewCenter(loadingLabel))
+
+	// Defer setting actual content until after main loop starts
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		fyne.Do(func() {
+			fmt.Println("[STARTUP] Setting actual window content...")
+			window.SetContent(mainContent)
+			fmt.Println("[STARTUP] Window content set")
+		})
+	}()
+	fmt.Println("[STARTUP] Placeholder content set")
 
 	// Start window resize tracking for debugging (if FYNE_DEBUG_RESIZE is set)
 	if sharedwidgets.DebugResize {
@@ -708,11 +730,14 @@ func main() {
 	})
 
 	// Restore last selected tab
+	fmt.Println("[STARTUP] Restoring last tab...")
 	lastTabIndex := loadLastTab(prefs)
 	if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
+		fmt.Printf("[STARTUP] Selecting tab index %d...\n", lastTabIndex)
 		tabs.SelectIndex(lastTabIndex)
 		log.Debug("Restored last tab: %d", lastTabIndex)
 	}
+	fmt.Println("[STARTUP] Tab restored")
 
 	// Run the application
 	fmt.Println("[STARTUP] About to call ShowAndRun()...")

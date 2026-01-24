@@ -139,19 +139,19 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 	// Create main layout
 	fmt.Println("[MNIST] BuildContent: calling createMainLayout...")
 	content := app.createMainLayout()
-	fmt.Println("[MNIST] BuildContent: createMainLayout done")
-
-	// Initialize weight heatmap
-	fmt.Println("[MNIST] BuildContent: calling updateWeightHeatmap...")
-	app.updateWeightHeatmap()
-	fmt.Println("[MNIST] BuildContent: done")
+	fmt.Println("[MNIST] BuildContent: done (deferred init to Start)")
+	// NOTE: updateWeightHeatmap and changeHiddenSize deferred to Start() to avoid fyne.Do() deadlock
 
 	return content
 }
 
 // Start initializes anything that needs to run after UI is visible.
 func (app *DualModeApp) Start() {
-	// Nothing to start - event-driven
+	// Initialize network display now that UI is ready (deferred from BuildContent to avoid fyne.Do() deadlock)
+	fmt.Println("[MNIST] Start: initializing network display...")
+	app.changeHiddenSize(128)
+	app.updateWeightHeatmap()
+	fmt.Println("[MNIST] Start: done")
 }
 
 // Stop cleans up resources.
@@ -224,10 +224,10 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 		mainSplit,
 	)
 
-	// Mark as initialized and trigger initial setup
-	fmt.Println("[MNIST] createMainLayout: calling changeHiddenSize...")
+	// Mark as initialized - but defer changeHiddenSize to Start() to avoid fyne.Do() deadlock
+	fmt.Println("[MNIST] createMainLayout: setting initialized=true...")
 	app.initialized = true
-	app.changeHiddenSize(128) // Initialize with default hidden size
+	// NOTE: changeHiddenSize(128) moved to Start() method to avoid deadlock
 
 	fmt.Println("[MNIST] createMainLayout: returning")
 	return mainContent

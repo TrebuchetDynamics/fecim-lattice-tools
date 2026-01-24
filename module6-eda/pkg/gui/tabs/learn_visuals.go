@@ -25,6 +25,12 @@ var (
 	colorBL          = color.RGBA{100, 200, 255, 255} // Blue for bit lines
 	colorFeFET       = color.RGBA{255, 200, 50, 255}  // Gold for FeFET devices
 	colorHighlight   = color.RGBA{0, 255, 150, 255}   // Green highlight
+	colorStorage     = color.RGBA{100, 150, 255, 255}  // Blue for Storage mode
+	colorMemory      = color.RGBA{255, 200, 50, 255}   // Gold for Memory mode
+	colorCompute     = color.RGBA{0, 255, 150, 255}    // Green for Compute mode
+	colorTableHeader = color.RGBA{0, 60, 120, 255}    // Dark blue table headers
+	colorTableRow1   = color.RGBA{0, 40, 80, 255}     // Alternating row 1
+	colorTableRow2   = color.RGBA{0, 50, 100, 255}    // Alternating row 2
 )
 
 // =============================================================================
@@ -520,6 +526,236 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 }
 
 // =============================================================================
+// CELL COMPARISON TABLE
+// =============================================================================
+
+// CellComparisonTable creates a visual comparison table for Passive vs 1T1R cells
+func CellComparisonTable() fyne.CanvasObject {
+	objects := []fyne.CanvasObject{}
+
+	// Table dimensions
+	colWidths := []float32{100, 100, 100, 100} // Property, Passive, 1T1R, Winner
+	rowHeight := float32(24)
+	startX := float32(10)
+	startY := float32(10)
+
+	// Table data
+	type row struct {
+		property string
+		passive  string
+		t1r      string
+		winner   string // "Passive" or "1T1R"
+	}
+
+	rows := []row{
+		{"Property", "Passive", "1T1R", "Winner"}, // Header
+		{"Cell Size", "0.46x2.72um", "0.92x2.72um", "Passive"},
+		{"Area (um²)", "1.25", "2.50", "Passive"},
+		{"Sneak Path", "HIGH", "NONE", "1T1R"},
+		{"Max Array", "~32x32", "128x128+", "1T1R"},
+		{"Port Count", "WL,BL", "WL,BL,SL", "Passive"},
+		{"Fab Complex", "Simple", "Moderate", "Passive"},
+	}
+
+	// Draw table
+	for i, rowData := range rows {
+		y := startY + float32(i)*rowHeight
+		x := startX
+
+		// Row background
+		var bgColor color.Color
+		if i == 0 {
+			bgColor = colorTableHeader
+		} else if i%2 == 1 {
+			bgColor = colorTableRow1
+		} else {
+			bgColor = colorTableRow2
+		}
+
+		rowBg := canvas.NewRectangle(bgColor)
+		rowBg.Resize(fyne.NewSize(400, rowHeight))
+		rowBg.Move(fyne.NewPos(x, y))
+		objects = append(objects, rowBg)
+
+		// Cells
+		cells := []string{rowData.property, rowData.passive, rowData.t1r, rowData.winner}
+		for j, cellText := range cells {
+			cellX := x + float32(j)*colWidths[j]
+
+			// Cell text
+			text := canvas.NewText(cellText, colorText)
+			if i == 0 {
+				text.TextSize = 11
+				text.TextStyle = fyne.TextStyle{Bold: true}
+			} else {
+				text.TextSize = 10
+			}
+
+			// Winner column gets special coloring
+			if j == 3 && i > 0 {
+				if cellText == "1T1R" {
+					text.Color = colorHighlight
+					text.TextStyle = fyne.TextStyle{Bold: true}
+				} else {
+					text.Color = colorBoxOurs
+					text.TextStyle = fyne.TextStyle{Bold: true}
+				}
+			}
+
+			text.Move(fyne.NewPos(cellX+5, y+5))
+			objects = append(objects, text)
+
+			// Vertical grid line (except after last column)
+			if j < len(cells)-1 {
+				lineX := cellX + colWidths[j]
+				line := canvas.NewLine(colorArrow)
+				line.StrokeWidth = 1
+				line.Position1 = fyne.NewPos(lineX, y)
+				line.Position2 = fyne.NewPos(lineX, y+rowHeight)
+				objects = append(objects, line)
+			}
+		}
+
+		// Horizontal grid line after row
+		hLine := canvas.NewLine(colorArrow)
+		hLine.StrokeWidth = 1
+		hLine.Position1 = fyne.NewPos(x, y+rowHeight)
+		hLine.Position2 = fyne.NewPos(x+400, y+rowHeight)
+		objects = append(objects, hLine)
+	}
+
+	// Outer border
+	border := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
+	border.StrokeColor = colorArrow
+	border.StrokeWidth = 2
+	border.Resize(fyne.NewSize(400, float32(len(rows))*rowHeight))
+	border.Move(fyne.NewPos(startX, startY))
+	objects = append(objects, border)
+
+	cont := container.NewWithoutLayout(objects...)
+	cont.Resize(fyne.NewSize(420, 200))
+
+	return cont
+}
+
+// =============================================================================
+// FECIM OPERATION MODES VISUAL
+// =============================================================================
+
+// OperationModesVisual creates a visual diagram showing the 3 FeCIM operation modes
+func OperationModesVisual() fyne.CanvasObject {
+	objects := []fyne.CanvasObject{}
+
+	// Title
+	title := canvas.NewText("FeCIM Operation Modes", colorText)
+	title.TextSize = 16
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Move(fyne.NewPos(110, 10))
+	objects = append(objects, title)
+
+	// Box dimensions
+	boxW := float32(110)
+	boxH := float32(90)
+	spacing := float32(15)
+	startX := float32(10)
+	startY := float32(40)
+
+	// Mode definitions
+	modes := []struct {
+		name        string
+		description string
+		color       color.Color
+		x           float32
+	}{
+		{"STORAGE", "Flash-like, ~4.9 bits/cell", colorStorage, startX},
+		{"MEMORY", "DRAM-like, Fast R/W", colorMemory, startX + boxW + spacing},
+		{"COMPUTE", "MVM/MAC, in-place", colorCompute, startX + 2*(boxW+spacing)},
+	}
+
+	// Draw mode boxes
+	for _, mode := range modes {
+		// Box background
+		box := canvas.NewRectangle(mode.color)
+		box.Resize(fyne.NewSize(boxW, boxH))
+		box.Move(fyne.NewPos(mode.x, startY))
+		box.CornerRadius = 8
+		objects = append(objects, box)
+
+		// Mode name (centered in box)
+		nameText := canvas.NewText(mode.name, colorBgDark)
+		nameText.TextSize = 12
+		nameText.TextStyle = fyne.TextStyle{Bold: true}
+		// Center text horizontally
+		nameX := mode.x + (boxW-float32(len(mode.name))*7)/2
+		nameText.Move(fyne.NewPos(nameX, startY+25))
+		objects = append(objects, nameText)
+
+		// Description (centered below name)
+		descText := canvas.NewText(mode.description, colorBgDark)
+		descText.TextSize = 10
+		// Center description horizontally (approximate)
+		descX := mode.x + 8
+		descText.Move(fyne.NewPos(descX, startY+50))
+		objects = append(objects, descText)
+	}
+
+	// Central FeCIM circle position
+	circleX := float32(210)  // Center of the diagram
+	circleY := float32(165)  // Below the boxes
+	circleRadius := float32(20)
+
+	// Draw lines from each box to central circle
+	for i, mode := range modes {
+		// Start point: bottom center of box
+		x1 := mode.x + boxW/2
+		y1 := startY + boxH
+
+		// End point: edge of circle (top)
+		line := canvas.NewLine(colorArrow)
+		line.StrokeWidth = 2
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(circleX, circleY-circleRadius)
+
+		// Adjust line endpoints for visual clarity
+		if i == 0 {
+			// Left box - line goes to left side of circle
+			line.Position2 = fyne.NewPos(circleX-circleRadius*0.7, circleY-circleRadius*0.7)
+		} else if i == 2 {
+			// Right box - line goes to right side of circle
+			line.Position2 = fyne.NewPos(circleX+circleRadius*0.7, circleY-circleRadius*0.7)
+		}
+
+		objects = append(objects, line)
+	}
+
+	// Central FeCIM circle
+	circle := canvas.NewCircle(colorBoxOurs)
+	circle.Resize(fyne.NewSize(circleRadius*2, circleRadius*2))
+	circle.Move(fyne.NewPos(circleX-circleRadius, circleY-circleRadius))
+	objects = append(objects, circle)
+
+	// "FeCIM" label in center
+	fecimLabel := canvas.NewText("FeCIM", colorBgDark)
+	fecimLabel.TextSize = 12
+	fecimLabel.TextStyle = fyne.TextStyle{Bold: true}
+	fecimLabel.Move(fyne.NewPos(circleX-22, circleY-8))
+	objects = append(objects, fecimLabel)
+
+	// Quote below circle
+	quote := canvas.NewText("\"Same device does all\"", colorBoxOurs)
+	quote.TextSize = 11
+	quote.TextStyle = fyne.TextStyle{Italic: true}
+	quote.Move(fyne.NewPos(circleX-75, circleY+30))
+	objects = append(objects, quote)
+
+	// Container with fixed size
+	cont := container.NewWithoutLayout(objects...)
+	cont.Resize(fyne.NewSize(420, 200))
+
+	return cont
+}
+
+// =============================================================================
 // FILE FORMAT PREVIEW CARDS
 // =============================================================================
 
@@ -588,4 +824,143 @@ func VerilogPreviewCard() fyne.CanvasObject {
   // ... 16 cells
 endmodule`
 	return FileFormatCard("Verilog", "v", content)
+}
+
+// LibertyPreviewCard shows a Liberty timing file example
+func LibertyPreviewCard() fyne.CanvasObject {
+	content := `library(fecim_cells) {
+  cell(fecim_bitcell) {
+    area : 1.2512 ;
+    pin(WL) { capacitance: 0.002; }
+    timing() { cell_rise: 0.1ns; }
+  }
+}`
+	return FileFormatCard("Liberty", "lib", content)
+}
+
+// =============================================================================
+// REFERENCES CARD
+// =============================================================================
+
+// ReferencesCard creates an IEEE-formatted references section with category headers
+func ReferencesCard() fyne.CanvasObject {
+	objects := []fyne.CanvasObject{}
+
+	// Card dimensions
+	cardWidth := float32(420)
+	cardHeight := float32(310)
+
+	// Category header dimensions
+	headerHeight := float32(26)
+	categorySpacing := float32(8)
+
+	// Starting positions
+	startX := float32(0)
+	currentY := float32(0)
+
+	// Category 1: EDA / OpenLane
+	header1 := canvas.NewRectangle(colorBoxOurs)
+	header1.Resize(fyne.NewSize(cardWidth, headerHeight))
+	header1.Move(fyne.NewPos(startX, currentY))
+	header1.CornerRadius = 4
+	objects = append(objects, header1)
+
+	headerText1 := canvas.NewText("EDA / OpenLane", colorText)
+	headerText1.TextSize = 12
+	headerText1.TextStyle = fyne.TextStyle{Bold: true}
+	headerText1.Move(fyne.NewPos(startX+10, currentY+6))
+	objects = append(objects, headerText1)
+
+	currentY += headerHeight
+
+	// References for EDA / OpenLane
+	refs1 := `[1] M. Shalan et al., "OpenLANE: Digital ASIC Flow," WOSET, 2020.
+[2] LEF/DEF 5.8 Specification, Si2 Coalition.`
+
+	refBg1 := canvas.NewRectangle(colorBgDark)
+	refBg1.Resize(fyne.NewSize(cardWidth, 50))
+	refBg1.Move(fyne.NewPos(startX, currentY))
+	objects = append(objects, refBg1)
+
+	refLabel1 := widget.NewLabel(refs1)
+	refLabel1.Wrapping = fyne.TextWrapWord
+	refLabel1.TextStyle = fyne.TextStyle{}
+	refContainer1 := container.NewPadded(refLabel1)
+	refContainer1.Move(fyne.NewPos(startX+5, currentY+2))
+	refContainer1.Resize(fyne.NewSize(cardWidth-10, 46))
+	objects = append(objects, refContainer1)
+
+	currentY += 50 + categorySpacing
+
+	// Category 2: FeCIM Device Physics
+	header2 := canvas.NewRectangle(colorBoxOurs)
+	header2.Resize(fyne.NewSize(cardWidth, headerHeight))
+	header2.Move(fyne.NewPos(startX, currentY))
+	header2.CornerRadius = 4
+	objects = append(objects, header2)
+
+	headerText2 := canvas.NewText("FeCIM Device Physics", colorText)
+	headerText2.TextSize = 12
+	headerText2.TextStyle = fyne.TextStyle{Bold: true}
+	headerText2.Move(fyne.NewPos(startX+10, currentY+6))
+	objects = append(objects, headerText2)
+
+	currentY += headerHeight
+
+	// References for FeCIM Device Physics
+	refs2 := `[3] S. Shin et al., "Flash In2Se3," Adv. Electron. Mater., 2025.
+[4] U. Schroeder et al., "Roadmap Ferroelectric HfZrO," APL Mater., 2023.`
+
+	refBg2 := canvas.NewRectangle(colorBgDark)
+	refBg2.Resize(fyne.NewSize(cardWidth, 50))
+	refBg2.Move(fyne.NewPos(startX, currentY))
+	objects = append(objects, refBg2)
+
+	refLabel2 := widget.NewLabel(refs2)
+	refLabel2.Wrapping = fyne.TextWrapWord
+	refLabel2.TextStyle = fyne.TextStyle{}
+	refContainer2 := container.NewPadded(refLabel2)
+	refContainer2.Move(fyne.NewPos(startX+5, currentY+2))
+	refContainer2.Resize(fyne.NewSize(cardWidth-10, 46))
+	objects = append(objects, refContainer2)
+
+	currentY += 50 + categorySpacing
+
+	// Category 3: CIM Architecture
+	header3 := canvas.NewRectangle(colorBoxOurs)
+	header3.Resize(fyne.NewSize(cardWidth, headerHeight))
+	header3.Move(fyne.NewPos(startX, currentY))
+	header3.CornerRadius = 4
+	objects = append(objects, header3)
+
+	headerText3 := canvas.NewText("CIM Architecture", colorText)
+	headerText3.TextSize = 12
+	headerText3.TextStyle = fyne.TextStyle{Bold: true}
+	headerText3.Move(fyne.NewPos(startX+10, currentY+6))
+	objects = append(objects, headerText3)
+
+	currentY += headerHeight
+
+	// References for CIM Architecture
+	refs3 := `[5] Y. Chen, "Sneak Path Solutions," RSC Nanoscale Adv., 2020.
+[6] P. Chen, NeuroSim, Georgia Tech, 2021.`
+
+	refBg3 := canvas.NewRectangle(colorBgDark)
+	refBg3.Resize(fyne.NewSize(cardWidth, 50))
+	refBg3.Move(fyne.NewPos(startX, currentY))
+	objects = append(objects, refBg3)
+
+	refLabel3 := widget.NewLabel(refs3)
+	refLabel3.Wrapping = fyne.TextWrapWord
+	refLabel3.TextStyle = fyne.TextStyle{}
+	refContainer3 := container.NewPadded(refLabel3)
+	refContainer3.Move(fyne.NewPos(startX+5, currentY+2))
+	refContainer3.Resize(fyne.NewSize(cardWidth-10, 46))
+	objects = append(objects, refContainer3)
+
+	// Container with fixed size
+	cont := container.NewWithoutLayout(objects...)
+	cont.Resize(fyne.NewSize(cardWidth, cardHeight))
+
+	return cont
 }
