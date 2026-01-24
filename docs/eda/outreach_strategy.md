@@ -21,13 +21,7 @@ This is the **first open-source EDA suite for ferroelectric compute-in-memory (F
 *   **FMC raised €100M** (November 2025) - ferroelectric memory commercialization wave starting
 *   **No open-source EDA tools exist yet** - user owns the niche
 
-### 2. The "Controlled Threat" Strategy
-**Game theory:**
-*   **User's BATNA:** Open-source it → become "FeCIM EDA guy" → attract opportunities
-*   **Dr. Tour's risk:** Competitors (FMC, startups) get free tools, lose control of standard
-*   **Leverage:** Repository is private NOW, could go public if no response
-
-### 3. Repository Privacy Strategy
+### 2. Repository Privacy Strategy
 **Decision:** Keep repo private, use **unlisted YouTube video** for demo
 *   **Rationale:** Protect IP from idea theft, academic scooping, commercial cloning
 *   **Approach:** Show UI functionality, don't reveal implementation details
@@ -140,7 +134,6 @@ trebuchetdynamics.com
 ### Tone
 *   Confident, not asking permission
 *   Direct: "Built this. Demo here. Want code? Send usernames."
-*   No weak phrasing ("hope this is useful," "let me know what you think")
 
 ### Follow-Up Strategy
 *   **If No Response:**
