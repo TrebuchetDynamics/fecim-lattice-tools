@@ -249,6 +249,141 @@ func (r *vectorBarChartRenderer) Objects() []fyne.CanvasObject {
 
 func (r *vectorBarChartRenderer) Destroy() {}
 
+// MiniMatrixView displays a small heatmap of the conductance matrix.
+type MiniMatrixView struct {
+	widget.BaseWidget
+
+	data   [][]float64
+	rows   int
+	cols   int
+	raster *canvas.Raster
+}
+
+// NewMiniMatrixView creates a new mini matrix visualization.
+func NewMiniMatrixView() *MiniMatrixView {
+	m := &MiniMatrixView{}
+	m.ExtendBaseWidget(m)
+	return m
+}
+
+// SetData updates the matrix data.
+func (m *MiniMatrixView) SetData(data [][]float64) {
+	m.data = data
+	if len(data) > 0 {
+		m.rows = len(data)
+		m.cols = len(data[0])
+	}
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
+		m.Refresh()
+	})
+}
+
+// CreateRenderer implements fyne.Widget.
+func (m *MiniMatrixView) CreateRenderer() fyne.WidgetRenderer {
+	m.raster = canvas.NewRaster(m.generateImage)
+	return widget.NewSimpleRenderer(m.raster)
+}
+
+// MinSize returns minimum size.
+func (m *MiniMatrixView) MinSize() fyne.Size {
+	return fyne.NewSize(150, 100)
+}
+
+// generateImage creates the mini matrix heatmap.
+func (m *MiniMatrixView) generateImage(w, h int) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+	// Background
+	bgColor := color.RGBA{35, 35, 45, 255}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			img.Set(x, y, bgColor)
+		}
+	}
+
+	if len(m.data) == 0 || m.rows == 0 || m.cols == 0 {
+		// Draw placeholder text area
+		placeholderColor := color.RGBA{60, 60, 70, 255}
+		for y := h/4; y < 3*h/4; y++ {
+			for x := w/4; x < 3*w/4; x++ {
+				img.Set(x, y, placeholderColor)
+			}
+		}
+		return img
+	}
+
+	// Limit to max 32x32 for performance
+	displayRows := m.rows
+	displayCols := m.cols
+	if displayRows > 32 {
+		displayRows = 32
+	}
+	if displayCols > 32 {
+		displayCols = 32
+	}
+
+	// Calculate cell size
+	padding := 10
+	cellW := float64(w-2*padding) / float64(displayCols)
+	cellH := float64(h-2*padding) / float64(displayRows)
+	cellSize := math.Min(cellW, cellH)
+	if cellSize < 2 {
+		cellSize = 2
+	}
+
+	// Find min/max for normalization
+	minVal := math.Inf(1)
+	maxVal := math.Inf(-1)
+	for i := 0; i < displayRows && i < len(m.data); i++ {
+		for j := 0; j < displayCols && j < len(m.data[i]); j++ {
+			if m.data[i][j] < minVal {
+				minVal = m.data[i][j]
+			}
+			if m.data[i][j] > maxVal {
+				maxVal = m.data[i][j]
+			}
+		}
+	}
+	if maxVal <= minVal {
+		maxVal = minVal + 1
+	}
+
+	// Draw cells
+	for i := 0; i < displayRows && i < len(m.data); i++ {
+		for j := 0; j < displayCols && j < len(m.data[i]); j++ {
+			normVal := (m.data[i][j] - minVal) / (maxVal - minVal)
+			cellColor := fecimColor(normVal)
+
+			x0 := int(float64(padding) + float64(j)*cellSize)
+			y0 := int(float64(padding) + float64(i)*cellSize)
+			x1 := int(float64(padding) + float64(j+1)*cellSize - 1)
+			y1 := int(float64(padding) + float64(i+1)*cellSize - 1)
+
+			for y := y0; y < y1 && y < h; y++ {
+				for x := x0; x < x1 && x < w; x++ {
+					img.Set(x, y, cellColor)
+				}
+			}
+		}
+	}
+
+	// Draw border
+	borderColor := color.RGBA{100, 120, 140, 255}
+	for x := padding; x < w-padding; x++ {
+		img.Set(x, padding, borderColor)
+		img.Set(x, h-padding-1, borderColor)
+	}
+	for y := padding; y < h-padding; y++ {
+		img.Set(padding, y, borderColor)
+		img.Set(w-padding-1, y, borderColor)
+	}
+
+	return img
+}
+
 // MVMVisualization shows the matrix-vector multiplication process.
 type MVMVisualization struct {
 	widget.BaseWidget
@@ -259,6 +394,7 @@ type MVMVisualization struct {
 
 	inputChart  *VectorBarChart
 	outputChart *VectorBarChart
+	miniMatrix  *MiniMatrixView
 }
 
 // NewMVMVisualization creates a new MVM visualization.
@@ -269,9 +405,12 @@ func NewMVMVisualization() *MVMVisualization {
 	outputChart := NewVectorBarChart("Output Vector (I)", color.RGBA{255, 200, 100, 255})
 	outputChart.SetUnit(" µA") // Current unit
 
+	miniMatrix := NewMiniMatrixView()
+
 	m := &MVMVisualization{
 		inputChart:  inputChart,
 		outputChart: outputChart,
+		miniMatrix:  miniMatrix,
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -289,12 +428,35 @@ func (m *MVMVisualization) SetOutput(output []float64) {
 	m.outputChart.SetValues(output)
 }
 
+// SetWeights updates the conductance matrix visualization.
+func (m *MVMVisualization) SetWeights(weights [][]float64) {
+	m.weights = weights
+	if m.miniMatrix != nil {
+		m.miniMatrix.SetData(weights)
+	}
+}
+
 // CreateRenderer implements fyne.Widget.
 func (m *MVMVisualization) CreateRenderer() fyne.WidgetRenderer {
+	// Input label
+	inputLabel := canvas.NewText("Input Vector (V)", color.RGBA{150, 180, 255, 255})
+	inputLabel.TextSize = 11
+	inputLabel.Alignment = fyne.TextAlignCenter
+
 	// MVM operation symbol
-	mvmLabel := widget.NewLabel("Crossbar W × V = I")
+	mvmLabel := widget.NewLabel("W × V = I")
 	mvmLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 	mvmLabel.Alignment = fyne.TextAlignCenter
+
+	// Matrix label
+	matrixLabel := canvas.NewText("Conductance Matrix (W)", color.RGBA{180, 180, 180, 255})
+	matrixLabel.TextSize = 10
+	matrixLabel.Alignment = fyne.TextAlignCenter
+
+	// Output label
+	outputLabel := canvas.NewText("Output Current (I)", color.RGBA{255, 200, 150, 255})
+	outputLabel.TextSize = 11
+	outputLabel.Alignment = fyne.TextAlignCenter
 
 	// Stats
 	statsLabel := widget.NewLabel("")
@@ -310,9 +472,14 @@ func (m *MVMVisualization) CreateRenderer() fyne.WidgetRenderer {
 	}
 	statsLabel.Alignment = fyne.TextAlignCenter
 
+	// Layout: Input → Matrix → Output (vertical flow)
 	content := container.NewVBox(
+		inputLabel,
 		m.inputChart,
 		mvmLabel,
+		matrixLabel,
+		container.NewCenter(m.miniMatrix),
+		outputLabel,
 		m.outputChart,
 		statsLabel,
 	)

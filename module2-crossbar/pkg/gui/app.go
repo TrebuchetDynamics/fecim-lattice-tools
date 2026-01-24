@@ -86,6 +86,10 @@ type CrossbarApp struct {
 	irColormap    string
 	sneakColormap string
 
+	// Architecture selector (Dr. Tour: clarify 0T1R vs 1T1R)
+	archSelect   *widget.Select
+	architecture string // "1T1R (Transistor)" or "0T1R (Passive)"
+
 	// Status
 	statusLabel    *widget.Label
 	infoLabel      *widget.Label
@@ -271,6 +275,34 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	})
 	ca.colormapSelect.SetSelected("fecim")
 
+	// Architecture selector: 0T1R (passive) vs 1T1R (with access transistor)
+	// Dr. Tour recommendation: clarify sneak path behavior depends on architecture
+	ca.archSelect = widget.NewSelect([]string{"1T1R (Transistor)", "0T1R (Passive)"}, func(s string) {
+		ca.stateMu.Lock()
+		ca.architecture = s
+		ca.stateMu.Unlock()
+		// Update educational content based on architecture
+		if s == "1T1R (Transistor)" {
+			ca.setEducationalContent("1T1R Architecture",
+				"1T1R = One Transistor + One FeFET\n\n"+
+					"✓ Transistor isolates cells\n"+
+					"✓ NO sneak paths\n"+
+					"✓ Industry standard\n"+
+					"✗ Lower density (50% area)\n\n"+
+					"Best for: High accuracy")
+		} else {
+			ca.setEducationalContent("0T1R Architecture",
+				"0T1R = Passive crossbar\n\n"+
+					"✓ Highest density\n"+
+					"✓ Simpler fabrication\n"+
+					"✗ Sneak paths (2-15% error)\n"+
+					"✗ Needs self-rectifying cells\n\n"+
+					"FeFET advantage: natural\n"+
+					"rectification possible")
+		}
+	})
+	ca.archSelect.SetSelected("1T1R (Transistor)")
+
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
 	ca.statsLabel.Wrapping = fyne.TextWrapOff
 	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true} // Fixed-width prevents resize
@@ -377,6 +409,14 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.adcBitsSlider,
 	)
 
+	// Architecture settings group (Dr. Tour: clarify 0T1R vs 1T1R)
+	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	archGroup := container.NewVBox(
+		widget.NewSeparator(),
+		archLabel,
+		ca.archSelect,
+	)
+
 	// Display settings group
 	displayLabel := widget.NewLabelWithStyle("Display", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	displayGroup := container.NewVBox(
@@ -389,6 +429,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	controlsBox := container.NewVBox(
 		actionsGroup,
 		settingsGroup,
+		archGroup,
 		signalGroup,
 		displayGroup,
 	)

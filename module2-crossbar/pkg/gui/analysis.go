@@ -64,9 +64,6 @@ func (ca *CrossbarApp) runSneakPathAnalysis() {
 
 // analyzeIRDrop performs IR drop analysis.
 func (ca *CrossbarApp) analyzeIRDrop() {
-	// Switch to IR Drop tab
-	ca.tabs.SelectIndex(1)
-
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeIRDrop)
 	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
@@ -128,9 +125,6 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 // analyzeSneakPaths performs sneak path analysis.
 func (ca *CrossbarApp) analyzeSneakPaths() {
-	// Switch to Sneak Paths tab
-	ca.tabs.SelectIndex(2)
-
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeSneakPath)
 	ca.setEducationalContent("Non-Ideality: Sneak Paths", "SNEAK PATH ANALYSIS\n\nCurrent can flow through\nunintended paths in passive\ncrossbar arrays.\n\nMitigation strategies:\n• Selector devices\n• 1T1R architecture\n• Threshold switching")

@@ -136,21 +136,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 		// Auto-run IR Drop and Sneak Path analysis
 		ca.runIRDropAnalysis()
 		ca.runSneakPathAnalysis()
-	})
 
-	// Cycle through all tabs (4 seconds each)
-	tabNames := []string{"Conductance", "IR Drop", "Sneak Paths", "Input/Output"}
-	for i, name := range tabNames {
-		fyne.Do(func() {
-			ca.tabs.SelectIndex(i)
-			ca.updateStatus(fmt.Sprintf("Showing: %s", name))
-		})
-		time.Sleep(4 * time.Second)
-	}
-
-	// Return to Conductance tab and re-enable button
-	fyne.Do(func() {
-		ca.tabs.SelectIndex(0)
 		ca.updateStatus("Ready for next MVM")
 		ca.runMVMButton.Enable()
 	})

@@ -111,8 +111,8 @@ func (l *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns the minimum size.
 func (l *ColorLegend) MinSize() fyne.Size {
-	// Increased width to accommodate tick value labels
-	return fyne.NewSize(80, 150)
+	// Width: barX(10) + barWidth(30) + tick(8) + label space(42) = 90
+	return fyne.NewSize(90, 150)
 }
 
 // generateImage creates the legend gradient.
@@ -121,7 +121,7 @@ func (l *ColorLegend) generateImage(w, h int) image.Image {
 
 	// Draw gradient bar
 	barX := 10
-	barWidth := 20
+	barWidth := 30 // Increased from 20 for better visibility
 	barY := 30
 	barHeight := h - 60
 
@@ -174,8 +174,8 @@ func (l *ColorLegend) generateImage(w, h int) image.Image {
 			if level%5 == 0 {
 				t := float64(level) / 29.0
 				y := barY + int(float64(barHeight)*(1.0-t))
-				// Draw tick mark
-				for x := barX + barWidth; x < barX+barWidth+5; x++ {
+				// Draw tick mark (8px for better visibility)
+				for x := barX + barWidth; x < barX+barWidth+8; x++ {
 					img.Set(x, y, tickColor)
 				}
 			}
@@ -206,9 +206,11 @@ func (r *colorLegendRenderer) Layout(size fyne.Size) {
 	}
 	r.cache.MarkLayout(size)
 	r.raster.Resize(size)
-	r.maxText.Move(fyne.NewPos(38, 25))
+	// Position labels after the bar (barX=10 + barWidth=30 + tick=8 + padding=2 = 50)
+	labelX := float32(50)
+	r.maxText.Move(fyne.NewPos(labelX, 25))
 	r.unitText.Move(fyne.NewPos(0, 5))
-	r.minText.Move(fyne.NewPos(38, size.Height-20))
+	r.minText.Move(fyne.NewPos(labelX, size.Height-20))
 
 	// Position tick labels (0, 10, 20 for 30-level FeCIM)
 	if len(r.tickLabels) > 0 && r.legend.levels == 30 {
@@ -219,7 +221,7 @@ func (r *colorLegendRenderer) Layout(size fyne.Size) {
 			// Calculate Y position based on level value
 			t := float64(tickValues[i]) / 29.0
 			y := barY + barHeight*(1.0-float32(t)) - 5
-			label.Move(fyne.NewPos(38, y))
+			label.Move(fyne.NewPos(labelX, y))
 		}
 	}
 }
@@ -791,12 +793,8 @@ func (r *waterfallRenderer) Refresh() {
 	if len(w.stepLabels) != len(w.steps) {
 		w.stepLabels = make([]*canvas.Text, len(w.steps))
 		for i, step := range w.steps {
-			// Shorten label names for display
-			shortLabel := step.Label
-			if len(shortLabel) > 10 {
-				shortLabel = shortLabel[:10]
-			}
-			label := canvas.NewText(shortLabel, color.RGBA{150, 150, 150, 255})
+			// Use full label name without truncation
+			label := canvas.NewText(step.Label, color.RGBA{150, 150, 150, 255})
 			label.TextSize = 8
 			label.Alignment = fyne.TextAlignCenter
 			w.stepLabels[i] = label
@@ -917,22 +915,31 @@ func (b *BeforeAfterToggle) updateDisplay() {
 
 	switch b.mode {
 	case "split":
+		b.leftHeatmap.SetColormap("fecim")
+		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.idealData)
 		b.rightHeatmap.SetData(b.actualData)
 	case "before":
+		b.leftHeatmap.SetColormap("fecim")
+		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.idealData)
 		b.rightHeatmap.SetData(b.idealData)
 	case "after":
+		b.leftHeatmap.SetColormap("fecim")
+		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.actualData)
 		b.rightHeatmap.SetData(b.actualData)
 	case "diff":
-		diff := b.computeDifference()
+		// Use diverging colormap (blue-white-red) for difference view
+		b.leftHeatmap.SetColormap("diverging")
+		b.rightHeatmap.SetColormap("diverging")
+		diff := b.computeSignedDifference()
 		b.leftHeatmap.SetData(diff)
 		b.rightHeatmap.SetData(diff)
 	}
 }
 
-// computeDifference computes the difference map.
+// computeDifference computes the absolute difference map.
 func (b *BeforeAfterToggle) computeDifference() [][]float64 {
 	rows := len(b.idealData)
 	if rows == 0 {
@@ -945,6 +952,45 @@ func (b *BeforeAfterToggle) computeDifference() [][]float64 {
 		diff[i] = make([]float64, cols)
 		for j := range diff[i] {
 			diff[i][j] = math.Abs(b.idealData[i][j] - b.actualData[i][j])
+		}
+	}
+	return diff
+}
+
+// computeSignedDifference computes the signed difference map for diverging colormap.
+// Returns values in range [-1, 1] where negative means ideal > actual, positive means actual > ideal.
+func (b *BeforeAfterToggle) computeSignedDifference() [][]float64 {
+	rows := len(b.idealData)
+	if rows == 0 {
+		return nil
+	}
+	cols := len(b.idealData[0])
+
+	// First pass: find max absolute difference for normalization
+	maxAbsDiff := 0.0
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols && j < len(b.idealData[i]) && j < len(b.actualData[i]); j++ {
+			absDiff := math.Abs(b.actualData[i][j] - b.idealData[i][j])
+			if absDiff > maxAbsDiff {
+				maxAbsDiff = absDiff
+			}
+		}
+	}
+
+	// Avoid division by zero
+	if maxAbsDiff == 0 {
+		maxAbsDiff = 1
+	}
+
+	// Second pass: compute normalized signed differences
+	diff := make([][]float64, rows)
+	for i := range diff {
+		diff[i] = make([]float64, cols)
+		for j := range diff[i] {
+			if j < len(b.idealData[i]) && j < len(b.actualData[i]) {
+				// Normalize to [-1, 1] range
+				diff[i][j] = (b.actualData[i][j] - b.idealData[i][j]) / maxAbsDiff
+			}
 		}
 	}
 	return diff

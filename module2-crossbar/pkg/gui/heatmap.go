@@ -38,6 +38,9 @@ type CrossbarHeatmap struct {
 	selectedCol   int
 	showSelection bool
 
+	// Grid lines (subtle lines between cells for larger arrays)
+	showGridLines bool
+
 	// Animation state
 	animPhase     int     // 0=none, 1=input, 2=compute, 3=output
 	animProgress  float64 // 0-1 progress within phase
@@ -178,6 +181,12 @@ func (h *CrossbarHeatmap) ClearSelection() {
 	h.rateLimitedRefresh()
 }
 
+// SetShowGridLines enables or disables grid line rendering.
+func (h *CrossbarHeatmap) SetShowGridLines(show bool) {
+	h.showGridLines = show
+	h.rateLimitedRefresh()
+}
+
 // SetDimensions changes the dimensions of the heatmap and reinitializes data.
 func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 	h.rows = rows
@@ -187,6 +196,9 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 	h.showSelection = false
 	h.minVal = 0
 	h.maxVal = 1 // Reset to default range
+
+	// Auto-enable grid lines for larger arrays (>16x16) for better cell distinction
+	h.showGridLines = rows > 16 || cols > 16
 
 	// Reinitialize data
 	h.data = make([][]float64, rows)
@@ -400,6 +412,29 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 		}
 	}
 
+	// Draw grid lines if enabled (after cells for visibility)
+	if h.showGridLines {
+		gridColor := color.RGBA{60, 80, 100, 100} // Subtle blue-gray
+		// Draw horizontal lines
+		for i := 0; i <= h.rows; i++ {
+			y := int(20 + float64(i)*cellSize)
+			if y >= 0 && y < h_size {
+				for x := 20; x < int(20+float64(h.cols)*cellSize) && x < w; x++ {
+					img.Set(x, y, gridColor)
+				}
+			}
+		}
+		// Draw vertical lines
+		for j := 0; j <= h.cols; j++ {
+			x := int(20 + float64(j)*cellSize)
+			if x >= 0 && x < w {
+				for y := 20; y < int(20+float64(h.rows)*cellSize) && y < h_size; y++ {
+					img.Set(x, y, gridColor)
+				}
+			}
+		}
+	}
+
 	// Draw axis labels (simplified)
 	labelColor := color.RGBA{200, 200, 200, 255}
 	// Draw corner markers
@@ -413,6 +448,12 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 
 // valueToColor converts a normalized value to a color using the selected colormap.
 func (h *CrossbarHeatmap) valueToColor(t float64) color.RGBA {
+	// For diverging colormap, t is already in [-1, 1] range
+	if h.colormap == "diverging" {
+		return divergingColor(t)
+	}
+
+	// Standard colormaps expect t in [0, 1]
 	if t < 0 {
 		t = 0
 	} else if t > 1 {
@@ -533,6 +574,36 @@ func clamp(v, min, max float64) float64 {
 		return max
 	}
 	return v
+}
+
+// divergingColor returns a red-white-blue diverging colormap for difference visualization.
+// t ranges from -1 to 1 where: negative = blue, zero = white, positive = red.
+func divergingColor(t float64) color.RGBA {
+	// Clamp t to [-1, 1]
+	if t < -1 {
+		t = -1
+	} else if t > 1 {
+		t = 1
+	}
+
+	if t < 0 {
+		// Blue gradient (negative differences)
+		s := -t // 0 to 1
+		return color.RGBA{
+			R: uint8(255 * (1 - s)),
+			G: uint8(255 * (1 - s)),
+			B: 255,
+			A: 255,
+		}
+	}
+	// Red gradient (positive differences)
+	s := t // 0 to 1
+	return color.RGBA{
+		R: 255,
+		G: uint8(255 * (1 - s)),
+		B: uint8(255 * (1 - s)),
+		A: 255,
+	}
 }
 
 // heatmapRenderer implements fyne.WidgetRenderer.

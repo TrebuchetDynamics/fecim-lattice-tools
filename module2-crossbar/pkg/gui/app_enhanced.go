@@ -596,20 +596,6 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
 			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
 		ca.modeIndicator.SetMode(DemoModeIdle)
-	})
-
-	// Cycle through key tabs
-	tabIndices := []int{0, 1, 2, 4, 5} // Conductance, IR Drop, Sneak, Comparison, Waterfall
-	for _, idx := range tabIndices {
-		fyne.Do(func() {
-			ca.tabs.SelectIndex(idx)
-		})
-		time.Sleep(3 * time.Second)
-	}
-
-	// Return to Conductance tab
-	fyne.Do(func() {
-		ca.tabs.SelectIndex(0)
 		ca.runMVMButton.Enable()
 	})
 
