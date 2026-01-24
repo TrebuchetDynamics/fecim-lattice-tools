@@ -18,3 +18,4 @@ screenshots/
 train-network
 train-single-layer
 cmd/fecim-visualizer/logs/OpenLane/
+/OpenLane
