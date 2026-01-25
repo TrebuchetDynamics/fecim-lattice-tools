@@ -11,17 +11,19 @@
 ## Table of Contents
 
 1. [Executive Summary](#1-executive-summary)
-2. [Technology Foundation](#2-technology-foundation)
-3. [Module 6 EDA Design Suite](#3-module-6-eda-design-suite)
-4. [OpenLane Integration Strategy](#4-openlane-integration-strategy)
-5. [Process Design Kits (PDKs)](#5-process-design-kits-pdks)
-6. [Fabrication Pathways](#6-fabrication-pathways)
-7. [Simulation & Validation](#7-simulation--validation)
-8. [Custom FeFET Cell Design](#8-custom-fefet-cell-design)
-9. [Complete Design-to-Wafer Workflow](#9-complete-design-to-wafer-workflow)
-10. [Cost & Timeline Analysis](#10-cost--timeline-analysis)
-11. [Risk Assessment & Mitigation](#11-risk-assessment--mitigation)
-12. [References](#12-references)
+2. [ELI5: The Big Picture](#2-eli5-the-big-picture)
+3. [Where Module 6 Fits](#3-where-module-6-fits)
+4. [Technology Foundation](#4-technology-foundation)
+5. [Module 6 EDA Design Suite](#5-module-6-eda-design-suite)
+6. [OpenLane Integration Strategy](#6-openlane-integration-strategy)
+7. [Process Design Kits (PDKs)](#7-process-design-kits-pdks)
+8. [Fabrication Pathways](#8-fabrication-pathways)
+9. [Simulation & Validation](#9-simulation--validation)
+10. [Custom FeFET Cell Design](#10-custom-fefet-cell-design)
+11. [Complete Design-to-Wafer Workflow](#11-complete-design-to-wafer-workflow)
+12. [Cost & Timeline Analysis](#12-cost--timeline-analysis)
+13. [Risk Assessment & Mitigation](#13-risk-assessment--mitigation)
+14. [References](#14-references)
 
 ---
 
@@ -58,7 +60,125 @@ Transform FeCIM (Ferroelectric Compute-in-Memory) array designs from our Module 
 
 ---
 
-## 2. Technology Foundation
+## 2. ELI5: The Big Picture
+
+> *"Explain Like I'm 5" - A simplified overview for quick understanding*
+
+### What We're Doing
+
+You want to turn FeCIM chip designs into **real silicon chips**. This document explains how.
+
+### Key Discoveries
+
+**1. Your Tool Works**
+Module 6 already generates the right files (Verilog, DEF) that chip-making software understands.
+
+**2. Making Chips is Surprisingly Affordable**
+
+| Option | Cost | Time |
+|--------|------|------|
+| Google's free program (OpenMPW) | $0 | 6-9 months |
+| Tiny Tapeout | ~$300 | 6 months |
+| ChipFoundry | $15,000 | 5 months |
+
+**3. The Catch: FeFET is Special**
+
+Regular chip factories don't know how to make ferroelectric memory yet. It's like asking a regular bakery to make a soufflé - they have ovens, but not the recipe.
+
+**Solutions:**
+- Make the "normal" parts at a chip factory
+- Add the ferroelectric layer yourself (or with a university lab)
+- Or use IHP's MEMRES module (they have HfO₂ - the same material!)
+
+**4. IHP is the Best Match**
+
+IHP (a German chip maker) has a **MEMRES module** that uses the same basic material (hafnium oxide) as Dr. Tour's FeCIM. Cost: ~€18,000 for a small chip.
+
+**5. Simulate Before You Fabricate**
+
+Free tools exist to test your design virtually:
+- **CrossSim** - Fast accuracy testing
+- **NeuroSim** - Power/area estimates
+- **ngspice** - Circuit-level testing
+
+### Bottom Line
+
+**You CAN make real FeCIM chips.**
+
+The path is: `Design → Simulate → Standard CMOS fab → Add ferroelectric layer`
+
+Budget: $0-$20k for prototypes, 6-12 months.
+
+---
+
+## 3. Where Module 6 Fits
+
+Your tool is the **first critical step** - it bridges the gap between "I have an idea for a FeCIM array" and "I have files a chip factory can use."
+
+### The Chip-Making Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    THE CHIP-MAKING PIPELINE                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   IDEA ──► MODULE 6 ──► OpenLane ──► Factory ──► Real Chip     │
+│               ▲                                                 │
+│               │                                                 │
+│          YOU ARE HERE                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### What Module 6 Does (That Nothing Else Does)
+
+| Problem | Module 6 Solves It |
+|---------|---------------------|
+| "I want a 256×256 FeCIM array" | Click, configure, done |
+| "I need files for OpenLane" | Generates Verilog + DEF automatically |
+| "What about 30-level quantization?" | Built-in (matches Dr. Tour's spec) |
+| "Storage vs Memory vs Compute mode?" | All three supported |
+| "How do I place thousands of cells?" | Auto-generates placement grid |
+
+### Without Module 6 vs With Module 6
+
+**Without Module 6:**
+- Manually write thousands of lines of Verilog
+- Hand-calculate cell positions for DEF file
+- Hope you got the quantization math right
+- Repeat for every design change
+
+**With Module 6:**
+```bash
+go run ./cmd/eda-cli -mode compute -rows 256 -cols 256 -output ./chip
+# Done. Verilog, DEF, SPICE all generated.
+```
+
+### Target Users
+
+```
+         Academia                    Industry
+             │                           │
+             │    ┌─────────────────┐    │
+             │    │    MODULE 6     │    │
+             │    │                 │    │
+             │    │  • Researchers  │    │
+             │    │  • Students     │    │
+             │    │  • Startups     │    │
+             │    │  • Prototyping  │    │
+             │    └─────────────────┘    │
+             │                           │
+        $0 budget                   $1M+ budget
+        (OpenMPW)                   (Full custom)
+```
+
+**Your users**: Anyone who wants to prototype FeCIM arrays without writing thousands of lines of EDA code by hand.
+
+**Value proposition**: Turns weeks of manual work into minutes of configuration.
+
+---
+
+## 4. Technology Foundation
 
 ### 2.1 Ferroelectric Memory Principles
 
@@ -106,7 +226,7 @@ Module 6 supports three FeCIM operation modes:
 
 ---
 
-## 3. Module 6 EDA Design Suite
+## 5. Module 6 EDA Design Suite
 
 ### 3.1 Overview
 
@@ -162,7 +282,7 @@ go run ./cmd/eda-cli \
 
 ---
 
-## 4. OpenLane Integration Strategy
+## 6. OpenLane Integration Strategy
 
 ### 4.1 OpenLane Flow Overview
 
@@ -293,7 +413,7 @@ END DESIGN
 
 ---
 
-## 5. Process Design Kits (PDKs)
+## 7. Process Design Kits (PDKs)
 
 ### 5.1 SKY130 PDK (Primary Target)
 
@@ -357,7 +477,7 @@ END DESIGN
 
 ---
 
-## 6. Fabrication Pathways
+## 8. Fabrication Pathways
 
 ### 6.1 Option Comparison Matrix
 
@@ -448,7 +568,7 @@ END DESIGN
 
 ---
 
-## 7. Simulation & Validation
+## 9. Simulation & Validation
 
 ### 7.1 Pre-Silicon Simulation Tools
 
@@ -530,7 +650,7 @@ plot V(BL) V(WL)
 
 ---
 
-## 8. Custom FeFET Cell Design
+## 10. Custom FeFET Cell Design
 
 ### 8.1 Material Stack: HfO₂-ZrO₂ Superlattice
 
@@ -715,7 +835,7 @@ library(fecim_1t1r) {
 
 ---
 
-## 9. Complete Design-to-Wafer Workflow
+## 11. Complete Design-to-Wafer Workflow
 
 ### 9.1 Phase 0: Requirements (Week 1-2)
 
@@ -864,7 +984,7 @@ library(fecim_1t1r) {
 
 ---
 
-## 10. Cost & Timeline Analysis
+## 12. Cost & Timeline Analysis
 
 ### 10.1 Standard CMOS Path (Peripheral Circuits)
 
@@ -911,7 +1031,7 @@ library(fecim_1t1r) {
 
 ---
 
-## 11. Risk Assessment & Mitigation
+## 13. Risk Assessment & Mitigation
 
 ### 11.1 Technical Risks
 
@@ -948,7 +1068,7 @@ library(fecim_1t1r) {
 
 ---
 
-## 12. References
+## 14. References
 
 ### Project Documentation
 
