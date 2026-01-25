@@ -235,7 +235,7 @@ func (ca *CircuitsApp) createReadDataPathSection() fyne.CanvasObject {
 		"I = G × V = -- µS × -- V = -- µA\n" +
 			"V_tia = I × R = -- µA × -- kΩ = -- mV\n" +
 			"ADC = (-- mV / 1000 mV) × 255 = --\n" +
-			"Level = round(-- / 255 × 29) = --",
+			"Level = round(-- / 255 × (L-1)) = --",
 	)
 	// Use monospace for better alignment
 	ca.readCalcLabel.TextStyle = fyne.TextStyle{Monospace: true}
@@ -562,11 +562,11 @@ func (ca *CircuitsApp) refreshReadCalculation() {
 				"I     = G × V     = %.1f µS × %.2f V = %.1f µA\n"+
 					"V_tia = I × R     = %.1f µA × %.0f kΩ = %.0f mV\n"+
 					"ADC   = V_tia/Vref = %.0f / 1000 × 255 = %d\n"+
-					"Level = ADC/Max   = %d / 255 × 29  = %d",
+					"Level = ADC/Max   = %d / 255 × %d  = %d",
 				conductance, readV, current,
 				current, tiaGain, tiaVoltage,
 				tiaVoltage, adcRaw,
-				adcRaw, decodedLevel,
+				adcRaw, levels-1, decodedLevel,
 			))
 		})
 	}

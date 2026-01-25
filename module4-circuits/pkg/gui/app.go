@@ -98,6 +98,7 @@ type CircuitsApp struct {
 	compEnergyCanvas *canvas.Raster
 	compTableLabels  []*widget.Label
 	compStatusLabel  *widget.Label
+	compArraySize    int // Current array size for comparison (8, 16, 32, or 64)
 
 	// Tab 5: Timing
 	timingOpSelect      *widget.Select
@@ -136,6 +137,7 @@ func NewCircuitsApp() *CircuitsApp {
 		selectedRow: 3,
 		selectedCol: 5,
 		targetLevel: 15,
+		compArraySize: 8, // Start with 8x8 array for comparison
 	}
 
 	// Create Fyne app

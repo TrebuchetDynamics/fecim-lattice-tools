@@ -398,15 +398,16 @@ func (ca *CircuitsApp) onAnimateComparison() {
 func (ca *CircuitsApp) onScaleUpComparison() {
 	// Cycle through array sizes and update comparison values
 	sizes := []int{8, 16, 32, 64}
-	currentSize := 8
 
 	// Find next size in cycle
+	currentSize := ca.compArraySize
 	for i, size := range sizes {
 		if size == currentSize {
 			currentSize = sizes[(i+1)%len(sizes)]
 			break
 		}
 	}
+	ca.compArraySize = currentSize
 
 	// Calculate scaled values
 	scaleFactor := float64(currentSize * currentSize) / 64.0 // 64 = 8x8 baseline

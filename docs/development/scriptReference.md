@@ -2,6 +2,348 @@
 
 Quick reference for file structure and key functions. Use this for fast lookups.
 
+## Quick Navigation (For AI Agents)
+
+| I need to... | Go to section |
+|--------------|---------------|
+| Find a function | [Quick Function Lookups](#quick-function-lookups) |
+| Add a new demo | [Common Patterns: Adding New Demo](#adding-a-new-demo-module) |
+| Fix a UI crash | [Error Resolution Guide](#error-resolution-guide) |
+| Understand imports | [Import Patterns](#import-patterns) |
+| Check thread safety | [Thread Safety Guide](#thread-safety-guide) |
+| Find file dependencies | [Module Dependencies](#module-dependencies) |
+| Modify physics | [Decision Trees](#decision-trees) |
+
+## Decision Trees
+
+### "I need to modify..." Decision Tree
+
+| Modify What | File Location | Key Type/Function |
+|-------------|---------------|-------------------|
+| Crossbar physics | `module2-crossbar/pkg/crossbar/array.go` | `Config`, `Array`, `MVM()` |
+| Hysteresis model | `module1-hysteresis/pkg/ferroelectric/preisach.go` | `PreisachModel`, `Update()` |
+| MNIST inference | `module3-mnist/pkg/core/network.go` | `DualModeNetwork`, `Infer()` |
+| Circuit peripherals | `module4-circuits/pkg/peripherals/*.go` | `DAC`, `ADC`, `TIA` |
+| Theme/colors | `shared/theme/theme.go` | `ColorPrimary`, `ColorBackground` |
+| Non-idealities | `module2-crossbar/pkg/crossbar/nonidealities.go` | `AnalyzeIRDrop()`, `AnalyzeSneakPaths()` |
+| Quantization levels | `module2-crossbar/pkg/crossbar/array.go` | `FeCIMLevels`, `QuantizeTo30Levels()` |
+
+### "I need to add..." Decision Tree
+
+| Add What | Template File | Required Interface |
+|----------|---------------|-------------------|
+| New demo module | Copy `module4-circuits/pkg/gui/embedded.go` | `NewEmbedded*App()`, `BuildContent()`, `Start()`, `Stop()` |
+| New tab to existing demo | See `module2-crossbar/pkg/gui/tabs/*.go` | Tab struct with `CreateContent()` method |
+| New physics test | `*_test.go` in same package | `Test*` function with `*testing.T` |
+| New peripheral | `module4-circuits/pkg/peripherals/` | Struct with `Default*()` constructor |
+
+### "I need to debug..." Decision Tree
+
+| Problem | First Check | Solution Pattern |
+|---------|-------------|------------------|
+| UI not updating | Missing `fyne.Do()` wrapper | Wrap in `fyne.Do(func() { ... })` |
+| Nil pointer in GUI | Widget not initialized | Check `BuildContent()` called before `Start()` |
+| Wrong quantization | Check `FeCIMLevels` constant | Use `crossbar.QuantizeTo30Levels()` |
+| Import error | Check module path | Use `multilayer-ferroelectric-cim-visualizer/module*` |
+| Test fails on CI | GUI test without display | Skip with `t.Skip("Requires display")` |
+| Goroutine panic | Race condition | Add mutex or use channels |
+
+## Error Resolution Guide
+
+### Common Errors and Fixes
+
+| Error Message | Cause | Fix |
+|---------------|-------|-----|
+| `panic: runtime error: invalid memory address` | UI update from goroutine | Wrap in `fyne.Do(func() { ... })` |
+| `undefined: crossbar.NewArray` | Wrong import path | Import `multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar` |
+| `type *XxxApp has no field or method BuildContent` | Missing embedded interface | Implement: `BuildContent()`, `Start()`, `Stop()` |
+| `cannot use x (type float64) as type int` | Quantization type mismatch | Use `int(crossbar.QuantizeTo30Levels(x) * 29)` for level index |
+| `fyne: no OpenGL context` | GUI test without display | Add `t.Skip("Requires display")` |
+| `weights not loaded` | Missing weight file | Call `LoadWeights()` before `Infer()` |
+| `conductance out of range` | Value > 1.0 or < 0.0 | Normalize to [0, 1] before `ProgramWeight()` |
+| `slice bounds out of range` | Array dimension mismatch | Check `array.Rows()` and `array.Cols()` match input |
+| `context deadline exceeded` | Slow operation blocking | Move to goroutine with callback |
+| `duplicate declaration` | Same name in package | Rename or check imports |
+
+### Thread Safety Errors
+
+| Symptom | Check | Fix |
+|---------|-------|-----|
+| Random crashes on UI update | Update from goroutine? | Use `fyne.Do()` |
+| Race condition warnings | Shared state access? | Use `sync.Mutex` or channel |
+| Frozen UI | Blocking on main thread? | Move to goroutine with `fyne.Do()` callback |
+| Data corruption | Concurrent map access? | Use `sync.Map` or mutex |
+
+### Build Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `go: module not found` | Module not in go.mod | Run `go mod tidy` |
+| `cgo: pkg-config not found` | Missing system deps | Install `libgl1-mesa-dev` (Linux) |
+| `vulkan headers not found` | Missing Vulkan SDK | Install `vulkan-sdk` or use non-Vulkan mode |
+| `undefined: widget.NewXxx` | Old Fyne version | Run `go get fyne.io/fyne/v2@latest` |
+
+## Thread Safety Guide
+
+### Functions Requiring fyne.Do() Wrapper
+
+Any UI update from a goroutine MUST use `fyne.Do()`:
+
+| Component | Safe Pattern |
+|-----------|--------------|
+| Label text | `fyne.Do(func() { label.SetText("new") })` |
+| Container add | `fyne.Do(func() { container.Add(widget) })` |
+| Refresh widget | `fyne.Do(func() { widget.Refresh() })` |
+| Progress bar | `fyne.Do(func() { progress.SetValue(0.5) })` |
+| Status updates | `fyne.Do(func() { app.statusLabel.SetText("msg") })` |
+| Heatmap redraw | `fyne.Do(func() { heatmap.Refresh() })` |
+
+### Thread-Safe Code Pattern
+
+```go
+// WRONG - will crash randomly
+go func() {
+    label.SetText("Updated")  // NO: direct UI update from goroutine
+}()
+
+// CORRECT - thread-safe
+go func() {
+    result := heavyComputation()
+    fyne.Do(func() {
+        label.SetText(result)  // YES: wrapped in fyne.Do()
+    })
+}()
+```
+
+### Concurrent Data Access Pattern
+
+```go
+// Use mutex for shared state
+type SafeState struct {
+    mu    sync.Mutex
+    value float64
+}
+
+func (s *SafeState) Update(v float64) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    s.value = v
+}
+```
+
+## Import Patterns
+
+### Standard Module Imports
+
+```go
+import (
+    // Core crossbar (MVM, quantization)
+    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+
+    // Hysteresis model (Preisach)
+    "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+
+    // MNIST network (DualModeNetwork)
+    "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+
+    // Circuit peripherals (DAC, ADC, TIA)
+    "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+
+    // Comparison metrics
+    "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/comparison"
+
+    // EDA compiler
+    "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+
+    // Shared theme
+    "multilayer-ferroelectric-cim-visualizer/shared/theme"
+
+    // Fyne GUI
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/container"
+    "fyne.io/fyne/v2/widget"
+    "fyne.io/fyne/v2/canvas"
+)
+```
+
+## Module Dependencies
+
+### Dependency Graph
+
+```
+cmd/fecim-visualizer
+    ├── shared/theme
+    ├── module1-hysteresis/pkg/gui
+    ├── module2-crossbar/pkg/gui
+    ├── module3-mnist/pkg/gui
+    ├── module4-circuits/pkg/gui
+    └── module5-comparison/pkg/gui
+
+module3-mnist/pkg/core
+    └── module2-crossbar/pkg/crossbar  (for quantization)
+
+module4-circuits/pkg/peripherals
+    └── (standalone - no internal deps)
+
+module5-comparison/pkg/comparison
+    └── (standalone - no internal deps)
+```
+
+### Safe to Modify (no dependents)
+- `shared/theme/` - Only imported by GUI packages
+- `module*-*/pkg/gui/` - Only imported by main app
+- `docs/` - No code imports
+
+### Modify with Care (has dependents)
+- `module2-crossbar/pkg/crossbar/` - Imported by module3-mnist
+- Constants like `FeCIMLevels` affect multiple modules
+
+## Common Patterns
+
+### Adding a New Demo Module
+
+1. Create directory structure:
+```
+module7-newdemo/
+    cmd/newdemo-gui/main.go
+    pkg/newdemo/logic.go
+    pkg/gui/
+        app.go
+        embedded.go  # Required for unified app
+```
+
+2. Implement embedded interface in `pkg/gui/embedded.go`:
+```go
+package gui
+
+import (
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/widget"
+)
+
+type EmbeddedNewDemoApp struct {
+    // internal state
+    statusLabel *widget.Label
+}
+
+func NewEmbeddedNewDemoApp() *EmbeddedNewDemoApp {
+    return &EmbeddedNewDemoApp{}
+}
+
+func (app *EmbeddedNewDemoApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
+    app.statusLabel = widget.NewLabel("Ready")
+    // Create and return UI content
+    return widget.NewLabel("New Demo Content")
+}
+
+func (app *EmbeddedNewDemoApp) Start() {
+    // Called when tab selected - start animations, load data
+}
+
+func (app *EmbeddedNewDemoApp) Stop() {
+    // Called when tab deselected - stop animations, cleanup
+}
+```
+
+3. Register in `cmd/fecim-visualizer/main.go`:
+```go
+import newdemo "multilayer-ferroelectric-cim-visualizer/module7-newdemo/pkg/gui"
+
+// In main(), add to demos slice:
+newDemoApp := newdemo.NewEmbeddedNewDemoApp()
+// Add tab: container.NewTabItem("7.NewDemo", newDemoApp.BuildContent(app, window))
+```
+
+### Adding a Physics Parameter
+
+1. Define constant in appropriate package with citation:
+```go
+// module2-crossbar/pkg/crossbar/array.go
+const (
+    FeCIMLevels = 30  // Dr. Tour COSM 2025: "It's got 30 discrete states"
+    NewParam    = 42  // [Citation required] - add DOI or source
+)
+```
+
+2. Add physics test in `*_test.go`:
+```go
+func TestNewParamPhysics(t *testing.T) {
+    // Test physical validity
+    if NewParam < 0 {
+        t.Error("NewParam must be non-negative")
+    }
+}
+```
+
+3. Document in `CLAUDE.md` Physics Constants table.
+
+### Updating Quantization Logic
+
+**Location:** `module2-crossbar/pkg/crossbar/array.go`
+
+Current implementation:
+```go
+// QuantizeTo30Levels maps [0,1] to one of 30 discrete levels
+func QuantizeTo30Levels(value float64) float64 {
+    if value < 0 {
+        value = 0
+    } else if value > 1 {
+        value = 1
+    }
+    level := int(value * float64(FeCIMLevels-1) + 0.5)
+    return float64(level) / float64(FeCIMLevels-1)
+}
+```
+
+To modify quantization:
+1. Change `FeCIMLevels` constant (requires citation for new value)
+2. Update tests in `module2-crossbar/pkg/crossbar/physics_test.go`
+3. Run `go test ./module2-crossbar/...` to verify
+4. Update CLAUDE.md Physics Constants table
+
+### Running Inference with Custom Parameters
+
+```go
+import "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+
+// Create network with custom config
+config := core.DefaultNetworkConfig()
+config.NumLevels = 30
+config.NoiseLevel = 0.02
+config.ADCBits = 6
+
+network := core.NewDualModeNetwork(config)
+network.LoadWeights("path/to/weights.gob")
+
+// Run inference
+result := network.Infer(inputImage)  // inputImage is []float64 of length 784
+fmt.Printf("FP prediction: %d, CIM prediction: %d\n", result.FPPrediction, result.CIMPrediction)
+```
+
+### Creating a Custom Heatmap Widget
+
+```go
+import (
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/canvas"
+    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+)
+
+// Get conductance matrix from array
+array := crossbar.NewArray(crossbar.Config{Rows: 8, Cols: 8})
+matrix := array.GetConductanceMatrix()
+
+// Create heatmap visualization
+for i := 0; i < 8; i++ {
+    for j := 0; j < 8; j++ {
+        value := matrix[i][j]
+        // Map value [0,1] to color
+        rect := canvas.NewRectangle(theme.ColorForValue(value))
+        // Add to container at position (i, j)
+    }
+}
+```
+
 ## Directory Structure
 
 ```

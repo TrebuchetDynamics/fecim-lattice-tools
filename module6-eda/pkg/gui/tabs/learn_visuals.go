@@ -40,9 +40,9 @@ var (
 // OpenLaneFlowDiagram creates a visual pipeline diagram
 func OpenLaneFlowDiagram() fyne.CanvasObject {
 	// Diagram dimensions - INCREASED 40%
-	boxW := float32(140)
+	boxW := float32(150)
 	boxH := float32(65)
-	spacing := float32(25)
+	spacing := float32(30)
 	startX := float32(30)
 	startY := float32(50)
 
@@ -167,7 +167,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 
 	// Container with fixed size - INCREASED
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(720, 300))
+	cont.Resize(fyne.NewSize(780, 320))
 
 	return cont
 }
@@ -229,7 +229,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	sinA := float32(math.Sin(float64(isoAngle)))
 
 	// Starting position - shifted right to make room for labels
-	startX := float32(220)
+	startX := float32(240)
 	startY := float32(80)
 
 	// Layer separation (Z height) - INCREASED
@@ -317,7 +317,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	}
 
 	// Legend - moved down with more spacing
-	legendY := float32(280)
+	legendY := float32(320)
 	legendX := float32(20)
 
 	// WL legend
@@ -351,7 +351,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	objects = append(objects, feText)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(540, 400))
+	cont.Resize(fyne.NewSize(600, 420))
 
 	return cont
 }
@@ -366,7 +366,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
 
-	startX := float32(220)
+	startX := float32(240)
 	startY := float32(80)
 	layerGap := float32(70)
 
@@ -480,7 +480,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	}
 
 	// Legend - with more spacing
-	legendY := float32(280)
+	legendY := float32(320)
 	legendX := float32(20)
 
 	// Transistor legend
@@ -514,7 +514,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	objects = append(objects, feText)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(540, 400))
+	cont.Resize(fyne.NewSize(600, 420))
 
 	return cont
 }

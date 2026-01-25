@@ -26,11 +26,11 @@ Based on screenshot analysis and code review:
 
 | Component | File:Line | Issue |
 |-----------|-----------|-------|
-| `OperationModesVisual()` | learn_visuals.go:640-750 | Fixed 140px box width, hardcoded text positions |
-| `IsometricCrossbar()` | learn_visuals.go:222-357 | 540x400 container too small, legend overlaps diagram |
-| `Isometric1T1RCrossbar()` | learn_visuals.go:360-520 | Same sizing issues as passive crossbar |
-| `CellComparisonTable()` | learn_visuals.go:527-633 | Column widths hardcoded at 100px each |
-| `FileFormatCard()` | learn_visuals.go:757-787 | Card fixed at 360x224, no responsive layout |
+| `OperationModesVisual()` | learn_visuals.go:639-750 | Fixed 140px box width, hardcoded text positions |
+| `IsometricCrossbar()` | learn_visuals.go:221-357 | 540x400 container too small, legend overlaps diagram |
+| `Isometric1T1RCrossbar()` | learn_visuals.go:359-520 | Same sizing issues as passive crossbar |
+| `CellComparisonTable()` | learn_visuals.go:526-633 | Column widths hardcoded at 100px each |
+| `FileFormatCard()` | learn_visuals.go:756-787 | Card fixed at 360x224, no responsive layout |
 | `makeFilesContent()` | learn_tab.go:255-309 | Uses HBox for cards, needs vertical stacking |
 
 ---
@@ -133,7 +133,7 @@ Task 9 (Build & Visual Verification)
 
 ### Task 2: Fix OperationModesVisual()
 **File:** `<local-path>`
-**Lines:** 640-750
+**Lines:** 639-750
 **Acceptance Criteria:**
 - Box width increased to fit description text (180px minimum)
 - Description text centered properly within boxes
@@ -147,13 +147,15 @@ Task 9 (Build & Visual Verification)
 4. Line 683: Fix centering calculation - use `nameX := mode.x + (boxW - textWidth) / 2` with proper text width estimation
 5. Line 691: Change `descX := mode.x + 8` to `descX := mode.x + (boxW - float32(len(mode.description)*6)) / 2`
 6. Line 697: Update `circleX` to center under new layout: `circleX := float32(300)`
+   - **Math:** With 3 boxes at 180px + 2 gaps at 20px = 580px total content width
+   - Content starts at x=10, so center = 10 + 580/2 = 10 + 290 = **300**
 7. Line 747: Change container size from `fyne.NewSize(560, 260)` to `fyne.NewSize(620, 280)`
 
 ---
 
 ### Task 3: Fix OpenLaneFlowDiagram()
 **File:** `<local-path>`
-**Lines:** 41-173
+**Lines:** 40-173
 **Acceptance Criteria:**
 - All stage boxes visible without cramping
 - Arrows properly spaced between boxes
@@ -162,14 +164,14 @@ Task 9 (Build & Visual Verification)
 
 **Changes Required:**
 1. Line 43: Increase `boxW := float32(140)` to `boxW := float32(150)`
-2. Line 46: Increase `spacing := float32(25)` to `spacing := float32(30)`
+2. Line 45: Increase `spacing := float32(25)` to `spacing := float32(30)`
 3. Line 170: Change container size from `fyne.NewSize(720, 300)` to `fyne.NewSize(780, 320)`
 
 ---
 
 ### Task 4: Fix IsometricCrossbar()
 **File:** `<local-path>`
-**Lines:** 222-357
+**Lines:** 221-357
 **Acceptance Criteria:**
 - Diagram content does not overlap legend
 - Labels (WL0, WL1, BL0, BL1) fully visible
@@ -185,7 +187,7 @@ Task 9 (Build & Visual Verification)
 
 ### Task 5: Fix Isometric1T1RCrossbar()
 **File:** `<local-path>`
-**Lines:** 360-520
+**Lines:** 359-520
 **Acceptance Criteria:**
 - Diagram matches passive crossbar sizing improvements
 - SL labels visible without overlap
@@ -200,7 +202,7 @@ Task 9 (Build & Visual Verification)
 
 ### Task 6: Fix CellComparisonTable()
 **File:** `<local-path>`
-**Lines:** 527-633
+**Lines:** 526-633
 **Acceptance Criteria:**
 - All cell text visible without truncation
 - Column widths accommodate longest content
@@ -208,7 +210,7 @@ Task 9 (Build & Visual Verification)
 
 **Changes Required:**
 1. Line 531: Change column widths from `[]float32{100, 100, 100, 100}` to `[]float32{110, 120, 120, 90}` (total 440px)
-2. Line 571: Update row background width from 400 to 440
+2. Line 570: Update row background width from 400 to 440
 3. Line 617: Update horizontal line end from 400 to 440
 4. Line 625: Update border size from 400 to 440
 5. Line 630: Update container size from `fyne.NewSize(420, 200)` to `fyne.NewSize(460, 210)`
@@ -217,7 +219,7 @@ Task 9 (Build & Visual Verification)
 
 ### Task 7: Fix FileFormatCard()
 **File:** `<local-path>`
-**Lines:** 757-787
+**Lines:** 756-787
 **Acceptance Criteria:**
 - Card dimensions allow full code visibility
 - Content area has adequate padding
@@ -240,20 +242,66 @@ Task 9 (Build & Visual Verification)
 - All cards fully visible
 
 **Changes Required:**
-Replace HBox layout with AdaptiveGrid:
-```go
-// Replace lines 269-275:
-// OLD:
-// cardsRow1 := container.NewHBox(lefCard, spacerH1, defCard)
-// spacerV := widget.NewLabel("")
-// spacerV.Resize(fyne.NewSize(1, 12))
-// cardsRow2 := container.NewHBox(verilogCard, spacerH2, libertyCard)
 
-// NEW:
-cardsGrid := container.NewAdaptiveGrid(2, lefCard, defCard, verilogCard, libertyCard)
-```
+1. **Remove unused spacer widgets** (lines 264-267 and 272-273):
+   Delete these lines after converting to AdaptiveGrid:
+   ```go
+   // DELETE these lines (264-267):
+   spacerH1 := widget.NewLabel("")
+   spacerH1.Resize(fyne.NewSize(10, 1))
+   spacerH2 := widget.NewLabel("")
+   spacerH2.Resize(fyne.NewSize(10, 1))
 
-Then update the return VBox to use cardsGrid instead of cardsRow1/spacerV/cardsRow2.
+   // DELETE these lines (272-273):
+   spacerV := widget.NewLabel("")
+   spacerV.Resize(fyne.NewSize(1, 12))
+   ```
+
+2. **Replace HBox layout with AdaptiveGrid** (lines 269-275):
+   ```go
+   // OLD (lines 269-275):
+   cardsRow1 := container.NewHBox(lefCard, spacerH1, defCard)
+
+   // Vertical spacer between card rows
+   spacerV := widget.NewLabel("")
+   spacerV.Resize(fyne.NewSize(1, 12))
+
+   cardsRow2 := container.NewHBox(verilogCard, spacerH2, libertyCard)
+
+   // NEW:
+   cardsGrid := container.NewAdaptiveGrid(2, lefCard, defCard, verilogCard, libertyCard)
+   ```
+
+3. **Update return statement** (lines 296-308):
+   ```go
+   // OLD (lines 296-308):
+   return container.NewVBox(
+       title,
+       widget.NewSeparator(),
+       cardsRow1,
+       spacerV,
+       cardsRow2,
+       widget.NewSeparator(),
+       purposesTitle,
+       purposesText,
+       widget.NewSeparator(),
+       referencesTitle,
+       refsCard,
+   )
+
+   // NEW:
+   return container.NewVBox(
+       title,
+       widget.NewSeparator(),
+       cardsGrid,
+       widget.NewSeparator(),
+       purposesTitle,
+       purposesText,
+       widget.NewSeparator(),
+       referencesTitle,
+       refsCard,
+   )
+   ```
 
 **8b. Fix makeCrossbarContent() diagram container sizes (lines 181-253)**
 **Acceptance Criteria:**
@@ -304,6 +352,7 @@ fix: Module 6 Learn tab UI - spacing, sizing, and layout improvements
 - Enlarge crossbar diagrams and reposition legends
 - Widen comparison table columns
 - Convert file cards to adaptive grid layout
+- Remove unused spacer widgets after grid conversion
 - Add FYNE_NOTES.md development documentation
 
 Resolves text truncation, overlapping elements, and cramped layouts.

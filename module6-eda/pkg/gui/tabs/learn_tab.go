@@ -112,12 +112,12 @@ func makeIntroContent() fyne.CanvasObject {
 	// Larger operation modes visual - wrapped in padded container
 	modesVisual := OperationModesVisual()
 	modesContainer := container.NewPadded(modesVisual)
-	modesContainer.Resize(fyne.NewSize(600, 280))
+	modesContainer.Resize(fyne.NewSize(640, 300))
 
 	// OpenLane flow diagram - wrapped in padded container
 	flowDiagram := OpenLaneFlowDiagram()
 	flowContainer := container.NewPadded(flowDiagram)
-	flowContainer.Resize(fyne.NewSize(750, 320))
+	flowContainer.Resize(fyne.NewSize(800, 340))
 
 	// Stages Explained section
 	stagesTitle := widget.NewLabelWithStyle("The Stages Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -191,7 +191,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 	// Wrap passive diagram in padded container
 	passiveDiagram := IsometricCrossbar(3, 3, true)
 	passiveDiagramContainer := container.NewPadded(passiveDiagram)
-	passiveDiagramContainer.Resize(fyne.NewSize(560, 420))
+	passiveDiagramContainer.Resize(fyne.NewSize(620, 440))
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VDD, VSS | Cell Size: 0.92 x 2.72 um (2x width)
@@ -202,12 +202,12 @@ func makeCrossbarContent() fyne.CanvasObject {
 	// Wrap 1T1R diagram in padded container
 	oneToneRDiagram := Isometric1T1RCrossbar(3, 3)
 	oneToneRDiagramContainer := container.NewPadded(oneToneRDiagram)
-	oneToneRDiagramContainer.Resize(fyne.NewSize(560, 420))
+	oneToneRDiagramContainer.Resize(fyne.NewSize(620, 440))
 
 	// Comparison table - wrapped in padded container
 	comparisonTable := CellComparisonTable()
 	comparisonContainer := container.NewPadded(comparisonTable)
-	comparisonContainer.Resize(fyne.NewSize(440, 220))
+	comparisonContainer.Resize(fyne.NewSize(480, 230))
 
 	// Sneak path explanation (clean prose, no ASCII)
 	sneakPathTitle := widget.NewLabelWithStyle("The Sneak Path Problem", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -261,18 +261,7 @@ func makeFilesContent() fyne.CanvasObject {
 	verilogCard := VerilogPreviewCard()
 	libertyCard := LibertyPreviewCard()
 
-	spacerH1 := widget.NewLabel("")
-	spacerH1.Resize(fyne.NewSize(10, 1))
-	spacerH2 := widget.NewLabel("")
-	spacerH2.Resize(fyne.NewSize(10, 1))
-
-	cardsRow1 := container.NewHBox(lefCard, spacerH1, defCard)
-
-	// Vertical spacer between card rows
-	spacerV := widget.NewLabel("")
-	spacerV.Resize(fyne.NewSize(1, 12))
-
-	cardsRow2 := container.NewHBox(verilogCard, spacerH2, libertyCard)
+	cardsGrid := container.NewAdaptiveGrid(2, lefCard, defCard, verilogCard, libertyCard)
 
 	// File purposes section (clean prose)
 	purposesTitle := widget.NewLabelWithStyle("File Purposes", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -296,9 +285,7 @@ Important: LEF is abstract with no real layout. Liberty timing values need SPICE
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		cardsRow1,
-		spacerV,
-		cardsRow2,
+		cardsGrid,
 		widget.NewSeparator(),
 		purposesTitle,
 		purposesText,
