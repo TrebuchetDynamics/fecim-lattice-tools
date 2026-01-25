@@ -4,12 +4,13 @@
 // It combines all 6 demos into a single application with tab navigation.
 //
 // The 6-Demo Story:
-//   Demo 1: The Memory Cell (Hysteresis) - How the cell works
-//   Demo 2: The Crossbar Computer (MVM + Non-Idealities) - How we compute
-//   Demo 3: The AI Brain (MNIST) - What we can build
-//   Demo 4: The Chip System (Circuits) - How it fits in a chip
-//   Demo 5: Why FeCIM Wins (Comparison) - The business case
-//   Demo 6: EDA Design Suite - Bridge to open-source EDA tools
+//
+//	Demo 1: The Memory Cell (Hysteresis) - How the cell works
+//	Demo 2: The Crossbar Computer (MVM + Non-Idealities) - How we compute
+//	Demo 3: The AI Brain (MNIST) - What we can build
+//	Demo 4: The Chip System (Circuits) - How it fits in a chip
+//	Demo 5: Why FeCIM Wins (Comparison) - The business case
+//	Demo 6: EDA Design Suite - Bridge to open-source EDA tools
 package main
 
 import (
@@ -44,6 +45,24 @@ import (
 
 // Global logger for the main application
 var log *logging.Logger
+
+// ForceMinSizeLayout ignores the child's MinSize and returns a fixed small size.
+// This prevents Fyne from requesting window resizes based on content size,
+// which causes oscillation loops on tiling window managers (Wayland/Sway).
+type ForceMinSizeLayout struct {
+	Min fyne.Size
+}
+
+func (l *ForceMinSizeLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	return l.Min
+}
+
+func (l *ForceMinSizeLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Resize(size)
+		o.Move(fyne.NewPos(0, 0))
+	}
+}
 
 // RecordingState manages FFmpeg video recording using canvas capture
 type RecordingState struct {
@@ -153,16 +172,16 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 
 	// FFmpeg command to receive raw RGB frames from stdin
 	rs.cmd = exec.Command("ffmpeg",
-		"-y",                                      // Overwrite output file
-		"-f", "rawvideo",                          // Raw video input
-		"-pixel_format", "rgb24",                  // RGB24 format
+		"-y",             // Overwrite output file
+		"-f", "rawvideo", // Raw video input
+		"-pixel_format", "rgb24", // RGB24 format
 		"-video_size", fmt.Sprintf("%dx%d", width, height), // Frame size
-		"-framerate", "20",                        // 20 FPS (balance between smoothness and CPU)
-		"-i", "-",                                 // Read from stdin
-		"-c:v", "libx264",                         // H.264 codec
-		"-preset", "ultrafast",                    // Fast encoding
-		"-crf", "23",                              // Quality
-		"-pix_fmt", "yuv420p",                     // Output pixel format
+		"-framerate", "20", // 20 FPS (balance between smoothness and CPU)
+		"-i", "-", // Read from stdin
+		"-c:v", "libx264", // H.264 codec
+		"-preset", "ultrafast", // Fast encoding
+		"-crf", "23", // Quality
+		"-pix_fmt", "yuv420p", // Output pixel format
 		rs.outputFile,
 	)
 
@@ -272,12 +291,12 @@ func (rs *RecordingState) IsRecording() bool {
 
 // DemoApp holds the demo instances
 type DemoApp struct {
-	demo1 *demo1gui.EmbeddedApp             // Hysteresis
-	demo2 *demo2gui.EmbeddedCrossbarApp     // Crossbar (original single-view)
-	demo3 *demo3gui.EmbeddedDualModeApp     // MNIST FP vs CIM (full-featured)
-	demo4 *demo4gui.EmbeddedCircuitsApp     // Circuits
-	demo5 *demo5gui.EmbeddedComparisonApp   // Comparison (technical briefing)
-	demo6 *demo6gui.EmbeddedEDAApp          // EDA Design Suite
+	demo1 *demo1gui.EmbeddedApp           // Hysteresis
+	demo2 *demo2gui.EmbeddedCrossbarApp   // Crossbar (original single-view)
+	demo3 *demo3gui.EmbeddedDualModeApp   // MNIST FP vs CIM (full-featured)
+	demo4 *demo4gui.EmbeddedCircuitsApp   // Circuits
+	demo5 *demo5gui.EmbeddedComparisonApp // Comparison (technical briefing)
+	demo6 *demo6gui.EmbeddedEDAApp        // EDA Design Suite
 }
 
 // Preference keys for window state persistence
@@ -548,8 +567,8 @@ func main() {
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			go func() {
-				displayTicker := time.NewTicker(50 * time.Millisecond)  // Update display ~20 times per second
-				screenshotTicker := time.NewTicker(5 * time.Second)     // Screenshot every 5 seconds
+				displayTicker := time.NewTicker(50 * time.Millisecond) // Update display ~20 times per second
+				screenshotTicker := time.NewTicker(5 * time.Second)    // Screenshot every 5 seconds
 				defer displayTicker.Stop()
 				defer screenshotTicker.Stop()
 				for {
@@ -666,6 +685,9 @@ func main() {
 		tabs,
 	)
 
+	// Wrap in ForceMinSize container to prevent Wayland resize loops
+	rootContainer := container.New(&ForceMinSizeLayout{Min: fyne.NewSize(100, 100)}, mainContent)
+
 	// Set content in a deferred way to avoid fyne.Do() deadlock
 	// First set a placeholder, then set real content after event loop starts
 	fmt.Println("[STARTUP] Setting placeholder content...")
@@ -677,8 +699,18 @@ func main() {
 		time.Sleep(200 * time.Millisecond)
 		fyne.Do(func() {
 			fmt.Println("[STARTUP] Setting actual window content...")
-			window.SetContent(mainContent)
+			window.SetContent(rootContainer)
 			fmt.Println("[STARTUP] Window content set")
+
+			// Restore last selected tab after content is set
+			fmt.Println("[STARTUP] Restoring last tab...")
+			lastTabIndex := loadLastTab(prefs)
+			if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
+				fmt.Printf("[STARTUP] Selecting tab index %d...\n", lastTabIndex)
+				tabs.SelectIndex(lastTabIndex)
+				log.Debug("Restored last tab: %d", lastTabIndex)
+			}
+			fmt.Println("[STARTUP] Tab restored")
 		})
 	}()
 	fmt.Println("[STARTUP] Placeholder content set")
@@ -728,16 +760,6 @@ func main() {
 		// Close the window
 		window.Close()
 	})
-
-	// Restore last selected tab
-	fmt.Println("[STARTUP] Restoring last tab...")
-	lastTabIndex := loadLastTab(prefs)
-	if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
-		fmt.Printf("[STARTUP] Selecting tab index %d...\n", lastTabIndex)
-		tabs.SelectIndex(lastTabIndex)
-		log.Debug("Restored last tab: %d", lastTabIndex)
-	}
-	fmt.Println("[STARTUP] Tab restored")
 
 	// Run the application
 	fmt.Println("[STARTUP] About to call ShowAndRun()...")

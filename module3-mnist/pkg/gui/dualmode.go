@@ -106,6 +106,11 @@ type DualModeApp struct {
 	// P2 Enhancement: Weight Comparison
 	weightComparisonWidget *WeightComparisonWidget
 	dualWeightHeatmap      *DualWeightHeatmap
+
+	// Layout containers (stored to defer SetOffset)
+	leftSplit  *container.Split
+	rightSplit *container.Split
+	mainSplit  *container.Split
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -151,6 +156,19 @@ func (app *DualModeApp) Start() {
 	// Initialize network display now that UI is ready (deferred from BuildContent to avoid fyne.Do() deadlock)
 	fmt.Println("[MNIST] Start: initializing network display...")
 
+	// Set layout offsets (deferred from createMainLayout to avoid deadlock)
+	fyne.Do(func() {
+		if app.leftSplit != nil {
+			app.leftSplit.SetOffset(0.35) // 35% drawing, 65% controls
+		}
+		if app.rightSplit != nil {
+			app.rightSplit.SetOffset(0.55) // 55% results, 45% weights
+		}
+		if app.mainSplit != nil {
+			app.mainSplit.SetOffset(0.35) // 35% left, 65% right
+		}
+	})
+
 	// Show loading progress
 	fyne.Do(func() {
 		app.statusLabel.SetText("Loading MNIST module...")
@@ -168,11 +186,8 @@ func (app *DualModeApp) Start() {
 		defer wg.Done()
 
 		// Background: changeHiddenSize with loading feedback
-		go func() {
-			defer wg.Done()
-			done <- nil               // Signal changeHiddenSize started
-			app.changeHiddenSize(128) // Call original function without error channel
-		}()
+		done <- nil               // Signal changeHiddenSize started
+		app.changeHiddenSize(128) // Call original function without error channel
 	}()
 
 	// Background: updateWeightHeatmap with loading feedback
@@ -244,37 +259,28 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Arrange zones using expandable splits to fill available space
 	// Left column: Drawing (top) + Controls (bottom)
 	fmt.Println("[MNIST] createMainLayout: creating leftSplit...")
-	leftSplit := container.NewVSplit(zone1, zone3)
+	app.leftSplit = container.NewVSplit(zone1, zone3)
 	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
 	// Right column: Results (top) + Weights (bottom)
 	fmt.Println("[MNIST] createMainLayout: creating rightSplit...")
-	rightSplit := container.NewVSplit(zone2, zone4)
+	app.rightSplit = container.NewVSplit(zone2, zone4)
 	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
 	// Main horizontal split
 	fmt.Println("[MNIST] createMainLayout: creating mainSplit...")
-	mainSplit := container.NewHSplit(leftSplit, rightSplit)
+	app.mainSplit = container.NewHSplit(app.leftSplit, app.rightSplit)
 	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
 	// Defer SetOffset calls to after widget creation to avoid deadlock
-	fmt.Println("[MNIST] createMainLayout: deferring SetOffset calls...")
-	go func() {
-		// Small delay to let Fyne initialize
-		time.Sleep(100 * time.Millisecond)
-		fyne.Do(func() {
-			leftSplit.SetOffset(0.35)  // 35% drawing, 65% controls
-			rightSplit.SetOffset(0.55) // 55% results, 45% weights
-			mainSplit.SetOffset(0.35)  // 35% left, 65% right
-		})
-	}()
+	fmt.Println("[MNIST] createMainLayout: offsets deferred to Start()...")
 
 	fmt.Println("[MNIST] createMainLayout: creating border...")
 	mainContent := container.NewBorder(
 		header,
 		footer,
 		nil, nil,
-		mainSplit,
+		app.mainSplit,
 	)
 
 	// Mark as initialized - but defer changeHiddenSize to Start() to avoid fyne.Do() deadlock
@@ -548,7 +554,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Selection("Hidden", s)
 		var size int
 		fmt.Sscanf(s, "%d", &size)
-		app.changeHiddenSize(size)
+		go app.changeHiddenSize(size)
 	})
 	app.hiddenSelect.SetSelected("128")
 
@@ -1319,12 +1325,18 @@ func (app *DualModeApp) updateWeightHeatmap() {
 	if app.weightLayer == 0 {
 		weights, _, _, _ = app.network.GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
-			app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
+			fyne.Do(func() {
+				app.weightDimLabel.SetText(msg)
+			})
 		}
 	} else {
 		_, weights, _, _ = app.network.GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
-			app.weightDimLabel.SetText(fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0])))
+			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
+			fyne.Do(func() {
+				app.weightDimLabel.SetText(msg)
+			})
 		}
 	}
 
@@ -1343,27 +1355,20 @@ func (app *DualModeApp) updateWeightHeatmap() {
 				distinctMap[weights[i][j]] = true
 			}
 		}
-		app.weightRangeLabel.SetText(fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax))
-		app.weightLevelsLabel.SetText(fmt.Sprintf("Distinct levels: %d (FeCIM max: 30)", len(distinctMap)))
+		rangeMsg := fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax)
+		levelsMsg := fmt.Sprintf("Distinct levels: %d (FeCIM max: 30)", len(distinctMap))
+		fyne.Do(func() {
+			app.weightRangeLabel.SetText(rangeMsg)
+			app.weightLevelsLabel.SetText(levelsMsg)
+		})
 	}
 
 	// Also update FP vs Quantized comparison
 	app.updateWeightComparison()
 }
 
-// changeHiddenSizeWithProgress performs hidden size change with loading feedback
-func (app *DualModeApp) changeHiddenSizeWithProgress(size int, done chan error) {
-	defer func() {
-		if err := <-done; err != nil {
-			fyne.Do(func() {
-				app.statusLabel.SetText(fmt.Sprintf("Error changing hidden size: %v", err))
-				if app.window != nil {
-					dialog.ShowError(fmt.Errorf("Failed to change hidden size: %w", err), app.window)
-				}
-			})
-		}
-	}()
-
+// changeHiddenSize performs hidden size change with loading feedback
+func (app *DualModeApp) changeHiddenSize(size int) {
 	// Map size to weight file
 	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
 	weightsPath := filepath.Join(app.dataDir, weightsFile)
@@ -1382,8 +1387,26 @@ func (app *DualModeApp) changeHiddenSizeWithProgress(size int, done chan error) 
 		})
 	}
 
-	// Signal completion
-	done <- nil
+	err := app.network.LoadWeights(weightsPath)
+	if err != nil {
+		fyne.Do(func() {
+			app.statusLabel.SetText(fmt.Sprintf("Error changing hidden size: %v", err))
+			if app.window != nil {
+				dialog.ShowError(fmt.Errorf("Failed to change hidden size: %w", err), app.window)
+			}
+		})
+		return
+	}
+
+	app.updateWeightHeatmap()
+
+	if len(app.lastPixels) > 0 {
+		app.runInference(app.lastPixels)
+	}
+
+	fyne.Do(func() {
+		app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", size))
+	})
 }
 
 // updateWeightHeatmapWithProgress updates weight visualization with loading feedback
