@@ -112,7 +112,7 @@ func (t *SneakTab) Content() fyne.CanvasObject {
 
 	// Wrap stats in scroll to prevent layout resize
 	statsScroll := container.NewVScroll(t.statsLabel)
-	statsScroll.SetMinSize(fyne.NewSize(200, 150))
+	statsScroll.SetMinSize(fyne.NewSize(240, 150))
 
 	rightPanel := container.NewVBox(
 		statsScroll,

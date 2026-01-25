@@ -107,7 +107,7 @@ This is the theoretical best case.`
 
 	// Wrap stats in scroll to prevent layout resize
 	statsScroll := container.NewVScroll(t.statsLabel)
-	statsScroll.SetMinSize(fyne.NewSize(200, 150))
+	statsScroll.SetMinSize(fyne.NewSize(240, 150))
 
 	controls := container.NewVBox(
 		widget.NewLabel("Array Size:"),

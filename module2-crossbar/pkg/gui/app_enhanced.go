@@ -369,7 +369,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		displayGroup,
 	)
 	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(200, 300))
+	controlsScroll.SetMinSize(fyne.NewSize(240, 300))
 
 	// Stats label for cell analysis
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick a cell or Run MVM.")

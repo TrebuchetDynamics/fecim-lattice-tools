@@ -137,8 +137,8 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 
 	if result == nil {
 		// Draw idle state with hint
-		drawSimpleText(img, "Waiting for inference...", w/2-80, h/2-8, color.RGBA{100, 100, 120, 255})
-		drawSimpleText(img, "Draw a digit or click Random", w/2-100, h/2+12, color.RGBA{80, 80, 100, 255})
+		drawSimpleText(img, "Ready - Draw a digit to classify", w/2-100, h/2-8, color.RGBA{100, 100, 120, 255})
+		drawSimpleText(img, "or click Random to load from MNIST", w/2-110, h/2+12, color.RGBA{80, 80, 100, 255})
 		return img
 	}
 

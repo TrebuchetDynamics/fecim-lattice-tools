@@ -207,7 +207,7 @@ func (qw *QuantizationWidget) generateImage(w, h int) image.Image {
 
 	if len(samples) == 0 {
 		// Draw idle state message
-		qw.drawText(img, "Waiting for inference...", w/2-80, h/2-8, color.RGBA{100, 100, 120, 255})
+		qw.drawText(img, "Ready - Draw to see quantization", w/2-100, h/2-8, color.RGBA{100, 100, 120, 255})
 		return img
 	}
 

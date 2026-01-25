@@ -477,7 +477,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		displayGroup,
 	)
 	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(180, 250))
+	controlsScroll.SetMinSize(fyne.NewSize(240, 250))
 
 	// Stats section with header
 	statsHeader := widget.NewLabelWithStyle("Analysis Results", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -487,7 +487,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.statsLabel,
 	)
 	statsScroll := container.NewVScroll(statsSection)
-	statsScroll.SetMinSize(fyne.NewSize(180, 120))
+	statsScroll.SetMinSize(fyne.NewSize(240, 120))
 
 	// Use VSplit for controls and stats
 	rightPanel := container.NewVSplit(

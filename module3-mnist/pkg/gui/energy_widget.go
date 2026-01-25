@@ -73,7 +73,7 @@ func NewEnergyWidget(inputSize, hiddenSize, outputSize int) *EnergyWidget {
 		outputSize: outputSize,
 	}
 	ew.titleLabel = widget.NewLabelWithStyle("Energy Efficiency", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	ew.statsLabel = widget.NewLabel("Waiting for inference...")
+	ew.statsLabel = widget.NewLabel("Ready - Draw a digit to begin")
 	ew.ExtendBaseWidget(ew)
 	return ew
 }
@@ -171,7 +171,7 @@ func (ew *EnergyWidget) Reset() {
 	ew.efficiencyRatio = 0
 	ew.mu.Unlock()
 
-	ew.statsLabel.SetText("Waiting for inference...")
+	ew.statsLabel.SetText("Ready - Draw a digit to begin")
 	fyne.Do(func() {
 		ew.Refresh()
 	})
