@@ -43,17 +43,19 @@ func NewColorLegend(minValue, maxValue float64, units string, vertical bool, col
 	}
 
 	// Create labels
-	minText := fmt.Sprintf("%.3f", minValue)
-	maxText := fmt.Sprintf("%.3f", maxValue)
+	minText := fmt.Sprintf("Low\n%.3f", minValue)
+	maxText := fmt.Sprintf("High\n%.3f", maxValue)
 	if units != "" {
-		minText += " " + units
-		maxText += " " + units
+		minText = fmt.Sprintf("Low\n%.3f %s", minValue, units)
+		maxText = fmt.Sprintf("High\n%.3f %s", maxValue, units)
 	}
 
 	cl.minLabel = widget.NewLabel(minText)
 	cl.minLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	cl.minLabel.Alignment = fyne.TextAlignCenter
 	cl.maxLabel = widget.NewLabel(maxText)
 	cl.maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	cl.maxLabel.Alignment = fyne.TextAlignCenter
 
 	cl.ExtendBaseWidget(cl)
 	return cl
@@ -64,11 +66,11 @@ func (cl *ColorLegend) SetRange(minValue, maxValue float64) {
 	cl.minValue = minValue
 	cl.maxValue = maxValue
 
-	minText := fmt.Sprintf("%.3f", minValue)
-	maxText := fmt.Sprintf("%.3f", maxValue)
+	minText := fmt.Sprintf("Low\n%.3f", minValue)
+	maxText := fmt.Sprintf("High\n%.3f", maxValue)
 	if cl.units != "" {
-		minText += " " + cl.units
-		maxText += " " + cl.units
+		minText = fmt.Sprintf("Low\n%.3f %s", minValue, cl.units)
+		maxText = fmt.Sprintf("High\n%.3f %s", maxValue, cl.units)
 	}
 
 	fyne.Do(func() {

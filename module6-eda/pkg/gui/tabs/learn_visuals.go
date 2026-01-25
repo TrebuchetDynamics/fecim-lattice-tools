@@ -228,9 +228,9 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
 
-	// Starting position
-	startX := float32(180)
-	startY := float32(60)
+	// Starting position - shifted right to make room for labels
+	startX := float32(220)
+	startY := float32(80)
 
 	// Layer separation (Z height) - INCREASED
 	layerGap := float32(70)
@@ -260,12 +260,12 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 
-		// WL label
+		// WL label - moved further left to avoid overlap
 		if showLabels && i < rows {
 			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
 			label.TextSize = 12
 			label.TextStyle = fyne.TextStyle{Bold: true}
-			label.Move(fyne.NewPos(x1-35, y1-5))
+			label.Move(fyne.NewPos(x1-50, y1-5))
 			objects = append(objects, label)
 		}
 	}
@@ -281,12 +281,12 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 
-		// BL label
+		// BL label - moved higher to avoid overlap
 		if showLabels && j < cols {
 			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
 			label.TextSize = 12
 			label.TextStyle = fyne.TextStyle{Bold: true}
-			label.Move(fyne.NewPos(x1-5, y1-25))
+			label.Move(fyne.NewPos(x1-5, y1-35))
 			objects = append(objects, label)
 		}
 	}
@@ -316,8 +316,8 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		}
 	}
 
-	// Legend - moved down
-	legendY := float32(240)
+	// Legend - moved down with more spacing
+	legendY := float32(280)
 	legendX := float32(20)
 
 	// WL legend
@@ -360,14 +360,14 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
-	// Isometric projection parameters
+	// Isometric projection parameters - matched to passive crossbar
 	cellSize := float32(52)
 	isoAngle := float32(30 * math.Pi / 180)
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
 
-	startX := float32(180)
-	startY := float32(60)
+	startX := float32(220)
+	startY := float32(80)
 	layerGap := float32(70)
 
 	toIso := func(gridX, gridY, z float32) (float32, float32) {
@@ -403,7 +403,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
 			label.TextSize = 12
 			label.TextStyle = fyne.TextStyle{Bold: true}
-			label.Move(fyne.NewPos(x1-35, y1-5))
+			label.Move(fyne.NewPos(x1-50, y1-5))
 			objects = append(objects, label)
 		}
 	}
@@ -423,7 +423,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
 			label.TextSize = 12
 			label.TextStyle = fyne.TextStyle{Bold: true}
-			label.Move(fyne.NewPos(x1-5, y1-25))
+			label.Move(fyne.NewPos(x1-5, y1-35))
 			objects = append(objects, label)
 		}
 	}
@@ -446,7 +446,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		if j < cols {
 			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL)
 			label.TextSize = 10
-			label.Move(fyne.NewPos(x2+5, y2-5))
+			label.Move(fyne.NewPos(x2+8, y2-5))
 			objects = append(objects, label)
 		}
 	}
@@ -479,8 +479,8 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		}
 	}
 
-	// Legend
-	legendY := float32(240)
+	// Legend - with more spacing
+	legendY := float32(280)
 	legendX := float32(20)
 
 	// Transistor legend
@@ -527,9 +527,9 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 func CellComparisonTable() fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
-	// Table dimensions
+	// Table dimensions - increased row height for better readability
 	colWidths := []float32{100, 100, 100, 100} // Property, Passive, 1T1R, Winner
-	rowHeight := float32(24)
+	rowHeight := float32(28)
 	startX := float32(10)
 	startY := float32(10)
 
@@ -576,13 +576,13 @@ func CellComparisonTable() fyne.CanvasObject {
 		for j, cellText := range cells {
 			cellX := x + float32(j)*colWidths[j]
 
-			// Cell text
+			// Cell text - improved sizing
 			text := canvas.NewText(cellText, colorText)
 			if i == 0 {
-				text.TextSize = 11
+				text.TextSize = 12
 				text.TextStyle = fyne.TextStyle{Bold: true}
 			} else {
-				text.TextSize = 10
+				text.TextSize = 11
 			}
 
 			// Winner column gets special coloring
@@ -596,7 +596,7 @@ func CellComparisonTable() fyne.CanvasObject {
 				}
 			}
 
-			text.Move(fyne.NewPos(cellX+5, y+5))
+			text.Move(fyne.NewPos(cellX+5, y+7))
 			objects = append(objects, text)
 
 			// Vertical grid line (except after last column)

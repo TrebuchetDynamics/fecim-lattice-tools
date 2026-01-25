@@ -162,6 +162,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	yosysResult := widget.NewLabel("Not validated")
 	defResult := widget.NewLabel("Not validated")
 	crossResult := widget.NewLabel("Not validated")
+	validationSummary := widget.NewLabel("")
+	validationSummary.TextStyle.Bold = true
 	logOutput := widget.NewMultiLineEntry()
 	logOutput.Wrapping = fyne.TextWrapWord
 
@@ -336,6 +338,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				yosysResult.SetText("...")
 				defResult.SetText("...")
 				crossResult.SetText("...")
+				validationSummary.SetText("Running validations...")
 			})
 
 			allPassed := true
@@ -349,11 +352,11 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			err1 := validation.ValidateVerilogWithCell(arrayPath, cellPath)
 			if err1 != nil {
-				fyne.Do(func() { yosysResult.SetText("FAIL") })
+				fyne.Do(func() { yosysResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err1))
 				allPassed = false
 			} else {
-				fyne.Do(func() { yosysResult.SetText("PASS") })
+				fyne.Do(func() { yosysResult.SetText("✓ PASS") })
 				addLog("PASSED")
 			}
 
@@ -364,11 +367,11 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			err2 := validation.ValidateDEF(defPath)
 			if err2 != nil {
-				fyne.Do(func() { defResult.SetText("FAIL") })
+				fyne.Do(func() { defResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err2))
 				allPassed = false
 			} else {
-				fyne.Do(func() { defResult.SetText("PASS") })
+				fyne.Do(func() { defResult.SetText("✓ PASS") })
 				stats, _ := validation.GetDEFStats(defPath)
 				addLog(fmt.Sprintf("Design: %v, Components: %v", stats["design_name"], stats["component_count"]))
 				addLog("PASSED")
@@ -385,11 +388,11 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			err3 := validation.CrossCheckFiles(lefPath, libPath, vPath)
 			if err3 != nil {
-				fyne.Do(func() { crossResult.SetText("FAIL") })
+				fyne.Do(func() { crossResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err3))
 				allPassed = false
 			} else {
-				fyne.Do(func() { crossResult.SetText("PASS") })
+				fyne.Do(func() { crossResult.SetText("✓ PASS") })
 				addLog("Pin names and cell names match")
 				addLog("PASSED")
 			}
@@ -401,7 +404,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				mode := manager.DetectMode()
 
 				if mode == openlane.ModeNone {
-					fyne.Do(func() { placementResult.SetText("SKIP - No OpenLane") })
+					fyne.Do(func() { placementResult.SetText("⊝ SKIP") })
 					addLog("SKIPPED: OpenLane not available")
 				} else {
 					defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
@@ -412,15 +415,15 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 					config := openlane.DefaultConfig()
 					result, err := validation.RunPlacementCheck(defPath, manager, config)
 					if err != nil {
-						fyne.Do(func() { placementResult.SetText("ERROR") })
+						fyne.Do(func() { placementResult.SetText("✗ ERROR") })
 						addLog(fmt.Sprintf("ERROR: %v", err))
 						allPassed = false
 					} else if result.Passed {
-						fyne.Do(func() { placementResult.SetText("PASS") })
+						fyne.Do(func() { placementResult.SetText("✓ PASS") })
 						addLog(result.RawOutput)
 						addLog("PASSED")
 					} else {
-						fyne.Do(func() { placementResult.SetText("FAIL") })
+						fyne.Do(func() { placementResult.SetText("✗ FAIL") })
 						addLog(result.RawOutput)
 						addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
 						for _, v := range result.Violations {
@@ -435,6 +438,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if allPassed {
 				fyne.Do(func() {
 					statusLabel.SetText("All validations passed")
+					validationSummary.SetText("✓ All checks passed")
 					validateAllBtn.Enable()
 					generateAllBtn.Enable()
 					exportPackageBtn.Enable()
@@ -444,6 +448,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			} else {
 				fyne.Do(func() {
 					statusLabel.SetText("Some validations failed")
+					validationSummary.SetText("✗ Some checks failed - see log for details")
 					validateAllBtn.Enable()
 					generateAllBtn.Enable()
 					exportPackageBtn.Enable()
@@ -614,12 +619,15 @@ Date: %s
 		exportPackageBtn,
 	)
 
-	// Validation results (compact row)
-	validationRow := container.NewHBox(
-		widget.NewLabel("Yosys:"), yosysResult,
-		widget.NewLabel(" | DEF:"), defResult,
-		widget.NewLabel(" | Cross:"), crossResult,
-		widget.NewLabel(" | Placement:"), placementResult,
+	// Validation results (compact row with summary)
+	validationRow := container.NewVBox(
+		validationSummary,
+		container.NewHBox(
+			widget.NewLabel("Yosys:"), yosysResult,
+			widget.NewLabel(" | DEF:"), defResult,
+			widget.NewLabel(" | Cross:"), crossResult,
+			widget.NewLabel(" | Placement:"), placementResult,
+		),
 	)
 
 	// OpenLane status panel

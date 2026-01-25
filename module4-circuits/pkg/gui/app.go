@@ -285,6 +285,11 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 				v.Hide()
 			}
 		}
+
+		// Refresh timing canvases when TIMING tab is shown
+		if view == "TIMING" {
+			ca.refreshTimingDiagrams()
+		}
 	}
 
 	// Initialize: show first view, hide others
@@ -2753,26 +2758,47 @@ func (ca *CircuitsApp) createSpecsTab() fyne.CanvasObject {
 		ca.specStatusLabel,
 	)
 
-	// Layout in a grid
+	// Layout in a grid with improved visual hierarchy
+	arrayHeader := widget.NewLabelWithStyle("ARRAY CONFIGURATION", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	dacHeader := widget.NewLabelWithStyle("DAC SPECIFICATIONS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	adcHeader := widget.NewLabelWithStyle("ADC SPECIFICATIONS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	tiaHeader := widget.NewLabelWithStyle("TIA SPECIFICATIONS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	fefetHeader := widget.NewLabelWithStyle("FeFET CELL SPECIFICATIONS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	summaryHeader := widget.NewLabelWithStyle("SYSTEM SUMMARY", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
 	leftCol := container.NewVBox(
-		widget.NewLabel("ARRAY CONFIGURATION"),
+		arrayHeader,
+		layout.NewSpacer(), // Small spacing after header
 		arraySection,
+		layout.NewSpacer(), // Spacing before separator
 		widget.NewSeparator(),
-		widget.NewLabel("DAC SPECIFICATIONS"),
+		layout.NewSpacer(), // Spacing after separator
+		dacHeader,
+		layout.NewSpacer(),
 		dacSection,
+		layout.NewSpacer(),
 		widget.NewSeparator(),
-		widget.NewLabel("ADC SPECIFICATIONS"),
+		layout.NewSpacer(),
+		adcHeader,
+		layout.NewSpacer(),
 		adcSection,
 	)
 
 	rightCol := container.NewVBox(
-		widget.NewLabel("TIA SPECIFICATIONS"),
+		tiaHeader,
+		layout.NewSpacer(),
 		tiaSection,
+		layout.NewSpacer(),
 		widget.NewSeparator(),
-		widget.NewLabel("FeFET CELL SPECIFICATIONS"),
+		layout.NewSpacer(),
+		fefetHeader,
+		layout.NewSpacer(),
 		fefetSection,
+		layout.NewSpacer(),
 		widget.NewSeparator(),
-		widget.NewLabel("SYSTEM SUMMARY"),
+		layout.NewSpacer(),
+		summaryHeader,
+		layout.NewSpacer(),
 		summarySection,
 	)
 
@@ -2807,7 +2833,9 @@ func (ca *CircuitsApp) createSpecArraySection() fyne.CanvasObject {
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Array Size:"), ca.specArraySizeSelect, widget.NewLabel("×"), ca.specArraySizeSelect, widget.NewLabel(fmt.Sprintf("= %d cells", cells))),
+		widget.NewLabel(""), // Spacing
 		container.NewHBox(widget.NewLabel("Quantization:"), ca.specQuantLevelSelect, widget.NewLabel(fmt.Sprintf("levels (~%.1f bits/cell)", bitsPerCell))),
+		widget.NewLabel(""), // Spacing
 		widget.NewLabel(fmt.Sprintf("Total Storage: %d × %.1f = %.0f bits", cells, bitsPerCell, totalBits)),
 	)
 }
@@ -2832,7 +2860,9 @@ Rise/Fall Time:    2-5 ns (signal edge transitions)`
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Resolution:"), ca.specDACBitsSelect, widget.NewLabel("bits")),
+		widget.NewLabel(""), // Spacing
 		widget.NewLabel(specs),
+		widget.NewLabel(""), // Spacing
 		widget.NewSeparator(),
 		helpText,
 	)
@@ -2858,7 +2888,9 @@ Sample Rate:       100 MSPS (samples per second)`
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Resolution:"), ca.specADCBitsSelect, widget.NewLabel("bits")),
+		widget.NewLabel(""), // Spacing
 		widget.NewLabel(specs),
+		widget.NewLabel(""), // Spacing
 		widget.NewSeparator(),
 		helpText,
 	)
@@ -2882,7 +2914,9 @@ Response Time:     ~2 ns (settling time)`
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Gain:"), ca.specTIAGainSelect, widget.NewLabel("kOhm")),
+		widget.NewLabel(""), // Spacing
 		widget.NewLabel(specs),
+		widget.NewLabel(""), // Spacing
 		widget.NewSeparator(),
 		helpText,
 	)
@@ -2924,7 +2958,12 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 	helpText := widget.NewLabel("Note: Rise/fall times typically 2-10 ns; capacitance 0.1-10 pF; leakage < 1 nW per cell")
 	helpText.TextStyle = fyne.TextStyle{Italic: true}
 
-	return container.NewVBox(grid, widget.NewSeparator(), helpText)
+	return container.NewVBox(
+		grid,
+		widget.NewLabel(""), // Spacing
+		widget.NewSeparator(),
+		helpText,
+	)
 }
 
 func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
