@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -97,10 +98,10 @@ type DualModeApp struct {
 	dualProbabilityChart *DualProbabilityChart // P1.2: Probability divergence chart
 
 	// P2 Enhancements: Animation & Quick Demo
-	inferencePhaseLabel *widget.Label  // Shows current inference phase
-	quickDemoRunning    bool           // True when quick demo is active
-	quickDemoStopChan   chan struct{}  // Channel to stop quick demo
-	animationEnabled    bool           // Enable/disable inference animation
+	inferencePhaseLabel *widget.Label // Shows current inference phase
+	quickDemoRunning    bool          // True when quick demo is active
+	quickDemoStopChan   chan struct{} // Channel to stop quick demo
+	animationEnabled    bool          // Enable/disable inference animation
 
 	// P2 Enhancement: Weight Comparison
 	weightComparisonWidget *WeightComparisonWidget
@@ -149,9 +150,61 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 func (app *DualModeApp) Start() {
 	// Initialize network display now that UI is ready (deferred from BuildContent to avoid fyne.Do() deadlock)
 	fmt.Println("[MNIST] Start: initializing network display...")
-	app.changeHiddenSize(128)
-	app.updateWeightHeatmap()
-	fmt.Println("[MNIST] Start: done")
+
+	// Show loading progress
+	fyne.Do(func() {
+		app.statusLabel.SetText("Loading MNIST module...")
+	})
+
+	// Use WaitGroup to coordinate background operations
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Channel to signal completion and handle errors
+	done := make(chan error, 2)
+
+	// Start background goroutines for heavy operations
+	go func() {
+		defer wg.Done()
+
+		// Background: changeHiddenSize with loading feedback
+		go func() {
+			defer wg.Done()
+			done <- nil               // Signal changeHiddenSize started
+			app.changeHiddenSize(128) // Call original function without error channel
+		}()
+	}()
+
+	// Background: updateWeightHeatmap with loading feedback
+	go func() {
+		defer wg.Done()
+		app.updateWeightHeatmapWithProgress(done)
+	}()
+
+	// Wait for background operations to complete
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	// Handle completion and update UI
+	go func() {
+		for err := range done {
+			if err != nil {
+				fyne.Do(func() {
+					app.statusLabel.SetText(fmt.Sprintf("Error loading weights: %v", err))
+					if app.window != nil {
+						dialog.ShowError(fmt.Errorf("Failed to load MNIST weights: %w", err), app.window)
+					}
+				})
+			} else {
+				fyne.Do(func() {
+					app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", 128))
+					fmt.Println("[MNIST] Start: done")
+				})
+			}
+		}
+	}()
 }
 
 // Stop cleans up resources.
@@ -1298,41 +1351,72 @@ func (app *DualModeApp) updateWeightHeatmap() {
 	app.updateWeightComparison()
 }
 
-// changeHiddenSize changes the network hidden layer size.
-// This requires loading different pretrained weights.
-func (app *DualModeApp) changeHiddenSize(size int) {
-	// Skip during initialization - will be called again after UI is ready
-	if !app.initialized {
-		return
-	}
+// changeHiddenSizeWithProgress performs hidden size change with loading feedback
+func (app *DualModeApp) changeHiddenSizeWithProgress(size int, done chan error) {
+	defer func() {
+		if err := <-done; err != nil {
+			fyne.Do(func() {
+				app.statusLabel.SetText(fmt.Sprintf("Error changing hidden size: %v", err))
+				if app.window != nil {
+					dialog.ShowError(fmt.Errorf("Failed to change hidden size: %w", err), app.window)
+				}
+			})
+		}
+	}()
 
 	// Map size to weight file
 	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
 	weightsPath := filepath.Join(app.dataDir, weightsFile)
 
+	// Show loading progress
+	fyne.Do(func() {
+		app.statusLabel.SetText(fmt.Sprintf("Loading weights for hidden size %d...", size))
+	})
+
 	// Check if file exists, fallback to default
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
 		// Try default weights file
 		weightsPath = filepath.Join(app.dataDir, "pretrained_weights.json")
-		app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
+		fyne.Do(func() {
+			app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
+		})
 	}
 
-	// Create new network with specified hidden size
-	app.network = core.NewDualModeNetwork(784, size, 10)
+	// Signal completion
+	done <- nil
+}
 
-	// Load weights
-	if err := app.network.LoadWeights(weightsPath); err != nil {
-		app.statusLabel.SetText("Error loading weights")
-		if app.window != nil {
-			dialog.ShowError(fmt.Errorf("failed to load weights from %s: %w", weightsPath, err), app.window)
+// updateWeightHeatmapWithProgress updates weight visualization with loading feedback
+func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
+	defer func() {
+		if err := <-done; err != nil {
+			fyne.Do(func() {
+				app.statusLabel.SetText(fmt.Sprintf("Error updating heatmap: %v", err))
+				if app.window != nil {
+					dialog.ShowError(fmt.Errorf("Failed to update weight heatmap: %w", err), app.window)
+				}
+			})
 		}
+	}()
+
+	if !app.initialized {
 		return
 	}
 
-	// Reset results and update heatmap
-	app.resetResults()
-	app.updateWeightHeatmap()
-	app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", size))
+	// Show loading progress
+	fyne.Do(func() {
+		app.statusLabel.SetText("Updating weight heatmap...")
+	})
+
+	// Update heatmap if it exists
+	if app.weightHeatmap != nil {
+		fyne.Do(func() {
+			app.weightHeatmap.Refresh()
+		})
+	}
+
+	// Signal completion
+	done <- nil
 }
 
 // tryLoadQATWeights attempts to load QAT weights optimized for the given level.
