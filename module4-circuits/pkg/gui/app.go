@@ -164,6 +164,15 @@ type CircuitsApp struct {
 	opsComputeOutputLabels   []*widget.Label
 	opsComputeMathLabel      *widget.Label
 
+	// Compute mode INPUT data path labels
+	opsComputeInputDigitalLabel  *widget.Label  // Shows "x0: 128\n0b10000000"
+	opsComputeInputDACLabel      *widget.Label  // Shows "0.50V"
+
+	// Compute mode OUTPUT data path labels
+	opsComputeOutputCurrentLabel *widget.Label  // Shows "50.0 uA" or "160.0 uA (SAT)"
+	opsComputeOutputTIALabel     *widget.Label  // Shows "0.500 V" or "1.000 V (SAT)"
+	opsComputeOutputADCLabel     *widget.Label  // Shows "Level 16" or "Level 31 (SAT)"
+
 	// Operations action buttons
 	opsProgramBtn       *widget.Button
 	opsProgramRandomBtn *widget.Button

@@ -301,8 +301,8 @@ func NewDataCenterCalculator() *DataCenterCalculator {
 	d.gpuCostLabel = widget.NewLabel("GPU: $-/month")
 	d.fecimCostLabel = widget.NewLabel("FeCIM: $-/month")
 
-	d.savingsLabel = widget.NewLabel("Savings: -")
-	d.savingsLabel.TextStyle = fyne.TextStyle{Bold: true}
+	d.savingsLabel = widget.NewLabelWithStyle("Savings: -", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	d.savingsLabel.Importance = widget.HighImportance
 
 	d.ExtendBaseWidget(d)
 	return d
@@ -351,8 +351,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// Energy section
-	energyLabel := widget.NewLabel("Energy per Inference:")
-	energyLabel.TextStyle = fyne.TextStyle{Bold: true}
+	energyLabel := widget.NewLabelWithStyle("Energy per Inference:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	energyBox := container.NewVBox(
 		energyLabel,
 		d.cpuEnergyLabel,
@@ -361,8 +360,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// Power section
-	powerLabel := widget.NewLabel("Total Power:")
-	powerLabel.TextStyle = fyne.TextStyle{Bold: true}
+	powerLabel := widget.NewLabelWithStyle("Total Power:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	powerBox := container.NewVBox(
 		powerLabel,
 		d.cpuPowerLabel,
@@ -371,8 +369,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// Cost section
-	costLabel := widget.NewLabel("Monthly Cost (@$0.10/kWh):")
-	costLabel.TextStyle = fyne.TextStyle{Bold: true}
+	costLabel := widget.NewLabelWithStyle("Monthly Cost (@$0.10/kWh):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	costBox := container.NewVBox(
 		costLabel,
 		d.cpuCostLabel,
@@ -597,7 +594,7 @@ func (d *DataCenterTransformation) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	// Before section - GPU (many racks)
-	beforeTitle := widget.NewLabel("Before (GPU)")
+	beforeTitle := widget.NewLabelWithStyle("Before (GPU)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	var beforeRackWidgets []fyne.CanvasObject
 	for i := 0; i < 10; i++ {
 		d.beforeRacks[i] = canvas.NewRectangle(color.RGBA{180, 80, 80, 255})
@@ -613,7 +610,7 @@ func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	arrowText.TextSize = 24
 
 	// After section - FeCIM (few racks)
-	afterTitle := widget.NewLabel("After (FeCIM)")
+	afterTitle := widget.NewLabelWithStyle("After (FeCIM)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	var afterRackWidgets []fyne.CanvasObject
 	for i := 0; i < 2; i++ {
 		d.afterRacks[i] = canvas.NewRectangle(color.RGBA{80, 180, 120, 255})
@@ -624,9 +621,9 @@ func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	d.afterLabel = widget.NewLabel("100 W")
 	afterCol := container.NewVBox(afterTitle, afterRacksRow, d.afterLabel)
 
-	// Savings
+	// Savings - larger text size for prominence
 	d.savingsLabel = canvas.NewText("90% Less", color.RGBA{0, 212, 255, 255})
-	d.savingsLabel.TextSize = 12
+	d.savingsLabel.TextSize = 16
 	d.savingsLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	d.container = container.NewHBox(

@@ -93,62 +93,78 @@ func (e *AnimatedEnergyRace) Reset() {
 
 // MinSize returns minimum size.
 func (e *AnimatedEnergyRace) MinSize() fyne.Size {
-	return fyne.NewSize(400, 140)
+	return fyne.NewSize(400, 160)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
-	barHeight := float32(18)
+	barHeight := float32(26)   // Increased from 18 to 26 for better visibility
 	trackWidth := float32(400) // Reference width for CPU (1000 pJ)
 
 	// LINEAR SCALE: CPU=100%, GPU=10%, FeCIM=0.1%
 	labelWidth := float32(80)
-	valueWidth := float32(70)
+	valueWidth := float32(80) // Increased for larger text
 
 	// CPU row - full width (1000 pJ reference)
+	cpuIcon := canvas.NewText("🖥️", color.Black)
+	cpuIcon.TextSize = 18
 	cpuLabel := widget.NewLabel("CPU+DRAM")
 	cpuLabel.TextStyle = fyne.TextStyle{Bold: true}
-	cpuLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), cpuLabel)
-	e.cpuBar = canvas.NewRectangle(color.RGBA{220, 80, 80, 255})
+	cpuLabel.Importance = widget.HighImportance // Makes text larger/bolder
+	cpuLabelBox := container.NewHBox(cpuIcon, cpuLabel)
+	cpuLabelContainer := container.NewGridWrap(fyne.NewSize(labelWidth+20, barHeight), cpuLabelBox)
+	e.cpuBar = canvas.NewRectangle(color.RGBA{231, 76, 60, 255}) // Strong red (#E74C3C)
 	e.cpuBar.SetMinSize(fyne.NewSize(trackWidth, barHeight))
 	e.cpuValue = widget.NewLabel("1000 pJ")
 	e.cpuValue.TextStyle = fyne.TextStyle{Bold: true}
+	e.cpuValue.Importance = widget.HighImportance // Makes text larger/bolder
 	cpuValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.cpuValue)
-	cpuRow := container.NewHBox(cpuLabelBox, e.cpuBar, cpuValueBox)
+	cpuRow := container.NewHBox(cpuLabelContainer, e.cpuBar, cpuValueBox)
 
 	// GPU row - 10% width (100 pJ = 10× less)
+	gpuIcon := canvas.NewText("🎮", color.Black)
+	gpuIcon.TextSize = 18
 	gpuLabel := widget.NewLabel("GPU+HBM")
 	gpuLabel.TextStyle = fyne.TextStyle{Bold: true}
-	gpuLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), gpuLabel)
-	e.gpuBar = canvas.NewRectangle(color.RGBA{220, 180, 80, 255})
+	gpuLabel.Importance = widget.HighImportance
+	gpuLabelBox := container.NewHBox(gpuIcon, gpuLabel)
+	gpuLabelContainer := container.NewGridWrap(fyne.NewSize(labelWidth+20, barHeight), gpuLabelBox)
+	e.gpuBar = canvas.NewRectangle(color.RGBA{243, 156, 18, 255}) // Amber/Orange (#F39C12)
 	e.gpuBar.SetMinSize(fyne.NewSize(trackWidth*0.1, barHeight)) // 10% of CPU
 	e.gpuValue = widget.NewLabel("100 pJ")
 	e.gpuValue.TextStyle = fyne.TextStyle{Bold: true}
+	e.gpuValue.Importance = widget.HighImportance
 	gpuValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.gpuValue)
-	gpuRow := container.NewHBox(gpuLabelBox, e.gpuBar, gpuValueBox)
+	gpuRow := container.NewHBox(gpuLabelContainer, e.gpuBar, gpuValueBox)
 
-	// FeCIM row - 0.1% width (1 pJ = 1000× less) - minimum 4px visible
+	// FeCIM row - 0.1% width (1 pJ = 1000× less) - minimum 8px visible
+	fecimIcon := canvas.NewText("💾", color.Black)
+	fecimIcon.TextSize = 18
 	fecimLabel := widget.NewLabel("FeCIM")
 	fecimLabel.TextStyle = fyne.TextStyle{Bold: true}
+	fecimLabel.Importance = widget.HighImportance
 	fecimAsterisk := canvas.NewText("*", estimatedColor)
 	fecimAsterisk.TextSize = 14
 	fecimAsterisk.TextStyle = fyne.TextStyle{Bold: true}
-	fecimLabelWithAsterisk := container.NewHBox(fecimLabel, fecimAsterisk)
-	fecimLabelBox := container.NewGridWrap(fyne.NewSize(labelWidth, barHeight), fecimLabelWithAsterisk)
-	e.fecimBar = canvas.NewRectangle(color.RGBA{80, 220, 120, 255})
-	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001), barHeight)) // 0.1% of CPU, min 4px
+	fecimLabelBox := container.NewHBox(fecimIcon, fecimLabel, fecimAsterisk)
+	fecimLabelContainer := container.NewGridWrap(fyne.NewSize(labelWidth+20, barHeight), fecimLabelBox)
+	e.fecimBar = canvas.NewRectangle(color.RGBA{46, 204, 113, 255}) // Bright green (#2ECC71)
+	e.fecimBar.SetMinSize(fyne.NewSize(max(8, trackWidth*0.001), barHeight)) // 0.1% of CPU, min 8px
 	e.fecimValue = widget.NewLabel("~1 pJ")
 	e.fecimValue.TextStyle = fyne.TextStyle{Bold: true}
+	e.fecimValue.Importance = widget.HighImportance
 	fecimValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.fecimValue)
-	fecimRow := container.NewHBox(fecimLabelBox, e.fecimBar, fecimValueBox)
+	fecimRow := container.NewHBox(fecimLabelContainer, e.fecimBar, fecimValueBox)
 
-	// Headline - emphasize the claimed energy advantage
-	e.headlineText = canvas.NewText("1000× LESS ENERGY*", color.RGBA{0, 212, 255, 255})
-	e.headlineText.TextSize = 32
+	// Headline - larger and visible from start (dimmed), then pulses bright
+	e.headlineText = canvas.NewText("1000× LESS ENERGY*", color.RGBA{0, 85, 102, 128}) // Dimmed cyan, visible from start
+	e.headlineText.TextSize = 38 // Increased from 32 to 38
 	e.headlineText.TextStyle = fyne.TextStyle{Bold: true}
+	e.headlineText.Alignment = fyne.TextAlignCenter
 
-	// Scale note
-	scaleNote := widget.NewLabel("(Linear scale)")
+	// Scale note - more prominent
+	scaleNote := canvas.NewText("Scale: Linear (1000:100:1 ratio)", color.RGBA{100, 100, 100, 255})
+	scaleNote.TextSize = 11
 	scaleNote.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Legend for estimated indicator
@@ -160,8 +176,8 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		cpuRow,
 		gpuRow,
 		fecimRow,
-		container.NewHBox(container.NewCenter(e.headlineText), layout.NewSpacer(), scaleNote),
-		container.NewHBox(layout.NewSpacer(), estimatedNote),
+		container.NewCenter(e.headlineText),
+		container.NewHBox(container.NewCenter(scaleNote), layout.NewSpacer(), estimatedNote),
 	)
 
 	return widget.NewSimpleRenderer(e.container)
@@ -180,11 +196,11 @@ func (e *AnimatedEnergyRace) Refresh() {
 	}
 
 	// LINEAR scale bar widths: CPU=100%, GPU=10%, FeCIM=0.1%
-	barHeight := float32(18)
+	barHeight := float32(26) // Updated from 18 to 26
 	trackWidth := float32(400)
 	e.cpuBar.SetMinSize(fyne.NewSize(trackWidth*float32(progress), barHeight))
 	e.gpuBar.SetMinSize(fyne.NewSize(trackWidth*0.1*float32(progress), barHeight))
-	e.fecimBar.SetMinSize(fyne.NewSize(max(4, trackWidth*0.001*float32(progress)), barHeight))
+	e.fecimBar.SetMinSize(fyne.NewSize(max(8, trackWidth*0.001*float32(progress)), barHeight)) // Updated min from 4 to 8
 
 	// Update value labels - show final values after animation
 	// Use caching to avoid redundant SetText calls that trigger layout recalculations
@@ -211,12 +227,14 @@ func (e *AnimatedEnergyRace) Refresh() {
 		e.lastFecimText = fecimText
 	}
 
-	// Headline visibility and pulse
+	// Headline visibility and pulse - now dimmed at start, bright pulse when complete
 	if showWinner {
-		pulse := 0.7 + math.Sin(pulsePhase)*0.3
+		// Bright pulsing cyan when animation complete
+		pulse := 0.8 + math.Sin(pulsePhase)*0.2
 		e.headlineText.Color = color.RGBA{0, uint8(212 * pulse), uint8(255 * pulse), 255}
 	} else {
-		e.headlineText.Color = color.RGBA{0, 0, 0, 0} // Hidden until animation complete
+		// Dimmed cyan, visible from start
+		e.headlineText.Color = color.RGBA{0, 85, 102, 128}
 	}
 
 	canvas.Refresh(e.cpuBar)

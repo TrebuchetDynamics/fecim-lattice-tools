@@ -112,3 +112,63 @@ Files updated with shared theme color imports:
 
 ### Next Steps
 The individual tab files (tab_write.go, tab_read.go, etc.) can now be consolidated into a unified operations view in subsequent tasks.
+
+## Phase 7: COMPUTE Mode Label Enhancements (2026-01-25)
+
+### Implemented Changes
+
+#### 1. Enhanced Array Canvas Labels in COMPUTE Mode (tab_operations.go)
+- Added column labels "x0" through "x7" at TOP of each column (above the grid)
+  - Light blue color (RGBA{100, 150, 255, 255}) for input labels
+  - Positioned 30 pixels above grid
+  - Lines: 411-419
+
+- Added "8 DACs" label centered above the grid
+  - Same light blue color as input labels
+  - Positioned 40 pixels above grid
+  - Lines: 421-426
+
+- Added row labels "y0" through "y7" at RIGHT of each row (after the grid)
+  - Light orange color (RGBA{255, 180, 100, 255}) for output labels
+  - Positioned 20 pixels to the right of grid
+  - Lines: 428-436
+
+- Added "8 ADCs" label to the right of the grid
+  - Same light orange color as output labels
+  - Positioned below the row labels
+  - Lines: 438-443
+
+### Visual Layout
+```
+                    8 DACs
+              x0  x1  x2  x3  x4  x5  x6  x7
+              ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓
+           ┌─────────────────────────────┐
+        y0 │ [] [] [] [] [] [] [] []     │ → y0
+        y1 │ [] [] [] [] [] [] [] []     │ → y1
+        y2 │ [] [] [] [] [] [] [] []     │ → y2
+        y3 │ [] [] [] [] [] [] [] []     │ → y3
+        y4 │ [] [] [] [] [] [] [] []     │ → y4
+        y5 │ [] [] [] [] [] [] [] []     │ → y5
+        y6 │ [] [] [] [] [] [] [] []     │ → y6
+        y7 │ [] [] [] [] [] [] [] []     │ → y7
+           └─────────────────────────────┘
+                                          8 ADCs
+```
+
+### Color Choices
+- **Input labels (blue)**: Matches DAC/input signal convention
+- **Output labels (orange)**: Matches ADC/output signal convention
+- Creates clear visual distinction between input and output pathways
+
+### Verification
+- Build succeeds: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
+- All tests pass: `go test ./module4-circuits/...`
+- No vet errors: `go vet ./module4-circuits/pkg/gui/...`
+- Uses existing `drawSimpleText()` helper from font.go
+
+### User Experience Improvements
+1. **Clearer MVM operation**: Labels show which columns are inputs (x0-x7) and which rows are outputs (y0-y7)
+2. **DAC/ADC indication**: "8 DACs" and "8 ADCs" labels clarify the parallel peripheral operation
+3. **Educational value**: Visual reinforcement that 8 DACs drive inputs and 8 ADCs read outputs simultaneously
+4. **Professional appearance**: Labels match technical documentation standards

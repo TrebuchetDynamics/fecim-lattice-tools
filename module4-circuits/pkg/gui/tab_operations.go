@@ -407,6 +407,40 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 				}
 			}
 		}
+
+		// Add column labels at TOP (x0-x7) - light blue for inputs
+		inputLabelColor := color.RGBA{100, 150, 255, 255}
+		for c := 0; c < min(8, cols); c++ {
+			x := offsetX + c*cellSize + cellSize/2 - 6
+			y := offsetY - 30
+			if y >= 5 {
+				drawSimpleText(img, fmt.Sprintf("x%d", c), x, y, inputLabelColor)
+			}
+		}
+
+		// Add "8 DACs" label centered above grid
+		dacLabelX := offsetX + gridW/2 - 20
+		dacLabelY := offsetY - 40
+		if dacLabelY >= 5 {
+			drawSimpleText(img, "8 DACs", dacLabelX, dacLabelY, inputLabelColor)
+		}
+
+		// Add row labels at RIGHT (y0-y7) - light orange for outputs
+		outputLabelColor := color.RGBA{255, 180, 100, 255}
+		for r := 0; r < min(8, rows); r++ {
+			x := offsetX + gridW + 20
+			y := offsetY + r*cellSize + cellSize/2 - 3
+			if x < w-15 {
+				drawSimpleText(img, fmt.Sprintf("y%d", r), x, y, outputLabelColor)
+			}
+		}
+
+		// Add "8 ADCs" label to the right of grid
+		adcLabelX := offsetX + gridW + 20
+		adcLabelY := offsetY + gridH + 10
+		if adcLabelX < w-35 && adcLabelY < h-5 {
+			drawSimpleText(img, "8 ADCs", adcLabelX, adcLabelY, outputLabelColor)
+		}
 	}
 
 	return img
@@ -554,14 +588,14 @@ func (ca *CircuitsApp) onArrayCellTapped(row, col int) {
 // createWriteModePanel creates the write mode configuration panel
 func (ca *CircuitsApp) createWriteModePanel() {
 	// Target level slider
-	ca.opsWriteLevelLabel = widget.NewLabel(fmt.Sprintf("Target Level: %d / %d", ca.targetLevel, ca.quantLevels))
+	ca.opsWriteLevelLabel = widget.NewLabel(fmt.Sprintf("Target Level: %d (0-%d)", ca.targetLevel, ca.quantLevels-1))
 	ca.opsWriteLevelSlider = widget.NewSlider(0, float64(ca.quantLevels-1))
 	ca.opsWriteLevelSlider.Value = float64(ca.targetLevel)
 	ca.opsWriteLevelSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()
 		ca.targetLevel = int(v)
 		ca.mu.Unlock()
-		ca.opsWriteLevelLabel.SetText(fmt.Sprintf("Target Level: %d / %d", ca.targetLevel, ca.quantLevels))
+		ca.opsWriteLevelLabel.SetText(fmt.Sprintf("Target Level: %d (0-%d)", ca.targetLevel, ca.quantLevels-1))
 		ca.updateOpsWriteDataPath()
 		ca.refreshOpsWritePulse()
 		ca.updateSharedCellInfo()
@@ -1086,19 +1120,99 @@ func (ca *CircuitsApp) createComputeModePanel() {
 	ca.opsComputeMathLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Input section
+	// Create Random Bits button
+	randomBitsBtn := widget.NewButton("RANDOM BITS", func() {
+		ca.mu.Lock()
+		for i := range ca.inputVector {
+			ca.inputVector[i] = rand.Intn(256)
+		}
+		ca.mu.Unlock()
+		ca.updateOpsComputeInputs()
+	})
+
 	inputSection := container.NewVBox(
 		widget.NewLabelWithStyle("INPUT VECTOR", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewHBox(widget.NewLabel("Mode:"), modeSelect),
+		container.NewHBox(widget.NewLabel("Mode:"), modeSelect, randomBitsBtn),
 		widget.NewLabel("Digital inputs (0-255) -> DAC voltages (0-1V):"),
 		inputGrid,
+	)
+
+	// FULL INPUT PIPELINE: 8 digital values -> 8 DACs -> 8 column voltages
+	inputPipelineHeader := widget.NewLabelWithStyle(
+		"INPUT PIPELINE: 8 DIGITAL → 8 DACs → 8 COLUMNS",
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true},
+	)
+
+	// Summary boxes showing the full pipeline
+	digitalSummaryBox := ca.createLabeledBox("8× DIGITAL", "x0-x7\n(0-255)", sharedtheme.ColorPrimary)
+	dacSummaryBox := ca.createLabeledBox("8× DAC", "→ 0-1V\neach", sharedtheme.ColorAccent)
+	columnSummaryBox := ca.createLabeledBox("8 COLUMNS", "Voltages\napplied", sharedtheme.ColorSuccess)
+
+	inputPipelinePath := container.NewHBox(
+		digitalSummaryBox, widget.NewLabel("→"),
+		dacSummaryBox, widget.NewLabel("→"),
+		columnSummaryBox,
+	)
+
+	// Physics note about READ-safe voltages
+	inputPhysicsNote := widget.NewLabel(
+		"⚡ COMPUTE uses 0-1V (READ-safe) - won't disturb programmed cell states",
+	)
+	inputPhysicsNote.TextStyle = fyne.TextStyle{Italic: true}
+
+	inputDataPathSection := container.NewVBox(
+		widget.NewSeparator(),
+		inputPipelineHeader,
+		inputPipelinePath,
+		inputPhysicsNote,
+	)
+
+	// FULL OUTPUT PIPELINE: 8 row sums -> 8 TIAs -> 8 ADCs -> 8 digital levels
+	outputPipelineHeader := widget.NewLabelWithStyle(
+		"OUTPUT PIPELINE: 8 ROWS → 8 TIAs → 8 ADCs → 8 LEVELS",
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true},
+	)
+
+	// Summary boxes for full output pipeline
+	rowSumBox := ca.createLabeledBox("8× ROW SUM", "y0-y7\n(KCL)", sharedtheme.ColorWarning)
+	tiaSummaryBox := ca.createLabeledBox("8× TIA", "I→V\n10kΩ", sharedtheme.ColorInfo)
+	adcSummaryBox := ca.createLabeledBox("8× ADC", "5-bit\n0-31", sharedtheme.ColorSuccess)
+	levelSummaryBox := ca.createLabeledBox("8× LEVEL", "Digital\noutput", sharedtheme.ColorPrimary)
+
+	outputPipelinePath := container.NewHBox(
+		rowSumBox, widget.NewLabel("→"),
+		tiaSummaryBox, widget.NewLabel("→"),
+		adcSummaryBox, widget.NewLabel("→"),
+		levelSummaryBox,
+	)
+
+	// Physics note about row sums
+	outputPhysicsNote := widget.NewLabel(
+		"⚡ Each y_i = Σ(G[i,j] × V_j) - sum of 8 cell currents via KCL",
+	)
+	outputPhysicsNote.TextStyle = fyne.TextStyle{Italic: true}
+
+	// IDEAL CROSSBAR DISCLAIMER
+	idealDisclaimer := widget.NewLabel(
+		"⚠️ IDEAL CROSSBAR: No IR drop or sneak paths modeled (see Module 2 for non-idealities)",
+	)
+	idealDisclaimer.TextStyle = fyne.TextStyle{Bold: true}
+
+	outputDataPathSection := container.NewVBox(
+		widget.NewSeparator(),
+		outputPipelineHeader,
+		outputPipelinePath,
+		outputPhysicsNote,
+		idealDisclaimer,
 	)
 
 	// Output section
 	outputSection := container.NewVBox(
 		widget.NewSeparator(),
-		widget.NewLabelWithStyle("OUTPUT VECTOR", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Row currents (uA) -> ADC -> digital:"),
+		widget.NewLabelWithStyle("OUTPUT VECTOR (Row Sums)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Each output = sum of 8 cell currents, digitized by TIA+ADC:"),
 		outputGrid,
+		outputDataPathSection,
 	)
 
 	// Math section
@@ -1119,6 +1233,7 @@ func (ca *CircuitsApp) createComputeModePanel() {
 
 	ca.computeConfigPanel = container.NewVBox(
 		inputSection,
+		inputDataPathSection,
 		outputSection,
 		mathSection,
 		perfSection,
@@ -1142,6 +1257,74 @@ func (ca *CircuitsApp) updateOpsComputeInputs() {
 				ca.opsComputeVoltageLabels[i].SetText(fmt.Sprintf("%.2fV", voltage))
 			})
 		}
+	}
+}
+
+// updateOpsComputeInputDataPath updates the input data path display
+func (ca *CircuitsApp) updateOpsComputeInputDataPath() {
+	ca.mu.RLock()
+	defer ca.mu.RUnlock()
+
+	if len(ca.inputVector) == 0 {
+		return
+	}
+
+	// Show summary of input vector (first value as example)
+	digitalVal := ca.inputVector[0]
+	voltage := float64(digitalVal) / 255.0
+
+	if ca.opsComputeInputDigitalLabel != nil {
+		fyne.Do(func() {
+			ca.opsComputeInputDigitalLabel.SetText(fmt.Sprintf("x0: %d\n0b%08b", digitalVal, digitalVal))
+		})
+	}
+	if ca.opsComputeInputDACLabel != nil {
+		fyne.Do(func() {
+			ca.opsComputeInputDACLabel.SetText(fmt.Sprintf("%.2fV", voltage))
+		})
+	}
+}
+
+// updateOpsComputeOutputDataPath updates the output data path display
+func (ca *CircuitsApp) updateOpsComputeOutputDataPath() {
+	ca.mu.RLock()
+	defer ca.mu.RUnlock()
+
+	if len(ca.outputVector) == 0 {
+		return
+	}
+
+	// Show y0 as the example
+	rawCurrent := ca.outputVector[0] // uA
+
+	// TIA conversion (saturates at 100 uA -> 1.0V output)
+	tiaVoltage := ca.tia.Convert(rawCurrent * 1e-6) // uA to A
+
+	// ADC conversion (5-bit: 0V->0, 1V->31)
+	adcLevel := ca.adc.Convert(tiaVoltage)
+
+	// Check for TIA saturation
+	isSaturated := rawCurrent > 100.0
+
+	satSuffix := ""
+	if isSaturated {
+		satSuffix = " (SAT)"
+	}
+
+	if ca.opsComputeOutputCurrentLabel != nil {
+		fyne.Do(func() {
+			ca.opsComputeOutputCurrentLabel.SetText(fmt.Sprintf("%.1f uA%s", rawCurrent, satSuffix))
+		})
+	}
+	if ca.opsComputeOutputTIALabel != nil {
+		fyne.Do(func() {
+			ca.opsComputeOutputTIALabel.SetText(fmt.Sprintf("%.3f V%s", tiaVoltage, satSuffix))
+		})
+	}
+	if ca.opsComputeOutputADCLabel != nil {
+		fyne.Do(func() {
+			ca.opsComputeOutputADCLabel.SetText(fmt.Sprintf("Level %d%s", adcLevel, satSuffix))
+		})
 	}
 }
 
@@ -1375,13 +1558,32 @@ func (ca *CircuitsApp) onOpsCompute() {
 	}
 	ca.mu.Unlock()
 
-	// Update output labels
+	// Update output labels with BOTH raw current AND digitized level
 	ca.mu.RLock()
 	for i := 0; i < 8 && i < len(ca.outputVector); i++ {
 		if ca.opsComputeOutputLabels[i] != nil {
-			val := ca.outputVector[i]
+			rawCurrent := ca.outputVector[i] // uA
+
+			// TIA conversion: current (uA) -> voltage (V)
+			// TIA saturates at 100 uA -> clamps output to 1.0V
+			tiaVoltage := ca.tia.Convert(rawCurrent * 1e-6) // Convert uA to A for TIA
+
+			// ADC conversion: voltage -> digital level (5-bit: 0-31)
+			adcLevel := ca.adc.Convert(tiaVoltage)
+
+			// Check for TIA saturation (current > 100 uA causes clamp to 1V)
+			isSaturated := rawCurrent > 100.0
+
+			idx := i
+			current := rawCurrent
+			level := adcLevel
+			sat := isSaturated
 			fyne.Do(func() {
-				ca.opsComputeOutputLabels[i].SetText(fmt.Sprintf("y%d: %.1f uA", i, val))
+				if sat {
+					ca.opsComputeOutputLabels[idx].SetText(fmt.Sprintf("y%d: %.1f uA | L%d (SAT)", idx, current, level))
+				} else {
+					ca.opsComputeOutputLabels[idx].SetText(fmt.Sprintf("y%d: %.1f uA | L%d", idx, current, level))
+				}
 			})
 		}
 	}

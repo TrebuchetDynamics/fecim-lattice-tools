@@ -1,11 +1,11 @@
 {
   "active": true,
   "mode": "ralplan",
-  "iteration": 1,
+  "iteration": 0,
   "max_iterations": 5,
-  "plan_path": ".omc/plans/module4-dac-adc-pipeline.md",
+  "plan_path": ".omc/plans/module4-interactive-compute.md",
   "current_phase": "planner_planning",
-  "started_at": "2026-01-25T11:00:00Z",
-  "task_description": "Module 4 Circuits: Add proper DAC/ADC pipeline for COMPUTE mode with Random Bits generator, DAC visualization, ADC output conversion",
+  "started_at": "2026-01-25T17:49:00Z",
+  "task_description": "Module 4 COMPUTE mode needs interactive responsiveness: (1) When input values change, output should update automatically, (2) When clicking RANDOM BITS, full pipeline should animate/update, (3) Data path boxes should show LIVE values (not static placeholders), (4) Input entry changes should trigger immediate recompute, (5) Array canvas should highlight active columns/rows during compute, (6) Output labels should update in real-time as inputs change. Currently it's static - user has to click COMPUTE button manually. Need automatic reactive updates like WRITE mode has.",
   "ultrawork_enabled": true
 }

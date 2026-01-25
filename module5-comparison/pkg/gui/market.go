@@ -25,7 +25,7 @@ type MarketSegment struct {
 }
 
 // marketData holds the market opportunity data (in billions USD).
-// Sources: Gartner 2026 AI Semiconductor Forecast, WSTS Semiconductor Market Statistics 2024
+// Sources: WSTS Semiconductor Trade Statistics 2025, Gartner AI Semiconductor Forecasts 2025 (combined markets)
 var marketData = []MarketSegment{
 	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{200, 100, 100, 255}},
 	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{100, 150, 200, 255}},
@@ -55,7 +55,7 @@ type MarketOpportunityChart struct {
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:    fyne.NewSize(350, 120),
+		minSize:    fyne.NewSize(420, 160),
 		bars2024:   make([]*canvas.Rectangle, len(marketData)),
 		bars2026:   make([]*canvas.Rectangle, len(marketData)),
 		bars2030:   make([]*canvas.Rectangle, len(marketData)),
@@ -101,63 +101,69 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	// Total market calculation: $98B + $220B + $403B = $721B
 	m.totalText = canvas.NewText("$721B Market by 2030", color.RGBA{0, 212, 255, 255})
-	m.totalText.TextSize = 24
+	m.totalText.TextSize = 32
 	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
 
 	var segmentWidgets []fyne.CanvasObject
 	maxVal := float32(450.0)
-	barHeight := float32(50)
+	barHeight := float32(90)
 
-	// Create Y-axis with scale markers
+	// Create Y-axis with cleaner scale markers
 	yAxisLabel := widget.NewLabel("USD\n(Billions)")
 	yAxisLabel.Alignment = fyne.TextAlignCenter
 
-	// Y-axis scale markers: 0, 200B, 400B
-	scale400 := widget.NewLabel("400")
+	// Y-axis scale markers: $0, $100B, $200B, $300B, $400B
+	scale400 := widget.NewLabel("$400B")
 	scale400.Alignment = fyne.TextAlignTrailing
-	scale200 := widget.NewLabel("200")
+	scale300 := widget.NewLabel("$300B")
+	scale300.Alignment = fyne.TextAlignTrailing
+	scale200 := widget.NewLabel("$200B")
 	scale200.Alignment = fyne.TextAlignTrailing
-	scale0 := widget.NewLabel("0")
+	scale100 := widget.NewLabel("$100B")
+	scale100.Alignment = fyne.TextAlignTrailing
+	scale0 := widget.NewLabel("$0")
 	scale0.Alignment = fyne.TextAlignTrailing
 
 	yAxisScales := container.NewVBox(
 		scale400,
-		container.NewPadded(), // spacer
+		scale300,
 		scale200,
-		container.NewPadded(), // spacer
+		scale100,
 		scale0,
 	)
 
 	yAxis := container.NewHBox(yAxisLabel, yAxisScales)
 
+	// Simplified: Show ONLY 2030 bars with prominent in-bar labels
 	for i, seg := range marketData {
-		shortName := seg.Name
-		if len(shortName) > 6 {
-			shortName = shortName[:6]
-		}
-		segLabel := widget.NewLabel(shortName)
-
-		darkestColor := color.RGBA{seg.Color.R / 3, seg.Color.G / 3, seg.Color.B / 3, 255}
-		m.bars2024[i] = canvas.NewRectangle(darkestColor)
-		m.bars2024[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2024)/maxVal))
-
-		mediumColor := color.RGBA{seg.Color.R * 2 / 3, seg.Color.G * 2 / 3, seg.Color.B * 2 / 3, 255}
-		m.bars2026[i] = canvas.NewRectangle(mediumColor)
-		m.bars2026[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2026)/maxVal))
-
+		// Create single wide bar for 2030 value
 		m.bars2030[i] = canvas.NewRectangle(seg.Color)
-		m.bars2030[i].SetMinSize(fyne.NewSize(12, barHeight*float32(seg.Y2030)/maxVal))
+		m.bars2030[i].SetMinSize(fyne.NewSize(70, barHeight*float32(seg.Y2030)/maxVal))
 
+		// Create placeholder bars (unused but needed for struct)
+		m.bars2024[i] = canvas.NewRectangle(color.Transparent)
+		m.bars2024[i].SetMinSize(fyne.NewSize(0, 0))
+		m.bars2026[i] = canvas.NewRectangle(color.Transparent)
+		m.bars2026[i].SetMinSize(fyne.NewSize(0, 0))
+
+		// Segment name label below bar
+		segLabel := widget.NewLabel(seg.Name)
+		segLabel.Alignment = fyne.TextAlignCenter
+		segLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+		// Value label ABOVE bar (prominent)
 		m.values[i] = widget.NewLabel(fmt.Sprintf("$%.0fB", seg.Y2030))
+		m.values[i].Alignment = fyne.TextAlignCenter
+		m.values[i].TextStyle = fyne.TextStyle{Bold: true}
 
-		barGroup := container.NewHBox(m.bars2024[i], m.bars2026[i], m.bars2030[i])
-		segCol := container.NewVBox(segLabel, barGroup, m.values[i])
+		// Stack: value on top, bar in middle, name below
+		segCol := container.NewVBox(m.values[i], m.bars2030[i], segLabel)
 		segmentWidgets = append(segmentWidgets, segCol)
 	}
 
 	barsRow := container.NewHBox(yAxis, container.NewHBox(segmentWidgets...))
 
-	citation := widget.NewLabel("Source: Gartner 2026 AI Semiconductor Forecast")
+	citation := widget.NewLabel("Source: WSTS + Gartner Combined Market Forecasts (2025)")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
@@ -189,19 +195,13 @@ func (m *MarketOpportunityChart) Refresh() {
 		m.totalText.Color = color.RGBA{0, 150, 200, 255}
 	}
 
-	// Update bar heights based on progress
+	// Update bar heights based on progress (only 2030 bars now)
 	maxVal := float32(450.0)
-	barHeight := float32(80)
+	barHeight := float32(90)
 
 	for i, seg := range marketData {
-		bar2024Height := barHeight * float32(seg.Y2024) / maxVal * float32(progress)
-		m.bars2024[i].SetMinSize(fyne.NewSize(20, max(2, bar2024Height)))
-
-		bar2026Height := barHeight * float32(seg.Y2026) / maxVal * float32(progress)
-		m.bars2026[i].SetMinSize(fyne.NewSize(20, max(2, bar2026Height)))
-
 		bar2030Height := barHeight * float32(seg.Y2030) / maxVal * float32(progress)
-		m.bars2030[i].SetMinSize(fyne.NewSize(20, max(2, bar2030Height)))
+		m.bars2030[i].SetMinSize(fyne.NewSize(70, max(2, bar2030Height)))
 
 		// Use caching to avoid redundant SetText calls
 		newText := fmt.Sprintf("$%.0fB", seg.Y2030*progress)
@@ -210,8 +210,6 @@ func (m *MarketOpportunityChart) Refresh() {
 			m.lastValues[i] = newText
 		}
 
-		canvas.Refresh(m.bars2024[i])
-		canvas.Refresh(m.bars2026[i])
 		canvas.Refresh(m.bars2030[i])
 	}
 
@@ -231,8 +229,9 @@ type Competitor struct {
 
 // competitors data for the competitive matrix.
 // Energy values sourced from published specifications where available.
+// NOTE: FeCIM values are TRL 4 projections vs commercial products (TRL 9)
 var competitors = []Competitor{
-	{"FeCIM", "~1 pJ*", 2, 2, 2, true, true},            // Dr. Tour claim (unverified)
+	{"FeCIM", "~1 pJ*", 2, 2, 2, true, true},            // Dr. Tour claim (TRL 4 projection)
 	{"Google TPU v5", "~100 pJ", 0, 2, 2, false, false}, // Google published specs
 	{"Intel Loihi 2", "~10 pJ", 2, 0, 0, false, false},  // Intel published specs (non-CMOS fab)
 	{"IBM Analog AI", "~10 pJ", 2, 1, 1, false, true},   // Research prototype estimate

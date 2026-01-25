@@ -389,14 +389,19 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 				"100× less than GPUs\n\n" +
 				"= 90% cost reduction\n" +
 				"= 10× more inference\n" +
-				"= same power budget"
+				"= same power budget\n\n" +
+				"* TRL 4 = Laboratory Validation\n" +
+				"  (not production ready)"
 		} else {
 			content = "ENERGY PER MAC\n\n" +
 				"CPU + DRAM: 1000 pJ\n" +
 				"GPU + HBM: 100 pJ\n" +
 				"FeCIM: ~1 pJ*\n\n" +
-				"* TRL 4 claims\n" +
-				"(1 pJ = 1000 fJ)"
+				"* TRL 4 = Laboratory Validation\n" +
+				"  (not production ready)\n" +
+				"(1 pJ = 1000 fJ)\n\n" +
+				"References: Nature Commun. 2025,\n" +
+				"PMC 2024, IEEE IRPS 2022"
 		}
 
 	case AutoDemoPhaseMarket:
@@ -459,8 +464,12 @@ func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
 		"CLAIMED ADVANTAGES:\n" +
 		fmt.Sprintf("  • %.0f× less power vs CPU*\n", cpuRatio) +
 		fmt.Sprintf("  • %.0f× less power vs GPU*\n", gpuRatio) +
-		"\n* Based on Dr. Tour's claims (TRL 4)\n" +
-		"  Independent verification pending"
+		"\n* TRL 4 = Laboratory Validation\n" +
+		"  (not production ready)\n" +
+		"  Based on Dr. Tour's claims\n" +
+		"  Independent verification pending\n\n" +
+		"Peer-reviewed: Nature Commun. 2025,\n" +
+		"PMC 2024, IEEE IRPS 2022"
 	e.SetContent("Why Compute-in-Memory Wins", content)
 }
 
@@ -476,7 +485,11 @@ func (e *ComparisonEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 	content := e.content
 	e.mu.RUnlock()
 
+	// Section title: 18-20pt Bold
 	titleLabel := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	titleLabel.Importance = widget.HighImportance
+
+	// Body text: 13-14pt Regular (default)
 	contentLabel := widget.NewLabel(content)
 	contentLabel.Wrapping = fyne.TextWrapWord
 
@@ -516,8 +529,10 @@ func NewComparisonOperationLog() *ComparisonOperationLog {
 		entries:    make([]string, 0, 8),
 	}
 	o.titleLabel = widget.NewLabelWithStyle("Calculation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	// Use monospace font for log entries for better readability
 	o.contentLabel = widget.NewLabel("Ready for calculations...")
 	o.contentLabel.Wrapping = fyne.TextWrapWord
+	o.contentLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	o.ExtendBaseWidget(o)
 	return o
 }

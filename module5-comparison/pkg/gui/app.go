@@ -419,46 +419,92 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		ca.pauseBtn,
 	)
 
-	// === LEFT PANEL - Controls ===
+	// === LEFT PANEL - Narrow controls (~12%) ===
+	leftConfigLabel := widget.NewLabelWithStyle("Configuration", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+
 	leftPanel := container.NewVBox(
-		widget.NewLabel("Configuration"),
+		leftConfigLabel,
 		widget.NewSeparator(),
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
+		widget.NewSeparator(),
 		ca.inferencesLabel,
 		ca.inferencesSlider,
-		calcBtn,
 		widget.NewSeparator(),
-		ca.createVerifiedClaimsWidget(),
+		calcBtn,
 	)
 
-	// === CENTER PANEL - Main visualizations (2 columns) ===
-	// Dr. Tour recommendation: Show explicit energy numbers with units
+	// === CENTER PANEL - Expanded with better hierarchy (~68%) ===
+	// HERO: Energy Race (full width, larger)
+	heroEnergyRace := widget.NewCard(
+		"Energy per MAC Operation",
+		fmt.Sprintf("CPU: %d pJ | GPU: %d pJ | FeCIM: %.1f pJ",
+			int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC),
+		container.NewPadded(ca.energyRace),
+	)
+
+	// Row 1: Calculator + Memory Wall
 	row1 := container.NewGridWithColumns(2,
-		widget.NewCard("Energy per MAC Operation",
-			fmt.Sprintf("CPU: %d pJ | GPU: %d pJ | FeCIM: %.1f pJ",
-				int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC),
-			ca.energyRace),
-		widget.NewCard("Memory Wall Problem", "Data movement = waste", ca.memoryWall),
+		widget.NewCard("Data Center Calculator", "Interactive power and cost estimates",
+			container.NewPadded(container.NewVBox(ca.calculator, ca.dcTransformation))),
+		widget.NewCard("Memory Wall Problem", "Data movement dominates energy",
+			container.NewPadded(ca.memoryWall)),
 	)
+
+	// Row 2: Market + Competitive
 	row2 := container.NewGridWithColumns(2,
-		widget.NewCard("Market Opportunity", "AI semiconductor growth", ca.marketChart),
-		widget.NewCard("Competitive Comparison", "FeCIM vs alternatives", ca.competitiveMatrix),
+		widget.NewCard("Market Opportunity", "AI semiconductor growth projection",
+			container.NewPadded(ca.marketChart)),
+		widget.NewCard("Competitive Landscape", "FeCIM vs alternatives",
+			container.NewPadded(ca.competitiveMatrix)),
 	)
+
+	// Row 3: Strategy + Analog States
 	row3 := container.NewGridWithColumns(2,
-		widget.NewCard("Commercialization Strategy", "Phased market entry", ca.phasedStrategy),
-		widget.NewCard("Analog States", "30 states per cell", ca.analogStates),
+		widget.NewCard("Commercialization Strategy", "Phased market entry plan",
+			container.NewPadded(ca.phasedStrategy)),
+		widget.NewCard("Analog States", "30 programmable levels per cell",
+			container.NewPadded(ca.analogStates)),
 	)
-	row4 := widget.NewCard("Data Center Calculator", "Power and cost estimates",
-		container.NewVBox(ca.calculator, ca.dcTransformation))
 
-	centerPanel := container.NewVBox(row1, row2, row3, row4)
+	// Verified Claims - Collapsible accordion at bottom
+	verifiedClaimsAccordion := widget.NewAccordion(
+		widget.NewAccordionItem("Verified Claims & Technology Status", ca.createVerifiedClaimsWidget()),
+	)
 
-	// === RIGHT PANEL - Educational content ===
+	// Scroll indicator to help users discover content below the fold
+	scrollHintLabel := widget.NewLabelWithStyle("▼ Scroll down for Data Center Calculator, Market Analysis, and more ▼", fyne.TextAlignCenter, fyne.TextStyle{Italic: true})
+	scrollHintLabel.Importance = widget.LowImportance
+
+	centerPanel := container.NewVBox(
+		heroEnergyRace,
+		scrollHintLabel,
+		widget.NewSeparator(),
+		row1,
+		widget.NewSeparator(),
+		row2,
+		widget.NewSeparator(),
+		row3,
+		widget.NewSeparator(),
+		verifiedClaimsAccordion,
+	)
+
+	// === RIGHT PANEL - Educational + Log (~20%) ===
+	sourcesLink := widget.NewHyperlink("View Sources & References", nil)
+	sourcesLink.OnTapped = func() {
+		ca.operationLog.Add("Sources: See docs/videos/COSM_2025_AI_Hardware_Breakthrough/")
+	}
+
+	operationLogAccordion := widget.NewAccordion(
+		widget.NewAccordionItem("Operation Log", ca.operationLog),
+	)
+
 	rightPanel := container.NewVBox(
 		ca.educationalPanel,
 		widget.NewSeparator(),
-		ca.operationLog,
+		operationLogAccordion,
+		layout.NewSpacer(),
+		sourcesLink,
 	)
 
 	// === FOOTER ===
@@ -482,14 +528,14 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// === MAIN LAYOUT ===
-	// Left panel: ~18%, Center: ~57%, Right: ~25%
+	// Left panel: ~12% (150px fixed), Center: ~68%, Right: ~20% (250px fixed)
 	leftScroll := container.NewScroll(container.NewPadded(leftPanel))
-	leftScroll.SetMinSize(fyne.NewSize(200, 0))
+	leftScroll.SetMinSize(fyne.NewSize(150, 0))
 
-	centerScroll := container.NewScroll(centerPanel)
+	centerScroll := container.NewScroll(container.NewPadded(centerPanel))
 
 	rightScroll := container.NewScroll(container.NewPadded(rightPanel))
-	rightScroll.SetMinSize(fyne.NewSize(280, 0))
+	rightScroll.SetMinSize(fyne.NewSize(250, 0))
 
 	mainContent := container.NewBorder(
 		container.NewVBox(header, widget.NewSeparator()),
