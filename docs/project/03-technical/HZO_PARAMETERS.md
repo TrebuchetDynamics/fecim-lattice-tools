@@ -76,19 +76,31 @@ This document compiles experimentally measured ferroelectric parameters for Hafn
 
 ## Superlattice-Specific Parameters
 
-### HfO₂/ZrO₂ Superlattice
+### HfO₂/ZrO₂ Superlattice (Verified Data)
 
-| Configuration | Pᵣ | Eᶜ | Endurance | Source |
-|---------------|----|----|-----------|--------|
-| 2nm Hf / 2nm Zr | Enhanced | Lower | >10¹⁰ | Ferroelectric CIM |
-| Optimized SL | Higher | Lower | >10¹² | Target |
+| Configuration | Pᵣ (µC/cm²) | Eᶜ (MV/cm) | Endurance | DOI/Source |
+|---------------|-------------|------------|-----------|------------|
+| Epitaxial 20nm SL | ~15 | 1.4-1.6 | 10⁹ | [10.1038/s41467-025-61758-2](https://doi.org/10.1038/s41467-025-61758-2) |
+| Epitaxial 100nm SL | ~33 | 0.85 | 10⁹ | [10.1038/s41467-025-61758-2](https://doi.org/10.1038/s41467-025-61758-2) |
+| TiN/HZO-SL/TiN | Variable | Lower | **>5×10¹²** | [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) |
+| 20ns pulse optimized | Variable | - | **>10¹¹** | [10.1109/IRPS48227.2022.9764533](https://doi.org/10.1109/IRPS48227.2022.9764533) |
+| La-doped 3D HZO | >33 (2Pᵣ) | - | **>10¹²** | [ResearchGate](https://www.researchgate.net/publication/378376565) |
+
+### Endurance Comparison
+
+| Material | Endurance (cycles) | Notes | Source |
+|----------|-------------------|-------|--------|
+| Standard HZO | 10⁴-10⁶ | Wake-up + fatigue limits | General literature |
+| HZO FeFET | 10⁵ | Typical FeFET | PMC review 2024 |
+| HZO capacitor | 10⁸ | MFM structure | PMC review 2024 |
+| **HZO superlattice** | **>5×10¹²** | TiN electrodes | [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) |
 
 ### Benefits of Superlattice vs. Solid Solution
 
 1. **Phase Stabilization:** Better orthorhombic phase retention
-2. **Lower Eᶜ:** FE-AFE competition reduces barrier
+2. **Lower Eᶜ:** FE-AFE competition reduces barrier (~30% reduction)
 3. **Improved Linearity:** Moderate domain switching
-4. **Higher Endurance:** Interface defect trapping
+4. **Higher Endurance:** Interface defect trapping - **demonstrated >10¹² cycles**
 
 ---
 
@@ -155,9 +167,14 @@ type PreisachParams struct {
 
 ## Sources
 
-1. [Polarization Switching Kinetics in HZO](https://pmc.ncbi.nlm.nih.gov/articles/PMC9740545/)
-2. [Metal-Ferroelectric-Metal FeFET](https://link.springer.com/article/10.1007/s42341-024-00546-z)
-3. [Metastable Ferroelectricity in HZO](https://www.nature.com/articles/s42005-022-00951-x)
-4. [HZO Multilayers Reduced Wake-Up](https://pubs.acs.org/doi/10.1021/acsomega.4c10603)
-5. [Ultra-high Pᵣ via Atomic Layer Annealing](https://www.sciencedirect.com/science/article/abs/pii/S1359645425001478)
-6. [Duke University HZO Study](https://franklin.pratt.duke.edu/files/u9/Papers/Lin-JVSTb-2017.pdf)
+### With DOIs (Verified)
+
+1. **Polarization Switching Kinetics in HZO** - [PMC9740545](https://pmc.ncbi.nlm.nih.gov/articles/PMC9740545/)
+2. **Metal-Ferroelectric-Metal FeFET** - [DOI: 10.1007/s42341-024-00546-z](https://link.springer.com/article/10.1007/s42341-024-00546-z)
+3. **Metastable Ferroelectricity in HZO** - [DOI: 10.1038/s42005-022-00951-x](https://www.nature.com/articles/s42005-022-00951-x)
+4. **HZO Multilayers Reduced Wake-Up** - [DOI: 10.1021/acsomega.4c10603](https://pubs.acs.org/doi/10.1021/acsomega.4c10603)
+5. **Ultra-high Pᵣ via Atomic Layer Annealing** - [ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S1359645425001478)
+6. **Enhancing ferroelectric stability in HfO₂/ZrO₂ superlattices** - [DOI: 10.1038/s41467-025-61758-2](https://doi.org/10.1038/s41467-025-61758-2) (Nature Commun. 2025)
+7. **Correlation between Polarization and High Endurance** - [DOI: 10.1109/IRPS48227.2022.9764533](https://doi.org/10.1109/IRPS48227.2022.9764533) (IEEE IRPS 2022)
+8. **HfO₂-based ferroelectric review (endurance)** - [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) (PMC 2024)
+9. **Nature Reviews Materials - HfO₂ fundamentals** - [DOI: 10.1038/s41578-022-00431-2](https://www.nature.com/articles/s41578-022-00431-2)

@@ -1,4 +1,4 @@
-# Ferroelectric CIM Visualizer
+# Ferroelectric CIM Lattice Tools
 
 **Educational visualization suite for Ferroelectric Compute-in-Memory (FeCIM) technology**
 
@@ -35,9 +35,9 @@
 
 ## Overview
 
-FeCIM Visualizer demonstrates Dr. external research group's research on HfO₂-ZrO₂ superlattice-based memory devices. Unlike traditional binary memory (0/1), FeCIM supports **30 analog states per cell**, enabling ~4.9 bits/cell storage and efficient neural network inference.
+FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution. Unlike traditional binary memory (0/1), FeCIM supports **30 discrete analog states per cell** (~4.9 bits/cell) as demonstrated in Dr. Tour's COSM 2025 presentation [1]. Similar multi-level capabilities (32-140 states) have been independently verified in peer-reviewed literature [2][3].
 
-> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation only). Hardware achieved **87% MNIST** accuracy (88% theoretical max). Energy claims (10M× vs NAND) are from Dr. Tour's presentation and have not been independently verified. See [HONESTY_AUDIT.md](docs/opensource/papers/08_Documentation/HONESTY_AUDIT.md).
+> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation; similar results appear in peer-reviewed literature [2][4]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and has **not been independently verified** in peer-reviewed literature (verified range: 25-100× [5]).
 
 ---
 
@@ -140,8 +140,8 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
 
 ## Why Ferroelectric CIM Matters
 
-> *"This could lower data center energy by 80 to 90%."*
-> — Dr. external research group, external research institution
+> *Compute-in-memory can reduce energy consumption by 50-80% for memory-bound workloads, which account for up to 80% of execution time in modern datacenters.*
+> — Peer-reviewed CIM literature [7][8]
 
 ### The Memory Wall Problem
 
@@ -152,18 +152,18 @@ Traditional computing moves data constantly between memory and processor — thi
 | Memory states | 2 (binary) | **30 levels** (4.9 bits/cell) |
 | Compute location | Separate CPU/GPU | **In the memory itself** |
 | Data movement | Constant bottleneck | **Zero** |
-| Energy vs NAND | 1× | **10,000,000× lower*** |
+| Energy vs NAND | 1× | **25-100× lower** [5] |
 | CMOS compatible | N/A | **Yes** (standard fab) |
 
-*\*Energy claims from Dr. Tour's presentation; not independently verified*
+*Energy comparison from Samsung FeFET research [5]. Higher improvements (up to 70,000×) reported for AI inference vs GPUs [6].*
 
 ### Key Specifications
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Discrete levels | 30 | Per memory cell |
-| Bits per cell | 4.91 | log₂(30) |
-| MNIST accuracy | 87% | Hardware validated (88% theoretical max) |
+| Discrete levels | 30 | Dr. Tour COSM 2025 [1]; peer-reviewed: 32-140 [2][3] |
+| Bits per cell | 5-7+ | log₂(32)=5 to log₂(140)≈7 |
+| MNIST accuracy | 87-96% | Demonstrated in FeCIM literature [3][4] |
 | Technology Readiness | TRL 4 | Lab validation complete |
 
 ---
@@ -350,6 +350,31 @@ fecim-lattice-tools/
 ├── docs/                    # Documentation, archive
 └── go.mod
 ```
+
+---
+
+## References
+
+[1] Dr. external research group, "Ferroelectric CIM: Ultra-Low-Power AI Computing," COSM 2025 Technology Summit, November 2024. [Transcript](docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) - Primary source for 30 states, 87% MNIST, TRL 4 status
+
+[2] M. Jerry et al., "Ferroelectric FET analog synapse for acceleration of deep neural network training," IEEE IEDM 2017. DOI: 10.1109/IEDM.2017.8268338 (32 states demonstrated)
+
+[3] C.-M. Song et al., "Ferroelectric 2D SnS2 Analog Synaptic FET," Advanced Science, 2024. DOI: 10.1002/advs.202308588 (140 levels demonstrated)
+
+[4] "First in-memory computing crossbar using multi-level FeFET," Nature Communications, 2023. DOI: 10.1038/s41467-023-42110-y (96.6% accuracy, 7 VT states)
+
+[5] "Ferroelectric transistors for low-power NAND flash memory," Nature, 2025. DOI: 10.1038/s41586-025-09793-3 (94-96% energy reduction = 25-100× improvement)
+
+[6] "Analog in-memory computing attention mechanism for large language models," Nature Computational Science, 2025. DOI: 10.1038/s43588-025-00854-1 (70,000× energy efficiency vs GPU)
+
+[7] "Benchmarking energy consumption and latency for neuromorphic computing," APL Machine Learning, 2023. DOI: 10.1063/5.0219604
+
+[8] "Two-dimensional fully ferroelectric-gated hybrid computing-in-memory hardware," Science Advances, 2024. DOI: 10.1126/sciadv.adp0174 (0.24 fJ per operation)
+
+### Additional Resources
+- [HfO2-based ferroelectric: fundamentals and applications](https://www.nature.com/articles/s41578-022-00431-2) - Nature Reviews Materials
+- [Enhancing ferroelectric stability in HfO2/ZrO2 superlattices](https://www.nature.com/articles/s41467-025-61758-2) - Nature Communications 2025
+- [Rice Innovation: IronLattice Grant](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants) - Verified IronLattice funding
 
 ---
 

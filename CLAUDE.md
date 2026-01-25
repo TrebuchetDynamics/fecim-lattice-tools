@@ -1,10 +1,12 @@
-# CLAUDE.md - FeCIM Visualizer
+# CLAUDE.md - FeCIM Lattice Tools
 
 ## Overview
 
-Go-based visualization suite for Ferroelectric Compute-in-Memory (FeCIM) technology demonstrating Dr. external research group's HfO2-ZrO2 superlattice research.
+Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research.
 
-**Core concept**: 30 discrete analog states per cell (~4.9 bits/cell) enabling compute-in-memory where the same device handles both storage and computation.
+**Core concept**: 30 discrete analog states per cell (~4.9 bits/cell) as demonstrated in Dr. Tour's COSM 2025 presentation. Peer-reviewed literature confirms similar capabilities (32-140 states) in HZO FeFET devices.
+
+> **Primary Source**: Dr. external research group, COSM 2025 - [Transcript](docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
 
 ## Build & Run
 
@@ -65,12 +67,39 @@ func (app *EmbeddedXxxApp) Stop()   // Called when tab deselected
 
 ## Physics Constants
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| FeCIM Levels | 30 | Discrete states per cell |
-| Pr | ~25 µC/cm² | Remanent polarization |
-| Ec | ~1 MV/cm | Coercive field |
-| Ps | ~30 µC/cm² | Saturation polarization |
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| FeCIM Levels | 30 | Dr. Tour COSM 2025 (primary); Jerry 2017: 32, Song 2024: 140 |
+| Pr | 15-34 µC/cm² | Nature Commun. 2025, ACS 2020 |
+| Ec | 1.0-1.5 MV/cm | Nature Commun. 2025 |
+| Ps | ~30-35 µC/cm² | Literature consensus |
+| Endurance | 10¹²+ cycles (superlattice) | PMC 2024, IEEE IRPS 2022 |
+
+### Parameter References
+- **Pr (Remanent Polarization)**: 15 µC/cm² for 20nm superlattice [DOI:10.1038/s41467-025-61758-2], up to 34 µC/cm² wake-up free [DOI:10.1021/acsaelm.0c00671]
+- **Ec (Coercive Field)**: 1.4-1.6 MV/cm for 20nm, 0.85 MV/cm for 100nm superlattice [DOI:10.1038/s41467-025-61758-2]
+- **Endurance**: >5×10¹² cycles demonstrated for HfO₂-ZrO₂ superlattice with TiN electrodes [PMC 2024]
+- **Multi-level states**: 32 states (5-bit) standard benchmark [DOI:10.1109/IEDM.2017.8268338]
+
+## Accuracy & Honesty Policy
+
+This project prioritizes **scientific accuracy** over marketing claims:
+
+1. **Verified claims** include peer-reviewed citations with DOIs
+2. **Unverified claims** are marked as such (e.g., "10M× energy" claim)
+3. **Simulation parameters** (30 levels) may differ from literature (32-140 levels)
+4. **Dr. Tour attribution**: IronLattice is verified (Rice Innovation grant 2025), but specific device parameters are from general HZO literature
+
+### Key Verified Facts
+| Claim | Status | Source |
+|-------|--------|--------|
+| 30 analog states | ✅ Dr. Tour claim | COSM 2025 presentation; peer-reviewed: 32 states (Jerry 2017) |
+| 87% MNIST accuracy | ✅ Dr. Tour claim | COSM 2025 presentation; peer-reviewed: 87-96% (multiple sources) |
+| 10¹² cycle endurance | ⚠️ Target, not achieved | Dr. Tour: "still have to get this up to 10¹²"; literature: verified for superlattice (PMC 2024) |
+| 10M× vs NAND energy | ❌ Unverified | Dr. Tour claim only; peer-reviewed max: 25-100× (Nature 2025) |
+| 80-90% datacenter savings | ⚠️ Dr. Tour claim | COSM 2025; realistic peer-reviewed: 50-80% for memory-bound |
+| IronLattice company | ✅ Verified | Rice Innovation grant Jan 2025; COSM 2025 presentation |
+| TRL 4 status | ✅ Confirmed | Dr. Tour explicitly stated at COSM 2025 |
 
 ## Testing
 

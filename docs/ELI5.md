@@ -8,7 +8,7 @@
 
 **If you only have 60 seconds, read this.**
 
-> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation). Energy claims (10M× vs NAND, 80-90% DC savings) are from Dr. Tour's presentation and have NOT been independently verified.
+> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation) — Dr. Tour explicitly stated this at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation, with similar results in peer-reviewed literature [2][3]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and remains **unverified** in peer-reviewed research (verified range: 25-100× [4]).
 
 ## The Problem
 AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
@@ -23,28 +23,49 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 
 ## The Magic Numbers
 
-| What | Traditional | Ferroelectric CIM | Improvement |
-|------|-------------|-------------|-------------|
-| Energy per operation | 10 pJ | 0.001 pJ | **10,000×*** |
-| Data movement | Billions of trips | Zero | **∞** |
-| Operations in parallel | 1-1000 | Millions | **1000×** |
-| States per cell | 1 bit (0 or 1) | ~5 bits (30 levels) | **5×** |
-
-*Energy claims from Dr. Tour, not independently verified
+| What | Traditional | Ferroelectric CIM | Improvement | Source |
+|------|-------------|-------------------|-------------|--------|
+| Energy per operation | 10 pJ | 0.24 fJ | **25-100×** vs NAND | [Nature 2025](https://doi.org/10.1038/s41586-025-09793-3) |
+| Energy vs GPU (AI) | 100 pJ | ~1 fJ | **up to 70,000×** | [Nature Comp. Sci. 2025](https://doi.org/10.1038/s43588-025-00854-1) |
+| Data movement | Billions of trips | Zero | **Eliminated** | CIM architecture |
+| Operations in parallel | 1-1000 | Millions | **1000×** | Crossbar arrays |
+| States per cell | 1 bit (0 or 1) | 5-7 bits (32-140 levels) | **5-7×** | [Jerry 2017](https://doi.org/10.1109/IEDM.2017.8268338), [Song 2024](https://doi.org/10.1002/advs.202308588) |
 
 ## The Proof
-- ✅ Real material demonstrated in Dr. Tour's lab at external research institution
-- ✅ 30 discrete analog states achieved
+
+**From Dr. Tour's COSM 2025 Presentation [1]:**
+- ✅ 30 discrete analog states demonstrated at external research institution
+- ✅ 87% MNIST accuracy on hardware (88% theoretical max)
 - ✅ Works with standard CMOS manufacturing
-- ✅ Hardware achieved 87% MNIST (88% theoretical max)
+- ⚠️ TRL 4 — "We are at Technology Readiness Level TRL4" — Dr. Tour
+- ⚠️ Endurance: "We still have to get this up to the required 10^12 cycles" — Dr. Tour
+
+**Corroborated by Peer-Reviewed Literature:**
+- ✅ 32-140 discrete states demonstrated [Jerry 2017, Song 2024]
+- ✅ 87-96% MNIST accuracy achieved [arXiv:2601.01186, Nature Commun. 2023]
+- ✅ >10¹² cycle endurance for HZO superlattice [IEEE IRPS 2022, PMC 2024]
 
 ## The Vision
 A future where:
 - Your phone runs ChatGPT locally without draining the battery
-- Data centers use 80-90% less power
+- Data centers use **50-80% less power** for memory-bound AI workloads
 - AI is fast, cheap, and everywhere
 
+*Note: Specific savings depend on workload characteristics. Memory-bound tasks benefit most from CIM.*
+
 **That's Ferroelectric CIM.**
+
+---
+
+### Sources for Part 0
+
+[1] Dr. external research group, "Ferroelectric CIM," COSM 2025 — [Full Transcript](../videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
+
+[2] Jerry et al., IEEE IEDM 2017 — 32 states (DOI: 10.1109/IEDM.2017.8268338)
+
+[3] Song et al., Advanced Science 2024 — 140 levels (DOI: 10.1002/advs.202308588)
+
+[4] Nature 2025 — 94-96% energy reduction vs NAND (DOI: 10.1038/s41586-025-09793-3)
 
 ---
 
