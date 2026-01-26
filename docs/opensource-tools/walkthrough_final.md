@@ -4,7 +4,7 @@
 I have researched open source ferroelectric tools, additional papers by Dr. Tour/Jaeho Shin, competitor research, and HZO/SiO CMOS integration.
 
 ### Research Notes
-Detailed research notes have been compiled in [research_notes.md](file://<local-path>).
+Detailed research notes have been compiled in [research_notes.md](./research_notes_final.md).
 
 ### Downloaded Papers
 The following papers were successfully downloaded to `opensource/papers`:

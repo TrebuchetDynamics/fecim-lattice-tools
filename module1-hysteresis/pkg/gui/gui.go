@@ -324,6 +324,15 @@ func (a *App) run() error {
 
 	// Start simulation loop
 	a.running = true
+
+	// Perform level calibration for current material (background to not block UI)
+	go func() {
+		time.Sleep(100 * time.Millisecond) // Let UI settle
+		a.mu.Lock()
+		a.calibrateLevels()
+		a.mu.Unlock()
+	}()
+
 	go a.simulationLoop()
 
 	a.mainWindow.ShowAndRun()

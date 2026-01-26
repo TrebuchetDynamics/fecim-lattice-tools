@@ -3,6 +3,8 @@
 package gui
 
 import (
+	"time"
+
 	"fyne.io/fyne/v2"
 	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
 )
@@ -58,6 +60,15 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 // Start begins the simulation loop (call after BuildContent)
 func (e *EmbeddedApp) Start() {
 	e.running = true
+
+	// Perform level calibration for current material (background to not block UI)
+	go func() {
+		time.Sleep(100 * time.Millisecond) // Let UI settle
+		e.mu.Lock()
+		e.calibrateLevels()
+		e.mu.Unlock()
+	}()
+
 	go e.simulationLoop()
 }
 

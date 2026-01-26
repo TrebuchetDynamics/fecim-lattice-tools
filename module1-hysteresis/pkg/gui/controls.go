@@ -96,7 +96,16 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.plot.SetBounds(a.material.Ec*2.5, a.material.Ps*1.2)
+		// Mark calibration as stale (new material needs recalibration)
+		a.calibrated = false
 		a.mu.Unlock()
+
+		// Recalibrate for new material (background to not block UI)
+		go func() {
+			a.mu.Lock()
+			a.calibrateLevels()
+			a.mu.Unlock()
+		}()
 	})
 	a.materialSelect.SetSelected("Default HZO")
 

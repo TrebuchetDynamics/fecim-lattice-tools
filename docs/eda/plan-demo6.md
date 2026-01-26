@@ -3279,7 +3279,7 @@ Action: Conduct literature review of recent HfO₂-based FeFET papers (2020-2026
 PROJECT IMPLEMENTATION:
 
 [7] This Implementation:
-    github.com/XelHaku/ironlattice-vis/tree/main/module6-eda
+    github.com/your-org/fecim-lattice-tools/tree/main/module6-eda
     Module 6: FeCIM Design Suite
     Status: Proof-of-concept with placeholder FeFET characteristics
 
@@ -3351,7 +3351,7 @@ Version:      0.2.0
 Date:         2026-01-24
 Status:       Implementation plan with validated OpenLane integration methodology
 Author:       XelHaku
-Repository:   github.com/XelHaku/ironlattice-vis
+Repository:   github.com/your-org/fecim-lattice-tools
 Validation:   OpenLane v2.0 documentation cross-referenced and corrected
 
 REVISION HISTORY:
