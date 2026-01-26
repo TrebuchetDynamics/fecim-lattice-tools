@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-25
+Last Updated: 2026-01-26
 ---
 
 ## Bugs Summary
@@ -26,12 +26,12 @@ Last Updated: 2026-01-25
 - [x] PHYS-003: COMPUTE voltage note updated ("0.3-0.5V COMPUTE-safe")
 
 ### UX Issues (NEW)
-- [ ] UX-001: COMPUTE button redundant (auto-compute already triggers on input change)
+- [x] UX-001: COMPUTE button redundant (auto-compute implemented on input change)
 - [ ] UX-002: Export buttons not implemented (EXPORT SVG, EXPORT SPECS)
 
 ---
 
-## Recent Changes (2026-01-25)
+## Recent Changes (2026-01-26)
 
 ### Input Row Position Fixed
 - Input vector now appears **ABOVE crossbar array** in COMPUTE mode (was in right panel)

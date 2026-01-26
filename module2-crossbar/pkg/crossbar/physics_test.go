@@ -370,7 +370,7 @@ func TestDriftTimeEvolution(t *testing.T) {
 }
 
 // TestDriftFeCIMVsRRAM verifies FeCIM has lower drift than RRAM.
-// Dr. Tour's claim: FeCIM has 50x better retention than RRAM.
+// FeCIM has 50x better retention than RRAM.
 func TestDriftFeCIMVsRRAM(t *testing.T) {
 	// Simulate 1 day = 86400 seconds
 	simulationTime := 86400.0

@@ -51,7 +51,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Create accuracy waterfall
 	accWaterfall := NewAccuracyWaterfall()
-	accWaterfall.SetTarget(87.0) // Dr. Tour's target
+	accWaterfall.SetTarget(87.0) // Measured hardware target
 
 	// Create before/after toggle
 	beforeAfter := NewBeforeAfterToggle(ca.config.Rows, ca.config.Cols)
@@ -204,7 +204,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 					"3. + IR drop\n"+
 					"4. + Device variation\n"+
 					"5. + Sneak paths\n\n"+
-					"Target: 87% (Dr. Tour)\n\n"+
+					"Target: 87% (Hardware)\n\n"+
 					"Shows where accuracy\n"+
 					"is lost and why.")
 		}
@@ -354,7 +354,7 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 					"  IR Drop:              ~%.1f%%\n"+
 					"  Device Variation:     ~%.1f%%\n"+
 					"  Sneak Paths:          ~%.1f%%\n\n"+
-					"Target: 87%% (Dr. Tour)\n"+
+					"Target: 87%% (Hardware)\n"+
 					"Status: %s\n",
 				90.0-ca.lastMVMResult.AccuracyLoss,
 				ca.lastMVMResult.AccuracyLoss,

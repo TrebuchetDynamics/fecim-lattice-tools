@@ -24,9 +24,9 @@ var (
 	colorBL          = color.RGBA{100, 200, 255, 255} // Blue for bit lines
 	colorFeFET       = color.RGBA{255, 200, 50, 255}  // Gold for FeFET devices
 	colorHighlight   = color.RGBA{0, 255, 150, 255}   // Green highlight
-	colorStorage     = color.RGBA{100, 150, 255, 255}  // Blue for Storage mode
-	colorMemory      = color.RGBA{255, 200, 50, 255}   // Gold for Memory mode
-	colorCompute     = color.RGBA{0, 255, 150, 255}    // Green for Compute mode
+	colorStorage     = color.RGBA{100, 150, 255, 255} // Blue for Storage mode
+	colorMemory      = color.RGBA{255, 200, 50, 255}  // Gold for Memory mode
+	colorCompute     = color.RGBA{0, 255, 150, 255}   // Green for Compute mode
 	colorTableHeader = color.RGBA{0, 60, 120, 255}    // Dark blue table headers
 	colorTableRow1   = color.RGBA{0, 40, 80, 255}     // Alternating row 1
 	colorTableRow2   = color.RGBA{0, 50, 100, 255}    // Alternating row 2
@@ -48,7 +48,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Title
-	title := canvas.NewText("OpenLane RTL-to-GDSII Flow", colorText)
+	title := canvas.NewText("OpenLane RTL-to-GDSII Assembly", colorText)
 	title.TextSize = 18
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Move(fyne.NewPos(startX, 8))
@@ -63,10 +63,10 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 
 	// Pipeline stages - row 1
 	stages := []struct {
-		name    string
-		tool    string
-		isOurs  bool
-		x, y    float32
+		name   string
+		tool   string
+		isOurs bool
+		x, y   float32
 	}{
 		{"Verilog", "Input", false, startX, startY},
 		{"Synthesis", "Yosys", false, startX + boxW + spacing, startY},
@@ -77,21 +77,21 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	// Row 2 (reversed flow) - more vertical space
 	row2Y := startY + boxH + spacing + 30
 	stages = append(stages, []struct {
-		name    string
-		tool    string
-		isOurs  bool
-		x, y    float32
+		name   string
+		tool   string
+		isOurs bool
+		x, y   float32
 	}{
 		{"CTS", "TritonCTS", false, startX + 3*(boxW+spacing), row2Y},
 		{"Routing", "TritonRoute", false, startX + 2*(boxW+spacing), row2Y},
 		{"Signoff", "Magic/LVS", false, startX + boxW + spacing, row2Y},
-		{"GDSII", "Output", false, startX, row2Y},
+		{"GDSII", "Assembly", false, startX, row2Y},
 	}...)
 
 	// Mark which stages we contribute to
-	stages[0].isOurs = true  // Verilog - we provide
-	stages[2].isOurs = true  // Floorplan - our LEF
-	stages[3].isOurs = true  // Placement - our DEF (FIXED)
+	stages[0].isOurs = true // Verilog - we provide
+	stages[2].isOurs = true // Floorplan - our LEF
+	stages[3].isOurs = true // Placement - our DEF (FIXED)
 
 	// Draw stages
 	for i, stage := range stages {

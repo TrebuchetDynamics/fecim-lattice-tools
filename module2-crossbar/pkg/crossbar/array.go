@@ -7,9 +7,9 @@ import (
 	"math/rand"
 )
 
-// FeCIMLevels is the number of discrete analog states per Dr. Tour's specs.
-// "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
-const FeCIMLevels = 30
+// DefaultQuantizationLevels is the standard number of discrete analog states.
+// "It's got 30 discrete states. So it's not 0-1-0-1."
+const DefaultQuantizationLevels = 30
 
 // Config contains crossbar array configuration.
 type Config struct {
@@ -69,14 +69,14 @@ func NewArray(cfg *Config) (*Array, error) {
 }
 
 // ProgramWeight programs a weight value to a specific cell.
-// Weights are automatically quantized to 30 discrete FeCIM levels.
+// Weights are automatically quantized to discrete levels.
 func (a *Array) ProgramWeight(row, col int, weight float64) error {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		return fmt.Errorf("cell index out of range: (%d, %d)", row, col)
 	}
 
-	// Quantize to 30 FeCIM levels
-	quantized := QuantizeTo30Levels(weight)
+	// Quantize to discrete levels
+	quantized := QuantizeToLevels(weight)
 
 	a.cells[row][col].Conductance = quantized
 	a.cells[row][col].SwitchingCount++
@@ -85,19 +85,19 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 	return nil
 }
 
-// QuantizeTo30Levels quantizes a value to exactly 30 discrete levels (0-29).
-// This matches FeCIM's 30 discrete analog states.
-func QuantizeTo30Levels(value float64) float64 {
+// QuantizeToLevels quantizes a value to exactly discrete levels (0-29).
+// This matches the standard 30 discrete analog states.
+func QuantizeToLevels(value float64) float64 {
 	// Clamp to [0, 1]
 	value = math.Max(0, math.Min(1, value))
-	// Quantize to 30 levels (0-29)
-	level := math.Round(value * float64(FeCIMLevels-1))
-	return level / float64(FeCIMLevels-1)
+	// Quantize to levels (0 to N-1)
+	level := math.Round(value * float64(DefaultQuantizationLevels-1))
+	return level / float64(DefaultQuantizationLevels-1)
 }
 
-// GetLevel returns the discrete level (0-29) for a conductance value.
+// GetLevel returns the discrete level (0 to N-1) for a conductance value.
 func GetLevel(conductance float64) int {
-	return int(math.Round(conductance * float64(FeCIMLevels-1)))
+	return int(math.Round(conductance * float64(DefaultQuantizationLevels-1)))
 }
 
 // ProgramWeightMatrix programs an entire weight matrix to the array.

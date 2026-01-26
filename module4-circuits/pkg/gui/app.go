@@ -143,36 +143,36 @@ type CircuitsApp struct {
 	computeInputRowContainer *fyne.Container // Input row shown above array in COMPUTE mode
 
 	// Write mode panel widgets (ops prefix to distinguish from legacy)
-	writeConfigPanel      *fyne.Container
-	opsWriteLevelSlider   *widget.Slider
-	opsWriteLevelLabel    *widget.Label
-	opsWriteDigitalLabel  *widget.Label
-	opsWriteDACLabel      *widget.Label
-	opsWriteFeFETLabel    *widget.Label
-	opsWritePulseCanvas   *canvas.Raster
+	writeConfigPanel     *fyne.Container
+	opsWriteLevelSlider  *widget.Slider
+	opsWriteLevelLabel   *widget.Label
+	opsWriteDigitalLabel *widget.Label
+	opsWriteDACLabel     *widget.Label
+	opsWriteFeFETLabel   *widget.Label
+	opsWritePulseCanvas  *canvas.Raster
 
 	// Read mode panel widgets
-	readConfigPanel        *fyne.Container
-	opsReadVoltageSlider   *widget.Slider
-	opsReadVoltageLabel    *widget.Label
-	opsReadZoneCanvas      *canvas.Raster
-	opsReadResultsLabel    *widget.Label
+	readConfigPanel      *fyne.Container
+	opsReadVoltageSlider *widget.Slider
+	opsReadVoltageLabel  *widget.Label
+	opsReadZoneCanvas    *canvas.Raster
+	opsReadResultsLabel  *widget.Label
 
 	// Compute mode panel widgets
-	computeConfigPanel       *fyne.Container
-	opsComputeInputs         []*widget.Entry
-	opsComputeVoltageLabels  []*widget.Label
-	opsComputeOutputLabels   []*widget.Label
-	opsComputeMathLabel      *widget.Label
+	computeConfigPanel      *fyne.Container
+	opsComputeInputs        []*widget.Entry
+	opsComputeVoltageLabels []*widget.Label
+	opsComputeOutputLabels  []*widget.Label
+	opsComputeMathLabel     *widget.Label
 
 	// Compute mode INPUT data path labels
-	opsComputeInputDigitalLabel  *widget.Label  // Shows "x0: 128\n0b10000000"
-	opsComputeInputDACLabel      *widget.Label  // Shows "0.50V"
+	opsComputeInputDigitalLabel *widget.Label // Shows "x0: 128\n0b10000000"
+	opsComputeInputDACLabel     *widget.Label // Shows "0.50V"
 
 	// Compute mode OUTPUT data path labels
-	opsComputeOutputCurrentLabel *widget.Label  // Shows "50.0 uA" or "160.0 uA (SAT)"
-	opsComputeOutputTIALabel     *widget.Label  // Shows "0.500 V" or "1.000 V (SAT)"
-	opsComputeOutputADCLabel     *widget.Label  // Shows "Level 16" or "Level 31 (SAT)"
+	opsComputeOutputCurrentLabel *widget.Label // Shows "50.0 uA" or "160.0 uA (SAT)"
+	opsComputeOutputTIALabel     *widget.Label // Shows "0.500 V" or "1.000 V (SAT)"
+	opsComputeOutputADCLabel     *widget.Label // Shows "Level 16" or "Level 31 (SAT)"
 
 	// Operations action buttons
 	opsProgramBtn       *widget.Button
@@ -187,26 +187,26 @@ type CircuitsApp struct {
 	opsComputeButtons   *fyne.Container
 
 	// Animation state
-	animationStep    int  // 0=none, 1=DAC, 2=Array, 3=ADC
-	animationActive  bool
+	animationStep   int // 0=none, 1=DAC, 2=Array, 3=ADC
+	animationActive bool
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.
 func NewCircuitsApp() *CircuitsApp {
 	ca := &CircuitsApp{
-		arrayRows:   DefaultSize,
-		arrayCols:   DefaultSize,
-		quantLevels: FeCIMLevels,
-		dacBits:     DefaultDACBits,
-		adcBits:     DefaultADCBits,
-		vMin:        1.2,  // Minimum write voltage (just above Vc for 10nm HZO)
-		vMax:        1.5,  // Maximum write voltage
-		pulseWidth:  50.0,
-		readVoltage: 0.5,
-		tiaGain:     10.0,
-		selectedRow: 3,
-		selectedCol: 5,
-		targetLevel: 15,
+		arrayRows:     DefaultSize,
+		arrayCols:     DefaultSize,
+		quantLevels:   FeCIMLevels,
+		dacBits:       DefaultDACBits,
+		adcBits:       DefaultADCBits,
+		vMin:          1.2, // Minimum write voltage (just above Vc for 10nm HZO)
+		vMax:          1.5, // Maximum write voltage
+		pulseWidth:    50.0,
+		readVoltage:   0.5,
+		tiaGain:       10.0,
+		selectedRow:   3,
+		selectedCol:   5,
+		targetLevel:   15,
 		compArraySize: 8, // Start with 8x8 array for comparison
 	}
 
@@ -258,9 +258,9 @@ func (ca *CircuitsApp) Run() {
 // createMainLayout builds the main application layout with 3 views.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	operationsContent := ca.createOperationsView()     // NEW: from tab_operations.go
-	comparisonContent := ca.createComparisonTab()       // KEEP: from tab_comparison.go
-	referenceContent := ca.createReferenceTab()         // NEW: from tab_reference.go
+	operationsContent := ca.createOperationsView() // NEW: from tab_operations.go
+	comparisonContent := ca.createComparisonTab()  // KEEP: from tab_comparison.go
+	referenceContent := ca.createReferenceTab()    // NEW: from tab_reference.go
 
 	// All views for Hide/Show toggling
 	viewNames := []string{"OPERATIONS", "COMPARISON", "REFERENCE"}
@@ -327,7 +327,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Footer
-	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Dr. Tour's Research")
+	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Published Research")
 	footerLabel.Alignment = fyne.TextAlignCenter
 
 	footer := container.NewVBox(
@@ -407,4 +407,3 @@ func (ca *CircuitsApp) refreshReadZone() {
 		})
 	}
 }
-

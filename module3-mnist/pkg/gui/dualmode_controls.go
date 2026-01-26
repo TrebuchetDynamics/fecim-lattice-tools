@@ -20,10 +20,10 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	label := widget.NewLabel("Hardware Config")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Levels slider (2-31, covers all QAT-trained levels)
+	// Levels slider (2-256)
 	levelsTitle := widget.NewLabel("Levels:")
 	app.levelsLabel = widget.NewLabel(fmt.Sprintf("%d", FeCIMDefaultLevels))
-	app.levelsSlider = widget.NewSlider(2, 31)
+	app.levelsSlider = widget.NewSlider(2, 256)
 	app.levelsSlider.Step = 1
 	app.levelsSlider.Value = float64(FeCIMDefaultLevels)
 	app.levelsSlider.OnChanged = func(v float64) {
@@ -43,7 +43,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	}
 	levelsRow := container.NewBorder(nil, nil,
 		container.NewHBox(levelsTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\n30 levels = ~4.9 bits per cell (FeCIM standard)\n\nPhysics: HZO ferroelectric material exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.", app.window)
+			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\nHigher levels = better precision but harder to stabilize.\n\nPhysics: Ferroelectric material domains determine stable polarization states.", app.window)
 		})),
 		app.levelsLabel, app.levelsSlider)
 
@@ -119,13 +119,13 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.applyPresetWithMode(2, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, false)
 	})
 
-	// Hardware 87% preset - realistic production hardware (Dr. Tour's COSM 2025 target)
-	hw87Btn := widget.NewButton("Hardware 87%", func() {
-		mnistLog.Button("Preset:HW87")
+	// Hardware preset - realistic production hardware
+	hw87Btn := widget.NewButton("Hardware", func() {
+		mnistLog.Button("Preset:Hardware")
 		// Realistic production config: 30 levels, 3% noise, 6-bit ADC, single layer
 		app.applyPresetWithMode(FeCIMDefaultLevels, 0.03, 6, FeCIMDefaultDAC, true)
 	})
-	hw87Btn.Importance = widget.HighImportance // Highlight alongside Tour button
+	hw87Btn.Importance = widget.HighImportance // Highlight alongside Calibration button
 
 	noisyBtn := widget.NewButton("Noisy", func() {
 		mnistLog.Button("Preset:Noisy")
@@ -136,10 +136,10 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, 3, FeCIMDefaultDAC, false)
 	})
 
-	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
-	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87%, unverified)
-	tourBtn := widget.NewButton("Tour", func() {
-		mnistLog.Button("Preset:Tour")
+	// Calibration Mode button (single-layer 784→10, matching hardware architecture)
+	// Achieved accuracy depends on physics simulation, not forced target
+	tourBtn := widget.NewButton("Calibration", func() {
+		mnistLog.Button("Preset:Calibration")
 		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, true)
 	})
 	tourBtn.Importance = widget.HighImportance // Highlight this button
@@ -189,7 +189,7 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 	app.applyPresetWithMode(levels, noise, adcBits, dacBits, false)
 }
 
-// applyPresetWithMode sets hardware parameters with optional Tour Mode (single-layer).
+// applyPresetWithMode sets hardware parameters with optional Calibration Mode (single-layer).
 func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
 	// Update network parameters (thread-safe, not UI)
 	app.network.SetNumLevels(levels)
@@ -205,9 +205,9 @@ func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, 
 		app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
 		app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
 
-		// Update status to indicate Tour Mode
+		// Update status to indicate Calibration Mode
 		if singleLayer {
-			app.statusLabel.SetText("Tour Mode: Single-layer network (784→10) matching Dr. Tour's COSM 2025 architecture | Target: 87% accuracy")
+			app.statusLabel.SetText("Calibration Mode: Single-layer network (784→10) matching hardware architecture | Target: Physics-limited accuracy")
 		}
 
 		app.updateWeightHeatmap()
@@ -277,7 +277,7 @@ func (app *DualModeApp) runQuickTest() {
 		fyne.Do(func() {
 			app.testProgressBar.Hide()
 			app.testResultLabel.SetText(fmt.Sprintf(
-				"FP: %.1f%% | CIM: %.1f%% | Agreement: %.1f%% | Target: 87%%",
+				"FP: %.1f%% | CIM: %.1f%% | Agreement: %.1f%%",
 				fpAcc, cimAcc, agreeRate))
 			app.testButton.Enable()
 		})

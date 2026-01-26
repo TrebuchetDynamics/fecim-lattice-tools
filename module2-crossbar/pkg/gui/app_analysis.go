@@ -278,7 +278,7 @@ func (ca *CrossbarApp) assessDegradationImpact(diffPercent float64) string {
 // getAccuracyStatus returns a status message based on accuracy.
 func (ca *CrossbarApp) getAccuracyStatus(accuracy float64) string {
 	if accuracy >= 87.0 {
-		return "✓ Meets Dr. Tour's 87% target"
+		return "✓ Meets 87% hardware target"
 	} else if accuracy >= 85.0 {
 		return "⚠ Close to target (within 2%)"
 	} else if accuracy >= 80.0 {

@@ -45,7 +45,7 @@ type WaterfallStep struct {
 func NewAccuracyWaterfall() *AccuracyWaterfall {
 	w := &AccuracyWaterfall{
 		steps:          []WaterfallStep{},
-		targetAccuracy: 87.0, // Dr. Tour's reported 87%
+		targetAccuracy: 87.0, // Measured hardware target
 	}
 	w.ExtendBaseWidget(w)
 	return w

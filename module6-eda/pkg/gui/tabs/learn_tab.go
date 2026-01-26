@@ -118,7 +118,7 @@ func makeBulletList(header string, items ...string) fyne.CanvasObject {
 func makeIntroContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("What is FeCIM EDA?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files for integrating FeCIM crossbar arrays into the OpenLane flow. This is an educational tool that demonstrates how FeCIM arrays could integrate with open-source EDA. All timing values are placeholders - real values require SPICE characterization with validated models.`)
+	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files for assembling FeCIM crossbar arrays within the OpenLane flow. It automates the placement (DEF) and connectivity (Verilog) of pre-existing FeFET cell macros. It does NOT draw transistors from scratch.`)
 	intro.Wrapping = fyne.TextWrapWord
 
 	// Operation modes visual with enforced minimum size
@@ -134,7 +134,7 @@ func makeIntroContent() fyne.CanvasObject {
 3. PLACEMENT (RePlAce + OpenDP) - Assigns X,Y coordinates to every cell
 4. CTS (Clock Tree Synthesis) - Distributes clock signal evenly (FeCIM arrays often skip this)
 5. ROUTING (TritonRoute) - Draws metal wire connections
-6. SIGNOFF & GDSII - DRC/LVS verification, final output`)
+6. SIGNOFF & GDSII - Assembly of pre-existing cell macros into final GDSII`)
 	stagesText.Wrapping = fyne.TextWrapWord
 
 	// Two-column do/don't layout
@@ -147,7 +147,7 @@ func makeIntroContent() fyne.CanvasObject {
 
 	dontList := makeBulletList("WHAT WE DON'T DO:",
 		"We do NOT provide validated FeFET device models",
-		"We do NOT generate production-ready layouts",
+		"We do NOT generate GDSII geometry from scratch",
 		"We do NOT characterize real timing values",
 		"We do NOT fabricate chips")
 

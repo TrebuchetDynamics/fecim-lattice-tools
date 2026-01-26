@@ -44,7 +44,7 @@ func (net *DualModeNetwork) requantizeWeightsLocked() {
 	// Quantize layer 2 weights with layer2 levels
 	net.QuantWeights2, _ = QuantizeWeights(net.FPWeights2, l2Levels)
 
-	// Quantize single-layer weights (Tour Mode) - use l1 levels for input layer
+	// Quantize single-layer weights (Calibration Mode) - use l1 levels for input layer
 	if len(net.SingleLayerWeights) > 0 {
 		net.QuantSingleLayerWeights, _ = QuantizeWeights(net.SingleLayerWeights, l1Levels)
 		net.QuantSingleLayerBias, _ = QuantizeBias(net.SingleLayerBias, l1Levels)

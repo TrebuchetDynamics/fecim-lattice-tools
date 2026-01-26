@@ -6,7 +6,7 @@ import (
 )
 
 // TestQuantizeTo30LevelsProducesExactly30Values verifies FeCIM spec:
-// "It's got 30 discrete states." — Dr. Tour
+// "It's got 30 discrete states."
 func TestQuantizeTo30LevelsProducesExactly30Values(t *testing.T) {
 	seen := make(map[float64]bool)
 

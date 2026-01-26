@@ -69,7 +69,7 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewLabelWithStyle("Why 87% and Not 98%?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
 		widget.NewLabel("Simulation (this demo): Can achieve 95-98% under ideal conditions"),
-		widget.NewLabel("FeCIM Hardware (Dr. Tour, COSM 2025): 87% measured accuracy"),
+		widget.NewLabel("FeCIM Hardware (Measured): 87% reported accuracy"),
 		widget.NewLabel("Software baseline: 98-99% (FP32); CIM hardware: 87-96% (various literature)"),
 		widget.NewSeparator(),
 
@@ -179,7 +179,7 @@ func ShowAboutDialog(window fyne.Window) {
 	content := container.NewVBox(
 		widget.NewLabelWithStyle("MNIST FeCIM Demo", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Educational Visualization of Ferroelectric Compute-in-Memory"),
-		widget.NewLabel("Target: 87% Hardware Accuracy (Dr. Tour, COSM 2025)"),
+		widget.NewLabel("Target: 87% Hardware Accuracy (Reference: COSM 2025)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("This Demo Answers Four Key Questions:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -198,7 +198,7 @@ func ShowAboutDialog(window fyne.Window) {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Key References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("• Dr. external research group, COSM 2025 (IronLattice presentation)"),
+		widget.NewLabel("• COSM 2025 (Ferroelectric CIM presentation)"),
 		widget.NewLabel("• Jerry et al., IEDM 2017 - FeFET Synapse (DOI: 10.1109/IEDM.2017.8268338)"),
 		widget.NewLabel("• MNIST Dataset - Yann LeCun et al. (http://yann.lecun.com/exdb/mnist/)"),
 		widget.NewSeparator(),

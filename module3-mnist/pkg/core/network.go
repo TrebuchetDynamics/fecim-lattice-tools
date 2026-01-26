@@ -16,7 +16,7 @@ type NetworkConfig struct {
 	DACBits     int     // DAC resolution (3-16)
 	EnableSneak bool    // Enable sneak path simulation
 	IRDrop      bool    // Enable IR drop simulation
-	SingleLayer bool    // Tour Mode: use single-layer (784→10) like Dr. Tour's demo
+	SingleLayer bool    // Calibration Mode: use single-layer (784→10) like hardware demo
 
 	// Per-layer PTQ configuration
 	PerLayerQuant bool // Enable per-layer quantization levels
@@ -57,8 +57,8 @@ type DualModeNetwork struct {
 	QuantBias1    []float64   // [HiddenSize]
 	QuantBias2    []float64   // [OutputSize]
 
-	// Single-Layer Weights (Tour Mode: 784→10 direct, ~87% max accuracy)
-	// This matches Dr. Tour's MNIST demo architecture
+	// Single-Layer Weights (Calibration Mode: 784→10 direct)
+	// This matches the hardware demo architecture
 	SingleLayerWeights      [][]float64 // [OutputSize][InputSize] = [10][784]
 	SingleLayerBias         []float64   // [OutputSize] = [10]
 	QuantSingleLayerWeights [][]float64 // Quantized version
@@ -132,7 +132,7 @@ func NewDualModeNetwork(inputSize, hiddenSize, outputSize int) *DualModeNetwork 
 	net.QuantBias1 = make([]float64, hiddenSize)
 	net.QuantBias2 = make([]float64, outputSize)
 
-	// Initialize single-layer weights (Tour Mode: 784→10)
+	// Initialize single-layer weights (Calibration Mode: 784→10)
 	net.SingleLayerWeights = make([][]float64, outputSize)
 	net.QuantSingleLayerWeights = make([][]float64, outputSize)
 	for i := 0; i < outputSize; i++ {
@@ -153,7 +153,7 @@ type WeightsFile struct {
 	Biases2       []float64   `json:"biases2"`
 	L1Scale       float64     `json:"l1_scale"`
 	L1Offset      float64     `json:"l1_offset"`
-	// Single-layer weights (Tour Mode: 784→10 direct)
+	// Single-layer weights (Calibration Mode: 784→10 direct)
 	SingleLayerWeights [][]float64 `json:"single_layer_weights,omitempty"`
 	SingleLayerBias    []float64   `json:"single_layer_bias,omitempty"`
 	L2Scale            float64     `json:"l2_scale"`
@@ -276,7 +276,7 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 		copy(net.FPBias2, wf.Biases2)
 	}
 
-	// Load single-layer weights if provided (Tour Mode: 784→10)
+	// Load single-layer weights if provided (Calibration Mode: 784→10)
 	// If not provided, initialize from layer2 weights as a fallback
 	net.SingleLayerWeights = make([][]float64, outputSize)
 	net.QuantSingleLayerWeights = make([][]float64, outputSize)
@@ -295,7 +295,7 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 		}
 	} else {
 		// Generate single-layer weights using Xavier initialization
-		// Dr. Tour's hardware: 87% (unverified conference claim); software baseline: 98-99%
+		// Hardware target: ~87% (dependent on quantization noise); software baseline: 98-99%
 		scale := 1.0 / float64(inputSize)
 		for i := 0; i < outputSize; i++ {
 			net.SingleLayerWeights[i] = make([]float64, inputSize)

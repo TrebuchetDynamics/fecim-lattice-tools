@@ -8,8 +8,8 @@ func (net *DualModeNetwork) SetNumLevels(levels int) {
 	if levels < 1 {
 		levels = 1
 	}
-	if levels > 30 {
-		levels = 30
+	if levels > 256 {
+		levels = 256
 	}
 	net.Config.NumLevels = levels
 	net.requantizeWeightsLocked()
@@ -64,8 +64,8 @@ func (net *DualModeNetwork) SetDACBits(bits int) {
 	net.Config.DACBits = bits
 }
 
-// SetSingleLayer enables/disables Tour Mode (single-layer 784→10 architecture).
-// When enabled, this matches Dr. Tour's MNIST demo with claimed 87% accuracy (unverified).
+// SetSingleLayer enables/disables Calibration Mode (single-layer 784→10 architecture).
+// When enabled, this matches the hardware MNIST demo.
 func (net *DualModeNetwork) SetSingleLayer(enabled bool) {
 	net.mu.Lock()
 	defer net.mu.Unlock()
@@ -96,8 +96,8 @@ func (net *DualModeNetwork) SetLayer1Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > 30 {
-		levels = 30
+	if levels > 256 {
+		levels = 256
 	}
 	net.Config.Layer1Levels = levels
 	if net.Config.PerLayerQuant {
@@ -120,8 +120,8 @@ func (net *DualModeNetwork) SetLayer2Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > 30 {
-		levels = 30
+	if levels > 256 {
+		levels = 256
 	}
 	net.Config.Layer2Levels = levels
 	if net.Config.PerLayerQuant {
@@ -144,14 +144,14 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	if layer1 < 2 {
 		layer1 = 2
 	}
-	if layer1 > 30 {
-		layer1 = 30
+	if layer1 > 256 {
+		layer1 = 256
 	}
 	if layer2 < 2 {
 		layer2 = 2
 	}
-	if layer2 > 30 {
-		layer2 = 30
+	if layer2 > 256 {
+		layer2 = 256
 	}
 
 	net.Config.Layer1Levels = layer1
@@ -160,7 +160,7 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	net.requantizeWeightsLocked()
 }
 
-// IsSingleLayer returns whether single-layer (Tour Mode) is enabled.
+// IsSingleLayer returns whether single-layer (Calibration Mode) is enabled.
 func (net *DualModeNetwork) IsSingleLayer() bool {
 	net.mu.RLock()
 	defer net.mu.RUnlock()

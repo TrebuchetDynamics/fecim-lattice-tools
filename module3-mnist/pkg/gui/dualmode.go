@@ -23,16 +23,16 @@ import (
 // Constants for MNIST network configuration
 const (
 	// Network architecture
-	MNISTInputSize   = 784 // 28x28 pixel images
-	MNISTHiddenSize  = 128 // Default hidden layer size
-	MNISTOutputSize  = 10  // Digits 0-9
-	MNISTTotalMACs   = 101632 // Total multiply-accumulate operations per inference
+	MNISTInputSize  = 784    // 28x28 pixel images
+	MNISTHiddenSize = 128    // Default hidden layer size
+	MNISTOutputSize = 10     // Digits 0-9
+	MNISTTotalMACs  = 101632 // Total multiply-accumulate operations per inference
 
 	// FeCIM hardware parameters
-	FeCIMDefaultLevels = 30    // Standard 30-level quantization
-	FeCIMDefaultNoise  = 0.01  // 1% standard deviation (typical production)
-	FeCIMDefaultADC    = 8     // 8-bit ADC resolution
-	FeCIMDefaultDAC    = 8     // 8-bit DAC resolution
+	FeCIMDefaultLevels = 30   // Default levels (can be changed in UI)
+	FeCIMDefaultNoise  = 0.01 // 1% standard deviation (typical production)
+	FeCIMDefaultADC    = 8    // 8-bit ADC resolution
+	FeCIMDefaultDAC    = 8    // 8-bit DAC resolution
 
 	// Energy efficiency
 	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
@@ -40,7 +40,7 @@ const (
 	EnergyRatioGPU    = 10000   // GPU uses 10,000x more energy
 
 	// Accuracy targets
-	TargetHardwareAccuracy = 0.87 // 87% measured on real FeCIM hardware
+	TargetHardwareAccuracy = 0.87 // Measured on real FeCIM hardware
 	TargetFP32Accuracy     = 0.98 // 98% theoretical with Float32
 )
 
@@ -137,12 +137,12 @@ type DualModeApp struct {
 	adaptiveLayout *sharedwidgets.AdaptiveLayout
 
 	// Expert Mode
-	expertMode           bool
-	simplePresets        *fyne.Container
-	expertOnlyControls   *fyne.Container
-	expertModeToggle     *widget.Check
-	brushRow             *fyne.Container  // For hiding brush selector in simple mode
-	expertHeaderButtons  *fyne.Container  // For HW Reality, Failures buttons
+	expertMode          bool
+	simplePresets       *fyne.Container
+	expertOnlyControls  *fyne.Container
+	expertModeToggle    *widget.Check
+	brushRow            *fyne.Container // For hiding brush selector in simple mode
+	expertHeaderButtons *fyne.Container // For HW Reality, Failures buttons
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.

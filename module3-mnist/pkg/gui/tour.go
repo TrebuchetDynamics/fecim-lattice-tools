@@ -22,16 +22,16 @@ type TourStep struct {
 
 // GuidedTour manages the 7-step educational tour.
 type GuidedTour struct {
-	app          *DualModeApp
-	currentStep  int
-	steps        []TourStep
-	isRunning    bool
-	stopChan     chan bool
-	statusLabel  *widget.Label
-	progressBar  *widget.ProgressBar
-	nextButton   *widget.Button
-	stopButton   *widget.Button
-	tourDialog   dialog.Dialog
+	app         *DualModeApp
+	currentStep int
+	steps       []TourStep
+	isRunning   bool
+	stopChan    chan bool
+	statusLabel *widget.Label
+	progressBar *widget.ProgressBar
+	nextButton  *widget.Button
+	stopButton  *widget.Button
+	tourDialog  dialog.Dialog
 }
 
 // NewGuidedTour creates a new guided tour for the dual-mode app.
@@ -45,7 +45,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 	gt.steps = []TourStep{
 		{
 			Title:       "Step 1/5: Welcome to FeCIM",
-			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory (FeCIM).\n\nKey Innovation: 30 analog conductance levels per cell (~4.9 bits/cell)\n\nPhysics: HfO₂-ZrO₂ (HZO) superlattice ferroelectric exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.\n\nTarget: 87% accuracy with 10,000x less energy than GPU!\n\nLet's see it in action...",
+			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory (FeCIM).\n\nKey Innovation: 30 analog conductance levels per cell (~4.9 bits/cell)\n\nPhysics: HfO₂-ZrO₂ (HZO) superlattice ferroelectric exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.\n\nTarget: High efficiency and accuracy comparable to digital logic!\n\nLet's see it in action...",
 			Action:      func() { gt.app.applyPreset(30, 0.01, 8, 8) },
 			Duration:    4 * time.Second,
 		},
@@ -211,7 +211,7 @@ func (gt *GuidedTour) finishTour() {
 			widget.NewLabel(""),
 			widget.NewSeparator(),
 			widget.NewLabelWithStyle("Next Steps:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			widget.NewLabel("• Try the 'Tour' preset (Dr. Tour's COSM 2025 architecture)"),
+			widget.NewLabel("• Try the 'Calibration' preset (Single-layer architecture)"),
 			widget.NewLabel("• Click 'Why 30?' to understand the physics"),
 			widget.NewLabel("• Click 'HW Reality' to see manufacturing constraints"),
 			widget.NewLabel("• Explore failure modes: QuantCliff, Noisy, BrokenADC"),
@@ -224,7 +224,7 @@ func (gt *GuidedTour) finishTour() {
 	// Reset to ideal settings
 	gt.app.applyPreset(30, 0.01, 8, 8)
 	fyne.Do(func() {
-		gt.app.statusLabel.SetText("Tour complete! Now explore: Ideal (30-level baseline) | QuantCliff (binary failure) | Noisy (15% noise) | BrokenADC (3-bit) | Tour (Dr. Tour's architecture)")
+		gt.app.statusLabel.SetText("Tour complete! Now explore: Ideal (30-level baseline) | QuantCliff (binary failure) | Noisy (15% noise) | BrokenADC (3-bit) | Calibration (Hardware architecture)")
 	})
 }
 
