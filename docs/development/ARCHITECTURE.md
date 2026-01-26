@@ -18,9 +18,9 @@ A comprehensive reference to the design, structure, and patterns of the FeCIM La
 
 FeCIM Lattice Tools is a **unified educational visualization suite** for Ferroelectric Compute-in-Memory (FeCIM) based on Dr. external research group's superlattice research. The entire application is orchestrated through a single entry point that launches six independent modules as tabs, each demonstrating a different aspect of FeCIM technology.
 
-### Entry Point: cmd/fecim-visualizer
+### Entry Point: cmd/fecim-lattice-tools
 
-The main application (`cmd/fecim-visualizer/main.go`) implements a **unified launcher** pattern:
+The main application (`cmd/fecim-lattice-tools/main.go`) implements a **unified launcher** pattern:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -161,7 +161,7 @@ Each module has a concrete implementation:
 The main app creates all modules and manages their lifecycle:
 
 ```go
-// cmd/fecim-visualizer/main.go (simplified)
+// cmd/fecim-lattice-tools/main.go (simplified)
 
 type DemoApp struct {
     demo1 *demo1gui.EmbeddedApp           // Hysteresis
@@ -583,7 +583,7 @@ func (a *App) Stop() {
 The main app can optionally record video:
 
 ```go
-// cmd/fecim-visualizer/main.go
+// cmd/fecim-lattice-tools/main.go
 
 type RecordingState struct {
     isRecording bool
@@ -755,8 +755,8 @@ This ensures:
 ### Build
 
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer
-./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
 ```
 
 ### Tests
@@ -776,10 +776,10 @@ go test -race ./...                      # Race condition detection
 
 ```bash
 # Verbose logging (3 levels: 1=info, 2=debug, 3=trace)
-./fecim-visualizer -verbosity=2
+./fecim-lattice-tools -verbosity=2
 
 # Resize debugging (if FYNE_DEBUG_RESIZE=1)
-FYNE_DEBUG_RESIZE=1 ./fecim-visualizer
+FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 ```
 
 ---

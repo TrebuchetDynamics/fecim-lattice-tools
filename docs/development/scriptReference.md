@@ -171,7 +171,7 @@ import (
 ### Dependency Graph
 
 ```
-cmd/fecim-visualizer
+cmd/fecim-lattice-tools
     ├── shared/theme
     ├── module1-hysteresis/pkg/gui
     ├── module2-crossbar/pkg/gui
@@ -245,7 +245,7 @@ func (app *EmbeddedNewDemoApp) Stop() {
 }
 ```
 
-3. Register in `cmd/fecim-visualizer/main.go`:
+3. Register in `cmd/fecim-lattice-tools/main.go`:
 ```go
 import newdemo "fecim-lattice-tools/module7-newdemo/pkg/gui"
 
@@ -349,7 +349,7 @@ for i := 0; i < 8; i++ {
 ```
 fecim-lattice-tools/
 ├── cmd/
-│   ├── fecim-visualizer/          # Unified GUI application entry point
+│   ├── fecim-lattice-tools/          # Unified GUI application entry point
 │   │   ├── main.go                # Main entry, creates tabbed app with 5 demos
 │   │   └── launcher.go            # Home tab with demo cards
 │   └── launcher/                  # Legacy launcher
@@ -532,7 +532,7 @@ DefaultConfig = CompileConfig{
 
 ## Core Types & Functions
 
-### Unified Application (cmd/fecim-visualizer/)
+### Unified Application (cmd/fecim-lattice-tools/)
 
 | File | Type/Function | Purpose |
 |------|---------------|---------|
@@ -777,10 +777,10 @@ func getLogsDir() string  // Returns logs directory path
 
 ```bash
 # Build unified visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Run unified app
-./fecim-visualizer
+./fecim-lattice-tools
 
 # Or use launch script
 ./launch.sh

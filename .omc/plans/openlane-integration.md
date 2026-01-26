@@ -146,7 +146,7 @@ go build ./module6-eda/...
 
 # Run the visualizer and navigate to Module 6 EDA
 # Check that OpenLane status shows in the validation tab
-./fecim-visualizer
+./fecim-lattice-tools
 
 # Or test programmatically:
 # 1. Check Docker status: manager.IsDockerImagePulled()

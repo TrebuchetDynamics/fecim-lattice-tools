@@ -840,8 +840,8 @@ python export_weights.py --input mnist_model.pt --output weights.json
 
 # Step 3: Run visualizer
 cd ..
-go build -o fecim-visualizer ./cmd/fecim-visualizer
-./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
 ```
 
 ---
@@ -866,7 +866,7 @@ git clone https://github.com/sandialabs/cross-sim && pip install -e cross-sim
 pip install tensorboard wandb
 
 # Our FeCIM Visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ---

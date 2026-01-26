@@ -299,7 +299,7 @@ import (
 ### Dependency Graph (which modules import which)
 
 ```
-cmd/fecim-visualizer
+cmd/fecim-lattice-tools
     ├── shared/theme
     ├── module1-hysteresis/pkg/gui
     ├── module2-crossbar/pkg/gui
@@ -371,7 +371,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM).
 ## Build & Run
 
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 ```
 
 ## Key Rules
@@ -486,7 +486,7 @@ func (app *EmbeddedNewDemoApp) Stop() {
 }
 ```
 
-3. Register in `cmd/fecim-visualizer/main.go`:
+3. Register in `cmd/fecim-lattice-tools/main.go`:
 ```go
 import newdemo "fecim-lattice-tools/module7-newdemo/pkg/gui"
 

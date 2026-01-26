@@ -634,8 +634,8 @@ feat(module4): Improve UI elements and complete stub implementations
 Each task includes specific verification steps in its acceptance criteria.
 
 ### Integration Verification
-1. Build: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
-2. Run: `./fecim-visualizer`
+1. Build: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
+2. Run: `./fecim-lattice-tools`
 3. Navigate to Module 4 (Peripheral Circuits)
 4. Test each tab systematically:
    - WRITE: Program cells, verify array updates

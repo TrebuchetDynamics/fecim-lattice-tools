@@ -13,7 +13,7 @@
 | module5-comparison/pkg/comparison | 19 | ✅ PASS |
 | shared/logging | 6 | ✅ PASS |
 | shared/theme | 5 | ✅ PASS |
-| cmd/fecim-visualizer | 2 | ✅ PASS |
+| cmd/fecim-lattice-tools | 2 | ✅ PASS |
 | **Total** | **117** | **✅ 100% PASS** |
 
 ## Running Tests

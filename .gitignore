@@ -12,12 +12,12 @@
 *.out
 /logs
 shared/logging/
-/fecim-visualizer
+/fecim-lattice-tools
 recordings/
 screenshots/
 train-network
 train-single-layer
-cmd/fecim-visualizer/logs/OpenLane/
+cmd/fecim-lattice-tools/logs/OpenLane/
 /OpenLane
 
 # Output directory (keep structure, ignore generated files)
@@ -27,7 +27,7 @@ cmd/fecim-visualizer/logs/OpenLane/
 !/output/.gitkeep
 !/output/README.md
 !/output/*/
-cmd/fecim-visualizer/logs/
+cmd/fecim-lattice-tools/logs/
 module5-comparison/pkg/gui/logs/
 generated/
 

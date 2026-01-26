@@ -1008,7 +1008,7 @@ feat(module4): adjust compute mode layout ratios
 
 1. **Build Verification**
    ```bash
-   go build ./cmd/fecim-visualizer
+   go build ./cmd/fecim-lattice-tools
    ```
 
 2. **Test Verification**

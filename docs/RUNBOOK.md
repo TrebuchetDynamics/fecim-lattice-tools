@@ -8,7 +8,7 @@
 
 ```bash
 # Build unified visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Or use launch script
 ./launch.sh
@@ -18,16 +18,16 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer
 
 ```bash
 # Optimized binary (smaller, faster)
-go build -ldflags="-s -w" -o fecim-visualizer ./cmd/fecim-visualizer
+go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Cross-compile for Linux (from any OS)
-GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o fecim-visualizer-linux ./cmd/fecim-visualizer
+GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-linux ./cmd/fecim-lattice-tools
 
 # Cross-compile for macOS
-GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o fecim-visualizer-mac ./cmd/fecim-visualizer
+GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-mac ./cmd/fecim-lattice-tools
 
 # Cross-compile for Windows
-GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-visualizer.exe ./cmd/fecim-visualizer
+GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools.exe ./cmd/fecim-lattice-tools
 ```
 
 ### Pre-Deployment Checklist
@@ -46,10 +46,10 @@ go vet ./... && echo "VET OK"
 go fmt ./...
 
 # 5. Build release binary
-go build -ldflags="-s -w" -o fecim-visualizer ./cmd/fecim-visualizer
+go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # 6. Verify binary runs
-./fecim-visualizer --help
+./fecim-lattice-tools --help
 ```
 
 ## Monitoring & Diagnostics
@@ -64,7 +64,7 @@ go build -ldflags="-s -w" -o fecim-visualizer ./cmd/fecim-visualizer
 | Trace | `--verbosity 3` | Deep debugging |
 
 ```bash
-./fecim-visualizer --verbosity 2  # Debug mode
+./fecim-lattice-tools --verbosity 2  # Debug mode
 ```
 
 ### Runtime Profiling
@@ -101,7 +101,7 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 **Manual verification:**
 ```bash
 # Check binary starts
-./fecim-visualizer &
+./fecim-lattice-tools &
 PID=$!
 sleep 3
 kill -0 $PID && echo "Running OK" || echo "Failed to start"
@@ -122,7 +122,7 @@ kill $PID
 **Fixes:**
 ```bash
 # Try software rendering
-FYNE_NO_GL=1 ./fecim-visualizer
+FYNE_NO_GL=1 ./fecim-lattice-tools
 
 # Check OpenGL support
 glxinfo | grep "OpenGL version"
@@ -137,10 +137,10 @@ sudo ubuntu-drivers autoinstall
 
 **Cause:** MinSize feedback loop with Wayland tiling WM
 
-**Fix:** The app uses `ForceMinSizeLayout` wrapper in `cmd/fecim-visualizer/main.go:52`. If issue persists:
+**Fix:** The app uses `ForceMinSizeLayout` wrapper in `cmd/fecim-lattice-tools/main.go:52`. If issue persists:
 ```bash
 # Run under X11 instead
-GDK_BACKEND=x11 ./fecim-visualizer
+GDK_BACKEND=x11 ./fecim-lattice-tools
 ```
 
 ### Issue: CGO/GCC Build Errors
@@ -169,8 +169,8 @@ gcc --version
 **Fix:** Wrap ALL UI updates in `fyne.Do()`:
 ```go
 // Find the offending code
-go build -race -o fecim-visualizer ./cmd/fecim-visualizer
-./fecim-visualizer
+go build -race -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
 # Race detector will print stack trace
 
 // Fix: wrap in fyne.Do()
@@ -216,7 +216,7 @@ export GDK_DPI_SCALE=1
 **Diagnosis:**
 ```bash
 # Run with debug logging
-./fecim-visualizer --verbosity 3 2>&1 | tee debug.log
+./fecim-lattice-tools --verbosity 3 2>&1 | tee debug.log
 
 # Look for initialization errors
 grep -i "error\|panic\|fail" debug.log
@@ -271,7 +271,7 @@ git log --oneline -10
 
 # Revert to previous working commit
 git checkout <commit-hash>
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Or revert last commit (creates new commit)
 git revert HEAD
@@ -287,7 +287,7 @@ go list -m all | grep fyne
 go get fyne.io/fyne/v2@v2.7.0
 
 # Rebuild
-go build ./cmd/fecim-visualizer
+go build ./cmd/fecim-lattice-tools
 ```
 
 ### Full Environment Reset
@@ -300,7 +300,7 @@ go clean -modcache
 go mod download
 
 # Rebuild from scratch
-go build -a ./cmd/fecim-visualizer
+go build -a ./cmd/fecim-lattice-tools
 ```
 
 ## Performance Tuning

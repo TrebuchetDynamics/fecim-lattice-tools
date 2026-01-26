@@ -94,7 +94,7 @@ weights at the boundary conditions.
 
 ```
 fecim-lattice-tools/
-├── cmd/fecim-visualizer/     # Unified GUI entry point
+├── cmd/fecim-lattice-tools/     # Unified GUI entry point
 ├── module1-hysteresis/       # P-E curve visualization
 ├── module2-crossbar/         # Crossbar MVM + non-idealities
 ├── module3-mnist/            # MNIST inference demo

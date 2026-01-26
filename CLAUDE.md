@@ -25,7 +25,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) based on
 ## Build & Run
 
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Or: ./launch.sh
 ```
 
@@ -46,7 +46,7 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
 ## Project Structure
 
 ```
-cmd/fecim-visualizer/     # Main unified app entry point
+cmd/fecim-lattice-tools/     # Main unified app entry point
 module1-hysteresis/       # P-E curve, Preisach model
 module2-crossbar/         # MVM, non-idealities (IR drop, sneak paths, drift)
 module3-mnist/            # Neural network digit recognition

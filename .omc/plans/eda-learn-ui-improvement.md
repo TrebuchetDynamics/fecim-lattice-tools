@@ -574,12 +574,12 @@ go test ./module6-eda/...
 
 **Step 2: Build Application**
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 **Step 3: Manual Verification**
 ```bash
-./fecim-visualizer
+./fecim-lattice-tools
 ```
 1. Open EDA tab
 2. Navigate to Learn sub-tab
@@ -665,7 +665,7 @@ PHASE 4: Verification
 | No duplicates | Flow diagram appears once |
 | Single disclaimer | Search for "DISCLAIMER" - one instance |
 | Clean formatting | No "----" or "====" in text |
-| App runs | `go build && ./fecim-visualizer` succeeds |
+| App runs | `go build && ./fecim-lattice-tools` succeeds |
 | All tests pass | `go test ./module6-eda/...` |
 
 ---

@@ -668,7 +668,7 @@ Demo 5: "Why FeCIM beats everything"       ✅ Fyne GUI (NEW)
 sudo apt-get install gcc libgl1-mesa-dev xorg-dev
 
 # Run all 5 demos from unified launcher
-go build ./cmd/fecim-visualizer && ./fecim-visualizer
+go build ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 
 # Or run individual demos:
 ./module1-hysteresis/hysteresis

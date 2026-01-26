@@ -874,7 +874,7 @@ IntegrationPoints:
   - name: EmbeddedApp Interface
     methods: [BuildContent, Start, Stop]
     file:embedded.go:44-60
-    purpose: Embeds into unified visualizer (cmd/fecim-visualizer)
+    purpose: Embeds into unified visualizer (cmd/fecim-lattice-tools)
 
   - name: Standalone Entry
     file: cmd/eda-gui/main.go:10-14

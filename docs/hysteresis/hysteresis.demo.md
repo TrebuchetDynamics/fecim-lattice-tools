@@ -29,7 +29,7 @@ The Hysteresis demo provides an interactive visualization of ferroelectric hyste
 ./launch.sh
 
 # Or build and run directly
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 
 # Then select the "Hysteresis" tab
 ```

@@ -79,7 +79,7 @@ echo ""
 
 # App running check
 echo "[8/8] Verifying app is running..."
-APP_PID=$(ps aux | grep fecim-visualizer | grep -v grep | awk '{print $2}' | head -1)
+APP_PID=$(ps aux | grep fecim-lattice-tools | grep -v grep | awk '{print $2}' | head -1)
 if [ -n "$APP_PID" ]; then
   echo "  ✓ App is running (PID: $APP_PID)"
   

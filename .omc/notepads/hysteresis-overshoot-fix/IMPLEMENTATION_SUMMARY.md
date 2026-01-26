@@ -120,8 +120,8 @@ module1-hysteresis/pkg/gui/simulation.go
 ```
 
 ## Testing Instructions
-1. Build: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
-2. Run: `./fecim-visualizer`
+1. Build: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
+2. Run: `./fecim-lattice-tools`
 3. Test Manual mode:
    - Switch to "Manual" waveform
    - Click different level bars
@@ -144,7 +144,7 @@ module1-hysteresis/pkg/gui/simulation.go
 
 ## Verification Evidence
 ```bash
-$ go build -o fecim-visualizer ./cmd/fecim-visualizer
+$ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 # Success (no errors)
 
 $ go test ./module1-hysteresis/... -v

@@ -206,7 +206,7 @@ go test ./...
 # Edit docs/development/GUI/GUI.moduleX.md
 
 # 3. Run the module to verify visually
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 
 # 4. Commit with clear message
 git commit -m "feat(module-X): description of change"

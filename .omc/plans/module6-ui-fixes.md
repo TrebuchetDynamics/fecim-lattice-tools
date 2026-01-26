@@ -50,7 +50,7 @@ Fix all visual rendering issues in the Module 6 Learn tab to ensure readable tex
 - [ ] No overlapping elements in any diagram
 - [ ] Diagrams have adequate padding around edges
 - [ ] File cards stack vertically for better readability
-- [ ] App builds without errors: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
+- [ ] App builds without errors: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
 - [ ] Visual verification confirms all issues resolved
 
 ---
@@ -325,15 +325,15 @@ Task 9 (Build & Visual Verification)
 
 ### Task 9: Build and Visual Verification
 **Acceptance Criteria:**
-- `go build -o fecim-visualizer ./cmd/fecim-visualizer` succeeds
+- `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools` succeeds
 - Launch app and verify each Learn tab visually
 - All text readable without truncation
 - No overlapping elements
 - Diagrams properly spaced
 
 **Verification Steps:**
-1. Build: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
-2. Launch: `./fecim-visualizer`
+1. Build: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
+2. Launch: `./fecim-lattice-tools`
 3. Navigate to Module 6 (EDA)
 4. Check "Learn" tab
 5. Verify Tab 1: "What is FeCIM EDA?" - operation modes diagram, OpenLane flow

@@ -354,7 +354,7 @@ go test ./module4-circuits/...
 ```
 
 #### Task 4.3: Visual verification
-- Launch application: `./fecim-visualizer`
+- Launch application: `./fecim-lattice-tools`
 - Navigate to each tab
 - Verify timing diagrams show continuous waveforms
 - Test all button interactions

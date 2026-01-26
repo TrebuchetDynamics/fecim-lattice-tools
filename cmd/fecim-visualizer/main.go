@@ -1,4 +1,4 @@
-// Command fecim-visualizer provides a unified GUI application with all FeCIM demos.
+// Command fecim-lattice-tools provides a unified GUI application with all FeCIM demos.
 //
 // This is the main entry point for FeCIM Lattice Tools.
 // It combines all 6 demos into a single application with tab navigation.
@@ -371,7 +371,7 @@ func main() {
 	logging.SetVerbosity(verbosity)
 
 	// Initialize global logger
-	log = logging.NewLogger("fecim-visualizer")
+	log = logging.NewLogger("fecim-lattice-tools")
 	defer log.Close()
 
 	log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))

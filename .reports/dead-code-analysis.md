@@ -289,7 +289,7 @@ go test ./... 2>&1 | tee baseline-tests.txt
 rm <file>
 
 # 3. Verify build
-go build ./cmd/fecim-visualizer
+go build ./cmd/fecim-lattice-tools
 
 # 4. Re-run tests
 go test ./... 2>&1 | tee post-deletion-tests.txt

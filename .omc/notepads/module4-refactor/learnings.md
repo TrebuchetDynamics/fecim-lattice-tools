@@ -45,7 +45,7 @@ All implementations follow proper thread safety:
 - `fyne.Do()` for UI updates from goroutines
 
 ### Verification
-- Build succeeds: `go build -o /tmp/fecim-visualizer ./cmd/fecim-visualizer`
+- Build succeeds: `go build -o /tmp/fecim-lattice-tools ./cmd/fecim-lattice-tools`
 - All required imports added (time, math)
 - No linter errors
 
@@ -162,7 +162,7 @@ The individual tab files (tab_write.go, tab_read.go, etc.) can now be consolidat
 - Creates clear visual distinction between input and output pathways
 
 ### Verification
-- Build succeeds: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
+- Build succeeds: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
 - All tests pass: `go test ./module4-circuits/...`
 - No vet errors: `go vet ./module4-circuits/pkg/gui/...`
 - Uses existing `drawSimpleText()` helper from font.go

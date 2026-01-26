@@ -26,10 +26,10 @@ Demo 2 provides an interactive visualization of how Ferroelectric CIM performs a
 cd <local-path>
 
 # Build unified app
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Run and select "Crossbar" tab
-./fecim-visualizer
+./fecim-lattice-tools
 
 # OR: Launch directly
 ./launch.sh
@@ -60,7 +60,7 @@ go build -o crossbar-gui ./cmd/crossbar-gui
 Launch from the unified visualizer:
 
 ```bash
-./fecim-visualizer
+./fecim-lattice-tools
 # Select "Crossbar" tab from the tabbed interface
 ```
 

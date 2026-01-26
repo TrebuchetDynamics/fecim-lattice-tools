@@ -244,14 +244,14 @@ container.NewAppTabs(
 cd <local-path>
 go build ./module6-eda/...
 go test ./module6-eda/...
-go build ./cmd/fecim-visualizer
+go build ./cmd/fecim-lattice-tools
 ```
 
 **Acceptance Criteria:**
 - [ ] `go build ./module6-eda/...` exits 0
 - [ ] `go test ./module6-eda/...` exits 0
-- [ ] `go build ./cmd/fecim-visualizer` exits 0
-- [ ] Running `./fecim-visualizer` shows 2 tabs in Module 6
+- [ ] `go build ./cmd/fecim-lattice-tools` exits 0
+- [ ] Running `./fecim-lattice-tools` shows 2 tabs in Module 6
 
 ---
 
@@ -290,7 +290,7 @@ Reduces module from 7 tabs to 2 tabs.
 
 | Criterion | How to Verify |
 |-----------|---------------|
-| Build passes | `go build ./module6-eda/... && go build ./cmd/fecim-visualizer` |
+| Build passes | `go build ./module6-eda/... && go build ./cmd/fecim-lattice-tools` |
 | Tests pass | `go test ./module6-eda/...` |
 | 2 tabs only | Run app, count tabs in Module 6 |
 | No duplication | `grep -r "generateDEF" module6-eda/` returns 1 result |

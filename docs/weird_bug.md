@@ -162,16 +162,16 @@ If using a HiDPI display or non-integer scaling, the conversion between device p
 - `module2-crossbar/pkg/gui/widgets.go` - Added startup suppression
 - `module2-crossbar/pkg/gui/vectors.go` - Added startup suppression
 - `module2-crossbar/pkg/gui/liveslide.go` - Added startup suppression
-- `cmd/fecim-visualizer/main.go` - Window size rounding
+- `cmd/fecim-lattice-tools/main.go` - Window size rounding
 
 ## Debug Commands
 
 ```bash
 # Enable resize debugging
-FYNE_DEBUG_RESIZE=1 ./fecim-visualizer 2>&1 | grep RESIZE
+FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools 2>&1 | grep RESIZE
 
 # Enable full layout debugging
-FYNE_DEBUG_LAYOUT=1 FYNE_DEBUG_RESIZE=1 ./fecim-visualizer 2>&1
+FYNE_DEBUG_LAYOUT=1 FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools 2>&1
 
 # Check Fyne version
 go list -m fyne.io/fyne/v2

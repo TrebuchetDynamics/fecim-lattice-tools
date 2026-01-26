@@ -945,7 +945,7 @@ PROGRESS: 65/65 screenshots complete (Modules 1-5)
 ### Test Execution Results
 ```
 go test ./...
-ok  	fecim-lattice-tools/cmd/fecim-visualizer
+ok  	fecim-lattice-tools/cmd/fecim-lattice-tools
 ok  	fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric
 ok  	fecim-lattice-tools/module1-hysteresis/pkg/simulation
 ok  	fecim-lattice-tools/module2-crossbar/pkg/crossbar

@@ -61,7 +61,7 @@ git clone <repository-url>
 cd fecim-lattice-tools
 
 # Build the main visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Or use the launch script (convenience wrapper)
 ./launch.sh
@@ -72,7 +72,7 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer
 ```
 fecim-lattice-tools/
 ├── cmd/
-│   └── fecim-visualizer/      # Main unified app entry point
+│   └── fecim-lattice-tools/      # Main unified app entry point
 ├── module1-hysteresis/         # P-E curve simulation, Preisach model
 ├── module2-crossbar/           # Crossbar array, MVM, non-idealities
 ├── module3-mnist/              # MNIST neural network demo
@@ -106,7 +106,7 @@ export FYNE_THEME=dark
 Load before running:
 ```bash
 source .env
-./fecim-visualizer -verbosity debug
+./fecim-lattice-tools -verbosity debug
 ```
 
 ---
@@ -117,32 +117,32 @@ source .env
 
 **Release Build (Optimized):**
 ```bash
-go build -ldflags="-s -w" -o fecim-visualizer ./cmd/fecim-visualizer
+go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 **Debug Build (With Symbols):**
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 **Build with Race Detector:**
 ```bash
 # Detects concurrent memory access issues
-go build -race -o fecim-visualizer ./cmd/fecim-visualizer
+go build -race -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ### Run the Application
 
 **Direct Execution:**
 ```bash
-./fecim-visualizer
+./fecim-lattice-tools
 ```
 
 **With Logging:**
 ```bash
-./fecim-visualizer -verbosity info    # Info level logging
-./fecim-visualizer -verbosity debug   # Debug level logging
-./fecim-visualizer -verbosity trace   # Trace level logging
+./fecim-lattice-tools -verbosity info    # Info level logging
+./fecim-lattice-tools -verbosity debug   # Debug level logging
+./fecim-lattice-tools -verbosity trace   # Trace level logging
 ```
 
 **Via Launch Script:**
@@ -261,7 +261,7 @@ func (e *EmbeddedApp) Stop() {
 
 ### Step 3: Register Module in Main Visualizer
 
-Edit `/cmd/fecim-visualizer/main.go`:
+Edit `/cmd/fecim-lattice-tools/main.go`:
 
 **1. Import the module:**
 ```go
@@ -429,7 +429,7 @@ The project uses Go's standard `testing` package with 117 tests across 13 packag
 ✅ shared/theme                                5 tests
 ✅ shared/widgets                              1 test
 ✅ module6-eda/pkg/export                      3 tests
-✅ cmd/fecim-visualizer                        2 tests
+✅ cmd/fecim-lattice-tools                        2 tests
 ────────────────────────────────────
 ✅ TOTAL                                     117 tests (100% PASS)
 ```
@@ -571,8 +571,8 @@ log.Error("Error: %v", err)
 
 **Set verbosity at runtime:**
 ```bash
-./fecim-visualizer -verbosity debug
-./fecim-visualizer -verbosity trace
+./fecim-lattice-tools -verbosity debug
+./fecim-lattice-tools -verbosity trace
 ```
 
 **Programmatically:**
@@ -585,7 +585,7 @@ logging.SetVerbosity(logging.DebugLevel)
 Enable Fyne layout debugging with environment variable:
 
 ```bash
-FYNE_DEBUG_RESIZE=1 ./fecim-visualizer
+FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 ```
 
 This logs window resize events and layout calculations. Useful for:
@@ -599,10 +599,10 @@ Catch concurrent memory access issues during development:
 
 ```bash
 # Build with race detector
-go build -race -o fecim-visualizer ./cmd/fecim-visualizer
+go build -race -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Run and reproduce the issue
-./fecim-visualizer
+./fecim-lattice-tools
 
 # Race detector will output stack traces of data races
 ```
@@ -638,7 +638,7 @@ go func() {
 
 **Cause:** MinSize calculations causing feedback loops
 
-**Fix:** Use `ForceMinSizeLayout` (see `cmd/fecim-visualizer/main.go`, line 52)
+**Fix:** Use `ForceMinSizeLayout` (see `cmd/fecim-lattice-tools/main.go`, line 52)
 
 #### Graphics Driver Issues
 
@@ -647,7 +647,7 @@ go func() {
 **Solution:**
 ```bash
 # Try software rendering (disables GPU)
-FYNE_NO_GL=1 ./fecim-visualizer
+FYNE_NO_GL=1 ./fecim-lattice-tools
 
 # Check OpenGL support
 glxinfo | grep "OpenGL version"
@@ -872,7 +872,7 @@ xcode-select --install
 
 **"Segmentation fault"**
 - Usually graphics driver issue
-- Try: `FYNE_NO_GL=1 ./fecim-visualizer`
+- Try: `FYNE_NO_GL=1 ./fecim-lattice-tools`
 - Update GPU drivers
 
 **"panic: runtime error: index out of range"**
@@ -881,7 +881,7 @@ xcode-select --install
 - Check array bounds before access
 
 **Demo fails to initialize**
-- Check logs: `./fecim-visualizer -verbosity debug`
+- Check logs: `./fecim-lattice-tools -verbosity debug`
 - Verify package imports are correct
 - Ensure embedded app interface fully implemented
 
@@ -1000,7 +1000,7 @@ go vet ./...                  # Static analysis
 1. Create widget in `moduleN/pkg/gui/widgets/`
 2. Implement fyne.CanvasObject interface
 3. Add to UI in `BuildContent()`
-4. Test manually: `./fecim-visualizer`
+4. Test manually: `./fecim-lattice-tools`
 5. Commit: `git commit -m "feat: description"`
 
 **Performance tuning:**

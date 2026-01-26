@@ -18,8 +18,8 @@ git clone https://github.com/your-repo/fecim-lattice-tools.git
 cd fecim-lattice-tools
 
 # Build and run
-go build -o fecim-visualizer ./cmd/fecim-visualizer
-./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
 ```
 
 ### Running Tests
@@ -84,7 +84,7 @@ chore: update dependencies
 ## Project Structure
 
 ```
-cmd/fecim-visualizer/     # Main application entry
+cmd/fecim-lattice-tools/     # Main application entry
 module1-hysteresis/       # P-E curve simulation
 module2-crossbar/         # Crossbar array visualization
 module3-mnist/            # Neural network demo

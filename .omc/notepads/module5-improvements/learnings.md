@@ -506,7 +506,7 @@ window.SetCloseIntercept(func() {
 - `module2-crossbar/pkg/gui/animation.go:194-207` - `stopAutoDemoLoop()` implementation
 
 **Verification:**
-- Compiles successfully: `go build ./cmd/fecim-visualizer`
+- Compiles successfully: `go build ./cmd/fecim-lattice-tools`
 - Pattern ensures all background goroutines are cancelled before window destruction
 - Cleanup order: preferences → recording → demos → window close
 
@@ -556,13 +556,13 @@ func SafeGo(name string, fn func()) {
 
 **Applied to**:
 1. `module2-crossbar/pkg/gui/app_enhanced.go:461` - Enhanced MVM animation goroutine
-2. `cmd/fecim-visualizer/main.go:206` - FFmpeg capture loop
-3. `cmd/fecim-visualizer/main.go:536` - Screenshot notification timer
-4. `cmd/fecim-visualizer/main.go:575` - Recording saved notification timer
-5. `cmd/fecim-visualizer/main.go:589` - Recording error notification timer
-6. `cmd/fecim-visualizer/main.go:602` - Recording timer (display + screenshot)
-7. `cmd/fecim-visualizer/main.go:732` - Startup content loader
-8. `cmd/fecim-visualizer/main.go:754` - Resize debugger
+2. `cmd/fecim-lattice-tools/main.go:206` - FFmpeg capture loop
+3. `cmd/fecim-lattice-tools/main.go:536` - Screenshot notification timer
+4. `cmd/fecim-lattice-tools/main.go:575` - Recording saved notification timer
+5. `cmd/fecim-lattice-tools/main.go:589` - Recording error notification timer
+6. `cmd/fecim-lattice-tools/main.go:602` - Recording timer (display + screenshot)
+7. `cmd/fecim-lattice-tools/main.go:732` - Startup content loader
+8. `cmd/fecim-lattice-tools/main.go:754` - Resize debugger
 
 **Pattern**:
 ```go
@@ -751,7 +751,7 @@ Successfully refactored `tab_operations.go` (1770 lines) into 4 smaller, focused
 ### Verification
 - ✅ Build successful: `go build ./module4-circuits/...`
 - ✅ Tests pass: `go test ./module4-circuits/...`
-- ✅ Main visualizer builds: `go build ./cmd/fecim-visualizer`
+- ✅ Main visualizer builds: `go build ./cmd/fecim-lattice-tools`
 - ✅ All files under 500 lines
 
 ## Module 2 Waterfall Chart - Percentage Labels Enhancement (2026-01-25)
@@ -797,7 +797,7 @@ The waterfall widget already had a complete label system:
 This enhancement simply improved the styling of the existing labels.
 
 ### Verification
-- ✅ Build successful: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
+- ✅ Build successful: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
 - ✅ Module 2 compiles: `go test ./module2-crossbar/...`
 - ✅ No regressions in existing functionality
 
@@ -891,7 +891,7 @@ When programming ferroelectric memory to analog levels:
 
 **Verification:**
 - ✅ Tests pass: `go test ./module1-hysteresis/...`
-- ✅ Build succeeds: `go build ./cmd/fecim-visualizer`
+- ✅ Build succeeds: `go build ./cmd/fecim-lattice-tools`
 - ✅ No `go vet` issues
 - ✅ Physics now matches WriteReadDemo reference implementation
 

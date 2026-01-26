@@ -666,7 +666,7 @@ git clone https://github.com/neurosim/DNN_NeuroSim_V2.1 && cd DNN_NeuroSim_V2.1 
 sudo apt install ngspice
 
 # Our FeCIM Visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 ```
 
 ---

@@ -49,7 +49,7 @@ xcode-select --install
 
 **Note:** No `.env` file required. Use CLI flags instead:
 ```bash
-./fecim-visualizer --verbosity 2  # 0=off, 1=info, 2=debug, 3=trace
+./fecim-lattice-tools --verbosity 2  # 0=off, 1=info, 2=debug, 3=trace
 ```
 
 ## Available Scripts
@@ -63,13 +63,13 @@ xcode-select --install
 
 ```bash
 # Standard build
-go build -o fecim-visualizer ./cmd/fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Release build (optimized)
-go build -ldflags="-s -w" -o fecim-visualizer ./cmd/fecim-visualizer
+go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Debug build with race detector
-go build -race -o fecim-visualizer ./cmd/fecim-visualizer
+go build -race -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ## Testing
@@ -219,7 +219,7 @@ go mod tidy          # Clean up
 
 ```
 fecim-lattice-tools/
-├── cmd/fecim-visualizer/     # Unified GUI entry
+├── cmd/fecim-lattice-tools/     # Unified GUI entry
 ├── module1-hysteresis/       # P-E curve, Preisach model
 ├── module2-crossbar/         # MVM, non-idealities
 ├── module3-mnist/            # Neural network demo

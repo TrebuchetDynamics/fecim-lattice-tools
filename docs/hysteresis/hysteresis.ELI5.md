@@ -674,7 +674,7 @@ The physics is real — the loop is **emergent**, not drawn!
 # From project root
 ./launch.sh
 # Or build and run
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Then select "Hysteresis" tab
 ```
 

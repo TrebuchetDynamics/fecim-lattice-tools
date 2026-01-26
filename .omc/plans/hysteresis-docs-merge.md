@@ -236,7 +236,7 @@ Consolidate all hysteresis documentation into `docs/hysteresis/` with clear orga
 # From project root
 ./launch.sh
 # Or build and run
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Then select "Hysteresis" tab
 ```
 

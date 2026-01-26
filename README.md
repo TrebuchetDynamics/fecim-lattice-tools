@@ -53,7 +53,7 @@ cd fecim-lattice-tools
 Or build manually:
 
 ```bash
-go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 ```
 
 ---
@@ -95,7 +95,7 @@ go mod download
 
 1. Install [MSYS2](https://www.msys2.org/) or [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)
 2. Ensure `gcc` is in your PATH
-3. Run: `go build -o fecim-visualizer.exe ./cmd/fecim-visualizer`
+3. Run: `go build -o fecim-lattice-tools.exe ./cmd/fecim-lattice-tools`
 
 ### Running Tests
 
@@ -339,7 +339,7 @@ go run ./cmd/eda-cli -mode storage -rows 4 -cols 4 -name hello_storage
 
 ```
 fecim-lattice-tools/
-├── cmd/fecim-visualizer/    # Unified GUI entry point
+├── cmd/fecim-lattice-tools/    # Unified GUI entry point
 ├── module1-hysteresis/      # P-E curve physics
 ├── module2-crossbar/        # MVM + non-idealities
 ├── module3-mnist/           # Neural network demo

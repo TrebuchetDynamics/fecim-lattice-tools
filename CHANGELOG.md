@@ -45,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.8.0] - 2026-01-22
 
 ### Added
-- Unified tabbed GUI application (`cmd/fecim-visualizer/`)
+- Unified tabbed GUI application (`cmd/fecim-lattice-tools/`)
 - Modules 1-5 fully implemented and tested
 - 117 passing tests across all modules
 - Lattice generator with fractal placement algorithm
