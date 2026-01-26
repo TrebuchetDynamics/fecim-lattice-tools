@@ -123,13 +123,13 @@ func TestWeightsAreQuantizedTo30Levels(t *testing.T) {
 		for j := 0; j < 784; j++ {
 			w := weights1[i][j]
 			level := crossbar.GetLevel(w)
-			if level < 0 || level >= crossbar.FeCIMLevels {
-				t.Errorf("Weight level %d out of range [0, %d)", level, crossbar.FeCIMLevels)
+			if level < 0 || level >= crossbar.DefaultQuantizationLevels {
+				t.Errorf("Weight level %d out of range [0, %d)", level, crossbar.DefaultQuantizationLevels)
 			}
 			seenLevels[level] = true
 
 			// Verify weight is exactly on a 30-level quantization point
-			expected := float64(level) / float64(crossbar.FeCIMLevels-1)
+			expected := float64(level) / float64(crossbar.DefaultQuantizationLevels-1)
 			if w != expected {
 				t.Errorf("Weight %.6f not quantized to level %d (expected %.6f)", w, level, expected)
 			}
@@ -274,15 +274,15 @@ func TestMNISTAccuracyWithQuantization(t *testing.T) {
 	level := crossbar.GetLevel(w)
 
 	t.Logf("Weight quantization test: input=%.3f, stored=%.6f, level=%d/%d",
-		testWeight, w, level, crossbar.FeCIMLevels)
+		testWeight, w, level, crossbar.DefaultQuantizationLevels)
 
-	if level < 0 || level >= crossbar.FeCIMLevels {
-		t.Errorf("Weight level %d outside valid range [0, %d)", level, crossbar.FeCIMLevels)
+	if level < 0 || level >= crossbar.DefaultQuantizationLevels {
+		t.Errorf("Weight level %d outside valid range [0, %d)", level, crossbar.DefaultQuantizationLevels)
 	}
 
 	// Verify 30-level quantization is enforced
-	expectedLevel := int(testWeight*float64(crossbar.FeCIMLevels-1) + 0.5)
-	expectedWeight := float64(expectedLevel) / float64(crossbar.FeCIMLevels-1)
+	expectedLevel := int(testWeight*float64(crossbar.DefaultQuantizationLevels-1) + 0.5)
+	expectedWeight := float64(expectedLevel) / float64(crossbar.DefaultQuantizationLevels-1)
 	if w != expectedWeight {
 		t.Errorf("Weight not properly quantized: got %.6f, expected %.6f", w, expectedWeight)
 	}

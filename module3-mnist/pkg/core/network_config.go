@@ -8,8 +8,8 @@ func (net *DualModeNetwork) SetNumLevels(levels int) {
 	if levels < 1 {
 		levels = 1
 	}
-	if levels > 256 {
-		levels = 256
+	if levels > FeCIMLevels {
+		levels = FeCIMLevels
 	}
 	net.Config.NumLevels = levels
 	net.requantizeWeightsLocked()
@@ -96,8 +96,8 @@ func (net *DualModeNetwork) SetLayer1Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > 256 {
-		levels = 256
+	if levels > FeCIMLevels {
+		levels = FeCIMLevels
 	}
 	net.Config.Layer1Levels = levels
 	if net.Config.PerLayerQuant {
@@ -120,8 +120,8 @@ func (net *DualModeNetwork) SetLayer2Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > 256 {
-		levels = 256
+	if levels > FeCIMLevels {
+		levels = FeCIMLevels
 	}
 	net.Config.Layer2Levels = levels
 	if net.Config.PerLayerQuant {
@@ -144,14 +144,14 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	if layer1 < 2 {
 		layer1 = 2
 	}
-	if layer1 > 256 {
-		layer1 = 256
+	if layer1 > FeCIMLevels {
+		layer1 = FeCIMLevels
 	}
 	if layer2 < 2 {
 		layer2 = 2
 	}
-	if layer2 > 256 {
-		layer2 = 256
+	if layer2 > FeCIMLevels {
+		layer2 = FeCIMLevels
 	}
 
 	net.Config.Layer1Levels = layer1

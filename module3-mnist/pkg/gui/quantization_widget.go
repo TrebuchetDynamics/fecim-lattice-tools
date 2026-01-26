@@ -103,7 +103,7 @@ func (qw *QuantizationWidget) UpdateWithWeights(weights [][]float64, count int) 
 		normalized = math.Max(0, math.Min(1, normalized))
 
 		// Quantize using crossbar function
-		quantized := crossbar.QuantizeTo30Levels(normalized)
+		quantized := crossbar.QuantizeToLevels(normalized)
 		level := crossbar.GetLevel(quantized)
 
 		// Map back to original range

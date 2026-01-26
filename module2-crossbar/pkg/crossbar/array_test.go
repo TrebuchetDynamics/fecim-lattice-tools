@@ -5,36 +5,36 @@ import (
 	"testing"
 )
 
-// TestQuantizeTo30LevelsProducesExactly30Values verifies FeCIM spec:
+// TestQuantizeToLevelsProducesExactly30Values verifies FeCIM spec:
 // "It's got 30 discrete states."
-func TestQuantizeTo30LevelsProducesExactly30Values(t *testing.T) {
+func TestQuantizeToLevelsProducesExactly30Values(t *testing.T) {
 	seen := make(map[float64]bool)
 
 	// Test many input values
 	for i := 0; i <= 1000; i++ {
 		input := float64(i) / 1000.0
-		quantized := QuantizeTo30Levels(input)
+		quantized := QuantizeToLevels(input)
 		seen[quantized] = true
 	}
 
-	if len(seen) != FeCIMLevels {
-		t.Errorf("Expected exactly %d discrete levels, got %d", FeCIMLevels, len(seen))
+	if len(seen) != DefaultQuantizationLevels {
+		t.Errorf("Expected exactly %d discrete levels, got %d", DefaultQuantizationLevels, len(seen))
 	}
 }
 
-// TestQuantizeTo30LevelsRange verifies output is in [0, 1]
-func TestQuantizeTo30LevelsRange(t *testing.T) {
+// TestQuantizeToLevelsRange verifies output is in [0, 1]
+func TestQuantizeToLevelsRange(t *testing.T) {
 	testCases := []float64{-0.5, 0.0, 0.5, 1.0, 1.5}
 	for _, input := range testCases {
-		output := QuantizeTo30Levels(input)
+		output := QuantizeToLevels(input)
 		if output < 0 || output > 1 {
-			t.Errorf("QuantizeTo30Levels(%v) = %v, expected in [0, 1]", input, output)
+			t.Errorf("QuantizeToLevels(%v) = %v, expected in [0, 1]", input, output)
 		}
 	}
 }
 
-// TestQuantizeTo30LevelsSpecificValues verifies key quantization points
-func TestQuantizeTo30LevelsSpecificValues(t *testing.T) {
+// TestQuantizeToLevelsSpecificValues verifies key quantization points
+func TestQuantizeToLevelsSpecificValues(t *testing.T) {
 	testCases := []struct {
 		input    float64
 		expected float64
@@ -47,17 +47,17 @@ func TestQuantizeTo30LevelsSpecificValues(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		output := QuantizeTo30Levels(tc.input)
+		output := QuantizeToLevels(tc.input)
 		if math.Abs(output-tc.expected) > 1e-10 {
-			t.Errorf("QuantizeTo30Levels(%v) = %v, expected %v", tc.input, output, tc.expected)
+			t.Errorf("QuantizeToLevels(%v) = %v, expected %v", tc.input, output, tc.expected)
 		}
 	}
 }
 
 // TestGetLevelReturns0To29 verifies level indices are 0-29
 func TestGetLevelReturns0To29(t *testing.T) {
-	for i := 0; i < FeCIMLevels; i++ {
-		conductance := float64(i) / float64(FeCIMLevels-1)
+	for i := 0; i < DefaultQuantizationLevels; i++ {
+		conductance := float64(i) / float64(DefaultQuantizationLevels-1)
 		level := GetLevel(conductance)
 		if level != i {
 			t.Errorf("GetLevel(%v) = %d, expected %d", conductance, level, i)
@@ -85,7 +85,7 @@ func TestProgramWeightQuantizes(t *testing.T) {
 	stored := matrix[0][0]
 
 	// Should be quantized to nearest 30-level
-	expected := QuantizeTo30Levels(0.123)
+	expected := QuantizeToLevels(0.123)
 	if math.Abs(stored-expected) > 1e-10 {
 		t.Errorf("ProgramWeight stored %v, expected quantized %v", stored, expected)
 	}

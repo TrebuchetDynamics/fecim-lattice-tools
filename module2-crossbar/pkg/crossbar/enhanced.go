@@ -423,16 +423,16 @@ func (a *Array) ProgramWeightVerified(row, col int, targetLevel int, cfg *WriteV
 		cfg = DefaultWriteVerifyConfig()
 	}
 
-	if targetLevel < 0 || targetLevel >= FeCIMLevels {
-		return nil, fmt.Errorf("target level %d out of range [0, %d)", targetLevel, FeCIMLevels)
+	if targetLevel < 0 || targetLevel >= DefaultQuantizationLevels {
+		return nil, fmt.Errorf("target level %d out of range [0, %d)", targetLevel, DefaultQuantizationLevels)
 	}
 
 	result := &WriteVerifyResult{
 		TargetLevel: targetLevel,
 	}
 
-	targetConductance := float64(targetLevel) / float64(FeCIMLevels-1)
-	tolerance := cfg.Tolerance / float64(FeCIMLevels-1)
+	targetConductance := float64(targetLevel) / float64(DefaultQuantizationLevels-1)
+	tolerance := cfg.Tolerance / float64(DefaultQuantizationLevels-1)
 
 	currentConductance := a.cells[row][col].Conductance
 
@@ -447,7 +447,7 @@ func (a *Array) ProgramWeightVerified(row, col int, targetLevel int, cfg *WriteV
 		newConductance = math.Max(0, math.Min(1, newConductance))
 
 		// Quantize to 30 levels
-		newConductance = QuantizeTo30Levels(newConductance)
+		newConductance = QuantizeToLevels(newConductance)
 		a.cells[row][col].Conductance = newConductance
 		a.cells[row][col].SwitchingCount++
 		a.totalWrites++
@@ -456,7 +456,7 @@ func (a *Array) ProgramWeightVerified(row, col int, targetLevel int, cfg *WriteV
 		// Check convergence
 		currentLevel := GetLevel(currentConductance)
 		result.AchievedLevel = currentLevel
-		result.FinalError = math.Abs(float64(currentLevel-targetLevel)) / float64(FeCIMLevels-1)
+		result.FinalError = math.Abs(float64(currentLevel-targetLevel)) / float64(DefaultQuantizationLevels-1)
 
 		if math.Abs(currentConductance-targetConductance) <= tolerance {
 			result.Converged = true
@@ -506,7 +506,7 @@ func (a *Array) GenerateReport(mvmResult *MVMResult) *AnalysisReport {
 		Timestamp:  time.Now(),
 		ArraySize:  [2]int{a.config.Rows, a.config.Cols},
 		TotalMACs:  a.config.Rows * a.config.Cols,
-		Levels:     FeCIMLevels,
+		Levels:     DefaultQuantizationLevels,
 		NoiseLevel: a.config.NoiseLevel,
 		ADCBits:    a.config.ADCBits,
 	}
