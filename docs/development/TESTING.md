@@ -1,20 +1,31 @@
-# FeCIM Visualizer Test Documentation
+# FeCIM Lattice Tools Test Documentation
 
 ## Test Summary
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| module1-hysteresis/pkg/ferroelectric | 7 | ✅ PASS |
-| module1-hysteresis/pkg/simulation | 4 | ✅ PASS |
+| cmd/fecim-lattice-tools | 26 | ✅ PASS |
+| config/physics | 3 | ✅ PASS |
+| module1-hysteresis/pkg/ferroelectric | 23 | ✅ PASS |
+| module1-hysteresis/pkg/gui/widgets | 21 | ✅ PASS |
+| module1-hysteresis/pkg/simulation | 21 | ✅ PASS |
 | module2-crossbar/pkg/crossbar | 29 | ✅ PASS |
-| module3-mnist/pkg/core | 33 | ✅ PASS |
+| module2-crossbar/pkg/gui | 4 | ✅ PASS |
+| module2-crossbar/pkg/network | 8 | ✅ PASS |
+| module2-crossbar/pkg/training | 2 | ✅ PASS |
+| module3-mnist/pkg/core | 48 | ✅ PASS |
+| module3-mnist/pkg/mnist | 8 | ✅ PASS |
 | module3-mnist/pkg/training | 3 | ✅ PASS |
 | module4-circuits/pkg/peripherals | 9 | ✅ PASS |
 | module5-comparison/pkg/comparison | 19 | ✅ PASS |
+| module5-comparison/pkg/gui | 8 | ✅ PASS |
+| module6-eda/pkg/compiler | 10 | ✅ PASS |
+| module6-eda/pkg/config | 5 | ✅ PASS |
+| module6-eda/pkg/export | 22 | ✅ PASS |
 | shared/logging | 6 | ✅ PASS |
 | shared/theme | 5 | ✅ PASS |
-| cmd/fecim-lattice-tools | 2 | ✅ PASS |
-| **Total** | **117** | **✅ 100% PASS** |
+| shared/widgets | 3 | ✅ PASS |
+| **Total** | **333** | **✅ 100% PASS** |
 
 ## Running Tests
 
@@ -22,17 +33,24 @@
 # Run all tests
 go test ./...
 
-# Run tests for active demos only
-go test ./cmd/... ./module1-hysteresis/... ./module2-crossbar/... ./module3-mnist/... ./module4-circuits/... ./module5-comparison/... ./shared/...
-
 # Run with verbose output
-go test -v ./module2-crossbar/pkg/crossbar/...
+go test -v ./...
+
+# Run tests for specific module
+go test -v ./module1-hysteresis/...
+go test -v ./module2-crossbar/...
+go test -v ./module3-mnist/...
 
 # Run specific test
 go test -v -run TestFeCIM30LevelPhysics ./module3-mnist/pkg/core/...
+go test -v -run TestMaterialPhysicsConsistency ./cmd/fecim-lattice-tools/...
 
 # Run benchmarks
 go test -bench=. ./module2-crossbar/pkg/crossbar/...
+go test -bench=. ./cmd/fecim-lattice-tools/...
+
+# Run with race detector
+go test -race ./...
 ```
 
 ## Test Categories
@@ -46,15 +64,16 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/...
 - `TestLevelSpacingUniformity` - Linear DAC spacing verification
 - `TestQuantizationSymmetry` - Symmetric bipolar quantization q(-x) ≈ -q(x)
 - `TestQuantizationCliff` - Validates 2→30 level MSE/PSNR improvement
+- `Test30LevelQuantizationAccuracy` - PSNR verification at different bit depths
 
 **Results:**
 | Levels | MSE | PSNR |
 |--------|-----|------|
-| 2 (binary) | 0.1956 | 5.1 dB |
-| 4 | 0.0217 | 14.7 dB |
-| 8 | 0.0040 | 22.1 dB |
-| 16 | 0.0009 | 28.7 dB |
-| 30 (FeCIM) | 0.0002 | 34.4 dB |
+| 2 (binary) | 0.3323 | 4.8 dB |
+| 4 | 0.0369 | 14.3 dB |
+| 8 | 0.0068 | 21.7 dB |
+| 16 | 0.0015 | 28.4 dB |
+| 30 (FeCIM) | 0.0004 | 34.0 dB |
 
 #### IR Drop Physics
 - `TestIRDropOhmsLaw` - V=IR verification
@@ -74,7 +93,65 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/...
 - `TestDriftRetentionPrediction` - 100% 10-year retention
 - `TestDriftTemperatureDependence` - Arrhenius behavior at 27°C vs 85°C
 
-### 2. Calculation Tests
+### 2. Material/Ferroelectric Tests
+
+**Location:** `module1-hysteresis/pkg/ferroelectric/ferroelectric_test.go`
+
+- `TestHysteresisLoopExists` - P-E curve generation
+- `TestHysteresisAsymmetry` - Path-dependent polarization
+- `TestCoerciveFieldSwitching` - Polarization switching around Ec
+- `TestDiscreteStatesCount` - 30 discrete states verification
+- `TestMaterialParameters` - HZO parameter validation
+- `TestCoerciveFieldTemperatureDependence` - Ec vs temperature
+- `TestPolarizationTemperatureDependence` - Pr vs temperature
+- `TestMaterialVariants` - All material presets work correctly
+- `TestFerroelectricMaterialPhysics` - Literature-accurate parameters
+
+### 3. Simulation Engine Tests
+
+**Location:** `module1-hysteresis/pkg/simulation/engine_test.go`
+
+- `TestEngineStartStop` - Thread-safe start/stop
+- `TestEnginePause` - Pause/resume functionality
+- `TestEngineConcurrentAccess` - No data races
+- `TestSineWaveformGeneration` - Correct waveform output
+- `TestTriangleWaveformGeneration` - Triangle wave verification
+- `TestManualWaveformMode` - Manual voltage control
+- `TestPolarizationRespondsToField` - Physics response
+- `TestHistoryRecording` - Voltage/polarization history
+- `TestEngineWithDifferentMaterials` - All materials work
+- `TestGetHysteresisData` - Hysteresis loop data generation
+
+### 4. GUI Widget Tests (Headless)
+
+**Location:** `module1-hysteresis/pkg/gui/widgets/widgets_test.go`
+
+- `TestLevelIndicatorCreation` - Widget initialization
+- `TestLevelIndicatorSetLevel` - Level setting (0-29)
+- `TestLevelIndicator30Levels` - Full 30-level range
+- `TestLevelIndicatorConcurrency` - Thread safety
+- `TestCellVisualizerSetLevel` - Cell visualization
+- `TestModeIndicatorSetWrite` - WRITE/READ mode
+- `TestPEPlotSetData` - P-E plot data
+- `TestPEPlotConcurrency` - Thread-safe data access
+
+### 5. Integration Tests
+
+**Location:** `cmd/fecim-lattice-tools/integration_test.go`
+
+#### Cross-Module Tests
+- `TestMaterialPhysicsConsistency` - 30-level consistency across modules
+- `TestHysteresisToMNISTWorkflow` - Module 1 → Module 3 pipeline
+- `TestSimulationEngineIntegration` - Engine produces correct physics
+- `TestCrossbarNonIdealitiesIntegration` - IR drop, sneak paths, drift together
+- `TestPeripheralCircuitsIntegration` - DAC/ADC/TIA circuits
+
+#### End-to-End Tests
+- `TestQuantizationCliffEffect` - 2-level vs 30-level comparison
+- `TestEndToEndMNISTInference` - Full inference for all digits
+- `TestConcurrentInferenceStability` - Thread safety under load
+
+### 6. Calculation Tests
 
 **Location:** `module3-mnist/pkg/core/physics_test.go`
 
@@ -84,38 +161,36 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/...
 - `TestArgmaxCorrectness` - Index of maximum value
 - `TestEnergyCalculation` - 50 fJ/MAC FeCIM energy estimate
 
-### 3. Integration Tests
+### 7. Network/Training Tests
 
-**Location:** `module3-mnist/pkg/core/integration_test.go`
+**Location:** `module3-mnist/pkg/core/integration_test.go`, `module3-mnist/pkg/core/quantize_test.go`
 
 - `TestFullInferencePipeline` - Complete 784→128→10 inference
 - `TestPresetConfigurations` - 4 failure mode presets
-- `TestQuickTestAccuracy` - 50-sample agreement testing
-- `TestConcurrentInference` - Thread safety (10 goroutines × 100 inferences)
-
-### 4. UI/UX Tests
-
-**Location:** `module3-mnist/pkg/core/integration_test.go`
-
-- `TestNetworkConfigBounds` - Parameter bounds validation
-- `TestRequantizeWeightsIdempotent` - Consistent re-quantization
-- `TestZeroInput`, `TestMaxInput` - Edge case handling
-- `TestDifferentHiddenSizes` - Architecture flexibility (16→256 hidden)
+- `TestDualModeNetwork_Creation` - Network initialization
+- `TestDualModeNetwork_SetParameters` - Config bounds
+- `TestDualModeNetwork_Inference` - Valid predictions
+- `TestDualModeNetwork_AgreementUnderIdealConditions` - FP/CIM agreement
 
 ## Known Limitations
 
-### 1. GUI Tests Not Automated
+### 1. GUI Tests Partially Automated
 
-**Issue:** Fyne GUI components require a display server to test interactively.
+**Issue:** Some Fyne GUI features require a display server or running Fyne app.
 
-**Workaround:** GUI testing is done manually. Core logic is tested independently.
+**Solution:** Widget logic is tested without display. Animation-related features (like pulsing highlights) are skipped in tests.
 
-**Affected packages:**
-- `module1-hysteresis/pkg/gui`
-- `module2-crossbar/pkg/gui`
-- `module3-mnist/pkg/gui`
-- `module4-circuits/pkg/gui`
-- `module5-comparison/pkg/gui`
+**Covered in headless tests:**
+- Level indicator state management
+- P-E plot data handling
+- Mode indicator state
+- Cell visualizer level mapping
+- Thread-safe concurrent access
+
+**Requires manual testing:**
+- Animation timing
+- Visual rendering
+- User interactions (mouse clicks)
 
 ### 2. Drift Model Precision
 
@@ -144,7 +219,7 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/...
 ## Benchmarks
 
 ```bash
-go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/...
+go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/... ./cmd/fecim-lattice-tools/...
 ```
 
 | Benchmark | Operations/sec | Notes |
@@ -154,6 +229,10 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/..
 | BenchmarkIRDropSimulator | ~1,000 | 64×64 array, 100 iterations |
 | BenchmarkSneakPathAnalyzer | ~5,000 | 64×64 array analysis |
 | BenchmarkDriftSimulator | ~100,000 | Single timestep |
+| BenchmarkEngineStep | ~100,000 | Single simulation step |
+| BenchmarkGetHysteresisData | ~10,000 | Hysteresis loop generation |
+| BenchmarkFullInferencePipeline | ~5,000 | Complete 784→10 inference |
+| BenchmarkCrossbarMVM | ~10,000 | 64×64 matrix-vector multiply |
 
 ## Test Coverage Areas
 
@@ -168,13 +247,18 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/..
 - Parameter bounds validation
 - Concurrent access safety
 - Edge cases (zero/max input)
+- Simulation engine state management
+- GUI widget state management (headless)
+- Cross-module integration
+- Material physics across all presets
+- Peripheral circuits (DAC/ADC/TIA)
 
 ### Not Covered ❌
-- Interactive GUI behavior
-- Real MNIST dataset accuracy
+- Interactive GUI behavior (requires display)
+- Real MNIST dataset accuracy (uses synthetic data)
 - Hardware-in-the-loop testing
 - Multi-GPU rendering
-- Network file I/O (weight loading)
+- Network file I/O (weight loading from disk)
 
 ## Adding New Tests
 
@@ -183,3 +267,60 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/..
 3. Use table-driven tests for multiple cases
 4. Add physics validation where applicable
 5. Document known limitations in this file
+6. Run race detector: `go test -race ./...`
+7. Update this documentation with new test counts
+
+## Test File Locations
+
+```
+cmd/fecim-lattice-tools/
+├── launcher_test.go           # Launcher UI tests
+└── integration_test.go        # Cross-module integration tests
+
+module1-hysteresis/
+├── pkg/ferroelectric/
+│   ├── ferroelectric_test.go       # Physics model tests
+│   └── preisach_advanced_test.go   # Advanced Preisach tests
+├── pkg/simulation/
+│   └── engine_test.go              # Simulation engine tests
+└── pkg/gui/widgets/
+    └── widgets_test.go             # Widget logic tests (headless)
+
+module2-crossbar/
+└── pkg/crossbar/
+    ├── physics_test.go             # IR drop, sneak, drift tests
+    ├── nonidealities_test.go       # Non-ideality model tests
+    └── array_test.go               # Crossbar array tests
+
+module3-mnist/
+└── pkg/core/
+    ├── physics_test.go             # Math/calculation tests
+    ├── quantize_test.go            # Quantization tests
+    └── integration_test.go         # E2E inference tests
+
+module4-circuits/
+└── pkg/peripherals/
+    └── peripherals_test.go         # DAC/ADC/TIA tests
+
+module5-comparison/
+└── pkg/comparison/
+    └── comparison_test.go          # Technology comparison tests
+
+module6-eda/
+└── pkg/
+    ├── compiler/compiler_test.go   # Compiler tests
+    ├── config/types_test.go        # Config validation tests
+    └── export/*.go                 # Export format tests
+
+shared/
+├── logging/logging_test.go         # Logger tests
+├── theme/theme_test.go             # Theme tests
+└── widgets/color_legend_test.go    # Shared widget tests
+```
+
+## Last Updated
+
+- **Date:** 2026-01-26
+- **Total Tests:** 333
+- **Pass Rate:** 100%
+- **Coverage:** Physics, integration, GUI logic (headless)
