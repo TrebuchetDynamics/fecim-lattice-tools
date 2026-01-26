@@ -618,7 +618,9 @@ func (ca *CrossbarApp) programRandomWeights() {
 // updateConductanceDisplay refreshes the conductance heatmap.
 func (ca *CrossbarApp) updateConductanceDisplay() {
 	matrix := ca.array.GetConductanceMatrix()
-	ca.conductanceHeatmap.SetData(matrix)
+	fyne.Do(func() {
+		ca.conductanceHeatmap.SetData(matrix)
+	})
 }
 
 // updateStatus updates the status label.

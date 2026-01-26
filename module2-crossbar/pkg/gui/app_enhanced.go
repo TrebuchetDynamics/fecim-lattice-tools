@@ -318,15 +318,8 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 
-	// Title and header
-	titleLabel := widget.NewLabel("FeCIM Crossbar Array Visualization")
-	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
-	titleLabel.Alignment = fyne.TextAlignCenter
-
-	header := container.NewVBox(
-		titleLabel,
-		widget.NewSeparator(),
-	)
+	// Header separator (title moved to main navbar)
+	header := widget.NewSeparator()
 
 	// Right panel layout
 	actionLabel := widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -390,11 +383,14 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	rightPanel := container.NewVSplit(controlsScroll, metricsScroll)
 	rightPanel.SetOffset(0.5)
 
-	// Left panel - wrap in scroll to prevent layout resize on content change
+	// Left panel - wrap educational content in fixed-size container to prevent layout changes
+	// Educational content wrapper: fixed height prevents parent layout recalculation on text changes
+	eduContentWrapper := container.NewGridWrap(fyne.NewSize(200, 300), ca.eduContentLabel)
+
 	leftPanelContent := container.NewVBox(
 		ca.eduTitleLabel,
 		widget.NewSeparator(),
-		ca.eduContentLabel,
+		eduContentWrapper,
 		widget.NewSeparator(),
 		ca.keyStatLabel,
 		ca.keyStatValue,
@@ -450,7 +446,12 @@ func (ca *CrossbarApp) runEnhancedMVM() {
 	for i := range input {
 		input[i] = rand.Float64()
 	}
+
+	// Protected write to lastInput
+	ca.stateMu.Lock()
 	ca.lastInput = input
+	ca.stateMu.Unlock()
+
 	ca.mvmVis.SetInput(input)
 
 	// Run animated MVM in goroutine

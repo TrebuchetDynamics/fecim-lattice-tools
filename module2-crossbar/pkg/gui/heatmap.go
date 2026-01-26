@@ -59,6 +59,9 @@ type CrossbarHeatmap struct {
 	refreshMu      sync.Mutex
 	lastRefresh    time.Time
 	refreshPending bool
+
+	// Data synchronization
+	dataMu sync.RWMutex
 }
 
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
@@ -137,6 +140,9 @@ func (h *CrossbarHeatmap) rateLimitedRefresh() {
 
 // SetData updates the heatmap data.
 func (h *CrossbarHeatmap) SetData(data [][]float64) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
 	h.minVal = math.Inf(1)
 	h.maxVal = math.Inf(-1)
 
@@ -161,12 +167,18 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 
 // SetColormap changes the colormap (viridis, plasma, coolwarm, fecim).
 func (h *CrossbarHeatmap) SetColormap(name string) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
 	h.colormap = name
 	h.rateLimitedRefresh()
 }
 
 // SetSelection highlights a specific cell.
 func (h *CrossbarHeatmap) SetSelection(row, col int) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
 	h.selectedRow = row
 	h.selectedCol = col
 	h.showSelection = row >= 0 && col >= 0
@@ -189,6 +201,9 @@ func (h *CrossbarHeatmap) SetShowGridLines(show bool) {
 
 // SetDimensions changes the dimensions of the heatmap and reinitializes data.
 func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
 	h.rows = rows
 	h.cols = cols
 	h.selectedRow = -1
@@ -250,6 +265,9 @@ func (h *CrossbarHeatmap) TappedSecondary(*fyne.PointEvent) {
 
 // MouseMoved tracks mouse position for hover info.
 func (h *CrossbarHeatmap) MouseMoved(e *desktop.MouseEvent) {
+	h.dataMu.RLock()
+	defer h.dataMu.RUnlock()
+
 	size := h.Size()
 	cellW := float64(size.Width-40) / float64(h.cols)
 	cellH := float64(size.Height-40) / float64(h.rows)
@@ -309,6 +327,9 @@ func (h *CrossbarHeatmap) ClearAnimation() {
 
 // generateImage creates the heatmap image with optimized rendering.
 func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
+	h.dataMu.RLock()
+	defer h.dataMu.RUnlock()
+
 	img := image.NewRGBA(image.Rect(0, 0, w, h_size))
 
 	// Calculate cell size
