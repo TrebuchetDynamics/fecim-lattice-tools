@@ -88,13 +88,12 @@ func (a *App) getSlideText() string {
 		a.mu.RUnlock()
 
 		if animating {
-			return fmt.Sprintf("🎯 WRITING LEVEL %d\n\n"+
-				"Click-to-level animation:\n"+
-				"SATURATE → SETTLE → HOLD\n\n"+
-				"Watch the P-E plot trace\n"+
-				"the physics path!\n\n"+
-				"Click any level on the bar\n"+
-				"to program a new value.", level)
+			return fmt.Sprintf("WRITING → L%d\n\n"+
+				"Applying E-field:\n"+
+				"• Higher target → +E\n"+
+				"• Lower target → -E\n\n"+
+				"Watch the P-E plot!\n"+
+				"Click level bar for new target.", level)
 		}
 		if isWrite {
 			return fmt.Sprintf("██ WRITING LEVEL %d ██\n\n"+
@@ -136,62 +135,48 @@ func (a *App) getSlideText() string {
 
 		var phaseExplanation string
 		switch wrdPhase {
-		case 0: // SATURATE
-			phaseExplanation = fmt.Sprintf("▓▓ SATURATE → %d ▓▓\n\n"+
-				"|E| = 2×Ec (maximum field)\n"+
-				"ALL ferroelectric domains\n"+
-				"switching simultaneously.\n\n"+
+		case 0: // WRITE
+			direction := "+E (positive)"
+			if wrdTarget < level {
+				direction = "-E (negative)"
+			}
+			phaseExplanation = fmt.Sprintf("▓▓ WRITE → L%d ▓▓\n\n"+
+				"Applying %s\n"+
+				"|E| > Ec to switch domains.\n\n"+
+				"Higher level → +E field\n"+
+				"Lower level → -E field\n\n"+
 				"Energy: ~%.0f fJ\n"+
-				"(10M× less than NAND!)\n\n"+
-				"\"The same device does memory\n"+
-				"AND computation.\" - Dr. Tour", wrdTarget, energyPerOp)
-		case 1: // SETTLE
-			phaseExplanation = fmt.Sprintf("██ SETTLE → %d ██\n\n"+
-				"MINOR LOOP formation:\n"+
-				"Partial domain reversal\n"+
-				"sets the analog level.\n\n"+
-				"This is how we store\n"+
-				"4.91 BITS in ONE cell!\n"+
-				"(Binary = only 1 bit)\n\n"+
-				"30 levels = 5× density", wrdTarget)
-		case 2: // HOLD
-			phaseExplanation = fmt.Sprintf("░░ HOLD LEVEL %d ░░\n\n"+
+				"(10M× less than NAND!)", wrdTarget, direction, energyPerOp)
+		case 1: // HOLD
+			phaseExplanation = fmt.Sprintf("░░ HOLD L%d ░░\n\n"+
 				"E = 0, P persists!\n\n"+
 				"ZERO POWER NEEDED.\n"+
-				"Data retention: 10+ years\n"+
-				"(demonstrated: 10⁷ sec)\n\n"+
+				"Data retention: 10+ years\n\n"+
 				"This is TRUE non-volatile:\n"+
 				"No refresh like DRAM.\n"+
 				"No charge leakage.\n\n"+
-				"Just ferroelectric\n"+
-				"polarization.", level)
-		case 3: // READ
-			phaseExplanation = fmt.Sprintf("▒▒ READING LEVEL %d ▒▒\n\n"+
+				"30 levels = 4.9 bits/cell", level)
+		case 2: // READ
+			phaseExplanation = fmt.Sprintf("▒▒ READ L%d ▒▒\n\n"+
 				"Sense pulse: |E| < Ec\n"+
 				"State UNCHANGED!\n\n"+
 				"Non-destructive read:\n"+
 				"Unlike NAND, data stays.\n"+
 				"No rewrite needed.\n\n"+
-				"Read energy: ~%.0f fJ\n"+
-				"(1000× less than DRAM)", level, energyPerOp*0.1)
-		case 4: // DISPLAY
+				"Read energy: ~%.0f fJ", level, energyPerOp*0.1)
+		case 3: // DISPLAY
 			status := "✓ SUCCESS"
 			accuracy := ""
 			if level != wrdTarget {
-				status = fmt.Sprintf("△ Level %d (target %d)", level, wrdTarget)
-				accuracy = "\n(Within ±1 is normal)"
+				status = fmt.Sprintf("△ L%d (want %d)", level, wrdTarget)
+				accuracy = "\n(±1 is normal)"
 			} else {
-				accuracy = "\nPerfect analog storage!"
+				accuracy = "\nPerfect!"
 			}
 			phaseExplanation = fmt.Sprintf("%s%s\n\n"+
-				"─── SESSION STATS ───\n"+
-				"Writes: %d\n"+
-				"Success: %.0f%%\n"+
+				"Writes: %d | %.0f%%\n"+
 				"Energy: %.1f pJ total\n\n"+
-				"Each write: ~10 fJ\n"+
-				"Each read: ~1 fJ\n"+
-				"─────────────────\n"+
-				"Next level coming...", status, accuracy,
+				"Next target coming...", status, accuracy,
 				wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000)
 		}
 		// Add Dr. Tour footer

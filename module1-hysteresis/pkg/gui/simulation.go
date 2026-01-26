@@ -41,59 +41,57 @@ func (a *App) simulationLoop() {
 		if a.waveform == WaveformManual {
 			// Manual mode: slider control or click-to-level animation
 			if a.manualAnimating {
-				// Animation in progress - run saturate→settle→hold sequence
-				Emax := a.material.Ec * 2
+				// Correct hysteresis physics:
+				// - To write HIGHER level: apply +E > +Ec (positive field)
+				// - To write LOWER level: apply -E < -Ec (negative field)
 				Ec := a.material.Ec
-				phaseDuration := 0.8 / a.frequency
-				rampRate := 3.0 * Emax * a.frequency
+				Emax := Ec * 2.0
+				phaseDuration := 0.6 / a.frequency
+				rampRate := 4.0 * Emax * a.frequency
 
 				a.manualPhaseTime += dt
 
-				// Calculate target fields same as Write/Read demo
-				targetNormP := (float64(a.manualTargetLevel) - 15.5) / 14.5
-				var saturateE, settleE float64
-				if targetNormP >= 0 {
-					saturateE = Emax
-					settleRatio := 1.0 - (float64(a.manualTargetLevel-16) / 14.0)
-					settleE = -Ec * (0.5 + settleRatio*1.0)
+				currentLevel := a.discreteLevel + 1 // 1-indexed (1-30)
+				targetLevel := a.manualTargetLevel  // 1-indexed (1-30)
+
+				// Calculate write field based on direction
+				// Higher level = more positive P = need positive E
+				// Lower level = more negative P = need negative E
+				var writeE float64
+				if targetLevel > currentLevel {
+					// Going UP: positive field proportional to jump size
+					// Level 30 needs full +Emax, smaller jumps need less
+					ratio := float64(targetLevel-1) / 29.0 // 0 to 1 for levels 1-30
+					writeE = Ec * (1.0 + ratio*1.0)        // Ec to 2*Ec
+				} else if targetLevel < currentLevel {
+					// Going DOWN: negative field proportional to jump size
+					ratio := float64(30-targetLevel) / 29.0 // 0 to 1 for levels 30-1
+					writeE = -Ec * (1.0 + ratio*1.0)        // -Ec to -2*Ec
 				} else {
-					saturateE = -Emax
-					settleRatio := float64(a.manualTargetLevel-1) / 14.0
-					settleE = Ec * (0.5 + settleRatio*1.0)
+					// Already at target
+					writeE = 0
+					a.manualAnimating = false
+					a.manualPhase = 0
 				}
 
 				switch a.manualPhase {
-				case 1: // SATURATE - ramp to saturation
-					diff := saturateE - a.electricField
+				case 1: // WRITE - ramp to write field
+					diff := writeE - a.electricField
 					step := rampRate * dt
 					if math.Abs(diff) < step {
-						a.electricField = saturateE
+						a.electricField = writeE
 					} else if diff > 0 {
 						a.electricField += step
 					} else {
 						a.electricField -= step
 					}
-					if a.manualPhaseTime > phaseDuration*0.5 && math.Abs(a.electricField-saturateE) < 0.01*Emax {
+					// Move to hold phase once we reach target E and spend enough time
+					if a.manualPhaseTime > phaseDuration*0.6 && math.Abs(a.electricField-writeE) < 0.01*Emax {
 						a.manualPhase = 2
 						a.manualPhaseTime = 0
 					}
 
-				case 2: // SETTLE - create minor loop
-					diff := settleE - a.electricField
-					step := rampRate * 0.7 * dt
-					if math.Abs(diff) < step {
-						a.electricField = settleE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-					if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField-settleE) < 0.01*Emax {
-						a.manualPhase = 3
-						a.manualPhaseTime = 0
-					}
-
-				case 3: // HOLD - return to zero
+				case 2: // HOLD - return to zero, polarization persists
 					step := rampRate * dt
 					if math.Abs(a.electricField) < step {
 						a.electricField = 0
@@ -102,10 +100,10 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField += step
 					}
-					if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField) < 0.01*Emax {
+					if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField) < 0.01*Emax {
 						a.manualAnimating = false
 						a.manualPhase = 0
-						a.addLogEntry(fmt.Sprintf("HOLD Level %d ✓", a.discreteLevel+1))
+						a.addLogEntry(fmt.Sprintf("→ Level %d ✓", a.discreteLevel+1))
 					}
 				}
 			}
@@ -128,87 +126,60 @@ func (a *App) simulationLoop() {
 					a.electricField = Emax * (4*p - 4)
 				}
 			case WaveformWriteReadDemo:
-				// IMPROVED Write/Read Demo with correct ferroelectric physics
-				//
-				// Key insight: To write ANY level, you must first SATURATE then SETTLE
-				// 1. SATURATE: Apply large |E| >> Ec to fully switch all hysterons
-				// 2. SETTLE: Apply opposite field to create minor loop and set level
-				// 3. HOLD: E = 0, polarization persists (non-volatile!)
-				// 4. READ: Small sense pulse |E| < Ec, doesn't disturb state
+				// Correct ferroelectric write/read physics:
+				// - To write HIGHER level: apply +E > +Ec (positive field)
+				// - To write LOWER level: apply -E < -Ec (negative field)
+				// - READ: Small pulse |E| < Ec doesn't disturb state
 				//
 				// Phase mapping:
-				// 0 = SATURATE (ramp to ±Emax)
-				// 1 = SETTLE (ramp to settling field to set target level)
-				// 2 = HOLD (return to zero)
-				// 3 = READ (small sense pulse)
-				// 4 = DISPLAY (show result, pick next target)
+				// 0 = WRITE (ramp to write field based on target vs current)
+				// 1 = HOLD (return to zero, polarization persists)
+				// 2 = READ (small sense pulse)
+				// 3 = DISPLAY (show result, pick next target)
 
 				a.wrdPhaseTimer += dt
 				phaseDuration := 1.0 / a.frequency
-				rampRate := 2.5 * Emax * a.frequency
+				rampRate := 3.0 * Emax * a.frequency
 				Ec := a.material.Ec
 
-				// Calculate target normalized polarization (-1 to +1)
-				// Level 1 = -1 (negative saturation)
-				// Level 15-16 = ~0 (intermediate)
-				// Level 30 = +1 (positive saturation)
-				targetNormP := (float64(a.wrdTargetLevel) - 15.5) / 14.5
+				currentLevel := a.discreteLevel + 1 // 1-indexed
+				targetLevel := a.wrdTargetLevel     // 1-indexed
 
-				// Determine saturation direction and settle field
-				// For positive targets: saturate positive, settle negative
-				// For negative targets: saturate negative, settle positive
-				if targetNormP >= 0 {
-					a.wrdSaturateE = Emax // Positive saturation
-					// Settle field: partial negative field to create minor loop
-					// More negative field → lower final level
-					// The relationship is approximately: final P ≈ Ps * tanh((E_settle + Ec) / delta)
-					// For level 30: settle at ~0 (stay at positive saturation)
-					// For level 16: settle at ~ -Ec (intermediate)
-					settleRatio := 1.0 - (float64(a.wrdTargetLevel-16) / 14.0) // 0 to 1 for levels 16-30
-					a.wrdSettleE = -Ec * (0.5 + settleRatio*1.0)              // Range: -0.5*Ec to -1.5*Ec
+				// Calculate write field based on direction
+				// Higher level = more positive P = need positive E
+				// Lower level = more negative P = need negative E
+				var writeE float64
+				if targetLevel > currentLevel {
+					// Going UP: positive field
+					ratio := float64(targetLevel-1) / 29.0
+					writeE = Ec * (1.0 + ratio*1.0) // Ec to 2*Ec
+				} else if targetLevel < currentLevel {
+					// Going DOWN: negative field
+					ratio := float64(30-targetLevel) / 29.0
+					writeE = -Ec * (1.0 + ratio*1.0) // -Ec to -2*Ec
 				} else {
-					a.wrdSaturateE = -Emax // Negative saturation
-					// For negative targets, settle with positive field
-					// For level 1: settle at ~0 (stay at negative saturation)
-					// For level 15: settle at ~ +Ec (intermediate)
-					settleRatio := float64(a.wrdTargetLevel-1) / 14.0 // 0 to 1 for levels 1-15
-					a.wrdSettleE = Ec * (0.5 + settleRatio*1.0)       // Range: 0.5*Ec to 1.5*Ec
+					// Already at target - still apply small field to demonstrate
+					writeE = Ec * 0.5
 				}
 
 				switch a.wrdPhase {
-				case 0: // SATURATE phase - ramp to saturation voltage (±Emax)
-					diff := a.wrdSaturateE - a.electricField
+				case 0: // WRITE phase - apply field to reach target level
+					diff := writeE - a.electricField
 					step := rampRate * dt
 					if math.Abs(diff) < step {
-						a.electricField = a.wrdSaturateE
+						a.electricField = writeE
 					} else if diff > 0 {
 						a.electricField += step
 					} else {
 						a.electricField -= step
 					}
-					// Transition when we've reached saturation and held briefly
-					if a.wrdPhaseTimer > phaseDuration*0.6 && math.Abs(a.electricField-a.wrdSaturateE) < 0.01*Emax {
+					// Transition when we've applied write field long enough
+					if a.wrdPhaseTimer > phaseDuration*0.6 && math.Abs(a.electricField-writeE) < 0.01*Emax {
 						a.wrdPhase = 1
 						a.wrdPhaseTimer = 0
 					}
 
-				case 1: // SETTLE phase - ramp to settling field (creates minor loop)
-					diff := a.wrdSettleE - a.electricField
-					step := rampRate * 0.7 * dt // Slower for precision
-					if math.Abs(diff) < step {
-						a.electricField = a.wrdSettleE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-					// Transition when we've reached settle field
-					if a.wrdPhaseTimer > phaseDuration*0.5 && math.Abs(a.electricField-a.wrdSettleE) < 0.01*Emax {
-						a.wrdPhase = 2
-						a.wrdPhaseTimer = 0
-					}
-
-				case 2: // HOLD phase - return to zero (polarization persists!)
+				case 1: // HOLD phase - return to zero (polarization persists!)
 					step := rampRate * dt
 					if math.Abs(a.electricField) < step {
 						a.electricField = 0
@@ -219,15 +190,12 @@ func (a *App) simulationLoop() {
 					}
 					// Transition when at zero
 					if a.wrdPhaseTimer > phaseDuration*0.5 && math.Abs(a.electricField) < 0.01*Emax {
-						a.wrdPhase = 3
+						a.wrdPhase = 2
 						a.wrdPhaseTimer = 0
 					}
 
-				case 3: // READ phase - small sense pulse below Ec
+				case 2: // READ phase - small sense pulse below Ec
 					readE := Ec * 0.3 // Well below Ec - won't switch
-					if a.wrdSaturateE < 0 {
-						readE = -readE // Match polarity of written state
-					}
 					step := rampRate * 0.4 * dt
 					diff := readE - a.electricField
 					if math.Abs(diff) < step {
@@ -240,7 +208,7 @@ func (a *App) simulationLoop() {
 					// Capture read level and transition
 					if a.wrdPhaseTimer > phaseDuration*0.4 {
 						a.wrdReadLevel = a.discreteLevel + 1
-						a.wrdPhase = 4
+						a.wrdPhase = 3
 						a.wrdPhaseTimer = 0
 
 						// Track Dr. Tour demo metrics
@@ -262,8 +230,8 @@ func (a *App) simulationLoop() {
 								ReadLevel:   a.wrdReadLevel,
 								Success:     abs(a.wrdReadLevel-a.wrdTargetLevel) <= 1,
 								Phases: []WriteReadPhase{
-									{Phase: "SATURATE", EFieldPeak: a.wrdSaturateE / 1e8},
-									{Phase: "SETTLE", EFieldEnd: a.wrdSettleE / 1e8},
+									{Phase: "WRITE", EFieldPeak: writeE / 1e8},
+									{Phase: "HOLD", EFieldEnd: 0},
 									{Phase: "READ", EFieldPeak: readE / 1e8, LevelEnd: a.wrdReadLevel},
 								},
 							}
@@ -281,7 +249,7 @@ func (a *App) simulationLoop() {
 						}
 					}
 
-				case 4: // DISPLAY phase - return to zero, show result
+				case 3: // DISPLAY phase - return to zero, show result
 					step := rampRate * 0.4 * dt
 					if math.Abs(a.electricField) < step {
 						a.electricField = 0
@@ -355,7 +323,7 @@ func (a *App) simulationLoop() {
 
 		// Calculate energy: integral of E·dP ≈ |E| * |ΔP|
 		// During write/read cycles, accumulate energy for the cycle
-		if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 3 {
+		if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 2 {
 			deltaP := a.polarization - prevP
 			// Energy per unit volume: E·dP in J/m³
 			// Use actual cell dimensions from material
@@ -447,26 +415,26 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 			switch waveform {
 			case WaveformWriteReadDemo:
 				var phaseStr string
-				// Log phase transitions (now 5 phases: SATURATE, SETTLE, HOLD, READ, DISPLAY)
+				// Log phase transitions (4 phases: WRITE, HOLD, READ, DISPLAY)
 				if wrdPhase != lastPhase {
 					a.mu.Lock()
 					a.lastLogPhase = wrdPhase
 					switch wrdPhase {
 					case 0:
-						// SATURATE: Show domain saturation with energy
-						a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | E=2Ec | ~10fJ", wrdTarget))
+						// WRITE: Apply field to reach target level
+						direction := "+"
+						if wrdTarget < level+1 {
+							direction = "-"
+						}
+						a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
 					case 1:
-						// SETTLE: Show minor loop formation
-						polarization := float64(wrdTarget-15) / 15.0 * 100 // % of Pr
-						a.addLogEntry(fmt.Sprintf("██ SETTLE  | P→%.0f%% Pr", polarization))
-					case 2:
-						// HOLD: Emphasize zero-power retention
+						// HOLD: Return to zero, polarization persists
 						a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", level+1))
-					case 3:
-						// READ: Show non-destructive sense
+					case 2:
+						// READ: Non-destructive sense
 						a.addLogEntry("▒▒ READ    | E<Ec | ~1fJ")
-					case 4:
-						// RESULT: Show success/tolerance and running stats
+					case 3:
+						// DISPLAY: Show result
 						status := "✓ MATCH"
 						if wrdRead != wrdTarget {
 							diff := abs(wrdRead - wrdTarget)
@@ -491,15 +459,16 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 
 				switch wrdPhase {
 				case 0:
-					phaseStr = fmt.Sprintf("▓ WRITE L%d | E=2×Ec | ~10fJ switching", wrdTarget)
+					direction := "+"
+					if wrdTarget < level+1 {
+						direction = "-"
+					}
+					phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
 				case 1:
-					polarization := float64(wrdTarget-15) / 15.0 * 100
-					phaseStr = fmt.Sprintf("█ SETTLE L%d | P→%.0f%% of Pr", wrdTarget, polarization)
-				case 2:
 					phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", level+1)
-				case 3:
+				case 2:
 					phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", level+1)
-				case 4:
+				case 3:
 					successRate := 0.0
 					if writeCount > 0 {
 						successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100
@@ -523,17 +492,15 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 					var phaseStr string
 					switch manPhase {
 					case 1:
-						phaseStr = fmt.Sprintf("SATURATING → L%d...", manTarget)
+						phaseStr = fmt.Sprintf("WRITING → L%d...", manTarget)
 					case 2:
-						phaseStr = fmt.Sprintf("SETTLING → L%d...", manTarget)
-					case 3:
 						phaseStr = fmt.Sprintf("HOLDING L%d...", level+1)
 					default:
 						phaseStr = fmt.Sprintf("Current: L%d", level+1)
 					}
-					a.statusLabel.SetText(fmt.Sprintf("🎯 Manual (animating) | %s", phaseStr))
+					a.statusLabel.SetText(fmt.Sprintf("WRITE L%d | %s", manTarget, phaseStr))
 				} else {
-					a.statusLabel.SetText(fmt.Sprintf("✋ Manual | L%d | Click level bar or use slider", level+1))
+					a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", level+1))
 				}
 			default:
 				frac := a.preisach.GetSwitchedFraction() * 100
@@ -567,8 +534,8 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		a.mu.RUnlock()
 
 		if currentWaveform == WaveformWriteReadDemo {
-			// Show target during phases 0-3 (SATURATE through READ)
-			highlight := currentWrdPhase >= 0 && currentWrdPhase <= 3
+			// Show target during phases 0-2 (WRITE/HOLD/READ)
+			highlight := currentWrdPhase >= 0 && currentWrdPhase <= 2
 			a.levelIndicator.SetTargetLevel(currentWrdTarget, highlight)
 		} else if currentWaveform == WaveformManual && manualAnim {
 			// Show target during Manual mode click animation

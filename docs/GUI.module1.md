@@ -6,12 +6,12 @@ Package: multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui
 ---
 
 Bugs:
-  - [ ] BUG-001: UI updates from goroutine without fyne.Do() wrapper in saveDebugLog (gui.go:279)
-  - [ ] BUG-002: Potential nil pointer access in initDebugLog when material not set (gui.go:235-238)
-  - [ ] BUG-003: Missing mutex protection when accessing a.material in createUI (gui.go:331)
-  - [ ] BUG-004: Animation loop refresh rate may cause drift without vsync sync (simulation.go:14)
-  - [ ] BUG-005: Slider value setting outside mutex lock in keyboard.go (keyboard.go:22, 35)
-  - [ ] BUG-006: LevelIndicator time-based pulse may not refresh properly (level.go:260)
+  - [ ] BUG-M1-001: UI updates from goroutine without fyne.Do() wrapper in saveDebugLog (gui.go:279) - Low risk: only file I/O
+  - [x] BUG-M1-002: Potential nil pointer access in initDebugLog when material not set - FIXED: has nil check
+  - [ ] BUG-M1-003: Missing mutex protection when accessing a.material in createUI (gui.go:331) - Low risk: init-time only
+  - [ ] BUG-M1-004: Animation loop refresh rate may cause drift without vsync sync (simulation.go:14)
+  - [x] BUG-M1-005: Slider value setting inside mutex lock in keyboard.go - FIXED: removed unnecessary mutex
+  - [x] BUG-M1-006: LevelIndicator time-based pulse may not refresh properly - OK: simulation refreshes at 60 FPS
 
 Screens:
   - name: MainWindow
@@ -158,7 +158,7 @@ Screens:
                       - SetTargetLevel(level, highlight)
                       - Tapped(event) -> OnLevelClicked callback
                       - Refresh
-                    bugs: [BUG-006]
+                    bugs: [BUG-M1-006]
 
               - name: rightColumn
                 type: container.VBox
@@ -202,7 +202,7 @@ Screens:
                         state: [range=-2 to 2, step=0.01, value=0]
                         bindings:
                           - OnChanged -> set a.electricField (only in Manual mode)
-                        bugs: [BUG-005]
+                        bugs: [BUG-M1-005]
 
                       - name: freqSlider
                         type: widget.Slider
@@ -302,7 +302,7 @@ DataFlow:
     updates:
       - a.manualTargetLevel
       - a.manualAnimating = true
-      - a.manualPhase = 1 (start saturate)
+      - a.manualPhase = 1 (start WRITE phase)
       - a.manualPhaseTime = 0
       - Add log entry
     file: level.go:67-112, gui.go:338-349
@@ -318,28 +318,28 @@ DataFlow:
       - R: reset simulation
       - /: show keyboard help dialog
     file: keyboard.go:11-175
-    bugs: [BUG-005]
+    bugs: [BUG-M1-005]
 
   - trigger: Write/Read Demo phase progression
-    source: simulation.go:131-340
+    source: simulation.go:128-310
     updates:
-      - wrdPhase state machine (0-4)
+      - wrdPhase state machine (0=WRITE, 1=HOLD, 2=READ, 3=DISPLAY)
       - wrdPhaseTimer accumulation
-      - wrdSaturateE, wrdSettleE calculation
-      - a.electricField ramping
+      - writeE calculation based on target vs current level
+      - a.electricField ramping (+E for higher, -E for lower)
       - wrdReadLevel capture
       - wrdTotalWrites, wrdSuccessWrites
       - wrdTotalEnergyfJ accumulation
       - wrdDebugLog.Cycles append
       - saveDebugLog every 5 cycles
       - logEntries with phase transitions
-    file: simulation.go:131-340
-    bugs: [BUG-001]
+    file: simulation.go:128-310
+    bugs: [BUG-M1-001]
 
 BugDetails:
-  - id: BUG-001
+  - id: BUG-M1-001
     component: saveDebugLog
-    severity: high
+    severity: High
     description: Debug log save spawns goroutine without fyne.Do wrapper for potential UI updates
     expected: All UI-related operations in goroutines must use fyne.Do
     actual: saveDebugLog called from simulationLoop via goroutine (line 279)
@@ -351,7 +351,7 @@ BugDetails:
 
   - id: BUG-002
     component: initDebugLog
-    severity: medium
+    severity: Medium
     description: initDebugLog accesses a.material without checking for nil
     expected: Defensive nil check before accessing material fields
     actual: Comment says "Defensive" but only checks after access for fallback values
@@ -366,7 +366,7 @@ BugDetails:
 
   - id: BUG-003
     component: createUI
-    severity: medium
+    severity: Medium
     description: Plot initialization accesses a.material.Ec without mutex protection
     expected: All shared state access should be mutex-protected
     actual: Line 331 reads a.material fields outside any lock
@@ -381,7 +381,7 @@ BugDetails:
 
   - id: BUG-004
     component: simulationLoop
-    severity: low
+    severity: Low
     description: 60 FPS ticker may drift over time without vsync sync
     expected: Frame-perfect 60Hz timing
     actual: 16ms ticker accumulates error, simTime wrap at 1000s may cause glitches
@@ -391,9 +391,9 @@ BugDetails:
       Use adaptive dt calculation or sync to display refresh rate.
       Remove simTime modulo wrap (breaks continuity) or use proper phase wrapping.
 
-  - id: BUG-005
+  - id: BUG-M1-005
     component: Keyboard E/D field control
-    severity: medium
+    severity: Medium
     description: eFieldSlider.SetValue called outside mutex lock
     expected: Read current slider value with lock, then set new value
     actual: Lines 22 and 35 set slider value after releasing lock
@@ -407,9 +407,9 @@ BugDetails:
       a.mu.Unlock()
       a.eFieldSlider.SetValue(newValue)  // OK outside lock (UI setter)
 
-  - id: BUG-006
+  - id: BUG-M1-006
     component: LevelIndicator pulsing effect
-    severity: low
+    severity: Low
     description: Time-based pulse effect may not refresh without manual Refresh call
     expected: Smooth pulsing animation at target level
     actual: Pulse alpha calculated from time.Now() but no auto-refresh mechanism
@@ -424,7 +424,9 @@ Notes:
   - All UI updates wrapped in fyne.Do for thread safety
   - Mutex (a.mu) protects all simulation state
   - 4 waveform modes: Manual, Sine, Triangle, Write/Read Demo
-  - Write/Read Demo uses 5-phase state machine (SATURATE, SETTLE, HOLD, READ, DISPLAY)
+  - Write/Read Demo uses 4-phase state machine (WRITE, HOLD, READ, DISPLAY)
+  - Manual mode uses 2-phase animation (WRITE, HOLD)
+  - Correct physics: +E for higher level, -E for lower level
   - Manual mode supports click-to-level animation (gui.go:338-349)
   - Energy calculation via E·dP integration for Write/Read cycles
   - Debug logging to JSON (logs/hysteresis-TIMESTAMP.json)

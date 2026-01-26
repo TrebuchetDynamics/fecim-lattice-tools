@@ -185,6 +185,10 @@ type CircuitsApp struct {
 	opsWriteButtons     *fyne.Container
 	opsReadButtons      *fyne.Container
 	opsComputeButtons   *fyne.Container
+
+	// Animation state
+	animationStep    int  // 0=none, 1=DAC, 2=Array, 3=ADC
+	animationActive  bool
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.

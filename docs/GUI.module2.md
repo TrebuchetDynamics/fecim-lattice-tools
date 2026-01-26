@@ -6,12 +6,12 @@ Package: module2-crossbar/pkg/gui
 Description: "Interactive visualization of FeCIM crossbar array matrix-vector multiplication with non-ideality analysis"
 ---
 
-# Bugs Summary
-- [ ] BUG-1: Potential race condition on lastInput/lastOutput without mutex protection in runMVMAnimated
-- [ ] BUG-2: Missing fyne.Do wrapper in app.go:204 updateConductanceDisplay call
-- [ ] BUG-3: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
-- [ ] BUG-4: Educational content wrapping disabled but can still trigger MinSize changes
-- [ ] BUG-5: Auto-demo context cancellation may leak if Stop() not called
+Bugs:
+  - [ ] BUG-M2-001: Potential race condition on lastInput/lastOutput without mutex protection in runMVMAnimated
+  - [ ] BUG-M2-002: Missing fyne.Do wrapper in updateConductanceDisplay call
+  - [ ] BUG-M2-003: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
+  - [ ] BUG-M2-004: Educational content wrapping disabled but can still trigger MinSize changes
+  - [ ] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called
 
 # Screens
 
@@ -417,7 +417,7 @@ Layout:
                     Bindings: UpdateValues() called by updateEnhancedWidgets (app_enhanced.go:596)
                     Bug: None
 
-# DataFlow
+DataFlow:
 
 ## MVM Execution Flow
 Trigger: User clicks "Run MVM" button
@@ -544,28 +544,27 @@ Updates:
 File: heatmap.go:87-136
 Bug: None
 
-# BugDetails
-
-BUG-1:
-  component: runMVMAnimated
-  severity: medium
-  description: "lastInput write without mutex protection"
-  expected: "ca.stateMu.Lock() before writing ca.lastInput"
-  actual: "Direct write at animation.go:31-32 without lock"
-  file: module2-crossbar/pkg/gui/animation.go:31-32
+BugDetails:
+  - id: BUG-M2-001
+    component: runMVMAnimated
+    severity: Medium
+    description: "lastInput write without mutex protection"
+    expected: "ca.stateMu.Lock() before writing ca.lastInput"
+    actual: "Direct write at animation.go:31-32 without lock"
+    file: animation.go:31-32
   suggested_fix: |
     // Before line 31:
     ca.stateMu.Lock()
     ca.lastInput = input
     ca.stateMu.Unlock()
 
-BUG-2:
-  component: updateConductanceDisplay
-  severity: low
-  description: "Missing fyne.Do wrapper for UI update from potentially background context"
-  expected: "fyne.Do(func() { ca.conductanceHeatmap.SetData(matrix) })"
-  actual: "Direct call ca.conductanceHeatmap.SetData(matrix) at app.go:621"
-  file: module2-crossbar/pkg/gui/app.go:621
+  - id: BUG-M2-002
+    component: updateConductanceDisplay
+    severity: Low
+    description: "Missing fyne.Do wrapper for UI update from potentially background context"
+    expected: "fyne.Do(func() { ca.conductanceHeatmap.SetData(matrix) })"
+    actual: "Direct call ca.conductanceHeatmap.SetData(matrix) at app.go:621"
+    file: app.go:621
   suggested_fix: |
     func (ca *CrossbarApp) updateConductanceDisplay() {
         matrix := ca.array.GetConductanceMatrix()
@@ -574,22 +573,22 @@ BUG-2:
         })
     }
 
-BUG-3:
-  component: CrossbarHeatmap.rateLimitedRefresh
-  severity: low
-  description: "Heatmap refresh during startup can trigger layout oscillation"
-  expected: "Skip refreshes during startup stabilization period"
-  actual: "Refresh calls check IsStartupStabilizing() but some callers bypass it"
-  file: module2-crossbar/pkg/gui/heatmap.go:92
-  suggested_fix: "Already partially mitigated - ensure all SetData callers respect startup flag"
+  - id: BUG-M2-003
+    component: CrossbarHeatmap.rateLimitedRefresh
+    severity: Low
+    description: "Heatmap refresh during startup can trigger layout oscillation"
+    expected: "Skip refreshes during startup stabilization period"
+    actual: "Refresh calls check IsStartupStabilizing() but some callers bypass it"
+    file: heatmap.go:92
+    suggested_fix: "Already partially mitigated - ensure all SetData callers respect startup flag"
 
-BUG-4:
-  component: eduContentLabel
-  severity: low
-  description: "Educational content label wrapping disabled but content changes can still trigger layout"
-  expected: "Fixed-size container or maximum content length enforcement"
-  actual: "Wrapping=off at app_enhanced.go:228 but long content can still resize"
-  file: module2-crossbar/pkg/gui/app_enhanced.go:228
+  - id: BUG-M2-004
+    component: eduContentLabel
+    severity: Low
+    description: "Educational content label wrapping disabled but content changes can still trigger layout"
+    expected: "Fixed-size container or maximum content length enforcement"
+    actual: "Wrapping=off at app_enhanced.go:228 but long content can still resize"
+    file: app_enhanced.go:228
   suggested_fix: |
     // Wrap in fixed-size container:
     leftPanelContent := container.NewVBox(
@@ -599,13 +598,13 @@ BUG-4:
         ...
     )
 
-BUG-5:
-  component: Auto Demo Loop
-  severity: medium
-  description: "Auto demo context cancellation may leak if Stop() not called"
-  expected: "Cleanup in window close handler or destructor"
-  actual: "Relies on explicit Stop() call from embedded interface"
-  file: module2-crossbar/pkg/gui/animation.go:172-207
+  - id: BUG-M2-005
+    component: Auto Demo Loop
+    severity: Medium
+    description: "Auto demo context cancellation may leak if Stop() not called"
+    expected: "Cleanup in window close handler or destructor"
+    actual: "Relies on explicit Stop() call from embedded interface"
+    file: animation.go:172-207
   suggested_fix: |
     // Add cleanup to window lifecycle:
     ca.window.SetOnClosed(func() {

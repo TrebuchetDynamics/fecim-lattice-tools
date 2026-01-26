@@ -13,12 +13,12 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 	case fyne.KeyE:
 		// Increase E-field by 0.1*Ec (Manual mode only)
 		if a.waveform == WaveformManual {
-			a.mu.Lock()
-			newValue := a.eFieldSlider.Value + 0.1
+			// Read slider value (UI access safe from main thread)
+			currentValue := a.eFieldSlider.Value
+			newValue := currentValue + 0.1
 			if newValue > 2.0 {
 				newValue = 2.0
 			}
-			a.mu.Unlock()
 			a.eFieldSlider.SetValue(newValue)
 			log.Info("E-field increased to %.2f×Ec", newValue)
 		}
@@ -26,12 +26,12 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 	case fyne.KeyD:
 		// Decrease E-field by 0.1*Ec (Manual mode only)
 		if a.waveform == WaveformManual {
-			a.mu.Lock()
-			newValue := a.eFieldSlider.Value - 0.1
+			// Read slider value (UI access safe from main thread)
+			currentValue := a.eFieldSlider.Value
+			newValue := currentValue - 0.1
 			if newValue < -2.0 {
 				newValue = -2.0
 			}
-			a.mu.Unlock()
 			a.eFieldSlider.SetValue(newValue)
 			log.Info("E-field decreased to %.2f×Ec", newValue)
 		}

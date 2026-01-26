@@ -251,6 +251,7 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	selectedCol := ca.selectedCol
 	levels := ca.quantLevels
 	mode := ca.currentMode
+	animStep := ca.animationStep
 	ca.mu.RUnlock()
 
 	// Background
@@ -363,6 +364,17 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 				drawRect(img, x0, y0, borderWidth, cellSize, borderColor)
 				drawRect(img, x0+cellSize-borderWidth, y0, borderWidth, cellSize, borderColor)
 			}
+
+			// Highlight cells during array animation (Step 2)
+			if mode == ModeCompute && animStep == 2 {
+				// Add a bright cyan overlay/border to show computation in progress
+				overlayColor := color.RGBA{0, 255, 255, 100} // Semi-transparent cyan
+				// Draw brighter border around each cell
+				drawRect(img, x0, y0, cellSize, 2, overlayColor)
+				drawRect(img, x0, y0+cellSize-2, cellSize, 2, overlayColor)
+				drawRect(img, x0, y0, 2, cellSize, overlayColor)
+				drawRect(img, x0+cellSize-2, y0, 2, cellSize, overlayColor)
+			}
 		}
 	}
 
@@ -440,6 +452,9 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		dacBoxWidth := cellSize - 4
 		dacY := offsetY - dacBoxHeight - 10
 		dacColor := color.RGBA{100, 80, 180, 255} // Purple for DACs
+		if animStep == 1 {
+			dacColor = color.RGBA{255, 255, 100, 255} // Bright yellow when animating DAC step
+		}
 
 		// Define input label color for column labels (light blue for inputs)
 		inputLabelColor := color.RGBA{100, 150, 255, 255}
@@ -482,6 +497,9 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		adcBoxHeight := cellSize - 4
 		adcX := offsetX + gridW + 8
 		adcColor := color.RGBA{80, 150, 100, 255} // Green for ADCs
+		if animStep == 3 {
+			adcColor = color.RGBA{100, 255, 150, 255} // Bright green when animating ADC step
+		}
 
 		// Define output label color for row labels (light orange for outputs)
 		outputLabelColor := color.RGBA{255, 180, 100, 255}
@@ -1215,7 +1233,7 @@ func (ca *CircuitsApp) createComputeModePanel() {
 		randomBitsBtn,
 	)
 
-	physicsNote := widget.NewLabel("0-1V READ-safe (below Ec)")
+	physicsNote := widget.NewLabel("0.3-0.5V COMPUTE-safe (well below Vc)")
 	physicsNote.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Populate the input row container that will appear above the array
@@ -1661,23 +1679,54 @@ func (ca *CircuitsApp) updateOpsComputeMath() {
 	}
 }
 
-// onOpsAnimate animates the compute process step by step
+// onOpsAnimate animates the compute process step by step with visual feedback
 func (ca *CircuitsApp) onOpsAnimate() {
+	ca.mu.Lock()
+	ca.animationActive = true
+	ca.mu.Unlock()
+
 	ca.operationsStatusLabel.SetText("Animating...")
 
 	go func() {
-		time.Sleep(400 * time.Millisecond)
+		// Step 1: DAC highlight
+		ca.mu.Lock()
+		ca.animationStep = 1
+		ca.mu.Unlock()
+		ca.refreshSharedArray()
 		fyne.Do(func() {
 			ca.operationsStatusLabel.SetText("Step 1: DAC conversion (5ns)")
 		})
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(600 * time.Millisecond)
+
+		// Step 2: Array highlight
+		ca.mu.Lock()
+		ca.animationStep = 2
+		ca.mu.Unlock()
+		ca.refreshSharedArray()
 		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText("Step 2: Array settle (5ns)")
+			ca.operationsStatusLabel.SetText("Step 2: Array MVM (5ns)")
 		})
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(600 * time.Millisecond)
+
+		// Step 3: ADC highlight
+		ca.mu.Lock()
+		ca.animationStep = 3
+		ca.mu.Unlock()
+		ca.refreshSharedArray()
 		fyne.Do(func() {
 			ca.operationsStatusLabel.SetText("Step 3: ADC conversion (10ns)")
-			ca.onOpsCompute()
+		})
+		time.Sleep(600 * time.Millisecond)
+
+		// Complete
+		ca.mu.Lock()
+		ca.animationStep = 0
+		ca.animationActive = false
+		ca.mu.Unlock()
+		ca.computeAndUpdateAll()
+		ca.refreshSharedArray()
+		fyne.Do(func() {
+			ca.operationsStatusLabel.SetText("Compute complete in ~20ns")
 		})
 	}()
 }
