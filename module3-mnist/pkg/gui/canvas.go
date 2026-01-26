@@ -143,9 +143,9 @@ func (dc *DigitCanvas) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // MinSize returns the minimum size for the digit canvas.
-// Enlarged to 280x280 for better drawing experience (Dr. Tour recommendation).
+// Enlarged to 350x350 for better drawing experience (increased vertical space).
 func (dc *DigitCanvas) MinSize() fyne.Size {
-	return fyne.NewSize(280, 280) // Larger canvas for easier digit drawing
+	return fyne.NewSize(350, 350) // Larger canvas for easier digit drawing
 }
 
 // generateImage creates the canvas image.

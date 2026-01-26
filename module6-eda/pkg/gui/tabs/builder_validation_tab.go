@@ -108,11 +108,13 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	})
 	archSelect.SetSelected(cfg.Architecture)
 
-	// Statistics labels
+	// Statistics labels - now with more metrics
 	totalLabel := widget.NewLabel(fmt.Sprintf("Total Cells: %d", cfg.Rows*cfg.Cols))
 	areaLabel := widget.NewLabel(fmt.Sprintf("Array Area: %.2f µm²", float64(cfg.Rows*cfg.Cols)*cfg.CellWidth*cfg.CellHeight))
 	wlLengthLabel := widget.NewLabel(fmt.Sprintf("WL Length: %.2f µm", float64(cfg.Cols)*cfg.CellWidth))
 	blLengthLabel := widget.NewLabel(fmt.Sprintf("BL Length: %.2f µm", float64(cfg.Rows)*cfg.CellHeight))
+	densityLabel := widget.NewLabel(fmt.Sprintf("Density: %.2f cells/µm²", 0.0))
+	utilizationLabel := widget.NewLabel(fmt.Sprintf("Utilization: %.1f%%", 0.0))
 
 	// Update statistics function
 	updateStats := func() {
@@ -132,10 +134,27 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		wlLength := float64(cols) * cfg.CellWidth
 		blLength := float64(rows) * cfg.CellHeight
 
+		// Calculate density (cells per µm²)
+		arrayWidth := wlLength
+		arrayHeight := blLength
+		arrayTotalArea := arrayWidth * arrayHeight
+		density := 0.0
+		if arrayTotalArea > 0 {
+			density = float64(total) / arrayTotalArea
+		}
+
+		// Calculate utilization (cell area / total area)
+		utilization := 0.0
+		if arrayTotalArea > 0 {
+			utilization = (area / arrayTotalArea) * 100.0
+		}
+
 		totalLabel.SetText(fmt.Sprintf("Total Cells: %d", total))
 		areaLabel.SetText(fmt.Sprintf("Array Area: %.2f µm²", area))
 		wlLengthLabel.SetText(fmt.Sprintf("WL Length: %.2f µm", wlLength))
 		blLengthLabel.SetText(fmt.Sprintf("BL Length: %.2f µm", blLength))
+		densityLabel.SetText(fmt.Sprintf("Density: %.4f cells/µm²", density))
+		utilizationLabel.SetText(fmt.Sprintf("Utilization: %.1f%%", utilization))
 		cellAreaLabel.SetText(fmt.Sprintf("Cell Area: %.4f µm²", cellW*cellH))
 	}
 
@@ -148,11 +167,13 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// ========== PREVIEW SECTION ==========
 	verilogPreview := widget.NewMultiLineEntry()
 	verilogPreview.Wrapping = fyne.TextWrapOff
+	verilogPreview.SetText("// Example Verilog Array Structure\n// After clicking 'Generate All', this will show:\n//   - Module definition with WL/BL ports\n//   - Cell instantiation grid\n//   - Power/ground connections\n\nmodule fecim_crossbar_NxM (\n    input [N-1:0] WL,\n    output [M-1:0] BL,\n    input VPWR, VGND\n);\n    // ... array instances ...\nendmodule")
 
 	defPreview := widget.NewMultiLineEntry()
 	defPreview.Wrapping = fyne.TextWrapOff
+	defPreview.SetText("# Example DEF Placement Structure\n# After clicking 'Generate All', this will show:\n#   - Design header with units and die area\n#   - Component placement coordinates\n#   - Pin definitions\n\nVERSION 5.8 ;\nDESIGN fecim_crossbar_NxM ;\nUNITS DISTANCE MICRONS 1000 ;\nDIEAREA ( 0 0 ) ( ... ) ;\nCOMPONENTS ... ;\n  - cell_0_0 fecim_bitcell + FIXED ( ... ) N ;\nEND COMPONENTS")
 
-	layoutViz := widget.NewLabel("Generate to see layout")
+	layoutViz := widget.NewLabel("ASCII Layout Visualization\n\nAfter clicking 'Generate All', this will show a text-based\nrepresentation of your crossbar array with WL/BL connections.\n\nExample:\nWL[0] [=][=][=]\n      | | |\nWL[1] [=][=][=]\n      BL0 BL1 BL2")
 	layoutViz.TextStyle.Monospace = true
 
 	verilogStatsLabel := widget.NewLabel("Verilog: Pending")
@@ -166,12 +187,17 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	validationSummary.TextStyle.Bold = true
 	logOutput := widget.NewMultiLineEntry()
 	logOutput.Wrapping = fyne.TextWrapWord
+	logOutput.TextStyle.Monospace = true
 
 	addLog := func(msg string) {
 		fyne.Do(func() {
 			logOutput.SetText(logOutput.Text + msg + "\n")
 		})
 	}
+
+	clearLogBtn := widget.NewButton("Clear Log", func() {
+		logOutput.SetText("")
+	})
 
 	// ========== OPENLANE STATUS SECTION ==========
 	dockerStatus := widget.NewLabel("Checking...")
@@ -575,12 +601,17 @@ Date: %s
 		widget.NewFormItem("Architecture", archSelect),
 	)
 
+	// Enhanced stats box with visual prominence
+	statsTitle := widget.NewLabelWithStyle("Statistics", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	statsBox := container.NewVBox(
-		widget.NewLabelWithStyle("Statistics", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		statsTitle,
+		widget.NewSeparator(),
 		totalLabel,
 		areaLabel,
 		wlLengthLabel,
 		blLengthLabel,
+		densityLabel,
+		utilizationLabel,
 	)
 
 	arrayPanel := container.NewVBox(
@@ -630,26 +661,51 @@ Date: %s
 		),
 	)
 
-	// OpenLane status panel
+	// Compact OpenLane status panel with helpful messages
+	openLaneHelpText := widget.NewLabel("Optional: Enable placement validation if OpenLane/Docker is installed")
+	openLaneHelpText.Wrapping = fyne.TextWrapWord
+
 	openLanePanel := container.NewVBox(
-		widget.NewLabelWithStyle("OpenLane Status", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("OpenLane (Optional)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		openLaneHelpText,
 		container.NewHBox(widget.NewLabel("Docker:"), dockerStatus),
 		container.NewHBox(widget.NewLabel("PDK:"), pdkStatus),
 		pullImageBtn,
 		enablePlacementCheck,
 	)
 
-	// Bottom section with validation
+	// Update pull button visibility based on Docker status
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		fyne.Do(func() {
+			if strings.Contains(dockerStatus.Text, "not available") {
+				pullImageBtn.Hide()
+			}
+		})
+	}()
+
+	// Bottom section with improved layout - more space for validation, compact OpenLane
+	validationResultsPanel := container.NewVBox(
+		widget.NewLabelWithStyle("Validation Results", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		validationRow,
+	)
+
+	validationSplit := container.NewHSplit(
+		validationResultsPanel,
+		openLanePanel,
+	)
+	validationSplit.SetOffset(0.65) // Give 65% to validation results, 35% to OpenLane
+
+	logSection := container.NewBorder(
+		container.NewHBox(widget.NewLabelWithStyle("Validation Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), clearLogBtn),
+		nil, nil, nil,
+		container.NewScroll(logOutput),
+	)
+
 	validationSection := container.NewVBox(
 		widget.NewSeparator(),
-		container.NewHSplit(
-			container.NewVBox(
-				widget.NewLabelWithStyle("Validation Results", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-				validationRow,
-			),
-			openLanePanel,
-		),
-		container.NewScroll(logOutput),
+		validationSplit,
+		logSection,
 	)
 
 	// Status bar

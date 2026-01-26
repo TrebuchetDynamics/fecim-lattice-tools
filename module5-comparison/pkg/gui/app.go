@@ -61,7 +61,6 @@ type ComparisonApp struct {
 
 	// GUI components - Hero visualizations
 	energyRace        *AnimatedEnergyRace
-	memoryWall        *MemoryWallAnimation
 	marketChart       *MarketOpportunityChart
 	competitiveMatrix *CompetitiveMatrix
 	phasedStrategy    *PhasedStrategyDiagram
@@ -71,17 +70,10 @@ type ComparisonApp struct {
 	// GUI components - Calculator
 	calculator *DataCenterCalculator
 
-	// GUI components - Educational
-	educationalPanel *ComparisonEducationalPanel
-	operationLog     *ComparisonOperationLog
-	modeIndicator    *ComparisonModeIndicator
-
 	// Controls
 	workloadSelect   *widget.Select
 	inferencesSlider *widget.Slider
 	inferencesLabel  *widget.Label
-	modeSelect       *widget.Select
-	pauseBtn         *widget.Button
 
 	// Status
 	statusLabel     *widget.Label
@@ -135,7 +127,7 @@ func NewComparisonApp() *ComparisonApp {
 // Run starts the GUI application.
 func (ca *ComparisonApp) Run() {
 	debug.Println("App: Creating window")
-	ca.window = ca.fyneApp.NewWindow("FeCIM Demo 5: Architecture Comparison")
+	ca.window = ca.fyneApp.NewWindow("FeCIM Technical Briefing: Architecture Comparison")
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	content := ca.createMainLayout()
@@ -193,9 +185,6 @@ func (ca *ComparisonApp) animationLoop() {
 		if ca.energyRace != nil {
 			ca.energyRace.UpdateAnimation(dt)
 		}
-		if ca.memoryWall != nil {
-			ca.memoryWall.UpdateAnimation(dt)
-		}
 		if ca.marketChart != nil {
 			ca.marketChart.UpdateAnimation(dt)
 		}
@@ -209,30 +198,11 @@ func (ca *ComparisonApp) animationLoop() {
 			ca.dcTransformation.UpdateAnimation(dt)
 		}
 
-		// Handle auto-demo mode
-		ca.animMu.Lock()
-		if ca.presentationMode == PresentationModeAuto {
-			ca.phaseTimer += dt
-			phaseDuration := ca.currentPhase.PhaseDuration().Seconds()
-			if ca.phaseTimer >= phaseDuration {
-				ca.phaseTimer = 0
-				ca.currentPhase = AutoDemoPhase((int(ca.currentPhase) + 1) % int(AutoDemoPhaseCount))
-				ca.animMu.Unlock()
-				ca.onPhaseChanged()
-			} else {
-				ca.animMu.Unlock()
-			}
-		} else {
-			ca.animMu.Unlock()
-		}
 
 		// Refresh UI
 		fyne.Do(func() {
 			if ca.energyRace != nil {
 				ca.energyRace.Refresh()
-			}
-			if ca.memoryWall != nil {
-				ca.memoryWall.Refresh()
 			}
 			if ca.marketChart != nil {
 				ca.marketChart.Refresh()
@@ -246,130 +216,20 @@ func (ca *ComparisonApp) animationLoop() {
 			if ca.dcTransformation != nil {
 				ca.dcTransformation.Refresh()
 			}
-			ca.updateStatusForMode()
 		})
 	}
-}
-
-// onPhaseChanged handles auto-demo phase transitions.
-func (ca *ComparisonApp) onPhaseChanged() {
-	ca.animMu.RLock()
-	phase := ca.currentPhase
-	ca.animMu.RUnlock()
-
-	debug.Printf("Auto-demo phase changed to: %s", phase.String())
-
-	if ca.educationalPanel != nil {
-		ca.educationalPanel.SetPhase(phase)
-	}
-
-	if ca.phasedStrategy != nil {
-		ca.phasedStrategy.SetPhase(int(phase) % 3)
-	}
-
-	switch phase {
-	case AutoDemoPhaseEnergyRace:
-		if ca.energyRace != nil {
-			ca.energyRace.Reset()
-		}
-	case AutoDemoPhaseMarket:
-		if ca.marketChart != nil {
-			ca.marketChart.Reset()
-		}
-	}
-}
-
-// updateStatusForMode updates status based on current mode.
-func (ca *ComparisonApp) updateStatusForMode() {
-	if ca.statusLabel == nil {
-		return
-	}
-
-	ca.animMu.RLock()
-	mode := ca.presentationMode
-	phase := ca.currentPhase
-	timer := ca.phaseTimer
-	ca.animMu.RUnlock()
-
-	var newText string
-	switch mode {
-	case PresentationModeAuto:
-		remaining := phase.PhaseDuration().Seconds() - timer
-		newText = fmt.Sprintf("Auto Demo: %s (%.0fs remaining)", phase.String(), remaining)
-	case PresentationModeInvestor:
-		newText = "Mode: Technical Briefing"
-	case PresentationModeEngineer:
-		newText = "Mode: Technical Deep-Dive"
-	case PresentationModeManual:
-		// In manual mode, preserve the current status text (don't override calculation status)
-		return
-	}
-
-	// Use caching to avoid redundant SetText calls that trigger layout recalculations
-	if newText != "" && newText != ca.lastStatusText {
-		ca.statusLabel.SetText(newText)
-		ca.lastStatusText = newText
-	}
-}
-
-// SetPresentationMode sets the current presentation mode.
-func (ca *ComparisonApp) SetPresentationMode(mode PresentationMode) {
-	ca.animMu.Lock()
-	ca.presentationMode = mode
-	ca.phaseTimer = 0
-	ca.currentPhase = AutoDemoPhaseEnergyRace
-	ca.animMu.Unlock()
-
-	if ca.educationalPanel != nil {
-		ca.educationalPanel.SetPresentationMode(mode)
-	}
-
-	if ca.energyRace != nil {
-		ca.energyRace.Reset()
-	}
-	if ca.marketChart != nil {
-		ca.marketChart.Reset()
-	}
-
-	debug.Printf("Presentation mode set to: %s", mode.String())
 }
 
 // createMainLayout builds the main application layout.
 func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// Create widgets
 	ca.energyRace = NewAnimatedEnergyRace()
-	ca.memoryWall = NewMemoryWallAnimation()
 	ca.marketChart = NewMarketOpportunityChart()
 	ca.competitiveMatrix = NewCompetitiveMatrix()
 	ca.phasedStrategy = NewPhasedStrategyDiagram()
 	ca.analogStates = NewAnalogStatesComparison()
 	ca.dcTransformation = NewDataCenterTransformation()
 	ca.calculator = NewDataCenterCalculator()
-	ca.educationalPanel = NewComparisonEducationalPanel()
-	ca.operationLog = NewComparisonOperationLog()
-	ca.modeIndicator = NewComparisonModeIndicator()
-
-	// Mode selector
-	ca.modeSelect = widget.NewSelect(
-		[]string{"Manual", "Auto Demo", "Investor", "Engineer"},
-		func(s string) {
-			ca.SetPresentationMode(PresentationModeFromString(s))
-		},
-	)
-	ca.modeSelect.SetSelected("Manual")
-
-	// Pause button
-	ca.pauseBtn = widget.NewButton("Pause", func() {
-		ca.animMu.Lock()
-		ca.paused = !ca.paused
-		paused := ca.paused
-		ca.animMu.Unlock()
-		if paused {
-			ca.pauseBtn.SetText("Resume")
-		} else {
-			ca.pauseBtn.SetText("Pause")
-		}
-	})
 
 	// Workload selector
 	ca.workloadSelect = widget.NewSelect(
@@ -407,142 +267,111 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.statusLabel = widget.NewLabel("Status: Ready")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	// === HEADER ===
-	titleLabel := widget.NewLabel("FeCIM Architecture Comparison")
+	// === HEADER - INVESTOR GRADE ===
+	titleLabel := widget.NewLabel("FeCIM: The Energy Revolution")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
+	titleLabel.Importance = widget.HighImportance
+
+	subtitleLabel := widget.NewLabel("Dr. external research group | COSM 2025")
+	subtitleLabel.TextStyle = fyne.TextStyle{Italic: true}
+
+	resetBtn := widget.NewButton("Reset", func() {
+		if ca.energyRace != nil {
+			ca.energyRace.Reset()
+		}
+		if ca.marketChart != nil {
+			ca.marketChart.Reset()
+		}
+		if ca.phasedStrategy != nil {
+			ca.phasedStrategy.Reset()
+		}
+		ca.updateStatus("Animation reset")
+	})
 
 	header := container.NewHBox(
 		titleLabel,
+		subtitleLabel,
 		layout.NewSpacer(),
-		widget.NewLabel("Mode:"),
-		ca.modeSelect,
-		ca.pauseBtn,
+		resetBtn,
 	)
 
-	// === LEFT PANEL - Narrow controls (~12%) ===
-	leftConfigLabel := widget.NewLabelWithStyle("Configuration", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	// === CENTER PANEL - TECHNICAL BRIEFING TABS ===
 
-	leftPanel := container.NewVBox(
-		leftConfigLabel,
+	// TAB 1: "The Energy Problem" - HERO VIEW
+	// HERO: "80-90% DATA CENTER ENERGY REDUCTION"
+	energyProblemTab := container.NewVBox(
+		container.NewPadded(container.NewPadded(ca.energyRace)),
+	)
+
+	// TAB 2: "Market Opportunity" - BUSINESS CASE
+	// HERO: "$721B ADDRESSABLE MARKET BY 2030"
+	// + Phased Entry Strategy (de-risking) + Competitive Matrix
+	marketOpportunityTab := container.NewVBox(
+		container.NewPadded(ca.marketChart),
 		widget.NewSeparator(),
+		// Phased Entry Strategy - CRITICAL for de-risking
+		widget.NewCard(
+			"Phased Entry Strategy",
+			"De-risking through staged market entry",
+			container.NewPadded(ca.phasedStrategy),
+		),
+		widget.NewSeparator(),
+		// Competitive Matrix - simplified "all green checkmarks" message
+		container.NewPadded(ca.competitiveMatrix),
+	)
+
+	// TAB 3: "ROI Calculator" - HANDS-ON TOOL
+	// HERO: Dynamic "$XX MILLION ANNUAL SAVINGS"
+	// Configuration controls inline (horizontal) for cleaner look
+	configRow := container.NewHBox(
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
-		widget.NewSeparator(),
+		layout.NewSpacer(),
 		ca.inferencesLabel,
 		ca.inferencesSlider,
-		widget.NewSeparator(),
 		calcBtn,
 	)
 
-	// === CENTER PANEL - Expanded with better hierarchy (~68%) ===
-	// HERO: Energy Race (full width, larger)
-	heroEnergyRace := widget.NewCard(
-		"Energy per MAC Operation",
-		fmt.Sprintf("CPU: %d pJ | GPU: %d pJ | FeCIM: %.1f pJ",
-			int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC),
-		container.NewPadded(ca.energyRace),
-	)
-
-	// Row 1: Calculator + Memory Wall
-	row1 := container.NewGridWithColumns(2,
-		widget.NewCard("Data Center Calculator", "Interactive power and cost estimates",
-			container.NewPadded(container.NewVBox(ca.calculator, ca.dcTransformation))),
-		widget.NewCard("Memory Wall Problem", "Data movement dominates energy",
-			container.NewPadded(ca.memoryWall)),
-	)
-
-	// Row 2: Market + Competitive
-	row2 := container.NewGridWithColumns(2,
-		widget.NewCard("Market Opportunity", "AI semiconductor growth projection",
-			container.NewPadded(ca.marketChart)),
-		widget.NewCard("Competitive Landscape", "FeCIM vs alternatives",
-			container.NewPadded(ca.competitiveMatrix)),
-	)
-
-	// Row 3: Strategy + Analog States
-	row3 := container.NewGridWithColumns(2,
-		widget.NewCard("Commercialization Strategy", "Phased market entry plan",
-			container.NewPadded(ca.phasedStrategy)),
-		widget.NewCard("Analog States", "30 programmable levels per cell",
-			container.NewPadded(ca.analogStates)),
-	)
-
-	// Verified Claims - Collapsible accordion at bottom
-	verifiedClaimsAccordion := widget.NewAccordion(
-		widget.NewAccordionItem("Verified Claims & Technology Status", ca.createVerifiedClaimsWidget()),
-	)
-
-	// Scroll indicator to help users discover content below the fold
-	scrollHintLabel := widget.NewLabelWithStyle("▼ Scroll down for Data Center Calculator, Market Analysis, and more ▼", fyne.TextAlignCenter, fyne.TextStyle{Italic: true})
-	scrollHintLabel.Importance = widget.LowImportance
-
-	centerPanel := container.NewVBox(
-		heroEnergyRace,
-		scrollHintLabel,
+	roiCalculatorTab := container.NewVBox(
+		// Inline config controls - more compact, professional
+		container.NewPadded(configRow),
 		widget.NewSeparator(),
-		row1,
-		widget.NewSeparator(),
-		row2,
-		widget.NewSeparator(),
-		row3,
-		widget.NewSeparator(),
-		verifiedClaimsAccordion,
+		// Results with generous padding - hero savings display
+		container.NewPadded(ca.calculator),
 	)
 
-	// === RIGHT PANEL - Educational + Log (~20%) ===
-	sourcesLink := widget.NewHyperlink("View Sources & References", nil)
-	sourcesLink.OnTapped = func() {
-		ca.operationLog.Add("Sources: See docs/videos/COSM_2025_AI_Hardware_Breakthrough/")
-	}
-
-	operationLogAccordion := widget.NewAccordion(
-		widget.NewAccordionItem("Operation Log", ca.operationLog),
+	// Create tabs with technical briefing names
+	centerTabs := container.NewAppTabs(
+		container.NewTabItem("The Energy Problem", container.NewScroll(energyProblemTab)),
+		container.NewTabItem("Market Opportunity", container.NewScroll(marketOpportunityTab)),
+		container.NewTabItem("ROI Calculator", container.NewScroll(roiCalculatorTab)),
 	)
 
-	rightPanel := container.NewVBox(
-		ca.educationalPanel,
-		widget.NewSeparator(),
-		operationLogAccordion,
+	// Set default to Energy Problem (hero view)
+	centerTabs.SelectIndex(0)
+
+	centerPanel := centerTabs
+
+	// === FOOTER - INVESTOR GRADE ===
+	disclaimerLabel := widget.NewLabel("TRL 4 | Laboratory Validation | Energy claims pending independent verification")
+	disclaimerLabel.TextStyle = fyne.TextStyle{Italic: true}
+
+	footer := container.NewHBox(
+		ca.statusLabel,
 		layout.NewSpacer(),
-		sourcesLink,
-	)
-
-	// === FOOTER ===
-	disclaimerIcon := widget.NewLabel("⚠")
-	disclaimerIcon.TextStyle = fyne.TextStyle{Bold: true}
-
-	disclaimerLabel := widget.NewLabel("Technology Readiness Level 4 | Laboratory Validation | Energy claims pending independent verification")
-	disclaimerLabel.TextStyle = fyne.TextStyle{Bold: true}
-
-	disclaimerContainer := container.NewHBox(
-		disclaimerIcon,
 		disclaimerLabel,
 	)
 
-	footer := container.NewHBox(
-		ca.modeIndicator,
-		widget.NewSeparator(),
-		ca.statusLabel,
-		layout.NewSpacer(),
-		disclaimerContainer,
-	)
-
 	// === MAIN LAYOUT ===
-	// Left panel: ~12% (150px fixed), Center: ~68%, Right: ~20% (250px fixed)
-	leftScroll := container.NewScroll(container.NewPadded(leftPanel))
-	leftScroll.SetMinSize(fyne.NewSize(150, 0))
-
-	centerScroll := container.NewScroll(container.NewPadded(centerPanel))
-
-	rightScroll := container.NewScroll(container.NewPadded(rightPanel))
-	rightScroll.SetMinSize(fyne.NewSize(250, 0))
+	// No side panels - tabs are full width, config is in Calculator tab
+	centerContainer := container.NewPadded(centerPanel)
 
 	mainContent := container.NewBorder(
 		container.NewVBox(header, widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), footer),
-		leftScroll,
-		rightScroll,
-		centerScroll,
+		nil, // No left panel - config is in Calculator tab
+		nil, // No right panel
+		centerContainer,
 	)
 
 	return mainContent
@@ -585,7 +414,6 @@ func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 // onWorkloadChanged handles workload selection.
 func (ca *ComparisonApp) onWorkloadChanged(workload string) {
 	ca.currentWorkload = workload
-	ca.operationLog.Add(fmt.Sprintf("Workload: %s", workload))
 	ca.updateCalculations()
 }
 
@@ -619,26 +447,10 @@ func (ca *ComparisonApp) updateCalculations() {
 		cpuCost, gpuCost, fecimCost,
 	)
 
-	// Update educational panel
-	ca.educationalPanel.SetComparison(cpuPower/fecimPower, gpuPower/fecimPower)
-
 	// Update transformation widget
 	ca.dcTransformation.SetValues(gpuPower, fecimPower)
 
-	// Log
-	ca.operationLog.Add(fmt.Sprintf("Calculated: %.0f MACs × %.0f inf/s", float64(macs), ca.currentInferences))
-
-	ca.modeIndicator.SetMode(ComparisonModeCalculating)
 	ca.updateStatus(fmt.Sprintf("Calculated for %s @ %.0f inf/s", ca.currentWorkload, ca.currentInferences))
-
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		fyne.Do(func() {
-			if ca.modeIndicator != nil {
-				ca.modeIndicator.SetMode(ComparisonModeIdle)
-			}
-		})
-	}()
 }
 
 // getWorkloadMACs returns MACs per inference for common neural network workloads.

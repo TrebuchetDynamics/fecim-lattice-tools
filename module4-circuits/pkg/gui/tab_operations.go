@@ -36,9 +36,9 @@ const (
 // TappableArrayCanvas is a canvas.Raster that responds to taps
 type TappableArrayCanvas struct {
 	widget.BaseWidget
-	raster  *canvas.Raster
-	onTap   func(row, col int)
-	ca      *CircuitsApp
+	raster *canvas.Raster
+	onTap  func(row, col int)
+	ca     *CircuitsApp
 }
 
 func NewTappableArrayCanvas(ca *CircuitsApp, drawFunc func(w, h int) image.Image, onTap func(row, col int)) *TappableArrayCanvas {
@@ -75,9 +75,20 @@ func (t *TappableArrayCanvas) Tapped(e *fyne.PointEvent) {
 	// Recalculate cell geometry using same logic as drawSharedArray
 	w := int(size.Width)
 	h := int(size.Height)
-	margin := 40
-	cellW := (w - 2*margin) / cols
-	cellH := (h - 2*margin) / rows
+
+	// Use same asymmetric margins as drawSharedArray
+	topMargin := 70
+	rightMargin := 70
+	bottomMargin := 30
+	leftMargin := 30
+
+	availableW := w - leftMargin - rightMargin
+	availableH := h - topMargin - bottomMargin
+
+	cellW := availableW / cols
+	cellH := availableH / rows
+
+	// Cell size calculations (COMPLETE - matching drawSharedArray exactly)
 	cellSize := cellW
 	if cellH < cellSize {
 		cellSize = cellH
@@ -88,16 +99,15 @@ func (t *TappableArrayCanvas) Tapped(e *fyne.PointEvent) {
 	if cellSize < 8 {
 		cellSize = 8
 	}
-
 	if cellSize <= 0 {
 		return
 	}
 
-	// Calculate grid size and centering offset
+	// Calculate grid size and offset
 	gridW := cols * cellSize
 	gridH := rows * cellSize
-	offsetX := (w - gridW) / 2
-	offsetY := (h - gridH) / 2
+	offsetX := leftMargin + (availableW-gridW)/2
+	offsetY := topMargin + (availableH-gridH)/2
 
 	// Convert click position to cell coordinates
 	col := (int(e.Position.X) - offsetX) / cellSize
@@ -159,7 +169,7 @@ func (ca *CircuitsApp) createOperationsView() fyne.CanvasObject {
 		arraySection,
 		rightPanel,
 	)
-	mainContent.SetOffset(0.4) // Array gets 40% width
+	mainContent.SetOffset(0.55) // Array gets 55% width (more space for integrated DAC/ADC)
 
 	return container.NewBorder(
 		modeSelector,
@@ -198,8 +208,9 @@ func (ca *CircuitsApp) createModeSelector() fyne.CanvasObject {
 func (ca *CircuitsApp) createSharedArraySection() fyne.CanvasObject {
 	// Create tappable array canvas
 	tappableArray := NewTappableArrayCanvas(ca, ca.drawSharedArray, ca.onArrayCellTapped)
-	tappableArray.SetMinSize(fyne.NewSize(400, 350))
-	ca.sharedArrayCanvas = tappableArray.raster  // Keep reference for refresh
+	// Larger size to accommodate integrated DAC (top) and ADC (right) boxes
+	tappableArray.SetMinSize(fyne.NewSize(480, 420))
+	ca.sharedArrayCanvas = tappableArray.raster // Keep reference for refresh
 
 	// Color legend
 	legendLabel := widget.NewLabel("Level: Low (blue) -> High (red) | Yellow = Selected | Click to select")
@@ -248,10 +259,19 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		return img
 	}
 
+	// Calculate asymmetric margins for integrated DAC (top) and ADC (right)
+	topMargin := 70   // Space for DAC boxes + labels above grid
+	rightMargin := 70 // Space for ADC boxes + labels right of grid
+	bottomMargin := 30
+	leftMargin := 30
+
+	// Calculate available area for grid
+	availableW := w - leftMargin - rightMargin
+	availableH := h - topMargin - bottomMargin
+
 	// Calculate cell size (use square cells)
-	margin := 40
-	cellW := (w - 2*margin) / cols
-	cellH := (h - 2*margin) / rows
+	cellW := availableW / cols
+	cellH := availableH / rows
 	cellSize := cellW
 	if cellH < cellSize {
 		cellSize = cellH
@@ -263,18 +283,20 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		cellSize = 8
 	}
 
+	// Calculate grid dimensions
+	gridW := cols * cellSize
+	gridH := rows * cellSize
+
+	// Calculate offset to center grid within available area
+	offsetX := leftMargin + (availableW-gridW)/2
+	offsetY := topMargin + (availableH-gridH)/2
+
 	// Store cell geometry for click detection
 	ca.mu.Lock()
 	ca.sharedArrayCellSize = cellSize
-	ca.sharedArrayOffsetX = (w - cols*cellSize) / 2
-	ca.sharedArrayOffsetY = (h - rows*cellSize) / 2
+	ca.sharedArrayOffsetX = offsetX
+	ca.sharedArrayOffsetY = offsetY
 	ca.mu.Unlock()
-
-	// Center the grid
-	gridW := cols * cellSize
-	gridH := rows * cellSize
-	offsetX := (w - gridW) / 2
-	offsetY := (h - gridH) / 2
 
 	// Draw column lines (for compute mode - input voltages)
 	if mode == ModeCompute {
@@ -408,38 +430,90 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 			}
 		}
 
-		// Add column labels at TOP (x0-x7) - light blue for inputs
+		// Draw DAC boxes at TOP of each column (integrated visualization)
+		dacBoxHeight := 25
+		dacBoxWidth := cellSize - 4
+		dacY := offsetY - dacBoxHeight - 10
+		dacColor := color.RGBA{100, 80, 180, 255} // Purple for DACs
+
+		// Define input label color for column labels (light blue for inputs)
 		inputLabelColor := color.RGBA{100, 150, 255, 255}
-		for c := 0; c < min(8, cols); c++ {
-			x := offsetX + c*cellSize + cellSize/2 - 6
-			y := offsetY - 30
-			if y >= 5 {
-				drawSimpleText(img, fmt.Sprintf("x%d", c), x, y, inputLabelColor)
-			}
+
+		// OPTIMIZATION: Copy input vector data once before loop to avoid RLock per iteration
+		dacColCount := min(8, cols)
+		inputVectorCopy := make([]int, dacColCount)
+		ca.mu.RLock()
+		copy(inputVectorCopy, ca.inputVector[:dacColCount])
+		ca.mu.RUnlock()
+
+		for c := 0; c < dacColCount; c++ {
+			dacX := offsetX + c*cellSize + 2
+
+			// Draw DAC box
+			drawRect(img, dacX, dacY, dacBoxWidth, dacBoxHeight, dacColor)
+
+			// Draw border
+			borderColor := color.RGBA{150, 130, 220, 255}
+			drawRectBorder(img, dacX, dacY, dacBoxWidth, dacBoxHeight, borderColor)
+
+			// Use pre-copied input value (no lock needed)
+			inputVal := inputVectorCopy[c]
+			voltage := float64(inputVal) / 255.0
+
+			// Show voltage value
+			voltageText := fmt.Sprintf("%.1fV", voltage)
+			textX := dacX + dacBoxWidth/2 - len(voltageText)*3
+			textY := dacY + dacBoxHeight/2 - 3
+			drawSimpleText(img, voltageText, textX, textY, color.RGBA{255, 255, 255, 255})
+
+			// Draw column label above DAC box
+			labelX := offsetX + c*cellSize + cellSize/2 - 6
+			labelY := dacY - 12
+			drawSimpleText(img, fmt.Sprintf("x%d", c), labelX, labelY, inputLabelColor)
 		}
 
-		// Add "8 DACs" label centered above grid
-		dacLabelX := offsetX + gridW/2 - 20
-		dacLabelY := offsetY - 40
-		if dacLabelY >= 5 {
-			drawSimpleText(img, "8 DACs", dacLabelX, dacLabelY, inputLabelColor)
-		}
+		// Draw ADC boxes at RIGHT of each row (integrated visualization)
+		adcBoxWidth := 45
+		adcBoxHeight := cellSize - 4
+		adcX := offsetX + gridW + 8
+		adcColor := color.RGBA{80, 150, 100, 255} // Green for ADCs
 
-		// Add row labels at RIGHT (y0-y7) - light orange for outputs
+		// Define output label color for row labels (light orange for outputs)
 		outputLabelColor := color.RGBA{255, 180, 100, 255}
-		for r := 0; r < min(8, rows); r++ {
-			x := offsetX + gridW + 20
-			y := offsetY + r*cellSize + cellSize/2 - 3
-			if x < w-15 {
-				drawSimpleText(img, fmt.Sprintf("y%d", r), x, y, outputLabelColor)
-			}
-		}
 
-		// Add "8 ADCs" label to the right of grid
-		adcLabelX := offsetX + gridW + 20
-		adcLabelY := offsetY + gridH + 10
-		if adcLabelX < w-35 && adcLabelY < h-5 {
-			drawSimpleText(img, "8 ADCs", adcLabelX, adcLabelY, outputLabelColor)
+		// OPTIMIZATION: Copy output vector data once before loop to avoid RLock per iteration
+		adcRowCount := min(8, rows)
+		outputVectorCopy := make([]float64, adcRowCount)
+		ca.mu.RLock()
+		copy(outputVectorCopy, ca.outputVector[:min(adcRowCount, len(ca.outputVector))])
+		ca.mu.RUnlock()
+
+		for r := 0; r < adcRowCount; r++ {
+			adcY := offsetY + r*cellSize + 2
+
+			// Draw ADC box
+			drawRect(img, adcX, adcY, adcBoxWidth, adcBoxHeight, adcColor)
+
+			// Draw border
+			borderColor := color.RGBA{130, 200, 150, 255}
+			drawRectBorder(img, adcX, adcY, adcBoxWidth, adcBoxHeight, borderColor)
+
+			// Use pre-copied output value (no lock needed)
+			outputVal := outputVectorCopy[r]
+
+			// Show ADC level (after TIA+ADC conversion)
+			tiaVoltage := ca.tia.Convert(outputVal * 1e-6)
+			adcLevel := ca.adc.Convert(tiaVoltage)
+
+			levelText := fmt.Sprintf("L%d", adcLevel)
+			textX := adcX + adcBoxWidth/2 - len(levelText)*3
+			textY := adcY + adcBoxHeight/2 - 3
+			drawSimpleText(img, levelText, textX, textY, color.RGBA{255, 255, 255, 255})
+
+			// Draw row label to right of ADC box
+			labelX := adcX + adcBoxWidth + 5
+			labelY := offsetY + r*cellSize + cellSize/2 - 3
+			drawSimpleText(img, fmt.Sprintf("y%d", r), labelX, labelY, outputLabelColor)
 		}
 	}
 
@@ -473,6 +547,11 @@ func (ca *CircuitsApp) onModeChanged(mode string) {
 	ca.updateModeHelp()
 	ca.refreshSharedArray()
 	ca.updateSharedCellInfo()
+
+	// Auto-compute when entering COMPUTE mode
+	if mode == "COMPUTE" {
+		ca.computeAndUpdateAll()
+	}
 }
 
 // updateOperationsPanels shows/hides panels based on current mode
@@ -1052,11 +1131,13 @@ func (ca *CircuitsApp) createComputeModePanel() {
 	ca.opsComputeInputs = make([]*widget.Entry, ca.arrayCols)
 	ca.opsComputeVoltageLabels = make([]*widget.Label, ca.arrayCols)
 
-	inputGrid := container.NewGridWithColumns(4)
+	// Create horizontal input row with compact entries
+	inputRow := container.NewHBox()
 	maxDisplay := min(8, ca.arrayCols)
 	for i := 0; i < maxDisplay; i++ {
 		ca.opsComputeInputs[i] = widget.NewEntry()
 		ca.opsComputeInputs[i].SetText(fmt.Sprintf("%d", ca.inputVector[i]))
+		ca.opsComputeInputs[i].Resize(fyne.NewSize(45, 30)) // Compact width
 
 		idx := i
 		ca.opsComputeInputs[i].OnChanged = func(s string) {
@@ -1071,37 +1152,20 @@ func (ca *CircuitsApp) createComputeModePanel() {
 			if ca.opsComputeVoltageLabels[idx] != nil {
 				ca.opsComputeVoltageLabels[idx].SetText(fmt.Sprintf("%.2fV", float64(v)/255.0))
 			}
+			// Auto-compute on input change
+			ca.computeAndUpdateAll()
 		}
 
+		// Compact column: label on top, entry below
 		ca.opsComputeVoltageLabels[i] = widget.NewLabel(fmt.Sprintf("%.2fV", float64(ca.inputVector[i])/255.0))
+		ca.opsComputeVoltageLabels[i].TextStyle = fyne.TextStyle{Monospace: true}
 
-		inputGrid.Add(container.NewVBox(
+		col := container.NewVBox(
 			widget.NewLabel(fmt.Sprintf("x%d", i)),
 			ca.opsComputeInputs[i],
-			ca.opsComputeVoltageLabels[i],
-		))
+		)
+		inputRow.Add(col)
 	}
-
-	// Input mode selector
-	modeSelect := widget.NewSelect([]string{"Manual", "Random", "Ramp"}, func(s string) {
-		switch s {
-		case "Random":
-			ca.mu.Lock()
-			for i := range ca.inputVector {
-				ca.inputVector[i] = rand.Intn(256)
-			}
-			ca.mu.Unlock()
-			ca.updateOpsComputeInputs()
-		case "Ramp":
-			ca.mu.Lock()
-			for i := range ca.inputVector {
-				ca.inputVector[i] = i * 255 / max(1, len(ca.inputVector)-1)
-			}
-			ca.mu.Unlock()
-			ca.updateOpsComputeInputs()
-		}
-	})
-	modeSelect.SetSelected("Manual")
 
 	// Output display
 	ca.opsComputeOutputLabels = make([]*widget.Label, 8)
@@ -1128,91 +1192,37 @@ func (ca *CircuitsApp) createComputeModePanel() {
 		}
 		ca.mu.Unlock()
 		ca.updateOpsComputeInputs()
+		ca.computeAndUpdateAll()
 	})
 
+	// Compact input section
+	inputHeader := container.NewHBox(
+		widget.NewLabelWithStyle("INPUT VECTOR (0-255)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		layout.NewSpacer(),
+		randomBitsBtn,
+	)
+
+	physicsNote := widget.NewLabel("0-1V READ-safe (below Ec)")
+	physicsNote.TextStyle = fyne.TextStyle{Italic: true}
+
 	inputSection := container.NewVBox(
-		widget.NewLabelWithStyle("INPUT VECTOR", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewHBox(widget.NewLabel("Mode:"), modeSelect, randomBitsBtn),
-		widget.NewLabel("Digital inputs (0-255) -> DAC voltages (0-1V):"),
-		inputGrid,
-	)
-
-	// FULL INPUT PIPELINE: 8 digital values -> 8 DACs -> 8 column voltages
-	inputPipelineHeader := widget.NewLabelWithStyle(
-		"INPUT PIPELINE: 8 DIGITAL → 8 DACs → 8 COLUMNS",
-		fyne.TextAlignLeading, fyne.TextStyle{Bold: true},
-	)
-
-	// Summary boxes showing the full pipeline
-	digitalSummaryBox := ca.createLabeledBox("8× DIGITAL", "x0-x7\n(0-255)", sharedtheme.ColorPrimary)
-	dacSummaryBox := ca.createLabeledBox("8× DAC", "→ 0-1V\neach", sharedtheme.ColorAccent)
-	columnSummaryBox := ca.createLabeledBox("8 COLUMNS", "Voltages\napplied", sharedtheme.ColorSuccess)
-
-	inputPipelinePath := container.NewHBox(
-		digitalSummaryBox, widget.NewLabel("→"),
-		dacSummaryBox, widget.NewLabel("→"),
-		columnSummaryBox,
-	)
-
-	// Physics note about READ-safe voltages
-	inputPhysicsNote := widget.NewLabel(
-		"⚡ COMPUTE uses 0-1V (READ-safe) - won't disturb programmed cell states",
-	)
-	inputPhysicsNote.TextStyle = fyne.TextStyle{Italic: true}
-
-	inputDataPathSection := container.NewVBox(
-		widget.NewSeparator(),
-		inputPipelineHeader,
-		inputPipelinePath,
-		inputPhysicsNote,
-	)
-
-	// FULL OUTPUT PIPELINE: 8 row sums -> 8 TIAs -> 8 ADCs -> 8 digital levels
-	outputPipelineHeader := widget.NewLabelWithStyle(
-		"OUTPUT PIPELINE: 8 ROWS → 8 TIAs → 8 ADCs → 8 LEVELS",
-		fyne.TextAlignLeading, fyne.TextStyle{Bold: true},
-	)
-
-	// Summary boxes for full output pipeline
-	rowSumBox := ca.createLabeledBox("8× ROW SUM", "y0-y7\n(KCL)", sharedtheme.ColorWarning)
-	tiaSummaryBox := ca.createLabeledBox("8× TIA", "I→V\n10kΩ", sharedtheme.ColorInfo)
-	adcSummaryBox := ca.createLabeledBox("8× ADC", "5-bit\n0-31", sharedtheme.ColorSuccess)
-	levelSummaryBox := ca.createLabeledBox("8× LEVEL", "Digital\noutput", sharedtheme.ColorPrimary)
-
-	outputPipelinePath := container.NewHBox(
-		rowSumBox, widget.NewLabel("→"),
-		tiaSummaryBox, widget.NewLabel("→"),
-		adcSummaryBox, widget.NewLabel("→"),
-		levelSummaryBox,
-	)
-
-	// Physics note about row sums
-	outputPhysicsNote := widget.NewLabel(
-		"⚡ Each y_i = Σ(G[i,j] × V_j) - sum of 8 cell currents via KCL",
-	)
-	outputPhysicsNote.TextStyle = fyne.TextStyle{Italic: true}
-
-	// IDEAL CROSSBAR DISCLAIMER
-	idealDisclaimer := widget.NewLabel(
-		"⚠️ IDEAL CROSSBAR: No IR drop or sneak paths modeled (see Module 2 for non-idealities)",
-	)
-	idealDisclaimer.TextStyle = fyne.TextStyle{Bold: true}
-
-	outputDataPathSection := container.NewVBox(
-		widget.NewSeparator(),
-		outputPipelineHeader,
-		outputPipelinePath,
-		outputPhysicsNote,
-		idealDisclaimer,
+		inputHeader,
+		inputRow,
+		physicsNote,
 	)
 
 	// Output section
+	// Ideal crossbar disclaimer (moved from removed section)
+	idealDisclaimer := widget.NewLabel(
+		"IDEAL CROSSBAR: No IR drop or sneak paths (see Module 2)")
+	idealDisclaimer.TextStyle = fyne.TextStyle{Italic: true}
+
 	outputSection := container.NewVBox(
 		widget.NewSeparator(),
-		widget.NewLabelWithStyle("OUTPUT VECTOR (Row Sums)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Each output = sum of 8 cell currents, digitized by TIA+ADC:"),
+		widget.NewLabelWithStyle("OUTPUT VECTOR", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("I_row -> TIA (10k) -> ADC (5-bit):"),
 		outputGrid,
-		outputDataPathSection,
+		idealDisclaimer,
 	)
 
 	// Math section
@@ -1233,7 +1243,6 @@ func (ca *CircuitsApp) createComputeModePanel() {
 
 	ca.computeConfigPanel = container.NewVBox(
 		inputSection,
-		inputDataPathSection,
 		outputSection,
 		mathSection,
 		perfSection,
@@ -1258,6 +1267,61 @@ func (ca *CircuitsApp) updateOpsComputeInputs() {
 			})
 		}
 	}
+}
+
+// computeAndUpdateAll performs MVM and updates all output displays
+// Called by: input changes, RANDOM BITS, mode selector, COMPUTE button
+// IMPORTANT: Does NOT call updateOpsComputeInputs() to prevent Entry->OnChanged recursion
+func (ca *CircuitsApp) computeAndUpdateAll() {
+	// 1. MVM computation
+	ca.mu.Lock()
+	rows := min(8, ca.arrayRows)
+	cols := min(8, ca.arrayCols)
+
+	for r := 0; r < rows && r < len(ca.arrayWeights); r++ {
+		sum := 0.0
+		for c := 0; c < cols && c < len(ca.arrayWeights[r]); c++ {
+			conductance := 1.0 + float64(ca.arrayWeights[r][c])/29.0*99.0
+			voltage := float64(ca.inputVector[c]) / 255.0
+			sum += conductance * voltage
+		}
+		ca.outputVector[r] = sum
+	}
+	ca.mu.Unlock()
+
+	// 2. Update output labels with TIA/ADC conversion
+	ca.mu.RLock()
+	for i := 0; i < 8 && i < len(ca.outputVector); i++ {
+		if ca.opsComputeOutputLabels[i] != nil {
+			rawCurrent := ca.outputVector[i]
+			tiaVoltage := ca.tia.Convert(rawCurrent * 1e-6)
+			adcLevel := ca.adc.Convert(tiaVoltage)
+			isSaturated := rawCurrent > 100.0
+
+			idx := i
+			current := rawCurrent
+			tiaV := tiaVoltage
+			level := adcLevel
+			sat := isSaturated
+			fyne.Do(func() {
+				// Show full pipeline: Current -> TIA Voltage -> ADC Level
+				satSuffix := ""
+				if sat {
+					satSuffix = " SAT"
+				}
+				ca.opsComputeOutputLabels[idx].SetText(
+					fmt.Sprintf("y%d: %.1fuA -> %.2fV -> L%d%s", idx, current, tiaV, level, satSuffix))
+			})
+		}
+	}
+	ca.mu.RUnlock()
+
+	// 3. Update math breakdown
+	ca.updateOpsComputeMath()
+
+	// 4. Update data path displays
+	ca.updateOpsComputeInputDataPath()
+	ca.updateOpsComputeOutputDataPath()
 }
 
 // updateOpsComputeInputDataPath updates the input data path display
@@ -1542,56 +1606,7 @@ func (ca *CircuitsApp) onOpsVerify() {
 
 // onOpsCompute performs matrix-vector multiplication
 func (ca *CircuitsApp) onOpsCompute() {
-	ca.mu.Lock()
-	rows := min(8, ca.arrayRows)
-	cols := min(8, ca.arrayCols)
-
-	// MVM: output = weights * input
-	for r := 0; r < rows && r < len(ca.arrayWeights); r++ {
-		sum := 0.0
-		for c := 0; c < cols && c < len(ca.arrayWeights[r]); c++ {
-			conductance := 1.0 + float64(ca.arrayWeights[r][c])/29.0*99.0
-			voltage := float64(ca.inputVector[c]) / 255.0
-			sum += conductance * voltage
-		}
-		ca.outputVector[r] = sum
-	}
-	ca.mu.Unlock()
-
-	// Update output labels with BOTH raw current AND digitized level
-	ca.mu.RLock()
-	for i := 0; i < 8 && i < len(ca.outputVector); i++ {
-		if ca.opsComputeOutputLabels[i] != nil {
-			rawCurrent := ca.outputVector[i] // uA
-
-			// TIA conversion: current (uA) -> voltage (V)
-			// TIA saturates at 100 uA -> clamps output to 1.0V
-			tiaVoltage := ca.tia.Convert(rawCurrent * 1e-6) // Convert uA to A for TIA
-
-			// ADC conversion: voltage -> digital level (5-bit: 0-31)
-			adcLevel := ca.adc.Convert(tiaVoltage)
-
-			// Check for TIA saturation (current > 100 uA causes clamp to 1V)
-			isSaturated := rawCurrent > 100.0
-
-			idx := i
-			current := rawCurrent
-			level := adcLevel
-			sat := isSaturated
-			fyne.Do(func() {
-				if sat {
-					ca.opsComputeOutputLabels[idx].SetText(fmt.Sprintf("y%d: %.1f uA | L%d (SAT)", idx, current, level))
-				} else {
-					ca.opsComputeOutputLabels[idx].SetText(fmt.Sprintf("y%d: %.1f uA | L%d", idx, current, level))
-				}
-			})
-		}
-	}
-	ca.mu.RUnlock()
-
-	// Update math breakdown
-	ca.updateOpsComputeMath()
-
+	ca.computeAndUpdateAll()
 	ca.operationsStatusLabel.SetText("Compute complete in ~20ns")
 }
 

@@ -1,5 +1,6 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains market analysis visualizations.
+// TECHNICAL BRIEFING DESIGN: Based on Dr. Tour's COSM 2025 presentation messaging.
 package gui
 
 import (
@@ -11,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -26,13 +28,15 @@ type MarketSegment struct {
 
 // marketData holds the market opportunity data (in billions USD).
 // Sources: WSTS Semiconductor Trade Statistics 2025, Gartner AI Semiconductor Forecasts 2025 (combined markets)
+// TOTAL: $98B + $220B + $403B = $721B (Dr. Tour COSM 2025)
 var marketData = []MarketSegment{
-	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{200, 100, 100, 255}},
-	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{100, 150, 200, 255}},
-	{Name: "AI Semiconductor", Y2024: 140, Y2026: 220, Y2030: 403, Color: color.RGBA{100, 200, 150, 255}},
+	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{231, 76, 60, 255}},   // Red
+	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{243, 156, 18, 255}},     // Amber
+	{Name: "AI Semiconductor", Y2024: 140, Y2026: 220, Y2030: 403, Color: color.RGBA{46, 204, 113, 255}}, // Green
 }
 
-// MarketOpportunityChart shows the market opportunity visualization using Fyne widgets.
+// MarketOpportunityChart shows the HERO market opportunity - investor grade.
+// HERO STATEMENT: "$721B ADDRESSABLE MARKET BY 2030"
 type MarketOpportunityChart struct {
 	widget.BaseWidget
 
@@ -44,23 +48,22 @@ type MarketOpportunityChart struct {
 	// Cached values to avoid redundant SetText calls (prevents resize loops)
 	lastValues []string
 
-	container *fyne.Container
-	totalText *canvas.Text
-	bars2024  []*canvas.Rectangle
-	bars2026  []*canvas.Rectangle
-	bars2030  []*canvas.Rectangle
-	values    []*widget.Label
+	container     *fyne.Container
+	heroText      *canvas.Text
+	heroSubtext   *canvas.Text
+	marketBoxes   []*canvas.Rectangle
+	marketLabels  []*canvas.Text
+	marketValues  []*canvas.Text
 }
 
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:    fyne.NewSize(420, 160),
-		bars2024:   make([]*canvas.Rectangle, len(marketData)),
-		bars2026:   make([]*canvas.Rectangle, len(marketData)),
-		bars2030:   make([]*canvas.Rectangle, len(marketData)),
-		values:     make([]*widget.Label, len(marketData)),
-		lastValues: make([]string, len(marketData)),
+		minSize:      fyne.NewSize(800, 350),
+		marketBoxes:  make([]*canvas.Rectangle, len(marketData)),
+		marketLabels: make([]*canvas.Text, len(marketData)),
+		marketValues: make([]*canvas.Text, len(marketData)),
+		lastValues:   make([]string, len(marketData)),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -72,7 +75,7 @@ func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
 	defer m.mu.Unlock()
 
 	if m.animProgress < 1.0 {
-		m.animProgress += dt * 0.5
+		m.animProgress += dt * 0.4
 		if m.animProgress > 1.0 {
 			m.animProgress = 1.0
 		}
@@ -99,75 +102,81 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
-	// Total market calculation: $98B + $220B + $403B = $721B
-	m.totalText = canvas.NewText("$721B Market by 2030", color.RGBA{0, 212, 255, 255})
-	m.totalText.TextSize = 32
-	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
+	// === HERO SECTION: MASSIVE "$721B" ===
+	m.heroText = canvas.NewText("$721B", heroTextColor)
+	m.heroText.TextSize = 96 // MASSIVE for investor impact
+	m.heroText.TextStyle = fyne.TextStyle{Bold: true}
+	m.heroText.Alignment = fyne.TextAlignCenter
 
-	var segmentWidgets []fyne.CanvasObject
-	maxVal := float32(450.0)
-	barHeight := float32(90)
+	m.heroSubtext = canvas.NewText("ADDRESSABLE MARKET BY 2030", heroCyanColor)
+	m.heroSubtext.TextSize = 28
+	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
+	m.heroSubtext.Alignment = fyne.TextAlignCenter
 
-	// Create Y-axis with cleaner scale markers
-	yAxisLabel := widget.NewLabel("USD\n(Billions)")
-	yAxisLabel.Alignment = fyne.TextAlignCenter
-
-	// Y-axis scale markers: $0, $100B, $200B, $300B, $400B
-	scale400 := widget.NewLabel("$400B")
-	scale400.Alignment = fyne.TextAlignTrailing
-	scale300 := widget.NewLabel("$300B")
-	scale300.Alignment = fyne.TextAlignTrailing
-	scale200 := widget.NewLabel("$200B")
-	scale200.Alignment = fyne.TextAlignTrailing
-	scale100 := widget.NewLabel("$100B")
-	scale100.Alignment = fyne.TextAlignTrailing
-	scale0 := widget.NewLabel("$0")
-	scale0.Alignment = fyne.TextAlignTrailing
-
-	yAxisScales := container.NewVBox(
-		scale400,
-		scale300,
-		scale200,
-		scale100,
-		scale0,
+	heroSection := container.NewVBox(
+		container.NewCenter(m.heroText),
+		container.NewCenter(m.heroSubtext),
 	)
 
-	yAxis := container.NewHBox(yAxisLabel, yAxisScales)
+	// === THREE MARKET BOXES (horizontal) ===
+	boxWidth := float32(180)
+	boxHeight := float32(100)
 
-	// Simplified: Show ONLY 2030 bars with prominent in-bar labels
+	var marketWidgets []fyne.CanvasObject
 	for i, seg := range marketData {
-		// Create single wide bar for 2030 value
-		m.bars2030[i] = canvas.NewRectangle(seg.Color)
-		m.bars2030[i].SetMinSize(fyne.NewSize(70, barHeight*float32(seg.Y2030)/maxVal))
+		// Market segment box
+		m.marketBoxes[i] = canvas.NewRectangle(seg.Color)
+		m.marketBoxes[i].SetMinSize(fyne.NewSize(boxWidth, boxHeight))
+		m.marketBoxes[i].CornerRadius = 8
 
-		// Create placeholder bars (unused but needed for struct)
-		m.bars2024[i] = canvas.NewRectangle(color.Transparent)
-		m.bars2024[i].SetMinSize(fyne.NewSize(0, 0))
-		m.bars2026[i] = canvas.NewRectangle(color.Transparent)
-		m.bars2026[i].SetMinSize(fyne.NewSize(0, 0))
+		// Market name label
+		m.marketLabels[i] = canvas.NewText(seg.Name, heroTextColor)
+		m.marketLabels[i].TextSize = 16
+		m.marketLabels[i].TextStyle = fyne.TextStyle{Bold: true}
+		m.marketLabels[i].Alignment = fyne.TextAlignCenter
 
-		// Segment name label below bar
-		segLabel := widget.NewLabel(seg.Name)
-		segLabel.Alignment = fyne.TextAlignCenter
-		segLabel.TextStyle = fyne.TextStyle{Bold: true}
+		// Market value (large)
+		m.marketValues[i] = canvas.NewText(fmt.Sprintf("$%.0fB", seg.Y2030), heroTextColor)
+		m.marketValues[i].TextSize = 32
+		m.marketValues[i].TextStyle = fyne.TextStyle{Bold: true}
+		m.marketValues[i].Alignment = fyne.TextAlignCenter
 
-		// Value label ABOVE bar (prominent)
-		m.values[i] = widget.NewLabel(fmt.Sprintf("$%.0fB", seg.Y2030))
-		m.values[i].Alignment = fyne.TextAlignCenter
-		m.values[i].TextStyle = fyne.TextStyle{Bold: true}
+		// Stack value and label inside box
+		boxContent := container.NewVBox(
+			layout.NewSpacer(),
+			container.NewCenter(m.marketValues[i]),
+			container.NewCenter(m.marketLabels[i]),
+			layout.NewSpacer(),
+		)
 
-		// Stack: value on top, bar in middle, name below
-		segCol := container.NewVBox(m.values[i], m.bars2030[i], segLabel)
-		segmentWidgets = append(segmentWidgets, segCol)
+		boxWithContent := container.NewStack(m.marketBoxes[i], boxContent)
+		marketWidgets = append(marketWidgets, container.NewPadded(boxWithContent))
 	}
 
-	barsRow := container.NewHBox(yAxis, container.NewHBox(segmentWidgets...))
+	marketsRow := container.NewHBox(
+		layout.NewSpacer(),
+		marketWidgets[0],
+		marketWidgets[1],
+		marketWidgets[2],
+		layout.NewSpacer(),
+	)
 
-	citation := widget.NewLabel("Source: WSTS + Gartner Combined Market Forecasts (2025)")
+	// === DISCLAIMER ===
+	citation := canvas.NewText("Source: WSTS + Gartner Combined Market Forecasts (2025)", heroMutedColor)
+	citation.TextSize = 11
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
-	m.container = container.NewVBox(container.NewCenter(m.totalText), barsRow, citation)
+	// === ASSEMBLE ===
+	m.container = container.NewVBox(
+		layout.NewSpacer(),
+		heroSection,
+		widget.NewSeparator(),
+		container.NewPadded(marketsRow),
+		layout.NewSpacer(),
+		container.NewCenter(citation),
+	)
+
 	return widget.NewSimpleRenderer(m.container)
 }
 
@@ -178,66 +187,59 @@ func (m *MarketOpportunityChart) Refresh() {
 	pulsePhase := m.pulsePhase
 	m.mu.RUnlock()
 
-	if m.totalText == nil {
+	if m.heroText == nil {
 		return
 	}
 
-	// Pulse total text when done
+	// Pulse hero text when animation complete
 	if progress >= 1.0 {
-		pulse := 0.7 + math.Sin(pulsePhase)*0.3
-		m.totalText.Color = color.RGBA{
-			0,
-			uint8(212 * pulse),
-			uint8(255 * pulse),
+		pulse := 0.85 + math.Sin(pulsePhase)*0.15
+		m.heroText.Color = color.RGBA{
+			uint8(240 * pulse),
+			uint8(244 * pulse),
+			uint8(248 * pulse),
 			255,
 		}
 	} else {
-		m.totalText.Color = color.RGBA{0, 150, 200, 255}
+		m.heroText.Color = heroTextColor
 	}
 
-	// Update bar heights based on progress (only 2030 bars now)
-	maxVal := float32(450.0)
-	barHeight := float32(90)
-
+	// Update market values based on progress
 	for i, seg := range marketData {
-		bar2030Height := barHeight * float32(seg.Y2030) / maxVal * float32(progress)
-		m.bars2030[i].SetMinSize(fyne.NewSize(70, max(2, bar2030Height)))
-
-		// Use caching to avoid redundant SetText calls
 		newText := fmt.Sprintf("$%.0fB", seg.Y2030*progress)
 		if newText != m.lastValues[i] {
-			m.values[i].SetText(newText)
+			m.marketValues[i].Text = newText
+			canvas.Refresh(m.marketValues[i])
 			m.lastValues[i] = newText
 		}
-
-		canvas.Refresh(m.bars2030[i])
 	}
 
-	canvas.Refresh(m.totalText)
+	canvas.Refresh(m.heroText)
 }
 
 // Competitor represents a competitor in the matrix.
 type Competitor struct {
 	Name        string
-	Energy      string
-	InMemory    int // 0=no, 1=partial, 2=yes
-	CMOS        int
-	Scalable    int
+	Energy      bool // Has green checkmark for energy
+	Speed       bool // Has green checkmark for speed
+	Endurance   bool // Has green checkmark for endurance
+	CMOS        bool // Has green checkmark for CMOS compatible
+	Scalable    bool // Has green checkmark for scalable
 	Highlight   bool
-	IsEstimated bool // True if energy value is estimated
 }
 
-// competitors data for the competitive matrix.
-// Energy values sourced from published specifications where available.
-// NOTE: FeCIM values are TRL 4 projections vs commercial products (TRL 9)
+// competitors data for the simplified competitive matrix.
+// INVESTOR MESSAGE: "Only FeCIM has ALL green checkmarks"
 var competitors = []Competitor{
-	{"FeCIM", "~1 pJ*", 2, 2, 2, true, true},            // Dr. Tour claim (TRL 4 projection)
-	{"Google TPU v5", "~100 pJ", 0, 2, 2, false, false}, // Google published specs
-	{"Intel Loihi 2", "~10 pJ", 2, 0, 0, false, false},  // Intel published specs (non-CMOS fab)
-	{"IBM Analog AI", "~10 pJ", 2, 1, 1, false, true},   // Research prototype estimate
+	{"FeCIM", true, true, true, true, true, true},       // ALL CHECKMARKS
+	{"Google TPU v5", false, true, true, true, true, false},
+	{"Intel Loihi 2", true, true, true, false, false, false},
+	{"IBM Analog AI", true, false, false, false, false, false},
+	{"ReRAM", true, false, false, true, false, false},
 }
 
-// CompetitiveMatrix shows competitive comparison.
+// CompetitiveMatrix shows SIMPLIFIED competitive comparison.
+// INVESTOR MESSAGE: "Only FeCIM has checkmarks in ALL categories"
 type CompetitiveMatrix struct {
 	widget.BaseWidget
 }
@@ -251,55 +253,81 @@ func NewCompetitiveMatrix() *CompetitiveMatrix {
 
 // MinSize returns minimum size.
 func (c *CompetitiveMatrix) MinSize() fyne.Size {
-	return fyne.NewSize(350, 130)
+	return fyne.NewSize(700, 280)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
-	// Amber color for estimated values
-	estimatedAmber := color.RGBA{255, 191, 0, 255}
+	// Hero message
+	heroText := canvas.NewText("Only FeCIM has checkmarks in ALL categories", heroCyanColor)
+	heroText.TextSize = 20
+	heroText.TextStyle = fyne.TextStyle{Bold: true}
+	heroText.Alignment = fyne.TextAlignCenter
 
-	header := container.NewGridWithColumns(5,
-		widget.NewLabel("Tech"),
-		widget.NewLabel("Energy"),
-		widget.NewLabel("Memory Type"),
-		widget.NewLabel("CMOS Compatible"),
-		widget.NewLabel("Scalable"),
-	)
+	// Header row - simplified categories
+	headers := []string{"Technology", "Energy", "Speed", "Endurance", "CMOS", "Scalable"}
+	var headerWidgets []fyne.CanvasObject
+	for _, h := range headers {
+		label := canvas.NewText(h, heroTextColor)
+		label.TextSize = 14
+		label.TextStyle = fyne.TextStyle{Bold: true}
+		label.Alignment = fyne.TextAlignCenter
+		headerWidgets = append(headerWidgets, container.NewCenter(label))
+	}
+	headerRow := container.NewGridWithColumns(6, headerWidgets...)
 
+	// Data rows
 	rows := container.NewVBox()
 	for _, comp := range competitors {
-		nameLabel := widget.NewLabel(comp.Name)
+		var rowWidgets []fyne.CanvasObject
+
+		// Technology name
+		nameText := canvas.NewText(comp.Name, heroTextColor)
 		if comp.Highlight {
-			nameLabel.TextStyle = fyne.TextStyle{Bold: true}
+			nameText.Color = heroCyanColor
+			nameText.TextStyle = fyne.TextStyle{Bold: true}
+		}
+		nameText.TextSize = 14
+		rowWidgets = append(rowWidgets, container.NewCenter(nameText))
+
+		// Checkmark columns
+		checks := []bool{comp.Energy, comp.Speed, comp.Endurance, comp.CMOS, comp.Scalable}
+		for _, hasCheck := range checks {
+			var icon fyne.Resource
+			if hasCheck {
+				icon = theme.ConfirmIcon()
+			} else {
+				icon = theme.CancelIcon()
+			}
+			rowWidgets = append(rowWidgets, container.NewCenter(widget.NewIcon(icon)))
 		}
 
-		// Render energy value in amber if estimated
-		var energyWidget fyne.CanvasObject
-		if comp.IsEstimated {
-			energyText := canvas.NewText(comp.Energy, estimatedAmber)
-			energyText.TextSize = 14
-			energyWidget = energyText
-		} else {
-			energyWidget = widget.NewLabel(comp.Energy)
-		}
-
-		row := container.NewGridWithColumns(5,
-			nameLabel,
-			energyWidget,
-			createStatusLabel(comp.InMemory),
-			createStatusLabel(comp.CMOS),
-			createStatusLabel(comp.Scalable),
-		)
+		row := container.NewGridWithColumns(6, rowWidgets...)
 		rows.Add(row)
 	}
 
-	// Add legend below the table
-	legend := widget.NewLabel("✓ = Yes | ⚠ = Partial | ✗ = No")
-	legend.TextStyle = fyne.TextStyle{Italic: true}
-	legend.Alignment = fyne.TextAlignCenter
+	// Capital light note (fabless model like NVIDIA)
+	fablessNote := canvas.NewText("Capital Light: Fabless model like NVIDIA", heroMutedColor)
+	fablessNote.TextSize = 12
+	fablessNote.TextStyle = fyne.TextStyle{Italic: true}
+	fablessNote.Alignment = fyne.TextAlignCenter
 
-	content := container.NewVBox(header, rows, legend)
+	// Disclaimer
+	disclaimer := canvas.NewText("* TRL 4 (Laboratory Validation) - Competitive position based on published research", estimatedColor)
+	disclaimer.TextSize = 10
+	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
+	disclaimer.Alignment = fyne.TextAlignCenter
+
+	content := container.NewVBox(
+		container.NewCenter(heroText),
+		widget.NewSeparator(),
+		headerRow,
+		widget.NewSeparator(),
+		rows,
+		widget.NewSeparator(),
+		container.NewCenter(fablessNote),
+		container.NewCenter(disclaimer),
+	)
 	return widget.NewSimpleRenderer(content)
 }
 

@@ -259,50 +259,37 @@ func drawBox(img *image.RGBA, x, y, width, height int, c color.RGBA) {
 	}
 }
 
-// DataCenterCalculator shows power and cost calculations.
+// DataCenterCalculator shows power and cost calculations - INVESTOR GRADE.
+// HERO: Dynamic "$XX MILLION ANNUAL SAVINGS"
 type DataCenterCalculator struct {
 	widget.BaseWidget
 
+	// Hero display
+	heroSavingsText  *canvas.Text
+	heroSavingsLabel *canvas.Text
+
+	// Comparison display
+	gpuCostText    *canvas.Text
+	fecimCostText  *canvas.Text
+	savingsPercent *canvas.Text
+
+	// Configuration display
 	workloadLabel   *widget.Label
-	macsLabel       *widget.Label
 	inferencesLabel *widget.Label
 
-	cpuEnergyLabel   *widget.Label
-	gpuEnergyLabel   *widget.Label
-	fecimEnergyLabel *widget.Label
-
-	cpuPowerLabel   *widget.Label
-	gpuPowerLabel   *widget.Label
-	fecimPowerLabel *widget.Label
-
-	cpuCostLabel   *widget.Label
-	gpuCostLabel   *widget.Label
-	fecimCostLabel *widget.Label
-
-	savingsLabel *widget.Label
+	// Internal values for calculations
+	currentWorkload   string
+	currentInferences float64
+	currentGpuCost    float64
+	currentFecimCost  float64
+	annualSavings     float64
 }
 
 // NewDataCenterCalculator creates a new calculator widget.
 func NewDataCenterCalculator() *DataCenterCalculator {
 	d := &DataCenterCalculator{}
-	d.workloadLabel = widget.NewLabel("Workload: -")
-	d.macsLabel = widget.NewLabel("MACs/inference: -")
-	d.inferencesLabel = widget.NewLabel("Inferences/sec: -")
-
-	d.cpuEnergyLabel = widget.NewLabel("CPU: - µJ/inf")
-	d.gpuEnergyLabel = widget.NewLabel("GPU: - µJ/inf")
-	d.fecimEnergyLabel = widget.NewLabel("FeCIM: - µJ/inf")
-
-	d.cpuPowerLabel = widget.NewLabel("CPU: - W")
-	d.gpuPowerLabel = widget.NewLabel("GPU: - W")
-	d.fecimPowerLabel = widget.NewLabel("FeCIM: - W")
-
-	d.cpuCostLabel = widget.NewLabel("CPU: $-/month")
-	d.gpuCostLabel = widget.NewLabel("GPU: $-/month")
-	d.fecimCostLabel = widget.NewLabel("FeCIM: $-/month")
-
-	d.savingsLabel = widget.NewLabelWithStyle("Savings: -", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	d.savingsLabel.Importance = widget.HighImportance
+	d.workloadLabel = widget.NewLabel("Workload: MNIST")
+	d.inferencesLabel = widget.NewLabel("Scale: 10,000 servers")
 
 	d.ExtendBaseWidget(d)
 	return d
@@ -317,78 +304,131 @@ func (d *DataCenterCalculator) SetResults(
 	cpuPower, gpuPower, fecimPower float64,
 	cpuCost, gpuCost, fecimCost float64,
 ) {
-	d.workloadLabel.SetText(fmt.Sprintf("Workload: %s", workload))
-	d.macsLabel.SetText(fmt.Sprintf("MACs/inference: %s", formatNumberWithSuffix(float64(macs))))
-	d.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", inferences))
+	d.currentWorkload = workload
+	d.currentInferences = inferences
+	d.currentGpuCost = gpuCost
+	d.currentFecimCost = fecimCost
 
-	d.cpuEnergyLabel.SetText(fmt.Sprintf("CPU: %s/inf [1]", formatEnergy(cpuEnergy)))
-	d.gpuEnergyLabel.SetText(fmt.Sprintf("GPU: %s/inf [2]", formatEnergy(gpuEnergy)))
-	d.fecimEnergyLabel.SetText(fmt.Sprintf("FeCIM: %s/inf [3]*", formatEnergy(fecimEnergy)))
-
-	d.cpuPowerLabel.SetText(fmt.Sprintf("CPU: %s", formatPower(cpuPower)))
-	d.gpuPowerLabel.SetText(fmt.Sprintf("GPU: %s", formatPower(gpuPower)))
-	d.fecimPowerLabel.SetText(fmt.Sprintf("FeCIM: %s*", formatPower(fecimPower)))
-
-	d.cpuCostLabel.SetText(fmt.Sprintf("CPU: %s/month", formatCost(cpuCost)))
-	d.gpuCostLabel.SetText(fmt.Sprintf("GPU: %s/month", formatCost(gpuCost)))
-	d.fecimCostLabel.SetText(fmt.Sprintf("FeCIM: %s/month*", formatCost(fecimCost)))
-
-	savingsVsGPU := (gpuCost - fecimCost) / gpuCost * 100
-	d.savingsLabel.SetText(fmt.Sprintf("Potential Savings vs GPU: %.0f%%*", savingsVsGPU))
+	// Calculate annual savings (monthly * 12 * 10,000 server scale factor)
+	serverScale := 10000.0
+	monthlyGpuCost := gpuCost * serverScale
+	monthlyFecimCost := fecimCost * serverScale
+	d.annualSavings = (monthlyGpuCost - monthlyFecimCost) * 12
 
 	fyne.Do(func() {
+		if d.workloadLabel != nil {
+			d.workloadLabel.SetText(fmt.Sprintf("Workload: %s", workload))
+		}
+		if d.inferencesLabel != nil {
+			d.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", inferences))
+		}
+
+		// Update hero savings display
+		if d.heroSavingsText != nil {
+			d.heroSavingsText.Text = formatHeroMoney(d.annualSavings)
+			canvas.Refresh(d.heroSavingsText)
+		}
+
+		// Update comparison display
+		if d.gpuCostText != nil {
+			d.gpuCostText.Text = fmt.Sprintf("GPU Baseline: %s/month", formatCost(monthlyGpuCost))
+			canvas.Refresh(d.gpuCostText)
+		}
+		if d.fecimCostText != nil {
+			d.fecimCostText.Text = fmt.Sprintf("FeCIM: %s/month*", formatCost(monthlyFecimCost))
+			canvas.Refresh(d.fecimCostText)
+		}
+		if d.savingsPercent != nil {
+			savingsPct := (gpuCost - fecimCost) / gpuCost * 100
+			d.savingsPercent.Text = fmt.Sprintf("SAVINGS: %.0f%%*", savingsPct)
+			canvas.Refresh(d.savingsPercent)
+		}
+
 		d.Refresh()
 	})
 }
 
+// formatHeroMoney formats large money values for hero display.
+func formatHeroMoney(amount float64) string {
+	if amount >= 1e9 {
+		return fmt.Sprintf("$%.1fB", amount/1e9)
+	} else if amount >= 1e6 {
+		return fmt.Sprintf("$%.0fM", amount/1e6)
+	} else if amount >= 1e3 {
+		return fmt.Sprintf("$%.0fK", amount/1e3)
+	}
+	return fmt.Sprintf("$%.0f", amount)
+}
+
 // CreateRenderer implements fyne.Widget.
 func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
-	// Configuration section
-	configBox := container.NewVBox(
+	// === HERO SECTION: DYNAMIC ANNUAL SAVINGS ===
+	d.heroSavingsText = canvas.NewText("$0M", color.RGBA{46, 204, 113, 255}) // Green for money
+	d.heroSavingsText.TextSize = 72
+	d.heroSavingsText.TextStyle = fyne.TextStyle{Bold: true}
+	d.heroSavingsText.Alignment = fyne.TextAlignCenter
+
+	d.heroSavingsLabel = canvas.NewText("ANNUAL SAVINGS", color.RGBA{0, 212, 255, 255})
+	d.heroSavingsLabel.TextSize = 24
+	d.heroSavingsLabel.TextStyle = fyne.TextStyle{Bold: true}
+	d.heroSavingsLabel.Alignment = fyne.TextAlignCenter
+
+	heroSection := container.NewVBox(
+		container.NewCenter(d.heroSavingsText),
+		container.NewCenter(d.heroSavingsLabel),
+	)
+
+	// === CONFIGURATION ROW ===
+	configRow := container.NewHBox(
 		d.workloadLabel,
-		d.macsLabel,
+		widget.NewLabel("|"),
 		d.inferencesLabel,
+		widget.NewLabel("|"),
+		widget.NewLabel("Scale: 10,000 servers"),
 	)
 
-	// Energy section
-	energyLabel := widget.NewLabelWithStyle("Energy per Inference:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	energyBox := container.NewVBox(
-		energyLabel,
-		d.cpuEnergyLabel,
-		d.gpuEnergyLabel,
-		d.fecimEnergyLabel,
-	)
+	// === COMPARISON SECTION ===
+	d.gpuCostText = canvas.NewText("GPU Baseline: $0/month", color.RGBA{231, 76, 60, 255}) // Red
+	d.gpuCostText.TextSize = 20
+	d.gpuCostText.Alignment = fyne.TextAlignCenter
 
-	// Power section
-	powerLabel := widget.NewLabelWithStyle("Total Power:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	powerBox := container.NewVBox(
-		powerLabel,
-		d.cpuPowerLabel,
-		d.gpuPowerLabel,
-		d.fecimPowerLabel,
-	)
+	d.fecimCostText = canvas.NewText("FeCIM: $0/month*", color.RGBA{46, 204, 113, 255}) // Green
+	d.fecimCostText.TextSize = 20
+	d.fecimCostText.Alignment = fyne.TextAlignCenter
 
-	// Cost section
-	costLabel := widget.NewLabelWithStyle("Monthly Cost (@$0.10/kWh):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	costBox := container.NewVBox(
-		costLabel,
-		d.cpuCostLabel,
-		d.gpuCostLabel,
-		d.fecimCostLabel,
+	d.savingsPercent = canvas.NewText("SAVINGS: 99%*", color.RGBA{0, 212, 255, 255}) // Cyan
+	d.savingsPercent.TextSize = 28
+	d.savingsPercent.TextStyle = fyne.TextStyle{Bold: true}
+	d.savingsPercent.Alignment = fyne.TextAlignCenter
+
+	comparisonSection := container.NewVBox(
+		container.NewCenter(d.gpuCostText),
+		container.NewCenter(d.fecimCostText),
 		widget.NewSeparator(),
-		d.savingsLabel,
+		container.NewCenter(d.savingsPercent),
 	)
 
-	// Disclaimer - clarity on verification status
-	disclaimer := widget.NewLabel("* FeCIM energy values based on Dr. Tour's COSM 2025 claims. Independent verification pending.")
+	// === PROJECTION NOTE ===
+	projectionNote := canvas.NewText("A 10,000 server data center saves millions per year", color.RGBA{160, 180, 200, 255})
+	projectionNote.TextSize = 14
+	projectionNote.TextStyle = fyne.TextStyle{Italic: true}
+	projectionNote.Alignment = fyne.TextAlignCenter
+
+	// === DISCLAIMER ===
+	disclaimer := canvas.NewText("* TRL 4 estimates - FeCIM values are laboratory projections, not production costs", color.RGBA{255, 191, 0, 255})
+	disclaimer.TextSize = 11
 	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
+	disclaimer.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
-		configBox,
+		heroSection,
 		widget.NewSeparator(),
-		container.NewGridWithColumns(3, energyBox, powerBox, costBox),
+		container.NewCenter(configRow),
 		widget.NewSeparator(),
-		disclaimer,
+		container.NewPadded(comparisonSection),
+		container.NewCenter(projectionNote),
+		widget.NewSeparator(),
+		container.NewCenter(disclaimer),
 	)
 
 	return widget.NewSimpleRenderer(content)
@@ -396,7 +436,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns minimum size.
 func (d *DataCenterCalculator) MinSize() fyne.Size {
-	return fyne.NewSize(400, 180)
+	return fyne.NewSize(700, 380)
 }
 
 // VerifiedClaimsTable shows what's verified vs claimed.

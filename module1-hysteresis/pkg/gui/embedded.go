@@ -34,8 +34,6 @@ func NewEmbeddedApp() *EmbeddedApp {
 		autoMode:       true,
 		waveform:       WaveformSine,
 		frequency:      0.5, // 0.5 Hz default
-		rwTargetLevel:  25,
-		rwStepDelay:    2.5, // 2.5 seconds between random level changes
 		wrdTargetLevel: 28,  // Start high for dramatic first write
 		maxLogLines:    12,
 		logEntries:     make([]string, 0, 12),

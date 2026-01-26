@@ -187,13 +187,13 @@ func (app *DualModeApp) Start() {
 	// Set layout offsets (deferred from createMainLayout to avoid layout cascade)
 	fyne.Do(func() {
 		if app.leftSplit != nil {
-			app.leftSplit.SetOffset(0.35) // 35% drawing, 65% controls
+			app.leftSplit.SetOffset(0.50) // 50% drawing, 50% controls (increased canvas space)
 		}
 		if app.rightSplit != nil {
 			app.rightSplit.SetOffset(0.55) // 55% results, 45% weights
 		}
 		if app.mainSplit != nil {
-			app.mainSplit.SetOffset(0.35) // 35% left, 65% right
+			app.mainSplit.SetOffset(0.40) // 40% left, 60% right (increased left column width)
 		}
 	})
 
@@ -562,11 +562,15 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 	app.hiddenSelect.SetSelected("128")
 
-	selectsRow := container.NewGridWithColumns(6,
+	// ADC/DAC/Hidden selects - use 2 rows for better spacing
+	selectsRow1 := container.NewGridWithColumns(4,
 		widget.NewLabel("ADC:"), app.adcSelect,
 		widget.NewLabel("DAC:"), app.dacSelect,
+	)
+	selectsRow2 := container.NewGridWithColumns(2,
 		widget.NewLabel("Hidden:"), app.hiddenSelect,
 	)
+	selectsRow := container.NewVBox(selectsRow1, selectsRow2)
 
 	// Preset buttons (first row: standard presets)
 	idealBtn := widget.NewButton("Ideal", func() {
@@ -594,7 +598,10 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 	tourBtn.Importance = widget.HighImportance // Highlight this button
 
-	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
+	// Preset buttons - use 2 rows for better spacing (3+2)
+	presetRow1 := container.NewGridWithColumns(3, idealBtn, quantCliffBtn, noisyBtn)
+	presetRow2 := container.NewGridWithColumns(2, brokenBtn, tourBtn)
+	presetRow := container.NewVBox(presetRow1, presetRow2)
 
 	// Quick test with progress bar
 	app.testResultLabel = widget.NewLabel("")
@@ -605,12 +612,6 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.runQuickTest()
 	})
 
-	// P1.1: Quantization Visualization Widget
-	app.quantizationWidget = NewQuantizationWidget()
-
-	// P1.3: Energy Tracking Widget
-	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
-
 	// Controls header (compact, fixed height)
 	controlsHeader := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testProgressBar, app.testResultLabel),
@@ -620,22 +621,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		presetRow,
 	)
 
-	// P1 widgets that expand to fill space (shown in Config tab)
-	p1ExpandingContent := container.NewVSplit(
-		app.quantizationWidget,
-		app.energyWidget,
-	)
-	p1ExpandingContent.SetOffset(0.5) // Equal split
-
-	// Config tab: controls at top, P1 widgets fill remaining space
-	// This eliminates the need for a separate Quantization tab and uses the space better
-	configTab := container.NewBorder(
-		controlsHeader,
-		nil, nil, nil,
-		p1ExpandingContent,
-	)
-
-	return configTab
+	return controlsHeader
 }
 
 // createWeightZone creates the weight visualization zone (Zone 4).
@@ -708,17 +694,26 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		),
 	)
 
+	// P1 Enhancement Widgets (moved from controls zone for better space utilization)
+	fmt.Println("[MNIST] createWeightZone: creating P1 widgets...")
+	app.quantizationWidget = NewQuantizationWidget()
+	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
+
 	// Create tabbed view for different weight visualizations
 	fmt.Println("[MNIST] createWeightZone: creating tabs...")
 	// Add legend to the left of the heatmap
 	quantizedTab := container.NewBorder(nil, nil, weightLegend, nil, app.weightHeatmap)
 	comparisonTab := container.NewMax(app.weightComparisonWidget)
 	sideBySideTab := container.NewMax(app.dualWeightHeatmap)
+	quantizationTab := container.NewMax(app.quantizationWidget)
+	energyTab := container.NewMax(app.energyWidget)
 
 	weightTabs := container.NewAppTabs(
 		container.NewTabItem("Quantized", quantizedTab),
 		container.NewTabItem("FP vs Quant", comparisonTab),
 		container.NewTabItem("Side-by-Side", sideBySideTab),
+		container.NewTabItem("Quantization", quantizationTab),
+		container.NewTabItem("Energy", energyTab),
 	)
 
 	fmt.Println("[MNIST] createWeightZone: returning...")
