@@ -295,7 +295,7 @@ The 30 discrete states arise from:
 To visualize these differences in the FeCIM Visualizer:
 
 ```go
-import "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+import "fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 
 // Create models
 defaultMat := ferroelectric.DefaultHZO()

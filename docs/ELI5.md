@@ -1234,7 +1234,7 @@ Run: cd module5-comparison && go run ./cmd/comparison --all --workload=bert
 # Part 12: The Code Structure
 
 ```
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 │
 ├── module1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
 │   ├── cmd/hysteresis/    ← Main program

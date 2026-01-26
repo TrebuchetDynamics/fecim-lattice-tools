@@ -15,10 +15,10 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/shared/logging"
-	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/logging"
+	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Package-level logger using shared logging infrastructure

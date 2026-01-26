@@ -381,8 +381,8 @@ cp demo7-nonidealities/pkg/drift/*.go module2-crossbar/pkg/crossbar/
 # Change: package drift → package crossbar
 
 # 3. Update imports in moved files
-# Old: "multilayer-ferroelectric-cim-visualizer/demo7-nonidealities/pkg/irdrop"
-# New: "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+# Old: "fecim-lattice-tools/demo7-nonidealities/pkg/irdrop"
+# New: "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 ```
 
 **Day 3: Create tabbed GUI**
@@ -396,7 +396,7 @@ import (
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/widget"
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 type IdealTab struct {
@@ -439,7 +439,7 @@ import (
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/widget"
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 type IRDropTab struct {
@@ -499,8 +499,8 @@ import (
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/app"
     "fyne.io/fyne/v2/container"
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui/tabs"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
 )
 
 type CrossbarApp struct {
@@ -749,7 +749,7 @@ See `docs/archive/removed-demos/README.md` for details.
 
 ```bash
 # New structure
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 ├── module1-hysteresis/          ✅ Keep as-is
 ├── module2-crossbar/            ✅ Enhanced with tabs
 ├── module3-mnist/               🚀 Full enhancement (Phase 2)
@@ -1288,7 +1288,7 @@ import (
     "fyne.io/fyne/v2/widget"
     "fyne.io/fyne/v2/canvas"
     "image/color"
-    "multilayer-ferroelectric-cim-visualizer/demo5-comparison/pkg/comparison"
+    "fecim-lattice-tools/demo5-comparison/pkg/comparison"
 )
 
 type EnergySection struct {
@@ -1426,7 +1426,7 @@ import (
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/widget"
-    "multilayer-ferroelectric-cim-visualizer/demo5-comparison/pkg/calculator"
+    "fecim-lattice-tools/demo5-comparison/pkg/calculator"
 )
 
 type CalculatorSection struct {
@@ -1550,7 +1550,7 @@ import (
     "fyne.io/fyne/v2/app"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/widget"
-    "multilayer-ferroelectric-cim-visualizer/demo5-comparison/pkg/gui/sections"
+    "fecim-lattice-tools/demo5-comparison/pkg/gui/sections"
 )
 
 type ComparisonApp struct {
@@ -1623,7 +1623,7 @@ func (a *ComparisonApp) Run() {
 
 package main
 
-import "multilayer-ferroelectric-cim-visualizer/demo5-comparison/pkg/gui"
+import "fecim-lattice-tools/demo5-comparison/pkg/gui"
 
 func main() {
     app := gui.NewComparisonApp()
@@ -1734,7 +1734,7 @@ This project uses a modular architecture with shared utilities and independent d
 ## Directory Structure
 
 ```
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 ├── module1-hysteresis/          # Standalone demo
 ├── module2-crossbar/            # Shared crossbar package
 ├── module3-mnist/               # Imports demo2/crossbar
@@ -1754,7 +1754,7 @@ multilayer-ferroelectric-cim-visualizer/
 Demo 3 (MNIST) imports crossbar simulation from Demo 2:
 
 ```go
-import "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+import "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 ```
 
 This provides:
@@ -1768,7 +1768,7 @@ This provides:
 All demos use consistent FeCIM branding:
 
 ```go
-import "multilayer-ferroelectric-cim-visualizer/shared/theme"
+import "fecim-lattice-tools/shared/theme"
 
 app.Settings().SetTheme(theme.FeCIMTheme())
 ```
@@ -1929,7 +1929,7 @@ Thank you for your interest in contributing!
 
 Found a bug? Have a suggestion?
 
-[Open an issue](https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer/issues)
+[Open an issue](https://github.com/your-org/fecim-lattice-tools/issues)
 
 Include:
 - Demo name and version
@@ -1949,8 +1949,8 @@ Documentation improvements are always welcome:
 
 #### Setup
 ```bash
-git clone https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer
-cd multilayer-ferroelectric-cim-visualizer
+git clone https://github.com/your-org/fecim-lattice-tools
+cd fecim-lattice-tools
 go mod download
 scripts/build-all.sh
 scripts/test-all.sh
@@ -2073,7 +2073,7 @@ func (t *fecimTheme) Size(name fyne.ThemeSizeName) float32 {
 ```go
 // In any demo's main.go
 
-import "multilayer-ferroelectric-cim-visualizer/shared/theme"
+import "fecim-lattice-tools/shared/theme"
 
 func main() {
     app := app.NewWithID("com.fecim.demo")

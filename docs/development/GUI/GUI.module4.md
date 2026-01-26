@@ -2,7 +2,7 @@
 Module: module4-circuits
 Name: Peripheral Circuits Visualizer
 Entry: cmd/circuits-gui/main.go
-Package: multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui
+Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
 Last Updated: 2026-01-25
@@ -846,9 +846,9 @@ for c := 0; c < min(8, cols); c++ {
 - fyne.io/fyne/v2/driver/desktop (for Cursor() interface)
 
 ### Internal Packages
-- multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals (DAC, ADC, TIA, ChargePump)
-- multilayer-ferroelectric-cim-visualizer/shared/theme (FeCIMTheme, ColorPrimary, etc.)
-- multilayer-ferroelectric-cim-visualizer/shared/widgets (DebugInteraction)
+- fecim-lattice-tools/module4-circuits/pkg/peripherals (DAC, ADC, TIA, ChargePump)
+- fecim-lattice-tools/shared/theme (FeCIMTheme, ColorPrimary, etc.)
+- fecim-lattice-tools/shared/widgets (DebugInteraction)
 
 ### Peripheral Components (module4-circuits/pkg/peripherals)
 - DAC: DefaultDAC() - 8-bit, 0-1V output

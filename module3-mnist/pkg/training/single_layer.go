@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // SingleLayerNetwork represents a single-layer neural network for MNIST.

@@ -8,8 +8,8 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/shared/utils"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // runEnhancedMVM performs MVM with full non-ideality analysis and updates all widgets.

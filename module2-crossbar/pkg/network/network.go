@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/rand"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // Config contains neural network configuration.

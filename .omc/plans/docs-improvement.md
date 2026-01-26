@@ -25,7 +25,7 @@ Current documentation is comprehensive but not optimized for AI agent lookups:
 - 131 lines in CLAUDE.md - contains duplicated info from scriptReference
 - 6 modules with consistent embedded.go pattern
 - `fyne.Do()` used in 30+ locations for thread-safe UI updates
-- All modules follow same import pattern from multilayer-ferroelectric-cim-visualizer/
+- All modules follow same import pattern from fecim-lattice-tools/
 
 ---
 
@@ -164,7 +164,7 @@ Add after Quick Navigation:
 | UI not updating | Missing `fyne.Do()` wrapper | Wrap UI update in `fyne.Do(func() { ... })` |
 | Nil pointer in GUI | Widget not initialized | Check `BuildContent()` called before `Start()` |
 | Wrong quantization | Check `FeCIMLevels` constant | Use `crossbar.QuantizeTo30Levels()` |
-| Import error | Check module path | Use `multilayer-ferroelectric-cim-visualizer/module*` |
+| Import error | Check module path | Use `fecim-lattice-tools/module*` |
 | Test fails on CI | GUI test without display | Mock or skip with `t.Skip()` |
 ```
 
@@ -190,7 +190,7 @@ Add new section:
 | Error Message | Cause | Fix |
 |---------------|-------|-----|
 | `panic: runtime error: invalid memory address` | UI update from goroutine | Wrap in `fyne.Do(func() { ... })` |
-| `undefined: crossbar.NewArray` | Wrong import path | Import `multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar` |
+| `undefined: crossbar.NewArray` | Wrong import path | Import `fecim-lattice-tools/module2-crossbar/pkg/crossbar` |
 | `type *XxxApp has no field or method BuildContent` | Missing embedded interface | Implement full interface: `BuildContent()`, `Start()`, `Stop()` |
 | `cannot use x (type float64) as type int` | Quantization type mismatch | Use `int(crossbar.QuantizeTo30Levels(x))` for level index |
 | `fyne: no OpenGL context` | GUI test without display | Add `t.Skip("Requires display")` or mock |
@@ -267,25 +267,25 @@ go func() {
 ```go
 import (
     // Core crossbar
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 
     // Hysteresis model
-    "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+    "fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 
     // MNIST network
-    "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+    "fecim-lattice-tools/module3-mnist/pkg/core"
 
     // Circuit peripherals
-    "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+    "fecim-lattice-tools/module4-circuits/pkg/peripherals"
 
     // Comparison
-    "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/comparison"
+    "fecim-lattice-tools/module5-comparison/pkg/comparison"
 
     // EDA compiler
-    "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+    "fecim-lattice-tools/module6-eda/pkg/compiler"
 
     // Shared theme
-    "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    "fecim-lattice-tools/shared/theme"
 
     // Fyne GUI
     "fyne.io/fyne/v2"
@@ -488,7 +488,7 @@ func (app *EmbeddedNewDemoApp) Stop() {
 
 3. Register in `cmd/fecim-visualizer/main.go`:
 ```go
-import newdemo "multilayer-ferroelectric-cim-visualizer/module7-newdemo/pkg/gui"
+import newdemo "fecim-lattice-tools/module7-newdemo/pkg/gui"
 
 // In main(), add to DemoApp:
 newDemoApp := newdemo.NewEmbeddedNewDemoApp()

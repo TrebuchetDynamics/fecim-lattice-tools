@@ -16,7 +16,7 @@ package export
 
 import (
 	"fmt"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/config"
 )
 
 // GenerateLiberty generates a Liberty (.lib) timing file for the FeCIM bitcell

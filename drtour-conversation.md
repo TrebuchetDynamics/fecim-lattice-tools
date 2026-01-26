@@ -2,7 +2,7 @@
 
 **Date:** January 2025
 **Context:** Self-critique exercise before reaching out to Dr. external research group's team about ferroelectric CIM visualization project
-multilayer-ferroelectric-cim-visualizer
+fecim-lattice-tools
 ---
 
 ## Part 1: The Critique (Roleplay as Dr. Tour)
@@ -325,10 +325,10 @@ Your call. No pressure either way.
 | Category | Count | Action |
 |----------|-------|--------|
 | `go.mod` | 1 | Change module name to `fecim-demos` |
-| Go imports | ~100+ | Update all `multilayer-ferroelectric-cim-visualizer/...` imports |
+| Go imports | ~100+ | Update all `fecim-lattice-tools/...` imports |
 | UI strings | ~30 | Change window titles, labels |
 | README/docs | ~40 | Rebrand, keep Tour quotes with attribution |
-| Directory | 1 | `docs/multilayer-ferroelectric-cim-visualizer/` → `docs/project/` |
+| Directory | 1 | `docs/fecim-lattice-tools/` → `docs/project/` |
 
 ### What Changes vs. What Stays
 
@@ -603,7 +603,7 @@ If there's something specific that would help IronLattice - investor demos, desi
 exploration, or integration with your actual device models - I'd rather build that
 than guess.
 
-GitHub: github.com/XelHaku/multilayer-ferroelectric-cim-visualizer
+GitHub: github.com/your-org/fecim-lattice-tools
 Demo video: [link]
 
 FeCIM Maintainers

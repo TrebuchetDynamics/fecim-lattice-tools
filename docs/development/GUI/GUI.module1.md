@@ -2,7 +2,7 @@
 Module: module1-hysteresis
 Name: Hysteresis Visualizer
 Entry: cmd/hysteresis/main.go
-Package: multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui
+Package: fecim-lattice-tools/module1-hysteresis/pkg/gui
 ---
 
 Bugs:

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
 )
 
 // DEFConfig holds configuration for DEF generation

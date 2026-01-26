@@ -10,9 +10,9 @@ import (
 	"log"
 	"math/rand"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/network"
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/visualization"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/network"
+	"fecim-lattice-tools/module2-crossbar/pkg/visualization"
 )
 
 func main() {

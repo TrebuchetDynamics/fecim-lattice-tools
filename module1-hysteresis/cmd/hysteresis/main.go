@@ -16,11 +16,11 @@ import (
 	"log"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/render"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/simulation"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/tui"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/gui"
+	"fecim-lattice-tools/module1-hysteresis/pkg/render"
+	"fecim-lattice-tools/module1-hysteresis/pkg/simulation"
+	"fecim-lattice-tools/module1-hysteresis/pkg/tui"
 )
 
 func main() {

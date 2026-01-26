@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
 )
 
 func TestGenerateVerilog(t *testing.T) {

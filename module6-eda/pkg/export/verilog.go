@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/shared/logging"
 )
 
 // VerilogConfig holds configuration for Verilog generation
@@ -32,18 +33,22 @@ func DefaultVerilogConfig() VerilogConfig {
 // Architecture is determined from design.Config.Architecture:
 //   - "passive": WL[], BL[] ports (sneak path susceptible)
 //   - "1T1R": WL[], BL[], SL[] ports (sneak path mitigated)
+//
 // For compute mode with weights, only exports cells within weight matrix bounds.
 // For other modes, exports all cells in the physical array.
 func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string {
+	logging.GlobalDebug("Generating Verilog netlist for module: %s", config.ModuleName)
 	var sb strings.Builder
 
 	// Filter cells to export based on mode
 	cellsToExport := filterActiveCells(design)
+	logging.GlobalDebug("Active cells to export: %d (total: %d)", len(cellsToExport), len(design.Cells))
 
 	// Find array dimensions from cells to export
 	maxRow, maxCol := findCellDimensions(cellsToExport)
 	numRows := maxRow + 1
 	numCols := maxCol + 1
+	logging.GlobalDebug("Array dimensions: %d rows x %d cols", numRows, numCols)
 
 	// Determine architecture
 	arch := design.Config.Architecture
@@ -51,6 +56,7 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 		arch = compiler.ArchPassive // Default to passive if not specified
 	}
 	is1T1R := arch == compiler.Arch1T1R
+	logging.GlobalDebug("Architecture: %s (1T1R=%v)", arch, is1T1R)
 
 	// Determine cell name based on architecture
 	cellName := config.CellName
@@ -143,12 +149,14 @@ func GenerateVerilogWithDefaults(design *compiler.ArrayDesign) string {
 
 // ExportVerilog writes Verilog netlist to file
 func ExportVerilog(design *compiler.ArrayDesign, path string) error {
+	logging.GlobalInfo("Exporting Verilog to: %s", path)
 	content := GenerateVerilogWithDefaults(design)
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
 // ExportVerilogWithConfig writes Verilog netlist to file with custom config
 func ExportVerilogWithConfig(design *compiler.ArrayDesign, path string, config VerilogConfig) error {
+	logging.GlobalInfo("Exporting Verilog to: %s (custom config)", path)
 	content := GenerateVerilog(design, config)
 	return os.WriteFile(path, []byte(content), 0644)
 }

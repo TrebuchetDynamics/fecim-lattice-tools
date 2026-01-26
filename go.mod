@@ -1,4 +1,4 @@
-module multilayer-ferroelectric-cim-visualizer
+module fecim-lattice-tools
 
 go 1.24.0
 

@@ -115,7 +115,7 @@ than just educational visualization), it needs calibration with your actual meas
 device parameters: P-E curves, coercive field distributions, programming voltage 
 characteristics, and device-to-device variation statistics.
 
-**Repository:** Private GitHub at https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer
+**Repository:** Private GitHub at https://github.com/your-org/fecim-lattice-tools
 
 To review the implementation, reply with your GitHub username(s) and I'll add you 
 as collaborators immediately.

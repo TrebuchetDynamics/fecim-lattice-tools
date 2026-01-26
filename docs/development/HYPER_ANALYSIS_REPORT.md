@@ -945,16 +945,16 @@ PROGRESS: 65/65 screenshots complete (Modules 1-5)
 ### Test Execution Results
 ```
 go test ./...
-ok  	multilayer-ferroelectric-cim-visualizer/cmd/fecim-visualizer
-ok  	multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric
-ok  	multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/simulation
-ok  	multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar
-ok  	multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core
-ok  	multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training
-ok  	multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals
-ok  	multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/comparison
-ok  	multilayer-ferroelectric-cim-visualizer/shared/logging
-ok  	multilayer-ferroelectric-cim-visualizer/shared/theme
+ok  	fecim-lattice-tools/cmd/fecim-visualizer
+ok  	fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric
+ok  	fecim-lattice-tools/module1-hysteresis/pkg/simulation
+ok  	fecim-lattice-tools/module2-crossbar/pkg/crossbar
+ok  	fecim-lattice-tools/module3-mnist/pkg/core
+ok  	fecim-lattice-tools/module3-mnist/pkg/training
+ok  	fecim-lattice-tools/module4-circuits/pkg/peripherals
+ok  	fecim-lattice-tools/module5-comparison/pkg/comparison
+ok  	fecim-lattice-tools/shared/logging
+ok  	fecim-lattice-tools/shared/theme
 ```
 
 ### Dr. Tour Specifications Verified by Tests

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // syncSelection updates the app-level selection and syncs it to all heatmaps.

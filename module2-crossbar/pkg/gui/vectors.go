@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // VectorBarChart displays a vector as a bar chart.

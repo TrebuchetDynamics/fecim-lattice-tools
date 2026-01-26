@@ -6,8 +6,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
+	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/gui/tabs"
 )
 
 // EmbeddedEDAApp is the embeddable version of the EDA app

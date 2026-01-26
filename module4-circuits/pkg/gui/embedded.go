@@ -7,7 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
 )
 
 // EmbeddedCircuitsApp holds the state for an embedded demo instance

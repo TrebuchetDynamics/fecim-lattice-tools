@@ -5,13 +5,24 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
+	"path/filepath"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
+	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/shared/logging"
 )
 
 func main() {
+	// Initialize logger
+	homeDir, _ := os.UserHomeDir()
+	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-lattice-gen.log")
+	if err := logging.Init("module6-eda-lattice-gen", logPath); err != nil {
+		// Fallback to standard error if logger init fails
+		os.Stderr.WriteString("Failed to initialize logging: " + err.Error() + "\n")
+		os.Exit(1)
+	}
+	defer logging.CloseGlobal()
+
 	rows := flag.Int("rows", 4, "Number of rows")
 	cols := flag.Int("cols", 4, "Number of columns")
 	outputDir := flag.String("output", "output/lattices", "Output directory")
@@ -19,24 +30,24 @@ func main() {
 
 	// Create output directory if needed
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating output dir: %v\n", err)
+		logging.GlobalError("Error creating output dir: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Generate files
 	verilogPath, err := export.WriteLatticeVerilog(*rows, *cols, *outputDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing Verilog: %v\n", err)
+		logging.GlobalError("Error writing Verilog: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Generated: %s\n", verilogPath)
+	logging.Printf("Generated: %s\n", verilogPath)
 
 	defPath, err := export.WriteLatticeDEF(*rows, *cols, *outputDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing DEF: %v\n", err)
+		logging.GlobalError("Error writing DEF: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Generated: %s\n", defPath)
+	logging.Printf("Generated: %s\n", defPath)
 
-	fmt.Printf("\nLattice %dx%d generated successfully (%d cells)\n", *rows, *cols, (*rows)*(*cols))
+	logging.Printf("\nLattice %dx%d generated successfully (%d cells)\n", *rows, *cols, (*rows)*(*cols))
 }

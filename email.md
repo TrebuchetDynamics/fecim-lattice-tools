@@ -43,7 +43,7 @@ I also appreciate your work on faith and science - it's part of why I paid atten
 
 If this could help IronLattice with investor demos, foundry discussions, or design exploration, I'd rather build what you actually need than guess.
 
-GitHub: github.com/XelHaku/multilayer-ferroelectric-cim-visualizer
+GitHub: github.com/your-org/fecim-lattice-tools
 Demo video: [2-minute walkthrough]
 
 FeCIM Maintainers

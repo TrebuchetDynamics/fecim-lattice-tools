@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // PEPlot is a custom widget that displays a P-E hysteresis loop.

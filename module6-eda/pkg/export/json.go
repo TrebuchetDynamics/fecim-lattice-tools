@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
 )
 
 // ExportJSON writes the array design to a JSON file.

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
 // Simple 2-layer network with quantization-aware training

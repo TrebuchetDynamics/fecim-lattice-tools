@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
 )
 
 func main() {

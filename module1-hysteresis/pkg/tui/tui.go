@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 // Styles using lipgloss

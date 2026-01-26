@@ -9,8 +9,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/shared/logging"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Package-level logger for crossbar GUI

@@ -2,7 +2,7 @@
 Module: module5-comparison
 Name: Technology Comparison & Technical Briefing
 Entry: cmd/comparison-gui/main.go
-Package: multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui
+Package: fecim-lattice-tools/module5-comparison/pkg/gui
 Description: |
   Technical briefing comparison demo showing FeCIM vs CPU/GPU architectures.
   Features animated energy comparisons, market analysis, ROI calculator,

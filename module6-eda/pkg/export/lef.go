@@ -11,7 +11,7 @@ package export
 
 import (
 	"fmt"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/config"
 )
 
 // GenerateLEF generates a LEF (Library Exchange Format) file for the FeCIM bitcell

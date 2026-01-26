@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 func (a *App) createControlsPanel() fyne.CanvasObject {

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
 // Network is a simple 2-layer network with per-layer quantization support

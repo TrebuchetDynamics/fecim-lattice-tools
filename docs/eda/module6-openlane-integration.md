@@ -51,7 +51,7 @@ Module 6 (FeCIM Design Suite) generates files compatible with OpenLane v1.0, ena
 ### Step 1: Generate Design Files
 
 ```bash
-cd multilayer-ferroelectric-cim-visualizer/module6-eda
+cd fecim-lattice-tools/module6-eda
 
 # Compile weights to Verilog + DEF
 go run ./cmd/eda-cli \
@@ -227,6 +227,6 @@ cd module6-eda
 
 ## Support
 
-- **Repository Issues:** https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer/issues
+- **Repository Issues:** https://github.com/your-org/fecim-lattice-tools/issues
 - **OpenLane Documentation:** https://openlane.readthedocs.io/
 - **SKY130 PDK:** https://skywater-pdk.readthedocs.io/

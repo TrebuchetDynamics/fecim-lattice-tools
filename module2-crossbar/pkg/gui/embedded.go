@@ -7,7 +7,7 @@ import (
 	"math/rand"
 
 	"fyne.io/fyne/v2"
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // EmbeddedCrossbarApp holds the state for an embedded crossbar demo instance

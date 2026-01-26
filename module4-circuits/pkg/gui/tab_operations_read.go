@@ -15,7 +15,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	sharedtheme "fecim-lattice-tools/shared/theme"
 )
 
 // ============================================================================

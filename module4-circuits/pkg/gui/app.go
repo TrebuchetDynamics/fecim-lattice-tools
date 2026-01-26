@@ -16,9 +16,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
-	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Constants

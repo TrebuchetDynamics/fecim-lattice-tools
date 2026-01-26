@@ -399,7 +399,7 @@ Dr. Tour's previous success story (from transcript):
 ## FILE STRUCTURE
 
 ```
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 ├── module1-hysteresis/     ✅ P-E curve + Fyne GUI
 ├── module2-crossbar/       ✅ Crossbar MVM + Fyne GUI
 ├── module3-mnist/          ✅ MNIST 95.8% + Fyne GUI

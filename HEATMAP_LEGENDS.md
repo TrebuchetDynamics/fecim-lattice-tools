@@ -95,7 +95,7 @@ All changes include:
 ```bash
 go test ./shared/widgets
 PASS
-ok  	multilayer-ferroelectric-cim-visualizer/shared/widgets	0.008s
+ok  	fecim-lattice-tools/shared/widgets	0.008s
 ```
 
 ## Benefits

@@ -11,8 +11,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/core"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
 // onDigitChanged handles canvas drawing updates.

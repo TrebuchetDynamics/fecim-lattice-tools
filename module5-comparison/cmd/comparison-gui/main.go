@@ -9,7 +9,7 @@
 package main
 
 import (
-	"multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
+	"fecim-lattice-tools/module5-comparison/pkg/gui"
 )
 
 func main() {

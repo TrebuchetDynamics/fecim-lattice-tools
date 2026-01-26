@@ -14,7 +14,7 @@
 package main
 
 import (
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/gui"
+	"fecim-lattice-tools/module3-mnist/pkg/gui"
 )
 
 func main() {

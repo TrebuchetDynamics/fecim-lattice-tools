@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 // TestEngineStartStop verifies thread-safe start/stop operations

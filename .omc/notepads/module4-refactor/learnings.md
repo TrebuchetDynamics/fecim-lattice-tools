@@ -63,7 +63,7 @@ All implementations follow proper thread safety:
 - Local theme had duplicate color definitions that should use shared theme
 
 #### 2. Updated App Initialization (app.go)
-- Added import: `sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"`
+- Added import: `sharedtheme "fecim-lattice-tools/shared/theme"`
 - Changed theme assignment from `&feCIMTheme{}` to `&sharedtheme.FeCIMTheme{}`
 - Lines modified: 6-20, 145
 

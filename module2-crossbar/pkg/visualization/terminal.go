@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // TerminalVisualizer provides ASCII/Unicode visualization of crossbar operations.

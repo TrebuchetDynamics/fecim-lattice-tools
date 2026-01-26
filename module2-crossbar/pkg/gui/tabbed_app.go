@@ -11,8 +11,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui/tabs"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
 )
 
 // TabbedCrossbarApp is the enhanced crossbar demo with 4 tabs.

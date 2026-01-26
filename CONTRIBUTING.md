@@ -7,8 +7,8 @@ Thank you for your interest in contributing to the FeCIM Visualizer project.
 1. **Fork** the repository
 2. **Clone** your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/multilayer-ferroelectric-cim-visualizer.git
-   cd multilayer-ferroelectric-cim-visualizer
+   git clone https://github.com/YOUR_USERNAME/fecim-lattice-tools.git
+   cd fecim-lattice-tools
    ```
 3. **Install dependencies:**
    ```bash
@@ -93,7 +93,7 @@ weights at the boundary conditions.
 ## Project Structure
 
 ```
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 ├── cmd/fecim-visualizer/     # Unified GUI entry point
 ├── module1-hysteresis/       # P-E curve visualization
 ├── module2-crossbar/         # Crossbar MVM + non-idealities

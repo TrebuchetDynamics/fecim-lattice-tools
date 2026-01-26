@@ -32,17 +32,17 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	demo1gui "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui"
-	demo2gui "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui"
-	demo3gui "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/gui"
-	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
-	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
-	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
-	demo7gui "multilayer-ferroelectric-cim-visualizer/module7-docs/pkg/gui"
-	"multilayer-ferroelectric-cim-visualizer/shared/logging"
-	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
-	"multilayer-ferroelectric-cim-visualizer/shared/utils"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
+	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
+	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
+	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
+	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
+	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
+	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
+	"fecim-lattice-tools/shared/logging"
+	sharedtheme "fecim-lattice-tools/shared/theme"
+	"fecim-lattice-tools/shared/utils"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Global logger for the main application

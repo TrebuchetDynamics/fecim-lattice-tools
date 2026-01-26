@@ -45,8 +45,8 @@ FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technol
 
 ```bash
 # Clone and run
-git clone https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer.git
-cd multilayer-ferroelectric-cim-visualizer
+git clone https://github.com/your-org/fecim-lattice-tools.git
+cd fecim-lattice-tools
 ./launch.sh
 ```
 

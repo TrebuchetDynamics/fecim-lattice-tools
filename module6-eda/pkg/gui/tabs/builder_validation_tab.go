@@ -16,10 +16,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/openlane"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/validation"
+	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/module6-eda/pkg/openlane"
+	"fecim-lattice-tools/module6-eda/pkg/validation"
+	"fecim-lattice-tools/shared/logging"
 )
 
 // MakeBuilderValidationTab creates a unified tab combining cell/array configuration,
@@ -34,7 +35,6 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	heightEntry := widget.NewEntry()
 	heightEntry.SetText("2.720")
-
 
 	riseEntry := widget.NewEntry()
 	riseEntry.SetText("0.1")
@@ -190,6 +190,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	logOutput.TextStyle.Monospace = true
 
 	addLog := func(msg string) {
+		logging.GlobalInfo(msg)
 		fyne.Do(func() {
 			logOutput.SetText(logOutput.Text + msg + "\n")
 		})
@@ -204,34 +205,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	pdkStatus := widget.NewLabel("Checking...")
 	placementResult := widget.NewLabel("Not validated")
 
-	// Check OpenLane status on startup
-	go func() {
-		manager := openlane.NewManager()
-		mode := manager.DetectMode()
-
-		fyne.Do(func() {
-			if mode == openlane.ModeDocker {
-				if manager.IsDockerImagePulled() {
-					dockerStatus.SetText("✓ Docker image ready")
-				} else {
-					dockerStatus.SetText("○ Docker image not pulled")
-				}
-			} else if mode == openlane.ModeNative {
-				dockerStatus.SetText("✓ Native tools detected")
-			} else {
-				dockerStatus.SetText("✗ OpenLane not available")
-			}
-
-			if manager.IsPDKInstalled() {
-				pdkStatus.SetText("✓ SKY130A PDK ready")
-			} else {
-				pdkStatus.SetText("○ PDK not installed (run: volare enable --pdk sky130 sky130A)")
-			}
-		})
-	}()
-
 	// Pull Docker Image button (only shown when needed)
-	pullImageBtn := widget.NewButton("Pull OpenLane Image", func() {
+	var pullImageBtn *widget.Button
+	pullImageBtn = widget.NewButton("Pull OpenLane Image", func() {
 		go func() {
 			fyne.Do(func() {
 				dockerStatus.SetText("Pulling image...")
@@ -251,11 +227,51 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			} else {
 				fyne.Do(func() {
 					dockerStatus.SetText("✓ Docker image ready")
+					pullImageBtn.Hide()
 				})
 				addLog("Docker image pulled successfully")
 			}
 		}()
 	})
+	pullImageBtn.Hide() // Initially hidden until check completes
+
+	// Check OpenLane status on startup
+	go func() {
+		manager := openlane.NewManager()
+		mode := manager.DetectMode()
+
+		fyne.Do(func() {
+			if mode == openlane.ModeDocker {
+				if manager.IsDockerImagePulled() {
+					dockerStatus.SetText("✓ Docker image ready")
+					pullImageBtn.Hide()
+				} else {
+					// Should not happen with current DetectMode logic, but for safety
+					dockerStatus.SetText("○ Docker image not pulled")
+					pullImageBtn.Show()
+				}
+			} else if mode == openlane.ModeNative {
+				dockerStatus.SetText("✓ Native tools detected")
+				pullImageBtn.Hide()
+			} else {
+				// ModeNone
+				if manager.IsDockerAvailable() {
+					dockerStatus.SetText("○ Docker found, image missing")
+					pullImageBtn.Show()
+					pullImageBtn.Enable()
+				} else {
+					dockerStatus.SetText("✗ OpenLane/Docker not available")
+					pullImageBtn.Disable()
+				}
+			}
+
+			if manager.IsPDKInstalled() {
+				pdkStatus.SetText("✓ SKY130A PDK ready")
+			} else {
+				pdkStatus.SetText("○ PDK not installed (run: volare enable --pdk sky130 sky130A)")
+			}
+		})
+	}()
 
 	// Placement validation checkbox
 	enablePlacementCheck := widget.NewCheck("Enable OpenLane Placement Check", nil)
@@ -673,16 +689,6 @@ Date: %s
 		pullImageBtn,
 		enablePlacementCheck,
 	)
-
-	// Update pull button visibility based on Docker status
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		fyne.Do(func() {
-			if strings.Contains(dockerStatus.Text, "not available") {
-				pullImageBtn.Hide()
-			}
-		})
-	}()
 
 	// Bottom section with improved layout - more space for validation, compact OpenLane
 	validationResultsPanel := container.NewVBox(

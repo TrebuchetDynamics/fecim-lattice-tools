@@ -44,7 +44,7 @@ Quick reference for file structure and key functions. Use this for fast lookups.
 | UI not updating | Missing `fyne.Do()` wrapper | Wrap in `fyne.Do(func() { ... })` |
 | Nil pointer in GUI | Widget not initialized | Check `BuildContent()` called before `Start()` |
 | Wrong quantization | Check `FeCIMLevels` constant | Use `crossbar.QuantizeTo30Levels()` |
-| Import error | Check module path | Use `multilayer-ferroelectric-cim-visualizer/module*` |
+| Import error | Check module path | Use `fecim-lattice-tools/module*` |
 | Test fails on CI | GUI test without display | Skip with `t.Skip("Requires display")` |
 | Goroutine panic | Race condition | Add mutex or use channels |
 
@@ -55,7 +55,7 @@ Quick reference for file structure and key functions. Use this for fast lookups.
 | Error Message | Cause | Fix |
 |---------------|-------|-----|
 | `panic: runtime error: invalid memory address` | UI update from goroutine | Wrap in `fyne.Do(func() { ... })` |
-| `undefined: crossbar.NewArray` | Wrong import path | Import `multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar` |
+| `undefined: crossbar.NewArray` | Wrong import path | Import `fecim-lattice-tools/module2-crossbar/pkg/crossbar` |
 | `type *XxxApp has no field or method BuildContent` | Missing embedded interface | Implement: `BuildContent()`, `Start()`, `Stop()` |
 | `cannot use x (type float64) as type int` | Quantization type mismatch | Use `int(crossbar.QuantizeTo30Levels(x) * 29)` for level index |
 | `fyne: no OpenGL context` | GUI test without display | Add `t.Skip("Requires display")` |
@@ -138,25 +138,25 @@ func (s *SafeState) Update(v float64) {
 ```go
 import (
     // Core crossbar (MVM, quantization)
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 
     // Hysteresis model (Preisach)
-    "multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+    "fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 
     // MNIST network (DualModeNetwork)
-    "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+    "fecim-lattice-tools/module3-mnist/pkg/core"
 
     // Circuit peripherals (DAC, ADC, TIA)
-    "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+    "fecim-lattice-tools/module4-circuits/pkg/peripherals"
 
     // Comparison metrics
-    "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/comparison"
+    "fecim-lattice-tools/module5-comparison/pkg/comparison"
 
     // EDA compiler
-    "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+    "fecim-lattice-tools/module6-eda/pkg/compiler"
 
     // Shared theme
-    "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    "fecim-lattice-tools/shared/theme"
 
     // Fyne GUI
     "fyne.io/fyne/v2"
@@ -247,7 +247,7 @@ func (app *EmbeddedNewDemoApp) Stop() {
 
 3. Register in `cmd/fecim-visualizer/main.go`:
 ```go
-import newdemo "multilayer-ferroelectric-cim-visualizer/module7-newdemo/pkg/gui"
+import newdemo "fecim-lattice-tools/module7-newdemo/pkg/gui"
 
 // In main(), add to demos slice:
 newDemoApp := newdemo.NewEmbeddedNewDemoApp()
@@ -304,7 +304,7 @@ To modify quantization:
 ### Running Inference with Custom Parameters
 
 ```go
-import "multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+import "fecim-lattice-tools/module3-mnist/pkg/core"
 
 // Create network with custom config
 config := core.DefaultNetworkConfig()
@@ -326,7 +326,7 @@ fmt.Printf("FP prediction: %d, CIM prediction: %d\n", result.FPPrediction, resul
 import (
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/canvas"
-    "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+    "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // Get conductance matrix from array
@@ -347,7 +347,7 @@ for i := 0; i < 8; i++ {
 ## Directory Structure
 
 ```
-multilayer-ferroelectric-cim-visualizer/
+fecim-lattice-tools/
 ├── cmd/
 │   ├── fecim-visualizer/          # Unified GUI application entry point
 │   │   ├── main.go                # Main entry, creates tabbed app with 5 demos

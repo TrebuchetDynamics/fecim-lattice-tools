@@ -18,10 +18,10 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui/widgets"
-	"multilayer-ferroelectric-cim-visualizer/shared/logging"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
+	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Package-level logger for hysteresis GUI

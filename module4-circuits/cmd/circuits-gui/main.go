@@ -6,7 +6,7 @@
 package main
 
 import (
-	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
+	"fecim-lattice-tools/module4-circuits/pkg/gui"
 )
 
 func main() {

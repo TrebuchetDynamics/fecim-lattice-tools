@@ -2,7 +2,7 @@
 Module: module6-eda
 Name: FeCIM Design Suite - EDA
 Entry: module6-eda/cmd/eda-gui/main.go
-Package: multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui
+Package: fecim-lattice-tools/module6-eda/pkg/gui
 Description: |
   Educational array builder that demonstrates how FeCIM crossbar arrays could
   integrate with open-source EDA tools (OpenLane/SKY130). Generates LEF/DEF/Verilog

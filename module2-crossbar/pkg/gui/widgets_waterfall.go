@@ -10,8 +10,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 
-	sharedutils "multilayer-ferroelectric-cim-visualizer/shared/utils"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedutils "fecim-lattice-tools/shared/utils"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // AccuracyWaterfall displays stepwise accuracy degradation.

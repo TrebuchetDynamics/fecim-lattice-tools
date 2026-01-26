@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
+	"fecim-lattice-tools/module3-mnist/pkg/core"
 )
 
 // createControlsZone creates the hardware control panel (Zone 3).

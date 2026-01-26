@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // MNISTNetwork represents a 2-layer neural network for MNIST classification.

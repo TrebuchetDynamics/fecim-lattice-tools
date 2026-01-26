@@ -13,13 +13,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/shared/logging"
 )
 
 // WeightsFile represents a JSON file containing neural network weights
@@ -32,6 +32,14 @@ type WeightsFile struct {
 }
 
 func main() {
+	homeDir, _ := os.UserHomeDir()
+	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-cli.log")
+	if err := logging.Init("module6-eda-cli", logPath); err != nil {
+		logging.GlobalError("Failed to initialize logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer logging.CloseGlobal()
+
 	// Operation mode
 	mode := flag.String("mode", "compute", "Operation mode: storage, memory, or compute")
 
@@ -75,12 +83,12 @@ func main() {
 	case "compute":
 		opMode = compiler.ModeCompute
 	default:
-		fmt.Printf("Error: unknown mode '%s'. Use: storage, memory, or compute\n", *mode)
+		logging.Printf("Error: unknown mode '%s'. Use: storage, memory, or compute\n", *mode)
 		os.Exit(1)
 	}
 
-	fmt.Printf("FeCIM Array Generator - %s Mode\n", strings.Title(*mode))
-	fmt.Printf("========================================\n\n")
+	logging.Printf("FeCIM Array Generator - %s Mode\n", strings.Title(*mode))
+	logging.Printf("========================================\n\n")
 
 	// Create configuration
 	config := compiler.NewArrayConfig(opMode, *rows, *cols)
@@ -100,17 +108,17 @@ func main() {
 	if opMode == compiler.ModeCompute && *inputFile != "" {
 		data, err := os.ReadFile(*inputFile)
 		if err != nil {
-			fmt.Printf("Error reading weights file: %v\n", err)
+			logging.Printf("Error reading weights file: %v\n", err)
 			os.Exit(1)
 		}
 
 		var wf WeightsFile
 		if err := json.Unmarshal(data, &wf); err != nil {
-			fmt.Printf("Error parsing weights JSON: %v\n", err)
+			logging.Printf("Error parsing weights JSON: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Loaded weights: %s (%dx%d = %d weights)\n",
+		logging.Printf("Loaded weights: %s (%dx%d = %d weights)\n",
 			wf.Name, len(wf.Weights), len(wf.Weights[0]),
 			len(wf.Weights)*len(wf.Weights[0]))
 
@@ -118,98 +126,98 @@ func main() {
 	}
 
 	// Print configuration
-	fmt.Printf("Configuration:\n")
-	fmt.Printf("  Mode:         %s\n", config.Mode)
-	fmt.Printf("  Array Size:   %d × %d (%d cells)\n", config.ArrayRows, config.ArrayCols, config.ArrayRows*config.ArrayCols)
-	fmt.Printf("  Technology:   %s\n", config.Technology)
-	fmt.Printf("  Architecture: %s\n", config.Architecture)
-	fmt.Printf("  Levels:       %d (%.2f bits/cell)\n", config.Levels, float64(config.Levels)/6.0)
-	fmt.Printf("  Conductance:  %.1f - %.1f μS\n", config.GMin, config.GMax)
+	logging.Printf("Configuration:\n")
+	logging.Printf("  Mode:         %s\n", config.Mode)
+	logging.Printf("  Array Size:   %d × %d (%d cells)\n", config.ArrayRows, config.ArrayCols, config.ArrayRows*config.ArrayCols)
+	logging.Printf("  Technology:   %s\n", config.Technology)
+	logging.Printf("  Architecture: %s\n", config.Architecture)
+	logging.Printf("  Levels:       %d (%.2f bits/cell)\n", config.Levels, float64(config.Levels)/6.0)
+	logging.Printf("  Conductance:  %.1f - %.1f μS\n", config.GMin, config.GMax)
 	if opMode == compiler.ModeCompute && config.ComputeConfig.InitialWeights != nil {
-		fmt.Printf("  Weights:      %dx%d loaded\n",
+		logging.Printf("  Weights:      %dx%d loaded\n",
 			len(config.ComputeConfig.InitialWeights),
 			len(config.ComputeConfig.InitialWeights[0]))
 	} else if opMode == compiler.ModeCompute {
-		fmt.Printf("  Weights:      None (unprogrammed array)\n")
+		logging.Printf("  Weights:      None (unprogrammed array)\n")
 	}
-	fmt.Println()
+	logging.Println()
 
 	// Generate design
 	design, err := compiler.GenerateDesign(config)
 	if err != nil {
-		fmt.Printf("Design generation error: %v\n", err)
+		logging.Printf("Design generation error: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Print results
-	fmt.Printf("Design Statistics:\n")
-	fmt.Printf("  Total Cells:  %d\n", design.Stats.TotalCells)
-	fmt.Printf("  Active Cells: %d\n", design.Stats.ActiveCells)
-	fmt.Printf("  Area:         %.4f mm²\n", design.Stats.AreaMM2)
-	fmt.Printf("  Est. Power:   %.2f mW\n", design.Stats.PowerMW)
+	logging.Printf("Design Statistics:\n")
+	logging.Printf("  Total Cells:  %d\n", design.Stats.TotalCells)
+	logging.Printf("  Active Cells: %d\n", design.Stats.ActiveCells)
+	logging.Printf("  Area:         %.4f mm²\n", design.Stats.AreaMM2)
+	logging.Printf("  Est. Power:   %.2f mW\n", design.Stats.PowerMW)
 
 	if opMode == compiler.ModeCompute {
-		fmt.Printf("  Throughput:   %.2f GOPS\n", design.Stats.ThroughputGOPS)
+		logging.Printf("  Throughput:   %.2f GOPS\n", design.Stats.ThroughputGOPS)
 		if config.ComputeConfig.InitialWeights != nil {
-			fmt.Printf("  Weight Range: [%.4f, %.4f]\n", design.Stats.WeightMin, design.Stats.WeightMax)
-			fmt.Printf("  Quant PSNR:   %.2f dB\n", design.Stats.QuantPSNR)
+			logging.Printf("  Weight Range: [%.4f, %.4f]\n", design.Stats.WeightMin, design.Stats.WeightMax)
+			logging.Printf("  Quant PSNR:   %.2f dB\n", design.Stats.QuantPSNR)
 		}
 	}
-	fmt.Println()
+	logging.Println()
 
 	// Create output directory
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
-		fmt.Printf("Error creating output directory: %v\n", err)
+		logging.Printf("Error creating output directory: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Export files
-	fmt.Printf("Exporting files to %s/\n", *outputDir)
+	logging.Printf("Exporting files to %s/\n", *outputDir)
 
 	if *exportJSON {
 		path := filepath.Join(*outputDir, *designName+"_design.json")
 		if err := export.ExportJSON(design, path); err != nil {
-			fmt.Printf("  JSON export error: %v\n", err)
+			logging.Printf("  JSON export error: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ %s\n", path)
+			logging.Printf("  ✓ %s\n", path)
 		}
 	}
 
 	if *exportCSV {
 		path := filepath.Join(*outputDir, *designName+"_cells.csv")
 		if err := export.ExportCSV(design, path); err != nil {
-			fmt.Printf("  CSV export error: %v\n", err)
+			logging.Printf("  CSV export error: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ %s\n", path)
+			logging.Printf("  ✓ %s\n", path)
 		}
 	}
 
 	if *exportSPICE {
 		path := filepath.Join(*outputDir, *designName+".sp")
 		if err := export.ExportSPICE(design, path, *vdd); err != nil {
-			fmt.Printf("  SPICE export error: %v\n", err)
+			logging.Printf("  SPICE export error: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ %s\n", path)
+			logging.Printf("  ✓ %s\n", path)
 		}
 	}
 
 	if *exportVerilog {
 		path := filepath.Join(*outputDir, *designName+".v")
 		if err := export.ExportVerilog(design, path); err != nil {
-			fmt.Printf("  Verilog export error: %v\n", err)
+			logging.Printf("  Verilog export error: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ %s\n", path)
+			logging.Printf("  ✓ %s\n", path)
 		}
 	}
 
 	if *exportDEF {
 		path := filepath.Join(*outputDir, *designName+".def")
 		if err := export.ExportDEF(design, path); err != nil {
-			fmt.Printf("  DEF export error: %v\n", err)
+			logging.Printf("  DEF export error: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ %s\n", path)
+			logging.Printf("  ✓ %s\n", path)
 		}
 	}
 
-	fmt.Println("\nDone!")
+	logging.Println("\nDone!")
 }

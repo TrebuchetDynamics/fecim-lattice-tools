@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 // EmbeddedApp holds the state for an embedded demo instance

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module3-mnist/pkg/training"
 )
 
 // EmbeddedMNISTApp holds the state for an embedded MNIST demo instance

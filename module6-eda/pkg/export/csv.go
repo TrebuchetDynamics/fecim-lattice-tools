@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
 )
 
 // ExportCSV writes the array design to a CSV file.

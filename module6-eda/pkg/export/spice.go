@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/module6-eda/pkg/compiler"
 )
 
 // GenerateSPICE creates ngspice-compatible netlist.

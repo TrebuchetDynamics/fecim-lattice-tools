@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/openlane"
+	"fecim-lattice-tools/module6-eda/pkg/openlane"
 )
 
 // PlacementResult contains the results of placement validation

@@ -228,7 +228,7 @@ If you use this tool in academic work, please cite:
   author       = {Tamez, Juan (XelHaku)},
   title        = {FeCIM Design Suite: Educational EDA Tool for Ferroelectric CIM},
   year         = {2026},
-  url          = {https://github.com/XelHaku/multilayer-ferroelectric-cim-visualizer},
+  url          = {https://github.com/your-org/fecim-lattice-tools},
   note         = {Educational/research software, not affiliated with external research institution}
 }
 ```

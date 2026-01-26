@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 // State represents the current simulation state.

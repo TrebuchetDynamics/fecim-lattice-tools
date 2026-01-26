@@ -180,7 +180,7 @@ go func() {
 
 Always use the standard quantization function:
 ```go
-import "multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+import "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 
 level := crossbar.QuantizeTo30Levels(value)
 ```

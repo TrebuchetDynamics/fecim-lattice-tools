@@ -12,7 +12,7 @@ package export
 import (
 	"encoding/json"
 	"fmt"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/config"
 )
 
 // GenerateOpenLaneConfig generates an OpenLane v2.0 config.json for FeCIM crossbar

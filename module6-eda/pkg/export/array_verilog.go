@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/config"
 )
 
 // GenerateArrayVerilog generates a structural Verilog netlist for a FeCIM crossbar array

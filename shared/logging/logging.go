@@ -166,7 +166,106 @@ func (l *Logger) EntryChange(entryName string, text string) {
 	}
 }
 
-// ParseVerbosityFlag parses a verbosity string into a VerbosityLevel
+// Global singleton logger
+var (
+	defaultLogger *Logger
+	once          sync.Once
+)
+
+// Init initializes the global default logger
+func Init(demoName string, logPath string) error {
+	var err error
+	once.Do(func() {
+		// Use provided path or default
+		if logPath == "" {
+			logsDir := getLogsDir()
+			if err := os.MkdirAll(logsDir, 0755); err != nil {
+				// Fallback to current dir if logs dir creation fails
+				logsDir = "."
+			}
+			timestamp := time.Now().Format("2006-01-02_15-04-05")
+			logPath = filepath.Join(logsDir, timestamp+"-"+demoName+".log")
+		} else {
+			// Ensure directory exists
+			if err := os.MkdirAll(filepath.Dir(logPath), 0755); err != nil {
+				// Log to stderr if we can't create directory
+				fmt.Fprintf(os.Stderr, "Failed to create log directory: %v\n", err)
+			}
+		}
+
+		// Create log file
+		var logFile *os.File
+		logFile, err = os.Create(logPath)
+		if err != nil {
+			return
+		}
+
+		// Write to both file and stdout
+		multiWriter := io.MultiWriter(os.Stdout, logFile)
+		defaultLogger = &Logger{
+			Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			logFile:  logFile,
+			demoName: demoName,
+		}
+		defaultLogger.Printf("Logging initialized to: %s", logPath)
+	})
+	return err
+}
+
+// Global convenience functions using the default logger
+
+// Printf logs to the default logger
+func Printf(format string, v ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Printf(format, v...)
+	} else {
+		log.Printf(format, v...)
+	}
+}
+
+// Println logs to the default logger
+func Println(v ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Println(v...)
+	} else {
+		log.Println(v...)
+	}
+}
+
+// GlobalInfo logs at INFO level
+func GlobalInfo(format string, args ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Info(format, args...)
+	} else {
+		log.Printf("[INFO] "+format, args...)
+	}
+}
+
+// GlobalDebug logs at DEBUG level
+func GlobalDebug(format string, args ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Debug(format, args...)
+	} else if IsVerbose(VerbosityDebug) {
+		log.Printf("[DEBUG] "+format, args...)
+	}
+}
+
+// GlobalError logs at ERROR level
+func GlobalError(format string, args ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Printf("[ERROR] "+format, args...)
+	} else {
+		log.Printf("[ERROR] "+format, args...)
+	}
+}
+
+// CloseGlobal closes the default logger
+func CloseGlobal() {
+	if defaultLogger != nil {
+		defaultLogger.Close()
+	}
+}
+
 func ParseVerbosityFlag(s string) VerbosityLevel {
 	switch s {
 	case "0", "off", "none":

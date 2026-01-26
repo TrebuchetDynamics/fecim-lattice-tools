@@ -11,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // LevelIndicator displays the current 30-level state of the ferroelectric cell.

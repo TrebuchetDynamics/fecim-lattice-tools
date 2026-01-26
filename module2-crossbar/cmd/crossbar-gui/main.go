@@ -31,7 +31,7 @@ import (
 	"fmt"
 	"os"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/gui"
+	"fecim-lattice-tools/module2-crossbar/pkg/gui"
 )
 
 func main() {

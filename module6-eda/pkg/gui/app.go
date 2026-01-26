@@ -7,8 +7,8 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui/tabs"
+	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/gui/tabs"
 )
 
 // CreateMainWindow creates the main application window

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
+	"fecim-lattice-tools/module6-eda/pkg/config"
 )
 
 func TestGenerateLEF(t *testing.T) {

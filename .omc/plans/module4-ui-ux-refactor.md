@@ -181,7 +181,7 @@ Modernize Module 4 UI to match project standards while enhancing educational cla
 // Add import (after line 7)
 import (
     ...
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 
 // Line 143: Change theme assignment
@@ -207,7 +207,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -250,7 +250,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -282,7 +282,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -318,7 +318,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -361,7 +361,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -462,7 +462,7 @@ import (
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/widget"
 
-    sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+    sharedtheme "fecim-lattice-tools/shared/theme"
 )
 ```
 
@@ -1064,7 +1064,7 @@ func (ca *CircuitsApp) onArrayCellHover(row, col int, hovering bool) {
 ```go
 import (
     ...
-    sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+    sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 ```
 
@@ -1105,7 +1105,7 @@ func (ca *CircuitsApp) createWriteArraySection() fyne.CanvasObject {
 ```go
 import (
     ...
-    sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+    sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 ```
 

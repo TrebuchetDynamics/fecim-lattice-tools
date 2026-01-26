@@ -14,7 +14,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // refreshMinInterval is the minimum time between heatmap refreshes (30 FPS max)

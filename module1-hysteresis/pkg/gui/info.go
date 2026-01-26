@@ -11,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui/widgets"
+	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
 // createInfoPanel creates the state and material information panel

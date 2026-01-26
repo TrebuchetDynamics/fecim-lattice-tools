@@ -15,7 +15,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // createWeightZone creates the weight visualization zone (Zone 4).

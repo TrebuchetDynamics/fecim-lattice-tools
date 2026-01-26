@@ -30,3 +30,8 @@ cmd/fecim-visualizer/logs/OpenLane/
 cmd/fecim-visualizer/logs/
 module5-comparison/pkg/gui/logs/
 generated/
+
+# Logs
+*.log
+logs/
+**/*.log

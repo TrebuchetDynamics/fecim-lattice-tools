@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/training"
 )
 
 func main() {

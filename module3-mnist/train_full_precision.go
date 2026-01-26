@@ -14,7 +14,7 @@ import (
 	"os"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
 const (

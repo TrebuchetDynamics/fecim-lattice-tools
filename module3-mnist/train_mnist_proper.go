@@ -13,9 +13,9 @@ import (
 	"math/rand"
 	"time"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/training"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/training"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/comparison"
+	"fecim-lattice-tools/module5-comparison/pkg/comparison"
 )
 
 func main() {

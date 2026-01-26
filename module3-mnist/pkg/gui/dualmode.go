@@ -15,9 +15,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
-	"multilayer-ferroelectric-cim-visualizer/shared/logging"
-	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
+	"fecim-lattice-tools/module3-mnist/pkg/core"
+	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Constants for MNIST network configuration

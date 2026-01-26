@@ -267,7 +267,7 @@ Edit `/cmd/fecim-visualizer/main.go`:
 ```go
 import (
 	// ... existing imports
-	moduleNgui "multilayer-ferroelectric-cim-visualizer/moduleN-name/pkg/gui"
+	moduleNgui "fecim-lattice-tools/moduleN-name/pkg/gui"
 )
 ```
 
@@ -557,7 +557,7 @@ go test -race -v ./... && echo "✅ All tests passed"
 The project uses a shared logging package (`shared/logging/`):
 
 ```go
-import "multilayer-ferroelectric-cim-visualizer/shared/logging"
+import "fecim-lattice-tools/shared/logging"
 
 // Get logger for your package
 var log = logging.NewLogger("module-name")
@@ -856,7 +856,7 @@ go mod graph | head -20
 cat go.mod | head -5
 
 # All module paths should match
-# multilayer-ferroelectric-cim-visualizer/module1-hysteresis
+# fecim-lattice-tools/module1-hysteresis
 ```
 
 **CGO/gcc errors**

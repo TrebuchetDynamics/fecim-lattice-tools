@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 func TestNewNetwork_ValidConfig(t *testing.T) {
