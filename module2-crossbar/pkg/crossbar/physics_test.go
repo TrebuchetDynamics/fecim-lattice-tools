@@ -297,7 +297,7 @@ func TestSneakMitigationSelector(t *testing.T) {
 // =============================================================================
 
 // TestDriftTimeEvolution verifies conductance drift over time.
-// Note: FeCIM has extremely low drift (0.001 coefficient), which is a key advantage.
+// Note: FeFET assumed drift coefficient 0.001 (no peer-reviewed source). Compare RRAM ~0.05.
 // We use RRAM-like drift coefficient to verify the model works correctly.
 func TestDriftTimeEvolution(t *testing.T) {
 	sim := NewDriftSimulator(8, 8, 30)

@@ -1,6 +1,6 @@
-# MNIST FeCIM Demo - 87% Hardware Target
+# MNIST FeCIM Demo - 87% Hardware Claim
 
-> *"We're at 87% validation here... theoretical is 88%."*
+> *"We're at 87% validation here."* (Dr. Tour conference claim, unverified)
 > — Dr. external research group, external research institution (Nov 2024)
 
 ## Overview
@@ -104,7 +104,7 @@ With 3σ separation requirement, 30 levels is the practical limit.
 
 **Simulation (this demo):** Can achieve 95-98% under ideal conditions.
 
-**FeCIM Hardware (Dr. Tour):** 87% measured, 88% theoretical max.
+**FeCIM Hardware (Dr. Tour):** 87% (Dr. Tour conference claim, unverified); Software baseline: 98-99%.
 
 **Why the gap?**
 
@@ -118,7 +118,7 @@ With 3σ separation requirement, 30 levels is the practical limit.
 | Retention drift | ❌ Not modeled | ✓ 10 years | -1% |
 | Cycle-to-cycle variation | ⚠️ Limited | ✓ 2.75% | -2% |
 
-**Total:** ~12% gap between ideal (98%) and hardware (87%).
+**Total:** ~12% gap between ideal (98%) and Dr. Tour's hardware claims (87%, unverified; Software baseline: 98-99%).
 
 **How to Match Hardware:**
 Set noise level to ~0.08 in the GUI. This empirically matches the 87% target.

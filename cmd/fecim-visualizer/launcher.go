@@ -718,7 +718,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	grid := container.New(gridWrap, cards...)
 
 	// Key metrics in footer - split into two lines for readability
-	line1 := canvas.NewText("30 Analog States per Cell  |  87% MNIST Accuracy  |  Up to 100× Energy Efficiency  |  10¹² Cycle Endurance  |  TRL 4", color.RGBA{0, 212, 255, 230})
+	line1 := canvas.NewText("30 Analog States per Cell  |  87% MNIST Accuracy  |  Up to 100× Energy Efficiency  |  10⁹ Cycles (10¹² target)  |  TRL 4", color.RGBA{0, 212, 255, 230})
 	line1.TextSize = 13
 	line1.Alignment = fyne.TextAlignCenter
 

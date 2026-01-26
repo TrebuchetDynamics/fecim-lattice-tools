@@ -380,7 +380,7 @@ type MagnetoOpticConfig struct {
 	Material string
 
 	// Performance
-	Endurance      float64 // Cycles (10¹² demonstrated)
+	Endurance      float64 // Cycles (10⁹ demonstrated; 10¹² is target)
 	SwitchingTimeNs float64
 	SwitchingEnergyPJ float64
 

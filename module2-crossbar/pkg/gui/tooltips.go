@@ -43,7 +43,7 @@ func ConductanceTooltip(row, col int, G float64, array *crossbar.Array) string {
 		"Usage:\n"+
 		"  Click: Select cell\n"+
 		"  Right-click: Deselect\n"+
-		"  Drag: Inspect region\n",
+		"  Drag: Inspect region\n",  // Conductance already has µS unit",
 		row, col,
 		level, float64(level)/29.0*100,
 		G,

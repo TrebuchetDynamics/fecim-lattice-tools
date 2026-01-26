@@ -66,10 +66,12 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 		Levels:       levels,
 		GMin:         gMin,
 		GMax:         gMax,
-		DriftCoeff:   0.001, // Very low for FeFET (0.001 vs 0.05 for RRAM)
-		ReadDisturb:  1e-6,  // Very low read disturb for FeFET
-		Temperature:  300,   // Room temperature
-		Time:         0,
+		// Note: FeFET drift coefficient 0.001 is an assumed value for simulation.
+		// No peer-reviewed source. Compare to RRAM ~0.05, PCM ~0.02 (qualitative only).
+		DriftCoeff:  0.001, // Very low for FeFET (0.001 vs 0.05 for RRAM)
+		ReadDisturb: 1e-6,  // Very low read disturb for FeFET
+		Temperature: 300,   // Room temperature
+		Time:        0,
 		DriftHistory: make([]DriftSnapshot, 0),
 	}
 }
@@ -317,12 +319,13 @@ func (d *DriftSimulator) GetStats() DriftStats {
 	}
 
 	// Technology comparison
+	// Note: FeFET drift coefficient 0.001 is assumed (no peer-reviewed source)
 	comparison := TechDriftComparison{
-		FeFETDrift:     0.001,        // Very low for FeFET
+		FeFETDrift:     0.001,        // Assumed for FeFET (no peer-reviewed source)
 		RRAMDrift:      0.05,         // Higher for RRAM
 		PCMDrift:       0.1,          // Higher for PCM
 		FlashDrift:     0.02,         // Medium for Flash
-		FeFETAdvantage: 0.05 / 0.001, // 50x better than RRAM
+		FeFETAdvantage: 0.05 / 0.001, // 50x better than RRAM (based on assumed values)
 	}
 
 	return DriftStats{

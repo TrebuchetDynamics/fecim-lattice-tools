@@ -73,7 +73,7 @@ Comprehensive research on Compute-in-Memory (CIM) technology fundamentals, creat
 - 30 states = 4.9 bits/cell
 - Intermediate polarization states in HZO superlattice
 - Each domain switches independently (stochastic)
-- 87% MNIST accuracy achieved (vs 88% theoretical max)
+- 87% MNIST accuracy claimed (Dr. Tour, unverified conference claim)
 
 ### Non-Ideality Impact
 | Array Size | IR Drop | Accuracy Loss |
@@ -86,7 +86,7 @@ Comprehensive research on Compute-in-Memory (CIM) technology fundamentals, creat
 - Pr: 15-34 µC/cm² (Nature Commun. 2025)
 - Ec: 1.0-1.5 MV/cm (Nature Commun. 2025)
 - Endurance: 10⁹ demonstrated, 10¹² target
-- FeFET drift: ν = 0.001 (50× better than RRAM)
+- FeFET drift: ν = 0.001 (assumed; no peer-reviewed source)
 
 ## Codebase Integration
 

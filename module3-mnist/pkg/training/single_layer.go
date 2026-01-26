@@ -14,7 +14,7 @@ import (
 
 // SingleLayerNetwork represents a single-layer neural network for MNIST.
 // Architecture: 784 -> 10 (no hidden layer, matching Tour's demo)
-// Theoretical max accuracy: ~88% on MNIST
+// Note: Dr. Tour claimed 87% on hardware (unverified); software baseline is 98-99%
 type SingleLayerNetwork struct {
 	layer   *crossbar.Array // 784 -> 10
 	biases  []float64       // Output biases

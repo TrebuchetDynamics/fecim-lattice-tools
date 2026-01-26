@@ -328,9 +328,8 @@ Test coverage:
 | Multi-Level FeFET 28nm (sim) | 96.6% | Nature Comms 2023 |
 | FTJ Crossbar (sim) | 92% | SemiEngineering 2024 |
 | **Ferroelectric CIM Hardware** | **87%** | Dr. Tour COSM 2025 |
-| **Theoretical Max (FeCIM)** | **88%** | Dr. Tour COSM 2025 |
 
-**Important Note:** Dr. Tour stated that Ferroelectric CIM achieves **87% accuracy on physical hardware** with a theoretical maximum of **88%** for their architecture. Our simulation may achieve higher accuracy because it doesn't capture all hardware non-idealities. The 87% figure represents actual measured performance on ferroelectric crossbar arrays.
+**Important Note:** Dr. Tour's hardware claims are unverified (conference presentation only). Our simulation may achieve higher accuracy because it doesn't capture all hardware non-idealities.
 
 ---
 

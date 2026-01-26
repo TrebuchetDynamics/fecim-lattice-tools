@@ -403,13 +403,15 @@ G(t) = G₀ × (1 + ν × log(t/t₀))
 
 **Source:** Drift literature (empirical model)
 
-**Drift coefficients (from IEEE TCAD 2022):**
-| Memory Type | ν (drift coefficient) | 10-Year Retention |
-|-------------|----------------------|-------------------|
-| PCM         | 0.05-0.1             | 90-95%            |
-| RRAM        | 0.01-0.05            | 95-99%            |
-| **FeFET**   | **0.001-0.01**       | **99%+**          |
-| Flash       | 0.01-0.02            | 99%+              |
+**Note:** The 0.001 value for FeFET is assumed for simulation purposes. No peer-reviewed source exists for FeFET-specific drift coefficients. The value is qualitatively expected to be lower than RRAM/PCM based on retention characteristics.
+
+**Drift coefficients (from IEEE TCAD 2022 for RRAM/PCM, FeFET assumed):**
+| Memory Type | ν (drift coefficient) | 10-Year Retention | Source |
+|-------------|----------------------|-------------------|--------|
+| PCM         | 0.05-0.1             | 90-95%            | Literature |
+| RRAM        | 0.01-0.05            | 95-99%            | Literature |
+| **FeFET**   | **0.001-0.01**       | **99%+**          | **Assumed (no peer review)** |
+| Flash       | 0.01-0.02            | 99%+              | Literature |
 
 **Example (FeFET, ν = 0.001):**
 - After 1 second: G = G₀ × 1.000 (0% change)
@@ -623,7 +625,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 | Parameter | Symbol | Value | Source |
 |-----------|--------|-------|--------|
-| **Drift coefficient** | ν | **0.001** | FeFET literature (best case) |
+| **Drift coefficient** | ν | **0.001** | **Assumed (no peer-reviewed source)** |
 | Device-to-device variation | σ_D2D | ~3% | HZO studies |
 | Cycle-to-cycle variation | σ_C2C | ~1% | FeFET papers |
 | Read noise (thermal) | σ_thermal | 0.5% σ/µ | Johnson noise in sense amps |

@@ -624,7 +624,7 @@ Traditional computers move data to a processor. FeCIM processes data WHERE IT'S 
 
 ## One-Sentence Summary
 
-> **This demo shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — Ferroelectric CIM hardware achieves 87% accuracy (88% theoretical max)!**
+> **This demo shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — FeCIM hardware claims 87% accuracy (Dr. Tour, unverified; Software baseline: 98-99%)!**
 
 ---
 

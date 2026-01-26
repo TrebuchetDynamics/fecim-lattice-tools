@@ -35,7 +35,7 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 
 **From Dr. Tour's COSM 2025 Presentation [1]:**
 - ✅ 30 discrete analog states demonstrated at external research institution
-- ✅ 87% MNIST accuracy on hardware (88% theoretical max)
+- ✅ 87% MNIST accuracy on hardware (unverified conference claim)
 - ✅ Works with standard CMOS manufacturing
 - ⚠️ TRL 4 — "We are at Technology Readiness Level TRL4" — Dr. Tour
 - ⚠️ Endurance: "We still have to get this up to the required 10^12 cycles" — Dr. Tour
@@ -43,7 +43,7 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 **Corroborated by Peer-Reviewed Literature:**
 - ✅ 32-140 discrete states demonstrated [Jerry 2017, Song 2024]
 - ✅ 87-96% MNIST accuracy achieved [arXiv:2601.01186, Nature Commun. 2023]
-- ✅ >10¹² cycle endurance for HZO superlattice [IEEE IRPS 2022, PMC 2024]
+- ⚠️ 10⁹ cycles demonstrated; 10¹² is target (Dr. Tour: 'still have to get this up')
 
 ## The Vision
 A future where:
@@ -372,7 +372,7 @@ Walking distance: ZERO! 🎉
 ```
 
 **Result:**
-- 10,000,000× less energy than NAND flash
+- 25-100× less energy than NAND flash (Samsung Nature 2025); Dr. Tour claims 10M× (unverified)
 - 1,000× less energy than DRAM
 - Much faster
 - Smaller chips
@@ -874,9 +874,9 @@ Input Image (28×28 pixels):          Output:
 
 ## Ferroelectric CIM MNIST Performance
 
-> "We're at 87% validation here... theoretical is 88% is the theoretical maximum." — Dr. Tour
+> "We're at 87% validation here." — Dr. Tour (unverified conference claim)
 
-**Hardware achieved 87% accuracy** (88% theoretical max per Dr. Tour). Simulation may exceed this under idealized conditions.
+**Hardware achieved 87% accuracy** (unverified conference claim). Simulation may exceed this under idealized conditions.
 
 ## Training
 
@@ -1138,7 +1138,7 @@ Run: cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./cro
 - Confusion matrix with clickable cells
 - Per-class metrics (precision, recall, F1)
 
-**Hardware accuracy:** 87% (88% theoretical max per Dr. Tour)
+**Hardware accuracy:** 87% (unverified conference claim)
 
 **Who it's for:** Investors, media, conferences
 
@@ -1474,7 +1474,7 @@ Ferroelectric CIM is arriving at exactly the right moment.
 | Metric | Target | Achieved |
 |--------|--------|----------|
 | Analog states | 30 levels | ✅ 30 levels |
-| MNIST accuracy | 88% (theoretical max) | ✅ 87% (hardware) |
+| MNIST accuracy | 87% (Tour, unverified) | Software: 98-99% |
 | Energy vs NAND | 10,000,000× lower | Claimed* |
 | Energy vs DRAM | 1,000× lower | Claimed* |
 
@@ -1495,7 +1495,7 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 > "It's got **30 discrete states**. So it's not 0-1-0-1."
 
-> "We're at **87% validation** here... theoretical is 88% is the theoretical maximum."
+> "We're at **87% validation** here." (unverified conference claim)
 
 > "**Compute in memory** where the same device does the memory and the computation."
 
@@ -1530,7 +1530,7 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 ## Important Accuracy Notes
 
-**Hardware (Dr. Tour's lab):** 87% MNIST accuracy (88% theoretical max)
+**Hardware (Dr. Tour's lab):** 87% MNIST accuracy (unverified conference claim)
 
 **Simulation:** May exceed hardware due to idealized conditions - simulation does not include all real-world non-idealities.
 
@@ -1788,7 +1788,7 @@ A: Every technology has challenges:
 ## Technical Questions
 
 **Q: How accurate can it get?**
-A: Dr. Tour's hardware achieved 87% MNIST accuracy (88% theoretical max). State-of-the-art digital achieves ~99%. The gap comes from:
+A: Dr. Tour claimed 87% MNIST accuracy (unverified conference claim). State-of-the-art digital achieves ~99%. The gap comes from:
 - Quantization (30 levels vs. 32-bit float)
 - Analog noise and non-idealities
 This is acceptable for many applications; techniques like quantization-aware training help.
@@ -2323,7 +2323,7 @@ Improvement: 10,000×!
 │  Ohm's Law:     I = V × G    (physics does multiplication)│
 │  MVM:           I = G × V    (matrix-vector multiply)     │
 │  States:        30 levels    (not binary!)                │
-│  MNIST:         87% hardware (88% theoretical max)        │
+│  MNIST:         87% (Tour, unverified)                    │
 │                                                            │
 │  GUI Demos:     module1-hysteresis, module2-crossbar,         │
 │                 module3-mnist (Fyne)                        │

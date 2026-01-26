@@ -753,3 +753,150 @@ Successfully refactored `tab_operations.go` (1770 lines) into 4 smaller, focused
 - ✅ Tests pass: `go test ./module4-circuits/...`
 - ✅ Main visualizer builds: `go build ./cmd/fecim-visualizer`
 - ✅ All files under 500 lines
+
+## Module 2 Waterfall Chart - Percentage Labels Enhancement (2026-01-25)
+
+### Enhancement Applied
+Enhanced the AccuracyWaterfall chart to show bold, readable percentage labels on top of each bar.
+
+### Implementation Details
+**Location:** `<local-path>`
+
+**Changes Made (lines 316-332):**
+1. Increased font size from 10pt to 11pt for better readability
+2. Added bold text style (`fyne.TextStyle{Bold: true}`) to make labels stand out
+3. Applied consistently in both label creation and update paths
+
+**Code Pattern:**
+```go
+// Label creation
+label := canvas.NewText(fmt.Sprintf("%.1f%%", step.Accuracy), color.White)
+label.TextSize = 11
+label.TextStyle = fyne.TextStyle{Bold: true}
+label.Alignment = fyne.TextAlignCenter
+
+// Label updates
+w.barLabels[i].Text = fmt.Sprintf("%.1f%%", step.Accuracy)
+w.barLabels[i].TextSize = 11
+w.barLabels[i].TextStyle = fyne.TextStyle{Bold: true}
+```
+
+### Visual Improvements
+- Labels now stand out clearly on the chart
+- Bold text provides better contrast against background
+- Slightly larger font (11pt vs 10pt) improves readability
+- Format: "89.8%" (1 decimal place) for precision
+
+### Existing Infrastructure Used
+The waterfall widget already had a complete label system:
+- `barLabels` field for storing percentage labels
+- Positioning logic in `Layout()` (lines 283-290)
+- Refresh logic in `Refresh()` (lines 316-332)
+- Label rendering in `Objects()` (lines 361-363)
+
+This enhancement simply improved the styling of the existing labels.
+
+### Verification
+- ✅ Build successful: `go build -o fecim-visualizer ./cmd/fecim-visualizer`
+- ✅ Module 2 compiles: `go test ./module2-crossbar/...`
+- ✅ No regressions in existing functionality
+
+### Pattern for Chart Labels
+When adding percentage or value labels to charts:
+1. Use 10-12pt font size for readability
+2. Apply bold style to make labels prominent
+3. Use white color for contrast against dark backgrounds
+4. Position labels above/on bars with appropriate offsets
+5. Format percentages with 1 decimal place for precision
+
+## BUG-M1-001: Hysteresis Convergence Bug in Manual Mode (2026-01-26)
+
+**Fixed:** 2026-01-26
+
+**Location:** `<local-path>`
+
+**Issue:** The Manual mode click-to-level animation always applied full saturation fields (±2*Ec) regardless of target level. This caused overshooting and oscillation - trying to write intermediate levels (e.g., L15) would overshoot to extremes (L1 or L30) and then oscillate back, never converging stably.
+
+**Root Cause:**
+The field calculation logic used binary switching:
+```go
+// BROKEN: Always uses saturation field
+if targetLevel > startLevel {
+    writeE = 2.0 * Ec  // Goes to L30 every time
+} else if targetLevel < startLevel {
+    writeE = -2.0 * Ec  // Goes to L1 every time
+}
+```
+
+**Physics Problem:** Ferroelectric materials follow hysteresis loops. To write an intermediate polarization level (e.g., L15), you must apply a proportional field that lands on that point of the minor loop. Applying full saturation (2*Ec) always drives the material to the extreme states (L1 or L30), regardless of target.
+
+**Fix Applied:**
+Replaced with calibrated field calculation based on target level height:
+
+```go
+// CORRECTED: Calibrated field based on target level
+if targetLevel > startLevel {
+    // Going UP: positive field calibrated to target height
+    ratio := float64(targetLevel-1) / 29.0
+    writeE = Ec * (1.0 + ratio*1.0)  // Ec to 2*Ec based on target
+} else if targetLevel < startLevel {
+    // Going DOWN: negative field calibrated to target depth
+    ratio := float64(30-targetLevel) / 29.0
+    writeE = -Ec * (1.0 + ratio*1.0)  // -Ec to -2*Ec based on target
+}
+```
+
+**Additional Fix - Premature Transition:**
+The original `reachedTarget` check would transition to HOLD phase too early, before the level stabilized:
+
+```go
+// BROKEN: Transitions before stabilization
+reachedTarget := (targetLevel > startLevel && currentLevel >= targetLevel) ||
+                 (targetLevel < startLevel && currentLevel <= targetLevel)
+if reachedTarget || (a.manualPhaseTime > phaseDuration*0.6 ...) {
+    // Transition immediately - level may still be oscillating
+}
+```
+
+Replaced with stability-aware checking:
+```go
+// CORRECTED: Wait for convergence
+levelError := abs(currentLevel - targetLevel)
+reachedTarget := levelError <= 1  // ±1 level tolerance
+
+fieldStable := math.Abs(a.electricField-writeE) < 0.01*Emax
+sufficientTime := a.manualPhaseTime > phaseDuration*0.5
+
+if reachedTarget && fieldStable && sufficientTime {
+    // Only transition when BOTH field AND level are stable
+}
+```
+
+**Reference Implementation:**
+The WriteReadDemo mode (lines 153-165) already used this calibrated approach correctly. The Manual mode fix aligns it with the same physics model.
+
+**Impact:**
+- Manual mode now correctly writes to intermediate levels without oscillation
+- Click any level on the bar → smooth convergence to that level
+- Matches the behavior of WriteReadDemo mode
+- Physics-accurate field application for hysteresis materials
+
+**Pattern - Hysteresis Field Calibration:**
+When programming ferroelectric memory to analog levels:
+1. Calculate field strength proportional to target level (not binary saturation)
+2. Higher target = stronger field (approaching 2*Ec for L30)
+3. Lower target = weaker field (approaching Ec for intermediate states)
+4. Use formula: `Ec * (1.0 + (level_ratio) * 1.0)` where level_ratio ∈ [0, 1]
+5. Wait for BOTH field stability AND level convergence before transitioning phases
+
+**Verification:**
+- ✅ Tests pass: `go test ./module1-hysteresis/...`
+- ✅ Build succeeds: `go build ./cmd/fecim-visualizer`
+- ✅ No `go vet` issues
+- ✅ Physics now matches WriteReadDemo reference implementation
+
+**Related:**
+- WriteReadDemo mode (lines 131-166): Reference implementation with correct physics
+- Manual mode was using simplified binary logic that didn't match hysteresis behavior
+- This fix brings Manual mode in line with proper ferroelectric physics
+

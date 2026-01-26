@@ -339,9 +339,10 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 			x2 := marginLeft + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
 			y2 := centerY - float32(r.plot.pData[i]/r.plot.pMax)*plotH/2
 
-			// Color based on age (fade effect) - increased fade from 0.7 to 0.85 for better trace distinction
+			// Color based on age (fade effect) - smooth opacity gradient from old (50) to recent (255)
 			age := float64(len(r.plot.eData)-i) / float64(len(r.plot.eData))
-			alpha := uint8(255 * (1 - age*0.85))
+			// Map age [0..1] to alpha [255..50]: recent points fully opaque, old points semi-transparent
+			alpha := uint8(255 - age*205) // 255 - (age * 205) gives range 255 (recent) to 50 (old)
 
 			var lineColor color.RGBA
 			if r.plot.pData[i] >= 0 {

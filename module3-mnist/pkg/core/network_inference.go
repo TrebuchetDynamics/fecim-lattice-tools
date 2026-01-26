@@ -20,7 +20,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	if net.Config.SingleLayer {
 		// ============================================
 		// TOUR MODE: Single-Layer (784→10)
-		// Matches Dr. Tour's MNIST demo (~87% theoretical max)
+		// Matches Dr. Tour's MNIST demo (claimed 87%, unverified)
 		// ============================================
 
 		// FP PATH (single layer)

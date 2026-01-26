@@ -295,7 +295,7 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 		}
 	} else {
 		// Generate single-layer weights using Xavier initialization
-		// This gives ~88% theoretical max on MNIST (matching Tour's claim)
+		// Dr. Tour's hardware: 87% (unverified conference claim); software baseline: 98-99%
 		scale := 1.0 / float64(inputSize)
 		for i := 0; i < outputSize; i++ {
 			net.SingleLayerWeights[i] = make([]float64, inputSize)

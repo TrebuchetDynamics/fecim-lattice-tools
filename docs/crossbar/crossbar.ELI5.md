@@ -349,7 +349,7 @@ type DriftSimulator interface {
 
 **Requirements:**
 - Model: G(t) = G₀ × (t/t₀)^ν
-- FeFET drift coefficient: ν ≈ 0.001 (very stable)
+- FeFET drift: Assumed ν ≈ 0.001 for simulation (no peer-reviewed source; qualitatively 'mild')
 - Temperature-aware retention projection
 
 ---

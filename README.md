@@ -219,7 +219,7 @@ Matrix-vector multiplication (MVM) via Kirchhoff's current law, plus real-world 
 
 ### Module 3: MNIST Neural Network ✅ (Flagship Demo)
 
-> *"We're at 87% validation here... theoretical is 88%."* — Dr. Tour
+> *"We're at 87% validation here."* — Dr. Tour (Note: Conference claim, unverified; Software baseline: 98-99%)
 
 Interactive digit recognition comparing full-precision vs CIM inference.
 

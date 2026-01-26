@@ -45,8 +45,8 @@ PHASE 1               PHASE 2               PHASE 3
 | Metric | Target | Demo Status | Notes |
 |--------|--------|-------------|-------|
 | Discrete analog states | **30 levels** | ✅ All demos | "Not 0-1-0-1" |
-| MNIST accuracy | **87%** (88% max) | ✅ **95.8%** | Exceeds target! |
-| Energy vs NAND | 10,000,000× lower | 🔲 Demo 8 | Key pitch metric |
+| MNIST accuracy | **87%** (Tour, unverified) | ✅ **95.8%** | Sim exceeds claim |
+| Energy vs NAND | 10,000,000× lower (Dr. Tour, unverified) | 🔲 Demo 8 | Peer-reviewed: 25-100× |
 | Energy vs DRAM | 1,000× lower | 🔲 Demo 8 | Zero refresh |
 | Speed vs NAND | 1,000,000× faster | 🔲 Demo 8 | 10ns switching |
 | Data center savings | **80-90%** | 🔲 Demo 8 | Headline metric |
@@ -128,12 +128,13 @@ competition"  architecture" challenges"   else"
 │ CMOS Compatible│   Yes       │   Yes       │       Yes           │
 └────────────────┴─────────────┴─────────────┴─────────────────────┘
                                                ↑
-                                         10,000,000× better
+                                         10,000,000× better*
+                                         *Dr. Tour claim, unverified
 ```
 
 **Implement:**
 - [ ] Side-by-side animated comparison (3 columns)
-- [ ] Energy meter filling up (show 10M× difference)
+- [ ] Energy meter filling up (show 25-100× verified; note 10M× is unverified)
 - [ ] Time bar racing (show 1M× faster)
 - [ ] Data center savings calculator ($$$)
 - [ ] "If X data centers switch, save Y TWh/year"
@@ -367,7 +368,7 @@ STEP 5: Join external research institution / Ferroelectric CIM team
 
 > "It's got **30 discrete states**. So it's not 0-1-0-1."
 
-> "We're at **87% validation** here... theoretical is 88%."
+> "We're at **87% validation** here." (unverified conference claim)
 
 > "**Compute in memory** where the same device does the memory and the computation."
 

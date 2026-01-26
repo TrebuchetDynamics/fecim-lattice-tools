@@ -67,7 +67,7 @@ func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
 	ca.hoverInfoLabel.SetText(fmt.Sprintf(
 		"[%d,%d] │ L%d/29 (%.1f%%) │ G=%.2f µS │ R=%.1f kΩ │ %s %.6f",
 		row, col, level, float64(level)/29.0*100, conductanceUS, resistance,
-		"Norm:", value))
+		"Norm:", value))  // Already has µS
 }
 
 // onIRDropCellTapped handles clicks on IR Drop heatmap.
@@ -123,12 +123,12 @@ func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 		blDist := row // Distance from top BL sense amp
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1fµS L%d │ Dist=[WL:%d,BL:%d]",
+			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1f µS L%d │ Dist=[WL:%d,BL:%d]",
 			row, col, effectiveV, dropPercent, wlV, blV, conductanceUS, level, wlDist, blDist))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
 			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for IR drop analysis",
-			row, col, conductanceUS, level))
+			row, col, conductanceUS, level))  // Already has µS
 	}
 }
 
@@ -209,11 +209,11 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 		}
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ %s sneak │ I=%.3fµA (%.2f%%) │ SNR=%.1fdB │ G=%.1fµS L%d",
+			"[%d,%d] │ %s sneak │ I=%.3fµA (%.2f%%) │ SNR=%.1fdB │ G=%.1f µS L%d",
 			row, col, pathType, sneakCurrent*1e6, sneakRatio, snrDB, conductanceUS, level))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
 			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for sneak analysis",
-			row, col, conductanceUS, level))
+			row, col, conductanceUS, level))  // Already has µS
 	}
 }

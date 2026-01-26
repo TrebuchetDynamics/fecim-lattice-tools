@@ -128,7 +128,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 
 	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
-	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87% with 88% theoretical max)
+	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87%, unverified)
 	tourBtn := widget.NewButton("Tour", func() {
 		mnistLog.Button("Preset:Tour")
 		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, true)

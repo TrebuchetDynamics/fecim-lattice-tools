@@ -70,7 +70,7 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewLabel(""),
 		widget.NewLabel("Simulation (this demo): Can achieve 95-98% under ideal conditions"),
 		widget.NewLabel("FeCIM Hardware (Dr. Tour, COSM 2025): 87% measured accuracy"),
-		widget.NewLabel("Theoretical maximum for 30-level analog: 88% (quantization limit)"),
+		widget.NewLabel("Software baseline: 98-99% (FP32); CIM hardware: 87-96% (various literature)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("The Accuracy Gap Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

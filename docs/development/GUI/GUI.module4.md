@@ -876,6 +876,6 @@ for c := 0; c < min(8, cols); c++ {
 
 8. **Comparison View**: Compares FeFET vs GPU vs CPU. Conservative energy claims per CLAUDE.md accuracy policy (10-100x savings, not 10M×).
 
-9. **Specifications**: Comprehensive component specs including DAC/ADC resolution, TIA gain, FeFET cell parameters (30 levels, 10nm HZO, 10^12 cycle endurance).
+9. **Specifications**: Comprehensive component specs including DAC/ADC resolution, TIA gain, FeFET cell parameters (30 levels, 10nm HZO, 10^12 cycle endurance target - currently 10^9 demonstrated).
 
 10. **Embedded Interface**: Implements BuildContent(), Start(), Stop() for integration with main visualizer (cmd/fecim-visualizer).

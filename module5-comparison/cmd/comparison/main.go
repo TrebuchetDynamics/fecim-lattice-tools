@@ -91,7 +91,7 @@ func printHeader() {
 	fmt.Println("║  The FeCIM values below are ESTIMATES for demo        ║")
 	fmt.Println("║  purposes only. Do NOT use for investment decisions.        ║")
 	fmt.Println("║                                                              ║")
-	fmt.Println("║  VERIFIED: 30 analog levels, 87% MNIST (88% max)            ║")
+	fmt.Println("║  CLAIMED: 30 analog levels, 87% MNIST (Tour, unverified)    ║")
 	fmt.Println("║  CLAIMED:  10M× vs NAND, 80-90% DC savings (unverified)     ║")
 	fmt.Println("║                                                              ║")
 	fmt.Println("║  See: opensource/papers/08_Documentation/HONESTY_AUDIT.md   ║")

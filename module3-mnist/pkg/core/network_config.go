@@ -65,7 +65,7 @@ func (net *DualModeNetwork) SetDACBits(bits int) {
 }
 
 // SetSingleLayer enables/disables Tour Mode (single-layer 784→10 architecture).
-// When enabled, this matches Dr. Tour's MNIST demo with ~87% theoretical max accuracy.
+// When enabled, this matches Dr. Tour's MNIST demo with claimed 87% accuracy (unverified).
 func (net *DualModeNetwork) SetSingleLayer(enabled bool) {
 	net.mu.Lock()
 	defer net.mu.Unlock()

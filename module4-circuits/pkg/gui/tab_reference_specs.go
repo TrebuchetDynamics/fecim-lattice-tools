@@ -351,7 +351,7 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 		widget.NewLabel("polarization switching"),
 
 		widget.NewLabel("Endurance"),
-		widget.NewLabel("10^12 cycles"),
+		widget.NewLabel("10^9 cycles (10^12 target)"),
 		widget.NewLabel("write/erase lifetime"),
 
 		widget.NewLabel("Retention"),

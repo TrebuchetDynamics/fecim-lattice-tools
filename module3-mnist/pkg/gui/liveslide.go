@@ -290,7 +290,7 @@ func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
 		"Each digit runs through\n" +
 		"the full network.\n\n" +
 		"Target: 87% accuracy\n" +
-		"(88% theoretical max)"
+		"(per Dr. Tour, unverified)"
 	e.SetContent("Evaluating Network", content)
 }
 

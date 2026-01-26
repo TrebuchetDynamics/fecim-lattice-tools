@@ -60,21 +60,35 @@ shared/                   # Theme, widgets, logging
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| FeCIM Levels | 30 | Dr. Tour COSM 2025 |
+| FeCIM Levels | 30 | Dr. Tour COSM 2025 (32-140 demonstrated by others) |
 | Pr | 15-34 µC/cm² | Nature Commun. 2025 |
 | Ec | 1.0-1.5 MV/cm | Nature Commun. 2025 |
-| Endurance | 10¹²+ cycles | PMC 2024, IEEE IRPS 2022 |
+| Endurance (demonstrated) | 10⁹ cycles | IEEE IRPS 2022 |
+| Endurance (target) | 10¹² cycles | Dr. Tour goal, not achieved |
 
 ## Accuracy & Honesty Policy
 
-Scientific accuracy over marketing claims. Full policy in `docs/development/scriptReference.md`.
+Scientific accuracy over marketing claims. Full audit: `docs/cim/HONESTY_AUDIT.md`.
 
-| Claim | Status |
-|-------|--------|
-| 30 analog states | ✅ Verified (Dr. Tour + peer-reviewed) |
-| 87% MNIST accuracy | ✅ Verified |
-| 10¹² cycle endurance | ⚠️ Target (literature shows path) |
-| 10M× vs NAND energy | ❌ Unverified (Dr. Tour claim only) |
+### Verified Claims (Peer-Reviewed)
+
+| Claim | Status | Evidence |
+|-------|--------|----------|
+| Pr: 15-34 µC/cm² | ✅ Verified | Nature Commun. 2025 (HZO measurements) |
+| Ec: 1.0-1.5 MV/cm | ✅ Verified | Nature Commun. 2025 |
+| 32-140 analog states | ✅ Verified | Jerry 2017 (32), Song 2024 (140) |
+| 25-100× vs NAND | ✅ Verified | Samsung Nature 2025 |
+| 10⁹ cycle endurance | ✅ Verified | IEEE IRPS 2022 |
+| 96.6% MNIST accuracy | ✅ Verified | Nature Communications 2023 |
+
+### Unverified Claims (Conference Only)
+
+| Claim | Status | Source |
+|-------|--------|--------|
+| 30 analog states (Tour device) | ⚠️ Unverified | COSM 2025 (not peer-reviewed) |
+| 87% MNIST accuracy (Tour) | ⚠️ Unverified | COSM 2025 (not peer-reviewed) |
+| 10¹² cycle endurance | ⚠️ Target | Dr. Tour goal, not achieved |
+| 10M× vs NAND energy | ❌ Unverified | No measurement data exists |
 
 ## Testing
 

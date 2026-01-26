@@ -86,7 +86,7 @@ func GPUAccelerator() *Architecture {
 //
 // VERIFIED claims from Dr. Tour (Nov 2024):
 //   - 30 discrete analog states (VERIFIED)
-//   - 87% MNIST accuracy with 88% theoretical max (VERIFIED)
+//   - 87% MNIST accuracy (Dr. Tour, UNVERIFIED - conference claim only)
 //   - "10M× lower energy than NAND" (CLAIMED, NOT VERIFIED)
 //   - "1M× faster than NAND" (CLAIMED, NOT VERIFIED)
 //   - "80-90% data center energy reduction" (CLAIMED, NOT VERIFIED)

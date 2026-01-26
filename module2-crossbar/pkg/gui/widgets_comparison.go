@@ -23,7 +23,11 @@ type BeforeAfterToggle struct {
 	toggleGroup  *widget.RadioGroup
 
 	// Statistical metrics display
-	statsLabel *widget.Label
+	statsLabel   *widget.Label
+	leftLabel    *widget.Label
+	rightLabel   *widget.Label
+	legendLabel  *widget.Label
+	legendWidget fyne.CanvasObject
 
 	// Callbacks for cell interactions
 	// isIdeal indicates if the tap/hover is on the ideal (left) or actual (right) heatmap
@@ -82,6 +86,7 @@ func (b *BeforeAfterToggle) SetData(ideal, actual [][]float64) {
 func (b *BeforeAfterToggle) SetMode(mode string) {
 	b.mode = mode
 	b.updateDisplay()
+	b.updateLegend()
 }
 
 // updateDisplay refreshes the heatmaps based on current mode.
@@ -96,16 +101,34 @@ func (b *BeforeAfterToggle) updateDisplay() {
 		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.idealData)
 		b.rightHeatmap.SetData(b.actualData)
+		if b.leftLabel != nil {
+			b.leftLabel.SetText("Ideal (No Non-Idealities)")
+		}
+		if b.rightLabel != nil {
+			b.rightLabel.SetText("Actual (With Non-Idealities)")
+		}
 	case "before":
 		b.leftHeatmap.SetColormap("fecim")
 		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.idealData)
 		b.rightHeatmap.SetData(b.idealData)
+		if b.leftLabel != nil {
+			b.leftLabel.SetText("Ideal (No Non-Idealities)")
+		}
+		if b.rightLabel != nil {
+			b.rightLabel.SetText("Ideal (No Non-Idealities)")
+		}
 	case "after":
 		b.leftHeatmap.SetColormap("fecim")
 		b.rightHeatmap.SetColormap("fecim")
 		b.leftHeatmap.SetData(b.actualData)
 		b.rightHeatmap.SetData(b.actualData)
+		if b.leftLabel != nil {
+			b.leftLabel.SetText("Actual (With Non-Idealities)")
+		}
+		if b.rightLabel != nil {
+			b.rightLabel.SetText("Actual (With Non-Idealities)")
+		}
 	case "diff":
 		// Use diverging colormap (blue-white-red) for difference view
 		b.leftHeatmap.SetColormap("diverging")
@@ -113,6 +136,12 @@ func (b *BeforeAfterToggle) updateDisplay() {
 		diff := b.computeSignedDifference()
 		b.leftHeatmap.SetData(diff)
 		b.rightHeatmap.SetData(diff)
+		if b.leftLabel != nil {
+			b.leftLabel.SetText("Difference (Actual - Ideal)")
+		}
+		if b.rightLabel != nil {
+			b.rightLabel.SetText("Difference (Actual - Ideal)")
+		}
 	}
 }
 
@@ -222,6 +251,20 @@ func (b *BeforeAfterToggle) updateStatsLabel() {
 	b.statsLabel.SetText(statsText)
 }
 
+// updateLegend updates the legend display based on the current mode.
+func (b *BeforeAfterToggle) updateLegend() {
+	if b.legendLabel == nil {
+		return
+	}
+
+	if b.mode == "diff" {
+		b.legendLabel.SetText("Color Scale: Blue (Actual < Ideal) ← White (No Difference) → Red (Actual > Ideal)")
+		b.legendLabel.Show()
+	} else {
+		b.legendLabel.Hide()
+	}
+}
+
 // CreateRenderer implements fyne.Widget.
 func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	b.toggleGroup = widget.NewRadioGroup(
@@ -243,19 +286,27 @@ func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	b.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	b.statsLabel.Alignment = fyne.TextAlignCenter
 
-	leftLabel := widget.NewLabelWithStyle("Ideal (No Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	rightLabel := widget.NewLabelWithStyle("Actual (With Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	// Legend for difference view
+	b.legendLabel = widget.NewLabel("")
+	b.legendLabel.TextStyle = fyne.TextStyle{Italic: true}
+	b.legendLabel.Alignment = fyne.TextAlignCenter
+	b.legendLabel.Hide() // Hidden by default
 
-	leftPane := container.NewBorder(leftLabel, nil, nil, nil, b.leftHeatmap)
-	rightPane := container.NewBorder(rightLabel, nil, nil, nil, b.rightHeatmap)
+	// Create dynamic labels that update based on mode
+	b.leftLabel = widget.NewLabelWithStyle("Ideal (No Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	b.rightLabel = widget.NewLabelWithStyle("Actual (With Non-Idealities)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+
+	leftPane := container.NewBorder(b.leftLabel, nil, nil, nil, b.leftHeatmap)
+	rightPane := container.NewBorder(b.rightLabel, nil, nil, nil, b.rightHeatmap)
 
 	splitView := container.NewHSplit(leftPane, rightPane)
 	splitView.SetOffset(0.5)
 
-	// Top controls with toggle and stats
+	// Top controls with toggle, stats, and legend
 	topControls := container.NewVBox(
 		b.toggleGroup,
 		b.statsLabel,
+		b.legendLabel,
 	)
 
 	content := container.NewBorder(topControls, nil, nil, nil, splitView)

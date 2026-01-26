@@ -209,7 +209,7 @@ func (a *App) getSlideText() string {
 				"Higher level → +E field\n"+
 				"Lower level → -E field\n\n"+
 				"Energy: ~%.0f fJ\n"+
-				"(10M× less than NAND!)", wrdTarget, direction, energyPerOp)
+				"(25-100× less than NAND, Samsung 2025)", wrdTarget, direction, energyPerOp)
 		case 1: // HOLD
 			phaseExplanation = fmt.Sprintf("░░ HOLD L%d ░░\n\n"+
 				"E = 0, P persists!\n\n"+

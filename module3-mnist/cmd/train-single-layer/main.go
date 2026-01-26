@@ -1,5 +1,5 @@
 // Command train-single-layer trains a single-layer MNIST network matching Dr. Tour's demo.
-// Expected accuracy: ~85-88% (theoretical max ~88% for single-layer on MNIST)
+// Expected accuracy: ~85-92% (single-layer networks are limited by linear separability of MNIST)
 package main
 
 import (
@@ -15,7 +15,7 @@ import (
 func main() {
 	fmt.Println("=== Single-Layer MNIST Training (Tour Mode) ===")
 	fmt.Println("Architecture: 784 -> 10 (no hidden layer)")
-	fmt.Println("Theoretical max accuracy: ~88%")
+	fmt.Println("Single-layer limit: ~85-92% (MNIST not fully linearly separable)")
 	fmt.Println("")
 
 	// Find data directory

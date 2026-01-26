@@ -626,8 +626,11 @@ AP (Antiparallel): ↓↓↓ | ↑↑↑ → High R (TMR > 200%)
 ### FeFET (HZO)
 1. Böscke et al., "Ferroelectricity in hafnium oxide thin films", *Appl. Phys. Lett.* 2011
 2. Dr. external research group, COSM 2025 (30 discrete states claim)
-3. Nature Commun. 2025 (Pr = 15-34 µC/cm², Ec = 1.0-1.5 MV/cm)
-4. PMC 2024, IEEE IRPS 2022 (10¹² endurance target)
+3. [Nature Commun. 2025](https://doi.org/10.1038/s41467-025-61758-2) - HfO₂/ZrO₂ superlattice (Pr = 15-34 µC/cm², Ec = 1.0-1.5 MV/cm)
+4. [IEEE IRPS 2022](https://doi.org/10.1109/IRPS48227.2022.9764533) - High endurance HZO (>10¹¹ cycles)
+5. [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) - HfO₂ ferroelectric endurance review (>5×10¹² cycles)
+6. [PMC9740545](https://pmc.ncbi.nlm.nih.gov/articles/PMC9740545/) - Polarization switching kinetics in HZO
+7. [Nature Reviews Materials](https://doi.org/10.1038/s41578-022-00431-2) - HfO₂ fundamentals review
 
 ### ReRAM
 5. Wong et al., "Metal-Oxide RRAM", *Proc. IEEE* 2012

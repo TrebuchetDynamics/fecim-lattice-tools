@@ -98,6 +98,12 @@ type App struct {
 	manualPhase       int     // 0=idle, 1=saturate, 2=settle, 3=hold
 	manualPhaseTime   float64 // Time in current phase
 
+	// Level calibration data (populated at startup/material change)
+	// Maps field values needed to reach each level from known starting states
+	calibrationUp   [30]float64 // Field needed to reach level N from level 1 (ascending)
+	calibrationDown [30]float64 // Field needed to reach level N from level 30 (descending)
+	calibrated      bool        // Whether calibration has been performed
+
 	// UI components
 	plot           *widgets.PEPlot
 	levelIndicator *widgets.LevelIndicator

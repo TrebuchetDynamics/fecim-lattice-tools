@@ -191,10 +191,11 @@ THE FeCIM NARRATIVE
 │ GUIDED TOUR MODE: (7 steps, 3 minutes)                     │
 │ [Start Tour] → Teaches "Why 30 levels?" story              │
 │                                                             │
-│ Key Insight:                                                │
+│ Key Insight (Dr. Tour, COSM 2025 - unverified):             │
 │ "We're at 87% validation here...                           │
 │  theoretical is 88%."                                       │
 │              — Dr. external research group                               │
+│ NOTE: "88% theoretical" has no peer-reviewed basis.        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -251,8 +252,8 @@ THE FeCIM NARRATIVE
 │     GPU+HBM   ████████           100 pJ                     │
 │     FeCIM     █                   10 pJ                     │
 │                                                             │
-│     → 10,000,000× better than NAND                          │
-│     → 1,000× better than DRAM                               │
+│     → 10,000,000× better than NAND (Dr. Tour, unverified)   │
+│     → 1,000× better than DRAM (peer-reviewed: 25-100×)      │
 │                                                             │
 │ [2] COMPETITIVE MATRIX                                      │
 │     ┌──────────┬──────┬──────┬──────┬──────┐               │

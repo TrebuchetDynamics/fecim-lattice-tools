@@ -318,13 +318,16 @@ func (r *waterfallRenderer) Refresh() {
 		w.barLabels = make([]*canvas.Text, len(w.steps))
 		for i, step := range w.steps {
 			label := canvas.NewText(fmt.Sprintf("%.1f%%", step.Accuracy), color.White)
-			label.TextSize = 10
+			label.TextSize = 11
+			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Alignment = fyne.TextAlignCenter
 			w.barLabels[i] = label
 		}
 	} else {
 		for i, step := range w.steps {
 			w.barLabels[i].Text = fmt.Sprintf("%.1f%%", step.Accuracy)
+			w.barLabels[i].TextSize = 11
+			w.barLabels[i].TextStyle = fyne.TextStyle{Bold: true}
 		}
 	}
 

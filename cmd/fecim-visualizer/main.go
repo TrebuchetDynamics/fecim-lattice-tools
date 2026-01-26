@@ -38,6 +38,7 @@ import (
 	demo4gui "multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/gui"
 	demo5gui "multilayer-ferroelectric-cim-visualizer/module5-comparison/pkg/gui"
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
+	demo7gui "multilayer-ferroelectric-cim-visualizer/module7-docs/pkg/gui"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 	"multilayer-ferroelectric-cim-visualizer/shared/utils"
@@ -306,6 +307,7 @@ type DemoApp struct {
 	demo4 *demo4gui.EmbeddedCircuitsApp   // Circuits
 	demo5 *demo5gui.EmbeddedComparisonApp // Comparison (technical briefing)
 	demo6 *demo6gui.EmbeddedEDAApp        // EDA Design Suite
+	demo7 *demo7gui.EmbeddedDocsApp       // Documentation
 }
 
 // Preference keys for window state persistence
@@ -411,6 +413,8 @@ func main() {
 	d5 := demo5gui.NewEmbeddedComparisonApp()
 	fmt.Println("[STARTUP] Creating demo6 (EDA)...")
 	d6 := demo6gui.NewEmbeddedEDAApp()
+	fmt.Println("[STARTUP] Creating demo7 (Docs)...")
+	d7 := demo7gui.NewEmbeddedDocsApp()
 	fmt.Println("[STARTUP] All demos created")
 
 	demos := &DemoApp{
@@ -420,6 +424,7 @@ func main() {
 		demo4: d4,
 		demo5: d5,
 		demo6: d6,
+		demo7: d7,
 	}
 
 	// View names for navigation (index matches view index)
@@ -431,6 +436,7 @@ func main() {
 		"FeCIM Peripheral Circuits Visualizer",
 		"FeCIM: The Energy Revolution",
 		"FeCIM EDA Design Suite (Work In Progress)",
+		"Documentation",
 	}
 
 	// Track current view index and content stack
@@ -495,8 +501,11 @@ func main() {
 	fmt.Println("[STARTUP] Building demo6 content...")
 	demo6Content := demos.demo6.BuildContent(fyneApp, window)
 	fmt.Println("[STARTUP] demo6 content built")
+	fmt.Println("[STARTUP] Building demo7 content...")
+	demo7Content := demos.demo7.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo7 content built")
 
-	// Create views - 6 demos total (plus home)
+	// Create views - 7 demos total (plus home)
 	fmt.Println("[STARTUP] Creating views...")
 	views = []fyne.CanvasObject{
 		launcherContent,
@@ -506,6 +515,7 @@ func main() {
 		container.NewMax(demo4Content),
 		container.NewMax(demo5Content),
 		container.NewMax(demo6Content),
+		container.NewMax(demo7Content),
 	}
 	// Hide all views except Home initially
 	for i, v := range views {
@@ -676,9 +686,12 @@ func main() {
 		case 6:
 			log.Debug("Stopping demo6 (EDA)")
 			demos.demo6.Stop()
+		case 7:
+			log.Debug("Stopping demo7 (Docs)")
+			demos.demo7.Stop()
 		}
 
-		// Start new demo (index 0=Home, 1-6=demos)
+		// Start new demo (index 0=Home, 1-7=demos)
 		currentDemo = index
 		switch index {
 		case 1:
@@ -701,15 +714,24 @@ func main() {
 		case 6:
 			log.Debug("Starting demo6 (EDA)")
 			demos.demo6.Start()
+		case 7:
+			log.Debug("Starting demo7 (Docs)")
+			demos.demo7.Start()
 		}
 	}
+
+	// Create docs button to navigate to Documentation view
+	docsBtn := widget.NewButtonWithIcon("", theme.HelpIcon(), func() {
+		log.Button("Docs")
+		selectView(7) // Documentation is view index 7
+	})
 
 	// Create toolbar with module label left, buttons aligned right
 	fmt.Println("[STARTUP] Creating toolbar...")
 	toolbar := container.NewBorder(
 		nil, nil,
 		currentModuleLabel, // Left side: current module name
-		container.NewHBox(homeBtn, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
+		container.NewHBox(homeBtn, docsBtn, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
 	)
 
 	// Stack content with toolbar on top
