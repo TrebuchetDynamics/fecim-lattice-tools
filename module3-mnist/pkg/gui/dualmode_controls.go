@@ -4,6 +4,9 @@ package gui
 
 import (
 	"fmt"
+	"math/rand"
+	"path/filepath"
+	"sync/atomic"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -12,7 +15,10 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/core"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/module3-mnist/pkg/training"
 )
 
 // createControlsZone creates the hardware control panel (Zone 3).
@@ -153,12 +159,18 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.runQuickTest()
 	})
 
+	// Train Weights button - allows user to generate weights for current level
+	trainWeightsBtn := widget.NewButton("Train Weights", func() {
+		mnistLog.Button("TrainWeights")
+		app.showTrainWeightsDialog()
+	})
+
 	// Simple Mode presets (shown by default)
 	app.simplePresets = container.NewGridWithColumns(3, idealBtn, hw87Btn, noisyBtn)
 
 	// Expert-only controls (hidden by default)
 	expertPresetRow := container.NewGridWithColumns(3, quantCliffBtn, brokenBtn, tourBtn)
-	testRow := container.NewHBox(app.testButton, app.testProgressBar, app.testResultLabel)
+	testRow := container.NewHBox(app.testButton, trainWeightsBtn, app.testProgressBar, app.testResultLabel)
 	app.expertOnlyControls = container.NewVBox(
 		selectsRow,
 		expertPresetRow,
@@ -282,4 +294,261 @@ func (app *DualModeApp) runQuickTest() {
 			app.testButton.Enable()
 		})
 	}()
+}
+
+// showTrainWeightsDialog shows a dialog to train weights for the current quantization level.
+func (app *DualModeApp) showTrainWeightsDialog() {
+	currentLevels := int(app.levelsSlider.Value)
+
+	// Create progress UI elements
+	progressBar := widget.NewProgressBar()
+	statusLabel := widget.NewLabel("Ready to train")
+	epochLabel := widget.NewLabel("")
+	accuracyLabel := widget.NewLabel("")
+
+	// Training parameters (with sensible defaults)
+	epochsEntry := widget.NewEntry()
+	epochsEntry.SetText("10")
+	samplesEntry := widget.NewEntry()
+	samplesEntry.SetText("10000")
+
+	// Training state (use atomic.Bool for thread-safe access between UI and training goroutine)
+	var isTraining atomic.Bool
+	var stopTraining atomic.Bool
+
+	// Create the dialog content
+	form := container.NewVBox(
+		widget.NewLabel(fmt.Sprintf("Train weights optimized for %d quantization levels", currentLevels)),
+		widget.NewSeparator(),
+		container.NewGridWithColumns(2,
+			widget.NewLabel("Epochs:"), epochsEntry,
+			widget.NewLabel("Training samples:"), samplesEntry,
+		),
+		widget.NewSeparator(),
+		progressBar,
+		statusLabel,
+		epochLabel,
+		accuracyLabel,
+	)
+
+	// Create buttons
+	var trainBtn *widget.Button
+
+	trainBtn = widget.NewButton("Start Training", func() {
+		if isTraining.Load() {
+			return
+		}
+
+		// Parse parameters
+		var epochs int
+		var samples int
+		_, err := fmt.Sscanf(epochsEntry.Text, "%d", &epochs)
+		if err != nil || epochs < 1 {
+			epochs = 10
+		}
+		_, err = fmt.Sscanf(samplesEntry.Text, "%d", &samples)
+		if err != nil || samples < 100 {
+			samples = 10000
+		}
+
+		isTraining.Store(true)
+		stopTraining.Store(false)
+		trainBtn.Disable()
+		epochsEntry.Disable()
+		samplesEntry.Disable()
+
+		go app.runTraining(currentLevels, epochs, samples, progressBar, statusLabel, epochLabel, accuracyLabel, &stopTraining, func() {
+			fyne.Do(func() {
+				isTraining.Store(false)
+				trainBtn.Enable()
+				epochsEntry.Enable()
+				samplesEntry.Enable()
+			})
+		})
+	})
+	trainBtn.Importance = widget.HighImportance
+
+	cancelBtn := widget.NewButton("Stop", func() {
+		stopTraining.Store(true)
+		statusLabel.SetText("Stopping training...")
+	})
+
+	buttonRow := container.NewHBox(layout.NewSpacer(), trainBtn, cancelBtn, layout.NewSpacer())
+	content := container.NewVBox(form, buttonRow)
+
+	d := dialog.NewCustom("Train Weights", "Close", content, app.window)
+	d.SetOnClosed(func() {
+		stopTraining.Store(true) // Stop training when dialog is closed
+	})
+	d.Resize(fyne.NewSize(450, 350))
+	d.Show()
+}
+
+// runTraining performs the actual training in a background goroutine.
+func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *widget.ProgressBar, statusLabel, epochLabel, accuracyLabel *widget.Label, stopTraining *atomic.Bool, onComplete func()) {
+	defer onComplete()
+
+	// Use local RNG for shuffling (global rand is already auto-seeded in Go 1.20+)
+	rng := rand.New(rand.NewSource(rand.Int63()))
+
+	fyne.Do(func() {
+		statusLabel.SetText("Loading MNIST training data...")
+		progressBar.SetValue(0)
+	})
+
+	// Load MNIST training data
+	trainImages, trainLabels, err := mnist.LoadMNIST(app.dataDir, true)
+	if err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Error loading data: %v", err))
+		})
+		return
+	}
+
+	// Limit samples
+	if samples > len(trainImages) {
+		samples = len(trainImages)
+	}
+	trainImages = trainImages[:samples]
+	trainLabels = trainLabels[:samples]
+
+	fyne.Do(func() {
+		statusLabel.SetText(fmt.Sprintf("Loaded %d training samples", samples))
+	})
+
+	// Load test data for evaluation
+	testImages, testLabels, err := mnist.LoadMNIST(app.dataDir, false)
+	if err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Error loading test data: %v", err))
+		})
+		return
+	}
+	// Use subset for evaluation
+	if len(testImages) > 1000 {
+		testImages = testImages[:1000]
+		testLabels = testLabels[:1000]
+	}
+
+	// Create crossbar arrays for training
+	// Note: Crossbar uses 30-level quantization internally, but the saved weights
+	// can be re-quantized to different levels at inference time by DualModeNetwork
+	hidden := 128
+	layer1, err := crossbar.NewArray(&crossbar.Config{
+		Rows: hidden, Cols: 784, NoiseLevel: 0, ADCBits: 16, DACBits: 16,
+	})
+	if err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Error creating layer1: %v", err))
+		})
+		return
+	}
+
+	layer2, err := crossbar.NewArray(&crossbar.Config{
+		Rows: 10, Cols: hidden, NoiseLevel: 0, ADCBits: 16, DACBits: 16,
+	})
+	if err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Error creating layer2: %v", err))
+		})
+		return
+	}
+
+	// Create training network
+	net := training.NewMNISTNetwork(layer1, layer2)
+
+	// Training parameters
+	learningRate := 1.0
+	bestAcc := 0.0
+
+	fyne.Do(func() {
+		statusLabel.SetText("Training...")
+	})
+
+	for epoch := 1; epoch <= epochs; epoch++ {
+		if stopTraining.Load() {
+			fyne.Do(func() {
+				statusLabel.SetText("Training stopped by user")
+			})
+			return
+		}
+
+		// Shuffle training data
+		perm := rng.Perm(len(trainImages))
+		shuffledImages := make([][]float64, len(trainImages))
+		shuffledLabels := make([]int, len(trainImages))
+		for i, p := range perm {
+			shuffledImages[i] = trainImages[p]
+			shuffledLabels[i] = trainLabels[p]
+		}
+
+		// Train one epoch
+		loss := net.TrainEpoch(shuffledImages, shuffledLabels, learningRate)
+
+		// Evaluate
+		acc := net.Evaluate(testImages, testLabels) * 100
+		if acc > bestAcc {
+			bestAcc = acc
+		}
+
+		// Update UI
+		progress := float64(epoch) / float64(epochs)
+		currentEpoch := epoch
+		currentLoss := loss
+		currentAcc := acc
+		currentBest := bestAcc
+		fyne.Do(func() {
+			progressBar.SetValue(progress)
+			epochLabel.SetText(fmt.Sprintf("Epoch %d/%d | Loss: %.4f", currentEpoch, epochs, currentLoss))
+			accuracyLabel.SetText(fmt.Sprintf("Accuracy: %.1f%% | Best: %.1f%%", currentAcc, currentBest))
+		})
+
+		// Learning rate decay
+		if epoch%5 == 0 {
+			learningRate *= 0.5
+		}
+	}
+
+	// Save weights
+	weightsPath := core.GetWeightsFilename(app.dataDir, levels)
+	// For non-standard levels, save with level number
+	if levels != 30 {
+		weightsPath = filepath.Join(app.dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+	}
+
+	fyne.Do(func() {
+		statusLabel.SetText(fmt.Sprintf("Saving weights to %s...", filepath.Base(weightsPath)))
+	})
+
+	if err := net.SaveWeights(weightsPath); err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Error saving weights: %v", err))
+		})
+		return
+	}
+
+	// Clear the "warned" flag so the new weights can be loaded (thread-safe access)
+	app.warnedMissingLevelsMu.Lock()
+	app.warnedMissingLevels[levels] = false
+	app.warnedMissingLevelsMu.Unlock()
+
+	// Reload the weights into the current network (LoadWeights is thread-safe internally)
+	if err := app.network.LoadWeights(weightsPath); err != nil {
+		fyne.Do(func() {
+			statusLabel.SetText(fmt.Sprintf("Trained but error loading: %v", err))
+		})
+		return
+	}
+
+	// Update state on main thread to ensure thread safety
+	finalBestAcc := bestAcc
+	fyne.Do(func() {
+		app.currentQATLevel = levels
+		statusLabel.SetText(fmt.Sprintf("Training complete! Accuracy: %.1f%% | Weights saved.", finalBestAcc))
+		progressBar.SetValue(1.0)
+		app.updateWeightHeatmap()
+		if len(app.lastPixels) > 0 {
+			app.runInference(app.lastPixels)
+		}
+	})
 }

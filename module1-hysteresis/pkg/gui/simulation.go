@@ -159,15 +159,30 @@ func (a *App) simulationLoop() {
 
 						// Update calibration based on error (for next time)
 						// This adaptive calibration improves accuracy over time
+						// Using 6% of Ec per level error for faster convergence
 						if levelError != 0 && a.calibrated {
 							if targetLevel > startLevel {
 								// Adjust ascending calibration
-								adjustment := float64(levelError) * Ec * 0.02
-								a.calibrationUp[targetLevel-1] -= adjustment
+								adjustment := float64(levelError) * Ec * 0.06
+								newVal := a.calibrationUp[targetLevel-1] - adjustment
+								// Clamp to valid range (0.5*Ec to 2.5*Ec)
+								if newVal < Ec*0.5 {
+									newVal = Ec * 0.5
+								} else if newVal > Ec*2.5 {
+									newVal = Ec * 2.5
+								}
+								a.calibrationUp[targetLevel-1] = newVal
 							} else {
 								// Adjust descending calibration
-								adjustment := float64(levelError) * Ec * 0.02
-								a.calibrationDown[targetLevel-1] += adjustment
+								adjustment := float64(levelError) * Ec * 0.06
+								newVal := a.calibrationDown[targetLevel-1] + adjustment
+								// Clamp to valid range (-2.5*Ec to -0.5*Ec)
+								if newVal > -Ec*0.5 {
+									newVal = -Ec * 0.5
+								} else if newVal < -Ec*2.5 {
+									newVal = -Ec * 2.5
+								}
+								a.calibrationDown[targetLevel-1] = newVal
 							}
 						}
 
@@ -344,16 +359,31 @@ func (a *App) simulationLoop() {
 						}
 
 						// Update calibration based on error (adaptive learning)
+						// Using 6% of Ec per level error for faster convergence
 						if levelError != 0 && a.calibrated {
 							goingUp := a.wrdTargetLevel > a.wrdStartLevel || a.wrdTargetLevel > 15
 							if goingUp {
 								// Adjust ascending calibration
-								adjustment := float64(levelError) * Ec * 0.02
-								a.calibrationUp[a.wrdTargetLevel-1] -= adjustment
+								adjustment := float64(levelError) * Ec * 0.06
+								newVal := a.calibrationUp[a.wrdTargetLevel-1] - adjustment
+								// Clamp to valid range (0.5*Ec to 2.5*Ec)
+								if newVal < Ec*0.5 {
+									newVal = Ec * 0.5
+								} else if newVal > Ec*2.5 {
+									newVal = Ec * 2.5
+								}
+								a.calibrationUp[a.wrdTargetLevel-1] = newVal
 							} else {
 								// Adjust descending calibration
-								adjustment := float64(levelError) * Ec * 0.02
-								a.calibrationDown[a.wrdTargetLevel-1] += adjustment
+								adjustment := float64(levelError) * Ec * 0.06
+								newVal := a.calibrationDown[a.wrdTargetLevel-1] + adjustment
+								// Clamp to valid range (-2.5*Ec to -0.5*Ec)
+								if newVal > -Ec*0.5 {
+									newVal = -Ec * 0.5
+								} else if newVal < -Ec*2.5 {
+									newVal = -Ec * 2.5
+								}
+								a.calibrationDown[a.wrdTargetLevel-1] = newVal
 							}
 						}
 
@@ -744,6 +774,9 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 // This mimics how real ferroelectric memory controllers characterize each device
 // and build lookup tables for programming. Called at startup and when material changes.
 // MUST be called with a.mu held.
+//
+// FIXED: Uses binary search with fresh saturation for each level to avoid
+// Preisach state corruption from the previous sweep-based approach.
 func (a *App) calibrateLevels() {
 	if a.preisach == nil || a.material == nil {
 		return
@@ -752,58 +785,20 @@ func (a *App) calibrateLevels() {
 	Ec := a.material.Ec
 	Emax := 2.5 * Ec // Go slightly beyond saturation
 
-	// Save current Preisach state (we'll restore after calibration)
-	// Note: We can't fully save/restore Preisach state, so we'll reset after
-
-	// Calibrate ASCENDING (from negative saturation to positive)
-	// First, saturate negative
-	for i := 0; i < 100; i++ {
-		a.preisach.Update(-Emax)
-	}
-	a.preisach.Update(0) // Return to zero (remanent state)
-
-	// Now sweep up and record field needed for each level
-	lastLevel := 0
-	for e := 0.0; e <= Emax; e += Ec * 0.02 { // Fine steps (2% of Ec)
-		a.preisach.Update(e)
-		p := a.preisach.Update(0) // Check remanent after removing field
-		normalizedP := p / a.material.Ps
-		level := int(math.Round((normalizedP + 1) / 2 * 29))
-		if level < 0 {
-			level = 0
+	// Helper function to test what level results from a given field
+	// starting from negative saturation (for ascending calibration)
+	testLevelAscending := func(testE float64) int {
+		// Reset and saturate negative
+		a.preisach.Reset()
+		for i := 0; i < 50; i++ {
+			a.preisach.Update(-Emax)
 		}
-		if level > 29 {
-			level = 29
-		}
+		a.preisach.Update(0) // At level 1 (negative remanent)
 
-		// Record the field that first achieved this level
-		if level > lastLevel && level < 30 {
-			a.calibrationUp[level] = e
-			lastLevel = level
-		}
-
-		// Re-apply field for next iteration (continue sweep)
-		a.preisach.Update(e)
-	}
-
-	// Fill any gaps (use interpolation)
-	for i := 1; i < 30; i++ {
-		if a.calibrationUp[i] == 0 && i > 0 {
-			a.calibrationUp[i] = a.calibrationUp[i-1] + Ec*0.05
-		}
-	}
-
-	// Calibrate DESCENDING (from positive saturation to negative)
-	// First, saturate positive
-	for i := 0; i < 100; i++ {
-		a.preisach.Update(Emax)
-	}
-	a.preisach.Update(0) // Return to zero (remanent state)
-
-	lastLevel = 29
-	for e := 0.0; e >= -Emax; e -= Ec * 0.02 { // Fine steps (negative direction)
-		a.preisach.Update(e)
+		// Apply test field and return to zero
+		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
+
 		normalizedP := p / a.material.Ps
 		level := int(math.Round((normalizedP + 1) / 2 * 29))
 		if level < 0 {
@@ -812,23 +807,111 @@ func (a *App) calibrateLevels() {
 		if level > 29 {
 			level = 29
 		}
-
-		// Record the field that first achieved this level (going down)
-		if level < lastLevel && level >= 0 {
-			a.calibrationDown[level] = e // Negative field
-			lastLevel = level
-		}
-
-		// Re-apply field for next iteration
-		a.preisach.Update(e)
+		return level
 	}
 
-	// Fill gaps (descending)
-	for i := 28; i >= 0; i-- {
-		if a.calibrationDown[i] == 0 && i < 29 {
-			a.calibrationDown[i] = a.calibrationDown[i+1] - Ec*0.05
+	// Helper function for descending calibration (from positive saturation)
+	testLevelDescending := func(testE float64) int {
+		// Reset and saturate positive
+		a.preisach.Reset()
+		for i := 0; i < 50; i++ {
+			a.preisach.Update(Emax)
 		}
+		a.preisach.Update(0) // At level 30 (positive remanent)
+
+		// Apply test field (negative) and return to zero
+		a.preisach.Update(testE)
+		p := a.preisach.Update(0)
+
+		normalizedP := p / a.material.Ps
+		level := int(math.Round((normalizedP + 1) / 2 * 29))
+		if level < 0 {
+			level = 0
+		}
+		if level > 29 {
+			level = 29
+		}
+		return level
 	}
+
+	// Calibrate ASCENDING using binary search for each level
+	// Start with initial estimates based on linear interpolation
+	for targetLevel := 1; targetLevel < 30; targetLevel++ {
+		// Initial estimate: linear interpolation between Ec and 2*Ec
+		ratio := float64(targetLevel) / 29.0
+		initialGuess := Ec * (0.8 + ratio*1.2) // Range: 0.8*Ec to 2.0*Ec
+
+		// Binary search to find exact field
+		lowE := Ec * 0.5
+		highE := Emax
+		bestE := initialGuess
+		bestDiff := 30 // Start with worst case
+
+		// Binary search with 15 iterations (precision: ~0.003% of range)
+		for iter := 0; iter < 15; iter++ {
+			midE := (lowE + highE) / 2
+			resultLevel := testLevelAscending(midE)
+
+			diff := resultLevel - targetLevel
+			if abs(diff) < abs(bestDiff) {
+				bestDiff = diff
+				bestE = midE
+			}
+
+			if resultLevel == targetLevel {
+				// Found exact match
+				break
+			} else if resultLevel < targetLevel {
+				// Need higher field
+				lowE = midE
+			} else {
+				// Need lower field
+				highE = midE
+			}
+		}
+
+		a.calibrationUp[targetLevel] = bestE
+	}
+	// Level 0 is at negative saturation, no field needed from that state
+	a.calibrationUp[0] = 0
+
+	// Calibrate DESCENDING using binary search for each level
+	for targetLevel := 28; targetLevel >= 0; targetLevel-- {
+		// Initial estimate: linear interpolation between -Ec and -2*Ec
+		ratio := float64(29-targetLevel) / 29.0
+		initialGuess := -Ec * (0.8 + ratio*1.2) // Range: -0.8*Ec to -2.0*Ec
+
+		// Binary search to find exact field (negative values)
+		lowE := -Emax  // More negative
+		highE := -Ec * 0.5 // Less negative
+		bestE := initialGuess
+		bestDiff := 30
+
+		for iter := 0; iter < 15; iter++ {
+			midE := (lowE + highE) / 2
+			resultLevel := testLevelDescending(midE)
+
+			diff := resultLevel - targetLevel
+			if abs(diff) < abs(bestDiff) {
+				bestDiff = diff
+				bestE = midE
+			}
+
+			if resultLevel == targetLevel {
+				break
+			} else if resultLevel > targetLevel {
+				// Need more negative field (lower E)
+				highE = midE
+			} else {
+				// Need less negative field (higher E)
+				lowE = midE
+			}
+		}
+
+		a.calibrationDown[targetLevel] = bestE
+	}
+	// Level 29 is at positive saturation, no field needed from that state
+	a.calibrationDown[29] = 0
 
 	// Reset Preisach to neutral state after calibration
 	a.preisach.Reset()
@@ -837,49 +920,4 @@ func (a *App) calibrateLevels() {
 	a.calibrated = true
 
 	log.Info("Level calibration complete for material: %s", a.material.Name)
-}
-
-// getCalibratedWriteField returns the calibrated E-field for a target level.
-// DEPRECATED: The RESET-AND-RETRY approach doesn't need continuous feedback.
-// This function is kept for backward compatibility but the new physics implementation
-// directly accesses calibrationUp/calibrationDown arrays.
-//
-// The correct approach for ferroelectric programming:
-// 1. RESET to known saturation (opposite direction to target)
-// 2. Return to E=0 (now at known remanent: level 1 or 30)
-// 3. Apply single calibrated pulse from calibrationUp or calibrationDown
-// 4. Return to E=0 (polarization persists at target level)
-//
-// If target missed, record error and adjust calibration for next time.
-// Do NOT try to "correct" by applying opposite field - that's physically wrong.
-func (a *App) getCalibratedWriteField(currentLevel, targetLevel, startLevel int) float64 {
-	Ec := a.material.Ec
-
-	// If already at target, no field needed
-	if currentLevel == targetLevel {
-		return 0
-	}
-
-	// Determine direction based on start level
-	goingUp := targetLevel > startLevel
-
-	if goingUp {
-		// Use ascending calibration (from level 1)
-		field := a.calibrationUp[targetLevel-1] // 0-indexed array
-		if field == 0 {
-			// Fallback: interpolate
-			ratio := float64(targetLevel-1) / 29.0
-			field = Ec * (1.0 + ratio*1.0)
-		}
-		return field
-	} else {
-		// Use descending calibration (from level 30)
-		field := a.calibrationDown[targetLevel-1] // 0-indexed array
-		if field == 0 {
-			// Fallback: interpolate
-			ratio := float64(30-targetLevel) / 29.0
-			field = -Ec * (1.0 + ratio*1.0)
-		}
-		return field
-	}
 }

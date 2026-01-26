@@ -109,6 +109,10 @@ type DualModeApp struct {
 	// QAT (Quantization-Aware Training) weight tracking
 	currentQATLevel int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
 
+	// Track which missing weight levels have already shown a warning (to avoid infinite modals)
+	warnedMissingLevels   map[int]bool
+	warnedMissingLevelsMu sync.RWMutex
+
 	// Guided Tour
 	tour *GuidedTour
 
@@ -148,8 +152,9 @@ type DualModeApp struct {
 // NewDualModeApp creates a new dual-mode MNIST application.
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
-		dataDir:         findDataDir(),
-		currentQATLevel: FeCIMDefaultLevels, // Default QAT level (30)
+		dataDir:             findDataDir(),
+		currentQATLevel:     FeCIMDefaultLevels, // Default QAT level (30)
+		warnedMissingLevels: make(map[int]bool),
 	}
 
 	// Create network
