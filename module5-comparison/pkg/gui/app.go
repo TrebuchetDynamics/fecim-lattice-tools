@@ -76,6 +76,8 @@ type ComparisonApp struct {
 	inferencesLabel  *widget.Label
 
 	// Status
+	// IMPORTANT: All status updates MUST go through updateStatus() method to use cache
+	// and prevent redundant SetText calls that bypass Fyne's internal caching.
 	statusLabel     *widget.Label
 	lastStatusText  string // Cache to avoid redundant SetText calls
 
@@ -159,25 +161,23 @@ func (ca *ComparisonApp) animationLoop() {
 	for {
 		<-ticker.C
 
-		// Check if we should stop
-		ca.animMu.RLock()
+		// Check if we should stop and update simTime atomically
+		ca.animMu.Lock()
 		running := ca.running
 		paused := ca.paused
-		ca.animMu.RUnlock()
-
 		if !running {
+			ca.animMu.Unlock()
 			return
 		}
 
 		if paused {
+			ca.animMu.Unlock()
 			lastTime = time.Now()
 			continue
 		}
 
 		dt := time.Since(lastTime).Seconds()
 		lastTime = time.Now()
-
-		ca.animMu.Lock()
 		ca.simTime += dt
 		ca.animMu.Unlock()
 
@@ -267,14 +267,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.statusLabel = widget.NewLabel("Status: Ready")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	// === HEADER - INVESTOR GRADE ===
-	titleLabel := widget.NewLabel("FeCIM: The Energy Revolution")
-	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
-	titleLabel.Importance = widget.HighImportance
-
-	subtitleLabel := widget.NewLabel("Dr. external research group | COSM 2025")
-	subtitleLabel.TextStyle = fyne.TextStyle{Italic: true}
-
+	// === HEADER (title moved to main navbar) ===
 	resetBtn := widget.NewButton("Reset", func() {
 		if ca.energyRace != nil {
 			ca.energyRace.Reset()
@@ -289,8 +282,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	})
 
 	header := container.NewHBox(
-		titleLabel,
-		subtitleLabel,
+		widget.NewLabel("Dr. external research group | COSM 2025"),
 		layout.NewSpacer(),
 		resetBtn,
 	)
@@ -477,10 +469,17 @@ func (ca *ComparisonApp) getWorkloadMACs() int {
 	}
 }
 
-// updateStatus updates the status label.
+// updateStatus updates the status label using cache to prevent redundant SetText calls.
+// All status updates should go through this method to avoid bypassing Fyne's internal cache.
 func (ca *ComparisonApp) updateStatus(status string) {
 	if ca.statusLabel == nil {
 		return
 	}
-	ca.statusLabel.SetText("Status: " + status)
+	newText := "Status: " + status
+	// Only update if text has actually changed (cache bypass prevention)
+	if ca.lastStatusText == newText {
+		return
+	}
+	ca.lastStatusText = newText
+	ca.statusLabel.SetText(newText)
 }

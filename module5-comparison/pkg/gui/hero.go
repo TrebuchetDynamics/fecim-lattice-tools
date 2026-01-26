@@ -47,11 +47,13 @@ type AnimatedEnergyRace struct {
 	showWinner   bool
 	pulsePhase   float64
 
-	// Cached values to avoid redundant SetText calls (prevents resize loops)
-	lastGpuText   string
-	lastFecimText string
+	// Cached values to avoid redundant text formatting (prevents resize loops)
+	// BUG-M5-004 FIX: Track raw progress values, not formatted strings
+	lastGpuProgress   int // Percentage as int (0-100) to detect 1+ point changes
+	lastFecimProgress int // Percentage as int (0-100)
+	needsTextUpdate   bool
 
-	// UI elements
+	// UI elements (cached for renderer reuse)
 	container     *fyne.Container
 	heroText      *canvas.Text
 	heroSubtext   *canvas.Text
@@ -60,6 +62,7 @@ type AnimatedEnergyRace struct {
 	gpuLabel      *canvas.Text
 	fecimLabel    *canvas.Text
 	statStrip     *canvas.Text
+	renderer      fyne.WidgetRenderer
 }
 
 // NewAnimatedEnergyRace creates a new energy race visualization.
@@ -73,6 +76,7 @@ func NewAnimatedEnergyRace() *AnimatedEnergyRace {
 func (e *AnimatedEnergyRace) SetLogScale(log bool) {}
 
 // UpdateAnimation advances the animation by dt seconds.
+// BUG-M5-004 FIX: Check thresholds BEFORE formatting to avoid unnecessary recalculations
 func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -88,6 +92,17 @@ func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
 	if e.showWinner {
 		e.pulsePhase += dt * 2.0
 	}
+
+	// BUG-M5-004 FIX: Check if progress crossed a 1-point threshold before marking for update
+	// Only mark needsTextUpdate when the integer percentage changes
+	newGpuProgress := int(100 * e.animProgress)
+	newFecimProgress := int(10 * e.animProgress)
+
+	if newGpuProgress != e.lastGpuProgress || newFecimProgress != e.lastFecimProgress {
+		e.needsTextUpdate = true
+		e.lastGpuProgress = newGpuProgress
+		e.lastFecimProgress = newFecimProgress
+	}
 }
 
 // Reset resets the animation.
@@ -96,6 +111,9 @@ func (e *AnimatedEnergyRace) Reset() {
 	e.animProgress = 0
 	e.showWinner = false
 	e.pulsePhase = 0
+	e.lastGpuProgress = -1   // Force text update on first frame
+	e.lastFecimProgress = -1 // Force text update on first frame
+	e.needsTextUpdate = true
 	e.mu.Unlock()
 	fyne.Do(func() {
 		e.Refresh()
@@ -108,7 +126,13 @@ func (e *AnimatedEnergyRace) MinSize() fyne.Size {
 }
 
 // CreateRenderer implements fyne.Widget.
+// BUG-M5-003 FIX: Cache renderer and reuse canvas objects instead of recreating
 func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
+	// Return cached renderer if already created (prevents recreation)
+	if e.renderer != nil {
+		return e.renderer
+	}
+
 	// === HERO SECTION: MASSIVE "80-90%" ===
 	e.heroText = canvas.NewText("80-90%", heroTextColor)
 	e.heroText.TextSize = 96 // MASSIVE for investor impact
@@ -202,15 +226,49 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		container.NewCenter(disclaimer),
 	)
 
-	return widget.NewSimpleRenderer(e.container)
+	// Initialize cache values to force first update
+	e.lastGpuProgress = -1
+	e.lastFecimProgress = -1
+	e.needsTextUpdate = true
+
+	// Cache and return the renderer
+	e.renderer = &energyRaceRenderer{widget: e, container: e.container}
+	return e.renderer
 }
 
-// Refresh updates the widget display.
-func (e *AnimatedEnergyRace) Refresh() {
+// energyRaceRenderer is a custom renderer that properly implements Layout.
+// BUG-M5-003 FIX: Proper WidgetRenderer with Layout() method
+type energyRaceRenderer struct {
+	widget    *AnimatedEnergyRace
+	container *fyne.Container
+}
+
+func (r *energyRaceRenderer) Destroy() {}
+
+func (r *energyRaceRenderer) Layout(size fyne.Size) {
+	r.container.Resize(size)
+}
+
+func (r *energyRaceRenderer) MinSize() fyne.Size {
+	return r.widget.MinSize()
+}
+
+func (r *energyRaceRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{r.container}
+}
+
+func (r *energyRaceRenderer) Refresh() {
+	r.widget.doRefresh()
+}
+
+// doRefresh performs the actual refresh logic (called by renderer).
+// BUG-M5-004 FIX: Only format text when needsTextUpdate is true
+func (e *AnimatedEnergyRace) doRefresh() {
 	e.mu.RLock()
 	progress := e.animProgress
 	showWinner := e.showWinner
 	pulsePhase := e.pulsePhase
+	needsTextUpdate := e.needsTextUpdate
 	e.mu.RUnlock()
 
 	if e.gpuBar == nil {
@@ -223,24 +281,25 @@ func (e *AnimatedEnergyRace) Refresh() {
 	e.gpuBar.SetMinSize(fyne.NewSize(barWidth*float32(progress), barHeight))
 	e.fecimBar.SetMinSize(fyne.NewSize(max(10, barWidth*0.1*float32(progress)), barHeight))
 
-	// Update labels with caching
-	var gpuText, fecimText string
-	if progress > 0.9 {
-		gpuText = "100 units power"
-		fecimText = "~10 units power"
-	} else {
-		gpuText = fmt.Sprintf("%.0f units", 100*progress)
-		fecimText = fmt.Sprintf("~%.0f units", 10*progress)
-	}
-	if gpuText != e.lastGpuText {
+	// BUG-M5-004 FIX: Only format and update text when threshold was crossed
+	if needsTextUpdate {
+		var gpuText, fecimText string
+		if progress > 0.9 {
+			gpuText = "100 units power"
+			fecimText = "~10 units power"
+		} else {
+			gpuText = fmt.Sprintf("%.0f units", 100*progress)
+			fecimText = fmt.Sprintf("~%.0f units", 10*progress)
+		}
 		e.gpuLabel.Text = gpuText
-		canvas.Refresh(e.gpuLabel)
-		e.lastGpuText = gpuText
-	}
-	if fecimText != e.lastFecimText {
 		e.fecimLabel.Text = fecimText
+		canvas.Refresh(e.gpuLabel)
 		canvas.Refresh(e.fecimLabel)
-		e.lastFecimText = fecimText
+
+		// Clear the flag
+		e.mu.Lock()
+		e.needsTextUpdate = false
+		e.mu.Unlock()
 	}
 
 	// Pulse the hero text when animation complete
@@ -258,6 +317,11 @@ func (e *AnimatedEnergyRace) Refresh() {
 	canvas.Refresh(e.gpuBar)
 	canvas.Refresh(e.fecimBar)
 	e.container.Refresh()
+}
+
+// Refresh triggers a widget refresh via the base widget.
+func (e *AnimatedEnergyRace) Refresh() {
+	e.BaseWidget.Refresh()
 }
 
 // PhasedStrategyDiagram shows the de-risking phased market entry strategy.

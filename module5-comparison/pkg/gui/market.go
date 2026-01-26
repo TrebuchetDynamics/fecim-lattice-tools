@@ -45,8 +45,9 @@ type MarketOpportunityChart struct {
 	pulsePhase   float64
 	minSize      fyne.Size
 
-	// Cached values to avoid redundant SetText calls (prevents resize loops)
-	lastValues []string
+	// BUG-M5-004 FIX: Track raw progress values to detect threshold crossings
+	lastProgressPct []int // Percentage values per segment
+	needsTextUpdate bool
 
 	container     *fyne.Container
 	heroText      *canvas.Text
@@ -54,22 +55,28 @@ type MarketOpportunityChart struct {
 	marketBoxes   []*canvas.Rectangle
 	marketLabels  []*canvas.Text
 	marketValues  []*canvas.Text
+	renderer      fyne.WidgetRenderer // BUG-M5-003 FIX: Cache renderer
 }
 
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:      fyne.NewSize(800, 350),
-		marketBoxes:  make([]*canvas.Rectangle, len(marketData)),
-		marketLabels: make([]*canvas.Text, len(marketData)),
-		marketValues: make([]*canvas.Text, len(marketData)),
-		lastValues:   make([]string, len(marketData)),
+		minSize:         fyne.NewSize(800, 350),
+		marketBoxes:     make([]*canvas.Rectangle, len(marketData)),
+		marketLabels:    make([]*canvas.Text, len(marketData)),
+		marketValues:    make([]*canvas.Text, len(marketData)),
+		lastProgressPct: make([]int, len(marketData)),
+	}
+	// Initialize to -1 to force first update
+	for i := range m.lastProgressPct {
+		m.lastProgressPct[i] = -1
 	}
 	m.ExtendBaseWidget(m)
 	return m
 }
 
 // UpdateAnimation advances the animation.
+// BUG-M5-004 FIX: Check thresholds BEFORE formatting to avoid unnecessary recalculations
 func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -82,6 +89,15 @@ func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
 	}
 
 	m.pulsePhase += dt * 2.0
+
+	// BUG-M5-004 FIX: Check if any segment crossed a threshold (1+ point change)
+	for i, seg := range marketData {
+		newPct := int(seg.Y2030 * m.animProgress)
+		if newPct != m.lastProgressPct[i] {
+			m.needsTextUpdate = true
+			m.lastProgressPct[i] = newPct
+		}
+	}
 }
 
 // Reset resets the animation.
@@ -89,6 +105,11 @@ func (m *MarketOpportunityChart) Reset() {
 	m.mu.Lock()
 	m.animProgress = 0
 	m.pulsePhase = 0
+	// Force text update on next frame
+	for i := range m.lastProgressPct {
+		m.lastProgressPct[i] = -1
+	}
+	m.needsTextUpdate = true
 	m.mu.Unlock()
 	fyne.Do(func() {
 		m.Refresh()
@@ -101,7 +122,13 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 }
 
 // CreateRenderer implements fyne.Widget.
+// BUG-M5-003 FIX: Cache renderer and reuse canvas objects instead of recreating
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
+	// Return cached renderer if already created (prevents recreation)
+	if m.renderer != nil {
+		return m.renderer
+	}
+
 	// === HERO SECTION: MASSIVE "$721B" ===
 	m.heroText = canvas.NewText("$721B", heroTextColor)
 	m.heroText.TextSize = 96 // MASSIVE for investor impact
@@ -177,14 +204,49 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		container.NewCenter(citation),
 	)
 
-	return widget.NewSimpleRenderer(m.container)
+	// Initialize cache values to force first update
+	for i := range m.lastProgressPct {
+		m.lastProgressPct[i] = -1
+	}
+	m.needsTextUpdate = true
+
+	// Cache and return the renderer
+	m.renderer = &marketChartRenderer{widget: m, container: m.container}
+	return m.renderer
 }
 
-// Refresh updates the widget display.
-func (m *MarketOpportunityChart) Refresh() {
+// marketChartRenderer is a custom renderer that properly implements Layout.
+// BUG-M5-003 FIX: Proper WidgetRenderer with Layout() method
+type marketChartRenderer struct {
+	widget    *MarketOpportunityChart
+	container *fyne.Container
+}
+
+func (r *marketChartRenderer) Destroy() {}
+
+func (r *marketChartRenderer) Layout(size fyne.Size) {
+	r.container.Resize(size)
+}
+
+func (r *marketChartRenderer) MinSize() fyne.Size {
+	return r.widget.MinSize()
+}
+
+func (r *marketChartRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{r.container}
+}
+
+func (r *marketChartRenderer) Refresh() {
+	r.widget.doRefresh()
+}
+
+// doRefresh performs the actual refresh logic (called by renderer).
+// BUG-M5-004 FIX: Only format text when needsTextUpdate is true
+func (m *MarketOpportunityChart) doRefresh() {
 	m.mu.RLock()
 	progress := m.animProgress
 	pulsePhase := m.pulsePhase
+	needsTextUpdate := m.needsTextUpdate
 	m.mu.RUnlock()
 
 	if m.heroText == nil {
@@ -204,17 +266,25 @@ func (m *MarketOpportunityChart) Refresh() {
 		m.heroText.Color = heroTextColor
 	}
 
-	// Update market values based on progress
-	for i, seg := range marketData {
-		newText := fmt.Sprintf("$%.0fB", seg.Y2030*progress)
-		if newText != m.lastValues[i] {
-			m.marketValues[i].Text = newText
+	// BUG-M5-004 FIX: Only format and update text when threshold was crossed
+	if needsTextUpdate {
+		for i, seg := range marketData {
+			m.marketValues[i].Text = fmt.Sprintf("$%.0fB", seg.Y2030*progress)
 			canvas.Refresh(m.marketValues[i])
-			m.lastValues[i] = newText
 		}
+
+		// Clear the flag
+		m.mu.Lock()
+		m.needsTextUpdate = false
+		m.mu.Unlock()
 	}
 
 	canvas.Refresh(m.heroText)
+}
+
+// Refresh triggers a widget refresh via the base widget.
+func (m *MarketOpportunityChart) Refresh() {
+	m.BaseWidget.Refresh()
 }
 
 // Competitor represents a competitor in the matrix.
