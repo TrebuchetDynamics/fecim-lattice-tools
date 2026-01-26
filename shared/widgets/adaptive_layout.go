@@ -216,8 +216,9 @@ func (a *AdaptiveLayout) switchToMobileInternal() {
 	a.mu.Unlock()
 
 	// Refresh the content container (outside lock)
-	// Note: This is already called from within fyne.Do context from Layout
-	cc.Refresh()
+	fyne.Do(func() {
+		cc.Refresh()
+	})
 }
 
 // switchToDesktop reparents zones to the split containers (public API).
@@ -262,8 +263,9 @@ func (a *AdaptiveLayout) switchToDesktopInternal() {
 	a.mu.Unlock()
 
 	// Refresh the content container (outside lock)
-	// Note: This is already called from within fyne.Do context from Layout
-	cc.Refresh()
+	fyne.Do(func() {
+		cc.Refresh()
+	})
 }
 
 // IsMobile returns true if currently in mobile layout.
@@ -305,13 +307,19 @@ func (a *AdaptiveLayout) SetZone(index int, zone fyne.CanvasObject) {
 	if a.isMobile {
 		if index < len(a.mobileContainer.Items) {
 			a.mobileContainer.Items[index].Content = container.NewMax(zone)
-			a.mobileContainer.Refresh()
+			mc := a.mobileContainer
+			fyne.Do(func() {
+				mc.Refresh()
+			})
 		}
 	} else if a.desktopLayoutBuilder != nil {
 		// Rebuild desktop layout
 		a.desktopContainer = a.desktopLayoutBuilder(a.zones)
 		a.contentContainer.Objects = []fyne.CanvasObject{a.desktopContainer}
-		a.contentContainer.Refresh()
+		cc := a.contentContainer
+		fyne.Do(func() {
+			cc.Refresh()
+		})
 	}
 }
 
