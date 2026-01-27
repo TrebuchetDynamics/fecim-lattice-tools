@@ -1014,7 +1014,30 @@ func (ca *CircuitsApp) onArrayCellTapped(row, col int) {
 	ca.mu.Lock()
 	ca.selectedRow = row
 	ca.selectedCol = col
+
+	// In WRITE mode, update target level to match selected cell's current level
+	// This provides better UX - user can see current value and adjust from there
+	if ca.currentMode == ModeWrite {
+		if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+			currentLevel := ca.arrayWeights[row][col]
+			ca.targetLevel = currentLevel
+		}
+	}
 	ca.mu.Unlock()
+
+	// Update slider to reflect current cell's level (in WRITE mode)
+	if ca.currentMode == ModeWrite && ca.opsWriteLevelSlider != nil {
+		ca.mu.RLock()
+		level := ca.targetLevel
+		ca.mu.RUnlock()
+		fyne.Do(func() {
+			ca.opsWriteLevelSlider.Value = float64(level)
+			ca.opsWriteLevelSlider.Refresh()
+			ca.opsWriteLevelLabel.SetText(fmt.Sprintf("Target Level: %d (0-%d)", level, ca.quantLevels-1))
+		})
+		// Also refresh the pulse visualization to show current level's voltage
+		ca.refreshOpsWritePulse()
+	}
 
 	ca.refreshSharedArray()
 	ca.updateSharedCellInfo()
