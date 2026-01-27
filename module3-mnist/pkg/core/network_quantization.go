@@ -23,18 +23,18 @@ func (net *DualModeNetwork) requantizeWeightsLocked() {
 		l2Levels = net.Config.NumLevels
 	}
 
-	// Clamp levels to valid range
+	// Clamp levels to valid range [2, FeCIMLevels]
 	if l1Levels < 2 {
 		l1Levels = 2
 	}
-	if l1Levels > 31 {
-		l1Levels = 31
+	if l1Levels > FeCIMLevels {
+		l1Levels = FeCIMLevels
 	}
 	if l2Levels < 2 {
 		l2Levels = 2
 	}
-	if l2Levels > 31 {
-		l2Levels = 31
+	if l2Levels > FeCIMLevels {
+		l2Levels = FeCIMLevels
 	}
 
 	// Quantize layer 1 weights with layer1 levels

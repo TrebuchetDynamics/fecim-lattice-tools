@@ -71,15 +71,16 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	runMVMButton    *widget.Button
-	resetButton     *widget.Button
-	arraySizeSelect *widget.Select // Dropdown for array size
-	noiseLabel      *widget.Label
-	noiseSlider     *widget.Slider
-	adcBitsLabel    *widget.Label
-	adcBitsSlider   *widget.Slider
-	colormapSelect  *widget.Select
-	statsLabel      *widget.Label
+	resetButton      *widget.Button
+	arraySizeSelect  *widget.Select // Dropdown for array size
+	arraySizeLabel   *widget.Label  // Label for slider display
+	arraySizeSlider  *widget.Slider // Slider for array size
+	noiseLabel       *widget.Label
+	noiseSlider      *widget.Slider
+	adcBitsLabel     *widget.Label
+	adcBitsSlider    *widget.Slider
+	colormapSelect   *widget.Select
+	statsLabel       *widget.Label
 
 	// Track colormap per tab
 	condColormap  string
@@ -229,6 +230,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.sneakPathHeatmap.OnCellTapped = ca.onSneakCellTapped
 	ca.sneakPathHeatmap.OnCellHover = ca.onSneakCellHover
 
+	// Create color legends for each heatmap
+	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "µS", true, "fecim")
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 15, "%", true, "viridis")
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 200, "%", true, "plasma")
+
 	// Create MVM visualization with bar charts
 	ca.mvmVis = NewMVMVisualization()
 
@@ -253,22 +259,19 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	// Create simple RIGHT panel widgets directly (no custom widgets)
-	ca.runMVMButton = widget.NewButton("▶ Run MVM", ca.runMVM)
-	ca.runMVMButton.Importance = widget.HighImportance
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
 
-	// Array size dropdown - create without callback to avoid triggering
+	// Array size slider - create without callback to avoid triggering
 	// recreateArray before UI is initialized
-	arraySizes := []string{"8×8", "16×16", "32×32", "64×64", "128×128"}
-	ca.arraySizeSelect = widget.NewSelect(arraySizes, nil)
-	ca.arraySizeSelect.SetSelected("64×64")
-	ca.arraySizeSelect.OnChanged = func(s string) {
-		var size int
-		fmt.Sscanf(s, "%d×%d", &size, &size)
-		if size > 0 {
-			ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
-		}
+	ca.arraySizeLabel = widget.NewLabel("Array Size: 64×64")
+	ca.arraySizeSlider = widget.NewSlider(8, 128)
+	ca.arraySizeSlider.Step = 8
+	ca.arraySizeSlider.Value = 64
+	ca.arraySizeSlider.OnChanged = func(v float64) {
+		size := int(v)
+		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %d×%d", size, size))
+		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
 	ca.noiseLabel = widget.NewLabel("2.0%")
@@ -292,6 +295,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
 		ca.conductanceHeatmap.SetColormap(s)
+		ca.condLegend.SetColormap(s)
 	})
 	ca.colormapSelect.SetSelected("fecim")
 
@@ -368,11 +372,15 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 
-	// Create tabbed heatmap view - use Max to fill available space
+	// Create tabbed heatmap view with legends on the right
+	conductanceWithLegend := container.NewBorder(nil, nil, nil, ca.condLegend, ca.conductanceHeatmap)
+	irDropWithLegend := container.NewBorder(nil, nil, nil, ca.irLegend, ca.irDropHeatmap)
+	sneakPathWithLegend := container.NewBorder(nil, nil, nil, ca.sneakLegend, ca.sneakPathHeatmap)
+
 	ca.tabs = container.NewAppTabs(
-		container.NewTabItem("Conductance", container.NewMax(ca.conductanceHeatmap)),
-		container.NewTabItem("IR Drop", container.NewMax(ca.irDropHeatmap)),
-		container.NewTabItem("Sneak Paths", container.NewMax(ca.sneakPathHeatmap)),
+		container.NewTabItem("Conductance", conductanceWithLegend),
+		container.NewTabItem("IR Drop", irDropWithLegend),
+		container.NewTabItem("Sneak Paths", sneakPathWithLegend),
 		container.NewTabItem("Input/Output", container.NewMax(ca.mvmVis)),
 	)
 
@@ -441,19 +449,12 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Right panel - improved layout with better spacing and grouping
 
-	// Action buttons group
-	actionLabel := widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	actionsGroup := container.NewVBox(
-		actionLabel,
-		ca.runMVMButton,
-	)
-
 	// Export button
 	exportButton := widget.NewButton("Export", func() { ca.exportData() })
 	exportButton.Importance = widget.MediumImportance
 
-	// Array size row - compact
-	arraySizeRow := container.NewBorder(nil, nil, widget.NewLabel("Array:"), nil, ca.arraySizeSelect)
+	// Array size row - slider with label
+	arraySizeRow := container.NewBorder(nil, nil, widget.NewLabel("Array:"), ca.arraySizeLabel, ca.arraySizeSlider)
 
 	// Architecture toggle
 	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -470,8 +471,6 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Combined controls with scroll for overflow
 	controlsBox := container.NewVBox(
-		actionsGroup,
-		widget.NewSeparator(),
 		arraySizeRow,
 		widget.NewSeparator(),
 		archLabel,
@@ -570,6 +569,7 @@ func (ca *CrossbarApp) setupControlCallbacks() {
 
 	ca.controlPanel.OnColormapChanged = func(colormap string) {
 		ca.conductanceHeatmap.SetColormap(colormap)
+		ca.condLegend.SetColormap(colormap)
 	}
 
 	ca.controlPanel.OnDemoModeChanged = ca.onDemoModeChanged
@@ -634,8 +634,24 @@ func (ca *CrossbarApp) programRandomWeights() {
 // updateConductanceDisplay refreshes the conductance heatmap.
 func (ca *CrossbarApp) updateConductanceDisplay() {
 	matrix := ca.array.GetConductanceMatrix()
+
+	// Calculate min/max for conductance legend
+	minG, maxG := 1e6, 0.0
+	for i := range matrix {
+		for j := range matrix[i] {
+			val := matrix[i][j] * 1e6 // Convert S to µS
+			if val < minG {
+				minG = val
+			}
+			if val > maxG {
+				maxG = val
+			}
+		}
+	}
+
 	fyne.Do(func() {
 		ca.conductanceHeatmap.SetData(matrix)
+		ca.condLegend.SetRange(minG, maxG)
 	})
 }
 

@@ -13,6 +13,8 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // OperationMode represents the current operation mode in the unified view
@@ -174,7 +176,7 @@ func (ca *CircuitsApp) createOperationsView() fyne.CanvasObject {
 	)
 }
 
-// createModeSelector creates the WRITE/READ/COMPUTE mode toggle
+// createModeSelector creates the WRITE/READ/COMPUTE mode toggle with architecture selector
 func (ca *CircuitsApp) createModeSelector() fyne.CanvasObject {
 	modeRadio := widget.NewRadioGroup([]string{"WRITE", "READ", "COMPUTE"}, func(mode string) {
 		ca.onModeChanged(mode)
@@ -185,12 +187,18 @@ func (ca *CircuitsApp) createModeSelector() fyne.CanvasObject {
 	modeHelp := widget.NewLabel("")
 	modeHelp.TextStyle = fyne.TextStyle{Italic: true}
 	ca.operationsModeHelp = modeHelp
+
+	// Create architecture toggle (1T1R vs 0T1R)
+	archToggle := ca.createArchitectureToggle()
+
 	ca.updateModeHelp()
 
 	return container.NewVBox(
 		container.NewHBox(
 			widget.NewLabel("Mode:"),
 			modeRadio,
+			layout.NewSpacer(),
+			archToggle,
 			layout.NewSpacer(),
 			ca.operationsStatusLabel,
 		),
@@ -236,7 +244,6 @@ func (ca *CircuitsApp) createSharedArraySection() fyne.CanvasObject {
 // drawSharedArray draws the shared array visualization with click interaction
 func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	bgColor := color.RGBA{0, 40, 80, 255}
 
 	ca.mu.RLock()
 	rows := ca.arrayRows
@@ -247,214 +254,362 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	levels := ca.quantLevels
 	mode := ca.currentMode
 	animStep := ca.animationStep
+	arch := ca.architecture
 	ca.mu.RUnlock()
 
-	// Background
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			img.Set(x, y, bgColor)
-		}
-	}
+	// Draw gradient background
+	bgTop := color.RGBA{12, 20, 35, 255}
+	bgBottom := color.RGBA{8, 14, 28, 255}
+	drawGradientRect(img, 0, 0, w, h, bgTop, bgBottom)
 
 	if weights == nil || len(weights) == 0 {
 		return img
 	}
 
-	// Calculate asymmetric margins for integrated DAC (top) and ADC (right)
-	topMargin := 70   // Space for DAC boxes + labels above grid
-	rightMargin := 70 // Space for ADC boxes + labels right of grid
-	bottomMargin := 30
-	leftMargin := 30
+	// Calculate margins - more space for 1T1R transistors and labels
+	topMargin := 80
+	rightMargin := 80
+	bottomMargin := 35
+	leftMargin := 50
+	if arch == sharedwidgets.Architecture1T1R {
+		leftMargin = 75 // More space for MOSFET symbols
+	}
 
-	// Calculate available area for grid
 	availableW := w - leftMargin - rightMargin
 	availableH := h - topMargin - bottomMargin
 
-	// Calculate cell size (use square cells)
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := cellW
 	if cellH < cellSize {
 		cellSize = cellH
 	}
-	if cellSize > 40 {
-		cellSize = 40
+	if cellSize > 42 {
+		cellSize = 42
 	}
-	if cellSize < 8 {
-		cellSize = 8
+	if cellSize < 12 {
+		cellSize = 12
 	}
 
-	// Calculate grid dimensions
 	gridW := cols * cellSize
 	gridH := rows * cellSize
-
-	// Calculate offset to center grid within available area
 	offsetX := leftMargin + (availableW-gridW)/2
 	offsetY := topMargin + (availableH-gridH)/2
 
-	// Store cell geometry for click detection
 	ca.mu.Lock()
 	ca.sharedArrayCellSize = cellSize
 	ca.sharedArrayOffsetX = offsetX
 	ca.sharedArrayOffsetY = offsetY
 	ca.mu.Unlock()
 
-	// Draw column lines (for compute mode - input voltages)
-	if mode == ModeCompute {
-		lineColor := color.RGBA{100, 100, 150, 150}
-		for c := 0; c < cols; c++ {
-			x := offsetX + c*cellSize + cellSize/2
-			for y := offsetY - 15; y < offsetY+gridH+15; y++ {
-				if y >= 0 && y < h {
-					img.Set(x, y, lineColor)
-				}
-			}
-		}
-	}
-
-	// Draw row lines (for compute mode - output currents)
-	if mode == ModeCompute {
-		lineColor := color.RGBA{150, 100, 100, 150}
+	// ========== PASSIVE MODE: Draw sneak path visualization ==========
+	if arch == sharedwidgets.Architecture0T1R && (mode == ModeRead || mode == ModeWrite) {
+		// Show faded sneak paths through unselected cells
+		sneakColor := color.RGBA{80, 40, 40, 60}
 		for r := 0; r < rows; r++ {
+			if r == selectedRow {
+				continue
+			}
+			// Horizontal sneak indication
 			y := offsetY + r*cellSize + cellSize/2
-			for x := offsetX - 15; x < offsetX+gridW+15; x++ {
+			for x := offsetX; x < offsetX+gridW; x++ {
 				if x >= 0 && x < w {
-					img.Set(x, y, lineColor)
+					img.Set(x, y, sneakColor)
+				}
+			}
+		}
+		for c := 0; c < cols; c++ {
+			if c == selectedCol {
+				continue
+			}
+			// Vertical sneak indication
+			x := offsetX + c*cellSize + cellSize/2
+			for y := offsetY; y < offsetY+gridH; y++ {
+				if y >= 0 && y < h {
+					img.Set(x, y, sneakColor)
 				}
 			}
 		}
 	}
 
-	// Draw cells
+	// ========== Draw array background panel ==========
+	panelColor := color.RGBA{18, 28, 45, 255}
+	drawRoundedRect(img, offsetX-6, offsetY-6, gridW+12, gridH+12, 8, panelColor)
+
+	// ========== Highlight selected row (1T1R WRITE/READ) ==========
+	if arch == sharedwidgets.Architecture1T1R && (mode == ModeWrite || mode == ModeRead) {
+		rowHighlight := color.RGBA{40, 60, 40, 255}
+		drawRect(img, offsetX-4, offsetY+selectedRow*cellSize-2, gridW+8, cellSize+4, rowHighlight)
+	}
+
+	// ========== Highlight selected column (WRITE/READ) ==========
+	if mode == ModeWrite || mode == ModeRead {
+		colHighlight := color.RGBA{40, 40, 60, 200}
+		drawRect(img, offsetX+selectedCol*cellSize-2, offsetY-4, cellSize+4, gridH+8, colHighlight)
+	}
+
+	// ========== Draw BIT LINES (vertical) ==========
+	for c := 0; c < cols; c++ {
+		x := offsetX + c*cellSize + cellSize/2
+		isSelectedCol := (c == selectedCol)
+
+		var blCol color.RGBA
+		if mode == ModeCompute {
+			blCol = color.RGBA{100, 130, 200, 255}
+		} else if isSelectedCol {
+			blCol = color.RGBA{100, 180, 255, 255} // Bright blue for selected
+		} else {
+			blCol = color.RGBA{50, 70, 100, 150}
+		}
+
+		// Draw from top to bottom
+		for y := offsetY - 25; y < offsetY+gridH+8; y++ {
+			if y >= 0 && y < h {
+				img.Set(x, y, blCol)
+				if cellSize > 16 {
+					img.Set(x+1, y, blCol)
+				}
+			}
+		}
+	}
+
+	// ========== Draw WORD LINES (horizontal) ==========
+	for r := 0; r < rows; r++ {
+		y := offsetY + r*cellSize + cellSize/2
+		isSelectedRow := (r == selectedRow)
+
+		var wlCol color.RGBA
+		if mode == ModeCompute {
+			wlCol = color.RGBA{200, 130, 100, 255}
+		} else if isSelectedRow && (mode == ModeWrite || mode == ModeRead) {
+			wlCol = color.RGBA{255, 180, 100, 255} // Bright orange for selected
+		} else {
+			wlCol = color.RGBA{100, 70, 50, 150}
+		}
+
+		startX := offsetX - 20
+		if arch == sharedwidgets.Architecture1T1R {
+			startX = offsetX - 8 // Start after transistor
+		}
+
+		for x := startX; x < offsetX+gridW+25; x++ {
+			if x >= 0 && x < w {
+				img.Set(x, y, wlCol)
+				if cellSize > 16 {
+					img.Set(x, y+1, wlCol)
+				}
+			}
+		}
+	}
+
+	// ========== Draw 1T1R MOSFET transistors ==========
+	if arch == sharedwidgets.Architecture1T1R {
+		for r := 0; r < rows; r++ {
+			ty := offsetY + r*cellSize + cellSize/2
+			tx := offsetX - 28
+
+			var transistorOn bool
+			switch mode {
+			case ModeWrite, ModeRead:
+				transistorOn = (r == selectedRow)
+			case ModeCompute:
+				transistorOn = true
+			}
+
+			// MOSFET symbol colors
+			var bodyCol, gateCol, channelCol color.RGBA
+			if transistorOn {
+				bodyCol = color.RGBA{60, 200, 80, 255}    // Green body
+				gateCol = color.RGBA{100, 255, 120, 255}  // Bright green gate
+				channelCol = color.RGBA{80, 220, 100, 255}
+			} else {
+				bodyCol = color.RGBA{50, 50, 60, 255}    // Gray body
+				gateCol = color.RGBA{70, 70, 80, 255}    // Gray gate
+				channelCol = color.RGBA{40, 40, 50, 255}
+			}
+
+			// Draw MOSFET body (vertical bar)
+			for dy := -8; dy <= 8; dy++ {
+				for dx := 0; dx < 4; dx++ {
+					px, py := tx+dx, ty+dy
+					if px >= 0 && px < w && py >= 0 && py < h {
+						img.Set(px, py, bodyCol)
+					}
+				}
+			}
+
+			// Draw gate (vertical line with gap)
+			gateX := tx - 6
+			for dy := -10; dy <= 10; dy++ {
+				py := ty + dy
+				if gateX >= 0 && gateX < w && py >= 0 && py < h {
+					img.Set(gateX, py, gateCol)
+					img.Set(gateX+1, py, gateCol)
+				}
+			}
+
+			// Draw channel (horizontal connection to WL)
+			for dx := 4; dx < 20; dx++ {
+				px := tx + dx
+				if px >= 0 && px < w {
+					img.Set(px, ty, channelCol)
+					img.Set(px, ty+1, channelCol)
+				}
+			}
+
+			// Draw source/drain terminals
+			termCol := channelCol
+			// Source (top)
+			for dy := -12; dy <= -8; dy++ {
+				px := tx + 2
+				py := ty + dy
+				if px >= 0 && px < w && py >= 0 && py < h {
+					img.Set(px, py, termCol)
+				}
+			}
+			// Drain (bottom)
+			for dy := 8; dy <= 12; dy++ {
+				px := tx + 2
+				py := ty + dy
+				if px >= 0 && px < w && py >= 0 && py < h {
+					img.Set(px, py, termCol)
+				}
+			}
+
+			// Draw ON/OFF indicator
+			if transistorOn {
+				// Small glow
+				drawGlowCircle(img, tx+2, ty, 3,
+					color.RGBA{150, 255, 150, 255},
+					color.RGBA{100, 200, 100, 80})
+			}
+		}
+
+		// Labels
+		drawSimpleText(img, "WL", offsetX-55, offsetY-12, color.RGBA{150, 200, 150, 255})
+		drawSimpleText(img, "Gate", offsetX-55, offsetY+gridH+8, color.RGBA{120, 160, 120, 200})
+	}
+
+	// ========== Draw cells ==========
 	for r := 0; r < rows && r < len(weights); r++ {
 		for c := 0; c < cols && c < len(weights[r]); c++ {
-			x0 := offsetX + c*cellSize
-			y0 := offsetY + r*cellSize
+			x0 := offsetX + c*cellSize + 2
+			y0 := offsetY + r*cellSize + 2
+			cw := cellSize - 4
+			ch := cellSize - 4
 
 			level := weights[r][c]
-			intensity := float64(level) / float64(levels-1)
-
-			// Check if this is the selected cell
 			isSelected := r == selectedRow && c == selectedCol
 
-			// Color based on level (blue to red gradient)
-			var cr, cg, cb uint8
+			// Determine if this cell is "active" based on mode
+			isActive := false
+			switch mode {
+			case ModeWrite, ModeRead:
+				isActive = isSelected
+			case ModeCompute:
+				isActive = true
+			}
+
+			// Get cell color
+			var cellColor color.RGBA
 			if isSelected {
-				cr, cg, cb = 255, 200, 50 // Bright yellow for selection
+				cellColor = color.RGBA{255, 230, 100, 255}
 			} else {
-				cr = uint8(intensity * 200)
-				cg = uint8(50 + (1-intensity)*100)
-				cb = uint8((1 - intensity) * 200)
+				cellColor = levelToColor(level, levels)
+				// Dim inactive cells in WRITE/READ mode
+				if !isActive && (mode == ModeWrite || mode == ModeRead) {
+					cellColor.R = uint8(float64(cellColor.R) * 0.5)
+					cellColor.G = uint8(float64(cellColor.G) * 0.5)
+					cellColor.B = uint8(float64(cellColor.B) * 0.5)
+				}
 			}
 
-			cellColor := color.RGBA{cr, cg, cb, 255}
-			drawRect(img, x0+2, y0+2, cellSize-4, cellSize-4, cellColor)
+			// Draw cell with 3D effect
+			topColor := color.RGBA{
+				uint8(min(int(cellColor.R)+35, 255)),
+				uint8(min(int(cellColor.G)+35, 255)),
+				uint8(min(int(cellColor.B)+35, 255)),
+				255,
+			}
+			drawGradientRect(img, x0, y0, cw, ch, topColor, cellColor)
 
-			// Draw border around selected cell
+			// Border
+			borderColor := color.RGBA{
+				uint8(min(int(cellColor.R)+60, 255)),
+				uint8(min(int(cellColor.G)+60, 255)),
+				uint8(min(int(cellColor.B)+60, 255)),
+				255,
+			}
+			drawRectBorder(img, x0, y0, cw, ch, borderColor)
+
+			// Selected cell glow
 			if isSelected {
-				borderColor := color.RGBA{255, 255, 255, 255}
-				borderWidth := 3
-				drawRect(img, x0, y0, cellSize, borderWidth, borderColor)
-				drawRect(img, x0, y0+cellSize-borderWidth, cellSize, borderWidth, borderColor)
-				drawRect(img, x0, y0, borderWidth, cellSize, borderColor)
-				drawRect(img, x0+cellSize-borderWidth, y0, borderWidth, cellSize, borderColor)
+				white := color.RGBA{255, 255, 255, 255}
+				drawRectBorder(img, x0-1, y0-1, cw+2, ch+2, white)
+				drawRectBorder(img, x0-2, y0-2, cw+4, ch+4, color.RGBA{255, 255, 180, 150})
 			}
 
-			// Highlight cells during array animation (Step 2)
+			// Compute animation
 			if mode == ModeCompute && animStep == 2 {
-				// Add a bright cyan overlay/border to show computation in progress
-				overlayColor := color.RGBA{0, 255, 255, 100} // Semi-transparent cyan
-				// Draw brighter border around each cell
-				drawRect(img, x0, y0, cellSize, 2, overlayColor)
-				drawRect(img, x0, y0+cellSize-2, cellSize, 2, overlayColor)
-				drawRect(img, x0, y0, 2, cellSize, overlayColor)
-				drawRect(img, x0+cellSize-2, y0, 2, cellSize, overlayColor)
+				drawRectBorder(img, x0, y0, cw, ch, color.RGBA{0, 255, 255, 100})
 			}
 		}
 	}
 
-	// Draw mode-specific overlays
-	switch mode {
-	case ModeWrite:
-		// Show target level indicator on selected cell
-		if selectedRow < rows && selectedCol < cols {
-			x0 := offsetX + selectedCol*cellSize
-			y0 := offsetY + selectedRow*cellSize
-			// Draw small arrow pointing to cell
-			arrowColor := color.RGBA{255, 255, 0, 255}
-			for i := 0; i < 8; i++ {
-				img.Set(x0-10+i, y0+cellSize/2, arrowColor)
-			}
-		}
+	// ========== Draw current flow arrows ==========
+	if mode == ModeCompute || ((mode == ModeWrite || mode == ModeRead) && arch == sharedwidgets.Architecture1T1R) {
+		arrowCol := color.RGBA{255, 255, 100, 200}
 
-	case ModeRead:
-		// Show read probe indicator
-		if selectedRow < rows && selectedCol < cols {
-			x0 := offsetX + selectedCol*cellSize + cellSize/2
-			y0 := offsetY + selectedRow*cellSize + cellSize/2
-			// Draw probe circle
-			probeColor := color.RGBA{0, 255, 255, 200}
-			radius := cellSize / 3
-			for dy := -radius; dy <= radius; dy++ {
-				for dx := -radius; dx <= radius; dx++ {
-					if dx*dx+dy*dy <= radius*radius && dx*dx+dy*dy >= (radius-2)*(radius-2) {
-						px, py := x0+dx, y0+dy
-						if px >= 0 && px < w && py >= 0 && py < h {
-							img.Set(px, py, probeColor)
-						}
-					}
+		if mode == ModeCompute {
+			// Input arrows (down from DAC)
+			for c := 0; c < min(cols, 8); c++ {
+				ax := offsetX + c*cellSize + cellSize/2
+				ay := offsetY - 18
+				// Arrow pointing down
+				for i := 0; i < 8; i++ {
+					img.Set(ax, ay+i, arrowCol)
+				}
+				for i := 0; i < 4; i++ {
+					img.Set(ax-i, ay+8-i, arrowCol)
+					img.Set(ax+i, ay+8-i, arrowCol)
 				}
 			}
-		}
 
-	case ModeCompute:
-		// Show input/output indicators
-		// Input arrows at top of columns
-		arrowColor := color.RGBA{150, 100, 200, 255}
-		for c := 0; c < min(8, cols); c++ {
-			x := offsetX + c*cellSize + cellSize/2
-			for i := 0; i < 10; i++ {
-				y := offsetY - 20 + i
-				if y >= 0 {
-					img.Set(x, y, arrowColor)
-					if i > 5 {
-						img.Set(x-1, y, arrowColor)
-						img.Set(x+1, y, arrowColor)
-					}
+			// Output arrows (right to ADC)
+			for r := 0; r < min(rows, 8); r++ {
+				ax := offsetX + gridW + 8
+				ay := offsetY + r*cellSize + cellSize/2
+				// Arrow pointing right
+				for i := 0; i < 8; i++ {
+					img.Set(ax+i, ay, arrowCol)
+				}
+				for i := 0; i < 4; i++ {
+					img.Set(ax+8-i, ay-i, arrowCol)
+					img.Set(ax+8-i, ay+i, arrowCol)
 				}
 			}
-		}
+		} else if mode == ModeWrite || mode == ModeRead {
+			// Single cell current path
+			cx := offsetX + selectedCol*cellSize + cellSize/2
+			cy := offsetY + selectedRow*cellSize + cellSize/2
 
-		// Output arrows at right of rows
-		outputColor := color.RGBA{100, 200, 150, 255}
-		for r := 0; r < min(8, rows); r++ {
-			y := offsetY + r*cellSize + cellSize/2
-			xStart := offsetX + gridW + 5
-			for i := 0; i < 10; i++ {
-				x := xStart + i
-				if x < w {
-					img.Set(x, y, outputColor)
-					if i > 5 {
-						img.Set(x, y-1, outputColor)
-						img.Set(x, y+1, outputColor)
-					}
-				}
+			// Vertical arrow to cell
+			for i := 0; i < 12; i++ {
+				img.Set(cx, offsetY-15+i, arrowCol)
+			}
+			// Horizontal arrow from cell
+			for i := 0; i < 12; i++ {
+				img.Set(offsetX+gridW+5+i, cy, arrowCol)
 			}
 		}
+	}
 
-		// Draw DAC boxes at TOP of each column (integrated visualization)
-		dacBoxHeight := 25
-		dacBoxWidth := cellSize - 4
-		dacY := offsetY - dacBoxHeight - 10
-		dacColor := color.RGBA{100, 80, 180, 255} // Purple for DACs
-		if animStep == 1 {
-			dacColor = color.RGBA{255, 255, 100, 255} // Bright yellow when animating DAC step
-		}
+	// ========== COMPUTE MODE: DAC and ADC boxes ==========
+	if mode == ModeCompute {
+		dacBoxH := 30
+		dacBoxW := cellSize - 2
+		dacY := offsetY - dacBoxH - 18
 
-		// Define input label color for column labels (light blue for inputs)
-		inputLabelColor := color.RGBA{100, 150, 255, 255}
-
-		// OPTIMIZATION: Copy input vector data once before loop to avoid RLock per iteration
 		dacColCount := min(8, cols)
 		inputVectorCopy := make([]int, dacColCount)
 		ca.mu.RLock()
@@ -462,44 +617,35 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		ca.mu.RUnlock()
 
 		for c := 0; c < dacColCount; c++ {
-			dacX := offsetX + c*cellSize + 2
+			dacX := offsetX + c*cellSize + 1
 
-			// Draw DAC box
-			drawRect(img, dacX, dacY, dacBoxWidth, dacBoxHeight, dacColor)
+			dacTop := color.RGBA{130, 90, 190, 255}
+			dacBot := color.RGBA{80, 50, 140, 255}
+			if animStep == 1 {
+				dacTop = color.RGBA{255, 255, 120, 255}
+				dacBot = color.RGBA{220, 200, 80, 255}
+			}
 
-			// Draw border
-			borderColor := color.RGBA{150, 130, 220, 255}
-			drawRectBorder(img, dacX, dacY, dacBoxWidth, dacBoxHeight, borderColor)
+			drawGradientRect(img, dacX, dacY, dacBoxW, dacBoxH, dacTop, dacBot)
+			drawRectBorder(img, dacX, dacY, dacBoxW, dacBoxH, color.RGBA{170, 140, 220, 255})
 
-			// Use pre-copied input value (no lock needed)
-			inputVal := inputVectorCopy[c]
-			voltage := float64(inputVal) / 255.0
+			// Voltage display
+			voltage := float64(inputVectorCopy[c]) / 255.0
+			vText := fmt.Sprintf("%.2f", voltage)
+			drawSimpleText(img, vText, dacX+dacBoxW/2-len(vText)*3, dacY+dacBoxH/2-3, color.RGBA{255, 255, 255, 255})
 
-			// Show voltage value
-			voltageText := fmt.Sprintf("%.1fV", voltage)
-			textX := dacX + dacBoxWidth/2 - len(voltageText)*3
-			textY := dacY + dacBoxHeight/2 - 3
-			drawSimpleText(img, voltageText, textX, textY, color.RGBA{255, 255, 255, 255})
-
-			// Draw column label above DAC box
-			labelX := offsetX + c*cellSize + cellSize/2 - 6
-			labelY := dacY - 12
-			drawSimpleText(img, fmt.Sprintf("x%d", c), labelX, labelY, inputLabelColor)
+			// Column label
+			drawSimpleText(img, fmt.Sprintf("x%d", c), offsetX+c*cellSize+cellSize/2-6, dacY-12, color.RGBA{140, 170, 255, 255})
 		}
 
-		// Draw ADC boxes at RIGHT of each row (integrated visualization)
-		adcBoxWidth := 45
-		adcBoxHeight := cellSize - 4
-		adcX := offsetX + gridW + 8
-		adcColor := color.RGBA{80, 150, 100, 255} // Green for ADCs
-		if animStep == 3 {
-			adcColor = color.RGBA{100, 255, 150, 255} // Bright green when animating ADC step
-		}
+		// DAC label
+		drawSimpleText(img, "DAC", offsetX-28, dacY+dacBoxH/2-3, color.RGBA{170, 140, 220, 255})
 
-		// Define output label color for row labels (light orange for outputs)
-		outputLabelColor := color.RGBA{255, 180, 100, 255}
+		// ADC boxes
+		adcBoxW := 52
+		adcBoxH := cellSize - 2
+		adcX := offsetX + gridW + 15
 
-		// OPTIMIZATION: Copy output vector data once before loop to avoid RLock per iteration
 		adcRowCount := min(8, rows)
 		outputVectorCopy := make([]float64, adcRowCount)
 		ca.mu.RLock()
@@ -507,31 +653,77 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		ca.mu.RUnlock()
 
 		for r := 0; r < adcRowCount; r++ {
-			adcY := offsetY + r*cellSize + 2
+			adcY := offsetY + r*cellSize + 1
 
-			// Draw ADC box
-			drawRect(img, adcX, adcY, adcBoxWidth, adcBoxHeight, adcColor)
+			adcTop := color.RGBA{70, 170, 130, 255}
+			adcBot := color.RGBA{40, 120, 90, 255}
+			if animStep == 3 {
+				adcTop = color.RGBA{100, 255, 170, 255}
+				adcBot = color.RGBA{70, 200, 130, 255}
+			}
 
-			// Draw border
-			borderColor := color.RGBA{130, 200, 150, 255}
-			drawRectBorder(img, adcX, adcY, adcBoxWidth, adcBoxHeight, borderColor)
+			drawGradientRect(img, adcX, adcY, adcBoxW, adcBoxH, adcTop, adcBot)
+			drawRectBorder(img, adcX, adcY, adcBoxW, adcBoxH, color.RGBA{130, 210, 170, 255})
 
-			// Use pre-copied output value (no lock needed)
-			outputVal := outputVectorCopy[r]
+			// Level display
+			tiaV := ca.tia.Convert(outputVectorCopy[r] * 1e-6)
+			lvl := ca.adc.Convert(tiaV)
+			lText := fmt.Sprintf("L%d", lvl)
+			drawSimpleText(img, lText, adcX+adcBoxW/2-len(lText)*3, adcY+adcBoxH/2-3, color.RGBA{255, 255, 255, 255})
 
-			// Show ADC level (after TIA+ADC conversion)
-			tiaVoltage := ca.tia.Convert(outputVal * 1e-6)
-			adcLevel := ca.adc.Convert(tiaVoltage)
+			// Row label
+			drawSimpleText(img, fmt.Sprintf("y%d", r), adcX+adcBoxW+6, offsetY+r*cellSize+cellSize/2-3, color.RGBA{255, 190, 140, 255})
+		}
 
-			levelText := fmt.Sprintf("L%d", adcLevel)
-			textX := adcX + adcBoxWidth/2 - len(levelText)*3
-			textY := adcY + adcBoxHeight/2 - 3
-			drawSimpleText(img, levelText, textX, textY, color.RGBA{255, 255, 255, 255})
+		// ADC label
+		drawSimpleText(img, "TIA+ADC", adcX, offsetY-12, color.RGBA{130, 210, 170, 255})
+	}
 
-			// Draw row label to right of ADC box
-			labelX := adcX + adcBoxWidth + 5
-			labelY := offsetY + r*cellSize + cellSize/2 - 3
-			drawSimpleText(img, fmt.Sprintf("y%d", r), labelX, labelY, outputLabelColor)
+	// ========== Mode title and architecture indicator ==========
+	var titleText string
+	var titleColor color.RGBA
+	switch mode {
+	case ModeWrite:
+		titleText = "WRITE"
+		titleColor = color.RGBA{255, 200, 100, 255}
+	case ModeRead:
+		titleText = "READ"
+		titleColor = color.RGBA{100, 220, 255, 255}
+	case ModeCompute:
+		titleText = "COMPUTE (MVM)"
+		titleColor = color.RGBA{200, 150, 255, 255}
+	}
+
+	// Architecture badge
+	var archText string
+	var archColor color.RGBA
+	if arch == sharedwidgets.Architecture1T1R {
+		archText = "1T1R"
+		archColor = color.RGBA{100, 220, 120, 255}
+	} else {
+		archText = "PASSIVE"
+		archColor = color.RGBA{220, 150, 100, 255}
+	}
+
+	// Draw title bar
+	drawSimpleText(img, titleText, 10, 8, titleColor)
+	drawSimpleText(img, archText, w-len(archText)*6-10, 8, archColor)
+
+	// ========== Legend (bottom) ==========
+	legendY := h - 18
+	legendColor := color.RGBA{120, 130, 150, 255}
+
+	if arch == sharedwidgets.Architecture1T1R {
+		if mode == ModeCompute {
+			drawSimpleText(img, "All transistors ON | Full matrix active", 10, legendY, legendColor)
+		} else {
+			drawSimpleText(img, "Row transistor ON (green) | Others isolated", 10, legendY, legendColor)
+		}
+	} else {
+		if mode == ModeCompute {
+			drawSimpleText(img, "Passive array | Sneak paths affect accuracy", 10, legendY, legendColor)
+		} else {
+			drawSimpleText(img, "Passive array | Red lines show sneak paths", 10, legendY, legendColor)
 		}
 	}
 
@@ -618,7 +810,7 @@ func (ca *CircuitsApp) updateOperationsPanels() {
 	ca.updateOperationsButtons()
 }
 
-// updateModeHelp updates the mode description text
+// updateModeHelp updates the mode description text with architecture-aware context
 func (ca *CircuitsApp) updateModeHelp() {
 	if ca.operationsModeHelp == nil {
 		return
@@ -626,16 +818,31 @@ func (ca *CircuitsApp) updateModeHelp() {
 
 	ca.mu.RLock()
 	mode := ca.currentMode
+	arch := ca.architecture
 	ca.mu.RUnlock()
+
+	is1T1R := arch == sharedwidgets.Architecture1T1R
 
 	var helpText string
 	switch mode {
 	case ModeWrite:
-		helpText = "WRITE: Program cells using DAC voltage pulses (1.2-1.5V). Select cell and target level, then PROGRAM."
+		if is1T1R {
+			helpText = "WRITE: Transistor gates ONLY selected row (green●). Full write pulse to target cell, others isolated."
+		} else {
+			helpText = "WRITE: Passive array - partial voltages affect neighboring rows (sneak paths ~5-20% error)."
+		}
 	case ModeRead:
-		helpText = "READ: Sense cell conductance with low voltage (≤0.5V). TIA converts current to voltage for ADC."
+		if is1T1R {
+			helpText = "READ: Transistor isolates selected row (green●). Clean sense current from target cell only."
+		} else {
+			helpText = "READ: Passive array - sneak currents add ~5-20% noise to sense signal."
+		}
 	case ModeCompute:
-		helpText = "COMPUTE: Matrix-vector multiply in ~20ns. Input voltages x conductances, summed by KCL."
+		if is1T1R {
+			helpText = "COMPUTE: ALL transistors ON (all green●) for full MVM. Sneak-free parallel computation."
+		} else {
+			helpText = "COMPUTE: Passive MVM - sneak paths cause ~5-20% output error. Still functional for AI inference."
+		}
 	}
 
 	fyne.Do(func() {
@@ -771,5 +978,64 @@ func (ca *CircuitsApp) updateOperationsButtons() {
 			ca.opsComputeButtons.Show()
 		}
 	}
+}
+
+// ============================================================================
+// ARCHITECTURE TOGGLE (1T1R vs 0T1R)
+// ============================================================================
+
+// createArchitectureToggle creates the PASSIVE/1T1R toggle buttons
+// 1T1R: Transistor gates each row - only selected row active (write/read) or all rows (compute)
+// 0T1R: Passive crossbar - sneak paths affect accuracy
+func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
+	// Create toggle buttons (same pattern as Module 2)
+	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+
+	// Helper to update button styles based on selection
+	updateArchButtons := func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			ca.archPassiveBtn.Importance = widget.HighImportance
+			ca.arch1T1RBtn.Importance = widget.LowImportance
+		} else {
+			ca.archPassiveBtn.Importance = widget.LowImportance
+			ca.arch1T1RBtn.Importance = widget.HighImportance
+		}
+		ca.archPassiveBtn.Refresh()
+		ca.arch1T1RBtn.Refresh()
+	}
+
+	// Set initial state
+	updateArchButtons()
+
+	// Wire up callbacks
+	ca.archPassiveBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			return // Already selected
+		}
+		ca.mu.Lock()
+		ca.architecture = sharedwidgets.Architecture0T1R
+		ca.mu.Unlock()
+		updateArchButtons()
+		ca.refreshSharedArray()
+		ca.updateModeHelp()
+	}
+
+	ca.arch1T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture1T1R {
+			return // Already selected
+		}
+		ca.mu.Lock()
+		ca.architecture = sharedwidgets.Architecture1T1R
+		ca.mu.Unlock()
+		updateArchButtons()
+		ca.refreshSharedArray()
+		ca.updateModeHelp()
+	}
+
+	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
+
+	archLabel := widget.NewLabel("Array:")
+	return container.NewHBox(archLabel, ca.archToggle)
 }
 

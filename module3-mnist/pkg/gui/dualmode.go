@@ -4,8 +4,6 @@ package gui
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -26,7 +24,7 @@ const (
 	MNISTInputSize  = 784    // 28x28 pixel images
 	MNISTHiddenSize = 128    // Default hidden layer size
 	MNISTOutputSize = 10     // Digits 0-9
-	MNISTTotalMACs  = 101632 // Total multiply-accumulate operations per inference
+	MNISTTotalMACs  = 101632 // Total MACs per inference: (784×128) + (128×10) = 101632 (reference value)
 
 	// FeCIM hardware parameters
 	FeCIMDefaultLevels = 30   // Default levels (can be changed in UI)
@@ -39,9 +37,10 @@ const (
 	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC (with DRAM access)
 	EnergyRatioGPU    = 10000   // GPU uses 10,000x more energy
 
-	// Accuracy targets
-	TargetHardwareAccuracy = 0.87 // Measured on real FeCIM hardware
-	TargetFP32Accuracy     = 0.98 // 98% theoretical with Float32
+	// Accuracy reference (peer-reviewed baselines, not targets)
+	// Note: Accuracy varies with noise, levels, and architecture
+	// Peer-reviewed: 96.6% (Nature Commun. 2023), 98.24% (ScienceDirect 2025)
+	TargetFP32Accuracy = 0.98 // 98% theoretical with Float32
 )
 
 // Package-level logger for MNIST GUI (named mnistLog to avoid conflict with app.go's debug logger)
@@ -56,9 +55,8 @@ type DualModeApp struct {
 	fyneApp fyne.App
 	window  fyne.Window
 
-	// Network
-	network *core.DualModeNetwork
-	dataDir string
+	// Network controller (ARCH-001: extracted from DualModeApp)
+	networkCtrl *NetworkController
 
 	// Drawing
 	digitCanvas *DigitCanvas
@@ -95,23 +93,12 @@ type DualModeApp struct {
 	testResultLabel *widget.Label
 	testProgressBar *widget.ProgressBar
 
-	// Test data
-	testImages [][]float64
-	testLabels []int
-
 	// Status
 	statusLabel *widget.Label
 	initialized bool // true after UI is fully built
 
 	// Last inference result for refresh
 	lastPixels []float64
-
-	// QAT (Quantization-Aware Training) weight tracking
-	currentQATLevel int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
-
-	// Track which missing weight levels have already shown a warning (to avoid infinite modals)
-	warnedMissingLevels   map[int]bool
-	warnedMissingLevelsMu sync.RWMutex
 
 	// Guided Tour
 	tour *GuidedTour
@@ -152,30 +139,68 @@ type DualModeApp struct {
 // NewDualModeApp creates a new dual-mode MNIST application.
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
-		dataDir:             findDataDir(),
-		currentQATLevel:     FeCIMDefaultLevels, // Default QAT level (30)
-		warnedMissingLevels: make(map[int]bool),
-	}
-
-	// Create network
-	app.network = core.NewDualModeNetwork(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
-
-	// Load pretrained weights (default 30-level QAT weights)
-	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
-	if _, err := os.Stat(weightsPath); err == nil {
-		if err := app.network.LoadWeights(weightsPath); err != nil {
-			mnistLog.Printf("Warning: Failed to load weights from %s: %v", weightsPath, err)
-		}
-	} else {
-		mnistLog.Printf("Note: No pretrained weights found at %s, using random initialization", weightsPath)
+		// Create network controller (ARCH-001: network management extracted)
+		networkCtrl: NewNetworkController(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize),
 	}
 
 	return app
 }
 
+// ======================================================================
+// Network Controller Accessors (ARCH-001: backward compatibility layer)
+// These methods delegate to networkCtrl for existing code compatibility.
+// ======================================================================
+
+// network returns the underlying DualModeNetwork for backward compatibility.
+// Prefer using networkCtrl methods directly for new code.
+func (app *DualModeApp) network() *core.DualModeNetwork {
+	return app.networkCtrl.Network()
+}
+
+// dataDir returns the data directory path.
+func (app *DualModeApp) dataDir() string {
+	return app.networkCtrl.DataDir()
+}
+
+// testImages returns the cached test images.
+func (app *DualModeApp) testImages() [][]float64 {
+	images, _ := app.networkCtrl.GetTestData()
+	return images
+}
+
+// testLabels returns the cached test labels.
+func (app *DualModeApp) testLabels() []int {
+	_, labels := app.networkCtrl.GetTestData()
+	return labels
+}
+
+// currentQATLevel returns the current QAT level.
+func (app *DualModeApp) currentQATLevel() int {
+	return app.networkCtrl.CurrentQATLevel()
+}
+
+// setCurrentQATLevel sets the current QAT level.
+func (app *DualModeApp) setCurrentQATLevel(level int) {
+	app.networkCtrl.SetCurrentQATLevel(level)
+}
+
+// hasWarnedMissingLevel checks if a warning was shown for a missing level.
+func (app *DualModeApp) hasWarnedMissingLevel(level int) bool {
+	return app.networkCtrl.HasWarnedMissingLevel(level)
+}
+
+// setWarnedMissingLevel marks a level as warned.
+func (app *DualModeApp) setWarnedMissingLevel(level int) {
+	app.networkCtrl.SetWarnedMissingLevel(level)
+}
+
+// clearWarnedMissingLevel clears the warning flag for a level.
+func (app *DualModeApp) clearWarnedMissingLevel(level int) {
+	app.networkCtrl.ClearWarnedMissingLevel(level)
+}
+
 // BuildContent creates the UI content for embedding.
 func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	fmt.Println("[MNIST] BuildContent: start")
 	app.fyneApp = fyneApp
 	app.window = parentWindow
 
@@ -185,9 +210,7 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 	}
 
 	// Create main layout
-	fmt.Println("[MNIST] BuildContent: calling createMainLayout...")
 	content := app.createMainLayout()
-	fmt.Println("[MNIST] BuildContent: done (deferred init to Start)")
 	// NOTE: updateWeightHeatmap and changeHiddenSize deferred to Start() to avoid fyne.Do() deadlock
 
 	return content
@@ -196,7 +219,6 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 // Start initializes anything that needs to run after UI is visible.
 func (app *DualModeApp) Start() {
 	// Initialize network display now that UI is ready (deferred from BuildContent to avoid fyne.Do() deadlock)
-	fmt.Println("[MNIST] Start: initializing network display...")
 
 	// Set layout offsets (deferred from createMainLayout to avoid layout cascade)
 	fyne.Do(func() {
@@ -257,7 +279,6 @@ func (app *DualModeApp) Start() {
 			} else {
 				fyne.Do(func() {
 					app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", 128))
-					fmt.Println("[MNIST] Start: done")
 				})
 			}
 		}
@@ -314,35 +335,28 @@ func (app *DualModeApp) setExpertMode(enabled bool) {
 // createMainLayout builds the 4-zone responsive layout.
 // Uses AdaptiveLayout to switch between desktop (splits) and mobile (tabs) layouts.
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
-	fmt.Println("[MNIST] createMainLayout: start")
 	// Status label must be created first (used by callbacks in controls zone)
 	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random' to load a test sample from the MNIST dataset.")
 
 	// Header
-	fmt.Println("[MNIST] createMainLayout: creating header...")
 	header := app.createHeader()
 
 	// Zone 1: Drawing canvas (top-left)
-	fmt.Println("[MNIST] createMainLayout: creating zone1 (drawing)...")
 	zone1 := app.createDrawingZone()
 
 	// Zone 2: Results (top-right)
-	fmt.Println("[MNIST] createMainLayout: creating zone2 (results)...")
 	zone2 := app.createResultsZone()
 
 	// Zone 3: Controls (bottom-left)
-	fmt.Println("[MNIST] createMainLayout: creating zone3 (controls)...")
 	zone3 := app.createControlsZone()
 
 	// Zone 4: Weight visualization (bottom-right)
-	fmt.Println("[MNIST] createMainLayout: creating zone4 (weights)...")
 	zone4 := app.createWeightZone()
 
 	// Status footer
 	footer := app.statusLabel
 
 	// Create AdaptiveLayout for responsive design
-	fmt.Println("[MNIST] createMainLayout: creating adaptive layout...")
 	zones := []fyne.CanvasObject{zone1, zone2, zone3, zone4}
 	tabLabels := []string{"Draw", "Results", "Config", "Weights"}
 	app.adaptiveLayout = sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
@@ -372,7 +386,6 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 		mnistLog.Printf("Breakpoint changed to: %s", sharedwidgets.BreakpointName(bp))
 	}
 
-	fmt.Println("[MNIST] createMainLayout: creating border...")
 	mainContent := container.NewBorder(
 		header,
 		footer,
@@ -381,17 +394,16 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Mark as initialized - but defer changeHiddenSize to Start() to avoid fyne.Do() deadlock
-	fmt.Println("[MNIST] createMainLayout: setting initialized=true...")
 	app.initialized = true
 	// NOTE: changeHiddenSize(128) moved to Start() method to avoid deadlock
 
-	fmt.Println("[MNIST] createMainLayout: returning")
 	return mainContent
 }
 
 // createHeader creates the title and info header.
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
-	title := widget.NewLabel("FeCIM MNIST: 30 Levels = 87% Accuracy")
+	// Header with peer-reviewed accuracy context (87% claim removed)
+	title := widget.NewLabel("FeCIM MNIST Demo | Peer-reviewed: 96.6-98.24%")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action

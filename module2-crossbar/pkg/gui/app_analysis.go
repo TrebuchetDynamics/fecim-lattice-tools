@@ -97,6 +97,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 			len(irMap), len(irMap[0]),
 			mvmResult.IRDropAnalysis.MaxIRDrop*100,
 			mvmResult.IRDropAnalysis.AvgIRDrop*100)
+
+		// Update legend with actual IR drop percentages
+		ca.irLegend.SetRange(0, mvmResult.IRDropAnalysis.MaxIRDrop*100)
+
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(
 			mvmResult.IRDropAnalysis.WorstCaseCell[0],
@@ -115,6 +119,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 
 		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
 		debug.Printf("Sneak data: %d×%d, maxSneak=%.6f", len(sneakMap), len(sneakMap[0]), mvmResult.SneakPathAnalysis.MaxSneakRatio)
+
+		// Update legend with actual sneak ratio (as percentage)
+		ca.sneakLegend.SetRange(0, mvmResult.SneakPathAnalysis.MaxSneakRatio*100)
+
 		// Apply sqrt for better visibility
 		for i := range sneakMap {
 			for j := range sneakMap[i] {
@@ -280,15 +288,16 @@ func (ca *CrossbarApp) assessDegradationImpact(diffPercent float64) string {
 }
 
 // getAccuracyStatus returns a status message based on accuracy.
+// Note: No fixed target - compares against peer-reviewed benchmarks (96.6-98.24%)
 func (ca *CrossbarApp) getAccuracyStatus(accuracy float64) string {
-	if accuracy >= 87.0 {
-		return "✓ Meets 87% hardware target"
-	} else if accuracy >= 85.0 {
-		return "⚠ Close to target (within 2%)"
+	if accuracy >= 96.0 {
+		return "✓ Excellent - matches peer-reviewed benchmarks"
+	} else if accuracy >= 90.0 {
+		return "✓ Good - within practical range"
 	} else if accuracy >= 80.0 {
-		return "⚠ Below target - optimization needed"
+		return "⚠ Moderate - optimization may help"
 	}
-	return "✗ Significant optimization required"
+	return "⚠ Low - check noise and quantization settings"
 }
 
 // showExportSuccessDialog displays a success dialog with export file paths

@@ -87,12 +87,12 @@ Scientific accuracy over marketing claims. Full audit: `docs/cim/HONESTY_AUDIT.m
 | Grade 0 automotive | ✅ Verified | Fraunhofer IPMS 2024 (AEC-Q100) |
 | Cryogenic 5K operation | ✅ Verified | IEEE 2024, Frontiers 2024 |
 
-### Unverified Claims (Conference Only)
+### Unverified/Removed Claims (Conference Only)
 
 | Claim | Status | Source |
 |-------|--------|--------|
 | 30 analog states (Tour device) | ⚠️ Unverified | COSM 2025 (not peer-reviewed) |
-| 87% MNIST accuracy (Tour) | ⚠️ Unverified | COSM 2025 (below 98.24% verified) |
+| 87% MNIST accuracy (Tour) | ❌ REMOVED | Removed from tool - below peer-reviewed 96.6-98.24% |
 | 10M× vs NAND energy | ❌ REMOVED | No measurement data exists (verified: 25-100×) |
 
 ## Testing

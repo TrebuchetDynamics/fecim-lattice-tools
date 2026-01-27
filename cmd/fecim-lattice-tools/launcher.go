@@ -37,7 +37,7 @@ func GetDemos() []DemoInfo {
 			Number:      2,
 			Title:       "Crossbar+",
 			Subtitle:    "Compute-in-Memory Array",
-			Description: "Watch matrix multiplication happen in hardware: see how crossbar arrays compute using Ohm's law, and explore real-world challenges like IR drop and sneak currents",
+			Description: "Watch matrix multiplication happen (simulated physics): see how crossbar arrays compute using Ohm's law, and explore real-world challenges like IR drop and sneak currents",
 			Icon:        "#",
 			Ready:       true,
 		},
@@ -45,7 +45,7 @@ func GetDemos() []DemoInfo {
 			Number:      3,
 			Title:       "MNIST",
 			Subtitle:    "Neural Network Demo",
-			Description: "Draw your own digits and watch AI recognize them instantly: experience 87% accuracy on the classic handwriting benchmark, powered by analog computing",
+			Description: "Draw your own digits and watch AI recognize them instantly: experience analog computing on the classic handwriting benchmark (peer-reviewed: 96-98%)",
 			Icon:        "9",
 			Ready:       true,
 		},
@@ -61,7 +61,7 @@ func GetDemos() []DemoInfo {
 			Number:      5,
 			Title:       "Comparison",
 			Subtitle:    "Technology Benchmarks",
-			Description: "See why FeCIM matters: compare energy, speed, and density against NAND flash, DRAM, and other emerging memory technologies with interactive charts",
+			Description: "Compare FeCIM to alternatives (with TRL caveats): energy, speed, and density vs NAND flash, DRAM, and emerging memory - all projections marked",
 			Icon:        "$",
 			Ready:       true,
 		},
@@ -69,7 +69,7 @@ func GetDemos() []DemoInfo {
 			Number:      6,
 			Title:       "EDA",
 			Subtitle:    "Chip Layout Tools",
-			Description: "Design your own chips: generate layouts from code, visualize placement, and export industry-standard formats for fabrication",
+			Description: "Explore chip layout concepts: visualize placement, generate layouts from code, and learn industry-standard formats (educational tool)",
 			Icon:        "L",
 			Ready:       true,
 			WIP:         true,
@@ -90,7 +90,7 @@ func NewDemoCard(info DemoInfo, onTapped func()) *DemoCard {
 	card := &DemoCard{
 		info:     info,
 		onTapped: onTapped,
-		minSize:  fyne.NewSize(300, 180), // Moderate size
+		minSize:  fyne.NewSize(300, 200), // UI-002: Increased from 180 to 200 for better spacing
 	}
 	card.ExtendBaseWidget(card)
 	return card
@@ -226,30 +226,68 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	numText.Move(fyne.NewPos(badgeX+badgeSize/2-numTextSize*0.3, badgeY+badgeSize/2-numTextSize*0.6))
 	r.objects = append(r.objects, numText)
 
-	// Title (scales with height)
-	titleSize := float32(22) * heightScale
+	// Title (scales with height) - UI-001: Increased from 22 to 28
+	titleSize := float32(28) * heightScale
 	title := canvas.NewText(info.Title, textColor)
 	title.TextSize = titleSize
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale))
 	r.objects = append(r.objects, title)
 
-	// Subtitle
-	subtitleSize := float32(14) * heightScale
+	// Subtitle - UI-001: Increased from 14 to 16
+	subtitleSize := float32(16) * heightScale
 	subtitle := canvas.NewText(info.Subtitle, subtitleColor)
 	subtitle.TextSize = subtitleSize
 	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale+titleSize+2))
 	r.objects = append(r.objects, subtitle)
 
+	// UI-004: Add sequence indicator (X/6) on all cards
+	seqWidth := float32(50) * heightScale
+	seqHeight := float32(22) * heightScale
+	seqBg := canvas.NewRectangle(color.RGBA{0, 80, 120, 220})
+	seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
+	seqBg.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale, 10*heightScale))
+	seqBg.CornerRadius = 4 * heightScale
+	r.objects = append(r.objects, seqBg)
+
+	seqTextSize := float32(12) * heightScale
+	seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{255, 255, 255, 255})
+	seqText.TextSize = seqTextSize
+	seqText.TextStyle = fyne.TextStyle{Bold: true}
+	seqText.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale+seqWidth/2-seqTextSize*1.2, 10*heightScale+seqHeight/2-seqTextSize*0.6))
+	r.objects = append(r.objects, seqText)
+
+	// UI-004: Add "START HERE" badge for module 1
+	if info.Number == 1 {
+		startWidth := float32(100) * heightScale
+		startHeight := float32(24) * heightScale
+		startBg := canvas.NewRectangle(color.RGBA{50, 200, 50, 255})
+		startBg.Resize(fyne.NewSize(startWidth, startHeight))
+		startBg.Move(fyne.NewPos(size.Width-startWidth-10*heightScale, 10*heightScale+seqHeight+6*heightScale))
+		startBg.CornerRadius = 4 * heightScale
+		r.objects = append(r.objects, startBg)
+
+		startTextSize := float32(12) * heightScale
+		startText := canvas.NewText("START HERE", color.RGBA{255, 255, 255, 255})
+		startText.TextSize = startTextSize
+		startText.TextStyle = fyne.TextStyle{Bold: true}
+		startText.Move(fyne.NewPos(size.Width-startWidth-10*heightScale+startWidth/2-startTextSize*2.8, 10*heightScale+seqHeight+6*heightScale+startHeight/2-startTextSize*0.6))
+		r.objects = append(r.objects, startText)
+	}
+
 	// Status indicator - WIP badge or green dot (scales with card)
 	if info.Ready {
 		if info.WIP {
-			// Work In Progress badge
+			// Work In Progress badge - moved down if module 1
+			wipYOffset := float32(10) * heightScale
+			if info.Number == 1 {
+				wipYOffset = 10*heightScale + seqHeight + 6*heightScale + 30*heightScale
+			}
 			wipWidth := float32(70) * heightScale
 			wipHeight := float32(20) * heightScale
 			wipBg := canvas.NewRectangle(color.RGBA{255, 165, 0, 255})
 			wipBg.Resize(fyne.NewSize(wipWidth, wipHeight))
-			wipBg.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale, 10*heightScale))
+			wipBg.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale, wipYOffset))
 			wipBg.CornerRadius = 4 * heightScale
 			r.objects = append(r.objects, wipBg)
 
@@ -257,15 +295,8 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 			wipText := canvas.NewText("WIP", color.RGBA{0, 0, 0, 255})
 			wipText.TextSize = wipTextSize
 			wipText.TextStyle = fyne.TextStyle{Bold: true}
-			wipText.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale+wipWidth/2-wipTextSize, 10*heightScale+wipHeight/2-wipTextSize*0.6))
+			wipText.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale+wipWidth/2-wipTextSize, wipYOffset+wipHeight/2-wipTextSize*0.6))
 			r.objects = append(r.objects, wipText)
-		} else {
-			// Green dot for ready
-			dotSize := float32(12) * heightScale
-			statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
-			statusDot.Resize(fyne.NewSize(dotSize, dotSize))
-			statusDot.Move(fyne.NewPos(size.Width-dotSize-12*heightScale, 12*heightScale))
-			r.objects = append(r.objects, statusDot)
 		}
 	}
 
@@ -296,9 +327,9 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 
 	// Description - wrapped text below header, left of thumbnail area
 	desc := info.Description
-	descSize := float32(14) * heightScale // Scale with card
-	if descSize < 12 {
-		descSize = 12
+	descSize := float32(16) * heightScale // UI-001: Increased from 14 to 16, min from 12 to 14
+	if descSize < 14 {
+		descSize = 14
 	}
 	maxWidth := size.Width - previewWidth - 40*heightScale // Leave space for preview
 	lineY := headerHeight + borderWidth + 14*heightScale
@@ -696,6 +727,7 @@ type ResponsiveHeader struct {
 	titleText    *canvas.Text
 	subtitleText *canvas.Text
 	taglineText  *canvas.Text
+	bannerText   *canvas.Text // UI-005: TRL warning banner
 	separator    *widget.Separator
 	cache        sharedwidgets.LayoutCache
 }
@@ -706,10 +738,12 @@ func NewResponsiveHeader() *ResponsiveHeader {
 		titleText:    canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255}),
 		subtitleText: canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255}),
 		taglineText:  canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200}),
+		bannerText:   canvas.NewText("⚠ Educational Tool | Simulating TRL 4 Research | Not Production Technology", color.RGBA{255, 200, 100, 255}), // UI-005: TRL warning banner
 		separator:    widget.NewSeparator(),
 	}
 	h.titleText.TextStyle = fyne.TextStyle{Bold: true}
 	h.taglineText.TextStyle = fyne.TextStyle{Italic: true}
+	h.bannerText.TextStyle = fyne.TextStyle{Bold: true}
 	h.ExtendBaseWidget(h)
 	return h
 }
@@ -724,7 +758,7 @@ type responsiveHeaderRenderer struct {
 }
 
 func (r *responsiveHeaderRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(280, 80)
+	return fyne.NewSize(280, 100) // UI-005: Increased from 80 to 100 to accommodate banner
 }
 
 func (r *responsiveHeaderRenderer) Layout(size fyne.Size) {
@@ -738,29 +772,39 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	h := r.header
 	bp := sharedwidgets.GetBreakpoint(size.Width)
 
-	// Scale text sizes based on breakpoint
-	var titleSize, subtitleSize, taglineSize float32
+	// Scale text sizes based on breakpoint - UI-001: Increased sizes
+	var titleSize, subtitleSize, taglineSize, bannerSize float32
 	showTagline := true
 
 	switch bp {
 	case sharedwidgets.BreakpointSM:
-		titleSize, subtitleSize, taglineSize = 22, 14, 11
+		titleSize, subtitleSize, taglineSize, bannerSize = 28, 16, 12, 11 // UI-001: Increased from 22,14,11
 		showTagline = false // Hide tagline on mobile
 	case sharedwidgets.BreakpointMD:
-		titleSize, subtitleSize, taglineSize = 24, 15, 12
+		titleSize, subtitleSize, taglineSize, bannerSize = 30, 17, 13, 12 // UI-001: Increased from 24,15,12
 	case sharedwidgets.BreakpointLG:
-		titleSize, subtitleSize, taglineSize = 26, 15, 12
+		titleSize, subtitleSize, taglineSize, bannerSize = 32, 17, 13, 12 // UI-001: Increased from 26,15,12
 	default: // XL
-		titleSize, subtitleSize, taglineSize = 28, 16, 13
+		titleSize, subtitleSize, taglineSize, bannerSize = 32, 18, 14, 13 // UI-001: Increased from 28,16,13
 	}
 
 	h.titleText.TextSize = titleSize
 	h.subtitleText.TextSize = subtitleSize
 	h.taglineText.TextSize = taglineSize
+	h.bannerText.TextSize = bannerSize
 
 	// Calculate positions (centered)
 	padding := float32(8)
 	y := padding
+
+	// UI-005: TRL Warning Banner at top
+	bannerWidth := h.bannerText.MinSize().Width
+	if bannerWidth > size.Width-20 {
+		h.bannerText.Move(fyne.NewPos(10, y))
+	} else {
+		h.bannerText.Move(fyne.NewPos((size.Width-bannerWidth)/2, y))
+	}
+	y += bannerSize + 8
 
 	// Title
 	titleWidth := h.titleText.MinSize().Width
@@ -788,8 +832,8 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	h.separator.Resize(fyne.NewSize(size.Width, 2))
 	h.separator.Move(fyne.NewPos(0, size.Height-2))
 
-	// Build objects list
-	r.objects = []fyne.CanvasObject{h.titleText, h.subtitleText}
+	// Build objects list - UI-005: Add banner
+	r.objects = []fyne.CanvasObject{h.bannerText, h.titleText, h.subtitleText}
 	if showTagline {
 		r.objects = append(r.objects, h.taglineText)
 	}
@@ -804,8 +848,8 @@ func (r *responsiveHeaderRenderer) Refresh() {
 
 func (r *responsiveHeaderRenderer) Objects() []fyne.CanvasObject {
 	if len(r.objects) == 0 {
-		// Initial objects before first layout
-		return []fyne.CanvasObject{r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
+		// Initial objects before first layout - UI-005: Include banner
+		return []fyne.CanvasObject{r.header.bannerText, r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
 	}
 	return r.objects
 }
@@ -824,8 +868,8 @@ type ResponsiveFooter struct {
 // NewResponsiveFooter creates a footer that simplifies on small screens
 func NewResponsiveFooter() *ResponsiveFooter {
 	f := &ResponsiveFooter{
-		metricsText: canvas.NewText("30 Analog States  |  87% MNIST  |  100× Efficiency  |  10⁹ Cycles  |  TRL 4", color.RGBA{0, 212, 255, 230}),
-		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{150, 170, 190, 200}),
+		metricsText: canvas.NewText("30 Analog States  |  96-98% MNIST  |  25-100× vs NAND  |  10⁹ Cycles  |  TRL 4", color.RGBA{0, 212, 255, 230}),
+		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{200, 210, 220, 255}), // UI-003: Increased contrast from (150,170,190,200) to (200,210,220,255)
 		separator:   widget.NewSeparator(),
 	}
 	f.metricsText.Alignment = fyne.TextAlignCenter
@@ -866,13 +910,13 @@ func (r *responsiveFooterRenderer) layoutWithSize(size fyne.Size) {
 	case sharedwidgets.BreakpointSM:
 		metricsSize = 11
 		// Shorter metrics text for mobile
-		f.metricsText.Text = "30 States | 87% MNIST | 100× Eff"
+		f.metricsText.Text = "30 States | 96-98% MNIST | TRL 4"
 	case sharedwidgets.BreakpointMD:
 		metricsSize, journeySize = 12, 11
-		f.metricsText.Text = "30 States | 87% MNIST | 100× Efficiency | TRL 4"
+		f.metricsText.Text = "30 States | 96-98% MNIST | 25-100× vs NAND | TRL 4"
 	default:
 		metricsSize, journeySize = 13, 12
-		f.metricsText.Text = "30 Analog States  |  87% MNIST  |  100× Efficiency  |  10⁹ Cycles  |  TRL 4"
+		f.metricsText.Text = "30 Analog States  |  96-98% MNIST  |  25-100× vs NAND  |  10⁹ Cycles  |  TRL 4"
 	}
 
 	f.metricsText.TextSize = metricsSize

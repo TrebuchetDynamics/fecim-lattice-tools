@@ -5,7 +5,9 @@ package gui
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"path/filepath"
+	"strconv"
 	"sync/atomic"
 
 	"fyne.io/fyne/v2"
@@ -41,7 +43,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		bestLevel := core.GetBestMatchingWeightsLevel(levels)
 		app.tryLoadQATWeights(bestLevel)
 
-		app.network.SetNumLevels(levels)
+		app.network().SetNumLevels(levels)
 		app.updateWeightHeatmap()
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
@@ -62,7 +64,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.noiseSlider.OnChanged = func(v float64) {
 		mnistLog.SliderChange("Noise", v)
 		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
-		app.network.SetNoiseLevel(v)
+		app.network().SetNoiseLevel(v)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -79,7 +81,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Selection("ADC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
-		app.network.SetADCBits(bits)
+		app.network().SetADCBits(bits)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -90,7 +92,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Selection("DAC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
-		app.network.SetDACBits(bits)
+		app.network().SetDACBits(bits)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -204,11 +206,11 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 // applyPresetWithMode sets hardware parameters with optional Calibration Mode (single-layer).
 func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
 	// Update network parameters (thread-safe, not UI)
-	app.network.SetNumLevels(levels)
-	app.network.SetNoiseLevel(noise)
-	app.network.SetADCBits(adcBits)
-	app.network.SetDACBits(dacBits)
-	app.network.SetSingleLayer(singleLayer)
+	app.network().SetNumLevels(levels)
+	app.network().SetNoiseLevel(noise)
+	app.network().SetADCBits(adcBits)
+	app.network().SetDACBits(dacBits)
+	app.network().SetSingleLayer(singleLayer)
 
 	// Update UI elements on main thread
 	fyne.Do(func() {
@@ -240,16 +242,18 @@ func (app *DualModeApp) runQuickTest() {
 	})
 
 	go func() {
-		if len(app.testImages) == 0 {
+		if len(app.testImages()) == 0 {
 			fyne.Do(func() {
 				app.testResultLabel.SetText("Loading test data...")
 			})
-			app.loadTestData()
+			if err := app.networkCtrl.LoadTestData(); err != nil {
+				mnistLog.Printf("Failed to load test data: %v", err)
+			}
 		}
 
 		n := 200
-		if n > len(app.testImages) {
-			n = len(app.testImages)
+		if n > len(app.testImages()) {
+			n = len(app.testImages())
 		}
 
 		fpCorrect := 0
@@ -260,11 +264,11 @@ func (app *DualModeApp) runQuickTest() {
 		updateInterval := 10
 
 		for i := 0; i < n; i++ {
-			result := app.network.Infer(app.testImages[i])
-			if result.FPPrediction == app.testLabels[i] {
+			result := app.network().Infer(app.testImages()[i])
+			if result.FPPrediction == app.testLabels()[i] {
 				fpCorrect++
 			}
-			if result.CIMPrediction == app.testLabels[i] {
+			if result.CIMPrediction == app.testLabels()[i] {
 				cimCorrect++
 			}
 			if result.Agree {
@@ -388,8 +392,19 @@ func (app *DualModeApp) showTrainWeightsDialog() {
 func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *widget.ProgressBar, statusLabel, epochLabel, accuracyLabel *widget.Label, stopTraining *atomic.Bool, onComplete func()) {
 	defer onComplete()
 
-	// Use local RNG for shuffling (global rand is already auto-seeded in Go 1.20+)
-	rng := rand.New(rand.NewSource(rand.Int63()))
+	// Use local RNG for shuffling
+	// For debugging: set FECIM_DEBUG_SEED=42 (or any integer) for reproducible training
+	var rng *rand.Rand
+	if seedStr := os.Getenv("FECIM_DEBUG_SEED"); seedStr != "" {
+		if seed, err := strconv.ParseInt(seedStr, 10, 64); err == nil {
+			rng = rand.New(rand.NewSource(seed))
+			mnistLog.Printf("Debug mode: using fixed seed %d for reproducible training", seed)
+		} else {
+			rng = rand.New(rand.NewSource(rand.Int63()))
+		}
+	} else {
+		rng = rand.New(rand.NewSource(rand.Int63()))
+	}
 
 	fyne.Do(func() {
 		statusLabel.SetText("Loading MNIST training data...")
@@ -397,7 +412,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	})
 
 	// Load MNIST training data
-	trainImages, trainLabels, err := mnist.LoadMNIST(app.dataDir, true)
+	trainImages, trainLabels, err := mnist.LoadMNIST(app.dataDir(), true)
 	if err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Error loading data: %v", err))
@@ -417,7 +432,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	})
 
 	// Load test data for evaluation
-	testImages, testLabels, err := mnist.LoadMNIST(app.dataDir, false)
+	testImages, testLabels, err := mnist.LoadMNIST(app.dataDir(), false)
 	if err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Error loading test data: %v", err))
@@ -510,10 +525,10 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	}
 
 	// Save weights
-	weightsPath := core.GetWeightsFilename(app.dataDir, levels)
+	weightsPath := core.GetWeightsFilename(app.dataDir(), levels)
 	// For non-standard levels, save with level number
 	if levels != 30 {
-		weightsPath = filepath.Join(app.dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+		weightsPath = filepath.Join(app.dataDir(), fmt.Sprintf("pretrained_weights_%d.json", levels))
 	}
 
 	fyne.Do(func() {
@@ -528,12 +543,10 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	}
 
 	// Clear the "warned" flag so the new weights can be loaded (thread-safe access)
-	app.warnedMissingLevelsMu.Lock()
-	app.warnedMissingLevels[levels] = false
-	app.warnedMissingLevelsMu.Unlock()
+	app.clearWarnedMissingLevel(levels)
 
 	// Reload the weights into the current network (LoadWeights is thread-safe internally)
-	if err := app.network.LoadWeights(weightsPath); err != nil {
+	if err := app.network().LoadWeights(weightsPath); err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Trained but error loading: %v", err))
 		})
@@ -542,8 +555,8 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 
 	// Update state on main thread to ensure thread safety
 	finalBestAcc := bestAcc
+	app.setCurrentQATLevel(levels)
 	fyne.Do(func() {
-		app.currentQATLevel = levels
 		statusLabel.SetText(fmt.Sprintf("Training complete! Accuracy: %.1f%% | Weights saved.", finalBestAcc))
 		progressBar.SetValue(1.0)
 		app.updateWeightHeatmap()

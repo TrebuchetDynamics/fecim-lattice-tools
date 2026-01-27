@@ -3,6 +3,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -416,7 +417,12 @@ func TestConcurrentInference(t *testing.T) {
 		go func(id int) {
 			defer func() {
 				if r := recover(); r != nil {
-					errors <- r.(error)
+					// Safe type assertion with comma-ok idiom
+					if err, ok := r.(error); ok {
+						errors <- err
+					} else {
+						errors <- fmt.Errorf("panic: %v", r)
+					}
 				}
 				done <- true
 			}()

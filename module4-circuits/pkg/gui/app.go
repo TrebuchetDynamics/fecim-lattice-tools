@@ -26,8 +26,8 @@ const (
 	FeCIMLevels    = 30  // Always 30 levels for FeCIM
 	MaxArraySize   = 128 // Maximum array dimension
 	DefaultSize    = 8   // Default array size
-	DefaultDACBits = 8   // Default DAC resolution
-	DefaultADCBits = 8   // Default ADC resolution
+	DefaultDACBits = 5   // Default DAC resolution (matches peripherals.DefaultDAC)
+	DefaultADCBits = 5   // Default ADC resolution (matches peripherals.DefaultADC)
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.
@@ -57,8 +57,9 @@ type CircuitsApp struct {
 	selectedCol  int
 	targetLevel  int
 	arrayWeights [][]int // Current programmed levels
-	inputVector  []int   // Input vector for compute
+	inputVector  []int     // Input vector for compute
 	outputVector []float64
+	architecture string // "1T1R" or "0T1R" - affects row selection behavior
 
 	// Tab-specific GUI components
 	// Tab 1: Write
@@ -189,6 +190,11 @@ type CircuitsApp struct {
 	// Animation state
 	animationStep   int // 0=none, 1=DAC, 2=Array, 3=ADC
 	animationActive bool
+
+	// Architecture toggle (1T1R vs 0T1R)
+	archPassiveBtn *widget.Button
+	arch1T1RBtn    *widget.Button
+	archToggle     *fyne.Container
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.
@@ -207,7 +213,8 @@ func NewCircuitsApp() *CircuitsApp {
 		selectedRow:   3,
 		selectedCol:   5,
 		targetLevel:   15,
-		compArraySize: 8, // Start with 8x8 array for comparison
+		compArraySize: 8,                             // Start with 8x8 array for comparison
+		architecture:  sharedwidgets.Architecture0T1R, // Default to passive for educational demo
 	}
 
 	// Create Fyne app

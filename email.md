@@ -1,54 +1,29 @@
 TO: tour@rice.edu
+CC: jaeho-shin@rice.edu, tawfik.jarjour@accenture.com
 
-CC:
-  jaeho-shin@rice.edu
-  tawfik.jarjour@accenture.com
-
-
-Subject: Interactive FeCIM visualization suite - investor demos that let people draw digits and watch the crossbar compute
+Subject: FeCIM tool - 6 modules, Yosys/KLayout/OpenROAD integration
 
 Dr. Tour,
 
-After watching your COSM presentation - "the same device does the memory and the computation" - I built an interactive visualization suite for FeCIM technology. Five modules designed for technical briefinges and foundry conversations.
+After your COSM presentation, I built an interactive tool 
+for exploring FeCIM concepts. Six modules:
 
-**What's working now:**
+- Hysteresis - Preisach model, configurable states, quantization error visible
+- Crossbar - 1T1R vs Passive toggle, IR drop, sneak paths visible
+- MNIST - Draw a digit, watch the crossbar compute
+- Peripherals - DAC/TIA/ADC, Write/Read/Compute modes, 1T1R vs Passive
+- Comparison - FeCIM vs ReRAM vs PCM vs MRAM
+- EDA Explorer - Verilog/DEF, validates with Yosys, views in KLayout and OpenROAD
 
-1. **Hysteresis** - P-E curves with Preisach model, 30 discrete states (~4.9 bits/cell)
-   → Explains "why 30 levels matters" in 60 seconds
+Built from published literature. Would need real device 
+data for calibration, but the framework is working.
 
-2. **Crossbar MVM** - Matrix-vector multiply with toggleable non-idealities
-   → IR drop, sneak paths, drift - visualize the problems and how FeCIM handles them
+Your faith-and-science work is part of why I paid attention.
 
-3. **MNIST Demo** - Draw a digit, watch the crossbar recognize it, 87% accuracy
-   → Configured to match your reported hardware result. The "wow moment" for investor meetings.
-
-4. **Peripheral Circuits** - DAC/ADC/TIA in Write/Read/Compute modes
-   → Shows this is a real system, not just a memory cell
-
-5. **Technology Comparison** - Energy metrics, competitive matrix, market sizing
-   → FeCIM wins every category, investor-ready charts
-
-**In development:**
-- Module 6: FeCIM Design Suite - universal chip design tool
-  → Design storage chips (NAND), memory chips (DRAM), or AI chips (CIM)
-  → Generates Verilog, DEF, SPICE, ready for OpenLane fabrication flow
-  → "Hello World": 4×4 storage array in 3 commands, no AI weights needed
-
-**The value:** Interactive demos > PowerPoint slides.
-When an investor draws a "7" and watches your crossbar recognize it in real-time, that's worth more than 50 slides explaining the technology.
-
-**To be clear:** Built from published literature and your public presentations - no proprietary data. The physics models would need calibration against real device measurements before any serious application. I'm building the framework; the accuracy depends on real data.
-
-I also appreciate your work on faith and science - it's part of why I paid attention to your COSM talk in the first place.
-
-If this could help IronLattice with investor demos, foundry discussions, or design exploration, I'd rather build what you actually need than guess.
-
-GitHub: github.com/your-org/fecim-lattice-tools
-Demo video: [2-minute walkthrough]
+Demo: [5-minute video]
+Repo: Private. Will invite on reply.
 
 FeCIM Maintainers
 Monterrey, Mexico
-+52 812 193 7470 (WhatsApp/Telegram)
-
++52 812 193 7470
 github.com/XelHaku
-trebuchetdynamics.com

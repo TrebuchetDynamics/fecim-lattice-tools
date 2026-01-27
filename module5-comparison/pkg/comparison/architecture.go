@@ -84,12 +84,13 @@ func GPUAccelerator() *Architecture {
 // The values below are ESTIMATES/GUESSES for visualization purposes only.
 // They should NOT be presented as facts or used for investment decisions.
 //
-// VERIFIED claims from Dr. Tour (Nov 2024):
-//   - 30 discrete analog states (VERIFIED)
-//   - 87% MNIST accuracy (Dr. Tour, UNVERIFIED - conference claim only)
-//   - "10M× lower energy than NAND" (CLAIMED, NOT VERIFIED)
-//   - "1M× faster than NAND" (CLAIMED, NOT VERIFIED)
-//   - "80-90% data center energy reduction" (CLAIMED, NOT VERIFIED)
+// VERIFIED claims:
+//   - 30 discrete analog states (VERIFIED - Dr. Tour; peer-reviewed: 32-140 states)
+//   - 96.6-98.24% MNIST accuracy (VERIFIED - peer-reviewed: Nature Commun. 2023, ScienceDirect 2025)
+//   - 25-100× lower energy than NAND (VERIFIED - Samsung Nature 2025)
+// UNVERIFIED claims (removed from tool):
+//   - Dr. Tour's "87% MNIST" (below peer-reviewed benchmarks)
+//   - "10M× lower energy than NAND" (no peer-reviewed data)
 //
 // See opensource/papers/08_Documentation/HONESTY_AUDIT.md for full analysis.
 func FeCIMChip() *Architecture {

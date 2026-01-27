@@ -175,13 +175,6 @@ func TestDEF4x4Array(t *testing.T) {
 		t.Error("DEF should have BL[3] pin")
 	}
 
-	// Write to generated directory for manual inspection
-	generatedDir := "../../../generated"
-	if err := os.MkdirAll(generatedDir, 0755); err == nil {
-		outPath := filepath.Join(generatedDir, "placement.def")
-		ExportDEF(mapping, outPath)
-		t.Logf("4x4 DEF written to %s", outPath)
-	}
 }
 
 func TestDEFCoordinates(t *testing.T) {
@@ -348,14 +341,6 @@ func TestDEF1T1RArchitecture(t *testing.T) {
 	// SL nets should exist
 	if !strings.Contains(def, "- SL[0]\n") {
 		t.Error("1T1R should have SL[0] net")
-	}
-
-	// Write 1T1R output for inspection
-	generatedDir := "../../../generated"
-	if err := os.MkdirAll(generatedDir, 0755); err == nil {
-		outPath := filepath.Join(generatedDir, "placement_1t1r.def")
-		ExportDEF(mapping, outPath)
-		t.Logf("1T1R DEF written to %s", outPath)
 	}
 
 	t.Log("1T1R architecture DEF generated successfully with SL[] pins")

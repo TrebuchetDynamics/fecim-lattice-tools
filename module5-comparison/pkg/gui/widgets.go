@@ -461,7 +461,7 @@ func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
 
 	verified := container.NewVBox(
 		widget.NewLabel("  30 discrete analog levels"),
-		widget.NewLabel("  87% MNIST accuracy"),
+		widget.NewLabel("  96.6-98.24% MNIST (peer-reviewed)"),
 		widget.NewLabel("  CMOS compatible fab"),
 		widget.NewLabel("  Non-volatile (no refresh)"),
 	)

@@ -17,16 +17,18 @@ import (
 type CellVisualizer struct {
 	widget.BaseWidget
 
-	mu      sync.RWMutex
-	level   int
-	minSize fyne.Size
+	mu        sync.RWMutex
+	level     int
+	numLevels int // Total number of levels (default 30)
+	minSize   fyne.Size
 }
 
 // NewCellVisualizer creates a new cell visualizer
 func NewCellVisualizer() *CellVisualizer {
 	c := &CellVisualizer{
-		level:   15,
-		minSize: fyne.NewSize(180, 220),
+		level:     15,
+		numLevels: 30, // Default to 30 levels
+		minSize:   fyne.NewSize(180, 220),
 	}
 	c.ExtendBaseWidget(c)
 	return c
@@ -43,6 +45,13 @@ func (c *CellVisualizer) MinSize() fyne.Size {
 func (c *CellVisualizer) SetLevel(level int) {
 	c.mu.Lock()
 	c.level = level
+	c.mu.Unlock()
+}
+
+// SetNumLevels sets the total number of levels (for display purposes)
+func (c *CellVisualizer) SetNumLevels(numLevels int) {
+	c.mu.Lock()
+	c.numLevels = numLevels
 	c.mu.Unlock()
 }
 
@@ -86,7 +95,13 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 
 	r.cell.mu.RLock()
 	level := r.cell.level
+	numLevels := r.cell.numLevels
 	r.cell.mu.RUnlock()
+
+	// Fallback to 30 if numLevels not set
+	if numLevels < 2 {
+		numLevels = 30
+	}
 
 	r.objects = r.objects[:0]
 
@@ -206,7 +221,7 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 
 	// Label below cell (centered) - larger
 	labelY := cellY + cellSize + 8
-	levelLabelStr := fmt.Sprintf("Level %d/30", level+1)
+	levelLabelStr := fmt.Sprintf("Level %d/%d", level+1, numLevels)
 	levelLabel := canvas.NewText(levelLabelStr, color.RGBA{220, 220, 220, 255})
 	levelLabel.TextSize = 14
 	levelLabel.TextStyle = fyne.TextStyle{Bold: true}

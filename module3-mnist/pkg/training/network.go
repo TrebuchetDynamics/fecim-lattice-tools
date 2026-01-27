@@ -3,7 +3,7 @@ package training
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -48,6 +48,10 @@ func NewMNISTNetwork(layer1, layer2 *crossbar.Array) *MNISTNetwork {
 
 // NewMNISTNetworkWithWeights creates a network with pre-loaded crossbar arrays.
 // Does NOT reinitialize weights - use this when arrays already have trained weights.
+//
+// Use case: When crossbar arrays are created elsewhere with weights already programmed
+// (e.g., hardware-in-the-loop testing or weight transfer from another system).
+// For normal usage with random initialization, use NewMNISTNetwork instead.
 func NewMNISTNetworkWithWeights(layer1, layer2 *crossbar.Array) *MNISTNetwork {
 	hiddenSize := layer1.Rows()
 
@@ -349,6 +353,11 @@ func (n *MNISTNetwork) LoadWeights(filename string) error {
 	n.l2Offset = data.L2Offset
 
 	// Program weights to crossbar arrays
+	// Warn if loaded weights don't match crossbar dimensions
+	if len(data.Layer1Weights) != n.layer1.Rows() || (len(data.Layer1Weights) > 0 && len(data.Layer1Weights[0]) != n.layer1.Cols()) {
+		log.Printf("Warning: Layer 1 weight dimensions mismatch - loaded: %dx%d, crossbar: %dx%d",
+			len(data.Layer1Weights), len(data.Layer1Weights[0]), n.layer1.Rows(), n.layer1.Cols())
+	}
 	for i, row := range data.Layer1Weights {
 		for j, w := range row {
 			if i < n.layer1.Rows() && j < n.layer1.Cols() {
@@ -357,6 +366,10 @@ func (n *MNISTNetwork) LoadWeights(filename string) error {
 		}
 	}
 
+	if len(data.Layer2Weights) != n.layer2.Rows() || (len(data.Layer2Weights) > 0 && len(data.Layer2Weights[0]) != n.layer2.Cols()) {
+		log.Printf("Warning: Layer 2 weight dimensions mismatch - loaded: %dx%d, crossbar: %dx%d",
+			len(data.Layer2Weights), len(data.Layer2Weights[0]), n.layer2.Rows(), n.layer2.Cols())
+	}
 	for i, row := range data.Layer2Weights {
 		for j, w := range row {
 			if i < n.layer2.Rows() && j < n.layer2.Cols() {
@@ -518,5 +531,5 @@ func (n *MNISTNetwork) QuantizeWeightsTo30Levels() {
 		}
 	}
 
-	fmt.Println("Weights quantized to 30 discrete levels (FeCIM format)")
+	// Weights quantized to 30 discrete levels (FeCIM format)
 }

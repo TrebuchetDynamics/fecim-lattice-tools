@@ -210,7 +210,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 					"3. + IR drop\n"+
 					"4. + Device variation\n"+
 					"5. + Sneak paths\n\n"+
-					"Target: 87% (Hardware)\n\n"+
+					"Peer-reviewed: 96-98%\n\n"+
 					"Shows where accuracy\n"+
 					"is lost and why.")
 		}
@@ -360,7 +360,7 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 					"  IR Drop:              ~%.1f%%\n"+
 					"  Device Variation:     ~%.1f%%\n"+
 					"  Sneak Paths:          ~%.1f%%\n\n"+
-					"Target: 87%% (Hardware)\n"+
+					"Peer-reviewed: 96-98%%\n"+
 					"Status: %s\n",
 				90.0-ca.lastMVMResult.AccuracyLoss,
 				ca.lastMVMResult.AccuracyLoss,

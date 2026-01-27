@@ -1385,6 +1385,7 @@ Example:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-22 | Claude Opus 4.5 | Initial plan based on screenshot analysis |
+| 1.1 | 2026-01-27 | Claude Opus 4.5 | Added links to expert critique and fixes todo |
 
 ---
 
@@ -1394,6 +1395,49 @@ Example:
 - [MNIST ELI5](mnist.ELI5.md) - Simple explanations for beginners
 - [MNIST Research](mnist.research.md) - Academic background and literature review
 - [MNIST Open Source](mnist.opensource.md) - Related projects and tools
+- [**Expert Critique**](mnist.expert-critique.md) - Comprehensive architecture/code/security review (NEW)
+- [**Fixes TODO**](mnist.fixes.todo.md) - Prioritized bug and improvement tracking (NEW)
+
+---
+
+## Addendum: Code Health Status (2026-01-27)
+
+An expert review was conducted on the module3-mnist codebase covering architecture, code quality, and security. Key findings that affect this improvement plan:
+
+### Blockers for UI Improvements
+
+Before implementing P1-P3 UI enhancements, these critical issues should be fixed:
+
+| Issue | Severity | Impact on Plan |
+|-------|----------|----------------|
+| Nil slice access in softmax/argmax | CRITICAL | Could crash during inference |
+| Inconsistent level bounds | CRITICAL | 1-level setting causes errors |
+| Race condition in tryLoadQATWeights | HIGH | Weight loading unreliable |
+| InferCIMOnly uses FP weights | HIGH | CIM demos show wrong results |
+| God object DualModeApp | HIGH | Makes enhancements harder |
+
+### Recommended Pre-Work
+
+1. **Fix critical bugs first** (3 issues, ~1 day)
+2. **Fix high-priority issues** (9 issues, ~2-3 days)
+3. **Add missing GUI tests** before major changes
+4. **Consider DualModeApp decomposition** to simplify enhancement work
+
+### Revised Implementation Approach
+
+Given the architectural debt, consider this modified approach:
+
+**Phase 0 (NEW): Stabilization** (1 week)
+- Fix all CRITICAL and HIGH issues from [mnist.fixes.todo.md](mnist.fixes.todo.md)
+- Add basic GUI test coverage for inference path
+- Remove debug print statements
+
+**Phase 1-4**: Proceed as originally planned, but:
+- Extract new widgets to separate files (don't expand god object)
+- Add tests alongside each new feature
+- Document public APIs
+
+See [mnist.expert-critique.md](mnist.expert-critique.md) for full analysis and recommendations.
 
 ---
 

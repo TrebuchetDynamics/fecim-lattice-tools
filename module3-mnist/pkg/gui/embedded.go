@@ -33,7 +33,11 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer1, _ := crossbar.NewArray(layer1Config)
+	layer1, err := crossbar.NewArray(layer1Config)
+	if err != nil {
+		fmt.Printf("Error: failed to create layer 1 crossbar: %v\n", err)
+		return nil
+	}
 
 	// Layer 2: 10 x hidden
 	layer2Config := &crossbar.Config{
@@ -43,7 +47,11 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer2, _ := crossbar.NewArray(layer2Config)
+	layer2, err := crossbar.NewArray(layer2Config)
+	if err != nil {
+		fmt.Printf("Error: failed to create layer 2 crossbar: %v\n", err)
+		return nil
+	}
 
 	// Create network
 	ma.network = training.NewMNISTNetwork(layer1, layer2)

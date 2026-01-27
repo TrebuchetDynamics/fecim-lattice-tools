@@ -66,10 +66,10 @@ func (cc *ComparisonCard) SetResult(result *ComparisonResult) {
 	// Update status
 	if result != nil {
 		if result.Match {
-			cc.statusLabel.SetText(fmt.Sprintf("MATCH | Confidence Δ: %.1f%% | %.0fx energy savings",
+			cc.statusLabel.SetText(fmt.Sprintf("MATCH | Confidence Δ: %.1f%% | Energy Efficiency: %.0fx improvement",
 				result.ConfidenceDelta*100, result.EnergyRatio))
 		} else {
-			cc.statusLabel.SetText(fmt.Sprintf("MISMATCH | FP: %d vs CIM: %d | Check hardware config!",
+			cc.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
 				result.FPPrediction, result.CIMPrediction))
 		}
 	}
@@ -193,9 +193,9 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	}
 	drawSimpleText(img, bannerText, padding, infoY, bannerColor)
 
-	// Energy savings (key insight)
-	energyText := fmt.Sprintf("| %.0fx energy savings", result.EnergyRatio)
-	drawSimpleText(img, energyText, padding+70, infoY, color.RGBA{0, 200, 255, 255})
+	// Energy efficiency (key insight) - UI-024 fix: clearer wording
+	energyText := fmt.Sprintf("| Energy Efficiency: %.0fx improvement", result.EnergyRatio)
+	drawSimpleText(img, energyText, padding+140, infoY, color.RGBA{0, 200, 255, 255})
 
 	// Confidence comparison
 	infoY += 15
@@ -270,11 +270,11 @@ func (cc *ComparisonCard) drawPredictionCardEnhanced(img *image.RGBA, x, y, w, h
 	}
 	cc.drawScaledDigit(img, digitX, digitY, digitText, accentColor, digitScale)
 
-	// Confidence bar - wider and more prominent
+	// Confidence bar - wider and more prominent (UI-021 fix: increased from 16 to 24px)
 	barY := digitY + digitHeight + 12
 	barX := x + 15
 	barWidth := w - 30
-	barHeight := 16
+	barHeight := 24
 
 	// Background
 	for bx := barX; bx < barX+barWidth; bx++ {
@@ -296,10 +296,11 @@ func (cc *ComparisonCard) drawPredictionCardEnhanced(img *image.RGBA, x, y, w, h
 		}
 	}
 
-	// Confidence percentage text (larger)
-	confY := barY + barHeight + 8
+	// Confidence percentage text (UI-021 fix: moved to right side of bar)
+	confY := barY + (barHeight / 2) - 5
 	confText := fmt.Sprintf("%.1f%%", confidence*100)
-	drawScaledText(img, confText, x+w/2-len(confText)*7, confY, 2, color.RGBA{220, 220, 240, 255})
+	confX := barX + barWidth + 10
+	drawSimpleText(img, confText, confX, confY, color.RGBA{220, 220, 240, 255})
 
 	// Mini probability distribution (bottom of card)
 	if len(probs) == 10 {

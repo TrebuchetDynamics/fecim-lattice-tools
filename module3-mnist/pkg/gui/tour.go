@@ -45,7 +45,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 	gt.steps = []TourStep{
 		{
 			Title:       "Step 1/5: Welcome to FeCIM",
-			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory (FeCIM).\n\nKey Innovation: 30 analog conductance levels per cell (~4.9 bits/cell)\n\nPhysics: HfO₂-ZrO₂ (HZO) superlattice ferroelectric exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.\n\nTarget: High efficiency and accuracy comparable to digital logic!\n\nLet's see it in action...",
+			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory (FeCIM).\n\nKey Innovation: 30 analog conductance levels per cell (~4.9 bits/cell)\n\nPhysics: HfO₂-ZrO₂ (HZO) superlattice ferroelectric exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.\n\nPeer-reviewed benchmarks: 96.6-98.24% MNIST accuracy (Nature Commun. 2023, ScienceDirect 2025)\n\nLet's see it in action...",
 			Action:      func() { gt.app.applyPreset(30, 0.01, 8, 8) },
 			Duration:    4 * time.Second,
 		},
@@ -79,7 +79,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 5/5: FeCIM Sweet Spot",
-			Description: "Restoring optimal settings...\n\n30 levels + 1% noise = 87% accuracy!\n\nThe optimal operating point:\n• 30 levels: Enough precision to represent the network\n• 1% noise: Low enough to be manufacturable at 28nm\n• 50 fJ/MAC: 10,000x more energy-efficient than GPU DRAM access (500 pJ/MAC)\n\nPhysics: This sweet spot balances quantization error vs. analog noise, achieving near-digital accuracy with analog efficiency.\n\nExplore the presets to learn more!",
+			Description: "Restoring optimal settings...\n\n30 levels + 1% noise = high accuracy!\n\nThe optimal operating point:\n• 30 levels: Enough precision to represent the network\n• 1% noise: Low enough to be manufacturable at 28nm\n• 25-100x more energy-efficient than NAND (Samsung Nature 2025)\n\nPhysics: This sweet spot balances quantization error vs. analog noise, achieving near-digital accuracy with analog efficiency.\n\nExplore the presets to learn more!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
@@ -204,10 +204,10 @@ func (gt *GuidedTour) finishTour() {
 			widget.NewSeparator(),
 			widget.NewLabelWithStyle("Key Physics Insights:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			widget.NewLabel(""),
-			widget.NewLabel("1. 30 analog levels (HZO ferroelectric) → 87% accuracy"),
+			widget.NewLabel("1. 30 analog levels (HZO ferroelectric) → high accuracy"),
 			widget.NewLabel("2. Binary (2 levels, like SRAM) → 50% accuracy (fails!)"),
 			widget.NewLabel("3. High noise (15% σ/μ) → 70% accuracy (degraded)"),
-			widget.NewLabel("4. Energy: 50 fJ/MAC vs 500 pJ/MAC (GPU) = 10,000x better"),
+			widget.NewLabel("4. Energy: 25-100x more efficient than NAND (Samsung Nature 2025)"),
 			widget.NewLabel(""),
 			widget.NewSeparator(),
 			widget.NewLabelWithStyle("Next Steps:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

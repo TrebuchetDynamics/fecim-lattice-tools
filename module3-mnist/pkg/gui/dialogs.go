@@ -10,9 +10,19 @@ import (
 )
 
 // ShowWhy30LevelsDialog displays information about the 30 analog levels.
+// CRIT-003 fix: Add verification status and peer-reviewed context
 func ShowWhy30LevelsDialog(window fyne.Window) {
 	content := container.NewVBox(
 		widget.NewLabelWithStyle("Why 30 Analog Levels?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+
+		// CRIT-003: Verification status section
+		widget.NewLabelWithStyle("⚠️ Verification Status", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("• Tour's 30-state claim: UNVERIFIED (COSM 2025, not peer-reviewed)"),
+		widget.NewLabel("• Peer-reviewed range: 32-140 states demonstrated"),
+		widget.NewLabel("  - 32 states: Oh et al., IEEE EDL 2017 (VERIFIED)"),
+		widget.NewLabel("  - 140 states: Song et al., Adv. Science 2024 (VERIFIED)"),
+		widget.NewLabel("• Conclusion: 30 states is PLAUSIBLE (within demonstrated range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Physics Justification", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -23,22 +33,26 @@ func ShowWhy30LevelsDialog(window fyne.Window) {
 		widget.NewLabel("• Separation: 3σ noise margin between adjacent levels"),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Competitive Technology Comparison", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Technology     | Levels | Bits/Cell | Notes"),
+		widget.NewLabelWithStyle("Peer-Reviewed Technology Comparison", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Technology     | Levels | Bits/Cell | Verification"),
 		widget.NewLabel("---------------|--------|-----------|------------------"),
-		widget.NewLabel("SRAM           | 2      | 1 bit     | Binary only"),
-		widget.NewLabel("Flash (NAND)   | 2-4    | 1-2 bits  | TLC/QLC, slow write"),
-		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | High variability"),
-		widget.NewLabel("FeCIM (HZO)    | 30     | ~4.9 bits | 5-7x better than ReRAM"),
-		widget.NewLabel("Ideal (FP32)   | 2³²    | 32 bits   | Digital baseline"),
+		widget.NewLabel("SRAM           | 2      | 1 bit     | Industry standard"),
+		widget.NewLabel("Flash (NAND)   | 2-4    | 1-2 bits  | Industry standard"),
+		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | Peer-reviewed"),
+		widget.NewLabel("FeFET (Oh 2017)| 32     | 5.0 bits  | IEEE EDL (VERIFIED)"),
+		widget.NewLabel("FeFET (Song'24)| 140    | 7.1 bits  | Adv. Science (VERIFIED)"),
+		widget.NewLabel("Tour FeCIM     | 30     | ~4.9 bits | COSM 2025 (UNVERIFIED)"),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Impact on MNIST Accuracy (784→128→10 network)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Impact on MNIST Accuracy (Peer-Reviewed Results)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("• 2 levels (binary): ~50% accuracy (worse than random!)"),
 		widget.NewLabel("• 4 levels (2-bit): ~65% accuracy"),
-		widget.NewLabel("• 8 levels (3-bit): ~75% accuracy"),
-		widget.NewLabel("• 30 levels (FeCIM): ~87% accuracy (measured hardware)"),
+		widget.NewLabel("• 7 levels (FeFET): 96.6% (Nature Commun. 2023 - VERIFIED)"),
+		widget.NewLabel("• 30+ levels: 92-98% (varies with implementation)"),
+		widget.NewLabel("• HZO-FTJ reservoir: 98.24% (ScienceDirect 2025 - VERIFIED)"),
 		widget.NewLabel("• Float32 (digital): ~98% accuracy (theoretical baseline)"),
+		widget.NewLabel(""),
+		widget.NewLabel("Note: Accuracy depends on implementation quality and non-idealities"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Why Not 64 Levels (6-bit ADC maximum)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -66,11 +80,11 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewLabelWithStyle("Hardware Reality Check", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Why 87% and Not 98%?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Accuracy Depends on Configuration", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
-		widget.NewLabel("Simulation (this demo): Can achieve 95-98% under ideal conditions"),
-		widget.NewLabel("FeCIM Hardware (Measured): 87% reported accuracy"),
-		widget.NewLabel("Software baseline: 98-99% (FP32); CIM hardware: 87-96% (various literature)"),
+		widget.NewLabel("Simulation (this demo): 85-98% depending on noise, levels, ADC bits"),
+		widget.NewLabel("Peer-reviewed FeCIM: 96.6% (Nature Commun. 2023), 98.24% (ScienceDirect 2025)"),
+		widget.NewLabel("Software baseline: 98-99% (FP32); CIM: 92-98% (peer-reviewed literature)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("The Accuracy Gap Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -84,14 +98,14 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewLabel("Retention drift       | ✗ No     | ✓ Yes   | -1%"),
 		widget.NewLabel("Cycle-to-cycle var.   | ✗ No     | ✓ Yes   | -1% to -2%"),
 		widget.NewLabel(""),
-		widget.NewLabel("Total gap: ~11% between ideal FP32 (98%) and measured hardware (87%)"),
+		widget.NewLabel("Gap varies: Peer-reviewed achieves 96-98%; gap depends on implementation quality"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("How to Match Real Hardware in This Simulation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("To approximate real hardware behavior:"),
-		widget.NewLabel("• Set noise level to ~0.08 (8% standard deviation)"),
-		widget.NewLabel("• This empirically captures the combined effect of all non-idealities"),
-		widget.NewLabel("• Result: ~87% accuracy matching measured hardware"),
+		widget.NewLabel("• Adjust noise level (1-15% standard deviation)"),
+		widget.NewLabel("• This captures the combined effect of hardware non-idealities"),
+		widget.NewLabel("• Result: Accuracy varies from ~70% (high noise) to ~98% (ideal)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Energy Efficiency Advantage", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -179,14 +193,14 @@ func ShowAboutDialog(window fyne.Window) {
 	content := container.NewVBox(
 		widget.NewLabelWithStyle("MNIST FeCIM Demo", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Educational Visualization of Ferroelectric Compute-in-Memory"),
-		widget.NewLabel("Target: 87% Hardware Accuracy (Reference: COSM 2025)"),
+		widget.NewLabel("Peer-reviewed accuracy: 96.6-98.24% (Nature Commun. 2023, ScienceDirect 2025)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("This Demo Answers Four Key Questions:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("1. What are 30 analog levels? (Physics + competitive advantage)"),
-		widget.NewLabel("2. Why does FeCIM achieve 87%? (Hardware reality vs simulation)"),
+		widget.NewLabel("2. How does accuracy depend on configuration? (Noise, levels, ADC)"),
 		widget.NewLabel("3. What happens when hardware fails? (Quantization, noise, ADC)"),
-		widget.NewLabel("4. Why does this matter? (10,000x energy efficiency vs GPU)"),
+		widget.NewLabel("4. Why does this matter? (25-100x energy efficiency vs NAND)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Neural Network Architecture", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

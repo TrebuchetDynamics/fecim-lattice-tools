@@ -20,19 +20,16 @@ import (
 
 // createWeightZone creates the weight visualization zone (Zone 4).
 func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
-	fmt.Println("[MNIST] createWeightZone: start")
 	label := widget.NewLabel("Weights")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Layer selector as horizontal radio
 	// NOTE: Don't set callback initially - SetSelected triggers callback which uses fyne.Do() and deadlocks during startup
-	fmt.Println("[MNIST] createWeightZone: creating radio group...")
 	layerSelect := widget.NewRadioGroup(
 		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
 		nil, // No callback initially to avoid fyne.Do() deadlock during startup
 	)
 	layerSelect.Horizontal = true
-	fmt.Println("[MNIST] createWeightZone: setting selected...")
 	layerSelect.SetSelected("Layer1 (784x128)")
 	// Now set the callback after initial selection
 	layerSelect.OnChanged = func(s string) {
@@ -44,40 +41,31 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		app.updateWeightHeatmap()
 		app.updateWeightComparison()
 	}
-	fmt.Println("[MNIST] createWeightZone: radio done")
 
 	// Info labels (combined into one)
-	fmt.Println("[MNIST] createWeightZone: creating labels...")
 	app.weightDimLabel = widget.NewLabel("")
 	app.weightRangeLabel = widget.NewLabel("")
 	app.weightLevelsLabel = widget.NewLabel("")
 
 	// Create heatmap raster (quantized weights)
-	fmt.Println("[MNIST] createWeightZone: creating heatmap...")
 	app.hoverableWeightHeatmap = NewHoverableHeatmap(app)
 	app.hoverableWeightHeatmap.SetMinSize(fyne.NewSize(600, 400))
 	app.weightHeatmap = app.hoverableWeightHeatmap.raster // Keep reference for updateWeightHeatmap
 
 	// Create color legend for weight heatmap (blue-white-red)
-	fmt.Println("[MNIST] createWeightZone: creating color legend...")
 	weightLegend := sharedwidgets.NewColorLegend(-1.0, 1.0, "", true, sharedwidgets.BlueWhiteRedColor)
 
 	// Create FP vs Quantized comparison widget
-	fmt.Println("[MNIST] createWeightZone: creating comparison widget...")
 	app.weightComparisonWidget = NewWeightComparisonWidget()
 
 	// Create dual heatmap (side-by-side FP vs Quantized)
-	fmt.Println("[MNIST] createWeightZone: creating dual heatmap...")
 	app.dualWeightHeatmap = NewDualWeightHeatmap()
 
-	fmt.Println("[MNIST] createWeightZone: creating zoom button...")
 	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
 		app.showZoomedHeatmap()
 	})
-	fmt.Println("[MNIST] createWeightZone: done with widgets")
 
 	// Header with controls
-	fmt.Println("[MNIST] createWeightZone: creating header container...")
 	header := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
 		container.NewHBox(
@@ -90,12 +78,10 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	)
 
 	// P1 Enhancement Widgets (moved from controls zone for better space utilization)
-	fmt.Println("[MNIST] createWeightZone: creating P1 widgets...")
 	app.quantizationWidget = NewQuantizationWidget()
 	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
 
 	// Create tabbed view for different weight visualizations
-	fmt.Println("[MNIST] createWeightZone: creating tabs...")
 	// Add legend to the left of the heatmap
 	quantizedTab := container.NewBorder(nil, nil, weightLegend, nil, app.hoverableWeightHeatmap)
 	comparisonTab := container.NewMax(app.weightComparisonWidget)
@@ -110,8 +96,6 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		container.NewTabItem("Quantization", quantizationTab),
 		container.NewTabItem("Energy", energyTab),
 	)
-
-	fmt.Println("[MNIST] createWeightZone: returning...")
 	return container.NewBorder(
 		header,
 		nil, nil, nil,
@@ -121,8 +105,8 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 
 // updateWeightComparison updates the FP vs Quantized comparison widgets.
 func (app *DualModeApp) updateWeightComparison() {
-	fpW1, fpW2, _, _ := app.network.GetFPWeights()
-	quantW1, quantW2, _, _ := app.network.GetQuantWeights()
+	fpW1, fpW2, _, _ := app.network().GetFPWeights()
+	quantW1, quantW2, _, _ := app.network().GetQuantWeights()
 
 	// Update comparison widget based on selected layer
 	if app.weightComparisonWidget != nil {
@@ -142,13 +126,15 @@ func (app *DualModeApp) updateWeightComparison() {
 
 // drawWeightHeatmap draws the weight heatmap.
 func (app *DualModeApp) drawWeightHeatmap(w, h int) image.Image {
-	_, w2, _, _ := app.network.GetQuantWeights()
+	// Get weights once to avoid redundant calls
+	// (renamed from w1/w2 to avoid confusion with width parameter w)
+	layer1Weights, layer2Weights, _, _ := app.network().GetQuantWeights()
 
 	var weights [][]float64
 	if app.weightLayer == 0 {
-		weights, _, _, _ = app.network.GetQuantWeights()
+		weights = layer1Weights
 	} else {
-		weights = w2
+		weights = layer2Weights
 	}
 
 	if len(weights) == 0 || len(weights[0]) == 0 {
@@ -267,10 +253,10 @@ func (h *HoverableHeatmap) MouseIn(e *desktop.MouseEvent) {
 // MouseMoved is called when the mouse moves over the widget.
 func (h *HoverableHeatmap) MouseMoved(e *desktop.MouseEvent) {
 	// Get the current weight matrix
-	_, w2, _, _ := h.app.network.GetQuantWeights()
+	_, w2, _, _ := h.app.network().GetQuantWeights()
 	var weights [][]float64
 	if h.app.weightLayer == 0 {
-		weights, _, _, _ = h.app.network.GetQuantWeights()
+		weights, _, _, _ = h.app.network().GetQuantWeights()
 	} else {
 		weights = w2
 	}
@@ -312,7 +298,10 @@ func (h *HoverableHeatmap) MouseMoved(e *desktop.MouseEvent) {
 		h.tooltip.Hide()
 	}
 
-	// Create new tooltip at cursor position
+	// Create new tooltip at cursor position (check window is not nil)
+	if h.app.window == nil {
+		return
+	}
 	h.tooltip = widget.NewPopUp(label, h.app.window.Canvas())
 
 	// Position tooltip near the cursor
@@ -345,7 +334,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 	// Update info labels
 	var weights [][]float64
 	if app.weightLayer == 0 {
-		weights, _, _, _ = app.network.GetQuantWeights()
+		weights, _, _, _ = app.network().GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
 			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
 			fyne.Do(func() {
@@ -353,7 +342,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 			})
 		}
 	} else {
-		_, weights, _, _ = app.network.GetQuantWeights()
+		_, weights, _, _ = app.network().GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
 			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
 			fyne.Do(func() {
@@ -398,7 +387,7 @@ func (app *DualModeApp) showZoomedHeatmap() {
 	zoomedApp := &DualModeApp{
 		fyneApp:     app.fyneApp,
 		window:      w,
-		network:     app.network,
+		networkCtrl: app.networkCtrl,
 		weightLayer: app.weightLayer,
 	}
 	heatmap := NewHoverableHeatmap(zoomedApp)

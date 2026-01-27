@@ -37,7 +37,7 @@
 
 FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution. Unlike traditional binary memory (0/1), FeCIM supports **30 discrete analog states per cell** (~4.9 bits/cell) as demonstrated in Dr. Tour's COSM 2025 presentation [1]. Similar multi-level capabilities (32-140 states) have been independently verified in peer-reviewed literature [2][3].
 
-> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation; similar results appear in peer-reviewed literature [2][4]. Energy efficiency vs NAND is **25-100×** (Samsung Nature 2025 [5]). Dr. Tour's "10M× vs NAND" claim has been **removed** from this project as no peer-reviewed data supports it.
+> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** claim is from Dr. Tour's presentation; similar results (32-140 states) appear in peer-reviewed literature [2][3]. **MNIST accuracy** in peer-reviewed literature is **96.6-98.24%** [4][9]. Energy efficiency vs NAND is **25-100×** (Samsung Nature 2025 [5]). Dr. Tour's unverified "87% MNIST" and "10M× vs NAND" claims have been **removed** from this project.
 
 ---
 
@@ -123,7 +123,7 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
 ┌────────────┐    ┌────────────┐    ┌────────────┐
 │  Module 1  │───▶│  Module 2  │───▶│  Module 3  │
 │ Hysteresis │    │  Crossbar  │    │   MNIST    │
-│  30 levels │    │  + Noise   │    │    87%     │
+│  30 levels │    │  + Noise   │    │  96-98%    │
 └────────────┘    └────────────┘    └────────────┘
       │                                    │
       ▼                                    ▼
@@ -138,7 +138,7 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
 |--------|-------|-------------|
 | **1. Hysteresis** | Physics | P-E curve, Preisach model, 30 discrete levels |
 | **2. Crossbar** | Compute | MVM operations + non-idealities (4 tabs) |
-| **3. MNIST** | Application | Neural network digit recognition (87-98% accuracy) |
+| **3. MNIST** | Application | Neural network digit recognition (peer-reviewed: 96-98%) |
 | **4. Circuits** | System | DAC/ADC/TIA peripheral design |
 | **5. Comparison** | Business | Technology benchmarks, technical briefing |
 | **6. EDA Suite** | Tooling | Chip design and fabrication export |
@@ -170,7 +170,7 @@ Traditional computing moves data constantly between memory and processor — thi
 |--------|-------|-------|
 | Discrete levels | 30 | Dr. Tour COSM 2025 [1]; peer-reviewed: 32-140 [2][3] |
 | Bits per cell | 5-7+ | log₂(32)=5 to log₂(140)≈7 |
-| MNIST accuracy | 87-98% | Dr. Tour: 87% [1]; Peer-reviewed: 96.6-98.24% [4][9] |
+| MNIST accuracy | 96.6-98.24% | Peer-reviewed: Nature Commun. 2023 [4], ScienceDirect 2025 [9] |
 | Endurance | 10⁹-10¹² | IEEE IRPS 2022 [10]; V:HfO₂ 2024 [11] |
 | 3D Integration | 22nm BEOL | CEA-Leti December 2024 [12] |
 | Cryogenic | 5K-300K | +25% memory window at 14K [13] |
@@ -230,7 +230,7 @@ Matrix-vector multiplication (MVM) via Kirchhoff's current law, plus real-world 
 
 ### Module 3: MNIST Neural Network ✅ (Flagship Demo)
 
-> *"We're at 87% validation here."* — Dr. Tour (Note: Conference claim, unverified; Peer-reviewed record: 98.24% [9])
+> Peer-reviewed FeCIM achieves **96.6-98.24% MNIST accuracy** (Nature Commun. 2023 [4], ScienceDirect 2025 [9])
 
 Interactive digit recognition comparing full-precision vs CIM inference.
 
@@ -366,7 +366,7 @@ fecim-lattice-tools/
 
 ## References
 
-[1] Dr. external research group, "Ferroelectric CIM: Ultra-Low-Power AI Computing," COSM 2025 Technology Summit, November 2024. [Transcript](docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) - Primary source for 30 states, 87% MNIST, TRL 4 status
+[1] Dr. external research group, "Ferroelectric CIM: Ultra-Low-Power AI Computing," COSM 2025 Technology Summit, November 2024. [Transcript](docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) - Primary source for 30 states, TRL 4 status (87% MNIST claim removed from tool)
 
 [2] M. Jerry et al., "Ferroelectric FET analog synapse for acceleration of deep neural network training," IEEE IEDM 2017. DOI: 10.1109/IEDM.2017.8268338 (32 states demonstrated)
 

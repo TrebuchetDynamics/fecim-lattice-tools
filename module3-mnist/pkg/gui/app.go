@@ -138,7 +138,11 @@ func NewMNISTApp() *MNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer1, _ := crossbar.NewArray(layer1Config)
+	layer1, err := crossbar.NewArray(layer1Config)
+	if err != nil {
+		debug.Printf("NewMNISTApp: Failed to create layer 1 crossbar: %v", err)
+		return nil
+	}
 
 	// Layer 2: 10 x hidden
 	layer2Config := &crossbar.Config{
@@ -148,7 +152,11 @@ func NewMNISTApp() *MNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer2, _ := crossbar.NewArray(layer2Config)
+	layer2, err := crossbar.NewArray(layer2Config)
+	if err != nil {
+		debug.Printf("NewMNISTApp: Failed to create layer 2 crossbar: %v", err)
+		return nil
+	}
 
 	// Create network
 	ma.network = training.NewMNISTNetwork(layer1, layer2)
@@ -241,7 +249,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.educationalPanel.SetIdleExplanation()
 	ma.operationLog = NewMNISTOperationLog()
 	ma.predictionDisplay = NewPredictionDisplay()
-	ma.keyStat = NewMNISTKeyStat("Target Accuracy", "87%")
+	ma.keyStat = NewMNISTKeyStat("Peer-Reviewed", "96-98%")
 
 	// Demo mode selector
 	ma.demoModeSelect = widget.NewSelect(
@@ -264,7 +272,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Info label with network specs
-	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Target: 87%")
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Peer-reviewed: 96-98%")
 
 	// Control buttons - organized into groups
 	clearBtn := widget.NewButton("Clear", func() {
@@ -333,7 +341,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		drawBtn,
 		metricsBtn,
 		layout.NewSpacer(),
-		widget.NewLabel("784 -> 128 -> 10 | 87% accuracy | 30 Levels"),
+		widget.NewLabel("784 -> 128 -> 10 | 30 Levels | Accuracy varies with config"),
 	)
 
 	header := container.NewVBox(
@@ -787,11 +795,11 @@ func generateSyntheticData(count int) ([][]float64, []int) {
 				images[i][y*28+13] = 0.5 + rand.Float64()*0.3
 			}
 		case 7: // Diagonal line from top-left
-			for i := 0; i < 16; i++ {
-				y := 6 + i
-				x := 8 + i/2
+			for j := 0; j < 16; j++ {
+				y := 6 + j
+				x := 8 + j/2
 				if y < 28 && x < 28 {
-					images[labels[0]][y*28+x] = 0.8 + rand.Float64()*0.2
+					images[i][y*28+x] = 0.8 + rand.Float64()*0.2
 				}
 			}
 		default: // Random blob for other digits
@@ -863,7 +871,7 @@ func (ma *MNISTApp) startAutoDemoLoop() {
 			"2. Run inference\n"+
 			"3. Show prediction\n"+
 			"4. Repeat\n\n"+
-			"Target: 87% accuracy")
+			"Accuracy varies")
 
 	go ma.autoDemoLoop(ma.autoDemoCtx)
 }

@@ -134,7 +134,7 @@ func OptimizedHZO() *HZOMaterial {
 //
 // VERIFIED/DEMONSTRATED:
 //   - 30 discrete analog states (VERIFIED)
-//   - 87% MNIST accuracy (Dr. Tour, UNVERIFIED - conference claim only)
+//   - Peer-reviewed MNIST: 96.6-98.24% (Nature Commun. 2023, ScienceDirect 2025)
 //   - 10^9 endurance cycles DEMONSTRATED
 //   - 10^7 seconds retention DEMONSTRATED (~116 days)
 //
