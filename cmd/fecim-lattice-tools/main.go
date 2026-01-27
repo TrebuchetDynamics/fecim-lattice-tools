@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -176,24 +175,20 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 		height--
 	}
 
-	// Get audio device for recording - prefer mic, fall back to desktop audio
+	// Get audio device for recording - try mic first, fallback to desktop audio
 	audioDevice := ""
-	isDesktopAudio := false
+	isMicrophone := false
 	if recording.IsAudioAvailable() {
-		// Try to get microphone first
-		if micDevice, err := recording.GetDefaultAudioDevice(); err == nil {
-			// Check if it's an actual input (not a monitor source)
-			if strings.Contains(strings.ToLower(micDevice.Name), "input") {
-				audioDevice = micDevice.Name
-				log.Info("Recording with microphone: %s", audioDevice)
-			}
-		}
-		// Fall back to desktop audio (monitor source) if no mic
-		if audioDevice == "" {
+		// Try to find a microphone (Bluetooth or wired)
+		if micDevice, err := recording.GetMicrophoneDevice(); err == nil {
+			audioDevice = micDevice.Name
+			isMicrophone = true
+			log.Info("Recording with microphone: %s", audioDevice)
+		} else {
+			// Fallback to desktop audio (monitor source)
 			if desktopDevice, err := recording.GetDesktopAudioDevice(); err == nil {
 				audioDevice = desktopDevice.Name
-				isDesktopAudio = true
-				log.Info("Recording desktop audio: %s (no microphone detected)", audioDevice)
+				log.Info("Recording desktop audio: %s", audioDevice)
 			}
 		}
 	}
@@ -201,17 +196,7 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 	// FFmpeg command to receive raw RGB frames from stdin + audio from PulseAudio
 	var ffmpegArgs []string
 	if audioDevice != "" {
-		// Audio filter depends on source type
-		var audioFilter string
-		if isDesktopAudio {
-			// Desktop audio: just normalize levels, no noise filtering
-			audioFilter = "volume=1.5"
-		} else {
-			// Microphone: filter noise and boost
-			audioFilter = "highpass=f=80,lowpass=f=12000,afftdn=nf=-25,volume=25dB,compand=attacks=0.1:decays=0.3:points=-80/-80|-50/-50|-30/-15|-10/-8|0/-6"
-		}
-
-		// With audio: video from stdin, audio from pulse
+		// Base args for video + audio input
 		ffmpegArgs = []string{
 			"-y",             // Overwrite output file
 			"-f", "rawvideo", // Raw video input
@@ -225,13 +210,31 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 			"-preset", "ultrafast", // Fast encoding
 			"-crf", "23", // Quality
 			"-pix_fmt", "yuv420p", // Output pixel format
-			"-af", audioFilter, // Audio filter (different for mic vs desktop)
+		}
+
+		// Add audio filter based on source type
+		if isMicrophone {
+			// Voice enhancement with deeper tone:
+			// 1. highpass=f=80 - Allow more bass through
+			// 2. lowpass=f=7500 - Cut high hiss
+			// 3. afftdn - Noise reduction
+			// 4. agate - Noise gate
+			// 5. rubberband - Pitch down for deeper voice
+			// 6. equalizer - Boost bass frequencies for fuller sound
+			// 7. acompressor - Even out levels
+			// 8. alimiter - Prevent clipping
+			ffmpegArgs = append(ffmpegArgs, "-af",
+				"highpass=f=80,lowpass=f=7500,afftdn=nr=80:nf=-25:tn=1,agate=threshold=-35dB:ratio=3:attack=10:release=150,rubberband=pitch=0.92,equalizer=f=200:t=h:w=200:g=4,equalizer=f=100:t=h:w=100:g=3,acompressor=threshold=-20dB:ratio=3:attack=10:release=150:makeup=5dB,alimiter=limit=0.95")
+		}
+
+		// Common audio encoding args
+		ffmpegArgs = append(ffmpegArgs,
 			"-c:a", "aac", // AAC audio codec
-			"-b:a", "128k", // Audio bitrate
+			"-b:a", "192k", // Higher bitrate for better quality
 			"-ac", "2", // Stereo
 			"-shortest", // Stop when shortest input ends
 			rs.outputFile,
-		}
+		)
 	} else {
 		// Without audio: video only
 		log.Info("Recording without audio (no audio device available)")

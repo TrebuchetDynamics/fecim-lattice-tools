@@ -278,6 +278,54 @@ func GetDesktopAudioDevice() (AudioDevice, error) {
 	}, nil
 }
 
+// GetMicrophoneDevice returns the best available microphone input device.
+// Priority: Bluetooth mic > USB mic > Analog input
+func GetMicrophoneDevice() (AudioDevice, error) {
+	cmd := exec.Command("pactl", "list", "sources", "short")
+	output, err := cmd.Output()
+	if err != nil {
+		return AudioDevice{}, fmt.Errorf("failed to list sources: %w", err)
+	}
+
+	lines := strings.Split(string(output), "\n")
+
+	// First pass: look for Bluetooth input (bluez_input)
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 {
+			name := fields[1]
+			if strings.HasPrefix(name, "bluez_input.") {
+				log.Debug("GetMicrophoneDevice: found Bluetooth mic: %s", name)
+				return AudioDevice{
+					ID:          fields[0],
+					Name:        name,
+					Description: "Bluetooth Microphone",
+					IsDefault:   true,
+				}, nil
+			}
+		}
+	}
+
+	// Second pass: look for USB input
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 {
+			name := fields[1]
+			if strings.Contains(name, "usb") && strings.Contains(name, "input") {
+				log.Debug("GetMicrophoneDevice: found USB mic: %s", name)
+				return AudioDevice{
+					ID:          fields[0],
+					Name:        name,
+					Description: "USB Microphone",
+					IsDefault:   true,
+				}, nil
+			}
+		}
+	}
+
+	return AudioDevice{}, errors.New("no microphone found")
+}
+
 // SetDevice sets the audio device to monitor.
 func (am *AudioMonitor) SetDevice(device AudioDevice) {
 	am.mu.Lock()

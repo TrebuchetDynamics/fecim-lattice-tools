@@ -8,9 +8,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/openlane"
+	"fecim-lattice-tools/shared/logging"
 )
+
+// Package-level logger for validation
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("eda-validation")
+}
 
 // LayoutImageResult contains the result of layout image generation
 type LayoutImageResult struct {
@@ -87,20 +96,29 @@ func GenerateLayoutImage(defPath string, lefPath string, outputPath string, mana
 		ImagePath: outputPath,
 	}
 
+	log.Info("=== KLayout Image Generation ===")
+	log.Info("  DEF: %s", defPath)
+	log.Info("  LEF: %s", lefPath)
+	log.Info("  Output: %s", outputPath)
+
 	// Check if files exist
 	if _, err := os.Stat(defPath); os.IsNotExist(err) {
 		result.Error = fmt.Sprintf("DEF file not found: %s", defPath)
+		log.Printf("KLayout: %s", result.Error)
 		return result, nil
 	}
 	if _, err := os.Stat(lefPath); os.IsNotExist(err) {
 		result.Error = fmt.Sprintf("LEF file not found: %s", lefPath)
+		log.Printf("KLayout: %s", result.Error)
 		return result, nil
 	}
 
 	// Check mode
 	mode := manager.DetectMode()
+	log.Info("  Mode: %s", mode)
 	if mode == openlane.ModeNone {
 		result.Error = "KLayout not available (install Docker with OpenLane image or native KLayout)"
+		log.Printf("KLayout: %s", result.Error)
 		return result, nil
 	}
 
@@ -148,15 +166,34 @@ func GenerateLayoutImage(defPath string, lefPath string, outputPath string, mana
 	}
 
 	// Run KLayout
+	log.Info("  Running KLayout...")
 	runner := openlane.NewRunner(manager, config)
 	runResult, err := runner.RunKLayout(scriptPath, absWorkDir, rdVars)
 
 	if runResult != nil {
 		result.RawOutput = runResult.Stdout + "\n" + runResult.Stderr
+		// Log output for debugging
+		if runResult.Stdout != "" {
+			for _, line := range strings.Split(runResult.Stdout, "\n") {
+				if line != "" {
+					log.Info("  [KLayout stdout] %s", line)
+				}
+			}
+		}
+		if runResult.Stderr != "" {
+			for _, line := range strings.Split(runResult.Stderr, "\n") {
+				if line != "" {
+					log.Info("  [KLayout stderr] %s", line)
+				}
+			}
+		}
+		log.Info("  [KLayout] Exit code: %d, Duration: %v", runResult.ExitCode, runResult.Duration)
 	}
 
 	if err != nil {
 		result.Error = fmt.Sprintf("KLayout execution failed: %v", err)
+		log.Printf("KLayout error: %v", err)
+		log.Printf("KLayout raw output:\n%s", result.RawOutput)
 		return result, nil
 	}
 
@@ -164,6 +201,7 @@ func GenerateLayoutImage(defPath string, lefPath string, outputPath string, mana
 	expectedOutput := filepath.Join(absWorkDir, outputName)
 	if _, err := os.Stat(expectedOutput); os.IsNotExist(err) {
 		result.Error = "KLayout did not produce output image"
+		log.Printf("KLayout: %s (expected: %s)", result.Error, expectedOutput)
 		return result, nil
 	}
 
@@ -174,6 +212,7 @@ func GenerateLayoutImage(defPath string, lefPath string, outputPath string, mana
 
 	result.Success = true
 	result.ImagePath = outputPath
+	log.Info("  KLayout image generated: %s", outputPath)
 	return result, nil
 }
 

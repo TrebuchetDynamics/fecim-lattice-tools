@@ -49,6 +49,7 @@ func (r *Runner) RunOpenROAD(scriptName string, workDir string, envVars map[stri
 }
 
 // runDockerOpenROAD runs OpenROAD in Docker container with correct --entrypoint pattern
+// Requires X display access for save_image command - passes through host DISPLAY
 func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars map[string]string) (*Result, error) {
 	// Docker requires absolute paths for volume mounts
 	absWorkDir, err := filepath.Abs(workDir)
@@ -63,6 +64,13 @@ func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars ma
 		"--entrypoint", "openroad",
 		"-v", fmt.Sprintf("%s:/design", absWorkDir),
 		"-w", "/design",
+	}
+
+	// Pass through X display for image export (required for save_image)
+	display := os.Getenv("DISPLAY")
+	if display != "" {
+		args = append(args, "-e", fmt.Sprintf("DISPLAY=%s", display))
+		args = append(args, "-v", "/tmp/.X11-unix:/tmp/.X11-unix:rw")
 	}
 
 	// Add environment variables (caller provides CELL_LEF, DEF_FILE, etc.)
@@ -157,6 +165,7 @@ func (r *Runner) RunKLayout(scriptPath string, workDir string, envVars map[strin
 
 // runDockerKLayout runs KLayout in Docker container
 // Uses -rd flags to pass variables to scripts (standard KLayout pattern)
+// Requires X display access for image export - passes through host DISPLAY
 func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
 	absWorkDir, err := filepath.Abs(workDir)
 	if err != nil {
@@ -164,11 +173,19 @@ func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map
 	}
 
 	// Build Docker command with --entrypoint klayout
+	// Pass through X display for GUI-based image export
 	args := []string{
 		"run", "--rm",
 		"--entrypoint", "klayout",
 		"-v", fmt.Sprintf("%s:/design", absWorkDir),
 		"-w", "/design",
+	}
+
+	// Pass through X display for image export (required for save_image)
+	display := os.Getenv("DISPLAY")
+	if display != "" {
+		args = append(args, "-e", fmt.Sprintf("DISPLAY=%s", display))
+		args = append(args, "-v", "/tmp/.X11-unix:/tmp/.X11-unix:rw")
 	}
 
 	// Add image first

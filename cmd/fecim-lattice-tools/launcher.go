@@ -90,7 +90,7 @@ func NewDemoCard(info DemoInfo, onTapped func()) *DemoCard {
 	card := &DemoCard{
 		info:     info,
 		onTapped: onTapped,
-		minSize:  fyne.NewSize(320, 140),
+		minSize:  fyne.NewSize(300, 180), // Moderate size
 	}
 	card.ExtendBaseWidget(card)
 	return card
@@ -176,9 +176,18 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 		numberBgColor = color.RGBA{50, 60, 70, 255}
 	}
 
+	// Height scaling for responsive layouts (base reference: 140px)
+	heightScale := size.Height / 140.0
+	if heightScale < 0.9 {
+		heightScale = 0.9 // Don't shrink too much
+	}
+	if heightScale > 1.5 {
+		heightScale = 1.5 // Moderate growth
+	}
+
 	borderWidth := float32(2)
 	cornerRadius := float32(8)
-	headerHeight := float32(50)
+	headerHeight := float32(50) * heightScale
 
 	// Outer border with rounded corners
 	border := canvas.NewRectangle(borderColor)
@@ -199,59 +208,63 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	headerBg.Move(fyne.NewPos(borderWidth, borderWidth))
 	r.objects = append(r.objects, headerBg)
 
-	// Number badge - compact circle
-	badgeSize := float32(36)
+	// Number badge - compact circle (scales with height)
+	badgeSize := float32(36) * heightScale
 	badgeX := float32(14)
-	badgeY := float32(7) + borderWidth
+	badgeY := float32(8)*heightScale + borderWidth
 
 	badgeBg := canvas.NewCircle(numberBgColor)
 	badgeBg.Resize(fyne.NewSize(badgeSize, badgeSize))
 	badgeBg.Move(fyne.NewPos(badgeX, badgeY))
 	r.objects = append(r.objects, badgeBg)
 
-	// Number text
+	// Number text (scales with badge)
+	numTextSize := float32(18) * heightScale
 	numText := canvas.NewText(string('0'+byte(info.Number)), textColor)
-	numText.TextSize = 20
+	numText.TextSize = numTextSize
 	numText.TextStyle = fyne.TextStyle{Bold: true}
-	numText.Move(fyne.NewPos(badgeX+badgeSize/2-6, badgeY+badgeSize/2-12))
+	numText.Move(fyne.NewPos(badgeX+badgeSize/2-numTextSize*0.3, badgeY+badgeSize/2-numTextSize*0.6))
 	r.objects = append(r.objects, numText)
 
-	// Title
+	// Title (scales with height)
+	titleSize := float32(22) * heightScale
 	title := canvas.NewText(info.Title, textColor)
-	title.TextSize = 22
+	title.TextSize = titleSize
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Move(fyne.NewPos(badgeX+badgeSize+12, 12))
+	title.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale))
 	r.objects = append(r.objects, title)
 
 	// Subtitle
+	subtitleSize := float32(14) * heightScale
 	subtitle := canvas.NewText(info.Subtitle, subtitleColor)
-	subtitle.TextSize = 13
-	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 36))
+	subtitle.TextSize = subtitleSize
+	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale+titleSize+2))
 	r.objects = append(r.objects, subtitle)
 
-	// Status indicator - WIP badge or green dot
+	// Status indicator - WIP badge or green dot (scales with card)
 	if info.Ready {
 		if info.WIP {
 			// Work In Progress badge
-			wipWidth := float32(70)
-			wipHeight := float32(18)
+			wipWidth := float32(70) * heightScale
+			wipHeight := float32(20) * heightScale
 			wipBg := canvas.NewRectangle(color.RGBA{255, 165, 0, 255})
 			wipBg.Resize(fyne.NewSize(wipWidth, wipHeight))
-			wipBg.Move(fyne.NewPos(size.Width-wipWidth-8, 8))
-			wipBg.CornerRadius = 3
+			wipBg.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale, 10*heightScale))
+			wipBg.CornerRadius = 4 * heightScale
 			r.objects = append(r.objects, wipBg)
 
+			wipTextSize := float32(12) * heightScale
 			wipText := canvas.NewText("WIP", color.RGBA{0, 0, 0, 255})
-			wipText.TextSize = 11
+			wipText.TextSize = wipTextSize
 			wipText.TextStyle = fyne.TextStyle{Bold: true}
-			wipText.Move(fyne.NewPos(size.Width-wipWidth-8+24, 11))
+			wipText.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale+wipWidth/2-wipTextSize, 10*heightScale+wipHeight/2-wipTextSize*0.6))
 			r.objects = append(r.objects, wipText)
 		} else {
 			// Green dot for ready
-			dotSize := float32(10)
+			dotSize := float32(12) * heightScale
 			statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
 			statusDot.Resize(fyne.NewSize(dotSize, dotSize))
-			statusDot.Move(fyne.NewPos(size.Width-dotSize-10, 10))
+			statusDot.Move(fyne.NewPos(size.Width-dotSize-12*heightScale, 12*heightScale))
 			r.objects = append(r.objects, statusDot)
 		}
 	}
@@ -266,30 +279,30 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	if previewWidth < 80 {
 		previewWidth = 80
 	}
-	if previewWidth > 140 {
-		previewWidth = 140
+	if previewWidth > 250 {
+		previewWidth = 250
 	}
-	previewHeight := contentHeight * 0.55
+	previewHeight := contentHeight * 0.6
 	if previewHeight < 50 {
 		previewHeight = 50
 	}
-	if previewHeight > 100 {
-		previewHeight = 100
+	if previewHeight > 180 {
+		previewHeight = 180
 	}
-	previewX := size.Width - previewWidth - 10
-	previewY := size.Height - previewHeight - 10
+	previewX := size.Width - previewWidth - 14*heightScale
+	previewY := size.Height - previewHeight - 14*heightScale
 	previewObjects := drawPreviewThumbnail(info.Number, previewX, previewY, previewWidth, previewHeight, cyanColor)
 	r.objects = append(r.objects, previewObjects...)
 
 	// Description - wrapped text below header, left of thumbnail area
 	desc := info.Description
-	descSize := float32(12)
-	if size.Height > 200 {
-		descSize = 13
+	descSize := float32(14) * heightScale // Scale with card
+	if descSize < 12 {
+		descSize = 12
 	}
-	maxWidth := size.Width - previewWidth - 35 // Leave space for preview
-	lineY := headerHeight + borderWidth + 10
-	lineHeight := descSize + 4
+	maxWidth := size.Width - previewWidth - 40*heightScale // Leave space for preview
+	lineY := headerHeight + borderWidth + 14*heightScale
+	lineHeight := descSize + 6*heightScale
 
 	// Calculate max lines based on available height
 	// Reserve space for: header (top) + description top padding (10) + hint text at bottom (20)
@@ -331,10 +344,14 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, lineText)
 	}
 
-	// Click hint at bottom left
+	// Click hint at bottom left (scales with card)
+	hintSize := float32(12) * heightScale
+	if hintSize < 10 {
+		hintSize = 10
+	}
 	hintText := canvas.NewText("Click to explore →", color.RGBA{100, 130, 160, 200})
-	hintText.TextSize = 10
-	hintText.Move(fyne.NewPos(14, size.Height-18))
+	hintText.TextSize = hintSize
+	hintText.Move(fyne.NewPos(14*heightScale, size.Height-20*heightScale))
 	r.objects = append(r.objects, hintText)
 
 	r.cache.MarkLayout(size)
@@ -673,6 +690,236 @@ func (r *demoCardRenderer) Objects() []fyne.CanvasObject {
 
 func (r *demoCardRenderer) Destroy() {}
 
+// ResponsiveHeader is a custom widget that adapts text size based on width
+type ResponsiveHeader struct {
+	widget.BaseWidget
+	titleText    *canvas.Text
+	subtitleText *canvas.Text
+	taglineText  *canvas.Text
+	separator    *widget.Separator
+	cache        sharedwidgets.LayoutCache
+}
+
+// NewResponsiveHeader creates a header that scales with screen width
+func NewResponsiveHeader() *ResponsiveHeader {
+	h := &ResponsiveHeader{
+		titleText:    canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255}),
+		subtitleText: canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255}),
+		taglineText:  canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200}),
+		separator:    widget.NewSeparator(),
+	}
+	h.titleText.TextStyle = fyne.TextStyle{Bold: true}
+	h.taglineText.TextStyle = fyne.TextStyle{Italic: true}
+	h.ExtendBaseWidget(h)
+	return h
+}
+
+func (h *ResponsiveHeader) CreateRenderer() fyne.WidgetRenderer {
+	return &responsiveHeaderRenderer{header: h}
+}
+
+type responsiveHeaderRenderer struct {
+	header  *ResponsiveHeader
+	objects []fyne.CanvasObject
+}
+
+func (r *responsiveHeaderRenderer) MinSize() fyne.Size {
+	return fyne.NewSize(280, 80)
+}
+
+func (r *responsiveHeaderRenderer) Layout(size fyne.Size) {
+	if !r.header.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+}
+
+func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
+	h := r.header
+	bp := sharedwidgets.GetBreakpoint(size.Width)
+
+	// Scale text sizes based on breakpoint
+	var titleSize, subtitleSize, taglineSize float32
+	showTagline := true
+
+	switch bp {
+	case sharedwidgets.BreakpointSM:
+		titleSize, subtitleSize, taglineSize = 22, 14, 11
+		showTagline = false // Hide tagline on mobile
+	case sharedwidgets.BreakpointMD:
+		titleSize, subtitleSize, taglineSize = 24, 15, 12
+	case sharedwidgets.BreakpointLG:
+		titleSize, subtitleSize, taglineSize = 26, 15, 12
+	default: // XL
+		titleSize, subtitleSize, taglineSize = 28, 16, 13
+	}
+
+	h.titleText.TextSize = titleSize
+	h.subtitleText.TextSize = subtitleSize
+	h.taglineText.TextSize = taglineSize
+
+	// Calculate positions (centered)
+	padding := float32(8)
+	y := padding
+
+	// Title
+	titleWidth := h.titleText.MinSize().Width
+	h.titleText.Move(fyne.NewPos((size.Width-titleWidth)/2, y))
+	y += titleSize + 4
+
+	// Subtitle
+	subtitleWidth := h.subtitleText.MinSize().Width
+	h.subtitleText.Move(fyne.NewPos((size.Width-subtitleWidth)/2, y))
+	y += subtitleSize + 4
+
+	// Tagline (conditional)
+	if showTagline {
+		taglineWidth := h.taglineText.MinSize().Width
+		// Truncate if too wide
+		if taglineWidth > size.Width-20 {
+			h.taglineText.Move(fyne.NewPos(10, y))
+		} else {
+			h.taglineText.Move(fyne.NewPos((size.Width-taglineWidth)/2, y))
+		}
+		y += taglineSize + 8
+	}
+
+	// Separator at bottom
+	h.separator.Resize(fyne.NewSize(size.Width, 2))
+	h.separator.Move(fyne.NewPos(0, size.Height-2))
+
+	// Build objects list
+	r.objects = []fyne.CanvasObject{h.titleText, h.subtitleText}
+	if showTagline {
+		r.objects = append(r.objects, h.taglineText)
+	}
+	r.objects = append(r.objects, h.separator)
+
+	r.header.cache.MarkLayout(size)
+}
+
+func (r *responsiveHeaderRenderer) Refresh() {
+	r.layoutWithSize(r.header.Size())
+}
+
+func (r *responsiveHeaderRenderer) Objects() []fyne.CanvasObject {
+	if len(r.objects) == 0 {
+		// Initial objects before first layout
+		return []fyne.CanvasObject{r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
+	}
+	return r.objects
+}
+
+func (r *responsiveHeaderRenderer) Destroy() {}
+
+// ResponsiveFooter adapts footer content based on screen width
+type ResponsiveFooter struct {
+	widget.BaseWidget
+	metricsText *canvas.Text
+	journeyText *canvas.Text
+	separator   *widget.Separator
+	cache       sharedwidgets.LayoutCache
+}
+
+// NewResponsiveFooter creates a footer that simplifies on small screens
+func NewResponsiveFooter() *ResponsiveFooter {
+	f := &ResponsiveFooter{
+		metricsText: canvas.NewText("30 Analog States  |  87% MNIST  |  100× Efficiency  |  10⁹ Cycles  |  TRL 4", color.RGBA{0, 212, 255, 230}),
+		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{150, 170, 190, 200}),
+		separator:   widget.NewSeparator(),
+	}
+	f.metricsText.Alignment = fyne.TextAlignCenter
+	f.journeyText.Alignment = fyne.TextAlignCenter
+	f.ExtendBaseWidget(f)
+	return f
+}
+
+func (f *ResponsiveFooter) CreateRenderer() fyne.WidgetRenderer {
+	return &responsiveFooterRenderer{footer: f}
+}
+
+type responsiveFooterRenderer struct {
+	footer  *ResponsiveFooter
+	objects []fyne.CanvasObject
+}
+
+func (r *responsiveFooterRenderer) MinSize() fyne.Size {
+	return fyne.NewSize(280, 40)
+}
+
+func (r *responsiveFooterRenderer) Layout(size fyne.Size) {
+	if !r.footer.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+}
+
+func (r *responsiveFooterRenderer) layoutWithSize(size fyne.Size) {
+	f := r.footer
+	bp := sharedwidgets.GetBreakpoint(size.Width)
+
+	showJourney := bp != sharedwidgets.BreakpointSM // Hide journey on mobile
+
+	// Adjust text sizes and content based on breakpoint
+	var metricsSize, journeySize float32
+	switch bp {
+	case sharedwidgets.BreakpointSM:
+		metricsSize = 11
+		// Shorter metrics text for mobile
+		f.metricsText.Text = "30 States | 87% MNIST | 100× Eff"
+	case sharedwidgets.BreakpointMD:
+		metricsSize, journeySize = 12, 11
+		f.metricsText.Text = "30 States | 87% MNIST | 100× Efficiency | TRL 4"
+	default:
+		metricsSize, journeySize = 13, 12
+		f.metricsText.Text = "30 Analog States  |  87% MNIST  |  100× Efficiency  |  10⁹ Cycles  |  TRL 4"
+	}
+
+	f.metricsText.TextSize = metricsSize
+	f.journeyText.TextSize = journeySize
+
+	// Separator at top
+	f.separator.Resize(fyne.NewSize(size.Width, 2))
+	f.separator.Move(fyne.NewPos(0, 0))
+
+	// Position metrics text
+	y := float32(8)
+	metricsWidth := f.metricsText.MinSize().Width
+	if metricsWidth > size.Width-20 {
+		f.metricsText.Move(fyne.NewPos(10, y))
+	} else {
+		f.metricsText.Move(fyne.NewPos((size.Width-metricsWidth)/2, y))
+	}
+	y += metricsSize + 4
+
+	// Journey text (conditional)
+	r.objects = []fyne.CanvasObject{f.separator, f.metricsText}
+	if showJourney {
+		journeyWidth := f.journeyText.MinSize().Width
+		if journeyWidth > size.Width-20 {
+			f.journeyText.Move(fyne.NewPos(10, y))
+		} else {
+			f.journeyText.Move(fyne.NewPos((size.Width-journeyWidth)/2, y))
+		}
+		r.objects = append(r.objects, f.journeyText)
+	}
+
+	r.footer.cache.MarkLayout(size)
+}
+
+func (r *responsiveFooterRenderer) Refresh() {
+	r.layoutWithSize(r.footer.Size())
+}
+
+func (r *responsiveFooterRenderer) Objects() []fyne.CanvasObject {
+	if len(r.objects) == 0 {
+		return []fyne.CanvasObject{r.footer.separator, r.footer.metricsText, r.footer.journeyText}
+	}
+	return r.objects
+}
+
+func (r *responsiveFooterRenderer) Destroy() {}
+
 // CreateLauncherContent creates the launcher tab content
 func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	demos := GetDemos()
@@ -688,55 +935,24 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		})
 	}
 
-	// Create header with branding
-	titleText := canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255})
-	titleText.TextSize = 28
-	titleText.TextStyle = fyne.TextStyle{Bold: true}
+	// Create responsive header that scales with screen width
+	header := NewResponsiveHeader()
 
-	subtitleText := canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255})
-	subtitleText.TextSize = 16
+	// Responsive grid layout - adapts columns AND card height per breakpoint
+	gridLayout := sharedwidgets.NewResponsiveGridLayout()
+	grid := container.New(gridLayout, cards...)
 
-	taglineText := canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200})
-	taglineText.TextSize = 13
-	taglineText.TextStyle = fyne.TextStyle{Italic: true}
+	// Wrap grid in VScroll for small screens where content overflows
+	scrollableGrid := container.NewVScroll(container.NewPadded(grid))
 
-	header := container.NewVBox(
-		container.NewCenter(titleText),
-		container.NewCenter(subtitleText),
-		container.NewCenter(taglineText),
-		widget.NewSeparator(),
-	)
-
-	// Responsive grid layout - wraps from 3 columns to 2 to 1 based on width
-	// Uses GridWrapLayout for automatic responsive behavior
-	gridWrap := sharedwidgets.NewGridWrapLayout(
-		320, // MinItemWidth - card minimum width
-		140, // ItemHeight - card height
-		16,  // RowSpacing
-		16,  // ColSpacing
-	)
-	grid := container.New(gridWrap, cards...)
-
-	// Key metrics in footer - split into two lines for readability
-	line1 := canvas.NewText("30 Analog States per Cell  |  87% MNIST Accuracy  |  Up to 100× Energy Efficiency  |  10⁹ Cycles (10¹² target)  |  TRL 4", color.RGBA{0, 212, 255, 230})
-	line1.TextSize = 13
-	line1.Alignment = fyne.TextAlignCenter
-
-	line2 := canvas.NewText("1. Physics  →  2. Compute  →  3. Application  →  4. System  →  5. Business  →  6. Design", color.RGBA{150, 170, 190, 200})
-	line2.TextSize = 12
-	line2.Alignment = fyne.TextAlignCenter
-
-	footer := container.NewVBox(
-		widget.NewSeparator(),
-		container.NewCenter(line1),
-		container.NewCenter(line2),
-	)
+	// Create responsive footer that simplifies on small screens
+	footer := NewResponsiveFooter()
 
 	// Use border layout with header and footer
 	return container.NewBorder(
 		container.NewPadded(header),
 		container.NewPadded(footer),
 		nil, nil,
-		container.NewPadded(grid),
+		scrollableGrid,
 	)
 }
