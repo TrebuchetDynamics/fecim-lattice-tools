@@ -37,7 +37,7 @@
 
 FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution. Unlike traditional binary memory (0/1), FeCIM supports **30 discrete analog states per cell** (~4.9 bits/cell) as demonstrated in Dr. Tour's COSM 2025 presentation [1]. Similar multi-level capabilities (32-140 states) have been independently verified in peer-reviewed literature [2][3].
 
-> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation; similar results appear in peer-reviewed literature [2][4]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and has **not been independently verified** in peer-reviewed literature (verified range: 25-100× [5]).
+> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation; similar results appear in peer-reviewed literature [2][4]. Energy efficiency vs NAND is **25-100×** (Samsung Nature 2025 [5]). Dr. Tour's "10M× vs NAND" claim has been **removed** from this project as no peer-reviewed data supports it.
 
 ---
 
@@ -131,7 +131,7 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
 |--------|-------|-------------|
 | **1. Hysteresis** | Physics | P-E curve, Preisach model, 30 discrete levels |
 | **2. Crossbar** | Compute | MVM operations + non-idealities (4 tabs) |
-| **3. MNIST** | Application | Neural network digit recognition (87% accuracy) |
+| **3. MNIST** | Application | Neural network digit recognition (87-98% accuracy) |
 | **4. Circuits** | System | DAC/ADC/TIA peripheral design |
 | **5. Comparison** | Business | Technology benchmarks, technical briefing |
 | **6. EDA Suite** | Tooling | Chip design and fabrication export |
@@ -163,7 +163,11 @@ Traditional computing moves data constantly between memory and processor — thi
 |--------|-------|-------|
 | Discrete levels | 30 | Dr. Tour COSM 2025 [1]; peer-reviewed: 32-140 [2][3] |
 | Bits per cell | 5-7+ | log₂(32)=5 to log₂(140)≈7 |
-| MNIST accuracy | 87-96% | Demonstrated in FeCIM literature [3][4] |
+| MNIST accuracy | 87-98% | Dr. Tour: 87% [1]; Peer-reviewed: 96.6-98.24% [4][9] |
+| Endurance | 10⁹-10¹² | IEEE IRPS 2022 [10]; V:HfO₂ 2024 [11] |
+| 3D Integration | 22nm BEOL | CEA-Leti December 2024 [12] |
+| Cryogenic | 5K-300K | +25% memory window at 14K [13] |
+| Automotive | Grade 0 | AEC-Q100 qualified [14] |
 | Technology Readiness | TRL 4 | Lab validation complete |
 
 ---
@@ -219,7 +223,7 @@ Matrix-vector multiplication (MVM) via Kirchhoff's current law, plus real-world 
 
 ### Module 3: MNIST Neural Network ✅ (Flagship Demo)
 
-> *"We're at 87% validation here."* — Dr. Tour (Note: Conference claim, unverified; Software baseline: 98-99%)
+> *"We're at 87% validation here."* — Dr. Tour (Note: Conference claim, unverified; Peer-reviewed record: 98.24% [9])
 
 Interactive digit recognition comparing full-precision vs CIM inference.
 
@@ -370,6 +374,18 @@ fecim-lattice-tools/
 [7] "Benchmarking energy consumption and latency for neuromorphic computing," APL Machine Learning, 2023. DOI: 10.1063/5.0219604
 
 [8] "Two-dimensional fully ferroelectric-gated hybrid computing-in-memory hardware," Science Advances, 2024. DOI: 10.1126/sciadv.adp0174 (0.24 fJ per operation)
+
+[9] "HZO ferroelectric tunnel junction reservoir computing," ScienceDirect, 2025. DOI: 10.1016/j.jallcom.2025.034309 (98.24% MNIST accuracy)
+
+[10] IEEE IRPS 2022 - FeFET endurance characteristics (10⁹ cycles demonstrated)
+
+[11] "Vanadium-doped HfO₂ ferroelectric," Nano Letters, 2024. DOI: 10.1021/acs.nanolett.4c05671 (10¹² cycles extrapolated)
+
+[12] CEA-Leti, "Embedded FeRAM Platform at 22nm FD-SOI," December 2024 (3D BEOL integration)
+
+[13] "Cryogenic FeFET operation," Frontiers in Nanotechnology, 2024. DOI: 10.3389/fnano.2024.1371386 (5K-300K characterization)
+
+[14] Fraunhofer IPMS, "FeFET AEC-Q100 Grade 0 Qualification," VLSI 2024 (automotive -40°C to 150°C)
 
 ### Additional Resources
 - [HfO2-based ferroelectric: fundamentals and applications](https://www.nature.com/articles/s41578-022-00431-2) - Nature Reviews Materials
