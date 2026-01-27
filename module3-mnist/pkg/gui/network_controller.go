@@ -153,6 +153,13 @@ func (nc *NetworkController) SetWarnedMissingLevel(level int) {
 	nc.warnedMissingLevels[level] = true
 }
 
+// ClearWarnedMissingLevel clears the warning flag for a level.
+func (nc *NetworkController) ClearWarnedMissingLevel(level int) {
+	nc.warnedMissingLevelsMu.Lock()
+	defer nc.warnedMissingLevelsMu.Unlock()
+	nc.warnedMissingLevels[level] = false
+}
+
 // ChangeHiddenSize creates a new network with a different hidden size.
 func (nc *NetworkController) ChangeHiddenSize(hiddenSize int) error {
 	// Create new network

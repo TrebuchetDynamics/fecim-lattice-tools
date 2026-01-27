@@ -272,17 +272,23 @@ func softmax(x []float64) []float64 {
 
 ## Architectural Debt
 
-### ARCH-001: God Object DualModeApp
+### ARCH-001: God Object DualModeApp ✅ PARTIAL (NetworkController extracted)
 - **File:** `pkg/gui/dualmode.go:55-150`
 - **Issue:** 97 lines of field declarations, 50+ fields mixing concerns
 - **Impact:** Hard to maintain, test, and extend
 - **Fix:** Decompose into:
-  - `NetworkController` - network state and operations
+  - `NetworkController` - network state and operations ✅ DONE
   - `InferencePresenter` - results display
   - `ControlsPresenter` - hardware config UI
   - `DemoController` - animation/demo logic
-- [ ] Plan decomposition
-- [ ] Implement refactor
+- [x] Plan decomposition (2026-01-27)
+- [x] Implement NetworkController extraction (2026-01-27)
+  - Created `pkg/gui/network_controller.go`
+  - Extracted network, test data, QAT level tracking
+  - Added backward compatibility layer via methods
+- [ ] Extract InferencePresenter (future)
+- [ ] Extract ControlsPresenter (future)
+- [ ] Extract DemoController (future)
 
 ### ARCH-002: Dual Network Implementations
 - **Files:** `pkg/core/DualModeNetwork` and `pkg/training/MNISTNetwork`
@@ -292,14 +298,22 @@ func softmax(x []float64) []float64 {
 - [ ] Analyze dependencies
 - [ ] Plan consolidation
 
-### ARCH-003: Missing Interfaces
+### ARCH-003: Missing Interfaces ✅ DONE
 - **Issue:** Core types lack interfaces, preventing mocking/testing
 - **Needed:**
   - `NetworkInferer` interface for inference operations
   - `WeightLoader` interface for weight I/O
   - `DataLoader` interface for MNIST data
-- [ ] Define interfaces
-- [ ] Refactor implementations
+- [x] Define interfaces (2026-01-27)
+  - Created `pkg/core/interfaces.go`
+  - `Inferer` - inference operations
+  - `WeightLoader` - weight file I/O
+  - `WeightProvider` - weight access
+  - `NetworkConfigurer` - parameter configuration
+  - `DataLoader` - MNIST data loading
+  - `Network` - combined interface
+  - Compile-time verification that DualModeNetwork implements Network
+- [x] Refactor implementations - DualModeNetwork already satisfies interfaces
 
 ### ARCH-004: GUI Business Logic
 - **Files:** `pkg/gui/dualmode_inference.go`, `pkg/gui/dualmode_controls.go`
@@ -381,10 +395,10 @@ func softmax(x []float64) []float64 {
 | Medium | 13 | 13 | 0 |
 | Low | 6 | 6 | 0 |
 | Security | 2 | 2 | 0 |
-| Architecture | 5 | 0 | 5 |
+| Architecture | 5 | 2 | 3 |
 | Documentation | 4 | 4 | 0 |
 | Tests | 4 | 4 | 0 |
-| **Total** | **46** | **41** | **5** |
+| **Total** | **46** | **43** | **3** |
 
 ---
 

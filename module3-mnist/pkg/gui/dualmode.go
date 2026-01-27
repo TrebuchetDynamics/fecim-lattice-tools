@@ -4,8 +4,6 @@ package gui
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -194,6 +192,11 @@ func (app *DualModeApp) hasWarnedMissingLevel(level int) bool {
 // setWarnedMissingLevel marks a level as warned.
 func (app *DualModeApp) setWarnedMissingLevel(level int) {
 	app.networkCtrl.SetWarnedMissingLevel(level)
+}
+
+// clearWarnedMissingLevel clears the warning flag for a level.
+func (app *DualModeApp) clearWarnedMissingLevel(level int) {
+	app.networkCtrl.ClearWarnedMissingLevel(level)
 }
 
 // BuildContent creates the UI content for embedding.

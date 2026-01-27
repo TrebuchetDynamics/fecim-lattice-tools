@@ -246,7 +246,9 @@ func (app *DualModeApp) runQuickTest() {
 			fyne.Do(func() {
 				app.testResultLabel.SetText("Loading test data...")
 			})
-			app.loadTestData()
+			if err := app.networkCtrl.LoadTestData(); err != nil {
+				mnistLog.Printf("Failed to load test data: %v", err)
+			}
 		}
 
 		n := 200
@@ -410,7 +412,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	})
 
 	// Load MNIST training data
-	trainImages, trainLabels, err := mnist.LoadMNIST(app.dataDir, true)
+	trainImages, trainLabels, err := mnist.LoadMNIST(app.dataDir(), true)
 	if err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Error loading data: %v", err))
@@ -430,7 +432,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	})
 
 	// Load test data for evaluation
-	testImages, testLabels, err := mnist.LoadMNIST(app.dataDir, false)
+	testImages, testLabels, err := mnist.LoadMNIST(app.dataDir(), false)
 	if err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Error loading test data: %v", err))
@@ -523,10 +525,10 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	}
 
 	// Save weights
-	weightsPath := core.GetWeightsFilename(app.dataDir, levels)
+	weightsPath := core.GetWeightsFilename(app.dataDir(), levels)
 	// For non-standard levels, save with level number
 	if levels != 30 {
-		weightsPath = filepath.Join(app.dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+		weightsPath = filepath.Join(app.dataDir(), fmt.Sprintf("pretrained_weights_%d.json", levels))
 	}
 
 	fyne.Do(func() {
@@ -541,9 +543,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	}
 
 	// Clear the "warned" flag so the new weights can be loaded (thread-safe access)
-	app.warnedMissingLevelsMu.Lock()
-	app.warnedMissingLevels[levels] = false
-	app.warnedMissingLevelsMu.Unlock()
+	app.clearWarnedMissingLevel(levels)
 
 	// Reload the weights into the current network (LoadWeights is thread-safe internally)
 	if err := app.network().LoadWeights(weightsPath); err != nil {

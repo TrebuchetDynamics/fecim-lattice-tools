@@ -12,7 +12,6 @@ import (
 	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
-	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
 // onDigitChanged handles canvas drawing updates.
@@ -27,10 +26,10 @@ func (app *DualModeApp) onDigitChanged(pixels []float64) {
 
 // runInference runs dual-path inference and updates the UI.
 func (app *DualModeApp) runInference(pixels []float64) {
-	result := app.network.Infer(pixels)
+	result := app.network().Infer(pixels)
 
 	// Get quantized weights for P1.1 visualization
-	quantWeights, _, _, _ := app.network.GetQuantWeights()
+	quantWeights, _, _, _ := app.network().GetQuantWeights()
 
 	fyne.Do(func() {
 		// Update status line (not in updateResultDisplays since it's specific to runInference)
@@ -75,8 +74,8 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 	time.Sleep(150 * time.Millisecond)
 
 	// Phase 4: Result - run actual inference and display
-	result := app.network.Infer(pixels)
-	quantWeights, _, _, _ := app.network.GetQuantWeights()
+	result := app.network().Infer(pixels)
+	quantWeights, _, _, _ := app.network().GetQuantWeights()
 
 	fyne.Do(func() {
 		if app.inferencePhaseLabel != nil {
@@ -128,7 +127,7 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 
 	// P1 Enhancements
 	if app.quantizationWidget != nil && len(quantWeights) > 0 {
-		app.quantizationWidget.SetNumLevels(app.network.GetNumLevels())
+		app.quantizationWidget.SetNumLevels(app.network().GetNumLevels())
 		app.quantizationWidget.UpdateWithWeights(quantWeights, 5)
 	}
 
@@ -196,9 +195,10 @@ func (app *DualModeApp) resetResults() {
 
 // loadRandomSample loads a random test sample.
 func (app *DualModeApp) loadRandomSample() {
-	if len(app.testImages) == 0 {
-		app.loadTestData()
-		if len(app.testImages) == 0 {
+	// Ensure test data is loaded
+	if app.networkCtrl.TestDataSize() == 0 {
+		if err := app.networkCtrl.LoadTestData(); err != nil {
+			mnistLog.Printf("Failed to load test data: %v", err)
 			fyne.Do(func() {
 				app.statusLabel.SetText("No test data available")
 			})
@@ -206,9 +206,22 @@ func (app *DualModeApp) loadRandomSample() {
 		}
 	}
 
-	idx := int(time.Now().UnixNano() % int64(len(app.testImages)))
-	pixels := app.testImages[idx]
-	label := app.testLabels[idx]
+	testSize := app.networkCtrl.TestDataSize()
+	if testSize == 0 {
+		fyne.Do(func() {
+			app.statusLabel.SetText("No test data available")
+		})
+		return
+	}
+
+	idx := int(time.Now().UnixNano() % int64(testSize))
+	pixels, label, err := app.networkCtrl.GetTestSample(idx)
+	if err != nil {
+		fyne.Do(func() {
+			app.statusLabel.SetText(fmt.Sprintf("Error loading sample: %v", err))
+		})
+		return
+	}
 
 	fyne.Do(func() {
 		app.digitCanvas.SetPixels(pixels)
@@ -217,33 +230,11 @@ func (app *DualModeApp) loadRandomSample() {
 	})
 }
 
-// loadTestData loads MNIST test data.
-func (app *DualModeApp) loadTestData() {
-	images, labels, err := mnist.LoadMNIST(app.dataDir, false) // false = test set
-	if err != nil {
-		mnistLog.Printf("Failed to load MNIST test data: %v, using synthetic data", err)
-		app.testImages, app.testLabels = generateSyntheticData(200)
-		// Notify user that we're using synthetic data
-		fyne.Do(func() {
-			app.statusLabel.SetText("Using synthetic test data (MNIST not found)")
-		})
-		return
-	}
-
-	if len(images) > 1000 {
-		app.testImages = images[:1000]
-		app.testLabels = labels[:1000]
-	} else {
-		app.testImages = images
-		app.testLabels = labels
-	}
-}
-
 // changeHiddenSize performs hidden size change with loading feedback
 func (app *DualModeApp) changeHiddenSize(size int) {
 	// Map size to weight file
 	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
-	weightsPath := filepath.Join(app.dataDir, weightsFile)
+	weightsPath := filepath.Join(app.dataDir(), weightsFile)
 
 	// Show loading progress
 	fyne.Do(func() {
@@ -253,13 +244,13 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	// Check if file exists, fallback to default
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
 		// Try default weights file
-		weightsPath = filepath.Join(app.dataDir, "pretrained_weights.json")
+		weightsPath = filepath.Join(app.dataDir(), "pretrained_weights.json")
 		fyne.Do(func() {
 			app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
 		})
 	}
 
-	err := app.network.LoadWeights(weightsPath)
+	err := app.network().LoadWeights(weightsPath)
 	if err != nil {
 		fyne.Do(func() {
 			app.statusLabel.SetText(fmt.Sprintf("Error changing hidden size: %v", err))
@@ -338,9 +329,7 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 		alreadyWarned := app.hasWarnedMissingLevel(targetLevel)
 
 		if !alreadyWarned {
-			app.warnedMissingLevelsMu.Lock()
-			app.warnedMissingLevels[targetLevel] = true
-			app.warnedMissingLevelsMu.Unlock()
+			app.setWarnedMissingLevel(targetLevel)
 
 			fyne.Do(func() {
 				if app.statusLabel != nil {
@@ -366,7 +355,7 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	}
 
 	// Load the new weights
-	if err := app.network.LoadWeights(weightsPath); err != nil {
+	if err := app.network().LoadWeights(weightsPath); err != nil {
 		// Failed to load, notify user
 		fyne.Do(func() {
 			if app.statusLabel != nil {
@@ -380,9 +369,7 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	}
 
 	// Update tracking (thread-safe write)
-	app.currentQATLevelMu.Lock()
-	app.currentQATLevel = targetLevel
-	app.currentQATLevelMu.Unlock()
+	app.setCurrentQATLevel(targetLevel)
 
 	// Update status
 	fyne.Do(func() {

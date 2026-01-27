@@ -105,8 +105,8 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 
 // updateWeightComparison updates the FP vs Quantized comparison widgets.
 func (app *DualModeApp) updateWeightComparison() {
-	fpW1, fpW2, _, _ := app.network.GetFPWeights()
-	quantW1, quantW2, _, _ := app.network.GetQuantWeights()
+	fpW1, fpW2, _, _ := app.network().GetFPWeights()
+	quantW1, quantW2, _, _ := app.network().GetQuantWeights()
 
 	// Update comparison widget based on selected layer
 	if app.weightComparisonWidget != nil {
@@ -128,7 +128,7 @@ func (app *DualModeApp) updateWeightComparison() {
 func (app *DualModeApp) drawWeightHeatmap(w, h int) image.Image {
 	// Get weights once to avoid redundant calls
 	// (renamed from w1/w2 to avoid confusion with width parameter w)
-	layer1Weights, layer2Weights, _, _ := app.network.GetQuantWeights()
+	layer1Weights, layer2Weights, _, _ := app.network().GetQuantWeights()
 
 	var weights [][]float64
 	if app.weightLayer == 0 {
@@ -253,10 +253,10 @@ func (h *HoverableHeatmap) MouseIn(e *desktop.MouseEvent) {
 // MouseMoved is called when the mouse moves over the widget.
 func (h *HoverableHeatmap) MouseMoved(e *desktop.MouseEvent) {
 	// Get the current weight matrix
-	_, w2, _, _ := h.app.network.GetQuantWeights()
+	_, w2, _, _ := h.app.network().GetQuantWeights()
 	var weights [][]float64
 	if h.app.weightLayer == 0 {
-		weights, _, _, _ = h.app.network.GetQuantWeights()
+		weights, _, _, _ = h.app.network().GetQuantWeights()
 	} else {
 		weights = w2
 	}
@@ -334,7 +334,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 	// Update info labels
 	var weights [][]float64
 	if app.weightLayer == 0 {
-		weights, _, _, _ = app.network.GetQuantWeights()
+		weights, _, _, _ = app.network().GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
 			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
 			fyne.Do(func() {
@@ -342,7 +342,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 			})
 		}
 	} else {
-		_, weights, _, _ = app.network.GetQuantWeights()
+		_, weights, _, _ = app.network().GetQuantWeights()
 		if len(weights) > 0 && len(weights[0]) > 0 {
 			msg := fmt.Sprintf("Dimensions: %d rows x %d cols", len(weights), len(weights[0]))
 			fyne.Do(func() {
@@ -387,7 +387,7 @@ func (app *DualModeApp) showZoomedHeatmap() {
 	zoomedApp := &DualModeApp{
 		fyneApp:     app.fyneApp,
 		window:      w,
-		network:     app.network,
+		networkCtrl: app.networkCtrl,
 		weightLayer: app.weightLayer,
 	}
 	heatmap := NewHoverableHeatmap(zoomedApp)
