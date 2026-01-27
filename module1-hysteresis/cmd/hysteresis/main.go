@@ -23,14 +23,86 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/tui"
 )
 
+// Available materials for --material flag
+var materialNames = map[string]*ferroelectric.HZOMaterial{
+	"default":      nil, // Will use DefaultHZO()
+	"fecim":        nil, // Will use FeCIMMaterial()
+	"superlattice": nil, // Will use LiteratureSuperlattice()
+	"cryogenic":    nil, // Will use CryogenicHZO()
+	"hzo32":        nil, // Will use HZOStandard32()
+	"ftj140":       nil, // Will use HZOFJT140()
+	"alscn":        nil, // Will use AlScN()
+}
+
+func getMaterial(name string) *ferroelectric.HZOMaterial {
+	switch name {
+	case "fecim":
+		return ferroelectric.FeCIMMaterial()
+	case "superlattice":
+		return ferroelectric.LiteratureSuperlattice()
+	case "cryogenic":
+		return ferroelectric.CryogenicHZO()
+	case "hzo32":
+		return ferroelectric.HZOStandard32()
+	case "ftj140":
+		return ferroelectric.HZOFJT140()
+	case "alscn":
+		return ferroelectric.AlScN()
+	default:
+		return ferroelectric.DefaultHZO()
+	}
+}
+
+func listMaterials() {
+	fmt.Println("Available materials (--material <name>):")
+	fmt.Println()
+	for _, m := range ferroelectric.AllMaterials() {
+		fmt.Printf("  %-12s - %s\n", getMaterialKey(m), m.Name)
+	}
+	fmt.Println()
+}
+
+func getMaterialKey(m *ferroelectric.HZOMaterial) string {
+	switch m.Name {
+	case "HZO (Si-doped)":
+		return "default"
+	case "FeCIM HZO":
+		return "fecim"
+	case "FeCIM HZO (TARGET - NOT DEMONSTRATED)":
+		return "fecim-target"
+	case "Literature Superlattice (Cheema 2020)":
+		return "superlattice"
+	case "Cryogenic HZO (4K)":
+		return "cryogenic"
+	case "HZO Standard (32 states)":
+		return "hzo32"
+	case "HZO FTJ (140 states)":
+		return "ftj140"
+	case "AlScN (8-16 states)":
+		return "alscn"
+	default:
+		return "default"
+	}
+}
+
 func main() {
 	// Command line flags
-	optimized := flag.Bool("optimized", false, "Use optimized superlattice parameters")
+	materialName := flag.String("material", "default", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
 	freq := flag.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := flag.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := flag.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
 	vulkan := flag.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
+	listMats := flag.Bool("list-materials", false, "List available materials and exit")
 	flag.Parse()
+
+	// List materials and exit
+	if *listMats {
+		listMaterials()
+		return
+	}
+
+	// Get selected material
+	material := getMaterial(*materialName)
 
 	// Determine run mode based on flags
 	if *headless {
@@ -40,20 +112,12 @@ func main() {
 		fmt.Println("  Demo 1: Ferroelectric P-E Curve")
 		fmt.Println("===========================================")
 		fmt.Println()
-
-		var material *ferroelectric.HZOMaterial
-		if *optimized {
-			material = ferroelectric.OptimizedHZO()
-			fmt.Println("Using: Optimized HfO2/ZrO2 Superlattice")
-		} else {
-			material = ferroelectric.DefaultHZO()
-			fmt.Println("Using: Default HZO Parameters")
-		}
+		fmt.Printf("Using: %s\n", material.Name)
 
 		printMaterialInfo(material)
 		engine := simulation.NewEngine(material)
 		engine.SetFrequency(*freq)
-		runHeadless(engine)
+		runHeadless(engine, material)
 		return
 	}
 
@@ -63,15 +127,9 @@ func main() {
 			log.Printf("TUI error: %v\n", err)
 			fmt.Println("\nFalling back to headless mode...")
 
-			var material *ferroelectric.HZOMaterial
-			if *optimized {
-				material = ferroelectric.OptimizedHZO()
-			} else {
-				material = ferroelectric.DefaultHZO()
-			}
 			engine := simulation.NewEngine(material)
 			engine.SetFrequency(*freq)
-			runHeadless(engine)
+			runHeadless(engine, material)
 		}
 		return
 	}
@@ -83,20 +141,12 @@ func main() {
 		fmt.Println("  Demo 1: Ferroelectric P-E Curve (Vulkan)")
 		fmt.Println("===========================================")
 		fmt.Println()
-
-		var material *ferroelectric.HZOMaterial
-		if *optimized {
-			material = ferroelectric.OptimizedHZO()
-			fmt.Println("Using: Optimized HfO2/ZrO2 Superlattice")
-		} else {
-			material = ferroelectric.DefaultHZO()
-			fmt.Println("Using: Default HZO Parameters")
-		}
+		fmt.Printf("Using: %s\n", material.Name)
 
 		printMaterialInfo(material)
 		engine := simulation.NewEngine(material)
 		engine.SetFrequency(*freq)
-		runGraphical(engine)
+		runGraphical(engine, material)
 		return
 	}
 
@@ -109,15 +159,9 @@ func main() {
 			log.Printf("TUI error: %v\n", err)
 			fmt.Println("\nFalling back to headless mode...")
 
-			var material *ferroelectric.HZOMaterial
-			if *optimized {
-				material = ferroelectric.OptimizedHZO()
-			} else {
-				material = ferroelectric.DefaultHZO()
-			}
 			engine := simulation.NewEngine(material)
 			engine.SetFrequency(*freq)
-			runHeadless(engine)
+			runHeadless(engine, material)
 		}
 	}
 }
@@ -133,12 +177,9 @@ func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 	fmt.Println()
 }
 
-func runHeadless(engine *simulation.Engine) {
+func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial) {
 	fmt.Println("Running enhanced terminal visualization...")
 	fmt.Println()
-
-	// Get material
-	material := ferroelectric.DefaultHZO()
 
 	// Create advanced Preisach model
 	model := ferroelectric.NewMayergoyzPreisach(material, 40)
@@ -188,7 +229,7 @@ func runHeadless(engine *simulation.Engine) {
 	fmt.Println()
 }
 
-func runGraphical(engine *simulation.Engine) {
+func runGraphical(engine *simulation.Engine, material *ferroelectric.HZOMaterial) {
 	fmt.Println("Starting Vulkan-based graphical interface...")
 	fmt.Println("Press ESC or close window to exit.")
 	fmt.Println()
@@ -198,7 +239,6 @@ func runGraphical(engine *simulation.Engine) {
 	renderer := render.NewVulkanRenderer(config)
 
 	// Create hysteresis plot
-	material := ferroelectric.DefaultHZO()
 	Emax := material.Ec * 1.5
 	Pmax := material.Ps * 1.2
 	plot := render.NewHysteresisPlot(Emax, Pmax)
@@ -227,7 +267,7 @@ func runGraphical(engine *simulation.Engine) {
 		fmt.Println()
 		fmt.Println("Vulkan initialization failed. Running in headless mode instead.")
 		fmt.Println()
-		runHeadless(engine)
+		runHeadless(engine, material)
 		os.Exit(0)
 	}
 	defer renderer.Cleanup()
