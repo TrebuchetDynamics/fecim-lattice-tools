@@ -314,49 +314,42 @@ func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
 
 // tryLoadQATWeights attempts to load QAT weights optimized for the given level.
 // Only reloads if the optimal weights are different from currently loaded.
+// Business logic is delegated to NetworkController; this method handles UI feedback.
 func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
-	// Check if we already have optimal weights loaded (thread-safe read)
-	if app.currentQATLevel() == targetLevel {
+	result, err := app.networkCtrl.TryLoadQATWeights(targetLevel)
+
+	switch result {
+	case QATAlreadyLoaded:
+		// Nothing to do
 		return
-	}
 
-	// Find the weights file for this level
-	weightsPath := core.GetWeightsFilename(app.dataDir(), targetLevel)
+	case QATLoaded:
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
+			}
+		})
 
-	// Check if the file exists
-	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
-		// No level-specific weights, notify user (but only once per level per session)
-		alreadyWarned := app.hasWarnedMissingLevel(targetLevel)
+	case QATNotFoundFirstWarning:
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Note: No QAT weights for %d levels - using existing weights", targetLevel))
+			}
+			if app.window != nil {
+				dialog.ShowInformation("Weights Not Found",
+					fmt.Sprintf("QAT weights for %d levels not found.\n\nUsing existing weights instead.\n\nTo train weights for this level, use Expert Mode → Train Weights.", targetLevel),
+					app.window)
+			}
+		})
 
-		if !alreadyWarned {
-			app.setWarnedMissingLevel(targetLevel)
+	case QATNotFound:
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Using existing weights (no QAT weights for %d levels)", targetLevel))
+			}
+		})
 
-			fyne.Do(func() {
-				if app.statusLabel != nil {
-					app.statusLabel.SetText(fmt.Sprintf("Note: No QAT weights for %d levels - using existing weights", targetLevel))
-				}
-				if app.window != nil {
-					// Show a non-blocking notification instead of modal dialog
-					// User can train weights using the "Train Weights" button
-					dialog.ShowInformation("Weights Not Found",
-						fmt.Sprintf("QAT weights for %d levels not found.\n\nUsing existing weights instead.\n\nTo train weights for this level, use Expert Mode → Train Weights.", targetLevel),
-						app.window)
-				}
-			})
-		} else {
-			// Already warned about this level, just update status silently
-			fyne.Do(func() {
-				if app.statusLabel != nil {
-					app.statusLabel.SetText(fmt.Sprintf("Using existing weights (no QAT weights for %d levels)", targetLevel))
-				}
-			})
-		}
-		return
-	}
-
-	// Load the new weights
-	if err := app.network().LoadWeights(weightsPath); err != nil {
-		// Failed to load, notify user
+	case QATLoadError:
 		fyne.Do(func() {
 			if app.statusLabel != nil {
 				app.statusLabel.SetText(fmt.Sprintf("Error: Failed to load QAT weights for %d levels: %v", targetLevel, err))
@@ -365,16 +358,5 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 				dialog.ShowError(fmt.Errorf("Failed to load QAT weights for %d levels: %w", targetLevel, err), app.window)
 			}
 		})
-		return
 	}
-
-	// Update tracking (thread-safe write)
-	app.setCurrentQATLevel(targetLevel)
-
-	// Update status
-	fyne.Do(func() {
-		if app.statusLabel != nil {
-			app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
-		}
-	})
 }
