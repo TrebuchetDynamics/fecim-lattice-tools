@@ -10,7 +10,7 @@
 # Build unified visualizer
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
-# Or use launch script
+# Or use launch script (builds and runs)
 ./launch.sh
 ```
 
@@ -23,8 +23,11 @@ go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 # Cross-compile for Linux (from any OS)
 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-linux ./cmd/fecim-lattice-tools
 
-# Cross-compile for macOS
+# Cross-compile for macOS (Intel)
 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-mac ./cmd/fecim-lattice-tools
+
+# Cross-compile for macOS (Apple Silicon)
+GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o fecim-lattice-tools-mac-arm ./cmd/fecim-lattice-tools
 
 # Cross-compile for Windows
 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools.exe ./cmd/fecim-lattice-tools
@@ -33,7 +36,7 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools.exe .
 ### Pre-Deployment Checklist
 
 ```bash
-# 1. Run all tests
+# 1. Run all tests (117 tests across all modules)
 go test ./... && echo "PASS"
 
 # 2. Run with race detector
@@ -52,6 +55,20 @@ go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools --help
 ```
 
+### Build All Standalone Modules
+
+```bash
+# Build all 7 demo binaries
+./scripts/build-all.sh
+
+# Output:
+# module1-hysteresis/hysteresis
+# module2-crossbar/crossbar-gui
+# module3-mnist/mnist-gui
+# module4-circuits/circuits-gui
+# module5-comparison/comparison-gui
+```
+
 ## Monitoring & Diagnostics
 
 ### Logging Levels
@@ -66,6 +83,8 @@ go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```bash
 ./fecim-lattice-tools --verbosity 2  # Debug mode
 ```
+
+**Log files are written to:** `logs/` directory with datetime stamps.
 
 ### Runtime Profiling
 
@@ -149,9 +168,13 @@ GDK_BACKEND=x11 ./fecim-lattice-tools
 
 **Fixes:**
 ```bash
-# Linux - Install build dependencies
+# Linux (Ubuntu/Debian) - Install build dependencies
 sudo apt-get install -y gcc libgl1-mesa-dev libx11-dev \
-  libxinerama-dev libxrandr-dev libxcursor-dev libxi-dev
+  libxinerama-dev libxrandr-dev libxcursor-dev libxi-dev libxext-dev libxfixes-dev
+
+# Linux (Fedora/RHEL)
+sudo dnf install -y gcc mesa-libGL-devel libX11-devel libXcursor-devel \
+  libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel
 
 # macOS - Install Xcode tools
 xcode-select --install
@@ -223,7 +246,7 @@ grep -i "error\|panic\|fail" debug.log
 ```
 
 **Common causes:**
-1. Missing embedded interface implementation
+1. Missing embedded interface implementation (`BuildContent()`, `Start()`, `Stop()`)
 2. Nil pointer in BuildContent()
 3. Resource loading failure
 
@@ -259,6 +282,39 @@ func TestGUIComponent(t *testing.T) {
     }
     // ... test code
 }
+```
+
+### Issue: MNIST Data Not Found
+
+**Symptoms:** Module 3 fails to load training data
+
+**Fix:**
+```bash
+# Download MNIST data
+cd module3-mnist/data
+wget -q http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+wget -q http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+wget -q http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+wget -q http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+
+# Or use the training script (auto-downloads)
+./module3-mnist/scripts/train_all_sizes.sh
+```
+
+### Issue: Module 6 EDA Tools Not Working
+
+**Symptoms:** Yosys/OpenROAD commands fail
+
+**Fixes:**
+```bash
+# Install Graphviz for schematic visualization
+sudo apt install graphviz
+
+# For full OpenLane flow, use Docker
+docker pull efabless/openlane:latest
+
+# Verify Yosys (if installed)
+yosys --version
 ```
 
 ## Rollback Procedures
@@ -328,6 +384,33 @@ go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./module2-crossbar/pkg/crossbar
 go tool pprof cpu.prof
 ```
 
+### MNIST Benchmarking
+
+```bash
+# Run comparison benchmark against literature
+./module3-mnist/scripts/benchmark.sh
+
+# Expected results:
+# Float32 baseline:           98.1%
+# 30-level quant, no noise:   96.8%
+# 30-level quant, noise=0.08: 87.0% (matches Dr. Tour hardware)
+```
+
+## Automated Git Commits
+
+For long development sessions:
+
+```bash
+# One-time commit in 12 hours
+./commit-push.sh -12
+
+# Hourly commits (background)
+./commit-push.sh --periodically
+
+# Stop hourly commits
+./commit-push.sh --stop
+```
+
 ## Security Notes
 
 ### No Secrets Required
@@ -336,13 +419,14 @@ This application:
 - Has no network connectivity (offline tool)
 - Has no authentication
 - Has no sensitive data storage
+- No `.env` file needed
 
 ### File Permissions
 
 Ensure output directories are writable:
 ```bash
-mkdir -p screenshots recordings output
-chmod 755 screenshots recordings output
+mkdir -p screenshots recordings output logs
+chmod 755 screenshots recordings output logs
 ```
 
 ## Contact & Escalation
@@ -352,8 +436,10 @@ chmod 755 screenshots recordings output
 | Build errors | `docs/development/WORKFLOWS.md#troubleshooting` |
 | Physics questions | `docs/cim/HONESTY_AUDIT.md` |
 | GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
-| General development | `CONTRIBUTING.md` |
+| Testing | `docs/development/TESTING.md` |
+| General development | `docs/CONTRIB.md` |
+| Project rules | `CLAUDE.md` |
 
 ---
 
-**Last Updated:** 2026-01-26 | **Go Version:** 1.24+ | **Fyne Version:** 2.7.2
+**Last Updated:** 2026-01-26 | **Go Version:** 1.24+ (toolchain go1.24.12) | **Fyne Version:** 2.7.2
