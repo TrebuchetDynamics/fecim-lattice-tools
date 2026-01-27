@@ -138,7 +138,11 @@ func NewMNISTApp() *MNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer1, _ := crossbar.NewArray(layer1Config)
+	layer1, err := crossbar.NewArray(layer1Config)
+	if err != nil {
+		debug.Printf("NewMNISTApp: Failed to create layer 1 crossbar: %v", err)
+		return nil
+	}
 
 	// Layer 2: 10 x hidden
 	layer2Config := &crossbar.Config{
@@ -148,7 +152,11 @@ func NewMNISTApp() *MNISTApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer2, _ := crossbar.NewArray(layer2Config)
+	layer2, err := crossbar.NewArray(layer2Config)
+	if err != nil {
+		debug.Printf("NewMNISTApp: Failed to create layer 2 crossbar: %v", err)
+		return nil
+	}
 
 	// Create network
 	ma.network = training.NewMNISTNetwork(layer1, layer2)
@@ -787,11 +795,11 @@ func generateSyntheticData(count int) ([][]float64, []int) {
 				images[i][y*28+13] = 0.5 + rand.Float64()*0.3
 			}
 		case 7: // Diagonal line from top-left
-			for i := 0; i < 16; i++ {
-				y := 6 + i
-				x := 8 + i/2
+			for j := 0; j < 16; j++ {
+				y := 6 + j
+				x := 8 + j/2
 				if y < 28 && x < 28 {
-					images[labels[0]][y*28+x] = 0.8 + rand.Float64()*0.2
+					images[i][y*28+x] = 0.8 + rand.Float64()*0.2
 				}
 			}
 		default: // Random blob for other digits

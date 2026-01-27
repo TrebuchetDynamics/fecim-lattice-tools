@@ -5,9 +5,15 @@ import (
 )
 
 // Infer runs dual-path inference (FP + CIM) and returns comparison results.
+// Returns nil if input length doesn't match expected InputSize.
 func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	net.mu.RLock()
 	defer net.mu.RUnlock()
+
+	// Validate input length
+	if len(input) != net.InputSize {
+		return nil
+	}
 
 	result := &InferenceResult{}
 
@@ -156,23 +162,28 @@ func (net *DualModeNetwork) InferFPOnly(input []float64) (prediction int, confid
 }
 
 // InferCIMOnly runs only the CIM path (for fast evaluation).
+// Uses quantized weights to simulate realistic hardware behavior.
 func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confidence float64, probs []float64) {
 	net.mu.RLock()
 	defer net.mu.RUnlock()
 
 	dacInput := quantizeDAC(input, net.Config.DACBits)
 
-	hidden := net.forwardCIM(dacInput, net.FPWeights1, net.FPBias1)
+	// Layer 1: Use QUANTIZED weights (30-level FeCIM quantization)
+	hidden := net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
 	hidden = quantizeADC(hidden, net.Config.ADCBits)
 	hidden = net.safeNoise(hidden, net.Config.NoiseLevel)
 	hidden = relu(hidden)
 
-	output := net.forwardCIM(hidden, net.FPWeights2, net.FPBias2)
+	// Layer 2: Use QUANTIZED weights (30-level FeCIM quantization)
+	output := net.forwardCIM(hidden, net.QuantWeights2, net.QuantBias2)
 	output = quantizeADC(output, net.Config.ADCBits)
 	output = net.safeNoise(output, net.Config.NoiseLevel)
 	probs = softmax(output)
 	prediction = argmax(probs)
-	confidence = probs[prediction]
+	if prediction >= 0 && prediction < len(probs) {
+		confidence = probs[prediction]
+	}
 	return
 }
 
@@ -209,6 +220,10 @@ func relu(x []float64) []float64 {
 
 // softmax applies softmax activation.
 func softmax(x []float64) []float64 {
+	if len(x) == 0 {
+		return nil
+	}
+
 	max := x[0]
 	for _, v := range x {
 		if v > max {
@@ -231,7 +246,12 @@ func softmax(x []float64) []float64 {
 }
 
 // argmax returns the index of the maximum value.
+// Returns -1 if the slice is empty.
 func argmax(x []float64) int {
+	if len(x) == 0 {
+		return -1
+	}
+
 	maxIdx := 0
 	maxVal := x[0]
 	for i, v := range x {
@@ -280,6 +300,10 @@ func quantizeDAC(values []float64, bits int) []float64 {
 
 // quantizeADC simulates N-bit ADC quantization of output currents.
 func quantizeADC(values []float64, bits int) []float64 {
+	if len(values) == 0 {
+		return values
+	}
+
 	if bits >= 16 {
 		return values // No quantization
 	}

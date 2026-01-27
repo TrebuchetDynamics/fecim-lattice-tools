@@ -542,8 +542,10 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 
 	// Update state on main thread to ensure thread safety
 	finalBestAcc := bestAcc
+	app.currentQATLevelMu.Lock()
+	app.currentQATLevel = levels
+	app.currentQATLevelMu.Unlock()
 	fyne.Do(func() {
-		app.currentQATLevel = levels
 		statusLabel.SetText(fmt.Sprintf("Training complete! Accuracy: %.1f%% | Weights saved.", finalBestAcc))
 		progressBar.SetValue(1.0)
 		app.updateWeightHeatmap()

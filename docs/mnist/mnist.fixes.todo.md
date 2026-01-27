@@ -23,7 +23,7 @@ This document tracks all identified issues, bugs, and improvements for the MNIST
 
 ## Critical Issues (Must Fix)
 
-### CRIT-001: Nil Pointer Dereference in `softmax` Function
+### CRIT-001: Nil Pointer Dereference in `softmax` Function ✅ FIXED
 - **File:** `pkg/core/network_inference.go:212`
 - **Issue:** Accessing `x[0]` without checking if slice is empty causes panic
 - **Impact:** Runtime crash if empty input passed
@@ -37,91 +37,91 @@ func softmax(x []float64) []float64 {
     // ...
 }
 ```
-- [ ] Implement fix
+- [x] Implement fix (2026-01-27)
 - [ ] Add unit test for empty input
 
-### CRIT-002: Nil Pointer Dereference in `quantizeADC`
+### CRIT-002: Nil Pointer Dereference in `quantizeADC` ✅ FIXED
 - **File:** `pkg/core/network_inference.go:290-291`
 - **Issue:** Accessing `values[0]` without empty check
 - **Impact:** Runtime crash
 - **Fix:** Add `if len(values) == 0 { return values }` at function start
-- [ ] Implement fix
+- [x] Implement fix (2026-01-27)
 - [ ] Add unit test
 
-### CRIT-003: Inconsistent Minimum Levels Bound
+### CRIT-003: Inconsistent Minimum Levels Bound ✅ FIXED
 - **File:** `pkg/core/network_config.go:8-9` vs `:96-97`
 - **Issue:** `SetNumLevels` allows 1 level, but `SetLayer1Levels` requires 2. `QuantizeWeights` requires `levels >= 2`
 - **Impact:** Setting 1 level causes quantization to fail
 - **Fix:** Change `SetNumLevels` to clamp to 2, not 1
-- [ ] Implement fix
-- [ ] Add regression test
+- [x] Implement fix (2026-01-27)
+- [x] Test updated to match new behavior (2026-01-27)
 
 ---
 
 ## High Priority Issues
 
-### HIGH-001: Ignored Crossbar Creation Errors
+### HIGH-001: Ignored Crossbar Creation Errors ✅ FIXED
 - **File:** `pkg/gui/embedded.go:36-37`, `pkg/gui/app.go:141-151`
 - **Issue:** `crossbar.NewArray` errors silently ignored with `_`
 - **Impact:** Nil pointer panic if crossbar creation fails
 - **Fix:** Check and handle/log errors
-- [ ] Fix in embedded.go
-- [ ] Fix in app.go
+- [x] Fix in embedded.go (2026-01-27)
+- [x] Fix in app.go (2026-01-27)
 
-### HIGH-002: Race Condition in `tryLoadQATWeights`
+### HIGH-002: Race Condition in `tryLoadQATWeights` ✅ FIXED
 - **File:** `pkg/gui/dualmode_inference.go:386-445`
 - **Issue:** `currentQATLevel` accessed without synchronization
 - **Impact:** Data race, potential inconsistent state
 - **Fix:** Use atomic operations or mutex for `currentQATLevel`
-- [ ] Add mutex protection
-- [ ] Run with `-race` flag to verify
+- [x] Add mutex protection (2026-01-27)
+- [x] Run with `-race` flag to verify (2026-01-27)
 
-### HIGH-003: InferCIMOnly Uses FP Weights Instead of Quantized
+### HIGH-003: InferCIMOnly Uses FP Weights Instead of Quantized ✅ FIXED
 - **File:** `pkg/core/network_inference.go:159-177`
 - **Issue:** Function named "CIMOnly" but uses `net.FPWeights1/2` instead of `net.QuantWeights1/2`
 - **Impact:** Semantically incorrect, misleading function behavior
 - **Fix:** Use quantized weights in CIM path
-- [ ] Implement fix
+- [x] Implement fix (2026-01-27)
 - [ ] Add test verifying CIM uses quantized weights
 
-### HIGH-004: Deprecated `rand.Seed` Usage
+### HIGH-004: Deprecated `rand.Seed` Usage ✅ FIXED
 - **File:** `pkg/training/network_test.go:144`
 - **Issue:** `rand.Seed(42)` deprecated since Go 1.20
 - **Fix:** Use `rand.New(rand.NewSource(42))` for reproducible tests
-- [ ] Update test file
+- [x] Update test file (2026-01-27)
 
-### HIGH-005: Complex Error Channel Handling
+### HIGH-005: Complex Error Channel Handling ✅ FIXED
 - **File:** `pkg/gui/dualmode_inference.go:352-382`
 - **Issue:** `updateWeightHeatmapWithProgress` receives from same channel it sends to
 - **Impact:** Confusing code, potential deadlock
 - **Fix:** Restructure error handling
-- [ ] Refactor function
+- [x] Refactor function (2026-01-27)
 
-### HIGH-006: Start() Goroutines May Race with UI
+### HIGH-006: Start() Goroutines May Race with UI - REVIEWED
 - **File:** `pkg/gui/dualmode.go:219-265`
 - **Issue:** Goroutines started in `Start()` may race with Fyne's UI initialization
 - **Impact:** Potential UI corruption or panic
-- **Fix:** Ensure proper synchronization with UI ready state
-- [ ] Review and fix timing
+- **Status:** Code review shows proper use of `fyne.Do()` for all UI updates and `initialized` flag checks
+- [x] Reviewed - acceptable design pattern (2026-01-27)
 
-### HIGH-007: Magic Number for Energy Ratio
+### HIGH-007: Magic Number for Energy Ratio ✅ FIXED
 - **File:** `pkg/gui/dualmode_inference.go:192-194`
 - **Issue:** `10000` hardcoded instead of using `EnergyRatioGPU` constant
 - **Fix:** Use `EnergyRatioGPU` from `dualmode.go:40`
-- [ ] Replace all hardcoded values
+- [x] Replace all hardcoded values (2026-01-27)
 
-### HIGH-008: Missing Thread Safety in DigitCanvas
+### HIGH-008: Missing Thread Safety in DigitCanvas - REVIEWED
 - **File:** `pkg/gui/canvas.go:29-47`
 - **Issue:** `pixels` array has no mutex for concurrent access
 - **Impact:** Potential data race
-- **Fix:** Add mutex or document single-thread access requirement
-- [ ] Add synchronization
+- **Status:** `fyne.Do()` is already used for thread safety in `Clear()` and `SetPixels()`. Fyne callbacks run on main thread. Adding mutex could cause deadlocks.
+- [x] Reviewed - acceptable design with Fyne's threading model (2026-01-27)
 
-### HIGH-009: Redundant GetQuantWeights Calls
+### HIGH-009: Redundant GetQuantWeights Calls ✅ FIXED
 - **File:** `pkg/gui/dualmode_weights.go:144-149`
 - **Issue:** Calls `GetQuantWeights()` twice, inefficient and could get inconsistent values
 - **Fix:** Call once and use results
-- [ ] Refactor function
+- [x] Refactor function (2026-01-27)
 
 ---
 
@@ -147,17 +147,17 @@ func softmax(x []float64) []float64 {
 - **Fix:** Use `mnistLog.Printf()` or remove
 - [ ] Clean up debug prints
 
-### MED-004: Inconsistent Max Quantization Level
+### MED-004: Inconsistent Max Quantization Level ✅ FIXED
 - **File:** `pkg/core/network_quantization.go:30-31`
 - **Issue:** Clamps to 31, but `FeCIMLevels` is 30
 - **Fix:** Use consistent constants
-- [ ] Standardize bounds
+- [x] Standardize bounds (2026-01-27)
 
-### MED-005: Bug in generateSyntheticData for Digit 7
+### MED-005: Bug in generateSyntheticData for Digit 7 ✅ FIXED
 - **File:** `pkg/gui/app.go:789-798`
 - **Issue:** Uses `labels[0]` instead of `i` when drawing digit 7
 - **Fix:** Change `images[labels[0]]` to `images[i]`
-- [ ] Fix bug
+- [x] Fix bug (2026-01-27)
 - [ ] Add test
 
 ### MED-006: Non-Reproducible Training RNG
@@ -172,11 +172,11 @@ func softmax(x []float64) []float64 {
 - **Fix:** Remove wrapper or add documentation
 - [ ] Document or refactor
 
-### MED-008: Missing Input Validation in Infer
+### MED-008: Missing Input Validation in Infer ✅ FIXED
 - **File:** `pkg/core/network_inference.go:8-11`
 - **Issue:** No validation that `len(input) == net.InputSize`
 - **Fix:** Add validation
-- [ ] Add input length check
+- [x] Add input length check (2026-01-27)
 
 ### MED-009: Potential Nil Tooltip Access
 - **File:** `pkg/gui/dualmode_weights.go:311-312`
@@ -196,11 +196,11 @@ func softmax(x []float64) []float64 {
 - **Fix:** Remove or document intended use
 - [ ] Remove or document
 
-### MED-012: fmt.Println in Library Code
+### MED-012: fmt.Println in Library Code ✅ FIXED
 - **File:** `pkg/training/network.go:522`
 - **Issue:** Production library prints to stdout
 - **Fix:** Use logging or remove
-- [ ] Remove print statement
+- [x] Remove print statement (2026-01-27)
 
 ### MED-013: Memory Allocation from Untrusted File Data
 - **File:** `pkg/mnist/loader.go:84, 131`
@@ -243,30 +243,30 @@ func softmax(x []float64) []float64 {
 - **Fix:** Standardize naming
 - [ ] Standardize names
 
-### LOW-006: Missing binary.Read Error Checks
+### LOW-006: Missing binary.Read Error Checks ✅ FIXED
 - **File:** `pkg/mnist/loader.go:70-73, 123-124`
 - **Issue:** Error returns not checked
 - **Fix:** Check all `binary.Read` errors
-- [ ] Add error handling
+- [x] Add error handling (2026-01-27, fixed as part of SEC-002)
 
 ---
 
 ## Security Issues
 
-### SEC-001: Unsafe Type Assertion in Test
+### SEC-001: Unsafe Type Assertion in Test ✅ FIXED
 - **File:** `pkg/core/integration_test.go:419`
 - **Issue:** `r.(error)` panics if recover value isn't error type
 - **Fix:** Use comma-ok idiom
-- [ ] Fix type assertion
+- [x] Fix type assertion (2026-01-27)
 
-### SEC-002: Empty Slice Access (Multiple Locations)
+### SEC-002: Empty Slice Access (Multiple Locations) ✅ FIXED
 - **Files:**
   - `pkg/core/network_inference.go:212` (softmax)
   - `pkg/core/network_inference.go:234` (argmax)
   - `pkg/core/quantize.go:407`
 - **Issue:** Accessing first element without bounds check
 - **Fix:** Add length checks
-- [ ] Fix all locations
+- [x] Fix all locations (2026-01-27)
 
 ---
 
@@ -377,17 +377,17 @@ func softmax(x []float64) []float64 {
 
 ## Progress Tracking
 
-| Category | Total | Fixed | Remaining |
-|----------|-------|-------|-----------|
-| Critical | 3 | 0 | 3 |
-| High | 9 | 0 | 9 |
-| Medium | 13 | 0 | 13 |
-| Low | 6 | 0 | 6 |
-| Security | 2 | 0 | 2 |
+| Category | Total | Fixed/Reviewed | Remaining |
+|----------|-------|----------------|-----------|
+| Critical | 3 | 3 | 0 |
+| High | 9 | 9 | 0 |
+| Medium | 13 | 4 | 9 |
+| Low | 6 | 1 | 5 |
+| Security | 2 | 2 | 0 |
 | Architecture | 5 | 0 | 5 |
 | Documentation | 4 | 0 | 4 |
 | Tests | 4 | 0 | 4 |
-| **Total** | **46** | **0** | **46** |
+| **Total** | **46** | **19** | **27** |
 
 ---
 

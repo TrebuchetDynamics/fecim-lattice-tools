@@ -107,7 +107,8 @@ type DualModeApp struct {
 	lastPixels []float64
 
 	// QAT (Quantization-Aware Training) weight tracking
-	currentQATLevel int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
+	currentQATLevel   int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
+	currentQATLevelMu sync.RWMutex
 
 	// Track which missing weight levels have already shown a warning (to avoid infinite modals)
 	warnedMissingLevels   map[int]bool

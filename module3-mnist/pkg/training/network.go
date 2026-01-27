@@ -3,7 +3,6 @@ package training
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -518,5 +517,5 @@ func (n *MNISTNetwork) QuantizeWeightsTo30Levels() {
 		}
 	}
 
-	fmt.Println("Weights quantized to 30 discrete levels (FeCIM format)")
+	// Weights quantized to 30 discrete levels (FeCIM format)
 }

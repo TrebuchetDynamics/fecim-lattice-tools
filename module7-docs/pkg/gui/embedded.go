@@ -15,9 +15,32 @@ import (
 
 // EmbeddedDocsApp is the embeddable documentation viewer
 type EmbeddedDocsApp struct {
+	// Existing
 	content     fyne.CanvasObject
 	currentFile string
 	docsPath    string
+
+	// New components
+	window        fyne.Window
+	searchIndex   *SearchIndex
+	history       *DocsHistory
+	layoutManager *LayoutManager
+
+	// UI components
+	tree          *widget.Tree
+	contentText   *widget.RichText
+	contentScroll *container.Scroll
+	breadcrumbs   *BreadcrumbWidget
+	toc           *TableOfContentsWidget
+	quickAccess   *QuickAccessPanel
+	glossaryPills *GlossaryPillsWidget
+	docMetadata   *DocumentMetadataWidget
+	relatedDocs   *RelatedDocsWidget
+	searchDialog  *SearchDialog
+
+	// State
+	pathMap map[string]*docEntry
+	docs    []*docEntry
 }
 
 // NewEmbeddedDocsApp creates a new embedded docs app instance
@@ -35,64 +58,172 @@ type docEntry struct {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Find docs directory relative to executable or working directory
+	app.window = window
 	app.docsPath = findDocsPath()
 
-	// Create markdown viewer for content
-	contentText := widget.NewRichTextFromMarkdown("# FeCIM Documentation\n\nSelect a document from the tree on the left.")
-	contentText.Wrapping = fyne.TextWrapWord
+	// Initialize search index (builds in background via goroutine internally)
+	app.searchIndex = NewSearchIndex(app.docsPath)
 
-	// Create scrollable content area
-	contentScroll := container.NewVScroll(contentText)
+	// Initialize history persistence
+	app.history = NewDocsHistory()
 
-	// Create file tree
-	tree := app.createDocTree(contentText)
+	// Create all UI components
+	app.createUIComponents()
 
-	// Create split view with tree on left, content on right
-	split := container.NewHSplit(
-		container.NewBorder(
-			widget.NewLabelWithStyle("Documentation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			nil, nil, nil,
-			tree,
-		),
-		contentScroll,
+	// Setup responsive layout
+	app.layoutManager = NewLayoutManager()
+	app.layoutManager.SetComponents(
+		app.buildSidebar(),     // tree + quick access
+		app.buildMainContent(), // breadcrumbs + metadata + content + related
+		app.buildTocSidebar(),  // table of contents
+		app.buildTopBar(),      // search button, title
 	)
-	split.SetOffset(0.25) // 25% for tree, 75% for content
 
-	app.content = split
+	app.content = app.layoutManager.BuildLayout()
+
+	// Setup keyboard shortcut for search
+	SetupSearchShortcut(window, app.searchDialog)
+
 	return app.content
 }
 
-// createDocTree builds the documentation file tree widget
-func (app *EmbeddedDocsApp) createDocTree(contentWidget *widget.RichText) *widget.Tree {
-	// Build tree data
-	docs := app.scanDocsDirectory()
+// createUIComponents initializes all UI widgets
+func (app *EmbeddedDocsApp) createUIComponents() {
+	// Content viewer
+	app.contentText = widget.NewRichTextFromMarkdown("# FeCIM Documentation\n\nSelect a document from the tree.")
+	app.contentText.Wrapping = fyne.TextWrapWord
+	app.contentScroll = container.NewVScroll(app.contentText)
 
-	// Map for quick lookup
-	pathMap := make(map[string]*docEntry)
-	var buildMap func(entries []*docEntry, parent string)
-	buildMap = func(entries []*docEntry, parent string) {
-		for _, e := range entries {
-			pathMap[e.path] = e
-			if e.isDir && len(e.children) > 0 {
-				buildMap(e.children, e.path)
-			}
+	// Breadcrumbs
+	app.breadcrumbs = NewBreadcrumbWidget(func(path string) {
+		app.navigateToFolder(path)
+	})
+
+	// ToC
+	app.toc = NewTableOfContentsWidget(func(anchor string) {
+		app.scrollToSection(anchor)
+	})
+
+	// Quick access panel
+	app.quickAccess = NewQuickAccessPanel(
+		func(path string) { app.loadDocument(path) },
+		func(path string) { app.toggleFavorite(path) },
+	)
+	// Initialize with persisted history
+	for _, path := range app.history.GetRecent() {
+		app.quickAccess.AddRecent(path)
+	}
+	for _, path := range app.history.GetFavorites() {
+		if !app.quickAccess.IsFavorite(path) {
+			app.quickAccess.ToggleFavorite(path)
 		}
 	}
-	buildMap(docs, "")
 
+	// Glossary pills
+	app.glossaryPills = NewGlossaryPillsWidget(app.window)
+
+	// Document metadata
+	app.docMetadata = NewDocumentMetadataWidget(app.window)
+
+	// Related docs
+	app.relatedDocs = NewRelatedDocsWidget(func(path string) {
+		app.loadDocument(path)
+	})
+
+	// Search dialog
+	app.searchDialog = NewSearchDialog(app.searchIndex, app.window, func(path string) {
+		app.loadDocument(path)
+	})
+}
+
+// buildSidebar creates the left sidebar with tree and quick access
+func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
+	// Scan docs and build tree
+	app.docs = app.scanDocsDirectory()
+	app.pathMap = make(map[string]*docEntry)
+	app.buildPathMap(app.docs)
+	app.tree = app.createDocTree()
+
+	return container.NewBorder(
+		widget.NewLabelWithStyle("Documentation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		nil, nil, nil,
+		container.NewVSplit(
+			app.quickAccess,
+			app.tree,
+		),
+	)
+}
+
+// buildPathMap recursively builds the path lookup map
+func (app *EmbeddedDocsApp) buildPathMap(entries []*docEntry) {
+	for _, e := range entries {
+		app.pathMap[e.path] = e
+		if e.isDir && len(e.children) > 0 {
+			app.buildPathMap(e.children)
+		}
+	}
+}
+
+// buildMainContent creates the central content area
+func (app *EmbeddedDocsApp) buildMainContent() fyne.CanvasObject {
+	// Top metadata section
+	topSection := container.NewVBox(
+		app.breadcrumbs,
+		app.docMetadata,
+	)
+
+	// Glossary pills below metadata
+	pillsSection := container.NewHBox(app.glossaryPills)
+
+	return container.NewBorder(
+		container.NewVBox(topSection, pillsSection),
+		app.relatedDocs,
+		nil, nil,
+		app.contentScroll,
+	)
+}
+
+// buildTocSidebar creates the right ToC sidebar
+func (app *EmbeddedDocsApp) buildTocSidebar() fyne.CanvasObject {
+	return container.NewBorder(
+		widget.NewLabelWithStyle("On This Page", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		nil, nil, nil,
+		app.toc,
+	)
+}
+
+// buildTopBar creates the top action bar with search
+func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
+	searchBtn := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
+		app.showSearch()
+	})
+
+	tocToggleBtn := widget.NewButtonWithIcon("", theme.ListIcon(), func() {
+		app.layoutManager.ToggleToc()
+	})
+
+	return container.NewBorder(
+		nil, nil,
+		widget.NewLabel("FeCIM Documentation"),
+		container.NewHBox(tocToggleBtn, searchBtn),
+		nil,
+	)
+}
+
+// createDocTree builds the documentation file tree widget
+func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 	tree := widget.NewTree(
 		// ChildUIDs - return child IDs for a node
 		func(uid widget.TreeNodeID) []widget.TreeNodeID {
 			if uid == "" {
 				// Root level
 				var ids []widget.TreeNodeID
-				for _, d := range docs {
+				for _, d := range app.docs {
 					ids = append(ids, d.path)
 				}
 				return ids
 			}
-			if entry, ok := pathMap[uid]; ok && entry.isDir {
+			if entry, ok := app.pathMap[uid]; ok && entry.isDir {
 				var ids []widget.TreeNodeID
 				for _, c := range entry.children {
 					ids = append(ids, c.path)
@@ -106,7 +237,7 @@ func (app *EmbeddedDocsApp) createDocTree(contentWidget *widget.RichText) *widge
 			if uid == "" {
 				return true
 			}
-			if entry, ok := pathMap[uid]; ok {
+			if entry, ok := app.pathMap[uid]; ok {
 				return entry.isDir && len(entry.children) > 0
 			}
 			return false
@@ -115,20 +246,40 @@ func (app *EmbeddedDocsApp) createDocTree(contentWidget *widget.RichText) *widge
 		func(branch bool) fyne.CanvasObject {
 			icon := widget.NewIcon(theme.DocumentIcon())
 			label := widget.NewLabel("Document")
-			return container.NewHBox(icon, label)
+			starBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
+			starBtn.Importance = widget.LowImportance
+			starBtn.Hidden = true
+			return container.NewBorder(nil, nil, icon, starBtn, label)
 		},
 		// Update - update tree node with data
 		func(uid widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
 			box := node.(*fyne.Container)
 			icon := box.Objects[0].(*widget.Icon)
-			label := box.Objects[1].(*widget.Label)
+			starBtn := box.Objects[1].(*widget.Button)
+			label := box.Objects[2].(*widget.Label)
 
-			if entry, ok := pathMap[uid]; ok {
+			if entry, ok := app.pathMap[uid]; ok {
 				label.SetText(entry.name)
 				if entry.isDir {
 					icon.SetResource(theme.FolderIcon())
+					starBtn.Hidden = true
 				} else {
 					icon.SetResource(theme.DocumentIcon())
+					starBtn.Hidden = false
+
+					// Update star icon based on favorite status
+					if app.history.IsFavorite(entry.path) {
+						starBtn.SetIcon(theme.ContentRemoveIcon())
+					} else {
+						starBtn.SetIcon(theme.ContentAddIcon())
+					}
+
+					// Capture path for closure
+					path := entry.path
+					starBtn.OnTapped = func() {
+						app.toggleFavorite(path)
+						app.tree.Refresh()
+					}
 				}
 			}
 		},
@@ -136,18 +287,131 @@ func (app *EmbeddedDocsApp) createDocTree(contentWidget *widget.RichText) *widge
 
 	// Handle selection - load markdown file
 	tree.OnSelected = func(uid widget.TreeNodeID) {
-		if entry, ok := pathMap[uid]; ok && !entry.isDir {
-			content, err := os.ReadFile(entry.path)
-			if err != nil {
-				contentWidget.ParseMarkdown("# Error\n\nCould not read file: " + err.Error())
-			} else {
-				contentWidget.ParseMarkdown(string(content))
-			}
-			app.currentFile = entry.path
+		if entry, ok := app.pathMap[uid]; ok && !entry.isDir {
+			app.loadDocument(entry.path)
 		}
 	}
 
 	return tree
+}
+
+// loadDocument loads and displays a markdown document
+func (app *EmbeddedDocsApp) loadDocument(path string) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		fyne.Do(func() {
+			app.contentText.ParseMarkdown("# Error\n\nCould not read: " + err.Error())
+		})
+		return
+	}
+
+	markdown := string(content)
+
+	fyne.Do(func() {
+		app.contentText.ParseMarkdown(markdown)
+	})
+	app.currentFile = path
+
+	// Update breadcrumbs
+	fyne.Do(func() {
+		app.breadcrumbs.SetPath(path, app.docsPath)
+	})
+
+	// Update ToC
+	fyne.Do(func() {
+		app.toc.ParseMarkdown(markdown)
+	})
+
+	// Update glossary pills
+	terms := DetectGlossaryTerms(markdown)
+	fyne.Do(func() {
+		app.glossaryPills.SetTerms(terms)
+	})
+
+	// Update metadata
+	meta := app.searchIndex.GetDocMetadata(path)
+	if meta != nil {
+		fyne.Do(func() {
+			app.docMetadata.SetMetadata(meta.Title, meta.Category, meta.ReadingTime, terms)
+		})
+	}
+
+	// Update related docs
+	app.updateRelatedDocs(path, meta)
+
+	// Add to recent history
+	app.history.AddRecent(path)
+	fyne.Do(func() {
+		app.quickAccess.AddRecent(path)
+	})
+}
+
+// updateRelatedDocs finds and displays related documents
+func (app *EmbeddedDocsApp) updateRelatedDocs(currentPath string, currentMeta *SearchDocMetadata) {
+	if currentMeta == nil {
+		fyne.Do(func() {
+			app.relatedDocs.SetDocs(nil)
+		})
+		return
+	}
+
+	// Convert SearchDocMetadata to DocMetadata for the FindRelated function
+	currentDocMeta := &DocMetadata{
+		Path:          currentMeta.Path,
+		Title:         currentMeta.Title,
+		Category:      currentMeta.Category,
+		GlossaryTerms: currentMeta.GlossaryTerms,
+		ParentFolder:  filepath.Dir(currentPath),
+	}
+
+	// Build allDocs map from search index
+	allDocs := make(map[string]*DocMetadata)
+	app.searchIndex.mu.RLock()
+	for path, meta := range app.searchIndex.docs {
+		allDocs[path] = &DocMetadata{
+			Path:          meta.Path,
+			Title:         meta.Title,
+			Category:      meta.Category,
+			GlossaryTerms: meta.GlossaryTerms,
+			ParentFolder:  filepath.Dir(path),
+		}
+	}
+	app.searchIndex.mu.RUnlock()
+
+	related := FindRelated(currentPath, currentDocMeta, allDocs)
+
+	fyne.Do(func() {
+		app.relatedDocs.SetDocs(related)
+	})
+}
+
+// toggleFavorite adds or removes a document from favorites
+func (app *EmbeddedDocsApp) toggleFavorite(path string) {
+	app.history.ToggleFavorite(path)
+	fyne.Do(func() {
+		app.quickAccess.ToggleFavorite(path)
+	})
+}
+
+// showSearch displays the search dialog
+func (app *EmbeddedDocsApp) showSearch() {
+	app.searchDialog.Show()
+}
+
+// scrollToSection scrolls to a section anchor (best effort)
+func (app *EmbeddedDocsApp) scrollToSection(anchor string) {
+	// Fyne doesn't have built-in anchor scrolling
+	// Highlight the section in ToC as visual feedback
+	fyne.Do(func() {
+		app.toc.SetCurrentSection(anchor)
+	})
+}
+
+// navigateToFolder expands the tree to show a folder
+func (app *EmbeddedDocsApp) navigateToFolder(path string) {
+	fyne.Do(func() {
+		app.tree.OpenBranch(path)
+	})
 }
 
 // scanDocsDirectory recursively scans the docs directory

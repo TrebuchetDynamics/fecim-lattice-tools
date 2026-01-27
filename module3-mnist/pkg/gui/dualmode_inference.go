@@ -189,9 +189,9 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 	}
 
 	// Update energy (legacy) - UI-024 fix: clearer units and wording
-	gpuEnergy := result.EnergyUsed * 10000
+	gpuEnergy := result.EnergyUsed * EnergyRatioGPU
 	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) vs %.0f mJ (GPU) = %.0f× improvement",
-		result.EnergyUsed, gpuEnergy/1000, 10000.0))
+		result.EnergyUsed, gpuEnergy/1000, float64(EnergyRatioGPU)))
 
 	// P1 Enhancements
 	if app.quantizationWidget != nil && len(quantWeights) > 0 {
@@ -210,8 +210,8 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 			Match:            result.Agree,
 			ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
 			EnergyFeCIM:      result.EnergyUsed * 1e6,
-			EnergyGPU:        result.EnergyUsed * 1e6 * 10000,
-			EnergyRatio:      10000.0,
+			EnergyGPU:        result.EnergyUsed * 1e6 * EnergyRatioGPU,
+			EnergyRatio:      float64(EnergyRatioGPU),
 		}
 		if compResult.ConfidenceDelta < 0 {
 			compResult.ConfidenceDelta = -compResult.ConfidenceDelta
@@ -348,20 +348,21 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	})
 }
 
-// updateWeightHeatmapWithProgress updates weight visualization with loading feedback
+// updateWeightHeatmapWithProgress updates weight visualization with loading feedback.
+// The done channel is used to signal completion; send nil for success, or an error.
 func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
-	defer func() {
-		if err := <-done; err != nil {
-			fyne.Do(func() {
-				app.statusLabel.SetText(fmt.Sprintf("Error updating heatmap: %v", err))
-				if app.window != nil {
-					dialog.ShowError(fmt.Errorf("Failed to update weight heatmap: %w", err), app.window)
-				}
-			})
-		}
-	}()
+	// Helper to report errors
+	reportError := func(err error) {
+		fyne.Do(func() {
+			app.statusLabel.SetText(fmt.Sprintf("Error updating heatmap: %v", err))
+			if app.window != nil {
+				dialog.ShowError(fmt.Errorf("Failed to update weight heatmap: %w", err), app.window)
+			}
+		})
+	}
 
 	if !app.initialized {
+		done <- nil
 		return
 	}
 
@@ -371,21 +372,30 @@ func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
 	})
 
 	// Update heatmap if it exists
+	var updateErr error
 	if app.weightHeatmap != nil {
 		fyne.Do(func() {
 			app.weightHeatmap.Refresh()
 		})
 	}
 
+	// Report any error that occurred
+	if updateErr != nil {
+		reportError(updateErr)
+	}
+
 	// Signal completion
-	done <- nil
+	done <- updateErr
 }
 
 // tryLoadQATWeights attempts to load QAT weights optimized for the given level.
 // Only reloads if the optimal weights are different from currently loaded.
 func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
-	// Check if we already have optimal weights loaded
-	if app.currentQATLevel == targetLevel {
+	// Check if we already have optimal weights loaded (thread-safe read)
+	app.currentQATLevelMu.RLock()
+	currentLevel := app.currentQATLevel
+	app.currentQATLevelMu.RUnlock()
+	if currentLevel == targetLevel {
 		return
 	}
 
@@ -441,8 +451,10 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 		return
 	}
 
-	// Update tracking
+	// Update tracking (thread-safe write)
+	app.currentQATLevelMu.Lock()
 	app.currentQATLevel = targetLevel
+	app.currentQATLevelMu.Unlock()
 
 	// Update status
 	fyne.Do(func() {

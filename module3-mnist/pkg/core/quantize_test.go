@@ -266,10 +266,10 @@ func TestDualModeNetwork_SetParameters(t *testing.T) {
 		t.Errorf("SetNumLevels failed: got %d", net.Config.NumLevels)
 	}
 
-	// Test bounds
+	// Test bounds (minimum is now 2, required by QuantizeWeights)
 	net.SetNumLevels(0)
-	if net.Config.NumLevels != 1 {
-		t.Errorf("NumLevels should be clamped to 1, got %d", net.Config.NumLevels)
+	if net.Config.NumLevels != 2 {
+		t.Errorf("NumLevels should be clamped to 2 (minimum for quantization), got %d", net.Config.NumLevels)
 	}
 
 	net.SetNumLevels(100)

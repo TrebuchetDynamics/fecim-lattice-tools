@@ -141,7 +141,8 @@ func TestWeightsAreQuantizedTo30Levels(t *testing.T) {
 
 // TestTrainEpochReducesLoss verifies training makes progress
 func TestTrainEpochReducesLoss(t *testing.T) {
-	rand.Seed(42)
+	// Use local RNG for reproducible tests (rand.Seed is deprecated since Go 1.20)
+	rng := rand.New(rand.NewSource(42))
 
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 64, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
@@ -158,9 +159,9 @@ func TestTrainEpochReducesLoss(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		images[i] = make([]float64, 784)
 		for j := range images[i] {
-			images[i][j] = rand.Float64()
+			images[i][j] = rng.Float64()
 		}
-		labels[i] = rand.Intn(10)
+		labels[i] = rng.Intn(10)
 	}
 
 	// Initial loss

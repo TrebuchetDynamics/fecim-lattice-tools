@@ -1,12 +1,13 @@
 package core
 
 // SetNumLevels updates the quantization levels and re-quantizes weights.
+// Minimum is 2 levels (required by QuantizeWeights), maximum is FeCIMLevels (30).
 func (net *DualModeNetwork) SetNumLevels(levels int) {
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
-	if levels < 1 {
-		levels = 1
+	if levels < 2 {
+		levels = 2
 	}
 	if levels > FeCIMLevels {
 		levels = FeCIMLevels

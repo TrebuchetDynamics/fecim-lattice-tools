@@ -10,6 +10,13 @@ import (
 	"path/filepath"
 )
 
+// Maximum allowed image/label counts to prevent memory exhaustion attacks.
+// MNIST has 60,000 training and 10,000 test images.
+const (
+	maxMNISTImages = 100000
+	maxMNISTLabels = 100000
+)
+
 // LoadMNIST loads the MNIST dataset from the specified directory.
 // If train is true, loads training data; otherwise loads test data.
 func LoadMNIST(dir string, train bool) (images [][]float64, labels []int, err error) {
@@ -67,10 +74,18 @@ func loadImages(filename string) ([][]float64, error) {
 
 	// Read header
 	var magic, numImages, numRows, numCols int32
-	binary.Read(reader, binary.BigEndian, &magic)
-	binary.Read(reader, binary.BigEndian, &numImages)
-	binary.Read(reader, binary.BigEndian, &numRows)
-	binary.Read(reader, binary.BigEndian, &numCols)
+	if err := binary.Read(reader, binary.BigEndian, &magic); err != nil {
+		return nil, fmt.Errorf("failed to read magic number: %w", err)
+	}
+	if err := binary.Read(reader, binary.BigEndian, &numImages); err != nil {
+		return nil, fmt.Errorf("failed to read image count: %w", err)
+	}
+	if err := binary.Read(reader, binary.BigEndian, &numRows); err != nil {
+		return nil, fmt.Errorf("failed to read row count: %w", err)
+	}
+	if err := binary.Read(reader, binary.BigEndian, &numCols); err != nil {
+		return nil, fmt.Errorf("failed to read column count: %w", err)
+	}
 
 	if magic != 2051 {
 		return nil, fmt.Errorf("invalid magic number: %d (expected 2051)", magic)
@@ -78,6 +93,11 @@ func loadImages(filename string) ([][]float64, error) {
 
 	if numRows != 28 || numCols != 28 {
 		return nil, fmt.Errorf("unexpected image size: %dx%d", numRows, numCols)
+	}
+
+	// Sanity check to prevent memory exhaustion from malicious files
+	if numImages < 0 || numImages > maxMNISTImages {
+		return nil, fmt.Errorf("invalid image count: %d (expected 0-%d)", numImages, maxMNISTImages)
 	}
 
 	// Read images
@@ -120,11 +140,20 @@ func loadLabels(filename string) ([]int, error) {
 
 	// Read header
 	var magic, numLabels int32
-	binary.Read(reader, binary.BigEndian, &magic)
-	binary.Read(reader, binary.BigEndian, &numLabels)
+	if err := binary.Read(reader, binary.BigEndian, &magic); err != nil {
+		return nil, fmt.Errorf("failed to read magic number: %w", err)
+	}
+	if err := binary.Read(reader, binary.BigEndian, &numLabels); err != nil {
+		return nil, fmt.Errorf("failed to read label count: %w", err)
+	}
 
 	if magic != 2049 {
 		return nil, fmt.Errorf("invalid magic number: %d (expected 2049)", magic)
+	}
+
+	// Sanity check to prevent memory exhaustion from malicious files
+	if numLabels < 0 || numLabels > maxMNISTLabels {
+		return nil, fmt.Errorf("invalid label count: %d (expected 0-%d)", numLabels, maxMNISTLabels)
 	}
 
 	// Read labels

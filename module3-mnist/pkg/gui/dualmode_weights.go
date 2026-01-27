@@ -142,11 +142,12 @@ func (app *DualModeApp) updateWeightComparison() {
 
 // drawWeightHeatmap draws the weight heatmap.
 func (app *DualModeApp) drawWeightHeatmap(w, h int) image.Image {
-	_, w2, _, _ := app.network.GetQuantWeights()
+	// Get weights once to avoid redundant calls
+	w1, w2, _, _ := app.network.GetQuantWeights()
 
 	var weights [][]float64
 	if app.weightLayer == 0 {
-		weights, _, _, _ = app.network.GetQuantWeights()
+		weights = w1
 	} else {
 		weights = w2
 	}
