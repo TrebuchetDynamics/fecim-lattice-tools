@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // Renderer renders comparison visualizations.
@@ -73,7 +75,7 @@ func (r *Renderer) RenderInferenceComparison(results []InferenceResult, workload
 	for _, res := range results {
 		latStr := formatLatency(res.Latency)
 		tpStr := formatThroughput(res.Throughput)
-		enStr := formatEnergy(res.Energy)
+		enStr := physics.FormatEnergyMJ(res.Energy)
 
 		sb.WriteString(fmt.Sprintf("%-22s %12s %15s %12s\n",
 			res.Architecture, latStr, tpStr, enStr))
@@ -252,7 +254,7 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv FeCIMAdvantage
 	sb.WriteString("FeCIM Key Metrics:\n")
 	sb.WriteString(strings.Repeat("─", 60) + "\n")
 	sb.WriteString(fmt.Sprintf("  Inference Latency:    %s\n", formatLatency(fecimResult.Latency)))
-	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", formatEnergy(fecimResult.Energy)))
+	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", physics.FormatEnergyMJ(fecimResult.Energy)))
 	sb.WriteString(fmt.Sprintf("  Throughput:           %s\n", formatThroughput(fecimResult.Throughput)))
 	sb.WriteString(fmt.Sprintf("  Data Center Power:    %.1f kW\n", fecimDC.TotalPower))
 	sb.WriteString(fmt.Sprintf("  Annual TCO:           $%.0f\n", fecimDC.TCO))
@@ -323,16 +325,8 @@ func formatThroughput(ips float64) string {
 	return fmt.Sprintf("%.2f inf/s", ips)
 }
 
-func formatEnergy(mj float64) string {
-	if mj >= 1000 {
-		return fmt.Sprintf("%.2f J", mj/1000)
-	} else if mj >= 1 {
-		return fmt.Sprintf("%.2f mJ", mj)
-	} else if mj >= 0.001 {
-		return fmt.Sprintf("%.2f µJ", mj*1000)
-	}
-	return fmt.Sprintf("%.2f nJ", mj*1e6)
-}
+// Note: formatEnergy moved to shared/physics package
+// Use physics.FormatEnergyMJ(millijoules) for mJ input
 
 func indexOfMin(values []float64) int {
 	minIdx := 0

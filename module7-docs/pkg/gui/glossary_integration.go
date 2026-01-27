@@ -100,6 +100,166 @@ func DetectGlossaryTerms(content string) []string {
 	return terms
 }
 
+// glossaryTermEntry is used for sorting terms by length
+type glossaryTermEntry struct {
+	lower    string
+	original string
+}
+
+// HighlightGlossaryTerms wraps glossary terms in markdown bold formatting
+// Returns the modified markdown content with terms highlighted
+func HighlightGlossaryTerms(content string) string {
+	// Build a map of terms to their original casing
+	termMap := make(map[string]string) // lowercase -> original
+	for _, entry := range widgets.TermsData {
+		termMap[strings.ToLower(entry.Term)] = entry.Term
+	}
+
+	// Sort terms by length (longest first) to avoid partial replacements
+	// e.g., "Preisach Model" should be matched before "Model"
+	var sortedTerms []glossaryTermEntry
+	for lower, original := range termMap {
+		sortedTerms = append(sortedTerms, glossaryTermEntry{lower, original})
+	}
+	sort.Slice(sortedTerms, func(i, j int) bool {
+		return len(sortedTerms[i].lower) > len(sortedTerms[j].lower)
+	})
+
+	// Track which positions have already been modified to avoid double-highlighting
+	// We'll use a simple approach: process line by line, skip code blocks and headers
+	lines := strings.Split(content, "\n")
+	var result []string
+
+	inCodeBlock := false
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+
+		// Toggle code block state
+		if strings.HasPrefix(trimmedLine, "```") {
+			inCodeBlock = !inCodeBlock
+			result = append(result, line)
+			continue
+		}
+
+		// Skip code blocks
+		if inCodeBlock {
+			result = append(result, line)
+			continue
+		}
+
+		// Skip headers (they're already styled)
+		if strings.HasPrefix(trimmedLine, "#") {
+			result = append(result, line)
+			continue
+		}
+
+		// Skip table separator lines (|---|---|)
+		if strings.Contains(line, "|") && strings.Contains(line, "---") {
+			result = append(result, line)
+			continue
+		}
+
+		// Skip table header/data rows that start with | (formatted tables)
+		if strings.HasPrefix(trimmedLine, "|") {
+			result = append(result, line)
+			continue
+		}
+
+		// Highlight terms in this line (including lines with links)
+		highlightedLine := highlightTermsInLine(line, sortedTerms)
+		result = append(result, highlightedLine)
+	}
+
+	return strings.Join(result, "\n")
+}
+
+// highlightTermsInLine highlights glossary terms in a single line
+func highlightTermsInLine(line string, terms []glossaryTermEntry) string {
+	// Track positions that should be skipped (inside links, bold, code)
+	skipPositions := make([]bool, len(line))
+
+	// Mark positions inside markdown links [text](url) as skip
+	linkRe := regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
+	for _, match := range linkRe.FindAllStringIndex(line, -1) {
+		for i := match[0]; i < match[1] && i < len(skipPositions); i++ {
+			skipPositions[i] = true
+		}
+	}
+
+	// Mark positions inside inline code `code` as skip
+	codeRe := regexp.MustCompile("`[^`]+`")
+	for _, match := range codeRe.FindAllStringIndex(line, -1) {
+		for i := match[0]; i < match[1] && i < len(skipPositions); i++ {
+			skipPositions[i] = true
+		}
+	}
+
+	// Mark positions inside existing bold **text** as skip
+	boldRe := regexp.MustCompile(`\*\*[^*]+\*\*`)
+	for _, match := range boldRe.FindAllStringIndex(line, -1) {
+		for i := match[0]; i < match[1] && i < len(skipPositions); i++ {
+			skipPositions[i] = true
+		}
+	}
+
+	type replacement struct {
+		start, end int
+		newText    string
+	}
+	var replacements []replacement
+
+	for _, term := range terms {
+		// Create case-insensitive regex for whole-word match
+		pattern := `(?i)\b` + regexp.QuoteMeta(term.lower) + `\b`
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			continue
+		}
+
+		matches := re.FindAllStringIndex(line, -1)
+		for _, match := range matches {
+			start, end := match[0], match[1]
+
+			// Check if any position in this match should be skipped
+			shouldSkip := false
+			for i := start; i < end && i < len(skipPositions); i++ {
+				if skipPositions[i] {
+					shouldSkip = true
+					break
+				}
+			}
+			if shouldSkip {
+				continue
+			}
+
+			// Mark positions as used
+			for i := start; i < end && i < len(skipPositions); i++ {
+				skipPositions[i] = true
+			}
+
+			// Get the actual text (preserve original casing from content)
+			originalText := line[start:end]
+			// Use markdown link with glossary:// scheme for clickable terms
+			replacements = append(replacements, replacement{
+				start:   start,
+				end:     end,
+				newText: "[" + originalText + "](glossary://" + term.original + ")",
+			})
+		}
+	}
+
+	// Apply replacements from end to start to preserve positions
+	sort.Slice(replacements, func(i, j int) bool {
+		return replacements[i].start > replacements[j].start
+	})
+
+	for _, r := range replacements {
+		line = line[:r.start] + r.newText + line[r.end:]
+	}
+
+	return line
+}
+
 // CategoryBadge displays a colored category indicator
 type CategoryBadge struct {
 	widget.BaseWidget
@@ -151,33 +311,31 @@ func (b *CategoryBadge) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(content)
 }
 
-// DocumentMetadataWidget displays document metadata with category, reading time, and glossary terms
+// DocumentMetadataWidget displays document metadata with category and reading time
 type DocumentMetadataWidget struct {
 	widget.BaseWidget
-	title         string
-	category      string
-	readingTime   int // minutes
-	glossaryTerms []string
-	window        fyne.Window
-	container     *fyne.Container
+	title       string
+	category    string
+	readingTime int // minutes
+	window      fyne.Window
+	container   *fyne.Container
 }
 
 // NewDocumentMetadataWidget creates a new document metadata widget
 func NewDocumentMetadataWidget(window fyne.Window) *DocumentMetadataWidget {
 	w := &DocumentMetadataWidget{
 		window:    window,
-		container: container.NewVBox(),
+		container: container.NewHBox(),
 	}
 	w.ExtendBaseWidget(w)
 	return w
 }
 
 // SetMetadata updates the metadata display
-func (d *DocumentMetadataWidget) SetMetadata(title, category string, readingTime int, terms []string) {
+func (d *DocumentMetadataWidget) SetMetadata(title, category string, readingTime int, _ []string) {
 	d.title = title
 	d.category = category
 	d.readingTime = readingTime
-	d.glossaryTerms = terms
 	d.rebuild()
 	d.Refresh()
 }
@@ -190,38 +348,18 @@ func (d *DocumentMetadataWidget) CreateRenderer() fyne.WidgetRenderer {
 func (d *DocumentMetadataWidget) rebuild() {
 	d.container.Objects = nil
 
-	// First row: Category badge | Reading time
-	firstRow := container.NewHBox()
-
 	if d.category != "" {
 		badge := NewCategoryBadge(d.category)
-		firstRow.Add(badge)
+		d.container.Add(badge)
 	}
 
 	if d.readingTime > 0 {
-		if len(firstRow.Objects) > 0 {
-			firstRow.Add(widget.NewLabel("|"))
+		if len(d.container.Objects) > 0 {
+			d.container.Add(widget.NewLabel("|"))
 		}
 		readingLabel := widget.NewLabel(formatReadingTime(d.readingTime))
 		readingLabel.TextStyle = fyne.TextStyle{Italic: true}
-		firstRow.Add(readingLabel)
-	}
-
-	if len(firstRow.Objects) > 0 {
-		d.container.Add(firstRow)
-	}
-
-	// Second row: Key Terms pills
-	if len(d.glossaryTerms) > 0 {
-		termsRow := container.NewHBox(
-			widget.NewLabel("Key Terms:"),
-		)
-
-		pills := NewGlossaryPillsWidget(d.window)
-		pills.SetTerms(d.glossaryTerms)
-		termsRow.Add(pills)
-
-		d.container.Add(termsRow)
+		d.container.Add(readingLabel)
 	}
 }
 

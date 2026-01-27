@@ -11,6 +11,16 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/physics"
+)
+
+// Re-export shared physics formatters for package-level use
+var (
+	// FormatEnergy formats energy in Joules with appropriate SI prefix (fJ to J)
+	FormatEnergy = physics.FormatEnergy
+	// FormatEnergyUJ formats energy given in microjoules
+	FormatEnergyUJ = physics.FormatEnergyUJ
 )
 
 // EnergyBarChart displays energy per MAC comparison.
@@ -554,26 +564,8 @@ func formatPower(power float64) string {
 	}
 }
 
-// formatEnergy formats energy values with appropriate units.
-// Input is in µJ (microjoules).
-func formatEnergy(energy float64) string {
-	switch {
-	case energy >= 1000000:
-		return fmt.Sprintf("%.2f J", energy/1000000)
-	case energy >= 1000:
-		return fmt.Sprintf("%.2f mJ", energy/1000)
-	case energy >= 1:
-		return fmt.Sprintf("%.2f µJ", energy)
-	case energy >= 0.001:
-		return fmt.Sprintf("%.2f nJ", energy*1000)
-	case energy >= 0.000001:
-		return fmt.Sprintf("%.3f pJ", energy*1000000)
-	case energy > 0:
-		return fmt.Sprintf("%.1f fJ", energy*1e9)
-	default:
-		return "0 µJ"
-	}
-}
+// Note: formatEnergy moved to shared/physics package
+// Use physics.FormatEnergy(joules) or physics.FormatEnergyUJ(microjoules)
 
 // DataCenterTransformation shows before/after data center comparison using Fyne widgets.
 type DataCenterTransformation struct {

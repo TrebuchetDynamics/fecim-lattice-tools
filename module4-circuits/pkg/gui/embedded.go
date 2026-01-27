@@ -3,8 +3,6 @@
 package gui
 
 import (
-	"math/rand"
-
 	"fyne.io/fyne/v2"
 
 	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
@@ -39,20 +37,16 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca.tia = peripherals.DefaultTIA()
 	ca.pump = peripherals.DefaultChargePump()
 
-	// Initialize array
+	// Initialize array - all cells start at state 0 (lowest conductance)
 	ca.arrayWeights = make([][]int, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
-		for j := range ca.arrayWeights[i] {
-			ca.arrayWeights[i][j] = rand.Intn(ca.quantLevels)
-		}
+		// All cells start at state 0
 	}
 
 	ca.inputVector = make([]int, ca.arrayCols)
 	ca.outputVector = make([]float64, ca.arrayRows)
-	for j := range ca.inputVector {
-		ca.inputVector[j] = rand.Intn(256)
-	}
+	// Input vector starts at 0
 
 	return &EmbeddedCircuitsApp{CircuitsApp: ca}
 }

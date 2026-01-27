@@ -12,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // EnergyConfig defines energy parameters for calculations.
@@ -135,29 +137,12 @@ func (ew *EnergyWidget) RecordInference() {
 }
 
 func (ew *EnergyWidget) updateStatsLabel() {
-	// Convert totals to appropriate units
-	fecimStr := formatEnergy(ew.totalEnergyFeCIM)
-	gpuStr := formatEnergy(ew.totalEnergyGPU)
+	// Convert totals to appropriate units using shared physics package
+	fecimStr := physics.FormatEnergy(ew.totalEnergyFeCIM)
+	gpuStr := physics.FormatEnergy(ew.totalEnergyGPU)
 
 	ew.statsLabel.SetText(fmt.Sprintf("Session: %d inferences | FeCIM: %s | GPU: %s | %.0fx savings",
 		ew.totalInferences, fecimStr, gpuStr, ew.efficiencyRatio))
-}
-
-// formatEnergy converts Joules to human-readable string.
-func formatEnergy(joules float64) string {
-	if joules < 1e-9 {
-		return fmt.Sprintf("%.2f pJ", joules*1e12)
-	}
-	if joules < 1e-6 {
-		return fmt.Sprintf("%.2f nJ", joules*1e9)
-	}
-	if joules < 1e-3 {
-		return fmt.Sprintf("%.2f µJ", joules*1e6)
-	}
-	if joules < 1 {
-		return fmt.Sprintf("%.2f mJ", joules*1e3)
-	}
-	return fmt.Sprintf("%.2f J", joules)
 }
 
 // Reset clears all counters.

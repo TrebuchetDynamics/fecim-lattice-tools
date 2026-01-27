@@ -418,13 +418,13 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 	tiaText := fmt.Sprintf("%.2fV", tiaV)
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 
-	// ADC box (to the right of TIA)
+	// ADC box (to the right of TIA) - shows decoded state (0-29 for 30 analog states)
 	adcStyle := ADCStyle(highlighted, dimmed)
 	adcLevel := level
 	if adc != nil && tia != nil {
 		adcLevel = adc.Convert(tiaV)
 	}
-	adcText := fmt.Sprintf("L%d", adcLevel)
+	adcText := fmt.Sprintf("%d", adcLevel)
 	drawPeripheralBox(img, x+tiaW+2, y, adcW, h, adcStyle, adcText)
 
 	// Draw label to the right

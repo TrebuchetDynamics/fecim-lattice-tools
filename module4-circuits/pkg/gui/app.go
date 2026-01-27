@@ -6,7 +6,6 @@ package gui
 import (
 	"fmt"
 	"image/color"
-	"math/rand"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -206,6 +205,11 @@ type CircuitsApp struct {
 	unifiedDACEntries []*widget.Entry
 	unifiedDACLabels  []*widget.Label
 
+	// Unified view DAC preset buttons (labels updated based on material)
+	dacPresetReadBtn  *widget.Button
+	dacPresetWriteBtn *widget.Button
+	dacRangeLabel     *widget.Label
+
 	// Unified view WL selector widgets
 	unifiedWLChecks []*widget.Check
 
@@ -249,21 +253,17 @@ func NewCircuitsApp() *CircuitsApp {
 	return ca
 }
 
-// initializeArray sets up the weight array with random values
+// initializeArray sets up the weight array with all cells at state 0
 func (ca *CircuitsApp) initializeArray() {
 	ca.arrayWeights = make([][]int, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
-		for j := range ca.arrayWeights[i] {
-			ca.arrayWeights[i][j] = rand.Intn(ca.quantLevels)
-		}
+		// All cells start at state 0 (lowest conductance)
 	}
 
 	ca.inputVector = make([]int, ca.arrayCols)
 	ca.outputVector = make([]float64, ca.arrayRows)
-	for j := range ca.inputVector {
-		ca.inputVector[j] = rand.Intn(256)
-	}
+	// Input vector starts at 0
 }
 
 // Run starts the GUI application.

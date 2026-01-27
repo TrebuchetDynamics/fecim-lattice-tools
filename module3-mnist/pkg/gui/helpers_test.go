@@ -3,20 +3,25 @@ package gui
 import (
 	"image/color"
 	"testing"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // TestFormatEnergy verifies energy formatting to human-readable units.
+// Note: The actual formatting logic is now in shared/physics package,
+// this test verifies the integration works correctly.
 func TestFormatEnergy(t *testing.T) {
 	tests := []struct {
 		joules   float64
 		expected string
 	}{
-		{1e-13, "0.10 pJ"},
-		{5e-10, "500.00 pJ"},  // Below nJ threshold
+		{1e-15, "1.00 fJ"},    // fJ range (shared/physics adds fJ support)
+		{1e-13, "100.00 fJ"},  // fJ range (1e-13 J = 100 fJ)
+		{5e-10, "500.00 pJ"},  // pJ range
 		{1e-9, "1.00 nJ"},
-		{5e-7, "500.00 nJ"},   // Below µJ threshold
+		{5e-7, "500.00 nJ"},   // nJ range
 		{1e-6, "1.00 µJ"},
-		{5e-4, "500.00 µJ"},   // Below mJ threshold
+		{5e-4, "500.00 µJ"},   // µJ range
 		{1e-3, "1.00 mJ"},
 		{0.5, "500.00 mJ"},
 		{1.0, "1.00 J"},
@@ -24,9 +29,9 @@ func TestFormatEnergy(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result := formatEnergy(tc.joules)
+		result := physics.FormatEnergy(tc.joules)
 		if result != tc.expected {
-			t.Errorf("formatEnergy(%e) = %q, expected %q", tc.joules, result, tc.expected)
+			t.Errorf("physics.FormatEnergy(%e) = %q, expected %q", tc.joules, result, tc.expected)
 		}
 	}
 }
