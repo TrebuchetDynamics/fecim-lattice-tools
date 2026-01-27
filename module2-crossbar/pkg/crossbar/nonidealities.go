@@ -130,8 +130,9 @@ func (a *Array) estimateCurrent(row int, input []float64) float64 {
 	var current float64
 	for j := 0; j < len(input) && j < a.config.Cols; j++ {
 		g := a.cells[row][j].Conductance
-		// I = G * V, normalized conductance and voltage
-		current += g * input[j] * 1e-5 // Scale factor for reasonable current
+		// I = G * V, where G is in Siemens and V is normalized voltage
+		// Typical: g = 50e-6 S (50 µS), input = 1V → I = 50 µA
+		current += g * input[j]
 	}
 	return current
 }
@@ -142,8 +143,9 @@ func (a *Array) estimateColumnCurrent(col int, input []float64) float64 {
 	for i := 0; i < a.config.Rows; i++ {
 		g := a.cells[i][col].Conductance
 		// Sum all currents flowing through this column
+		// I = G * V, where G is in Siemens and V is normalized voltage
 		if col < len(input) {
-			current += g * input[col] * 1e-5
+			current += g * input[col]
 		}
 	}
 	return current

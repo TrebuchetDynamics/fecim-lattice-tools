@@ -90,7 +90,7 @@ func NewDemoCard(info DemoInfo, onTapped func()) *DemoCard {
 	card := &DemoCard{
 		info:     info,
 		onTapped: onTapped,
-		minSize:  fyne.NewSize(300, 180), // Moderate size
+		minSize:  fyne.NewSize(300, 200), // UI-002: Increased from 180 to 200 for better spacing
 	}
 	card.ExtendBaseWidget(card)
 	return card
@@ -226,30 +226,68 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	numText.Move(fyne.NewPos(badgeX+badgeSize/2-numTextSize*0.3, badgeY+badgeSize/2-numTextSize*0.6))
 	r.objects = append(r.objects, numText)
 
-	// Title (scales with height)
-	titleSize := float32(22) * heightScale
+	// Title (scales with height) - UI-001: Increased from 22 to 28
+	titleSize := float32(28) * heightScale
 	title := canvas.NewText(info.Title, textColor)
 	title.TextSize = titleSize
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale))
 	r.objects = append(r.objects, title)
 
-	// Subtitle
-	subtitleSize := float32(14) * heightScale
+	// Subtitle - UI-001: Increased from 14 to 16
+	subtitleSize := float32(16) * heightScale
 	subtitle := canvas.NewText(info.Subtitle, subtitleColor)
 	subtitle.TextSize = subtitleSize
 	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale+titleSize+2))
 	r.objects = append(r.objects, subtitle)
 
+	// UI-004: Add sequence indicator (X/6) on all cards
+	seqWidth := float32(50) * heightScale
+	seqHeight := float32(22) * heightScale
+	seqBg := canvas.NewRectangle(color.RGBA{0, 80, 120, 220})
+	seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
+	seqBg.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale, 10*heightScale))
+	seqBg.CornerRadius = 4 * heightScale
+	r.objects = append(r.objects, seqBg)
+
+	seqTextSize := float32(12) * heightScale
+	seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{255, 255, 255, 255})
+	seqText.TextSize = seqTextSize
+	seqText.TextStyle = fyne.TextStyle{Bold: true}
+	seqText.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale+seqWidth/2-seqTextSize*1.2, 10*heightScale+seqHeight/2-seqTextSize*0.6))
+	r.objects = append(r.objects, seqText)
+
+	// UI-004: Add "START HERE" badge for module 1
+	if info.Number == 1 {
+		startWidth := float32(100) * heightScale
+		startHeight := float32(24) * heightScale
+		startBg := canvas.NewRectangle(color.RGBA{50, 200, 50, 255})
+		startBg.Resize(fyne.NewSize(startWidth, startHeight))
+		startBg.Move(fyne.NewPos(size.Width-startWidth-10*heightScale, 10*heightScale+seqHeight+6*heightScale))
+		startBg.CornerRadius = 4 * heightScale
+		r.objects = append(r.objects, startBg)
+
+		startTextSize := float32(12) * heightScale
+		startText := canvas.NewText("START HERE", color.RGBA{255, 255, 255, 255})
+		startText.TextSize = startTextSize
+		startText.TextStyle = fyne.TextStyle{Bold: true}
+		startText.Move(fyne.NewPos(size.Width-startWidth-10*heightScale+startWidth/2-startTextSize*2.8, 10*heightScale+seqHeight+6*heightScale+startHeight/2-startTextSize*0.6))
+		r.objects = append(r.objects, startText)
+	}
+
 	// Status indicator - WIP badge or green dot (scales with card)
 	if info.Ready {
 		if info.WIP {
-			// Work In Progress badge
+			// Work In Progress badge - moved down if module 1
+			wipYOffset := float32(10) * heightScale
+			if info.Number == 1 {
+				wipYOffset = 10*heightScale + seqHeight + 6*heightScale + 30*heightScale
+			}
 			wipWidth := float32(70) * heightScale
 			wipHeight := float32(20) * heightScale
 			wipBg := canvas.NewRectangle(color.RGBA{255, 165, 0, 255})
 			wipBg.Resize(fyne.NewSize(wipWidth, wipHeight))
-			wipBg.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale, 10*heightScale))
+			wipBg.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale, wipYOffset))
 			wipBg.CornerRadius = 4 * heightScale
 			r.objects = append(r.objects, wipBg)
 
@@ -257,15 +295,8 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 			wipText := canvas.NewText("WIP", color.RGBA{0, 0, 0, 255})
 			wipText.TextSize = wipTextSize
 			wipText.TextStyle = fyne.TextStyle{Bold: true}
-			wipText.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale+wipWidth/2-wipTextSize, 10*heightScale+wipHeight/2-wipTextSize*0.6))
+			wipText.Move(fyne.NewPos(size.Width-wipWidth-10*heightScale+wipWidth/2-wipTextSize, wipYOffset+wipHeight/2-wipTextSize*0.6))
 			r.objects = append(r.objects, wipText)
-		} else {
-			// Green dot for ready
-			dotSize := float32(12) * heightScale
-			statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
-			statusDot.Resize(fyne.NewSize(dotSize, dotSize))
-			statusDot.Move(fyne.NewPos(size.Width-dotSize-12*heightScale, 12*heightScale))
-			r.objects = append(r.objects, statusDot)
 		}
 	}
 
@@ -296,9 +327,9 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 
 	// Description - wrapped text below header, left of thumbnail area
 	desc := info.Description
-	descSize := float32(14) * heightScale // Scale with card
-	if descSize < 12 {
-		descSize = 12
+	descSize := float32(16) * heightScale // UI-001: Increased from 14 to 16, min from 12 to 14
+	if descSize < 14 {
+		descSize = 14
 	}
 	maxWidth := size.Width - previewWidth - 40*heightScale // Leave space for preview
 	lineY := headerHeight + borderWidth + 14*heightScale
@@ -825,7 +856,7 @@ type ResponsiveFooter struct {
 func NewResponsiveFooter() *ResponsiveFooter {
 	f := &ResponsiveFooter{
 		metricsText: canvas.NewText("30 Analog States  |  87% MNIST  |  100× Efficiency  |  10⁹ Cycles  |  TRL 4", color.RGBA{0, 212, 255, 230}),
-		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{150, 170, 190, 200}),
+		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{200, 210, 220, 255}), // UI-003: Increased contrast from (150,170,190,200) to (200,210,220,255)
 		separator:   widget.NewSeparator(),
 	}
 	f.metricsText.Alignment = fyne.TextAlignCenter

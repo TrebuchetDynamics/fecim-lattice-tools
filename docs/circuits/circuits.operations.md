@@ -666,30 +666,45 @@ Source: Our implementation (module4-circuits/pkg/peripherals/chargepump.go)
 ```
 module4-circuits/
 ├── pkg/gui/
-│   ├── tab_operations.go        # Unified operations view
-│   ├── tab_operations_write.go  # WRITE mode implementation
-│   ├── tab_operations_read.go   # READ mode implementation
-│   └── tab_operations_compute.go # COMPUTE mode implementation
+│   ├── app.go                   # Main app with architecture state
+│   ├── tab_operations.go        # Unified operations view (WRITE/READ/COMPUTE)
+│   │   ├── createArchitectureToggle()  # 1T1R/0T1R toggle
+│   │   ├── drawSharedArray()           # Array visualization with transistors
+│   │   └── updateModeHelp()            # Architecture-aware help text
+│   ├── helpers.go               # Drawing utilities (gradients, glow effects)
+│   └── drawing.go               # Timing diagram utilities
 └── pkg/peripherals/
-    ├── dac.go                   # 5-bit DAC model
-    ├── adc.go                   # 5-bit SAR ADC model
+    ├── dac.go                   # 8-bit DAC model
+    ├── adc.go                   # 8-bit SAR ADC model
     ├── tia.go                   # TIA for current sensing
     └── chargepump.go            # Voltage boost circuit
 ```
 
-### 8.2 Architecture Toggle (Planned)
+### 8.2 Architecture Toggle (Implemented)
 
-See `.omc/plans/module4-1t1r-plan.md` for implementation details.
+**Location:** OPERATIONS view header, next to mode selector (WRITE/READ/COMPUTE)
+
+**Toggle Buttons:**
+- `[PASSIVE]` - 0T1R passive crossbar (default)
+- `[1T1R GATE]` - Transistor-gated array
 
 **Visual Indication:**
-- Passive: No transistor symbols shown
+- Passive (0T1R): No transistor symbols shown
 - 1T1R: Transistor symbols on left of each row
-  - GREEN = transistor ON
-  - GRAY = transistor OFF
+  - **GREEN with glow** = transistor ON (conducting)
+  - **GRAY** = transistor OFF (isolated)
+  - "WL" (Word Line) label above transistors
 
 **Mode-Specific Behavior:**
 - WRITE/READ: Selected row transistor ON, others OFF
 - COMPUTE: ALL transistors ON for full MVM
+
+**Help Text Updates:**
+The mode help text dynamically updates based on architecture:
+- 1T1R WRITE: "Transistor gates ONLY selected row"
+- 1T1R READ: "Transistor isolates selected row"
+- 1T1R COMPUTE: "ALL transistors ON for full MVM"
+- Passive modes show sneak path error warnings (~5-20%)
 
 ---
 
