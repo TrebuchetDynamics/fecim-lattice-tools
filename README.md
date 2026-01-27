@@ -6,7 +6,8 @@
 [![Fyne](https://img.shields.io/badge/Fyne-2.7.2-blue?logo=go)](https://fyne.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)]()
-[![Modules](https://img.shields.io/badge/Modules-6-brightgreen.svg)]()
+[![Modules](https://img.shields.io/badge/Modules-7-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-541-success.svg)]()
 
 > **"Compute in memory where the same device does the memory and the computation."**
 > — Dr. external research group, external research institution
@@ -25,6 +26,7 @@
   - [Module 4: Peripheral Circuits](#module-4-peripheral-circuits-)
   - [Module 5: Technology Comparison](#module-5-technology-comparison--investor-pitch)
   - [Module 6: Design Suite (EDA)](#module-6-fecim-design-suite--chip-design-tool)
+  - [Module 7: Documentation Browser](#module-7-documentation-browser-)
 - [Why FeCIM Matters](#why-ferroelectric-cim-matters)
 - [Technical Stack](#technical-stack)
 - [Repository Structure](#repository-structure)
@@ -107,28 +109,29 @@ go mod download
 ### Running Tests
 
 ```bash
-go test ./...                              # All tests
+go test ./...                              # All 541 tests
 go test -v ./module2-crossbar/pkg/crossbar # Crossbar tests only
+go test -race ./...                        # Race detector (all pass)
 ```
 
 ---
 
 ## Modules
 
-The visualizer includes 6 interconnected modules that tell the FeCIM story:
+The visualizer includes 7 interconnected modules that tell the FeCIM story:
 
 ```
-PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
+PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING → REFERENCE
 
-┌────────────┐    ┌────────────┐    ┌────────────┐
-│  Module 1  │───▶│  Module 2  │───▶│  Module 3  │
-│ Hysteresis │    │  Crossbar  │    │   MNIST    │
-│  30 levels │    │  + Noise   │    │  96-98%    │
-└────────────┘    └────────────┘    └────────────┘
-      │                                    │
-      ▼                                    ▼
-┌────────────┐    ┌────────────┐    ┌────────────┐
-│  Module 4  │◀───│  Module 5  │◀───│  Module 6  │
+┌────────────┐    ┌────────────┐    ┌────────────┐    ┌────────────┐
+│  Module 1  │───▶│  Module 2  │───▶│  Module 3  │    │  Module 7  │
+│ Hysteresis │    │  Crossbar  │    │   MNIST    │    │    Docs    │
+│  30 levels │    │  + Noise   │    │  96-98%    │    │  Glossary  │
+└────────────┘    └────────────┘    └────────────┘    └────────────┘
+      │                                    │                 ▲
+      ▼                                    ▼                 │
+┌────────────┐    ┌────────────┐    ┌────────────┐          │
+│  Module 4  │◀───│  Module 5  │◀───│  Module 6  │──────────┘
 │  Circuits  │    │ Comparison │    │    EDA     │
 │    CMOS    │    │  Business  │    │   Suite    │
 └────────────┘    └────────────┘    └────────────┘
@@ -142,6 +145,7 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING
 | **4. Circuits** | System | DAC/ADC/TIA peripheral design |
 | **5. Comparison** | Business | Technology benchmarks, technical briefing |
 | **6. EDA Suite** | Tooling | Chip design and fabrication export |
+| **7. Docs** | Reference | Interactive glossary, research papers, search |
 
 ---
 
@@ -334,6 +338,33 @@ go run ./cmd/eda-cli -mode storage -rows 4 -cols 4 -name hello_storage
 
 ---
 
+### Module 7: Documentation Browser ✅
+
+In-app reference system with glossary and research paper index.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  🔍 Search: [ferroelectric_________]                │
+├─────────────────────────────────────────────────────┤
+│  📚 Glossary          │  📄 Document Viewer         │
+│  ──────────────       │  ────────────────           │
+│  • FeCIM              │  # Ferroelectric CIM        │
+│  • HZO                │                             │
+│  • Preisach Model     │  Compute-in-memory using    │
+│  • MVM                │  ferroelectric materials... │
+│  • Coercive Field     │                             │
+└─────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- **100+ glossary terms** organized by category (Physics, Devices, Circuits, EDA)
+- Full-text search across all documentation
+- Breadcrumb navigation with history
+- Direct links to peer-reviewed papers (DOI)
+- In-app reading without leaving the tool
+
+---
+
 ## Technical Stack
 
 | Component | Technology |
@@ -343,6 +374,8 @@ go run ./cmd/eda-cli -mode storage -rows 4 -cols 4 -name hello_storage
 | Physics Model | Preisach/Mayergoyz |
 | Compute | Crossbar MVM simulation |
 | Non-Idealities | IR drop, sneak paths, drift |
+| Tests | 541 tests (100% pass, race-free) |
+| Documentation | 95+ markdown files |
 
 ---
 
@@ -351,14 +384,16 @@ go run ./cmd/eda-cli -mode storage -rows 4 -cols 4 -name hello_storage
 ```
 fecim-lattice-tools/
 ├── cmd/fecim-lattice-tools/    # Unified GUI entry point
-├── module1-hysteresis/      # P-E curve physics
-├── module2-crossbar/        # MVM + non-idealities
-├── module3-mnist/           # Neural network demo
-├── module4-circuits/        # Peripheral circuits
-├── module5-comparison/      # Technology benchmarks
-├── module6-eda/             # Design suite
-├── shared/                  # Common theme, logging
-├── docs/                    # Documentation, archive
+├── module1-hysteresis/         # P-E curve physics
+├── module2-crossbar/           # MVM + non-idealities
+├── module3-mnist/              # Neural network demo
+├── module4-circuits/           # Peripheral circuits
+├── module5-comparison/         # Technology benchmarks
+├── module6-eda/                # Design suite
+├── module7-docs/               # Documentation browser
+├── shared/                     # Common theme, logging, widgets
+├── docs/                       # 95+ markdown documentation files
+├── data/                       # Calibration data
 └── go.mod
 ```
 
