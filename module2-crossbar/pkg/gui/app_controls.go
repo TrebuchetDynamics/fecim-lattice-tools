@@ -24,18 +24,17 @@ func (ca *CrossbarApp) createControlWidgets() {
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
 
-	// Array size dropdown instead of slider (discrete values)
+	// Array size slider (8 to 128 in steps of 8)
 	// Create without callback first, set value, then add callback to avoid
 	// triggering recreateArray before UI is initialized
-	arraySizes := []string{"8×8", "16×16", "32×32", "64×64", "128×128"}
-	ca.arraySizeSelect = widget.NewSelect(arraySizes, nil)
-	ca.arraySizeSelect.SetSelected("64×64")
-	ca.arraySizeSelect.OnChanged = func(s string) {
-		var size int
-		fmt.Sscanf(s, "%d×%d", &size, &size)
-		if size > 0 {
-			ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
-		}
+	ca.arraySizeLabel = widget.NewLabel("Array Size: 64×64")
+	ca.arraySizeSlider = widget.NewSlider(8, 128)
+	ca.arraySizeSlider.Step = 8
+	ca.arraySizeSlider.Value = 64
+	ca.arraySizeSlider.OnChanged = func(v float64) {
+		size := int(v)
+		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %d×%d", size, size))
+		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
 	// Keep sliders for continuous values but with compact labels
@@ -171,12 +170,12 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *contai
 		ca.runMVMButton,
 	)
 
-	// === ARRAY CONFIG - Compact row ===
+	// === ARRAY CONFIG - Slider with label ===
 	arraySizeRow := container.NewBorder(
 		nil, nil,
 		widget.NewLabel("Array:"),
-		nil,
-		ca.arraySizeSelect,
+		ca.arraySizeLabel,
+		ca.arraySizeSlider,
 	)
 
 	// === ARCHITECTURE TOGGLE ===

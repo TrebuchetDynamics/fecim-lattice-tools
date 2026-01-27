@@ -71,15 +71,17 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	runMVMButton    *widget.Button
-	resetButton     *widget.Button
-	arraySizeSelect *widget.Select // Dropdown for array size
-	noiseLabel      *widget.Label
-	noiseSlider     *widget.Slider
-	adcBitsLabel    *widget.Label
-	adcBitsSlider   *widget.Slider
-	colormapSelect  *widget.Select
-	statsLabel      *widget.Label
+	runMVMButton     *widget.Button
+	resetButton      *widget.Button
+	arraySizeSelect  *widget.Select // Dropdown for array size
+	arraySizeLabel   *widget.Label  // Label for slider display
+	arraySizeSlider  *widget.Slider // Slider for array size
+	noiseLabel       *widget.Label
+	noiseSlider      *widget.Slider
+	adcBitsLabel     *widget.Label
+	adcBitsSlider    *widget.Slider
+	colormapSelect   *widget.Select
+	statsLabel       *widget.Label
 
 	// Track colormap per tab
 	condColormap  string
@@ -258,17 +260,16 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
 
-	// Array size dropdown - create without callback to avoid triggering
+	// Array size slider - create without callback to avoid triggering
 	// recreateArray before UI is initialized
-	arraySizes := []string{"8×8", "16×16", "32×32", "64×64", "128×128"}
-	ca.arraySizeSelect = widget.NewSelect(arraySizes, nil)
-	ca.arraySizeSelect.SetSelected("64×64")
-	ca.arraySizeSelect.OnChanged = func(s string) {
-		var size int
-		fmt.Sscanf(s, "%d×%d", &size, &size)
-		if size > 0 {
-			ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
-		}
+	ca.arraySizeLabel = widget.NewLabel("Array Size: 64×64")
+	ca.arraySizeSlider = widget.NewSlider(8, 128)
+	ca.arraySizeSlider.Step = 8
+	ca.arraySizeSlider.Value = 64
+	ca.arraySizeSlider.OnChanged = func(v float64) {
+		size := int(v)
+		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %d×%d", size, size))
+		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
 	ca.noiseLabel = widget.NewLabel("2.0%")
@@ -452,8 +453,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	exportButton := widget.NewButton("Export", func() { ca.exportData() })
 	exportButton.Importance = widget.MediumImportance
 
-	// Array size row - compact
-	arraySizeRow := container.NewBorder(nil, nil, widget.NewLabel("Array:"), nil, ca.arraySizeSelect)
+	// Array size row - slider with label
+	arraySizeRow := container.NewBorder(nil, nil, widget.NewLabel("Array:"), ca.arraySizeLabel, ca.arraySizeSlider)
 
 	// Architecture toggle
 	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
