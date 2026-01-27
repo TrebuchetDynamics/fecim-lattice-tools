@@ -144,9 +144,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			// NOTE: Do NOT recreate Preisach model - its grid size is for physics
 			// accuracy, not quantization levels. We only change the output quantization.
 
-			// Update level indicator
+			// Update level indicator and cell visualizer
 			if a.levelIndicator != nil {
 				a.levelIndicator.SetNumLevels(n)
+			}
+			if a.cellViz != nil {
+				a.cellViz.SetNumLevels(n)
 			}
 			// Reset discrete level to middle of new range
 			a.discreteLevel = n / 2

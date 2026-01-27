@@ -65,10 +65,11 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 	// Driver topology: WL drivers on LEFT, BL sense amps/ground at TOP
 	// This matches display convention where row 0 is at top
 	for i := 0; i < rows; i++ {
+		rowCurrent := a.estimateCurrent(i, input)
 		for j := 0; j < cols; j++ {
 			// Word line voltage drop (cumulative from left driver)
 			// Drop increases with column index j (farther from driver)
-			wlDrop := float64(j) * params.RwordLine * a.estimateCurrent(i, input)
+			wlDrop := float64(j) * params.RwordLine * rowCurrent
 			wlVoltage[i][j] = 1.0 - wlDrop // Assuming 1V input normalized
 
 			// Bit line voltage (sense amp/ground at top, row 0)
@@ -129,10 +130,12 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 func (a *Array) estimateCurrent(row int, input []float64) float64 {
 	var current float64
 	for j := 0; j < len(input) && j < a.config.Cols; j++ {
-		g := a.cells[row][j].Conductance
-		// I = G * V, where G is in Siemens and V is normalized voltage
-		// Typical: g = 50e-6 S (50 µS), input = 1V → I = 50 µA
-		current += g * input[j]
+		gNorm := a.cells[row][j].Conductance // Normalized [0,1]
+		// Convert normalized conductance to physical units (Siemens)
+		// Range: 10 µS (OFF) to 100 µS (ON), linear mapping
+		gPhys := (10e-6 + gNorm*90e-6) // 10-100 µS range
+		// I = G * V
+		current += gPhys * input[j]
 	}
 	return current
 }
@@ -141,11 +144,13 @@ func (a *Array) estimateCurrent(row int, input []float64) float64 {
 func (a *Array) estimateColumnCurrent(col int, input []float64) float64 {
 	var current float64
 	for i := 0; i < a.config.Rows; i++ {
-		g := a.cells[i][col].Conductance
-		// Sum all currents flowing through this column
-		// I = G * V, where G is in Siemens and V is normalized voltage
+		gNorm := a.cells[i][col].Conductance // Normalized [0,1]
+		// Convert normalized conductance to physical units (Siemens)
+		// Range: 10 µS (OFF) to 100 µS (ON), linear mapping
+		gPhys := (10e-6 + gNorm*90e-6) // 10-100 µS range
+		// I = G * V
 		if col < len(input) {
-			current += g * input[col]
+			current += gPhys * input[col]
 		}
 	}
 	return current

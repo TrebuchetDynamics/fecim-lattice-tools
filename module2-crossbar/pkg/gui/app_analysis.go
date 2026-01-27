@@ -97,6 +97,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 			len(irMap), len(irMap[0]),
 			mvmResult.IRDropAnalysis.MaxIRDrop*100,
 			mvmResult.IRDropAnalysis.AvgIRDrop*100)
+
+		// Update legend with actual IR drop percentages
+		ca.irLegend.SetRange(0, mvmResult.IRDropAnalysis.MaxIRDrop*100)
+
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(
 			mvmResult.IRDropAnalysis.WorstCaseCell[0],
@@ -115,6 +119,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 
 		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
 		debug.Printf("Sneak data: %d×%d, maxSneak=%.6f", len(sneakMap), len(sneakMap[0]), mvmResult.SneakPathAnalysis.MaxSneakRatio)
+
+		// Update legend with actual sneak ratio (as percentage)
+		ca.sneakLegend.SetRange(0, mvmResult.SneakPathAnalysis.MaxSneakRatio*100)
+
 		// Apply sqrt for better visibility
 		for i := range sneakMap {
 			for j := range sneakMap[i] {

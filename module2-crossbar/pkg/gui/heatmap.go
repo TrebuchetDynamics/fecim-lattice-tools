@@ -203,7 +203,12 @@ func (h *CrossbarHeatmap) ClearFixedScale() {
 	h.rateLimitedRefresh()
 }
 
-// SetColormap changes the colormap (viridis, plasma, coolwarm, fecim).
+// SetColormap changes the colormap.
+// Available colormaps:
+//   - viridis: Perceptually uniform, colorblind-safe (default for IR drop)
+//   - plasma: Perceptually uniform, colorblind-safe (default for sneak paths)
+//   - coolwarm: Diverging blue-white-red, generally colorblind-safe
+//   - fecim: Custom FeCIM branding, not colorblind-safe
 func (h *CrossbarHeatmap) SetColormap(name string) {
 	h.dataMu.Lock()
 	defer h.dataMu.Unlock()

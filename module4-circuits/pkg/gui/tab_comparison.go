@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"image"
+	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -294,6 +295,10 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 
 	// Energy savings annotation (conservative claim per CLAUDE.md accuracy policy)
 	drawSimpleText(img, "10-100x savings", w-120, fefetY+8, sharedtheme.ColorAccent)
+
+	// FeFET energy breakdown (below the bar)
+	breakdownY := fefetY + barH + 12
+	drawSimpleText(img, "Breakdown: DAC (35%) + Array (45%) + TIA (10%) + ADC (10%)", 10, breakdownY, color.RGBA{180, 180, 200, 255})
 
 	// X-axis
 	axisY := h - 30

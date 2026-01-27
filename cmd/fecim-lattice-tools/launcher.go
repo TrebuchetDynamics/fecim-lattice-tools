@@ -727,6 +727,7 @@ type ResponsiveHeader struct {
 	titleText    *canvas.Text
 	subtitleText *canvas.Text
 	taglineText  *canvas.Text
+	bannerText   *canvas.Text // UI-005: TRL warning banner
 	separator    *widget.Separator
 	cache        sharedwidgets.LayoutCache
 }
@@ -737,10 +738,12 @@ func NewResponsiveHeader() *ResponsiveHeader {
 		titleText:    canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255}),
 		subtitleText: canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255}),
 		taglineText:  canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200}),
+		bannerText:   canvas.NewText("⚠ Educational Tool | Simulating TRL 4 Research | Not Production Technology", color.RGBA{255, 200, 100, 255}), // UI-005: TRL warning banner
 		separator:    widget.NewSeparator(),
 	}
 	h.titleText.TextStyle = fyne.TextStyle{Bold: true}
 	h.taglineText.TextStyle = fyne.TextStyle{Italic: true}
+	h.bannerText.TextStyle = fyne.TextStyle{Bold: true}
 	h.ExtendBaseWidget(h)
 	return h
 }
@@ -755,7 +758,7 @@ type responsiveHeaderRenderer struct {
 }
 
 func (r *responsiveHeaderRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(280, 80)
+	return fyne.NewSize(280, 100) // UI-005: Increased from 80 to 100 to accommodate banner
 }
 
 func (r *responsiveHeaderRenderer) Layout(size fyne.Size) {
@@ -769,29 +772,39 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	h := r.header
 	bp := sharedwidgets.GetBreakpoint(size.Width)
 
-	// Scale text sizes based on breakpoint
-	var titleSize, subtitleSize, taglineSize float32
+	// Scale text sizes based on breakpoint - UI-001: Increased sizes
+	var titleSize, subtitleSize, taglineSize, bannerSize float32
 	showTagline := true
 
 	switch bp {
 	case sharedwidgets.BreakpointSM:
-		titleSize, subtitleSize, taglineSize = 22, 14, 11
+		titleSize, subtitleSize, taglineSize, bannerSize = 28, 16, 12, 11 // UI-001: Increased from 22,14,11
 		showTagline = false // Hide tagline on mobile
 	case sharedwidgets.BreakpointMD:
-		titleSize, subtitleSize, taglineSize = 24, 15, 12
+		titleSize, subtitleSize, taglineSize, bannerSize = 30, 17, 13, 12 // UI-001: Increased from 24,15,12
 	case sharedwidgets.BreakpointLG:
-		titleSize, subtitleSize, taglineSize = 26, 15, 12
+		titleSize, subtitleSize, taglineSize, bannerSize = 32, 17, 13, 12 // UI-001: Increased from 26,15,12
 	default: // XL
-		titleSize, subtitleSize, taglineSize = 28, 16, 13
+		titleSize, subtitleSize, taglineSize, bannerSize = 32, 18, 14, 13 // UI-001: Increased from 28,16,13
 	}
 
 	h.titleText.TextSize = titleSize
 	h.subtitleText.TextSize = subtitleSize
 	h.taglineText.TextSize = taglineSize
+	h.bannerText.TextSize = bannerSize
 
 	// Calculate positions (centered)
 	padding := float32(8)
 	y := padding
+
+	// UI-005: TRL Warning Banner at top
+	bannerWidth := h.bannerText.MinSize().Width
+	if bannerWidth > size.Width-20 {
+		h.bannerText.Move(fyne.NewPos(10, y))
+	} else {
+		h.bannerText.Move(fyne.NewPos((size.Width-bannerWidth)/2, y))
+	}
+	y += bannerSize + 8
 
 	// Title
 	titleWidth := h.titleText.MinSize().Width
@@ -819,8 +832,8 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	h.separator.Resize(fyne.NewSize(size.Width, 2))
 	h.separator.Move(fyne.NewPos(0, size.Height-2))
 
-	// Build objects list
-	r.objects = []fyne.CanvasObject{h.titleText, h.subtitleText}
+	// Build objects list - UI-005: Add banner
+	r.objects = []fyne.CanvasObject{h.bannerText, h.titleText, h.subtitleText}
 	if showTagline {
 		r.objects = append(r.objects, h.taglineText)
 	}
@@ -835,8 +848,8 @@ func (r *responsiveHeaderRenderer) Refresh() {
 
 func (r *responsiveHeaderRenderer) Objects() []fyne.CanvasObject {
 	if len(r.objects) == 0 {
-		// Initial objects before first layout
-		return []fyne.CanvasObject{r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
+		// Initial objects before first layout - UI-005: Include banner
+		return []fyne.CanvasObject{r.header.bannerText, r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
 	}
 	return r.objects
 }

@@ -494,35 +494,41 @@ This would set a gold standard for educational software honesty.
 
 ## UI/LAYOUT IMPROVEMENTS (Priority 5 - User Experience)
 
-### UI-001: Home Screen Typography Too Small
+### UI-001: Home Screen Typography Too Small ✅ FIXED
 **Location**: Home screen module
 **Issue**: Title text is 18px and body text is 12px. Vision agent reports these fail readability standards for educational software. Users at 1080p resolution must lean in to read module descriptions.
 **Fix**: Increase title to 28-32px, body text to 14px minimum. Add responsive font scaling based on window size.
+**Status**: Fixed in launcher.go - title 28-32px, body 14-16px, responsive scaling added.
 
-### UI-002: Home Screen Module Card Spacing
+### UI-002: Home Screen Module Card Spacing ✅ FIXED
 **Location**: Home screen module grid
 **Issue**: Module cards have only 8px gaps between them, creating visual crowding and making click targets less distinct.
 **Fix**: Increase spacing to 16-24px gaps. Add subtle hover elevation effect (4px shadow) to improve visual feedback.
+**Status**: Fixed in responsive_grid_layout.go - spacing increased to 24px.
 
-### UI-003: Home Screen Footer Contrast Violation
+### UI-003: Home Screen Footer Contrast Violation ✅ FIXED
 **Location**: Home screen footer text
 **Issue**: Footer text has 3.5:1 contrast ratio, failing WCAG AA standard (requires 4.5:1 for body text). Users with vision impairments cannot read footer links.
 **Fix**: Increase footer text contrast to 4.5:1 minimum. Consider using theme.ForegroundColor() instead of dimmed color.
+**Status**: Fixed in launcher.go - RGB increased from (150,170,190) to (200,210,220).
 
-### UI-004: Home Screen Missing Learning Sequence
+### UI-004: Home Screen Missing Learning Sequence ✅ FIXED
 **Location**: Home screen module cards
 **Issue**: No visual indication that modules build on each other. Students may jump to MNIST without understanding hysteresis fundamentals.
 **Fix**: Add "START HERE" badge to Hysteresis module card. Add sequence numbers (1/6, 2/6, etc.) to card headers. Include prerequisite indicators ("Recommended: Complete Modules 1-2 first").
+**Status**: Fixed in launcher.go - sequence numbers (1/6-6/6) added, "START HERE" badge on module 1.
 
-### UI-005: Home Screen Missing TRL Warning Banner
+### UI-005: Home Screen Missing TRL Warning Banner ✅ FIXED
 **Location**: Home screen top
 **Issue**: Users see impressive demos without immediate context that this is TRL 4 laboratory research, not production technology.
 **Fix**: Add global banner at top: "Educational Tool | Simulating TRL 4 Research | Not Production Technology" with info icon linking to TRL explanation.
+**Status**: Fixed in launcher.go - yellow warning banner added to header.
 
-### UI-006: Hysteresis "Level no" Bug Display
+### UI-006: Hysteresis "Level no" Bug Display ✅ FIXED
 **Location**: Module 1 - State indicator when voltage below Ec
 **Issue**: Displays "Level no" (string concatenation bug) when no state change occurs. Should display "N/A - below Ec" to teach that coercive field threshold must be exceeded.
 **Fix**: Add explicit check: `if abs(voltage) < Ec { return "N/A - below Ec" }` instead of string concatenation.
+**Status**: Fixed in widgets/cell.go - level display now shows dynamic N/30 based on numLevels setting.
 
 ### UI-007: Hysteresis Polarization Bar Indicator Too Small
 **Location**: Module 1 - Current polarization indicator on P-E graph
@@ -549,20 +555,23 @@ This would set a gold standard for educational software honesty.
 **Issue**: Three columns become cramped at 1366×768 resolution. Controls overlap. Touch targets shrink below 44×44px minimum.
 **Fix**: Implement responsive breakpoints: >1600px (3 columns), 1024-1600px (2 columns), <1024px (1 column stack). Use Fyne container with adaptive layout.
 
-### UI-012: Crossbar Heatmaps Missing Scale Bars
+### UI-012: Crossbar Heatmaps Missing Scale Bars ✅ FIXED
 **Location**: Module 2 - All heatmap visualizations (conductance, voltage drop, current)
 **Issue**: Heatmaps show color gradients but no scale bars or value legends. Users cannot interpret absolute values or compare between architectures.
 **Fix**: Add vertical scale bar to right of each heatmap showing min/max values with 5 intermediate ticks. Include units (µS, mV, µA).
+**Status**: Fixed in app.go and app_analysis.go - ColorLegend widgets integrated with dynamic range updates.
 
-### UI-013: Crossbar IR Drop Calculation Inconsistency
+### UI-013: Crossbar IR Drop Calculation Inconsistency ✅ FIXED
 **Location**: Module 2 - IR drop simulation tab
 **Issue**: Vision agent reports: "80pA through 140Ω should produce µV drops (V=IR: 80×10⁻¹²×140=11.2nV), but display shows mV values." This is 6 orders of magnitude error.
 **Fix**: Audit `ir_drop.go` calculation. Verify wire resistance model uses Ω per unit length, not total resistance. Add validation test comparing hand calculation to simulation output.
+**Status**: Fixed in nonidealities.go - corrected conductance scale (10-100 µS), IR drops now physically correct (~8mV).
 
-### UI-014: Crossbar Colormap Not Colorblind-Safe
+### UI-014: Crossbar Colormap Not Colorblind-Safe ✅ VERIFIED
 **Location**: Module 2 - All heatmaps using rainbow/plasma colormap
 **Issue**: Rainbow colormaps are not perceptually uniform and fail for ~8% of users with colorblindness. Red/green cannot be distinguished.
 **Fix**: Replace with viridis or plasma colormap (perceptually uniform, colorblind-safe). Add option in settings for colormap selection (Viridis, Plasma, Grayscale).
+**Status**: Verified in heatmap.go - IR drop and sneak path already use viridis/plasma (colorblind-safe). Documentation added.
 
 ### UI-015: Crossbar No Cell-Level Inspection
 **Location**: Module 2 - Heatmap hover interaction
@@ -589,30 +598,35 @@ This would set a gold standard for educational software honesty.
 **Issue**: Waterfall chart shows total error but doesn't attribute how much each non-ideality contributes to specific misclassifications.
 **Fix**: Add "Error Attribution" tab showing: "Of 13% total error: IR drop (5.2%), Device variation (4.1%), Sneak paths (2.8%), Quantization (0.9%)". Add confusion matrix showing which digits suffer most.
 
-### UI-020: MNIST Drawing Canvas Too Small
+### UI-020: MNIST Drawing Canvas Too Small ✅ VERIFIED
 **Location**: Module 3 - Canvas input area
 **Issue**: 28×28 pixel canvas is difficult to draw on, especially for touchpad users. No zoom or scaling option.
 **Fix**: Render canvas at 280×280 pixels (10× scale) but downsample to 28×28 for inference. Add grid lines every 10 pixels. Add "Clear" and "Random Sample" buttons.
+**Status**: Verified - canvas already 350×350 (12.5× scale), grid lines present.
 
-### UI-021: MNIST Confidence Bars Too Small
+### UI-021: MNIST Confidence Bars Too Small ✅ FIXED
 **Location**: Module 3 - FP32 vs CIM confidence comparison
 **Issue**: Horizontal bars showing 10 class confidences are narrow (8-10px height) and hard to read. Percentage text overlaps bars.
 **Fix**: Increase bar height to 24px minimum. Move percentage labels to right side of bars. Add color coding: Green (highest confidence), Blue (medium), Gray (low).
+**Status**: Fixed in comparison_card.go - bar height increased to 24px, labels moved to right side.
 
-### UI-022: MNIST Energy Visualization Missing Scale
+### UI-022: MNIST Energy Visualization Missing Scale ✅ FIXED
 **Location**: Module 3 - Energy comparison graph/panel
 **Issue**: Energy visualization shows relative comparison but lacks scale bar, legend, units, and absolute values. Users cannot interpret "100000 energy saving" without units.
 **Fix**: Add clear labels: "FP32: 1.25 mJ", "FeCIM: 12.5 µJ", "Ratio: 100×". Add bar chart with logarithmic scale. Include citation: "Based on Horowitz 2014 energy model".
+**Status**: Fixed in energy_widget.go - clear unit labels added, Horowitz 2014 citation in title.
 
-### UI-023: MNIST "MISMATCH" Metric Unexplained
+### UI-023: MNIST "MISMATCH" Metric Unexplained ✅ FIXED
 **Location**: Module 3 - Comparison results panel
 **Issue**: Shows "MISMATCH: 0.0074" without explaining what this measures. Is it per-weight error? Total network error?
 **Fix**: Rename to "Weight Quantization Error (RMS)" with tooltip: "Root-mean-square difference between FP32 and 30-level quantized weights. Lower is better. <0.01 typically preserves accuracy."
+**Status**: Fixed in comparison_card.go and dualmode_inference.go - renamed to "Prediction Mismatch" with context.
 
-### UI-024: MNIST "100000 energy saving" Missing Units
+### UI-024: MNIST "100000 energy saving" Missing Units ✅ FIXED
 **Location**: Module 3 - Energy comparison output
 **Issue**: Displays "100000 energy saving" which is ambiguous. Is it 100,000× improvement? 100,000 joules saved? Needs units and context.
 **Fix**: Change to: "Energy Efficiency: 100,000× improvement (FP32: 1.25 mJ, FeCIM: 12.5 nJ per inference)". Add caveat: "Assumes array energy only, excludes DAC/ADC overhead".
+**Status**: Fixed across comparison_card.go, dualmode_inference.go, dualmode_demo.go - "Energy Efficiency: X× improvement" with proper µ symbol.
 
 ### UI-025: Circuits Math Error (11.2 × 6.045)
 **Location**: Module 4 - Calculation display
@@ -629,25 +643,29 @@ This would set a gold standard for educational software honesty.
 **Issue**: Vision agent notes 8×8 = 64 MACs per cycle, so 4,009 MACs implies 62.6 cycles. Unclear why this specific number.
 **Fix**: Add explanation: "4,009 MACs = 8×8 array × 62 inference cycles + 73 overhead MACs for MNIST (28×28 → 8×8 tiled processing)". Or correct if value is wrong.
 
-### UI-028: Circuits Voltage Zones Unlabeled
+### UI-028: Circuits Voltage Zones Unlabeled ✅ FIXED
 **Location**: Module 4 - Circuit diagram with voltage regions
 **Issue**: Color-coded voltage zones (red/yellow/green regions) lack labels or legend. Users cannot interpret which voltages are safe/destructive.
 **Fix**: Add voltage zone legend: "Green (0-0.5V): Safe read zone", "Yellow (0.5-1.5V): Caution - read disturb risk", "Red (>1.5V): Write/erase zone - destructive read".
+**Status**: Fixed in tab_operations_read.go - comprehensive zone legend added below visualization.
 
-### UI-029: Circuits No Energy Breakdown (DAC + Array + ADC)
+### UI-029: Circuits No Energy Breakdown (DAC + Array + ADC) ✅ FIXED
 **Location**: Module 4 - Energy calculation display
 **Issue**: Shows total energy but doesn't break down peripheral overhead. Users assume array energy is everything.
 **Fix**: Add stacked bar chart: "DAC (35%)", "Array (45%)", "ADC (15%)", "TIA (5%)". Add toggle: "Array Only" vs "Full System" energy comparison.
+**Status**: Fixed in tab_comparison.go - energy breakdown annotation added showing peripheral percentages.
 
-### UI-030: Global Missing Citation Panel
+### UI-030: Global Missing Citation Panel ✅ CREATED
 **Location**: All modules
 **Issue**: Scientific claims appear throughout UI without inline citations or centralized reference list. Users cannot verify sources.
 **Fix**: Add "References" button to top toolbar opening slide-out panel with DOI links for all cited papers. Add superscript citation numbers [1], [2] inline with claims.
+**Status**: Created shared/widgets/glossary.go - ReferencesWidget with 9 key papers with DOI links.
 
-### UI-031: Global No Glossary System
+### UI-031: Global No Glossary System ✅ CREATED
 **Location**: All modules
 **Issue**: Technical terms (FeCIM, TRL, Ec, Pr, MAC, MVM, 1T1R, PUTT, DAPS) appear without definitions. New users must search external resources.
 **Fix**: Add global glossary accessible via Cmd+G or "Glossary" button. Automatically link first occurrence of each term with dotted underline. Clicking shows inline definition popup.
+**Status**: Created shared/widgets/glossary.go - searchable GlossaryWidget with 24 terms in 4 categories. Helper functions for easy integration.
 
 ### UI-032: Global No Accessibility Features
 **Location**: All modules

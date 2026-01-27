@@ -236,24 +236,29 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 	barHeight := 25
 	labelWidth := 70
 
-	// Section 1: Per-Inference Comparison
+	// Section 1: Per-Inference Comparison (UI-022 fix: added clear labels with units)
 	y := padding
 
 	// Title
-	drawSimpleText(img, "Per Inference Energy:", padding, y, color.RGBA{180, 180, 200, 255})
+	drawSimpleText(img, "Per Inference Energy (Horowitz 2014 model):", padding, y, color.RGBA{180, 180, 200, 255})
 	y += 15
 
 	// GPU bar (full width represents GPU energy)
-	maxBarWidth := w - 2*padding - labelWidth - 100
+	maxBarWidth := w - 2*padding - labelWidth - 120
 	gpuBarWidth := maxBarWidth
 	if gpuBarWidth < 10 {
 		gpuBarWidth = 10
 	}
 
-	// GPU label and bar
-	drawSimpleText(img, "GPU:", padding, y+8, color.RGBA{255, 100, 100, 255})
+	// GPU label and bar with units
+	drawSimpleText(img, "FP32:", padding, y+8, color.RGBA{255, 100, 100, 255})
 	drawBar(img, padding+labelWidth, y, gpuBarWidth, barHeight, color.RGBA{200, 80, 80, 255})
-	drawSimpleText(img, fmt.Sprintf("%.0f nJ", gpuEnergy), padding+labelWidth+gpuBarWidth+5, y+8, color.RGBA{200, 150, 150, 255})
+	// UI-022 fix: Clear unit labeling
+	gpuLabel := fmt.Sprintf("%.2f nJ", gpuEnergy)
+	if gpuEnergy >= 1000 {
+		gpuLabel = fmt.Sprintf("%.2f µJ", gpuEnergy/1000)
+	}
+	drawSimpleText(img, gpuLabel, padding+labelWidth+gpuBarWidth+5, y+8, color.RGBA{200, 150, 150, 255})
 	y += barHeight + 5
 
 	// FeCIM bar (proportionally smaller)
@@ -265,10 +270,15 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 		}
 	}
 
-	// FeCIM label and bar
+	// FeCIM label and bar with units
 	drawSimpleText(img, "FeCIM:", padding, y+8, color.RGBA{100, 255, 180, 255})
 	drawBar(img, padding+labelWidth, y, fecimBarWidth, barHeight, color.RGBA{80, 200, 150, 255})
-	drawSimpleText(img, fmt.Sprintf("%.1f nJ", fecimEnergy), padding+labelWidth+fecimBarWidth+5, y+8, color.RGBA{150, 200, 180, 255})
+	// UI-022 fix: Clear unit labeling (nJ or pJ)
+	fecimLabel := fmt.Sprintf("%.2f nJ", fecimEnergy)
+	if fecimEnergy < 1 {
+		fecimLabel = fmt.Sprintf("%.0f pJ", fecimEnergy*1000)
+	}
+	drawSimpleText(img, fecimLabel, padding+labelWidth+fecimBarWidth+5, y+8, color.RGBA{150, 200, 180, 255})
 	y += barHeight + 10
 
 	// Efficiency highlight box

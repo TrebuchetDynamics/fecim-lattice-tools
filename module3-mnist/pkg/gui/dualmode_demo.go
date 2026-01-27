@@ -90,7 +90,7 @@ func (app *DualModeApp) StartQuickDemo() {
 		// Restore ideal settings (2s)
 		fyne.Do(func() {
 			app.applyPresetWithMode(30, 0.01, 8, 8, false)
-			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable 87% accuracy with 10,000x energy savings!")
+			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable 87% accuracy with 10,000× energy efficiency improvement!")
 		})
 		if app.waitOrStop(500 * time.Millisecond) {
 			return

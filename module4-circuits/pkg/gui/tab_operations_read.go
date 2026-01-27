@@ -120,11 +120,15 @@ func (ca *CircuitsApp) createReadModePanel() {
 		),
 	)
 
-	// Zone visualization
+	// Zone visualization with legend
+	zoneLegend := widget.NewLabel("Red (>1.5V): Write zone - polarization switches\nGreen (<0.5V): Safe read - non-disturbing\nYellow (0.5-1.5V): Caution zone")
+	zoneLegend.TextStyle = fyne.TextStyle{Italic: true}
+
 	zoneSection := container.NewVBox(
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("VOLTAGE ZONES", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ca.opsReadZoneCanvas,
+		zoneLegend,
 	)
 
 	// Data path section
@@ -206,9 +210,11 @@ func (ca *CircuitsApp) drawOpsReadZone(w, h int) image.Image {
 		}
 	}
 
-	// Zone labels
-	drawSimpleText(img, "WRITE", marginLeft+5, writeZoneTop+12, labelColor)
-	drawSimpleText(img, "READ", marginLeft+5, readZoneTop+12, labelColor)
+	// Zone labels with descriptions
+	drawSimpleText(img, "WRITE ZONE", marginLeft+5, writeZoneTop+12, labelColor)
+	drawSimpleText(img, ">1.5V: Polarization switch", marginLeft+5, writeZoneTop+26, color.RGBA{200, 200, 200, 200})
+	drawSimpleText(img, "SAFE READ", marginLeft+5, readZoneTop+12, labelColor)
+	drawSimpleText(img, "<0.5V: Non-disturbing", marginLeft+5, readZoneTop+26, color.RGBA{200, 200, 200, 200})
 
 	// Y-axis
 	for y := marginTop; y <= h-marginBottom; y++ {

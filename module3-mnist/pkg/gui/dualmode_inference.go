@@ -54,16 +54,16 @@ func (app *DualModeApp) runInference(pixels []float64) {
 			app.cimProbBars[i].SetValue(result.CIMProbabilities[i])
 		}
 
-		// Update energy (legacy)
+		// Update energy (legacy) - UI-024 fix: clearer units and wording
 		gpuEnergy := result.EnergyUsed * EnergyRatioGPU
-		app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f uJ (FeCIM) vs %.0f mJ (GPU) = %.0fx savings",
+		app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) vs %.0f mJ (GPU) = %.0f× improvement",
 			result.EnergyUsed, gpuEnergy/1000, float64(EnergyRatioGPU)))
 
-		// Update status
+		// Update status (UI-023 fix: clearer MISMATCH wording)
 		app.statusLabel.SetText(fmt.Sprintf("FP: %d (%.1f%%) | CIM: %d (%.1f%%) | %s",
 			result.FPPrediction, result.FPConfidence*100,
 			result.CIMPrediction, result.CIMConfidence*100,
-			map[bool]string{true: "MATCH", false: "MISMATCH"}[result.Agree]))
+			map[bool]string{true: "MATCH", false: "Prediction Mismatch"}[result.Agree]))
 
 		// === P1 ENHANCEMENTS ===
 
@@ -153,12 +153,12 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 		// Update all displays (same as runInference)
 		app.updateResultDisplays(result, quantWeights)
 
-		// Show dramatic match/mismatch feedback
+		// Show dramatic match/mismatch feedback (UI-024 fix: better units, UI-023 fix: clearer wording)
 		if result.Agree {
-			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 10,000x energy savings",
+			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | Energy Efficiency: 10,000× improvement",
 				result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
 		} else {
-			app.statusLabel.SetText(fmt.Sprintf("MISMATCH | FP: %d vs CIM: %d | Check hardware config!",
+			app.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
 				result.FPPrediction, result.CIMPrediction))
 		}
 	})
@@ -188,9 +188,9 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 		app.cimProbBars[i].SetValue(result.CIMProbabilities[i])
 	}
 
-	// Update energy (legacy)
+	// Update energy (legacy) - UI-024 fix: clearer units and wording
 	gpuEnergy := result.EnergyUsed * 10000
-	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f uJ (FeCIM) vs %.0f mJ (GPU) = %.0fx savings",
+	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) vs %.0f mJ (GPU) = %.0f× improvement",
 		result.EnergyUsed, gpuEnergy/1000, 10000.0))
 
 	// P1 Enhancements
