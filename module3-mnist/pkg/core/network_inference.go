@@ -202,7 +202,11 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 	return output
 }
 
-// forwardCIM performs CIM matrix multiplication (same math, but uses quantized weights).
+// forwardCIM performs CIM (Compute-in-Memory) matrix multiplication.
+// The math is identical to forwardFP - the difference is semantic:
+// - forwardFP is called with full-precision (float64) weights
+// - forwardCIM is called with quantized weights (30-level FeCIM representation)
+// This wrapper exists for code clarity to distinguish the two inference paths.
 func (net *DualModeNetwork) forwardCIM(input []float64, weights [][]float64, bias []float64) []float64 {
 	return net.forwardFP(input, weights, bias)
 }

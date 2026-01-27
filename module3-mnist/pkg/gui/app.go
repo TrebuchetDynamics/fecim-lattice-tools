@@ -249,7 +249,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.educationalPanel.SetIdleExplanation()
 	ma.operationLog = NewMNISTOperationLog()
 	ma.predictionDisplay = NewPredictionDisplay()
-	ma.keyStat = NewMNISTKeyStat("Target Accuracy", "87%")
+	ma.keyStat = NewMNISTKeyStat("Peer-Reviewed", "96-98%")
 
 	// Demo mode selector
 	ma.demoModeSelect = widget.NewSelect(
@@ -272,7 +272,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Info label with network specs
-	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Target: 87%")
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Peer-reviewed: 96-98%")
 
 	// Control buttons - organized into groups
 	clearBtn := widget.NewButton("Clear", func() {
@@ -341,7 +341,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		drawBtn,
 		metricsBtn,
 		layout.NewSpacer(),
-		widget.NewLabel("784 -> 128 -> 10 | 87% accuracy | 30 Levels"),
+		widget.NewLabel("784 -> 128 -> 10 | 30 Levels | Accuracy varies with config"),
 	)
 
 	header := container.NewVBox(
@@ -871,7 +871,7 @@ func (ma *MNISTApp) startAutoDemoLoop() {
 			"2. Run inference\n"+
 			"3. Show prediction\n"+
 			"4. Repeat\n\n"+
-			"Target: 87% accuracy")
+			"Accuracy varies")
 
 	go ma.autoDemoLoop(ma.autoDemoCtx)
 }
