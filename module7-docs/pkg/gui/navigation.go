@@ -394,5 +394,6 @@ func (qap *QuickAccessPanel) refresh() {
 	}
 
 	qap.container = container.NewVBox(items...)
-	qap.Refresh()
+	// Note: Don't call qap.Refresh() here - it causes infinite recursion
+	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...
 }

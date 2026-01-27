@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image/color"
 	"regexp"
 	"sort"
@@ -228,7 +229,7 @@ func formatReadingTime(minutes int) string {
 	if minutes == 1 {
 		return "1 min read"
 	}
-	return strings.Join([]string{string(rune(minutes + '0')), " min read"}, "")
+	return fmt.Sprintf("%d min read", minutes)
 }
 
 // RelatedDoc represents a related document suggestion
@@ -393,7 +394,7 @@ func FindRelated(currentPath string, currentMeta *DocMetadata, allDocs map[strin
 
 		commonTerms := countCommonTerms(currentMeta.GlossaryTerms, meta.GlossaryTerms)
 		if commonTerms >= 3 {
-			reason := strings.Join([]string{string(rune(commonTerms + '0')), " shared terms"}, "")
+			reason := fmt.Sprintf("%d shared terms", commonTerms)
 			related = append(related, RelatedDoc{
 				Path:     path,
 				Title:    meta.Title,

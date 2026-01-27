@@ -403,9 +403,11 @@ mnist:
   batch_size: 64
   learning_rate: 0.001
 
-  # Expected accuracy
+  # Reference accuracy (peer-reviewed benchmarks, not targets)
+  # Note: Accuracy varies with noise, levels, and architecture
   baseline_accuracy: 0.966      # 96.6% (Nature Communications 2023) - VERIFIED
-  tour_claimed_accuracy: 0.87   # 87% (Dr. Tour, COSM 2025) - UNVERIFIED [17]
+  best_accuracy: 0.9824         # 98.24% (ScienceDirect 2025) - VERIFIED (FTJ reservoir)
+  # tour_claimed_accuracy: 0.87 # REMOVED - unverified conference claim below peer-reviewed
   current_limited_accuracy: 0.97 # 97% with current-limited FeFET [16]
   fashion_mnist_rc: 0.8838      # 88.38% Fashion MNIST with reservoir computing
 

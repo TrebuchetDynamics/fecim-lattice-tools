@@ -319,9 +319,9 @@ Files reviewed (124 claims extracted):
 | Claim | Value | Status | Analysis |
 |-------|-------|--------|----------|
 | 30 analog states | 30 levels | **PLAUSIBLE** | Others demonstrated 32-140; Tour's specific device unverified |
-| 87% MNIST accuracy | 87% | **BELOW PEER-REVIEWED** | Peer-reviewed achieves 96.6-98.24% |
+| 87% MNIST accuracy | 87% | **REMOVED FROM TOOL** | Removed - peer-reviewed achieves 96.6-98.24%; unverified claim should not constrain simulation |
 | 10¹² cycle endurance | 10¹² | **NOW DEMONSTRATED BY OTHERS** | Tour stated as "target"; V:HfO₂ 2024 actually achieved it |
-| 10M× vs NAND energy | 10,000,000× | **NO DATA EXISTS** | Samsung peer-reviewed shows 25-100×; Tour's claim unsupported |
+| 10M× vs NAND energy | 10,000,000× | **REMOVED** | Samsung peer-reviewed shows 25-100×; Tour's claim unsupported |
 
 ### 6.2 Analysis of Tour's 10M× Claim
 
@@ -466,7 +466,7 @@ Scientific accuracy over marketing claims. Full audit: `docs/cim/HONESTY_AUDIT.m
 | Claim | Status | Source |
 |-------|--------|--------|
 | 30 analog states (Tour device) | UNVERIFIED | COSM 2025 (not peer-reviewed) |
-| 87% MNIST accuracy (Tour) | UNVERIFIED | COSM 2025 (below 98.24% verified) |
+| 87% MNIST accuracy (Tour) | REMOVED | Removed from tool - unverified claim below peer-reviewed 96.6-98.24% |
 | 10M× vs NAND energy | REMOVED | No measurement data exists |
 
 ### Notes

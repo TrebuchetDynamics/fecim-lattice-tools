@@ -9,30 +9,32 @@ Subject: Interactive FeCIM visualization suite - investor demos that let people 
 
 Dr. Tour,
 
-After watching your COSM presentation - "the same device does the memory and the computation" - I built an interactive visualization suite for FeCIM technology. Five modules designed for technical briefinges and foundry conversations.
+After watching your COSM presentation - "the same device does the memory and the computation" - I built an interactive visualization suite for FeCIM technology. Seven modules designed for technical briefinges and foundry conversations.
 
 **What's working now:**
 
 1. **Hysteresis** - P-E curves with Preisach model, 30 discrete states (~4.9 bits/cell)
-   → Explains "why 30 levels matters" in 60 seconds
+   → Write/Read demo shows multi-level memory operations in real-time
+   → Temperature-dependent calibration (automotive range: -40°C to 150°C)
 
 2. **Crossbar MVM** - Matrix-vector multiply with toggleable non-idealities
    → IR drop, sneak paths, drift - visualize the problems and how FeCIM handles them
 
-3. **MNIST Demo** - Draw a digit, watch the crossbar recognize it, 87% accuracy
-   → Configured to match your reported hardware result. The "wow moment" for investor meetings.
+3. **MNIST Demo** - Draw a digit, watch the crossbar recognize it
+   → Configurable accuracy to match hardware results. The "wow moment" for investor meetings.
 
 4. **Peripheral Circuits** - DAC/ADC/TIA in Write/Read/Compute modes
    → Shows this is a real system, not just a memory cell
 
 5. **Technology Comparison** - Energy metrics, competitive matrix, market sizing
-   → FeCIM wins every category, investor-ready charts
+   → Side-by-side vs NAND, DRAM, ReRAM with investor-ready charts
 
-**In development:**
-- Module 6: FeCIM Design Suite - universal chip design tool
-  → Design storage chips (NAND), memory chips (DRAM), or AI chips (CIM)
-  → Generates Verilog, DEF, SPICE, ready for OpenLane fabrication flow
-  → "Hello World": 4×4 storage array in 3 commands, no AI weights needed
+6. **EDA Design Suite** - Chip design tool with industry-standard outputs
+   → Generates Verilog RTL, DEF placement, ready for OpenLane flow
+   → Supports passive crossbar and 1T1R architectures
+
+7. **Documentation** - Interactive docs browser with glossary
+   → Physics explanations, research references, demo guides
 
 **The value:** Interactive demos > PowerPoint slides.
 When an investor draws a "7" and watches your crossbar recognize it in real-time, that's worth more than 50 slides explaining the technology.

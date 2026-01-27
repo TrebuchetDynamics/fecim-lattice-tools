@@ -193,8 +193,8 @@ func TestSaveLoadWeights(t *testing.T) {
 	// Get original weights
 	origWeights := layer1.GetConductanceMatrix()
 
-	// Save weights
-	tmpFile := "/tmp/test_weights.json"
+	// Save weights (use t.TempDir for automatic cleanup)
+	tmpFile := filepath.Join(t.TempDir(), "test_weights.json")
 	err := net.SaveWeights(tmpFile)
 	if err != nil {
 		t.Fatal(err)

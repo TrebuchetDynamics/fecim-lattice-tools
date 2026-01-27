@@ -289,8 +289,8 @@ func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
 	content := "Testing on 1000 digits...\n\n" +
 		"Each digit runs through\n" +
 		"the full network.\n\n" +
-		"Target: 87% accuracy\n" +
-		"(per Dr. Tour, unverified)"
+		"Peer-reviewed: 96-98%\n" +
+		"(varies with configuration)"
 	e.SetContent("Evaluating Network", content)
 }
 
@@ -298,9 +298,9 @@ func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
 func (e *MNISTEducationalPanel) SetIdleExplanation() {
 	content := "Draw a digit (0-9) or\n" +
 		"click Random Test.\n\n" +
-		"The FeCIM chip recognizes\n" +
-		"handwritten numbers with\n" +
-		"87% accuracy.\n\n" +
+		"FeCIM recognizes digits\n" +
+		"with high accuracy\n" +
+		"(peer-reviewed: 96-98%).\n\n" +
 		"784 → 128 → 10 neurons\n" +
 		"30 analog levels per cell\n" +
 		"2 clock cycles total"

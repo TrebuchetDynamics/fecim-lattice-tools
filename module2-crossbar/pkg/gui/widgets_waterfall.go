@@ -42,12 +42,12 @@ type WaterfallStep struct {
 }
 
 // NewAccuracyWaterfall creates a new waterfall chart.
-// CRIT-005 fix: Target accuracy with context - 87% is Tour's unverified claim
-// Peer-reviewed range: 92-98.24% (see HONESTY_AUDIT.md Section 5.4)
+// Note: No fixed target - accuracy varies with configuration
+// Peer-reviewed range: 96.6-98.24% (see HONESTY_AUDIT.md Section 5.4)
 func NewAccuracyWaterfall() *AccuracyWaterfall {
 	w := &AccuracyWaterfall{
 		steps:          []WaterfallStep{},
-		targetAccuracy: 87.0, // Tour COSM 2025 (unverified) | Peer-reviewed: 92-98.24%
+		targetAccuracy: 0.0, // No fixed target - accuracy determined by simulation
 	}
 	w.ExtendBaseWidget(w)
 	return w
@@ -90,8 +90,8 @@ func (w *AccuracyWaterfall) CreateRenderer() fyne.WidgetRenderer {
 		w.yAxisLabels[i] = label
 	}
 
-	// Create target label - CRIT-005 fix: Add context about verification status
-	w.targetLabel = canvas.NewText(fmt.Sprintf("Target: %.0f%% (Tour) | Peer-reviewed: 92-98%%", w.targetAccuracy), color.RGBA{255, 200, 0, 255})
+	// Create reference label showing peer-reviewed accuracy range
+	w.targetLabel = canvas.NewText("Peer-reviewed: 96.6-98.24%", color.RGBA{100, 200, 150, 255})
 	w.targetLabel.TextSize = 10
 	w.targetLabel.Alignment = fyne.TextAlignLeading
 
@@ -345,8 +345,8 @@ func (r *waterfallRenderer) Refresh() {
 		}
 	}
 
-	// Update target label - CRIT-005 fix: Maintain context about verification status
-	w.targetLabel.Text = fmt.Sprintf("Target: %.0f%% (Tour) | Peer-reviewed: 92-98%%", w.targetAccuracy)
+	// Update reference label (peer-reviewed range, no target)
+	w.targetLabel.Text = "Peer-reviewed: 96.6-98.24%"
 
 	w.raster.Refresh()
 }

@@ -133,13 +133,6 @@ func TestVerilog4x4Array(t *testing.T) {
 		t.Errorf("4x4 array should have 16 instances, got %d", instanceCount)
 	}
 
-	// Write to generated directory for manual inspection and Yosys testing
-	generatedDir := "../../../generated"
-	if err := os.MkdirAll(generatedDir, 0755); err == nil {
-		outPath := filepath.Join(generatedDir, "lattice.v")
-		ExportVerilog(mapping, outPath)
-		t.Logf("4x4 Verilog written to %s for Yosys validation", outPath)
-	}
 }
 
 // Phase 2 Tests: Architecture Configuration
@@ -221,14 +214,6 @@ func TestVerilog1T1RArchitecture(t *testing.T) {
 	// Cell instances should have SL pin connections
 	if !strings.Contains(verilog, ".SL  (SL[") {
 		t.Error("1T1R cell instances should connect SL pins")
-	}
-
-	// Write 1T1R output for Yosys validation
-	generatedDir := "../../../generated"
-	if err := os.MkdirAll(generatedDir, 0755); err == nil {
-		outPath := filepath.Join(generatedDir, "lattice_1t1r.v")
-		ExportVerilog(mapping, outPath)
-		t.Logf("1T1R Verilog written to %s", outPath)
 	}
 
 	t.Log("1T1R architecture Verilog generated successfully with SL[] ports")

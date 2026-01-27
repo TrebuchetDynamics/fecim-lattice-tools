@@ -288,15 +288,16 @@ func (ca *CrossbarApp) assessDegradationImpact(diffPercent float64) string {
 }
 
 // getAccuracyStatus returns a status message based on accuracy.
+// Note: No fixed target - compares against peer-reviewed benchmarks (96.6-98.24%)
 func (ca *CrossbarApp) getAccuracyStatus(accuracy float64) string {
-	if accuracy >= 87.0 {
-		return "✓ Meets 87% hardware target"
-	} else if accuracy >= 85.0 {
-		return "⚠ Close to target (within 2%)"
+	if accuracy >= 96.0 {
+		return "✓ Excellent - matches peer-reviewed benchmarks"
+	} else if accuracy >= 90.0 {
+		return "✓ Good - within practical range"
 	} else if accuracy >= 80.0 {
-		return "⚠ Below target - optimization needed"
+		return "⚠ Moderate - optimization may help"
 	}
-	return "✗ Significant optimization required"
+	return "⚠ Low - check noise and quantization settings"
 }
 
 // showExportSuccessDialog displays a success dialog with export file paths
