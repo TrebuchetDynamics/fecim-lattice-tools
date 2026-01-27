@@ -6,6 +6,7 @@ package tabs
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -18,10 +19,17 @@ import (
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/module6-eda/pkg/gui/widgets"
 	"fecim-lattice-tools/module6-eda/pkg/openlane"
 	"fecim-lattice-tools/module6-eda/pkg/validation"
 	"fecim-lattice-tools/shared/logging"
 )
+
+// fileExists checks if a file exists
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
 
 // MakeBuilderValidationTab creates a unified tab combining cell/array configuration,
 // preview (Verilog/DEF/Layout), validation, and export functionality
@@ -103,10 +111,52 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	modeSelect.SetSelected(cfg.Mode)
 	updateModeHelp(cfg.Mode) // Initialize help text
 
-	archSelect := widget.NewSelect([]string{"passive", "1t1r"}, func(s string) {
-		cfg.Architecture = s
-	})
-	archSelect.SetSelected(cfg.Architecture)
+	// Layout canvas widget for visual display (created early for architecture toggle reference)
+	layoutCanvas := widgets.NewLayoutCanvas(cfg)
+
+	// Architecture toggle buttons (same style as crossbar module)
+	archPassiveBtn := widget.NewButton("PASSIVE", nil)
+	arch1T1RBtn := widget.NewButton("1T1R", nil)
+
+	// Helper to update button styles based on selection
+	updateArchButtons := func() {
+		if cfg.Architecture == "passive" {
+			archPassiveBtn.Importance = widget.HighImportance
+			arch1T1RBtn.Importance = widget.LowImportance
+		} else {
+			archPassiveBtn.Importance = widget.LowImportance
+			arch1T1RBtn.Importance = widget.HighImportance
+		}
+		archPassiveBtn.Refresh()
+		arch1T1RBtn.Refresh()
+	}
+
+	// Set initial state
+	updateArchButtons()
+
+	// Wire up callbacks
+	archPassiveBtn.OnTapped = func() {
+		if cfg.Architecture == "passive" {
+			return // Already selected
+		}
+		cfg.Architecture = "passive"
+		updateArchButtons()
+		// Update layout canvas if it exists
+		layoutCanvas.SetConfig(cfg)
+	}
+
+	arch1T1RBtn.OnTapped = func() {
+		if cfg.Architecture == "1t1r" {
+			return // Already selected
+		}
+		cfg.Architecture = "1t1r"
+		updateArchButtons()
+		// Update layout canvas if it exists
+		layoutCanvas.SetConfig(cfg)
+	}
+
+	// Architecture toggle container
+	archToggle := container.NewGridWithColumns(2, archPassiveBtn, arch1T1RBtn)
 
 	// Statistics labels - now with more metrics
 	totalLabel := widget.NewLabel(fmt.Sprintf("Total Cells: %d", cfg.Rows*cfg.Cols))
@@ -149,13 +199,15 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			utilization = (area / arrayTotalArea) * 100.0
 		}
 
-		totalLabel.SetText(fmt.Sprintf("Total Cells: %d", total))
-		areaLabel.SetText(fmt.Sprintf("Array Area: %.2f µm²", area))
-		wlLengthLabel.SetText(fmt.Sprintf("WL Length: %.2f µm", wlLength))
-		blLengthLabel.SetText(fmt.Sprintf("BL Length: %.2f µm", blLength))
-		densityLabel.SetText(fmt.Sprintf("Density: %.4f cells/µm²", density))
-		utilizationLabel.SetText(fmt.Sprintf("Utilization: %.1f%%", utilization))
-		cellAreaLabel.SetText(fmt.Sprintf("Cell Area: %.4f µm²", cellW*cellH))
+		fyne.Do(func() {
+			totalLabel.SetText(fmt.Sprintf("Total Cells: %d", total))
+			areaLabel.SetText(fmt.Sprintf("Array Area: %.2f µm²", area))
+			wlLengthLabel.SetText(fmt.Sprintf("WL Length: %.2f µm", wlLength))
+			blLengthLabel.SetText(fmt.Sprintf("BL Length: %.2f µm", blLength))
+			densityLabel.SetText(fmt.Sprintf("Density: %.4f cells/µm²", density))
+			utilizationLabel.SetText(fmt.Sprintf("Utilization: %.1f%%", utilization))
+			cellAreaLabel.SetText(fmt.Sprintf("Cell Area: %.4f µm²", cellW*cellH))
+		})
 	}
 
 	// Wire up change handlers
@@ -173,8 +225,24 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	defPreview.Wrapping = fyne.TextWrapOff
 	defPreview.SetText("# Example DEF Placement Structure\n# After clicking 'Generate All', this will show:\n#   - Design header with units and die area\n#   - Component placement coordinates\n#   - Pin definitions\n\nVERSION 5.8 ;\nDESIGN fecim_crossbar_NxM ;\nUNITS DISTANCE MICRONS 1000 ;\nDIEAREA ( 0 0 ) ( ... ) ;\nCOMPONENTS ... ;\n  - cell_0_0 fecim_bitcell + FIXED ( ... ) N ;\nEND COMPONENTS")
 
-	layoutViz := widget.NewLabel("ASCII Layout Visualization\n\nAfter clicking 'Generate All', this will show a text-based\nrepresentation of your crossbar array with WL/BL connections.\n\nExample:\nWL[0] [=][=][=]\n      | | |\nWL[1] [=][=][=]\n      BL0 BL1 BL2")
-	layoutViz.TextStyle.Monospace = true
+	// Button to open SVG in browser
+	openSVGBtn := widget.NewButton("Open SVG in Browser", func() {
+		svgPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.svg", cfg.Rows, cfg.Cols)
+		absPath, _ := filepath.Abs(svgPath)
+		// Try xdg-open (Linux), open (Mac), or start (Windows)
+		var cmd *exec.Cmd
+		switch {
+		case fileExists("/usr/bin/xdg-open"):
+			cmd = exec.Command("xdg-open", absPath)
+		case fileExists("/usr/bin/open"):
+			cmd = exec.Command("open", absPath)
+		default:
+			cmd = exec.Command("xdg-open", absPath)
+		}
+		if err := cmd.Start(); err != nil {
+			dialog.ShowError(fmt.Errorf("Could not open SVG: %v\nFile: %s", err, absPath), window)
+		}
+	})
 
 	verilogStatsLabel := widget.NewLabel("Verilog: Pending")
 	defStatsLabel := widget.NewLabel("DEF: Pending")
@@ -266,15 +334,13 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			}
 
 			if manager.IsPDKInstalled() {
-				pdkStatus.SetText("✓ SKY130A PDK ready")
+				pdkStatus.SetText("✓ SKY130A PDK available (optional)")
 			} else {
-				pdkStatus.SetText("○ PDK not installed (run: volare enable --pdk sky130 sky130A)")
+				pdkStatus.SetText("○ Not needed - uses FeCIM cell library")
 			}
 		})
 	}()
 
-	// Placement validation checkbox
-	enablePlacementCheck := widget.NewCheck("Enable OpenLane Placement Check", nil)
 
 	// ========== STATUS ==========
 	statusLabel := widget.NewLabel("Ready")
@@ -298,17 +364,26 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			updateStats()
 			cellCfg := getCellConfig()
 
-			// Generate cell files
+			// Generate cell files - use appropriate directory based on architecture
 			addLog("Generating cell library...")
+			is1T1R := cfg.Architecture == "1t1r"
 			lefContent := export.GenerateLEF(cellCfg)
 			libContent := export.GenerateLiberty(cellCfg)
 			cellVContent := export.GenerateCellVerilog(cellCfg)
 
-			dir := "cells/fecim_bitcell"
+			// Choose cell directory and name based on architecture
+			var dir, cellFileName string
+			if is1T1R {
+				dir = "cells/fecim_1t1r_bitcell"
+				cellFileName = "fecim_1t1r_bitcell"
+			} else {
+				dir = "cells/fecim_bitcell"
+				cellFileName = "fecim_bitcell"
+			}
 			os.MkdirAll(dir, 0755)
-			os.WriteFile(dir+"/fecim_bitcell.lef", []byte(lefContent), 0644)
-			os.WriteFile(dir+"/fecim_bitcell.lib", []byte(libContent), 0644)
-			os.WriteFile(dir+"/fecim_bitcell.v", []byte(cellVContent), 0644)
+			os.WriteFile(dir+"/"+cellFileName+".lef", []byte(lefContent), 0644)
+			os.WriteFile(dir+"/"+cellFileName+".lib", []byte(libContent), 0644)
+			os.WriteFile(dir+"/"+cellFileName+".v", []byte(cellVContent), 0644)
 			addLog("  LEF/LIB/V written to " + dir)
 
 			// Generate array Verilog
@@ -344,11 +419,53 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			})
 			addLog("  DEF: " + defFilename)
 
-			// Update layout visualization
-			vizText := makeBuilderLayoutVisualization(cfg)
+			// Update layout visualization canvas
 			fyne.Do(func() {
-				layoutViz.SetText(vizText)
+				layoutCanvas.SetConfig(cfg)
 			})
+
+			// Generate layout image using KLayout (if available)
+			addLog("Generating layout image...")
+			pngFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
+
+			// Determine LEF path based on architecture
+			cellLEFPath := "cells/fecim_bitcell/fecim_bitcell.lef"
+			if cfg.Architecture == "1t1r" {
+				cellLEFPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
+			}
+
+			imgManager := openlane.NewManager()
+			imgConfig := openlane.DefaultConfig()
+			if validation.IsKLayoutAvailable(imgManager) {
+				imgResult, _ := validation.GenerateLayoutImage(
+					defFilename,
+					cellLEFPath,
+					pngFilename,
+					imgManager,
+					imgConfig,
+				)
+				if imgResult != nil && imgResult.Success {
+					addLog("  PNG (KLayout): " + pngFilename)
+				} else {
+					errMsg := "unknown error"
+					if imgResult != nil && imgResult.Error != "" {
+						errMsg = imgResult.Error
+					}
+					addLog("  KLayout failed: " + errMsg)
+					addLog("  Generating fallback schematic SVG...")
+					svgContent := export.GenerateLayoutSVGWithDefaults(*cfg)
+					svgFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.svg", cfg.Rows, cfg.Cols)
+					os.WriteFile(svgFilename, []byte(svgContent), 0644)
+					addLog("  SVG (schematic): " + svgFilename)
+				}
+			} else {
+				addLog("  KLayout not available (install Docker with OpenLane image)")
+				addLog("  Generating schematic SVG preview...")
+				svgContent := export.GenerateLayoutSVGWithDefaults(*cfg)
+				svgFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.svg", cfg.Rows, cfg.Cols)
+				os.WriteFile(svgFilename, []byte(svgContent), 0644)
+				addLog("  SVG (schematic): " + svgFilename)
+			}
 
 			// Generate OpenLane config
 			addLog("Generating OpenLane config...")
@@ -385,10 +502,21 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			allPassed := true
 
+			// Determine cell paths based on architecture
+			is1T1R := cfg.Architecture == "1t1r"
+			var cellDir, cellFileName string
+			if is1T1R {
+				cellDir = "cells/fecim_1t1r_bitcell"
+				cellFileName = "fecim_1t1r_bitcell"
+			} else {
+				cellDir = "cells/fecim_bitcell"
+				cellFileName = "fecim_bitcell"
+			}
+
 			// Yosys validation
 			addLog("=== Yosys Verilog Validation ===")
 			arrayPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-			cellPath := "cells/fecim_bitcell/fecim_bitcell.v"
+			cellPath := cellDir + "/" + cellFileName + ".v"
 			addLog(fmt.Sprintf("Array: %s", arrayPath))
 			addLog(fmt.Sprintf("Cell:  %s", cellPath))
 
@@ -421,9 +549,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			// Cross-check validation
 			addLog("\n=== LEF/LIB/V Cross-Check ===")
-			lefPath := "cells/fecim_bitcell/fecim_bitcell.lef"
-			libPath := "cells/fecim_bitcell/fecim_bitcell.lib"
-			vPath := "cells/fecim_bitcell/fecim_bitcell.v"
+			lefPath := cellDir + "/" + cellFileName + ".lef"
+			libPath := cellDir + "/" + cellFileName + ".lib"
+			vPath := cellDir + "/" + cellFileName + ".v"
 			addLog(fmt.Sprintf("LEF: %s", lefPath))
 			addLog(fmt.Sprintf("LIB: %s", libPath))
 			addLog(fmt.Sprintf("V:   %s", vPath))
@@ -439,40 +567,40 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				addLog("PASSED")
 			}
 
-			// OpenLane Placement validation (if enabled and available)
-			if enablePlacementCheck.Checked {
-				addLog("\n=== OpenLane Placement Validation ===")
-				manager := openlane.NewManager()
-				mode := manager.DetectMode()
+			// OpenLane Placement validation (runs when Docker/OpenROAD is available)
+			// Uses our custom FeCIM cell LEF - no external PDK required
+			addLog("\n=== OpenLane Placement Validation ===")
+			manager := openlane.NewManager()
+			mode := manager.DetectMode()
 
-				if mode == openlane.ModeNone {
-					fyne.Do(func() { placementResult.SetText("⊝ SKIP") })
-					addLog("SKIPPED: OpenLane not available")
+			if mode == openlane.ModeNone {
+				fyne.Do(func() { placementResult.SetText("⊝ SKIP") })
+				addLog("SKIPPED: OpenLane/Docker not available")
+			} else {
+				defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+
+				addLog(fmt.Sprintf("Mode: %s", mode))
+				addLog(fmt.Sprintf("DEF: %s", defPath))
+				addLog(fmt.Sprintf("Cell LEF: %s", lefPath))
+
+				config := openlane.DefaultConfig()
+				result, err := validation.RunPlacementCheckWithCell(defPath, lefPath, manager, config)
+				if err != nil {
+					fyne.Do(func() { placementResult.SetText("✗ ERROR") })
+					addLog(fmt.Sprintf("ERROR: %v", err))
+					allPassed = false
+				} else if result.Passed {
+					fyne.Do(func() { placementResult.SetText("✓ PASS") })
+					addLog(result.RawOutput)
+					addLog("PASSED")
 				} else {
-					defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
-
-					addLog(fmt.Sprintf("Mode: %s", mode))
-					addLog(fmt.Sprintf("DEF: %s", defPath))
-
-					config := openlane.DefaultConfig()
-					result, err := validation.RunPlacementCheck(defPath, manager, config)
-					if err != nil {
-						fyne.Do(func() { placementResult.SetText("✗ ERROR") })
-						addLog(fmt.Sprintf("ERROR: %v", err))
-						allPassed = false
-					} else if result.Passed {
-						fyne.Do(func() { placementResult.SetText("✓ PASS") })
-						addLog(result.RawOutput)
-						addLog("PASSED")
-					} else {
-						fyne.Do(func() { placementResult.SetText("✗ FAIL") })
-						addLog(result.RawOutput)
-						addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
-						for _, v := range result.Violations {
-							addLog(fmt.Sprintf("  - %s: %s", v.Issue, v.Message))
-						}
-						allPassed = false
+					fyne.Do(func() { placementResult.SetText("✗ FAIL") })
+					addLog(result.RawOutput)
+					addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
+					for _, v := range result.Violations {
+						addLog(fmt.Sprintf("  - %s: %s", v.Issue, v.Message))
 					}
+					allPassed = false
 				}
 			}
 
@@ -592,57 +720,61 @@ Date: %s
 
 	// ========== BUILD LAYOUT ==========
 
-	// Cell config form
-	cellForm := widget.NewForm(
-		widget.NewFormItem("Cell Name", nameEntry),
-		widget.NewFormItem("Width (µm)", widthEntry),
-		widget.NewFormItem("Height (µm)", heightEntry),
-		widget.NewFormItem("Rise (ns)", riseEntry),
-		widget.NewFormItem("Fall (ns)", fallEntry),
-		widget.NewFormItem("Cap (pF)", capEntry),
-		widget.NewFormItem("Leakage (nW)", leakageEntry),
+	// Compact cell config - 6 columns for tighter layout
+	cellConfigGrid := container.NewGridWithColumns(6,
+		widget.NewLabel("Name"), nameEntry,
+		widget.NewLabel("W(µm)"), widthEntry,
+		widget.NewLabel("H(µm)"), heightEntry,
+		widget.NewLabel("Rise(ns)"), riseEntry,
+		widget.NewLabel("Fall(ns)"), fallEntry,
+		widget.NewLabel("Cap(pF)"), capEntry,
+	)
+	cellConfigGrid2 := container.NewGridWithColumns(4,
+		widget.NewLabel("Leakage(nW)"), leakageEntry,
+		cellAreaLabel, widget.NewLabel(""),
 	)
 
 	cellPanel := container.NewVBox(
 		widget.NewLabelWithStyle("Cell Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		cellForm,
-		cellAreaLabel,
+		cellConfigGrid,
+		cellConfigGrid2,
 	)
 
-	// Array config form
-	arrayForm := widget.NewForm(
-		widget.NewFormItem("Rows", rowsEntry),
-		widget.NewFormItem("Columns", colsEntry),
-		widget.NewFormItem("Mode", modeSelect),
-		widget.NewFormItem("Architecture", archSelect),
+	// Compact array config - 6 columns with architecture toggle
+	arrayConfigGrid := container.NewGridWithColumns(6,
+		widget.NewLabel("Rows"), rowsEntry,
+		widget.NewLabel("Cols"), colsEntry,
+		widget.NewLabel("Mode"), modeSelect,
+	)
+	arrayConfigGrid2 := container.NewHBox(
+		widget.NewLabel("Architecture:"),
+		archToggle,
 	)
 
-	// Enhanced stats box with visual prominence
-	statsTitle := widget.NewLabelWithStyle("Statistics", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	statsBox := container.NewVBox(
-		statsTitle,
-		widget.NewSeparator(),
-		totalLabel,
-		areaLabel,
-		wlLengthLabel,
-		blLengthLabel,
-		densityLabel,
+	// Compact stats in single horizontal row
+	statsRow := container.NewHBox(
+		widget.NewLabelWithStyle("Stats:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		totalLabel, widget.NewLabel("|"),
+		areaLabel, widget.NewLabel("|"),
+		wlLengthLabel, widget.NewLabel("|"),
+		blLengthLabel, widget.NewLabel("|"),
+		densityLabel, widget.NewLabel("|"),
 		utilizationLabel,
 	)
 
 	arrayPanel := container.NewVBox(
 		widget.NewLabelWithStyle("Array Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		arrayForm,
+		arrayConfigGrid,
+		arrayConfigGrid2,
 		modeHelpText,
-		widget.NewSeparator(),
-		statsBox,
+		statsRow,
 	)
 
-	// Config panels (left/right split)
+	// Config panels (left/right split) - give more to array side
 	configSplit := container.NewHSplit(cellPanel, arrayPanel)
-	configSplit.SetOffset(0.5)
+	configSplit.SetOffset(0.45)
 
-	// Preview tabs
+	// Preview tabs - larger, scrollable containers
 	verilogTab := container.NewBorder(
 		verilogStatsLabel, nil, nil, nil,
 		container.NewScroll(verilogPreview),
@@ -651,13 +783,22 @@ Date: %s
 		defStatsLabel, nil, nil, nil,
 		container.NewScroll(defPreview),
 	)
-	layoutTab := container.NewScroll(layoutViz)
+
+	// Layout tab with canvas that fills available space
+	layoutHelp := widget.NewLabel("SVG also exported to output/exports/")
+	layoutScroll := container.NewScroll(layoutCanvas)
+	layoutTab := container.NewBorder(
+		container.NewHBox(openSVGBtn, layoutHelp),
+		nil, nil, nil,
+		layoutScroll,
+	)
 
 	previewTabs := container.NewAppTabs(
 		container.NewTabItem("Verilog", verilogTab),
 		container.NewTabItem("DEF", defTab),
 		container.NewTabItem("Layout", layoutTab),
 	)
+	previewTabs.SetTabLocation(container.TabLocationTop)
 
 	// Action buttons
 	actionButtons := container.NewHBox(
@@ -666,82 +807,91 @@ Date: %s
 		exportPackageBtn,
 	)
 
-	// Validation results (compact row with summary)
-	validationRow := container.NewVBox(
+	// Validation results - single compact row
+	validationRow := container.NewHBox(
+		widget.NewLabelWithStyle("Validation:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		validationSummary,
-		container.NewHBox(
-			widget.NewLabel("Yosys:"), yosysResult,
-			widget.NewLabel(" | DEF:"), defResult,
-			widget.NewLabel(" | Cross:"), crossResult,
-			widget.NewLabel(" | Placement:"), placementResult,
-		),
+		widget.NewSeparator(),
+		widget.NewLabel("Yosys:"), yosysResult,
+		widget.NewLabel("|"), widget.NewLabel("DEF:"), defResult,
+		widget.NewLabel("|"), widget.NewLabel("Cross:"), crossResult,
+		widget.NewLabel("|"), widget.NewLabel("Placement:"), placementResult,
 	)
 
-	// Compact OpenLane status panel with helpful messages
-	openLaneHelpText := widget.NewLabel("Optional: Enable placement validation if OpenLane/Docker is installed")
-	openLaneHelpText.Wrapping = fyne.TextWrapWord
-
-	openLanePanel := container.NewVBox(
-		widget.NewLabelWithStyle("OpenLane (Optional)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		openLaneHelpText,
-		container.NewHBox(widget.NewLabel("Docker:"), dockerStatus),
-		container.NewHBox(widget.NewLabel("PDK:"), pdkStatus),
+	// Compact OpenLane status - single row
+	openLaneRow := container.NewHBox(
+		widget.NewLabelWithStyle("OpenLane:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Docker:"), dockerStatus,
+		widget.NewLabel("|"), widget.NewLabel("PDK:"), pdkStatus,
 		pullImageBtn,
-		enablePlacementCheck,
 	)
 
-	// Bottom section with improved layout - more space for validation, compact OpenLane
-	validationResultsPanel := container.NewVBox(
-		widget.NewLabelWithStyle("Validation Results", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		validationRow,
+	// Log section with fixed height scroll
+	logOutput.SetMinRowsVisible(4)
+	logHeader := container.NewHBox(
+		widget.NewLabelWithStyle("Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		clearLogBtn,
 	)
+	logScroll := container.NewScroll(logOutput)
+	logScroll.SetMinSize(fyne.NewSize(0, 100)) // Fixed height for log
 
-	validationSplit := container.NewHSplit(
-		validationResultsPanel,
-		openLanePanel,
-	)
-	validationSplit.SetOffset(0.65) // Give 65% to validation results, 35% to OpenLane
-
-	logSection := container.NewBorder(
-		container.NewHBox(widget.NewLabelWithStyle("Validation Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), clearLogBtn),
-		nil, nil, nil,
-		container.NewScroll(logOutput),
-	)
-
+	// Bottom validation section - more compact
 	validationSection := container.NewVBox(
 		widget.NewSeparator(),
-		validationSplit,
-		logSection,
+		validationRow,
+		openLaneRow,
+		logHeader,
+		logScroll,
 	)
 
-	// Status bar
+	// Status bar - compact inline with actions
 	statusBar := container.NewHBox(
 		widget.NewLabel("Status:"),
 		statusLabel,
 	)
 
-	// Top section: config + actions
+	// Top section: config + actions (compact)
 	topSection := container.NewVBox(
 		configSplit,
 		widget.NewSeparator(),
-		actionButtons,
-		statusBar,
+		container.NewHBox(actionButtons, widget.NewSeparator(), statusBar),
 	)
 
-	// Main layout: top (config/actions) | middle (preview) | bottom (validation)
+	// Use VSplit for resizable preview/validation areas
+	// Preview gets 75% of space, validation gets 25%
+	mainSplit := container.NewVSplit(
+		previewTabs,
+		validationSection,
+	)
+	mainSplit.SetOffset(0.75)
+
+	// Main layout: fixed top section, resizable middle/bottom
 	mainContent := container.NewBorder(
 		topSection,
-		validationSection,
+		nil,
 		nil, nil,
-		previewTabs,
+		mainSplit,
 	)
 
 	return mainContent
 }
 
 // generateBuilderDEF generates DEF content for the unified builder tab
+// Supports both passive and 1T1R architectures:
+//   - passive: WL[], BL[] pins
+//   - 1t1r: WL[], BL[], SL[] pins (SL at bottom edge for transistor source)
+// Includes ROW definitions for OpenROAD placement validation
 func generateBuilderDEF(cfg config.ArrayConfig) string {
 	designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
+	is1T1R := cfg.Architecture == "1t1r"
+
+	// Determine cell name and site name based on architecture
+	cellName := "fecim_bitcell"
+	siteName := "fecim_site"
+	if is1T1R {
+		cellName = "fecim_1t1r_bitcell"
+		siteName = "fecim_1t1r_site"
+	}
 
 	dbu := 1000 // Database units per micron
 	cellWidthDBU := int(cfg.CellWidth * float64(dbu))
@@ -760,6 +910,20 @@ BUSBITCHARS "[]" ;
 	content.WriteString(fmt.Sprintf("UNITS DISTANCE MICRONS %d ;\n\n", dbu))
 	content.WriteString(fmt.Sprintf("DIEAREA ( 0 0 ) ( %d %d ) ;\n\n", dieWidth, dieHeight))
 
+	// ROW definitions - required for OpenROAD placement check
+	content.WriteString(fmt.Sprintf("ROW ROW_0 %s %d %d N DO %d BY 1 STEP %d 0 ;\n\n",
+		siteName, margin, margin, cfg.Cols, cellWidthDBU))
+	for row := 1; row < cfg.Rows; row++ {
+		y := margin + row*cellHeightDBU
+		orient := "N"
+		if row%2 == 1 {
+			orient = "FS" // Flip alternate rows for proper power grid
+		}
+		content.WriteString(fmt.Sprintf("ROW ROW_%d %s %d %d %s DO %d BY 1 STEP %d 0 ;\n",
+			row, siteName, margin, y, orient, cfg.Cols, cellWidthDBU))
+	}
+	content.WriteString("\n")
+
 	// Components
 	totalCells := cfg.Rows * cfg.Cols
 	content.WriteString(fmt.Sprintf("COMPONENTS %d ;\n", totalCells))
@@ -768,13 +932,20 @@ BUSBITCHARS "[]" ;
 		for col := 0; col < cfg.Cols; col++ {
 			x := margin + col*cellWidthDBU
 			y := margin + row*cellHeightDBU
-			content.WriteString(fmt.Sprintf("    - cell_%d_%d fecim_bitcell + FIXED ( %d %d ) N ;\n", row, col, x, y))
+			orient := "N"
+			if row%2 == 1 {
+				orient = "FS"
+			}
+			content.WriteString(fmt.Sprintf("    - cell_%d_%d %s + FIXED ( %d %d ) %s ;\n", row, col, cellName, x, y, orient))
 		}
 	}
 	content.WriteString("END COMPONENTS\n\n")
 
-	// Pins
+	// Pins - add SL for 1T1R architecture
 	numPins := cfg.Rows + cfg.Cols + 2
+	if is1T1R {
+		numPins += cfg.Cols // Add SL pins (one per column)
+	}
 	content.WriteString(fmt.Sprintf("PINS %d ;\n", numPins))
 	content.WriteString("    - VPWR + NET VPWR + DIRECTION INOUT + USE POWER ;\n")
 	content.WriteString("    - VGND + NET VGND + DIRECTION INOUT + USE GROUND ;\n")
@@ -783,6 +954,12 @@ BUSBITCHARS "[]" ;
 	}
 	for i := 0; i < cfg.Cols; i++ {
 		content.WriteString(fmt.Sprintf("    - BL[%d] + NET BL[%d] + DIRECTION OUTPUT + USE SIGNAL ;\n", i, i))
+	}
+	if is1T1R {
+		// SL pins at bottom edge (opposite from BL) - one per column for transistor source
+		for i := 0; i < cfg.Cols; i++ {
+			content.WriteString(fmt.Sprintf("    - SL[%d] + NET SL[%d] + DIRECTION INPUT + USE SIGNAL ;\n", i, i))
+		}
 	}
 	content.WriteString("END PINS\n\n")
 

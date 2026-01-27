@@ -89,6 +89,15 @@ func (b *BeforeAfterToggle) SetMode(mode string) {
 	b.updateLegend()
 }
 
+// SetDimensions changes the dimensions of both internal heatmaps and reinitializes data.
+func (b *BeforeAfterToggle) SetDimensions(rows, cols int) {
+	b.leftHeatmap.SetDimensions(rows, cols)
+	b.rightHeatmap.SetDimensions(rows, cols)
+	// Clear cached data since dimensions changed
+	b.idealData = nil
+	b.actualData = nil
+}
+
 // updateDisplay refreshes the heatmaps based on current mode.
 func (b *BeforeAfterToggle) updateDisplay() {
 	if b.idealData == nil || b.actualData == nil {

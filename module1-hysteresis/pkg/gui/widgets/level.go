@@ -4,6 +4,7 @@ package widgets
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"sync"
 	"time"
 
@@ -14,14 +15,15 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
-// LevelIndicator displays the current 30-level state of the ferroelectric cell.
+// LevelIndicator displays the current N-level state of the ferroelectric cell.
 // Implements fyne.Tappable to allow interactive level selection.
 type LevelIndicator struct {
 	widget.BaseWidget
 
-	mu      sync.RWMutex
-	level   int
-	minSize fyne.Size
+	mu        sync.RWMutex
+	level     int
+	numLevels int // Number of discrete levels (default 30)
+	minSize   fyne.Size
 
 	// Interactive mode callback - called when user clicks a level
 	OnLevelClicked func(targetLevel int)
@@ -35,14 +37,40 @@ type LevelIndicator struct {
 	pulseProgress float32 // 0.0 to 1.0, used for pulsing effect
 }
 
-// NewLevelIndicator creates a new level indicator
+// NewLevelIndicator creates a new level indicator with default 30 levels
 func NewLevelIndicator() *LevelIndicator {
 	l := &LevelIndicator{
-		level:   15,
-		minSize: fyne.NewSize(60, 400),
+		level:     15,
+		numLevels: 30,
+		minSize:   fyne.NewSize(60, 400),
 	}
 	l.ExtendBaseWidget(l)
 	return l
+}
+
+// SetNumLevels changes the number of discrete levels displayed
+func (l *LevelIndicator) SetNumLevels(n int) {
+	if n < 2 {
+		n = 2
+	}
+	if n > 256 {
+		n = 256
+	}
+	l.mu.Lock()
+	l.numLevels = n
+	// Clamp current level to new range
+	if l.level >= n {
+		l.level = n - 1
+	}
+	l.mu.Unlock()
+	l.Refresh()
+}
+
+// NumLevels returns the current number of levels
+func (l *LevelIndicator) NumLevels() int {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.numLevels
 }
 
 func (l *LevelIndicator) SetMinSize(size fyne.Size) {
@@ -117,6 +145,14 @@ func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
 		return
 	}
 
+	l.mu.RLock()
+	numLevels := l.numLevels
+	l.mu.RUnlock()
+
+	if numLevels < 2 {
+		numLevels = 30
+	}
+
 	// Match the renderer's layout EXACTLY
 	// See layoutWithSize() for the reference implementation
 	marginH := float32(50)
@@ -130,26 +166,26 @@ func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
 	pMaxScale := float32(1.2)
 	levelRangeH := totalH / pMaxScale
 	levelTop := centerY - levelRangeH/2
-	segH := levelRangeH / 30
+	segH := levelRangeH / float32(numLevels)
 
 	// Calculate which segment was clicked
-	// Renderer draws: y = levelTop + (29-i)*segH where i is 0-29, level = i+1
-	// So level 30 (i=29) is at top, level 1 (i=0) is at bottom
+	// Renderer draws: y = levelTop + (numLevels-1-i)*segH where i is 0 to numLevels-1, level = i+1
+	// So level N (i=N-1) is at top, level 1 (i=0) is at bottom
 	relY := e.Position.Y - levelTop
 
-	// Find segment index from top (0 = level 30, 29 = level 1)
+	// Find segment index from top (0 = level N, N-1 = level 1)
 	segFromTop := int(relY / segH)
 
 	// Clamp to valid range
 	if segFromTop < 0 {
 		segFromTop = 0
 	}
-	if segFromTop > 29 {
-		segFromTop = 29
+	if segFromTop > numLevels-1 {
+		segFromTop = numLevels - 1
 	}
 
-	// Convert to level: top segment (0) = level 30, bottom segment (29) = level 1
-	targetLevel := 30 - segFromTop
+	// Convert to level: top segment (0) = level N, bottom segment (N-1) = level 1
+	targetLevel := numLevels - segFromTop
 
 	l.OnLevelClicked(targetLevel)
 }
@@ -197,10 +233,15 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 
 	r.indicator.mu.RLock()
 	level := r.indicator.level
+	numLevels := r.indicator.numLevels
 	targetLevel := r.indicator.targetLevel
 	highlightTarget := r.indicator.highlightTarget
 	pulseProgress := r.indicator.pulseProgress
 	r.indicator.mu.RUnlock()
+
+	if numLevels < 2 {
+		numLevels = 30 // Fallback
+	}
 
 	r.objects = r.objects[:0]
 
@@ -227,15 +268,16 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	bg.Move(fyne.NewPos(2, 2))
 	r.objects = append(r.objects, bg)
 
-	// Title at top - increased from 12pt to 14pt for better visibility
-	title := canvas.NewText("30 LEVELS", color.RGBA{0, 212, 255, 255})
+	// Title at top - shows number of levels
+	title := canvas.NewText(fmt.Sprintf("%d LEVELS", numLevels), color.RGBA{0, 212, 255, 255})
 	title.TextSize = 14
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Move(fyne.NewPos(6, 8))
 	r.objects = append(r.objects, title)
 
-	// Bits label - increased from 10pt to 12pt for better readability
-	bitsLabel := canvas.NewText("4.9 bits", color.RGBA{180, 180, 180, 255})
+	// Bits label - calculate log2(numLevels)
+	bitsPerCell := math.Log2(float64(numLevels))
+	bitsLabel := canvas.NewText(fmt.Sprintf("%.1f bits", bitsPerCell), color.RGBA{180, 180, 180, 255})
 	bitsLabel.TextSize = 12
 	bitsLabel.Move(fyne.NewPos(10, 26))
 	r.objects = append(r.objects, bitsLabel)
@@ -253,12 +295,15 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	centerY := marginH + totalH/2
 
 	// The plot shows P from -Ps*1.2 to +Ps*1.2
-	// Levels 1-30 should map to -Ps to +Ps (the inner 1/1.2 = 83% of plot range)
+	// Levels 1-N should map to -Ps to +Ps (the inner 1/1.2 = 83% of plot range)
 	pMaxScale := float32(1.2)
-	// The actual Y range for the 30 levels (±Ps portion of the plot)
+	// The actual Y range for the N levels (±Ps portion of the plot)
 	levelRangeH := totalH / pMaxScale // ~83% of totalH
-	segH := levelRangeH / 30
+	segH := levelRangeH / float32(numLevels)
 	gap := float32(1)
+	if numLevels > 64 {
+		gap = 0 // No gaps for many levels
+	}
 
 	// Y positions for level range (screen coords: y increases downward)
 	// levelTop = where level 30 (+Ps) should be = centerY - levelRangeH/2
@@ -270,14 +315,14 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	colorTarget := color.RGBA{255, 220, 0, 255}    // Yellow for target
 	colorAxis := color.RGBA{150, 180, 200, 255}
 
-	for i := 0; i < 30; i++ {
-		// Level i=0 is level 1 (bottom, -Ps), i=29 is level 30 (top, +Ps)
-		// Invert: level 30 at top, level 1 at bottom
-		// y = levelTop + (29-i) * segH
-		y := levelTop + float32(29-i)*segH
+	for i := 0; i < numLevels; i++ {
+		// Level i=0 is level 1 (bottom, -Ps), i=numLevels-1 is level numLevels (top, +Ps)
+		// Invert: level N at top, level 1 at bottom
+		// y = levelTop + (numLevels-1-i) * segH
+		y := levelTop + float32(numLevels-1-i)*segH
 
 		// Color gradient (blue to red)
-		t := float64(i) / 29.0
+		t := float64(i) / float64(numLevels-1)
 		var segColor color.RGBA
 		if i == level {
 			// Current level - bright GREEN
@@ -332,8 +377,13 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		seg.Move(fyne.NewPos(marginW, y))
 		r.objects = append(r.objects, seg)
 
-		// Level number for every 5th level and current level
-		if i%5 == 0 || i == 29 || i == level {
+		// Level number for key levels and current level
+		// Show every Nth level where N scales with total levels
+		labelInterval := numLevels / 6
+		if labelInterval < 1 {
+			labelInterval = 1
+		}
+		if i%labelInterval == 0 || i == numLevels-1 || i == level {
 			labelColor := colorAxis
 			fontSize := float32(11)
 			if i == level {

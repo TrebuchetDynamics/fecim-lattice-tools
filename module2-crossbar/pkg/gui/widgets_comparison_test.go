@@ -155,3 +155,55 @@ func TestModeChanges(t *testing.T) {
 		t.Errorf("Expected diverging colormap in diff mode, got '%s'", widget.leftHeatmap.colormap)
 	}
 }
+
+func TestSetDimensions(t *testing.T) {
+	// Create widget with initial 4x4 dimensions
+	widget := NewBeforeAfterToggle(4, 4)
+
+	// Verify initial dimensions
+	if widget.leftHeatmap.rows != 4 || widget.leftHeatmap.cols != 4 {
+		t.Errorf("Expected initial dimensions 4x4, got %dx%d", widget.leftHeatmap.rows, widget.leftHeatmap.cols)
+	}
+
+	// Set some data
+	ideal := [][]float64{
+		{0.1, 0.2, 0.3, 0.4},
+		{0.5, 0.6, 0.7, 0.8},
+		{0.1, 0.2, 0.3, 0.4},
+		{0.5, 0.6, 0.7, 0.8},
+	}
+	actual := [][]float64{
+		{0.2, 0.3, 0.4, 0.5},
+		{0.6, 0.7, 0.8, 0.9},
+		{0.2, 0.3, 0.4, 0.5},
+		{0.6, 0.7, 0.8, 0.9},
+	}
+	widget.SetData(ideal, actual)
+
+	// Resize to 8x8
+	widget.SetDimensions(8, 8)
+
+	// Verify new dimensions on both heatmaps
+	if widget.leftHeatmap.rows != 8 || widget.leftHeatmap.cols != 8 {
+		t.Errorf("Expected left heatmap dimensions 8x8, got %dx%d", widget.leftHeatmap.rows, widget.leftHeatmap.cols)
+	}
+	if widget.rightHeatmap.rows != 8 || widget.rightHeatmap.cols != 8 {
+		t.Errorf("Expected right heatmap dimensions 8x8, got %dx%d", widget.rightHeatmap.rows, widget.rightHeatmap.cols)
+	}
+
+	// Verify cached data was cleared
+	if widget.idealData != nil {
+		t.Error("Expected idealData to be nil after SetDimensions")
+	}
+	if widget.actualData != nil {
+		t.Error("Expected actualData to be nil after SetDimensions")
+	}
+
+	// Resize to smaller 2x2
+	widget.SetDimensions(2, 2)
+
+	// Verify dimensions changed
+	if widget.leftHeatmap.rows != 2 || widget.leftHeatmap.cols != 2 {
+		t.Errorf("Expected dimensions 2x2, got %dx%d", widget.leftHeatmap.rows, widget.leftHeatmap.cols)
+	}
+}

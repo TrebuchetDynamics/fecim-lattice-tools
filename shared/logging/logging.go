@@ -25,6 +25,12 @@ const (
 var (
 	globalVerbosity VerbosityLevel = VerbosityOff
 	verbosityMu     sync.RWMutex
+
+	// Shared log file for all loggers
+	sharedLogFile   *os.File
+	sharedLogWriter io.Writer
+	sharedLogMu     sync.Mutex
+	sharedLogPath   string
 )
 
 // SetVerbosity sets the global verbosity level
@@ -54,45 +60,62 @@ type Logger struct {
 }
 
 // NewLogger creates a new logger for the specified demo
+// All loggers share a single log file to avoid creating multiple files
 func NewLogger(demoName string) *Logger {
-	// Get logs directory relative to executable or working directory
-	logsDir := getLogsDir()
-	if err := os.MkdirAll(logsDir, 0755); err != nil {
-		// Fallback to stdout only
-		return &Logger{
-			Logger:   log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
-			demoName: demoName,
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+
+	// Initialize shared log file if not already done
+	if sharedLogWriter == nil {
+		logsDir := getLogsDir()
+		if err := os.MkdirAll(logsDir, 0755); err != nil {
+			// Fallback to stdout only
+			sharedLogWriter = os.Stdout
+		} else {
+			timestamp := time.Now().Format("2006-01-02_15-04-05")
+			sharedLogPath = filepath.Join(logsDir, timestamp+"-fecim.log")
+
+			var err error
+			sharedLogFile, err = os.Create(sharedLogPath)
+			if err != nil {
+				// Fallback to stdout only
+				sharedLogWriter = os.Stdout
+			} else {
+				// Write to both file and stdout
+				sharedLogWriter = io.MultiWriter(os.Stdout, sharedLogFile)
+			}
 		}
 	}
 
-	// Create log file with datetime
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-"+demoName+".log")
-
-	logFile, err := os.Create(logPath)
-	if err != nil {
-		// Fallback to stdout only
-		return &Logger{
-			Logger:   log.New(os.Stdout, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
-			demoName: demoName,
-		}
-	}
-
-	// Write to both file and stdout
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
 	logger := &Logger{
-		Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
-		logFile:  logFile,
+		Logger:   log.New(sharedLogWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+		logFile:  nil, // Don't store file reference - shared file is managed globally
 		demoName: demoName,
 	}
-	logger.Printf("Logging to: %s", logPath)
+
+	// Only log the path once for the first logger
+	if sharedLogPath != "" {
+		logger.Printf("Logging to: %s", sharedLogPath)
+		sharedLogPath = "" // Clear to avoid repeating
+	}
+
 	return logger
 }
 
-// Close closes the log file if open
+// Close is a no-op for individual loggers since they share a file
+// Use CloseShared() to close the shared log file
 func (l *Logger) Close() {
-	if l.logFile != nil {
-		l.logFile.Close()
+	// No-op - shared log file is managed globally
+}
+
+// CloseShared closes the shared log file
+func CloseShared() {
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+	if sharedLogFile != nil {
+		sharedLogFile.Close()
+		sharedLogFile = nil
+		sharedLogWriter = nil
 	}
 }
 
@@ -259,11 +282,12 @@ func GlobalError(format string, args ...interface{}) {
 	}
 }
 
-// CloseGlobal closes the default logger
+// CloseGlobal closes the default logger and shared log file
 func CloseGlobal() {
 	if defaultLogger != nil {
 		defaultLogger.Close()
 	}
+	CloseShared()
 }
 
 func ParseVerbosityFlag(s string) VerbosityLevel {

@@ -50,31 +50,24 @@ func (r *Runner) RunOpenROAD(scriptName string, workDir string, envVars map[stri
 
 // runDockerOpenROAD runs OpenROAD in Docker container with correct --entrypoint pattern
 func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars map[string]string) (*Result, error) {
-	pdkRoot := r.manager.GetPDKRoot()
-	if pdkRoot == "" {
-		return nil, fmt.Errorf("PDK_ROOT not set - run GetPDKSetupInstructions() for setup help")
+	// Docker requires absolute paths for volume mounts
+	absWorkDir, err := filepath.Abs(workDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
 	// Build Docker command with --entrypoint openroad
+	// For FeCIM validation, we use our own cell LEF files - no external PDK required
 	args := []string{
 		"run", "--rm",
 		"--entrypoint", "openroad",
-		"-v", fmt.Sprintf("%s:/design", workDir),
+		"-v", fmt.Sprintf("%s:/design", absWorkDir),
 		"-w", "/design",
-		"-v", fmt.Sprintf("%s:/pdk:ro", pdkRoot),
 	}
 
-	// Add environment variables
+	// Add environment variables (caller provides CELL_LEF, DEF_FILE, etc.)
 	for k, v := range envVars {
 		args = append(args, "-e", fmt.Sprintf("%s=%s", k, v))
-	}
-
-	// Add default PDK paths if not specified
-	if _, ok := envVars["TECH_LEF"]; !ok {
-		args = append(args, "-e", "TECH_LEF=/pdk/sky130A/libs.tech/openlane/sky130_fd_sc_hd/sky130_fd_sc_hd.tlef")
-	}
-	if _, ok := envVars["CELL_LEF"]; !ok {
-		args = append(args, "-e", "CELL_LEF=/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef")
 	}
 
 	// Add image and OpenROAD flags
@@ -86,38 +79,119 @@ func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars ma
 
 // runNativeOpenROAD runs OpenROAD directly
 func (r *Runner) runNativeOpenROAD(scriptName string, workDir string, envVars map[string]string) (*Result, error) {
-	pdkRoot := r.manager.GetPDKRoot()
-	if pdkRoot == "" {
-		return nil, fmt.Errorf("PDK_ROOT not set - run GetPDKSetupInstructions() for setup help")
-	}
-
 	scriptPath := filepath.Join(workDir, scriptName)
 	args := []string{"-no_splash", "-exit", scriptPath}
 
-	// Set up environment
+	// Set up environment from caller-provided vars
+	// For FeCIM validation, caller provides CELL_LEF path - no external PDK required
 	env := os.Environ()
-	env = append(env, fmt.Sprintf("PDK_ROOT=%s", pdkRoot))
 
-	// Add default PDK paths if not specified
-	techLEF := filepath.Join(pdkRoot, "sky130A/libs.tech/openlane/sky130_fd_sc_hd/sky130_fd_sc_hd.tlef")
-	cellLEF := filepath.Join(pdkRoot, "sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef")
-
-	if v, ok := envVars["TECH_LEF"]; ok {
-		techLEF = v
-	}
-	if v, ok := envVars["CELL_LEF"]; ok {
-		cellLEF = v
-	}
-
-	env = append(env, fmt.Sprintf("TECH_LEF=%s", techLEF))
-	env = append(env, fmt.Sprintf("CELL_LEF=%s", cellLEF))
-
-	// Add user-provided env vars
+	// Add user-provided env vars (CELL_LEF, DEF_FILE, etc.)
 	for k, v := range envVars {
 		env = append(env, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	return r.runWithTimeoutEnv("openroad", args, workDir, r.config.TimeoutPlacement, env)
+}
+
+// RunYosys executes a Yosys command
+// workDir should contain the Verilog files
+// yosysCmd is the yosys command string (e.g., "read_verilog file.v; hierarchy -check")
+func (r *Runner) RunYosys(yosysCmd string, workDir string) (*Result, error) {
+	mode := r.manager.DetectMode()
+
+	switch mode {
+	case ModeDocker:
+		return r.runDockerYosys(yosysCmd, workDir)
+	case ModeNative:
+		return r.runNativeYosys(yosysCmd, workDir)
+	default:
+		return nil, fmt.Errorf("no Yosys execution mode available (install Docker with OpenLane image or native yosys)")
+	}
+}
+
+// runDockerYosys runs Yosys in Docker container
+func (r *Runner) runDockerYosys(yosysCmd string, workDir string) (*Result, error) {
+	// Docker requires absolute paths for volume mounts
+	absWorkDir, err := filepath.Abs(workDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	// Build Docker command with --entrypoint yosys
+	args := []string{
+		"run", "--rm",
+		"--entrypoint", "yosys",
+		"-v", fmt.Sprintf("%s:/design", absWorkDir),
+		"-w", "/design",
+	}
+
+	// Add image and Yosys command
+	args = append(args, r.manager.GetDockerImage())
+	args = append(args, "-p", yosysCmd)
+
+	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutSynthesis)
+}
+
+// runNativeYosys runs Yosys directly
+func (r *Runner) runNativeYosys(yosysCmd string, workDir string) (*Result, error) {
+	args := []string{"-p", yosysCmd}
+	return r.runWithTimeout("yosys", args, workDir, r.config.TimeoutSynthesis)
+}
+
+// RunKLayout executes a KLayout script for layout visualization
+// workDir should contain the DEF and LEF files
+// scriptPath is the path to the Python/Ruby script
+func (r *Runner) RunKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
+	mode := r.manager.DetectMode()
+
+	switch mode {
+	case ModeDocker:
+		return r.runDockerKLayout(scriptPath, workDir, envVars)
+	case ModeNative:
+		return r.runNativeKLayout(scriptPath, workDir, envVars)
+	default:
+		return nil, fmt.Errorf("no KLayout execution mode available (install Docker with OpenLane image or native klayout)")
+	}
+}
+
+// runDockerKLayout runs KLayout in Docker container
+func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
+	absWorkDir, err := filepath.Abs(workDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	// Build Docker command with --entrypoint klayout
+	args := []string{
+		"run", "--rm",
+		"--entrypoint", "klayout",
+		"-v", fmt.Sprintf("%s:/design", absWorkDir),
+		"-w", "/design",
+	}
+
+	// Add environment variables
+	for k, v := range envVars {
+		args = append(args, "-e", fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// Add image and KLayout flags: -b for batch mode, -r for Ruby script
+	args = append(args, r.manager.GetDockerImage())
+	args = append(args, "-b", "-r", fmt.Sprintf("/design/%s", filepath.Base(scriptPath)))
+
+	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
+}
+
+// runNativeKLayout runs KLayout directly
+func (r *Runner) runNativeKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
+	args := []string{"-b", "-r", scriptPath}
+
+	env := os.Environ()
+	for k, v := range envVars {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return r.runWithTimeoutEnv("klayout", args, workDir, r.config.TimeoutPlacement, env)
 }
 
 // runWithTimeout executes a command with timeout

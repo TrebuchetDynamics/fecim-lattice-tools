@@ -10,45 +10,56 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // createControlWidgets creates all control panel widgets (buttons, sliders, dropdowns).
 func (ca *CrossbarApp) createControlWidgets() {
-	ca.runMVMButton = widget.NewButton("Run Enhanced MVM", ca.runEnhancedMVM)
+	// Primary action button - most prominent
+	ca.runMVMButton = widget.NewButton("▶ Run MVM", ca.runEnhancedMVM)
 	ca.runMVMButton.Importance = widget.HighImportance
 
-	ca.resetButton = widget.NewButton("Reset Array", ca.resetArray)
+	// Secondary action buttons - smaller
+	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
+	ca.resetButton.Importance = widget.MediumImportance
 
-	ca.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
-	ca.arraySizeLabel.Wrapping = fyne.TextWrapOff
-	ca.arraySizeSlider = widget.NewSlider(8, 128)
-	ca.arraySizeSlider.Step = 8
-	ca.arraySizeSlider.Value = 64
-	ca.arraySizeSlider.OnChanged = func(v float64) {
-		size := int(v)
-		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %dx%d", size, size))
-		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
+	// Array size dropdown instead of slider (discrete values)
+	// Create without callback first, set value, then add callback to avoid
+	// triggering recreateArray before UI is initialized
+	arraySizes := []string{"8×8", "16×16", "32×32", "64×64", "128×128"}
+	ca.arraySizeSelect = widget.NewSelect(arraySizes, nil)
+	ca.arraySizeSelect.SetSelected("64×64")
+	ca.arraySizeSelect.OnChanged = func(s string) {
+		var size int
+		fmt.Sscanf(s, "%d×%d", &size, &size)
+		if size > 0 {
+			ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
+		}
 	}
 
-	ca.noiseLabel = widget.NewLabel("Noise: 2.0%")
+	// Keep sliders for continuous values but with compact labels
+	ca.noiseLabel = widget.NewLabel("2.0%")
 	ca.noiseLabel.Wrapping = fyne.TextWrapOff
 	ca.noiseSlider = widget.NewSlider(0, 20)
 	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("Noise: %.1f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
 		ca.config.NoiseLevel = v / 100.0
+		ca.runEnhancedMVMInstant()
 	}
 
-	ca.adcBitsLabel = widget.NewLabel("ADC Bits: 6")
+	ca.adcBitsLabel = widget.NewLabel("6")
 	ca.adcBitsLabel.Wrapping = fyne.TextWrapOff
 	ca.adcBitsSlider = widget.NewSlider(4, 10)
 	ca.adcBitsSlider.Step = 1
 	ca.adcBitsSlider.Value = 6
 	ca.adcBitsSlider.OnChanged = func(v float64) {
 		bits := int(v)
-		ca.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
+		ca.adcBitsLabel.SetText(fmt.Sprintf("%d", bits))
 		ca.config.ADCBits = bits
+		ca.runEnhancedMVMInstant()
 	}
 
 	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
@@ -80,56 +91,141 @@ func (ca *CrossbarApp) createControlWidgets() {
 		}
 	})
 	ca.colormapSelect.SetSelected("fecim")
+
+	// Architecture toggle: 0T1R (passive) vs 1T1R (with access transistor)
+	// This affects sneak path and IR drop physics calculations
+	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
+
+	// Create toggle buttons
+	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+
+	// Helper to update button styles based on selection
+	updateArchButtons := func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			ca.archPassiveBtn.Importance = widget.HighImportance
+			ca.arch1T1RBtn.Importance = widget.LowImportance
+		} else {
+			ca.archPassiveBtn.Importance = widget.LowImportance
+			ca.arch1T1RBtn.Importance = widget.HighImportance
+		}
+		ca.archPassiveBtn.Refresh()
+		ca.arch1T1RBtn.Refresh()
+	}
+
+	// Set initial state
+	updateArchButtons()
+
+	// Wire up callbacks
+	ca.archPassiveBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			return // Already selected
+		}
+		debug.Printf("[ARCH TOGGLE] Switched to: PASSIVE (0T1R)")
+
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture0T1R
+		ca.stateMu.Unlock()
+
+		updateArchButtons()
+
+		// Update educational content
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture0T1R)
+		ca.setEducationalContent(title, content)
+
+		// Re-run MVM
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
+	ca.arch1T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture1T1R {
+			return // Already selected
+		}
+		debug.Printf("[ARCH TOGGLE] Switched to: 1T1R GATE")
+
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture1T1R
+		ca.stateMu.Unlock()
+
+		updateArchButtons()
+
+		// Update educational content
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture1T1R)
+		ca.setEducationalContent(title, content)
+
+		// Re-run MVM
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
+	// Create horizontal container for toggle
+	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
 }
 
 // createRightPanel creates the right panel with controls and metrics.
 func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *container.Split {
-	exportButton := widget.NewButton("Export Data", ca.exportData)
+	exportButton := widget.NewButton("Export", ca.exportData)
+	exportButton.Importance = widget.MediumImportance
 
-	actionLabel := widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	actionsGroup := container.NewVBox(
-		actionLabel,
+	// === PRIMARY ACTION - Most prominent ===
+	primaryAction := container.NewVBox(
 		ca.runMVMButton,
-		ca.resetButton,
-		exportButton,
 	)
 
-	settingsLabel := widget.NewLabelWithStyle("Array Settings", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	settingsGroup := container.NewVBox(
-		widget.NewSeparator(),
-		settingsLabel,
-		ca.arraySizeLabel,
-		ca.arraySizeSlider,
+	// === ARRAY CONFIG - Compact row ===
+	arraySizeRow := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("Array:"),
+		nil,
+		ca.arraySizeSelect,
 	)
 
-	signalLabel := widget.NewLabelWithStyle("Signal Quality", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	signalGroup := container.NewVBox(
-		widget.NewSeparator(),
-		signalLabel,
+	// === ARCHITECTURE TOGGLE ===
+	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+
+	// === SIGNAL QUALITY - Inline labels with sliders ===
+	noiseRow := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("Noise:"),
 		ca.noiseLabel,
 		ca.noiseSlider,
+	)
+	adcRow := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("ADC:"),
 		ca.adcBitsLabel,
 		ca.adcBitsSlider,
 	)
 
-	displayLabel := widget.NewLabelWithStyle("Display", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	displayGroup := container.NewVBox(
-		widget.NewSeparator(),
-		displayLabel,
+	// === DISPLAY & ACTIONS - Combined compact row ===
+	colormapRow := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("Color:"),
+		nil,
 		ca.colormapSelect,
 	)
+	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
+	// === ASSEMBLE CONTROLS ===
 	controlsBox := container.NewVBox(
-		actionsGroup,
-		settingsGroup,
-		signalGroup,
-		displayGroup,
+		primaryAction,
+		widget.NewSeparator(),
+		arraySizeRow,
+		widget.NewSeparator(),
+		archLabel,
+		ca.archToggle,
+		widget.NewSeparator(),
+		noiseRow,
+		adcRow,
+		widget.NewSeparator(),
+		colormapRow,
+		layout.NewSpacer(),
+		actionButtons,
 	)
 	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(240, 300))
+	controlsScroll.SetMinSize(fyne.NewSize(220, 280))
 
 	rightPanel := container.NewVSplit(controlsScroll, metricsScroll)
-	rightPanel.SetOffset(0.5)
+	rightPanel.SetOffset(0.45) // Give more space to metrics
 
 	return rightPanel
 }

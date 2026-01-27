@@ -2,7 +2,9 @@ package gui
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -13,7 +15,7 @@ import (
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
 	// E-field slider (no logging - too frequent)
-	a.eFieldSlider = widget.NewSlider(-2, 2)
+	a.eFieldSlider = widget.NewSlider(-1.5, 1.5)
 	a.eFieldSlider.Step = 0.01
 	a.eFieldSlider.Value = 0
 	a.eFieldSlider.OnChanged = func(v float64) {
@@ -60,21 +62,21 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			// Reset write/read demo state with improved physics
 			a.wrdPhase = 0
 			a.wrdPhaseTimer = 0
-			a.wrdTargetLevel = rand.Intn(30) + 1
+			a.wrdTargetLevel = rand.Intn(a.numLevels) + 1
 			a.wrdStartLevel = a.discreteLevel + 1
 			// Reset Dr. Tour demo metrics
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
 			a.wrdTotalEnergyfJ = 0
 			a.wrdCycleEnergy = 0
-			a.wrdBitsStored = 4.91 // log2(30)
+			a.wrdBitsStored = math.Log2(float64(a.numLevels))
 			// Initialize debug log (requires material to be set)
 			if a.material != nil {
 				a.initDebugLog()
 			}
 		}
 	})
-	a.waveformSelect.SetSelected("Sine Wave")
+	a.waveformSelect.SetSelected("Write/Read Demo")
 
 	// Material selector
 	matNames := []string{"Default HZO", "Optimized Superlattice", "FeCIM HZO"}
@@ -92,10 +94,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Lock()
 		a.matIndex = idx
 		a.material = a.materials[idx]
-		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 30)
+		// Use fixed high-resolution grid (50) for physics accuracy, independent of quantization levels
+		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.plot.SetBounds(a.material.Ec*2.5, a.material.Ps*1.2)
+		a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
 		// Mark calibration as stale (new material needs recalibration)
 		a.calibrated = false
 		a.mu.Unlock()
@@ -104,10 +108,67 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		go func() {
 			a.mu.Lock()
 			a.calibrateLevels()
+			if err := a.saveCalibration(); err != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
 			a.mu.Unlock()
 		}()
 	})
 	a.materialSelect.SetSelected("Default HZO")
+
+	// Levels selector (2-256 levels)
+	a.levelsLabel = widget.NewLabel(fmt.Sprintf("Levels: %d (%.1f bits)", a.numLevels, math.Log2(float64(a.numLevels))))
+	a.levelsEntry = widget.NewEntry()
+	a.levelsEntry.SetText(fmt.Sprintf("%d", a.numLevels))
+	a.levelsEntry.SetPlaceHolder("2-256")
+	a.levelsEntry.OnChanged = func(s string) {
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return
+		}
+		if n < 2 {
+			n = 2
+		}
+		if n > 256 {
+			n = 256
+		}
+		log.Selection("Levels", fmt.Sprintf("%d", n))
+
+		a.mu.Lock()
+		if n != a.numLevels {
+			a.numLevels = n
+			// NOTE: Do NOT recreate Preisach model - its grid size is for physics
+			// accuracy, not quantization levels. We only change the output quantization.
+
+			// Update level indicator
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetNumLevels(n)
+			}
+			// Reset discrete level to middle of new range
+			a.discreteLevel = n / 2
+			// Reset target levels to be within new bounds
+			a.wrdTargetLevel = n / 2
+			a.wrdStartLevel = n / 2
+			a.manualTargetLevel = n / 2
+			// Mark calibration as stale (need new level->field mapping)
+			a.calibrated = false
+		}
+		a.mu.Unlock()
+
+		// Update label
+		bits := math.Log2(float64(n))
+		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", n, bits))
+
+		// Recalibrate in background (new quantization mapping)
+		go func() {
+			a.mu.Lock()
+			a.calibrateLevels()
+			if err := a.saveCalibration(); err != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
+			a.mu.Unlock()
+		}()
+	}
 
 	// Pause/Resume button
 	a.pauseBtn = widget.NewButton("Pause", func() {
@@ -171,7 +232,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Lock()
 		// Update Preisach model temperature
 		a.preisach.SetTemperature(v)
+		// Update plot markers with temperature-corrected Ec and Pr
+		effEc := a.preisach.GetEffectiveEc()
+		effPr := a.preisach.GetEffectivePr()
 		a.mu.Unlock()
+		// Update plot markers (outside lock to avoid potential deadlock)
+		a.plot.SetMaterialParams(effEc, effPr)
 		celsius := v - 273
 		tcRatio := v / a.material.CurieTemp * 100
 		tempLabel.SetText(fmt.Sprintf("T: %.0f K (%.0f°C) [%.0f%% Tc]", v, celsius, tcRatio))
@@ -199,6 +265,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	return container.NewVBox(
 		a.materialSelect,
 		a.waveformSelect,
+		a.levelsLabel,
+		a.levelsEntry,
 		a.eFieldLabel,
 		a.eFieldSlider,
 		freqLabel,

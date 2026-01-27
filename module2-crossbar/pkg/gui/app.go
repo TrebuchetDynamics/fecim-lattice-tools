@@ -73,8 +73,7 @@ type CrossbarApp struct {
 	// Simple right panel widgets (replacing custom widgets)
 	runMVMButton    *widget.Button
 	resetButton     *widget.Button
-	arraySizeLabel  *widget.Label
-	arraySizeSlider *widget.Slider
+	arraySizeSelect *widget.Select // Dropdown for array size
 	noiseLabel      *widget.Label
 	noiseSlider     *widget.Slider
 	adcBitsLabel    *widget.Label
@@ -87,9 +86,11 @@ type CrossbarApp struct {
 	irColormap    string
 	sneakColormap string
 
-	// Architecture selector (Dr. Tour: clarify 0T1R vs 1T1R)
-	archSelect   *widget.Select
-	architecture string // "1T1R (Transistor)" or "0T1R (Passive)"
+	// Architecture toggle (Dr. Tour: clarify 0T1R vs 1T1R)
+	archToggle       *fyne.Container // Container with two toggle buttons
+	archPassiveBtn   *widget.Button
+	arch1T1RBtn      *widget.Button
+	architecture     string // "1T1R (Transistor)" or "0T1R (Passive)"
 
 	// Status
 	statusLabel    *widget.Label
@@ -252,30 +253,34 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	// Create simple RIGHT panel widgets directly (no custom widgets)
-	ca.runMVMButton = widget.NewButton("Run MVM", ca.runMVM)
+	ca.runMVMButton = widget.NewButton("▶ Run MVM", ca.runMVM)
 	ca.runMVMButton.Importance = widget.HighImportance
-	ca.resetButton = widget.NewButton("Reset Array", ca.resetArray)
+	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
+	ca.resetButton.Importance = widget.MediumImportance
 
-	ca.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
-	ca.arraySizeSlider = widget.NewSlider(8, 128)
-	ca.arraySizeSlider.Step = 8
-	ca.arraySizeSlider.Value = 64
-	ca.arraySizeSlider.OnChanged = func(v float64) {
-		size := int(v)
-		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %dx%d", size, size))
-		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
+	// Array size dropdown - create without callback to avoid triggering
+	// recreateArray before UI is initialized
+	arraySizes := []string{"8×8", "16×16", "32×32", "64×64", "128×128"}
+	ca.arraySizeSelect = widget.NewSelect(arraySizes, nil)
+	ca.arraySizeSelect.SetSelected("64×64")
+	ca.arraySizeSelect.OnChanged = func(s string) {
+		var size int
+		fmt.Sscanf(s, "%d×%d", &size, &size)
+		if size > 0 {
+			ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
+		}
 	}
 
-	ca.noiseLabel = widget.NewLabel("Noise: 2.0%")
+	ca.noiseLabel = widget.NewLabel("2.0%")
 	ca.noiseSlider = widget.NewSlider(0, 20)
 	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("Noise: %.1f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
 		ca.config.NoiseLevel = v / 100.0
 	}
 
-	ca.adcBitsLabel = widget.NewLabel("ADC Bits: 6")
+	ca.adcBitsLabel = widget.NewLabel("6")
 	ca.adcBitsSlider = widget.NewSlider(4, 10)
 	ca.adcBitsSlider.Step = 1
 	ca.adcBitsSlider.Value = 6
@@ -290,47 +295,59 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	})
 	ca.colormapSelect.SetSelected("fecim")
 
-	// Architecture selector: 0T1R (passive) vs 1T1R (with access transistor)
+	// Architecture toggle: 0T1R (passive) vs 1T1R (with access transistor)
 	// Dr. Tour recommendation: clarify sneak path behavior depends on architecture
-	ca.archSelect = widget.NewSelect([]string{"1T1R (Transistor)", "0T1R (Passive)"}, func(s string) {
-		ca.stateMu.Lock()
-		ca.architecture = s
-		ca.stateMu.Unlock()
-		// Update educational content based on architecture
-		if s == "1T1R (Transistor)" {
-			ca.setEducationalContent("1T1R Architecture",
-				"1T1R = One Transistor per FeFET\n\n"+
-					"How it works:\n"+
-					"Transistor acts as controlled\n"+
-					"switch, isolating unselected cells.\n\n"+
-					"Advantages:\n"+
-					"✓ Zero sneak paths\n"+
-					"✓ Linear I-V characteristics\n"+
-					"✓ Industry standard (SRAM-like)\n\n"+
-					"Tradeoffs:\n"+
-					"✗ 50% area overhead\n"+
-					"✗ More complex fabrication\n\n"+
-					"Best for: High-precision inference\n"+
-					"(vision, language models)")
+	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
+
+	// Create toggle buttons
+	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+
+	// Helper to update button styles based on selection
+	updateArchButtons := func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			ca.archPassiveBtn.Importance = widget.HighImportance
+			ca.arch1T1RBtn.Importance = widget.LowImportance
 		} else {
-			ca.setEducationalContent("0T1R Architecture",
-				"0T1R = Passive Crossbar (no transistor)\n\n"+
-					"How it works:\n"+
-					"Direct connection between wires.\n"+
-					"FeFET is the only device.\n\n"+
-					"Advantages:\n"+
-					"✓ Highest density (4F² per cell)\n"+
-					"✓ Simpler fabrication\n"+
-					"✓ Lower cost\n\n"+
-					"Tradeoffs:\n"+
-					"✗ Sneak paths (2-15% SNR loss)\n"+
-					"✗ Requires selector device OR\n"+
-					"    self-rectifying FeFET\n\n"+
-					"FeFET advantage: Natural\n"+
-					"rectification in HfO₂-ZrO₂!")
+			ca.archPassiveBtn.Importance = widget.LowImportance
+			ca.arch1T1RBtn.Importance = widget.HighImportance
 		}
-	})
-	ca.archSelect.SetSelected("1T1R (Transistor)")
+		ca.archPassiveBtn.Refresh()
+		ca.arch1T1RBtn.Refresh()
+	}
+
+	// Set initial state
+	updateArchButtons()
+
+	// Wire up callbacks
+	ca.archPassiveBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture0T1R {
+			return // Already selected
+		}
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture0T1R
+		ca.stateMu.Unlock()
+		updateArchButtons()
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture0T1R)
+		ca.setEducationalContent(title, content)
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
+	ca.arch1T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture1T1R {
+			return // Already selected
+		}
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture1T1R
+		ca.stateMu.Unlock()
+		updateArchButtons()
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture1T1R)
+		ca.setEducationalContent(title, content)
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
+	// Create horizontal container for toggle
+	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
 
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
 	ca.statsLabel.Wrapping = fyne.TextWrapOff
@@ -429,55 +446,46 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	actionsGroup := container.NewVBox(
 		actionLabel,
 		ca.runMVMButton,
-		ca.resetButton,
 	)
 
-	// Array settings group - collapsible style header
-	settingsLabel := widget.NewLabelWithStyle("Array Settings", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	settingsGroup := container.NewVBox(
-		widget.NewSeparator(),
-		settingsLabel,
-		ca.arraySizeLabel,
-		ca.arraySizeSlider,
-	)
+	// Export button
+	exportButton := widget.NewButton("Export", func() { ca.exportData() })
+	exportButton.Importance = widget.MediumImportance
 
-	// Noise/ADC group
-	signalLabel := widget.NewLabelWithStyle("Signal Quality", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	signalGroup := container.NewVBox(
-		widget.NewSeparator(),
-		signalLabel,
-		ca.noiseLabel,
-		ca.noiseSlider,
-		ca.adcBitsLabel,
-		ca.adcBitsSlider,
-	)
+	// Array size row - compact
+	arraySizeRow := container.NewBorder(nil, nil, widget.NewLabel("Array:"), nil, ca.arraySizeSelect)
 
-	// Architecture settings group (Dr. Tour: clarify 0T1R vs 1T1R)
+	// Architecture toggle
 	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	archGroup := container.NewVBox(
-		widget.NewSeparator(),
-		archLabel,
-		ca.archSelect,
-	)
 
-	// Display settings group
-	displayLabel := widget.NewLabelWithStyle("Display", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	displayGroup := container.NewVBox(
-		widget.NewSeparator(),
-		displayLabel,
-		ca.colormapSelect,
-	)
+	// Signal quality - inline labels
+	noiseRow := container.NewBorder(nil, nil, widget.NewLabel("Noise:"), ca.noiseLabel, ca.noiseSlider)
+	adcRow := container.NewBorder(nil, nil, widget.NewLabel("ADC:"), ca.adcBitsLabel, ca.adcBitsSlider)
+
+	// Colormap row
+	colormapRow := container.NewBorder(nil, nil, widget.NewLabel("Color:"), nil, ca.colormapSelect)
+
+	// Action buttons row
+	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
 	// Combined controls with scroll for overflow
 	controlsBox := container.NewVBox(
 		actionsGroup,
-		settingsGroup,
-		archGroup,
-		signalGroup,
-		displayGroup,
+		widget.NewSeparator(),
+		arraySizeRow,
+		widget.NewSeparator(),
+		archLabel,
+		ca.archToggle,
+		widget.NewSeparator(),
+		noiseRow,
+		adcRow,
+		widget.NewSeparator(),
+		colormapRow,
+		layout.NewSpacer(),
+		actionButtons,
 	)
 	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(240, 250))
+	controlsScroll.SetMinSize(fyne.NewSize(220, 280))
 
 	// Stats section with header
 	statsHeader := widget.NewLabelWithStyle("Analysis Results", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -597,11 +605,19 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 	ca.irDropHeatmap.SetDimensions(size, size)
 	ca.sneakPathHeatmap.SetDimensions(size, size)
 
+	// Resize the Ideal vs Actual comparison widget if it exists
+	if ca.beforeAfterToggle != nil {
+		ca.beforeAfterToggle.SetDimensions(size, size)
+	}
+
 	ca.programRandomWeights()
 	ca.updateConductanceDisplay()
 	ca.updateInfoLabel()
 	ca.setKeyStatValue(fmt.Sprintf("%d MACs", size*size))
 	ca.updateStatus(fmt.Sprintf("Array resized to %dx%d (%d parallel MACs)", size, size, size*size))
+
+	// Auto-run MVM after resize
+	ca.runEnhancedMVMInstant()
 }
 
 // programRandomWeights fills the array with random weights quantized to 30 levels.

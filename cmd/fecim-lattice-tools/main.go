@@ -40,6 +40,7 @@ import (
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/recording"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	"fecim-lattice-tools/shared/utils"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -174,20 +175,58 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 		height--
 	}
 
-	// FFmpeg command to receive raw RGB frames from stdin
-	rs.cmd = exec.Command("ffmpeg",
-		"-y",             // Overwrite output file
-		"-f", "rawvideo", // Raw video input
-		"-pixel_format", "rgb24", // RGB24 format
-		"-video_size", fmt.Sprintf("%dx%d", width, height), // Frame size
-		"-framerate", "20", // 20 FPS (balance between smoothness and CPU)
-		"-i", "-", // Read from stdin
-		"-c:v", "libx264", // H.264 codec
-		"-preset", "ultrafast", // Fast encoding
-		"-crf", "23", // Quality
-		"-pix_fmt", "yuv420p", // Output pixel format
-		rs.outputFile,
-	)
+	// Get default audio device for recording
+	audioDevice := ""
+	if recording.IsAudioAvailable() {
+		if defaultAudio, err := recording.GetDefaultAudioDevice(); err == nil {
+			audioDevice = defaultAudio.Name
+			log.Info("Recording with audio from: %s", audioDevice)
+		}
+	}
+
+	// FFmpeg command to receive raw RGB frames from stdin + audio from PulseAudio
+	var ffmpegArgs []string
+	if audioDevice != "" {
+		// With audio: video from stdin, audio from pulse
+		// Apply 20dB gain to microphone input (typical mics need boost)
+		ffmpegArgs = []string{
+			"-y",             // Overwrite output file
+			"-f", "rawvideo", // Raw video input
+			"-pixel_format", "rgb24", // RGB24 format
+			"-video_size", fmt.Sprintf("%dx%d", width, height), // Frame size
+			"-framerate", "20", // 20 FPS
+			"-i", "-", // Video from stdin
+			"-f", "pulse", // Audio from PulseAudio
+			"-i", audioDevice, // Audio device
+			"-c:v", "libx264", // H.264 codec
+			"-preset", "ultrafast", // Fast encoding
+			"-crf", "23", // Quality
+			"-pix_fmt", "yuv420p", // Output pixel format
+			"-af", "volume=20dB", // Boost mic volume by 20dB
+			"-c:a", "aac", // AAC audio codec
+			"-b:a", "128k", // Audio bitrate
+			"-ac", "2", // Stereo
+			"-shortest", // Stop when shortest input ends
+			rs.outputFile,
+		}
+	} else {
+		// Without audio: video only
+		log.Info("Recording without audio (no audio device available)")
+		ffmpegArgs = []string{
+			"-y",             // Overwrite output file
+			"-f", "rawvideo", // Raw video input
+			"-pixel_format", "rgb24", // RGB24 format
+			"-video_size", fmt.Sprintf("%dx%d", width, height), // Frame size
+			"-framerate", "20", // 20 FPS
+			"-i", "-", // Read from stdin
+			"-c:v", "libx264", // H.264 codec
+			"-preset", "ultrafast", // Fast encoding
+			"-crf", "23", // Quality
+			"-pix_fmt", "yuv420p", // Output pixel format
+			rs.outputFile,
+		}
+	}
+	rs.cmd = exec.Command("ffmpeg", ffmpegArgs...)
 
 	// Get stdin pipe
 	var err error
@@ -530,6 +569,37 @@ func main() {
 
 	// Create recording state
 	recordingState := newRecordingState()
+
+	// Create mic level widget (shows audio levels even when not recording)
+	fmt.Println("[STARTUP] Creating mic level widget...")
+	micLevelWidget := sharedwidgets.NewMicLevel()
+	var audioMonitor *recording.AudioMonitor
+	var micController *sharedwidgets.MicLevelController
+
+	// Check if audio is available and start monitoring
+	if recording.IsAudioAvailable() {
+		log.Info("Audio input detected, enabling mic level indicator")
+		audioMonitor = recording.NewAudioMonitor()
+
+		// Try to set default device
+		if defaultDevice, err := recording.GetDefaultAudioDevice(); err == nil {
+			audioMonitor.SetDevice(defaultDevice)
+			log.Debug("Using audio device: %s", defaultDevice.Name)
+		}
+
+		// Create controller to connect monitor to widget
+		micController = sharedwidgets.NewMicLevelController(micLevelWidget, audioMonitor)
+
+		// Start monitoring immediately (shows levels even when not recording)
+		if err := micController.Start(); err != nil {
+			log.Debug("Failed to start audio monitoring: %v", err)
+		} else {
+			log.Info("Audio level monitoring started")
+		}
+	} else {
+		log.Info("No audio input detected, mic level indicator disabled")
+	}
+
 	fmt.Println("[STARTUP] Creating buttons...")
 
 	// Create screenshot button
@@ -579,6 +649,8 @@ func main() {
 			recordBtn.SetText("Record")
 			recordBtn.SetIcon(theme.MediaRecordIcon())
 			recordTimeLabel.Hide()
+			// Update mic indicator
+			micLevelWidget.SetRecording(false)
 			// Show brief notification
 			originalTitle := window.Title()
 			window.SetTitle("Recording saved: " + outputFile)
@@ -607,6 +679,8 @@ func main() {
 			recordBtn.SetText("Stop")
 			recordBtn.SetIcon(theme.MediaStopIcon())
 			recordTimeLabel.Show()
+			// Update mic indicator to show recording state (red dot)
+			micLevelWidget.SetRecording(true)
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			utils.SafeGo("recording-timer", func() {
@@ -731,7 +805,7 @@ func main() {
 	toolbar := container.NewBorder(
 		nil, nil,
 		currentModuleLabel, // Left side: current module name
-		container.NewHBox(homeBtn, docsBtn, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
+		container.NewHBox(homeBtn, docsBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons (mic shows levels always)
 	)
 
 	// Stack content with toolbar on top
@@ -800,6 +874,14 @@ func main() {
 		// Stop recording if active
 		if recordingState.IsRecording() {
 			recordingState.stopRecording()
+		}
+
+		// Stop audio monitoring
+		if micController != nil {
+			micController.Stop()
+		}
+		if audioMonitor != nil {
+			audioMonitor.Stop()
 		}
 
 		// Stop all demos to clean up resources (e.g., auto demo contexts)

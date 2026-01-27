@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,18 @@ type MVMOptions struct {
 	EnableVariation  bool
 	EnableDrift      bool
 	Temperature      float64 // Kelvin (default 300K = 27C)
+	Architecture     string  // "1T1R" or "0T1R" - affects sneak path and IR drop calculations
+}
+
+// Is1T1R returns true if the architecture uses transistor isolation (1T1R).
+// 1T1R provides ~1000:1 sneak path isolation compared to passive 0T1R.
+func (o *MVMOptions) Is1T1R() bool {
+	if o == nil || o.Architecture == "" {
+		return false // Default to 0T1R (passive crossbar)
+	}
+	return o.Architecture == "1T1R" ||
+		strings.Contains(o.Architecture, "1T1R") ||
+		strings.Contains(o.Architecture, "Transistor")
 }
 
 // DefaultMVMOptions returns options with all non-idealities enabled.
@@ -29,6 +42,7 @@ func DefaultMVMOptions() *MVMOptions {
 		EnableVariation:  true,
 		EnableDrift:      false, // Drift usually simulated separately over time
 		Temperature:      300.0, // Room temperature
+		Architecture:     "0T1R", // Default to passive crossbar (simpler, higher density)
 	}
 }
 
@@ -95,6 +109,17 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 	var effectiveVoltages [][]float64
 	if opts.EnableIRDrop {
 		params := DefaultWireParams()
+		archName := "1T1R"
+
+		// 0T1R (passive) has higher effective IR drop because sneak currents
+		// increase total current flow through shared metal lines
+		// 1T1R transistors isolate cells, reducing total current → less IR drop
+		if !opts.Is1T1R() {
+			params.RwordLine *= 1.5 // 50% higher effective resistance for 0T1R
+			params.RbitLine *= 1.5
+			archName = "0T1R"
+		}
+
 		// Apply temperature effect on wire resistance
 		if opts.Temperature != 300.0 {
 			tempFactor := 1.0 + 0.00393*(opts.Temperature-300.0) // Copper TCR
@@ -102,6 +127,9 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 			params.RbitLine *= tempFactor
 		}
 		irAnalysis := a.AnalyzeIRDrop(input, params)
+		// Debug: log the architecture and max IR drop
+		fmt.Printf("[IR Drop] Architecture=%s, RwordLine=%.2f, MaxDrop=%.4f%%\n",
+			archName, params.RwordLine, irAnalysis.MaxIRDrop*100)
 		result.IRDropAnalysis = irAnalysis
 		effectiveVoltages = irAnalysis.EffectiveVoltage
 	} else {
@@ -139,7 +167,7 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 
 		// Add sneak path currents
 		if opts.EnableSneakPaths {
-			sneakCurrent := a.computeSneakCurrentForRow(i, input)
+			sneakCurrent := a.computeSneakCurrentForRow(i, input, opts)
 			sum += sneakCurrent
 		}
 
@@ -149,11 +177,11 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 		a.totalReads++
 	}
 
-	// Compute sneak path analysis for center cell
+	// Compute sneak path analysis for center cell (architecture-aware)
 	if opts.EnableSneakPaths {
 		centerRow := a.config.Rows / 2
 		centerCol := a.config.Cols / 2
-		result.SneakPathAnalysis = a.AnalyzeSneakPaths(centerRow, centerCol)
+		result.SneakPathAnalysis = a.AnalyzeSneakPathsWithArch(centerRow, centerCol, opts.Is1T1R())
 	}
 
 	// Step 4: Compute error metrics
@@ -166,9 +194,19 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 }
 
 // computeSneakCurrentForRow computes total sneak current affecting a row.
-func (a *Array) computeSneakCurrentForRow(row int, input []float64) float64 {
+// The sneak factor varies based on architecture:
+// - 1T1R: Transistor provides ~1000:1 isolation, minimal sneak paths
+// - 0T1R: Passive crossbar has full sneak path impact
+func (a *Array) computeSneakCurrentForRow(row int, input []float64, opts *MVMOptions) float64 {
 	var sneakCurrent float64
-	sneakFactor := 0.001 // 0.1% sneak coupling factor
+
+	// Architecture-dependent sneak factor:
+	// 1T1R: 0.00001 (0.001%) - transistor provides ~1000:1 isolation
+	// 0T1R: 0.01 (1%) - passive crossbar, full sneak path impact
+	sneakFactor := 0.01 // Default: passive (0T1R)
+	if opts != nil && opts.Is1T1R() {
+		sneakFactor = 0.00001 // 1000x reduction with transistor isolation
+	}
 
 	for j := 0; j < len(input); j++ {
 		// Three-cell sneak paths from other rows

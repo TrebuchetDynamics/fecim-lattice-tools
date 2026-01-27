@@ -221,15 +221,15 @@ func (ca *CrossbarApp) resetArray() {
 
 	ca.setEducationalContent("What You're Seeing", "Matrix-Vector Multiplication\n"+
 		"using FeFET crossbar arrays.\n\n"+
-		"Click 'Run MVM' to see the\n"+
-		"computation in action!\n\n"+
 		"The array computes I = W × V\n"+
 		"using physics (Ohm's Law)\n"+
 		"instead of digital logic.\n\n"+
 		"All operations happen in\n"+
 		"parallel - no sequential ALU!")
-	ca.updateStatus("Ready | Array reprogrammed with fresh random weights")
 	ca.modeIndicator.SetMode(DemoModeIdle)
+
+	// Auto-run MVM after reset
+	ca.runEnhancedMVMInstant()
 }
 
 // getImpactAssessment returns a text assessment of sneak path severity.

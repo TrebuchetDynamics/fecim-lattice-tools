@@ -40,6 +40,9 @@ func main() {
 	}
 	defer logging.CloseGlobal()
 
+	// Enable logging by default
+	logging.SetVerbosity(logging.VerbosityInfo)
+
 	// Operation mode
 	mode := flag.String("mode", "compute", "Operation mode: storage, memory, or compute")
 

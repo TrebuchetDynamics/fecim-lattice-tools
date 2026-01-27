@@ -16,96 +16,59 @@ import (
 
 // createInfoPanel creates the state and material information panel
 func (a *App) createInfoPanel() fyne.CanvasObject {
-	a.pLabel = widget.NewLabel("0.00 µC/cm²")
+	a.pLabel = widget.NewLabel("0.00")
 	a.levelLabel = widget.NewLabel("15/30")
 	a.stateLabel = widget.NewLabel("Intermediate")
 	a.modeIndicator = widgets.NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(180, 50))
+	a.modeIndicator.SetMinSize(fyne.NewSize(160, 40))
 
-	// State display - horizontal layout for compactness
-	pRow := container.NewHBox(
+	// Combined level + polarization row
+	levelRow := container.NewHBox(
+		widget.NewLabelWithStyle("L:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		a.levelLabel,
+		widget.NewLabel(" "),
 		widget.NewLabelWithStyle("P:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		a.pLabel,
 	)
 
-	// Material params - compact grid with tooltips
-	matParamsLabel := widget.NewLabelWithStyle("Material", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-
-	// Ec tooltip button
-	ecTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("Coercive Field (Ec)",
-			"The electric field magnitude required to switch the ferroelectric polarization direction.\n\n"+
-				"For HfO₂-ZrO₂ superlattice: Ec ≈ 1.0-1.5 MV/cm.\n\n"+
-				"When |E| > Ec, domains switch → WRITE operation.", a.mainWindow)
+	// Material info button (shows details in dialog)
+	matInfoBtn := widget.NewButtonWithIcon("Material Info", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Material Properties",
+			fmt.Sprintf("Material: %s\n\n"+
+				"Pr (Remanent): %.0f µC/cm²\n"+
+				"Ps (Saturation): %.0f µC/cm²\n"+
+				"Ec (Coercive): %.2f MV/cm\n"+
+				"Endurance: %.0e cycles\n\n"+
+				"Pr = polarization at E=0 (memory!)\n"+
+				"Ec = field needed to switch",
+				a.material.Name, a.material.Pr*100, a.material.Ps*100,
+				a.material.Ec/1e8, a.material.EnduranceCycles), a.mainWindow)
 	})
-	ecTooltipBtn.Importance = widget.LowImportance
+	matInfoBtn.Importance = widget.LowImportance
 
-	// Pr tooltip button
-	prTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("Remanent Polarization (Pr)",
-			"The polarization that remains when E=0 after switching.\n\n"+
-				"Pr enables non-volatile storage without power.\n\n"+
-				"For HfO₂-ZrO₂: Pr ≈ 15-34 µC/cm².", a.mainWindow)
-	})
-	prTooltipBtn.Importance = widget.LowImportance
+	// Compact material line
+	matLine := widget.NewLabel(fmt.Sprintf("Pr=%.0f Ec=%.1f End=%.0e",
+		a.material.Pr*100, a.material.Ec/1e8, a.material.EnduranceCycles))
 
-	// 30 Levels tooltip button
-	levelsTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("30 Analog Levels",
-			"FeCIM uses 30 discrete analog states per cell.\n\n"+
-				"30 levels = ~4.9 bits/cell vs 1 bit for binary memory.\n\n"+
-				"Each level is a stable polarization state.", a.mainWindow)
-	})
-	levelsTooltipBtn.Importance = widget.LowImportance
-
-	matParams := container.NewHBox(
-		widget.NewLabel(fmt.Sprintf("Pr=%.0f", a.material.Pr*100)),
-		prTooltipBtn,
-		widget.NewLabel(fmt.Sprintf("Ps=%.0f", a.material.Ps*100)),
-		widget.NewLabel(fmt.Sprintf("Ec=%.2f", a.material.Ec/1e8)),
-		ecTooltipBtn,
-	)
-
-	enduranceLabel := widget.NewLabel(fmt.Sprintf("Endurance: %.0e", a.material.EnduranceCycles))
-	enduranceLabel.Wrapping = fyne.TextWrapWord
-
-	// Create level row with tooltip
-	levelRow := container.NewHBox(
-		widget.NewLabelWithStyle("Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		a.levelLabel,
-		levelsTooltipBtn,
-	)
-	a.stateLabel.Alignment = fyne.TextAlignCenter
-
-	// Wake-up/Fatigue display - compact
+	// Wake-up/Fatigue - single compact line
 	a.cyclesLabel = widget.NewLabel("0")
 	a.wakeupLabel = widget.NewLabel("80%")
-	a.fatigueLabel = widget.NewLabel("0.0%")
+	a.fatigueLabel = widget.NewLabel("0%")
 
-	cyclingLabel := widget.NewLabelWithStyle("Cycling Stats", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	fatigueRow := container.NewHBox(
+	statsRow := container.NewHBox(
 		widget.NewLabel("Cyc:"), a.cyclesLabel,
-		widget.NewLabel("Wake:"), a.wakeupLabel,
-		widget.NewLabel("Fat:"), a.fatigueLabel,
+		widget.NewLabel("W:"), a.wakeupLabel,
+		widget.NewLabel("F:"), a.fatigueLabel,
 	)
-
-	// Divider
-	divider := widget.NewSeparator()
 
 	return container.NewVBox(
 		levelRow,
 		container.NewCenter(a.stateLabel),
-		divider,
-		pRow,
-		divider,
+		widget.NewSeparator(),
 		a.modeIndicator,
-		divider,
-		matParamsLabel,
-		matParams,
-		enduranceLabel,
-		divider,
-		cyclingLabel,
-		fatigueRow,
+		widget.NewSeparator(),
+		container.NewHBox(matLine, matInfoBtn),
+		statsRow,
 	)
 }
 
@@ -134,7 +97,8 @@ func (a *App) createLogPanel() fyne.CanvasObject {
 // getSlideText returns the contextual explanation text based on current waveform mode
 func (a *App) getSlideText() string {
 	a.mu.RLock()
-	level := a.discreteLevel + 1 // 1-indexed for display
+	level := a.discreteLevel + 1
+	numLevels := a.numLevels
 	wrdPhase := a.wrdPhase
 	wrdTarget := a.wrdTargetLevel
 	isWrite := math.Abs(a.electricField) > a.material.Ec
@@ -142,110 +106,49 @@ func (a *App) getSlideText() string {
 	wrdTotalWrites := a.wrdTotalWrites
 	wrdSuccessWrites := a.wrdSuccessWrites
 	wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
+	animating := a.manualAnimating
 	a.mu.RUnlock()
 
 	switch waveform {
 	case WaveformManual:
-		a.mu.RLock()
-		animating := a.manualAnimating
-		a.mu.RUnlock()
-
 		if animating {
-			return fmt.Sprintf("WRITING → L%d\n\n"+
-				"Applying E-field:\n"+
-				"• Higher target → +E\n"+
-				"• Lower target → -E\n\n"+
-				"Watch the P-E plot!\n"+
-				"Click level bar for new target.", level)
+			return fmt.Sprintf("WRITING → L%d\nClick level bar for target", level)
 		}
 		if isWrite {
-			return fmt.Sprintf("██ WRITING LEVEL %d ██\n\n"+
-				"Electric field E > Ec.\n"+
-				"Domains are switching.\n"+
-				"Polarization is changing.\n\n"+
-				"Use slider OR click\n"+
-				"level bar to program!", level)
+			return fmt.Sprintf("WRITING L%d\n|E| > Ec, switching...", level)
 		}
-		return fmt.Sprintf("░░ HOLDING LEVEL %d ░░\n\n"+
-			"E-field is low or zero.\n"+
-			"Polarization PERSISTS.\n"+
-			"No power needed.\n\n"+
-			"MANUAL MODE:\n"+
-			"• Drag slider to apply E-field\n"+
-			"• Click level bar to auto-program", level)
+		return fmt.Sprintf("HOLD L%d\nE=0, data persists\nClick level bar to write", level)
 
 	case WaveformSine, WaveformTriangle:
-		phaseText := "░░ READING ░░"
+		mode := "READ"
 		if isWrite {
-			phaseText = "██ WRITING ██"
+			mode = "WRITE"
 		}
-		return fmt.Sprintf("%s\n\n"+
-			"Level: %d/30\n\n"+
-			"The P-E loop shows hysteresis:\n"+
-			"• Upper branch: E increasing\n"+
-			"• Lower branch: E decreasing\n"+
-			"• Area inside = energy loss\n\n"+
-			"The SQUARE shape means:\n"+
-			"sharp switching at ±Ec.", phaseText, level)
+		return fmt.Sprintf("%s L%d/%d\nP-E loop = hysteresis\nSquare shape = sharp switch", mode, level, numLevels)
 
 	case WaveformWriteReadDemo:
-		// Calculate stats (using local copies from RLock above)
 		successRate := 0.0
 		if wrdTotalWrites > 0 {
 			successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
 		}
-		energyPerOp := 10.0 // ~10 fJ per operation (FeFET switching energy)
 
-		var phaseExplanation string
 		switch wrdPhase {
-		case 0: // WRITE
-			direction := "+E (positive)"
-			if wrdTarget < level {
-				direction = "-E (negative)"
+		case 0:
+			return fmt.Sprintf("WRITE → L%d\n|E| > Ec", wrdTarget)
+		case 1:
+			return fmt.Sprintf("HOLD L%d\nE=0, P persists", level)
+		case 2:
+			return fmt.Sprintf("READ L%d\n|E| < Ec, non-destructive", level)
+		case 3:
+			if level == wrdTarget {
+				return fmt.Sprintf("OK L%d\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ", level, wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000)
 			}
-			phaseExplanation = fmt.Sprintf("▓▓ WRITE → L%d ▓▓\n\n"+
-				"Applying %s\n"+
-				"|E| > Ec to switch domains.\n\n"+
-				"Higher level → +E field\n"+
-				"Lower level → -E field\n\n"+
-				"Energy: ~%.0f fJ\n"+
-				"(25-100× less than NAND, Samsung 2025)", wrdTarget, direction, energyPerOp)
-		case 1: // HOLD
-			phaseExplanation = fmt.Sprintf("░░ HOLD L%d ░░\n\n"+
-				"E = 0, P persists!\n\n"+
-				"ZERO POWER NEEDED.\n"+
-				"Data retention: 10+ years\n\n"+
-				"This is TRUE non-volatile:\n"+
-				"No refresh like DRAM.\n"+
-				"No charge leakage.\n\n"+
-				"30 levels = 4.9 bits/cell", level)
-		case 2: // READ
-			phaseExplanation = fmt.Sprintf("▒▒ READ L%d ▒▒\n\n"+
-				"Sense pulse: |E| < Ec\n"+
-				"State UNCHANGED!\n\n"+
-				"Non-destructive read:\n"+
-				"Unlike NAND, data stays.\n"+
-				"No rewrite needed.\n\n"+
-				"Read energy: ~%.0f fJ", level, energyPerOp*0.1)
-		case 3: // DISPLAY
-			status := "✓ SUCCESS"
-			accuracy := ""
-			if level != wrdTarget {
-				status = fmt.Sprintf("△ L%d (want %d)", level, wrdTarget)
-				accuracy = "\n(±1 is normal)"
-			} else {
-				accuracy = "\nPerfect!"
-			}
-			phaseExplanation = fmt.Sprintf("%s%s\n\n"+
-				"Writes: %d | %.0f%%\n"+
-				"Energy: %.1f pJ total\n\n"+
-				"Next target coming...", status, accuracy,
-				wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000)
+			return fmt.Sprintf("L%d (want %d)\nWrites: %d (%.0f%%)", level, wrdTarget, wrdTotalWrites, successRate)
 		}
-		return phaseExplanation
+		return ""
 
 	default:
-		return "Select a waveform mode\nto see explanation."
+		return "Select mode"
 	}
 }
 

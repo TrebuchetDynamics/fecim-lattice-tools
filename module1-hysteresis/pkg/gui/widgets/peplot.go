@@ -24,6 +24,8 @@ type PEPlot struct {
 	currentP float64
 	eMax     float64
 	pMax     float64
+	ec       float64 // Actual coercive field for markers
+	pr       float64 // Actual remanent polarization for markers
 	minSize  fyne.Size
 
 	// Color scheme (passed in during construction or via setters)
@@ -65,6 +67,15 @@ func (p *PEPlot) SetBounds(eMax, pMax float64) {
 	p.eMax = eMax
 	p.pMax = pMax
 	p.mu.Unlock()
+}
+
+// SetMaterialParams sets the actual Ec and Pr values for accurate marker placement
+func (p *PEPlot) SetMaterialParams(ec, pr float64) {
+	p.mu.Lock()
+	p.ec = ec
+	p.pr = pr
+	p.mu.Unlock()
+	p.Refresh() // Redraw with new marker positions
 }
 
 func (p *PEPlot) SetData(eData, pData []float64, currentE, currentP float64) {
@@ -272,8 +283,13 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, pLabelText)
 
 	// Ec markers (vertical dashed lines at ±Ec)
-	// Assuming Ec is roughly at 40% of eMax (since eMax = 2.5*Ec)
-	ecRatio := float32(1.0 / 2.5) // Ec / eMax
+	// Use actual Ec value if set, otherwise fall back to ratio
+	var ecRatio float32
+	if r.plot.ec > 0 && r.plot.eMax > 0 {
+		ecRatio = float32(r.plot.ec / r.plot.eMax)
+	} else {
+		ecRatio = float32(1.0 / 2.5) // Fallback: assume eMax = 2.5*Ec
+	}
 	ecPosX := centerX + ecRatio*plotW/2
 	ecNegX := centerX - ecRatio*plotW/2
 
@@ -302,7 +318,13 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, ecNegLabel)
 
 	// Pr markers (horizontal dashed lines at ±Pr)
-	prRatio := float32(0.8 / 1.2) // Pr / pMax
+	// Use actual Pr value if set, otherwise fall back to ratio
+	var prRatio float32
+	if r.plot.pr > 0 && r.plot.pMax > 0 {
+		prRatio = float32(r.plot.pr / r.plot.pMax)
+	} else {
+		prRatio = float32(0.8 / 1.2) // Fallback: assume Pr/Ps ≈ 0.8, pMax = 1.2*Ps
+	}
 	prPosY := centerY - prRatio*plotH/2
 	prNegY := centerY + prRatio*plotH/2
 

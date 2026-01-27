@@ -122,12 +122,18 @@ func (m *Manager) IsNativeOpenROADAvailable() bool {
 	return err == nil
 }
 
+// IsNativeYosysAvailable checks if yosys is in PATH
+func (m *Manager) IsNativeYosysAvailable() bool {
+	_, err := exec.LookPath("yosys")
+	return err == nil
+}
+
 // DetectMode returns the best available execution mode
 func (m *Manager) DetectMode() Mode {
 	if m.IsDockerImagePulled() {
 		return ModeDocker
 	}
-	if m.IsNativeOpenROADAvailable() {
+	if m.IsNativeOpenROADAvailable() || m.IsNativeYosysAvailable() {
 		return ModeNative
 	}
 	return ModeNone

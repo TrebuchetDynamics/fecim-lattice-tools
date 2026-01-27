@@ -37,10 +37,11 @@ type CellUsageResult struct {
 
 // checkPlacementScript is the TCL script for placement validation
 // Note: FeCIM crossbar is clockless - no STA, just placement check
+// Uses our custom FeCIM cell LEF - no external PDK required
 const checkPlacementScript = `# check_placement.tcl - For clockless FeCIM crossbar
 # NOTE: No STA since design has no clock
+# Uses custom FeCIM cell library, no external PDK required
 
-read_lef $env(TECH_LEF)
 read_lef $env(CELL_LEF)
 read_def $env(DEF_FILE)
 
@@ -48,19 +49,19 @@ read_def $env(DEF_FILE)
 puts "=== PLACEMENT CHECK ==="
 check_placement -verbose
 
-# Cell usage report
-puts "=== CELL USAGE ==="
-report_cell_usage
-
-# Design summary
-puts "=== DESIGN SUMMARY ==="
-report_design
+puts "=== PLACEMENT CHECK COMPLETE ==="
+puts "Placement validation finished successfully."
 
 exit
 `
 
-// RunPlacementCheck validates placement using OpenROAD
+// RunPlacementCheck validates placement using OpenROAD with default cell LEF path
 func RunPlacementCheck(defPath string, manager *openlane.Manager, config *openlane.Config) (*PlacementResult, error) {
+	return RunPlacementCheckWithCell(defPath, "cells/fecim_bitcell/fecim_bitcell.lef", manager, config)
+}
+
+// RunPlacementCheckWithCell validates placement using OpenROAD with specified cell LEF
+func RunPlacementCheckWithCell(defPath string, cellLEFPath string, manager *openlane.Manager, config *openlane.Config) (*PlacementResult, error) {
 	// Check if DEF file exists
 	if _, err := os.Stat(defPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("DEF file not found: %s", defPath)
@@ -73,16 +74,43 @@ func RunPlacementCheck(defPath string, manager *openlane.Manager, config *openla
 	}
 
 	// Create work directory with script
+	// Convert to absolute path - Docker requires absolute paths for volume mounts
 	workDir := filepath.Dir(defPath)
+	absWorkDir, err := filepath.Abs(workDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path for work directory: %v", err)
+	}
+	workDir = absWorkDir
 	scriptPath := filepath.Join(workDir, "check_placement.tcl")
 	if err := os.WriteFile(scriptPath, []byte(checkPlacementScript), 0644); err != nil {
 		return nil, fmt.Errorf("failed to write TCL script: %v", err)
 	}
 	defer os.Remove(scriptPath)
 
-	// Set up environment variables
-	envVars := map[string]string{
-		"DEF_FILE": "/design/" + filepath.Base(defPath),
+	// Copy FeCIM cell LEF to work directory for Docker access
+	cellLEFName := filepath.Base(cellLEFPath)
+	cellLEFDst := filepath.Join(workDir, cellLEFName)
+	if lefData, err := os.ReadFile(cellLEFPath); err == nil {
+		os.WriteFile(cellLEFDst, lefData, 0644)
+		defer os.Remove(cellLEFDst)
+	} else {
+		return nil, fmt.Errorf("cell LEF not found at %s - run 'Generate All' first", cellLEFPath)
+	}
+
+	// Set up environment variables - use our FeCIM cell LEF, no external PDK needed
+	// Paths differ between Docker (container paths) and native (host paths)
+	var envVars map[string]string
+	if mode == openlane.ModeDocker {
+		envVars = map[string]string{
+			"DEF_FILE": "/design/" + filepath.Base(defPath),
+			"CELL_LEF": "/design/" + cellLEFName,
+		}
+	} else {
+		// Native mode - use absolute host paths
+		envVars = map[string]string{
+			"DEF_FILE": filepath.Join(workDir, filepath.Base(defPath)),
+			"CELL_LEF": cellLEFDst,
+		}
 	}
 
 	// Run OpenROAD

@@ -62,6 +62,11 @@ type CrossbarHeatmap struct {
 
 	// Data synchronization
 	dataMu sync.RWMutex
+
+	// Fixed scale (disables auto-scaling)
+	useFixedScale  bool
+	fixedMinVal    float64
+	fixedMaxVal    float64
 }
 
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
@@ -143,25 +148,58 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 	h.dataMu.Lock()
 	defer h.dataMu.Unlock()
 
-	h.minVal = math.Inf(1)
-	h.maxVal = math.Inf(-1)
-
+	// Copy data
 	for i := 0; i < h.rows && i < len(data); i++ {
 		for j := 0; j < h.cols && j < len(data[i]); j++ {
 			h.data[i][j] = data[i][j]
-			if data[i][j] < h.minVal {
-				h.minVal = data[i][j]
-			}
-			if data[i][j] > h.maxVal {
-				h.maxVal = data[i][j]
-			}
 		}
 	}
 
-	if h.maxVal <= h.minVal {
-		h.maxVal = h.minVal + 1
+	// Only auto-scale if not using fixed scale
+	if !h.useFixedScale {
+		h.minVal = math.Inf(1)
+		h.maxVal = math.Inf(-1)
+
+		for i := 0; i < h.rows && i < len(data); i++ {
+			for j := 0; j < h.cols && j < len(data[i]); j++ {
+				if data[i][j] < h.minVal {
+					h.minVal = data[i][j]
+				}
+				if data[i][j] > h.maxVal {
+					h.maxVal = data[i][j]
+				}
+			}
+		}
+
+		if h.maxVal <= h.minVal {
+			h.maxVal = h.minVal + 1
+		}
 	}
 
+	h.rateLimitedRefresh()
+}
+
+// SetFixedScale sets a fixed min/max scale for the heatmap.
+// When enabled, the heatmap will NOT auto-scale to the data range.
+// Use this for consistent comparison between different data sets.
+func (h *CrossbarHeatmap) SetFixedScale(min, max float64) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
+	h.useFixedScale = true
+	h.fixedMinVal = min
+	h.fixedMaxVal = max
+	h.minVal = min
+	h.maxVal = max
+	h.rateLimitedRefresh()
+}
+
+// ClearFixedScale disables fixed scale and reverts to auto-scaling.
+func (h *CrossbarHeatmap) ClearFixedScale() {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
+	h.useFixedScale = false
 	h.rateLimitedRefresh()
 }
 
@@ -209,8 +247,12 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 	h.selectedRow = -1
 	h.selectedCol = -1
 	h.showSelection = false
-	h.minVal = 0
-	h.maxVal = 1 // Reset to default range
+
+	// Only reset min/max if not using fixed scale
+	if !h.useFixedScale {
+		h.minVal = 0
+		h.maxVal = 1 // Reset to default range
+	}
 
 	// Auto-enable grid lines for larger arrays (>16x16) for better cell distinction
 	h.showGridLines = rows > 16 || cols > 16
@@ -378,7 +420,7 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 
 			// Draw selection highlight using draw.Draw for borders
 			if h.showSelection && i == h.selectedRow && j == h.selectedCol {
-				highlightColor := color.RGBA{255, 255, 0, 255}
+				highlightColor := h.selectionColor()
 				highlightUniform := &image.Uniform{highlightColor}
 				// Top border (2px)
 				draw.Draw(img, image.Rect(x0, y0, x1, y0+2), highlightUniform, image.Point{}, draw.Src)
@@ -595,6 +637,30 @@ func clamp(v, min, max float64) float64 {
 		return max
 	}
 	return v
+}
+
+// selectionColor returns a contrasting selection border color based on the current colormap.
+func (h *CrossbarHeatmap) selectionColor() color.RGBA {
+	switch h.colormap {
+	case "viridis":
+		// Viridis is blue-green-yellow, use white for contrast
+		return color.RGBA{255, 255, 255, 255}
+	case "plasma":
+		// Plasma is purple-orange-yellow, use cyan for contrast
+		return color.RGBA{0, 255, 255, 255}
+	case "coolwarm":
+		// Coolwarm is blue-white-red, use bright green for contrast
+		return color.RGBA{0, 255, 0, 255}
+	case "fecim":
+		// FeCIM has many colors, use white for best visibility
+		return color.RGBA{255, 255, 255, 255}
+	case "diverging":
+		// Diverging is blue-white-red, use bright green
+		return color.RGBA{0, 255, 0, 255}
+	default:
+		// Default to white (most visible on dark backgrounds)
+		return color.RGBA{255, 255, 255, 255}
+	}
 }
 
 // divergingColor returns a red-white-blue diverging colormap for difference visualization.

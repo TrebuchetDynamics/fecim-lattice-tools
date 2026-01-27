@@ -168,7 +168,15 @@ type SneakPathAnalysis struct {
 // - Same row: current leaks from selected WL through cell to unselected BL
 // - Same column: current from unselected WLs leaks through cell to selected BL
 // - Off-diagonal: three-cell sneak path forms a complete loop
+//
+// For architecture-aware analysis, use AnalyzeSneakPathsWithArch.
 func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalysis {
+	return a.AnalyzeSneakPathsWithArch(selectedRow, selectedCol, false)
+}
+
+// AnalyzeSneakPathsWithArch analyzes sneak paths with architecture consideration.
+// If is1T1R is true, transistor isolation reduces sneak by ~1000x.
+func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R bool) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
 
@@ -181,6 +189,14 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 	signalG := a.cells[selectedRow][selectedCol].Conductance
 	if signalG < 1e-10 {
 		signalG = 1e-10 // Avoid division by zero
+	}
+
+	// Architecture-dependent isolation factor
+	// 1T1R: Transistor provides ~10^6 ON/OFF ratio, use 10^-3 for conservative estimate
+	// 0T1R: Full sneak path (factor = 1.0)
+	isolationFactor := 1.0
+	if is1T1R {
+		isolationFactor = 0.001 // 1000x isolation from transistor
 	}
 
 	var totalSneak float64
@@ -244,6 +260,9 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 					sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
 				}
 			}
+
+			// Apply architecture isolation factor
+			sneakG *= isolationFactor
 
 			sneakMap[i][j] = sneakG
 			totalSneak += sneakG
@@ -317,14 +336,15 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 // ErrInputSize indicates input size mismatch.
 var ErrInputSize error
 
-// GetIRDropMap returns a normalized IR drop heatmap for visualization.
+// GetIRDropMap returns an IR drop heatmap for visualization.
+// Uses a FIXED scale (0-15% drop) so architecture differences are visible.
 func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
-	if a.MaxIRDrop < 1e-10 {
-		return a.EffectiveVoltage
-	}
-
 	rows := len(a.EffectiveVoltage)
 	cols := len(a.EffectiveVoltage[0])
+
+	// Fixed scale: 15% max drop for better color differentiation
+	// Typical values: 0T1R ~12%, 1T1R ~8% - this range shows clear differences
+	fixedMaxDrop := 0.15
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
@@ -332,7 +352,11 @@ func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
 		for j := range normalized[i] {
 			// IR drop = 1 - effective voltage (assuming 1V input)
 			drop := 1.0 - a.EffectiveVoltage[i][j]
-			normalized[i][j] = drop / a.MaxIRDrop
+			// Normalize to fixed scale, cap at 1.0
+			normalized[i][j] = drop / fixedMaxDrop
+			if normalized[i][j] > 1.0 {
+				normalized[i][j] = 1.0
+			}
 		}
 	}
 
@@ -340,29 +364,26 @@ func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
 }
 
 // GetSneakMap returns the sneak current map normalized for visualization.
+// Uses a fixed scale of 2.0 (200% sneak ratio) to allow consistent comparison
+// between architectures: 0T1R (~1-2 ratio) vs 1T1R (~0.001 ratio).
 func (s *SneakPathAnalysis) GetSneakMap() [][]float64 {
 	rows := len(s.SneakCurrents)
 	cols := len(s.SneakCurrents[0])
 
-	// Find max for normalization
-	maxSneak := 0.0
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			if s.SneakCurrents[i][j] > maxSneak {
-				maxSneak = s.SneakCurrents[i][j]
-			}
-		}
-	}
-
-	if maxSneak < 1e-10 {
-		return s.SneakCurrents
-	}
+	// Fixed scale: 2.0 max sneak ratio for consistent architecture comparison
+	// 0T1R typically shows ~1-2 ratio (significant sneak)
+	// 1T1R typically shows ~0.001 ratio (transistor isolation)
+	fixedMaxSneak := 2.0
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
 		normalized[i] = make([]float64, cols)
 		for j := range normalized[i] {
-			normalized[i][j] = s.SneakCurrents[i][j] / maxSneak
+			// Normalize to fixed scale, cap at 1.0
+			normalized[i][j] = s.SneakCurrents[i][j] / fixedMaxSneak
+			if normalized[i][j] > 1.0 {
+				normalized[i][j] = 1.0
+			}
 		}
 	}
 

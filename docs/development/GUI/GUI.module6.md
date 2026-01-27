@@ -5,10 +5,11 @@ Entry: module6-eda/cmd/eda-gui/main.go
 Package: fecim-lattice-tools/module6-eda/pkg/gui
 Last Updated: 2026-01-26
 Description: |
-  Educational array builder that demonstrates how FeCIM crossbar arrays could
-  integrate with open-source EDA tools (OpenLane/SKY130). Generates LEF/DEF/Verilog
-  files with placeholder timing values - NOT production-ready. Real fabrication
-  requires validated FeFET SPICE models and characterized timing.
+  Educational array builder that demonstrates FeCIM crossbar array design with
+  open-source EDA tools (OpenLane). Generates custom FeCIM cell libraries (LEF/LIB/V),
+  array Verilog/DEF, and visual layout. Uses custom FeCIM bitcell definitions instead
+  of external PDKs. Supports passive and 1T1R architectures with SL (Source Line).
+  Timing values are placeholders - real fabrication requires validated SPICE models.
 ---
 
 Bugs:
@@ -91,9 +92,10 @@ Screens:
                             text: "Cell Config"
                             style: Bold
                             file:tabs/builder_validation_tab.go:591
-                        - CellForm (Form):
-                            type: widget.Form
+                        - CellGrid (Grid):
+                            type: container.Grid (4 columns)
                             file:tabs/builder_validation_tab.go:580-588
+                            layout: Label-Entry pairs in 4-column grid for compact display
                             fields:
                               - nameEntry:
                                   purpose: Cell name
@@ -138,9 +140,10 @@ Screens:
                             text: "Array Config"
                             style: Bold
                             file:tabs/builder_validation_tab.go:618
-                        - ArrayForm (Form):
-                            type: widget.Form
+                        - ArrayGrid (Grid):
+                            type: container.Grid (4 columns)
                             file:tabs/builder_validation_tab.go:597-602
+                            layout: Label-Entry pairs in 4-column grid for compact display
                             fields:
                               - rowsEntry:
                                   purpose: Array rows
@@ -170,35 +173,36 @@ Screens:
                             wrapping: TextWrapWord
                             file:tabs/builder_validation_tab.go:83-104
                             bindings: Updated by updateModeHelp() when mode changes
-                        - StatsBox (VBox):
+                        - StatsBox (HBox):
                             file:tabs/builder_validation_tab.go:606-615
+                            layout: Horizontal row with pipe separators for compact display
                             components:
                               - StatsTitle (Label):
-                                  text: "Statistics"
+                                  text: "Stats:"
                                   style: Bold
                                   file:tabs/builder_validation_tab.go:605
                               - TotalLabel:
-                                  purpose: Total Cells count
+                                  purpose: Total Cells count (e.g., "64 cells")
                                   file:tabs/builder_validation_tab.go:112
                                   bindings: Updated by updateStats()
                               - AreaLabel:
-                                  purpose: Array area (μm²)
+                                  purpose: Array area (e.g., "11.85 μm²")
                                   file:tabs/builder_validation_tab.go:113
                                   bindings: Updated by updateStats()
                               - WLLengthLabel:
-                                  purpose: Word line length
+                                  purpose: Word line length (e.g., "WL: 3.68 μm")
                                   file:tabs/builder_validation_tab.go:114
                                   bindings: Updated by updateStats()
                               - BLLengthLabel:
-                                  purpose: Bit line length
+                                  purpose: Bit line length (e.g., "BL: 21.76 μm")
                                   file:tabs/builder_validation_tab.go:115
                                   bindings: Updated by updateStats()
                               - DensityLabel:
-                                  purpose: Cell density (cells/μm²)
+                                  purpose: Cell density (e.g., "5.40 cells/μm²")
                                   file:tabs/builder_validation_tab.go:116
                                   bindings: Updated by updateStats()
                               - UtilizationLabel:
-                                  purpose: Utilization percentage
+                                  purpose: Utilization percentage (e.g., "100.0%")
                                   file:tabs/builder_validation_tab.go:117
                                   bindings: Updated by updateStats()
             - Separator (widget.Separator):
@@ -277,12 +281,28 @@ Screens:
                       bindings: Updated by generateAllBtn
             - LayoutTab:
                 components:
-                  - LayoutViz (Label):
-                      type: widget.Label
-                      purpose: ASCII art visualization of crossbar layout
-                      style: Monospace
-                      file:tabs/builder_validation_tab.go:176-177
-                      bindings: Updated by makeBuilderLayoutVisualization()
+                  - OpenSVGBtn (Button):
+                      type: widget.Button
+                      text: "Open SVG in Browser"
+                      purpose: Open exported SVG in system browser
+                      file:tabs/builder_validation_tab.go:189-205
+                  - LayoutHelp (Label):
+                      text: "SVG also exported to output/exports/"
+                      file:tabs/builder_validation_tab.go:703
+                  - LayoutCanvas (Custom Widget):
+                      type: widgets.LayoutCanvas
+                      purpose: Interactive visual display of crossbar array
+                      file:gui/widgets/layout_canvas.go
+                      features:
+                        - Grid lines showing cell boundaries
+                        - Word Lines (WL) in orange with pins/labels
+                        - Bit Lines (BL) in green with pins/labels
+                        - Source Lines (SL) in purple (1T1R only, dashed)
+                        - Passive cells: single teal FeFET rectangles
+                        - 1T1R cells: transistor + FeFET stack
+                        - Auto-updates when config changes
+                        - Legend showing wire colors
+                      bindings: SetConfig() called after Generate All
       - ValidationSection (VBox):
           file:tabs/builder_validation_tab.go:705-709
           description: Bottom section with validation results and log
@@ -332,9 +352,10 @@ Screens:
                             values: ["Checking...", "✓ Docker image ready", "○ Docker image not pulled", "✗ OpenLane not available", "✓ Native tools detected"]
                             bindings: Updated by goroutine on tab load (line 208-231)
                         - PDKStatus (Label):
-                            purpose: Show SKY130A PDK status
+                            purpose: Show cell library status
                             file:tabs/builder_validation_tab.go:204
-                            values: ["Checking...", "✓ SKY130A PDK ready", "○ PDK not installed"]
+                            values: ["Checking...", "✓ Not needed - uses FeCIM cell library"]
+                            note: FeCIM uses custom cell LEF, no external PDK required
                             bindings: Updated by goroutine on tab load
                         - PullImageBtn (Button):
                             type: widget.Button
@@ -579,11 +600,13 @@ DataFlow:
     updates:
       - Disables all 3 action buttons
       - statusLabel -> "Generating..."
-      - Generates cell files (LEF/LIB/V) to cells/fecim_bitcell/
-      - Generates array Verilog to output/exports/fecim_crossbar_NxM.v
-      - Generates DEF to output/exports/fecim_crossbar_NxM.def
+      - Generates cell files (LEF/LIB/V) to cells/fecim_bitcell/ or cells/fecim_1t1r_bitcell/
+      - Generates array Verilog to output/exports/fecim_crossbar_NxM.v (with SL for 1T1R)
+      - Generates DEF to output/exports/fecim_crossbar_NxM.def (with SL pins for 1T1R)
+      - Generates SVG to output/exports/fecim_crossbar_NxM.svg
       - Generates OpenLane config to output/exports/config.json
-      - Updates verilogPreview, defPreview, layoutViz
+      - Updates verilogPreview, defPreview
+      - Updates layoutCanvas via SetConfig()
       - Updates verilogStatsLabel, defStatsLabel
       - Re-enables buttons, statusLabel -> "All files generated"
     file:tabs/builder_validation_tab.go:271-352
@@ -759,6 +782,13 @@ KeyFeatures:
       - Validation + OpenLane status (bottom)
     benefit: Cleaner UX, less tab switching
 
+  - name: Compact Configuration UI
+    description: |
+      Cell and Array config use 4-column grid layout (label-entry pairs)
+      for compact display. Stats shown in horizontal row with pipe separators.
+      Maximizes vertical space for preview/visualization areas.
+    file:tabs/builder_validation_tab.go:580-615
+
   - name: Real-time Statistics
     description: |
       As user types rows/cols/dimensions, stats update immediately:
@@ -785,8 +815,21 @@ KeyFeatures:
   - name: Docker Integration
     description: |
       Detects OpenLane Docker image, offers pull button if missing,
-      optional placement validation if available
+      optional placement validation if available. Uses custom FeCIM cell LEF
+      instead of external PDK for validation.
     file:tabs/builder_validation_tab.go:208-231, 234-258
+
+  - name: In-App Layout Visualization
+    description: |
+      Custom Fyne canvas widget (LayoutCanvas) renders crossbar array layout:
+      - Word Lines (WL) in orange (#ff6600) with pins and labels
+      - Bit Lines (BL) in green (#00cc66) with pins and labels
+      - Source Lines (SL) in purple (#cc66ff) - 1T1R only, dashed
+      - Passive cells: single teal FeFET rectangles
+      - 1T1R cells: transistor (top) + FeFET (bottom) stack
+      - Auto-updates when array config changes
+      - Legend showing wire colors
+    file:gui/widgets/layout_canvas.go
 
   - name: Educational Learn Tab
     description: |
@@ -813,40 +856,56 @@ KeyFeatures:
     file:tabs/learn_visuals.go:840-960
 
 FilesGenerated:
-  - path: cells/fecim_bitcell/fecim_bitcell.lef
-    purpose: Cell abstract (LEF)
-    generator: export.GenerateLEF(cellCfg)
-    file:tabs/builder_validation_tab.go:293
+  - path: cells/fecim_bitcell/fecim_bitcell.* (passive)
+    purpose: Passive cell library (LEF/LIB/V)
+    generator: export.GenerateLEF/Liberty/CellVerilog(cellCfg)
+    file:tabs/builder_validation_tab.go:315-323
 
-  - path: cells/fecim_bitcell/fecim_bitcell.lib
-    purpose: Timing library (Liberty) - PLACEHOLDER VALUES
-    generator: export.GenerateLiberty(cellCfg)
-    file:tabs/builder_validation_tab.go:294
-
-  - path: cells/fecim_bitcell/fecim_bitcell.v
-    purpose: Cell Verilog model (behavioral)
-    generator: export.GenerateCellVerilog(cellCfg)
-    file:tabs/builder_validation_tab.go:295
+  - path: cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.* (1T1R)
+    purpose: 1T1R cell library with SL pin (LEF/LIB/V)
+    generator: export.Generate1T1RLEF/Liberty/CellVerilog(cellCfg)
+    file:tabs/builder_validation_tab.go:315-323
+    features:
+      - SL (Source Line) pin for sneak path mitigation
+      - Larger cell dimensions (0.92x3.4 µm vs 0.46x2.72 µm)
+      - Transistor + FeFET behavioral model
 
   - path: output/exports/fecim_crossbar_NxM.v
     purpose: Array Verilog netlist
     generator: export.GenerateArrayVerilog(*cfg)
-    file:tabs/builder_validation_tab.go:300
+    file:tabs/builder_validation_tab.go:328
+    1t1r_features:
+      - SL[M-1:0] port declaration
+      - fecim_1t1r_bitcell cell instantiation
+      - .SL() connections per column
 
   - path: output/exports/fecim_crossbar_NxM.def
     purpose: Physical placement (DEF)
     generator: generateBuilderDEF(*cfg)
-    file:tabs/builder_validation_tab.go:319
+    file:tabs/builder_validation_tab.go:346
+    1t1r_features:
+      - SL[M-1:0] pins at bottom edge
+      - fecim_1t1r_bitcell cell references
+
+  - path: output/exports/fecim_crossbar_NxM.svg
+    purpose: Visual layout diagram (SVG)
+    generator: export.GenerateLayoutSVGWithDefaults(*cfg)
+    file:tabs/builder_validation_tab.go:387-390
+    features:
+      - WL/BL/SL wiring with colors
+      - Cell visualization (passive vs 1T1R)
+      - Pin markers and labels
+      - Legend
 
   - path: output/exports/config.json
     purpose: OpenLane configuration
     generator: export.GenerateOpenLaneConfig(*cfg)
-    file:tabs/builder_validation_tab.go:339
+    file:tabs/builder_validation_tab.go:394
 
   - path: output/exports/fecim_crossbar_NxM/
     purpose: Complete package directory (created by Export Package)
     contains: cells/, Verilog, DEF, config.json, design JSON, README.md
-    file:tabs/builder_validation_tab.go:500-555
+    file:tabs/builder_validation_tab.go:527-620
 
 ValidationTools:
   - name: Yosys
@@ -888,15 +947,16 @@ IntegrationPoints:
 ExternalDependencies:
   - name: OpenLane Docker
     optional: true
-    purpose: Placement validation
+    purpose: Placement validation via OpenROAD
     detection: openlane.NewManager().DetectMode()
     file:tabs/builder_validation_tab.go:209-210
+    note: Uses custom FeCIM cell LEF, no external PDK mount required
 
-  - name: SKY130A PDK
-    optional: true
-    purpose: Placement validation
-    detection: manager.IsPDKInstalled()
-    file:tabs/builder_validation_tab.go:225-229
+  - name: FeCIM Cell Library
+    optional: false
+    purpose: Custom cell definitions for FeCIM bitcells
+    path: cells/fecim_bitcell/ (passive), cells/fecim_1t1r_bitcell/ (1T1R)
+    note: Generated by "Generate All", replaces need for SKY130A PDK
 
   - name: Yosys
     optional: false (for validation)

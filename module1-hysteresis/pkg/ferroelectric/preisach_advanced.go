@@ -322,6 +322,41 @@ func (m *MayergoyzPreisach) GetEffectiveEc() float64 {
 	return m.temperatureCorrectedEc()
 }
 
+// GetEffectivePr returns the actual simulated remanent polarization.
+// This measures what the Preisach model actually produces at E=0 after saturation,
+// which may differ from the nominal material Pr due to loop shape.
+func (m *MayergoyzPreisach) GetEffectivePr() float64 {
+	if m.Temperature >= m.CurieTemp {
+		return 0 // Above Curie temperature, no ferroelectricity
+	}
+
+	// Save current state
+	savedStates := make([]int, len(m.hysterons))
+	for i, h := range m.hysterons {
+		savedStates[i] = h.State
+	}
+	savedPol := m.polarization
+
+	// Saturate positive then return to E=0
+	Emax := m.temperatureCorrectedEc() * 2.5
+	steps := 20
+	for i := 0; i <= steps; i++ {
+		m.Update(Emax * float64(i) / float64(steps))
+	}
+	for i := steps; i >= 0; i-- {
+		m.Update(Emax * float64(i) / float64(steps))
+	}
+	actualPr := m.polarization
+
+	// Restore original state
+	for i := range m.hysterons {
+		m.hysterons[i].State = savedStates[i]
+	}
+	m.polarization = savedPol
+
+	return actualPr
+}
+
 // SimulateDomainSwitching returns domain switching dynamics over time.
 // Returns time, polarization, and number of switched domains.
 func (m *MayergoyzPreisach) SimulateDomainSwitching(Eapplied float64, duration float64, steps int) ([]float64, []float64, []int) {

@@ -22,18 +22,24 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	ca.irDropHeatmap = NewCrossbarHeatmap(ca.config.Rows, ca.config.Cols)
 	ca.irDropHeatmap.SetColormap("viridis")
+	// Fixed scale: GetIRDropMap returns values normalized to [0,1] where 1.0 = 20% drop
+	// This ensures consistent visual comparison across architectures
+	ca.irDropHeatmap.SetFixedScale(0, 1.0)
 	ca.irDropHeatmap.OnCellTapped = ca.onIRDropCellTapped
 	ca.irDropHeatmap.OnCellHover = ca.onIRDropCellHover
 
 	ca.sneakPathHeatmap = NewCrossbarHeatmap(ca.config.Rows, ca.config.Cols)
 	ca.sneakPathHeatmap.SetColormap("plasma")
+	// Fixed scale: GetSneakMap returns values normalized to [0,1] where 1.0 = 200% sneak ratio
+	// This ensures consistent visual comparison across architectures (1T1R vs 0T1R)
+	ca.sneakPathHeatmap.SetFixedScale(0, 1.0)
 	ca.sneakPathHeatmap.OnCellTapped = ca.onSneakCellTapped
 	ca.sneakPathHeatmap.OnCellHover = ca.onSneakCellHover
 
 	// Create color legends using shared widget and store in app
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "% Drop", true, "viridis")
-	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 1, "Sneak", true, "plasma")
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 15, "% Drop", true, "viridis") // 0-15% range for better visualization
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma")   // 0-100% of max sneak ratio
 
 	// Initialize per-tab colormap tracking with defaults
 	ca.condColormap = "fecim"

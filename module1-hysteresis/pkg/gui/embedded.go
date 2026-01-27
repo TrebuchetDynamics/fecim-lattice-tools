@@ -23,23 +23,28 @@ func NewEmbeddedApp() *EmbeddedApp {
 	}
 
 	mat := materials[0]
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
+	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 50                                 // High-resolution physics simulation (independent of quantization)
+	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	app := &App{
-		material:       mat,
-		preisach:       preisach,
-		materials:      materials,
-		matIndex:       0,
-		maxHistory:     500,
-		eHistory:       make([]float64, 0, 500),
-		pHistory:       make([]float64, 0, 500),
-		autoMode:       true,
-		waveform:       WaveformSine,
-		frequency:      0.5, // 0.5 Hz default
-		wrdTargetLevel: 28,  // Start high for dramatic first write
-		maxLogLines:    12,
-		logEntries:     make([]string, 0, 12),
-		lastLogPhase:   -1,
+		material:        mat,
+		preisach:        preisach,
+		materials:       materials,
+		matIndex:        0,
+		numLevels:       numLevels,
+		calibrationUp:   make([]float64, numLevels),
+		calibrationDown: make([]float64, numLevels),
+		maxHistory:      2000,
+		eHistory:        make([]float64, 0, 2000),
+		pHistory:        make([]float64, 0, 2000),
+		autoMode:        true,
+		waveform:        WaveformSine,
+		frequency:       0.5, // 0.5 Hz default
+		wrdTargetLevel:  28,  // Start high for dramatic first write
+		maxLogLines:     12,
+		logEntries:      make([]string, 0, 12),
+		lastLogPhase:    -1,
 	}
 
 	return &EmbeddedApp{App: app}
@@ -61,11 +66,14 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 func (e *EmbeddedApp) Start() {
 	e.running = true
 
-	// Perform level calibration for current material (background to not block UI)
+	// Try to load saved calibration, or perform fresh calibration
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		e.mu.Lock()
-		e.calibrateLevels()
+		if !e.loadCalibration() {
+			// No valid saved calibration - perform fresh calibration
+			e.calibrateLevels()
+		}
 		e.mu.Unlock()
 	}()
 
@@ -75,4 +83,11 @@ func (e *EmbeddedApp) Start() {
 // Stop ends the simulation loop
 func (e *EmbeddedApp) Stop() {
 	e.running = false
+
+	// Save calibration for next session
+	e.mu.Lock()
+	if err := e.saveCalibration(); err != nil {
+		log.Printf("Warning: failed to save calibration: %v", err)
+	}
+	e.mu.Unlock()
 }

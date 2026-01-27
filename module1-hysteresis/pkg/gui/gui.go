@@ -49,6 +49,7 @@ type App struct {
 	preisach  *ferroelectric.MayergoyzPreisach
 	materials []*ferroelectric.HZOMaterial
 	matIndex  int
+	numLevels int // Number of discrete analog levels (default 30)
 
 	// Simulation state
 	mu            sync.RWMutex
@@ -100,9 +101,19 @@ type App struct {
 
 	// Level calibration data (populated at startup/material change)
 	// Maps field values needed to reach each level from known starting states
-	calibrationUp   [30]float64 // Field needed to reach level N from level 1 (ascending)
-	calibrationDown [30]float64 // Field needed to reach level N from level 30 (descending)
-	calibrated      bool        // Whether calibration has been performed
+	calibrationUp   []float64 // Field needed to reach level N from level 1 (ascending)
+	calibrationDown []float64 // Field needed to reach level N from level N (descending)
+	calibrated      bool      // Whether calibration has been performed
+
+	// Adaptive calibration bounds (binary search approach)
+	// Tracks proven lower/upper bounds for each level to converge faster
+	calibUpLow    []float64 // Proven lower bound (field too weak, undershot)
+	calibUpHigh   []float64 // Proven upper bound (field too strong, overshot)
+	calibDownLow  []float64 // Proven lower bound (more negative, overshot down)
+	calibDownHigh []float64 // Proven upper bound (less negative, undershot down)
+	lastErrorUp   []int     // Last error for each level (for oscillation detection)
+	lastErrorDown []int     // Last error for each level (for oscillation detection)
+
 
 	// UI components
 	plot           *widgets.PEPlot
@@ -123,6 +134,10 @@ type App struct {
 	cyclesLabel  *widget.Label
 	wakeupLabel  *widget.Label
 	fatigueLabel *widget.Label
+
+	// Levels selector
+	levelsEntry *widget.Entry
+	levelsLabel *widget.Label
 
 	// Educational slide and log
 	slideTitle   *widget.Label
@@ -280,16 +295,21 @@ func NewApp() *App {
 	}
 
 	mat := materials[0]
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
+	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 50                                 // High-resolution physics simulation (independent of quantization)
+	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{
-		material:       mat,
-		preisach:       preisach,
-		materials:      materials,
-		matIndex:       0,
-		maxHistory:     500,
-		eHistory:       make([]float64, 0, 500),
-		pHistory:       make([]float64, 0, 500),
+		material:        mat,
+		preisach:        preisach,
+		materials:       materials,
+		matIndex:        0,
+		numLevels:       numLevels,
+		calibrationUp:   make([]float64, numLevels),
+		calibrationDown: make([]float64, numLevels),
+		maxHistory:     2000,
+		eHistory:       make([]float64, 0, 2000),
+		pHistory:       make([]float64, 0, 2000),
 		autoMode:       true,
 		waveform:       WaveformSine,
 		frequency:      0.5, // 0.5 Hz default
@@ -325,11 +345,16 @@ func (a *App) run() error {
 	// Start simulation loop
 	a.running = true
 
-	// Perform level calibration for current material (background to not block UI)
+	// Try to load saved calibration, or perform fresh calibration
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		a.mu.Lock()
-		a.calibrateLevels()
+		if !a.loadCalibration() {
+			a.calibrateLevels()
+			if err := a.saveCalibration(); err != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
+		}
 		a.mu.Unlock()
 	}()
 
@@ -351,6 +376,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create P-E plot - will expand to fill space
 	a.plot = widgets.NewPEPlot(a.material.Ec*2.5, a.material.Ps*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
+	a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
 
 	// Create level indicator (wider for better labels, clickable in Manual mode)
 	a.levelIndicator = widgets.NewLevelIndicator()
@@ -359,6 +385,11 @@ func (a *App) createUI() fyne.CanvasObject {
 	a.levelIndicator.OnLevelClicked = func(targetLevel int) {
 		a.mu.Lock()
 		defer a.mu.Unlock()
+
+		// Log click with detailed state (always log for debugging)
+		log.Printf("LEVEL CLICK: target=%d, currentDiscrete=%d, normalizedP=%.4f, waveform=%v, animating=%v",
+			targetLevel, a.discreteLevel, a.normalizedP, a.waveform, a.manualAnimating)
+
 		if a.waveform == WaveformManual && !a.manualAnimating {
 			// Start animation to target level
 			a.manualTargetLevel = targetLevel
@@ -366,6 +397,9 @@ func (a *App) createUI() fyne.CanvasObject {
 			a.manualAnimating = true
 			a.manualPhase = 0 // Start at RESET phase (saturate opposite direction first)
 			a.manualPhaseTime = 0
+
+			log.Printf("ANIMATION START: target=%d, start=%d, numLevels=%d",
+				targetLevel, a.manualStartLevel, a.numLevels)
 			a.addLogEntry(fmt.Sprintf("WRITE → Level %d", targetLevel))
 		}
 	}

@@ -257,30 +257,102 @@ func makeCrossbarContent() fyne.CanvasObject {
 func makeFilesContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("EDA Files We Generate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	// 2x2 file cards grid with spacing for better readability
-	lefCard := LEFPreviewCard()
-	defCard := DEFPreviewCard()
-	verilogCard := VerilogPreviewCard()
-	libertyCard := LibertyPreviewCard()
+	// File cards - using widget.Card which reports MinSize properly
+	cardsGrid := container.NewAdaptiveGrid(2,
+		LEFPreviewCard(),
+		DEFPreviewCard(),
+		VerilogPreviewCard(),
+		LibertyPreviewCard(),
+	)
 
-	cardsGrid := container.NewAdaptiveGrid(2, lefCard, defCard, verilogCard, libertyCard)
+	// === SECTION 1: How We Generate Files ===
+	genTitle := widget.NewLabelWithStyle("1. How We Generate Files", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	genText := widget.NewLabel(`VERILOG GENERATION:
+• Loop through array dimensions (Rows × Cols)
+• Instantiate cell macros: fecim_bitcell (passive) or fecim_1t1r_bitcell (1T1R)
+• Connect WL[row] to each cell's WL pin
+• Connect BL[col] to each cell's BL pin
+• For 1T1R: also connect SL[col] to each cell's SL pin
 
-	// File purposes section (clean prose)
-	purposesTitle := widget.NewLabelWithStyle("File Purposes", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	purposesText := widget.NewLabel(`LEF (Library Exchange Format) defines cell geometry - size and pin locations. This is an abstract view with no transistors.
+DEF GENERATION:
+• Calculate die area from cell dimensions + margins
+• Generate SITE definition matching the LEF
+• Generate ROW definitions (required for placement validation)
+• Place each cell at calculated (X, Y) coordinates with FIXED keyword
+• Declare all pins: WL[], BL[], SL[] (1T1R), VPWR, VGND
 
-DEF (Design Exchange Format) specifies physical placement with X,Y coordinates. The FIXED keyword prevents auto-placement.
+LEF GENERATION:
+• Define LAYER (met1) for pin geometries
+• Define SITE with cell dimensions
+• Define MACRO with pin locations and obstruction areas`)
+	genText.Wrapping = fyne.TextWrapWord
 
-Verilog Netlist provides a structural description of the array. Cells are black boxes (behavioral only).
+	// === SECTION 2: How We Validate ===
+	valTitle := widget.NewLabelWithStyle("2. How We Validate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	valText := widget.NewLabel(`YOSYS VALIDATION (Verilog Syntax):
+• Runs: yosys -p "read_verilog cell.v array.v"
+• Checks syntax errors, undefined modules, port mismatches
+• PASS = Verilog is syntactically correct
 
-Liberty (.lib) contains timing information for synthesis. WARNING: All values are PLACEHOLDERS!
+DEF VALIDATION (Placement Syntax):
+• Parses DEF file structure
+• Verifies COMPONENTS match expected count
+• Checks coordinate format and keywords
 
-OpenLane Config (JSON) points OpenLane to our custom files.
+CROSS-CHECK VALIDATION:
+• Compares cell names across LEF, LIB, and Verilog
+• Verifies pin names match between all three files
+• Ensures consistency for OpenLane integration
 
-Important: LEF is abstract with no real layout. Liberty timing values need SPICE characterization. Verilog doesn't model FeFET physics. Real fabrication requires validated cells.`)
+OPENLANE PLACEMENT VALIDATION (via Docker):
+• Runs OpenROAD: read_lef, read_def, check_placement
+• Verifies cells are placed within die boundaries
+• Checks ROW definitions match SITE definitions
+• Detects overlapping cells or DRC violations`)
+	valText.Wrapping = fyne.TextWrapWord
+
+	// === SECTION 3: How to Generate Layout Images ===
+	imgTitle := widget.NewLabelWithStyle("3. Layout Visualization (OpenLane)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	imgText := widget.NewLabel(`Layout images are generated using industry-standard EDA tools:
+
+OUR APP USES KLAYOUT (via Docker):
+  • Automatically invoked when Docker + OpenLane image available
+  • Reads our generated LEF (cell geometry) and DEF (placement)
+  • Exports PNG layout image to output/exports/
+  • Falls back to schematic SVG if KLayout unavailable
+
+MANUAL KLAYOUT:
+  klayout -l tech.lyp design.def -o layout.png
+  • Reads DEF placement data
+  • Applies layer colors from technology file
+
+USING MAGIC:
+  magic -dnull -noconsole << EOF
+    def read design.def
+    load design
+    plot svg layout.svg
+  EOF
+
+USING OPENROAD GUI:
+  openroad -gui
+  • Interactive placement viewer
+  • Real-time DRC feedback
+
+NOTE: The in-app canvas shows a schematic preview for quick feedback. The actual PNG export uses KLayout for proper EDA visualization.`)
+	imgText.Wrapping = fyne.TextWrapWord
+
+	// === SECTION 4: File Purposes ===
+	purposesTitle := widget.NewLabelWithStyle("4. File Format Summary", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	purposesText := widget.NewLabel(`LEF: Cell geometry (abstract view, no transistors)
+DEF: Physical placement with X,Y coordinates
+Verilog: Structural netlist (behavioral black boxes)
+Liberty: Timing info for synthesis (PLACEHOLDER values!)
+Config.json: OpenLane configuration pointing to our files
+
+⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
 
-	// References section at bottom
+	// References section
 	referencesTitle := widget.NewLabelWithStyle("References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	refsCard := ReferencesCard()
 
@@ -288,6 +360,15 @@ Important: LEF is abstract with no real layout. Liberty timing values need SPICE
 		title,
 		widget.NewSeparator(),
 		cardsGrid,
+		widget.NewSeparator(),
+		genTitle,
+		genText,
+		widget.NewSeparator(),
+		valTitle,
+		valText,
+		widget.NewSeparator(),
+		imgTitle,
+		imgText,
 		widget.NewSeparator(),
 		purposesTitle,
 		purposesText,

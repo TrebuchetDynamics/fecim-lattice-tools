@@ -93,12 +93,16 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		ca.stateMu.Unlock()
 
 		irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
-		debug.Printf("IR Drop data: %d×%d, max=%.6f", len(irMap), len(irMap[0]), mvmResult.IRDropAnalysis.MaxIRDrop)
+		debug.Printf("IR Drop data: %d×%d, MaxDrop=%.4f%%, AvgDrop=%.4f%%",
+			len(irMap), len(irMap[0]),
+			mvmResult.IRDropAnalysis.MaxIRDrop*100,
+			mvmResult.IRDropAnalysis.AvgIRDrop*100)
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(
 			mvmResult.IRDropAnalysis.WorstCaseCell[0],
 			mvmResult.IRDropAnalysis.WorstCaseCell[1],
 		)
+		ca.irDropHeatmap.Refresh() // Force refresh
 	} else {
 		debug.Println("Warning: IRDropAnalysis is nil")
 	}

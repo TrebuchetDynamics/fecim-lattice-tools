@@ -20,6 +20,9 @@ func main() {
 	}
 	defer logging.CloseGlobal()
 
+	// Enable logging by default
+	logging.SetVerbosity(logging.VerbosityInfo)
+
 	logging.GlobalInfo("Starting EDA GUI application")
 
 	a := app.New()

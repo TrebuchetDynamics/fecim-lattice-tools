@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"image/color"
-	"io"
-	stdlog "log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -22,33 +20,14 @@ import (
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/logging"
 )
 
-var debug *stdlog.Logger
-var logFile *os.File
+var debug *logging.Logger
 
 func init() {
-	// Create logs directory
-	logsDir := "<local-path>"
-	os.MkdirAll(logsDir, 0755)
-
-	// Create log file with datetime
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logPath := filepath.Join(logsDir, timestamp+"-mnist-module03.log")
-
-	var err error
-	logFile, err = os.Create(logPath)
-	if err != nil {
-		// Fallback to stdout if file creation fails
-		debug = stdlog.New(os.Stdout, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
-		debug.Printf("Failed to create log file: %v, using stdout", err)
-		return
-	}
-
-	// Write to both file and stdout
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	debug = stdlog.New(multiWriter, "[DEBUG] ", stdlog.Ltime|stdlog.Lmicroseconds)
-	debug.Printf("Logging to: %s", logPath)
+	// Use shared logging - writes to single fecim.log file
+	debug = logging.NewLogger("mnist-gui")
 }
 
 // FeCIM theme colors - same as demo1

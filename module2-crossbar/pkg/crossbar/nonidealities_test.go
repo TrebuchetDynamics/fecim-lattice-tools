@@ -314,6 +314,109 @@ func BenchmarkIRDropAnalysis(b *testing.B) {
 	}
 }
 
+func TestArchitectureAffectsSneak(t *testing.T) {
+	cfg := &Config{
+		Rows:       16,
+		Cols:       16,
+		NoiseLevel: 0.0, // No noise for deterministic test
+		ADCBits:    8,
+		DACBits:    8,
+	}
+
+	arr, err := NewArray(cfg)
+	if err != nil {
+		t.Fatalf("Failed to create array: %v", err)
+	}
+
+	// Program moderate conductance weights (0.5) for sneak path visibility
+	for i := 0; i < cfg.Rows; i++ {
+		for j := 0; j < cfg.Cols; j++ {
+			arr.ProgramWeight(i, j, 0.5)
+		}
+	}
+
+	// Create input vector
+	input := make([]float64, cfg.Cols)
+	for i := range input {
+		input[i] = 0.5
+	}
+
+	// Test with 1T1R architecture (transistor isolation)
+	opts1T1R := &MVMOptions{
+		EnableSneakPaths: true,
+		EnableIRDrop:     true,
+		EnableVariation:  false, // Disable for deterministic test
+		Architecture:     "1T1R (Transistor)",
+		Temperature:      300.0,
+	}
+
+	// Test with 0T1R architecture (passive crossbar)
+	opts0T1R := &MVMOptions{
+		EnableSneakPaths: true,
+		EnableIRDrop:     true,
+		EnableVariation:  false, // Disable for deterministic test
+		Architecture:     "0T1R (Passive)",
+		Temperature:      300.0,
+	}
+
+	result1T1R, err := arr.MVMWithNonIdealities(input, opts1T1R)
+	if err != nil {
+		t.Fatalf("1T1R MVM failed: %v", err)
+	}
+
+	result0T1R, err := arr.MVMWithNonIdealities(input, opts0T1R)
+	if err != nil {
+		t.Fatalf("0T1R MVM failed: %v", err)
+	}
+
+	// 1T1R should have lower RMSE due to better sneak path isolation
+	if result1T1R.RMSE >= result0T1R.RMSE {
+		t.Errorf("1T1R should have lower RMSE than 0T1R: 1T1R=%.6f, 0T1R=%.6f",
+			result1T1R.RMSE, result0T1R.RMSE)
+	}
+
+	// The difference should be significant (at least 10x based on physics values)
+	ratio := result0T1R.RMSE / result1T1R.RMSE
+	if ratio < 5 {
+		t.Errorf("0T1R RMSE should be significantly higher than 1T1R (expected ratio > 5, got %.2f)",
+			ratio)
+	}
+
+	t.Logf("Architecture comparison: 1T1R RMSE=%.6f, 0T1R RMSE=%.6f, ratio=%.2fx",
+		result1T1R.RMSE, result0T1R.RMSE, ratio)
+}
+
+func TestIs1T1RHelper(t *testing.T) {
+	tests := []struct {
+		name     string
+		opts     *MVMOptions
+		expected bool
+	}{
+		{"nil opts", nil, false},                                      // Default is 0T1R (passive)
+		{"empty architecture", &MVMOptions{Architecture: ""}, false}, // Default is 0T1R (passive)
+		{"1T1R string", &MVMOptions{Architecture: "1T1R"}, true},
+		{"1T1R with label", &MVMOptions{Architecture: "1T1R (Transistor)"}, true},
+		{"0T1R string", &MVMOptions{Architecture: "0T1R"}, false},
+		{"0T1R with label", &MVMOptions{Architecture: "0T1R (Passive)"}, false},
+		{"Passive only", &MVMOptions{Architecture: "Passive"}, false},
+		{"Transistor only", &MVMOptions{Architecture: "Transistor"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.opts.Is1T1R()
+			if result != tt.expected {
+				arch := ""
+				if tt.opts != nil {
+					arch = tt.opts.Architecture
+				}
+				t.Errorf("Is1T1R() = %v, expected %v for architecture %q",
+					result, tt.expected, arch)
+			}
+		})
+	}
+}
+
 func BenchmarkSneakPathAnalysis(b *testing.B) {
 	cfg := &Config{
 		Rows:       64,

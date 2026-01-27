@@ -218,34 +218,15 @@ func createArrowDown(x1, y1, x2, y2 float32) []fyne.CanvasObject {
 // =============================================================================
 
 // FileFormatCard creates a styled card showing file format examples
+// Uses proper Fyne widgets for responsive layout
 func FileFormatCard(title, format, content string) fyne.CanvasObject {
-	// Header - INCREASED HEIGHT for better readability
-	headerBg := canvas.NewRectangle(colorBoxOurs)
-	headerBg.Resize(fyne.NewSize(360, 40))
-	headerBg.CornerRadius = 6
-
-	titleText := canvas.NewText(title+" (."+format+")", colorBgDark)
-	titleText.TextSize = 14
-	titleText.TextStyle = fyne.TextStyle{Bold: true}
-	titleText.Move(fyne.NewPos(12, 10))
-
-	// Content area - INCREASED HEIGHT for better code visibility
-	contentBg := canvas.NewRectangle(color.RGBA{0, 25, 50, 255})
-	contentBg.Resize(fyne.NewSize(360, 180))
-	contentBg.Move(fyne.NewPos(0, 40))
-	contentBg.CornerRadius = 4
-
-	// Code content with monospace style and better line spacing
+	// Code content with monospace style
 	codeLabel := widget.NewLabel(content)
 	codeLabel.Wrapping = fyne.TextWrapOff
 	codeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	codeContainer := container.NewPadded(codeLabel)
-	codeContainer.Move(fyne.NewPos(8, 44))
-	codeContainer.Resize(fyne.NewSize(344, 172))
-
-	card := container.NewWithoutLayout(headerBg, titleText, contentBg, codeContainer)
-	card.Resize(fyne.NewSize(360, 224))
+	// Use widget.Card for proper layout and MinSize reporting
+	card := widget.NewCard(title+" (."+format+")", "", codeLabel)
 
 	return card
 }
@@ -301,124 +282,25 @@ func LibertyPreviewCard() fyne.CanvasObject {
 // =============================================================================
 
 // ReferencesCard creates an IEEE-formatted references section with category headers
+// Uses proper Fyne widgets for responsive layout
 func ReferencesCard() fyne.CanvasObject {
-	objects := []fyne.CanvasObject{}
-
-	// Card dimensions
-	cardWidth := float32(420)
-	cardHeight := float32(310)
-
-	// Category header dimensions
-	headerHeight := float32(26)
-	categorySpacing := float32(8)
-
-	// Starting positions
-	startX := float32(0)
-	currentY := float32(0)
-
 	// Category 1: EDA / OpenLane
-	header1 := canvas.NewRectangle(colorBoxOurs)
-	header1.Resize(fyne.NewSize(cardWidth, headerHeight))
-	header1.Move(fyne.NewPos(startX, currentY))
-	header1.CornerRadius = 4
-	objects = append(objects, header1)
-
-	headerText1 := canvas.NewText("EDA / OpenLane", colorText)
-	headerText1.TextSize = 12
-	headerText1.TextStyle = fyne.TextStyle{Bold: true}
-	headerText1.Move(fyne.NewPos(startX+10, currentY+6))
-	objects = append(objects, headerText1)
-
-	currentY += headerHeight
-
-	// References for EDA / OpenLane
-	refs1 := `[1] M. Shalan et al., "OpenLANE: Digital ASIC Flow," WOSET, 2020.
-[2] LEF/DEF 5.8 Specification, Si2 Coalition.`
-
-	refBg1 := canvas.NewRectangle(colorBgDark)
-	refBg1.Resize(fyne.NewSize(cardWidth, 50))
-	refBg1.Move(fyne.NewPos(startX, currentY))
-	objects = append(objects, refBg1)
-
-	refLabel1 := widget.NewLabel(refs1)
-	refLabel1.Wrapping = fyne.TextWrapWord
-	refLabel1.TextStyle = fyne.TextStyle{}
-	refContainer1 := container.NewPadded(refLabel1)
-	refContainer1.Move(fyne.NewPos(startX+5, currentY+2))
-	refContainer1.Resize(fyne.NewSize(cardWidth-10, 46))
-	objects = append(objects, refContainer1)
-
-	currentY += 50 + categorySpacing
+	refs1 := widget.NewLabel(`[1] M. Shalan et al., "OpenLANE: Digital ASIC Flow," WOSET, 2020.
+[2] LEF/DEF 5.8 Specification, Si2 Coalition.`)
+	refs1.Wrapping = fyne.TextWrapWord
+	card1 := widget.NewCard("EDA / OpenLane", "", refs1)
 
 	// Category 2: FeCIM Device Physics
-	header2 := canvas.NewRectangle(colorBoxOurs)
-	header2.Resize(fyne.NewSize(cardWidth, headerHeight))
-	header2.Move(fyne.NewPos(startX, currentY))
-	header2.CornerRadius = 4
-	objects = append(objects, header2)
-
-	headerText2 := canvas.NewText("FeCIM Device Physics", colorText)
-	headerText2.TextSize = 12
-	headerText2.TextStyle = fyne.TextStyle{Bold: true}
-	headerText2.Move(fyne.NewPos(startX+10, currentY+6))
-	objects = append(objects, headerText2)
-
-	currentY += headerHeight
-
-	// References for FeCIM Device Physics
-	refs2 := `[3] S. Shin et al., "Flash In2Se3," Adv. Electron. Mater., 2025.
-[4] U. Schroeder et al., "Roadmap Ferroelectric HfZrO," APL Mater., 2023.`
-
-	refBg2 := canvas.NewRectangle(colorBgDark)
-	refBg2.Resize(fyne.NewSize(cardWidth, 50))
-	refBg2.Move(fyne.NewPos(startX, currentY))
-	objects = append(objects, refBg2)
-
-	refLabel2 := widget.NewLabel(refs2)
-	refLabel2.Wrapping = fyne.TextWrapWord
-	refLabel2.TextStyle = fyne.TextStyle{}
-	refContainer2 := container.NewPadded(refLabel2)
-	refContainer2.Move(fyne.NewPos(startX+5, currentY+2))
-	refContainer2.Resize(fyne.NewSize(cardWidth-10, 46))
-	objects = append(objects, refContainer2)
-
-	currentY += 50 + categorySpacing
+	refs2 := widget.NewLabel(`[3] S. Shin et al., "Flash In2Se3," Adv. Electron. Mater., 2025.
+[4] U. Schroeder et al., "Roadmap Ferroelectric HfZrO," APL Mater., 2023.`)
+	refs2.Wrapping = fyne.TextWrapWord
+	card2 := widget.NewCard("FeCIM Device Physics", "", refs2)
 
 	// Category 3: CIM Architecture
-	header3 := canvas.NewRectangle(colorBoxOurs)
-	header3.Resize(fyne.NewSize(cardWidth, headerHeight))
-	header3.Move(fyne.NewPos(startX, currentY))
-	header3.CornerRadius = 4
-	objects = append(objects, header3)
+	refs3 := widget.NewLabel(`[5] Y. Chen, "Sneak Path Solutions," RSC Nanoscale Adv., 2020.
+[6] P. Chen, NeuroSim, Georgia Tech, 2021.`)
+	refs3.Wrapping = fyne.TextWrapWord
+	card3 := widget.NewCard("CIM Architecture", "", refs3)
 
-	headerText3 := canvas.NewText("CIM Architecture", colorText)
-	headerText3.TextSize = 12
-	headerText3.TextStyle = fyne.TextStyle{Bold: true}
-	headerText3.Move(fyne.NewPos(startX+10, currentY+6))
-	objects = append(objects, headerText3)
-
-	currentY += headerHeight
-
-	// References for CIM Architecture
-	refs3 := `[5] Y. Chen, "Sneak Path Solutions," RSC Nanoscale Adv., 2020.
-[6] P. Chen, NeuroSim, Georgia Tech, 2021.`
-
-	refBg3 := canvas.NewRectangle(colorBgDark)
-	refBg3.Resize(fyne.NewSize(cardWidth, 50))
-	refBg3.Move(fyne.NewPos(startX, currentY))
-	objects = append(objects, refBg3)
-
-	refLabel3 := widget.NewLabel(refs3)
-	refLabel3.Wrapping = fyne.TextWrapWord
-	refLabel3.TextStyle = fyne.TextStyle{}
-	refContainer3 := container.NewPadded(refLabel3)
-	refContainer3.Move(fyne.NewPos(startX+5, currentY+2))
-	refContainer3.Resize(fyne.NewSize(cardWidth-10, 46))
-	objects = append(objects, refContainer3)
-
-	// Container with fixed size
-	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(cardWidth, cardHeight))
-
-	return cont
+	return container.NewVBox(card1, card2, card3)
 }

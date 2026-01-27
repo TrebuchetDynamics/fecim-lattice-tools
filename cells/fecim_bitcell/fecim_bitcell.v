@@ -1,11 +1,11 @@
 // FeCIM Bitcell - Behavioral Model (Placeholder)
 // Technology: sky130
-// Type: passive
+// Type: passive (passive)
 // Size: 0.460 x 2.720 um
 
 module fecim_bitcell (
     input  wire WL,     // Word Line
-    output wire BL,     // Bit Line  
+    output wire BL,     // Bit Line
     inout  wire VPWR,   // Power
     inout  wire VGND    // Ground
 );

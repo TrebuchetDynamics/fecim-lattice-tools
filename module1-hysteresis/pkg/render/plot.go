@@ -42,7 +42,7 @@ func DefaultPlotConfig() *PlotConfig {
 		XLabel:        "Electric Field E (MV/cm)",
 		YLabel:        "Polarization P (μC/cm²)",
 		Title:         "Ferroelectric Hysteresis",
-		TrailLength:   500,
+		TrailLength:   2000,
 		TrailFade:     0.3,
 	}
 }

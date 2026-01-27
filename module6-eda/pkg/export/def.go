@@ -130,6 +130,28 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	sb.WriteString(fmt.Sprintf("DIEAREA ( 0 0 ) ( %d %d ) ;\n", dieWidthDBU, dieHeightDBU))
 	sb.WriteString("\n")
 
+	// ROW definitions - required for OpenROAD placement validation
+	// Site name must match the SITE defined in the LEF file
+	siteName := "fecim_site"
+	if is1T1R {
+		siteName = "fecim_1t1r_site"
+	}
+	cellWidthDBU := int(config.CellWidth * float64(dbu))
+	cellHeightDBU := int(config.CellHeight * float64(dbu))
+	originXDBU := int(config.OriginX * float64(dbu))
+	originYDBU := int(config.OriginY * float64(dbu))
+
+	for row := 0; row < numRows; row++ {
+		rowY := originYDBU + row*cellHeightDBU
+		orient := "N"
+		if row%2 == 1 {
+			orient = "FS" // Flip alternate rows for power grid alignment
+		}
+		sb.WriteString(fmt.Sprintf("ROW ROW_%d %s %d %d %s DO %d BY 1 STEP %d 0 ;\n",
+			row, siteName, originXDBU, rowY, orient, numCols, cellWidthDBU))
+	}
+	sb.WriteString("\n")
+
 	// Components section
 	sb.WriteString(fmt.Sprintf("COMPONENTS %d ;\n", len(cellsToExport)))
 

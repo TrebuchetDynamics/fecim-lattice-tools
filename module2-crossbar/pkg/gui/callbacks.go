@@ -217,3 +217,45 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 			row, col, conductanceUS, level))  // Already has µS
 	}
 }
+
+// refreshSelectedCellTooltip refreshes the tooltip for the currently selected cell.
+// Call this after architecture changes or MVM recalculation to update displayed values.
+func (ca *CrossbarApp) refreshSelectedCellTooltip() {
+	// Check if a cell is selected
+	if ca.selectedRow < 0 || ca.selectedCol < 0 {
+		return
+	}
+
+	// Determine which tab is active and refresh the appropriate tooltip
+	if ca.tabs == nil || ca.tabs.Selected() == nil {
+		return
+	}
+
+	row, col := ca.selectedRow, ca.selectedCol
+
+	switch ca.tabs.Selected().Text {
+	case "Conductance":
+		matrix := ca.array.GetConductanceMatrix()
+		if row < len(matrix) && col < len(matrix[0]) {
+			value := matrix[row][col]
+			tooltip := ConductanceTooltip(row, col, value, ca.array)
+			ca.statsLabel.SetText(tooltip)
+		}
+
+	case "IR Drop":
+		ca.stateMu.RLock()
+		analysis := ca.lastIRDropAnalysis
+		ca.stateMu.RUnlock()
+		tooltip := IRDropTooltip(row, col, analysis, ca.array)
+		ca.statsLabel.SetText(tooltip)
+
+	case "Sneak Paths":
+		sneakTargetRow := ca.config.Rows / 2
+		sneakTargetCol := ca.config.Cols / 2
+		ca.stateMu.RLock()
+		analysis := ca.lastSneakAnalysis
+		ca.stateMu.RUnlock()
+		tooltip := SneakPathTooltip(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array)
+		ca.statsLabel.SetText(tooltip)
+	}
+}

@@ -23,6 +23,9 @@ func main() {
 	}
 	defer logging.CloseGlobal()
 
+	// Enable logging by default
+	logging.SetVerbosity(logging.VerbosityInfo)
+
 	rows := flag.Int("rows", 4, "Number of rows")
 	cols := flag.Int("cols", 4, "Number of columns")
 	outputDir := flag.String("output", "output/lattices", "Output directory")

@@ -55,6 +55,15 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 
 	// Perform enhanced MVM with all non-idealities
 	opts := crossbar.DefaultMVMOptions()
+
+	// Get architecture from GUI state
+	ca.stateMu.RLock()
+	arch := ca.architecture
+	ca.stateMu.RUnlock()
+	if arch != "" {
+		opts.Architecture = arch
+	}
+
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
 		debug.Printf("runEnhancedMVMInstant: Error: %v", err)
@@ -71,6 +80,9 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 
 	// Update all visualizations (synchronously)
 	ca.updateEnhancedWidgets(mvmResult)
+
+	// Refresh the selected cell tooltip with new values
+	ca.refreshSelectedCellTooltip()
 
 	ca.updateStatus("Ready | Initial MVM complete. All analysis tabs populated.")
 	debug.Println("runEnhancedMVMInstant: Complete")
@@ -108,6 +120,15 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 	// Perform enhanced MVM with all non-idealities
 	opts := crossbar.DefaultMVMOptions()
+
+	// Get architecture from GUI state
+	ca.stateMu.RLock()
+	arch := ca.architecture
+	ca.stateMu.RUnlock()
+	if arch != "" {
+		opts.Architecture = arch
+	}
+
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
 		fyne.Do(func() {
@@ -147,4 +168,60 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	})
 
 	debug.Println("runEnhancedMVM: Complete")
+}
+
+// runEnhancedMVMWithCurrentInput re-runs MVM using the existing input vector.
+// Use this when changing architecture to compare the SAME computation with different physics.
+func (ca *CrossbarApp) runEnhancedMVMWithCurrentInput() {
+	// Get existing input (don't generate new random)
+	ca.stateMu.RLock()
+	input := ca.lastInput
+	arch := ca.architecture
+	ca.stateMu.RUnlock()
+
+	// If no input yet OR input is wrong size (after array resize), generate one
+	needNewInput := input == nil || len(input) == 0 || len(input) != ca.config.Cols
+	if needNewInput {
+		debug.Printf("[ARCH SWITCH] Creating new input: current len=%d, need=%d", len(input), ca.config.Cols)
+		input = make([]float64, ca.config.Cols)
+		for i := range input {
+			input[i] = 0.5 // Use uniform input for fair comparison
+		}
+		ca.stateMu.Lock()
+		ca.lastInput = input
+		ca.stateMu.Unlock()
+		ca.mvmVis.SetInput(input)
+	} else {
+		debug.Printf("[ARCH SWITCH] Reusing existing input: len=%d", len(input))
+	}
+
+	debug.Printf("[ARCH SWITCH] Architecture changed to: %s", arch)
+
+	// Perform enhanced MVM with all non-idealities
+	opts := crossbar.DefaultMVMOptions()
+	opts.Architecture = arch // Always set architecture explicitly
+	debug.Printf("[ARCH SWITCH] opts.Architecture=%s, Is1T1R=%v", opts.Architecture, opts.Is1T1R())
+
+	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
+	if err != nil {
+		debug.Printf("runEnhancedMVMWithCurrentInput: Error: %v", err)
+		ca.updateStatus(fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	ca.stateMu.Lock()
+	ca.lastOutput = mvmResult.ActualOutput
+	ca.lastMVMResult = mvmResult
+	ca.stateMu.Unlock()
+
+	ca.mvmVis.SetOutput(mvmResult.ActualOutput)
+
+	// Update all visualizations
+	ca.updateEnhancedWidgets(mvmResult)
+
+	// Refresh the selected cell tooltip with new values
+	ca.refreshSelectedCellTooltip()
+
+	ca.updateStatus(fmt.Sprintf("Ready | Architecture: %s | Accuracy: %.1f%%", arch, 90.0-mvmResult.AccuracyLoss))
+	debug.Println("runEnhancedMVMWithCurrentInput: Complete")
 }

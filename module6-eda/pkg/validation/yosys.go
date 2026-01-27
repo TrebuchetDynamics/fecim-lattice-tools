@@ -4,13 +4,14 @@ package validation
 import (
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"fecim-lattice-tools/module6-eda/pkg/openlane"
 	"fecim-lattice-tools/shared/logging"
 )
 
-// ValidateVerilog validates Verilog syntax using Yosys
+// ValidateVerilog validates Verilog syntax using Yosys (via Docker or native)
 // Returns nil if validation passes, error with details if it fails
 func ValidateVerilog(verilogPath string) error {
 	logging.GlobalInfo("Running Yosys validation on: %s", verilogPath)
@@ -20,25 +21,36 @@ func ValidateVerilog(verilogPath string) error {
 		return fmt.Errorf("verilog file not found: %s", verilogPath)
 	}
 
-	// Check if yosys is installed
-	if _, err := exec.LookPath("yosys"); err != nil {
-		return fmt.Errorf("yosys not found in PATH - cannot validate (install with: sudo apt install yosys)")
+	// Get absolute path and working directory
+	absPath, err := filepath.Abs(verilogPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %v", err)
 	}
+	workDir := filepath.Dir(absPath)
+	fileName := filepath.Base(absPath)
 
-	// Run yosys syntax check
-	// Use 'read_verilog' to parse and check syntax
-	cmd := exec.Command("yosys", "-p", fmt.Sprintf("read_verilog %s; hierarchy -check", verilogPath))
-	output, err := cmd.CombinedOutput()
+	// Create runner with OpenLane manager
+	manager := openlane.NewManager()
+	config := openlane.DefaultConfig()
+	runner := openlane.NewRunner(manager, config)
 
+	// Build yosys command - paths relative to /design in Docker
+	yosysCmd := fmt.Sprintf("read_verilog %s; hierarchy -check", fileName)
+
+	result, err := runner.RunYosys(yosysCmd, workDir)
 	if err != nil {
 		logging.GlobalError("Yosys validation failed: %v", err)
-		return fmt.Errorf("yosys validation failed:\n%s", string(output))
+		output := ""
+		if result != nil {
+			output = result.Stdout + result.Stderr
+		}
+		return fmt.Errorf("yosys validation failed:\n%s\n%v", output, err)
 	}
 
-	logging.GlobalDebug("Yosys output:\n%s", string(output))
+	logging.GlobalDebug("Yosys output:\n%s", result.Stdout)
 
-	// Check for warnings or errors in output
-	outputStr := string(output)
+	// Check for errors in output
+	outputStr := result.Stdout + result.Stderr
 	if strings.Contains(outputStr, "ERROR") {
 		logging.GlobalError("Yosys reported internal errors")
 		return fmt.Errorf("yosys found errors:\n%s", outputStr)
@@ -49,6 +61,7 @@ func ValidateVerilog(verilogPath string) error {
 }
 
 // ValidateVerilogWithCell validates array Verilog with cell library blackbox
+// Both files should be in the same directory for Docker volume mounting
 func ValidateVerilogWithCell(arrayPath, cellPath string) error {
 	logging.GlobalInfo("Running Yosys validation on array: %s with cell: %s", arrayPath, cellPath)
 
@@ -60,24 +73,54 @@ func ValidateVerilogWithCell(arrayPath, cellPath string) error {
 		return fmt.Errorf("cell verilog not found: %s", cellPath)
 	}
 
-	// Check if yosys is installed
-	if _, err := exec.LookPath("yosys"); err != nil {
-		return fmt.Errorf("yosys not found in PATH")
+	// Get absolute paths
+	absArrayPath, err := filepath.Abs(arrayPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for array: %v", err)
+	}
+	absCellPath, err := filepath.Abs(cellPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for cell: %v", err)
 	}
 
-	// Run yosys with cell as library (blackbox)
-	cmd := exec.Command("yosys", "-p",
-		fmt.Sprintf("read_verilog -lib %s; read_verilog %s; hierarchy -check", cellPath, arrayPath))
-	output, err := cmd.CombinedOutput()
+	// For Docker, we need both files accessible from a common mount point
+	// Use the project root as the work directory
+	workDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %v", err)
+	}
 
+	// Make paths relative to workDir for Docker
+	relArrayPath, err := filepath.Rel(workDir, absArrayPath)
+	if err != nil {
+		relArrayPath = absArrayPath
+	}
+	relCellPath, err := filepath.Rel(workDir, absCellPath)
+	if err != nil {
+		relCellPath = absCellPath
+	}
+
+	// Create runner with OpenLane manager
+	manager := openlane.NewManager()
+	config := openlane.DefaultConfig()
+	runner := openlane.NewRunner(manager, config)
+
+	// Build yosys command with cell as library (blackbox)
+	yosysCmd := fmt.Sprintf("read_verilog -lib %s; read_verilog %s; hierarchy -check", relCellPath, relArrayPath)
+
+	result, err := runner.RunYosys(yosysCmd, workDir)
 	if err != nil {
 		logging.GlobalError("Yosys validation failed: %v", err)
-		return fmt.Errorf("yosys validation failed:\n%s", string(output))
+		output := ""
+		if result != nil {
+			output = result.Stdout + result.Stderr
+		}
+		return fmt.Errorf("yosys validation failed:\n%s\n%v", output, err)
 	}
 
-	logging.GlobalDebug("Yosys output:\n%s", string(output))
+	logging.GlobalDebug("Yosys output:\n%s", result.Stdout)
 
-	outputStr := string(output)
+	outputStr := result.Stdout + result.Stderr
 	if strings.Contains(outputStr, "ERROR") {
 		logging.GlobalError("Yosys reported internal errors")
 		return fmt.Errorf("yosys found errors:\n%s", outputStr)
