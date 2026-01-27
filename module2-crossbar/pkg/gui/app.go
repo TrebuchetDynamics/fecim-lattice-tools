@@ -87,11 +87,12 @@ type CrossbarApp struct {
 	irColormap    string
 	sneakColormap string
 
-	// Architecture toggle (Dr. Tour: clarify 0T1R vs 1T1R)
-	archToggle       *fyne.Container // Container with two toggle buttons
+	// Architecture toggle (Dr. Tour: clarify 0T1R vs 1T1R vs 2T1R)
+	archToggle       *fyne.Container // Container with toggle buttons
 	archPassiveBtn   *widget.Button
 	arch1T1RBtn      *widget.Button
-	architecture     string // "1T1R (Transistor)" or "0T1R (Passive)"
+	arch2T1RBtn      *widget.Button
+	architecture     string // "1T1R (Transistor)", "0T1R (Passive)", or "2T1R (Dual Transistor)"
 
 	// Status
 	statusLabel    *widget.Label
@@ -299,25 +300,33 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	})
 	ca.colormapSelect.SetSelected("fecim")
 
-	// Architecture toggle: 0T1R (passive) vs 1T1R (with access transistor)
+	// Architecture toggle: 0T1R (passive) vs 1T1R (with access transistor) vs 2T1R (dual transistor)
 	// Dr. Tour recommendation: clarify sneak path behavior depends on architecture
 	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
 
 	// Create toggle buttons
 	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
-	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R", nil)
+	ca.arch2T1RBtn = widget.NewButton("2T1R", nil)
 
 	// Helper to update button styles based on selection
 	updateArchButtons := func() {
-		if ca.architecture == sharedwidgets.Architecture0T1R {
+		ca.archPassiveBtn.Importance = widget.LowImportance
+		ca.arch1T1RBtn.Importance = widget.LowImportance
+		ca.arch2T1RBtn.Importance = widget.LowImportance
+		switch ca.architecture {
+		case sharedwidgets.Architecture0T1R:
 			ca.archPassiveBtn.Importance = widget.HighImportance
-			ca.arch1T1RBtn.Importance = widget.LowImportance
-		} else {
-			ca.archPassiveBtn.Importance = widget.LowImportance
+		case sharedwidgets.Architecture1T1R:
 			ca.arch1T1RBtn.Importance = widget.HighImportance
+		case sharedwidgets.Architecture2T1R:
+			ca.arch2T1RBtn.Importance = widget.HighImportance
+		default:
+			ca.archPassiveBtn.Importance = widget.HighImportance
 		}
 		ca.archPassiveBtn.Refresh()
 		ca.arch1T1RBtn.Refresh()
+		ca.arch2T1RBtn.Refresh()
 	}
 
 	// Set initial state
@@ -350,8 +359,21 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.runEnhancedMVMWithCurrentInput()
 	}
 
-	// Create horizontal container for toggle
-	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
+	ca.arch2T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture2T1R {
+			return // Already selected
+		}
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture2T1R
+		ca.stateMu.Unlock()
+		updateArchButtons()
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture2T1R)
+		ca.setEducationalContent(title, content)
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
+	// Create horizontal container for toggle (3 buttons)
+	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
 	ca.statsLabel.Wrapping = fyne.TextWrapOff
