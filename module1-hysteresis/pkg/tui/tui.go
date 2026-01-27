@@ -660,6 +660,49 @@ func Run() error {
 	return err
 }
 
+// RunWithMaterial starts the TUI application with a specific material selected
+func RunWithMaterial(materialName string) error {
+	p := tea.NewProgram(NewModelWithMaterial(materialName), tea.WithAltScreen())
+	_, err := p.Run()
+	return err
+}
+
+// NewModelWithMaterial creates a new TUI model with a specific material pre-selected
+func NewModelWithMaterial(materialName string) Model {
+	materials := ferroelectric.AllMaterials()
+
+	// Find the requested material by name
+	matIndex := 0
+	for i, m := range materials {
+		if m.Name == materialName {
+			matIndex = i
+			break
+		}
+	}
+
+	mat := materials[matIndex]
+	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
+
+	return Model{
+		material:   mat,
+		preisach:   preisach,
+		materials:  materials,
+		matIndex:   matIndex,
+		maxHistory: 200,
+		eHistory:   make([]float64, 0, 200),
+		pHistory:   make([]float64, 0, 200),
+		waveform:   WaveformSine,
+		autoMode:   true,
+		paused:     false,
+		frequency:  2.0, // 2 Hz for visible animation
+		plotWidth:  60,
+		plotHeight: 20,
+		keys:       DefaultKeyMap(),
+		help:       help.New(),
+		lastTick:   time.Now(),
+	}
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a

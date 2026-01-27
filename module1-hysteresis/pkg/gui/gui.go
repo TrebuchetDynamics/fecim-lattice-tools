@@ -322,9 +322,67 @@ func NewApp() *App {
 }
 
 // Run starts the GUI application
+// Run starts the GUI with the default material (first in AllMaterials).
 func Run() error {
 	a := NewApp()
 	return a.run()
+}
+
+// RunWithMaterial starts the GUI with a specific initial material.
+// materialName should match one of the material names from AllMaterials().
+// If not found, falls back to the default material.
+func RunWithMaterial(materialName string) error {
+	a := NewAppWithMaterial(materialName)
+	return a.run()
+}
+
+// NewAppWithMaterial creates a new GUI application with a specific initial material.
+func NewAppWithMaterial(materialName string) *App {
+	materials := ferroelectric.AllMaterials()
+
+	// Find the material by name
+	var mat *ferroelectric.HZOMaterial
+	var matIndex int
+	for i, m := range materials {
+		if m.Name == materialName {
+			mat = m
+			matIndex = i
+			break
+		}
+	}
+	// Fallback to first material if not found
+	if mat == nil {
+		mat = materials[0]
+		matIndex = 0
+	}
+
+	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 50                                 // High-resolution physics simulation (independent of quantization)
+	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+
+	return &App{
+		material:         mat,
+		preisach:         preisach,
+		materials:        materials,
+		matIndex:         matIndex,
+		numLevels:        numLevels,
+		calibrationUp:    make([]float64, numLevels),
+		calibrationDown:  make([]float64, numLevels),
+		calibrationTemp:  300, // Default room temperature
+		tempCalibrations: make(map[int]*TempCalibration),
+		maxHistory:       2000,
+		eHistory:         make([]float64, 0, 2000),
+		pHistory:         make([]float64, 0, 2000),
+		autoMode:         true,
+		frequency:        0.5,
+		paused:           false,
+		// Write/Read Demo fields initialized to defaults
+		wrdPhase:         0,
+		wrdTargetLevel:   15,
+		wrdStartLevel:    15,
+		wrdBitsStored:    4.91,
+		manualTargetLevel: 15,
+	}
 }
 
 func (a *App) run() error {

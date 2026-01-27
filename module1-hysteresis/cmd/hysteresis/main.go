@@ -122,8 +122,8 @@ func main() {
 	}
 
 	if *tuiMode {
-		// Terminal UI mode
-		if err := tui.Run(); err != nil {
+		// Terminal UI mode with selected material
+		if err := tui.RunWithMaterial(material.Name); err != nil {
 			log.Printf("TUI error: %v\n", err)
 			fmt.Println("\nFalling back to headless mode...")
 
@@ -151,11 +151,12 @@ func main() {
 	}
 
 	// Default: Fyne GUI mode (recommended)
-	if err := gui.Run(); err != nil {
+	// Pass the selected material name to the GUI
+	if err := gui.RunWithMaterial(material.Name); err != nil {
 		log.Printf("GUI error: %v\n", err)
 		fmt.Println("\nFalling back to TUI mode...")
 
-		if err := tui.Run(); err != nil {
+		if err := tui.RunWithMaterial(material.Name); err != nil {
 			log.Printf("TUI error: %v\n", err)
 			fmt.Println("\nFalling back to headless mode...")
 
