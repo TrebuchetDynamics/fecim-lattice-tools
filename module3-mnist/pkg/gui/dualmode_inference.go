@@ -325,22 +325,17 @@ func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
 // Only reloads if the optimal weights are different from currently loaded.
 func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	// Check if we already have optimal weights loaded (thread-safe read)
-	app.currentQATLevelMu.RLock()
-	currentLevel := app.currentQATLevel
-	app.currentQATLevelMu.RUnlock()
-	if currentLevel == targetLevel {
+	if app.currentQATLevel() == targetLevel {
 		return
 	}
 
 	// Find the weights file for this level
-	weightsPath := core.GetWeightsFilename(app.dataDir, targetLevel)
+	weightsPath := core.GetWeightsFilename(app.dataDir(), targetLevel)
 
 	// Check if the file exists
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
 		// No level-specific weights, notify user (but only once per level per session)
-		app.warnedMissingLevelsMu.RLock()
-		alreadyWarned := app.warnedMissingLevels[targetLevel]
-		app.warnedMissingLevelsMu.RUnlock()
+		alreadyWarned := app.hasWarnedMissingLevel(targetLevel)
 
 		if !alreadyWarned {
 			app.warnedMissingLevelsMu.Lock()

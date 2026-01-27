@@ -57,9 +57,8 @@ type DualModeApp struct {
 	fyneApp fyne.App
 	window  fyne.Window
 
-	// Network
-	network *core.DualModeNetwork
-	dataDir string
+	// Network controller (ARCH-001: extracted from DualModeApp)
+	networkCtrl *NetworkController
 
 	// Drawing
 	digitCanvas *DigitCanvas
@@ -96,24 +95,12 @@ type DualModeApp struct {
 	testResultLabel *widget.Label
 	testProgressBar *widget.ProgressBar
 
-	// Test data
-	testImages [][]float64
-	testLabels []int
-
 	// Status
 	statusLabel *widget.Label
 	initialized bool // true after UI is fully built
 
 	// Last inference result for refresh
 	lastPixels []float64
-
-	// QAT (Quantization-Aware Training) weight tracking
-	currentQATLevel   int // Currently loaded QAT weights level (10, 20, 29, 30, 31)
-	currentQATLevelMu sync.RWMutex
-
-	// Track which missing weight levels have already shown a warning (to avoid infinite modals)
-	warnedMissingLevels   map[int]bool
-	warnedMissingLevelsMu sync.RWMutex
 
 	// Guided Tour
 	tour *GuidedTour
@@ -154,25 +141,59 @@ type DualModeApp struct {
 // NewDualModeApp creates a new dual-mode MNIST application.
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
-		dataDir:             findDataDir(),
-		currentQATLevel:     FeCIMDefaultLevels, // Default QAT level (30)
-		warnedMissingLevels: make(map[int]bool),
-	}
-
-	// Create network
-	app.network = core.NewDualModeNetwork(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
-
-	// Load pretrained weights (default 30-level QAT weights)
-	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
-	if _, err := os.Stat(weightsPath); err == nil {
-		if err := app.network.LoadWeights(weightsPath); err != nil {
-			mnistLog.Printf("Warning: Failed to load weights from %s: %v", weightsPath, err)
-		}
-	} else {
-		mnistLog.Printf("Note: No pretrained weights found at %s, using random initialization", weightsPath)
+		// Create network controller (ARCH-001: network management extracted)
+		networkCtrl: NewNetworkController(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize),
 	}
 
 	return app
+}
+
+// ======================================================================
+// Network Controller Accessors (ARCH-001: backward compatibility layer)
+// These methods delegate to networkCtrl for existing code compatibility.
+// ======================================================================
+
+// network returns the underlying DualModeNetwork for backward compatibility.
+// Prefer using networkCtrl methods directly for new code.
+func (app *DualModeApp) network() *core.DualModeNetwork {
+	return app.networkCtrl.Network()
+}
+
+// dataDir returns the data directory path.
+func (app *DualModeApp) dataDir() string {
+	return app.networkCtrl.DataDir()
+}
+
+// testImages returns the cached test images.
+func (app *DualModeApp) testImages() [][]float64 {
+	images, _ := app.networkCtrl.GetTestData()
+	return images
+}
+
+// testLabels returns the cached test labels.
+func (app *DualModeApp) testLabels() []int {
+	_, labels := app.networkCtrl.GetTestData()
+	return labels
+}
+
+// currentQATLevel returns the current QAT level.
+func (app *DualModeApp) currentQATLevel() int {
+	return app.networkCtrl.CurrentQATLevel()
+}
+
+// setCurrentQATLevel sets the current QAT level.
+func (app *DualModeApp) setCurrentQATLevel(level int) {
+	app.networkCtrl.SetCurrentQATLevel(level)
+}
+
+// hasWarnedMissingLevel checks if a warning was shown for a missing level.
+func (app *DualModeApp) hasWarnedMissingLevel(level int) bool {
+	return app.networkCtrl.HasWarnedMissingLevel(level)
+}
+
+// setWarnedMissingLevel marks a level as warned.
+func (app *DualModeApp) setWarnedMissingLevel(level int) {
+	app.networkCtrl.SetWarnedMissingLevel(level)
 }
 
 // BuildContent creates the UI content for embedding.

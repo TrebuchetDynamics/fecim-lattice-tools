@@ -43,7 +43,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		bestLevel := core.GetBestMatchingWeightsLevel(levels)
 		app.tryLoadQATWeights(bestLevel)
 
-		app.network.SetNumLevels(levels)
+		app.network().SetNumLevels(levels)
 		app.updateWeightHeatmap()
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
@@ -64,7 +64,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.noiseSlider.OnChanged = func(v float64) {
 		mnistLog.SliderChange("Noise", v)
 		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
-		app.network.SetNoiseLevel(v)
+		app.network().SetNoiseLevel(v)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -81,7 +81,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Selection("ADC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
-		app.network.SetADCBits(bits)
+		app.network().SetADCBits(bits)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -92,7 +92,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Selection("DAC", s)
 		var bits int
 		fmt.Sscanf(s, "%d", &bits)
-		app.network.SetDACBits(bits)
+		app.network().SetDACBits(bits)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
@@ -206,11 +206,11 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 // applyPresetWithMode sets hardware parameters with optional Calibration Mode (single-layer).
 func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
 	// Update network parameters (thread-safe, not UI)
-	app.network.SetNumLevels(levels)
-	app.network.SetNoiseLevel(noise)
-	app.network.SetADCBits(adcBits)
-	app.network.SetDACBits(dacBits)
-	app.network.SetSingleLayer(singleLayer)
+	app.network().SetNumLevels(levels)
+	app.network().SetNoiseLevel(noise)
+	app.network().SetADCBits(adcBits)
+	app.network().SetDACBits(dacBits)
+	app.network().SetSingleLayer(singleLayer)
 
 	// Update UI elements on main thread
 	fyne.Do(func() {
@@ -242,7 +242,7 @@ func (app *DualModeApp) runQuickTest() {
 	})
 
 	go func() {
-		if len(app.testImages) == 0 {
+		if len(app.testImages()) == 0 {
 			fyne.Do(func() {
 				app.testResultLabel.SetText("Loading test data...")
 			})
@@ -250,8 +250,8 @@ func (app *DualModeApp) runQuickTest() {
 		}
 
 		n := 200
-		if n > len(app.testImages) {
-			n = len(app.testImages)
+		if n > len(app.testImages()) {
+			n = len(app.testImages())
 		}
 
 		fpCorrect := 0
@@ -262,11 +262,11 @@ func (app *DualModeApp) runQuickTest() {
 		updateInterval := 10
 
 		for i := 0; i < n; i++ {
-			result := app.network.Infer(app.testImages[i])
-			if result.FPPrediction == app.testLabels[i] {
+			result := app.network().Infer(app.testImages()[i])
+			if result.FPPrediction == app.testLabels()[i] {
 				fpCorrect++
 			}
-			if result.CIMPrediction == app.testLabels[i] {
+			if result.CIMPrediction == app.testLabels()[i] {
 				cimCorrect++
 			}
 			if result.Agree {
@@ -546,7 +546,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 	app.warnedMissingLevelsMu.Unlock()
 
 	// Reload the weights into the current network (LoadWeights is thread-safe internally)
-	if err := app.network.LoadWeights(weightsPath); err != nil {
+	if err := app.network().LoadWeights(weightsPath); err != nil {
 		fyne.Do(func() {
 			statusLabel.SetText(fmt.Sprintf("Trained but error loading: %v", err))
 		})
@@ -555,9 +555,7 @@ func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *wi
 
 	// Update state on main thread to ensure thread safety
 	finalBestAcc := bestAcc
-	app.currentQATLevelMu.Lock()
-	app.currentQATLevel = levels
-	app.currentQATLevelMu.Unlock()
+	app.setCurrentQATLevel(levels)
 	fyne.Do(func() {
 		statusLabel.SetText(fmt.Sprintf("Training complete! Accuracy: %.1f%% | Weights saved.", finalBestAcc))
 		progressBar.SetValue(1.0)

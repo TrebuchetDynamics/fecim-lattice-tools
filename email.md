@@ -46,7 +46,7 @@ I also appreciate your work on faith and science - it's part of why I paid atten
 I want to be part of what IronLattice is building. This software is my contribution - happy to adapt it however serves you best.
 
 Demo video: [2-minute walkthrough]
-GitHub: Private repo - happy to grant access or share a demo build
+GitHub: github.com/your-org/fecim-lattice-tools (private - reply with GitHub usernames to add as collaborators)
 
 FeCIM Maintainers
 Monterrey, Mexico
