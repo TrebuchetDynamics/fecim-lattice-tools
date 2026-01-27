@@ -39,21 +39,44 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// 1. Signal chain header
 	signalChainHeader := ca.createSignalChainHeader()
 
-	// 2. DAC input section (top)
+	// 2. Mode bar at top (Mode-First UX)
+	modeBar := ca.createModeBar()
+
+	// 3. Mode-specific panels (initially hidden, shown based on mode)
+	writePanelContent := ca.createWriteModePanel()
+	ca.writeModePanel = container.NewVBox(writePanelContent)
+	ca.writeModePanel.Hide() // Hidden by default (READ mode)
+
+	computePanelContent := ca.createComputeModePanel()
+	ca.computeModePanel = container.NewVBox(computePanelContent)
+	ca.computeModePanel.Hide() // Hidden by default (READ mode)
+
+	// Stack the mode panels (only one visible at a time)
+	modePanelStack := container.NewStack(ca.writeModePanel, ca.computeModePanel)
+
+	// 4. DAC input section
 	dacSection := ca.createDACInputSection()
 
 	// Update DAC preset labels with actual voltage ranges from material
 	ca.updateDACPresetLabels()
 	ca.updateDACRangeModeLabel()
 
-	// 3. Main visualization area (center)
+	// 5. Main visualization area (center)
 	mainSection := ca.createMainSimSection()
 
-	// 4. Action buttons (bottom)
+	// 6. Action buttons (bottom)
 	actionSection := ca.createUnifiedActionSection()
 
+	// Top section: signal chain header, mode bar, mode panels, DAC presets
+	topSection := container.NewVBox(
+		signalChainHeader,
+		modeBar,
+		modePanelStack,
+		dacSection,
+	)
+
 	return container.NewBorder(
-		container.NewVBox(signalChainHeader, dacSection), // top
+		topSection,    // top
 		actionSection, // bottom
 		nil, nil,
 		mainSection, // center
@@ -225,8 +248,9 @@ func (ca *CircuitsApp) createMainSimSection() fyne.CanvasObject {
 }
 
 // createWLSelector creates the word line selection controls
+// Mode buttons have been moved to top mode bar (Mode-First UX)
 func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
-	// Row checkboxes (show first 8)
+	// Row checkboxes (show first 8 for visual indication)
 	maxRows := min(8, ca.arrayRows)
 	ca.unifiedWLChecks = make([]*widget.Check, maxRows)
 
@@ -234,10 +258,16 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 	for i := 0; i < maxRows; i++ {
 		idx := i
 		check := widget.NewCheck(fmt.Sprintf("WL%d", i), nil)
-		// Capture check in closure via stored slice
 		check.OnChanged = func(checked bool) {
 			// In passive mode, ignore checkbox changes - all lines always active
 			if ca.architecture == sharedwidgets.Architecture0T1R {
+				fyne.Do(func() {
+					ca.unifiedWLChecks[idx].SetChecked(true)
+				})
+				return
+			}
+			// In compute mode, all rows must be active
+			if ca.deviceState != nil && ca.deviceState.GetOperationMode() == OpModeCompute {
 				fyne.Do(func() {
 					ca.unifiedWLChecks[idx].SetChecked(true)
 				})
@@ -252,26 +282,91 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 		checkboxes.Add(check)
 	}
 
-	// Mode buttons
-	singleBtn := widget.NewButton("Single Row", func() {
-		ca.setWLModeSingle()
+	return checkboxes
+}
+
+// setOperationMode sets the operation mode and configures WL/DAC accordingly
+// READ: Single row, safe voltage (0-0.5V)
+// WRITE: Single row, write voltage (1.2-1.5V on selected column)
+// COMPUTE: All rows active, input vector (0-1V)
+func (ca *CircuitsApp) setOperationMode(mode OpMode) {
+	if ca.deviceState == nil {
+		return
+	}
+
+	ca.deviceState.SetOperationMode(mode)
+
+	switch mode {
+	case OpModeRead:
+		// Single row active, safe read voltage on all columns
+		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		ca.deviceState.SetDACPreset(DACReadPreset)
+
+	case OpModeWrite:
+		// Single row active, write voltage on selected column only
+		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		ca.deviceState.SetDACPreset(DACWritePreset)
+
+	case OpModeCompute:
+		// All rows active for MVM, input vector on columns
+		ca.deviceState.SetWLAll()
+		// Keep current DAC voltages or set to mid-range for demo
+		if ca.deviceState.GetDACMode() == DACWritePreset {
+			// Switch from write to read range for compute
+			ca.deviceState.SetDACPreset(DACReadPreset)
+		}
+	}
+
+	ca.updateModeButtons()
+	ca.updateModePanels(mode) // Show/hide mode-specific panels
+	ca.updateWLCheckboxes()
+	ca.updateDACRangeModeLabel()
+	ca.updateDACPresetLabels()
+	ca.recomputeAndRefresh()
+}
+
+// updateModeButtons updates the mode button highlighting
+func (ca *CircuitsApp) updateModeButtons() {
+	if ca.deviceState == nil {
+		return
+	}
+
+	mode := ca.deviceState.GetOperationMode()
+
+	fyne.Do(func() {
+		// Reset all to low importance
+		if ca.modeReadBtn != nil {
+			ca.modeReadBtn.Importance = widget.LowImportance
+			ca.modeReadBtn.Refresh()
+		}
+		if ca.modeWriteBtn != nil {
+			ca.modeWriteBtn.Importance = widget.LowImportance
+			ca.modeWriteBtn.Refresh()
+		}
+		if ca.modeComputeBtn != nil {
+			ca.modeComputeBtn.Importance = widget.LowImportance
+			ca.modeComputeBtn.Refresh()
+		}
+
+		// Highlight active mode
+		switch mode {
+		case OpModeRead:
+			if ca.modeReadBtn != nil {
+				ca.modeReadBtn.Importance = widget.HighImportance
+				ca.modeReadBtn.Refresh()
+			}
+		case OpModeWrite:
+			if ca.modeWriteBtn != nil {
+				ca.modeWriteBtn.Importance = widget.HighImportance
+				ca.modeWriteBtn.Refresh()
+			}
+		case OpModeCompute:
+			if ca.modeComputeBtn != nil {
+				ca.modeComputeBtn.Importance = widget.HighImportance
+				ca.modeComputeBtn.Refresh()
+			}
+		}
 	})
-	singleBtn.Importance = widget.HighImportance
-
-	allBtn := widget.NewButton("All Rows", func() {
-		ca.setWLModeAll()
-	})
-
-	modeButtons := container.NewVBox(
-		widget.NewSeparator(),
-		singleBtn,
-		allBtn,
-	)
-
-	return container.NewVBox(
-		checkboxes,
-		modeButtons,
-	)
 }
 
 // createUnifiedArraySection creates the array visualization section
@@ -1190,49 +1285,41 @@ func (ca *CircuitsApp) updateCellInfo() {
 
 // updateOperationClassification updates the operation classification display
 func (ca *CircuitsApp) updateOperationClassification() {
-	if ca.operationsModeHelp == nil {
+	if ca.operationsModeHelp == nil || ca.deviceState == nil {
 		return
 	}
 
-	opText := ca.deviceState.ClassifyOperation()
+	mode := ca.deviceState.GetOperationMode()
 	arch := ca.architecture
+	readRange := ca.deviceState.GetReadRange()
+	writeRange := ca.deviceState.GetWriteRange()
 
 	var helpText string
-	switch opText {
-	case "WRITE":
+	switch mode {
+	case OpModeRead:
 		if arch == sharedwidgets.Architecture2T1R {
-			helpText = "WRITE: Row+Col transistors select single cell. Zero disturb to neighbors."
+			helpText = fmt.Sprintf("READ: Single row, 0-%.1fV. 2T1R provides perfect isolation.", readRange.Max)
 		} else if arch == sharedwidgets.Architecture1T1R {
-			helpText = "WRITE: Row transistor gates selected row. Full write to target cell."
+			helpText = fmt.Sprintf("READ: Single row, 0-%.1fV. 1T1R transistor isolates selected row.", readRange.Max)
 		} else {
-			helpText = "WRITE: Passive array - ALL rows active, partial voltages disturb neighbors."
+			helpText = fmt.Sprintf("READ: 0-%.1fV. Passive array - sneak currents add 5-20%% error.", readRange.Max)
 		}
-	case "READ":
+	case OpModeWrite:
 		if arch == sharedwidgets.Architecture2T1R {
-			helpText = "READ: Dual transistor AND-gate selects single cell. Perfect isolation."
+			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 2T1R selects single cell.", writeRange.Min, writeRange.Max)
 		} else if arch == sharedwidgets.Architecture1T1R {
-			helpText = "READ: Row transistor isolates selected row. Clean sense current."
+			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 1T1R gates selected row.", writeRange.Min, writeRange.Max)
 		} else {
-			helpText = "READ: Passive array - ALL rows active, sneak currents add noise."
+			helpText = fmt.Sprintf("WRITE: %.1f-%.1fV. Passive: V/2 scheme reduces half-select disturb.", writeRange.Min, writeRange.Max)
 		}
-	case "COMPUTE (MVM)":
+	case OpModeCompute:
 		if arch == sharedwidgets.Architecture0T1R {
-			helpText = "COMPUTE: Passive array natural MVM mode. All WLs always connected."
+			helpText = fmt.Sprintf("COMPUTE: All rows, 0-%.1fV. Passive natural MVM mode (~75ns).", readRange.Max)
 		} else {
-			helpText = "COMPUTE: All WLs activated. Full matrix-vector multiply in ~20ns."
-		}
-	case "BULK WRITE (CAUTION)":
-		if arch == sharedwidgets.Architecture0T1R {
-			helpText = "CAUTION: Passive array - write voltage affects ALL cells in column!"
-		} else {
-			helpText = "CAUTION: All rows active with write voltage. May cause unintended writes!"
+			helpText = fmt.Sprintf("COMPUTE: All transistors ON, 0-%.1fV. Full MVM in ~75ns.", readRange.Max)
 		}
 	default:
-		if arch == sharedwidgets.Architecture0T1R {
-			helpText = "PASSIVE: All WLs always connected. No selective row access."
-		} else {
-			helpText = "Configure WL selection and DAC voltages to perform operations."
-		}
+		helpText = "Select a mode: READ, WRITE, or COMPUTE."
 	}
 
 	fyne.Do(func() {
@@ -1320,4 +1407,253 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 
 	archLabel := widget.NewLabel("Array:")
 	return container.NewHBox(archLabel, ca.archToggle)
+}
+
+// ============================================================================
+// MODE-FIRST UX PANELS (Phase 1)
+// ============================================================================
+
+// createModeBar creates the top-level mode selection bar
+// This replaces the mode buttons previously buried in createWLSelector()
+func (ca *CircuitsApp) createModeBar() fyne.CanvasObject {
+	ca.modeReadBtn = widget.NewButton("READ", func() {
+		ca.setOperationMode(OpModeRead)
+	})
+	ca.modeWriteBtn = widget.NewButton("WRITE", func() {
+		ca.setOperationMode(OpModeWrite)
+	})
+	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() {
+		ca.setOperationMode(OpModeCompute)
+	})
+
+	// Set initial highlight (READ mode by default)
+	ca.modeReadBtn.Importance = widget.HighImportance
+
+	return container.NewHBox(
+		widget.NewLabelWithStyle("Mode:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		ca.modeReadBtn,
+		ca.modeWriteBtn,
+		ca.modeComputeBtn,
+		layout.NewSpacer(),
+	)
+}
+
+// createWriteModePanel creates the write mode panel with level slider (0-29)
+// This addresses UX-004: No target level selector for WRITE mode
+func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
+	// Slider: 0-29 (30 discrete levels = FeCIM standard)
+	ca.mfuxWriteLevelSlider = widget.NewSlider(0, 29)
+	ca.mfuxWriteLevelSlider.Step = 1
+	ca.mfuxWriteLevelSlider.Value = 15 // Start at mid-range
+	ca.mfuxWriteLevelSlider.OnChanged = func(v float64) {
+		ca.onWriteLevelChanged(int(v))
+	}
+
+	ca.mfuxWriteLevelLabel = widget.NewLabel("Level: 15")
+	ca.mfuxWriteLevelLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	ca.mfuxWriteVoltageLabel = widget.NewLabel("Voltage: 1.00V")
+	ca.mfuxWriteVoltageLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	// Layout: Title row, then slider with value labels
+	titleLabel := widget.NewLabelWithStyle("Target Write Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	sliderRow := container.NewBorder(nil, nil,
+		ca.mfuxWriteLevelLabel,
+		ca.mfuxWriteVoltageLabel,
+		ca.mfuxWriteLevelSlider,
+	)
+
+	return container.NewVBox(
+		titleLabel,
+		sliderRow,
+	)
+}
+
+// onWriteLevelChanged handles write level slider changes
+// Uses SetDACVoltageForState() to map level to material-derived voltage
+func (ca *CircuitsApp) onWriteLevelChanged(level int) {
+	if ca.deviceState == nil {
+		return
+	}
+
+	selectedCol := ca.deviceState.GetSelectedCol()
+	ca.deviceState.SetDACVoltageForState(selectedCol, level)
+
+	voltage := ca.deviceState.GetDACVoltage(selectedCol)
+
+	fyne.Do(func() {
+		if ca.mfuxWriteLevelLabel != nil {
+			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("Level: %d", level))
+		}
+		if ca.mfuxWriteVoltageLabel != nil {
+			ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("Voltage: %.2fV", voltage))
+		}
+	})
+
+	ca.recomputeAndRefresh()
+}
+
+// createComputeModePanel creates the compute mode panel with input vector entries
+// This addresses UX-005: Input vector entries not visible
+func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
+	maxCols := min(8, ca.arrayCols)
+	ca.mfuxInputVectorEntry = make([]*widget.Entry, maxCols)
+	ca.mfuxInputVectorLabels = make([]*widget.Label, maxCols)
+
+	entriesBox := container.NewHBox()
+	for i := 0; i < maxCols; i++ {
+		idx := i
+		entry := widget.NewEntry()
+		entry.SetPlaceHolder("0")
+		entry.SetText("0")
+		entry.OnChanged = func(s string) {
+			ca.onInputVectorEntryChanged(idx, s)
+		}
+		ca.mfuxInputVectorEntry[i] = entry
+
+		label := widget.NewLabel(fmt.Sprintf("x%d", i))
+		label.TextStyle = fyne.TextStyle{Monospace: true}
+		ca.mfuxInputVectorLabels[i] = label
+
+		// Each column: label above entry
+		col := container.NewVBox(label, entry)
+		entriesBox.Add(col)
+	}
+
+	// Random button to populate with random values
+	randomBtn := widget.NewButton("Random", func() {
+		ca.randomizeInputVectorEntries()
+	})
+
+	// Clear button
+	clearBtn := widget.NewButton("Clear", func() {
+		ca.clearInputVectorEntries()
+	})
+
+	titleLabel := widget.NewLabelWithStyle("Input Vector (0-255):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	return container.NewVBox(
+		titleLabel,
+		entriesBox,
+		container.NewHBox(randomBtn, clearBtn),
+	)
+}
+
+// onInputVectorEntryChanged handles input vector entry changes
+func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return
+	}
+
+	// Clamp to valid range
+	if value < 0 {
+		value = 0
+	}
+	if value > 255 {
+		value = 255
+	}
+
+	ca.mu.Lock()
+	if col < len(ca.inputVector) {
+		ca.inputVector[col] = value
+	}
+	ca.mu.Unlock()
+
+	// Convert all inputs to DAC voltages
+	params := make([]float64, len(ca.inputVector))
+	ca.mu.RLock()
+	for i, v := range ca.inputVector {
+		params[i] = float64(v)
+	}
+	ca.mu.RUnlock()
+
+	ca.deviceState.SetDACPreset(DACInputVector, params...)
+	ca.recomputeAndRefresh()
+}
+
+// randomizeInputVectorEntries fills entries with random 0-255 values
+func (ca *CircuitsApp) randomizeInputVectorEntries() {
+	ca.mu.Lock()
+	for i := range ca.inputVector {
+		ca.inputVector[i] = rand.Intn(256)
+	}
+	ca.mu.Unlock()
+
+	// Update entry widgets
+	fyne.Do(func() {
+		ca.mu.RLock()
+		defer ca.mu.RUnlock()
+		for i, entry := range ca.mfuxInputVectorEntry {
+			if entry != nil && i < len(ca.inputVector) {
+				entry.SetText(strconv.Itoa(ca.inputVector[i]))
+			}
+		}
+	})
+
+	// Apply to DAC
+	params := make([]float64, len(ca.inputVector))
+	ca.mu.RLock()
+	for i, v := range ca.inputVector {
+		params[i] = float64(v)
+	}
+	ca.mu.RUnlock()
+
+	ca.deviceState.SetDACPreset(DACInputVector, params...)
+	ca.recomputeAndRefresh()
+}
+
+// clearInputVectorEntries sets all entries to 0
+func (ca *CircuitsApp) clearInputVectorEntries() {
+	ca.mu.Lock()
+	for i := range ca.inputVector {
+		ca.inputVector[i] = 0
+	}
+	ca.mu.Unlock()
+
+	// Update entry widgets
+	fyne.Do(func() {
+		for _, entry := range ca.mfuxInputVectorEntry {
+			if entry != nil {
+				entry.SetText("0")
+			}
+		}
+	})
+
+	// Apply to DAC
+	params := make([]float64, len(ca.inputVector))
+	ca.deviceState.SetDACPreset(DACInputVector, params...)
+	ca.recomputeAndRefresh()
+}
+
+// updateModePanels shows/hides mode-specific panels based on current mode
+func (ca *CircuitsApp) updateModePanels(mode OpMode) {
+	fyne.Do(func() {
+		// Hide all panels first
+		if ca.writeModePanel != nil {
+			ca.writeModePanel.Hide()
+		}
+		if ca.computeModePanel != nil {
+			ca.computeModePanel.Hide()
+		}
+
+		// Show relevant panel
+		switch mode {
+		case OpModeWrite:
+			if ca.writeModePanel != nil {
+				ca.writeModePanel.Show()
+				// Update slider to reflect current selection
+				if ca.mfuxWriteLevelSlider != nil {
+					// Trigger an update to sync voltage display
+					ca.onWriteLevelChanged(int(ca.mfuxWriteLevelSlider.Value))
+				}
+			}
+		case OpModeCompute:
+			if ca.computeModePanel != nil {
+				ca.computeModePanel.Show()
+			}
+		// OpModeRead: no special panel needed (clean view)
+		}
+	})
 }

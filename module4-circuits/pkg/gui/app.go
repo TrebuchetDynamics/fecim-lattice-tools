@@ -213,8 +213,28 @@ type CircuitsApp struct {
 	// Unified view WL selector widgets
 	unifiedWLChecks []*widget.Check
 
+	// Unified view mode buttons (READ/WRITE/COMPUTE)
+	modeReadBtn    *widget.Button
+	modeWriteBtn   *widget.Button
+	modeComputeBtn *widget.Button
+
 	// Unified view output labels
 	unifiedOutputLabels []*widget.Label
+
+	// ============================================================================
+	// MODE-FIRST UX PANELS (Phase 1)
+	// ============================================================================
+
+	// Write mode panel with level slider (mfux = Mode-First UX prefix)
+	writeModePanel        *fyne.Container
+	mfuxWriteLevelSlider  *widget.Slider
+	mfuxWriteLevelLabel   *widget.Label
+	mfuxWriteVoltageLabel *widget.Label
+
+	// Compute mode panel with input vector entries
+	computeModePanel      *fyne.Container
+	mfuxInputVectorEntry  []*widget.Entry
+	mfuxInputVectorLabels []*widget.Label
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.

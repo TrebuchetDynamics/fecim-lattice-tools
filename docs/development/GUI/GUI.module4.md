@@ -30,10 +30,19 @@ Last Updated: 2026-01-27
 - [x] UX-001: COMPUTE button redundant (auto-compute implemented on input change)
 - [x] UX-002: Export buttons - FIXED (2026-01-26): Now show "Coming soon" dialogs with helpful workarounds
 - [x] UX-003: Mode selection refactored (2026-01-27): Mode buttons replace RadioGroup
+- [x] UX-004: No target level selector for WRITE - FIXED (2026-01-27): Write level slider (0-29) added
+- [x] UX-005: Input vector entries not visible - FIXED (2026-01-27): Persistent entries in COMPUTE mode panel
 
 ---
 
 ## Recent Changes (2026-01-27)
+
+### Mode-First UX Redesign (Phase 1)
+- **Mode bar at top** - READ/WRITE/COMPUTE buttons now prominent at top of OPERATIONS view
+- **Write level slider** - 0-29 slider with real-time voltage display (addresses UX-004)
+- **Input vector panel** - 8 persistent entry fields for COMPUTE mode (addresses UX-005)
+- **Contextual panels** - Show/hide based on mode (WRITE shows slider, COMPUTE shows entries)
+- **Mode buttons removed from WL selector** - now only at top mode bar
 
 ### Major Refactor: Unified Device Simulation View
 - **Replaced** `tab_operations.go` with `tab_unified.go` - single unified device simulation
@@ -102,15 +111,15 @@ Border
 
 ---
 
-### OPERATIONS View (tab_unified.go:29-61)
-**Purpose**: Unified device simulation with material selection and mode buttons
-**File**: tab_unified.go:29-61
+### OPERATIONS View (tab_unified.go:29-76)
+**Purpose**: Unified device simulation with Mode-First UX
+**File**: tab_unified.go:29-76
 **State**: deviceState (OpMode, VoltageRange, material, activeRows, dacVoltages)
 **Layout**:
 ```
 Border
-├─ Top: Signal chain header + DAC section
-│  ├─ VBox
+├─ Top: VBox
+│  ├─ Signal chain header
 │  │  ├─ HBox
 │  │  │  ├─ Label: "SIGNAL CHAIN: DAC -> Array -> TIA -> ADC" (bold)
 │  │  │  ├─ Spacer
@@ -121,6 +130,27 @@ Border
 │  │  │  └─ operationsStatusLabel
 │  │  ├─ operationsModeHelp (mode + architecture help text)
 │  │  └─ Separator
+│  ├─ Mode bar (Mode-First UX)
+│  │  ├─ HBox
+│  │  │  ├─ Label: "Mode:" (bold)
+│  │  │  ├─ modeReadBtn: "READ" (highlighted when active)
+│  │  │  ├─ modeWriteBtn: "WRITE"
+│  │  │  ├─ modeComputeBtn: "COMPUTE"
+│  │  │  └─ Spacer
+│  ├─ Mode panels (Stack - only one visible)
+│  │  ├─ writeModePanel (shown in WRITE mode)
+│  │  │  ├─ Label: "Target Write Level:" (bold)
+│  │  │  └─ Border
+│  │  │     ├─ Left: mfuxWriteLevelLabel "Level: 15"
+│  │  │     ├─ Right: mfuxWriteVoltageLabel "Voltage: 1.20V"
+│  │  │     └─ Center: mfuxWriteLevelSlider (0-29)
+│  │  └─ computeModePanel (shown in COMPUTE mode)
+│  │     ├─ Label: "Input Vector (0-255):" (bold)
+│  │     ├─ HBox (8 entry columns)
+│  │     │  ├─ VBox: [x0 label, entry]
+│  │     │  ├─ VBox: [x1 label, entry]
+│  │     │  └─ ... x7
+│  │     └─ HBox: [Random] [Clear]
 │  └─ DAC presets section
 │     ├─ HBox
 │     │  ├─ Label: "DAC Presets:"
@@ -144,12 +174,7 @@ Border
 └─ Center: HSplit (10% WL selector, 90% array)
    ├─ Left: Word Line selector
    │  ├─ Label: "WORD LINES" (bold)
-   │  ├─ WL checkboxes: WL0, WL1, ... WL7
-   │  ├─ Separator
-   │  ├─ Label: "Mode:"
-   │  ├─ modeReadBtn: "READ" (highlighted when active)
-   │  ├─ modeWriteBtn: "WRITE"
-   │  └─ modeComputeBtn: "COMPUTE"
+   │  └─ WL checkboxes: WL0, WL1, ... WL7
    └─ Right: Array visualization
       ├─ UnifiedTappableCanvas (400x350px)
       │  └─ Raster: drawUnifiedArray
@@ -282,17 +307,23 @@ case OpModeCompute:
 
 | Component | Type | Purpose | File:Line | State |
 |-----------|------|---------|-----------|-------|
-| UnifiedTappableCanvas | Custom Widget | Clickable array with DAC/TIA/ADC | tab_unified.go:444-522 | sharedArrayCanvas |
-| modeReadBtn | Button | Set READ mode | tab_unified.go:264 | opMode |
-| modeWriteBtn | Button | Set WRITE mode | tab_unified.go:267 | opMode |
-| modeComputeBtn | Button | Set COMPUTE mode | tab_unified.go:270 | opMode |
+| UnifiedTappableCanvas | Custom Widget | Clickable array with DAC/TIA/ADC | tab_unified.go:460-538 | sharedArrayCanvas |
+| modeReadBtn | Button | Set READ mode (top mode bar) | tab_unified.go:1432 | opMode |
+| modeWriteBtn | Button | Set WRITE mode (top mode bar) | tab_unified.go:1435 | opMode |
+| modeComputeBtn | Button | Set COMPUTE mode (top mode bar) | tab_unified.go:1438 | opMode |
+| mfuxWriteLevelSlider | Slider | Target write level (0-29) | tab_unified.go:1459 | via SetDACVoltageForState() |
+| mfuxWriteLevelLabel | Label | Shows "Level: N" | tab_unified.go:1466 | Updated by onWriteLevelChanged() |
+| mfuxWriteVoltageLabel | Label | Shows "Voltage: X.XXV" | tab_unified.go:1468 | Updated by onWriteLevelChanged() |
+| mfuxInputVectorEntry | []Entry | 8 input vector entries (0-255) | tab_unified.go:1503 | inputVector via onInputVectorEntryChanged() |
+| writeModePanel | Container | Write mode controls (slider) | tab_unified.go:45 | Show/Hide via updateModePanels() |
+| computeModePanel | Container | Compute mode controls (entries) | tab_unified.go:49 | Show/Hide via updateModePanels() |
 | dacPresetReadBtn | Button | Apply read voltage preset | tab_unified.go:132 | dacVoltages |
 | dacPresetWriteBtn | Button | Apply write voltage preset | tab_unified.go:135 | dacVoltages |
 | dacRangeLabel | Label | Shows current DAC range mode | tab_unified.go:147 | dacRangeMode |
 | materialSelector | Select | Choose ferroelectric material | tab_unified.go:97-122 | material |
-| archPassiveBtn | Button | Select passive (0T1R) architecture | tab_unified.go:1338 | architecture |
-| arch1T1RBtn | Button | Select 1T1R architecture | tab_unified.go:1339 | architecture |
-| arch2T1RBtn | Button | Select 2T1R architecture | tab_unified.go:1340 | architecture |
+| archPassiveBtn | Button | Select passive (0T1R) architecture | tab_unified.go:1356 | architecture |
+| arch1T1RBtn | Button | Select 1T1R architecture | tab_unified.go:1357 | architecture |
+| arch2T1RBtn | Button | Select 2T1R architecture | tab_unified.go:1358 | architecture |
 | operationsModeHelp | Label | Mode + architecture help text | tab_unified.go:79 | Updated by updateOperationClassification() |
 
 ---
@@ -301,13 +332,15 @@ case OpModeCompute:
 
 | Trigger | Source | Updates | File |
 |---------|--------|---------|------|
-| Mode button click | modeReadBtn/modeWriteBtn/modeComputeBtn | opMode, WL config, DAC config, button highlighting | tab_unified.go:295-328 |
+| Mode button click | modeReadBtn/modeWriteBtn/modeComputeBtn | opMode, WL config, DAC config, button highlighting, mode panels | tab_unified.go:314-352 |
+| Write level slider | mfuxWriteLevelSlider | DAC voltage via SetDACVoltageForState(), level/voltage labels | tab_unified.go:1489-1507 |
+| Input vector entry | mfuxInputVectorEntry[i] | inputVector[i], DAC voltages via SetDACPreset(DACInputVector) | tab_unified.go:1527-1551 |
 | Material selection | materialSelector | material, voltage ranges, DAC labels | tab_unified.go:104-115 |
-| Architecture change | archPassiveBtn/arch1T1RBtn/arch2T1RBtn | architecture, WL state, transistor display | tab_unified.go:1366-1406 |
-| DAC preset button | dacPresetReadBtn/dacPresetWriteBtn | dacVoltages, dacRangeMode, range label | tab_unified.go:935-954 |
-| Cell click | UnifiedTappableCanvas.Tapped() | selectedRow, selectedCol, WL (if single mode) | tab_unified.go:1023-1035 |
-| Write Cell button | programBtn | arrayWeights[row][col] | tab_unified.go:1042-1073 |
-| Compute MVM button | computeBtn | WL all, recompute | tab_unified.go:1087-1094 |
+| Architecture change | archPassiveBtn/arch1T1RBtn/arch2T1RBtn | architecture, WL state, transistor display | tab_unified.go:1384-1424 |
+| DAC preset button | dacPresetReadBtn/dacPresetWriteBtn | dacVoltages, dacRangeMode, range label | tab_unified.go:951-970 |
+| Cell click | UnifiedTappableCanvas.Tapped() | selectedRow, selectedCol, WL (if single mode) | tab_unified.go:1039-1051 |
+| Write Cell button | programBtn | arrayWeights[row][col] | tab_unified.go:1058-1089 |
+| Compute MVM button | computeBtn | WL all, recompute | tab_unified.go:1103-1110 |
 
 ---
 
@@ -351,10 +384,11 @@ OpModeCompute
 2. Configure WL (single for READ/WRITE, all for COMPUTE)
 3. Configure DAC preset (read vs write range)
 4. Update mode button highlighting
-5. Update WL checkboxes
-6. Update DAC range label
-7. Refresh array canvas
-8. Update operation classification help text
+5. **Show/hide mode panels** (writeModePanel for WRITE, computeModePanel for COMPUTE)
+6. Update WL checkboxes
+7. Update DAC range label
+8. Refresh array canvas
+9. Update operation classification help text
 
 ---
 
@@ -420,6 +454,52 @@ func (ca *CircuitsApp) updateDACPresetLabels() {
 // Passive mode: all WLs always active (no transistor gating)
 if ca.architecture == sharedwidgets.Architecture0T1R {
     ca.deviceState.SetWLAll()
+}
+```
+
+### 6. Mode-First UX Panel Show/Hide
+```go
+func (ca *CircuitsApp) updateModePanels(mode OpMode) {
+    fyne.Do(func() {
+        // Hide all panels first
+        ca.writeModePanel.Hide()
+        ca.computeModePanel.Hide()
+
+        // Show relevant panel based on mode
+        switch mode {
+        case OpModeWrite:
+            ca.writeModePanel.Show()
+        case OpModeCompute:
+            ca.computeModePanel.Show()
+        // OpModeRead: clean view, no extra panel
+        }
+    })
+}
+```
+
+### 7. Write Level Slider to DAC Voltage
+```go
+func (ca *CircuitsApp) onWriteLevelChanged(level int) {
+    // Use material-derived voltage mapping
+    ca.deviceState.SetDACVoltageForState(selectedCol, level)
+    voltage := ca.deviceState.GetDACVoltage(selectedCol)
+    ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("Level: %d", level))
+    ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("Voltage: %.2fV", voltage))
+}
+```
+
+### 8. Input Vector to DAC Voltages
+```go
+func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
+    value, _ := strconv.Atoi(valueStr)  // 0-255
+    ca.inputVector[col] = value
+
+    // Convert all inputs to DAC voltages (0-255 -> read range)
+    params := make([]float64, len(ca.inputVector))
+    for i, v := range ca.inputVector {
+        params[i] = float64(v)
+    }
+    ca.deviceState.SetDACPreset(DACInputVector, params...)
 }
 ```
 
