@@ -319,10 +319,10 @@ func softmax(x []float64) []float64 {
 
 ## Documentation Gaps
 
-### DOC-001: Missing Architecture Overview
+### DOC-001: Missing Architecture Overview ✅ FIXED
 - **Issue:** No document explaining dual-mode architecture
 - **Fix:** Create `docs/mnist/mnist.architecture.md`
-- [ ] Write architecture doc
+- [x] Write architecture doc (2026-01-27)
 
 ### DOC-002: Missing API Reference
 - **Issue:** Public APIs lack comprehensive documentation
@@ -336,11 +336,11 @@ func softmax(x []float64) []float64 {
 - **Fix:** Create `docs/mnist/mnist.development.md`
 - [ ] Write developer guide
 
-### DOC-004: Outdated Improvement Plan References
+### DOC-004: Outdated Improvement Plan References ✅ VERIFIED
 - **File:** `docs/mnist/mnist-module-improvements-plan.md`
 - **Issue:** References to non-existent files (e.g., `liveslide.go`)
-- **Fix:** Update file references
-- [ ] Audit and update references
+- **Status:** Verified - `liveslide.go` exists with `MNISTEducationalPanel` and `PredictionDisplay`
+- [x] Audit and update references (2026-01-27) - references are valid
 
 ---
 
@@ -386,9 +386,9 @@ func softmax(x []float64) []float64 {
 | Low | 6 | 6 | 0 |
 | Security | 2 | 2 | 0 |
 | Architecture | 5 | 0 | 5 |
-| Documentation | 4 | 0 | 4 |
+| Documentation | 4 | 2 | 2 |
 | Tests | 4 | 3 | 1 |
-| **Total** | **46** | **36** | **10** |
+| **Total** | **46** | **38** | **8** |
 
 ---
 
