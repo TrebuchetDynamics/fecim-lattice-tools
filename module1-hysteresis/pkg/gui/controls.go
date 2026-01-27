@@ -78,18 +78,20 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	a.waveformSelect.SetSelected("Write/Read Demo")
 
-	// Material selector
-	matNames := []string{"Default HZO", "Optimized Superlattice", "FeCIM HZO"}
+	// Material selector - dynamically build from AllMaterials()
+	matNames := make([]string, len(a.materials))
+	for i, m := range a.materials {
+		matNames[i] = m.Name
+	}
 	a.materialSelect = widget.NewSelect(matNames, func(s string) {
 		log.Selection("Material", s)
+		// Find selected material by name
 		var idx int
-		switch s {
-		case "Default HZO":
-			idx = 0
-		case "Optimized Superlattice":
-			idx = 1
-		case "FeCIM HZO":
-			idx = 2
+		for i, m := range a.materials {
+			if m.Name == s {
+				idx = i
+				break
+			}
 		}
 		a.mu.Lock()
 		a.matIndex = idx
@@ -118,7 +120,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.mu.Unlock()
 		}()
 	})
-	a.materialSelect.SetSelected("Default HZO")
+	a.materialSelect.SetSelected(a.materials[0].Name)
 
 	// Levels selector (2-256 levels)
 	a.levelsLabel = widget.NewLabel(fmt.Sprintf("Levels: %d (%.1f bits)", a.numLevels, math.Log2(float64(a.numLevels))))
