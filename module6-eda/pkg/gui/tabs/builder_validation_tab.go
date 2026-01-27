@@ -58,12 +58,30 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// Helper to parse cell config from inputs
 	getCellConfig := func() config.CellConfig {
-		width, _ := strconv.ParseFloat(widthEntry.Text, 64)
-		height, _ := strconv.ParseFloat(heightEntry.Text, 64)
-		rise, _ := strconv.ParseFloat(riseEntry.Text, 64)
-		fall, _ := strconv.ParseFloat(fallEntry.Text, 64)
-		cap, _ := strconv.ParseFloat(capEntry.Text, 64)
-		leakage, _ := strconv.ParseFloat(leakageEntry.Text, 64)
+		width, err := strconv.ParseFloat(widthEntry.Text, 64)
+		if err != nil {
+			width = 0.460 // Default value
+		}
+		height, err := strconv.ParseFloat(heightEntry.Text, 64)
+		if err != nil {
+			height = 2.720 // Default value
+		}
+		rise, err := strconv.ParseFloat(riseEntry.Text, 64)
+		if err != nil {
+			rise = 0.1 // Default value
+		}
+		fall, err := strconv.ParseFloat(fallEntry.Text, 64)
+		if err != nil {
+			fall = 0.1 // Default value
+		}
+		cap, err := strconv.ParseFloat(capEntry.Text, 64)
+		if err != nil {
+			cap = 0.002 // Default value
+		}
+		leakage, err := strconv.ParseFloat(leakageEntry.Text, 64)
+		if err != nil {
+			leakage = 0.001 // Default value
+		}
 
 		return config.CellConfig{
 			Name:         nameEntry.Text,
@@ -264,14 +282,26 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// Update statistics function
 	updateStats := func() {
-		rows, _ := strconv.Atoi(rowsEntry.Text)
-		cols, _ := strconv.Atoi(colsEntry.Text)
+		rows, err := strconv.Atoi(rowsEntry.Text)
+		if err != nil || rows <= 0 {
+			rows = cfg.Rows // Keep current value
+		}
+		cols, err := strconv.Atoi(colsEntry.Text)
+		if err != nil || cols <= 0 {
+			cols = cfg.Cols // Keep current value
+		}
 		cfg.Rows = rows
 		cfg.Cols = cols
 
 		// Update cell dimensions from entries
-		cellW, _ := strconv.ParseFloat(widthEntry.Text, 64)
-		cellH, _ := strconv.ParseFloat(heightEntry.Text, 64)
+		cellW, err := strconv.ParseFloat(widthEntry.Text, 64)
+		if err != nil || cellW <= 0 {
+			cellW = cfg.CellWidth // Keep current value
+		}
+		cellH, err := strconv.ParseFloat(heightEntry.Text, 64)
+		if err != nil || cellH <= 0 {
+			cellH = cfg.CellHeight // Keep current value
+		}
 		cfg.CellWidth = cellW
 		cfg.CellHeight = cellH
 
@@ -334,7 +364,10 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			manager := openlane.NewManager()
 			config := openlane.DefaultConfig()
 
-			result, _ := validation.GenerateYosysSchematic(verilogPath, outputPrefix, topModule, manager, config)
+			result, err := validation.GenerateYosysSchematic(verilogPath, outputPrefix, topModule, manager, config)
+			if err != nil {
+				logging.GlobalInfo("ERROR: " + err.Error())
+			}
 			fyne.Do(func() {
 				if result != nil && result.Success {
 					updateYosysImage()
@@ -376,7 +409,10 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			manager := openlane.NewManager()
 			config := openlane.DefaultConfig()
 
-			result, _ := validation.GenerateOpenROADImage(defPath, lefPath, outputPath, manager, config)
+			result, err := validation.GenerateOpenROADImage(defPath, lefPath, outputPath, manager, config)
+			if err != nil {
+				logging.GlobalInfo("ERROR: " + err.Error())
+			}
 			fyne.Do(func() {
 				if result != nil && result.Success {
 					updateOpenROADImage()
@@ -538,10 +574,26 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				dir = "cells/fecim_bitcell"
 				cellFileName = "fecim_bitcell"
 			}
-			os.MkdirAll(dir, 0755)
-			os.WriteFile(dir+"/"+cellFileName+".lef", []byte(lefContent), 0644)
-			os.WriteFile(dir+"/"+cellFileName+".lib", []byte(libContent), 0644)
-			os.WriteFile(dir+"/"+cellFileName+".v", []byte(cellVContent), 0644)
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				addLog("ERROR: Failed to create directory " + dir + ": " + err.Error())
+				fyne.Do(func() {
+					statusLabel.SetText("Generation failed")
+					generateAllBtn.Enable()
+					validateAllBtn.Enable()
+					exportPackageBtn.Enable()
+					generateAllBtn.SetText("Generate All")
+				})
+				return
+			}
+			if err := os.WriteFile(dir+"/"+cellFileName+".lef", []byte(lefContent), 0644); err != nil {
+				addLog("ERROR: Failed to write LEF: " + err.Error())
+			}
+			if err := os.WriteFile(dir+"/"+cellFileName+".lib", []byte(libContent), 0644); err != nil {
+				addLog("ERROR: Failed to write LIB: " + err.Error())
+			}
+			if err := os.WriteFile(dir+"/"+cellFileName+".v", []byte(cellVContent), 0644); err != nil {
+				addLog("ERROR: Failed to write V: " + err.Error())
+			}
 			addLog("  LEF/LIB/V written to " + dir)
 
 			// Generate array Verilog
@@ -559,8 +611,12 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			})
 
 			vFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-			os.MkdirAll("output/exports", 0755)
-			os.WriteFile(vFilename, []byte(vContent), 0644)
+			if err := os.MkdirAll("output/exports", 0755); err != nil {
+				addLog("ERROR: Failed to create output/exports directory: " + err.Error())
+			}
+			if err := os.WriteFile(vFilename, []byte(vContent), 0644); err != nil {
+				addLog("ERROR: Failed to write Verilog: " + err.Error())
+			}
 			addLog("  Verilog: " + vFilename)
 
 			// Generate DEF
@@ -571,7 +627,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			})
 
 			defFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
-			os.WriteFile(defFilename, []byte(defContent), 0644)
+			if err := os.WriteFile(defFilename, []byte(defContent), 0644); err != nil {
+				addLog("ERROR: Failed to write DEF: " + err.Error())
+			}
 			fyne.Do(func() {
 				defStatsLabel.SetText(fmt.Sprintf("Components: %d | File: %s", cfg.Rows*cfg.Cols, defFilename))
 			})
@@ -593,13 +651,16 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				klayoutStatus.SetText("Generating...")
 			})
 			if validation.IsKLayoutAvailable(imgManager) {
-				imgResult, _ := validation.GenerateLayoutImage(
+				imgResult, err := validation.GenerateLayoutImage(
 					defFilename,
 					cellLEFPath,
 					pngFilename,
 					imgManager,
 					imgConfig,
 				)
+				if err != nil {
+					addLog("ERROR: " + err.Error())
+				}
 				if imgResult != nil && imgResult.Success {
 					addLog("  PNG (KLayout): " + pngFilename)
 					// Update the layout image display
@@ -635,7 +696,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// Generate OpenLane config
 			addLog("Generating OpenLane config...")
 			configContent := export.GenerateOpenLaneConfig(*cfg)
-			os.WriteFile("output/exports/config.json", []byte(configContent), 0644)
+			if err := os.WriteFile("output/exports/config.json", []byte(configContent), 0644); err != nil {
+				addLog("ERROR: Failed to write OpenLane config: " + err.Error())
+			}
 			addLog("  Config: output/exports/config.json")
 
 			fyne.Do(func() {
@@ -808,38 +871,69 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 			outputDir := fmt.Sprintf("output/exports/%s", designName)
-			os.MkdirAll(outputDir, 0755)
-			os.MkdirAll(outputDir+"/cells", 0755)
+			if err := os.MkdirAll(outputDir, 0755); err != nil {
+				addLog("ERROR: Failed to create directory " + outputDir + ": " + err.Error())
+				fyne.Do(func() {
+					statusLabel.SetText("Export failed")
+					exportPackageBtn.Enable()
+					generateAllBtn.Enable()
+					validateAllBtn.Enable()
+					exportPackageBtn.SetText("Export Package")
+				})
+				return
+			}
+			if err := os.MkdirAll(outputDir+"/cells", 0755); err != nil {
+				addLog("ERROR: Failed to create cells directory: " + err.Error())
+				fyne.Do(func() {
+					validateAllBtn.Enable()
+					exportPackageBtn.SetText("Export Package")
+				})
+				return
+			}
 
 			cellCfg := getCellConfig()
 
 			// Step 1: Cell library
 			addLog("[1/6] Generating cell library...")
-			os.WriteFile(outputDir+"/cells/fecim_bitcell.lef", []byte(export.GenerateLEF(cellCfg)), 0644)
-			os.WriteFile(outputDir+"/cells/fecim_bitcell.lib", []byte(export.GenerateLiberty(cellCfg)), 0644)
-			os.WriteFile(outputDir+"/cells/fecim_bitcell.v", []byte(export.GenerateCellVerilog(cellCfg)), 0644)
+			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.lef", []byte(export.GenerateLEF(cellCfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write LEF: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.lib", []byte(export.GenerateLiberty(cellCfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write LIB: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.v", []byte(export.GenerateCellVerilog(cellCfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write cell Verilog: " + err.Error())
+			}
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 2: Array Verilog
 			addLog("[2/6] Generating array Verilog...")
-			os.WriteFile(outputDir+"/"+designName+".v", []byte(export.GenerateArrayVerilog(*cfg)), 0644)
+			if err := os.WriteFile(outputDir+"/"+designName+".v", []byte(export.GenerateArrayVerilog(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write array Verilog: " + err.Error())
+			}
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 3: DEF
 			addLog("[3/6] Generating DEF placement...")
-			os.WriteFile(outputDir+"/"+designName+".def", []byte(generateBuilderDEF(*cfg)), 0644)
+			if err := os.WriteFile(outputDir+"/"+designName+".def", []byte(generateBuilderDEF(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write DEF: " + err.Error())
+			}
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 4: Design JSON
 			addLog("[4/6] Generating design data...")
 			jsonContent := fmt.Sprintf(`{"design": "%s", "rows": %d, "cols": %d, "mode": "%s", "arch": "%s"}`,
 				designName, cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture)
-			os.WriteFile(outputDir+"/"+designName+".json", []byte(jsonContent), 0644)
+			if err := os.WriteFile(outputDir+"/"+designName+".json", []byte(jsonContent), 0644); err != nil {
+				addLog("ERROR: Failed to write design JSON: " + err.Error())
+			}
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 5: OpenLane config
 			addLog("[5/6] Generating OpenLane config...")
-			os.WriteFile(outputDir+"/config.json", []byte(export.GenerateOpenLaneConfig(*cfg)), 0644)
+			if err := os.WriteFile(outputDir+"/config.json", []byte(export.GenerateOpenLaneConfig(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write OpenLane config: " + err.Error())
+			}
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 6: README
@@ -861,7 +955,9 @@ Date: %s
 1. Copy this directory to your OpenLane designs/
 2. Run: flow.tcl -design %s
 `, designName, time.Now().Format("2006-01-02"), designName, designName, designName)
-			os.WriteFile(outputDir+"/README.md", []byte(readme), 0644)
+			if err := os.WriteFile(outputDir+"/README.md", []byte(readme), 0644); err != nil {
+				addLog("ERROR: Failed to write README: " + err.Error())
+			}
 
 			// Convert to absolute path for dialog
 			absOutputDir, _ := filepath.Abs(outputDir)
@@ -1130,44 +1226,4 @@ BUSBITCHARS "[]" ;
 
 	content.WriteString("END DESIGN\n")
 	return content.String()
-}
-
-// makeBuilderLayoutVisualization creates a text-based visualization of the array layout
-func makeBuilderLayoutVisualization(cfg *config.ArrayConfig) string {
-	var viz strings.Builder
-
-	rows := cfg.Rows
-	cols := cfg.Cols
-	if rows > 12 {
-		rows = 12
-	}
-	if cols > 8 {
-		cols = 8
-	}
-
-	viz.WriteString(fmt.Sprintf("FeCIM Crossbar %dx%d Layout\n\n", cfg.Rows, cfg.Cols))
-
-	for r := 0; r < rows; r++ {
-		viz.WriteString(fmt.Sprintf("WL[%d] ", r))
-		for c := 0; c < cols; c++ {
-			viz.WriteString("[=]")
-		}
-		viz.WriteString("\n      ")
-		for c := 0; c < cols; c++ {
-			viz.WriteString(" | ")
-		}
-		viz.WriteString("\n")
-	}
-
-	if cfg.Rows > 12 {
-		viz.WriteString(fmt.Sprintf("      ... (%d more rows)\n", cfg.Rows-12))
-	}
-
-	viz.WriteString("      ")
-	for c := 0; c < cols; c++ {
-		viz.WriteString(fmt.Sprintf("BL%d ", c))
-	}
-	viz.WriteString("\n")
-
-	return viz.String()
 }
