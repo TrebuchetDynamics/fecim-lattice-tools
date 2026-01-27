@@ -19,6 +19,58 @@ This document explains all physical parameters in `config/physics.yaml` for ferr
 
 ---
 
+## Model Parameter Usage
+
+Parameters are used by different hysteresis models. Legend:
+- **[P]** = Preisach Model (hysteron-based, phenomenological)
+- **[L]** = Landau Model (thermodynamic, mean-field theory)
+- **[B]** = Both models
+
+### Quick Reference Matrix
+
+| Parameter | Preisach | Landau | Description |
+|-----------|:--------:|:------:|-------------|
+| `pr_c_m2` | **[P]** | **[L]** | Remanent polarization |
+| `ps_c_m2` | **[P]** | **[L]** | Saturation polarization |
+| `ec_v_m` | **[P]** | **[L]** | Coercive field |
+| `epsilon_hf` | - | **[L]** | High-frequency permittivity |
+| `epsilon_lf` | - | **[L]** | Low-frequency permittivity |
+| `thickness_m` | - | **[L]** | Film thickness (depolarization) |
+| `tau_s` | **[P]** | - | Switching time constant |
+| `tau0_s` | **[P]** | - | Attempt frequency inverse |
+| `activation_energy_ev` | **[P]** | - | Switching activation energy |
+| `kai_exponent` | **[P]** | - | KAI domain growth exponent |
+| `curie_temp_k` | - | **[L]** | Curie temperature (Tc) |
+| `temp_coeff_ec` | **[P]** | **[L]** | dEc/dT |
+| `temp_coeff_pr` | **[P]** | **[L]** | dPr/dT |
+| `alpha_sigma_ratio` | **[P]** | - | Hysteron distribution width |
+| `beta_sigma_ratio` | **[P]** | - | Hysteron distribution width |
+| `correlation` | **[P]** | - | α-β correlation |
+| `fatigue_rate` | **[P]** | - | Degradation per cycle |
+| `wakeup_cycles` | **[P]** | - | Wake-up effect |
+
+### Preisach Model Overview
+The **Preisach model** represents ferroelectric hysteresis as a weighted sum of elementary bistable units (hysterons). Each hysteron has two switching fields (α, β) and switches between ±1 states.
+
+```
+P(E) = ∫∫ μ(α,β) γ(α,β)[E] dα dβ
+```
+
+**Key parameters:** Pr, Ps, Ec, τ, τ₀, Ea, KAI exponent, hysteron distribution
+
+### Landau Model Overview
+The **Landau-Devonshire model** uses thermodynamic free energy expansion to describe ferroelectric phase transitions:
+
+```
+F = α₀(T-Tc)P² + βP⁴ + γP⁶ - EP
+```
+
+Where α₀, β, γ are Landau coefficients derived from material properties.
+
+**Key parameters:** Pr, Ps, Ec, ε, Tc, thickness (for depolarization field)
+
+---
+
 ## 1. Fundamental Constants
 
 ### `fecim_levels` (30)
@@ -62,9 +114,10 @@ Where D is displacement, E is electric field, P is polarization.
 
 ## 2. Polarization Parameters
 
-### `pr_c_m2` - Remanent Polarization (Pr)
+### `pr_c_m2` - Remanent Polarization (Pr) **[P][L]**
 **Unit:** C/m² (Coulombs per square meter)
 **Typical Range:** 0.15 - 1.50 C/m² (15 - 150 µC/cm²)
+**Used by:** Preisach (hysteron saturation), Landau (equilibrium state)
 
 **Physical Meaning:** The polarization that remains after the external electric field is removed.
 
@@ -97,9 +150,10 @@ Where D is displacement, E is electric field, P is polarization.
 | Cryogenic HZO (4K) | 75 | Enhanced at cryo |
 | AlScN | 120 | Very high |
 
-### `ps_c_m2` - Saturation Polarization (Ps)
+### `ps_c_m2` - Saturation Polarization (Ps) **[P][L]**
 **Unit:** C/m²
 **Typical Range:** 0.25 - 1.50 C/m²
+**Used by:** Preisach (maximum hysteron sum), Landau (P⁶ term coefficient)
 
 **Physical Meaning:** Maximum polarization when all ferroelectric domains are aligned.
 
@@ -125,9 +179,10 @@ For HfO₂ in orthorhombic Pca2₁ phase:
 
 ## 3. Electric Field Parameters
 
-### `ec_v_m` - Coercive Field (Ec)
+### `ec_v_m` - Coercive Field (Ec) **[P][L]**
 **Unit:** V/m (Volts per meter)
 **Typical Range:** 0.5×10⁸ - 6×10⁸ V/m (0.5 - 6 MV/cm)
+**Used by:** Preisach (hysteron switching thresholds), Landau (derived from α,β coefficients)
 
 **Physical Meaning:** The electric field required to switch polarization direction (reduce P to zero).
 
@@ -184,9 +239,10 @@ Larger memory window enables:
 
 ## 4. Dielectric Properties
 
-### `epsilon_hf` - High-Frequency Permittivity
+### `epsilon_hf` - High-Frequency Permittivity **[L]**
 **Unit:** Dimensionless (relative to ε₀)
 **Typical Range:** 10 - 50
+**Used by:** Landau (background permittivity in free energy)
 
 **Physical Meaning:** Dielectric constant at frequencies above ferroelectric domain switching (typically > 1 GHz).
 
@@ -195,9 +251,10 @@ At high frequencies, only electronic and ionic polarization respond:
 ε_hf = ε_electronic + ε_ionic
 ```
 
-### `epsilon_lf` - Low-Frequency Permittivity
+### `epsilon_lf` - Low-Frequency Permittivity **[L]**
 **Unit:** Dimensionless
 **Typical Range:** 20 - 100
+**Used by:** Landau (total permittivity including domain contribution)
 
 **Physical Meaning:** Dielectric constant at low frequencies where domain walls can move.
 
@@ -235,9 +292,10 @@ tan δ = ε'' / ε' = Power_dissipated / (ω × Energy_stored)
 
 ## 5. Film Geometry
 
-### `thickness_m` - Film Thickness
+### `thickness_m` - Film Thickness **[L]**
 **Unit:** meters
 **Typical Range:** 4 - 20 nm
+**Used by:** Landau (depolarization field Ed = -P/(ε₀εᵣ) for thin films)
 
 **Physical Meaning:** Thickness of the ferroelectric layer.
 
@@ -298,9 +356,10 @@ Cells/mm² = 10¹² / 45² = 494 million cells/mm²
 
 ## 6. Switching Dynamics
 
-### `tau_s` - Switching Time Constant
+### `tau_s` - Switching Time Constant **[P]**
 **Unit:** seconds
 **Typical Range:** 0.3 - 100 ns
+**Used by:** Preisach (time-dependent hysteron switching, KAI model)
 
 **Physical Meaning:** Characteristic time for polarization reversal.
 
@@ -311,9 +370,10 @@ P(t) = Ps × [1 - exp(-(t/τ)^n)]
 
 Where n is the dimensionality of domain growth.
 
-### `tau0_s` - Attempt Time
+### `tau0_s` - Attempt Time **[P]**
 **Unit:** seconds
 **Typical Value:** ~10⁻¹³ s (100 fs)
+**Used by:** Preisach (Arrhenius prefactor for thermally-activated switching)
 
 **Physical Meaning:** Inverse of attempt frequency for domain nucleation.
 
@@ -322,9 +382,10 @@ From transition state theory:
 τ₀ = h / (kT) ≈ 10⁻¹³ s at room temperature
 ```
 
-### `activation_energy_ev` - Activation Energy (Ea)
+### `activation_energy_ev` - Activation Energy (Ea) **[P]**
 **Unit:** electron-volts
 **Typical Range:** 0.3 - 1.2 eV
+**Used by:** Preisach (thermally-activated switching: τ = τ₀·exp(Ea/kT))
 
 **Physical Meaning:** Energy barrier for domain nucleation/switching.
 
@@ -343,9 +404,10 @@ Ea(E) = Ea₀ × (1 - E/E₀)^α
 where α ≈ 1.5-2 (Merz's law)
 ```
 
-### `kai_exponent` - KAI Model Exponent
+### `kai_exponent` - KAI Model Exponent **[P]**
 **Unit:** Dimensionless
 **Typical Range:** 1.5 - 3.0
+**Used by:** Preisach (domain growth dimensionality in P(t) = Ps·[1-exp(-(t/τ)ⁿ)])
 
 **Physical Meaning:** Dimensionality of domain growth in the Kolmogorov-Avrami-Ishibashi (KAI) model.
 
@@ -363,9 +425,10 @@ n = 3: 3D spherical growth
 
 ## 7. Temperature Properties
 
-### `curie_temp_k` - Curie Temperature (Tc)
+### `curie_temp_k` - Curie Temperature (Tc) **[L]**
 **Unit:** Kelvin
 **Typical Range:** 700 - 1300 K
+**Used by:** Landau (phase transition: α = α₀(T-Tc) in free energy)
 
 **Physical Meaning:** Temperature above which ferroelectricity disappears (phase transition to paraelectric).
 
@@ -387,9 +450,10 @@ Higher Tc provides:
 - BEOL (back-end-of-line) compatibility
 - Wider operating temperature range
 
-### `temp_coeff_ec` - Temperature Coefficient of Ec
+### `temp_coeff_ec` - Temperature Coefficient of Ec **[P][L]**
 **Unit:** V/m/K
 **Typical Value:** -1.5×10⁵ to -2.5×10⁵ V/m/K
+**Used by:** Preisach (T-dependent hysteron thresholds), Landau (T-dependent Ec from α(T))
 
 **Physical Meaning:** How coercive field changes with temperature.
 
@@ -399,9 +463,10 @@ Ec(T) = Ec(T₀) + (dEc/dT) × (T - T₀)
 
 **Negative coefficient:** Ec decreases as temperature increases (easier switching).
 
-### `temp_coeff_pr` - Temperature Coefficient of Pr
+### `temp_coeff_pr` - Temperature Coefficient of Pr **[P][L]**
 **Unit:** C/m²/K
 **Typical Value:** -3×10⁻⁵ to -5×10⁻⁵ C/m²/K
+**Used by:** Preisach (T-dependent hysteron saturation), Landau (Pr(T) = Pr₀·(1-T/Tc)^β)
 
 **Physical Meaning:** How remanent polarization changes with temperature.
 
@@ -638,17 +703,18 @@ Compare to:
 
 The Preisach model represents ferroelectric hysteresis as a collection of elementary bistable units (hysterons).
 
-### `grid_size` (30)
+### `grid_size` (30) **[P]**
 **Physical Meaning:** Number of hysterons along each axis of the Preisach plane.
 
 Total hysterons = grid_size² = 900
 
 Higher grid size = smoother hysteresis loop simulation.
 
-### Distribution Parameters
+### Distribution Parameters **[P]**
 
 **`alpha_sigma_ratio`** (0.20) and **`beta_sigma_ratio`** (0.20)
 **Physical Meaning:** Width of the hysteron distribution relative to Ec.
+**Used by:** Preisach only (defines Gaussian distribution of switching fields)
 
 ```
 σ_α = 0.20 × Ec
@@ -665,10 +731,11 @@ Correlation between switching-up (α) and switching-down (β) fields.
 ρ = 1: Perfectly correlated (α = β)
 ```
 
-### Fatigue Model
+### Fatigue Model **[P]**
 
 **`fatigue_rate`** (10⁻¹⁰)
 Degradation of hysteron amplitude per cycle.
+**Used by:** Preisach only (reduces hysteron weights with cycling)
 
 **`wakeup_cycles`** (100)
 Number of cycles for wake-up effect (initial Pr increase).
