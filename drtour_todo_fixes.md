@@ -492,6 +492,175 @@ This would set a gold standard for educational software honesty.
 
 ---
 
+## UI/LAYOUT IMPROVEMENTS (Priority 5 - User Experience)
+
+### UI-001: Home Screen Typography Too Small
+**Location**: Home screen module
+**Issue**: Title text is 18px and body text is 12px. Vision agent reports these fail readability standards for educational software. Users at 1080p resolution must lean in to read module descriptions.
+**Fix**: Increase title to 28-32px, body text to 14px minimum. Add responsive font scaling based on window size.
+
+### UI-002: Home Screen Module Card Spacing
+**Location**: Home screen module grid
+**Issue**: Module cards have only 8px gaps between them, creating visual crowding and making click targets less distinct.
+**Fix**: Increase spacing to 16-24px gaps. Add subtle hover elevation effect (4px shadow) to improve visual feedback.
+
+### UI-003: Home Screen Footer Contrast Violation
+**Location**: Home screen footer text
+**Issue**: Footer text has 3.5:1 contrast ratio, failing WCAG AA standard (requires 4.5:1 for body text). Users with vision impairments cannot read footer links.
+**Fix**: Increase footer text contrast to 4.5:1 minimum. Consider using theme.ForegroundColor() instead of dimmed color.
+
+### UI-004: Home Screen Missing Learning Sequence
+**Location**: Home screen module cards
+**Issue**: No visual indication that modules build on each other. Students may jump to MNIST without understanding hysteresis fundamentals.
+**Fix**: Add "START HERE" badge to Hysteresis module card. Add sequence numbers (1/6, 2/6, etc.) to card headers. Include prerequisite indicators ("Recommended: Complete Modules 1-2 first").
+
+### UI-005: Home Screen Missing TRL Warning Banner
+**Location**: Home screen top
+**Issue**: Users see impressive demos without immediate context that this is TRL 4 laboratory research, not production technology.
+**Fix**: Add global banner at top: "Educational Tool | Simulating TRL 4 Research | Not Production Technology" with info icon linking to TRL explanation.
+
+### UI-006: Hysteresis "Level no" Bug Display
+**Location**: Module 1 - State indicator when voltage below Ec
+**Issue**: Displays "Level no" (string concatenation bug) when no state change occurs. Should display "N/A - below Ec" to teach that coercive field threshold must be exceeded.
+**Fix**: Add explicit check: `if abs(voltage) < Ec { return "N/A - below Ec" }` instead of string concatenation.
+
+### UI-007: Hysteresis Polarization Bar Indicator Too Small
+**Location**: Module 1 - Current polarization indicator on P-E graph
+**Issue**: 6px diameter circle is hard to track during simulation. Users lose focus of current state.
+**Fix**: Increase to 16px diameter. Add pulsing animation (scale 1.0 → 1.2 → 1.0 every 0.8s) to draw attention. Add trailing path showing last 3 positions.
+
+### UI-008: Hysteresis Memory Log Format Cryptic
+**Location**: Module 1 - Memory log panel entries
+**Issue**: Entries like "F2 -3.5V [-0.13]" require decoding. New users don't understand "F2" means "Full state 2" or that [-0.13] is normalized polarization.
+**Fix**: Expand format to: "State 2 (Full) | -3.5V applied | Pr = -0.13 (normalized)" with toggle for compact/verbose view.
+
+### UI-009: Hysteresis Missing Ec Threshold Visualization
+**Location**: Module 1 - P-E curve graph
+**Issue**: No visual indication of where Ec threshold is. Users don't see that voltage must exceed ±Ec for switching.
+**Fix**: Add horizontal dashed lines at +Ec and -Ec voltage levels. Label "Coercive field (Ec)" with arrow. Shade region below Ec threshold in light red with "No switching zone" label.
+
+### UI-010: Hysteresis No State Stability Warnings
+**Location**: Module 1 - When selecting intermediate polarization levels
+**Issue**: Users can select any of 30 levels without feedback that intermediate states (levels 10-20) are less stable and more prone to drift.
+**Fix**: Add stability indicator color: Green (levels 1-5, 26-30 "stable"), Yellow (levels 6-9, 21-25 "semi-stable"), Orange (levels 10-20 "unstable - use for inference only").
+
+### UI-011: Hysteresis Layout Not Responsive
+**Location**: Module 1 - Three-column layout (graph | controls | log)
+**Issue**: Three columns become cramped at 1366×768 resolution. Controls overlap. Touch targets shrink below 44×44px minimum.
+**Fix**: Implement responsive breakpoints: >1600px (3 columns), 1024-1600px (2 columns), <1024px (1 column stack). Use Fyne container with adaptive layout.
+
+### UI-012: Crossbar Heatmaps Missing Scale Bars
+**Location**: Module 2 - All heatmap visualizations (conductance, voltage drop, current)
+**Issue**: Heatmaps show color gradients but no scale bars or value legends. Users cannot interpret absolute values or compare between architectures.
+**Fix**: Add vertical scale bar to right of each heatmap showing min/max values with 5 intermediate ticks. Include units (µS, mV, µA).
+
+### UI-013: Crossbar IR Drop Calculation Inconsistency
+**Location**: Module 2 - IR drop simulation tab
+**Issue**: Vision agent reports: "80pA through 140Ω should produce µV drops (V=IR: 80×10⁻¹²×140=11.2nV), but display shows mV values." This is 6 orders of magnitude error.
+**Fix**: Audit `ir_drop.go` calculation. Verify wire resistance model uses Ω per unit length, not total resistance. Add validation test comparing hand calculation to simulation output.
+
+### UI-014: Crossbar Colormap Not Colorblind-Safe
+**Location**: Module 2 - All heatmaps using rainbow/plasma colormap
+**Issue**: Rainbow colormaps are not perceptually uniform and fail for ~8% of users with colorblindness. Red/green cannot be distinguished.
+**Fix**: Replace with viridis or plasma colormap (perceptually uniform, colorblind-safe). Add option in settings for colormap selection (Viridis, Plasma, Grayscale).
+
+### UI-015: Crossbar No Cell-Level Inspection
+**Location**: Module 2 - Heatmap hover interaction
+**Issue**: Users cannot inspect individual cell values. No tooltip or click-to-inspect feature for specific array positions.
+**Fix**: Add hover tooltip showing: "Cell [row,col]: Conductance = 45.2 µS, Voltage = 1.23V, Current = 55.6 µA". Add click-to-pin feature keeping inspection overlay visible.
+
+### UI-016: Crossbar No Side-by-Side Architecture Comparison
+**Location**: Module 2 - PASSIVE vs 1T1R tab switching
+**Issue**: Users must toggle between tabs and mentally remember differences. Cannot see improvement visually.
+**Fix**: Add "Compare Architectures" button that splits screen vertically: Left=PASSIVE, Right=1T1R, same input pattern. Add center metric: "1000:1 sneak isolation improvement, 45% accuracy gain".
+
+### UI-017: Crossbar Undefined Acronyms (PUTT, M20-DAC)
+**Location**: Module 2 - Various tabs
+**Issue**: "PUTT" (Programming Up-Down Two-Transistor?) and "M20-DAC" appear without definition. New users assume they should know these terms.
+**Fix**: Add inline tooltips with definitions. Create glossary panel accessible via "?" icon: PUTT = "Progressive Up-Down Two-Transistor", M20-DAC = "Multi-level 20-bit DAC".
+
+### UI-018: Crossbar Input/Output Tab Empty Panel
+**Location**: Module 2 - Input/Output tab, output panel
+**Issue**: Vision agent reports output panel appears empty or shows placeholder text. Users expect to see output vector values.
+**Fix**: Display output vector as: Vertical bar chart with 10 bars (for 10 MNIST classes), value labels, highlighting max value. Add "Copy as CSV" button.
+
+### UI-019: Crossbar No Error Attribution Breakdown
+**Location**: Module 2 - Accuracy degradation analysis
+**Issue**: Waterfall chart shows total error but doesn't attribute how much each non-ideality contributes to specific misclassifications.
+**Fix**: Add "Error Attribution" tab showing: "Of 13% total error: IR drop (5.2%), Device variation (4.1%), Sneak paths (2.8%), Quantization (0.9%)". Add confusion matrix showing which digits suffer most.
+
+### UI-020: MNIST Drawing Canvas Too Small
+**Location**: Module 3 - Canvas input area
+**Issue**: 28×28 pixel canvas is difficult to draw on, especially for touchpad users. No zoom or scaling option.
+**Fix**: Render canvas at 280×280 pixels (10× scale) but downsample to 28×28 for inference. Add grid lines every 10 pixels. Add "Clear" and "Random Sample" buttons.
+
+### UI-021: MNIST Confidence Bars Too Small
+**Location**: Module 3 - FP32 vs CIM confidence comparison
+**Issue**: Horizontal bars showing 10 class confidences are narrow (8-10px height) and hard to read. Percentage text overlaps bars.
+**Fix**: Increase bar height to 24px minimum. Move percentage labels to right side of bars. Add color coding: Green (highest confidence), Blue (medium), Gray (low).
+
+### UI-022: MNIST Energy Visualization Missing Scale
+**Location**: Module 3 - Energy comparison graph/panel
+**Issue**: Energy visualization shows relative comparison but lacks scale bar, legend, units, and absolute values. Users cannot interpret "100000 energy saving" without units.
+**Fix**: Add clear labels: "FP32: 1.25 mJ", "FeCIM: 12.5 µJ", "Ratio: 100×". Add bar chart with logarithmic scale. Include citation: "Based on Horowitz 2014 energy model".
+
+### UI-023: MNIST "MISMATCH" Metric Unexplained
+**Location**: Module 3 - Comparison results panel
+**Issue**: Shows "MISMATCH: 0.0074" without explaining what this measures. Is it per-weight error? Total network error?
+**Fix**: Rename to "Weight Quantization Error (RMS)" with tooltip: "Root-mean-square difference between FP32 and 30-level quantized weights. Lower is better. <0.01 typically preserves accuracy."
+
+### UI-024: MNIST "100000 energy saving" Missing Units
+**Location**: Module 3 - Energy comparison output
+**Issue**: Displays "100000 energy saving" which is ambiguous. Is it 100,000× improvement? 100,000 joules saved? Needs units and context.
+**Fix**: Change to: "Energy Efficiency: 100,000× improvement (FP32: 1.25 mJ, FeCIM: 12.5 nJ per inference)". Add caveat: "Assumes array energy only, excludes DAC/ADC overhead".
+
+### UI-025: Circuits Math Error (11.2 × 6.045)
+**Location**: Module 4 - Calculation display
+**Issue**: Vision agent reports: "Shows 11.2 × 6.045 = 56.67 but actual result is 67.704. This is a computational error or display bug."
+**Fix**: Audit calculation in circuits.go. Verify all intermediate values. Add unit test: `assert.InDelta(t, 11.2*6.045, result, 0.01)`. Fix displayed value to 67.7.
+
+### UI-026: Circuits DAPS Acronym Undefined
+**Location**: Module 4 - Various circuit diagrams
+**Issue**: "DAPS" appears without definition. Users cannot understand circuit function.
+**Fix**: Add inline definition: "DAPS (Differential Analog Paired Scheme)" or create circuits glossary accessible via "?" icon.
+
+### UI-027: Circuits "4,009 MACs" Claim Unexplained
+**Location**: Module 4 - For 8×8 array
+**Issue**: Vision agent notes 8×8 = 64 MACs per cycle, so 4,009 MACs implies 62.6 cycles. Unclear why this specific number.
+**Fix**: Add explanation: "4,009 MACs = 8×8 array × 62 inference cycles + 73 overhead MACs for MNIST (28×28 → 8×8 tiled processing)". Or correct if value is wrong.
+
+### UI-028: Circuits Voltage Zones Unlabeled
+**Location**: Module 4 - Circuit diagram with voltage regions
+**Issue**: Color-coded voltage zones (red/yellow/green regions) lack labels or legend. Users cannot interpret which voltages are safe/destructive.
+**Fix**: Add voltage zone legend: "Green (0-0.5V): Safe read zone", "Yellow (0.5-1.5V): Caution - read disturb risk", "Red (>1.5V): Write/erase zone - destructive read".
+
+### UI-029: Circuits No Energy Breakdown (DAC + Array + ADC)
+**Location**: Module 4 - Energy calculation display
+**Issue**: Shows total energy but doesn't break down peripheral overhead. Users assume array energy is everything.
+**Fix**: Add stacked bar chart: "DAC (35%)", "Array (45%)", "ADC (15%)", "TIA (5%)". Add toggle: "Array Only" vs "Full System" energy comparison.
+
+### UI-030: Global Missing Citation Panel
+**Location**: All modules
+**Issue**: Scientific claims appear throughout UI without inline citations or centralized reference list. Users cannot verify sources.
+**Fix**: Add "References" button to top toolbar opening slide-out panel with DOI links for all cited papers. Add superscript citation numbers [1], [2] inline with claims.
+
+### UI-031: Global No Glossary System
+**Location**: All modules
+**Issue**: Technical terms (FeCIM, TRL, Ec, Pr, MAC, MVM, 1T1R, PUTT, DAPS) appear without definitions. New users must search external resources.
+**Fix**: Add global glossary accessible via Cmd+G or "Glossary" button. Automatically link first occurrence of each term with dotted underline. Clicking shows inline definition popup.
+
+### UI-032: Global No Accessibility Features
+**Location**: All modules
+**Issue**: No keyboard navigation support, no screen reader ARIA labels, no high-contrast mode, no focus indicators.
+**Fix**: Implement keyboard shortcuts (Tab navigation, Enter to activate, Esc to close dialogs). Add ARIA labels to all interactive elements. Add "Accessibility" settings panel with high-contrast toggle.
+
+### UI-033: Global No Responsive Design for Mobile/Tablet
+**Location**: All modules
+**Issue**: Layout assumes desktop resolution (1920×1080+). Tablet (1024×768) and mobile users see cramped/broken layouts.
+**Fix**: Implement responsive breakpoints: Desktop (>1600px), Laptop (1024-1600px), Tablet (768-1024px), Mobile (<768px). Adjust layouts, hide non-essential panels, increase touch targets to 44×44px minimum.
+
+---
+
 ## FINAL THOUGHTS
 
 This tool could become the **gold standard** for CIM education if it maintains scientific rigor. The physics simulation is sound. The visual design is professional. The interaction model is intuitive.
