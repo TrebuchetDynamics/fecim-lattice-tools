@@ -225,11 +225,11 @@ func softmax(x []float64) []float64 {
 - **Fix:** Rename for clarity
 - [x] Renamed w1/w2 to layer1Weights/layer2Weights (2026-01-27)
 
-### LOW-003: Magic Numbers in Tests
+### LOW-003: Magic Numbers in Tests ✅ FIXED
 - **File:** `pkg/training/network_test.go:143-145`
 - **Issue:** Magic numbers `42`, `64`, `100`, `0.1`
 - **Fix:** Use named constants
-- [ ] Add constants
+- [x] Add constants (2026-01-27) - added testRNGSeed, testHiddenSize, testSampleCount, testLearningRate, testMNISTInputs, testMNISTOutputs
 
 ### LOW-004: Missing Godoc for Exported Variable - ALREADY FIXED
 - **File:** `pkg/core/network.go:168-169`
@@ -367,11 +367,11 @@ func softmax(x []float64) []float64 {
 - **Fix:** Add tests with `-race` flag
 - [ ] Add concurrency tests
 
-### TEST-004: Hardcoded Test Paths
+### TEST-004: Hardcoded Test Paths ✅ FIXED
 - **File:** `pkg/training/network_test.go:196`
 - **Issue:** Uses `/tmp/test_weights.json`
 - **Fix:** Use `t.TempDir()`
-- [ ] Update test paths
+- [x] Update test paths (2026-01-27) - uses t.TempDir() for automatic cleanup
 
 ---
 
@@ -386,7 +386,8 @@ func softmax(x []float64) []float64 {
 | Security | 2 | 2 | 0 |
 | Architecture | 5 | 0 | 5 |
 | Documentation | 4 | 0 | 4 |
-| Tests | 4 | 0 | 4 |
+| Tests | 4 | 2 | 2 |
+| **Total** | **46** | **35** | **11** |
 | **Total** | **46** | **33** | **13** |
 
 ---

@@ -13,8 +13,8 @@ import (
 )
 
 // SingleLayerNetwork represents a single-layer neural network for MNIST.
-// Architecture: 784 -> 10 (no hidden layer, matching Tour's demo)
-// Note: Dr. Tour claimed 87% on hardware (unverified); software baseline is 98-99%
+// Architecture: 784 -> 10 (no hidden layer)
+// Note: Peer-reviewed FeCIM achieves 96.6-98.24% MNIST accuracy; software baseline is 98-99%
 type SingleLayerNetwork struct {
 	layer   *crossbar.Array // 784 -> 10
 	biases  []float64       // Output biases

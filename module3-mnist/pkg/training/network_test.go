@@ -10,6 +10,16 @@ import (
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
+// Test constants for reproducibility and clarity
+const (
+	testRNGSeed       = 42    // Fixed seed for reproducible tests
+	testHiddenSize    = 64    // Smaller hidden layer for faster tests
+	testSampleCount   = 100   // Number of training samples
+	testLearningRate  = 0.1   // Learning rate for training tests
+	testMNISTInputs   = 784   // 28x28 MNIST images
+	testMNISTOutputs  = 10    // 10 digit classes
+)
+
 // TestNetworkCreation verifies network initialization
 func TestNetworkCreation(t *testing.T) {
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
@@ -142,34 +152,34 @@ func TestWeightsAreQuantizedTo30Levels(t *testing.T) {
 // TestTrainEpochReducesLoss verifies training makes progress
 func TestTrainEpochReducesLoss(t *testing.T) {
 	// Use local RNG for reproducible tests (rand.Seed is deprecated since Go 1.20)
-	rng := rand.New(rand.NewSource(42))
+	rng := rand.New(rand.NewSource(testRNGSeed))
 
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
-		Rows: 64, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+		Rows: testHiddenSize, Cols: testMNISTInputs, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})
 	layer2, _ := crossbar.NewArray(&crossbar.Config{
-		Rows: 10, Cols: 64, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+		Rows: testMNISTOutputs, Cols: testHiddenSize, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})
 
 	net := NewMNISTNetwork(layer1, layer2)
 
 	// Generate simple training data
-	images := make([][]float64, 100)
-	labels := make([]int, 100)
-	for i := 0; i < 100; i++ {
-		images[i] = make([]float64, 784)
+	images := make([][]float64, testSampleCount)
+	labels := make([]int, testSampleCount)
+	for i := 0; i < testSampleCount; i++ {
+		images[i] = make([]float64, testMNISTInputs)
 		for j := range images[i] {
 			images[i][j] = rng.Float64()
 		}
-		labels[i] = rng.Intn(10)
+		labels[i] = rng.Intn(testMNISTOutputs)
 	}
 
 	// Initial loss
-	loss1 := net.TrainEpoch(images, labels, 0.1)
+	loss1 := net.TrainEpoch(images, labels, testLearningRate)
 
 	// Train more epochs
-	loss2 := net.TrainEpoch(images, labels, 0.1)
-	loss3 := net.TrainEpoch(images, labels, 0.1)
+	loss2 := net.TrainEpoch(images, labels, testLearningRate)
+	loss3 := net.TrainEpoch(images, labels, testLearningRate)
 
 	// Loss should generally decrease (or at least not explode)
 	t.Logf("Losses: epoch1=%.4f, epoch2=%.4f, epoch3=%.4f", loss1, loss2, loss3)
@@ -227,8 +237,8 @@ func TestSaveLoadWeights(t *testing.T) {
 }
 
 // TestMNISTAccuracyWithQuantization validates that 30-level weight quantization
-// maintains high accuracy, as demonstrated by Dr. Tour's FeCIM results.
-// This test verifies the core claim: 87%+ accuracy with 30 discrete analog levels.
+// maintains high accuracy. Peer-reviewed FeCIM achieves 96.6-98.24% MNIST accuracy.
+// This test verifies high accuracy with 30 discrete analog levels.
 func TestMNISTAccuracyWithQuantization(t *testing.T) {
 	// Find the data directory
 	dataDir := filepath.Join("..", "..", "data")
@@ -289,7 +299,7 @@ func TestMNISTAccuracyWithQuantization(t *testing.T) {
 	}
 
 	t.Log("30-level quantization verified on crossbar array")
-	t.Log("Note: Achieving 87%+ accuracy requires proper training with the train_and_save.go script")
+	t.Log("Note: Achieving high accuracy requires proper training with the train_and_save.go script")
 }
 
 // TestMNISTNetworkForwardConsistency verifies forward pass produces valid outputs.
