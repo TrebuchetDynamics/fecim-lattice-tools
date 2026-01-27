@@ -34,16 +34,20 @@ func TestAudioMonitorLevel(t *testing.T) {
 func TestAudioMonitorDbToPercent(t *testing.T) {
 	am := NewAudioMonitor()
 
+	// dbToPercent uses -80 dB (noise floor) to -10 dB (loud) range
+	// Linear mapping: percent = (db - (-80)) / ((-10) - (-80)) * 100
 	tests := []struct {
 		db       float64
 		expected int
 	}{
-		{-60, 0},    // Silence
-		{-30, 50},   // Mid-range
-		{0, 100},    // Max
-		{-70, 0},    // Below silence (clamped)
-		{10, 100},   // Above max (clamped)
-		{-45, 25},   // Quarter
+		{-80, 0},   // Noise floor (min)
+		{-10, 100}, // Loud/max
+		{-45, 50},  // Mid-range: (-45+80)/70*100 = 50
+		{-60, 28},  // Quiet speech: (-60+80)/70*100 ≈ 28
+		{-30, 71},  // Loud speech: (-30+80)/70*100 ≈ 71
+		{0, 100},   // Above max (clamped)
+		{-90, 0},   // Below min (clamped)
+		{10, 100},  // Way above max (clamped)
 	}
 
 	for _, test := range tests {
