@@ -600,31 +600,11 @@ func main() {
 	fmt.Println("[STARTUP] Creating mic level widget...")
 	micLevelWidget := sharedwidgets.NewMicLevel()
 	var audioMonitor *recording.AudioMonitor
+	var audioMonitorMu sync.Mutex
 	var micController *sharedwidgets.MicLevelController
 
-	// Check if audio is available and start monitoring
-	if recording.IsAudioAvailable() {
-		log.Info("Audio input detected, enabling mic level indicator")
-		audioMonitor = recording.NewAudioMonitor()
-
-		// Try to set default device
-		if defaultDevice, err := recording.GetDefaultAudioDevice(); err == nil {
-			audioMonitor.SetDevice(defaultDevice)
-			log.Debug("Using audio device: %s", defaultDevice.Name)
-		}
-
-		// Create controller to connect monitor to widget
-		micController = sharedwidgets.NewMicLevelController(micLevelWidget, audioMonitor)
-
-		// Start monitoring immediately (shows levels even when not recording)
-		if err := micController.Start(); err != nil {
-			log.Debug("Failed to start audio monitoring: %v", err)
-		} else {
-			log.Info("Audio level monitoring started")
-		}
-	} else {
-		log.Info("No audio input detected, mic level indicator disabled")
-	}
+	// Defer audio initialization to background - IsAudioAvailable() can take 7+ seconds
+	fmt.Println("[STARTUP] Deferring audio initialization to background...")
 
 	fmt.Println("[STARTUP] Creating buttons...")
 
@@ -865,6 +845,42 @@ func main() {
 			fmt.Println("[STARTUP] Home tab selected")
 		})
 	})
+
+	// Initialize audio in background after window is shown (can take 7+ seconds)
+	utils.SafeGo("audio-init", func() {
+		time.Sleep(500 * time.Millisecond) // Let UI render first
+		fmt.Println("[STARTUP] Checking audio availability (background)...")
+
+		if recording.IsAudioAvailable() {
+			log.Info("Audio input detected, enabling mic level indicator")
+			monitor := recording.NewAudioMonitor()
+
+			// Try to set default device
+			if defaultDevice, err := recording.GetDefaultAudioDevice(); err == nil {
+				monitor.SetDevice(defaultDevice)
+				log.Debug("Using audio device: %s", defaultDevice.Name)
+			}
+
+			// Create controller to connect monitor to widget
+			controller := sharedwidgets.NewMicLevelController(micLevelWidget, monitor)
+
+			// Start monitoring immediately (shows levels even when not recording)
+			if err := controller.Start(); err != nil {
+				log.Debug("Failed to start audio monitoring: %v", err)
+			} else {
+				log.Info("Audio level monitoring started")
+			}
+
+			// Store references for cleanup
+			audioMonitorMu.Lock()
+			audioMonitor = monitor
+			micController = controller
+			audioMonitorMu.Unlock()
+		} else {
+			log.Info("No audio input detected, mic level indicator disabled")
+		}
+		fmt.Println("[STARTUP] Audio initialization complete")
+	})
 	fmt.Println("[STARTUP] Placeholder content set")
 
 	// Start window resize tracking for debugging (if FYNE_DEBUG_RESIZE is set)
@@ -902,13 +918,15 @@ func main() {
 			recordingState.stopRecording()
 		}
 
-		// Stop audio monitoring
+		// Stop audio monitoring (with mutex since it may still be initializing)
+		audioMonitorMu.Lock()
 		if micController != nil {
 			micController.Stop()
 		}
 		if audioMonitor != nil {
 			audioMonitor.Stop()
 		}
+		audioMonitorMu.Unlock()
 
 		// Stop all demos to clean up resources (e.g., auto demo contexts)
 		log.Debug("Stopping all demos before window close...")

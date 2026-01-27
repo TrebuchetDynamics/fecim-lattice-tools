@@ -35,7 +35,6 @@ type EmbeddedDocsApp struct {
 	quickAccess   *QuickAccessPanel
 	glossaryPills *GlossaryPillsWidget
 	docMetadata   *DocumentMetadataWidget
-	relatedDocs   *RelatedDocsWidget
 	searchDialog  *SearchDialog
 
 	// State
@@ -74,7 +73,7 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 	app.layoutManager = NewLayoutManager()
 	app.layoutManager.SetComponents(
 		app.buildSidebar(),     // tree + quick access
-		app.buildMainContent(), // breadcrumbs + metadata + content + related
+		app.buildMainContent(), // breadcrumbs + metadata + content
 		app.buildTocSidebar(),  // table of contents
 		app.buildTopBar(),      // search button, title
 	)
@@ -109,10 +108,7 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 		func(path string) { app.loadDocument(path) },
 		func(path string) { app.toggleFavorite(path) },
 	)
-	// Initialize with persisted history
-	for _, path := range app.history.GetRecent() {
-		app.quickAccess.AddRecent(path)
-	}
+	// Initialize with persisted favorites
 	for _, path := range app.history.GetFavorites() {
 		if !app.quickAccess.IsFavorite(path) {
 			app.quickAccess.ToggleFavorite(path)
@@ -124,11 +120,6 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 
 	// Document metadata
 	app.docMetadata = NewDocumentMetadataWidget(app.window)
-
-	// Related docs
-	app.relatedDocs = NewRelatedDocsWidget(func(path string) {
-		app.loadDocument(path)
-	})
 
 	// Search dialog
 	app.searchDialog = NewSearchDialog(app.searchIndex, app.window, func(path string) {
@@ -177,7 +168,7 @@ func (app *EmbeddedDocsApp) buildMainContent() fyne.CanvasObject {
 
 	return container.NewBorder(
 		container.NewVBox(topSection, pillsSection),
-		app.relatedDocs,
+		nil,
 		nil, nil,
 		app.contentScroll,
 	)
@@ -254,9 +245,20 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 		// Update - update tree node with data
 		func(uid widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
 			box := node.(*fyne.Container)
-			icon := box.Objects[0].(*widget.Icon)
-			starBtn := box.Objects[1].(*widget.Button)
-			label := box.Objects[2].(*widget.Label)
+			// Find widgets by type - don't rely on container object ordering
+			var icon *widget.Icon
+			var label *widget.Label
+			var starBtn *widget.Button
+			for _, obj := range box.Objects {
+				switch v := obj.(type) {
+				case *widget.Icon:
+					icon = v
+				case *widget.Label:
+					label = v
+				case *widget.Button:
+					starBtn = v
+				}
+			}
 
 			if entry, ok := app.pathMap[uid]; ok {
 				label.SetText(entry.name)
@@ -335,54 +337,6 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 			app.docMetadata.SetMetadata(meta.Title, meta.Category, meta.ReadingTime, terms)
 		})
 	}
-
-	// Update related docs
-	app.updateRelatedDocs(path, meta)
-
-	// Add to recent history
-	app.history.AddRecent(path)
-	fyne.Do(func() {
-		app.quickAccess.AddRecent(path)
-	})
-}
-
-// updateRelatedDocs finds and displays related documents
-func (app *EmbeddedDocsApp) updateRelatedDocs(currentPath string, currentMeta *SearchDocMetadata) {
-	if currentMeta == nil {
-		fyne.Do(func() {
-			app.relatedDocs.SetDocs(nil)
-		})
-		return
-	}
-
-	// Convert SearchDocMetadata to DocMetadata for the FindRelated function
-	currentDocMeta := &DocMetadata{
-		Path:          currentMeta.Path,
-		Title:         currentMeta.Title,
-		Category:      currentMeta.Category,
-		GlossaryTerms: currentMeta.GlossaryTerms,
-		ParentFolder:  filepath.Dir(currentPath),
-	}
-
-	// Build allDocs map from search index
-	allDocs := make(map[string]*DocMetadata)
-	app.searchIndex.mu.RLock()
-	for path, meta := range app.searchIndex.docs {
-		allDocs[path] = &DocMetadata{
-			Path:          meta.Path,
-			Title:         meta.Title,
-			Category:      meta.Category,
-			GlossaryTerms: meta.GlossaryTerms,
-			ParentFolder:  filepath.Dir(path),
-		}
-	}
-	app.searchIndex.mu.RUnlock()
-
-	related := FindRelated(currentPath, currentDocMeta, allDocs)
-
-	fyne.Do(func() {
-		app.relatedDocs.SetDocs(related)
-	})
 }
 
 // toggleFavorite adds or removes a document from favorites

@@ -305,45 +305,48 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	contentWidth := size.Width - borderWidth*2
 
 	// Preview thumbnail - scale with card size, positioned at bottom right
-	// Use ~35% of width and ~55% of content height for preview
-	previewWidth := contentWidth * 0.35
-	if previewWidth < 80 {
-		previewWidth = 80
+	// Use ~28% of width and ~50% of content height for preview (reduced for more description space)
+	previewWidth := contentWidth * 0.28
+	if previewWidth < 70 {
+		previewWidth = 70
 	}
-	if previewWidth > 250 {
-		previewWidth = 250
+	if previewWidth > 180 {
+		previewWidth = 180
 	}
-	previewHeight := contentHeight * 0.6
-	if previewHeight < 50 {
-		previewHeight = 50
+	previewHeight := contentHeight * 0.5
+	if previewHeight < 45 {
+		previewHeight = 45
 	}
-	if previewHeight > 180 {
-		previewHeight = 180
+	if previewHeight > 140 {
+		previewHeight = 140
 	}
-	previewX := size.Width - previewWidth - 14*heightScale
-	previewY := size.Height - previewHeight - 14*heightScale
+	previewX := size.Width - previewWidth - 10
+	previewY := size.Height - previewHeight - 22
 	previewObjects := drawPreviewThumbnail(info.Number, previewX, previewY, previewWidth, previewHeight, cyanColor)
 	r.objects = append(r.objects, previewObjects...)
 
 	// Description - wrapped text below header, left of thumbnail area
 	desc := info.Description
-	descSize := float32(16) * heightScale // UI-001: Increased from 14 to 16, min from 12 to 14
-	if descSize < 14 {
-		descSize = 14
+	descSize := float32(15) * heightScale // Slightly smaller for better fit
+	if descSize < 13 {
+		descSize = 13
 	}
-	maxWidth := size.Width - previewWidth - 40*heightScale // Leave space for preview
-	lineY := headerHeight + borderWidth + 14*heightScale
-	lineHeight := descSize + 6*heightScale
+	if descSize > 18 {
+		descSize = 18
+	}
+	maxWidth := size.Width - previewWidth - 24*heightScale // Reduced padding for more text space
+	lineY := headerHeight + borderWidth + 10*heightScale
+	lineHeight := descSize + 4*heightScale // Tighter line spacing
 
 	// Calculate max lines based on available height
-	// Reserve space for: header (top) + description top padding (10) + hint text at bottom (20)
-	availableDescHeight := size.Height - headerHeight - borderWidth*2 - 10 - 20
+	// Reserve space for: header (top) + description top padding (8) + hint text at bottom (18)
+	availableDescHeight := size.Height - headerHeight - borderWidth*2 - 8 - 18
 	maxLines := int(availableDescHeight / lineHeight)
-	if maxLines < 2 {
-		maxLines = 2
+	if maxLines < 3 {
+		maxLines = 3
 	}
-	if maxLines > 8 {
-		maxLines = 8
+	if maxLines > 6 {
+		maxLines = 6
 	}
 
 	words := splitWords(desc)
@@ -376,13 +379,16 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	}
 
 	// Click hint at bottom left (scales with card)
-	hintSize := float32(12) * heightScale
+	hintSize := float32(11) * heightScale
 	if hintSize < 10 {
 		hintSize = 10
 	}
+	if hintSize > 14 {
+		hintSize = 14
+	}
 	hintText := canvas.NewText("Click to explore →", color.RGBA{100, 130, 160, 200})
 	hintText.TextSize = hintSize
-	hintText.Move(fyne.NewPos(14*heightScale, size.Height-20*heightScale))
+	hintText.Move(fyne.NewPos(14, size.Height-18))
 	r.objects = append(r.objects, hintText)
 
 	r.cache.MarkLayout(size)
@@ -727,7 +733,6 @@ type ResponsiveHeader struct {
 	titleText    *canvas.Text
 	subtitleText *canvas.Text
 	taglineText  *canvas.Text
-	bannerText   *canvas.Text // UI-005: TRL warning banner
 	separator    *widget.Separator
 	cache        sharedwidgets.LayoutCache
 }
@@ -738,12 +743,10 @@ func NewResponsiveHeader() *ResponsiveHeader {
 		titleText:    canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255}),
 		subtitleText: canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255}),
 		taglineText:  canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200}),
-		bannerText:   canvas.NewText("⚠ Educational Tool | Simulating TRL 4 Research | Not Production Technology", color.RGBA{255, 200, 100, 255}), // UI-005: TRL warning banner
 		separator:    widget.NewSeparator(),
 	}
 	h.titleText.TextStyle = fyne.TextStyle{Bold: true}
 	h.taglineText.TextStyle = fyne.TextStyle{Italic: true}
-	h.bannerText.TextStyle = fyne.TextStyle{Bold: true}
 	h.ExtendBaseWidget(h)
 	return h
 }
@@ -758,7 +761,7 @@ type responsiveHeaderRenderer struct {
 }
 
 func (r *responsiveHeaderRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(280, 100) // UI-005: Increased from 80 to 100 to accommodate banner
+	return fyne.NewSize(280, 90) // Title + subtitle + tagline + separator
 }
 
 func (r *responsiveHeaderRenderer) Layout(size fyne.Size) {
@@ -772,39 +775,29 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	h := r.header
 	bp := sharedwidgets.GetBreakpoint(size.Width)
 
-	// Scale text sizes based on breakpoint - UI-001: Increased sizes
-	var titleSize, subtitleSize, taglineSize, bannerSize float32
+	// Scale text sizes based on breakpoint
+	var titleSize, subtitleSize, taglineSize float32
 	showTagline := true
 
 	switch bp {
 	case sharedwidgets.BreakpointSM:
-		titleSize, subtitleSize, taglineSize, bannerSize = 28, 16, 12, 11 // UI-001: Increased from 22,14,11
+		titleSize, subtitleSize, taglineSize = 28, 16, 12
 		showTagline = false // Hide tagline on mobile
 	case sharedwidgets.BreakpointMD:
-		titleSize, subtitleSize, taglineSize, bannerSize = 30, 17, 13, 12 // UI-001: Increased from 24,15,12
+		titleSize, subtitleSize, taglineSize = 30, 17, 13
 	case sharedwidgets.BreakpointLG:
-		titleSize, subtitleSize, taglineSize, bannerSize = 32, 17, 13, 12 // UI-001: Increased from 26,15,12
+		titleSize, subtitleSize, taglineSize = 32, 17, 13
 	default: // XL
-		titleSize, subtitleSize, taglineSize, bannerSize = 32, 18, 14, 13 // UI-001: Increased from 28,16,13
+		titleSize, subtitleSize, taglineSize = 32, 18, 14
 	}
 
 	h.titleText.TextSize = titleSize
 	h.subtitleText.TextSize = subtitleSize
 	h.taglineText.TextSize = taglineSize
-	h.bannerText.TextSize = bannerSize
 
 	// Calculate positions (centered)
 	padding := float32(8)
 	y := padding
-
-	// UI-005: TRL Warning Banner at top
-	bannerWidth := h.bannerText.MinSize().Width
-	if bannerWidth > size.Width-20 {
-		h.bannerText.Move(fyne.NewPos(10, y))
-	} else {
-		h.bannerText.Move(fyne.NewPos((size.Width-bannerWidth)/2, y))
-	}
-	y += bannerSize + 8
 
 	// Title
 	titleWidth := h.titleText.MinSize().Width
@@ -825,15 +818,15 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 		} else {
 			h.taglineText.Move(fyne.NewPos((size.Width-taglineWidth)/2, y))
 		}
-		y += taglineSize + 8
+		y += taglineSize + 6
 	}
 
-	// Separator at bottom
+	// Separator positioned below content, not at size.Height (avoids overlap on any screen)
 	h.separator.Resize(fyne.NewSize(size.Width, 2))
-	h.separator.Move(fyne.NewPos(0, size.Height-2))
+	h.separator.Move(fyne.NewPos(0, y))
 
-	// Build objects list - UI-005: Add banner
-	r.objects = []fyne.CanvasObject{h.bannerText, h.titleText, h.subtitleText}
+	// Build objects list
+	r.objects = []fyne.CanvasObject{h.titleText, h.subtitleText}
 	if showTagline {
 		r.objects = append(r.objects, h.taglineText)
 	}
@@ -848,8 +841,8 @@ func (r *responsiveHeaderRenderer) Refresh() {
 
 func (r *responsiveHeaderRenderer) Objects() []fyne.CanvasObject {
 	if len(r.objects) == 0 {
-		// Initial objects before first layout - UI-005: Include banner
-		return []fyne.CanvasObject{r.header.bannerText, r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
+		// Initial objects before first layout
+		return []fyne.CanvasObject{r.header.titleText, r.header.subtitleText, r.header.taglineText, r.header.separator}
 	}
 	return r.objects
 }
@@ -989,13 +982,10 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	// Wrap grid in VScroll for small screens where content overflows
 	scrollableGrid := container.NewVScroll(container.NewPadded(grid))
 
-	// Create responsive footer that simplifies on small screens
-	footer := NewResponsiveFooter()
-
-	// Use border layout with header and footer
+	// Use border layout with header only (footer removed - contained unverified claims)
 	return container.NewBorder(
 		container.NewPadded(header),
-		container.NewPadded(footer),
+		nil,
 		nil, nil,
 		scrollableGrid,
 	)

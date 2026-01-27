@@ -27,7 +27,7 @@ Last Updated: 2026-01-26
 
 ### UX Issues (NEW)
 - [x] UX-001: COMPUTE button redundant (auto-compute implemented on input change)
-- [ ] UX-002: Export buttons not implemented (EXPORT SVG, EXPORT SPECS)
+- [x] UX-002: Export buttons - FIXED (2026-01-26): Now show "Coming soon" dialogs with helpful workarounds
 
 ---
 

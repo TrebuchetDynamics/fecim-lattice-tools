@@ -8,11 +8,11 @@ Description: "Interactive visualization of FeCIM crossbar array matrix-vector mu
 ---
 
 Bugs:
-  - [x] BUG-M2-001: Potential race condition on lastInput/lastOutput without mutex protection in runMVMAnimated
-  - [x] BUG-M2-002: Missing fyne.Do wrapper in updateConductanceDisplay call
+  - [x] BUG-M2-001: Potential race condition on lastInput/lastOutput - FIXED (2026-01-26): Added mutex protection
+  - [x] BUG-M2-002: Missing fyne.Do wrapper in updateConductanceDisplay - FIXED (2026-01-26): Added fyne.Do wrappers
   - [x] BUG-M2-003: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
   - [x] BUG-M2-004: Educational content wrapping disabled but can still trigger MinSize changes
-  - [x] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called
+  - [x] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called - FIXED (2026-01-26): Added window close cleanup
 
 # Screens
 
@@ -602,12 +602,14 @@ BugDetails:
   - id: BUG-M2-005
     component: Auto Demo Loop
     severity: Medium
+    status: FIXED (2026-01-26)
     description: "Auto demo context cancellation may leak if Stop() not called"
     expected: "Cleanup in window close handler or destructor"
     actual: "Relies on explicit Stop() call from embedded interface"
     file: animation.go:172-207
-  suggested_fix: |
-    // Add cleanup to window lifecycle:
-    ca.window.SetOnClosed(func() {
-        ca.stopAutoDemoLoop()
-    })
+    fix_applied: app.go:194-196
+  fix_description: |
+    Added window.SetOnClosed() handler in RunWithLayout() to call
+    stopAutoDemoLoop() when window closes. This ensures cleanup happens
+    for standalone mode, complementing the existing Stop() method used
+    in embedded mode.

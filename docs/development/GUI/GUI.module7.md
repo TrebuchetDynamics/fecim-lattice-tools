@@ -7,7 +7,7 @@ Last Updated: 2026-01-27
 Description: |
   In-app documentation viewer with full-text search, responsive layout,
   breadcrumb navigation, table of contents, glossary term detection,
-  favorites/recent history persistence, and related documents discovery.
+  and favorites persistence.
   Scans the docs/ directory for markdown files and renders them with
   navigation features. No physics simulation - utility module only.
 ---
@@ -56,7 +56,7 @@ Screens:
                       bottom: DocTree
                   - QuickAccessPanel:
                       type: QuickAccessPanel
-                      purpose: Recent & favorite docs
+                      purpose: Favorite docs
                       file: navigation.go
                   - DocTree (Tree):
                       type: widget.Tree
@@ -92,11 +92,6 @@ Screens:
                             type: widget.RichText
                             purpose: Rendered markdown
                             file: embedded.go:93
-                  - RelatedDocs (RelatedDocsWidget):
-                      type: RelatedDocsWidget
-                      purpose: Related document suggestions
-                      file: glossary_integration.go
-                      position: bottom
             - TocSidebar (Border):
                 file: embedded.go:186-193
                 components:
@@ -134,15 +129,12 @@ DataFlow:
       5. Parse ToC headings from markdown
       6. Detect glossary terms
       7. Get document metadata from SearchIndex
-      8. Find related documents
-      9. Add to recent history (persisted to JSON)
     updates:
       - contentText.ParseMarkdown()
       - breadcrumbs.SetPath()
       - toc.ParseMarkdown()
       - glossaryPills.SetTerms()
       - docMetadata.SetMetadata()
-      - relatedDocs.SetDocs()
 
   - event: User types in search dialog
     trigger: SearchDialog entry.OnChanged
@@ -188,10 +180,9 @@ SharedState:
 
   - DocsHistory:
       type: *DocsHistory
-      purpose: Persist recent/favorites to JSON
+      purpose: Persist favorites to JSON
       file: persistence.go
       fields:
-        - recent: []string (LRU list, max 10)
         - favorites: map[string]bool
         - filePath: string (.omc/docs-history.json)
       thread_safety: sync.RWMutex
@@ -232,9 +223,8 @@ CustomWidgets:
 
   - QuickAccessPanel:
       file: navigation.go
-      purpose: Shows recent documents and favorites
+      purpose: Shows favorite documents
       features:
-        - Recent: LRU list of last 10 documents
         - Favorites: User-bookmarked documents
         - Persisted across sessions
 
@@ -252,15 +242,6 @@ CustomWidgets:
         - Category (ELI5, Physics, Research, Demo, Guide)
         - Reading time (minutes, based on word count / 200)
         - Glossary term count
-
-  - RelatedDocsWidget:
-      file: glossary_integration.go
-      purpose: Suggests related documents
-      algorithm:
-        - Same category boost
-        - Shared glossary terms boost
-        - Same parent folder boost
-        - Returns top 5 matches
 
   - SearchDialog:
       file: search.go

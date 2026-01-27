@@ -7,6 +7,8 @@ import (
 	"math"
 	"math/rand"
 
+	"fyne.io/fyne/v2"
+
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
@@ -33,8 +35,10 @@ func (ca *CrossbarApp) runIRDropAnalysis() {
 	ca.stateMu.Unlock()
 
 	irMap := analysis.GetIRDropMap()
-	ca.irDropHeatmap.SetData(irMap)
-	ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
+	fyne.Do(func() {
+		ca.irDropHeatmap.SetData(irMap)
+		ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
+	})
 }
 
 // runSneakPathAnalysis updates sneak path heatmap silently (no tab switch).
@@ -58,8 +62,10 @@ func (ca *CrossbarApp) runSneakPathAnalysis() {
 		}
 	}
 
-	ca.sneakPathHeatmap.SetData(sneakMap)
-	ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
+	fyne.Do(func() {
+		ca.sneakPathHeatmap.SetData(sneakMap)
+		ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
+	})
 }
 
 // analyzeIRDrop performs IR drop analysis.
@@ -69,17 +75,21 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
 	ca.updateStatus("IR DROP | Computing voltage distribution across array (wire resistance model)...")
 
-	// Protected read/write of lastInput
-	ca.stateMu.Lock()
+	// Protected read of lastInput
+	ca.stateMu.RLock()
 	input := ca.lastInput
+	ca.stateMu.RUnlock()
+
 	if input == nil || len(input) != ca.config.Cols {
 		input = make([]float64, ca.config.Cols)
 		for i := range input {
 			input[i] = rand.Float64()
 		}
+		// Protected write to lastInput
+		ca.stateMu.Lock()
 		ca.lastInput = input
+		ca.stateMu.Unlock()
 	}
-	ca.stateMu.Unlock()
 
 	// Analyze IR drop
 	params := crossbar.DefaultWireParams()
@@ -92,7 +102,10 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	if len(irMap) > 0 && len(irMap[0]) > 0 {
 		debug.Printf("IR Drop sample values: [0,0]=%.4f, [mid,mid]=%.4f", irMap[0][0], irMap[len(irMap)/2][len(irMap[0])/2])
 	}
-	ca.irDropHeatmap.SetData(irMap)
+	fyne.Do(func() {
+		ca.irDropHeatmap.SetData(irMap)
+		ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
+	})
 
 	// Update stats
 	ca.statsLabel.SetText(fmt.Sprintf(
@@ -111,9 +124,6 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 		analysis.WorstCaseCell[0], analysis.WorstCaseCell[1],
 		params.RwordLine, params.RbitLine, params.Rcontact,
 	))
-
-	// Highlight worst cell
-	ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
 
 	// Update key stat and log
 	ca.setKeyStatValue(fmt.Sprintf("Max: %.1f%% drop", analysis.MaxIRDrop*100))
@@ -151,10 +161,10 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	if len(sneakMap) > 0 && len(sneakMap[0]) > 0 {
 		debug.Printf("Sneak sample values (sqrt): [0,0]=%.4f, [mid,mid]=%.4f", sneakMap[0][0], sneakMap[len(sneakMap)/2][len(sneakMap[0])/2])
 	}
-	ca.sneakPathHeatmap.SetData(sneakMap)
-
-	// Highlight selected cell
-	ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
+	fyne.Do(func() {
+		ca.sneakPathHeatmap.SetData(sneakMap)
+		ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
+	})
 
 	// Calculate signal-to-sneak ratio
 	snr := 0.0

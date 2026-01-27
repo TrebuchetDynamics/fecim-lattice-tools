@@ -900,3 +900,74 @@ When programming ferroelectric memory to analog levels:
 - Manual mode was using simplified binary logic that didn't match hysteresis behavior
 - This fix brings Manual mode in line with proper ferroelectric physics
 
+
+## Lock Ordering Pattern Documentation (BUG-M5-001) - 2026-01-26
+
+### Problem
+The `animationLoop` function in `module5-comparison/pkg/gui/app.go` had undocumented lock usage that could be misunderstood as unsafe RLock→Lock upgrade pattern.
+
+### Analysis
+**Initial Concern**: The function appeared to use RLock for reading state (running, paused) then Lock for updating simTime, which would be unsafe.
+
+**Actual Implementation**: The code uses a **single `Lock()` acquisition** per iteration (line 190), not RLock→Lock. This is SAFE.
+
+### Pattern (lines 154-208)
+```go
+ca.animMu.Lock()  // Single lock acquisition
+running := ca.running
+paused := ca.paused
+// ... check conditions ...
+ca.simTime += dt
+ca.animMu.Unlock()
+// UI updates happen OUTSIDE lock
+```
+
+### Why This Is Safe
+1. **Single lock per iteration** - no lock ordering issues possible
+2. **No RLock→Lock upgrade** - avoids deadlock hazard
+3. **Minimal hold time** - just state reads + simTime increment (~1μs)
+4. **UI updates outside lock** - prevents blocking other goroutines during slow Fyne calls
+
+### Documentation Added
+Added comprehensive function-level comments explaining:
+1. The lock ordering pattern being used
+2. Why it's safe (single acquisition, no upgrade)
+3. Guidelines for future developers:
+   - DO NOT split into RLock + Lock (deadlock risk)
+   - DO NOT hold lock during UI updates (performance)
+   - Keep all state variables under SAME lock acquisition (atomicity)
+   - Alternative: Use atomic operations if lock contention becomes an issue
+
+### Verification
+- Checked all other access points to `running`, `paused`, `simTime`
+- `app.go` Run() method: Uses full Lock() ✓
+- `embedded.go` Start()/Stop(): Uses full Lock() ✓
+- Consistent pattern throughout codebase ✓
+
+### Testing
+```bash
+go test ./module5-comparison/...
+# All tests pass
+```
+
+### Pattern for Other Modules
+This is the CORRECT pattern for animation loops with shared state:
+1. Use **single Lock()** for atomic read-modify-write
+2. Keep lock scope minimal (don't include UI calls)
+3. Document why the pattern is safe
+4. Consider atomic operations only if profiling shows lock contention
+
+**Anti-pattern to AVOID**:
+```go
+// WRONG - potential deadlock!
+ca.animMu.RLock()
+running := ca.running
+ca.animMu.RUnlock()
+ca.animMu.Lock()  // Another goroutine could acquire Lock between these calls
+ca.simTime += dt
+ca.animMu.Unlock()
+```
+
+### Files Modified
+- `<local-path>`: Added comprehensive lock ordering documentation to `animationLoop()` function
+

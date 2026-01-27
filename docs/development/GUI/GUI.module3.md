@@ -9,7 +9,7 @@ Last Updated: 2026-01-26
 Bugs:
   - [x] BUG-M3-001: Canvas mouse events may not use fyne.Do() consistently
   - [x] BUG-M3-002: Auto-demo loop cleanup - ticker and context not fully synchronized
-  - [x] BUG-M3-003: Network weight loading failure handling incomplete
+  - [x] BUG-M3-003: Network weight loading failure handling - VERIFIED (2026-01-26): Already implemented with dialogs in dualmode_inference.go:384-453
 
 Variants:
   - MNISTApp: Original single-mode MNIST demo (app.go)

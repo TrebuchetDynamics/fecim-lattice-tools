@@ -52,6 +52,7 @@ func (b *BreadcrumbWidget) SetPath(currentPath, docsRoot string) {
 	relPath, err := filepath.Rel(docsRoot, currentPath)
 	if err != nil || relPath == "." || relPath == "" {
 		b.refresh()
+		b.Refresh()
 		return
 	}
 
@@ -84,6 +85,7 @@ func (b *BreadcrumbWidget) SetPath(currentPath, docsRoot string) {
 	}
 
 	b.refresh()
+	b.Refresh()
 }
 
 // CreateRenderer implements the fyne.Widget interface
@@ -116,7 +118,8 @@ func (b *BreadcrumbWidget) refresh() {
 	}
 
 	b.container = container.NewHBox(items...)
-	b.Refresh()
+	// Note: Don't call b.Refresh() here - it causes infinite recursion
+	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...
 }
 
 // TOCHeading represents a heading in the table of contents
@@ -175,12 +178,14 @@ func (toc *TableOfContentsWidget) ParseMarkdown(content string) {
 	}
 
 	toc.refresh()
+	toc.Refresh()
 }
 
 // SetCurrentSection highlights the current section in the ToC
 func (toc *TableOfContentsWidget) SetCurrentSection(anchor string) {
 	toc.currentSection = anchor
 	toc.refresh()
+	toc.Refresh()
 }
 
 // CreateRenderer implements the fyne.Widget interface
@@ -195,7 +200,6 @@ func (toc *TableOfContentsWidget) refresh() {
 	// Only show if document has 3+ headings
 	if len(toc.headings) < 3 {
 		toc.container = container.NewVBox()
-		toc.Refresh()
 		return
 	}
 
@@ -246,13 +250,13 @@ func (toc *TableOfContentsWidget) refresh() {
 	}
 
 	toc.container = container.NewVBox(items...)
-	toc.Refresh()
+	// Note: Don't call toc.Refresh() here - it causes infinite recursion
+	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...
 }
 
-// QuickAccessPanel provides quick access to recent and favorite documents
+// QuickAccessPanel provides quick access to favorite documents
 type QuickAccessPanel struct {
 	widget.BaseWidget
-	recent           []string // Last 10 viewed docs (LRU)
 	favorites        []string // Starred docs
 	onSelect         func(path string)
 	onToggleFavorite func(path string)
@@ -262,7 +266,6 @@ type QuickAccessPanel struct {
 // NewQuickAccessPanel creates a new quick access panel
 func NewQuickAccessPanel(onSelect func(string), onToggleFavorite func(string)) *QuickAccessPanel {
 	qap := &QuickAccessPanel{
-		recent:           []string{},
 		favorites:        []string{},
 		onSelect:         onSelect,
 		onToggleFavorite: onToggleFavorite,
@@ -270,27 +273,6 @@ func NewQuickAccessPanel(onSelect func(string), onToggleFavorite func(string)) *
 	}
 	qap.ExtendBaseWidget(qap)
 	return qap
-}
-
-// AddRecent adds a document to the recent list (LRU, max 10)
-func (qap *QuickAccessPanel) AddRecent(path string) {
-	// Remove if already exists
-	for i, p := range qap.recent {
-		if p == path {
-			qap.recent = append(qap.recent[:i], qap.recent[i+1:]...)
-			break
-		}
-	}
-
-	// Add to front
-	qap.recent = append([]string{path}, qap.recent...)
-
-	// Cap at 10 items
-	if len(qap.recent) > 10 {
-		qap.recent = qap.recent[:10]
-	}
-
-	qap.refresh()
 }
 
 // ToggleFavorite adds or removes a document from favorites
@@ -303,6 +285,7 @@ func (qap *QuickAccessPanel) ToggleFavorite(path string) {
 				qap.onToggleFavorite(path)
 			}
 			qap.refresh()
+			qap.Refresh()
 			return
 		}
 	}
@@ -313,6 +296,7 @@ func (qap *QuickAccessPanel) ToggleFavorite(path string) {
 		qap.onToggleFavorite(path)
 	}
 	qap.refresh()
+	qap.Refresh()
 }
 
 // IsFavorite checks if a document is in favorites
@@ -358,37 +342,11 @@ func (qap *QuickAccessPanel) refresh() {
 			items = append(items, btn)
 		}
 
-		items = append(items, widget.NewSeparator())
-	}
-
-	// Recent section
-	if len(qap.recent) > 0 {
-		recentTitle := container.NewHBox(
-			canvas.NewText("🕐", fecimTheme.ColorTextDim),
-			widget.NewLabel("Recent"),
-		)
-		items = append(items, recentTitle)
-
-		for _, path := range qap.recent {
-			p := path // Capture for closure
-			label := filepath.Base(path)
-			label = strings.TrimSuffix(label, filepath.Ext(label))
-			label = strings.ReplaceAll(label, "_", " ")
-			label = strings.ReplaceAll(label, "-", " ")
-
-			btn := widget.NewButton(label, func() {
-				if qap.onSelect != nil {
-					qap.onSelect(p)
-				}
-			})
-			btn.Importance = widget.LowImportance
-			items = append(items, btn)
-		}
 	}
 
 	// Show empty state if no items
 	if len(items) == 0 {
-		emptyLabel := canvas.NewText("No recent or favorite docs", fecimTheme.ColorTextDim)
+		emptyLabel := canvas.NewText("No favorite docs", fecimTheme.ColorTextDim)
 		emptyLabel.TextSize = 12
 		items = append(items, emptyLabel)
 	}

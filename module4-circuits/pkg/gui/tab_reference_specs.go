@@ -8,6 +8,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -523,10 +524,12 @@ func (ca *CircuitsApp) updateSpecSummary() {
 }
 
 func (ca *CircuitsApp) onExportSpecs() {
-	// Show "Export not implemented" message in status
-	fyne.Do(func() {
-		ca.specStatusLabel.SetText("Export not implemented - copy specs from display or take screenshot")
-	})
+	// Show "Coming soon" dialog for specs export feature
+	if ca.window != nil {
+		dialog.ShowInformation("Export Specifications",
+			"Specification export feature coming soon!\n\nThis will allow exporting system specifications as JSON or CSV files.\n\nFor now, copy values from the display or use a screenshot.",
+			ca.window)
+	}
 }
 
 func (ca *CircuitsApp) onCompareToGPU() {
