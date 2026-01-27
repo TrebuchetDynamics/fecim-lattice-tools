@@ -1121,6 +1121,7 @@ func (a *App) simulationLoop() {
 		eField := a.electricField
 		pol := a.polarization
 		level := a.discreteLevel
+		materialEc := mat.Ec // Capture Ec under lock for thread safety
 		eHist := make([]float64, len(a.eHistory))
 		pHist := make([]float64, len(a.pHistory))
 		copy(eHist, a.eHistory)
@@ -1129,12 +1130,13 @@ func (a *App) simulationLoop() {
 		a.mu.Unlock()
 
 		// Update UI (must be on main thread)
-		a.updateUI(eField, pol, level, eHist, pHist)
+		a.updateUI(eField, pol, level, materialEc, eHist, pHist)
 	}
 }
 
-// updateUI updates all UI elements with the latest simulation data
-func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
+// updateUI updates all UI elements with the latest simulation data.
+// materialEc is passed as parameter to avoid race conditions with a.material access.
+func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist, pHist []float64) {
 	fyne.Do(func() {
 		// Update labels
 		a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", eField/1e8))
@@ -1178,7 +1180,7 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		}
 
 		// Update WRITE/READ mode indicator based on E vs Ec
-		isWrite := math.Abs(eField) > a.material.Ec
+		isWrite := math.Abs(eField) > materialEc
 		a.modeIndicator.SetWrite(isWrite)
 		a.modeIndicator.Refresh()
 
@@ -1189,7 +1191,7 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
 		a.mu.RUnlock()
 		if shouldUpdateSlider {
-			a.eFieldSlider.SetValue(eField / a.material.Ec)
+			a.eFieldSlider.SetValue(eField / materialEc)
 		}
 
 		// Update status and logging
