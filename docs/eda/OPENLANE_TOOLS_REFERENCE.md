@@ -16,7 +16,9 @@
 6. [Netgen - LVS](#6-netgen---lvs)
 7. [OpenSTA - Timing Analysis](#7-opensta---timing-analysis)
 8. [PDK Installation](#8-pdk-installation)
-9. [Quick Reference Tables](#9-quick-reference-tables)
+9. [Validation & Analysis CLI](#9-validation--analysis-cli)
+10. [Quick Reference Tables](#10-quick-reference-tables)
+11. [**Module 6 CLI Cheatsheet**](#11-module-6-cli-cheatsheet)
 
 ---
 
@@ -654,6 +656,79 @@ EOF
 | `cif ostyle` | Set CIF output style |
 | `gds ordering on` | Preserve GDS ordering |
 
+### 4.9 Image Generation (PNG/SVG)
+
+Magic can export layout images via `plot pnm` (then convert to PNG) or `plot svg`.
+
+#### PNM Export (Batch Mode)
+
+```bash
+magic -dnull -noconsole << 'EOF'
+tech load sky130A
+gds read design.gds
+load topcell
+select top cell
+box 0 0 1000 1000
+plot pnm output.pnm 1500
+quit
+EOF
+
+# Convert PNM to PNG with ImageMagick
+convert output.pnm output.png
+```
+
+#### Plot PNM Command Syntax
+
+```tcl
+# Basic syntax (width in pixels, default 1500)
+plot pnm <filename> [width] [layers]
+
+# Examples
+plot pnm layout.pnm                    # Default 1500px width
+plot pnm layout.pnm 3000               # 3000px width
+plot pnm layout.pnm 2000 "metal1,metal2"  # Specific layers
+```
+
+#### SVG Export (Requires Cairo)
+
+```bash
+# Must use Cairo graphics (-d XR)
+magic -d XR << 'EOF'
+tech load sky130A
+load topcell
+plot svg output.svg
+quit
+EOF
+```
+
+#### Batch Script Example
+
+```bash
+#!/bin/bash
+# generate_layout_image.sh
+INPUT_GDS=$1
+OUTPUT_PNG=$2
+CELL_NAME=${3:-topcell}
+
+magic -dnull -noconsole << EOF
+tech load sky130A
+gds read $INPUT_GDS
+load $CELL_NAME
+select top cell
+plot pnm /tmp/layout_temp.pnm 2000
+quit
+EOF
+
+convert /tmp/layout_temp.pnm $OUTPUT_PNG
+rm /tmp/layout_temp.pnm
+```
+
+| Format | Command | Notes |
+|--------|---------|-------|
+| PNM | `plot pnm file [width]` | Best for large layouts, needs ImageMagick to convert |
+| SVG | `plot svg file` | Requires `-d XR` (Cairo), vector format |
+| PostScript | `plot postscript file` | Legacy format |
+
 ---
 
 ## 5. KLayout - GDSII Viewer/Editor
@@ -807,6 +882,120 @@ layout.write("output.gds")
 |----------|-------------|
 | `KLAYOUT_PATH` | Search paths (: separated on Linux) |
 | `KLAYOUT_HOME` | Home directory for config |
+
+### 5.7 Image Generation (PNG)
+
+KLayout provides robust PNG export via Ruby/Python scripting. Use `-z` flag (not `-zz`) as it requires a main window object.
+
+#### Basic CLI Command
+
+```bash
+klayout -z -r screenshot.rb -rd input=design.gds -rd output=design.png
+```
+
+#### Ruby Script (`screenshot.rb`)
+
+```ruby
+# Basic screenshot script
+mw = RBA::Application::instance.main_window
+mw.load_layout($input, 0)
+view = mw.current_view
+
+# Configure view
+view.max_hier                                    # Show full hierarchy
+view.set_config("background-color", "#ffffff")   # White background
+view.set_config("grid-visible", "false")         # Hide grid
+
+# Save image (width x height in pixels)
+view.save_image($output, 2000, 2000)
+```
+
+#### Ruby Script with Zoom Control
+
+```ruby
+# Screenshot with specific region
+input_file = $input
+output_file = $output
+width = 1000
+height = 1000
+
+# Rectangle to capture (left, bottom, right, top in microns)
+rect = RBA::DBox::new(-100.0, -200.0, 100.0, 200.0)
+
+mw = RBA::Application::instance.main_window
+mw.load_layout(input_file, 0)
+view = mw.current_view
+
+view.max_hier
+view.zoom_box(rect)
+view.save_image(output_file, width, height)
+```
+
+#### Python Script
+
+```python
+import pya
+
+# Load layout
+app = pya.Application.instance()
+mw = app.main_window()
+mw.load_layout("design.gds", 0)
+
+# Configure view
+lv = mw.current_view()
+lv.max_hier()
+
+# Zoom to specific region (left, bottom, right, top in µm)
+lv.zoom_box(pya.DBox(-100.0, -200.0, 100.0, 200.0))
+
+# Save image
+lv.save_image("output.png", 1920, 1080)
+```
+
+#### Layer Properties Configuration
+
+```ruby
+# Load layer properties file for consistent styling
+mw = RBA::Application::instance.main_window
+mw.load_layout($input, 0)
+view = mw.current_view
+
+# Load .lyp file for layer colors/visibility
+view.load_layer_props("layers.lyp", false)
+
+view.max_hier
+view.save_image($output, 2000, 2000)
+```
+
+#### Batch Script Example
+
+```bash
+#!/bin/bash
+# generate_gds_image.sh
+INPUT_GDS=$1
+OUTPUT_PNG=$2
+
+cat > /tmp/screenshot.rb << 'RUBY'
+mw = RBA::Application::instance.main_window
+mw.load_layout($input, 0)
+view = mw.current_view
+view.max_hier
+view.set_config("background-color", "#ffffff")
+view.set_config("grid-visible", "false")
+view.save_image($output, 2000, 2000)
+RUBY
+
+klayout -z -r /tmp/screenshot.rb -rd input="$INPUT_GDS" -rd output="$OUTPUT_PNG"
+```
+
+| Option | Description |
+|--------|-------------|
+| `view.max_hier` | Show all hierarchy levels |
+| `view.zoom_fit` | Fit entire layout in view |
+| `view.zoom_box(DBox)` | Zoom to specific region |
+| `view.save_image(file, w, h)` | Save PNG (max ~500M pixels) |
+| `view.set_config(key, val)` | Set view configuration |
+| `view.load_layer_props(lyp)` | Load layer properties file |
 
 ---
 
@@ -1170,9 +1359,596 @@ conda install -c litex-hub open_pdks.gf180mcuC
 
 ---
 
-## 9. Quick Reference Tables
+## 9. Validation & Analysis CLI
 
-### 9.1 File Formats
+This section covers CLI commands specifically useful for validating generated EDA files (LEF, Liberty, Verilog, DEF) - essential for tools like Module 6 that generate OpenLane-compatible files.
+
+### 9.1 Verilog Validation
+
+#### Yosys Syntax Check
+
+```bash
+# Basic syntax check (read and elaborate)
+yosys -p "read_verilog design.v; hierarchy -check -top top_module"
+
+# With detailed error reporting
+yosys -p "read_verilog design.v; hierarchy -check -top top_module; check -assert"
+
+# Check for unmapped cells after synthesis
+yosys -p "read_verilog design.v; synth -top top; check -mapped -assert"
+```
+
+#### Yosys `check` Command Options
+
+```tcl
+check                    # Basic check for problems
+check -assert            # Error if problems found
+check -noinit            # Check 'init' attributes
+check -initdrv           # Check init-driven wires
+check -mapped            # Check for unmapped cells
+check -allow-tbuf        # Allow $_TBUF_ cells
+```
+
+#### Verilator Lint (Recommended Pre-Check)
+
+```bash
+# Lint-only mode (no simulation)
+verilator --lint-only design.v
+
+# With specific warnings
+verilator --lint-only -Wall design.v
+
+# Specify top module
+verilator --lint-only --top-module top_module design.v
+```
+
+#### Icarus Verilog Syntax Check
+
+```bash
+# Parse only (no elaboration)
+iverilog -t null design.v
+
+# With top module
+iverilog -t null -s top_module design.v
+```
+
+### 9.2 Liberty (.lib) Validation
+
+#### OpenSTA Liberty Check
+
+```bash
+# Create validation script
+cat > check_liberty.tcl << 'EOF'
+read_liberty -lib cells.lib
+report_units
+exit
+EOF
+
+# Run validation
+sta check_liberty.tcl
+```
+
+#### OpenSTA Liberty Analysis
+
+```tcl
+# Read and report library info
+read_liberty -lib cells.lib
+
+# Report units (timing, capacitance, etc.)
+report_units
+
+# Report cell info
+report_cell <cell_name>
+
+# List all cells
+report_lib <lib_name>
+```
+
+#### Liberty Syntax Check with Yosys
+
+```bash
+# Yosys can also validate Liberty files
+yosys -p "read_liberty -lib cells.lib"
+```
+
+### 9.3 LEF Validation
+
+#### Magic LEF Check
+
+```bash
+magic -dnull -noconsole << 'EOF'
+tech load sky130A
+lef read cells.lef
+quit
+EOF
+```
+
+If the LEF has errors, Magic will report them.
+
+#### OpenROAD LEF Check
+
+```bash
+openroad << 'EOF'
+read_lef tech.lef
+read_lef cells.lef
+exit
+EOF
+```
+
+### 9.4 DEF Validation
+
+#### Magic DEF Check
+
+```bash
+magic -dnull -noconsole << 'EOF'
+tech load sky130A
+lef read tech.lef
+lef read cells.lef
+def read design.def
+quit
+EOF
+```
+
+#### OpenROAD DEF Check
+
+```bash
+openroad << 'EOF'
+read_lef tech.lef
+read_lef cells.lef
+read_def design.def
+check_placement -verbose
+exit
+EOF
+```
+
+### 9.5 Design Statistics
+
+#### Yosys `stat` Command
+
+```bash
+# Basic statistics
+yosys -p "read_verilog design.v; synth -top top; stat"
+
+# With Liberty for area estimation
+yosys -p "read_verilog design.v; synth -top top; stat -liberty cells.lib"
+
+# JSON output for parsing
+yosys -p "read_verilog design.v; synth -top top; stat -json" > stats.json
+
+# Technology-specific estimation
+yosys -p "read_verilog design.v; synth -top top; stat -tech cmos"
+```
+
+#### Yosys `stat` Output Includes
+
+- Wire count and bits
+- Port count and bits
+- Cell count by type
+- Area (with Liberty file)
+- Module hierarchy
+
+#### OpenROAD Design Reports
+
+```tcl
+# Design area
+report_design_area
+
+# Cell usage
+report_cell_usage
+
+# Instance count
+report_instance_count
+
+# Power grid analysis
+report_pdn
+```
+
+### 9.6 Complete Validation Script
+
+```bash
+#!/bin/bash
+# validate_eda_files.sh - Validate all generated EDA files
+
+LEF_FILE=${1:-cells.lef}
+LIB_FILE=${2:-cells.lib}
+VERILOG_FILE=${3:-design.v}
+DEF_FILE=${4:-design.def}
+TOP_MODULE=${5:-top}
+
+echo "=== Validating Verilog ==="
+verilator --lint-only --top-module $TOP_MODULE $VERILOG_FILE && \
+yosys -q -p "read_verilog $VERILOG_FILE; hierarchy -check -top $TOP_MODULE; check -assert"
+
+echo "=== Validating Liberty ==="
+cat > /tmp/check_lib.tcl << EOF
+read_liberty -lib $LIB_FILE
+report_units
+exit
+EOF
+sta /tmp/check_lib.tcl
+
+echo "=== Validating LEF ==="
+yosys -q -p "read_liberty -lib $LIB_FILE"
+
+echo "=== Validating with Yosys stat ==="
+yosys -p "read_verilog $VERILOG_FILE; synth -top $TOP_MODULE; stat -liberty $LIB_FILE"
+
+echo "=== All validations complete ==="
+```
+
+### 9.7 Batch Image Generation
+
+Generate images for all cells in a library:
+
+```bash
+#!/bin/bash
+# generate_cell_images.sh
+
+GDS_FILE=$1
+OUTPUT_DIR=${2:-./images}
+mkdir -p $OUTPUT_DIR
+
+# Get list of cells from GDS
+klayout -b -r - << 'RUBY' -rd gds=$GDS_FILE
+layout = RBA::Layout.new
+layout.read($gds)
+layout.each_cell { |cell| puts cell.name }
+RUBY | while read cell; do
+    klayout -z -r /tmp/screenshot.rb \
+        -rd input="$GDS_FILE" \
+        -rd cell="$cell" \
+        -rd output="$OUTPUT_DIR/${cell}.png"
+done
+```
+
+### 9.8 Format Conversion Reference
+
+| From | To | Tool | Command |
+|------|-----|------|---------|
+| Verilog | JSON | Yosys | `write_json out.json` |
+| Verilog | BLIF | Yosys | `write_blif out.blif` |
+| Verilog | EDIF | Yosys | `write_edif out.edif` |
+| GDS | OASIS | KLayout | `klayout -b -r convert.rb` |
+| OASIS | GDS | KLayout | `klayout -b -r convert.rb` |
+| GDS | CIF | Magic | `cif write out.cif` |
+| CIF | GDS | Magic | `gds write out.gds` |
+| DEF | GDS | Magic | `gds write out.gds` |
+| Layout | SPICE | Magic | `ext2spice` |
+| Layout | PNM | Magic | `plot pnm out.pnm` |
+| GDS | PNG | KLayout | `view.save_image()` |
+
+### 9.9 CI/CD Integration Examples
+
+#### GitHub Actions Validation
+
+```yaml
+# .github/workflows/validate-eda.yml
+name: Validate EDA Files
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get install -y yosys verilator
+      - name: Validate Verilog
+        run: |
+          verilator --lint-only --top-module top design.v
+          yosys -p "read_verilog design.v; check -assert"
+```
+
+#### Pre-commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Validate all .v files
+for f in $(git diff --cached --name-only | grep '\.v$'); do
+    verilator --lint-only "$f" || exit 1
+done
+```
+
+### 9.10 Circuit Visualization (Yosys)
+
+Yosys can generate circuit diagrams via Graphviz.
+
+#### `show` Command - Schematic Generation
+
+```bash
+# Generate SVG schematic
+yosys -p "read_verilog design.v; show -format svg -prefix schematic"
+
+# Generate DOT file only
+yosys -p "read_verilog design.v; show -format dot -prefix circuit"
+
+# With library for proper cell display
+yosys -p "read_liberty -lib cells.lib; read_verilog design.v; show -format svg"
+```
+
+#### `show` Command Options
+
+```tcl
+show                              # Open in xdot viewer (interactive)
+show -format svg                  # Generate SVG file
+show -format png                  # Generate PNG file
+show -format pdf                  # Generate PDF file
+show -format dot                  # Generate DOT file only
+show -prefix <name>               # Output file prefix
+show -viewer none                 # Don't open viewer
+show -lib <verilog_file>          # Use library for cell display
+show -stretch                     # Inputs left, outputs right
+show -width                       # Annotate word widths
+show -signed                      # Mark signed signals
+show -colors <N>                  # Use N random colors
+show -notitle                     # Suppress title
+```
+
+#### `viz` Command - Data Flow Graph
+
+```tcl
+# Visualize selected wires/signals
+select -set path sig_a sig_b sig_c
+viz -set path
+
+# Generate to file
+viz -format svg -prefix dataflow
+```
+
+#### Batch Schematic Generation
+
+```bash
+#!/bin/bash
+# generate_schematics.sh
+for v in *.v; do
+    base=$(basename "$v" .v)
+    yosys -q -p "read_verilog $v; hierarchy -auto-top; show -format svg -prefix ${base}_schematic -viewer none"
+done
+```
+
+### 9.11 OpenROAD Image Export
+
+OpenROAD can export layout images without GUI display.
+
+```tcl
+# Save layout image (works in batch mode)
+save_image output.png
+
+# With resolution control (microns per pixel)
+save_image -resolution 0.1 output.png
+
+# Specific area (x0 y0 x1 y1 in microns)
+save_image -area {0 0 100 100} output.png
+
+# With width specification
+save_image -width 2000 output.png
+
+# With display options
+save_image -display_option {Layers metal1} output.png
+```
+
+#### Animated GIF Generation
+
+```tcl
+# Create animated GIF of flow stages
+save_animated_gif -start -delay 500 flow_animation.gif
+# ... run placement steps ...
+save_animated_gif -add
+# ... run routing steps ...
+save_animated_gif -add
+save_animated_gif -end
+```
+
+#### Timing Histogram Image
+
+```tcl
+save_histogram_image timing_hist.png -width 800 -height 600
+```
+
+### 9.12 KLayout Layer Operations (Batch)
+
+Useful for post-processing generated layouts.
+
+#### Boolean Operations Script
+
+```ruby
+# boolean_ops.rb - Run with: klayout -b -r boolean_ops.rb -rd input=design.gds -rd output=result.gds
+layout = RBA::Layout.new
+layout.read($input)
+
+cell = layout.top_cell
+layer1 = layout.layer(1, 0)
+layer2 = layout.layer(2, 0)
+result_layer = layout.layer(10, 0)
+
+# Get regions
+r1 = RBA::Region.new(cell.begin_shapes_rec(layer1))
+r2 = RBA::Region.new(cell.begin_shapes_rec(layer2))
+
+# Boolean AND
+result = r1 & r2
+cell.shapes(result_layer).insert(result)
+
+layout.write($output)
+```
+
+#### Layer Sizing/Biasing
+
+```ruby
+# Size (expand) a layer
+region = RBA::Region.new(cell.begin_shapes_rec(layer))
+sized = region.sized(100)  # 100 database units (typically nm)
+cell.shapes(output_layer).insert(sized)
+
+# Shrink
+shrunk = region.sized(-50)
+```
+
+#### Merge Overlapping Shapes
+
+```ruby
+region = RBA::Region.new(cell.begin_shapes_rec(layer))
+merged = region.merged
+cell.clear(layer)
+cell.shapes(layer).insert(merged)
+```
+
+#### DRC Script Boolean Operations
+
+```ruby
+# In .drc file
+metal1 = input(68, 20)
+metal2 = input(69, 20)
+via = input(68, 44)
+
+# Boolean operations
+overlap = metal1 & metal2                    # AND
+diff = metal1 - metal2                       # NOT
+xor_result = metal1 ^ metal2                 # XOR
+
+# Sizing
+expanded = metal1.sized(0.1.um)              # Expand by 100nm
+shrunk = metal1.sized(-0.05.um)              # Shrink by 50nm
+
+# Output results
+overlap.output(100, 0)
+expanded.output(101, 0)
+```
+
+### 9.13 Magic DRC Batch Reports
+
+Generate DRC reports in batch mode.
+
+```bash
+#!/bin/bash
+# drc_report.sh
+magic -dnull -noconsole << 'EOF'
+tech load sky130A
+gds read design.gds
+load topcell
+select top cell
+drc catchup
+drc count total
+drc listall why
+quit
+EOF
+```
+
+#### DRC Commands Reference
+
+```tcl
+drc on                    # Enable continuous DRC
+drc off                   # Disable continuous DRC
+drc check                 # Force recheck of box area
+drc catchup               # Complete all pending DRC
+drc find                  # Move box to next error
+drc find [n]              # Move to nth error
+drc why                   # Explain errors in box
+drc count                 # Count errors (cell, count)
+drc count total           # Total error count only
+drc listall why           # List all errors with explanations
+drc style drc(full)       # Full DRC mode
+drc euclidean on          # Enable Euclidean distance
+```
+
+### 9.14 JSON Netlist Analysis (Yosys)
+
+Export and analyze netlists programmatically.
+
+```bash
+# Generate JSON netlist
+yosys -p "read_verilog design.v; synth -top top; write_json netlist.json"
+
+# With AIG models
+yosys -p "read_verilog design.v; synth -top top; write_json -aig netlist.json"
+```
+
+#### Python Analysis Script
+
+```python
+#!/usr/bin/env python3
+# analyze_netlist.py
+import json
+import sys
+
+with open(sys.argv[1]) as f:
+    netlist = json.load(f)
+
+for mod_name, mod in netlist['modules'].items():
+    print(f"Module: {mod_name}")
+    print(f"  Ports: {len(mod.get('ports', {}))}")
+    print(f"  Cells: {len(mod.get('cells', {}))}")
+
+    # Count cell types
+    cell_types = {}
+    for cell_name, cell in mod.get('cells', {}).items():
+        t = cell['type']
+        cell_types[t] = cell_types.get(t, 0) + 1
+
+    print("  Cell types:")
+    for t, count in sorted(cell_types.items()):
+        print(f"    {t}: {count}")
+```
+
+#### Use Cases for Module 6
+
+```bash
+# Validate array structure
+yosys -p "
+  read_verilog fecim_array.v
+  hierarchy -check -top fecim_array_4x4
+  check -assert
+  stat
+  write_json -aig array_netlist.json
+"
+
+# Compare before/after synthesis
+yosys -p "read_verilog design.v; write_json pre_synth.json"
+yosys -p "read_verilog design.v; synth -top top; write_json post_synth.json"
+# Then diff the JSON files
+```
+
+### 9.15 Useful One-Liners
+
+```bash
+# Quick Verilog syntax check
+yosys -p "read_verilog design.v" 2>&1 | grep -i error
+
+# Count cells after synthesis
+yosys -p "read_verilog design.v; synth -top top; stat" | grep "cells:"
+
+# Generate all format exports
+yosys -p "read_verilog design.v; synth -top top; \
+  write_verilog synth.v; write_json synth.json; \
+  write_blif synth.blif; stat -json" > report.json
+
+# Quick Liberty validation
+sta -exit -f <(echo "read_liberty -lib cells.lib; report_units")
+
+# Generate GDS thumbnail
+klayout -z -r - -rd in=design.gds -rd out=thumb.png << 'RUBY'
+mw = RBA::Application.instance.main_window
+mw.load_layout($in, 0)
+mw.current_view.max_hier
+mw.current_view.save_image($out, 256, 256)
+RUBY
+
+# Magic: Quick area calculation
+magic -dnull -noconsole << 'EOF' | grep "Total area"
+load topcell
+select top cell
+box
+quit
+EOF
+```
+
+---
+
+## 10. Quick Reference Tables
+
+### 10.1 File Formats
 
 | Format | Extension | Tool | Purpose |
 |--------|-----------|------|---------|
@@ -1187,7 +1963,7 @@ conda install -c litex-hub open_pdks.gf180mcuC
 | SPEF | .spef | OpenSTA | Parasitics |
 | SDF | .sdf | OpenSTA | Delay file |
 
-### 9.2 Common CLI Patterns
+### 10.2 Common CLI Patterns
 
 | Task | OpenLane 2 | OpenLane 1 |
 |------|------------|------------|
@@ -1196,7 +1972,7 @@ conda install -c litex-hub open_pdks.gf180mcuC
 | Smoke test | `openlane --smoke-test` | N/A |
 | Docker | `openlane --dockerized` | `make mount` |
 
-### 9.3 OpenLane Directory Structure
+### 10.3 OpenLane Directory Structure
 
 ```
 designs/
@@ -1213,7 +1989,7 @@ designs/
             └── tmp/         # Intermediate files
 ```
 
-### 9.4 Environment Variables
+### 10.4 Environment Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -1222,6 +1998,349 @@ designs/
 | `STD_CELL_LIBRARY` | Standard cell library | `sky130_fd_sc_hd` |
 | `OPENLANE_ROOT` | OpenLane installation | `~/OpenLane` |
 | `KLAYOUT_PATH` | KLayout search paths | `~/.klayout` |
+
+---
+
+## 11. Module 6 CLI Cheatsheet
+
+**Essential CLI commands for the FeCIM Array Builder workflow.**
+
+Module 6 generates: `fecim_bitcell.lef`, `fecim_bitcell.lib`, `fecim_bitcell.v`, `fecim_array_NxM.v`, `fecim_array_NxM.def`, and `config.json`.
+
+---
+
+### 11.1 Validate Generated Files
+
+#### Verilog Validation (Cell + Array)
+
+```bash
+# Quick syntax check
+yosys -p "read_verilog cells/fecim_bitcell/fecim_bitcell.v"
+yosys -p "read_verilog generated/lattice.v"
+
+# Full validation with hierarchy check
+yosys -p "
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v
+  read_verilog generated/lattice.v
+  hierarchy -check -top fecim_array_4x4
+  check -assert
+"
+
+# Pre-check with Verilator (recommended)
+verilator --lint-only cells/fecim_bitcell/fecim_bitcell.v
+verilator --lint-only generated/lattice.v
+```
+
+#### Liberty (.lib) Validation
+
+```bash
+# OpenSTA validation
+sta << 'EOF'
+read_liberty -lib cells/fecim_bitcell/fecim_bitcell.lib
+report_units
+report_lib fecim_bitcell_lib
+exit
+EOF
+
+# Quick one-liner
+sta -exit -f <(echo "read_liberty -lib cells/fecim_bitcell/fecim_bitcell.lib; report_units")
+```
+
+#### LEF Validation
+
+```bash
+# With Magic
+magic -dnull -noconsole << 'EOF'
+lef read cells/fecim_bitcell/fecim_bitcell.lef
+quit
+EOF
+
+# With OpenROAD
+openroad << 'EOF'
+read_lef cells/fecim_bitcell/fecim_bitcell.lef
+exit
+EOF
+```
+
+#### DEF Validation
+
+```bash
+# Validate DEF with LEF dependency
+magic -dnull -noconsole << 'EOF'
+lef read cells/fecim_bitcell/fecim_bitcell.lef
+def read generated/placement.def
+quit
+EOF
+```
+
+---
+
+### 11.2 Design Statistics
+
+```bash
+# Cell statistics
+yosys -p "
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v
+  stat
+"
+
+# Array statistics with Liberty
+yosys -p "
+  read_liberty -lib cells/fecim_bitcell/fecim_bitcell.lib
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v
+  read_verilog generated/lattice.v
+  hierarchy -top fecim_array_4x4
+  stat -liberty cells/fecim_bitcell/fecim_bitcell.lib
+"
+
+# JSON output for programmatic analysis
+yosys -p "
+  read_verilog generated/lattice.v
+  hierarchy -top fecim_array_4x4
+  stat -json
+" > array_stats.json
+```
+
+---
+
+### 11.3 Generate Documentation Images
+
+#### Array Schematic (Yosys → SVG)
+
+```bash
+# Generate SVG schematic of array
+yosys -p "
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v
+  read_verilog generated/lattice.v
+  hierarchy -top fecim_array_4x4
+  show -format svg -prefix docs/array_schematic -viewer none
+"
+
+# Cell-only schematic
+yosys -p "
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v
+  show -format svg -prefix docs/cell_schematic -viewer none
+"
+```
+
+#### Layout Image (KLayout → PNG)
+
+```bash
+# Generate PNG from DEF (requires GDS or visual DEF)
+cat > /tmp/def_screenshot.rb << 'RUBY'
+mw = RBA::Application::instance.main_window
+# Load LEF first for cell definitions
+options = RBA::LoadLayoutOptions::new
+lefdef = RBA::LEFDEFReaderConfiguration::new
+lefdef.read_lef_with_def = true
+options.lefdef_config = lefdef
+mw.load_layout($input, options, 0)
+view = mw.current_view
+view.max_hier
+view.set_config("background-color", "#ffffff")
+view.save_image($output, 2000, 2000)
+RUBY
+
+klayout -z -r /tmp/def_screenshot.rb \
+  -rd input=generated/placement.def \
+  -rd output=docs/array_layout.png
+```
+
+---
+
+### 11.4 Test OpenLane Integration
+
+#### Syntax Test with OpenLane Tools
+
+```bash
+# Test full file set loads correctly
+openroad << 'EOF'
+read_lef cells/fecim_bitcell/fecim_bitcell.lef
+read_liberty cells/fecim_bitcell/fecim_bitcell.lib
+read_verilog generated/lattice.v
+link_design fecim_array_4x4
+report_design_area
+exit
+EOF
+```
+
+#### Simulate OpenLane Config
+
+```bash
+# Validate config.json structure
+python3 -c "
+import json
+with open('generated/config.json') as f:
+    cfg = json.load(f)
+    print('Design:', cfg.get('DESIGN_NAME', 'NOT SET'))
+    print('Verilog:', cfg.get('VERILOG_FILES', 'NOT SET'))
+    print('Clock:', cfg.get('CLOCK_PORT', 'NOT SET'))
+"
+```
+
+---
+
+### 11.5 Complete Validation Script
+
+```bash
+#!/bin/bash
+# validate_module6_output.sh
+# Run from fecim-lattice-tools root
+
+set -e
+echo "=== Module 6 Output Validation ==="
+
+CELL_DIR="cells/fecim_bitcell"
+GEN_DIR="generated"
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+pass() { echo -e "${GREEN}✓ $1${NC}"; }
+fail() { echo -e "${RED}✗ $1${NC}"; exit 1; }
+
+# 1. Verilog syntax
+echo -e "\n[1/5] Verilog Validation..."
+yosys -q -p "read_verilog $CELL_DIR/fecim_bitcell.v" && pass "Cell Verilog OK" || fail "Cell Verilog FAILED"
+yosys -q -p "read_verilog $GEN_DIR/lattice.v" && pass "Array Verilog OK" || fail "Array Verilog FAILED"
+
+# 2. Liberty validation
+echo -e "\n[2/5] Liberty Validation..."
+sta -exit -f <(echo "read_liberty -lib $CELL_DIR/fecim_bitcell.lib; exit") 2>/dev/null && \
+  pass "Liberty OK" || fail "Liberty FAILED"
+
+# 3. LEF validation
+echo -e "\n[3/5] LEF Validation..."
+magic -dnull -noconsole << EOF 2>/dev/null && pass "LEF OK" || fail "LEF FAILED"
+lef read $CELL_DIR/fecim_bitcell.lef
+quit
+EOF
+
+# 4. DEF validation
+echo -e "\n[4/5] DEF Validation..."
+magic -dnull -noconsole << EOF 2>/dev/null && pass "DEF OK" || fail "DEF FAILED"
+lef read $CELL_DIR/fecim_bitcell.lef
+def read $GEN_DIR/placement.def
+quit
+EOF
+
+# 5. Full integration test
+echo -e "\n[5/5] Integration Test..."
+yosys -q -p "
+  read_liberty -lib $CELL_DIR/fecim_bitcell.lib
+  read_verilog $CELL_DIR/fecim_bitcell.v
+  read_verilog $GEN_DIR/lattice.v
+  hierarchy -check
+  check -assert
+" && pass "Integration OK" || fail "Integration FAILED"
+
+echo -e "\n${GREEN}=== All validations passed ===${NC}"
+```
+
+---
+
+### 11.6 Quick Reference Card
+
+| Task | Command |
+|------|---------|
+| **Validate cell Verilog** | `yosys -p "read_verilog fecim_bitcell.v"` |
+| **Validate array Verilog** | `yosys -p "read_verilog lattice.v; hierarchy -check"` |
+| **Validate Liberty** | `sta -exit -f <(echo "read_liberty -lib file.lib")` |
+| **Validate LEF** | `magic -dnull -noconsole -c "lef read file.lef; quit"` |
+| **Validate DEF** | `magic -dnull -noconsole -c "lef read cell.lef; def read file.def; quit"` |
+| **Cell count** | `yosys -p "read_verilog design.v; stat"` |
+| **Generate schematic SVG** | `yosys -p "read_verilog design.v; show -format svg -prefix out"` |
+| **Check hierarchy** | `yosys -p "read_verilog *.v; hierarchy -check -top top"` |
+| **JSON netlist** | `yosys -p "read_verilog design.v; write_json out.json"` |
+| **Full lint** | `verilator --lint-only -Wall design.v` |
+
+---
+
+### 11.7 Troubleshooting Common Issues
+
+#### "Module not found" in Yosys
+```bash
+# Ensure cell module is read before array
+yosys -p "
+  read_verilog cells/fecim_bitcell/fecim_bitcell.v  # Cell first
+  read_verilog generated/lattice.v                   # Array second
+  hierarchy -check -top fecim_array_4x4
+"
+```
+
+#### "Unknown cell type" in Liberty/LEF
+```bash
+# Check cell name matches across files
+grep "^cell(" cells/fecim_bitcell/fecim_bitcell.lib
+grep "^MACRO" cells/fecim_bitcell/fecim_bitcell.lef
+grep "^module" cells/fecim_bitcell/fecim_bitcell.v
+# All should show: fecim_bitcell
+```
+
+#### "Port mismatch" errors
+```bash
+# Compare ports across formats
+yosys -p "read_verilog fecim_bitcell.v; ls" | grep -A20 "module fecim_bitcell"
+grep "PIN" fecim_bitcell.lef
+grep "pin(" fecim_bitcell.lib
+```
+
+#### DEF placement issues
+```bash
+# Check COMPONENTS section references correct cell
+grep "COMPONENTS" generated/placement.def -A5
+# Should show: fecim_bitcell (matching MACRO name in LEF)
+```
+
+---
+
+### 11.8 Automated CI/CD for Module 6
+
+```yaml
+# .github/workflows/validate-eda-output.yml
+name: Validate EDA Output
+on:
+  push:
+    paths:
+      - 'cells/**'
+      - 'generated/**'
+      - 'module6-eda/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install EDA tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys verilator
+
+      - name: Validate Verilog
+        run: |
+          verilator --lint-only cells/fecim_bitcell/fecim_bitcell.v
+          yosys -p "read_verilog cells/fecim_bitcell/fecim_bitcell.v; check -assert"
+
+      - name: Validate Array
+        run: |
+          yosys -p "
+            read_verilog cells/fecim_bitcell/fecim_bitcell.v
+            read_verilog generated/lattice.v
+            hierarchy -check
+            check -assert
+          "
+
+      - name: Generate Stats
+        run: |
+          yosys -p "
+            read_verilog generated/lattice.v
+            stat -json
+          " > stats.json
+          cat stats.json
+```
 
 ---
 
