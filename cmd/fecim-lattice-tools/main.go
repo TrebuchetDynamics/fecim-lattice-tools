@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -175,20 +176,42 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 		height--
 	}
 
-	// Get default audio device for recording
+	// Get audio device for recording - prefer mic, fall back to desktop audio
 	audioDevice := ""
+	isDesktopAudio := false
 	if recording.IsAudioAvailable() {
-		if defaultAudio, err := recording.GetDefaultAudioDevice(); err == nil {
-			audioDevice = defaultAudio.Name
-			log.Info("Recording with audio from: %s", audioDevice)
+		// Try to get microphone first
+		if micDevice, err := recording.GetDefaultAudioDevice(); err == nil {
+			// Check if it's an actual input (not a monitor source)
+			if strings.Contains(strings.ToLower(micDevice.Name), "input") {
+				audioDevice = micDevice.Name
+				log.Info("Recording with microphone: %s", audioDevice)
+			}
+		}
+		// Fall back to desktop audio (monitor source) if no mic
+		if audioDevice == "" {
+			if desktopDevice, err := recording.GetDesktopAudioDevice(); err == nil {
+				audioDevice = desktopDevice.Name
+				isDesktopAudio = true
+				log.Info("Recording desktop audio: %s (no microphone detected)", audioDevice)
+			}
 		}
 	}
 
 	// FFmpeg command to receive raw RGB frames from stdin + audio from PulseAudio
 	var ffmpegArgs []string
 	if audioDevice != "" {
+		// Audio filter depends on source type
+		var audioFilter string
+		if isDesktopAudio {
+			// Desktop audio: just normalize levels, no noise filtering
+			audioFilter = "volume=1.5"
+		} else {
+			// Microphone: filter noise and boost
+			audioFilter = "highpass=f=80,lowpass=f=12000,afftdn=nf=-25,volume=25dB,compand=attacks=0.1:decays=0.3:points=-80/-80|-50/-50|-30/-15|-10/-8|0/-6"
+		}
+
 		// With audio: video from stdin, audio from pulse
-		// Apply 20dB gain to microphone input (typical mics need boost)
 		ffmpegArgs = []string{
 			"-y",             // Overwrite output file
 			"-f", "rawvideo", // Raw video input
@@ -202,7 +225,7 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 			"-preset", "ultrafast", // Fast encoding
 			"-crf", "23", // Quality
 			"-pix_fmt", "yuv420p", // Output pixel format
-			"-af", "volume=20dB", // Boost mic volume by 20dB
+			"-af", audioFilter, // Audio filter (different for mic vs desktop)
 			"-c:a", "aac", // AAC audio codec
 			"-b:a", "128k", // Audio bitrate
 			"-ac", "2", // Stereo

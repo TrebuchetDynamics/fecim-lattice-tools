@@ -156,6 +156,7 @@ func (r *Runner) RunKLayout(scriptPath string, workDir string, envVars map[strin
 }
 
 // runDockerKLayout runs KLayout in Docker container
+// Uses -rd flags to pass variables to scripts (standard KLayout pattern)
 func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
 	absWorkDir, err := filepath.Abs(workDir)
 	if err != nil {
@@ -170,28 +171,38 @@ func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map
 		"-w", "/design",
 	}
 
-	// Add environment variables
+	// Add image first
+	args = append(args, r.manager.GetDockerImage())
+
+	// KLayout flags: -z for batch mode with main window (required for image export)
+	args = append(args, "-z")
+
+	// Add variables using -rd (standard KLayout pattern per docs)
 	for k, v := range envVars {
-		args = append(args, "-e", fmt.Sprintf("%s=%s", k, v))
+		args = append(args, "-rd", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	// Add image and KLayout flags: -b for batch mode, -r for Ruby script
-	args = append(args, r.manager.GetDockerImage())
-	args = append(args, "-b", "-r", fmt.Sprintf("/design/%s", filepath.Base(scriptPath)))
+	// Add script
+	args = append(args, "-r", fmt.Sprintf("/design/%s", filepath.Base(scriptPath)))
 
 	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
 }
 
 // runNativeKLayout runs KLayout directly
+// Uses -rd flags to pass variables to scripts (standard KLayout pattern)
 func (r *Runner) runNativeKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
-	args := []string{"-b", "-r", scriptPath}
+	// KLayout flags: -z for batch mode with main window (required for image export)
+	args := []string{"-z"}
 
-	env := os.Environ()
+	// Add variables using -rd (standard KLayout pattern per docs)
 	for k, v := range envVars {
-		env = append(env, fmt.Sprintf("%s=%s", k, v))
+		args = append(args, "-rd", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	return r.runWithTimeoutEnv("klayout", args, workDir, r.config.TimeoutPlacement, env)
+	// Add script
+	args = append(args, "-r", scriptPath)
+
+	return r.runWithTimeout("klayout", args, workDir, r.config.TimeoutPlacement)
 }
 
 // runWithTimeout executes a command with timeout

@@ -21,90 +21,63 @@ type LayoutImageResult struct {
 }
 
 // klayoutScript is the Ruby script for KLayout to generate layout image
-// Uses environment variables: LEF_FILE, DEF_FILE, OUTPUT_PNG
-const klayoutScript = `# layout_export.rb - KLayout script to export DEF as PNG
-# Environment: LEF_FILE, DEF_FILE, OUTPUT_PNG
-
-require 'fileutils'
-
-lef_file = ENV['LEF_FILE'] || 'fecim_bitcell.lef'
-def_file = ENV['DEF_FILE'] || 'placement.def'
-output_png = ENV['OUTPUT_PNG'] || 'layout.png'
+// Uses -rd variables: $lef_file, $def_file, $output_png
+// Pattern from: https://www.klayout.de/forum/discussion/812/get-screenshot-of-a-design-from-command-line
+const klayoutScript = `# layout_export.rb - KLayout script to export DEF/LEF as PNG
+# Variables passed via -rd: lef_file, def_file, output_png
+# Requires -z flag (not -zz) for main window access
 
 puts "=== KLayout Layout Export ==="
-puts "LEF: #{lef_file}"
-puts "DEF: #{def_file}"
-puts "Output: #{output_png}"
+puts "LEF: #{$lef_file}"
+puts "DEF: #{$def_file}"
+puts "Output: #{$output_png}"
 
-# Create layout view
-main_window = RBA::Application.instance.main_window
-layout_view = main_window.create_layout(1)
-layout = layout_view.active_cellview.layout
+# Get main window (requires -z flag)
+mw = RBA::Application::instance.main_window
 
-# Set up DEF/LEF reader options
-opt = RBA::LoadLayoutOptions.new
-lef_map = RBA::LEFDEFReaderConfiguration.new
-opt.set_lefdef_config(lef_map)
-
-# Read LEF first (cell definitions)
+# Load LEF first (cell definitions)
 puts "Reading LEF..."
 begin
-  layout.read(lef_file, opt)
-  puts "  LEF loaded successfully"
+  mw.load_layout($lef_file, 0)
+  puts "  LEF loaded"
 rescue => e
   puts "  LEF warning: #{e.message}"
 end
 
-# Read DEF (placement)
+# Load DEF (placement) into same view
 puts "Reading DEF..."
 begin
-  layout.read(def_file, opt)
-  puts "  DEF loaded successfully"
+  mw.load_layout($def_file, 1)
+  puts "  DEF loaded"
 rescue => e
   puts "  DEF error: #{e.message}"
   exit 1
 end
 
-# Get the top cell
-top_cell = layout.top_cell
-if top_cell.nil?
-  puts "Error: No top cell found"
+# Get current view
+view = mw.current_view
+if view.nil?
+  puts "Error: No view available"
   exit 1
 end
-puts "Top cell: #{top_cell.name}"
 
-# Configure view for export
-layout_view.select_cell(top_cell.cell_index, 0)
-layout_view.zoom_fit
+# Show full hierarchy and fit to view
+view.max_hier
+view.zoom_fit
 
-# Set up layers with colors
-layer_colors = {
-  'met1' => 0x4444ff,  # Blue for metal1
-  'met2' => 0xff4444,  # Red for metal2
-  'via1' => 0x44ff44,  # Green for via1
-  'nwell' => 0xffff44, # Yellow for nwell
-  'pwell' => 0xff44ff, # Magenta for pwell
-}
+# Configure view for clean export
+view.set_config("background-color", "#001020")  # Dark background
+view.set_config("grid-visible", "false")        # Hide grid
 
-# Apply colors to layers
-layout.layer_indices.each do |li|
-  info = layout.get_info(li)
-  layer_name = info.name.downcase
-  layer_colors.each do |pattern, color|
-    if layer_name.include?(pattern)
-      lp = layout_view.find_layer_iter(li, 0).current
-      lp.fill_color = color if lp
-      lp.frame_color = color if lp
-    end
-  end
-end
-
-# Export to PNG
+# Export to PNG (1600x1200 for good resolution)
 puts "Exporting PNG..."
-layout_view.save_image(output_png, 1200, 900)
-puts "  Saved: #{output_png}"
+view.save_image($output_png, 1600, 1200)
+puts "  Saved: #{$output_png}"
 
 puts "=== Layout Export Complete ==="
+
+# Exit cleanly
+RBA::Application::instance.exit(0)
 `
 
 // GenerateLayoutImage creates a layout image using KLayout
@@ -157,26 +130,26 @@ func GenerateLayoutImage(defPath string, lefPath string, outputPath string, mana
 		}
 	}
 
-	// Set up environment variables
-	var envVars map[string]string
+	// Set up KLayout -rd variables (lowercase with underscores)
+	var rdVars map[string]string
 	outputName := filepath.Base(outputPath)
 	if mode == openlane.ModeDocker {
-		envVars = map[string]string{
-			"DEF_FILE":   "/design/" + filepath.Base(defPath),
-			"LEF_FILE":   "/design/" + lefName,
-			"OUTPUT_PNG": "/design/" + outputName,
+		rdVars = map[string]string{
+			"def_file":   "/design/" + filepath.Base(defPath),
+			"lef_file":   "/design/" + lefName,
+			"output_png": "/design/" + outputName,
 		}
 	} else {
-		envVars = map[string]string{
-			"DEF_FILE":   filepath.Join(absWorkDir, filepath.Base(defPath)),
-			"LEF_FILE":   lefDst,
-			"OUTPUT_PNG": filepath.Join(absWorkDir, outputName),
+		rdVars = map[string]string{
+			"def_file":   filepath.Join(absWorkDir, filepath.Base(defPath)),
+			"lef_file":   lefDst,
+			"output_png": filepath.Join(absWorkDir, outputName),
 		}
 	}
 
 	// Run KLayout
 	runner := openlane.NewRunner(manager, config)
-	runResult, err := runner.RunKLayout(scriptPath, absWorkDir, envVars)
+	runResult, err := runner.RunKLayout(scriptPath, absWorkDir, rdVars)
 
 	if runResult != nil {
 		result.RawOutput = runResult.Stdout + "\n" + runResult.Stderr

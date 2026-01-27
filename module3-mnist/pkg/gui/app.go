@@ -170,22 +170,33 @@ func NewMNISTApp() *MNISTApp {
 }
 
 // findDataDir locates the module3-mnist/data directory.
+// It verifies the directory contains expected MNIST files (pretrained_weights.json).
 func findDataDir() string {
-	// Try common locations
+	// Try common locations - prioritize module3-mnist/data paths
 	paths := []string{
-		"data",
 		"module3-mnist/data",
+		"data",
 		"../data",
 		"../../module3-mnist/data",
+		"../module3-mnist/data",
 	}
 
+	// Look for a directory that contains MNIST weights
+	for _, p := range paths {
+		weightsPath := filepath.Join(p, "pretrained_weights.json")
+		if _, err := os.Stat(weightsPath); err == nil {
+			return p
+		}
+	}
+
+	// Fallback: return first existing directory
 	for _, p := range paths {
 		if _, err := os.Stat(p); err == nil {
 			return p
 		}
 	}
 
-	return "data" // Default
+	return "module3-mnist/data" // Default
 }
 
 // Run starts the GUI application.

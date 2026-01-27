@@ -251,6 +251,33 @@ func GetDefaultAudioDevice() (AudioDevice, error) {
 	return AudioDevice{}, errors.New("no audio device found")
 }
 
+// GetDesktopAudioDevice returns the monitor source for recording desktop/system audio.
+// This captures what you hear through speakers (game audio, videos, music, etc.)
+func GetDesktopAudioDevice() (AudioDevice, error) {
+	// Get default output sink and return its monitor
+	cmd := exec.Command("pactl", "get-default-sink")
+	output, err := cmd.Output()
+	if err != nil {
+		return AudioDevice{}, fmt.Errorf("failed to get default sink: %w", err)
+	}
+
+	sinkName := strings.TrimSpace(string(output))
+	if sinkName == "" {
+		return AudioDevice{}, errors.New("no default sink found")
+	}
+
+	// Monitor source name is sink name + ".monitor"
+	monitorName := sinkName + ".monitor"
+	log.Debug("GetDesktopAudioDevice: using monitor source: %s", monitorName)
+
+	return AudioDevice{
+		ID:          monitorName,
+		Name:        monitorName,
+		Description: "Desktop Audio (System Sounds)",
+		IsDefault:   true,
+	}, nil
+}
+
 // SetDevice sets the audio device to monitor.
 func (am *AudioMonitor) SetDevice(device AudioDevice) {
 	am.mu.Lock()
