@@ -307,6 +307,7 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 // READ: Single row, safe voltage (0-0.5V)
 // WRITE: Single row, write voltage (1.2-1.5V on selected column)
 // COMPUTE: All rows active, input vector (0-1V)
+// NOTE: In passive mode (0T1R), all WLs are ALWAYS on - WL configuration is skipped
 func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	if ca.deviceState == nil {
 		return
@@ -314,20 +315,29 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 
 	ca.deviceState.SetOperationMode(mode)
 
+	// In passive mode, all WLs are always on - skip WL configuration
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+
 	switch mode {
 	case OpModeRead:
-		// Single row active, safe read voltage on all columns
-		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		// Single row active (only in 1T1R/2T1R), safe read voltage on all columns
+		if !isPassive {
+			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		}
 		ca.deviceState.SetDACPreset(DACReadPreset)
 
 	case OpModeWrite:
-		// Single row active, write voltage on selected column only
-		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		// Single row active (only in 1T1R/2T1R), write voltage on selected column only
+		if !isPassive {
+			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		}
 		ca.deviceState.SetDACPreset(DACWritePreset)
 
 	case OpModeCompute:
 		// All rows active for MVM, input vector on columns
-		ca.deviceState.SetWLAll()
+		if !isPassive {
+			ca.deviceState.SetWLAll()
+		}
 		// Keep current DAC voltages or set to mid-range for demo
 		if ca.deviceState.GetDACMode() == DACWritePreset {
 			// Switch from write to read range for compute
@@ -1046,8 +1056,10 @@ func (ca *CircuitsApp) setWLModeAll() {
 func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	ca.deviceState.SetSelectedCell(row, col)
 
-	// If in single mode, also update WL
-	if ca.deviceState.GetWLMode() == WLSingle {
+	// If in single mode and NOT passive, also update WL
+	// In passive mode, all WLs are always on - no changes allowed
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+	if !isPassive && ca.deviceState.GetWLMode() == WLSingle {
 		ca.deviceState.SetWLSingle(row)
 		ca.updateWLCheckboxes()
 	}
@@ -1191,8 +1203,11 @@ func (ca *CircuitsApp) onUnifiedReset() {
 	ca.updateDACRangeModeLabel()
 	ca.updateDACEntries()
 
-	// Reset WL to single row 0
-	ca.deviceState.SetWLSingle(0)
+	// Reset WL to single row 0 (only in 1T1R/2T1R - passive keeps all on)
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+	if !isPassive {
+		ca.deviceState.SetWLSingle(0)
+	}
 	ca.updateWLCheckboxes()
 
 	ca.recomputeAndRefresh()

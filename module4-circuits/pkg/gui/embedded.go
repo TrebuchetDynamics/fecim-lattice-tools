@@ -37,11 +37,14 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca.tia = peripherals.DefaultTIA()
 	ca.pump = peripherals.DefaultChargePump()
 
-	// Initialize array - all cells start at state 0 (lowest conductance)
+	// Initialize array - all cells start at mid-level (neutral state)
+	midLevel := ca.quantLevels / 2
 	ca.arrayWeights = make([][]int, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
-		// All cells start at state 0
+		for j := range ca.arrayWeights[i] {
+			ca.arrayWeights[i][j] = midLevel
+		}
 	}
 
 	ca.inputVector = make([]int, ca.arrayCols)

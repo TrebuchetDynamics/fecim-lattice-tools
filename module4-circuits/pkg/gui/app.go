@@ -280,12 +280,16 @@ func NewCircuitsApp() *CircuitsApp {
 	return ca
 }
 
-// initializeArray sets up the weight array with all cells at state 0
+// initializeArray sets up the weight array with all cells at mid-level
 func (ca *CircuitsApp) initializeArray() {
+	midLevel := ca.quantLevels / 2
 	ca.arrayWeights = make([][]int, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
-		// All cells start at state 0 (lowest conductance)
+		// All cells start at mid-level (neutral state)
+		for j := range ca.arrayWeights[i] {
+			ca.arrayWeights[i][j] = midLevel
+		}
 	}
 
 	ca.inputVector = make([]int, ca.arrayCols)
