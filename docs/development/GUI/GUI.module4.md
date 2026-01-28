@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-27
+Last Updated: 2026-01-27 (UX Fixes)
 ---
 
 ## Bugs Summary
@@ -32,10 +32,35 @@ Last Updated: 2026-01-27
 - [x] UX-003: Mode selection refactored (2026-01-27): Mode buttons replace RadioGroup
 - [x] UX-004: No target level selector for WRITE - FIXED (2026-01-27): Write level slider (0-29) added
 - [x] UX-005: Input vector entries not visible - FIXED (2026-01-27): Persistent entries in COMPUTE mode panel
+- [x] UX-C1: Cell selection fill obscured state - FIXED (2026-01-27): Gold border only, no fill
+- [x] UX-H2: No target cell indicator - FIXED (2026-01-27): "Target: Row X, Col Y" label in write panel
+- [x] UX-H3: No undo functionality - FIXED (2026-01-27): Undo button with single-level history
+- [x] UX-H4: WL labels unclear - FIXED (2026-01-27): "Row 0" labels, disabled in passive mode
 
 ---
 
 ## Recent Changes (2026-01-27)
+
+### UX Improvements (Phase 2)
+- **Cell selection feedback** - Gold border only, no fill (C1 fix) - preserves visibility of state color
+- **Target cell label** - "Target: Row X, Col Y" label in write mode panel (H2 fix)
+- **Undo functionality** - Single-level undo for array changes with dedicated button (H3 fix)
+- **WL checkbox labels** - Changed "WL0" to "Row 0" for clarity (H4 fix)
+- **Passive mode enforcement** - In 0T1R architecture:
+  - All WL checkboxes always checked and disabled (cannot turn off)
+  - DeviceState ignores WL change requests when `isPassive=true`
+  - Defense-in-depth: UI + data layer both enforce constraint
+- **Dynamic quantLevels** - Write level slider uses `ca.quantLevels` instead of hardcoded 29
+- **Mid-level array initialization** - Array cells start at mid-level (15 for 30 states, not 0)
+- **Blue-gray-red color mapping** - New color scheme:
+  - Blue gradient for levels below mid (0 to mid-1)
+  - Gray for mid-level (neutral state)
+  - Red gradient for levels above mid (mid+1 to max)
+
+### Research Documentation (New)
+- **docs/research/circuits.CIM-fundamentals.md** - Physics basis for READ/WRITE/COMPUTE operations
+- **docs/research/MODULE4-PHYSICS-IMPROVEMENTS.md** - Gap analysis with severity ratings
+- **docs/plans/module4-plan-improvements.md** - 12-task implementation plan across 4 phases
 
 ### Mode-First UX Redesign (Phase 1)
 - **Mode bar at top** - READ/WRITE/COMPUTE buttons now prominent at top of OPERATIONS view
@@ -208,6 +233,7 @@ type DeviceState struct {
     // WL configuration
     wlMode     WLMode      // WLSingle, WLAll, WLCustom
     activeRows []bool      // true = WL HIGH
+    isPassive  bool        // When true, ALL WLs always on (0T1R architecture)
 
     // DAC inputs
     dacVoltages  []float64   // Voltage per column
@@ -241,8 +267,9 @@ type DeviceState struct {
 | `NewDeviceState(rows, cols, tia, adc)` | Create with dimensions and peripherals |
 | `SetMaterial(mat)` | Change material, recalculates voltage ranges |
 | `SetOperationMode(mode)` | Set READ/WRITE/COMPUTE mode |
-| `SetWLSingle(row)` | Activate only specified row |
+| `SetWLSingle(row)` | Activate only specified row (ignored if isPassive=true) |
 | `SetWLAll()` | Activate all rows for MVM |
+| `SetPassiveMode(passive)` | Enable/disable passive mode enforcement |
 | `SetDACPreset(preset, params...)` | Apply voltage preset |
 | `SetDACVoltageForState(col, level)` | Set write voltage for target state |
 | `Compute(weights, levels)` | Run MVM simulation |
@@ -311,9 +338,11 @@ case OpModeCompute:
 | modeReadBtn | Button | Set READ mode (top mode bar) | tab_unified.go:1432 | opMode |
 | modeWriteBtn | Button | Set WRITE mode (top mode bar) | tab_unified.go:1435 | opMode |
 | modeComputeBtn | Button | Set COMPUTE mode (top mode bar) | tab_unified.go:1438 | opMode |
-| mfuxWriteLevelSlider | Slider | Target write level (0-29) | tab_unified.go:1459 | via SetDACVoltageForState() |
+| mfuxWriteLevelSlider | Slider | Target write level (0 to quantLevels-1) | tab_unified.go:1459 | via SetDACVoltageForState() |
 | mfuxWriteLevelLabel | Label | Shows "Level: N" | tab_unified.go:1466 | Updated by onWriteLevelChanged() |
 | mfuxWriteVoltageLabel | Label | Shows "Voltage: X.XXV" | tab_unified.go:1468 | Updated by onWriteLevelChanged() |
+| mfuxWriteTargetLabel | Label | Shows "Target: Row X, Col Y" | tab_unified.go | Updated by cell selection |
+| undoHistoryBtn | Button | Undo last array change | tab_unified.go | Enabled when hasUndoHistory=true |
 | mfuxInputVectorEntry | []Entry | 8 input vector entries (0-255) | tab_unified.go:1503 | inputVector via onInputVectorEntryChanged() |
 | writeModePanel | Container | Write mode controls (slider) | tab_unified.go:45 | Show/Hide via updateModePanels() |
 | computeModePanel | Container | Compute mode controls (entries) | tab_unified.go:49 | Show/Hide via updateModePanels() |
@@ -449,11 +478,45 @@ func (ca *CircuitsApp) updateDACPresetLabels() {
 }
 ```
 
-### 5. Architecture-Aware WL Handling
+### 5. Architecture-Aware WL Handling (Defense-in-Depth)
 ```go
-// Passive mode: all WLs always active (no transistor gating)
-if ca.architecture == sharedwidgets.Architecture0T1R {
-    ca.deviceState.SetWLAll()
+// UI Layer: Disable checkboxes in passive mode
+func (ca *CircuitsApp) updateWLCheckboxes() {
+    isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+    for i, check := range ca.unifiedWLChecks {
+        if isPassive {
+            check.SetChecked(true)
+            check.Disable()  // User cannot uncheck
+        } else {
+            check.Enable()
+            check.SetChecked(isActive)
+        }
+    }
+}
+
+// Data Layer: Ignore WL changes when passive
+func (ds *DeviceState) SetWLSingle(row int) {
+    if ds.isPassive {
+        return  // Passive mode: all WLs always on, ignore
+    }
+    // ... normal logic
+}
+```
+
+### 5b. Undo History Pattern
+```go
+func (ca *CircuitsApp) saveUndoHistory() {
+    ca.mu.Lock()
+    ca.undoHistory = make([][]int, len(ca.arrayWeights))
+    for i := range ca.arrayWeights {
+        ca.undoHistory[i] = make([]int, len(ca.arrayWeights[i]))
+        copy(ca.undoHistory[i], ca.arrayWeights[i])
+    }
+    ca.hasUndoHistory = true
+    ca.mu.Unlock()
+    fyne.Do(func() {
+        if ca.undoHistoryBtn != nil { ca.undoHistoryBtn.Enable() }
+    })
 }
 ```
 
@@ -500,6 +563,42 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
         params[i] = float64(v)
     }
     ca.deviceState.SetDACPreset(DACInputVector, params...)
+}
+```
+
+### 9. Level-to-Color Mapping (Blue-Gray-Red)
+```go
+func levelToColor(level, maxLevel int) color.RGBA {
+    mid := (maxLevel - 1) / 2
+    if level < mid {
+        // Below mid: Blue gradient (low conductance)
+        t := float64(level) / float64(mid)
+        r = uint8(40 + t*40)
+        g = uint8(60 + t*60)
+        b = uint8(180 + t*40)
+    } else if level > mid {
+        // Above mid: Red gradient (high conductance)
+        t := float64(level-mid) / float64(maxLevel-1-mid)
+        r = uint8(180 + t*75)
+        g = uint8(100 - t*60)
+        b = uint8(80 - t*40)
+    } else {
+        // At mid: Gray (neutral state)
+        r, g, b = 140, 140, 150
+    }
+    return color.RGBA{r, g, b, 255}
+}
+```
+
+### 10. Cell Selection Visual (Border Only)
+```go
+// Draw gold border for selected cell - NO FILL (preserves state color)
+if r == selectedRow && c == selectedCol {
+    borderColor := color.RGBA{255, 215, 0, 255}  // Gold
+    for b := 0; b < 2; b++ {  // 2-pixel border
+        // Draw top, bottom, left, right border lines
+        // Cell interior retains levelToColor() result
+    }
 }
 ```
 
@@ -1032,36 +1131,60 @@ ca.sharedArrayCanvas.Refresh()
 
 **Symptom**: WL checkbox states don't match expected pattern when switching to PASSIVE architecture
 
-**Root Cause**: Passive mode (0T1R) always has all WLs active regardless of mode
+**Root Cause**: Passive mode (0T1R) always has all WLs active regardless of mode - no transistor gating
 
 **Expected Behavior**:
-- PASSIVE mode: All WL checkboxes always checked (all rows active)
-- 1T1R/2T1R: WL checkboxes reflect mode:
+- PASSIVE mode: All WL checkboxes always checked AND DISABLED (user cannot uncheck)
+- 1T1R/2T1R: WL checkboxes enabled and reflect mode:
   - READ: Single row checked
   - WRITE: Single row checked
   - COMPUTE: All rows checked
 
-**Solution**:
+**Solution (Defense-in-Depth)**:
+
+**UI Layer** (tab_unified.go):
 ```go
-// tab_unified.go:1356-1373
-if ca.architecture == sharedwidgets.Architecture0T1R {
-    // Passive: always activate all WLs
-    ca.deviceState.SetWLAll()
-    // Update all checkboxes to checked
-    for i := 0; i < 8; i++ {
-        ca.wlCheckboxes[i].SetChecked(true)
+func (ca *CircuitsApp) updateWLCheckboxes() {
+    isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+    for i, check := range ca.unifiedWLChecks {
+        fyne.Do(func() {
+            if isPassive {
+                check.SetChecked(true)
+                check.Disable()  // Cannot uncheck in passive mode
+            } else {
+                check.Enable()
+                check.SetChecked(isActive)
+            }
+        })
     }
-} else {
-    // 1T1R/2T1R: follow mode
-    ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+}
+```
+
+**Data Layer** (device_state.go):
+```go
+func (ds *DeviceState) SetPassiveMode(passive bool) {
+    ds.isPassive = passive
+    if passive {
+        ds.wlMode = WLAll
+        for i := range ds.activeRows {
+            ds.activeRows[i] = true
+        }
+    }
+}
+
+func (ds *DeviceState) SetWLSingle(row int) {
+    if ds.isPassive {
+        return  // Ignore - passive mode enforces all WLs on
+    }
+    // ... normal logic
 }
 ```
 
 **Debugging**:
-1. Check current architecture via `ca.architecture` variable
-2. Verify `ca.wlCheckboxes` are initialized: `len(ca.wlCheckboxes) == 8`
-3. Look for architecture changes in: `archPassiveBtn.OnTapped`, `arch1T1RBtn.OnTapped`
-4. Ensure checkbox state updates called in `updateWLCheckboxes()` function
+1. Check `ca.architecture` value (should be `sharedwidgets.Architecture0T1R` for passive)
+2. Verify `ca.deviceState.isPassive` is set correctly
+3. Verify `ca.unifiedWLChecks` are initialized before `SetChecked()` is called
+4. Check for nil pointer if checkbox OnChanged fires before array is populated
 
 ---
 

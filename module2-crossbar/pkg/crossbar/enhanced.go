@@ -193,28 +193,50 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 	return result, nil
 }
 
+// SneakPathMode controls the sneak path calculation mode.
+type SneakPathMode int
+
+const (
+	// SneakPathSimplified uses a fixed factor model (fast, less accurate)
+	SneakPathSimplified SneakPathMode = iota
+	// SneakPathFull computes actual three-cell series paths (slower, more accurate)
+	SneakPathFull
+)
+
+// SneakPathThreshold is the array size above which simplified mode is used automatically.
+// Full sneak calculation is O(n^4) so becomes expensive for large arrays.
+const SneakPathThreshold = 32 // Use simplified mode for arrays larger than 32x32
+
 // computeSneakCurrentForRow computes total sneak current affecting a row.
 // The sneak factor varies based on architecture:
 // - 1T1R: Transistor provides ~1000:1 isolation, minimal sneak paths
 // - 0T1R: Passive crossbar has full sneak path impact
 func (a *Array) computeSneakCurrentForRow(row int, input []float64, opts *MVMOptions) float64 {
-	var sneakCurrent float64
-
-	// Architecture-dependent sneak factor:
-	// 1T1R: 0.00001 (0.001%) - transistor provides ~1000:1 isolation
-	// 0T1R: 0.01 (1%) - passive crossbar, full sneak path impact
-	sneakFactor := 0.01 // Default: passive (0T1R)
+	// For 1T1R, transistor isolation makes sneak paths negligible
 	if opts != nil && opts.Is1T1R() {
-		sneakFactor = 0.00001 // 1000x reduction with transistor isolation
+		return a.computeSimplifiedSneakCurrent(row, input, 0.00001)
 	}
 
+	// For small passive arrays, use full calculation for accuracy
+	if a.config.Rows <= SneakPathThreshold && a.config.Cols <= SneakPathThreshold {
+		return a.computeFullSneakCurrent(row, input)
+	}
+
+	// For large passive arrays, use simplified model for performance
+	return a.computeSimplifiedSneakCurrent(row, input, 0.01)
+}
+
+// computeSimplifiedSneakCurrent uses a fixed factor model for sneak paths.
+// This is the original simplified model - fast but less accurate.
+func (a *Array) computeSimplifiedSneakCurrent(row int, input []float64, sneakFactor float64) float64 {
+	var sneakCurrent float64
+
 	for j := 0; j < len(input); j++ {
-		// Three-cell sneak paths from other rows
+		// Two-cell approximation: current through row cells to other rows
 		for i := 0; i < a.config.Rows; i++ {
 			if i == row {
 				continue
 			}
-			// Simplified sneak model
 			g1 := a.cells[row][j].Conductance
 			g2 := a.cells[i][j].Conductance
 			if g1 > 0.01 && g2 > 0.01 {
@@ -224,6 +246,170 @@ func (a *Array) computeSneakCurrentForRow(row int, input []float64, opts *MVMOpt
 	}
 
 	return sneakCurrent
+}
+
+// computeFullSneakCurrent computes actual three-cell sneak paths through all rows.
+// This provides literature-matched sneak path magnitudes (5-20% for passive arrays).
+//
+// Physical model: For a given target row reading, sneak paths form when:
+// Input voltage on column 'col' → cell[srcRow][col] → cell[srcRow][j] → cell[targetRow][j]
+// This creates a three-cell series path that adds parasitic current to the target row.
+func (a *Array) computeFullSneakCurrent(targetRow int, input []float64) float64 {
+	var totalSneak float64
+
+	inputLen := len(input)
+	if inputLen > a.config.Cols {
+		inputLen = a.config.Cols
+	}
+
+	// For each input column
+	for col := 0; col < inputLen; col++ {
+		vIn := input[col]
+		if vIn < 0.01 {
+			continue // Skip negligible inputs
+		}
+
+		// Sum sneak paths through every other row
+		for srcRow := 0; srcRow < a.config.Rows; srcRow++ {
+			if srcRow == targetRow {
+				continue // Not a sneak path
+			}
+
+			// Entry conductance: input column on source row
+			g1 := a.cells[srcRow][col].Conductance
+			if g1 < 0.01 {
+				continue // Path blocked by low conductance
+			}
+
+			// Three-cell paths through every other column
+			for j := 0; j < a.config.Cols; j++ {
+				if j == col {
+					continue // Direct path, not sneak
+				}
+
+				// Middle conductance: source row, different column
+				g2 := a.cells[srcRow][j].Conductance
+				if g2 < 0.01 {
+					continue // Path blocked
+				}
+
+				// Exit conductance: target row, exit column
+				g3 := a.cells[targetRow][j].Conductance
+				if g3 < 0.01 {
+					continue // Path blocked
+				}
+
+				// Three conductances in series: G_path = 1/(1/g1 + 1/g2 + 1/g3)
+				gPath := 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
+
+				// Current through this sneak path: I = V * G_path
+				totalSneak += vIn * gPath
+			}
+		}
+	}
+
+	return totalSneak
+}
+
+// ComputeFullMVMSneak computes sneak currents for all rows in a full MVM operation.
+// Returns an array of sneak current per row.
+// This is the comprehensive sneak path analysis for passive arrays.
+func (a *Array) ComputeFullMVMSneak(input []float64, opts *MVMOptions) []float64 {
+	sneakPerRow := make([]float64, a.config.Rows)
+
+	// 1T1R has negligible sneak paths due to transistor isolation
+	if opts != nil && opts.Is1T1R() {
+		return sneakPerRow // All zeros
+	}
+
+	for targetRow := 0; targetRow < a.config.Rows; targetRow++ {
+		if a.config.Rows <= SneakPathThreshold && a.config.Cols <= SneakPathThreshold {
+			sneakPerRow[targetRow] = a.computeFullSneakCurrent(targetRow, input)
+		} else {
+			sneakPerRow[targetRow] = a.computeSimplifiedSneakCurrent(targetRow, input, 0.01)
+		}
+	}
+
+	return sneakPerRow
+}
+
+// GetSneakPathContribution returns detailed sneak path analysis for a single row.
+// Useful for visualization and debugging.
+type SneakPathContribution struct {
+	SourceRow    int
+	SourceCol    int
+	ExitCol      int
+	PathG        float64 // Effective path conductance
+	PathCurrent  float64 // Current through this path
+}
+
+// AnalyzeSneakContributions returns the top sneak path contributors for a row.
+func (a *Array) AnalyzeSneakContributions(targetRow int, input []float64, maxPaths int) []SneakPathContribution {
+	var contributions []SneakPathContribution
+
+	inputLen := len(input)
+	if inputLen > a.config.Cols {
+		inputLen = a.config.Cols
+	}
+
+	for col := 0; col < inputLen; col++ {
+		vIn := input[col]
+		if vIn < 0.01 {
+			continue
+		}
+
+		for srcRow := 0; srcRow < a.config.Rows; srcRow++ {
+			if srcRow == targetRow {
+				continue
+			}
+
+			g1 := a.cells[srcRow][col].Conductance
+			if g1 < 0.01 {
+				continue
+			}
+
+			for j := 0; j < a.config.Cols; j++ {
+				if j == col {
+					continue
+				}
+
+				g2 := a.cells[srcRow][j].Conductance
+				g3 := a.cells[targetRow][j].Conductance
+				if g2 < 0.01 || g3 < 0.01 {
+					continue
+				}
+
+				gPath := 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
+				pathCurrent := vIn * gPath
+
+				contributions = append(contributions, SneakPathContribution{
+					SourceRow:   srcRow,
+					SourceCol:   col,
+					ExitCol:     j,
+					PathG:       gPath,
+					PathCurrent: pathCurrent,
+				})
+			}
+		}
+	}
+
+	// Sort by current magnitude (descending) and limit to maxPaths
+	// Using simple selection sort since maxPaths is typically small
+	for i := 0; i < len(contributions) && i < maxPaths; i++ {
+		maxIdx := i
+		for j := i + 1; j < len(contributions); j++ {
+			if contributions[j].PathCurrent > contributions[maxIdx].PathCurrent {
+				maxIdx = j
+			}
+		}
+		contributions[i], contributions[maxIdx] = contributions[maxIdx], contributions[i]
+	}
+
+	if len(contributions) > maxPaths {
+		contributions = contributions[:maxPaths]
+	}
+
+	return contributions
 }
 
 // computeErrorMetrics calculates error statistics between ideal and actual outputs.
@@ -423,6 +609,150 @@ func (d *DifferentialArray) GetSignedWeightMatrix() [][]float64 {
 			result[i][j] = posMatrix[i][j] - negMatrix[i][j]
 		}
 	}
+	return result
+}
+
+// WriteStatistics configures write variation/statistics.
+type WriteStatistics struct {
+	Enabled  bool       // Enable statistical write variation
+	VthSigma float64    // Threshold voltage sigma (normalized, 0-1)
+	RNG      *rand.Rand // Random number generator (seeded for reproducibility)
+}
+
+// DefaultWriteStatistics returns default write statistics configuration.
+func DefaultWriteStatistics() *WriteStatistics {
+	return &WriteStatistics{
+		Enabled:  false,
+		VthSigma: 0.05, // 5% variation = ~1.5 level spread
+		RNG:      rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+}
+
+// ProgramWeightWithVariation programs a weight with statistical write variation.
+// Returns the actual achieved level (may differ from target due to Vth variation).
+func (a *Array) ProgramWeightWithVariation(row, col int, targetLevel int, stats *WriteStatistics) (int, error) {
+	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
+		return 0, fmt.Errorf("cell index out of range: (%d, %d)", row, col)
+	}
+
+	if targetLevel < 0 || targetLevel >= DefaultQuantizationLevels {
+		return 0, fmt.Errorf("target level %d out of range [0, %d)", targetLevel, DefaultQuantizationLevels)
+	}
+
+	// Without variation, just program the exact level
+	if stats == nil || !stats.Enabled {
+		weight := float64(targetLevel) / float64(DefaultQuantizationLevels-1)
+		if err := a.ProgramWeight(row, col, weight); err != nil {
+			return 0, err
+		}
+		return targetLevel, nil
+	}
+
+	// Add Gaussian noise to target level based on Vth variation
+	// VthSigma of 0.05 corresponds to about 1.5 levels of variation (0.05 * 29 ≈ 1.5)
+	rng := stats.RNG
+	if rng == nil {
+		rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+
+	noise := rng.NormFloat64() * stats.VthSigma * float64(DefaultQuantizationLevels-1)
+	actualLevel := int(math.Round(float64(targetLevel) + noise))
+
+	// Clamp to valid range
+	if actualLevel < 0 {
+		actualLevel = 0
+	}
+	if actualLevel >= DefaultQuantizationLevels {
+		actualLevel = DefaultQuantizationLevels - 1
+	}
+
+	// Program the actual achieved level
+	weight := float64(actualLevel) / float64(DefaultQuantizationLevels-1)
+	a.cells[row][col].Conductance = QuantizeToLevels(weight)
+	a.cells[row][col].SwitchingCount++
+	a.totalWrites++
+
+	return actualLevel, nil
+}
+
+// ProgramMatrixWithVariation programs an entire weight matrix with statistical variation.
+// Returns a matrix of actual achieved levels.
+func (a *Array) ProgramMatrixWithVariation(targetLevels [][]int, stats *WriteStatistics) ([][]int, error) {
+	if len(targetLevels) > a.config.Rows {
+		return nil, fmt.Errorf("matrix rows (%d) exceed array rows (%d)", len(targetLevels), a.config.Rows)
+	}
+
+	actualLevels := make([][]int, len(targetLevels))
+	for i, row := range targetLevels {
+		if len(row) > a.config.Cols {
+			return nil, fmt.Errorf("matrix cols (%d) exceed array cols (%d)", len(row), a.config.Cols)
+		}
+		actualLevels[i] = make([]int, len(row))
+		for j, targetLevel := range row {
+			actual, err := a.ProgramWeightWithVariation(i, j, targetLevel, stats)
+			if err != nil {
+				return nil, err
+			}
+			actualLevels[i][j] = actual
+		}
+	}
+	return actualLevels, nil
+}
+
+// WriteVariationAnalysis contains statistics about write variation.
+type WriteVariationAnalysis struct {
+	NumWrites        int       // Total number of write operations
+	NumErrors        int       // Number of writes with level error
+	ErrorRate        float64   // Percentage of writes with errors
+	AvgLevelError    float64   // Average absolute level error
+	MaxLevelError    int       // Maximum level error observed
+	ErrorDistribution []int    // Histogram of error magnitudes [0, ±1, ±2, ±3, ...]
+}
+
+// AnalyzeWriteVariation tests write variation by programming random levels.
+func (a *Array) AnalyzeWriteVariation(stats *WriteStatistics, numTests int) *WriteVariationAnalysis {
+	result := &WriteVariationAnalysis{
+		NumWrites:        numTests,
+		ErrorDistribution: make([]int, 10), // Track errors up to ±9 levels
+	}
+
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	totalError := 0.0
+
+	for i := 0; i < numTests; i++ {
+		// Pick random cell and target level
+		row := rng.Intn(a.config.Rows)
+		col := rng.Intn(a.config.Cols)
+		targetLevel := rng.Intn(DefaultQuantizationLevels)
+
+		actualLevel, err := a.ProgramWeightWithVariation(row, col, targetLevel, stats)
+		if err != nil {
+			continue
+		}
+
+		levelError := actualLevel - targetLevel
+		absError := levelError
+		if absError < 0 {
+			absError = -absError
+		}
+
+		if levelError != 0 {
+			result.NumErrors++
+		}
+		totalError += float64(absError)
+
+		if absError > result.MaxLevelError {
+			result.MaxLevelError = absError
+		}
+
+		if absError < len(result.ErrorDistribution) {
+			result.ErrorDistribution[absError]++
+		}
+	}
+
+	result.ErrorRate = float64(result.NumErrors) / float64(numTests) * 100
+	result.AvgLevelError = totalError / float64(numTests)
+
 	return result
 }
 

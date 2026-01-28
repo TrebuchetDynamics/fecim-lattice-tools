@@ -8,7 +8,8 @@ cd "$(dirname "$0")" || exit 1
 
 # Periodic mode: commit and push every hour (runs in background)
 if [[ "$1" == "--periodically" ]]; then
-    LOGFILE="$(dirname "$0")/commit-push.log"
+    # Store log and PID files outside the repo to avoid git tracking
+    LOGFILE="/tmp/commit-push-$(basename "$(pwd)").log"
     PIDFILE="$(dirname "$0")/.commit-push.pid"
 
     # Check if already running
@@ -24,13 +25,17 @@ if [[ "$1" == "--periodically" ]]; then
         cd \"$(dirname "$0")\" || exit 1
         echo \$\$ > \"$PIDFILE\"
         while true; do
-            git add -A
-            if ! git diff --cached --quiet; then
+            # Stage all changes except PID file (log is in /tmp, not repo)
+            git add -A -- ':!.commit-push.pid'
+            # Only commit and push if there are real changes
+            if ! git diff --cached --quiet -- ':!.commit-push.pid'; then
                 git commit -m \"Auto-commit (periodic) at \$(date '+%Y-%m-%d %H:%M:%S')\"
                 git push
                 echo \"Commit and push completed at \$(date)\"
             else
-                echo \"No changes to commit at \$(date)\"
+                # Reset any accidentally staged PID file
+                git reset HEAD -- .commit-push.pid 2>/dev/null || true
+                echo \"No real changes to commit at \$(date)\"
             fi
             echo \"Next commit-push in 1 hour...\"
             sleep 3600
@@ -84,13 +89,17 @@ echo "Scheduling commit and push in $HOURS hour(s)..."
 (
     sleep "$SECONDS_DELAY"
     cd "$(dirname "$0")" || exit 1
-    git add -A
-    if ! git diff --cached --quiet; then
+    # Stage all changes except PID file (log is in /tmp, not repo)
+    git add -A -- ':!.commit-push.pid'
+    # Only commit and push if there are real changes
+    if ! git diff --cached --quiet -- ':!.commit-push.pid'; then
         git commit -m "Auto-commit after $HOURS hour delay at $(date '+%Y-%m-%d %H:%M:%S')"
         git push
         echo "Commit and push completed at $(date)"
     else
-        echo "No changes to commit at $(date)"
+        # Reset any accidentally staged PID file
+        git reset HEAD -- .commit-push.pid 2>/dev/null || true
+        echo "No real changes to commit at $(date)"
     fi
 ) &
 

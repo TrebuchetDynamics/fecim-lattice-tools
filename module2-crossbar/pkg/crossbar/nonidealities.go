@@ -127,13 +127,12 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 }
 
 // estimateCurrent estimates current draw for a word line.
+// Uses the configured conductance model (linear, exponential, or lookup).
 func (a *Array) estimateCurrent(row int, input []float64) float64 {
 	var current float64
 	for j := 0; j < len(input) && j < a.config.Cols; j++ {
-		gNorm := a.cells[row][j].Conductance // Normalized [0,1]
-		// Convert normalized conductance to physical units (Siemens)
-		// Range: 10 µS (OFF) to 100 µS (ON), linear mapping
-		gPhys := (10e-6 + gNorm*90e-6) // 10-100 µS range
+		// Use the new physics-aware conductance conversion
+		gPhys := a.GetPhysicalConductanceForCell(row, j)
 		// I = G * V
 		current += gPhys * input[j]
 	}
@@ -141,13 +140,12 @@ func (a *Array) estimateCurrent(row int, input []float64) float64 {
 }
 
 // estimateColumnCurrent estimates current through a bit line column.
+// Uses the configured conductance model (linear, exponential, or lookup).
 func (a *Array) estimateColumnCurrent(col int, input []float64) float64 {
 	var current float64
 	for i := 0; i < a.config.Rows; i++ {
-		gNorm := a.cells[i][col].Conductance // Normalized [0,1]
-		// Convert normalized conductance to physical units (Siemens)
-		// Range: 10 µS (OFF) to 100 µS (ON), linear mapping
-		gPhys := (10e-6 + gNorm*90e-6) // 10-100 µS range
+		// Use the new physics-aware conductance conversion
+		gPhys := a.GetPhysicalConductanceForCell(i, col)
 		// I = G * V
 		if col < len(input) {
 			current += gPhys * input[col]

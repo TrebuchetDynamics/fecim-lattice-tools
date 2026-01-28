@@ -486,38 +486,45 @@ print("[STAGE:begin:physics_validation]")
 print("="*80)
 
 physics_tests = {
-    "ir_drop_tests": {
-        "test_ohms_law": "physics_test.go:15-44",
+    "ir_drop_ohms_law": {
+        "test": "TestIRDropOhmsLaw",
+        "location": "physics_test.go:15-44",
         "validates": "V = I × R relationship in wire networks",
         "assertion": "Corner IR drop > center IR drop"
     },
     "ir_drop_scaling": {
-        "test_resistance_scaling": "physics_test.go:47-88",
+        "test": "TestIRDropScalesWithResistance",
+        "location": "physics_test.go:47-88",
         "validates": "IR drop ∝ wire resistance",
         "assertion": "5× resistance → 5× IR drop (±50% tolerance)"
     },
-    "sneak_path_tests": {
-        "test_three_cell_model": "physics_test.go:159-194",
+    "sneak_path_model": {
+        "test": "TestSneakPathThreeCellModel",
+        "location": "physics_test.go:159-194",
         "validates": "Three-cell sneak path conductance series formula",
         "assertion": "G_sneak = 1/(1/G1 + 1/G2 + 1/G3)"
     },
-    "sneak_scaling": {
-        "test_conductance_scaling": "physics_test.go:197-233",
+    "sneak_conductance_scaling": {
+        "test": "TestSneakPathScalesWithConductance",
+        "location": "physics_test.go:197-233",
         "validates": "Sneak current ∝ conductance",
         "assertion": "10× conductance → ~10× sneak current"
     },
-    "drift_tests": {
-        "test_time_evolution": "physics_test.go:299-370",
+    "drift_time_evolution": {
+        "test": "TestDriftTimeEvolution",
+        "location": "physics_test.go:299-370",
         "validates": "G(t) = G₀ × (t/t₀)^ν drift model",
         "assertion": "Conductance changes over time (RRAM-like drift)"
     },
-    "drift_comparison": {
-        "test_fecim_vs_rram": "physics_test.go:373-397",
+    "drift_fecim_vs_rram": {
+        "test": "TestDriftFeCIMVsRRAM",
+        "location": "physics_test.go:373-397",
         "validates": "FeFET has lower drift than RRAM",
         "assertion": "FeFET drift < RRAM drift (>10× better)"
     },
     "mvm_calculation": {
-        "test_mvm": "physics_test.go:518-573",
+        "test": "TestMVMMatrixVectorMultiply",
+        "location": "physics_test.go:518-573",
         "validates": "y = W × x via I = G × V summation",
         "assertion": "MVM output matches mathematical expectation (±20% for quantization)"
     }
@@ -525,9 +532,9 @@ physics_tests = {
 
 print("[FINDING] Comprehensive physics test suite validates all major models")
 print("\nPhysics Test Coverage:")
-for test_cat, test_data in physics_tests.items():
-    print(f"  ✓ {test_cat}: {test_data['validates']}")
-    print(f"    Location: {test_data.get('test_ohms_law', test_data.get('test_resistance_scaling', test_data.get('test_three_cell_model', test_data.get('test_conductance_scaling', test_data.get('test_time_evolution', test_data.get('test_fecim_vs_rram', test_data.get('test_mvm', 'unknown'))))))}")
+for test_key, test_data in physics_tests.items():
+    print(f"  ✓ {test_data['test']}: {test_data['validates']}")
+    print(f"    Location: {test_data['location']}")
 
 print("\n[STAT:num_physics_tests] 7")
 print("[STAGE:status:success]")
