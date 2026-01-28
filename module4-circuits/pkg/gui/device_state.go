@@ -184,7 +184,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 func (ds *DeviceState) updateVoltageRanges() {
 	// Get material's coercive voltage (Vc = Ec * thickness)
 	Vc := 1.0 // Fallback if no material
-	numLevels := 30
+	numLevels := 30 // Default FeCIM level count, matches app.go:FeCIMLevels
 	if ds.material != nil {
 		Vc = ds.material.CoerciveVoltage()
 		numLevels = ds.material.GetNumLevels()
@@ -495,7 +495,12 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		}
 
 		// Check saturation (TIA saturates around 100 µA)
-		ds.saturated[r] = totalCurrent > 100.0 || ds.rowLevels[r] >= 31
+		// ADC saturation: 5-bit ADC has 32 levels (0-31), level 31 indicates max/saturated
+		adcMaxLevel := 31 // Default 5-bit ADC max level
+		if ds.adc != nil {
+			adcMaxLevel = (1 << ds.adc.Bits) - 1 // 2^bits - 1
+		}
+		ds.saturated[r] = totalCurrent > 100.0 || ds.rowLevels[r] >= adcMaxLevel
 	}
 }
 

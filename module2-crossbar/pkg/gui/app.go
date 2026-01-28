@@ -72,6 +72,7 @@ type CrossbarApp struct {
 
 	// Simple right panel widgets (replacing custom widgets)
 	resetButton      *widget.Button
+	runMVMButton     *widget.Button
 	arraySizeSelect  *widget.Select // Dropdown for array size
 	arraySizeLabel   *widget.Label  // Label for slider display
 	arraySizeSlider  *widget.Slider // Slider for array size

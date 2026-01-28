@@ -68,6 +68,13 @@ func (ca *CrossbarApp) setControlsEnabled(enabled bool) {
 			ca.resetButton.Disable()
 		}
 	}
+	if ca.runMVMButton != nil {
+		if enabled {
+			ca.runMVMButton.Enable()
+		} else {
+			ca.runMVMButton.Disable()
+		}
+	}
 }
 
 // createControlWidgets creates all control panel widgets (buttons, sliders, dropdowns).
@@ -75,6 +82,10 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// Reset button
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
+
+	// Run MVM button - primary action for enhanced mode
+	ca.runMVMButton = widget.NewButton("Run MVM", ca.runEnhancedMVM)
+	ca.runMVMButton.Importance = widget.HighImportance
 
 	// Array size slider (8 to 128 in steps of 8)
 	// Create without callback first, set value, then add callback to avoid
@@ -101,14 +112,14 @@ func (ca *CrossbarApp) createControlWidgets() {
 		ca.runEnhancedMVMInstant()
 	}
 
-	ca.adcBitsLabel = widget.NewLabel("6")
+	ca.adcBitsLabel = widget.NewLabel("6 bits")
 	ca.adcBitsLabel.Wrapping = fyne.TextWrapOff
 	ca.adcBitsSlider = widget.NewSlider(4, 10)
 	ca.adcBitsSlider.Step = 1
 	ca.adcBitsSlider.Value = 6
 	ca.adcBitsSlider.OnChanged = func(v float64) {
 		bits := int(v)
-		ca.adcBitsLabel.SetText(fmt.Sprintf("%d", bits))
+		ca.adcBitsLabel.SetText(fmt.Sprintf("%d bits", bits))
 		ca.config.ADCBits = bits
 		ca.runEnhancedMVMInstant()
 	}
@@ -116,7 +127,8 @@ func (ca *CrossbarApp) createControlWidgets() {
 	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
 		// Change colormap for the currently active tab and store the selection
 		if ca.tabs != nil {
-			switch ca.tabs.Selected().Text {
+			tabName := ca.getBaseTabName(ca.tabs.Selected().Text)
+			switch tabName {
 			case "Conductance":
 				ca.conductanceHeatmap.SetColormap(s)
 				ca.condLegend.SetColormap(s)
@@ -129,11 +141,18 @@ func (ca *CrossbarApp) createControlWidgets() {
 				ca.sneakPathHeatmap.SetColormap(s)
 				ca.sneakLegend.SetColormap(s)
 				ca.sneakColormap = s
+			case "Ideal vs Actual":
+				// No SetColormap method on BeforeAfterToggle - just return
+				return
+			case "Accuracy Analysis":
+				// No heatmap on this tab - ignore colormap changes
+				return
+			case "Input/Output":
+				// No heatmap on this tab - ignore colormap changes
+				return
 			default:
-				// For other tabs, default to conductance
-				ca.conductanceHeatmap.SetColormap(s)
-				ca.condLegend.SetColormap(s)
-				ca.condColormap = s
+				// Unknown tab - ignore
+				return
 			}
 		} else {
 			ca.conductanceHeatmap.SetColormap(s)
@@ -151,23 +170,41 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// Use meaningful icons: grid for passive array, lock for gated transistor
 	ca.archPassiveBtn = widget.NewButtonWithIcon("PASSIVE", theme.GridIcon(), nil)
 	ca.arch1T1RBtn = widget.NewButtonWithIcon("1T1R GATE", theme.VisibilityIcon(), nil)
+	ca.arch2T1RBtn = widget.NewButtonWithIcon("2T1R", theme.MoreVerticalIcon(), nil)
 
 	// m4 UX fix: Helper to update button styles with clear selected/unselected states
 	updateArchButtons := func() {
-		if ca.architecture == sharedwidgets.Architecture0T1R {
-			// Selected: high importance, show checkmark in text
+		// Reset all buttons to unselected state
+		ca.archPassiveBtn.Importance = widget.LowImportance
+		ca.arch1T1RBtn.Importance = widget.LowImportance
+		ca.arch2T1RBtn.Importance = widget.LowImportance
+
+		// Set selected button with bullet indicator
+		switch ca.architecture {
+		case sharedwidgets.Architecture0T1R:
 			ca.archPassiveBtn.SetText("● PASSIVE")
 			ca.archPassiveBtn.Importance = widget.HighImportance
 			ca.arch1T1RBtn.SetText("1T1R GATE")
-			ca.arch1T1RBtn.Importance = widget.LowImportance
-		} else {
+			ca.arch2T1RBtn.SetText("2T1R")
+		case sharedwidgets.Architecture1T1R:
 			ca.archPassiveBtn.SetText("PASSIVE")
-			ca.archPassiveBtn.Importance = widget.LowImportance
 			ca.arch1T1RBtn.SetText("● 1T1R GATE")
 			ca.arch1T1RBtn.Importance = widget.HighImportance
+			ca.arch2T1RBtn.SetText("2T1R")
+		case sharedwidgets.Architecture2T1R:
+			ca.archPassiveBtn.SetText("PASSIVE")
+			ca.arch1T1RBtn.SetText("1T1R GATE")
+			ca.arch2T1RBtn.SetText("● 2T1R")
+			ca.arch2T1RBtn.Importance = widget.HighImportance
+		default:
+			ca.archPassiveBtn.SetText("● PASSIVE")
+			ca.archPassiveBtn.Importance = widget.HighImportance
+			ca.arch1T1RBtn.SetText("1T1R GATE")
+			ca.arch2T1RBtn.SetText("2T1R")
 		}
 		ca.archPassiveBtn.Refresh()
 		ca.arch1T1RBtn.Refresh()
+		ca.arch2T1RBtn.Refresh()
 	}
 
 	// Set initial state
@@ -214,8 +251,28 @@ func (ca *CrossbarApp) createControlWidgets() {
 		ca.runEnhancedMVMWithCurrentInput()
 	}
 
+	ca.arch2T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture2T1R {
+			return // Already selected
+		}
+		debug.Printf("[ARCH TOGGLE] Switched to: 2T1R")
+
+		ca.stateMu.Lock()
+		ca.architecture = sharedwidgets.Architecture2T1R
+		ca.stateMu.Unlock()
+
+		updateArchButtons()
+
+		// Update educational content
+		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture2T1R)
+		ca.setEducationalContent(title, content)
+
+		// Re-run MVM
+		ca.runEnhancedMVMWithCurrentInput()
+	}
+
 	// Create horizontal container for toggle
-	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
+	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 }
 
 // createRightPanel creates the right panel with controls and metrics.
@@ -225,11 +282,24 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 	exportButton.Importance = widget.MediumImportance
 
 	// === ARRAY CONFIG - Slider with label ===
+	// Add min/max labels for array size slider
+	minLabel := widget.NewLabel("8")
+	minLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	maxLabel := widget.NewLabel("128")
+	maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	sliderWithLabels := container.NewBorder(
+		nil, nil,
+		minLabel,
+		maxLabel,
+		ca.arraySizeSlider,
+	)
+
 	arraySizeRow := container.NewBorder(
 		nil, nil,
 		widget.NewLabel("Array:"),
 		ca.arraySizeLabel,
-		ca.arraySizeSlider,
+		sliderWithLabels,
 	)
 
 	// === ARCHITECTURE TOGGLE ===
@@ -256,7 +326,7 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 		nil,
 		ca.colormapSelect,
 	)
-	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
+	actionButtons := container.NewGridWithColumns(3, ca.runMVMButton, ca.resetButton, exportButton)
 
 	// === ASSEMBLE CONTROLS ===
 	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues
@@ -321,7 +391,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	ca.levelIndicator = NewLevelIndicator()
 
 	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
-	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(450, 20), ca.hoverInfoLabel)
+	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(300, 20), ca.hoverInfoLabel)
 
 	return container.NewHBox(
 		ca.modeIndicator,
