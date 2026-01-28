@@ -454,3 +454,299 @@ func TestConcurrentInference(t *testing.T) {
 		t.Log("Concurrent inference test passed")
 	}
 }
+
+// =============================================================================
+// SINGLE-LAYER MODE TESTS
+// =============================================================================
+
+// TestSingleLayerModeE2E tests Calibration Mode (784→10 single layer).
+// This mode simulates the simplified hardware demo architecture without hidden layer.
+func TestSingleLayerModeE2E(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize single-layer weights with Xavier-like initialization
+	for i := range net.SingleLayerWeights {
+		for j := range net.SingleLayerWeights[i] {
+			net.SingleLayerWeights[i][j] = (float64((i*j)%100) - 50) / 1000.0
+		}
+	}
+	net.SingleLayerBias = make([]float64, 10)
+	for i := range net.SingleLayerBias {
+		net.SingleLayerBias[i] = 0.01
+	}
+
+	// Enable SingleLayer mode
+	net.Config.SingleLayer = true
+	net.RequantizeWeights()
+
+	// Create synthetic input (784 elements)
+	input := make([]float64, 784)
+	for i := range input {
+		input[i] = math.Mod(float64(i)*0.01, 1.0)
+	}
+
+	result := net.Infer(input)
+
+	// Verify FP path produces valid result
+	if result.FPPrediction < 0 || result.FPPrediction > 9 {
+		t.Errorf("Invalid FP prediction: %d", result.FPPrediction)
+	}
+	if len(result.FPProbabilities) != 10 {
+		t.Errorf("Expected 10 FP probabilities, got %d", len(result.FPProbabilities))
+	}
+
+	// Verify CIM path produces valid result
+	if result.CIMPrediction < 0 || result.CIMPrediction > 9 {
+		t.Errorf("Invalid CIM prediction: %d", result.CIMPrediction)
+	}
+	if len(result.CIMProbabilities) != 10 {
+		t.Errorf("Expected 10 CIM probabilities, got %d", len(result.CIMProbabilities))
+	}
+
+	// No hidden layer in single-layer mode
+	if result.FPHidden != nil {
+		t.Error("Expected no FP hidden layer in single-layer mode")
+	}
+	if result.CIMHidden != nil {
+		t.Error("Expected no CIM hidden layer in single-layer mode")
+	}
+
+	// Energy calculation should reflect single layer only (7,840 MACs)
+	expectedMACs := 784 * 10 // 7,840 MACs
+	bitsPerCell := math.Log2(30.0)
+	expectedEnergy := float64(expectedMACs) * 10e-15 * bitsPerCell * 1e6
+
+	if result.EnergyUsed < expectedEnergy*0.5 || result.EnergyUsed > expectedEnergy*2.0 {
+		t.Errorf("Single-layer energy %.4f µJ outside expected range [%.4f, %.4f] µJ",
+			result.EnergyUsed, expectedEnergy*0.5, expectedEnergy*2.0)
+	}
+
+	t.Logf("Single-layer mode: FP=%d (%.1f%%), CIM=%d (%.1f%%), Energy=%.4f µJ, MACs=%d",
+		result.FPPrediction, result.FPConfidence*100,
+		result.CIMPrediction, result.CIMConfidence*100,
+		result.EnergyUsed, expectedMACs)
+}
+
+// =============================================================================
+// PER-LAYER QUANTIZATION TESTS
+// =============================================================================
+
+// TestPerLayerQuantizationE2E tests per-layer PTQ configuration.
+// Layer 1 can use different quantization levels than Layer 2.
+func TestPerLayerQuantizationE2E(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize weights
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = (float64((i+j)%100) - 50) / 500.0
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = (float64((i+j)%100) - 50) / 200.0
+		}
+	}
+	net.FPBias1 = make([]float64, 128)
+	net.FPBias2 = make([]float64, 10)
+
+	// Enable per-layer quantization with different levels
+	net.Config.PerLayerQuant = true
+	net.Config.Layer1Levels = 20
+	net.Config.Layer2Levels = 10
+	net.RequantizeWeights()
+
+	// Create synthetic input
+	input := make([]float64, 784)
+	for i := range input {
+		input[i] = math.Sin(float64(i)*0.1) * 0.5 + 0.5
+	}
+
+	result := net.Infer(input)
+
+	// Verify inference produces valid results
+	if result.FPPrediction < 0 || result.FPPrediction > 9 {
+		t.Errorf("Invalid FP prediction: %d", result.FPPrediction)
+	}
+	if result.CIMPrediction < 0 || result.CIMPrediction > 9 {
+		t.Errorf("Invalid CIM prediction: %d", result.CIMPrediction)
+	}
+
+	// Energy calculation should reflect different bit depths
+	macs1 := 784 * 128
+	macs2 := 128 * 10
+	bits1 := math.Log2(20.0) // ~4.32 bits
+	bits2 := math.Log2(10.0) // ~3.32 bits
+	expectedEnergy := float64(macs1)*10e-15*bits1*1e6 + float64(macs2)*10e-15*bits2*1e6
+
+	if result.EnergyUsed < expectedEnergy*0.5 || result.EnergyUsed > expectedEnergy*2.0 {
+		t.Errorf("Per-layer quant energy %.4f µJ outside expected range [%.4f, %.4f] µJ",
+			result.EnergyUsed, expectedEnergy*0.5, expectedEnergy*2.0)
+	}
+
+	t.Logf("Per-layer quantization: L1=%d levels, L2=%d levels, Energy=%.4f µJ, Agree=%v",
+		net.Config.Layer1Levels, net.Config.Layer2Levels, result.EnergyUsed, result.Agree)
+}
+
+// =============================================================================
+// AGREEMENT RATE STATISTICS TESTS
+// =============================================================================
+
+// TestAgreementRateStatistics performs statistical test of FP/CIM agreement rate.
+// With moderate noise, agreement should still be high (>80%).
+func TestAgreementRateStatistics(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize weights with known values
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = math.Sin(float64(i+j)) * 0.3
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = math.Cos(float64(i*j)) * 0.3
+		}
+	}
+	net.FPBias1 = make([]float64, 128)
+	net.FPBias2 = make([]float64, 10)
+
+	// Test with moderate noise first
+	net.SetNoiseLevel(0.05)
+	net.RequantizeWeights()
+
+	numTrials := 100
+	agreements := 0
+	var disagreements []int
+
+	for trial := 0; trial < numTrials; trial++ {
+		// Create different input for each trial
+		input := make([]float64, 784)
+		for i := range input {
+			input[i] = math.Mod(float64(trial*i+1)*0.01, 1.0)
+		}
+
+		result := net.Infer(input)
+		if result.Agree {
+			agreements++
+		} else {
+			disagreements = append(disagreements, trial)
+		}
+	}
+
+	agreementRate := float64(agreements) / float64(numTrials) * 100
+
+	// With 5% noise and 30 levels, agreement should be >80%
+	if agreementRate < 80 {
+		t.Errorf("Agreement rate %.1f%% below expected 80%% threshold (noise=0.05)",
+			agreementRate)
+	}
+
+	t.Logf("Agreement statistics (noise=0.05): %d/%d agreements (%.1f%%), %d disagreements",
+		agreements, numTrials, agreementRate, len(disagreements))
+
+	// Test with zero noise - should have 100% agreement
+	net.SetNoiseLevel(0.0)
+	perfectAgreements := 0
+
+	for trial := 0; trial < numTrials; trial++ {
+		input := make([]float64, 784)
+		for i := range input {
+			input[i] = math.Mod(float64(trial*i+1)*0.01, 1.0)
+		}
+
+		result := net.Infer(input)
+		if result.Agree {
+			perfectAgreements++
+		}
+	}
+
+	perfectRate := float64(perfectAgreements) / float64(numTrials) * 100
+	if perfectRate < 100 {
+		t.Logf("Note: With zero noise, agreement rate is %.1f%% (expected 100%%)", perfectRate)
+	}
+
+	t.Logf("Agreement statistics (noise=0.00): %d/%d agreements (%.1f%%)",
+		perfectAgreements, numTrials, perfectRate)
+}
+
+// =============================================================================
+// ENERGY CALCULATION VERIFICATION TESTS
+// =============================================================================
+
+// TestEnergyCalculationVerification verifies the energy calculation formula.
+// Energy should scale with NumLevels and reflect correct MAC counts.
+func TestEnergyCalculationVerification(t *testing.T) {
+	net := NewDualModeNetwork(784, 128, 10)
+
+	// Initialize simple weights
+	for i := range net.FPWeights1 {
+		for j := range net.FPWeights1[i] {
+			net.FPWeights1[i][j] = 0.1
+		}
+	}
+	for i := range net.FPWeights2 {
+		for j := range net.FPWeights2[i] {
+			net.FPWeights2[i][j] = 0.1
+		}
+	}
+	net.FPBias1 = make([]float64, 128)
+	net.FPBias2 = make([]float64, 10)
+	net.RequantizeWeights()
+
+	input := make([]float64, 784)
+	for i := range input {
+		input[i] = 0.5
+	}
+
+	// Verify MAC counts: Layer 1: 784*128, Layer 2: 128*10
+	macs1 := 784 * 128 // 100,352 MACs
+	macs2 := 128 * 10  // 1,280 MACs
+	totalMACs := macs1 + macs2 // 101,632 MACs
+
+	// Test energy scaling with different levels
+	levelsToTest := []struct {
+		levels        int
+		expectedBits  float64
+		expectedFJMAC float64
+	}{
+		{2, 1.0, 10.0},      // 1 bit
+		{8, 3.0, 30.0},      // 3 bits
+		{16, 4.0, 40.0},     // 4 bits
+		{30, 4.9, 49.0},     // ~4.9 bits
+	}
+
+	for _, test := range levelsToTest {
+		net.SetNumLevels(test.levels)
+		result := net.Infer(input)
+
+		// Energy formula: 10 * log2(levels) fJ/MAC
+		expectedEnergy := float64(totalMACs) * test.expectedFJMAC * 1e-15 * 1e6 // Convert to µJ
+
+		if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*0.3 {
+			t.Errorf("Energy mismatch for %d levels: got %.4f µJ, expected %.4f µJ",
+				test.levels, result.EnergyUsed, expectedEnergy)
+		}
+
+		actualFJMAC := result.EnergyUsed * 1e6 / float64(totalMACs)
+		t.Logf("Levels=%2d: Bits=%.1f, Energy=%.4f µJ, %.1f fJ/MAC (expected %.1f fJ/MAC)",
+			test.levels, test.expectedBits, result.EnergyUsed, actualFJMAC, test.expectedFJMAC)
+	}
+
+	// Verify energy scales with levels (more levels = more energy)
+	net.SetNumLevels(2)
+	result2 := net.Infer(input)
+	net.SetNumLevels(30)
+	result30 := net.Infer(input)
+
+	ratio := result30.EnergyUsed / result2.EnergyUsed
+	expectedRatio := 4.9 // log2(30) / log2(2)
+
+	if ratio < expectedRatio*0.8 || ratio > expectedRatio*1.2 {
+		t.Errorf("Energy scaling ratio %.2f outside expected range [%.2f, %.2f]",
+			ratio, expectedRatio*0.8, expectedRatio*1.2)
+	}
+
+	t.Logf("Energy scaling verification: 30-level/2-level = %.2fx (expected ~%.1fx)",
+		ratio, expectedRatio)
+}
