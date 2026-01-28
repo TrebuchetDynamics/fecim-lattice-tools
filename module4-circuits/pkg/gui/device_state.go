@@ -390,21 +390,28 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 
 // SetDACVoltageForState sets the write voltage for a target state (0 to numLevels-1)
 // Maps the state to the appropriate voltage in the write range
-func (ds *DeviceState) SetDACVoltageForState(col int, targetState int) {
+// numLevels specifies the quantization levels used by the app (typically 30 for FeCIM)
+func (ds *DeviceState) SetDACVoltageForState(col int, targetState int, numLevels int) {
 	if col < 0 || col >= ds.cols {
 		return
+	}
+
+	// Use provided numLevels, fallback to writeRange if not specified
+	if numLevels <= 0 {
+		numLevels = ds.writeRange.NumLevels
 	}
 
 	// Clamp target state
 	if targetState < 0 {
 		targetState = 0
 	}
-	if targetState >= ds.writeRange.NumLevels {
-		targetState = ds.writeRange.NumLevels - 1
+	if targetState >= numLevels {
+		targetState = numLevels - 1
 	}
 
 	// Linear interpolation within write range
-	normalized := float64(targetState) / float64(ds.writeRange.NumLevels-1)
+	// Maps level 0 -> writeRange.Min, level (numLevels-1) -> writeRange.Max
+	normalized := float64(targetState) / float64(numLevels-1)
 	voltage := ds.writeRange.Min + normalized*(ds.writeRange.Max-ds.writeRange.Min)
 
 	ds.dacVoltages[col] = voltage

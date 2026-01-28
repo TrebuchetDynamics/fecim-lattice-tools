@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -355,9 +356,33 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	ca.updateModeButtons()
 	ca.updateModePanels(mode) // Show/hide mode-specific panels
 	ca.updateWLCheckboxes()
+	ca.updateWLHelpLabel()
 	ca.updateDACRangeModeLabel()
 	ca.updateDACPresetLabels()
 	ca.recomputeAndRefresh()
+}
+
+// updateWLHelpLabel updates the WL help text based on mode and architecture
+func (ca *CircuitsApp) updateWLHelpLabel() {
+	if ca.unifiedWLHelpLabel == nil {
+		return
+	}
+
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+	mode := ca.deviceState.GetOperationMode()
+
+	var helpText string
+	if isPassive {
+		helpText = "Passive: All rows always on"
+	} else if mode == OpModeCompute {
+		helpText = "Compute: All rows active"
+	} else {
+		helpText = "R/W: One row only"
+	}
+
+	fyne.Do(func() {
+		ca.unifiedWLHelpLabel.SetText(helpText)
+	})
 }
 
 // updateModeButtons updates the mode button highlighting
@@ -1032,7 +1057,37 @@ func (ca *CircuitsApp) onWLChanged(row int, checked bool) {
 		return
 	}
 
-	// Update the active rows pattern
+	mode := ca.deviceState.GetOperationMode()
+
+	// In READ/WRITE mode: radio button behavior - only ONE row can be active
+	if mode == OpModeRead || mode == OpModeWrite {
+		if checked {
+			// User checked this row - make it the only active row
+			ca.deviceState.SetWLSingle(row)
+			// Also update selected cell to this row
+			ca.deviceState.SetSelectedCell(row, ca.deviceState.GetSelectedCol())
+			// Uncheck all other checkboxes
+			fyne.Do(func() {
+				for i, check := range ca.unifiedWLChecks {
+					if check != nil {
+						check.SetChecked(i == row)
+					}
+				}
+			})
+		} else {
+			// User unchecked - don't allow (must have one row active)
+			fyne.Do(func() {
+				if ca.unifiedWLChecks[row] != nil {
+					ca.unifiedWLChecks[row].SetChecked(true)
+				}
+			})
+		}
+		ca.recomputeAndRefresh()
+		return
+	}
+
+	// In COMPUTE mode: all rows must be active (handled elsewhere)
+	// This shouldn't be called in compute mode, but handle gracefully
 	pattern := make([]bool, ca.arrayRows)
 	for i := 0; i < len(ca.unifiedWLChecks) && i < ca.arrayRows; i++ {
 		if ca.unifiedWLChecks[i] != nil {
@@ -1060,19 +1115,34 @@ func (ca *CircuitsApp) setWLModeAll() {
 }
 
 // onUnifiedCellTapped handles cell selection
+// In READ/WRITE mode: selects row transistor (WL) and column transistor (BL)
 func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	ca.deviceState.SetSelectedCell(row, col)
 
-	// If in single mode and NOT passive, also update WL
-	// In passive mode, all WLs are always on - no changes allowed
+	mode := ca.deviceState.GetOperationMode()
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-	if !isPassive && ca.deviceState.GetWLMode() == WLSingle {
+
+	// In READ/WRITE mode (non-passive): select ONLY this row (single transistor)
+	// This enforces radio-button behavior - only one row can be active
+	if !isPassive && (mode == OpModeRead || mode == OpModeWrite) {
 		ca.deviceState.SetWLSingle(row)
-		ca.updateWLCheckboxes()
+		// Update checkboxes to show only this row selected
+		fyne.Do(func() {
+			for i, check := range ca.unifiedWLChecks {
+				if check != nil {
+					check.SetChecked(i == row)
+				}
+			}
+		})
 	}
 
 	// H2 FIX: Update target cell label in write mode panel
 	ca.updateWriteTargetLabel()
+
+	// Update write voltage for the newly selected column
+	if mode == OpModeWrite && ca.mfuxWriteLevelSlider != nil {
+		ca.deviceState.SetDACVoltageForState(col, int(ca.mfuxWriteLevelSlider.Value), ca.quantLevels)
+	}
 
 	ca.recomputeAndRefresh()
 	ca.updateCellInfo()
@@ -1082,22 +1152,11 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 // ACTION HANDLERS
 // ============================================================================
 
-// onUnifiedProgram programs the selected cell
+// onUnifiedProgram programs the selected cell using Write-ReadVerify loop
+// This simulates ISPP (Incremental Step Pulse Programming) behavior
 func (ca *CircuitsApp) onUnifiedProgram() {
-	// Check if we have write voltage (using material-derived threshold)
-	selectedCol := ca.deviceState.GetSelectedCol()
-	voltage := ca.deviceState.GetDACVoltage(selectedCol)
-	writeRange := ca.deviceState.GetWriteRange()
-
-	if voltage < writeRange.Min {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("Warning: Voltage %.2fV below write threshold (%.1fV)", voltage, writeRange.Min))
-		return
-	}
-
-	selectedRow := ca.deviceState.GetSelectedRow()
-
-	// Calculate target level from voltage within write range
-	targetLevel := int((voltage - writeRange.Min) / (writeRange.Max - writeRange.Min) * float64(ca.quantLevels-1))
+	// Get target level directly from slider (the user's intent)
+	targetLevel := int(ca.mfuxWriteLevelSlider.Value)
 	if targetLevel < 0 {
 		targetLevel = 0
 	}
@@ -1105,18 +1164,127 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 		targetLevel = ca.quantLevels - 1
 	}
 
+	selectedRow := ca.deviceState.GetSelectedRow()
+	selectedCol := ca.deviceState.GetSelectedCol()
+	writeRange := ca.deviceState.GetWriteRange()
+
+	// Calculate write voltage for target level
+	normalized := float64(targetLevel) / float64(ca.quantLevels-1)
+	targetVoltage := writeRange.Min + normalized*(writeRange.Max-writeRange.Min)
+
 	// H3 FIX: Save current state to undo history before modifying
 	ca.saveUndoHistory()
 
-	// Update array weight
+	// Run Write-ReadVerify loop in background goroutine
+	go ca.writeReadVerifyLoop(selectedRow, selectedCol, targetLevel, targetVoltage)
+}
+
+// writeReadVerifyLoop performs animated Write-ReadVerify iterations
+// Simulates ISPP: apply pulse, read back, adjust if needed, repeat until target reached
+func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVoltage float64) {
+	const maxIterations = 5
+	const iterationDelay = 300 * time.Millisecond
+
+	writeRange := ca.deviceState.GetWriteRange()
+	voltage := startVoltage
+	currentLevel := 0
+
+	// Get current level
 	ca.mu.Lock()
-	if selectedRow < len(ca.arrayWeights) && selectedCol < len(ca.arrayWeights[selectedRow]) {
-		ca.arrayWeights[selectedRow][selectedCol] = targetLevel
+	if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+		currentLevel = ca.arrayWeights[row][col]
 	}
 	ca.mu.Unlock()
 
+	for iteration := 1; iteration <= maxIterations; iteration++ {
+		// === WRITE PHASE ===
+		fyne.Do(func() {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, voltage, iteration, maxIterations))
+		})
+
+		// Set DAC voltage for write
+		ca.deviceState.SetDACVoltage(col, voltage)
+		ca.recomputeAndRefresh()
+		time.Sleep(iterationDelay / 2)
+
+		// Simulate write: move current level toward target
+		// In real hardware, the level change depends on voltage amplitude
+		ca.mu.Lock()
+		if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+			if currentLevel < targetLevel {
+				// Increase by 1-2 levels per pulse (simulated partial switching)
+				step := 1
+				if targetLevel-currentLevel > 3 {
+					step = 2
+				}
+				currentLevel += step
+				if currentLevel > targetLevel {
+					currentLevel = targetLevel
+				}
+			} else if currentLevel > targetLevel {
+				// Decrease by 1-2 levels per pulse
+				step := 1
+				if currentLevel-targetLevel > 3 {
+					step = 2
+				}
+				currentLevel -= step
+				if currentLevel < targetLevel {
+					currentLevel = targetLevel
+				}
+			}
+			ca.arrayWeights[row][col] = currentLevel
+		}
+		ca.mu.Unlock()
+
+		// === READ/VERIFY PHASE ===
+		fyne.Do(func() {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("VERIFY [%d,%d]: Read level %d (target %d)", row, col, currentLevel, targetLevel))
+		})
+
+		// Set DAC to read voltage for verification
+		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
+		ca.deviceState.SetDACVoltage(col, readVoltage)
+		ca.recomputeAndRefresh()
+		time.Sleep(iterationDelay / 2)
+
+		// Check if target reached
+		if currentLevel == targetLevel {
+			fyne.Do(func() {
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("SUCCESS [%d,%d] = State %d (V=%.2fV, %d iterations)",
+					row, col, targetLevel, startVoltage, iteration))
+			})
+			// Restore write voltage display
+			ca.deviceState.SetDACVoltage(col, startVoltage)
+			ca.recomputeAndRefresh()
+			return
+		}
+
+		// Adjust voltage for next iteration (ISPP: increment voltage if undershoot)
+		if currentLevel < targetLevel {
+			// Need higher voltage to switch more domains
+			voltageStep := (writeRange.Max - writeRange.Min) / float64(ca.quantLevels*2)
+			voltage += voltageStep
+			if voltage > writeRange.Max {
+				voltage = writeRange.Max
+			}
+		} else {
+			// Need lower voltage (less aggressive write)
+			voltageStep := (writeRange.Max - writeRange.Min) / float64(ca.quantLevels*2)
+			voltage -= voltageStep
+			if voltage < writeRange.Min {
+				voltage = writeRange.Min
+			}
+		}
+	}
+
+	// Max iterations reached
+	fyne.Do(func() {
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("PARTIAL [%d,%d] = State %d (target was %d, max iterations)",
+			row, col, currentLevel, targetLevel))
+	})
+	// Restore write voltage display
+	ca.deviceState.SetDACVoltage(col, startVoltage)
 	ca.recomputeAndRefresh()
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Wrote [%d,%d] = State %d (V=%.2fV)", selectedRow, selectedCol, targetLevel, voltage))
 }
 
 // onUnifiedRead reads the selected cell
@@ -1377,23 +1545,6 @@ func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
 
 	// Update help label based on architecture
 	ca.updateWLHelpLabel()
-}
-
-// updateWLHelpLabel updates the WL help label based on current architecture
-func (ca *CircuitsApp) updateWLHelpLabel() {
-	if ca.unifiedWLHelpLabel == nil {
-		return
-	}
-
-	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-
-	fyne.Do(func() {
-		if isPassive {
-			ca.unifiedWLHelpLabel.SetText("Passive: All rows always on")
-		} else {
-			ca.unifiedWLHelpLabel.SetText("Checked = Active")
-		}
-	})
 }
 
 // updateOutputDisplay is a no-op - outputs are shown on the diagram
@@ -1658,7 +1809,7 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	}
 
 	selectedCol := ca.deviceState.GetSelectedCol()
-	ca.deviceState.SetDACVoltageForState(selectedCol, level)
+	ca.deviceState.SetDACVoltageForState(selectedCol, level, ca.quantLevels)
 
 	voltage := ca.deviceState.GetDACVoltage(selectedCol)
 
