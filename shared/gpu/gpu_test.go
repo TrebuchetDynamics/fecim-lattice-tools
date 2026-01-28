@@ -586,3 +586,211 @@ func TestLayerDimensionMismatch(t *testing.T) {
 		t.Error("Expected error for incompatible layer dimensions")
 	}
 }
+
+// ============================================================================
+// Batch Layer Tests
+// ============================================================================
+
+// TestDenseLayerForwardBatch tests the batched dense layer directly.
+func TestDenseLayerForwardBatch(t *testing.T) {
+	gpuNet := NewGPUNetwork()
+	defer gpuNet.Destroy()
+
+	if !gpuNet.IsAvailable() {
+		t.Skip("GPU not available, skipping GPU test")
+	}
+
+	// Test dimensions
+	rows, cols := 10, 20
+	batchSize := 16
+
+	// Create test data
+	weights := createRandomWeights(rows, cols, 600)
+	bias := createRandomBias(rows, 600)
+
+	// Create batch inputs
+	batchInputs := make([][]float32, batchSize)
+	for i := 0; i < batchSize; i++ {
+		batchInputs[i] = createRandomInput(cols, int64(700+i))
+	}
+
+	// Pack into flat batch array
+	flatBatch := make([]float32, batchSize*cols)
+	for i, input := range batchInputs {
+		copy(flatBatch[i*cols:], input)
+	}
+
+	// Run batched forward
+	batchOutput, err := gpuNet.denseLayer.ForwardBatch(weights, bias, flatBatch, batchSize, rows, cols, ActivationReLU)
+	if err != nil {
+		t.Fatalf("ForwardBatch failed: %v", err)
+	}
+
+	// Verify output size
+	expectedSize := batchSize * rows
+	if len(batchOutput) != expectedSize {
+		t.Fatalf("Batch output size mismatch: expected %d, got %d", expectedSize, len(batchOutput))
+	}
+
+	// Verify each sample matches individual forward pass
+	for i := 0; i < batchSize; i++ {
+		individualOutput, err := gpuNet.denseLayer.Forward(weights, bias, batchInputs[i], rows, cols, ActivationReLU)
+		if err != nil {
+			t.Fatalf("Individual forward failed for sample %d: %v", i, err)
+		}
+
+		// Extract batch result for this sample
+		batchSampleOutput := batchOutput[i*rows : (i+1)*rows]
+
+		assertFloat32SliceEqual(t, individualOutput, batchSampleOutput, 1e-5,
+			"Batch sample vs individual forward")
+	}
+}
+
+// TestForwardBatchLarge tests batched processing with realistic MNIST dimensions.
+func TestForwardBatchLarge(t *testing.T) {
+	gpuNet := NewGPUNetwork()
+	defer gpuNet.Destroy()
+
+	if !gpuNet.IsAvailable() {
+		t.Skip("GPU not available, skipping GPU test")
+	}
+
+	// MNIST-like dimensions: 784 -> 128 -> 10
+	batchSize := 64
+
+	layers := []LayerWeights{
+		{
+			Weights:    createRandomWeights(128, 784, 800),
+			Bias:       createRandomBias(128, 800),
+			Rows:       128,
+			Cols:       784,
+			Activation: ActivationReLU,
+		},
+		{
+			Weights:    createRandomWeights(10, 128, 801),
+			Bias:       createRandomBias(10, 801),
+			Rows:       10,
+			Cols:       128,
+			Activation: ActivationNone,
+		},
+	}
+
+	// Create batch of inputs
+	inputs := make([][]float32, batchSize)
+	for i := 0; i < batchSize; i++ {
+		inputs[i] = createRandomInput(784, int64(900+i))
+	}
+
+	// Run batch forward
+	outputs, err := gpuNet.ForwardBatch(inputs, layers)
+	if err != nil {
+		t.Fatalf("Large batch forward failed: %v", err)
+	}
+
+	// Verify output count and dimensions
+	if len(outputs) != batchSize {
+		t.Fatalf("Output count mismatch: expected %d, got %d", batchSize, len(outputs))
+	}
+
+	for i, output := range outputs {
+		if len(output) != 10 {
+			t.Errorf("Output %d size mismatch: expected 10, got %d", i, len(output))
+		}
+	}
+
+	// Spot check: verify one sample matches individual forward
+	individualOutput, err := gpuNet.Forward(inputs[0], layers)
+	if err != nil {
+		t.Fatalf("Individual forward failed: %v", err)
+	}
+	assertFloat32SliceEqual(t, individualOutput, outputs[0], 1e-4,
+		"Batch first sample vs individual")
+}
+
+// ============================================================================
+// Benchmark Tests
+// ============================================================================
+
+// BenchmarkForwardBatch benchmarks batched GPU inference.
+func BenchmarkForwardBatch(b *testing.B) {
+	gpuNet := NewGPUNetwork()
+	defer gpuNet.Destroy()
+
+	if !gpuNet.IsAvailable() {
+		b.Skip("GPU not available, skipping GPU benchmark")
+	}
+
+	// MNIST-like network
+	layers := []LayerWeights{
+		{
+			Weights:    createRandomWeights(128, 784, 1000),
+			Bias:       createRandomBias(128, 1000),
+			Rows:       128,
+			Cols:       784,
+			Activation: ActivationReLU,
+		},
+		{
+			Weights:    createRandomWeights(10, 128, 1001),
+			Bias:       createRandomBias(10, 1001),
+			Rows:       10,
+			Cols:       128,
+			Activation: ActivationNone,
+		},
+	}
+
+	// Batch of 100 samples
+	batchSize := 100
+	inputs := make([][]float32, batchSize)
+	for i := 0; i < batchSize; i++ {
+		inputs[i] = createRandomInput(784, int64(2000+i))
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = gpuNet.ForwardBatch(inputs, layers)
+	}
+}
+
+// BenchmarkForwardSequential benchmarks sequential GPU inference for comparison.
+func BenchmarkForwardSequential(b *testing.B) {
+	gpuNet := NewGPUNetwork()
+	defer gpuNet.Destroy()
+
+	if !gpuNet.IsAvailable() {
+		b.Skip("GPU not available, skipping GPU benchmark")
+	}
+
+	// MNIST-like network
+	layers := []LayerWeights{
+		{
+			Weights:    createRandomWeights(128, 784, 1100),
+			Bias:       createRandomBias(128, 1100),
+			Rows:       128,
+			Cols:       784,
+			Activation: ActivationReLU,
+		},
+		{
+			Weights:    createRandomWeights(10, 128, 1101),
+			Bias:       createRandomBias(10, 1101),
+			Rows:       10,
+			Cols:       128,
+			Activation: ActivationNone,
+		},
+	}
+
+	// Same batch size for fair comparison
+	batchSize := 100
+	inputs := make([][]float32, batchSize)
+	for i := 0; i < batchSize; i++ {
+		inputs[i] = createRandomInput(784, int64(3000+i))
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// Sequential processing (old approach)
+		for _, input := range inputs {
+			_, _ = gpuNet.Forward(input, layers)
+		}
+	}
+}

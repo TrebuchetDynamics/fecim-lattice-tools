@@ -41,6 +41,18 @@ type SoftmaxParams struct {
 // SoftmaxParamsSize is the byte size of SoftmaxParams (16 bytes).
 const SoftmaxParamsSize = 16
 
+// BatchLayerParams matches the batch shader's uniform buffer layout (std140).
+// Must match dense_mvm_batch.comp binding 0 EXACTLY.
+type BatchLayerParams struct {
+	Rows       int32 // Output features (offset 0)
+	Cols       int32 // Input features (offset 4)
+	BatchSize  int32 // Number of samples (offset 8)
+	Activation int32 // 0=none, 1=relu (offset 12)
+}
+
+// BatchLayerParamsSize is the byte size of BatchLayerParams (16 bytes).
+const BatchLayerParamsSize = 16
+
 // EncodeLayerParams encodes LayerParams into a byte slice for GPU upload.
 func EncodeLayerParams(p LayerParams) []byte {
 	buf := make([]byte, LayerParamsSize)
@@ -58,6 +70,16 @@ func EncodeSoftmaxParams(p SoftmaxParams) []byte {
 	binary.LittleEndian.PutUint32(buf[4:8], uint32(p.Padding1))
 	binary.LittleEndian.PutUint32(buf[8:12], uint32(p.Padding2))
 	binary.LittleEndian.PutUint32(buf[12:16], uint32(p.Padding3))
+	return buf
+}
+
+// EncodeBatchLayerParams encodes BatchLayerParams into a byte slice for GPU upload.
+func EncodeBatchLayerParams(p BatchLayerParams) []byte {
+	buf := make([]byte, BatchLayerParamsSize)
+	binary.LittleEndian.PutUint32(buf[0:4], uint32(p.Rows))
+	binary.LittleEndian.PutUint32(buf[4:8], uint32(p.Cols))
+	binary.LittleEndian.PutUint32(buf[8:12], uint32(p.BatchSize))
+	binary.LittleEndian.PutUint32(buf[12:16], uint32(p.Activation))
 	return buf
 }
 
@@ -105,8 +127,9 @@ func Weights2DToFlat(weights [][]float64) []float32 {
 }
 
 // Compile-time size assertions
-var _ = [1]struct{}{}[LayerParamsSize-16]   // LayerParams must be 16 bytes
-var _ = [1]struct{}{}[SoftmaxParamsSize-16] // SoftmaxParams must be 16 bytes
+var _ = [1]struct{}{}[LayerParamsSize-16]      // LayerParams must be 16 bytes
+var _ = [1]struct{}{}[SoftmaxParamsSize-16]    // SoftmaxParams must be 16 bytes
+var _ = [1]struct{}{}[BatchLayerParamsSize-16] // BatchLayerParams must be 16 bytes
 
 // Unused import guard
 var _ = math.Float32bits

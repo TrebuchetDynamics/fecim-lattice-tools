@@ -1,0 +1,63 @@
+#version 450
+
+// Batched dense layer: Y[batch, rows] = X[batch, cols] @ W[rows, cols]^T + b[rows]
+// Each workgroup handles one (batch, row) output element.
+// Dispatch: (ceil(rows/16), ceil(batchSize/16), 1) workgroups
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+// Layer parameters (std140 layout)
+layout(std140, binding = 0) uniform BatchLayerParams {
+    int rows;       // Output features
+    int cols;       // Input features
+    int batchSize;  // Number of samples in batch
+    int activation; // 0=none, 1=relu
+};
+
+// Weight matrix W[rows][cols] in row-major order
+layout(std430, binding = 1) buffer WeightBuffer {
+    float W[];
+};
+
+// Bias vector b[rows]
+layout(std430, binding = 2) buffer BiasBuffer {
+    float b[];
+};
+
+// Input batch X[batchSize][cols] in row-major order
+layout(std430, binding = 3) buffer InputBuffer {
+    float X[];
+};
+
+// Output batch Y[batchSize][rows] in row-major order
+layout(std430, binding = 4) buffer OutputBuffer {
+    float Y[];
+};
+
+void main() {
+    uint rowIdx = gl_GlobalInvocationID.x;
+    uint batchIdx = gl_GlobalInvocationID.y;
+
+    // Bounds check
+    if (rowIdx >= rows || batchIdx >= batchSize) return;
+
+    // Compute Y[batch, row] = sum(W[row, j] * X[batch, j]) + b[row]
+    float sum = b[rowIdx];
+
+    // Input offset for this batch sample
+    uint inputOffset = batchIdx * cols;
+    // Weight offset for this output row
+    uint weightOffset = rowIdx * cols;
+
+    for (int j = 0; j < cols; j++) {
+        sum += W[weightOffset + j] * X[inputOffset + j];
+    }
+
+    // Optional inline ReLU
+    if (activation == 1) {
+        sum = max(0.0, sum);
+    }
+
+    // Output index: Y[batch, row] = Y[batchIdx * rows + rowIdx]
+    Y[batchIdx * rows + rowIdx] = sum;
+}

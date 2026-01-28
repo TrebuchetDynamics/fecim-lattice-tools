@@ -19,8 +19,9 @@ type EmbeddedCrossbarApp struct {
 // Returns an error if the crossbar array cannot be initialized.
 func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 	ca := &CrossbarApp{
-		selectedRow: -1, // No selection initially
-		selectedCol: -1,
+		selectedRow:   -1, // No selection initially
+		selectedCol:   -1,
+		tabHasNewData: make(map[string]bool),
 	}
 
 	// Initialize with default config
