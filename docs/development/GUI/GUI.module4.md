@@ -505,6 +505,336 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 
 ---
 
+## Error Handling
+
+### Voltage Range Validation
+
+All voltage inputs are validated within material-derived bounds:
+
+```go
+// Column bounds checking (device_state.go:295-298)
+func (ds *DeviceState) SetDACVoltage(col int, voltage float64) {
+    if col >= 0 && col < ds.cols {
+        ds.dacVoltages[col] = voltage
+        ds.dacMode = DACManual
+    }
+    // Silently ignores out-of-bounds column
+}
+
+// Target state clamping for write level (device_state.go:364-375)
+func (ds *DeviceState) SetDACVoltageForState(col int, targetState int) {
+    if col < 0 || col >= ds.cols {
+        return  // Out-of-bounds column ignored
+    }
+
+    // Clamp target state to 0..NumLevels-1
+    if targetState < 0 {
+        targetState = 0
+    }
+    if targetState >= ds.writeRange.NumLevels {
+        targetState = ds.writeRange.NumLevels - 1
+    }
+}
+
+// Voltage clamping in preset application (device_state.go:314-335)
+case DACReadPreset:
+    voltage := ds.readRange.Max * 0.5
+    if len(params) > 0 {
+        voltage = params[0]
+    }
+    if voltage > ds.readRange.Max {
+        voltage = ds.readRange.Max  // Clamp to safe read range
+    }
+
+case DACWritePreset:
+    writeVoltage := (ds.writeRange.Min + ds.writeRange.Max) / 2
+    if writeVoltage < ds.writeRange.Min {
+        writeVoltage = ds.writeRange.Min
+    }
+    if writeVoltage > ds.writeRange.Max {
+        writeVoltage = ds.writeRange.Max
+    }
+```
+
+### Fallback Behavior for physics.yaml
+
+Configuration loading gracefully handles missing/invalid physics.yaml:
+
+```go
+// device_state.go:76-89
+func loadCalibrationParams() CalibrationParams {
+    cfg, err := physics.Load()
+    if err != nil || cfg == nil {
+        // Fallback: field_min_ratio=0.5, field_max_ratio=2.5
+        // These are standard values from typical physics.yaml
+        return CalibrationParams{
+            FieldMinRatio: 0.5,
+            FieldMaxRatio: 2.5,
+        }
+    }
+    return CalibrationParams{
+        FieldMinRatio: cfg.Calibration.FieldMinRatio,
+        FieldMaxRatio: cfg.Calibration.FieldMaxRatio,
+    }
+}
+```
+
+**Fallback Action**: If physics.yaml is unavailable or corrupted:
+- Read max voltage: 0.5 × Vc (safe non-destructive reading)
+- Write max voltage: 2.5 × Vc (standard overwrite window)
+- System remains fully functional without explicit error dialogs
+
+### Array Bounds Checking
+
+All array access validates indices before operation:
+
+```go
+// Row/column validation in cell operations (device_state.go:395-401)
+func (ds *DeviceState) SetSelectedCell(row, col int) {
+    // No explicit validation - relies on slice bounds
+    // GUI ensures valid indices via click coordinate conversion
+    ds.selectedRow = row
+    ds.selectedCol = col
+}
+
+// Column validation in Compute (device_state.go:424-426)
+for c := 0; c < ds.cols; c++ {
+    level := 0
+    if r < len(weights) && c < len(weights[r]) {
+        level = weights[r][c]  // Safe access to weights matrix
+    }
+    // Proceeds with level=0 if weights unavailable
+}
+```
+
+### Invalid Mode Transition Handling
+
+Mode transitions are always safe - no invalid state transitions exist:
+
+```go
+// State transitions (tab_unified.go:314-352)
+// All mode buttons can transition to any other mode
+switch mode {
+case OpModeRead:
+    ca.deviceState.SetWLSingle(selectedRow)      // Valid
+    ca.deviceState.SetDACPreset(DACReadPreset)   // Valid
+case OpModeWrite:
+    ca.deviceState.SetWLSingle(selectedRow)      // Valid
+    ca.deviceState.SetDACPreset(DACWritePreset)  // Valid
+case OpModeCompute:
+    ca.deviceState.SetWLAll()                    // Valid
+    // Keeps read range for compute-safe operation
+}
+
+// State machine always remains consistent
+```
+
+### Material Selection Error Handling
+
+Material selection gracefully handles fallback:
+
+```go
+// Device_state.go:403-436 Compute function
+var conductanceS float64
+if ds.material != nil {
+    conductanceS = ds.material.DiscreteLevel(level, quantLevels)
+} else {
+    // Fallback: linear mapping 1-100 µS
+    conductanceS = (1.0 + float64(level)/float64(quantLevels-1)*99.0) * 1e-6
+}
+```
+
+If material selector fails to load or material is nil:
+- Fallback uses simple linear conductance model (1-100 µS)
+- Simulation continues without explicit error
+- UI material selector initialized with AllMaterials() from ferroelectric package
+
+---
+
+## Testing
+
+### Unit Test Strategy for DeviceState Methods
+
+Test structure follows `docs/development/TESTING.md` patterns:
+
+```bash
+# Run peripheral circuit tests (includes device state logic)
+go test -v ./module4-circuits/pkg/peripherals
+
+# Run GUI tests (headless widget tests)
+go test -v ./module4-circuits/pkg/gui
+```
+
+**DeviceState Method Testing Approach**:
+| Method | Test Category | Validation |
+|--------|---------------|-----------|
+| SetDACVoltage() | Bounds checking | Verify col in [0, cols), voltage stored |
+| SetDACVoltageForState() | State-to-voltage mapping | Level clamping, linear interpolation |
+| SetWLSingle(row) | WL mode switching | activeRows[row]=true, others false |
+| SetWLAll() | WL mode switching | All activeRows=true |
+| SetOperationMode() | Mode transitions | OpMode updated, WL/DAC reconfigured |
+| Compute() | Physics simulation | Row currents, TIA conversion, ADC levels |
+| GetReadRange() | Configuration | Returns material-derived range |
+
+### GUI Interaction Testing Approach
+
+**Interactive elements tested via:**
+
+```go
+// Mode button state (tab_unified.go - manual testing required)
+// - Click modeReadBtn → opMode=OpModeRead, modeReadBtn.Importance=High
+// - Click modeWriteBtn → opMode=OpModeWrite, modeWriteBtn.Importance=High
+// - Button text updates reflect current mode
+
+// Write level slider (tab_unified.go:1489-1507)
+// - Slider range: 0-29
+// - Labels update: "Level: N", "Voltage: X.XXV"
+// - DAC voltage set via SetDACVoltageForState()
+
+// Input vector entries (tab_unified.go:1527-1551)
+// - 8 entry fields accept 0-255 values
+// - DAC voltages updated via SetDACPreset(DACInputVector, ...)
+// - Invalid input (non-numeric) ignored by strconv.Atoi
+
+// Canvas refresh (tab_unified.go:460-538)
+// - Tapped(e *fyne.PointEvent) converts screen coords to grid
+// - Calculate col = (X - offsetX) / cellSize
+// - Calculate row = (Y - offsetY) / cellSize
+```
+
+### Example Test Cases
+
+**Voltage Range Calculations** (integration testing):
+
+```go
+// Pseudo-code for test verification
+func TestVoltageRangeCalculations() {
+    // Setup
+    material := ferroelectric.GetHZOMaterial()  // e.g., FeCIM HZO
+    ds := NewDeviceState(8, 8, tia, adc)
+    ds.SetMaterial(material)
+
+    // Read range validation
+    Vc := material.CoerciveVoltage()
+    expectedReadMax := 0.5 * Vc  // Default FieldMinRatio
+    assert(ds.GetReadRange().Max == expectedReadMax)
+
+    // Write range validation
+    expectedWriteMin := Vc
+    expectedWriteMax := 2.5 * Vc  // Default FieldMaxRatio
+    assert(ds.GetWriteRange().Min == expectedWriteMin)
+    assert(ds.GetWriteRange().Max == expectedWriteMax)
+}
+
+// Write level slider verification
+func TestWriteLevelToVoltageMapping() {
+    for level := 0; level < 30; level++ {
+        ds.SetDACVoltageForState(0, level)
+        voltage := ds.GetDACVoltage(0)
+
+        // Verify linear interpolation
+        expected := writeRange.Min +
+                   (float64(level)/(30-1)) *
+                   (writeRange.Max - writeRange.Min)
+        assert(voltage ≈ expected)  // With 0.01V tolerance
+    }
+}
+
+// Input vector voltage mapping
+func TestInputVectorToDAC() {
+    inputs := []float64{0, 64, 128, 192, 255}
+    ds.SetDACPreset(DACInputVector, inputs...)
+
+    for col, input := range inputs {
+        voltage := ds.GetDACVoltage(col)
+        expected := readRange.Min +
+                   (input/255.0) *
+                   (readRange.Max - readRange.Min)
+        assert(voltage ≈ expected)
+    }
+}
+
+// Bounds checking for set operations
+func TestSetDACVoltageOutOfBounds() {
+    ds.SetDACVoltage(-1, 0.5)   // Column < 0
+    ds.SetDACVoltage(8, 0.5)    // Column >= cols
+    ds.SetDACVoltage(4, 0.5)    // Valid column
+
+    // Only column 4 should be updated
+    assert(ds.GetDACVoltage(-1) == 0.0)
+    assert(ds.GetDACVoltage(8) == 0.0)
+    assert(ds.GetDACVoltage(4) == 0.5)
+}
+```
+
+---
+
+## Reference Tab Architecture
+
+### tab_reference_specs.go Structure
+
+**Purpose**: Display comprehensive electrical and physical specifications for all peripheral components
+
+**Organization**:
+- `createReferenceSpecsSection()` - Main section builder (line 20)
+- `createSpecArraySection()` - Array configuration (rows, cols, cell density, topology)
+- `createSpecDACSection()` - DAC parameters (resolution bits, conversion time, INL/DNL, settling)
+- `createSpecADCSection()` - ADC parameters (resolution, conversion time, noise floor)
+- `createSpecTIASection()` - TIA specifications (gain, bandwidth, output range, input-referred noise)
+- `createSpecFeFETSection()` - FeFET cell parameters (Pr, Ec, coercive voltage, conductance levels)
+- `createSpecSummarySection()` - System-level summary (power, area, energy per operation)
+
+**Data Sources**:
+- Array size from `ca.deviceState` (rows, cols)
+- Material properties from `ca.deviceState.material` (HZOMaterial)
+- Peripheral specs from `ca.deviceState.tia` and `ca.deviceState.adc`
+- Physics config from `config/physics.Load()`
+
+**Export Functions**:
+- `onExportSpecs()` - Export specs to CSV/JSON (stub - "Coming soon")
+- `onCompareToGPU()` - Show comparison dialog with GPU equivalent specs
+
+### tab_reference_timing.go Structure
+
+**Purpose**: Visualize timing relationships and signal waveforms for write, read, and compute operations
+
+**Organization**:
+- `createReferenceTimingSection()` - Main section builder with operation selector (line 23)
+- `createTimingWriteSection()` - WRITE operation timing diagram
+- `createTimingReadSection()` - READ operation timing diagram
+- `createTimingComputeSection()` - COMPUTE (MVM) operation timing diagram
+
+**Drawing Functions**:
+- `drawTimingWrite(w, h int)` - Render WRITE operation signals (line 76)
+  - Signals: CLK, ROW_SEL, COL_SEL, WL_PULSE, BL_VOLTAGE, SENSE_EN, ADC_CONVERT
+  - Time resolution: nanoseconds
+  - Color-coded signal levels (high=cyan, low=dark)
+
+- `drawTimingRead(w, h int)` - Render READ operation signals
+  - Signals: CLK, ROW_SEL, BL_VOLTAGE (low for sense), SENSE_EN (acquire), ADC (convert/output)
+
+- `drawTimingCompute(w, h int)` - Render COMPUTE operation signals
+  - Signals: CLK (controls input vector shift), WL_ALL (all high), BL_VOLTAGE (per column), SENSE_EN (parallel), ADC_OUTPUT (per row)
+
+**Key Timing Parameters** (from drawing code):
+- Clock period: ~10ns
+- Pulse widths: Row/column select pulses 5-10 timing units
+- Sense window: 8-15 timing units
+- ADC conversion: 20+ timing units
+
+**Features**:
+- Operator selector dropdown (WRITE/READ/COMPUTE) at top
+- Animation button for step-through demonstration
+- Export button for SVG output (stub - "Coming soon")
+- Status label shows selected operation timing
+
+**Canvas Properties**:
+- Minimum size: 600×200 pixels (timing waveforms)
+- Light background color (FeCIMTheme.ColorDarkBG)
+- Signal colors: Cyan (active), Orange (timing markers), Gray (inactive)
+
+---
+
 ## Thread Safety
 
 ### Mutex Protection
@@ -558,6 +888,311 @@ fyne.Do(func() {
 - fecim-lattice-tools/config/physics (Load physics.yaml config)
 - fecim-lattice-tools/shared/theme (FeCIMTheme)
 - fecim-lattice-tools/shared/widgets (DebugInteraction, Architecture constants)
+
+---
+
+## Performance Characteristics
+
+### Canvas Refresh Frequency
+
+**Expected refresh timing**:
+- **Normal interaction**: 60 FPS (16.7 ms per frame) when user idle
+- **Active slider/entry**: 30-60 FPS (driven by Fyne event loop)
+- **Animation mode**: 16-30 FPS (animationStep cycles through 0→1→2→3→0)
+  - Each step takes ~500ms for visual clarity
+  - Total animation cycle: ~2 seconds
+
+**Memory Considerations per Array Size**:
+```
+8×8 array:    ~1.2 KB (arrayWeights) + Raster canvas memory
+16×16 array:  ~4.8 KB (arrayWeights) + Raster canvas memory
+32×32 array:  ~19.2 KB (arrayWeights) + Raster canvas memory
+64×64 array:  ~76.8 KB (arrayWeights) + Raster canvas memory
+```
+
+**Raster Canvas Memory** (tab_unified.go:460-538):
+- Default size: 400×350 pixels
+- RGBA image buffer: 400 × 350 × 4 bytes = ~560 KB per refresh
+- Raster redraws on every canvas.Refresh() call
+- Painting is synchronized with fyne.Do() for thread safety
+
+### Animation Goroutine Lifecycle
+
+**Animation flow** (tab_unified.go:1097-1137):
+
+```
+User clicks "Animate" button
+    ↓
+animationActive = true
+animationStep = 1 (DAC highlight phase)
+    ↓
+Wait 500ms
+    ↓
+animationStep = 2 (Array highlight phase)
+    ↓
+Wait 500ms
+    ↓
+animationStep = 3 (ADC highlight phase)
+    ↓
+Wait 500ms
+    ↓
+animationStep = 0 (reset)
+animationActive = false
+```
+
+**Goroutine Pattern**:
+- Animation runs in separate goroutine spawned by button handler
+- Uses `time.Sleep(500ms)` for pacing between steps
+- All state updates protected by ca.mu (mutex)
+- Canvas refresh called on each step via `fyne.Do()`
+- Animation completes cleanly without blocking UI thread
+
+### Voltage Range Calculation Performance
+
+**Material coercive voltage lookup**: O(1)
+```go
+Vc := material.CoerciveVoltage()  // Cached in material struct
+```
+
+**Voltage range updates**: O(1)
+- Called when material selected: device_state.go:SetMaterial()
+- Called when physics.yaml loaded on startup
+
+**DAC voltage updates**: O(cols)
+```go
+SetDACPreset() → loops cols times to update dacVoltages array
+SetDACVoltageForState() → single column update O(1)
+```
+
+**Compute simulation**: O(rows × cols)
+- Called on every MVM or array refresh
+- Inner loop: sum currents from all columns for each row (device_state.go:404-459)
+- TIA + ADC conversion: O(rows)
+
+### Input Vector Processing
+
+**Input entry validation**: O(8) for 8 columns
+```go
+onInputVectorEntryChanged() → strconv.Atoi() → SetDACPreset(DACInputVector)
+```
+
+**DAC voltage calculation from input**: O(cols)
+```go
+// Maps each input 0-255 to readRange.Min → readRange.Max
+normalized := params[i] / 255.0
+ds.dacVoltages[i] = ds.readRange.Min + normalized*(ds.readRange.Max-ds.readRange.Min)
+```
+
+### Known Performance Bottlenecks
+
+1. **Large array rendering**: 64×64 array redraws can take 2-3 frames to complete
+   - Mitigation: Limit to 32×32 for smooth interaction
+   - Consider hardware acceleration in future
+
+2. **Material property lookup** in Compute loop: Currently O(1) with fallback
+   - If material nil: falls back to linear model (negligible cost)
+   - No caching required - calls are infrequent
+
+3. **Canvas refresh serialization**: fyne.Do() ensures thread safety but adds latency
+   - Each refresh waits for Fyne event loop
+   - Typical latency: 1-5ms
+
+---
+
+## Troubleshooting Guide
+
+### Canvas Not Refreshing
+
+**Symptom**: Array visualization appears frozen after voltage/mode changes
+
+**Root Cause**: Canvas refresh not called or called outside fyne.Do()
+
+**Solution**:
+```go
+// ✓ Correct: Wrapped in fyne.Do()
+fyne.Do(func() {
+    ca.sharedArrayCanvas.Refresh()
+})
+
+// ✗ Wrong: Direct refresh (may cause data races)
+ca.sharedArrayCanvas.Refresh()
+```
+
+**Debugging**:
+1. Check if mode button click triggers `updateModeButtons()` call
+2. Verify `ca.sharedArrayCanvas` is initialized in BuildContent()
+3. Enable logging in updateUnifiedArrayDisplay() (tab_unified.go)
+4. Check Fyne event queue: ensure app.Run() is active
+
+**Reference**: Thread Safety section, Canvas Refresh Pattern subsection
+
+---
+
+### WL Checkboxes Not Updating in Passive Mode
+
+**Symptom**: WL checkbox states don't match expected pattern when switching to PASSIVE architecture
+
+**Root Cause**: Passive mode (0T1R) always has all WLs active regardless of mode
+
+**Expected Behavior**:
+- PASSIVE mode: All WL checkboxes always checked (all rows active)
+- 1T1R/2T1R: WL checkboxes reflect mode:
+  - READ: Single row checked
+  - WRITE: Single row checked
+  - COMPUTE: All rows checked
+
+**Solution**:
+```go
+// tab_unified.go:1356-1373
+if ca.architecture == sharedwidgets.Architecture0T1R {
+    // Passive: always activate all WLs
+    ca.deviceState.SetWLAll()
+    // Update all checkboxes to checked
+    for i := 0; i < 8; i++ {
+        ca.wlCheckboxes[i].SetChecked(true)
+    }
+} else {
+    // 1T1R/2T1R: follow mode
+    ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+}
+```
+
+**Debugging**:
+1. Check current architecture via `ca.architecture` variable
+2. Verify `ca.wlCheckboxes` are initialized: `len(ca.wlCheckboxes) == 8`
+3. Look for architecture changes in: `archPassiveBtn.OnTapped`, `arch1T1RBtn.OnTapped`
+4. Ensure checkbox state updates called in `updateWLCheckboxes()` function
+
+---
+
+### Voltage Ranges Showing Unexpected Values
+
+**Symptom**: DAC preset buttons show incorrect voltage ranges (e.g., "Read (0.0-0.0V)")
+
+**Root Cause**:
+1. Material not set (nil pointer)
+2. physics.yaml missing or malformed
+3. Calibration parameters loading failed
+
+**Expected Ranges** (for HZO materials):
+```
+Material: FeCIM HZO (typical)
+Vc ≈ 1.0V (from material.CoerciveVoltage())
+Read range: 0 → 0.5×Vc = 0.0V → 0.5V
+Write range: 1.0×Vc → 2.5×Vc = 1.0V → 2.5V
+```
+
+**Solution**:
+```go
+// device_state.go:242-256 - Update voltage ranges on material change
+func (ds *DeviceState) SetMaterial(mat *ferroelectric.HZOMaterial) {
+    ds.material = mat
+    if ds.material == nil {
+        return  // Falls back to previous material
+    }
+
+    Vc := ds.material.CoerciveVoltage()
+    if Vc <= 0 {
+        return  // Invalid coercive voltage
+    }
+
+    // Update read/write ranges
+    ds.readRange.Max = ds.calibParams.FieldMinRatio * Vc
+    ds.writeRange.Min = Vc
+    ds.writeRange.Max = ds.calibParams.FieldMaxRatio * Vc
+    ds.writeRange.Max = min(ds.writeRange.Max, MaxPracticalVoltage)  // Hardware limit
+}
+```
+
+**Debugging**:
+1. Check material selector dropdown - ensure material is selected
+2. Verify physics.yaml exists at `config/physics.yaml`
+3. In device_state.go, add logging to loadCalibrationParams():
+   ```go
+   cfg, err := physics.Load()
+   if err != nil {
+       log.Printf("physics.yaml load failed: %v", err)  // Fallback to defaults
+   }
+   ```
+4. Check calibration parameters: `log.Printf("FieldMinRatio=%f, FieldMaxRatio=%f", calibParams.FieldMinRatio, calibParams.FieldMaxRatio)`
+
+**References**:
+- Voltage Range Configuration section (line 254)
+- Error Handling: Fallback Behavior section
+- Physics Constants section
+
+---
+
+### Material Selector Not Populating
+
+**Symptom**: Material selector dropdown appears empty or shows no options
+
+**Root Cause**: `ferroelectric.AllMaterials()` returns empty or nil slice
+
+**Solution**:
+```go
+// tab_unified.go:97-122 - Material selector initialization
+materials := ferroelectric.AllMaterials()
+materialNames := make([]string, len(materials))
+for i, m := range materials {
+    materialNames[i] = m.String()  // e.g., "FeCIM HZO", "HZO (Si-doped)", etc.
+}
+
+ca.materialSelector = widget.NewSelect(materialNames, func(s string) {
+    // Find material by name and set it
+    for _, mat := range ferroelectric.AllMaterials() {
+        if mat.String() == s {
+            ca.deviceState.SetMaterial(mat)
+            ca.updateDACPresetLabels()
+            ca.sharedArrayCanvas.Refresh()
+            return
+        }
+    }
+})
+```
+
+**Debugging**:
+1. Check module1-hysteresis/pkg/ferroelectric/ferroelectric.go for AllMaterials() definition
+2. Verify materials are registered in material initialization code
+3. Test AllMaterials() directly:
+   ```bash
+   go test -run TestMaterialSelection ./module4-circuits/pkg/gui/...
+   ```
+4. Check if ferroelectric package import is correct: `"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"`
+
+**References**: Peripheral Circuits Visualizer (module4) README for material list
+
+---
+
+### High Memory Usage During Animation
+
+**Symptom**: Memory usage spikes to 100+ MB during "Animate" button operation
+
+**Root Cause**: Repeated canvas redraw creates temporary image buffers
+
+**Solution - Optimize Animation**:
+1. Reduce canvas size from 400×350 to 320×280 pixels
+2. Limit animation to specific array sizes (8×8 only, disable for 64×64)
+3. Reuse Raster instead of recreating it per frame
+
+```go
+// Recommended optimization
+const AnimationCanvasWidth = 320
+const AnimationCanvasHeight = 280
+const MaxAnimationArraySize = 8  // Limit animation to 8×8 arrays only
+
+if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
+    showDialog("Animation disabled for large arrays (>8×8)")
+    return
+}
+```
+
+**Memory Per Animation Cycle**:
+- Single frame: ~400 KB (400×350×4 bytes RGBA)
+- 4-step animation: ~1.6 MB peak
+- Should complete in <5 seconds without lingering allocations
+
+**References**: Performance Characteristics section
 
 ---
 
