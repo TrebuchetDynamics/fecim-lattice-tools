@@ -1,8 +1,8 @@
-# Hysteresis Module GPU Integration Plan
+# Hysteresis Module GPU Integration Plan (v2 - Revised)
 
 ## Overview
 
-Integrate module1-hysteresis with the shared Vulkan compute infrastructure (`shared/compute/`) to GPU-accelerate the Preisach hysteresis model. The existing `preisach.comp` shader will be enhanced and connected to the shared compute pipeline.
+Integrate module1-hysteresis with the shared Vulkan compute infrastructure (`shared/compute/`) to GPU-accelerate the Preisach hysteresis model.
 
 ## Current State Analysis
 
@@ -10,175 +10,390 @@ Integrate module1-hysteresis with the shared Vulkan compute infrastructure (`sha
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| preisach.comp | module1-hysteresis/shaders/ | EXISTS but NOT integrated |
-| preisach.comp.spv | module1-hysteresis/shaders/ | Compiled, unused |
+| preisach.comp | module1-hysteresis/shaders/ | EXISTS but NOT integrated (different physics model) |
 | MayergoyzPreisach | pkg/ferroelectric/preisach_advanced.go | CPU-only, 100% serial |
 | shared/compute | shared/compute/*.go | Production-ready |
 
-### Key Finding: Orphaned Shader
+### Hysteron Count Formula
 
-The `preisach.comp` shader (88 lines) implements basic tanh-based Preisach switching for multiple cells in parallel, but:
-- Has NO Go code calling it
-- Physics model doesn't match `MayergoyzPreisach` (hysteron-based)
-- Uses simple cell struct, not hysteron grid
+For a gridSize of N, the number of hysterons is approximately:
+```
+numHysterons ≈ N * (N - 1) / 2
+```
+- gridSize=50 → ~1225 hysterons
+- gridSize=100 → ~4950 hysterons
+- gridSize=200 → ~19900 hysterons
 
-### CPU Bottlenecks in preisach_advanced.go
+## Design Decisions
 
-| Function | Complexity | Typical Size | GPU Benefit |
-|----------|------------|--------------|-------------|
-| `Update()` | O(N) | 5000 hysterons | HIGH - parallel state updates |
-| `initializeDistribution()` | O(N) | 5000 exp() calls | HIGH - parallel Gaussian |
-| `GetHysteresisLoop()` | O(N × points) | 1M operations | HIGH - batch processing |
-| `SimulateDomainSwitching()` | O(steps × N) | 5M operations | MEDIUM - timestepping |
+### 1. Precision Handling Strategy
+
+**Decision: Accept float32 precision loss with documented tolerance.**
+
+| Aspect | CPU | GPU | Strategy |
+|--------|-----|-----|----------|
+| Hysteron α, β | float64 | float32 | Convert, accept ~1e-7 relative error |
+| Polarization sum | float64 | float32 | Use Kahan summation, accept 1e-4 tolerance |
+| Test tolerance | - | - | Use 1e-4 (not 1e-6) due to float32 |
+
+**Rationale:** Double-precision GLSL requires VK_KHR_shader_float64 extension which isn't universally available. The physics doesn't require 1e-6 precision - ferroelectric measurements typically have ~1% uncertainty.
+
+### 2. Temperature Dependence
+
+**Decision: GPU path ignores temperature (operates at room temperature 300K).**
+
+Temperature-dependent calculations (`temperatureCorrectedEc()`) remain CPU-only. For temperature sweeps, use CPU path. Document this limitation.
+
+### 3. Wake-up Factor
+
+**Decision: GPU path uses fixed wake-up factor of 1.0 (fully woken up).**
+
+Wake-up simulation requires per-cycle state tracking which adds complexity. Users needing wake-up modeling should use CPU path.
 
 ## Proposed Architecture
 
-### New Files
+### GPU Hysteron Struct (16 bytes, std430 aligned)
 
-```
-module1-hysteresis/
-├── pkg/ferroelectric/
-│   └── gpu_preisach.go      # GPUPreisach wrapper (NEW)
-├── shaders/
-│   ├── preisach.comp        # Basic cell shader (EXISTS - keep for simple mode)
-│   ├── hysteron_update.comp # Hysteron state update (NEW)
-│   ├── hysteron_reduce.comp # Polarization reduction (NEW)
-│   └── distribution.comp    # Gaussian distribution init (NEW)
+```glsl
+struct GPUHysteron {
+    float alpha;    // 4 bytes - positive switching threshold (V/m)
+    float beta;     // 4 bytes - negative switching threshold (V/m)
+    int state;      // 4 bytes - current state (+1 or -1)
+    float weight;   // 4 bytes - distribution weight μ(α,β)
+};
 ```
 
-### Core Integration
+### Go-to-GPU Serialization Code
 
 ```go
-// module1-hysteresis/pkg/ferroelectric/gpu_preisach.go
-
-import "fecim-lattice-tools/shared/compute"
-
-// GPUPreisach provides GPU-accelerated Preisach hysteresis model
-type GPUPreisach struct {
-    ctx            *compute.VulkanContext
-    updatePipeline *compute.ComputePipeline
-    reducePipeline *compute.ComputePipeline
-
-    // GPU buffers
-    hystBuffer     *compute.GPUBuffer  // Hysteron states (alpha, beta, state)
-    distBuffer     *compute.GPUBuffer  // Distribution weights
-    outputBuffer   *compute.GPUBuffer  // Reduction output
-
-    numHysterons   int
-    cpuFallback    *MayergoyzPreisach  // Fallback when GPU unavailable
+// GPUHysteron matches shader struct layout (16 bytes, std430)
+type GPUHysteron struct {
+    Alpha  float32
+    Beta   float32
+    State  int32
+    Weight float32
 }
 
-func NewGPUPreisach(material *HZOMaterial, gridSize int) (*GPUPreisach, error)
-func (g *GPUPreisach) Update(E float64) float64
-func (g *GPUPreisach) GetHysteresisLoop(Emax float64, points int) ([]float64, []float64)
-func (g *GPUPreisach) Destroy()
+// serializeHysterons converts CPU model to GPU format
+func serializeHysterons(m *MayergoyzPreisach) []GPUHysteron {
+    gpuHyst := make([]GPUHysteron, len(m.hysterons))
+    for i, h := range m.hysterons {
+        gpuHyst[i] = GPUHysteron{
+            Alpha:  float32(h.Alpha),
+            Beta:   float32(h.Beta),
+            State:  int32(h.State),
+            Weight: float32(m.distribution[i][0]),
+        }
+    }
+    return gpuHyst
+}
+
+// deserializeStates updates CPU model from GPU results
+func deserializeStates(m *MayergoyzPreisach, gpuHyst []GPUHysteron) {
+    for i := range m.hysterons {
+        m.hysterons[i].State = int(gpuHyst[i].State)
+    }
+}
 ```
 
 ## Implementation Tasks
 
 ### Phase 1: Shader Development
 
-1. **hysteron_update.comp** - Parallel hysteron state update
-   ```glsl
-   #version 450
-   layout(local_size_x = 256) in;
+#### 1. hysteron_update.comp - Parallel State Update (Complete)
 
-   struct Hysteron {
-       float alpha;    // Positive switching threshold
-       float beta;     // Negative switching threshold
-       int state;      // +1 or -1
-       float weight;   // Distribution weight
-   };
+```glsl
+#version 450
 
-   layout(std140, binding = 0) uniform Params {
-       float E;           // Applied electric field
-       int numHysterons;
-       float padding[2];
-   };
+layout(local_size_x = 256) in;
 
-   layout(std430, binding = 1) buffer HysteronBuffer {
-       Hysteron hysterons[];
-   };
+struct GPUHysteron {
+    float alpha;
+    float beta;
+    int state;
+    float weight;
+};
 
-   void main() {
-       uint idx = gl_GlobalInvocationID.x;
-       if (idx >= numHysterons) return;
+layout(std140, binding = 0) uniform UpdateParams {
+    float E;              // Applied electric field (V/m)
+    uint numHysterons;    // Total hysteron count
+    float padding[2];     // std140 alignment
+};
 
-       Hysteron h = hysterons[idx];
+layout(std430, binding = 1) buffer HysteronBuffer {
+    GPUHysteron hysterons[];
+};
 
-       // Classical Preisach switching logic
-       if (E >= h.alpha) {
-           hysterons[idx].state = 1;   // Switch UP
-       } else if (E <= h.beta) {
-           hysterons[idx].state = -1;  // Switch DOWN
-       }
-       // Else: stay in current state (memory effect)
-   }
-   ```
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= numHysterons) return;
 
-2. **hysteron_reduce.comp** - Parallel reduction for polarization
-   ```glsl
-   #version 450
-   layout(local_size_x = 256) in;
+    GPUHysteron h = hysterons[idx];
 
-   // Computes: P = Σ(weight_i * state_i)
-   // Uses workgroup shared memory for efficient reduction
+    // Classical Preisach switching: compare E against thresholds
+    if (E >= h.alpha) {
+        hysterons[idx].state = 1;   // Switch UP
+    } else if (E <= h.beta) {
+        hysterons[idx].state = -1;  // Switch DOWN
+    }
+    // Else: memory effect - stay in current state
+}
+```
 
-   shared float partialSums[256];
+#### 2. hysteron_reduce.comp - Parallel Reduction (Complete with Kahan)
 
-   layout(std430, binding = 1) buffer HysteronBuffer { ... };
-   layout(std430, binding = 2) buffer OutputBuffer {
-       float polarization;
-   };
-   ```
+```glsl
+#version 450
 
-3. **distribution.comp** - Parallel Gaussian distribution initialization
-   ```glsl
-   #version 450
-   layout(local_size_x = 256) in;
+// Two-phase parallel reduction for computing P = Σ(weight_i * state_i)
+// Phase 1: Each workgroup computes partial sum into shared memory
+// Phase 2: Final workgroup sums all partial results
 
-   // Computes bivariate Gaussian for each hysteron:
-   // weight = exp(-(da² - 2ρ*da*db + db²) / (2(1-ρ²)))
-   ```
+layout(local_size_x = 256) in;
+
+struct GPUHysteron {
+    float alpha;
+    float beta;
+    int state;
+    float weight;
+};
+
+layout(std140, binding = 0) uniform ReduceParams {
+    uint numHysterons;
+    uint numWorkgroups;   // For multi-pass reduction
+    float padding[2];
+};
+
+layout(std430, binding = 1) buffer HysteronBuffer {
+    GPUHysteron hysterons[];
+};
+
+layout(std430, binding = 2) buffer PartialSums {
+    float partials[];     // One per workgroup
+};
+
+layout(std430, binding = 3) buffer OutputBuffer {
+    float polarization;   // Final result
+};
+
+shared float sharedSums[256];
+shared float sharedComp[256];  // Kahan compensation terms
+
+void main() {
+    uint localIdx = gl_LocalInvocationID.x;
+    uint globalIdx = gl_GlobalInvocationID.x;
+    uint groupIdx = gl_WorkGroupID.x;
+
+    // Initialize with Kahan summation
+    float sum = 0.0;
+    float comp = 0.0;  // Compensation for lost low-order bits
+
+    // Each thread processes multiple elements (grid-stride loop)
+    for (uint i = globalIdx; i < numHysterons; i += gl_NumWorkGroups.x * 256) {
+        GPUHysteron h = hysterons[i];
+        float contribution = h.weight * float(h.state);
+
+        // Kahan summation step
+        float y = contribution - comp;
+        float t = sum + y;
+        comp = (t - sum) - y;
+        sum = t;
+    }
+
+    sharedSums[localIdx] = sum;
+    sharedComp[localIdx] = comp;
+    barrier();
+    memoryBarrierShared();
+
+    // Tree-based reduction within workgroup
+    for (uint stride = 128; stride > 0; stride >>= 1) {
+        if (localIdx < stride) {
+            // Combine with Kahan
+            float y = sharedSums[localIdx + stride] - sharedComp[localIdx];
+            float t = sharedSums[localIdx] + y;
+            sharedComp[localIdx] = (t - sharedSums[localIdx]) - y;
+            sharedSums[localIdx] = t;
+        }
+        barrier();
+        memoryBarrierShared();
+    }
+
+    // First thread writes workgroup result
+    if (localIdx == 0) {
+        partials[groupIdx] = sharedSums[0];
+    }
+
+    // Final reduction by first workgroup (for small number of workgroups)
+    barrier();
+    if (groupIdx == 0 && localIdx == 0) {
+        float finalSum = 0.0;
+        float finalComp = 0.0;
+        for (uint g = 0; g < numWorkgroups; g++) {
+            float y = partials[g] - finalComp;
+            float t = finalSum + y;
+            finalComp = (t - finalSum) - y;
+            finalSum = t;
+        }
+        polarization = finalSum;
+    }
+}
+```
+
+#### 3. distribution.comp - Parallel Gaussian Init
+
+```glsl
+#version 450
+
+layout(local_size_x = 256) in;
+
+struct GPUHysteron {
+    float alpha;
+    float beta;
+    int state;
+    float weight;
+};
+
+layout(std140, binding = 0) uniform DistParams {
+    float alphaM;     // Mean of alpha distribution
+    float betaM;      // Mean of beta distribution
+    float sigmaA;     // Std dev of alpha
+    float sigmaB;     // Std dev of beta
+    float rho;        // Correlation coefficient
+    float Ps;         // Saturation polarization (for normalization)
+    uint numHysterons;
+    float padding;
+};
+
+layout(std430, binding = 1) buffer HysteronBuffer {
+    GPUHysteron hysterons[];
+};
+
+layout(std430, binding = 2) buffer TotalWeight {
+    float totalWeight;  // For normalization (atomic add)
+};
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= numHysterons) return;
+
+    GPUHysteron h = hysterons[idx];
+
+    // Bivariate Gaussian: μ(α,β) = exp(-(da² - 2ρ·da·db + db²) / (2(1-ρ²)))
+    float da = (h.alpha - alphaM) / sigmaA;
+    float db = (h.beta - betaM) / sigmaB;
+
+    float denom = 2.0 * (1.0 - rho * rho);
+    float exponent = -(da * da - 2.0 * rho * da * db + db * db) / denom;
+    float weight = exp(exponent);
+
+    hysterons[idx].weight = weight;
+
+    // Atomic add for total (for later normalization pass)
+    atomicAdd(totalWeight, weight);
+}
+```
 
 ### Phase 2: Go Integration
 
-1. **gpu_preisach.go** - Main GPU wrapper
-   - Initialize VulkanContext from shared/compute
-   - Create compute pipelines for each shader
-   - Manage hysteron buffer (upload once, reuse)
-   - Implement Update() with GPU dispatch
-   - CPU fallback when GPU unavailable
+#### gpu_preisach.go Structure
 
-2. **Update preisach_advanced.go**
-   - Add `UseGPU bool` option to model
-   - Lazy-initialize GPUPreisach on first Update()
-   - Delegate to GPU or CPU based on availability
+```go
+// GPUPreisach provides GPU-accelerated Preisach hysteresis
+type GPUPreisach struct {
+    ctx            *compute.VulkanContext
+    updatePipeline *compute.ComputePipeline
+    reducePipeline *compute.ComputePipeline
+    distPipeline   *compute.ComputePipeline
 
-### Phase 3: Move Shader to Shared (Optional)
+    hystBuffer     *compute.GPUBuffer  // GPUHysteron array
+    partialsBuffer *compute.GPUBuffer  // Workgroup partial sums
+    outputBuffer   *compute.GPUBuffer  // Final polarization
 
-Consider moving `preisach.comp` to `shared/compute/shaders/` if other modules could use ferroelectric cell simulation.
+    numHysterons   int
+    numWorkgroups  int
+    cpuModel       *MayergoyzPreisach  // For sync and fallback
+}
+```
 
-## Shader Binding Layout
+### Phase 3: Update preisach_advanced.go
 
-### hysteron_update.comp
-| Binding | Type | Content |
-|---------|------|---------|
-| 0 | Uniform | Params (E, numHysterons) |
-| 1 | Storage | HysteronBuffer (read/write) |
+Add to `MayergoyzPreisach`:
+```go
+type MayergoyzPreisach struct {
+    // ... existing fields ...
 
-### hysteron_reduce.comp
-| Binding | Type | Content |
-|---------|------|---------|
-| 0 | Uniform | Params (numHysterons) |
-| 1 | Storage | HysteronBuffer (read) |
-| 2 | Storage | OutputBuffer (write - single float) |
+    UseGPU        bool          // Enable GPU acceleration
+    gpuAccel      *GPUPreisach  // Lazy-initialized
+    gpuInitDone   bool          // Tracks initialization attempt
+}
 
-### distribution.comp
-| Binding | Type | Content |
-|---------|------|---------|
-| 0 | Uniform | DistParams (means, sigmas, rho, Ec) |
-| 1 | Storage | HysteronBuffer (read alpha/beta, write weight) |
+func (m *MayergoyzPreisach) Update(E float64) float64 {
+    m.initGPU()  // Lazy init
+
+    if m.gpuAccel != nil && m.gpuAccel.IsAvailable() {
+        return m.gpuAccel.Update(E)
+    }
+    return m.updateCPU(E)  // Fallback
+}
+```
+
+## Test Vectors
+
+### Test Case 1: Basic Switching
+```
+Input:
+  - material: DefaultHZOMaterial() (Ec=1.0 MV/cm, Ps=30 µC/cm²)
+  - gridSize: 10 (45 hysterons)
+  - E sequence: [0, +2*Ec, 0, -2*Ec, 0]
+
+Expected CPU Output:
+  - P[0] ≈ -15 µC/cm² (initial negative saturation)
+  - P[1] ≈ +30 µC/cm² (positive saturation after +2Ec)
+  - P[2] ≈ +15 µC/cm² (remanent at E=0)
+  - P[3] ≈ -30 µC/cm² (negative saturation after -2Ec)
+  - P[4] ≈ -15 µC/cm² (remanent at E=0)
+
+GPU Tolerance: ±1e-4 (0.01%) relative to CPU values
+```
+
+### Test Case 2: Hysteresis Loop Closure
+```
+Input:
+  - gridSize: 50 (~1225 hysterons)
+  - Emax: 1.5 * Ec
+  - points: 100
+
+Expected:
+  - Loop closes (P_start ≈ P_end within 1%)
+  - Symmetric about origin (|P(E)| ≈ |P(-E)|)
+  - Pr (remanent) between 0.3*Ps and 0.9*Ps
+```
+
+### Speedup Measurement Methodology
+```go
+func BenchmarkUpdate(b *testing.B) {
+    model := NewMayergoyzPreisach(DefaultHZOMaterial(), 100)
+
+    b.Run("CPU", func(b *testing.B) {
+        model.UseGPU = false
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            model.Update(1.0e6)  // 1 MV/cm
+        }
+    })
+
+    b.Run("GPU", func(b *testing.B) {
+        model.UseGPU = true
+        model.Update(0)  // Warm up, initialize GPU
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            model.Update(1.0e6)
+        }
+    })
+}
+```
+
+**Speedup = CPU_time / GPU_time** (measured after GPU warm-up, includes buffer transfer)
 
 ## File Changes Summary
 
@@ -186,59 +401,40 @@ Consider moving `preisach.comp` to `shared/compute/shaders/` if other modules co
 
 | File | Lines (est) | Purpose |
 |------|-------------|---------|
-| module1-hysteresis/pkg/ferroelectric/gpu_preisach.go | 300 | GPU wrapper |
-| module1-hysteresis/shaders/hysteron_update.comp | 50 | State update shader |
-| module1-hysteresis/shaders/hysteron_reduce.comp | 80 | Reduction shader |
-| module1-hysteresis/shaders/distribution.comp | 60 | Gaussian init shader |
+| module1-hysteresis/pkg/ferroelectric/gpu_preisach.go | 350 | GPU wrapper with serialization |
+| module1-hysteresis/shaders/hysteron_update.comp | 40 | State update shader |
+| module1-hysteresis/shaders/hysteron_reduce.comp | 90 | Kahan reduction shader |
+| module1-hysteresis/shaders/distribution.comp | 50 | Gaussian init shader |
+| module1-hysteresis/pkg/ferroelectric/gpu_preisach_test.go | 150 | GPU-specific tests |
 
 ### Modified Files
 
 | File | Changes |
 |------|---------|
-| module1-hysteresis/pkg/ferroelectric/preisach_advanced.go | Add UseGPU option, GPU delegation |
-| module1-hysteresis/shaders/compile.sh | Add new shaders to compilation |
-
-## Verification Steps
-
-1. **Unit Tests**
-   - `go test ./module1-hysteresis/pkg/ferroelectric/...`
-   - Test GPU vs CPU results match within tolerance
-   - Test fallback when Vulkan unavailable
-
-2. **Integration Tests**
-   - GetHysteresisLoop produces valid P-E curves
-   - GPU and CPU paths produce identical curves
-   - No memory leaks (run with -race)
-
-3. **Performance Benchmarks**
-   - `BenchmarkUpdate_CPU` vs `BenchmarkUpdate_GPU`
-   - Target: 10-100x speedup for gridSize=100 (5000 hysterons)
-
-4. **Build Verification**
-   - `go build ./module1-hysteresis/...`
-   - All shaders compile with glslc
+| module1-hysteresis/pkg/ferroelectric/preisach_advanced.go | Add UseGPU field, lazy GPU init, delegation |
+| module1-hysteresis/shaders/compile.sh | Add new shaders |
 
 ## Acceptance Criteria
 
-1. [ ] hysteron_update.comp compiles and executes
-2. [ ] hysteron_reduce.comp produces correct polarization sum
-3. [ ] GPUPreisach.Update() matches CPU within 1e-6 tolerance
-4. [ ] GPU fallback works when Vulkan unavailable
-5. [ ] GetHysteresisLoop produces valid P-E curves
-6. [ ] Existing tests pass
-7. [ ] 10x+ speedup demonstrated for gridSize >= 50
+1. [ ] All 3 shaders compile with glslc
+2. [ ] hysteron_update.comp correctly switches states
+3. [ ] hysteron_reduce.comp produces polarization matching CPU within 1e-4
+4. [ ] GPUPreisach.Update() matches CPU within 1e-4 relative tolerance
+5. [ ] Test Case 1 (Basic Switching) passes on both CPU and GPU
+6. [ ] Test Case 2 (Loop Closure) produces valid hysteresis loop
+7. [ ] GPU fallback works when Vulkan unavailable
+8. [ ] Existing tests pass (`go test ./module1-hysteresis/...`)
+9. [ ] 5x+ speedup for gridSize >= 50 (measured per methodology above)
 
-## Risk Mitigation
+## Limitations (Documented)
 
-| Risk | Mitigation |
-|------|------------|
-| Reduction precision | Use Kahan summation in shader |
-| Floating point mismatch | Accept 1e-6 tolerance, document |
-| GPU memory limit | Limit gridSize, warn user |
-| No GPU available | Transparent CPU fallback |
+1. **Temperature:** GPU path operates at 300K only. Use CPU for temperature sweeps.
+2. **Wake-up:** GPU assumes fully woken material. Use CPU for wake-up simulation.
+3. **Precision:** GPU uses float32, results differ from CPU float64 by up to 1e-4.
+4. **Max gridSize:** Limited by GPU memory. Recommend gridSize ≤ 500 (~125K hysterons).
 
 ## Dependencies
 
 - `shared/compute` package (already implemented)
-- Vulkan SDK with glslc (for shader compilation)
+- Vulkan SDK with glslc
 - No new Go dependencies

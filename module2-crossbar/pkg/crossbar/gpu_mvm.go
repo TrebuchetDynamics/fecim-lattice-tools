@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"unsafe"
 
 	"fecim-lattice-tools/shared/compute"
@@ -54,6 +56,12 @@ func NewGPUAccelerator(maxRows, maxCols int) (*GPUAccelerator, error) {
 		return nil, fmt.Errorf("invalid dimensions: rows=%d, cols=%d", maxRows, maxCols)
 	}
 
+	// Find repository root for absolute shader path
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find repository root: %w", err)
+	}
+
 	// Create Vulkan context
 	ctx, err := compute.NewVulkanContext()
 	if err != nil {
@@ -75,7 +83,7 @@ func NewGPUAccelerator(maxRows, maxCols int) (*GPUAccelerator, error) {
 	}
 
 	// Create MVM compute pipeline
-	if err := g.createMVMPipeline(); err != nil {
+	if err := g.createMVMPipeline(repoRoot); err != nil {
 		g.Destroy()
 		return nil, fmt.Errorf("failed to create MVM pipeline: %w", err)
 	}
@@ -90,7 +98,7 @@ func NewGPUAccelerator(maxRows, maxCols int) (*GPUAccelerator, error) {
 }
 
 // createMVMPipeline creates the compute pipeline for mvm.comp shader.
-func (g *GPUAccelerator) createMVMPipeline() error {
+func (g *GPUAccelerator) createMVMPipeline(repoRoot string) error {
 	// The mvm.comp shader expects:
 	// - binding 0: uniform CrossbarParams (std140)
 	// - binding 1: storage ConductanceBuffer (G matrix, row-major)
@@ -98,7 +106,7 @@ func (g *GPUAccelerator) createMVMPipeline() error {
 	// - binding 3: storage OutputCurrentBuffer (I vector)
 	// - binding 4: storage VariationBuffer (device-to-device variation)
 	config := compute.PipelineConfig{
-		ShaderPath: "shared/compute/shaders/mvm.comp.spv",
+		ShaderPath: filepath.Join(repoRoot, "shared/compute/shaders/mvm.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(CrossbarParams{}))}, // 32 bytes
 			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0},                                        // ConductanceBuffer (dynamic)
@@ -301,6 +309,31 @@ func (g *GPUAccelerator) Destroy() {
 		g.ctx.Destroy()
 		g.ctx = nil
 	}
+}
+
+// findRepoRoot walks up the directory tree to find the repository root (go.mod location).
+func findRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Walk up directory tree looking for go.mod
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached root without finding go.mod
+			break
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("could not find repository root (no go.mod found)")
 }
 
 // encodeParams encodes CrossbarParams into a byte slice using std140 layout.

@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"fmt"
 	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
@@ -629,4 +630,538 @@ func (ds *DeviceState) Resize(rows, cols int) {
 	if ds.selectedCol >= ds.cols {
 		ds.selectedCol = 0
 	}
+}
+
+// ============================================================================
+// 1. PER-LEVEL VOLTAGE CALIBRATION
+// ============================================================================
+
+// PerLevelVoltageCalibration holds calibrated voltages for each of 30 levels
+// Linear interpolation used as simplified demo (not physics-accurate Preisach model)
+type PerLevelVoltageCalibration struct {
+	AscendingVoltages  [30]float64 // Voltages for writing up (level 0→29)
+	DescendingVoltages [30]float64 // Voltages for writing down (level 29→0)
+}
+
+// voltageCalibration holds the per-level calibration data
+// Initialized once at startup via InitVoltageCalibration()
+var voltageCalibration *PerLevelVoltageCalibration
+
+// InitVoltageCalibration initializes the per-level voltage arrays using linear interpolation
+// This is a simplified demo - real devices would use non-linear Preisach-derived values
+func (ds *DeviceState) InitVoltageCalibration() {
+	cal := &PerLevelVoltageCalibration{}
+
+	// Linear interpolation: Level 0 → WriteRange.Min, Level 29 → WriteRange.Max
+	minV := ds.writeRange.Min
+	maxV := ds.writeRange.Max
+	step := (maxV - minV) / 29.0
+
+	for i := 0; i < 30; i++ {
+		voltage := minV + float64(i)*step
+		cal.AscendingVoltages[i] = voltage
+		cal.DescendingVoltages[i] = voltage // Same for simplified model
+	}
+
+	voltageCalibration = cal
+}
+
+// GetVoltageForLevel returns the calibrated write voltage for a target level
+// direction: true = ascending (increasing level), false = descending (decreasing level)
+func (ds *DeviceState) GetVoltageForLevel(level int, ascending bool) float64 {
+	if voltageCalibration == nil {
+		ds.InitVoltageCalibration()
+	}
+
+	// Clamp level to valid range
+	if level < 0 {
+		level = 0
+	}
+	if level > 29 {
+		level = 29
+	}
+
+	if ascending {
+		return voltageCalibration.AscendingVoltages[level]
+	}
+	return voltageCalibration.DescendingVoltages[level]
+}
+
+// ============================================================================
+// 2. HYSTERESIS DIRECTION TRACKING
+// ============================================================================
+
+// HysteresisDirection indicates the write direction on the hysteresis curve
+type HysteresisDirection int
+
+const (
+	DirectionUnknown    HysteresisDirection = iota
+	DirectionAscending                      // Writing to higher level
+	DirectionDescending                     // Writing to lower level
+)
+
+// HysteresisState tracks the last written level and direction per cell
+type HysteresisState struct {
+	LastLevel map[string]int                // key: "row,col" -> last written level
+	Direction map[string]HysteresisDirection // key: "row,col" -> last direction
+}
+
+// hysteresisState is the global hysteresis tracking state
+var hysteresisState *HysteresisState
+
+// getHysteresisState returns the global hysteresis state, initializing if needed
+func getHysteresisState() *HysteresisState {
+	if hysteresisState == nil {
+		hysteresisState = &HysteresisState{
+			LastLevel: make(map[string]int),
+			Direction: make(map[string]HysteresisDirection),
+		}
+	}
+	return hysteresisState
+}
+
+// cellKey generates a map key for a cell coordinate
+func cellKey(row, col int) string {
+	return fmt.Sprintf("%d,%d", row, col)
+}
+
+// RecordWrite updates the hysteresis state after a successful write
+func (ds *DeviceState) RecordWrite(row, col, newLevel int) {
+	hs := getHysteresisState()
+	key := cellKey(row, col)
+
+	oldLevel, exists := hs.LastLevel[key]
+	if exists {
+		if newLevel > oldLevel {
+			hs.Direction[key] = DirectionAscending
+		} else if newLevel < oldLevel {
+			hs.Direction[key] = DirectionDescending
+		}
+		// If equal, keep previous direction
+	} else {
+		hs.Direction[key] = DirectionUnknown
+	}
+
+	hs.LastLevel[key] = newLevel
+}
+
+// GetWriteDirection determines the write direction for a target level
+func (ds *DeviceState) GetWriteDirection(row, col, currentLevel, targetLevel int) HysteresisDirection {
+	if targetLevel > currentLevel {
+		return DirectionAscending
+	} else if targetLevel < currentLevel {
+		return DirectionDescending
+	}
+	return DirectionUnknown
+}
+
+// GetLastHysteresisDirection returns the last write direction for a cell
+func (ds *DeviceState) GetLastHysteresisDirection(row, col int) HysteresisDirection {
+	hs := getHysteresisState()
+	key := cellKey(row, col)
+	if dir, exists := hs.Direction[key]; exists {
+		return dir
+	}
+	return DirectionUnknown
+}
+
+// ============================================================================
+// 3. 4-PHASE WRITE SEQUENCE STATE MACHINE
+// ============================================================================
+
+// WritePhase represents the current phase in a 4-phase write sequence
+type WritePhase int
+
+const (
+	PhaseIdle   WritePhase = iota // No write in progress
+	PhaseReset                    // Applying -V_sat (100ns)
+	PhaseHold1                    // Zero field hold (50ns)
+	PhaseWrite                    // Applying calibrated voltage (200ns)
+	PhaseHold2                    // Zero field hold (50ns)
+)
+
+// Phase timing constants (in nanoseconds for display, not real-time)
+const (
+	PhaseResetDurationNs = 100
+	PhaseHold1DurationNs = 50
+	PhaseWriteDurationNs = 200
+	PhaseHold2DurationNs = 50
+)
+
+// WriteSequenceState holds the state of an active 4-phase write
+type WriteSequenceState struct {
+	Active       bool
+	Phase        WritePhase
+	TargetRow    int
+	TargetCol    int
+	TargetLevel  int
+	CurrentLevel int
+	WriteVoltage float64 // Calibrated voltage for target level
+	Progress     float64 // 0.0 to 1.0 progress through sequence
+}
+
+// writeSequenceState is the global write sequence state
+var writeSequenceState *WriteSequenceState
+
+// getWriteSequenceState returns the global write sequence state
+func getWriteSequenceState() *WriteSequenceState {
+	if writeSequenceState == nil {
+		writeSequenceState = &WriteSequenceState{}
+	}
+	return writeSequenceState
+}
+
+// StartWriteSequence begins a 4-phase write sequence
+func (ds *DeviceState) StartWriteSequence(row, col, targetLevel int) {
+	ws := getWriteSequenceState()
+
+	direction := ds.GetWriteDirection(row, col, 0, targetLevel) // Assume starting from current
+	ascending := direction == DirectionAscending
+
+	ws.Active = true
+	ws.Phase = PhaseReset
+	ws.TargetRow = row
+	ws.TargetCol = col
+	ws.TargetLevel = targetLevel
+	ws.WriteVoltage = ds.GetVoltageForLevel(targetLevel, ascending)
+	ws.Progress = 0.0
+}
+
+// AdvanceWritePhase moves to the next phase in the sequence
+// Returns true if sequence is complete
+func (ds *DeviceState) AdvanceWritePhase() bool {
+	ws := getWriteSequenceState()
+	if !ws.Active {
+		return true
+	}
+
+	switch ws.Phase {
+	case PhaseReset:
+		ws.Phase = PhaseHold1
+		ws.Progress = 0.25
+	case PhaseHold1:
+		ws.Phase = PhaseWrite
+		ws.Progress = 0.5
+	case PhaseWrite:
+		ws.Phase = PhaseHold2
+		ws.Progress = 0.75
+	case PhaseHold2:
+		ws.Phase = PhaseIdle
+		ws.Active = false
+		ws.Progress = 1.0
+		return true
+	}
+	return false
+}
+
+// GetWritePhaseInfo returns the current write sequence state for UI display
+func (ds *DeviceState) GetWritePhaseInfo() WriteSequenceState {
+	ws := getWriteSequenceState()
+	return *ws
+}
+
+// CancelWriteSequence aborts the current write sequence
+func (ds *DeviceState) CancelWriteSequence() {
+	ws := getWriteSequenceState()
+	ws.Active = false
+	ws.Phase = PhaseIdle
+	ws.Progress = 0.0
+}
+
+// GetPhaseName returns a human-readable name for a write phase
+func GetPhaseName(phase WritePhase) string {
+	switch phase {
+	case PhaseIdle:
+		return "IDLE"
+	case PhaseReset:
+		return "RESET"
+	case PhaseHold1:
+		return "HOLD"
+	case PhaseWrite:
+		return "WRITE"
+	case PhaseHold2:
+		return "HOLD"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+// GetPhaseDuration returns the duration in nanoseconds for a phase
+func GetPhaseDuration(phase WritePhase) int {
+	switch phase {
+	case PhaseReset:
+		return PhaseResetDurationNs
+	case PhaseHold1:
+		return PhaseHold1DurationNs
+	case PhaseWrite:
+		return PhaseWriteDurationNs
+	case PhaseHold2:
+		return PhaseHold2DurationNs
+	default:
+		return 0
+	}
+}
+
+// ============================================================================
+// 4. ISPP STATE MACHINE WITH OVERSHOOT HANDLING
+// ============================================================================
+
+// ISPPResult represents the result of an ISPP iteration
+type ISPPResult int
+
+const (
+	ISPPResultContinue      ISPPResult = iota // Continue iterating
+	ISPPResultVerified                        // Target level reached
+	ISPPResultOvershoot                       // Overshoot detected, reset needed
+	ISPPResultMaxIterations                   // Max iterations reached
+)
+
+// ISPP constants
+const (
+	ISPPMaxIterations   = 5
+	ISPPToleranceLevels = 0 // Exact match required
+)
+
+// ISPPState holds the state of an active ISPP (Incremental Step Pulse Programming) loop
+type ISPPState struct {
+	Active       bool
+	Iteration    int
+	MaxIter      int
+	TargetRow    int
+	TargetCol    int
+	TargetLevel  int
+	CurrentLevel int
+	Voltage      float64
+	Direction    HysteresisDirection
+	Verified     bool
+	Complete     bool
+	Success      bool
+}
+
+// isppState is the global ISPP state
+var isppState *ISPPState
+
+// getISPPState returns the global ISPP state
+func getISPPState() *ISPPState {
+	if isppState == nil {
+		isppState = &ISPPState{MaxIter: ISPPMaxIterations}
+	}
+	return isppState
+}
+
+// StartISPP begins an ISPP loop for a cell
+func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
+	is := getISPPState()
+
+	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
+	ascending := direction == DirectionAscending
+
+	is.Active = true
+	is.Iteration = 0
+	is.MaxIter = ISPPMaxIterations
+	is.TargetRow = row
+	is.TargetCol = col
+	is.TargetLevel = targetLevel
+	is.CurrentLevel = currentLevel
+	is.Voltage = ds.GetVoltageForLevel(targetLevel, ascending)
+	is.Direction = direction
+	is.Verified = false
+	is.Complete = false
+	is.Success = false
+}
+
+// ISPPIterate performs one write-verify iteration
+// Returns the result indicating whether to continue, success, overshoot, or max iterations
+func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
+	is := getISPPState()
+	if !is.Active {
+		return ISPPResultVerified
+	}
+
+	is.CurrentLevel = newCurrentLevel
+	is.Iteration++
+
+	// Check if target reached (within tolerance)
+	diff := is.TargetLevel - is.CurrentLevel
+	if diff < 0 {
+		diff = -diff
+	}
+	if diff <= ISPPToleranceLevels {
+		is.Verified = true
+		is.Complete = true
+		is.Success = true
+		is.Active = false
+		return ISPPResultVerified
+	}
+
+	// Check for overshoot
+	if is.Direction == DirectionAscending && is.CurrentLevel > is.TargetLevel {
+		return ISPPResultOvershoot
+	}
+	if is.Direction == DirectionDescending && is.CurrentLevel < is.TargetLevel {
+		return ISPPResultOvershoot
+	}
+
+	// Check max iterations
+	if is.Iteration >= is.MaxIter {
+		is.Complete = true
+		is.Success = false
+		is.Active = false
+		return ISPPResultMaxIterations
+	}
+
+	// Adjust voltage for next iteration
+	voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 60.0 // Fine step
+	if is.Direction == DirectionAscending {
+		is.Voltage += voltageStep
+		if is.Voltage > ds.writeRange.Max {
+			is.Voltage = ds.writeRange.Max
+		}
+	} else {
+		is.Voltage -= voltageStep
+		if is.Voltage < ds.writeRange.Min {
+			is.Voltage = ds.writeRange.Min
+		}
+	}
+
+	return ISPPResultContinue
+}
+
+// HandleOvershoot performs RESET-to-saturation when write overshoots target
+// Returns true if reset was performed
+func (ds *DeviceState) HandleOvershoot(row, col int) bool {
+	is := getISPPState()
+	if !is.Active {
+		return false
+	}
+
+	// Reset to saturation based on direction
+	if is.Direction == DirectionAscending {
+		// Ascending overshoot: reset to level 0 (negative saturation)
+		is.CurrentLevel = 0
+		is.Direction = DirectionAscending // Keep ascending for retry
+	} else {
+		// Descending overshoot: reset to level 29 (positive saturation)
+		is.CurrentLevel = 29
+		is.Direction = DirectionDescending // Keep descending for retry
+	}
+
+	// Recalculate voltage for target from new position
+	ascending := is.Direction == DirectionAscending
+	is.Voltage = ds.GetVoltageForLevel(is.TargetLevel, ascending)
+
+	return true
+}
+
+// GetISPPStatus returns the current ISPP state for UI display
+func (ds *DeviceState) GetISPPStatus() ISPPState {
+	is := getISPPState()
+	return *is
+}
+
+// CancelISPP aborts the current ISPP loop
+func (ds *DeviceState) CancelISPP() {
+	is := getISPPState()
+	is.Active = false
+	is.Complete = true
+	is.Success = false
+}
+
+// ============================================================================
+// 5. V/2 HALF-SELECT VISUALIZATION STATE
+// ============================================================================
+
+// HalfSelectVoltageRatio is the V/2 ratio for half-selected cells
+const HalfSelectVoltageRatio = 0.5
+
+// HalfSelectVisualization holds the state for V/2 overlay visualization
+type HalfSelectVisualization struct {
+	Enabled        bool
+	FullVoltage    float64
+	HalfVoltage    float64
+	SelectedRow    int
+	SelectedCol    int
+	HalfSelectRows []int // Rows with V/2 (same column, different rows)
+	HalfSelectCols []int // Cols with V/2 (same row, different columns)
+}
+
+// halfSelectState is the global half-select visualization state
+var halfSelectState *HalfSelectVisualization
+
+// getHalfSelectStateInternal returns the global half-select state
+func getHalfSelectStateInternal() *HalfSelectVisualization {
+	if halfSelectState == nil {
+		halfSelectState = &HalfSelectVisualization{}
+	}
+	return halfSelectState
+}
+
+// EnableHalfSelectVisualization enables V/2 overlay for a write operation
+// Only meaningful for 0T1R (passive) architecture
+func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage float64) {
+	hs := getHalfSelectStateInternal()
+
+	hs.Enabled = true
+	hs.FullVoltage = fullVoltage
+	hs.HalfVoltage = fullVoltage * HalfSelectVoltageRatio
+	hs.SelectedRow = row
+	hs.SelectedCol = col
+
+	// All other rows in the same column get V/2
+	hs.HalfSelectRows = make([]int, 0)
+	for r := 0; r < ds.rows; r++ {
+		if r != row {
+			hs.HalfSelectRows = append(hs.HalfSelectRows, r)
+		}
+	}
+
+	// All other columns in the same row get V/2
+	hs.HalfSelectCols = make([]int, 0)
+	for c := 0; c < ds.cols; c++ {
+		if c != col {
+			hs.HalfSelectCols = append(hs.HalfSelectCols, c)
+		}
+	}
+}
+
+// DisableHalfSelectVisualization disables the V/2 overlay
+func (ds *DeviceState) DisableHalfSelectVisualization() {
+	hs := getHalfSelectStateInternal()
+	hs.Enabled = false
+	hs.HalfSelectRows = nil
+	hs.HalfSelectCols = nil
+}
+
+// GetHalfSelectState returns the current V/2 visualization state
+func (ds *DeviceState) GetHalfSelectState() HalfSelectVisualization {
+	hs := getHalfSelectStateInternal()
+	return *hs
+}
+
+// IsHalfSelected returns true if the given cell is in half-select state
+func (ds *DeviceState) IsHalfSelected(row, col int) bool {
+	hs := getHalfSelectStateInternal()
+	if !hs.Enabled {
+		return false
+	}
+
+	// Check if in half-select row (same column as selected)
+	if col == hs.SelectedCol {
+		for _, r := range hs.HalfSelectRows {
+			if r == row {
+				return true
+			}
+		}
+	}
+
+	// Check if in half-select column (same row as selected)
+	if row == hs.SelectedRow {
+		for _, c := range hs.HalfSelectCols {
+			if c == col {
+				return true
+			}
+		}
+	}
+
+	return false
 }

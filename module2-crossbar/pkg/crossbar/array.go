@@ -198,25 +198,40 @@ func (a *Array) uploadVariationToGPU() {
 }
 
 // mvmGPU performs MVM using GPU acceleration.
+// The GPU shader implements VMM physics, so we transpose to get MVM:
+// MVM(W, x) = VMM(x, W^T)
 func (a *Array) mvmGPU(input []float64) ([]float64, error) {
-	// Convert input to float32
+	// For MVM: y = W*x where W is [Rows x Cols], x has Cols elements, y has Rows elements
+	// GPU shader does VMM: I_j = Sum_i(V_i * G_ij), input size = shader rows, output size = shader cols
+	//
+	// To get MVM from VMM shader:
+	// - Transpose W: shader sees W^T which is [Cols x Rows]
+	// - Swap dimensions: shader rows = our cols, shader cols = our rows
+	// - Input (our cols) goes to shader rows
+	// - Output (shader cols) = our rows
+
+	// Convert input to float32 (input has Cols elements)
 	input32 := make([]float32, len(input))
 	for i, v := range input {
 		input32[i] = float32(a.quantizeDAC(v))
 	}
 
-	// Build conductance matrix from cells
-	conductances := make([]float32, a.config.Rows*a.config.Cols)
+	// Build TRANSPOSED conductance matrix: G^T[j][i] = G[i][j]
+	// Layout: G^T stored as [Cols x Rows] row-major = G stored column-major
+	conductancesT := make([]float32, a.config.Rows*a.config.Cols)
 	for i := 0; i < a.config.Rows; i++ {
 		for j := 0; j < a.config.Cols; j++ {
-			conductances[i*a.config.Cols+j] = float32(a.cells[i][j].Conductance)
+			// G^T[j][i] at index j*Rows + i
+			conductancesT[j*a.config.Rows+i] = float32(a.cells[i][j].Conductance)
 		}
 	}
 
-	// Set up GPU parameters
+	// Set up GPU parameters with SWAPPED dimensions
+	// Shader "rows" = our Cols (input size)
+	// Shader "cols" = our Rows (output size)
 	params := CrossbarParams{
-		Rows:           int32(a.config.Rows),
-		Cols:           int32(len(input)),
+		Rows:           int32(a.config.Cols), // SWAPPED: shader rows = our cols
+		Cols:           int32(a.config.Rows), // SWAPPED: shader cols = our rows
 		NoiseLevel:     float32(a.config.NoiseLevel),
 		ADCBits:        int32(a.config.ADCBits),
 		DACBits:        int32(a.config.DACBits),
@@ -225,17 +240,18 @@ func (a *Array) mvmGPU(input []float64) ([]float64, error) {
 		DriftCoeff:     0.0,
 	}
 
-	// Execute GPU MVM
-	outputs32, err := a.gpuAccelerator.MVM(conductances, input32, params)
+	// Execute GPU MVM (shader computes VMM on transposed matrix = MVM on original)
+	outputs32, err := a.gpuAccelerator.MVM(conductancesT, input32, params)
 	if err != nil {
 		// Fall back to CPU on GPU error
 		return a.mvmCPU(input)
 	}
 
-	// Find max possible current for normalization
+	// Find max possible current for normalization (same as CPU)
 	maxCurrent := float64(len(input))
 
 	// Convert back to float64 and apply normalization/quantization
+	// Output vector now has Rows elements (one per output row)
 	output := make([]float64, a.config.Rows)
 	for i := 0; i < a.config.Rows; i++ {
 		normalizedSum := float64(outputs32[i]) / maxCurrent
