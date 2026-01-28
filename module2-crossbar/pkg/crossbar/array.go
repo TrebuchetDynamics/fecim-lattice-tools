@@ -36,6 +36,7 @@ type Config struct {
 	NoiseLevel float64 // Device-to-device variation (0-1)
 	ADCBits    int     // ADC resolution in bits
 	DACBits    int     // DAC resolution in bits
+	UseGPU     bool    `json:"use_gpu"` // Enable GPU acceleration for MVM operations
 
 	// Conductance model configuration
 	ConductanceModel ConductanceModel // Model type (linear, exponential, lookup)
@@ -120,6 +121,10 @@ type Array struct {
 	adcLevels int
 	dacLevels int
 
+	// GPU acceleration (nil if GPU not enabled/available)
+	gpuAccelerator *GPUAccelerator
+	gpuInitialized bool // true after first GPU init attempt
+
 	// Statistics
 	totalReads  int64
 	totalWrites int64
@@ -150,6 +155,103 @@ func NewArray(cfg *Config) (*Array, error) {
 	}
 
 	return arr, nil
+}
+
+// initGPU lazily initializes GPU accelerator on first use.
+// Silently falls back to CPU if GPU is unavailable.
+func (a *Array) initGPU() {
+	if a.gpuInitialized || !a.config.UseGPU {
+		return
+	}
+	a.gpuInitialized = true
+
+	accel, err := NewGPUAccelerator(a.config.Rows, a.config.Cols)
+	if err != nil {
+		// Log warning but continue with CPU fallback
+		// GPU unavailable is not a fatal error
+		return
+	}
+	a.gpuAccelerator = accel
+
+	// Upload device variation factors to GPU
+	if a.gpuAccelerator != nil {
+		a.uploadVariationToGPU()
+	}
+}
+
+// uploadVariationToGPU uploads device variation factors to GPU.
+func (a *Array) uploadVariationToGPU() {
+	if a.gpuAccelerator == nil {
+		return
+	}
+
+	// Build variation matrix from cells
+	variation := make([]float32, a.config.Rows*a.config.Cols)
+	for i := 0; i < a.config.Rows; i++ {
+		for j := 0; j < a.config.Cols; j++ {
+			variation[i*a.config.Cols+j] = float32(a.cells[i][j].NoiseFactor)
+		}
+	}
+
+	// Upload to GPU (ignore errors - will fall back to CPU if this fails)
+	_ = a.gpuAccelerator.SetDeviceVariation(variation)
+}
+
+// mvmGPU performs MVM using GPU acceleration.
+func (a *Array) mvmGPU(input []float64) ([]float64, error) {
+	// Convert input to float32
+	input32 := make([]float32, len(input))
+	for i, v := range input {
+		input32[i] = float32(a.quantizeDAC(v))
+	}
+
+	// Build conductance matrix from cells
+	conductances := make([]float32, a.config.Rows*a.config.Cols)
+	for i := 0; i < a.config.Rows; i++ {
+		for j := 0; j < a.config.Cols; j++ {
+			conductances[i*a.config.Cols+j] = float32(a.cells[i][j].Conductance)
+		}
+	}
+
+	// Set up GPU parameters
+	params := CrossbarParams{
+		Rows:           int32(a.config.Rows),
+		Cols:           int32(len(input)),
+		NoiseLevel:     float32(a.config.NoiseLevel),
+		ADCBits:        int32(a.config.ADCBits),
+		DACBits:        int32(a.config.DACBits),
+		Time:           0.0,
+		WireResistance: 0.0,
+		DriftCoeff:     0.0,
+	}
+
+	// Execute GPU MVM
+	outputs32, err := a.gpuAccelerator.MVM(conductances, input32, params)
+	if err != nil {
+		// Fall back to CPU on GPU error
+		return a.mvmCPU(input)
+	}
+
+	// Find max possible current for normalization
+	maxCurrent := float64(len(input))
+
+	// Convert back to float64 and apply normalization/quantization
+	output := make([]float64, a.config.Rows)
+	for i := 0; i < a.config.Rows; i++ {
+		normalizedSum := float64(outputs32[i]) / maxCurrent
+		output[i] = a.quantizeADC(normalizedSum)
+		a.totalReads++
+	}
+
+	return output, nil
+}
+
+// Destroy releases GPU resources. Call when array is no longer needed.
+func (a *Array) Destroy() {
+	if a.gpuAccelerator != nil {
+		a.gpuAccelerator.Destroy()
+		a.gpuAccelerator = nil
+	}
 }
 
 // ProgramWeight programs a weight value to a specific cell.
@@ -318,6 +420,18 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 		return nil, fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
 	}
 
+	// Try GPU path first
+	a.initGPU()
+	if a.gpuAccelerator != nil && a.gpuAccelerator.IsAvailable() {
+		return a.mvmGPU(input)
+	}
+
+	// CPU fallback
+	return a.mvmCPU(input)
+}
+
+// mvmCPU performs MVM using CPU implementation (original algorithm).
+func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 	output := make([]float64, a.config.Rows)
 
 	// Find max possible current for normalization
