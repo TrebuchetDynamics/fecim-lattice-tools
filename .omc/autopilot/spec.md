@@ -1,132 +1,123 @@
-# VOLTAGE_RULES.md Specification
+# Module4 Voltage Rules Implementation Specification
 
-## Requirements (from Analyst)
+## Overview
+Implement voltage rules from VOLTAGE_RULES.md into the module4-circuits GUI.
 
-### Functional Requirements
-1. Document must cover read/write/compute operations for passive (0T1R), 1T1R, and 2T1R modes
-2. 9 core sections minimum (3 operations × 3 architectures)
-3. Each voltage specification needs Source column (peer-reviewed, codebase, or "ESTIMATED")
-4. Must include code snippet mappings to codebase
-5. Cross-reference at least 5 existing documents
-
-### Non-Functional Requirements
-- Markdown format, GitHub-compatible
-- ASCII diagrams (version control friendly)
-- Copy-paste ready quick reference card
-- Consistent table formatting
-
-### Implicit Requirements
-- Temperature: Room temperature (300K) nominal values only
-- Array sizes: Reference sizes (8x8, 32x32, 128x128)
-- Timing: Exclude (separate document scope)
-
-### Out of Scope
-- Temperature-dependent voltage scaling (reference only)
-- Pulse width/timing specifications
-- PVT corner analysis
-- Circuit implementation details (defer to PHYSICS.md)
+**Scope:** Visual demo of voltage concepts, not physics-accurate simulation.
 
 ---
 
-## Voltage Data Collected
+## Requirements Summary
 
-### Core Constants (from codebase)
+### Functional Requirements
+1. **Multi-Level Write Voltage Calibration** - Per-level voltage arrays (30 levels)
+2. **Program-Verify Loop (ISPP)** - Write→read→verify→adjust→retry (max 5 iterations)
+3. **V/2 Half-Select Biasing** - Visual indication for passive (0T1R) mode
+4. **4-Phase Write Sequence** - RESET→HOLD→WRITE→HOLD animation
+5. **Architecture-Specific Voltage UI** - Different displays for 0T1R vs 1T1R/2T1R
+6. **Hysteresis Path Awareness** - Track ascending vs descending direction
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| DACVrefHigh | +1.5V | shared/peripherals/defaults.go:19 |
-| DACVrefLow | -1.5V | shared/peripherals/defaults.go:22 |
-| ADCVrefHigh | +1.0V | shared/peripherals/defaults.go:31 |
-| ADCVrefLow | 0.0V | shared/peripherals/defaults.go:34 |
-| Charge Pump Input | 1.0V | chargepump.go:22 |
-| Charge Pump Output | 1.5V | chargepump.go:23 |
-| TIA Max Output | 1.0V | tia.go:26 |
+### Non-Functional Requirements
+- 20 FPS animation (50ms frame delay)
+- Thread-safe state updates (use existing ca.mu mutex)
+- Responsive UI (no blocking operations)
 
-### Material Parameters (from physics.yaml)
-
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| Coercive Field (Ec) | 0.6-1.5 MV/cm | Peer-reviewed: Nature Commun. 2025 |
-| Coercive Voltage (Vc) | 0.6-1.5V (at 10nm) | ESTIMATED: Vc = Ec × thickness |
-| Half-Select (V/2) | 0.75V | ESTIMATED: Vwrite/2 |
-
-### Operation Voltages
-
-| Operation | Voltage Range | Notes |
-|-----------|---------------|-------|
-| Write (positive) | +1.2 to +1.5V | Above Vc with margin |
-| Write (negative) | -1.2 to -1.5V | Erase operation |
-| Read | +0.1 to +0.5V | Below Vc (non-destructive) |
-| Compute (input) | 0 to +1.0V | MVM input range |
+### Out of Scope
+- Full Preisach model integration
+- Temperature-dependent calibration
+- Physics-accurate switching simulation
 
 ---
 
 ## Technical Specification
 
-### Document Location
-```
-<local-path>
-```
+### Target Files
+1. `module4-circuits/pkg/gui/device_state.go` - State management (~250-300 lines added)
+2. `module4-circuits/pkg/gui/tab_unified.go` - UI and animation (~400-500 lines added)
+3. `module4-circuits/pkg/gui/app.go` - New widget fields (~20 lines added)
 
-### Section Outline
+### New Data Structures
 
-```markdown
-# FeCIM Voltage Rules: Architecture-Specific Operating Voltages
-
-## Table of Contents
-1. Overview
-2. Voltage Constants Summary
-3. Passive (0T1R) Mode
-   - 3.1 Read Operation
-   - 3.2 Write Operation
-   - 3.3 Compute Operation
-4. 1T1R Mode
-   - 4.1 Read Operation
-   - 4.2 Write Operation
-   - 4.3 Compute Operation
-5. 2T1R Mode
-   - 5.1 Read Operation
-   - 5.2 Write Operation
-   - 5.3 Compute Operation
-6. Voltage Biasing Schemes
-7. Code Mappings
-8. ASCII Diagrams
-9. References
-10. Quick Reference Card
+**device_state.go:**
+```go
+// WritePhase enum: PhaseIdle, PhaseReset, PhaseHold1, PhaseWrite, PhaseHold2
+// WriteSequenceState: Active, Phase, TargetRow/Col/Level, CurrentLevel, Timing, Progress
+// ISPPState: Active, Iteration, MaxIterations, TargetLevel, CurrentLevel, Voltages, Verified
+// HysteresisDirection enum: DirectionUnknown, DirectionAscending, DirectionDescending
+// HysteresisState: LastWrittenLevel, Direction (per cell)
+// PerLevelVoltageCalibration: AscendingVoltages[30], DescendingVoltages[30]
+// HalfSelectVisualization: Enabled, FullVoltage, HalfVoltage, Selected/HalfSelect rows/cols
 ```
 
-### Required Cross-References
+### New Methods
 
-| Reference | Path |
-|-----------|------|
-| ARCHITECTURES.md | docs/crossbar/ARCHITECTURES.md |
-| PHYSICS.md (crossbar) | docs/crossbar/PHYSICS.md |
-| PHYSICS.md (peripheral) | docs/peripheral-circuits/PHYSICS.md |
-| physics.yaml | config/physics.yaml |
-| defaults.go | shared/peripherals/defaults.go |
-| dac.go | module4-circuits/pkg/peripherals/dac.go |
-| adc.go | module4-circuits/pkg/peripherals/adc.go |
-| chargepump.go | module4-circuits/pkg/peripherals/chargepump.go |
-| array.go | module2-crossbar/pkg/crossbar/array.go |
-| sneakpath.go | module2-crossbar/pkg/crossbar/sneakpath.go |
+**device_state.go (15 methods):**
+- `InitVoltageCalibration()` - Linear interpolation per level
+- `GetVoltageForLevel(level, direction)` - Calibrated voltage lookup
+- `StartWriteSequence(row, col, targetLevel)` - Begin 4-phase sequence
+- `AdvanceWritePhase()` - Move to next phase
+- `GetWritePhaseInfo()` - Current phase for UI
+- `CancelWriteSequence()` - Abort sequence
+- `StartISPP(row, col, targetLevel)` - Begin ISPP loop
+- `ISPPIterate()` - One write-verify iteration
+- `GetISPPStatus()` - Current ISPP state for UI
+- `CancelISPP()` - Abort ISPP
+- `RecordWrite(row, col, newLevel)` - Update hysteresis state
+- `GetWriteDirection(row, col, current, target)` - Determine direction
+- `EnableHalfSelectVisualization(row, col, voltage)` - Enable V/2 overlay
+- `DisableHalfSelectVisualization()` - Disable V/2 overlay
+- `GetHalfSelectState()` - Current V/2 state
 
-### Required ASCII Diagrams
+**tab_unified.go (12 methods):**
+- `drawWriteSequenceTimingDiagram()` - 4-phase timing diagram
+- `animateWriteSequence()` - Run 4-phase animation
+- `updateWriteSequenceUI()` - Refresh write display
+- `runISPPWithAnimation()` - ISPP with visual feedback
+- `updateISPPUI()` - Refresh ISPP display
+- `drawHalfSelectOverlay()` - V/2 overlay on array canvas
+- `updateHalfSelectVisualization()` - Enable/disable V/2
+- `createPassiveVoltagePanel()` - V/2 panel for 0T1R
+- `createActiveVoltagePanel()` - Direct panel for 1T1R/2T1R
+- `updateArchitectureSpecificUI()` - Show/hide panels
+- `updateHysteresisDirectionUI()` - Direction indicator
+- `createEnhancedWriteModePanel()` - Replace existing write panel
 
-1. **Voltage Levels Overview** - Rail diagram showing all voltage levels
-2. **0T1R Half-Select Biasing** - V/2 scheme for passive arrays
-3. **1T1R Isolation** - Transistor gating mechanism
+### Constants
+
+| Constant | Value |
+|----------|-------|
+| PhaseResetDurationNs | 100 |
+| PhaseHold1DurationNs | 50 |
+| PhaseWriteDurationNs | 200 |
+| PhaseHold2DurationNs | 50 |
+| ISPPMaxIterations | 5 |
+| ISPPToleranceLevels | 0 (exact match) |
+| HalfSelectVoltageRatio | 0.5 |
+| AnimationFrameDelayMs | 50 |
+
+### UI Color Scheme
+
+| Element | Color |
+|---------|-------|
+| Full write voltage | Bright Gold (255, 200, 0) |
+| V/2 half-select | Amber (255, 165, 0) |
+| Zero voltage | Dim Gray (50, 50, 60) |
+| Ascending direction | Green (100, 220, 120) |
+| Descending direction | Red (220, 100, 100) |
 
 ---
 
-## Verification Checklist
+## Implementation Priority
 
-- [ ] All 9 core sections present (3 operations x 3 architectures)
-- [ ] Every voltage value has Source column
-- [ ] Cross-references to 10+ files
-- [ ] ASCII diagrams render correctly
-- [ ] Code snippets have file paths
-- [ ] Quick reference card included
-- [ ] No claims without evidence
+1. Per-Level Voltage Calibration (Low complexity)
+2. Hysteresis Direction Tracking (Low)
+3. 4-Phase Write Sequence State (Medium)
+4. 4-Phase Animation UI (Medium)
+5. ISPP State Machine (Medium)
+6. ISPP Animation UI (Medium)
+7. V/2 Visualization State (Low)
+8. V/2 Overlay Drawing (Medium)
+9. Architecture-Specific Panels (Low)
 
 ---
 
