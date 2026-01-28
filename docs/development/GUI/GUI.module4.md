@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-27 (UX Fixes)
+Last Updated: 2026-01-28 (UX Fixes)
 ---
 
 ## Bugs Summary
@@ -36,6 +36,16 @@ Last Updated: 2026-01-27 (UX Fixes)
 - [x] UX-H2: No target cell indicator - FIXED (2026-01-27): "Target: Row X, Col Y" label in write panel
 - [x] UX-H3: No undo functionality - FIXED (2026-01-27): Undo button with single-level history
 - [x] UX-H4: WL labels unclear - FIXED (2026-01-27): "Row 0" labels, disabled in passive mode
+- [x] UX-M4-001: ADC saturation threshold hardcoded - FIXED (2026-01-28): Uses dynamic `adc.Bits` to calculate max level
+- [x] UX-M4-002: Fallback numLevels undocumented - FIXED (2026-01-28): Added comment documenting FeCIMLevels consistency
+
+---
+
+## Recent Changes (2026-01-28)
+
+### UX Improvements
+- **Dynamic ADC saturation** - Saturation check now uses `adc.Bits` to calculate max level (2^bits - 1) instead of hardcoded 31
+- **Documented fallback constant** - Added comment explaining `numLevels := 30` fallback matches `FeCIMLevels` constant
 
 ---
 

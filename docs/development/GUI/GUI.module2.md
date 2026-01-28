@@ -3,7 +3,7 @@ Module: module2-crossbar
 Name: "Crossbar Array MVM Visualization"
 Entry: cmd/crossbar-gui/main.go
 Package: module2-crossbar/pkg/gui
-Last Updated: 2026-01-26
+Last Updated: 2026-01-28
 Description: "Interactive visualization of FeCIM crossbar array matrix-vector multiplication with non-ideality analysis"
 ---
 
@@ -13,6 +13,13 @@ Bugs:
   - [x] BUG-M2-003: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
   - [x] BUG-M2-004: Educational content wrapping disabled but can still trigger MinSize changes
   - [x] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called - FIXED (2026-01-26): Added window close cleanup
+  - [x] BUG-M2-006: Missing Run MVM button in enhanced mode - FIXED (2026-01-28): Added runMVMButton to enhanced controls
+  - [x] BUG-M2-007: Missing 2T1R architecture button in enhanced mode - FIXED (2026-01-28): Added arch2T1RBtn for feature parity
+  - [x] BUG-M2-008: Inconsistent ADC label format between modes - FIXED (2026-01-28): Standardized to "X bits" format
+  - [x] BUG-M2-009: Colormap selector falls through on non-heatmap tabs - FIXED (2026-01-28): Added explicit return for non-heatmap tabs
+  - [x] BUG-M2-010: Array size slider missing min/max labels - FIXED (2026-01-28): Added 8/128 labels flanking slider
+  - [x] BUG-M2-011: Hover info fixed width causes layout issues - FIXED (2026-01-28): Reduced to 300px for better responsiveness
+  - [x] BUG-M2-012: Embedded mode missing onboarding content - FIXED (2026-01-28): Added setEducationalContent call
 
 # Screens
 

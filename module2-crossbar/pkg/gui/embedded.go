@@ -64,6 +64,21 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 	e.updateConductanceDisplay()
 	e.updateStatus("Ready. Program weights and run MVM operations.")
 
+	// Set first-load onboarding content (same as standalone mode)
+	e.setEducationalContent("Getting Started",
+		"Welcome to Crossbar MVM!\n\n"+
+			"Quick Start:\n"+
+			"1. Hover over cells to see\n"+
+			"   conductance values\n"+
+			"2. Click cells for details\n"+
+			"3. Adjust controls on right\n"+
+			"4. Explore IR Drop & Sneak\n"+
+			"   Path analysis tabs\n\n"+
+			"Key Concepts:\n"+
+			"• 30 analog levels/cell\n"+
+			"• MVM = Matrix × Vector\n"+
+			"• All rows compute in 1 step")
+
 	return content
 }
 
