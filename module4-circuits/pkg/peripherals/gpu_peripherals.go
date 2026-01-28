@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"unsafe"
 
 	"fecim-lattice-tools/shared/compute"
@@ -74,9 +76,16 @@ func NewGPUPeripherals() (*GPUPeripherals, error) {
 		return g, nil
 	}
 
+	// Find repo root by looking for go.mod
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		g.Destroy()
+		return nil, fmt.Errorf("failed to find repo root: %w", err)
+	}
+
 	// Create DAC pipeline
 	dacConfig := compute.PipelineConfig{
-		ShaderPath: "module4-circuits/shaders/dac.comp.spv",
+		ShaderPath: filepath.Join(repoRoot, "module4-circuits/shaders/dac.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(DACParams{}))},
 			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0}, // Input: int32[]
@@ -92,7 +101,7 @@ func NewGPUPeripherals() (*GPUPeripherals, error) {
 
 	// Create ADC pipeline
 	adcConfig := compute.PipelineConfig{
-		ShaderPath: "module4-circuits/shaders/adc.comp.spv",
+		ShaderPath: filepath.Join(repoRoot, "module4-circuits/shaders/adc.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(ADCParams{}))},
 			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0}, // Input: float32[]
@@ -109,7 +118,7 @@ func NewGPUPeripherals() (*GPUPeripherals, error) {
 
 	// Create TIA pipeline
 	tiaConfig := compute.PipelineConfig{
-		ShaderPath: "module4-circuits/shaders/tia.comp.spv",
+		ShaderPath: filepath.Join(repoRoot, "module4-circuits/shaders/tia.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(TIAParams{}))},
 			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0}, // Input: float32[]
@@ -517,3 +526,29 @@ func DefaultTIAParams(size int) TIAParams {
 
 // Compile-time check that math package is imported (needed for future extensions)
 var _ = math.Pi
+
+// findRepoRoot searches for the repository root by looking for go.mod.
+// Starts from the current working directory and walks up the directory tree.
+func findRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Walk up directory tree looking for go.mod
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached root without finding go.mod
+			break
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("could not find repository root (no go.mod found)")
+}

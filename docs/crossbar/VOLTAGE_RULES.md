@@ -190,6 +190,281 @@ Half-selected cells experience V/2 = 0.75V
 - If Vc = 1.2V, then V/2 = 0.625 × Vc (safe margin)
 - Repeated half-selects cause cumulative drift (modeled in `HalfSelectConfig`)
 
+### 3.2.1 Multi-Level Write Voltage (30 Levels)
+
+**Critical Insight:** Write voltage is NOT a single fixed value - it varies per target analog level and requires iterative program-verify loops.
+
+#### Per-Level Voltage Calibration
+
+Each of the 30 analog levels requires a different E-field to achieve:
+
+**Calibration Arrays:**
+```
+calibrationUp[30]   : E-field values for ascending polarization path
+calibrationDown[30] : E-field values for descending polarization path
+```
+
+**Binary Search Calibration (15 iterations per level):**
+```
+File: module1-hysteresis/pkg/gui/simulation.go:1564-1750
+
+For each level 0-29:
+    1. Initial estimate: Linear interpolation between E_min and E_max
+    2. Apply field, read Preisach model polarization
+    3. If overshoot → reduce field, retry
+    4. If undershoot → increase field, retry
+    5. Converge to ±0.5% tolerance
+```
+
+**Why Not a Lookup Table?**
+- Hysteresis path-dependence: Ascending ≠ Descending branches
+- Temperature variation: Field requirements change with T
+- Aging/drift: Cells evolve over 10¹² cycles
+- Solution: **Adaptive runtime calibration**
+
+#### Hysteresis Path-Dependence
+
+**Preisach Model Governs Switching:**
+
+```
+File: module1-hysteresis/pkg/ferroelectric/preisach_advanced.go
+
+           P (Polarization)
+           ↑
+      Psat │     ╱╲  Ascending branch
+           │    ╱  ╲
+           │   ╱    ╲
+      Pr   ├──●      ╲
+           │           ╲
+           │            ╲
+   ───────┼─────────────●─────→ E (Field)
+          │            ╱
+     -Pr  ├──────────●╱
+          │        ╱
+          │       ╱  Descending branch
+    -Psat │      ╱
+          │
+```
+
+**Voltage Implications:**
+- **Ascending path** (0 → 29): Requires higher field per level
+- **Descending path** (29 → 0): Requires lower field per level
+- **Overshoot handling**: If target level exceeded:
+  1. RESET cell to opposite saturation (-Psat)
+  2. Return to known state (Preisach hysteron reset)
+  3. Retry with adjusted voltage
+
+**Code Reference:**
+```go
+// Preisach model tracks every hysteron's state
+// Overshooting requires full RESET to clear hysteretic memory
+if overshoot {
+    applyReset()  // Saturate to -Psat
+    clearHysterons()
+    retryFromKnownState()
+}
+```
+
+#### Program-Verify Loop (ISPP)
+
+**Incremental Step Pulse Programming** - Industry-standard approach for multi-level cells:
+
+```
+File: module4-circuits/pkg/gui/tab_unified.go:1188-1279
+
+Write Sequence:
+┌─────────────────────────────────────────┐
+│ 1. WRITE: Apply calibrated voltage     │
+│ 2. READ:  Sense actual conductance     │
+│ 3. VERIFY: Compare to target level     │
+│ 4. ADJUST: Δ = target - actual         │
+│ 5. RETRY:  If |Δ| > tolerance          │
+└─────────────────────────────────────────┘
+
+Max 5 iterations per cell
+Tolerance: ±0.5 levels (±1.67% of full range)
+```
+
+**Voltage Adjustment Strategy:**
+```
+Initial V = calibrationUp[level]  // or calibrationDown[level]
+
+Loop up to 5 times:
+    Apply V → Read actual_level
+
+    If actual_level < target:
+        V += step_size  (typically 0.05V increments)
+    Else if actual_level > target:
+        V -= step_size
+    Else:
+        SUCCESS (within tolerance)
+
+    If iteration > 5:
+        WARNING: Cell may be defective or drifted
+```
+
+**Why ISPP is Essential:**
+- Cell-to-cell variation: ±10% variation in Ec across array
+- Cycle-dependent drift: Switching field evolves over 10⁹-10¹² cycles
+- IR drop effects: Cells at array edges see different voltages
+- Temperature gradients: Local heating changes Ec
+
+#### Voltage-Level Relationship
+
+**Non-Linear Mapping Due to Hysteresis:**
+
+```
+Voltage (V)  Level  Notes
+   ↑         29     Psat (saturation)
+   │         28
+  1.5V ─┐    27     Near saturation (steep slope)
+        │    26
+  1.4V ─┤    25
+        │    24
+  1.3V ─┤    23     Linear region (easier to hit)
+        │    ...
+  1.2V ─┤    15     Vc threshold (steepest slope)
+        │    14
+  1.1V ─┤    13     Sub-Vc region (minimal switching)
+        │    ...
+  1.0V ─┤     5
+        │     ...
+  0.8V ─┘     0     Near zero polarization
+   ↓
+```
+
+**ASCII Diagram: Voltage vs Level (Ascending Path)**
+
+```
+Level vs Required Voltage (HZO, 10nm, 300K)
+
+Level
+ 29 ────────────────────────────────────────────●  1.50V  Saturation
+ 28 ────────────────────────────────────────●     1.48V
+ 27 ──────────────────────────────────────●       1.46V
+ 26 ────────────────────────────────────●         1.43V
+ 25 ──────────────────────────────────●           1.40V
+ 24 ────────────────────────────────●             1.38V  } Steep
+ 23 ──────────────────────────────●               1.35V  } slope
+ 22 ────────────────────────────●                 1.32V  } (hard
+ 21 ──────────────────────────●                   1.29V  } to hit)
+ 20 ────────────────────────●                     1.26V
+ 19 ──────────────────────●                       1.24V
+ 18 ────────────────────●                         1.22V  } Near Ec
+ 17 ──────────────────●                           1.20V  } (easiest)
+ 16 ────────────────●                             1.18V
+ 15 ──────────────●                               1.16V  } Linear
+ 14 ────────────●                                 1.14V  } region
+ 13 ──────────●                                   1.12V
+ 12 ────────●                                     1.10V
+ 11 ──────●                                       1.08V
+ 10 ────●                                         1.06V
+  9 ──●                                           1.04V  } Sub-Vc
+  8 ●                                             1.02V  } (slow)
+  7                                               1.00V
+  ...
+  0 ●                                             0.80V  Zero P
+     └────┴────┴────┴────┴────┴────┴────┴────┘
+      0.8  1.0  1.2  1.4  1.6  1.8  2.0V
+
+Voltage →
+
+Key observations:
+  • Levels 15-18 (near Vc): LINEAR, easiest to target
+  • Levels 0-8 (sub-Vc): FLAT, requires fine voltage control
+  • Levels 24-29 (saturation): STEEP, prone to overshoot
+  • Descending path: Different curve (lower voltages)
+```
+
+**Refinement Sources:**
+1. **Preisach calibration**: Accounts for hysteresis path
+2. **Runtime feedback**: ISPP loop measures actual response
+3. **Temperature interpolation**: Vc(T) from physics.yaml
+4. **Drift compensation**: Tracks cumulative cycle count
+
+#### 4-Phase Write Sequence
+
+**Full Write Operation (one cell, one level):**
+
+```
+Phase 0: RESET (100ns pulse)
+┌──────────────────────────────────┐
+│ Apply -V_sat (opposite polarity) │
+│ Purpose: Saturate to -Psat       │
+│ Result: Known starting state     │
+└──────────────────────────────────┘
+         ↓
+Phase 1: HOLD_RESET (50ns)
+┌──────────────────────────────────┐
+│ Return WL/BL to 0V               │
+│ Purpose: Zero field, P persists  │
+│ Result: Cell at -Psat, stable    │
+└──────────────────────────────────┘
+         ↓
+Phase 2: WRITE (Program-Verify Loop)
+┌──────────────────────────────────┐
+│ Apply calibrated V for target    │
+│ Purpose: Switch to +P_target     │
+│ Result: Cell at desired level    │
+│ Iterations: 1-5 (ISPP)           │
+└──────────────────────────────────┘
+         ↓
+Phase 3: HOLD_WRITE (50ns)
+┌──────────────────────────────────┐
+│ Return WL/BL to 0V               │
+│ Purpose: Zero field, P persists  │
+│ Result: Non-volatile storage     │
+└──────────────────────────────────┘
+```
+
+**Timing (from config/physics.yaml):**
+```yaml
+pulse_widths:
+    reset_ns: 100       # Phase 0: RESET
+    hold_reset_ns: 50   # Phase 1: HOLD_RESET
+    write_ns: 200       # Phase 2: WRITE (single pulse)
+    hold_write_ns: 50   # Phase 3: HOLD_WRITE
+
+Total per cell: 400ns + ISPP overhead (5× worst case = 2µs)
+```
+
+**Why 4 Phases?**
+- **Phase 0 (RESET)**: Erases hysteretic memory (Preisach hysteron reset)
+- **Phase 1 (HOLD_RESET)**: Allows domain walls to stabilize
+- **Phase 2 (WRITE)**: Applies calibrated field for target level
+- **Phase 3 (HOLD_WRITE)**: Ensures polarization persists after field removal
+
+**Code Flow:**
+```go
+// Simplified from tab_unified.go:1188-1279
+func writeCellToLevel(row, col, level int) error {
+    // Phase 0: RESET
+    applyVoltage(row, col, -V_sat, RESET_PULSE)
+
+    // Phase 1: HOLD_RESET
+    applyVoltage(row, col, 0, HOLD_RESET)
+
+    // Phase 2: WRITE (ISPP loop)
+    V := calibrationUp[level]
+    for iter := 0; iter < 5; iter++ {
+        applyVoltage(row, col, V, WRITE_PULSE)
+        actual := readCell(row, col)
+
+        if abs(actual - level) < 0.5 {
+            break  // SUCCESS
+        }
+        V += stepSize * sign(level - actual)
+    }
+
+    // Phase 3: HOLD_WRITE
+    applyVoltage(row, col, 0, HOLD_WRITE)
+
+    return verify(row, col, level)
+}
+```
+
+**Key Takeaway:** Write voltage is a **dynamic, adaptive parameter**, not a static constant. The program-verify loop compensates for physics complexity that cannot be captured in a simple lookup table.
+
 ### 3.3 Compute (MVM)
 
 **Voltage Configuration:**
@@ -905,6 +1180,11 @@ Sneak Path Suppression:
 ║   WRITE (Erase):         -1.2-1.5V     -1.2-1.5V     -1.2-1.5V            ║
 ║   MVM Input:             0.0-1.0V      0.0-1.0V      0.0-1.0V             ║
 ║                                                                            ║
+║   NOTE: Write voltages are LEVEL-DEPENDENT (30 levels)                    ║
+║         - Each level requires unique voltage (calibrationUp/Down arrays)  ║
+║         - Program-Verify loop (ISPP): 1-5 iterations per cell            ║
+║         - See Section 3.2.1 for multi-level complexity                    ║
+║                                                                            ║
 ║  ARCHITECTURE-SPECIFIC VOLTAGES                                            ║
 ║  ───────────────────────────────────────────────────────────────────────   ║
 ║   Half-Select (0T1R):    ±0.75V        N/A           N/A                  ║
@@ -916,6 +1196,8 @@ Sneak Path Suppression:
 ║  ───────────────────────────────────────────────────────────────────────   ║
 ║   READ:   0.2V    (well below Vc, non-destructive)                        ║
 ║   WRITE:  ±1.5V   (maximum DAC range, ensures switching)                  ║
+║           NOTE: Actual write V varies by target level (30 states)         ║
+║                 Requires program-verify loop (ISPP, §3.2.1)               ║
 ║   MVM:    0-1.0V  (matches ADC input range)                               ║
 ║                                                                            ║
 ║  CODE CONSTANTS (source file : line number)                                ║
@@ -950,6 +1232,9 @@ NOTES:
   - Vc varies with material (HZO: 1.2V, AlScN: 5-10V)
   - Half-select voltage = Vwrite/2 (0T1R only)
   - Transistor ON/OFF voltages are standard CMOS logic levels
+  - Write voltages are level-dependent (30 unique values per cell)
+  - Multi-level writes use ISPP (Incremental Step Pulse Programming)
+  - See §3.2.1 for full multi-level write voltage complexity
 ```
 
 ---
