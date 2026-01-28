@@ -80,9 +80,24 @@ func max(a, b int) int {
 }
 
 // sleep pauses execution for the specified number of milliseconds.
-// Used for animation timing.
-func (ca *CircuitsApp) sleep(milliseconds int) {
-	time.Sleep(time.Duration(milliseconds) * time.Millisecond)
+// Used for animation timing. Returns true if interrupted by stop signal.
+func (ca *CircuitsApp) sleep(milliseconds int) bool {
+	select {
+	case <-ca.stopChan:
+		return true // Interrupted
+	case <-time.After(time.Duration(milliseconds) * time.Millisecond):
+		return false // Normal completion
+	}
+}
+
+// shouldStop returns true if Stop() has been called
+func (ca *CircuitsApp) shouldStop() bool {
+	select {
+	case <-ca.stopChan:
+		return true
+	default:
+		return false
+	}
 }
 
 // drawRoundedRect draws a filled rectangle with rounded corners.

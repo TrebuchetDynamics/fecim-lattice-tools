@@ -189,18 +189,18 @@ Border
 │  └─ DAC presets section
 │     ├─ HBox
 │     │  ├─ Label: "DAC Presets:"
-│     │  ├─ dacPresetReadBtn: "Read (0-0.5V)" (dynamic label)
-│     │  ├─ dacPresetWriteBtn: "Write (1.0-2.5V)" (dynamic label)
-│     │  ├─ Button: "Input Vector"
+│     │  ├─ dacPresetReadBtn: "Safe (0-0.5V)" (dynamic label)
+│     │  ├─ dacPresetWriteBtn: "Program (1.0-2.5V)" (dynamic label)
+│     │  ├─ Button: "Random Vector"
 │     │  ├─ Button: "Random"
 │     │  ├─ Spacer
-│     │  ├─ dacRangeLabel: "Mode: Read (0-0.5V)"
+│     │  ├─ dacRangeLabel: "DAC: Safe (0-0.5V)"
 │     │  ├─ Label: "Set All (V):"
 │     │  └─ Entry: allEntry
 ├─ Bottom: Action buttons
 │  ├─ HBox
 │  │  ├─ Button: "Write Cell" (HighImportance)
-│  │  ├─ Button: "Read/Sense"
+│  │  ├─ Button: "Sense Row"
 │  │  ├─ Button: "Compute MVM"
 │  │  ├─ Spacer
 │  │  ├─ Button: "Animate"

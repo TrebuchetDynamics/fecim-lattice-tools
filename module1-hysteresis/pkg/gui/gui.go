@@ -129,8 +129,7 @@ type App struct {
 	plot           *widgets.PEPlot
 	levelIndicator *widgets.LevelIndicator
 	cellViz        *widgets.CellVisualizer
-	modeIndicator  *widgets.ModeIndicator  // WRITE/READ mode indicator with colored box
-	phaseIndicator *widgets.PhaseIndicator // State machine phase indicator
+	phaseIndicator *widgets.PhaseIndicator // State machine phase indicator (RESET|SETTLE|WRITE|READ|VERIFY)
 	eFieldSlider   *widget.Slider
 	eFieldLabel    *widget.Label
 	eFieldModeLabel *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
@@ -313,7 +312,7 @@ func NewApp() *App {
 
 	mat := materials[0]
 	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 50                                 // High-resolution physics simulation (independent of quantization)
+	preisachGridSize := 60                                 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{
@@ -375,7 +374,7 @@ func NewAppWithMaterial(materialName string) *App {
 	}
 
 	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 50                                 // High-resolution physics simulation (independent of quantization)
+	preisachGridSize := 60                                 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{

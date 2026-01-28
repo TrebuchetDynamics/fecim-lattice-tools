@@ -558,12 +558,17 @@ func (ca *CircuitsApp) onAnimateTiming() {
 
 	go func() {
 		for i, step := range steps {
+			if ca.shouldStop() {
+				return
+			}
 			fyne.Do(func() {
 				ca.timingStatusLabel.SetText(step)
 			})
 			if i < len(steps)-1 {
 				// Pause between animation steps
-				ca.sleep(600)
+				if ca.sleep(600) {
+					return // Interrupted
+				}
 			}
 		}
 	}()

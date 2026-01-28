@@ -144,8 +144,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 		a.matIndex = idx
 		a.material = a.materials[idx]
-		// Use fixed high-resolution grid (50) for physics accuracy, independent of quantization levels
-		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
+		// Use fixed high-resolution grid (60) for physics accuracy, independent of quantization levels
+		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 60)
 
 		// HYBRID APPROACH: Restore temperature immediately after model creation
 		a.preisach.SetTemperature(savedTemp)
@@ -153,11 +153,20 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 
+		// Reset simulation state for new material
+		a.electricField = 0
+		a.polarization = 0
+		a.normalizedP = 0
+		a.simTime = 0
+
 		// HYBRID APPROACH: Use temperature-corrected values for bounds and markers
 		effEc := a.preisach.GetEffectiveEc()
 		effPr := a.preisach.GetEffectivePr()
 		a.plot.SetBounds(effEc*1.5, effPr*1.2)
 		a.plot.SetMaterialParams(effEc, effPr)
+		// Clear plot data and refresh immediately
+		a.plot.SetData(nil, nil, 0, 0)
+		a.plot.Refresh()
 		// Mark calibration as stale (new material needs recalibration)
 		a.calibrated = false
 

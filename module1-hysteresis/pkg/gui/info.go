@@ -19,10 +19,9 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("0.00")
 	a.levelLabel = widget.NewLabel("15/30")
 	a.stateLabel = widget.NewLabel("Intermediate")
-	a.modeIndicator = widgets.NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(140, 36))
 
 	// Phase indicator for state machine visualization
+	// Shows operation sequence: RESET | SETTLE | WRITE | READ | VERIFY
 	a.phaseIndicator = widgets.NewPhaseIndicator()
 	a.phaseIndicator.SetMinSize(fyne.NewSize(140, 50))
 
@@ -87,7 +86,6 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		levelRow,
 		container.NewCenter(a.stateLabel),
 		widget.NewSeparator(),
-		a.modeIndicator,
 		a.phaseIndicator,
 		widget.NewSeparator(),
 		container.NewHBox(matLine, matInfoBtn),

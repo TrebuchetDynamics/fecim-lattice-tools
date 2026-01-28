@@ -56,9 +56,9 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		numAlpha:      gridSize,
 		numBeta:       gridSize,
 		AlphaMean:     material.Ec,       // +Ec
-		AlphaSigma:    material.Ec * 0.2, // 20% distribution
+		AlphaSigma:    material.Ec * 0.28, // 28% distribution (Mayergoyz literature: 0.25-0.35)
 		BetaMean:      -material.Ec,      // -Ec
-		BetaSigma:     material.Ec * 0.2,
+		BetaSigma:     material.Ec * 0.28,
 		Correlation:   0.5,   // Some correlation between α and β
 		Temperature:   300,   // Room temperature (K)
 		CurieTemp:     723,   // HZO Curie temperature ~450°C

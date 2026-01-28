@@ -174,7 +174,23 @@ for i := 0; i < numLevels; i++ {
 
 ### Step 5: Add Smoothness Test
 
-**File:** `module1-hysteresis/pkg/ferroelectric/preisach_advanced_test.go` (append to end)
+**File:** `module1-hysteresis/pkg/ferroelectric/preisach_advanced_test.go`
+
+**First, update the imports (lines 3-5)** from:
+```go
+import (
+	"testing"
+)
+```
+To:
+```go
+import (
+	"math"
+	"testing"
+)
+```
+
+**Then append to end of file:**
 
 ```go
 // TestPECurveSmoothness verifies the P-E curve has enough granularity for 30-level quantization.

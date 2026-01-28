@@ -256,6 +256,14 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 
 	// Validate calibration quality
 	a.validateCalibration()
+
+	// Log critical calibration quality issues
+	upDupes := countDuplicates(a.calibrationUp)
+	downDupes := countDuplicates(a.calibrationDown)
+	if upDupes > 10 || downDupes > 10 {
+		log.Printf("CRITICAL: Calibration has %d/%d duplicate E-fields.", upDupes, downDupes)
+		log.Printf("  Consider: increasing grid size or widening distribution (σ)")
+	}
 }
 
 // validateCalibration checks for degenerate calibration values (duplicate E-fields)
@@ -551,7 +559,8 @@ func (a *App) simulationLoop() {
 				case 2: // WRITE - apply calibrated field for target
 					var writeE float64
 					targetIdx := targetLevel - 1
-					goingUp := targetLevel > startLevel
+					midLevel := a.numLevels / 2
+					goingUp := targetLevel > midLevel
 					if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
 						// Out of bounds - use fallback
 						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
@@ -617,7 +626,8 @@ func (a *App) simulationLoop() {
 						// This approach converges much faster and avoids oscillation
 						adjIdx := targetLevel - 1
 						if levelError != 0 && a.calibrated && adjIdx >= 0 && adjIdx < len(a.calibrationUp) {
-							if targetLevel > startLevel {
+							midLevel := a.numLevels / 2
+							if targetLevel > midLevel {
 								// ASCENDING calibration adjustment
 								currentE := a.calibrationUp[adjIdx]
 								lastErr := a.lastErrorUp[adjIdx]
@@ -1276,11 +1286,6 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			a.switchedLabel.SetText(fmt.Sprintf("Switched: %.0f%%", switchedFraction*100))
 		}
 
-		// Update WRITE/READ mode indicator based on E vs Ec
-		isWrite := math.Abs(eField) > materialEc
-		a.modeIndicator.SetWrite(isWrite)
-		a.modeIndicator.Refresh()
-
 		// Update phase indicator based on current mode and phase
 		a.mu.RLock()
 		waveform := a.waveform
@@ -1608,10 +1613,10 @@ func (a *App) calibrateLevels() {
 	// Initialize bounds based on temperature-corrected Ec
 	for i := 0; i < numLevels; i++ {
 		// Initial bounds: full range (will be narrowed by runtime feedback)
-		a.calibUpLow[i] = Ec * 0.5
-		a.calibUpHigh[i] = Emax
-		a.calibDownLow[i] = -Emax
-		a.calibDownHigh[i] = -Ec * 0.5
+		a.calibUpLow[i] = Ec * 0.3
+		a.calibUpHigh[i] = Ec * 2.0
+		a.calibDownLow[i] = -Ec * 2.0
+		a.calibDownHigh[i] = -Ec * 0.3
 	}
 
 	// Helper function to test what level results from a given field

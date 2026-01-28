@@ -28,32 +28,38 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	label := widget.NewLabel("Hardware Config")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Levels slider (2-256)
+	// Levels select (only available QAT levels)
 	levelsTitle := widget.NewLabel("Levels:")
 	app.levelsLabel = widget.NewLabel(fmt.Sprintf("%d", FeCIMDefaultLevels))
-	app.levelsSlider = widget.NewSlider(2, 256)
-	app.levelsSlider.Step = 1
-	app.levelsSlider.Value = float64(FeCIMDefaultLevels)
-	app.levelsSlider.OnChanged = func(v float64) {
-		mnistLog.SliderChange("Levels", v)
-		levels := int(v)
+
+	// Build options from available QAT levels
+	levelOptions := make([]string, len(core.AvailableQATLevels))
+	for i, l := range core.AvailableQATLevels {
+		levelOptions[i] = fmt.Sprintf("%d", l)
+	}
+
+	app.levelsSelect = widget.NewSelect(levelOptions, func(s string) {
+		var levels int
+		fmt.Sscanf(s, "%d", &levels)
+		mnistLog.Selection("Levels", s)
 		app.levelsLabel.SetText(fmt.Sprintf("%d", levels))
 
-		// Check if we should load level-specific QAT weights
-		bestLevel := core.GetBestMatchingWeightsLevel(levels)
-		app.tryLoadQATWeights(bestLevel)
+		// Load weights for this level
+		app.tryLoadQATWeights(levels)
 
 		app.network().SetNumLevels(levels)
 		app.updateWeightHeatmap()
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)
 		}
-	}
+	})
+	app.levelsSelect.SetSelected(fmt.Sprintf("%d", FeCIMDefaultLevels))
+
 	levelsRow := container.NewBorder(nil, nil,
 		container.NewHBox(levelsTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\nHigher levels = better precision but harder to stabilize.\n\nPhysics: Ferroelectric material domains determine stable polarization states.", app.window)
+			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\nOnly levels with trained weights are shown.\n\nPhysics: Ferroelectric material domains determine stable polarization states.", app.window)
 		})),
-		app.levelsLabel, app.levelsSlider)
+		app.levelsLabel, app.levelsSelect)
 
 	// Noise slider
 	noiseTitle := widget.NewLabel("Noise:")
@@ -214,7 +220,7 @@ func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, 
 
 	// Update UI elements on main thread
 	fyne.Do(func() {
-		app.levelsSlider.SetValue(float64(levels))
+		app.levelsSelect.SetSelected(fmt.Sprintf("%d", levels))
 		app.noiseSlider.SetValue(noise)
 		app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
 		app.dacSelect.SetSelected(fmt.Sprintf("%d", dacBits))
@@ -302,7 +308,11 @@ func (app *DualModeApp) runQuickTest() {
 
 // showTrainWeightsDialog shows a dialog to train weights for the current quantization level.
 func (app *DualModeApp) showTrainWeightsDialog() {
-	currentLevels := int(app.levelsSlider.Value)
+	var currentLevels int
+	fmt.Sscanf(app.levelsSelect.Selected, "%d", &currentLevels)
+	if currentLevels == 0 {
+		currentLevels = FeCIMDefaultLevels
+	}
 
 	// Create progress UI elements
 	progressBar := widget.NewProgressBar()

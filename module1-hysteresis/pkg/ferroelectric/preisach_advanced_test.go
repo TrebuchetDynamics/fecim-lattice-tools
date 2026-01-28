@@ -1,6 +1,7 @@
 package ferroelectric
 
 import (
+	"math"
 	"testing"
 )
 
@@ -356,4 +357,31 @@ func BenchmarkPreisachLoop(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		model.GetHysteresisLoop(Emax, 100)
 	}
+}
+
+// TestPECurveSmoothness verifies the P-E curve has enough granularity for 30-level quantization.
+func TestPECurveSmoothness(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 60) // Match updated GUI grid size
+
+	Emax := material.Ec * 2.0
+	E, P := model.GetHysteresisLoop(Emax, 100)
+	_ = E // Use E to avoid unused variable error
+
+	// Count unique P values in -Pr to +Pr range
+	Pr := material.Pr
+	uniqueP := make(map[float64]bool)
+	for _, p := range P {
+		if p >= -Pr && p <= Pr {
+			// Round to 5% of Pr for comparison
+			rounded := math.Round(p/(Pr*0.05)) * (Pr * 0.05)
+			uniqueP[rounded] = true
+		}
+	}
+
+	// Should have at least 20 distinct levels in the polarization range
+	if len(uniqueP) < 20 {
+		t.Errorf("P-E curve too coarse: only %d distinct P values (expected >= 20)", len(uniqueP))
+	}
+	t.Logf("P-E curve smoothness: %d distinct P values in ±Pr range", len(uniqueP))
 }

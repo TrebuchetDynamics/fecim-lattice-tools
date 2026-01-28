@@ -390,12 +390,17 @@ func (ca *CircuitsApp) onAnimateComparison() {
 
 	go func() {
 		for i, step := range steps {
+			if ca.shouldStop() {
+				return
+			}
 			fyne.Do(func() {
 				ca.compStatusLabel.SetText(step)
 			})
 			if i < len(steps)-1 {
 				// Pause between animation steps
-				ca.sleep(500)
+				if ca.sleep(500) {
+					return // Interrupted
+				}
 			}
 		}
 	}()

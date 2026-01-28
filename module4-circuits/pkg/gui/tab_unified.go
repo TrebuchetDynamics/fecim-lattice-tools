@@ -160,21 +160,22 @@ func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 	ca.unifiedDACLabels = make([]*widget.Label, maxCols)
 
 	// Preset buttons - labels updated dynamically based on material voltage ranges
-	ca.dacPresetReadBtn = widget.NewButton("Read (0-1V)", func() {
+	// "Safe" = non-destructive sensing voltage, "Program" = write voltage that exceeds Vc
+	ca.dacPresetReadBtn = widget.NewButton("Safe (0-1V)", func() {
 		ca.setUnifiedDACPreset(DACReadPreset)
 	})
-	ca.dacPresetWriteBtn = widget.NewButton("Write (1.2-1.5V)", func() {
+	ca.dacPresetWriteBtn = widget.NewButton("Program (1.2-1.5V)", func() {
 		ca.setUnifiedDACPreset(DACWritePreset)
 	})
-	presetCompute := widget.NewButton("Input Vector", func() {
-		ca.showInputVectorDialog()
+	presetCompute := widget.NewButton("Random Vector", func() {
+		ca.applyRandomInputVector()
 	})
 	presetRandom := widget.NewButton("Random", func() {
 		ca.setUnifiedDACPreset(DACRandom)
 	})
 
 	// Range mode indicator
-	ca.dacRangeLabel = widget.NewLabel("Mode: Read")
+	ca.dacRangeLabel = widget.NewLabel("DAC: Safe")
 	ca.dacRangeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// "Set All" entry for bulk voltage
@@ -203,12 +204,13 @@ func (ca *CircuitsApp) updateDACPresetLabels() {
 	writeRange := ca.deviceState.GetWriteRange()
 
 	// Update button labels with actual voltage ranges
+	// "Safe" = non-destructive, "Program" = exceeds coercive voltage
 	fyne.Do(func() {
 		if ca.dacPresetReadBtn != nil {
-			ca.dacPresetReadBtn.SetText(fmt.Sprintf("Read (0-%.1fV)", readRange.Max))
+			ca.dacPresetReadBtn.SetText(fmt.Sprintf("Safe (0-%.1fV)", readRange.Max))
 		}
 		if ca.dacPresetWriteBtn != nil {
-			ca.dacPresetWriteBtn.SetText(fmt.Sprintf("Write (%.1f-%.1fV)", writeRange.Min, writeRange.Max))
+			ca.dacPresetWriteBtn.SetText(fmt.Sprintf("Program (%.1f-%.1fV)", writeRange.Min, writeRange.Max))
 		}
 	})
 }
@@ -224,9 +226,9 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 
 	var text string
 	if rangeMode == DACRangeWrite {
-		text = fmt.Sprintf("Mode: Write (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
+		text = fmt.Sprintf("DAC: Program (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
 	} else {
-		text = fmt.Sprintf("Mode: Read (0-%.1fV)", currentRange.Max)
+		text = fmt.Sprintf("DAC: Safe (0-%.1fV)", currentRange.Max)
 	}
 
 	fyne.Do(func() {
@@ -361,6 +363,7 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	}
 
 	ca.updateModeButtons()
+	ca.updateActionButtons() // Enable/disable action buttons based on mode
 	ca.updateModePanels(mode) // Show/hide mode-specific panels
 	ca.updateWLCheckboxes()
 	ca.updateWLHelpLabel()
@@ -380,11 +383,11 @@ func (ca *CircuitsApp) updateWLHelpLabel() {
 
 	var helpText string
 	if isPassive {
-		helpText = "Passive: All rows always on"
+		helpText = "Passive: All rows on (no transistors)"
 	} else if mode == OpModeCompute {
-		helpText = "Compute: All rows active"
+		helpText = "Compute: All rows active (locked)"
 	} else {
-		helpText = "R/W: One row only"
+		helpText = "R/W: Select one row"
 	}
 
 	fyne.Do(func() {
@@ -464,19 +467,19 @@ func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 
 // createUnifiedActionSection creates the action buttons
 func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
-	// Program button - only enabled when single row + high voltage
-	programBtn := widget.NewButton("Write Cell", func() {
+	// Program button - only enabled in WRITE mode
+	ca.actionWriteCellBtn = widget.NewButton("Write Cell", func() {
 		ca.onUnifiedProgram()
 	})
-	programBtn.Importance = widget.HighImportance
+	ca.actionWriteCellBtn.Importance = widget.HighImportance
 
-	// Read button
-	readBtn := widget.NewButton("Read/Sense", func() {
+	// Sense button - only enabled in READ mode
+	ca.actionReadBtn = widget.NewButton("Sense Row", func() {
 		ca.onUnifiedRead()
 	})
 
-	// Compute button
-	computeBtn := widget.NewButton("Compute MVM", func() {
+	// Compute button - only enabled in COMPUTE mode
+	ca.actionComputeBtn = widget.NewButton("Compute MVM", func() {
 		ca.onUnifiedCompute()
 	})
 
@@ -502,10 +505,51 @@ func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
 	})
 
 	return container.NewHBox(
-		programBtn, readBtn, computeBtn,
+		ca.actionWriteCellBtn, ca.actionReadBtn, ca.actionComputeBtn,
 		layout.NewSpacer(),
 		ca.undoHistoryBtn, animateBtn, randomBtn, resetBtn,
 	)
+}
+
+// updateActionButtons enables/disables action buttons based on current mode
+func (ca *CircuitsApp) updateActionButtons() {
+	if ca.deviceState == nil {
+		return
+	}
+
+	mode := ca.deviceState.GetOperationMode()
+
+	fyne.Do(func() {
+		// Write Cell: only in WRITE mode
+		if ca.actionWriteCellBtn != nil {
+			if mode == OpModeWrite {
+				ca.actionWriteCellBtn.Enable()
+				ca.actionWriteCellBtn.Importance = widget.HighImportance
+			} else {
+				ca.actionWriteCellBtn.Disable()
+				ca.actionWriteCellBtn.Importance = widget.MediumImportance
+			}
+			ca.actionWriteCellBtn.Refresh()
+		}
+
+		// Read/Sense: only in READ mode
+		if ca.actionReadBtn != nil {
+			if mode == OpModeRead {
+				ca.actionReadBtn.Enable()
+			} else {
+				ca.actionReadBtn.Disable()
+			}
+		}
+
+		// Compute MVM: only in COMPUTE mode
+		if ca.actionComputeBtn != nil {
+			if mode == OpModeCompute {
+				ca.actionComputeBtn.Enable()
+			} else {
+				ca.actionComputeBtn.Disable()
+			}
+		}
+	})
 }
 
 // ============================================================================
@@ -1035,27 +1079,40 @@ func (ca *CircuitsApp) setAllUnifiedDACVoltages(voltageStr string) {
 	ca.recomputeAndRefresh()
 }
 
-// showInputVectorDialog shows a dialog for entering input vector values
-func (ca *CircuitsApp) showInputVectorDialog() {
-	// For simplicity, set random input vector (0-255) converted to voltage
+// applyRandomInputVector applies random input vector values (0-255) and syncs UI entries
+func (ca *CircuitsApp) applyRandomInputVector() {
+	// Set random input vector (0-255) converted to voltage
 	ca.mu.Lock()
 	for i := range ca.inputVector {
 		ca.inputVector[i] = rand.Intn(256)
 	}
 	ca.mu.Unlock()
 
+	// Sync the compute mode panel entries if they exist
+	fyne.Do(func() {
+		ca.mu.RLock()
+		defer ca.mu.RUnlock()
+		for i, entry := range ca.mfuxInputVectorEntry {
+			if entry != nil && i < len(ca.inputVector) {
+				entry.SetText(strconv.Itoa(ca.inputVector[i]))
+			}
+		}
+	})
+
 	// Convert to DAC voltages (0-255 -> read range)
 	params := make([]float64, len(ca.inputVector))
+	ca.mu.RLock()
 	for i, v := range ca.inputVector {
 		params[i] = float64(v)
 	}
+	ca.mu.RUnlock()
 	ca.deviceState.SetDACPreset(DACInputVector, params...)
 
 	readRange := ca.deviceState.GetReadRange()
 	ca.updateDACRangeModeLabel()
 	ca.updateDACEntries()
 	ca.recomputeAndRefresh()
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Input vector applied (0-255 -> 0-%.1fV)", readRange.Max))
+	ca.operationsStatusLabel.SetText(fmt.Sprintf("Random input vector applied (0-255 -> 0-%.1fV)", readRange.Max))
 }
 
 // onWLChanged handles WL checkbox changes
@@ -1146,13 +1203,19 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	// H2 FIX: Update target cell label in write mode panel
 	ca.updateWriteTargetLabel()
 
-	// Update DAC voltage for the newly selected column
-	if mode == OpModeWrite && ca.mfuxWriteLevelSlider != nil {
+	// Update DAC voltage for the newly selected column based on mode
+	switch mode {
+	case OpModeWrite:
 		// Write mode: set write voltage on selected column only
-		ca.deviceState.SetDACVoltageForState(col, int(ca.mfuxWriteLevelSlider.Value), ca.quantLevels)
-	} else if mode == OpModeRead {
+		if ca.mfuxWriteLevelSlider != nil {
+			ca.deviceState.SetDACVoltageForState(col, int(ca.mfuxWriteLevelSlider.Value), ca.quantLevels)
+		}
+	case OpModeRead:
 		// Read mode: set read voltage on selected column only (others stay 0)
 		ca.deviceState.SetDACPreset(DACReadPreset)
+	case OpModeCompute:
+		// Compute mode: don't change DAC (input vector is already applied)
+		// Cell selection is just for visual feedback - MVM uses all cells
 	}
 
 	ca.recomputeAndRefresh()
@@ -1166,6 +1229,12 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 // onUnifiedProgram programs the selected cell using Write-ReadVerify loop
 // This simulates ISPP (Incremental Step Pulse Programming) behavior
 func (ca *CircuitsApp) onUnifiedProgram() {
+	// Mode validation: only allowed in WRITE mode
+	if ca.deviceState.GetOperationMode() != OpModeWrite {
+		ca.operationsStatusLabel.SetText("Error: Switch to WRITE mode first")
+		return
+	}
+
 	// Get target level directly from slider (the user's intent)
 	targetLevel := int(ca.mfuxWriteLevelSlider.Value)
 	if targetLevel < 0 {
@@ -1295,6 +1364,12 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 
 // onUnifiedRead reads the selected cell
 func (ca *CircuitsApp) onUnifiedRead() {
+	// Mode validation: only allowed in READ mode
+	if ca.deviceState.GetOperationMode() != OpModeRead {
+		ca.operationsStatusLabel.SetText("Error: Switch to READ mode first")
+		return
+	}
+
 	ca.recomputeAndRefresh()
 
 	selectedRow := ca.deviceState.GetSelectedRow()
@@ -1306,6 +1381,12 @@ func (ca *CircuitsApp) onUnifiedRead() {
 
 // onUnifiedCompute runs MVM computation
 func (ca *CircuitsApp) onUnifiedCompute() {
+	// Mode validation: only allowed in COMPUTE mode
+	if ca.deviceState.GetOperationMode() != OpModeCompute {
+		ca.operationsStatusLabel.SetText("Error: Switch to COMPUTE mode first")
+		return
+	}
+
 	// Ensure all rows are active for MVM
 	ca.deviceState.SetWLAll()
 	ca.updateWLCheckboxes()
@@ -1324,6 +1405,9 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 
 	go func() {
 		// Step 1: DAC
+		if ca.shouldStop() {
+			return
+		}
 		ca.mu.Lock()
 		ca.animationStep = 1
 		ca.mu.Unlock()
@@ -1331,9 +1415,14 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		fyne.Do(func() {
 			ca.operationsStatusLabel.SetText("Step 1: DAC conversion (5ns)")
 		})
-		ca.sleep(600)
+		if ca.sleep(600) {
+			return // Interrupted
+		}
 
 		// Step 2: Array
+		if ca.shouldStop() {
+			return
+		}
 		ca.mu.Lock()
 		ca.animationStep = 2
 		ca.mu.Unlock()
@@ -1341,9 +1430,14 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		fyne.Do(func() {
 			ca.operationsStatusLabel.SetText("Step 2: Array MVM (5ns)")
 		})
-		ca.sleep(600)
+		if ca.sleep(600) {
+			return // Interrupted
+		}
 
 		// Step 3: ADC
+		if ca.shouldStop() {
+			return
+		}
 		ca.mu.Lock()
 		ca.animationStep = 3
 		ca.mu.Unlock()
@@ -1351,7 +1445,9 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		fyne.Do(func() {
 			ca.operationsStatusLabel.SetText("Step 3: TIA+ADC conversion (10ns)")
 		})
-		ca.sleep(600)
+		if ca.sleep(600) {
+			return // Interrupted
+		}
 
 		// Complete
 		ca.mu.Lock()
@@ -1510,16 +1606,22 @@ func (ca *CircuitsApp) updateDACEntries() {
 // In passive mode, all checkboxes are checked AND disabled (all WLs always on)
 func (ca *CircuitsApp) updateWLCheckboxes() {
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+	mode := ca.deviceState.GetOperationMode()
 
 	for i, check := range ca.unifiedWLChecks {
 		if check != nil {
 			isActive := ca.deviceState.IsRowActive(i)
 			fyne.Do(func() {
 				if isPassive {
-					// Passive mode: all WLs always on, checkboxes disabled
+					// Passive mode: all WLs always on, checkboxes disabled (no transistors)
+					check.SetChecked(true)
+					check.Disable()
+				} else if mode == OpModeCompute {
+					// COMPUTE mode: all WLs active, checkboxes disabled (locked for MVM)
 					check.SetChecked(true)
 					check.Disable()
 				} else {
+					// READ/WRITE mode: single row selection enabled
 					check.Enable()
 					check.SetChecked(isActive)
 				}
@@ -1531,24 +1633,8 @@ func (ca *CircuitsApp) updateWLCheckboxes() {
 // updateWLCheckboxesForArchitecture updates checkboxes based on architecture
 // In passive mode (0T1R), all WLs are always active and checkboxes are disabled
 func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
-	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-
-	for i, check := range ca.unifiedWLChecks {
-		if check != nil {
-			fyne.Do(func() {
-				if isPassive {
-					// Passive: all WLs always active, disable checkboxes (no transistors)
-					check.SetChecked(true)
-					check.Disable()
-				} else {
-					// 1T1R/2T1R: enable checkboxes and show actual state
-					check.Enable()
-					check.SetChecked(ca.deviceState.IsRowActive(i))
-				}
-			})
-		}
-	}
-
+	// Delegate to updateWLCheckboxes which handles both architecture and mode
+	ca.updateWLCheckboxes()
 	// Update help label based on architecture
 	ca.updateWLHelpLabel()
 }
@@ -1881,6 +1967,7 @@ func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 }
 
 // onInputVectorEntryChanged handles input vector entry changes
+// Only applies DAC changes in COMPUTE mode to prevent state corruption
 func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
@@ -1895,11 +1982,17 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 		value = 255
 	}
 
+	// Always store the value (for when user switches to COMPUTE mode)
 	ca.mu.Lock()
 	if col < len(ca.inputVector) {
 		ca.inputVector[col] = value
 	}
 	ca.mu.Unlock()
+
+	// Only apply to DAC if in COMPUTE mode
+	if ca.deviceState.GetOperationMode() != OpModeCompute {
+		return
+	}
 
 	// Convert all inputs to DAC voltages
 	params := make([]float64, len(ca.inputVector))
@@ -1914,6 +2007,7 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 }
 
 // randomizeInputVectorEntries fills entries with random 0-255 values
+// Only applies to DAC if in COMPUTE mode
 func (ca *CircuitsApp) randomizeInputVectorEntries() {
 	ca.mu.Lock()
 	for i := range ca.inputVector {
@@ -1932,6 +2026,11 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 		}
 	})
 
+	// Only apply to DAC if in COMPUTE mode
+	if ca.deviceState.GetOperationMode() != OpModeCompute {
+		return
+	}
+
 	// Apply to DAC
 	params := make([]float64, len(ca.inputVector))
 	ca.mu.RLock()
@@ -1945,6 +2044,7 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 }
 
 // clearInputVectorEntries sets all entries to 0
+// Only applies to DAC if in COMPUTE mode
 func (ca *CircuitsApp) clearInputVectorEntries() {
 	ca.mu.Lock()
 	for i := range ca.inputVector {
@@ -1960,6 +2060,11 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 			}
 		}
 	})
+
+	// Only apply to DAC if in COMPUTE mode
+	if ca.deviceState.GetOperationMode() != OpModeCompute {
+		return
+	}
 
 	// Apply to DAC
 	params := make([]float64, len(ca.inputVector))
@@ -2078,6 +2183,11 @@ func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 // This is called from a goroutine
 func (ca *CircuitsApp) animateWriteSequence() {
 	for {
+		// Check for stop signal
+		if ca.shouldStop() {
+			return
+		}
+
 		if ca.deviceState == nil {
 			return
 		}
@@ -2094,11 +2204,13 @@ func (ca *CircuitsApp) animateWriteSequence() {
 		ca.updateWriteSequenceUI()
 
 		// Delay proportional to phase duration (scaled for animation)
-		animDelay := time.Duration(duration/4) * time.Millisecond
-		if animDelay < time.Duration(AnimationFrameDelayMs)*time.Millisecond {
-			animDelay = time.Duration(AnimationFrameDelayMs) * time.Millisecond
+		animDelayMs := duration / 4
+		if animDelayMs < AnimationFrameDelayMs {
+			animDelayMs = AnimationFrameDelayMs
 		}
-		time.Sleep(animDelay)
+		if ca.sleep(animDelayMs) {
+			return // Interrupted
+		}
 
 		// Advance to next phase
 		complete := ca.deviceState.AdvanceWritePhase()
@@ -2153,6 +2265,12 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 	ca.deviceState.StartISPP(row, col, targetLevel, currentLevel)
 
 	for {
+		// Check for stop signal at start of each iteration
+		if ca.shouldStop() {
+			ca.deviceState.CancelISPP()
+			return
+		}
+
 		isppStatus := ca.deviceState.GetISPPStatus()
 		if !isppStatus.Active {
 			break
@@ -2167,11 +2285,20 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 
 		// Wait for 4-phase sequence to complete
 		for {
+			if ca.shouldStop() {
+				ca.deviceState.CancelWriteSequence()
+				ca.deviceState.CancelISPP()
+				return
+			}
 			phaseInfo := ca.deviceState.GetWritePhaseInfo()
 			if !phaseInfo.Active {
 				break
 			}
-			time.Sleep(time.Duration(AnimationFrameDelayMs) * time.Millisecond)
+			if ca.sleep(AnimationFrameDelayMs) {
+				ca.deviceState.CancelWriteSequence()
+				ca.deviceState.CancelISPP()
+				return
+			}
 		}
 
 		// Simulate write: move toward target (same logic as existing writeReadVerifyLoop)

@@ -62,7 +62,7 @@ type DualModeApp struct {
 	digitCanvas *DigitCanvas
 
 	// Control panel components
-	levelsSlider *widget.Slider
+	levelsSelect *widget.Select
 	levelsLabel  *widget.Label
 	noiseSlider  *widget.Slider
 	noiseLabel   *widget.Label

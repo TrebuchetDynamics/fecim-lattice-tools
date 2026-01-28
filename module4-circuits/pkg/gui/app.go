@@ -189,6 +189,8 @@ type CircuitsApp struct {
 	// Animation state
 	animationStep   int // 0=none, 1=DAC, 2=Array, 3=ADC
 	animationActive bool
+	stopChan        chan struct{} // Closed to signal all goroutines to stop
+	stopped         bool          // True when Stop() has been called
 
 	// Architecture toggle (1T1R vs 0T1R vs 2T1R)
 	archPassiveBtn *widget.Button
@@ -249,6 +251,11 @@ type CircuitsApp struct {
 	undoHistory     [][]int // Previous array state
 	undoHistoryBtn  *widget.Button
 	hasUndoHistory  bool
+
+	// Action buttons (stored for mode-based enable/disable)
+	actionWriteCellBtn *widget.Button
+	actionReadBtn      *widget.Button
+	actionComputeBtn   *widget.Button
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.
@@ -283,6 +290,9 @@ func NewCircuitsApp() *CircuitsApp {
 
 	// Initialize array
 	ca.initializeArray()
+
+	// Initialize stop channel for goroutine lifecycle
+	ca.stopChan = make(chan struct{})
 
 	return ca
 }

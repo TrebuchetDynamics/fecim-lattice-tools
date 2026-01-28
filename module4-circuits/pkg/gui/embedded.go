@@ -70,6 +70,17 @@ func (e *EmbeddedCircuitsApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 
 // Start begins any background processes when the tab is selected
 func (e *EmbeddedCircuitsApp) Start() {
+	// Reset stop state so goroutines can run again
+	e.mu.Lock()
+	if e.stopped {
+		e.stopped = false
+		e.stopChan = make(chan struct{})
+	}
+	e.mu.Unlock()
+
+	// Update action button states for current mode
+	e.updateActionButtons()
+
 	// Refresh all canvases when tab is selected
 	e.refreshWriteArray()
 	e.refreshWritePulse()
@@ -94,5 +105,19 @@ func (e *EmbeddedCircuitsApp) Start() {
 
 // Stop ends any background processes when the tab is deselected
 func (e *EmbeddedCircuitsApp) Stop() {
-	// Nothing to stop in current implementation
+	// Signal all goroutines to stop
+	e.mu.Lock()
+	if !e.stopped {
+		e.stopped = true
+		close(e.stopChan)
+	}
+	e.animationActive = false
+	e.animationStep = 0
+	e.mu.Unlock()
+
+	// Cancel any ongoing device state operations
+	if e.deviceState != nil {
+		e.deviceState.CancelWriteSequence()
+		e.deviceState.CancelISPP()
+	}
 }
