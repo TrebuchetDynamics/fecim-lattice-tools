@@ -10,6 +10,7 @@ import (
 
 // DefaultQuantizationLevels is the standard number of discrete analog states.
 // Alias to shared/physics for backward compatibility.
+// "It's got 30 discrete states. So it's not 0-1-0-1." - Dr. Tour, COSM 2025
 const DefaultQuantizationLevels = physics.DefaultLevels
 
 // Conductance range constants (physical units) - aliases to shared/physics
@@ -170,17 +171,15 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 
 // QuantizeToLevels quantizes a value to exactly discrete levels (0-29).
 // This matches the standard 30 discrete analog states.
+// Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
-	// Clamp to [0, 1]
-	value = math.Max(0, math.Min(1, value))
-	// Quantize to levels (0 to N-1)
-	level := math.Round(value * float64(DefaultQuantizationLevels-1))
-	return level / float64(DefaultQuantizationLevels-1)
+	return physics.QuantizeTo30Levels(value)
 }
 
 // GetLevel returns the discrete level (0 to N-1) for a conductance value.
+// Wrapper for shared/physics.GetLevelFor30 for backward compatibility.
 func GetLevel(conductance float64) int {
-	return int(math.Round(conductance * float64(DefaultQuantizationLevels-1)))
+	return physics.GetLevelFor30(conductance)
 }
 
 // GetPhysicalConductance converts normalized conductance [0,1] to physical units (Siemens).
