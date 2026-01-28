@@ -1077,6 +1077,77 @@ func (a *App) simulationLoop() {
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle
 					}
 				}
+			case WaveformTimeResolved:
+				// Time-resolved switching dynamics visualization
+				// Shows KAI (Kolmogorov-Avrami-Ishibashi) stretched exponential switching
+				if !a.timeResAnimating {
+					// Start new animation - simulate domain switching dynamics
+					Eapplied := 2.0 * a.material.Ec       // Write pulse at 2×Ec
+					duration := 100e-9         // 100 nanoseconds
+					steps := 100               // 100 time points
+
+					times, pols, switched := a.preisach.SimulateDomainSwitching(Eapplied, duration, steps)
+
+					a.timeResDataTimes = times
+					a.timeResDataPols = pols
+					a.timeResDataSwitch = switched
+					a.timeResIndex = 0
+					a.timeResAnimating = true
+
+					// Clear history for clean display
+					a.eHistory = a.eHistory[:0]
+					a.pHistory = a.pHistory[:0]
+
+					a.addLogEntry("━━ TIME-RESOLVED SWITCHING ━━")
+					a.addLogEntry(fmt.Sprintf("E = %.1f MV/cm (2×Ec)", Eapplied/1e8))
+					a.addLogEntry(fmt.Sprintf("Duration: %.0f ns", duration*1e9))
+					a.addLogEntry("KAI stretched exponential")
+					a.addLogEntry("P(t)=Ps(1-exp(-(t/τ)^n))")
+				}
+
+				// Animate through the precomputed data
+				if a.timeResAnimating && len(a.timeResDataTimes) > 0 {
+					// Advance at a rate of ~2 samples per frame (controlled animation speed)
+					a.timeResIndex += 2
+					if a.timeResIndex >= len(a.timeResDataTimes) {
+						// Loop back to start for continuous demonstration
+						a.timeResIndex = 0
+						a.eHistory = a.eHistory[:0]
+						a.pHistory = a.pHistory[:0]
+						a.addLogEntry("─── Loop ───")
+					}
+
+					// Set current state from precomputed data
+					idx := a.timeResIndex
+					currentTime := a.timeResDataTimes[idx]
+					a.polarization = a.timeResDataPols[idx]
+					a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
+
+					// Update discrete level
+					a.normalizedP = a.polarization / a.material.Ps
+					maxLevel := a.numLevels - 1
+					a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
+					if a.discreteLevel < 0 {
+						a.discreteLevel = 0
+					}
+					if a.discreteLevel > maxLevel {
+						a.discreteLevel = maxLevel
+					}
+
+					// Log progress at key milestones
+					if idx == 10 {
+						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+						a.addLogEntry(fmt.Sprintf("10 ns: %.0f%% switched", switchedFrac))
+					} else if idx == 50 {
+						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+						a.addLogEntry(fmt.Sprintf("50 ns: %.0f%% switched", switchedFrac))
+					} else if idx == 90 {
+						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+						a.addLogEntry(fmt.Sprintf("90 ns: %.0f%% switched", switchedFrac))
+						a.addLogEntry("τ = switching time constant")
+						a.addLogEntry("n = Avrami exponent")
+					}
+				}
 			}
 		}
 
@@ -1179,6 +1250,32 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			a.fatigueLabel.SetText(fmt.Sprintf("%.4f%%", degradation*100))
 		}
 
+		// Update temperature-dependent metrics
+		effEc := a.preisach.GetEffectiveEc()
+		effPr := a.preisach.GetEffectivePr()
+		switchedFraction := a.preisach.GetSwitchedFraction()
+
+		// Calculate squareness (Pr/Ps ratio)
+		squareness := 0.0
+		a.mu.RLock()
+		if a.material != nil && a.material.Ps > 0 {
+			squareness = effPr / a.material.Ps
+		}
+		a.mu.RUnlock()
+
+		if a.effEcLabel != nil {
+			a.effEcLabel.SetText(fmt.Sprintf("Ec(T): %.2f MV/cm", effEc/1e8))
+		}
+		if a.effPrLabel != nil {
+			a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f µC/cm²", effPr*100))
+		}
+		if a.squarenessLabel != nil {
+			a.squarenessLabel.SetText(fmt.Sprintf("Squareness: %.2f", squareness))
+		}
+		if a.switchedLabel != nil {
+			a.switchedLabel.SetText(fmt.Sprintf("Switched: %.0f%%", switchedFraction*100))
+		}
+
 		// Update WRITE/READ mode indicator based on E vs Ec
 		isWrite := math.Abs(eField) > materialEc
 		a.modeIndicator.SetWrite(isWrite)
@@ -1230,6 +1327,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			wrdTotalWrites := a.wrdTotalWrites
 			wrdSuccessWrites := a.wrdSuccessWrites
 			wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
+			midLevel := a.numLevels / 2 // Dynamic middle level for direction logic
 			a.mu.RUnlock()
 
 			switch waveform {
@@ -1243,7 +1341,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					case 0:
 						// RESET: Saturate in opposite direction
 						direction := "-sat"
-						if wrdTarget <= 15 {
+						if wrdTarget <= midLevel {
 							direction = "+sat"
 						}
 						a.addLogEntry(fmt.Sprintf("◆◆ RESET   | %s | prep", direction))
@@ -1253,7 +1351,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					case 2:
 						// WRITE: Apply calibrated field to reach target
 						direction := "+"
-						if wrdTarget <= 15 {
+						if wrdTarget <= midLevel {
 							direction = "-"
 						}
 						a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
@@ -1290,7 +1388,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 				switch wrdPhase {
 				case 0:
 					direction := "-sat"
-					if wrdTarget <= 15 {
+					if wrdTarget <= midLevel {
 						direction = "+sat"
 					}
 					phaseStr = fmt.Sprintf("◆ RESET | %s | preparing", direction)
@@ -1298,7 +1396,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					phaseStr = "░ SETTLE | E=0 | at known state"
 				case 2:
 					direction := "+"
-					if wrdTarget <= 15 {
+					if wrdTarget <= midLevel {
 						direction = "-"
 					}
 					phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
@@ -1349,6 +1447,26 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					a.statusLabel.SetText(fmt.Sprintf("TARGET L%d | %s", manTarget, phaseStr))
 				} else {
 					a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", level+1))
+				}
+			case WaveformTimeResolved:
+				a.mu.RLock()
+				animating := a.timeResAnimating
+				idx := a.timeResIndex
+				dataLen := len(a.timeResDataTimes)
+				a.mu.RUnlock()
+
+				if animating && dataLen > 0 && idx < dataLen {
+					a.mu.RLock()
+					currentTime := a.timeResDataTimes[idx]
+					switchedCount := a.timeResDataSwitch[idx]
+					totalHysterons := len(a.timeResDataSwitch)
+					a.mu.RUnlock()
+
+					switchedFrac := float64(switchedCount) / float64(totalHysterons) * 100
+					a.statusLabel.SetText(fmt.Sprintf("⚡ Time-Resolved | t=%.1f ns | %.0f%% switched | L%d",
+						currentTime*1e9, switchedFrac, level+1))
+				} else {
+					a.statusLabel.SetText("⚡ Time-Resolved Switching (KAI Dynamics)")
 				}
 			default:
 				frac := a.preisach.GetSwitchedFraction() * 100

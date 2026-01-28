@@ -18,6 +18,9 @@ UX Improvements (2026-01-27):
   - [x] UX-M1-001: LevelIndicator now shows "CLICK TO SET" / "AUTO" mode indicator at bottom
   - [x] UX-M1-002: PhaseIndicator widget shows state machine progress (RESET→SETTLE→WRITE→HOLD→READ→VERIFY)
   - [x] UX-M1-003: eFieldSlider shows "MANUAL" / "AUTO" label to indicate control mode
+  - [x] UX-M1-004: Metrics dashboard shows live Ec(T), Pr(T), Squareness, Switched %
+  - [x] UX-M1-005: Ctrl+E export shortcut with status feedback
+  - [x] UX-M1-006: Time-Resolved Switching mode for KAI dynamics visualization
 
 Screens:
   - name: MainWindow
@@ -128,6 +131,17 @@ Screens:
                           file: info.go:65-69
                           state: [logText with wrapping]
                           bindings: [SetText from getLogText]
+                        - name: metricsGrid
+                          type: container.GridWithColumns(2)
+                          purpose: Real-time temperature-corrected metrics
+                          file: info.go:68-84, gui.go:151-154
+                          state: [effEcLabel, effPrLabel, squarenessLabel, switchedLabel]
+                          bindings:
+                            - effEcLabel: Shows "Ec(T): X.XX MV/cm" (temperature-corrected coercive field)
+                            - effPrLabel: Shows "Pr(T): XX.X µC/cm²" (temperature-corrected remnant polarization)
+                            - squarenessLabel: Shows "Squareness: 0.XX" (Pr/Ps ratio, 0-1)
+                            - switchedLabel: Shows "Switched: XX%" (hysteron switching fraction)
+                          updates: simulation.go:1266-1277 via fyne.Do()
 
               - name: plotAndLevel
                 type: container.Border
@@ -197,11 +211,18 @@ Screens:
                         purpose: Choose waveform mode
                         file: controls.go:28-76
                         state: [selected="Sine Wave"]
+                        options:
+                          - "Manual"
+                          - "Sine Wave"
+                          - "Triangle Wave"
+                          - "Write/Read Demo"
+                          - "Time-Resolved Switching" (WaveformTimeResolved = 4)
                         bindings:
                           - OnChanged -> switch waveform, toggle autoMode
                           - Manual: enable eFieldSlider
                           - Auto modes: disable eFieldSlider
                           - Write/Read Demo: reset demo state, init debug log
+                          - Time-Resolved: shows KAI switching dynamics over 100ns with 100 steps
 
                       - name: eFieldLabel
                         type: widget.Label
@@ -283,7 +304,16 @@ DataFlow:
       - eHistory, pHistory (with maxHistory limit)
       - wrdPhase, wrdPhaseTimer (Write/Read Demo state machine)
       - wrdCycleEnergy (E·dP integration)
+      - timeResAnimating, timeResIndex (Time-Resolved mode state)
+      - timeResDataTimes, timeResDataPols, timeResDataSwitch (KAI switching data arrays)
     file: simulation.go:13-394
+    state_fields:
+      Time-Resolved mode:
+        - timeResAnimating: bool - animation active flag
+        - timeResDataTimes: []float64 - time steps (0-100ns)
+        - timeResDataPols: []float64 - polarization evolution
+        - timeResDataSwitch: []float64 - switched fraction over time
+        - timeResIndex: int - current animation frame (0-99)
 
   - trigger: updateUI call
     source: simulation.go:392
@@ -339,8 +369,28 @@ DataFlow:
       - Space: toggle a.paused
       - R: reset simulation
       - /: show keyboard help dialog
+      - Ctrl+E: export P-E data to JSON and CSV (export.go:19-30)
     file: keyboard.go:11-175
     bugs: [BUG-M1-005]
+
+  - trigger: Ctrl+E export shortcut
+    source: keyboard.go:19-30, export.go
+    updates:
+      - exports eHistory, pHistory to JSON and CSV
+      - saves to data/ directory with timestamp
+      - filename format: pe-data-YYYY-MM-DDTHH-MM-SS.{json,csv}
+      - shows status feedback via statusLabel
+    file: export.go (new)
+
+  - trigger: Temperature slider change (enhanced)
+    source: controls.go:155-168
+    updates:
+      - preisach.SetTemperature(v)
+      - effEcLabel: real-time Ec(T) calculation
+      - effPrLabel: real-time Pr(T) calculation
+      - squarenessLabel: updated Pr/Ps ratio
+      - switchedLabel: hysteron switching fraction
+    file: simulation.go:1266-1277
 
   - trigger: Write/Read Demo phase progression
     source: simulation.go:128-310
@@ -445,16 +495,20 @@ Notes:
   - Simulation runs at 60 FPS in background goroutine (simulationLoop)
   - All UI updates wrapped in fyne.Do for thread safety
   - Mutex (a.mu) protects all simulation state
-  - 4 waveform modes: Manual, Sine, Triangle, Write/Read Demo
+  - 5 waveform modes: Manual, Sine, Triangle, Write/Read Demo, Time-Resolved Switching
   - Write/Read Demo uses 4-phase state machine (WRITE, HOLD, READ, DISPLAY)
   - Manual mode uses 2-phase animation (WRITE, HOLD)
+  - Time-Resolved mode shows KAI switching dynamics over 100ns (educational)
   - Correct physics: +E for higher level, -E for lower level
   - Manual mode supports click-to-level animation (gui.go:338-349)
   - Energy calculation via E·dP integration for Write/Read cycles
   - Debug logging to JSON (logs/hysteresis-TIMESTAMP.json)
+  - Export feature: Ctrl+E saves P-E data to data/pe-data-YYYY-MM-DDTHH-MM-SS.{json,csv}
+  - Metrics dashboard shows temperature-corrected Ec(T), Pr(T), squareness, switched fraction
   - 30 discrete levels = 4.91 bits/cell
   - Keyboard shortcuts fully documented in keyboard.go:140-175
   - Responsive layout adapts to mobile via AdaptiveLayout
   - Theme uses FeCIM blue (#003264) from theme.go
-  - Custom widgets: PEPlot, LevelIndicator, CellVisualizer, ModeIndicator
+  - Custom widgets: PEPlot, LevelIndicator, CellVisualizer, ModeIndicator, PhaseIndicator
   - LayoutCache prevents redundant layout passes (from shared/widgets)
+  - Time-Resolved mode uses SimulateDomainSwitching() from preisach_advanced.go

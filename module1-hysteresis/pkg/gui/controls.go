@@ -32,7 +32,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.eFieldModeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Waveform selector
-	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo"}
+	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo", "Time-Resolved Switching"}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
 		log.Selection("Waveform", s)
 		a.mu.Lock()
@@ -101,6 +101,24 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.material != nil {
 				a.initDebugLog()
 			}
+		case "Time-Resolved Switching":
+			a.waveform = WaveformTimeResolved
+			a.autoMode = true
+			if a.eFieldSlider != nil {
+				a.eFieldSlider.Disable()
+			}
+			if a.eFieldModeLabel != nil {
+				a.eFieldModeLabel.SetText("AUTO")
+			}
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetInteractive(false)
+			}
+			// Reset time-resolved animation state for fresh start
+			a.timeResAnimating = false
+			a.timeResIndex = 0
+			a.timeResDataTimes = nil
+			a.timeResDataPols = nil
+			a.timeResDataSwitch = nil
 		}
 	})
 	a.waveformSelect.SetSelected("Write/Read Demo")
@@ -261,10 +279,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.electricField = 0
 		a.polarization = 0
 		a.normalizedP = 0
-		a.discreteLevel = 15
+		a.discreteLevel = a.numLevels / 2 // Reset to middle of current range
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
+		// Reset Time-Resolved animation state
+		a.timeResAnimating = false
+		a.timeResIndex = 0
 		a.eFieldSlider.SetValue(0)
 		a.mu.Unlock()
 	})

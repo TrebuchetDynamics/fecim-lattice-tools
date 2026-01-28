@@ -99,6 +99,13 @@ type App struct {
 	manualPhase       int     // 0=idle, 1=saturate, 2=settle, 3=hold
 	manualPhaseTime   float64 // Time in current phase
 
+	// Time-resolved switching animation (KAI dynamics visualization)
+	timeResAnimating  bool      // True when animating time-resolved switching
+	timeResDataTimes  []float64 // Time points from SimulateDomainSwitching
+	timeResDataPols   []float64 // Polarization values from SimulateDomainSwitching
+	timeResDataSwitch []int     // Switched hysteron counts
+	timeResIndex      int       // Current index into time-resolved data arrays
+
 	// Level calibration data (populated at startup/material change)
 	// Maps field values needed to reach each level from known starting states
 	calibrationUp   []float64 // Field needed to reach level N from level 1 (ascending)
@@ -140,6 +147,12 @@ type App struct {
 	wakeupLabel  *widget.Label
 	fatigueLabel *widget.Label
 
+	// Temperature-dependent metrics labels
+	effEcLabel       *widget.Label
+	effPrLabel       *widget.Label
+	squarenessLabel  *widget.Label
+	switchedLabel    *widget.Label
+
 	// Levels selector
 	levelsEntry *widget.Entry
 	levelsLabel *widget.Label
@@ -161,6 +174,7 @@ const (
 	WaveformSine
 	WaveformTriangle
 	WaveformWriteReadDemo
+	WaveformTimeResolved
 )
 
 func (w WaveformType) String() string {
@@ -173,6 +187,8 @@ func (w WaveformType) String() string {
 		return "Triangle Wave"
 	case WaveformWriteReadDemo:
 		return "Write/Read Demo"
+	case WaveformTimeResolved:
+		return "Time-Resolved Switching"
 	default:
 		return "Unknown"
 	}
@@ -402,6 +418,9 @@ func (a *App) run() error {
 	a.mainWindow.Canvas().SetOnTypedKey(func(ke *fyne.KeyEvent) {
 		a.handleKeyPress(ke)
 	})
+
+	// Setup custom shortcuts (Ctrl+E for export, etc.)
+	a.setupShortcuts()
 
 	// Start simulation loop
 	a.running = true

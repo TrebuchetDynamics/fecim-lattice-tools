@@ -65,6 +65,24 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewLabel("F:"), a.fatigueLabel,
 	)
 
+	// Temperature-dependent metrics
+	a.effEcLabel = widget.NewLabel("Ec(T): 1.00 MV/cm")
+	a.effPrLabel = widget.NewLabel("Pr(T): 20.0 µC/cm²")
+	a.squarenessLabel = widget.NewLabel("Squareness: 0.60")
+	a.switchedLabel = widget.NewLabel("Switched: 0%")
+
+	metricsRow1 := container.NewHBox(
+		a.effEcLabel,
+		widget.NewLabel(" "),
+		a.effPrLabel,
+	)
+
+	metricsRow2 := container.NewHBox(
+		a.squarenessLabel,
+		widget.NewLabel(" "),
+		a.switchedLabel,
+	)
+
 	return container.NewVBox(
 		levelRow,
 		container.NewCenter(a.stateLabel),
@@ -74,6 +92,9 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewSeparator(),
 		container.NewHBox(matLine, matInfoBtn),
 		statsRow,
+		widget.NewSeparator(),
+		metricsRow1,
+		metricsRow2,
 	)
 }
 
@@ -151,6 +172,27 @@ func (a *App) getSlideText() string {
 			return fmt.Sprintf("L%d (want %d)\nWrites: %d (%.0f%%)", level, wrdTarget, wrdTotalWrites, successRate)
 		}
 		return ""
+
+	case WaveformTimeResolved:
+		a.mu.RLock()
+		animating := a.timeResAnimating
+		idx := a.timeResIndex
+		dataLen := len(a.timeResDataTimes)
+		a.mu.RUnlock()
+
+		if animating && dataLen > 0 && idx < dataLen {
+			a.mu.RLock()
+			currentTime := a.timeResDataTimes[idx]
+			switchedCount := a.timeResDataSwitch[idx]
+			totalHysterons := len(a.timeResDataSwitch)
+			a.mu.RUnlock()
+
+			switchedFrac := float64(switchedCount) / float64(totalHysterons) * 100
+			tau := a.material.Tau
+			return fmt.Sprintf("KAI SWITCHING L%d\nt = %.1f ns\n%.0f%% switched\nτ = %.1f ns\nP(t)=Ps(1-e^(-(t/τ)²))",
+				level, currentTime*1e9, switchedFrac, tau*1e9)
+		}
+		return "TIME-RESOLVED SWITCHING\nKAI dynamics\nNanosecond switching"
 
 	default:
 		return "Select mode"

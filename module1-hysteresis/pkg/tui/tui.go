@@ -313,7 +313,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.electricField = 0
 			m.polarization = 0
 			m.normalizedP = 0
-			m.discreteLevel = 15
+			m.discreteLevel = 15 // Middle of fixed 30 levels (TUI uses fixed level count)
 			m.eHistory = m.eHistory[:0]
 			m.pHistory = m.pHistory[:0]
 			m.simTime = 0

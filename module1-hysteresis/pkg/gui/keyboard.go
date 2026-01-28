@@ -4,14 +4,38 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
+
+// exportShortcut implements fyne.Shortcut for Ctrl+E (export).
+type exportShortcut struct{}
+
+func (s *exportShortcut) ShortcutName() string {
+	return "Export P-E Data"
+}
+
+// setupShortcuts registers custom keyboard shortcuts
+func (a *App) setupShortcuts() {
+	// Register Ctrl+E for export
+	ctrlE := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyE,
+		Modifier: fyne.KeyModifierControl,
+	}
+
+	a.mainWindow.Canvas().AddShortcut(ctrlE, func(shortcut fyne.Shortcut) {
+		log.Info("Export shortcut triggered (Ctrl+E)")
+		// Run export in background to avoid blocking UI
+		go a.exportPEData()
+	})
+}
 
 // handleKeyPress processes keyboard shortcuts
 func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 	switch ke.Name {
 	case fyne.KeyE:
 		// Increase E-field by 0.1*Ec (Manual mode only)
+		// Note: Ctrl+E is handled by setupShortcuts() via Canvas.AddShortcut
 		if a.waveform == WaveformManual {
 			// Read slider value (UI access safe from main thread)
 			currentValue := a.eFieldSlider.Value
@@ -103,13 +127,13 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		log.Info("Frequency decreased to %.2f Hz", newFreq)
 
 	case fyne.KeyW:
-		// Cycle to next waveform
+		// Cycle to next waveform (5 modes: Manual, Sine, Triangle, Write/Read, Time-Resolved)
 		a.mu.Lock()
-		nextWaveform := (a.waveform + 1) % 4
+		nextWaveform := (a.waveform + 1) % 5
 		a.mu.Unlock()
 
 		// Trigger the same logic as waveformSelect.OnChanged
-		waveformNames := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo"}
+		waveformNames := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo", "Time-Resolved Switching"}
 		selectedName := waveformNames[nextWaveform]
 
 		// Call the select widget to trigger the OnChanged callback
@@ -135,10 +159,13 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		a.electricField = 0
 		a.polarization = 0
 		a.normalizedP = 0
-		a.discreteLevel = 15
+		a.discreteLevel = a.numLevels / 2 // Reset to middle of current range
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
+		// Reset Time-Resolved animation state
+		a.timeResAnimating = false
+		a.timeResIndex = 0
 		a.mu.Unlock()
 		a.eFieldSlider.SetValue(0)
 
@@ -169,11 +196,15 @@ Waveform & Simulation:
   Space     Toggle pause/resume
   R         Reset simulation
 
+Data Export:
+  Ctrl+E    Export P-E data to JSON and CSV
+
 Help:
   / or ?    Show this help dialog
 
 Note: E and D keys only work in Manual mode.
-Switch to Manual mode using the waveform selector.`
+Switch to Manual mode using the waveform selector.
+Exported files are saved to the data/ directory with timestamps.`
 
 	// Create a scrollable label for the help text
 	helpLabel := widget.NewLabel(helpText)
