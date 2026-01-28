@@ -233,6 +233,13 @@ type CircuitsApp struct {
 	mfuxWriteVoltageLabel *widget.Label
 	mfuxWriteTargetLabel  *widget.Label // H2 FIX: Shows "Target: Row X, Col Y"
 
+	// Voltage rules UI widgets
+	writeSequencePanel       *fyne.Container // 4-phase timing diagram container
+	halfSelectIndicator      *widget.Label   // V/2 bias status indicator
+	hysteresisDirectionLabel *widget.Label   // Direction indicator (^/v)
+	passiveVoltagePanel      fyne.CanvasObject // 0T1R voltage panel
+	activeVoltagePanel       fyne.CanvasObject // 1T1R/2T1R voltage panel
+
 	// Compute mode panel with input vector entries
 	computeModePanel      *fyne.Container
 	mfuxInputVectorEntry  []*widget.Entry
