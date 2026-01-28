@@ -1325,7 +1325,7 @@ if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
 
 2. **Material Selection**: The material selector loads all materials from `ferroelectric.AllMaterials()`. Changing material updates voltage ranges and recalculates outputs.
 
-3. **Architecture Toggle**: Switches between PASSIVE (0T1R), 1T1R, and 2T1R. Passive mode always has all WLs active. 1T1R/2T1R draw transistor symbols.
+3. **Architecture Toggle**: Switches between PASSIVE (0T1R), 1T1R, and 2T1R. Passive mode always has all WLs active and DISABLED (user cannot turn off). 1T1R/2T1R draw transistor symbols.
 
 4. **Dynamic Voltage Ranges**: All voltage thresholds are derived from physics.yaml calibration parameters and material properties. No hardcoded values. DAC preset button labels update automatically.
 
@@ -1336,3 +1336,28 @@ if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
 7. **Operation Classification Help**: The `operationsModeHelp` label shows mode-specific guidance including voltage ranges and architecture-specific notes (e.g., sneak paths in passive mode).
 
 8. **Embedded Interface**: Implements BuildContent(), Start(), Stop() for integration with main visualizer (cmd/fecim-lattice-tools).
+
+9. **Cell Selection Feedback**: Selected cells show gold 2-pixel border only (no fill). This preserves visibility of the conductance state color within the cell.
+
+10. **Color Mapping**: Uses blue-gray-red gradient based on level relative to mid-point:
+    - Blue: Low conductance states (0 to mid-1)
+    - Gray: Neutral/mid state
+    - Red: High conductance states (mid+1 to max)
+
+11. **Undo Functionality**: Single-level undo for array changes. History saved before each write operation. Button enabled only when history exists.
+
+12. **Passive Mode Enforcement**: Defense-in-depth approach:
+    - UI: Checkboxes disabled in passive mode
+    - Data: DeviceState.SetWLSingle() ignored when isPassive=true
+
+13. **Dynamic quantLevels**: Write slider range and array initialization use `ca.quantLevels` (default 30) instead of hardcoded values.
+
+14. **Mid-Level Initialization**: Array cells start at mid-level (quantLevels/2 = 15 for 30 states), representing neutral polarization state.
+
+---
+
+## Related Documentation
+
+- **Physics Basis**: `docs/research/circuits.CIM-fundamentals.md` - READ/WRITE/COMPUTE physics
+- **Gap Analysis**: `docs/research/MODULE4-PHYSICS-IMPROVEMENTS.md` - Critical/High severity gaps
+- **Implementation Plan**: `docs/plans/module4-plan-improvements.md` - 12-task phased implementation
