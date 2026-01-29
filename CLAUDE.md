@@ -100,7 +100,7 @@ Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_
 ## Testing
 
 ```bash
-go test ./...                            # All tests (117 total)
+go test ./...                            # All tests (1755 total)
 go test ./module2-crossbar/pkg/crossbar  # Crossbar only
 ```
 

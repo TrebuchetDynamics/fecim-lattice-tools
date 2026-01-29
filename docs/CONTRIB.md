@@ -114,7 +114,7 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim.exe ./cmd/fecim-lat
 ### Run All Tests
 
 ```bash
-go test ./...                    # All 117 tests
+go test ./...                    # All 1755 tests
 go test -v ./...                 # Verbose output
 go test -race ./...              # With race detector
 go test -cover ./...             # With coverage
@@ -139,16 +139,33 @@ go tool cover -html=coverage.out
 
 | Package | Tests |
 |---------|-------|
-| module1-hysteresis/pkg/ferroelectric | 7 |
-| module1-hysteresis/pkg/simulation | 4 |
-| module2-crossbar/pkg/crossbar | 29 |
-| module3-mnist/pkg/core | 33 |
-| module3-mnist/pkg/training | 3 |
-| module4-circuits/pkg/peripherals | 9 |
+| cmd/fecim-lattice-tools | 21 |
+| config/physics | 7 |
+| module1-hysteresis/pkg/ferroelectric | 30 |
+| module1-hysteresis/pkg/gui/widgets | 20 |
+| module1-hysteresis/pkg/simulation | 14 |
+| module2-crossbar/pkg/crossbar | 31 |
+| module2-crossbar/pkg/gui | 4 |
+| module2-crossbar/pkg/network | 10 |
+| module2-crossbar/pkg/training | 18 |
+| module2-crossbar/pkg/weights | 27 |
+| module3-mnist/pkg/core | 37 |
+| module3-mnist/pkg/mnist | 2 |
+| module3-mnist/pkg/training | 9 |
+| module3-mnist/pkg/gui | 4 |
+| module4-circuits/pkg/peripherals | 33 |
+| module4-circuits/pkg/gui | varies |
 | module5-comparison/pkg/comparison | 19 |
-| module6-eda/pkg/export | 3 |
-| shared/* | 12 |
-| **Total** | **117** |
+| module5-comparison/pkg/gui | 8 |
+| module6-eda/pkg/compiler | 27 |
+| module6-eda/pkg/config | 4 |
+| module6-eda/pkg/export | 69 |
+| shared/logging | 6 |
+| shared/theme | 8 |
+| shared/widgets | 6 |
+| shared/recording | 145 |
+| shared/* (other) | varies |
+| **Total** | **1755** |
 
 ## Development Workflow
 
@@ -290,4 +307,4 @@ fecim-lattice-tools/
 
 ---
 
-**Last Synced:** 2026-01-26 | **Source:** go.mod (Go 1.24.12), shell scripts, CLAUDE.md
+**Last Synced:** 2026-01-29 | **Source:** go.mod (Go 1.24.12), shell scripts, CLAUDE.md

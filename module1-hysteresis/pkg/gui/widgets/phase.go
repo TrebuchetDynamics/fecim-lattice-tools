@@ -21,7 +21,7 @@ type PhaseIndicator struct {
 	minSize fyne.Size
 }
 
-// Phase constants for Write/Read Demo (6 phases)
+// Phase constants for Write/Read Demo (7 phases)
 const (
 	PhaseReset     = 0
 	PhaseSettle    = 1
@@ -29,7 +29,8 @@ const (
 	PhaseHold      = 3
 	PhaseRead      = 4
 	PhaseDisplay   = 5
-	NumWRDPhases   = 6
+	PhaseBoost     = 6 // Undershoot retry - skip RESET, apply more field
+	NumWRDPhases   = 7
 )
 
 // Manual mode phases (4 phases)
@@ -49,6 +50,7 @@ var wrdPhaseColors = map[int]color.RGBA{
 	PhaseHold:    {100, 200, 100, 255}, // Green for hold
 	PhaseRead:    {100, 180, 255, 255}, // Blue for read
 	PhaseDisplay: {255, 200, 100, 255}, // Yellow for display
+	PhaseBoost:   {255, 150, 50, 255},  // Orange for boost (undershoot retry)
 }
 
 // Phase colors for Manual mode
@@ -67,6 +69,7 @@ var wrdPhaseNames = map[int]string{
 	PhaseHold:    "HOLD",
 	PhaseRead:    "READ",
 	PhaseDisplay: "VERIFY",
+	PhaseBoost:   "BOOST",
 }
 
 // Phase names for Manual mode

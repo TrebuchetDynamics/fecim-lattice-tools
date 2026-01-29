@@ -115,6 +115,15 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 	ca.operationsModeHelp = widget.NewLabel("Configuration: Click cells or adjust voltages")
 	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
 
+	// Circuit specs summary - shows current configuration
+	adcBits := 5
+	if ca.adc != nil {
+		adcBits = ca.adc.Bits
+	}
+	adcLevels := 1 << adcBits
+	circuitSpecsLabel := widget.NewLabel(fmt.Sprintf("ADC: %d-bit (%d levels, 0-%d)", adcBits, adcLevels, adcLevels-1))
+	circuitSpecsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
 	return container.NewVBox(
 		container.NewHBox(
 			chainLabel,
@@ -124,7 +133,7 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 			layout.NewSpacer(),
 			archToggle,
 			layout.NewSpacer(),
-			ca.operationsStatusLabel,
+			circuitSpecsLabel,
 		),
 		ca.operationsModeHelp,
 		widget.NewSeparator(),
@@ -380,9 +389,9 @@ func (ca *CircuitsApp) updateModeButtons() {
 
 // createUnifiedArraySection creates the array visualization section
 func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
-	// Create tappable array canvas
+	// Create tappable array canvas - larger size for better visualization
 	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
-	tappableArray.SetMinSize(fyne.NewSize(400, 350))
+	tappableArray.SetMinSize(fyne.NewSize(700, 500)) // Increased from 400x350 for better visibility
 	ca.sharedArrayCanvas = tappableArray.raster
 
 	// Cell info display
@@ -548,11 +557,11 @@ func (t *UnifiedTappableCanvas) Tapped(e *fyne.PointEvent) {
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := min(cellW, cellH)
-	if cellSize > 40 {
-		cellSize = 40
+	if cellSize > 60 { // Match drawing function limits
+		cellSize = 60
 	}
-	if cellSize < 8 {
-		cellSize = 8
+	if cellSize < 16 { // Match drawing function limits
+		cellSize = 16
 	}
 
 	gridW := cols * cellSize
@@ -604,19 +613,19 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		return img
 	}
 
-	// Calculate margins
-	topMargin := 50
-	rightMargin := 20
-	bottomMargin := 25
-	leftMargin := 25
+	// Calculate margins - increased for larger peripheral boxes
+	topMargin := 65    // Increased from 50 for larger DAC boxes + column labels
+	rightMargin := 130 // Increased from 20 for larger TIA+ADC boxes
+	bottomMargin := 30 // Slightly increased
+	leftMargin := 30   // Slightly increased
 
 	is1T1R := arch == sharedwidgets.Architecture1T1R
 	is2T1R := arch == sharedwidgets.Architecture2T1R
 	if is1T1R || is2T1R {
-		leftMargin = 50
+		leftMargin = 55
 	}
 	if is2T1R {
-		bottomMargin = 50
+		bottomMargin = 55
 	}
 
 	availableW := w - leftMargin - rightMargin
@@ -625,11 +634,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := min(cellW, cellH)
-	if cellSize > 40 {
-		cellSize = 40
+	if cellSize > 60 { // Increased from 40 for better visibility
+		cellSize = 60
 	}
-	if cellSize < 12 {
-		cellSize = 12
+	if cellSize < 16 { // Increased from 12 for better readability
+		cellSize = 16
 	}
 
 	gridW := cols * cellSize
@@ -763,6 +772,54 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			}
 			drawRectBorder(img, x0, y0, cw, ch, borderColor)
 
+			// Draw state number and conductance in cell if large enough
+			if cellSize >= 28 {
+				// Calculate text color for contrast (light on dark, dark on light)
+				brightness := (int(cellColor.R) + int(cellColor.G) + int(cellColor.B)) / 3
+				var textColor color.RGBA
+				if brightness > 140 {
+					textColor = color.RGBA{0, 0, 0, 220} // Dark text on light bg
+				} else {
+					textColor = color.RGBA{255, 255, 255, 220} // Light text on dark bg
+				}
+
+				// For large cells (>= 45px), show both state and conductance
+				if cellSize >= 45 {
+					// Calculate conductance using material model
+					var conductanceUS float64
+					material := ca.deviceState.GetMaterial()
+					if material != nil {
+						conductanceUS = material.DiscreteLevel(level, levels) * 1e6 // S to µS
+					} else {
+						conductanceUS = 1.0 + float64(level)/float64(levels-1)*99.0
+					}
+
+					// Draw state level number (top half of cell)
+					stateText := fmt.Sprintf("S%d", level)
+					textX := x0 + cw/2 - len(stateText)*3
+					textY := y0 + ch/3 - 3
+					drawSimpleText(img, stateText, textX, textY, textColor)
+
+					// Draw conductance value (bottom half of cell) - dimmer
+					var gText string
+					if conductanceUS < 10 {
+						gText = fmt.Sprintf("%.1f", conductanceUS)
+					} else {
+						gText = fmt.Sprintf("%.0f", conductanceUS)
+					}
+					gTextX := x0 + cw/2 - len(gText)*3
+					gTextY := y0 + ch*2/3 - 3
+					dimTextColor := color.RGBA{textColor.R, textColor.G, textColor.B, 160}
+					drawSimpleText(img, gText, gTextX, gTextY, dimTextColor)
+				} else {
+					// For medium cells, just show state number centered
+					stateText := fmt.Sprintf("%d", level)
+					textX := x0 + cw/2 - len(stateText)*3
+					textY := y0 + ch/2 - 3
+					drawSimpleText(img, stateText, textX, textY, textColor)
+				}
+			}
+
 			// C1 FIX: Selected cell highlight with bright contrasting border
 			if isSelected {
 				// Bold yellow/gold border (3px thick)
@@ -776,29 +833,31 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
-	// Draw DAC boxes (top)
-	dacBoxH := 25
+	// Draw DAC boxes (top) - larger for better visibility
+	dacBoxH := 30  // Increased from 25
 	dacBoxW := cellSize - 2
-	if dacBoxW < 24 {
-		dacBoxW = 24
+	if dacBoxW < 35 { // Increased from 24
+		dacBoxW = 35
 	}
-	dacY := offsetY - dacBoxH - 15
+	dacY := offsetY - dacBoxH - 18 // More spacing
 
 	for c := 0; c < min(8, cols); c++ {
 		dacX := offsetX + c*cellSize + 1
 		voltage := ca.deviceState.GetDACVoltage(c)
 		highlighted := animStep == 1
-		drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, "", highlighted, false)
+		// Show column number as label for clarity
+		colLabel := fmt.Sprintf("C%d", c)
+		drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, colLabel, highlighted, false)
 	}
 
-	// Draw TIA+ADC boxes (right side)
-	tiaBoxW := 50 // Wider to show both current and voltage
-	adcBoxW := 24
+	// Draw TIA+ADC boxes (right side) - larger for better visibility
+	tiaBoxW := 70 // Increased from 50 for more data
+	adcBoxW := 30 // Increased from 24
 	tiaAdcBoxH := cellSize - 2
-	if tiaAdcBoxH < 18 {
-		tiaAdcBoxH = 18
+	if tiaAdcBoxH < 24 { // Increased from 18
+		tiaAdcBoxH = 24
 	}
-	tiaX := offsetX + gridW + 10
+	tiaX := offsetX + gridW + 12
 
 	for r := 0; r < min(8, rows); r++ {
 		tiaY := offsetY + r*cellSize + 1
@@ -806,7 +865,9 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		level := ca.deviceState.GetRowLevel(r)
 		highlighted := animStep == 3
 		dimmed := !ca.deviceState.IsRowActive(r)
-		drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, level, "", highlighted, dimmed, ca.tia, ca.adc)
+		// Show row number as label for clarity
+		rowLabel := fmt.Sprintf("R%d", r)
+		drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, level, rowLabel, highlighted, dimmed, ca.tia, ca.adc)
 	}
 
 	// Draw labels
@@ -844,6 +905,82 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		archColor = color.RGBA{220, 150, 100, 255}
 	}
 	drawSimpleText(img, archText, w-len(archText)*6-10, 8, archColor)
+
+	// Draw current flow indicators during active operation
+	if animStep >= 2 {
+		// Draw current flow arrows on active bit lines (columns with voltage)
+		for c := 0; c < cols; c++ {
+			voltage := ca.deviceState.GetDACVoltage(c)
+			if voltage > 0.05 {
+				x := offsetX + c*cellSize + cellSize/2
+				// Draw downward current arrow (electrons flow opposite to current)
+				arrowColor := color.RGBA{100, 255, 150, 200}
+				// Draw arrow shaft
+				for y := offsetY - 10; y < offsetY+gridH+5; y += 8 {
+					if y >= 0 && y < h {
+						img.Set(x, y, arrowColor)
+						img.Set(x-1, y, arrowColor)
+						img.Set(x+1, y, arrowColor)
+					}
+				}
+			}
+		}
+
+		// Draw current collection arrows flowing to TIA (horizontal on active rows)
+		for r := 0; r < rows; r++ {
+			if ca.deviceState.IsRowActive(r) {
+				current := ca.deviceState.GetRowCurrent(r)
+				if current > 0.1 {
+					y := offsetY + r*cellSize + cellSize/2
+					// Arrow intensity based on current magnitude
+					intensity := uint8(min(int(current*2), 200))
+					arrowColor := color.RGBA{255, 200, intensity, 180}
+					// Draw rightward arrow to TIA
+					for x := offsetX + gridW + 2; x < tiaX-2; x += 4 {
+						if x >= 0 && x < w {
+							img.Set(x, y, arrowColor)
+							img.Set(x, y-1, arrowColor)
+							img.Set(x, y+1, arrowColor)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Draw info badge showing selected cell's expected current
+	if ca.deviceState != nil {
+		selectedRow := ca.deviceState.GetSelectedRow()
+		selectedCol := ca.deviceState.GetSelectedCol()
+		voltage := ca.deviceState.GetDACVoltage(selectedCol)
+
+		ca.mu.RLock()
+		var level int
+		if selectedRow < len(weights) && selectedCol < len(weights[selectedRow]) {
+			level = weights[selectedRow][selectedCol]
+		}
+		ca.mu.RUnlock()
+
+		if voltage > 0.05 && level > 0 {
+			// Calculate expected current for selected cell
+			var conductanceUS float64
+			material := ca.deviceState.GetMaterial()
+			if material != nil {
+				conductanceUS = material.DiscreteLevel(level, levels) * 1e6
+			} else {
+				conductanceUS = 1.0 + float64(level)/float64(levels-1)*99.0
+			}
+			expectedCurrent := conductanceUS * voltage
+
+			// Draw info near selected cell
+			cellX := offsetX + selectedCol*cellSize + cellSize/2
+			cellY := offsetY + selectedRow*cellSize - 12
+			if cellY > 20 {
+				infoText := fmt.Sprintf("%.1fuA", expectedCurrent)
+				drawSimpleText(img, infoText, cellX-len(infoText)*3, cellY, color.RGBA{255, 255, 100, 220})
+			}
+		}
+	}
 
 	return img
 }
@@ -1165,10 +1302,13 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		time.Sleep(iterationDelay / 2)
 
 		// Check if target reached
+		// Write cycle: ~170ns per iteration, Energy: ~100fJ (pulse + verify)
 		if currentLevel == targetLevel {
+			totalTimeNs := iteration * 170
+			totalEnergyFJ := iteration * 100
 			fyne.Do(func() {
-				ca.operationsStatusLabel.SetText(fmt.Sprintf("SUCCESS [%d,%d] = State %d (V=%.2fV, %d iterations)",
-					row, col, targetLevel, startVoltage, iteration))
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d] = State %d | %d iter | ~%dns, ~%dfJ",
+					row, col, targetLevel, iteration, totalTimeNs, totalEnergyFJ))
 			})
 			// Return all voltages to 0 (safe idle state)
 			ca.deviceState.ResetWriteVoltages()
@@ -1256,10 +1396,11 @@ func (ca *CircuitsApp) onUnifiedRead() {
 	}
 	ca.mu.RUnlock()
 
-	// Update status with single-cell sense result
+	// Update status with single-cell sense result including energy/timing
+	// Read cycle: ~65ns, Energy: DAC(15fJ) + TIA(5fJ) + ADC(25fJ) = ~45fJ
 	fyne.Do(func() {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("Cell [%d,%d]: State=%d, V=%.2fV → I=%.1fµA → TIA=%.2fV → ADC=%d",
-			selectedRow, selectedCol, level, readVoltage, current, tiaVoltage, adcLevel))
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.1fµA → TIA=%.2fV → ADC=%d | ~65ns, ~45fJ",
+			selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
 	})
 }
 
@@ -1287,10 +1428,14 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 	ca.recomputeAndRefresh()
 
 	// Save compute log for debugging
+	// MVM: ~20ns (parallel), Energy: N × ~50fJ where N = active cells
+	activeCells := ca.arrayRows * ca.arrayCols
+	energyFJ := activeCells * 50 // ~50fJ per cell
 	if err := SaveComputeLog(); err != nil {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("Compute done, log error: %v", err))
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM done (log error: %v)", err))
 	} else {
-		ca.operationsStatusLabel.SetText("Compute complete - saved to compute_log.json")
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM complete: %dx%d array | ~20ns, ~%dfJ total | saved log",
+			ca.arrayRows, ca.arrayCols, energyFJ))
 	}
 }
 
@@ -1522,7 +1667,7 @@ func (ca *CircuitsApp) updateOutputDisplay() {
 	// Outputs are displayed in the array diagram's TIA/ADC boxes
 }
 
-// updateCellInfo updates the cell info display
+// updateCellInfo updates the cell info display with detailed circuit data
 func (ca *CircuitsApp) updateCellInfo() {
 	if ca.sharedCellInfoLabel == nil {
 		return
@@ -1551,9 +1696,38 @@ func (ca *CircuitsApp) updateCellInfo() {
 	voltage := ca.deviceState.GetDACVoltage(selectedCol)
 	matName := ca.deviceState.GetMaterialName()
 
+	// Calculate expected current I = G × V
+	expectedCurrent := conductanceUS * voltage // µA
+
+	// Get actual row output (includes all cells in row if active)
+	rowCurrent := ca.deviceState.GetRowCurrent(selectedRow)
+	rowVoltage := ca.deviceState.GetRowVoltage(selectedRow)
+	adcLevel := ca.deviceState.GetRowLevel(selectedRow)
+	isActive := ca.deviceState.IsRowActive(selectedRow)
+
 	fyne.Do(func() {
-		ca.sharedCellInfoLabel.SetText(fmt.Sprintf("Cell [%d,%d]: State %d | G=%.1fµS | BL=%.2fV | %s", selectedRow, selectedCol, level, conductanceUS, voltage, matName))
+		// Build detailed info string with signal chain data
+		var infoStr string
+		if isActive && voltage > 0.01 {
+			// Show full signal chain: G → I → TIA → ADC
+			infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fµS | BL=%.2fV → I=%.1fµA → TIA=%.2fV → ADC=%d | %s",
+				selectedRow, selectedCol, level, levels-1, conductanceUS, voltage, expectedCurrent, rowVoltage, adcLevel, matName)
+		} else {
+			// Cell not being sensed
+			infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fµS | (Row %s, BL=%.2fV) | %s",
+				selectedRow, selectedCol, level, levels-1, conductanceUS,
+				map[bool]string{true: "ON", false: "OFF"}[isActive], voltage, matName)
+		}
+		ca.sharedCellInfoLabel.SetText(infoStr)
 	})
+
+	// Also update array info label with total row current
+	if ca.sharedArrayInfoLabel != nil {
+		fyne.Do(func() {
+			ca.sharedArrayInfoLabel.SetText(fmt.Sprintf("Array: %dx%d | %d levels | Row %d sum: I=%.1fµA",
+				ca.arrayRows, ca.arrayCols, ca.quantLevels, selectedRow, rowCurrent))
+		})
+	}
 }
 
 // updateOperationClassification updates the operation classification display

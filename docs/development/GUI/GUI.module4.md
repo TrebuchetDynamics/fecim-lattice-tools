@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-28 (Voltage Rules & ISPP)
+Last Updated: 2026-01-29
 ---
 
 ## Bugs Summary

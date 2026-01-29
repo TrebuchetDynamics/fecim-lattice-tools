@@ -118,7 +118,7 @@ See [FEATURES.md](FEATURES.md) for complete specifications per module.
 | Doc | Purpose |
 |-----|---------|
 | [ARCHITECTURE.md](development/ARCHITECTURE.md) | System design |
-| [TESTING.md](development/TESTING.md) | Test guide (117 tests) |
+| [TESTING.md](development/TESTING.md) | Test guide (1755 tests) |
 | [scriptReference.md](development/scriptReference.md) | Function lookups |
 | [FYNE_NOTES.md](development/GUI/FYNE_NOTES.md) | Fyne GUI development |
 | [HYPER_ANALYSIS_REPORT.md](development/HYPER_ANALYSIS_REPORT.md) | UI analysis |

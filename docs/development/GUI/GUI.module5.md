@@ -3,7 +3,7 @@ Module: module5-comparison
 Name: Technology Comparison & Technical Briefing
 Entry: cmd/comparison-gui/main.go
 Package: fecim-lattice-tools/module5-comparison/pkg/gui
-Last Updated: 2026-01-26
+Last Updated: 2026-01-29
 Description: |
   Technical briefing comparison demo showing FeCIM vs CPU/GPU architectures.
   Features animated energy comparisons, market analysis, ROI calculator,

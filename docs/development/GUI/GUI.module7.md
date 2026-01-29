@@ -3,7 +3,7 @@ Module: module7-docs
 Name: FeCIM Documentation Viewer
 Entry: N/A (embedded only, accessed via toolbar icon)
 Package: fecim-lattice-tools/module7-docs/pkg/gui
-Last Updated: 2026-01-27
+Last Updated: 2026-01-29
 Description: |
   In-app documentation viewer with full-text search, responsive layout,
   breadcrumb navigation, table of contents, glossary term detection,

@@ -588,3 +588,346 @@ func TestErrorContextWithNilError(t *testing.T) {
 		t.Errorf("ErrorContext should show <nil> for nil error, got: %s", output)
 	}
 }
+
+// TestSetVerbosity tests the SetVerbosity function
+func TestSetVerbosity(t *testing.T) {
+	// Save original
+	original := GetVerbosity()
+	defer SetVerbosity(original)
+
+	levels := []VerbosityLevel{VerbosityOff, VerbosityInfo, VerbosityDebug, VerbosityTrace}
+	for _, level := range levels {
+		SetVerbosity(level)
+		if GetVerbosity() != level {
+			t.Errorf("SetVerbosity(%v) failed, GetVerbosity() = %v", level, GetVerbosity())
+		}
+	}
+}
+
+// TestIsVerbose tests the IsVerbose function
+func TestIsVerbose(t *testing.T) {
+	original := GetVerbosity()
+	defer SetVerbosity(original)
+
+	SetVerbosity(VerbosityDebug)
+
+	if !IsVerbose(VerbosityOff) {
+		t.Error("IsVerbose(VerbosityOff) should return true when verbosity is Debug")
+	}
+	if !IsVerbose(VerbosityInfo) {
+		t.Error("IsVerbose(VerbosityInfo) should return true when verbosity is Debug")
+	}
+	if !IsVerbose(VerbosityDebug) {
+		t.Error("IsVerbose(VerbosityDebug) should return true when verbosity is Debug")
+	}
+	if IsVerbose(VerbosityTrace) {
+		t.Error("IsVerbose(VerbosityTrace) should return false when verbosity is Debug")
+	}
+}
+
+// TestParseVerbosityFlag tests parsing verbosity flags
+func TestParseVerbosityFlag(t *testing.T) {
+	tests := []struct {
+		input  string
+		expect VerbosityLevel
+	}{
+		{"0", VerbosityOff},
+		{"off", VerbosityOff},
+		{"none", VerbosityOff},
+		{"1", VerbosityInfo},
+		{"info", VerbosityInfo},
+		{"2", VerbosityDebug},
+		{"debug", VerbosityDebug},
+		{"3", VerbosityTrace},
+		{"trace", VerbosityTrace},
+		{"all", VerbosityTrace},
+		{"invalid", VerbosityOff},
+		{"", VerbosityOff},
+	}
+
+	for _, tt := range tests {
+		result := ParseVerbosityFlag(tt.input)
+		if result != tt.expect {
+			t.Errorf("ParseVerbosityFlag(%q) = %v, expected %v", tt.input, result, tt.expect)
+		}
+	}
+}
+
+// TestVerbosityString tests verbosity level to string conversion
+func TestVerbosityString(t *testing.T) {
+	tests := []struct {
+		level  VerbosityLevel
+		expect string
+	}{
+		{VerbosityOff, "off"},
+		{VerbosityInfo, "info"},
+		{VerbosityDebug, "debug"},
+		{VerbosityTrace, "trace"},
+		{VerbosityLevel(99), "unknown(99)"},
+	}
+
+	for _, tt := range tests {
+		result := VerbosityString(tt.level)
+		if result != tt.expect {
+			t.Errorf("VerbosityString(%v) = %q, expected %q", tt.level, result, tt.expect)
+		}
+	}
+}
+
+// TestNewNoOpLogger tests the no-op logger
+func TestNewNoOpLogger(t *testing.T) {
+	logger := NewNoOpLogger()
+
+	if logger == nil {
+		t.Fatal("NewNoOpLogger should return non-nil")
+	}
+	if logger.demoName != "noop" {
+		t.Errorf("expected demoName='noop', got %q", logger.demoName)
+	}
+
+	// Should not panic
+	logger.Println("test")
+	logger.Printf("test %d", 42)
+	logger.Close()
+}
+
+// TestLoggerButton tests Button logging
+func TestLoggerButton(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-button")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Button("StartButton")
+
+	output := buf.String()
+	if !strings.Contains(output, "BUTTON:") {
+		t.Errorf("Button should log BUTTON:, got: %s", output)
+	}
+	if !strings.Contains(output, "StartButton") {
+		t.Errorf("Button should log button name, got: %s", output)
+	}
+}
+
+// TestLoggerValueChange tests ValueChange logging
+func TestLoggerValueChange(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-value")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.ValueChange("Slider", 0.5, 0.8)
+
+	output := buf.String()
+	if !strings.Contains(output, "VALUE:") {
+		t.Errorf("ValueChange should log VALUE:, got: %s", output)
+	}
+}
+
+// TestLoggerSelection tests Selection logging
+func TestLoggerSelection(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-select")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Selection("Dropdown", "Option1")
+
+	output := buf.String()
+	if !strings.Contains(output, "SELECT:") {
+		t.Errorf("Selection should log SELECT:, got: %s", output)
+	}
+}
+
+// TestLoggerSliderChange tests SliderChange logging
+func TestLoggerSliderChange(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-slider")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.SliderChange("VolumeSlider", 0.75)
+
+	output := buf.String()
+	if !strings.Contains(output, "SLIDER:") {
+		t.Errorf("SliderChange should log SLIDER:, got: %s", output)
+	}
+}
+
+// TestLoggerTabChange tests TabChange logging
+func TestLoggerTabChange(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-tab")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.TabChange("Settings")
+
+	output := buf.String()
+	if !strings.Contains(output, "TAB:") {
+		t.Errorf("TabChange should log TAB:, got: %s", output)
+	}
+}
+
+// TestLoggerCheckboxChange tests CheckboxChange logging
+func TestLoggerCheckboxChange(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-checkbox")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.CheckboxChange("EnableFeature", true)
+
+	output := buf.String()
+	if !strings.Contains(output, "CHECKBOX:") {
+		t.Errorf("CheckboxChange should log CHECKBOX:, got: %s", output)
+	}
+}
+
+// TestLoggerEntryChange tests EntryChange logging
+func TestLoggerEntryChange(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-entry")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.EntryChange("UsernameField", "testuser")
+
+	output := buf.String()
+	if !strings.Contains(output, "ENTRY:") {
+		t.Errorf("EntryChange should log ENTRY:, got: %s", output)
+	}
+}
+
+// TestLoggerInfo tests Info logging
+func TestLoggerInfo(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-info")
+
+	SetVerbosity(VerbosityInfo)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Info("Application started")
+
+	output := buf.String()
+	if !strings.Contains(output, "[INFO]") {
+		t.Errorf("Info should log [INFO], got: %s", output)
+	}
+}
+
+// TestLoggerDebug tests Debug logging
+func TestLoggerDebug(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-debug")
+
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Debug("Debug message")
+
+	output := buf.String()
+	if !strings.Contains(output, "[DEBUG]") {
+		t.Errorf("Debug should log [DEBUG], got: %s", output)
+	}
+}
+
+// TestLoggerTrace tests Trace logging
+func TestLoggerTrace(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-trace")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Trace("Trace message")
+
+	output := buf.String()
+	if !strings.Contains(output, "[TRACE]") {
+		t.Errorf("Trace should log [TRACE], got: %s", output)
+	}
+}
+
+// TestGlobalPrintf tests global Printf
+func TestGlobalPrintf(t *testing.T) {
+	// Should not panic with nil defaultLogger
+	oldLogger := defaultLogger
+	defaultLogger = nil
+	Printf("test %d", 42)
+	defaultLogger = oldLogger
+}
+
+// TestGlobalPrintln tests global Println
+func TestGlobalPrintln(t *testing.T) {
+	// Should not panic with nil defaultLogger
+	oldLogger := defaultLogger
+	defaultLogger = nil
+	Println("test message")
+	defaultLogger = oldLogger
+}
+
+// TestGlobalInfo tests global GlobalInfo
+func TestGlobalInfo(t *testing.T) {
+	SetVerbosity(VerbosityInfo)
+	defer SetVerbosity(VerbosityOff)
+
+	// Should not panic
+	GlobalInfo("info message")
+}
+
+// TestGlobalDebug tests global GlobalDebug
+func TestGlobalDebug(t *testing.T) {
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	// Should not panic
+	GlobalDebug("debug message")
+}
+
+// TestGlobalError tests global GlobalError
+func TestGlobalError(t *testing.T) {
+	// Should not panic
+	GlobalError("error: %s", "something went wrong")
+}
+
+// TestEnableFileLogging tests file logging toggle
+func TestEnableFileLogging(t *testing.T) {
+	// Check initial state
+	wasEnabled := IsFileLoggingEnabled()
+
+	// Enable
+	EnableFileLogging()
+
+	if !IsFileLoggingEnabled() {
+		t.Error("IsFileLoggingEnabled should return true after EnableFileLogging")
+	}
+
+	// Note: We can't easily disable it for cleanup, but this tests the mechanism
+	_ = wasEnabled
+}
+
+// TestFormatParams tests the formatParams helper
+func TestFormatParams(t *testing.T) {
+	tests := []struct {
+		name   string
+		params map[string]interface{}
+	}{
+		{"empty params", map[string]interface{}{}},
+		{"single param", map[string]interface{}{"key": "value"}},
+		{"multiple params", map[string]interface{}{"a": 1, "b": "two", "c": 3.14}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatParams(tt.params)
+			// Just verify it doesn't panic and returns a string
+			_ = result
+		})
+	}
+}

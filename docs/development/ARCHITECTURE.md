@@ -1001,6 +1001,7 @@ When adding new features to the architecture:
 
 ---
 
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-29
 **Architecture Version**: 3.1 (Unified Launcher + Docs)
 **Modules**: 7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)
+**Total Tests**: 1755

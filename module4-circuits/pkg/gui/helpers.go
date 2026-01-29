@@ -176,8 +176,38 @@ func drawPeripheralBox(img *image.RGBA, x, y, w, h int, style PeripheralStyle, t
 }
 
 // drawDACColumn draws a DAC box above a column with voltage display
+// Colors indicate voltage zone: blue/green = read (safe), orange/red = write (programming)
 func drawDACColumn(img *image.RGBA, x, y, w, h int, voltage float64, label string, highlighted, dimmed bool) {
 	style := DACStyle(highlighted, dimmed)
+
+	// Voltage zone color coding (based on typical FeCIM thresholds)
+	// Read zone: 0-0.5V (safe sensing, below coercive voltage)
+	// Caution zone: 0.5-0.8V (approaching Vc)
+	// Write zone: >0.8V (above Vc, will program cell)
+	if !highlighted && !dimmed {
+		if voltage < 0.05 {
+			// No voltage - dim gray
+			style.TopColor = color.RGBA{60, 60, 70, 255}
+			style.BottomColor = color.RGBA{40, 40, 50, 255}
+			style.BorderColor = color.RGBA{80, 80, 90, 255}
+		} else if voltage < 0.5 {
+			// Read zone - blue/cyan (safe)
+			style.TopColor = color.RGBA{60, 140, 200, 255}
+			style.BottomColor = color.RGBA{40, 100, 160, 255}
+			style.BorderColor = color.RGBA{100, 180, 255, 255}
+		} else if voltage < 0.8 {
+			// Caution zone - yellow/amber
+			style.TopColor = color.RGBA{200, 180, 60, 255}
+			style.BottomColor = color.RGBA{160, 140, 40, 255}
+			style.BorderColor = color.RGBA{255, 220, 100, 255}
+		} else {
+			// Write zone - orange/red (programming)
+			style.TopColor = color.RGBA{220, 100, 60, 255}
+			style.BottomColor = color.RGBA{180, 70, 40, 255}
+			style.BorderColor = color.RGBA{255, 140, 100, 255}
+		}
+	}
+
 	vText := fmt.Sprintf("%.2f", voltage)
 	drawPeripheralBox(img, x, y, w, h, style, vText)
 
@@ -199,14 +229,14 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 	if tia != nil {
 		tiaV = tia.Convert(current * 1e-6) // uA to A
 	}
-	// Format: "12µA→.12" (compact: current in µA, arrow, voltage without leading 0)
+	// Format shows current → voltage conversion clearly
 	var tiaText string
-	if current < 10 {
-		tiaText = fmt.Sprintf("%.1fµ→%.2f", current, tiaV)
-	} else if current < 100 {
-		tiaText = fmt.Sprintf("%.0fµ→%.2f", current, tiaV)
+	if current < 1 {
+		tiaText = fmt.Sprintf("%.2fuA", current)
+	} else if current < 10 {
+		tiaText = fmt.Sprintf("%.1fuA", current)
 	} else {
-		tiaText = fmt.Sprintf("%.0fµ→%.2f", current, tiaV)
+		tiaText = fmt.Sprintf("%.0fuA", current)
 	}
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 
@@ -219,13 +249,14 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 	adcText := fmt.Sprintf("%d", adcLevel)
 	drawPeripheralBox(img, x+tiaW+2, y, adcW, h, adcStyle, adcText)
 
-	// Draw label to the right
+	// Draw label to the left (row number)
 	if label != "" {
 		labelColor := color.RGBA{255, 190, 140, 255}
 		if dimmed {
 			labelColor = color.RGBA{180, 140, 110, 200}
 		}
-		utils.DrawSimpleText(img, label, x+tiaW+adcW+8, y+h/2-3, labelColor)
+		// Draw row label to the right of ADC box
+		utils.DrawSimpleText(img, label, x+tiaW+adcW+6, y+h/2-3, labelColor)
 	}
 }
 

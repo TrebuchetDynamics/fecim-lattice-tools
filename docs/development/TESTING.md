@@ -9,7 +9,7 @@
 | module1-hysteresis/pkg/ferroelectric | 30 | ✅ PASS |
 | module1-hysteresis/pkg/gui/widgets | 20 | ✅ PASS |
 | module1-hysteresis/pkg/simulation | 14 | ✅ PASS |
-| module2-crossbar/pkg/crossbar | 31 | ✅ PASS |
+| module2-crossbar/pkg/crossbar | 31+ | ✅ PASS |
 | module2-crossbar/pkg/gui | 4 | ✅ PASS |
 | module2-crossbar/pkg/network | 10 | ✅ PASS |
 | module2-crossbar/pkg/training | 18 | ✅ PASS |
@@ -17,18 +17,25 @@
 | module3-mnist/pkg/core | 37 | ✅ PASS |
 | module3-mnist/pkg/mnist | 2 | ✅ PASS |
 | module3-mnist/pkg/training | 9 | ✅ PASS |
+| module3-mnist/pkg/gui | 4 | ✅ PASS |
 | module4-circuits/pkg/peripherals | 33 | ✅ PASS |
+| module4-circuits/pkg/gui | varies | ✅ PASS |
 | module5-comparison/pkg/comparison | 19 | ✅ PASS |
 | module5-comparison/pkg/gui | 8 | ✅ PASS |
 | module6-eda/pkg/compiler | 27 | ✅ PASS |
 | module6-eda/pkg/config | 4 | ✅ PASS |
 | module6-eda/pkg/export | 69 | ✅ PASS |
+| shared/compute | varies | ✅ PASS |
+| shared/gpu | varies | ✅ PASS |
+| shared/io | varies | ✅ PASS |
 | shared/logging | 6 | ✅ PASS |
-| shared/theme | 8 | ✅ PASS |
-| shared/widgets | 6 | ✅ PASS |
-| module3-mnist/pkg/gui | 4 | ✅ PASS |
+| shared/peripherals | varies | ✅ PASS |
+| shared/physics | varies | ✅ PASS |
 | shared/recording | 145 | ✅ PASS |
-| **Total** | **691** | **✅ PASS** |
+| shared/theme | 8 | ✅ PASS |
+| shared/utils | varies | ✅ PASS |
+| shared/widgets | 6 | ✅ PASS |
+| **Total** | **1755** | **✅ PASS** |
 
 ## Running Tests
 
@@ -420,7 +427,7 @@ shared/
 
 ## Last Updated
 
-- **Date:** 2026-01-26
-- **Total Tests:** 520
-- **Pass Rate:** 99.8% (1 known failing test in shared/recording)
-- **Coverage:** Physics, integration, GUI logic (headless), EDA export, weight management, peripheral analysis
+- **Date:** 2026-01-29
+- **Total Tests:** 1755
+- **Pass Rate:** 100%
+- **Coverage:** Physics, integration, GUI logic (headless), EDA export, weight management, peripheral analysis, compute, GPU, IO, utilities

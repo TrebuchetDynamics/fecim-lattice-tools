@@ -986,6 +986,11 @@ func (a *App) simulationLoop() {
 					// Use absolute level position to match calibration measurement conditions
 				goingUp := targetLevel > midLevel
 					wrdTargetIdx := targetLevel - 1
+					currentLevel := a.discreteLevel + 1 // 1-indexed
+
+					// Check if this is a retry from undershoot (skipped RESET)
+					// In undershoot retry, we need incremental field from current position
+					isUndershootRetry := a.wrdRetryCount > 0 && a.wrdResetEndLvl == 0
 
 					// Bounds check for calibration array access
 					if wrdTargetIdx < 0 || wrdTargetIdx >= len(a.calibrationUp) {
@@ -996,6 +1001,29 @@ func (a *App) simulationLoop() {
 						} else {
 							writeE = -Ec * (1.0 + ratio*1.0)
 						}
+					} else if isUndershootRetry {
+						// UNDERSHOOT RETRY: We're on the correct branch, just apply more field
+						// No need to saturate - just push harder toward target
+						if goingUp {
+							// Get field for target level
+							targetE := a.calibrationUp[wrdTargetIdx]
+							if targetE == 0 {
+								ratio := float64(targetLevel-1) / float64(maxLevelIdx)
+								targetE = Ec * (1.0 + ratio*1.0)
+							}
+							// Apply slightly more field than the difference to ensure we reach target
+							writeE = targetE * 1.05 // 5% extra to overcome any drift
+						} else {
+							// Get field for target level
+							targetE := a.calibrationDown[wrdTargetIdx]
+							if targetE == 0 {
+								ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
+								targetE = -Ec * (1.0 + ratio*1.0)
+							}
+							writeE = targetE * 1.05 // 5% extra (more negative)
+						}
+						log.Printf("WRD UNDERSHOOT WRITE: currentLvl=%d targetLvl=%d | applying E=%.3f MV/cm",
+							currentLevel, targetLevel, writeE/1e8)
 					} else if goingUp {
 						// Going UP from level 1: use ascending calibration
 						baseE := a.calibrationUp[wrdTargetIdx]
@@ -1171,14 +1199,42 @@ func (a *App) simulationLoop() {
 						} else {
 							// FAILED: Update calibration and RETRY (NO LIMIT - must hit target!)
 							a.wrdRetryCount++
-							log.Printf("WRD VERIFY MISS: L_read=%d L_target=%d err=%+d | RETRY #%d (will keep trying)",
-								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+
+							// Determine if overshoot or undershoot based on direction
+							// goingUp: positive field, higher levels
+							// goingDown: negative field, lower levels
+							goingUp := a.wrdTargetLevel > midLevel
+
+							// Undershoot: didn't apply enough field, might continue without reset
+							// Overshoot: went past target, MUST reset (hysteresis is path-dependent)
+							var isUndershoot bool
+							absError := abs(levelError)
+							if goingUp {
+								// Going up (positive field): undershoot means read < target (levelError < 0)
+								isUndershoot = levelError < 0
+							} else {
+								// Going down (negative field): undershoot means read > target (levelError > 0)
+								isUndershoot = levelError > 0
+							}
+
+							// Only skip RESET for small undershoots (1-2 levels) on first retry
+							// READ phase can disturb polarization, so larger errors need full RESET
+							canSkipReset := isUndershoot && absError <= 2 && a.wrdRetryCount == 1
+
+							if canSkipReset {
+								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (skip RESET, small error)",
+									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+							} else if isUndershoot {
+								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (RESET needed, error too large or repeated)",
+									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+							} else {
+								log.Printf("WRD VERIFY OVERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (must RESET)",
+									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+							}
 
 							// Update calibration BEFORE retry to converge on correct field
 							targetIdx := a.wrdTargetLevel - 1
 							if a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
-								midLevel := a.numLevels / 2
-								goingUp := a.wrdTargetLevel > midLevel
 								if goingUp {
 									a.updateCalibrationUp(targetIdx, levelError, Ec)
 								} else {
@@ -1186,13 +1242,23 @@ func (a *App) simulationLoop() {
 								}
 							}
 
-							// Loop back to RESET with SAME target - never give up!
-							a.wrdResetStartP = a.polarization * 100
 							// Clear history trail to prevent visual spikes during retry
 							a.eHistory = a.eHistory[:0]
 							a.pHistory = a.pHistory[:0]
-							a.wrdPhase = 0
-							a.wrdPhaseTimer = 0
+
+							if canSkipReset {
+								// SMALL UNDERSHOOT: Skip RESET, use BOOST phase (phase 6)
+								// We're still on the same branch of the hysteresis loop
+								a.wrdWriteStartP = a.polarization * 100
+								a.wrdResetEndLvl = 0 // Mark that we skipped RESET (used by WRITE phase)
+								a.wrdPhase = 6       // BOOST phase (undershoot retry)
+								a.wrdPhaseTimer = 0
+							} else {
+								// OVERSHOOT or LARGE UNDERSHOOT: Must fully reset
+								a.wrdResetStartP = a.polarization * 100
+								a.wrdPhase = 0 // Full RESET
+								a.wrdPhaseTimer = 0
+							}
 						}
 					}
 
@@ -1271,6 +1337,58 @@ func (a *App) simulationLoop() {
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle
+					}
+
+				case 6: // BOOST phase - undershoot retry, skip RESET and apply more field
+					// This phase handles small undershoots by directly applying more field
+					// without going through the full RESET cycle
+					var writeE float64
+					goingUp := targetLevel > midLevel
+					wrdTargetIdx := targetLevel - 1
+
+					if wrdTargetIdx < 0 || wrdTargetIdx >= len(a.calibrationUp) {
+						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
+						if goingUp {
+							writeE = Ec * (1.0 + ratio*1.0) * 1.08 // 8% extra for boost
+						} else {
+							writeE = -Ec * (1.0 + ratio*1.0) * 1.08
+						}
+					} else if goingUp {
+						targetE := a.calibrationUp[wrdTargetIdx]
+						if targetE == 0 {
+							ratio := float64(targetLevel-1) / float64(maxLevelIdx)
+							targetE = Ec * (1.0 + ratio*1.0)
+						}
+						writeE = targetE * 1.08 // 8% extra for boost
+					} else {
+						targetE := a.calibrationDown[wrdTargetIdx]
+						if targetE == 0 {
+							ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
+							targetE = -Ec * (1.0 + ratio*1.0)
+						}
+						writeE = targetE * 1.08 // 8% extra for boost
+					}
+					a.wrdWriteE = writeE
+
+					// Ramp to write field
+					diff := writeE - a.electricField
+					step := rampRate * dt
+					if math.Abs(diff) < step {
+						a.electricField = writeE
+					} else if diff > 0 {
+						a.electricField += step
+					} else {
+						a.electricField -= step
+					}
+
+					// Transition to HOLD phase when field applied
+					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-writeE) < 0.01*Emax {
+						a.wrdWriteEndP = a.polarization * 100
+						a.wrdWriteEndLvl = a.discreteLevel + 1
+						log.Printf("WRD PHASE 6→3: BOOST done | E=%.3f MV/cm (%.2f×Ec) | P=%.2f→%.2f µC/cm² | L=%d | target=%d",
+							a.electricField/1e8, a.electricField/Ec, a.wrdWriteStartP, a.wrdWriteEndP, a.wrdWriteEndLvl, targetLevel)
+						a.wrdPhase = 3 // Go to HOLD phase
+						a.wrdPhaseTimer = 0
 					}
 				}
 			case WaveformTimeResolved:

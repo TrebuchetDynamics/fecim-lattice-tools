@@ -3,7 +3,7 @@ Module: module6-eda
 Name: FeCIM Design Suite - EDA
 Entry: module6-eda/cmd/eda-gui/main.go
 Package: fecim-lattice-tools/module6-eda/pkg/gui
-Last Updated: 2026-01-26
+Last Updated: 2026-01-29
 Description: |
   Educational array builder that demonstrates FeCIM crossbar array design with
   open-source EDA tools (OpenLane). Generates custom FeCIM cell libraries (LEF/LIB/V),
