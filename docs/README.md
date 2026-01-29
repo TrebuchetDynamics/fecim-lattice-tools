@@ -1,24 +1,104 @@
 # FeCIM Lattice Tools Documentation
 
-## Start Here
+> Ferroelectric Compute-in-Memory simulation suite with 30 discrete analog states per cell (~4.9 bits/cell).
+
+---
+
+## Quick Start
 
 | Doc | Purpose |
 |-----|---------|
 | [ELI5.md](ELI5.md) | Concepts explained simply |
 | [RUNBOOK.md](RUNBOOK.md) | Build, run, and deploy |
+| [FEATURES.md](FEATURES.md) | Complete feature reference |
 | [CONTRIB.md](CONTRIB.md) | How to contribute |
+
+## Build & Run
+
+```bash
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
+# Or: ./launch.sh
+```
+
+### Command-Line Options
+
+| Flag | Description |
+|------|-------------|
+| `--logger` | Enable file logging to `logs/` |
+| `--verbosity <level>` | Logging level: `off`, `info`, `debug`, `trace` |
+| `--calibrate` | Run hysteresis calibration (no GUI) |
+| `--material <name>` | Material to calibrate (default: all) |
+| `--force` | Force recalibration even if valid |
+| `--verify` | Verify calibration accuracy |
+| `--list-materials` | List available materials and exit |
+
+---
 
 ## By Module
 
-| Module | Folder | Start With |
-|--------|--------|------------|
-| 1. Hysteresis | [hysteresis/](hysteresis/) | [ELI5](hysteresis/hysteresis.ELI5.md), [Physics](hysteresis/hysteresis.physics.md) |
-| 2. Crossbar | [crossbar-arrays/](crossbar-arrays/) | [ELI5](crossbar-arrays/crossbar.ELI5.md), [Physics](crossbar-arrays/crossbar.physics.md) |
-| 3. Neural Network | [neural-network/](neural-network/) | [ELI5](neural-network/mnist.ELI5.md), [Demo](neural-network/mnist.demo.md) |
-| 4. Peripheral Circuits | [peripheral-circuits/](peripheral-circuits/) | [ELI5](peripheral-circuits/circuits.ELI5.md) |
-| 5. Comparison | [comparison/](comparison/) | [ELI5](comparison/cim.ELI5.md), [Honesty Audit](comparison/HONESTY_AUDIT.md) |
-| 6. EDA Design Suite | [eda-design-suite/](eda-design-suite/) | [ELI5](eda-design-suite/eda.eli5.md) |
-| 7. Docs Viewer | - | Embedded documentation browser |
+| Module | Folder | Features | Start With |
+|--------|--------|----------|------------|
+| 1. Hysteresis | [hysteresis/](hysteresis/) | P-E loops, Preisach model, 8 materials, temperature effects | [ELI5](hysteresis/hysteresis.ELI5.md), [Physics](hysteresis/hysteresis.physics.md) |
+| 2. Crossbar | [crossbar/](crossbar/) | MVM, IR drop, sneak paths, 0T1R/1T1R/2T1R | [ELI5](crossbar-arrays/crossbar.ELI5.md), [Physics](crossbar-arrays/crossbar.physics.md), [Voltage Rules](crossbar/VOLTAGE_RULES.md) |
+| 3. Neural Network | [neural-network/](neural-network/) | MNIST inference, FP32 vs CIM comparison, quantization | [ELI5](neural-network/mnist.ELI5.md), [Demo](neural-network/mnist.demo.md) |
+| 4. Peripheral Circuits | [peripheral-circuits/](peripheral-circuits/) | DAC/ADC/TIA, 4-phase write, ISPP | [ELI5](peripheral-circuits/circuits.ELI5.md) |
+| 5. Comparison | [comparison/](comparison/) | CPU vs GPU vs FeCIM, data center projections | [ELI5](comparison/cim.ELI5.md), [Honesty Audit](comparison/HONESTY_AUDIT.md) |
+| 6. EDA Design Suite | [eda/](eda/) | RTL-to-GDSII, 8 export formats, SKY130/GF180 PDKs | [ELI5](eda-design-suite/eda.eli5.md), [Workflow](eda/WORKFLOW.md) |
+| 7. Docs Viewer | - | Glossary (100+ terms), full-text search, markdown rendering | Embedded in app |
+
+---
+
+## Shared Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Material Picker | `shared/widgets/` | Searchable material dialog with property tables |
+| Theme System | `shared/theme/` | Consistent FeCIM color palette |
+| Physics Config | `config/physics/` | Physics engine and material loading |
+| Material Library | `config/materials.yaml` | 8 ferroelectric materials with 25+ properties |
+| Logging | `shared/logging/` | Structured logging with verbosity levels |
+| Recording | `shared/recording/` | FFmpeg screen capture with audio |
+
+### Key Widgets
+
+- **MaterialPicker** - Dialog with searchable list, 8 property categories, scientific unit formatting
+- **ColorLegend** - Scalable color bar with dual-scale support
+- **AdaptiveLayout** - Responsive design for desktop/tablet/mobile
+- **ArchitectureSelector** - 0T1R/1T1R/2T1R toggle
+
+---
+
+## Calibration System
+
+Temperature-aware multi-level calibration for accurate discrete state mapping.
+
+| Feature | Description |
+|---------|-------------|
+| Temperature range | 233-423 K (-40°C to 150°C) |
+| Key points | Cold (-40°C), Room (27°C), Hot (150°C) |
+| Algorithm | Binary search with oscillation detection |
+| Storage | JSON files in `data/calibrations/` |
+
+Run calibration:
+```bash
+./fecim-lattice-tools --calibrate --material fecim_hzo --verify
+```
+
+---
+
+## Physics Specifications
+
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| FeCIM Levels | 30 | Dr. Tour COSM 2025 |
+| Pr (RT) | 15-34 µC/cm² | Nature Commun. 2025 |
+| Pr (4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 |
+| Ec | 0.6-1.5 MV/cm | Nature Commun. 2025 |
+| Endurance | 10⁹-10¹² cycles | IEEE IRPS 2022, Nano Letters 2024 |
+
+See [FEATURES.md](FEATURES.md) for complete specifications per module.
+
+---
 
 ## Research & References
 
@@ -31,16 +111,37 @@
 | PDK reference | [pdk-reference/](pdk-reference/) |
 | Video transcripts | [video-transcripts/](video-transcripts/) |
 
+---
+
 ## For Developers
 
 | Doc | Purpose |
 |-----|---------|
 | [ARCHITECTURE.md](development/ARCHITECTURE.md) | System design |
-| [TESTING.md](development/TESTING.md) | Test guide |
+| [TESTING.md](development/TESTING.md) | Test guide (117 tests) |
 | [scriptReference.md](development/scriptReference.md) | Function lookups |
-| [GUI/](development/GUI/) | Fyne GUI development |
+| [FYNE_NOTES.md](development/GUI/FYNE_NOTES.md) | Fyne GUI development |
+| [HYPER_ANALYSIS_REPORT.md](development/HYPER_ANALYSIS_REPORT.md) | UI analysis |
+
+---
+
+## Accuracy & Honesty
+
+Scientific accuracy over marketing claims. All claims are backed by peer-reviewed sources.
+
+| Claim | Status | Source |
+|-------|--------|--------|
+| 32-140 analog states | Verified | Oh 2017 (32), Song 2024 (140) |
+| 96.6-98.24% MNIST | Verified | Nature Communications 2023, ScienceDirect 2025 |
+| 10¹² endurance | Verified | Nano Letters 2024 (V:HfO₂) |
+
+Full audit: [comparison/HONESTY_AUDIT.md](comparison/HONESTY_AUDIT.md)
+
+---
 
 ## See Also
 
-- Project root: [../CLAUDE.md](../CLAUDE.md) - AI agent instructions and quick reference
-- About: [about/](about/) - App info, contributors, thanks
+- **Project root:** [../CLAUDE.md](../CLAUDE.md) - AI agent instructions and quick reference
+- **Root README:** [../README.md](../README.md) - Full project overview
+- **About:** [about/](about/) - App info, contributors, thanks
+- **Glossary:** [GLOSSARY.md](GLOSSARY.md) - 100+ ferroelectric terms
