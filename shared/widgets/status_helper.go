@@ -10,12 +10,25 @@ import (
 )
 
 // StatusBar provides thread-safe status updates with cache prevention.
-// All status updates are wrapped in fyne.Do() for goroutine safety.
+// All status updates are wrapped in fyne.Do() for goroutine safety when
+// a Fyne app is running. Falls back to direct execution in tests.
 type StatusBar struct {
 	label    *widget.Label
 	prefix   string
 	lastText string
 	mu       sync.Mutex
+}
+
+// safeUIUpdate executes fn on the UI thread if a Fyne app is running,
+// otherwise executes directly (safe for tests and initialization).
+func safeUIUpdate(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			// No Fyne app running, execute directly
+			fn()
+		}
+	}()
+	fyne.Do(fn)
 }
 
 // NewStatusBar creates a new status bar with an optional prefix.
@@ -63,7 +76,7 @@ func (s *StatusBar) Update(msg string) {
 	s.lastText = newText
 	s.mu.Unlock()
 
-	fyne.Do(func() {
+	safeUIUpdate(func() {
 		s.label.SetText(newText)
 	})
 }
@@ -83,7 +96,7 @@ func (s *StatusBar) Updatef(format string, args ...interface{}) {
 	s.lastText = newText
 	s.mu.Unlock()
 
-	fyne.Do(func() {
+	safeUIUpdate(func() {
 		s.label.SetText(newText)
 	})
 }
