@@ -1998,8 +1998,9 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 	if a.calibUpLow[targetIdx] < a.calibUpHigh[targetIdx] {
 		newVal = (a.calibUpLow[targetIdx] + a.calibUpHigh[targetIdx]) / 2
 	} else {
-		// Bounds crossed - use small adjustment
-		adjustment := float64(levelError) * Ec * 0.01
+		// Bounds crossed - use direct error-proportional adjustment
+		// This is more aggressive than midpoint to escape stuck states
+		adjustment := float64(levelError) * Ec * 0.05 // 5% per level error
 		newVal = currentE - adjustment
 	}
 
@@ -2008,11 +2009,10 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 		newVal = currentE*0.7 + newVal*0.3
 	}
 
-	// Level-dependent minimum field: higher levels need stronger fields
-	maxLevel := float64(a.numLevels - 1)
-	levelRatio := float64(targetIdx) / maxLevel
-	minE := Ec * (0.4 + levelRatio*1.0) // Range: 0.4×Ec to 1.4×Ec
-	maxE := Ec * (0.6 + levelRatio*1.2) // Range: 0.6×Ec to 1.8×Ec
+	// Soft constraints: guide towards reasonable range but don't hard-clamp
+	// This allows the binary search to explore beyond if physics requires it
+	minE := Ec * 0.3  // Absolute minimum: 0.3×Ec
+	maxE := Ec * 2.5  // Absolute maximum: 2.5×Ec
 
 	if newVal < minE {
 		newVal = minE
@@ -2020,9 +2020,30 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 		newVal = maxE
 	}
 
+	oldVal := a.calibrationUp[targetIdx]
 	a.calibrationUp[targetIdx] = newVal
+
+	// CASCADE DOWN: If we lowered this level's field, also lower preceding levels
+	// to maintain monotonicity (higher levels need higher fields)
+	step := Ec * 0.02 // 2% of Ec minimum step between levels
+	if newVal < oldVal {
+		// We lowered the field - cascade down to lower levels
+		for i := targetIdx - 1; i >= 0; i-- {
+			if a.calibrationUp[i] >= a.calibrationUp[i+1]-step {
+				a.calibrationUp[i] = a.calibrationUp[i+1] - step
+			} else {
+				break // Monotonicity already satisfied, stop cascading
+			}
+		}
+	}
+
+	// Enforce monotonicity upward (push higher levels up if needed)
 	a.enforceMonotonicityUp(targetIdx, Ec)
 	a.lastErrorUp[targetIdx] = levelError
+
+	log.Printf("CALIB_UP[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
+		targetIdx, oldVal/1e8, newVal/1e8, levelError,
+		a.calibUpLow[targetIdx]/1e8, a.calibUpHigh[targetIdx]/1e8)
 }
 
 // updateCalibrationDown updates descending calibration using binary search with bounds tracking.
@@ -2054,8 +2075,9 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 	if a.calibDownLow[targetIdx] < a.calibDownHigh[targetIdx] {
 		newVal = (a.calibDownLow[targetIdx] + a.calibDownHigh[targetIdx]) / 2
 	} else {
-		// Bounds crossed - use small adjustment
-		adjustment := float64(levelError) * Ec * 0.01
+		// Bounds crossed - use direct error-proportional adjustment
+		// For descending, positive error means we need MORE negative field
+		adjustment := float64(levelError) * Ec * 0.05 // 5% per level error
 		newVal = currentE - adjustment
 	}
 
@@ -2064,11 +2086,9 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 		newVal = currentE*0.7 + newVal*0.3
 	}
 
-	// Level-dependent minimum field: lower levels need stronger (more negative) fields
-	maxLevel := float64(a.numLevels - 1)
-	levelRatio := float64(targetIdx) / maxLevel
-	minE := -Ec * (0.6 + (1-levelRatio)*1.2) // Range: -1.8×Ec to -0.6×Ec
-	maxE := -Ec * (0.4 + (1-levelRatio)*1.0) // Range: -1.4×Ec to -0.4×Ec
+	// Soft constraints: guide towards reasonable range but don't hard-clamp
+	minE := -Ec * 2.5 // Absolute minimum (most negative): -2.5×Ec
+	maxE := -Ec * 0.3 // Absolute maximum (least negative): -0.3×Ec
 
 	if newVal > maxE {
 		newVal = maxE
@@ -2076,7 +2096,28 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 		newVal = minE
 	}
 
+	oldVal := a.calibrationDown[targetIdx]
 	a.calibrationDown[targetIdx] = newVal
+
+	// CASCADE: For descending, lower indices need more negative fields
+	// If we made this level more negative, cascade to higher indices (less negative)
+	step := Ec * 0.02 // 2% of Ec minimum step between levels
+	if newVal < oldVal {
+		// We made field more negative - cascade upward (higher indices need less negative)
+		for i := targetIdx + 1; i < len(a.calibrationDown); i++ {
+			if a.calibrationDown[i] <= a.calibrationDown[i-1]+step {
+				a.calibrationDown[i] = a.calibrationDown[i-1] + step
+			} else {
+				break // Monotonicity already satisfied, stop cascading
+			}
+		}
+	}
+
+	// Enforce monotonicity downward (push lower indices more negative if needed)
 	a.enforceMonotonicityDown(targetIdx, Ec)
 	a.lastErrorDown[targetIdx] = levelError
+
+	log.Printf("CALIB_DOWN[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
+		targetIdx, oldVal/1e8, newVal/1e8, levelError,
+		a.calibDownLow[targetIdx]/1e8, a.calibDownHigh[targetIdx]/1e8)
 }
