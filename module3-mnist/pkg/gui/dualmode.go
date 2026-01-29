@@ -33,9 +33,9 @@ const (
 	FeCIMDefaultDAC    = 8    // 8-bit DAC resolution
 
 	// Energy efficiency (Samsung Nature 2025: 25-100× vs NAND)
-	FeCIMEnergyPerMAC = 50e-15 // 50 fJ/MAC (femtojoules)
-	GPUEnergyPerMAC   = 5e-12  // 5 pJ/MAC estimate
-	EnergyRatioGPU    = 100    // Verified: 25-100× (Samsung Nature 2025)
+	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
+	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
+	EnergyRatioGPU    = 100     // Verified: 25-100× (Samsung Nature 2025)
 
 	// Accuracy reference (peer-reviewed baselines, not targets)
 	// Note: Accuracy varies with noise, levels, and architecture

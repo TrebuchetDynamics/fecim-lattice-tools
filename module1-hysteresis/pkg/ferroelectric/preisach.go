@@ -3,7 +3,16 @@ package ferroelectric
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+// Package-level logger
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("preisach")
+}
 
 // PreisachModel implements the Preisach hysteresis model for ferroelectrics.
 // Based on Bartic et al. (2001) "Preisach model for the simulation of
@@ -28,7 +37,14 @@ type PreisachModel struct {
 
 // NewPreisachModel creates a new Preisach model with the given material.
 func NewPreisachModel(material *HZOMaterial) *PreisachModel {
-	return &PreisachModel{
+	log.Input("NewPreisachModel", map[string]interface{}{
+		"material_name": material.Name,
+		"Ec":            material.Ec,
+		"Ps":            material.Ps,
+		"Pr":            material.Pr,
+	})
+
+	p := &PreisachModel{
 		material:      material,
 		EcMean:        material.Ec,
 		EcSigma:       material.Ec * 0.25, // 25% distribution width
@@ -37,6 +53,15 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 		turningPoints: make([]float64, 0, 100),
 		polarization:  0,
 	}
+
+	log.Calculation("NewPreisachModel", map[string]interface{}{
+		"EcMean":  p.EcMean,
+		"EcSigma": p.EcSigma,
+		"EuMean":  p.EuMean,
+		"EuSigma": p.EuSigma,
+	}, p)
+
+	return p
 }
 
 // Reset clears the history and sets polarization to zero.
@@ -49,6 +74,10 @@ func (p *PreisachModel) Reset() {
 // Update applies a new electric field and returns the resulting polarization.
 // The field E should be in V/m.
 func (p *PreisachModel) Update(E float64) float64 {
+	log.Input("Update", map[string]interface{}{
+		"E_field": E,
+	})
+
 	// Determine direction
 	increasing := E > p.lastE
 
@@ -64,6 +93,12 @@ func (p *PreisachModel) Update(E float64) float64 {
 	// Update state
 	p.lastE = E
 	p.increasing = increasing
+
+	log.Calculation("Update", map[string]interface{}{
+		"E_field":        E,
+		"turning_points": len(p.turningPoints),
+		"increasing":     p.increasing,
+	}, p.polarization)
 
 	return p.polarization
 }
@@ -166,6 +201,11 @@ func (p *PreisachModel) NormalizedPolarization() float64 {
 // GetHysteresisLoop generates a full P-E hysteresis loop.
 // Returns slices of E and P values for plotting.
 func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, []float64) {
+	log.Input("GetHysteresisLoop", map[string]interface{}{
+		"Emax":   Emax,
+		"points": points,
+	})
+
 	p.Reset()
 
 	E := make([]float64, 0, points*4)
@@ -195,12 +235,24 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 		P = append(P, pol)
 	}
 
+	log.Output("GetHysteresisLoop", map[string]interface{}{
+		"E_points": len(E),
+		"P_points": len(P),
+		"P_max":    maxFloat64(P),
+		"P_min":    minFloat64(P),
+	})
+
 	return E, P
 }
 
 // DiscreteStates returns polarization values for N discrete analog states.
 // This demonstrates the 30-state capability of FeCIM.
 func (p *PreisachModel) DiscreteStates(N int) []float64 {
+	log.Input("DiscreteStates", map[string]interface{}{
+		"N_states": N,
+		"Ps":       p.material.Ps,
+	})
+
 	states := make([]float64, N)
 	Ps := p.material.Ps
 
@@ -209,5 +261,39 @@ func (p *PreisachModel) DiscreteStates(N int) []float64 {
 		states[i] = -Ps + 2*Ps*float64(i)/float64(N-1)
 	}
 
+	log.Output("DiscreteStates", map[string]interface{}{
+		"N_states":   N,
+		"state_min":  states[0],
+		"state_max":  states[N-1],
+		"state_step": (states[N-1] - states[0]) / float64(N-1),
+	})
+
 	return states
+}
+
+// Helper functions for logging
+func maxFloat64(slice []float64) float64 {
+	if len(slice) == 0 {
+		return 0
+	}
+	max := slice[0]
+	for _, v := range slice {
+		if v > max {
+			max = v
+		}
+	}
+	return max
+}
+
+func minFloat64(slice []float64) float64 {
+	if len(slice) == 0 {
+		return 0
+	}
+	min := slice[0]
+	for _, v := range slice {
+		if v < min {
+			min = v
+		}
+	}
+	return min
 }

@@ -2,7 +2,11 @@ package comparison
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+var log = logging.NewLogger("comparison")
 
 // Architecture represents a compute architecture for neural network inference.
 type Architecture struct {
@@ -127,12 +131,24 @@ func CustomArchitecture(name string, tops, power, area float64) *Architecture {
 
 // CalculateEfficiency calculates efficiency metrics.
 func (a *Architecture) CalculateEfficiency() {
+	log.Input("CalculateEfficiency", map[string]interface{}{
+		"name":     a.Name,
+		"peakTOPS": a.PeakTOPS,
+		"tdp":      a.TOPSPerWatt,
+		"chipArea": a.ChipArea,
+	})
+
 	if a.TDP > 0 {
 		a.TOPSPerWatt = a.PeakTOPS / a.TDP
 	}
 	if a.ChipArea > 0 {
 		a.TOPSPerMM2 = a.PeakTOPS / a.ChipArea
 	}
+
+	log.Calculation("CalculateEfficiency", map[string]interface{}{
+		"topsPerWatt": a.TOPSPerWatt,
+		"topsPerMM2":  a.TOPSPerMM2,
+	}, nil)
 }
 
 // InferenceResult contains results from running inference on an architecture.
@@ -148,6 +164,12 @@ type InferenceResult struct {
 
 // RunInference simulates running inference on the architecture.
 func (a *Architecture) RunInference(modelOps int, batchSize int) InferenceResult {
+	log.Input("RunInference", map[string]interface{}{
+		"architecture": a.Name,
+		"modelOps":     modelOps,
+		"batchSize":    batchSize,
+	})
+
 	// Operations in TOPS
 	opsInTOPS := float64(modelOps) * float64(batchSize) / 1e12
 
@@ -171,7 +193,7 @@ func (a *Architecture) RunInference(modelOps int, batchSize int) InferenceResult
 	// Throughput
 	throughput := float64(batchSize) / (totalLatency / 1000) // inferences/sec
 
-	return InferenceResult{
+	result := InferenceResult{
 		Architecture: a.Name,
 		ModelOps:     modelOps,
 		BatchSize:    batchSize,
@@ -180,6 +202,16 @@ func (a *Architecture) RunInference(modelOps int, batchSize int) InferenceResult
 		Energy:       energy,
 		PowerUsed:    a.TDP,
 	}
+
+	log.Calculation("RunInference", map[string]interface{}{
+		"computeLatency": computeLatency,
+		"memoryLatency":  memoryLatency,
+		"totalLatency":   totalLatency,
+		"energy":         energy,
+		"throughput":     throughput,
+	}, result)
+
+	return result
 }
 
 // Workload defines a neural network workload.
@@ -264,6 +296,13 @@ type DataCenterMetrics struct {
 
 // ScaleToDataCenter calculates data center scale metrics.
 func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Workload) DataCenterMetrics {
+	log.Input("ScaleToDataCenter", map[string]interface{}{
+		"architecture":      arch.Name,
+		"targetThroughput":  targetThroughput,
+		"workload":          workload.Name,
+		"workloadTotalOps":  workload.TotalOps,
+	})
+
 	// Run single chip inference
 	result := arch.RunInference(workload.TotalOps, 1)
 
@@ -300,7 +339,7 @@ func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Wo
 	co2PerKWh := 0.4
 	co2PerDay := totalPower * 24 * co2PerKWh
 
-	return DataCenterMetrics{
+	metrics := DataCenterMetrics{
 		Architecture:     arch.Name,
 		ChipsRequired:    chipsRequired,
 		TotalPower:       totalPower,
@@ -310,6 +349,17 @@ func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Wo
 		TCO:              tco,
 		CO2Emissions:     co2PerDay,
 	}
+
+	log.Calculation("ScaleToDataCenter", map[string]interface{}{
+		"chipsRequired":    chipsRequired,
+		"totalPower_kW":    totalPower,
+		"rackUnits":        rackUnits,
+		"actualThroughput": actualThroughput,
+		"tco":              tco,
+		"co2PerDay":        co2PerDay,
+	}, metrics)
+
+	return metrics
 }
 
 // ComparisonResult contains full comparison between architectures.
@@ -323,6 +373,12 @@ type ComparisonResult struct {
 
 // CompareArchitectures runs a full comparison.
 func CompareArchitectures(workload Workload, batchSize int, targetThroughput float64) ComparisonResult {
+	log.Input("CompareArchitectures", map[string]interface{}{
+		"workload":         workload.Name,
+		"batchSize":        batchSize,
+		"targetThroughput": targetThroughput,
+	})
+
 	architectures := []*Architecture{
 		TraditionalCPU(),
 		GPUAccelerator(),
@@ -337,13 +393,22 @@ func CompareArchitectures(workload Workload, batchSize int, targetThroughput flo
 		dcMetrics[i] = ScaleToDataCenter(arch, targetThroughput, workload)
 	}
 
-	return ComparisonResult{
+	comparison := ComparisonResult{
 		Workload:      workload,
 		BatchSize:     batchSize,
 		Architectures: architectures,
 		Results:       results,
 		DataCenter:    dcMetrics,
 	}
+
+	log.Calculation("CompareArchitectures", map[string]interface{}{
+		"architectures": len(architectures),
+		"cpu_latency":   results[0].Latency,
+		"gpu_latency":   results[1].Latency,
+		"fecim_latency": results[2].Latency,
+	}, comparison)
+
+	return comparison
 }
 
 // FeCIMAdvantage calculates FeCIM advantages over other architectures.
@@ -366,6 +431,10 @@ type FeCIMAdvantage struct {
 
 // CalculateAdvantages calculates FeCIM advantages.
 func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
+	log.Input("CalculateAdvantages", map[string]interface{}{
+		"workload": comparison.Workload.Name,
+	})
+
 	var adv FeCIMAdvantage
 
 	var cpuResult, gpuResult, fecimResult InferenceResult
@@ -406,6 +475,13 @@ func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
 		adv.VsGPU.PowerReduction = gpuArch.TDP / fecimArch.TDP
 		adv.VsGPU.CostReduction = gpuDC.TCO / fecimDC.TCO
 	}
+
+	log.Calculation("CalculateAdvantages", map[string]interface{}{
+		"vsCPU_energy":     adv.VsCPU.EnergyReduction,
+		"vsCPU_throughput": adv.VsCPU.ThroughputIncrease,
+		"vsGPU_energy":     adv.VsGPU.EnergyReduction,
+		"vsGPU_area":       adv.VsGPU.AreaReduction,
+	}, adv)
 
 	return adv
 }

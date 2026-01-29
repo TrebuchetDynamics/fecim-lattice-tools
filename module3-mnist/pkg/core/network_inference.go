@@ -1,17 +1,46 @@
 package core
 
 import (
+	"fmt"
 	"math"
 )
 
 // Infer runs dual-path inference (FP + CIM) and returns comparison results.
 // Returns nil if input length doesn't match expected InputSize.
 func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
+	// Compute input stats for logging
+	inputMin, inputMax, inputMean := 1.0, 0.0, 0.0
+	for _, v := range input {
+		if v < inputMin {
+			inputMin = v
+		}
+		if v > inputMax {
+			inputMax = v
+		}
+		inputMean += v
+	}
+	if len(input) > 0 {
+		inputMean /= float64(len(input))
+	}
+
+	log.Input("Infer", map[string]interface{}{
+		"inputLen":  len(input),
+		"inputMin":  inputMin,
+		"inputMax":  inputMax,
+		"inputMean": inputMean,
+		"levels":    net.Config.NumLevels,
+		"noise":     net.Config.NoiseLevel,
+		"adcBits":   net.Config.ADCBits,
+		"dacBits":   net.Config.DACBits,
+		"singleLyr": net.Config.SingleLayer,
+	})
+
 	net.mu.RLock()
 	defer net.mu.RUnlock()
 
 	// Validate input length
 	if len(input) != net.InputSize {
+		log.Error(fmt.Errorf("input length %d != expected %d", len(input), net.InputSize), "Infer")
 		return nil
 	}
 
@@ -105,6 +134,14 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	//
 	// With per-layer quantization, calculate energy for each layer separately
 	var totalEnergy float64
+
+	// ADC/DAC overhead energy
+	// DAC: 0.1 pJ per conversion (784 inputs)
+	// ADC: 0.5 pJ per conversion (128 hidden + 10 output = 138)
+	dacEnergy := float64(net.InputSize) * 0.1e-12     // 784 * 0.1 pJ = 78.4 pJ
+	adcEnergy := float64(net.HiddenSize+net.OutputSize) * 0.5e-12 // 138 * 0.5 pJ = 69 pJ
+	adcDacOverhead := (dacEnergy + adcEnergy) * 1e6   // Convert to μJ
+
 	if net.Config.SingleLayer {
 		// Single layer uses Layer1Levels (or NumLevels if not per-layer)
 		levels := net.Config.NumLevels
@@ -116,7 +153,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 			bitsPerCell = 1
 		}
 		energyPerMAC := 10e-15 * bitsPerCell
-		totalEnergy = float64(totalMACs) * energyPerMAC * 1e6
+		totalEnergy = float64(totalMACs)*energyPerMAC*1e6 + adcDacOverhead
 	} else {
 		// Two layers: calculate energy separately
 		macs1 := net.InputSize * net.HiddenSize
@@ -140,15 +177,27 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 		energy1 := float64(macs1) * 10e-15 * bits1 * 1e6 // Layer 1 energy in μJ
 		energy2 := float64(macs2) * 10e-15 * bits2 * 1e6 // Layer 2 energy in μJ
-		totalEnergy = energy1 + energy2
+		totalEnergy = energy1 + energy2 + adcDacOverhead
 	}
 	result.EnergyUsed = totalEnergy
+
+	log.Calculation("Infer", map[string]interface{}{
+		"fpPred":      result.FPPrediction,
+		"fpConf":      result.FPConfidence,
+		"cimPred":     result.CIMPrediction,
+		"cimConf":     result.CIMConfidence,
+		"agree":       result.Agree,
+		"disagreement": result.Disagreement,
+		"energy_uJ":   result.EnergyUsed,
+	}, result)
 
 	return result
 }
 
 // InferFPOnly runs only the FP path (for fast evaluation).
 func (net *DualModeNetwork) InferFPOnly(input []float64) (prediction int, confidence float64, probs []float64) {
+	log.Trace("InferFPOnly: start (inputLen=%d)", len(input))
+
 	net.mu.RLock()
 	defer net.mu.RUnlock()
 
@@ -158,12 +207,16 @@ func (net *DualModeNetwork) InferFPOnly(input []float64) (prediction int, confid
 	probs = softmax(output)
 	prediction = argmax(probs)
 	confidence = probs[prediction]
+
+	log.Trace("InferFPOnly: pred=%d, conf=%.4f", prediction, confidence)
 	return
 }
 
 // InferCIMOnly runs only the CIM path (for fast evaluation).
 // Uses quantized weights to simulate realistic hardware behavior.
 func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confidence float64, probs []float64) {
+	log.Trace("InferCIMOnly: start (inputLen=%d)", len(input))
+
 	net.mu.RLock()
 	defer net.mu.RUnlock()
 
@@ -184,6 +237,8 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 	if prediction >= 0 && prediction < len(probs) {
 		confidence = probs[prediction]
 	}
+
+	log.Trace("InferCIMOnly: pred=%d, conf=%.4f", prediction, confidence)
 	return
 }
 
@@ -194,8 +249,10 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 	if net.useGPU && len(input) >= 128 {
 		result, err := net.forwardFPGPU(input, weights, bias)
 		if err == nil {
+			log.Trace("forwardFP: GPU path used (input=%d, output=%d)", len(input), len(bias))
 			return result
 		}
+		log.Trace("forwardFP: GPU fallback to CPU (err=%v)", err)
 		// Fall back to CPU on GPU error (silent fallback)
 	}
 
@@ -210,15 +267,45 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 		output[i] = sum
 	}
 
+	// Log activation stats
+	if len(output) > 0 {
+		outMin, outMax, outMean := output[0], output[0], 0.0
+		for _, v := range output {
+			if v < outMin {
+				outMin = v
+			}
+			if v > outMax {
+				outMax = v
+			}
+			outMean += v
+		}
+		outMean /= float64(len(output))
+		log.Trace("forwardFP: CPU path (input=%d, output=%d, min=%.3f, max=%.3f, mean=%.3f)",
+			len(input), len(output), outMin, outMax, outMean)
+	}
+
 	return output
 }
 
-// forwardCIM performs CIM (Compute-in-Memory) matrix multiplication.
-// The math is identical to forwardFP - the difference is semantic:
+// forwardCIM performs CIM (Compute-in-Memory) matrix multiplication using conductance-based computation.
+//
+// Physical Model:
+// - Each quantized weight represents a discrete conductance level: G = Gmin + (Gmax-Gmin) * normalized_weight
+// - Using Gmin=10µS, Gmax=100µS (from docs)
+// - The math result is identical to forwardFP for inference, but models the physical process
+//
+// The difference from forwardFP is semantic:
 // - forwardFP is called with full-precision (float64) weights
 // - forwardCIM is called with quantized weights (30-level FeCIM representation)
+// - forwardCIM conceptually represents conductance-based analog computation
+//
 // This wrapper exists for code clarity to distinguish the two inference paths.
 func (net *DualModeNetwork) forwardCIM(input []float64, weights [][]float64, bias []float64) []float64 {
+	// The quantized weights are already mapped to discrete levels
+	// In hardware, these would be conductance levels G = Gmin + (Gmax-Gmin) * normalized_weight
+	// For computational efficiency, we keep normalized values but the mapping is:
+	// Gmin = 10e-6 S, Gmax = 100e-6 S
+	// The multiplication and accumulation is mathematically identical to FP
 	return net.forwardFP(input, weights, bias)
 }
 

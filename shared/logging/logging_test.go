@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,4 +94,497 @@ func TestLoggerWithFailedFileCreation(t *testing.T) {
 
 	// Close should not panic even with nil fields
 	logger.Close()
+}
+
+// TestCalculation tests the Calculation method for physics/math calculations
+func TestCalculation(t *testing.T) {
+	// Create a buffer to capture log output
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-calc")
+
+	// Set verbosity to TRACE to enable calculation logging
+	oldVerbosity := GetVerbosity()
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(oldVerbosity)
+
+	// Test calculation logging
+	inputs := map[string]interface{}{
+		"voltage": 3.3,
+		"current": 0.001,
+	}
+	result := 3.3 * 0.001 // 0.0033 W
+
+	logger.Calculation("calculatePower", inputs, result)
+
+	output := buf.String()
+	if !strings.Contains(output, "[TRACE]") {
+		t.Errorf("Calculation log should contain [TRACE], got: %s", output)
+	}
+	if !strings.Contains(output, "CALC:") {
+		t.Errorf("Calculation log should contain CALC:, got: %s", output)
+	}
+	if !strings.Contains(output, "calculatePower") {
+		t.Errorf("Calculation log should contain function name, got: %s", output)
+	}
+	if !strings.Contains(output, "voltage") {
+		t.Errorf("Calculation log should contain input param name, got: %s", output)
+	}
+}
+
+// TestCalculationVerbosityFiltering tests that Calculation respects verbosity levels
+func TestCalculationVerbosityFiltering(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-calc-filter")
+
+	// Set verbosity below TRACE - calculation should not log
+	SetVerbosity(VerbosityDebug)
+	defer SetVerbosity(VerbosityOff)
+
+	inputs := map[string]interface{}{"x": 10}
+	logger.Calculation("testFunc", inputs, 100)
+
+	output := buf.String()
+	if strings.Contains(output, "CALC:") {
+		t.Errorf("Calculation should not log at DEBUG verbosity, got: %s", output)
+	}
+}
+
+// TestInput tests the Input method for function entry logging
+func TestInput(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-input")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	params := map[string]interface{}{
+		"arraySize": 256,
+		"threshold": 0.5,
+		"enabled":   true,
+	}
+
+	logger.Input("processArray", params)
+
+	output := buf.String()
+	if !strings.Contains(output, "[TRACE]") {
+		t.Errorf("Input log should contain [TRACE], got: %s", output)
+	}
+	if !strings.Contains(output, "INPUT:") {
+		t.Errorf("Input log should contain INPUT:, got: %s", output)
+	}
+	if !strings.Contains(output, "processArray") {
+		t.Errorf("Input log should contain function name, got: %s", output)
+	}
+	if !strings.Contains(output, "arraySize") {
+		t.Errorf("Input log should contain param name, got: %s", output)
+	}
+}
+
+// TestInputVerbosityFiltering tests that Input respects verbosity levels
+func TestInputVerbosityFiltering(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-input-filter")
+
+	SetVerbosity(VerbosityInfo)
+	defer SetVerbosity(VerbosityOff)
+
+	params := map[string]interface{}{"x": 10}
+	logger.Input("testFunc", params)
+
+	output := buf.String()
+	if strings.Contains(output, "INPUT:") {
+		t.Errorf("Input should not log at INFO verbosity, got: %s", output)
+	}
+}
+
+// TestOutput tests the Output method for function return logging
+func TestOutput(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-output")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	result := struct {
+		Success bool
+		Value   float64
+	}{true, 42.5}
+
+	logger.Output("computeResult", result)
+
+	output := buf.String()
+	if !strings.Contains(output, "[TRACE]") {
+		t.Errorf("Output log should contain [TRACE], got: %s", output)
+	}
+	if !strings.Contains(output, "OUTPUT:") {
+		t.Errorf("Output log should contain OUTPUT:, got: %s", output)
+	}
+	if !strings.Contains(output, "computeResult") {
+		t.Errorf("Output log should contain function name, got: %s", output)
+	}
+	if !strings.Contains(output, "->") {
+		t.Errorf("Output log should contain arrow (->), got: %s", output)
+	}
+}
+
+// TestOutputVerbosityFiltering tests that Output respects verbosity levels
+func TestOutputVerbosityFiltering(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-output-filter")
+
+	SetVerbosity(VerbosityOff)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Output("testFunc", "result")
+
+	output := buf.String()
+	if strings.Contains(output, "OUTPUT:") {
+		t.Errorf("Output should not log at OFF verbosity, got: %s", output)
+	}
+}
+
+// TestError tests the Error method for error logging
+func TestError(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error")
+
+	// Error should log regardless of verbosity
+	SetVerbosity(VerbosityOff)
+	defer SetVerbosity(VerbosityOff)
+
+	err := os.ErrNotExist
+	logger.Error(err, "failed to load configuration")
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("Error log should contain [ERROR], got: %s", output)
+	}
+	if !strings.Contains(output, "failed to load configuration") {
+		t.Errorf("Error log should contain context, got: %s", output)
+	}
+	if !strings.Contains(output, "file does not exist") {
+		t.Errorf("Error log should contain error message, got: %s", output)
+	}
+}
+
+// TestErrorAlwaysLogs tests that Error logs regardless of verbosity
+func TestErrorAlwaysLogs(t *testing.T) {
+	verbosityLevels := []VerbosityLevel{VerbosityOff, VerbosityInfo, VerbosityDebug, VerbosityTrace}
+
+	for _, level := range verbosityLevels {
+		t.Run(VerbosityString(level), func(t *testing.T) {
+			var buf strings.Builder
+			logger := createTestLogger(&buf, "test-error-always")
+
+			SetVerbosity(level)
+			defer SetVerbosity(VerbosityOff)
+
+			err := os.ErrPermission
+			logger.Error(err, "access denied")
+
+			output := buf.String()
+			if !strings.Contains(output, "[ERROR]") {
+				t.Errorf("Error should log at %s verbosity, got: %s", VerbosityString(level), output)
+			}
+		})
+	}
+}
+
+// TestErrorContext tests the ErrorContext method with additional details
+func TestErrorContext(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-ctx")
+
+	SetVerbosity(VerbosityOff) // Should still log
+	defer SetVerbosity(VerbosityOff)
+
+	err := os.ErrNotExist
+	details := map[string]interface{}{
+		"filename": "config.json",
+		"attempts": 3,
+	}
+
+	logger.ErrorContext("LoadConfig", err, details)
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("ErrorContext log should contain [ERROR], got: %s", output)
+	}
+	if !strings.Contains(output, "LoadConfig") {
+		t.Errorf("ErrorContext log should contain operation name, got: %s", output)
+	}
+	if !strings.Contains(output, "filename") {
+		t.Errorf("ErrorContext log should contain detail key, got: %s", output)
+	}
+	if !strings.Contains(output, "config.json") {
+		t.Errorf("ErrorContext log should contain detail value, got: %s", output)
+	}
+}
+
+// TestErrorContextAlwaysLogs tests that ErrorContext logs regardless of verbosity
+func TestErrorContextAlwaysLogs(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-ctx-always")
+
+	SetVerbosity(VerbosityOff)
+	defer SetVerbosity(VerbosityOff)
+
+	err := os.ErrClosed
+	details := map[string]interface{}{"socket": "tcp:8080"}
+
+	logger.ErrorContext("ConnectSocket", err, details)
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("ErrorContext should log at OFF verbosity, got: %s", output)
+	}
+}
+
+// TestErrorWithNilError tests Error handles nil error gracefully
+func TestErrorWithNilError(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-nil")
+
+	// Should not panic with nil error
+	logger.Error(nil, "some context")
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("Error should still log with nil error, got: %s", output)
+	}
+	if !strings.Contains(output, "nil") || !strings.Contains(output, "<nil>") {
+		// Either "nil" or "<nil>" is acceptable
+		if !strings.Contains(output, "nil") {
+			t.Errorf("Error should indicate nil error, got: %s", output)
+		}
+	}
+}
+
+// TestErrorContextWithNilDetails tests ErrorContext handles nil details
+func TestErrorContextWithNilDetails(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-ctx-nil")
+
+	err := os.ErrNotExist
+	// Should not panic with nil details
+	logger.ErrorContext("Operation", err, nil)
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("ErrorContext should log with nil details, got: %s", output)
+	}
+}
+
+// TestGlobalCalculation tests the global Calculation convenience function
+func TestGlobalCalculation(t *testing.T) {
+	var buf strings.Builder
+	oldLogger := defaultLogger
+	defaultLogger = createTestLogger(&buf, "global-calc")
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	inputs := map[string]interface{}{"a": 1, "b": 2}
+	GlobalCalculation("add", inputs, 3)
+
+	output := buf.String()
+	if !strings.Contains(output, "CALC:") {
+		t.Errorf("GlobalCalculation should log CALC:, got: %s", output)
+	}
+}
+
+// TestGlobalInput tests the global Input convenience function
+func TestGlobalInput(t *testing.T) {
+	var buf strings.Builder
+	oldLogger := defaultLogger
+	defaultLogger = createTestLogger(&buf, "global-input")
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	params := map[string]interface{}{"size": 100}
+	GlobalInput("processData", params)
+
+	output := buf.String()
+	if !strings.Contains(output, "INPUT:") {
+		t.Errorf("GlobalInput should log INPUT:, got: %s", output)
+	}
+}
+
+// TestGlobalOutput tests the global Output convenience function
+func TestGlobalOutput(t *testing.T) {
+	var buf strings.Builder
+	oldLogger := defaultLogger
+	defaultLogger = createTestLogger(&buf, "global-output")
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	GlobalOutput("computeSum", 42)
+
+	output := buf.String()
+	if !strings.Contains(output, "OUTPUT:") {
+		t.Errorf("GlobalOutput should log OUTPUT:, got: %s", output)
+	}
+}
+
+// TestCalculationEmptyInputs tests Calculation with empty inputs map
+func TestCalculationEmptyInputs(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-calc-empty")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Calculation("noArgs", map[string]interface{}{}, "result")
+
+	output := buf.String()
+	if !strings.Contains(output, "CALC:") {
+		t.Errorf("Calculation should log with empty inputs, got: %s", output)
+	}
+	if !strings.Contains(output, "noArgs") {
+		t.Errorf("Calculation should contain function name, got: %s", output)
+	}
+}
+
+// TestInputEmptyParams tests Input with empty params map
+func TestInputEmptyParams(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-input-empty")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Input("noParams", map[string]interface{}{})
+
+	output := buf.String()
+	if !strings.Contains(output, "INPUT:") {
+		t.Errorf("Input should log with empty params, got: %s", output)
+	}
+}
+
+// TestOutputNilResult tests Output with nil result
+func TestOutputNilResult(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-output-nil")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	logger.Output("returnsNil", nil)
+
+	output := buf.String()
+	if !strings.Contains(output, "OUTPUT:") {
+		t.Errorf("Output should log with nil result, got: %s", output)
+	}
+}
+
+// TestCalculationWithComplexTypes tests Calculation with slices and nested structures
+func TestCalculationWithComplexTypes(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-calc-complex")
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	inputs := map[string]interface{}{
+		"weights": []float64{0.1, 0.2, 0.3},
+		"config": map[string]int{
+			"layers": 3,
+		},
+	}
+	result := []float64{0.5, 0.6, 0.7}
+
+	logger.Calculation("forwardPass", inputs, result)
+
+	output := buf.String()
+	if !strings.Contains(output, "CALC:") {
+		t.Errorf("Calculation should handle complex types, got: %s", output)
+	}
+}
+
+// createTestLogger creates a logger that writes to the provided buffer
+func createTestLogger(buf *strings.Builder, name string) *Logger {
+	return &Logger{
+		Logger:   log.New(buf, "["+name+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
+		logFile:  nil,
+		demoName: name,
+	}
+}
+
+// TestGlobalCalculationFallback tests GlobalCalculation when defaultLogger is nil
+func TestGlobalCalculationFallback(t *testing.T) {
+	oldLogger := defaultLogger
+	defaultLogger = nil
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	// Should not panic when defaultLogger is nil
+	GlobalCalculation("testFunc", map[string]interface{}{"x": 1}, 2)
+}
+
+// TestGlobalInputFallback tests GlobalInput when defaultLogger is nil
+func TestGlobalInputFallback(t *testing.T) {
+	oldLogger := defaultLogger
+	defaultLogger = nil
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	// Should not panic when defaultLogger is nil
+	GlobalInput("testFunc", map[string]interface{}{"param": "value"})
+}
+
+// TestGlobalOutputFallback tests GlobalOutput when defaultLogger is nil
+func TestGlobalOutputFallback(t *testing.T) {
+	oldLogger := defaultLogger
+	defaultLogger = nil
+	defer func() { defaultLogger = oldLogger }()
+
+	SetVerbosity(VerbosityTrace)
+	defer SetVerbosity(VerbosityOff)
+
+	// Should not panic when defaultLogger is nil
+	GlobalOutput("testFunc", "result")
+}
+
+// TestErrorContextWithEmptyDetails tests ErrorContext with empty (not nil) details
+func TestErrorContextWithEmptyDetails(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-ctx-empty")
+
+	err := os.ErrNotExist
+	logger.ErrorContext("Operation", err, map[string]interface{}{})
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("ErrorContext should log with empty details, got: %s", output)
+	}
+	// Should not contain parentheses for empty details
+	if strings.Contains(output, "()") {
+		t.Errorf("ErrorContext should not have empty parens, got: %s", output)
+	}
+}
+
+// TestErrorContextWithNilError tests ErrorContext handles nil error
+func TestErrorContextWithNilError(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "test-error-ctx-nil-err")
+
+	details := map[string]interface{}{"key": "value"}
+	logger.ErrorContext("Operation", nil, details)
+
+	output := buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("ErrorContext should log with nil error, got: %s", output)
+	}
+	if !strings.Contains(output, "<nil>") {
+		t.Errorf("ErrorContext should show <nil> for nil error, got: %s", output)
+	}
 }

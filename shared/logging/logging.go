@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -189,6 +190,72 @@ func (l *Logger) EntryChange(entryName string, text string) {
 	}
 }
 
+// Calculation logs a physics/math calculation at TRACE level
+// Format: [TRACE] CALC: funcName(param1=value1, param2=value2) = result
+func (l *Logger) Calculation(funcName string, inputs map[string]interface{}, result interface{}) {
+	if IsVerbose(VerbosityTrace) {
+		l.Printf("[TRACE] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+	}
+}
+
+// Input logs function entry with parameters at TRACE level
+// Format: [TRACE] INPUT: funcName(param1=value1, param2=value2)
+func (l *Logger) Input(funcName string, params map[string]interface{}) {
+	if IsVerbose(VerbosityTrace) {
+		l.Printf("[TRACE] INPUT: %s(%s)", funcName, formatParams(params))
+	}
+}
+
+// Output logs function return value at TRACE level
+// Format: [TRACE] OUTPUT: funcName -> result
+func (l *Logger) Output(funcName string, result interface{}) {
+	if IsVerbose(VerbosityTrace) {
+		l.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
+	}
+}
+
+// Error logs an error with context - always logs regardless of verbosity
+// Format: [ERROR] context: error message
+func (l *Logger) Error(err error, context string) {
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
+	} else {
+		errMsg = "<nil>"
+	}
+	l.Printf("[ERROR] %s: %s", context, errMsg)
+}
+
+// ErrorContext logs an error with operation context and additional details
+// Format: [ERROR] operation: error message (detail1=val1, detail2=val2)
+func (l *Logger) ErrorContext(operation string, err error, details map[string]interface{}) {
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
+	} else {
+		errMsg = "<nil>"
+	}
+
+	if len(details) > 0 {
+		l.Printf("[ERROR] %s: %s (%s)", operation, errMsg, formatParams(details))
+	} else {
+		l.Printf("[ERROR] %s: %s", operation, errMsg)
+	}
+}
+
+// formatParams formats a map of parameters as "key1=value1, key2=value2"
+func formatParams(params map[string]interface{}) string {
+	if len(params) == 0 {
+		return ""
+	}
+
+	parts := make([]string, 0, len(params))
+	for k, v := range params {
+		parts = append(parts, fmt.Sprintf("%s=%v", k, v))
+	}
+	return strings.Join(parts, ", ")
+}
+
 // Global singleton logger
 var (
 	defaultLogger *Logger
@@ -279,6 +346,33 @@ func GlobalError(format string, args ...interface{}) {
 		defaultLogger.Printf("[ERROR] "+format, args...)
 	} else {
 		log.Printf("[ERROR] "+format, args...)
+	}
+}
+
+// GlobalCalculation logs a calculation at TRACE level using the default logger
+func GlobalCalculation(funcName string, inputs map[string]interface{}, result interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Calculation(funcName, inputs, result)
+	} else if IsVerbose(VerbosityTrace) {
+		log.Printf("[TRACE] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+	}
+}
+
+// GlobalInput logs function entry at TRACE level using the default logger
+func GlobalInput(funcName string, params map[string]interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Input(funcName, params)
+	} else if IsVerbose(VerbosityTrace) {
+		log.Printf("[TRACE] INPUT: %s(%s)", funcName, formatParams(params))
+	}
+}
+
+// GlobalOutput logs function return at TRACE level using the default logger
+func GlobalOutput(funcName string, result interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Output(funcName, result)
+	} else if IsVerbose(VerbosityTrace) {
+		log.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
 	}
 }
 

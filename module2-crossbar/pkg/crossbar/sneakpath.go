@@ -31,6 +31,11 @@ type SneakPath struct {
 
 // NewSneakPathAnalyzer creates a sneak path analyzer.
 func NewSneakPathAnalyzer(rows, cols int) *SneakPathAnalyzer {
+	log.Input("NewSneakPathAnalyzer", map[string]interface{}{
+		"rows": rows,
+		"cols": cols,
+	})
+
 	conductances := make([][]float64, rows)
 	for i := range conductances {
 		conductances[i] = make([]float64, cols)
@@ -39,12 +44,15 @@ func NewSneakPathAnalyzer(rows, cols int) *SneakPathAnalyzer {
 		}
 	}
 
-	return &SneakPathAnalyzer{
+	analyzer := &SneakPathAnalyzer{
 		Rows:          rows,
 		Cols:          cols,
 		Conductances:  conductances,
 		SneakCurrents: make([][]float64, rows),
 	}
+
+	log.Output("NewSneakPathAnalyzer", analyzer)
+	return analyzer
 }
 
 // SetConductance sets conductance for a specific cell.
@@ -70,6 +78,12 @@ func (sp *SneakPathAnalyzer) SetConductancePattern(weights [][]int, levels int) 
 
 // AnalyzeTarget analyzes sneak paths for a target cell.
 func (sp *SneakPathAnalyzer) AnalyzeTarget(targetRow, targetCol int, voltage float64) {
+	log.Input("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
+		"targetRow": targetRow,
+		"targetCol": targetCol,
+		"voltage":   voltage,
+	})
+
 	sp.TargetRow = targetRow
 	sp.TargetCol = targetCol
 
@@ -137,6 +151,13 @@ func (sp *SneakPathAnalyzer) AnalyzeTarget(targetRow, targetCol int, voltage flo
 	} else {
 		sp.TotalSneakRatio = math.Inf(1)
 	}
+
+	log.Calculation("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
+		"targetCurrent":    targetCurrent,
+		"totalSneakCurrent": totalSneakCurrent,
+		"sneakRatio":       sp.TotalSneakRatio,
+		"numPaths":         len(sp.SneakPaths),
+	}, nil)
 }
 
 // SneakPathStats contains statistics about sneak paths.

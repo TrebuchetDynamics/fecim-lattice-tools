@@ -1029,14 +1029,87 @@ func (a *App) simulationLoop() {
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
 						success := abs(levelError) <= 1 // Strict: ±1 level tolerance for verify
 
-						// WRITE-VERIFY-RETRY LOOP
-						// If not successful and retries remaining, loop back to RESET
-						if !success && a.wrdRetryCount < a.wrdMaxRetries {
-							a.wrdRetryCount++
-							log.Printf("WRD VERIFY FAIL: L_read=%d L_target=%d err=%+d | RETRY %d/%d",
-								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount, a.wrdMaxRetries)
+						// WRITE-VERIFY-RETRY LOOP (INFINITE UNTIL SUCCESS)
+						// MUST hit the target - no giving up!
+						if success {
+							// SUCCESS: Proceed to DISPLAY phase
+							a.wrdPhase = 5
+							a.wrdPhaseTimer = 0
 
-							// Update calibration BEFORE retry
+							// Track metrics - 100% success rate guaranteed
+							a.wrdTotalWrites++
+							a.wrdSuccessWrites++
+							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
+
+							if a.wrdRetryCount > 0 {
+								log.Printf("WRD PHASE 4→5: TARGET HIT after %d retries | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
+									a.wrdRetryCount, a.wrdReadLevel, a.wrdTargetLevel,
+									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+							} else {
+								log.Printf("WRD PHASE 4→5: TARGET HIT (1st try) | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
+									a.wrdReadLevel, a.wrdTargetLevel,
+									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+							}
+
+							// Reset retry count for next target
+							a.wrdRetryCount = 0
+
+							// Add accumulated energy for this cycle
+							a.wrdTotalEnergyfJ += a.wrdCycleEnergy
+							a.wrdCycleEnergy = 0
+
+							// Log this cycle for debugging
+							if a.wrdDebugLog != nil {
+								cycle := WriteReadCycle{
+									CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
+									TargetLevel: a.wrdTargetLevel,
+									StartLevel:  a.wrdStartLevel,
+									ReadLevel:   a.wrdReadLevel,
+									Success:     true, // Always true now - we only get here on success
+									Phases: []WriteReadPhase{
+										{
+											Phase:      "RESET",
+											EFieldPeak: a.wrdSaturateE / 1e8,
+											PStart:     a.wrdResetStartP,
+											PEnd:       a.wrdResetEndP,
+											LevelStart: a.wrdStartLevel,
+											LevelEnd:   a.wrdResetEndLvl,
+										},
+										{
+											Phase:      "WRITE",
+											EFieldPeak: a.wrdWriteE / 1e8,
+											PStart:     a.wrdWriteStartP,
+											PEnd:       a.wrdWriteEndP,
+											LevelStart: a.wrdResetEndLvl,
+											LevelEnd:   a.wrdWriteEndLvl,
+										},
+										{
+											Phase:      "READ",
+											EFieldPeak: readE / 1e8,
+											PStart:     a.wrdReadStartP,
+											PEnd:       a.wrdReadStartP,
+											LevelStart: a.wrdWriteEndLvl,
+											LevelEnd:   a.wrdReadLevel,
+										},
+									},
+								}
+								a.wrdDebugLog.Cycles = append(a.wrdDebugLog.Cycles, cycle)
+
+								if len(a.wrdDebugLog.Cycles) > 100 {
+									a.wrdDebugLog.Cycles = a.wrdDebugLog.Cycles[len(a.wrdDebugLog.Cycles)-100:]
+								}
+
+								if len(a.wrdDebugLog.Cycles)%5 == 0 {
+									go a.saveDebugLog()
+								}
+							}
+						} else {
+							// FAILED: Update calibration and RETRY (NO LIMIT - must hit target!)
+							a.wrdRetryCount++
+							log.Printf("WRD VERIFY MISS: L_read=%d L_target=%d err=%+d | RETRY #%d (will keep trying)",
+								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+
+							// Update calibration BEFORE retry to converge on correct field
 							targetIdx := a.wrdTargetLevel - 1
 							if a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
 								midLevel := a.numLevels / 2
@@ -1048,102 +1121,11 @@ func (a *App) simulationLoop() {
 								}
 							}
 
-							// Loop back to RESET with SAME target
+							// Loop back to RESET with SAME target - never give up!
 							a.wrdResetStartP = a.polarization * 100
 							a.wrdPhase = 0
 							a.wrdPhaseTimer = 0
-							// Don't increment wrdTotalWrites - this is a retry, not a new write
-						} else {
-							// Either success OR max retries reached - proceed to DISPLAY
-							a.wrdPhase = 5
-							a.wrdPhaseTimer = 0
-
-							// Track Dr. Tour demo metrics (only count final result)
-							a.wrdTotalWrites++
-							finalSuccess := abs(levelError) <= 2 // Final tolerance: ±2 levels
-							if finalSuccess {
-								a.wrdSuccessWrites++
-							}
-							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
-
-							if a.wrdRetryCount > 0 {
-								log.Printf("WRD PHASE 4→5: VERIFY %s after %d retries | L_read=%d L_target=%d err=%+d | rate=%.1f%% (%d/%d)",
-									map[bool]string{true: "OK", false: "FAIL"}[finalSuccess],
-									a.wrdRetryCount, a.wrdReadLevel, a.wrdTargetLevel, levelError,
-									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
-							} else {
-								log.Printf("WRD PHASE 4→5: VERIFY OK (1st try) | L_read=%d L_target=%d err=%+d | rate=%.1f%% (%d/%d)",
-									a.wrdReadLevel, a.wrdTargetLevel, levelError,
-									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
-							}
-
-							// Update calibration if there was still error
-							targetIdx := a.wrdTargetLevel - 1
-							if levelError != 0 && a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
-								midLevel := a.numLevels / 2
-								goingUp := a.wrdTargetLevel > midLevel
-								if goingUp {
-									a.updateCalibrationUp(targetIdx, levelError, Ec)
-								} else {
-									a.updateCalibrationDown(targetIdx, levelError, Ec)
-								}
-							}
-
-							// Reset retry count for next target
-							a.wrdRetryCount = 0
-
-							// Add accumulated energy for this cycle (calculated from E·dP integration)
-							a.wrdTotalEnergyfJ += a.wrdCycleEnergy
-							a.wrdCycleEnergy = 0 // Reset for next cycle
-
-							// Log this cycle for debugging with complete phase data
-							if a.wrdDebugLog != nil {
-								cycle := WriteReadCycle{
-									CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
-									TargetLevel: a.wrdTargetLevel,
-								StartLevel:  a.wrdStartLevel,
-								ReadLevel:   a.wrdReadLevel,
-								Success:     abs(a.wrdReadLevel-a.wrdTargetLevel) <= 2,
-								Phases: []WriteReadPhase{
-									{
-										Phase:      "RESET",
-										EFieldPeak: a.wrdSaturateE / 1e8,
-										PStart:     a.wrdResetStartP,
-										PEnd:       a.wrdResetEndP,
-										LevelStart: a.wrdStartLevel,
-										LevelEnd:   a.wrdResetEndLvl,
-									},
-									{
-										Phase:      "WRITE",
-										EFieldPeak: a.wrdWriteE / 1e8,
-										PStart:     a.wrdWriteStartP,
-										PEnd:       a.wrdWriteEndP,
-										LevelStart: a.wrdResetEndLvl,
-										LevelEnd:   a.wrdWriteEndLvl,
-									},
-									{
-										Phase:      "READ",
-										EFieldPeak: readE / 1e8,
-										PStart:     a.wrdReadStartP,
-										PEnd:       a.wrdReadStartP, // Non-destructive read - P doesn't change
-										LevelStart: a.wrdWriteEndLvl,
-										LevelEnd:   a.wrdReadLevel,
-									},
-								},
-							}
-							a.wrdDebugLog.Cycles = append(a.wrdDebugLog.Cycles, cycle)
-
-							// Cap debug log to 100 cycles to prevent memory leak
-							if len(a.wrdDebugLog.Cycles) > 100 {
-								a.wrdDebugLog.Cycles = a.wrdDebugLog.Cycles[len(a.wrdDebugLog.Cycles)-100:]
-							}
-
-							// Save after every 5 cycles
-							if len(a.wrdDebugLog.Cycles)%5 == 0 {
-								go a.saveDebugLog()
-							}
 						}
-						} // Close else block (success/max retries path)
 					}
 
 				case 5: // DISPLAY phase - return to zero, show result

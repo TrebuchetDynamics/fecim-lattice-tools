@@ -99,7 +99,7 @@ func TestADCResolution(t *testing.T) {
 	}
 }
 
-func TestDACLevels(t *testing.T) {
+func TestDefaultDACLevels(t *testing.T) {
 	dac := DefaultDAC()
 	if dac.Levels() != 32 {
 		t.Errorf("DAC Levels = %d, want 32", dac.Levels())

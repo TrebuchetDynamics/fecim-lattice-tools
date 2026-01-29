@@ -3,6 +3,7 @@ package core
 // RequantizeWeights re-quantizes the FP weights to the current number of levels.
 // Call this after changing Config.NumLevels.
 func (net *DualModeNetwork) RequantizeWeights() {
+	log.Debug("RequantizeWeights called")
 	net.mu.Lock()
 	defer net.mu.Unlock()
 	net.requantizeWeightsLocked()
@@ -22,6 +23,9 @@ func (net *DualModeNetwork) requantizeWeightsLocked() {
 		l1Levels = net.Config.NumLevels
 		l2Levels = net.Config.NumLevels
 	}
+
+	log.Trace("requantizeWeightsLocked: L1=%d, L2=%d, perLayer=%v",
+		l1Levels, l2Levels, net.Config.PerLayerQuant)
 
 	// Clamp levels to valid range [2, FeCIMLevels]
 	if l1Levels < 2 {

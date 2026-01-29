@@ -27,7 +27,7 @@ const (
 
 // DefaultADC returns an ADC configured for FeCIM read operations.
 func DefaultADC() *ADC {
-	return &ADC{
+	adc := &ADC{
 		Bits:           5,    // 32 levels, we use 30
 		VrefHigh:       1.0,  // Max sense voltage
 		VrefLow:        0.0,  // Min sense voltage
@@ -36,6 +36,16 @@ func DefaultADC() *ADC {
 		ConversionTime: 50,   // 50 ns for SAR
 		Type:           ADCTypeSAR,
 	}
+	log.Calculation("DefaultADC", map[string]interface{}{
+		"bits":            adc.Bits,
+		"vref_high":       adc.VrefHigh,
+		"vref_low":        adc.VrefLow,
+		"inl":             adc.INL,
+		"dnl":             adc.DNL,
+		"conversion_time": adc.ConversionTime,
+		"type":            adc.Type,
+	}, adc)
+	return adc
 }
 
 // Levels returns the number of discrete output levels.
@@ -45,6 +55,13 @@ func (a *ADC) Levels() int {
 
 // Convert performs ADC conversion from voltage to digital level.
 func (a *ADC) Convert(voltage float64) int {
+	log.Input("ADC.Convert", map[string]interface{}{
+		"voltage":   voltage,
+		"bits":      a.Bits,
+		"vref_high": a.VrefHigh,
+		"vref_low":  a.VrefLow,
+	})
+
 	// Clamp input
 	if voltage < a.VrefLow {
 		voltage = a.VrefLow
@@ -60,6 +77,10 @@ func (a *ADC) Convert(voltage float64) int {
 	if level >= a.Levels() {
 		level = a.Levels() - 1
 	}
+
+	log.Calculation("ADC.Convert", map[string]interface{}{
+		"voltage": voltage,
+	}, level)
 
 	return level
 }
@@ -87,9 +108,21 @@ func (a *ADC) Resolution() float64 {
 
 // ENOB returns the Effective Number of Bits considering nonlinearity.
 func (a *ADC) ENOB() float64 {
+	log.Input("ADC.ENOB", map[string]interface{}{
+		"bits": a.Bits,
+		"inl":  a.INL,
+		"dnl":  a.DNL,
+	})
+
 	// ENOB = Bits - log2(1 + INL^2 + DNL^2)^0.5
 	noiseFactorSq := 1.0 + a.INL*a.INL + a.DNL*a.DNL
 	enob := float64(a.Bits) - math.Log2(math.Sqrt(noiseFactorSq))
+
+	log.Calculation("ADC.ENOB", map[string]interface{}{
+		"bits":           a.Bits,
+		"noise_factor_sq": noiseFactorSq,
+	}, enob)
+
 	return enob
 }
 

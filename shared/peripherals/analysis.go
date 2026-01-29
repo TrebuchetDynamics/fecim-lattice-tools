@@ -18,6 +18,12 @@ type INLDNLAnalysis struct {
 
 // AnalyzeINLDNL computes detailed INL/DNL for a DAC.
 func (d *DAC) AnalyzeINLDNL() *INLDNLAnalysis {
+	log.Input("DAC.AnalyzeINLDNL", map[string]interface{}{
+		"bits": d.Bits,
+		"inl":  d.INL,
+		"dnl":  d.DNL,
+	})
+
 	levels := d.Levels()
 	if levels > 32 {
 		levels = 32 // Limit for FeCIM 30 levels
@@ -59,11 +65,24 @@ func (d *DAC) AnalyzeINLDNL() *INLDNLAnalysis {
 		}
 	}
 
+	log.Calculation("DAC.AnalyzeINLDNL", map[string]interface{}{
+		"levels":     levels,
+		"max_inl":    analysis.MaxINL,
+		"max_dnl":    analysis.MaxDNL,
+		"worst_code": analysis.WorstCode,
+	}, analysis)
+
 	return analysis
 }
 
 // AnalyzeINLDNL computes detailed INL/DNL for an ADC.
 func (a *ADC) AnalyzeINLDNL() *INLDNLAnalysis {
+	log.Input("ADC.AnalyzeINLDNL", map[string]interface{}{
+		"bits": a.Bits,
+		"inl":  a.INL,
+		"dnl":  a.DNL,
+	})
+
 	levels := a.Levels()
 	if levels > 32 {
 		levels = 32
@@ -108,6 +127,13 @@ func (a *ADC) AnalyzeINLDNL() *INLDNLAnalysis {
 		}
 	}
 
+	log.Calculation("ADC.AnalyzeINLDNL", map[string]interface{}{
+		"levels":     levels,
+		"max_inl":    analysis.MaxINL,
+		"max_dnl":    analysis.MaxDNL,
+		"worst_code": analysis.WorstCode,
+	}, analysis)
+
 	return analysis
 }
 
@@ -134,6 +160,11 @@ type TimingAnalysis struct {
 
 // AnalyzeTiming computes timing for a complete peripheral system.
 func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalysis {
+	log.Input("AnalyzeTiming", map[string]interface{}{
+		"dac_settle_time": dac.SettleTime,
+		"adc_conv_time":   adc.ConversionTime,
+	})
+
 	t := &TimingAnalysis{
 		DACSettle:  dac.SettleTime * 1e-9,
 		PumpRise:   pump.RiseTime(),
@@ -152,6 +183,13 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 
 	// Throughput (assuming parallel columns)
 	t.MaxThroughput = 1.0 / t.CycleTime
+
+	log.Calculation("AnalyzeTiming", map[string]interface{}{
+		"write_time":     t.WriteTime,
+		"read_time":      t.ReadTime,
+		"cycle_time":     t.CycleTime,
+		"max_throughput": t.MaxThroughput,
+	}, t)
 
 	return t
 }
@@ -180,6 +218,11 @@ type PowerBreakdown struct {
 
 // AnalyzePower computes power breakdown for peripheral system.
 func AnalyzePower(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump, timing *TimingAnalysis) *PowerBreakdown {
+	log.Input("AnalyzePower", map[string]interface{}{
+		"cycle_time": timing.CycleTime,
+		"read_time":  timing.ReadTime,
+	})
+
 	p := &PowerBreakdown{}
 
 	// Energy per operation
@@ -207,6 +250,15 @@ func AnalyzePower(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump, timing *Timing
 		p.PumpFraction = p.PumpEnergy / p.TotalEnergy
 	}
 
+	log.Calculation("AnalyzePower", map[string]interface{}{
+		"dac_energy":   p.DACEnergy,
+		"adc_energy":   p.ADCEnergy,
+		"tia_energy":   p.TIAEnergy,
+		"pump_energy":  p.PumpEnergy,
+		"total_energy": p.TotalEnergy,
+		"total_power":  p.TotalPower,
+	}, p)
+
 	return p
 }
 
@@ -222,6 +274,13 @@ type TransferFunction struct {
 
 // ComputeTransferFunction traces signals through the full peripheral chain.
 func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TransferFunction {
+	log.Input("ComputeTransferFunction", map[string]interface{}{
+		"dac_bits":  dac.Bits,
+		"adc_bits":  adc.Bits,
+		"tia_gain":  tia.Gain,
+		"pump_eff":  pump.Efficiency,
+	})
+
 	tf := &TransferFunction{
 		InputLevels:  make([]int, 30),
 		DACVoltages:  make([]float64, 30),
@@ -260,5 +319,24 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 		tf.Errors[i] = tf.ADCLevels[i] - i
 	}
 
+	log.Calculation("ComputeTransferFunction", map[string]interface{}{
+		"levels":     30,
+		"max_error":  maxAbsError(tf.Errors),
+	}, tf)
+
 	return tf
+}
+
+// maxAbsError returns the maximum absolute error value.
+func maxAbsError(errors []int) int {
+	maxErr := 0
+	for _, e := range errors {
+		if e < 0 {
+			e = -e
+		}
+		if e > maxErr {
+			maxErr = e
+		}
+	}
+	return maxErr
 }

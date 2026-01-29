@@ -36,9 +36,9 @@ Instead of moving data to the brain, FeCIM does the math *inside* the storage. I
 Because we aren't "running back and forth" anymore, we save a **HUGE** amount of energy. 
 
 > **📏 The "Honesty Check":**
-> *   **The Big Claim**: Dr. external research group (the scientist who started this) says it could be **10,000,000 times** more efficient than the memory in your USB stick! 🚀
-> *   **The Measured Science**: Other big companies like Samsung have measured it at **25 to 100 times** better. 
-> *   **The Bottom Line**: Even the smaller number is like turning a car that gets 20 miles per gallon into one that gets 2,000 miles per gallon! 🚗✨
+> *   **The Peer-Reviewed Science**: Big companies like Samsung have measured it at **25 to 100 times** more efficient than regular memory (NAND flash). For specialized AI tasks like running large language models, researchers have measured up to **70,000 times** better efficiency!
+> *   **The Bottom Line**: Even the smaller number (25×) is like turning a car that gets 20 miles per gallon into one that gets 500 miles per gallon! 🚗✨
+> *   **Note**: Some earlier promotional claims suggested even higher numbers, but peer-reviewed science is what counts. See `HONESTY_AUDIT.md` for full details.
 
 ---
 

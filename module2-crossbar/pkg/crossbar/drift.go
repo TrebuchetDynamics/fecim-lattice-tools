@@ -83,6 +83,12 @@ type DriftSnapshot struct {
 
 // NewDriftSimulator creates a drift simulator.
 func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
+	log.Input("NewDriftSimulator", map[string]interface{}{
+		"rows":   rows,
+		"cols":   cols,
+		"levels": levels,
+	})
+
 	conductances := make([][]float64, rows)
 	initialConds := make([][]float64, rows)
 
@@ -101,7 +107,7 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 		}
 	}
 
-	return &DriftSimulator{
+	sim := &DriftSimulator{
 		Rows:         rows,
 		Cols:         cols,
 		Conductances: conductances,
@@ -121,6 +127,9 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 		Time:         0,
 		DriftHistory: make([]DriftSnapshot, 0),
 	}
+
+	log.Output("NewDriftSimulator", sim)
+	return sim
 }
 
 // NewDriftSimulatorWithModel creates a drift simulator with specified coefficient source.
@@ -225,6 +234,13 @@ func (d *DriftSimulator) SetWeightMatrix(weights [][]int) {
 
 // SimulateTimeStep advances simulation by dt seconds.
 func (d *DriftSimulator) SimulateTimeStep(dt float64) {
+	log.Calculation("SimulateTimeStep", map[string]interface{}{
+		"dt":          dt,
+		"currentTime": d.Time,
+		"driftCoeff":  d.DriftCoeff,
+		"temperature": d.Temperature,
+	}, nil)
+
 	d.Time += dt
 
 	// Thermal activation factor
@@ -233,6 +249,7 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 	eV := 1.6e-19  // eV to J
 	thermalFactor := math.Exp(-Ea * eV / (kB * d.Temperature))
 
+	var maxDrift float64
 	for i := 0; i < d.Rows; i++ {
 		for j := 0; j < d.Cols; j++ {
 			// Drift model: G(t) = G0 * (t/t0)^v
@@ -257,9 +274,18 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 				if d.Conductances[i][j] > d.GMax {
 					d.Conductances[i][j] = d.GMax
 				}
+
+				if math.Abs(drift) > maxDrift {
+					maxDrift = math.Abs(drift)
+				}
 			}
 		}
 	}
+
+	log.Calculation("SimulateTimeStep", map[string]interface{}{
+		"newTime":  d.Time,
+		"maxDrift": maxDrift,
+	}, nil)
 }
 
 // SimulateRead simulates read disturb on a cell.

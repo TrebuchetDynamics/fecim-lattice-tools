@@ -7,15 +7,28 @@ import (
 	"os"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logCSV = logging.NewLogger("eda-export-csv")
 
 // ExportCSV writes the array design to a CSV file.
 // Works with all operation modes (Storage, Memory, Compute).
 // For compute mode with weights, includes initial_weight column.
 // For storage/memory modes, initial_weight is empty.
 func ExportCSV(design *compiler.ArrayDesign, path string) error {
+	logCSV.Input("ExportCSV", map[string]interface{}{
+		"path":        path,
+		"mode":        design.Config.Mode,
+		"totalCells":  design.Stats.TotalCells,
+		"activeCells": design.Stats.ActiveCells,
+	})
+
 	file, err := os.Create(path)
 	if err != nil {
+		logCSV.ErrorContext("ExportCSV", err, map[string]interface{}{
+			"path": path,
+		})
 		return err
 	}
 	defer file.Close()
@@ -39,6 +52,10 @@ func ExportCSV(design *compiler.ArrayDesign, path string) error {
 		header = []string{"row", "col", "level", "conductance_uS", "resistance_ohm", "program_V"}
 	}
 	if err := writer.Write(header); err != nil {
+		logCSV.ErrorContext("ExportCSV", err, map[string]interface{}{
+			"operation": "write header",
+			"path":      path,
+		})
 		return err
 	}
 
@@ -66,9 +83,17 @@ func ExportCSV(design *compiler.ArrayDesign, path string) error {
 			}
 		}
 		if err := writer.Write(record); err != nil {
+			logCSV.ErrorContext("ExportCSV", err, map[string]interface{}{
+				"operation": "write record",
+				"row":       cell.Row,
+				"col":       cell.Col,
+				"path":      path,
+			})
 			return err
 		}
 	}
+
+	logCSV.Debug("ExportCSV: Exported %d cells to %s", len(cellsToExport), path)
 
 	return nil
 }

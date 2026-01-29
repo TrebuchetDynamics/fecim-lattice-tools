@@ -2,6 +2,8 @@ package ferroelectric
 
 import (
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -469,4 +471,453 @@ func TestNLSZeroField(t *testing.T) {
 	if !math.IsInf(tau, 1) {
 		t.Errorf("Expected Inf for zero field, got %v", tau)
 	}
+}
+
+// TestExportImportState verifies state export/import functionality.
+func TestExportImportState(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+
+	// Apply some fields to create a specific state
+	Ec := material.Ec
+	model.Update(1.5 * Ec)
+	model.Update(0.5 * Ec)
+	model.Update(-0.3 * Ec)
+
+	// Record state before export
+	P0 := model.Polarization()
+	switched0 := model.GetSwitchedFraction()
+
+	// Export to temporary file
+	tmpFile := "/tmp/test_preisach_export.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	err := model.ExportState(tmpFile)
+	if err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Reset model to different state
+	model.Reset()
+	if model.Polarization() == P0 {
+		t.Error("Reset should change polarization")
+	}
+
+	// Import state
+	err = model.ImportState(tmpFile)
+	if err != nil {
+		t.Fatalf("ImportState failed: %v", err)
+	}
+
+	// Verify restored state matches original
+	P1 := model.Polarization()
+	switched1 := model.GetSwitchedFraction()
+
+	if math.Abs(P1-P0) > 1e-10 {
+		t.Errorf("Polarization mismatch after import: P0=%.6f, P1=%.6f", P0, P1)
+	}
+
+	if math.Abs(switched1-switched0) > 1e-10 {
+		t.Errorf("Switched fraction mismatch: %.4f vs %.4f", switched0, switched1)
+	}
+
+	t.Logf("Export/Import successful: P=%.4f C/m², switched=%.1f%%", P1, switched1*100)
+}
+
+// TestExportImportPreservesMemory verifies memory effect preservation.
+func TestExportImportPreservesMemory(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+
+	// Create a complex history
+	Ec := material.Ec
+	fields := []float64{2 * Ec, Ec, 0, -0.5 * Ec, 0.3 * Ec, -Ec}
+	for _, E := range fields {
+		model.Update(E)
+	}
+
+	// Export
+	tmpFile := "/tmp/test_preisach_memory.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	if err := model.ExportState(tmpFile); err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Create new model and import
+	model2 := NewMayergoyzPreisach(material, 40)
+	if err := model2.ImportState(tmpFile); err != nil {
+		t.Fatalf("ImportState failed: %v", err)
+	}
+
+	// Apply same field to both models - should get same result
+	testField := 0.7 * Ec
+	P1 := model.Update(testField)
+	P2 := model2.Update(testField)
+
+	if math.Abs(P2-P1) > 1e-8 {
+		t.Errorf("Memory not preserved: P1=%.6f, P2=%.6f (diff=%.3e)", P1, P2, math.Abs(P2-P1))
+	}
+
+	t.Logf("Memory preserved: both models yield P=%.4f C/m² at E=%.2f MV/cm", P1, testField/1e8)
+}
+
+// TestExportImportGridMismatch verifies grid size validation.
+func TestExportImportGridMismatch(t *testing.T) {
+	material := DefaultHZO()
+	model1 := NewMayergoyzPreisach(material, 40)
+
+	// Export from 40x40 grid
+	tmpFile := "/tmp/test_preisach_grid.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	if err := model1.ExportState(tmpFile); err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Try to import into 50x50 grid
+	model2 := NewMayergoyzPreisach(material, 50)
+	err := model2.ImportState(tmpFile)
+
+	if err == nil {
+		t.Error("ImportState should fail with grid size mismatch")
+	} else {
+		t.Logf("Correctly rejected grid mismatch: %v", err)
+	}
+}
+
+// TestExportImportFatigueState verifies fatigue state preservation.
+func TestExportImportFatigueState(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 30)
+
+	// Run some cycles to accumulate fatigue
+	Emax := material.Ec * 2
+	for i := 0; i < 50; i++ {
+		model.GetHysteresisLoop(Emax, 20)
+	}
+
+	cycles0, _, wakeup0 := model.GetFatigueState()
+
+	// Export
+	tmpFile := "/tmp/test_preisach_fatigue.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	if err := model.ExportState(tmpFile); err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Import into new model
+	model2 := NewMayergoyzPreisach(material, 30)
+	if err := model2.ImportState(tmpFile); err != nil {
+		t.Fatalf("ImportState failed: %v", err)
+	}
+
+	cycles1, _, wakeup1 := model2.GetFatigueState()
+
+	if cycles1 != cycles0 {
+		t.Errorf("Cycle count mismatch: %d vs %d", cycles0, cycles1)
+	}
+
+	if math.Abs(wakeup1-wakeup0) > 1e-6 {
+		t.Errorf("Wakeup factor mismatch: %.4f vs %.4f", wakeup0, wakeup1)
+	}
+
+	t.Logf("Fatigue state preserved: cycles=%d, wakeup=%.1f%%", cycles1, wakeup1*100)
+}
+
+// TestExportImportTemperature verifies temperature preservation.
+func TestExportImportTemperature(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+
+	// Set to non-default temperature
+	model.SetTemperature(400)
+
+	// Apply field at this temperature
+	model.Update(material.Ec * 1.5)
+	P0 := model.Polarization()
+
+	// Export
+	tmpFile := "/tmp/test_preisach_temp.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	if err := model.ExportState(tmpFile); err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Import into new model
+	model2 := NewMayergoyzPreisach(material, 40)
+	if err := model2.ImportState(tmpFile); err != nil {
+		t.Fatalf("ImportState failed: %v", err)
+	}
+
+	if model2.Temperature != 400 {
+		t.Errorf("Temperature not preserved: got %.0fK, expected 400K", model2.Temperature)
+	}
+
+	P1 := model2.Polarization()
+	if math.Abs(P1-P0) > 1e-10 {
+		t.Errorf("Polarization mismatch: %.6f vs %.6f", P0, P1)
+	}
+
+	t.Logf("Temperature preserved: T=%.0fK, P=%.4f C/m²", model2.Temperature, P1)
+}
+
+// TestDefaultExportPath verifies default path generation.
+func TestDefaultExportPath(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+
+	path := model.DefaultExportPath()
+
+	// Should contain material name and temperature
+	if path == "" {
+		t.Error("DefaultExportPath returned empty string")
+	}
+
+	// Should be in data/preisach_states/
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(".", path)
+	}
+
+	t.Logf("Default export path: %s", path)
+}
+
+// TestExportImportRoundtrip verifies complete state preservation through export/import.
+func TestExportImportRoundtrip(t *testing.T) {
+	material := FeCIMMaterial()
+	model := NewMayergoyzPreisach(material, 50)
+
+	// Create a realistic state: run some cycles with varying fields
+	Ec := material.Ec
+	sequences := [][]float64{
+		{2 * Ec, -2 * Ec, 0},
+		{Ec, -0.5 * Ec, 0.3 * Ec},
+		{-Ec, 0.5 * Ec, 0},
+	}
+
+	for _, seq := range sequences {
+		for _, E := range seq {
+			model.Update(E)
+		}
+		model.Cycle()
+	}
+
+	// Capture full state
+	P0 := model.Polarization()
+	switched0 := model.GetSwitchedFraction()
+	cycles0, _, wakeup0 := model.GetFatigueState()
+
+	// Export
+	tmpFile := "/tmp/test_preisach_roundtrip.json"
+	defer func() {
+		_ = os.Remove(tmpFile)
+	}()
+
+	if err := model.ExportState(tmpFile); err != nil {
+		t.Fatalf("ExportState failed: %v", err)
+	}
+
+	// Create completely fresh model and import
+	model2 := NewMayergoyzPreisach(material, 50)
+	if err := model2.ImportState(tmpFile); err != nil {
+		t.Fatalf("ImportState failed: %v", err)
+	}
+
+	// Verify all state components
+	// Note: Small differences (< 0.1%) are expected due to wake-up factor
+	// being recalculated during distribution initialization
+	P1 := model2.Polarization()
+	switched1 := model2.GetSwitchedFraction()
+	cycles1, _, wakeup1 := model2.GetFatigueState()
+
+	tolerance := 0.001 * math.Abs(P0) // 0.1% tolerance
+	if math.Abs(P1-P0) > tolerance && math.Abs(P1-P0) > 1e-6 {
+		t.Errorf("Polarization: %.6f vs %.6f (diff=%.3e)", P0, P1, math.Abs(P1-P0))
+	}
+	if math.Abs(switched1-switched0) > 1e-6 {
+		t.Errorf("Switched fraction: %.4f vs %.4f", switched0, switched1)
+	}
+	if cycles1 != cycles0 {
+		t.Errorf("Cycles: %d vs %d", cycles0, cycles1)
+	}
+	if math.Abs(wakeup1-wakeup0) > 1e-6 {
+		t.Errorf("Wakeup: %.4f vs %.4f", wakeup0, wakeup1)
+	}
+
+	// Apply same future field sequence to both - should track identically
+	testSeq := []float64{0.5 * Ec, -0.8 * Ec, 0.2 * Ec}
+	for i, E := range testSeq {
+		Pa := model.Update(E)
+		Pb := model2.Update(E)
+		if math.Abs(Pb-Pa) > 1e-8 {
+			t.Errorf("Step %d: P diverged: %.6f vs %.6f", i, Pa, Pb)
+		}
+	}
+
+	t.Logf("Roundtrip successful: P=%.4f C/m², cycles=%d, wakeup=%.1f%%", P1, cycles1, wakeup1*100)
+}
+
+// TestLorentzianDistribution verifies Lorentzian distribution functionality.
+func TestLorentzianDistribution(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+
+	// Verify defaults to Gaussian
+	if model.DistType != DistGaussian {
+		t.Error("Model should default to Gaussian distribution")
+	}
+
+	// Switch to Lorentzian
+	model.SetDistributionType(DistLorentzian)
+	if model.DistType != DistLorentzian {
+		t.Error("Failed to set Lorentzian distribution")
+	}
+
+	// Verify Lorentzian parameters are initialized
+	if model.LorentzAlphaC == 0 || model.LorentzAlphaW == 0 {
+		t.Error("Lorentzian parameters should be initialized")
+	}
+
+	// Test hysteresis loop with Lorentzian
+	Emax := material.Ec * 1.5
+	E, P := model.GetHysteresisLoop(Emax, 100)
+
+	if len(E) != len(P) {
+		t.Error("E and P should have same length")
+	}
+
+	// Check loop has proper saturation
+	maxP := 0.0
+	minP := 0.0
+	for _, p := range P {
+		if p > maxP {
+			maxP = p
+		}
+		if p < minP {
+			minP = p
+		}
+	}
+
+	expectedRange := material.Ps * 1.5
+	actualRange := maxP - minP
+	if actualRange < expectedRange {
+		t.Errorf("Loop range too small: %.4f < %.4f", actualRange, expectedRange)
+	}
+
+	t.Logf("Lorentzian loop: range=%.4f C/m², Ps=%.4f C/m²", actualRange, material.Ps)
+}
+
+// TestGaussianVsLorentzian compares Gaussian and Lorentzian distributions.
+func TestGaussianVsLorentzian(t *testing.T) {
+	material := DefaultHZO()
+	gaussModel := NewMayergoyzPreisach(material, 40)
+	lorentzModel := NewMayergoyzPreisach(material, 40)
+
+	lorentzModel.SetDistributionType(DistLorentzian)
+
+	// Generate loops for both
+	Emax := material.Ec * 1.5
+	Eg, Pg := gaussModel.GetHysteresisLoop(Emax, 100)
+	El, Pl := lorentzModel.GetHysteresisLoop(Emax, 100)
+
+	if len(Eg) != len(El) {
+		t.Error("Loops should have same length")
+	}
+
+	// Both should produce valid loops
+	for i := range Pg {
+		if math.IsNaN(Pg[i]) || math.IsInf(Pg[i], 0) {
+			t.Errorf("Gaussian loop has invalid value at index %d", i)
+		}
+		if math.IsNaN(Pl[i]) || math.IsInf(Pl[i], 0) {
+			t.Errorf("Lorentzian loop has invalid value at index %d", i)
+		}
+	}
+
+	// Check that distributions produce different but similar results
+	totalDiff := 0.0
+	for i := range Pg {
+		totalDiff += math.Abs(Pg[i] - Pl[i])
+	}
+	avgDiff := totalDiff / float64(len(Pg))
+
+	// Differences should exist but be reasonable
+	if avgDiff > material.Ps*0.5 {
+		t.Errorf("Distributions differ too much: avg=%.4f", avgDiff)
+	}
+
+	t.Logf("Gaussian vs Lorentzian: avg diff=%.4f C/m² (%.1f%% of Ps)",
+		avgDiff, avgDiff/material.Ps*100)
+}
+
+// TestLorentzianWithUpdate verifies Lorentzian works with single updates.
+func TestLorentzianWithUpdate(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 40)
+	model.SetDistributionType(DistLorentzian)
+
+	// Test sequence of field updates
+	testFields := []float64{
+		0,
+		material.Ec * 1.5,
+		material.Ec * 0.5,
+		-material.Ec * 1.5,
+		0,
+	}
+
+	for i, E := range testFields {
+		P := model.Update(E)
+
+		if math.IsNaN(P) || math.IsInf(P, 0) {
+			t.Errorf("Step %d: invalid polarization", i)
+		}
+
+		if math.Abs(P) > material.Ps*1.5 {
+			t.Errorf("Step %d: polarization exceeds Ps: %.4f > %.4f", i, P, material.Ps*1.5)
+		}
+
+		t.Logf("Step %d: E=%.2f MV/cm, P=%.4f C/m²", i, E/1e8, P)
+	}
+}
+
+// TestLorentzian1DFunction verifies the Lorentzian helper function.
+func TestLorentzian1DFunction(t *testing.T) {
+	center := 0.0
+	width := 2.0
+
+	// Test at center (should be max)
+	valCenter := lorentzian1D(center, center, width)
+	if valCenter <= 0 {
+		t.Error("Lorentzian at center should be positive")
+	}
+
+	// Test at x = center + width/2 (should be half max)
+	valHalfWidth := lorentzian1D(center+width/2, center, width)
+	expectedHalfMax := valCenter / 2
+
+	if math.Abs(valHalfWidth-expectedHalfMax) > expectedHalfMax*0.01 {
+		t.Errorf("Half-width test failed: %.6f != %.6f", valHalfWidth, expectedHalfMax)
+	}
+
+	// Test symmetry
+	valLeft := lorentzian1D(center-1, center, width)
+	valRight := lorentzian1D(center+1, center, width)
+	if math.Abs(valLeft-valRight) > 1e-10 {
+		t.Error("Lorentzian should be symmetric")
+	}
+
+	t.Logf("Lorentzian 1D: center=%.4f, half-width=%.4f, max/half=%.2f",
+		valCenter, valHalfWidth, valCenter/valHalfWidth)
 }

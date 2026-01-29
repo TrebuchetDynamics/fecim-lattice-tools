@@ -2,12 +2,15 @@ package core
 
 import (
 	"encoding/json"
+	"fecim-lattice-tools/shared/logging"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"sync"
 )
+
+var log = logging.NewLogger("mnist-core")
 
 // NetworkConfig holds configuration for the CIM inference path.
 type NetworkConfig struct {
@@ -107,6 +110,12 @@ type InferenceResult struct {
 
 // NewDualModeNetwork creates a new dual-mode network with the specified architecture.
 func NewDualModeNetwork(inputSize, hiddenSize, outputSize int) *DualModeNetwork {
+	log.Input("NewDualModeNetwork", map[string]interface{}{
+		"inputSize":  inputSize,
+		"hiddenSize": hiddenSize,
+		"outputSize": outputSize,
+	})
+
 	net := &DualModeNetwork{
 		InputSize:  inputSize,
 		HiddenSize: hiddenSize,
@@ -145,6 +154,10 @@ func NewDualModeNetwork(inputSize, hiddenSize, outputSize int) *DualModeNetwork 
 	}
 	net.SingleLayerBias = make([]float64, outputSize)
 	net.QuantSingleLayerBias = make([]float64, outputSize)
+
+	log.Info("Created network: %dx%dx%d, config: levels=%d, noise=%.4f, ADC=%d, DAC=%d",
+		inputSize, hiddenSize, outputSize,
+		net.Config.NumLevels, net.Config.NoiseLevel, net.Config.ADCBits, net.Config.DACBits)
 
 	return net
 }
@@ -255,16 +268,27 @@ func GetBestMatchingWeightsLevel(dataDir string, targetLevels int) int {
 // 1. Quantized weights with scale/offset (new format)
 // 2. Raw FP weights (legacy format)
 func (net *DualModeNetwork) LoadWeights(filename string) error {
+	log.Input("LoadWeights", map[string]interface{}{
+		"filename": filename,
+	})
+
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
+		log.ErrorContext("LoadWeights", err, map[string]interface{}{
+			"filename": filename,
+		})
 		return err
 	}
 
 	var wf WeightsFile
 	if err := json.Unmarshal(data, &wf); err != nil {
+		log.ErrorContext("LoadWeights", err, map[string]interface{}{
+			"filename": filename,
+			"reason":   "json unmarshal failed",
+		})
 		return err
 	}
 
@@ -372,6 +396,11 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 
 	// Initialize quantized weights based on current config
 	net.requantizeWeightsLocked()
+
+	log.Info("Loaded weights: %dx%dx%d, L1levels=%d, L2levels=%d, singleLayer=%v",
+		inputSize, hiddenSize, outputSize,
+		net.Config.Layer1Levels, net.Config.Layer2Levels,
+		len(wf.SingleLayerWeights) > 0)
 
 	return nil
 }

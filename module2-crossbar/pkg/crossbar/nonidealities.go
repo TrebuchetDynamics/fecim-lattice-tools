@@ -3,6 +3,7 @@ package crossbar
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -67,7 +68,19 @@ func DefaultIRDropSolverConfig() *IRDropSolverConfig {
 //   - V_eff(i,j) = V_wl(i,j) - V_bl(i,j)
 //   - I_ij = V_eff(i,j) × G_ij
 func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalysis {
-	return a.AnalyzeIRDropIterative(input, params, nil)
+	log.Input("AnalyzeIRDrop", map[string]interface{}{
+		"inputLen": len(input),
+		"rows":     a.config.Rows,
+		"cols":     a.config.Cols,
+	})
+	result := a.AnalyzeIRDropIterative(input, params, nil)
+	log.Calculation("AnalyzeIRDrop", map[string]interface{}{
+		"maxDrop":     result.MaxIRDrop,
+		"avgDrop":     result.AvgIRDrop,
+		"variance":    result.IRDropVariance,
+		"worstCell":   result.WorstCaseCell,
+	}, result)
+	return result
 }
 
 // AnalyzeIRDropIterative performs physics-based IR drop analysis with configurable solver.
@@ -324,7 +337,18 @@ type SneakPathAnalysis struct {
 //
 // For architecture-aware analysis, use AnalyzeSneakPathsWithArch.
 func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalysis {
-	return a.AnalyzeSneakPathsWithArch(selectedRow, selectedCol, false)
+	log.Input("AnalyzeSneakPaths", map[string]interface{}{
+		"selectedRow": selectedRow,
+		"selectedCol": selectedCol,
+	})
+	result := a.AnalyzeSneakPathsWithArch(selectedRow, selectedCol, false)
+	log.Calculation("AnalyzeSneakPaths", map[string]interface{}{
+		"maxSneakRatio": result.MaxSneakRatio,
+		"avgSneakRatio": result.AvgSneakRatio,
+		"totalSneak":    result.TotalSneak,
+		"totalSignal":   result.TotalSignal,
+	}, result)
+	return result
 }
 
 // AnalyzeSneakPathsWithArch analyzes sneak paths with architecture consideration.
@@ -461,7 +485,14 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 
 // MVMWithIRDrop performs MVM with IR drop effects.
 func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *IRDropAnalysis, error) {
+	log.Input("MVMWithIRDrop", map[string]interface{}{
+		"inputLen": len(input),
+		"rows":     a.config.Rows,
+		"cols":     a.config.Cols,
+	})
+
 	if len(input) > a.config.Cols {
+		log.Error(ErrInputSize, "MVMWithIRDrop validation failed")
 		return nil, nil, ErrInputSize
 	}
 
@@ -488,6 +519,11 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 		output[i] = a.quantizeADC(sum / float64(len(input)))
 		a.totalReads++
 	}
+
+	log.Calculation("MVMWithIRDrop", map[string]interface{}{
+		"maxIRDrop": irAnalysis.MaxIRDrop,
+		"avgIRDrop": irAnalysis.AvgIRDrop,
+	}, output)
 
 	return output, irAnalysis, nil
 }
@@ -577,7 +613,13 @@ func (s *SneakPathAnalysis) GetSneakMapWithScale(maxRatio float64) [][]float64 {
 
 // ComputeError calculates the MVM output error due to non-idealities.
 func ComputeError(ideal, actual []float64) float64 {
+	log.Input("ComputeError", map[string]interface{}{
+		"idealLen":  len(ideal),
+		"actualLen": len(actual),
+	})
+
 	if len(ideal) != len(actual) {
+		log.Error(fmt.Errorf("length mismatch: ideal=%d actual=%d", len(ideal), len(actual)), "ComputeError validation failed")
 		return math.Inf(1)
 	}
 
@@ -587,5 +629,11 @@ func ComputeError(ideal, actual []float64) float64 {
 		sumSqError += diff * diff
 	}
 
-	return math.Sqrt(sumSqError / float64(len(ideal)))
+	rmse := math.Sqrt(sumSqError / float64(len(ideal)))
+
+	log.Calculation("ComputeError", map[string]interface{}{
+		"rmse": rmse,
+	}, rmse)
+
+	return rmse
 }

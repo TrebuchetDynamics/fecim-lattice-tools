@@ -3,6 +3,7 @@ package core
 // SetNumLevels updates the quantization levels and re-quantizes weights.
 // Minimum is 2 levels (required by QuantizeWeights), maximum is FeCIMLevels (30).
 func (net *DualModeNetwork) SetNumLevels(levels int) {
+	oldLevels := net.Config.NumLevels
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -14,6 +15,8 @@ func (net *DualModeNetwork) SetNumLevels(levels int) {
 	}
 	net.Config.NumLevels = levels
 	net.requantizeWeightsLocked()
+
+	log.Debug("SetNumLevels: %d -> %d", oldLevels, levels)
 }
 
 // GetNumLevels returns the current quantization levels.
@@ -25,6 +28,7 @@ func (net *DualModeNetwork) GetNumLevels() int {
 
 // SetNoiseLevel updates the noise level for CIM inference.
 func (net *DualModeNetwork) SetNoiseLevel(noise float64) {
+	oldNoise := net.Config.NoiseLevel
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -35,10 +39,13 @@ func (net *DualModeNetwork) SetNoiseLevel(noise float64) {
 		noise = 0.5
 	}
 	net.Config.NoiseLevel = noise
+
+	log.Debug("SetNoiseLevel: %.4f -> %.4f", oldNoise, noise)
 }
 
 // SetADCBits updates the ADC resolution for CIM inference.
 func (net *DualModeNetwork) SetADCBits(bits int) {
+	oldBits := net.Config.ADCBits
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -49,10 +56,13 @@ func (net *DualModeNetwork) SetADCBits(bits int) {
 		bits = 16
 	}
 	net.Config.ADCBits = bits
+
+	log.Debug("SetADCBits: %d -> %d", oldBits, bits)
 }
 
 // SetDACBits updates the DAC resolution for CIM inference.
 func (net *DualModeNetwork) SetDACBits(bits int) {
+	oldBits := net.Config.DACBits
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -63,23 +73,32 @@ func (net *DualModeNetwork) SetDACBits(bits int) {
 		bits = 16
 	}
 	net.Config.DACBits = bits
+
+	log.Debug("SetDACBits: %d -> %d", oldBits, bits)
 }
 
 // SetSingleLayer enables/disables Calibration Mode (single-layer 784→10 architecture).
 // When enabled, this matches the hardware MNIST demo.
 func (net *DualModeNetwork) SetSingleLayer(enabled bool) {
+	oldValue := net.Config.SingleLayer
 	net.mu.Lock()
 	defer net.mu.Unlock()
 	net.Config.SingleLayer = enabled
+
+	log.Debug("SetSingleLayer: %v -> %v", oldValue, enabled)
 }
 
 // SetPerLayerQuant enables/disables per-layer quantization mode.
 // When enabled, Layer1Levels and Layer2Levels are used instead of NumLevels.
 func (net *DualModeNetwork) SetPerLayerQuant(enabled bool) {
+	oldValue := net.Config.PerLayerQuant
 	net.mu.Lock()
 	defer net.mu.Unlock()
 	net.Config.PerLayerQuant = enabled
 	net.requantizeWeightsLocked()
+
+	log.Debug("SetPerLayerQuant: %v -> %v (L1=%d, L2=%d)",
+		oldValue, enabled, net.Config.Layer1Levels, net.Config.Layer2Levels)
 }
 
 // IsPerLayerQuant returns whether per-layer quantization is enabled.
@@ -91,6 +110,7 @@ func (net *DualModeNetwork) IsPerLayerQuant() bool {
 
 // SetLayer1Levels sets the quantization levels for layer 1 (hidden layer).
 func (net *DualModeNetwork) SetLayer1Levels(levels int) {
+	oldLevels := net.Config.Layer1Levels
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -103,6 +123,7 @@ func (net *DualModeNetwork) SetLayer1Levels(levels int) {
 	net.Config.Layer1Levels = levels
 	if net.Config.PerLayerQuant {
 		net.requantizeWeightsLocked()
+		log.Debug("SetLayer1Levels: %d -> %d (requantized)", oldLevels, levels)
 	}
 }
 
@@ -115,6 +136,7 @@ func (net *DualModeNetwork) GetLayer1Levels() int {
 
 // SetLayer2Levels sets the quantization levels for layer 2 (output layer).
 func (net *DualModeNetwork) SetLayer2Levels(levels int) {
+	oldLevels := net.Config.Layer2Levels
 	net.mu.Lock()
 	defer net.mu.Unlock()
 
@@ -127,6 +149,7 @@ func (net *DualModeNetwork) SetLayer2Levels(levels int) {
 	net.Config.Layer2Levels = levels
 	if net.Config.PerLayerQuant {
 		net.requantizeWeightsLocked()
+		log.Debug("SetLayer2Levels: %d -> %d (requantized)", oldLevels, levels)
 	}
 }
 
@@ -159,6 +182,8 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	net.Config.Layer2Levels = layer2
 	net.Config.PerLayerQuant = true
 	net.requantizeWeightsLocked()
+
+	log.Debug("SetPerLayerLevels: L1=%d, L2=%d (enabled per-layer quant)", layer1, layer2)
 }
 
 // IsSingleLayer returns whether single-layer (Calibration Mode) is enabled.

@@ -7,11 +7,21 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logSPICE = logging.NewLogger("eda-export-spice")
 
 // GenerateSPICE creates ngspice-compatible netlist.
 // Works with all operation modes (Storage, Memory, Compute).
 func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
+	logSPICE.Input("GenerateSPICE", map[string]interface{}{
+		"mode":        design.Config.Mode,
+		"totalCells":  design.Stats.TotalCells,
+		"activeCells": design.Stats.ActiveCells,
+		"vdd":         vdd,
+	})
+
 	var sb strings.Builder
 
 	// Filter cells to export
@@ -67,12 +77,37 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 	sb.WriteString(".endc\n")
 	sb.WriteString(".end\n")
 
-	return sb.String()
+	netlist := sb.String()
+
+	logSPICE.Calculation("GenerateSPICE", map[string]interface{}{
+		"cellsExported": len(cellsToExport),
+		"wordLines":     maxRow + 1,
+		"bitLines":      maxCol + 1,
+		"netlistSize":   len(netlist),
+	}, nil)
+
+	return netlist
 }
 
 // ExportSPICE writes netlist to file.
 // Works with all operation modes (Storage, Memory, Compute).
 func ExportSPICE(design *compiler.ArrayDesign, path string, vdd float64) error {
+	logSPICE.Input("ExportSPICE", map[string]interface{}{
+		"path": path,
+		"vdd":  vdd,
+	})
+
 	content := GenerateSPICE(design, vdd)
-	return os.WriteFile(path, []byte(content), 0644)
+
+	err := os.WriteFile(path, []byte(content), 0644)
+	if err != nil {
+		logSPICE.ErrorContext("ExportSPICE", err, map[string]interface{}{
+			"path": path,
+		})
+		return err
+	}
+
+	logSPICE.Debug("ExportSPICE: Exported netlist to %s (size: %d bytes)", path, len(content))
+
+	return nil
 }

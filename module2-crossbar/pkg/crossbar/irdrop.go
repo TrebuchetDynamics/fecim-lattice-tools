@@ -23,6 +23,11 @@ type IRDropSimulator struct {
 
 // NewIRDropSimulator creates an IR drop simulator for a crossbar.
 func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
+	log.Input("NewIRDropSimulator", map[string]interface{}{
+		"rows": rows,
+		"cols": cols,
+	})
+
 	// Initialize conductance matrix
 	conductances := make([][]float64, rows)
 	for i := range conductances {
@@ -32,7 +37,7 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 		}
 	}
 
-	return &IRDropSimulator{
+	sim := &IRDropSimulator{
 		Rows:         rows,
 		Cols:         cols,
 		RowResist:    2.5, // 2.5 Ω per segment (typical metal interconnect)
@@ -45,6 +50,9 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 		CellCurrents: make([][]float64, rows),
 		IRDropMap:    make([][]float64, rows),
 	}
+
+	log.Output("NewIRDropSimulator", sim)
+	return sim
 }
 
 // SetConductance sets conductance for a specific cell.
@@ -70,6 +78,14 @@ func (ir *IRDropSimulator) SetAllInputs(voltages []float64) {
 
 // Simulate runs the IR drop simulation using iterative method.
 func (ir *IRDropSimulator) Simulate(iterations int) {
+	log.Input("IRDropSimulator.Simulate", map[string]interface{}{
+		"iterations": iterations,
+		"rows":       ir.Rows,
+		"cols":       ir.Cols,
+		"rowResist":  ir.RowResist,
+		"colResist":  ir.ColResist,
+	})
+
 	// Initialize voltage arrays
 	for i := range ir.RowVoltages {
 		ir.RowVoltages[i] = make([]float64, ir.Cols)
@@ -124,13 +140,22 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 	}
 
 	// Calculate IR drop map
+	var maxDrop float64
 	for i := 0; i < ir.Rows; i++ {
 		for j := 0; j < ir.Cols; j++ {
 			idealVoltage := ir.VoltageIn[i] - ir.VoltageOut[j]
 			actualVoltage := ir.RowVoltages[i][j] - ir.ColVoltages[i][j]
 			ir.IRDropMap[i][j] = math.Abs(idealVoltage - actualVoltage)
+			if ir.IRDropMap[i][j] > maxDrop {
+				maxDrop = ir.IRDropMap[i][j]
+			}
 		}
 	}
+
+	log.Calculation("IRDropSimulator.Simulate", map[string]interface{}{
+		"maxDrop": maxDrop,
+		"avgDrop": ir.GetAvgIRDrop(),
+	}, nil)
 }
 
 // GetMaxIRDrop returns the maximum IR drop in the array.

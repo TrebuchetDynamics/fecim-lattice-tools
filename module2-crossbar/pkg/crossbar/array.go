@@ -2,11 +2,14 @@
 package crossbar
 
 import (
+	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
 	"fmt"
 	"math"
 	"math/rand"
 )
+
+var log = logging.NewLogger("crossbar")
 
 // DefaultQuantizationLevels is the standard number of discrete analog states.
 // Alias to shared/physics for backward compatibility.
@@ -132,8 +135,19 @@ type Array struct {
 
 // NewArray creates a new crossbar array.
 func NewArray(cfg *Config) (*Array, error) {
+	log.Input("NewArray", map[string]interface{}{
+		"rows":       cfg.Rows,
+		"cols":       cfg.Cols,
+		"noiseLevel": cfg.NoiseLevel,
+		"adcBits":    cfg.ADCBits,
+		"dacBits":    cfg.DACBits,
+		"useGPU":     cfg.UseGPU,
+	})
+
 	if cfg.Rows <= 0 || cfg.Cols <= 0 {
-		return nil, fmt.Errorf("invalid array dimensions: %dx%d", cfg.Rows, cfg.Cols)
+		err := fmt.Errorf("invalid array dimensions: %dx%d", cfg.Rows, cfg.Cols)
+		log.Error(err, "NewArray validation failed")
+		return nil, err
 	}
 
 	arr := &Array{
@@ -154,6 +168,7 @@ func NewArray(cfg *Config) (*Array, error) {
 		}
 	}
 
+	log.Output("NewArray", arr)
 	return arr, nil
 }
 
@@ -274,11 +289,21 @@ func (a *Array) Destroy() {
 // Weights are automatically quantized to discrete levels.
 func (a *Array) ProgramWeight(row, col int, weight float64) error {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
-		return fmt.Errorf("cell index out of range: (%d, %d)", row, col)
+		err := fmt.Errorf("cell index out of range: (%d, %d)", row, col)
+		log.Error(err, "ProgramWeight validation failed")
+		return err
 	}
 
 	// Quantize to discrete levels
 	quantized := QuantizeToLevels(weight)
+
+	log.Calculation("ProgramWeight", map[string]interface{}{
+		"row":            row,
+		"col":            col,
+		"originalWeight": weight,
+		"quantized":      quantized,
+		"level":          GetLevel(quantized),
+	}, nil)
 
 	a.cells[row][col].Conductance = quantized
 	a.cells[row][col].SwitchingCount++
@@ -291,7 +316,11 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 // This matches the standard 30 discrete analog states.
 // Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
-	return physics.QuantizeTo30Levels(value)
+	quantized := physics.QuantizeTo30Levels(value)
+	log.Calculation("QuantizeToLevels", map[string]interface{}{
+		"input": value,
+	}, quantized)
+	return quantized
 }
 
 // GetLevel returns the discrete level (0 to N-1) for a conductance value.
@@ -410,13 +439,24 @@ func (a *Array) applyEnduranceFatigue(cell *Cell, gPhys float64) float64 {
 
 // ProgramWeightMatrix programs an entire weight matrix to the array.
 func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
+	log.Input("ProgramWeightMatrix", map[string]interface{}{
+		"matrixRows": len(weights),
+		"matrixCols": len(weights[0]),
+		"arrayRows":  a.config.Rows,
+		"arrayCols":  a.config.Cols,
+	})
+
 	if len(weights) > a.config.Rows {
-		return fmt.Errorf("weight matrix rows (%d) exceed array rows (%d)", len(weights), a.config.Rows)
+		err := fmt.Errorf("weight matrix rows (%d) exceed array rows (%d)", len(weights), a.config.Rows)
+		log.Error(err, "ProgramWeightMatrix validation failed")
+		return err
 	}
 
 	for i, row := range weights {
 		if len(row) > a.config.Cols {
-			return fmt.Errorf("weight matrix cols (%d) exceed array cols (%d)", len(row), a.config.Cols)
+			err := fmt.Errorf("weight matrix cols (%d) exceed array cols (%d)", len(row), a.config.Cols)
+			log.Error(err, "ProgramWeightMatrix validation failed")
+			return err
 		}
 		for j, w := range row {
 			if err := a.ProgramWeight(i, j, w); err != nil {
@@ -425,6 +465,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 		}
 	}
 
+	log.Output("ProgramWeightMatrix", "success")
 	return nil
 }
 
@@ -432,18 +473,38 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 // Input x is applied to columns (bit lines), output y is read from rows (word lines).
 // Physics: I_row = Σ(G_ij × V_j) - each cell contributes current via Ohm's law.
 func (a *Array) MVM(input []float64) ([]float64, error) {
+	log.Input("MVM", map[string]interface{}{
+		"inputLen": len(input),
+		"rows":     a.config.Rows,
+		"cols":     a.config.Cols,
+	})
+
 	if len(input) > a.config.Cols {
-		return nil, fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
+		err := fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
+		log.Error(err, "MVM validation failed")
+		return nil, err
 	}
 
 	// Try GPU path first
 	a.initGPU()
 	if a.gpuAccelerator != nil && a.gpuAccelerator.IsAvailable() {
-		return a.mvmGPU(input)
+		output, err := a.mvmGPU(input)
+		if err == nil {
+			log.Calculation("MVM", map[string]interface{}{
+				"mode": "GPU",
+			}, output)
+		}
+		return output, err
 	}
 
 	// CPU fallback
-	return a.mvmCPU(input)
+	output, err := a.mvmCPU(input)
+	if err == nil {
+		log.Calculation("MVM", map[string]interface{}{
+			"mode": "CPU",
+		}, output)
+	}
+	return output, err
 }
 
 // mvmCPU performs MVM using CPU implementation (original algorithm).
@@ -483,8 +544,16 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 // VMM performs vector-matrix multiplication: y = x * W
 // Input x is applied to rows (word lines), output y is read from columns (bit lines).
 func (a *Array) VMM(input []float64) ([]float64, error) {
+	log.Input("VMM", map[string]interface{}{
+		"inputLen": len(input),
+		"rows":     a.config.Rows,
+		"cols":     a.config.Cols,
+	})
+
 	if len(input) > a.config.Rows {
-		return nil, fmt.Errorf("input size (%d) exceeds array rows (%d)", len(input), a.config.Rows)
+		err := fmt.Errorf("input size (%d) exceeds array rows (%d)", len(input), a.config.Rows)
+		log.Error(err, "VMM validation failed")
+		return nil, err
 	}
 
 	output := make([]float64, a.config.Cols)
@@ -506,6 +575,10 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 		output[j] = a.quantizeADC(sum / float64(len(input)))
 		a.totalReads++
 	}
+
+	log.Calculation("VMM", map[string]interface{}{
+		"outputLen": len(output),
+	}, output)
 
 	return output, nil
 }

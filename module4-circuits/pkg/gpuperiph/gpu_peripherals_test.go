@@ -3,6 +3,8 @@ package gpuperiph
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 // TestGPUPeripherals_Availability tests GPU initialization and availability check.
@@ -240,7 +242,7 @@ func TestGPUPeripherals_CPUCompare(t *testing.T) {
 	}
 
 	// Create CPU DAC for comparison
-	dacCPU := DefaultDAC()
+	dacCPU := peripherals.DefaultDAC()
 
 	// Test same codes on both - use DefaultDACParams to ensure consistency
 	codes := []int32{0, 8, 16, 24, 31}

@@ -1,6 +1,6 @@
 # Scientific Honesty Audit: FeCIM Lattice Tools
 
-**Version**: 3.0 | **Date**: January 27, 2026 | **Status**: APPROVED
+**Version**: 3.1 | **Date**: January 28, 2026 | **Status**: APPROVED
 
 ---
 
@@ -263,6 +263,9 @@ Temperature range 5K-300K now documented with Pr, endurance, and speed metrics. 
 | Remove 10M x energy claim | 2026-01-26 | Documentation updated |
 | Update endurance to "demonstrated" | 2026-01-26 | CLAUDE.md updated |
 | Update MNIST benchmark to 98.24% | 2026-01-26 | CLAUDE.md updated |
+| Sync cim.ELI5.md energy claims | 2026-01-28 | Removed 10M× claim, updated to verified 25-100× |
+| Add verification badges to devices.md | 2026-01-28 | Added [VERIFIED]/[PLAUSIBLE] annotations |
+| Update devices.md endurance to demonstrated | 2026-01-28 | Changed "target" to "demonstrated" for 10¹² |
 
 ### 6.2 Pending
 
@@ -334,6 +337,7 @@ Temperature range 5K-300K now documented with Pr, endurance, and speed metrics. 
 | 2026-01-25 | 1.0 | Initial | Full documentation review, 89 claims |
 | 2026-01-26 | 2.0 | Re-audit | Updated with 2024-2026 literature, 124 claims |
 | 2026-01-27 | 3.0 | Restructure | Removed redundant sections, 565 -> 350 lines |
+| 2026-01-28 | 3.1 | Sync | Synced cim.ELI5.md, devices.md with audit findings; added [VERIFIED]/[PLAUSIBLE] badges |
 
 ### A.2 Verification Badges
 

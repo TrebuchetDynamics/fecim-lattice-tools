@@ -3,7 +3,11 @@ package peripherals
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+var log = logging.NewLogger("peripherals")
 
 // DAC represents a Digital-to-Analog Converter for crossbar write operations.
 // 5-bit DAC maps 30 discrete levels to write voltages.
@@ -18,7 +22,7 @@ type DAC struct {
 
 // DefaultDAC returns a DAC configured for FeCIM 30-level operation.
 func DefaultDAC() *DAC {
-	return &DAC{
+	dac := &DAC{
 		Bits:       5,    // 32 levels, we use 30
 		VrefHigh:   1.5,  // +1.5V for positive write
 		VrefLow:    -1.5, // -1.5V for negative write
@@ -26,6 +30,15 @@ func DefaultDAC() *DAC {
 		DNL:        0.25, // 0.25 LSB DNL
 		SettleTime: 10,   // 10 ns settling time
 	}
+	log.Calculation("DefaultDAC", map[string]interface{}{
+		"bits":        dac.Bits,
+		"vref_high":   dac.VrefHigh,
+		"vref_low":    dac.VrefLow,
+		"inl":         dac.INL,
+		"dnl":         dac.DNL,
+		"settle_time": dac.SettleTime,
+	}, dac)
+	return dac
 }
 
 // Levels returns the number of discrete output levels.
@@ -35,6 +48,13 @@ func (d *DAC) Levels() int {
 
 // Convert maps a digital level (0-29) to an analog voltage.
 func (d *DAC) Convert(level int) float64 {
+	log.Input("DAC.Convert", map[string]interface{}{
+		"level":     level,
+		"bits":      d.Bits,
+		"vref_high": d.VrefHigh,
+		"vref_low":  d.VrefLow,
+	})
+
 	if level < 0 {
 		level = 0
 	}
@@ -47,11 +67,21 @@ func (d *DAC) Convert(level int) float64 {
 	fraction := float64(level) / float64(maxLevel)
 	voltage := d.VrefLow + fraction*(d.VrefHigh-d.VrefLow)
 
+	log.Calculation("DAC.Convert", map[string]interface{}{
+		"level": level,
+	}, voltage)
+
 	return voltage
 }
 
 // ConvertWithNonlinearity adds INL/DNL errors to conversion.
 func (d *DAC) ConvertWithNonlinearity(level int) float64 {
+	log.Input("DAC.ConvertWithNonlinearity", map[string]interface{}{
+		"level": level,
+		"inl":   d.INL,
+		"dnl":   d.DNL,
+	})
+
 	idealVoltage := d.Convert(level)
 
 	// LSB size
@@ -63,7 +93,16 @@ func (d *DAC) ConvertWithNonlinearity(level int) float64 {
 	// Add DNL error (random per level)
 	dnlError := d.DNL * lsb * (0.5 - float64(level%3)/2.0)
 
-	return idealVoltage + inlError + dnlError
+	result := idealVoltage + inlError + dnlError
+
+	log.Calculation("DAC.ConvertWithNonlinearity", map[string]interface{}{
+		"level":          level,
+		"ideal_voltage":  idealVoltage,
+		"inl_error":      inlError,
+		"dnl_error":      dnlError,
+	}, result)
+
+	return result
 }
 
 // VoltageRange returns the full output voltage range.
@@ -79,11 +118,25 @@ func (d *DAC) Resolution() float64 {
 // EnergyPerConversion estimates energy consumption per DAC conversion.
 // Based on typical switched-capacitor DAC.
 func (d *DAC) EnergyPerConversion() float64 {
+	log.Input("DAC.EnergyPerConversion", map[string]interface{}{
+		"bits":      d.Bits,
+		"vref_high": d.VrefHigh,
+		"vref_low":  d.VrefLow,
+	})
+
 	// Energy ~ C * Vref^2 * 2^N
 	// Typical: ~1 fJ/conversion-step for 65nm CMOS
 	capacitance := 1e-15 // 1 fF unit capacitor
 	levels := float64(d.Levels())
 	vref := (d.VrefHigh - d.VrefLow) / 2
 
-	return capacitance * vref * vref * levels // ~15 fJ typical
+	energy := capacitance * vref * vref * levels // ~15 fJ typical
+
+	log.Calculation("DAC.EnergyPerConversion", map[string]interface{}{
+		"capacitance": capacitance,
+		"levels":      levels,
+		"vref":        vref,
+	}, energy)
+
+	return energy
 }

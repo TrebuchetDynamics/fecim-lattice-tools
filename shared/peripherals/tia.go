@@ -17,7 +17,7 @@ type TIA struct {
 
 // DefaultTIA returns a TIA configured for crossbar sense operations.
 func DefaultTIA() *TIA {
-	return &TIA{
+	tia := &TIA{
 		Gain:             10e3,   // 10 kΩ transimpedance
 		Bandwidth:        100e6,  // 100 MHz bandwidth
 		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) input noise
@@ -25,10 +25,24 @@ func DefaultTIA() *TIA {
 		MaxInputCurrent:  100e-6, // 100 µA max input
 		MaxOutputVoltage: 1.0,    // 1V max output
 	}
+	log.Calculation("DefaultTIA", map[string]interface{}{
+		"gain":               tia.Gain,
+		"bandwidth":          tia.Bandwidth,
+		"input_noise_rms":    tia.InputNoiseRMS,
+		"max_input_current":  tia.MaxInputCurrent,
+		"max_output_voltage": tia.MaxOutputVoltage,
+	}, tia)
+	return tia
 }
 
 // Convert performs current-to-voltage conversion.
 func (t *TIA) Convert(current float64) float64 {
+	log.Input("TIA.Convert", map[string]interface{}{
+		"current": current,
+		"gain":    t.Gain,
+		"offset":  t.OutputOffset,
+	})
+
 	// Vout = Iin * Gain + Offset
 	output := current*t.Gain + t.OutputOffset
 
@@ -39,6 +53,10 @@ func (t *TIA) Convert(current float64) float64 {
 	if output > t.MaxOutputVoltage {
 		output = t.MaxOutputVoltage
 	}
+
+	log.Calculation("TIA.Convert", map[string]interface{}{
+		"current": current,
+	}, output)
 
 	return output
 }
@@ -60,6 +78,12 @@ func (t *TIA) ConvertWithNoise(current float64) float64 {
 
 // SNR returns the signal-to-noise ratio for a given input current.
 func (t *TIA) SNR(current float64) float64 {
+	log.Input("TIA.SNR", map[string]interface{}{
+		"current":   current,
+		"gain":      t.Gain,
+		"bandwidth": t.Bandwidth,
+	})
+
 	signal := current * t.Gain
 	noise := t.InputNoiseRMS * t.Gain * math.Sqrt(t.Bandwidth)
 
@@ -67,7 +91,15 @@ func (t *TIA) SNR(current float64) float64 {
 		return math.Inf(1)
 	}
 
-	return 20 * math.Log10(signal/noise) // dB
+	snr := 20 * math.Log10(signal/noise) // dB
+
+	log.Calculation("TIA.SNR", map[string]interface{}{
+		"current": current,
+		"signal":  signal,
+		"noise":   noise,
+	}, snr)
+
+	return snr
 }
 
 // MinDetectableCurrent returns minimum detectable current (SNR=1).
@@ -78,16 +110,38 @@ func (t *TIA) MinDetectableCurrent() float64 {
 
 // DynamicRange returns the dynamic range in dB.
 func (t *TIA) DynamicRange() float64 {
+	log.Input("TIA.DynamicRange", map[string]interface{}{
+		"max_input_current": t.MaxInputCurrent,
+	})
+
 	minCurrent := t.MinDetectableCurrent()
-	return 20 * math.Log10(t.MaxInputCurrent/minCurrent)
+	dr := 20 * math.Log10(t.MaxInputCurrent/minCurrent)
+
+	log.Calculation("TIA.DynamicRange", map[string]interface{}{
+		"min_current": minCurrent,
+		"max_current": t.MaxInputCurrent,
+	}, dr)
+
+	return dr
 }
 
 // SettlingTime estimates the step response settling time.
 func (t *TIA) SettlingTime() float64 {
+	log.Input("TIA.SettlingTime", map[string]interface{}{
+		"bandwidth": t.Bandwidth,
+	})
+
 	// Single-pole settling: t = ln(1/accuracy) / (2*pi*BW)
 	// For 0.1% accuracy: t ≈ 7 / (2*pi*BW)
 	accuracy := 0.001 // 0.1%
-	return math.Log(1/accuracy) / (2 * math.Pi * t.Bandwidth)
+	settleTime := math.Log(1/accuracy) / (2 * math.Pi * t.Bandwidth)
+
+	log.Calculation("TIA.SettlingTime", map[string]interface{}{
+		"bandwidth": t.Bandwidth,
+		"accuracy":  accuracy,
+	}, settleTime)
+
+	return settleTime
 }
 
 // PowerConsumption estimates TIA power based on bandwidth and gain.

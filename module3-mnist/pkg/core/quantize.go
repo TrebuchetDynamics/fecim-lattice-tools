@@ -8,15 +8,32 @@ import (
 	"math"
 )
 
+// Note: logger is shared with network.go (var log = logging.NewLogger("mnist-core"))
+
 // FeCIMLevels is the number of discrete conductance levels in FeCIM hardware.
 // This is the key physical constraint from Dr. Tour's research.
 const FeCIMLevels = 30
 
 // QuantizeWeights quantizes FP weights to N discrete levels
 // using symmetric range [-W_max, +W_max] with linear mapping.
+//
+// Physical Mapping:
+// Each quantization level represents a discrete conductance state in the FeCIM device.
+// In hardware, these map to conductance values: G = Gmin + (Gmax - Gmin) * normalized_level
+// where Gmin = 10µS and Gmax = 100µS (from docs).
+// For computational efficiency, we store normalized values [−W_max, +W_max] but the
+// conceptual mapping to [Gmin, Gmax] is implicit.
 func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
+	log.Input("QuantizeWeights", map[string]interface{}{
+		"levels": levels,
+		"rows":   len(fpWeights),
+		"cols":   func() int { if len(fpWeights) > 0 { return len(fpWeights[0]) }; return 0 }(),
+	})
+
 	if levels < 2 {
-		return nil, fmt.Errorf("quantize: levels must be >= 2, got %d", levels)
+		err := fmt.Errorf("quantize: levels must be >= 2, got %d", levels)
+		log.ErrorContext("QuantizeWeights", err, nil)
+		return nil, err
 	}
 
 	rows := len(fpWeights)
@@ -43,6 +60,7 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 	}
 
 	// 2. Quantize to integer bins [0, levels-1]
+	// Each bin represents a discrete conductance level in the FeCIM device
 	quantized := make([][]float64, rows)
 	levelStep := 2.0 * wMax / float64(levels-1) // Level spacing
 
@@ -52,7 +70,7 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 			// Map [-wMax, +wMax] → [0, 1]
 			normalized := (fpWeights[i][j] + wMax) / (2.0 * wMax)
 
-			// Quantize to bin
+			// Quantize to bin (conductance level)
 			bin := int(math.Round(normalized * float64(levels-1)))
 
 			// Clamp
@@ -64,15 +82,24 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 			}
 
 			// Map back to [-wMax, +wMax]
+			// In hardware: this represents G = Gmin + bin/(levels-1) * (Gmax - Gmin)
 			quantized[i][j] = -wMax + float64(bin)*levelStep
 		}
 	}
+
+	log.Calculation("QuantizeWeights", map[string]interface{}{
+		"wMax":       wMax,
+		"levelStep":  levelStep,
+		"dims":       fmt.Sprintf("%dx%d", rows, cols),
+	}, "quantized")
 
 	return quantized, nil
 }
 
 // QuantizeBias quantizes bias vector to N discrete levels.
 func QuantizeBias(fpBias []float64, levels int) ([]float64, error) {
+	log.Trace("QuantizeBias: levels=%d, len=%d", levels, len(fpBias))
+
 	if len(fpBias) == 0 {
 		return fpBias, nil
 	}
@@ -80,6 +107,7 @@ func QuantizeBias(fpBias []float64, levels int) ([]float64, error) {
 	wrapped := [][]float64{fpBias}
 	quantized, err := QuantizeWeights(wrapped, levels)
 	if err != nil {
+		log.ErrorContext("QuantizeBias", err, map[string]interface{}{"levels": levels})
 		return nil, err
 	}
 	return quantized[0], nil
@@ -101,6 +129,7 @@ func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats
 	stats := QuantizationStats{}
 
 	if len(original) == 0 || len(original[0]) == 0 {
+		log.Trace("ComputeQuantizationStats: empty input")
 		return stats
 	}
 
@@ -176,25 +205,35 @@ func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats
 		stats.PSNR = math.Inf(1) // Perfect reconstruction
 	}
 
+	log.Calculation("ComputeQuantizationStats", map[string]interface{}{
+		"numDistinct":  stats.NumDistinct,
+		"levelSpacing": stats.LevelSpacing,
+		"MSE":          stats.MSE,
+		"PSNR_dB":      stats.PSNR,
+	}, stats)
+
 	return stats
 }
 
 // AddGaussianNoise adds Gaussian noise to values with given standard deviation.
-// noiseLevel is specified as σ/μ (coefficient of variation).
+// noiseLevel is specified as the standard deviation σ (additive noise model).
+//
+// Physical Model:
+// This models read noise from thermal/shot noise in the analog readout circuitry.
+// The noise is additive (constant σ) rather than multiplicative, as thermal and shot
+// noise do not scale with signal amplitude.
 func AddGaussianNoise(values []float64, noiseLevel float64, rng *RandomSource) []float64 {
+	log.Trace("AddGaussianNoise: noiseLevel=%.4f, len=%d", noiseLevel, len(values))
+
 	if noiseLevel <= 0 {
 		return values
 	}
 
 	result := make([]float64, len(values))
 	for i, v := range values {
-		// Noise proportional to absolute value (multiplicative noise)
-		sigma := math.Abs(v) * noiseLevel
-		if sigma > 0 {
-			result[i] = v + rng.NormFloat64()*sigma
-		} else {
-			result[i] = v
-		}
+		// Additive Gaussian noise (models thermal/shot read noise)
+		// sigma is constant, not proportional to signal
+		result[i] = v + rng.NormFloat64()*noiseLevel
 	}
 	return result
 }

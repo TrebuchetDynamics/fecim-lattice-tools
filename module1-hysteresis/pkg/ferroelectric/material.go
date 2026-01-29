@@ -5,7 +5,15 @@ import (
 	"math"
 
 	"fecim-lattice-tools/config/physics"
+	"fecim-lattice-tools/shared/logging"
 )
+
+// Package-level logger for material calculations
+var matLog *logging.Logger
+
+func init() {
+	matLog = logging.NewLogger("material")
+}
 
 // HZOMaterial contains material parameters for Hafnium-Zirconium Oxide.
 //
@@ -489,7 +497,19 @@ func (m *HZOMaterial) GetNumLevels() int {
 
 // CoerciveVoltage returns the coercive voltage for a given thickness.
 func (m *HZOMaterial) CoerciveVoltage() float64 {
-	return m.Ec * m.Thickness
+	matLog.Input("CoerciveVoltage", map[string]interface{}{
+		"Ec":        m.Ec,
+		"thickness": m.Thickness,
+	})
+
+	voltage := m.Ec * m.Thickness
+
+	matLog.Calculation("CoerciveVoltage", map[string]interface{}{
+		"Ec":        m.Ec,
+		"thickness": m.Thickness,
+	}, voltage)
+
+	return voltage
 }
 
 // RemanentCharge returns the remanent charge per unit area.
@@ -506,8 +526,23 @@ func (m *HZOMaterial) Capacitance() float64 {
 // SwitchingEnergy returns the energy required for complete switching.
 // E = 2 * Pr * Ec * Volume
 func (m *HZOMaterial) SwitchingEnergy() float64 {
+	matLog.Input("SwitchingEnergy", map[string]interface{}{
+		"Pr":        m.Pr,
+		"Ec":        m.Ec,
+		"area":      m.Area,
+		"thickness": m.Thickness,
+	})
+
 	volume := m.Area * m.Thickness
-	return 2 * m.Pr * m.Ec * volume
+	energy := 2 * m.Pr * m.Ec * volume
+
+	matLog.Calculation("SwitchingEnergy", map[string]interface{}{
+		"volume": volume,
+		"Pr":     m.Pr,
+		"Ec":     m.Ec,
+	}, energy)
+
+	return energy
 }
 
 // SwitchingTime returns temperature-dependent switching time.
@@ -570,6 +605,11 @@ func (m *HZOMaterial) RetentionAtTime(t, T float64) float64 {
 //
 // This matches the Preisach model's polarizationToConductance() for consistency.
 func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
+	matLog.Input("DiscreteLevel", map[string]interface{}{
+		"level":       level,
+		"totalLevels": totalLevels,
+	})
+
 	if totalLevels <= 1 {
 		return (m.Gmin + m.Gmax) / 2 // Return midpoint for degenerate case
 	}
@@ -589,5 +629,14 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 	// FeFET conductance model: G = Gmin + (Gmax-Gmin) * (normalizedP + 1) / 2
 	// At P = -Ps (normalizedP = -1): G = Gmin
 	// At P = +Ps (normalizedP = +1): G = Gmax
-	return Gmin + (Gmax-Gmin)*(normalizedP+1)/2
+	conductance := Gmin + (Gmax-Gmin)*(normalizedP+1)/2
+
+	matLog.Calculation("DiscreteLevel", map[string]interface{}{
+		"level":       level,
+		"normalizedP": normalizedP,
+		"Gmin":        Gmin,
+		"Gmax":        Gmax,
+	}, conductance)
+
+	return conductance
 }

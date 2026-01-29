@@ -4,30 +4,68 @@ package compiler
 import (
 	"fmt"
 	"math"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+var log = logging.NewLogger("eda-compiler")
 
 // GenerateDesign is the main entry point.
 // Transforms configuration into a physical array design.
 // If config.ComputeConfig.InitialWeights is provided, performs mapping.
 // Otherwise, generates a blank initialized array.
 func GenerateDesign(config *ArrayConfig) (*ArrayDesign, error) {
+	log.Input("GenerateDesign", map[string]interface{}{
+		"mode":       config.Mode,
+		"arrayRows":  config.ArrayRows,
+		"arrayCols":  config.ArrayCols,
+		"levels":     config.Levels,
+		"hasWeights": config.ComputeConfig != nil && config.ComputeConfig.InitialWeights != nil,
+	})
+
+	var design *ArrayDesign
+	var err error
+
 	// Check for Compute Mode with Weights
-	if config.Mode == ModeCompute && 
-	   config.ComputeConfig != nil && 
+	if config.Mode == ModeCompute &&
+	   config.ComputeConfig != nil &&
 	   config.ComputeConfig.InitialWeights != nil {
-		return mapWeights(config)
+		design, err = mapWeights(config)
+	} else {
+		// Default: Generate Blank Array
+		design = GenerateBlank(config)
 	}
 
-	// Default: Generate Blank Array
-	return GenerateBlank(config), nil
+	if err != nil {
+		log.ErrorContext("GenerateDesign", err, map[string]interface{}{
+			"mode": config.Mode,
+		})
+		return nil, err
+	}
+
+	log.Calculation("GenerateDesign", map[string]interface{}{
+		"totalCells":  design.Stats.TotalCells,
+		"activeCells": design.Stats.ActiveCells,
+		"areaMM2":     design.Stats.AreaMM2,
+		"powerMW":     design.Stats.PowerMW,
+	}, design)
+
+	return design, nil
 }
 
 // GenerateBlank creates an initialized array without weights
 func GenerateBlank(config *ArrayConfig) *ArrayDesign {
+	log.Input("GenerateBlank", map[string]interface{}{
+		"rows":      config.ArrayRows,
+		"cols":      config.ArrayCols,
+		"cellPitch": config.CellPitch,
+		"rowHeight": config.RowHeight,
+	})
+
 	// Use config dimensions
 	rows := config.ArrayRows
 	cols := config.ArrayCols
-	
+
 	// Pre-allocate for performance
 	cells := make([]CellAssignment, 0, rows*cols)
 
@@ -51,7 +89,7 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign {
 	cellAreaMM2 := (config.CellPitch * config.RowHeight) * 1e-6
 	totalAreaMM2 := float64(rows*cols) * cellAreaMM2
 
-	return &ArrayDesign{
+	design := &ArrayDesign{
 		Config: config,
 		Cells:  cells,
 		Stats: DesignStats{
@@ -62,22 +100,46 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign {
 			ThroughputGOPS: 0.0,
 		},
 	}
+
+	log.Calculation("GenerateBlank", map[string]interface{}{
+		"totalCells": rows * cols,
+		"areaMM2":    totalAreaMM2,
+	}, design)
+
+	return design
 }
 
 // mapWeights handles the compute-mode mapping logic
 func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	weights := config.ComputeConfig.InitialWeights
-	
+
 	if len(weights) == 0 || len(weights[0]) == 0 {
-		return nil, fmt.Errorf("empty weight matrix provided")
+		err := fmt.Errorf("empty weight matrix provided")
+		log.ErrorContext("mapWeights", err, nil)
+		return nil, err
 	}
 
 	rows := len(weights)
 	cols := len(weights[0])
 
+	log.Input("mapWeights", map[string]interface{}{
+		"weightRows":     rows,
+		"weightCols":     cols,
+		"arrayRows":      config.ArrayRows,
+		"arrayCols":      config.ArrayCols,
+		"levels":         config.Levels,
+	})
+
 	if rows > config.ArrayRows || cols > config.ArrayCols {
-		return nil, fmt.Errorf("weights %dx%d exceed array %dx%d",
+		err := fmt.Errorf("weights %dx%d exceed array %dx%d",
 			rows, cols, config.ArrayRows, config.ArrayCols)
+		log.ErrorContext("mapWeights", err, map[string]interface{}{
+			"weightRows": rows,
+			"weightCols": cols,
+			"arrayRows":  config.ArrayRows,
+			"arrayCols":  config.ArrayCols,
+		})
+		return nil, err
 	}
 
 	// Find weight range for quantization
@@ -144,7 +206,7 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	
 	totalAreaMM2 := float64(config.ArrayRows * config.ArrayCols) * (config.CellPitch * config.RowHeight) * 1e-6
 
-	return &ArrayDesign{
+	design := &ArrayDesign{
 		Config: config,
 		Cells:  cells,
 		Stats: DesignStats{
@@ -158,7 +220,18 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 			WeightMin:      wMin,
 			WeightMax:      wMax,
 		},
-	}, nil
+	}
+
+	log.Calculation("mapWeights", map[string]interface{}{
+		"totalCells":  design.Stats.TotalCells,
+		"activeWeights": numWeights,
+		"levelsUsed":  len(levelsUsed),
+		"quantMSE":    mse,
+		"quantPSNR":   psnr,
+		"areaMM2":     totalAreaMM2,
+	}, design)
+
+	return design, nil
 }
 
 // Compile is the Legacy wrapper for backward compatibility

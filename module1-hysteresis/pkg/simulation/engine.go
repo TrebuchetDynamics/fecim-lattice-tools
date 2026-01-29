@@ -152,6 +152,15 @@ func (e *Engine) Step() {
 	e.state.Polarization = e.model.Update(e.state.ElectricField)
 	e.state.NormPol = e.model.NormalizedPolarization()
 
+	log.Calculation("Step", map[string]interface{}{
+		"time":    e.state.Time,
+		"voltage": e.state.Voltage,
+		"E_field": e.state.ElectricField,
+	}, map[string]interface{}{
+		"polarization": e.state.Polarization,
+		"normPol":      e.state.NormPol,
+	})
+
 	// Record history
 	e.recordHistory()
 

@@ -84,9 +84,8 @@ type App struct {
 	wrdPrevP       float64 // Previous polarization for energy calculation (E·dP integration)
 	wrdCycleEnergy float64 // Energy for current write/read cycle
 
-	// Write-Verify-Retry loop tracking
+	// Write-Verify-Retry loop tracking (retries indefinitely until target hit)
 	wrdRetryCount int // Current retry count for this target
-	wrdMaxRetries int // Maximum retries before giving up (set to 3)
 
 	// Phase transition tracking for logging
 	wrdResetStartP float64 // Polarization at start of RESET phase
@@ -346,7 +345,6 @@ func NewApp() *App {
 		waveform:         WaveformSine,
 		frequency:        0.5, // 0.5 Hz default
 		wrdTargetLevel:   28,  // Start high for dramatic first write
-		wrdMaxRetries:    3,   // Write-Verify-Retry: max 3 attempts per target
 		maxLogLines:      12,
 		logEntries:       make([]string, 0, 12),
 		lastLogPhase:     -1,
@@ -412,7 +410,6 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdPhase:         0,
 		wrdTargetLevel:   15,
 		wrdStartLevel:    15,
-		wrdMaxRetries:    3,    // Write-Verify-Retry: max 3 attempts per target
 		wrdBitsStored:    4.91,
 		manualTargetLevel: 15,
 	}

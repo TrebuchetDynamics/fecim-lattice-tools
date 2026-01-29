@@ -18,7 +18,7 @@ type ChargePump struct {
 
 // DefaultChargePump returns a charge pump for FeCIM write operations.
 func DefaultChargePump() *ChargePump {
-	return &ChargePump{
+	cp := &ChargePump{
 		InputVoltage:   1.0,     // 1V CMOS supply
 		OutputVoltage:  1.5,     // 1.5V write voltage
 		Stages:         2,       // 2-stage Dickson pump
@@ -27,6 +27,16 @@ func DefaultChargePump() *ChargePump {
 		FlyCapacitance: 100e-12, // 100 pF flying caps
 		Efficiency:     0.7,     // 70% efficiency
 	}
+	log.Calculation("DefaultChargePump", map[string]interface{}{
+		"input_voltage":   cp.InputVoltage,
+		"output_voltage":  cp.OutputVoltage,
+		"stages":          cp.Stages,
+		"clock_frequency": cp.ClockFrequency,
+		"load_current":    cp.LoadCurrent,
+		"fly_capacitance": cp.FlyCapacitance,
+		"efficiency":      cp.Efficiency,
+	}, cp)
+	return cp
 }
 
 // IdealOutputVoltage returns theoretical maximum output.
@@ -38,11 +48,26 @@ func (c *ChargePump) IdealOutputVoltage() float64 {
 
 // ActualOutputVoltage returns output considering losses.
 func (c *ChargePump) ActualOutputVoltage() float64 {
+	log.Input("ChargePump.ActualOutputVoltage", map[string]interface{}{
+		"stages":          c.Stages,
+		"load_current":    c.LoadCurrent,
+		"fly_capacitance": c.FlyCapacitance,
+		"clock_frequency": c.ClockFrequency,
+	})
+
 	// Account for diode drops, IR drops, etc.
 	vthDrop := 0.3 * float64(c.Stages) // ~0.3V per stage for MOS switches
 	irDrop := c.LoadCurrent / (c.FlyCapacitance * c.ClockFrequency)
+	idealVoltage := c.IdealOutputVoltage()
+	actualVoltage := idealVoltage - vthDrop - irDrop
 
-	return c.IdealOutputVoltage() - vthDrop - irDrop
+	log.Calculation("ChargePump.ActualOutputVoltage", map[string]interface{}{
+		"ideal_voltage": idealVoltage,
+		"vth_drop":      vthDrop,
+		"ir_drop":       irDrop,
+	}, actualVoltage)
+
+	return actualVoltage
 }
 
 // OutputRipple estimates peak-to-peak ripple voltage.
@@ -90,8 +115,20 @@ func (c *ChargePump) MaxCurrentCapability() float64 {
 
 // EnergyPerOperation estimates energy for one write voltage pulse.
 func (c *ChargePump) EnergyPerOperation(pulseDuration float64) float64 {
+	log.Input("ChargePump.EnergyPerOperation", map[string]interface{}{
+		"pulse_duration": pulseDuration,
+	})
+
 	// E = P * t
-	return c.PowerInput() * pulseDuration
+	power := c.PowerInput()
+	energy := power * pulseDuration
+
+	log.Calculation("ChargePump.EnergyPerOperation", map[string]interface{}{
+		"power":          power,
+		"pulse_duration": pulseDuration,
+	}, energy)
+
+	return energy
 }
 
 // NegativePump creates a negative voltage charge pump configuration.
@@ -120,7 +157,22 @@ func (c *ChargePump) Area() float64 {
 
 // SupportsLevel checks if pump can generate voltage for a given level.
 func (c *ChargePump) SupportsLevel(level int, maxLevel int) bool {
+	log.Input("ChargePump.SupportsLevel", map[string]interface{}{
+		"level":          level,
+		"max_level":      maxLevel,
+		"output_voltage": c.OutputVoltage,
+	})
+
 	// Calculate required voltage for this level
 	requiredV := c.OutputVoltage * float64(level) / float64(maxLevel)
-	return math.Abs(requiredV) <= math.Abs(c.ActualOutputVoltage())
+	actualV := c.ActualOutputVoltage()
+	supported := math.Abs(requiredV) <= math.Abs(actualV)
+
+	log.Calculation("ChargePump.SupportsLevel", map[string]interface{}{
+		"level":       level,
+		"required_v":  requiredV,
+		"actual_v":    actualV,
+	}, supported)
+
+	return supported
 }

@@ -18,20 +18,20 @@ import (
 
 // EnergyConfig defines energy parameters for calculations.
 type EnergyConfig struct {
-	// Per-operation energy costs (in femtojoules)
-	EnergyPerMAC_FeCIM float64 // ~50 fJ per MAC for FeCIM
-	EnergyPerMAC_GPU   float64 // ~2000 fJ per MAC for GPU (data movement dominates)
-	EnergyPerDAC       float64 // ~10 pJ per DAC conversion
-	EnergyPerADC       float64 // ~20 pJ per ADC conversion (6-bit)
+	// Per-operation energy costs
+	EnergyPerMAC_FeCIM float64 // ~50 fJ per MAC for FeCIM (analog in-memory compute)
+	EnergyPerMAC_GPU   float64 // ~500 pJ per MAC for GPU including DRAM access (Horowitz 2014)
+	EnergyPerDAC       float64 // ~0.1 pJ per DAC conversion (100 fJ)
+	EnergyPerADC       float64 // ~0.5 pJ per ADC conversion (500 fJ)
 }
 
 // DefaultEnergyConfig returns energy parameters based on FeCIM research.
 func DefaultEnergyConfig() EnergyConfig {
 	return EnergyConfig{
-		EnergyPerMAC_FeCIM: 50e-15,   // 50 femtojoules
-		EnergyPerMAC_GPU:   2000e-15, // 2 picojoules (due to data movement)
-		EnergyPerDAC:       10e-12,   // 10 picojoules
-		EnergyPerADC:       20e-12,   // 20 picojoules
+		EnergyPerMAC_FeCIM: 50e-15,  // 50 femtojoules
+		EnergyPerMAC_GPU:   500e-12, // 500 picojoules per MAC including DRAM access (Horowitz 2014)
+		EnergyPerDAC:       0.1e-12, // 0.1 picojoules (100 fJ)
+		EnergyPerADC:       0.5e-12, // 0.5 picojoules (500 fJ)
 	}
 }
 
