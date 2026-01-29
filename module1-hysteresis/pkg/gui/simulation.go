@@ -1372,12 +1372,16 @@ func (a *App) simulationLoop() {
 			a.wrdCycleEnergy += energyfJ
 		}
 
-		// Record history
-		a.eHistory = append(a.eHistory, a.electricField)
-		a.pHistory = append(a.pHistory, a.polarization)
-		if len(a.eHistory) > a.maxHistory {
-			a.eHistory = a.eHistory[1:]
-			a.pHistory = a.pHistory[1:]
+		// Record history (skip RESET phases in WRD mode to avoid visual spikes)
+		// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY
+		skipHistory := a.waveform == WaveformWriteReadDemo && a.wrdPhase <= 1
+		if !skipHistory {
+			a.eHistory = append(a.eHistory, a.electricField)
+			a.pHistory = append(a.pHistory, a.polarization)
+			if len(a.eHistory) > a.maxHistory {
+				a.eHistory = a.eHistory[1:]
+				a.pHistory = a.pHistory[1:]
+			}
 		}
 
 		// Copy data for UI update
