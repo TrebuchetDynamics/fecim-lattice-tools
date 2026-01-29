@@ -228,53 +228,6 @@ func (r *Renderer) RenderAdvantages(adv FeCIMAdvantage) string {
 	return sb.String()
 }
 
-// RenderSummary renders comparison summary.
-func (r *Renderer) RenderSummary(comparison ComparisonResult, adv FeCIMAdvantage) string {
-	var sb strings.Builder
-
-	sb.WriteString("\n")
-	sb.WriteString("╔══════════════════════════════════════════════════════════════════╗\n")
-	sb.WriteString("║                    COMPARISON SUMMARY                            ║\n")
-	sb.WriteString("╚══════════════════════════════════════════════════════════════════╝\n")
-	sb.WriteString("\n")
-
-	// Find FeCIM results
-	var fecimResult InferenceResult
-	var fecimDC DataCenterMetrics
-	for i, arch := range comparison.Architectures {
-		if arch.Name == "FeCIM CIM" {
-			fecimResult = comparison.Results[i]
-			fecimDC = comparison.DataCenter[i]
-		}
-	}
-
-	sb.WriteString(fmt.Sprintf("Workload: %s (%s MACs)\n\n", comparison.Workload.Name,
-		formatNumber(float64(comparison.Workload.TotalOps))))
-
-	sb.WriteString("FeCIM Key Metrics:\n")
-	sb.WriteString(strings.Repeat("─", 60) + "\n")
-	sb.WriteString(fmt.Sprintf("  Inference Latency:    %s\n", formatLatency(fecimResult.Latency)))
-	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", physics.FormatEnergyMJ(fecimResult.Energy)))
-	sb.WriteString(fmt.Sprintf("  Throughput:           %s\n", formatThroughput(fecimResult.Throughput)))
-	sb.WriteString(fmt.Sprintf("  Data Center Power:    %.1f kW\n", fecimDC.TotalPower))
-	sb.WriteString(fmt.Sprintf("  Annual TCO:           $%.0f\n", fecimDC.TCO))
-	sb.WriteString("\n")
-
-	sb.WriteString(fmt.Sprintf("vs CPU:  %.0fx energy, %.0fx throughput, %.0fx lower TCO\n",
-		adv.VsCPU.EnergyReduction, adv.VsCPU.ThroughputIncrease, adv.VsCPU.CostReduction))
-	sb.WriteString(fmt.Sprintf("vs GPU:  %.0fx energy, %.0fx smaller, %.0fx lower power\n",
-		adv.VsGPU.EnergyReduction, adv.VsGPU.AreaReduction, adv.VsGPU.PowerReduction))
-	sb.WriteString("\n")
-
-	// Dr. Tour quote
-	sb.WriteString("─────────────────────────────────────────────────────────────\n")
-	sb.WriteString("  \"This could lower the requirements in a data center\n")
-	sb.WriteString("   by 80 to 90%.\" - Dr. external research group\n")
-	sb.WriteString("─────────────────────────────────────────────────────────────\n")
-
-	return sb.String()
-}
-
 func (r *Renderer) makeAdvantageBar(advantage float64) string {
 	maxBar := 30
 	// Log scale for better visualization

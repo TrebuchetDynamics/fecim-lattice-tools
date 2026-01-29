@@ -129,28 +129,6 @@ func CustomArchitecture(name string, tops, power, area float64) *Architecture {
 	}
 }
 
-// CalculateEfficiency calculates efficiency metrics.
-func (a *Architecture) CalculateEfficiency() {
-	log.Input("CalculateEfficiency", map[string]interface{}{
-		"name":     a.Name,
-		"peakTOPS": a.PeakTOPS,
-		"tdp":      a.TOPSPerWatt,
-		"chipArea": a.ChipArea,
-	})
-
-	if a.TDP > 0 {
-		a.TOPSPerWatt = a.PeakTOPS / a.TDP
-	}
-	if a.ChipArea > 0 {
-		a.TOPSPerMM2 = a.PeakTOPS / a.ChipArea
-	}
-
-	log.Calculation("CalculateEfficiency", map[string]interface{}{
-		"topsPerWatt": a.TOPSPerWatt,
-		"topsPerMM2":  a.TOPSPerMM2,
-	}, nil)
-}
-
 // InferenceResult contains results from running inference on an architecture.
 type InferenceResult struct {
 	Architecture string  // Architecture name
