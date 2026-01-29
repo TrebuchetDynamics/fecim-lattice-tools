@@ -391,17 +391,20 @@ func (ca *CircuitsApp) updateModeButtons() {
 func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 	// Create tappable array canvas - larger size for better visualization
 	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
-	tappableArray.SetMinSize(fyne.NewSize(700, 500)) // Increased from 400x350 for better visibility
+	tappableArray.SetMinSize(fyne.NewSize(850, 600)) // Large canvas for detailed visualization
 	ca.sharedArrayCanvas = tappableArray.raster
 
 	// Cell info display
 	ca.sharedCellInfoLabel = widget.NewLabel("Click a cell to select")
 
-	// Array size info
-	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d | %d levels", ca.arrayRows, ca.arrayCols, ca.quantLevels))
+	// Array size info with capacity calculation
+	totalCells := ca.arrayRows * ca.arrayCols
+	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
+	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d (%d cells) | %d levels (~%.0f bits)",
+		ca.arrayRows, ca.arrayCols, totalCells, ca.quantLevels, bitCapacity))
 
-	// Legend: Blue-White-Red gradient, gold border for selected
-	legendLabel := widget.NewLabel("State: Low G (blue) → Mid (white) → High G (red) | Gold = Selected")
+	// Legend with energy info
+	legendLabel := widget.NewLabel("States: Low G (blue) → High G (red) | Energy: READ ~45fJ, WRITE ~55fJ, MVM ~50fJ/cell")
 	legendLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
@@ -634,11 +637,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := min(cellW, cellH)
-	if cellSize > 60 { // Increased from 40 for better visibility
-		cellSize = 60
+	if cellSize > 70 { // Larger cells for better state visibility
+		cellSize = 70
 	}
-	if cellSize < 16 { // Increased from 12 for better readability
-		cellSize = 16
+	if cellSize < 18 { // Readable minimum
+		cellSize = 18
 	}
 
 	gridW := cols * cellSize
@@ -731,6 +734,38 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	}
 	if is2T1R {
 		ca.drawColTransistors(img, offsetX, offsetY, cellSize, cols, gridW, gridH, w, h)
+	}
+
+	// Draw signal line labels (BL = Bit Line, WL = Word Line, SL = Source Line)
+	// BL label at top of grid
+	drawSimpleText(img, "BL", offsetX+gridW/2-6, offsetY-35, color.RGBA{100, 180, 255, 200})
+	// WL label at left of grid
+	drawSimpleText(img, "WL", offsetX-25, offsetY+gridH/2-3, color.RGBA{255, 180, 100, 200})
+	// SL label at bottom for 2T1R
+	if is2T1R {
+		drawSimpleText(img, "SL", offsetX+gridW/2-6, offsetY+gridH+45, color.RGBA{100, 220, 255, 200})
+	}
+
+	// Draw row indices on left side of array
+	for r := 0; r < rows; r++ {
+		y := offsetY + r*cellSize + cellSize/2 - 3
+		indexColor := color.RGBA{150, 150, 170, 200}
+		if r == selectedRow {
+			indexColor = color.RGBA{255, 220, 100, 255} // Highlight selected row
+		}
+		rowText := fmt.Sprintf("%d", r)
+		drawSimpleText(img, rowText, 5, y, indexColor)
+	}
+
+	// Draw column indices below array (above DAC boxes position)
+	for c := 0; c < cols; c++ {
+		x := offsetX + c*cellSize + cellSize/2 - 3
+		indexColor := color.RGBA{150, 150, 170, 200}
+		if c == selectedCol {
+			indexColor = color.RGBA{255, 220, 100, 255} // Highlight selected column
+		}
+		colText := fmt.Sprintf("%d", c)
+		drawSimpleText(img, colText, x, offsetY+gridH+5, indexColor)
 	}
 
 	// Draw cells
@@ -875,19 +910,26 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	drawSimpleText(img, "TIA", tiaX, offsetY-10, color.RGBA{220, 180, 100, 255})
 	drawSimpleText(img, "ADC", tiaX+tiaBoxW+4, offsetY-10, color.RGBA{130, 210, 170, 255})
 
-	// Operation classification title
+	// Operation classification title with prominent badge
 	opText := ca.deviceState.ClassifyOperation()
-	var opColor color.RGBA
+	var opColor, opBgColor color.RGBA
 	switch {
 	case opText == "WRITE":
 		opColor = color.RGBA{255, 200, 100, 255}
+		opBgColor = color.RGBA{80, 60, 30, 200}
 	case opText == "READ":
 		opColor = color.RGBA{100, 220, 255, 255}
+		opBgColor = color.RGBA{30, 60, 80, 200}
 	case opText == "COMPUTE (MVM)":
 		opColor = color.RGBA{200, 150, 255, 255}
+		opBgColor = color.RGBA{50, 40, 80, 200}
 	default:
 		opColor = color.RGBA{150, 150, 150, 255}
+		opBgColor = color.RGBA{40, 40, 50, 200}
 	}
+	// Draw background badge for operation mode
+	opBoxW := len(opText)*6 + 12
+	drawRoundedRect(img, 5, 3, opBoxW, 16, 4, opBgColor)
 	drawSimpleText(img, opText, 10, 8, opColor)
 
 	// Architecture badge
@@ -905,6 +947,91 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		archColor = color.RGBA{220, 150, 100, 255}
 	}
 	drawSimpleText(img, archText, w-len(archText)*6-10, 8, archColor)
+
+	// Draw energy/timing info in top-right corner (below architecture badge)
+	mode := ca.deviceState.GetOperationMode()
+	var energyText, timingText string
+	var energyColor color.RGBA
+	switch mode {
+	case OpModeRead:
+		energyText = "~45fJ"
+		timingText = "65ns"
+		energyColor = color.RGBA{100, 200, 255, 200}
+	case OpModeWrite:
+		energyText = "~55fJ"
+		timingText = "170ns"
+		energyColor = color.RGBA{255, 180, 100, 200}
+	case OpModeCompute:
+		// MVM energy scales with active cells
+		activeCells := 0
+		activeRows := 0
+		activeCols := 0
+		for r := 0; r < rows; r++ {
+			if ca.deviceState.IsRowActive(r) {
+				activeRows++
+				for c := 0; c < cols; c++ {
+					if ca.deviceState.GetDACVoltage(c) > 0.01 {
+						activeCells++
+					}
+				}
+			}
+		}
+		for c := 0; c < cols; c++ {
+			if ca.deviceState.GetDACVoltage(c) > 0.01 {
+				activeCols++
+			}
+		}
+		energyFJ := 50 * activeCells // ~50fJ per cell
+		energyText = fmt.Sprintf("~%dfJ", energyFJ)
+		timingText = fmt.Sprintf("%d×%d=%d", activeRows, activeCols, activeCells)
+		energyColor = color.RGBA{200, 150, 255, 200}
+	default:
+		energyText = ""
+		timingText = ""
+	}
+	if energyText != "" {
+		drawSimpleText(img, energyText, w-50, 22, energyColor)
+		drawSimpleText(img, timingText, w-50, 34, color.RGBA{150, 150, 170, 180})
+	}
+
+	// Draw sneak path indicators for passive (0T1R) mode
+	// Sneak currents flow through half-selected cells, causing read errors
+	if arch == sharedwidgets.Architecture0T1R && ca.deviceState != nil {
+		sneakColor := color.RGBA{255, 100, 100, 100} // Semi-transparent red for sneak paths
+		selectedRow := ca.deviceState.GetSelectedRow()
+		selectedCol := ca.deviceState.GetSelectedCol()
+		voltage := ca.deviceState.GetDACVoltage(selectedCol)
+
+		// Only show sneak paths when there's active voltage and in READ mode
+		if voltage > 0.05 && ca.deviceState.GetOperationMode() == OpModeRead {
+			// Draw diagonal sneak path indicators (L-shaped paths through half-selected cells)
+			for r := 0; r < rows; r++ {
+				if r == selectedRow {
+					continue // Skip the target row
+				}
+				for c := 0; c < cols; c++ {
+					if c == selectedCol {
+						continue // Skip the target column
+					}
+					// Draw small diagonal indicator in corner of sneak path cells
+					cx := offsetX + c*cellSize + cellSize - 6
+					cy := offsetY + r*cellSize + 4
+					// Draw small "S" marker for sneak path
+					for dx := 0; dx < 4; dx++ {
+						for dy := 0; dy < 4; dy++ {
+							if (dx+dy)%2 == 0 { // Dashed pattern
+								if cx+dx >= 0 && cx+dx < w && cy+dy >= 0 && cy+dy < h {
+									img.Set(cx+dx, cy+dy, sneakColor)
+								}
+							}
+						}
+					}
+				}
+			}
+			// Draw "SNEAK PATHS" warning label
+			drawSimpleText(img, "0T1R: Sneak paths active", 10, h-15, color.RGBA{255, 150, 100, 200})
+		}
+	}
 
 	// Draw current flow indicators during active operation
 	if animStep >= 2 {
@@ -982,31 +1109,87 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
+	// Draw color legend in bottom-left corner
+	legendY := h - 60
+	legendX := 5
+
+	// Title
+	drawSimpleText(img, "Legend:", legendX, legendY, color.RGBA{200, 200, 220, 255})
+
+	// Cell conductance gradient: Low G → High G
+	legendY += 12
+	drawSimpleText(img, "G:", legendX, legendY, color.RGBA{150, 150, 170, 200})
+	// Draw gradient boxes
+	boxW := 12
+	for i := 0; i < 5; i++ {
+		level := i * (levels - 1) / 4
+		c := levelToColor(level, levels)
+		drawRect(img, legendX+15+i*boxW, legendY-2, boxW-2, 10, c)
+	}
+	drawSimpleText(img, "Lo", legendX+15, legendY+10, color.RGBA{100, 150, 255, 200})
+	drawSimpleText(img, "Hi", legendX+15+4*boxW, legendY+10, color.RGBA{255, 100, 100, 200})
+
+	// DAC voltage zones
+	legendY += 22
+	drawSimpleText(img, "V:", legendX, legendY, color.RGBA{150, 150, 170, 200})
+	// Read zone - blue
+	drawRect(img, legendX+15, legendY-2, boxW, 10, color.RGBA{60, 140, 200, 255})
+	drawSimpleText(img, "R", legendX+15+2, legendY+10, color.RGBA{100, 180, 255, 200})
+	// Caution zone - yellow
+	drawRect(img, legendX+15+boxW+2, legendY-2, boxW, 10, color.RGBA{200, 180, 60, 255})
+	drawSimpleText(img, "!", legendX+15+boxW+4, legendY+10, color.RGBA{255, 220, 100, 200})
+	// Write zone - red
+	drawRect(img, legendX+15+2*(boxW+2), legendY-2, boxW, 10, color.RGBA{220, 100, 60, 255})
+	drawSimpleText(img, "W", legendX+15+2*(boxW+2)+2, legendY+10, color.RGBA{255, 140, 100, 200})
+
+	// Draw operation hint in bottom-right corner
+	hintY := h - 20
+	hintX := w - 200
+	var hintText string
+	hintColor := color.RGBA{120, 140, 160, 200}
+	switch ca.deviceState.GetOperationMode() {
+	case OpModeRead:
+		hintText = "READ: Sense cell conductance"
+		hintColor = color.RGBA{100, 180, 220, 200}
+	case OpModeWrite:
+		hintText = "WRITE: Program cell state"
+		hintColor = color.RGBA{220, 160, 80, 200}
+	case OpModeCompute:
+		hintText = "MVM: y = W * x"
+		hintColor = color.RGBA{180, 140, 220, 200}
+	}
+	if hintText != "" {
+		drawSimpleText(img, hintText, hintX, hintY, hintColor)
+	}
+
 	return img
 }
 
 // drawRowTransistors draws the row transistors for 1T1R/2T1R architecture
+// Enhanced with clearer MOSFET symbols and ON/OFF indicators
 func (ca *CircuitsApp) drawRowTransistors(img *image.RGBA, offsetX, offsetY, cellSize, rows, gridH, w, h int) {
 	for r := 0; r < rows; r++ {
 		ty := offsetY + r*cellSize + cellSize/2
-		tx := offsetX - 28
+		tx := offsetX - 35 // Moved left for larger symbol
 
 		transistorOn := ca.deviceState.IsRowActive(r)
 
-		var bodyCol, gateCol, channelCol color.RGBA
+		var bodyCol, gateCol, channelCol, terminalCol color.RGBA
 		if transistorOn {
-			bodyCol = color.RGBA{60, 200, 80, 255}
-			gateCol = color.RGBA{100, 255, 120, 255}
+			bodyCol = color.RGBA{60, 200, 80, 255}    // Green body when ON
+			gateCol = color.RGBA{100, 255, 120, 255}  // Bright green gate
 			channelCol = color.RGBA{80, 220, 100, 255}
+			terminalCol = color.RGBA{150, 255, 150, 255}
 		} else {
-			bodyCol = color.RGBA{50, 50, 60, 255}
-			gateCol = color.RGBA{70, 70, 80, 255}
-			channelCol = color.RGBA{40, 40, 50, 255}
+			bodyCol = color.RGBA{60, 60, 70, 255}
+			gateCol = color.RGBA{90, 90, 100, 255}
+			channelCol = color.RGBA{50, 50, 60, 255}
+			terminalCol = color.RGBA{100, 100, 110, 255}
 		}
 
-		// Draw MOSFET body
+		// Draw MOSFET body (larger, 8x12 rectangle)
 		for dy := -6; dy <= 6; dy++ {
-			for dx := 0; dx < 3; dx++ {
+			for dx := 0; dx < 5; dx++ {
 				px, py := tx+dx, ty+dy
 				if px >= 0 && px < w && py >= 0 && py < h {
 					img.Set(px, py, bodyCol)
@@ -1014,54 +1197,93 @@ func (ca *CircuitsApp) drawRowTransistors(img *image.RGBA, offsetX, offsetY, cel
 			}
 		}
 
-		// Draw gate
-		gateX := tx - 5
+		// Draw gate (thicker, 2px wide)
+		gateX := tx - 4
 		for dy := -8; dy <= 8; dy++ {
 			py := ty + dy
-			if gateX >= 0 && gateX < w && py >= 0 && py < h {
+			if gateX >= 0 && gateX+1 < w && py >= 0 && py < h {
 				img.Set(gateX, py, gateCol)
+				img.Set(gateX+1, py, gateCol)
 			}
 		}
 
-		// Draw channel
-		for dx := 3; dx < 18; dx++ {
+		// Draw source terminal (top)
+		for dx := -2; dx <= 2; dx++ {
+			py := ty - 8
+			px := tx + 2 + dx
+			if px >= 0 && px < w && py >= 0 && py < h {
+				img.Set(px, py, terminalCol)
+				img.Set(px, py-1, terminalCol)
+			}
+		}
+
+		// Draw drain terminal (bottom)
+		for dx := -2; dx <= 2; dx++ {
+			py := ty + 8
+			px := tx + 2 + dx
+			if px >= 0 && px < w && py >= 0 && py < h {
+				img.Set(px, py, terminalCol)
+				img.Set(px, py+1, terminalCol)
+			}
+		}
+
+		// Draw channel (connecting to array)
+		for dx := 5; dx < 25; dx++ {
 			px := tx + dx
 			if px >= 0 && px < w {
 				img.Set(px, ty, channelCol)
+				if transistorOn {
+					img.Set(px, ty+1, channelCol) // Thicker when ON
+				}
 			}
 		}
 
-		// ON indicator
+		// ON/OFF indicator with label
 		if transistorOn {
-			drawGlowCircle(img, tx+1, ty, 2, color.RGBA{150, 255, 150, 255}, color.RGBA{100, 200, 100, 80})
+			drawGlowCircle(img, tx+2, ty, 3, color.RGBA{150, 255, 150, 255}, color.RGBA{100, 200, 100, 100})
+		} else {
+			// Draw X for OFF state
+			for d := -2; d <= 2; d++ {
+				px1, py1 := tx+2+d, ty+d
+				px2, py2 := tx+2+d, ty-d
+				if px1 >= 0 && px1 < w && py1 >= 0 && py1 < h {
+					img.Set(px1, py1, color.RGBA{150, 80, 80, 200})
+				}
+				if px2 >= 0 && px2 < w && py2 >= 0 && py2 < h {
+					img.Set(px2, py2, color.RGBA{150, 80, 80, 200})
+				}
+			}
 		}
 	}
 }
 
 // drawColTransistors draws the column transistors for 2T1R architecture
+// Enhanced with clearer MOSFET symbols (horizontal orientation)
 func (ca *CircuitsApp) drawColTransistors(img *image.RGBA, offsetX, offsetY, cellSize, cols, gridW, gridH, w, h int) {
 	for c := 0; c < cols; c++ {
 		tx := offsetX + c*cellSize + cellSize/2
-		ty := offsetY + gridH + 20
+		ty := offsetY + gridH + 25 // Moved down slightly
 
 		// In 2T1R, column transistors are controlled by CSL
 		// For simplicity, all column transistors are ON when computing
 		transistorOn := ca.deviceState.GetWLMode() == WLAll || c == ca.deviceState.GetSelectedCol()
 
-		var bodyCol, gateCol, channelCol color.RGBA
+		var bodyCol, gateCol, channelCol, terminalCol color.RGBA
 		if transistorOn {
-			bodyCol = color.RGBA{60, 180, 200, 255}
-			gateCol = color.RGBA{100, 220, 255, 255}
+			bodyCol = color.RGBA{60, 180, 200, 255}    // Cyan body when ON
+			gateCol = color.RGBA{100, 220, 255, 255}   // Bright cyan gate
 			channelCol = color.RGBA{80, 200, 220, 255}
+			terminalCol = color.RGBA{150, 230, 255, 255}
 		} else {
-			bodyCol = color.RGBA{50, 50, 60, 255}
-			gateCol = color.RGBA{70, 70, 80, 255}
-			channelCol = color.RGBA{40, 40, 50, 255}
+			bodyCol = color.RGBA{60, 60, 70, 255}
+			gateCol = color.RGBA{90, 90, 100, 255}
+			channelCol = color.RGBA{50, 50, 60, 255}
+			terminalCol = color.RGBA{100, 100, 110, 255}
 		}
 
-		// Draw MOSFET body (horizontal)
+		// Draw MOSFET body (horizontal, larger)
 		for dx := -6; dx <= 6; dx++ {
-			for dy := 0; dy < 3; dy++ {
+			for dy := 0; dy < 5; dy++ {
 				px, py := tx+dx, ty+dy
 				if px >= 0 && px < w && py >= 0 && py < h {
 					img.Set(px, py, bodyCol)
@@ -1069,26 +1291,62 @@ func (ca *CircuitsApp) drawColTransistors(img *image.RGBA, offsetX, offsetY, cel
 			}
 		}
 
-		// Draw gate
-		gateY := ty + 5
+		// Draw gate (thicker)
+		gateY := ty + 7
 		for dx := -8; dx <= 8; dx++ {
 			px := tx + dx
-			if px >= 0 && px < w && gateY >= 0 && gateY < h {
+			if px >= 0 && px < w && gateY >= 0 && gateY+1 < h {
 				img.Set(px, gateY, gateCol)
+				img.Set(px, gateY+1, gateCol)
 			}
 		}
 
-		// Draw channel
-		for dy := -15; dy < 0; dy++ {
+		// Draw left terminal
+		for dy := -2; dy <= 2; dy++ {
+			px := tx - 8
+			py := ty + 2 + dy
+			if px >= 0 && px < w && py >= 0 && py < h {
+				img.Set(px, py, terminalCol)
+				img.Set(px-1, py, terminalCol)
+			}
+		}
+
+		// Draw right terminal
+		for dy := -2; dy <= 2; dy++ {
+			px := tx + 8
+			py := ty + 2 + dy
+			if px >= 0 && px < w && py >= 0 && py < h {
+				img.Set(px, py, terminalCol)
+				img.Set(px+1, py, terminalCol)
+			}
+		}
+
+		// Draw channel (connecting to array above)
+		for dy := -20; dy < 0; dy++ {
 			py := ty + dy
 			if tx >= 0 && tx < w && py >= 0 && py < h {
 				img.Set(tx, py, channelCol)
+				if transistorOn {
+					img.Set(tx+1, py, channelCol) // Thicker when ON
+				}
 			}
 		}
 
-		// ON indicator
+		// ON/OFF indicator
 		if transistorOn {
-			drawGlowCircle(img, tx, ty+1, 2, color.RGBA{150, 220, 255, 255}, color.RGBA{100, 180, 200, 80})
+			drawGlowCircle(img, tx, ty+2, 3, color.RGBA{150, 230, 255, 255}, color.RGBA{100, 180, 200, 100})
+		} else {
+			// Draw X for OFF state
+			for d := -2; d <= 2; d++ {
+				px1, py1 := tx+d, ty+2+d
+				px2, py2 := tx+d, ty+2-d
+				if px1 >= 0 && px1 < w && py1 >= 0 && py1 < h {
+					img.Set(px1, py1, color.RGBA{150, 80, 80, 200})
+				}
+				if px2 >= 0 && px2 < w && py2 >= 0 && py2 < h {
+					img.Set(px2, py2, color.RGBA{150, 80, 80, 200})
+				}
+			}
 		}
 	}
 }
