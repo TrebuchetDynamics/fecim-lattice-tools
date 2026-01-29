@@ -25,11 +25,8 @@ import (
 )
 
 // Package-level logger for hysteresis GUI
+// Initialized in run() after EnableFileLogging() is called in main
 var log *logging.Logger
-
-func init() {
-	log = logging.NewLogger("hysteresis")
-}
 
 // abs returns absolute value of int
 func abs(x int) int {
@@ -418,6 +415,11 @@ func NewAppWithMaterial(materialName string) *App {
 }
 
 func (a *App) run() error {
+	// Initialize logger here (after EnableFileLogging() has been called in main)
+	if log == nil {
+		log = logging.NewLogger("hysteresis")
+	}
+
 	a.fyneApp = app.New()
 	a.fyneApp.Settings().SetTheme(&feCIMTheme{})
 

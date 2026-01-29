@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/shared/logging"
 )
 
 // EmbeddedApp holds the state for an embedded demo instance
@@ -49,6 +51,11 @@ func NewEmbeddedApp() *EmbeddedApp {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	// Initialize logger here (after EnableFileLogging() has been called in main)
+	if log == nil {
+		log = logging.NewLogger("hysteresis")
+	}
+
 	e.fyneApp = fyneApp
 	e.mainWindow = parentWindow
 
