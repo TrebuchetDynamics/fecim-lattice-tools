@@ -15,7 +15,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )

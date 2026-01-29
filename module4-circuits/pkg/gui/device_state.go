@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 // OperationMode represents the current operation mode (legacy, kept for compatibility)

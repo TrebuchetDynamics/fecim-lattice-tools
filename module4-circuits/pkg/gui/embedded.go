@@ -5,7 +5,7 @@ package gui
 import (
 	"fyne.io/fyne/v2"
 
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

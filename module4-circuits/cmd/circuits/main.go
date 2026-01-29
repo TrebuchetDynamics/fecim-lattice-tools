@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 func main() {

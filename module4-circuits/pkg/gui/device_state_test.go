@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 const testEpsilon = 1e-6

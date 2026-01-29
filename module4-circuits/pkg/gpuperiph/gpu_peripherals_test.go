@@ -1,4 +1,4 @@
-package peripherals
+package gpuperiph
 
 import (
 	"math"

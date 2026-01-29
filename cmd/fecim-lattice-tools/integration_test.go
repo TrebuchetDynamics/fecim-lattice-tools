@@ -10,7 +10,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/simulation"
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/core"
-	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 // =============================================================================

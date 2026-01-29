@@ -1,5 +1,5 @@
-// Package peripherals provides GPU-accelerated peripheral circuit simulation.
-package peripherals
+// Package gpuperiph provides GPU-accelerated peripheral circuit simulation.
+package gpuperiph
 
 import (
 	"encoding/binary"
