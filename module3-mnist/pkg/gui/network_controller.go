@@ -10,6 +10,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // NetworkController manages the neural network state and operations.
@@ -38,8 +39,12 @@ type NetworkController struct {
 
 // NewNetworkController creates a new network controller.
 func NewNetworkController(inputSize, hiddenSize, outputSize int) *NetworkController {
+	dataDir := utils.FindModuleDataDir("module3-mnist", "pretrained_weights.json")
+	if dataDir == "" {
+		dataDir = "module3-mnist/data" // Default fallback
+	}
 	nc := &NetworkController{
-		dataDir:             findDataDir(),
+		dataDir:             dataDir,
 		currentQATLevel:     FeCIMDefaultLevels,
 		warnedMissingLevels: make(map[int]bool),
 	}

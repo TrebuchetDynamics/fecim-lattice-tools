@@ -21,6 +21,7 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/utils"
 )
 
 var debug *logging.Logger
@@ -127,7 +128,10 @@ func NewMNISTApp() *MNISTApp {
 	debug.Println("NewMNISTApp: Applied FeCIM theme")
 
 	// Find data directory
-	ma.dataDir = findDataDir()
+	ma.dataDir = utils.FindModuleDataDir("module3-mnist", "pretrained_weights.json")
+	if ma.dataDir == "" {
+		ma.dataDir = "module3-mnist/data" // Default fallback
+	}
 
 	// Create crossbar arrays for layers
 	// Layer 1: hidden x 784 (transposed for MVM)
@@ -175,36 +179,6 @@ func NewMNISTApp() *MNISTApp {
 
 	debug.Println("NewMNISTApp: Initialization complete")
 	return ma
-}
-
-// findDataDir locates the module3-mnist/data directory.
-// It verifies the directory contains expected MNIST files (pretrained_weights.json).
-func findDataDir() string {
-	// Try common locations - prioritize module3-mnist/data paths
-	paths := []string{
-		"module3-mnist/data",
-		"data",
-		"../data",
-		"../../module3-mnist/data",
-		"../module3-mnist/data",
-	}
-
-	// Look for a directory that contains MNIST weights
-	for _, p := range paths {
-		weightsPath := filepath.Join(p, "pretrained_weights.json")
-		if _, err := os.Stat(weightsPath); err == nil {
-			return p
-		}
-	}
-
-	// Fallback: return first existing directory
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-
-	return "module3-mnist/data" // Default
 }
 
 // Run starts the GUI application.

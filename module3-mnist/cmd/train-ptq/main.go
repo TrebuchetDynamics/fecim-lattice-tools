@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // Network is a simple 2-layer network with per-layer quantization support
@@ -375,7 +376,7 @@ func main() {
 	fmt.Println("Training FP32 weights, then evaluating with different quantization per layer")
 	fmt.Println("")
 
-	dataDir := findDataDir()
+	dataDir := utils.FindModuleDataDir("module3-mnist", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
 		fmt.Println("Error: Could not find MNIST data directory")
 		os.Exit(1)
@@ -499,17 +500,3 @@ func main() {
 	fmt.Println("\nDone!")
 }
 
-func findDataDir() string {
-	paths := []string{
-		"module3-mnist/data",
-		"../module3-mnist/data",
-		"../../module3-mnist/data",
-		"data",
-	}
-	for _, p := range paths {
-		if _, err := os.Stat(filepath.Join(p, "train-images-idx3-ubyte.gz")); err == nil {
-			return p
-		}
-	}
-	return ""
-}

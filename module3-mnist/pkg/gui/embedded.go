@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
+
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // EmbeddedMNISTApp holds the state for an embedded MNIST demo instance
@@ -22,7 +24,10 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	ma := &MNISTApp{}
 
 	// Find data directory
-	ma.dataDir = findDataDir()
+	ma.dataDir = utils.FindModuleDataDir("module3-mnist", "pretrained_weights.json")
+	if ma.dataDir == "" {
+		ma.dataDir = "module3-mnist/data" // Default fallback
+	}
 
 	// Create crossbar arrays for layers
 	// Layer 1: hidden x 784 (transposed for MVM)

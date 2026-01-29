@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/shared/utils"
 	sharedWidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -59,7 +60,7 @@ type docEntry struct {
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
 	app.window = window
-	app.docsPath = findDocsPath()
+	app.docsPath = utils.FindDirectory("docs")
 
 	// Initialize search index
 	app.searchIndex = NewSearchIndex(app.docsPath)
@@ -449,35 +450,6 @@ func (app *EmbeddedDocsApp) scanEntry(path string, info os.DirEntry) *docEntry {
 	}
 
 	return nil
-}
-
-// findDocsPath locates the docs directory
-func findDocsPath() string {
-	// Try relative to working directory
-	candidates := []string{
-		"docs",
-		"../docs",
-		"../../docs",
-	}
-
-	// Also try relative to executable
-	if exe, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(exe)
-		candidates = append(candidates,
-			filepath.Join(exeDir, "docs"),
-			filepath.Join(exeDir, "..", "docs"),
-		)
-	}
-
-	for _, candidate := range candidates {
-		if abs, err := filepath.Abs(candidate); err == nil {
-			if info, err := os.Stat(abs); err == nil && info.IsDir() {
-				return abs
-			}
-		}
-	}
-
-	return ""
 }
 
 // Start is called when this demo tab is selected

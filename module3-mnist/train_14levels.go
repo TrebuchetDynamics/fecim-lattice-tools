@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/utils"
 )
 
 const (
@@ -303,21 +304,6 @@ func (n *Network) Train(trainImages, testImages [][]float64, trainLabels, testLa
 	}
 }
 
-func findDataDir() string {
-	paths := []string{
-		"module3-mnist/data",
-		"../module3-mnist/data",
-		"../../module3-mnist/data",
-		"data",
-	}
-	for _, p := range paths {
-		if _, err := os.Stat(filepath.Join(p, "train-images-idx3-ubyte.gz")); err == nil {
-			return p
-		}
-	}
-	return ""
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -326,7 +312,7 @@ func main() {
 	fmt.Println("Target epochs: 10 and 20")
 	fmt.Println("")
 
-	dataDir := findDataDir()
+	dataDir := utils.FindModuleDataDir("module3-mnist", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
 		fmt.Println("Error: Could not find MNIST data directory")
 		os.Exit(1)
