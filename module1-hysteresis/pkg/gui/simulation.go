@@ -519,23 +519,15 @@ func (a *App) interpolateCalibrations(tempK, lowerTemp, upperTemp float64, lower
 		if i < len(lowerCal.RelaxCompUp) && i < len(upperCal.RelaxCompUp) {
 			a.relaxCompUp[i] = lowerCal.RelaxCompUp[i]*(1-t) + upperCal.RelaxCompUp[i]*t
 		} else {
-			// Default to parabolic profile if relax comp not available
-			maxLvl := a.numLevels - 1
-			if maxLvl < 1 {
-				maxLvl = 1
-			}
-			normalizedPos := float64(i) / float64(maxLvl)
-			a.relaxCompUp[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+			// Static compensation removed - rely on adaptive system
+			// No physics justification for static overshoot in quasistatic regime
+			a.relaxCompUp[i] = 0.0
 		}
 		if i < len(lowerCal.RelaxCompDown) && i < len(upperCal.RelaxCompDown) {
 			a.relaxCompDown[i] = lowerCal.RelaxCompDown[i]*(1-t) + upperCal.RelaxCompDown[i]*t
 		} else {
-			maxLvl := a.numLevels - 1
-			if maxLvl < 1 {
-				maxLvl = 1
-			}
-			normalizedPos := float64(i) / float64(maxLvl)
-			a.relaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+			// Static compensation removed - rely on adaptive system
+			a.relaxCompDown[i] = 0.0
 		}
 
 		// Reset error tracking for interpolated calibration
@@ -1813,11 +1805,11 @@ func (a *App) calibrateLevels() {
 		a.calibDownLow[i] = -Ec * 2.0
 		a.calibDownHigh[i] = -Ec * 0.3
 
-		// Initialize relaxation compensation with level-dependent parabolic profile
-		// Middle levels experience more relaxation (peak 5% overshoot at mid-level)
-		normalizedPos := float64(i) / float64(maxLevel)
-		a.relaxCompUp[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos) // Peak at 0.5, zero at edges
-		a.relaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+		// No static relaxation compensation - not needed in quasistatic Preisach simulation.
+		// Switching time (10ns) is negligible vs pulse duration (300ms), so no drift occurs.
+		// The adaptive runtime feedback system handles any corrections needed.
+		a.relaxCompUp[i] = 0.0
+		a.relaxCompDown[i] = 0.0
 	}
 
 	// Helper function to test what level results from a given field
