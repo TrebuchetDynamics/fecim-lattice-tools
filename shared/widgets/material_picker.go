@@ -47,15 +47,16 @@ var materialColumns = []struct {
 	Description string
 	Models      string // [P] for Preisach
 }{
-	{"Name", 180, "Material name", ""},
+	{"Name", 160, "Material name", ""},
 	{"States", 70, "Number of analog states (bits/cell)", ""},
-	{"Pr", 90, "Remanent polarization (µC/cm²)", "[P]"},
-	{"Ps", 90, "Saturation polarization (µC/cm²)", "[P]"},
-	{"Ec", 90, "Coercive field (MV/cm)", "[P]"},
-	{"τ", 80, "Switching time", "[P]"},
-	{"Tc", 100, "Curie temperature", "[P]"},
-	{"Endurance", 100, "Write cycle endurance", ""},
-	{"Thickness", 80, "Film thickness (nm)", "[P]"},
+	{"Pr", 85, "Remanent polarization (µC/cm²)", "[P]"},
+	{"Ps", 85, "Saturation polarization (µC/cm²)", "[P]"},
+	{"Ec", 85, "Coercive field (MV/cm)", "[P]"},
+	{"τ", 70, "Switching time", "[P]"},
+	{"Tc", 80, "Curie temperature", "[P]"},
+	{"Endurance", 90, "Write cycle endurance", ""},
+	{"Thickness", 70, "Film thickness (nm)", "[P]"},
+	{"Reference", 200, "Data source / citation", ""},
 }
 
 // NewMaterialPicker creates a new material picker widget.
@@ -218,6 +219,11 @@ func (mp *MaterialPicker) getCellValue(row, col int) string {
 		return FormatEndurance(mat.EnduranceCycles)
 	case 8: // Thickness
 		return FormatThickness(mat.ThicknessM)
+	case 9: // Reference
+		if mat.Reference != "" {
+			return TruncateString(mat.Reference, 35)
+		}
+		return "—"
 	default:
 		return ""
 	}
@@ -351,7 +357,7 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns the minimum size for the picker.
 func (mp *MaterialPicker) MinSize() fyne.Size {
-	return fyne.NewSize(950, 450)
+	return fyne.NewSize(1100, 450)
 }
 
 // ShowMaterialPicker displays the material picker in a modal dialog.
@@ -377,7 +383,7 @@ func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected
 		parent,
 	)
 
-	d.Resize(fyne.NewSize(1000, 500))
+	d.Resize(fyne.NewSize(1150, 500))
 	d.Show()
 }
 

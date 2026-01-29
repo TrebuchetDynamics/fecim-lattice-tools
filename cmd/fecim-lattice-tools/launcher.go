@@ -242,38 +242,38 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, subtitle)
 
 	// UI-004: Add sequence indicator (X/6) on all cards
-	seqWidth := float32(50) * heightScale
-	seqHeight := float32(22) * heightScale
-	seqBg := canvas.NewRectangle(color.RGBA{0, 80, 120, 220})
-	seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
-	seqBg.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale, 10*heightScale))
-	seqBg.CornerRadius = 4 * heightScale
-	r.objects = append(r.objects, seqBg)
+	// seqWidth := float32(50) * heightScale
+	// seqHeight := float32(22) * heightScale
+	// seqBg := canvas.NewRectangle(color.RGBA{0, 80, 120, 220})
+	// seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
+	// seqBg.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale, 10*heightScale))
+	// seqBg.CornerRadius = 4 * heightScale
+	// r.objects = append(r.objects, seqBg)
 
-	seqTextSize := float32(12) * heightScale
-	seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{255, 255, 255, 255})
-	seqText.TextSize = seqTextSize
-	seqText.TextStyle = fyne.TextStyle{Bold: true}
-	seqText.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale+seqWidth/2-seqTextSize*1.2, 10*heightScale+seqHeight/2-seqTextSize*0.6))
-	r.objects = append(r.objects, seqText)
+	// seqTextSize := float32(12) * heightScale
+	// seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{255, 255, 255, 255})
+	// seqText.TextSize = seqTextSize
+	// seqText.TextStyle = fyne.TextStyle{Bold: true}
+	// seqText.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale+seqWidth/2-seqTextSize*1.2, 10*heightScale+seqHeight/2-seqTextSize*0.6))
+	// r.objects = append(r.objects, seqText)
 
 	// UI-004: Add "START HERE" badge for module 1
-	if info.Number == 1 {
-		startWidth := float32(100) * heightScale
-		startHeight := float32(24) * heightScale
-		startBg := canvas.NewRectangle(color.RGBA{50, 200, 50, 255})
-		startBg.Resize(fyne.NewSize(startWidth, startHeight))
-		startBg.Move(fyne.NewPos(size.Width-startWidth-10*heightScale, 10*heightScale+seqHeight+6*heightScale))
-		startBg.CornerRadius = 4 * heightScale
-		r.objects = append(r.objects, startBg)
+	// if info.Number == 1 {
+	// 	startWidth := float32(100) * heightScale
+	// 	startHeight := float32(24) * heightScale
+	// 	startBg := canvas.NewRectangle(color.RGBA{50, 200, 50, 255})
+	// 	startBg.Resize(fyne.NewSize(startWidth, startHeight))
+	// 	startBg.Move(fyne.NewPos(size.Width-startWidth-10*heightScale, 10*heightScale+seqHeight+6*heightScale))
+	// 	startBg.CornerRadius = 4 * heightScale
+	// 	r.objects = append(r.objects, startBg)
 
-		startTextSize := float32(12) * heightScale
-		startText := canvas.NewText("START HERE", color.RGBA{255, 255, 255, 255})
-		startText.TextSize = startTextSize
-		startText.TextStyle = fyne.TextStyle{Bold: true}
-		startText.Move(fyne.NewPos(size.Width-startWidth-10*heightScale+startWidth/2-startTextSize*2.8, 10*heightScale+seqHeight+6*heightScale+startHeight/2-startTextSize*0.6))
-		r.objects = append(r.objects, startText)
-	}
+	// 	// startTextSize := float32(12) * heightScale
+	// 	// startText := canvas.NewText("START HERE", color.RGBA{255, 255, 255, 255})
+	// 	// startText.TextSize = startTextSize
+	// 	// startText.TextStyle = fyne.TextStyle{Bold: true}
+	// 	// startText.Move(fyne.NewPos(size.Width-startWidth-10*heightScale+startWidth/2-startTextSize*2.8, 10*heightScale+seqHeight+6*heightScale+startHeight/2-startTextSize*0.6))
+	// 	// r.objects = append(r.objects, startText)
+	// }
 
 	// Status indicator - WIP badge or green dot (scales with card)
 	if info.Ready {
@@ -281,7 +281,7 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 			// Work In Progress badge - moved down if module 1
 			wipYOffset := float32(10) * heightScale
 			if info.Number == 1 {
-				wipYOffset = 10*heightScale + seqHeight + 6*heightScale + 30*heightScale
+				wipYOffset = 10*heightScale + 6*heightScale + 30*heightScale
 			}
 			wipWidth := float32(70) * heightScale
 			wipHeight := float32(20) * heightScale
