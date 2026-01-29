@@ -85,7 +85,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	ca.stateMu.RUnlock()
 
 	// Compute passive baseline if not yet set (needed for legend scaling)
-	// Uses direct array analysis with passive (0T1R) isolation factor = 1.0
+	// Fixed at 100% - sneak ratio shows each cell's contribution relative to signal
+	// Same-row/column cells: ~100% (direct parallel paths)
+	// Off-diagonal cells: ~30% (series path through 3 cells)
+	// With 1T1R/2T1R: near 0% (transistor isolation)
 	if !baselineSneakExists {
 		centerRow := ca.config.Rows / 2
 		centerCol := ca.config.Cols / 2
@@ -93,16 +96,15 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		getDebug().Printf("  Center cell: [%d, %d]", centerRow, centerCol)
 		passiveSneak := ca.array.AnalyzeSneakPathsWithIsolation(centerRow, centerCol, 1.0) // 0T1R factor
 		getDebug().Printf("  Passive analysis result:")
-		getDebug().Printf("    MaxSneakRatio: %.6f", passiveSneak.MaxSneakRatio)
-		getDebug().Printf("    AvgSneakRatio: %.6f", passiveSneak.AvgSneakRatio)
+		getDebug().Printf("    MaxSneakRatio: %.6f (%.1f%%)", passiveSneak.MaxSneakRatio, passiveSneak.MaxSneakRatio*100)
+		getDebug().Printf("    AvgSneakRatio: %.6f (%.1f%%)", passiveSneak.AvgSneakRatio, passiveSneak.AvgSneakRatio*100)
 		getDebug().Printf("    TotalSneak: %.6e", passiveSneak.TotalSneak)
 		getDebug().Printf("    TotalSignal: %.6e", passiveSneak.TotalSignal)
 		ca.stateMu.Lock()
-		ca.baselineMaxSneak = passiveSneak.MaxSneakRatio * 100
-		if ca.baselineMaxSneak < 1 {
-			ca.baselineMaxSneak = 1
-		}
-		getDebug().Printf("  Baseline Sneak set from passive: %.2f%%", ca.baselineMaxSneak)
+		// Use fixed 100% baseline for intuitive visualization
+		// Values > 100% will be clamped (cells with higher G than signal)
+		ca.baselineMaxSneak = 100.0
+		getDebug().Printf("  Baseline Sneak set to fixed: %.2f%%", ca.baselineMaxSneak)
 		ca.stateMu.Unlock()
 	}
 
