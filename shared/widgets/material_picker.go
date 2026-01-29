@@ -242,14 +242,6 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 	}
 	mp.detailPanel = NewMaterialDetailPanel(firstMat)
 
-	// Select button
-	selectBtn := widget.NewButtonWithIcon("Select Material", theme.ConfirmIcon(), func() {
-		if mp.OnSelected != nil && mp.selectedID != "" {
-			mp.OnSelected(mp.selectedID, mp.materials[mp.selectedID])
-		}
-	})
-	selectBtn.Importance = widget.HighImportance
-
 	// Left pane: search + scrollable card list
 	leftPane := container.NewBorder(
 		mp.searchEntry,
@@ -257,13 +249,8 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 		container.NewVScroll(mp.cardList),
 	)
 
-	// Right pane: detail panel + select button
-	rightPane := container.NewBorder(
-		nil,
-		container.NewPadded(selectBtn),
-		nil, nil,
-		mp.detailPanel,
-	)
+	// Right pane: detail panel (dialog provides confirm/cancel buttons)
+	rightPane := mp.detailPanel
 
 	// Main split layout
 	split := container.NewHSplit(leftPane, rightPane)
