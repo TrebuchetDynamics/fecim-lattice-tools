@@ -12,7 +12,6 @@ import (
 	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
-	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // updateEnhancedWidgets updates all enhanced visualization widgets with MVM results
@@ -79,13 +78,11 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		ca.beforeAfterToggle.SetData(idealMatrix, actualMatrix)
 	}
 
-	// Get current architecture for baseline determination
+	// Check if baselines need to be computed (first run after array creation)
 	ca.stateMu.RLock()
-	currentArch := ca.architecture
 	baselineIRExists := ca.baselineMaxIRDrop > 0
 	baselineSneakExists := ca.baselineMaxSneak > 0
 	ca.stateMu.RUnlock()
-	isPassive := currentArch == "" || currentArch == sharedwidgets.Architecture0T1R
 
 	// Compute passive baseline if not yet set (needed for legend scaling)
 	// Uses direct array analysis with passive (0T1R) isolation factor = 1.0
@@ -121,13 +118,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	if mvmResult.IRDropAnalysis != nil {
 		ca.stateMu.Lock()
 		ca.lastIRDropAnalysis = mvmResult.IRDropAnalysis
-		// If passive (0T1R), update baseline for legend scaling
-		if isPassive {
-			ca.baselineMaxIRDrop = mvmResult.IRDropAnalysis.MaxIRDrop * 100
-			if ca.baselineMaxIRDrop < 1 {
-				ca.baselineMaxIRDrop = 1 // Minimum 1% for visibility
-			}
-		}
+		// Use pre-computed passive baseline (don't update - keep fixed for comparison)
 		baselineIR := ca.baselineMaxIRDrop
 		ca.stateMu.Unlock()
 
@@ -156,13 +147,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	if mvmResult.SneakPathAnalysis != nil {
 		ca.stateMu.Lock()
 		ca.lastSneakAnalysis = mvmResult.SneakPathAnalysis
-		// If passive (0T1R), update baseline for legend scaling
-		if isPassive {
-			ca.baselineMaxSneak = mvmResult.SneakPathAnalysis.MaxSneakRatio * 100
-			if ca.baselineMaxSneak < 1 {
-				ca.baselineMaxSneak = 1 // Minimum 1% for visibility
-			}
-		}
+		// Use pre-computed passive baseline (don't update - keep fixed for comparison)
 		baselineSneak := ca.baselineMaxSneak
 		ca.stateMu.Unlock()
 

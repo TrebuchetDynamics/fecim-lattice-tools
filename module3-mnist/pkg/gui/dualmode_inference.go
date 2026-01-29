@@ -182,21 +182,28 @@ func (app *DualModeApp) resetResults() {
 
 // loadRandomSample loads a random test sample.
 func (app *DualModeApp) loadRandomSample() {
+	dataDir := app.dataDir()
+	fmt.Printf("[MNIST] loadRandomSample: dataDir=%s\n", dataDir)
+
 	// Ensure test data is loaded
 	if app.networkCtrl.TestDataSize() == 0 {
+		fmt.Printf("[MNIST] loadRandomSample: Loading test data from %s...\n", dataDir)
 		if err := app.networkCtrl.LoadTestData(); err != nil {
-			mnistLog.Printf("Failed to load test data: %v", err)
+			errMsg := fmt.Sprintf("Failed to load MNIST test data from %s: %v", dataDir, err)
+			fmt.Printf("[MNIST] ERROR: %s\n", errMsg)
 			fyne.Do(func() {
-				app.statusLabel.SetText("No test data available")
+				app.statusLabel.SetText(errMsg)
 			})
 			return
 		}
+		fmt.Printf("[MNIST] loadRandomSample: Loaded %d test samples\n", app.networkCtrl.TestDataSize())
 	}
 
 	testSize := app.networkCtrl.TestDataSize()
 	if testSize == 0 {
+		fmt.Println("[MNIST] ERROR: No test data available after loading")
 		fyne.Do(func() {
-			app.statusLabel.SetText("No test data available")
+			app.statusLabel.SetText("No test data available - check module3-mnist/data/")
 		})
 		return
 	}
@@ -204,15 +211,19 @@ func (app *DualModeApp) loadRandomSample() {
 	idx := int(time.Now().UnixNano() % int64(testSize))
 	pixels, label, err := app.networkCtrl.GetTestSample(idx)
 	if err != nil {
+		errMsg := fmt.Sprintf("Error loading sample #%d: %v", idx, err)
+		fmt.Printf("[MNIST] ERROR: %s\n", errMsg)
 		fyne.Do(func() {
-			app.statusLabel.SetText(fmt.Sprintf("Error loading sample: %v", err))
+			app.statusLabel.SetText(errMsg)
 		})
 		return
 	}
 
+	fmt.Printf("[MNIST] loadRandomSample: Loaded sample #%d (label=%d, %d pixels)\n", idx, label, len(pixels))
+
 	fyne.Do(func() {
 		app.digitCanvas.SetPixels(pixels)
-		app.statusLabel.SetText(fmt.Sprintf("Loaded sample #%d (true label: %d)", idx, label))
+		app.statusLabel.SetText(fmt.Sprintf("Loaded test sample #%d (true label: %d)", idx, label))
 		app.onDigitChanged(pixels)
 	})
 }

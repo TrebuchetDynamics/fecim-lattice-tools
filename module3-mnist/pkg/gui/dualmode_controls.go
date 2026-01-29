@@ -92,24 +92,13 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.applyPreset(FeCIMDefaultLevels, 0.15, 6, FeCIMDefaultDAC)
 	})
 
-	// Quick test with progress bar
-	app.testResultLabel = widget.NewLabel("")
-	app.testProgressBar = widget.NewProgressBar()
-	app.testProgressBar.Hide()
-	app.testButton = widget.NewButton("Test", func() {
-		mnistLog.Button("Test200")
-		app.runQuickTest()
-	})
-
-	presetRow := container.NewGridWithColumns(4, idealBtn, hwBtn, noisyBtn, app.testButton)
-	testResultRow := container.NewHBox(app.testProgressBar, app.testResultLabel)
+	presetRow := container.NewGridWithColumns(3, idealBtn, hwBtn, noisyBtn)
 
 	return container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer()),
 		levelsRow,
 		noiseRow,
 		presetRow,
-		testResultRow,
 	)
 }
 

@@ -1023,125 +1023,84 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField -= step
 					}
-					// Capture read level and transition
+					// Capture read level and VERIFY
 					if a.wrdPhaseTimer > phaseDuration*0.3 {
 						a.wrdReadLevel = a.discreteLevel + 1
-						a.wrdPhase = 5
-						a.wrdPhaseTimer = 0
-
-						// Track Dr. Tour demo metrics
-						a.wrdTotalWrites++
-						// Success if within ±2 levels (realistic analog tolerance for 30-level memory)
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
-						success := abs(levelError) <= 2
-						if success {
-							a.wrdSuccessWrites++
-						}
-						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
-						log.Printf("WRD PHASE 4→5: READ done | readE=%.3f MV/cm | L_read=%d | L_target=%d | error=%+d | success=%v | rate=%.1f%% (%d/%d)",
-							readE/1e8, a.wrdReadLevel, a.wrdTargetLevel, levelError, success, successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+						success := abs(levelError) <= 1 // Strict: ±1 level tolerance for verify
 
-						// Update calibration using binary search with bounds tracking
-						// Bounds check: ensure target is within calibration array bounds
-						targetIdx := a.wrdTargetLevel - 1
-						if levelError != 0 && a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
-							midLevel := a.numLevels / 2
-							// Use absolute level position to match write phase logic
-							goingUp := a.wrdTargetLevel > midLevel
-							if goingUp {
-								// ASCENDING calibration with binary search
-								currentE := a.calibrationUp[targetIdx]
-								lastErr := a.lastErrorUp[targetIdx]
+						// WRITE-VERIFY-RETRY LOOP
+						// If not successful and retries remaining, loop back to RESET
+						if !success && a.wrdRetryCount < a.wrdMaxRetries {
+							a.wrdRetryCount++
+							log.Printf("WRD VERIFY FAIL: L_read=%d L_target=%d err=%+d | RETRY %d/%d",
+								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount, a.wrdMaxRetries)
 
-								if levelError > 0 {
-									if currentE < a.calibUpHigh[targetIdx] {
-										a.calibUpHigh[targetIdx] = currentE
-									}
+							// Update calibration BEFORE retry
+							targetIdx := a.wrdTargetLevel - 1
+							if a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
+								midLevel := a.numLevels / 2
+								goingUp := a.wrdTargetLevel > midLevel
+								if goingUp {
+									a.updateCalibrationUp(targetIdx, levelError, Ec)
 								} else {
-									if currentE > a.calibUpLow[targetIdx] {
-										a.calibUpLow[targetIdx] = currentE
-									}
+									a.updateCalibrationDown(targetIdx, levelError, Ec)
 								}
-
-								var newVal float64
-								if a.calibUpLow[targetIdx] < a.calibUpHigh[targetIdx] {
-									newVal = (a.calibUpLow[targetIdx] + a.calibUpHigh[targetIdx]) / 2
-								} else {
-									adjustment := float64(levelError) * Ec * 0.01
-									newVal = currentE - adjustment
-								}
-
-								if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
-									newVal = currentE*0.7 + newVal*0.3
-								}
-
-								// Level-dependent minimum field: higher levels need stronger fields
-								maxLevel := float64(a.numLevels - 1)
-								levelRatio := float64(targetIdx) / maxLevel
-								minE := Ec * (0.4 + levelRatio*1.0)
-								maxE := Ec * (0.6 + levelRatio*1.2)
-
-								if newVal < minE {
-									newVal = minE
-								} else if newVal > maxE {
-									newVal = maxE
-								}
-								a.calibrationUp[targetIdx] = newVal
-								a.enforceMonotonicityUp(targetIdx, Ec) // Prevent spikes from runtime updates
-								a.lastErrorUp[targetIdx] = levelError
-							} else {
-								// DESCENDING calibration with binary search
-								currentE := a.calibrationDown[targetIdx]
-								lastErr := a.lastErrorDown[targetIdx]
-
-								if levelError > 0 {
-									if currentE > a.calibDownLow[targetIdx] {
-										a.calibDownLow[targetIdx] = currentE
-									}
-								} else {
-									if currentE < a.calibDownHigh[targetIdx] {
-										a.calibDownHigh[targetIdx] = currentE
-									}
-								}
-
-								var newVal float64
-								if a.calibDownLow[targetIdx] < a.calibDownHigh[targetIdx] {
-									newVal = (a.calibDownLow[targetIdx] + a.calibDownHigh[targetIdx]) / 2
-								} else {
-									adjustment := float64(levelError) * Ec * 0.01
-									newVal = currentE - adjustment
-								}
-
-								if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
-									newVal = currentE*0.7 + newVal*0.3
-								}
-
-								// Level-dependent minimum field: lower levels need stronger (more negative) fields
-								maxLevel := float64(a.numLevels - 1)
-								levelRatio := float64(targetIdx) / maxLevel
-								minE := -Ec * (0.6 + (1-levelRatio)*1.2)
-								maxE := -Ec * (0.4 + (1-levelRatio)*1.0)
-
-								if newVal > maxE {
-									newVal = maxE
-								} else if newVal < minE {
-									newVal = minE
-								}
-								a.calibrationDown[targetIdx] = newVal
-								a.enforceMonotonicityDown(targetIdx, Ec) // Prevent spikes from runtime updates
-								a.lastErrorDown[targetIdx] = levelError
 							}
-						}
 
-						// Add accumulated energy for this cycle (calculated from E·dP integration)
-						a.wrdTotalEnergyfJ += a.wrdCycleEnergy
-						a.wrdCycleEnergy = 0 // Reset for next cycle
+							// Loop back to RESET with SAME target
+							a.wrdResetStartP = a.polarization * 100
+							a.wrdPhase = 0
+							a.wrdPhaseTimer = 0
+							// Don't increment wrdTotalWrites - this is a retry, not a new write
+						} else {
+							// Either success OR max retries reached - proceed to DISPLAY
+							a.wrdPhase = 5
+							a.wrdPhaseTimer = 0
 
-						// Log this cycle for debugging with complete phase data
-						if a.wrdDebugLog != nil {
-							cycle := WriteReadCycle{
-								CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
-								TargetLevel: a.wrdTargetLevel,
+							// Track Dr. Tour demo metrics (only count final result)
+							a.wrdTotalWrites++
+							finalSuccess := abs(levelError) <= 2 // Final tolerance: ±2 levels
+							if finalSuccess {
+								a.wrdSuccessWrites++
+							}
+							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
+
+							if a.wrdRetryCount > 0 {
+								log.Printf("WRD PHASE 4→5: VERIFY %s after %d retries | L_read=%d L_target=%d err=%+d | rate=%.1f%% (%d/%d)",
+									map[bool]string{true: "OK", false: "FAIL"}[finalSuccess],
+									a.wrdRetryCount, a.wrdReadLevel, a.wrdTargetLevel, levelError,
+									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+							} else {
+								log.Printf("WRD PHASE 4→5: VERIFY OK (1st try) | L_read=%d L_target=%d err=%+d | rate=%.1f%% (%d/%d)",
+									a.wrdReadLevel, a.wrdTargetLevel, levelError,
+									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+							}
+
+							// Update calibration if there was still error
+							targetIdx := a.wrdTargetLevel - 1
+							if levelError != 0 && a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
+								midLevel := a.numLevels / 2
+								goingUp := a.wrdTargetLevel > midLevel
+								if goingUp {
+									a.updateCalibrationUp(targetIdx, levelError, Ec)
+								} else {
+									a.updateCalibrationDown(targetIdx, levelError, Ec)
+								}
+							}
+
+							// Reset retry count for next target
+							a.wrdRetryCount = 0
+
+							// Add accumulated energy for this cycle (calculated from E·dP integration)
+							a.wrdTotalEnergyfJ += a.wrdCycleEnergy
+							a.wrdCycleEnergy = 0 // Reset for next cycle
+
+							// Log this cycle for debugging with complete phase data
+							if a.wrdDebugLog != nil {
+								cycle := WriteReadCycle{
+									CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
+									TargetLevel: a.wrdTargetLevel,
 								StartLevel:  a.wrdStartLevel,
 								ReadLevel:   a.wrdReadLevel,
 								Success:     abs(a.wrdReadLevel-a.wrdTargetLevel) <= 2,
@@ -1184,6 +1143,7 @@ func (a *App) simulationLoop() {
 								go a.saveDebugLog()
 							}
 						}
+						} // Close else block (success/max retries path)
 					}
 
 				case 5: // DISPLAY phase - return to zero, show result
@@ -2025,4 +1985,116 @@ func (a *App) enforceMonotonicityDown(idx int, Ec float64) {
 		// Push previous value down to maintain monotonicity
 		a.calibrationDown[idx-1] = a.calibrationDown[idx] - step
 	}
+}
+
+// updateCalibrationUp updates ascending calibration using binary search with bounds tracking.
+// Called after write-verify fails to refine the field value for the given level.
+// MUST be called with a.mu held.
+func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
+	if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
+		return
+	}
+
+	currentE := a.calibrationUp[targetIdx]
+	lastErr := a.lastErrorUp[targetIdx]
+
+	// Update bounds based on error direction
+	if levelError > 0 {
+		// Overshot (read level > target) → field too strong → update upper bound
+		if currentE < a.calibUpHigh[targetIdx] {
+			a.calibUpHigh[targetIdx] = currentE
+		}
+	} else {
+		// Undershot (read level < target) → field too weak → update lower bound
+		if currentE > a.calibUpLow[targetIdx] {
+			a.calibUpLow[targetIdx] = currentE
+		}
+	}
+
+	// Binary search: use midpoint of bounds
+	var newVal float64
+	if a.calibUpLow[targetIdx] < a.calibUpHigh[targetIdx] {
+		newVal = (a.calibUpLow[targetIdx] + a.calibUpHigh[targetIdx]) / 2
+	} else {
+		// Bounds crossed - use small adjustment
+		adjustment := float64(levelError) * Ec * 0.01
+		newVal = currentE - adjustment
+	}
+
+	// Detect oscillation and dampen
+	if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
+		newVal = currentE*0.7 + newVal*0.3
+	}
+
+	// Level-dependent minimum field: higher levels need stronger fields
+	maxLevel := float64(a.numLevels - 1)
+	levelRatio := float64(targetIdx) / maxLevel
+	minE := Ec * (0.4 + levelRatio*1.0) // Range: 0.4×Ec to 1.4×Ec
+	maxE := Ec * (0.6 + levelRatio*1.2) // Range: 0.6×Ec to 1.8×Ec
+
+	if newVal < minE {
+		newVal = minE
+	} else if newVal > maxE {
+		newVal = maxE
+	}
+
+	a.calibrationUp[targetIdx] = newVal
+	a.enforceMonotonicityUp(targetIdx, Ec)
+	a.lastErrorUp[targetIdx] = levelError
+}
+
+// updateCalibrationDown updates descending calibration using binary search with bounds tracking.
+// Called after write-verify fails to refine the field value for the given level.
+// MUST be called with a.mu held.
+func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
+	if targetIdx < 0 || targetIdx >= len(a.calibrationDown) {
+		return
+	}
+
+	currentE := a.calibrationDown[targetIdx]
+	lastErr := a.lastErrorDown[targetIdx]
+
+	// Update bounds based on error direction (descending uses negative fields)
+	if levelError > 0 {
+		// Overshot UP (didn't go down enough) → field not negative enough → update lower bound
+		if currentE > a.calibDownLow[targetIdx] {
+			a.calibDownLow[targetIdx] = currentE
+		}
+	} else {
+		// Undershot (went too far down) → field too negative → update upper bound
+		if currentE < a.calibDownHigh[targetIdx] {
+			a.calibDownHigh[targetIdx] = currentE
+		}
+	}
+
+	// Binary search: use midpoint of bounds
+	var newVal float64
+	if a.calibDownLow[targetIdx] < a.calibDownHigh[targetIdx] {
+		newVal = (a.calibDownLow[targetIdx] + a.calibDownHigh[targetIdx]) / 2
+	} else {
+		// Bounds crossed - use small adjustment
+		adjustment := float64(levelError) * Ec * 0.01
+		newVal = currentE - adjustment
+	}
+
+	// Detect oscillation and dampen
+	if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
+		newVal = currentE*0.7 + newVal*0.3
+	}
+
+	// Level-dependent minimum field: lower levels need stronger (more negative) fields
+	maxLevel := float64(a.numLevels - 1)
+	levelRatio := float64(targetIdx) / maxLevel
+	minE := -Ec * (0.6 + (1-levelRatio)*1.2) // Range: -1.8×Ec to -0.6×Ec
+	maxE := -Ec * (0.4 + (1-levelRatio)*1.0) // Range: -1.4×Ec to -0.4×Ec
+
+	if newVal > maxE {
+		newVal = maxE
+	} else if newVal < minE {
+		newVal = minE
+	}
+
+	a.calibrationDown[targetIdx] = newVal
+	a.enforceMonotonicityDown(targetIdx, Ec)
+	a.lastErrorDown[targetIdx] = levelError
 }
