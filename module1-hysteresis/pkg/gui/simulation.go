@@ -1092,7 +1092,7 @@ func (a *App) simulationLoop() {
 					if a.wrdPhaseTimer > phaseDuration*0.3 {
 						a.wrdReadLevel = a.discreteLevel + 1
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
-						success := abs(levelError) <= 1 // Strict: ±1 level tolerance for verify
+						success := levelError == 0 // Exact match required - retry until we hit the exact target
 
 						// WRITE-VERIFY-RETRY LOOP (INFINITE UNTIL SUCCESS)
 						// MUST hit the target - no giving up!
