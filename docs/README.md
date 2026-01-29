@@ -43,7 +43,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 | 3. Neural Network | [neural-network/](neural-network/) | MNIST inference, FP32 vs CIM comparison, quantization | [ELI5](neural-network/mnist.ELI5.md), [Demo](neural-network/mnist.demo.md) |
 | 4. Peripheral Circuits | [peripheral-circuits/](peripheral-circuits/) | DAC/ADC/TIA, 4-phase write, ISPP | [ELI5](peripheral-circuits/circuits.ELI5.md) |
 | 5. Comparison | [comparison/](comparison/) | CPU vs GPU vs FeCIM, data center projections | [ELI5](comparison/cim.ELI5.md), [Honesty Audit](comparison/HONESTY_AUDIT.md) |
-| 6. EDA Design Suite | [eda/](eda/) | RTL-to-GDSII, 8 export formats, SKY130/GF180 PDKs | [ELI5](eda-design-suite/eda.eli5.md), [Workflow](eda/WORKFLOW.md) |
+| 6. EDA Design Suite | [eda/](eda/) | RTL-to-GDSII, 8 export formats, SKY130/GF180 PDKs | [ELI5](eda/guides/eli5.md), [Workflow](eda/WORKFLOW.md) |
 | 7. Docs Viewer | - | Glossary (100+ terms), full-text search, markdown rendering | Embedded in app |
 
 ---
