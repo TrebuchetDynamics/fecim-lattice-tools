@@ -112,6 +112,11 @@ type CrossbarApp struct {
 	lastIRDropAnalysis *crossbar.IRDropAnalysis
 	lastSneakAnalysis  *crossbar.SneakPathAnalysis
 
+	// Baseline values from 0T1R (passive) for legend scaling
+	// These provide consistent reference for comparing architectures
+	baselineMaxIRDrop float64 // Max IR drop % from passive array
+	baselineMaxSneak  float64 // Max sneak ratio from passive array
+
 	// Persistent cell selection (synced across all heatmaps, protected by stateMu)
 	selectedRow int
 	selectedCol int
@@ -262,7 +267,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Conductance displayed as discrete level (0-29) per FeCIM 30-level spec
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
 	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "viridis")
-	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 200, "%", true, "plasma")
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma") // Fixed 0-100% for architecture comparison
 
 	// Create MVM visualization with bar charts
 	ca.mvmVis = NewMVMVisualization()

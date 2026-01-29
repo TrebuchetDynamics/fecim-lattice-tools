@@ -68,6 +68,12 @@ type HZOMaterial struct {
 	// These are per-material since different ferroelectrics have different switching behavior
 	Tau0NLS float64 // Attempt time for NLS (s), typically 1e-10 to 1e-12 for HfO2
 	EaNLS   float64 // Activation field for NLS (V/m), typically 10-15 MV/cm for HfO2
+
+	// FeFET conductance parameters (for CIM applications)
+	// G = Gmin + (Gmax-Gmin) * (P/Ps + 1) / 2
+	// Based on FeFET channel conductance modulation by ferroelectric polarization
+	Gmin float64 // Minimum conductance (S) at P = -Ps (HRS state)
+	Gmax float64 // Maximum conductance (S) at P = +Ps (LRS state)
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
@@ -100,6 +106,8 @@ func DefaultHZO() *HZOMaterial {
 		NumLevels:       30,      // Standard HZO achieves ~30 levels
 		Tau0NLS:         1e-10,   // 100 ps attempt time (HfO2 typical)
 		EaNLS:           12e8,    // 12 MV/cm activation field
+		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
+		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
 	}
 }
 
@@ -133,9 +141,11 @@ func LiteratureSuperlattice() *HZOMaterial {
 		EnduranceCycles: 1e12, // Literature best-case
 		RetentionTime:   1e10, // Literature best-case
 		ImrintField:     0.5e6,
-		NumLevels:       64,    // Enhanced superlattice can achieve more states
+		NumLevels:       64,     // Enhanced superlattice can achieve more states
 		Tau0NLS:         0.5e-10, // 50 ps (faster switching)
 		EaNLS:           10e8,    // 10 MV/cm (lower barrier)
+		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower due to better control)
+		Gmax:            150e-6,  // 150 µS at LRS (higher Pr → better modulation)
 	}
 }
 
@@ -188,9 +198,11 @@ func FeCIMMaterial() *HZOMaterial {
 		EnduranceCycles: 1e9,  // 10^9 DEMONSTRATED (10^12 is TARGET)
 		RetentionTime:   1e7,  // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
-		NumLevels:       30,   // 30 discrete analog states - VERIFIED
+		NumLevels:       30,     // 30 discrete analog states - VERIFIED
 		Tau0NLS:         1e-10,  // 100 ps attempt time
 		EaNLS:           12e8,   // 12 MV/cm activation field
+		Gmin:            1e-6,   // 1 µS at HRS
+		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
 	}
 }
 
@@ -235,9 +247,11 @@ func CryogenicHZO() *HZOMaterial {
 		EnduranceCycles: 1e9,     // 10^9 at ±5V verified at cryo
 		RetentionTime:   3.15e10, // >10 years at cryo (improved)
 		ImrintField:     0.3e6,   // Reduced imprint at cryo
-		NumLevels:       48,      // Enhanced polarization allows more levels
+		NumLevels:       48,     // Enhanced polarization allows more levels
 		Tau0NLS:         2e-10,  // 200 ps (slower at cryo)
 		EaNLS:           15e8,   // 15 MV/cm (higher barrier at cryo)
+		Gmin:            0.5e-6, // 0.5 µS at HRS (lower leakage at cryo)
+		Gmax:            200e-6, // 200 µS at LRS (higher Pr → better modulation)
 	}
 }
 
@@ -266,9 +280,11 @@ func HZOStandard32() *HZOMaterial {
 		EnduranceCycles: 1e8,     // 10^8 cycles (2017 era)
 		RetentionTime:   3.15e8,  // 10 years projected
 		ImrintField:     1e6,
-		NumLevels:       32,      // 32 states - VERIFIED (Oh et al. 2017)
+		NumLevels:       32,     // 32 states - VERIFIED (Oh et al. 2017)
 		Tau0NLS:         1e-10,  // 100 ps attempt time
 		EaNLS:           12e8,   // 12 MV/cm activation field
+		Gmin:            2e-6,   // 2 µS at HRS (2017 era device)
+		Gmax:            80e-6,  // 80 µS at LRS, ~40x on/off ratio
 	}
 }
 
@@ -298,9 +314,43 @@ func HZOFJT140() *HZOMaterial {
 		EnduranceCycles: 1e7,     // 10^7 cycles demonstrated
 		RetentionTime:   3.15e8,  // 10 years extrapolated
 		ImrintField:     1e6,
-		NumLevels:       140,     // 140 states - VERIFIED (Song et al. 2024)
+		NumLevels:       140,    // 140 states - VERIFIED (Song et al. 2024)
 		Tau0NLS:         2e-10,  // 200 ps (FTJ tunneling)
 		EaNLS:           10e8,   // 10 MV/cm
+		Gmin:            0.1e-6, // 0.1 µS at HRS (FTJ: tunneling → lower current)
+		Gmax:            10e-6,  // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
+	}
+}
+
+// HZOCustom14 returns a custom HZO configuration with 14 discrete levels.
+// This provides a balance between precision and programming complexity.
+// 14 levels = 3.81 bits/cell
+func HZOCustom14() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "HZO Custom (14 states)",
+		Pr:              25e-2,   // 25 µC/cm²
+		Ps:              30e-2,   // 30 µC/cm²
+		Ec:              1.1e8,   // 1.1 MV/cm
+		Epsilon:         30,
+		EpsilonLF:       38,
+		LossAngle:       0.02,
+		Thickness:       10e-9,
+		Area:            100e-12,
+		Tau:             5e-9,    // 5 ns
+		Tau0:            1e-13,
+		Ea:              0.65,
+		Alpha:           2.0,
+		CurieTemp:       723,
+		TempCoeffEc:     -2e5,
+		TempCoeffPr:     -5e-5,
+		EnduranceCycles: 1e10,
+		RetentionTime:   3.15e9,
+		ImrintField:     1e6,
+		NumLevels:       14,     // 14 discrete levels (3.81 bits/cell)
+		Tau0NLS:         1e-10,
+		EaNLS:           12e8,
+		Gmin:            1e-6,
+		Gmax:            100e-6,
 	}
 }
 
@@ -331,9 +381,11 @@ func AlScN() *HZOMaterial {
 		EnduranceCycles: 1e9,     // 10^9 cycles
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
-		NumLevels:       12,      // 8-16 states (high Ec limits granularity)
+		NumLevels:       12,     // 8-16 states (high Ec limits granularity)
 		Tau0NLS:         1e-11,  // 10 ps (faster attempt time)
 		EaNLS:           22e8,   // 22 MV/cm (higher Ec material)
+		Gmin:            0.2e-6, // 0.2 µS at HRS (high Pr → excellent off state)
+		Gmax:            300e-6, // 300 µS at LRS (very high Pr → strong modulation)
 	}
 }
 
@@ -355,6 +407,7 @@ func AllMaterials() []*HZOMaterial {
 		LiteratureSuperlattice(),
 		CryogenicHZO(),
 		HZOStandard32(),
+		HZOCustom14(),
 		HZOFJT140(),
 		AlScN(),
 	}
@@ -506,13 +559,35 @@ func (m *HZOMaterial) RetentionAtTime(t, T float64) float64 {
 	return m.Pr * (1 - 0.1*effectiveTime/m.RetentionTime)
 }
 
-// DiscreteLevel returns the conductance for a given state level (0-29).
+// DiscreteLevel returns the conductance for a given state level (0 to totalLevels-1).
+// Uses FeFET physics model: conductance is linearly modulated by polarization.
+//
+// Physics basis:
+//   - Polarization P varies from -Ps to +Ps across levels
+//   - FeFET threshold voltage: ΔVth ∝ P (polarization shifts channel threshold)
+//   - Channel conductance: G ∝ (Vgs - Vth) in linear region
+//   - Net effect: G = Gmin + (Gmax-Gmin) * (P/Ps + 1) / 2
+//
+// This matches the Preisach model's polarizationToConductance() for consistency.
 func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
-	// Linear mapping from level to normalized polarization
+	if totalLevels <= 1 {
+		return (m.Gmin + m.Gmax) / 2 // Return midpoint for degenerate case
+	}
+
+	// Map level to normalized polarization: level 0 → P/Ps = -1, level N-1 → P/Ps = +1
 	normalizedP := -1.0 + 2.0*float64(level)/float64(totalLevels-1)
 
-	// Map to conductance (1-100 µS range)
-	Gmin := 1e-6   // 1 µS
-	Gmax := 100e-6 // 100 µS
+	// Get conductance bounds from material (use defaults if not set)
+	Gmin := m.Gmin
+	Gmax := m.Gmax
+	if Gmin == 0 && Gmax == 0 {
+		// Fallback to typical FeFET values if material doesn't specify
+		Gmin = 1e-6   // 1 µS (high resistance state, P = -Ps)
+		Gmax = 100e-6 // 100 µS (low resistance state, P = +Ps)
+	}
+
+	// FeFET conductance model: G = Gmin + (Gmax-Gmin) * (normalizedP + 1) / 2
+	// At P = -Ps (normalizedP = -1): G = Gmin
+	// At P = +Ps (normalizedP = +1): G = Gmax
 	return Gmin + (Gmax-Gmin)*(normalizedP+1)/2
 }

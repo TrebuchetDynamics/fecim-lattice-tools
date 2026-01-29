@@ -219,9 +219,9 @@ func drawGlowCircle(img *image.RGBA, cx, cy, radius int, centerColor, glowColor 
 }
 
 // levelToColor converts a FeCIM level to a color using blue-white-red gradient.
-// Level 0: Blue (low conductance)
+// Level 0: Blue (low conductance) - full brightness
 // Mid level: White (neutral)
-// Max level: Red (high conductance)
+// Max level: Red (high conductance) - full brightness
 func levelToColor(level, maxLevel int) color.RGBA {
 	if maxLevel <= 1 {
 		return color.RGBA{255, 255, 255, 255} // White for single level
@@ -234,18 +234,18 @@ func levelToColor(level, maxLevel int) color.RGBA {
 
 	if t < 0.5 {
 		// Blue to White: level 0 -> mid
-		// t=0: Blue (50, 100, 220), t=0.5: White (255, 255, 255)
+		// t=0: Blue (0, 0, 255), t=0.5: White (255, 255, 255)
 		s := t * 2.0 // Scale to 0-1 for this half
-		r = uint8(50 + s*205)  // 50 -> 255
-		g = uint8(100 + s*155) // 100 -> 255
-		b = uint8(220 + s*35)  // 220 -> 255
+		r = uint8(s * 255)       // 0 -> 255
+		g = uint8(s * 255)       // 0 -> 255
+		b = 255                  // Always 255 (full blue)
 	} else {
 		// White to Red: mid -> max level
-		// t=0.5: White (255, 255, 255), t=1: Red (220, 50, 50)
+		// t=0.5: White (255, 255, 255), t=1: Red (255, 0, 0)
 		s := (t - 0.5) * 2.0 // Scale to 0-1 for this half
-		r = uint8(255 - s*35)  // 255 -> 220
-		g = uint8(255 - s*205) // 255 -> 50
-		b = uint8(255 - s*205) // 255 -> 50
+		r = 255              // Always 255 (full red)
+		g = uint8(255 - s*255) // 255 -> 0
+		b = uint8(255 - s*255) // 255 -> 0
 	}
 
 	return color.RGBA{r, g, b, 255}

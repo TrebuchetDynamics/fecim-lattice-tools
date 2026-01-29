@@ -45,6 +45,11 @@ func ConductanceTooltip(row, col int, G float64, array *crossbar.Array) string {
 
 // IRDropTooltip generates tooltip for IR drop analysis with progressive disclosure
 func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *crossbar.Array) string {
+	return IRDropTooltipWithArch(row, col, irAnalysis, array, "")
+}
+
+// IRDropTooltipWithArch generates tooltip for IR drop analysis including architecture info
+func IRDropTooltipWithArch(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *crossbar.Array, arch string) string {
 	if irAnalysis == nil {
 		return "Run MVM to compute IR drop analysis"
 	}
@@ -76,26 +81,34 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		severitySymbol = "✗"
 	}
 
+	// Architecture display
+	archDisplay := arch
+	if archDisplay == "" {
+		archDisplay = "0T1R"
+	}
+
 	// Progressive disclosure: Key metrics first (M1 UX fix)
 	tooltip := fmt.Sprintf(
-		"CELL [%d, %d] - IR DROP\n"+
-			"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
+		"CELL [%d, %d] - IR DROP [%s]\n"+
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
 			"%s IR Drop: %.2f%% (%s)\n"+
 			"Effective V: %.3f V\n"+
 			"Current loss: %.1f%%\n"+
 			"Worst cell: [%d,%d] at %.1f%%\n"+
-			"━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
 			"Details:\n"+
+			"  Architecture: %s\n"+
 			"  Distance from driver: %d cells\n"+
 			"  Conductance: %.2f µS\n"+
 			"  Array avg drop: %.2f%%\n\n"+
 			"Mitigation: wider wires, tiled arch\n",
-		row, col,
+		row, col, archDisplay,
 		severitySymbol, dropPercent, severity,
 		effectiveV,
 		currentLossPercent,
 		irAnalysis.WorstCaseCell[0], irAnalysis.WorstCaseCell[1],
 		irAnalysis.MaxIRDrop*100,
+		archDisplay,
 		col+row, // Manhattan distance from corner
 		conductanceUS,
 		irAnalysis.AvgIRDrop*100,
@@ -106,6 +119,11 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 
 // SneakPathTooltip generates tooltip for sneak path analysis with progressive disclosure
 func SneakPathTooltip(row, col int, sneakAnalysis *crossbar.SneakPathAnalysis, selectedRow, selectedCol int, array *crossbar.Array) string {
+	return SneakPathTooltipWithArch(row, col, sneakAnalysis, selectedRow, selectedCol, array, "")
+}
+
+// SneakPathTooltipWithArch generates tooltip for sneak path analysis including architecture info
+func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAnalysis, selectedRow, selectedCol int, array *crossbar.Array, arch string) string {
 	if sneakAnalysis == nil {
 		return "Run MVM to compute sneak path analysis"
 	}
@@ -161,28 +179,45 @@ func SneakPathTooltip(row, col int, sneakAnalysis *crossbar.SneakPathAnalysis, s
 	// Distance from target
 	manhattanDist := abs(row-selectedRow) + abs(col-selectedCol)
 
+	// Architecture display
+	archDisplay := arch
+	if archDisplay == "" {
+		archDisplay = "0T1R"
+	}
+
+	// Architecture-specific note
+	archNote := "Mitigation: 1T1R, selectors"
+	if arch == "1T1R" || arch == "1T1R GATE" {
+		archNote = "1T1R: ~1000× sneak reduction"
+	} else if arch == "2T1R" {
+		archNote = "2T1R: ~10000× sneak reduction"
+	}
+
 	// Progressive disclosure: Key metrics first (M1 UX fix)
 	tooltip := fmt.Sprintf(
-		"CELL [%d, %d] - SNEAK PATH\n"+
-			"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
+		"CELL [%d, %d] - SNEAK PATH [%s]\n"+
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
 			"%s Sneak: %.2f%% (%s)\n"+
 			"Path type: %s\n"+
 			"SNR: %.1f:1\n"+
 			"Target: [%d,%d], dist: %d\n"+
-			"━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
 			"Details:\n"+
+			"  Architecture: %s\n"+
 			"  Signal: %.3f µA\n"+
 			"  Sneak: %.3f µA\n"+
 			"  Array max: %.2f%%\n\n"+
-			"Mitigation: 1T1R, selectors\n",
-		row, col,
+			"%s\n",
+		row, col, archDisplay,
 		severitySymbol, sneakRatio, severity,
 		pathType,
 		snr,
 		selectedRow, selectedCol, manhattanDist,
+		archDisplay,
 		signalCurrent*1e6,
 		sneakCurrent*1e6,
 		sneakAnalysis.MaxSneakRatio*100,
+		archNote,
 	)
 
 	return tooltip

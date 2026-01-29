@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // updateEnhancedWidgets updates all enhanced visualization widgets with MVM results
@@ -78,19 +79,62 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		ca.beforeAfterToggle.SetData(idealMatrix, actualMatrix)
 	}
 
+	// Get current architecture for baseline determination
+	ca.stateMu.RLock()
+	currentArch := ca.architecture
+	baselineIRExists := ca.baselineMaxIRDrop > 0
+	baselineSneakExists := ca.baselineMaxSneak > 0
+	ca.stateMu.RUnlock()
+	isPassive := currentArch == "" || currentArch == sharedwidgets.Architecture0T1R
+
+	// Compute passive baseline if not yet set (needed for legend scaling)
+	// This runs once when first MVM is executed, regardless of architecture
+	if !baselineIRExists || !baselineSneakExists {
+		debug.Println("Computing passive baseline for legend scaling...")
+		passiveOpts := crossbar.DefaultMVMOptions()
+		passiveOpts.Architecture = sharedwidgets.Architecture0T1R
+		passiveResult, err := ca.array.MVMWithNonIdealities(input, passiveOpts)
+		if err == nil {
+			ca.stateMu.Lock()
+			if passiveResult.IRDropAnalysis != nil && !baselineIRExists {
+				ca.baselineMaxIRDrop = passiveResult.IRDropAnalysis.MaxIRDrop * 100
+				if ca.baselineMaxIRDrop < 1 {
+					ca.baselineMaxIRDrop = 1
+				}
+				debug.Printf("Baseline IR Drop set: %.2f%%", ca.baselineMaxIRDrop)
+			}
+			if passiveResult.SneakPathAnalysis != nil && !baselineSneakExists {
+				ca.baselineMaxSneak = passiveResult.SneakPathAnalysis.MaxSneakRatio * 100
+				if ca.baselineMaxSneak < 1 {
+					ca.baselineMaxSneak = 1
+				}
+				debug.Printf("Baseline Sneak set: %.2f%%", ca.baselineMaxSneak)
+			}
+			ca.stateMu.Unlock()
+		}
+	}
+
 	// Update IR drop heatmap
 	if mvmResult.IRDropAnalysis != nil {
 		ca.stateMu.Lock()
 		ca.lastIRDropAnalysis = mvmResult.IRDropAnalysis
+		// If passive (0T1R), update baseline for legend scaling
+		if isPassive {
+			ca.baselineMaxIRDrop = mvmResult.IRDropAnalysis.MaxIRDrop * 100
+			if ca.baselineMaxIRDrop < 1 {
+				ca.baselineMaxIRDrop = 1 // Minimum 1% for visibility
+			}
+		}
+		baselineIR := ca.baselineMaxIRDrop
 		ca.stateMu.Unlock()
 
 		irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
-		debug.Printf("IR Drop data: %d×%d, MaxDrop=%.4f%%, AvgDrop=%.4f%%",
+		debug.Printf("IR Drop data: %d×%d, MaxDrop=%.4f%%, Baseline=%.2f%%",
 			len(irMap), len(irMap[0]),
-			mvmResult.IRDropAnalysis.MaxIRDrop*100,
-			mvmResult.IRDropAnalysis.AvgIRDrop*100)
+			mvmResult.IRDropAnalysis.MaxIRDrop*100, baselineIR)
 
-		// Legend uses fixed 0-100% range for consistent comparison across runs
+		// Use passive baseline for legend
+		ca.irLegend.SetRange(0, baselineIR)
 
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(
@@ -109,15 +153,26 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	if mvmResult.SneakPathAnalysis != nil {
 		ca.stateMu.Lock()
 		ca.lastSneakAnalysis = mvmResult.SneakPathAnalysis
+		// If passive (0T1R), update baseline for legend scaling
+		if isPassive {
+			ca.baselineMaxSneak = mvmResult.SneakPathAnalysis.MaxSneakRatio * 100
+			if ca.baselineMaxSneak < 1 {
+				ca.baselineMaxSneak = 1 // Minimum 1% for visibility
+			}
+		}
+		baselineSneak := ca.baselineMaxSneak
 		ca.stateMu.Unlock()
 
-		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
-		debug.Printf("Sneak data: %d×%d, maxSneak=%.6f", len(sneakMap), len(sneakMap[0]), mvmResult.SneakPathAnalysis.MaxSneakRatio)
+		maxSneakPercent := mvmResult.SneakPathAnalysis.MaxSneakRatio * 100
+		debug.Printf("Sneak data: maxSneak=%.4f%%, Baseline=%.2f%%", maxSneakPercent, baselineSneak)
 
-		// Update legend with actual sneak ratio (as percentage)
-		ca.sneakLegend.SetRange(0, mvmResult.SneakPathAnalysis.MaxSneakRatio*100)
+		// Use passive baseline for legend
+		ca.sneakLegend.SetRange(0, baselineSneak)
 
-		// Apply sqrt for better visibility
+		// Get sneak map normalized to baseline
+		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMapWithScale(baselineSneak / 100)
+
+		// Apply sqrt for better visibility of small values
 		for i := range sneakMap {
 			for j := range sneakMap[i] {
 				sneakMap[i][j] = math.Sqrt(sneakMap[i][j])

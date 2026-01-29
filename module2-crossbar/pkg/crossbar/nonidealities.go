@@ -524,23 +524,34 @@ func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
 }
 
 // GetSneakMap returns the sneak current map normalized for visualization.
-// Uses a fixed scale of 2.0 (200% sneak ratio) to allow consistent comparison
-// between architectures: 0T1R (~1-2 ratio) vs 1T1R (~0.001 ratio).
+// Uses a default scale of 1.0 (100% sneak ratio).
 func (s *SneakPathAnalysis) GetSneakMap() [][]float64 {
+	return s.GetSneakMapWithScale(1.0) // Default 100% scale
+}
+
+// GetSneakMapWithScale returns the sneak current map normalized to a custom scale.
+// Use the passive (0T1R) max sneak ratio as scale for architecture comparison:
+// - 0T1R: Shows full color range (high sneak)
+// - 1T1R: Shows near-zero (1000x reduction visible)
+// - 2T1R: Shows essentially zero (10000x reduction visible)
+func (s *SneakPathAnalysis) GetSneakMapWithScale(maxRatio float64) [][]float64 {
 	rows := len(s.SneakCurrents)
 	cols := len(s.SneakCurrents[0])
 
-	// Fixed scale: 2.0 max sneak ratio for consistent architecture comparison
-	// 0T1R typically shows ~1-2 ratio (significant sneak)
-	// 1T1R typically shows ~0.001 ratio (transistor isolation)
-	fixedMaxSneak := 2.0
+	if maxRatio <= 0 {
+		maxRatio = 1.0 // Default to 100%
+	}
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
 		normalized[i] = make([]float64, cols)
 		for j := range normalized[i] {
-			// Normalize to fixed scale, cap at 1.0
-			normalized[i][j] = s.SneakCurrents[i][j] / fixedMaxSneak
+			if s.TotalSignal > 0 {
+				// Compute sneak ratio for this cell
+				ratio := s.SneakCurrents[i][j] / s.TotalSignal
+				// Normalize to [0,1] using provided scale
+				normalized[i][j] = ratio / maxRatio
+			}
 			if normalized[i][j] > 1.0 {
 				normalized[i][j] = 1.0
 			}

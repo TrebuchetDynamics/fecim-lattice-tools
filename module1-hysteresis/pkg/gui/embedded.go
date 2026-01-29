@@ -62,15 +62,17 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 func (e *EmbeddedApp) Start() {
 	e.running = true
 
-	// Try to load saved calibration (fast), or mark for lazy calibration
+	// Load or run calibration at startup (ensures calibration files exist)
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		e.mu.Lock()
 		if !e.loadCalibration() {
-			// No valid saved calibration - defer to first manual/WRD mode use
-			// This saves ~400ms at startup for users who only view auto waveforms
-			e.needsCalibration = true
-			log.Printf("Calibration deferred (will run on first manual/WRD mode use)")
+			// No valid saved calibration - run immediately
+			log.Printf("Running calibration for %s at startup...", e.material.Name)
+			e.calibrateLevelsAtTemperature(300)
+			if err := e.saveCalibration(); err != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
 		}
 		e.mu.Unlock()
 	}()

@@ -110,6 +110,30 @@ func (a *App) saveCalibration() error {
 
 	// Save current active calibration at its temperature
 	tempK := int(math.Round(a.calibrationTemp))
+
+	// MONOTONICITY ENFORCEMENT before saving: fix any runtime corruption
+	// This ensures saved calibration values are always monotonic.
+	Ec := a.material.Ec
+	if a.preisach != nil {
+		Ec = a.preisach.GetEffectiveEc()
+	}
+	numLevels := len(a.calibrationUp)
+	step := Ec * 0.02 // 2% of Ec minimum step
+
+	// Fix ascending: ensure calibrationUp[i] < calibrationUp[i+1]
+	for i := 1; i < numLevels; i++ {
+		if a.calibrationUp[i] <= a.calibrationUp[i-1] {
+			a.calibrationUp[i] = a.calibrationUp[i-1] + step
+		}
+	}
+
+	// Fix descending: ensure calibrationDown[i] > calibrationDown[i-1] (less negative)
+	for i := numLevels - 2; i >= 0; i-- {
+		if a.calibrationDown[i] >= a.calibrationDown[i+1] {
+			a.calibrationDown[i] = a.calibrationDown[i+1] - step
+		}
+	}
+
 	calibrations[tempK] = &TempCalibration{
 		Temperature:     a.calibrationTemp,
 		CalibrationUp:   append([]float64(nil), a.calibrationUp...),
@@ -130,10 +154,13 @@ func (a *App) saveCalibration() error {
 		SavedAt:      time.Now().Format(time.RFC3339),
 	}
 
-	// Ensure data directory exists
-	dir := filepath.Dir(calibrationFile)
+	// Get per-material calibration file path
+	calibFile := calibrationFileForMaterial(a.material.Name)
+
+	// Ensure calibration directory exists
+	dir := filepath.Dir(calibFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("create data dir: %w", err)
+		return fmt.Errorf("create calibration dir: %w", err)
 	}
 
 	// Write JSON file
@@ -142,38 +169,42 @@ func (a *App) saveCalibration() error {
 		return fmt.Errorf("marshal calibration: %w", err)
 	}
 
-	if err := os.WriteFile(calibrationFile, jsonData, 0644); err != nil {
+	if err := os.WriteFile(calibFile, jsonData, 0644); err != nil {
 		return fmt.Errorf("write calibration file: %w", err)
 	}
 
-	log.Printf("Calibration saved for material: %s (%d levels, %d temperatures)", a.material.Name, a.numLevels, len(calibrations))
+	log.Printf("Calibration saved: %s (%d levels, %d temperatures)", calibFile, a.numLevels, len(calibrations))
 	return nil
 }
 
 // loadCalibration loads calibration data from disk if valid for current material
 // Returns true if calibration was loaded successfully
 // Supports both v1 (single-temp) and v2 (multi-temp) formats
+// Each material has its own calibration file in data/calibrations/
 func (a *App) loadCalibration() bool {
 	if a.material == nil {
 		return false
 	}
 
-	jsonData, err := os.ReadFile(calibrationFile)
+	// Get per-material calibration file path
+	calibFile := calibrationFileForMaterial(a.material.Name)
+
+	jsonData, err := os.ReadFile(calibFile)
 	if err != nil {
-		// File doesn't exist yet - that's fine
+		// File doesn't exist yet - that's fine, will calibrate fresh
+		log.Printf("No calibration file for %s, will calibrate", a.material.Name)
 		return false
 	}
 
 	var data CalibrationData
 	if err := json.Unmarshal(jsonData, &data); err != nil {
-		log.Printf("Invalid calibration file, will recalibrate: %v", err)
+		log.Printf("Invalid calibration file %s, will recalibrate: %v", calibFile, err)
 		return false
 	}
 
-	// Validate material and levels must match
+	// Warn if material name doesn't match (shouldn't happen with per-material files)
 	if data.MaterialName != a.material.Name {
-		log.Printf("Calibration material mismatch (got %s, want %s), will recalibrate", data.MaterialName, a.material.Name)
-		return false
+		log.Printf("Warning: calibration file material mismatch (file=%s, expected=%s)", data.MaterialName, a.material.Name)
 	}
 	if data.NumLevels != a.numLevels {
 		log.Printf("Calibration levels mismatch (got %d, want %d), will recalibrate", data.NumLevels, a.numLevels)
@@ -215,7 +246,7 @@ func (a *App) loadCalibration() bool {
 		// Load into active arrays
 		a.loadTempCalibration(tempCal)
 
-		log.Printf("Calibration migrated from v1: %s (%d levels at 300K, saved %s)", data.MaterialName, data.NumLevels, data.SavedAt)
+		log.Printf("Calibration migrated from v1: %s (%d levels at 300K)", calibFile, data.NumLevels)
 		return true
 	}
 
@@ -250,7 +281,7 @@ func (a *App) loadCalibration() bool {
 	currentTemp := a.preisach.Temperature
 	a.loadCalibrationForTemperature(currentTemp)
 
-	log.Printf("Calibration loaded for material: %s (%d levels, %d temperatures, saved %s)", data.MaterialName, data.NumLevels, len(a.tempCalibrations), data.SavedAt)
+	log.Printf("Calibration loaded: %s (%d levels, %d temperatures)", calibFile, a.numLevels, len(a.tempCalibrations))
 	return true
 }
 
@@ -287,6 +318,29 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 	a.lastErrorUp = append([]int(nil), cal.LastErrorUp...)
 	a.lastErrorDown = append([]int(nil), cal.LastErrorDown...)
 	a.calibrationTemp = cal.Temperature
+
+	// MONOTONICITY ENFORCEMENT on load: fix any corrupted values from file
+	Ec := a.material.Ec
+	if a.preisach != nil {
+		Ec = a.preisach.GetEffectiveEc()
+	}
+	numLevels := len(a.calibrationUp)
+	step := Ec * 0.02 // 2% of Ec minimum step
+
+	// Fix ascending: ensure calibrationUp[i] < calibrationUp[i+1]
+	for i := 1; i < numLevels; i++ {
+		if a.calibrationUp[i] <= a.calibrationUp[i-1] {
+			a.calibrationUp[i] = a.calibrationUp[i-1] + step
+		}
+	}
+
+	// Fix descending: ensure calibrationDown[i] > calibrationDown[i-1] (less negative)
+	for i := numLevels - 2; i >= 0; i-- {
+		if a.calibrationDown[i] >= a.calibrationDown[i+1] {
+			a.calibrationDown[i] = a.calibrationDown[i+1] - step
+		}
+	}
+
 	a.calibrated = true
 
 	// Validate calibration quality
@@ -705,11 +759,17 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								// Clamp to valid range (allow weaker fields for mid-levels)
-								if newVal < Ec*0.3 {
-									newVal = Ec * 0.3
-								} else if newVal > Ec*2.5 {
-									newVal = Ec * 1.5
+								// Level-dependent minimum field: higher levels need stronger fields
+								// Linear interpolation: level 1 needs ~0.4×Ec, level 29 needs ~1.4×Ec
+								maxLevel := float64(a.numLevels - 1)
+								levelRatio := float64(adjIdx) / maxLevel
+								minE := Ec * (0.4 + levelRatio*1.0) // Range: 0.4×Ec to 1.4×Ec
+								maxE := Ec * (0.6 + levelRatio*1.2) // Range: 0.6×Ec to 1.8×Ec
+
+								if newVal < minE {
+									newVal = minE
+								} else if newVal > maxE {
+									newVal = maxE
 								}
 								a.calibrationUp[adjIdx] = newVal
 								a.lastErrorUp[adjIdx] = levelError
@@ -1837,6 +1897,63 @@ func (a *App) calibrateLevels() {
 	}
 	// Level maxLevel is at positive saturation, no field needed from that state
 	a.calibrationDown[maxLevel] = 0
+
+	// MONOTONICITY ENFORCEMENT: Fix any non-monotonic values (spikes)
+	// This is critical for preventing large errors when Preisach resolution
+	// causes binary search to converge to non-monotonic values.
+	//
+	// For ascending (calibrationUp): E-field must increase with level
+	// For descending (calibrationDown): E-field must decrease (more negative) with decreasing level
+
+	// Fix ascending calibration: ensure calibrationUp[i] <= calibrationUp[i+1]
+	for i := 1; i < numLevels-1; i++ {
+		if a.calibrationUp[i+1] < a.calibrationUp[i] {
+			// Spike detected - interpolate from neighbors
+			// Find next valid (higher) value
+			nextValid := a.calibrationUp[i]
+			for j := i + 1; j < numLevels; j++ {
+				if a.calibrationUp[j] > a.calibrationUp[i] {
+					nextValid = a.calibrationUp[j]
+					break
+				}
+			}
+			// Interpolate
+			a.calibrationUp[i+1] = (a.calibrationUp[i] + nextValid) / 2
+		}
+	}
+
+	// Second pass: ensure strict monotonicity from bottom up
+	for i := 1; i < numLevels; i++ {
+		if a.calibrationUp[i] <= a.calibrationUp[i-1] {
+			// Add small increment to maintain monotonicity
+			step := Ec * 0.02 // 2% of Ec per level minimum step
+			a.calibrationUp[i] = a.calibrationUp[i-1] + step
+		}
+	}
+
+	// Fix descending calibration: ensure calibrationDown[i] >= calibrationDown[i-1] (less negative for higher levels)
+	for i := numLevels - 2; i > 0; i-- {
+		if a.calibrationDown[i-1] > a.calibrationDown[i] {
+			// Spike detected - interpolate
+			prevValid := a.calibrationDown[i]
+			for j := i - 1; j >= 0; j-- {
+				if a.calibrationDown[j] < a.calibrationDown[i] {
+					prevValid = a.calibrationDown[j]
+					break
+				}
+			}
+			a.calibrationDown[i-1] = (a.calibrationDown[i] + prevValid) / 2
+		}
+	}
+
+	// Second pass: ensure strict monotonicity from top down
+	for i := numLevels - 2; i >= 0; i-- {
+		if a.calibrationDown[i] >= a.calibrationDown[i+1] {
+			// Add small decrement to maintain monotonicity
+			step := Ec * 0.02 // 2% of Ec per level minimum step
+			a.calibrationDown[i] = a.calibrationDown[i+1] - step
+		}
+	}
 
 	// Reset Preisach to neutral state after calibration
 	a.preisach.Reset()

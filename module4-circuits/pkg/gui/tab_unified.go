@@ -73,6 +73,9 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// 6. Action buttons (bottom)
 	actionSection := ca.createUnifiedActionSection()
 
+	// Initialize button states for default READ mode
+	ca.updateActionButtons()
+
 	// Top section: signal chain header, mode bar, mode panels, architecture voltage panels, DAC presets
 	topSection := container.NewVBox(
 		signalChainHeader,
@@ -231,31 +234,38 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	switch mode {
 	case OpModeRead:
 		// Single row active (only in 1T1R/2T1R)
-		// DAC voltages stay at 0 until user presses "Sense Row"
 		if !isPassive {
 			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		}
 		ca.deviceState.SetDACRangeMode(DACRangeRead)
-		ca.deviceState.SetAllDACVoltages(0)
+		// Apply default read voltage so TIA shows real-time current
+		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
+		if readVoltage < 0.1 {
+			readVoltage = 0.5
+		}
+		ca.deviceState.SetAllDACVoltages(readVoltage)
 
 	case OpModeWrite:
 		// Single row active (only in 1T1R/2T1R)
-		// DAC voltages stay at 0 until user presses "Write Cell" (prevents accidental writes)
+		// DAC voltages stay at 0 (write requires explicit action to avoid accidents)
 		if !isPassive {
 			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		}
-		// Set all DAC to 0 but indicate we're in write range mode
 		ca.deviceState.SetDACRangeMode(DACRangeWrite)
-		ca.deviceState.SetAllDACVoltages(0)
+		ca.deviceState.SetAllDACVoltages(0) // Safe: no voltage until explicit write
 
 	case OpModeCompute:
 		// All rows active for MVM
-		// DAC voltages stay at 0 until user presses "Compute MVM"
 		if !isPassive {
 			ca.deviceState.SetWLAll()
 		}
 		ca.deviceState.SetDACRangeMode(DACRangeRead)
-		ca.deviceState.SetAllDACVoltages(0)
+		// Apply default read voltage so TIA shows real-time MVM output
+		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
+		if readVoltage < 0.1 {
+			readVoltage = 0.5
+		}
+		ca.deviceState.SetAllDACVoltages(readVoltage)
 	}
 
 	ca.updateModeButtons()
@@ -1148,30 +1158,63 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 	ca.recomputeAndRefresh()
 }
 
-// onUnifiedRead reads the selected row by applying read voltage to ALL columns
+// onUnifiedRead senses the selected cell per VOLTAGE_RULES.md:
+// - Selected WL: Active (1T1R) or read voltage (0T1R)
+// - Selected BL: Read voltage (0.1-0.5V)
+// - Unselected BLs: 0V (grounded to minimize sneak paths)
 func (ca *CircuitsApp) onUnifiedRead() {
 	// Mode validation: only allowed in READ mode
 	if ca.deviceState.GetOperationMode() != OpModeRead {
-		ca.operationsStatusLabel.SetText("Error: Switch to READ mode first")
+		fyne.Do(func() {
+			ca.operationsStatusLabel.SetText("Error: Switch to READ mode first")
+		})
 		return
 	}
 
-	// Apply read voltage to ALL columns to sense the entire row
-	// (not just selected column - we want row-wide current sum)
-	readVoltage := ca.deviceState.GetReadRange().Max * 0.5
-	ca.deviceState.SetAllDACVoltages(readVoltage)
-	ca.deviceState.SetDACRangeMode(DACRangeRead)
-	ca.recomputeAndRefresh()
-
 	selectedRow := ca.deviceState.GetSelectedRow()
-	level := ca.deviceState.GetRowLevel(selectedRow)
-	current := ca.deviceState.GetRowCurrent(selectedRow)
+	selectedCol := ca.deviceState.GetSelectedCol()
 
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Sense Row %d: %.1f µA -> ADC Level %d", selectedRow, current, level))
+	// Per VOLTAGE_RULES.md: Only selected row active
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+	if !isPassive {
+		ca.deviceState.SetWLSingle(selectedRow)
+	}
 
-	// Return DAC to 0 after sensing (non-destructive but don't leave voltage applied)
+	// Per VOLTAGE_RULES.md Section 3.1 and 4.1:
+	// - Selected BL: Read voltage (0.2V typical)
+	// - Unselected BLs: 0V (ground)
+	readRange := ca.deviceState.GetReadRange()
+	readVoltage := readRange.Max * 0.4 // ~0.2V for safe read
+	if readVoltage < 0.1 {
+		readVoltage = 0.2
+	}
+
+	// Ground all columns first, then apply read voltage only to selected column
 	ca.deviceState.SetAllDACVoltages(0)
+	ca.deviceState.SetDACVoltage(selectedCol, readVoltage)
+	ca.deviceState.SetDACRangeMode(DACRangeRead)
+
+	// Recompute with proper biasing
 	ca.recomputeAndRefresh()
+
+	// Get results for the selected cell
+	current := ca.deviceState.GetRowCurrent(selectedRow)
+	tiaVoltage := ca.deviceState.GetRowVoltage(selectedRow)
+	adcLevel := ca.deviceState.GetRowLevel(selectedRow)
+
+	// Get the cell's conductance for display
+	ca.mu.RLock()
+	level := 0
+	if selectedRow < len(ca.arrayWeights) && selectedCol < len(ca.arrayWeights[selectedRow]) {
+		level = ca.arrayWeights[selectedRow][selectedCol]
+	}
+	ca.mu.RUnlock()
+
+	// Update status with single-cell sense result
+	fyne.Do(func() {
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("Cell [%d,%d]: State=%d, V=%.2fV → I=%.1fµA → TIA=%.2fV → ADC=%d",
+			selectedRow, selectedCol, level, readVoltage, current, tiaVoltage, adcLevel))
+	})
 }
 
 // onUnifiedCompute runs MVM computation with current input vector
@@ -1284,10 +1327,14 @@ func (ca *CircuitsApp) onUnifiedReset() {
 	ca.updateDACRangeModeLabel()
 	ca.updateDACEntries()
 
-	// Reset WL to single row 0 (only in 1T1R/2T1R - passive keeps all on)
+	// Reset WL based on operation mode (only in 1T1R/2T1R - passive keeps all on)
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
 	if !isPassive {
-		ca.deviceState.SetWLSingle(0)
+		if ca.deviceState.GetOperationMode() == OpModeCompute {
+			ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
+		} else {
+			ca.deviceState.SetWLSingle(0)
+		}
 	}
 	ca.updateWLCheckboxes()
 
@@ -1572,9 +1619,14 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.architecture = sharedwidgets.Architecture1T1R
 		ca.mu.Unlock()
 		updateArchButtons()
-		// 1T1R: disable passive mode, restore single-row selection
+		// 1T1R: disable passive mode, set WLs based on current operation mode
 		ca.deviceState.SetPassiveMode(false)
-		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		// Preserve WL state based on operation mode
+		if ca.deviceState.GetOperationMode() == OpModeCompute {
+			ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
+		} else {
+			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		}
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()
 		ca.updateArchitectureSpecificUI()
@@ -1588,9 +1640,14 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.architecture = sharedwidgets.Architecture2T1R
 		ca.mu.Unlock()
 		updateArchButtons()
-		// 2T1R: disable passive mode, restore single-row selection
+		// 2T1R: disable passive mode, set WLs based on current operation mode
 		ca.deviceState.SetPassiveMode(false)
-		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		// Preserve WL state based on operation mode
+		if ca.deviceState.GetOperationMode() == OpModeCompute {
+			ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
+		} else {
+			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+		}
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()
 		ca.updateArchitectureSpecificUI()

@@ -222,11 +222,16 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 		})
 
-		// Mark calibration as needed for new material (lazy: runs on first manual/WRD use)
-		// Clear old calibration cache since material changed
+		// Load or run calibration for new material immediately
 		a.tempCalibrations = make(map[int]*TempCalibration)
-		a.needsCalibration = true
-		log.Printf("Material changed to %s - calibration deferred", a.material.Name)
+		if !a.loadCalibration() {
+			log.Printf("Running calibration for %s...", a.material.Name)
+			a.calibrateLevelsAtTemperature(300)
+			if err := a.saveCalibration(); err != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
+		}
+		a.needsCalibration = false
 	})
 	a.materialSelect.SetSelected(a.materials[0].Name)
 
@@ -276,11 +281,15 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		bits := math.Log2(float64(n))
 		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", n, bits))
 
-		// Mark calibration as needed for new level count (lazy: runs on first manual/WRD use)
+		// Run calibration immediately for new level count
 		a.mu.Lock()
 		a.tempCalibrations = make(map[int]*TempCalibration)
-		a.needsCalibration = true
-		log.Printf("Levels changed to %d - calibration deferred", n)
+		log.Printf("Running calibration for %d levels...", n)
+		a.calibrateLevelsAtTemperature(300)
+		if err := a.saveCalibration(); err != nil {
+			log.Printf("Warning: failed to save calibration: %v", err)
+		}
+		a.needsCalibration = false
 		a.mu.Unlock()
 	}
 

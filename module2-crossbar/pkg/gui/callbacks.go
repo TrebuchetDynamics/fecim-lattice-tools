@@ -74,13 +74,14 @@ func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 	// Sync selection across all heatmaps
 	ca.syncSelection(row, col)
 
-	// Protected read of lastIRDropAnalysis
+	// Protected read of lastIRDropAnalysis and architecture
 	ca.stateMu.RLock()
 	analysis := ca.lastIRDropAnalysis
+	arch := ca.architecture
 	ca.stateMu.RUnlock()
 
-	// Generate comprehensive IR drop tooltip
-	tooltip := IRDropTooltip(row, col, analysis, ca.array)
+	// Generate comprehensive IR drop tooltip with architecture
+	tooltip := IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
@@ -152,13 +153,14 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 	sneakTargetRow := ca.config.Rows / 2
 	sneakTargetCol := ca.config.Cols / 2
 
-	// Protected read of lastSneakAnalysis
+	// Protected read of lastSneakAnalysis and architecture
 	ca.stateMu.RLock()
 	analysis := ca.lastSneakAnalysis
+	arch := ca.architecture
 	ca.stateMu.RUnlock()
 
-	// Generate comprehensive sneak path tooltip
-	tooltip := SneakPathTooltip(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array)
+	// Generate comprehensive sneak path tooltip with architecture
+	tooltip := SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
@@ -267,6 +269,11 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 
 	row, col := ca.selectedRow, ca.selectedCol
 
+	// Get current architecture
+	ca.stateMu.RLock()
+	arch := ca.architecture
+	ca.stateMu.RUnlock()
+
 	switch ca.tabs.Selected().Text {
 	case "Conductance":
 		matrix := ca.array.GetConductanceMatrix()
@@ -280,7 +287,7 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		ca.stateMu.RLock()
 		analysis := ca.lastIRDropAnalysis
 		ca.stateMu.RUnlock()
-		tooltip := IRDropTooltip(row, col, analysis, ca.array)
+		tooltip := IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
 		ca.statsLabel.SetText(tooltip)
 
 	case "Sneak Paths":
@@ -289,7 +296,12 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		ca.stateMu.RLock()
 		analysis := ca.lastSneakAnalysis
 		ca.stateMu.RUnlock()
-		tooltip := SneakPathTooltip(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array)
+		tooltip := SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
 		ca.statsLabel.SetText(tooltip)
+	}
+
+	// Force refresh to ensure UI updates
+	if ca.statsLabel != nil {
+		ca.statsLabel.Refresh()
 	}
 }
