@@ -294,7 +294,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.mu.Unlock()
 
 			// Update plot bounds and markers (outside lock, uses fyne.Do internally)
-			a.plot.SetBounds(effEc*2.0, effPr*1.2)
+			a.plot.SetBounds(effEc*2.5, effPr*1.2)
 			a.plot.SetMaterialParams(effEc, effPr)
 		}()
 
@@ -409,30 +409,46 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.normalizedP = 0
 	a.simTime = 0
 
+	// Reset time-resolved animation state
+	a.timeResAnimating = false
+	a.timeResIndex = 0
+	a.timeResDataTimes = nil
+	a.timeResDataPols = nil
+	a.timeResDataSwitch = nil
+
+	// Reset write/read demo state
+	a.wrdPhase = 0
+	a.wrdPhaseTimer = 0
+	a.wrdTotalWrites = 0
+	a.wrdSuccessWrites = 0
+	a.wrdTotalEnergyfJ = 0
+	a.wrdCycleEnergy = 0
+
 	// Get temperature-corrected values
 	effEc := a.preisach.GetEffectiveEc()
 	effPr := a.preisach.GetEffectivePr()
 
 	// Update number of levels based on material
 	newLevels := a.material.GetNumLevels()
-	if newLevels != a.numLevels {
-		a.numLevels = newLevels
-		// Update level indicator and cell visualizer
-		if a.levelIndicator != nil {
-			a.levelIndicator.SetNumLevels(newLevels)
-		}
-		if a.cellViz != nil {
-			a.cellViz.SetNumLevels(newLevels)
-		}
-		// Reset discrete level to middle of new range
-		a.discreteLevel = newLevels / 2
-		// Reset target levels
-		a.wrdTargetLevel = newLevels / 2
-		a.manualTargetLevel = newLevels / 2
-		// Resize calibration arrays
-		a.calibrationUp = make([]float64, newLevels)
-		a.calibrationDown = make([]float64, newLevels)
+	a.numLevels = newLevels
+	// Update level indicator and cell visualizer
+	if a.levelIndicator != nil {
+		a.levelIndicator.SetNumLevels(newLevels)
 	}
+	if a.cellViz != nil {
+		a.cellViz.SetNumLevels(newLevels)
+	}
+	// Reset discrete level to middle of new range
+	a.discreteLevel = newLevels / 2
+	// Reset target levels
+	a.wrdTargetLevel = newLevels / 2
+	a.wrdStartLevel = newLevels / 2
+	a.manualTargetLevel = newLevels / 2
+	// Update bits stored
+	a.wrdBitsStored = math.Log2(float64(newLevels))
+	// Resize calibration arrays
+	a.calibrationUp = make([]float64, newLevels)
+	a.calibrationDown = make([]float64, newLevels)
 
 	// Mark calibration as stale
 	a.calibrated = false
@@ -441,10 +457,15 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Update UI (must use fyne.Do from goroutine context)
 	fyne.Do(func() {
 		// Update plot bounds and markers
-		a.plot.SetBounds(effEc*2.0, effPr*1.2)
+		a.plot.SetBounds(effEc*2.5, effPr*1.2)
 		a.plot.SetMaterialParams(effEc, effPr)
 		a.plot.SetData(nil, nil, 0, 0)
 		a.plot.Refresh()
+
+		// Reset E-field slider
+		if a.eFieldSlider != nil {
+			a.eFieldSlider.SetValue(0)
+		}
 
 		// Update material button text
 		if a.materialBtn != nil {
@@ -457,6 +478,11 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		}
 		if a.levelsLabel != nil {
 			a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+		}
+
+		// Reset level indicator to middle
+		if a.levelIndicator != nil {
+			a.levelIndicator.SetLevel(newLevels / 2)
 		}
 	})
 
