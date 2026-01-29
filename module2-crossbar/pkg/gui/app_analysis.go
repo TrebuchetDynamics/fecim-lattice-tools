@@ -89,13 +89,20 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	if !baselineSneakExists {
 		centerRow := ca.config.Rows / 2
 		centerCol := ca.config.Cols / 2
+		getDebug().Printf("=== COMPUTING SNEAK BASELINE ===")
+		getDebug().Printf("  Center cell: [%d, %d]", centerRow, centerCol)
 		passiveSneak := ca.array.AnalyzeSneakPathsWithIsolation(centerRow, centerCol, 1.0) // 0T1R factor
+		getDebug().Printf("  Passive analysis result:")
+		getDebug().Printf("    MaxSneakRatio: %.6f", passiveSneak.MaxSneakRatio)
+		getDebug().Printf("    AvgSneakRatio: %.6f", passiveSneak.AvgSneakRatio)
+		getDebug().Printf("    TotalSneak: %.6e", passiveSneak.TotalSneak)
+		getDebug().Printf("    TotalSignal: %.6e", passiveSneak.TotalSignal)
 		ca.stateMu.Lock()
 		ca.baselineMaxSneak = passiveSneak.MaxSneakRatio * 100
 		if ca.baselineMaxSneak < 1 {
 			ca.baselineMaxSneak = 1
 		}
-		debug.Printf("Baseline Sneak set from passive: %.2f%%", ca.baselineMaxSneak)
+		getDebug().Printf("  Baseline Sneak set from passive: %.2f%%", ca.baselineMaxSneak)
 		ca.stateMu.Unlock()
 	}
 
@@ -110,7 +117,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		if ca.baselineMaxIRDrop < 1 {
 			ca.baselineMaxIRDrop = 1
 		}
-		debug.Printf("Baseline IR Drop set from passive: %.2f%%", ca.baselineMaxIRDrop)
+		getDebug().Printf("Baseline IR Drop set from passive: %.2f%%", ca.baselineMaxIRDrop)
 		ca.stateMu.Unlock()
 	}
 
@@ -122,7 +129,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		baselineIR := ca.baselineMaxIRDrop
 		ca.stateMu.Unlock()
 
-		debug.Printf("IR Drop data: MaxDrop=%.4f%%, Baseline=%.2f%%",
+		getDebug().Printf("IR Drop data: MaxDrop=%.4f%%, Baseline=%.2f%%",
 			mvmResult.IRDropAnalysis.MaxIRDrop*100, baselineIR)
 
 		// Use passive baseline for legend
@@ -140,7 +147,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		// Add badge to IR Drop tab (C2 accessibility fix - discoverability)
 		ca.setTabBadge("IR Drop")
 	} else {
-		debug.Println("Warning: IRDropAnalysis is nil")
+		getDebug().Println("Warning: IRDropAnalysis is nil")
 	}
 
 	// Update sneak path heatmap
@@ -151,27 +158,54 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		baselineSneak := ca.baselineMaxSneak
 		ca.stateMu.Unlock()
 
-		maxSneakPercent := mvmResult.SneakPathAnalysis.MaxSneakRatio * 100
-		debug.Printf("Sneak data: maxSneak=%.4f%%, Baseline=%.2f%%", maxSneakPercent, baselineSneak)
+		analysis := mvmResult.SneakPathAnalysis
+		maxSneakPercent := analysis.MaxSneakRatio * 100
+		avgSneakPercent := analysis.AvgSneakRatio * 100
+		getDebug().Printf("=== SNEAK PATH UPDATE ===")
+		getDebug().Printf("  MaxSneakRatio: %.6f (%.4f%%)", analysis.MaxSneakRatio, maxSneakPercent)
+		getDebug().Printf("  AvgSneakRatio: %.6f (%.4f%%)", analysis.AvgSneakRatio, avgSneakPercent)
+		getDebug().Printf("  TotalSneak: %.6e, TotalSignal: %.6e", analysis.TotalSneak, analysis.TotalSignal)
+		getDebug().Printf("  Baseline: %.2f%%", baselineSneak)
+		getDebug().Printf("  SneakCurrents size: %dx%d", len(analysis.SneakCurrents), func() int {
+			if len(analysis.SneakCurrents) > 0 {
+				return len(analysis.SneakCurrents[0])
+			}
+			return 0
+		}())
+
+		// Sample some sneak values
+		if len(analysis.SneakCurrents) > 0 && len(analysis.SneakCurrents[0]) > 0 {
+			mid := len(analysis.SneakCurrents) / 2
+			getDebug().Printf("  Sample SneakCurrents[0][0]=%.6e, [mid][mid]=%.6e, [0][mid]=%.6e, [mid][0]=%.6e",
+				analysis.SneakCurrents[0][0],
+				analysis.SneakCurrents[mid][mid],
+				analysis.SneakCurrents[0][mid],
+				analysis.SneakCurrents[mid][0])
+		}
 
 		// Use passive baseline for legend
 		ca.sneakLegend.SetRange(0, baselineSneak)
 
 		// Get sneak map normalized to baseline
-		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMapWithScale(baselineSneak / 100)
-
-		// Apply sqrt for better visibility of small values
-		for i := range sneakMap {
-			for j := range sneakMap[i] {
-				sneakMap[i][j] = math.Sqrt(sneakMap[i][j])
+		sneakMap := analysis.GetSneakMapWithScale(baselineSneak / 100)
+		getDebug().Printf("  SneakMap size: %dx%d", len(sneakMap), func() int {
+			if len(sneakMap) > 0 {
+				return len(sneakMap[0])
 			}
+			return 0
+		}())
+		if len(sneakMap) > 0 && len(sneakMap[0]) > 0 {
+			mid := len(sneakMap) / 2
+			getDebug().Printf("  Sample SneakMap[0][0]=%.4f, [mid][mid]=%.4f, [0][mid]=%.4f, [mid][0]=%.4f",
+				sneakMap[0][0], sneakMap[mid][mid], sneakMap[0][mid], sneakMap[mid][0])
 		}
+
 		ca.sneakPathHeatmap.SetData(sneakMap)
 
 		// Add badge to Sneak Paths tab (C2 accessibility fix - discoverability)
 		ca.setTabBadge("Sneak Paths")
 	} else {
-		debug.Println("Warning: SneakPathAnalysis is nil")
+		getDebug().Println("Warning: SneakPathAnalysis is nil")
 	}
 }
 

@@ -24,6 +24,8 @@ type TempCalibration struct {
 	CalibDownHigh   []float64 `json:"calib_down_high"`   // Binary search upper bounds (descending)
 	LastErrorUp     []int     `json:"last_error_up"`     // Last error for oscillation detection
 	LastErrorDown   []int     `json:"last_error_down"`   // Last error for oscillation detection
+	RelaxCompUp     []float64 `json:"relax_comp_up"`     // Relaxation compensation factors (ascending)
+	RelaxCompDown   []float64 `json:"relax_comp_down"`   // Relaxation compensation factors (descending)
 }
 
 // CalibrationData holds persistent calibration state (v2: multi-temperature support)
@@ -43,6 +45,8 @@ type CalibrationData struct {
 	CalibDownHigh   []float64 `json:"calib_down_high,omitempty"`
 	LastErrorUp     []int     `json:"last_error_up,omitempty"`
 	LastErrorDown   []int     `json:"last_error_down,omitempty"`
+	RelaxCompUp     []float64 `json:"relax_comp_up,omitempty"`
+	RelaxCompDown   []float64 `json:"relax_comp_down,omitempty"`
 }
 
 const calibrationVersion = 2
@@ -144,6 +148,8 @@ func (a *App) saveCalibration() error {
 		CalibDownHigh:   append([]float64(nil), a.calibDownHigh...),
 		LastErrorUp:     append([]int(nil), a.lastErrorUp...),
 		LastErrorDown:   append([]int(nil), a.lastErrorDown...),
+		RelaxCompUp:     append([]float64(nil), a.relaxCompUp...),
+		RelaxCompDown:   append([]float64(nil), a.relaxCompDown...),
 	}
 
 	data := CalibrationData{
@@ -305,6 +311,20 @@ func (a *App) initializeTempCalibrationBounds(cal *TempCalibration) {
 		cal.LastErrorUp = make([]int, a.numLevels)
 		cal.LastErrorDown = make([]int, a.numLevels)
 	}
+	if len(cal.RelaxCompUp) != a.numLevels || len(cal.RelaxCompDown) != a.numLevels {
+		cal.RelaxCompUp = make([]float64, a.numLevels)
+		cal.RelaxCompDown = make([]float64, a.numLevels)
+		maxLevel := a.numLevels - 1
+		if maxLevel < 1 {
+			maxLevel = 1 // Prevent division by zero when numLevels=1
+		}
+		for i := 0; i < a.numLevels; i++ {
+			// Initialize with parabolic profile (peak 5% at middle, zero at edges)
+			normalizedPos := float64(i) / float64(maxLevel)
+			cal.RelaxCompUp[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+			cal.RelaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+		}
+	}
 }
 
 // loadTempCalibration loads a TempCalibration into the active calibration arrays
@@ -317,6 +337,8 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 	a.calibDownHigh = append([]float64(nil), cal.CalibDownHigh...)
 	a.lastErrorUp = append([]int(nil), cal.LastErrorUp...)
 	a.lastErrorDown = append([]int(nil), cal.LastErrorDown...)
+	a.relaxCompUp = append([]float64(nil), cal.RelaxCompUp...)
+	a.relaxCompDown = append([]float64(nil), cal.RelaxCompDown...)
 	a.calibrationTemp = cal.Temperature
 
 	// MONOTONICITY ENFORCEMENT on load: fix any corrupted values from file
@@ -478,6 +500,8 @@ func (a *App) interpolateCalibrations(tempK, lowerTemp, upperTemp float64, lower
 		a.calibDownHigh = make([]float64, a.numLevels)
 		a.lastErrorUp = make([]int, a.numLevels)
 		a.lastErrorDown = make([]int, a.numLevels)
+		a.relaxCompUp = make([]float64, a.numLevels)
+		a.relaxCompDown = make([]float64, a.numLevels)
 	}
 
 	// Interpolate field values for each level
@@ -490,6 +514,29 @@ func (a *App) interpolateCalibrations(tempK, lowerTemp, upperTemp float64, lower
 		a.calibUpHigh[i] = math.Max(lowerCal.CalibUpHigh[i], upperCal.CalibUpHigh[i])
 		a.calibDownLow[i] = math.Min(lowerCal.CalibDownLow[i], upperCal.CalibDownLow[i])
 		a.calibDownHigh[i] = math.Max(lowerCal.CalibDownHigh[i], upperCal.CalibDownHigh[i])
+
+		// Interpolate relaxation compensation factors (with bounds check for backward compatibility)
+		if i < len(lowerCal.RelaxCompUp) && i < len(upperCal.RelaxCompUp) {
+			a.relaxCompUp[i] = lowerCal.RelaxCompUp[i]*(1-t) + upperCal.RelaxCompUp[i]*t
+		} else {
+			// Default to parabolic profile if relax comp not available
+			maxLvl := a.numLevels - 1
+			if maxLvl < 1 {
+				maxLvl = 1
+			}
+			normalizedPos := float64(i) / float64(maxLvl)
+			a.relaxCompUp[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+		}
+		if i < len(lowerCal.RelaxCompDown) && i < len(upperCal.RelaxCompDown) {
+			a.relaxCompDown[i] = lowerCal.RelaxCompDown[i]*(1-t) + upperCal.RelaxCompDown[i]*t
+		} else {
+			maxLvl := a.numLevels - 1
+			if maxLvl < 1 {
+				maxLvl = 1
+			}
+			normalizedPos := float64(i) / float64(maxLvl)
+			a.relaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
+		}
 
 		// Reset error tracking for interpolated calibration
 		a.lastErrorUp[i] = 0
@@ -954,19 +1001,31 @@ func (a *App) simulationLoop() {
 						}
 					} else if goingUp {
 						// Going UP from level 1: use ascending calibration
-						writeE = a.calibrationUp[wrdTargetIdx]
-						if writeE == 0 {
+						baseE := a.calibrationUp[wrdTargetIdx]
+						if baseE == 0 {
 							// Fallback: interpolate based on target position
 							ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-							writeE = Ec * (1.0 + ratio*1.0) // Ec to 2*Ec
+							baseE = Ec * (1.0 + ratio*1.0) // Ec to 2*Ec
 						}
+						// Apply relaxation compensation (overshoot to counteract relaxation drift)
+						compFactor := 1.0
+						if wrdTargetIdx < len(a.relaxCompUp) {
+							compFactor = 1.0 + a.relaxCompUp[wrdTargetIdx]
+						}
+						writeE = baseE * compFactor
 					} else {
 						// Going DOWN from level N: use descending calibration
-						writeE = a.calibrationDown[wrdTargetIdx]
-						if writeE == 0 {
+						baseE := a.calibrationDown[wrdTargetIdx]
+						if baseE == 0 {
 							ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
-							writeE = -Ec * (1.0 + ratio*1.0) // -Ec to -2*Ec
+							baseE = -Ec * (1.0 + ratio*1.0) // -Ec to -2*Ec
 						}
+						// Apply relaxation compensation
+						compFactor := 1.0
+						if wrdTargetIdx < len(a.relaxCompDown) {
+							compFactor = 1.0 + a.relaxCompDown[wrdTargetIdx]
+						}
+						writeE = baseE * compFactor
 					}
 					a.wrdWriteE = writeE // Store for logging
 
@@ -1013,7 +1072,16 @@ func (a *App) simulationLoop() {
 					}
 
 				case 4: // READ phase - small sense pulse below Ec
-					readE := Ec * 0.3 // Well below Ec - won't switch
+					// READ pulse direction should match WRITE direction to minimize disturbing the state
+					// Applying opposite polarity read would push polarization further away from written state
+					var readE float64
+					if targetLevel > midLevel {
+						// Ascending calibration used positive E - read with same polarity
+						readE = Ec * 0.3
+					} else {
+						// Descending calibration used negative E - read with same polarity
+						readE = -Ec * 0.3
+					}
 					step := rampRate * 0.4 * dt
 					diff := readE - a.electricField
 					if math.Abs(diff) < step {
@@ -1670,6 +1738,8 @@ func (a *App) calibrateLevelsAtTemperature(tempK float64) {
 		CalibDownHigh:   append([]float64(nil), a.calibDownHigh...),
 		LastErrorUp:     append([]int(nil), a.lastErrorUp...),
 		LastErrorDown:   append([]int(nil), a.lastErrorDown...),
+		RelaxCompUp:     append([]float64(nil), a.relaxCompUp...),
+		RelaxCompDown:   append([]float64(nil), a.relaxCompDown...),
 	}
 
 	log.Printf("Level calibration complete for material: %s at %.0fK", a.material.Name, tempK)
@@ -1696,6 +1766,9 @@ func (a *App) calibrateLevels() {
 	Emax := 1.5 * Ec // Go slightly beyond saturation
 	numLevels := a.numLevels
 	maxLevel := numLevels - 1
+	if maxLevel < 1 {
+		maxLevel = 1 // Prevent division by zero when numLevels=1
+	}
 
 	// Record calibration temperature
 	a.calibrationTemp = a.preisach.Temperature
@@ -1725,6 +1798,12 @@ func (a *App) calibrateLevels() {
 	if len(a.lastErrorDown) != numLevels {
 		a.lastErrorDown = make([]int, numLevels)
 	}
+	if len(a.relaxCompUp) != numLevels {
+		a.relaxCompUp = make([]float64, numLevels)
+	}
+	if len(a.relaxCompDown) != numLevels {
+		a.relaxCompDown = make([]float64, numLevels)
+	}
 
 	// Initialize bounds based on temperature-corrected Ec
 	for i := 0; i < numLevels; i++ {
@@ -1733,6 +1812,12 @@ func (a *App) calibrateLevels() {
 		a.calibUpHigh[i] = Ec * 2.0
 		a.calibDownLow[i] = -Ec * 2.0
 		a.calibDownHigh[i] = -Ec * 0.3
+
+		// Initialize relaxation compensation with level-dependent parabolic profile
+		// Middle levels experience more relaxation (peak 5% overshoot at mid-level)
+		normalizedPos := float64(i) / float64(maxLevel)
+		a.relaxCompUp[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos) // Peak at 0.5, zero at edges
+		a.relaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
 	}
 
 	// Helper function to test what level results from a given field
@@ -2053,6 +2138,28 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 	// Don't call enforceMonotonicityUp - cascade handles it and won't fight with newVal
 	a.lastErrorUp[targetIdx] = levelError
 
+	// Update relaxation compensation based on error direction
+	if targetIdx < len(a.relaxCompUp) {
+		relaxAdjust := 0.01 // 1% adjustment per retry
+		oldRelaxComp := a.relaxCompUp[targetIdx]
+		if levelError > 0 {
+			// Overshot: read level > target, reduce compensation (we overshot too much)
+			a.relaxCompUp[targetIdx] -= relaxAdjust
+		} else {
+			// Undershot: read level < target, increase compensation (need more overshoot)
+			a.relaxCompUp[targetIdx] += relaxAdjust
+		}
+		// Clamp to reasonable bounds [-0.05, 0.25]
+		if a.relaxCompUp[targetIdx] < -0.05 {
+			a.relaxCompUp[targetIdx] = -0.05
+		} else if a.relaxCompUp[targetIdx] > 0.25 {
+			a.relaxCompUp[targetIdx] = 0.25
+		}
+		if a.relaxCompUp[targetIdx] != oldRelaxComp {
+			log.Printf("RELAX_UP[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, a.relaxCompUp[targetIdx], levelError)
+		}
+	}
+
 	log.Printf("CALIB_UP[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,
 		a.calibUpLow[targetIdx]/1e8, a.calibUpHigh[targetIdx]/1e8)
@@ -2149,6 +2256,28 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 
 	// Don't call enforceMonotonicityDown - cascade handles it and won't fight with newVal
 	a.lastErrorDown[targetIdx] = levelError
+
+	// Update relaxation compensation based on error direction
+	if targetIdx < len(a.relaxCompDown) {
+		relaxAdjust := 0.01 // 1% adjustment per retry
+		oldRelaxComp := a.relaxCompDown[targetIdx]
+		if levelError < 0 {
+			// Went too far down (error < 0), reduce compensation
+			a.relaxCompDown[targetIdx] -= relaxAdjust
+		} else {
+			// Didn't go down enough (error > 0), increase compensation
+			a.relaxCompDown[targetIdx] += relaxAdjust
+		}
+		// Clamp to reasonable bounds [-0.05, 0.25]
+		if a.relaxCompDown[targetIdx] < -0.05 {
+			a.relaxCompDown[targetIdx] = -0.05
+		} else if a.relaxCompDown[targetIdx] > 0.25 {
+			a.relaxCompDown[targetIdx] = 0.25
+		}
+		if a.relaxCompDown[targetIdx] != oldRelaxComp {
+			log.Printf("RELAX_DOWN[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, a.relaxCompDown[targetIdx], levelError)
+		}
+	}
 
 	log.Printf("CALIB_DOWN[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,

@@ -38,8 +38,8 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Create color legends using shared widget and store in app
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "viridis") // Fixed 0-100% for consistent comparison
-	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma")   // 0-100% of max sneak ratio
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis") // Typical IR drop range ~1-10%
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "plasma") // Typical sneak ratio range
 
 	// Initialize per-tab colormap tracking with defaults
 	ca.condColormap = "fecim"

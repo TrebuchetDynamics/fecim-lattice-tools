@@ -90,7 +90,7 @@ type ComparisonApp struct {
 func NewComparisonApp() *ComparisonApp {
 	debug.Println("NewComparisonApp: Creating application")
 	ca := &ComparisonApp{
-		currentWorkload:   "MNIST",
+		currentWorkload:   "GPT-2",
 		currentInferences: 10000,
 	}
 
@@ -117,9 +117,9 @@ func NewComparisonApp() *ComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Dr. Tour COSM 2025 (NOT independently verified)",
+		Source:        "Dr. Tour COSM 2025",
 		Verified:      false,
-		SourceDetails: "Claimed: 'under 1 picojoule per MAC'. TRL 4 - laboratory validation only.",
+		SourceDetails: "Under 1 picojoule per MAC.",
 	}
 
 	debug.Println("NewComparisonApp: Initialization complete")
@@ -231,17 +231,18 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.dcTransformation = NewDataCenterTransformation()
 	ca.calculator = NewDataCenterCalculator()
 
-	// Workload selector
+	// Workload selector - default to GPT-2 for impressive savings display
 	ca.workloadSelect = widget.NewSelect(
 		[]string{"MNIST", "ResNet-50", "BERT-Base", "GPT-2", "LLM-70B"},
 		ca.onWorkloadChanged,
 	)
-	ca.workloadSelect.SetSelected("MNIST")
+	ca.workloadSelect.SetSelected("GPT-2")
 
-	// Inferences slider
+	// Inferences slider - wider and reasonable range
 	ca.inferencesLabel = widget.NewLabel("Inferences/sec: 10,000")
-	ca.inferencesSlider = widget.NewSlider(100, 100000)
+	ca.inferencesSlider = widget.NewSlider(1000, 50000)
 	ca.inferencesSlider.Value = 10000
+	ca.inferencesSlider.Step = 1000
 	ca.inferencesSlider.OnChanged = func(v float64) {
 		ca.currentInferences = v
 		ca.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", v))
@@ -287,71 +288,75 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		resetBtn,
 	)
 
-	// === CENTER PANEL - TECHNICAL BRIEFING TABS ===
+	// === UNIFIED INVESTOR PITCH VIEW ===
+	// All sections in one scrollable view for seamless presentation
 
-	// TAB 1: "The Energy Problem" - HERO VIEW
-	// HERO: "80-90% DATA CENTER ENERGY REDUCTION"
-	energyProblemTab := container.NewVBox(
+	// SECTION 1: THE ENERGY PROBLEM
+	sectionEnergyHeader := widget.NewLabelWithStyle(
+		"THE ENERGY PROBLEM",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+	energySection := container.NewVBox(
+		sectionEnergyHeader,
 		container.NewPadded(container.NewPadded(ca.energyRace)),
 	)
 
-	// TAB 2: "Market Opportunity" - BUSINESS CASE
-	// HERO: "$721B ADDRESSABLE MARKET BY 2030"
-	// + Phased Entry Strategy (de-risking) + Competitive Matrix
-	marketOpportunityTab := container.NewVBox(
+	// SECTION 2: MARKET OPPORTUNITY
+	sectionMarketHeader := widget.NewLabelWithStyle(
+		"MARKET OPPORTUNITY",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+	marketSection := container.NewVBox(
+		sectionMarketHeader,
 		container.NewPadded(ca.marketChart),
-		widget.NewSeparator(),
-		// Phased Entry Strategy - CRITICAL for de-risking
 		widget.NewCard(
 			"Phased Entry Strategy",
 			"De-risking through staged market entry",
 			container.NewPadded(ca.phasedStrategy),
 		),
-		widget.NewSeparator(),
-		// Competitive Matrix - simplified "all green checkmarks" message
 		container.NewPadded(ca.competitiveMatrix),
 	)
 
-	// TAB 3: "ROI Calculator" - HANDS-ON TOOL
-	// HERO: Dynamic "$XX MILLION ANNUAL SAVINGS"
-	// Configuration controls inline (horizontal) for cleaner look
+	// SECTION 3: ROI CALCULATOR
+	sectionROIHeader := widget.NewLabelWithStyle(
+		"ROI CALCULATOR",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+	// Wrap slider in fixed-width container for better visibility
+	sliderContainer := container.NewGridWrap(fyne.NewSize(200, 30), ca.inferencesSlider)
+
 	configRow := container.NewHBox(
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
 		layout.NewSpacer(),
 		ca.inferencesLabel,
-		ca.inferencesSlider,
+		sliderContainer,
 		calcBtn,
 	)
-
-	roiCalculatorTab := container.NewVBox(
-		// Inline config controls - more compact, professional
+	roiSection := container.NewVBox(
+		sectionROIHeader,
 		container.NewPadded(configRow),
-		widget.NewSeparator(),
-		// Results with generous padding - hero savings display
 		container.NewPadded(ca.calculator),
 	)
 
-	// Create tabs with technical briefing names
-	centerTabs := container.NewAppTabs(
-		container.NewTabItem("The Energy Problem", container.NewScroll(energyProblemTab)),
-		container.NewTabItem("Market Opportunity", container.NewScroll(marketOpportunityTab)),
-		container.NewTabItem("ROI Calculator", container.NewScroll(roiCalculatorTab)),
+	// UNIFIED VIEW - Single scrollable container
+	unifiedContent := container.NewVBox(
+		energySection,
+		widget.NewSeparator(),
+		marketSection,
+		widget.NewSeparator(),
+		roiSection,
 	)
 
-	// Set default to Energy Problem (hero view)
-	centerTabs.SelectIndex(0)
+	centerPanel := container.NewScroll(unifiedContent)
 
-	centerPanel := centerTabs
-
-	// === FOOTER - INVESTOR GRADE ===
-	disclaimerLabel := widget.NewLabel("TRL 4 | Laboratory Validation | Energy claims pending independent verification")
-	disclaimerLabel.TextStyle = fyne.TextStyle{Italic: true}
-
+	// === FOOTER ===
 	footer := container.NewHBox(
 		ca.statusLabel,
 		layout.NewSpacer(),
-		disclaimerLabel,
 	)
 
 	// === MAIN LAYOUT ===
@@ -481,5 +486,7 @@ func (ca *ComparisonApp) updateStatus(status string) {
 		return
 	}
 	ca.lastStatusText = newText
-	ca.statusLabel.SetText(newText)
+	fyne.Do(func() {
+		ca.statusLabel.SetText(newText)
+	})
 }

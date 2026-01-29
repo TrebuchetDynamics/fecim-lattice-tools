@@ -19,10 +19,10 @@ func (ca *CrossbarApp) runMVM() {
 		return
 	}
 
-	debug.Println("runMVM: Starting")
+	getDebug().Println("runMVM: Starting")
 
 	// Create random input
-	debug.Printf("runMVM: Creating input vector of size %d", ca.config.Cols)
+	getDebug().Printf("runMVM: Creating input vector of size %d", ca.config.Cols)
 	input := make([]float64, ca.config.Cols)
 	for i := range input {
 		input[i] = rand.Float64()
@@ -158,7 +158,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 		ca.updateStatus("Ready | MVM complete. Check IR Drop and Sneak Paths tabs for analysis!")
 	})
-	debug.Println("runMVM: Complete")
+	getDebug().Println("runMVM: Complete")
 }
 
 // onDemoModeChanged handles demo mode selection changes.

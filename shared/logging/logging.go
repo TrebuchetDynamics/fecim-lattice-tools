@@ -27,6 +27,10 @@ var (
 	globalVerbosity VerbosityLevel = VerbosityOff
 	verbosityMu     sync.RWMutex
 
+	// File logging control - disabled by default, enable with EnableFileLogging()
+	fileLoggingEnabled bool
+	fileLoggingMu      sync.RWMutex
+
 	// Shared log file for all loggers
 	sharedLogFile   *os.File
 	sharedLogWriter io.Writer
@@ -53,6 +57,21 @@ func IsVerbose(level VerbosityLevel) bool {
 	return GetVerbosity() >= level
 }
 
+// EnableFileLogging enables file logging. Must be called before NewLogger
+// if you want logs to be written to files. By default, file logging is disabled.
+func EnableFileLogging() {
+	fileLoggingMu.Lock()
+	fileLoggingEnabled = true
+	fileLoggingMu.Unlock()
+}
+
+// IsFileLoggingEnabled returns true if file logging is enabled
+func IsFileLoggingEnabled() bool {
+	fileLoggingMu.RLock()
+	defer fileLoggingMu.RUnlock()
+	return fileLoggingEnabled
+}
+
 // Logger wraps log.Logger with demo-specific configuration and verbosity support
 type Logger struct {
 	*log.Logger
@@ -60,9 +79,25 @@ type Logger struct {
 	demoName string
 }
 
+// NewNoOpLogger creates a logger that doesn't write to any files
+// Used when --logger flag is not provided
+func NewNoOpLogger() *Logger {
+	return &Logger{
+		Logger:   log.New(io.Discard, "", 0),
+		logFile:  nil,
+		demoName: "noop",
+	}
+}
+
 // NewLogger creates a new logger for the specified demo
 // All loggers share a single log file to avoid creating multiple files
+// If file logging is not enabled (via EnableFileLogging()), returns a no-op logger
 func NewLogger(demoName string) *Logger {
+	// If file logging is not enabled, return a no-op logger
+	if !IsFileLoggingEnabled() {
+		return NewNoOpLogger()
+	}
+
 	sharedLogMu.Lock()
 	defer sharedLogMu.Unlock()
 

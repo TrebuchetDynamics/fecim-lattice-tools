@@ -31,7 +31,7 @@ type SneakPath struct {
 
 // NewSneakPathAnalyzer creates a sneak path analyzer.
 func NewSneakPathAnalyzer(rows, cols int) *SneakPathAnalyzer {
-	log.Input("NewSneakPathAnalyzer", map[string]interface{}{
+	getLog().Input("NewSneakPathAnalyzer", map[string]interface{}{
 		"rows": rows,
 		"cols": cols,
 	})
@@ -51,7 +51,7 @@ func NewSneakPathAnalyzer(rows, cols int) *SneakPathAnalyzer {
 		SneakCurrents: make([][]float64, rows),
 	}
 
-	log.Output("NewSneakPathAnalyzer", analyzer)
+	getLog().Output("NewSneakPathAnalyzer", analyzer)
 	return analyzer
 }
 
@@ -77,8 +77,12 @@ func (sp *SneakPathAnalyzer) SetConductancePattern(weights [][]int, levels int) 
 }
 
 // AnalyzeTarget analyzes sneak paths for a target cell.
+//
+// Physics model per VOLTAGE_RULES.md Section 3.3 (MVM/Compute):
+// During MVM in passive (0T1R) mode, ALL word lines are active simultaneously.
+// This enables 3-cell sneak paths through the array.
 func (sp *SneakPathAnalyzer) AnalyzeTarget(targetRow, targetCol int, voltage float64) {
-	log.Input("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
+	getLog().Input("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
 		"targetRow": targetRow,
 		"targetCol": targetCol,
 		"voltage":   voltage,
@@ -152,11 +156,11 @@ func (sp *SneakPathAnalyzer) AnalyzeTarget(targetRow, targetCol int, voltage flo
 		sp.TotalSneakRatio = math.Inf(1)
 	}
 
-	log.Calculation("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
-		"targetCurrent":    targetCurrent,
+	getLog().Calculation("SneakPathAnalyzer.AnalyzeTarget", map[string]interface{}{
+		"targetCurrent":     targetCurrent,
 		"totalSneakCurrent": totalSneakCurrent,
-		"sneakRatio":       sp.TotalSneakRatio,
-		"numPaths":         len(sp.SneakPaths),
+		"sneakRatio":        sp.TotalSneakRatio,
+		"numPaths":          len(sp.SneakPaths),
 	}, nil)
 }
 

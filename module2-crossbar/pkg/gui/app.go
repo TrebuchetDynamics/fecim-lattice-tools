@@ -22,10 +22,15 @@ import (
 )
 
 // Package-level logger using shared logging infrastructure
+// Lazy-initialized to ensure it's created after EnableFileLogging() is called
 var debug *logging.Logger
+var debugOnce sync.Once
 
-func init() {
-	debug = logging.NewLogger("crossbar-app")
+func getDebug() *logging.Logger {
+	debugOnce.Do(func() {
+		debug = logging.NewLogger("crossbar-app")
+	})
+	return debug
 }
 
 // CrossbarApp is the main application for the crossbar demo.
@@ -197,7 +202,7 @@ func (ca *CrossbarApp) RunEnhanced() {
 
 // RunWithLayout starts the GUI application with specified layout.
 func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
-	debug.Println("App: Creating window")
+	getDebug().Println("App: Creating window")
 	windowTitle := "FeCIM Demo 2: Crossbar Array MVM"
 	if enhanced {
 		windowTitle += " (Enhanced)"
@@ -206,20 +211,20 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
-	debug.Println("App: Creating main layout")
+	getDebug().Println("App: Creating main layout")
 	var content fyne.CanvasObject
 	if enhanced {
 		content = ca.createEnhancedMainLayout()
 	} else {
 		content = ca.createMainLayout()
 	}
-	debug.Println("App: Setting window content")
+	getDebug().Println("App: Setting window content")
 	ca.window.SetContent(content)
 
 	// Initialize displays
-	debug.Println("App: Updating conductance display")
+	getDebug().Println("App: Updating conductance display")
 	ca.updateConductanceDisplay()
-	debug.Println("App: Updating status")
+	getDebug().Println("App: Updating status")
 	ca.updateStatus("Ready | Array initialized with random weights. Click 'Run MVM' to start!")
 
 	// m5 UX fix: Set first-load onboarding content
@@ -239,9 +244,9 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 			"Try: Switch tabs to see\n"+
 			"different non-idealities!")
 
-	debug.Println("App: ShowAndRun starting")
+	getDebug().Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
-	debug.Println("App: Window closed")
+	getDebug().Println("App: Window closed")
 }
 
 // createMainLayout builds the main application layout.
@@ -265,8 +270,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Create color legends for each heatmap
 	// Conductance displayed as discrete level (0-29) per FeCIM 30-level spec
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "viridis")
-	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma") // Fixed 0-100% for architecture comparison
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis") // Typical IR drop range ~1-10%
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "plasma") // Typical sneak ratio range
 
 	// Create MVM visualization with bar charts
 	ca.mvmVis = NewMVMVisualization()

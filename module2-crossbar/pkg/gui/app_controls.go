@@ -203,7 +203,7 @@ func (ca *CrossbarApp) createControlWidgets() {
 		if ca.architecture == sharedwidgets.Architecture0T1R {
 			return // Already selected
 		}
-		debug.Printf("[ARCH TOGGLE] Switched to: PASSIVE (0T1R)")
+		getDebug().Printf("[ARCH TOGGLE] Switched to: PASSIVE (0T1R)")
 
 		ca.stateMu.Lock()
 		ca.architecture = sharedwidgets.Architecture0T1R
@@ -223,7 +223,7 @@ func (ca *CrossbarApp) createControlWidgets() {
 		if ca.architecture == sharedwidgets.Architecture1T1R {
 			return // Already selected
 		}
-		debug.Printf("[ARCH TOGGLE] Switched to: 1T1R GATE")
+		getDebug().Printf("[ARCH TOGGLE] Switched to: 1T1R GATE")
 
 		ca.stateMu.Lock()
 		ca.architecture = sharedwidgets.Architecture1T1R
@@ -243,7 +243,7 @@ func (ca *CrossbarApp) createControlWidgets() {
 		if ca.architecture == sharedwidgets.Architecture2T1R {
 			return // Already selected
 		}
-		debug.Printf("[ARCH TOGGLE] Switched to: 2T1R")
+		getDebug().Printf("[ARCH TOGGLE] Switched to: 2T1R")
 
 		ca.stateMu.Lock()
 		ca.architecture = sharedwidgets.Architecture2T1R

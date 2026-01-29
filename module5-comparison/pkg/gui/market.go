@@ -61,7 +61,7 @@ type MarketOpportunityChart struct {
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize:         fyne.NewSize(800, 350),
+		minSize:         fyne.NewSize(600, 160),
 		marketBoxes:     make([]*canvas.Rectangle, len(marketData)),
 		marketLabels:    make([]*canvas.Text, len(marketData)),
 		marketValues:    make([]*canvas.Text, len(marketData)),
@@ -129,25 +129,29 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		return m.renderer
 	}
 
-	// === HERO SECTION: MASSIVE "$721B" ===
+	// === HERO SECTION: COMPACT "$721B" ===
 	m.heroText = canvas.NewText("$721B", heroTextColor)
-	m.heroText.TextSize = 96 // MASSIVE for investor impact
+	m.heroText.TextSize = 48 // Compact for unified view
 	m.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroText.Alignment = fyne.TextAlignCenter
 
 	m.heroSubtext = canvas.NewText("ADDRESSABLE MARKET BY 2030", heroCyanColor)
-	m.heroSubtext.TextSize = 28
+	m.heroSubtext.TextSize = 14
 	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroSubtext.Alignment = fyne.TextAlignCenter
 
-	heroSection := container.NewVBox(
-		container.NewCenter(m.heroText),
-		container.NewCenter(m.heroSubtext),
+	heroSection := container.NewHBox(
+		layout.NewSpacer(),
+		container.NewVBox(
+			container.NewCenter(m.heroText),
+			container.NewCenter(m.heroSubtext),
+		),
+		layout.NewSpacer(),
 	)
 
 	// === THREE MARKET BOXES (horizontal) ===
-	boxWidth := float32(180)
-	boxHeight := float32(100)
+	boxWidth := float32(100)
+	boxHeight := float32(60)
 
 	var marketWidgets []fyne.CanvasObject
 	for i, seg := range marketData {
@@ -158,13 +162,13 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 
 		// Market name label
 		m.marketLabels[i] = canvas.NewText(seg.Name, heroTextColor)
-		m.marketLabels[i].TextSize = 16
+		m.marketLabels[i].TextSize = 10
 		m.marketLabels[i].TextStyle = fyne.TextStyle{Bold: true}
 		m.marketLabels[i].Alignment = fyne.TextAlignCenter
 
-		// Market value (large)
+		// Market value (compact)
 		m.marketValues[i] = canvas.NewText(fmt.Sprintf("$%.0fB", seg.Y2030), heroTextColor)
-		m.marketValues[i].TextSize = 32
+		m.marketValues[i].TextSize = 18
 		m.marketValues[i].TextStyle = fyne.TextStyle{Bold: true}
 		m.marketValues[i].Alignment = fyne.TextAlignCenter
 
@@ -188,27 +192,17 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		layout.NewSpacer(),
 	)
 
-	// === DISCLAIMER - HIGH-005 fix: Prominent market projection caveats ===
-	citation := canvas.NewText("Source: WSTS + Gartner Combined Market Forecasts (2025)", heroMutedColor)
-	citation.TextSize = 11
+	// === SOURCE ===
+	citation := canvas.NewText("Source: WSTS + Gartner (2025)", heroMutedColor)
+	citation.TextSize = 9
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
-	// HIGH-005 fix: Add clear projection disclaimer
-	disclaimer := canvas.NewText("⚠️ Market projections are estimates only. FeCIM position assumes successful TRL 4→9 transition.", estimatedColor)
-	disclaimer.TextSize = 10
-	disclaimer.TextStyle = fyne.TextStyle{Bold: true}
-	disclaimer.Alignment = fyne.TextAlignCenter
-
 	// === ASSEMBLE ===
 	m.container = container.NewVBox(
-		layout.NewSpacer(),
 		heroSection,
-		widget.NewSeparator(),
-		container.NewPadded(marketsRow),
-		layout.NewSpacer(),
+		marketsRow,
 		container.NewCenter(citation),
-		container.NewCenter(disclaimer),
 	)
 
 	// Initialize cache values to force first update
@@ -330,14 +324,14 @@ func NewCompetitiveMatrix() *CompetitiveMatrix {
 
 // MinSize returns minimum size.
 func (c *CompetitiveMatrix) MinSize() fyne.Size {
-	return fyne.NewSize(700, 280)
+	return fyne.NewSize(600, 160)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	// Hero message
 	heroText := canvas.NewText("Only FeCIM has checkmarks in ALL categories", heroCyanColor)
-	heroText.TextSize = 20
+	heroText.TextSize = 12
 	heroText.TextStyle = fyne.TextStyle{Bold: true}
 	heroText.Alignment = fyne.TextAlignCenter
 
@@ -346,7 +340,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	var headerWidgets []fyne.CanvasObject
 	for _, h := range headers {
 		label := canvas.NewText(h, heroTextColor)
-		label.TextSize = 14
+		label.TextSize = 10
 		label.TextStyle = fyne.TextStyle{Bold: true}
 		label.Alignment = fyne.TextAlignCenter
 		headerWidgets = append(headerWidgets, container.NewCenter(label))
@@ -364,7 +358,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 			nameText.Color = heroCyanColor
 			nameText.TextStyle = fyne.TextStyle{Bold: true}
 		}
-		nameText.TextSize = 14
+		nameText.TextSize = 10
 		rowWidgets = append(rowWidgets, container.NewCenter(nameText))
 
 		// Checkmark columns
@@ -380,36 +374,28 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		}
 
 		row := container.NewGridWithColumns(6, rowWidgets...)
-		rows.Add(row)
+
+		// Highlight FeCIM row with cyan background for investor visibility
+		if comp.Highlight {
+			highlightBg := canvas.NewRectangle(color.RGBA{0, 212, 255, 40}) // Subtle cyan
+			highlightBg.CornerRadius = 4
+			rows.Add(container.NewStack(highlightBg, row))
+		} else {
+			rows.Add(row)
+		}
 	}
 
-	// Capital light note (fabless model like NVIDIA)
-	fablessNote := canvas.NewText("Capital Light: Fabless model like NVIDIA", heroMutedColor)
-	fablessNote.TextSize = 12
-	fablessNote.TextStyle = fyne.TextStyle{Italic: true}
-	fablessNote.Alignment = fyne.TextAlignCenter
-
-	// Disclaimer - HIGH-005 fix: More prominent TRL caveat
-	trlDisclaimer := canvas.NewText("⚠️ TRL 4 (Laboratory Validation) - Competitive position based on published research only", estimatedColor)
-	trlDisclaimer.TextSize = 10
-	trlDisclaimer.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
-	trlDisclaimer.Alignment = fyne.TextAlignCenter
-
-	productionNote := canvas.NewText("All checkmarks assume successful commercialization (not yet demonstrated at scale)", heroMutedColor)
-	productionNote.TextSize = 9
-	productionNote.TextStyle = fyne.TextStyle{Italic: true}
-	productionNote.Alignment = fyne.TextAlignCenter
+	// === CITATION ===
+	citation := canvas.NewText("Sources: Samsung Nature 2025, IEEE IRPS 2022, Nano Letters 2024, CEA-Leti 2024", heroMutedColor)
+	citation.TextSize = 9
+	citation.TextStyle = fyne.TextStyle{Italic: true}
+	citation.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
 		container.NewCenter(heroText),
-		widget.NewSeparator(),
 		headerRow,
-		widget.NewSeparator(),
 		rows,
-		widget.NewSeparator(),
-		container.NewCenter(fablessNote),
-		container.NewCenter(trlDisclaimer),
-		container.NewCenter(productionNote),
+		container.NewCenter(citation),
 	)
 	return widget.NewSimpleRenderer(content)
 }

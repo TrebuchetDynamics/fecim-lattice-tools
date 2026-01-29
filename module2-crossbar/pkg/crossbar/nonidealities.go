@@ -68,13 +68,13 @@ func DefaultIRDropSolverConfig() *IRDropSolverConfig {
 //   - V_eff(i,j) = V_wl(i,j) - V_bl(i,j)
 //   - I_ij = V_eff(i,j) × G_ij
 func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalysis {
-	log.Input("AnalyzeIRDrop", map[string]interface{}{
+	getLog().Input("AnalyzeIRDrop", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
 		"cols":     a.config.Cols,
 	})
 	result := a.AnalyzeIRDropIterative(input, params, nil)
-	log.Calculation("AnalyzeIRDrop", map[string]interface{}{
+	getLog().Calculation("AnalyzeIRDrop", map[string]interface{}{
 		"maxDrop":     result.MaxIRDrop,
 		"avgDrop":     result.AvgIRDrop,
 		"variance":    result.IRDropVariance,
@@ -337,12 +337,12 @@ type SneakPathAnalysis struct {
 //
 // For architecture-aware analysis, use AnalyzeSneakPathsWithArch.
 func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalysis {
-	log.Input("AnalyzeSneakPaths", map[string]interface{}{
+	getLog().Input("AnalyzeSneakPaths", map[string]interface{}{
 		"selectedRow": selectedRow,
 		"selectedCol": selectedCol,
 	})
 	result := a.AnalyzeSneakPathsWithArch(selectedRow, selectedCol, false)
-	log.Calculation("AnalyzeSneakPaths", map[string]interface{}{
+	getLog().Calculation("AnalyzeSneakPaths", map[string]interface{}{
 		"maxSneakRatio": result.MaxSneakRatio,
 		"avgSneakRatio": result.AvgSneakRatio,
 		"totalSneak":    result.TotalSneak,
@@ -367,9 +367,25 @@ func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R b
 //   - 1.0:    0T1R (passive) - full sneak path impact
 //   - 0.001:  1T1R - ~1000x isolation from single transistor
 //   - 0.0001: 2T1R - ~10000x isolation from dual transistor AND-gate
+//
+// Physics model per VOLTAGE_RULES.md Section 3.3 (MVM/Compute):
+// During MVM in passive (0T1R) mode, ALL word lines are active simultaneously.
+// This enables 3-cell sneak paths: WL_i → cell(i,j) → BL_j → cell(k,j) → WL_k → ...
+//
+// The sneak current through each off-diagonal cell depends on parallel paths
+// through the array. For visualization, we show the relative contribution of
+// each cell to total sneak current affecting the selected cell's readout.
 func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, isolationFactor float64) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
+
+	getLog().Input("AnalyzeSneakPathsWithIsolation", map[string]interface{}{
+		"selectedRow":     selectedRow,
+		"selectedCol":     selectedCol,
+		"isolationFactor": isolationFactor,
+		"rows":            rows,
+		"cols":            cols,
+	})
 
 	sneakMap := make([][]float64, rows)
 	for i := range sneakMap {
@@ -381,8 +397,13 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 	if signalG < 1e-10 {
 		signalG = 1e-10 // Avoid division by zero
 	}
+	getLog().Calculation("SignalConductance", map[string]interface{}{
+		"signalG": signalG,
+	}, nil)
 
 	var totalSneak float64
+	var sameRowCount, sameColCount, offDiagCount int
+	var sameRowSneak, sameColSneak, offDiagSneak float64
 
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
@@ -393,55 +414,31 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 			var sneakG float64
 
 			if i == selectedRow {
-				// Same row as selected cell (but different column)
-				// Sneak path: selected WL → this cell → BL j → return path
-				// The cell's conductance directly contributes to sneak current
-				// Higher conductance = more current leaks to this BL
+				// Same row: Direct parallel path to selected BL
 				cellG := a.cells[i][j].Conductance
-
-				// Sum return paths through all cells in column j (except this row)
-				var returnPathG float64
-				for k := 0; k < rows; k++ {
-					if k != selectedRow {
-						returnPathG += a.cells[k][j].Conductance
-					}
-				}
-
-				// Series combination: this cell in series with parallel return paths
-				if cellG > 0 && returnPathG > 0 {
-					sneakG = (cellG * returnPathG) / (cellG + returnPathG)
-				}
+				sneakG = cellG
+				sameRowCount++
+				sameRowSneak += sneakG
 
 			} else if j == selectedCol {
-				// Same column as selected cell (but different row)
-				// Sneak path: WL i → cells in row i → return to this cell → selected BL
-				// Current from other word lines can leak through this cell
+				// Same column: Current from other WLs can reach selected BL
 				cellG := a.cells[i][j].Conductance
-
-				// Sum paths from other columns in this row
-				var feedPathG float64
-				for k := 0; k < cols; k++ {
-					if k != selectedCol {
-						feedPathG += a.cells[i][k].Conductance
-					}
-				}
-
-				// Series combination: feed paths in series with this cell
-				if cellG > 0 && feedPathG > 0 {
-					sneakG = (cellG * feedPathG) / (cellG + feedPathG)
-				}
+				sneakG = cellG
+				sameColCount++
+				sameColSneak += sneakG
 
 			} else {
-				// Off-diagonal cell: three-cell sneak path
-				// Path: selected WL → cell(sr,j) → BL j → cell(i,j) → WL i → cell(i,sc) → selected BL
-				g1 := a.cells[selectedRow][j].Conductance // Entry point on selected row
-				g2 := a.cells[i][j].Conductance           // This cell (corner of path)
-				g3 := a.cells[i][selectedCol].Conductance // Exit point on selected column
+				// Off-diagonal: Three-cell sneak path
+				g1 := a.cells[selectedRow][j].Conductance // Same row, other column
+				g2 := a.cells[i][j].Conductance           // The off-diagonal cell
+				g3 := a.cells[i][selectedCol].Conductance // Same column, other row
 
 				if g1 > 0 && g2 > 0 && g3 > 0 {
-					// Three conductances in series: G_total = 1/(1/g1 + 1/g2 + 1/g3)
+					// Series conductance: 1/G_total = 1/G1 + 1/G2 + 1/G3
 					sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
 				}
+				offDiagCount++
+				offDiagSneak += sneakG
 			}
 
 			// Apply architecture isolation factor
@@ -454,6 +451,7 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 
 	// Calculate statistics
 	var maxRatio, sumRatio float64
+	var maxRatioRow, maxRatioCol int
 	count := 0
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
@@ -463,6 +461,8 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 			ratio := sneakMap[i][j] / signalG
 			if ratio > maxRatio {
 				maxRatio = ratio
+				maxRatioRow = i
+				maxRatioCol = j
 			}
 			sumRatio += ratio
 			count++
@@ -473,6 +473,20 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 	if count > 0 {
 		avgRatio = sumRatio / float64(count)
 	}
+
+	getLog().Calculation("SneakPathAnalysis", map[string]interface{}{
+		"sameRowCount":    sameRowCount,
+		"sameRowSneak":    sameRowSneak,
+		"sameColCount":    sameColCount,
+		"sameColSneak":    sameColSneak,
+		"offDiagCount":    offDiagCount,
+		"offDiagSneak":    offDiagSneak,
+		"totalSneak":      totalSneak,
+		"maxRatio":        maxRatio,
+		"maxRatioCell":    []int{maxRatioRow, maxRatioCol},
+		"avgRatio":        avgRatio,
+		"isolationFactor": isolationFactor,
+	}, nil)
 
 	return &SneakPathAnalysis{
 		SneakCurrents: sneakMap,
@@ -485,14 +499,14 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 
 // MVMWithIRDrop performs MVM with IR drop effects.
 func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *IRDropAnalysis, error) {
-	log.Input("MVMWithIRDrop", map[string]interface{}{
+	getLog().Input("MVMWithIRDrop", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
 		"cols":     a.config.Cols,
 	})
 
 	if len(input) > a.config.Cols {
-		log.Error(ErrInputSize, "MVMWithIRDrop validation failed")
+		getLog().Error(ErrInputSize, "MVMWithIRDrop validation failed")
 		return nil, nil, ErrInputSize
 	}
 
@@ -520,7 +534,7 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 		a.totalReads++
 	}
 
-	log.Calculation("MVMWithIRDrop", map[string]interface{}{
+	getLog().Calculation("MVMWithIRDrop", map[string]interface{}{
 		"maxIRDrop": irAnalysis.MaxIRDrop,
 		"avgIRDrop": irAnalysis.AvgIRDrop,
 	}, output)
@@ -588,9 +602,19 @@ func (s *SneakPathAnalysis) GetSneakMapWithScale(maxRatio float64) [][]float64 {
 	rows := len(s.SneakCurrents)
 	cols := len(s.SneakCurrents[0])
 
+	getLog().Input("GetSneakMapWithScale", map[string]interface{}{
+		"maxRatio":    maxRatio,
+		"rows":        rows,
+		"cols":        cols,
+		"TotalSignal": s.TotalSignal,
+	})
+
 	if maxRatio <= 0 {
 		maxRatio = 1.0 // Default to 100%
 	}
+
+	var minVal, maxVal float64 = 1.0, 0.0
+	var nonZeroCount int
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
@@ -605,21 +629,38 @@ func (s *SneakPathAnalysis) GetSneakMapWithScale(maxRatio float64) [][]float64 {
 			if normalized[i][j] > 1.0 {
 				normalized[i][j] = 1.0
 			}
+			if normalized[i][j] > 0 {
+				nonZeroCount++
+				if normalized[i][j] < minVal {
+					minVal = normalized[i][j]
+				}
+				if normalized[i][j] > maxVal {
+					maxVal = normalized[i][j]
+				}
+			}
 		}
 	}
+
+	getLog().Calculation("GetSneakMapWithScale", map[string]interface{}{
+		"minNormalized":  minVal,
+		"maxNormalized":  maxVal,
+		"nonZeroCount":   nonZeroCount,
+		"totalCells":     rows * cols,
+		"percentNonZero": float64(nonZeroCount) / float64(rows*cols) * 100,
+	}, nil)
 
 	return normalized
 }
 
 // ComputeError calculates the MVM output error due to non-idealities.
 func ComputeError(ideal, actual []float64) float64 {
-	log.Input("ComputeError", map[string]interface{}{
+	getLog().Input("ComputeError", map[string]interface{}{
 		"idealLen":  len(ideal),
 		"actualLen": len(actual),
 	})
 
 	if len(ideal) != len(actual) {
-		log.Error(fmt.Errorf("length mismatch: ideal=%d actual=%d", len(ideal), len(actual)), "ComputeError validation failed")
+		getLog().Error(fmt.Errorf("length mismatch: ideal=%d actual=%d", len(ideal), len(actual)), "ComputeError validation failed")
 		return math.Inf(1)
 	}
 
@@ -631,7 +672,7 @@ func ComputeError(ideal, actual []float64) float64 {
 
 	rmse := math.Sqrt(sumSqError / float64(len(ideal)))
 
-	log.Calculation("ComputeError", map[string]interface{}{
+	getLog().Calculation("ComputeError", map[string]interface{}{
 		"rmse": rmse,
 	}, rmse)
 

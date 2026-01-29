@@ -23,7 +23,7 @@ type IRDropSimulator struct {
 
 // NewIRDropSimulator creates an IR drop simulator for a crossbar.
 func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
-	log.Input("NewIRDropSimulator", map[string]interface{}{
+	getLog().Input("NewIRDropSimulator", map[string]interface{}{
 		"rows": rows,
 		"cols": cols,
 	})
@@ -51,7 +51,7 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 		IRDropMap:    make([][]float64, rows),
 	}
 
-	log.Output("NewIRDropSimulator", sim)
+	getLog().Output("NewIRDropSimulator", sim)
 	return sim
 }
 
@@ -78,7 +78,7 @@ func (ir *IRDropSimulator) SetAllInputs(voltages []float64) {
 
 // Simulate runs the IR drop simulation using iterative method.
 func (ir *IRDropSimulator) Simulate(iterations int) {
-	log.Input("IRDropSimulator.Simulate", map[string]interface{}{
+	getLog().Input("IRDropSimulator.Simulate", map[string]interface{}{
 		"iterations": iterations,
 		"rows":       ir.Rows,
 		"cols":       ir.Cols,
@@ -152,7 +152,7 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 		}
 	}
 
-	log.Calculation("IRDropSimulator.Simulate", map[string]interface{}{
+	getLog().Calculation("IRDropSimulator.Simulate", map[string]interface{}{
 		"maxDrop": maxDrop,
 		"avgDrop": ir.GetAvgIRDrop(),
 	}, nil)

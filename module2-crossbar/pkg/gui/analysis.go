@@ -4,7 +4,6 @@ package gui
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 
 	"fyne.io/fyne/v2"
@@ -58,13 +57,6 @@ func (ca *CrossbarApp) runSneakPathAnalysis() {
 
 	sneakMap := analysis.GetSneakMap()
 
-	// Apply sqrt transformation for better visibility
-	for i := range sneakMap {
-		for j := range sneakMap[i] {
-			sneakMap[i][j] = math.Sqrt(sneakMap[i][j])
-		}
-	}
-
 	fyne.Do(func() {
 		ca.sneakPathHeatmap.SetData(sneakMap)
 		ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
@@ -103,10 +95,10 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 	// Update IR drop heatmap
 	irMap := analysis.GetIRDropMap()
-	debug.Printf("IR Drop map size: %dx%d, MaxIRDrop: %.6f", len(irMap), len(irMap[0]), analysis.MaxIRDrop)
+	getDebug().Printf("IR Drop map size: %dx%d, MaxIRDrop: %.6f", len(irMap), len(irMap[0]), analysis.MaxIRDrop)
 	// Sample some values to see the range
 	if len(irMap) > 0 && len(irMap[0]) > 0 {
-		debug.Printf("IR Drop sample values: [0,0]=%.4f, [mid,mid]=%.4f", irMap[0][0], irMap[len(irMap)/2][len(irMap[0])/2])
+		getDebug().Printf("IR Drop sample values: [0,0]=%.4f, [mid,mid]=%.4f", irMap[0][0], irMap[len(irMap)/2][len(irMap[0])/2])
 	}
 	fyne.Do(func() {
 		ca.irDropHeatmap.SetData(irMap)
@@ -153,19 +145,12 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	// Analyze sneak paths
 	analysis := ca.array.AnalyzeSneakPaths(selectedRow, selectedCol)
 
-	// Update sneak path heatmap with sqrt transform for better visibility
+	// Update sneak path heatmap
 	sneakMap := analysis.GetSneakMap()
-	debug.Printf("Sneak map size: %dx%d", len(sneakMap), len(sneakMap[0]))
-
-	// Apply sqrt transformation to make small variations more visible
-	for i := range sneakMap {
-		for j := range sneakMap[i] {
-			sneakMap[i][j] = math.Sqrt(sneakMap[i][j])
-		}
-	}
+	getDebug().Printf("Sneak map size: %dx%d", len(sneakMap), len(sneakMap[0]))
 
 	if len(sneakMap) > 0 && len(sneakMap[0]) > 0 {
-		debug.Printf("Sneak sample values (sqrt): [0,0]=%.4f, [mid,mid]=%.4f", sneakMap[0][0], sneakMap[len(sneakMap)/2][len(sneakMap[0])/2])
+		getDebug().Printf("Sneak sample values: [0,0]=%.4f, [mid,mid]=%.4f", sneakMap[0][0], sneakMap[len(sneakMap)/2][len(sneakMap[0])/2])
 	}
 	fyne.Do(func() {
 		ca.sneakPathHeatmap.SetData(sneakMap)

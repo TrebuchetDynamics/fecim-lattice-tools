@@ -133,6 +133,8 @@ type App struct {
 	calibDownHigh []float64 // Proven upper bound (less negative, undershot down)
 	lastErrorUp   []int     // Last error for each level (for oscillation detection)
 	lastErrorDown []int     // Last error for each level (for oscillation detection)
+	relaxCompUp   []float64 // Relaxation compensation factors (ascending, 0-indexed)
+	relaxCompDown []float64 // Relaxation compensation factors (descending, 0-indexed)
 
 	// Temperature-aware calibration (v2)
 	calibrationTemp  float64                   // Temperature of current active calibration (K)

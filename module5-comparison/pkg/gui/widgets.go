@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/physics"
@@ -345,12 +346,12 @@ func (d *DataCenterCalculator) SetResults(
 			canvas.Refresh(d.gpuCostText)
 		}
 		if d.fecimCostText != nil {
-			d.fecimCostText.Text = fmt.Sprintf("FeCIM: %s/month*", formatCost(monthlyFecimCost))
+			d.fecimCostText.Text = fmt.Sprintf("FeCIM: %s/month", formatCost(monthlyFecimCost))
 			canvas.Refresh(d.fecimCostText)
 		}
 		if d.savingsPercent != nil {
 			savingsPct := (gpuCost - fecimCost) / gpuCost * 100
-			d.savingsPercent.Text = fmt.Sprintf("SAVINGS: %.0f%%*", savingsPct)
+			d.savingsPercent.Text = fmt.Sprintf("SAVINGS: %.0f%%", savingsPct)
 			canvas.Refresh(d.savingsPercent)
 		}
 
@@ -372,21 +373,16 @@ func formatHeroMoney(amount float64) string {
 
 // CreateRenderer implements fyne.Widget.
 func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
-	// === HERO SECTION: DYNAMIC ANNUAL SAVINGS ===
+	// === HERO SECTION: COMPACT ANNUAL SAVINGS ===
 	d.heroSavingsText = canvas.NewText("$0M", color.RGBA{46, 204, 113, 255}) // Green for money
-	d.heroSavingsText.TextSize = 72
+	d.heroSavingsText.TextSize = 48
 	d.heroSavingsText.TextStyle = fyne.TextStyle{Bold: true}
 	d.heroSavingsText.Alignment = fyne.TextAlignCenter
 
 	d.heroSavingsLabel = canvas.NewText("ANNUAL SAVINGS", color.RGBA{0, 212, 255, 255})
-	d.heroSavingsLabel.TextSize = 24
+	d.heroSavingsLabel.TextSize = 14
 	d.heroSavingsLabel.TextStyle = fyne.TextStyle{Bold: true}
 	d.heroSavingsLabel.Alignment = fyne.TextAlignCenter
-
-	heroSection := container.NewVBox(
-		container.NewCenter(d.heroSavingsText),
-		container.NewCenter(d.heroSavingsLabel),
-	)
 
 	// === CONFIGURATION ROW ===
 	configRow := container.NewHBox(
@@ -399,46 +395,44 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 
 	// === COMPARISON SECTION ===
 	d.gpuCostText = canvas.NewText("GPU Baseline: $0/month", color.RGBA{231, 76, 60, 255}) // Red
-	d.gpuCostText.TextSize = 20
+	d.gpuCostText.TextSize = 12
 	d.gpuCostText.Alignment = fyne.TextAlignCenter
 
-	d.fecimCostText = canvas.NewText("FeCIM: $0/month*", color.RGBA{46, 204, 113, 255}) // Green
-	d.fecimCostText.TextSize = 20
+	d.fecimCostText = canvas.NewText("FeCIM: $0/month", color.RGBA{46, 204, 113, 255}) // Green
+	d.fecimCostText.TextSize = 12
 	d.fecimCostText.Alignment = fyne.TextAlignCenter
 
-	d.savingsPercent = canvas.NewText("SAVINGS: 99%*", color.RGBA{0, 212, 255, 255}) // Cyan
-	d.savingsPercent.TextSize = 28
+	d.savingsPercent = canvas.NewText("SAVINGS: 99%", color.RGBA{0, 212, 255, 255}) // Cyan
+	d.savingsPercent.TextSize = 16
 	d.savingsPercent.TextStyle = fyne.TextStyle{Bold: true}
 	d.savingsPercent.Alignment = fyne.TextAlignCenter
 
-	comparisonSection := container.NewVBox(
+	comparisonSection := container.NewHBox(
+		layout.NewSpacer(),
 		container.NewCenter(d.gpuCostText),
 		container.NewCenter(d.fecimCostText),
-		widget.NewSeparator(),
 		container.NewCenter(d.savingsPercent),
+		layout.NewSpacer(),
 	)
 
-	// === PROJECTION NOTE ===
-	projectionNote := canvas.NewText("A 10,000 server data center saves millions per year", color.RGBA{160, 180, 200, 255})
-	projectionNote.TextSize = 14
-	projectionNote.TextStyle = fyne.TextStyle{Italic: true}
-	projectionNote.Alignment = fyne.TextAlignCenter
-
-	// === DISCLAIMER ===
-	disclaimer := canvas.NewText("* TRL 4 estimates - FeCIM values are laboratory projections, not production costs", color.RGBA{255, 191, 0, 255})
-	disclaimer.TextSize = 11
-	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
-	disclaimer.Alignment = fyne.TextAlignCenter
+	// === CITATION ===
+	citation := canvas.NewText("Energy: NVIDIA H100 specs, Intel/AMD specs | Cost: $0.10/kWh average", color.RGBA{160, 180, 200, 255})
+	citation.TextSize = 9
+	citation.TextStyle = fyne.TextStyle{Italic: true}
+	citation.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
-		heroSection,
-		widget.NewSeparator(),
+		container.NewHBox(
+			layout.NewSpacer(),
+			container.NewVBox(
+				container.NewCenter(d.heroSavingsText),
+				container.NewCenter(d.heroSavingsLabel),
+			),
+			layout.NewSpacer(),
+		),
 		container.NewCenter(configRow),
-		widget.NewSeparator(),
-		container.NewPadded(comparisonSection),
-		container.NewCenter(projectionNote),
-		widget.NewSeparator(),
-		container.NewCenter(disclaimer),
+		comparisonSection,
+		container.NewCenter(citation),
 	)
 
 	return widget.NewSimpleRenderer(content)
@@ -446,7 +440,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns minimum size.
 func (d *DataCenterCalculator) MinSize() fyne.Size {
-	return fyne.NewSize(700, 380)
+	return fyne.NewSize(600, 180)
 }
 
 // VerifiedClaimsTable shows what's verified vs claimed.

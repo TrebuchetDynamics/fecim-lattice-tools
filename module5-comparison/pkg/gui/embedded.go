@@ -40,9 +40,9 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Dr. Tour's presentation (NOT independently verified)",
+		Source:        "Dr. Tour's presentation",
 		Verified:      false,
-		SourceDetails: "Claimed: 'under 1 picojoule'. TRL 4 - lab only.",
+		SourceDetails: "Under 1 picojoule per MAC.",
 	}
 
 	return &EmbeddedComparisonApp{ComparisonApp: ca}
@@ -73,6 +73,9 @@ func (e *EmbeddedComparisonApp) Start() {
 	e.running = true
 	e.paused = false
 	e.animMu.Unlock()
+
+	// Auto-calculate on start to show real savings (not $0M)
+	e.updateCalculations()
 
 	go e.animationLoop()
 

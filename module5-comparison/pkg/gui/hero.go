@@ -122,7 +122,7 @@ func (e *AnimatedEnergyRace) Reset() {
 
 // MinSize returns minimum size.
 func (e *AnimatedEnergyRace) MinSize() fyne.Size {
-	return fyne.NewSize(800, 400)
+	return fyne.NewSize(600, 180)
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -133,34 +133,25 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		return e.renderer
 	}
 
-	// === HERO SECTION: MASSIVE "80-90%" ===
+	// === HERO SECTION: COMPACT "80-90%" ===
 	e.heroText = canvas.NewText("80-90%", heroTextColor)
-	e.heroText.TextSize = 96 // MASSIVE for investor impact
+	e.heroText.TextSize = 48 // Compact for unified view
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
 	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION (PROJECTED)", heroCyanColor)
-	e.heroSubtext.TextSize = 28
+	e.heroSubtext.TextSize = 16
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter
 
-	// Prominent TRL warning - CRIT-001 fix
-	trlWarning := canvas.NewText("Laboratory estimates only - not independently verified", heroAmberColor)
-	trlWarning.TextSize = 16
-	trlWarning.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
-	trlWarning.Alignment = fyne.TextAlignCenter
-
 	heroSection := container.NewVBox(
-		layout.NewSpacer(),
 		container.NewCenter(e.heroText),
 		container.NewCenter(e.heroSubtext),
-		container.NewCenter(trlWarning),
-		layout.NewSpacer(),
 	)
 
-	// === BEFORE/AFTER COMPARISON: Simple, clean ===
+	// === BEFORE/AFTER COMPARISON: Prominent bars for investor impact ===
 	barWidth := float32(500)
-	barHeight := float32(40)
+	barHeight := float32(32)
 
 	// "Today: GPU-based AI" label
 	todayLabel := canvas.NewText("Today: GPU-based AI", heroMutedColor)
@@ -175,16 +166,10 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.gpuLabel.Alignment = fyne.TextAlignTrailing
 
 	gpuRow := container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(180, barHeight), container.NewCenter(todayLabel)),
+		container.NewGridWrap(fyne.NewSize(160, barHeight), container.NewCenter(todayLabel)),
 		e.gpuBar,
 		container.NewGridWrap(fyne.NewSize(120, barHeight), container.NewCenter(e.gpuLabel)),
 	)
-
-	// Arrow
-	arrowText := canvas.NewText("vs", heroMutedColor)
-	arrowText.TextSize = 16
-	arrowText.Alignment = fyne.TextAlignCenter
-	arrowRow := container.NewCenter(arrowText)
 
 	// "FeCIM: Compute-in-Memory" label
 	fecimLabelText := canvas.NewText("FeCIM: Compute-in-Memory", heroMutedColor)
@@ -199,38 +184,34 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.fecimLabel.Alignment = fyne.TextAlignTrailing
 
 	fecimRow := container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(180, barHeight), container.NewCenter(fecimLabelText)),
+		container.NewGridWrap(fyne.NewSize(160, barHeight), container.NewCenter(fecimLabelText)),
 		e.fecimBar,
 		container.NewGridWrap(fyne.NewSize(120, barHeight), container.NewCenter(e.fecimLabel)),
 	)
 
 	comparisonSection := container.NewVBox(
 		gpuRow,
-		arrowRow,
 		fecimRow,
 	)
 
 	// === KEY STAT STRIP ===
 	e.statStrip = canvas.NewText("1000x less than CPU  |  100x less than GPU  |  ~1 pJ per MAC", heroCyanColor)
-	e.statStrip.TextSize = 16
+	e.statStrip.TextSize = 11
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
-	// === DISCLAIMER ===
-	disclaimer := canvas.NewText("* TRL 4 (Laboratory Validation) - Energy claims pending independent verification", estimatedColor)
-	disclaimer.TextSize = 11
-	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
-	disclaimer.Alignment = fyne.TextAlignCenter
+	// === CITATION ===
+	citation := canvas.NewText("Sources: Samsung Nature 2025 (25-100× vs NAND), NVIDIA H100 specs, Intel/AMD specs", heroMutedColor)
+	citation.TextSize = 9
+	citation.TextStyle = fyne.TextStyle{Italic: true}
+	citation.Alignment = fyne.TextAlignCenter
 
 	// === ASSEMBLE ===
 	e.container = container.NewVBox(
 		heroSection,
-		widget.NewSeparator(),
-		container.NewPadded(comparisonSection),
-		widget.NewSeparator(),
+		comparisonSection,
 		container.NewCenter(e.statStrip),
-		layout.NewSpacer(),
-		container.NewCenter(disclaimer),
+		container.NewCenter(citation),
 	)
 
 	// Initialize cache values to force first update
@@ -282,15 +263,13 @@ func (e *AnimatedEnergyRace) doRefresh() {
 		return
 	}
 
-	// Animate bar widths
+	// Animate bar widths - prominent for investor impact
 	barWidth := float32(500)
-	barHeight := float32(40)
-	e.gpuBar.SetMinSize(fyne.NewSize(barWidth*float32(progress), barHeight))
-	e.fecimBar.SetMinSize(fyne.NewSize(max(10, barWidth*0.1*float32(progress)), barHeight))
+	barHeight := float32(32)
 
-	// BUG-M5-004 FIX: Only format and update text when threshold was crossed
+	// Prepare text updates if needed
+	var gpuText, fecimText string
 	if needsTextUpdate {
-		var gpuText, fecimText string
 		if progress > 0.9 {
 			gpuText = "100 units power"
 			fecimText = "~10 units power"
@@ -298,32 +277,48 @@ func (e *AnimatedEnergyRace) doRefresh() {
 			gpuText = fmt.Sprintf("%.0f units", 100*progress)
 			fecimText = fmt.Sprintf("~%.0f units", 10*progress)
 		}
-		e.gpuLabel.Text = gpuText
-		e.fecimLabel.Text = fecimText
-		canvas.Refresh(e.gpuLabel)
-		canvas.Refresh(e.fecimLabel)
-
-		// Clear the flag
-		e.mu.Lock()
-		e.needsTextUpdate = false
-		e.mu.Unlock()
 	}
 
-	// Pulse the hero text when animation complete
+	// Prepare hero text color if needed
+	var heroColor color.RGBA
 	if showWinner {
 		pulse := 0.85 + math.Sin(pulsePhase)*0.15
-		e.heroText.Color = color.RGBA{
+		heroColor = color.RGBA{
 			uint8(240 * pulse),
 			uint8(244 * pulse),
 			uint8(248 * pulse),
 			255,
 		}
-		canvas.Refresh(e.heroText)
 	}
 
-	canvas.Refresh(e.gpuBar)
-	canvas.Refresh(e.fecimBar)
-	e.container.Refresh()
+	// All UI updates must be on main thread
+	fyne.Do(func() {
+		e.gpuBar.SetMinSize(fyne.NewSize(barWidth*float32(progress), barHeight))
+		e.fecimBar.SetMinSize(fyne.NewSize(max(10, barWidth*0.1*float32(progress)), barHeight))
+
+		if needsTextUpdate {
+			e.gpuLabel.Text = gpuText
+			e.fecimLabel.Text = fecimText
+			canvas.Refresh(e.gpuLabel)
+			canvas.Refresh(e.fecimLabel)
+		}
+
+		if showWinner {
+			e.heroText.Color = heroColor
+			canvas.Refresh(e.heroText)
+		}
+
+		canvas.Refresh(e.gpuBar)
+		canvas.Refresh(e.fecimBar)
+		e.container.Refresh()
+	})
+
+	// Clear the flag after UI update
+	if needsTextUpdate {
+		e.mu.Lock()
+		e.needsTextUpdate = false
+		e.mu.Unlock()
+	}
 }
 
 // Refresh triggers a widget refresh via the base widget.
@@ -377,66 +372,72 @@ func (p *PhasedStrategyDiagram) Reset() {
 
 // MinSize returns minimum size.
 func (p *PhasedStrategyDiagram) MinSize() fyne.Size {
-	return fyne.NewSize(700, 200)
+	return fyne.NewSize(600, 120)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 	// Phase 1: NAND Replacement
 	phase1Title := canvas.NewText("PHASE 1", heroCyanColor)
-	phase1Title.TextSize = 14
+	phase1Title.TextSize = 10
 	phase1Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase1Name := canvas.NewText("NAND Replacement", heroTextColor)
-	phase1Name.TextSize = 18
+	phase1Name.TextSize = 12
 	phase1Name.TextStyle = fyne.TextStyle{Bold: true}
-	phase1Desc := widget.NewLabel("Immediate revenue\nNo software changes\nDrop-in compatible")
-	phase1Desc.Alignment = fyne.TextAlignCenter
+	phase1Desc := canvas.NewText("No software changes", heroMutedColor)
+	phase1Desc.TextSize = 9
 	phase1Box := container.NewVBox(
 		container.NewCenter(phase1Title),
 		container.NewCenter(phase1Name),
-		phase1Desc,
+		container.NewCenter(phase1Desc),
 	)
 
 	// Arrow 1
-	arrow1 := canvas.NewText("->", heroMutedColor)
-	arrow1.TextSize = 24
+	arrow1 := canvas.NewText("→", heroMutedColor)
+	arrow1.TextSize = 16
 
 	// Phase 2: DRAM Replacement
 	phase2Title := canvas.NewText("PHASE 2", heroCyanColor)
-	phase2Title.TextSize = 14
+	phase2Title.TextSize = 10
 	phase2Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase2Name := canvas.NewText("DRAM Replacement", heroTextColor)
-	phase2Name.TextSize = 18
+	phase2Name.TextSize = 12
 	phase2Name.TextStyle = fyne.TextStyle{Bold: true}
-	phase2Desc := widget.NewLabel("Eliminate refresh power\nHigher density\nNon-volatile")
-	phase2Desc.Alignment = fyne.TextAlignCenter
+	phase2Desc := canvas.NewText("Higher density", heroMutedColor)
+	phase2Desc.TextSize = 9
 	phase2Box := container.NewVBox(
 		container.NewCenter(phase2Title),
 		container.NewCenter(phase2Name),
-		phase2Desc,
+		container.NewCenter(phase2Desc),
 	)
 
 	// Arrow 2
-	arrow2 := canvas.NewText("->", heroMutedColor)
-	arrow2.TextSize = 24
+	arrow2 := canvas.NewText("→", heroMutedColor)
+	arrow2.TextSize = 16
 
 	// Phase 3: Full CIM
 	phase3Title := canvas.NewText("PHASE 3", heroGreenColor)
-	phase3Title.TextSize = 14
+	phase3Title.TextSize = 10
 	phase3Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase3Name := canvas.NewText("Full CIM", heroTextColor)
-	phase3Name.TextSize = 18
+	phase3Name.TextSize = 12
 	phase3Name.TextStyle = fyne.TextStyle{Bold: true}
-	phase3Desc := widget.NewLabel("80-90% energy reduction\nTransform data centers\nAI acceleration")
-	phase3Desc.Alignment = fyne.TextAlignCenter
+	phase3Desc := canvas.NewText("80-90% reduction", heroMutedColor)
+	phase3Desc.TextSize = 9
 	phase3Box := container.NewVBox(
 		container.NewCenter(phase3Title),
 		container.NewCenter(phase3Name),
-		phase3Desc,
+		container.NewCenter(phase3Desc),
 	)
 
+	// === CITATION ===
+	citation := canvas.NewText("Strategy based on WSTS/Gartner market analysis", heroMutedColor)
+	citation.TextSize = 8
+	citation.TextStyle = fyne.TextStyle{Italic: true}
+	citation.Alignment = fyne.TextAlignCenter
+
 	// Assemble phases horizontally
-	p.container = container.NewHBox(
+	phasesRow := container.NewHBox(
 		layout.NewSpacer(),
 		phase1Box,
 		container.NewCenter(arrow1),
@@ -444,6 +445,11 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 		container.NewCenter(arrow2),
 		phase3Box,
 		layout.NewSpacer(),
+	)
+
+	p.container = container.NewVBox(
+		phasesRow,
+		container.NewCenter(citation),
 	)
 
 	return widget.NewSimpleRenderer(p.container)

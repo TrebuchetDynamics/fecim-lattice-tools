@@ -111,7 +111,9 @@ func TestAnalyzeSneakPaths(t *testing.T) {
 		t.Error("Selected cell should have zero sneak current")
 	}
 
-	// Check that same row/column cells have sneak currents
+	// Per VOLTAGE_RULES.md Section 3.3 (MVM/Compute in passive 0T1R):
+	// All word lines are active simultaneously, enabling 3-cell sneak paths.
+	// Same-row and same-column cells contribute to sneak currents.
 	hasRowSneak := false
 	hasColSneak := false
 

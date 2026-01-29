@@ -83,7 +83,7 @@ type DriftSnapshot struct {
 
 // NewDriftSimulator creates a drift simulator.
 func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
-	log.Input("NewDriftSimulator", map[string]interface{}{
+	getLog().Input("NewDriftSimulator", map[string]interface{}{
 		"rows":   rows,
 		"cols":   cols,
 		"levels": levels,
@@ -128,7 +128,7 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 		DriftHistory: make([]DriftSnapshot, 0),
 	}
 
-	log.Output("NewDriftSimulator", sim)
+	getLog().Output("NewDriftSimulator", sim)
 	return sim
 }
 
@@ -234,7 +234,7 @@ func (d *DriftSimulator) SetWeightMatrix(weights [][]int) {
 
 // SimulateTimeStep advances simulation by dt seconds.
 func (d *DriftSimulator) SimulateTimeStep(dt float64) {
-	log.Calculation("SimulateTimeStep", map[string]interface{}{
+	getLog().Calculation("SimulateTimeStep", map[string]interface{}{
 		"dt":          dt,
 		"currentTime": d.Time,
 		"driftCoeff":  d.DriftCoeff,
@@ -282,7 +282,7 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 		}
 	}
 
-	log.Calculation("SimulateTimeStep", map[string]interface{}{
+	getLog().Calculation("SimulateTimeStep", map[string]interface{}{
 		"newTime":  d.Time,
 		"maxDrift": maxDrift,
 	}, nil)

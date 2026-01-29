@@ -428,18 +428,52 @@ func loadLastTab(prefs fyne.Preferences) int {
 
 func main() {
 	// Parse command-line flags
-	verbosityFlag := flag.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
+	loggerFlag := flag.Bool("logger", false, "Enable file logging (logs to logs/ directory)")
+	verbosityFlag := flag.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace (only used with --logger)")
+	calibrateFlag := flag.Bool("calibrate", false, "Run hysteresis calibration and exit (no GUI)")
+	materialFlag := flag.String("material", "all", "Material to calibrate (use 'all' for all materials, or specify name)")
+	forceFlag := flag.Bool("force", false, "Force recalibration even if calibration file exists")
+	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
 	flag.Parse()
 
-	// Set global verbosity level
-	verbosity := logging.ParseVerbosityFlag(*verbosityFlag)
-	logging.SetVerbosity(verbosity)
+	// Handle --list-materials
+	if *listMaterialsFlag {
+		fmt.Println("Available materials:")
+		for _, name := range demo1gui.ListMaterials() {
+			fmt.Printf("  - %s\n", name)
+		}
+		return
+	}
 
-	// Initialize global logger
-	log = logging.NewLogger("fecim-lattice-tools")
-	defer log.Close()
+	// Handle --calibrate (CLI mode, no GUI)
+	if *calibrateFlag {
+		opts := demo1gui.CLICalibrationOptions{
+			MaterialName: *materialFlag,
+			NumLevels:    0, // 0 = use material's native level count
+			Temperature:  300,
+			Force:        *forceFlag,
+			Verbose:      true,
+		}
+		if err := demo1gui.RunCLICalibration(opts); err != nil {
+			fmt.Fprintf(os.Stderr, "Calibration error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Calibration complete.")
+		return
+	}
 
-	log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))
+	// Initialize logger only if --logger flag is set
+	if *loggerFlag {
+		logging.EnableFileLogging() // Must be called before NewLogger to enable file output
+		verbosity := logging.ParseVerbosityFlag(*verbosityFlag)
+		logging.SetVerbosity(verbosity)
+		log = logging.NewLogger("fecim-lattice-tools")
+		defer log.Close()
+		log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))
+	} else {
+		// File logging is disabled by default, no action needed
+		log = logging.NewNoOpLogger()
+	}
 
 	// Create Fyne app
 	fmt.Println("[STARTUP] Creating Fyne app...")

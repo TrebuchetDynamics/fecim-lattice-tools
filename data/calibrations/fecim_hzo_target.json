@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "material_name": "FeCIM HZO",
+  "material_name": "FeCIM HZO (TARGET)",
   "num_levels": 30,
   "calibrations": {
     "300": {

@@ -7,9 +7,19 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sync"
 )
 
-var log = logging.NewLogger("crossbar")
+// Lazy-initialized logger to ensure it's created after EnableFileLogging() is called
+var log *logging.Logger
+var logOnce sync.Once
+
+func getLog() *logging.Logger {
+	logOnce.Do(func() {
+		log = logging.NewLogger("crossbar")
+	})
+	return log
+}
 
 // DefaultQuantizationLevels is the standard number of discrete analog states.
 // Alias to shared/physics for backward compatibility.
@@ -135,7 +145,7 @@ type Array struct {
 
 // NewArray creates a new crossbar array.
 func NewArray(cfg *Config) (*Array, error) {
-	log.Input("NewArray", map[string]interface{}{
+	getLog().Input("NewArray", map[string]interface{}{
 		"rows":       cfg.Rows,
 		"cols":       cfg.Cols,
 		"noiseLevel": cfg.NoiseLevel,
@@ -146,7 +156,7 @@ func NewArray(cfg *Config) (*Array, error) {
 
 	if cfg.Rows <= 0 || cfg.Cols <= 0 {
 		err := fmt.Errorf("invalid array dimensions: %dx%d", cfg.Rows, cfg.Cols)
-		log.Error(err, "NewArray validation failed")
+		getLog().Error(err, "NewArray validation failed")
 		return nil, err
 	}
 
@@ -168,7 +178,7 @@ func NewArray(cfg *Config) (*Array, error) {
 		}
 	}
 
-	log.Output("NewArray", arr)
+	getLog().Output("NewArray", arr)
 	return arr, nil
 }
 
@@ -290,14 +300,14 @@ func (a *Array) Destroy() {
 func (a *Array) ProgramWeight(row, col int, weight float64) error {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		err := fmt.Errorf("cell index out of range: (%d, %d)", row, col)
-		log.Error(err, "ProgramWeight validation failed")
+		getLog().Error(err, "ProgramWeight validation failed")
 		return err
 	}
 
 	// Quantize to discrete levels
 	quantized := QuantizeToLevels(weight)
 
-	log.Calculation("ProgramWeight", map[string]interface{}{
+	getLog().Calculation("ProgramWeight", map[string]interface{}{
 		"row":            row,
 		"col":            col,
 		"originalWeight": weight,
@@ -317,7 +327,7 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 // Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
 	quantized := physics.QuantizeTo30Levels(value)
-	log.Calculation("QuantizeToLevels", map[string]interface{}{
+	getLog().Calculation("QuantizeToLevels", map[string]interface{}{
 		"input": value,
 	}, quantized)
 	return quantized
@@ -439,7 +449,7 @@ func (a *Array) applyEnduranceFatigue(cell *Cell, gPhys float64) float64 {
 
 // ProgramWeightMatrix programs an entire weight matrix to the array.
 func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
-	log.Input("ProgramWeightMatrix", map[string]interface{}{
+	getLog().Input("ProgramWeightMatrix", map[string]interface{}{
 		"matrixRows": len(weights),
 		"matrixCols": len(weights[0]),
 		"arrayRows":  a.config.Rows,
@@ -448,14 +458,14 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 
 	if len(weights) > a.config.Rows {
 		err := fmt.Errorf("weight matrix rows (%d) exceed array rows (%d)", len(weights), a.config.Rows)
-		log.Error(err, "ProgramWeightMatrix validation failed")
+		getLog().Error(err, "ProgramWeightMatrix validation failed")
 		return err
 	}
 
 	for i, row := range weights {
 		if len(row) > a.config.Cols {
 			err := fmt.Errorf("weight matrix cols (%d) exceed array cols (%d)", len(row), a.config.Cols)
-			log.Error(err, "ProgramWeightMatrix validation failed")
+			getLog().Error(err, "ProgramWeightMatrix validation failed")
 			return err
 		}
 		for j, w := range row {
@@ -465,7 +475,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 		}
 	}
 
-	log.Output("ProgramWeightMatrix", "success")
+	getLog().Output("ProgramWeightMatrix", "success")
 	return nil
 }
 
@@ -473,7 +483,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 // Input x is applied to columns (bit lines), output y is read from rows (word lines).
 // Physics: I_row = Σ(G_ij × V_j) - each cell contributes current via Ohm's law.
 func (a *Array) MVM(input []float64) ([]float64, error) {
-	log.Input("MVM", map[string]interface{}{
+	getLog().Input("MVM", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
 		"cols":     a.config.Cols,
@@ -481,7 +491,7 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 
 	if len(input) > a.config.Cols {
 		err := fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
-		log.Error(err, "MVM validation failed")
+		getLog().Error(err, "MVM validation failed")
 		return nil, err
 	}
 
@@ -490,7 +500,7 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 	if a.gpuAccelerator != nil && a.gpuAccelerator.IsAvailable() {
 		output, err := a.mvmGPU(input)
 		if err == nil {
-			log.Calculation("MVM", map[string]interface{}{
+			getLog().Calculation("MVM", map[string]interface{}{
 				"mode": "GPU",
 			}, output)
 		}
@@ -500,7 +510,7 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 	// CPU fallback
 	output, err := a.mvmCPU(input)
 	if err == nil {
-		log.Calculation("MVM", map[string]interface{}{
+		getLog().Calculation("MVM", map[string]interface{}{
 			"mode": "CPU",
 		}, output)
 	}
@@ -544,7 +554,7 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 // VMM performs vector-matrix multiplication: y = x * W
 // Input x is applied to rows (word lines), output y is read from columns (bit lines).
 func (a *Array) VMM(input []float64) ([]float64, error) {
-	log.Input("VMM", map[string]interface{}{
+	getLog().Input("VMM", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
 		"cols":     a.config.Cols,
@@ -552,7 +562,7 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 
 	if len(input) > a.config.Rows {
 		err := fmt.Errorf("input size (%d) exceeds array rows (%d)", len(input), a.config.Rows)
-		log.Error(err, "VMM validation failed")
+		getLog().Error(err, "VMM validation failed")
 		return nil, err
 	}
 
@@ -576,7 +586,7 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 		a.totalReads++
 	}
 
-	log.Calculation("VMM", map[string]interface{}{
+	getLog().Calculation("VMM", map[string]interface{}{
 		"outputLen": len(output),
 	}, output)
 

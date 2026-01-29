@@ -19,7 +19,7 @@ func (ca *CrossbarApp) runEnhancedMVM() {
 		return
 	}
 
-	debug.Println("runEnhancedMVM: Starting")
+	getDebug().Println("runEnhancedMVM: Starting")
 
 	// Create random input
 	input := make([]float64, ca.config.Cols)
@@ -42,7 +42,7 @@ func (ca *CrossbarApp) runEnhancedMVM() {
 
 // runEnhancedMVMInstant performs instant MVM (no animation) for initial data population
 func (ca *CrossbarApp) runEnhancedMVMInstant() {
-	debug.Println("runEnhancedMVMInstant: Starting instant MVM for initial load")
+	getDebug().Println("runEnhancedMVMInstant: Starting instant MVM for initial load")
 
 	// Create random input
 	input := make([]float64, ca.config.Cols)
@@ -69,7 +69,7 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
-		debug.Printf("runEnhancedMVMInstant: Error: %v", err)
+		getDebug().Printf("runEnhancedMVMInstant: Error: %v", err)
 		ca.updateStatus(fmt.Sprintf("Error: %v", err))
 		return
 	}
@@ -88,7 +88,7 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 	ca.refreshSelectedCellTooltip()
 
 	ca.updateStatus("Ready | Initial MVM complete. All analysis tabs populated.")
-	debug.Println("runEnhancedMVMInstant: Complete")
+	getDebug().Println("runEnhancedMVMInstant: Complete")
 }
 
 // runEnhancedMVMAnimated performs the enhanced MVM with all analysis.
@@ -181,7 +181,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 		ca.modeIndicator.SetMode(DemoModeIdle)
 	})
 
-	debug.Println("runEnhancedMVM: Complete")
+	getDebug().Println("runEnhancedMVM: Complete")
 }
 
 // runEnhancedMVMWithCurrentInput re-runs MVM using the existing input vector.
@@ -196,7 +196,7 @@ func (ca *CrossbarApp) runEnhancedMVMWithCurrentInput() {
 	// If no input yet OR input is wrong size (after array resize), generate one
 	needNewInput := input == nil || len(input) == 0 || len(input) != ca.config.Cols
 	if needNewInput {
-		debug.Printf("[ARCH SWITCH] Creating new input: current len=%d, need=%d", len(input), ca.config.Cols)
+		getDebug().Printf("[ARCH SWITCH] Creating new input: current len=%d, need=%d", len(input), ca.config.Cols)
 		input = make([]float64, ca.config.Cols)
 		for i := range input {
 			input[i] = 0.5 // Use uniform input for fair comparison
@@ -206,19 +206,19 @@ func (ca *CrossbarApp) runEnhancedMVMWithCurrentInput() {
 		ca.stateMu.Unlock()
 		ca.mvmVis.SetInput(input)
 	} else {
-		debug.Printf("[ARCH SWITCH] Reusing existing input: len=%d", len(input))
+		getDebug().Printf("[ARCH SWITCH] Reusing existing input: len=%d", len(input))
 	}
 
-	debug.Printf("[ARCH SWITCH] Architecture changed to: %s", arch)
+	getDebug().Printf("[ARCH SWITCH] Architecture changed to: %s", arch)
 
 	// Perform enhanced MVM with all non-idealities
 	opts := crossbar.DefaultMVMOptions()
 	opts.Architecture = arch // Always set architecture explicitly
-	debug.Printf("[ARCH SWITCH] opts.Architecture=%s, Is1T1R=%v", opts.Architecture, opts.Is1T1R())
+	getDebug().Printf("[ARCH SWITCH] opts.Architecture=%s, Is1T1R=%v", opts.Architecture, opts.Is1T1R())
 
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
-		debug.Printf("runEnhancedMVMWithCurrentInput: Error: %v", err)
+		getDebug().Printf("runEnhancedMVMWithCurrentInput: Error: %v", err)
 		ca.updateStatus(fmt.Sprintf("Error: %v", err))
 		return
 	}
@@ -237,5 +237,5 @@ func (ca *CrossbarApp) runEnhancedMVMWithCurrentInput() {
 	ca.refreshSelectedCellTooltip()
 
 	ca.updateStatus(fmt.Sprintf("Ready | Architecture: %s | Accuracy: %.1f%%", arch, 90.0-mvmResult.AccuracyLoss))
-	debug.Println("runEnhancedMVMWithCurrentInput: Complete")
+	getDebug().Println("runEnhancedMVMWithCurrentInput: Complete")
 }
