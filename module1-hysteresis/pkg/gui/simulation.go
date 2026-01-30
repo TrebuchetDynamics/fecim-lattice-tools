@@ -66,6 +66,10 @@ var keyTemperatures = []float64{
 const temperatureTolerance = 25.0 // Kelvin
 const calibrationDir = "data/calibrations"
 
+// maxWrdRetries is the maximum number of WRD retry attempts before accepting current level
+// This prevents infinite loops when targeting difficult levels (e.g., level 26)
+const maxWrdRetries = 25
+
 // calibrationFileForMaterial returns the calibration file path for a given material.
 // Material names are sanitized to be filesystem-safe.
 func calibrationFileForMaterial(materialName string) string {
@@ -1000,6 +1004,14 @@ func (a *App) simulationLoop() {
 							a.isppMaxPulses = 10
 						}
 
+						// Reset oscillation/bisection tracking for new write target
+						a.isppLastError = 0
+						a.isppOscillationCount = 0
+						a.isppUseBisection = false
+						a.isppReversedOnce = false
+						a.isppLowVoltage = 0
+						a.isppHighVoltage = 0
+
 						// Calculate starting voltage based on direction
 						// Use calibration as hint, but start conservatively
 						var calibratedE float64
@@ -1144,29 +1156,84 @@ func (a *App) simulationLoop() {
 								isOvershoot := (verifyLevel > targetLevel && a.isppCurrentVoltage > 0) ||
 									(verifyLevel < targetLevel && a.isppCurrentVoltage < 0)
 
+								// OSCILLATION DETECTION: Track if error sign changed
+								if a.isppLastError != 0 && (a.isppLastError > 0) != (levelError > 0) {
+									// Sign changed - we're oscillating!
+									a.isppOscillationCount++
+									if a.isppOscillationCount >= 2 {
+										// Multiple oscillations - switch to bisection mode
+										a.isppUseBisection = true
+										log.Printf("ISPP OSCILLATION DETECTED: count=%d, switching to bisection mode",
+											a.isppOscillationCount)
+									}
+								}
+								a.isppLastError = levelError
+
 								if isOvershoot {
 									// OVERSHOOT: Switch ISPP direction to come back
 									log.Printf("ISPP OVERSHOOT: pulse=%d, target=%d, verified=%d, V=%.3f×Ec -> REVERSE DIRECTION",
 										a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
 
-									// Switch voltage polarity to go opposite direction
-									// Start at a small voltage in the opposite direction
+									// Track voltage bounds for bisection
 									if a.isppCurrentVoltage > 0 {
-										// Was going positive (up), now go negative (down)
-										a.isppCurrentVoltage = -a.isppVoltageStep * 2
+										a.isppHighVoltage = a.isppCurrentVoltage // Overshot going up
 									} else {
-										// Was going negative (down), now go positive (up)
-										a.isppCurrentVoltage = a.isppVoltageStep * 2
+										a.isppLowVoltage = a.isppCurrentVoltage // Overshot going down
 									}
+
+									// Calculate proportional reverse voltage based on overshoot magnitude
+									overshootLevels := math.Abs(float64(verifyLevel - targetLevel))
+									totalLevels := float64(a.numLevels)
+
+									var newVoltage float64
+									if a.isppUseBisection && a.isppLowVoltage != 0 && a.isppHighVoltage != 0 {
+										// BISECTION MODE: Use midpoint of known bounds
+										newVoltage = (a.isppLowVoltage + a.isppHighVoltage) / 2
+										log.Printf("ISPP BISECTION: low=%.3f×Ec, high=%.3f×Ec, mid=%.3f×Ec",
+											a.isppLowVoltage/Ec, a.isppHighVoltage/Ec, newVoltage/Ec)
+									} else {
+										// PROPORTIONAL REVERSE: Scale by how far we overshot
+										reverseRatio := overshootLevels / totalLevels * 0.5 // Conservative
+										if reverseRatio < 0.02 {
+											reverseRatio = 0.02 // Minimum step
+										}
+										if reverseRatio > 0.3 {
+											reverseRatio = 0.3 // Maximum initial reverse
+										}
+
+										if a.isppCurrentVoltage > 0 {
+											// Was going positive (up), now go negative (down)
+											newVoltage = -Ec * reverseRatio
+										} else {
+											// Was going negative (down), now go positive (up)
+											newVoltage = Ec * reverseRatio
+										}
+									}
+
+									// If already reversed before, use finer steps
+									if a.isppReversedOnce {
+										a.isppVoltageStep = a.isppVoltageStep / 2 // Halve step for finer control
+										minStep := Ec * 0.005                      // Minimum step 0.5% Ec
+										if a.isppVoltageStep < minStep {
+											a.isppVoltageStep = minStep
+										}
+									}
+									a.isppReversedOnce = true
+									a.isppCurrentVoltage = newVoltage
 
 									a.isppPulseCount++
 									a.isppPhase = 0 // Back to APPLY with reversed direction
 									a.isppPhaseTimer = 0
 
-									log.Printf("ISPP REVERSE: nextV=%.3f×Ec, target=%d",
-										a.isppCurrentVoltage/Ec, targetLevel)
+									log.Printf("ISPP REVERSE: nextV=%.3f×Ec, target=%d, bisection=%v",
+										a.isppCurrentVoltage/Ec, targetLevel, a.isppUseBisection)
 								} else {
-									// UNDERSHOOT: Need more voltage in same direction -> ADJUST
+									// UNDERSHOOT: Track lower bound and need more voltage -> ADJUST
+									if a.isppCurrentVoltage > 0 {
+										a.isppLowVoltage = a.isppCurrentVoltage // Undershot going up
+									} else {
+										a.isppHighVoltage = a.isppCurrentVoltage // Undershot going down
+									}
 									a.isppPhase = 3
 									a.isppPhaseTimer = 0
 								}
@@ -1327,8 +1394,36 @@ func (a *App) simulationLoop() {
 								}
 							}
 						} else {
-							// FAILED: Update calibration and RETRY (NO LIMIT - must hit target!)
+							// FAILED: Update calibration and RETRY
 							a.wrdRetryCount++
+
+							// MAX RETRY LIMIT: Prevent infinite loops on difficult targets
+							if a.wrdRetryCount > maxWrdRetries {
+								log.Printf("WRD MAX RETRIES: giving up on target=%d after %d retries, accepting level=%d",
+									a.wrdTargetLevel, a.wrdRetryCount, a.wrdReadLevel)
+
+								// Accept current level and move on (partial success)
+								a.wrdPhase = 5 // Go to DISPLAY
+								a.wrdPhaseTimer = 0
+								a.wrdRetryCount = 0
+								a.isppTotalPulses = 0
+
+								// Reset ISPP oscillation tracking
+								a.isppLastError = 0
+								a.isppOscillationCount = 0
+								a.isppUseBisection = false
+								a.isppReversedOnce = false
+
+								// Track as partial success in stats
+								a.wrdTotalWrites++
+
+								// Record in ISPP widget as failed attempt
+								if a.isppWidget != nil {
+									a.isppWidget.RecordWrite(a.wrdTargetLevel, maxWrdRetries*a.isppMaxPulses, false, true)
+								}
+
+								break // Exit early from case 4
+							}
 
 							// Determine if overshoot or undershoot based on direction
 							// goingUp: positive field, higher levels

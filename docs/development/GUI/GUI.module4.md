@@ -130,6 +130,189 @@ Last Updated: 2026-01-29
 
 ---
 
+## UI Analysis (2026-01-30)
+
+### 1. Current Layout Issues (from visual analysis)
+
+**CRITICAL Issues:**
+- **Massive left sidebar empty space**: 30-40% of horizontal screen space wasted on the WL selector container
+  - WL selector (150px width) is barely filled while array gets squeezed
+  - Sidebar becomes increasingly wasteful as array grows beyond 8×8
+  - Example: 32×32 array needs ~450px but only gets ~250px due to sidebar allocation
+
+- **Mode controls buried at bottom**: Operation mode buttons (READ/WRITE/COMPUTE) are in the top mode bar but easily missed
+  - Controls should be more prominent for discoverability
+  - Top positioning is good but could be more visually integrated with operation name
+
+- **Write slider hidden at bottom edge**: The write level slider (mfuxWriteLevelSlider) is in the write mode panel
+  - Primary control for WRITE mode is not always visible without scrolling
+  - Should be in top toolbar for guaranteed visibility
+
+- **Cell details illegible at 32x32+ arrays**: sharedCellInfoLabel shows "Cell [r,c]: State N | G=XXµS | BL=X.XXV | Material"
+  - Text overlaps with array or is too small to read
+  - Cell coordinates become hard to interpret with large grids
+
+**HIGH Priority Issues:**
+- **WL labels take too much vertical space**: "Row 0", "Row 1", ... labels in the checkbox list
+  - Each checkbox with label adds 30-35px height
+  - For 8 rows, that's 240+ px of vertical space used just for labels
+  - Could be replaced with compact numbering or icon indicators
+
+- **Missing legend**: Color meaning unclear without reference
+  - Users cannot determine what blue/gray/red gradient represents without documentation
+  - Should show level mapping (blue=low conductance, gray=mid, red=high)
+
+- **Architecture mode change weak feedback**: Architecture buttons (PASSIVE/1T1R/2T1R) don't clearly show active state
+  - Should use same button importance highlighting as mode buttons
+  - Current state requires close inspection
+
+- **MVM output not displayed**: Compute operation result (row currents, ADC levels) not shown
+  - sharedArrayInfoLabel shows array dimensions only
+  - Should display compute results or provide separate output panel
+
+- **Control panel grouping flat (no visual hierarchy)**: Too many controls at same visual level
+  - Mode bar, DAC section, action buttons all blend together
+  - Difficult to understand what controls work together
+  - Separator line between signal chain and mode bar helps, but more structure needed
+
+### 2. Recommended New Layout (Option B: Top-Heavy Toolbar)
+
+The following layout moves the mode controls and key inputs to a unified top toolbar, freeing vertical space and improving discoverability.
+
+**Layout Structure**:
+```
+Border
+├─ Top: VBox (toolbarSection) ~100px
+│  ├─ configRow: HBox [Material, ArraySize, ADCBits, |, READ, WRITE, COMPUTE, |, PASSIVE, 1T1R, 2T1R]
+│  │  ├─ Label: "Config:" (bold)
+│  │  ├─ materialSelector: Dropdown [FeCIM HZO, HZO (Si-doped), ...]
+│  │  ├─ Spacer (small)
+│  │  ├─ Label: "Array:"
+│  │  ├─ arraySizeSelector: Dropdown [8×8, 16×16, 32×32, 64×64]
+│  │  ├─ Spacer (small)
+│  │  ├─ Label: "ADC Bits:"
+│  │  ├─ adcBitsSpinner: Spinner control [4-12 bits]
+│  │  ├─ Separator (vertical line)
+│  │  ├─ modeReadBtn: "READ"
+│  │  ├─ modeWriteBtn: "WRITE"
+│  │  ├─ modeComputeBtn: "COMPUTE"
+│  │  ├─ Separator (vertical line)
+│  │  ├─ archPassiveBtn: "PASSIVE"
+│  │  ├─ arch1T1RBtn: "1T1R"
+│  │  └─ arch2T1RBtn: "2T1R"
+│  ├─ modePanelStack: Stack [writeModePanel, computeModePanel, emptyPanel] ~35px
+│  │  ├─ writeModePanel: HBox
+│  │  │  ├─ Label: "Write Level:" (bold)
+│  │  │  ├─ mfuxWriteLevelSlider (0-29, wide)
+│  │  │  ├─ mfuxWriteLevelLabel: "Level: 15"
+│  │  │  ├─ mfuxWriteVoltageLabel: "Voltage: 1.20V"
+│  │  │  └─ Spacer
+│  │  └─ computeModePanel: HBox
+│  │     ├─ Label: "Input Vector (0-255):" (bold)
+│  │     ├─ HBox (8 input entries, compact)
+│  │     │  ├─ Entry (x0)
+│  │     │  ├─ Entry (x1)
+│  │     │  └─ ... x7
+│  │     └─ HBox buttons [Random, Clear]
+│  └─ actionRow: HBox ~30px
+│     ├─ dacRangeLabel: "DAC: Read (0-0.5V)"
+│     ├─ Spacer
+│     ├─ writeBtn: "Write"
+│     ├─ mvmBtn: "MVM"
+│     ├─ Separator (vertical line)
+│     ├─ undoBtn: "Undo"
+│     ├─ randomBtn: "Random"
+│     ├─ resetBtn: "Reset"
+│     ├─ Separator (vertical line)
+│     ├─ toolsBtn: "Tools▼" (dropdown: Export, Compare, Settings)
+│     └─ Spacer
+├─ Center: VBox (arraySection) EXPANDS
+│  ├─ UnifiedTappableCanvas (flexible size, maximum vertical space)
+│  └─ infoRow: HBox ~20px [sharedCellInfoLabel, Spacer, sharedArrayInfoLabel]
+│     ├─ sharedCellInfoLabel: "Cell [r,c]: State N | G=XXµS"
+│     ├─ Spacer
+│     ├─ sharedArrayInfoLabel: "Array: 8×8 | 30 levels | MVM: [Y0=X, Y1=X, ...]"
+│     └─ Spacer
+└─ Bottom: HBox (statusBar) ~20px
+   └─ operationsModeHelp: "READ mode: Single row, safe voltage (0-0.5V)"
+```
+
+**Key Changes from Current Layout**:
+
+1. **Material, ArraySize, ADCBits moved to top configRow**
+   - Currently in separate locations or missing from UI
+   - Consolidation improves visual grouping
+
+2. **Mode buttons (READ/WRITE/COMPUTE) promoted to top toolbar**
+   - Currently in "Mode:" section below signal chain header
+   - Top position improves discoverability and reduces scrolling
+
+3. **Architecture buttons (PASSIVE/1T1R/2T1R) moved to configRow**
+   - Currently separate from mode controls
+   - Grouping shows they work together
+
+4. **Write level slider integrated into toolbar**
+   - Currently in writeModePanel which can be hidden
+   - Top placement ensures visibility and quick access
+
+5. **Input vector entries in actionRow (compact layout)**
+   - Currently in computeModePanel which can be hidden
+   - More compact representation (8 narrow fields instead of tall column)
+
+6. **Array canvas gets Center position (EXPANDS)**
+   - Currently constrained by left sidebar (HSplit 10%/90%)
+   - Full horizontal space allows larger cell visualization
+
+7. **WL selector removed entirely**
+   - Functionality preserved: all WL modes configured by operation mode buttons
+   - READ mode = single WL selected by clicking cell
+   - WRITE mode = single WL selected by clicking cell
+   - COMPUTE mode = all WLs active (automatic)
+   - No need for explicit WL checkboxes
+
+8. **DAC "Set All (V)" entry removed from toolbar**
+   - Manual voltage override replaced with mode-based presets
+   - Reduces control clutter
+
+9. **MVM output displayed in infoRow**
+   - Shows computed currents/levels after COMPUTE operation
+   - Example: "MVM: [Y0=85, Y1=120, ...]" or similar
+
+10. **Status bar simplified to single operationsModeHelp label**
+    - Reduces visual clutter at bottom
+    - Essential info only
+
+### 3. Implementation Changes Required
+
+Files to modify:
+
+- **tab_unified.go** - Restructure `createUnifiedView()` layout
+  - Current: Top (signal chain + mode bar + DAC) → Center (HSplit sidebar + array) → Bottom (actions)
+  - New: Top (toolbar) → Center (array with info) → Bottom (status)
+  - Remove HSplit layout for WL selector
+  - Consolidate mode/architecture/config controls into single toolbar VBox
+
+- **tab_unified_canvas.go** - Remove fixed MinSize constraint
+  - Current: `MinSize(850, 550)` forces large minimum canvas
+  - New: Remove or reduce to `MinSize(600, 400)` to allow flexible scaling
+  - Canvas should expand to fill available Center space
+
+- **device_state.go** - No changes needed
+  - Existing OpMode/WL logic works with new UI
+  - WL mode still set by mode button clicks
+
+### 4. Benefits of New Layout
+
+- **Better space utilization**: Array canvas gets maximum vertical/horizontal space
+- **Improved discoverability**: Mode/architecture controls prominent at top
+- **Reduced scrolling**: All primary controls visible without scrolling
+- **Better visual hierarchy**: Toolbar organizes controls into logical sections (Config, Mode, Action)
+- **Larger cell visualization**: 32×32+ arrays more readable
+- **Single entry point**: No hidden/nested WL controls to discover
+- **Professional appearance**: Top toolbar matches modern application design patterns (browsers, IDEs, etc.)
+
+---
+
 ## File Structure
 
 | File | Purpose |

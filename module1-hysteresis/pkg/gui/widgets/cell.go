@@ -28,7 +28,7 @@ func NewCellVisualizer() *CellVisualizer {
 	c := &CellVisualizer{
 		level:     15,
 		numLevels: 30, // Default to 30 levels
-		minSize:   fyne.NewSize(140, 160),
+		minSize:   fyne.NewSize(180, 200), // Larger cell display (30% increase)
 	}
 	c.ExtendBaseWidget(c)
 	return c
@@ -193,23 +193,18 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 	glow.Move(fyne.NewPos(glowX, glowY))
 	r.objects = append(r.objects, glow)
 
-	// Level text inside cell - larger and centered
+	// Level text inside cell - larger and centered with cyan accent
 	levelStr := fmt.Sprintf("%d", level+1)
-	// Choose text color based on background brightness
-	var textColor color.RGBA
-	brightness := (int(cellColor.R) + int(cellColor.G) + int(cellColor.B)) / 3
-	if brightness > 180 {
-		textColor = color.RGBA{0, 0, 0, 230} // Dark text on light background
-	} else {
-		textColor = color.RGBA{255, 255, 255, 230} // Light text on dark background
+	// Use cyan color for prominence (#00D4FF)
+	textColor := color.RGBA{0, 212, 255, 255}
+
+	// Scale text size with cell size - increased baseline
+	textSize := cellSize * 0.45 // Increased from 0.35
+	if textSize < 36 {
+		textSize = 36 // Increased from 24
 	}
-	// Scale text size with cell size
-	textSize := cellSize * 0.35
-	if textSize < 24 {
-		textSize = 24
-	}
-	if textSize > 48 {
-		textSize = 48
+	if textSize > 60 {
+		textSize = 60 // Increased from 48
 	}
 	levelText := canvas.NewText(levelStr, textColor)
 	levelText.TextSize = textSize
@@ -219,13 +214,13 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 	levelText.Move(fyne.NewPos(cellX+(cellSize-textW)/2, cellY+cellSize/2-textSize/2))
 	r.objects = append(r.objects, levelText)
 
-	// Label below cell (centered) - larger
-	labelY := cellY + cellSize + 8
+	// Label below cell (centered) - larger text
+	labelY := cellY + cellSize + 10
 	levelLabelStr := fmt.Sprintf("Level %d/%d", level+1, numLevels)
-	levelLabel := canvas.NewText(levelLabelStr, color.RGBA{220, 220, 220, 255})
-	levelLabel.TextSize = 14
+	levelLabel := canvas.NewText(levelLabelStr, color.RGBA{0, 212, 255, 255}) // Cyan for consistency
+	levelLabel.TextSize = 16 // Increased from 14
 	levelLabel.TextStyle = fyne.TextStyle{Bold: true}
-	labelW := float32(len(levelLabelStr)) * 8
+	labelW := float32(len(levelLabelStr)) * 9.5 // Adjusted for larger text
 	levelLabel.Move(fyne.NewPos(cellX+(cellSize-labelW)/2, labelY))
 	r.objects = append(r.objects, levelLabel)
 
@@ -238,10 +233,10 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 	} else {
 		stateText = "Intermediate"
 	}
-	stateLabel := canvas.NewText(stateText, color.RGBA{180, 180, 180, 255})
-	stateLabel.TextSize = 12
-	stateLabelW := float32(len(stateText)) * 7
-	stateLabel.Move(fyne.NewPos(cellX+(cellSize-stateLabelW)/2, labelY+18))
+	stateLabel := canvas.NewText(stateText, color.RGBA{220, 220, 220, 255})
+	stateLabel.TextSize = 13 // Increased from 12
+	stateLabelW := float32(len(stateText)) * 7.5
+	stateLabel.Move(fyne.NewPos(cellX+(cellSize-stateLabelW)/2, labelY+20))
 	r.objects = append(r.objects, stateLabel)
 
 	// Mark cache with the effective size used

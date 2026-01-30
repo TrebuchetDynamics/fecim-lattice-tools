@@ -147,6 +147,14 @@ type App struct {
 	isppLastVerifyLvl  int     // Level at last ISPP verification (for detecting stuck states)
 	isppTotalPulses    int     // Total ISPP pulses across all retries for current write target
 
+	// ISPP oscillation/bisection tracking (convergence improvement)
+	isppLastError        int     // Last level error for oscillation detection
+	isppOscillationCount int     // Number of direction sign changes (oscillations)
+	isppUseBisection     bool    // True when using bisection mode after oscillations
+	isppReversedOnce     bool    // True after first direction reversal
+	isppLowVoltage       float64 // Lower bound voltage for bisection
+	isppHighVoltage      float64 // Upper bound voltage for bisection
+
 	// Temperature-aware calibration (v2)
 	calibrationTemp  float64                   // Temperature of current active calibration (K)
 	tempCalibrations map[int]*TempCalibration  // Cache of calibrations at key temperatures (key: temp in K)
@@ -497,9 +505,9 @@ func (a *App) createUI() fyne.CanvasObject {
 	// SAFETY: No mutex needed - createUI() called from run() before simulation goroutine starts (line 319).
 	// No concurrent access to a.material exists during UI initialization.
 
-	// Create cell visualizer (THE memory cell!) - responsive size
+	// Create cell visualizer (THE memory cell!) - larger for better visibility
 	a.cellViz = widgets.NewCellVisualizer()
-	a.cellViz.SetMinSize(fyne.NewSize(140, 160))
+	a.cellViz.SetMinSize(fyne.NewSize(180, 200)) // Increased 30% for prominence
 
 	// Create P-E plot - will expand to fill space
 	// Use temperature-corrected values for initial plot setup
@@ -568,14 +576,14 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create ISPP visualization widget (H14)
 	a.isppWidget = widgets.NewISPPVisualization()
 
-	// Cell title with underline effect
+	// Cell title with underline effect - more prominent
 	cellTitle := canvas.NewText("MEMORY CELL", color.RGBA{0, 212, 255, 255})
-	cellTitle.TextSize = 16
+	cellTitle.TextSize = 18 // Increased from 16
 	cellTitle.TextStyle = fyne.TextStyle{Bold: true}
 	cellTitle.Alignment = fyne.TextAlignCenter
 
-	cellUnderline := canvas.NewRectangle(color.RGBA{0, 212, 255, 150})
-	cellUnderline.SetMinSize(fyne.NewSize(100, 2))
+	cellUnderline := canvas.NewRectangle(color.RGBA{0, 212, 255, 200}) // More opaque
+	cellUnderline.SetMinSize(fyne.NewSize(140, 3)) // Wider and thicker
 
 	cellHeader := container.NewVBox(
 		container.NewCenter(cellTitle),
@@ -588,20 +596,24 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(a.cellViz),
 	)
 
-	// Scrollable content: all information panels with spacing
+	// Scrollable content: all information panels with improved spacing
 	leftScrollableContent := container.NewVBox(
 		info,
-		widget.NewSeparator(),
+		container.NewPadded(widget.NewSeparator()),
+		layout.NewSpacer(),
 		slidePanel,
-		widget.NewSeparator(),
+		container.NewPadded(widget.NewSeparator()),
+		layout.NewSpacer(),
 		logPanel,
-		widget.NewSeparator(),
+		container.NewPadded(widget.NewSeparator()),
+		layout.NewSpacer(),
 		a.isppWidget,
-		widget.NewSeparator(),
+		container.NewPadded(widget.NewSeparator()),
+		layout.NewSpacer(),
 		a.simVsExpWidget,
 	)
 	leftScroll := container.NewScroll(leftScrollableContent)
-	leftScroll.SetMinSize(fyne.NewSize(160, 0))
+	leftScroll.SetMinSize(fyne.NewSize(200, 0)) // Wider for better breathing room
 
 	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(

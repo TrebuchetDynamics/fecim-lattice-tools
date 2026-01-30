@@ -37,7 +37,7 @@ func createFixedHeightContainer(content fyne.CanvasObject, minHeight float32) fy
 // ============================================================================
 
 // createUnifiedView creates the unified device simulation view
-// Layout: Circuit visualization on TOP, all inputs/controls at BOTTOM
+// Layout: Controls at TOP (toolbar), Array canvas in CENTER (expands), minimal status at BOTTOM
 func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Initialize device state
 	ca.deviceState = NewDeviceState(ca.arrayRows, ca.arrayCols, ca.tia, ca.adc)
@@ -49,41 +49,16 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	}
 
 	// ============================================================
-	// TOP: Circuit Visualization (main focus area)
+	// TOP: Compact Toolbar (~100px total)
 	// ============================================================
 
-	// Signal chain header (minimal - just shows the chain)
-	chainLabel := widget.NewLabelWithStyle(
-		"SIGNAL CHAIN: DAC → Array → TIA → ADC",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Bold: true},
-	)
+	// Row 1: Config + Mode + Architecture (unified row)
+	configModeRow := ca.createUnifiedConfigModeRow()
 
-	// Main visualization area - the circuit canvas
-	mainSection := ca.createMainSimSection()
+	// Row 2: Action buttons
+	actionRow := ca.createUnifiedActionRow()
 
-	// Status/info labels
-	ca.operationsModeHelp = widget.NewLabel("Click cells to select | Mode controls below")
-	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
-
-	topSection := container.NewVBox(
-		chainLabel,
-		mainSection,
-		ca.operationsModeHelp,
-		widget.NewSeparator(),
-	)
-
-	// ============================================================
-	// BOTTOM: All Input Controls (single compact area)
-	// ============================================================
-
-	// 1. Configuration row: Material, Array, ADC, Architecture, Tools
-	configSection := ca.createConfigurationSection()
-
-	// 2. Mode bar with action buttons integrated
-	modeActionBar := ca.createModeActionBar()
-
-	// 3. Mode-specific panels (only visible when mode is active)
+	// Mode-specific panels (only visible when mode is active)
 	writePanelContent := ca.createCompactWritePanel()
 	ca.writeModePanel = container.NewVBox(writePanelContent)
 	ca.writeModePanel.Hide() // Hidden by default (READ mode)
@@ -95,38 +70,144 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Stack panels (only one visible at a time)
 	modePanelStack := container.NewStack(ca.writeModePanel, ca.computeModePanel)
 
+	// Toolbar section: Config/Mode row + Action row + Mode panel
+	toolbarSection := container.NewVBox(
+		configModeRow,
+		actionRow,
+		modePanelStack,
+	)
+
+	// ============================================================
+	// CENTER: Array Canvas (expands to fill available space)
+	// ============================================================
+
+	// Create tappable array canvas
+	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
+	tappableArray.SetMinSize(fyne.NewSize(400, 300)) // Reduced min size - will expand
+	ca.sharedArrayCanvas = tappableArray.raster
+
+	// Initialize empty WL checks array (some code may reference it)
+	ca.unifiedWLChecks = make([]*widget.Check, 0)
+
+	// Cell info display (updated on cell click)
+	ca.sharedCellInfoLabel = widget.NewLabel("Click a cell to select")
+
+	// Array info (updated on resize)
+	totalCells := ca.arrayRows * ca.arrayCols
+	bitCapacity := float64(totalCells) * 4.9
+	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("%dx%d array | %d levels | ~%.0f bits",
+		ca.arrayRows, ca.arrayCols, ca.quantLevels, bitCapacity))
+
+	// Compact info row below canvas
+	infoRow := container.NewHBox(
+		ca.sharedCellInfoLabel,
+		layout.NewSpacer(),
+		ca.sharedArrayInfoLabel,
+	)
+
+	// Array section: canvas + info row
+	arraySection := container.NewBorder(nil, infoRow, nil, nil, tappableArray)
+
+	// ============================================================
+	// BOTTOM: Minimal Status Bar (~20px)
+	// ============================================================
+
+	// Status/info label
+	ca.operationsModeHelp = widget.NewLabel("Click cells to select")
+	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
+
 	// Initialize architecture info (compact single-line)
 	ca.passiveVoltagePanel = ca.createCompactPassivePanel()
 	ca.activeVoltagePanel = ca.createCompactActivePanel()
 	ca.passiveVoltagePanel.Hide() // Hidden initially (1T1R default)
-	archVoltageStack := container.NewStack(ca.passiveVoltagePanel, ca.activeVoltagePanel)
+
+	statusBar := container.NewHBox(
+		ca.operationsModeHelp,
+		layout.NewSpacer(),
+		widget.NewLabel("DAC -> Array -> TIA -> ADC"),
+	)
 
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()
 
-	// Bottom section: Compact control area
-	bottomSection := container.NewVBox(
-		configSection,     // Material, Array, ADC, Architecture, Tools
-		modeActionBar,     // Mode buttons + Action buttons on same row
-		modePanelStack,    // Write slider OR Compute inputs
-		archVoltageStack,  // Single-line arch info
-	)
-
 	return container.NewBorder(
-		topSection,    // top: circuit visualization
-		bottomSection, // bottom: all controls
+		toolbarSection, // top: compact controls
+		statusBar,      // bottom: minimal status
 		nil, nil,
-		nil, // no center (everything in top/bottom)
+		arraySection, // center: array canvas (EXPANDS)
 	)
 }
 
-// createConfigurationSection creates all configuration controls in a single compact row
-func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
-	archToggle := ca.createArchitectureToggle()
+// createUnifiedConfigModeRow creates a single row with config + mode buttons + architecture
+func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
+	// Material selector
 	materialSelector := ca.createMaterialSelector()
+
+	// Array size selector
 	arraySizeSelector := ca.createArraySizeSelector()
+
+	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
+	// Mode buttons
+	ca.modeReadBtn = widget.NewButton("READ", func() {
+		ca.setOperationMode(OpModeRead)
+	})
+	ca.modeWriteBtn = widget.NewButton("WRITE", func() {
+		ca.setOperationMode(OpModeWrite)
+	})
+	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() {
+		ca.setOperationMode(OpModeCompute)
+	})
+
+	// Set initial highlight (READ mode by default)
+	ca.modeReadBtn.Importance = widget.HighImportance
+
+	// Architecture toggle
+	archToggle := ca.createArchitectureToggle()
+
+	// Single row: Material | Array | ADC | Sep | Mode buttons | Spacer | Architecture
+	return container.NewHBox(
+		materialSelector,
+		arraySizeSelector,
+		adcBitsSelector,
+		widget.NewSeparator(),
+		widget.NewLabel("Mode:"),
+		ca.modeReadBtn,
+		ca.modeWriteBtn,
+		ca.modeComputeBtn,
+		layout.NewSpacer(),
+		archToggle,
+	)
+}
+
+// createUnifiedActionRow creates the action buttons row
+func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
+	// Primary action buttons
+	ca.actionWriteCellBtn = widget.NewButton("Write", func() {
+		ca.onUnifiedProgram()
+	})
+	ca.actionWriteCellBtn.Importance = widget.HighImportance
+
+	ca.actionComputeBtn = widget.NewButton("MVM", func() {
+		ca.onUnifiedCompute()
+	})
+
+	// Utility buttons
+	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
+		ca.onUndo()
+	})
+	ca.undoHistoryBtn.Disable()
+
+	randomBtn := widget.NewButton("Random", func() {
+		ca.onUnifiedRandomArray()
+	})
+
+	resetBtn := widget.NewButton("Reset", func() {
+		ca.onUnifiedReset()
+	})
+
+	// Tools button with status indicators
 	crosssimStatus := widget.NewLabel("○")
 	badcrossbarStatus := widget.NewLabel("○")
 	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
@@ -141,7 +222,6 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 		})
 	}
 
-	// Combined install/validate button - installs if needed, then validates
 	toolsBtn := widget.NewButton("Tools", func() {
 		go func() {
 			fyne.Do(func() {
@@ -149,10 +229,7 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 				badcrossbarStatus.SetText("...")
 			})
 
-			// First install if needed
 			installResults := validation.InstallToolsIfNeeded()
-
-			// Then validate
 			validateResults := validation.ValidateAllTools()
 
 			var messages []string
@@ -161,11 +238,11 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 				if i < len(installResults) && installResults[i].Output != "Already installed" && installResults[i].Success {
 					installMsg = " (installed)"
 				}
-				status := "✗ FAIL"
+				status := "X FAIL"
 				if r.Passed {
-					status = "✓ PASS"
+					status = "V PASS"
 				} else if r.Error != nil && strings.Contains(r.Error.Error(), "not installed") {
-					status = "○ NOT INSTALLED"
+					status = "O NOT INSTALLED"
 				}
 				messages = append(messages, fmt.Sprintf("%s: %s%s", r.Tool, status, installMsg))
 			}
@@ -182,17 +259,21 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 
 	go updateToolStatus()
 
-	// Single row: Material | Array | ADC | Tools | Architecture
+	// Row: Write | MVM | Sep | Undo | Random | Reset | Spacer | Tools status
 	return container.NewHBox(
-		materialSelector,
-		arraySizeSelector,
-		adcBitsSelector,
+		ca.actionWriteCellBtn,
+		ca.actionComputeBtn,
 		widget.NewSeparator(),
-		crosssimStatus, badcrossbarStatus, toolsBtn,
+		ca.undoHistoryBtn,
+		randomBtn,
+		resetBtn,
 		layout.NewSpacer(),
-		archToggle,
+		crosssimStatus,
+		badcrossbarStatus,
+		toolsBtn,
 	)
 }
+
 
 // ValidArraySizes defines the supported array dimensions
 var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64}
@@ -403,21 +484,6 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	})
 }
 
-// createMainSimSection creates the main simulation visualization area
-func (ca *CircuitsApp) createMainSimSection() fyne.CanvasObject {
-	// WL checkboxes removed - row selection is done by clicking cells
-	// WL state is determined automatically by mode and architecture:
-	// - Passive (0T1R): All WLs always on
-	// - 1T1R/2T1R READ/WRITE: Selected row only (via cell click)
-	// - COMPUTE: All WLs on for MVM
-
-	// Initialize empty WL checks array (some code may reference it)
-	ca.unifiedWLChecks = make([]*widget.Check, 0)
-
-	// Array canvas with DAC inputs at top, TIA/ADC outputs at right
-	return ca.createUnifiedArraySection()
-}
-
 // setOperationMode sets the operation mode and configures WL/DAC accordingly
 // READ: Single row, safe voltage (0-0.5V)
 // WRITE: Single row, write voltage (1.2-1.5V on selected column)
@@ -531,75 +597,6 @@ func (ca *CircuitsApp) updateModeButtons() {
 	})
 }
 
-// createUnifiedArraySection creates the array visualization section
-func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
-	// Create tappable array canvas
-	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
-	tappableArray.SetMinSize(fyne.NewSize(850, 550)) // Canvas for visualization
-	ca.sharedArrayCanvas = tappableArray.raster
-
-	// Cell info display (updated on cell click)
-	ca.sharedCellInfoLabel = widget.NewLabel("Click a cell to select")
-
-	// Array info (updated on resize)
-	totalCells := ca.arrayRows * ca.arrayCols
-	bitCapacity := float64(totalCells) * 4.9
-	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("%dx%d array | %d levels | ~%.0f bits",
-		ca.arrayRows, ca.arrayCols, ca.quantLevels, bitCapacity))
-
-	// Compact info row with cell info and array info
-	infoRow := container.NewHBox(
-		ca.sharedCellInfoLabel,
-		layout.NewSpacer(),
-		ca.sharedArrayInfoLabel,
-	)
-
-	return container.NewVBox(
-		tappableArray,
-		infoRow,
-	)
-}
-
-// createUnifiedActionSection creates the action buttons
-func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
-	// Program button - only enabled in WRITE mode
-	ca.actionWriteCellBtn = widget.NewButton("Write Cell", func() {
-		ca.onUnifiedProgram()
-	})
-	ca.actionWriteCellBtn.Importance = widget.HighImportance
-
-	// Compute button - only enabled in COMPUTE mode
-	ca.actionComputeBtn = widget.NewButton("Compute MVM", func() {
-		ca.onUnifiedCompute()
-	})
-
-	// Animate button
-	animateBtn := widget.NewButton("Animate", func() {
-		ca.onUnifiedAnimate()
-	})
-
-	// H3 FIX: Undo button
-	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
-		ca.onUndo()
-	})
-	ca.undoHistoryBtn.Disable() // Initially disabled (no history)
-
-	// Reset array button
-	resetBtn := widget.NewButton("Reset Array", func() {
-		ca.onUnifiedReset()
-	})
-
-	// Random array button
-	randomBtn := widget.NewButton("Random Array", func() {
-		ca.onUnifiedRandomArray()
-	})
-
-	return container.NewHBox(
-		ca.actionWriteCellBtn, ca.actionComputeBtn,
-		layout.NewSpacer(),
-		ca.undoHistoryBtn, animateBtn, randomBtn, resetBtn,
-	)
-}
 
 // updateActionButtons enables/disables action buttons based on current mode
 func (ca *CircuitsApp) updateActionButtons() {
@@ -1005,65 +1002,6 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 // ============================================================================
 // MODE-FIRST UX PANELS (Phase 1)
 // ============================================================================
-
-// createModeBar creates the top-level mode selection bar (legacy, kept for compatibility)
-func (ca *CircuitsApp) createModeBar() fyne.CanvasObject {
-	return ca.createModeActionBar()
-}
-
-// createModeActionBar creates a combined mode selection + action buttons bar
-func (ca *CircuitsApp) createModeActionBar() fyne.CanvasObject {
-	// Mode buttons
-	ca.modeReadBtn = widget.NewButton("READ", func() {
-		ca.setOperationMode(OpModeRead)
-	})
-	ca.modeWriteBtn = widget.NewButton("WRITE", func() {
-		ca.setOperationMode(OpModeWrite)
-	})
-	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() {
-		ca.setOperationMode(OpModeCompute)
-	})
-
-	// Set initial highlight (READ mode by default)
-	ca.modeReadBtn.Importance = widget.HighImportance
-
-	// Action buttons
-	ca.actionWriteCellBtn = widget.NewButton("Write", func() {
-		ca.onUnifiedProgram()
-	})
-	ca.actionWriteCellBtn.Importance = widget.HighImportance
-
-	ca.actionComputeBtn = widget.NewButton("MVM", func() {
-		ca.onUnifiedCompute()
-	})
-
-	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
-		ca.onUndo()
-	})
-	ca.undoHistoryBtn.Disable()
-
-	randomBtn := widget.NewButton("Random", func() {
-		ca.onUnifiedRandomArray()
-	})
-
-	resetBtn := widget.NewButton("Reset", func() {
-		ca.onUnifiedReset()
-	})
-
-	return container.NewHBox(
-		widget.NewLabelWithStyle("Mode:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		ca.modeReadBtn,
-		ca.modeWriteBtn,
-		ca.modeComputeBtn,
-		widget.NewSeparator(),
-		ca.actionWriteCellBtn,
-		ca.actionComputeBtn,
-		layout.NewSpacer(),
-		ca.undoHistoryBtn,
-		randomBtn,
-		resetBtn,
-	)
-}
 
 // createWriteModePanel creates the write mode panel with level slider
 // This addresses UX-004: No target level selector for WRITE mode
