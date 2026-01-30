@@ -181,6 +181,14 @@ func (a *App) getSlideText() string {
 			successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
 		}
 
+		// Get ISPP stats for phase 3 display
+		var avgPulses, failRate float64
+		if a.isppWidget != nil {
+			stats := a.isppWidget.GetStats()
+			avgPulses = stats.GetAveragePulses()
+			failRate = stats.GetFailureRate() * 100 // Convert to percentage
+		}
+
 		switch wrdPhase {
 		case 0:
 			return fmt.Sprintf("WRITE → L%d\n|E| > Ec", wrdTarget)
@@ -190,9 +198,11 @@ func (a *App) getSlideText() string {
 			return fmt.Sprintf("READ L%d\n|E| < Ec, non-destructive", level)
 		case 3:
 			if level == wrdTarget {
-				return fmt.Sprintf("OK L%d\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ", level, wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000)
+				return fmt.Sprintf("OK L%d\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ\nAvg: %.1f pulses | Fail: %.2f%%",
+					level, wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000, avgPulses, failRate)
 			}
-			return fmt.Sprintf("L%d (want %d)\nWrites: %d (%.0f%%)", level, wrdTarget, wrdTotalWrites, successRate)
+			return fmt.Sprintf("L%d (want %d)\nWrites: %d (%.0f%%)\nAvg: %.1f pulses | Fail: %.2f%%",
+				level, wrdTarget, wrdTotalWrites, successRate, avgPulses, failRate)
 		}
 		return ""
 
