@@ -893,9 +893,17 @@ func (ds *DeviceState) InitVoltageCalibration() {
 	ds.voltageCalibration = cal
 }
 
-// getVoltageForLevelInternal returns the calibrated write voltage (internal, no locking)
-// Caller must hold appropriate lock
-func (ds *DeviceState) getVoltageForLevelInternal(level int, ascending bool) float64 {
+// GetVoltageForLevel returns the calibrated write voltage for a target level
+// direction: true = ascending (increasing level), false = descending (decreasing level)
+func (ds *DeviceState) GetVoltageForLevel(level int, ascending bool) float64 {
+	ds.mu.RLock()
+	if ds.voltageCalibration == nil {
+		ds.mu.RUnlock()
+		ds.InitVoltageCalibration()
+		ds.mu.RLock()
+	}
+	defer ds.mu.RUnlock()
+
 	// Clamp level to valid range
 	maxLevel := len(ds.voltageCalibration.AscendingVoltages) - 1
 	if level < 0 {
@@ -909,20 +917,6 @@ func (ds *DeviceState) getVoltageForLevelInternal(level int, ascending bool) flo
 		return ds.voltageCalibration.AscendingVoltages[level]
 	}
 	return ds.voltageCalibration.DescendingVoltages[level]
-}
-
-// GetVoltageForLevel returns the calibrated write voltage for a target level
-// direction: true = ascending (increasing level), false = descending (decreasing level)
-func (ds *DeviceState) GetVoltageForLevel(level int, ascending bool) float64 {
-	ds.mu.RLock()
-	if ds.voltageCalibration == nil {
-		ds.mu.RUnlock()
-		ds.InitVoltageCalibration()
-		ds.mu.RLock()
-	}
-	defer ds.mu.RUnlock()
-
-	return ds.getVoltageForLevelInternal(level, ascending)
 }
 
 // ============================================================================
@@ -1028,47 +1022,55 @@ type WriteSequenceState struct {
 	Progress     float64 // 0.0 to 1.0 progress through sequence
 }
 
+// writeSequenceState is the global write sequence state
+var writeSequenceState *WriteSequenceState
+
+// getWriteSequenceState returns the global write sequence state
+func getWriteSequenceState() *WriteSequenceState {
+	if writeSequenceState == nil {
+		writeSequenceState = &WriteSequenceState{}
+	}
+	return writeSequenceState
+}
+
 // StartWriteSequence begins a 4-phase write sequence
 func (ds *DeviceState) StartWriteSequence(row, col, targetLevel int) {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
+	ws := getWriteSequenceState()
 
 	direction := ds.GetWriteDirection(row, col, 0, targetLevel) // Assume starting from current
 	ascending := direction == DirectionAscending
 
-	ds.writeSequenceState.Active = true
-	ds.writeSequenceState.Phase = PhaseReset
-	ds.writeSequenceState.TargetRow = row
-	ds.writeSequenceState.TargetCol = col
-	ds.writeSequenceState.TargetLevel = targetLevel
-	ds.writeSequenceState.WriteVoltage = ds.GetVoltageForLevel(targetLevel, ascending)
-	ds.writeSequenceState.Progress = 0.0
+	ws.Active = true
+	ws.Phase = PhaseReset
+	ws.TargetRow = row
+	ws.TargetCol = col
+	ws.TargetLevel = targetLevel
+	ws.WriteVoltage = ds.GetVoltageForLevel(targetLevel, ascending)
+	ws.Progress = 0.0
 }
 
 // AdvanceWritePhase moves to the next phase in the sequence
 // Returns true if sequence is complete
 func (ds *DeviceState) AdvanceWritePhase() bool {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	if !ds.writeSequenceState.Active {
+	ws := getWriteSequenceState()
+	if !ws.Active {
 		return true
 	}
 
-	switch ds.writeSequenceState.Phase {
+	switch ws.Phase {
 	case PhaseReset:
-		ds.writeSequenceState.Phase = PhaseHold1
-		ds.writeSequenceState.Progress = 0.25
+		ws.Phase = PhaseHold1
+		ws.Progress = 0.25
 	case PhaseHold1:
-		ds.writeSequenceState.Phase = PhaseWrite
-		ds.writeSequenceState.Progress = 0.5
+		ws.Phase = PhaseWrite
+		ws.Progress = 0.5
 	case PhaseWrite:
-		ds.writeSequenceState.Phase = PhaseHold2
-		ds.writeSequenceState.Progress = 0.75
+		ws.Phase = PhaseHold2
+		ws.Progress = 0.75
 	case PhaseHold2:
-		ds.writeSequenceState.Phase = PhaseIdle
-		ds.writeSequenceState.Active = false
-		ds.writeSequenceState.Progress = 1.0
+		ws.Phase = PhaseIdle
+		ws.Active = false
+		ws.Progress = 1.0
 		return true
 	}
 	return false
@@ -1076,19 +1078,16 @@ func (ds *DeviceState) AdvanceWritePhase() bool {
 
 // GetWritePhaseInfo returns the current write sequence state for UI display
 func (ds *DeviceState) GetWritePhaseInfo() WriteSequenceState {
-	ds.mu.RLock()
-	defer ds.mu.RUnlock()
-	return ds.writeSequenceState
+	ws := getWriteSequenceState()
+	return *ws
 }
 
 // CancelWriteSequence aborts the current write sequence
 func (ds *DeviceState) CancelWriteSequence() {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	ds.writeSequenceState.Active = false
-	ds.writeSequenceState.Phase = PhaseIdle
-	ds.writeSequenceState.Progress = 0.0
+	ws := getWriteSequenceState()
+	ws.Active = false
+	ws.Phase = PhaseIdle
+	ws.Progress = 0.0
 }
 
 // GetPhaseName returns a human-readable name for a write phase
@@ -1162,94 +1161,102 @@ type ISPPState struct {
 	Success      bool
 }
 
+// isppState is the global ISPP state
+var isppState *ISPPState
+
+// getISPPState returns the global ISPP state
+func getISPPState() *ISPPState {
+	if isppState == nil {
+		isppState = &ISPPState{MaxIter: ISPPMaxIterations}
+	}
+	return isppState
+}
+
 // StartISPP begins an ISPP loop for a cell
 func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
+	is := getISPPState()
 
 	// Early exit if already at target level
 	if currentLevel == targetLevel {
-		ds.isppState.Active = false
-		ds.isppState.Iteration = 0
-		ds.isppState.TargetLevel = targetLevel
-		ds.isppState.CurrentLevel = currentLevel
-		ds.isppState.Verified = true
-		ds.isppState.Complete = true
-		ds.isppState.Success = true
+		is.Active = false
+		is.Iteration = 0
+		is.TargetLevel = targetLevel
+		is.CurrentLevel = currentLevel
+		is.Verified = true
+		is.Complete = true
+		is.Success = true
 		return
 	}
 
 	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
 	ascending := direction == DirectionAscending
 
-	ds.isppState.Active = true
-	ds.isppState.Iteration = 0
-	ds.isppState.MaxIter = ISPPMaxIterations
-	ds.isppState.TargetRow = row
-	ds.isppState.TargetCol = col
-	ds.isppState.TargetLevel = targetLevel
-	ds.isppState.CurrentLevel = currentLevel
-	ds.isppState.Voltage = ds.getVoltageForLevelInternal(targetLevel, ascending) * 0.7 // Start at 70% of calibrated voltage
-	ds.isppState.Direction = direction
-	ds.isppState.Verified = false
-	ds.isppState.Complete = false
-	ds.isppState.Success = false
+	is.Active = true
+	is.Iteration = 0
+	is.MaxIter = ISPPMaxIterations
+	is.TargetRow = row
+	is.TargetCol = col
+	is.TargetLevel = targetLevel
+	is.CurrentLevel = currentLevel
+	is.Voltage = ds.GetVoltageForLevel(targetLevel, ascending) * 0.7 // Start at 70% of calibrated voltage
+	is.Direction = direction
+	is.Verified = false
+	is.Complete = false
+	is.Success = false
 }
 
 // ISPPIterate performs one write-verify iteration
 // Returns the result indicating whether to continue, success, overshoot, or max iterations
 func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	if !ds.isppState.Active {
+	is := getISPPState()
+	if !is.Active {
 		return ISPPResultNotActive
 	}
 
-	ds.isppState.CurrentLevel = newCurrentLevel
-	ds.isppState.Iteration++
+	is.CurrentLevel = newCurrentLevel
+	is.Iteration++
 
 	// Check if target reached (within tolerance)
-	diff := ds.isppState.TargetLevel - ds.isppState.CurrentLevel
+	diff := is.TargetLevel - is.CurrentLevel
 	if diff < 0 {
 		diff = -diff
 	}
 	if diff <= ISPPToleranceLevels {
-		ds.isppState.Verified = true
-		ds.isppState.Complete = true
-		ds.isppState.Success = true
-		ds.isppState.Active = false
+		is.Verified = true
+		is.Complete = true
+		is.Success = true
+		is.Active = false
 		return ISPPResultVerified
 	}
 
 	// Check for overshoot
-	if ds.isppState.Direction == DirectionAscending && ds.isppState.CurrentLevel > ds.isppState.TargetLevel {
+	if is.Direction == DirectionAscending && is.CurrentLevel > is.TargetLevel {
 		return ISPPResultOvershoot
 	}
-	if ds.isppState.Direction == DirectionDescending && ds.isppState.CurrentLevel < ds.isppState.TargetLevel {
+	if is.Direction == DirectionDescending && is.CurrentLevel < is.TargetLevel {
 		return ISPPResultOvershoot
 	}
 
 	// Check max iterations
-	if ds.isppState.Iteration >= ds.isppState.MaxIter {
-		ds.isppState.Complete = true
-		ds.isppState.Success = false
-		ds.isppState.Active = false
+	if is.Iteration >= is.MaxIter {
+		is.Complete = true
+		is.Success = false
+		is.Active = false
 		return ISPPResultMaxIterations
 	}
 
 	// Adjust voltage for next iteration
 	// Physics-based step: 5% of coercive voltage range
 	voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~5% of range per step
-	if ds.isppState.Direction == DirectionAscending {
-		ds.isppState.Voltage += voltageStep
-		if ds.isppState.Voltage > ds.writeRange.Max {
-			ds.isppState.Voltage = ds.writeRange.Max
+	if is.Direction == DirectionAscending {
+		is.Voltage += voltageStep
+		if is.Voltage > ds.writeRange.Max {
+			is.Voltage = ds.writeRange.Max
 		}
 	} else {
-		ds.isppState.Voltage -= voltageStep
-		if ds.isppState.Voltage < ds.writeRange.Min {
-			ds.isppState.Voltage = ds.writeRange.Min
+		is.Voltage -= voltageStep
+		if is.Voltage < ds.writeRange.Min {
+			is.Voltage = ds.writeRange.Min
 		}
 	}
 
@@ -1259,46 +1266,41 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 // HandleOvershoot performs RESET-to-saturation when write overshoots target
 // Returns true if reset was performed
 func (ds *DeviceState) HandleOvershoot(row, col int) bool {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	if !ds.isppState.Active {
+	is := getISPPState()
+	if !is.Active {
 		return false
 	}
 
 	// Reset to saturation based on direction
-	if ds.isppState.Direction == DirectionAscending {
+	if is.Direction == DirectionAscending {
 		// Ascending overshoot: reset to level 0 (negative saturation)
-		ds.isppState.CurrentLevel = 0
-		ds.isppState.Direction = DirectionAscending // Keep ascending for retry
+		is.CurrentLevel = 0
+		is.Direction = DirectionAscending // Keep ascending for retry
 	} else {
 		// Descending overshoot: reset to max level (positive saturation)
-		ds.isppState.CurrentLevel = ds.writeRange.NumLevels - 1
-		ds.isppState.Direction = DirectionDescending // Keep descending for retry
+		is.CurrentLevel = ds.writeRange.NumLevels - 1
+		is.Direction = DirectionDescending // Keep descending for retry
 	}
 
 	// Recalculate voltage for target from new position
-	ascending := ds.isppState.Direction == DirectionAscending
-	ds.isppState.Voltage = ds.getVoltageForLevelInternal(ds.isppState.TargetLevel, ascending)
+	ascending := is.Direction == DirectionAscending
+	is.Voltage = ds.GetVoltageForLevel(is.TargetLevel, ascending)
 
 	return true
 }
 
 // GetISPPStatus returns the current ISPP state for UI display
 func (ds *DeviceState) GetISPPStatus() ISPPState {
-	ds.mu.RLock()
-	defer ds.mu.RUnlock()
-	return ds.isppState
+	is := getISPPState()
+	return *is
 }
 
 // CancelISPP aborts the current ISPP loop
 func (ds *DeviceState) CancelISPP() {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	ds.isppState.Active = false
-	ds.isppState.Complete = true
-	ds.isppState.Success = false
+	is := getISPPState()
+	is.Active = false
+	is.Complete = true
+	is.Success = false
 }
 
 // ============================================================================
@@ -1319,64 +1321,69 @@ type HalfSelectVisualization struct {
 	HalfSelectCols []int // Cols with V/2 (same row, different columns)
 }
 
+// halfSelectState is the global half-select visualization state
+var halfSelectState *HalfSelectVisualization
+
+// getHalfSelectStateInternal returns the global half-select state
+func getHalfSelectStateInternal() *HalfSelectVisualization {
+	if halfSelectState == nil {
+		halfSelectState = &HalfSelectVisualization{}
+	}
+	return halfSelectState
+}
+
 // EnableHalfSelectVisualization enables V/2 overlay for a write operation
 // Only meaningful for 0T1R (passive) architecture
 func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage float64) {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
+	hs := getHalfSelectStateInternal()
 
-	ds.halfSelectState.Enabled = true
-	ds.halfSelectState.FullVoltage = fullVoltage
-	ds.halfSelectState.HalfVoltage = fullVoltage * HalfSelectVoltageRatio
-	ds.halfSelectState.SelectedRow = row
-	ds.halfSelectState.SelectedCol = col
+	hs.Enabled = true
+	hs.FullVoltage = fullVoltage
+	hs.HalfVoltage = fullVoltage * HalfSelectVoltageRatio
+	hs.SelectedRow = row
+	hs.SelectedCol = col
 
 	// All other rows in the same column get V/2
-	ds.halfSelectState.HalfSelectRows = make([]int, 0)
+	hs.HalfSelectRows = make([]int, 0)
 	for r := 0; r < ds.rows; r++ {
 		if r != row {
-			ds.halfSelectState.HalfSelectRows = append(ds.halfSelectState.HalfSelectRows, r)
+			hs.HalfSelectRows = append(hs.HalfSelectRows, r)
 		}
 	}
 
 	// All other columns in the same row get V/2
-	ds.halfSelectState.HalfSelectCols = make([]int, 0)
+	hs.HalfSelectCols = make([]int, 0)
 	for c := 0; c < ds.cols; c++ {
 		if c != col {
-			ds.halfSelectState.HalfSelectCols = append(ds.halfSelectState.HalfSelectCols, c)
+			hs.HalfSelectCols = append(hs.HalfSelectCols, c)
 		}
 	}
 }
 
 // DisableHalfSelectVisualization disables the V/2 overlay
 func (ds *DeviceState) DisableHalfSelectVisualization() {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
-	ds.halfSelectState.Enabled = false
-	ds.halfSelectState.HalfSelectRows = nil
-	ds.halfSelectState.HalfSelectCols = nil
+	hs := getHalfSelectStateInternal()
+	hs.Enabled = false
+	hs.HalfSelectRows = nil
+	hs.HalfSelectCols = nil
 }
 
 // GetHalfSelectState returns the current V/2 visualization state
 func (ds *DeviceState) GetHalfSelectState() HalfSelectVisualization {
-	ds.mu.RLock()
-	defer ds.mu.RUnlock()
-	return ds.halfSelectState
+	hs := getHalfSelectStateInternal()
+	return *hs
 }
 
 // IsHalfSelected returns true if the given cell is in half-select state
 func (ds *DeviceState) IsHalfSelected(row, col int) bool {
-	ds.mu.RLock()
-	defer ds.mu.RUnlock()
-
-	if !ds.halfSelectState.Enabled {
+	hs := getHalfSelectStateInternal()
+	if !hs.Enabled {
 		return false
 	}
 
 	// Check if in half-select row (same column as selected)
-	if col == ds.halfSelectState.SelectedCol {
-		for _, r := range ds.halfSelectState.HalfSelectRows {
+	if col == hs.SelectedCol {
+		for _, r := range hs.HalfSelectRows {
 			if r == row {
 				return true
 			}
@@ -1384,8 +1391,8 @@ func (ds *DeviceState) IsHalfSelected(row, col int) bool {
 	}
 
 	// Check if in half-select column (same row as selected)
-	if row == ds.halfSelectState.SelectedRow {
-		for _, c := range ds.halfSelectState.HalfSelectCols {
+	if row == hs.SelectedRow {
+		for _, c := range hs.HalfSelectCols {
 			if c == col {
 				return true
 			}

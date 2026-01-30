@@ -318,9 +318,12 @@ func (v *ISPPVisualization) createExplanationWidget() fyne.CanvasObject {
 }
 
 // Refresh updates the widget display.
+// Thread-safe: uses fyne.Do() to ensure UI updates happen on main thread.
 func (v *ISPPVisualization) Refresh() {
-	v.content = v.createContent()
-	v.BaseWidget.Refresh()
+	fyne.Do(func() {
+		v.content = v.createContent()
+		v.BaseWidget.Refresh()
+	})
 }
 
 // MinSize returns the minimum size for the widget.

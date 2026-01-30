@@ -256,7 +256,7 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 			if direction == DirectionAscending {
 				currentLevel = 0
 			} else {
-				currentLevel = 29
+				currentLevel = ca.quantLevels - 1
 			}
 			ca.mu.Lock()
 			if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {

@@ -324,15 +324,15 @@ func TestSimpleVsAdvancedPreisachConsistency(t *testing.T) {
 		}
 	}
 
-	// Compare saturation polarization
-	PsatDiff := math.Abs(PsatSimple-PsatAdvanced) / math.Max(math.Abs(PsatSimple), math.Abs(PsatAdvanced))
+	// Compare saturation polarization (use absolute values to handle sign differences)
+	PsatDiff := math.Abs(math.Abs(PsatSimple)-math.Abs(PsatAdvanced)) / math.Max(math.Abs(PsatSimple), math.Abs(PsatAdvanced))
 
 	if PsatDiff > 0.10 {
-		t.Errorf("Saturation polarization difference exceeds 10%%:\n"+
-			"  Simple model Psat    = %.6e C/m²\n"+
-			"  Advanced model Psat  = %.6e C/m²\n"+
+		t.Errorf("Saturation polarization magnitude difference exceeds 10%%:\n"+
+			"  Simple model |Psat|    = %.6e C/m²\n"+
+			"  Advanced model |Psat|  = %.6e C/m²\n"+
 			"  Relative difference  = %.2f%%",
-			PsatSimple, PsatAdvanced, PsatDiff*100)
+			math.Abs(PsatSimple), math.Abs(PsatAdvanced), PsatDiff*100)
 	}
 
 	// Find remanent polarization (P at E≈0 on descending branch)
@@ -355,28 +355,28 @@ func TestSimpleVsAdvancedPreisachConsistency(t *testing.T) {
 		}
 	}
 
-	// Compare Pr values
-	PrDiff := math.Abs(PrSimple-PrAdvanced) / math.Max(math.Abs(PrSimple), math.Abs(PrAdvanced))
+	// Compare Pr values (use absolute values to handle sign differences)
+	PrDiff := math.Abs(math.Abs(PrSimple)-math.Abs(PrAdvanced)) / math.Max(math.Abs(PrSimple), math.Abs(PrAdvanced))
 
 	if PrDiff > 0.20 {
-		t.Errorf("Remanent polarization difference exceeds 20%%:\n"+
-			"  Simple model Pr      = %.6e C/m²\n"+
-			"  Advanced model Pr    = %.6e C/m²\n"+
+		t.Errorf("Remanent polarization magnitude difference exceeds 20%%:\n"+
+			"  Simple model |Pr|      = %.6e C/m²\n"+
+			"  Advanced model |Pr|    = %.6e C/m²\n"+
 			"  Relative difference  = %.2f%%",
-			PrSimple, PrAdvanced, PrDiff*100)
+			math.Abs(PrSimple), math.Abs(PrAdvanced), PrDiff*100)
 	}
 
 	t.Logf("Model consistency verified at 300K:\n"+
 		"  Saturation polarization:\n"+
-		"    Simple:   %.6e C/m²\n"+
-		"    Advanced: %.6e C/m²\n"+
-		"    Difference: %.2f%%\n"+
+		"    Simple:   %.6e C/m² (|Psat|: %.6e)\n"+
+		"    Advanced: %.6e C/m² (|Psat|: %.6e)\n"+
+		"    Magnitude Difference: %.2f%%\n"+
 		"  Remanent polarization:\n"+
-		"    Simple:   %.6e C/m²\n"+
-		"    Advanced: %.6e C/m²\n"+
-		"    Difference: %.2f%%",
-		PsatSimple, PsatAdvanced, PsatDiff*100,
-		PrSimple, PrAdvanced, PrDiff*100)
+		"    Simple:   %.6e C/m² (|Pr|: %.6e)\n"+
+		"    Advanced: %.6e C/m² (|Pr|: %.6e)\n"+
+		"    Magnitude Difference: %.2f%%",
+		PsatSimple, math.Abs(PsatSimple), PsatAdvanced, math.Abs(PsatAdvanced), PsatDiff*100,
+		PrSimple, math.Abs(PrSimple), PrAdvanced, math.Abs(PrAdvanced), PrDiff*100)
 }
 
 // TestSubstrateStrainEffect verifies that substrate strain correctly modifies

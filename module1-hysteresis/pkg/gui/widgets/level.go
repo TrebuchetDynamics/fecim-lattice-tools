@@ -307,8 +307,13 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 
 	// Draw 30 level segments
 	// Match P-E plot margins for proper Y-axis alignment
-	marginH := float32(50)      // Top margin - matches plot marginTop
-	marginBottom := float32(35) // Bottom margin - matches plot marginBottom
+	// The plot uses marginTop=50, marginBottom=35
+	// However, the plot's legend (at marginTop+10) and +Ec/+Pr labels cause
+	// the visual data area to appear shifted down by ~15px
+	// Shift level bars down to align with plot's visual ±Pr positions
+	visualOffset := float32(15) // Offset to align with plot's +Pr/-Pr visual positions
+	marginH := float32(50) + visualOffset      // Increased top margin shifts levels down
+	marginBottom := float32(35) - visualOffset // Decreased bottom margin compensates
 	marginW := float32(6)
 	labelW := float32(28)
 	barW := size.Width - 2*marginW - labelW

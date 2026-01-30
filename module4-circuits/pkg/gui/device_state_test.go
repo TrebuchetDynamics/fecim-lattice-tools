@@ -39,11 +39,8 @@ func assertFloatEquals(t *testing.T, name string, got, want float64) {
 }
 
 func resetGlobalState() {
-	voltageCalibration = nil
-	hysteresisState = nil
-	writeSequenceState = nil
-	isppState = nil
-	halfSelectState = nil
+	// Note: All state is now embedded in DeviceState instances
+	// This function kept for compatibility but no longer needed
 }
 
 // ============================================================================
@@ -288,26 +285,28 @@ func TestInitVoltageCalibration_LinearInterpolation(t *testing.T) {
 	ds := newTestDeviceState(8, 8)
 	ds.InitVoltageCalibration()
 
-	if voltageCalibration == nil {
-		t.Fatal("voltageCalibration should be initialized")
+	if ds.voltageCalibration == nil {
+		t.Fatal("ds.voltageCalibration should be initialized")
 	}
 
 	// Check level 0 equals writeRange.Min
-	if math.Abs(voltageCalibration.AscendingVoltages[0]-ds.writeRange.Min) > testEpsilon {
-		t.Errorf("level 0 voltage: got %.6f, want %.6f", voltageCalibration.AscendingVoltages[0], ds.writeRange.Min)
+	if math.Abs(ds.voltageCalibration.AscendingVoltages[0]-ds.writeRange.Min) > testEpsilon {
+		t.Errorf("level 0 voltage: got %.6f, want %.6f", ds.voltageCalibration.AscendingVoltages[0], ds.writeRange.Min)
 	}
 
-	// Check level 29 equals writeRange.Max
-	if math.Abs(voltageCalibration.AscendingVoltages[29]-ds.writeRange.Max) > testEpsilon {
-		t.Errorf("level 29 voltage: got %.6f, want %.6f", voltageCalibration.AscendingVoltages[29], ds.writeRange.Max)
+	// Check max level equals writeRange.Max
+	numLevels := ds.writeRange.NumLevels
+	maxLevel := numLevels - 1
+	if math.Abs(ds.voltageCalibration.AscendingVoltages[maxLevel]-ds.writeRange.Max) > testEpsilon {
+		t.Errorf("level %d voltage: got %.6f, want %.6f", maxLevel, ds.voltageCalibration.AscendingVoltages[maxLevel], ds.writeRange.Max)
 	}
 
-	// Check linear interpolation - all 30 levels should be evenly spaced
-	step := (ds.writeRange.Max - ds.writeRange.Min) / 29.0
-	for i := 0; i < 30; i++ {
+	// Check linear interpolation - all levels should be evenly spaced
+	step := (ds.writeRange.Max - ds.writeRange.Min) / float64(numLevels-1)
+	for i := 0; i < numLevels; i++ {
 		expected := ds.writeRange.Min + float64(i)*step
-		if math.Abs(voltageCalibration.AscendingVoltages[i]-expected) > testEpsilon {
-			t.Errorf("level %d voltage: got %.6f, want %.6f", i, voltageCalibration.AscendingVoltages[i], expected)
+		if math.Abs(ds.voltageCalibration.AscendingVoltages[i]-expected) > testEpsilon {
+			t.Errorf("level %d voltage: got %.6f, want %.6f", i, ds.voltageCalibration.AscendingVoltages[i], expected)
 		}
 	}
 }
@@ -323,11 +322,12 @@ func TestGetVoltageForLevel_BoundaryClamping(t *testing.T) {
 		t.Errorf("level -5 should clamp to level 0: got %.6f, want %.6f", vNegative, vZero)
 	}
 
-	// Test level > 29 clamps to level 29
+	// Test level > max clamps to max level
+	maxLevel := ds.writeRange.NumLevels - 1
 	vOver := ds.GetVoltageForLevel(50, true)
-	v29 := ds.GetVoltageForLevel(29, true)
-	if math.Abs(vOver-v29) > testEpsilon {
-		t.Errorf("level 50 should clamp to level 29: got %.6f, want %.6f", vOver, v29)
+	vMax := ds.GetVoltageForLevel(maxLevel, true)
+	if math.Abs(vOver-vMax) > testEpsilon {
+		t.Errorf("level 50 should clamp to level %d: got %.6f, want %.6f", maxLevel, vOver, vMax)
 	}
 }
 
@@ -336,7 +336,8 @@ func TestGetVoltageForLevel_Direction(t *testing.T) {
 	ds := newTestDeviceState(8, 8)
 
 	// In simplified model, ascending == descending
-	for level := 0; level < 30; level++ {
+	numLevels := ds.writeRange.NumLevels
+	for level := 0; level < numLevels; level++ {
 		vAsc := ds.GetVoltageForLevel(level, true)
 		vDesc := ds.GetVoltageForLevel(level, false)
 		if math.Abs(vAsc-vDesc) > testEpsilon {
@@ -666,8 +667,9 @@ func TestHandleOvershoot_Descending(t *testing.T) {
 	}
 
 	is := ds.GetISPPStatus()
-	if is.CurrentLevel != 29 {
-		t.Errorf("after descending overshoot, current level should reset to 29: got %d", is.CurrentLevel)
+	maxLevel := ds.writeRange.NumLevels - 1
+	if is.CurrentLevel != maxLevel {
+		t.Errorf("after descending overshoot, current level should reset to %d: got %d", maxLevel, is.CurrentLevel)
 	}
 	if is.Direction != DirectionDescending {
 		t.Errorf("direction should remain descending: got %d", is.Direction)
@@ -1394,10 +1396,10 @@ func TestISPPIterate_NotActive(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	// Without starting ISPP, iterate should return verified
+	// Without starting ISPP, iterate should return not active
 	result := ds.ISPPIterate(15)
-	if result != ISPPResultVerified {
-		t.Errorf("iterate on inactive ISPP: got %d, want ISPPResultVerified", result)
+	if result != ISPPResultNotActive {
+		t.Errorf("iterate on inactive ISPP: got %d, want ISPPResultNotActive", result)
 	}
 }
 

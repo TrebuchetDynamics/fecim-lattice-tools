@@ -43,8 +43,8 @@ type WriteVerifyStats struct {
 	FailureRateHistory []float64 // Failure rate at each 100-cycle checkpoint
 
 	// Per-level statistics (which levels are hardest to hit)
-	LevelAttempts  [32]int // Attempts per target level
-	LevelSuccesses [32]int // Successes per target level
+	LevelAttempts  [256]int // Attempts per target level (supports up to 140+ levels)
+	LevelSuccesses [256]int // Successes per target level (supports up to 140+ levels)
 
 	// Timing statistics (in microseconds)
 	TotalWriteTimeUs float64 // Total time spent in write operations
@@ -66,7 +66,7 @@ func (s *WriteVerifyStats) RecordWrite(targetLevel int, pulsesUsed int, success 
 	s.TotalWrites++
 	s.CycleCount++
 
-	if targetLevel >= 0 && targetLevel < 32 {
+	if targetLevel >= 0 && targetLevel < 256 {
 		s.LevelAttempts[targetLevel]++
 		if success {
 			s.LevelSuccesses[targetLevel]++
@@ -142,13 +142,13 @@ func (s *WriteVerifyStats) GetPulsesHistogram() [10]int {
 	return s.PulsesHistogram
 }
 
-// GetLevelSuccessRates returns success rate for each level (0-31).
-func (s *WriteVerifyStats) GetLevelSuccessRates() [32]float64 {
+// GetLevelSuccessRates returns success rate for each level (0-255).
+func (s *WriteVerifyStats) GetLevelSuccessRates() [256]float64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var rates [32]float64
-	for i := 0; i < 32; i++ {
+	var rates [256]float64
+	for i := 0; i < 256; i++ {
 		if s.LevelAttempts[i] > 0 {
 			rates[i] = float64(s.LevelSuccesses[i]) / float64(s.LevelAttempts[i])
 		} else {
@@ -317,8 +317,8 @@ func (s *WriteVerifyStats) Reset() {
 	s.ResetCount = 0
 	s.CycleCount = 0
 	s.FailureRateHistory = make([]float64, 0, 100)
-	s.LevelAttempts = [32]int{}
-	s.LevelSuccesses = [32]int{}
+	s.LevelAttempts = [256]int{}
+	s.LevelSuccesses = [256]int{}
 	s.TotalWriteTimeUs = 0
 	s.AvgPulsesPerWrite = 0
 }

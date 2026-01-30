@@ -19,6 +19,13 @@ import (
 // onUnifiedProgram programs the selected cell using Write-ReadVerify loop
 // This simulates ISPP (Incremental Step Pulse Programming) behavior
 func (ca *CircuitsApp) onUnifiedProgram() {
+	// Check if ISPP already in progress - prevent concurrent operations
+	isppStatus := ca.deviceState.GetISPPStatus()
+	if isppStatus.Active {
+		ca.operationsStatusLabel.SetText("Write in progress - please wait")
+		return
+	}
+
 	// Mode validation: only allowed in WRITE mode
 	if ca.deviceState.GetOperationMode() != OpModeWrite {
 		ca.operationsStatusLabel.SetText("Error: Switch to WRITE mode first")
@@ -147,14 +154,14 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		// Adjust voltage for next iteration (ISPP: increment voltage if undershoot)
 		if currentLevel < targetLevel {
 			// Need higher voltage to switch more domains
-			voltageStep := (writeRange.Max - writeRange.Min) / float64(ca.quantLevels*2)
+			voltageStep := (writeRange.Max - writeRange.Min) / 40.0 // ~5% of range per step
 			voltage += voltageStep
 			if voltage > writeRange.Max {
 				voltage = writeRange.Max
 			}
 		} else {
 			// Need lower voltage (less aggressive write)
-			voltageStep := (writeRange.Max - writeRange.Min) / float64(ca.quantLevels*2)
+			voltageStep := (writeRange.Max - writeRange.Min) / 40.0 // ~5% of range per step
 			voltage -= voltageStep
 			if voltage < writeRange.Min {
 				voltage = writeRange.Min
