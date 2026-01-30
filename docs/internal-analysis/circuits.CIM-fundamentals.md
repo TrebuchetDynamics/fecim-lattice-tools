@@ -283,9 +283,47 @@ Impact: 5-20% error in worst case
 
 ## References
 
-1. Nature Communications 2025 - HfO₂/ZrO₂ superlattice ferroelectrics
-2. IEEE IRPS 2022 - FeFET endurance characterization
-3. Science 2025 - Ultralow coercive field rhombohedral phase
-4. Advanced Functional Materials 2025 - 3D anisotropic switching
-5. Dr. external research group, COSM 2025 - FeCIM demonstration
-6. Module 2 crossbar/nonidealities.go - IR drop and sneak path models
+### Peer-Reviewed Publications (with DOIs)
+
+| # | Title | Journal | Year | DOI |
+|---|-------|---------|------|-----|
+| 1 | Enhancing Ferroelectric Stability in HfO₂/ZrO₂ Superlattices | Nature Communications | 2025 | [10.1038/s41467-025-61758-2](https://doi.org/10.1038/s41467-025-61758-2) |
+| 2 | First-Principles Predictions of HfO₂-Based Superlattices | npj Computational Materials | 2024 | [10.1038/s41524-024-01344-0](https://doi.org/10.1038/s41524-024-01344-0) |
+| 3 | Vanadium-doped HfO₂ Ferroelectric (10¹² cycles) | Nano Letters | 2024 | [10.1021/acs.nanolett.4c05671](https://doi.org/10.1021/acs.nanolett.4c05671) |
+| 4 | First In-Memory Computing Crossbar Using Multi-Level FeFET | Nature Communications | 2023 | [10.1038/s41467-023-42110-y](https://doi.org/10.1038/s41467-023-42110-y) |
+| 5 | Recent Advances in Ferroelectric CIM Applications | Nano Convergence | 2025 | [10.1186/s40580-025-00520-2](https://doi.org/10.1186/s40580-025-00520-2) |
+| 6 | Ferroelectric Capacitive Memories: Devices & Applications | Nano Convergence | 2025 | [10.1186/s40580-024-00463-0](https://doi.org/10.1186/s40580-024-00463-0) |
+| 7 | Samsung FeFET for Low-Power NAND Flash | Nature | 2025 | [10.1038/s41586-025-09793-3](https://doi.org/10.1038/s41586-025-09793-3) |
+| 8 | HZO FTJ Reservoir Computing (98.24% MNIST) | ScienceDirect | 2025 | [10.1016/j.jallcom.2025.034309](https://doi.org/10.1016/j.jallcom.2025.034309) |
+
+### Conference & Technical Reports
+
+| # | Title | Source | Year | Notes |
+|---|-------|--------|------|-------|
+| 9 | FeFET Endurance Characterization | IEEE IRPS | 2022 | 10⁹ cycles HZO |
+| 10 | 3D Anisotropic Switching in HZO | Advanced Functional Materials | 2025 | Switching dynamics |
+| 11 | FeCIM Demonstration | Dr. external research group, COSM | 2025 | 30 states (**unverified**) |
+
+### Simulation Tools
+
+| Tool | Source | DOI/Reference |
+|------|--------|---------------|
+| CrossSim | Sandia National Labs | SAND2021-12318C |
+| badcrossbar | UCL | [10.1016/j.softx.2020.100617](https://doi.org/10.1016/j.softx.2020.100617) |
+| NeuroSim | Georgia Tech | [10.3389/frai.2021.659060](https://doi.org/10.3389/frai.2021.659060) |
+
+### Internal Project References
+
+- Module 2 IR drop model: `module2-crossbar/pkg/nonidealities/irdrop.go`
+- Module 2 sneak paths: `module2-crossbar/pkg/nonidealities/sneak.go`
+- Physics configuration: `config/physics.yaml`
+- Material library: `config/materials.yaml`
+
+---
+
+## See Also
+
+- [hysteresis-physics.md](hysteresis-physics.md) — P-E curves, Preisach model, HZO materials
+- [crossbar-arrays.md](crossbar-arrays.md) — MVM, IR drop, sneak paths, architectures
+- [cim-circuits.md](cim-circuits.md) — DAC/ADC/TIA specifications, energy efficiency
+- [MODULE4-PHYSICS-IMPROVEMENTS.md](MODULE4-PHYSICS-IMPROVEMENTS.md) — Gap analysis and roadmap

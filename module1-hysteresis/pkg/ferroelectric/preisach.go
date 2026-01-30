@@ -69,6 +69,7 @@ func (p *PreisachModel) Reset() {
 	p.turningPoints = p.turningPoints[:0]
 	p.polarization = 0
 	p.lastE = 0
+	p.increasing = true // Start assuming ascending direction to avoid first-point discontinuity
 }
 
 // Update applies a new electric field and returns the resulting polarization.
@@ -211,25 +212,21 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 	E := make([]float64, 0, points*4)
 	P := make([]float64, 0, points*4)
 
-	// Sweep from 0 to +Emax
-	for i := 0; i <= points; i++ {
-		e := Emax * float64(i) / float64(points)
-		pol := p.Update(e)
-		E = append(E, e)
-		P = append(P, pol)
-	}
+	// First, establish initial saturation state at -Emax (not recorded)
+	// This ensures we start from a well-defined state on the major loop
+	p.Update(-Emax)
 
-	// Sweep from +Emax to -Emax
-	for i := 0; i <= points*2; i++ {
-		e := Emax - 2*Emax*float64(i)/float64(points*2)
-		pol := p.Update(e)
-		E = append(E, e)
-		P = append(P, pol)
-	}
-
-	// Sweep from -Emax back to +Emax
+	// Sweep from -Emax to +Emax (ascending branch)
 	for i := 0; i <= points*2; i++ {
 		e := -Emax + 2*Emax*float64(i)/float64(points*2)
+		pol := p.Update(e)
+		E = append(E, e)
+		P = append(P, pol)
+	}
+
+	// Sweep from +Emax back to -Emax (descending branch)
+	for i := 1; i <= points*2; i++ {
+		e := Emax - 2*Emax*float64(i)/float64(points*2)
 		pol := p.Update(e)
 		E = append(E, e)
 		P = append(P, pol)

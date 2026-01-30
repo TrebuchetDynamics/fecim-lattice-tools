@@ -306,3 +306,64 @@ See `docs/plans/module4-plan-improvements.md` for detailed tasks.
 ### Phase 4 - Material Specialization (Week 5)
 - FTJ TER ratio handling
 - Per-material non-idealities
+
+---
+
+## Implementation References
+
+### Key Papers for Physics Improvements
+
+| Gap | Recommended Paper | DOI | Key Insight |
+|-----|-------------------|-----|-------------|
+| Nonlinear G(P) | Physical Reality of Preisach Model | [10.1038/s41467-018-06717-w](https://doi.org/10.1038/s41467-018-06717-w) | Domain distribution, minor loops |
+| IR Drop | badcrossbar: Crossbar Simulation | [10.1016/j.softx.2020.100617](https://doi.org/10.1016/j.softx.2020.100617) | Nodal analysis, exact voltage drops |
+| Sneak Paths | FeCAP Suppresses Sneak Paths | [10.1186/s40580-024-00463-0](https://doi.org/10.1186/s40580-024-00463-0) | Capacitive vs resistive crossbars |
+| TIA Noise | NeuroSim Validation | [10.3389/frai.2021.659060](https://doi.org/10.3389/frai.2021.659060) | Circuit-level noise modeling |
+| ADC Power | ADC-less Hybrid CIM | See `04-cim-architectures/` | 82% power in ADC |
+| FTJ TER | 140 Analog States in SnS₂ | [10.1002/advs.202308588](https://doi.org/10.1002/advs.202308588) | TER ratio 834:1 |
+
+### Simulation Tool Integration
+
+| Tool | What to Import | How to Use |
+|------|----------------|------------|
+| **CrossSim** | Device models, noise | Reference for validation |
+| **badcrossbar** | IR drop algorithm | Port `compute_output()` to Go |
+| **Module 2** | `AnalyzeIRDrop()`, `AnalyzeSneakPaths()` | Direct integration |
+
+### Code Examples from Literature
+
+**Nonlinear FeFET Conductance** (based on Physical Reality of Preisach 2018):
+```go
+// Replace linear model with sigmoid threshold model
+func NonlinearConductance(P, Gmin, Gmax, Pth, k float64) float64 {
+    // P = polarization state (-1 to +1)
+    // Pth = threshold polarization for conductance onset
+    // k = steepness factor (typically 5-10)
+    sigmoid := 1.0 / (1.0 + math.Exp(-k*(P-Pth)))
+    return Gmin + (Gmax-Gmin)*sigmoid
+}
+```
+
+**IR Drop Integration** (from badcrossbar approach):
+```go
+// Use Module 2's existing IR drop analysis
+func (ds *DeviceState) ComputeWithIRDrop(weights [][]int) {
+    array := crossbar.NewArray(ds.rows, ds.cols)
+    irResult := array.AnalyzeIRDrop(ds.dacVoltages, crossbar.DefaultWireParams())
+    for r := 0; r < ds.rows; r++ {
+        for c := 0; c < ds.cols; c++ {
+            effectiveV := irResult.EffectiveVoltage[r][c] // Reduced by IR drop
+            // ... use effectiveV instead of ds.dacVoltages[c]
+        }
+    }
+}
+```
+
+---
+
+## Related Documents
+
+- [circuits.CIM-fundamentals.md](circuits.CIM-fundamentals.md) — CIM operation physics
+- [cim-circuits.md](cim-circuits.md) — Peripheral circuit specifications
+- [crossbar-arrays.md](crossbar-arrays.md) — Crossbar architecture and non-idealities
+- [hysteresis-physics.md](hysteresis-physics.md) — Preisach model implementation

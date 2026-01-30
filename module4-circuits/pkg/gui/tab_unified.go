@@ -9,11 +9,13 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	configphysics "fecim-lattice-tools/config/physics"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -100,12 +102,12 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Bottom section: All controls consolidated
 	bottomSection := container.NewVBox(
-		configSection,      // Material, ADC, Architecture
-		modeBar,            // READ/WRITE/COMPUTE buttons
-		modePanelStack,     // Mode-specific panels (write slider, compute inputs)
-		archVoltageStack,   // Architecture-specific voltage info
-		dacSection,         // DAC controls
-		actionSection,      // Action buttons
+		configSection,    // Material, ADC, Architecture
+		modeBar,          // READ/WRITE/COMPUTE buttons
+		modePanelStack,   // Mode-specific panels (write slider, compute inputs)
+		archVoltageStack, // Architecture-specific voltage info
+		dacSection,       // DAC controls
+		actionSection,    // Action buttons
 	)
 
 	return container.NewBorder(
@@ -118,19 +120,11 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 // createConfigurationSection creates the configuration controls row
 func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
-	// Architecture toggle
 	archToggle := ca.createArchitectureToggle()
-
-	// Material selector
 	materialSelector := ca.createMaterialSelector()
-
-	// Array size selector
 	arraySizeSelector := ca.createArraySizeSelector()
-
-	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
-	// Circuit specs summary
 	adcBits := 5
 	if ca.adc != nil {
 		adcBits = ca.adc.Bits
@@ -138,6 +132,54 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	adcLevels := 1 << adcBits
 	circuitSpecsLabel := widget.NewLabel(fmt.Sprintf("%d levels (0-%d)", adcLevels, adcLevels-1))
 	circuitSpecsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	crosssimStatus := widget.NewLabel("○ CrossSim")
+	badcrossbarStatus := widget.NewLabel("○ BadCrossbar")
+	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
+	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
+
+	updateToolStatus := func() {
+		crosssimInfo := validation.CrossSimInfo()
+		badcrossbarInfo := validation.BadCrossbarInfo()
+		fyne.Do(func() {
+			crosssimStatus.SetText(fmt.Sprintf("%s CrossSim", crosssimInfo.Status.Symbol()))
+			badcrossbarStatus.SetText(fmt.Sprintf("%s BadCrossbar", badcrossbarInfo.Status.Symbol()))
+		})
+	}
+
+	validateToolsBtn := widget.NewButton("Validate Tools", func() {
+		go func() {
+			fyne.Do(func() {
+				crosssimStatus.SetText("... CrossSim")
+				badcrossbarStatus.SetText("... BadCrossbar")
+			})
+
+			results := validation.ValidateAllTools()
+
+			var messages []string
+			for _, r := range results {
+				status := "✗ FAIL"
+				if r.Passed {
+					status = "✓ PASS"
+				} else if r.Error != nil && (r.Error.Error() == "CrossSim not installed" || r.Error.Error() == "BadCrossbar not installed") {
+					status = "○ SKIP (not installed)"
+				}
+				messages = append(messages, fmt.Sprintf("%s: %s", r.Tool, status))
+			}
+
+			fyne.Do(func() {
+				updateToolStatus()
+				if ca.window != nil {
+					content := widget.NewLabel(fmt.Sprintf("Validation Results:\n\n%s\n\nInstall commands:\n• CrossSim: git clone https://github.com/sandialabs/cross-sim && pip install -e ./cross-sim\n• BadCrossbar: pip install badcrossbar",
+						fmt.Sprintf("%s\n%s", messages[0], messages[1])))
+					content.Wrapping = fyne.TextWrapWord
+					dialog.ShowCustom("Tool Validation", "Close", content, ca.window)
+				}
+			})
+		}()
+	})
+
+	go updateToolStatus()
 
 	return container.NewHBox(
 		materialSelector,
@@ -147,6 +189,10 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 		adcBitsSelector,
 		circuitSpecsLabel,
 		layout.NewSpacer(),
+		crosssimStatus,
+		badcrossbarStatus,
+		validateToolsBtn,
+		widget.NewSeparator(),
 		archToggle,
 	)
 }
@@ -423,7 +469,7 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	}
 
 	ca.updateModeButtons()
-	ca.updateActionButtons() // Enable/disable action buttons based on mode
+	ca.updateActionButtons()  // Enable/disable action buttons based on mode
 	ca.updateModePanels(mode) // Show/hide mode-specific panels
 	ca.updateWLCheckboxes()
 	ca.updateWLHelpLabel()
@@ -507,7 +553,6 @@ func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 		ca.sharedArrayInfoLabel,
 	)
 }
-
 
 // createUnifiedActionSection creates the action buttons
 func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
@@ -1285,7 +1330,7 @@ func (ca *CircuitsApp) updateModePanels(mode OpMode) {
 			if ca.computeModePanel != nil {
 				ca.computeModePanel.Show()
 			}
-		// OpModeRead: no special panel needed (clean view)
+			// OpModeRead: no special panel needed (clean view)
 		}
 	})
 }

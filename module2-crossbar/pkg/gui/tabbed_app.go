@@ -3,16 +3,20 @@
 package gui
 
 import (
+	"fmt"
 	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
+	"fecim-lattice-tools/shared/validation"
 )
 
 // TabbedCrossbarApp is the enhanced crossbar demo with 4 tabs.
@@ -131,7 +135,55 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 	sneakBtn.OnTapped = func() { updateView(2) }
 	driftBtn.OnTapped = func() { updateView(3) }
 
-	// Header with inline view selector
+	crosssimStatus := widget.NewLabel("○ CrossSim")
+	badcrossbarStatus := widget.NewLabel("○ BadCrossbar")
+	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
+	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
+
+	updateToolStatus := func() {
+		crosssimInfo := validation.CrossSimInfo()
+		badcrossbarInfo := validation.BadCrossbarInfo()
+
+		fyne.Do(func() {
+			crosssimStatus.SetText(fmt.Sprintf("%s CrossSim", crosssimInfo.Status.Symbol()))
+			badcrossbarStatus.SetText(fmt.Sprintf("%s BadCrossbar", badcrossbarInfo.Status.Symbol()))
+		})
+	}
+
+	validateToolsBtn := widget.NewButton("Validate Tools", func() {
+		go func() {
+			fyne.Do(func() {
+				crosssimStatus.SetText("... CrossSim")
+				badcrossbarStatus.SetText("... BadCrossbar")
+			})
+
+			results := validation.ValidateAllTools()
+
+			var messages []string
+			for _, r := range results {
+				status := "✗ FAIL"
+				if r.Passed {
+					status = "✓ PASS"
+				} else if r.Error != nil && r.Error.Error() == "CrossSim not installed" || r.Error != nil && r.Error.Error() == "BadCrossbar not installed" {
+					status = "○ SKIP (not installed)"
+				}
+				messages = append(messages, fmt.Sprintf("%s: %s", r.Tool, status))
+			}
+
+			fyne.Do(func() {
+				updateToolStatus()
+				if app.window != nil {
+					content := widget.NewLabel(fmt.Sprintf("Validation Results:\n\n%s\n\nInstall commands:\n• CrossSim: git clone https://github.com/sandialabs/cross-sim && pip install -e ./cross-sim\n• BadCrossbar: pip install badcrossbar",
+						fmt.Sprintf("%s\n%s", messages[0], messages[1])))
+					content.Wrapping = fyne.TextWrapWord
+					dialog.ShowCustom("Tool Validation", "Close", content, app.window)
+				}
+			})
+		}()
+	})
+
+	go updateToolStatus()
+
 	title := canvas.NewText("FeCIM Crossbar Array Visualization", color.White)
 	title.TextSize = 16
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -144,6 +196,10 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 		irDropBtn,
 		sneakBtn,
 		driftBtn,
+		layout.NewSpacer(),
+		crosssimStatus,
+		badcrossbarStatus,
+		validateToolsBtn,
 	)
 
 	header := container.NewVBox(
@@ -165,7 +221,6 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 		contentContainer,
 	)
 }
-
 
 // Start is called when the tab is selected in unified visualizer.
 func (app *TabbedCrossbarApp) Start() {

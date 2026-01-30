@@ -334,20 +334,39 @@ The modules share no code but share all physics — making them complementary ed
 
 ## References
 
+### Peer-Reviewed Literature
+
+| Topic | Paper | Journal | Year | DOI |
+|-------|-------|---------|------|-----|
+| MVM Physics | First In-Memory Computing Crossbar Using Multi-Level FeFET | Nature Communications | 2023 | [10.1038/s41467-023-42110-y](https://doi.org/10.1038/s41467-023-42110-y) |
+| Energy Efficiency | Samsung FeFET for Low-Power NAND Flash | Nature | 2025 | [10.1038/s41586-025-09793-3](https://doi.org/10.1038/s41586-025-09793-3) |
+| CIM Applications | Recent Advances in Ferroelectric CIM | Nano Convergence | 2025 | [10.1186/s40580-025-00520-2](https://doi.org/10.1186/s40580-025-00520-2) |
+| ADC Power Dominance | ADC-less Hybrid CIM Architecture | IEEE JSSC | 2024 | See `04-cim-architectures/` |
+| NeuroSim Validation | NeuroSim Simulator Validation and Benchmark | Frontiers in AI | 2021 | [10.3389/frai.2021.659060](https://doi.org/10.3389/frai.2021.659060) |
+| IR Drop Modeling | badcrossbar: Python Tool for Crossbar Arrays | SoftwareX | 2020 | [10.1016/j.softx.2020.100617](https://doi.org/10.1016/j.softx.2020.100617) |
+
+### Simulation Tool References
+
+| Tool | Purpose | Citation |
+|------|---------|----------|
+| **CrossSim** | GPU-accelerated CIM simulation | SAND2021-12318C (Sandia) |
+| **badcrossbar** | Exact IR drop calculation | DOI: 10.1016/j.softx.2020.100617 |
+| **NeuroSim** | Device-circuit-architecture co-simulation | DOI: 10.3389/frai.2021.659060 |
+
 ### Code Locations
 
-- Module 2 MVM: `module2-crossbar/pkg/crossbar/array.go:123-161`
-- Module 2 IR Drop: `module2-crossbar/pkg/nonidealities/irdrop.go`
-- Module 2 Sneak Paths: `module2-crossbar/pkg/nonidealities/sneak.go`
-- Module 4 DAC: `module4-circuits/pkg/dac/dac.go`
-- Module 4 ADC: `module4-circuits/pkg/adc/adc.go`
-- Module 4 TIA: `module4-circuits/pkg/tia/tia.go`
+| Module | Component | File Path |
+|--------|-----------|-----------|
+| Module 2 | MVM | `module2-crossbar/pkg/crossbar/array.go:123-161` |
+| Module 2 | IR Drop | `module2-crossbar/pkg/nonidealities/irdrop.go` |
+| Module 2 | Sneak Paths | `module2-crossbar/pkg/nonidealities/sneak.go` |
+| Module 4 | DAC | `module4-circuits/pkg/dac/dac.go` |
+| Module 4 | ADC | `module4-circuits/pkg/adc/adc.go` |
+| Module 4 | TIA | `module4-circuits/pkg/tia/tia.go` |
 
-### Generated Reports
+### Related Documents
 
-Additional detailed reports available in `.omc/scientist/reports/`:
-
-- `module2_physics_data.json` — Complete Module 2 physics data export
-- `READ_OPERATION_ANALYSIS.md` — Detailed read path analysis
-- `COMPUTE_PHYSICS_SUMMARY.md` — MVM physics summary
-- `signal_flow_diagram.txt` — ASCII signal flow diagrams
+- [circuits.CIM-fundamentals.md](circuits.CIM-fundamentals.md) — CIM operation physics
+- [crossbar-arrays.md](crossbar-arrays.md) — Crossbar architecture synthesis
+- [cim-circuits.md](cim-circuits.md) — Peripheral circuit specifications
+- [MODULE4-PHYSICS-IMPROVEMENTS.md](MODULE4-PHYSICS-IMPROVEMENTS.md) — Gap analysis

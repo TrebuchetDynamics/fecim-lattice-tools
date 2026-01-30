@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"fecim-lattice-tools/config/physics"
-	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // OperationMode represents the current operation mode (legacy, kept for compatibility)
@@ -42,11 +42,11 @@ const (
 type DACMode int
 
 const (
-	DACManual DACMode = iota // User entered each voltage
-	DACReadPreset            // Selected column at readVoltage, others 0 (single cell read)
-	DACWritePreset           // Selected column at write voltage, others 0 (single cell write)
-	DACInputVector           // From digital input vector (0-255 -> 0-1V)
-	DACRandom                // Random voltages
+	DACManual      DACMode = iota // User entered each voltage
+	DACReadPreset                 // Selected column at readVoltage, others 0 (single cell read)
+	DACWritePreset                // Selected column at write voltage, others 0 (single cell write)
+	DACInputVector                // From digital input vector (0-255 -> 0-1V)
+	DACRandom                     // Random voltages
 )
 
 // DACRangeMode represents the DAC output range mode
@@ -107,7 +107,7 @@ type DeviceState struct {
 
 	// WL configuration (derived from opMode)
 	wlMode     WLMode
-	activeRows []bool   // true = WL HIGH for that row
+	activeRows []bool    // true = WL HIGH for that row
 	wlVoltages []float64 // WL voltages for V/2 scheme (passive mode write)
 
 	// DAC inputs (per column)
@@ -116,8 +116,8 @@ type DeviceState struct {
 	dacRangeMode DACRangeMode // Current DAC range (read vs write)
 
 	// Voltage ranges (derived from material + calibration config)
-	readRange   VoltageRange     // 0 to FieldMinRatio*Vc for read/compute
-	writeRange  VoltageRange     // Vc to FieldMaxRatio*Vc for write operations
+	readRange   VoltageRange      // 0 to FieldMinRatio*Vc for read/compute
+	writeRange  VoltageRange      // Vc to FieldMaxRatio*Vc for write operations
 	calibParams CalibrationParams // Loaded from physics.yaml
 
 	// Computed outputs (per row)
@@ -138,6 +138,9 @@ type DeviceState struct {
 	// Peripherals reference
 	tia *peripherals.TIA
 	adc *peripherals.ADC
+	dac *peripherals.DAC
+
+	enableDACNonlinearity bool // Apply DAC INL/DNL in compute path
 }
 
 // NewDeviceState creates a new device state with specified dimensions
@@ -163,6 +166,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		calibParams:  loadCalibrationParams(),       // Load from physics.yaml
 		tia:          tia,
 		adc:          adc,
+		dac:          peripherals.DefaultDAC(),
 	}
 
 	// Calculate voltage ranges from material + calibration config
@@ -183,8 +187,9 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 // Write range: Vc to FieldMaxRatio * Vc (exceeds coercive voltage for polarization switching)
 //
 // From physics.yaml calibration section:
-//   field_min_ratio: 0.5  -> Read max = 0.5 * Vc
-//   field_max_ratio: 2.5  -> Write max = 2.5 * Vc
+//
+//	field_min_ratio: 0.5  -> Read max = 0.5 * Vc
+//	field_max_ratio: 2.5  -> Write max = 2.5 * Vc
 func (ds *DeviceState) updateVoltageRanges() {
 	// Ensure material is set - use default FeCIM if not
 	if ds.material == nil {
@@ -238,6 +243,16 @@ func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 // GetMaterial returns the current material
 func (ds *DeviceState) GetMaterial() *sharedphysics.HZOMaterial {
 	return ds.material
+}
+
+// SetDACNonlinearity enables/disables DAC nonlinearity in compute
+func (ds *DeviceState) SetDACNonlinearity(enable bool) {
+	ds.enableDACNonlinearity = enable
+}
+
+// IsDACNonlinearityEnabled returns whether DAC nonlinearity is applied
+func (ds *DeviceState) IsDACNonlinearityEnabled() bool {
+	return ds.enableDACNonlinearity
 }
 
 // SetADCBits changes the ADC resolution (5, 6, 7, or 8 bits)
@@ -601,6 +616,21 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		totalCurrent := 0.0
 		for c := 0; c < ds.cols; c++ {
 			voltage := ds.dacVoltages[c]
+
+			// Apply DAC nonlinearity if enabled
+			if ds.enableDACNonlinearity && ds.dac != nil {
+				// Convert voltage to level and back through DAC with nonlinearity
+				normalizedV := voltage / ds.readRange.Max
+				if normalizedV > 1.0 {
+					normalizedV = 1.0
+				}
+				if normalizedV < 0 {
+					normalizedV = 0
+				}
+				level := int(normalizedV * float64(ds.dac.Levels()-1))
+				voltage = ds.dac.ConvertWithNonlinearity(level)
+			}
+
 			if voltage < 0.01 {
 				continue
 			}
@@ -879,7 +909,7 @@ const (
 
 // HysteresisState tracks the last written level and direction per cell
 type HysteresisState struct {
-	LastLevel map[string]int                // key: "row,col" -> last written level
+	LastLevel map[string]int                 // key: "row,col" -> last written level
 	Direction map[string]HysteresisDirection // key: "row,col" -> last direction
 }
 
@@ -950,11 +980,11 @@ func (ds *DeviceState) GetLastHysteresisDirection(row, col int) HysteresisDirect
 type WritePhase int
 
 const (
-	PhaseIdle   WritePhase = iota // No write in progress
-	PhaseReset                    // Applying -V_sat (100ns)
-	PhaseHold1                    // Zero field hold (50ns)
-	PhaseWrite                    // Applying calibrated voltage (200ns)
-	PhaseHold2                    // Zero field hold (50ns)
+	PhaseIdle  WritePhase = iota // No write in progress
+	PhaseReset                   // Applying -V_sat (100ns)
+	PhaseHold1                   // Zero field hold (50ns)
+	PhaseWrite                   // Applying calibrated voltage (200ns)
+	PhaseHold2                   // Zero field hold (50ns)
 )
 
 // Phase timing constants (in nanoseconds for display, not real-time)

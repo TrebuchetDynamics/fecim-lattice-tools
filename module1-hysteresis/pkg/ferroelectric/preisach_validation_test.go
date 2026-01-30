@@ -164,11 +164,9 @@ func TestPreisachCoerciveField(t *testing.T) {
 				}
 			}
 
-			// Saturate negative
-			for i := -steps; i <= -steps; i-- {
-				E := float64(i) / float64(steps) * Emax
-				model.Update(E)
-			}
+			// Already at negative saturation from previous sweep (lines 159-165)
+			// Just ensure we're at -Emax
+			model.Update(-Emax)
 
 			// Sweep up to find Ec+ (positive coercive field)
 			var EcPlus float64

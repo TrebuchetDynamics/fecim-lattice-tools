@@ -196,6 +196,119 @@ func TestDACToADCRoundTrip(t *testing.T) {
 	}
 }
 
+// TestDACConvertWithNonlinearity verifies DAC nonlinearity application.
+func TestDACConvertWithNonlinearity(t *testing.T) {
+	dac := DefaultDAC()
+	dac.INL = 0.5
+	dac.DNL = 0.5
+
+	level := 15
+	idealV := dac.Convert(level)
+	noisyV := dac.ConvertWithNonlinearity(level)
+
+	if math.Abs(noisyV-idealV) < 1e-9 {
+		t.Errorf("DAC nonlinearity should change output, but got same as ideal: %.4fV", idealV)
+	}
+
+	lsb := dac.Resolution()
+	if math.Abs(noisyV-idealV) > 2.0*lsb {
+		t.Errorf("DAC nonlinearity deviation too large: ideal %.4fV, noisy %.4fV (Δ=%.2f LSB)",
+			idealV, noisyV, math.Abs(noisyV-idealV)/lsb)
+	}
+}
+
+// TestADCConvertWithNonlinearity verifies ADC nonlinearity effects.
+func TestADCConvertWithNonlinearity(t *testing.T) {
+	adc := DefaultADC()
+	adc.INL = 1.0
+	adc.DNL = 1.0
+
+	v := (adc.VrefHigh + adc.VrefLow) / 2.0
+	idealL := adc.Convert(v)
+	noisyL := adc.ConvertWithNonlinearity(v)
+
+	if abs(noisyL-idealL) > 2 {
+		t.Errorf("ADC nonlinearity caused too large deviation: ideal %d, noisy %d", idealL, noisyL)
+	}
+}
+
+// TestADCTheoreticalSNR verifies SNR calculation.
+func TestADCTheoreticalSNR(t *testing.T) {
+	adc := DefaultADC()
+	adc.Bits = 5
+	snr := adc.TheoreticalSNR()
+	expected := 6.02*5.0 + 1.76
+	if math.Abs(snr-expected) > 0.01 {
+		t.Errorf("Expected TheoreticalSNR %.2f, got %.2f", expected, snr)
+	}
+}
+
+// TestADCEffectiveSNR verifies ENOB-based SNR.
+func TestADCEffectiveSNR(t *testing.T) {
+	adc := DefaultADC()
+	adc.INL = 0.5
+	adc.DNL = 0.5
+
+	tSNR := adc.TheoreticalSNR()
+	eSNR := adc.EffectiveSNR()
+
+	if eSNR >= tSNR {
+		t.Errorf("Effective SNR (%.2f) should be less than Theoretical SNR (%.2f) when nonlinearity exists", eSNR, tSNR)
+	}
+
+	adc.INL = 0
+	adc.DNL = 0
+	if math.Abs(adc.EffectiveSNR()-adc.TheoreticalSNR()) > 0.01 {
+		t.Errorf("Ideal ADC should have EffectiveSNR == TheoreticalSNR")
+	}
+}
+
+// TestTIAConvertWithNoise verifies TIA noise injection.
+func TestTIAConvertWithNoise(t *testing.T) {
+	tia := DefaultTIA()
+
+	current := 10e-6
+	vIdeal := tia.Convert(current)
+
+	const iterations = 10
+	for i := 0; i < iterations; i++ {
+		v := tia.ConvertWithNoise(current)
+		if math.Abs(v-vIdeal) > 0.1 {
+			t.Errorf("TIA mean voltage (%.4fV) deviated too far from ideal (%.4fV)", v, vIdeal)
+		}
+	}
+}
+
+// TestTIASNR verifies TIA signal-to-noise ratio.
+func TestTIASNR(t *testing.T) {
+	tia := DefaultTIA()
+
+	snrLow := tia.SNR(1e-7)
+	snrHigh := tia.SNR(1e-5)
+
+	if snrHigh <= snrLow {
+		t.Errorf("Higher current should have better SNR: SNR(10uA)=%.2fdB, SNR(0.1uA)=%.2fdB", snrHigh, snrLow)
+	}
+}
+
+// TestTIAMinDetectableCurrent verifies sensitivity.
+func TestTIAMinDetectableCurrent(t *testing.T) {
+	tia := DefaultTIA()
+	minI := tia.MinDetectableCurrent()
+	if minI <= 0 {
+		t.Errorf("Min detectable current should be positive, got %.2e", minI)
+	}
+}
+
+// TestTIADynamicRange verifies dynamic range.
+func TestTIADynamicRange(t *testing.T) {
+	tia := DefaultTIA()
+	dr := tia.DynamicRange()
+	if dr < 50 || dr > 120 {
+		t.Errorf("Reasonable Dynamic Range expected, got %.2fdB", dr)
+	}
+}
+
 func abs(x int) int {
 	if x < 0 {
 		return -x

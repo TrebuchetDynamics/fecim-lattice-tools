@@ -10,6 +10,7 @@ type IRDropSimulator struct {
 	Cols         int         // Number of columns in crossbar
 	RowResist    float64     // Resistance per row segment (Ohms)
 	ColResist    float64     // Resistance per column segment (Ohms)
+	Temperature  float64     // Operating temperature in Kelvin (default 300K)
 	VoltageIn    []float64   // Input voltages (row drivers)
 	VoltageOut   []float64   // Output voltages (column sense)
 	Conductances [][]float64 // Conductance matrix (S)
@@ -42,6 +43,7 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 		Cols:         cols,
 		RowResist:    2.5, // 2.5 Ω per segment (typical metal interconnect)
 		ColResist:    2.5, // 2.5 Ω per segment
+		Temperature:  300.0,
 		VoltageIn:    make([]float64, rows),
 		VoltageOut:   make([]float64, cols),
 		Conductances: conductances,
@@ -53,6 +55,33 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 
 	getLog().Output("NewIRDropSimulator", sim)
 	return sim
+}
+
+// SetTemperature sets the operating temperature and adjusts wire resistances.
+// Uses copper TCR = 0.00393/K for resistance scaling.
+func (ir *IRDropSimulator) SetTemperature(tempK float64) {
+	if tempK < 0 {
+		tempK = 300 // Default to room temperature
+	}
+	ir.Temperature = tempK
+
+	// Apply temperature coefficient of resistance (TCR) for copper
+	// R(T) = R(300K) * (1 + 0.00393 * (T - 300))
+	const copperTCR = 0.00393
+	const refTemp = 300.0
+	const baseRowResist = 2.5 // Base resistance at 300K
+	const baseColResist = 2.5
+
+	factor := 1.0 + copperTCR*(tempK-refTemp)
+	ir.RowResist = baseRowResist * factor
+	ir.ColResist = baseColResist * factor
+}
+
+// GetTemperatureEffect returns the resistance multiplier due to temperature.
+func (ir *IRDropSimulator) GetTemperatureEffect() float64 {
+	const copperTCR = 0.00393
+	const refTemp = 300.0
+	return 1.0 + copperTCR*(ir.Temperature-refTemp)
 }
 
 // SetConductance sets conductance for a specific cell.
@@ -231,6 +260,8 @@ type IRDropStats struct {
 	AvgOutputError float64 // Average output error (%)
 	WorstCellRow   int     // Row of worst-affected cell
 	WorstCellCol   int     // Column of worst-affected cell
+	Temperature    float64 // Operating temperature (K)
+	ResistFactor   float64 // Resistance multiplier due to temperature
 }
 
 // GetStats returns IR drop statistics.
@@ -267,6 +298,8 @@ func (ir *IRDropSimulator) GetStats() IRDropStats {
 		AvgOutputError: avgErr,
 		WorstCellRow:   worstRow,
 		WorstCellCol:   worstCol,
+		Temperature:    ir.Temperature,
+		ResistFactor:   ir.GetTemperatureEffect(),
 	}
 }
 
@@ -290,4 +323,3 @@ func (ir *IRDropSimulator) ApplyMitigation(mit IRDropMitigation) {
 	// Re-simulate with new parameters
 	ir.Simulate(100)
 }
-
