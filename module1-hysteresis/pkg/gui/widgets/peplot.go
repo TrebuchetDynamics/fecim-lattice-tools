@@ -355,14 +355,30 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	// Plot the hysteresis data
 	if len(r.plot.eData) > 1 {
 		for i := 1; i < len(r.plot.eData); i++ {
-			// Skip drawing line if points are too far apart (discontinuity)
-			// This prevents visual spikes when history is cleared or during rapid phase transitions
+			// Skip drawing line if it would create a spike (discontinuity)
 			eDiff := r.plot.eData[i] - r.plot.eData[i-1]
 			pDiff := r.plot.pData[i] - r.plot.pData[i-1]
-			// Threshold: skip if E jumps more than 30% of range OR P jumps more than 30% of range
-			if eDiff > r.plot.eMax*0.3 || eDiff < -r.plot.eMax*0.3 ||
-				pDiff > r.plot.pMax*0.3 || pDiff < -r.plot.pMax*0.3 {
-				continue // Skip this line segment - it's a discontinuity
+			absEDiff := eDiff
+			if absEDiff < 0 {
+				absEDiff = -absEDiff
+			}
+			absPDiff := pDiff
+			if absPDiff < 0 {
+				absPDiff = -absPDiff
+			}
+
+			// Detect spikes: unphysical jumps where one variable changes dramatically
+			// while the other stays nearly constant
+			eSmall := absEDiff < r.plot.eMax*0.05 // E changed less than 5%
+			eLarge := absEDiff > r.plot.eMax*0.15 // E changed more than 15%
+			pSmall := absPDiff < r.plot.pMax*0.05 // P changed less than 5%
+			pLarge := absPDiff > r.plot.pMax*0.15 // P changed more than 15%
+
+			// Skip if: vertical spike (E small, P large) OR horizontal spike (E large, P small)
+			// OR any jump larger than 40% of range
+			if (eSmall && pLarge) || (eLarge && pSmall) ||
+				absEDiff > r.plot.eMax*0.4 || absPDiff > r.plot.pMax*0.4 {
+				continue // Skip this line segment - it's a spike
 			}
 
 			// Map data to screen coordinates

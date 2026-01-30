@@ -1584,10 +1584,14 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		a.mu.RUnlock()
 
 		if a.effEcLabel != nil {
-			a.effEcLabel.SetText(fmt.Sprintf("Ec(T): %.2f MV/cm", effEc/1e8))
+			// Show Ec with ±15% uncertainty (typical device-to-device variation)
+			ecVal := effEc / 1e8
+			a.effEcLabel.SetText(fmt.Sprintf("Ec(T): %.2f±%.2f MV/cm", ecVal, ecVal*0.15))
 		}
 		if a.effPrLabel != nil {
-			a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f µC/cm²", effPr*100))
+			// Show Pr with ±20% uncertainty (typical device-to-device variation)
+			prVal := effPr * 100
+			a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
 		}
 		if a.squarenessLabel != nil {
 			a.squarenessLabel.SetText(fmt.Sprintf("Squareness: %.2f", squareness))

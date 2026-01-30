@@ -34,16 +34,18 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		a.pLabel,
 	)
 
-	// Material info button (shows details in dialog)
+	// Material info button (shows details in dialog with uncertainty ranges)
 	matInfoBtn := widget.NewButtonWithIcon("Material Info", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Material Properties",
 			fmt.Sprintf("Material: %s\n\n"+
-				"Pr (Remanent): %.0f µC/cm²\n"+
-				"Ps (Saturation): %.0f µC/cm²\n"+
-				"Ec (Coercive): %.2f MV/cm\n"+
-				"Endurance: %.0e cycles\n\n"+
+				"Pr (Remanent): %.0f µC/cm² [literature: 15-34]\n"+
+				"Ps (Saturation): %.0f µC/cm² [±10%%]\n"+
+				"Ec (Coercive): %.2f MV/cm [literature: 0.6-1.5]\n"+
+				"Endurance: %.0e cycles [demonstrated: 10⁹-10¹²]\n\n"+
 				"Pr = polarization at E=0 (memory!)\n"+
-				"Ec = field needed to switch",
+				"Ec = field needed to switch\n\n"+
+				"Note: Ranges from peer-reviewed literature.\n"+
+				"Actual values depend on process conditions.",
 				a.material.Name, a.material.Pr*100, a.material.Ps*100,
 				a.material.Ec/1e8, a.material.EnduranceCycles), a.mainWindow)
 	})
@@ -64,9 +66,9 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewLabel("F:"), a.fatigueLabel,
 	)
 
-	// Temperature-dependent metrics
-	a.effEcLabel = widget.NewLabel("Ec(T): 1.00 MV/cm")
-	a.effPrLabel = widget.NewLabel("Pr(T): 20.0 µC/cm²")
+	// Temperature-dependent metrics (with uncertainty notation)
+	a.effEcLabel = widget.NewLabel("Ec(T): 1.00±0.15 MV/cm")
+	a.effPrLabel = widget.NewLabel("Pr(T): 20.0±5 µC/cm²")
 	a.squarenessLabel = widget.NewLabel("Squareness: 0.60")
 	a.switchedLabel = widget.NewLabel("Switched: 0%")
 

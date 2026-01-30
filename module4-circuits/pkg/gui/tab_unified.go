@@ -22,7 +22,7 @@ import (
 // ============================================================================
 
 // createUnifiedView creates the unified device simulation view
-// Replaces the old mode-based createOperationsView()
+// Layout: Circuit visualization on TOP, all inputs/controls at BOTTOM
 func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Initialize device state
 	ca.deviceState = NewDeviceState(ca.arrayRows, ca.arrayCols, ca.tia, ca.adc)
@@ -33,10 +33,39 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 		ca.deviceState.SetPassiveMode(true)
 	}
 
-	// 1. Signal chain header
-	signalChainHeader := ca.createSignalChainHeader()
+	// ============================================================
+	// TOP: Circuit Visualization (main focus area)
+	// ============================================================
 
-	// 2. Mode bar at top (Mode-First UX)
+	// Signal chain header (minimal - just shows the chain)
+	chainLabel := widget.NewLabelWithStyle(
+		"SIGNAL CHAIN: DAC → Array → TIA → ADC",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+
+	// Main visualization area - the circuit canvas
+	mainSection := ca.createMainSimSection()
+
+	// Status/info labels
+	ca.operationsModeHelp = widget.NewLabel("Click cells to select | Mode controls below")
+	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
+
+	topSection := container.NewVBox(
+		chainLabel,
+		mainSection,
+		ca.operationsModeHelp,
+		widget.NewSeparator(),
+	)
+
+	// ============================================================
+	// BOTTOM: All Input Controls (consolidated)
+	// ============================================================
+
+	// 1. Configuration row: Material, ADC bits, Architecture
+	configSection := ca.createConfigurationSection()
+
+	// 2. Mode bar (Mode-First UX)
 	modeBar := ca.createModeBar()
 
 	// 3. Mode-specific panels (initially hidden, shown based on mode)
@@ -63,34 +92,32 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Update DAC range mode label with current voltage range
 	ca.updateDACRangeModeLabel()
 
-	// 5. Main visualization area (center)
-	mainSection := ca.createMainSimSection()
-
-	// 6. Action buttons (bottom)
+	// 5. Action buttons
 	actionSection := ca.createUnifiedActionSection()
 
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()
 
-	// Top section: signal chain header, mode bar, mode panels, architecture voltage panels, DAC presets
-	topSection := container.NewVBox(
-		signalChainHeader,
-		modeBar,
-		modePanelStack,
-		archVoltageStack,
-		dacSection,
+	// Bottom section: All controls consolidated
+	bottomSection := container.NewVBox(
+		configSection,      // Material, ADC, Architecture
+		modeBar,            // READ/WRITE/COMPUTE buttons
+		modePanelStack,     // Mode-specific panels (write slider, compute inputs)
+		archVoltageStack,   // Architecture-specific voltage info
+		dacSection,         // DAC controls
+		actionSection,      // Action buttons
 	)
 
 	return container.NewBorder(
-		topSection,    // top
-		actionSection, // bottom
+		topSection,    // top: circuit visualization
+		bottomSection, // bottom: all controls
 		nil, nil,
-		mainSection, // center
+		nil, // no center (everything in top/bottom)
 	)
 }
 
-// createSignalChainHeader creates the signal chain indicator
-func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
+// createConfigurationSection creates the configuration controls row
+func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	// Architecture toggle
 	archToggle := ca.createArchitectureToggle()
 
@@ -100,40 +127,27 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
-	chainLabel := widget.NewLabelWithStyle(
-		"SIGNAL CHAIN: DAC -> Array -> TIA -> ADC",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Bold: true},
-	)
-
-	// Operation classification label (updates based on configuration)
-	ca.operationsModeHelp = widget.NewLabel("Configuration: Click cells or adjust voltages")
-	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
-
-	// Circuit specs summary - shows current configuration
+	// Circuit specs summary
 	adcBits := 5
 	if ca.adc != nil {
 		adcBits = ca.adc.Bits
 	}
 	adcLevels := 1 << adcBits
-	circuitSpecsLabel := widget.NewLabel(fmt.Sprintf("ADC: %d-bit (%d levels, 0-%d)", adcBits, adcLevels, adcLevels-1))
+	circuitSpecsLabel := widget.NewLabel(fmt.Sprintf("%d levels (0-%d)", adcLevels, adcLevels-1))
 	circuitSpecsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	return container.NewVBox(
-		container.NewHBox(
-			chainLabel,
-			layout.NewSpacer(),
-			materialSelector,
-			adcBitsSelector,
-			layout.NewSpacer(),
-			archToggle,
-			layout.NewSpacer(),
-			circuitSpecsLabel,
-		),
-		ca.operationsModeHelp,
+	return container.NewHBox(
+		materialSelector,
 		widget.NewSeparator(),
+		adcBitsSelector,
+		circuitSpecsLabel,
+		layout.NewSpacer(),
+		archToggle,
 	)
 }
+
+// Note: createSignalChainHeader removed - functionality moved to createConfigurationSection
+// and the signal chain label is now inline in createUnifiedView
 
 // createMaterialSelector creates the ferroelectric material selection dropdown with browse button
 func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {

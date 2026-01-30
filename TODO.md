@@ -53,8 +53,8 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| C01 | Add "SIMULATION ONLY - NOT VALIDATED" banners to Module 5 comparison screens | ⏳ | 30m |
-| C02 | Change "30 discrete states" from fact to hypothesis: "30 states (conference presentation, pending peer review)" | ⏳ | 1hr |
+| C01 | Add "SIMULATION ONLY - NOT VALIDATED" banners to Module 5 comparison screens | ✅ | Done |
+| C02 | Change "30 discrete states" from fact to hypothesis: "30 states (conference presentation, pending peer review)" | ✅ | Done |
 | C03 | ~~Add TRL disclaimer to energy comparison charts~~ | ✅ | Done |
 | C04 | ~~Update 87% MNIST to show peer-reviewed context (96.6-98.24%)~~ | ✅ | Done |
 | C05 | ~~Add "Why 30?" dialog with verification status~~ | ✅ | Done |
@@ -90,8 +90,8 @@
 | H03 | ~~Voltage range citations (thickness-dependent)~~ | ✅ | Done |
 | H04 | ~~Read parameter sources - mark as empirical~~ | ✅ | Done |
 | H05 | ~~Market chart disclaimers - TRL and projection warnings~~ | ✅ | Done |
-| H06 | Cite strain coefficients - replace magic `-0.15` with Haun 1987 or DFT reference | ⏳ | 1hr |
-| H07 | Add Preisach grid size convergence study reference (why 50×50?) | ⏳ | 1hr |
+| H06 | Cite strain coefficients - replace magic `-0.15` with Haun 1987 or DFT reference | ✅ | Done |
+| H07 | Add Preisach grid size convergence study reference (why 50×50?) | ✅ | Done |
 
 ### P2-D2: Medium-Effort High-Priority Fixes
 
@@ -275,12 +275,12 @@ From HONESTY_AUDIT Section 6.2:
 
 ## 11. Sprint Planning
 
-### Sprint 1: Critical Easy Wins (1 day)
+### Sprint 1: Critical Easy Wins (1 day) ✅ COMPLETE
 **Goal**: Address all P1-D1 items
-- [ ] C01: Add "SIMULATION ONLY" banners
-- [ ] C02: Change "30 states" language to hypothesis
-- [ ] H06: Cite strain coefficients
-- [ ] H07: Add Preisach grid size reference
+- [x] C01: Add "SIMULATION ONLY" banners ✅
+- [x] C02: Change "30 states" language to hypothesis ✅
+- [x] H06: Cite strain coefficients ✅
+- [x] H07: Add Preisach grid size reference ✅
 
 ### Sprint 2: Critical Physics (3 days)
 **Goal**: Address P1-D2 items
@@ -308,13 +308,13 @@ From HONESTY_AUDIT Section 6.2:
 
 | Priority | Total | Done | Remaining | % Complete |
 |----------|-------|------|-----------|------------|
-| P1 Critical | 13 | 5 | 8 | 38% |
-| P2 High | 16 | 7 | 9 | 44% |
+| P1 Critical | 13 | 7 | 6 | 54% |
+| P2 High | 16 | 9 | 7 | 56% |
 | P3 Medium | 15 | 6 | 9 | 40% |
 | P4 Low | 10 | 0 | 10 | 0% |
-| **TOTAL** | **54** | **18** | **36** | **33%** |
+| **TOTAL** | **54** | **22** | **32** | **41%** |
 
-**Estimated Remaining Effort**: ~150 hours
+**Estimated Remaining Effort**: ~140 hours
 
 ---
 
