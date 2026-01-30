@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"math/rand"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -73,17 +74,17 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	)
 
 	// ============================================================
-	// BOTTOM: All Input Controls (consolidated)
+	// BOTTOM: All Input Controls (single compact area)
 	// ============================================================
 
-	// 1. Configuration row: Material, ADC bits, Architecture
+	// 1. Configuration row: Material, Array, ADC, Architecture, Tools
 	configSection := ca.createConfigurationSection()
 
-	// 2. Mode bar (Mode-First UX)
-	modeBar := ca.createModeBar()
+	// 2. Mode bar with action buttons integrated
+	modeActionBar := ca.createModeActionBar()
 
-	// 3. Mode-specific panels (initially hidden, shown based on mode)
-	writePanelContent := ca.createEnhancedWriteModePanel()
+	// 3. Mode-specific panels (only visible when mode is active)
+	writePanelContent := ca.createCompactWritePanel()
 	ca.writeModePanel = container.NewVBox(writePanelContent)
 	ca.writeModePanel.Hide() // Hidden by default (READ mode)
 
@@ -91,36 +92,24 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	ca.computeModePanel = container.NewVBox(computePanelContent)
 	ca.computeModePanel.Hide() // Hidden by default (READ mode)
 
-	// Stack the mode panels (only one visible at a time)
+	// Stack panels (only one visible at a time)
 	modePanelStack := container.NewStack(ca.writeModePanel, ca.computeModePanel)
-	fixedModePanelArea := createFixedHeightContainer(modePanelStack, 80)
 
-	// Initialize architecture-specific voltage panels
-	ca.passiveVoltagePanel = ca.createPassiveVoltagePanel()
-	ca.activeVoltagePanel = ca.createActiveVoltagePanel()
+	// Initialize architecture info (compact single-line)
+	ca.passiveVoltagePanel = ca.createCompactPassivePanel()
+	ca.activeVoltagePanel = ca.createCompactActivePanel()
 	ca.passiveVoltagePanel.Hide() // Hidden initially (1T1R default)
 	archVoltageStack := container.NewStack(ca.passiveVoltagePanel, ca.activeVoltagePanel)
-
-	// 4. DAC input section
-	dacSection := ca.createDACInputSection()
-
-	// Update DAC range mode label with current voltage range
-	ca.updateDACRangeModeLabel()
-
-	// 5. Action buttons
-	actionSection := ca.createUnifiedActionSection()
 
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()
 
-	// Bottom section: All controls consolidated
+	// Bottom section: Compact control area
 	bottomSection := container.NewVBox(
-		configSection,       // Material, ADC, Architecture
-		modeBar,             // READ/WRITE/COMPUTE buttons
-		fixedModePanelArea,  // Fixed 80px area for mode panels
-		archVoltageStack,    // Architecture-specific voltage info
-		dacSection,          // DAC controls
-		actionSection,       // Action buttons
+		configSection,     // Material, Array, ADC, Architecture, Tools
+		modeActionBar,     // Mode buttons + Action buttons on same row
+		modePanelStack,    // Write slider OR Compute inputs
+		archVoltageStack,  // Single-line arch info
 	)
 
 	return container.NewBorder(
@@ -131,25 +120,15 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	)
 }
 
-// createConfigurationSection creates the configuration controls in two rows
-// Row 1: Material, Array size, ADC bits, ADC levels, Architecture
-// Row 2: Validation tools (CrossSim, BadCrossbar)
+// createConfigurationSection creates all configuration controls in a single compact row
 func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	archToggle := ca.createArchitectureToggle()
 	materialSelector := ca.createMaterialSelector()
 	arraySizeSelector := ca.createArraySizeSelector()
 	adcBitsSelector := ca.createADCBitsSelector()
 
-	adcBits := 5
-	if ca.adc != nil {
-		adcBits = ca.adc.Bits
-	}
-	adcLevels := 1 << adcBits
-	circuitSpecsLabel := widget.NewLabel(fmt.Sprintf("%d levels (0-%d)", adcLevels, adcLevels-1))
-	circuitSpecsLabel.TextStyle = fyne.TextStyle{Monospace: true}
-
-	crosssimStatus := widget.NewLabel("○ CrossSim")
-	badcrossbarStatus := widget.NewLabel("○ BadCrossbar")
+	crosssimStatus := widget.NewLabel("○")
+	badcrossbarStatus := widget.NewLabel("○")
 	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
 	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
 
@@ -157,38 +136,45 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 		crosssimInfo := validation.CrossSimInfo()
 		badcrossbarInfo := validation.BadCrossbarInfo()
 		fyne.Do(func() {
-			crosssimStatus.SetText(fmt.Sprintf("%s CrossSim", crosssimInfo.Status.Symbol()))
-			badcrossbarStatus.SetText(fmt.Sprintf("%s BadCrossbar", badcrossbarInfo.Status.Symbol()))
+			crosssimStatus.SetText(crosssimInfo.Status.Symbol())
+			badcrossbarStatus.SetText(badcrossbarInfo.Status.Symbol())
 		})
 	}
 
-	validateToolsBtn := widget.NewButton("Validate Tools", func() {
+	// Combined install/validate button - installs if needed, then validates
+	toolsBtn := widget.NewButton("Tools", func() {
 		go func() {
 			fyne.Do(func() {
-				crosssimStatus.SetText("... CrossSim")
-				badcrossbarStatus.SetText("... BadCrossbar")
+				crosssimStatus.SetText("...")
+				badcrossbarStatus.SetText("...")
 			})
 
-			results := validation.ValidateAllTools()
+			// First install if needed
+			installResults := validation.InstallToolsIfNeeded()
+
+			// Then validate
+			validateResults := validation.ValidateAllTools()
 
 			var messages []string
-			for _, r := range results {
+			for i, r := range validateResults {
+				installMsg := ""
+				if i < len(installResults) && installResults[i].Output != "Already installed" && installResults[i].Success {
+					installMsg = " (installed)"
+				}
 				status := "✗ FAIL"
 				if r.Passed {
 					status = "✓ PASS"
-				} else if r.Error != nil && (r.Error.Error() == "CrossSim not installed" || r.Error.Error() == "BadCrossbar not installed") {
-					status = "○ SKIP (not installed)"
+				} else if r.Error != nil && strings.Contains(r.Error.Error(), "not installed") {
+					status = "○ NOT INSTALLED"
 				}
-				messages = append(messages, fmt.Sprintf("%s: %s", r.Tool, status))
+				messages = append(messages, fmt.Sprintf("%s: %s%s", r.Tool, status, installMsg))
 			}
 
 			fyne.Do(func() {
 				updateToolStatus()
 				if ca.window != nil {
-					content := widget.NewLabel(fmt.Sprintf("Validation Results:\n\n%s\n\nInstall commands:\n• CrossSim: git clone https://github.com/sandialabs/cross-sim && pip install -e ./cross-sim\n• BadCrossbar: pip install badcrossbar",
-						fmt.Sprintf("%s\n%s", messages[0], messages[1])))
-					content.Wrapping = fyne.TextWrapWord
-					dialog.ShowCustom("Tool Validation", "Close", content, ca.window)
+					content := widget.NewLabel(strings.Join(messages, "\n"))
+					dialog.ShowCustom("Validation Tools", "Close", content, ca.window)
 				}
 			})
 		}()
@@ -196,28 +182,16 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 
 	go updateToolStatus()
 
-	// Row 1: Core configuration elements
-	configRow1 := container.NewHBox(
+	// Single row: Material | Array | ADC | Tools | Architecture
+	return container.NewHBox(
 		materialSelector,
-		widget.NewSeparator(),
 		arraySizeSelector,
-		widget.NewSeparator(),
 		adcBitsSelector,
-		circuitSpecsLabel,
+		widget.NewSeparator(),
+		crosssimStatus, badcrossbarStatus, toolsBtn,
 		layout.NewSpacer(),
 		archToggle,
 	)
-
-	// Row 2: Validation tools
-	configRow2 := container.NewHBox(
-		widget.NewLabel("Validation:"),
-		crosssimStatus,
-		badcrossbarStatus,
-		validateToolsBtn,
-		layout.NewSpacer(),
-	)
-
-	return container.NewVBox(configRow1, configRow2)
 }
 
 // ValidArraySizes defines the supported array dimensions
@@ -559,29 +533,30 @@ func (ca *CircuitsApp) updateModeButtons() {
 
 // createUnifiedArraySection creates the array visualization section
 func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
-	// Create tappable array canvas - larger size for better visualization
+	// Create tappable array canvas
 	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
-	tappableArray.SetMinSize(fyne.NewSize(850, 600)) // Large canvas for detailed visualization
+	tappableArray.SetMinSize(fyne.NewSize(850, 550)) // Canvas for visualization
 	ca.sharedArrayCanvas = tappableArray.raster
 
-	// Cell info display
+	// Cell info display (updated on cell click)
 	ca.sharedCellInfoLabel = widget.NewLabel("Click a cell to select")
 
-	// Array size info with capacity calculation
+	// Array info (updated on resize)
 	totalCells := ca.arrayRows * ca.arrayCols
-	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
-	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d (%d cells) | %d levels (~%.0f bits)",
-		ca.arrayRows, ca.arrayCols, totalCells, ca.quantLevels, bitCapacity))
+	bitCapacity := float64(totalCells) * 4.9
+	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("%dx%d array | %d levels | ~%.0f bits",
+		ca.arrayRows, ca.arrayCols, ca.quantLevels, bitCapacity))
 
-	// Legend with energy info (C10: include system power breakdown)
-	legendLabel := widget.NewLabel("States: Low G → High G | Energy: READ ~45fJ, WRITE ~55fJ | System: Array 45%, ADC/DAC 40%, Periph 15%")
-	legendLabel.TextStyle = fyne.TextStyle{Italic: true}
+	// Compact info row with cell info and array info
+	infoRow := container.NewHBox(
+		ca.sharedCellInfoLabel,
+		layout.NewSpacer(),
+		ca.sharedArrayInfoLabel,
+	)
 
 	return container.NewVBox(
 		tappableArray,
-		legendLabel,
-		ca.sharedCellInfoLabel,
-		ca.sharedArrayInfoLabel,
+		infoRow,
 	)
 }
 
@@ -926,7 +901,7 @@ func (ca *CircuitsApp) updateWriteTargetLabel() {
 	col := ca.deviceState.GetSelectedCol()
 
 	fyne.Do(func() {
-		ca.mfuxWriteTargetLabel.SetText(fmt.Sprintf("Target: Row %d, Col %d", row, col))
+		ca.mfuxWriteTargetLabel.SetText(fmt.Sprintf("[%d,%d]", row, col))
 	})
 }
 
@@ -1031,9 +1006,14 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 // MODE-FIRST UX PANELS (Phase 1)
 // ============================================================================
 
-// createModeBar creates the top-level mode selection bar
-// This replaces the mode buttons previously buried in createWLSelector()
+// createModeBar creates the top-level mode selection bar (legacy, kept for compatibility)
 func (ca *CircuitsApp) createModeBar() fyne.CanvasObject {
+	return ca.createModeActionBar()
+}
+
+// createModeActionBar creates a combined mode selection + action buttons bar
+func (ca *CircuitsApp) createModeActionBar() fyne.CanvasObject {
+	// Mode buttons
 	ca.modeReadBtn = widget.NewButton("READ", func() {
 		ca.setOperationMode(OpModeRead)
 	})
@@ -1047,12 +1027,41 @@ func (ca *CircuitsApp) createModeBar() fyne.CanvasObject {
 	// Set initial highlight (READ mode by default)
 	ca.modeReadBtn.Importance = widget.HighImportance
 
+	// Action buttons
+	ca.actionWriteCellBtn = widget.NewButton("Write", func() {
+		ca.onUnifiedProgram()
+	})
+	ca.actionWriteCellBtn.Importance = widget.HighImportance
+
+	ca.actionComputeBtn = widget.NewButton("MVM", func() {
+		ca.onUnifiedCompute()
+	})
+
+	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
+		ca.onUndo()
+	})
+	ca.undoHistoryBtn.Disable()
+
+	randomBtn := widget.NewButton("Random", func() {
+		ca.onUnifiedRandomArray()
+	})
+
+	resetBtn := widget.NewButton("Reset", func() {
+		ca.onUnifiedReset()
+	})
+
 	return container.NewHBox(
 		widget.NewLabelWithStyle("Mode:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ca.modeReadBtn,
 		ca.modeWriteBtn,
 		ca.modeComputeBtn,
+		widget.NewSeparator(),
+		ca.actionWriteCellBtn,
+		ca.actionComputeBtn,
 		layout.NewSpacer(),
+		ca.undoHistoryBtn,
+		randomBtn,
+		resetBtn,
 	)
 }
 
@@ -1113,10 +1122,10 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 
 	fyne.Do(func() {
 		if ca.mfuxWriteLevelLabel != nil {
-			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("Level: %d", level))
+			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("L:%d", level))
 		}
 		if ca.mfuxWriteVoltageLabel != nil {
-			ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("Voltage: %.2fV", voltage))
+			ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV", voltage))
 		}
 	})
 }

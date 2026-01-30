@@ -71,3 +71,33 @@ func TestToolStatusSymbol(t *testing.T) {
 		}
 	}
 }
+
+func TestGetProjectRoot(t *testing.T) {
+	root, err := GetProjectRoot()
+	if err != nil {
+		t.Fatalf("GetProjectRoot failed: %v", err)
+	}
+	t.Logf("Project root: %s", root)
+}
+
+func TestGetLocalClonePaths(t *testing.T) {
+	crosssimPath, badcrossbarPath, err := GetLocalClonePaths()
+	if err != nil {
+		t.Fatalf("GetLocalClonePaths failed: %v", err)
+	}
+	t.Logf("CrossSim path: %s", crosssimPath)
+	t.Logf("BadCrossbar path: %s", badcrossbarPath)
+}
+
+func TestHasLocalClone(t *testing.T) {
+	crosssimPath, badcrossbarPath, err := GetLocalClonePaths()
+	if err != nil {
+		t.Fatalf("GetLocalClonePaths failed: %v", err)
+	}
+
+	// These may or may not exist depending on environment
+	hasCrossSim := HasLocalClone(crosssimPath)
+	hasBadCrossbar := HasLocalClone(badcrossbarPath)
+	t.Logf("Has CrossSim clone: %v", hasCrossSim)
+	t.Logf("Has BadCrossbar clone: %v", hasBadCrossbar)
+}

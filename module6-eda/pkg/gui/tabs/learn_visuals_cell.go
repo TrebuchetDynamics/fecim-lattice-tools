@@ -25,6 +25,12 @@ func CellComparisonTable() fyne.CanvasObject {
 	startX := float32(10)
 	startY := float32(10)
 
+	// Calculate total table width from column widths
+	var tableWidth float32
+	for _, w := range colWidths {
+		tableWidth += w
+	}
+
 	// Table data
 	type row struct {
 		property string
@@ -59,14 +65,14 @@ func CellComparisonTable() fyne.CanvasObject {
 		}
 
 		rowBg := canvas.NewRectangle(bgColor)
-		rowBg.Resize(fyne.NewSize(440, rowHeight))
+		rowBg.Resize(fyne.NewSize(tableWidth, rowHeight))
 		rowBg.Move(fyne.NewPos(x, y))
 		objects = append(objects, rowBg)
 
-		// Cells
+		// Cells - calculate cumulative X position
 		cells := []string{rowData.property, rowData.passive, rowData.t1r, rowData.winner}
+		cellX := x
 		for j, cellText := range cells {
-			cellX := x + float32(j)*colWidths[j]
 
 			// Cell text - improved sizing
 			text := canvas.NewText(cellText, colorText)
@@ -100,26 +106,32 @@ func CellComparisonTable() fyne.CanvasObject {
 				line.Position2 = fyne.NewPos(lineX, y+rowHeight)
 				objects = append(objects, line)
 			}
+
+			// Move to next column
+			cellX += colWidths[j]
 		}
 
 		// Horizontal grid line after row
 		hLine := canvas.NewLine(colorArrow)
 		hLine.StrokeWidth = 1
 		hLine.Position1 = fyne.NewPos(x, y+rowHeight)
-		hLine.Position2 = fyne.NewPos(x+440, y+rowHeight)
+		hLine.Position2 = fyne.NewPos(x+tableWidth, y+rowHeight)
 		objects = append(objects, hLine)
 	}
+
+	tableHeight := float32(len(rows)) * rowHeight
 
 	// Outer border
 	border := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	border.StrokeColor = colorArrow
 	border.StrokeWidth = 2
-	border.Resize(fyne.NewSize(440, float32(len(rows))*rowHeight))
+	border.Resize(fyne.NewSize(tableWidth, tableHeight))
 	border.Move(fyne.NewPos(startX, startY))
 	objects = append(objects, border)
 
+	// Container size: table + margins
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(460, 210))
+	cont.Resize(fyne.NewSize(startX+tableWidth+float32(10), startY+tableHeight+float32(10)))
 
 	return cont
 }

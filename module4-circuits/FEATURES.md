@@ -15,6 +15,7 @@ DAC/ADC/TIA Signal Chain for FeCIM Arrays
 - **Voltage Zone Canvas** - Safe read vs write regions visualization
 - **Pulse Waveform Display** - Programming pulse visualization
 - **Array Heatmap** - Current programmed states
+- **External Tool Validation** - CrossSim (Sandia) and BadCrossbar (UCL) integration
 
 ## Circuit Models
 

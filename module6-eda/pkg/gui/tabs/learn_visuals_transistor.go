@@ -115,15 +115,21 @@ func OperationModesVisual() fyne.CanvasObject {
 	objects = append(objects, fecimLabel)
 
 	// Quote below circle
+	quoteY := circleY + float32(30)
 	quote := canvas.NewText("\"Same device does all\"", colorBoxOurs)
 	quote.TextSize = 11
 	quote.TextStyle = fyne.TextStyle{Italic: true}
-	quote.Move(fyne.NewPos(circleX-75, circleY+30))
+	quote.Move(fyne.NewPos(circleX-75, quoteY))
 	objects = append(objects, quote)
 
-	// Container with fixed size
+	// Calculate proper container size based on content bounds
+	// Width: 3 boxes * (180 + 20) + margins = ~620
+	totalWidth := startX + 3*(boxW+spacing) + float32(10)
+	// Height: quote position + text height + margin
+	totalHeight := quoteY + float32(30)
+
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(620, 280))
+	cont.Resize(fyne.NewSize(totalWidth, totalHeight))
 
 	return cont
 }

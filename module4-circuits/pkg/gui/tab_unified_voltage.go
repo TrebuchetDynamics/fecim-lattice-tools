@@ -420,6 +420,54 @@ func (ca *CircuitsApp) createActiveVoltagePanel() fyne.CanvasObject {
 	)
 }
 
+// createCompactPassivePanel creates a single-line info for passive mode
+func (ca *CircuitsApp) createCompactPassivePanel() fyne.CanvasObject {
+	// V/2 indicator (updated during write operations)
+	ca.halfSelectIndicator = widget.NewLabel("0T1R: V/2 scheme - sneak currents add 5-20% error")
+	ca.halfSelectIndicator.TextStyle = fyne.TextStyle{Italic: true}
+	return ca.halfSelectIndicator
+}
+
+// createCompactActivePanel creates a single-line info for active mode
+func (ca *CircuitsApp) createCompactActivePanel() fyne.CanvasObject {
+	label := widget.NewLabel("1T1R/2T1R: Transistors isolate cells - no sneak currents")
+	label.TextStyle = fyne.TextStyle{Italic: true}
+	return label
+}
+
+// createCompactWritePanel creates a compact write panel without the 4-phase sequence UI
+func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
+	maxLevel := ca.quantLevels - 1
+	midLevel := ca.quantLevels / 2
+
+	ca.mfuxWriteLevelSlider = widget.NewSlider(0, float64(maxLevel))
+	ca.mfuxWriteLevelSlider.Step = 1
+	ca.mfuxWriteLevelSlider.Value = float64(midLevel)
+	ca.mfuxWriteLevelSlider.OnChanged = func(v float64) {
+		ca.onWriteLevelChanged(int(v))
+		ca.updateHysteresisDirectionUI(int(v))
+	}
+
+	ca.mfuxWriteLevelLabel = widget.NewLabel(fmt.Sprintf("Level: %d", midLevel))
+	ca.mfuxWriteLevelLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	ca.mfuxWriteVoltageLabel = widget.NewLabel("V: 1.00")
+	ca.mfuxWriteVoltageLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	ca.mfuxWriteTargetLabel = widget.NewLabel("Target: [0,0]")
+	ca.mfuxWriteTargetLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	ca.hysteresisDirectionLabel = widget.NewLabel("^")
+	ca.hysteresisDirectionLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	// Single row: Target | Slider | Level | Voltage | Direction
+	return container.NewBorder(nil, nil,
+		container.NewHBox(ca.mfuxWriteTargetLabel, widget.NewLabel("Write:")),
+		container.NewHBox(ca.mfuxWriteLevelLabel, ca.mfuxWriteVoltageLabel, ca.hysteresisDirectionLabel),
+		ca.mfuxWriteLevelSlider,
+	)
+}
+
 // updateArchitectureSpecificUI shows/hides panels based on architecture
 func (ca *CircuitsApp) updateArchitectureSpecificUI() {
 	isPassive := ca.deviceState.IsPassiveMode()

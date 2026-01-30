@@ -16,6 +16,7 @@ Matrix-Vector Multiply Simulator with Non-Idealities
 - **Before/After Toggle** - Compare ideal vs non-ideal instantly
 - **Accuracy Waterfall** - Timeline of degradation effects
 - **Weight Serialization** - Save/load trained weights
+- **External Tool Validation** - CrossSim (Sandia) and BadCrossbar (UCL) integration
 
 ## Physics Models
 

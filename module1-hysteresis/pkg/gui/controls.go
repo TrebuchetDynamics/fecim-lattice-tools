@@ -330,8 +330,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			effPr := a.preisach.GetEffectivePr()
 			a.mu.Unlock()
 
-			// Update plot bounds and markers (outside lock, uses fyne.Do internally)
-			a.plot.SetBounds(effEc*2.5, effPr*1.2)
+			// Only update material markers (Ec/Pr lines), NOT the axis bounds
+			// The X-axis should stay fixed - only the marker positions change
 			a.plot.SetMaterialParams(effEc, effPr)
 		}()
 
@@ -494,37 +494,35 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.calibrated = false
 	a.mu.Unlock()
 
-	// Update UI (must use fyne.Do from goroutine context)
-	fyne.Do(func() {
-		// Update plot bounds and markers
-		a.plot.SetBounds(effEc*2.5, effPr*1.2)
-		a.plot.SetMaterialParams(effEc, effPr)
-		a.plot.SetData(nil, nil, 0, 0)
-		a.plot.Refresh()
+	// Update UI directly (we're already on the UI thread from dialog callback)
+	// Update plot bounds and markers
+	a.plot.SetBounds(effEc*2.5, effPr*1.2)
+	a.plot.SetMaterialParams(effEc, effPr)
+	a.plot.SetData(nil, nil, 0, 0)
+	a.plot.Refresh()
 
-		// Reset E-field slider
-		if a.eFieldSlider != nil {
-			a.eFieldSlider.SetValue(0)
-		}
+	// Reset E-field slider
+	if a.eFieldSlider != nil {
+		a.eFieldSlider.SetValue(0)
+	}
 
-		// Update material button text
-		if a.materialBtn != nil {
-			a.materialBtn.SetText(hzoMat.Name)
-		}
+	// Update material button text
+	if a.materialBtn != nil {
+		a.materialBtn.SetText(hzoMat.Name)
+	}
 
-		// Update levels entry and label
-		if a.levelsEntry != nil {
-			a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
-		}
-		if a.levelsLabel != nil {
-			a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
-		}
+	// Update levels entry and label
+	if a.levelsEntry != nil {
+		a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
+	}
+	if a.levelsLabel != nil {
+		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+	}
 
-		// Reset level indicator to middle
-		if a.levelIndicator != nil {
-			a.levelIndicator.SetLevel(newLevels / 2)
-		}
-	})
+	// Reset level indicator to middle
+	if a.levelIndicator != nil {
+		a.levelIndicator.SetLevel(newLevels / 2)
+	}
 
 	// Load or run calibration for new material
 	a.tempCalibrations = make(map[int]*TempCalibration)

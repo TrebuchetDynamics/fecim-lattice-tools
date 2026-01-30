@@ -11,11 +11,11 @@ func TestDefaultISPPConfig(t *testing.T) {
 	if cfg.StartRatio != 0.7 {
 		t.Errorf("StartRatio = %v, want 0.7", cfg.StartRatio)
 	}
-	if cfg.StepPercent != 0.05 {
-		t.Errorf("StepPercent = %v, want 0.05", cfg.StepPercent)
+	if cfg.StepPercent != 0.02 {
+		t.Errorf("StepPercent = %v, want 0.02", cfg.StepPercent)
 	}
-	if cfg.MaxPulses != 10 {
-		t.Errorf("MaxPulses = %v, want 10", cfg.MaxPulses)
+	if cfg.MaxPulses != 20 {
+		t.Errorf("MaxPulses = %v, want 20", cfg.MaxPulses)
 	}
 	if cfg.SafetyCap != 2.2 {
 		t.Errorf("SafetyCap = %v, want 2.2", cfg.SafetyCap)
@@ -157,9 +157,9 @@ func TestCalculateVoltageStep(t *testing.T) {
 		ec       float64
 		expected float64
 	}{
-		{"1V Ec", 1.0, 0.05},
-		{"2V Ec", 2.0, 0.10},
-		{"0.5V Ec", 0.5, 0.025},
+		{"1V Ec", 1.0, 0.02},   // 2% of 1V
+		{"2V Ec", 2.0, 0.04},   // 2% of 2V
+		{"0.5V Ec", 0.5, 0.01}, // 2% of 0.5V
 	}
 
 	for _, tt := range tests {
@@ -174,7 +174,7 @@ func TestCalculateVoltageStep(t *testing.T) {
 }
 
 func TestCalculateNextVoltage(t *testing.T) {
-	calc := NewISPPCalculator(1.0, 30) // Ec = 1V, step = 0.05V
+	calc := NewISPPCalculator(1.0, 30) // Ec = 1V, step = 0.02V
 
 	tests := []struct {
 		name      string
@@ -182,10 +182,10 @@ func TestCalculateNextVoltage(t *testing.T) {
 		direction HysteresisDirection
 		expected  float64
 	}{
-		{"ascending from 0.7V", 0.7, DirectionAscending, 0.75},
-		{"ascending from 2.0V", 2.0, DirectionAscending, 2.05},
-		{"descending from -0.7V", -0.7, DirectionDescending, -0.75},
-		{"descending from -2.0V", -2.0, DirectionDescending, -2.05},
+		{"ascending from 0.7V", 0.7, DirectionAscending, 0.72},
+		{"ascending from 2.0V", 2.0, DirectionAscending, 2.02},
+		{"descending from -0.7V", -0.7, DirectionDescending, -0.72},
+		{"descending from -2.0V", -2.0, DirectionDescending, -2.02},
 		{"unknown direction", 0.5, DirectionUnknown, 0.5},
 	}
 
@@ -285,9 +285,9 @@ func TestCheckResult(t *testing.T) {
 		{"overshoot ascending", 16, 15, DirectionAscending, 2, ISPPOvershoot},
 		{"overshoot descending", 14, 15, DirectionDescending, 2, ISPPOvershoot},
 
-		// Max pulses
-		{"max pulses ascending", 14, 15, DirectionAscending, 10, ISPPMaxPulses},
-		{"max pulses descending", 16, 15, DirectionDescending, 10, ISPPMaxPulses},
+		// Max pulses (MaxPulses=20)
+		{"max pulses ascending", 14, 15, DirectionAscending, 20, ISPPMaxPulses},
+		{"max pulses descending", 16, 15, DirectionDescending, 20, ISPPMaxPulses},
 
 		// Continue cases (undershoot, not at max)
 		{"continue ascending", 14, 15, DirectionAscending, 5, ISPPContinue},
@@ -458,7 +458,7 @@ func TestISPPWorkflow(t *testing.T) {
 
 	// Calculate next voltage
 	nextV := calc.CalculateNextVoltage(startV, direction)
-	expectedNext := startV + 0.05 // 1.10V
+	expectedNext := startV + 0.02 // step = 2% of Ec = 0.02V
 	if math.Abs(nextV-expectedNext) > 1e-9 {
 		t.Errorf("Next voltage = %v, want %v", nextV, expectedNext)
 	}

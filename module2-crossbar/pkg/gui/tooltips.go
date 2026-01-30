@@ -140,6 +140,14 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 		sneakRatio = sneakCurrent / signalCurrent * 100
 	}
 
+	// Cap displayed ratio at 100% with note (>100% means sneak path dominates signal)
+	sneakRatioDisplay := sneakRatio
+	sneakRatioNote := ""
+	if sneakRatio > 100.0 {
+		sneakRatioNote = fmt.Sprintf(" (actual %.1f%%)", sneakRatio)
+		sneakRatioDisplay = 100.0
+	}
+
 	// Determine sneak path type
 	var pathType string
 	isSelected := (row == selectedRow && col == selectedCol)
@@ -162,7 +170,7 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 		snr = signalCurrent / sneakCurrent
 	}
 
-	// Severity
+	// Severity - >100% means sneak path dominates signal (critical for passive)
 	var severity string
 	var severitySymbol string
 	if sneakRatio < 1 {
@@ -171,8 +179,11 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 	} else if sneakRatio < 5 {
 		severity = "Low"
 		severitySymbol = "⚠"
-	} else {
+	} else if sneakRatio < 100 {
 		severity = "High"
+		severitySymbol = "✗"
+	} else {
+		severity = "Critical"
 		severitySymbol = "✗"
 	}
 
@@ -205,7 +216,7 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 	tooltip := fmt.Sprintf(
 		"CELL [%d, %d] - SNEAK PATH [%s]\n"+
 			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
-			"%s Sneak: %.2f%% (%s)\n"+
+			"%s Sneak: %.2f%%%s (%s)\n"+
 			"Path type: %s\n"+
 			"SNR: %.1f:1\n"+
 			"Target: [%d,%d], dist: %d\n"+
@@ -217,7 +228,7 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 			"  Array max: %.2f%%%s\n\n"+
 			"%s\n",
 		row, col, archDisplay,
-		severitySymbol, sneakRatio, severity,
+		severitySymbol, sneakRatioDisplay, sneakRatioNote, severity,
 		pathType,
 		snr,
 		selectedRow, selectedCol, manhattanDist,

@@ -678,15 +678,15 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
-	// Draw color legend in top-left corner (below operation badge)
+	// Compact legend in top-left corner (below operation badge)
 	legendX := 8
-	legendY := 28 // Below operation badge
-	legendW := 100
-	legendH := 55
+	legendY := 26
 
-	// Draw semi-transparent background for legend
-	legendBg := color.RGBA{15, 20, 35, 190} // Dark blue-gray, ~75% opacity
-	for py := legendY - 5; py < legendY+legendH; py++ {
+	// Draw semi-transparent background
+	legendBg := color.RGBA{15, 20, 35, 180}
+	legendW := 85
+	legendH := 35
+	for py := legendY - 3; py < legendY+legendH; py++ {
 		for px := legendX - 3; px < legendX+legendW; px++ {
 			if px >= 0 && px < w && py >= 0 && py < h {
 				img.Set(px, py, legendBg)
@@ -694,78 +694,35 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
-	// Title
-	drawSimpleText(img, "Legend:", legendX, legendY, color.RGBA{200, 200, 220, 255})
-
 	// Cell conductance gradient: Low G -> High G
-	legendY += 12
+	boxW := 10
 	drawSimpleText(img, "G:", legendX, legendY, color.RGBA{150, 150, 170, 200})
-	// Draw gradient boxes
-	boxW := 12
 	for i := 0; i < 5; i++ {
 		level := i * (levels - 1) / 4
 		c := levelToColor(level, levels)
-		drawRect(img, legendX+15+i*boxW, legendY-2, boxW-2, 10, c)
+		drawRect(img, legendX+15+i*boxW, legendY-2, boxW-1, 8, c)
 	}
-	drawSimpleText(img, "Lo", legendX+15, legendY+10, color.RGBA{100, 150, 255, 200})
-	drawSimpleText(img, "Hi", legendX+15+4*boxW, legendY+10, color.RGBA{255, 100, 100, 200})
 
-	// DAC voltage zones
-	legendY += 22
+	// Voltage zones (compact)
+	legendY += 15
 	drawSimpleText(img, "V:", legendX, legendY, color.RGBA{150, 150, 170, 200})
-	// Read zone - blue
-	drawRect(img, legendX+15, legendY-2, boxW, 10, color.RGBA{60, 140, 200, 255})
-	drawSimpleText(img, "R", legendX+15+2, legendY+10, color.RGBA{100, 180, 255, 200})
-	// Caution zone - yellow
-	drawRect(img, legendX+15+boxW+2, legendY-2, boxW, 10, color.RGBA{200, 180, 60, 255})
-	drawSimpleText(img, "!", legendX+15+boxW+4, legendY+10, color.RGBA{255, 220, 100, 200})
-	// Write zone - red
-	drawRect(img, legendX+15+2*(boxW+2), legendY-2, boxW, 10, color.RGBA{220, 100, 60, 255})
-	drawSimpleText(img, "W", legendX+15+2*(boxW+2)+2, legendY+10, color.RGBA{255, 140, 100, 200})
+	drawRect(img, legendX+15, legendY-2, 15, 8, color.RGBA{60, 140, 200, 255})
+	drawRect(img, legendX+32, legendY-2, 10, 8, color.RGBA{200, 180, 60, 255})
+	drawRect(img, legendX+44, legendY-2, 15, 8, color.RGBA{220, 100, 60, 255})
 
-	// Draw energy breakdown bar chart in bottom-center
-	// C10: System Power Breakdown - Array ~45%, ADC/DAC ~40%, Peripherals ~15%
-	energyBarX := w/2 - 60
-	energyBarY := h - 65
-	drawSimpleText(img, "System Power:", energyBarX-20, energyBarY, color.RGBA{180, 180, 200, 200})
-	// Show percentage breakdown (C10 requirement)
-	drawSimpleText(img, "Array~45% | ADC/DAC~40% | Periph~15%", energyBarX-20, energyBarY+12, color.RGBA{255, 191, 0, 180})
-	// DAC: 15fJ (purple), TIA: 5fJ (orange), ADC: 25fJ (green), Pump: 10fJ (gray)
-	barY := energyBarY + 24
-	barH := 8
-	// Scale: 1fJ = 1px, max ~55fJ total
-	// DAC bar (purple)
-	drawRect(img, energyBarX, barY, 15, barH, color.RGBA{130, 90, 190, 255})
-	// TIA bar (orange)
-	drawRect(img, energyBarX+15, barY, 5, barH, color.RGBA{190, 140, 70, 255})
-	// ADC bar (green) - largest consumer
-	drawRect(img, energyBarX+20, barY, 25, barH, color.RGBA{70, 170, 130, 255})
-	// Pump bar (gray)
-	drawRect(img, energyBarX+45, barY, 10, barH, color.RGBA{100, 100, 120, 255})
-	// Labels
-	drawSimpleText(img, "DAC", energyBarX, barY+12, color.RGBA{130, 90, 190, 180})
-	drawSimpleText(img, "TIA", energyBarX+15, barY+12, color.RGBA{190, 140, 70, 180})
-	drawSimpleText(img, "ADC", energyBarX+30, barY+12, color.RGBA{70, 170, 130, 180})
-	drawSimpleText(img, "55fJ", energyBarX+55, barY, color.RGBA{150, 150, 170, 180})
-
-	// Draw operation hint in bottom-right corner
-	hintY := h - 20
-	hintX := w - 200
-	var hintText string
-	hintColor := color.RGBA{120, 140, 160, 200}
+	// Compact energy/timing info in bottom-right (C10 requirement simplified)
+	infoY := h - 20
+	infoX := w - 180
+	infoColor := color.RGBA{150, 150, 170, 180}
 	switch ca.deviceState.GetOperationMode() {
 	case OpModeRead:
-		hintText = "READ: Sense cell conductance"
-		hintColor = color.RGBA{100, 180, 220, 200}
+		drawSimpleText(img, "READ ~45fJ 65ns", infoX, infoY, color.RGBA{100, 180, 220, 180})
 	case OpModeWrite:
-		hintText = "WRITE: Program cell state"
-		hintColor = color.RGBA{220, 160, 80, 200}
+		drawSimpleText(img, "WRITE ~55fJ 170ns", infoX, infoY, color.RGBA{220, 160, 80, 180})
 	case OpModeCompute:
-		hintText = "MVM: y = W * x"
-		hintColor = color.RGBA{180, 140, 220, 200}
-	}
-	if hintText != "" {
-		drawSimpleText(img, hintText, hintX, hintY, hintColor)
+		drawSimpleText(img, "MVM: y=Wx ~75ns", infoX, infoY, color.RGBA{180, 140, 220, 180})
+	default:
+		drawSimpleText(img, "Array 45% | DAC/ADC 40%", infoX, infoY, infoColor)
 	}
 
 	return img

@@ -3,6 +3,7 @@ package gui
 
 import (
 	"fmt"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -11,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -316,6 +318,71 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 	)
 	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
+	// === EXTERNAL TOOLS VALIDATION ===
+	crosssimStatus := widget.NewLabel("○")
+	badcrossbarStatus := widget.NewLabel("○")
+	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
+	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
+
+	updateToolStatus := func() {
+		crosssimInfo := validation.CrossSimInfo()
+		badcrossbarInfo := validation.BadCrossbarInfo()
+		fyne.Do(func() {
+			crosssimStatus.SetText(crosssimInfo.Status.Symbol())
+			badcrossbarStatus.SetText(badcrossbarInfo.Status.Symbol())
+		})
+	}
+
+	// Combined install/validate button - installs if needed, then validates
+	toolsBtn := widget.NewButton("Validate Tools", func() {
+		go func() {
+			fyne.Do(func() {
+				crosssimStatus.SetText("...")
+				badcrossbarStatus.SetText("...")
+			})
+
+			// First install if needed
+			installResults := validation.InstallToolsIfNeeded()
+
+			// Then validate
+			validateResults := validation.ValidateAllTools()
+
+			var messages []string
+			for i, r := range validateResults {
+				installMsg := ""
+				if i < len(installResults) && installResults[i].Output != "Already installed" && installResults[i].Success {
+					installMsg = " (installed)"
+				}
+				status := "✗ FAIL"
+				if r.Passed {
+					status = "✓ PASS"
+				} else if r.Error != nil && strings.Contains(r.Error.Error(), "not installed") {
+					status = "○ NOT INSTALLED"
+				}
+				messages = append(messages, fmt.Sprintf("%s: %s%s", r.Tool, status, installMsg))
+			}
+
+			fyne.Do(func() {
+				updateToolStatus()
+				if ca.window != nil {
+					content := widget.NewLabel(strings.Join(messages, "\n"))
+					dialog.ShowCustom("External Crossbar Tools", "Close", content, ca.window)
+				}
+			})
+		}()
+	})
+	toolsBtn.Importance = widget.LowImportance
+
+	// Initial status check in background
+	go updateToolStatus()
+
+	toolsRow := container.NewHBox(
+		widget.NewLabel("CrossSim:"), crosssimStatus,
+		widget.NewLabel("BadCrossbar:"), badcrossbarStatus,
+		layout.NewSpacer(),
+		toolsBtn,
+	)
+
 	// === ASSEMBLE CONTROLS ===
 	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues
 	// Controls are fixed-height, only metrics need scrolling
@@ -331,6 +398,8 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 		colormapRow,
 		widget.NewSeparator(),
 		actionButtons,
+		widget.NewSeparator(),
+		toolsRow,
 	)
 
 	// Use Border layout: controls at top (fixed), metrics fills rest (scrollable)

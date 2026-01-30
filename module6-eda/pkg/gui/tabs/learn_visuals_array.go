@@ -114,8 +114,13 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		}
 	}
 
-	// Legend - moved down with more spacing
-	legendY := float32(320)
+	// Calculate diagram bounds for proper legend placement
+	// The rightmost point is at toIso(cols, 0, layerGap) for BL layer
+	// The bottommost point is at toIso(cols, rows, 0) for WL layer
+	_, bottomY := toIso(float32(cols), float32(rows), 0)
+
+	// Legend - positioned below the lowest diagram element with margin
+	legendY := bottomY + float32(40)
 	legendX := float32(20)
 
 	// WL legend
@@ -148,8 +153,16 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	feText.Move(fyne.NewPos(legendX+25, legendY+36))
 	objects = append(objects, feText)
 
+	// Calculate proper container size based on diagram bounds
+	// Width: need space for labels on left (-50) and diagram extends right
+	rightX, _ := toIso(float32(cols), 0, layerGap)
+	totalWidth := rightX + float32(50) // Add margin on right
+
+	// Height: legend bottom + text height + margin
+	totalHeight := legendY + float32(60)
+
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(600, 420))
+	cont.Resize(fyne.NewSize(totalWidth, totalHeight))
 
 	return cont
 }
@@ -277,8 +290,11 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		}
 	}
 
-	// Legend - with more spacing
-	legendY := float32(320)
+	// Calculate diagram bounds for proper legend placement
+	_, bottomY := toIso(float32(cols), float32(rows), 0)
+
+	// Legend - positioned below the lowest diagram element with margin
+	legendY := bottomY + float32(40)
 	legendX := float32(20)
 
 	// Transistor legend
@@ -311,8 +327,13 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	feText.Move(fyne.NewPos(legendX+25, legendY+36))
 	objects = append(objects, feText)
 
+	// Calculate proper container size based on diagram bounds
+	rightX, _ := toIso(float32(cols), 0, layerGap)
+	totalWidth := rightX + float32(50) // Add margin on right
+	totalHeight := legendY + float32(60)
+
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(600, 420))
+	cont.Resize(fyne.NewSize(totalWidth, totalHeight))
 
 	return cont
 }

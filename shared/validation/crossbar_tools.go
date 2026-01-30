@@ -6,7 +6,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -321,6 +324,193 @@ func ValidateAllTools() []*ValidationResult {
 		Error:   err,
 		Elapsed: time.Since(start),
 	})
+
+	return results
+}
+
+// GetProjectRoot returns the project root directory by looking for CLAUDE.md marker.
+func GetProjectRoot() (string, error) {
+	// Get the source file location to find project root
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("could not determine source location")
+	}
+
+	// Walk up from shared/validation/ to find project root
+	dir := filepath.Dir(filename)
+	for i := 0; i < 5; i++ {
+		// Check for CLAUDE.md as project root marker
+		claudeMD := filepath.Join(dir, "CLAUDE.md")
+		if _, err := os.Stat(claudeMD); err == nil {
+			return dir, nil
+		}
+		dir = filepath.Dir(dir)
+	}
+
+	return "", fmt.Errorf("project root not found")
+}
+
+// GetLocalClonePaths returns paths to local clones of CrossSim and BadCrossbar.
+// Returns crosssimPath, badcrossbarPath, error.
+func GetLocalClonePaths() (string, string, error) {
+	projectRoot, err := GetProjectRoot()
+	if err != nil {
+		return "", "", err
+	}
+
+	crosssimPath := filepath.Join(projectRoot, "opensource", "crossbar", "cross-sim")
+	badcrossbarPath := filepath.Join(projectRoot, "opensource", "crossbar", "badcrossbar")
+
+	return crosssimPath, badcrossbarPath, nil
+}
+
+// HasLocalClone checks if a local clone exists at the given path.
+func HasLocalClone(path string) bool {
+	// Check for setup.py or pyproject.toml as indicators of a Python package
+	if _, err := os.Stat(filepath.Join(path, "setup.py")); err == nil {
+		return true
+	}
+	if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
+		return true
+	}
+	return false
+}
+
+// InstallResult represents the result of an installation attempt.
+type InstallResult struct {
+	Tool    string
+	Success bool
+	Output  string
+	Error   error
+}
+
+// InstallCrossSim installs CrossSim from the local clone using pip install -e.
+func InstallCrossSim() *InstallResult {
+	crosssimPath, _, err := GetLocalClonePaths()
+	if err != nil {
+		return &InstallResult{
+			Tool:    "CrossSim",
+			Success: false,
+			Error:   fmt.Errorf("could not find project root: %w", err),
+		}
+	}
+
+	if !HasLocalClone(crosssimPath) {
+		return &InstallResult{
+			Tool:    "CrossSim",
+			Success: false,
+			Error:   fmt.Errorf("local clone not found at %s", crosssimPath),
+		}
+	}
+
+	return installPythonPackage("CrossSim", crosssimPath)
+}
+
+// InstallBadCrossbar installs BadCrossbar from the local clone using pip install -e.
+func InstallBadCrossbar() *InstallResult {
+	_, badcrossbarPath, err := GetLocalClonePaths()
+	if err != nil {
+		return &InstallResult{
+			Tool:    "BadCrossbar",
+			Success: false,
+			Error:   fmt.Errorf("could not find project root: %w", err),
+		}
+	}
+
+	if !HasLocalClone(badcrossbarPath) {
+		return &InstallResult{
+			Tool:    "BadCrossbar",
+			Success: false,
+			Error:   fmt.Errorf("local clone not found at %s", badcrossbarPath),
+		}
+	}
+
+	return installPythonPackage("BadCrossbar", badcrossbarPath)
+}
+
+// installPythonPackage runs pip install -e on a package directory.
+func installPythonPackage(name, path string) *InstallResult {
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	pythonCmd := findPython()
+	if pythonCmd == "" {
+		return &InstallResult{
+			Tool:    name,
+			Success: false,
+			Error:   fmt.Errorf("Python not found in PATH"),
+		}
+	}
+
+	// Use pip install -e for editable install
+	cmd := exec.CommandContext(ctx, pythonCmd, "-m", "pip", "install", "-e", path)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	output := stdout.String() + stderr.String()
+
+	if err != nil {
+		return &InstallResult{
+			Tool:    name,
+			Success: false,
+			Output:  output,
+			Error:   err,
+		}
+	}
+
+	return &InstallResult{
+		Tool:    name,
+		Success: true,
+		Output:  output,
+	}
+}
+
+// InstallToolsIfNeeded checks if tools are installed and installs them from local clones if not.
+// Returns results for each tool (install attempt or already-installed status).
+func InstallToolsIfNeeded() []*InstallResult {
+	var results []*InstallResult
+
+	// Check and install CrossSim
+	if !IsCrossSimAvailable() {
+		crosssimPath, _, _ := GetLocalClonePaths()
+		if HasLocalClone(crosssimPath) {
+			results = append(results, InstallCrossSim())
+		} else {
+			results = append(results, &InstallResult{
+				Tool:    "CrossSim",
+				Success: false,
+				Error:   fmt.Errorf("not installed and local clone not found at opensource/crossbar/cross-sim"),
+			})
+		}
+	} else {
+		results = append(results, &InstallResult{
+			Tool:    "CrossSim",
+			Success: true,
+			Output:  "Already installed",
+		})
+	}
+
+	// Check and install BadCrossbar
+	if !IsBadCrossbarAvailable() {
+		_, badcrossbarPath, _ := GetLocalClonePaths()
+		if HasLocalClone(badcrossbarPath) {
+			results = append(results, InstallBadCrossbar())
+		} else {
+			results = append(results, &InstallResult{
+				Tool:    "BadCrossbar",
+				Success: false,
+				Error:   fmt.Errorf("not installed and local clone not found at opensource/crossbar/badcrossbar"),
+			})
+		}
+	} else {
+		results = append(results, &InstallResult{
+			Tool:    "BadCrossbar",
+			Success: true,
+			Output:  "Already installed",
+		})
+	}
 
 	return results
 }

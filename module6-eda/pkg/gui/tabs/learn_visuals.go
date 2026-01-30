@@ -164,9 +164,16 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	vLabel.Move(fyne.NewPos(stages[0].x+5, stages[0].y-15))
 	objects = append(objects, vLabel)
 
-	// Container with fixed size - INCREASED
+	// Calculate proper container bounds:
+	// Row 1: startX (30) to startX + 4*(boxW+spacing) - spacing = 30 + 4*180 - 30 = 720
+	// Row 2: same width
+	// Height: row2Y + boxH + margin = 50 + 65 + 30 + 30 + 65 + 40 = ~280
+	// With labels above boxes (-15) and title (30), total height needed
+	totalWidth := startX + 4*(boxW+spacing)  // ~750
+	totalHeight := row2Y + boxH + float32(50) // ~275
+
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(780, 320))
+	cont.Resize(fyne.NewSize(totalWidth, totalHeight))
 
 	return cont
 }

@@ -17,8 +17,10 @@ func sizedContainer(child fyne.CanvasObject, width, height float32) fyne.CanvasO
 	// Create a transparent spacer rectangle that enforces minimum size
 	spacer := canvas.NewRectangle(nil) // nil = transparent
 	spacer.SetMinSize(fyne.NewSize(width, height))
-	// Stack the child on top of the spacer
-	child.Resize(fyne.NewSize(width, height))
+	// Position the child at origin within the stack
+	child.Move(fyne.NewPos(0, 0))
+	// Stack positions the child properly - don't call Resize as the child
+	// (container.NewWithoutLayout) already has its own size
 	return container.NewStack(spacer, child)
 }
 
@@ -122,10 +124,12 @@ func makeIntroContent() fyne.CanvasObject {
 	intro.Wrapping = fyne.TextWrapWord
 
 	// Operation modes visual with enforced minimum size
-	modesContainer := sizedContainer(OperationModesVisual(), 640, 300)
+	// Content calculates to ~610x225, use slightly larger for padding
+	modesContainer := sizedContainer(OperationModesVisual(), 620, 230)
 
 	// OpenLane flow diagram with enforced minimum size
-	flowContainer := sizedContainer(OpenLaneFlowDiagram(), 800, 340)
+	// Content calculates to ~750x275, use slightly larger for padding
+	flowContainer := sizedContainer(OpenLaneFlowDiagram(), 760, 290)
 
 	// Stages Explained section
 	stagesTitle := widget.NewLabelWithStyle("The Stages Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -197,7 +201,8 @@ func makeCrossbarContent() fyne.CanvasObject {
 	passiveDesc.Wrapping = fyne.TextWrapWord
 
 	// Passive diagram with enforced minimum size
-	passiveDiagramContainer := sizedContainer(IsometricCrossbar(3, 3, true), 620, 440)
+	// For 3x3: rightX ~380, bottomY ~260, legend adds ~60, total ~380x380
+	passiveDiagramContainer := sizedContainer(IsometricCrossbar(3, 3, true), 450, 400)
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VDD, VSS | Cell Size: 0.92 x 2.72 um (2x width)
@@ -206,10 +211,12 @@ func makeCrossbarContent() fyne.CanvasObject {
 	oneToneRDesc.Wrapping = fyne.TextWrapWord
 
 	// 1T1R diagram with enforced minimum size
-	oneToneRDiagramContainer := sizedContainer(Isometric1T1RCrossbar(3, 3), 620, 440)
+	// Similar to passive: ~450x400
+	oneToneRDiagramContainer := sizedContainer(Isometric1T1RCrossbar(3, 3), 450, 400)
 
 	// Comparison table with enforced minimum size
-	comparisonContainer := sizedContainer(CellComparisonTable(), 480, 230)
+	// Table: colWidths sum to 440, 7 rows * 28 = 196, plus margins ~460x216
+	comparisonContainer := sizedContainer(CellComparisonTable(), 460, 220)
 
 	// Sneak path explanation (clean prose, no ASCII)
 	sneakPathTitle := widget.NewLabelWithStyle("The Sneak Path Problem", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})

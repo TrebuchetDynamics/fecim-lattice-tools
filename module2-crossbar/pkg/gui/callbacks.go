@@ -173,8 +173,15 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 		if analysis.TotalSignal > 0 {
 			sneakRatio = sneakCurrent / analysis.TotalSignal * 100
 		}
-		ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f µA (%.2f%% of signal)",
-			row, col, sneakCurrent*1e6, sneakRatio))
+		// Cap display at 100% with note when sneak exceeds signal
+		sneakDisplay := sneakRatio
+		sneakNote := ""
+		if sneakRatio > 100.0 {
+			sneakDisplay = 100.0
+			sneakNote = fmt.Sprintf(" [actual %.0f%%]", sneakRatio)
+		}
+		ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f µA (%.2f%% of signal)%s",
+			row, col, sneakCurrent*1e6, sneakDisplay, sneakNote))
 
 		// m3 UX fix: Update educational content for specific cell types
 		isTargetCell := row == sneakTargetRow && col == sneakTargetCol
@@ -237,6 +244,14 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 			sneakRatio = analysis.SneakCurrents[row][col] / analysis.TotalSignal * 100
 		}
 
+		// Cap display at 100% with indicator when sneak exceeds signal
+		sneakDisplay := sneakRatio
+		overflowMark := ""
+		if sneakRatio > 100.0 {
+			sneakDisplay = 100.0
+			overflowMark = "+"
+		}
+
 		// Determine path type (compact)
 		pathType := "diag"
 		if row == selectedRow && col == selectedCol {
@@ -248,8 +263,8 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 		}
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] %.1f%% sneak │ %s",
-			row, col, sneakRatio, pathType))
+			"[%d,%d] %.1f%%%s sneak │ %s",
+			row, col, sneakDisplay, overflowMark, pathType))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
 			"[%d,%d] Run MVM for sneak analysis", row, col))

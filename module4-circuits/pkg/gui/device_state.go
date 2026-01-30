@@ -1184,8 +1184,8 @@ const (
 
 // ISPP constants
 const (
-	ISPPMaxIterations   = 10
-	ISPPToleranceLevels = 0 // Exact match required
+	ISPPMaxIterations   = 20 // More pulses for fine convergence (matched to shared/physics)
+	ISPPToleranceLevels = 0  // Exact match required
 )
 
 // ISPPState holds the state of an active ISPP (Incremental Step Pulse Programming) loop
