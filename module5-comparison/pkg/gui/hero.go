@@ -200,6 +200,13 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
+	// === SYSTEM POWER BREAKDOWN (C10: Per Dr. Tour critique) ===
+	// Shows total system power distribution, not just array power
+	powerBreakdown := canvas.NewText("System Power: Array ~45% | ADC/DAC ~40% | Peripherals ~15% (typical CIM architecture)", heroAmberColor)
+	powerBreakdown.TextSize = 10
+	powerBreakdown.TextStyle = fyne.TextStyle{Italic: true}
+	powerBreakdown.Alignment = fyne.TextAlignCenter
+
 	// === CITATION ===
 	citation := canvas.NewText("Sources: Samsung Nature 2025 (25-100× vs NAND), NVIDIA H100 specs, Intel/AMD specs", heroMutedColor)
 	citation.TextSize = 9
@@ -211,6 +218,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		heroSection,
 		comparisonSection,
 		container.NewCenter(e.statStrip),
+		container.NewCenter(powerBreakdown),
 		container.NewCenter(citation),
 	)
 

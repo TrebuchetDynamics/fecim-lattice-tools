@@ -641,11 +641,14 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	drawSimpleText(img, "W", legendX+15+2*(boxW+2)+2, legendY+10, color.RGBA{255, 140, 100, 200})
 
 	// Draw energy breakdown bar chart in bottom-center
+	// C10: System Power Breakdown - Array ~45%, ADC/DAC ~40%, Peripherals ~15%
 	energyBarX := w/2 - 60
-	energyBarY := h - 55
-	drawSimpleText(img, "Energy:", energyBarX, energyBarY, color.RGBA{180, 180, 200, 200})
+	energyBarY := h - 65
+	drawSimpleText(img, "System Power:", energyBarX-20, energyBarY, color.RGBA{180, 180, 200, 200})
+	// Show percentage breakdown (C10 requirement)
+	drawSimpleText(img, "Array~45% | ADC/DAC~40% | Periph~15%", energyBarX-20, energyBarY+12, color.RGBA{255, 191, 0, 180})
 	// DAC: 15fJ (purple), TIA: 5fJ (orange), ADC: 25fJ (green), Pump: 10fJ (gray)
-	barY := energyBarY + 10
+	barY := energyBarY + 24
 	barH := 8
 	// Scale: 1fJ = 1px, max ~55fJ total
 	// DAC bar (purple)

@@ -1242,9 +1242,8 @@ func (a *App) simulationLoop() {
 								}
 							}
 
-							// Clear history trail to prevent visual spikes during retry
-							a.eHistory = a.eHistory[:0]
-							a.pHistory = a.pHistory[:0]
+							// NOTE: Don't clear history - let spike detection in plot handle discontinuities
+							// This allows the full hysteresis loop to build up over time
 
 							if canSkipReset {
 								// SMALL UNDERSHOOT: Skip RESET, use BOOST phase (phase 6)
@@ -1332,10 +1331,8 @@ func (a *App) simulationLoop() {
 						a.wrdResetStartP = a.polarization * 100 // Convert to µC/cm²
 						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
 							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdResetStartP)
-						// Clear history when starting new cycle to avoid vertical spike artifacts
-						// The trail from the previous cycle (opposite direction) would create visual spikes
-						a.eHistory = a.eHistory[:0]
-						a.pHistory = a.pHistory[:0]
+						// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
+						// Spike detection in plot widget handles any discontinuities
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle

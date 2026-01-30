@@ -245,8 +245,8 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.hoverInfoLabel = widget.NewLabel("Hover over neurons to see values")
 	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Info label with network specs
-	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Peer-reviewed: 96-98%")
+	// Info label with network specs - distinguish verified vs simulated
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Verified: 96-98% | This demo: PROJECTED")
 
 	// Control buttons - organized into groups
 	clearBtn := widget.NewButton("Clear", func() {
