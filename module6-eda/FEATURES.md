@@ -1,14 +1,20 @@
 # Module 6: EDA Tools - Features
 
+Chip Design Suite for FeCIM Arrays
+
+---
+
 ## Features
 
-- **Three Operation Modes** — Storage (NAND), Memory (DRAM), Compute (AI)
-- **8 Export Formats** — JSON, CSV, SPICE, Verilog, DEF, LEF, Liberty, SVG
-- **Architecture Support** — Passive (0T1R), 1T1R, 2T1R
-- **PDK Support** — SKY130, GF180MCU, IHP_SG13G2
-- **OpenLane Integration** — RTL-to-GDSII flow ready
-- **Weight Mapping** — Quantize trained weights to 30 conductance levels
-- **Validation Tools** — Yosys, DEF checker, cross-file consistency
+- **Three Operation Modes** - Storage (NAND), Memory (DRAM), Compute (AI)
+- **8 Export Formats** - JSON, CSV, SPICE, Verilog, DEF, LEF, Liberty, SVG
+- **Architecture Support** - Passive (0T1R), 1T1R, 2T1R
+- **PDK Support** - SKY130, GF180MCU, IHP_SG13G2
+- **OpenLane Integration** - RTL-to-GDSII flow ready
+- **Weight Mapping** - Quantize trained weights to 30 conductance levels
+- **Validation Tools** - Yosys, DEF checker, cross-file consistency
+- **3 Preview Windows** - KLayout, OpenROAD, Yosys visualization
+- **Learn Tab** - Interactive OpenLane flow diagram, educational references
 
 ## Operation Modes
 

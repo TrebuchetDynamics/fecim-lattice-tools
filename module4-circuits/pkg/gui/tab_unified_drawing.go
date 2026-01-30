@@ -371,9 +371,10 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	adcBoxW := 30
 	tiaAdcBoxH := cellSize - 2
 	// Scale TIA/ADC box size based on array dimensions
+	// Note: TIA box needs at least 50px to fit "16.7mA" format for large currents
 	if rows > 32 {
-		tiaBoxW = 45
-		adcBoxW = 20
+		tiaBoxW = 50
+		adcBoxW = 22
 		tiaAdcBoxH = cellSize - 1
 	} else if rows > 16 {
 		tiaBoxW = 55

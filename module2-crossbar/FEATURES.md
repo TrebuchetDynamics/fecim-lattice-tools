@@ -1,14 +1,21 @@
 # Module 2: Crossbar - Features
 
+Matrix-Vector Multiply Simulator with Non-Idealities
+
+---
+
 ## Features
 
-- **Analog Matrix-Vector Multiply (MVM)** — Physics-based I = G × V computation
-- **30-Level Quantization** — Discrete conductance states [0/29 ... 29/29]
-- **Non-Ideality Simulation** — IR drop, sneak paths, drift, temperature, device variation
-- **Architecture Comparison** — 0T1R (passive) vs 1T1R (gated)
-- **Real-Time Heatmaps** — Conductance, IR drop, sneak paths, drift visualization
-- **GPU Acceleration** — Optional Vulkan compute shaders
-- **Neural Network Integration** — Multi-layer networks with hardware-aware training
+- **Analog Matrix-Vector Multiply (MVM)** - Physics-based I = G × V computation
+- **30-Level Quantization** - Discrete conductance states [0/29 ... 29/29]
+- **Non-Ideality Simulation** - IR drop, sneak paths, drift, temperature, device variation
+- **Architecture Comparison** - 0T1R (passive) vs 1T1R (gated) vs 2T1R (dual)
+- **Real-Time Heatmaps** - Conductance, IR drop, sneak paths, drift visualization (8 colormaps)
+- **GPU Acceleration** - Optional Vulkan compute shaders for MVM
+- **Neural Network Integration** - Multi-layer networks with hardware-aware training
+- **Before/After Toggle** - Compare ideal vs non-ideal instantly
+- **Accuracy Waterfall** - Timeline of degradation effects
+- **Weight Serialization** - Save/load trained weights
 
 ## Physics Models
 

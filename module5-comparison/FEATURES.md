@@ -1,12 +1,18 @@
 # Module 5: Comparison - Features
 
+FeCIM vs CPU/GPU Business Case Analysis
+
+---
+
 ## Features
 
-- **Architecture Comparison** — CPU+DRAM vs GPU+HBM vs FeCIM CIM
-- **5 Neural Network Workloads** — MNIST to LLM-70B
-- **Data Center Scaling** — Chip count, power, cost, CO2 projections
-- **Animated Visualizations** — Energy race, market charts, ROI calculator
-- **Market Analysis** — $721B addressable market by 2030
+- **Architecture Comparison** - CPU+DRAM vs GPU+HBM vs FeCIM CIM
+- **5 Neural Network Workloads** - MNIST to LLM-70B
+- **Data Center Scaling** - Chip count, power, cost, CO2 projections
+- **Animated Visualizations** - Energy race, market charts, ROI calculator
+- **Market Analysis** - $721B addressable market by 2030
+- **4 Presentation Modes** - Manual, Auto Demo, Investor, Engineer
+- **Data Center Calculator** - Real-time CPU vs GPU vs FeCIM projections
 
 ## Comparison Metrics
 

@@ -1,14 +1,21 @@
 # Module 3: MNIST - Features
 
+Neural Network Digit Recognition Demo
+
+---
+
 ## Features
 
-- **Dual-Mode Inference** — Side-by-side FP32 vs CIM (quantized + noise) comparison
-- **Drawing Canvas** — 28×28 pixel digit input with 3 brush sizes
-- **Quantization Control** — 2-30 levels, per-layer PTQ support
-- **Noise Injection** — Adjustable Gaussian read noise (0-50%)
-- **DAC/ADC Simulation** — 3-16 bit resolution
-- **Educational Tour** — 5-step guided demo + 30-second quick demo
-- **Failure Mode Demos** — Binary weights, high noise demonstrations
+- **Dual-Mode Inference** - Side-by-side FP32 vs CIM (quantized + noise) comparison
+- **Drawing Canvas** - 28×28 pixel digit input with 3 brush sizes
+- **Quantization Control** - 2-30 levels, per-layer PTQ support
+- **Noise Injection** - Adjustable Gaussian read noise (0-50%)
+- **DAC/ADC Simulation** - 3-16 bit resolution
+- **Educational Tour** - 5-step guided demo + 30-second quick demo
+- **Failure Mode Demos** - Binary weights, high noise demonstrations
+- **Layer Activation View** - Visualize hidden layer activations
+- **Confusion Matrix** - Classification error heatmap
+- **Weight Comparison Widget** - FP32 vs quantized weight visualization
 
 ## Physics Models
 

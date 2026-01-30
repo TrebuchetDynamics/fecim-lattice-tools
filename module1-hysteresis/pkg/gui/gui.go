@@ -375,6 +375,7 @@ func NewApp() *App {
 		maxLogLines:      12,
 		logEntries:       make([]string, 0, 12),
 		lastLogPhase:     -1,
+		isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 }
 
@@ -439,6 +440,7 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdStartLevel:    15,
 		wrdBitsStored:    4.91,
 		manualTargetLevel: 15,
+		isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 }
 

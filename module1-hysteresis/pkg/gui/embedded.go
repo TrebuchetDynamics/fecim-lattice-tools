@@ -9,6 +9,7 @@ import (
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/physics"
 )
 
 // EmbeddedApp holds the state for an embedded demo instance
@@ -43,6 +44,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		maxLogLines:     12,
 		logEntries:      make([]string, 0, 12),
 		lastLogPhase:    -1,
+		isppCalc:        physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 
 	return &EmbeddedApp{App: app}

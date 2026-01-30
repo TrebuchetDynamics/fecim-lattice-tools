@@ -230,13 +230,30 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 		tiaV = tia.Convert(current * 1e-6) // uA to A
 	}
 	// Format shows current → voltage conversion clearly
+	// Handle range from sub-uA to mA with appropriate units
+	// Keep text short to fit in TIA box (min 50px width = ~8 chars)
 	var tiaText string
-	if current < 1 {
-		tiaText = fmt.Sprintf("%.2fuA", current)
+	if current < 0.1 {
+		tiaText = fmt.Sprintf("%.2f", current)
+	} else if current < 1 {
+		tiaText = fmt.Sprintf("%.1f", current)
 	} else if current < 10 {
-		tiaText = fmt.Sprintf("%.1fuA", current)
+		tiaText = fmt.Sprintf("%.1f", current)
+	} else if current < 100 {
+		tiaText = fmt.Sprintf("%.0f", current)
+	} else if current < 1000 {
+		tiaText = fmt.Sprintf("%.0f", current)
 	} else {
-		tiaText = fmt.Sprintf("%.0fuA", current)
+		// Convert to mA for values >= 1000 uA to fit in box
+		currentMA := current / 1000.0
+		if currentMA < 10 {
+			tiaText = fmt.Sprintf("%.1fm", currentMA)
+		} else if currentMA < 100 {
+			tiaText = fmt.Sprintf("%.0fm", currentMA)
+		} else {
+			// Very large currents (>100mA) - unlikely but handle gracefully
+			tiaText = fmt.Sprintf("%.0f", currentMA)
+		}
 	}
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 

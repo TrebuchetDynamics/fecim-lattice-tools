@@ -984,14 +984,14 @@ func (a *App) simulationLoop() {
 					}
 
 				case 2: // WRITE - ISPP (Incremental Step Pulse Programming)
-					// TRUE ISPP: Climb the hysteresis S-curve incrementally instead of single calibrated pulse.
-					// Each pulse switches more domains until target conductance/polarization is reached.
-					// This compensates for device variation without needing precise calibration.
+					// TRUE ISPP: Bidirectional incremental programming without initial RESET.
+					// Direction determined by current position vs target, not calibration-based midpoint.
 					//
 					// ISPP Sub-phases: 0=APPLY, 1=WAIT, 2=VERIFY, 3=ADJUST
-					goingUp := targetLevel > midLevel
 					wrdTargetIdx := targetLevel - 1
 					currentLevel := a.discreteLevel + 1 // 1-indexed
+					// Direction based on current vs target (bidirectional ISPP)
+					goingUp := targetLevel > currentLevel
 
 					// Initialize ISPP on first entry to WRITE phase (pulse count == 0)
 					if a.isppPulseCount == 0 {
@@ -1000,8 +1000,8 @@ func (a *App) simulationLoop() {
 							a.isppMaxPulses = 10
 						}
 
-						// Calculate starting voltage: ~0.7× calibrated value
-						// This conservative start ensures we approach target from below
+						// Calculate starting voltage based on direction
+						// Use calibration as hint, but start conservatively
 						var calibratedE float64
 						if wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
 							if goingUp {
@@ -1011,13 +1011,13 @@ func (a *App) simulationLoop() {
 							}
 						}
 						if calibratedE == 0 {
-							// Fallback: estimate based on target position
-							ratio := float64(targetLevel-1) / float64(maxLevelIdx)
+							// Fallback: estimate based on distance to target
+							levelDiff := math.Abs(float64(targetLevel - currentLevel))
+							ratio := levelDiff / float64(maxLevelIdx)
 							if goingUp {
-								calibratedE = Ec * (1.0 + ratio*1.0) // Ec to 2*Ec range
+								calibratedE = Ec * (0.5 + ratio*1.5) // Start lower, scale with distance
 							} else {
-								ratio = float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
-								calibratedE = -Ec * (1.0 + ratio*1.0)
+								calibratedE = -Ec * (0.5 + ratio*1.5)
 							}
 						}
 
@@ -1140,53 +1140,35 @@ func (a *App) simulationLoop() {
 								a.wrdPhaseTimer = 0
 							} else {
 								// Check for overshoot vs undershoot
-								if goingUp {
-									if levelError > 0 {
-										// OVERSHOOT (went past target): Must reset and retry
-										log.Printf("ISPP OVERSHOOT: pulse=%d, target=%d, verified=%d, V=%.3f×Ec -> RESET",
-											a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
+								// Use actual current vs target comparison (not midLevel-based)
+								isOvershoot := (verifyLevel > targetLevel && a.isppCurrentVoltage > 0) ||
+									(verifyLevel < targetLevel && a.isppCurrentVoltage < 0)
 
-										// Track pulses used before resetting
-										a.isppTotalPulses += a.isppPulseCount
+								if isOvershoot {
+									// OVERSHOOT: Switch ISPP direction to come back
+									log.Printf("ISPP OVERSHOOT: pulse=%d, target=%d, verified=%d, V=%.3f×Ec -> REVERSE DIRECTION",
+										a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
 
-										// Reset ISPP state - will be restarted via retry mechanism
-										a.isppPulseCount = 0
-										a.isppPhase = 0
-										a.wrdWriteEndP = a.polarization * 100
-										a.wrdWriteEndLvl = verifyLevel
-										a.wrdWriteE = a.isppCurrentVoltage
-
-										// Transition to HOLD, then READ will detect overshoot and trigger full RESET
-										a.wrdPhase = 3
-										a.wrdPhaseTimer = 0
+									// Switch voltage polarity to go opposite direction
+									// Start at a small voltage in the opposite direction
+									if a.isppCurrentVoltage > 0 {
+										// Was going positive (up), now go negative (down)
+										a.isppCurrentVoltage = -a.isppVoltageStep * 2
 									} else {
-										// UNDERSHOOT: Need more voltage -> ADJUST
-										a.isppPhase = 3
-										a.isppPhaseTimer = 0
+										// Was going negative (down), now go positive (up)
+										a.isppCurrentVoltage = a.isppVoltageStep * 2
 									}
+
+									a.isppPulseCount++
+									a.isppPhase = 0 // Back to APPLY with reversed direction
+									a.isppPhaseTimer = 0
+
+									log.Printf("ISPP REVERSE: nextV=%.3f×Ec, target=%d",
+										a.isppCurrentVoltage/Ec, targetLevel)
 								} else {
-									// Going DOWN (negative fields)
-									if levelError < 0 {
-										// OVERSHOOT (went too far down): Must reset
-										log.Printf("ISPP OVERSHOOT (down): pulse=%d, target=%d, verified=%d, V=%.3f×Ec -> RESET",
-											a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
-
-										// Track pulses used before resetting
-										a.isppTotalPulses += a.isppPulseCount
-
-										a.isppPulseCount = 0
-										a.isppPhase = 0
-										a.wrdWriteEndP = a.polarization * 100
-										a.wrdWriteEndLvl = verifyLevel
-										a.wrdWriteE = a.isppCurrentVoltage
-
-										a.wrdPhase = 3
-										a.wrdPhaseTimer = 0
-									} else {
-										// UNDERSHOOT: Need stronger negative voltage -> ADJUST
-										a.isppPhase = 3
-										a.isppPhaseTimer = 0
-									}
+									// UNDERSHOOT: Need more voltage in same direction -> ADJUST
+									a.isppPhase = 3
+									a.isppPhaseTimer = 0
 								}
 							}
 							a.isppLastVerifyLvl = verifyLevel
@@ -1398,10 +1380,13 @@ func (a *App) simulationLoop() {
 								a.wrdPhase = 6       // BOOST phase (undershoot retry)
 								a.wrdPhaseTimer = 0
 							} else {
-								// OVERSHOOT: Must fully reset (went past target, hysteresis path-dependent)
-								a.wrdResetStartP = a.polarization * 100
-								a.wrdPhase = 0 // Full RESET
+								// OVERSHOOT: Use ISPP in opposite direction to come back
+								// No full RESET needed - bidirectional ISPP handles it
+								log.Printf("WRD VERIFY OVERSHOOT RECOVERY: switching ISPP direction")
+								a.wrdWriteStartP = a.polarization * 100
+								a.wrdPhase = 2 // Go back to WRITE phase with ISPP
 								a.wrdPhaseTimer = 0
+								// ISPP will reinitialize with correct direction based on current vs target level
 							}
 						}
 					}
@@ -1472,13 +1457,14 @@ func (a *App) simulationLoop() {
 								a.wrdTargetLevel = 2
 							}
 						}
-						// Capture start-of-RESET state for next cycle logging
-						a.wrdResetStartP = a.polarization * 100 // Convert to µC/cm²
+						// Capture start state for next cycle logging
+						a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
 						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
-							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdResetStartP)
+							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdWriteStartP)
 						// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 						// Spike detection in plot widget handles any discontinuities
-						a.wrdPhase = 0
+						// Skip RESET phase - go directly to WRITE with ISPP
+						a.wrdPhase = 2
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0    // Reset energy accumulator for next cycle
 						a.isppTotalPulses = 0   // Reset ISPP pulse counter for next target
@@ -1723,14 +1709,14 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			a.fatigueLabel.SetText(fmt.Sprintf("%.4f%%", degradation*100))
 		}
 
-		// Update temperature-dependent metrics
+		// Update temperature-dependent metrics (must hold lock during preisach access)
+		a.mu.RLock()
 		effEc := a.preisach.GetEffectiveEc()
 		effPr := a.preisach.GetEffectivePr()
 		switchedFraction := a.preisach.GetSwitchedFraction()
 
 		// Calculate squareness (Pr/Ps ratio)
 		squareness := 0.0
-		a.mu.RLock()
 		if a.material != nil && a.material.Ps > 0 {
 			squareness = effPr / a.material.Ps
 		}

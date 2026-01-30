@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -211,12 +212,19 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	}
 }
 
-// exportData exports array weights and analysis to files.
+// exportData exports array weights and analysis to files in the data folder.
 func (ca *CrossbarApp) exportData() {
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 
-	// Export weights CSV
-	weightsPath := fmt.Sprintf("crossbar_weights_%s.csv", timestamp)
+	// Ensure data/crossbar folder exists
+	dataDir := filepath.Join("data", "crossbar")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		ca.updateStatus(fmt.Sprintf("Export failed: cannot create data/crossbar folder: %v", err))
+		return
+	}
+
+	// Export weights CSV to data/crossbar folder
+	weightsPath := filepath.Join(dataDir, fmt.Sprintf("crossbar_weights_%s.csv", timestamp))
 	if err := ca.array.ExportWeightsCSV(weightsPath); err != nil {
 		ca.updateStatus(fmt.Sprintf("Export failed: %v", err))
 		return
@@ -225,9 +233,9 @@ func (ca *CrossbarApp) exportData() {
 	// Convert to absolute path for dialog
 	absWeightsPath, _ := filepath.Abs(weightsPath)
 
-	// Export analysis JSON
+	// Export analysis JSON to data/crossbar folder
 	if ca.lastMVMResult != nil {
-		analysisPath := fmt.Sprintf("crossbar_analysis_%s.json", timestamp)
+		analysisPath := filepath.Join(dataDir, fmt.Sprintf("crossbar_analysis_%s.json", timestamp))
 		if err := ca.array.ExportAnalysisJSON(analysisPath, ca.lastMVMResult); err != nil {
 			ca.updateStatus(fmt.Sprintf("Export failed: %v", err))
 			return

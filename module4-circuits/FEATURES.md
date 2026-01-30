@@ -1,13 +1,20 @@
 # Module 4: Circuits - Features
 
+DAC/ADC/TIA Signal Chain for FeCIM Arrays
+
+---
+
 ## Features
 
-- **Three Operation Modes** — READ (sense), WRITE (program), COMPUTE (MVM)
-- **Complete Signal Chain** — DAC → ChargePump → FeFET → TIA → ADC
-- **Architecture Support** — 0T1R (passive), 1T1R (gated)
-- **Material Calibration** — Voltage ranges from physics.yaml (Ec, thickness)
-- **INL/DNL Analysis** — Linearity metrics for converters
-- **GPU Acceleration** — Vulkan compute shaders for batch operations
+- **Three Operation Modes** - READ (sense), WRITE (program), COMPUTE (MVM)
+- **Complete Signal Chain** - DAC → ChargePump → FeFET → TIA → ADC
+- **Architecture Support** - 0T1R (passive), 1T1R (gated), 2T1R (dual)
+- **Material Calibration** - Voltage ranges from physics.yaml (Ec, thickness)
+- **INL/DNL Analysis** - Linearity metrics for converters
+- **GPU Acceleration** - Vulkan compute shaders for batch operations
+- **Voltage Zone Canvas** - Safe read vs write regions visualization
+- **Pulse Waveform Display** - Programming pulse visualization
+- **Array Heatmap** - Current programmed states
 
 ## Circuit Models
 
