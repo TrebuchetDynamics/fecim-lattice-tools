@@ -21,6 +21,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -196,6 +197,9 @@ type App struct {
 
 	// ISPP visualization widget (H14)
 	isppWidget *widgets.ISPPVisualization
+
+	// Shared ISPP calculator
+	isppCalc *physics.ISPPCalculator
 
 	// State stability indicator (M12)
 	stabilityIndicator *widgets.StabilityIndicator

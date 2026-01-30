@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // TempCalibration holds calibration data for a specific temperature
@@ -997,9 +999,8 @@ func (a *App) simulationLoop() {
 						if a.isppMaxPulses == 0 {
 							a.isppMaxPulses = 10
 						}
-						a.isppVoltageStep = Ec * 0.05 // 5% of Ec per step
 
-						// Calculate starting voltage: ~0.6× calibrated value
+						// Calculate starting voltage: ~0.7× calibrated value
 						// This conservative start ensures we approach target from below
 						var calibratedE float64
 						if wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
@@ -1020,8 +1021,9 @@ func (a *App) simulationLoop() {
 							}
 						}
 
-						// Start at 70% of calibrated value for conservative ISPP approach
-						a.isppStartVoltage = calibratedE * 0.7
+						// Use shared ISPP calculator for voltage calculations
+						a.isppVoltageStep = a.isppCalc.CalculateVoltageStep()
+						a.isppStartVoltage = a.isppCalc.CalculateStartVoltage(calibratedE)
 						a.isppCurrentVoltage = a.isppStartVoltage
 						a.isppPulseCount = 1
 						a.isppPhase = 0 // APPLY
@@ -1191,20 +1193,9 @@ func (a *App) simulationLoop() {
 						}
 
 					case 3: // ADJUST - increment voltage for next pulse
-						// Increase voltage magnitude for next ISPP pulse
-						if goingUp {
-							a.isppCurrentVoltage += a.isppVoltageStep
-							// Cap at 2.2×Ec to avoid damage
-							if a.isppCurrentVoltage > Ec*2.2 {
-								a.isppCurrentVoltage = Ec * 2.2
-							}
-						} else {
-							// For descending (negative fields), make more negative
-							a.isppCurrentVoltage -= a.isppVoltageStep
-							if a.isppCurrentVoltage < -Ec*2.2 {
-								a.isppCurrentVoltage = -Ec * 2.2
-							}
-						}
+						// Use shared ISPP calculator to determine next voltage
+						direction := physics.GetDirection(currentLevel, targetLevel)
+						a.isppCurrentVoltage = a.isppCalc.CalculateNextVoltage(a.isppCurrentVoltage, direction)
 
 						a.isppPulseCount++
 						a.isppPhase = 0 // Back to APPLY
@@ -1365,7 +1356,6 @@ func (a *App) simulationLoop() {
 							// Undershoot: didn't apply enough field, might continue without reset
 							// Overshoot: went past target, MUST reset (hysteresis is path-dependent)
 							var isUndershoot bool
-							absError := abs(levelError)
 							if goingUp {
 								// Going up (positive field): undershoot means read < target (levelError < 0)
 								isUndershoot = levelError < 0
@@ -1374,15 +1364,13 @@ func (a *App) simulationLoop() {
 								isUndershoot = levelError > 0
 							}
 
-							// Only skip RESET for small undershoots (1-2 levels) on first retry
-							// READ phase can disturb polarization, so larger errors need full RESET
-							canSkipReset := isUndershoot && absError <= 2 && a.wrdRetryCount == 1
+							// PHYSICS: Never reset for undershoots - just apply more field (BOOST)
+							// UNDERSHOOT = didn't apply enough field yet → apply BOOST (more field same direction)
+							// OVERSHOOT = went past target → MUST reset due to hysteresis path-dependence
+							canSkipReset := isUndershoot  // Never reset for undershoots, just BOOST with more field
 
 							if canSkipReset {
-								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (skip RESET, small error)",
-									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
-							} else if isUndershoot {
-								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (RESET needed, error too large or repeated)",
+								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (skip RESET, apply BOOST)",
 									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
 							} else {
 								log.Printf("WRD VERIFY OVERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (must RESET)",
@@ -1410,7 +1398,7 @@ func (a *App) simulationLoop() {
 								a.wrdPhase = 6       // BOOST phase (undershoot retry)
 								a.wrdPhaseTimer = 0
 							} else {
-								// OVERSHOOT or LARGE UNDERSHOOT: Must fully reset
+								// OVERSHOOT: Must fully reset (went past target, hysteresis path-dependent)
 								a.wrdResetStartP = a.polarization * 100
 								a.wrdPhase = 0 // Full RESET
 								a.wrdPhaseTimer = 0

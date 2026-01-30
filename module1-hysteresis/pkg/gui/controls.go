@@ -12,6 +12,7 @@ import (
 
 	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -467,6 +468,9 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Update number of levels based on material
 	newLevels := a.material.GetNumLevels()
 	a.numLevels = newLevels
+
+	// Initialize ISPP calculator with new material parameters
+	a.isppCalc = sharedphysics.NewISPPCalculator(effEc, newLevels)
 	// Update level indicator and cell visualizer
 	if a.levelIndicator != nil {
 		a.levelIndicator.SetNumLevels(newLevels)

@@ -152,11 +152,16 @@ type DeviceState struct {
 	isppState            ISPPState
 	halfSelectState      HalfSelectVisualization
 	voltageCalibration   *PerLevelVoltageCalibration
+
+	// Shared ISPP calculator for voltage math
+	isppCalc *sharedphysics.ISPPCalculator
 }
 
 // NewDeviceState creates a new device state with specified dimensions
 // Loads calibration parameters from physics.yaml for voltage range calculation
 func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) *DeviceState {
+	defaultMaterial := sharedphysics.FeCIMMaterial()
+
 	ds := &DeviceState{
 		rows:         rows,
 		cols:         cols,
@@ -173,8 +178,8 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		saturated:    make([]bool, rows),
 		selectedRow:  0,
 		selectedCol:  0,
-		material:     sharedphysics.FeCIMMaterial(), // Default to FeCIM material
-		calibParams:  loadCalibrationParams(),       // Load from physics.yaml
+		material:     defaultMaterial,              // Default to FeCIM material
+		calibParams:  loadCalibrationParams(),      // Load from physics.yaml
 		tia:          tia,
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
@@ -184,6 +189,13 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 			Direction: make(map[string]HysteresisDirection),
 		},
 		isppState: ISPPState{MaxIter: ISPPMaxIterations},
+	}
+
+	// Initialize ISPP calculator with default material
+	if defaultMaterial != nil {
+		ec := defaultMaterial.CoerciveVoltage()
+		numLevels := defaultMaterial.GetNumLevels()
+		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
 	}
 
 	// Calculate voltage ranges from material + calibration config
@@ -255,6 +267,13 @@ func (ds *DeviceState) updateVoltageRanges() {
 func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 	ds.material = mat
 	ds.updateVoltageRanges() // Recalculate voltage ranges for new material
+
+	// Initialize ISPP calculator with material's coercive voltage
+	if mat != nil {
+		ec := mat.CoerciveVoltage()
+		numLevels := mat.GetNumLevels()
+		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
+	}
 }
 
 // GetMaterial returns the current material
@@ -1202,12 +1221,34 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 		return
 	}
 
-	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
-	ascending := direction == DirectionAscending
+	// Use shared ISPP calculator to determine direction
+	sharedDirection := sharedphysics.GetDirection(currentLevel, targetLevel)
+
+	// Map to local HysteresisDirection type
+	var localDirection HysteresisDirection
+	switch sharedDirection {
+	case sharedphysics.DirectionAscending:
+		localDirection = DirectionAscending
+	case sharedphysics.DirectionDescending:
+		localDirection = DirectionDescending
+	default:
+		localDirection = DirectionUnknown
+	}
 
 	// Ensure voltage calibration is initialized
 	if ds.voltageCalibration == nil {
 		ds.initVoltageCalibrationInternal()
+	}
+
+	// Calculate starting voltage using shared calculator
+	ascending := localDirection == DirectionAscending
+	calibratedVoltage := ds.getVoltageForLevelInternal(targetLevel, ascending)
+	startVoltage := calibratedVoltage
+	if ds.isppCalc != nil {
+		startVoltage = ds.isppCalc.CalculateStartVoltage(calibratedVoltage)
+	} else {
+		// Fallback if calculator not initialized
+		startVoltage = calibratedVoltage * 0.7
 	}
 
 	ds.isppState.Active = true
@@ -1217,8 +1258,8 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 	ds.isppState.TargetCol = col
 	ds.isppState.TargetLevel = targetLevel
 	ds.isppState.CurrentLevel = currentLevel
-	ds.isppState.Voltage = ds.getVoltageForLevelInternal(targetLevel, ascending) * 0.7 // Start at 70% of calibrated voltage
-	ds.isppState.Direction = direction
+	ds.isppState.Voltage = startVoltage
+	ds.isppState.Direction = localDirection
 	ds.isppState.Verified = false
 	ds.isppState.Complete = false
 	ds.isppState.Success = false
@@ -1237,51 +1278,86 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 	ds.isppState.CurrentLevel = newCurrentLevel
 	ds.isppState.Iteration++
 
-	// Check if target reached (within tolerance)
-	diff := ds.isppState.TargetLevel - ds.isppState.CurrentLevel
-	if diff < 0 {
-		diff = -diff
+	// Map local direction to shared direction type
+	var sharedDirection sharedphysics.HysteresisDirection
+	switch ds.isppState.Direction {
+	case DirectionAscending:
+		sharedDirection = sharedphysics.DirectionAscending
+	case DirectionDescending:
+		sharedDirection = sharedphysics.DirectionDescending
+	default:
+		sharedDirection = sharedphysics.DirectionUnknown
 	}
-	if diff <= ISPPToleranceLevels {
+
+	// Use shared ISPP calculator to check result
+	var result sharedphysics.ISPPResult
+	if ds.isppCalc != nil {
+		result = ds.isppCalc.CheckResult(
+			ds.isppState.CurrentLevel,
+			ds.isppState.TargetLevel,
+			sharedDirection,
+			ds.isppState.Iteration,
+		)
+	} else {
+		// Fallback to manual checks if calculator not initialized
+		diff := ds.isppState.TargetLevel - ds.isppState.CurrentLevel
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff <= ISPPToleranceLevels {
+			result = sharedphysics.ISPPSuccess
+		} else if (ds.isppState.Direction == DirectionAscending && ds.isppState.CurrentLevel > ds.isppState.TargetLevel) ||
+			(ds.isppState.Direction == DirectionDescending && ds.isppState.CurrentLevel < ds.isppState.TargetLevel) {
+			result = sharedphysics.ISPPOvershoot
+		} else if ds.isppState.Iteration >= ds.isppState.MaxIter {
+			result = sharedphysics.ISPPMaxPulses
+		} else {
+			result = sharedphysics.ISPPContinue
+		}
+	}
+
+	// Map shared result to local result type and update state
+	switch result {
+	case sharedphysics.ISPPSuccess:
 		ds.isppState.Verified = true
 		ds.isppState.Complete = true
 		ds.isppState.Success = true
 		ds.isppState.Active = false
 		return ISPPResultVerified
-	}
 
-	// Check for overshoot
-	if ds.isppState.Direction == DirectionAscending && ds.isppState.CurrentLevel > ds.isppState.TargetLevel {
+	case sharedphysics.ISPPOvershoot:
 		return ISPPResultOvershoot
-	}
-	if ds.isppState.Direction == DirectionDescending && ds.isppState.CurrentLevel < ds.isppState.TargetLevel {
-		return ISPPResultOvershoot
-	}
 
-	// Check max iterations
-	if ds.isppState.Iteration >= ds.isppState.MaxIter {
+	case sharedphysics.ISPPMaxPulses:
 		ds.isppState.Complete = true
 		ds.isppState.Success = false
 		ds.isppState.Active = false
 		return ISPPResultMaxIterations
-	}
 
-	// Adjust voltage for next iteration
-	// Physics-based step: 5% of coercive voltage range
-	voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~2.5% of range per step
-	if ds.isppState.Direction == DirectionAscending {
-		ds.isppState.Voltage += voltageStep
-		if ds.isppState.Voltage > ds.writeRange.Max {
-			ds.isppState.Voltage = ds.writeRange.Max
+	case sharedphysics.ISPPContinue:
+		// Calculate next voltage using shared calculator
+		if ds.isppCalc != nil {
+			ds.isppState.Voltage = ds.isppCalc.CalculateNextVoltage(ds.isppState.Voltage, sharedDirection)
+		} else {
+			// Fallback to manual voltage adjustment
+			voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~2.5% of range per step
+			if ds.isppState.Direction == DirectionAscending {
+				ds.isppState.Voltage += voltageStep
+				if ds.isppState.Voltage > ds.writeRange.Max {
+					ds.isppState.Voltage = ds.writeRange.Max
+				}
+			} else {
+				ds.isppState.Voltage -= voltageStep
+				if ds.isppState.Voltage < ds.writeRange.Min {
+					ds.isppState.Voltage = ds.writeRange.Min
+				}
+			}
 		}
-	} else {
-		ds.isppState.Voltage -= voltageStep
-		if ds.isppState.Voltage < ds.writeRange.Min {
-			ds.isppState.Voltage = ds.writeRange.Min
-		}
-	}
+		return ISPPResultContinue
 
-	return ISPPResultContinue
+	default:
+		return ISPPResultContinue
+	}
 }
 
 // HandleOvershoot performs RESET-to-saturation when write overshoots target
@@ -1312,7 +1388,14 @@ func (ds *DeviceState) HandleOvershoot(row, col int) bool {
 
 	// Recalculate voltage for target from new position
 	ascending := ds.isppState.Direction == DirectionAscending
-	ds.isppState.Voltage = ds.getVoltageForLevelInternal(ds.isppState.TargetLevel, ascending)
+	calibratedVoltage := ds.getVoltageForLevelInternal(ds.isppState.TargetLevel, ascending)
+
+	// Use shared calculator for starting voltage after reset
+	if ds.isppCalc != nil {
+		ds.isppState.Voltage = ds.isppCalc.CalculateStartVoltage(calibratedVoltage)
+	} else {
+		ds.isppState.Voltage = calibratedVoltage
+	}
 
 	return true
 }
