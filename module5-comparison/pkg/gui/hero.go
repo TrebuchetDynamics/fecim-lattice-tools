@@ -139,7 +139,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
-	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION (PROJECTED)", heroCyanColor)
+	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION (PROJECTED - TRL 4 ESTIMATES)", heroCyanColor)
 	e.heroSubtext.TextSize = 16
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter

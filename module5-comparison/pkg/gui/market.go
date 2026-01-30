@@ -135,7 +135,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	m.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroText.Alignment = fyne.TextAlignCenter
 
-	m.heroSubtext = canvas.NewText("ADDRESSABLE MARKET BY 2030", heroCyanColor)
+	m.heroSubtext = canvas.NewText("ADDRESSABLE MARKET BY 2030 (PROJECTION - ASSUMES TRL 4→9 SUCCESS)", heroCyanColor)
 	m.heroSubtext.TextSize = 14
 	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroSubtext.Alignment = fyne.TextAlignCenter

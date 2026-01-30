@@ -268,6 +268,14 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.statusLabel = widget.NewLabel("Status: Ready")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 
+	// === SIMULATION WARNING BANNER ===
+	// CRITICAL: Per Dr. Tour critique - must prominently display TRL status
+	warningBanner := widget.NewLabelWithStyle(
+		"⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All projections are estimates pending peer review",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+
 	// === HEADER (title moved to main navbar) ===
 	resetBtn := widget.NewButton("Reset", func() {
 		if ca.energyRace != nil {
@@ -364,7 +372,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	centerContainer := container.NewPadded(centerPanel)
 
 	mainContent := container.NewBorder(
-		container.NewVBox(header, widget.NewSeparator()),
+		container.NewVBox(warningBanner, header, widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), footer),
 		nil, // No left panel - config is in Calculator tab
 		nil, // No right panel
