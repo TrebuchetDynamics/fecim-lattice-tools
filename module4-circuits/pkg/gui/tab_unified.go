@@ -412,8 +412,8 @@ func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d (%d cells) | %d levels (~%.0f bits)",
 		ca.arrayRows, ca.arrayCols, totalCells, ca.quantLevels, bitCapacity))
 
-	// Legend with energy info
-	legendLabel := widget.NewLabel("States: Low G (blue) -> High G (red) | Energy: READ ~45fJ, WRITE ~55fJ, MVM ~50fJ/cell")
+	// Legend with energy info (C10: include system power breakdown)
+	legendLabel := widget.NewLabel("States: Low G → High G | Energy: READ ~45fJ, WRITE ~55fJ | System: Array 45%, ADC/DAC 40%, Periph 15%")
 	legendLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
