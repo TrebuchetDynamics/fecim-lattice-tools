@@ -346,6 +346,8 @@ func (ds *DeviceState) SetPassiveMode(passive bool) {
 
 // IsPassiveMode returns true if in passive mode (all WLs always on)
 func (ds *DeviceState) IsPassiveMode() bool {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.isPassive
 }
 
@@ -619,6 +621,9 @@ func (ds *DeviceState) SetSelectedCell(row, col int) {
 
 // Compute runs the device simulation given the weight matrix
 func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
 	// Perform computation
 	for r := 0; r < ds.rows; r++ {
 		if !ds.activeRows[r] {
@@ -788,16 +793,22 @@ func (ds *DeviceState) GetDACMode() DACMode {
 
 // GetSelectedRow returns the selected row index
 func (ds *DeviceState) GetSelectedRow() int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.selectedRow
 }
 
 // GetSelectedCol returns the selected column index
 func (ds *DeviceState) GetSelectedCol() int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.selectedCol
 }
 
 // GetOperationMode returns the current operation mode (READ/WRITE/COMPUTE)
 func (ds *DeviceState) GetOperationMode() OpMode {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.opMode
 }
 
@@ -867,12 +878,9 @@ type PerLevelVoltageCalibration struct {
 	DescendingVoltages []float64 // Voltages for writing down (level max→0)
 }
 
-// InitVoltageCalibration initializes the per-level voltage arrays using linear interpolation
-// This is a simplified demo - real devices would use non-linear Preisach-derived values
-func (ds *DeviceState) InitVoltageCalibration() {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
-
+// initVoltageCalibrationInternal initializes the per-level voltage arrays (internal, no locking)
+// Caller must hold appropriate lock
+func (ds *DeviceState) initVoltageCalibrationInternal() {
 	numLevels := ds.writeRange.NumLevels
 	cal := &PerLevelVoltageCalibration{
 		AscendingVoltages:  make([]float64, numLevels),
@@ -891,6 +899,15 @@ func (ds *DeviceState) InitVoltageCalibration() {
 	}
 
 	ds.voltageCalibration = cal
+}
+
+// InitVoltageCalibration initializes the per-level voltage arrays using linear interpolation
+// This is a simplified demo - real devices would use non-linear Preisach-derived values
+func (ds *DeviceState) InitVoltageCalibration() {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	ds.initVoltageCalibrationInternal()
 }
 
 // getVoltageForLevelInternal returns the calibrated write voltage (internal, no locking)
@@ -914,15 +931,13 @@ func (ds *DeviceState) getVoltageForLevelInternal(level int, ascending bool) flo
 // GetVoltageForLevel returns the calibrated write voltage for a target level
 // direction: true = ascending (increasing level), false = descending (decreasing level)
 func (ds *DeviceState) GetVoltageForLevel(level int, ascending bool) float64 {
-	ds.mu.RLock()
+	ds.mu.Lock()
 	if ds.voltageCalibration == nil {
-		ds.mu.RUnlock()
-		ds.InitVoltageCalibration()
-		ds.mu.RLock()
+		ds.initVoltageCalibrationInternal()
 	}
-	defer ds.mu.RUnlock()
-
-	return ds.getVoltageForLevelInternal(level, ascending)
+	result := ds.getVoltageForLevelInternal(level, ascending)
+	ds.mu.Unlock()
+	return result
 }
 
 // ============================================================================
@@ -1034,14 +1049,22 @@ func (ds *DeviceState) StartWriteSequence(row, col, targetLevel int) {
 	defer ds.mu.Unlock()
 
 	direction := ds.GetWriteDirection(row, col, 0, targetLevel) // Assume starting from current
+	// Initialize voltage calibration if needed
+	if ds.voltageCalibration == nil {
+		ds.initVoltageCalibrationInternal()
+	}
+
 	ascending := direction == DirectionAscending
+
+	// Ensure voltage calibration is initialized
+	ds.initVoltageCalibrationInternal()
 
 	ds.writeSequenceState.Active = true
 	ds.writeSequenceState.Phase = PhaseReset
 	ds.writeSequenceState.TargetRow = row
 	ds.writeSequenceState.TargetCol = col
 	ds.writeSequenceState.TargetLevel = targetLevel
-	ds.writeSequenceState.WriteVoltage = ds.GetVoltageForLevel(targetLevel, ascending)
+	ds.writeSequenceState.WriteVoltage = ds.getVoltageForLevelInternal(targetLevel, ascending)
 	ds.writeSequenceState.Progress = 0.0
 }
 
@@ -1182,6 +1205,11 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
 	ascending := direction == DirectionAscending
 
+	// Ensure voltage calibration is initialized
+	if ds.voltageCalibration == nil {
+		ds.initVoltageCalibrationInternal()
+	}
+
 	ds.isppState.Active = true
 	ds.isppState.Iteration = 0
 	ds.isppState.MaxIter = ISPPMaxIterations
@@ -1240,7 +1268,7 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 
 	// Adjust voltage for next iteration
 	// Physics-based step: 5% of coercive voltage range
-	voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~5% of range per step
+	voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~2.5% of range per step
 	if ds.isppState.Direction == DirectionAscending {
 		ds.isppState.Voltage += voltageStep
 		if ds.isppState.Voltage > ds.writeRange.Max {
@@ -1275,6 +1303,11 @@ func (ds *DeviceState) HandleOvershoot(row, col int) bool {
 		// Descending overshoot: reset to max level (positive saturation)
 		ds.isppState.CurrentLevel = ds.writeRange.NumLevels - 1
 		ds.isppState.Direction = DirectionDescending // Keep descending for retry
+	}
+
+	// Ensure voltage calibration is initialized
+	if ds.voltageCalibration == nil {
+		ds.initVoltageCalibrationInternal()
 	}
 
 	// Recalculate voltage for target from new position

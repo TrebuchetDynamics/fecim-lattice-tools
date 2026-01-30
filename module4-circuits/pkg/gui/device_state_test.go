@@ -1028,16 +1028,17 @@ func TestSetDACVoltageForState_AllLevels(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	// Test all 30 levels map to write range
-	for level := 0; level < 30; level++ {
-		ds.SetDACVoltageForState(0, level, 30)
+	// Test all levels map to write range
+	numLevels := ds.writeRange.NumLevels
+	for level := 0; level < numLevels; level++ {
+		ds.SetDACVoltageForState(0, level, numLevels)
 		v := ds.GetDACVoltage(0)
 
 		// Should be within write range
 		assertVoltageInRange(t, "level voltage", v, ds.writeRange.Min, ds.writeRange.Max)
 
 		// Check linear interpolation
-		normalized := float64(level) / 29.0
+		normalized := float64(level) / float64(numLevels-1)
 		expected := ds.writeRange.Min + normalized*(ds.writeRange.Max-ds.writeRange.Min)
 		if math.Abs(v-expected) > testEpsilon {
 			t.Errorf("level %d voltage: got %.6f, want %.6f", level, v, expected)
