@@ -29,6 +29,14 @@ type WriteController struct {
 	Emax            float64
 	MaxRetries      int // Max ISPP pulses before giving up
 	ForceResetLimit int // Max retries before forcing a full reset
+	Attempts        int
+	SuccessCount    int
+	FailureCount    int
+	PulseDuration   float64 // Configuration field for simulation sync
+
+	// Added for search acceleration (Slope estimation)
+	previousLevel   int
+	previousVoltage float64
 
 	// Dependencies
 	CalibManager *algo.CalibrationManager
@@ -59,8 +67,9 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		NumLevels:       numLevels,
 		Ec:              ec,
 		Emax:            emax,
-		MaxRetries:      50,  // Stubborn: Try hard to converge
-		ForceResetLimit: 100, // Effectively disabled, only for total failure
+		MaxRetries:      50,   // Stubborn: Try hard to converge
+		ForceResetLimit: 100,  // Effectively disabled, only for total failure
+		PulseDuration:   0.15, // Default safe value
 		CalibManager:    calib,
 		State:           StateIdle,
 	}
@@ -77,6 +86,10 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.PreviousDiff = 0
 	wc.StepModifier = 1.0
 
+	// Reset slope estimation state
+	wc.previousLevel = -1
+	wc.previousVoltage = 0
+
 	wc.calculateNextVoltage(0) // 0 for current level, but will be refined
 }
 
@@ -85,6 +98,9 @@ func (wc *WriteController) ResetState() {
 	wc.State = StateIdle
 	wc.TotalPulses = 0
 	wc.RetryCount = 0
+	wc.Attempts = 0
+	wc.SuccessCount = 0
+	wc.FailureCount = 0
 }
 
 // Update advances the controller state logic.
@@ -92,7 +108,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 	wc.PhaseTimer += dt
 
 	// Pulse duration constant (could be configurable)
-	const pulseDur = 0.08
+	pulseDur := wc.PulseDuration
 
 	switch wc.State {
 	case StateApply:
@@ -127,6 +143,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
 				wc.State = StateSuccess
+				wc.SuccessCount++
 				// Update calibration (simple average learning)
 				// Note: In real FeCIM, we'd be more careful about updating calib from "stubborn" writes
 				// as they might represent edges of the distribution.
@@ -138,6 +155,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				// We tried hard. If we still failed, we might need a BIG reset.
 				// But we are "Stubborn", so we only give up if we hit the limit.
 				wc.RetryCount++
+				wc.FailureCount++
 
 				// Don't resets immediately. Just count it as a "failed cycle" but maybe keep trying?
 				// For now, adhere to the "Give Up" logic if MaxRetries hit, but MaxRetries is high (50).
@@ -184,10 +202,10 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 		} else {
 			// OVERSHOOT RECOVERY or FIRST ATTEMPT from mid-state
 			// Use estimation logic
-			voltagePerLevel := (2.0 * wc.Ec) / float64(wc.NumLevels-1)
-
-			// Base estimation
-			estV := voltagePerLevel * float64(levelDiff) * 1.5 // Initial kick
+			// Proportional Step
+			// Increased gain from 0.005 to 0.015 to speed up convergence when far from target
+			propStep := float64(levelDiff) * wc.Emax * 0.015
+			estV := propStep
 
 			if goingUp {
 				targetVoltage = estV
@@ -206,6 +224,7 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 
 	// 1. Calculate Error
 	diff := currentLevel - targetLevel // +ve means READ > TARGET (Overshoot) -> Needs Negative Nudge
+	levelError := diff                 // Renamed for clarity in new logic
 
 	// 2. Servo Logic: Detect Oscillation
 	// If sign of diff flipped compared to previous, we overshot the target in the servo loop.
@@ -217,22 +236,56 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 		signChanged = true
 	}
 
-	// Update modifier
+	// SIGN CHANGED - Dampen or Binary Search logic
 	if signChanged {
-		wc.StepModifier *= 0.5 // Dampen significantly on overshoot
-		if wc.StepModifier < 0.05 {
-			wc.StepModifier = 0.05 // Lower minimum for finer control
+		wc.StepModifier *= 0.5 // Standard dampening
+		if wc.StepModifier < 0.1 {
+			wc.StepModifier = 0.1
 		}
+		// Reset tracking on flip
+		wc.previousVoltage = 0
+		wc.previousLevel = -1
 	} else {
-		// No sign change - we haven't crossed target yet.
-		// If we made NO progress (diff is same), kick it harder
+		// NO SIGN CHANGE - We haven't crossed target yet.
+		// If we made NO progress (level read same), kick it harder
 		if diff == wc.PreviousDiff {
-			wc.StepModifier *= 1.2 // Moderate increase when stuck (was 1.5, caused exponential growth)
+			// AGGRESSIVE KICK when stuck in sub-threshold or plateau
+			// If field is weak (<0.8*Ec), jump immediately to switching region
+			EcEst := wc.Emax * 0.4
+			if math.Abs(wc.CurrentVoltage) < 0.8*EcEst && math.Abs(float64(levelError)) > 2 {
+				if levelError > 0 {
+					wc.CurrentVoltage = -0.9 * EcEst // Kick negative
+				} else {
+					wc.CurrentVoltage = 0.9 * EcEst // Kick positive
+				}
+				log.Printf("ISPP KICK: V=%.3f", wc.CurrentVoltage)
+			} else {
+				wc.StepModifier *= 1.5 // Standard stuck recovery
+			}
 		} else {
-			// We made progress, keep steady or slightly dampen to land softly
+			// WE MADE PROGRESS - but are we moving fast enough?
+			// Use slope estimation if we have two data points on the same branch
+			if wc.previousVoltage != 0 && currentLevel != wc.previousLevel {
+				slope := (wc.CurrentVoltage - wc.previousVoltage) / float64(currentLevel-wc.previousLevel)
+				if (levelError > 0 && slope < 0) || (levelError < 0 && slope > 0) {
+					// Predict voltage needed to close remaining level error
+					estDeltaV := slope * float64(-levelError)
+					// Use a blend of current and estimate to avoid overshoot
+					wc.CurrentVoltage += estDeltaV * 0.8
+					log.Printf("ISPP SLOPE ESTIMATE: newV=%.3f", wc.CurrentVoltage)
+					// Reset tracking to avoid double-stepping
+					wc.previousVoltage = 0
+					wc.previousLevel = -1
+					return
+				}
+			}
 			wc.StepModifier = 1.0
 		}
 	}
+
+	// Update tracking for next slope calculation
+	wc.previousLevel = currentLevel
+	wc.previousVoltage = wc.CurrentVoltage
 
 	// 3. Calculate Nudge
 	voltagePerLevel := (2.0 * wc.Ec) / float64(wc.NumLevels-1)

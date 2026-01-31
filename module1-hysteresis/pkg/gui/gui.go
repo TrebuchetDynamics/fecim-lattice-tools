@@ -573,8 +573,8 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create simulation vs experiment comparison widget (H16)
 	a.simVsExpWidget = widgets.NewSimVsExpComparison()
-	// Set initial values from Preisach model
-	simPr := a.preisach.GetEffectivePr()
+	// Set initial values from Preisach model/material
+	simPr := a.material.Pr
 	simEc := a.preisach.GetEffectiveEc()
 	// Calculate squareness from model
 	a.preisach.Reset()

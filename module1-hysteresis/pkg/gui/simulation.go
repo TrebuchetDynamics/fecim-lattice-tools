@@ -607,328 +607,173 @@ func (a *App) simulationLoop() {
 	for a.running {
 		<-ticker.C
 
+		now := time.Now()
+		dt := now.Sub(lastTime).Seconds()
+		lastTime = now
+
 		if a.paused {
-			// Reset lastTime when paused to prevent time accumulation
-			lastTime = time.Now()
 			continue
 		}
 
-		// Calculate time since last frame BEFORE acquiring lock
-		dt := time.Since(lastTime).Seconds()
-
-		// CRITICAL: Clamp dt immediately to prevent any large values from leaking through
-		// This handles window focus loss, system sleep, or debugger pauses
-		const maxDt = 0.025 // 25ms = 40fps minimum, conservative to prevent bugs
+		// Clamp dt to prevent physics explosions after pauses
+		const maxDt = 0.025 // 25ms
 		if dt > maxDt {
 			dt = maxDt
-			lastTime = time.Now()
-			// Drain any queued ticks to prevent rapid processing when returning to window
-			drainCount := 0
-			for {
-				select {
-				case <-ticker.C:
-					drainCount++
-					if drainCount > 10 {
-						goto drained
-					}
-				default:
-					goto drained
+		}
+
+		a.Update(dt)
+	}
+}
+
+// Update handles the physics and state transitions for all simulation modes.
+func (a *App) Update(dt float64) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	mat := a.material
+	if mat == nil {
+		return
+	}
+
+	Emax := mat.Ec * 2.5 // Scale for full loop traversal
+	Ec := mat.Ec
+	a.simTime += dt
+	phaseDuration := 1.0 / a.frequency
+	rampRate := 4.0 * Emax * a.frequency
+
+	// Generate E-field based on waveform
+	if a.waveform == WaveformManual {
+		if a.manualAnimating {
+			a.manualPhaseTime += dt
+			targetLevel := a.manualTargetLevel // 1-indexed (1-N)
+			startLevel := a.manualStartLevel   // Captured at animation start
+			maxLevelIdx := a.numLevels - 1
+
+			switch a.manualPhase {
+			case 0: // RESET phase
+				var resetE float64
+				if targetLevel > startLevel {
+					resetE = -2.0 * Ec
+				} else {
+					resetE = 2.0 * Ec
 				}
-			}
-		drained:
-			continue
-		}
 
-		lastTime = time.Now()
+				// Ramp to reset field
+				diff := resetE - a.electricField
+				step := rampRate * dt
+				if math.Abs(diff) < step {
+					a.electricField = resetE
+				} else if diff > 0 {
+					a.electricField += step
+				} else {
+					a.electricField -= step
+				}
 
-		a.mu.Lock()
+				// Transition when field reached and held briefly
+				if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField-resetE) < 0.01*Emax {
+					a.manualPhase = 1
+					a.manualPhaseTime = 0
+				}
 
-		// Check material inside lock to prevent race condition
-		if a.material == nil {
-			a.mu.Unlock()
-			continue
-		}
+			case 1: // HOLD_RESET - return to zero
+				step := rampRate * dt
+				if math.Abs(a.electricField) < step {
+					a.electricField = 0
+				} else if a.electricField > 0 {
+					a.electricField -= step
+				} else {
+					a.electricField += step
+				}
 
-		// Copy material reference under lock for safe access
-		mat := a.material
+				if a.manualPhaseTime > phaseDuration*0.2 && math.Abs(a.electricField) < 0.01*Emax {
+					a.manualPhase = 2
+					a.manualPhaseTime = 0
+				}
 
-		// dt is already clamped to maxDt (25ms) before the lock (see line ~622)
-		a.simTime += dt
-		// Wrap simTime to prevent floating-point issues after long runs
-		if a.simTime > 1000 {
-			a.simTime = math.Mod(a.simTime, 1000)
-		}
+			case 2: // WRITE - apply calibrated field
+				var writeE float64
+				targetIdx := targetLevel - 1
+				midLevel := a.numLevels / 2
+				goingUp := targetLevel > midLevel
 
-		// Generate E-field based on waveform
-		if a.waveform == WaveformManual {
-			// Manual mode: slider control or click-to-level animation
-			//
-			// PHYSICS: Hysteresis is PATH-DEPENDENT and NON-REVERSIBLE.
-			// If you overshoot a target level, you CANNOT correct by applying less field
-			// or opposite field (that's a different branch of the hysteresis loop).
-			// You MUST reset to a known saturation state and try again.
-			//
-			// Phases:
-			// 0: RESET - saturate in opposite direction to target
-			// 1: HOLD_RESET - return to zero (now at known remanent: level 1 or N)
-			// 2: WRITE - apply calibrated field toward target
-			// 3: HOLD_WRITE - return to zero, polarization persists at target
-			if a.manualAnimating {
-				Ec := mat.Ec     // Use local copy for thread safety
-				Emax := Ec * 1.5 // Match calibration saturation field
-				phaseDuration := 0.6 / a.frequency
-				rampRate := 4.0 * Emax * a.frequency
-				maxLevelIdx := a.numLevels - 1
-
-				a.manualPhaseTime += dt
-
-				targetLevel := a.manualTargetLevel // 1-indexed (1-N)
-				startLevel := a.manualStartLevel   // Captured at animation start
-
-				switch a.manualPhase {
-				case 0: // RESET phase - always saturate to known state before writing
-					// NOTE: ISPP skip-reset optimization removed (incompatible with Preisach model).
-					// Preisach hysteresis is path-dependent - reliable level targeting requires
-					// starting from a known saturation state. Incremental writes with sub-Ec
-					// fields do not produce predictable switching.
-
-					var resetE float64
-					if targetLevel > startLevel {
-						// Going UP: first saturate negative (reach level 1)
-						resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
+				if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
+					// Out of bounds - use fallback
+					ratio := float64(targetLevel-1) / float64(maxLevelIdx)
+					if goingUp {
+						writeE = Ec * (0.9 + ratio*1.1)
 					} else {
-						// Going DOWN: first saturate positive (reach level N)
-						resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
+						writeE = -Ec * (0.9 + ratio*1.1)
 					}
-
-					// Ramp to reset field
-					diff := resetE - a.electricField
-					step := rampRate * dt
-					if math.Abs(diff) < step {
-						a.electricField = resetE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-
-					// Transition when field reached and held briefly
-					if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField-resetE) < 0.01*Emax {
-						a.manualPhase = 1
-						a.manualPhaseTime = 0
-					}
-
-				case 1: // HOLD_RESET - return to zero (now at known remanent state)
-					step := rampRate * dt
-					if math.Abs(a.electricField) < step {
-						a.electricField = 0
-					} else if a.electricField > 0 {
-						a.electricField -= step
-					} else {
-						a.electricField += step
-					}
-
-					// Now at known remanent state (level 1 or level N)
-					if a.manualPhaseTime > phaseDuration*0.2 && math.Abs(a.electricField) < 0.01*Emax {
-						// Log the write field that will be used (only once at phase transition)
-						targetIdx := targetLevel - 1
-						goingUp := targetLevel > startLevel
-						if targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
-							if goingUp {
-								log.Printf("WRITE PHASE START: target=%d, calibUp[%d]=%.4f*Ec", targetLevel, targetIdx, a.calibrationUp[targetIdx]/Ec)
-							} else {
-								log.Printf("WRITE PHASE START: target=%d, calibDown[%d]=%.4f*Ec", targetLevel, targetIdx, a.calibrationDown[targetIdx]/Ec)
-							}
-						}
-						a.manualPhase = 2
-						a.manualPhaseTime = 0
-					}
-
-				case 2: // WRITE - apply calibrated field for target
-					var writeE float64
-					targetIdx := targetLevel - 1
-					midLevel := a.numLevels / 2
-					goingUp := targetLevel > midLevel
-
-					// Use calibrated fields for reliable level targeting
-					// (ISPP incremental writes removed - incompatible with Preisach model)
-					if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
-						// Out of bounds - use fallback
+				} else if goingUp {
+					writeE = a.calibrationUp[targetIdx]
+					if writeE == 0 {
 						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-						if goingUp {
-							writeE = Ec * (1.0 + ratio*1.0)
+						writeE = Ec * (0.9 + ratio*1.1)
+					}
+				} else {
+					writeE = a.calibrationDown[targetIdx]
+					if writeE == 0 {
+						ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
+						writeE = -Ec * (0.9 + ratio*1.1)
+					}
+				}
+
+				// Ramp to write field
+				diff := writeE - a.electricField
+				step := rampRate * dt
+				if math.Abs(diff) < step {
+					a.electricField = writeE
+				} else if diff > 0 {
+					a.electricField += step
+				} else {
+					a.electricField -= step
+				}
+
+				if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
+					a.manualPhase = 3
+					a.manualPhaseTime = 0
+				}
+
+			case 3: // HOLD_WRITE - return to zero, polarization persists
+				step := rampRate * dt
+				if math.Abs(a.electricField) < step {
+					a.electricField = 0
+				} else if a.electricField > 0 {
+					a.electricField -= step
+				} else {
+					a.electricField += step
+				}
+
+				// Animation complete
+				if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField) < 0.01*Emax {
+					finalLevel := a.discreteLevel + 1
+					levelError := finalLevel - targetLevel
+					adjIdx := targetLevel - 1
+					Ec := mat.Ec
+
+					// Log animation result with detailed state
+					log.Printf("MANUAL ANIMATION COMPLETE: target=%d, final=%d, error=%d",
+						targetLevel, finalLevel, levelError)
+
+					if levelError != 0 && a.calibrated && adjIdx >= 0 && adjIdx < len(a.calibrationUp) {
+						if targetLevel > startLevel { // startLevel defined outside case
+							// ASCENDING calibration adjustment
+							if a.calibManager != nil {
+								a.calibManager.UpdateCalibrationUp(adjIdx, levelError, Ec)
+								a.calibrationUp[adjIdx] = a.calibManager.CalibrationUp[adjIdx]
+							}
 						} else {
-							writeE = -Ec * (1.0 + ratio*1.0)
-						}
-					} else if goingUp {
-						// Going UP from level 1: use ascending calibration
-						writeE = a.calibrationUp[targetIdx]
-						if writeE == 0 {
-							// Fallback: interpolate based on target position
-							ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-							writeE = Ec * (1.0 + ratio*1.0) // Ec to 2*Ec
-						}
-					} else {
-						// Going DOWN from level N: use descending calibration
-						writeE = a.calibrationDown[targetIdx]
-						if writeE == 0 {
-							ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
-							writeE = -Ec * (1.0 + ratio*1.0) // -Ec to -2*Ec
-						}
-					}
-
-					// Ramp to write field
-					diff := writeE - a.electricField
-					step := rampRate * dt
-					if math.Abs(diff) < step {
-						a.electricField = writeE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-
-					// Transition when field applied and held
-					if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
-						a.manualPhase = 3
-						a.manualPhaseTime = 0
-					}
-
-				case 3: // HOLD_WRITE - return to zero, polarization persists
-					step := rampRate * dt
-					if math.Abs(a.electricField) < step {
-						a.electricField = 0
-					} else if a.electricField > 0 {
-						a.electricField -= step
-					} else {
-						a.electricField += step
-					}
-
-					// Animation complete
-					if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField) < 0.01*Emax {
-						finalLevel := a.discreteLevel + 1
-						levelError := finalLevel - targetLevel
-
-						// Log animation result with detailed state
-						log.Printf("ANIMATION COMPLETE: target=%d, final=%d, error=%d, normalizedP=%.4f",
-							targetLevel, finalLevel, levelError, a.normalizedP)
-
-						// Update calibration using binary search with bounds tracking
-						// This approach converges much faster and avoids oscillation
-						adjIdx := targetLevel - 1
-						if levelError != 0 && a.calibrated && adjIdx >= 0 && adjIdx < len(a.calibrationUp) {
-							midLevel := a.numLevels / 2
-							if targetLevel > midLevel {
-								// ASCENDING calibration adjustment
-								currentE := a.calibrationUp[adjIdx]
-								lastErr := a.lastErrorUp[adjIdx]
-
-								// Update bounds based on error direction
-								if levelError > 0 {
-									// Overshot (went too high) → field was too strong → update upper bound
-									if currentE < a.calibUpHigh[adjIdx] {
-										a.calibUpHigh[adjIdx] = currentE
-									}
-								} else {
-									// Undershot (too low) → field was too weak → update lower bound
-									if currentE > a.calibUpLow[adjIdx] {
-										a.calibUpLow[adjIdx] = currentE
-									}
-								}
-
-								// Binary search: use midpoint of bounds
-								var newVal float64
-								if a.calibUpLow[adjIdx] < a.calibUpHigh[adjIdx] {
-									// Valid bounds: use midpoint
-									newVal = (a.calibUpLow[adjIdx] + a.calibUpHigh[adjIdx]) / 2
-								} else {
-									// Bounds crossed (shouldn't happen) - use small adjustment
-									adjustment := float64(levelError) * Ec * 0.01
-									newVal = currentE - adjustment
-								}
-
-								// Detect oscillation (error sign flipped) and dampen
-								if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
-									// Oscillating - use weighted average closer to current
-									newVal = currentE*0.7 + newVal*0.3
-								}
-
-								// Level-dependent minimum field: higher levels need stronger fields
-								// Linear interpolation: level 1 needs ~0.4×Ec, level 29 needs ~1.4×Ec
-								maxLevel := float64(a.numLevels - 1)
-								levelRatio := float64(adjIdx) / maxLevel
-								minE := Ec * (0.4 + levelRatio*1.0) // Range: 0.4×Ec to 1.4×Ec
-								maxE := Ec * (0.6 + levelRatio*1.2) // Range: 0.6×Ec to 1.8×Ec
-
-								if newVal < minE {
-									newVal = minE
-								} else if newVal > maxE {
-									newVal = maxE
-								}
-								a.calibrationUp[adjIdx] = newVal
-								a.enforceMonotonicityUp(adjIdx, Ec) // Prevent spikes from runtime updates
-								a.lastErrorUp[adjIdx] = levelError
-								log.Printf("CALIB UP[%d]: bounds=[%.4f,%.4f]*Ec, new=%.4f*Ec, err=%d",
-									adjIdx, a.calibUpLow[adjIdx]/Ec, a.calibUpHigh[adjIdx]/Ec, newVal/Ec, levelError)
-							} else {
-								// DESCENDING calibration adjustment
-								currentE := a.calibrationDown[adjIdx]
-								lastErr := a.lastErrorDown[adjIdx]
-
-								// Update bounds (note: descending uses negative fields)
-								if levelError > 0 {
-									// Overshot UP (didn't go down enough) → field not negative enough → update lower bound
-									if currentE > a.calibDownLow[adjIdx] {
-										a.calibDownLow[adjIdx] = currentE
-									}
-								} else {
-									// Undershot (went too far down) → field too negative → update upper bound
-									if currentE < a.calibDownHigh[adjIdx] {
-										a.calibDownHigh[adjIdx] = currentE
-									}
-								}
-
-								// Binary search: use midpoint of bounds
-								var newVal float64
-								if a.calibDownLow[adjIdx] < a.calibDownHigh[adjIdx] {
-									// Valid bounds: use midpoint
-									newVal = (a.calibDownLow[adjIdx] + a.calibDownHigh[adjIdx]) / 2
-								} else {
-									// Bounds crossed - use small adjustment
-									adjustment := float64(levelError) * Ec * 0.01
-									newVal = currentE - adjustment
-								}
-
-								// Detect oscillation and dampen
-								if lastErr != 0 && ((lastErr > 0 && levelError < 0) || (lastErr < 0 && levelError > 0)) {
-									newVal = currentE*0.7 + newVal*0.3
-								}
-
-								// Level-dependent minimum field: lower levels need stronger (more negative) fields
-								// For descending: level 29 needs ~-0.4×Ec, level 1 needs ~-1.4×Ec
-								maxLevel := float64(a.numLevels - 1)
-								levelRatio := float64(adjIdx) / maxLevel
-								// Invert: low level index = strong negative field
-								minE := -Ec * (0.6 + (1-levelRatio)*1.2) // Range: -1.8×Ec to -0.6×Ec
-								maxE := -Ec * (0.4 + (1-levelRatio)*1.0) // Range: -1.4×Ec to -0.4×Ec
-
-								if newVal > maxE {
-									newVal = maxE
-								} else if newVal < minE {
-									newVal = minE
-								}
-								a.calibrationDown[adjIdx] = newVal
-								a.enforceMonotonicityDown(adjIdx, Ec) // Prevent spikes from runtime updates
-								a.lastErrorDown[adjIdx] = levelError
-								log.Printf("CALIB DOWN[%d]: bounds=[%.4f,%.4f]*Ec, new=%.4f*Ec, err=%d",
-									adjIdx, a.calibDownLow[adjIdx]/Ec, a.calibDownHigh[adjIdx]/Ec, newVal/Ec, levelError)
+							// DESCENDING calibration adjustment
+							if a.calibManager != nil {
+								a.calibManager.UpdateCalibrationDown(adjIdx, levelError, Ec)
+								a.calibrationDown[adjIdx] = a.calibManager.CalibrationDown[adjIdx]
 							}
 						}
-
-						a.manualAnimating = false
-						a.manualPhase = 0
-						a.addLogEntry(fmt.Sprintf("→ Level %d (target %d)", finalLevel, targetLevel))
 					}
+
+					a.manualAnimating = false
+					a.manualPhase = 0
+					a.manualPhaseTime = 0
 				}
 			}
 			// If not animating, electric field is already set by slider in controls.go
@@ -1031,6 +876,9 @@ func (a *App) simulationLoop() {
 						// Determine if fromSaturation: Level 1 or MaxLevel
 						currentLevel := a.discreteLevel + 1
 						fromSaturation := currentLevel <= 2 || currentLevel >= a.numLevels-1
+
+						// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
+						a.writeController.PulseDuration = phaseDuration * 0.4
 						a.writeController.Start(targetLevel, fromSaturation)
 
 						a.wrdPhase = 2
@@ -1074,28 +922,26 @@ func (a *App) simulationLoop() {
 								a.writeController.LastVerifyLevel, targetLevel,
 								successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
 
-							// CRITICAL FIX: Learn from the Servo!
-							// Save the successful voltage to calibration so next run starts closer.
+							// CRITICAL FIX: Learn from the Servo using CalibrationManager
+							// Instead of naïve 100% overwrite, we use binary search + monotonicity
 							learnedV := a.writeController.CurrentVoltage
 							Ec := mat.Ec
+							targetIdx := targetLevel - 1 // 0-indexed for CM
 
-							// Determine direction and update correct calibration
-							if targetLevel > midLevel {
-								// Ascending (written from reset negative)
-								oldV := a.calibrationUp[targetLevel]
-								a.calibrationUp[targetLevel] = learnedV
-								if a.calibManager != nil {
-									a.calibManager.CalibrationUp[targetLevel] = learnedV
+							if a.calibManager != nil {
+								if targetLevel > midLevel {
+									// Ascending (written from reset negative)
+									a.calibManager.UpdateCalibrationUp(targetIdx, 0, Ec)
+									// Override the midpoint with the actual successful servo voltage to anchor the search
+									a.calibManager.CalibrationUp[targetIdx] = learnedV
+									a.calibrationUp[targetIdx] = learnedV
+								} else {
+									// Descending (written from reset positive)
+									a.calibManager.UpdateCalibrationDown(targetIdx, 0, Ec)
+									a.calibManager.CalibrationDown[targetIdx] = learnedV
+									a.calibrationDown[targetIdx] = learnedV
 								}
-								log.Printf("CALIB LEARN UP[%d]: %.3f → %.3f (%.3f×Ec)", targetLevel, oldV, learnedV, learnedV/Ec)
-							} else {
-								// Descending (written from reset positive)
-								oldV := a.calibrationDown[targetLevel]
-								a.calibrationDown[targetLevel] = learnedV
-								if a.calibManager != nil {
-									a.calibManager.CalibrationDown[targetLevel] = learnedV
-								}
-								log.Printf("CALIB LEARN DOWN[%d]: %.3f → %.3f (%.3f×Ec)", targetLevel, oldV, learnedV, learnedV/Ec)
+								log.Printf("CALIB LEARN: target=%d learnedV=%.3f×Ec (updated via CM)", targetLevel, learnedV/Ec)
 							}
 
 						case controller.StateForceReset:
@@ -1254,8 +1100,8 @@ func (a *App) simulationLoop() {
 					a.polarization = a.timeResDataPols[idx]
 					a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
 
-					// Update discrete level - normalize by effective Pr (not Ps) so levels 1 and 30 are reachable
-					effPr := a.preisach.GetEffectivePr()
+					// Update discrete level - normalize by material Pr (not Ps) so levels 1 and 30 are reachable
+					effPr := a.material.Pr
 					if effPr <= 0 {
 						effPr = a.material.Pr
 					}
@@ -1336,42 +1182,39 @@ func (a *App) simulationLoop() {
 			}
 		}
 
-		// Copy data for UI update
-		eField := a.electricField
-		pol := a.polarization
-		level := a.discreteLevel
-		materialEc := mat.Ec // Capture Ec under lock for thread safety
-		eHist := make([]float64, len(a.eHistory))
-		pHist := make([]float64, len(a.pHistory))
-		copy(eHist, a.eHistory)
-		copy(pHist, a.pHistory)
+	// Update UI (must be on main thread)
+	fE := a.electricField
+	pV := a.polarization
+	dL := a.discreteLevel
+	materialEc := mat.Ec // Capture Ec under lock for thread safety
+	eHist := make([]float64, len(a.eHistory))
+	pHist := make([]float64, len(a.pHistory))
+	copy(eHist, a.eHistory)
+	copy(pHist, a.pHistory)
 
-		a.mu.Unlock()
+	a.mu.Unlock()
 
-		// Update UI (must be on main thread)
-		a.updateUI(eField, pol, level, materialEc, eHist, pHist)
-	}
+	a.refreshGUI(fE, pV, dL, materialEc, eHist, pHist)
 }
 
-// updateUI updates all UI elements with the latest simulation data.
-// materialEc is passed as parameter to avoid race conditions with a.material access.
-func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist, pHist []float64) {
+// refreshGUI updates all UI elements with the latest simulation data.
+func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float64, hP []float64) {
 	fyne.Do(func() {
 		// Update labels
-		a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", eField/1e8))
-		a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pol*100))
+		a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", fE/1e8))
+		a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pV*100))
 		a.mu.RLock()
 		numLevels := a.numLevels
 		a.mu.RUnlock()
-		a.levelLabel.SetText(fmt.Sprintf("%d/%d", level+1, numLevels))
+		a.levelLabel.SetText(fmt.Sprintf("%d/%d", dL+1, numLevels))
 
 		// Update state descriptor (divide into thirds)
 		var stateText string
 		lowThird := numLevels / 3
 		highThird := numLevels * 2 / 3
-		if level < lowThird {
+		if dL < lowThird {
 			stateText = "Negative P"
-		} else if level >= highThird {
+		} else if dL >= highThird {
 			stateText = "Positive P"
 		} else {
 			stateText = "Intermediate"
@@ -1382,7 +1225,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 
 		// Update stability indicator (M12)
 		if a.stabilityIndicator != nil {
-			a.stabilityIndicator.SetLevel(level+1, numLevels)
+			a.stabilityIndicator.SetLevel(dL+1, numLevels)
 		}
 
 		// Update wake-up/fatigue labels (Dr. Tour recommendation)
@@ -1476,7 +1319,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
 		a.mu.RUnlock()
 		if shouldUpdateSlider {
-			a.eFieldSlider.SetValue(eField / materialEc)
+			a.eFieldSlider.SetValue(fE / eC)
 		}
 
 		// Update status and logging
@@ -1484,7 +1327,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			a.statusLabel.SetText("⏸ Paused")
 		} else {
 			a.mu.RLock()
-			waveform := a.waveform
+			currentWaveform := a.waveform
 			wrdPhase := a.wrdPhase
 			wrdTarget := a.wrdTargetLevel
 			wrdRead := a.wrdReadLevel
@@ -1495,7 +1338,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			midLevel := a.numLevels / 2 // Dynamic middle level for direction logic
 			a.mu.RUnlock()
 
-			switch waveform {
+			switch currentWaveform {
 			case WaveformWriteReadDemo:
 				var phaseStr string
 				// Log phase transitions (6 phases: RESET, HOLD_RESET, WRITE, HOLD_WRITE, READ, DISPLAY)
@@ -1522,7 +1365,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 						a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
 					case 3:
 						// HOLD_WRITE: Return to zero, polarization persists
-						a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", level+1))
+						a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", dL+1))
 					case 4:
 						// READ: Non-destructive sense
 						a.addLogEntry("▒▒ READ    | E<Ec | ~1fJ")
@@ -1566,9 +1409,9 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					}
 					phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
 				case 3:
-					phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", level+1)
+					phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", dL+1)
 				case 4:
-					phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", level+1)
+					phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", dL+1)
 				case 5:
 					successRate := 0.0
 					if writeCount > 0 {
@@ -1584,13 +1427,13 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			case WaveformManual:
 				// Manual mode status with RESET-AND-RETRY physics
 				a.mu.RLock()
-				animating := a.manualAnimating
+				animAnimating := a.manualAnimating
 				manPhase := a.manualPhase
 				manTarget := a.manualTargetLevel
 				manStart := a.manualStartLevel
 				a.mu.RUnlock()
 
-				if animating {
+				if animAnimating {
 					var phaseStr string
 					switch manPhase {
 					case 0:
@@ -1605,13 +1448,13 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 					case 2:
 						phaseStr = fmt.Sprintf("WRITE → L%d...", manTarget)
 					case 3:
-						phaseStr = fmt.Sprintf("HOLD L%d...", level+1)
+						phaseStr = fmt.Sprintf("HOLD L%d...", dL+1)
 					default:
-						phaseStr = fmt.Sprintf("Current: L%d", level+1)
+						phaseStr = fmt.Sprintf("Current: L%d", dL+1)
 					}
 					a.statusLabel.SetText(fmt.Sprintf("TARGET L%d | %s", manTarget, phaseStr))
 				} else {
-					a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", level+1))
+					a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", dL+1))
 				}
 			case WaveformTimeResolved:
 				a.mu.RLock()
@@ -1629,7 +1472,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 
 					switchedFrac := float64(switchedCount) / float64(totalHysterons) * 100
 					a.statusLabel.SetText(fmt.Sprintf("⚡ Time-Resolved | t=%.1f ns | %.0f%% switched | L%d",
-						currentTime*1e9, switchedFrac, level+1))
+						currentTime*1e9, switchedFrac, dL+1))
 				} else {
 					a.statusLabel.SetText("⚡ Time-Resolved Switching (KAI Dynamics)")
 				}
@@ -1648,40 +1491,40 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		a.logText.SetText(logText)
 
 		// Update plot
-		a.plot.SetData(eHist, pHist, eField, pol)
+		a.plot.SetData(hE, hP, fE, pV)
 		a.plot.Refresh()
 
 		// Update level indicator (level is 0-indexed, display is 1-indexed)
-		a.levelIndicator.SetLevel(level)
+		a.levelIndicator.SetLevel(dL)
 
 		// Highlight target level during animations
 		a.mu.RLock()
-		currentWaveform := a.waveform
-		currentWrdPhase := a.wrdPhase
-		currentWrdTarget := a.wrdTargetLevel
-		manualAnim := a.manualAnimating
-		manualTarget := a.manualTargetLevel
-		materialEc := a.material.Ec // For settled threshold
+		currentMode := a.waveform
+		currentWrdPh := a.wrdPhase
+		currentWrdTrg := a.wrdTargetLevel
+		manAnim := a.manualAnimating
+		manTrg := a.manualTargetLevel
+		matEcVal := a.material.Ec // For settled threshold
 		a.mu.RUnlock()
 
-		if currentWaveform == WaveformWriteReadDemo {
+		if currentMode == WaveformWriteReadDemo {
 			// Show target until point SETTLES at target level (not just crosses it)
 			// Settled = level matches target AND E-field is near zero
-			atTarget := (level + 1) == currentWrdTarget                  // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(eField) < 0.01*materialEc          // E-field near zero (1% of Ec)
-			settled := atTarget && eFieldSettled && currentWrdPhase >= 3 // Must be past WRITE phase
+			atTarget := (dL + 1) == currentWrdTrg                  // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(fE) < 0.01*matEcVal          // E-field near zero (1% of Ec)
+			settled := atTarget && eFieldSettled && currentWrdPh >= 3 // Must be past WRITE phase
 
 			// Keep highlight on during active phases OR until settled at target
-			highlight := currentWrdPhase >= 0 && currentWrdPhase <= 5 && !settled
-			a.levelIndicator.SetTargetLevel(currentWrdTarget, highlight)
-		} else if currentWaveform == WaveformManual && manualAnim {
+			highlight := currentWrdPh >= 0 && currentWrdPh <= 5 && !settled
+			a.levelIndicator.SetTargetLevel(currentWrdTrg, highlight)
+		} else if currentMode == WaveformManual && manAnim {
 			// Show target until point SETTLES at target level in Manual mode
-			atTarget := (level + 1) == manualTarget // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(eField) < 0.01*materialEc
+			atTarget := (dL + 1) == manTrg // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(fE) < 0.01*matEcVal
 			settled := atTarget && eFieldSettled
 
 			// Keep highlight on until settled at target
-			a.levelIndicator.SetTargetLevel(manualTarget, !settled)
+			a.levelIndicator.SetTargetLevel(manTrg, !settled)
 		} else {
 			// Clear target highlight
 			a.levelIndicator.SetTargetLevel(0, false)
@@ -1690,7 +1533,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		a.levelIndicator.Refresh()
 
 		// Update cell visualizer
-		a.cellViz.SetLevel(level)
+		a.cellViz.SetLevel(dL)
 		a.cellViz.Refresh()
 	})
 }
@@ -1807,8 +1650,8 @@ func (a *App) calibrateLevels() {
 		a.relaxCompDown[i] = 0.0
 	}
 
-	// Get effective Pr for normalization (levels 1 and 30 must be reachable)
-	effPr := a.preisach.GetEffectivePr()
+	// Get material Pr for normalization (levels 1 and 30 must be reachable)
+	effPr := a.material.Pr
 	if effPr <= 0 {
 		effPr = a.material.Pr
 	}

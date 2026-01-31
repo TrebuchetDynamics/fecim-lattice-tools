@@ -84,47 +84,6 @@ func (p *PEPlot) SetData(eData, pData []float64, currentE, currentP float64) {
 	p.pData = pData
 	p.currentE = currentE
 	p.currentP = currentP
-
-	// AUTO-DETECT actual Pr from the hysteresis loop data
-	// Find polarization values where E is closest to zero (remanent state)
-	// This ensures Pr markers match the actual loop, not theoretical values
-	if len(eData) > 10 && len(pData) == len(eData) {
-		var prPos, prNeg float64
-		var foundPos, foundNeg bool
-		minEPos, minENeg := 1e10, 1e10
-
-		for i := 1; i < len(eData); i++ {
-			e := eData[i]
-			pVal := pData[i]
-			absE := e
-			if absE < 0 {
-				absE = -absE
-			}
-
-			// Look for E≈0 crossings where P is positive (upper branch)
-			if pVal > 0 && absE < minEPos && absE < p.eMax*0.1 {
-				minEPos = absE
-				prPos = pVal
-				foundPos = true
-			}
-			// Look for E≈0 crossings where P is negative (lower branch)
-			if pVal < 0 && absE < minENeg && absE < p.eMax*0.1 {
-				minENeg = absE
-				prNeg = -pVal // Store as positive value
-				foundNeg = true
-			}
-		}
-
-		// Update pr with the average of positive and negative branches
-		if foundPos && foundNeg {
-			p.pr = (prPos + prNeg) / 2.0
-		} else if foundPos {
-			p.pr = prPos
-		} else if foundNeg {
-			p.pr = prNeg
-		}
-	}
-
 	p.mu.Unlock()
 }
 
