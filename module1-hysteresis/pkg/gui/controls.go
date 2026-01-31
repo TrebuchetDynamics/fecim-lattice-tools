@@ -325,9 +325,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 				a.pHistory = a.pHistory[:0]
 			}
 
-			// Get plot markers with temperature-corrected Ec and Pr
+			// Get plot markers with temperature-corrected Ec and nominal Pr
 			effEc := a.preisach.GetEffectiveEc()
-			effPr := a.preisach.GetEffectivePr()
+			// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
+			effPr := a.material.Pr
 			a.mu.Unlock()
 
 			// Only update material markers (Ec/Pr lines), NOT the axis bounds
@@ -381,14 +382,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 func (a *App) getCurrentMaterialID() string {
 	// Map material names to IDs
 	nameToID := map[string]string{
-		"HZO (Si-doped)":                       "default_hzo",
-		"FeCIM HZO":                            "fecim_hzo",
+		"HZO (Si-doped)":                        "default_hzo",
+		"FeCIM HZO":                             "fecim_hzo",
 		"FeCIM HZO (TARGET - NOT DEMONSTRATED)": "fecim_hzo_target",
 		"Literature Superlattice (Cheema 2020)": "literature_superlattice",
-		"Cryogenic HZO (4K)":                   "cryogenic_hzo",
-		"HZO Standard (32 states)":             "hzo_standard_32",
-		"HZO FTJ (140 states)":                 "hzo_ftj_140",
-		"AlScN (8-16 states)":                  "alscn",
+		"Cryogenic HZO (4K)":                    "cryogenic_hzo",
+		"HZO Standard (32 states)":              "hzo_standard_32",
+		"HZO FTJ (140 states)":                  "hzo_ftj_140",
+		"AlScN (8-16 states)":                   "alscn",
 	}
 
 	if a.material != nil {
@@ -461,9 +462,10 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.wrdTotalEnergyfJ = 0
 	a.wrdCycleEnergy = 0
 
-	// Get temperature-corrected values
+	// Get temperature-corrected Ec and nominal Pr
 	effEc := a.preisach.GetEffectiveEc()
-	effPr := a.preisach.GetEffectivePr()
+	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
+	effPr := a.material.Pr
 
 	// Update number of levels based on material
 	newLevels := a.material.GetNumLevels()
@@ -535,4 +537,3 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	}
 	a.needsCalibration = false
 }
-

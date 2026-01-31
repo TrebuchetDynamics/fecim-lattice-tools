@@ -227,7 +227,7 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 		// No sign change - we haven't crossed target yet.
 		// If we made NO progress (diff is same), kick it harder
 		if diff == wc.PreviousDiff {
-			wc.StepModifier *= 1.5 // More aggressive when stuck
+			wc.StepModifier *= 1.2 // Moderate increase when stuck (was 1.5, caused exponential growth)
 		} else {
 			// We made progress, keep steady or slightly dampen to land softly
 			wc.StepModifier = 1.0

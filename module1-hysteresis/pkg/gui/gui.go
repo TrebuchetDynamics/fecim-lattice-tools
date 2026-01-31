@@ -528,9 +528,10 @@ func (a *App) createUI() fyne.CanvasObject {
 	a.cellViz.SetMinSize(fyne.NewSize(180, 200)) // Increased 30% for prominence
 
 	// Create P-E plot - will expand to fill space
-	// Use temperature-corrected values for initial plot setup
+	// Use temperature-corrected Ec and nominal Pr for initial plot setup
 	effEc := a.preisach.GetEffectiveEc()
-	effPr := a.preisach.GetEffectivePr()
+	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
+	effPr := a.material.Pr
 	a.plot = widgets.NewPEPlot(effEc*2.5, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
 	a.plot.SetMaterialParams(effEc, effPr)

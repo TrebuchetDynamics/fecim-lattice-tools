@@ -1418,7 +1418,8 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		// Update temperature-dependent metrics (must hold lock during preisach access)
 		a.mu.RLock()
 		effEc := a.preisach.GetEffectiveEc()
-		effPr := a.preisach.GetEffectivePr()
+		// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
+		effPr := a.material.Pr
 		switchedFraction := a.preisach.GetSwitchedFraction()
 
 		// Calculate squareness (Pr/Ps ratio)
