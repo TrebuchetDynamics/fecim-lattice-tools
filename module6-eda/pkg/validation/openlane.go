@@ -9,7 +9,10 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/openlane"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logOpenLaneValidation = logging.NewLogger("eda-validation-openlane")
 
 // PlacementResult contains the results of placement validation
 type PlacementResult struct {
@@ -73,6 +76,8 @@ func detectArchitectureFromDEF(defPath string) string {
 
 // RunPlacementCheck validates placement using OpenROAD with default cell LEF path
 func RunPlacementCheck(defPath string, manager *openlane.Manager, config *openlane.Config) (*PlacementResult, error) {
+	logOpenLaneValidation.Input("RunPlacementCheck", map[string]interface{}{"defPath": defPath})
+
 	arch := detectArchitectureFromDEF(defPath)
 
 	lefPath := "cells/fecim_bitcell/fecim_bitcell.lef"
@@ -88,6 +93,10 @@ func RunPlacementCheck(defPath string, manager *openlane.Manager, config *openla
 
 // RunPlacementCheckWithCell validates placement using OpenROAD with specified cell LEF
 func RunPlacementCheckWithCell(defPath string, cellLEFPath string, manager *openlane.Manager, config *openlane.Config) (*PlacementResult, error) {
+	logOpenLaneValidation.Input("RunPlacementCheckWithCell", map[string]interface{}{
+		"defPath": defPath, "cellLEFPath": cellLEFPath,
+	})
+
 	// Check if DEF file exists
 	if _, err := os.Stat(defPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("DEF file not found: %s", defPath)
@@ -207,6 +216,8 @@ func parsePlacementOutput(output string) ([]PlacementViolation, int) {
 
 // RunCellUsageReport gets cell usage statistics
 func RunCellUsageReport(defPath string, manager *openlane.Manager, config *openlane.Config) (*CellUsageResult, error) {
+	logOpenLaneValidation.Input("RunCellUsageReport", map[string]interface{}{"defPath": defPath})
+
 	// Run placement check which includes cell usage
 	placementResult, err := RunPlacementCheck(defPath, manager, config)
 	if err != nil {

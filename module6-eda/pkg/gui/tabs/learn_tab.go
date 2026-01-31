@@ -9,6 +9,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 // sizedContainer wraps a canvas object with a minimum size requirement
@@ -26,6 +28,8 @@ func sizedContainer(child fyne.CanvasObject, width, height float32) fyne.CanvasO
 
 // MakeLearnTab creates the learning center tab with educational content
 func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
+	logging.GlobalDebug("[EDA-Learn] Creating Learn tab")
+
 	// Topic selector
 	topics := []string{
 		"1. What is FeCIM EDA?",
@@ -59,6 +63,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Connect topic selector to content
 	topicSelector.OnSelected = func(id widget.ListItemID) {
+		logging.GlobalDebug("[EDA-Learn] Topic selected: %d (%s)", id, topics[id])
 		var content fyne.CanvasObject
 		switch id {
 		case 0:

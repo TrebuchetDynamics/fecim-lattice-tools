@@ -8,11 +8,17 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logDEFValidator = logging.NewLogger("eda-validation-def")
 
 // ValidateDEF performs basic DEF syntax validation
 // Checks for required keywords, component count, and basic structure
 func ValidateDEF(defPath string) error {
+	logDEFValidator.Input("ValidateDEF", map[string]interface{}{"defPath": defPath})
+
 	// Check if file exists
 	file, err := os.Open(defPath)
 	if err != nil {
@@ -96,6 +102,8 @@ func ValidateDEF(defPath string) error {
 
 // GetDEFStats returns basic statistics from a DEF file
 func GetDEFStats(defPath string) (map[string]interface{}, error) {
+	logDEFValidator.Input("GetDEFStats", map[string]interface{}{"defPath": defPath})
+
 	file, err := os.Open(defPath)
 	if err != nil {
 		return nil, err

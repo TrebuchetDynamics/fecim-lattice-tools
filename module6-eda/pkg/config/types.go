@@ -14,7 +14,16 @@ type CellConfig struct {
 	Height       float64 // Cell height in μm (SKY130 standard cell height: 2.72 μm)
 	CellType     string  // "passive" (0T1R) or "1t1r" (with selector)
 	Technology   string  // Target PDK, e.g., "sky130"
-	
+
+	// Operating conditions (for Liberty file generation)
+	Voltage     float64 // Operating voltage in V (default: 1.8V for SKY130)
+	Temperature float64 // Operating temperature in °C (default: 25°C typical corner)
+	Process     float64 // Process corner (1.0 = typical, <1.0 = fast, >1.0 = slow)
+
+	// Metal layer parameters (for LEF file generation)
+	MetalPitch float64 // Metal1 pitch in μm (default: 0.46 for SKY130)
+	MetalWidth float64 // Metal1 minimum width in μm (default: 0.14 for SKY130)
+
 	// ⚠️ PLACEHOLDER TIMING VALUES
 	// These are estimates requiring FeFET characterization via SPICE simulation
 	// Real values need: SPICE compact model + Liberty characterization
@@ -45,6 +54,13 @@ func DefaultCellConfig() CellConfig {
 		Height:       2.72,  // μm (SKY130 standard cell height)
 		CellType:     "passive",
 		Technology:   "sky130",
+		// Operating conditions (SKY130 typical corner)
+		Voltage:     1.8,  // V (SKY130 nominal VDD)
+		Temperature: 25.0, // °C (typical corner)
+		Process:     1.0,  // Typical process corner
+		// Metal layer parameters (SKY130 met1)
+		MetalPitch: 0.46, // μm (SKY130 met1 pitch)
+		MetalWidth: 0.14, // μm (SKY130 met1 minimum width)
 		// PLACEHOLDER timing values
 		RiseTime:     10.0,   // ns (realistic for HfO₂ FeFET at standard voltages)
 		FallTime:     10.0,   // ns (realistic for HfO₂ FeFET at standard voltages)

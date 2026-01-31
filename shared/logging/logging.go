@@ -225,19 +225,19 @@ func (l *Logger) EntryChange(entryName string, text string) {
 	}
 }
 
-// Calculation logs a physics/math calculation at TRACE level
-// Format: [TRACE] CALC: funcName(param1=value1, param2=value2) = result
+// Calculation logs a physics/math calculation at DEBUG level
+// Format: [DEBUG] CALC: funcName(param1=value1, param2=value2) = result
 func (l *Logger) Calculation(funcName string, inputs map[string]interface{}, result interface{}) {
-	if IsVerbose(VerbosityTrace) {
-		l.Printf("[TRACE] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
 	}
 }
 
-// Input logs function entry with parameters at TRACE level
-// Format: [TRACE] INPUT: funcName(param1=value1, param2=value2)
+// Input logs function entry with parameters at DEBUG level
+// Format: [DEBUG] INPUT: funcName(param1=value1, param2=value2)
 func (l *Logger) Input(funcName string, params map[string]interface{}) {
-	if IsVerbose(VerbosityTrace) {
-		l.Printf("[TRACE] INPUT: %s(%s)", funcName, formatParams(params))
+	if IsVerbose(VerbosityDebug) {
+		l.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(params))
 	}
 }
 
@@ -344,7 +344,16 @@ func Printf(format string, v ...interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Printf(format, v...)
 	} else {
-		log.Printf(format, v...)
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		msg := fmt.Sprintf(format, v...)
+		if writer != nil {
+			fmt.Fprintf(writer, "%s %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		} else {
+			log.Printf("%s", msg)
+		}
 	}
 }
 
@@ -353,7 +362,16 @@ func Println(v ...interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Println(v...)
 	} else {
-		log.Println(v...)
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		if writer != nil {
+			fmt.Fprint(writer, time.Now().Format("2006/01/02 15:04:05")+" ")
+			fmt.Fprintln(writer, v...)
+		} else {
+			log.Println(v...)
+		}
 	}
 }
 
@@ -361,8 +379,17 @@ func Println(v ...interface{}) {
 func GlobalInfo(format string, args ...interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Info(format, args...)
-	} else {
-		log.Printf("[INFO] "+format, args...)
+	} else if IsVerbose(VerbosityInfo) {
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		msg := fmt.Sprintf(format, args...)
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [INFO] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		} else {
+			log.Printf("[INFO] %s", msg)
+		}
 	}
 }
 
@@ -371,34 +398,68 @@ func GlobalDebug(format string, args ...interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Debug(format, args...)
 	} else if IsVerbose(VerbosityDebug) {
-		log.Printf("[DEBUG] "+format, args...)
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		msg := fmt.Sprintf(format, args...)
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [DEBUG] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		} else {
+			log.Printf("[DEBUG] %s", msg)
+		}
 	}
 }
 
-// GlobalError logs at ERROR level
+// GlobalError logs at ERROR level (always logs regardless of verbosity)
 func GlobalError(format string, args ...interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Printf("[ERROR] "+format, args...)
 	} else {
-		log.Printf("[ERROR] "+format, args...)
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		msg := fmt.Sprintf(format, args...)
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [ERROR] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		} else {
+			log.Printf("[ERROR] %s", msg)
+		}
 	}
 }
 
-// GlobalCalculation logs a calculation at TRACE level using the default logger
+// GlobalCalculation logs a calculation at DEBUG level using the default logger
 func GlobalCalculation(funcName string, inputs map[string]interface{}, result interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Calculation(funcName, inputs, result)
-	} else if IsVerbose(VerbosityTrace) {
-		log.Printf("[TRACE] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+	} else if IsVerbose(VerbosityDebug) {
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [DEBUG] CALC: %s(%s) = %v\n", time.Now().Format("2006/01/02 15:04:05"), funcName, formatParams(inputs), result)
+		} else {
+			log.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+		}
 	}
 }
 
-// GlobalInput logs function entry at TRACE level using the default logger
+// GlobalInput logs function entry at DEBUG level using the default logger
 func GlobalInput(funcName string, params map[string]interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Input(funcName, params)
-	} else if IsVerbose(VerbosityTrace) {
-		log.Printf("[TRACE] INPUT: %s(%s)", funcName, formatParams(params))
+	} else if IsVerbose(VerbosityDebug) {
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [DEBUG] INPUT: %s(%s)\n", time.Now().Format("2006/01/02 15:04:05"), funcName, formatParams(params))
+		} else {
+			log.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(params))
+		}
 	}
 }
 
@@ -407,7 +468,15 @@ func GlobalOutput(funcName string, result interface{}) {
 	if defaultLogger != nil {
 		defaultLogger.Output(funcName, result)
 	} else if IsVerbose(VerbosityTrace) {
-		log.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [TRACE] OUTPUT: %s -> %v\n", time.Now().Format("2006/01/02 15:04:05"), funcName, result)
+		} else {
+			log.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
+		}
 	}
 }
 

@@ -16,8 +16,12 @@ package export
 
 import (
 	"fmt"
+
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logLiberty = logging.NewLogger("eda-export-liberty")
 
 // GenerateLiberty generates a Liberty (.lib) timing file for the FeCIM bitcell
 // This is required by synthesis and STA tools (OpenROAD, OpenLane)
@@ -26,6 +30,10 @@ import (
 //
 // ⚠️ WARNING: Generated timing values are PLACEHOLDERS requiring characterization
 func GenerateLiberty(cfg config.CellConfig) string {
+	logLiberty.Input("GenerateLiberty", map[string]interface{}{
+		"cellName": cfg.Name, "cellType": cfg.CellType, "width": cfg.Width, "height": cfg.Height,
+	})
+
 	if cfg.CellType == "1t1r" {
 		return Generate1T1RLiberty(cfg)
 	}
@@ -33,6 +41,24 @@ func GenerateLiberty(cfg config.CellConfig) string {
 		return Generate2T1RLiberty(cfg)
 	}
 	area := cfg.Width * cfg.Height
+
+	// Use configured operating conditions with sensible defaults
+	voltage := cfg.Voltage
+	if voltage <= 0 {
+		voltage = 1.8 // SKY130 default
+	}
+	temperature := cfg.Temperature
+	if temperature <= 0 {
+		temperature = 25.0 // Typical corner
+	}
+	process := cfg.Process
+	if process <= 0 {
+		process = 1.0 // Typical process
+	}
+
+	// Transition time ~30% of propagation delay for realistic physics
+	riseTransition := cfg.RiseTime * 0.3
+	fallTransition := cfg.FallTime * 0.3
 
 	return fmt.Sprintf(`library(fecim_cells) {
   technology (cmos) ;
@@ -45,9 +71,9 @@ func GenerateLiberty(cfg config.CellConfig) string {
   leakage_power_unit : "1nW" ;
 
   operating_conditions(typical) {
-    process : 1.0 ;
-    temperature : 25 ;
-    voltage : 1.8 ;
+    process : %.1f ;
+    temperature : %.1f ;
+    voltage : %.2f ;
   }
   default_operating_conditions : typical ;
 
@@ -75,10 +101,10 @@ func GenerateLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.050") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.050") ;
+          values("%.3f") ;
         }
       }
     }
@@ -94,7 +120,7 @@ func GenerateLiberty(cfg config.CellConfig) string {
     }
   }
 }
-`, cfg.Name, area, cfg.LeakagePower, cfg.InputCap, cfg.RiseTime, cfg.FallTime)
+`, process, temperature, voltage, cfg.Name, area, cfg.LeakagePower, cfg.InputCap, cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition)
 }
 
 // Generate1T1RLiberty generates Liberty file for 1T1R FeCIM bitcell with SL pin
@@ -115,6 +141,24 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
 	}
 	area := width * height
 
+	// Use configured operating conditions with sensible defaults
+	voltage := cfg.Voltage
+	if voltage <= 0 {
+		voltage = 1.8 // SKY130 default
+	}
+	temperature := cfg.Temperature
+	if temperature <= 0 {
+		temperature = 25.0 // Typical corner
+	}
+	process := cfg.Process
+	if process <= 0 {
+		process = 1.0 // Typical process
+	}
+
+	// Transition time ~35% of propagation delay (1T1R slightly slower)
+	riseTransition := cfg.RiseTime * 0.35
+	fallTransition := cfg.FallTime * 0.35
+
 	return fmt.Sprintf(`library(fecim_1t1r_cells) {
   technology (cmos) ;
   delay_model : table_lookup ;
@@ -126,9 +170,9 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
   leakage_power_unit : "1nW" ;
 
   operating_conditions(typical) {
-    process : 1.0 ;
-    temperature : 25 ;
-    voltage : 1.8 ;
+    process : %.1f ;
+    temperature : %.1f ;
+    voltage : %.2f ;
   }
   default_operating_conditions : typical ;
 
@@ -161,10 +205,10 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.060") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.060") ;
+          values("%.3f") ;
         }
       }
 
@@ -179,10 +223,10 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.060") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.060") ;
+          values("%.3f") ;
         }
       }
     }
@@ -198,7 +242,7 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
     }
   }
 }
-`, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime)
+`, process, temperature, voltage, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition, cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition)
 }
 
 // Generate2T1RLiberty generates Liberty file for 2T1R FeCIM bitcell with CSL pin
@@ -220,6 +264,24 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
 	}
 	area := width * height
 
+	// Use configured operating conditions with sensible defaults
+	voltage := cfg.Voltage
+	if voltage <= 0 {
+		voltage = 1.8 // SKY130 default
+	}
+	temperature := cfg.Temperature
+	if temperature <= 0 {
+		temperature = 25.0 // Typical corner
+	}
+	process := cfg.Process
+	if process <= 0 {
+		process = 1.0 // Typical process
+	}
+
+	// Transition time ~40% of propagation delay (2T1R slowest due to dual transistors)
+	riseTransition := cfg.RiseTime * 0.4
+	fallTransition := cfg.FallTime * 0.4
+
 	return fmt.Sprintf(`library(fecim_2t1r_cells) {
   technology (cmos) ;
   delay_model : table_lookup ;
@@ -231,9 +293,9 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
   leakage_power_unit : "1nW" ;
 
   operating_conditions(typical) {
-    process : 1.0 ;
-    temperature : 25 ;
-    voltage : 1.8 ;
+    process : %.1f ;
+    temperature : %.1f ;
+    voltage : %.2f ;
   }
   default_operating_conditions : typical ;
 
@@ -271,10 +333,10 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
       }
 
@@ -289,10 +351,10 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
       }
 
@@ -307,10 +369,10 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
           values("%.3f") ;
         }
         rise_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
         fall_transition(scalar) {
-          values("0.070") ;
+          values("%.3f") ;
         }
       }
     }
@@ -326,5 +388,8 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
     }
   }
 }
-`, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.InputCap, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime)
+`, process, temperature, voltage, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.InputCap,
+		cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition,
+		cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition,
+		cfg.RiseTime, cfg.FallTime, riseTransition, fallTransition)
 }

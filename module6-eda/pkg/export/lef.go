@@ -11,8 +11,12 @@ package export
 
 import (
 	"fmt"
+
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logLEF = logging.NewLogger("eda-export-lef")
 
 // GenerateLEF generates a LEF (Library Exchange Format) file for the FeCIM bitcell
 // LEF provides the abstract/physical view needed by place-and-route tools (OpenLane/OpenROAD)
@@ -20,13 +24,28 @@ import (
 // Supports passive, 1T1R, and 2T1R architectures
 // Includes minimal layer and site definitions for standalone validation
 func GenerateLEF(cfg config.CellConfig) string {
+	logLEF.Input("GenerateLEF", map[string]interface{}{
+		"cellName": cfg.Name, "cellType": cfg.CellType, "width": cfg.Width, "height": cfg.Height,
+	})
+
 	if cfg.CellType == "1t1r" {
 		return Generate1T1RLEF(cfg)
 	}
 	if cfg.CellType == "2t1r" {
 		return Generate2T1RLEF(cfg)
 	}
-	return fmt.Sprintf(`VERSION 5.8 ;
+
+	// Use configured metal parameters with sensible defaults
+	metalPitch := cfg.MetalPitch
+	if metalPitch <= 0 {
+		metalPitch = 0.46 // SKY130 met1 pitch
+	}
+	metalWidth := cfg.MetalWidth
+	if metalWidth <= 0 {
+		metalWidth = 0.14 // SKY130 met1 minimum width
+	}
+
+	result := fmt.Sprintf(`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 
@@ -34,8 +53,8 @@ DIVIDERCHAR "/" ;
 LAYER met1
   TYPE ROUTING ;
   DIRECTION HORIZONTAL ;
-  PITCH 0.46 ;
-  WIDTH 0.14 ;
+  PITCH %.2f ;
+  WIDTH %.2f ;
 END met1
 
 # Site definition for placement
@@ -96,7 +115,13 @@ MACRO %s
 END %s
 
 END LIBRARY
-`, cfg.Width, cfg.Height, cfg.Name, cfg.Width, cfg.Height, cfg.Name)
+`, metalPitch, metalWidth, cfg.Width, cfg.Height, cfg.Name, cfg.Width, cfg.Height, cfg.Name)
+
+	logLEF.Calculation("GenerateLEF", map[string]interface{}{
+		"cellName": cfg.Name, "cellType": "passive", "width": cfg.Width, "height": cfg.Height,
+	}, nil)
+
+	return result
 }
 
 // Generate1T1RLEF generates LEF for 1T1R FeCIM bitcell with SL (Source Line) pin
@@ -117,6 +142,16 @@ func Generate1T1RLEF(cfg config.CellConfig) string {
 		height = 3.400 // Taller for transistor + FeFET stack
 	}
 
+	// Use configured metal parameters with sensible defaults
+	metalPitch := cfg.MetalPitch
+	if metalPitch <= 0 {
+		metalPitch = 0.46 // SKY130 met1 pitch
+	}
+	metalWidth := cfg.MetalWidth
+	if metalWidth <= 0 {
+		metalWidth = 0.14 // SKY130 met1 minimum width
+	}
+
 	return fmt.Sprintf(`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
@@ -125,8 +160,8 @@ DIVIDERCHAR "/" ;
 LAYER met1
   TYPE ROUTING ;
   DIRECTION HORIZONTAL ;
-  PITCH 0.46 ;
-  WIDTH 0.14 ;
+  PITCH %.2f ;
+  WIDTH %.2f ;
 END met1
 
 # Site definition for 1T1R placement
@@ -196,7 +231,7 @@ MACRO %s
 END %s
 
 END LIBRARY
-`, width, height, cellName, width, height, cellName)
+`, metalPitch, metalWidth, width, height, cellName, width, height, cellName)
 }
 
 // Generate2T1RLEF generates LEF for 2T1R FeCIM bitcell with CSL (Column Select Line) pin
@@ -217,6 +252,16 @@ func Generate2T1RLEF(cfg config.CellConfig) string {
 		height = 3.400 // Taller for dual transistor + FeFET stack
 	}
 
+	// Use configured metal parameters with sensible defaults
+	metalPitch := cfg.MetalPitch
+	if metalPitch <= 0 {
+		metalPitch = 0.46 // SKY130 met1 pitch
+	}
+	metalWidth := cfg.MetalWidth
+	if metalWidth <= 0 {
+		metalWidth = 0.14 // SKY130 met1 minimum width
+	}
+
 	return fmt.Sprintf(`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
@@ -225,8 +270,8 @@ DIVIDERCHAR "/" ;
 LAYER met1
   TYPE ROUTING ;
   DIRECTION HORIZONTAL ;
-  PITCH 0.46 ;
-  WIDTH 0.14 ;
+  PITCH %.2f ;
+  WIDTH %.2f ;
 END met1
 
 # Site definition for 2T1R placement
@@ -305,5 +350,5 @@ MACRO %s
 END %s
 
 END LIBRARY
-`, width, height, cellName, width, height, cellName)
+`, metalPitch, metalWidth, width, height, cellName, width, height, cellName)
 }

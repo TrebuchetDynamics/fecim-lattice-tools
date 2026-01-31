@@ -7,11 +7,19 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logCrossCheck = logging.NewLogger("eda-validation-crosscheck")
 
 // CrossCheckFiles performs cross-file consistency checks between LEF, LIB, and Verilog
 // Verifies that pin names and cell names match across all three files
 func CrossCheckFiles(lefPath, libPath, verilogPath string) error {
+	logCrossCheck.Input("CrossCheckFiles", map[string]interface{}{
+		"lefPath": lefPath, "libPath": libPath, "verilogPath": verilogPath,
+	})
+
 	// Extract data from each file
 	lefPins, lefCellName, err := extractLEFData(lefPath)
 	if err != nil {

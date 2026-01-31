@@ -85,8 +85,9 @@ This document provides the authoritative reference for all voltage values used i
 | Coercive Field (Ec) | 0.6-1.5 MV/cm | Material-dependent | `config/physics.yaml` (Nature Commun. 2025) | ✅ Peer-reviewed |
 | Film Thickness | 10 nm | ±1 nm | `config/physics.yaml` | ✅ Standard |
 | Coercive Voltage (Vc) | 0.6-1.5 V | Derived: Vc = Ec × thickness | Calculated from Ec | ⚠️ Estimated |
+| Read Voltage Max Ratio | 0.7 × Vc | 30% safety margin below Vc | `config/physics.yaml` (field_min_ratio) | ✅ Verified |
 | **Operation Voltages** | | | | |
-| Read Voltage | 0.1-0.5 V | <Vc | `module4-circuits/pkg/peripherals/analysis.go:249` | ✅ Verified |
+| Read Voltage | 0.1-0.5 V | <0.7×Vc (30% margin) | `module4-circuits/pkg/peripherals/analysis.go:249` | ✅ Verified |
 | Write Voltage (Set) | +1.2-1.5 V | >Vc with margin | Derived from DAC range | ⚠️ Estimated |
 | Write Voltage (Erase) | -1.2-1.5 V | Negative polarity | Derived from DAC range | ⚠️ Estimated |
 | MVM Input Range | 0.0-1.0 V | DAC output → array | ADC Vref range | ✅ Verified |
@@ -110,7 +111,7 @@ This document provides the authoritative reference for all voltage values used i
 - Coercive voltage (Vc) is **calculated** from Ec and thickness via `material.CoerciveVoltage()`.
 
 **Recommended Values (300K Operation):**
-- Read: **0.2V** (safe margin below Vc)
+- Read: **0.2V** (30% safety margin below Vc: max = 0.7×Vc = 0.7-1.05V for Vc=1.0-1.5V)
 - Write: **±1.5V** (maximum DAC range for full switching)
 - MVM: **0.0-1.0V** (matches ADC input range)
 
@@ -137,7 +138,7 @@ WL ─────────●────────────
 
 | Parameter | Value | Purpose | Notes |
 |-----------|-------|---------|-------|
-| **WL Voltage** | 0.1-0.5 V | Apply to word line | Below Vc (non-destructive) |
+| **WL Voltage** | 0.1-0.5 V | Apply to word line | Below 0.7×Vc (30% safety margin, non-destructive) |
 | **BL Voltage** | Floating → TIA | Sense current | Voltage develops from I×R_wire |
 | **Unselected WLs** | 0 V | Ground | Minimize sneak paths |
 | **Unselected BLs** | 0 V | Ground | Current sink |
@@ -150,9 +151,10 @@ I_read = G_cell × V_read
 ```
 
 **Constraints:**
-- V_read < Vc (0.6-1.5V) → Non-destructive read
-- Recommended: **0.2V** for safe margin
-- Higher V_read → better SNR but risk of disturb
+- V_read < 0.7×Vc (field_min_ratio = 0.7) → Non-destructive read with 30% safety margin
+- For Vc = 1.0V (typical HZO): V_read_max = 0.7V
+- Recommended: **0.2V** (well within safe margin)
+- Higher V_read → better SNR but risk of disturb above 0.7×Vc
 
 ### 3.2 Write Operation
 
@@ -1006,11 +1008,16 @@ Vread := 0.1  // 0.1V for non-destructive read
 default_hzo:
     ec_v_m: 1.2e8               # Coercive field = 1.2 MV/cm
     thickness_m: 10.0e-9        # Film thickness = 10 nm
+    field_min_ratio: 0.7        # Read voltage max = 0.7 × Vc (30% safety margin)
 
-# Derived coercive voltage:
+# Derived voltages:
 # Vc = Ec × thickness
 #    = 1.2e8 V/m × 10e-9 m
 #    = 1.2 V
+#
+# Read voltage max = field_min_ratio × Vc
+#    = 0.7 × 1.2 V
+#    = 0.84 V (safe non-destructive read)
 ```
 
 ### 7.6 Half-Select Voltage (V/2 Implementation)
@@ -1545,6 +1552,7 @@ Sneak Path Suppression:
 ║  ───────────────────────────────────────────────────────────────────────   ║
 ║   Coercive Field (Ec):    0.6-1.5 MV/cm  (peer-reviewed)                  ║
 ║   Coercive Voltage (Vc):  0.6-1.5 V      (Ec × 10nm)                      ║
+║   Read Max (field_min_ratio):  0.7 × Vc  (30% safety margin below Vc)    ║
 ║                                                                            ║
 ║  OPERATION VOLTAGES                                                        ║
 ║  ───────────────────────────────────────────────────────────────────────   ║
@@ -1568,7 +1576,8 @@ Sneak Path Suppression:
 ║                                                                            ║
 ║  RECOMMENDED VALUES (Safety Margins)                                       ║
 ║  ───────────────────────────────────────────────────────────────────────   ║
-║   READ:   0.2V    (well below Vc, non-destructive)                        ║
+║   READ:   0.2V    (well within 0.7×Vc limit, non-destructive)             ║
+║           Max:    0.7V for Vc=1.0V, 1.05V for Vc=1.5V (30% margin)        ║
 ║   WRITE:  ±1.5V   (maximum DAC range, ensures switching)                  ║
 ║           NOTE: Actual write V varies by target level (30 states)         ║
 ║                 Requires program-verify loop (ISPP, §3.2.1)               ║
@@ -1593,7 +1602,7 @@ Sneak Path Suppression:
 ║                                                                            ║
 ║  SAFETY CHECKS                                                             ║
 ║  ───────────────────────────────────────────────────────────────────────   ║
-║   ✓ Vread < Vc                  (non-destructive read)                    ║
+║   ✓ Vread < 0.7×Vc              (30% safety margin, non-destructive)     ║
 ║   ✓ Vwrite > Vc                 (ensure switching)                        ║
 ║   ✓ V_half_select < Vc          (minimize disturb in 0T1R)                ║
 ║   ✓ MVM range = ADC range       (avoid clipping)                          ║
@@ -1604,6 +1613,7 @@ NOTES:
   - All voltages at 300K (room temperature)
   - Timing parameters in config/physics.yaml
   - Vc varies with material (HZO: 1.2V, AlScN: 5-10V)
+  - Read voltage max = 0.7 × Vc (field_min_ratio = 0.7, 30% safety margin)
   - Half-select voltage = Vwrite/2 (0T1R only)
   - Transistor ON/OFF voltages are standard CMOS logic levels
   - Write voltages are level-dependent (30 unique values per cell)
@@ -1619,11 +1629,12 @@ NOTES:
 - ✅ V/2 half-select explicitly implemented in `ApplyHalfSelectWrite()` (device_state.go:487-518)
 - ✅ Architecture modes verified from device_state.go implementation
 - ✅ Write voltages derived from material properties (Vc = Ec × thickness)
+- ✅ **Read voltage safety margin**: field_min_ratio = 0.7 (30% below Vc, updated January 2026)
 - ✅ **SOR parasitic solver implemented** (solver.go) - ported from CrossSim NonInterleaved_InputSource
 - ✅ **Device error models implemented** (device_errors.go) - ported from CrossSim generic_error.py
 - ✅ **Validation test suite added** (validation_crosssim_test.go) - 12 tests proving algorithm provenance
 
-**Version:** 1.2
-**Last Updated:** January 2026
+**Version:** 1.3
+**Last Updated:** January 30, 2026
 **Part of:** FeCIM Lattice Tools
 **License:** See project root

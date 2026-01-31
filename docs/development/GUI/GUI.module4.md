@@ -623,7 +623,7 @@ Voltage ranges are derived from physics.yaml and material properties:
 ```yaml
 # config/physics.yaml
 calibration:
-  field_min_ratio: 0.5   # Read max = 0.5 * Vc
+  field_min_ratio: 0.7   # Read max = 0.7 * Vc
   field_max_ratio: 2.5   # Write max = 2.5 * Vc
 ```
 
@@ -1017,10 +1017,10 @@ Configuration loading gracefully handles missing/invalid physics.yaml:
 func loadCalibrationParams() CalibrationParams {
     cfg, err := physics.Load()
     if err != nil || cfg == nil {
-        // Fallback: field_min_ratio=0.5, field_max_ratio=2.5
+        // Fallback: field_min_ratio=0.7, field_max_ratio=2.5
         // These are standard values from typical physics.yaml
         return CalibrationParams{
-            FieldMinRatio: 0.5,
+            FieldMinRatio: 0.7,
             FieldMaxRatio: 2.5,
         }
     }
@@ -1168,7 +1168,7 @@ func TestVoltageRangeCalculations() {
 
     // Read range validation
     Vc := material.CoerciveVoltage()
-    expectedReadMax := 0.5 * Vc  // Default FieldMinRatio
+    expectedReadMax := 0.7 * Vc  // Default FieldMinRatio
     assert(ds.GetReadRange().Max == expectedReadMax)
 
     // Write range validation

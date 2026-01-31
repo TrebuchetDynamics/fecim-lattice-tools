@@ -41,9 +41,9 @@ Read voltage must stay **below coercive voltage** to avoid disturbing the polari
 | Coercive Field (Ec) | 0.6-1.5 MV/cm | Material property |
 | Film Thickness | 10 nm | Fabrication choice |
 | Coercive Voltage (Vc) | 0.6-1.5 V | Vc = Ec × thickness |
-| Safe Read Max | 0.3-0.75 V | 50% of Vc (field_min_ratio) |
+| Safe Read Max | 0.42-1.05 V | 70% of Vc (field_min_ratio = 0.7) |
 
-**Read Disturb Concern**: Repetitive reads at high voltage can cause gradual depolarization. Module 4 uses `field_min_ratio = 0.5` from physics.yaml.
+**Read Disturb Concern**: Repetitive reads at high voltage can cause gradual depolarization. Module 4 uses `field_min_ratio = 0.7` from physics.yaml.
 
 ### 1.3 TIA-Based Current Sensing
 

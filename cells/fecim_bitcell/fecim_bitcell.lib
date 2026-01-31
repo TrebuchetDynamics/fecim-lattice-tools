@@ -10,8 +10,8 @@ library(fecim_cells) {
 
   operating_conditions(typical) {
     process : 1.0 ;
-    temperature : 25 ;
-    voltage : 1.8 ;
+    temperature : 25.0 ;
+    voltage : 1.80 ;
   }
   default_operating_conditions : typical ;
 
@@ -39,10 +39,10 @@ library(fecim_cells) {
           values("10.000") ;
         }
         rise_transition(scalar) {
-          values("0.050") ;
+          values("3.000") ;
         }
         fall_transition(scalar) {
-          values("0.050") ;
+          values("3.000") ;
         }
       }
     }

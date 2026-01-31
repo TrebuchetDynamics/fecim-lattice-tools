@@ -20,13 +20,21 @@ package export
 
 import (
 	"fmt"
+
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logCellVerilog = logging.NewLogger("eda-export-cell-verilog")
 
 // GenerateCellVerilog generates a behavioral Verilog model for a single FeCIM bitcell
 // This is a PLACEHOLDER model for synthesis - does not model FeFET physics [See header warning]
 // Supports passive, 1T1R, and 2T1R architectures
 func GenerateCellVerilog(cfg config.CellConfig) string {
+	logCellVerilog.Input("GenerateCellVerilog", map[string]interface{}{
+		"cellName": cfg.Name, "cellType": cfg.CellType, "width": cfg.Width, "height": cfg.Height,
+	})
+
 	if cfg.CellType == "1t1r" {
 		return Generate1T1RCellVerilog(cfg)
 	}

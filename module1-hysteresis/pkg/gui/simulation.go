@@ -66,7 +66,8 @@ const calibrationDir = "data/calibrations"
 
 // maxWrdRetries is the maximum number of WRD retry attempts before accepting current level
 // This prevents infinite loops when targeting difficult levels (e.g., level 26)
-const maxWrdRetries = 25
+// Reduced from 25 to 15 since boundary oscillation tolerance kicks in at retry 10
+const maxWrdRetries = 15
 
 // calibrationFileForMaterial returns the calibration file path for a given material.
 // Material names are sanitized to be filesystem-safe.
@@ -1046,17 +1047,51 @@ func (a *App) simulationLoop() {
 							// For going UP (e.g., from 15 to 19): need strong POSITIVE field
 							voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
 
+							// CRITICAL FIX: Use calibration data to estimate voltage more accurately
+							// The calibration tells us what voltage reaches a target from saturation.
+							// For mid-state recovery, we scale by the level difference ratio.
 							if goingUp {
 								// Going up from mid-state: positive voltage proportional to distance
-								// Start with voltage that should move us most of the way
-								targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2 // 20% overshoot margin
-								// But cap at reasonable maximum
+								// Use calibration if available for better estimate
+								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
+									// Scale calibration voltage by how far we need to go vs full range
+									calibV := a.calibrationUp[wrdTargetIdx]
+									// Calibration assumes from level 1; we're from currentLevel
+									// Scale factor: (target - current) / (target - 1)
+									if targetLevel > 1 {
+										scaleFactor := float64(levelDiff) / float64(targetLevel-1)
+										if scaleFactor > 1.0 {
+											scaleFactor = 1.0
+										}
+										targetVoltage = calibV * scaleFactor * 1.1 // 10% margin
+									} else {
+										targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2
+									}
+								} else {
+									targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2
+								}
+								// Cap at reasonable maximum
 								if targetVoltage > 1.5*Ec {
 									targetVoltage = 1.5 * Ec
 								}
 							} else {
 								// Going down from mid-state: negative voltage proportional to distance
-								targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
+								// Use calibration if available for better estimate
+								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationDown) {
+									calibV := a.calibrationDown[wrdTargetIdx]
+									// Scale factor: (current - target) / (numLevels - target)
+									if targetLevel < a.numLevels {
+										scaleFactor := float64(levelDiff) / float64(a.numLevels-targetLevel)
+										if scaleFactor > 1.0 {
+											scaleFactor = 1.0
+										}
+										targetVoltage = calibV * scaleFactor * 1.1 // 10% margin
+									} else {
+										targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
+									}
+								} else {
+									targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
+								}
 								// Cap at reasonable minimum
 								if targetVoltage < -1.5*Ec {
 									targetVoltage = -1.5 * Ec
@@ -1174,14 +1209,17 @@ func (a *App) simulationLoop() {
 								a.wrdPhaseTimer = 0
 
 							} else {
-								// CONSTANT STEP ISPP: Use fixed voltage step per level of error
+								// CONSERVATIVE ISPP: Use capped voltage step to avoid oscillation
 								// Step size = (2*Ec)/(numLevels-1) is the average voltage per level
-								// Use 1.5x this for faster convergence while avoiding overshoot
 								voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-								stepSize := voltagePerLevel * 1.5 // Constant step per level
+								stepSize := voltagePerLevel * 1.5 // Base step per level
 
-								// Calculate adjustment: step size * number of levels off
-								adjustment := stepSize * math.Abs(float64(levelError))
+								// CRITICAL FIX: Cap the adjustment factor to prevent oscillation
+								// Large errors (5-6 levels) would cause 0.5×Ec swings which overshoot badly
+								// Cap at 2 levels worth of adjustment per pulse for stability
+								absError := math.Abs(float64(levelError))
+								adjustFactor := math.Min(absError, 2.0) // Cap at 2× step per pulse
+								adjustment := stepSize * adjustFactor
 
 								// Apply in correct direction based on error sign and movement direction
 								// levelError > 0 means we're ABOVE target (overshot), need to go DOWN (more negative)
@@ -1237,17 +1275,14 @@ func (a *App) simulationLoop() {
 						a.wrdPhaseTimer = 0
 					}
 
-				case 4: // READ phase - small sense pulse below Ec
-					// READ pulse direction should match WRITE direction to minimize disturbing the state
-					// Applying opposite polarity read would push polarization further away from written state
-					var readE float64
-					if targetLevel > midLevel {
-						// Ascending calibration used positive E - read with same polarity
-						readE = Ec * 0.3
-					} else {
-						// Descending calibration used negative E - read with same polarity
-						readE = -Ec * 0.3
-					}
+				case 4: // READ phase - verify at zero field (no sense pulse)
+					// CRITICAL FIX: For stable verification of boundary states, don't apply ANY
+					// read pulse. Any non-zero field can disturb polarization at level boundaries,
+					// causing the quantization to flip between adjacent levels.
+					//
+					// Real ferroelectric sensing uses capacitance or current measurement,
+					// not field application. For simulation, just verify at E=0.
+					readE := 0.0 // No read pulse - verify at zero field
 					step := rampRate * 0.4 * dt
 					diff := readE - a.electricField
 					if math.Abs(diff) < step {
@@ -1262,8 +1297,17 @@ func (a *App) simulationLoop() {
 						a.wrdReadLevel = a.discreteLevel + 1
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
 
-						// Exact match required - levels 1 and 30 are now reachable with Pr normalization
-						success := levelError == 0
+						// BOUNDARY OSCILLATION FIX: After many retries with ±1 error, accept it
+						// This handles cases where polarization lands exactly at a level boundary
+						// and tiny perturbations cause the quantization to flip between adjacent levels.
+						// After 10 retries with consistent ±1 error, treat it as success.
+						boundaryTolerance := a.wrdRetryCount >= 10 && math.Abs(float64(levelError)) == 1
+						success := levelError == 0 || boundaryTolerance
+
+						if boundaryTolerance && levelError != 0 {
+							log.Printf("WRD BOUNDARY ACCEPT: L_read=%d L_target=%d err=%+d | accepting ±1 after %d retries",
+								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
+						}
 
 						// WRITE-VERIFY-RETRY LOOP
 						if success {
@@ -1532,35 +1576,35 @@ func (a *App) simulationLoop() {
 						}
 					}
 
-				case 6: // BOOST phase - undershoot retry with level-difference voltage
+				case 6: // BOOST phase - undershoot retry with progressive voltage
 					// BOOST handles undershoots by applying voltage proportional to the
 					// level difference needed, NOT using calibration (which assumes saturation).
 					//
-					// On a minor loop (not from saturation), domains are HARDER to switch.
-					// Small level changes need disproportionately more voltage because:
-					// 1. We're not at saturation, so fewer domains are primed to switch
-					// 2. The remaining domains have higher coercive fields
+					// CRITICAL FIX: On minor loops, polarization is MUCH harder to change.
+					// Use retry count to progressively increase voltage when stuck.
 					currentLevel := a.discreteLevel + 1
 					levelDiff := targetLevel - currentLevel
 					absDiff := int(math.Abs(float64(levelDiff)))
 
-					// Minimum voltage for any level change on minor loop + scaled component
+					// Progressive voltage based on retry count (key fix for stuck states)
+					// Each retry increases the base voltage to overcome minor loop stiffness
 					voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-					minBoost := 0.5 * Ec // Minimum to move any domain on minor loop
+					retryBoost := 0.1 * Ec * float64(a.wrdRetryCount) // +0.1×Ec per retry
+					minBoost := 0.5*Ec + retryBoost                   // Increases with retries
 					scaledBoost := voltagePerLevel * float64(absDiff) * 1.5
 
 					var writeE float64
 					if levelDiff > 0 {
 						// Undershoot going up: need positive voltage
 						writeE = minBoost + scaledBoost
-						if writeE > 1.8*Ec {
-							writeE = 1.8 * Ec
+						if writeE > 2.0*Ec {
+							writeE = 2.0 * Ec // Allow up to 2×Ec for stubborn states
 						}
 					} else {
 						// Undershoot going down: need negative voltage
 						writeE = -(minBoost + scaledBoost)
-						if writeE < -1.8*Ec {
-							writeE = -1.8 * Ec
+						if writeE < -2.0*Ec {
+							writeE = -2.0 * Ec
 						}
 					}
 
@@ -1581,8 +1625,8 @@ func (a *App) simulationLoop() {
 					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-writeE) < 0.01*Emax {
 						a.wrdWriteEndP = a.polarization * 100
 						a.wrdWriteEndLvl = a.discreteLevel + 1
-						log.Printf("BOOST: L=%d→%d (diff=%d), V=%.2f×Ec, P=%.2f→%.2f µC/cm²",
-							currentLevel, a.wrdWriteEndLvl, levelDiff, writeE/Ec, a.wrdWriteStartP, a.wrdWriteEndP)
+						log.Printf("BOOST: L=%d→%d (diff=%d), V=%.2f×Ec (retry=%d), P=%.2f→%.2f µC/cm²",
+							currentLevel, a.wrdWriteEndLvl, levelDiff, writeE/Ec, a.wrdRetryCount, a.wrdWriteStartP, a.wrdWriteEndP)
 						a.wrdPhase = 3 // Go to HOLD phase
 						a.wrdPhaseTimer = 0
 					}
@@ -2039,15 +2083,27 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		currentWrdTarget := a.wrdTargetLevel
 		manualAnim := a.manualAnimating
 		manualTarget := a.manualTargetLevel
+		materialEc := a.material.Ec // For settled threshold
 		a.mu.RUnlock()
 
 		if currentWaveform == WaveformWriteReadDemo {
-			// Show target during phases 0-4 (RESET/SETTLE/WRITE/HOLD/READ)
-			highlight := currentWrdPhase >= 0 && currentWrdPhase <= 4
+			// Show target until point SETTLES at target level (not just crosses it)
+			// Settled = level matches target AND E-field is near zero
+			atTarget := (level + 1) == currentWrdTarget // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(eField) < 0.01*materialEc // E-field near zero (1% of Ec)
+			settled := atTarget && eFieldSettled && currentWrdPhase >= 3 // Must be past WRITE phase
+
+			// Keep highlight on during active phases OR until settled at target
+			highlight := currentWrdPhase >= 0 && currentWrdPhase <= 5 && !settled
 			a.levelIndicator.SetTargetLevel(currentWrdTarget, highlight)
 		} else if currentWaveform == WaveformManual && manualAnim {
-			// Show target during Manual mode click animation
-			a.levelIndicator.SetTargetLevel(manualTarget, true)
+			// Show target until point SETTLES at target level in Manual mode
+			atTarget := (level + 1) == manualTarget // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(eField) < 0.01*materialEc
+			settled := atTarget && eFieldSettled
+
+			// Keep highlight on until settled at target
+			a.levelIndicator.SetTargetLevel(manualTarget, !settled)
 		} else {
 			// Clear target highlight
 			a.levelIndicator.SetTargetLevel(0, false)

@@ -383,45 +383,51 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 // Note: createSignalChainHeader removed - functionality moved to createConfigurationSection
 // and the signal chain label is now inline in createUnifiedView
 
-// createMaterialSelector creates the ferroelectric material selection dropdown with browse button
+// createMaterialSelector creates the ferroelectric material selection button (like module 1)
 func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
-	materials := sharedphysics.AllMaterials()
-	materialNames := make([]string, len(materials))
-	for i, m := range materials {
-		materialNames[i] = m.Name
-	}
+	// Get initial material name
+	initialName := ca.deviceState.GetMaterialName()
 
-	selector := widget.NewSelect(materialNames, func(selected string) {
-		// Find the material and set it
-		for _, m := range materials {
-			if m.Name == selected {
-				ca.deviceState.SetMaterial(m)
-				ca.updateDACRangeModeLabel() // Update mode indicator
-				ca.recomputeAndRefresh()
-				ca.operationsStatusLabel.SetText(fmt.Sprintf("Material: %s (Vc=%.2fV)", selected, m.CoerciveVoltage()))
-				break
-			}
-		}
-	})
-
-	// Set default selection to FeCIM material
-	selector.SetSelected("FeCIM HZO")
-
-	// Material picker button for detailed view
-	pickerBtn := sharedwidgets.CreateMaterialPickerButton(
-		ca.window,
-		"fecim_hzo", // Default material ID
-		func(materialID string, mat *configphysics.Material) {
+	// Material button - shows current material, opens picker on click
+	ca.materialBtn = widget.NewButton(initialName, func() {
+		// Get current material ID for pre-selection in picker
+		currentID := ca.getCurrentMaterialID()
+		sharedwidgets.ShowMaterialPicker(ca.window, currentID, func(materialID string, mat *configphysics.Material) {
 			if mat == nil {
 				return
 			}
-			// Update dropdown to match selection
-			selector.SetSelected(mat.Name)
-			// The dropdown's OnChanged will handle the rest
-		},
-	)
+			// Convert config material to HZO material and set it
+			materials := sharedphysics.AllMaterials()
+			for _, m := range materials {
+				if m.Name == mat.Name {
+					ca.deviceState.SetMaterial(m)
+					ca.materialBtn.SetText(m.Name)
+					ca.updateDACRangeModeLabel()
+					ca.recomputeAndRefresh()
+					ca.operationsStatusLabel.SetText(fmt.Sprintf("Material: %s (Vc=%.2fV)", m.Name, m.CoerciveVoltage()))
+					break
+				}
+			}
+		})
+	})
 
-	return container.NewHBox(widget.NewLabel("Material:"), selector, pickerBtn)
+	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn)
+}
+
+// getCurrentMaterialID returns the ID of the currently selected material
+func (ca *CircuitsApp) getCurrentMaterialID() string {
+	matName := ca.deviceState.GetMaterialName()
+	// Load config and find ID by matching display name
+	cfg, err := configphysics.Load()
+	if err != nil {
+		return "fecim_hzo" // Default fallback
+	}
+	for id, mat := range cfg.Materials {
+		if mat.Name == matName {
+			return id
+		}
+	}
+	return "fecim_hzo" // Default fallback
 }
 
 // createADCBitsSelector creates a dropdown to select ADC resolution (5-8 bits)

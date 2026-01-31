@@ -1267,3 +1267,150 @@ Based on comprehensive analysis of 8 Module 6 screenshots:
 ### Related Documentation
 - Mermaid diagrams: `docs/development/GUI/mermaid6.gui.md`
 - Physics verification: `docs/development/PHYSICS_VERIFICATION_REPORT.md`
+
+## Detailed UI Analysis Report (2026-01-31)
+
+### Executive Summary
+
+The Module6-EDA interface shows a complex EDA integration tool with multiple tabs and workflows. While functional, there are significant layout issues, visual inconsistencies, and usability concerns that need addressing. **Total Issues Identified: 48**
+
+### Critical Issues by Category
+
+#### 1. Layout & Organization (8 issues - HIGH severity)
+
+- **Inconsistent spacing**: Panels feel cramped in some areas, wastefully large in others
+- **Poor vertical rhythm**: No clear visual hierarchy between sections
+- **Cramped sidebar**: Learning Center sidebar is too narrow (~120px should be 200px+)
+- **Console placement**: Bottom console competes with main content
+- **No responsive design**: Fixed layouts don't adapt to content
+- **Text area dominance**: Library file content consumes massive vertical space
+- **Dense button bar**: 8+ buttons cramped horizontally
+- **Stats row overflow**: Information overload in single row
+
+#### 2. Visual Design (12 issues - HIGH severity)
+
+- Status bar buttons are tiny, unlabeled icons
+- Dropdown selectors have inconsistent widths
+- Text areas lack visual polish (no borders, shadows, or depth)
+- Flowchart colors (orange/green) clash with blue theme
+- Console text is microscopic (~8pt)
+- Dark blue (#1E4B6E) is oppressive for large areas
+- Insufficient contrast for body text
+- No color coding for log severity (info/warn/error)
+- Diagram colors don't integrate with UI palette
+- Multiple font sizes with no clear scale
+- Code blocks lack monospace consistency
+- Learning Center uses body text for code samples
+
+#### 3. Data Display Issues (5 issues - CRITICAL severity)
+
+- Critical synthesis metrics buried in logs (area, wire length, violations)
+- **No visual dashboard** for key values
+- **No graphs** for timing analysis
+- **No comparison** to previous runs
+- Raw text dump of `.lib` files is unusable
+
+#### 4. Usability Concerns (18 issues - HIGH/MEDIUM severity)
+
+**Progress Feedback:**
+- Text-only "Synthesis in progress"
+- No percentage complete
+- No time estimates
+- No cancel button visible
+
+**Information Architecture:**
+- 50+ lines of log output with no summary view
+- No filtering by severity
+- Learning Center content is text walls
+- No interactive examples
+
+**Workflow:**
+- Tabs don't show clear progression (step 1→2→3)
+- No breadcrumbs
+- Status unclear between steps
+
+**Accessibility:**
+- Small click targets (<44px)
+- Color-only status indicators
+- Low contrast text
+
+### Recommended Prioritization
+
+| Priority | Fix | Effort | Impact |
+|----------|-----|--------|--------|
+| 1 | Console improvements + Status bar | Low | High |
+| 2 | Synthesis results dashboard | High | Critical |
+| 3 | Learning Center layout | Medium | High |
+| 4 | Color scheme + typography | Medium | Medium |
+| 5 | Schematic viewer zoom/pan | High | Medium |
+
+### Specific Recommendations
+
+#### Immediate Fixes (High Priority)
+
+1. **Status Bar Redesign**
+   - Increase font size from ~8pt to 11pt minimum
+   - Add labels to icon buttons
+   - Use cards/badges for metrics instead of plain text
+
+2. **Console Improvements**
+   - Add collapsible panel (not always visible)
+   - Implement color coding: red (error), yellow (warning), white (info)
+   - Increase font size to 10pt minimum
+   - Add "Clear" and "Export" buttons
+
+3. **Synthesis Results Dashboard**
+   - Create card-based summary view showing:
+     - Chip Area (with progress bar vs. target)
+     - Wire Length (with comparison)
+     - Timing Violations (with severity indicators)
+     - Cell Count (with breakdown chart)
+   - Move detailed logs to collapsible "Details" section
+
+4. **Learning Center Layout**
+   - Widen sidebar from ~120px to 200px minimum
+   - Add icons to topic list
+   - Use accordion pattern for subtopics
+   - Increase body text from ~11pt to 13pt
+   - Add syntax highlighting to code blocks
+
+5. **Schematic Viewer**
+   - Replace static image with zoomable/pannable canvas
+   - Add layer controls
+   - Implement click-to-highlight net tracing
+
+#### Medium Priority
+
+6. **Color Scheme Overhaul**
+   - Lighten background from #1E4B6E to #2A5F88 for main areas
+   - Use pure white (#FFFFFF) for content areas
+   - Implement semantic colors:
+     - Success: #4CAF50
+     - Warning: #FF9800
+     - Error: #F44336
+     - Info: #2196F3
+
+7. **Typography Scale**
+   - Establish clear hierarchy:
+     - H1: 24pt bold
+     - H2: 18pt semibold
+     - H3: 14pt semibold
+     - Body: 13pt regular
+     - Code: 11pt monospace
+     - Console: 10pt monospace
+
+8. **Configuration Panel**
+   - Use form layout with labels above inputs
+   - Add tooltips to each field
+   - Show validation states (green check/red X)
+   - Add "Load Config" and "Save Config" buttons
+
+### Docker Integration Status
+
+| Tool | Status | Issue |
+|------|--------|-------|
+| KLayout | ❌ Failed | X11 display passthrough error |
+| OpenROAD | ❌ Failed | X11 display passthrough error |
+| Yosys Schematic | ✅ Working | Generates PNG via graphviz |
+
+**Required fix**: `xhost +local:docker` before running visualization tools

@@ -141,10 +141,21 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		// Get IR drop map scaled to baseline (convert percent to fraction)
 		irMap := mvmResult.IRDropAnalysis.GetIRDropMapWithScale(baselineIR / 100)
 		ca.irDropHeatmap.SetData(irMap)
-		ca.irDropHeatmap.SetSelection(
-			mvmResult.IRDropAnalysis.WorstCaseCell[0],
-			mvmResult.IRDropAnalysis.WorstCaseCell[1],
-		)
+
+		// Preserve user's cell selection if they have one, otherwise show worst cell
+		ca.stateMu.RLock()
+		userRow, userCol := ca.selectedRow, ca.selectedCol
+		ca.stateMu.RUnlock()
+		if userRow >= 0 && userCol >= 0 {
+			// User has a selection - preserve it
+			ca.irDropHeatmap.SetSelection(userRow, userCol)
+		} else {
+			// No user selection - highlight worst-case cell
+			ca.irDropHeatmap.SetSelection(
+				mvmResult.IRDropAnalysis.WorstCaseCell[0],
+				mvmResult.IRDropAnalysis.WorstCaseCell[1],
+			)
+		}
 		ca.irDropHeatmap.Refresh() // Force refresh
 
 		// Add badge to IR Drop tab (C2 accessibility fix - discoverability)

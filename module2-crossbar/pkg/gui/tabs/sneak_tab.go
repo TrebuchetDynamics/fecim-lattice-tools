@@ -179,10 +179,11 @@ func (t *SneakTab) updateHeatmap() {
 				sneak := t.simulator.SneakCurrents[i][j]
 				normalized := sneak / maxSneak
 
-				// Color from blue (low) to yellow (high)
-				r := uint8(normalized * 255)
-				g := uint8(normalized * 200)
-				b := uint8((1 - normalized) * 150)
+				// Color from blue (low) to yellow (high) with minimum brightness
+				// Ensures visibility on dark theme backgrounds
+				r := uint8(50 + normalized*205)  // 50-255: visible at all levels
+				g := uint8(80 + normalized*140)  // 80-220: visible at all levels
+				b := uint8(200 - normalized*150) // 200-50: blue fades as yellow increases
 				rectColor = color.RGBA{r, g, b, 255}
 			}
 

@@ -11,7 +11,10 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logDEF = logging.NewLogger("eda-export-def")
 
 // DEFConfig holds configuration for DEF generation
 type DEFConfig struct {
@@ -76,6 +79,10 @@ func DEFConfigFrom(design *compiler.ArrayDesign) DEFConfig {
 //   - "passive": WL[], BL[] pins
 //   - "1T1R": WL[], BL[], SL[] pins
 func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
+	logDEF.Input("GenerateDEF", map[string]interface{}{
+		"designName": config.DesignName, "mode": design.Config.Mode, "arch": design.Config.Architecture,
+	})
+
 	var sb strings.Builder
 
 	// Filter cells to export

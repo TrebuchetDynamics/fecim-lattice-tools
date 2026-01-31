@@ -66,7 +66,7 @@ func (m *HZOMaterial) DiscreteLevelPhysics(level int, totalLevels int) float64 {
 func (ds *DeviceState) updateVoltageRanges() {
     Vc := ds.material.CoerciveVoltage()  // Ec × thickness - CORRECT
 
-    safeReadMax := ds.calibParams.FieldMinRatio * Vc  // 0.5 × Vc - OK
+    safeReadMax := ds.calibParams.FieldMinRatio * Vc  // 0.7 × Vc - OK
     writeMin := Vc                                      // At Vc - OK
     writeMax := ds.calibParams.FieldMaxRatio * Vc     // 2.5 × Vc - OK
 }

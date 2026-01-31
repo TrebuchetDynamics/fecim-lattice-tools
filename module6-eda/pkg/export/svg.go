@@ -9,7 +9,10 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logSVG = logging.NewLogger("eda-export-svg")
 
 // SVGConfig holds configuration for SVG generation
 type SVGConfig struct {
@@ -37,6 +40,10 @@ func DefaultSVGConfig() SVGConfig {
 
 // GenerateLayoutSVG creates an SVG visualization of the FeCIM crossbar array
 func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
+	logSVG.Input("GenerateLayoutSVG", map[string]interface{}{
+		"rows": cfg.Rows, "cols": cfg.Cols, "arch": cfg.Architecture,
+	})
+
 	var sb strings.Builder
 
 	is1T1R := cfg.Architecture == "1t1r"

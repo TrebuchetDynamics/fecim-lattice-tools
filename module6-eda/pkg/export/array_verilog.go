@@ -11,8 +11,12 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logArrayVerilog = logging.NewLogger("eda-export-array-verilog")
 
 // GenerateArrayVerilog generates a structural Verilog netlist for a FeCIM crossbar array
 // This instantiates the FeCIM bitcells in a grid pattern with WL/BL connections
@@ -22,6 +26,10 @@ import (
 //   - 1t1r: WL[], BL[], SL[] ports (sneak path mitigated via select transistor)
 //   - 2t1r: WL[], BL[], SL[], CSL[] ports (individual cell addressing via dual transistors)
 func GenerateArrayVerilog(cfg config.ArrayConfig) string {
+	logArrayVerilog.Input("GenerateArrayVerilog", map[string]interface{}{
+		"rows": cfg.Rows, "cols": cfg.Cols, "arch": cfg.Architecture, "mode": cfg.Mode,
+	})
+
 	var sb strings.Builder
 
 	designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)

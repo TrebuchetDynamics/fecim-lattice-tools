@@ -120,9 +120,10 @@ type CircuitsApp struct {
 	specSummaryLabel     *fyne.Container
 	specStatusLabel      *widget.Label
 
-	// Tab 7: Reference (unified TIMING + SPECS)
-	refTimingSection fyne.CanvasObject
-	refSpecsSection  fyne.CanvasObject
+	// Tab 7: Reference (unified TIMING + SPECS + VOLTAGE RULES)
+	refTimingSection       fyne.CanvasObject
+	refSpecsSection        fyne.CanvasObject
+	refVoltageRulesSection fyne.CanvasObject
 
 	// Main tabs
 	mainTabs *container.AppTabs
@@ -218,6 +219,9 @@ type CircuitsApp struct {
 
 	// Unified view DAC range indicator
 	dacRangeLabel *widget.Label
+
+	// Material selection button (like module 1)
+	materialBtn *widget.Button
 
 	// Unified view WL selector widgets
 	unifiedWLChecks   []*widget.Check

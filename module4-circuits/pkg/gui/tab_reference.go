@@ -18,19 +18,22 @@ func (ca *CircuitsApp) createReferenceTab() fyne.CanvasObject {
 	// Create sections FIRST (before selector triggers callback)
 	timingSection := ca.createReferenceTimingSection()
 	specsSection := ca.createReferenceSpecsSection()
+	voltageRulesSection := ca.createReferenceVoltageSection()
 
 	// Assign to struct BEFORE SetSelected triggers callback
 	ca.refTimingSection = timingSection
 	ca.refSpecsSection = specsSection
+	ca.refVoltageRulesSection = voltageRulesSection
 	specsSection.Hide()
+	voltageRulesSection.Hide()
 
 	// Section selector (callback now safe - sections are assigned)
-	sectionSelect := widget.NewSelect([]string{"TIMING DIAGRAMS", "SPECIFICATIONS"}, func(s string) {
+	sectionSelect := widget.NewSelect([]string{"TIMING DIAGRAMS", "SPECIFICATIONS", "VOLTAGE RULES"}, func(s string) {
 		ca.onReferenceSectionChanged(s)
 	})
 	sectionSelect.SetSelected("TIMING DIAGRAMS")
 
-	contentStack := container.NewStack(timingSection, specsSection)
+	contentStack := container.NewStack(timingSection, specsSection, voltageRulesSection)
 
 	header := container.NewHBox(
 		widget.NewLabel("Reference:"),
@@ -47,14 +50,22 @@ func (ca *CircuitsApp) createReferenceTab() fyne.CanvasObject {
 
 func (ca *CircuitsApp) onReferenceSectionChanged(section string) {
 	// Safety check - sections may not be initialized yet
-	if ca.refTimingSection == nil || ca.refSpecsSection == nil {
+	if ca.refTimingSection == nil || ca.refSpecsSection == nil || ca.refVoltageRulesSection == nil {
 		return
 	}
-	if section == "TIMING DIAGRAMS" {
+
+	// Hide all sections first
+	ca.refTimingSection.Hide()
+	ca.refSpecsSection.Hide()
+	ca.refVoltageRulesSection.Hide()
+
+	// Show the selected section
+	switch section {
+	case "TIMING DIAGRAMS":
 		ca.refTimingSection.Show()
-		ca.refSpecsSection.Hide()
-	} else {
-		ca.refTimingSection.Hide()
+	case "SPECIFICATIONS":
 		ca.refSpecsSection.Show()
+	case "VOLTAGE RULES":
+		ca.refVoltageRulesSection.Show()
 	}
 }

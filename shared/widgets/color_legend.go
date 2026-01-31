@@ -295,10 +295,11 @@ func GreenToRedColor(t float64) color.RGBA {
 }
 
 // BlueToYellowColor returns a blue-to-yellow color for t [0,1].
+// Uses minimum brightness values for visibility on dark theme backgrounds.
 func BlueToYellowColor(t float64) color.RGBA {
-	r := uint8(t * 255)
-	g := uint8(t * 200)
-	b := uint8((1 - t) * 150)
+	r := uint8(50 + t*205)  // 50-255: visible at all levels
+	g := uint8(80 + t*140)  // 80-220: visible at all levels
+	b := uint8(200 - t*150) // 200-50: blue fades as yellow increases
 	return color.RGBA{r, g, b, 255}
 }
 

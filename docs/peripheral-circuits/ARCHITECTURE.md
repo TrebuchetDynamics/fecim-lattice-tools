@@ -373,7 +373,7 @@ type DeviceState struct {
 - **Read Range**: 0 to `FieldMinRatio * Vc` (non-destructive sensing, safe zone)
 - **Write Range**: `Vc` to `FieldMaxRatio * Vc` (exceeds coercive voltage for switching)
 - Values derived from `physics.yaml` calibration parameters
-- Fallback defaults: `FieldMinRatio=0.5`, `FieldMaxRatio=2.5`
+- Fallback defaults: `FieldMinRatio=0.7`, `FieldMaxRatio=2.5`
 
 **Key Methods**:
 ```go
@@ -490,7 +490,7 @@ In passive (0T1R) architecture:
 Voltage ranges are calculated from ferroelectric material properties:
 
 ```go
-readRange.Max = FieldMinRatio * Vc  // e.g., 0.5 * 1.2V = 0.6V
+readRange.Max = FieldMinRatio * Vc  // e.g., 0.7 * 1.2V = 0.84V
 writeRange.Min = Vc                 // Coercive voltage (1.2V)
 writeRange.Max = FieldMaxRatio * Vc // e.g., 2.5 * 1.2V = 3.0V
 ```
@@ -804,7 +804,7 @@ tiaGain = 10.0 kΩ  // Converts µA → mV
 
 ```yaml
 calibration:
-    field_min_ratio: 0.5    # Read max = 0.5 * Vc
+    field_min_ratio: 0.7    # Read max = 0.7 * Vc
     field_max_ratio: 2.5    # Write max = 2.5 * Vc
 ```
 

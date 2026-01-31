@@ -12,15 +12,23 @@ package export
 import (
 	"encoding/json"
 	"fmt"
+
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	"fecim-lattice-tools/shared/logging"
 )
+
+var logOpenLane = logging.NewLogger("eda-export-openlane")
 
 // GenerateOpenLaneConfig generates an OpenLane v2.0 config.json for FeCIM crossbar
 // This configures OpenLane to use pre-placed cells and custom LEF/Liberty files
 // Reference: OpenLane v2.0 Configuration [Ref 1]
 func GenerateOpenLaneConfig(cfg config.ArrayConfig) string {
+	logOpenLane.Input("GenerateOpenLaneConfig", map[string]interface{}{
+		"rows": cfg.Rows, "cols": cfg.Cols, "arch": cfg.Architecture,
+	})
+
 	designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
-	
+
 	// Convert to microns for DIE_AREA
 	dieWidth := float64(cfg.Cols)*cfg.CellWidth + 2.0   // Add 2μm margin
 	dieHeight := float64(cfg.Rows)*cfg.CellHeight + 2.0 // Add 2μm margin
