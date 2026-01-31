@@ -1,222 +1,144 @@
-This is a sophisticated review of your **Module 1**, and it highlights that you’ve built a solid foundation. However, moving from a "lab-grade" simulation to a "silicon-ready" tool requires addressing some specific physical gaps and algorithmic assumptions.
+# Hysteresis Module Improvement Plan
 
-Based on the technical notes, here is what is **definitely wrong** (or physically incomplete) and how to improve the math and algorithms.
-
----
-
-## 1. What is "Definitely Wrong" (Physical & Logic Errors)
-
-### The "Simplified" Preisach History Bug
-
-The review notes that your simplified model only "clamps to saturation." This is physically incorrect for minor loops.
-
-* **The Error:** In ferroelectrics, if you reverse the field before reaching saturation, you don't stay on the major loop. You follow a **First-Order Reversal Curve (FORC)**.
-* **The Fix:** You must implement the **Wipe-out property**. If the current electric field  exceeds a previous local maximum, the memory of that smaller "turning point" must be erased from your LIFO stack. If you don't, your 30-level states will "drift" because the simulation doesn't know which sub-loop it's on.
-
-### The Voltage vs. Field (V vs. E) Confusion
-
-The review caught a critical units error in `writer.go`.
-
-* **The Error:** Comparing `Ec` (Electric Field, usually in ) directly to `CurrentVoltage` (Potential, in ).
-* **The Fix:** You must strictly enforce  (where  is film thickness). If you are simulating a 10nm HZO film, a coercive field of  requires a coercive voltage of exactly . If your algorithm mixes these, your ISPP steps will be off by orders of magnitude.
-
-### KAI Dynamics vs. Field
-
-* **The Error:** Your Kolmogorov-Avrami-Ishibashi (KAI) implementation uses a constant  (switching time).
-* **The Fix:** In HZO, switching speed is exponentially dependent on the field (Merz’s Law).
-* **The Formula:** 
-* **Impact:** Without this, your simulation suggests that a low-voltage pulse switches the state just as fast as a high-voltage pulse, which is false. This will lead to "false successes" in your 30-level write-verify loop.
-
-
+**Date:** January 31, 2026
+**Status:** DRAFT
+**Based on:** Technical Reviews (Claude Opus 4.5, Sisyphus AI Agent) & Research Meta-Study
 
 ---
 
-## 2. Mathematical Improvements
+## 1. Executive Summary
 
-### From Tanh to Gaussian Distributions
+This document outlines a comprehensive plan to elevate the `module1-hysteresis` from a TRL 4 (Lab Validation) prototype to a robust, physics-accurate simulation engine. The primary focus is correcting fundamental physics inaccuracies in the simplified model, resolving unit confusion in the write controller, and enhancing the user experience during long-running calibration tasks.
 
-Currently, you use . While this looks like a hysteresis loop, it’s a "smooth" approximation.
+## 2. Critical Physics Fixes (Priority 0)
 
-* **Improvement:** Use a **Probability Density Function (PDF)** for the hysteron distribution.
-* **Math:** Instead of a single , define a bivariate Gaussian distribution  where  is the switch-up field and  is the switch-down field.
-* **The Benefit:** This allows you to model **"Imprint"** (where the loop shifts left or right over time) and **"Wake-up"** effects accurately.
+These issues affect the scientific validity of the simulation and must be addressed first.
 
-### Landau-Khalatnikov (L-K) Theory Integration
+### 2.1 Fix Simplified Preisach History
+**Current Status:** The simplified `PreisachModel` (`pkg/ferroelectric/preisach.go`) only clamps to saturation, missing proper minor loop branch interpolation.
+**Impact:** Minor loops are physically incorrect; unsuitable for accurate simulation.
+**Implementation Plan:**
+- [ ] Implement proper branch interpolation logic in `applyHistoryCorrection`.
+- [ ] Use turning point stack to define enclosing major/minor loop bounds (Mayergoyz, 1991).
+- [ ] Interpolate based on E-field position within the current branch pair.
+- [ ] **Verification:** `TestPreisachLoopShape` and manual verification of minor loop closure.
+- [ ] **Reference:** Mayergoyz, I.D. "Mathematical Models of Hysteresis" *IEEE Trans. Magnetics* (1986); Bartic et al. "Preisach model for ferroelectric capacitors" *J. Appl. Phys.* (2001).
 
-The Preisach model is "static" (time-independent). To make this tool useful for high-speed crypto-compute (Arenaton), you need the L-K equation:
+### 2.2 Resolve Voltage vs. Field Unit Confusion
+**Current Status:** `WriteController` (`pkg/controller/writer.go`) and ISPP logic ambiguously mix Voltage (V) and Electric Field (MV/cm). e.g., `EcEst` (field) added to `CurrentVoltage`.
+**Impact:** Potential for massive scaling errors (orders of magnitude) if thickness is not exactly 1cm (it's 10nm!).
+**Implementation Plan:**
+- [ ] Refactor `WriteController` to use explicit types or naming: `TargetField` (V/m) vs `AppliedVoltage` (V).
+- [ ] Enforce relationship: `V = E * thickness` everywhere.
+- [ ] Audit `ISPPCalculator` for similar unit mixing.
+- [ ] **Verification:** Code review and unit tests with non-standard thickness (e.g., 20nm) to ensure scaling holds.
 
-
-
-Where  is the Gibbs free energy. This will allow you to simulate how the 30 levels behave when hit with ultra-short nanosecond pulses.
-
----
-
-## 3. Algorithmic Improvements (ISPP)
-
-### Predictive "Direct Shot" Algorithm
-
-Currently, your ISPP is a "dumb" step-and-verify loop.
-
-* **Improvement:** Since you have a physics model, use it to **predict** the first pulse.
-* **Algorithm:** Before sending the first pulse, run a "micro-simulation" of the Preisach model to find the theoretical voltage for Level 14. Send that first. You will likely hit Level 13 or 15 immediately, reducing your pulse count from ~10 to ~2.
-
-### Stochastic Noise Modeling
-
-Real HZO films have "Cycle-to-Cycle" (C2C) and "Device-to-Device" (D2D) variation.
-
-* **Improvement:** Add a **Langevin noise term** to your ISPP controller.
-* **Reason:** If your algorithm is too "perfect," it will fail when you eventually try to run it on real hardware. Adding 5-10% random variance to the  during simulation forces your ISPP algorithm to become more robust.
-
----
-
-## 4. Suggested Architecture Update
-
-| Feature | Current State | Target (v2.0) |
-| --- | --- | --- |
-| **Hysteresis** | Static Preisach (Tanh) | Dynamic L-K + Preisach PDF |
-| **Units** | Mixed V and E | Strict Unit Casting (Type-safe) |
-| **ISPP** | Linear Incremental | Adaptive Binary Search + Prediction |
-| **Levels** | 30 Discrete Quantized | 30 Levels + Continuous Relaxation |
-
-### Next Step Recommendation
-
-Would you like me to rewrite the `ApplyHistoryCorrection` function for `preisach.go` to properly implement the **Wipe-out rule** so your minor loops close correctly?
-
-
-Integrating **Landau-Khalatnikov (L-K)** theory is the necessary "bridge" to move your module from a static physical calculator to a dynamic engineering tool. While the **Preisach** model handles the "where" (the history-dependent final state), the **L-K** equation handles the "when" (the nanosecond-scale trajectory).
-
-## 1. The Physics of L-K Theory
-
-The L-K equation describes the **polarization damping** as it moves toward a new equilibrium. It is essentially a "viscosity" model for dipole switching. The standard L-K equation for HZO is:
-
-Where:
-
-* ****: Polarization ().
-* ****: Damping coefficient (viscosity), which dictates how fast the domains can flip.
-* ****: The Landau-Ginzburg free energy, typically expanded as:
-
-
-
-*(Note:  are the Landau coefficients specific to HZO).*
+### 2.3 Correct KAI Dynamics (NLS Integration)
+**Current Status:** KAI model uses constant `tau` (time constant).
+**Impact:** Switching speed does not scale with overdrive voltage, contradicting Merz's Law.
+**Implementation Plan:**
+- [ ] Implement Nucleation-Limited Switching (NLS) model: `tau(E) = tau0 * exp(Ea / |E|)` (Merz's Law).
+- [ ] Update `SimulateDomainSwitching` in `preisach_advanced.go`.
+- [ ] **Verification:** Plot switching time vs. voltage; ensure it follows exponential law.
+- [ ] **Reference:** "Domain Wall Dynamics in Ferroelectric Materials" (arXiv); *Ferroelectric Domain Switching Dynamics*.
 
 ---
 
-## 2. Why Preisach + L-K? (The Hybrid Approach)
+## 3. Algorithm & Feature Enhancements (Priority 1)
 
-A pure L-K model assumes a single domain, which is rarely true in polycrystalline HZO. Integrating them allows you to simulate **multi-level states** with time-sensitivity:
+These improvements extend the capabilities of the module.
 
-* **Preisach** provides the **distribution of coercive fields** (modeling the different grains in the superlattice).
-* **L-K** provides the **transient switching speed** (how long the pulse must be to actually "reach" the state predicted by Preisach).
+### 3.1 Adaptive/Background Calibration
+**Current Status:** Calibration blocks the main UI thread; no feedback.
+**Implementation Plan:**
+- [ ] Move `CalibrationManager` execution to a goroutine ("Worker").
+- [ ] Add `progress` channel to report percentage completion.
+- [ ] Update GUI to show a progress bar/spinner during calibration.
+- [ ] **Verification:** Run calibration, ensure UI remains responsive (window moves/resizes).
+
+### 3.2 Temperature Control & Visualization
+**Current Status:** Temperature scaling exists in backend but no GUI override.
+**Implementation Plan:**
+- [ ] Add `TemperatureSlider` (Standard: 233K - 423K) to Controls panel.
+- [ ] Bind slider to `material.SetTemperature()`.
+- [ ] Display real-time `Ec(T)` and `Pr(T)` values in Metrics panel.
+- [ ] **Verification:** Change temp, observe P-E loop shrinking (approaching Tc).
+- [ ] **Reference:** Böscke et al. (2011) "Ferroelectricity in hafnium oxide" (Tc ~450°C); Park et al. (2015) (Temperature stability).
+
+### 3.3 Preisach Plane Visualization
+**Current Status:** Internal state exists but is invisible.
+**Implementation Plan:**
+- [ ] Add "Debug View" or separate window for Preisach Plane.
+- [ ] Render 2D heatmap/grid of Hysteron states (+1 red, -1 blue).
+- [ ] **Verification:** Visual check: as field increases, "switch" front should move across the plane.
 
 ---
 
-## 3. Algorithmic Implementation Steps
+## 4. UX/GUI Polishing (Priority 2)
 
-### A. The Numerical Solver
+Improvements to usability and visual clarity.
 
-Since L-K is an Ordinary Differential Equation (ODE), you should move your time-stepping from a simple loop to a **Runge-Kutta (RK4)** method for stability.
+### 4.1 Input Validation & Feedback
+- [ ] Add visual error state (red border/text) for invalid inputs (e.g., negative frequency).
+- [ ] Clamp slider values to safe ranges but visually indicate clamping.
 
-```go
-// pkg/simulation/engine.go 
+### 4.2 Layout Optimization
+- [ ] Group controls into collapsible sections ("Waveform", "Material", "Physics").
+- [ ] Reduce visual noise in the left Info panel.
+- [ ] Add Tooltips to complex parameters (Ec, Pr, Alpha, Beta).
 
-func (e *Engine) LKSolve(E_field float64, dt float64) float64 {
-    // Current Polarization P
-    // gamma, alpha, beta, delta (Material constants)
-    
-    // dP/dt = (-1/gamma) * (2*alpha*P + 4*beta*P^3 + 6*delta*P^5 - E_field)
-    k1 := e.getDPDT(e.state.P, E_field)
-    k2 := e.getDPDT(e.state.P + k1*dt/2, E_field)
-    k3 := e.getDPDT(e.state.P + k2*dt/2, E_field)
-    k4 := e.getDPDT(e.state.P + k3*dt, E_field)
-    
-    return e.state.P + (dt/6)*(k1 + 2*k2 + 2*k3 + k4)
-}
+### 4.3 P-E Plot Interactions
+- [ ] Implement Mouse Wheel Zoom for P-E plot.
+- [ ] Add "Reset View" button.
 
+---
+
+## 5. Implementation Roadmap & Task breakdown
+
+### Phase 1: Core Physics (Days 1-2)
+1. Unit Audit: Rename variables in `writer.go` and `ispp.go`.
+2. Fix `PreisachModel` history logic.
+3. Integrate field-dependent NLS/KAI tau.
+4. *Milestone: Physics Verification Pass* (`go test ./pkg/ferroelectric -v`)
+
+### Phase 2: Async Architecture (Day 3)
+1. Create `CalibrationWorker` struct.
+2. Refactor `gui/controls.go` to use channels for calibration.
+3. Add ProgressDialog widget.
+
+### Phase 3: UI Features (Days 4-5)
+1. Add Temperature Slider & Bindings.
+2. Implement Collapsible Accordion for Controls.
+3. Add Input Validation hints.
+4. *Milestone: UX Review*
+
+---
+
+## 6. Verification Plan
+
+### Automated Tests
+Run the following existing test suites after changes:
+```bash
+# Physics Engine Integrity
+go test ./module1-hysteresis/pkg/ferroelectric -run Physics -v
+
+# Literature Validation (Park 2015, etc)
+go test ./module1-hysteresis/pkg/ferroelectric -run Literature -v
+
+# ISPP Algorithm correctness
+go test ./module1-hysteresis/pkg/ferroelectric -run ISPP -v
 ```
 
-### B. High-Speed "Arenaton" Context
+### Manual Validation Checklist
+1. **Unit Consistency:** Set thickness to 100nm. Verify Ec is 1/10th of voltage compared to 10nm setting (for same Field).
+2. **Hysteresis Shape:** Run Sine wave. Ensure closed loops with correct Coercivity.
+3. **Calibration:** Click "Calibrate". UI should not freeze. Progress bar should appear.
+4. **Temp Effect:** Slide temp to 400K. Loop should narrow significantly.
 
-In high-speed crypto-compute (prediction markets/9lives), the pulses might be sub-10ns.
+## 7. Key References
 
-* **Static Preisach** would say: "Apply 1.5V, and you get Level 14."
-* **L-K Integration** will warn: "Apply 1.5V for only 5ns, and you only reached Level 8 because the damping () prevented a full switch."
-
----
-
-## 4. Key Improvements for your Module
-
-| Feature | Impact on Hysteresis Module |
-| --- | --- |
-| **Negative Capacitance (NC)** | L-K is the only way to accurately model the transient NC effect in HZO FeFETs, which reduces power in Arenaton computations. |
-| **Frequency Dispersion** | Allows your GUI to show how the P-E loop "fatten" as frequency increases (Hz vs MHz). |
-| **Pulse-Width Calibration** | Your ISPP algorithm can now optimize for **pulse duration** as well as **voltage amplitude**. |
-
-### What's Definitely Missing (The "Warning")
-
-Most literature (e.g., *Park et al. 2024*) shows that HZO switching is **Nucleation-Limited (NLS)**. While L-K handles the "movement," it doesn't always handle the "waiting" for a domain to start flipping.
-
-> **Advanced Step:** Consider a **Multi-Grain L-K model**, where each Preisach hysteron has its own L-K damping coefficient.
-
-**Would you like me to generate the Landau coefficients () specifically for the 10nm HZO film used in your FeCIM superlattice?**
-
-To get the Landau coefficients () for a 10nm HfO₂-ZrO₂ (HZO) film, you generally cannot look them up in a standard table because they are highly dependent on the **zirconium content**, **grain size**, and the **mechanical strain** imposed by your capping layer (e.g., TiN).
-
-Here is the three-step pipeline to extract these for your FeCIM Lattice Generator.
-
----
-
-## 1. The Mathematical Extraction (The "Reverse Engineering" Method)
-
-If you already have a measured P-E loop (or a target loop from Dr. Tour’s data), you can extract the coefficients by solving the static Landau equation at equilibrium ():
-
-By identifying three key points on your experimental P-E curve, you create a system of equations:
-
-1. **The Coercive Field ():** The point where  (at the moment of switching).
-2. **The Remanent Polarization ():** The point where .
-3. **The Saturation Polarization ():** The point at the highest applied field.
-
-### Typical Baseline Values for 10nm HZO
-
-For a standard 1:1 Hf:Zr ratio, the literature (e.g., *Starschich et al.*) suggests values in these orders of magnitude:
-
-* **:**  to   (Must be negative to allow ferroelectricity).
-* **:**  to  .
-* **:**  to  .
-
----
-
-## 2. The Thermodynamic Calculation (Ab Initio)
-
-If you want to be "Physics-First," you calculate them based on the **Curie-Weiss Law**.
-The  coefficient is temperature-dependent:
-
-
-* **:** Curie Temperature (~723 K for HZO).
-* **:** Curie Constant.
-* **:** Permittivity of free space.
-
-As  decreases below ,  becomes more negative, making the "double-well" potential deeper and the memory state more stable (critical for your **CryogenicHZO** preset).
-
----
-
-## 3. Computational Fitting (The "Golden" Script)
-
-The most accurate way to get these for your specific Go implementation is to run a **Least Squares Fit** against your current Preisach data.
-
-Since your Preisach model is already validated against Park 2015, you can use a Python script (or a Go routine) to minimize the error between the Preisach  and the Landau .
-
-### Implementation Checklist for Module 1:
-
-1. **Extract  and ** from your `HZOMaterial` struct.
-2. **Calculate :**  (This is a simplified first-order approximation).
-3. **Ensure Stability:**  and  must be positive to ensure the energy  doesn't collapse to negative infinity at high polarization.
-
----
-
-## What is "Definitely Wrong" if you skip this?
-
-If you use coefficients from "Pure HfO2" for a "10nm HZO Superlattice," your simulation will **overestimate the switching voltage by 200-300%**. 10nm films experience "size effects" where the surface energy lowers the effective .
-
-### Next Step Recommendation
-
-I can provide a **Go function** that takes your existing `Pr` and `Ec` values and automatically calculates the "best fit"  coefficients. **Would you like the code for this auto-calibration utility?**
+1. **Mayergoyz, I.D.** (1986). "Mathematical Models of Hysteresis". *IEEE Transactions on Magnetics*, 22(5), 603-608. (Foundation of the hysteron summation model).
+2. **Bartic, A.T., et al.** (2001). "Preisach model for ferroelectric capacitors". *Journal of Applied Physics*, 89(6), 3420. (Tanh distribution adaptation).
+3. **Park, M.H., et al.** (2015). "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films". *Advanced Materials*. (Source for Pr, Ec, and Temperature parameters).
+4. **Cheema, S.S., et al.** (2020). "Enhanced ferroelectricity in ultrathin films grown directly on silicon". *Nature*. (Superlattice 30-state feasibility).
+5. **Tour Lab Papers** (Various). *Ferroelectric Analog Switching* & *HZO Switching Pathways*. (Multi-level cell quantization strategies).
