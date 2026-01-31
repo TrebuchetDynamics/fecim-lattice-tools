@@ -586,8 +586,36 @@ func (a *App) simulationLoop() {
 		<-ticker.C
 
 		if a.paused {
+			// Reset lastTime when paused to prevent time accumulation
+			lastTime = time.Now()
 			continue
 		}
+
+		// Calculate time since last frame BEFORE acquiring lock
+		dt := time.Since(lastTime).Seconds()
+
+		// If window lost focus (dt > 50ms), skip this frame and drain queue
+		// This prevents the "speed up" effect when returning to the window
+		if dt > 0.05 {
+			lastTime = time.Now()
+			// Drain any queued ticks to prevent rapid processing
+			drainCount := 0
+			for {
+				select {
+				case <-ticker.C:
+					drainCount++
+					if drainCount > 10 {
+						goto drained
+					}
+				default:
+					goto drained
+				}
+			}
+		drained:
+			continue
+		}
+
+		lastTime = time.Now()
 
 		a.mu.Lock()
 
@@ -600,12 +628,9 @@ func (a *App) simulationLoop() {
 		// Copy material reference under lock for safe access
 		mat := a.material
 
-		dt := time.Since(lastTime).Seconds()
-		lastTime = time.Now()
-		// Clamp dt to prevent animation "catch-up" after window loses focus
-		// Max 100ms per frame keeps animation smooth when returning from background
-		if dt > 0.1 {
-			dt = 0.1
+		// Clamp dt to max 33ms per frame (30fps minimum)
+		if dt > 0.033 {
+			dt = 0.033
 		}
 		a.simTime += dt
 		// Wrap simTime to prevent floating-point issues after long runs
@@ -1510,31 +1535,35 @@ func (a *App) simulationLoop() {
 				case 6: // BOOST phase - undershoot retry with level-difference voltage
 					// BOOST handles undershoots by applying voltage proportional to the
 					// level difference needed, NOT using calibration (which assumes saturation).
+					//
+					// On a minor loop (not from saturation), domains are HARDER to switch.
+					// Small level changes need disproportionately more voltage because:
+					// 1. We're not at saturation, so fewer domains are primed to switch
+					// 2. The remaining domains have higher coercive fields
 					currentLevel := a.discreteLevel + 1
 					levelDiff := targetLevel - currentLevel
-					goingUp := levelDiff > 0
+					absDiff := int(math.Abs(float64(levelDiff)))
 
-					// Voltage step proportional to level distance
+					// Minimum voltage for any level change on minor loop + scaled component
 					voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
+					minBoost := 0.5 * Ec // Minimum to move any domain on minor loop
+					scaledBoost := voltagePerLevel * float64(absDiff) * 1.5
 
 					var writeE float64
-					if goingUp {
-						// Undershoot going up: need positive voltage for remaining distance
-						// Add 30% margin since we're on a minor loop, not saturation
-						writeE = voltagePerLevel * float64(levelDiff) * 1.3
+					if levelDiff > 0 {
+						// Undershoot going up: need positive voltage
+						writeE = minBoost + scaledBoost
 						if writeE > 1.8*Ec {
 							writeE = 1.8 * Ec
 						}
 					} else {
-						// Undershoot going down: need negative voltage for remaining distance
-						writeE = voltagePerLevel * float64(levelDiff) * 1.3 // levelDiff is negative
+						// Undershoot going down: need negative voltage
+						writeE = -(minBoost + scaledBoost)
 						if writeE < -1.8*Ec {
 							writeE = -1.8 * Ec
 						}
 					}
 
-					log.Printf("BOOST: current=%d, target=%d, diff=%d, voltage=%.3f×Ec",
-						currentLevel, targetLevel, levelDiff, writeE/Ec)
 					a.wrdWriteE = writeE
 
 					// Ramp to write field
@@ -1552,8 +1581,8 @@ func (a *App) simulationLoop() {
 					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-writeE) < 0.01*Emax {
 						a.wrdWriteEndP = a.polarization * 100
 						a.wrdWriteEndLvl = a.discreteLevel + 1
-						log.Printf("WRD PHASE 6→3: BOOST done | E=%.3f MV/cm (%.2f×Ec) | P=%.2f→%.2f µC/cm² | L=%d | target=%d",
-							a.electricField/1e8, a.electricField/Ec, a.wrdWriteStartP, a.wrdWriteEndP, a.wrdWriteEndLvl, targetLevel)
+						log.Printf("BOOST: L=%d→%d (diff=%d), V=%.2f×Ec, P=%.2f→%.2f µC/cm²",
+							currentLevel, a.wrdWriteEndLvl, levelDiff, writeE/Ec, a.wrdWriteStartP, a.wrdWriteEndP)
 						a.wrdPhase = 3 // Go to HOLD phase
 						a.wrdPhaseTimer = 0
 					}
@@ -1988,8 +2017,7 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 			}
 		}
 
-		// Update slide text based on current waveform
-		a.slideText.SetText(a.getSlideText())
+		// Slide panel removed - was distracting and flickering
 
 		// Update log text
 		a.mu.RLock()

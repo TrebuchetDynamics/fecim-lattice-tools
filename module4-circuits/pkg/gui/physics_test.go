@@ -6,6 +6,7 @@ import (
 	"math"
 	"testing"
 
+	"fecim-lattice-tools/config/physics"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
 )
@@ -218,6 +219,9 @@ func TestCoerciveVoltageDerivation(t *testing.T) {
 // - Write voltage > Vc (for switching)
 // - Half-select voltage V/2 < Vc (minimize disturb)
 func TestVoltageRulesCompliance(t *testing.T) {
+	// Force reload of physics config to pick up any changes
+	physics.Reload()
+
 	tia := peripherals.DefaultTIA()
 	adc := peripherals.DefaultADC()
 	ds := NewDeviceState(8, 8, tia, adc)

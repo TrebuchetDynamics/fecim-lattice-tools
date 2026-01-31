@@ -17,11 +17,11 @@ library(fecim_cells) {
 
   cell(fecim_bitcell) {
     area : 1.2512 ;
-    cell_leakage_power : 0.0010 ;
+    cell_leakage_power : 0.0003 ;
 
     pin(WL) {
       direction : input ;
-      capacitance : 0.0020 ;
+      capacitance : 0.0150 ;
     }
 
     pin(BL) {
@@ -33,10 +33,10 @@ library(fecim_cells) {
         timing_sense : positive_unate ;
 
         cell_rise(scalar) {
-          values("0.100") ;
+          values("10.000") ;
         }
         cell_fall(scalar) {
-          values("0.100") ;
+          values("10.000") ;
         }
         rise_transition(scalar) {
           values("0.050") ;

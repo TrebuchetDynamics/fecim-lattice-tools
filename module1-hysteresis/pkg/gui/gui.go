@@ -549,9 +549,6 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create info panel
 	info := a.createInfoPanel()
 
-	// Create educational slide panel
-	slidePanel := a.createSlidePanel()
-
 	// Create log panel
 	logPanel := a.createLogPanel()
 
@@ -600,10 +597,6 @@ func (a *App) createUI() fyne.CanvasObject {
 	leftScrollableContent := container.NewVBox(
 		info,
 		container.NewPadded(widget.NewSeparator()),
-		layout.NewSpacer(),
-		slidePanel,
-		container.NewPadded(widget.NewSeparator()),
-		layout.NewSpacer(),
 		logPanel,
 		container.NewPadded(widget.NewSeparator()),
 		layout.NewSpacer(),

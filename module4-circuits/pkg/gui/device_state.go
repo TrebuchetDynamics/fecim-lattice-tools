@@ -79,9 +79,9 @@ type CalibrationParams struct {
 func loadCalibrationParams() CalibrationParams {
 	cfg, err := physics.Load()
 	if err != nil || cfg == nil {
-		// Fallback: field_min_ratio=1.0, field_max_ratio=2.5 (allows 0-1V DAC range)
+		// Fallback: field_min_ratio=0.7, field_max_ratio=2.5 (safe non-destructive reads)
 		return CalibrationParams{
-			FieldMinRatio: 1.0,
+			FieldMinRatio: 0.7,
 			FieldMaxRatio: 2.5,
 		}
 	}
