@@ -27,7 +27,8 @@ type PreisachModel struct {
 	EuSigma float64 // Interaction field distribution width
 
 	// History tracking (LIFO stack for turning points)
-	turningPoints []float64
+	turningPointsE []float64 // E-field at reversal
+	turningPointsP []float64 // Polarization at reversal
 	lastE         float64
 	increasing    bool
 
@@ -49,9 +50,10 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 		EcMean:        material.Ec,
 		EcSigma:       material.Ec * 0.25, // 25% distribution width
 		EuMean:        0,
-		EuSigma:       material.Ec * 0.4,
-		turningPoints: make([]float64, 0, 100),
-		polarization:  0,
+		EuSigma:        material.Ec * 0.4,
+		turningPointsE: make([]float64, 0, 100),
+		turningPointsP: make([]float64, 0, 100),
+		polarization:   0,
 	}
 
 	log.Calculation("NewPreisachModel", map[string]interface{}{
@@ -66,7 +68,8 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 
 // Reset clears the history and sets polarization to zero.
 func (p *PreisachModel) Reset() {
-	p.turningPoints = p.turningPoints[:0]
+	p.turningPointsE = p.turningPointsE[:0]
+	p.turningPointsP = p.turningPointsP[:0]
 	p.polarization = 0
 	p.lastE = 0
 	p.increasing = true // Start assuming ascending direction to avoid first-point discontinuity
@@ -83,13 +86,20 @@ func (p *PreisachModel) Update(E float64) float64 {
 	increasing := E > p.lastE
 
 	// Check for turning point (direction change)
-	if len(p.turningPoints) > 0 && increasing != p.increasing {
-		p.addTurningPoint(p.lastE)
+	if len(p.turningPointsE) > 0 && increasing != p.increasing {
+		p.addTurningPoint(p.lastE, p.polarization)
+	} else if len(p.turningPointsE) == 0 && p.polarization == 0 && E != 0 {
+		// First point from zero - implicitly track start
+		// p.addTurningPoint(0, 0)
 	}
 
-	// Calculate polarization using hyperbolic tangent model
-	// This captures the S-shaped switching characteristic
-	p.polarization = p.calculatePolarization(E)
+	// Apply Wipe-out property strictly BEFORE calculation
+	// This ensures we are always on the correct branch
+	p.applyWipeOut(E, increasing)
+
+	// Calculate polarization using hyperbolic tangent model with history
+	// This captures the S-shaped switching characteristic and proper minor loops
+	p.polarization = p.calculatePolarization(E, increasing)
 
 	// Update state
 	p.lastE = E
@@ -97,7 +107,7 @@ func (p *PreisachModel) Update(E float64) float64 {
 
 	log.Calculation("Update", map[string]interface{}{
 		"E_field":        E,
-		"turning_points": len(p.turningPoints),
+		"turning_points": len(p.turningPointsE),
 		"increasing":     p.increasing,
 	}, p.polarization)
 
@@ -105,11 +115,8 @@ func (p *PreisachModel) Update(E float64) float64 {
 }
 
 // calculatePolarization computes P(E) using the Preisach distribution.
-func (p *PreisachModel) calculatePolarization(E float64) float64 {
+func (p *PreisachModel) calculatePolarization(E float64, increasing bool) float64 {
 	// Hyperbolic tangent switching function (Bo Jiang method)
-	// P = Ps * tanh((E - Ec_eff) / delta)
-	// where delta controls the switching sharpness
-
 	Ps := p.material.Ps
 	delta := p.EcSigma * 2 // Transition width
 
@@ -117,20 +124,66 @@ func (p *PreisachModel) calculatePolarization(E float64) float64 {
 	EcEff := p.effectiveCoerciveField()
 
 	// Base switching function
-	var P float64
-	if p.increasing {
-		// Ascending branch
-		P = Ps * math.Tanh((E-EcEff)/delta)
-	} else {
-		// Descending branch
-		P = Ps * math.Tanh((E+EcEff)/delta)
+	majorP := func(e float64, inc bool) float64 {
+		if inc {
+			return Ps * math.Tanh((e-EcEff)/delta)
+		}
+		return Ps * math.Tanh((e+EcEff)/delta)
 	}
 
-	// Apply history correction for minor loops
-	P = p.applyHistoryCorrection(P, E)
+	// Get Major Loop value at current E
+	P_major := majorP(E, increasing)
+
+	// If no history, return Major Loop value
+	if len(p.turningPointsE) == 0 {
+		return P_major
+	}
+
+	// INTERPOLATION for Minor Loops (Bartic et al.)
+	// We scale the Major Loop shape to fit between the last turning point and saturation
+	// P(E) = P_start + S * (P_major(E) - P_major(E_start))
+	// where S scales the major loop slope to connect (E_start, P_start) to (Infinity, Ps)
+
+	lastIdx := len(p.turningPointsE) - 1
+	E_start := p.turningPointsE[lastIdx]
+	P_start := p.turningPointsP[lastIdx]
+	P_major_start := majorP(E_start, p.increasing)
+
+	// Calculate scaling factor S
+	// We want P -> Target as E -> Infinity
+	// If increasing: Target is +Ps. If decreasing: Target is -Ps.
+	var TargetP float64
+	var TargetMajor float64
+	if p.increasing {
+		TargetP = Ps
+		TargetMajor = Ps
+	} else {
+		TargetP = -Ps
+		TargetMajor = -Ps
+	}
+
+	// Avoid division by zero
+	denom := TargetMajor - P_major_start
+	if math.Abs(denom) < 1e-9 {
+		return P_start // Already at saturation
+	}
+
+	S := (TargetP - P_start) / denom
+
+	// Interpolated P
+	P := P_start + S*(P_major-P_major_start)
+
+	// Safety clamp
+	if P > Ps {
+		P = Ps
+	} else if P < -Ps {
+		P = -Ps
+	}
 
 	return P
 }
+
+
 
 // effectiveCoerciveField returns Ec modified by the Preisach distribution.
 func (p *PreisachModel) effectiveCoerciveField() float64 {
@@ -140,53 +193,77 @@ func (p *PreisachModel) effectiveCoerciveField() float64 {
 }
 
 // addTurningPoint records a reversal in the field sweep direction.
-func (p *PreisachModel) addTurningPoint(E float64) {
-	// Implement memory wipe-out: a turning point erases smaller previous ones
-	for len(p.turningPoints) > 0 {
-		last := p.turningPoints[len(p.turningPoints)-1]
-		if (p.increasing && E > last) || (!p.increasing && E < last) {
-			// Wipe out the smaller turning point
-			p.turningPoints = p.turningPoints[:len(p.turningPoints)-1]
+func (p *PreisachModel) addTurningPoint(E, P float64) {
+	p.turningPointsE = append(p.turningPointsE, E)
+	p.turningPointsP = append(p.turningPointsP, P)
+}
+
+// applyWipeOut implements the Preisach "Wipe-out" property.
+// If the field excursion goes beyond a previous turning point, that memory is erased.
+func (p *PreisachModel) applyWipeOut(E float64, increasing bool) {
+	if len(p.turningPointsE) == 0 {
+		return
+	}
+
+	// Loop to handle multiple wipes (e.g. large spike)
+	for len(p.turningPointsE) > 0 {
+		lastIdx := len(p.turningPointsE) - 1
+
+
+		shouldWipe := false
+		if increasing {
+			// Going UP: wipe if we exceed previous Max (which must be a turning point where we started going down)
+			// Wait, the stack is [..., Min, Max, Min, Max...]
+			// The last point was where we turned to come HERE.
+			// If we are increasing, the last point was a MINIMUM (start of this branch).
+			// We don't wipe the start of our own branch!
+			// We check the point BEFORE that (a Maximum).
+			// BUT, Mayergoyz stack logic:
+			// If increasing, we are checking if E > Previous Max.
+			// The stack top is the Minimum we just turned from.
+			// Any Maxima inside the minor loop < E are wiped?
+			//
+			// Actually, simpler logic:
+			// If increasing, and E > E_stack_top, does it mean anything?
+			// If E > E_stack_top, and E_stack_top was a Maximum, we wiped it.
+			// Use the alternating nature of stack.
+			// If stack has 1 element: [Min]. We are going up. If E < Min, impossible (we are up).
+			//
+			// Correct Logic (Mayergoyz):
+			// The stack contains pairs (M, m).
+			// If we are increasing, we check against M (previous max).
+			// The last element in `turningPoints` is the point we turned FROM.
+			// If we are increasing, we turned from a Minimum (stack top).
+			// We want to know if we exceed the Maximum prior to that.
+			// Stack: [..., Max_prev, Min_last].
+			// If E > Max_prev, then Min_last and Max_prev are wiped.
+			
+			if lastIdx >= 1 {
+				prevMax := p.turningPointsE[lastIdx-1]
+				if E >= prevMax {
+					shouldWipe = true
+				}
+			}
+		} else {
+			// Going DOWN. Last point was a Maximum.
+			// Check if E < Min_prev (point before last).
+			if lastIdx >= 1 {
+				prevMin := p.turningPointsE[lastIdx-1]
+				if E <= prevMin {
+					shouldWipe = true
+				}
+			}
+		}
+
+		if shouldWipe {
+			// Pop TWO points (the Min and the Max defining the minor loop)
+			// effectively returning to the outer loop
+			p.turningPointsE = p.turningPointsE[:lastIdx-1]
+			p.turningPointsP = p.turningPointsP[:lastIdx-1]
 		} else {
 			break
 		}
 	}
-	p.turningPoints = append(p.turningPoints, E)
-}
-
-// applyHistoryCorrection adjusts P based on the turning point history.
-func (p *PreisachModel) applyHistoryCorrection(P, E float64) float64 {
-	if len(p.turningPoints) == 0 {
-		return P
-	}
-
-	// For minor loops, interpolate between major loop branches
-	// This is a simplified implementation
-	Ps := p.material.Ps
-
-	// Calculate the "closure" of minor loops
-	for i := len(p.turningPoints) - 1; i >= 0; i-- {
-		tp := p.turningPoints[i]
-		if p.increasing {
-			if E >= tp {
-				// Close the minor loop
-				p.turningPoints = p.turningPoints[:i]
-			}
-		} else {
-			if E <= tp {
-				p.turningPoints = p.turningPoints[:i]
-			}
-		}
-	}
-
-	// Clamp to saturation
-	if P > Ps {
-		P = Ps
-	} else if P < -Ps {
-		P = -Ps
-	}
-
-	return P
 }
 
 // Polarization returns the current polarization state.

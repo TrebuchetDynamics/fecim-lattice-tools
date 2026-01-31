@@ -42,6 +42,14 @@ type MayergoyzPreisach struct {
 	numBeta      int         // Grid points along beta axis
 	distribution [][]float64 // μ(α, β) distribution weights
 
+	// History stack for Everett method (Exported for JSON persistence)
+	StackE []float64 `json:"stack_e"` // Turning points (E-field)
+	LastE  float64   `json:"last_e"`  // Last applied field for direction detection
+	
+	// Everett function optimization (O(1) updates)
+	everettTable [][]float64 // Pre-integrated polarization contribution F(α, β)
+	UseEverett   bool        `json:"use_everett"` // Flag to use efficient stack method
+
 	// Distribution type and parameters
 	DistType DistributionType // Distribution type (Gaussian or Lorentzian)
 
@@ -167,6 +175,15 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 
 	m.initializeHysterons()
 	m.initializeDistribution()
+	m.initializeEverettTable() // Pre-compute integrals for speed
+
+	// Initialize LastE to starting condition
+	m.LastE = 0 // Assume start at 0? Or negative saturation?
+	// If we assume unpolarized start, 0 is fine.
+	
+	// Initialize polarization to match hysterons (all -1)
+	// This ensures GetSwitchedFraction works correctly from start
+	m.polarization = -material.Ps
 
 	// Cache effective Pr for normalization (must be done after initialization)
 	m.updateEffectivePr()
@@ -309,6 +326,125 @@ func (m *MayergoyzPreisach) initializeDistributionLorentzian() {
 	}
 }
 
+// initializeEverettTable computes the Everett integral F(α, β) for the grid.
+// F(α, β) = ∫∫_T μ(x, y) dx dy over the triangle T defined by α, β.
+// This allows O(1) calculation of polarization changes.
+func (m *MayergoyzPreisach) initializeEverettTable() {
+	// Table size matches grid size
+	// everettTable[i][j] stores F(alpha_i, beta_j)
+	m.everettTable = make([][]float64, m.numAlpha)
+	for i := range m.everettTable {
+		m.everettTable[i] = make([]float64, m.numBeta)
+	}
+
+	// Calculate cumulative sums from the distribution grid
+	// distribution[i] corresponds to hysteron i (which maps to specific alpha, beta)
+	// Be careful with mapping: m.hysterons is a flat list of VALID (alpha>beta) points.
+	// We need to map back to [i][j] grid coordinates.
+	
+	// Create temporary 2D grid of weights
+	weights := make([][]float64, m.numAlpha)
+	for i := range weights {
+		weights[i] = make([]float64, m.numBeta)
+	}
+	
+	Emax := 2.0 * m.temperatureCorrectedEc()
+	dE := 2.0 * Emax / float64(m.numAlpha-1)
+	
+	// Fill weights grid
+	for k, h := range m.hysterons {
+		// Reverse engineer indices from alpha/beta
+		// alpha = -Emax + i*dE => i = (alpha + Emax) / dE
+		i := int(math.Round((h.Alpha + Emax) / dE))
+		j := int(math.Round((h.Beta + Emax) / dE))
+		
+		if i >= 0 && i < m.numAlpha && j >= 0 && j < m.numBeta {
+			weights[i][j] = m.distribution[k][0]
+		}
+	}
+	
+	// Integrate to form Everett surface
+	// F(α, β) = Sum of weights in the triangle region
+	// Depending on definition, usually rectangle integral for efficiency?
+	// Standard Everett: P = -Ps + 2 * Sum ...
+	// Let's store direct cumulative sum or standard Everett function F(a,b).
+	// F(a,b) = Integral_{beta <= y <= a, alpha >= x >= y} mu(x,y) ? No.
+	// Mayergoyz definition: F(u, v) = Integral_{v < y < x < u} mu(x, y) dx dy.
+	// This is the integral over the triangle with tip at (u, v).
+	
+	for i := 0; i < m.numAlpha; i++ {
+		for j := 0; j < m.numBeta; j++ {
+			// Integrate all weights where alpha_idx <= i AND beta_idx >= j AND alpha > beta
+			sum := 0.0
+			for r := 0; r <= i; r++ { // alpha index up to u
+				for c := j; c < m.numBeta; c++ { // beta index down to v (wait, beta index j corresponds to value v)
+					// Verify region: alpha > beta.
+					// In our grid, i increases with alpha, j increases with beta.
+					// Triangle: alpha_r in [beta_c, alpha_i], beta_c in [beta_j, alpha_r]
+					// This logic is complex O(N^4).
+					// Approximate: Sum all mu(r, c) where r <= i and c >= j and r > c?
+					
+					// Let's use simple summation for "Triangle with corner (alpha_i, beta_j)"
+					// Region: x <= alpha_i AND y >= beta_j. AND y < x.
+					if r > c && r <= i && c >= j {
+						sum += weights[r][c]
+					}
+				}
+			}
+			m.everettTable[i][j] = sum
+		}
+	}
+	
+	m.UseEverett = true
+	// Reset stack
+	m.StackE = make([]float64, 0, 100)
+	// Add initial saturation state (-Ps)
+	// Or handle implicitly.
+	// Convention: Empty stack = Negative Saturation state?
+	// We will follow Mayergoyz logic in Update.
+}
+
+// getEverettValue retrieves F(u, v) from the table using bilinear interpolation
+func (m *MayergoyzPreisach) getEverettValue(u, v float64) float64 {
+	Emax := 2.0 * m.temperatureCorrectedEc()
+	dE := 2.0 * Emax / float64(m.numAlpha-1)
+	
+	// Map u, v to float indices
+	ui := (u + Emax) / dE
+	vi := (v + Emax) / dE
+	
+	// Clamp
+	if ui < 0 { ui = 0 }
+	if ui >= float64(m.numAlpha-1) { ui = float64(m.numAlpha-1) }
+	if vi < 0 { vi = 0 }
+	if vi >= float64(m.numBeta-1) { vi = float64(m.numBeta-1) }
+	
+	// Floor indices
+	u0 := int(ui)
+	u1 := u0 + 1
+	if u1 >= m.numAlpha {
+		u1 = m.numAlpha - 1
+	}
+	v0 := int(vi)
+	v1 := v0 + 1
+	if v1 >= m.numBeta {
+		v1 = m.numBeta - 1
+	}
+	
+	// Weights
+	uw := ui - float64(u0)
+	vw := vi - float64(v0)
+	
+	// Bilinear
+	f00 := m.everettTable[u0][v0]
+	f10 := m.everettTable[u1][v0]
+	f01 := m.everettTable[u0][v1]
+	f11 := m.everettTable[u1][v1]
+	
+	interp := (1-uw)*(1-vw)*f00 + uw*(1-vw)*f10 + (1-uw)*vw*f01 + uw*vw*f11
+	return interp
+}
+
 // temperatureCorrectedEc returns the coercive field corrected for temperature and strain.
 // Temperature: Ec(T) = Ec0 * (1 - T/Tc)^β
 // Strain: Ec_eff = Ec(T) * (1 + strainShiftFactor * strain)
@@ -408,15 +544,53 @@ func (m *MayergoyzPreisach) GetEffectiveEc() float64 {
 	return m.temperatureCorrectedEc()
 }
 
-// Update applies a new electric field and returns the resulting polarization.
+// UpdateDynamic applies a new electric field over a time step dt.
+// Implements NLS/KAI dynamics: P moves toward P_unrelaxed with time constant tau(E).
+func (m *MayergoyzPreisach) UpdateDynamic(E, dt float64) float64 {
+	// Save current dynamic polarization before calculating static target
+	currentP := m.polarization
+
+	// 1. Calculate the instantaneous (static) target polarization using Stack/Everett
+	// This updates the field history (stack) and sets m.polarization to the target equilibrium
+	var targetP float64
+	if m.UseEverett {
+		targetP = m.updateStack(E)
+	} else {
+		targetP = m.Update(E)
+	}
+	
+	// 2. Calculate switching time constant tau(E) using NLS (Merz law)
+	tau := m.GetSwitchingTime(E)
+	
+	// 3. Apply relaxation (KAI/NLS dynamics)
+	// P(t+dt) = P(t) + (P_target - P(t)) * (1 - exp(-dt/tau))
+	progress := 1.0 - math.Exp(-dt/tau)
+	newP := currentP + (targetP - currentP) * progress
+	
+	// Update state to dynamic value
+	m.polarization = newP
+	
+	return newP
+}
+
+// Update applies a new electric field and returns the resulting polarization (Instantaneous).
 func (m *MayergoyzPreisach) Update(E float64) float64 {
+	if m.UseEverett {
+		return m.updateStack(E)
+	}
+
+	// Legacy Grid Update (O(N))
 	// Safety check: ensure distribution and hysterons are synchronized
 	if len(m.distribution) != len(m.hysterons) {
 		log.Debug("Update: distribution/hysteron mismatch (%d vs %d), reinitializing",
 			len(m.distribution), len(m.hysterons))
 		m.initializeDistribution()
 	}
-
+	
+	// ... (rest of old execution)
+	// But to avoid duplicate code and complexity, we should just use stack model if enabled.
+	// The Grid model is only kept as fallback or reference.
+	
 	// Update each hysteron's state based on the applied field
 	for i := range m.hysterons {
 		if E >= m.hysterons[i].Alpha {
@@ -424,35 +598,223 @@ func (m *MayergoyzPreisach) Update(E float64) float64 {
 		} else if E <= m.hysterons[i].Beta {
 			m.hysterons[i].State = -1 // Switch DOWN
 		}
-		// Otherwise, state remains unchanged (memory effect)
 	}
 
-	// Calculate polarization by integrating over Preisach plane
-	// P = ∫∫ μ(α, β) * γ(α, β) dα dβ
+	// Calculate polarization
 	m.polarization = 0
 	for i, h := range m.hysterons {
 		m.polarization += m.distribution[i][0] * float64(h.State)
 	}
 
+	// Post-processing (fatigue, clamp)
+	return m.finalizePolarization(E)
+}
+
+// updateStack implements the efficient O(1) Mayergoyz stack algorithm.
+func (m *MayergoyzPreisach) updateStack(E float64) float64 {
+	// Initialize if empty (assume negative saturation start)
+	if len(m.StackE) == 0 {
+		m.StackE = append(m.StackE, -math.MaxFloat64) // Initial Min
+	}
+
+	// Implement Wipe-out and Stack update
+	// Stack alternates [m0, M1, m1, M2, m2, ...]
+	// m are minima (local min E), M are maxima (local max E)
+	
+	// Check direction relative to current stack top
+	last := m.StackE[len(m.StackE)-1]
+	
+	// Determine if we are extending the current branch or turning
+	// If last was a Minimum (index even, 0, 2...), we are going UP (Increasing)
+	// If last was a Maximum (index odd, 1, 3...), we are going DOWN (Decreasing)
+	increasing := (len(m.StackE)-1) % 2 == 0
+	
+	if increasing {
+		if E < last {
+			// Reversal detected! We were increasing, now E < last.
+			// 'last' becomes a new Maximum M_k.
+			// Push E as new Minimum m_k? No, we push the Turning Point.
+			// Wait, if E < last, we haven't necessarily formed a permanent turning point yet.
+			// Any decrease counts as a reversal. 
+			// Push 'last' as Maximum. Current E is the candidate for new Minimum.
+			m.StackE = append(m.StackE, E) // Effectively push last (implicitly) and E?
+			// Stack logic: [m0] -> go up to E1 -> [m0]. Current is E1.
+			// If E drops to E2 < E1, then E1 was max. Stack: [m0, E1]. Current E2.
+			
+			// But careful: we modify the stack *in place* during the sweep.
+			// We only push a new extremum when we explicitly reverse direction.
+			// Current input E is simpler:
+			// Just maintain the stack such that it bounds the active history.
+			
+			// Simplified Logic:
+			// 1. Wipe out history that E exceeds.
+			// 2. Append E if it extends.
+			
+			// If increasing (last is Min):
+			// We check against previous Max (index len-2).
+			// If E > Max_{k}, wipe Max_{k} and m_{k-1}.
+			for len(m.StackE) >= 3 && E >= m.StackE[len(m.StackE)-2] {
+				m.StackE = m.StackE[:len(m.StackE)-2]
+			}
+			
+			// Update the current "tip" of the branch
+			// In Mayergoyz, strict stack only stores *past* extrema.
+			// The current value E is the "moving" tip.
+			// But we need to update the top of stack to E?
+			// Actually, stack usually stores [m0, M1, m1, M2]. The current branch extends from M2 down to E.
+			// OR extends from m2 up to E.
+			
+			// If we are increasing:
+			// Update the provisional Maximum (the future turning point).
+			// Actually, if we are in "increasing mode", we are just extending the path from stack-top (Min).
+			// If E > stack-top, we are continuing up.
+			// If E < stack-top? Then stack-top WAS the Maximum!
+			// We must push the stack-top as a confirmed Max, and start going down.
+			
+			// This suggests we need to track state: "Increasing" vs "Decreasing".
+			// But Mayergoyz handles this via "Wipe-out".
+			// If E > top (and we are increasing), we just update P.
+		}
+	}
+	
+	// Robust Implementation:
+	// Check for reversal using LastE vs current E
+	currentIsMin := len(m.StackE)%2 != 0
+	
+	if currentIsMin {
+		// We are currently on an Ascending Branch (extending from a Minimum)
+		// Expected behavior: E >= LastE
+		if E < m.LastE {
+			// REVERSAL DETECTED: We were going UP, now we are going DOWN.
+			// The previous point (m.LastE) is a new Maximum.
+			m.StackE = append(m.StackE, m.LastE)
+			// Now we are on a Descending Branch (stack top is Max)
+			// Proceed to handle descending logic below?
+			// Logic falls through or we re-evaluate?
+			// Re-evaluating is cleaner.
+			currentIsMin = false // Now we are descending
+		}
+	} else {
+		// We are currently on a Descending Branch (extending from a Maximum)
+		// Expected behavior: E <= LastE
+		if E > m.LastE {
+			// REVERSAL DETECTED: We were going DOWN, now we are going UP.
+			// The previous point (m.LastE) is a new Minimum.
+			m.StackE = append(m.StackE, m.LastE)
+			// Now we are on an Ascending Branch (stack top is Min)
+			currentIsMin = true
+		}
+	}
+
+	// Update LastE for next step
+	m.LastE = E
+
+	// Now process Wipe-out based on the current branch direction
+	if currentIsMin {
+		// Ascending Branch: Wiping out previous Maxima
+		// Stack: [..., Max_prev, Min_last]
+		// If E > Max_prev, then Max_prev and Min_last are wiped.
+		for len(m.StackE) >= 3 && E >= m.StackE[len(m.StackE)-2] {
+			m.StackE = m.StackE[:len(m.StackE)-2]
+		}
+	} else {
+		// Descending Branch: Wiping out previous Minima
+		// Stack: [..., Min_prev, Max_last]
+		// If E < Min_prev, then Min_prev and Max_last are wiped.
+		for len(m.StackE) >= 3 && E <= m.StackE[len(m.StackE)-2] {
+			m.StackE = m.StackE[:len(m.StackE)-2]
+		}
+	}
+	
+	// Calculate Polarization from Stack + Current E
+	// P = -Ps + 2 * Sum (F(M_k, m_{k-1}) - F(M_k, m_k))
+	// where the last "m_k" or "M_k" is replaced by E depending on direction.
+	
+
+	// Base P is -Ps?
+	// The Everett sum gives the change from negative saturation.
+	
+	// Iterate pairs
+	// Stack: [m0, M1, m1, M2, m2, ...]
+	// m0 is usually -Emax or similar.
+	
+	// We handle the "Current Segment" by temporarily appending E to stack conceptually.
+	// If going UP (len odd): Stack [..., m_k]. Virtual is [..., m_k, E] (E acts as M_{k+1}?)
+	// No, we rely on the formula 2.15 in Mayergoyz.
+	// P(t) = -Ps + 2 * [ F(M1, m0) - F(M1, m1) + F(M2, m1) - F(M2, m2) + ... ]
+	
+	// Let's build the sequence of extrema including current E.
+	// If going UP: Sequence is m0, M1, m1, ..., m_k, E (as M_{k+1})
+	// If going DOWN: Sequence is m0, M1, ..., M_k, E (as m_k)
+	
+	tempStack := make([]float64, len(m.StackE))
+	copy(tempStack, m.StackE)
+	
+	goingUp := len(m.StackE) % 2 != 0
+	if goingUp {
+		// Current branch is ascending from m_k. E acts as provisional Max.
+		// But strictly E isn't a Max yet. 
+		// Formula term: + F(E, m_k)
+		// So total sum ends with + F(E, last_min)
+	} else {
+		// Current branch is descending from M_k. E acts as provisional Min.
+		// Formula term: - F(M_k, E)
+	}
+	
+	// Evaluate Sum
+	val := 0.0
+	
+	// Pairs (M_i, m_{i-1}) contribute +F
+	// Pairs (M_i, m_i) contribute -F
+	
+	// Stack: m0, M1, m1, M2, m2...
+	// i=1: M1=stack[1], m0=stack[0]. Add F(M1, m0). Subtract F(M1, m1).
+	
+	// Loop through full pairs in stack
+	for i := 1; i < len(tempStack); i+=2 {
+		M := tempStack[i]
+		m_prev := tempStack[i-1]
+		
+		val += m.getEverettValue(M, m_prev)
+		
+		if i+1 < len(tempStack) {
+			m_curr := tempStack[i+1]
+			val -= m.getEverettValue(M, m_curr)
+		} else {
+			// Assuming we are at the end, and going DOWN (len even).
+			// The last element is M_k. Current E is acting as m_k.
+			val -= m.getEverettValue(M, E)
+		}
+	}
+	
+	if goingUp {
+		// We have an orphaned m_last at end of stack. Open ascending branch.
+		// Add F(E, m_last)
+		m_last := tempStack[len(tempStack)-1]
+		val += m.getEverettValue(E, m_last)
+	}
+	
+	m.polarization = -m.material.Ps + 2.0*val
+	
+	return m.finalizePolarization(E)
+}
+
+func (m *MayergoyzPreisach) finalizePolarization(E float64) float64 {
 	// Apply fatigue degradation
 	m.polarization *= (1 - m.fatigueRate*float64(m.cycleCount))
 
 	// Clamp polarization to physical bounds [-Ps, +Ps]
-	// This prevents visual spikes from numerical edge cases or race conditions
 	Ps := m.material.Ps
 	if m.polarization > Ps {
-		log.Debug("Update: clamping P=%.4f to +Ps=%.4f (E=%.2e)", m.polarization, Ps, E)
 		m.polarization = Ps
 	} else if m.polarization < -Ps {
-		log.Debug("Update: clamping P=%.4f to -Ps=%.4f (E=%.2e)", m.polarization, -Ps, E)
 		m.polarization = -Ps
 	}
 
-	// Record history with bounded growth to prevent memory exhaustion
+	// Record history
 	const maxFieldHistory = 10000
 	m.fieldHistory = append(m.fieldHistory, E)
 	if len(m.fieldHistory) > maxFieldHistory {
-		// Keep the most recent half of history
 		m.fieldHistory = m.fieldHistory[maxFieldHistory/2:]
 	}
 
@@ -605,6 +967,18 @@ func (m *MayergoyzPreisach) GetDistribution() []float64 {
 
 // GetSwitchedFraction returns the fraction of hysterons in +1 state.
 func (m *MayergoyzPreisach) GetSwitchedFraction() float64 {
+	// If using Everett method, hysterons state is not updated individually.
+	// Approximate fraction from macroscopic polarization.
+	if m.UseEverett {
+		// P = Ps * (2*fraction - 1)
+		// fraction = (P/Ps + 1) / 2
+		normP := m.polarization / m.material.Ps
+		frac := (normP + 1.0) / 2.0
+		if frac < 0 { return 0 }
+		if frac > 1 { return 1 }
+		return frac
+	}
+
 	switched := 0
 	for _, h := range m.hysterons {
 		if h.State == +1 {
@@ -628,6 +1002,9 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 		savedStates[i] = h.State
 	}
 	savedPol := m.polarization
+	savedStack := make([]float64, len(m.StackE))
+	copy(savedStack, m.StackE)
+	savedLastE := m.LastE
 
 	// Saturate positive then return to E=0
 	Emax := m.temperatureCorrectedEc() * 2.5
@@ -645,6 +1022,8 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 		m.hysterons[i].State = savedStates[i]
 	}
 	m.polarization = savedPol
+	m.StackE = savedStack
+	m.LastE = savedLastE
 
 	return actualPr
 }
@@ -855,6 +1234,11 @@ type PreisachExport struct {
 	// Metadata
 	Timestamp string `json:"timestamp"`  // ISO8601 timestamp
 	NumStates int    `json:"num_states"` // Number of hysterons (for validation)
+
+	// Everett/Stack Method State
+	StackE     []float64 `json:"stack_e,omitempty"`     // History stack
+	LastE      float64   `json:"last_e,omitempty"`      // Last field value
+	UseEverett bool      `json:"use_everett,omitempty"` // Optimization flag
 }
 
 // ExportState saves the current Preisach model state to a JSON file.
@@ -908,6 +1292,11 @@ func (m *MayergoyzPreisach) ExportState(filename string) error {
 
 		Timestamp: time.Now().Format(time.RFC3339),
 		NumStates: len(states),
+
+		// Save Stack State
+		StackE:     m.StackE,
+		LastE:      m.LastE,
+		UseEverett: m.UseEverett,
 	}
 
 	// Ensure directory exists
@@ -1019,10 +1408,34 @@ func (m *MayergoyzPreisach) ImportState(filename string) error {
 	// This ensures distribution weights match the restored state
 	m.initializeDistribution()
 
-	// Recalculate polarization from restored states
-	m.polarization = 0
-	for i, h := range m.hysterons {
-		m.polarization += m.distribution[i][0] * float64(h.State)
+	// Restore Everett/Stack state
+	m.UseEverett = export.UseEverett
+	if m.UseEverett {
+		m.initializeEverettTable()
+		// If exported file had stack state, restore it
+		if len(export.StackE) > 0 {
+			m.StackE = make([]float64, len(export.StackE))
+			copy(m.StackE, export.StackE)
+			m.LastE = export.LastE
+		}
+	} else {
+		// Just to be safe
+		m.StackE = nil
+		m.LastE = 0
+	}
+
+	// Recalculate polarization
+	if m.UseEverett && len(m.StackE) > 0 {
+		// If using Stack method, Hysterons are stale/unused.
+		// Recalculate P from the restored Stack by re-applying the last field.
+		// calling updateStack(m.LastE) updates P without changing stack state (since E == LastE).
+		m.updateStack(m.LastE)
+	} else {
+		// Using Grid method: P is sum of hysterons
+		m.polarization = 0
+		for i, h := range m.hysterons {
+			m.polarization += m.distribution[i][0] * float64(h.State)
+		}
 	}
 
 	log.Info("ImportState: restored %d hysteron states from %s (material=%s, T=%.0fK, cycles=%d, wakeup=%.1f%%)",

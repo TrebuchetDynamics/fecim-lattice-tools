@@ -598,42 +598,101 @@ func (a *App) onTemperatureChanged(newTemp float64) {
 }
 
 // simulationLoop runs the main simulation loop at ~60 FPS
+// simulationLoop runs the main simulation loop at ~60 FPS with adaptive physics stepping
 func (a *App) simulationLoop() {
-	ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS
+	ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS targeting
 	defer ticker.Stop()
 
 	lastTime := time.Now()
+
+	// Adaptive Time-Stepping Constants
+	const (
+		dtMax     = 0.025 // 25ms cap to prevent explosion after pause
+		dtNominal = 1e-4  // 0.1ms nominal physics step (good for standard loop)
+		dtMin     = 1e-6  // 1µs minimum step near critical field (Ec)
+	)
 
 	for a.running {
 		<-ticker.C
 
 		now := time.Now()
-		dt := now.Sub(lastTime).Seconds()
+		frameDt := now.Sub(lastTime).Seconds()
 		lastTime = now
 
 		if a.paused {
 			continue
 		}
 
-		// Clamp dt to prevent physics explosions after pauses
-		const maxDt = 0.025 // 25ms
-		if dt > maxDt {
-			dt = maxDt
+		if frameDt > dtMax {
+			frameDt = dtMax
 		}
 
-		a.Update(dt)
+		// Lock ONCE for the entire frame's physics burst
+		a.mu.Lock()
+
+		// --- Adaptive Sub-Stepping Loop ---
+		remainingDt := frameDt
+		
+		// Safety break to prevent infinite loops if calculation is too slow
+		const maxSubSteps = 1000
+		subSteps := 0
+
+		matEc := 0.0
+		if a.material != nil {
+			matEc = a.material.Ec
+		}
+
+		for remainingDt > 0 && subSteps < maxSubSteps {
+			// Determine step size based on physics state
+			// If E-field is near Ec, use smaller steps to capture switching dynamics
+			
+			currentStep := dtNominal
+			
+			// Check proximity to Ec (switching region)
+			// Switching happens at +Ec (increasing) and -Ec (decreasing)
+			// But effective Ec varies. Use material Ec as baseline proxy.
+			if matEc > 0 {
+				distPlus := math.Abs(a.electricField - matEc)
+				distMinus := math.Abs(a.electricField + matEc)
+				minDist := math.Min(distPlus, distMinus)
+
+				// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
+				// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait. 
+				// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
+				// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
+				// So 0.1 MV/cm = 10^7 V/m.
+				// Let's use 10 MV/m (1e7) as threshold.
+				
+				threshold := 1e7 // 0.1 MV/cm
+				if minDist < threshold {
+					currentStep = dtMin
+				}
+			}
+
+			// Don't step past the frame time
+			if currentStep > remainingDt {
+				currentStep = remainingDt
+			}
+
+			a.updatePhysics(currentStep)
+			remainingDt -= currentStep
+			subSteps++
+		}
+		
+		// Update UI once per frame with the final state
+		a.updateUI()
+		
+		a.mu.Unlock()
 	}
 }
 
-// Update handles the physics and state transitions for all simulation modes.
-func (a *App) Update(dt float64) {
-	a.mu.Lock()
-	// NOTE: No defer here - we explicitly unlock at line ~1192 before GUI refresh
-	// to avoid holding the lock during UI operations
+// updatePhysics handles the physics and state transitions.
+// MUST be called with a.mu held.
+func (a *App) updatePhysics(dt float64) {
+	// a.mu.Lock() -> Removed, caller holds lock
 
 	mat := a.material
 	if mat == nil {
-		a.mu.Unlock()
 		return
 	}
 
@@ -923,7 +982,7 @@ func (a *App) Update(dt float64) {
 
 						// CRITICAL FIX: Learn from the Servo using CalibrationManager
 						// Instead of naïve 100% overwrite, we use binary search + monotonicity
-						learnedV := a.writeController.CurrentVoltage
+						learnedE := a.writeController.CurrentField
 						Ec := mat.Ec
 						targetIdx := targetLevel - 1 // 0-indexed for CM
 
@@ -932,15 +991,15 @@ func (a *App) Update(dt float64) {
 								// Ascending (written from reset negative)
 								a.calibManager.UpdateCalibrationUp(targetIdx, 0, Ec)
 								// Override the midpoint with the actual successful servo voltage to anchor the search
-								a.calibManager.CalibrationUp[targetIdx] = learnedV
-								a.calibrationUp[targetIdx] = learnedV
+								a.calibManager.CalibrationUp[targetIdx] = learnedE
+								a.calibrationUp[targetIdx] = learnedE
 							} else {
 								// Descending (written from reset positive)
 								a.calibManager.UpdateCalibrationDown(targetIdx, 0, Ec)
-								a.calibManager.CalibrationDown[targetIdx] = learnedV
-								a.calibrationDown[targetIdx] = learnedV
+								a.calibManager.CalibrationDown[targetIdx] = learnedE
+								a.calibrationDown[targetIdx] = learnedE
 							}
-							log.Printf("CALIB LEARN: target=%d learnedV=%.3f×Ec (updated via CM)", targetLevel, learnedV/Ec)
+							log.Printf("CALIB LEARN: target=%d learnedE=%.3f×Ec (updated via CM)", targetLevel, learnedE/Ec)
 						}
 
 					case controller.StateForceReset:
@@ -1142,7 +1201,8 @@ func (a *App) Update(dt float64) {
 
 	// Update physics
 	prevP := a.polarization
-	a.polarization = a.preisach.Update(a.electricField)
+	// Use Dynamic Update (NLS/KAI) with adaptive time step
+	a.polarization = a.preisach.UpdateDynamic(a.electricField, dt)
 	a.normalizedP = a.preisach.NormalizedPolarization()
 	maxLevel := a.numLevels - 1
 	a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
@@ -1180,19 +1240,26 @@ func (a *App) Update(dt float64) {
 			a.pHistory = a.pHistory[1:]
 		}
 	}
+}
 
+// updateUI prepares data and calls refreshGUI. 
+// MUST be called with a.mu held.
+func (a *App) updateUI() {
 	// Update UI (must be on main thread)
 	fE := a.electricField
 	pV := a.polarization
 	dL := a.discreteLevel
-	materialEc := mat.Ec // Capture Ec under lock for thread safety
+	materialEc := a.material.Ec
 	eHist := make([]float64, len(a.eHistory))
 	pHist := make([]float64, len(a.pHistory))
 	copy(eHist, a.eHistory)
 	copy(pHist, a.pHistory)
 
-	a.mu.Unlock()
-
+	// Release lock temporarily if needed? 
+	// No, refreshGUI uses fyne.Do which schedules on main thread. 
+	// The copy operations above are safe under lock.
+	// We invoke refreshGUI which takes VALUES (copies).
+	
 	a.refreshGUI(fE, pV, dL, materialEc, eHist, pHist)
 }
 
