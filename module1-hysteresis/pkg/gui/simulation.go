@@ -1163,8 +1163,8 @@ func (a *App) simulationLoop() {
 							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdWriteStartP)
 						// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 						// Spike detection in plot widget handles any discontinuities
-						// Skip RESET phase - go directly to WRITE with ISPP
-						a.wrdPhase = 2
+						// Go to RESET phase to ensure clean state and proper initialization
+						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0  // Reset energy accumulator for next cycle
 						a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target

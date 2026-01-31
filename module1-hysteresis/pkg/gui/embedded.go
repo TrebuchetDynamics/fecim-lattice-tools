@@ -7,6 +7,8 @@ import (
 
 	"fyne.io/fyne/v2"
 
+	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
@@ -22,11 +24,17 @@ func NewEmbeddedApp() *EmbeddedApp {
 	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
-	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200                                 // High-resolution physics simulation (independent of quantization)
+	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
+	// Refactoring: Initialize managers
+	calibManager := algo.NewCalibrationManager(numLevels)
+	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
+
 	app := &App{
+		calibManager:    calibManager,
+		writeController: writeController,
 		material:        mat,
 		preisach:        preisach,
 		materials:       materials,
