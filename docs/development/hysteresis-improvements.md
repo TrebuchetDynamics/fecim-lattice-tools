@@ -20,8 +20,9 @@ These issues affect the scientific validity of the simulation and must be addres
 **Implementation Plan:**
 - [ ] Implement proper branch interpolation logic in `applyHistoryCorrection`.
 - [ ] Use turning point stack to define enclosing major/minor loop bounds (Mayergoyz, 1991).
+- [ ] **Critical:** Implement "Wipe-out" property: Pop points from LIFO stack when field exceeds previous extrema to prevent memory leaks.
 - [ ] Interpolate based on E-field position within the current branch pair.
-- [ ] **Verification:** `TestPreisachLoopShape` and manual verification of minor loop closure.
+- [ ] **Verification:** `TestPreisachLoopShape` and manual verification of minor loop closure; 1000-cycle endurance test.
 - [ ] **Reference:** Mayergoyz, I.D. "Mathematical Models of Hysteresis" *IEEE Trans. Magnetics* (1986); Bartic et al. "Preisach model for ferroelectric capacitors" *J. Appl. Phys.* (2001).
 
 ### 2.2 Resolve Voltage vs. Field Unit Confusion
@@ -38,6 +39,7 @@ These issues affect the scientific validity of the simulation and must be addres
 **Impact:** Switching speed does not scale with overdrive voltage, contradicting Merz's Law.
 **Implementation Plan:**
 - [ ] Implement Nucleation-Limited Switching (NLS) model: `tau(E) = tau0 * exp(Ea / |E|)` (Merz's Law).
+- [ ] **Critical:** Implement **Adaptive Time-Stepping**. Shrink `dt` when field is near `Ec` to prevent numerical oscillation in NLS dynamics.
 - [ ] Update `SimulateDomainSwitching` in `preisach_advanced.go`.
 - [ ] **Verification:** Plot switching time vs. voltage; ensure it follows exponential law.
 - [ ] **Reference:** "Domain Wall Dynamics in Ferroelectric Materials" (arXiv); *Ferroelectric Domain Switching Dynamics*.
@@ -62,6 +64,7 @@ These improvements extend the capabilities of the module.
 - [ ] Add `TemperatureSlider` (Standard: 233K - 423K) to Controls panel.
 - [ ] Bind slider to `material.SetTemperature()`.
 - [ ] Display real-time `Ec(T)` and `Pr(T)` values in Metrics panel.
+- [ ] Add **State Stability Indicator**: Calculate Boltzmann probability (`exp(-Eb/kT)`) of state retention. Warn user if thermal noise threatens 30-level stability.
 - [ ] **Verification:** Change temp, observe P-E loop shrinking (approaching Tc).
 - [ ] **Reference:** Böscke et al. (2011) "Ferroelectricity in hafnium oxide" (Tc ~450°C); Park et al. (2015) (Temperature stability).
 
@@ -97,9 +100,10 @@ Improvements to usability and visual clarity.
 
 ### Phase 1: Core Physics (Days 1-2)
 1. Unit Audit: Rename variables in `writer.go` and `ispp.go`.
-2. Fix `PreisachModel` history logic.
+2. Fix `PreisachModel` history logic (Implement Stack Management).
 3. Integrate field-dependent NLS/KAI tau.
-4. *Milestone: Physics Verification Pass* (`go test ./pkg/ferroelectric -v`)
+4. Implement Adaptive Time-Stepping for NLS stability (dt scaling).
+5. *Milestone: Physics Verification Pass* (`go test ./pkg/ferroelectric -v`)
 
 ### Phase 2: Async Architecture (Day 3)
 1. Create `CalibrationWorker` struct.
@@ -127,6 +131,9 @@ go test ./module1-hysteresis/pkg/ferroelectric -run Literature -v
 
 # ISPP Algorithm correctness
 go test ./module1-hysteresis/pkg/ferroelectric -run ISPP -v
+
+# Endurance/Memory Leak Check
+go test ./module1-hysteresis/pkg/ferroelectric -run Endurance
 ```
 
 ### Manual Validation Checklist
