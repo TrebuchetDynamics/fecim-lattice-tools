@@ -628,10 +628,12 @@ func (a *App) simulationLoop() {
 // Update handles the physics and state transitions for all simulation modes.
 func (a *App) Update(dt float64) {
 	a.mu.Lock()
-	defer a.mu.Unlock()
+	// NOTE: No defer here - we explicitly unlock at line ~1192 before GUI refresh
+	// to avoid holding the lock during UI operations
 
 	mat := a.material
 	if mat == nil {
+		a.mu.Unlock()
 		return
 	}
 
