@@ -132,6 +132,8 @@ func NewLogger(demoName string) *Logger {
 	// Only log the path once for the first logger
 	if sharedLogPath != "" {
 		logger.Printf("Logging to: %s", sharedLogPath)
+		// Hook standard log package to write to the shared log file as well
+		log.SetOutput(sharedLogWriter)
 		sharedLogPath = "" // Clear to avoid repeating
 	}
 

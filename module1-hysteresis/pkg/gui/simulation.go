@@ -347,6 +347,12 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 	a.relaxCompDown = append([]float64(nil), cal.RelaxCompDown...)
 	a.calibrationTemp = cal.Temperature
 
+	// Refactoring: Sync to CalibrationManager
+	if a.calibManager != nil {
+		copy(a.calibManager.CalibrationUp, a.calibrationUp)
+		copy(a.calibManager.CalibrationDown, a.calibrationDown)
+	}
+
 	// MONOTONICITY ENFORCEMENT on load: fix any corrupted values from file
 	Ec := a.material.Ec
 	if a.preisach != nil {
@@ -610,11 +616,13 @@ func (a *App) simulationLoop() {
 		// Calculate time since last frame BEFORE acquiring lock
 		dt := time.Since(lastTime).Seconds()
 
-		// If window lost focus (dt > 50ms), skip this frame and drain queue
-		// This prevents the "speed up" effect when returning to the window
-		if dt > 0.05 {
+		// CRITICAL: Clamp dt immediately to prevent any large values from leaking through
+		// This handles window focus loss, system sleep, or debugger pauses
+		const maxDt = 0.025 // 25ms = 40fps minimum, conservative to prevent bugs
+		if dt > maxDt {
+			dt = maxDt
 			lastTime = time.Now()
-			// Drain any queued ticks to prevent rapid processing
+			// Drain any queued ticks to prevent rapid processing when returning to window
 			drainCount := 0
 			for {
 				select {
@@ -644,10 +652,7 @@ func (a *App) simulationLoop() {
 		// Copy material reference under lock for safe access
 		mat := a.material
 
-		// Clamp dt to max 33ms per frame (30fps minimum)
-		if dt > 0.033 {
-			dt = 0.033
-		}
+		// dt is already clamped to maxDt (25ms) before the lock (see line ~622)
 		a.simTime += dt
 		// Wrap simTime to prevent floating-point issues after long runs
 		if a.simTime > 1000 {
@@ -1068,6 +1073,30 @@ func (a *App) simulationLoop() {
 							log.Printf("WRD PHASE 4→5: TARGET HIT | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
 								a.writeController.LastVerifyLevel, targetLevel,
 								successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+
+							// CRITICAL FIX: Learn from the Servo!
+							// Save the successful voltage to calibration so next run starts closer.
+							learnedV := a.writeController.CurrentVoltage
+							Ec := mat.Ec
+
+							// Determine direction and update correct calibration
+							if targetLevel > midLevel {
+								// Ascending (written from reset negative)
+								oldV := a.calibrationUp[targetLevel]
+								a.calibrationUp[targetLevel] = learnedV
+								if a.calibManager != nil {
+									a.calibManager.CalibrationUp[targetLevel] = learnedV
+								}
+								log.Printf("CALIB LEARN UP[%d]: %.3f → %.3f (%.3f×Ec)", targetLevel, oldV, learnedV, learnedV/Ec)
+							} else {
+								// Descending (written from reset positive)
+								oldV := a.calibrationDown[targetLevel]
+								a.calibrationDown[targetLevel] = learnedV
+								if a.calibManager != nil {
+									a.calibManager.CalibrationDown[targetLevel] = learnedV
+								}
+								log.Printf("CALIB LEARN DOWN[%d]: %.3f → %.3f (%.3f×Ec)", targetLevel, oldV, learnedV, learnedV/Ec)
+							}
 
 						case controller.StateForceReset:
 							// RETRY LIMIT: Trigger Full Reset
@@ -2162,6 +2191,11 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 	log.Printf("CALIB_UP[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,
 		a.calibUpLow[targetIdx]/1e8, a.calibUpHigh[targetIdx]/1e8)
+
+	// Refactoring: Sync to CalibrationManager
+	if a.calibManager != nil {
+		copy(a.calibManager.CalibrationUp, a.calibrationUp)
+	}
 }
 
 // updateCalibrationDown updates descending calibration using binary search with bounds tracking.
@@ -2284,4 +2318,9 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 	log.Printf("CALIB_DOWN[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,
 		a.calibDownLow[targetIdx]/1e8, a.calibDownHigh[targetIdx]/1e8)
+
+	// Refactoring: Sync to CalibrationManager
+	if a.calibManager != nil {
+		copy(a.calibManager.CalibrationDown, a.calibrationDown)
+	}
 }

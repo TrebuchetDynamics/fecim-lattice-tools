@@ -116,21 +116,38 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		eaNLS = material.Ec * 0.5 // Default: 0.5 * Ec (ensures fast switching above Ec)
 	}
 
+	// Calculate distribution width from material's squareness (Pr/Ps ratio)
+	// Physics: Narrower distribution → squarer loop → higher Pr/Ps
+	// Empirical formula: σ ≈ Ec × (1.2 - Pr/Ps)
+	// This ensures the Preisach model produces the correct remanent polarization
+	squareness := material.Pr / material.Ps
+	if squareness <= 0 || squareness > 1 {
+		squareness = 0.83 // Default to typical HZO squareness
+	}
+	distributionWidth := material.Ec * (1.2 - squareness)
+	// Clamp to reasonable range: [0.1*Ec, 0.8*Ec]
+	if distributionWidth < material.Ec*0.1 {
+		distributionWidth = material.Ec * 0.1
+	}
+	if distributionWidth > material.Ec*0.8 {
+		distributionWidth = material.Ec * 0.8
+	}
+
 	m := &MayergoyzPreisach{
 		material:    material,
 		numAlpha:    gridSize,
 		numBeta:     gridSize,
-		DistType:    DistGaussian,       // Default to Gaussian
-		AlphaMean:   material.Ec,        // +Ec
-		AlphaSigma:  material.Ec * 0.65, // 65% distribution - wider for more gradual switching
-		BetaMean:    -material.Ec,       // -Ec
-		BetaSigma:   material.Ec * 0.65, // Match alpha sigma
-		Correlation: 0.15,               // Low correlation for well-distributed hysterons
+		DistType:    DistGaussian,      // Default to Gaussian
+		AlphaMean:   material.Ec,       // +Ec
+		AlphaSigma:  distributionWidth, // Calculated from Pr/Ps ratio
+		BetaMean:    -material.Ec,      // -Ec
+		BetaSigma:   distributionWidth, // Match alpha sigma
+		Correlation: 0.15,              // Low correlation for well-distributed hysterons
 		// Lorentzian defaults
 		LorentzAlphaC: material.Ec,       // Center at +Ec
-		LorentzAlphaW: material.Ec * 0.5, // Half-width at half-maximum
+		LorentzAlphaW: distributionWidth, // Use same width as Gaussian
 		LorentzBetaC:  -material.Ec,      // Center at -Ec
-		LorentzBetaW:  material.Ec * 0.5, // Half-width at half-maximum
+		LorentzBetaW:  distributionWidth, // Use same width as Gaussian
 		Temperature:   300,               // Room temperature (K)
 		CurieTemp:     723,               // HZO Curie temperature ~450°C
 		TempExponent:  0.5,               // Typical exponent

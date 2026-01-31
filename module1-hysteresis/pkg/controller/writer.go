@@ -220,14 +220,14 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 	// Update modifier
 	if signChanged {
 		wc.StepModifier *= 0.5 // Dampen significantly on overshoot
-		if wc.StepModifier < 0.1 {
-			wc.StepModifier = 0.1 // Minimum floor
+		if wc.StepModifier < 0.05 {
+			wc.StepModifier = 0.05 // Lower minimum for finer control
 		}
 	} else {
 		// No sign change - we haven't crossed target yet.
 		// If we made NO progress (diff is same), kick it harder
 		if diff == wc.PreviousDiff {
-			wc.StepModifier *= 1.2
+			wc.StepModifier *= 1.5 // More aggressive when stuck
 		} else {
 			// We made progress, keep steady or slightly dampen to land softly
 			wc.StepModifier = 1.0
@@ -236,9 +236,11 @@ func (wc *WriteController) calculateNextVoltage(currentLevel int) {
 
 	// 3. Calculate Nudge
 	voltagePerLevel := (2.0 * wc.Ec) / float64(wc.NumLevels-1)
-	baseStep := voltagePerLevel * 0.5 // Base nudge unit
+	baseStep := voltagePerLevel * 0.15 // Finer base nudge unit (reduced from 0.5)
 
-	nudge := baseStep * float64(math.Abs(float64(diff))) * wc.StepModifier
+	// Scale nudge by error, but with diminishing returns for large errors
+	errorScale := math.Min(float64(math.Abs(float64(diff))), 3.0) // Cap at 3 levels
+	nudge := baseStep * errorScale * wc.StepModifier
 
 	// Direction
 	if diff > 0 {
