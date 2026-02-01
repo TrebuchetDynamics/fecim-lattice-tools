@@ -155,8 +155,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			targetField = wc.MaxField * 1.5 // Deep Positive
 		}
 		
-		// Wait for reset pulse
-		if wc.PhaseTimer > pulseDur*0.4 { // Short reset
+		// Wait for reset pulse to actually REACH the target (critical for ramp speed)
+		if wc.PhaseTimer > pulseDur*0.8 && math.Abs(currentField-targetField) < 0.01*wc.MaxField {
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 			// Back off CurrentField for next try
@@ -168,8 +168,10 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				// Was negative, make less negative
 				wc.CurrentField *= 0.8
 			}
+			// CRITICAL: Dampen step modifier to prevent immediate re-overshoot
+			wc.StepModifier = 0.2
 			wc.PulseCount++
-			log.Printf("ISPP RESET DONE. Retrying with E=%.3f", wc.CurrentField)
+			log.Printf("ISPP RESET DONE. Retrying with E=%.3f, dampening servo", wc.CurrentField)
 		}
 		return targetField, false
 
