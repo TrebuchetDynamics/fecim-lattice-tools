@@ -135,7 +135,8 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 	if preisachGridSize > 1000 {
 		preisachGridSize = 1000 // Cap for memory/performance
 	}
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+	// Create Preisach model
+	preisach := ferroelectric.NewPreisachModel(mat)
 	preisach.SetTemperature(tempK)
 
 	// Get temperature-corrected Ec
@@ -360,7 +361,8 @@ func verifyCalibration(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 	if preisachGridSize > 1000 {
 		preisachGridSize = 1000
 	}
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+	// Create fresh Preisach model
+	preisach := ferroelectric.NewPreisachModel(mat)
 	preisach.SetTemperature(tempK)
 
 	Ec := preisach.GetEffectiveEc()

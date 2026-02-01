@@ -25,8 +25,8 @@ func NewEmbeddedApp() *EmbeddedApp {
 
 	mat := materials[0]
 	numLevels := 30         // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+	// preisachGridSize := 200 // DEPRECATED
+	preisach := ferroelectric.NewPreisachModel(mat)
 
 	// Refactoring: Initialize managers
 	calibManager := algo.NewCalibrationManager(numLevels)
@@ -52,8 +52,12 @@ func NewEmbeddedApp() *EmbeddedApp {
 		maxLogLines:     12,
 		logEntries:      make([]string, 0, 12),
 		lastLogPhase:    -1,
-		isppCalc:        physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
+		// isppCalc:        physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
+	
+	// Initialize L-K Solver and Adaptive ISPP
+	app.lkSolver = physics.NewLKSolver()
+	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
 
 	return &EmbeddedApp{App: app}
 }

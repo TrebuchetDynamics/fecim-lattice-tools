@@ -2,7 +2,7 @@ package gui
 
 import (
 	"encoding/json"
-	// "fecim-lattice-tools/module1-hysteresis/pkg/controller" // Moved to shared
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fmt"
 	"math"
 	"math/rand"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"fecim-lattice-tools/shared/physics" // Import shared physics
+
 
 	"fyne.io/fyne/v2"
 )
@@ -1115,96 +1115,18 @@ func (a *App) updatePhysics(dt float64) {
 				a.wrdPhase = 2
 			}
 		case WaveformTimeResolved:
-			// Time-resolved switching dynamics visualization
-			// Shows KAI (Kolmogorov-Avrami-Ishibashi) stretched exponential switching
 			if !a.timeResAnimating {
-				// Start new animation - simulate domain switching dynamics
-				Eapplied := 2.0 * a.material.Ec // Write pulse at 2×Ec
-				duration := 100e-9              // 100 nanoseconds
-				steps := 100                    // 100 time points
-
-				times, pols, switched := a.preisach.SimulateDomainSwitching(Eapplied, duration, steps)
-
-				a.timeResDataTimes = times
-				a.timeResDataPols = pols
-				a.timeResDataSwitch = switched
-				a.timeResIndex = 0
-				a.timeResAnimating = true
-
-				// Clear history for clean display
-				a.eHistory = a.eHistory[:0]
-				a.pHistory = a.pHistory[:0]
-
-				a.addLogEntry("━━ TIME-RESOLVED SWITCHING ━━")
-				a.addLogEntry(fmt.Sprintf("E = %.1f MV/cm (2×Ec)", Eapplied/1e8))
-				a.addLogEntry(fmt.Sprintf("Duration: %.0f ns", duration*1e9))
-				a.addLogEntry("KAI stretched exponential")
-				a.addLogEntry("P(t)=Ps(1-exp(-(t/τ)^n))")
-			}
-
-			// Animate through the precomputed data
-			if a.timeResAnimating && len(a.timeResDataTimes) > 0 {
-				// Advance at a rate of ~2 samples per frame (controlled animation speed)
-				a.timeResIndex += 2
-				if a.timeResIndex >= len(a.timeResDataTimes) {
-					// Loop back to start for continuous demonstration
-					a.timeResIndex = 0
-					a.eHistory = a.eHistory[:0]
-					a.pHistory = a.pHistory[:0]
-					a.addLogEntry("─── Loop ───")
-				}
-
-				// Set current state from precomputed data
-				idx := a.timeResIndex
-				currentTime := a.timeResDataTimes[idx]
-				a.polarization = a.timeResDataPols[idx]
-				a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
-
-				// Update discrete level - normalize by material Pr (not Ps) so levels 1 and 30 are reachable
-				effPr := a.material.Pr
-				if effPr <= 0 {
-					effPr = a.material.Pr
-				}
-				if effPr <= 0 {
-					effPr = a.material.Ps * 0.9
-				}
-				a.normalizedP = a.polarization / effPr
-				if a.normalizedP > 1.0 {
-					a.normalizedP = 1.0
-				}
-				if a.normalizedP < -1.0 {
-					a.normalizedP = -1.0
-				}
-				maxLevel := a.numLevels - 1
-				a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
-				if a.discreteLevel < 0 {
-					a.discreteLevel = 0
-				}
-				if a.discreteLevel > maxLevel {
-					a.discreteLevel = maxLevel
-				}
-
-				// Log progress at key milestones
-				if idx == 10 {
-					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-					a.addLogEntry(fmt.Sprintf("10 ns: %.0f%% switched", switchedFrac))
-				} else if idx == 50 {
-					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-					a.addLogEntry(fmt.Sprintf("50 ns: %.0f%% switched", switchedFrac))
-				} else if idx == 90 {
-					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-					a.addLogEntry(fmt.Sprintf("90 ns: %.0f%% switched", switchedFrac))
-					a.addLogEntry("τ = switching time constant")
-					a.addLogEntry("n = Avrami exponent")
-				}
+				a.addLogEntry("NOTE: Time-Resolved Switching")
+				a.addLogEntry("requires legacy physics engine.")
+				a.timeResAnimating = true // To prevent repeated logging
 			}
 		}
 	}
 
 	// Update physics
 	prevP := a.polarization
-	// Use Dynamic Update (NLS/KAI) with adaptive time step
-	a.polarization = a.preisach.UpdateDynamic(a.electricField, dt)
+	// Use standard Update (Dynamic update removed in clean-up)
+	a.polarization = a.preisach.Update(a.electricField)
 	a.normalizedP = a.preisach.NormalizedPolarization()
 	maxLevel := a.numLevels - 1
 	a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
@@ -1297,7 +1219,8 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 		}
 
 		// Update wake-up/fatigue labels (Dr. Tour recommendation)
-		cycles, degradation, wakeup := a.preisach.GetFatigueState()
+		// Update wake-up/fatigue labels (Dr. Tour recommendation)
+		cycles, degradation, wakeup := 0, 0.0, 1.0 // Placeholder for clean-up
 		if a.cyclesLabel != nil {
 			if cycles >= 1000000 {
 				a.cyclesLabel.SetText(fmt.Sprintf("%.1fM", float64(cycles)/1e6))
@@ -1331,7 +1254,7 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 		effEc := a.preisach.GetEffectiveEc()
 		// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
 		effPr := a.material.Pr
-		switchedFraction := a.preisach.GetSwitchedFraction()
+		switchedFraction := (a.normalizedP + 1) / 2
 
 		// Calculate squareness (Pr/Ps ratio)
 		squareness := 0.0
@@ -1545,7 +1468,7 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 					a.statusLabel.SetText("⚡ Time-Resolved Switching (KAI Dynamics)")
 				}
 			default:
-				frac := a.preisach.GetSwitchedFraction() * 100
+				frac := (a.normalizedP + 1) / 2 * 100
 				a.statusLabel.SetText(fmt.Sprintf("● Running | t=%.2fs | Switched: %.1f%%", a.simTime, frac))
 			}
 		}

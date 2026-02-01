@@ -115,13 +115,21 @@ type DiscreteState struct {
 
 // DiscreteStates returns the polarization values for n evenly spaced discrete states.
 // This is a helper for testing and visualization.
-func (p *PreisachModel) DiscreteStates(n int) []float64 {
-	poles := make([]float64, n)
+// DiscreteStates returns the discrete states for n evenly spaced levels.
+func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
+	states := make([]DiscreteState, n)
 	step := 2.0 * p.material.Ps / float64(n-1)
 	for i := 0; i < n; i++ {
-		poles[i] = -p.material.Ps + float64(i)*step
+		pol := -p.material.Ps + float64(i)*step
+		states[i] = DiscreteState{
+			Level:        i + 1,
+			Polarization: pol,
+			NormalizedP:  pol / p.material.Ps,
+			Voltage:      0, // Placeholder
+			Conductance:  0, // Placeholder
+		}
 	}
-	return poles
+	return states
 }
 
 // Reset clears the history and sets polarization to negative saturation.

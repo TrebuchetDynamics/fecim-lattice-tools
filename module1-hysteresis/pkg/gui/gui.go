@@ -376,7 +376,7 @@ func NewApp() *App {
 	calibManager := algo.NewCalibrationManager(numLevels)
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
-	return &App{
+	uiApp := &App{
 		calibManager:     calibManager,
 		writeController:  writeController,
 		material:         mat,
@@ -398,19 +398,14 @@ func NewApp() *App {
 		maxLogLines:      12,
 		logEntries:       make([]string, 0, 12),
 		lastLogPhase:     -1,
-		logEntries:       make([]string, 0, 12),
-		lastLogPhase:     -1,
 		// isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 
 	// Initialize L-K Solver and Adaptive ISPP
-	app.lkSolver = physics.NewLKSolver()
-	// Note: LKSolver defaults might need tuning to match material.
-	// We should update LKSolver params from material?
-	// For now, use defaults.
-	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
+	uiApp.lkSolver = physics.NewLKSolver()
+	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 	
-	return app
+	return uiApp
 }
 
 // Run starts the GUI application
@@ -456,7 +451,7 @@ func NewAppWithMaterial(materialName string) *App {
 	calibManager := algo.NewCalibrationManager(numLevels)
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
-	return &App{
+	uiApp := &App{
 		calibManager:     calibManager,
 		writeController:  writeController,
 		material:         mat,
@@ -480,16 +475,14 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdStartLevel:     15,
 		wrdBitsStored:     4.91,
 		manualTargetLevel: 15,
-		wrdBitsStored:     4.91,
-		manualTargetLevel: 15,
 		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 	
 	// Initialize L-K Solver and Adaptive ISPP
-	app.lkSolver = physics.NewLKSolver()
-	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
+	uiApp.lkSolver = physics.NewLKSolver()
+	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 	
-	return app
+	return uiApp
 }
 
 func (a *App) run() error {

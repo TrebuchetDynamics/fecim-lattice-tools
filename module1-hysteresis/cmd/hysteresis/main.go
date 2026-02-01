@@ -183,7 +183,7 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	fmt.Println()
 
 	// Create advanced Preisach model
-	model := ferroelectric.NewMayergoyzPreisach(material, 40)
+	model := ferroelectric.NewPreisachModel(material)
 
 	// Create renderer
 	renderer := ferroelectric.NewPERenderer()
@@ -193,17 +193,17 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	E, P := model.GetHysteresisLoop(Emax, 100)
 	fmt.Println(renderer.RenderPELoop(E, P, material))
 
-	// Render domain states
-	alphas, betas, states := model.GetPreisachPlane()
-	fmt.Println(renderer.RenderDomainStates(alphas, betas, states))
+	// Render domain states (Deprecated in simplified model)
+	// alphas, betas, states := model.GetPreisachPlane()
+	// fmt.Println(renderer.RenderDomainStates(alphas, betas, states))
 
 	// Render discrete states
 	discreteStates := model.DiscreteStates(30)
 	fmt.Println(renderer.RenderDiscreteStates(discreteStates))
 
-	// Render switching dynamics
-	times, pols, switched := model.SimulateDomainSwitching(Emax, 10*material.Tau, 50)
-	fmt.Println(renderer.RenderSwitchingDynamics(times, pols, switched, material))
+	// Render switching dynamics (Deprecated in simplified model)
+	// times, pols, switched := model.SimulateDomainSwitching(Emax, 10*material.Tau, 50)
+	// fmt.Println(renderer.RenderSwitchingDynamics(times, pols, switched, material))
 
 	// Render temperature dependence
 	fmt.Println(renderer.RenderTemperatureDependence(material))

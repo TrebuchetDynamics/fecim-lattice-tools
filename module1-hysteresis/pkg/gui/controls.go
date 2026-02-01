@@ -301,14 +301,11 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
 	}
-	}
-
 	// Stress slider (Phase 4.1: Electrostriction control)
-	// stressSlider already defined above in previous edit?? No, I replaced it.
-	// I need to be careful. The context lines show I overwrote freqSlider.OnChanged.
-
-	// Let's rewrite the block around 		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
-	}
+	stressSlider := widget.NewSlider(0, 5.0) // 0 to 5 GPa
+	stressSlider.Step = 0.1
+	stressSlider.Value = 1.0
+	stressLabel := widget.NewLabel("Stress: 1.0 GPa")
 
 	// Stress slider (Phase 4.1: Electrostriction control)
 	stressSlider.OnChanged = func(v float64) {
