@@ -190,7 +190,7 @@ func (w WaveformType) String() string {
 type Model struct {
 	// Physics
 	material  *ferroelectric.HZOMaterial
-	preisach  *ferroelectric.MayergoyzPreisach
+	preisach  *ferroelectric.PreisachModel
 	materials []*ferroelectric.HZOMaterial
 	matIndex  int
 
@@ -230,7 +230,7 @@ func NewModel() Model {
 	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
+	preisach := ferroelectric.NewPreisachModel(mat)
 
 	return Model{
 		material:   mat,
@@ -321,7 +321,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Material):
 			m.matIndex = (m.matIndex + 1) % len(m.materials)
 			m.material = m.materials[m.matIndex]
-			m.preisach = ferroelectric.NewMayergoyzPreisach(m.material, 30)
+			m.preisach = ferroelectric.NewPreisachModel(m.material)
 			m.eHistory = m.eHistory[:0]
 			m.pHistory = m.pHistory[:0]
 		}
@@ -647,7 +647,7 @@ func (m Model) renderStatusBar() string {
 	}
 
 	time := fmt.Sprintf("t = %.2fs", m.simTime)
-	switchedFrac := fmt.Sprintf("Switched: %.1f%%", m.preisach.GetSwitchedFraction()*100)
+	switchedFrac := fmt.Sprintf("Switched: %.1f%%", (m.normalizedP+1)/2*100)
 
 	return fmt.Sprintf("  %s  │  %s  │  %s  │  Press [q] to quit",
 		status, time, switchedFrac)
@@ -681,7 +681,7 @@ func NewModelWithMaterial(materialName string) Model {
 	}
 
 	mat := materials[matIndex]
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
+	preisach := ferroelectric.NewPreisachModel(mat)
 
 	return Model{
 		material:   mat,

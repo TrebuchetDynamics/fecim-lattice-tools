@@ -301,9 +301,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
 	}
-			a.mu.Unlock()
-			freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
-		}
+	}
 
 	// Stress slider (Phase 4.1: Electrostriction control)
 	// stressSlider already defined above in previous edit?? No, I replaced it.
