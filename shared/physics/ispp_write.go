@@ -53,7 +53,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	isppLog.Input("WriteTarget", map[string]interface{}{
 		"targetG": targetG,
 		"targetP": targetP,
-	}, nil)
+	})
 
 	var vPulse float64
 	var i int
@@ -111,7 +111,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 				"finalG":     currentG,
 				"finalP":     currentP,
 				"overshoots": overshoots,
-			}, nil)
+			})
 			break
 		}
 
@@ -150,7 +150,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 			"attempts":   c.MaxIterations,
 			"overshoots": overshoots,
 			"reason":     "Max iterations exceeded",
-		}, nil)
+		})
 	}
 
 	return i + 1, success, overshoots
