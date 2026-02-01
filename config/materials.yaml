@@ -141,6 +141,18 @@ materials:
     retention_time_s: 1.0e7     # ~116 days DEMONSTRATED
     imprint_field_v_m: 1.0e6
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [Gemini Compendium]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8       # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10      # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05         # Damping/Viscosity [Wm] (Tuned for ~1ns switching)
+    
+    coupling:
+      q12_electrostriction: -0.026 # Tensile stability [m^4 / C^2]
+      stress_gpa: 1.0              # TiN Capping Stress [GPa]
+
   fecim_hzo_target:
     name: "FeCIM HZO (TARGET)"
     description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"
@@ -204,7 +216,20 @@ materials:
     # Literature best-case reliability [3][4][20]
     endurance_cycles: 1.0e10    # 10^10 verified [3][4], 10^12 claimed but rare
     retention_time_s: 3.15e8    # 10-year at 85°C verified
+    retention_time_s: 3.15e8    # 10-year at 85°C verified
     imprint_field_v_m: 0.5e6
+
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction)
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -3.8e8         # Deeper wells for Superlattice
+      gamma_landau: 2.1e10        # Higher stability
+      rho_viscosity: 0.02         # Lower viscosity (faster switching: 360ps)
+    
+    coupling:
+      q12_electrostriction: -0.035 # Stronger coupling in superlattice
+      stress_gpa: 1.5              # Higher epitaxial stress
 
   # NEW: Cryogenic operation profile (for quantum computing integration)
   cryogenic_hzo:

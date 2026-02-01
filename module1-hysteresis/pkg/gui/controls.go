@@ -301,6 +301,26 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
 	}
+			a.mu.Unlock()
+			freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
+		}
+
+	// Stress slider (Phase 4.1: Electrostriction control)
+	// stressSlider already defined above in previous edit?? No, I replaced it.
+	// I need to be careful. The context lines show I overwrote freqSlider.OnChanged.
+
+	// Let's rewrite the block around 		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
+	}
+
+	// Stress slider (Phase 4.1: Electrostriction control)
+	stressSlider.OnChanged = func(v float64) {
+		log.SliderChange("Stress", v)
+		a.mu.Lock()
+		// Pass stress to physics engine
+		a.preisach.SetStress(v) // v is in GPa
+		a.mu.Unlock()
+		stressLabel.SetText(fmt.Sprintf("Stress: %.1f GPa", v))
+	}
 
 	// Temperature slider (Dr. Tour recommendation: show HZO's high Tc advantage)
 	tempSlider := widget.NewSlider(200, 700)
@@ -375,6 +395,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel,
 		trailSlider,
 		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
+		stressLabel,
+		stressSlider,
 	)
 }
 

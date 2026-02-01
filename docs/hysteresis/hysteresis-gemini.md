@@ -85,11 +85,15 @@ The L-K equation is "stiff." Simple Euler integration oscillates. RK4 is require
 ```go
 // Step performs one RK4 integration step
 func (s *LKSolver) Step(E, dt, TempK float64) float64 {
-    k1 := s.dPdT(0, s.P, E, TempK)
-    k2 := s.dPdT(dt/2, s.P + 0.5*dt*k1, E, TempK)
-    k3 := s.dPdT(dt/2, s.P + 0.5*dt*k2, E, TempK)
-    k4 := s.dPdT(dt, s.P + dt*k3, E, TempK)
-    
+    // Account for series resistance (IR drop)
+    I := s.DisplacementCurrent(s.P, E)
+    V_eff := E * s.Thickness - I * s.SeriesResistance
+
+    k1 := s.dPdT(0, s.P, V_eff, TempK)
+    k2 := s.dPdT(dt/2, s.P + 0.5*dt*k1, V_eff, TempK)
+    k3 := s.dPdT(dt/2, s.P + 0.5*dt*k2, V_eff, TempK)
+    k4 := s.dPdT(dt, s.P + dt*k3, V_eff, TempK)
+
     dP := (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
     s.P += dP
     return s.P
@@ -108,7 +112,7 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 
 1.  **Predict:** Estimate start voltage $V_{start}$ using inverse physics model.
 2.  **Pulse:** Apply $V_{pulse}$ via L-K solver (10ns).
-3.  **Verify:** Read Conductance $G$.
+3.  **Verify:** Map $P \to G$ using conductance transfer function, then read Conductance $G$.
 4.  **Correction:**
     *   **Too Low:** Increase $V_{pulse}$ (Bisection toward $V_{max}$).
     *   **Too High (Overshoot):** **CRITICAL:** Apply Negative Reset Pulse ($V_{reset}$), then restart binary search with lower $V$. *You cannot "nudge" a ferroelectric backwards easily.*
@@ -123,18 +127,37 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 fecim_hzo_dynamic:
   name: "FeCIM HZO (L-K Enabled)"
   description: "Dynamic model for high-speed Arenaton compute"
-  
+
   # Thermodynamics (The Engine)
   thermodynamics:
     beta_landau: -2.160e8       # First-order barrier (Negative)
     gamma_landau: 1.653e10      # Stability (Positive)
     rho_viscosity: 0.05         # 1ns switching speed
-    
+
   # Coupling (The Environment)
   coupling:
     q12_electrostriction: -0.026 # Tensile stability
     stress_gpa: 1.0              # TiN Capping Stress
-    
+
+  # Circuit Parasitics (Speed Limit)
+  electrical:
+    series_resistance_ohms: 50.0  # Contact + wire resistance
+    thickness_nm: 10.0             # Film thickness for E = V/d
+
+  # Conductance Mapping (Device Physics)
+  device:
+    g_min_conductance: 1e-9      # Off state conductance (S)
+    g_max_conductance: 1e-4      # On state conductance (S)
+    p_min_remnant: -20.0e-6      # C/cm² at off state
+    p_max_remnant: 20.0e-6       # C/cm² at on state
+    gamma_nonlinearity: 2.0        # Transfer function exponent
+
+  # Reliability (Wake-Up & Fatigue)
+  reliability:
+    wake_up_cycles: 1000          # N_wakeup characteristic cycles
+    fatigue_cycles: 1e12           # N_fatigue breakdown cycles
+    p_saturation_remnant: 22.0e-6  # P_r,∞ asymptotic value
+
   # Statistics (The 30 Levels)
   distribution:
     activation_field_mean: 19.0e6
@@ -166,7 +189,49 @@ $$ \rho \frac{dP}{dt} = -\frac{\delta G}{\delta P} + \xi(t) $$
 
 where $\xi(t)$ is Gaussian white noise scaled by temperature: $\langle \xi(t)\xi(t') \rangle = 2 k_B T \rho \delta(t-t')$.
 
-### 3. Cryogenic Performance (4K to 77K)
+### 3. Wake-Up & Fatigue Model (Time-Dependent Reliability)
+
+Real HZO is not "born" ferroelectric. It starts in a mixed phase and "wakes up" over the first ~1,000 cycles as oxygen vacancies redistribute.
+
+$$ P_r(N) = P_{r,\infty} \cdot \left(1 - e^{-N/N_{wakeup}}\right) $$
+
+*   $P_r(N)$: Remnant polarization at cycle N
+*   $P_{r,\infty}$: Asymptotic saturation value
+*   $N_{wakeup}$: Wake-up characteristic cycle count (~1,000 cycles)
+
+For fatigue/breakdown beyond wake-up:
+$$ E_c(N) = E_{c,0} \cdot \left(1 + \frac{N}{N_{fatigue}}\right)^{0.1} $$
+
+This explains why early cycle data looks different from mature data—a common question from investors.
+
+### 4. Series Resistance (IR Drop) - Circuit Parasitics
+
+The L-K solver assumes voltage $V$ reaches the ferroelectric instantly. In reality, contact resistance ($R_s$) and capacitance create a voltage drop:
+
+$$ V_{eff}(t) = V_{applied} - I(t) \cdot R_s $$
+
+*   $I(t) = \frac{dQ}{dt} = A \cdot \frac{dP}{dt}$ (displacement current)
+*   $R_s$: Series resistance (contact + wire)
+*   $V_{eff}$: Effective field across ferroelectric
+
+This acts as a natural "speed limit." High switching speeds generate high current, which causes voltage drop that dampens switching—critical for accurate 1ns simulation. Requires implicit solve or small $dt$.
+
+### 5. Conductance Transfer Function (P-to-G Mapping)
+
+Phase 2.1 (Control Loop) says "Read Conductance $G$," but the physics engine outputs Polarization $P$. For FeFET or FTJ devices:
+
+$$ G(P) = G_{min} + (G_{max} - G_{min}) \cdot \frac{P - P_{min}}{P_{max} - P_{min}} $$
+
+Or for tunnel junctions (exponential):
+$$ G(P) = G_{off} \cdot \exp\left(\gamma_G \cdot \frac{P - P_{off}}{P_{on} - P_{off}}\right) $$
+
+*   $G_{min}$ / $G_{max}$: Off/On conductance states
+*   $\gamma_G$: Nonlinearity factor
+*   $P_{off}$ / $P_{on}$: Corresponding polarization values
+
+This creates the "Analog Levels." The nonlinearity ($\gamma_G$) of this mapping determines how hard it is to distinguish Level 15 from Level 16.
+
+### 6. Cryogenic Performance (4K to 77K)
 
 *   **Wake-up Suppression:** At 4K, oxygen vacancy diffusion is frozen, suppressing "wake-up" effects. The simulation should model a "pristine" but stable state for cryogenic operations.
 *   **Remnant Polarization:** Increases by ~23% at 77K due to stabilization of the orthorhombic phase.

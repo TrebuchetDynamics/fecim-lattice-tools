@@ -2,7 +2,7 @@ package gui
 
 import (
 	"encoding/json"
-	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
+	// "fecim-lattice-tools/module1-hysteresis/pkg/controller" // Moved to shared
 	"fmt"
 	"math"
 	"math/rand"
@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"fecim-lattice-tools/shared/physics" // Import shared physics
 
 	"fyne.io/fyne/v2"
 )

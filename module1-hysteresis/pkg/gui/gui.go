@@ -214,7 +214,9 @@ type App struct {
 	isppWidget *widgets.ISPPVisualization
 
 	// Shared ISPP calculator
-	isppCalc *physics.ISPPCalculator
+	// isppCalc *physics.ISPPCalculator // OLD
+	adaptiveISPP *physics.AdaptiveISPP // NEW: Phase 2 Adaptive ISPP
+	lkSolver     *physics.LKSolver     // Shared L-K Solver for time-domain physics
 
 	// State stability indicator (M12)
 	stabilityIndicator *widgets.StabilityIndicator
@@ -396,8 +398,19 @@ func NewApp() *App {
 		maxLogLines:      12,
 		logEntries:       make([]string, 0, 12),
 		lastLogPhase:     -1,
-		isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
+		logEntries:       make([]string, 0, 12),
+		lastLogPhase:     -1,
+		// isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
+
+	// Initialize L-K Solver and Adaptive ISPP
+	app.lkSolver = physics.NewLKSolver()
+	// Note: LKSolver defaults might need tuning to match material.
+	// We should update LKSolver params from material?
+	// For now, use defaults.
+	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
+	
+	return app
 }
 
 // Run starts the GUI application
@@ -467,8 +480,16 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdStartLevel:     15,
 		wrdBitsStored:     4.91,
 		manualTargetLevel: 15,
-		isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
+		wrdBitsStored:     4.91,
+		manualTargetLevel: 15,
+		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
+	
+	// Initialize L-K Solver and Adaptive ISPP
+	app.lkSolver = physics.NewLKSolver()
+	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
+	
+	return app
 }
 
 func (a *App) run() error {
