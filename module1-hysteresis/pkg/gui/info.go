@@ -238,6 +238,9 @@ func (a *App) getSlideText() string {
 
 // addLogEntry adds a timestamped entry to the memory log
 func (a *App) addLogEntry(entry string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	// Add timestamp prefix
 	timestamp := fmt.Sprintf("t=%.1fs", a.simTime)
 	fullEntry := fmt.Sprintf("%s %s", timestamp, entry)
@@ -249,6 +252,9 @@ func (a *App) addLogEntry(entry string) {
 
 // getLogText returns the formatted log text (M07: supports verbose/compact modes)
 func (a *App) getLogText() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	if len(a.logEntries) == 0 {
 		return "Waiting for operations..."
 	}

@@ -1106,7 +1106,10 @@ func (a *App) updatePhysics(dt float64) {
 
 					// Reset ISPP widget to idle state for new target
 					if a.isppWidget != nil {
-						a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
+						// UI update must be on main thread
+						fyne.Do(func() {
+							a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
+						})
 					}
 				}
 

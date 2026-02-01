@@ -80,25 +80,32 @@ func (ps *PreisachStack) Update(E float64) float64 {
 	
 	if direction == 1 { // Ascending
 		// If E > previous Max on stack, pop that Max (and its paired Min)
+		// The stack ends with a Min (where we turned to start ascending)
+		// So the previous Max is at len-2.
 		for len(ps.Stack) >= 2 {
-			top := ps.Stack[len(ps.Stack)-1]
+			maxPoint := ps.Stack[len(ps.Stack)-2]
 			
-			// We only care if top is a MAX that we are exceeding
-			if top.Type == 1 && E >= top.E {
-				// Wipe out this Max/Min pair
+			// We only care if maxPoint is a MAX that we are exceeding
+			if maxPoint.Type == 1 && E >= maxPoint.E {
+				// Wipe out this Max/Min pair (pop the Max and the Min BEFORE it? No, pop Max and Min After it?)
+				// Stack: ... Min_prev, Max, Min_last
+				// We fuse Min_prev and Min_last?
+				// Actually, standard wipeout removes the nested loop (Max, Min_last).
+				// We pop the top two elements (Min_last and Max).
 				ps.Stack = ps.Stack[:len(ps.Stack)-2] 
-				// Note: In standard Preisach, stack is alternating Min/Max.
-				// If we pop Max, we also pop the Min below it to merge the major loop.
+				
+				// Now the top of stack is Min_prev. We continue ascending from there.
 			} else {
 				break
 			}
 		}
 	} else { // Descending
 		// If E < previous Min on stack, pop that Min (and its paired Max)
+		// Stack ends with Max. Previous Min is at len-2.
 		for len(ps.Stack) >= 2 {
-			top := ps.Stack[len(ps.Stack)-1]
+			minPoint := ps.Stack[len(ps.Stack)-2]
 			
-			if top.Type == -1 && E <= top.E {
+			if minPoint.Type == -1 && E <= minPoint.E {
 				ps.Stack = ps.Stack[:len(ps.Stack)-2]
 			} else {
 				break
