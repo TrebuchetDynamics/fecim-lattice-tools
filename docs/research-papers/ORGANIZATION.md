@@ -271,11 +271,11 @@ By Topic:        By Year:           By Source:
 | **AVERAGE** | **A+** | **97/100** |
 
 ### Paper Quality
-- **Peer-reviewed (Tier 1-2):** ~120 papers (85%)
-- **Recent (2024-2026):** ~195 papers (85%)
-- **With DOI:** ~100 papers (43%)
-- **Open-access:** ~45 papers (16%)
-- **Preprints (arXiv):** ~25 papers (9%)
+- **Peer-reviewed (Tier 1-2):** ~142 papers (85%)
+- **Recent (2024-2026):** ~142 papers (85%)
+- **With DOI:** ~120 papers (72%)
+- **Open-access:** ~50 papers (30%)
+- **Preprints (arXiv):** ~30 papers (18%)
 
 ---
 
@@ -372,4 +372,4 @@ find downloaded -name "*.pdf" -exec mv {} ../by-topic/01-ferroelectric-materials
 ---
 
 *Last updated: 2026-02-02*
-*Current status: 141+ papers, A+ coverage grade (97/100)*
+*Current status: 167+ papers, A+ coverage grade (97/100)*

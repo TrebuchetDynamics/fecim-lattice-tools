@@ -300,15 +300,16 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 
 	// 30 Levels info tooltip
 	levelsInfoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("30 Analog Levels",
-			"FeCIM uses 30 discrete analog conductance states per cell.\n\n"+
-				"30 levels = ~4.9 bits/cell vs 1 bit for binary memory.\n\n"+
+		dialog.ShowInformation("30 Analog Levels (Conference Claim)",
+			"This demo assumes 30 discrete conductance states per cell (conference claim; pending peer review).\n"+
+				"Peer-reviewed devices report 32–140 states in related materials.\n\n"+
+				"30 levels ≈ 4.9 bits/cell vs 1 bit for binary memory.\n\n"+
 				"Each level represents a stable polarization state in the FeFET.", ca.window)
 	})
 	levelsInfoBtn.Importance = widget.LowImportance
 
 	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
+		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
 	ca.infoLabel.Wrapping = fyne.TextWrapOff

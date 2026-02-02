@@ -160,6 +160,14 @@ Fixes applied this session (2026-02-02):
    - Updated API call from deprecated `NewMayergoyzPreisach` to `NewPreisachModel`.
    - Removed calls to deprecated methods: `GetPreisachPlane()`, `SimulateDomainSwitching()`.
 
+5. **GUI PREP phase saturation fix**: GUI WRD was stuck at P=0 causing overshoots.
+   - Problem: PREP was applying field "toward target" but P started at 0 after calibration reset.
+   - Fix: PREP now saturates to OPPOSITE polarity first (like headless mode).
+   - Upper targets (>15): saturate NEGATIVE first, then write UP.
+   - Lower targets (<=15): saturate POSITIVE first, then write DOWN.
+   - Uses 0.75×Ps saturation threshold and 2.0×Ec drive field.
+   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 886-926.
+
 Next run (resume here)
 
 - System working correctly. ISPP hits all targets reliably.

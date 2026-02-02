@@ -175,7 +175,7 @@ func (cd *CellDisplay) GetColor() Color {
 }
 
 // FeCIMLevels is re-exported from shared/physics for backward compatibility.
-// "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
+// Conference claim (COSM 2025), pending peer review: "It's got 30 discrete states."
 const FeCIMLevels = physics.DefaultLevels
 
 // LevelIndicator displays the 30 discrete FeCIM levels.

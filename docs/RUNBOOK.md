@@ -36,7 +36,7 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools.exe .
 ### Pre-Deployment Checklist
 
 ```bash
-# 1. Run all tests (1755 tests across all modules)
+# 1. Run all tests (see CI for current count)
 go test ./... && echo "PASS"
 
 # 2. Run with race detector

@@ -349,6 +349,6 @@ Machine-readable `paper_metadata.json` includes:
 
 ---
 
-**Status:** A+ Coverage (97/100) | 141+ Papers | 23 Topics | Current: 2026-02-02
+**Status:** A+ Coverage (97/100) | 167+ Papers | 23 Topics | Current: 2026-02-02
 
 *This library is maintained with each project update. New papers are added as research progresses.*

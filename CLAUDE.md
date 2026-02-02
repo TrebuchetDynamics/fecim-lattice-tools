@@ -21,7 +21,9 @@
 
 Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) based on Dr. external research group's HfO₂-ZrO₂ superlattice research.
 
-**Core concept**: 30 discrete analog states per cell (~4.9 bits/cell).
+**Status**: Education phase (simulation-only). See `docs/project/STATUS.md`.
+
+**Core concept**: 30 discrete analog states per cell (~4.9 bits/cell) as a conference claim (pending peer review).
 
 > **Primary Source**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
 
@@ -62,7 +64,7 @@ shared/                   # Theme, widgets, logging
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| FeCIM Levels | 30 | Dr. Tour COSM 2025 (32-140 demonstrated by others) |
+| FeCIM Levels | 30 | Conference claim (COSM 2025, pending peer review); peer-reviewed devices show 32–140 states |
 | Pr | 15-34 µC/cm² (RT), 75 µC/cm² (4K) | Nature Commun. 2025, Adv. Elec. Mat. 2024 |
 | Ec | 0.6-1.5 MV/cm | Nature Commun. 2025, Nano Letters 2024 |
 | Endurance (demonstrated) | 10⁹-10¹² cycles | IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂) |
@@ -100,7 +102,7 @@ Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_
 ## Testing
 
 ```bash
-go test ./...                            # All tests (1755 total)
+go test ./...                            # See CI for latest status
 go test ./module2-crossbar/pkg/crossbar  # Crossbar only
 ```
 

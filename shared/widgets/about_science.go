@@ -38,11 +38,10 @@ func aboutScienceData() []ScienceSection {
 			Title:    "30 Analog States",
 			IconName: theme.IconNameList,
 			Summary:  "Multi-level cell storage (~4.9 bits/cell)",
-			Details: "Each FeCIM cell can store approximately 30 distinct polarization levels, compared to " +
-				"just 2 states (0/1) in traditional binary memory. This is achieved through precise control " +
-				"of the ferroelectric domain structure.\n\n" +
-				"Verified in literature: 32-140 analog states demonstrated (Oh 2017, Song 2024).\n" +
-				"Benefit: 5x more information per cell, enabling dense neural network weight storage.",
+			Details: "This demo uses a 30-level baseline from a conference claim (COSM 2025; pending peer review). " +
+				"Peer-reviewed devices report 32–140 analog states in related ferroelectric devices.\n\n" +
+				"Compared to 2 states (0/1) in traditional binary memory, multi-level storage increases density " +
+				"and can enable compact neural network weight storage (~4.9 bits/cell at 30 levels).",
 			LearnMore: "https://doi.org/10.1038/s41928-024-01234-5",
 		},
 		{
@@ -55,7 +54,7 @@ func aboutScienceData() []ScienceSection {
 				"- Apply positive field: polarization goes positive\n" +
 				"- Remove field: polarization stays at +Pr (stored '1')\n" +
 				"- Apply negative field: switches to -Pr (stored '0')\n\n" +
-				"This bistability (or multi-stability with 30 levels) is what makes ferroelectric memory non-volatile.",
+				"This bistability (or multi-stability with dozens of levels; the demo uses 30) is what makes ferroelectric memory non-volatile.",
 			LearnMore: "https://en.wikipedia.org/wiki/Ferroelectric_RAM",
 		},
 		{

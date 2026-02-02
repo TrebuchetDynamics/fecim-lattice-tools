@@ -230,12 +230,12 @@ This pattern ensures:
 
 ### 1. 30-Level Quantization
 
-The core of FeCIM is the **30 discrete analog states**—based on Dr. Tour's research (COSM 2025 transcript):
+This demo uses **30 discrete analog states** as a baseline **conference claim** (COSM 2025 transcript; pending peer review):
 
 ```go
 // module2-crossbar/pkg/crossbar/array.go
 
-const FeCIMLevels = 30  // Dr. Tour: "30 discrete states"
+const FeCIMLevels = 30  // Conference claim: "30 discrete states"
 
 // QuantizeTo30Levels quantizes any value to one of 30 levels
 func QuantizeTo30Levels(value float64) float64 {
@@ -1111,4 +1111,4 @@ When adding new features to the architecture:
 **Last Updated**: 2026-01-29
 **Architecture Version**: 3.1 (Unified Launcher + Docs)
 **Modules**: 7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)
-**Total Tests**: 1755
+**Total Tests**: See CI (`go test ./...`)

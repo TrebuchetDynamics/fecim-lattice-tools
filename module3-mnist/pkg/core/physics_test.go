@@ -34,12 +34,12 @@ func TestFeCIM30LevelPhysics(t *testing.T) {
 		}
 	}
 
-	// FeCIM constraint: exactly 30 levels maximum
+	// Demo baseline: 30 levels (conference claim; pending peer review)
 	if len(distinct) > 30 {
-		t.Errorf("PHYSICS ERROR: FeCIM can only store 30 levels, got %d", len(distinct))
+		t.Errorf("MODEL ASSUMPTION: demo baseline uses 30 levels, got %d", len(distinct))
 	}
 
-	t.Logf("FeCIM quantization: %d distinct levels used (max 30)", len(distinct))
+	t.Logf("Demo quantization: %d distinct levels used (baseline max 30)", len(distinct))
 }
 
 // TestLevelSpacingUniformity verifies uniform level spacing (linear DAC).

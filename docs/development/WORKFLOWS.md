@@ -417,7 +417,7 @@ go test ./...
 
 ### Test Structure
 
-The project uses Go's standard `testing` package with 1755 tests across 31 packages:
+The project uses Go's standard `testing` package (see CI for current totals):
 
 ```
 ✅ module1-hysteresis/pkg/ferroelectric       7 tests
@@ -433,7 +433,7 @@ The project uses Go's standard `testing` package with 1755 tests across 31 packa
 ✅ module6-eda/pkg/export                      3 tests
 ✅ cmd/fecim-lattice-tools                        2 tests
 ────────────────────────────────────
-✅ TOTAL                                     1755 tests (100% PASS)
+✅ TOTAL                                     See CI (`go test ./...`)
 ```
 
 ### Running Tests
@@ -719,7 +719,7 @@ Before submitting a pull request, verify:
 ### Testing
 
 - [ ] New code has tests?
-- [ ] All 1755 tests pass?
+- [ ] All tests pass (see CI)?
 - [ ] No test failures with `-race`?
 - [ ] Coverage maintained or improved?
 

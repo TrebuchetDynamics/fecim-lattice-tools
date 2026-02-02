@@ -3,10 +3,11 @@
 **Consolidated from:** a.md, drtour_todo_fixes.md, drtour-conversation.md, drtour-conversation-v2.md
 **Date:** 2026-01-29
 **Purpose:** Unified priority and difficulty ranking for all critique items
+**Status Note:** This file is a **snapshot**. For current progress and phase info, see `docs/project/STATUS.md` and `TODO.md`.
 
 ---
 
-## Summary Statistics
+## Summary Statistics (Snapshot: 2026-01-29)
 
 | Source Document | Total Items | Completed | Pending |
 |-----------------|-------------|-----------|---------|

@@ -82,7 +82,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	hwBtn := widget.NewButton("Hardware", func() {
 		mnistLog.Button("Preset:Hardware")
-		// Realistic production config: 30 levels, 3% noise, 6-bit ADC
+		// Demo baseline config: 30 levels, 3% noise, 6-bit ADC
 		app.applyPreset(FeCIMDefaultLevels, 0.03, 6, FeCIMDefaultDAC)
 	})
 	hwBtn.Importance = widget.HighImportance

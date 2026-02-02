@@ -332,8 +332,8 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 		widget.NewLabel("ferroelectric layer"),
 
 		widget.NewLabel("Levels"),
-		widget.NewLabel("30 states"),
-		widget.NewLabel("~4.9 bits/cell"),
+		widget.NewLabel("30 states (claim)"),
+		widget.NewLabel("~4.9 bits/cell; pending peer review"),
 
 		widget.NewLabel("Conductance Range"),
 		widget.NewLabel("1 µS to 100 µS"),

@@ -23,7 +23,7 @@ import (
 
 // Constants
 const (
-	FeCIMLevels    = physics.DefaultLevels // 30 levels for FeCIM (from shared/physics)
+	FeCIMLevels    = physics.DefaultLevels // Demo baseline (conference claim; from shared/physics)
 	MaxArraySize   = 128                   // Maximum array dimension
 	DefaultSize    = 8                     // Default array size
 	DefaultDACBits = 5                     // Default DAC resolution (matches peripherals.DefaultDAC)

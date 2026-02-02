@@ -157,10 +157,10 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 			ca.setEducationalContent("Conductance Matrix",
 				"Each cell = one FeFET\n\n"+
 					"Color = conductance level\n"+
-					"(0-29 discrete states)\n\n"+
+					"(0-29 discrete states; demo baseline)\n\n"+
 					"This is your weight matrix W\n"+
 					"for neural network inference.\n\n"+
-					"30 levels = 4.9 bits/cell\n"+
+					"30 levels (conference claim) = 4.9 bits/cell\n"+
 					"vs 1 bit for binary memory\n\n"+
 					"💡 Tip: Click ⓘ for physics details")
 		case "IR Drop":

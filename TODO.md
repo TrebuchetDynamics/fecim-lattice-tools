@@ -2,9 +2,9 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on peer-reviewed HfO₂-ZrO₂ superlattice research.
 
-**Last updated**: 2026-01-29
+**Last updated**: 2026-02-02
 
-**Master Critique Source**: See `CRITIQUE_MASTER_LIST.md` for full consolidation from Dr. Tour reviews.
+**Master Critique Source**: See `CRITIQUE_MASTER_LIST.md` for consolidated items (snapshot). Current status lives in `docs/project/STATUS.md`.
 
 ---
 
@@ -12,22 +12,15 @@
 
 | Module | Purpose | Status | Tests | GUI |
 |--------|---------|--------|-------|-----|
-| **module1-hysteresis** | P-E hysteresis, Preisach model, 30 analog states | ✅ Complete | ✅ Passing | ✅ Fyne |
-| **module2-crossbar** | Matrix-vector multiplication, IR drop, sneak paths | ✅ Complete | ✅ Passing | ✅ Fyne |
-| **module3-mnist** | Neural network digit recognition | ✅ Complete | ✅ Passing | ✅ Fyne |
-| **module4-circuits** | DAC/ADC/TIA peripheral circuits | ✅ Complete | ✅ Passing | ✅ Fyne |
-| **module5-comparison** | Technology comparison framework | ✅ Complete | ✅ Passing | ✅ Fyne |
-| **module6-eda** | Verilog/DEF/LEF/Liberty generation | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module1-hysteresis** | P-E hysteresis, Preisach model, 30-level baseline (conference claim) | ✅ Complete | See CI | ✅ Fyne |
+| **module2-crossbar** | Matrix-vector multiplication, IR drop, sneak paths | ✅ Complete | See CI | ✅ Fyne |
+| **module3-mnist** | Neural network digit recognition | ✅ Complete | See CI | ✅ Fyne |
+| **module4-circuits** | DAC/ADC/TIA peripheral circuits | ✅ Complete | See CI | ✅ Fyne |
+| **module5-comparison** | Technology comparison framework | ✅ Complete | See CI | ✅ Fyne |
+| **module6-eda** | Verilog/DEF/LEF/Liberty generation | ✅ Complete | See CI | ✅ Fyne |
 | **docs/** | Scientific documentation (78 papers catalogued) | ✅ Complete | N/A | N/A |
 
-**Project Health**:
-- Go files: 233
-- Test cases: 571 (all passing)
-- Generated outputs: Verilog, DEF, LEF, Liberty files (real synthesizable code)
-- Scientific Rigor Score: 4.0/5 (HONESTY_AUDIT v3.0)
-- Code coverage: ~85%
-
-**Critique Status**: 25/58 items completed (43%)
+**Project Status**: See `docs/project/STATUS.md` for phase, validation status, and test/coverage notes.
 
 ---
 
@@ -211,9 +204,9 @@ From HONESTY_AUDIT Section 6.2:
 ## 8. Testing
 
 ### Current Coverage
-- Total tests: 571
-- Pass rate: 100%
-- Coverage: ~85%
+- Total tests: See CI (`go test ./...`)
+- Pass rate: See CI
+- Coverage: ~85% (estimated; update when CI coverage is added)
 
 ### Needed Tests
 

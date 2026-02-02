@@ -94,7 +94,7 @@ performs matrix-vector multiplication
 without any non-idealities.
 
 Each cell stores a conductance value
-(one of 30 discrete FeCIM levels).
+(demo baseline: 30 levels, conference claim).
 
 Output = G × V
 (Kirchhoff's current law)

@@ -265,7 +265,7 @@ Digital [22] ──▶ DAC ──┐  ┌── ADC ──▶ Digital [22]
 
 ### Module 5: Technology Comparison ✅ (Technical Briefing)
 
-The business case for FeCIM vs competing technologies.
+The business case for FeCIM vs competing technologies. **Simulation-only comparisons; experimental validation pending.**
 
 ```
 Energy per MAC (fJ)                    Competitive Matrix
@@ -291,10 +291,10 @@ FeCIM     █                      10    │ Energy   │  ✅  │  🟡  │  
 
 ### Module 6: FeCIM Design Suite ✅ (EDA Tool)
 
-Design FeCIM chips for fabrication with OpenLane/OpenROAD integration.
+Design FeCIM chip **concepts** for education and early exploration with OpenLane/OpenROAD-compatible outputs. **Not tapeout- or signoff-ready.**
 
 ```
-Specification ──▶ Physical Layout ──▶ Fabrication Files
+Specification ──▶ Physical Layout ──▶ Layout Artifacts
 ┌────────────┐    ┌──────────────┐    ┌────────────────┐
 │ Mode: Store│    │ 4×4 FeFET    │    │ .v  (Verilog)  │
 │ Size: 256² │───▶│ Array Grid   │───▶│ .def (Layout)  │

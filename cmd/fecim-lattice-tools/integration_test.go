@@ -23,10 +23,10 @@ func TestMaterialPhysicsConsistency(t *testing.T) {
 	// Module 1: Material parameters
 	material := ferroelectric.FeCIMMaterial()
 
-	// Verify FeCIM specification: 30 discrete levels
+	// Verify demo baseline: 30 discrete levels
 	states := ferroelectric.NewPreisachModel(material).DiscreteStates(30)
 	if len(states) != 30 {
-		t.Errorf("Expected 30 discrete states, got %d", len(states))
+		t.Errorf("Expected 30 discrete states (demo baseline), got %d", len(states))
 	}
 
 	// Module 2: Crossbar array should use same levels
@@ -47,10 +47,10 @@ func TestMaterialPhysicsConsistency(t *testing.T) {
 
 	// Module 3: 30-level quantization constant
 	if core.FeCIMLevels != 30 {
-		t.Errorf("FeCIMLevels should be 30, got %d", core.FeCIMLevels)
+		t.Errorf("FeCIMLevels baseline should be 30, got %d", core.FeCIMLevels)
 	}
 
-	t.Logf("Cross-module physics verification passed: 30 discrete levels confirmed")
+	t.Logf("Cross-module baseline verification passed: 30 discrete levels")
 }
 
 // TestHysteresisToMNISTWorkflow verifies the workflow from material
@@ -85,13 +85,13 @@ func TestHysteresisToMNISTWorkflow(t *testing.T) {
 	// Step 2: Extract discrete levels for quantization (Module 1/2 bridge)
 	discreteLevels := model.DiscreteStates(30)
 	if len(discreteLevels) != 30 {
-		t.Fatalf("Expected 30 discrete levels, got %d", len(discreteLevels))
+		t.Fatalf("Expected 30 discrete levels (demo baseline), got %d", len(discreteLevels))
 	}
 
 	// Step 3: Create neural network with 30-level quantization (Module 3)
 	net := core.NewDualModeNetwork(784, 128, 10)
 	if net.Config.NumLevels != 30 {
-		t.Errorf("Network should use 30 levels, got %d", net.Config.NumLevels)
+		t.Errorf("Network should use 30 levels (demo baseline), got %d", net.Config.NumLevels)
 	}
 
 	// Initialize simple weights

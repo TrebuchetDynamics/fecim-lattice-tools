@@ -163,7 +163,7 @@ func (wcw *WeightComparisonWidget) updateStatsLabel() {
 	}
 	errorPctOfRange := (wcw.meanError / wRange) * 100
 
-	wcw.statsLabel.SetText(fmt.Sprintf("%s | %dx%d | Mean Error: %.4f (~%.1f%% of weight range) | Max: %.4f | 30 levels ≈ near-ideal accuracy",
+	wcw.statsLabel.SetText(fmt.Sprintf("%s | %dx%d | Mean Error: %.4f (~%.1f%% of weight range) | Max: %.4f | 30 levels (demo baseline) ≈ near-ideal accuracy",
 		modeName, rows, cols, wcw.meanError, errorPctOfRange, wcw.maxError))
 }
 

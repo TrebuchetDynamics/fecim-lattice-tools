@@ -12,8 +12,8 @@ import (
 
 // Note: logger is shared with network.go (var log = logging.NewLogger("mnist-core"))
 
-// FeCIMLevels is the number of discrete conductance levels in FeCIM hardware.
-// This is the key physical constraint from Dr. Tour's research.
+// FeCIMLevels is the baseline number of discrete conductance levels used in this demo.
+// Conference claim (COSM 2025), pending peer review; peer-reviewed devices show 32–140 states.
 // Re-exported from shared/physics for backward compatibility.
 const FeCIMLevels = physics.DefaultLevels
 

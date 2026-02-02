@@ -5,8 +5,8 @@ import "math"
 
 // FeCIM quantization constants
 const (
-	// DefaultLevels is the standard number of discrete analog states for FeCIM.
-	// "It's got 30 discrete states. So it's not 0-1-0-1." - Dr. Tour, COSM 2025
+	// DefaultLevels is the baseline number of discrete analog states used in this demo.
+	// Conference claim (COSM 2025), pending peer review: "It's got 30 discrete states."
 	DefaultLevels = 30
 
 	// BitsPerCell is the effective bits per cell: log2(30) ≈ 4.91

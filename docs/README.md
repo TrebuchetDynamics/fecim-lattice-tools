@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools Documentation
 
-> Ferroelectric Compute-in-Memory simulation suite with 30 discrete analog states per cell (~4.9 bits/cell).
+> Ferroelectric Compute-in-Memory simulation suite using a 30-level baseline (~4.9 bits/cell, conference claim; pending peer review).
 
 ---
 
@@ -118,7 +118,7 @@ See [FEATURES.md](FEATURES.md) for complete specifications per module.
 | Doc | Purpose |
 |-----|---------|
 | [ARCHITECTURE.md](development/ARCHITECTURE.md) | System design |
-| [TESTING.md](development/TESTING.md) | Test guide (1755 tests) |
+| [TESTING.md](development/TESTING.md) | Test guide (see CI for current status) |
 | [scriptReference.md](development/scriptReference.md) | Function lookups |
 | [FYNE_NOTES.md](development/GUI/FYNE_NOTES.md) | Fyne GUI development |
 | [HYPER_ANALYSIS_REPORT.md](development/HYPER_ANALYSIS_REPORT.md) | UI analysis |

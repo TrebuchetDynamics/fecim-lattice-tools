@@ -468,7 +468,7 @@ func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
 	verifiedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	verified := container.NewVBox(
-		widget.NewLabel("  30 discrete analog levels"),
+		widget.NewLabel("  32–140 analog levels (peer-reviewed devices)"),
 		widget.NewLabel("  96-98% MNIST (peer-reviewed)"),
 		widget.NewLabel("  CMOS compatible"),
 	)
@@ -477,6 +477,7 @@ func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
 	claimedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	claimed := container.NewVBox(
+		widget.NewLabel("  30 levels (conference claim)"),
 		widget.NewLabel("  25-100× lower than NAND"),
 		widget.NewLabel("  1000× lower than DRAM"),
 		widget.NewLabel("  80-90% DC energy savings"),

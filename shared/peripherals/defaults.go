@@ -3,15 +3,15 @@ package peripherals
 
 import "fecim-lattice-tools/shared/physics"
 
-// Standard peripheral configuration constants for FeCIM 30-level operation.
+// Standard peripheral configuration constants for the demo 30-level baseline.
 const (
 	// DefaultBits is the standard resolution for ADC/DAC (5 bits = 32 levels, we use 30).
 	DefaultBits = 5
 
-	// DefaultLevels is the number of discrete levels (2^5 = 32, but FeCIM uses 30).
+	// DefaultLevels is the number of discrete levels (2^5 = 32, demo baseline uses 30).
 	DefaultLevels = 32
 
-	// FeCIMLevels is the actual number of analog states used in FeCIM.
+	// FeCIMLevels is the baseline number of analog states used in this demo.
 	// Re-exported from shared/physics for backward compatibility.
 	FeCIMLevels = physics.DefaultLevels
 )

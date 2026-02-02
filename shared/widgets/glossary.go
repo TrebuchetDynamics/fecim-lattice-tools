@@ -41,7 +41,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "HZO",
-		Definition: "Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible, demonstrated 30 discrete analog states per cell (~4.9 bits/cell). Optimal composition: x ≈ 0.5.",
+		Definition: "Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible. Conference claim: 30 discrete analog states per cell (~4.9 bits/cell), pending peer review; peer-reviewed devices report 32–140 states in related materials. Optimal composition: x ≈ 0.5.",
 		Category:   "Physics",
 	},
 	{
@@ -117,7 +117,7 @@ var TermsData = []GlossaryEntry{
 	// Metrics
 	{
 		Term:       "TRL",
-		Definition: "Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status: TRL 6-7 (prototype demonstration), TRL 8 (automotive-grade, Fraunhofer IPMS 2024), TRL 9 (commercial production pending).",
+		Definition: "Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status (Tour COSM 2025): TRL 4 (lab validation). Other ferroelectric memory technologies may be at higher TRLs; treat those as separate contexts.",
 		Category:   "Metrics",
 	},
 	{
@@ -504,7 +504,7 @@ func CreateHelpMenuItems(parent fyne.Window) []*fyne.MenuItem {
 				widget.NewLabel("Ferroelectric Compute-in-Memory Simulation Suite"),
 				widget.NewSeparator(),
 				widget.NewLabel("Based on Dr. external research group's HfO₂-ZrO₂ superlattice research"),
-				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell)"),
+				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell, conference claim)"),
 				layout.NewSpacer(),
 				newGitHubLink(),
 			)

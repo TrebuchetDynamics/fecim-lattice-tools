@@ -34,15 +34,15 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 ## The Proof
 
 **From Dr. Tour's COSM 2025 Presentation [1]:**
-- ✅ 30 discrete analog states demonstrated at external research institution
-- ✅ 87% MNIST accuracy on hardware (unverified conference claim)
+- ⚠️ 30 discrete analog states claimed at external research institution (conference claim; pending peer review)
+- ❌ 87% MNIST accuracy on hardware (unverified; removed from tool)
 - ✅ Works with standard CMOS manufacturing
 - ⚠️ TRL 4 — "We are at Technology Readiness Level TRL4" — Dr. Tour
 - ⚠️ Endurance: "We still have to get this up to the required 10^12 cycles" — Dr. Tour
 
 **Corroborated by Peer-Reviewed Literature:**
 - ✅ 32-140 discrete states demonstrated [Jerry 2017, Song 2024]
-- ✅ 87-96% MNIST accuracy achieved [arXiv:2601.01186, Nature Commun. 2023]
+- ✅ 96.6–98.24% MNIST accuracy achieved [Nature Commun. 2023, ScienceDirect 2025]
 - ⚠️ 10⁹ cycles demonstrated; 10¹² is target (Dr. Tour: 'still have to get this up')
 
 ## The Vision

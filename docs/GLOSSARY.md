@@ -16,7 +16,7 @@ Coercive Field - Electric field required to switch ferroelectric polarization st
 Remnant Polarization - Polarization remaining after electric field removal. Verified range: 15-34 µC/cm² at room temperature, 75 µC/cm² at 4K. Higher Pr enables larger on/off ratios and analog storage capacity.
 
 ### HZO
-Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible, demonstrated 30 discrete analog states per cell (~4.9 bits/cell). Optimal composition: x ≈ 0.5.
+Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible. Conference claim: 30 discrete analog states per cell (~4.9 bits/cell), pending peer review; peer-reviewed devices report 32–140 states in related materials. Optimal composition: x ≈ 0.5.
 
 ### Hysteresis Loop
 P-E (Polarization-Electric Field) curve showing path-dependent behavior. Area enclosed represents energy dissipation per cycle. Shape determines analog state density and retention.
@@ -70,7 +70,7 @@ High-gain differential amplifier for detecting small signal differences in memor
 ## Metrics
 
 ### TRL
-Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status: TRL 6-7 (prototype demonstration), TRL 8 (automotive-grade, Fraunhofer IPMS 2024), TRL 9 (commercial production pending).
+Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status (Tour COSM 2025): TRL 4 (lab validation). Other ferroelectric memory technologies may be at higher TRLs; treat those as separate contexts.
 
 ### TOPS/W
 Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.

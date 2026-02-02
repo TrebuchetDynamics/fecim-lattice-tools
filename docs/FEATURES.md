@@ -96,7 +96,7 @@ Chip design suite for FeCIM arrays.
 ## Shared Infrastructure
 
 - Unified FeCIM theme
-- 1755+ tests
+- CI-tested (see GitHub Actions)
 - Centralized logging
 - Physics library with material database
 

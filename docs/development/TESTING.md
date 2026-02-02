@@ -2,6 +2,8 @@
 
 ## Test Summary
 
+*Counts below are a snapshot (2026-01-29). For current totals, see CI (`go test ./...`).*
+
 | Package | Tests | Status |
 |---------|-------|--------|
 | cmd/fecim-lattice-tools | 21 | ✅ PASS |
@@ -35,7 +37,7 @@
 | shared/theme | 8 | ✅ PASS |
 | shared/utils | varies | ✅ PASS |
 | shared/widgets | 6 | ✅ PASS |
-| **Total** | **1755** | **✅ PASS** |
+| **Total (snapshot)** | **See CI** | **✅ PASS** |
 
 ## Running Tests
 
@@ -428,6 +430,6 @@ shared/
 ## Last Updated
 
 - **Date:** 2026-01-29
-- **Total Tests:** 1755
+- **Total Tests:** See CI (`go test ./...`)
 - **Pass Rate:** 100%
 - **Coverage:** Physics, integration, GUI logic (headless), EDA export, weight management, peripheral analysis, compute, GPU, IO, utilities

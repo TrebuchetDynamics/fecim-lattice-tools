@@ -89,9 +89,12 @@ func GPUAccelerator() *Architecture {
 // They should NOT be presented as facts or used for investment decisions.
 //
 // VERIFIED claims:
-//   - 30 discrete analog states (VERIFIED - Dr. Tour; peer-reviewed: 32-140 states)
+//   - 32–140 discrete analog states in peer-reviewed devices (range)
 //   - 96.6-98.24% MNIST accuracy (VERIFIED - peer-reviewed: Nature Commun. 2023, ScienceDirect 2025)
 //   - 25-100× lower energy than NAND (VERIFIED - Samsung Nature 2025)
+//
+// CONFERENCE CLAIM (pending peer review):
+//   - 30 discrete analog states (Dr. Tour, COSM 2025)
 //
 // UNVERIFIED claims (removed from tool):
 //   - Dr. Tour's "87% MNIST" (below peer-reviewed benchmarks)
@@ -101,7 +104,7 @@ func GPUAccelerator() *Architecture {
 func FeCIMChip() *Architecture {
 	return &Architecture{
 		Name:            "FeCIM CIM",
-		Description:     "Ferroelectric compute-in-memory with 30-level cells (ESTIMATED SPECS - TRL4)",
+		Description:     "Ferroelectric compute-in-memory with 30-level baseline (conference claim; TRL4)",
 		Technology:      "FeFET Crossbar",
 		ProcessNode:     45,   // ESTIMATED - not disclosed
 		ChipArea:        50,   // ESTIMATED - not disclosed by FeCIM

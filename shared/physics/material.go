@@ -135,7 +135,7 @@ func DefaultHZO() *HZOMaterial {
 		EnduranceCycles: 1e10,    // 10^10 cycles
 		RetentionTime:   3.15e9,  // 100 years at 85°C
 		ImrintField:     1e6,     // Small imprint
-		NumLevels:       30,      // Standard HZO achieves ~30 levels
+		NumLevels:       30,      // Demo baseline (conference claim; pending peer review)
 		Tau0NLS:         1e-10,   // 100 ps attempt time (HfO2 typical)
 		EaNLS:           12e8,    // 12 MV/cm activation field
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
@@ -204,8 +204,8 @@ func LiteratureSuperlattice() *HZOMaterial {
 // ⚠️ HONESTY NOTE: Some parameters are TARGETS not DEMONSTRATED values.
 // Dr. Tour's presentation (Nov 2024) disclosed:
 //
-// VERIFIED/DEMONSTRATED:
-//   - 30 discrete analog states (VERIFIED)
+// CONFERENCE CLAIM (PENDING PEER REVIEW):
+//   - 30 discrete analog states (COSM 2025)
 //   - Peer-reviewed MNIST: 96.6-98.24% (Nature Commun. 2023, ScienceDirect 2025)
 //   - 10^9 endurance cycles DEMONSTRATED
 //   - 10^7 seconds retention DEMONSTRATED (~116 days)
@@ -242,7 +242,7 @@ func FeCIMMaterial() *HZOMaterial {
 		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
 		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
-		NumLevels:       30,     // 30 discrete analog states - VERIFIED
+		NumLevels:       30,     // 30-level baseline (conference claim; pending peer review)
 		Tau0NLS:         1e-10,  // 100 ps attempt time
 		EaNLS:           12e8,   // 12 MV/cm activation field
 		Gmin:            1e-6,   // 1 µS at HRS

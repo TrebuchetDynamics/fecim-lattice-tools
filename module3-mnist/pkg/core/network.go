@@ -32,7 +32,7 @@ type NetworkConfig struct {
 // DefaultNetworkConfig returns the default configuration for optimal FeCIM operation.
 func DefaultNetworkConfig() *NetworkConfig {
 	return &NetworkConfig{
-		NumLevels:     30,   // FeCIM supports 30 levels
+		NumLevels:     30,   // Demo baseline (conference claim; pending peer review)
 		NoiseLevel:    0.01, // Low noise
 		ADCBits:       8,    // 8-bit ADC
 		DACBits:       8,    // 8-bit DAC

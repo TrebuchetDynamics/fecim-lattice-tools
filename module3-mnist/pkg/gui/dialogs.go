@@ -48,9 +48,9 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 
 		widget.NewLabelWithStyle("Physics Justification", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("• Material: HfO₂-ZrO₂ (HZO) ferroelectric superlattice"),
-		widget.NewLabel("• Mechanism: ~30 stable polarization states from domain wall pinning"),
+		widget.NewLabel("• Mechanism: dozens of stable polarization states from domain wall pinning"),
 		widget.NewLabel("• Crystal defects: Oxygen vacancies create energy barriers"),
-		widget.NewLabel("• ADC limitation: 6-bit (64 levels) → 30 reliably distinguishable"),
+		widget.NewLabel("• ADC limitation: 6-bit (64 levels) → fewer reliably distinguishable levels in practice"),
 		widget.NewLabel("• Separation: 3σ noise margin between adjacent levels"),
 		widget.NewSeparator(),
 
@@ -77,14 +77,14 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Why Not 64 Levels (6-bit ADC maximum)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Only 30 levels are reliably distinguishable due to manufacturing tolerances:"),
+		widget.NewLabel("This demo assumes 30 levels as a conservative baseline; practical limits vary by process:"),
 		widget.NewLabel("1. Device-to-device variation: ~2.75% (process variation)"),
 		widget.NewLabel("2. Cycle-to-cycle variation: ~1.5% (retention drift)"),
 		widget.NewLabel("3. Read noise: ~0.5% σ/μ (thermal Johnson noise)"),
 		widget.NewLabel("4. Temperature sensitivity: ±1% per 10°C"),
 		widget.NewLabel(""),
 		widget.NewLabel("Statistical requirement: 3σ separation between adjacent levels"),
-		widget.NewLabel("Result: 30 levels is the practical manufacturing limit at 28nm node"),
+		widget.NewLabel("Result: 30 levels is a reasonable demo baseline, not a universal manufacturing limit"),
 	)
 }
 

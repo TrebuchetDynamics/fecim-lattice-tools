@@ -262,7 +262,7 @@ newDemoApp := newdemo.NewEmbeddedNewDemoApp()
 ```go
 // module2-crossbar/pkg/crossbar/array.go
 const (
-    FeCIMLevels = 30  // Dr. Tour COSM 2025: "It's got 30 discrete states"
+    FeCIMLevels = 30  // Conference claim (COSM 2025), pending peer review
     NewParam    = 42  // [Citation required] - add DOI or source
 )
 ```
@@ -510,7 +510,7 @@ fecim-lattice-tools/
 
 ```go
 // module2-crossbar/pkg/crossbar/array.go
-const FeCIMLevels = 30  // "It's got 30 discrete states" - Dr. Tour
+const FeCIMLevels = 30  // Conference claim (COSM 2025), pending peer review
 
 // shared/theme/theme.go
 ColorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan

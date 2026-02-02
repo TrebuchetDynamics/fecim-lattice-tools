@@ -4,7 +4,7 @@
 **Date:** January 30, 2026  
 **Reviewers:** Dr. James M. Tour (simulated), Dr. Jaeho Shin (simulated), Academic Peer Review Panel  
 **Scope:** Complete analysis of 7 modules, 357 Go files, 142 documentation files  
-**Status:** First comprehensive critique session  
+**Status:** First comprehensive critique session (snapshot; see `docs/project/STATUS.md` for current status)  
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Initial Assessment:** This is an exceptionally well-developed educational and design tool for ferroelectric compute-in-memory. After reviewing 43 screenshots, 78 research papers, and 380 lines of honesty auditing, the project demonstrates:
 
-- **Strong Foundation:** Real EDA outputs (Verilog, DEF, LEF, Liberty), 571 passing tests
+- **Strong Foundation:** Real EDA outputs (Verilog, DEF, LEF, Liberty), tests passing in CI
 - **Scientific Rigor:** Honest classification of claims, peer-reviewed sourcing
 - **Technical Depth:** ISPP implementation, temperature calibration, 30-level quantization
 - **Educational Value:** Interactive demos across 7 modules
@@ -44,7 +44,7 @@ This level of transparency is rare in educational software. Every uncertainty is
 | Preisach Hysteresis | ✅ COMPLETE | 100×100 hysteron grid at 60fps |
 | Crossbar MVM | ✅ COMPLETE | IR drop, sneak paths, drift modeling |
 | MNIST Demo | ✅ COMPLETE | Dual-mode (FP32 vs CIM) comparison |
-| 571 Tests | ✅ PASSING | All packages green |
+| Tests (CI) | ✅ PASSING | All packages green |
 
 ### Documentation Quality ✅
 

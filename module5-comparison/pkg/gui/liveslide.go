@@ -345,7 +345,7 @@ func (e *ComparisonEducationalPanel) updateForMode() {
 				"HfO₂-ZrO₂ superlattice structure\n"+
 				"Remanent polarization: 15-34 µC/cm²\n"+
 				"Coercive field: 1.0-1.5 MV/cm\n"+
-				"30 discrete analog levels\n\n"+
+				"30 discrete analog levels (conference claim)\n\n"+
 				"CROSSBAR ARCHITECTURE\n"+
 				"Matrix-vector multiply: O(1) time\n"+
 				"Physical parallelism via Kirchhoff's law\n"+
