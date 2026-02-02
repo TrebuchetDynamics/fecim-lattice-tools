@@ -85,6 +85,7 @@ type App struct {
 	wrdPhaseTimer  float64 // Time in current phase
 	wrdWriteE      float64 // E-field during write
 	wrdPrepE       float64 // Pre-bias E-field (±Ec) toward target
+	wrdPrepSkip    bool    // True if PREP was skipped (already at valid remanent)
 	wrdSettleE     float64 // Settle E-field (determines final level)
 	wrdStartLevel  int     // Level at start of write cycle
 	wrdDebugLog    *WriteReadDebugLog

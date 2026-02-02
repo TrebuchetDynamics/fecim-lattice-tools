@@ -172,7 +172,9 @@ Fixes applied this session (2026-02-02):
    - If |P| > 0.7×Ps AND correct polarity for target direction, skip PREP phase.
    - Logs "WRD PREP SKIP: already at valid remanent" when skipping.
    - Reduces write latency for consecutive writes that maintain remanent state.
-   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 894-943.
+   - **Bug fix**: Store skip decision in `a.wrdPrepSkip` at phase START only.
+     - Previous bug: recalculated `skipPrep` each iteration → deadlock when P crossed threshold mid-PREP.
+   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 886-958, `gui.go` line 88.
 
 Next run (resume here)
 
