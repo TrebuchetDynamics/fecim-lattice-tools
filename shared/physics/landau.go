@@ -290,7 +290,7 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 }
 
 func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
-	if !logging.IsVerbose(logging.VerbosityDebug) {
+	if !logging.IsVerbose(logging.VerbosityTrace) {
 		return
 	}
 	if lkLog == nil {

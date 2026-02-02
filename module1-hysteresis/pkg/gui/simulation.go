@@ -645,6 +645,7 @@ func (a *App) simulationLoop() {
 		// Safety break to prevent infinite loops if calculation is too slow
 		const maxSubSteps = 1000
 		subSteps := 0
+		fastPreisach := a.physicsEngine == PhysicsPreisach
 
 		matEc := 0.0
 		if a.material != nil {
@@ -653,28 +654,32 @@ func (a *App) simulationLoop() {
 
 		for remainingDt > 0 && subSteps < maxSubSteps {
 			// Determine step size based on physics state
-			// If E-field is near Ec, use smaller steps to capture switching dynamics
+			// If E-field is near Ec, use smaller steps to capture switching dynamics.
+			// Preisach is quasi-static: use a single step per frame for performance.
 
 			currentStep := dtNominal
+			if fastPreisach {
+				currentStep = remainingDt
+			} else {
+				// Check proximity to Ec (switching region)
+				// Switching happens at +Ec (increasing) and -Ec (decreasing)
+				// But effective Ec varies. Use material Ec as baseline proxy.
+				if matEc > 0 {
+					distPlus := math.Abs(a.electricField - matEc)
+					distMinus := math.Abs(a.electricField + matEc)
+					minDist := math.Min(distPlus, distMinus)
 
-			// Check proximity to Ec (switching region)
-			// Switching happens at +Ec (increasing) and -Ec (decreasing)
-			// But effective Ec varies. Use material Ec as baseline proxy.
-			if matEc > 0 {
-				distPlus := math.Abs(a.electricField - matEc)
-				distMinus := math.Abs(a.electricField + matEc)
-				minDist := math.Min(distPlus, distMinus)
+					// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
+					// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait.
+					// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
+					// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
+					// So 0.1 MV/cm = 10^7 V/m.
+					// Let's use 10 MV/m (1e7) as threshold.
 
-				// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
-				// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait.
-				// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
-				// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
-				// So 0.1 MV/cm = 10^7 V/m.
-				// Let's use 10 MV/m (1e7) as threshold.
-
-				threshold := 1e7 // 0.1 MV/cm
-				if minDist < threshold {
-					currentStep = dtMin
+					threshold := 1e7 // 0.1 MV/cm
+					if minDist < threshold {
+						currentStep = dtMin
+					}
 				}
 			}
 

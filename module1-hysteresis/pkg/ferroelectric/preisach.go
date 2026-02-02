@@ -144,11 +144,15 @@ func (p *PreisachModel) Reset() {
 
 // Update applies a new electric field and returns the resulting polarization.
 func (p *PreisachModel) Update(E float64) float64 {
-	log.Input("Update", map[string]interface{}{"E": E})
+	if logging.IsVerbose(logging.VerbosityTrace) {
+		log.Input("Update", map[string]interface{}{"E": E})
+	}
 
 	P := p.stack.Update(E)
 
-	log.Calculation("Update", map[string]interface{}{"E": E}, P)
+	if logging.IsVerbose(logging.VerbosityTrace) {
+		log.Calculation("Update", map[string]interface{}{"E": E}, P)
+	}
 	return P
 }
 
