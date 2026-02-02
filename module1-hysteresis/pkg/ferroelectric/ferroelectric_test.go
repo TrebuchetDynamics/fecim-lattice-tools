@@ -128,17 +128,17 @@ func TestDiscreteStatesCount(t *testing.T) {
 	}
 
 	// Verify states span from -Ps to +Ps
-	if states[0] > -0.9*material.Ps {
-		t.Errorf("First state %.4f should be close to -Ps (%.4f)", states[0], -material.Ps)
+	if states[0].Polarization > -0.9*material.Ps {
+		t.Errorf("First state %.4f should be close to -Ps (%.4f)", states[0].Polarization, -material.Ps)
 	}
-	if states[29] < 0.9*material.Ps {
-		t.Errorf("Last state %.4f should be close to +Ps (%.4f)", states[29], material.Ps)
+	if states[29].Polarization < 0.9*material.Ps {
+		t.Errorf("Last state %.4f should be close to +Ps (%.4f)", states[29].Polarization, material.Ps)
 	}
 
 	// Verify states are evenly spaced
 	expectedSpacing := 2 * material.Ps / 29
 	for i := 1; i < 30; i++ {
-		spacing := states[i] - states[i-1]
+		spacing := states[i].Polarization - states[i-1].Polarization
 		if math.Abs(spacing-expectedSpacing) > 1e-10 {
 			t.Errorf("State spacing at index %d is %.6f, expected %.6f", i, spacing, expectedSpacing)
 		}
@@ -198,8 +198,9 @@ func TestPreisachModelReset(t *testing.T) {
 	// Reset
 	model.Reset()
 
-	if model.Polarization() != 0 {
-		t.Errorf("After reset, polarization should be 0, got %.4f", model.Polarization())
+	resetP := model.Polarization()
+	if math.Abs(resetP-(-material.Ps)) > 1e-6 {
+		t.Errorf("After reset, polarization should be near -Ps: got %.4f, expected %.4f", resetP, -material.Ps)
 	}
 }
 

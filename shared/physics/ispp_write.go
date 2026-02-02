@@ -107,11 +107,23 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		}, nil)
 
 		if i == 0 {
-			vPulse = direction * (c.VMin + c.VMax) / 2.0
+			vGuess := c.initialPulseMagnitude(targetP)
+			if vGuess <= 0 {
+				vGuess = (c.VMin + c.VMax) / 2.0
+			}
+			if vGuess < c.VMin {
+				vGuess = c.VMin
+			}
+			if vGuess > c.VMax {
+				vGuess = c.VMax
+			}
+			vPulse = direction * vGuess
 			log.Calculation("WriteTarget", map[string]interface{}{
-				"step":   "Predict",
-				"vPulse": vPulse,
-				"bounds": []float64{c.VMin, c.VMax},
+				"step":    "Predict",
+				"model":   "atanh",
+				"vPulse":  vPulse,
+				"vGuess":  vGuess,
+				"bounds":  []float64{c.VMin, c.VMax},
 			}, nil)
 		} else {
 			vPulse = direction * (c.VMin + c.VMax) / 2.0
@@ -196,6 +208,27 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	}
 
 	return i + 1, success, overshoots
+}
+
+func (c *WriteController) initialPulseMagnitude(targetP float64) float64 {
+	if c.Material == nil || c.Material.Ps == 0 || c.Material.Ec == 0 || c.Material.Thickness == 0 {
+		return 0
+	}
+
+	ratio := targetP / c.Material.Ps
+	if ratio > 0.95 {
+		ratio = 0.95
+	}
+	if ratio < -0.95 {
+		ratio = -0.95
+	}
+
+	eEst := c.Material.Ec * math.Atanh(ratio)
+	vEst := math.Abs(eEst * c.Material.Thickness)
+	if math.IsNaN(vEst) || math.IsInf(vEst, 0) {
+		return 0
+	}
+	return vEst
 }
 
 func (c *WriteController) applyPulse(eField float64, duration float64) {

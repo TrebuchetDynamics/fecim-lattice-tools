@@ -90,8 +90,8 @@ func (d *DAC) ConvertWithNonlinearity(level int) float64 {
 	// Add INL error (varies with code)
 	inlError := d.INL * lsb * math.Sin(math.Pi*float64(level)/float64(d.Levels()-1))
 
-	// Add DNL error (random per level)
-	dnlError := d.DNL * lsb * (0.5 - float64(level%3)/2.0)
+	// Add DNL error (pseudo-random per level)
+	dnlError := d.DNL * lsb * (0.5 - float64(level%5)/4.0)
 
 	result := idealVoltage + inlError + dnlError
 
@@ -124,17 +124,19 @@ func (d *DAC) EnergyPerConversion() float64 {
 		"vref_low":  d.VrefLow,
 	})
 
-	// Energy ~ C * Vref^2 * 2^N
-	// Typical: ~1 fJ/conversion-step for 65nm CMOS
-	capacitance := 1e-15 // 1 fF unit capacitor
+	// Energy ~ C_eff * (Vspan/2)^2 * 2^N (differential, switched-cap DAC)
+	// C_eff is an effective unit capacitor calibrated to typical 5-bit DAC energy.
+	capacitance := 0.2e-15 // 0.2 fF effective unit capacitor
 	levels := float64(d.Levels())
-	vref := (d.VrefHigh - d.VrefLow) / 2
+	vrefSpan := d.VrefHigh - d.VrefLow
+	vref := vrefSpan / 2.0
 
 	energy := capacitance * vref * vref * levels // ~15 fJ typical
 
 	log.Calculation("DAC.EnergyPerConversion", map[string]interface{}{
 		"capacitance": capacitance,
 		"levels":      levels,
+		"vref_span":   vrefSpan,
 		"vref":        vref,
 	}, energy)
 

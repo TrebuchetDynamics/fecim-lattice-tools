@@ -517,11 +517,13 @@ func (a *ADC) AnalyzeINLDNL() *INLDNLAnalysis
 type TimingAnalysis struct {
     // Individual component times
     DACSettle     float64   // DAC settling time
+    ArraySettle   float64   // Array RC/sneak settling time
     PumpRise      float64   // Charge pump rise time
+    WritePulse    float64   // Program pulse width
     WriteTime     float64   // Total write (DAC + pump + pulse)
     TIASettle     float64   // TIA settling time
     ADCConvert    float64   // ADC conversion time
-    ReadTime      float64   // Total read (TIA + ADC)
+    ReadTime      float64   // Total read (DAC + array + TIA + ADC)
 
     // System metrics
     CycleTime     float64   // Full read+write cycle

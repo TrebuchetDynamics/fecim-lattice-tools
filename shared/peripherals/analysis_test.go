@@ -142,6 +142,12 @@ func TestAnalyzeTiming_Basic(t *testing.T) {
 	if timing.TIASettle <= 0 {
 		t.Errorf("TIASettle should be positive: %e", timing.TIASettle)
 	}
+	if timing.ArraySettle <= 0 {
+		t.Errorf("ArraySettle should be positive: %e", timing.ArraySettle)
+	}
+	if timing.WritePulse <= 0 {
+		t.Errorf("WritePulse should be positive: %e", timing.WritePulse)
+	}
 }
 
 func TestAnalyzeTiming_WriteTime(t *testing.T) {
@@ -152,8 +158,8 @@ func TestAnalyzeTiming_WriteTime(t *testing.T) {
 
 	timing := AnalyzeTiming(dac, adc, tia, pump)
 
-	// WriteTime = DACSettle + PumpRise + 100ns
-	expectedWriteTime := timing.DACSettle + timing.PumpRise + 100e-9
+	// WriteTime = DACSettle + PumpRise + WritePulse + ArraySettle
+	expectedWriteTime := timing.DACSettle + timing.PumpRise + timing.WritePulse + timing.ArraySettle
 	if math.Abs(timing.WriteTime-expectedWriteTime) > 1e-12 {
 		t.Errorf("WriteTime mismatch: expected %e, got %e", expectedWriteTime, timing.WriteTime)
 	}
@@ -167,8 +173,8 @@ func TestAnalyzeTiming_ReadTime(t *testing.T) {
 
 	timing := AnalyzeTiming(dac, adc, tia, pump)
 
-	// ReadTime = TIASettle + ADCConvert
-	expectedReadTime := timing.TIASettle + timing.ADCConvert
+	// ReadTime = DACSettle + ArraySettle + TIASettle + ADCConvert
+	expectedReadTime := timing.DACSettle + timing.ArraySettle + timing.TIASettle + timing.ADCConvert
 	if math.Abs(timing.ReadTime-expectedReadTime) > 1e-12 {
 		t.Errorf("ReadTime mismatch: expected %e, got %e", expectedReadTime, timing.ReadTime)
 	}

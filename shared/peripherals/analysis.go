@@ -149,7 +149,9 @@ func findCodeWidth(a *ADC, code int, lsb float64) float64 {
 // TimingAnalysis contains timing parameters for peripheral operations.
 type TimingAnalysis struct {
 	DACSettle     float64 // DAC settling time (s)
+	ArraySettle   float64 // Array RC/sneak settling time (s)
 	PumpRise      float64 // Charge pump rise time (s)
+	WritePulse    float64 // Program pulse width (s)
 	WriteTime     float64 // Total write time (s)
 	TIASettle     float64 // TIA settling time (s)
 	ADCConvert    float64 // ADC conversion time (s)
@@ -165,18 +167,23 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 		"adc_conv_time":   adc.ConversionTime,
 	})
 
+	arraySettle := 5e-9   // Array RC/sneak settling time (5 ns)
+	writePulse := 100e-9  // Write pulse duration (100 ns)
+
 	t := &TimingAnalysis{
-		DACSettle:  dac.SettleTime * 1e-9,
-		PumpRise:   pump.RiseTime(),
-		TIASettle:  tia.SettlingTime(),
-		ADCConvert: adc.ConversionTime * 1e-9,
+		DACSettle:   dac.SettleTime * 1e-9,
+		ArraySettle: arraySettle,
+		PumpRise:    pump.RiseTime(),
+		WritePulse:  writePulse,
+		TIASettle:   tia.SettlingTime(),
+		ADCConvert:  adc.ConversionTime * 1e-9,
 	}
 
 	// Write path timing
-	t.WriteTime = t.DACSettle + t.PumpRise + 100e-9 // 100ns write pulse
+	t.WriteTime = t.DACSettle + t.PumpRise + t.WritePulse + t.ArraySettle
 
 	// Read path timing
-	t.ReadTime = t.TIASettle + t.ADCConvert
+	t.ReadTime = t.DACSettle + t.ArraySettle + t.TIASettle + t.ADCConvert
 
 	// Full cycle
 	t.CycleTime = t.WriteTime + t.ReadTime
@@ -296,12 +303,13 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 		// DAC conversion
 		tf.DACVoltages[i] = dac.ConvertWithNonlinearity(i)
 
-		// Charge pump (for write path, shows voltage boosting)
-		if tf.DACVoltages[i] > 0 {
-			tf.PumpVoltages[i] = tf.DACVoltages[i] * pump.BoostFactor() * pump.Efficiency
-		} else {
-			tf.PumpVoltages[i] = tf.DACVoltages[i] * pump.BoostFactor() * pump.Efficiency
+		// Charge pump (for write path, voltage boosting with regulation clamp)
+		boosted := tf.DACVoltages[i] * pump.BoostFactor()
+		maxOut := pump.ActualOutputVoltage()
+		if maxOut != 0 && math.Abs(boosted) > math.Abs(maxOut) {
+			boosted = math.Copysign(math.Abs(maxOut), boosted)
 		}
+		tf.PumpVoltages[i] = boosted
 
 		// TIA (simulating read-back - current proportional to programmed level)
 		// Assume conductance proportional to level, Vread = 0.1V

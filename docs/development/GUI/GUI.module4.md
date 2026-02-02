@@ -121,7 +121,7 @@ Conventions:
 ### Voltage Range System
 - All voltage thresholds now derived from material properties:
   - **Coercive voltage (Vc)** = Ec × thickness (from material)
-  - **Read range**: 0 to FieldMinRatio × Vc (from physics.yaml calibration.field_min_ratio)
+  - **Read range**: 0 to FieldMinRatio × Vc (from physics.yaml calibration.field_min_ratio), capped at 1.0V and floored at 0.1V for ADC/DAC practicality
   - **Write range**: Vc to FieldMaxRatio × Vc (from physics.yaml calibration.field_max_ratio)
 - DAC preset buttons show actual voltage ranges based on selected material
 - No hardcoded voltage constants in device_state.go
@@ -595,9 +595,10 @@ type ISPPState struct {
 **Purpose**: Visualize half-select disturb risk in passive (0T1R) crossbar arrays.
 
 **Physics**: In passive arrays without transistor isolation:
-- Selected cell sees full write voltage (V)
-- Cells in same row (different columns) see V/2 on WL
-- Cells in same column (different rows) see V/2 on BL
+- Selected WL = +V/2, selected BL = −V/2 (symmetric half‑select)
+- Selected cell sees full write voltage ( +V/2 − (−V/2) = V )
+- Cells in same row or column see ±V/2 relative to ground
+- Unselected cells remain at 0V
 - These V/2 cells may experience disturb over time
 
 **HalfSelectVisualization Struct**:
@@ -1116,7 +1117,7 @@ Test structure follows `docs/development/TESTING.md` patterns:
 
 ```bash
 # Run peripheral circuit tests (includes device state logic)
-go test -v ./module4-circuits/pkg/peripherals
+go test -v ./shared/peripherals
 
 # Run GUI tests (headless widget tests)
 go test -v ./module4-circuits/pkg/gui
@@ -1319,9 +1320,9 @@ fyne.Do(func() {
 | Parameter | Source | Calculation |
 |-----------|--------|-------------|
 | Coercive Voltage (Vc) | material.CoerciveVoltage() | Ec × thickness |
-| Read Max Voltage | physics.yaml + material | FieldMinRatio × Vc |
+| Read Max Voltage | physics.yaml + material | FieldMinRatio × Vc (capped at 1.0V, floor 0.1V) |
 | Write Min Voltage | material | Vc |
-| Write Max Voltage | physics.yaml + material | FieldMaxRatio × Vc |
+| Write Max Voltage | physics.yaml + material | min(FieldMaxRatio × Vc, MaxPracticalVoltage) |
 | Max Practical Voltage | device_state.go:92 | 3.0V (hardware limit) |
 | FeCIM Levels | app.go:25 | 30 |
 | Default Array Size | app.go:27 | 8×8 |
@@ -1340,7 +1341,7 @@ fyne.Do(func() {
 - fyne.io/fyne/v2/driver/desktop (for Cursor() interface)
 
 ### Internal Packages
-- fecim-lattice-tools/module4-circuits/pkg/peripherals (DAC, ADC, TIA, ChargePump)
+- fecim-lattice-tools/shared/peripherals (DAC, ADC, TIA, ChargePump)
 - fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric (HZOMaterial, AllMaterials)
 - fecim-lattice-tools/config/physics (Load physics.yaml config)
 - fecim-lattice-tools/shared/theme (FeCIMTheme)
@@ -1561,6 +1562,7 @@ Material: FeCIM HZO (typical)
 Vc ≈ 1.0V (from material.CoerciveVoltage())
 Read range: 0 → 0.5×Vc = 0.0V → 0.5V
 Write range: 1.0×Vc → 2.5×Vc = 1.0V → 2.5V
+(Read range is capped at 1.0V and floored at 0.1V for ADC/DAC practicality)
 ```
 
 **Solution**:
@@ -1577,8 +1579,16 @@ func (ds *DeviceState) SetMaterial(mat *ferroelectric.HZOMaterial) {
         return  // Invalid coercive voltage
     }
 
-    // Update read/write ranges
-    ds.readRange.Max = ds.calibParams.FieldMinRatio * Vc
+    // Update read/write ranges (with practical caps)
+    safeReadMax := ds.calibParams.FieldMinRatio * Vc
+    if safeReadMax > 1.0 {
+        safeReadMax = 1.0
+    }
+    if safeReadMax < 0.1 {
+        safeReadMax = 0.1
+    }
+    ds.readRange.Max = safeReadMax
+
     ds.writeRange.Min = Vc
     ds.writeRange.Max = ds.calibParams.FieldMaxRatio * Vc
     ds.writeRange.Max = min(ds.writeRange.Max, MaxPracticalVoltage)  // Hardware limit
@@ -1721,6 +1731,8 @@ if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
 18. **Hysteresis Direction Tracking**: Each cell tracks whether it was last programmed ascending or descending. Affects voltage calculation for accurate programming.
 
 19. **Per-Level Voltage Calibration**: 30-level voltage arrays allow fine-grained control. Uses linear interpolation between calibration points.
+
+20. **Charge Pump Modeling**: The charge pump is treated as a regulated write‑rail supply (used for timing/power analysis and output limits); the GUI applies the resulting write voltages directly rather than simulating pump dynamics per cell.
 
 ---
 

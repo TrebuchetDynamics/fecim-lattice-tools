@@ -66,9 +66,9 @@ Time: 50 ns (5 comparisons × 10 ns each)
 
 ### Ideal Conversion Formula
 
-For a given analog voltage, the ideal digital code is:
+For a given analog voltage, the ideal digital code is (mid‑tread quantization, then clamped to 0…31):
 
-$$\text{Code} = \text{floor}\left(\frac{V_{\text{analog}} - V_{\text{ref,low}}}{LSB}\right)$$
+$$\text{Code} = \text{round}\left(\frac{V_{\text{analog}} - V_{\text{ref,low}}}{LSB}\right)$$
 
 Where the **Least Significant Bit (LSB)** is:
 
@@ -79,8 +79,8 @@ $$LSB = \frac{V_{\text{ref,high}} - V_{\text{ref,low}}}{2^{\text{bits}} - 1} = \
 | Input Voltage | Ideal Code | Physical Meaning |
 |---|---|---|
 | 0.0 V | 0 | Minimum (no current) |
-| 0.1615 V (0.5V) | 15 | Mid-range |
-| 0.325 V | 10 | 1/3 signal |
+| 0.325 V | 10 | ~1/3 scale |
+| 0.5 V | 16 | Mid-range (rounded) |
 | 1.0 V | 31 | Maximum (full scale) |
 
 ### Real ADCs Have Imperfections
@@ -167,7 +167,7 @@ $$ENOB = \text{Bits} - \log_2\sqrt{1 + INL^2 + DNL^2}$$
 
 For default FeCIM ADC (INL=0.5 LSB, DNL=0.25 LSB):
 
-$$ENOB = 5 - \log_2\sqrt{1 + 0.5^2 + 0.25^2} = 5 - 0.34 = 4.66 \text{ bits}$$
+$$ENOB = 5 - \log_2\sqrt{1 + 0.5^2 + 0.25^2} = 5 - 0.20 = 4.80 \text{ bits}$$
 
 This means the ADC actually provides **4.66 bits of resolution** instead of 5.
 
@@ -182,7 +182,7 @@ $$SNR_{\text{theo}} = 6.02 \times 5 + 1.76 = 31.86 \text{ dB}$$
 
 **Effective SNR** (including nonlinearity):
 
-$$SNR_{\text{eff}} = 6.02 \times ENOB + 1.76 = 6.02 \times 4.66 + 1.76 = 30.7 \text{ dB}$$
+$$SNR_{\text{eff}} = 6.02 \times ENOB + 1.76 = 6.02 \times 4.80 + 1.76 = 30.7 \text{ dB}$$
 
 The nonlinearity reduces SNR by **1.16 dB** (about 23% noise increase).
 
@@ -197,7 +197,7 @@ The SAR ADC requires time for:
 
 This is critical for **throughput**:
 - Read path: 50 ns ADC conversion
-- Write path: 10 ns DAC settling + 50 ns charge pump rise time
+- Write path: 10 ns DAC settling + 88 ns charge pump rise time
 
 ---
 
@@ -218,7 +218,7 @@ The DAC performs **interpolation**: mapping discrete levels to analog voltages t
 
 The FeCIM DAC uses 5-bit resolution with a **bipolar output range**:
 
-- **Input:** 5-bit digital code (0-31, using 0-29 for FeCIM)
+- **Input:** 5-bit digital code (0-31, using 0-29 for FeCIM; codes 30-31 reserved as headroom)
 - **Output range:** -1.5V to +1.5V (3V span)
 - **Total levels:** 32, with 30 used
 
@@ -233,10 +233,11 @@ $$V_{\text{out}} = -1.5V + \frac{\text{code}}{31} \times 3.0V$$
 
 | Digital Code | Output Voltage | Cell Effect |
 |---|---|---|
-| 0 | -1.5 V | Minimum conductance (erase) |
-| 15 | 0.0 V | Mid-level conductance |
-| 20 | +0.29 V | Higher conductance |
-| 29 | +1.5 V | Maximum conductance (set) |
+| 0 | -1.50 V | Minimum conductance (erase) |
+| 15 | -0.05 V | Near mid-level (slightly negative) |
+| 16 | +0.05 V | Near mid-level (slightly positive) |
+| 29 | +1.31 V | Max FeCIM level (code 29) |
+| 31 | +1.50 V | Full-scale (reserved headroom) |
 
 ### DAC Nonlinearity: INL and DNL
 
@@ -281,16 +282,16 @@ DNL = (actual_step - ideal_step) / LSB
 
 Energy per conversion (writing one level):
 
-$$E_{\text{DAC}} = C_{\text{unit}} \times V_{\text{ref}}^2 \times 2^N$$
+$$E_{\text{DAC}} = C_{\text{eff}} \times \left(\frac{V_{\text{span}}}{2}\right)^2 \times 2^N$$
 
-For FeCIM:
-- Unit capacitor: 1 fF (femtofarad)
-- Vref span: 3.0 V
+For FeCIM (effective switched‑cap model):
+- Effective unit capacitor: 0.2 fF
+- Vspan: 3.0 V (±1.5 V rails)
 - Number of levels: 32
 
-$$E_{\text{DAC}} = 1 \times 10^{-15}F \times 3.0^2 \times 32 = 288 \times 10^{-15}J = 288 \text{ aJ}$$
+$$E_{\text{DAC}} = 0.2 \times 10^{-15}F \times \left(\frac{3.0}{2}\right)^2 \times 32 \approx 14.4 \text{ fJ}$$
 
-**Typical: ~15 fJ per conversion** (includes charge redistribution)
+**Typical: ~15 fJ per conversion** (effective model; architecture-dependent)
 
 ---
 
@@ -356,7 +357,8 @@ $$I_{\text{noise,rms}} = \sqrt{1.656 \times 10^{-27}} = 1.28 \text{ pA}$$
 This matches the specified **1 pA/√Hz** input noise.
 
 **Output noise voltage:**
-$$V_{\text{noise}} = I_{\text{noise}} \times R_f = 1 \text{ pA/√Hz} \times 10k\Omega \times \sqrt{100MHz} = 31.6 \text{ µV/√Hz}$$
+$$V_{\text{noise,density}} = I_{\text{noise}} \times R_f = 1 \text{ pA/√Hz} \times 10k\Omega = 10 \text{ nV/√Hz}$$
+$$V_{\text{noise,rms}} = V_{\text{noise,density}} \times \sqrt{BW} = 10 \text{ nV/√Hz} \times \sqrt{100MHz} \approx 100 \text{ µV}$$
 
 #### Minimum Detectable Current
 
@@ -424,16 +426,19 @@ $$\tau = \frac{\ln(1000)}{2\pi \times BW} = \frac{6.91}{2\pi \times 100 \times 1
 
 ### TIA Power Consumption
 
-The TIA draws quiescent current primarily for biasing the op-amp:
+The simulation uses a **lower‑bound dynamic power** estimate tied to noise and bandwidth:
 
-$$P = 2 \times \frac{kT \times BW \times G_m}{\eta}$$
+$$P \approx 2 \times \frac{kT \times BW \times R_f}{\eta}$$
 
-where Gm is the op-amp transconductance and η is efficiency (typically 0.1-0.5).
+This uses the feedback gain $R_f$ as a proxy for the front‑end transconductance to scale with bandwidth
+(a deliberate simplification for repeatable, low‑overhead modeling). For the default TIA:
 
-For FeCIM estimate: **~5-10 mW** depending on op-amp design.
+- $P \approx 8.3 \times 10^{-8} \text{ W}$ (**~83 nW**)
 
-Energy per read operation:
-$$E = P \times t_{\text{settle}} = 7.5mW \times 11ns = 82.5 \text{ aJ}$$
+Energy per read window (using the full read time, ~76 ns):
+$$E \approx 83 \text{ nW} \times 76 \text{ ns} \approx 6.3 \text{ fJ}$$
+
+**Note:** Real high‑speed TIAs often draw **mW‑level bias power**; that static bias is **not** modeled here and can be layered on if needed.
 
 ---
 
@@ -502,13 +507,19 @@ But this assumes **perfect charge transfer**. Real losses reduce this.
 
 The pump loses voltage in:
 1. **Diode drops:** ~0.3V per MOS diode × stages
-2. **IR drops:** Load current through capacitive resistance
+2. **IR drops:** Load current through effective output resistance
 3. **Leakage:** Reverse current through pass devices
 
-$$V_{\text{out,actual}} = V_{\text{out,ideal}} - (N \times V_{th}) - I_{load} \times R_{diode}$$
+$$V_{\text{out,unreg}} = V_{\text{out,ideal}} - (N \times V_{th}) - I_{load} \times R_{out}$$
+$$R_{out} \approx \frac{1}{C_{fly} \times f_{clk}}$$
 
-For FeCIM pump with 10 µA load:
-$$V_{\text{out,actual}} = 3.0V - (2 \times 0.3V) - (10 \times 10^{-6} \times R) = 2.4V - I_{load} \times R$$
+For FeCIM defaults (Vin=1V, N=2, Vth=0.3V, Cfly=100 pF, f=50 MHz, Iload=10 µA):
+$$R_{out} \approx \frac{1}{100pF \times 50MHz} \approx 200 \Omega$$
+$$V_{\text{out,unreg}} \approx 3.0V - 0.6V - 0.002V = 2.398V$$
+
+The model then **regulates/clamps** to the target output rail:
+$$V_{\text{out,actual}} = \text{sign}(V_{target}) \times \min(|V_{target}|, |V_{\text{out,unreg}}|)$$
+For the default +1.5V rail, $V_{\text{out,actual}} \approx 1.5V$.
 
 **Boost factor:**
 $$\text{Boost} = \frac{V_{\text{out}}}{V_{in}} = \frac{1.5V}{1.0V} = 1.5\times$$
@@ -525,12 +536,12 @@ where Cout is the output storage capacitor and f is clock frequency.
 
 For FeCIM:
 - Iload = 10 µA
-- Cout = 1 pF (10× flying cap)
+- Cout = 1 nF (10× flying cap, with Cfly=100 pF)
 - f = 50 MHz
 
-$$\Delta V = \frac{10 \times 10^{-6}}{1 \times 10^{-12} \times 50 \times 10^6} = 0.2V$$
+$$\Delta V = \frac{10 \times 10^{-6}}{1 \times 10^{-9} \times 50 \times 10^6} = 0.2 \text{ mV}$$
 
-**Ripple is 13% of output voltage!** This is significant and can affect write accuracy.
+**Ripple is small** with large output capacitance. Smaller C\_out values increase ripple proportionally.
 
 Typical solution: Add external smoothing capacitor (0.1-1 nF).
 
@@ -561,10 +572,10 @@ Vout │
 
 $$\eta = \frac{P_{\text{out}}}{P_{\text{in}}} = \frac{V_{\text{out}} \times I_{\text{load}}}{V_{\text{in}} \times I_{\text{in}}}$$
 
-For ideal pump with perfect charge transfer:
-$$\eta_{\text{ideal}} = \frac{V_{\text{out}}}{(N+1) \times V_{in}} = \frac{1.5}{3.0} = 50\%$$
+For ideal charge transfer (unregulated):
+$$\eta_{\text{ideal}} = \frac{V_{\text{out,unreg}}}{(N+1) \times V_{in}}$$
 
-**FeCIM pump: 70% efficiency** (better than ideal due to optimized design)
+With regulation to the 1.5V rail, we assume **70% power efficiency** as a practical switched‑cap value for this model.
 
 $$P_{\text{in}} = \frac{P_{\text{out}}}{\eta} = \frac{1.5V \times 10\mu A}{0.7} = 21.4 \text{ µW}$$
 
@@ -612,7 +623,7 @@ Specifications identical to positive pump:
 - Boost: 1.5×
 - Efficiency: 70%
 - Rise time: 88 ns
-- Ripple: 0.2V
+- Ripple: 0.2 mV
 ```
 
 ---
@@ -708,29 +719,28 @@ With realistic peripherals:
 
 | Component | Energy | Fraction |
 |---|---|---|
-| DAC conversion | 15 fJ | 2% |
-| TIA amplification | 82 aJ | 11% |
-| ADC conversion | 125 aJ | 17% |
-| **Total** | **~750 aJ** | 100% |
+| DAC conversion | 14.4 fJ | 31% |
+| TIA amplification | 6.3 fJ | 14% |
+| ADC conversion | 25 fJ | 55% |
+| **Total** | **~46 fJ** | 100% |
 
-Energy normalized to 100 fJ baseline: **~7.5× smaller**
+Energy normalized to 100 fJ baseline: **~0.46×**
 
 #### Per Write Operation
 
 | Component | Energy | Fraction |
 |---|---|---|
-| DAC conversion | 15 fJ | 18% |
-| Charge pump (input) | 30 fJ | 35% |
-| Write pulse (cell charging) | 30 fJ | 35% |
-| Settling losses | 10 fJ | 12% |
-| **Total** | **~85 fJ** | 100% |
+| DAC conversion | 14.4 fJ | ~1% |
+| Charge pump (input) | 2.14 pJ | ~99% |
+| **Total** | **~2.15 pJ** | 100% |
 
-Write is **100× more energy-expensive** than read!
+Write is **~50× more energy‑expensive** than read (model default).  
+**Note:** Cell‑internal write energy is not modeled here; add separately if needed.
 
 #### Full Inference (64×64 MNIST)
 
 64 reads (one for each weight):
-$$E_{\text{inference}} = 64 \times 750aJ = 48pJ$$
+$$E_{\text{inference}} = 64 \times 46fJ \approx 2.9pJ$$
 
 This is the **computation energy only**. Does not include:
 - Static power (leakage)
@@ -802,8 +812,8 @@ Coercive field Ec and polarization Pr vary 10-15% across -40°C to +125°C opera
 
 ### ADC
 
-**Quantization:**
-$$\text{Code} = \text{floor}\left(\frac{V - V_{ref,low}}{(V_{ref,high} - V_{ref,low})/2^N}\right)$$
+**Quantization (mid‑tread):**
+$$\text{Code} = \text{round}\left(\frac{V - V_{ref,low}}{(V_{ref,high} - V_{ref,low})/(2^N-1)}\right)$$
 
 **ENOB:**
 $$ENOB = N - \log_2\sqrt{1 + INL^2 + DNL^2}$$
@@ -817,7 +827,7 @@ $$SNR_{eff} = 6.02 \times ENOB + 1.76 \text{ dB}$$
 $$V_{out} = V_{ref,low} + \frac{\text{code}}{2^N - 1}(V_{ref,high} - V_{ref,low})$$
 
 **Energy:**
-$$E = C_{unit} \times V_{ref}^2 \times 2^N$$
+$$E = C_{eff} \times \left(\frac{V_{span}}{2}\right)^2 \times 2^N$$
 
 ### TIA
 
@@ -838,8 +848,10 @@ $$DR = 20 \log_{10}\left(\frac{I_{max}}{I_{min}}\right)$$
 **Ideal output:**
 $$V_{out,ideal} = (N+1) \times V_{in}$$
 
-**Actual output (with diode drops):**
-$$V_{out,actual} = (N+1) \times V_{in} - N \times V_{th}$$
+**Actual output (with losses):**
+$$V_{out,unreg} = (N+1) \times V_{in} - N \times V_{th} - I_{load} \times R_{out}$$
+$$R_{out} \approx \frac{1}{C_{fly} \times f_{clk}}$$
+$$V_{out,actual} = \text{sign}(V_{target}) \times \min(|V_{target}|, |V_{out,unreg}|)$$
 
 **Ripple:**
 $$\Delta V = \frac{I_{load}}{C_{out} \times f}$$
@@ -935,7 +947,7 @@ The values in this document are based on:
 
 ## Code Implementation Reference
 
-Physics models implemented in: `/module4-circuits/pkg/peripherals/`
+Physics models implemented in: `/shared/peripherals/`
 
 - `adc.go` — ADC conversion, ENOB, SNR calculations
 - `dac.go` — DAC conversion, settling time, energy models

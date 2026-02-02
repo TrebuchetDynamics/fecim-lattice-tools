@@ -1,0 +1,85 @@
+package ferroelectric
+
+import (
+	"math"
+	"testing"
+)
+
+func TestTanhEverett_SymmetricPairMatchesTanh(t *testing.T) {
+	everett := &TanhEverett{
+		Ps:    0.30,
+		Ec:    1.0,
+		Delta: 0.2,
+	}
+
+	for _, x := range []float64{0, 0.2, 0.6} {
+		alpha := everett.Ec + x
+		beta := -everett.Ec - x
+
+		got := everett.Calculate(alpha, beta)
+		expected := math.Tanh(x/everett.Delta) * everett.Ps
+
+		if math.Abs(got-expected) > math.Abs(expected)*1e-8+1e-12 {
+			t.Fatalf("x=%.3f: got %.12f, expected %.12f", x, got, expected)
+		}
+	}
+}
+
+func TestPreisachModel_SetTemperatureUpdatesEverett(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+
+	tempK := 400.0
+	model.SetTemperature(tempK)
+
+	deltaT := tempK - 300.0
+	expectedEc := material.Ec + material.TempCoeffEc*deltaT
+	expectedPs := material.Ps + material.TempCoeffPr*deltaT
+	if expectedEc < 1e5 {
+		expectedEc = 1e5
+	}
+	if expectedPs < 1e-6 {
+		expectedPs = 1e-6
+	}
+
+	gotEc := model.GetEffectiveEc()
+	if math.Abs(gotEc-expectedEc) > math.Abs(expectedEc)*1e-8+1e-12 {
+		t.Fatalf("Ec mismatch: got %.6e, expected %.6e", gotEc, expectedEc)
+	}
+
+	gotPs := model.everett.Ps
+	if math.Abs(gotPs-expectedPs) > math.Abs(expectedPs)*1e-8+1e-12 {
+		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedPs)
+	}
+
+	expectedDelta := expectedEc * 0.25
+	if math.Abs(model.everett.Delta-expectedDelta) > math.Abs(expectedDelta)*1e-8+1e-12 {
+		t.Fatalf("Delta mismatch: got %.6e, expected %.6e", model.everett.Delta, expectedDelta)
+	}
+}
+
+func TestPreisachModel_SetStressUpdatesEverett(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+
+	model.SetStress(2.0)
+
+	expectedEc := material.Ec * (1.0 + 0.05*(2.0-1.0))
+	if expectedEc < 1e5 {
+		expectedEc = 1e5
+	}
+	expectedPs := material.Ps
+	if expectedPs < 1e-6 {
+		expectedPs = 1e-6
+	}
+
+	gotEc := model.GetEffectiveEc()
+	if math.Abs(gotEc-expectedEc) > math.Abs(expectedEc)*1e-8+1e-12 {
+		t.Fatalf("Ec mismatch: got %.6e, expected %.6e", gotEc, expectedEc)
+	}
+
+	gotPs := model.everett.Ps
+	if math.Abs(gotPs-expectedPs) > math.Abs(expectedPs)*1e-8+1e-12 {
+		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedPs)
+	}
+}

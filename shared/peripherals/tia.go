@@ -21,7 +21,7 @@ func DefaultTIA() *TIA {
 		Gain:             10e3,   // 10 kΩ transimpedance
 		Bandwidth:        100e6,  // 100 MHz bandwidth
 		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) input noise
-		OutputOffset:     0,      // No offset for clean simulation
+		OutputOffset:     5e-3,   // 5 mV output offset
 		MaxInputCurrent:  100e-6, // 100 µA max input
 		MaxOutputVoltage: 1.0,    // 1V max output
 	}
@@ -69,11 +69,18 @@ func (t *TIA) ConvertWithNoise(current float64) float64 {
 	// Vnoise = Inoise * Gain * sqrt(BW)
 	noiseVoltage := t.InputNoiseRMS * t.Gain * math.Sqrt(t.Bandwidth)
 
-	// For simulation, use gaussian approximation
-	// In real implementation, would use random noise
-	noiseContribution := noiseVoltage * 0.1 // ~10% of RMS for demo
+	// Deterministic RMS noise injection (non-random, for repeatable demos)
+	noiseContribution := noiseVoltage
 
-	return idealOutput + noiseContribution
+	noisy := idealOutput + noiseContribution
+	if noisy < 0 {
+		noisy = 0
+	}
+	if noisy > t.MaxOutputVoltage {
+		noisy = t.MaxOutputVoltage
+	}
+
+	return noisy
 }
 
 // SNR returns the signal-to-noise ratio for a given input current.

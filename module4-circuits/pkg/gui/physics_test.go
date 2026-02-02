@@ -133,9 +133,9 @@ func TestTIAConversion(t *testing.T) {
 		expected float64 // Expected output voltage
 		desc     string
 	}{
-		{0, 0, "Zero current should give zero voltage"},
-		{10e-6, 0.1, "10µA × 10kΩ = 0.1V"},
-		{50e-6, 0.5, "50µA × 10kΩ = 0.5V"},
+		{0, 0.005, "Zero current should give offset voltage"},
+		{10e-6, 0.105, "10µA × 10kΩ + 5mV offset = 0.105V"},
+		{50e-6, 0.505, "50µA × 10kΩ + 5mV offset = 0.505V"},
 		{100e-6, 1.0, "100µA × 10kΩ = 1.0V (at saturation)"},
 		{150e-6, 1.0, "150µA should saturate at MaxOutputVoltage (1.0V)"},
 		{-10e-6, 0, "Negative current should clamp to 0V"},

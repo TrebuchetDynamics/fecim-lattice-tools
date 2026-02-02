@@ -108,7 +108,7 @@ The stiffness coefficient $\alpha$ is **dynamic**. It unifies Thermodynamics (Cu
 $$ \alpha(T, \sigma) = \frac{T - T_C}{2 \epsilon_0 C} - 2 Q_{12} \sigma $$
 
 * **Temperature ($T$):** As $T \to T_C$, $\alpha \to 0$. The potential wells become shallow, making the memory volatile (Data Loss at high temps).
-* **Stress ($\sigma$):** The TiN capping layer applies $\sim 1$ GPa tensile stress. Since $Q_{12} < 0$, this makes $\alpha$ *more negative*, deepening the wells and stabilizing the memory (Data Retention).
+* **Stress ($\sigma$):** The TiN capping layer applies $\sim 1$ GPa tensile stress. With the sign convention used in code (tensile $\sigma > 0$) and $Q_{12} < 0$, the term $-2 Q_{12} \sigma$ **raises** $\alpha$ (less negative). Compressive $\sigma$ makes $\alpha$ more negative; flip the stress sign if you want tensile stress to deepen wells.
 
 ### 3. The "Golden" Parameter Set (10nm HZO Set I)
 
@@ -168,7 +168,13 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 3. **Verify:** Map $P \to G$ using conductance transfer function, then read Conductance $G$.
 4. **Correction:**
    * **Too Low:** Increase $V_{pulse}$ (Bisection toward $V_{max}$).
-   * **Too High (Overshoot):** **CRITICAL:** Apply Negative Reset Pulse ($V_{reset}$), then restart binary search with lower $V$. *You cannot "nudge" a ferroelectric backwards easily.*
+   * **Too High (Overshoot):** **CRITICAL:** Apply a reset pulse on the **opposite branch** (direction‑aware), then restart binary search with lower $V$. *You cannot "nudge" a ferroelectric backwards easily.*
+
+**Headless verification path:** `cmd/fecim-lattice-tools --mode hysteresis` drives a multi‑step ISPP sequence
+(`pos-1`, `pos-2`, `neg-1`) through `shared/physics/ispp_write.go`. The first step resets to a known branch,
+subsequent steps continue from the prior state to exercise end‑to‑end multi‑step convergence, including a
+negative‑branch target. The initial pulse uses an inverse‑tanh estimate (`atanh(P_target/Ps)`), then clamps to
+`[VMin, VMax]` before binary search refinement.
 
 ---
 
@@ -182,6 +188,11 @@ are defined in `shared/physics/material.go`:
 
 ```
 FeCIM HZO (L-K Enabled)
+  Pr/Ps:             0.30 / 0.35   C/m^2 (30/35 µC/cm^2)
+  Ec:                1.0e8         V/m (1.0 MV/cm)
+  Thickness:         10            nm
+  Area:              45 nm x 45 nm (2.025e-15 m^2)
+  Tau (PulseWidth):  10            ns
   BetaLandau:        -2.160e8   J·m^5/C^4
   GammaLandau:        1.653e10  J·m^9/C^6
   RhoViscosity:       0.05      Ω·m
@@ -191,13 +202,13 @@ FeCIM HZO (L-K Enabled)
   Stress:             1.0       GPa
   CurieTemp:          723       K
   CurieConst:         1.5e5     K
-  Thickness:          10        nm
   Gmin/Gmax:          1e-6 / 1e-4  S
 ```
 
 **Notes:**
 - The GUI hysteresis demo still uses the **Preisach** model; L‑K parameters are exercised in headless mode.
 - Conductance mapping in hysteresis mode is **linear** between `P = -Ps` and `P = +Ps` (see §5).
+- Headless mode sets `UseNLS=false` and `EnableNoise=false` in `cmd/fecim-lattice-tools/mode.go` for deterministic equation checks; `UseEffectiveViscosity` remains enabled.
 - The extended reliability and distribution blocks below remain a roadmap item; they are documented but not yet wired
   into the runtime.
 
@@ -225,6 +236,9 @@ To model real-world Bit Error Rates (BER) and cycle-to-cycle variation, a noise 
 $$ \rho \frac{dP}{dt} = -\frac{\delta G}{\delta P} + \xi(t) $$
 
 where $\xi(t)$ is Gaussian white noise scaled by temperature: $\langle \xi(t)\xi(t') \rangle = 2 k_B T \rho \delta(t-t')$.
+
+**Implementation note:** `shared/physics/landau.go` samples noise with $\sigma = \sqrt{2 k_B T \rho_{\mathrm{eff}} / \Delta t}$ when enabled.
+Headless hysteresis mode sets `EnableNoise=false` for deterministic equation checks.
 
 ### 3. Wake-Up & Fatigue Model (Time-Dependent Reliability)
 
@@ -380,14 +394,17 @@ Once implemented, the ISPP algorithm will encounter a slanted curve.
 
 ### 5. References & Validation Sources
 
-This correction aligns the simulator with established ferroelectric device physics literature:
+This correction aligns the simulator with established ferroelectric device physics literature. Local copies
+are stored in `docs/research-papers/` when available.
 
-| Reference | Key Finding |
-|------------|--------------|
-| **Park, M. H., et al. (2019)** | Confirms that the "slanted" loop in HZO is caused by grain distribution and the depolarization field from the interfacial layer. |
-| **Salahuddin & Datta (2008)** | Provides the mathematical foundation for modeling the ferroelectric-dielectric stack, deriving the **Edep = -kdep·P** relationship. |
-| **Jerry, M., et al. (2017)** | Demonstrates 32-level analog states in FeFETs, explicitly relying on partial switching dynamics enabled by non-square loops. |
-| **Damjanovic, D. (1998)** | Describes the "Rayleigh Region" where domain wall contributions create linear (analog) response regimes. |
+| Reference | Key Finding | Repo Availability |
+|-----------|-------------|------------------|
+| **Siannas, N. et al. (2022)** Commun. Phys. 5, 178 | Depolarization fields introduce a linear restoring term (slanted loop). | `docs/research-papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf` |
+| **Zhou, S. et al. (2022)** Sci. Adv. 8, eadd5953 | Strain/phase stability supports depolarization‑field modeling in HZO. | `docs/research-papers/by-topic/01-ferroelectric-materials/Zhou_2022_Strain_induced_antipolar_phase.pdf` |
+| **Park, M. H., et al. (2019)** | Slanted loop / depolarization in HZO (citation ambiguous in legacy notes). | Not resolved yet; see `docs/research-papers/by-topic/01-ferroelectric-materials/README.md`. |
+| **Salahuddin & Datta (2008)** | Negative‑capacitance stack modeling (Edep = −kdep·P). | Paywalled (ACS); metadata only. |
+| **Jerry, M., et al. (2017)** | 32‑level FeFET analog states via partial switching. | Paywalled (IEEE IEDM); metadata only. |
+| **Damjanovic, D. (1998)** | Rayleigh‑region linear analog response in ferroelectrics. | Paywalled (IOP); metadata only. |
 
 ---
 
@@ -407,7 +424,7 @@ This correction aligns the simulator with established ferroelectric device physi
 
 | Aspect | What the Model Does | What the Literature Says | Validation Status |
 |---------|---------------------|-------------------------|-------------------|
-| **Depolarization Field** | Introduces a linear depolarization field `E_dep = –k_dep·P` to produce the "slanted" hysteresis loop required for analog/multi‑level states. | • **Nature Communications Physics (2022)** analyzes depolarization fields in ultrathin (5‑nm) HZO using Landau‑Ginsburg‑Devonshire (LGD) theory. The article states that the depolarization field **adds a positive quadratic term (∝ P²) to the Gibbs free energy**, which linearized in the equation of motion yields a **linear restoring field**.<br>• **Science Advances (2022)** similarly notes that "the uncompensated depolarization field is proportional to the polarization, E_d = –λ_d P".<br>• **Park et al. (2019)** confirms that interfacial dead layers and grain boundaries produce a depolarization field that slants the P‑V loop, enabling analog states. | **Validated.** The linear depolarization term is a widely accepted phenomenological approximation for the effect of interfacial dead layers and incomplete screening in polycrystalline HZO. The literature consistently shows that depolarization fields introduce a **linear‑in‑P restoring force** that can be captured by a term `–k_dep·P` in the L‑K equation. |
+| **Depolarization Field** | Introduces a linear depolarization field `E_dep = –k_dep·P` to produce the "slanted" hysteresis loop required for analog/multi‑level states. | • **Nature Communications Physics (2022)** analyzes depolarization fields in ultrathin (5‑nm) HZO using Landau‑Ginsburg‑Devonshire (LGD) theory. The article states that the depolarization field **adds a positive quadratic term (∝ P²) to the Gibbs free energy**, which linearized in the equation of motion yields a **linear restoring field**.<br>• **Science Advances (2022)** similarly notes that "the uncompensated depolarization field is proportional to the polarization, E_d = –λ_d P".<br>• **Park et al. (2019)** is cited in older notes but remains ambiguous; see `docs/research-papers/by-topic/01-ferroelectric-materials/README.md` for the unresolved reference. | **Validated.** The linear depolarization term is a widely accepted phenomenological approximation for the effect of interfacial dead layers and incomplete screening in polycrystalline HZO. The literature consistently shows that depolarization fields introduce a **linear‑in‑P restoring force** that can be captured by a term `–k_dep·P` in the L‑K equation. |
 
 ### 3. Landau Coefficients for 10‑nm HZO
 
@@ -439,20 +456,20 @@ This correction aligns the simulator with established ferroelectric device physi
 ### 6. Recommended Citations for Further Validation
 
 #### Series Resistance in L‑K Models:
-- Chatterjee, K. et al. *Design and Characterization of Ferroelectric Negative Capacitance*. UC Berkeley EECS‑2018‑131 (2018).
-- Tung, C.‑T. et al. *Modeling and Design Enablement for Future Computing*. UC Berkeley EECS‑2025‑13 (2025).
+- Chatterjee, K. et al. *Design and Characterization of Ferroelectric Negative Capacitance*. UC Berkeley EECS‑2018‑131 (2018). Local: `docs/research-papers/by-topic/01-ferroelectric-materials/Chatterjee_2018_Design_and_Characterization_of_Ferroelectric_Negative_Capacitance.pdf`
+- Tung, C.‑T. et al. *Modeling and Design Enablement for Future Computing*. UC Berkeley EECS‑2025‑13 (2025). Local: `docs/research-papers/by-topic/01-ferroelectric-materials/Tung_2025_Modeling_and_Design_Enablement.pdf`
 
 #### Depolarization Field in HZO:
-- Siannas, N. et al. *Metastable ferroelectricity driven by depolarization fields in ultrathin Hf₀.₅Zr₀.₅O₂*. Commun. Phys. 5, 178 (2022).
-- Zhou, S. et al. *Strain‑induced antipolar phase in hafnia stabilizes robust ferroelectricity*. Sci. Adv. (2022).
+- Siannas, N. et al. *Metastable ferroelectricity driven by depolarization fields in ultrathin Hf₀.₅Zr₀.₅O₂*. Commun. Phys. 5, 178 (2022). Local: `docs/research-papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf`
+- Zhou, S. et al. *Strain‑induced antipolar phase in hafnia stabilizes robust ferroelectricity*. Sci. Adv. (2022). Local: `docs/research-papers/by-topic/01-ferroelectric-materials/Zhou_2022_Strain_induced_antipolar_phase.pdf`
 
 #### Landau Coefficients for HZO:
-- Hoffmann, M. et al. *Stabilizing the ferroelectric phase in doped HfO₂: A thermodynamic approach*. J. Appl. Phys. 118, 072006 (2015).
-- Starschich, S. et al. *Ferroelectric switching dynamics in polycrystalline HfO₂*. Appl. Phys. Lett. 108, 032903 (2016).
+- Hoffmann, M. et al. *Stabilizing the ferroelectric phase in doped HfO₂: A thermodynamic approach*. J. Appl. Phys. 118, 072006 (2015). Paywalled (AIP); metadata only.
+- Starschich, S. et al. *Ferroelectric switching dynamics in polycrystalline HfO₂*. Appl. Phys. Lett. 108, 032903 (2016). Paywalled (AIP); metadata only.
 
 #### Compact‑Model Implementation:
-- Tung, C.‑T. et al. *A Compact Model of Nanoscale Ferroelectric Capacitor*. IEEE Trans. Electron Devices (2022).
-- Berkeley BSIM‑NN/NeuroSpice framework.
+- Tung, C.‑T. et al. *A Compact Model of Nanoscale Ferroelectric Capacitor*. IEEE Trans. Electron Devices (2022). Paywalled (IEEE); metadata only.
+- Berkeley BSIM‑NN/NeuroSpice framework (no public PDF in repo).
 
 ### 7. Conclusion
 

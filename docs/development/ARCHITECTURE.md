@@ -101,12 +101,11 @@ Each module demonstrates a layer in the FeCIM stack:
            │                                 │
     ┌──────▼──────────────┐          ┌──────▼──────────────┐
     │ module4-circuits    │          │ module5-comparison  │
-    │ ├─ dac/            │          │ ├─ data/           │
-    │ ├─ adc/            │          │ ├─ metrics.go      │
-    │ ├─ tia/            │          │ └─ gui/            │
-    │ └─ gui/            │          │    └─ embedded.go  │
-    │    └─ embedded.go  │          └─────────────────────┘
-    └───────────────────┘
+    │ ├─ gui/            │          │ ├─ data/           │
+    │ │  └─ embedded.go  │          │ ├─ metrics.go      │
+    │ └─ uses shared/    │          │ └─ gui/            │
+    │    peripherals     │          │    └─ embedded.go  │
+    └───────────────────┘          └─────────────────────┘
             │
             │
     ┌───────▼──────────────┐
@@ -313,8 +312,10 @@ Key parameter mapping (from `HZOMaterial` → `LKSolver`):
 
 Usage:
 
-- **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and a **multi‑target ISPP sequence**.
+- **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and a **multi‑target ISPP sequence**
+  (`pos-1`, `pos-2`, `neg-1`) to exercise both branches without resetting between every step.
 - **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
+- **Logs**: `lk-solver` (equation terms) + `ispp` (write/verify loop) provide headless validation evidence.
 
 #### Material System
 
@@ -690,6 +691,39 @@ User Input
 - UI updates throttled to ~60 FPS (16.7 ms between refreshes)
 - Large heatmaps (64x64) batch canvas updates
 
+### Example: Module 4 (Peripheral Circuits) Data Flow
+
+```
+Mode Selection (READ / WRITE / COMPUTE)
+    │
+    ├─ Load material + calibration (physics.yaml)
+    │   ├─ Coercive voltage → read/write ranges
+    │   └─ DAC range mode (read vs write)
+    │
+    ├─ Configure word lines + DAC preset
+    │   ├─ READ: single WL active, read-range DAC
+    │   ├─ WRITE: single WL active, write-range DAC
+    │   └─ COMPUTE: all WLs active, input vector DAC
+    │
+    ├─ Signal chain execution (DeviceState)
+    │   ├─ DAC → Array (G × V) → Row current
+    │   ├─ TIA (gain-scaled for MVM) → Voltage
+    │   └─ ADC → Digital levels + saturation flags
+    │
+    ├─ Passive 0T1R write handling
+    │   └─ V/2 half‑select biasing (±V/2 on WL/BL)
+    │
+    └─ UI update
+        ├─ Array canvas refresh
+        ├─ Per‑row current/voltage/level labels
+        └─ Status + mode guidance
+```
+
+**Interfaces used**:
+- `shared/peripherals` (DAC/ADC/TIA/ChargePump + analysis)
+- `shared/physics` (HZOMaterial, conductance mapping)
+- `config/physics.yaml` (FieldMinRatio/FieldMaxRatio calibration)
+
 ### Example: Module 1 (Hysteresis) Data Flow
 
 ```
@@ -718,6 +752,9 @@ Auto-Mode / Manual Input
         ├─ Material properties
         └─ Statistics (Ec, Pr, ISPP success rate)
 ```
+
+**Headless mode shortcut:** `--mode hysteresis` bypasses the GUI and runs
+`FeCIMMaterial()` → `LKSolver.Step()` → `WriteController.WriteTargetWithReset()` with log output only.
 
 ---
 

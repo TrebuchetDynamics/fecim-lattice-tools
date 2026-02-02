@@ -440,21 +440,21 @@ func showTimingDiagram() {
 
 	// ASCII timing diagram
 	fmt.Println("Write Cycle:")
-	fmt.Println("  ┌───────────────────────────────────────────────────────┐")
-	fmt.Println("  │  DAC   │   Pump   │    FeFET Write    │    Verify     │")
-	fmt.Println("  │ Settle │   Rise   │      Pulse        │     Read      │")
-	fmt.Println("  └───────────────────────────────────────────────────────┘")
-	fmt.Printf("  │%.0fns │ %.0fns   │     100ns         │     50ns      │\n",
-		timing.DACSettle*1e9, timing.PumpRise*1e9)
+	fmt.Println("  ┌────────────────────────────────────────────────────────────┐")
+	fmt.Println("  │  DAC   │   Pump   │   FeFET Write   │  Array  │            │")
+	fmt.Println("  │ Settle │   Rise   │     Pulse       │ Settle  │            │")
+	fmt.Println("  └────────────────────────────────────────────────────────────┘")
+	fmt.Printf("  │%.0fns │ %.0fns   │     %.0fns       │   %.0fns  │            │\n",
+		timing.DACSettle*1e9, timing.PumpRise*1e9, timing.WritePulse*1e9, timing.ArraySettle*1e9)
 	fmt.Println()
 
 	fmt.Println("Read Cycle:")
 	fmt.Println("  ┌───────────────────────────────────────────────────────┐")
-	fmt.Println("  │  Apply  │   TIA    │    ADC     │    Process    │")
-	fmt.Println("  │  Vread  │  Settle  │   Convert  │    Output     │")
+	fmt.Println("  │   DAC   │  Array  │   TIA    │    ADC     │")
+	fmt.Println("  │ Settle  │ Settle  │  Settle  │   Convert  │")
 	fmt.Println("  └───────────────────────────────────────────────────────┘")
-	fmt.Printf("  │  10ns   │ %.0fns   │   %.0fns    │     5ns       │\n",
-		timing.TIASettle*1e9, timing.ADCConvert*1e9)
+	fmt.Printf("  │  %.0fns  │  %.0fns  │  %.0fns   │   %.0fns    │\n",
+		timing.DACSettle*1e9, timing.ArraySettle*1e9, timing.TIASettle*1e9, timing.ADCConvert*1e9)
 	fmt.Println()
 
 	// Waveform visualization
@@ -556,12 +556,14 @@ func makeBarChart(fraction float64, width int) string {
 func showAsciiPieChart(data map[string]float64) {
 	// Simple horizontal bar representation instead of actual pie
 	fmt.Println("  ┌" + strings.Repeat("─", 50) + "┐")
-	pos := 0
 	totalWidth := 50
 	for name, frac := range data {
 		segWidth := int(frac * float64(totalWidth))
 		if segWidth < 1 && frac > 0 {
 			segWidth = 1
+		}
+		if segWidth > totalWidth {
+			segWidth = totalWidth
 		}
 		char := "█"
 		switch name {
@@ -574,10 +576,8 @@ func showAsciiPieChart(data map[string]float64) {
 		case "Pump":
 			char = "░"
 		}
-		fmt.Printf("  │%s%s", strings.Repeat(char, segWidth),
-			strings.Repeat(" ", totalWidth-segWidth-pos))
-		fmt.Printf("│ %s: %.0f%%\n", name, frac*100)
-		pos += segWidth
+		bar := strings.Repeat(char, segWidth) + strings.Repeat(" ", totalWidth-segWidth)
+		fmt.Printf("  │%s│ %s: %.0f%%\n", bar, name, frac*100)
 	}
 	fmt.Println("  └" + strings.Repeat("─", 50) + "┘")
 }

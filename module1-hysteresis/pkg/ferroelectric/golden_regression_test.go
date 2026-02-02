@@ -233,25 +233,25 @@ func TestGolden30StateQuantization(t *testing.T) {
 	// All states should match exactly (within floating point precision)
 	tolerance := 1e-10 // Very tight tolerance for discrete states
 	for i := 0; i < len(states) && i < len(golden.States); i++ {
-		diff := math.Abs(states[i] - golden.States[i])
+		diff := math.Abs(states[i].Polarization - golden.States[i])
 		if diff > tolerance {
 			t.Errorf("State %d mismatch: got %e, expected %e (diff: %e)",
-				i, states[i], golden.States[i], diff)
+				i, states[i].Polarization, golden.States[i], diff)
 		}
 	}
 
 	// Verify states span from -Ps to +Ps
-	if math.Abs(states[0]-(-mat.Ps)) > tolerance {
-		t.Errorf("First state should be -Ps: got %e, expected %e", states[0], -mat.Ps)
+	if math.Abs(states[0].Polarization-(-mat.Ps)) > tolerance {
+		t.Errorf("First state should be -Ps: got %e, expected %e", states[0].Polarization, -mat.Ps)
 	}
-	if math.Abs(states[29]-mat.Ps) > tolerance {
-		t.Errorf("Last state should be +Ps: got %e, expected %e", states[29], mat.Ps)
+	if math.Abs(states[29].Polarization-mat.Ps) > tolerance {
+		t.Errorf("Last state should be +Ps: got %e, expected %e", states[29].Polarization, mat.Ps)
 	}
 
 	// Verify uniform spacing
 	expectedSpacing := 2 * mat.Ps / 29 // (Ps - (-Ps)) / (30 - 1)
 	for i := 0; i < len(states)-1; i++ {
-		spacing := states[i+1] - states[i]
+		spacing := states[i+1].Polarization - states[i].Polarization
 		if math.Abs(spacing-expectedSpacing) > tolerance {
 			t.Errorf("Non-uniform spacing at index %d: got %e, expected %e",
 				i, spacing, expectedSpacing)
@@ -264,10 +264,10 @@ func TestGolden30StateQuantization(t *testing.T) {
 // TestGoldenDataVersioning ensures golden reference files have proper version metadata.
 func TestGoldenDataVersioning(t *testing.T) {
 	tests := []struct {
-		name          string
-		file          string
-		expectedVer   string
-		checkFields   func(interface{}) error
+		name        string
+		file        string
+		expectedVer string
+		checkFields func(interface{}) error
 	}{
 		{
 			name:        "loop data",

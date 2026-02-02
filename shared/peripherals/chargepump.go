@@ -10,6 +10,7 @@ type ChargePump struct {
 	InputVoltage   float64 // Supply voltage (V)
 	OutputVoltage  float64 // Target output voltage (V)
 	Stages         int     // Number of pump stages
+	DiodeDrop      float64 // Effective diode/switch drop per stage (V)
 	ClockFrequency float64 // Pump clock frequency (Hz)
 	LoadCurrent    float64 // Maximum load current (A)
 	FlyCapacitance float64 // Flying capacitor value (F)
@@ -22,6 +23,7 @@ func DefaultChargePump() *ChargePump {
 		InputVoltage:   1.0,     // 1V CMOS supply
 		OutputVoltage:  1.5,     // 1.5V write voltage
 		Stages:         2,       // 2-stage Dickson pump
+		DiodeDrop:      0.3,     // ~0.3V per stage for MOS switches
 		ClockFrequency: 50e6,    // 50 MHz clock
 		LoadCurrent:    10e-6,   // 10 µA load
 		FlyCapacitance: 100e-12, // 100 pF flying caps
@@ -31,6 +33,7 @@ func DefaultChargePump() *ChargePump {
 		"input_voltage":   cp.InputVoltage,
 		"output_voltage":  cp.OutputVoltage,
 		"stages":          cp.Stages,
+		"diode_drop":      cp.DiodeDrop,
 		"clock_frequency": cp.ClockFrequency,
 		"load_current":    cp.LoadCurrent,
 		"fly_capacitance": cp.FlyCapacitance,
@@ -43,7 +46,11 @@ func DefaultChargePump() *ChargePump {
 func (c *ChargePump) IdealOutputVoltage() float64 {
 	// Dickson pump: Vout = (N+1) * Vclk - N * Vth
 	// For ideal case: Vout = (N+1) * Vin
-	return float64(c.Stages+1) * c.InputVoltage
+	sign := 1.0
+	if c.OutputVoltage < 0 {
+		sign = -1.0
+	}
+	return sign * float64(c.Stages+1) * c.InputVoltage
 }
 
 // ActualOutputVoltage returns output considering losses.
@@ -55,11 +62,28 @@ func (c *ChargePump) ActualOutputVoltage() float64 {
 		"clock_frequency": c.ClockFrequency,
 	})
 
-	// Account for diode drops, IR drops, etc.
-	vthDrop := 0.3 * float64(c.Stages) // ~0.3V per stage for MOS switches
-	irDrop := c.LoadCurrent / (c.FlyCapacitance * c.ClockFrequency)
+	// Account for diode drops and effective output resistance.
+	vthDrop := c.DiodeDrop * float64(c.Stages)
+	outputResistance := 0.0
+	if c.FlyCapacitance > 0 && c.ClockFrequency > 0 {
+		outputResistance = 1.0 / (c.FlyCapacitance * c.ClockFrequency)
+	}
+	irDrop := math.Abs(c.LoadCurrent) * outputResistance
 	idealVoltage := c.IdealOutputVoltage()
-	actualVoltage := idealVoltage - vthDrop - irDrop
+
+	// Compute magnitude after drops, then apply sign of ideal voltage.
+	idealMag := math.Abs(idealVoltage)
+	actualMag := idealMag - vthDrop - irDrop
+	if actualMag < 0 {
+		actualMag = 0
+	}
+
+	actualVoltage := math.Copysign(actualMag, idealVoltage)
+
+	// If a target output is set, clamp to that regulation limit.
+	if c.OutputVoltage != 0 && math.Abs(actualVoltage) > math.Abs(c.OutputVoltage) {
+		actualVoltage = math.Copysign(math.Abs(c.OutputVoltage), c.OutputVoltage)
+	}
 
 	log.Calculation("ChargePump.ActualOutputVoltage", map[string]interface{}{
 		"ideal_voltage": idealVoltage,
@@ -75,24 +99,30 @@ func (c *ChargePump) OutputRipple() float64 {
 	// ΔV = Iload / (Cout * f)
 	// Assume output cap = 10x flying cap
 	cOut := c.FlyCapacitance * 10
-	return c.LoadCurrent / (cOut * c.ClockFrequency)
+	if cOut <= 0 || c.ClockFrequency <= 0 {
+		return 0
+	}
+	return math.Abs(c.LoadCurrent) / (cOut * c.ClockFrequency)
 }
 
 // BoostFactor returns voltage multiplication factor.
 func (c *ChargePump) BoostFactor() float64 {
+	if c.InputVoltage == 0 {
+		return 0
+	}
 	return c.ActualOutputVoltage() / c.InputVoltage
 }
 
 // PowerInput returns input power consumption.
 func (c *ChargePump) PowerInput() float64 {
 	// Pin = Pout / efficiency
-	pOut := c.OutputVoltage * c.LoadCurrent
+	pOut := math.Abs(c.OutputVoltage) * math.Abs(c.LoadCurrent)
 	return pOut / c.Efficiency
 }
 
 // PowerOutput returns delivered output power.
 func (c *ChargePump) PowerOutput() float64 {
-	return c.OutputVoltage * c.LoadCurrent
+	return math.Abs(c.OutputVoltage) * math.Abs(c.LoadCurrent)
 }
 
 // PowerLoss returns power dissipated in the pump.
@@ -110,7 +140,10 @@ func (c *ChargePump) RiseTime() float64 {
 // MaxCurrentCapability returns maximum sustainable output current.
 func (c *ChargePump) MaxCurrentCapability() float64 {
 	// I_max = C * f * (N+1) * Vin / Vout
-	return c.FlyCapacitance * c.ClockFrequency * float64(c.Stages+1) * c.InputVoltage / c.OutputVoltage
+	if c.OutputVoltage == 0 {
+		return 0
+	}
+	return c.FlyCapacitance * c.ClockFrequency * float64(c.Stages+1) * c.InputVoltage / math.Abs(c.OutputVoltage)
 }
 
 // EnergyPerOperation estimates energy for one write voltage pulse.
@@ -143,7 +176,11 @@ func NegativePump() *ChargePump {
 func (c *ChargePump) ChargeTransferEfficiency() float64 {
 	// η_stage = Vout / (Vin * (N+1))
 	// Accounting for all stages
-	return c.ActualOutputVoltage() / c.IdealOutputVoltage()
+	ideal := c.IdealOutputVoltage()
+	if ideal == 0 {
+		return 0
+	}
+	return math.Abs(c.ActualOutputVoltage() / ideal)
 }
 
 // Area estimates silicon area (very rough).

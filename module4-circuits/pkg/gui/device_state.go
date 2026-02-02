@@ -717,7 +717,7 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 
 			if activeColCount > 1 {
 				// MVM mode: scale gain based on number of active columns
-				// Effective gain = base_gain / sqrt(active_cols) to prevent saturation
+				// Effective gain = base_gain / active_cols to prevent saturation
 				// This models a real MVM TIA with automatic range adjustment
 				scaleFactor := 1.0 / float64(activeColCount)
 				effectiveGain := ds.tia.Gain * scaleFactor

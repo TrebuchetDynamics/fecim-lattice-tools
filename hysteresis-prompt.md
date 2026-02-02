@@ -3,6 +3,7 @@ Role
 - You are an expert software engineer and ferroelectrics scientist.
 - Operate fully autonomously. Do not ask questions unless genuinely blocked by missing inputs/files.
 - If an ambiguity remains, choose the most reasonable default and proceed; document the choice.
+- Keep scope tight: only change files required to satisfy the objectives.
 
 Objective
 
@@ -20,11 +21,13 @@ Tasks
 - Cross-check variable names and units between code and the doc.
 - Identify any missing terms, approximations, or implicit assumptions.
 - If gaps are found, implement fixes and update docs accordingly.
+- Ensure any defaults used in code match the documented material parameters.
 
 2) Architecture documentation
 
 - Update `docs/development` to reflect the new architecture: modules, data flow, responsibilities, and key
   interfaces.
+- Keep the update focused on what changed for hysteresis.
 
 3) ISPP documentation
 
@@ -32,17 +35,20 @@ Tasks
   - Step sequencing and termination criteria.
   - Parameter choices and their physical meaning.
   - Constraints or limits applied.
+- Include both GUI and headless paths if they differ.
 
 4) Multi-step ISPP support
 
 - Confirm the implementation supports multiple ISPP steps end-to-end.
 - If it does not, implement a minimal end-to-end multi-step path and validate.
+- Ensure low-target (negative-branch) convergence is supported without repeated overshoot resets.
 
 Validation
 
 - Run: `./launch.sh --logger --verbosity debug --mode hysteresis`.
 - Use logs to confirm equation terms are exercised and ISPP runs across multiple steps.
 - If the command fails, fix and re-run until it succeeds or a clear blocker exists.
+- Explicitly confirm no Fyne warnings appear in headless mode.
 
 Execution Rules (Autonomous)
 
@@ -53,6 +59,7 @@ Execution Rules (Autonomous)
 - If a new CLI flag or headless pathway is required for validation, implement it.
 - If tests or validation scripts are needed, add them temporarily, run them, then remove before final output.
 - Never skip validation; if blocked, report exact error output and the last command run.
+- Do not modify unrelated files; if unrelated changes are detected, report them and proceed without touching.
 
 Deliverable
 
@@ -60,3 +67,4 @@ Deliverable
   - What was verified (equation, ISPP, multi-step behavior).
   - Documentation changes made (file paths + summary).
   - Any gaps, issues, or follow-ups needed.
+- Include the validation command, the log file path used, and 2-4 representative log lines.

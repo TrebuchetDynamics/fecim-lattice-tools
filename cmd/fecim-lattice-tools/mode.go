@@ -49,19 +49,22 @@ func runHysteresisMode() error {
 	writer.PulseWidth = mat.Tau
 
 	gWindow := mat.Gmax - mat.Gmin
-	targets := []float64{
-		mat.Gmin + 0.55*gWindow,
-		mat.Gmin + 0.75*gWindow,
-		mat.Gmin + 0.90*gWindow,
+	steps := []struct {
+		label   string
+		targetG float64
+		reset   bool
+	}{
+		{"pos-1", mat.Gmin + 0.75*gWindow, true},
+		{"pos-2", mat.Gmin + 0.90*gWindow, false},
+		{"neg-1", mat.Gmin + 0.25*gWindow, false},
 	}
 
-	for i, targetG := range targets {
-		reset := i == 0
-		attempts, success, overshoots := writer.WriteTargetWithReset(targetG, reset)
+	for i, step := range steps {
+		attempts, success, overshoots := writer.WriteTargetWithReset(step.targetG, step.reset)
 		finalP := solver.GetState()
 		finalG := physics.PolarizationToConductance(finalP, mat.Ps, mat.Gmin, mat.Gmax)
-		log.Info("ISPP step %d: targetG=%.3e reset=%v attempts=%d success=%v overshoots=%d finalP=%.3e finalG=%.3e",
-			i+1, targetG, reset, attempts, success, overshoots, finalP, finalG)
+		log.Info("ISPP step %d (%s): targetG=%.3e reset=%v attempts=%d success=%v overshoots=%d finalP=%.3e finalG=%.3e",
+			i+1, step.label, step.targetG, step.reset, attempts, success, overshoots, finalP, finalG)
 	}
 
 	return nil

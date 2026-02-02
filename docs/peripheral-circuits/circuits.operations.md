@@ -154,21 +154,22 @@ WL₂=0V  ──────●────────●───────�
 ✗ = Half-select voltage (potential disturb)
 ```
 
-**Mitigation Strategy (V/2 Scheme):**
+**Mitigation Strategy (V/2 Scheme — symmetric ±V/2):**
 
-Per *Crossbar_Sneak_Path_Analysis_arXiv*:
-- Unselected WLs biased to V/2 (0.75V)
-- Unselected BLs biased to V/2 (0.75V)
-- Target cell sees full ±V (1.5V - 0V = 1.5V)
-- Half-selected cells see ±V/2 (below Vc threshold)
+Per *Crossbar_Sneak_Path_Analysis_arXiv*, the implementation uses a symmetric half‑select:
+- **Selected WL:** +V/2
+- **Selected BL:** −V/2
+- **Unselected WL/BL:** 0V (grounded)
+- Target cell sees full ±V ( +V/2 − (−V/2) = V )
+- Half‑selected cells see ±V/2 (below Vc threshold)
 
 ```
 Voltage Distribution (V/2 Scheme):
 
-Cell at (1,1): 1.5V - 0V = +1.5V     → WRITES
-Cell at (0,1): 0.75V - 0V = +0.75V   → No disturb (below Vc)
-Cell at (1,0): 1.5V - 0.75V = +0.75V → No disturb (below Vc)
-Cell at (0,0): 0.75V - 0.75V = 0V    → No disturb
+Cell at (1,1): +0.75V − (−0.75V) = +1.5V → WRITES
+Cell at (0,1): +0.75V − 0V = +0.75V      → No disturb (below Vc)
+Cell at (1,0): 0V − (−0.75V) = +0.75V    → No disturb (below Vc)
+Cell at (0,0): 0V − 0V = 0V              → No disturb
 ```
 
 **Write Accuracy (Passive):**
@@ -600,7 +601,7 @@ Charge Pump Specifications:
 - Rise time: 40ns
 - Ripple: <50mV
 
-Source: Our implementation (module4-circuits/pkg/peripherals/chargepump.go)
+Source: Our implementation (shared/peripherals/chargepump.go)
 ```
 
 ---

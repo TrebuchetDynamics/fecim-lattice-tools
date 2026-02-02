@@ -284,6 +284,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.showELI5Dialog()
 	})
 	eli5Btn.Importance = widget.LowImportance
+	// Frankestein equation button (educational widget)
+	eqBtn := widget.NewButton("Eq", func() {
+		log.Button("Equation")
+		a.showFrankesteinEquationDialog()
+	})
+	eqBtn.Importance = widget.LowImportance
 
 	// Frequency slider
 	freqSlider := widget.NewSlider(0.01, 1.0)
@@ -392,7 +398,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		tempSlider,
 		trailLabel,
 		trailSlider,
-		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
+		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn, eqBtn),
 		stressLabel,
 		stressSlider,
 	)

@@ -9,21 +9,22 @@ Module 4 implements a complete peripheral circuit simulation environment for fer
 ## Project Structure
 
 ```
+shared/
+└── peripherals/              # Physics models (DAC/ADC/TIA/ChargePump + analysis)
+    ├── adc.go
+    ├── dac.go
+    ├── tia.go
+    ├── chargepump.go
+    ├── analysis.go
+    └── peripherals_test.go
+
 module4-circuits/
 ├── pkg/
-│   ├── peripherals/          # Physics models for analog components
-│   │   ├── adc.go            # Analog-to-Digital Converter
-│   │   ├── dac.go            # Digital-to-Analog Converter
-│   │   ├── tia.go            # Transimpedance Amplifier (current-to-voltage)
-│   │   ├── chargepump.go     # Voltage boosting for write operations
-│   │   ├── analysis.go       # System-level analysis (INL/DNL, timing, power)
-│   │   └── peripherals_test.go
-│   │
 │   └── gui/                  # Fyne-based visualization
-│       ├── app.go            # Main CircuitsApp struct (463 lines)
-│       ├── device_state.go   # DeviceState unified simulation (615 lines)
+│       ├── app.go            # Main CircuitsApp struct
+│       ├── device_state.go   # DeviceState unified simulation
 │       ├── embedded.go       # Embedded interface implementation
-│       ├── tab_unified.go    # Mode-First UX (1841 lines)
+│       ├── tab_unified.go    # Mode-First UX
 │       ├── tab_comparison.go # FeFET vs CPU/GPU benchmarks
 │       ├── tab_reference.go  # Timing diagrams and specs
 │       ├── tab_reference_timing.go
@@ -31,7 +32,6 @@ module4-circuits/
 │       ├── drawing.go        # Canvas rendering helpers
 │       ├── font.go           # Text rendering utilities
 │       └── helpers.go        # UI component builders
-│
 └── cmd/
     ├── circuits-gui/         # GUI application entry point
     └── circuits/             # CLI application entry point
@@ -39,11 +39,13 @@ module4-circuits/
 
 ## Peripherals Package Architecture
 
+**Location:** `shared/peripherals/` (used by Module 4 GUI + CLI)
+
 ### Core Components
 
 #### 1. DAC (Digital-to-Analog Converter)
 
-**File**: `adc.go`
+**File**: `shared/peripherals/dac.go`
 
 Converts discrete digital levels to analog voltages for driving the crossbar array.
 
@@ -73,7 +75,7 @@ type DAC struct {
 
 #### 2. ADC (Analog-to-Digital Converter)
 
-**File**: `adc.go`
+**File**: `shared/peripherals/adc.go`
 
 Converts sensed voltages back to discrete digital levels for data extraction.
 
@@ -106,7 +108,7 @@ type ADC struct {
 
 #### 3. TIA (Transimpedance Amplifier)
 
-**File**: `tia.go`
+**File**: `shared/peripherals/tia.go`
 
 Converts read column currents to measurable voltages using transimpedance gain.
 
@@ -141,7 +143,7 @@ type TIA struct {
 
 #### 4. Charge Pump
 
-**File**: `chargepump.go`
+**File**: `shared/peripherals/chargepump.go`
 
 Generates write voltages (±1.5V) from lower supply voltage (1V) using capacitive charge transfer.
 
@@ -150,6 +152,7 @@ type ChargePump struct {
     InputVoltage   float64 // Supply voltage (1V)
     OutputVoltage  float64 // Target write voltage (±1.5V)
     Stages         int     // Number of pump stages (2 = Dickson)
+    DiodeDrop      float64 // Effective diode/switch drop per stage (0.3V)
     ClockFrequency float64 // Pump clock frequency (50 MHz)
     LoadCurrent    float64 // Maximum load current (10 µA)
     FlyCapacitance float64 // Flying capacitor value (100 pF)
@@ -159,7 +162,7 @@ type ChargePump struct {
 
 **Key Methods**:
 - `IdealOutputVoltage()` - Theoretical max: (N+1) * Vin
-- `ActualOutputVoltage()` - Output minus diode/IR drops
+- `ActualOutputVoltage()` - Output after diode/IR drops (with regulation clamp)
 - `OutputRipple()` - Peak-to-peak ripple voltage
 - `BoostFactor()` - Voltage multiplication ratio
 - `PowerInput()` / `PowerOutput()` - Power consumption
@@ -172,11 +175,11 @@ type ChargePump struct {
 - Clock: 50 MHz
 - Flying caps: 100 pF per stage
 - Efficiency: 70%
-- Output ripple: ~50 mV at 10 µA load
+- Output ripple: ~0.2 mV at 10 µA load (with 1 nF output cap)
 
 #### 5. Analysis Functions
 
-**File**: `analysis.go`
+**File**: `shared/peripherals/analysis.go`
 
 System-level analysis combining multiple peripherals.
 
@@ -200,7 +203,9 @@ type INLDNLAnalysis struct {
 ```go
 type TimingAnalysis struct {
     DACSettle      float64 // DAC settling
+    ArraySettle    float64 // Array RC/sneak settling
     PumpRise       float64 // Charge pump rise time
+    WritePulse     float64 // Write pulse width
     WriteTime      float64 // Total write operation time
     TIASettle      float64 // TIA step response
     ADCConvert     float64 // ADC conversion
@@ -354,7 +359,7 @@ type DeviceState struct {
     dacMode      DACMode
     dacRangeMode DACRangeMode // Read vs Write range
 
-    readRange   VoltageRange  // 0 to FieldMinRatio*Vc
+    readRange   VoltageRange  // 0 to min(FieldMinRatio*Vc, 1.0V), floor 0.1V
     writeRange  VoltageRange  // Vc to FieldMaxRatio*Vc
     calibParams CalibrationParams // From physics.yaml
 
@@ -370,7 +375,7 @@ type DeviceState struct {
 ```
 
 **Voltage Range Calculation**:
-- **Read Range**: 0 to `FieldMinRatio * Vc` (non-destructive sensing, safe zone)
+- **Read Range**: 0 to `min(FieldMinRatio * Vc, 1.0V)` (floor 0.1V, safe zone)
 - **Write Range**: `Vc` to `FieldMaxRatio * Vc` (exceeds coercive voltage for switching)
 - Values derived from `physics.yaml` calibration parameters
 - Fallback defaults: `FieldMinRatio=0.7`, `FieldMaxRatio=2.5`
@@ -490,7 +495,14 @@ In passive (0T1R) architecture:
 Voltage ranges are calculated from ferroelectric material properties:
 
 ```go
-readRange.Max = FieldMinRatio * Vc  // e.g., 0.7 * 1.2V = 0.84V
+safeReadMax := FieldMinRatio * Vc  // e.g., 0.7 * 1.2V = 0.84V
+if safeReadMax > 1.0 {
+    safeReadMax = 1.0
+}
+if safeReadMax < 0.1 {
+    safeReadMax = 0.1
+}
+readRange.Max = safeReadMax
 writeRange.Min = Vc                 // Coercive voltage (1.2V)
 writeRange.Max = FieldMaxRatio * Vc // e.g., 2.5 * 1.2V = 3.0V
 ```
@@ -617,7 +629,7 @@ Output vector y[0..rows-1] is complete MVM result
 ### 3. Physics-Based Calibration
 
 **Why**: Voltage ranges derived from material properties (Ec, thickness) via physics.yaml:
-- Safe read voltage = FieldMinRatio * Vc (non-destructive)
+- Safe read voltage = min(FieldMinRatio * Vc, 1.0V) (floor 0.1V, non-destructive)
 - Write voltage = FieldMaxRatio * Vc (exceeds Vc for switching)
 - Automatic when material selected, not hardcoded
 
@@ -752,7 +764,7 @@ go func() {
 
 ### Unit Tests
 
-**File**: `peripherals/peripherals_test.go` and `peripherals/analysis_test.go`
+**File**: `shared/peripherals/peripherals_test.go` and `shared/peripherals/analysis_test.go`
 
 Test individual components:
 - DAC/ADC conversion accuracy
@@ -770,7 +782,7 @@ Test complete signal chains:
 
 **Run Tests**:
 ```bash
-go test ./module4-circuits/pkg/peripherals/...
+go test ./shared/peripherals/...
 go test ./module4-circuits/...
 ```
 
@@ -863,11 +875,11 @@ calibration:
 | tab_unified.go | 1841 | Mode-First UX (READ/WRITE/COMPUTE) |
 | tab_comparison.go | ~400 | Benchmark comparison view |
 | tab_reference.go | ~300 | Timing diagrams + specs |
-| peripherals/dac.go | 90 | DAC model |
-| peripherals/adc.go | 123 | ADC model |
-| peripherals/tia.go | 101 | TIA model |
-| peripherals/chargepump.go | 127 | Charge pump model |
-| peripherals/analysis.go | 265 | System analysis tools |
+| shared/peripherals/dac.go | 90 | DAC model |
+| shared/peripherals/adc.go | 123 | ADC model |
+| shared/peripherals/tia.go | 101 | TIA model |
+| shared/peripherals/chargepump.go | 127 | Charge pump model |
+| shared/peripherals/analysis.go | 265 | System analysis tools |
 | **Total GUI** | ~4400 | Complete GUI package |
 | **Total Peripherals** | ~700 | Physics models + tests |
 
@@ -925,7 +937,7 @@ ADC output → Network layer computation
 
 ### 1. Voltage Range Confusion
 
-- **Read range**: 0 to `FieldMinRatio * Vc` (safe, non-destructive)
+- **Read range**: 0 to `min(FieldMinRatio * Vc, 1.0V)` (floor 0.1V, safe)
 - **Write range**: `Vc` to `FieldMaxRatio * Vc` (must exceed Vc to switch)
 - Crossing Vc in read mode will destructively change state!
 

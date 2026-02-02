@@ -103,7 +103,7 @@ go run ./module4-circuits/cmd/circuits-gui/main.go
 
 ## Package Structure
 
-### `pkg/peripherals/` — Physics Models
+### `shared/peripherals/` — Physics Models (Shared)
 
 Core peripheral circuit implementations with realistic behavior:
 
@@ -320,10 +320,10 @@ All peripheral circuits include comprehensive tests:
 go test ./module4-circuits/...
 
 # Run specific test suite
-go test ./module4-circuits/pkg/peripherals -v
+go test ./shared/peripherals -v
 
 # Run with coverage
-go test ./module4-circuits/pkg/peripherals -cover
+go test ./shared/peripherals -cover
 ```
 
 ### Test Coverage
@@ -334,7 +334,7 @@ go test ./module4-circuits/pkg/peripherals -cover
 - **ChargePump Tests**: Voltage boost, efficiency, power balance
 - **Integration Tests**: Complete signal chain round-trips
 
-Run `go test ./module4-circuits/pkg/peripherals/peripherals_test.go` to see all 10+ test cases.
+Run `go test ./shared/peripherals/peripherals_test.go` to see all 10+ test cases.
 
 ## Related Documentation
 
@@ -367,8 +367,8 @@ For deeper understanding of ferroelectric physics, architecture trade-offs, and 
 
 To add a new circuit model (e.g., multiplexer):
 
-1. Create `pkg/peripherals/component.go` with struct and methods
-2. Add tests in `pkg/peripherals/component_test.go`
+1. Create `shared/peripherals/component.go` with struct and methods
+2. Add tests in `shared/peripherals/component_test.go`
 3. Create GUI in `pkg/gui/tab_component.go` with Fyne visualization
 4. Integrate into `device_state.go` if part of signal chain
 5. Add to README in this section

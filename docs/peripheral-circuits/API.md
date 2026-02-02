@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2026-01-27
-**Package:** `fecim-lattice-tools/module4-circuits/pkg/peripherals`
+**Package:** `fecim-lattice-tools/shared/peripherals`
 
 ---
 
@@ -153,13 +153,13 @@ ENOB = Bits - log₂(√(1 + INL² + DNL²))
 ```
 
 **Interpretation:**
-- With 0.5 LSB INL and 0.25 LSB DNL: ENOB ≈ 4.95 bits
+- With 0.5 LSB INL and 0.25 LSB DNL: ENOB ≈ 4.80 bits
 - Ideal ADC (INL=DNL=0): ENOB = Bits
 
 **Example:**
 ```go
 adc := peripherals.DefaultADC()
-enob := adc.ENOB() // ≈ 4.95 bits
+enob := adc.ENOB() // ≈ 4.80 bits
 
 // Quality assessment
 if enob < 4.5 {
@@ -192,10 +192,10 @@ SNR = 6.02 * ENOB + 1.76 dB
 ```go
 adc := peripherals.DefaultADC()
 
-theoretical := adc.TheoreticalSNR() // ~31.78 dB (ideal 5-bit)
-effective := adc.EffectiveSNR()     // ~31.54 dB (with INL/DNL)
+theoretical := adc.TheoreticalSNR() // ~31.86 dB (ideal 5-bit)
+effective := adc.EffectiveSNR()     // ~30.66 dB (with INL/DNL)
 
-loss := theoretical - effective      // ~0.24 dB loss
+loss := theoretical - effective      // ~1.2 dB loss
 ```
 
 #### EnergyPerConversion
@@ -313,8 +313,9 @@ func (d *DAC) Convert(level int) float64
 ```go
 dac := peripherals.DefaultDAC()
 
-v0 := dac.Convert(0)  // -1.5V (minimum)
-v15 := dac.Convert(15) // 0.0V (middle)
+v0 := dac.Convert(0)   // -1.5V (minimum)
+v15 := dac.Convert(15) // ≈ -0.05V (near mid)
+v16 := dac.Convert(16) // ≈ +0.05V (near mid)
 v31 := dac.Convert(31) // +1.5V (maximum)
 ```
 
@@ -340,8 +341,8 @@ func (d *DAC) ConvertWithNonlinearity(level int) float64
 ```go
 dac := peripherals.DefaultDAC()
 
-ideal := dac.Convert(15)              // 0.0V
-withError := dac.ConvertWithNonlinearity(15) // ≈0.0V ± error
+ideal := dac.Convert(16)              // ≈ +0.05V
+withError := dac.ConvertWithNonlinearity(16) // ≈ +0.05V ± error
 
 // Simulate write voltage uncertainty
 ```
@@ -373,9 +374,9 @@ func (d *DAC) EnergyPerConversion() float64
 **Returns:** Energy in Joules per conversion
 
 **Estimation:**
-- Based on switched-capacitor topology
-- Energy ~ C * Vref² * 2^N
-- Typical: ~15 fJ per conversion (1fF cap, 1.5V ref)
+- Based on switched‑capacitor topology
+- Energy ~ C_eff * (Vspan/2)² * 2^N
+- Typical: ~15 fJ per conversion (C_eff≈0.2 fF, Vspan=3.0V)
 
 **Example:**
 ```go
@@ -646,6 +647,7 @@ type ChargePump struct {
     InputVoltage   float64 // Supply voltage (V)
     OutputVoltage  float64 // Target output voltage (V)
     Stages         int     // Number of pump stages
+    DiodeDrop      float64 // Effective diode/switch drop per stage (V)
     ClockFrequency float64 // Pump clock frequency (Hz)
     LoadCurrent    float64 // Maximum load current (A)
     FlyCapacitance float64 // Flying capacitor value (F)
@@ -728,13 +730,15 @@ func (c *ChargePump) ActualOutputVoltage() float64
 
 **Formula:**
 ```
-V_actual = V_ideal - V_threshold_loss - V_ir_drop
+V_unreg = (N+1)*V_in - N*V_drop - I_load*R_out
+R_out ≈ 1 / (C_fly * f_clk)
+V_actual = sign(V_target) * min(|V_target|, |V_unreg|)
 ```
 
 **Example:**
 ```go
 pump := peripherals.DefaultChargePump()
-vactual := pump.ActualOutputVoltage() // ≈2.0-2.2V (with losses)
+vactual := pump.ActualOutputVoltage() // ≈1.5V (regulated; unreg ≈2.4V)
 ```
 
 #### OutputRipple
@@ -758,7 +762,7 @@ func (c *ChargePump) OutputRipple() float64
 **Example:**
 ```go
 pump := peripherals.DefaultChargePump()
-ripple := pump.OutputRipple() // Typically <10 mV
+ripple := pump.OutputRipple() // ≈0.2 mV with default caps
 ```
 
 #### BoostFactor
@@ -774,7 +778,7 @@ func (c *ChargePump) BoostFactor() float64
 **Example:**
 ```go
 pump := peripherals.DefaultChargePump()
-boost := pump.BoostFactor() // ≈2.0-2.2 (actual/ideal loss)
+boost := pump.BoostFactor() // ≈1.5 (regulated output / input)
 ```
 
 #### MaxCurrentCapability
@@ -799,7 +803,7 @@ I_max = C_fly * f_clock * (N+1) * V_in / V_out
 **Example:**
 ```go
 pump := peripherals.DefaultChargePump()
-imax := pump.MaxCurrentCapability() // Typically 100µA - 1mA
+imax := pump.MaxCurrentCapability() // ≈10 mA with default caps
 ```
 
 #### PowerInput / PowerOutput / PowerLoss
@@ -982,7 +986,9 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 
 **Calculated Values:**
 - DACSettle: Time for DAC output to stabilize
+- ArraySettle: Array RC/sneak settling time
 - PumpRise: Charge pump voltage rise time
+- WritePulse: Program pulse width
 - WriteTime: Total write operation duration
 - TIASettle: Transimpedance amp settling
 - ADCConvert: ADC conversion time
@@ -1023,6 +1029,7 @@ func AnalyzePower(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump,
 - Energy per operation for each component
 - Power averaged over cycle time
 - Fractional contribution (%)
+- PumpEnergy corresponds to the write pulse; total energy is a full read+write cycle
 
 **Example:**
 ```go
@@ -1117,7 +1124,9 @@ type INLDNLAnalysis struct {
 ```go
 type TimingAnalysis struct {
     DACSettle     float64 // DAC settling time (s)
+    ArraySettle   float64 // Array RC/sneak settling (s)
     PumpRise      float64 // Charge pump rise time (s)
+    WritePulse    float64 // Write pulse width (s)
     WriteTime     float64 // Total write time (s)
     TIASettle     float64 // TIA settling time (s)
     ADCConvert    float64 // ADC conversion time (s)
@@ -1177,7 +1186,7 @@ package main
 
 import (
     "fmt"
-    "fecim-lattice-tools/module4-circuits/pkg/peripherals"
+    "fecim-lattice-tools/shared/peripherals"
 )
 
 func main() {
@@ -1223,7 +1232,7 @@ package main
 
 import (
     "fmt"
-    "fecim-lattice-tools/module4-circuits/pkg/peripherals"
+    "fecim-lattice-tools/shared/peripherals"
 )
 
 func main() {
@@ -1267,7 +1276,7 @@ package main
 
 import (
     "fmt"
-    "fecim-lattice-tools/module4-circuits/pkg/peripherals"
+    "fecim-lattice-tools/shared/peripherals"
 )
 
 func main() {

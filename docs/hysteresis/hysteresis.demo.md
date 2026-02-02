@@ -179,9 +179,9 @@ controller to reach a target discrete level. The implementation is split across:
 #### Constraints / Limits
 
 - **Field bounds**: `VMin ≥ 0`, `VMax ≤ MaxField`.
-- **Overshoot reset**: uses a **deep reset** of `±1.5 × MaxField`.
+- **Overshoot reset**: uses a **deep reset** of `±1.5 × MaxField` with sign based on direction.
 - **Retry limit**: `MaxRetries = 50` (configurable).
-- **Directionality**: pulse sign derives from target level vs. initial level.
+- **Directionality**: pulse sign derives from target vs. current level (and target branch when reset).
 - **Quantization**: level readout uses `normalizedP` → discrete level mapping (0–N‑1).
 
 #### Headless L‑K ISPP (`--mode hysteresis`)
@@ -191,11 +191,12 @@ Landau‑Khalatnikov solver (`shared/physics/landau.go`). It exercises the same
 write‑verify logic, but in **conductance space** rather than discrete levels.
 
 **Sequence:**
-1. **Optional reset** to `-Pr` (first step only).
-2. **Pulse**: apply `V_pulse` → `E = V/Thickness`, integrate L‑K for `PulseWidth`.
+1. **Optional reset** to `±Pr` based on target branch (negative‑target writes start from +Pr).
+2. **Pulse**: apply a signed `V_pulse` → `E = V/Thickness`, integrate L‑K for `PulseWidth`. The first pulse uses
+   an inverse‑tanh estimate (`V_guess = Ec * Thickness * atanh(P_target / Ps)`) clamped to `[VMin, VMax]`.
 3. **Verify**: map `P → G` (linear mapping with `P = ±Ps` endpoints).
-4. **Adjust**: binary search update (`VMin`, `VMax`).
-5. **Overshoot**: apply negative reset pulse and restart with tighter bounds.
+4. **Adjust**: binary search update (`VMin`, `VMax`) on **magnitude**, pulse sign set by direction.
+5. **Overshoot**: apply a **direction‑aware** reset pulse (opposite branch) and restart with tighter bounds.
 
 **Termination:**
 - **Success**: `|G - G_target| < Tolerance`.
@@ -209,6 +210,10 @@ write‑verify logic, but in **conductance space** rather than discrete levels.
 | `MaxStep` | `1e-12 s` | L-K integration substep (stability) |
 | `Tolerance` | `1e-6 S` | Acceptable conductance error |
 | `MaxIterations` | `15` | Max program‑verify pulses |
+
+**Headless multi‑step validation:** `cmd/fecim-lattice-tools/mode.go` runs a 3‑step
+sequence (`pos-1`, `pos-2`, `neg-1`) to confirm end‑to‑end ISPP convergence across
+positive and negative branches without forcing a full reset between each step.
 
 ### Key Parameters (HZO Materials)
 
