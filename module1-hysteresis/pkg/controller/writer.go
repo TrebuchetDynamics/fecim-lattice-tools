@@ -22,6 +22,31 @@ const (
 	StateResetting  // Internal reset due to overshoot
 )
 
+func (s WriteState) String() string {
+	switch s {
+	case StateIdle:
+		return "IDLE"
+	case StateApply:
+		return "APPLY"
+	case StateWait:
+		return "WAIT"
+	case StateVerify:
+		return "VERIFY"
+	case StateHold:
+		return "HOLD"
+	case StateSuccess:
+		return "SUCCESS"
+	case StateFailed:
+		return "FAILED"
+	case StateForceReset:
+		return "FORCE_RESET"
+	case StateResetting:
+		return "RESETTING"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 // WriteController manages the ISPP (Incremental Step Pulse Programming) loop
 type WriteController struct {
 	// Configuration
@@ -104,6 +129,9 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.InitialLevel = 0 // Will be captured in Update
 	wc.InitialLevelSet = false
 	// CurrentField will be set when calculateNextField is called during first Update
+
+	log.Printf("ISPP START: target=%d fromSaturation=%v Ec=%.3g MaxField=%.3g bounds=[%.3f, %.3f]×Ec",
+		wc.TargetLevel, wc.FromSaturation, wc.EcField, wc.MaxField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 }
 
 // Reset clears the controller state for a completely new operation
@@ -152,6 +180,11 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 		// Target is the pulse field
 		targetField = wc.CurrentField
+		if wc.PhaseTimer <= dt {
+			log.Printf("ISPP APPLY: pulse=%d currentLevel=%d targetLevel=%d pulseDir=%d E=%.3f×Ec bounds=[%.3f, %.3f]×Ec",
+				wc.PulseCount+1, currentLevel, wc.TargetLevel, pulseDirection(wc.CurrentField),
+				wc.CurrentField/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+		}
 
 		// If we reached the target field (approx), switch to WAIT
 		if wc.PhaseTimer > pulseDur*0.4 && math.Abs(currentField-wc.CurrentField) < 0.01*wc.MaxField {
@@ -162,6 +195,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 	case StateWait:
 		targetField = wc.CurrentField
+		if wc.PhaseTimer <= dt {
+			log.Printf("ISPP WAIT: holding E=%.3f×Ec for verify (pulse=%d)", wc.CurrentField/wc.EcField, wc.PulseCount+1)
+		}
 		if wc.PhaseTimer > pulseDur*0.3 {
 			wc.State = StateVerify // Go to Verify
 			wc.PhaseTimer = 0
@@ -185,6 +221,13 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			targetField = -wc.MaxField * 1.5 // Deep Negative
 		} else {
 			targetField = wc.MaxField * 1.5 // Deep Positive
+		}
+		if wc.PhaseTimer <= dt {
+			log.Printf("ISPP RESET: resetDir=%d targetField=%.3f×Ec (pulse=%d)", resetDir, targetField/wc.EcField, wc.PulseCount+1)
+		}
+		if wc.PhaseTimer > pulseDur*0.5 && math.Abs(currentField-targetField) >= 0.01*wc.MaxField {
+			log.Printf("ISPP RESETTING: currentField=%.3f×Ec targetField=%.3f×Ec phase=%.3f",
+				currentField/wc.EcField, targetField/wc.EcField, wc.PhaseTimer)
 		}
 
 		// Wait for reset pulse to actually REACH the target (critical for ramp speed)
@@ -227,10 +270,13 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			if prevLevel == 0 {
 				prevLevel = currentLevel
 			}
+			log.Printf("ISPP READ: currentLevel=%d targetLevel=%d prevLevel=%d currentField=%.3f×Ec",
+				currentLevel, wc.TargetLevel, prevLevel, currentField/wc.EcField)
 			wc.LastError = currentLevel - wc.TargetLevel
 
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
+				log.Printf("ISPP VERIFY RESULT: hit target level %d", currentLevel)
 				wc.LastVerifyLevel = currentLevel
 				wc.State = StateSuccess
 				wc.SuccessCount++
@@ -256,6 +302,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			log.Printf("ISPP VERIFY: currentLevel=%d, targetLevel=%d, prevLevel=%d, pulseDir=%d, overshoot=%v",
 				currentLevel, wc.TargetLevel, prevLevel, pulseDir, overshoot)
 			wc.LastVerifyLevel = currentLevel
+			log.Printf("ISPP VERIFY RESULT: error=%d bounds=[%.3f, %.3f]×Ec",
+				wc.LastError, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 
 			if overshoot {
 				wc.OvershootCount++

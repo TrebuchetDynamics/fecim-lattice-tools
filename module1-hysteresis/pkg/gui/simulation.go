@@ -955,6 +955,35 @@ func (a *App) updatePhysics(dt float64) {
 				currentLevel := a.discreteLevel + 1
 				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
 
+				if a.writeController != nil && (a.wrdLastControllerState != a.writeController.State || a.wrdLastControllerPulse != a.writeController.PulseCount) {
+					log.Printf("WRD ISPP STATE: state=%s pulse=%d target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm targetE=%.3f×Ec pulseE=%.3f×Ec overshoots=%d",
+						a.writeController.State,
+						a.writeController.PulseCount,
+						targetLevel,
+						currentLevel,
+						a.polarization*100,
+						a.electricField/1e8,
+						targetField/mat.Ec,
+						a.writeController.CurrentField/mat.Ec,
+						a.writeController.OvershootCount)
+					a.wrdLastControllerState = a.writeController.State
+					a.wrdLastControllerPulse = a.writeController.PulseCount
+				}
+				if a.simTime-a.wrdLastProgressLog > 0.5 && a.writeController != nil {
+					log.Printf("WRD ISPP PROGRESS: target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm state=%s pulse=%d targetE=%.3f×Ec pulseE=%.3f×Ec bounds=[%.3f, %.3f]×Ec",
+						targetLevel,
+						currentLevel,
+						a.polarization*100,
+						a.electricField/1e8,
+						a.writeController.State,
+						a.writeController.PulseCount,
+						targetField/mat.Ec,
+						a.writeController.CurrentField/mat.Ec,
+						a.writeController.VMin/mat.Ec,
+						a.writeController.VMax/mat.Ec)
+					a.wrdLastProgressLog = a.simTime
+				}
+
 				// Autonomous runtime recalibration trigger (overshoots or too many pulses)
 				if a.autoRecalibrate && !a.recalibratePending {
 					if a.writeController.OvershootCount >= a.recalibrateOvershootMax {

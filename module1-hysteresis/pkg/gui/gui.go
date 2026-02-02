@@ -99,6 +99,9 @@ type App struct {
 	wrdWriteEndP   float64 // Polarization at end of WRITE phase
 	wrdWriteEndLvl int     // Level at end of WRITE phase
 	wrdReadStartP  float64 // Polarization at start of READ phase
+	wrdLastControllerState controller.WriteState
+	wrdLastControllerPulse int
+	wrdLastProgressLog     float64
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations

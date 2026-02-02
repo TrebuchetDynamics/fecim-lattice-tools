@@ -67,6 +67,6 @@ Deliverable
 
 Baseline (update each run)
 
-- SVG generated: 2026-02-02 via `go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg` (success).
+- SVG generated: 2026-02-02 via `go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg` (success; viewBox normalized to 0,0 and `<use>` glyphs inlined for Fyne SVG rendering).
 - Hotspots aligned: 2026-02-02 updated `shared/assets/equations/frankestein.hotspots.json` using font-based SVG bounds; GUI overlay not yet visually verified.
 - Widget status: not validated in GUI (needs `FECIM_EQUATION_DEBUG=1 ./launch.sh` for hover/tap/fallback confirmation).

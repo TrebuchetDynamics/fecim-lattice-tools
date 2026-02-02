@@ -3,11 +3,16 @@ package main
 
 import (
 	"bytes"
+	"encoding/xml"
 	"flag"
 	"fmt"
+	"io"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -81,6 +86,12 @@ func main() {
 
 	if err := runDvisvgm(opts, dviFile, opts.outputPath); err != nil {
 		exitError("dvisvgm failed", err)
+	}
+	if err := normalizeSVGViewBox(opts.outputPath); err != nil {
+		exitError("failed to normalize svg viewBox", err)
+	}
+	if err := inlineSVGUses(opts.outputPath); err != nil {
+		exitError("failed to inline svg uses", err)
 	}
 
 	fmt.Printf("SVG written to %s\n", opts.outputPath)
@@ -231,4 +242,243 @@ func runDvisvgm(opts options, dviFile, outputPath string) error {
 		return fmt.Errorf("%v\n%s", err, string(output))
 	}
 	return nil
+}
+
+var viewBoxRe = regexp.MustCompile(`viewBox=['"]([^'"]+)['"]`)
+
+type svgPathDef struct {
+	d     string
+	attrs []xml.Attr
+}
+
+func normalizeSVGViewBox(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	content := string(data)
+	match := viewBoxRe.FindStringSubmatch(content)
+	if len(match) < 2 {
+		return fmt.Errorf("viewBox not found")
+	}
+	fields := strings.Fields(match[1])
+	if len(fields) != 4 {
+		return fmt.Errorf("unexpected viewBox format: %q", match[1])
+	}
+	minX, err := strconv.ParseFloat(fields[0], 64)
+	if err != nil {
+		return fmt.Errorf("invalid viewBox minX: %w", err)
+	}
+	minY, err := strconv.ParseFloat(fields[1], 64)
+	if err != nil {
+		return fmt.Errorf("invalid viewBox minY: %w", err)
+	}
+	width, err := strconv.ParseFloat(fields[2], 64)
+	if err != nil {
+		return fmt.Errorf("invalid viewBox width: %w", err)
+	}
+	height, err := strconv.ParseFloat(fields[3], 64)
+	if err != nil {
+		return fmt.Errorf("invalid viewBox height: %w", err)
+	}
+
+	if math.Abs(minX) < 1e-6 && math.Abs(minY) < 1e-6 {
+		return nil
+	}
+
+	newViewBox := fmt.Sprintf("viewBox='0 0 %s %s'", formatFloat(width), formatFloat(height))
+	content = viewBoxRe.ReplaceAllString(content, newViewBox)
+
+	insertAfter := "</defs>"
+	translate := fmt.Sprintf("<g transform='translate(%s %s)'>", formatFloat(-minX), formatFloat(-minY))
+	if strings.Contains(content, insertAfter) {
+		content = strings.Replace(content, insertAfter, insertAfter+"\n"+translate, 1)
+		content = strings.Replace(content, "</svg>", "</g>\n</svg>", 1)
+	} else {
+		return fmt.Errorf("defs block not found for translation insert")
+	}
+
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+func formatFloat(value float64) string {
+	return strconv.FormatFloat(value, 'f', -1, 64)
+}
+
+func inlineSVGUses(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	dec := xml.NewDecoder(bytes.NewReader(data))
+	var out bytes.Buffer
+	enc := xml.NewEncoder(&out)
+
+	defs := map[string]svgPathDef{}
+	inDefs := false
+	skipUseEnd := false
+
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		switch t := tok.(type) {
+		case xml.StartElement:
+			if t.Name.Local == "defs" {
+				inDefs = true
+				if err := enc.EncodeToken(t); err != nil {
+					return err
+				}
+				continue
+			}
+			if inDefs {
+				if t.Name.Local == "path" {
+					id := attrValue(t.Attr, "id")
+					d := attrValue(t.Attr, "d")
+					if id != "" && d != "" {
+						defs[id] = svgPathDef{d: d, attrs: t.Attr}
+					}
+				}
+				if err := enc.EncodeToken(t); err != nil {
+					return err
+				}
+				continue
+			}
+			if t.Name.Local == "use" {
+				href := attrValueNS(t.Attr, "http://www.w3.org/1999/xlink", "href")
+				if href == "" {
+					href = attrValue(t.Attr, "href")
+				}
+				if strings.HasPrefix(href, "#") {
+					href = href[1:]
+				}
+				if def, ok := defs[href]; ok {
+					x := attrValue(t.Attr, "x")
+					y := attrValue(t.Attr, "y")
+					transform := attrValue(t.Attr, "transform")
+					translate := ""
+					if x != "" || y != "" {
+						if x == "" {
+							x = "0"
+						}
+						if y == "" {
+							y = "0"
+						}
+						translate = fmt.Sprintf("translate(%s %s)", x, y)
+					}
+					if translate != "" {
+						if transform != "" {
+							transform = translate + " " + transform
+						} else {
+							transform = translate
+						}
+					}
+
+					attrs := []xml.Attr{{Name: xml.Name{Local: "d"}, Value: def.d}}
+					for _, attr := range t.Attr {
+						if attr.Name.Local == "x" || attr.Name.Local == "y" || attr.Name.Local == "href" {
+							continue
+						}
+						if attr.Name.Space == "http://www.w3.org/1999/xlink" && attr.Name.Local == "href" {
+							continue
+						}
+						if attr.Name.Local == "transform" {
+							continue
+						}
+						attrs = append(attrs, attr)
+					}
+					if transform != "" {
+						attrs = append(attrs, xml.Attr{Name: xml.Name{Local: "transform"}, Value: transform})
+					}
+					if len(def.attrs) > 0 {
+						attrs = appendUniqueAttrs(attrs, inheritPathAttrs(def.attrs))
+					}
+					start := xml.StartElement{Name: xml.Name{Local: "path"}, Attr: attrs}
+					if err := enc.EncodeToken(start); err != nil {
+						return err
+					}
+					if err := enc.EncodeToken(xml.EndElement{Name: start.Name}); err != nil {
+						return err
+					}
+					skipUseEnd = true
+					continue
+				}
+			}
+			if err := enc.EncodeToken(t); err != nil {
+				return err
+			}
+		case xml.EndElement:
+			if skipUseEnd && t.Name.Local == "use" {
+				skipUseEnd = false
+				continue
+			}
+			if inDefs && t.Name.Local == "defs" {
+				inDefs = false
+			}
+			if err := enc.EncodeToken(t); err != nil {
+				return err
+			}
+		default:
+			if err := enc.EncodeToken(tok); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := enc.Flush(); err != nil {
+		return err
+	}
+	return os.WriteFile(path, out.Bytes(), 0644)
+}
+
+func attrValue(attrs []xml.Attr, name string) string {
+	for _, attr := range attrs {
+		if attr.Name.Local == name {
+			return attr.Value
+		}
+	}
+	return ""
+}
+
+func attrValueNS(attrs []xml.Attr, space, name string) string {
+	for _, attr := range attrs {
+		if attr.Name.Space == space && attr.Name.Local == name {
+			return attr.Value
+		}
+	}
+	return ""
+}
+
+func inheritPathAttrs(attrs []xml.Attr) []xml.Attr {
+	var inherited []xml.Attr
+	for _, attr := range attrs {
+		if attr.Name.Local == "id" || attr.Name.Local == "d" {
+			continue
+		}
+		inherited = append(inherited, attr)
+	}
+	return inherited
+}
+
+func appendUniqueAttrs(base []xml.Attr, extra []xml.Attr) []xml.Attr {
+	seen := map[string]struct{}{}
+	for _, attr := range base {
+		key := attr.Name.Space + ":" + attr.Name.Local
+		seen[key] = struct{}{}
+	}
+	for _, attr := range extra {
+		key := attr.Name.Space + ":" + attr.Name.Local
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		base = append(base, attr)
+		seen[key] = struct{}{}
+	}
+	return base
 }

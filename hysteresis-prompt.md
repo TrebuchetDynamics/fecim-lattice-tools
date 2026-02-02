@@ -12,6 +12,7 @@ Objective
 - Ensure the **Frankestein equation** in `docs/hysteresis/hysteresis-gemini.md` is correctly understood and implemented
   (terms, signs, units, and effective viscosity).
 - Keep calibration autonomous during runtime so WRD converges quickly without manual intervention.
+- **Run headless first, every iteration** and keep improving the ISPP + equation implementation based on those logs.
 - Update docs only when behavior or equations change.
 
 Primary Focus (ranked)
@@ -61,10 +62,10 @@ Tasks
 
 Validation
 
-- Headless physics: `./launch.sh --logger --verbosity debug --mode hysteresis`.
-  - Use logs to confirm Frankestein equation terms appear and match signs/units.
-- WRD demo: use the **latest WRD log** to verify target hits.
-  - Evidence must include "TARGET HIT" lines and no "Unexpected state ... VMax=0" loops.
+- **Universal command (always use this):** `./launch.sh --logger --verbosity debug`
+  - Headless physics: add `--mode hysteresis` when validating the L-K equation + ISPP diagnostics.
+  - GUI WRD: run without `--mode` and use the latest WRD log to verify target hits.
+  - Evidence must include "TARGET HIT" lines (WRD) and no "Unexpected state ... VMax=0" loops.
 
 Frankestein Equation Checklist (must satisfy each run)
 
@@ -90,7 +91,9 @@ Regression Guardrails
 
 Execution Rules (Autonomous)
 
-- Always inspect the newest WRD log file under `logs/`.
+- Always run **headless** (`--mode hysteresis`) before any GUI checks.
+- Always inspect the newest headless log under `logs/` for equation + ISPP signals.
+- Inspect the newest WRD log file under `logs/` when GUI WRD is exercised.
 - Prefer minimal, targeted changes; avoid unrelated files.
 - If validation fails, report exact error output and last command run.
 - GUI changes are allowed only to fix WRD/ISPP correctness.
@@ -106,7 +109,12 @@ Deliverable
 
 Baseline (update each run)
 
+- Latest headless log path:
+  - <local-path>
+- Headless status:
+  - LK equation terms present in debug logs (E_applied, E_dep, E_eff, dG_dP, rho_eff, Alpha/Beta/Gamma, K_dep)
+  - ISPP steps pos-1/pos-2/neg-1 succeeded (2 attempts each, no overshoots)
 - Latest WRD log path:
-- <local-path>
+  - <local-path>
 - WRD status:
-  - target=15 stalled, VMax collapsed to 0 (needs fix)
+  - overshoot detected after 1.75×Ec pulse; log ends before reset/next verify; no TARGET HIT lines yet
