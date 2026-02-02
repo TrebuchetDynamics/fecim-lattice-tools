@@ -63,6 +63,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 
 	currentP := c.Solver.GetState()
 	currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+	crossing := currentP*targetP < 0
 
 	direction := 1.0
 	if reset {
@@ -78,6 +79,17 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		c.Solver.SetState(-direction * pr)
 		currentP = c.Solver.GetState()
 		currentG = PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+	}
+
+	if crossing {
+		if vBound := c.initialPulseBound(targetP); vBound > 0 && vBound < c.VMax {
+			c.VMax = vBound
+			log.Calculation("WriteTarget", map[string]interface{}{
+				"step":     "ClampBounds",
+				"crossing": crossing,
+				"vMax":     c.VMax,
+			}, nil)
+		}
 	}
 
 	directionLabel := "positive"
@@ -107,7 +119,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		}, nil)
 
 		if i == 0 {
-			vGuess := c.initialPulseMagnitude(targetP)
+			vGuess := c.initialPulseMagnitude(targetP, currentP)
 			if vGuess <= 0 {
 				vGuess = (c.VMin + c.VMax) / 2.0
 			}
@@ -119,11 +131,12 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			}
 			vPulse = direction * vGuess
 			log.Calculation("WriteTarget", map[string]interface{}{
-				"step":    "Predict",
-				"model":   "atanh",
-				"vPulse":  vPulse,
-				"vGuess":  vGuess,
-				"bounds":  []float64{c.VMin, c.VMax},
+				"step":     "Predict",
+				"model":    "atanh",
+				"crossing": crossing,
+				"vPulse":   vPulse,
+				"vGuess":   vGuess,
+				"bounds":   []float64{c.VMin, c.VMax},
 			}, nil)
 		} else {
 			vPulse = direction * (c.VMin + c.VMax) / 2.0
@@ -210,7 +223,24 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	return i + 1, success, overshoots
 }
 
-func (c *WriteController) initialPulseMagnitude(targetP float64) float64 {
+func (c *WriteController) initialPulseMagnitude(targetP, currentP float64) float64 {
+	vEst := c.initialPulseBound(targetP)
+	if vEst <= 0 {
+		return 0
+	}
+
+	if currentP*targetP < 0 {
+		// Crossing hysteresis branches: bias low to reduce overshoot resets.
+		absRatio := math.Abs(targetP / c.Material.Ps)
+		vEst *= absRatio * absRatio
+	}
+	if math.IsNaN(vEst) || math.IsInf(vEst, 0) {
+		return 0
+	}
+	return vEst
+}
+
+func (c *WriteController) initialPulseBound(targetP float64) float64 {
 	if c.Material == nil || c.Material.Ps == 0 || c.Material.Ec == 0 || c.Material.Thickness == 0 {
 		return 0
 	}

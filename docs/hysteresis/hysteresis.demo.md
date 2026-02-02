@@ -194,6 +194,8 @@ write‑verify logic, but in **conductance space** rather than discrete levels.
 1. **Optional reset** to `±Pr` based on target branch (negative‑target writes start from +Pr).
 2. **Pulse**: apply a signed `V_pulse` → `E = V/Thickness`, integrate L‑K for `PulseWidth`. The first pulse uses
    an inverse‑tanh estimate (`V_guess = Ec * Thickness * atanh(P_target / Ps)`) clamped to `[VMin, VMax]`.
+   When crossing branches (`currentP * targetP < 0`), the guess is scaled by `( |P_target| / Ps )^2` to reduce
+   overshoot resets, and `VMax` is clamped to the inverse‑tanh bound to keep the search conservative.
 3. **Verify**: map `P → G` (linear mapping with `P = ±Ps` endpoints).
 4. **Adjust**: binary search update (`VMin`, `VMax`) on **magnitude**, pulse sign set by direction.
 5. **Overshoot**: apply a **direction‑aware** reset pulse (opposite branch) and restart with tighter bounds.

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/peripherals"
 )
 
@@ -24,7 +25,14 @@ func main() {
 	showTiming := flag.Bool("timing", false, "Show timing diagrams")
 	showPower := flag.Bool("power", false, "Show power breakdown")
 	demoLevel := flag.Int("level", 15, "Demo level for conversion (0-29)")
+	enableLogger := flag.Bool("logger", false, "Enable file logging (logs/)")
+	verbosity := flag.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
 	flag.Parse()
+
+	if *enableLogger {
+		logging.EnableFileLogging()
+		logging.SetVerbosity(logging.VerbosityLevel(*verbosity))
+	}
 
 	fmt.Println("================================================")
 	fmt.Println("  FeCIM Demo 4: Peripheral Circuits")

@@ -126,9 +126,9 @@ func TestDefaultTIA(t *testing.T) {
 	if tia.InputNoiseRMS != 1e-12 {
 		t.Errorf("TIA InputNoiseRMS = %v, want 1e-12", tia.InputNoiseRMS)
 	}
-	// TIA uses OutputOffset (0) not Offset field
-	if tia.OutputOffset != 0 {
-		t.Errorf("TIA OutputOffset = %v, want 0", tia.OutputOffset)
+	// TIA uses OutputOffset (5mV) not Offset field
+	if tia.OutputOffset != 5e-3 {
+		t.Errorf("TIA OutputOffset = %v, want 0.005", tia.OutputOffset)
 	}
 }
 

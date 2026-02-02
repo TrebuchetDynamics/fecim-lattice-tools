@@ -59,7 +59,7 @@ The visualization supports interactive simulation with a Mode-First UX that auto
 - Actual output: ~1.5V (accounting for MOS threshold drops and IR losses)
 - Clock frequency: 50 MHz
 - Efficiency: 70%
-- Output ripple: <10 mV
+- Output ripple: ~0.2 mV (with 1 nF Cout)
 
 **Physics**: Dickson pump charge redistribution enables write voltage generation without off-chip supplies, essential for integration.
 
@@ -78,6 +78,9 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```bash
 # Show all peripheral details
 go run ./module4-circuits/cmd/circuits -all
+
+# Show all details with file logging
+go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2
 
 # Show specific circuit
 go run ./module4-circuits/cmd/circuits -dac

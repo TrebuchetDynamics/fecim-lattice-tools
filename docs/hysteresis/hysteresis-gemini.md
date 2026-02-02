@@ -174,7 +174,8 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 (`pos-1`, `pos-2`, `neg-1`) through `shared/physics/ispp_write.go`. The first step resets to a known branch,
 subsequent steps continue from the prior state to exercise end‑to‑end multi‑step convergence, including a
 negative‑branch target. The initial pulse uses an inverse‑tanh estimate (`atanh(P_target/Ps)`), then clamps to
-`[VMin, VMax]` before binary search refinement.
+`[VMin, VMax]` before binary search refinement. When crossing branches, the guess is biased low by
+`( |P_target| / Ps )^2` and `VMax` is clamped to the inverse‑tanh bound to reduce repeated overshoot resets.
 
 ---
 
