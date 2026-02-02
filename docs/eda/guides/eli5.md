@@ -138,7 +138,7 @@ Think of it like Tetris, but:
 
 | Aspect | Normal Digital Chip | FeCIM Chip |
 |--------|--------------------:|:-----------|
-| Signals | 0 or 1 (binary) | 0 to 29 (30 levels!) |
+| Signals | 0 or 1 (binary) | 0 to 29 (30-level demo baseline; conference claim) |
 | Memory | Separate from compute | Memory IS the computer |
 | Design | Highly automated | Mostly manual |
 | Tools | Mature, production-ready | Research-grade |
@@ -163,7 +163,7 @@ Row 3 --| * | * | * | * |
 **Why EDA tools struggle:**
 
 1. **No FeFET in the library** - We have to model it ourselves
-2. **Analog behavior** - Tools expect digital 0/1, not 30 levels
+2. **Analog behavior** - Tools expect digital 0/1, not 30-level baselines
 3. **Array effects** - IR-drop and sneak paths need special analysis
 4. **No auto-router** - We can't just click "route" for a crossbar
 
@@ -302,7 +302,7 @@ This section outlines the requirements for a **production-grade** EDA toolchain 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
 | **Native FeFET models** | Built-in Preisach/L-K models, not add-ons | Missing |
-| **Multi-level state support** | 30+ discrete states per cell | Custom only |
+| **Multi-level state support** | 32–140 states (peer‑reviewed); demo baseline 30 | Custom only |
 | **Temperature dependence** | Ec, Pr variation with T | In research |
 | **History-dependent behavior** | Minor loop tracking | Verilog-A only |
 | **Fatigue/endurance modeling** | Cycle-dependent degradation | Missing |
@@ -315,7 +315,7 @@ fefet_model = FeFET(
     technology="HZO_superlattice",
     Ec=1.0e6,           # V/cm
     Pr=25e-6,           # C/cm^2
-    levels=30,
+    levels=30,          # Demo baseline (conference claim)
     endurance=1e12,
     retention_years=10,
     temperature=300,    # Kelvin
@@ -363,7 +363,7 @@ array.simulate_mvm(
 compiler = FeCIMCompiler(
     model="resnet50.onnx",
     target_array_size=(128, 128),
-    quantization_bits=5,    # log2(30) ~ 5
+    quantization_bits=5,    # log2(30) ~ 5 (demo baseline)
     mapping_strategy="differential_pair",
     optimize_for="energy"   # or "accuracy" or "throughput"
 )
@@ -467,7 +467,7 @@ mttf = verification.reliability_analysis(
 |                              v                                    |
 |  +-------------------------------------------------------------+ |
 |  |                    COMPILER                                  | |
-|  |  * Automatic weight quantization (30 levels)                | |
+|  |  * Automatic weight quantization (30-level demo baseline)    | |
 |  |  * Optimal array tiling and mapping                         | |
 |  |  * Programming sequence generation                          | |
 |  |  * Bit-slicing for high precision                           | |
@@ -695,7 +695,7 @@ Where we're going:    Real device models and physical layout
 
 | Standard EDA | FeCIM EDA Needs |
 |--------------|-----------------|
-| Binary signals (0/1) | 30 analog levels |
+| Binary signals (0/1) | 30 analog levels (demo baseline; conference claim) |
 | Logic gates | Crossbar arrays |
 | Auto place & route | Manual array layout |
 | Standard transistors | Custom FeFET models |
@@ -770,7 +770,7 @@ Our FeCIM Visualizer and Design Suite helps:
 ```
 2020: First HfO₂ FeFET demonstrations
 2022: Multi-level cell (MLC) proven
-2024: 30+ states per cell achieved
+2024: 32–140 states per cell demonstrated (peer‑reviewed)
 2025: 70,000× energy breakthrough
 2026: First commercial products?
 ```

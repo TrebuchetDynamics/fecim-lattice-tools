@@ -164,7 +164,7 @@ Files reviewed (124 claims extracted):
 
 | Claim | Value | Status | Notes |
 |-------|-------|--------|-------|
-| 30 analog states | 30 levels | PLAUSIBLE | Peer-reviewed range: 7-140. Tour's specific device unverified. |
+| 30 analog states | 30 levels | CONFERENCE CLAIM | Peer-reviewed range: 7-140. Device-specific data not yet peer-reviewed. |
 
 ### 4.2 Removed Claims
 
@@ -174,7 +174,7 @@ Peer-reviewed literature demonstrates 96.6-98.24% accuracy. The 87% claim was re
 1. Unverified conference presentation (Tier 5 source)
 2. 11% below peer-reviewed benchmarks (96.6-98.24%)
 3. Simulation should derive accuracy from physics parameters, not constrain to arbitrary targets
-4. 30 analog states naturally produces accuracy based on device physics
+4. Multi-level quantization baselines can produce high accuracy in simulation based on device physics
 
 **10M x vs NAND Energy (Tour COSM 2025)**
 

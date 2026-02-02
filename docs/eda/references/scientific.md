@@ -175,7 +175,7 @@ This tool implements simulation models based on published research. It is **not 
     - Modulates polarization via gate electrical pulses for synaptic behavior
     - Non-volatile memory with ON/OFF states due to ferroelectric characteristics
     - Robust reliability under repeated electrical pulses
-  * *How we use it:* Foundation for 30-level quantization and synaptic weight programming models.
+  * *How we use it:* Foundation for 30‑level demo baseline (conference claim) quantization and synaptic weight programming models.
 
 ### 7.2 Flash Joule Heating Technology
 

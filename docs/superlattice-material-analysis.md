@@ -197,7 +197,7 @@ The innovation protected by patents likely includes:
 1. Specific HfO2/ZrO2 layer thickness ratios
 2. Interface doping profiles (La, Y, Al, or Gd)
 3. Crystallization anneal protocol
-4. Domain engineering for 30-state granularity
+4. Domain engineering for 30-state granularity (demo baseline; conference claim)
 5. Electrode material and interface optimization
 
 ---
@@ -212,7 +212,7 @@ The `module1-hysteresis` visualizer implements three material modes that demonst
 |------|----------|-------------|
 | **Default HZO** | `DefaultHZO()` | Standard Si-doped Hf0.5Zr0.5O2 |
 | **Optimized HZO** | `OptimizedHZO()` | HfO2/ZrO2 superlattice (enhanced) |
-| **FeCIM** | `FeCIMMaterial()` | Dr. Tour's demonstrated specs |
+| **FeCIM** | `FeCIMMaterial()` | Conference-claim baseline (pending peer review) |
 
 ### Physics Comparison
 
@@ -272,7 +272,7 @@ The reduced coercive field comes from:
 2. **Domain Wall Mobility**: Smoother interfaces allow easier domain wall motion
 3. **Reduced Depolarization**: Better interface quality reduces depolarization fields
 
-#### 30-State Mechanism (FeCIM-specific)
+#### 30-State Mechanism (FeCIM demo baseline; conference claim)
 
 ```
 Standard Binary:     ↓↓↓↓ ←→ ↑↑↑↑   (2 states)
@@ -283,7 +283,7 @@ FeCIM 30-State:      ↓↓↓↓ → ↓↓↓↑ → ↓↓↑↑ → ... → 
 Each state = specific domain configuration with distinct conductance
 ```
 
-The 30 discrete states arise from:
+The 30 discrete states (demo baseline; conference claim) arise from:
 - **Partial domain switching**: Not all domains switch at once
 - **Multiple nucleation sites**: Superlattice creates distributed switching centers
 - **Controlled defect distribution**: Engineered pinning sites stabilize intermediate states

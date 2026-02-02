@@ -229,9 +229,9 @@ Weight = 0.314159265358979...
        (very precise!)
 ```
 
-### FeCIM: 30 Discrete Levels
+### FeCIM: 30 Discrete Levels (Demo Baseline)
 
-In ferroelectric memory, each cell can only store 30 different values:
+In ferroelectric memory, this demo uses 30 different values (conference-claim baseline):
 
 ```
 Level 0:  ─────────────────────●──────────────────

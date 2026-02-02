@@ -10,6 +10,8 @@
 
 This document catalogs open-source tools, libraries, and frameworks for neural network training, weight quantization, hardware-aware training, and deployment on compute-in-memory systems. It covers tools from academic research, industry, and the open-source community relevant to the FeCIM MNIST demo.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ---
 
 ## 1. Deep Learning Frameworks

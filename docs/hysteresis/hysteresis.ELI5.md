@@ -436,7 +436,7 @@ alphas, betas, states = model.get_preisach_plane()
 |-------------|-------------|---------------|
 | **P-E loop export** | Save loop data (CSV/JSON) | ⚠️ Easy to add |
 | **SPICE model export** | Generate Verilog-A parameters | ⚠️ Missing |
-| **Crossbar integration** | Feed conductances to Module 2 | ✅ Via 30-level |
+| **Crossbar integration** | Feed conductances to Module 2 | ✅ Via 30-level baseline |
 | **NeuroSim format** | Export for architecture sim | ⚠️ Missing |
 
 **What "production-ready" looks like:**

@@ -76,7 +76,8 @@ Tasks
   - Verify CPU/GPU specs are marked as verified (Intel/AMD, NVIDIA H100).
   - Confirm prominent TRL 4 warning banner: "⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 LAB PROTOTYPE".
   - Validate verified vs claimed sections clearly distinguish:
-    - Verified: 30 levels, 96-98% MNIST, CMOS compatible
+    - Verified: 32–140 levels (peer-reviewed), 96–98% MNIST, CMOS compatible
+    - Claimed: 30 levels (conference; pending peer review)
     - Claimed: 25-100× vs NAND, 1000× vs DRAM, 80-90% DC savings
   - If disclaimers are missing or unclear, add prominently and update docs.
 

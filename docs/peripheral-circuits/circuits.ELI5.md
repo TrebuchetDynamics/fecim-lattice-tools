@@ -18,6 +18,8 @@ Your brain (digital)  ←→  Translators  ←→  Memory (analog)
 
 **Peripheral circuits are the translators** between the digital world (numbers) and the analog world (voltages and currents).
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ---
 
 ## Part 2: The Four Main Translators
@@ -37,7 +39,7 @@ The number you pick → The voltage you get
 ```
 
 **In FeCIM:**
-- We have 30 settings (levels 0-29)
+- We have 30 settings (levels 0-29) in the demo baseline (conference claim)
 - Each setting tells the memory cell "store this much"
 - The DAC converts "level 15" into "0.75 volts"
 

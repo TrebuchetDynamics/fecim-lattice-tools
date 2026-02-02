@@ -6,6 +6,8 @@ Module 4 implements a complete peripheral circuit simulation environment for fer
 
 **Key Concept**: The module demonstrates how digital input signals are converted to analog control voltages, processed through a ferroelectric crossbar array, and converted back to digital output levels through a complete signal chain.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Project Structure
 
 ```
@@ -51,7 +53,7 @@ Converts discrete digital levels to analog voltages for driving the crossbar arr
 
 ```go
 type DAC struct {
-    Bits       int     // Resolution (5 bits = 32 levels, use 30 for FeCIM)
+    Bits       int     // Resolution (5 bits = 32 levels, use 30 for demo baseline)
     VrefHigh   float64 // High reference (+1.5V)
     VrefLow    float64 // Low reference (-1.5V)
     INL        float64 // Integral nonlinearity error
@@ -265,7 +267,7 @@ type CircuitsApp struct {
 
     // Configuration state
     arrayRows, arrayCols int  // Array dimensions (8-128)
-    quantLevels          int  // 30 for FeCIM
+    quantLevels          int  // 30 for demo baseline (conference claim)
     dacBits, adcBits     int  // Resolution in bits
     vMin, vMax           float64 // Write voltage range
     readVoltage          float64 // Safe read voltage
@@ -791,7 +793,7 @@ go test ./module4-circuits/...
 ### Physical Constants
 
 ```go
-FeCIMLevels    = 30  // Always 30 for ferroelectric CIM
+FeCIMLevels    = 30  // Demo baseline (conference claim)
 MaxArraySize   = 128 // Maximum supported array dimension
 DefaultSize    = 8   // Default 8x8 demo array
 DefaultDACBits = 5   // 32 levels, use 30

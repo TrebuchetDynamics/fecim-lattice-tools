@@ -430,7 +430,7 @@ func (p *PreisachModel) Update(E float64) float64 {
 
 func (p *PreisachModel) DiscreteStates(N int) []float64 {
     // Extract N discrete polarization levels
-    // Used to get 30 discrete states
+    // Used to get 30 discrete states (demo baseline; conference claim)
 }
 ```
 
@@ -625,7 +625,7 @@ AP (Antiparallel): ↓↓↓ | ↑↑↑ → High R (TMR > 200%)
 
 ### FeFET (HZO)
 1. Böscke et al., "Ferroelectricity in hafnium oxide thin films", *Appl. Phys. Lett.* 2011
-2. Dr. external research group, COSM 2025 (30 discrete states claim)
+2. Dr. external research group, COSM 2025 (30 discrete states conference claim; pending peer review)
 3. [Nature Commun. 2025](https://doi.org/10.1038/s41467-025-61758-2) - HfO₂/ZrO₂ superlattice (Pr = 15-34 µC/cm², Ec = 1.0-1.5 MV/cm)
 4. [IEEE IRPS 2022](https://doi.org/10.1109/IRPS48227.2022.9764533) - High endurance HZO (>10¹¹ cycles)
 5. [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) - HfO₂ ferroelectric endurance review (>5×10¹² cycles)

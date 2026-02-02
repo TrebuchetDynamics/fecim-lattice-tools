@@ -25,7 +25,7 @@ The crossbar array represents analog states as conductance values between minimu
 | **Gmin** | 10 | µS | Design choice (OFF state) |
 | **Gmax** | 100 | µS | Design choice (ON state) |
 | **Ratio** | 10:1 | dimensionless | Gmax/Gmin |
-| **Quantization Levels** | 30 | discrete states | FeCIM specification |
+| **Quantization Levels** | 30 | discrete states | Demo baseline (conference claim) |
 
 ### Linear Model
 

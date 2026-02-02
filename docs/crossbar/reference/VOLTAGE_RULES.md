@@ -204,7 +204,7 @@ Half-selected cells experience V/2 = 0.75V
 
 #### Per-Level Voltage Calibration
 
-Each of the 30 analog levels requires a different E-field to achieve:
+Each of the 30 analog levels (demo baseline; conference claim) requires a different E-field to achieve:
 
 **Calibration Arrays:**
 ```

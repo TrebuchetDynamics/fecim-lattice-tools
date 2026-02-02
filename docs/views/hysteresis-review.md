@@ -25,7 +25,7 @@ The **Module 1 Hysteresis** module implements a comprehensive ferroelectric phys
 | Achievement | Status | Notes |
 |------------|--------|-------|
 | Preisach Model Implementation | ✅ Complete | Based on Bartic et al. 2001, Mayergoyz formalism |
-| 30 Discrete Analog States | ✅ Verified | Matches Tour's COSM 2025 specification |
+| 30 Discrete Analog States | ⚠️ Conference claim baseline | COSM 2025 (pending peer review); peer‑reviewed devices report 32–140 states |
 | Multi-Material Support | ✅ 8 Presets | HZO, AlScN, FTJ, Superlattice, Cryogenic |
 | ISPP Algorithm | ✅ Complete | Full write-verify loop with overshoot handling |
 | Temperature Calibration | ✅ Multi-Temp | -40°C to 150°C automotive range |
@@ -135,7 +135,7 @@ The module implements **8 CMOS-compatible ferroelectric materials**:
 |----------|--------|-------------|------------|--------|
 | **DefaultHZO** | 30 | 25 | 1.2 | Park et al. 2015 |
 | **FeCIMMaterial** | 30 | 30 | 1.0 | Conference claim baseline (pending peer review) |
-| **FeCIMTarget** | 30 | 30 | 1.0 | Tour's stated targets |
+| **FeCIMTarget** | 30 | 30 | 1.0 | Conference-claim target (pending peer review) |
 | **LiteratureSuperlattice** | 64 | 45 | 0.8 | Cheema et al. 2020 |
 | **CryogenicHZO (4K)** | 48 | 75 | 1.5 | Adv. Elec. Mat. 2024 |
 | **HZOStandard32** | 32 | 20 | 1.0 | Oh et al. 2017 |
@@ -259,7 +259,7 @@ ISPP is the **critical algorithm** for programming discrete analog states into f
 type ISPPCalculator struct {
     Config   ISPPConfig  // Configuration parameters
     Ec       float64     // Coercive voltage
-    NumLevels int        // Number of analog states (30 for FeCIM)
+    NumLevels int        // Number of analog states (30 for demo baseline)
 }
 
 type ISPPConfig struct {
@@ -614,7 +614,7 @@ The GUI is built with **Fyne** cross-platform toolkit:
 ```
 Main Window
 ├── P-E Plot (Real-time hysteresis curve)
-├── Level Indicator (30-state visualization)
+├── Level Indicator (30-level baseline visualization)
 ├── Cell Visualizer (Physical cell representation)
 ├── Controls
 │   ├── Waveform selector
@@ -642,7 +642,7 @@ Main Window
 ```go
 type LevelIndicator struct {
     CurrentLevel  int     // 0-29
-    FeCIMLevels   int     // = 30
+    FeCIMLevels   int     // = 30 (demo baseline)
     ActiveColor   Color   // Green for current
     InactiveColor Color   // Gray for others
 }
@@ -665,7 +665,7 @@ type Renderer struct {
     config   *Config        // 1280×720, 60 FPS, VSync
     plot     *HysteresisPlot
     cell     *CellDisplay
-    levels   *LevelIndicator  // 30-level bar
+    levels   *LevelIndicator  // 30-level baseline bar
 }
 
 type HysteresisPlot struct {
@@ -981,7 +981,7 @@ The **Module 1 Hysteresis** implementation represents **exemplary engineering** 
 - ✅ **Real-Time Visualization**: Smooth 60 FPS rendering with Fyne GUI
 - ✅ **Comprehensive Testing**: 1,261 lines of validation tests
 
-**Dr. Tour's Vision Realized**: The 30 discrete analog states from the COSM 2025 presentation are fully implemented with:
+**Conference-Claim Baseline Implemented**: The 30 discrete analog states from the COSM 2025 presentation are implemented as a demo baseline with:
 - Proper physics basis (Preisach model)
 - Practical programming algorithm (ISPP)
 - Accurate calibration system

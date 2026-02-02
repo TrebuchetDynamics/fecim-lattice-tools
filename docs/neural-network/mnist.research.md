@@ -137,7 +137,7 @@ quantized[i][j] = -wMax + float64(bin) * levelStep
 ```
 
 **Key Parameters:**
-- `levels` = number of discrete states (FeCIM: 30)
+- `levels` = number of discrete states (FeCIM demo baseline: 30; conference claim)
 - `wMax` = maximum absolute weight value
 - `levelStep` = 2 × wMax / (levels - 1)
 
@@ -154,7 +154,7 @@ quantized[i][j] = -wMax + float64(bin) * levelStep
 | 8 | 256 | 98% (baseline) | Standard |
 | FP32 | Continuous | 98.5% | Ideal |
 
-**Key Finding:** Diminishing returns above 5 bits (~30 levels). The 30-level baseline is nearly optimal in simulation.
+**Key Finding:** Diminishing returns above 5 bits (~30 levels). The 30-level demo baseline (conference claim) is nearly optimal in simulation.
 
 ### 3.3 Quantization-Aware Training (QAT)
 
@@ -452,7 +452,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 | Institution | Focus | Key Contributions |
 |-------------|-------|-------------------|
-| **external research institution (Tour Lab)** | FeFET CIM | 30-level demo, 10^12 endurance |
+| **external research institution (Tour Lab)** | FeFET CIM | 30-level demo (conference claim), 10^12 endurance (target) |
 | **UC Berkeley** | FeFET devices | HZO materials, device physics |
 | **Georgia Tech** | NeuroSim | Architecture simulation |
 | **IBM Research** | Analog AI | AIHWKIT, production chips |
@@ -546,7 +546,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 ### 12.1 Key Takeaways
 
-1. **30-level baseline is sufficient** for MNIST—near‑optimal accuracy in simulation
+1. **30-level demo baseline (conference claim) is sufficient** for MNIST—near‑optimal accuracy in simulation
 2. **ADC precision matters more** than weight quantization for energy efficiency
 3. **Noise is the main accuracy limiter**—FeFET's low noise is a significant advantage
 4. **Dual-mode visualization** effectively demonstrates FP vs. CIM trade-offs

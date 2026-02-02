@@ -367,8 +367,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	}
 
 	// Trail length slider
-	trailSlider := widget.NewSlider(50, 2000)
-	trailSlider.Step = 50
+	trailSlider := widget.NewSlider(1000, 100000)
+	trailSlider.Step = 1000
 	trailSlider.Value = float64(a.maxHistory)
 	trailLabel := widget.NewLabel(fmt.Sprintf("Trail: %d", a.maxHistory))
 	trailSlider.OnChanged = func(v float64) {

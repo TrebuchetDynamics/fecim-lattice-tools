@@ -263,7 +263,7 @@ G_level = G_min + (level/(N-1)) × (G_max - G_min)
 **Variables:**
 - `G_level`: Conductance for quantization level
 - `level`: Integer level index (0, 1, 2, ..., N-1)
-- `N`: Number of discrete levels (30 for FeCIM)
+- `N`: Number of discrete levels (30 for demo baseline; conference claim)
 - `G_min`: Minimum conductance (typically 1 µS)
 - `G_max`: Maximum conductance (typically 100 µS)
 

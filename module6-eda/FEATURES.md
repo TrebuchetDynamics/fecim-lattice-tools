@@ -20,7 +20,7 @@ Chip Design Suite for FeCIM Arrays
 
 | Mode | Purpose | Key Feature |
 |------|---------|-------------|
-| **Storage** | NAND replacement | 30 levels = 4.9 bits/cell, ECC support |
+| **Storage** | NAND replacement | 30-level baseline = 4.9 bits/cell (conference claim), ECC support |
 | **Memory** | DRAM replacement | Zero refresh, 10ns target access |
 | **Compute** | AI accelerator | MVM with optional pre-programmed weights |
 

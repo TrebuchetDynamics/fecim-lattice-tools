@@ -18,7 +18,7 @@ This document collects and references 310+ papers, tools, and resources gathered
 2. **The FeFET modeling gap is closing** with OpenVAF and Verilog-A compact models enabling SPICE simulation
 3. **Architecture-level tools (NeuroSim, CiMLoop) are mature** and can guide design decisions before circuit implementation
 4. **IHP's open PDK with RRAM support** provides the closest path to fabricating CIM arrays in the open ecosystem
-5. **30-level quantization** used in this project aligns with state-of-the-art MLC FeFET demonstrations
+5. **30-level quantization** used in this project is a demo baseline (conference claim) bracketed by peer‑reviewed 32–140 state devices
 
 ---
 

@@ -130,7 +130,7 @@ For analog computing, memristors/FeFETs store weights as **discrete conductance 
 $$G_i = G_{\text{min}} + i \times \frac{G_{\text{max}} - G_{\text{min}}}{N - 1}, \quad i = 0, 1, \ldots, N-1$$
 
 Where:
-- $N$ = number of analog states (e.g., 30 for HfO₂-ZrO₂ FeFETs)
+- $N$ = number of analog states (e.g., 30 for demo baseline; conference claim)
 - $G_{\text{min}}$, $G_{\text{max}}$ = minimum/maximum conductance
 - $i$ = programmed state index
 

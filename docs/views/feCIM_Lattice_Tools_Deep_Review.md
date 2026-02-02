@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools Deep Technical Review
 
-**Reviewers' Perspectives**: Dr. external research group (Principal Investigator) & Dr. Jaeho Shin (Device Engineer)
+**Reviewer Lenses**: Principal Investigator (materials) + Device/Process Engineer (internal stand-ins; not statements by Dr. Tour or Dr. Jaeho)
 **Review Date**: January 31, 2026
 **Project Status**: TRL 4 (Lab Validation)
 **Overall Rating**: ⭐⭐⭐⭐ (4.25/5 stars)
@@ -9,10 +9,10 @@
 
 ## Executive Summary
 
-This comprehensive technical review evaluates the **FeCIM Lattice Tools** project from two authoritative perspectives:
+This comprehensive technical review evaluates the **FeCIM Lattice Tools** project from two internal, expert-style lenses:
 
-1. **Dr. external research group (Principal Investigator)** - Material science expert, technology originator
-2. **Dr. Jaeho Shin (Device Engineer)** - Ferroelectric superlattice inventor, implementer
+1. **Principal Investigator lens** - materials science and research framing
+2. **Device/Process Engineer lens** - device physics, manufacturability, and implementation risk
 
 **Key Findings**:
 - ✅ **Scientific Integrity**: Project rigorously separates verified (peer-reviewed) from unverified claims, with 27 removed/updated assertions
@@ -25,7 +25,7 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 **Major Achievements**:
 - Removed 2 unverified claims (87% MNIST, 10M× vs NAND energy)
 - Adopted peer-reviewed benchmarks (96.6-98.24% MNIST, 25-100× vs NAND energy)
-- Comprehensive documentation system (100+ glossary terms, 300+ research paper citations)
+- Comprehensive documentation system (glossary + research index)
 - Extensive test coverage (see CI for current totals)
 
 ---
@@ -36,7 +36,7 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 
 **FeCIM Lattice Tools** is an educational visualization suite demonstrating Ferroelectric Compute-in-Memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution.
 
-**Core Technology**: Ferroelectric superlattice with **30 discrete analog states per cell** (~4.9 bits/cell)
+**Core Technology**: Ferroelectric superlattice with a **30‑level demo baseline** (~4.9 bits/cell; conference claim, pending peer review)
 
 **Problem Statement**: Traditional computing suffers from the "von Neumann bottleneck" - constant data movement between separate memory and processor consuming most energy. FeCIM eliminates this by computing directly where data is stored.
 
@@ -47,8 +47,8 @@ Language: Go 1.24+
 GUI Framework: Fyne 2.7.2
 Physics Model: Preisach/Mayergoyz hysteresis model
 Parallel Computation: Vulkan GPU acceleration (optional)
-Testing Framework: 1,755 tests (100% pass rate)
-Documentation: 95+ Markdown files + 100+ term interactive documentation system
+Testing: `go test ./...` (see CI for latest status)
+Documentation: Markdown docs + interactive glossary system
 ```
 
 ### 1.3 Module Architecture (7 Core Modules)
@@ -58,7 +58,7 @@ Documentation: 95+ Markdown files + 100+ term interactive documentation system
 │                   FeCIM Complete Technology Stack                        │
 ├─▶ PHYSICS ────────────────────────────────────────────────▶│  │
 │  Module 1: Hysteresis   Module 2: Crossbar    │
-│  (30-state P-E curves)   (MVM + Non-idealities)   │    Module 6: EDA Suite        │
+│  (30-level baseline P-E curves)   (MVM + Non-idealities)   │    Module 6: EDA Suite        │
 │                            Module 3: MNIST       │    │    Module 7: Documentation   │
 │                         (Neural Network)   │    │    (Chip Design Tools)        │
 └─────────────────────────────────────────────────────────────┘
@@ -72,7 +72,7 @@ Documentation: 95+ Markdown files + 100+ term interactive documentation system
 ```
 Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
                               ↓
-                         Quantization (30 levels)
+                         Quantization (30-level baseline)
                          Dual-Mode (FP vs CIM)
                     Peripheral Circuits (DAC/ADC/TIA)
                               ↓
@@ -85,16 +85,16 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 
 | Metric | Value | Description |
 |--------|------|-------------|
-| **Go Code Lines** | 8,801 lines | 7 modules across physics, simulation, and GUI |
-| **Test Count** | 1,755 tests | Comprehensive coverage, 100% pass rate |
+| **Go Code Lines** | ~8.8k (snapshot) | 7 modules across physics, simulation, and GUI |
+| **Tests** | See CI | Automated coverage across core modules |
 | **Module Count** | 7 core modules | From physics to EDA tools |
-| **Documentation Files** | 95+ | Markdown files + 100+ term interactive glossary |
-| **Research Citations** | 300+ | Peer-reviewed sources organized by category |
+| **Documentation** | See `docs/` | Markdown files + interactive glossary |
+| **Research Citations** | See research index | Peer-reviewed sources organized by category |
 | **Material Presets** | 8 | HZO, AlScN, V:HfO₂, and more |
 
 ---
 
-## 2. Dr. external research group Perspective (Principal Investigator)
+## 2. Principal Investigator Lens
 
 ### 2.1 Technical Claims Assessment from COSM 2025
 
@@ -104,7 +104,7 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 
 | Claim | Value | Status | Notes |
 |-------|--------|--------|--------|
-| **30 discrete analog states** | ⚠️ Plausible | Falls within demonstrated range (32-140 states in literature). Marked as "plausible" in code. |
+| **30 discrete analog states** | ⚠️ Conference claim baseline | Pending peer review; peer‑reviewed devices report 32–140 states. |
 | **87% MNIST accuracy** | ❌ REMOVED | 11% below peer-reviewed benchmarks (96.6-98.24%). Removed from project for scientific accuracy. |
 | **10⁶ cycle endurance target** | ⚠️ Goal | Not yet achieved, stated as target. Updated in project to "demonstrated" based on recent literature (Nano Letters 2024). |
 | **10M× vs NAND energy efficiency** | ❌ REMOVED | No measurement data exists. Replaced with peer-reviewed Samsung Nature 2025: 25-100×. |
@@ -129,7 +129,7 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 2. **Removal of Unverified Claims**:
    - **87% MNIST accuracy**: Removed and replaced with peer-reviewed 96.6-98.24% benchmarks
    - **10M× vs NAND energy**: Removed and replaced with Samsung Nature 2025 (25-100×)
-   - **Justification**: Honest admission that Tour's device-specific data is not yet peer-reviewed
+   - **Justification**: Honest admission that conference device-specific data is not yet peer-reviewed
 
 3. **Adoption of Verified Standards**:
    - 32-140 analog states: Acknowledged from Oh 2017 (32), Song 2024 (140)
@@ -143,18 +143,18 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
    - No exaggerated "unlimited" claims
    - Professional disclaimer: "Not all details are going to be in here but enough for you to get the concept"
 
-**Dr. Tour's Overall Rating**: ⭐⭐⭐⭐⭐⭐⭐ (5/5 stars)
+**PI Lens Overall Rating**: ⭐⭐⭐⭐⭐⭐⭐ (5/5 stars)
 - Exceptional scientific rigor, transparent documentation, and responsible technology communication
 
 ---
 
-## 3. Dr. Jaeho Shin Perspective (Device Engineer)
+## 3. Device/Process Engineer Lens
 
-### 3.1 Superlattice Invention Assessment
+### 3.1 Device/Process Lens Context
 
-**Context**: According to COSM 2025, Dr. Jaeho Shin is the device engineer who invented the ferroelectric superlattice in 6 months from concept to prototype.
+**Context**: COSM 2025 frames this as an early‑stage device effort. This lens focuses on manufacturability, validation risk, and process readiness rather than attributing invention credit.
 
-**Achievement**: Rapid translation of theoretical concept into working hardware implementation.
+**Assessment**: The implementation translates the concept into a working simulation baseline, with clear gaps to hardware validation.
 
 ### 3.2 Implementation Review: 30-Level Discrete States
 
@@ -189,7 +189,7 @@ func (p *PreisachModel) DiscreteStates(N int) []float64 {
 ```
 
 **Assessment** ⭐⭐⭐⭐⭐:
-- ✅ **Scientific Accuracy**: Linear uniform distribution correctly models 30 analog states
+- ✅ **Scientific Accuracy**: Linear uniform distribution models the 30‑level demo baseline (conference claim) consistently
 - ✅ **Preisach Integration**: Memory effects (turning points) properly implemented
 - ✅ **Hysteresis Physics**: S-shaped switching curve captured via hyperbolic tangent method
 - ✅ **Code Quality**: Clean, well-documented functions with comprehensive logging
@@ -202,7 +202,7 @@ func (p *PreisachModel) DiscreteStates(N int) []float64 {
 - **Results**: Simulated values (Pmax = 30.0 µC/cm²) within ±5% of literature
 - **Conclusion**: ✅ Model accurately reproduces experimental data
 
-**Dr. Jaeho's Achievement**: Successfully translated Dr. Tour's 30-state concept into robust, testable implementation.
+**Engineering Highlight**: Translates the 30‑level conference‑claim baseline into a robust, testable implementation.
 
 ### 3.3 Crossbar Array MVM Implementation
 
@@ -243,7 +243,7 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 
 **Assessment** ⭐⭐⭐⭐⭐:
 - ✅ **Physics Accuracy**: MVM correctly implements analog summation via Kirchhoff's current law
-- ✅ **Quantization**: 30-level discretization matches Tour's 30-state specification
+- ✅ **Quantization**: 30-level discretization matches the demo baseline (conference claim)
 - ✅ **Normalization**: Keeps outputs in [0,1] range for neural network compatibility
 - ✅ **GPU Acceleration**: Optional Vulkan shader implementation for parallel processing
 - ✅ **Code Organization**: Clear separation of concerns (array config, cell management, MVM logic)
@@ -271,7 +271,7 @@ func (s *DriftSimulator) SimulateTime(time float64) []float64
 - ✅ **Energy Estimation**: Calculates pJ per operation for power analysis
 - ✅ **Extensibility**: Endurance modeling (10⁸-10¹² cycles) with degradation curve
 
-**Dr. Jaeho's Achievement**: Complete crossbar architecture enabling FeCIM computation with all real-world non-idealities.
+**Engineering Highlight**: Complete crossbar architecture enabling FeCIM computation with all real-world non-idealities.
 
 ### 3.4 Neural Network Integration (MNIST)
 
@@ -317,12 +317,12 @@ func (net *DualModeNetwork) Infer(input []float64) InferenceResult {
 
 **Assessment** ⭐⭐⭐⭐⭐:
 - ✅ **Dual-Mode Design**: Side-by-side comparison of FP vs CIM inference
-- ✅ **30-Level Quantization**: Explicit demonstration of Tour's discrete states impact
+- ✅ **30-Level Quantization**: Demonstrates impact of the 30-level demo baseline (conference claim)
 - ✅ **Softmax Stability**: Prevents numerical overflow with argmax handling
 - ✅ **ReLU Implementation**: Correct for neural network activation function
 - ✅ **Comprehensive Metrics**: Accuracy, energy, KL divergence, agreement tracking
 
-**Dr. Jaeho's Achievement**: Integration of 30-level FeCIM crossbar with full neural network inference pipeline, enabling direct accuracy comparison.
+**Engineering Highlight**: Integration of 30-level demo baseline crossbar with full neural network inference pipeline, enabling direct accuracy comparison.
 
 ### 3.5 Peripheral Circuits Integration
 
@@ -358,7 +358,7 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 - ✅ **Energy Calculation**: Accurate pJ per operation estimation
 - ✅ **Circuit Integration**: Proper connection between analog crossbar and digital interfaces
 
-**Dr. Jaeho's Achievement**: Complete peripheral circuit models enabling chip-level FeCIM system design.
+**Engineering Highlight**: Complete peripheral circuit models enabling chip-level FeCIM system design.
 
 ### 3.6 Test Coverage Assessment
 
@@ -367,14 +367,14 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 | Test Category | Test Count | Pass Rate | Coverage |
 |--------------|-----------|----------|-----------|
 | **Physics Model Tests** | 37 | ✅ 100% | Preisach hysteresis, material parameters, discrete states |
-| **Crossbar Physics Tests** | 31 | ✅ 100% | Quantization, MVM correctness, IR drop, sneak paths, drift |
-| **Neural Network Tests** | 47 | ✅ 100% | Forward propagation, dual-mode inference, accuracy |
-| **Peripheral Circuit Tests** | 33 | ✅ 100% | DAC/ADC/TIA accuracy, INL/DNL analysis |
-| **Integration Tests** | 18 | ✅ 100% | Cross-module workflow, end-to-end MNIST |
-| **EDA Tools Tests** | 69 | ✅ 100% | Compiler, layout, Verilog, DEF generation, export formats |
-| **Overall** | **1,755** | **100%** | Comprehensive coverage |
+| **Crossbar Physics Tests** | ✅ | Quantization, MVM correctness, IR drop, sneak paths, drift |
+| **Neural Network Tests** | ✅ | Forward propagation, dual-mode inference, accuracy |
+| **Peripheral Circuit Tests** | ✅ | DAC/ADC/TIA accuracy, INL/DNL analysis |
+| **Integration Tests** | ✅ | Cross-module workflow, end-to-end MNIST |
+| **EDA Tools Tests** | ✅ | Compiler, layout, Verilog, DEF generation, export formats |
+| **Overall** | ✅ | See CI for current status |
 
-**Dr. Jaeho's Achievement**: Test suite demonstrates engineering excellence with 1,755 tests covering all major subsystems with 100% pass rate.
+**Engineering Highlight**: Test suite covers all major subsystems (see CI for current status).
 
 ---
 
@@ -382,9 +382,9 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 
 ### 4.1 Material Properties (Verified Claims)
 
-| Parameter | Tour Claim | Peer-Reviewed Value | Source | DOI | Status |
+| Parameter | Conference Claim | Peer-Reviewed Value | Source | DOI | Status |
 |----------|---------------|-------------------|--------|---------|
-| **FeCIM States** | 30 discrete analog states | 32-140 states | Oh 2017 (32), Song 2024 (140) | ✅ Plausible (within range) |
+| **FeCIM States** | 30 discrete analog states (baseline) | 32-140 states | Oh 2017 (32), Song 2024 (140) | ⚠️ Conference claim baseline |
 | **Pr (Room Temp)** | Unspecified | 15-34 µC/cm² | Nature Commun. 2025 | ✅ Adopted as standard |
 | **Pr (4K Cryogenic)** | N/A | 75 µC/cm² | Adv. Elec. Mat. 2024 | ✅ Added for completeness |
 | **Ec (Standard)** | Unspecified | 0.6-1.5 MV/cm | Nature Commun. 2025 | ✅ Adopted as standard |
@@ -394,7 +394,7 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 
 ### 4.2 Endurance and Retention
 
-| Metric | Tour Claim | Peer-Reviewed Evidence | Source | DOI | Status |
+| Metric | Conference Claim | Peer-Reviewed Evidence | Source | DOI | Status |
 |--------|---------------|-------------------|--------|---------|
 | **10⁹ Cycle Endurance** | Target → Demonstrated | Nano Letters 2024 (V:HfO₂) | 10.1016/s41586 | ✅ Now achievable |
 | **>10¹¹¹ Cycle** | Extrapolated | Science 2024 (sliding ferroelectrics) | 1.0e+11/s38356 | ✅ Physics-based modeling |
@@ -403,7 +403,7 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 
 ### 4.3 Energy Efficiency
 
-| Comparison | Tour Claim | Peer-Reviewed Evidence | Source | DOI | Status |
+| Comparison | Conference Claim | Peer-Reviewed Evidence | Source | DOI | Status |
 |--------|---------------|-------------------|--------|---------|
 | **vs NAND Energy** | 10M× | 25-100× | Samsung Nature 2025 | 10.1038/s41586-25973-93 | ✅ Adopted realistic metric |
 | **vs NAND Speed** | 1,000,000× | Plausible | N/A | 10 ns switching plausible | ⚠️ Needs verification |
@@ -413,7 +413,7 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 
 | Metric | Status | Description |
 |--------|--------|----------|
-| **TRL 4** | ✅ Current | Component validation in lab environment (Tour's explicit statement) |
+| **TRL 4** | ✅ Current | Component validation in lab environment (COSM 2025 statement) |
 | **TRL 5** | ⏸️ Next | Device-level prototyping with foundry collaboration |
 | **TRL 6** | ⏸️ Future | Component integration and system-level testing |
 | **TRL 7** | ⏸️ Future | Pre-production pilot lines and yield optimization |
@@ -533,7 +533,7 @@ func (s *SafeState) Update(newValue float64) {
 | **Memory Efficiency** | ~50-100 MB RSS | Reasonable for Go + GUI application |
 | **GPU Acceleration** | Optional Vulkan backend | 10-100× speedup for large arrays |
 
-**Dr. Jaeho's Achievement**: Performance-optimized implementation suitable for interactive simulation and real-time visualization.
+**Engineering Highlight**: Performance-optimized implementation suitable for interactive simulation and real-time visualization.
 
 ---
 
@@ -543,17 +543,17 @@ func (s *SafeState) Update(newValue float64) {
 
 | Capability | Implementation | Status | Assessment |
 |-----------|-------------------|--------|
-| **Physics Simulation** | ⭐⭐⭐⭐⭐ | Preisach hysteresis, 30-level quantization, complete |
+| **Physics Simulation** | ⭐⭐⭐⭐⭐ | Preisach hysteresis, 30-level demo baseline (conference claim) |
 | **Crossbar Arrays** | ⭐⭐⭐⭐⭐ | MVM with IR drop, sneak paths, drift, temperature |
 | **Neural Networks** | ⭐⭐⭐⭐ | Dual-mode inference, MNIST benchmark |
 | **Peripheral Circuits** | ⭐⭐⭐⭐ | DAC/ADC/TIA with INL/DNL analysis |
 | **EDA Tools** | ⭐⭐⭐ | Compiler, Verilog, DEF, SPICE, SVG export |
-| **Documentation System** | ⭐⭐⭐⭐ | 100+ terms, full-text search, interactive glossary |
+| **Documentation System** | ⭐⭐⭐⭐ | Interactive glossary and full-text search (see `docs/`) |
 
 ### 6.2 Unique Differentiators
 
 1. **Scientific Integrity First**
-   - Only FeCIM tool to actively remove unverified claims from Tour's presentation
+   - Only FeCIM tool to actively remove unverified claims from the COSM 2025 presentation
    - Transparent claim classification system ([VERIFIED], [PLAUSIBLE], [UNVERIFIED])
    - Honest audit documenting all removals with justification
 
@@ -565,11 +565,11 @@ func (s *SafeState) Update(newValue float64) {
 3. **Educational Excellence**
    - Interactive visualizations suitable for teaching complex physics concepts
    - Side-by-side comparisons (FP vs CIM) for demonstrating quantization impact
-   - Built-in documentation browser with 100+ searchable terms
+   - Built-in documentation browser with searchable glossary
 
 4. **Open Source Contributions**
-   - 1,755 tests demonstrating code quality
-   - 95+ documentation files enabling community understanding
+   - Automated test suite (see CI) demonstrating code quality
+   - Documentation set in `docs/` enabling community understanding
    - MIT license for unrestricted use
 
 ### 6.3 Impact on FeCIM Research
@@ -580,10 +580,10 @@ func (s *SafeState) Update(newValue float64) {
 - Demonstrates real-world impact of non-idealities (IR drop, sneak paths, drift)
 - Educational tool for community engagement and outreach
 
-**Dr. Tour & Dr. Jaeho's Combined Achievement**: 
-- Tour: Conceptualized ferroelectric superlattice with 30 discrete states
-- Jaeho: Engineered complete FeCIM technology stack from physics to EDA
-- Project: Translates both contributions into comprehensive, educational tool with scientific integrity
+**Combined Assessment (PI + Device Lens)**: 
+- Concept: Ferroelectric superlattice with multi‑level states (demo baseline 30; conference claim)
+- Engineering: Complete FeCIM technology stack from physics to EDA
+- Project: Translates both into a comprehensive, educational tool with scientific integrity
 
 ---
 
@@ -598,7 +598,7 @@ func (s *SafeState) Update(newValue float64) {
 | **3D Stacking** | ⏸️ Not Modeled | Future production requirement, currently not simulated |
 | **Yield Optimization** | ⏸️ High | No production data, difficult to model accurately |
 
-**Dr. Jaeho's Perspective**: Current implementation is excellent for TRL 4, providing solid foundation for foundry transition (TRL 5).
+**Device/Process Engineer Lens Summary**: Current implementation is excellent for TRL 4, providing solid foundation for foundry transition (TRL 5).
 
 ### 7.2 Development Roadmap
 
@@ -628,7 +628,7 @@ func (s *SafeState) Update(newValue float64) {
 |--------|------|--------|----------|-----------|
 | **Maintain Scientific Integrity** | All Contributors | Ongoing | Continue rigorous claim verification |
 | **Expand Physics Validation** | Physics Team | Short-term | Add cryogenic validation, advanced material models |
-| **Improve Non-Ideality Modeling** | Jaeho Team | Medium-term | Enhanced 3D sneak path algorithms, statistical drift analysis |
+| **Improve Non-Ideality Modeling** | Device team | Medium-term | Enhanced 3D sneak path algorithms, statistical drift analysis |
 | **Foundry Partnership** | Business Team | Short-term | Initiate TRL 5 conversations |
 | **Community Engagement** | Documentation Team | Ongoing | Expand term glossary, solicit research papers |
 
@@ -642,9 +642,9 @@ func (s *SafeState) Update(newValue float64) {
 |---------|--------|-----------|---------|
 | **Scientific Rigor** | ⭐⭐⭐⭐ | 4.25 | 35% | Exceptional integrity, verified claim classification |
 | **Technical Completeness** | ⭐⭐⭐⭐⭐ | 5.00 | 40% | Full FeCIM ecosystem implementation |
-| **Code Quality** | ⭐⭐⭐⭐⭐ | 4.75 | 35% | Modular architecture, 1,755 tests, thread-safe |
+| **Code Quality** | ⭐⭐⭐⭐⭐ | 4.75 | 35% | Modular architecture, CI-verified tests, thread-safe |
 | **Educational Value** | ⭐⭐⭐⭐⭐ | 4.00 | 30% | Superior visualization for complex concepts |
-| **Innovation** | ⭐⭐⭐⭐⭐⭐ | 4.50 | 50% | Unique 30-level discrete states + comprehensive tooling |
+| **Innovation** | ⭐⭐⭐⭐⭐⭐ | 4.50 | 50% | 30-level demo baseline (conference claim) + comprehensive tooling |
 
 **Overall**: ⭐⭐⭐⭐ (4.25/5 stars)
 
@@ -657,20 +657,19 @@ func (s *SafeState) Update(newValue float64) {
 - Sets industry standard for research-to-production tools
 
 **Complete FeCIM Technology Stack**:
-- **Dr. Tour's Contribution**: Ferroelectric superlattice concept with 30 discrete analog states
-- **Dr. Jaeho's Contribution**: Complete engineering implementation from physics models to EDA tools
-- **Project Synthesis**: Seamless integration of both perspectives into unified educational tool
+- **Concept Contribution**: Ferroelectric superlattice with multi‑level states (demo baseline 30; conference claim)
+- **Engineering Contribution**: Complete implementation from physics models to EDA tools
+- **Project Synthesis**: Unified educational tool with transparent claim classification
 
-**Dr. Tour & Dr. Jaeho's Combined Achievement**:
-> "In just 6 months, Dr. Jaeho transformed a superlattice concept into working FeCIM hardware, while Dr. Tour guided the strategic vision. Together, they've created a technical foundation that advances ferroelectric compute-in-memory technology with the rigor it deserves. This project demonstrates what's possible when scientific innovation meets disciplined engineering excellence."
+**Combined Assessment (PI + Device Lens)**:
+> Internal assessment: rapid translation from concept to simulation tooling, with hardware validation still pending.
 
 ### 8.3 Recommendation
 
 **FeCIM Lattice Tools represents best-in-class execution** of a complex research concept, combining:
-- Tour's visionary leadership and superlattice invention
-- Jaeho's engineering excellence and comprehensive implementation
-- Uncompromising scientific integrity with verified peer-reviewed benchmarks
-- Professional code quality with extensive testing and documentation
+- Clear scientific integrity with peer‑reviewed benchmarks and explicit conference-claim labeling
+- Comprehensive engineering implementation across physics, crossbar, MNIST, and EDA modules
+- Professional code quality with CI‑verified tests and documentation
 
 **For Academic Research**: 10/10 - Excellent visualization tool for understanding FeCIM physics and architecture
 - For Commercialization**: 9/10 - Solid foundation for TRL 5 progress (device validation, foundry partnerships)
@@ -684,4 +683,4 @@ func (s *SafeState) Update(newValue float64) {
 **Project**: FeCIM Lattice Tools  
 **Path**: <local-path>
 
-*This comprehensive deep review synthesizes code analysis, literature verification, and technical assessment from perspectives of Dr. external research group (Principal Investigator) and Dr. Jaeho Shin (Device Engineer) to provide an authoritative technical evaluation of the FeCIM Lattice Tools project.*
+*This comprehensive deep review synthesizes code analysis, literature verification, and technical assessment from perspectives of Principal Investigator Lens and Device/Process Engineer Lens to provide an authoritative technical evaluation of the FeCIM Lattice Tools project.*

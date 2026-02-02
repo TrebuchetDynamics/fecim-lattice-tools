@@ -468,7 +468,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	}
 
 	// After overshoot, we're going in REVERSE direction
-	// This requires stronger fields because we're on the opposite hysteresis branch
+	// This requires careful stepping to avoid ping-pong oscillation
 	if wc.OvershootCount > 0 {
 		// Check if we're going in the same direction as initial or reversed
 		initialDir := 1
@@ -478,12 +478,20 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		isReversed := direction != initialDir
 
 		if isReversed {
-			// REVERSE DIRECTION after overshoot - need strong pulses!
-			// The Preisach model requires fields near Ec to switch
-			// Start at 0.6×Ec and increment by 0.1×Ec
+			// REVERSE DIRECTION after overshoot
+			// Use calibration hints if available, otherwise conservative stepping
+			// Cap at 0.95×Ec to avoid sharp switching that causes ping-pong
 			prevVoltage := math.Abs(wc.CurrentField)
-			minReverseField := 0.6 * wc.EcField
-			reverseStep := 0.10 * wc.EcField
+
+			// Start at 0.7×Ec, increment by 0.05×Ec, cap at 0.95×Ec
+			minReverseField := 0.7 * wc.EcField
+			reverseStep := 0.05 * wc.EcField
+			maxReverseField := 0.95 * wc.EcField // Stay below sharp switching threshold
+
+			// After multiple overshoots, use even finer steps
+			if wc.OvershootCount > 2 {
+				reverseStep = 0.03 * wc.EcField
+			}
 
 			var nextVoltage float64
 			if prevVoltage < minReverseField {
@@ -492,9 +500,9 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 				nextVoltage = prevVoltage + reverseStep
 			}
 
-			// Cap at max field
-			if nextVoltage > wc.MaxField {
-				nextVoltage = wc.MaxField
+			// Cap at max reverse field (below Ec to avoid ping-pong)
+			if nextVoltage > maxReverseField {
+				nextVoltage = maxReverseField
 			}
 
 			// Apply direction
@@ -505,8 +513,8 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			wc.CurrentField = nextVoltage
 			wc.VMin = math.Abs(nextVoltage)
 
-			log.Printf("ISPP REVERSE STEP: level=%d→%d, E=%.3f×Ec→%.3f×Ec (+%.3f×Ec reverse step)",
-				currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, reverseStep/wc.EcField)
+			log.Printf("ISPP REVERSE STEP: level=%d→%d, E=%.3f×Ec→%.3f×Ec (+%.3f×Ec reverse step, cap=%.2f×Ec)",
+				currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, reverseStep/wc.EcField, maxReverseField/wc.EcField)
 			return
 		}
 		// Forward direction after overshoot - use fine steps

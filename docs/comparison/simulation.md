@@ -61,7 +61,7 @@ xbar = CrossSim(
     device_params={
         'g_on': 100e-6,      # 100 µS
         'g_off': 1e-6,       # 1 µS
-        'states': 30,        # 30 analog levels
+        'states': 30,        # 30-level demo baseline (conference claim)
         'drift_nu': 0.001    # Drift exponent
     },
     wire_resistance=2.5,     # Ω per cell

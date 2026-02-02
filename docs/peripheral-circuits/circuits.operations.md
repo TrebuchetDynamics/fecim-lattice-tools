@@ -18,6 +18,8 @@ This document details the operational rules for FeCIM crossbar arrays in two arc
 **Key Papers Referenced:**
 - *Crossbar_Sneak_Path_Analysis_arXiv* — Sneak path modeling
 - *sneak_path_self_rectifying_arrays_2022* — Self-rectifying mitigation
+
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
 - *multilevel_fefet_crossbar_2023* — Multi-level FeFET programming
 - *FeFET_Crossbar_MNIST_Hardware_arXiv* — Hardware demonstration
 - *ferroelectric_CIM_review_2023* — Comprehensive FeCIM review

@@ -157,7 +157,7 @@ stepping clamped for stability (`dtNominal=min(1e‑4, τ/10,000)`, `dtMin=min(1
 
 ### 2. The Memory Stack: Preisach "Wipe-Out"
 
-To reliably store 30 analog levels, the simulator must track the exact history of the domain wall using the **Wipe-Out Property**. The system "forgets" minor loops if a larger voltage excursion occurs.
+To reliably store the 30-level demo baseline (conference claim), the simulator must track the exact history of the domain wall using the **Wipe-Out Property**. The system "forgets" minor loops if a larger voltage excursion occurs.
 
 * **Logic:** If the new input $E_{new}$ exceeds a previous local maximum stored on the stack, the pair (Max, Min) is erased. The system returns to the major loop trajectory.
 
@@ -335,7 +335,7 @@ In a perfect single crystal, all ferroelectric dipoles are perfectly coupled. Th
 
 #### 2.2 Why Analog Memory Needs "Dirt"
 
-Real-world HZO devices achieve 30+ analog states *because* they are not perfect crystals. They are **Polycrystalline**.
+Real-world HZO devices achieve multi‑level analog states (peer‑reviewed 32–140) *because* they are not perfect crystals. They are **Polycrystalline**.
 
 * **Grain Variation:** Thousands of individual grains (domains) exist, each with a slightly different orientation and switching threshold.
 * **Interfacial Layer (Dead Layer):** A non-ferroelectric dielectric layer exists at the electrode interface. This acts as a series capacitor, creating a "Depolarization Field" that fights against the polarization.

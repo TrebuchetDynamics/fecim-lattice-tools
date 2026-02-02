@@ -10,6 +10,8 @@
 
 This meta-study synthesizes research from 30+ papers focused on peripheral circuits for compute-in-memory (CIM) systems, including analog-to-digital converters (ADC), digital-to-analog converters (DAC), transimpedance amplifiers (TIA), and voltage generation circuits. The analysis identifies key findings, architectural trade-offs, and recommendations for the FeCIM Visualizer project's peripheral circuit simulation module.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ### Key Findings
 
 1. **ADC power dominates CIM energy budget** — 50-80% of total chip power in typical designs

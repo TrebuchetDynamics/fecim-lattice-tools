@@ -136,7 +136,7 @@ Your tool is the **first critical step** - it bridges the gap between "I have an
 |---------|---------------------|
 | "I want a 256×256 FeCIM array" | Click, configure, done |
 | "I need files for OpenLane" | Generates Verilog + DEF automatically |
-| "What about 30-level quantization?" | Built-in (matches Dr. Tour's spec) |
+| "What about 30-level quantization?" | Built-in (demo baseline; conference claim) |
 | "Storage vs Memory vs Compute mode?" | All three supported |
 | "How do I place thousands of cells?" | Auto-generates placement grid |
 

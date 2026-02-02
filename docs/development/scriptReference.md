@@ -285,7 +285,7 @@ func TestNewParamPhysics(t *testing.T) {
 
 Current implementation:
 ```go
-// QuantizeTo30Levels maps [0,1] to one of 30 discrete levels
+// QuantizeTo30Levels maps [0,1] to one of 30 discrete levels (demo baseline; conference claim)
 func QuantizeTo30Levels(value float64) float64 {
     if value < 0 {
         value = 0
@@ -576,9 +576,9 @@ DefaultConfig = CompileConfig{
 | pkg/crossbar/array.go | `Cell` | Individual crossbar cell |
 | pkg/crossbar/array.go | `Array` | Crossbar array with cells matrix |
 | pkg/crossbar/array.go | `NewArray(cfg)` | Create new crossbar array |
-| pkg/crossbar/array.go | `ProgramWeight()` | Program weight to cell (quantizes to 30 levels) |
+| pkg/crossbar/array.go | `ProgramWeight()` | Program weight to cell (quantizes to 30-level demo baseline) |
 | pkg/crossbar/array.go | `ProgramWeightMatrix()` | Program entire weight matrix |
-| pkg/crossbar/array.go | `QuantizeTo30Levels()` | Quantize value to FeCIM 30 discrete levels |
+| pkg/crossbar/array.go | `QuantizeTo30Levels()` | Quantize value to FeCIM 30-level demo baseline |
 | pkg/crossbar/array.go | `GetLevel()` | Get quantization level (0-29) |
 | pkg/crossbar/array.go | `MVM(input)` | Matrix-vector multiply: y = W × x |
 | pkg/crossbar/array.go | `VMM(input)` | Vector-matrix multiply: y = x × W |

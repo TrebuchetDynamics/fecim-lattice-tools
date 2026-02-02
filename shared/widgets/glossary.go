@@ -127,7 +127,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "Bits per Cell",
-		Definition: "Information density in single memory element. FeCIM: ~4.9 bits/cell (30 analog states), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
+		Definition: "Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, conference claim), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
 		Category:   "Metrics",
 	},
 	{

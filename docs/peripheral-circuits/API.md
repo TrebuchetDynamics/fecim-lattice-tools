@@ -29,7 +29,7 @@ The `peripherals` package provides models for key analog circuits used in FeCIM 
 - **ChargePump**: Boosts supply voltage to write voltage levels
 - **Analysis**: Functions to characterize system performance
 
-All peripherals are designed for the 30-level FeCIM standard (5-bit storage with 2 levels reserved).
+All peripherals are designed for the 30-level FeCIM demo baseline (conference claim; 5-bit storage with 2 levels reserved).
 
 ### Default Configuration
 

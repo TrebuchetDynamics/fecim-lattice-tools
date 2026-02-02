@@ -105,7 +105,7 @@ Weights must be provided as a JSON file with the following structure:
 
 - **Value Range**: Weights can be any real number. The compiler automatically finds min/max and normalizes.
 - **Array Size**: Weight dimensions must fit within physical array (check `-rows` and `-cols` flags)
-- **Positive/Negative**: The system supports both positive and negative weights through 30-level quantization
+- **Positive/Negative**: The system supports both positive and negative weights through 30-level baseline quantization (conference claim)
 - **PSNR Target**: Aim for 40+ dB quantization PSNR for minimal accuracy loss
 
 ### Quantization Process

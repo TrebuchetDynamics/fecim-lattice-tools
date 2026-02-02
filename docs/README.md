@@ -91,7 +91,7 @@ Run calibration:
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| FeCIM Levels | 30 | Dr. Tour COSM 2025 |
+| FeCIM Levels | 30 (conference claim baseline) | COSM 2025 (pending peer review); peer‑reviewed devices report 32–140 states |
 | Pr (RT) | 15-34 µC/cm² | Nature Commun. 2025 |
 | Pr (4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 |
 | Ec | 0.6-1.5 MV/cm | Nature Commun. 2025 |

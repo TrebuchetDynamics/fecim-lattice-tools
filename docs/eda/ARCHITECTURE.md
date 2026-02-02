@@ -132,7 +132,7 @@ Complete design output:
 |----------|---------|
 | `GenerateDesign(config)` | Main entry point: dispatch to mapWeights or GenerateBlank |
 | `GenerateBlank(config)` | Initialize array without weights (Level 0, GMin) |
-| `mapWeights(config)` | Quantize weight matrix to 30 levels, calculate stats |
+| `mapWeights(config)` | Quantize weight matrix to 30 levels (demo baseline; conference claim), calculate stats |
 
 **Weight Quantization Logic** (mapWeights):
 1. Find weight range: [wMin, wMax]
@@ -672,7 +672,7 @@ go test -v ./module6-eda/pkg/compiler/  # Verbose compiler tests
 - **DEF**: Design Exchange Format (placement constraints)
 - **FeCIM**: Ferroelectric Compute-in-Memory (HfO₂-ZrO₂ superlattice device)
 - **LEF**: Library Exchange Format (cell abstractions)
-- **Level**: Programmed conductance state (0-29 for 30-level device)
+- **Level**: Programmed conductance state (0-29 for 30-level demo baseline; conference claim)
 - **OpenLane**: Automated RTL-to-GDSII flow (uses Yosys, OpenROAD, KLayout)
 - **Quantization**: Mapping continuous weights to discrete levels
 - **Sneak Path**: Unwanted current leakage through unselected cells in passive crossbar

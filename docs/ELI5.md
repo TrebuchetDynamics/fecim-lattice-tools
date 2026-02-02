@@ -8,7 +8,7 @@
 
 **If you only have 60 seconds, read this.**
 
-> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation) — Dr. Tour explicitly stated this at COSM 2025 [1]. The **30 states** and **87% MNIST** claims are from Dr. Tour's presentation, with similar results in peer-reviewed literature [2][3]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and remains **unverified** in peer-reviewed research (verified range: 25-100× [4]).
+> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation) — Dr. Tour explicitly stated this at COSM 2025 [1]. The **30 states** and **87% MNIST** figures are **conference-only claims** from Dr. Tour's presentation (not peer-reviewed). Peer‑reviewed devices report **32–140 states** and **96.6–98.24% MNIST**, which bracket the demo baseline [2][3]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and remains **unverified** in peer-reviewed research (verified range: 25-100× [4]).
 
 ## The Problem
 AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
@@ -269,7 +269,7 @@ In the 1940s-60s, analog computers were common. They used voltages to represent 
 
 **Ferroelectric CIM brings analog back** with:
 - Ferroelectric memory that holds analog values stably
-- Enough precision (30 levels) for AI applications
+- Enough precision (30-level demo baseline) for AI applications
 - Inherent multiplication via Ohm's Law
 
 ## The Best of Both Worlds
@@ -545,9 +545,9 @@ When you push and release, the polarization traces a loop:
 
 **Key insight:** Going up is NOT the same as going down! The material remembers where it came from.
 
-## 30 Analog States (The Ferroelectric CIM Advantage)
+## 30 Analog States (Demo Baseline; Conference Claim)
 
-By stopping at different points, HZO can store 30 different levels:
+By stopping at different points, HZO can store multiple levels; this demo uses a 30-level baseline (conference claim):
 
 ```
 Polarization
@@ -566,9 +566,10 @@ Polarization
 ```
 
 Regular memory: 1 bit (ON/OFF)
-Ferroelectric CIM: ~5 bits (30 states ≈ 2⁵)
+Ferroelectric CIM: ~5 bits (30-state demo baseline ≈ 2⁵; conference claim)
 
-> "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
+> "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour  
+> *Conference claim (COSM 2025; pending peer review).*
 
 ---
 
@@ -651,7 +652,7 @@ Stacked layers:
 | Thickness | ~10 nm | Fits in tiny chips! |
 | Voltage to switch | ~1-3 V | Works with phone batteries |
 | Endurance | 10¹² cycles | Lasts basically forever |
-| States | ~30 levels | Stores way more info |
+| States | 32–140 levels (peer‑reviewed); demo baseline 30 | Stores way more info |
 | CMOS compatible | ✅ | Can use existing factories |
 
 > "Works on a standard CMOS line and can translate just like that." — Dr. Tour
@@ -706,7 +707,7 @@ The magic is in Step 2 and 3: alternating HfO₂ and ZrO₂ creates the special 
 | Saturation Polarization | Ps | 25 | μC/cm² |
 | Coercive Field | Ec | 1.0 | MV/cm |
 | Film Thickness | t | 10 | nm |
-| States | - | ~30 | - |
+| States | - | 30-level demo baseline (claim) | - |
 
 ---
 
@@ -784,7 +785,7 @@ Polarization UP:        Polarization DOWN:
 ```
 
 **Pros:**
-- 30 stable analog levels!
+- 30-level demo baseline (conference claim)
 - Ultra-low energy
 - 10¹² cycle endurance
 - CMOS compatible
@@ -798,7 +799,7 @@ Polarization UP:        Polarization DOWN:
 
 | Property | ReRAM | PCM | MRAM | **HZO (Ferroelectric CIM)** |
 |----------|-------|-----|------|----------------------|
-| Analog levels | 2-4 | 4-8 | 2 | **30 (claim)** |
+| Analog levels | 2-4 | 4-8 | 2 | **30 (conference claim baseline)** |
 | Write energy | Medium | High | Low | **Very Low** |
 | Endurance | 10⁶ | 10⁸ | 10¹⁵ | **10¹²** |
 | Speed | Fast | Slow | Very Fast | **Fast** |
@@ -813,7 +814,7 @@ The killer feature is **30 analog levels (conference claim baseline)**:
 ```
 AI Weight Storage Comparison:
 
-ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30 levels, claim):
+ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30-level baseline, claim):
 █░                    █░░░                 █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 1 bit                 2 bits               ~5 bits
 
@@ -1106,7 +1107,7 @@ Demo 8: "This is why it beats everything else"     ✅ CLI
 
 **What it shows:**
 - P-E hysteresis curve in real-time with fade trail
-- 30 discrete levels visualized
+- 30 discrete levels visualized (demo baseline)
 - Material selector (Default HZO, Optimized, Ferroelectric CIM)
 - Waveform modes (Sine, Triangle, Square, Manual)
 
@@ -1243,7 +1244,7 @@ fecim-lattice-tools/
 │
 ├── module2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
 │   ├── cmd/crossbar-gui/  ← Main program
-│   ├── pkg/crossbar/      ← Array model (30 levels)
+│   ├── pkg/crossbar/      ← Array model (30-level baseline)
 │   └── pkg/gui/           ← IR drop, sneak paths tabs
 │
 ├── module3-mnist/           ✅ MNIST classifier (Fyne GUI)
@@ -1312,7 +1313,7 @@ go mod tidy
 
 ```bash
 go test ./... -v
-# Should see: 130+ tests passing
+# See CI for the latest test status
 ```
 
 ---
@@ -1493,7 +1494,8 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 # Part 17: Dr. Tour's Quotes
 
-> "It's got **30 discrete states**. So it's not 0-1-0-1."
+> "It's got **30 discrete states**. So it's not 0-1-0-1."  
+> *Conference claim (COSM 2025; pending peer review).*
 
 > "We're at **87% validation** here." (unverified conference claim)
 
@@ -1512,7 +1514,7 @@ Ferroelectric CIM is arriving at exactly the right moment.
 ## All 8 Demos Complete!
 
 **GUI Demos (Fyne):**
-- ✅ Demo 1: Hysteresis visualizer with 30-level indicator
+- ✅ Demo 1: Hysteresis visualizer with 30-level (conference-claim baseline) indicator
 - ✅ Demo 2: Crossbar MVM with IR drop & sneak path tabs
 - ✅ Demo 3: MNIST classifier with confusion matrix
 
@@ -1524,7 +1526,7 @@ Ferroelectric CIM is arriving at exactly the right moment.
 - ✅ Demo 8: Technology comparison (CPU vs GPU vs CIM)
 
 **Testing & Quality:**
-- ✅ 130+ unit tests passing
+- ✅ Automated tests (see CI for latest status)
 - ✅ Honesty disclaimers on estimated specs
 - ✅ TRL 4 warnings in investor-facing demos
 
@@ -1789,7 +1791,7 @@ A: Every technology has challenges:
 
 **Q: How accurate can it get?**
 A: Dr. Tour claimed 87% MNIST accuracy (unverified conference claim). State-of-the-art digital achieves ~99%. The gap comes from:
-- Quantization (30 levels vs. 32-bit float)
+- Quantization (30-level baseline vs. 32-bit float)
 - Analog noise and non-idealities
 This is acceptable for many applications; techniques like quantization-aware training help.
 
@@ -1803,7 +1805,7 @@ A: LLMs are a perfect fit because they're dominated by matrix multiplications. A
 A: Yes, but HZO is remarkably stable. Ferroelectric properties persist across typical operating temperatures (-40°C to 125°C). This is better than many competing technologies.
 
 **Q: What if a cell fails?**
-A: Like any memory, redundancy and error correction are used. The 30-level scheme has built-in margin—small variations don't cause misclassification. For critical applications, extra cells provide fault tolerance.
+A: Like any memory, redundancy and error correction are used. The 30-level demo baseline has built-in margin—small variations don't cause misclassification. For critical applications, extra cells provide fault tolerance.
 
 ## Business Questions
 
@@ -1813,7 +1815,7 @@ A: Major players include:
 - **Intel**: Invested in ReRAM
 - **IBM**: PCM research
 - **Startups**: Mythic (ReRAM), Syntiant (mixed-signal), Rain AI
-Ferroelectric CIM's advantage is the 30-level HZO specifically.
+Ferroelectric CIM's advantage is multi-level HZO; this demo uses a 30-level baseline (conference claim).
 
 **Q: What's the market size?**
 A: AI accelerator market is projected at $100+ billion by 2030. Memory market is $150+ billion. Compute-in-memory could capture significant share of both.
@@ -2322,13 +2324,13 @@ Improvement: 10,000×!
 │                                                            │
 │  Ohm's Law:     I = V × G    (physics does multiplication)│
 │  MVM:           I = G × V    (matrix-vector multiply)     │
-│  States:        30 levels    (not binary!)                │
+│  States:        30 levels (conference-claim baseline)     │
 │  MNIST:         87% (Tour, unverified)                    │
 │                                                            │
 │  GUI Demos:     module1-hysteresis, module2-crossbar,         │
 │                 module3-mnist (Fyne)                        │
 │  CLI Demos:     demo4-8 (go run ./cmd/...)                │
-│  Run Tests:     go test ./... (130+ tests)                │
+│  Run Tests:     go test ./... (see CI status)             │
 │                                                            │
 │  ⚠️  TRL 4: Lab validation only                           │
 │  ⚠️  Energy claims not independently verified              │

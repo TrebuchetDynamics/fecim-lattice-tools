@@ -849,7 +849,7 @@ This is physically accurate for thermally activated processes like:
 
 ### Unverified Claims
 
-- **30 analog states**: Demonstrated by Dr. Tour at COSM 2025 (conference, not peer-reviewed)
+- **30 analog states**: Conference claim by Dr. Tour at COSM 2025 (pending peer review)
 - **Drift coefficient 0.001**: Assumed value for simulation; <10 year retention requires <0.001
 
 ---

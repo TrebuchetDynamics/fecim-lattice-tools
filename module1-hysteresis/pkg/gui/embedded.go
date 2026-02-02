@@ -44,7 +44,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		numLevels:       numLevels,
 		calibrationUp:   make([]float64, numLevels),
 		calibrationDown: make([]float64, numLevels),
-		maxHistory:      2000,
+		maxHistory:      50000,
 		eHistory:        make([]float64, 0, 2000),
 		pHistory:        make([]float64, 0, 2000),
 		autoMode:        true,

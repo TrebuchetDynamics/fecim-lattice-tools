@@ -260,7 +260,7 @@ type CrossbarArray interface {
 
 **Requirements:**
 - Support arrays from 8×8 to 1024×1024
-- Quantize all weights to exactly 30 discrete levels
+- Quantize all weights to exactly 30 discrete levels (demo baseline; conference claim)
 - Apply Ohm's Law: I = G × V at each cell
 - Apply Kirchhoff's Current Law: Sum currents on each row
 

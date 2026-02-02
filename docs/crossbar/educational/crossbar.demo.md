@@ -82,8 +82,8 @@ Cross-platform native GUI featuring:
   - Array size (8×8 to 128×128)
   - Noise level (0-20%)
   - ADC resolution (4-10 bits)
-- **Custom "Ferroelectric CIM" colormap** matching 30 discrete levels
-- **30-level discrete indicator widget**
+- **Custom "Ferroelectric CIM" colormap** matching the 30-level demo baseline (conference claim)
+- **30-level (conference-claim baseline) discrete indicator widget**
 - **Vector bar charts** for input/output visualization
 - **One-click MVM, IR Drop, and Sneak Path analysis**
 - **RMSE comparison charts** (ideal vs actual)
@@ -315,7 +315,7 @@ Test coverage:
 - MVM correctness verification
 - IR drop calculation
 - Sneak path current analysis
-- 30-level conductance quantization
+- 30-level conductance quantization (demo baseline; conference claim)
 - Non-ideality impact on accuracy
 
 ---
@@ -359,7 +359,7 @@ For large arrays (>64×64):
 ## Demo Flow (For Video/Presentation)
 
 1. **Open** - Window shows crossbar heatmap
-2. **Point out** color legend ("See the 30 levels")
+2. **Point out** color legend ("See the 30-level baseline")
 3. **Click** "Run MVM"
 4. **Watch** animation (1.1 seconds, smooth)
 5. **Show** metrics panel updating

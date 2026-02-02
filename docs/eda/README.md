@@ -110,7 +110,7 @@ endmodule
 **What it doesn't model:**
 - Polarization states (Pr, Ps)
 - Hysteresis (Preisach model)
-- 30-level analog states
+- 30-level demo baseline (conference claim; pending peer review)
 - Retention, endurance, drift
 
 ### 3. No Physical Layout

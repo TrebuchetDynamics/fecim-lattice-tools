@@ -30,7 +30,7 @@ Neural Network Digit Recognition Demo
 | **Read Noise** | Gaussian multiplicative (σ/μ) |
 | **DAC Quantization** | Input voltage resolution (2^bits levels) |
 | **ADC Quantization** | Output current resolution (2^bits levels) |
-| **Energy Model** | 10 fJ/bit per MAC (≈50 fJ @ 30 levels) + ADC/DAC overhead |
+| **Energy Model** | 10 fJ/bit per MAC (≈50 fJ @ 30-level baseline) + ADC/DAC overhead |
 
 ## Key Parameters
 
@@ -54,6 +54,6 @@ Neural Network Digit Recognition Demo
 | Configuration | Accuracy |
 |---------------|----------|
 | FP32 (ideal) | ~98% |
-| 30 levels, low noise | 92-96% |
+| 30-level baseline, low noise | 92-96% |
 | Peer-reviewed FeCIM | 96.6-98.24% |
 | 2 levels (binary) | ~50% |

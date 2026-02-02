@@ -65,7 +65,7 @@ The demo runs both paths simultaneously:
 ## Why 30 Levels?
 
 ### Physics Justification
-- **HZO Ferroelectric:** ~30 stable polarization states
+- **HZO Ferroelectric:** Demo baseline uses 30 states (conference claim); peer‑reviewed devices report 32–140 states
 - **Domain Wall Pinning:** Natural quantization from crystal defects
 - **ADC Resolution:** 6-bit (64 levels) → 30 reliably distinguishable
 
@@ -75,13 +75,13 @@ The demo runs both paths simultaneously:
 |------------|--------|-------|
 | Flash (NAND) | 2-4 | TLC/QLC |
 | ReRAM | 4-16 | Limited by variability |
-| **FeCIM (HZO)** | **30** | **5x better than ReRAM** |
+| **FeCIM (HZO)** | **30 (conference-claim baseline)** | **5x better than ReRAM** |
 | Ideal (FP32) | 2^32 | Baseline |
 
 **Impact on MNIST (illustrative):**
 - 2 levels (binary): ~50% accuracy (worse than random!)
 - 8 levels: ~75%
-- **30 levels: ~92–96% in simulation** (depends on noise/ADC/DAC)
+- **30 levels (demo baseline): ~92–96% in simulation** (depends on noise/ADC/DAC)
 - Float32: ~98% (theoretical)
 
 ### Why Not 64 Levels (6-bit ADC)?
@@ -400,9 +400,9 @@ This demo focuses on inference only.
 |---------|-----------|--------|--------|--------|
 | Mythic | Flash | 4 | ~5 pJ/MAC | Shipping |
 | Analog Inference | Flash | 8 | ~3 pJ/MAC | R&D |
-| **FeCIM** | **HZO FeFET** | **30** | **50 fJ/MAC** | **TRL 4** |
+| **FeCIM** | **HZO FeFET** | **30 (conference-claim baseline)** | **50 fJ/MAC** | **TRL 4** |
 
-FeCIM's advantage: 10× lower energy (fJ vs pJ), 5× more levels (30 vs 4-8).
+FeCIM's advantage: 10× lower energy (fJ vs pJ), 5× more levels (30-level demo baseline vs 4-8).
 
 ---
 

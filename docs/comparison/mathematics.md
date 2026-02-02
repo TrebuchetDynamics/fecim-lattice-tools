@@ -575,7 +575,7 @@ where:
 From `module2-crossbar/pkg/crossbar/array.go`:
 
 ```go
-// FeCIMLevels is the number of discrete analog states per Dr. Tour's specs
+// FeCIMLevels is the number of discrete analog states in the demo baseline (conference claim)
 const FeCIMLevels = 30
 
 // QuantizeTo30Levels quantizes a value to exactly 30 discrete levels (0-29)

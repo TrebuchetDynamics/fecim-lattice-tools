@@ -402,7 +402,7 @@ func NewApp() *App {
 		calibrationDown:         make([]float64, numLevels),
 		calibrationTemp:         300, // Default room temperature
 		tempCalibrations:        make(map[int]*TempCalibration),
-		maxHistory:              2000,
+		maxHistory:              50000,
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
@@ -481,7 +481,7 @@ func NewAppWithMaterial(materialName string) *App {
 		calibrationDown:         make([]float64, numLevels),
 		calibrationTemp:         300, // Default room temperature
 		tempCalibrations:        make(map[int]*TempCalibration),
-		maxHistory:              2000,
+		maxHistory:              50000,
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
