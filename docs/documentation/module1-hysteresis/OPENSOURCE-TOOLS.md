@@ -1,21 +1,21 @@
 # Module 1: Hysteresis - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- fyne.io/fyne/v2 (GUI)
-- github.com/charmbracelet/bubbletea (TUI mode)
-- github.com/vulkan-go/vulkan (optional renderer)
+- FerroX: GPU-accelerated phase-field ferroelectric domain simulation (HfO2).
+- FERRET (MOOSE): multiphysics phase-field ferroelectric modeling.
+- python-preisach: educational Preisach hysteresis model implementation.
+- Preisachmodel (fddf22): forward/inverse Preisach identification.
+- pyhist: discrete Preisach model with FORC analysis.
+- JAmodel: Jiles-Atherton style hysteresis modeling (MATLAB/Octave).
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/hysteresis-modeling-tools.md`
+- `docs/opensource-tools/ferroelectric-simulation-tools.md`
+- `docs/opensource-tools/tool-comparison-matrix.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

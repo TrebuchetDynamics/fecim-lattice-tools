@@ -1,20 +1,20 @@
 # Module 3: MNIST - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- MNIST dataset (gz files in module3-mnist/data)
-- fyne.io/fyne/v2 (GUI)
+- Brevitas: quantization-aware training with arbitrary bit widths.
+- HAWQ: mixed-precision quantization with sensitivity analysis.
+- QKeras: quantization-aware training in Keras.
+- IBM AIHWKIT: analog hardware-aware training toolkit.
+- MemTorch: end-to-end memristive inference with non-idealities.
+- CrossSim: crossbar inference and non-ideality modeling.
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/nn-hardware-mapping-tools.md`
+- `docs/opensource-tools/memristor-rram-tools.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

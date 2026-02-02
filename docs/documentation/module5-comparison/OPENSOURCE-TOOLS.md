@@ -1,20 +1,19 @@
 # Module 5: Comparison - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- fyne.io/fyne/v2 (GUI)
-- Go standard library
+- DNN+NeuroSim: device-circuit-architecture co-simulator for energy and latency.
+- NeuroSim: chip-level estimation for memory and compute arrays.
+- MNSIM 2.0: system-level CIM performance and energy modeling.
+- CrossSim: array-level validation feeding system-level estimates.
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/memristor-rram-tools.md`
+- `docs/opensource-tools/opensource-crossbar.md`
+- `docs/opensource-tools/tool-comparison-matrix.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

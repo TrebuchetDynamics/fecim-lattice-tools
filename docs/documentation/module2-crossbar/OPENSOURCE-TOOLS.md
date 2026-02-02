@@ -1,20 +1,19 @@
 # Module 2: Crossbar - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- fyne.io/fyne/v2 (GUI)
-- Go standard library math + plotting utilities
+- CrossSim (Sandia): iterative crossbar solver with GPU support.
+- badcrossbar (UCL): nodal-analysis crossbar solver for validation.
+- MemTorch: PyTorch-based memristive crossbar simulation with non-idealities.
+- DNN+NeuroSim: chip-level energy and latency estimation for crossbar networks.
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/opensource-crossbar.md`
+- `docs/opensource-tools/memristor-rram-tools.md`
+- `docs/opensource-tools/nn-hardware-mapping-tools.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

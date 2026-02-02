@@ -139,9 +139,10 @@ func isFullDocument(raw string) bool {
 
 func wrapLatex(body, extraPreamble string, inline bool) string {
 	var b strings.Builder
-	b.WriteString("\\documentclass[preview]{standalone}\n")
+	b.WriteString("\\documentclass{article}\n")
 	b.WriteString("\\usepackage{amsmath,amssymb}\n")
 	b.WriteString("\\usepackage{bm}\n")
+	b.WriteString("\\pagestyle{empty}\n")
 	if extraPreamble != "" {
 		b.WriteString(strings.TrimSpace(extraPreamble))
 		b.WriteString("\n")

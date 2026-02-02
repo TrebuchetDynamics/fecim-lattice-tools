@@ -1,20 +1,20 @@
 # Module 6: EDA - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- Makefile in module6-eda for build/run
-- fyne.io/fyne/v2 (GUI)
+- OpenLane: RTL-to-GDS flow integrating open-source tools.
+- OpenROAD: place-and-route for digital layouts.
+- Yosys: RTL synthesis to gate-level netlists.
+- Magic: layout editor and DRC.
+- Netgen: LVS (layout vs schematic).
+- KLayout: GDS viewer and cleanup.
+- Xschem + ngspice: analog schematic and simulation.
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/eda-tools.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

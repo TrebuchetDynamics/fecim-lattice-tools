@@ -1,19 +1,18 @@
 # Module 7: Docs - Open-Source Tools
 
-## Libraries and Dependencies
+## Goal-aligned tools (external)
 
-- fyne.io/fyne/v2 (GUI)
+- MkDocs: static documentation sites with navigation and search.
+- Docusaurus: curriculum-style docs with versioning and sidebar control.
+- mdBook: book-style Markdown publishing.
+- docsify: client-side documentation rendering.
+- Sphinx: long-form technical documentation (Python ecosystem).
 
-## Useful Commands
+## Where to read more in this repo
 
-```
-# Build and test selectively
-
-go test ./{m['key']}/...
-```
+- `docs/opensource-tools/README.md`
 
 ## Notes
 
-- This list focuses on tools used directly by the module.
-- For global build commands, see the repository README.
-
+- These are external tools available online; we do not vendor them here.
+- Use `FEATURES.md` for in-repo implementation details.

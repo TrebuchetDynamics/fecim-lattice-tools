@@ -128,6 +128,16 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 	switch wc.State {
 	case StateApply:
+		// If we're already at target, skip pulses entirely.
+		if wc.PulseCount == 0 && currentLevel == wc.TargetLevel {
+			wc.LastVerifyLevel = currentLevel
+			wc.LastError = 0
+			wc.State = StateSuccess
+			wc.SuccessCount++
+			log.Printf("ISPP EARLY: already at target level %d, no pulse needed", currentLevel)
+			return 0, true
+		}
+
 		// Calculate field for first pulse if not done yet
 		if wc.PulseCount == 0 && wc.CurrentField == 0 {
 			wc.calculateNextField(currentLevel)
@@ -156,6 +166,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// If we were going UP and overshot, we are stuck High. Reset Low (-Max).
 		// If we were going DOWN and overshot, we are stuck Low. Reset High (+Max).
 		goingUp := wc.TargetLevel > wc.InitialLevel
+		if wc.TargetLevel == wc.InitialLevel {
+			goingUp = currentLevel < wc.TargetLevel
+		}
 
 		if goingUp {
 			targetField = -wc.MaxField * 1.5 // Deep Negative
@@ -217,6 +230,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// Standard servoing (reducing voltage) won't work due to remanence.
 			// Must RESET.
 			goingUp := wc.TargetLevel > wc.InitialLevel
+			if wc.TargetLevel == wc.InitialLevel {
+				goingUp = currentLevel < wc.TargetLevel
+			}
 			overshoot := (goingUp && currentLevel > wc.TargetLevel) || (!goingUp && currentLevel < wc.TargetLevel)
 
 			// DEBUG: Always log the overshoot check
@@ -346,6 +362,9 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 
 		// Check the intended direction
 		goingDown := targetLevel < wc.InitialLevel
+		if targetLevel == wc.InitialLevel {
+			goingDown = currentLevel > targetLevel
+		}
 		if goingDown {
 			// We're trying to go DOWN but still above target
 			// Current field wasn't strong enough (in negative direction)
@@ -368,6 +387,9 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 
 	// Apply sign based on direction
 	goingDown := targetLevel < wc.InitialLevel
+	if targetLevel == wc.InitialLevel {
+		goingDown = currentLevel > targetLevel
+	}
 	if goingDown {
 		nextVoltage = -nextVoltage
 	}
