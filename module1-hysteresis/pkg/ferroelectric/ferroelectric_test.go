@@ -116,7 +116,7 @@ func TestCoerciveFieldSwitching(t *testing.T) {
 	}
 }
 
-// TestDiscreteStatesCount verifies 30 discrete states for FeCIM.
+// TestDiscreteStatesCount verifies 30 discrete states for the demo baseline.
 func TestDiscreteStatesCount(t *testing.T) {
 	material := DefaultHZO()
 	model := NewPreisachModel(material)
@@ -124,7 +124,7 @@ func TestDiscreteStatesCount(t *testing.T) {
 	states := model.DiscreteStates(30)
 
 	if len(states) != 30 {
-		t.Errorf("Expected 30 discrete states, got %d", len(states))
+		t.Errorf("Expected 30 discrete states (demo baseline), got %d", len(states))
 	}
 
 	// Verify states span from -Ps to +Ps
@@ -144,7 +144,7 @@ func TestDiscreteStatesCount(t *testing.T) {
 		}
 	}
 
-	t.Logf("30 discrete states verified, spacing: %.6f C/m²", expectedSpacing)
+	t.Logf("30 discrete states baseline verified, spacing: %.6f C/m²", expectedSpacing)
 }
 
 // TestMaterialParameters verifies HZO material parameters are physically reasonable.
