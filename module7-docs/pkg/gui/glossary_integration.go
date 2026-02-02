@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"image/color"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -239,11 +240,12 @@ func highlightTermsInLine(line string, terms []glossaryTermEntry) string {
 
 			// Get the actual text (preserve original casing from content)
 			originalText := line[start:end]
+			escapedTerm := url.PathEscape(term.original)
 			// Use markdown link with glossary:// scheme for clickable terms
 			replacements = append(replacements, replacement{
 				start:   start,
 				end:     end,
-				newText: "[" + originalText + "](glossary://" + term.original + ")",
+				newText: "[" + originalText + "](glossary://" + escapedTerm + ")",
 			})
 		}
 	}
@@ -317,6 +319,7 @@ type DocumentMetadataWidget struct {
 	title       string
 	category    string
 	readingTime int // minutes
+	termCount   int
 	window      fyne.Window
 	container   *fyne.Container
 }
@@ -332,10 +335,14 @@ func NewDocumentMetadataWidget(window fyne.Window) *DocumentMetadataWidget {
 }
 
 // SetMetadata updates the metadata display
-func (d *DocumentMetadataWidget) SetMetadata(title, category string, readingTime int, _ []string) {
+func (d *DocumentMetadataWidget) SetMetadata(title, category string, readingTime int, terms []string) {
 	d.title = title
 	d.category = category
 	d.readingTime = readingTime
+	d.termCount = 0
+	if len(terms) > 0 {
+		d.termCount = len(terms)
+	}
 	d.rebuild()
 	d.Refresh()
 }
@@ -361,6 +368,15 @@ func (d *DocumentMetadataWidget) rebuild() {
 		readingLabel.TextStyle = fyne.TextStyle{Italic: true}
 		d.container.Add(readingLabel)
 	}
+
+	if d.termCount > 0 {
+		if len(d.container.Objects) > 0 {
+			d.container.Add(widget.NewLabel("|"))
+		}
+		termLabel := widget.NewLabel(formatTermCount(d.termCount))
+		termLabel.TextStyle = fyne.TextStyle{Italic: true}
+		d.container.Add(termLabel)
+	}
 }
 
 func formatReadingTime(minutes int) string {
@@ -368,4 +384,11 @@ func formatReadingTime(minutes int) string {
 		return "1 min read"
 	}
 	return fmt.Sprintf("%d min read", minutes)
+}
+
+func formatTermCount(count int) string {
+	if count == 1 {
+		return "1 term"
+	}
+	return fmt.Sprintf("%d terms", count)
 }

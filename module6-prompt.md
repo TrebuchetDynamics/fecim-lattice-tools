@@ -23,6 +23,14 @@ Objective (priority-ordered)
   4. Documentation alignment: update docs to reflect real behavior and limitations.
   5. Papers: download only if already referenced in docs and required for verification.
 
+Current Baselines (keep aligned in code + docs)
+
+  - GMin default: 10.0 μS; GMax default: 100.0 μS.
+  - Power pins: VPWR/VGND (not VDD/VSS) in Verilog/LEF/Liberty/DEF.
+  - 1T1R geometry: 0.92 × 3.40 μm cell; row height 3.40 μm.
+  - Verilog BL buses are inout (passive + 1T1R); SL is input for 1T1R.
+  - 30 levels => 4.91 bits/cell (log2(30)).
+
 Tasks
 
   1. Compiler and mapping fidelity (no approximations unless explicitly called out)
@@ -71,6 +79,15 @@ Validation
   - Run: make -C module6-eda cli
   - Only if explicitly required: make -C module6-eda run
   - Use logs to confirm compilation, export, and validation steps.
+  - If CLI regenerates module6-eda/data/fecim_array.* artifacts, keep them unless instructed otherwise.
+
+Expected CLI output checks (sanity)
+
+  - Header shows "FeCIM Array Generator - Compute Mode".
+  - Levels line shows: "Levels:       30 (4.91 bits/cell)".
+  - Conductance line shows: "Conductance:  10.0 - 100.0 μS".
+  - Exports include: data/fecim_array_design.json, data/fecim_array_cells.csv, data/fecim_array.sp, data/fecim_array.v, data/fecim_array.def.
+  - CLI log file lives at ~/.fecim/logs/module6-eda-cli.log (stdout still the primary evidence).
   - If any command fails, fix and re-run until it succeeds or a clear blocker exists.
 
 Execution Rules (Autonomous)

@@ -140,9 +140,9 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			}, nil)
 		} else {
 			bias := 0.5
-			if crossingInitial {
+			if crossingNow {
 				ratio := math.Abs(targetP / c.Material.Ps)
-				bias = 0.05 + 0.15*ratio
+				bias = 0.1 + 0.2*ratio
 				if bias < 0.1 {
 					bias = 0.1
 				}

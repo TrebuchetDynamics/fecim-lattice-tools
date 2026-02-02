@@ -37,6 +37,7 @@ type EmbeddedDocsApp struct {
 	breadcrumbs   *BreadcrumbWidget
 	toc           *TableOfContentsWidget
 	docMetadata   *DocumentMetadataWidget
+	glossaryPills *GlossaryPillsWidget
 	searchDialog  *SearchDialog
 
 	// State
@@ -107,6 +108,7 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 
 	// Document metadata
 	app.docMetadata = NewDocumentMetadataWidget(app.window)
+	app.glossaryPills = NewGlossaryPillsWidget(app.window)
 
 	// Search dialog
 	app.searchDialog = NewSearchDialog(app.searchIndex, app.window, func(path string) {
@@ -145,6 +147,7 @@ func (app *EmbeddedDocsApp) buildMainContent() fyne.CanvasObject {
 	topSection := container.NewVBox(
 		app.breadcrumbs,
 		app.docMetadata,
+		app.glossaryPills,
 	)
 
 	return container.NewBorder(
@@ -308,6 +311,7 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 		app.setupGlossaryClickHandlers()
 	})
 	app.currentFile = path
+	app.history.AddRecent(path)
 
 	// Update breadcrumbs
 	fyne.Do(func() {
@@ -327,6 +331,9 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 			app.docMetadata.SetMetadata(meta.Title, meta.Category, meta.ReadingTime, terms)
 		})
 	}
+	fyne.Do(func() {
+		app.glossaryPills.SetTerms(terms)
+	})
 }
 
 // setupGlossaryClickHandlers iterates through RichText segments and adds click handlers for glossary:// links

@@ -8,12 +8,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Breakpoint constants define responsive breakpoints
+// Breakpoint constants define responsive breakpoints (width in px)
+// Mobile: < 600, Tablet: 600-900, Desktop: 900-1200, Wide: > 1200
 const (
-	BreakpointMobile  float32 = 600  // Single column, hamburger menu
-	BreakpointTablet  float32 = 900  // Sidebar + content
-	BreakpointDesktop float32 = 1200 // Sidebar + content + ToC
-	BreakpointWide    float32 = 1600 // Extra breathing room
+	BreakpointTablet  float32 = 600  // Tablet >= 600
+	BreakpointDesktop float32 = 900  // Desktop >= 900
+	BreakpointWide    float32 = 1200 // Wide > 1200
 )
 
 // LayoutMode represents the current responsive layout configuration
@@ -41,6 +41,7 @@ type LayoutManager struct {
 
 	// Container that holds the responsive layout
 	container *fyne.Container
+	root      *fyne.Container
 
 	// Callbacks
 	onSidebarToggle func(visible bool)
@@ -54,7 +55,7 @@ func NewLayoutManager() *LayoutManager {
 	return &LayoutManager{
 		currentMode:    LayoutDesktop,
 		sidebarVisible: true,
-		tocVisible:     false,
+		tocVisible:     true,
 	}
 }
 
@@ -102,7 +103,7 @@ func (lm *LayoutManager) OnResize(size fyne.Size) {
 
 	var newMode LayoutMode
 	switch {
-	case width >= BreakpointWide:
+	case width > BreakpointWide:
 		newMode = LayoutWide
 	case width >= BreakpointDesktop:
 		newMode = LayoutDesktop
@@ -174,7 +175,33 @@ func (lm *LayoutManager) BuildLayout() *fyne.Container {
 	defer lm.mu.Unlock()
 
 	lm.applyLayoutMode()
-	return lm.container
+	if lm.root == nil {
+		lm.root = container.New(&resizeWatcherLayout{onResize: lm.OnResize}, lm.container)
+	}
+	return lm.root
+}
+
+// resizeWatcherLayout forwards size changes to the layout manager.
+type resizeWatcherLayout struct {
+	onResize func(fyne.Size)
+}
+
+func (r *resizeWatcherLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if r.onResize != nil {
+		r.onResize(size)
+	}
+	if len(objects) == 0 {
+		return
+	}
+	objects[0].Move(fyne.NewPos(0, 0))
+	objects[0].Resize(size)
+}
+
+func (r *resizeWatcherLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if len(objects) == 0 {
+		return fyne.NewSize(0, 0)
+	}
+	return objects[0].MinSize()
 }
 
 // applyLayoutMode rebuilds the layout based on current mode
@@ -302,7 +329,7 @@ func (lm *LayoutManager) GetModeString() string {
 // GetBreakpointForWidth returns the layout mode for a given width
 func GetBreakpointForWidth(width float32) LayoutMode {
 	switch {
-	case width >= BreakpointWide:
+	case width > BreakpointWide:
 		return LayoutWide
 	case width >= BreakpointDesktop:
 		return LayoutDesktop

@@ -125,6 +125,7 @@ DataFlow:
       5. Parse ToC headings from markdown
       6. Detect glossary terms
       7. Get document metadata from SearchIndex
+      8. Add document to recent history
     updates:
       - contentText.ParseMarkdown()
       - breadcrumbs.SetPath()
@@ -177,7 +178,9 @@ SharedState:
       purpose: Persist favorites to JSON
       file: persistence.go
       fields:
-        - favorites: map[string]bool
+        - recent: []string (LRU, last 10)
+        - favorites: map[string]bool (in-memory)
+        - favoritesList: []string (persisted)
         - filePath: string (.omc/docs-history.json)
       thread_safety: sync.RWMutex
 
@@ -193,7 +196,7 @@ SharedState:
 
 Notes:
   - Thread safety: All UI updates from goroutines use fyne.Do()
-  - Search index builds synchronously in NewSearchIndex()
+  - Search index builds lazily on first query; call Build() for a synchronous build
   - DocsHistory persists to .omc/docs-history.json asynchronously
   - Glossary terms detected via shared/widgets.TermsData
   - Responsive breakpoints: Mobile (<600), Tablet (600-900), Desktop (900-1200), Wide (>1200)
@@ -247,6 +250,7 @@ SearchAlgorithm:
       - title_match: 3.0x
       - heading_match: 2.0x
       - glossary_match: 1.5x
+      - exact_match: 1.5x
   - fuzzy_matching: Levenshtein-based for typo tolerance
   - snippet_length: ~100 characters with match context
 
@@ -254,7 +258,7 @@ LifecycleNotes:
   - Start(): No-op (no background processes)
   - Stop(): No-op (no background processes)
   - BuildContent(): Called once at app startup
-    - Initializes SearchIndex (synchronous build)
+    - Initializes SearchIndex (lazy build; Build() optional for sync)
     - Loads DocsHistory from disk
     - Creates all UI components
     - Sets up keyboard shortcut (Cmd/Ctrl+K)

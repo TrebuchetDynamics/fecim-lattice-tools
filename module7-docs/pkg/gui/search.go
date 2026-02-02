@@ -15,10 +15,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"fecim-lattice-tools/shared/widgets"
 )
 
 // IndexEntry represents a term occurrence in a document.
@@ -34,10 +33,10 @@ type IndexEntry struct {
 // This extends the basic DocMetadata with additional search-relevant fields.
 type SearchDocMetadata struct {
 	Path          string
-	Title         string    // extracted from first # heading
-	Category      string    // ELI5, Physics, Research, Demo, Guide
-	ReadingTime   int       // estimated minutes (words / 200)
-	GlossaryTerms []string  // detected glossary terms
+	Title         string   // extracted from first # heading
+	Category      string   // ELI5, Physics, Research, Demo, Guide
+	ReadingTime   int      // estimated minutes (words / 200)
+	GlossaryTerms []string // detected glossary terms
 	LastModified  time.Time
 }
 
@@ -57,6 +56,13 @@ type SearchResult struct {
 	MatchType string  // "title", "heading", "content", "glossary"
 	Relevance float64 // TF-IDF score
 }
+
+const (
+	titleMatchBoost    = 3.0
+	headingMatchBoost  = 2.0
+	glossaryMatchBoost = 1.5
+	exactMatchBoost    = 1.5
+)
 
 // searchToken represents a parsed token with position info.
 type searchToken struct {
@@ -222,17 +228,7 @@ func (si *SearchIndex) detectCategory(path string) string {
 
 // detectGlossaryTerms finds glossary terms in the content.
 func (si *SearchIndex) detectGlossaryTerms(content string) []string {
-	var found []string
-	contentLower := strings.ToLower(content)
-
-	for _, entry := range widgets.TermsData {
-		termLower := strings.ToLower(entry.Term)
-		if strings.Contains(contentLower, termLower) {
-			found = append(found, entry.Term)
-		}
-	}
-
-	return found
+	return DetectGlossaryTerms(content)
 }
 
 // tokenize splits content into searchable tokens.
@@ -400,10 +396,10 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 
 				// Boost for title matches
 				if entry.InTitle {
-					score *= 3.0
+					score *= titleMatchBoost
 					docMatchTypes[entry.DocPath] = "title"
 				} else if entry.InHeading {
-					score *= 2.0
+					score *= headingMatchBoost
 					if docMatchTypes[entry.DocPath] != "title" {
 						docMatchTypes[entry.DocPath] = "heading"
 					}
@@ -413,7 +409,7 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 
 				// Exact match bonus
 				if matchTerm == term {
-					score *= 1.5
+					score *= exactMatchBoost
 				}
 
 				docScores[entry.DocPath] += score
@@ -429,20 +425,24 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 	}
 
 	// Check for glossary term matches
-	for _, entry := range widgets.TermsData {
-		termLower := strings.ToLower(entry.Term)
-		for _, qt := range queryTerms {
-			if strings.Contains(termLower, qt) || strings.Contains(qt, termLower) {
-				// Find docs containing this glossary term
-				for path, meta := range si.docs {
-					for _, gt := range meta.GlossaryTerms {
-						if gt == entry.Term {
-							docScores[path] += 0.5 // Small boost for glossary relevance
-							if docMatchTypes[path] == "" {
-								docMatchTypes[path] = "glossary"
-							}
-						}
-					}
+	glossaryQueryTerms := DetectGlossaryTerms(query)
+	if len(glossaryQueryTerms) > 0 {
+		glossarySet := make(map[string]struct{}, len(glossaryQueryTerms))
+		for _, term := range glossaryQueryTerms {
+			glossarySet[term] = struct{}{}
+		}
+
+		for path, meta := range si.docs {
+			if meta == nil || len(meta.GlossaryTerms) == 0 {
+				continue
+			}
+			if !hasGlossaryOverlap(glossarySet, meta.GlossaryTerms) {
+				continue
+			}
+			if score, ok := docScores[path]; ok {
+				docScores[path] = score * glossaryMatchBoost
+				if docMatchTypes[path] == "" {
+					docMatchTypes[path] = "glossary"
 				}
 			}
 		}
@@ -578,6 +578,15 @@ func minInt(a, b, c int) int {
 		return b
 	}
 	return c
+}
+
+func hasGlossaryOverlap(glossarySet map[string]struct{}, docTerms []string) bool {
+	for _, term := range docTerms {
+		if _, ok := glossarySet[term]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 // GetDocMetadata returns metadata for a document path.
@@ -817,9 +826,18 @@ func (s *searchShortcut) ShortcutName() string {
 
 // SetupSearchShortcut configures Cmd/Ctrl+K shortcut for search.
 func SetupSearchShortcut(window fyne.Window, searchDialog *SearchDialog) {
+	if window == nil || searchDialog == nil {
+		return
+	}
+
 	// Add keyboard shortcut for Cmd/Ctrl+K
-	shortcut := &fyne.ShortcutSelectAll{} // We'll use a custom key handler instead
-	_ = shortcut                          // Suppress unused warning
+	ctrlK := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyK,
+		Modifier: fyne.KeyModifierShortcutDefault,
+	}
+	window.Canvas().AddShortcut(ctrlK, func(shortcut fyne.Shortcut) {
+		searchDialog.Show()
+	})
 
 	// Custom shortcut handling via key events on entry
 	searchDialog.entry.OnSubmitted = func(s string) {

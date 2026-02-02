@@ -46,6 +46,8 @@ Tasks
 - Confirm the implementation supports multiple ISPP steps end-to-end.
 - If it does not, implement a minimal end-to-end multi-step path and validate.
 - Ensure low-target (negative-branch) convergence is supported **with minimal overshoot resets**.
+- When crossing branches, binary-search midpoints should stay **low-biased** using an adaptive
+  factor based on `|P_target|/Ps` (clamped ~0.1–0.3 of the bracket) until the branch is crossed.
 
 5) Headless repeatability loop (endless improvement)
 
@@ -77,6 +79,8 @@ ISPP correctness checklist (headless)
 - Multi-step sequence runs **without full reset between steps** (except overshoot recovery).
 - Crossing branches converges with limited overshoot resets (track count in logs).
 - First pulse uses inverse‑tanh estimate, clamped to bounds; bounds are conservative for branch crossing.
+- During branch crossing, binary-search midpoints remain **low-biased** (adaptive 0.1–0.3 bracket factor)
+  to reduce overshoot resets.
 - Verify step uses `P → G` mapping and terminates on tolerance.
 - Logs show `Predict → WritePulse → Verify → (Adjust/Overshoot)` sequence per step.
 
@@ -85,6 +89,7 @@ Regression guardrails
 - If overshoot resets increase versus the previous run, explain why or fix.
 - If convergence attempts increase, justify or improve the predictor/bounds.
 - If any term disappears from logs, restore instrumentation.
+- Maintain a simple **baseline** (log path + overshoot/attempt counts) so regressions are explicit.
 
 Execution Rules (Autonomous)
 
@@ -106,3 +111,12 @@ Deliverable
   - Any gaps, issues, or follow-ups needed.
 - Include the validation command, the log file path used, and 2-4 representative log lines.
 - Include a short **"next iteration target"** based on remaining physics gaps or ISPP inefficiencies.
+
+Baseline (update each run)
+
+- Latest log path:
+- <local-path>
+- ISPP step results (attempts, overshoots):
+  - pos-1: attempts=4, overshoots=1
+  - pos-2: attempts=2, overshoots=0
+  - neg-1: attempts=4, overshoots=1

@@ -316,7 +316,7 @@ Complete design specification with all parameters and cell assignments.
     "array_cols": 8,
     "architecture": "passive",
     "levels": 30,
-    "g_min": 1.0,
+    "g_min": 10.0,
     "g_max": 100.0
   },
   "cells": [

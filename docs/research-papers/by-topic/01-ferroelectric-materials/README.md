@@ -32,39 +32,45 @@
    *arXiv:* https://arxiv.org/abs/1708.04729
    *File:* [Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf](./Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf)
 
+6. **Salahuddin, S. & Datta, S. (2007 preprint / 2008 journal)**
+   *Title:* Use of negative capacitance to provide a sub-threshold slope lower than 60 mV/decade
+   *Source:* arXiv preprint (journal version: Nano Letters 2008)
+   *arXiv:* https://arxiv.org/abs/0707.2073
+   *File:* [Salahuddin_Datta_2007_Negative_Capacitance_arXiv.pdf](./Salahuddin_Datta_2007_Negative_Capacitance_arXiv.pdf)
+
 ## Referenced Papers (Metadata Only)
 
-6. **Salahuddin, S. & Datta, S. (2008)**
+7. **Salahuddin, S. & Datta, S. (2008)**
    *Title:* Use of Negative Capacitance to Provide Voltage Amplification for Low Power Nanoscale Devices
    *Source:* Nano Letters 8, 405-410
    *DOI:* [10.1021/nl071804g](https://doi.org/10.1021/nl071804g)
-   *Status:* Paywalled (ACS)
+   *Status:* Paywalled (ACS); see arXiv preprint above for open-access version
 
-7. **Damjanovic, D. (1998)**
+8. **Damjanovic, D. (1998)**
    *Title:* Ferroelectric, dielectric and piezoelectric properties of ferroelectric thin films and ceramics
    *Source:* Rep. Prog. Phys. 61, 1267
    *DOI:* [10.1088/0034-4885/61/9/002](https://doi.org/10.1088/0034-4885/61/9/002)
    *Status:* Paywalled (IOP)
 
-8. **Tung, C.-T. et al. (2022)**
+9. **Tung, C.-T. et al. (2022)**
    *Title:* A Compact Model of Nanoscale Ferroelectric Capacitor
    *Source:* IEEE Trans. Electron Devices 69, 4761-4764
    *DOI:* [10.1109/ted.2022.3181573](https://doi.org/10.1109/ted.2022.3181573)
    *Status:* Paywalled (IEEE)
 
-9. **Starschich, S. et al. (2016)**
+10. **Starschich, S. et al. (2016)**
    *Title:* Evidence for oxygen vacancies movement during wake-up in ferroelectric hafnium oxide (Note: Referenced as "Ferroelectric switching dynamics..." in doc)
    *Source:* Appl. Phys. Lett. 108, 032903
    *DOI:* [10.1063/1.4940370](https://doi.org/10.1063/1.4940370)
    *Status:* Paywalled (AIP)
 
-10. **Hoffmann, M. et al. (2015)**
+11. **Hoffmann, M. et al. (2015)**
     *Title:* Stabilizing the ferroelectric phase in doped HfO2: A thermodynamic approach
     *Source:* J. Appl. Phys. 118, 072006
     *DOI:* 10.1063/1.4927805 (inferred)
     *Status:* Paywalled (AIP)
 
-11. **Park, M. H. et al. (2019)**
+12. **Park, M. H. et al. (2019)**
     *Title:* (Topic: Slanted loop / Depolarization in HZO)
     *Possible Match:* "Depolarization of multidomain ferroelectric materials" (Zhao et al., Nat. Commun. 10, 2547, 2019)? Or a different Park paper.
     *Status:* Ambiguous citation in source doc.

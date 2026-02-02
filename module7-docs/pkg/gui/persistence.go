@@ -9,21 +9,39 @@ import (
 
 // DocsHistory manages recent documents and favorites with thread-safe persistence
 type DocsHistory struct {
-	Recent     []string `json:"recent"`    // Last 10 viewed (LRU order)
-	Favorites  []string `json:"favorites"` // Starred docs
-	mu         sync.RWMutex
-	configPath string
+	Recent       []string `json:"recent"`    // Last 10 viewed (LRU order)
+	Favorites    []string `json:"favorites"` // Starred docs
+	favoritesMap map[string]bool
+	mu           sync.RWMutex
+	configPath   string
 }
 
 // NewDocsHistory loads or creates history from .omc/docs-history.json
 func NewDocsHistory() *DocsHistory {
 	h := &DocsHistory{
-		Recent:     make([]string, 0),
-		Favorites:  make([]string, 0),
-		configPath: getHistoryPath(),
+		Recent:       make([]string, 0),
+		Favorites:    make([]string, 0),
+		favoritesMap: make(map[string]bool),
+		configPath:   getHistoryPath(),
 	}
 	h.Load()
 	return h
+}
+
+func (h *DocsHistory) rebuildFavoritesMapLocked() {
+	h.favoritesMap = make(map[string]bool, len(h.Favorites))
+	unique := make([]string, 0, len(h.Favorites))
+	for _, p := range h.Favorites {
+		if p == "" {
+			continue
+		}
+		if h.favoritesMap[p] {
+			continue
+		}
+		h.favoritesMap[p] = true
+		unique = append(unique, p)
+	}
+	h.Favorites = unique
 }
 
 // AddRecent adds a document to recent list (front), removes duplicates, caps at 10
@@ -64,34 +82,43 @@ func (h *DocsHistory) GetRecent() []string {
 // ToggleFavorite adds or removes from favorites
 func (h *DocsHistory) ToggleFavorite(path string) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	// Check if already favorited
-	for i, p := range h.Favorites {
-		if p == path {
-			// Remove from favorites
-			h.Favorites = append(h.Favorites[:i], h.Favorites[i+1:]...)
-			go h.Save()
-			return
-		}
+	if h.favoritesMap == nil {
+		h.rebuildFavoritesMapLocked()
 	}
 
-	// Add to favorites
+	if h.favoritesMap[path] {
+		delete(h.favoritesMap, path)
+		filtered := make([]string, 0, len(h.Favorites))
+		for _, p := range h.Favorites {
+			if p != path {
+				filtered = append(filtered, p)
+			}
+		}
+		h.Favorites = filtered
+		h.mu.Unlock()
+		go h.Save()
+		return
+	}
+
+	h.favoritesMap[path] = true
 	h.Favorites = append(h.Favorites, path)
+	h.mu.Unlock()
 	go h.Save()
 }
 
 // IsFavorite checks if document is favorited
 func (h *DocsHistory) IsFavorite(path string) bool {
 	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	for _, p := range h.Favorites {
-		if p == path {
-			return true
-		}
+	if h.favoritesMap == nil {
+		h.mu.RUnlock()
+		h.mu.Lock()
+		h.rebuildFavoritesMapLocked()
+		h.mu.Unlock()
+		h.mu.RLock()
 	}
-	return false
+	_, ok := h.favoritesMap[path]
+	h.mu.RUnlock()
+	return ok
 }
 
 // GetFavorites returns favorites list
@@ -137,7 +164,39 @@ func (h *DocsHistory) Load() error {
 		return err
 	}
 
-	return json.Unmarshal(data, h)
+	type historyList struct {
+		Recent    []string `json:"recent"`
+		Favorites []string `json:"favorites"`
+	}
+	var list historyList
+	listErr := json.Unmarshal(data, &list)
+	if listErr == nil {
+		h.Recent = list.Recent
+		h.Favorites = list.Favorites
+		h.rebuildFavoritesMapLocked()
+		return nil
+	}
+
+	type historyMap struct {
+		Recent    []string        `json:"recent"`
+		Favorites map[string]bool `json:"favorites"`
+	}
+	var mapped historyMap
+	mapErr := json.Unmarshal(data, &mapped)
+	if mapErr == nil {
+		h.Recent = mapped.Recent
+		h.favoritesMap = make(map[string]bool, len(mapped.Favorites))
+		h.Favorites = h.Favorites[:0]
+		for path, fav := range mapped.Favorites {
+			if fav {
+				h.favoritesMap[path] = true
+				h.Favorites = append(h.Favorites, path)
+			}
+		}
+		return nil
+	}
+
+	return mapErr
 }
 
 // getHistoryPath returns the path to docs-history.json

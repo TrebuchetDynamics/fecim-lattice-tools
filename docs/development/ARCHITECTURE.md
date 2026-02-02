@@ -318,6 +318,9 @@ Usage:
 - **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and a **multi‑target ISPP sequence**
   (`pos-1`, `pos-2`, `neg-1`) to exercise both branches without resetting between every step.
 - **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
+- **ISPP branch crossing**: binary-search midpoints stay low-biased while `currentP * targetP < 0` using
+  `bias = 0.1 + 0.2 * |P_target|/Ps` (clamped ~0.1-0.3 of the bracket) to reduce overshoot resets, then
+  revert to midpoint 0.5 after the branch is crossed.
 - **Logs**: `lk-solver` (equation terms) + `ispp` (write/verify loop) provide headless validation evidence.
 
 **Authoritative validation:** The headless hysteresis path (`--mode hysteresis`) is the **source of truth**

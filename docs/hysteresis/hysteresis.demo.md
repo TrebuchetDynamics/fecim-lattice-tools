@@ -196,8 +196,9 @@ write‑verify logic, but in **conductance space** rather than discrete levels.
    an inverse‑tanh estimate (`V_guess = Ec * Thickness * atanh(P_target / Ps)`) clamped to `[VMin, VMax]`.
    When crossing branches (`currentP * targetP < 0`), the guess is scaled by `( |P_target| / Ps )^2` to reduce
    overshoot resets, and `VMax` is clamped to the inverse‑tanh bound to keep the search conservative.
-   While still crossing, the binary‑search midpoint is **biased low** with a factor that scales with
-   `|P_target|/Ps` (clamped ~0.1–0.3 of the bracket) to reduce overshoot resets before the branch is crossed.
+   While **still** crossing (`currentP * targetP < 0`), the binary-search midpoint is **biased low** using
+   `bias = 0.1 + 0.2 * |P_target|/Ps` (clamped to ~0.1-0.3 of the bracket) to reduce overshoot resets before
+   the branch is crossed.
 3. **Verify**: map `P → G` (linear mapping with `P = ±Ps` endpoints).
 4. **Adjust**: binary search update (`VMin`, `VMax`) on **magnitude**, pulse sign set by direction.
 5. **Overshoot**: apply a **direction‑aware** reset pulse (opposite branch) and restart with tighter bounds.

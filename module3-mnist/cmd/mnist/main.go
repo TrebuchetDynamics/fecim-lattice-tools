@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/logging"
@@ -35,6 +36,8 @@ func main() {
 	noiseLevel := flag.Float64("noise", 0.02, "Device noise level (0-1)")
 	loadWeights := flag.String("load", "", "Load weights from file")
 	saveWeights := flag.String("save", "", "Save weights to file")
+	coreEvaluate := flag.Bool("core-eval", false, "Evaluate using dual-mode core network (FP vs CIM)")
+	coreSamples := flag.Int("core-samples", 1000, "Samples for core-eval (0=all)")
 	flag.Parse()
 
 	fmt.Println("================================================")
@@ -48,6 +51,11 @@ func main() {
 	fmt.Printf("  Device noise: %.2f%%\n", *noiseLevel*100)
 	fmt.Printf("  Discrete levels: 30 (FeCIM advantage)\n")
 	fmt.Printf("  Target accuracy: Physics-limited\n")
+
+	if *coreEvaluate {
+		runCoreEvaluation(*hiddenSize, *noiseLevel, *loadWeights, *coreSamples)
+		return
+	}
 
 	// Create crossbar arrays for each layer
 	// Layer 1: 784 inputs -> hidden neurons
@@ -201,6 +209,108 @@ func runEvaluation(net *training.MNISTNetwork) {
 			i, pred, conf*100, testLabels[i],
 			checkMark(pred == testLabels[i]))
 	}
+}
+
+func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxSamples int) {
+	fmt.Println("\n=== Core Dual-Path Evaluation (FP vs CIM) ===")
+
+	testImages, testLabels, err := mnist.LoadMNIST("module3-mnist/data", false)
+	if err != nil {
+		fmt.Printf("Could not load MNIST test data: %v\n", err)
+		fmt.Println("Running with synthetic test data...")
+		testImages, testLabels = generateSyntheticData(200)
+	}
+
+	totalSamples := len(testImages)
+	if maxSamples > 0 && maxSamples < totalSamples {
+		totalSamples = maxSamples
+		testImages = testImages[:totalSamples]
+		testLabels = testLabels[:totalSamples]
+	}
+	fmt.Printf("Evaluating on %d test samples...\n", totalSamples)
+
+	net := core.NewDualModeNetwork(784, hiddenSize, 10)
+	net.Config.NoiseLevel = noiseLevel
+	net.Config.ADCBits = 8
+	net.Config.DACBits = 8
+
+	weightsPath := loadFile
+	if weightsPath == "" {
+		defaultWeights := "module3-mnist/data/pretrained_weights.json"
+		if _, err := os.Stat(defaultWeights); err == nil {
+			weightsPath = defaultWeights
+		}
+	}
+
+	if weightsPath != "" {
+		fmt.Printf("\nLoading weights from: %s\n", weightsPath)
+		if err := net.LoadWeights(weightsPath); err != nil {
+			log.Printf("Warning: Failed to load weights: %v", err)
+			fmt.Println("Continuing with random initialization.")
+		} else {
+			fmt.Println("Weights loaded successfully.")
+		}
+	}
+
+	// Ensure noise level is aligned with CLI after loading weights.
+	net.Config.NoiseLevel = noiseLevel
+
+	perLayerEnabled, l1Levels, l2Levels := net.GetPerLayerQuantInfo()
+	log.Printf("Core eval config: levels=%d l1Levels=%d l2Levels=%d perLayer=%v noise=%.4f adcBits=%d dacBits=%d singleLayer=%v samples=%d",
+		net.Config.NumLevels, l1Levels, l2Levels, perLayerEnabled,
+		net.Config.NoiseLevel, net.Config.ADCBits, net.Config.DACBits,
+		net.Config.SingleLayer, totalSamples)
+
+	var fpCorrect, cimCorrect, agreeCount int
+	var totalKL, totalEnergy float64
+	var evaluated int
+
+	for i := 0; i < totalSamples; i++ {
+		result := net.Infer(testImages[i])
+		if result == nil {
+			continue
+		}
+		evaluated++
+		if result.FPPrediction == testLabels[i] {
+			fpCorrect++
+		}
+		if result.CIMPrediction == testLabels[i] {
+			cimCorrect++
+		}
+		if result.Agree {
+			agreeCount++
+		}
+		totalKL += result.Disagreement
+		totalEnergy += result.EnergyUsed
+
+		if i == 0 {
+			log.Printf("Core eval sample0: fpPred=%d (conf=%.4f) cimPred=%d (conf=%.4f) agree=%v kl=%.6f energy_uJ=%.6f",
+				result.FPPrediction, result.FPConfidence,
+				result.CIMPrediction, result.CIMConfidence,
+				result.Agree, result.Disagreement, result.EnergyUsed)
+		}
+	}
+
+	if evaluated == 0 {
+		fmt.Println("No samples evaluated (input length mismatch).")
+		log.Printf("Core evaluation complete: no valid samples evaluated")
+		return
+	}
+
+	fpAcc := float64(fpCorrect) / float64(evaluated)
+	cimAcc := float64(cimCorrect) / float64(evaluated)
+	agreeRate := float64(agreeCount) / float64(evaluated)
+	avgKL := totalKL / float64(evaluated)
+	avgEnergy := totalEnergy / float64(evaluated)
+
+	fmt.Printf("\nFP Accuracy: %.1f%%\n", fpAcc*100)
+	fmt.Printf("CIM Accuracy: %.1f%%\n", cimAcc*100)
+	fmt.Printf("Agreement Rate: %.1f%%\n", agreeRate*100)
+	fmt.Printf("Average KL Divergence: %.6f\n", avgKL)
+	fmt.Printf("Average Energy: %.6f μJ\n", avgEnergy)
+
+	log.Printf("Core evaluation complete: fpAcc=%.1f%% cimAcc=%.1f%% agree=%.1f%% avgKL=%.6f avgEnergy_uJ=%.6f samples=%d",
+		fpAcc*100, cimAcc*100, agreeRate*100, avgKL, avgEnergy, evaluated)
 }
 
 func runInteractive(net *training.MNISTNetwork) {
