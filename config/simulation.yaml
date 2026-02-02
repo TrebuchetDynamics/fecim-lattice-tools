@@ -1,0 +1,17 @@
+# FeCIM Lattice Tools - Simulation Parameters
+# Reference index defined in config/materials.yaml
+
+# =============================================================================
+# SIMULATION PARAMETERS
+# =============================================================================
+simulation:
+  # Time stepping
+  frame_rate_hz: 60             # UI update rate
+  dt_s: 0.0167                  # Time step (1/60 s)
+
+  # History
+  max_history_points: 500       # P-E plot trail length
+
+  # Default waveform parameters
+  default_frequency_hz: 0.5     # Default frequency for waveforms
+  default_amplitude_ratio: 1.5  # Default E amplitude = 1.5 * Ec (enough for switching, avoid over-saturation)

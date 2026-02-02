@@ -1,0 +1,21 @@
+# FeCIM Lattice Tools - Timing Parameters
+# References: [8][9] (see config/materials.yaml)
+
+# =============================================================================
+# TIMING PARAMETERS
+# =============================================================================
+# References: [8][9]
+timing:
+  # Operation latencies (seconds)
+  read_latency_s: 10.0e-9       # 10 ns read
+  write_latency_s: 100.0e-9     # 100 ns write (program-verify)
+  mac_latency_s: 10.0e-9        # 10 ns per MAC
+
+  # Switching speed records [8]
+  switching_time_typical_s: 925.0e-12  # 925 ps characteristic (Purdue)
+  switching_time_record_s: 360.0e-12   # 360 ps RECORD in sub-µm arrays [8]
+
+  # Programming parameters
+  pulse_width_s: 10.0e-9        # 10 ns programming pulse
+  verify_delay_s: 5.0e-9        # 5 ns verify delay
+  max_program_cycles: 10        # Max program-verify iterations

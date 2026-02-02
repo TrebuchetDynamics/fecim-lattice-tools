@@ -1,7 +1,8 @@
 #!/bin/bash
 # Launch the unified FeCIM Visualizer
-# Usage: ./launch.sh [--logger] [--verbosity LEVEL]
+# Usage: ./launch.sh [--logger [LEVEL]] [--verbosity LEVEL]
 #   --logger: Enable file logging (logs to logs/ directory)
+#     Optional shorthand: --logger debug|info|trace|off
 #   --verbosity LEVEL: Set logging verbosity (only used with --logger)
 #     LEVEL: 0|off, 1|info, 2|debug, 3|trace
 cd "$(dirname "$0")"

@@ -1,0 +1,25 @@
+# FeCIM Lattice Tools - MNIST Demo Parameters
+# References: [16][17][18] (see config/materials.yaml)
+
+# =============================================================================
+# MNIST DEMO PARAMETERS
+# =============================================================================
+# References: [16][17][18]
+mnist:
+  # Network architecture
+  input_size: 784               # 28x28 pixels
+  hidden_sizes: [128, 64]       # Hidden layer sizes
+  output_size: 10               # 10 digit classes
+
+  # Training
+  epochs: 10
+  batch_size: 64
+  learning_rate: 0.001
+
+  # Reference accuracy (peer-reviewed benchmarks, not targets)
+  # Note: Accuracy varies with noise, levels, and architecture
+  baseline_accuracy: 0.966      # 96.6% (Nature Communications 2023) - VERIFIED
+  best_accuracy: 0.9824         # 98.24% (ScienceDirect 2025) - VERIFIED (FTJ reservoir)
+  # tour_claimed_accuracy: 0.87 # REMOVED - unverified conference claim below peer-reviewed
+  current_limited_accuracy: 0.97 # 97% with current-limited FeFET [16]
+  fashion_mnist_rc: 0.8838      # 88.38% Fashion MNIST with reservoir computing

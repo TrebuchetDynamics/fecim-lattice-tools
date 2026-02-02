@@ -123,7 +123,7 @@ func runHysteresisMode() error {
 		currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
 		_, currentLevel := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 		stepStart := solver.Time
-		maxSimTime := phaseDuration * float64(writeController.MaxRetries+20)
+		maxSimTime := phaseDuration * float64(writeController.MaxRetries+100)
 		wrd := &headlessWRDState{
 			phase:         0,
 			phaseTimer:    0,
@@ -162,12 +162,22 @@ func runHysteresisMode() error {
 			wrd.phaseTimer += currentStep
 
 			switch wrd.phase {
-			case 0: // PREP - apply ±Ec toward target
+			case 0: // PREP - drive to saturation in opposite direction of target
+				// For upper targets (>15): saturate NEGATIVE first (level ~1), then write UP
+				// For lower targets (<=15): saturate POSITIVE first (level ~30), then write DOWN
 				prepE := 0.0
-				if currentLevel < targetLevel {
-					prepE = mat.Ec
-				} else if currentLevel > targetLevel {
-					prepE = -mat.Ec
+				saturated := false
+				// Use 0.75*Ps threshold (not 0.9) because K_dep depolarization feedback
+				// limits achievable polarization. With K_dep=2.5e8, steady-state P < 0.9*Ps.
+				// Also use 2.0×Ec drive field for faster saturation.
+				if targetLevel > numLevels/2 {
+					// Upper target: drive to negative saturation
+					prepE = -mat.Ec * 2.0
+					saturated = currentP <= -0.75*mat.Ps
+				} else {
+					// Lower target: drive to positive saturation
+					prepE = mat.Ec * 2.0
+					saturated = currentP >= 0.75*mat.Ps
 				}
 				wrd.prepE = prepE
 
@@ -181,28 +191,24 @@ func runHysteresisMode() error {
 					currentField -= stepSize
 				}
 
-				if wrd.phaseTimer > phaseDuration*0.25 && math.Abs(currentField-prepE) < 0.01*mat.Ec*2 {
-					wrd.phase = 1
-					wrd.phaseTimer = 0
-				}
-
-			case 1: // HOLD_RESET - return to zero
-				stepSize := 3.0 * mat.Ec * 2 * frequency * currentStep
-				if math.Abs(currentField) < stepSize {
-					currentField = 0
-				} else if currentField > 0 {
-					currentField -= stepSize
-				} else {
-					currentField += stepSize
-				}
-
-				if wrd.phaseTimer > phaseDuration*0.15 && math.Abs(currentField) < 0.01*mat.Ec*2 {
-					fromSaturation := currentLevel <= 2 || currentLevel >= numLevels-1
+				// Transition only after field reached AND level actually saturated
+				if wrd.phaseTimer > phaseDuration*0.25 && math.Abs(currentField-prepE) < 0.01*mat.Ec*2 && saturated {
+					if targetLevel > numLevels/2 {
+						wrd.saturatedDirection = -1
+					} else {
+						wrd.saturatedDirection = 1
+					}
+					// Skip HOLD_RESET (phase 1) to prevent polarization relaxation
+					// Go directly to WRITE phase with fromSaturation=true
+					fromSaturation := true
 					writeController.PulseDuration = phaseDuration * 0.4
 					writeController.Start(targetLevel, fromSaturation)
 					wrd.phase = 2
 					wrd.phaseTimer = 0
 				}
+
+			// case 1: HOLD_RESET - DELETED to prevent polarization relaxation
+			// Phase 1 is now skipped - transition goes directly from PREP (0) to WRITE (2)
 
 			case 2: // WRITE - delegated to WriteController
 				targetField, done := writeController.Update(currentStep, currentField, currentLevel)
@@ -282,18 +288,19 @@ const (
 )
 
 type headlessWRDState struct {
-	phase         int
-	phaseTimer    float64
-	targetLevel   int
-	readLevel     int
-	retryCount    int
-	cycleEnergy   float64
-	totalWrites   int
-	successWrites int
-	writeE        float64
-	prepE         float64
-	settleE       float64
-	startLevel    int
+	phase              int
+	phaseTimer         float64
+	targetLevel        int
+	readLevel          int
+	retryCount         int
+	cycleEnergy        float64
+	totalWrites        int
+	successWrites      int
+	writeE             float64
+	prepE              float64
+	settleE            float64
+	startLevel         int
+	saturatedDirection int // -1 for negative sat, +1 for positive sat, 0 for not saturated
 }
 
 func headlessLevelFromConductance(g, gmin, gmax float64, numLevels int) (int, int) {

@@ -1,0 +1,18 @@
+# FeCIM Lattice Tools - Additional Benchmarks
+# Reference index defined in config/materials.yaml
+
+# =============================================================================
+# ADDITIONAL BENCHMARKS (from new papers)
+# =============================================================================
+benchmarks:
+  # Matrix operations [13]
+  matrix_precision: "fp32"      # 32-bit floating point equivalent precision
+  matrix_size_max: 16           # 16×16 demonstrated with high precision
+
+  # Reservoir computing
+  rc_energy_vs_gpu: 10000       # 10⁴× lower energy than GPU
+  rc_endurance_cycles: 100000   # >10⁵ cycles demonstrated
+
+  # Security/PUF
+  puf_ml_attack_resistance: 10000000  # Resists 10M sample ML attacks
+  puf_reconfigurability: "near_ideal"

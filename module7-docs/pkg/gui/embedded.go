@@ -211,6 +211,23 @@ func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
 	)
 }
 
+// getCategoryIcon returns an appropriate icon for a file based on its name.
+func getCategoryIcon(filename string) fyne.Resource {
+	filenameLower := strings.ToLower(filename)
+	switch filenameLower {
+	case "eli5.md":
+		return theme.HelpIcon()
+	case "physics.md":
+		return theme.ComputerIcon()
+	case "features.md":
+		return theme.ListIcon()
+	case "opensource-tools.md":
+		return theme.SettingsIcon()
+	default:
+		return theme.DocumentIcon()
+	}
+}
+
 // createDocTree builds the documentation file tree widget
 func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 	tree := widget.NewTree(
@@ -276,7 +293,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 					icon.SetResource(theme.FolderIcon())
 					starBtn.Hidden = true
 				} else {
-					icon.SetResource(theme.DocumentIcon())
+					icon.SetResource(getCategoryIcon(entry.name))
 					starBtn.Hidden = false
 
 					// Update star icon based on favorite status

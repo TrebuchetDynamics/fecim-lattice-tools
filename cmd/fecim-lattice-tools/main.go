@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,6 +48,15 @@ import (
 
 // Global logger for the main application
 var log *logging.Logger
+
+func isVerbosityToken(token string) bool {
+	switch strings.ToLower(strings.TrimSpace(token)) {
+	case "0", "off", "none", "1", "info", "2", "debug", "3", "trace", "all":
+		return true
+	default:
+		return false
+	}
+}
 
 // ForceMinSizeLayout ignores the child's MinSize and returns a fixed small size.
 // This prevents Fyne from requesting window resizes based on content size,
@@ -311,12 +321,15 @@ func (rs *RecordingState) captureLoop(width, height int) {
 				}
 			}
 
-			// Write frame to FFmpeg
+			// Write frame to FFmpeg without holding the lock during IO.
 			rs.mu.Lock()
-			if rs.stdin != nil && rs.isRecording {
-				rs.stdin.Write(frameBuffer)
-			}
+			stdin := rs.stdin
+			recording := rs.isRecording
 			rs.mu.Unlock()
+
+			if stdin != nil && recording {
+				_, _ = stdin.Write(frameBuffer)
+			}
 		}
 	}
 }
@@ -324,31 +337,56 @@ func (rs *RecordingState) captureLoop(width, height int) {
 // stopRecording stops the FFmpeg recording
 func (rs *RecordingState) stopRecording() (string, error) {
 	rs.mu.Lock()
-	defer rs.mu.Unlock()
-
 	if !rs.isRecording {
+		rs.mu.Unlock()
 		return "", fmt.Errorf("not recording")
 	}
 
-	// Prevent double-close of stopChan
-	if !rs.stopped && rs.stopChan != nil {
-		close(rs.stopChan)
-		rs.stopped = true
-		rs.stopChan = nil
-	}
+	stopChan := rs.stopChan
+	shouldCloseStop := !rs.stopped && stopChan != nil
+	rs.stopped = true
+	rs.stopChan = nil
 
-	// Close stdin to signal EOF to FFmpeg
-	if rs.stdin != nil {
-		rs.stdin.Close()
-	}
+	stdin := rs.stdin
+	rs.stdin = nil
 
-	// Wait for FFmpeg to finish
-	if rs.cmd != nil {
-		rs.cmd.Wait()
-	}
+	cmd := rs.cmd
+	rs.cmd = nil
 
-	rs.isRecording = false
 	outputFile := rs.outputFile
+	rs.isRecording = false
+	rs.mu.Unlock()
+
+	// Signal capture loop to stop.
+	if shouldCloseStop {
+		close(stopChan)
+	}
+
+	// Close stdin to signal EOF to FFmpeg.
+	if stdin != nil {
+		_ = stdin.Close()
+	}
+
+	// Wait for FFmpeg to finish, but don't block the UI thread indefinitely.
+	if cmd != nil {
+		waitDone := make(chan error, 1)
+		go func() {
+			waitDone <- cmd.Wait()
+		}()
+
+		select {
+		case <-waitDone:
+		case <-time.After(2 * time.Second):
+			if cmd.Process != nil {
+				_ = cmd.Process.Kill()
+			}
+			select {
+			case <-waitDone:
+			case <-time.After(1 * time.Second):
+			}
+		}
+	}
+
 	fmt.Println("Recording stopped:", outputFile)
 	return outputFile, nil
 }
@@ -424,7 +462,7 @@ func loadLastTab(prefs fyne.Preferences) int {
 
 func main() {
 	// Parse command-line flags
-	loggerFlag := flag.Bool("logger", false, "Enable file logging (logs to logs/ directory)")
+	loggerFlag := flag.Bool("logger", false, "Enable file logging (logs to logs/ directory). Optional shorthand: --logger debug|info|trace|off")
 	verbosityFlag := flag.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace (only used with --logger)")
 	calibrateFlag := flag.Bool("calibrate", false, "Run hysteresis calibration and exit (no GUI)")
 	materialFlag := flag.String("material", "all", "Material to calibrate (use 'all' for all materials, or specify name)")
@@ -434,6 +472,18 @@ func main() {
 	modeFlag := flag.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
 	var moduleFlag = flag.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
 	flag.Parse()
+
+	verbosityProvided := false
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		if f.Name == "verbosity" {
+			verbosityProvided = true
+		}
+	})
+	if *loggerFlag && !verbosityProvided {
+		if args := flag.Args(); len(args) > 0 && isVerbosityToken(args[0]) {
+			*verbosityFlag = args[0]
+		}
+	}
 
 	// Handle --list-materials
 	if *listMaterialsFlag {
@@ -912,7 +962,7 @@ func main() {
 			case "docs":
 				startIdx = 7
 			}
-			
+
 			fmt.Printf("[STARTUP] Starting at module: %s (index %d)\n", *moduleFlag, startIdx)
 			selectView(startIdx)
 			log.Debug("Started at module %s (index %d)", *moduleFlag, startIdx)

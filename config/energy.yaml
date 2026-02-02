@@ -1,0 +1,25 @@
+# FeCIM Lattice Tools - Energy Parameters
+# References: [12][13][14] (see config/materials.yaml)
+
+# =============================================================================
+# ENERGY PARAMETERS
+# =============================================================================
+# References: [12][13][14]
+energy:
+  # Per-operation energy (Joules) [14]
+  read_energy_j: 1.0e-15        # ~1 fJ per read
+  write_energy_j: 10.0e-15      # ~10 fJ per write
+  mac_energy_j: 5.0e-15         # ~5 fJ per MAC operation
+  puf_readout_energy_j: 1.89e-15 # 1.89 fJ/bit PUF readout (Nature Commun. 2025)
+
+  # Comparison baselines [12]
+  nand_write_energy_j: 500.0e-15    # ~500 fJ (25-100x worse vs FeCIM)
+  dram_access_energy_j: 5000.0e-15  # ~5 pJ (1000x worse)
+  sram_access_energy_j: 50.0e-15    # ~50 fJ
+
+  # CIM benchmarks [14]
+  cim_area_efficiency_gops_mm2: 160   # 160 GOPS/mm² (DAC 2024)
+  cim_energy_efficiency_tops_w: 25.5  # 25.5 TOPS/W for 8b/8b (DAC 2024)
+
+  # Leakage
+  standby_power_w_per_cell: 1.0e-12 # ~1 pW standby

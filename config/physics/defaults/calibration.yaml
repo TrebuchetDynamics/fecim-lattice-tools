@@ -1,0 +1,17 @@
+# FeCIM Lattice Tools - Calibration Parameters
+# Reference index defined in config/materials.yaml
+
+# =============================================================================
+# CALIBRATION PARAMETERS
+# =============================================================================
+calibration:
+  # Binary search calibration
+  iterations: 15                # Binary search iterations
+  field_min_ratio: 0.7          # Read max = 0.7 * Vc (30% safety margin below Vc for non-destructive reads)
+  field_max_ratio: 2.5          # Max field = 2.5 * Ec
+
+  # Adaptive calibration
+  adjustment_rate: 0.06         # 6% of Ec per level error
+
+  # Tolerances
+  level_tolerance: 1            # Accept ±1 level as success

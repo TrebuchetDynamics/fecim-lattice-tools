@@ -1,0 +1,26 @@
+# FeCIM Lattice Tools - Training Configuration
+# Reference index defined in config/materials.yaml
+
+# =============================================================================
+# TRAINING CONFIGURATION
+# =============================================================================
+training:
+  # Learning parameters
+  learning_rate: 0.01
+  weight_decay: 1.0e-4          # L2 regularization
+  momentum: 0.9
+
+  # Batch settings
+  default_batch_size: 32
+  gradient_clip: 1.0
+
+  # Hardware-aware constraints
+  weight_clip_min: 0.0          # Minimum weight (maps to Gmin)
+  weight_clip_max: 1.0          # Maximum weight (maps to Gmax)
+  update_noise_sigma: 0.01      # Noise in weight updates
+  asymmetry_ratio: 1.0          # Potentiation/depression asymmetry (1.0 = symmetric)
+
+  # Quantization-aware training
+  quantize_forward: true        # Quantize in forward pass
+  quantize_backward: false      # Full precision gradients
+  straight_through: true        # STE for quantization gradients

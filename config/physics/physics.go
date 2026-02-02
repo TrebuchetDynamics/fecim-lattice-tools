@@ -1,4 +1,19 @@
-// Package physics provides access to physical parameters from config/physics.yaml.
+// Package physics provides access to physical parameters from split YAML configs.
+//
+// Config files live under config/:
+//   - constants.yaml
+//   - materials.yaml
+//   - crossbar.yaml
+//   - training.yaml
+//   - energy.yaml
+//   - timing.yaml
+//   - preisach.yaml
+//   - calibration.yaml
+//   - simulation.yaml
+//   - mnist.yaml
+//   - benchmarks.yaml
+//
+// Legacy monolith config/physics.yaml is still supported.
 //
 // Usage:
 //
@@ -20,10 +35,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed physics.yaml
+//go:embed defaults/*.yaml
 var embeddedConfig embed.FS
 
-// Config holds all physics configuration from physics.yaml.
+// Config holds all physics configuration aggregated from split YAML files.
 type Config struct {
 	Constants   Constants            `yaml:"constants"`
 	Materials   map[string]*Material `yaml:"materials"`
@@ -35,6 +50,7 @@ type Config struct {
 	Calibration Calibration          `yaml:"calibration"`
 	Simulation  Simulation           `yaml:"simulation"`
 	MNIST       MNIST                `yaml:"mnist"`
+	Benchmarks  map[string]any       `yaml:"benchmarks"`
 }
 
 // Constants holds global physics constants.
@@ -225,9 +241,92 @@ var (
 	configErr    error
 )
 
-// Load loads the physics configuration from physics.yaml.
-// It first tries to load from config/physics.yaml relative to the working directory,
-// then falls back to the embedded config.
+const (
+	constantsFile   = "constants.yaml"
+	materialsFile   = "materials.yaml"
+	crossbarFile    = "crossbar.yaml"
+	trainingFile    = "training.yaml"
+	energyFile      = "energy.yaml"
+	timingFile      = "timing.yaml"
+	preisachFile    = "preisach.yaml"
+	calibrationFile = "calibration.yaml"
+	simulationFile  = "simulation.yaml"
+	mnistFile       = "mnist.yaml"
+	benchmarksFile  = "benchmarks.yaml"
+
+	legacyConfigFile = "physics.yaml"
+)
+
+var (
+	configRoots = []string{
+		"config",
+		"../config",
+		"../../config",
+	}
+	// Split file probe list (materials.yaml is intentionally excluded to avoid
+	// treating legacy setups as split configs).
+	splitProbeFiles = []string{
+		constantsFile,
+		crossbarFile,
+		trainingFile,
+		energyFile,
+		timingFile,
+		preisachFile,
+		calibrationFile,
+		simulationFile,
+		mnistFile,
+		benchmarksFile,
+	}
+)
+
+type constantsWrapper struct {
+	Constants Constants `yaml:"constants"`
+}
+
+type materialsWrapper struct {
+	Materials map[string]*Material `yaml:"materials"`
+}
+
+type crossbarWrapper struct {
+	Crossbar Crossbar `yaml:"crossbar"`
+}
+
+type trainingWrapper struct {
+	Training Training `yaml:"training"`
+}
+
+type energyWrapper struct {
+	Energy Energy `yaml:"energy"`
+}
+
+type timingWrapper struct {
+	Timing Timing `yaml:"timing"`
+}
+
+type preisachWrapper struct {
+	Preisach Preisach `yaml:"preisach"`
+}
+
+type calibrationWrapper struct {
+	Calibration Calibration `yaml:"calibration"`
+}
+
+type simulationWrapper struct {
+	Simulation Simulation `yaml:"simulation"`
+}
+
+type mnistWrapper struct {
+	MNIST MNIST `yaml:"mnist"`
+}
+
+type benchmarksWrapper struct {
+	Benchmarks map[string]any `yaml:"benchmarks"`
+}
+
+// Load loads the physics configuration from split YAML files.
+// It first tries to load split configs from config/*.yaml relative to the working
+// directory, falls back to legacy config/physics.yaml if present, and finally
+// uses embedded defaults.
 func Load() (*Config, error) {
 	configOnce.Do(func() {
 		globalConfig, configErr = loadConfig()
@@ -251,39 +350,163 @@ func Reload() (*Config, error) {
 }
 
 func loadConfig() (*Config, error) {
-	var data []byte
-	var err error
-
-	// Try to load from filesystem first (allows customization)
-	paths := []string{
-		"config/physics.yaml",
-		"../config/physics.yaml",
-		"../../config/physics.yaml",
+	if root, ok := findSplitConfigRoot(); ok {
+		return loadSplitConfig(root)
 	}
 
-	for _, path := range paths {
-		if _, statErr := os.Stat(path); statErr == nil {
-			data, err = os.ReadFile(path)
-			if err == nil {
-				break
+	legacyData, err := readLegacyConfig()
+	if err != nil {
+		return nil, err
+	}
+	if legacyData != nil {
+		var cfg Config
+		if err := yaml.Unmarshal(legacyData, &cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse %s: %w", legacyConfigFile, err)
+		}
+		return &cfg, nil
+	}
+
+	// Fall back to embedded split defaults.
+	return loadSplitConfig("")
+}
+
+func loadSplitConfig(root string) (*Config, error) {
+	cfg := &Config{}
+
+	var constants constantsWrapper
+	if err := loadSection(root, constantsFile, &constants); err != nil {
+		return nil, err
+	}
+	cfg.Constants = constants.Constants
+
+	var materials materialsWrapper
+	if err := loadSection(root, materialsFile, &materials); err != nil {
+		return nil, err
+	}
+	cfg.Materials = materials.Materials
+
+	var crossbar crossbarWrapper
+	if err := loadSection(root, crossbarFile, &crossbar); err != nil {
+		return nil, err
+	}
+	cfg.Crossbar = crossbar.Crossbar
+
+	var training trainingWrapper
+	if err := loadSection(root, trainingFile, &training); err != nil {
+		return nil, err
+	}
+	cfg.Training = training.Training
+
+	var energy energyWrapper
+	if err := loadSection(root, energyFile, &energy); err != nil {
+		return nil, err
+	}
+	cfg.Energy = energy.Energy
+
+	var timing timingWrapper
+	if err := loadSection(root, timingFile, &timing); err != nil {
+		return nil, err
+	}
+	cfg.Timing = timing.Timing
+
+	var preisach preisachWrapper
+	if err := loadSection(root, preisachFile, &preisach); err != nil {
+		return nil, err
+	}
+	cfg.Preisach = preisach.Preisach
+
+	var calibration calibrationWrapper
+	if err := loadSection(root, calibrationFile, &calibration); err != nil {
+		return nil, err
+	}
+	cfg.Calibration = calibration.Calibration
+
+	var simulation simulationWrapper
+	if err := loadSection(root, simulationFile, &simulation); err != nil {
+		return nil, err
+	}
+	cfg.Simulation = simulation.Simulation
+
+	var mnist mnistWrapper
+	if err := loadSection(root, mnistFile, &mnist); err != nil {
+		return nil, err
+	}
+	cfg.MNIST = mnist.MNIST
+
+	var benchmarks benchmarksWrapper
+	if err := loadSection(root, benchmarksFile, &benchmarks); err != nil {
+		return nil, err
+	}
+	cfg.Benchmarks = benchmarks.Benchmarks
+
+	return cfg, nil
+}
+
+func loadSection(root, filename string, out any) error {
+	data, err := readConfigFile(root, filename)
+	if err != nil {
+		return err
+	}
+	if data == nil {
+		embeddedPath := filepath.ToSlash(filepath.Join("defaults", filename))
+		data, err = embeddedConfig.ReadFile(embeddedPath)
+		if err != nil {
+			return fmt.Errorf("failed to read embedded %s: %w", filename, err)
+		}
+	}
+	if err := yaml.Unmarshal(data, out); err != nil {
+		return fmt.Errorf("failed to parse %s: %w", filename, err)
+	}
+	return nil
+}
+
+func findSplitConfigRoot() (string, bool) {
+	for _, root := range configRoots {
+		for _, filename := range splitProbeFiles {
+			path := filepath.Join(root, filename)
+			if fileExists(path) {
+				return root, true
 			}
 		}
 	}
+	return "", false
+}
 
-	// Fall back to embedded config
-	if data == nil {
-		data, err = embeddedConfig.ReadFile("physics.yaml")
-		if err != nil {
-			return nil, fmt.Errorf("failed to read embedded config: %w", err)
+func readLegacyConfig() ([]byte, error) {
+	for _, root := range configRoots {
+		path := filepath.Join(root, legacyConfigFile)
+		if fileExists(path) {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read %s: %w", path, err)
+			}
+			return data, nil
 		}
 	}
+	return nil, nil
+}
 
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse physics.yaml: %w", err)
+func readConfigFile(root, filename string) ([]byte, error) {
+	if root == "" {
+		return nil, nil
 	}
+	path := filepath.Join(root, filename)
+	if !fileExists(path) {
+		return nil, nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s: %w", path, err)
+	}
+	return data, nil
+}
 
-	return &cfg, nil
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return !info.IsDir()
 }
 
 // GetMaterial returns a material by name.

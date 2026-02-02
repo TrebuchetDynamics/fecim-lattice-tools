@@ -1,0 +1,19 @@
+# FeCIM Lattice Tools - Preisach Model Parameters
+# Reference index defined in config/materials.yaml
+
+# =============================================================================
+# PREISACH MODEL PARAMETERS
+# =============================================================================
+preisach:
+  # Grid resolution
+  grid_size: 30                 # Hysteron grid (NxN)
+
+  # Distribution parameters (as fraction of Ec)
+  alpha_sigma_ratio: 0.20       # σ_α / Ec = 20%
+  beta_sigma_ratio: 0.20        # σ_β / Ec = 20%
+  correlation: 0.5              # α-β correlation
+
+  # Fatigue model
+  fatigue_rate: 1.0e-10         # Degradation per cycle
+  wakeup_cycles: 100            # Cycles for wake-up
+  initial_wakeup: 0.8           # Initial wake-up factor

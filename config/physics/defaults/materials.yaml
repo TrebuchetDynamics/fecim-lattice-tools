@@ -5,7 +5,7 @@
 # Edit this file to experiment with different materials and hardware configurations.
 #
 # =============================================================================
-# REFERENCES (Updated 2026-01-26)
+# REFERENCES (Updated 2026-02-02)
 # =============================================================================
 #
 # Core Material (HfO2-ZrO2 Superlattice):
@@ -53,16 +53,25 @@
 #   [26] Nature Commun. 2017, doi:10.1038/ncomms14956 - In2Se3 intrinsic 2D ferroelectricity
 #   [27] InfoMat 2022, doi:10.1002/inf2.12341 - In2Se3 for ferroelectric data storage
 #   [28] AIP Appl. Phys. Rev. 2024, doi:10.1063/5.0190692 - In2Se3 phase transitions & devices
+#
+# Landau-Khalatnikov / Thermodynamics:
+#   [29] Hoffmann et al., J. Appl. Phys. 118, 072006 (2015). DOI: 10.1063/1.4927805
+#   [30] Starschich et al., Appl. Phys. Lett. 108, 032903 (2016). DOI: 10.1063/1.4940370
+#   [31] Park et al., J. Appl. Phys. 117, 074103 (2015) - Electrostriction coefficients (Q11/Q12)
+#
+# Depolarization / Negative Capacitance:
+#   [32] Siannas et al., Commun. Phys. 5, 178 (2022). DOI: 10.1038/s42005-022-00951-x
+#   [33] Zhou et al., Sci. Adv. 8, eadd5953 (2022). DOI: 10.1126/sciadv.add5953
+#   [34] Salahuddin & Datta, Nano Lett. 8, 405–410 (2008). DOI: 10.1021/nl071804g
+#
+# Series Resistance / Compact Models:
+#   [35] Chatterjee et al., UC Berkeley EECS-2018-131 (2018)
+#   [36] Tung et al., UC Berkeley EECS-2025-13 (2025)
+#   [37] Tung et al., IEEE Trans. Electron Devices 69, 4761–4764 (2022). DOI: 10.1109/TED.2022.3181573
+#
+# Analog/MLC FeFET:
+#   [38] Jerry et al., arXiv:1708.04729 (2017)
 
-# =============================================================================
-# GLOBAL CONSTANTS
-# =============================================================================
-constants:
-  fecim_levels: 30              # Discrete analog states ("30 discrete states" - Dr. Tour)
-  bits_per_cell: 4.91           # log2(30) = 4.91 bits/cell
-  boltzmann_ev: 8.617e-5        # Boltzmann constant (eV/K)
-  epsilon_0: 8.854e-12          # Vacuum permittivity (F/m)
-  room_temperature: 300         # Standard room temperature (K)
 
 # =============================================================================
 # MATERIALS
@@ -111,20 +120,49 @@ materials:
     retention_time_s: 3.15e9    # 100 years at 85°C
     imprint_field_v_m: 1.0e6    # Imprint field shift
 
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
+
+    # Landau-Khalatnikov parameters (10nm HZO "Golden Set I") [29][30]
+    thermodynamics:
+      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
+      curie_const_k: 1.5e5      # Curie constant (K)
+
+    # Electrostriction & stress coupling [31][30]
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Transverse electrostriction (m^4 / C^2)
+      stress_gpa: 1.0              # TiN capping stress (typical)
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.2e9  # 12 MV/cm (within 13–19 MV/cm HZO range)
+      tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)
+
+    # Conductance transfer (FeFET mapping) [15]
+    conductance:
+      gmin_s: 1.0e-6               # High-resistance state (HRS)
+      gmax_s: 100.0e-6             # Low-resistance state (LRS)
+
   fecim_hzo:
     name: "FeCIM HZO"
     description: "Dr. Tour's FeCIM - DEMONSTRATED values only"
     reference: "Dr. external research group, COSM 2025 [17]"
     analog_states: 30           # 30 discrete states - VERIFIED (Dr. Tour)
-    
-    # Depolarization for Polycrystalline Analog Behavior
-    # Creates "slant" in hysteresis loop to enable 30-level operation
-    depolarization_factor_vm_c: 2.5e8  # V*m/C - Tuning knob for analog slope
-    
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
+
     # Polarization (estimated - not disclosed) [17][18]
     pr_c_m2: 0.30               # 30 µC/cm² (estimated from In2Se3 work)
     ps_c_m2: 0.35               # 35 µC/cm² (estimated)
-    
+
     # Field parameters (estimated) [17]
     ec_v_m: 1.0e8               # 1.0 MV/cm (estimated)
 
@@ -154,11 +192,42 @@ materials:
     retention_time_s: 1.0e7     # ~116 days DEMONSTRATED
     imprint_field_v_m: 1.0e6
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [Gemini Compendium]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8       # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10      # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05         # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
+      curie_const_k: 1.5e5        # Curie constant (K)
+    
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Tensile stability [m^4 / C^2]
+      stress_gpa: 1.0              # TiN Capping Stress [GPa]
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.2e9  # 12 MV/cm (within 13–19 MV/cm HZO range)
+      tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)
+
+    # Conductance transfer (FeFET mapping) [15]
+    conductance:
+      gmin_s: 1.0e-6               # High-resistance state (HRS)
+      gmax_s: 100.0e-6             # Low-resistance state (LRS)
+
   fecim_hzo_target:
     name: "FeCIM HZO (TARGET)"
     description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"
     reference: "Dr. external research group, COSM 2025"
     analog_states: 30           # Same as FeCIM demonstrated
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
 
     # Same as fecim_hzo except reliability targets
     pr_c_m2: 0.30
@@ -181,11 +250,42 @@ materials:
     retention_time_s: 3.15e9    # TARGET - 100 years (not demonstrated)
     imprint_field_v_m: 1.0e6
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
+      curie_const_k: 1.5e5      # Curie constant (K)
+
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Tensile stability [m^4 / C^2]
+      stress_gpa: 1.0              # TiN capping stress (typical)
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.2e9  # 12 MV/cm (within 13–19 MV/cm HZO range)
+      tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)
+
+    # Conductance transfer (FeFET mapping) [15]
+    conductance:
+      gmin_s: 1.0e-6               # High-resistance state (HRS)
+      gmax_s: 100.0e-6             # Low-resistance state (LRS)
+
   literature_superlattice:
     name: "Literature Superlattice"
     description: "Best academic HfO2/ZrO2 superlattice results"
     reference: "Cheema et al., Nature 580, 478 (2020) [2]; Nature Commun. 2025 [3]"
     analog_states: 64           # Enhanced superlattice supports more states
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
 
     # Enhanced polarization [2][3][5]
     pr_c_m2: 0.50               # 50 µC/cm² (superlattice enhanced) [5]
@@ -219,12 +319,43 @@ materials:
     retention_time_s: 3.15e8    # 10-year at 85°C verified
     imprint_field_v_m: 0.5e6
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction)
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -3.8e8         # Deeper wells for Superlattice
+      gamma_landau: 2.1e10        # Higher stability
+      rho_viscosity: 0.02         # Lower viscosity (faster switching: 360ps)
+      curie_const_k: 1.5e5        # Curie constant (K), assumed HZO-like
+    
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.035 # Stronger coupling in superlattice
+      stress_gpa: 1.5              # Higher epitaxial stress
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.0e9  # 10 MV/cm (superlattice lower barrier)
+      tau_inf_s: 0.5e-10           # 50 ps attempt time (faster switching)
+
+    # Conductance transfer (FeFET mapping) [15]
+    conductance:
+      gmin_s: 0.5e-6               # Lower leakage (HRS)
+      gmax_s: 150.0e-6             # Higher LRS due to higher Pr
+
   # NEW: Cryogenic operation profile (for quantum computing integration)
   cryogenic_hzo:
     name: "Cryogenic HZO"
     description: "HZO performance at 4K for quantum computing"
     reference: "Adv. Electron. Mater. 2024 [10]; 2025 [11]"
     analog_states: 48           # Enhanced polarization at cryo enables more states
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
 
     # ENHANCED polarization at cryogenic temps [10]
     pr_c_m2: 0.75               # 75 µC/cm² at 4K (RECORD - improved from RT!)
@@ -258,6 +389,35 @@ materials:
     retention_time_s: 3.15e10   # >10 years at cryo (improved)
     imprint_field_v_m: 0.3e6    # Reduced imprint at cryo
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction)
+    # Cryo-specific LGD coefficients are not widely published; defaults match 10nm HZO [29][30]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8     # HZO default (room-temp reference)
+      gamma_landau: 1.653e10    # HZO default (room-temp reference)
+      rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), model default
+      curie_const_k: 1.5e5      # Curie constant (K), model default
+
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Transverse electrostriction (m^4 / C^2)
+      stress_gpa: 1.0              # TiN capping stress (typical)
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.5e9  # 15 MV/cm (higher barrier at cryo)
+      tau_inf_s: 2.0e-10           # 200 ps attempt time (slower at cryo)
+
+    # Conductance transfer (FeFET mapping) [15]
+    conductance:
+      gmin_s: 0.5e-6               # Lower leakage at cryo (HRS)
+      gmax_s: 200.0e-6             # Higher LRS due to higher Pr
+
   # ---------------------------------------------------------------------------
   # MULTI-LEVEL DEMONSTRATIONS (Peer-Reviewed)
   # ---------------------------------------------------------------------------
@@ -267,6 +427,9 @@ materials:
     description: "Standard HZO FeFET demonstrating 32 analog states"
     reference: "Oh et al., IEEE EDL 38(6), 732 (2017) [21]"
     analog_states: 32           # PEER-REVIEWED: 32 discrete states
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
 
     # Polarization parameters [21]
     pr_c_m2: 0.20               # 20 µC/cm²
@@ -297,11 +460,42 @@ materials:
     endurance_cycles: 1.0e8     # 10^8 cycles (2017 era)
     retention_time_s: 3.15e8    # 10 years projected
 
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
+      curie_const_k: 1.5e5      # Curie constant (K)
+
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Transverse electrostriction (m^4 / C^2)
+      stress_gpa: 1.0              # TiN capping stress (typical)
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.2e9  # 12 MV/cm (within 13–19 MV/cm HZO range)
+      tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)
+
+    # Conductance transfer (FeFET mapping) [21]
+    conductance:
+      gmin_s: 2.0e-6               # Older HZO FeFET HRS
+      gmax_s: 80.0e-6              # Older HZO FeFET LRS
+
   hzo_ftj_140:
     name: "HZO FTJ (140 states)"
     description: "HZO Ferroelectric Tunnel Junction with >7-bit operation"
     reference: "Song et al., Adv. Science 2024 [22]; ACS AMI 2022 [23]"
     analog_states: 140          # PEER-REVIEWED: >7-bit = 128-140 states
+
+    # Depolarization field (polycrystalline slant) [32][33][34]
+    depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P (model default)
 
     # Polarization parameters [22][23]
     pr_c_m2: 0.25               # 25 µC/cm²
@@ -335,6 +529,34 @@ materials:
     # Reliability [22]
     endurance_cycles: 1.0e7     # 10^7 cycles demonstrated
     retention_time_s: 3.15e8    # 10 years extrapolated
+
+    # =========================================================================
+    # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
+    # =========================================================================
+    thermodynamics:
+      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
+      curie_const_k: 1.5e5      # Curie constant (K)
+
+    coupling:
+      q11_electrostriction: 0.089  # Longitudinal electrostriction (m^4 / C^2)
+      q12_electrostriction: -0.026 # Transverse electrostriction (m^4 / C^2)
+      stress_gpa: 1.0              # TiN capping stress (typical)
+
+    # Circuit parasitics (series resistance) [35][36][37]
+    circuit:
+      series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
+
+    # Nucleation-Limited Switching (Merz law) [30]
+    nls:
+      activation_field_v_m: 1.0e9  # 10 MV/cm (lower barrier for FTJ)
+      tau_inf_s: 2.0e-10           # 200 ps attempt time (FTJ tunneling)
+
+    # Conductance transfer (FTJ mapping) [22][23]
+    conductance:
+      gmin_s: 0.1e-6               # FTJ HRS (lower absolute current)
+      gmax_s: 10.0e-6              # FTJ LRS (higher TER)
 
   # ---------------------------------------------------------------------------
   # ALTERNATIVE FERROELECTRICS (Lower TRL for 30-state applications)
@@ -383,193 +605,3 @@ materials:
     # Limitations
     # - High Ec (5 MV/cm) requires high voltages, limits analog granularity
     # - Best for binary/few-level rather than 30-state applications
-
-# =============================================================================
-# CROSSBAR ARRAY CONFIGURATION
-# =============================================================================
-# References: [13][14][15][16]
-crossbar:
-  # Default array dimensions [15]
-  default_rows: 128
-  default_cols: 128
-  max_demonstrated_rows: 145    # 145×145 demonstrated [ferroelectric memristor 2025]
-
-  # Quantization [15][17]
-  quantization_levels: 30       # Same as fecim_levels
-  mlc_levels: 7                 # 7 VT states (~3-bit) demonstrated [15]
-  adc_bits: 8                   # ADC resolution
-  dac_bits: 8                   # DAC resolution
-
-  # Conductance range (Siemens) [15]
-  conductance_min_s: 1.0e-6     # 1 µS (Gmin)
-  conductance_max_s: 100.0e-6   # 100 µS (Gmax)
-  conductance_ratio: 100        # Gmax/Gmin = on/off ratio
-  ter_ratio: 911                # TER ~911% in MIFS structure
-
-  # Non-idealities [16]
-  device_variation: 0.05        # Device-to-device σ (5%)
-  read_noise: 0.02              # Read noise σ (2%)
-  write_noise: 0.03             # Write noise σ (3%)
-  # Note: Current-limited design achieves 97% MNIST vs 9.8% without [16]
-
-  # Line resistance (for IR drop simulation)
-  word_line_resistance_ohm: 10  # Word line R per segment
-  bit_line_resistance_ohm: 10   # Bit line R per segment
-
-  # Sneak path parameters
-  # Note: FCM (capacitive) arrays avoid IR drop and DC sneak paths
-  sneak_path_enabled: true
-  sneak_conductance_ratio: 0.01 # Leakage/on ratio
-  fcm_sneak_free: true          # Capacitive arrays are sneak-free
-
-# =============================================================================
-# TRAINING CONFIGURATION
-# =============================================================================
-training:
-  # Learning parameters
-  learning_rate: 0.01
-  weight_decay: 1.0e-4          # L2 regularization
-  momentum: 0.9
-
-  # Batch settings
-  default_batch_size: 32
-  gradient_clip: 1.0
-
-  # Hardware-aware constraints
-  weight_clip_min: 0.0          # Minimum weight (maps to Gmin)
-  weight_clip_max: 1.0          # Maximum weight (maps to Gmax)
-  update_noise_sigma: 0.01      # Noise in weight updates
-  asymmetry_ratio: 1.0          # Potentiation/depression asymmetry (1.0 = symmetric)
-
-  # Quantization-aware training
-  quantize_forward: true        # Quantize in forward pass
-  quantize_backward: false      # Full precision gradients
-  straight_through: true        # STE for quantization gradients
-
-# =============================================================================
-# ENERGY PARAMETERS
-# =============================================================================
-# References: [12][13][14]
-energy:
-  # Per-operation energy (Joules) [14]
-  read_energy_j: 1.0e-15        # ~1 fJ per read
-  write_energy_j: 10.0e-15      # ~10 fJ per write
-  mac_energy_j: 5.0e-15         # ~5 fJ per MAC operation
-  puf_readout_energy_j: 1.89e-15 # 1.89 fJ/bit PUF readout (Nature Commun. 2025)
-
-  # Comparison baselines [12]
-  nand_write_energy_j: 500.0e-15    # ~500 fJ (25-100x worse vs FeCIM)
-  dram_access_energy_j: 5000.0e-15  # ~5 pJ (1000x worse)
-  sram_access_energy_j: 50.0e-15    # ~50 fJ
-
-  # CIM benchmarks [14]
-  cim_area_efficiency_gops_mm2: 160   # 160 GOPS/mm² (DAC 2024)
-  cim_energy_efficiency_tops_w: 25.5  # 25.5 TOPS/W for 8b/8b (DAC 2024)
-
-  # Leakage
-  standby_power_w_per_cell: 1.0e-12 # ~1 pW standby
-
-# =============================================================================
-# TIMING PARAMETERS
-# =============================================================================
-# References: [8][9]
-timing:
-  # Operation latencies (seconds)
-  read_latency_s: 10.0e-9       # 10 ns read
-  write_latency_s: 100.0e-9     # 100 ns write (program-verify)
-  mac_latency_s: 10.0e-9        # 10 ns per MAC
-
-  # Switching speed records [8]
-  switching_time_typical_s: 925.0e-12  # 925 ps characteristic (Purdue)
-  switching_time_record_s: 360.0e-12   # 360 ps RECORD in sub-µm arrays [8]
-
-  # Programming parameters
-  pulse_width_s: 10.0e-9        # 10 ns programming pulse
-  verify_delay_s: 5.0e-9        # 5 ns verify delay
-  max_program_cycles: 10        # Max program-verify iterations
-
-# =============================================================================
-# PREISACH MODEL PARAMETERS
-# =============================================================================
-preisach:
-  # Grid resolution
-  grid_size: 30                 # Hysteron grid (NxN)
-
-  # Distribution parameters (as fraction of Ec)
-  alpha_sigma_ratio: 0.20       # σ_α / Ec = 20%
-  beta_sigma_ratio: 0.20        # σ_β / Ec = 20%
-  correlation: 0.5              # α-β correlation
-
-  # Fatigue model
-  fatigue_rate: 1.0e-10         # Degradation per cycle
-  wakeup_cycles: 100            # Cycles for wake-up
-  initial_wakeup: 0.8           # Initial wake-up factor
-
-# =============================================================================
-# CALIBRATION PARAMETERS
-# =============================================================================
-calibration:
-  # Binary search calibration
-  iterations: 15                # Binary search iterations
-  field_min_ratio: 0.7          # Read max = 0.7 * Vc (30% safety margin below Vc for non-destructive reads)
-  field_max_ratio: 2.5          # Max field = 2.5 * Ec
-
-  # Adaptive calibration
-  adjustment_rate: 0.06         # 6% of Ec per level error
-
-  # Tolerances
-  level_tolerance: 1            # Accept ±1 level as success
-
-# =============================================================================
-# SIMULATION PARAMETERS
-# =============================================================================
-simulation:
-  # Time stepping
-  frame_rate_hz: 60             # UI update rate
-  dt_s: 0.0167                  # Time step (1/60 s)
-
-  # History
-  max_history_points: 500       # P-E plot trail length
-
-  # Default waveform parameters
-  default_frequency_hz: 0.5     # Default frequency for waveforms
-  default_amplitude_ratio: 1.5  # Default E amplitude = 1.5 * Ec (enough for switching, avoid over-saturation)
-
-# =============================================================================
-# MNIST DEMO PARAMETERS
-# =============================================================================
-# References: [16][17][18]
-mnist:
-  # Network architecture
-  input_size: 784               # 28x28 pixels
-  hidden_sizes: [128, 64]       # Hidden layer sizes
-  output_size: 10               # 10 digit classes
-
-  # Training
-  epochs: 10
-  batch_size: 64
-  learning_rate: 0.001
-
-  # Reference accuracy (peer-reviewed benchmarks, not targets)
-  # Note: Accuracy varies with noise, levels, and architecture
-  baseline_accuracy: 0.966      # 96.6% (Nature Communications 2023) - VERIFIED
-  best_accuracy: 0.9824         # 98.24% (ScienceDirect 2025) - VERIFIED (FTJ reservoir)
-  # tour_claimed_accuracy: 0.87 # REMOVED - unverified conference claim below peer-reviewed
-  current_limited_accuracy: 0.97 # 97% with current-limited FeFET [16]
-  fashion_mnist_rc: 0.8838      # 88.38% Fashion MNIST with reservoir computing
-
-# =============================================================================
-# ADDITIONAL BENCHMARKS (from new papers)
-# =============================================================================
-benchmarks:
-  # Matrix operations [13]
-  matrix_precision: "fp32"      # 32-bit floating point equivalent precision
-  matrix_size_max: 16           # 16×16 demonstrated with high precision
-
-  # Reservoir computing
-  rc_energy_vs_gpu: 10000       # 10⁴× lower energy than GPU
-  rc_endurance_cycles: 100000   # >10⁵ cycles demonstrated
-
-  # Security/PUF
-  puf_ml_attack_resistance: 10000000  # Resists 10M sample ML attacks
-  puf_reconfigurability: "near_ideal"

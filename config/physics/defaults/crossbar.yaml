@@ -1,0 +1,40 @@
+# FeCIM Lattice Tools - Crossbar Array Configuration
+# References: [13][14][15][16] (see config/materials.yaml)
+
+# =============================================================================
+# CROSSBAR ARRAY CONFIGURATION
+# =============================================================================
+# References: [13][14][15][16]
+crossbar:
+  # Default array dimensions [15]
+  default_rows: 128
+  default_cols: 128
+  max_demonstrated_rows: 145    # 145×145 demonstrated [ferroelectric memristor 2025]
+
+  # Quantization [15][17]
+  quantization_levels: 30       # Same as fecim_levels
+  mlc_levels: 7                 # 7 VT states (~3-bit) demonstrated [15]
+  adc_bits: 8                   # ADC resolution
+  dac_bits: 8                   # DAC resolution
+
+  # Conductance range (Siemens) [15]
+  conductance_min_s: 1.0e-6     # 1 µS (Gmin)
+  conductance_max_s: 100.0e-6   # 100 µS (Gmax)
+  conductance_ratio: 100        # Gmax/Gmin = on/off ratio
+  ter_ratio: 911                # TER ~911% in MIFS structure
+
+  # Non-idealities [16]
+  device_variation: 0.05        # Device-to-device σ (5%)
+  read_noise: 0.02              # Read noise σ (2%)
+  write_noise: 0.03             # Write noise σ (3%)
+  # Note: Current-limited design achieves 97% MNIST vs 9.8% without [16]
+
+  # Line resistance (for IR drop simulation)
+  word_line_resistance_ohm: 10  # Word line R per segment
+  bit_line_resistance_ohm: 10   # Bit line R per segment
+
+  # Sneak path parameters
+  # Note: FCM (capacitive) arrays avoid IR drop and DC sneak paths
+  sneak_path_enabled: true
+  sneak_conductance_ratio: 0.01 # Leakage/on ratio
+  fcm_sneak_free: true          # Capacitive arrays are sneak-free

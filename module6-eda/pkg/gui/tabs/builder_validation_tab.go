@@ -132,43 +132,56 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	updateModeHelp(cfg.Mode) // Initialize help text
 
 	// Layout image display - shows KLayout, OpenROAD, and Yosys generated images
-	// === THREE IMAGE DISPLAYS IN A ROW ===
+	// === TABBED INTERFACE FOR BETTER VISIBILITY ===
 
 	// 1. KLayout image (physical layout from DEF/LEF)
 	klayoutImage := canvas.NewImageFromFile("")
 	klayoutImage.FillMode = canvas.ImageFillContain
-	klayoutImage.SetMinSize(fyne.NewSize(400, 350))
+	klayoutImage.SetMinSize(fyne.NewSize(600, 450))
 	klayoutLabel := widget.NewLabelWithStyle("KLayout", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	klayoutStatus := widget.NewLabel("Not generated")
-	klayoutCard := widget.NewCard("", "", container.NewBorder(
-		container.NewVBox(klayoutLabel, klayoutStatus), nil, nil, nil,
-		klayoutImage,
-	))
 
 	// 2. OpenROAD image (placement visualization)
 	openroadImage := canvas.NewImageFromFile("")
 	openroadImage.FillMode = canvas.ImageFillContain
-	openroadImage.SetMinSize(fyne.NewSize(400, 350))
+	openroadImage.SetMinSize(fyne.NewSize(600, 450))
 	openroadLabel := widget.NewLabelWithStyle("OpenROAD", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	openroadStatus := widget.NewLabel("Not generated")
-	openroadCard := widget.NewCard("", "", container.NewBorder(
-		container.NewVBox(openroadLabel, openroadStatus), nil, nil, nil,
-		openroadImage,
-	))
 
 	// 3. Yosys schematic image (circuit diagram - PNG converted from DOT)
 	yosysImage := canvas.NewImageFromFile("")
 	yosysImage.FillMode = canvas.ImageFillContain
-	yosysImage.SetMinSize(fyne.NewSize(400, 350))
+	yosysImage.SetMinSize(fyne.NewSize(600, 450))
 	yosysLabel := widget.NewLabelWithStyle("Yosys Schematic", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	yosysStatus := widget.NewLabel("Not generated")
-	yosysCard := widget.NewCard("", "", container.NewBorder(
-		container.NewVBox(yosysLabel, yosysStatus), nil, nil, nil,
-		yosysImage,
-	))
 
-	// Horizontal layout: three images in a row
-	layoutStack := container.NewGridWithColumns(3, klayoutCard, openroadCard, yosysCard)
+	// Tabbed layout for larger image previews
+	klayoutTab := container.NewBorder(
+		container.NewHBox(klayoutLabel, widget.NewLabel(" - "), klayoutStatus),
+		nil, nil, nil,
+		container.NewScroll(klayoutImage),
+	)
+	openroadTab := container.NewBorder(
+		container.NewHBox(openroadLabel, widget.NewLabel(" - "), openroadStatus),
+		nil, nil, nil,
+		container.NewScroll(openroadImage),
+	)
+	yosysTab := container.NewBorder(
+		container.NewHBox(yosysLabel, widget.NewLabel(" - "), yosysStatus),
+		nil, nil, nil,
+		container.NewScroll(yosysImage),
+	)
+
+	imageTabs := container.NewAppTabs(
+		container.NewTabItem("KLayout", klayoutTab),
+		container.NewTabItem("OpenROAD", openroadTab),
+		container.NewTabItem("Yosys Schematic", yosysTab),
+	)
+	imageTabs.SetTabLocation(container.TabLocationTop)
+
+	// Replace layoutStack with imageTabs
+	layoutStack := imageTabs
+
 
 	// Helper to update KLayout image from file
 	updateLayoutImage := func() {
@@ -1069,6 +1082,7 @@ Date: %s
 
 	cellPanel := container.NewVBox(
 		widget.NewLabelWithStyle("Cell Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
 		cellConfigGrid,
 		cellConfigGrid2,
 	)
@@ -1084,49 +1098,37 @@ Date: %s
 		archToggle,
 	)
 
-	// Stats grid - cleaner 3x2 layout instead of cramped pipe-separated row
+	// Helper for labeled stats - clean grid without card borders
+	labeledValue := func(header string, value *widget.Label) *fyne.Container {
+		headerLabel := widget.NewLabelWithStyle(header, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+		value.Alignment = fyne.TextAlignCenter
+		return container.NewVBox(headerLabel, value)
+	}
+
+	// Stats grid - clean 3x2 layout without card clutter
 	statsGrid := container.NewGridWithColumns(3,
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("Cells", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			totalLabel,
-		)),
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("Area", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			areaLabel,
-		)),
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("Utilization", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			utilizationLabel,
-		)),
-	)
-	statsRow2 := container.NewGridWithColumns(3,
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("WL", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			wlLengthLabel,
-		)),
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("BL", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			blLengthLabel,
-		)),
-		widget.NewCard("", "", container.NewVBox(
-			widget.NewLabelWithStyle("Density", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-			densityLabel,
-		)),
+		labeledValue("Cells", totalLabel),
+		labeledValue("Area", areaLabel),
+		labeledValue("Utilization", utilizationLabel),
+		labeledValue("WL Length", wlLengthLabel),
+		labeledValue("BL Length", blLengthLabel),
+		labeledValue("Density", densityLabel),
 	)
 
 	arrayPanel := container.NewVBox(
 		widget.NewLabelWithStyle("Array Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
 		arrayConfigGrid,
 		arrayConfigGrid2,
 		modeHelpText,
+		widget.NewSeparator(),
 		widget.NewLabelWithStyle("Statistics", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		statsGrid,
-		statsRow2,
 	)
 
 	// Config panels (left/right split) - give more to array side
 	configSplit := container.NewHSplit(cellPanel, arrayPanel)
-	configSplit.SetOffset(0.45)
+	configSplit.SetOffset(0.40)
 
 	// Preview tabs - larger, scrollable containers
 	verilogTab := container.NewBorder(
@@ -1161,12 +1163,24 @@ Date: %s
 		exportPackageBtn,
 	)
 
-	// Validation results - cleaner grid layout
-	validationResultsGrid := container.NewGridWithColumns(4,
-		container.NewVBox(widget.NewLabelWithStyle("Yosys", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}), yosysResult),
-		container.NewVBox(widget.NewLabelWithStyle("DEF", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}), defResult),
-		container.NewVBox(widget.NewLabelWithStyle("Cross", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}), crossResult),
-		container.NewVBox(widget.NewLabelWithStyle("Placement", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}), placementResult),
+	// Validation results - 2x2 card-style grid with better spacing
+	validationResultsGrid := container.NewGridWithColumns(2,
+		widget.NewCard("", "", container.NewHBox(
+			widget.NewLabelWithStyle("Yosys:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			yosysResult,
+		)),
+		widget.NewCard("", "", container.NewHBox(
+			widget.NewLabelWithStyle("DEF:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			defResult,
+		)),
+		widget.NewCard("", "", container.NewHBox(
+			widget.NewLabelWithStyle("Cross-Check:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			crossResult,
+		)),
+		widget.NewCard("", "", container.NewHBox(
+			widget.NewLabelWithStyle("Placement:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			placementResult,
+		)),
 	)
 	validationRow := container.NewVBox(
 		container.NewHBox(
@@ -1185,13 +1199,13 @@ Date: %s
 	)
 
 	// Log section with improved visibility
-	logOutput.SetMinRowsVisible(6) // More visible rows
+	logOutput.SetMinRowsVisible(10) // More visible rows
 	logHeader := container.NewHBox(
 		widget.NewLabelWithStyle("Validation Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		clearLogBtn,
 	)
 	logScroll := container.NewScroll(logOutput)
-	logScroll.SetMinSize(fyne.NewSize(0, 150)) // Larger fixed height for better readability
+	logScroll.SetMinSize(fyne.NewSize(0, 220)) // Larger fixed height for better readability
 
 	// Bottom validation section - more compact
 	validationSection := container.NewVBox(
@@ -1216,12 +1230,12 @@ Date: %s
 	)
 
 	// Use VSplit for resizable preview/validation areas
-	// Preview gets 75% of space, validation gets 25%
+	// Preview gets 65% of space, validation gets 35%
 	mainSplit := container.NewVSplit(
 		previewTabs,
 		validationSection,
 	)
-	mainSplit.SetOffset(0.75)
+	mainSplit.SetOffset(0.65)
 
 	// Main layout: fixed top section, resizable middle/bottom
 	mainContent := container.NewBorder(

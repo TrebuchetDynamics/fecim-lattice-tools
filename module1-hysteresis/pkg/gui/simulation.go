@@ -687,10 +687,10 @@ func (a *App) simulationLoop() {
 			subSteps++
 		}
 
-		// Update UI once per frame with the final state
-		a.updateUI()
-
 		a.mu.Unlock()
+
+		// Update UI once per frame with the final state (without holding a.mu).
+		a.updateUI()
 	}
 }
 
@@ -1232,20 +1232,20 @@ func (a *App) updatePhysics(dt float64) {
 // updateUI prepares data and calls refreshGUI.
 // MUST be called with a.mu held.
 func (a *App) updateUI() {
-	// Update UI (must be on main thread)
+	// Update UI (must be on main thread) - take a snapshot under lock.
+	a.mu.RLock()
 	fE := a.electricField
 	pV := a.polarization
 	dL := a.discreteLevel
-	materialEc := a.material.Ec
+	materialEc := 0.0
+	if a.material != nil {
+		materialEc = a.material.Ec
+	}
 	eHist := make([]float64, len(a.eHistory))
 	pHist := make([]float64, len(a.pHistory))
 	copy(eHist, a.eHistory)
 	copy(pHist, a.pHistory)
-
-	// Release lock temporarily if needed?
-	// No, refreshGUI uses fyne.Do which schedules on main thread.
-	// The copy operations above are safe under lock.
-	// We invoke refreshGUI which takes VALUES (copies).
+	a.mu.RUnlock()
 
 	a.refreshGUI(fE, pV, dL, materialEc, eHist, pHist)
 }

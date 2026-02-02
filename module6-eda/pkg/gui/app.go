@@ -14,7 +14,7 @@ import (
 // CreateMainWindow creates the main application window
 func CreateMainWindow(app fyne.App) fyne.Window {
 	w := app.NewWindow("Module 6: FeCIM Design Suite - EDA")
-	w.Resize(fyne.NewSize(1400, 900))
+	w.Resize(fyne.NewSize(1600, 1000))
 
 	// Shared array configuration (used across tabs 2-7)
 	arrayConfig := &config.ArrayConfig{

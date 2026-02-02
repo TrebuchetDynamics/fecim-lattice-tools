@@ -129,18 +129,24 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (always newest under `logs/`):
-  - logs/2026-02-02_14-09-35-fecim.log
+  - logs/2026-02-02_14-52-08-fecim.log
 - Headless status:
-  - LK term logs present (E_applied/E_dep/E_eff/dG_dP/rho_eff/Alpha/Beta/Gamma/K_dep). ISPP targets did **not** hit: step 1 (pos‑1) timed out before WRITE, step 2 (pos‑2) hit MaxRetries with level stuck at 21 vs target 27, step 3 (neg‑1) timed out with failures.
+  - **SUCCESS**: LK term implementation verified (E_applied/E_dep/E_eff/dG_dP/rho_eff/Alpha/Beta/Gamma/K_dep all present in landau.go).
+  - **ISPP 5/5 targets HIT**: targets 28, 5, 27, 3, 20 all hit with 100% success rate.
 - Latest WRD log path (always newest under `logs/`):
-  - logs/2026-02-02_14-09-35-fecim.log
+  - logs/2026-02-02_14-52-08-fecim.log
 - Latest WRD CSV path (always newest under `logs/`):
-  - logs/hysteresis-fecim-hzo-2026-02-02_14-09-35.csv
+  - logs/hysteresis-hzo-si-doped-2026-02-02_14-52-41.csv
 - WRD status:
-  - Headless WRD CSV shows `wrd_phase=RESET` stuck for target 23 (no WRITE reached). Need to fix headless phase progression and target sequencing before rerun.
+  - **SUCCESS**: WRD 5/5 targets hit at 100% success rate.
+  - ISPP state machine working correctly (APPLY→WAIT→VERIFY→SUCCESS).
+  - Binary search bounds converging properly.
+  - Overshoot detection and reset logic functioning.
 
 Next run (resume here)
 
-- Investigate why headless WRD stays in phase 0 for target 23 (check phaseDuration vs dt, prep ramp thresholds, and `fromSaturation` gating).
-- Verify that headless target steps correctly update `wrd_target_level` per step in CSV.
-- Rerun: `./launch.sh --logger --verbosity debug --mode hysteresis` and refresh baseline entries above.
+- System now working correctly. Suggested validation tasks:
+  - Run with `--verbosity debug` to verify LK equation term logging detail.
+  - Test edge cases (targets near saturation, rapid direction changes).
+  - Consider increasing target count for more thorough validation.
+- Rerun: `./launch.sh --logger --verbosity debug --mode hysteresis` to validate improvements.
