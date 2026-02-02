@@ -51,6 +51,14 @@
       "h": 0.3162
     },
     {
+      "id": "lk_terms",
+      "tooltip": "Landau-Khalatnikov nonlinear energy term: 2\u03b1P + 4\u03b2P^3 + 6\u03b3P^5.",
+      "x": 0.51,
+      "y": 0.4,
+      "w": 0.37,
+      "h": 0.12
+    },
+    {
       "id": "noise",
       "tooltip": "Stochastic noise term (optional): captures thermal variability.",
       "x": 0.9323,

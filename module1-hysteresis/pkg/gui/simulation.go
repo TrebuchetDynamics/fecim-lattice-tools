@@ -1224,6 +1224,9 @@ func (a *App) updatePhysics(dt float64) {
 			a.pHistory = a.pHistory[1:]
 		}
 	}
+
+	// Always record full-resolution data snapshot for offline analysis.
+	a.recordDataSnapshot(dt)
 }
 
 // updateUI prepares data and calls refreshGUI.

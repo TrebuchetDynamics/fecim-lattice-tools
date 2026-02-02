@@ -148,6 +148,11 @@ func (wc *WriteController) ResetState() {
 	wc.OvershootTotal = 0
 }
 
+// ResetDirection exposes the current sticky reset direction for diagnostics/logging.
+func (wc *WriteController) ResetDirection() int {
+	return wc.resetDirection
+}
+
 // Update advances the controller state logic.
 func (wc *WriteController) Update(dt float64, currentField float64, currentLevel int) (targetField float64, done bool) {
 	wc.PhaseTimer += dt

@@ -544,3 +544,8 @@ func getLogsDir() string {
 	// Default to "logs" in current working directory
 	return "logs"
 }
+
+// LogsDir exposes the resolved logs directory path for other packages.
+func LogsDir() string {
+	return getLogsDir()
+}

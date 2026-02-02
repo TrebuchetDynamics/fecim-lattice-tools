@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"image/color"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -26,19 +23,18 @@ const (
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
 type TermChip struct {
 	widget.BaseWidget
-	parent       fyne.Window
-	tooltip      string
-	label        *widget.Label
-	tooltipPopup *widget.PopUp
-	tooltipLabel *widget.Label
-	tooltipBody  *fyne.Container
+	parent   fyne.Window
+	tooltip  string
+	label    *widget.Label
+	onSelect func(string)
 }
 
 // NewTermChip creates a new term chip with hover tooltip text.
-func NewTermChip(parent fyne.Window, text, tooltip string) *TermChip {
+func NewTermChip(parent fyne.Window, text, tooltip string, onSelect func(string)) *TermChip {
 	t := &TermChip{
-		parent:  parent,
-		tooltip: tooltip,
+		parent:   parent,
+		tooltip:  tooltip,
+		onSelect: onSelect,
 	}
 	t.label = widget.NewLabel(text)
 	t.label.TextStyle = fyne.TextStyle{Monospace: true}
@@ -53,46 +49,28 @@ func (t *TermChip) CreateRenderer() fyne.WidgetRenderer {
 
 // MouseIn shows the tooltip on hover.
 func (t *TermChip) MouseIn(e *desktop.MouseEvent) {
-	t.showTooltip(e)
+	_ = e
 }
 
 // MouseMoved keeps the tooltip near the cursor.
 func (t *TermChip) MouseMoved(e *desktop.MouseEvent) {
-	t.showTooltip(e)
+	_ = e
 }
 
 // MouseOut hides the tooltip.
 func (t *TermChip) MouseOut() {
-	t.hideTooltip()
 }
 
-func (t *TermChip) showTooltip(e *desktop.MouseEvent) {
-	if t.parent == nil || t.tooltip == "" {
-		return
+// Tapped notifies the selected term without showing hover tooltips.
+func (t *TermChip) Tapped(_ *fyne.PointEvent) {
+	if t.onSelect != nil {
+		t.onSelect(t.tooltip)
 	}
-	if t.tooltipLabel == nil {
-		t.tooltipLabel = widget.NewLabel(t.tooltip)
-		t.tooltipLabel.Wrapping = fyne.TextWrapWord
-	} else {
-		t.tooltipLabel.SetText(t.tooltip)
-	}
-	popupSize := sizeTooltip(t.tooltipLabel, t.tooltip, tooltipMaxWidth)
-	if t.tooltipBody == nil {
-		t.tooltipBody = container.NewPadded(t.tooltipLabel)
-	}
-	if t.tooltipPopup == nil {
-		t.tooltipPopup = widget.NewPopUp(t.tooltipBody, t.parent.Canvas())
-	}
-	t.tooltipPopup.Resize(popupSize)
-	pos := fyne.NewPos(e.AbsolutePosition.X+10, e.AbsolutePosition.Y+10)
-	t.tooltipPopup.ShowAtPosition(pos)
 }
 
-func (t *TermChip) hideTooltip() {
-	if t.tooltipPopup != nil {
-		t.tooltipPopup.Hide()
-		t.tooltipPopup = nil
-	}
+// TappedSecondary mirrors tap behavior.
+func (t *TermChip) TappedSecondary(_ *fyne.PointEvent) {
+	t.Tapped(nil)
 }
 
 func mathLabel(text string) *widget.Label {
@@ -112,6 +90,11 @@ func NewFrankesteinEquationWidget(parent fyne.Window) fyne.CanvasObject {
 }
 
 func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
+	statusLabel := newEquationStatusLabel()
+	selectTerm := func(text string) {
+		statusLabel.SetText(text)
+	}
+
 	title := widget.NewLabelWithStyle(
 		"Frankestein Equation (Module 1)",
 		fyne.TextAlignLeading,
@@ -119,47 +102,53 @@ func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	line1 := container.NewHBox(
-		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay."),
+		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
-		NewTermChip(parent, "E_{applied}", "Applied electric field drive term (external voltage across the film)."),
+		NewTermChip(parent, "E_{applied}", "Applied electric field drive term (external voltage across the film).", selectTerm),
 		mathLabel(" - "),
-		NewTermChip(parent, "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states."),
+		NewTermChip(parent, "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
 		mathLabel(" P - ("),
 	)
 
 	line2 := container.NewHBox(
-		NewTermChip(parent, "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells."),
+		NewTermChip(parent, "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
 		mathLabel(" P + "),
-		NewTermChip(parent, "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier."),
+		NewTermChip(parent, "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
 		mathLabel(" P^3 + "),
-		NewTermChip(parent, "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization."),
+		NewTermChip(parent, "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
 		mathLabel(" P^5)"),
+	)
+
+	lkRow := container.NewHBox(
+		NewTermChip(parent, "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.", selectTerm),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("+ "),
-		NewTermChip(parent, "\\xi(t)", "Stochastic noise term (optional): captures thermal variability."),
+		NewTermChip(parent, "\\xi(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
 	)
 
 	line4 := container.NewHBox(
-		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path."),
+		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
 		mathLabel(" = "),
-		NewTermChip(parent, "\\rho", "Intrinsic viscosity / damping coefficient."),
+		NewTermChip(parent, "\\rho", "Intrinsic viscosity / damping coefficient.", selectTerm),
 		mathLabel(" + ("),
-		NewTermChip(parent, "R_{series}", "Series resistance: absorbs RC delay into viscosity."),
+		NewTermChip(parent, "R_{series}", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
 		mathLabel(" A) / d"),
 	)
 
-	caption := widget.NewLabel("Hover any coefficient to see its purpose in Module 1.")
+	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
 	caption.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		title,
 		line1,
 		line2,
+		lkRow,
 		line3,
 		line4,
 		caption,
+		statusLabel,
 	)
 }
 
@@ -199,19 +188,18 @@ func (l *normalizedHotspotLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
 
 type Hotspot struct {
 	widget.BaseWidget
-	parent       fyne.Window
-	tooltip      string
-	tooltipPopup *widget.PopUp
-	tooltipLabel *widget.Label
-	tooltipBody  *fyne.Container
-	debug        bool
+	parent   fyne.Window
+	tooltip  string
+	onSelect func(string)
+	debug    bool
 }
 
-func NewHotspot(parent fyne.Window, tooltip string, debug bool) *Hotspot {
+func NewHotspot(parent fyne.Window, tooltip string, debug bool, onSelect func(string)) *Hotspot {
 	h := &Hotspot{
-		parent:  parent,
-		tooltip: tooltip,
-		debug:   debug,
+		parent:   parent,
+		tooltip:  tooltip,
+		onSelect: onSelect,
+		debug:    debug,
 	}
 	h.ExtendBaseWidget(h)
 	return h
@@ -231,70 +219,32 @@ func (h *Hotspot) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (h *Hotspot) MouseIn(e *desktop.MouseEvent) {
-	h.showTooltipAt(e.AbsolutePosition)
+	_ = e
 }
 
 func (h *Hotspot) MouseMoved(e *desktop.MouseEvent) {
-	h.showTooltipAt(e.AbsolutePosition)
+	_ = e
 }
 
 func (h *Hotspot) MouseOut() {
-	h.hideTooltip()
 }
 
 func (h *Hotspot) Tapped(_ *fyne.PointEvent) {
-	if h.tooltipPopup != nil {
-		h.hideTooltip()
-		return
+	if h.onSelect != nil {
+		h.onSelect(h.tooltip)
 	}
-	if h.parent == nil || h.tooltip == "" {
-		return
-	}
-	app := fyne.CurrentApp()
-	if app == nil {
-		return
-	}
-	driver := app.Driver()
-	if driver == nil {
-		return
-	}
-	pos := driver.AbsolutePositionForObject(h)
-	h.showTooltipAt(pos.Add(fyne.NewPos(8, 8)))
 }
 
 func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 	h.Tapped(nil)
 }
 
-func (h *Hotspot) showTooltipAt(pos fyne.Position) {
-	if h.parent == nil || h.tooltip == "" {
-		return
-	}
-	if h.tooltipLabel == nil {
-		h.tooltipLabel = widget.NewLabel(h.tooltip)
-		h.tooltipLabel.Wrapping = fyne.TextWrapWord
-	} else {
-		h.tooltipLabel.SetText(h.tooltip)
-	}
-	popupSize := sizeTooltip(h.tooltipLabel, h.tooltip, tooltipMaxWidth)
-	if h.tooltipBody == nil {
-		h.tooltipBody = container.NewPadded(h.tooltipLabel)
-	}
-	if h.tooltipPopup == nil {
-		h.tooltipPopup = widget.NewPopUp(h.tooltipBody, h.parent.Canvas())
-	}
-	h.tooltipPopup.Resize(popupSize)
-	h.tooltipPopup.ShowAtPosition(fyne.NewPos(pos.X+10, pos.Y+10))
-}
-
-func (h *Hotspot) hideTooltip() {
-	if h.tooltipPopup != nil {
-		h.tooltipPopup.Hide()
-		h.tooltipPopup = nil
-	}
-}
-
 func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.CanvasObject {
+	statusLabel := newEquationStatusLabel()
+	selectTerm := func(text string) {
+		statusLabel.SetText(text)
+	}
+
 	title := widget.NewLabelWithStyle(
 		"Frankestein Equation (Module 1)",
 		fyne.TextAlignLeading,
@@ -306,7 +256,7 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 
 	var hotspotWidgets []fyne.CanvasObject
 	for _, spot := range hotspots {
-		hotspotWidgets = append(hotspotWidgets, NewHotspot(parent, spot.Tooltip, debug))
+		hotspotWidgets = append(hotspotWidgets, NewHotspot(parent, spot.Tooltip, debug, selectTerm))
 	}
 
 	image := loadFrankesteinEquationSVG(svgPath)
@@ -324,80 +274,15 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
 	stack := container.NewStack(image, overlay)
 
-	caption := widget.NewLabel("Hover or tap any coefficient to see its purpose in Module 1.")
+	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
 	caption.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		title,
 		stack,
 		caption,
+		statusLabel,
 	)
-}
-
-const tooltipMaxWidth float32 = 320
-
-func sizeTooltip(label *widget.Label, text string, maxWidth float32) fyne.Size {
-	textSize := theme.TextSize()
-	style := label.TextStyle
-	lineHeight := fyne.MeasureText("M", textSize, style).Height
-	if maxWidth <= 0 {
-		maxWidth = 280
-	}
-
-	words := strings.Fields(text)
-	if len(words) == 0 {
-		return paddedSize(maxWidth, lineHeight)
-	}
-
-	spaceWidth := fyne.MeasureText(" ", textSize, style).Width
-	lines := 1
-	lineWidth := float32(0)
-
-	for _, word := range words {
-		wordWidth := fyne.MeasureText(word, textSize, style).Width
-		if lineWidth == 0 {
-			if wordWidth > maxWidth {
-				extraLines := int(math.Ceil(float64(wordWidth/maxWidth))) - 1
-				if extraLines > 0 {
-					lines += extraLines
-				}
-				lineWidth = float32(math.Mod(float64(wordWidth), float64(maxWidth)))
-				if lineWidth == 0 {
-					lineWidth = maxWidth
-				}
-			} else {
-				lineWidth = wordWidth
-			}
-			continue
-		}
-
-		if lineWidth+spaceWidth+wordWidth <= maxWidth {
-			lineWidth += spaceWidth + wordWidth
-			continue
-		}
-
-		lines++
-		if wordWidth > maxWidth {
-			extraLines := int(math.Ceil(float64(wordWidth/maxWidth))) - 1
-			if extraLines > 0 {
-				lines += extraLines
-			}
-			lineWidth = float32(math.Mod(float64(wordWidth), float64(maxWidth)))
-			if lineWidth == 0 {
-				lineWidth = maxWidth
-			}
-		} else {
-			lineWidth = wordWidth
-		}
-	}
-
-	label.Resize(fyne.NewSize(maxWidth, float32(lines)*lineHeight))
-	return paddedSize(maxWidth, float32(lines)*lineHeight)
-}
-
-func paddedSize(width, height float32) fyne.Size {
-	padding := theme.Padding()
-	return fyne.NewSize(width+padding*2, height+padding*2)
 }
 
 func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
@@ -412,6 +297,13 @@ func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
 	}
 	resource := fyne.NewStaticResource(filepath.Base(svgPath), recolored)
 	return canvas.NewImageFromResource(resource)
+}
+
+func newEquationStatusLabel() *widget.Label {
+	label := widget.NewLabel("Tap a term to see its description.")
+	label.Wrapping = fyne.TextWrapWord
+	label.TextStyle = fyne.TextStyle{Italic: true}
+	return label
 }
 
 func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
@@ -445,52 +337,57 @@ func defaultFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
 		{
 			ID:      "rho_eff_main",
 			Tooltip: "Effective viscosity: intrinsic damping plus series-resistance RC delay.",
-			X:       0.05, Y: 0.12, W: 0.12, H: 0.12,
+			X:       0.0, Y: 0.1045, W: 0.0657, H: 0.2944,
 		},
 		{
 			ID:      "e_applied",
 			Tooltip: "Applied electric field drive term (external voltage across the film).",
-			X:       0.34, Y: 0.12, W: 0.16, H: 0.12,
+			X:       0.166, Y: 0.1045, W: 0.147, H: 0.2944,
 		},
 		{
 			ID:      "k_dep",
 			Tooltip: "Depolarization factor: models interfacial layer; slants the loop for analog states.",
-			X:       0.55, Y: 0.12, W: 0.10, H: 0.12,
+			X:       0.3444, Y: 0.1045, W: 0.0789, H: 0.2944,
 		},
 		{
 			ID:      "alpha",
 			Tooltip: "Dynamic stiffness: temperature + stress dependent curvature of energy wells.",
-			X:       0.22, Y: 0.30, W: 0.08, H: 0.12,
+			X:       0.5121, Y: 0.1045, W: 0.0922, H: 0.2778,
 		},
 		{
 			ID:      "beta",
 			Tooltip: "First-order nonlinearity: negative for HZO to create the switching barrier.",
-			X:       0.40, Y: 0.30, W: 0.08, H: 0.12,
+			X:       0.5964, Y: 0.0661, W: 0.1481, H: 0.3162,
 		},
 		{
 			ID:      "gamma",
 			Tooltip: "Sixth-order stabilizer: keeps energy bounded at large polarization.",
-			X:       0.58, Y: 0.30, W: 0.08, H: 0.12,
+			X:       0.7366, Y: 0.0661, W: 0.1376, H: 0.3162,
+		},
+		{
+			ID:      "lk_terms",
+			Tooltip: "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.",
+			X:       0.51, Y: 0.4, W: 0.37, H: 0.12,
 		},
 		{
 			ID:      "noise",
 			Tooltip: "Stochastic noise term (optional): captures thermal variability.",
-			X:       0.24, Y: 0.48, W: 0.10, H: 0.12,
+			X:       0.9323, Y: 0.1045, W: 0.0677, H: 0.2778,
 		},
 		{
 			ID:      "rho_eff_def",
 			Tooltip: "Effective viscosity definition used in the headless hysteresis path.",
-			X:       0.06, Y: 0.64, W: 0.12, H: 0.12,
+			X:       0.0566, Y: 0.6477, W: 0.0758, H: 0.2944,
 		},
 		{
 			ID:      "rho",
 			Tooltip: "Intrinsic viscosity / damping coefficient.",
-			X:       0.30, Y: 0.64, W: 0.06, H: 0.12,
+			X:       0.166, Y: 0.6477, W: 0.0369, H: 0.2778,
 		},
 		{
 			ID:      "r_series",
 			Tooltip: "Series resistance: absorbs RC delay into viscosity.",
-			X:       0.44, Y: 0.64, W: 0.12, H: 0.12,
+			X:       0.239, Y: 0.4974, W: 0.0653, H: 0.2944,
 		},
-	}, fyne.NewSize(1200, 320)
+	}, fyne.NewSize(1200, 212.1974)
 }

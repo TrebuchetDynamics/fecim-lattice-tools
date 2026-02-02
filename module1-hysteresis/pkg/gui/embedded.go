@@ -89,6 +89,7 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 func (e *EmbeddedApp) Start() {
 	e.EmbeddedAppBase.Start()
 	e.running = true
+	e.startDataLogger()
 
 	// Load or run calibration at startup (ensures calibration files exist)
 	go func() {
@@ -111,6 +112,7 @@ func (e *EmbeddedApp) Start() {
 // Stop ends the simulation loop
 func (e *EmbeddedApp) Stop() {
 	e.running = false
+	e.stopDataLogger()
 
 	// Save calibration for next session
 	e.mu.Lock()

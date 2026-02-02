@@ -67,6 +67,9 @@ type App struct {
 	pHistory   []float64
 	maxHistory int
 
+	// Full data logging (CSV)
+	dataLogger *HysteresisDataLogger
+
 	// UI state
 	running   bool
 	paused    bool
@@ -92,13 +95,13 @@ type App struct {
 	wrdRetryCount int // Current retry count for this target
 
 	// Phase transition tracking for logging
-	wrdResetStartP float64 // Polarization at start of RESET phase
-	wrdResetEndP   float64 // Polarization at end of RESET phase
-	wrdResetEndLvl int     // Level at end of RESET phase
-	wrdWriteStartP float64 // Polarization at start of WRITE phase
-	wrdWriteEndP   float64 // Polarization at end of WRITE phase
-	wrdWriteEndLvl int     // Level at end of WRITE phase
-	wrdReadStartP  float64 // Polarization at start of READ phase
+	wrdResetStartP         float64 // Polarization at start of RESET phase
+	wrdResetEndP           float64 // Polarization at end of RESET phase
+	wrdResetEndLvl         int     // Level at end of RESET phase
+	wrdWriteStartP         float64 // Polarization at start of WRITE phase
+	wrdWriteEndP           float64 // Polarization at end of WRITE phase
+	wrdWriteEndLvl         int     // Level at end of WRITE phase
+	wrdReadStartP          float64 // Polarization at start of READ phase
 	wrdLastControllerState controller.WriteState
 	wrdLastControllerPulse int
 	wrdLastProgressLog     float64
@@ -508,6 +511,8 @@ func (a *App) run() error {
 	if log == nil {
 		log = logging.NewLogger("hysteresis")
 	}
+	a.startDataLogger()
+	defer a.stopDataLogger()
 
 	a.fyneApp = app.New()
 	a.fyneApp.Settings().SetTheme(&feCIMTheme{})
