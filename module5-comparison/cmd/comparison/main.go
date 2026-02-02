@@ -265,7 +265,7 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 	fmt.Println("Why FeCIM Wins:")
 	fmt.Println(strings.Repeat("─", 60))
 	fmt.Println("  ✓ Compute-in-Memory: No von Neumann bottleneck")
-	fmt.Println("  ✓ 30 Analog Levels: High information density")
+	fmt.Println("  ✓ 30 Analog Levels (conference claim): High information density")
 	fmt.Println("  ✓ Ferroelectric: Non-volatile, low power switching")
 	fmt.Println("  ✓ Parallel MVM: Massively parallel matrix operations")
 	fmt.Println("  ✓ Low Voltage: Minimal energy per operation")

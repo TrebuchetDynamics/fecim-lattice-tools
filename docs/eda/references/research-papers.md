@@ -59,7 +59,7 @@ This document collects and references 310+ papers, tools, and resources gathered
 **Consensus Points:**
 - HfO₂-ZrO₂ superlattices achieve >10¹² cycle endurance (vs. 10⁴-10⁵ for standard HfO₂)
 - Coercive field Ec ≈ 1 MV/cm; Remanent polarization Pr ≈ 25 µC/cm²
-- 30 discrete analog states demonstrated in MLC FeFET (aligned with project's quantization)
+- 30 discrete analog states (conference claim; pending peer review) aligned with project baseline; peer-reviewed devices report 32–140 states
 - Temperature effects require Verilog-A models with history tracking
 
 **Key Papers:**

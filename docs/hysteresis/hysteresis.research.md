@@ -14,7 +14,7 @@ This meta-study synthesizes research from 50+ papers focused on ferroelectric hy
 
 1. **The Mayergoyz Preisach model** is the gold standard for ferroelectric hysteresis simulation with physics-accurate minor loop handling
 2. **HfO2-ZrO2 superlattices** achieve 10^12 cycle endurance vs. 10^4-10^5 for standard HfO2
-3. **30 discrete analog states** demonstrated in MLC FeFET devices align with our project's quantization
+3. **30 discrete analog states** (conference claim; pending peer review) align with our project's quantization baseline; peer-reviewed devices report 32–140 states
 4. **Temperature dependence** follows Ec(T) ~ (1 - T/Tc)^0.5 requiring dynamic model adjustment
 5. **Preisach-based simulators** with GPU acceleration can achieve real-time 60+ FPS hysteresis visualization
 

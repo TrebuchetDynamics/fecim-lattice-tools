@@ -798,7 +798,7 @@ Polarization UP:        Polarization DOWN:
 
 | Property | ReRAM | PCM | MRAM | **HZO (Ferroelectric CIM)** |
 |----------|-------|-----|------|----------------------|
-| Analog levels | 2-4 | 4-8 | 2 | **30** |
+| Analog levels | 2-4 | 4-8 | 2 | **30 (claim)** |
 | Write energy | Medium | High | Low | **Very Low** |
 | Endurance | 10⁶ | 10⁸ | 10¹⁵ | **10¹²** |
 | Speed | Fast | Slow | Very Fast | **Fast** |
@@ -808,12 +808,12 @@ Polarization UP:        Polarization DOWN:
 
 ## Why Ferroelectric CIM Wins for AI
 
-The killer feature is **30 analog levels**:
+The killer feature is **30 analog levels (conference claim baseline)**:
 
 ```
 AI Weight Storage Comparison:
 
-ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30 levels):
+ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30 levels, claim):
 █░                    █░░░                 █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 1 bit                 2 bits               ~5 bits
 

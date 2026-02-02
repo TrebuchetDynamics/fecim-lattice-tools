@@ -407,7 +407,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 // Dr. Tour recommendation: Show explicit energy numbers with units and citations
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 	verifiedLabel := widget.NewLabelWithStyle("VERIFIED (peer-reviewed):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	verifiedItems := widget.NewLabel("• 30 analog levels\n• 96-98% MNIST\n• CMOS compatible")
+	verifiedItems := widget.NewLabel("• 32–140 analog levels (peer-reviewed devices)\n• 96–98% MNIST\n• CMOS compatible")
 
 	// Explicit energy numbers with units (Dr. Tour recommendation)
 	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -416,7 +416,7 @@ func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 		int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC))
 
 	claimedLabel := widget.NewLabelWithStyle("CLAIMED (not verified):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	claimedItems := widget.NewLabel("• 25-100× vs NAND\n• 1000× vs DRAM\n• 80-90% DC savings")
+	claimedItems := widget.NewLabel("• 30 analog levels (conference claim)\n• 25-100× vs NAND\n• 1000× vs DRAM\n• 80-90% DC savings")
 
 	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
 

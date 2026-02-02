@@ -10,6 +10,7 @@
 
 - **Simulation-only**. Experimental validation is pending.
 - The “Simulation vs Experiment” tab is a placeholder until real datasets are added.
+- EDA outputs are educational artifacts and not signoff/tapeout ready.
 
 ## Claims Policy
 
