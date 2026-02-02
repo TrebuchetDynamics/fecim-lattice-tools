@@ -1,6 +1,6 @@
 # Research Papers Directory Organization
 
-**Overview:** 141+ research papers organized by research topic, with additional resources for paper discovery and compilation.
+**Overview:** 167+ research papers organized by research topic, with additional resources for paper discovery and compilation.
 
 ---
 
@@ -19,39 +19,39 @@ docs/research-papers/
 ├── paper_metadata.json                # Machine-readable metadata (2401 lines)
 │
 ├── by-topic/                          # 23 research topic directories
-│   ├── 01-ferroelectric-materials/    # 30 papers - Core physics, HfO₂-ZrO₂
+│   ├── 01-ferroelectric-materials/    # 42 papers - Core physics, HfO₂-ZrO₂
 │   ├── 02-training-algorithms/        # 11 papers - Quantization, low-precision
-│   ├── 03-simulation-tools/           # 9 papers - CrossSim, FerroX, NeuroSim
-│   ├── 04-cim-architectures/          # 30 papers - Crossbars, ADC, sneak paths
-│   ├── 05-neuromorphic/               # 6 papers - Synaptic transistors, STDP
+│   ├── 03-simulation-tools/           # 11 papers - CrossSim, FerroX, NeuroSim
+│   ├── 04-cim-architectures/          # 32 papers - Crossbars, ADC, sneak paths
+│   ├── 05-neuromorphic/               # 7 papers - Synaptic transistors, STDP
 │   ├── 06-photonic-computing/         # 5 papers - Optical DNNs
 │   ├── 07-memory-architectures/       # 3 papers - 3D memory, HBM
 │   ├── 08-industry-reports/           # 5 papers - Roadmaps, surveys
-│   ├── 09-reviews-surveys/            # 4 papers - Literature reviews
+│   ├── 09-reviews-surveys/            # 6 papers - Literature reviews
 │   ├── 10-cim-compilers-mapping/      # 2 papers - Compiler frameworks
-│   ├── 11-reservoir-computing/        # 2 papers - Analog RC
-│   ├── 12-spiking-neural-networks/    # 6 papers - SNNs, neuromorphic
-│   ├── 13-in-memory-training/         # 5 papers - On-chip backprop
+│   ├── 11-reservoir-computing/        # 3 papers - Analog RC
+│   ├── 12-spiking-neural-networks/    # 7 papers - SNNs, neuromorphic
+│   ├── 13-in-memory-training/         # 6 papers - On-chip backprop
 │   ├── 14-transformer-llm-accelerators/ # 4 papers - Attention, LLMs
-│   ├── 15-3d-stacking-architectures/  # 4 papers - Vertical FeFET
+│   ├── 15-3d-stacking-architectures/  # 6 papers - Vertical FeFET
 │   ├── 16-photonic-ferroelectric-hybrids/ # 5 papers - Hybrid optical
 │   ├── 17-security-cryptography/      # 2 papers - PUFs, crypto
 │   ├── 18-ald-process-control/        # 5 papers - HZO deposition
-│   ├── 19-variability-yield/          # 3 papers - Device variation
+│   ├── 19-variability-yield/          # 4 papers - Device variation
 │   ├── 20-manufacturing-integration/  # README only - BEOL/FEOL integration
 │   ├── 21-3d-stacking/                # README only - Vertical stacking roadmap
 │   ├── 22-automotive-harsh-env/       # README only - AEC-Q100, -40°C to 150°C
-│   └── 23-cryogenic-operation/        # README only - 4K operation, quantum
+│   └── 23-cryogenic-operation/        # 1 paper - 4K operation, quantum
 │
 ├── _tools/                            # Paper management tools and infrastructure
 │   ├── paper_downloader.py            # Script to fetch papers from arXiv, Nature, etc.
 │   ├── download_papers.sh             # Bash script wrapper
 │   │
-│   ├── downloaded/                    # 27 papers downloaded but not yet organized
-│   │   ├── arxiv/      # 6 papers from arXiv
-│   │   ├── nature/     # 12 papers from Nature journals
-│   │   ├── springer/   # 5 papers from Springer
-│   │   ├── other/      # 4 papers from other sources
+│   ├── downloaded/                    # Papers downloaded but not yet organized (mostly empty)
+│   │   ├── arxiv/      # (mostly categorized)
+│   │   ├── nature/     # (mostly categorized)
+│   │   ├── springer/   # (mostly categorized)
+│   │   ├── other/      # (mostly categorized)
 │   │   ├── acs/        # (empty) - ACS journals
 │   │   └── science/    # (empty) - Science family
 │   │
@@ -73,7 +73,7 @@ docs/research-papers/
 
 | File | Size | Purpose |
 |------|------|---------|
-| `PAPERS_INDEX.md` | ~2500 lines | Complete index of 141+ papers organized by topic with descriptions |
+| `PAPERS_INDEX.md` | ~2500 lines | Complete index of 167+ papers organized by topic with descriptions |
 | `TOPIC_SUMMARIES.md` | ~1000 lines | One-page summary of each topic with key concepts and use cases |
 | `ORGANIZATION.md` | This file | Directory structure and organization guide |
 | `RESEARCH_GAP_ANALYSIS.md` | ~800 lines | Coverage assessment, completion status, and identified gaps |
@@ -99,30 +99,30 @@ docs/research-papers/
 
 | Topic | Count | Status |
 |:-----|------:|:-------|
-| 01. Ferroelectric Materials | 30 | Comprehensive |
+| 01. Ferroelectric Materials | 42 | Comprehensive |
 | 02. Training Algorithms | 11 | Strong |
-| 03. Simulation Tools | 9 | Complete |
-| 04. CIM Architectures | 30 | Comprehensive |
-| 05. Neuromorphic | 6 | Adequate |
+| 03. Simulation Tools | 11 | Complete |
+| 04. CIM Architectures | 32 | Comprehensive |
+| 05. Neuromorphic | 7 | Adequate |
 | 06. Photonic Computing | 5 | Adequate |
 | 07. Memory Architectures | 3 | Minimal |
 | 08. Industry Reports | 5 | Adequate |
-| 09. Reviews & Surveys | 4 | Adequate |
+| 09. Reviews & Surveys | 6 | Adequate |
 | 10. CIM Compilers | 2 | Minimal |
-| 11. Reservoir Computing | 2 | Minimal |
-| 12. Spiking Neural Networks | 6 | Adequate |
-| 13. In-Memory Training | 5 | Adequate |
+| 11. Reservoir Computing | 3 | Minimal |
+| 12. Spiking Neural Networks | 7 | Adequate |
+| 13. In-Memory Training | 6 | Adequate |
 | 14. Transformer/LLMs | 4 | Minimal |
-| 15. 3D Stacking | 4 | Adequate |
+| 15. 3D Stacking | 6 | Adequate |
 | 16. Photonic-FE Hybrids | 5 | Adequate |
 | 17. Security/Crypto | 2 | Minimal |
 | 18. ALD Process Control | 5 | Adequate |
-| 19. Variability/Yield | 3 | Minimal |
+| 19. Variability/Yield | 4 | Minimal |
 | 20. Manufacturing | README | Strategic |
 | 21. 3D Stacking | README | Strategic |
 | 22. Automotive | README | Strategic |
-| 23. Cryogenic | README | Strategic |
-| **TOTAL** | **141+** | **A+ Grade** |
+| 23. Cryogenic | 1 | Strategic |
+| **TOTAL** | **167+** | **A+ Grade** |
 
 ---
 
@@ -159,13 +159,9 @@ This is intentional - these are strategic planning areas with supporting papers 
 
 **Location:** `_tools/downloaded/`
 
-Papers sorted by source but not yet organized into topic directories:
-- **arxiv/** - 6 preprints
-- **nature/** - 12 papers from Nature family
-- **springer/** - 5 papers from Springer journals
-- **other/** - 4 papers (Berkeley EECS reports, etc.)
+Most downloaded papers have been categorized into their appropriate topic directories. The `_tools/downloaded/` directory is now mostly empty, with papers successfully organized into topics 01-23 as of 2026-02-02.
 
-**Next Steps:** Move to appropriate topic directories using source information
+**Status:** Organization complete - 26 papers from recent download batches have been categorized
 
 ### Corrupted Files (Need Recovery)
 
@@ -250,11 +246,11 @@ ln -s <local-path> \
 ### Paper Distribution
 ```
 By Topic:        By Year:           By Source:
-01 (30) ████   2024-2026: ██████   arXiv: ██
-04 (30) ████   2022-2023: ███      Nature: ███
-02 (11) ██     2020-2021: ██       Springer: ██
-03 (9)  █      2018-2019: █        Other: █
-[rest]: 41     <2018: █
+01 (42) █████  2024-2026: ███████  arXiv: ██
+04 (32) ████   2022-2023: ███      Nature: ███
+03 (11) ██     2020-2021: ██       Springer: ██
+02 (11) ██     2018-2019: █        Other: █
+[rest]: 71     <2018: █
 ```
 
 ### Coverage Grade: A+ (97/100)

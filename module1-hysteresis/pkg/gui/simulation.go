@@ -884,19 +884,26 @@ func (a *App) updatePhysics(dt float64) {
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
 
 			switch a.wrdPhase {
-			case 0: // PREP - apply ±Ec in direction of target (no full saturation)
-				currentLevel := a.discreteLevel + 1
+			case 0: // PREP - saturate to OPPOSITE polarity before writing
+				// For upper targets (>midLevel): saturate NEGATIVE first, then write UP
+				// For lower targets (<=midLevel): saturate POSITIVE first, then write DOWN
+				// This ensures a known starting point for ISPP binary search.
 				var prepE float64
-				if targetLevel > currentLevel {
-					prepE = Ec
-				} else if targetLevel < currentLevel {
-					prepE = -Ec
+				var saturated bool
+				saturationThreshold := 0.75 * mat.Ps // Use 0.75 (not 0.9) due to depolarization effects
+
+				if targetLevel > midLevel {
+					// Upper target: drive to negative saturation first
+					prepE = -Ec * 2.0
+					saturated = a.polarization <= -saturationThreshold
 				} else {
-					prepE = 0
+					// Lower target: drive to positive saturation first
+					prepE = Ec * 2.0
+					saturated = a.polarization >= saturationThreshold
 				}
 				a.wrdPrepE = prepE // Store for logging
 
-				// Ramp to reset field
+				// Ramp to saturation field
 				diff := prepE - a.electricField
 				step := rampRate * dt
 				if math.Abs(diff) < step {
@@ -907,8 +914,8 @@ func (a *App) updatePhysics(dt float64) {
 					a.electricField -= step
 				}
 
-				// Transition when field reached and held briefly
-				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax {
+				// Transition when field reached AND polarization saturated
+				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
 					// Capture end-of-PREP state for logging
 					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
 					a.wrdResetEndLvl = a.discreteLevel + 1
@@ -918,7 +925,7 @@ func (a *App) updatePhysics(dt float64) {
 					a.wrdPhaseTimer = 0
 				}
 
-			case 1: // HOLD_RESET - return to zero (now at known remanent state)
+			case 1: // SETTLE - return to zero (now at known saturated remanent state)
 				step := rampRate * dt
 				if math.Abs(a.electricField) < step {
 					a.electricField = 0
@@ -928,17 +935,18 @@ func (a *App) updatePhysics(dt float64) {
 					a.electricField += step
 				}
 
-				// Now at known remanent state (level 1 or level N)
+				// Now at known saturated remanent state (level ~1 or ~30)
 				if a.wrdPhaseTimer > phaseDuration*0.15 && math.Abs(a.electricField) < 0.01*Emax {
 					// Capture start-of-WRITE state for logging
 					a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
 					log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
 						a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
 
-					// Initialize WriteController (Refactoring)
-					// Determine if fromSaturation: Level 1 or MaxLevel
+					// Initialize WriteController
+					// Always fromSaturation=true since PREP now saturates to opposite polarity
 					currentLevel := a.discreteLevel + 1
-					fromSaturation := currentLevel <= 2 || currentLevel >= a.numLevels-1
+					fromSaturation := true
+					_ = currentLevel // Used by WriteController.Start
 
 					// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
 					a.writeController.PulseDuration = phaseDuration * 0.4

@@ -38,25 +38,25 @@ var (
 
 // OpenLaneFlowDiagram creates a visual pipeline diagram
 func OpenLaneFlowDiagram() fyne.CanvasObject {
-	// Diagram dimensions - INCREASED 40%
-	boxW := float32(150)
-	boxH := float32(65)
-	spacing := float32(30)
-	startX := float32(30)
-	startY := float32(50)
+	// Diagram dimensions - LARGER for better readability
+	boxW := float32(160)
+	boxH := float32(70)
+	spacing := float32(35)
+	startX := float32(20)
+	startY := float32(55)
 
 	objects := []fyne.CanvasObject{}
 
-	// Title
+	// Title - larger
 	title := canvas.NewText("OpenLane RTL-to-GDSII Assembly", colorText)
-	title.TextSize = 18
+	title.TextSize = 20
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Move(fyne.NewPos(startX, 8))
+	title.Move(fyne.NewPos(startX, 5))
 	objects = append(objects, title)
 
-	// Subtitle
-	subtitle := canvas.NewText("CYAN = Our Array Builder files inject here", colorBoxOurs)
-	subtitle.TextSize = 13
+	// Subtitle with better contrast
+	subtitle := canvas.NewText("CYAN boxes = Our Array Builder contributes here", colorBoxOurs)
+	subtitle.TextSize = 14
 	subtitle.TextStyle = fyne.TextStyle{Bold: true}
 	subtitle.Move(fyne.NewPos(startX, 30))
 	objects = append(objects, subtitle)
@@ -120,6 +120,15 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 		toolText.Move(fyne.NewPos(stage.x+10, stage.y+30))
 		objects = append(objects, toolText)
 
+		// Add checkmark indicator for our contributions
+		if stage.isOurs {
+			checkmark := canvas.NewText("✓", colorHighlight)
+			checkmark.TextSize = 16
+			checkmark.TextStyle = fyne.TextStyle{Bold: true}
+			checkmark.Move(fyne.NewPos(stage.x+boxW-20, stage.y+8))
+			objects = append(objects, checkmark)
+		}
+
 		// Draw arrows between stages
 		if i > 0 && i < 4 {
 			// Row 1 arrows (left to right)
@@ -145,32 +154,76 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 		}
 	}
 
-	// Add "Our Files" labels
+	// Add "Our Files" labels with connecting lines
+	// Verilog label
+	vLine := canvas.NewLine(colorHighlight)
+	vLine.StrokeWidth = 1
+	vLine.Position1 = fyne.NewPos(stages[0].x+boxW/2, stages[0].y-5)
+	vLine.Position2 = fyne.NewPos(stages[0].x+boxW/2, stages[0].y)
+	objects = append(objects, vLine)
+
+	vLabel := canvas.NewText("↑ Our Verilog", colorHighlight)
+	vLabel.TextSize = 11
+	vLabel.TextStyle = fyne.TextStyle{Bold: true}
+	vLabel.Move(fyne.NewPos(stages[0].x+boxW/2-40, stages[0].y-20))
+	objects = append(objects, vLabel)
+
 	// LEF label
-	lefLabel := canvas.NewText("Our LEF", colorHighlight)
-	lefLabel.TextSize = 10
-	lefLabel.Move(fyne.NewPos(stages[2].x+10, stages[2].y-15))
+	lefLine := canvas.NewLine(colorHighlight)
+	lefLine.StrokeWidth = 1
+	lefLine.Position1 = fyne.NewPos(stages[2].x+boxW/2, stages[2].y-5)
+	lefLine.Position2 = fyne.NewPos(stages[2].x+boxW/2, stages[2].y)
+	objects = append(objects, lefLine)
+
+	lefLabel := canvas.NewText("↑ Our LEF", colorHighlight)
+	lefLabel.TextSize = 11
+	lefLabel.TextStyle = fyne.TextStyle{Bold: true}
+	lefLabel.Move(fyne.NewPos(stages[2].x+boxW/2-25, stages[2].y-20))
 	objects = append(objects, lefLabel)
 
 	// DEF label
-	defLabel := canvas.NewText("Our DEF (FIXED)", colorHighlight)
-	defLabel.TextSize = 10
-	defLabel.Move(fyne.NewPos(stages[3].x+5, stages[3].y-15))
+	defLine := canvas.NewLine(colorHighlight)
+	defLine.StrokeWidth = 1
+	defLine.Position1 = fyne.NewPos(stages[3].x+boxW/2, stages[3].y-5)
+	defLine.Position2 = fyne.NewPos(stages[3].x+boxW/2, stages[3].y)
+	objects = append(objects, defLine)
+
+	defLabel := canvas.NewText("↑ Our DEF (FIXED)", colorHighlight)
+	defLabel.TextSize = 11
+	defLabel.TextStyle = fyne.TextStyle{Bold: true}
+	defLabel.Move(fyne.NewPos(stages[3].x+boxW/2-50, stages[3].y-20))
 	objects = append(objects, defLabel)
 
-	// Verilog label
-	vLabel := canvas.NewText("Our Verilog", colorHighlight)
-	vLabel.TextSize = 10
-	vLabel.Move(fyne.NewPos(stages[0].x+5, stages[0].y-15))
-	objects = append(objects, vLabel)
+	// Add legend at bottom
+	legendY := row2Y + boxH + float32(25)
 
-	// Calculate proper container bounds:
-	// Row 1: startX (30) to startX + 4*(boxW+spacing) - spacing = 30 + 4*180 - 30 = 720
-	// Row 2: same width
-	// Height: row2Y + boxH + margin = 50 + 65 + 30 + 30 + 65 + 40 = ~280
-	// With labels above boxes (-15) and title (30), total height needed
-	totalWidth := startX + 4*(boxW+spacing)  // ~750
-	totalHeight := row2Y + boxH + float32(50) // ~275
+	// Standard stage box
+	legendBox1 := canvas.NewRectangle(colorBoxStandard)
+	legendBox1.Resize(fyne.NewSize(20, 15))
+	legendBox1.Move(fyne.NewPos(startX, legendY))
+	legendBox1.CornerRadius = 3
+	objects = append(objects, legendBox1)
+
+	legendText1 := canvas.NewText("= OpenLane handles", colorTextMuted)
+	legendText1.TextSize = 11
+	legendText1.Move(fyne.NewPos(startX+25, legendY))
+	objects = append(objects, legendText1)
+
+	// Our contribution box
+	legendBox2 := canvas.NewRectangle(colorBoxOurs)
+	legendBox2.Resize(fyne.NewSize(20, 15))
+	legendBox2.Move(fyne.NewPos(startX+180, legendY))
+	legendBox2.CornerRadius = 3
+	objects = append(objects, legendBox2)
+
+	legendText2 := canvas.NewText("= We provide input files", colorBoxOurs)
+	legendText2.TextSize = 11
+	legendText2.Move(fyne.NewPos(startX+205, legendY))
+	objects = append(objects, legendText2)
+
+	// Calculate proper container bounds with legend
+	totalWidth := startX + 4*(boxW+spacing)
+	totalHeight := legendY + float32(30)
 
 	cont := container.NewWithoutLayout(objects...)
 	cont.Resize(fyne.NewSize(totalWidth, totalHeight))

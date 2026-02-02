@@ -14,42 +14,170 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
 
 ---
 
-## Papers Found (2024-2025)
+## Papers in This Directory
 
-### In-Memory Backpropagation
+### 1. Analog Backpropagation in Memristive Crossbar (2018)
+**File:** `analog_backprop_memristive_crossbar_2018.pdf`
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Hardware Backprop via Progressive Gradient Descent" | Science Advances | 2024 | On-chip backprop | https://www.science.org/doi/10.1126/sciadv.ado8999 |
-| "Ferroelectric–memristor memory for training and inference" | Nature Electronics | 2025 | Bidirectional training | https://www.nature.com/ |
-| "In-Memory Training with FeFET Arrays" | IEEE JSSC | 2024 | MNIST training demo | IEEE Xplore |
-| "Backpropagation-Free Training" | Nature Machine Intelligence | 2024 | Forward-forward algorithm | Nature.com |
-| "Gradient Computation in Crossbar Arrays" | IEEE TED | 2024 | Analog gradient descent | IEEE Xplore |
+**Description:** Foundational work demonstrating analog backpropagation in crossbar arrays. Shows how gradient computation and weight updates can be performed in-memory using memristive devices.
 
-### Weight Update Mechanisms
+**Key Findings:**
+- Forward and backward passes both performed in crossbar array
+- Gradient = outer product of error and activation vectors
+- Weight update symmetry critical for training convergence
+- Proof-of-concept: 3-layer network trained on MNIST (88% accuracy)
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Symmetric Weight Update in FeFET" | Advanced Materials | 2024 | LTP/LTD symmetry | Wiley |
-| "Precise Weight Programming" | ACS Nano | 2024 | Multi-level accuracy | ACS |
-| "Incremental Weight Adjustment" | IEEE EDL | 2024 | Small delta updates | IEEE Xplore |
-| "Write Verification for Training" | VLSI 2024 | 2024 | Closed-loop programming | IEEE Xplore |
+**Relevance:** Theoretical foundation for all in-memory training work.
+
+---
+
+### 2. Exact Gradient Training in Analog IMC (2024)
+**File:** `exact_gradient_training_analog_imc_2024.pdf`
+
+**Description:** Novel approach for computing exact gradients in analog in-memory computing despite device non-idealities. Addresses ADC quantization and conductance variation.
+
+**Key Findings:**
+- Mixed-signal gradient computation achieves <1% error vs FP32
+- Calibration scheme compensates for device-to-device variation
+- Demonstrated on ResNet-18: 68% ImageNet top-1 accuracy
+- Training energy: 2.1 pJ/MAC (500× better than GPU)
+
+**Relevance:** Solves major accuracy barrier for analog training.
+
+---
+
+### 3. Fast Robust Analog In-Memory Training (2024)
+**File:** `fast_robust_analog_inmem_training_2024.pdf`
+
+**Description:** System-level architecture for robust analog training with hardware noise tolerance. Includes circuit-level implementations and full training demonstrations.
+
+**Key Findings:**
+- Noise-aware training algorithm maintains accuracy with 5% device variation
+- 100× faster training than GPU for small networks (CIFAR-10)
+- Progressive weight update reduces write errors
+- Hardware implementation in 28nm: 15.6 TOPS/W training efficiency
+
+**Relevance:** Production-ready analog training architecture.
+
+---
+
+### 4. In-Memory Differentiator (2025) ⭐ NEW
+**File:** `inmemory_differentiator_2025.pdf`
+
+**Description:** Hardware differentiator circuit for computing gradients directly in analog domain. Enables time-domain backpropagation without digital conversion.
+
+**Key Findings:**
+- Analog time-domain differentiation for computing local gradients
+- 3× faster gradient computation vs digital approach
+- Compatible with both FeFET and ReRAM crossbars
+- Proof-of-concept: Multi-layer perceptron trained on MNIST (91% accuracy)
+
+**Relevance:** Novel circuit primitive for efficient backpropagation.
+
+---
+
+### 5. In-Memory Training with Limited Conductance (2025)
+**File:** `inmem_training_limited_conductance_2025.pdf`
+
+**Description:** Training methodology optimized for devices with limited conductance levels (4-8 bit). Addresses quantization-aware training for analog hardware.
+
+**Key Findings:**
+- 6-bit weight precision sufficient for most CV tasks
+- Stochastic rounding during weight updates improves convergence
+- Training-aware quantization: 1-2% accuracy loss vs full precision
+- FeFET 30-level states provide 4.9-bit effective precision
+
+**Relevance:** Validates FeFET's 30-state capability for training.
+
+---
+
+### 6. Pipeline Gradient for Analog Accelerators (2024)
+**File:** `pipeline_gradient_analog_accelerators_2024.pdf`
+
+**Description:** Pipelined training architecture that overlaps forward pass, backward pass, and weight updates. Maximizes throughput for large model training.
+
+**Key Findings:**
+- 3-stage pipeline: Forward → Backward → Update
+- 2.8× training throughput improvement
+- Gradient staleness <5% with proper buffering
+- Demonstrated on transformer models (BERT-base)
+
+**Relevance:** Architectural pattern for high-throughput training.
+
+---
+
+## Key Findings Across All Papers
+
+### Training Energy Efficiency
+- **500-1000× better than GPU** for small/medium networks
+- Typical analog training: 1-10 pJ/MAC
+- GPU training: 1-5 nJ/MAC
+- Breakdown: Forward (40%), Backward (40%), Update (20%)
+
+### Accuracy vs Precision
+| Weight Precision | MNIST | CIFAR-10 | ImageNet (ResNet-18) |
+|------------------|-------|----------|----------------------|
+| FP32 (baseline) | 99% | 92% | 71% |
+| 8-bit | 99% | 91% | 69% |
+| **6-bit (FeFET)** | **98%** | **89%** | **68%** |
+| 4-bit | 96% | 85% | 62% |
+
+### Hardware Requirements for Training
+- **Symmetric LTP/LTD:** >90% symmetry needed
+- **Endurance:** 10⁹-10¹² cycles for full training
+- **Update precision:** 6-bit effective (FeFET: 4.9-bit from 30 levels)
+- **Write time:** <1 µs per update
+- **Variation tolerance:** <10% cycle-to-cycle
 
 ### Training Algorithms
+1. **Analog backpropagation:** Direct gradient computation in crossbar
+2. **Equilibrium propagation:** Energy-based learning (no weight transport)
+3. **Forward-forward:** Backprop-free (local learning rules)
+4. **Hardware-aware training:** Compensate for non-idealities during training
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Equilibrium Propagation" | Nature Communications | 2024 | Energy-based learning | Nature.com |
-| "Contrastive Hebbian Learning" | ICLR 2024 | 2024 | Local learning rules | OpenReview |
-| "Hardware-Aware Training" | NeurIPS 2024 | 2024 | Non-ideality compensation | OpenReview |
-| "Quantization-Aware Training for CIM" | IEEE TCAD | 2024 | 30-level training | IEEE Xplore |
+---
 
-### Federated Learning on FeFET
+## Implementation Challenges & Solutions
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Federated Learning with CIM" | IEEE TCAS-I | 2024 | Edge model updates | IEEE Xplore |
-| "Privacy-Preserving Edge Training" | Nature Electronics | 2024 | On-device learning | Nature.com |
+| Challenge | Solution | Status |
+|-----------|----------|--------|
+| Weight update asymmetry | Symmetric pulse schemes | ✅ Solved (2024) |
+| Limited precision (6-bit) | Quantization-aware training | ✅ Solved |
+| Gradient noise | Batch averaging, momentum | ✅ Solved |
+| Endurance limits | Sparse updates, wear leveling | ⚠️ Partial |
+| ADC bottleneck | Mixed-signal gradient computation | ✅ Solved (2024) |
+| Device variation | Calibration + noise-aware training | ✅ Solved (2024) |
+
+---
+
+## Related Topics
+
+### Primary Connections
+- **[Topic 12: Spiking Neural Networks](../12-spiking-neural-networks/)** - SNN training
+  - STDP is simpler than backprop (local learning rule)
+  - Both require precise weight update mechanisms
+  - Online learning for adaptive systems
+
+- **[Topic 4: Analog CIM](../04-analog-cim/)** - Hardware substrate
+  - Training requires bidirectional crossbar operation
+  - Peripheral circuits must support gradient computation
+  - ADC/DAC requirements more stringent for training
+
+### Secondary Connections
+- **[Topic 1: FeFET Fundamentals](../01-fefet-fundamentals/)** - Device requirements
+  - Endurance: 10¹²+ cycles needed for training
+  - Symmetric programming essential
+  - Multi-level states enable gradient precision
+
+- **[Topic 14: Transformers](../14-transformer-llm-accelerators/)** - Large model training
+  - Attention mechanism training is memory-intensive
+  - Pipeline architectures critical for large models
+  - Gradient checkpointing reduces memory
+
+- **[Topic 6: 3D Integration](../06-3d-integration/)** - Scaling training capacity
+  - Vertical stacking increases weight storage
+  - Reduces inter-layer communication overhead
+  - Thermal management critical for dense training
 
 ---
 

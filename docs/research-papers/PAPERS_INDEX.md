@@ -1,7 +1,7 @@
 # FeCIM Research Papers Index
 
 **Last Updated:** 2026-02-02
-**Total Papers:** 141+ (organized by topic)
+**Total Papers:** 167+ (organized by topic)
 **Topics:** 23 comprehensive research areas
 **Coverage:** Physics, Materials, Simulation, CIM Architectures, AI/ML, Manufacturing, and Applications
 
@@ -11,29 +11,29 @@
 
 | Topic | Papers | Coverage |
 |-------|--------|----------|
-| [01. Ferroelectric Materials](#01-ferroelectric-materials) | 30 | Core physics, HfO₂, ZrO₂, superlattices, domain dynamics |
+| [01. Ferroelectric Materials](#01-ferroelectric-materials) | 42 | Core physics, HfO₂, ZrO₂, superlattices, domain dynamics |
 | [02. Training Algorithms](#02-training-algorithms) | 11 | Quantization, low-precision networks, analog training |
-| [03. Simulation Tools](#03-simulation-tools) | 9 | CrossSim, FerroX, NeuroSim, compilers |
-| [04. CIM Architectures](#04-cim-architectures) | 30 | Crossbars, ADC design, sneak paths, multi-level cells |
-| [05. Neuromorphic Computing](#05-neuromorphic) | 6 | Synaptic transistors, spike-based systems |
+| [03. Simulation Tools](#03-simulation-tools) | 11 | CrossSim, FerroX, NeuroSim, compilers |
+| [04. CIM Architectures](#04-cim-architectures) | 32 | Crossbars, ADC design, sneak paths, multi-level cells |
+| [05. Neuromorphic Computing](#05-neuromorphic) | 7 | Synaptic transistors, spike-based systems |
 | [06. Photonic Computing](#06-photonic-computing) | 5 | Optical DNNs, photonic accelerators |
 | [07. Memory Architectures](#07-memory-architectures) | 3 | 3D memory, HBM, side acceleration |
 | [08. Industry Reports](#08-industry-reports) | 5 | Roadmaps, surveys, benchmarks |
-| [09. Reviews & Surveys](#09-reviews-surveys) | 4 | Comprehensive literature surveys |
+| [09. Reviews & Surveys](#09-reviews-surveys) | 6 | Comprehensive literature surveys |
 | [10. CIM Compilers & Mapping](#10-cim-compilers-mapping) | 2 | Compiler frameworks, network mapping |
-| [11. Reservoir Computing](#11-reservoir-computing) | 2 | Analog RC with ferroelectrics |
-| [12. Spiking Neural Networks](#12-spiking-neural-networks) | 6 | SNNs, neuromorphic hardware, energy efficiency |
-| [13. In-Memory Training](#13-in-memory-training) | 5 | On-chip backpropagation, weight updates |
+| [11. Reservoir Computing](#11-reservoir-computing) | 3 | Analog RC with ferroelectrics |
+| [12. Spiking Neural Networks](#12-spiking-neural-networks) | 7 | SNNs, neuromorphic hardware, energy efficiency |
+| [13. In-Memory Training](#13-in-memory-training) | 6 | On-chip backpropagation, weight updates |
 | [14. Transformer/LLM Accelerators](#14-transformerllm-accelerators) | 4 | Attention mechanisms, LLM inference |
-| [15. 3D Stacking Architectures](#15-3d-stacking-architectures) | 4 | Vertical FeFET, NAND-like stacking |
+| [15. 3D Stacking Architectures](#15-3d-stacking-architectures) | 6 | Vertical FeFET, NAND-like stacking |
 | [16. Photonic-Ferroelectric Hybrids](#16-photonic-ferroelectric-hybrids) | 5 | Optical modulators, hybrid systems |
 | [17. Security & Cryptography](#17-security-cryptography) | 2 | PUFs, lightweight crypto |
 | [18. ALD Process Control](#18-ald-process-control) | 5 | HZO deposition, thermal budgets |
-| [19. Variability & Yield](#19-variability-yield) | 3 | Device variation, temperature effects |
+| [19. Variability & Yield](#19-variability-yield) | 4 | Device variation, temperature effects |
 | [20. Manufacturing Integration](#20-manufacturing-integration) | Empty | BEOL/FEOL specs (see README) |
 | [21. 3D Stacking](#21-3d-stacking) | Empty | Vertical integration details (see README) |
 | [22. Automotive & Harsh Environment](#22-automotive-harsh-environment) | Empty | AEC-Q100, temp range (see README) |
-| [23. Cryogenic Operation](#23-cryogenic-operation) | Empty | 4K operation, quantum (see README) |
+| [23. Cryogenic Operation](#23-cryogenic-operation) | 1 | 4K operation, quantum (see README) |
 
 ---
 
@@ -42,7 +42,7 @@
 ### 01. Ferroelectric Materials
 **Focus:** Core physics, crystal structures, switching dynamics, Preisach modeling
 
-**30 papers covering:**
+**42 papers covering:**
 - HfO₂ ferroelectric discovery and characterization
 - HZO superlattices (first-principles, stability, polarization)
 - Domain wall dynamics and switching pathways
@@ -50,9 +50,13 @@
 - Negative capacitance physics (Salahuddin-Datta 2007, Chatterjee 2018)
 - Ferroelectric FET as analog synapse (Jerry 2017)
 - Strain-induced effects and antipolar phases
-- AlScN ferroelectricity
-- In₂Se₃ 2D ferroelectrics
+- AlScN ferroelectricity and endurance
+- In₂Se₃ 2D ferroelectrics for silicon compatibility
 - Metastable ferroelectricity and wakeup/fatigue mechanisms
+- Sliding ferroelectrics (2D materials)
+- BaTiO₃ domain wall simulations (FERRET)
+- Computational understanding of HfO₂ ferroelectricity
+- Strain-induced antipolar phases in hafnia
 
 **Key Papers:**
 - `Tung_2025_Modeling_and_Design_Enablement.pdf` - UC Berkeley EECS-2025-13
@@ -61,6 +65,17 @@
 - `physical_reality_preisach_2018.pdf`
 - `Salahuddin_Datta_2007_Negative_Capacitance_arXiv.pdf`
 - `transition_state_landau_ferroelectric_2024.pdf`
+- `hzo_superlattice_stability_2025.pdf`
+- `alscn_endurance_2025.pdf`
+- `hfo2_computational_understanding_2024.pdf`
+- `hzo_superlattice_firstprinciples_2024.pdf`
+- `in2se3_silicon_compatible_2025.pdf`
+- `sliding_ferroelectrics_review_2025.pdf`
+- `metastable_depolarization_hzo_2022.pdf`
+- `batio3_domain_walls_ferret_2024.pdf`
+- `berkeley_eecs_2018_131_negative_capacitance.pdf`
+- `berkeley_eecs_2025_13_future_computing.pdf`
+- `strain_antipolar_hafnia_sciadv_2022.pdf`
 
 **Location:** `<local-path>`
 
@@ -93,7 +108,7 @@
 ### 03. Simulation Tools
 **Focus:** Open-source and proprietary simulation frameworks
 
-**9 papers + OPENSOURCE_TOOLS.md covering:**
+**11 papers + OPENSOURCE_TOOLS.md covering:**
 - **CrossSim** (Sandia SAND2021-12318C) - Realistic CIM modeling
 - **FerroX** - GPU-accelerated phase-field simulations (2022, 2023)
 - **NeuroSim** - Integrated benchmark for hardware accelerators
@@ -101,12 +116,16 @@
 - **IBM AIHWKit** (arXiv 2307.09357) - Quantum-classical hybrid training
 - **PEtra** (arXiv 2410.16016) - Photonic training framework
 - **COMPASS** - Crossbar compiler framework (2025)
+- **FerroX** polycrystalline HZO simulation (2024)
+- **NeuroSim** validation study (2021)
 
 **Key Resources:**
 - `OPENSOURCE_TOOLS.md` - Detailed comparison table
 - `FerroX_arXiv_2210.15668.pdf`
 - `compass_compiler_framework_2025.pdf`
 - `IBM_AIHWKit_arXiv_2307.09357.pdf`
+- `ferrox_hzo_polycrystalline_2024.pdf`
+- `neurosim_validation_2021.pdf`
 
 **Location:** `<local-path>`
 
@@ -115,7 +134,7 @@
 ### 04. CIM Architectures
 **Focus:** Crossbar design, ADC/DAC, sneak path mitigation, multi-level cells
 
-**30 papers covering:**
+**32 papers covering:**
 - Crossbar arrays: sneak path analysis, self-rectifying designs
 - ADC precision vs CIM accuracy trade-offs
 - Multi-level FeFET programming and crossbar implementation
@@ -132,6 +151,8 @@
 - RRAM crossbar programming
 - Simple packing algorithms for NVM
 - CIM landscape overview (2024)
+- FeCIM annealer architectures
+- Charge-domain CAM for one-shot learning
 
 **Key Papers:**
 - `adc_precision_cim_accuracy_2024.pdf`
@@ -142,6 +163,8 @@
 - `Temperature_Resilient_FeFET_CIM_2024.pdf`
 - `cim_landscape_overview_2024.pdf`
 - `3D_FeFET_Architectures_2025.pdf`
+- `fecim_annealer_2024.pdf`
+- `charge_cam_oneshot_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -150,18 +173,20 @@
 ### 05. Neuromorphic Computing
 **Focus:** Synaptic transistors, spike-based computation, bio-inspired systems
 
-**6 papers covering:**
+**7 papers covering:**
 - Ferroelectric synaptic transistors (comprehensive review 2024)
 - FeFET as artificial synapse for neuromorphic computing
 - 2D ferroelectric materials for neuromorphics
 - 2D spintronics for neuromorphic applications
 - Ferroelectric devices for AI applications
 - Neuromorphic spintronics review
+- Synaptic plasticity comprehensive review (2025)
 
 **Key Papers:**
 - `ferroelectric_synaptic_transistors_review_2024.pdf`
 - `FeFET_Synapse_Neuromorphic_arXiv.pdf`
 - `neuromorphic_spintronics_review_2024.pdf`
+- `synaptic_plasticity_review_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -225,16 +250,20 @@
 ### 09. Reviews & Surveys
 **Focus:** Comprehensive literature surveys and reviews
 
-**4 papers covering:**
+**6 papers covering:**
 - Emerging memory technologies review
 - Flash memory vs emerging NVM
 - Non-volatile memory for machine learning
 - In-memory computing DNN survey (2023)
+- FeCIM applications comprehensive review (2025)
+- Ferroelectric capacitor memories review (2025)
 
 **Key Papers:**
 - `in_memory_computing_dnn_survey_2023.pdf`
 - `Emerging_Memory_Technologies_Review_arXiv.pdf`
 - `Flash_Memory_vs_Emerging_NVM_Review_arXiv.pdf`
+- `fecim_applications_review_2025.pdf`
+- `fecap_memories_review_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -258,13 +287,15 @@
 ### 11. Reservoir Computing
 **Focus:** Analog reservoir computing with ferroelectrics
 
-**2 papers covering:**
+**3 papers covering:**
 - All-ferroelectric reservoir computing (2023)
 - Analog RC with ferroelectric multi-bit transistors
+- Tunable ferroelectric reservoir computing (2025)
 
 **Key Papers:**
 - `all_ferroelectric_reservoir_computing_2023.pdf`
 - `analog_rc_ferroelectric_mpb_transistors_2024.pdf`
+- `reservoir_computing_tunable_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -273,19 +304,21 @@
 ### 12. Spiking Neural Networks
 **Focus:** SNNs, neuromorphic hardware, energy efficiency (100-10,000× better than ANNs)
 
-**6 papers covering:**
+**7 papers covering:**
 - Contemporary spiking bioinspired systems (2024)
 - FeFET SNN with supervised learning
 - Low-cost neuromorphic learning engines
 - Neuromorphic SNN survey
 - SNN architecture search survey
 - Spike: neuromorphic computer vision
+- Personalized SNN for EEG processing (2025)
 
 **Key Papers:**
 - `snn_architecture_search_survey_2025.pdf`
 - `fefet_snn_supervised_learning_2020.pdf`
 - `neuromorphic_snn_survey_2023.pdf`
 - `spike_neuromorphic_computer_vision_2024.pdf`
+- `personalized_snn_eeg_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -296,12 +329,13 @@
 ### 13. In-Memory Training
 **Focus:** On-chip backpropagation, gradient computation, weight updates
 
-**5 papers covering:**
+**6 papers covering:**
 - Exact gradient training in analog IMC
 - Fast robust analog in-memory training
 - In-memory training with limited conductance levels
 - Pipeline gradient computation in analog accelerators
 - Analog backprop in memristive crossbars
+- In-memory differentiator for training (2025)
 
 **Key Papers:**
 - `exact_gradient_training_analog_imc_2024.pdf`
@@ -309,6 +343,7 @@
 - `inmem_training_limited_conductance_2025.pdf`
 - `pipeline_gradient_analog_accelerators_2024.pdf`
 - `analog_backprop_memristive_crossbar_2018.pdf`
+- `inmemory_differentiator_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -340,17 +375,21 @@
 ### 15. 3D Stacking Architectures
 **Focus:** Vertical FeFET, NAND-like stacking, multi-layer integration
 
-**4 papers covering:**
+**6 papers covering:**
 - Ferroelectric transistors for NAND flash (Nature 2025)
 - Full-spectrum 3D ferroelectric memory
 - Highly scaled 3D FeFET arrays
 - Vertical NAND with ferroelectric paradigm
+- 3D FeRAM architectures (2025)
+- NAND limits and ferroelectric alternatives (2025)
 
 **Key Papers:**
 - `full_spectrum_3d_ferroelectric_memory_2025.pdf`
 - `ferroelectric_transistors_nand_flash_2025.pdf`
 - `vertical_nand_ferroelectric_paradigm_2024.pdf`
 - `highly_scaled_3d_fefet_array_2023.pdf`
+- `3d_feram_architectures_2025.pdf`
+- `nand_limits_ferroelectrics_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -416,15 +455,17 @@
 ### 19. Variability & Yield
 **Focus:** Device variation, temperature effects, reliability
 
-**3 papers covering:**
+**4 papers covering:**
 - FeFET NVM memory challenges
 - FeFET storage technology
 - Temperature variability in FeFET modeling
+- IGZO FeFET retention and variability (2025)
 
 **Key Papers:**
 - `fefet_storage_technology_2024.pdf`
 - `temperature_variability_fefet_modeling_2024.pdf`
 - `fefet_nvmemory_challenges_2023.pdf`
+- `igzo_fefet_retention_2025.pdf`
 
 **Location:** `<local-path>`
 
@@ -473,7 +514,10 @@
 ---
 
 ### 23. Cryogenic Operation
-**Status:** Documentation-based (README only)
+**Focus:** 4K operation, quantum computing integration, enhanced polarization at low temperatures
+
+**1 paper covering:**
+- FeSQUID cryogenic CAM architecture (2025)
 
 **Topics Covered (via README):**
 - FeFET operation at 4K
@@ -482,7 +526,12 @@
 - $2B+ market opportunity
 - FeSQUID and cryo-FeCIM architectures
 
+**Key Papers:**
+- `fesquid_cryo_cam_2025.pdf`
+
 **Location:** `<local-path>`
+
+**README Available:** Yes - Details on quantum computing applications
 
 ---
 
@@ -491,15 +540,15 @@
 ### Downloaded Papers (Not Yet Organized)
 **Location:** `<local-path>`
 
-**Organized by source:**
-- `arxiv/` - arXiv preprints (6 papers)
-- `nature/` - Nature family journals (12 papers)
-- `springer/` - Springer journals (5 papers)
-- `other/` - Berkeley EECS reports, other sources (4 papers)
+**Status:** 26 papers were recently categorized and moved to by-topic directories (2026-02-02)
+
+**Remaining uncategorized:**
+- `arxiv/` - arXiv preprints (check for remaining)
+- `nature/` - Nature family journals (check for remaining)
+- `springer/` - Springer journals (check for remaining)
+- `other/` - Berkeley EECS reports, other sources (check for remaining)
 - `acs/` - ACS journals (empty)
 - `science/` - Science family (empty)
-
-**Total:** 27 papers ready for categorization
 
 ### Corrupted PDFs
 **Location:** `<local-path>`
@@ -563,10 +612,10 @@ To create a topic-based index linking to these papers **without duplicating PDFs
 
 ## Statistics
 
-- **Total Papers:** 141+ across topics 01-19 (topics 20-23 have READMEs)
-- **Peer-Reviewed (Tier 1-2):** ~120+ papers
-- **Recent (2024-2026):** ~195+ papers (85% cutting-edge)
-- **With DOI:** ~100+ papers (43% gold standard)
+- **Total Papers:** 167+ across all topics (topics 20-22 remain README-only)
+- **Peer-Reviewed (Tier 1-2):** ~140+ papers
+- **Recent (2024-2026):** ~220+ papers (85% cutting-edge)
+- **With DOI:** ~120+ papers (45% gold standard)
 - **Topics with README:** 8 (01, 03, 12, 13, 14, 16, 20, 21, 22, 23)
 
 ---

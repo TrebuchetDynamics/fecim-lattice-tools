@@ -1,6 +1,6 @@
 # Research Papers Library
 
-**Complete index of 141+ research papers** organized by topic to support FeCIM lattice tools development.
+**Complete index of 167+ research papers** organized by topic to support FeCIM lattice tools development.
 
 ---
 
@@ -27,33 +27,33 @@
 
 ## What's Inside
 
-### 141+ Papers Across 23 Topics
+### 167+ Papers Across 23 Topics
 
 | # | Topic | Papers | Key Focus |
 |:--|:------|-------:|-----------|
-| **01** | Ferroelectric Materials | 30 | HfO₂, ZrO₂, Preisach, physics |
+| **01** | Ferroelectric Materials | 42 | HfO₂, ZrO₂, Preisach, physics |
 | **02** | Training Algorithms | 11 | Quantization, low-precision, analog AI |
-| **03** | Simulation Tools | 9 | CrossSim, FerroX, NeuroSim |
-| **04** | CIM Architectures | 30 | Crossbars, ADC, sneak paths |
-| **05** | Neuromorphic Computing | 6 | Synaptic transistors, STDP |
+| **03** | Simulation Tools | 11 | CrossSim, FerroX, NeuroSim |
+| **04** | CIM Architectures | 32 | Crossbars, ADC, sneak paths |
+| **05** | Neuromorphic Computing | 7 | Synaptic transistors, STDP |
 | **06** | Photonic Computing | 5 | Optical DNNs, photonic accelerators |
 | **07** | Memory Architectures | 3 | 3D memory, HBM, side acceleration |
 | **08** | Industry Reports | 5 | Roadmaps, surveys, benchmarks |
-| **09** | Reviews & Surveys | 4 | Comprehensive literature reviews |
+| **09** | Reviews & Surveys | 6 | Comprehensive literature reviews |
 | **10** | CIM Compilers | 2 | Mapping frameworks, compilers |
-| **11** | Reservoir Computing | 2 | Analog RC, ferroelectric |
-| **12** | Spiking Neural Networks | 6 | SNNs, neuromorphic, energy-efficient |
-| **13** | In-Memory Training | 5 | On-chip backprop, weight updates |
+| **11** | Reservoir Computing | 3 | Analog RC, ferroelectric |
+| **12** | Spiking Neural Networks | 7 | SNNs, neuromorphic, energy-efficient |
+| **13** | In-Memory Training | 6 | On-chip backprop, weight updates |
 | **14** | Transformer/LLM Accelerators | 4 | Attention mechanisms, LLMs |
-| **15** | 3D Stacking | 4 | Vertical FeFET, NAND-like arrays |
+| **15** | 3D Stacking | 6 | Vertical FeFET, NAND-like arrays |
 | **16** | Photonic-FE Hybrids | 5 | Optical modulators, hybrid systems |
 | **17** | Security/Cryptography | 2 | PUFs, lightweight crypto |
 | **18** | ALD Process Control | 5 | HZO deposition, thermal budgets |
-| **19** | Variability & Yield | 3 | Device variation, temperature |
+| **19** | Variability & Yield | 4 | Device variation, temperature |
 | **20** | Manufacturing Integration | — | BEOL/FEOL specs (README) |
 | **21** | 3D Stacking Roadmap | — | Vertical integration (README) |
 | **22** | Automotive & Harsh Environment | — | AEC-Q100, -40°C to 150°C (README) |
-| **23** | Cryogenic Operation | — | 4K operation, quantum (README) |
+| **23** | Cryogenic Operation | 1 | 4K operation, quantum |
 
 ---
 
@@ -63,9 +63,9 @@
 
 Start with **[TOPIC_SUMMARIES.md](./TOPIC_SUMMARIES.md)** to understand what each area covers:
 
-**Ferroelectric Physics?** → Topic 01 (30 papers on HfO₂, switching, Preisach)
+**Ferroelectric Physics?** → Topic 01 (42 papers on HfO₂, switching, Preisach)
 
-**CIM Hardware Design?** → Topic 04 (30 papers on crossbars, ADC, sneak paths)
+**CIM Hardware Design?** → Topic 04 (32 papers on crossbars, ADC, sneak paths)
 
 **AI Training?** → Topics 02, 13 (quantization, on-chip training)
 
@@ -126,11 +126,11 @@ Start with **[TOPIC_SUMMARIES.md](./TOPIC_SUMMARIES.md)** to understand what eac
 
 ## Key Statistics
 
-- **Total papers:** 141+ across 23 topics
-- **Peer-reviewed (Tier 1-2):** ~120 papers (85%)
-- **Recent (2024-2026):** ~195 papers (85% cutting-edge)
-- **With DOI:** ~100 papers (43% gold standard)
-- **Open-access:** ~45 papers (16%)
+- **Total papers:** 167+ across 23 topics
+- **Peer-reviewed (Tier 1-2):** ~142 papers (85%)
+- **Recent (2024-2026):** ~142 papers (85% cutting-edge)
+- **With DOI:** ~120 papers (72% gold standard)
+- **Open-access:** ~53 papers (32%)
 - **Coverage grade:** A+ (97/100)
 
 ---
@@ -247,29 +247,29 @@ mv _tools/downloaded/nature/some_paper.pdf by-topic/04-cim-architectures/
 
 | Topic | Grade | Assessment |
 |-------|-------|------------|
-| 01. Ferroelectric Materials | **A+** | 30 papers - excellent coverage of HfO₂-ZrO₂ physics |
+| 01. Ferroelectric Materials | **A+** | 42 papers - excellent coverage of HfO₂-ZrO₂ physics |
 | 02. Training Algorithms | **A** | 11 papers - strong quantization coverage |
-| 03. Simulation Tools | **A+** | 9 papers - complete tool ecosystem |
-| 04. CIM Architectures | **A+** | 30 papers - comprehensive system design |
-| 05. Neuromorphic | **A-** | 6 papers - adequate STDP coverage |
+| 03. Simulation Tools | **A+** | 11 papers - complete tool ecosystem |
+| 04. CIM Architectures | **A+** | 32 papers - comprehensive system design |
+| 05. Neuromorphic | **A** | 7 papers - strong STDP coverage |
 | 06. Photonic Computing | **B+** | 5 papers - emerging but limited |
 | 07. Memory Architectures | **B** | 3 papers - minimal coverage |
 | 08. Industry Reports | **A-** | 5 papers - good roadmap data |
-| 09. Reviews & Surveys | **A-** | 4 papers - contextual understanding |
+| 09. Reviews & Surveys | **A** | 6 papers - strong contextual understanding |
 | 10. CIM Compilers | **B** | 2 papers - minimal but growing |
-| 11. Reservoir Computing | **B** | 2 papers - exploratory |
-| 12. Spiking Neural Networks | **A** | 6 papers - strong energy efficiency focus |
-| 13. In-Memory Training | **A** | 5 papers - emerging competitive advantage |
+| 11. Reservoir Computing | **B+** | 3 papers - growing coverage |
+| 12. Spiking Neural Networks | **A** | 7 papers - strong energy efficiency focus |
+| 13. In-Memory Training | **A** | 6 papers - emerging competitive advantage |
 | 14. Transformer/LLMs | **B+** | 4 papers - timely but limited |
-| 15. 3D Stacking | **A-** | 4 papers - Samsung prototype data |
+| 15. 3D Stacking | **A** | 6 papers - Samsung prototype data |
 | 16. Photonic-FE Hybrids | **B+** | 5 papers - research frontier |
 | 17. Security/Cryptography | **B** | 2 papers - early stage |
 | 18. ALD Process Control | **A** | 5 papers - manufacturing critical |
-| 19. Variability & Yield | **B+** | 3 papers - device-level important |
+| 19. Variability & Yield | **A-** | 4 papers - device-level important |
 | 20. Manufacturing | **A-** | READMEs only (strategic) |
 | 21. 3D Stacking | **A** | READMEs only (strategic) |
 | 22. Automotive | **A-** | READMEs only (strategic) |
-| 23. Cryogenic | **A** | READMEs only (strategic) |
+| 23. Cryogenic | **A** | 1 paper - quantum computing interface |
 | **AVERAGE** | **A+** | **97/100 - excellent coverage** |
 
 ---
@@ -306,12 +306,12 @@ See `NEW_PAPERS_*.md` files for what was added recently.
 ### Directory Structure
 ```
 by-topic/
-├── 01-ferroelectric-materials/    (30 papers)
+├── 01-ferroelectric-materials/    (42 papers)
 ├── 02-training-algorithms/        (11 papers)
-├── 03-simulation-tools/           (9 papers)
-├── 04-cim-architectures/          (30 papers)
+├── 03-simulation-tools/           (11 papers)
+├── 04-cim-architectures/          (32 papers)
 ... [19 more topic directories]
-└── 23-cryogenic-operation/        (README only)
+└── 23-cryogenic-operation/        (1 paper)
 ```
 
 ### Naming Convention

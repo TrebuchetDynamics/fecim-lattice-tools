@@ -4,7 +4,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 01. Ferroelectric Materials (30 papers)
+## 01. Ferroelectric Materials (42 papers)
 
 **What:** Core physics of ferroelectric materials, especially HfO₂-ZrO₂ superlattices
 
@@ -67,7 +67,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 03. Simulation Tools (9 papers + OPENSOURCE_TOOLS.md)
+## 03. Simulation Tools (11 papers + OPENSOURCE_TOOLS.md)
 
 **What:** Open-source and commercial tools for simulating CIM and ferroelectric systems
 
@@ -99,7 +99,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 04. CIM Architectures (30 papers)
+## 04. CIM Architectures (32 papers)
 
 **What:** Complete compute-in-memory system designs with ferroelectric devices
 
@@ -135,7 +135,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 05. Neuromorphic Computing (6 papers)
+## 05. Neuromorphic Computing (7 papers)
 
 **What:** Brain-inspired computing with spiking neurons and synaptic plasticity
 
@@ -225,7 +225,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 09. Reviews & Surveys (4 papers)
+## 09. Reviews & Surveys (6 papers)
 
 **What:** Comprehensive literature reviews on related topics
 
@@ -260,7 +260,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 11. Reservoir Computing (2 papers)
+## 11. Reservoir Computing (3 papers)
 
 **What:** Recurrent neural networks with fixed random weights
 
@@ -278,7 +278,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 12. Spiking Neural Networks (6 papers)
+## 12. Spiking Neural Networks (7 papers)
 
 **What:** Neural networks based on spiking neurons and event-driven computation
 
@@ -305,7 +305,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 13. In-Memory Training (5 papers)
+## 13. In-Memory Training (6 papers)
 
 **What:** On-chip neural network training using analog crossbars
 
@@ -360,7 +360,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 15. 3D Stacking Architectures (4 papers)
+## 15. 3D Stacking Architectures (6 papers)
 
 **What:** Vertical integration of FeFET cells in 3D arrays (like 3D NAND)
 
@@ -454,7 +454,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 19. Variability & Yield (3 papers)
+## 19. Variability & Yield (4 papers)
 
 **What:** Device-to-device variation, temperature effects, reliability
 
@@ -537,7 +537,7 @@ A one-page guide to each research topic, with key papers and application areas.
 
 ---
 
-## 23. Cryogenic Operation (README only)
+## 23. Cryogenic Operation (1 paper)
 
 **What:** FeFET operation at ultra-low temperatures (4K) for quantum computing
 
@@ -547,13 +547,17 @@ A one-page guide to each research topic, with key papers and application areas.
 - Quantum-classical interface design
 - $2B+ market opportunity
 - Deep-cryo operation (1.5K)
+- FeSQUID: Ferroelectric SQUID for quantum applications
 
 **Why It Matters:**
 - Blue ocean market (few competitors)
 - Quantum computing is $1B+ by 2030
 - FeCIM could be quantum memory interface
 
-**Status:** Strategic vision (cutting-edge research)
+**Status:** Cutting-edge research (fesquid_cryo_cam_2025.pdf)
+
+**Key Paper:**
+- FeSQUID Cryo CAM 2025: Ferroelectric SQUID for cryogenic applications
 
 ---
 
@@ -584,5 +588,9 @@ A one-page guide to each research topic, with key papers and application areas.
 - **Key papers:** Preisach (01), CrossSim (03), sneak paths (04)
 
 ---
+
+---
+
+**Total Papers: 167+**
 
 *Last updated: 2026-02-02*

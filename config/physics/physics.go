@@ -117,6 +117,53 @@ type Material struct {
 
 	// AlScN-specific
 	ScFraction float64 `yaml:"sc_fraction,omitempty"` // Scandium fraction in AlScN
+
+	// Landau-Khalatnikov / Thermodynamics
+	Thermodynamics MaterialThermodynamics `yaml:"thermodynamics,omitempty"`
+
+	// Electrostriction / Stress coupling
+	Coupling MaterialCoupling `yaml:"coupling,omitempty"`
+
+	// Circuit parasitics
+	Circuit MaterialCircuit `yaml:"circuit,omitempty"`
+
+	// Nucleation-Limited Switching (Merz law)
+	NLS MaterialNLS `yaml:"nls,omitempty"`
+
+	// Conductance transfer (P -> G)
+	Conductance MaterialConductance `yaml:"conductance,omitempty"`
+}
+
+// MaterialThermodynamics holds Landau-Khalatnikov coefficients.
+type MaterialThermodynamics struct {
+	BetaLandau   float64 `yaml:"beta_landau"`
+	GammaLandau  float64 `yaml:"gamma_landau"`
+	RhoViscosity float64 `yaml:"rho_viscosity"`
+	CurieConstK  float64 `yaml:"curie_const_k"`
+}
+
+// MaterialCoupling holds electrostriction and stress coupling parameters.
+type MaterialCoupling struct {
+	Q11Electrostriction float64 `yaml:"q11_electrostriction"`
+	Q12Electrostriction float64 `yaml:"q12_electrostriction"`
+	StressGPa           float64 `yaml:"stress_gpa"`
+}
+
+// MaterialCircuit holds circuit parasitic parameters.
+type MaterialCircuit struct {
+	SeriesResistanceOhm float64 `yaml:"series_resistance_ohm"`
+}
+
+// MaterialNLS holds Nucleation-Limited Switching parameters.
+type MaterialNLS struct {
+	ActivationFieldVM float64 `yaml:"activation_field_v_m"`
+	TauInfS           float64 `yaml:"tau_inf_s"`
+}
+
+// MaterialConductance holds conductance mapping parameters.
+type MaterialConductance struct {
+	GminS float64 `yaml:"gmin_s"`
+	GmaxS float64 `yaml:"gmax_s"`
 }
 
 // Crossbar holds crossbar array configuration.

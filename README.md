@@ -7,7 +7,9 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)]()
 [![Modules](https://img.shields.io/badge/Modules-7-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-541-success.svg)]()
+[![CI](https://github.com/your-org/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/fecim-lattice-tools/actions/workflows/ci.yml)
+
+> **Status**: Education phase (roadmap: Education → Research → Chip Design). **Simulation-only**; experimental validation pending. See `docs/project/STATUS.md`.
 
 > **"Compute in memory where the same device does the memory and the computation."**
 > — Dr. external research group, external research institution
@@ -37,9 +39,9 @@
 
 ## Overview
 
-FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution. Unlike traditional binary memory (0/1), FeCIM supports **30 discrete analog states per cell** (~4.9 bits/cell) as demonstrated in Dr. Tour's COSM 2025 presentation [1]. Similar multi-level capabilities (32-140 states) have been independently verified in peer-reviewed literature [2][3].
+FeCIM Lattice Tools demonstrates ferroelectric compute-in-memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution. This **education-phase** simulator uses **30 discrete analog states per cell** (~4.9 bits/cell) as a **conference claim** from Dr. Tour's COSM 2025 presentation (pending peer review) [1]. Similar multi-level capabilities (32-140 states) have been independently verified in peer-reviewed literature [2][3].
 
-> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** claim is from Dr. Tour's presentation; similar results (32-140 states) appear in peer-reviewed literature [2][3]. **MNIST accuracy** in peer-reviewed literature is **96.6-98.24%** [4][9]. Energy efficiency vs NAND is **25-100×** (Samsung Nature 2025 [5]). Dr. Tour's unverified "87% MNIST" and "10M× vs NAND" claims have been **removed** from this project.
+> **DISCLAIMER**: Ferroelectric CIM is at **TRL 4** (lab validation) per Dr. Tour's own statement at COSM 2025 [1]. The **30 states** claim is from a **conference presentation** (pending peer review); similar results (32-140 states) appear in peer-reviewed literature [2][3]. **MNIST accuracy** in peer-reviewed literature is **96.6-98.24%** [4][9]. Energy efficiency vs NAND is **25-100×** (Samsung Nature 2025 [5]). Dr. Tour's unverified "87% MNIST" and "10M× vs NAND" claims have been **removed** from this project.
 
 ---
 
@@ -67,9 +69,9 @@ See `INSTALLATION.md` for prerequisites, optional dependencies, and platform-spe
 ### Running Tests
 
 ```bash
-go test ./...                              # All 541 tests
+go test ./...                              # See CI for latest status
 go test -v ./module2-crossbar/pkg/crossbar # Crossbar tests only
-go test -race ./...                        # Race detector (all pass)
+go test -race ./...                        # Race detector (optional)
 ```
 
 ### Command Line Options
@@ -102,7 +104,7 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING → REFE
 ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌────────────┐
 │  Module 1  │───▶│  Module 2  │───▶│  Module 3  │    │  Module 7  │
 │ Hysteresis │    │  Crossbar  │    │   MNIST    │    │    Docs    │
-│  30 levels │    │  + Noise   │    │  96-98%    │    │  Glossary  │
+│  30 levels*│    │  + Noise   │    │  96-98%    │    │  Glossary  │
 └────────────┘    └────────────┘    └────────────┘    └────────────┘
       │                                    │                 ▲
       ▼                                    ▼                 │
@@ -113,9 +115,11 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING → REFE
 └────────────┘    └────────────┘    └────────────┘
 ```
 
+*`30 levels*` = conference claim (COSM 2025), pending peer review; peer-reviewed devices show 32–140 states.
+
 | Module | Focus | Description |
 |--------|-------|-------------|
-| **1. Hysteresis** | Physics | P-E curve, Preisach model, 30 discrete levels |
+| **1. Hysteresis** | Physics | P-E curve, Preisach model, 30 discrete levels* |
 | **2. Crossbar** | Compute | MVM operations + non-idealities (4 tabs) |
 | **3. MNIST** | Application | Neural network digit recognition (peer-reviewed: 96-98%) |
 | **4. Circuits** | System | DAC/ADC/TIA peripheral design |
@@ -136,7 +140,7 @@ Traditional computing moves data constantly between memory and processor — thi
 
 | Aspect | Traditional | FeCIM |
 |--------|-------------|-------|
-| Memory states | 2 (binary) | **30 levels** (4.9 bits/cell) |
+| Memory states | 2 (binary) | **30 levels*** (~4.9 bits/cell) |
 | Compute location | Separate CPU/GPU | **In the memory itself** |
 | Data movement | Constant bottleneck | **Zero** |
 | Energy vs NAND | 1× | **25-100× lower** [5] |
@@ -163,7 +167,8 @@ Traditional computing moves data constantly between memory and processor — thi
 
 ### Module 1: Ferroelectric Hysteresis ✅
 
-> *"It's got 30 discrete states. So it's not 0-1-0-1."* — Dr. Tour
+> *"It's got 30 discrete states. So it's not 0-1-0-1."* — Dr. Tour  
+> *Conference claim; pending peer review.*
 
 Visualizes single-cell ferroelectric physics using the Mayergoyz Preisach model.
 
@@ -179,7 +184,7 @@ Polarization (P)              30 Discrete Levels
 
 **Features:**
 - Real-time P-E hysteresis curve with fade trail
-- 30 discrete levels visualization
+- 30-level* visualization (conference claim)
 - Material presets (Default HZO, Optimized, FeCIM)
 - Waveform modes: Sine, Triangle, Square, Manual
 
@@ -192,7 +197,7 @@ Matrix-vector multiplication (MVM) via Kirchhoff's current law, plus real-world 
 ```
      V₀   V₁   V₂   V₃  (input)        I_out[i] = Σ G[i,j] × V_in[j]
       │    │    │    │
- ─────●────●────●────●───→ I₀          ● = conductance (30 levels)
+ ─────●────●────●────●───→ I₀          ● = conductance (30 levels*)
       │    │    │    │
  ─────●────●────●────●───→ I₁          Analog multiply-accumulate
       │    │    │    │                 in O(1) time
@@ -245,7 +250,7 @@ Digital [22] ──▶ DAC ──┐  ┌── ADC ──▶ Digital [22]
                        ▼  ▲
               ┌────────────────────┐
               │   CROSSBAR ARRAY   │
-              │    (30 levels)     │
+              │   (30 levels*)     │
               └────────────────────┘
 ```
 
@@ -270,7 +275,7 @@ GPU+HBM   ████████              100    ├───────�
 FeCIM     █                      10    │ Energy   │  ✅  │  🟡  │  🟡  │
                                        │ Speed    │  ✅  │  ✅  │  ❌  │
                                        │ Endurance│  ✅  │  ❌  │  🟡  │
-                                       │ 30 levels│  ✅  │  ❌  │  ✅  │
+                                       │ 30 levels*│  ✅ │  ❌  │  ✅  │
                                        └──────────┴──────┴──────┴──────┘
 ```
 
@@ -350,7 +355,7 @@ In-app reference system with glossary and research paper index.
 | Physics Model | Preisach/Mayergoyz |
 | Compute | Crossbar MVM simulation |
 | Non-Idealities | IR drop, sneak paths, drift |
-| Tests | 541 tests (100% pass, race-free) |
+| Tests | See CI (`go test ./...`) |
 | Documentation | 95+ markdown files |
 
 ---

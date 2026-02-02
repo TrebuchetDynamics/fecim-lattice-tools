@@ -5,6 +5,8 @@
 package tabs
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -30,27 +32,40 @@ func sizedContainer(child fyne.CanvasObject, width, height float32) fyne.CanvasO
 func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	logging.GlobalDebug("[EDA-Learn] Creating Learn tab")
 
-	// Topic selector
-	topics := []string{
-		"1. What is FeCIM EDA?",
-		"2. The Crossbar Architecture",
-		"3. EDA Files We Generate",
+	// Topic data with titles and descriptions
+	type topicInfo struct {
+		title string
+		desc  string
+	}
+
+	topicData := []topicInfo{
+		{"Quick Start", "Get started in 5 steps"},
+		{"What is FeCIM EDA?", "Overview & OpenLane flow"},
+		{"Crossbar Architecture", "Passive vs 1T1R design"},
+		{"EDA Files", "LEF, DEF, Verilog, Liberty"},
+		{"FAQ", "Troubleshooting & tips"},
+	}
+
+	topics := make([]string, len(topicData))
+	for i, t := range topicData {
+		topics[i] = fmt.Sprintf("%d. %s", i+1, t.title)
 	}
 
 	topicSelector := widget.NewList(
-		func() int { return len(topics) },
+		func() int { return len(topicData) },
 		func() fyne.CanvasObject {
-			label := widget.NewLabel("Template")
-			label.Wrapping = fyne.TextWrapWord
-			return label
+			titleLabel := widget.NewLabelWithStyle("Title", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+			descLabel := widget.NewLabel("Description")
+			descLabel.TextStyle = fyne.TextStyle{Italic: true}
+			return container.NewVBox(titleLabel, descLabel)
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			label := obj.(*widget.Label)
-			label.SetText(topics[id])
-			// Add visual hierarchy with bold text for better readability
-			if id == 0 || id == 1 || id == 2 {
-				label.TextStyle = fyne.TextStyle{Bold: true}
-			}
+			box := obj.(*fyne.Container)
+			titleLabel := box.Objects[0].(*widget.Label)
+			descLabel := box.Objects[1].(*widget.Label)
+
+			titleLabel.SetText(fmt.Sprintf("%d. %s", id+1, topicData[id].title))
+			descLabel.SetText(topicData[id].desc)
 		},
 	)
 	topicSelector.OnSelected = func(id widget.ListItemID) {
@@ -58,7 +73,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	}
 
 	// Content area - increased width for better card layout
-	contentScroll := container.NewScroll(makeIntroContent())
+	contentScroll := container.NewScroll(makeQuickStartContent())
 	contentScroll.SetMinSize(fyne.NewSize(750, 500))
 
 	// Connect topic selector to content
@@ -67,13 +82,17 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 		var content fyne.CanvasObject
 		switch id {
 		case 0:
-			content = makeIntroContent()
+			content = makeQuickStartContent()
 		case 1:
-			content = makeCrossbarContent()
-		case 2:
-			content = makeFilesContent()
-		default:
 			content = makeIntroContent()
+		case 2:
+			content = makeCrossbarContent()
+		case 3:
+			content = makeFilesContent()
+		case 4:
+			content = makeFAQContent()
+		default:
+			content = makeQuickStartContent()
 		}
 		contentScroll.Content = content
 		fyne.Do(func() {
@@ -85,7 +104,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	topicSelector.Select(0)
 
 	// Layout with sidebar - increased width and better spacing
-	sidebarTitle := widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	sidebarTitle := widget.NewLabelWithStyle("📚 Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	sidebarSpacer := widget.NewLabel("") // Add spacing after title
 	sidebarSpacer.Resize(fyne.NewSize(1, 8))
 
@@ -97,7 +116,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Main layout - wider sidebar (240px instead of 180px)
 	split := container.NewHSplit(sidebar, contentScroll)
-	split.SetOffset(0.25) // Wider sidebar: 25% instead of 22%
+	split.SetOffset(0.22) // Slightly narrower sidebar for cleaner look
 
 	// Header
 	header := container.NewVBox(
@@ -127,17 +146,17 @@ func makeIntroContent() fyne.CanvasObject {
 
 	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files for assembling FeCIM crossbar arrays within the OpenLane flow. It automates the placement (DEF) and connectivity (Verilog) of pre-existing FeFET cell macros. It does NOT draw transistors from scratch.`)
 	intro.Wrapping = fyne.TextWrapWord
+	introCard := widget.NewCard("Overview", "", intro)
 
-	// Operation modes visual with enforced minimum size
-	// Content calculates to ~610x225, use slightly larger for padding
+	// Operation modes visual
 	modesContainer := sizedContainer(OperationModesVisual(), 620, 230)
+	modesCard := widget.NewCard("FeCIM Operation Modes", "", modesContainer)
 
-	// OpenLane flow diagram with enforced minimum size
-	// Content calculates to ~750x275, use slightly larger for padding
+	// OpenLane flow diagram
 	flowContainer := sizedContainer(OpenLaneFlowDiagram(), 760, 290)
+	flowCard := widget.NewCard("OpenLane RTL-to-GDSII Assembly", "", flowContainer)
 
 	// Stages Explained section
-	stagesTitle := widget.NewLabelWithStyle("The Stages Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	stagesText := widget.NewLabel(`1. SYNTHESIS (Yosys) - Converts behavioral Verilog to gate-level netlist
 2. FLOORPLAN - Defines die area and I/O pin locations
 3. PLACEMENT (RePlAce + OpenDP) - Assigns X,Y coordinates to every cell
@@ -145,55 +164,42 @@ func makeIntroContent() fyne.CanvasObject {
 5. ROUTING (TritonRoute) - Draws metal wire connections
 6. SIGNOFF & GDSII - Assembly of pre-existing cell macros into final GDSII`)
 	stagesText.Wrapping = fyne.TextWrapWord
+	stagesCard := widget.NewCard("The Stages Explained", "", stagesText)
 
 	// Two-column do/don't layout
-	doList := makeBulletList("WHAT WE DO:",
+	doList := makeBulletList("",
 		"Generate LEF files (cell abstracts)",
 		"Generate Liberty files (timing - placeholder values)",
 		"Generate Verilog netlists (behavioral models)",
 		"Generate DEF files (physical placement)",
 		"Export OpenLane configuration")
 
-	dontList := makeBulletList("WHAT WE DON'T DO:",
+	dontList := makeBulletList("",
 		"We do NOT provide validated FeFET device models",
 		"We do NOT generate GDSII geometry from scratch",
 		"We do NOT characterize real timing values",
 		"We do NOT fabricate chips")
 
-	doColumns := container.NewGridWithColumns(2, doList, dontList)
+	doCard := widget.NewCard("✓ WHAT WE DO", "", doList)
+	dontCard := widget.NewCard("✗ WHAT WE DON'T DO", "", dontList)
+	doColumns := container.NewGridWithColumns(2, doCard, dontCard)
 
-	// Disclaimer banner using widget.NewCard
-	disclaimerCard := widget.NewCard("", "DISCLAIMER",
+	// Disclaimer banner
+	disclaimerCard := widget.NewCard("⚠️ DISCLAIMER", "",
 		widget.NewLabel("This project is not affiliated with or endorsed by external research institution, Dr. external research group, or any foundry."))
-
-	// Add spacer elements for better vertical separation
-	spacer1 := widget.NewLabel("")
-	spacer1.Resize(fyne.NewSize(1, 15))
-	spacer2 := widget.NewLabel("")
-	spacer2.Resize(fyne.NewSize(1, 15))
-	spacer3 := widget.NewLabel("")
-	spacer3.Resize(fyne.NewSize(1, 15))
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		intro,
-		spacer1,
-		widget.NewSeparator(),
-		modesContainer,
-		spacer2,
-		widget.NewSeparator(),
-		flowContainer,
-		spacer3,
-		widget.NewSeparator(),
-		stagesTitle,
-		stagesText,
-		widget.NewSeparator(),
+		introCard,
+		modesCard,
+		flowCard,
+		stagesCard,
 		doColumns,
-		widget.NewSeparator(),
 		disclaimerCard,
 	)
 }
+
 
 func makeCrossbarContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("The Crossbar Architecture", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -276,9 +282,11 @@ func makeFilesContent() fyne.CanvasObject {
 		VerilogPreviewCard(),
 		LibertyPreviewCard(),
 	)
+	filePreviewsCard := widget.NewCard("File Format Examples", "", cardsGrid)
 
-	// === SECTION 1: How We Generate Files ===
-	genTitle := widget.NewLabelWithStyle("1. How We Generate Files", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	// === Collapsible sections using Accordion ===
+
+	// Section 1: How We Generate Files
 	genText := widget.NewLabel(`VERILOG GENERATION:
 • Loop through array dimensions (Rows × Cols)
 • Instantiate cell macros: fecim_bitcell (passive) or fecim_1t1r_bitcell (1T1R)
@@ -299,8 +307,7 @@ LEF GENERATION:
 • Define MACRO with pin locations and obstruction areas`)
 	genText.Wrapping = fyne.TextWrapWord
 
-	// === SECTION 2: How We Validate ===
-	valTitle := widget.NewLabelWithStyle("2. How We Validate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	// Section 2: How We Validate
 	valText := widget.NewLabel(`YOSYS VALIDATION (Verilog Syntax):
 • Runs: yosys -p "read_verilog cell.v array.v"
 • Checks syntax errors, undefined modules, port mismatches
@@ -323,20 +330,17 @@ OPENLANE PLACEMENT VALIDATION (via Docker):
 • Detects overlapping cells or DRC violations`)
 	valText.Wrapping = fyne.TextWrapWord
 
-	// === SECTION 3: How to Generate Layout Images ===
-	imgTitle := widget.NewLabelWithStyle("3. Layout Visualization (OpenLane)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	// Section 3: Layout Visualization
 	imgText := widget.NewLabel(`Layout images are generated using industry-standard EDA tools:
 
 OUR APP USES KLAYOUT (via Docker):
-  • Automatically invoked when Docker + OpenLane image available
-  • Reads our generated LEF (cell geometry) and DEF (placement)
-  • Exports PNG layout image to data/
-  • Falls back to schematic SVG if KLayout unavailable
+• Automatically invoked when Docker + OpenLane image available
+• Reads our generated LEF (cell geometry) and DEF (placement)
+• Exports PNG layout image to data/
+• Falls back to schematic SVG if KLayout unavailable
 
 MANUAL KLAYOUT:
   klayout -l tech.lyp design.def -o layout.png
-  • Reads DEF placement data
-  • Applies layer colors from technology file
 
 USING MAGIC:
   magic -dnull -noconsole << EOF
@@ -346,15 +350,10 @@ USING MAGIC:
   EOF
 
 USING OPENROAD GUI:
-  openroad -gui
-  • Interactive placement viewer
-  • Real-time DRC feedback
-
-NOTE: The in-app canvas shows a schematic preview for quick feedback. The actual PNG export uses KLayout for proper EDA visualization.`)
+  openroad -gui (Interactive placement viewer)`)
 	imgText.Wrapping = fyne.TextWrapWord
 
-	// === SECTION 4: File Purposes ===
-	purposesTitle := widget.NewLabelWithStyle("4. File Format Summary", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	// Section 4: File Format Summary
 	purposesText := widget.NewLabel(`LEF: Cell geometry (abstract view, no transistors)
 DEF: Physical placement with X,Y coordinates
 Verilog: Structural netlist (behavioral black boxes)
@@ -364,28 +363,86 @@ Config.json: OpenLane configuration pointing to our files
 ⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
 
+	// Create accordion with all sections
+	accordion := widget.NewAccordion(
+		widget.NewAccordionItem("1. How We Generate Files", genText),
+		widget.NewAccordionItem("2. How We Validate", valText),
+		widget.NewAccordionItem("3. Layout Visualization", imgText),
+		widget.NewAccordionItem("4. File Format Summary", purposesText),
+	)
+	// Open first section by default
+	accordion.Open(0)
+
 	// References section
-	referencesTitle := widget.NewLabelWithStyle("References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	refsCard := ReferencesCard()
+	refsCard := widget.NewCard("References", "", ReferencesCard())
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		cardsGrid,
+		filePreviewsCard,
 		widget.NewSeparator(),
-		genTitle,
-		genText,
+		accordion,
 		widget.NewSeparator(),
-		valTitle,
-		valText,
-		widget.NewSeparator(),
-		imgTitle,
-		imgText,
-		widget.NewSeparator(),
-		purposesTitle,
-		purposesText,
-		widget.NewSeparator(),
-		referencesTitle,
 		refsCard,
+	)
+}
+
+func makeQuickStartContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("Quick Start Guide", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	step1 := widget.NewCard("Step 1: Configure Array", "",
+		widget.NewLabel("Set Rows, Cols, Mode (storage/memory/compute), and Architecture (passive/1T1R/2T1R) in the Builder tab."))
+
+	step2 := widget.NewCard("Step 2: Generate Files", "",
+		widget.NewLabel("Click 'Generate All' to create Verilog, DEF, LEF, and Liberty files. Files are saved to the data/ directory."))
+
+	step3 := widget.NewCard("Step 3: Validate", "",
+		widget.NewLabel("Click 'Validate All' to run Yosys syntax check, DEF validation, and cross-check. Green checkmarks indicate success."))
+
+	step4 := widget.NewCard("Step 4: Export Package", "",
+		widget.NewLabel("Click 'Export Package' to bundle all files for OpenLane integration. The package includes README with usage instructions."))
+
+	step5 := widget.NewCard("Step 5: View Layout", "",
+		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))
+
+	tipCard := widget.NewCard("💡 Tips", "",
+		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation"))
+
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		step1, step2, step3, step4, step5,
+		widget.NewSeparator(),
+		tipCard,
+	)
+}
+
+func makeFAQContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("FAQ & Troubleshooting", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	faq1 := widget.NewCard("Q: Why do validations fail?", "",
+		widget.NewLabel("A: Common causes:\n• Missing cell files (run Generate All first)\n• Docker not running (needed for Yosys/OpenROAD)\n• Invalid array dimensions (must be > 0)"))
+
+	faq2 := widget.NewCard("Q: Why are images not generated?", "",
+		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull efabless/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
+
+	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", "",
+		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays. 1T1R adds a transistor per cell to isolate read/write operations, enabling larger arrays (64x64+)."))
+
+	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", "",
+		widget.NewLabel("A: NO! Liberty values are placeholders. Real fabrication requires SPICE characterization with validated FeFET device models from a foundry."))
+
+	faq5 := widget.NewCard("Q: How do I use the generated files with OpenLane?", "",
+		widget.NewLabel("A: Export Package creates a ready-to-use directory. Copy it to OpenLane's designs/ folder and run: flow.tcl -design <your_design_name>"))
+
+	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
+		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
+
+	return container.NewVBox(
+		title,
+		widget.NewSeparator(),
+		faq1, faq2, faq3, faq4, faq5,
+		widget.NewSeparator(),
+		troubleCard,
 	)
 }

@@ -118,6 +118,41 @@ func TestCrossbarConfig(t *testing.T) {
 	}
 }
 
+func TestMaterialAdvancedParams(t *testing.T) {
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
+
+	fecim := cfg.FeCIMMaterial()
+	if fecim == nil {
+		t.Fatal("FeCIM material not found")
+	}
+
+	if fecim.Thermodynamics.BetaLandau == 0 || fecim.Thermodynamics.GammaLandau == 0 {
+		t.Errorf("Expected Landau coefficients for FeCIM material, got beta=%f gamma=%f",
+			fecim.Thermodynamics.BetaLandau, fecim.Thermodynamics.GammaLandau)
+	}
+
+	if fecim.Coupling.Q12Electrostriction == 0 {
+		t.Errorf("Expected electrostriction Q12 for FeCIM material, got %f", fecim.Coupling.Q12Electrostriction)
+	}
+
+	if fecim.Circuit.SeriesResistanceOhm == 0 {
+		t.Errorf("Expected series resistance for FeCIM material, got %f", fecim.Circuit.SeriesResistanceOhm)
+	}
+
+	if fecim.NLS.ActivationFieldVM == 0 || fecim.NLS.TauInfS == 0 {
+		t.Errorf("Expected NLS parameters for FeCIM material, got activation=%f tau=%f",
+			fecim.NLS.ActivationFieldVM, fecim.NLS.TauInfS)
+	}
+
+	if fecim.Conductance.GmaxS <= fecim.Conductance.GminS {
+		t.Errorf("Expected Gmax > Gmin for FeCIM material, got Gmin=%f Gmax=%f",
+			fecim.Conductance.GminS, fecim.Conductance.GmaxS)
+	}
+}
+
 func TestCalibrationConfig(t *testing.T) {
 	cfg, err := Load()
 	if err != nil {

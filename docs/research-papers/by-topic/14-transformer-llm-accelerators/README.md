@@ -14,44 +14,196 @@ Transformers and Large Language Models (LLMs) are driving AI adoption but requir
 
 ---
 
-## Papers Found (2024-2025)
+## Papers in This Directory
 
-### CIM for Transformers
+### 1. Analog-Digital Hybrid Attention (2024)
+**File:** `analog_digital_hybrid_attention_2024.pdf`
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "CIMFormer: Systolic CIM-Array Transformer" | ResearchGate | 2024 | Transformer accelerator | https://www.researchgate.net/publication/380988019 |
-| "Ferroelectric Memory for Transformer Inference" | ISSCC 2025 | 2025 | FeFET attention | IEEE Xplore |
-| "In-Memory Attention Mechanism" | Nature Electronics | 2024 | Analog attention | Nature.com |
-| "CIM-based Transformer Accelerator" | IEEE JSSC | 2024 | Complete system | IEEE Xplore |
-| "Compute-in-Memory for NLP" | ACM MICRO | 2024 | Language model inference | ACM DL |
+**Description:** Mixed analog-digital architecture for transformer attention mechanism. Performs Q×K^T and Attention×V in analog domain while keeping softmax digital.
 
-### LLM Hardware Acceleration
+**Key Findings:**
+- Hybrid approach: Analog MVM + digital softmax
+- 50× energy reduction vs all-digital attention
+- Accuracy loss <0.5% on BERT and GPT-2 models
+- Scalable to 2048 sequence length
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Survey on Hardware Accelerators for LLMs" | MDPI Applied Sciences | 2025 | Comprehensive survey | https://www.mdpi.com/2076-3417/15/2/586 |
-| "Edge LLM with CIM" | IEEE TCAD | 2024 | On-device LLM | IEEE Xplore |
-| "FeFET for GPT-style Models" | VLSI 2024 | 2024 | Decoder acceleration | IEEE Xplore |
-| "Memory-Efficient LLM Inference" | MLSys 2024 | 2024 | KV-cache optimization | MLSys |
-| "Quantized LLMs on CIM" | NeurIPS 2024 | 2024 | INT4 LLM on analog | OpenReview |
+**Relevance:** Practical architecture for FeFET transformer accelerators.
 
-### Attention Mechanism Hardware
+---
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "Analog Softmax in CIM" | IEEE TCAS-I | 2024 | Hardware softmax | IEEE Xplore |
-| "In-Memory Q-K-V Computation" | DAC 2024 | 2024 | Attention in crossbar | ACM DL |
-| "Flash Attention on CIM" | HPCA 2024 | 2024 | Memory-efficient attention | IEEE Xplore |
-| "Multi-Head Attention Accelerator" | IEEE JSSC | 2024 | Parallel heads | IEEE Xplore |
+### 2. FAMOUS: FPGA Attention Accelerator (2024)
+**File:** `famous_fpga_attention_accelerator_2024.pdf`
 
-### Efficient Model Architectures
+**Description:** High-performance FPGA-based attention accelerator with novel tiling strategy. Optimizes memory bandwidth and compute utilization.
 
-| Paper | Source | Year | Key Contribution | URL |
-|-------|--------|------|------------------|-----|
-| "CIM-Aware Transformer Design" | ICLR 2024 | 2024 | Hardware-friendly arch | OpenReview |
-| "Sparse Attention for CIM" | NeurIPS 2024 | 2024 | Reduced computation | OpenReview |
-| "Linear Attention on FeFET" | ICML 2024 | 2024 | O(n) attention | OpenReview |
+**Key Findings:**
+- 4.2 TFLOPS attention throughput on Xilinx VU9P
+- Flash attention algorithm reduces memory by 4×
+- Dynamic tiling adapts to sequence length
+- 10× speedup vs CPU, 2× vs GPU for long sequences
+
+**Relevance:** Reference architecture and optimization techniques for custom accelerators.
+
+---
+
+### 3. Hardware Acceleration for LLMs Survey (2024)
+**File:** `hardware_acceleration_llm_survey_2024.pdf`
+
+**Description:** Comprehensive survey of hardware accelerators for large language models. Covers GPU, TPU, CIM, and specialized architectures.
+
+**Key Findings:**
+- **Memory bottleneck:** LLM inference is 90% memory-bound
+- CIM approaches: 10-100× energy efficiency potential
+- Quantization: INT4/INT8 with <1% accuracy loss
+- Attention optimization: Flash attention, sparse attention, linear attention
+- Emerging technologies: CIM (ReRAM, FeFET), photonics, neuromorphic
+
+**Relevance:** Complete market and technology landscape for LLM acceleration.
+
+---
+
+### 4. Memristor Transformer Self-Attention (2024)
+**File:** `memristor_transformer_self_attention_2024.pdf`
+
+**Description:** End-to-end memristor-based transformer implementation with in-memory attention computation. Demonstrates full BERT inference on analog hardware.
+
+**Key Findings:**
+- Complete transformer layer in memristor crossbar
+- Q×K^T and Attention×V performed in-memory
+- 100× energy efficiency vs GPU (5 mJ vs 500 mJ per inference)
+- BERT-base on SQuAD: 88.1 F1 score (vs 88.5 FP32)
+
+**Relevance:** Proof-of-concept for full transformer on FeFET-like devices.
+
+---
+
+## Key Findings Across All Papers
+
+### Why LLMs are Perfect for CIM
+
+**Memory-Bound Nature:**
+- 90% of LLM inference time is memory access, not compute
+- Attention mechanism: O(n²d) memory reads
+- Feed-forward network: O(4d²) weight reads
+- CIM eliminates data movement → 10-100× efficiency
+
+**Transformer Operations Breakdown:**
+```
+Per-token inference (GPT-2):
+├── Self-Attention (60%):  Q×K^T + Softmax + Attention×V
+├── Feed-Forward (35%):    2× Linear layers (MVM)
+└── LayerNorm (5%):        Digital peripheral
+```
+
+### Performance Metrics
+
+| Model | GPU Latency | CIM Latency (projected) | GPU Energy | CIM Energy (projected) |
+|-------|-------------|-------------------------|------------|------------------------|
+| GPT-2 (1.5B) | 50 ms/token | 5-10 ms/token | 100 mJ | 1-2 mJ |
+| BERT-base (110M) | 10 ms | 1-2 ms | 20 mJ | 0.2-0.5 mJ |
+| LLaMA-7B | 200 ms/token | 50-100 ms/token | 500 mJ | 10-20 mJ |
+| LLaMA-13B | 400 ms/token | 150-200 ms/token | 1 J | 50-100 mJ |
+
+### Attention Optimization Techniques
+
+1. **Flash Attention:** Reduce memory by 4× through tiling
+2. **Sparse Attention:** Only compute important attention scores
+3. **Linear Attention:** O(n) instead of O(n²) complexity
+4. **Multi-Query Attention:** Share K/V across heads
+5. **Sliding Window:** Local attention for long sequences
+
+### Quantization for CIM
+
+| Precision | BERT Accuracy | GPT-2 Perplexity | FeFET Suitability |
+|-----------|---------------|------------------|-------------------|
+| FP32 | 88.5% (SQuAD F1) | 18.5 | N/A |
+| INT8 | 88.3% | 18.7 | ✅ Easy |
+| **INT4** | **87.9%** | **19.2** | ✅ **FeFET: 4.9-bit** |
+| INT2 | 84.1% | 25.3 | ⚠️ Marginal |
+
+---
+
+## Architecture Insights
+
+### In-Memory Attention Flow
+```
+Input Embeddings (n × d)
+    ↓
+[Q×K^T in Crossbar] → Scores (n × n)
+    ↓
+[Digital Softmax] → Attention Weights (n × n)
+    ↓
+[Attention×V in Crossbar] → Output (n × d)
+    ↓
+[Feed-Forward in Crossbar] → Final Output
+```
+
+### FeFET Advantages for LLMs
+
+1. **Non-volatile KV-cache:** Zero refresh power for stored context
+2. **High density:** 30 analog levels = 4.9 bits effective precision
+3. **In-memory MVM:** Eliminates weight transfer bottleneck
+4. **Low energy:** 1-10 fJ per MAC (vs 1-10 pJ for SRAM)
+5. **Scalability:** 3D stacking for billion-parameter models
+
+### Critical Challenges
+
+| Challenge | Solution | Status |
+|-----------|----------|--------|
+| Large attention matrices (n²) | Tiled computation | ✅ Solved |
+| Softmax in analog | Digital peripheral circuit | ✅ Solved |
+| Variable sequence length | Dynamic resource allocation | ⚠️ Partial |
+| KV-cache management | FeFET non-volatile storage | 🔬 Research |
+| Multi-head parallelism | Array partitioning | ✅ Solved |
+| Quantization accuracy | INT4 with calibration | ✅ Solved |
+
+---
+
+## Related Topics
+
+### Primary Connections
+- **[Topic 4: Analog CIM](../04-analog-cim/)** - Hardware foundation
+  - Transformer = stack of MVM operations
+  - Attention is perfect for crossbar arrays
+  - Requires high-precision ADCs for softmax
+
+- **[Topic 13: In-Memory Training](../13-in-memory-training/)** - LLM fine-tuning
+  - On-chip fine-tuning for personalization
+  - Federated learning on edge devices
+  - LoRA (Low-Rank Adaptation) reduces training memory
+
+### Secondary Connections
+- **[Topic 2: HZO Materials](../02-hzo-materials/)** - Scaling to large models
+  - Billion-parameter models need high density
+  - Retention critical for persistent KV-cache
+
+- **[Topic 6: 3D Integration](../06-3d-integration/)** - Memory capacity
+  - Vertical stacking enables on-chip LLaMA-7B
+  - Reduces inter-layer latency
+
+- **[Topic 16: Photonic Hybrids](../16-photonic-ferroelectric-hybrids/)** - Future direction
+  - Photonic attention for 1000× bandwidth
+  - Hybrid electronic-photonic transformers
+
+- **[Topic 8: Reliability](../08-reliability-retention/)** - Long-context models
+  - KV-cache retention for multi-turn conversations
+  - Error correction for critical weights
+
+---
+
+## Market Opportunity
+
+### Edge LLM Applications
+- **On-device ChatGPT:** Privacy + low latency
+- **Wearable AI assistants:** Energy-efficient inference
+- **Autonomous vehicles:** Real-time language understanding
+- **IoT edge intelligence:** Local processing without cloud
+
+### Projected Impact
+- **Market size:** $50B by 2030 (edge AI inference)
+- **Energy savings:** 50-100× vs GPU
+- **Latency reduction:** 5-10× for memory-bound models
+- **Privacy:** No data sent to cloud
 
 ---
 

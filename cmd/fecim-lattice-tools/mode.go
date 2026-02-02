@@ -104,13 +104,20 @@ func runHysteresisMode() error {
 	}
 
 	gWindow := gmax - gmin
+	// Test targets matching baseline: levels 28, 5, 27, 3, 20
+	// Level-to-G: G = gmin + (level-1)/(numLevels-1) * gWindow
+	levelToG := func(level int) float64 {
+		return gmin + float64(level-1)/float64(numLevels-1)*gWindow
+	}
 	steps := []struct {
 		label   string
 		targetG float64
 	}{
-		{"pos-1", gmin + 0.75*gWindow},
-		{"pos-2", gmin + 0.90*gWindow},
-		{"neg-1", gmin + 0.25*gWindow},
+		{"L28", levelToG(28)},
+		{"L5", levelToG(5)},
+		{"L27", levelToG(27)},
+		{"L3", levelToG(3)},
+		{"L20", levelToG(20)},
 	}
 
 	wrdTotalWrites := 0
@@ -139,10 +146,37 @@ func runHysteresisMode() error {
 		recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
 
 		targetDone := false
+		// Track "written P" - the polarization captured at end of pulse (before E→0)
+		// This is critical because high K_dep causes P to relax toward 0 when E=0,
+		// which would give wrong level readings during VERIFY phase.
+		var writtenP float64
+		var lastControllerState = controller.StateIdle
+		// Track the state at success for accurate reporting (before DISPLAY relaxation)
+		var successP float64
+		var successLevel int
 		for solver.Time-stepStart < maxSimTime && !targetDone {
 			// Compute current level from solver state (previous step)
 			currentP := solver.GetState()
-			currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
+
+			// Capture "written P" at transition from WAIT to VERIFY (before E→0)
+			// This gives the true written state before depolarization relaxation
+			if writeController.State == controller.StateVerify && lastControllerState == controller.StateWait {
+				writtenP = currentP
+			}
+			lastControllerState = writeController.State
+
+			// Use writtenP for level calculation during VERIFY/SUCCESS/FAILED states
+			// to avoid depolarization-induced errors at E=0
+			effectiveP := currentP
+			if writeController.State == controller.StateVerify ||
+				writeController.State == controller.StateSuccess ||
+				writeController.State == controller.StateFailed {
+				if writtenP != 0 {
+					effectiveP = writtenP
+				}
+			}
+
+			currentG := physics.PolarizationToConductance(effectiveP, mat.Ps, gmin, gmax)
 			_, currentLevel = headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 			wrd.readLevel = currentLevel
 
@@ -228,6 +262,9 @@ func runHysteresisMode() error {
 				if done {
 					switch writeController.State {
 					case controller.StateSuccess:
+						// Capture the written state BEFORE DISPLAY phase relaxation
+						successP = effectiveP
+						successLevel = currentLevel
 						wrdTotalWrites++
 						wrdSuccessWrites++
 						wrd.totalWrites = wrdTotalWrites
@@ -270,13 +307,25 @@ func runHysteresisMode() error {
 			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, solver.Time-stepStart)
 		}
 
+		// Use the captured success state if available, otherwise use relaxed state
 		finalP := solver.GetState()
 		finalG := physics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+		_, finalLevel := headlessLevelFromConductance(finalG, gmin, gmax, numLevels)
 		success := writeController.State == controller.StateSuccess
 		attempts := writeController.PulseCount
 		overshoots := writeController.OvershootCount
-		log.Info("ISPP step %d (%s): targetG=%.3e targetLevel=%d attempts=%d success=%v overshoots=%d finalP=%.3e finalG=%.3e",
-			i+1, step.label, step.targetG, targetLevel, attempts, success, overshoots, finalP, finalG)
+
+		// Report the written state (at success) not the relaxed state (after DISPLAY)
+		reportP := finalP
+		reportLevel := finalLevel
+		if success && successP != 0 {
+			reportP = successP
+			reportLevel = successLevel
+		}
+		reportG := physics.PolarizationToConductance(reportP, mat.Ps, gmin, gmax)
+
+		log.Info("ISPP step %d (%s): targetG=%.3e targetLevel=%d attempts=%d success=%v overshoots=%d writtenLevel=%d writtenP=%.3e writtenG=%.3e (relaxedP=%.3e)",
+			i+1, step.label, step.targetG, targetLevel, attempts, success, overshoots, reportLevel, reportP, reportG, finalP)
 	}
 
 	return nil

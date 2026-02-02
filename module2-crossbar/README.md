@@ -2,11 +2,11 @@
 
 ## Overview
 
-Module 2 provides a comprehensive simulation of ferroelectric (FeCIM) crossbar arrays for Compute-in-Memory operations. It models the physics of matrix-vector multiplication (MVM) in analog crossbar arrays while accounting for real-world non-idealities including IR drop, sneak paths, device drift, and temperature effects.
+Module 2 provides a comprehensive **simulation** of ferroelectric (FeCIM) crossbar arrays for Compute-in-Memory operations. It models the physics of matrix-vector multiplication (MVM) in analog crossbar arrays while accounting for real-world non-idealities including IR drop, sneak paths, device drift, and temperature effects.
 
-The core concept is **30 discrete analog states per cell** (approximately 4.9 bits per cell), enabling multi-level storage and computation on ferroelectric memory elements. The simulation is hardware-aware, supporting both passive (0T1R) and transistor-isolated (1T1R) architectures.
+This module uses **30 discrete analog states per cell** (~4.9 bits/cell) as a **conference claim** from COSM 2025 (pending peer review). Peer-reviewed literature reports 32–140 states in related ferroelectric devices. The simulation is hardware-aware, supporting both passive (0T1R) and transistor-isolated (1T1R) architectures.
 
-**Primary Reference**: Dr. external research group, COSM 2025 - "It's got 30 discrete states. So it's not 0-1-0-1."
+**Primary Reference**: Dr. external research group, COSM 2025 - "It's got 30 discrete states. So it's not 0-1-0-1." (conference claim; pending peer review)
 
 ---
 
@@ -772,14 +772,13 @@ adjustedDrift := temp.AdjustedDriftRate(baseDriftCoeff)
 
 ### Why 30 Levels?
 
-Ferroelectric hysteresis curves naturally exhibit ~30 distinguishable polarization states under normal programming conditions. This provides:
+This demo uses 30 levels as a **conference claim baseline** (COSM 2025, pending peer review). Peer-reviewed literature reports **32–140 states** in related FeFET/FTJ devices, which brackets the 30-level assumption. This provides:
 - **Sufficient granularity**: 4.9 bits per cell is competitive with 8-bit quantization in neural networks
-- **Reliable operation**: Can be reliably written and read with standard voltage/current levels
-- **Practical**: Demonstrated by multiple research teams (Song et al. 2024, Oh et al. 2017)
+- **A reasonable baseline**: within the peer-reviewed multi-level range (32–140)
 
 ### Quantization During Weights Programming
 
-Weights are **automatically quantized to 30 levels** when programmed. This is a fundamental constraint of the device:
+Weights are **automatically quantized to 30 levels** when programmed. This is a **baseline assumption for this demo**, not a universal device limit:
 
 ```go
 array.ProgramWeight(row, col, 0.5123)

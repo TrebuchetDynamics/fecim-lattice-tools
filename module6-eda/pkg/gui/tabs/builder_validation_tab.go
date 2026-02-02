@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
@@ -131,6 +132,58 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	modeSelect.SetSelected(cfg.Mode)
 	updateModeHelp(cfg.Mode) // Initialize help text
 
+	// Helper to create zoomable image tab
+	makeZoomableImageTab := func(img *canvas.Image, label *widget.Label, status *widget.Label) fyne.CanvasObject {
+		zoomLevel := 1.0
+		baseWidth := float32(600)
+		baseHeight := float32(450)
+
+		zoomLabel := widget.NewLabel("100%")
+
+		updateZoom := func() {
+			newW := baseWidth * float32(zoomLevel)
+			newH := baseHeight * float32(zoomLevel)
+			img.SetMinSize(fyne.NewSize(newW, newH))
+			img.Refresh()
+			zoomLabel.SetText(fmt.Sprintf("%.0f%%", zoomLevel*100))
+		}
+
+		zoomInBtn := widget.NewButton("+", func() {
+			if zoomLevel < 3.0 {
+				zoomLevel += 0.25
+				updateZoom()
+			}
+		})
+		zoomOutBtn := widget.NewButton("-", func() {
+			if zoomLevel > 0.25 {
+				zoomLevel -= 0.25
+				updateZoom()
+			}
+		})
+		fitBtn := widget.NewButton("Fit", func() {
+			zoomLevel = 1.0
+			updateZoom()
+		})
+
+		zoomControls := container.NewHBox(
+			label,
+			widget.NewLabel(" - "),
+			status,
+			layout.NewSpacer(),
+			widget.NewLabel("Zoom:"),
+			zoomOutBtn,
+			zoomLabel,
+			zoomInBtn,
+			fitBtn,
+		)
+
+		return container.NewBorder(
+			zoomControls,
+			nil, nil, nil,
+			container.NewScroll(img),
+		)
+	}
+
 	// Layout image display - shows KLayout, OpenROAD, and Yosys generated images
 	// === TABBED INTERFACE FOR BETTER VISIBILITY ===
 
@@ -155,23 +208,10 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	yosysLabel := widget.NewLabelWithStyle("Yosys Schematic", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	yosysStatus := widget.NewLabel("Not generated")
 
-	// Tabbed layout for larger image previews
-	klayoutTab := container.NewBorder(
-		container.NewHBox(klayoutLabel, widget.NewLabel(" - "), klayoutStatus),
-		nil, nil, nil,
-		container.NewScroll(klayoutImage),
-	)
-	openroadTab := container.NewBorder(
-		container.NewHBox(openroadLabel, widget.NewLabel(" - "), openroadStatus),
-		nil, nil, nil,
-		container.NewScroll(openroadImage),
-	)
-	yosysTab := container.NewBorder(
-		container.NewHBox(yosysLabel, widget.NewLabel(" - "), yosysStatus),
-		nil, nil, nil,
-		container.NewScroll(yosysImage),
-	)
-
+	// Create zoomable image tabs
+	klayoutTab := makeZoomableImageTab(klayoutImage, klayoutLabel, klayoutStatus)
+	openroadTab := makeZoomableImageTab(openroadImage, openroadLabel, openroadStatus)
+	yosysTab := makeZoomableImageTab(yosysImage, yosysLabel, yosysStatus)
 	imageTabs := container.NewAppTabs(
 		container.NewTabItem("KLayout", klayoutTab),
 		container.NewTabItem("OpenROAD", openroadTab),
@@ -181,7 +221,6 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// Replace layoutStack with imageTabs
 	layoutStack := imageTabs
-
 
 	// Helper to update KLayout image from file
 	updateLayoutImage := func() {
@@ -592,7 +631,6 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			}
 		})
 	}()
-
 
 	// ========== STATUS ==========
 	statusLabel := widget.NewLabel("Ready")
@@ -1066,69 +1104,68 @@ Date: %s
 
 	// ========== BUILD LAYOUT ==========
 
-	// Compact cell config - 6 columns for tighter layout
-	cellConfigGrid := container.NewGridWithColumns(6,
+	// Ultra-compact cell config - 8 columns, single row where possible
+	// Set narrower placeholders for entries
+	nameEntry.SetPlaceHolder("name")
+	widthEntry.SetPlaceHolder("0.46")
+	heightEntry.SetPlaceHolder("2.72")
+	riseEntry.SetPlaceHolder("10")
+	fallEntry.SetPlaceHolder("10")
+	capEntry.SetPlaceHolder("0.015")
+	leakageEntry.SetPlaceHolder("0.0003")
+
+	cellConfigGrid := container.NewGridWithColumns(8,
 		widget.NewLabel("Name"), nameEntry,
-		widget.NewLabel("W(µm)"), widthEntry,
-		widget.NewLabel("H(µm)"), heightEntry,
-		widget.NewLabel("Rise(ns)"), riseEntry,
-		widget.NewLabel("Fall(ns)"), fallEntry,
-		widget.NewLabel("Cap(pF)"), capEntry,
-	)
-	cellConfigGrid2 := container.NewGridWithColumns(4,
-		widget.NewLabel("Leakage(nW)"), leakageEntry,
-		cellAreaLabel, widget.NewLabel(""),
+		widget.NewLabel("W"), widthEntry,
+		widget.NewLabel("H"), heightEntry,
+		widget.NewLabel("Rise"), riseEntry,
+		widget.NewLabel("Fall"), fallEntry,
+		widget.NewLabel("Cap"), capEntry,
+		widget.NewLabel("Leak"), leakageEntry,
+		cellAreaLabel,
 	)
 
 	cellPanel := container.NewVBox(
-		widget.NewLabelWithStyle("Cell Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
 		cellConfigGrid,
-		cellConfigGrid2,
 	)
 
-	// Compact array config - 6 columns with architecture toggle
-	arrayConfigGrid := container.NewGridWithColumns(6,
-		widget.NewLabel("Rows"), rowsEntry,
-		widget.NewLabel("Cols"), colsEntry,
-		widget.NewLabel("Mode"), modeSelect,
-	)
-	arrayConfigGrid2 := container.NewHBox(
-		widget.NewLabel("Architecture:"),
-		archToggle,
+	// Ultra-compact array config - combine everything in single row
+	arrayConfigRow := container.NewHBox(
+		widget.NewLabel("Rows:"), rowsEntry,
+		widget.NewLabel("Cols:"), colsEntry,
+		widget.NewLabel("Mode:"), modeSelect,
+		widget.NewSeparator(),
+		widget.NewLabel("Arch:"), archToggle,
 	)
 
-	// Helper for labeled stats - clean grid without card borders
-	labeledValue := func(header string, value *widget.Label) *fyne.Container {
-		headerLabel := widget.NewLabelWithStyle(header, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-		value.Alignment = fyne.TextAlignCenter
-		return container.NewVBox(headerLabel, value)
-	}
-
-	// Stats grid - clean 3x2 layout without card clutter
-	statsGrid := container.NewGridWithColumns(3,
-		labeledValue("Cells", totalLabel),
-		labeledValue("Area", areaLabel),
-		labeledValue("Utilization", utilizationLabel),
-		labeledValue("WL Length", wlLengthLabel),
-		labeledValue("BL Length", blLengthLabel),
-		labeledValue("Density", densityLabel),
+	// Horizontal stats - pipe separated for compactness
+	statsRow := container.NewHBox(
+		totalLabel,
+		widget.NewLabel("|"),
+		areaLabel,
+		widget.NewLabel("|"),
+		utilizationLabel,
+		widget.NewLabel("|"),
+		wlLengthLabel,
+		widget.NewLabel("|"),
+		blLengthLabel,
+		widget.NewLabel("|"),
+		densityLabel,
 	)
 
 	arrayPanel := container.NewVBox(
-		widget.NewLabelWithStyle("Array Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
-		arrayConfigGrid,
-		arrayConfigGrid2,
+		arrayConfigRow,
 		modeHelpText,
-		widget.NewSeparator(),
-		widget.NewLabelWithStyle("Statistics", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		statsGrid,
+		statsRow,
 	)
 
-	// Config panels (left/right split) - give more to array side
-	configSplit := container.NewHSplit(cellPanel, arrayPanel)
-	configSplit.SetOffset(0.40)
+	// Collapsible config sections using Accordion
+	configAccordion := widget.NewAccordion(
+		widget.NewAccordionItem("Cell Config", cellPanel),
+		widget.NewAccordionItem("Array Config", arrayPanel),
+	)
+	// Open Array Config by default (more commonly used)
+	configAccordion.Open(1)
 
 	// Preview tabs - larger, scrollable containers
 	verilogTab := container.NewBorder(
@@ -1224,7 +1261,7 @@ Date: %s
 
 	// Top section: config + actions (compact)
 	topSection := container.NewVBox(
-		configSplit,
+		configAccordion,
 		widget.NewSeparator(),
 		container.NewHBox(actionButtons, widget.NewSeparator(), statusBar),
 	)
@@ -1253,6 +1290,7 @@ Date: %s
 //   - passive: WL[], BL[] pins
 //   - 1t1r: WL[], BL[], SL[] pins (SL at bottom edge for transistor source)
 //   - 2t1r: WL[], BL[], SL[], CSL[] pins (CSL at right edge for column transistor gates)
+//
 // Includes ROW definitions for OpenROAD placement validation
 func generateBuilderDEF(cfg config.ArrayConfig) string {
 	designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)

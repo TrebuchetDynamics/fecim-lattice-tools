@@ -1,18 +1,18 @@
 # Module 6: EDA Tools
 
-Comprehensive Electronic Design Automation (EDA) toolchain for FeCIM (Ferroelectric Compute-in-Memory) chip design, from behavioral specification to fabrication-ready GDSII layout.
+Educational Electronic Design Automation (EDA) toolchain for FeCIM (Ferroelectric Compute-in-Memory) chip design, from behavioral specification to **illustrative** layout artifacts. **Simulation-only; not tape-out or signoff ready.**
 
 ## Overview
 
-Module 6 implements a complete RTL-to-GDSII design flow for FeCIM-based systems. It supports three distinct operation modes (Storage, Memory, Compute) and multiple process design kits (PDKs), enabling rapid chip design exploration and tape-out preparation.
+Module 6 implements an RTL-to-layout **exploration flow** for FeCIM-based systems. It supports three distinct operation modes (Storage, Memory, Compute) and multiple process design kits (PDKs), enabling rapid design iteration **for education and research planning** (not fabrication).
 
-**Key Capability**: Generate production-ready designs with integrated OpenLane support for automated placement, routing, and layout generation.
+**Key Capability**: Generate **educational** design artifacts with OpenLane-compatible outputs for learning and early exploration. External validation and signoff are required for any real fabrication.
 
 ## Features
 
 ### Three Operation Modes
 
-- **Storage Mode**: High-density non-volatile memory replacing NAND flash. Optimizes for data retention and write endurance with 30 conductance levels (4.9 bits/cell).
+- **Storage Mode**: High-density non-volatile memory replacing NAND flash. Optimizes for data retention and write endurance with a 30-level baseline (4.9 bits/cell, conference claim).
 
 - **Memory Mode**: High-speed zero-refresh memory replacing DRAM. Targets 10ns access times with minimal power consumption.
 
