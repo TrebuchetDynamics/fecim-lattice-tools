@@ -186,13 +186,13 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	result.EnergyUsed = totalEnergy
 
 	log.Calculation("Infer", map[string]interface{}{
-		"fpPred":      result.FPPrediction,
-		"fpConf":      result.FPConfidence,
-		"cimPred":     result.CIMPrediction,
-		"cimConf":     result.CIMConfidence,
-		"agree":       result.Agree,
+		"fpPred":       result.FPPrediction,
+		"fpConf":       result.FPConfidence,
+		"cimPred":      result.CIMPrediction,
+		"cimConf":      result.CIMConfidence,
+		"agree":        result.Agree,
 		"disagreement": result.Disagreement,
-		"energy_uJ":   result.EnergyUsed,
+		"energy_uJ":    result.EnergyUsed,
 	}, result)
 
 	return result

@@ -287,23 +287,23 @@ MACRO fecim_bit
     END
   END BL
 
-  PIN VDD
+  PIN VPWR
     DIRECTION INOUT ;
     USE POWER ;
     PORT
       LAYER met1 ;
         RECT 0.0 2.62 0.46 2.72 ;
     END
-  END VDD
+  END VPWR
 
-  PIN VSS
+  PIN VGND
     DIRECTION INOUT ;
     USE GROUND ;
     PORT
       LAYER met1 ;
         RECT 0.0 0.0 0.46 0.1 ;
     END
-  END VSS
+  END VGND
 
   OBS
     LAYER li1 ;
@@ -348,12 +348,12 @@ library(fecim_bit) {
       }
     }
 
-    pin(VDD) {
+    pin(VPWR) {
       direction : inout;
       pg_type : primary_power;
     }
 
-    pin(VSS) {
+    pin(VGND) {
       direction : inout;
       pg_type : primary_ground;
     }
@@ -530,7 +530,7 @@ ls -la /path/to/fecim_bit.lef
 
 **Solution:**
 1. Verify Verilog port names match LEF pin names exactly
-2. Check power/ground pin names (VDD/VSS vs VPWR/VGND)
+2. Check power/ground pin names (tool outputs VPWR/VGND; ensure your cells match)
 3. Ensure `LVS_INSERT_POWER_PINS=1`
 
 ### Debug Tips

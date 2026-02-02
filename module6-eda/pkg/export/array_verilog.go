@@ -72,7 +72,7 @@ func GenerateArrayVerilog(cfg config.ArrayConfig) string {
 	if is2T1R {
 		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] CSL,   // Column Select Lines (2T1R: column transistor gate, one per column)\n", cfg.Cols-1))
 	}
-	sb.WriteString(fmt.Sprintf("    output wire [%d:0] BL,    // Bit Lines (column data)\n", cfg.Cols-1))
+	sb.WriteString(fmt.Sprintf("    inout  wire [%d:0] BL,    // Bit Lines (column data)\n", cfg.Cols-1))
 	if is1T1R || is2T1R {
 		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] SL,    // Source Lines (FeFET source, one per column)\n", cfg.Cols-1))
 	}

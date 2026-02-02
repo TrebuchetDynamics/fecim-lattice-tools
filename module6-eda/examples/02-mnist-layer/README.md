@@ -100,7 +100,7 @@ Quantization error is measured as PSNR:
 ### Conductance Mapping
 
 ```
-Weight: -0.9 → Level: 0  → G: 1.0 μS   (high resistance)
+Weight: -0.9 → Level: 0  → G: 10.0 μS  (high resistance)
 Weight:  0.0 → Level: 15 → G: 50.5 μS  (mid resistance)
 Weight: +0.9 → Level: 29 → G: 100.0 μS (low resistance)
 ```

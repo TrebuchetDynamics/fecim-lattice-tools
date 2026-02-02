@@ -8,34 +8,39 @@ Neural Network Digit Recognition Demo
 
 - **Dual-Mode Inference** - Side-by-side FP32 vs CIM (quantized + noise) comparison
 - **Drawing Canvas** - 28×28 pixel digit input with 3 brush sizes
-- **Quantization Control** - 2-30 levels, per-layer PTQ support
-- **Noise Injection** - Adjustable Gaussian read noise (0-50%)
-- **DAC/ADC Simulation** - 3-16 bit resolution
-- **Educational Tour** - 5-step guided demo + 30-second quick demo
-- **Failure Mode Demos** - Binary weights, high noise demonstrations
+- **Quantization Control** - Levels selector (available QAT weights); per-layer PTQ supported in core
+- **Noise Injection** - Adjustable Gaussian read noise (0-20% in UI)
+- **DAC/ADC Simulation** - 3-16 bit resolution (core; fixed in Dual‑Mode UI)
+- **Quick Demo** - 5-step automated walkthrough (includes 2-level quantization cliff)
+- **Failure Mode Demos** - Binary weights + high noise via Quick Demo/Noisy preset
 - **Layer Activation View** - Visualize hidden layer activations
 - **Confusion Matrix** - Classification error heatmap
 - **Weight Comparison Widget** - FP32 vs quantized weight visualization
+
+## GUI Variants
+
+- **MNISTApp** (single‑mode): activations + confusion matrix + per‑class metrics
+- **DualModeApp** (FP vs CIM): comparison card, quantization/energy widgets, quick demo
 
 ## Physics Models
 
 | Model | Description |
 |-------|-------------|
 | **Weight Quantization** | Symmetric linear mapping to N discrete levels |
-| **Read Noise** | Gaussian multiplicative (Johnson noise model) |
+| **Read Noise** | Gaussian multiplicative (σ/μ) |
 | **DAC Quantization** | Input voltage resolution (2^bits levels) |
 | **ADC Quantization** | Output current resolution (2^bits levels) |
-| **Energy Model** | 10 fJ/bit per MAC (50 fJ @ 30 levels) |
+| **Energy Model** | 10 fJ/bit per MAC (≈50 fJ @ 30 levels) + ADC/DAC overhead |
 
 ## Key Parameters
 
 | Parameter | Default | Range |
 |-----------|---------|-------|
 | FeCIM Levels | 30 | 2-30 |
-| Noise σ/μ | 0.01 (1%) | 0.0-0.5 |
-| ADC Bits | 8 | 3-16 |
-| DAC Bits | 8 | 3-16 |
-| Hidden Size | 128 | 32-512 |
+| Noise σ/μ | 0.01 (1%) | 0.0-0.20 (UI), 0.0-0.5 (core clamp) |
+| ADC Bits | 8 | 3-16 (core) |
+| DAC Bits | 8 | 3-16 (core) |
+| Hidden Size | 128 | CLI/weights (GUI fixed) |
 | Input | 784 | Fixed (28×28) |
 | Output | 10 | Fixed (digits 0-9) |
 

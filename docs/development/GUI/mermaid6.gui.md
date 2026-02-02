@@ -594,7 +594,7 @@ graph TD
     ArchToggle --> GetArch{cfg.Architecture}
 
     GetArch -->|passive| Passive["PASSIVE<br/>Cell: fecim_bitcell<br/>Dims: 0.46 x 2.72 µm<br/>Pins: WL[], BL[]"]
-    GetArch -->|1t1r| OneT1R["1T1R<br/>Cell: fecim_1t1r_bitcell<br/>Dims: 0.92 x 2.72 µm<br/>Pins: WL[], BL[], SL[]"]
+    GetArch -->|1t1r| OneT1R["1T1R<br/>Cell: fecim_1t1r_bitcell<br/>Dims: 0.92 x 3.40 µm<br/>Pins: WL[], BL[], SL[]"]
     GetArch -->|2t1r| TwoT1R["2T1R<br/>Cell: fecim_2t1r_bitcell<br/>Dims: 1.38 x 2.72 µm<br/>Pins: WL[], BL[], SL[], CSL[]"]
 
     Passive --> PassiveDir["cells/fecim_bitcell/"]

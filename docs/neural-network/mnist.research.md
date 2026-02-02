@@ -12,7 +12,7 @@ This meta-study synthesizes research from 40+ papers focused on neural network i
 
 ### Key Findings
 
-1. **MNIST achieves 87% accuracy** on FeCIM hardware with 30 discrete levels (4.9 bits/cell)
+1. **Conference-only claim (~87%)** exists for FeCIM hardware with 30 levels, but is unverified; peer‑reviewed simulations report **96.6–98.24%**
 2. **Quantization-aware training (QAT)** recovers 90%+ of accuracy loss from post-training quantization
 3. **6-bit weights suffice** for most neural network tasks; 4-bit with QAT matches FP in many cases
 4. **ADC power dominates** (50-80% of CIM energy); reducing ADC bits is more impactful than weight bits
@@ -38,14 +38,14 @@ This meta-study synthesizes research from 40+ papers focused on neural network i
 
 | Paper | Size | Focus |
 |-------|------|-------|
-| FeFET_Crossbar_MNIST_Hardware_arXiv.pdf | ~1.5 MB | Hardware MNIST demo (87%) |
+| FeFET_Crossbar_MNIST_Hardware_arXiv.pdf | ~1.5 MB | Hardware MNIST demo (~87%, conference-only, unverified) |
 | multilevel_fefet_crossbar_2023.pdf | ~1 MB | Multi-level programming |
 | memory_tech_crossbar_dnn_accuracy_2024.pdf | ~2 MB | Technology comparison |
-| quantization_aware_training_survey_2023.pdf | ~3 MB | QAT methods |
-| low_bit_quantization_neural_nets_2022.pdf | ~2 MB | Extreme quantization |
-| adc_precision_cim_accuracy_2024.pdf | ~1.5 MB | ADC impact analysis |
+| quantization_aware_training_survey_2023.pdf | ~0.5 MB | Quantization survey (arXiv 2023) |
+| low_bit_quantization_neural_nets_2022.pdf | ~1.6 MB | Low-bit quantization survey |
+| adc_precision_cim_accuracy_2024.pdf | ~3.4 MB | ADC/dynamic range impact (CIM) |
 | fecap_fefet_cim_elements_2024.pdf | ~1.5 MB | FeCap vs FeFET |
-| in_memory_computing_dnn_survey_2023.pdf | ~4 MB | Comprehensive survey |
+| in_memory_computing_dnn_survey_2023.pdf | ~3.7 MB | In-memory compute architecture survey |
 | analog_backprop_memristive_crossbar_2018.pdf | ~2 MB | In-memory training |
 
 ---
@@ -179,7 +179,7 @@ def quantize_forward(x, levels):
 | QAT | 97.2% | -0.8% |
 | QAT + distillation | 97.8% | -0.2% |
 
-**Our Implementation:** Uses PTQ for simplicity. QAT would improve 30-level accuracy from ~87% to ~92%.
+**Our Implementation:** Uses PTQ for simplicity. QAT would likely improve 30‑level accuracy (low‑90s → mid‑90s, noise‑dependent).
 
 ### 3.4 Weight vs. Activation Quantization
 
@@ -281,8 +281,8 @@ result[i] = v + rng.NormFloat64() * math.Abs(v) * noiseLevel
 
 **Tour Lab (external research institution):**
 - 128×64 FeFET crossbar
-- 30 analog states demonstrated
-- 87% MNIST accuracy
+- 30 analog states (conference-only, unverified)
+- ~87% MNIST accuracy (conference-only, unverified)
 - 10^10 endurance cycles
 
 **Berkeley/IMEC:**
@@ -311,12 +311,20 @@ result[i] = v + rng.NormFloat64() * math.Abs(v) * noiseLevel
 **Our Energy Model:**
 
 ```go
-// From network.go
-// Energy calculation (Jerry et al. IEDM 2017: ~50 fJ/MAC)
-macs1 := net.InputSize * net.HiddenSize  // 784 × 128
-macs2 := net.HiddenSize * net.OutputSize // 128 × 10
-totalMACs := macs1 + macs2               // 101,632
-result.EnergyUsed = float64(totalMACs) * 50e-15 * 1e6 // ~5.1 µJ
+// From network_inference.go
+// Energy calculation: 10 fJ/bit × log2(levels), plus ADC/DAC overhead
+macs1 := net.InputSize * net.HiddenSize
+macs2 := net.HiddenSize * net.OutputSize
+totalMACs := macs1 + macs2
+
+bits := math.Log2(float64(levels))
+energyPerMAC := 10e-15 * bits
+
+dacEnergy := float64(net.InputSize) * 0.1e-12
+adcEnergy := float64(net.HiddenSize+net.OutputSize) * 0.5e-12
+
+result.EnergyUsed = float64(totalMACs)*energyPerMAC*1e6 +
+    (dacEnergy+adcEnergy)*1e6
 ```
 
 ---
@@ -424,17 +432,17 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 | FP32 (ideal) | ~97% | Baseline |
 | 30 levels, no noise | ~94% | Quantization only |
 | 30 levels, 1% noise | ~92% | Realistic |
-| 30 levels, 5% noise | ~87% | Hardware realistic |
+| 30 levels, 5% noise | ~87% | Illustrative (not calibrated to a specific device) |
 | 8 levels, 5% noise | ~75% | Comparison |
 
 ### 7.2 Factors Affecting Accuracy
 
 | Factor | Impact | Controllable? |
 |--------|--------|---------------|
-| Number of levels | ±5-10% | Yes (slider) |
-| Noise level | ±5-15% | Yes (slider) |
-| ADC bits | ±2-5% | Yes (slider) |
-| DAC bits | ±1-3% | Yes (slider) |
+| Number of levels | ±5-10% | Yes (UI / code) |
+| Noise level | ±5-15% | Yes (UI / code) |
+| ADC bits | ±2-5% | Yes (code/CLI) |
+| DAC bits | ±1-3% | Yes (code/CLI) |
 | Network architecture | ±2-5% | Fixed |
 | Training method | ±3-5% | Fixed (PTQ) |
 
@@ -542,7 +550,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 2. **ADC precision matters more** than weight quantization for energy efficiency
 3. **Noise is the main accuracy limiter**—FeFET's low noise is a significant advantage
 4. **Dual-mode visualization** effectively demonstrates FP vs. CIM trade-offs
-5. **87% accuracy is achievable** on real FeCIM hardware with 30 discrete states
+5. **Conference-only reports suggest ~87% accuracy** on real FeCIM hardware with 30 discrete states (unverified)
 
 ### 12.2 FeCIM MNIST Module Assessment
 
@@ -578,4 +586,4 @@ The MNIST demo effectively demonstrates:
 
 ---
 
-*This meta-study synthesizes 40+ papers from the project's research collection. For full paper access, see `/docs/papers/by-topic/`.*
+*This meta-study synthesizes 40+ papers from the project's research collection. For full paper access, see `/docs/research-papers/by-topic/`.*

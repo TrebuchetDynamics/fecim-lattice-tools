@@ -592,7 +592,7 @@ from crosssim import CoreParams, NeuralCore
 core_params = CoreParams(
     rows=64, cols=64,
     cell_type="FeFET",
-    Gmin_uS=1.0, Gmax_uS=100.0,
+    Gmin_uS=10.0, Gmax_uS=100.0,
     num_levels=30
 )
 ```

@@ -147,15 +147,15 @@ MACRO fecim_bit
     PORT LAYER met2 ; RECT 0.36 0.0 0.46 2.72 ; END
   END BL
 
-  PIN VDD
+  PIN VPWR
     DIRECTION INOUT ; USE POWER ;
     PORT LAYER met1 ; RECT 0.0 2.62 0.46 2.72 ; END
-  END VDD
+  END VPWR
 
-  PIN VSS
+  PIN VGND
     DIRECTION INOUT ; USE GROUND ;
     PORT LAYER met1 ; RECT 0.0 0.0 0.46 0.1 ; END
-  END VSS
+  END VGND
 END fecim_bit
 ```
 
@@ -165,8 +165,8 @@ END fecim_bit
 module fecim_bit (
     input  WL,
     output BL,
-    inout  VDD,
-    inout  VSS
+    inout  VPWR,
+    inout  VGND
 );
     // Behavioral model: BL follows WL
     // Actual conductance determined by programmed state
@@ -184,8 +184,8 @@ library(fecim_bit) {
     pin(BL) { direction : output; function : "WL";
       timing() { related_pin : "WL"; cell_rise(scalar) { values("0.1"); } }
     }
-    pin(VDD) { direction : inout; pg_type : primary_power; }
-    pin(VSS) { direction : inout; pg_type : primary_ground; }
+    pin(VPWR) { direction : inout; pg_type : primary_power; }
+    pin(VGND) { direction : inout; pg_type : primary_ground; }
   }
 }
 ```

@@ -462,10 +462,10 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 
 	// Main content
 	mainContent := container.NewBorder(
-		header, // top
-		footer, // bottom
-		nil,    // left
-		nil,    // right
+		header,           // top
+		footer,           // bottom
+		nil,              // left
+		nil,              // right
 		contentContainer, // center
 	)
 

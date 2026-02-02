@@ -30,7 +30,12 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 	log.Input("QuantizeWeights", map[string]interface{}{
 		"levels": levels,
 		"rows":   len(fpWeights),
-		"cols":   func() int { if len(fpWeights) > 0 { return len(fpWeights[0]) }; return 0 }(),
+		"cols": func() int {
+			if len(fpWeights) > 0 {
+				return len(fpWeights[0])
+			}
+			return 0
+		}(),
 	})
 
 	if levels < 2 {
@@ -91,9 +96,9 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 	}
 
 	log.Calculation("QuantizeWeights", map[string]interface{}{
-		"wMax":       wMax,
-		"levelStep":  levelStep,
-		"dims":       fmt.Sprintf("%dx%d", rows, cols),
+		"wMax":      wMax,
+		"levelStep": levelStep,
+		"dims":      fmt.Sprintf("%dx%d", rows, cols),
 	}, "quantized")
 
 	return quantized, nil

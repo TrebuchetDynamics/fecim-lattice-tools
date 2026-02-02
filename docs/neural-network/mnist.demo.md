@@ -27,9 +27,9 @@ go build -o mnist-gui ./cmd/mnist-gui
 ```
 
 **First-Time User:**
-1. Click "Start Guided Tour" (7 steps)
-2. Follow on-screen instructions
-3. Explore presets: Ideal → Quant Cliff → Noisy → Broken ADC
+1. Click **Quick Demo** (5 steps) or draw a digit
+2. Follow on-screen status and comparison card
+3. Explore presets: Ideal → Hardware → Noisy
 
 ---
 
@@ -119,22 +119,15 @@ With 3σ separation requirement, 30 levels is the practical limit.
 
 ---
 
-## Failure Modes (Interactive Presets)
+## Failure Modes (Quick Demo + Noise Preset)
 
-### 1. Quantization Cliff (< 4 levels)
+### 1. Quantization Cliff (2 levels)
 
-**Preset Button:** "Quant Cliff"
+**Trigger:** Quick Demo step 4 (forces 2 levels via PTQ if no QAT weights exist).
 
-**Settings:**
-- Levels: 2
-- Noise: 0.01 (low)
-- ADC: 8 bits
+**Result:** Accuracy collapses toward ~50% (worse than random).
 
-**Result:** Accuracy ~50% (worse than random!)
-
-**Why:** Binary weights {-1, +1} cannot represent the 128-dimensional weight space. Network loses ability to distinguish classes.
-
-**Visualization:** Heatmap shows only 2 colors (blue/red). Hidden layer activations are nearly identical for all digits.
+**Why:** Binary weights cannot represent the 128‑dimensional weight space.
 
 ---
 
@@ -142,53 +135,17 @@ With 3σ separation requirement, 30 levels is the practical limit.
 
 **Preset Button:** "Noisy"
 
-**Settings:**
-- Levels: 30
-- Noise: 0.15 (high)
-- ADC: 6 bits
+**Settings:** Levels=30, Noise=0.15 (high)
 
-**Result:** Accuracy ~70%. Confidence drops to ~40-60% (vs 90%+ ideal).
+**Result:** Accuracy drops and confidence degrades.
 
-**Why:** Gaussian noise in MVM corrupts output currents. ADC reads wrong value.
-
-**Visualization:**
-- Draw an "8" → classified as "3"
-- Probability bars "jitter" on redraw
+**Why:** σ/μ noise corrupts analog currents before ADC readout.
 
 ---
 
-### 3. ADC Quantization Artifacts (< 4-bit ADC)
+### 3. ADC Quantization Artifacts (Advanced)
 
-**Preset Button:** "Broken ADC"
-
-**Settings:**
-- Levels: 30
-- Noise: 0.01
-- **ADC: 3 bits**
-
-**Result:** Accuracy ~65%. Staircase artifacts in activations.
-
-**Why:** 3-bit ADC = only 8 output levels. Hidden layer activations are coarsely quantized, losing information.
-
-**Visualization:** Hidden layer heatmap shows discrete bands instead of smooth gradients.
-
----
-
-### 4. Confidence Collapse (Extreme Settings)
-
-**Manual Settings:**
-- Levels: 2
-- Noise: 0.20
-- ADC: 3 bits
-
-**Result:** All output probabilities → ~10% (uniform distribution). Network effectively random guessing.
-
-**Why:** Combination of:
-1. Insufficient weight precision (2 levels)
-2. High read noise (0.20)
-3. Coarse ADC (3 bits)
-
-Network cannot extract meaningful features.
+ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust `ADCBits` in code/CLI (e.g., 3‑bit).
 
 ---
 
@@ -361,20 +318,24 @@ The **Quick Demo** button runs an automated walkthrough:
 ```
 module3-mnist/
 ├── cmd/
-│   └── mnist-gui/
-│       └── main.go           # Standalone entry point
+│   ├── mnist/                # CLI (train/evaluate/interactive)
+│   └── mnist-gui/            # Standalone GUI (MNISTApp)
 ├── pkg/
 │   ├── core/                 # Dual-mode inference engine
-│   │   ├── network.go        # DualModeNetwork
-│   │   ├── quantize.go       # Weight quantization
-│   │   └── quantize_test.go  # Unit tests
+│   │   ├── network.go        # DualModeNetwork + weight loading
+│   │   ├── network_inference.go
+│   │   ├── network_quantization.go
+│   │   └── quantize.go       # Weight quantization + noise
 │   │
 │   ├── gui/                  # Fyne GUI components
 │   │   ├── dualmode.go       # Dual-mode app (4-zone layout)
-│   │   ├── tour.go           # Guided tour mode
+│   │   ├── dualmode_*.go     # Controls, inference, demo, weights
 │   │   ├── dialogs.go        # Info dialogs
+│   │   ├── comparison_card.go
+│   │   ├── energy_widget.go
+│   │   ├── weight_comparison.go
 │   │   ├── embedded.go       # For unified visualizer
-│   │   └── app.go            # Original single-mode app
+│   │   └── app.go            # Single-mode MNISTApp
 │   │
 │   ├── mnist/                # MNIST dataset loader
 │   │   └── loader.go
@@ -384,10 +345,10 @@ module3-mnist/
 │
 ├── data/
 │   ├── pretrained_weights.json
-│   ├── pretrained_30_h64.json
-│   ├── pretrained_30_h128.json
-│   ├── pretrained_30_h256.json
-│   └── mnist/                # MNIST dataset
+│   ├── pretrained_weights_{N}.json    # Optional level-specific weights
+│   ├── pretrained_weights_ptq.json
+│   ├── single_layer_weights.json
+│   └── *-idx*-ubyte.gz                 # MNIST dataset
 │
 ├── scripts/
 │   ├── train_all_sizes.sh    # Train 64/128/256
@@ -462,12 +423,11 @@ wget http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
 
 - Check noise level (lower = better accuracy)
 - Increase levels (30 = best)
-- Use higher ADC bits (6-8)
+- Use higher ADC bits (via code/CLI)
 - Try "Ideal" preset for baseline
 
 ### GUI not responding
 
-- Check if guided tour is running (click "End Tour")
 - Restart the application
 - Check terminal for error messages
 

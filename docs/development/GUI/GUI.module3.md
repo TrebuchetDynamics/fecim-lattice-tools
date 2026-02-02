@@ -209,10 +209,10 @@ Screens:
     file: dualmode.go:258-333
     components:
       - type: Header
-        purpose: Title + Quick Demo + Guided Tour + Info buttons
+        purpose: Title + Quick Demo + Info
         file: dualmode.go:336-391
         children:
-          - titleLabel: "MNIST FeCIM | 784→128→10 | 30 Levels | 87% Target"
+          - titleLabel: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected"
           - quickDemoBtn (WarningImportance):
               purpose: 30-second automated demo
               file: dualmode.go:344-352
@@ -222,16 +222,11 @@ Screens:
                 - quickDemoRunning: bool
                 - quickDemoStopChan: chan struct{}
                 - animationEnabled: bool
-          - tourBtn (HighImportance):
-              purpose: 5-step guided tour
+          - infoBtn:
+              purpose: Tabbed info dialog (Why 30 Levels, Hardware Reality, Failure Modes, About)
               file: dualmode.go:355-361
               bindings:
-                - OnTapped: tour.Start() [tour.go:96]
-          - infoButtons (HBox):
-              - why30Btn: ShowWhy30LevelsDialog() [dialogs.go:13]
-              - realityBtn: ShowHardwareRealityDialog() [dialogs.go:64]
-              - failuresBtn: ShowFailureModesDialog() [dialogs.go:118]
-              - aboutBtn: ShowAboutDialog() [dialogs.go:178]
+                - OnTapped: ShowInfoDialog() [dialogs.go:12]
 
       - type: Zone1_DrawingCanvas
         purpose: Interactive digit drawing
@@ -245,9 +240,9 @@ Screens:
           - clearBtn, randomBtn: Actions
 
       - type: Zone2_Results
-        purpose: FP vs CIM comparison + probability distribution
+        purpose: FP vs CIM comparison (ComparisonCard integrates probabilities)
         file: dualmode.go:450-478
-        layout: Border (top: comparison card, center: probability chart)
+        layout: Max (ComparisonCard)
         children:
           - comparisonCard (ComparisonCard):
               file: comparison_card.go:39-58
@@ -256,130 +251,56 @@ Screens:
                 - result: *ComparisonResult
               rendering:
                 - Single card layout with CIM as hero element
-                - CIM prediction: Large 5x scale digit in cyan/green
-                - FP reference: Small text below CIM ("✓ Matches FP" or "⚠ FP predicts: X")
-                - Color-coded background tint: Green for match, Amber for mismatch
-                - Thick border: Green (match) or Amber (mismatch)
-                - Large confidence bar: Horizontal gradient fill for CIM only
-                - Energy display: Compact "Ex more efficient than GPU" format
-                - Second-best prediction: CIM 2nd choice only
-              layout: Fixed height ~320px
-          - dualProbabilityChart (DualProbabilityChart):
-              file: comparison_card.go:547-571
-              purpose: Probability divergence visualization
-              state:
-                - fpProbs, cimProbs: []float64 (10 classes)
-                - divergences: []float64
-                - fpPred, cimPred: int
-              rendering:
-                - Paired bars per digit (FP blue, CIM green)
-                - Yellow marker: Divergence > 2%
-                - Legend: "FP | CIM"
+                - CIM prediction: Large digit emphasis
+                - FP reference: Small text below CIM ("Matches FP" or "FP predicts: X")
+                - Integrated probability bars in the card body
 
       - type: Zone3_Controls
         purpose: Hardware configuration panel
-        file: dualmode.go:482-624
+        file: dualmode_controls.go:15-120
         state:
           - network: *core.DualModeNetwork
-            - numLevels: int (2-31)
+            - numLevels: int (available QAT levels)
             - noiseLevel: float64 (0.0-0.20)
-            - adcBits, dacBits: int
-            - singleLayer: bool (Tour Mode)
         children:
-          - levelsSlider (2-31):
-              file: dualmode.go:487-506
+          - levelsSelect (QAT levels):
+              file: dualmode_controls.go:24-56
               bindings:
-                - OnChanged: SetNumLevels() + tryLoadQATWeights()
+                - OnChanged: tryLoadQATWeights() + SetNumLevels()
               state:
-                - currentQATLevel: int (10/20/29/30/31)
-              bug: BUG-M3-003 (weight loading)
+                - currentQATLevel: int (tracked in NetworkController)
           - noiseSlider (0.0-0.20):
-              file: dualmode.go:514-526
+              file: dualmode_controls.go:60-82
               bindings:
                 - OnChanged: SetNoiseLevel()
-          - adcSelect, dacSelect (3-16 bits):
-              file: dualmode.go:535-555
+          - presetButtons (Grid 3):
+              - Row: Ideal | Hardware | Noisy
+              file: dualmode_controls.go:86-118
               bindings:
-                - OnChanged: SetADCBits() / SetDACBits()
-          - hiddenSelect (64/128/256):
-              file: dualmode.go:557-563
-              bindings:
-                - OnChanged: changeHiddenSize() (async)
-          - presetButtons (Grid 3+2):
-              - Row 1: Ideal | QuantCliff | Noisy
-              - Row 2: BrokenADC | Tour (HighImportance)
-              file: dualmode.go:576-603
-              bindings:
-                - applyPresetWithMode(levels, noise, adc, dac, singleLayer)
-          - testButton: "Test (200)"
-              file: dualmode.go:610-613
-              bindings:
-                - OnTapped: runQuickTest() [dualmode.go:1187]
-              children:
-                - testProgressBar: Hidden until test starts
-                - testResultLabel: "FP: X% | CIM: Y% | Agreement: Z%"
+                - applyPreset(levels, noise, adc, dac)
 
       - type: Zone4_Weights
-        purpose: Weight visualization tabs
-        file: dualmode.go:628-724
-        layout: AppTabs (5 tabs)
+        purpose: Collapsible weight visualization
+        file: dualmode_weights.go:15-210
+        layout: AppTabs (2 tabs) + collapsible header
         children:
-          - Tab1: Quantized Heatmap
-              - weightHeatmap (Raster): Blue-white-red colormap
-                file: dualmode.go:1253-1317
-                bindings:
-                  - drawWeightHeatmap(): Generate heatmap image
-              - weightLegend (ColorLegend): -1.0 to 1.0
-              - layerSelect (Radio): "Layer1 (784x128)" | "Layer2 (128x10)"
+          - Header:
+              - weightsToggleBtn: Collapse/expand
+              - layerSelect: "Layer1 (784x128)" | "Layer2 (128x10)"
               - zoomBtn: Open new window with larger heatmap
               - labels:
                   - weightDimLabel: "Dimensions: RxC"
                   - weightRangeLabel: "Range: [min, max]"
-                  - weightLevelsLabel: "Levels: X/30"
-          - Tab2: FP vs Quant Comparison
-              - weightComparisonWidget (WeightComparisonWidget):
-                  file: weight_comparison.go:19-55
-                  purpose: Side-by-side FP and quantized weights
-                  state:
-                    - fpWeights, quantWeights: [][]float64
-                    - showMode: int (0=FP, 1=Quantized, 2=Difference)
-                    - meanError, maxError, errorStdDev: float64
-                  rendering:
-                    - Mode 0/1: Blue-white-red colormap
-                    - Mode 2: Black-yellow-red error gradient
-                  controls:
-                    - modeSelect: "FP (Float32)" | "Quantized" | "Difference"
-          - Tab3: Side-by-Side
+                  - weightLevelsLabel: "Levels: X/N"
+          - Tab1: FP vs Quantized
               - dualWeightHeatmap (DualWeightHeatmap):
                   file: weight_comparison.go:330-378
                   purpose: Split view (FP left, Quantized right)
                   rendering: Divider line between halves
-          - Tab4: Quantization (P1.1 Enhancement)
-              - quantizationWidget (QuantizationWidget):
-                  file: quantization_widget.go:30-56
-                  purpose: Real-time weight quantization visualization
-                  state:
-                    - samples: []QuantizationSample (max 5)
-                    - numLevels: int
-                    - totalError: float64
-                  rendering:
-                    - Per-sample row: FP → Arrow → Quantized (Level X)
-                    - Level indicator bar: Position in 0-29 range
-                    - Error statistics: "Precision loss: X% | Impact: Y"
-          - Tab5: Energy (P1.3 Enhancement)
-              - energyWidget (EnergyWidget):
-                  file: energy_widget.go:37-79
-                  purpose: Energy efficiency comparison
-                  state:
-                    - config: EnergyConfig (50 fJ/MAC FeCIM, 2000 fJ/MAC GPU)
-                    - totalInferences: int
-                    - totalEnergyFeCIM, totalEnergyGPU: float64 (Joules)
-                    - lastEnergyFeCIM, lastEnergyGPU: float64 (nJ)
-                    - efficiencyRatio: float64 (GPU/FeCIM)
-                  rendering:
-                    - Per-inference bars: GPU (full width) vs FeCIM (proportional)
-                    - Efficiency highlight box: "XXx MORE EFFICIENT"
-                    - Session totals: "X inferences | FeCIM: Y | GPU: Z"
+          - Tab2: Stats
+              - quantizationWidget (QuantizationWidget): real-time quantization samples
+              - energyWidget (EnergyWidget): per-inference energy + running totals
+              - weightComparisonWidget (WeightComparisonWidget): FP vs Quantized error metrics
 
       - type: Footer
         purpose: Status label
@@ -419,14 +340,14 @@ DataFlow:
 
   - name: DualModeApp_Inference
     trigger: OnDigitChanged(pixels []float64)
-    source: dualmode.go:748
+    source: dualmode_inference.go:13
     steps:
       - Check animationEnabled flag
-      - If enabled: runInferenceAnimated() [dualmode.go:846]
-      - If disabled: runInference() [dualmode.go:759]
+      - If enabled: runInferenceAnimated() [dualmode_inference.go:35]
+      - If disabled: runInference() [dualmode_inference.go:24]
       - network.Infer(pixels) → InferenceResult
-      - fyne.Do: Update comparison card, probability chart, energy widget
-    file: dualmode.go:748-842
+      - fyne.Do: Update comparison card, quantization widget, energy widget
+    file: dualmode_inference.go:13-140
     threading: Mixed (main for sync, goroutine for animated)
 
   - name: AutoDemo_Loop
@@ -446,36 +367,16 @@ DataFlow:
         - Cancel context
         - Stop ticker
     file: app.go:859-926
-    bug: BUG-M3-002 (ticker not stopped before cancel)
-
-  - name: QuickTest_Evaluation
-    trigger: testButton.OnTapped
-    source: dualmode.go:1187
-    steps:
-      - Disable button, show progress bar
-      - Launch goroutine
-      - Load test data if not loaded
-      - Loop 200 samples:
-        - network.Infer(testImages[i])
-        - Count correct predictions
-        - Every 10 samples: fyne.Do(update progress bar)
-      - fyne.Do: Hide progress bar, show results
-    file: dualmode.go:1187-1250
-    threading: Goroutine with fyne.Do() for UI updates
 
   - name: QAT_Weight_Loading
-    trigger: levelsSlider.OnChanged
-    source: dualmode.go:492
+    trigger: levelsSelect.OnChanged
+    source: dualmode_controls.go:32
     steps:
-      - GetBestMatchingWeightsLevel(levels) → 10/20/29/30/31
-      - tryLoadQATWeights(bestLevel) [dualmode.go:1470]
-      - Check if already loaded (currentQATLevel == targetLevel)
-      - GetWeightsFilename(dataDir, targetLevel)
-      - os.Stat(weightsPath) - check if file exists
-      - network.LoadWeights(weightsPath)
-      - Update currentQATLevel
-    file: dualmode.go:492-506, dualmode.go:1470-1500
-    bug: BUG-M3-003 (no error dialog on failure)
+      - tryLoadQATWeights(levels) [dualmode_inference.go:93]
+      - NetworkController checks file existence + loads weights
+      - First missing level shows dialog; subsequent misses only update status
+      - network.SetNumLevels(levels) + updateWeightHeatmap
+    file: dualmode_controls.go:24-56, dualmode_inference.go:93-134
 
 BugDetails:
   - id: BUG-M3-001

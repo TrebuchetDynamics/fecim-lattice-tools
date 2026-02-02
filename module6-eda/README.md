@@ -92,7 +92,7 @@ Technology & Architecture:
 
 Electrical Parameters:
   -vdd float            Supply voltage V (default 1.8)
-  -gmin float           Min conductance μS (default 1.0)
+  -gmin float           Min conductance μS (default 10.0)
   -gmax float           Max conductance μS (default 100.0)
 
 Output Configuration:

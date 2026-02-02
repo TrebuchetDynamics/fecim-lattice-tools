@@ -162,8 +162,8 @@ func createFailureModesContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("1. Quantization Cliff (< 4 levels)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Preset: Click 'QuantCliff' button to test"),
-		widget.NewLabel("Settings: Levels=2, Noise=0.01, ADC=8-bit"),
+		widget.NewLabel("Trigger: Quick Demo step 4 (forces 2 levels via PTQ)"),
+		widget.NewLabel("Settings: Levels=2, Noise=0.01, ADC=8-bit (fixed in UI)"),
 		widget.NewLabel("Result: Accuracy collapses to ~50% (worse than random guessing!)"),
 		widget.NewLabel(""),
 		widget.NewLabel("Root Cause: Binary weights {-1, +1} create severe quantization error."),
@@ -174,7 +174,7 @@ func createFailureModesContent() fyne.CanvasObject {
 
 		widget.NewLabelWithStyle("2. Noise Wall (> 0.10 noise)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Preset: Click 'Noisy' button to test"),
-		widget.NewLabel("Settings: Levels=30, Noise=0.15 (15% std dev), ADC=6-bit"),
+		widget.NewLabel("Settings: Levels=30, Noise=0.15 (15% std dev), ADC=8-bit (fixed in UI)"),
 		widget.NewLabel("Result: Accuracy degrades to ~70%, confidence drops to 40-60%"),
 		widget.NewLabel(""),
 		widget.NewLabel("Root Cause: Gaussian noise corrupts analog currents during MVM."),
@@ -184,7 +184,7 @@ func createFailureModesContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("3. ADC Quantization Artifacts (< 4-bit)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Preset: Click 'BrokenADC' button to test"),
+		widget.NewLabel("Advanced (not exposed in Dual-Mode UI)"),
 		widget.NewLabel("Settings: Levels=30, Noise=0.01, ADC=3-bit (only 8 levels!)"),
 		widget.NewLabel("Result: Accuracy degrades to ~65% with visible staircase artifacts"),
 		widget.NewLabel(""),
@@ -195,6 +195,7 @@ func createFailureModesContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("4. Confidence Collapse (Extreme Failure)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Advanced (not exposed in Dual-Mode UI)"),
 		widget.NewLabel("Settings: Levels=2, Noise=0.20 (20% std dev), ADC=3-bit"),
 		widget.NewLabel("Result: All output probabilities → ~10% (uniform distribution)"),
 		widget.NewLabel(""),

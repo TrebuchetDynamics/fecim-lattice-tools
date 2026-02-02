@@ -19,9 +19,13 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/logging"
 )
 
 func main() {
+	logging.EnableFileLogging()
+	_ = logging.NewLogger("mnist-cli")
+
 	// Command-line flags
 	train := flag.Bool("train", false, "Train the network on MNIST")
 	evaluate := flag.Bool("evaluate", false, "Evaluate trained network on test set")
@@ -83,6 +87,20 @@ func main() {
 			fmt.Println("Using random initialization instead.")
 		} else {
 			fmt.Println("Weights loaded successfully.")
+		}
+	}
+
+	// If evaluating or running interactively without explicit weights, try defaults
+	if *loadWeights == "" && !*train {
+		defaultWeights := "module3-mnist/data/pretrained_weights.json"
+		if _, err := os.Stat(defaultWeights); err == nil {
+			fmt.Printf("\nLoading default weights from: %s\n", defaultWeights)
+			if err := net.LoadWeights(defaultWeights); err != nil {
+				log.Printf("Warning: Failed to load default weights: %v", err)
+				fmt.Println("Using random initialization instead.")
+			} else {
+				fmt.Println("Default weights loaded successfully.")
+			}
 		}
 	}
 
@@ -159,6 +177,7 @@ func runEvaluation(net *training.MNISTNetwork) {
 
 	accuracy := net.Evaluate(testImages, testLabels)
 	fmt.Printf("\n=== Test Accuracy: %.1f%% ===\n", accuracy*100)
+	log.Printf("Evaluation complete: accuracy=%.1f%% on %d samples", accuracy*100, len(testImages))
 
 	if accuracy >= 0.85 {
 		fmt.Println("Target accuracy (>85%) ACHIEVED!")

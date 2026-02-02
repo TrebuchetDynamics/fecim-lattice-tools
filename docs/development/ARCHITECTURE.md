@@ -90,10 +90,13 @@ Each module demonstrates a layer in the FeCIM stack:
                                   │
                     ┌─────────────▼──────────────┐
                     │  module3-mnist             │
-                    │  ├─ network/              │
-                    │  │  ├─ weights.go         │
-                    │  │  └─ inference.go       │
-                    │  └─ gui/                  │
+                    │  ├─ pkg/core/             │
+                    │  │  ├─ network.go         │
+                    │  │  ├─ network_inference.go│
+                    │  │  └─ quantize.go        │
+                    │  ├─ pkg/mnist/            │
+                    │  │  └─ loader.go          │
+                    │  └─ pkg/gui/              │
                     │     └─ embedded.go        │
                     └──────────────────────────┘
                             │

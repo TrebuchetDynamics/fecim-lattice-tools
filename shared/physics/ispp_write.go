@@ -63,8 +63,6 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 
 	currentP := c.Solver.GetState()
 	currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
-	crossing := currentP*targetP < 0
-
 	direction := 1.0
 	if reset {
 		if targetP < 0 {
@@ -81,12 +79,13 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		currentG = PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
 	}
 
-	if crossing {
+	crossingInitial := currentP*targetP < 0
+	if crossingInitial {
 		if vBound := c.initialPulseBound(targetP); vBound > 0 && vBound < c.VMax {
 			c.VMax = vBound
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":     "ClampBounds",
-				"crossing": crossing,
+				"crossing": crossingInitial,
 				"vMax":     c.VMax,
 			}, nil)
 		}
@@ -112,6 +111,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	var vPulse float64
 	var i int
 	for i = 0; i < c.MaxIterations; i++ {
+		crossingNow := c.Solver.GetState()*targetP < 0
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"attempt":  i + 1,
 			"currentP": c.Solver.P,
@@ -133,18 +133,33 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":     "Predict",
 				"model":    "atanh",
-				"crossing": crossing,
+				"crossing": crossingNow,
 				"vPulse":   vPulse,
 				"vGuess":   vGuess,
 				"bounds":   []float64{c.VMin, c.VMax},
 			}, nil)
 		} else {
-			vPulse = direction * (c.VMin + c.VMax) / 2.0
+			bias := 0.5
+			if crossingInitial {
+				ratio := math.Abs(targetP / c.Material.Ps)
+				bias = 0.05 + 0.15*ratio
+				if bias < 0.1 {
+					bias = 0.1
+				}
+				if bias > 0.3 {
+					bias = 0.3
+				}
+			}
+			midpoint := c.VMin + bias*(c.VMax-c.VMin)
+			vPulse = direction * midpoint
 			log.Calculation("WriteTarget", map[string]interface{}{
-				"step":   "BinarySearch",
-				"vPulse": vPulse,
-				"vMin":   c.VMin,
-				"vMax":   c.VMax,
+				"step":        "BinarySearch",
+				"vPulse":      vPulse,
+				"vMin":        c.VMin,
+				"vMax":        c.VMax,
+				"crossing":    crossingNow,
+				"midpoint":    midpoint,
+				"bias":        bias,
 			}, nil)
 		}
 

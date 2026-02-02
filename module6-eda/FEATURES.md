@@ -41,7 +41,7 @@ Chip Design Suite for FeCIM Arrays
 | Parameter | Value | Notes |
 |-----------|-------|-------|
 | Levels | 30 | FeCIM standard |
-| Conductance | 1-100 µS | Gmin/Gmax range |
+| Conductance | 10-100 µS | Gmin/Gmax range |
 | Prog Voltage | 2-5V | Configurable |
 | Cell Pitch | 0.46 µm | SKY130 compatible |
 | Cell Height | 2.72 µm | Standard cell |

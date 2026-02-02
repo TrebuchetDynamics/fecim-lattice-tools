@@ -102,10 +102,10 @@ Structural Verilog for simulation:
 module fecim_crossbar_8x8 (
     input  wire [7:0] WL,
     output wire [7:0] BL,
-    inout  wire VDD,
-    inout  wire VSS
+    inout  wire VPWR,
+    inout  wire VGND
 );
-    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VDD(VDD), .VSS(VSS));
+    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VPWR(VPWR), .VGND(VGND));
     // ... 64 cells total
 endmodule
 ```

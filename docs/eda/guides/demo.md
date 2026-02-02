@@ -258,11 +258,11 @@ Structural netlist instantiating FeCIM cells:
 module fecim_crossbar_8x8 (
     input  [7:0] WL,    // Wordlines
     output [7:0] BL,    // Bitlines
-    inout  VDD,
-    inout  VSS
+    inout  VPWR,
+    inout  VGND
 );
-    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VDD(VDD), .VSS(VSS));
-    fecim_bit cell_0_1 (.WL(WL[0]), .BL(BL[1]), .VDD(VDD), .VSS(VSS));
+    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VPWR(VPWR), .VGND(VGND));
+    fecim_bit cell_0_1 (.WL(WL[0]), .BL(BL[1]), .VPWR(VPWR), .VGND(VGND));
     // ...
 endmodule
 ```

@@ -151,10 +151,10 @@ type StorageArrayConfig struct {
 
 // MemoryArrayConfig holds memory-mode specific parameters
 type MemoryArrayConfig struct {
-	AccessTimeNs   float64 `json:"access_time_ns"`   // Target read access time
-	WriteTimeNs    float64 `json:"write_time_ns"`    // Target write time
-	BandwidthGBps  float64 `json:"bandwidth_gbps"`   // Target bandwidth
-	PowerBudgetMW  float64 `json:"power_budget_mw"`  // Max power consumption
+	AccessTimeNs  float64 `json:"access_time_ns"`  // Target read access time
+	WriteTimeNs   float64 `json:"write_time_ns"`   // Target write time
+	BandwidthGBps float64 `json:"bandwidth_gbps"`  // Target bandwidth
+	PowerBudgetMW float64 `json:"power_budget_mw"` // Max power consumption
 }
 
 // ComputeArrayConfig holds compute-mode specific parameters
@@ -164,7 +164,7 @@ type ComputeArrayConfig struct {
 	InitialWeights [][]float64 `json:"initial_weights,omitempty"`
 
 	// Compute parameters
-	QuantLevels    int     `json:"quant_levels"`    // Quantization levels for weights
+	QuantLevels     int    `json:"quant_levels"`     // Quantization levels for weights
 	AccumulatorBits int    `json:"accumulator_bits"` // Bit width for MAC accumulator
 	ActivationFunc  string `json:"activation_func"`  // "none", "relu", "sigmoid"
 }
@@ -249,8 +249,8 @@ func (c *ArrayConfig) With1T1R() *ArrayConfig {
 // 2T1R uses dual transistors (row + column select) for individual cell addressing
 func (c *ArrayConfig) With2T1R() *ArrayConfig {
 	c.Architecture = Arch2T1R
-	c.CellPitch = 1.38  // ~3x passive for two transistors
-	c.RowHeight = 3.40  // Taller for dual transistor stack
+	c.CellPitch = 1.38 // ~3x passive for two transistors
+	c.RowHeight = 3.40 // Taller for dual transistor stack
 	return c
 }
 

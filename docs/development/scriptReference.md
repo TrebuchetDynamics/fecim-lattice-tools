@@ -526,7 +526,7 @@ DefaultConfig = CompileConfig{
     ArrayRows: 128,
     ArrayCols: 128,
     Levels:    30,
-    GMin:      1.0 µS,
+    GMin:      10.0 µS,
     GMax:      100.0 µS,
 }
 ```
