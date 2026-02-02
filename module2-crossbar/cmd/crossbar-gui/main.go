@@ -8,7 +8,7 @@
 // - IR drop analysis with heatmap overlay
 // - Sneak path current analysis
 // - Real-time MVM operations with full physics
-// - 30 discrete FeCIM levels (4.9 bits/cell)
+// - 30 discrete FeCIM levels (4.9 bits/cell, conference claim baseline)
 //
 // Standard Mode:
 //   go run ./cmd/crossbar-gui
@@ -51,7 +51,7 @@ func main() {
 		fmt.Println()
 		fmt.Println("Features:")
 		fmt.Println("  • 64×64 crossbar array (configurable 8-128)")
-		fmt.Println("  • 30 discrete FeCIM levels (4.9 bits/cell)")
+		fmt.Println("  • 30 discrete FeCIM levels (4.9 bits/cell, conference claim)")
 		fmt.Println("  • Matrix-vector multiplication in O(1)")
 		fmt.Println("  • IR drop analysis")
 		fmt.Println("  • Sneak path analysis")
