@@ -127,7 +127,7 @@ The Tour Group may be developing **two parallel tracks**:
 
 ## The 30-State Achievement
 
-The ability to achieve 30 discrete, stable polarization states is the key breakthrough. Possible mechanisms:
+The ability to achieve 30 discrete, stable polarization states is a conference-claim baseline; peer‑reviewed devices report 32–140 states. Possible mechanisms:
 
 ### Mechanism 1: Multi-Domain Switching
 

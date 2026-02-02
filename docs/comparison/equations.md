@@ -290,7 +290,7 @@ bits = log₂(N)
 **Examples:**
 - 2 levels (binary) = 1 bit/cell
 - 16 levels = 4 bits/cell
-- 30 levels = **4.9 bits/cell** (FeCIM)
+- 30 levels = **4.9 bits/cell** (FeCIM demo baseline; conference claim)
 - 32 levels = 5 bits/cell
 
 **Source:** Shannon information theory
@@ -665,7 +665,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 | **MVM** | `I = G × V` | Core compute operation |
 | **IR Drop** | `V_ij = V_applied - Σ(I × R_wire × dist)` | Voltage degradation modeling |
 | **Sneak Path** | `G_sneak = 1/(1/G₁ + 1/G₂ + 1/G₃)` | Parasitic current estimation |
-| **Quantization** | `G_level = G_min + (level/29) × (G_max - G_min)` | 30-level programming |
+| **Quantization** | `G_level = G_min + (level/29) × (G_max - G_min)` | 30-level programming (demo baseline) |
 | **Thermal Noise** | `σ = √(4 × k_B × T × R × BW)` | Read noise floor |
 | **Drift** | `G(t) = G₀ × (1 + ν × log(t/t₀))` | Long-term retention |
 | **Energy** | `E_MAC = C × V² + G × V × t` | Power estimation |

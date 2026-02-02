@@ -134,7 +134,7 @@ Where:
 - $G_{\text{min}}$, $G_{\text{max}}$ = minimum/maximum conductance
 - $i$ = programmed state index
 
-**Example for FeFET with 30 states:**
+**Example for FeFET with 30 states (demo baseline; conference claim):**
 - $G_{\text{min}} = 1 \mu S$, $G_{\text{max}} = 100 \mu S$
 - State 0: $G_0 = 1 \mu S$
 - State 15: $G_{15} = 52.1 \mu S$

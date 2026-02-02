@@ -470,7 +470,7 @@ Where F includes:
 - Memory effect (history dependence)
 - Minor loops
 - Temperature scaling
-- 30-level analog storage
+- 30-level analog storage (demo baseline; conference claim)
 
 **This is research-grade educational software**, not a toy approximation.
 

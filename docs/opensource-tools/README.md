@@ -8,6 +8,8 @@
 
 This documentation catalogs 100+ open-source tools relevant to ferroelectric compute-in-memory systems based on Dr. external research group's HfO₂-ZrO₂ superlattice research. Whether you're simulating hysteresis loops, designing crossbar arrays, training neural networks, or characterizing devices in the lab, this guide connects you to the right tools.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ### Why This Matters for FeCIM Development
 
 FeCIM systems span multiple computational domains:
@@ -15,7 +17,7 @@ FeCIM systems span multiple computational domains:
 - **Physics simulation** - Hysteresis, phase-field dynamics, polarization switching
 - **Circuit analysis** - Crossbar IR drop, sneak paths, device non-idealities
 - **Hardware design** - DAC/ADC peripherals, EDA tools for chip layout
-- **Neural networks** - Quantization to 30 levels, hardware-aware training
+- **Neural networks** - Quantization to 30 levels (demo baseline), hardware-aware training
 - **Device characterization** - Lab equipment control, P-E measurement, drift analysis
 
 Each domain has specialized tools. This documentation organizes them by category with practical examples and integration strategies for the FeCIM Lattice Tools project.

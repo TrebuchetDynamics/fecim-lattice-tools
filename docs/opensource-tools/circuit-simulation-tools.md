@@ -10,6 +10,8 @@
 
 This document catalogs open-source circuit simulation tools essential for designing peripheral circuits (ADC, DAC, TIA, comparators) for Ferroelectric Compute-in-Memory (FeCIM) systems. Whether you're validating behavioral models against transistor-level simulations, optimizing power consumption, or debugging non-ideal circuit behavior, this guide connects you to the right tools.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 **Why this matters:** Our behavioral models in `module4-circuits` provide fast simulations for teaching, but production circuits require verification against real physics. SPICE simulators bridge that gap.
 
 ---

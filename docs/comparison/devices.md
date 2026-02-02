@@ -367,7 +367,7 @@ Traditional ferroelectrics: 2 states (binary)
 #### Domain Switching Dynamics
 - **Single domain**: Switches abruptly at Ec (coercive field)
 - **Multi-domain ensemble**: Gradual switching over voltage range (distribution of Ec values)
-- **Result**: Continuous analog tuning → discretized into 30 levels for digital compatibility
+- **Result**: Continuous analog tuning → discretized into 30 levels for digital compatibility (demo baseline; conference claim)
 
 #### 30 States = 4.9 bits/cell
 ```
@@ -376,7 +376,7 @@ log₂(30) ≈ 4.9 bits/cell
 Compare to:
   NAND Flash: 3 bits/cell (TLC), 4 bits/cell (QLC)
   ReRAM: 2-4 bits/cell
-  FeFET: 4.9 bits/cell (30 levels)
+  FeFET: 4.9 bits/cell (30-level demo baseline; conference claim)
 ```
 
 ---
