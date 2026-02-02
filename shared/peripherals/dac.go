@@ -41,6 +41,12 @@ func DefaultDAC() *DAC {
 	return dac
 }
 
+// EnableLogging re-initializes the peripherals logger after file logging is enabled.
+// Call logging.EnableFileLogging() first, then this function.
+func EnableLogging() {
+	log = logging.NewLogger("peripherals")
+}
+
 // Levels returns the number of discrete output levels.
 func (d *DAC) Levels() int {
 	return 1 << d.Bits

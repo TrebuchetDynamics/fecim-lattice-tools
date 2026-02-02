@@ -32,6 +32,7 @@ func main() {
 	if *enableLogger {
 		logging.EnableFileLogging()
 		logging.SetVerbosity(logging.VerbosityLevel(*verbosity))
+		peripherals.EnableLogging()
 	}
 
 	fmt.Println("================================================")

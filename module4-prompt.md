@@ -11,6 +11,7 @@ Objective
   - Make any required code + documentation updates to achieve fidelity and verify via CLI output and logs.
   - Improve Module 4 documentation quality and ensure referenced papers are downloaded into the repo's
     research-papers area when possible.
+  - All verification must be runnable headless (CLI + tests). GUI runs are optional and only when explicitly requested.
 
 Tasks
 
@@ -41,16 +42,29 @@ Tasks
 
 Validation
 
-  - Run: go run ./module4-circuits/cmd/circuits -all
-  - Run: go test ./module4-circuits/...
-  - If GUI verification is required: ./launch.sh --logger --verbosity debug --module circuits
-  - Use logs to confirm signal-chain and mode behavior.
+  - Headless primary run:
+      - go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2
+  - Tests:
+      - go test ./module4-circuits/...
+      - go test ./shared/peripherals
+  - Log verification (must be headless):
+      - Find newest log in logs/ (ls -lt logs | head -n 1).
+      - Confirm key evidence lines exist (rg on the log file):
+          - DAC.EnergyPerConversion (energy ~1.4e-14 J / 14.4 fJ for default 5-bit DAC).
+          - ADC.ENOB (≈4.80 bits with INL=0.5, DNL=0.25).
+          - ChargePump.ActualOutputVoltage (≈1.5 V with regulation clamp).
+          - AnalyzeTiming (Read ≈76 ns, Write ≈203 ns, Cycle ≈279 ns for defaults).
+          - AnalyzePower (Total ≈2.19e-12 J; pump dominates).
+      - If values deviate, reconcile code/docs or update expected numbers with rationale.
+  - GUI runs are optional and only when explicitly requested:
+      - ./launch.sh --logger --verbosity debug --module circuits
   - If any command fails, fix and re-run until it succeeds or a clear blocker exists.
 
 Execution Rules (Autonomous)
 
   - No human intermediaries: run commands, inspect logs, make edits, and validate independently.
   - Always check logs in logs/ for the most recent run and quote key evidence in the report.
+  - Keep validation headless unless a GUI run is explicitly requested.
   - Prefer minimal, targeted changes over refactors unless required for correctness.
   - Keep code changes within the smallest possible surface area.
   - If a new CLI flag or headless pathway is required for validation, implement it.
