@@ -154,6 +154,5 @@ field, voltage, and current using geometry and readout models.
 
 - Core solver: `shared/physics/landau.go`
 - Material parameters: `shared/physics/material.go`
-- ISPP write strategy: `shared/physics/ispp_write.go`
+- ISPP write strategy (GUI + headless): `module1-hysteresis/pkg/controller`
 - Hysteresis module UI: `module1-hysteresis/pkg/gui/`
-

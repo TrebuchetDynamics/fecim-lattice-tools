@@ -151,7 +151,9 @@ func (s *LKSolver) Step(E, dt, TempK float64) float64 {
 **Implementation note (current code):** The headless hysteresis mode uses **E-field units** and folds series resistance into
 an effective viscosity term, `ρ_eff = ρ + (R_series · A / d)`, which preserves the RC-delay effect without an explicit
 algebraic loop. See `shared/physics/landau.go` for the exact implementation.
-For numerical stability, write pulses are **sub-stepped** (default max step `1e-12 s`) in `shared/physics/ispp_write.go`.
+The headless ISPP loop uses the **same WRD phase machine + WriteController** as the GUI
+(`module1-hysteresis/pkg/controller`) and advances the L‑K solver with GUI‑aligned adaptive
+stepping clamped for stability (`dtNominal=min(1e‑4, τ/10,000)`, `dtMin=min(1e‑6, dtNominal)`).
 
 ### 2. The Memory Stack: Preisach "Wipe-Out"
 
@@ -163,23 +165,22 @@ To reliably store 30 analog levels, the simulator must track the exact history o
 
 To write a specific analog state (e.g., Level 14) in nanoseconds, we replace linear stepping with **Adaptive Binary Search**.
 
-1. **Predict:** Estimate start voltage $V_{start}$ using inverse physics model.
-2. **Pulse:** Apply $V_{pulse}$ via L-K solver (10ns).
-3. **Verify:** Map $P \to G$ using conductance transfer function, then read Conductance $G$.
-4. **Correction:**
-   * **Too Low:** Increase $V_{pulse}$ (Bisection toward $V_{max}$).
-   * **Too High (Overshoot):** **CRITICAL:** Apply a reset pulse on the **opposite branch** (direction‑aware), then restart binary search with lower $V$. *You cannot "nudge" a ferroelectric backwards easily.*
+1. **PREP:** Apply ±Ec toward the target to bias the branch (no full saturation).
+2. **HOLD_RESET:** Return to 0 and capture the start level; determine `fromSaturation`.
+3. **Predict:** Select an initial pulse from calibration (if available) or a 1×Ec step toward the target.
+4. **Pulse:** Apply $E_{pulse}$ and integrate the L‑K solver for the pulse window.
+5. **Verify:** Map $P \to G$ using the conductance transfer function, then read the resulting **level**.
+6. **Correction:**
+   * **Too Low:** Increase field magnitude (bisection toward $V_{max}$).
+   * **Too High (Overshoot):** **CRITICAL:** Apply a reset pulse on the **opposite branch** (direction‑aware), then restart binary search with lower field. *You cannot "nudge" a ferroelectric backwards easily.*
 
 **Headless verification path:** `cmd/fecim-lattice-tools --mode hysteresis` drives a multi‑step ISPP sequence
-(`pos-1`, `pos-2`, `neg-1`) through `shared/physics/ispp_write.go`. The first step resets to a known branch,
-subsequent steps continue from the prior state to exercise end‑to‑end multi‑step convergence, including a
-negative‑branch target. The initial pulse uses an inverse‑tanh estimate (`atanh(P_target/Ps)`), then clamps to
-`[VMin, VMax]` before binary search refinement. When crossing branches, the guess is biased low by
-`( |P_target| / Ps )^2` and `VMax` is clamped to the inverse‑tanh bound. After the first post‑cross
-undershoot, the upper bound is tightened once (0.2–0.6 of the remaining bracket, scaled by `|P_target|/Ps`)
-to reduce overshoot on the next midpoint step.
-While still crossing, binary‑search midpoints are **biased low** with a factor that scales with
-`|P_target|/Ps` (clamped ~0.1–0.3 of the bracket) to further reduce overshoot resets before the branch is crossed.
+(`pos-1`, `pos-2`, `neg-1`) through the shared **WriteController** (`module1-hysteresis/pkg/controller`).
+The first step can start from saturation; subsequent steps continue from the prior state to exercise end‑to‑end
+multi‑step convergence, including a negative‑branch target. Each target runs the same **PREP → HOLD_RESET →
+WRITE → DISPLAY** phases as the GUI, then the controller chooses an initial pulse from calibration (if available)
+or a 1×Ec step, tightening `VMin/VMax` via binary search on field magnitude. Overshoot is detected by level
+crossing and triggers a **resetting** pulse to the opposite branch before retrying.
 
 ---
 

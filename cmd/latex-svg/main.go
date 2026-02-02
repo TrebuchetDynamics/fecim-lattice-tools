@@ -93,6 +93,9 @@ func main() {
 	if err := inlineSVGUses(opts.outputPath); err != nil {
 		exitError("failed to inline svg uses", err)
 	}
+	if err := sanitizeSVGRoot(opts.outputPath); err != nil {
+		exitError("failed to sanitize svg root", err)
+	}
 
 	fmt.Printf("SVG written to %s\n", opts.outputPath)
 	if opts.keepTemp {
@@ -245,6 +248,7 @@ func runDvisvgm(opts options, dviFile, outputPath string) error {
 }
 
 var viewBoxRe = regexp.MustCompile(`viewBox=['"]([^'"]+)['"]`)
+var svgRootRe = regexp.MustCompile(`(?s)<svg[^>]*>`)
 
 type svgPathDef struct {
 	d     string
@@ -481,4 +485,42 @@ func appendUniqueAttrs(base []xml.Attr, extra []xml.Attr) []xml.Attr {
 		seen[key] = struct{}{}
 	}
 	return base
+}
+
+func sanitizeSVGRoot(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	content := string(data)
+	match := svgRootRe.FindString(content)
+	if match == "" {
+		return fmt.Errorf("svg root not found")
+	}
+
+	version := attrValueFromTag(match, "version")
+	width := attrValueFromTag(match, "width")
+	height := attrValueFromTag(match, "height")
+	viewBox := attrValueFromTag(match, "viewBox")
+
+	if width == "" || height == "" || viewBox == "" {
+		return fmt.Errorf("svg root missing width/height/viewBox")
+	}
+
+	if version == "" {
+		version = "1.1"
+	}
+
+	root := fmt.Sprintf("<svg version='%s' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='%s' height='%s' viewBox='%s'>", version, width, height, viewBox)
+	content = strings.Replace(content, match, root, 1)
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+func attrValueFromTag(tag, name string) string {
+	re := regexp.MustCompile(name + `=['"]([^'"]+)['"]`)
+	m := re.FindStringSubmatch(tag)
+	if len(m) > 1 {
+		return m[1]
+	}
+	return ""
 }

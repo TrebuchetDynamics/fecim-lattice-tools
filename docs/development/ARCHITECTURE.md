@@ -253,7 +253,8 @@ This is used everywhere weights are programmed.
 
 Module 1 implements ferroelectric hysteresis simulation with two complementary models and comprehensive material support.
 The **GUI path** renders the Preisach model in real time; the **headless diagnostics path**
-(`cmd/fecim-lattice-tools --mode hysteresis`) exercises the L‑K solver and ISPP loop in `shared/physics/`.
+(`cmd/fecim-lattice-tools --mode hysteresis`) exercises the L‑K solver in `shared/physics/` and the
+shared WriteController state machine in `module1-hysteresis/pkg/controller/`.
 
 #### Preisach Model Architecture
 
@@ -321,7 +322,7 @@ Usage:
 
 - **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and a **multi‑target ISPP sequence**
   (`pos-1`, `pos-2`, `neg-1`) to exercise both branches without resetting between every step.
-- **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
+- **ISPP controller**: `module1-hysteresis/pkg/controller` drives write/verify sequencing (shared by GUI + headless).
 - **ISPP conservative bounds**: after the first post‑cross undershoot, the upper bound is tightened once by a
   factor that scales with `|P_target|/Ps` (0.2–0.6 of the remaining bracket) to reduce overshoot on the next midpoint.
 - **ISPP branch crossing**: binary-search midpoints stay low-biased while `currentP * targetP < 0` using

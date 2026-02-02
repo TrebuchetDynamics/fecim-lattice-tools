@@ -199,37 +199,38 @@ The WRD controller now recalibrates **during runtime** when convergence is poor:
 
 #### Headless L‑K ISPP (`--mode hysteresis`)
 
-The headless diagnostics path uses `shared/physics/ispp_write.go` with the
-Landau‑Khalatnikov solver (`shared/physics/landau.go`). It exercises the same
-write‑verify logic, but in **conductance space** rather than discrete levels.
+The headless diagnostics path uses the **same WRD phase machine + WriteController**
+as the GUI (`module1-hysteresis/pkg/controller`) while driving the Landau‑Khalatnikov
+solver (`shared/physics/landau.go`) for physics. Targets are resolved to **discrete
+levels** from the conductance mapping (Gmin/Gmax), then the controller steers field
+pulses to hit those levels exactly.
 
 **Sequence:**
-1. **Optional reset** to `±Pr` based on target branch (negative‑target writes start from +Pr).
-2. **Pulse**: apply a signed `V_pulse` → `E = V/Thickness`, integrate L‑K for `PulseWidth`. The first pulse uses
-   an inverse‑tanh estimate (`V_guess = Ec * Thickness * atanh(P_target / Ps)`) clamped to `[VMin, VMax]`.
-   When crossing branches (`currentP * targetP < 0`), the guess is scaled by `( |P_target| / Ps )^2` to reduce
-   overshoot resets, and `VMax` is clamped to the inverse‑tanh bound. After the first post‑cross undershoot,
-   the upper bound is tightened once (0.2–0.6 of the remaining bracket, scaled by `|P_target|/Ps`) to reduce
-   overshoot on the next midpoint step.
-   While **still** crossing (`currentP * targetP < 0`), the binary-search midpoint is **biased low** using
-   `bias = 0.1 + 0.2 * |P_target|/Ps` (clamped to ~0.1-0.3 of the bracket) to reduce overshoot resets before
-   the branch is crossed.
-3. **Verify**: map `P → G` (linear mapping with `P = ±Ps` endpoints).
-4. **Adjust**: binary search update (`VMin`, `VMax`) on **magnitude**, pulse sign set by direction.
-5. **Overshoot**: apply a **direction‑aware** reset pulse (opposite branch) and restart with tighter bounds.
+1. **PREP**: apply **±Ec** toward the target (no full saturation).
+2. **HOLD_RESET**: ramp back to 0 and capture the **start level**. `fromSaturation`
+   is computed here (`level ≤ 2` or `level ≥ N-1`), matching the GUI.
+3. **WRITE (controller)**: Apply → Wait → Verify
+   - **Apply**: pick pulse field from calibration (if available) or a 1×Ec step toward target.
+   - **Wait**: hold field near target for the pulse window.
+   - **Verify**: settle to 0, read level via L‑K (`P → G → level`).
+4. **Adjust**: update binary‑search bounds (`VMin`, `VMax`) on **field magnitude**.
+5. **Overshoot**: if the level crosses the target in the wrong direction, issue a **resetting** pulse to the opposite branch,
+   shrink `VMax` to the failed pulse, and restart.
+6. **DISPLAY**: ramp to 0 and advance to the next target.
 
 **Termination:**
-- **Success**: `|G - G_target| < Tolerance`.
-- **Failure**: `MaxIterations` exceeded.
+- **Success**: exact level match.
+- **Failure**: `MaxRetries` exceeded (controller returns `FAILED`).
 
 **Headless defaults (Feb 2026):**
 | Parameter | Value | Meaning |
 |-----------|-------|---------|
-| `MaxVoltage` | `2.5 × Ec × Thickness` | Safe upper bound in volts |
-| `PulseWidth` | `τ` | Characteristic switching time (material) |
-| `MaxStep` | `1e-12 s` | L-K integration substep (stability) |
-| `Tolerance` | `1.5e-6 S` | Acceptable conductance error |
-| `MaxIterations` | `15` | Max program‑verify pulses |
+| `MaxField` | `2.5 × Ec` | Safe upper bound in E‑field |
+| `PulseDuration` | `τ` | Characteristic switching time (material) |
+| `MaxRetries` | `50` | Max program‑verify pulses before `FAILED` |
+| `dtNominal` | `min(1e‑4, τ / 10,000)` | Nominal L‑K step (GUI‑aligned, stability‑clamped) |
+| `dtMin` | `min(1e‑6, dtNominal)` | Reduced step near ±Ec |
+| `dtMax` | `min(0.025, τ)` | Cap for stability |
 
 **Headless multi‑step validation:** `cmd/fecim-lattice-tools/mode.go` runs a 3‑step
 sequence (`pos-1`, `pos-2`, `neg-1`) to confirm end‑to‑end ISPP convergence across
@@ -239,7 +240,9 @@ positive and negative branches without forcing a full reset between each step.
 for physics + ISPP correctness. Run `./launch.sh --logger --verbosity debug --mode hysteresis`
 and confirm:
 - `lk-solver` logs include `E_applied`, `E_dep`, `E_eff`, `dG_dP`, `rho_eff`, `Alpha`, `Beta`, `Gamma`, `K_dep`.
-- `ispp` logs show `Predict → WritePulse → Verify → (Adjust/Overshoot)` sequences per step.
+- `ISPP` logs show `APPLY → WAIT → VERIFY → (RESETTING)` sequences per step.
+- Headless runs also emit a full‑resolution CSV at `logs/hysteresis-<material>-<timestamp>.csv` (same schema as GUI)
+  with `controller_*` fields for ISPP state transitions.
 GUI runs are **illustrative only**; physics verification is done headlessly.
 
 ### Key Parameters (HZO Materials)

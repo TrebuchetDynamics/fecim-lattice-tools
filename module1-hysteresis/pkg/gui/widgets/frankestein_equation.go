@@ -334,57 +334,62 @@ func defaultFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
 		{
 			ID:      "rho_eff_main",
 			Tooltip: "Effective viscosity: intrinsic damping plus series-resistance RC delay.",
-			X:       0.0, Y: 0.1045, W: 0.0657, H: 0.2944,
+			X:       0.0018, Y: 0.0663, W: 0.0693, H: 0.1868,
 		},
 		{
 			ID:      "e_applied",
 			Tooltip: "Applied electric field drive term (external voltage across the film).",
-			X:       0.166, Y: 0.1045, W: 0.147, H: 0.2944,
+			X:       0.1708, Y: 0.0663, W: 0.1462, H: 0.1868,
 		},
 		{
 			ID:      "k_dep",
 			Tooltip: "Depolarization factor: models interfacial layer; slants the loop for analog states.",
-			X:       0.3444, Y: 0.1045, W: 0.0789, H: 0.2944,
+			X:       0.3481, Y: 0.0663, W: 0.0785, H: 0.1868,
 		},
 		{
 			ID:      "alpha",
 			Tooltip: "Dynamic stiffness: temperature + stress dependent curvature of energy wells.",
-			X:       0.5121, Y: 0.1045, W: 0.0922, H: 0.2778,
+			X:       0.5149, Y: 0.0663, W: 0.0917, H: 0.1762,
 		},
 		{
 			ID:      "beta",
 			Tooltip: "First-order nonlinearity: negative for HZO to create the switching barrier.",
-			X:       0.5964, Y: 0.0661, W: 0.1481, H: 0.3162,
+			X:       0.5987, Y: 0.0419, W: 0.1472, H: 0.2006,
 		},
 		{
 			ID:      "gamma",
 			Tooltip: "Sixth-order stabilizer: keeps energy bounded at large polarization.",
-			X:       0.7366, Y: 0.0661, W: 0.1376, H: 0.3162,
+			X:       0.7381, Y: 0.0419, W: 0.1368, H: 0.2006,
 		},
 		{
 			ID:      "lk_terms",
 			Tooltip: "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.",
-			X:       0.51, Y: 0.4, W: 0.37, H: 0.12,
+			X:       0.51, Y: 0.27, W: 0.37, H: 0.08,
 		},
 		{
 			ID:      "noise",
 			Tooltip: "Stochastic noise term (optional): captures thermal variability.",
-			X:       0.9323, Y: 0.1045, W: 0.0677, H: 0.2778,
+			X:       0.9327, Y: 0.0663, W: 0.0673, H: 0.1762,
 		},
 		{
 			ID:      "rho_eff_def",
 			Tooltip: "Effective viscosity definition used in the headless hysteresis path.",
-			X:       0.0566, Y: 0.6477, W: 0.0758, H: 0.2944,
+			X:       0.062, Y: 0.4108, W: 0.0754, H: 0.1868,
 		},
 		{
 			ID:      "rho",
 			Tooltip: "Intrinsic viscosity / damping coefficient.",
-			X:       0.166, Y: 0.6477, W: 0.0369, H: 0.2778,
+			X:       0.1708, Y: 0.4108, W: 0.0367, H: 0.1762,
 		},
 		{
 			ID:      "r_series",
 			Tooltip: "Series resistance: absorbs RC delay into viscosity.",
-			X:       0.239, Y: 0.4974, W: 0.0653, H: 0.2944,
+			X:       0.2434, Y: 0.3155, W: 0.0649, H: 0.1868,
 		},
-	}, fyne.NewSize(1200, 212.1974)
+		{
+			ID:      "alpha_def",
+			Tooltip: "Alpha definition: temperature + stress dependent stiffness coefficient.",
+			X:       0.0173, Y: 0.646, W: 0.4309, H: 0.354,
+		},
+	}, fyne.NewSize(1200, 332.6155)
 }

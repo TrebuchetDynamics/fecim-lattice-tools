@@ -28,6 +28,27 @@ type WriteController struct {
 
 	VMin float64
 	VMax float64
+
+	// Optional hooks for headless diagnostics and CSV logging.
+	StepFunc  func(E, dt float64) float64
+	EventHook func(event WriteEvent)
+}
+
+// WriteEvent exposes key ISPP transitions for headless diagnostics.
+type WriteEvent struct {
+	Phase      string
+	Attempt    int
+	VPulse     float64
+	VMin       float64
+	VMax       float64
+	CurrentP   float64
+	CurrentG   float64
+	TargetP    float64
+	TargetG    float64
+	Error      float64
+	Direction  float64
+	Overshoots int
+	ResetField float64
 }
 
 func NewWriteController(solver *LKSolver, material *HZOMaterial) *WriteController {
@@ -107,14 +128,25 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		"startP":    currentP,
 		"startG":    currentG,
 	})
+	c.emitEvent(WriteEvent{
+		Phase:     "Start",
+		Attempt:   0,
+		TargetP:   targetP,
+		TargetG:   targetG,
+		CurrentP:  currentP,
+		CurrentG:  currentG,
+		Direction: direction,
+	})
 
 	var vPulse float64
 	var i int
 	for i = 0; i < c.MaxIterations; i++ {
-		crossingNow := c.Solver.GetState()*targetP < 0
+		currentP := c.Solver.GetState()
+		currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		crossingNow := currentP*targetP < 0
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"attempt":  i + 1,
-			"currentP": c.Solver.P,
+			"currentP": currentP,
 			"targetP":  targetP,
 		}, nil)
 
@@ -138,6 +170,19 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				"vGuess":   vGuess,
 				"bounds":   []float64{c.VMin, c.VMax},
 			}, nil)
+			c.emitEvent(WriteEvent{
+				Phase:      "Predict",
+				Attempt:    i + 1,
+				VPulse:     vPulse,
+				VMin:       c.VMin,
+				VMax:       c.VMax,
+				TargetP:    targetP,
+				TargetG:    targetG,
+				CurrentP:   currentP,
+				CurrentG:   currentG,
+				Direction:  direction,
+				Overshoots: overshoots,
+			})
 		} else {
 			bias := 0.5
 			if crossingNow {
@@ -161,6 +206,19 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				"midpoint": midpoint,
 				"bias":     bias,
 			}, nil)
+			c.emitEvent(WriteEvent{
+				Phase:      "BinarySearch",
+				Attempt:    i + 1,
+				VPulse:     vPulse,
+				VMin:       c.VMin,
+				VMax:       c.VMax,
+				TargetP:    targetP,
+				TargetG:    targetG,
+				CurrentP:   currentP,
+				CurrentG:   currentG,
+				Direction:  direction,
+				Overshoots: overshoots,
+			})
 		}
 
 		eField := vPulse / c.Material.Thickness
@@ -173,27 +231,55 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			"dt":     c.PulseWidth,
 		}, nil)
 
-		currentP := c.Solver.GetState()
-		currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		postP := c.Solver.GetState()
+		postG := PolarizationToConductance(postP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
 
-		error := currentG - targetG
-		crossingAfter := currentP*targetP < 0
+		error := postG - targetG
+		crossingAfter := postP*targetP < 0
 
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"step":     "Verify",
-			"currentP": currentP,
-			"currentG": currentG,
+			"currentP": postP,
+			"currentG": postG,
 			"error":    error,
 		}, nil)
+		c.emitEvent(WriteEvent{
+			Phase:      "Verify",
+			Attempt:    i + 1,
+			VPulse:     vPulse,
+			VMin:       c.VMin,
+			VMax:       c.VMax,
+			TargetP:    targetP,
+			TargetG:    targetG,
+			CurrentP:   postP,
+			CurrentG:   postG,
+			Error:      error,
+			Direction:  direction,
+			Overshoots: overshoots,
+		})
 
 		if math.Abs(error) < c.Tolerance {
 			success = true
 			log.Input("WriteTarget", map[string]interface{}{
 				"status":     "Success",
 				"attempts":   i + 1,
-				"finalG":     currentG,
-				"finalP":     currentP,
+				"finalG":     postG,
+				"finalP":     postP,
 				"overshoots": overshoots,
+			})
+			c.emitEvent(WriteEvent{
+				Phase:      "Success",
+				Attempt:    i + 1,
+				VPulse:     vPulse,
+				VMin:       c.VMin,
+				VMax:       c.VMax,
+				TargetP:    targetP,
+				TargetG:    targetG,
+				CurrentP:   postP,
+				CurrentG:   postG,
+				Error:      error,
+				Direction:  direction,
+				Overshoots: overshoots,
 			})
 			break
 		}
@@ -237,6 +323,21 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 
 			resetField := -direction * c.MaxVoltage * 1.5
 			eResetField := resetField / c.Material.Thickness
+			c.emitEvent(WriteEvent{
+				Phase:      "Reset",
+				Attempt:    i + 1,
+				VPulse:     vPulse,
+				VMin:       c.VMin,
+				VMax:       c.VMax,
+				TargetP:    targetP,
+				TargetG:    targetG,
+				CurrentP:   postP,
+				CurrentG:   postG,
+				Error:      error,
+				Direction:  direction,
+				Overshoots: overshoots,
+				ResetField: resetField,
+			})
 			c.applyPulse(eResetField, c.PulseWidth*2)
 
 			log.Calculation("WriteTarget", map[string]interface{}{
@@ -245,6 +346,21 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				"resetField":  resetField,
 				"eResetField": eResetField,
 			}, nil)
+			c.emitEvent(WriteEvent{
+				Phase:      "Overshoot",
+				Attempt:    i + 1,
+				VPulse:     vPulse,
+				VMin:       c.VMin,
+				VMax:       c.VMax,
+				TargetP:    targetP,
+				TargetG:    targetG,
+				CurrentP:   postP,
+				CurrentG:   postG,
+				Error:      error,
+				Direction:  direction,
+				Overshoots: overshoots,
+				ResetField: resetField,
+			})
 
 			c.VMax = math.Abs(vPulse)
 			c.VMin = 0.0
@@ -259,6 +375,16 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			"attempts":   c.MaxIterations,
 			"overshoots": overshoots,
 			"reason":     "Max iterations exceeded",
+		})
+		c.emitEvent(WriteEvent{
+			Phase:      "Failed",
+			Attempt:    c.MaxIterations,
+			TargetP:    targetP,
+			TargetG:    targetG,
+			CurrentP:   c.Solver.GetState(),
+			CurrentG:   PolarizationToConductance(c.Solver.GetState(), c.Material.Ps, c.Material.Gmin, c.Material.Gmax),
+			Direction:  direction,
+			Overshoots: overshoots,
 		})
 	}
 
@@ -307,8 +433,12 @@ func (c *WriteController) applyPulse(eField float64, duration float64) {
 	if duration <= 0 {
 		return
 	}
+	stepFn := c.StepFunc
+	if stepFn == nil {
+		stepFn = c.Solver.Step
+	}
 	if c.MaxStep <= 0 || duration <= c.MaxStep {
-		c.Solver.Step(eField, duration)
+		stepFn(eField, duration)
 		return
 	}
 	steps := int(math.Ceil(duration / c.MaxStep))
@@ -317,6 +447,12 @@ func (c *WriteController) applyPulse(eField float64, duration float64) {
 	}
 	dt := duration / float64(steps)
 	for i := 0; i < steps; i++ {
-		c.Solver.Step(eField, dt)
+		stepFn(eField, dt)
+	}
+}
+
+func (c *WriteController) emitEvent(event WriteEvent) {
+	if c.EventHook != nil {
+		c.EventHook(event)
 	}
 }

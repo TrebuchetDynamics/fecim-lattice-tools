@@ -1,94 +1,102 @@
 {
   "base_width": 1200,
-  "base_height": 212.1974,
+  "base_height": 332.6155,
   "hotspots": [
     {
       "id": "rho_eff_main",
       "tooltip": "Effective viscosity: intrinsic damping plus series-resistance RC delay.",
-      "x": 0.0,
-      "y": 0.1045,
-      "w": 0.0657,
-      "h": 0.2944
+      "x": 0.0018,
+      "y": 0.0663,
+      "w": 0.0693,
+      "h": 0.1868
     },
     {
       "id": "e_applied",
       "tooltip": "Applied electric field drive term (external voltage across the film).",
-      "x": 0.166,
-      "y": 0.1045,
-      "w": 0.147,
-      "h": 0.2944
+      "x": 0.1708,
+      "y": 0.0663,
+      "w": 0.1462,
+      "h": 0.1868
     },
     {
       "id": "k_dep",
       "tooltip": "Depolarization factor: models interfacial layer; slants the loop for analog states.",
-      "x": 0.3444,
-      "y": 0.1045,
-      "w": 0.0789,
-      "h": 0.2944
+      "x": 0.3481,
+      "y": 0.0663,
+      "w": 0.0785,
+      "h": 0.1868
     },
     {
       "id": "alpha",
       "tooltip": "Dynamic stiffness: temperature + stress dependent curvature of energy wells.",
-      "x": 0.5121,
-      "y": 0.1045,
-      "w": 0.0922,
-      "h": 0.2778
+      "x": 0.5149,
+      "y": 0.0663,
+      "w": 0.0917,
+      "h": 0.1762
     },
     {
       "id": "beta",
       "tooltip": "First-order nonlinearity: negative for HZO to create the switching barrier.",
-      "x": 0.5964,
-      "y": 0.0661,
-      "w": 0.1481,
-      "h": 0.3162
+      "x": 0.5987,
+      "y": 0.0419,
+      "w": 0.1472,
+      "h": 0.2006
     },
     {
       "id": "gamma",
       "tooltip": "Sixth-order stabilizer: keeps energy bounded at large polarization.",
-      "x": 0.7366,
-      "y": 0.0661,
-      "w": 0.1376,
-      "h": 0.3162
+      "x": 0.7381,
+      "y": 0.0419,
+      "w": 0.1368,
+      "h": 0.2006
     },
     {
       "id": "lk_terms",
       "tooltip": "Landau-Khalatnikov nonlinear energy term: 2\u03b1P + 4\u03b2P^3 + 6\u03b3P^5.",
       "x": 0.51,
-      "y": 0.4,
+      "y": 0.27,
       "w": 0.37,
-      "h": 0.12
+      "h": 0.08
     },
     {
       "id": "noise",
       "tooltip": "Stochastic noise term (optional): captures thermal variability.",
-      "x": 0.9323,
-      "y": 0.1045,
-      "w": 0.0677,
-      "h": 0.2778
+      "x": 0.9327,
+      "y": 0.0663,
+      "w": 0.0673,
+      "h": 0.1762
     },
     {
       "id": "rho_eff_def",
       "tooltip": "Effective viscosity definition used in the headless hysteresis path.",
-      "x": 0.0566,
-      "y": 0.6477,
-      "w": 0.0758,
-      "h": 0.2944
+      "x": 0.062,
+      "y": 0.4108,
+      "w": 0.0754,
+      "h": 0.1868
     },
     {
       "id": "rho",
       "tooltip": "Intrinsic viscosity / damping coefficient.",
-      "x": 0.166,
-      "y": 0.6477,
-      "w": 0.0369,
-      "h": 0.2778
+      "x": 0.1708,
+      "y": 0.4108,
+      "w": 0.0367,
+      "h": 0.1762
     },
     {
       "id": "r_series",
       "tooltip": "Series resistance: absorbs RC delay into viscosity.",
-      "x": 0.239,
-      "y": 0.4974,
-      "w": 0.0653,
-      "h": 0.2944
+      "x": 0.2434,
+      "y": 0.3155,
+      "w": 0.0649,
+      "h": 0.1868
+    },
+    {
+      "id": "alpha_def",
+      "tooltip": "Alpha definition: \u03b1(T,\u03c3) = (T \u2212 T_C)/(2 \u03b50 C) \u2212 2 Q12 \u03c3.",
+      "x": 0.0173,
+      "y": 0.646,
+      "w": 0.4309,
+      "h": 0.354
     }
   ]
 }
