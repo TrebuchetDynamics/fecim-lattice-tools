@@ -225,7 +225,7 @@ go build -o eda-cli ./cmd/eda-cli
 | `-tech` | SKY130 | Technology node: `SKY130`, `GF180MCU`, `IHP_SG13G2` |
 | `-arch` | passive | Architecture: `passive` or `1t1r` |
 | `-vdd` | 1.8 | Supply voltage (V) |
-| `-gmin` | 1.0 | Minimum conductance (μS) |
+| `-gmin` | 10.0 | Minimum conductance (μS) |
 | `-gmax` | 100.0 | Maximum conductance (μS) |
 | `-json` | true | Export JSON mapping |
 | `-csv` | true | Export CSV cells |
@@ -247,7 +247,7 @@ go build -o eda-cli ./cmd/eda-cli
   -tech SKY130 \
   -arch passive \
   -vdd 1.8 \
-  -gmin 1.0 \
+  -gmin 10.0 \
   -gmax 100.0 \
   -json \
   -csv \
@@ -270,7 +270,7 @@ Configuration:
   Technology:   SKY130
   Architecture: passive
   Levels:       30 (4.90 bits/cell)
-  Conductance:  1.0 - 100.0 μS
+  Conductance:  10.0 - 100.0 μS
 
 Design Statistics:
   Total Cells:  1024
@@ -375,13 +375,13 @@ Structural Verilog netlist instantiating FeCIM cells.
 ```verilog
 module fecim_crossbar_8x8 (
     input  wire [7:0]  WL,
-    output wire [7:0]  BL,
-    inout  wire        VDD,
-    inout  wire        VSS
+    inout  wire [7:0]  BL,
+    inout  wire        VPWR,
+    inout  wire        VGND
 );
     // Row 0
-    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VDD(VDD), .VSS(VSS));
-    fecim_bit cell_0_1 (.WL(WL[0]), .BL(BL[1]), .VDD(VDD), .VSS(VSS));
+    fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VPWR(VPWR), .VGND(VGND));
+    fecim_bit cell_0_1 (.WL(WL[0]), .BL(BL[1]), .VPWR(VPWR), .VGND(VGND));
     // ... 64 cells total
 endmodule
 ```
@@ -391,13 +391,13 @@ endmodule
 ```verilog
 module fecim_crossbar_8x8 (
     input  wire [7:0]  WL,
-    output wire [7:0]  BL,
+    inout  wire [7:0]  BL,
     input  wire [7:0]  SL,
-    inout  wire        VDD,
-    inout  wire        VSS
+    inout  wire        VPWR,
+    inout  wire        VGND
 );
     // Row 0
-    fecim_1t1r cell_0_0 (.WL(WL[0]), .BL(BL[0]), .SL(SL[0]), .VDD(VDD), .VSS(VSS));
+    fecim_1t1r cell_0_0 (.WL(WL[0]), .BL(BL[0]), .SL(SL[0]), .VPWR(VPWR), .VGND(VGND));
     // ... cells
 endmodule
 ```
@@ -462,13 +462,13 @@ SPICE netlist for analog simulation and verification.
 .param vdd=1.8
 
 * Conductance values (in units of 1/R where R is resistance)
-* Level 0: 1.0 uS
+* Level 0: 10.0 uS
 * Level 29: 100.0 uS
 * Array cells mapped to resistors
 
 * Row 0
-R_0_0 BL_0 VSS 18125.5
-R_0_1 BL_1 VSS 22319.2
+R_0_0 BL_0 VGND 18125.5
+R_0_1 BL_1 VGND 22319.2
 ...
 
 * Simulation commands (if included)
@@ -653,19 +653,19 @@ MACRO fecim_bit
     END
   END BL
 
-  PIN VDD
+  PIN VPWR
     DIRECTION INOUT ; USE POWER ;
     PORT LAYER met1 ;
       RECT 0.0 2.62 0.46 2.72 ;
     END
-  END VDD
+  END VPWR
 
-  PIN VSS
+  PIN VGND
     DIRECTION INOUT ; USE GROUND ;
     PORT LAYER met1 ;
       RECT 0.0 0.0 0.46 0.1 ;
     END
-  END VSS
+  END VGND
 END fecim_bit
 ```
 
@@ -675,8 +675,8 @@ END fecim_bit
 module fecim_bit (
     input  wire WL,
     output wire BL,
-    inout  wire VDD,
-    inout  wire VSS
+    inout  wire VPWR,
+    inout  wire VGND
 );
     // For simulation: BL tracks WL
     assign BL = WL;
@@ -702,11 +702,11 @@ library(fecim_bit) {
         cell_fall(scalar) { values("0.1"); }
       }
     }
-    pin(VDD) {
+    pin(VPWR) {
       direction : inout ;
       pg_type : primary_power ;
     }
-    pin(VSS) {
+    pin(VGND) {
       direction : inout ;
       pg_type : primary_ground ;
     }

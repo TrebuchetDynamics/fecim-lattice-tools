@@ -1,17 +1,14 @@
-# MNIST FeCIM Demo - 87% Hardware Claim
-
-> *"We're at 87% validation here."* (Dr. Tour conference claim, unverified)
-> — Dr. external research group, external research institution (Nov 2024)
+# MNIST FeCIM Demo - FP vs CIM Comparison
 
 ## Overview
 
-This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with **30 discrete analog levels**. It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths.
+This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with **30 discrete analog levels**. It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with peer-reviewed accuracy context in the UI (96.6–98.24%).
 
 **Key Questions Answered:**
 1. What are 30 analog levels? (Physics + competitive advantage)
-2. Why does FeCIM achieve 87%? (Hardware reality vs simulation)
-3. What happens when hardware fails? (Quantization cliff, noise wall)
-4. Why does this matter? (10,000x energy savings)
+2. How do FP vs CIM results diverge? (Quantization + noise effects)
+3. What happens when hardware degrades? (Quantization cliff, noise wall)
+4. Why does this matter? (Verified energy-efficiency advantage range)
 
 ---
 
@@ -81,10 +78,10 @@ The demo runs both paths simultaneously:
 | **FeCIM (HZO)** | **30** | **5x better than ReRAM** |
 | Ideal (FP32) | 2^32 | Baseline |
 
-**Impact on MNIST:**
+**Impact on MNIST (illustrative):**
 - 2 levels (binary): ~50% accuracy (worse than random!)
 - 8 levels: ~75%
-- **30 levels: ~87% (FeCIM hardware)**
+- **30 levels: ~92–96% in simulation** (depends on noise/ADC/DAC)
 - Float32: ~98% (theoretical)
 
 ### Why Not 64 Levels (6-bit ADC)?
@@ -100,28 +97,25 @@ With 3σ separation requirement, 30 levels is the practical limit.
 
 ## Hardware Reality Check
 
-### Why 87% and Not 98%?
+### Why CIM Diverges from FP
 
-**Simulation (this demo):** Can achieve 95-98% under ideal conditions.
+**Simulation (this demo):** With low noise and 30 levels, CIM can approach FP accuracy.
 
-**FeCIM Hardware (Dr. Tour):** 87% (Dr. Tour conference claim, unverified); Software baseline: 98-99%.
+**Hardware (literature):** Peer‑reviewed FeFET/FTJ work reports 96.6–98.24% (simulation); a conference‑only 87% claim exists but is unverified and not used as a target here.
 
 **Why the gap?**
 
-| Non-Ideality | Simulation | Hardware | Impact |
-|--------------|------------|----------|--------|
-| Weight quantization | ✓ 30 levels | ✓ 30 levels | -1% |
-| Read noise | ✓ Configurable | ✓ Real | -2% |
-| IR drop | ⚠️ Simplified | ✓ Metal lines | -3% |
-| Sneak paths | ⚠️ Simplified | ✓ Parasitic | -2% |
-| ADC non-linearity | ⚠️ Ideal | ✓ DNL/INL | -1% |
-| Retention drift | ❌ Not modeled | ✓ 10 years | -1% |
-| Cycle-to-cycle variation | ⚠️ Limited | ✓ 2.75% | -2% |
+| Non-Ideality | Modeled Here | Notes |
+|--------------|-------------|-------|
+| Weight quantization | ✓ | 30-level symmetric quantization |
+| Read noise | ✓ | σ/μ multiplicative noise (configurable) |
+| IR drop | ⚠️ Simplified | Not part of CIM inference path yet |
+| Sneak paths | ⚠️ Simplified | Not part of CIM inference path yet |
+| ADC non-linearity | ⚠️ Ideal | ADC modeled as uniform quantizer |
+| Retention drift | ❌ Not modeled | Long-term drift out of scope |
+| Cycle-to-cycle variation | ✓ | Covered by noise term |
 
-**Total:** ~12% gap between ideal (98%) and Dr. Tour's hardware claims (87%, unverified; Software baseline: 98-99%).
-
-**How to Match Hardware:**
-Set noise level to ~0.08 in the GUI. This empirically matches the 87% target.
+**Takeaway:** Increasing noise, reducing levels, or lowering ADC resolution visibly degrades confidence and agreement. Exact mapping to a specific hardware demo depends on device variability and is not calibrated in this UI.
 
 ---
 
@@ -200,23 +194,18 @@ Network cannot extract meaningful features.
 
 ## Energy Efficiency
 
-### Dr. Tour's 10,000x Claim
+### Energy Model (MAC-Level Estimate)
 
 **Calculation (Jerry et al. IEDM 2017):**
-- Energy per MAC: ~50 fJ (HZO FeFET)
+- Energy per MAC: ~10 fJ/bit × log2(levels) (≈50 fJ @ 30 levels)
 - MACs per inference: (784×128) + (128×10) = 101,632
-- **FeCIM Energy:** 101,632 × 50 fJ = **5.08 μJ**
+- **FeCIM Energy:** 101,632 × 50 fJ ≈ **5.08 μJ** (plus small ADC/DAC overhead)
 
 **GPU Baseline (NVIDIA V100):**
 - Energy per MAC: ~500 pJ (DRAM fetch + compute)
 - **GPU Energy:** 101,632 × 500 pJ = **50.8 mJ**
 
-**Ratio:** 50.8 mJ / 5.08 μJ = **10,000x**
-
-**Caveats:**
-- Assumes all data on-chip (no DRAM)
-- Excludes control circuitry overhead
-- Best-case estimate (not independently verified)
+**Ratio:** Theoretical MAC-level ratio is large, but the **verified project claim** is **25–100×** efficiency vs NAND (Samsung Nature 2025). The UI uses that verified range.
 
 ---
 
@@ -247,7 +236,7 @@ Network cannot extract meaningful features.
 |---------------|----------|--------|
 | FP (float32) | 98.1% | Training script |
 | 30-level quantized (sim) | 96.8% | Quantize weights |
-| **FeCIM hardware** | **87.0%** | **Dr. Tour (Nov 2024)** |
+| Conference-only claim (unverified) | ~87% | Dr. Tour (Nov 2024, not peer-reviewed) |
 
 ---
 
@@ -257,7 +246,7 @@ Network cannot extract meaningful features.
 
 | Paper | Architecture | Accuracy | Notes |
 |-------|--------------|----------|-------|
-| **This Demo** | 784→128→10 | **87%** | Matches Dr. Tour hardware |
+| **This Demo** | 784→128→10 | **92–96% (sim, noise‑dependent)** | UI highlights peer‑reviewed baselines |
 | Jerry+ IEDM 2017 | 784→256→10 | 90% | 75ns pulse optimization |
 | Nature Comms 2023 | Multi-level FeFET | 96.6% | Simulation only |
 | Variation-Resilient 2024 | Binary NN | 94.2% | BNN with FeFET |
@@ -285,42 +274,35 @@ Network cannot extract meaningful features.
 
 | Control | Range | Default | Description |
 |---------|-------|---------|-------------|
-| Levels Slider | 1-30 | 30 | Weight quantization levels |
+| Levels Select | QAT levels available in `module3-mnist/data/` | 30 | Only levels with trained weights are shown |
 | Noise Slider | 0.0-0.20 | 0.01 | Gaussian noise σ/μ |
-| ADC Bits | 3-8 | 6 | Output quantization |
-| DAC Bits | 3-8 | 8 | Input quantization |
-| Hidden Size | 64/128/256 | 128 | Network capacity |
+
+**Note:** ADC/DAC resolution and hidden size are fixed in the Dual‑Mode UI. They can be adjusted via code/CLI if needed.
 
 ### Preset Buttons
 
 | Button | Levels | Noise | ADC | Effect |
 |--------|--------|-------|-----|--------|
-| Ideal | 30 | 0.01 | 8 | Best case (~95%) |
-| Hardware (87%) | 30 | 0.08 | 6 | Matches real chip |
-| Quant Cliff | 2 | 0.01 | 8 | Binary collapse (~50%) |
-| Noisy | 30 | 0.15 | 6 | High noise (~70%) |
-| Broken ADC | 30 | 0.01 | 3 | Coarse output (~65%) |
+| Ideal | 30 | 0.01 | 8 | Best case (simulation) |
+| Hardware | 30 | 0.03 | 8 | Production‑like noise (illustrative) |
+| Noisy | 30 | 0.15 | 8 | High noise (accuracy drop) |
 
 ### Info Dialogs
 
-- **Why 30 Levels?** - Physics and competitive advantage
-- **Hardware Reality** - Simulation vs hardware gap explanation
-- **Failure Modes** - Detailed failure mode descriptions
-- **About** - Demo overview and references
+Click **ℹ Info** to open a tabbed dialog with:
+**Why 30 Levels?**, **Hardware Reality**, **Failure Modes**, and **About**.
 
 ---
 
-## Guided Tour Script (7 Steps)
+## Quick Demo Script (5 Steps)
 
-The guided tour walks through the key concepts:
+The **Quick Demo** button runs an automated walkthrough:
 
-1. **Welcome** - Introduction to FeCIM and 87% target
-2. **Draw a Digit** - Interactive digit drawing
-3. **FeCIM Classifies It** - Compare FP vs CIM predictions
-4. **The 30 Analog Levels** - Weight heatmap explanation
-5. **What If We Only Had 2 Levels?** - Quantization cliff demo
-6. **What About Noise?** - Noise wall demonstration
-7. **FeCIM's Sweet Spot** - Return to optimal settings
+1. **Welcome** - Intro to FeCIM + 30‑level advantage
+2. **Ideal** - Load a digit at 30 levels (low noise)
+3. **Success** - FP and CIM agree at 30 levels
+4. **Break It** - Switch to 2 levels (binary collapse)
+5. **Restore** - Return to 30 levels and conclude
 
 ---
 

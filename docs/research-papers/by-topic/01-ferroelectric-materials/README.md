@@ -26,19 +26,19 @@
    *DOI:* 10.1126/sciadv.add5953
    *File:* [Zhou_2022_Strain_induced_antipolar_phase.pdf](./Zhou_2022_Strain_induced_antipolar_phase.pdf)
 
+5. **Jerry, M. et al. (2017)**
+   *Title:* Ferroelectric FET analog synapse for acceleration of deep neural network training
+   *Source:* arXiv preprint (IEDM 2017 companion)
+   *arXiv:* https://arxiv.org/abs/1708.04729
+   *File:* [Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf](./Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf)
+
 ## Referenced Papers (Metadata Only)
 
-5. **Salahuddin, S. & Datta, S. (2008)**
+6. **Salahuddin, S. & Datta, S. (2008)**
    *Title:* Use of Negative Capacitance to Provide Voltage Amplification for Low Power Nanoscale Devices
    *Source:* Nano Letters 8, 405-410
    *DOI:* [10.1021/nl071804g](https://doi.org/10.1021/nl071804g)
    *Status:* Paywalled (ACS)
-
-6. **Jerry, M. et al. (2017)**
-   *Title:* Ferroelectric FET analog synapse for acceleration of deep neural network training
-   *Source:* IEDM 2017
-   *DOI:* [10.1109/iedm.2017.8268338](https://doi.org/10.1109/iedm.2017.8268338)
-   *Status:* Paywalled (IEEE)
 
 7. **Damjanovic, D. (1998)**
    *Title:* Ferroelectric, dielectric and piezoelectric properties of ferroelectric thin films and ceramics

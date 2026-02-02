@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"sync"
 )
 
@@ -116,12 +117,22 @@ func NewDualModeNetwork(inputSize, hiddenSize, outputSize int) *DualModeNetwork 
 		"outputSize": outputSize,
 	})
 
+	seed := uint64(42)
+	if seedStr := os.Getenv("FECIM_DEBUG_SEED"); seedStr != "" {
+		if parsed, err := strconv.ParseUint(seedStr, 10, 64); err == nil {
+			seed = parsed
+			log.Info("Using FECIM_DEBUG_SEED=%d for deterministic noise", seed)
+		} else {
+			log.Info("Ignoring invalid FECIM_DEBUG_SEED=%q: %v", seedStr, err)
+		}
+	}
+
 	net := &DualModeNetwork{
 		InputSize:  inputSize,
 		HiddenSize: hiddenSize,
 		OutputSize: outputSize,
 		Config:     DefaultNetworkConfig(),
-		rng:        NewRandomSource(42),
+		rng:        NewRandomSource(seed),
 	}
 
 	// Initialize weight matrices

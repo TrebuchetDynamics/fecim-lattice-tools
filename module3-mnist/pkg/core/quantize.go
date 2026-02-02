@@ -218,13 +218,12 @@ func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats
 	return stats
 }
 
-// AddGaussianNoise adds Gaussian noise to values with given standard deviation.
-// noiseLevel is specified as the standard deviation σ (additive noise model).
+// AddGaussianNoise adds Gaussian noise to values with a sigma/mu coefficient.
+// noiseLevel is specified as σ/μ, so noise scales with |value| (multiplicative model).
 //
 // Physical Model:
-// This models read noise from thermal/shot noise in the analog readout circuitry.
-// The noise is additive (constant σ) rather than multiplicative, as thermal and shot
-// noise do not scale with signal amplitude.
+// Models device-to-device + cycle-to-cycle variation where noise increases with signal
+// amplitude. This matches the σ/μ interpretation used in the MNIST docs.
 func AddGaussianNoise(values []float64, noiseLevel float64, rng *RandomSource) []float64 {
 	log.Trace("AddGaussianNoise: noiseLevel=%.4f, len=%d", noiseLevel, len(values))
 
@@ -234,9 +233,8 @@ func AddGaussianNoise(values []float64, noiseLevel float64, rng *RandomSource) [
 
 	result := make([]float64, len(values))
 	for i, v := range values {
-		// Additive Gaussian noise (models thermal/shot read noise)
-		// sigma is constant, not proportional to signal
-		result[i] = v + rng.NormFloat64()*noiseLevel
+		// Multiplicative Gaussian noise: sigma scales with |v|
+		result[i] = v + rng.NormFloat64()*math.Abs(v)*noiseLevel
 	}
 	return result
 }

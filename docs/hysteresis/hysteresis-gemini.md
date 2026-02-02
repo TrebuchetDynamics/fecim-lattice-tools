@@ -404,7 +404,7 @@ are stored in `docs/research-papers/` when available.
 | **Zhou, S. et al. (2022)** Sci. Adv. 8, eadd5953 | Strain/phase stability supports depolarization‑field modeling in HZO. | `docs/research-papers/by-topic/01-ferroelectric-materials/Zhou_2022_Strain_induced_antipolar_phase.pdf` |
 | **Park, M. H., et al. (2019)** | Slanted loop / depolarization in HZO (citation ambiguous in legacy notes). | Not resolved yet; see `docs/research-papers/by-topic/01-ferroelectric-materials/README.md`. |
 | **Salahuddin & Datta (2008)** | Negative‑capacitance stack modeling (Edep = −kdep·P). | Paywalled (ACS); metadata only. |
-| **Jerry, M., et al. (2017)** | 32‑level FeFET analog states via partial switching. | Paywalled (IEEE IEDM); metadata only. |
+| **Jerry, M., et al. (2017)** | 32‑level FeFET analog states via partial switching. | `docs/research-papers/by-topic/01-ferroelectric-materials/Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf` (arXiv preprint). |
 | **Damjanovic, D. (1998)** | Rayleigh‑region linear analog response in ferroelectrics. | Paywalled (IOP); metadata only. |
 
 ---

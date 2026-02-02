@@ -19,6 +19,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/utils"
@@ -570,12 +571,8 @@ func (ma *MNISTApp) loadTestData() {
 	ma.updateStatus("LOADING | Loading test data...")
 	ma.operationLog.Add("Loading MNIST test data")
 
-	// Try to load from IDX files
-	testImagesPath := filepath.Join(ma.dataDir, "t10k-images-idx3-ubyte")
-	testLabelsPath := filepath.Join(ma.dataDir, "t10k-labels-idx1-ubyte")
-	debug.Printf("loadTestData: Trying to load from %s", testImagesPath)
-
-	images, labels, err := loadMNISTData(testImagesPath, testLabelsPath)
+	debug.Printf("loadTestData: Trying to load MNIST data from %s", ma.dataDir)
+	images, labels, err := mnist.LoadMNIST(ma.dataDir, false)
 	if err != nil {
 		// Fall back to generating synthetic data for demo
 		debug.Printf("loadTestData: MNIST not found (%v), using synthetic data", err)
@@ -654,7 +651,9 @@ func (ma *MNISTApp) evaluateNetwork() {
 
 	// Update hover info with evaluation summary
 	totalMACs := len(ma.testImages) * (784*128 + 128*10)
-	ma.hoverInfoLabel.SetText(fmt.Sprintf("Evaluated: %d MACs total", totalMACs))
+	fyne.Do(func() {
+		ma.hoverInfoLabel.SetText(fmt.Sprintf("Evaluated: %d MACs total", totalMACs))
+	})
 
 	// Log result
 	ma.operationLog.Add(fmt.Sprintf("Accuracy: %.1f%% on %d samples", accuracy*100, len(ma.testImages)))
@@ -685,59 +684,12 @@ func (ma *MNISTApp) onConfusionCellTapped(actual, predicted, count int) {
 
 // updateStatus updates the status label.
 func (ma *MNISTApp) updateStatus(status string) {
-	ma.statusLabel.SetText("Status: " + status)
-}
-
-// loadMNISTData loads MNIST data from IDX files.
-func loadMNISTData(imagesPath, labelsPath string) ([][]float64, []int, error) {
-	// Read images
-	imagesData, err := os.ReadFile(imagesPath)
-	if err != nil {
-		return nil, nil, err
+	if ma.statusLabel == nil {
+		return
 	}
-
-	// Read labels
-	labelsData, err := os.ReadFile(labelsPath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Parse images (IDX3 format)
-	if len(imagesData) < 16 {
-		return nil, nil, fmt.Errorf("images file too small")
-	}
-
-	// Skip 16-byte header
-	numImages := int(imagesData[4])<<24 | int(imagesData[5])<<16 | int(imagesData[6])<<8 | int(imagesData[7])
-	numRows := int(imagesData[8])<<24 | int(imagesData[9])<<16 | int(imagesData[10])<<8 | int(imagesData[11])
-	numCols := int(imagesData[12])<<24 | int(imagesData[13])<<16 | int(imagesData[14])<<8 | int(imagesData[15])
-
-	if numRows != 28 || numCols != 28 {
-		return nil, nil, fmt.Errorf("unexpected image dimensions: %dx%d", numRows, numCols)
-	}
-
-	imageSize := 28 * 28
-	images := make([][]float64, numImages)
-	for i := 0; i < numImages; i++ {
-		images[i] = make([]float64, imageSize)
-		offset := 16 + i*imageSize
-		for j := 0; j < imageSize && offset+j < len(imagesData); j++ {
-			images[i][j] = float64(imagesData[offset+j]) / 255.0
-		}
-	}
-
-	// Parse labels (IDX1 format)
-	if len(labelsData) < 8 {
-		return nil, nil, fmt.Errorf("labels file too small")
-	}
-
-	numLabels := int(labelsData[4])<<24 | int(labelsData[5])<<16 | int(labelsData[6])<<8 | int(labelsData[7])
-	labels := make([]int, numLabels)
-	for i := 0; i < numLabels && 8+i < len(labelsData); i++ {
-		labels[i] = int(labelsData[8+i])
-	}
-
-	return images, labels, nil
+	fyne.Do(func() {
+		ma.statusLabel.SetText("Status: " + status)
+	})
 }
 
 // generateSyntheticData creates simple synthetic digit patterns for demo.

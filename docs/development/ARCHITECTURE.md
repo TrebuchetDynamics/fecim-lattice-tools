@@ -317,6 +317,10 @@ Usage:
 - **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
 - **Logs**: `lk-solver` (equation terms) + `ispp` (write/verify loop) provide headless validation evidence.
 
+**Authoritative validation:** The headless hysteresis path (`--mode hysteresis`) is the **source of truth**
+for physics and ISPP correctness. GUI runs are illustrative; acceptance requires a headless log with
+`lk-solver` + `ispp` evidence.
+
 #### Material System
 
 Eight built-in materials with peer-reviewed parameters:
@@ -753,8 +757,9 @@ Auto-Mode / Manual Input
         └─ Statistics (Ec, Pr, ISPP success rate)
 ```
 
-**Headless mode shortcut:** `--mode hysteresis` bypasses the GUI and runs
+**Headless mode shortcut (authoritative):** `--mode hysteresis` bypasses the GUI and runs
 `FeCIMMaterial()` → `LKSolver.Step()` → `WriteController.WriteTargetWithReset()` with log output only.
+This is the acceptance gate for physics fidelity; the GUI path is not used for equation validation.
 
 ---
 

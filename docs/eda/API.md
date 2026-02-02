@@ -134,7 +134,7 @@ type ArrayConfig struct {
     Levels    int     // Conductance levels (default: 30)
 
     // Electrical parameters
-    GMin     float64 // Min conductance (μS, default: 1.0)
+    GMin     float64 // Min conductance (μS, default: 10.0)
     GMax     float64 // Max conductance (μS, default: 100.0)
     VProgMin float64 // Min programming voltage (V, default: 2.0)
     VProgMax float64 // Max programming voltage (V, default: 5.0)
@@ -323,8 +323,8 @@ export.ExportVerilogWithConfig(design, "output/crossbar.v", cfg)
 module fecim_crossbar (
     input  wire [1:0] WL,  // Word Lines (row select)
     inout  wire [1:0] BL,  // Bit Lines (column data)
-    input  wire       VDD, // Power supply
-    input  wire       VSS  // Ground
+    inout  wire       VPWR, // Power supply
+    inout  wire       VGND  // Ground
 );
 
     parameter ROWS = 2;
@@ -337,8 +337,8 @@ module fecim_crossbar (
     fecim_bit #(.LEVEL(15)) R_0_0 (
         .WL  (WL[0]),
         .BL  (BL[0]),
-        .VDD (VDD),
-        .VSS (VSS)
+        .VPWR (VPWR),
+        .VGND (VGND)
     );
 
     // ... more cells ...
@@ -374,7 +374,7 @@ type DEFConfig struct {
 - FIXED placement (locked for OpenLane injection)
 - ROW definitions for placement validation
 - PIN definitions for all port types
-- NET connectivity (WL[], BL[], SL[], CSL[], VDD, VSS)
+- NET connectivity (WL[], BL[], SL[], CSL[], VPWR, VGND)
 - Compatible with OpenROAD/OpenLane
 
 **Example:**

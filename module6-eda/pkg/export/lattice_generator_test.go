@@ -29,12 +29,12 @@ func TestGenerateLatticeVerilog_Basic(t *testing.T) {
 		t.Error("Missing BL port declaration")
 	}
 
-	// Check VDD/VSS
-	if !strings.Contains(verilog, "input  wire       VDD") {
-		t.Error("Missing VDD port")
+	// Check VPWR/VGND
+	if !strings.Contains(verilog, "inout  wire       VPWR") {
+		t.Error("Missing VPWR port")
 	}
-	if !strings.Contains(verilog, "input  wire       VSS") {
-		t.Error("Missing VSS port")
+	if !strings.Contains(verilog, "inout  wire       VGND") {
+		t.Error("Missing VGND port")
 	}
 
 	// Check endmodule
@@ -177,7 +177,7 @@ func TestGenerateLatticeDEF_DIEAREA(t *testing.T) {
 func TestGenerateLatticeDEF_Pins(t *testing.T) {
 	def := GenerateLatticeDEF(2, 2)
 
-	// Pins = rows + cols + 2 (VDD + VSS) = 2 + 2 + 2 = 6
+	// Pins = rows + cols + 2 (VPWR + VGND) = 2 + 2 + 2 = 6
 	if !strings.Contains(def, "PINS 6") {
 		t.Error("Should declare PINS 6")
 	}
@@ -193,7 +193,7 @@ func TestGenerateLatticeDEF_Pins(t *testing.T) {
 	}
 
 	// Check power pins
-	if !strings.Contains(def, "- VDD") || !strings.Contains(def, "- VSS") {
+	if !strings.Contains(def, "- VPWR") || !strings.Contains(def, "- VGND") {
 		t.Error("Missing power pins")
 	}
 
@@ -231,8 +231,8 @@ func TestGenerateLatticeDEF_Nets(t *testing.T) {
 	}
 
 	// Check power nets
-	if !strings.Contains(def, "- VDD") {
-		t.Error("Missing VDD net")
+	if !strings.Contains(def, "- VPWR") {
+		t.Error("Missing VPWR net")
 	}
 }
 
@@ -430,7 +430,7 @@ func TestGenerateLatticeDEF_SingleCell(t *testing.T) {
 		t.Error("Should have COMPONENTS 1")
 	}
 	if !strings.Contains(def, "PINS 4") {
-		t.Error("Should have PINS 4 (WL[0], BL[0], VDD, VSS)")
+		t.Error("Should have PINS 4 (WL[0], BL[0], VPWR, VGND)")
 	}
 }
 

@@ -136,11 +136,15 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	var totalEnergy float64
 
 	// ADC/DAC overhead energy
-	// DAC: 0.1 pJ per conversion (784 inputs)
-	// ADC: 0.5 pJ per conversion (128 hidden + 10 output = 138)
-	dacEnergy := float64(net.InputSize) * 0.1e-12     // 784 * 0.1 pJ = 78.4 pJ
-	adcEnergy := float64(net.HiddenSize+net.OutputSize) * 0.5e-12 // 138 * 0.5 pJ = 69 pJ
-	adcDacOverhead := (dacEnergy + adcEnergy) * 1e6   // Convert to μJ
+	// DAC: 0.1 pJ per conversion (one per input)
+	// ADC: 0.5 pJ per conversion (one per layer output)
+	dacEnergy := float64(net.InputSize) * 0.1e-12 // 784 * 0.1 pJ = 78.4 pJ
+	adcCount := net.HiddenSize + net.OutputSize
+	if net.Config.SingleLayer {
+		adcCount = net.OutputSize
+	}
+	adcEnergy := float64(adcCount) * 0.5e-12
+	adcDacOverhead := (dacEnergy + adcEnergy) * 1e6 // Convert to μJ
 
 	if net.Config.SingleLayer {
 		// Single layer uses Layer1Levels (or NumLevels if not per-layer)

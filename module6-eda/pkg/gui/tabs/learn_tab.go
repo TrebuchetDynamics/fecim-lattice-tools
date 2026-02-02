@@ -200,7 +200,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 
 	// Stack diagrams vertically (not side-by-side to fit 600px scroll)
 	passiveTitle := widget.NewLabelWithStyle("Passive Crossbar", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	passiveDesc := widget.NewLabel(`Ports: WL[], BL[], VDD, VSS | Cell Size: 0.46 x 2.72 um (SKY130 site)
+passiveDesc := widget.NewLabel(`Ports: WL[], BL[], VPWR, VGND | Cell Size: 0.46 x 2.72 um (SKY130 site)
 + Simple, dense packing | + Lower fabrication complexity
 - SNEAK PATH CURRENTS | - Limited to small arrays (~32x32)`)
 	passiveDesc.Wrapping = fyne.TextWrapWord
@@ -210,7 +210,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 	passiveDiagramContainer := sizedContainer(IsometricCrossbar(3, 3, true), 450, 400)
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VDD, VSS | Cell Size: 0.92 x 2.72 um (2x width)
+oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VPWR, VGND | Cell Size: 0.92 x 3.40 um (2x width)
 + No sneak paths (transistor isolates) | + Scales to 128x128+ arrays
 - Larger cell area (2x) | - More complex routing`)
 	oneToneRDesc.Wrapping = fyne.TextWrapWord

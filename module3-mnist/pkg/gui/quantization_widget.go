@@ -13,8 +13,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // QuantizationSample represents a single weight before and after quantization.
@@ -25,8 +23,8 @@ type QuantizationSample struct {
 	Error          float64 // Absolute quantization error
 }
 
-// QuantizationWidget visualizes the 30-level quantization process in real-time.
-// This is the key educational widget showing why FeCIM's 30 levels matter.
+// QuantizationWidget visualizes the N-level quantization process in real-time.
+// This is the key educational widget showing why FeCIM's discrete levels matter.
 type QuantizationWidget struct {
 	widget.BaseWidget
 
@@ -74,6 +72,21 @@ func (qw *QuantizationWidget) UpdateWithWeights(weights [][]float64, count int) 
 	qw.mu.Lock()
 	defer qw.mu.Unlock()
 
+	levels := qw.numLevels
+	if levels < 2 {
+		levels = 2
+	}
+
+	// Determine max magnitude (same as core.QuantizeWeights)
+	wMax := 0.0
+	for i := range weights {
+		for j := range weights[i] {
+			if abs := math.Abs(weights[i][j]); abs > wMax {
+				wMax = abs
+			}
+		}
+	}
+
 	// Sample random weights
 	rows := len(weights)
 	cols := len(weights[0])
@@ -97,17 +110,23 @@ func (qw *QuantizationWidget) UpdateWithWeights(weights [][]float64, count int) 
 
 		original := weights[row][col]
 
-		// Normalize to [0,1] for quantization
-		// Weights typically range from -1 to 1, so map to 0-1
-		normalized := (original + 1.0) / 2.0
-		normalized = math.Max(0, math.Min(1, normalized))
-
-		// Quantize using crossbar function
-		quantized := crossbar.QuantizeToLevels(normalized)
-		level := crossbar.GetLevel(quantized)
-
-		// Map back to original range
-		quantizedOriginal := quantized*2.0 - 1.0
+		// Quantize using the same symmetric mapping as core.QuantizeWeights
+		level := 0
+		quantizedOriginal := 0.0
+		if wMax > 0 {
+			normalized := (original + wMax) / (2.0 * wMax)
+			normalized = math.Max(0, math.Min(1, normalized))
+			bin := int(math.Round(normalized * float64(levels-1)))
+			if bin < 0 {
+				bin = 0
+			}
+			if bin >= levels {
+				bin = levels - 1
+			}
+			level = bin
+			levelStep := 2.0 * wMax / float64(levels-1)
+			quantizedOriginal = -wMax + float64(bin)*levelStep
+		}
 
 		absError := math.Abs(original - quantizedOriginal)
 		relError := 0.0

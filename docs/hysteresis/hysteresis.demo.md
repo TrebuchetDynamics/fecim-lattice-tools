@@ -217,6 +217,13 @@ write‑verify logic, but in **conductance space** rather than discrete levels.
 sequence (`pos-1`, `pos-2`, `neg-1`) to confirm end‑to‑end ISPP convergence across
 positive and negative branches without forcing a full reset between each step.
 
+**Authoritative validation (headless‑first):** Headless mode is the acceptance gate
+for physics + ISPP correctness. Run `./launch.sh --logger --verbosity debug --mode hysteresis`
+and confirm:
+- `lk-solver` logs include `E_applied`, `E_dep`, `E_eff`, `dG_dP`, `rho_eff`, `Alpha`, `Beta`, `Gamma`, `K_dep`.
+- `ispp` logs show `Predict → WritePulse → Verify → (Adjust/Overshoot)` sequences per step.
+GUI runs are **illustrative only**; physics verification is done headlessly.
+
 ### Key Parameters (HZO Materials)
 
 | Parameter | Default HZO | Optimized | FeCIM |

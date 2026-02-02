@@ -1,7 +1,7 @@
 # MNIST Module Architecture
 
 **Version:** 1.0
-**Date:** 2026-01-27
+**Date:** 2026-02-02
 
 This document describes the architecture of the MNIST module (`module3-mnist/`), which implements dual-path neural network inference comparing ideal floating-point (FP) computation with realistic Ferroelectric Compute-in-Memory (FeCIM) hardware simulation.
 
@@ -99,6 +99,8 @@ Configuration for CIM inference behavior.
 | `NoiseLevel` | float64 | Noise coefficient σ/μ (0.0-0.20) |
 | `ADCBits` | int | ADC resolution (3-16 bits) |
 | `DACBits` | int | DAC resolution (3-16 bits) |
+| `EnableSneak` | bool | Sneak-path simulation flag (reserved for future non-idealities) |
+| `IRDrop` | bool | IR-drop simulation flag (reserved for future non-idealities) |
 | `SingleLayer` | bool | Use 784→10 architecture |
 | `PerLayerQuant` | bool | Enable per-layer quantization |
 | `Layer1Levels` | int | Layer 1 quantization levels |
@@ -111,11 +113,13 @@ Result container for dual-path inference.
 ```go
 type InferenceResult struct {
     // FP Path
+    FPLogits        []float64 // Pre-softmax logits
     FPPrediction    int       // Predicted digit (0-9)
     FPConfidence    float64   // Confidence (0-1)
     FPProbabilities []float64 // All class probabilities
 
     // CIM Path
+    CIMLogits        []float64
     CIMPrediction    int
     CIMConfidence    float64
     CIMProbabilities []float64
@@ -124,6 +128,10 @@ type InferenceResult struct {
     Agree        bool    // Do predictions match?
     Disagreement float64 // KL divergence
     EnergyUsed   float64 // Energy in μJ
+
+    // Intermediate activations (for visualization)
+    FPHidden  []float64 // Hidden layer activations (nil in single-layer mode)
+    CIMHidden []float64
 }
 ```
 
@@ -229,14 +237,15 @@ Weight File (JSON)
 
 ### 1. Quantization (`pkg/core/quantize.go`)
 
-Converts continuous weights to discrete FeCIM levels.
+Converts continuous weights to discrete FeCIM levels using symmetric range mapping.
 
 ```go
-// QuantizeTo30Levels maps [0,1] → one of 30 discrete levels
-func QuantizeTo30Levels(value float64) float64 {
-    level := int(math.Round(value * 29))
-    return float64(level) / 29.0
-}
+// QuantizeWeights maps [-Wmax, +Wmax] → N discrete levels (symmetric)
+normalized := (w + wMax) / (2.0 * wMax)
+bin := int(math.Round(normalized * float64(levels-1)))
+bin = clamp(bin, 0, levels-1)
+levelStep := 2.0 * wMax / float64(levels-1)
+quantized := -wMax + float64(bin)*levelStep
 ```
 
 ### 2. ADC/DAC Simulation (`pkg/core/network_inference.go`)
@@ -246,11 +255,12 @@ func QuantizeTo30Levels(value float64) float64 {
 // quantizeADC: Output current quantization (N-bit)
 ```
 
-### 3. Noise Injection (`pkg/core/network.go`)
+### 3. Noise Injection (`pkg/core/quantize.go`)
 
 ```go
-// safeNoise: Thread-safe Gaussian noise injection
-// Models device-to-device and cycle-to-cycle variation
+// AddGaussianNoise: σ/μ multiplicative noise
+// noiseLevel scales with |value| to model device/read variability
+result[i] = v + rng.NormFloat64()*math.Abs(v)*noiseLevel
 ```
 
 ---
@@ -294,15 +304,16 @@ func (net *DualModeNetwork) safeNoise(values []float64, level float64) []float64
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `FECIM_DEBUG_SEED` | Fixed RNG seed for reproducible training | `42` |
+| `FECIM_DEBUG_SEED` | Fixed RNG seed for reproducible training + inference noise | `42` |
 
 ### Weight Files
 
-Located in `module3-mnist/weights/`:
+Located in `module3-mnist/data/`:
 
-- `mnist_weights_30lvl.json` - Standard 30-level QAT weights
-- `mnist_weights_10lvl.json` - 10-level QAT weights
-- `mnist_weights_20lvl.json` - 20-level QAT weights
+- `pretrained_weights.json` - Default 30-level weights
+- `pretrained_weights_{N}.json` - Optional QAT/PTQ weights for specific levels
+- `pretrained_weights_ptq.json` - PTQ fallback (if present)
+- `single_layer_weights.json` - Optional 784→10 weights
 
 ### Data Files
 
@@ -317,7 +328,7 @@ Located in `module3-mnist/data/`:
 
 ## References
 
-- [FeCIM Honesty Audit](../../docs/cim/HONESTY_AUDIT.md) - Verified claims and sources
+- [FeCIM Honesty Audit](../../docs/comparison/HONESTY_AUDIT.md) - Verified claims and sources
 - [MNIST Fixes TODO](mnist.fixes.todo.md) - Issue tracking
 - [Development Reference](../development/scriptReference.md) - Code patterns
 

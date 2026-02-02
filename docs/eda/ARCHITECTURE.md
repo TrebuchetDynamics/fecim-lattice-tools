@@ -195,14 +195,14 @@ module fecim_crossbar (
     input wire [rows-1:0] WL,
     inout wire [cols-1:0] BL,
     input wire [cols-1:0] SL,  // 1T1R only
-    input wire VDD, VSS
+    inout wire VPWR, VGND
 );
     parameter ROWS = N;
     parameter COLS = M;
     parameter LEVELS = 30;
     parameter MODE = "Compute";
 
-    fecim_bit #(.LEVEL(5)) R_0_0 (.WL(WL[0]), .BL(BL[0]), .VDD(VDD), .VSS(VSS));
+    fecim_bit #(.LEVEL(5)) R_0_0 (.WL(WL[0]), .BL(BL[0]), .VPWR(VPWR), .VGND(VGND));
     // ... more cells
 endmodule
 ```
@@ -215,7 +215,7 @@ endmodule
 
 #### LEF Export (lef.go)
 - MACRO definition (cell abstraction)
-- PIN declarations (WL, BL, SL, VDD, VSS)
+- PIN declarations (WL, BL, SL, VPWR, VGND)
 - LAYER definitions (metal1, poly)
 - Geometry: PORT and OBS (obstruction) statements
 

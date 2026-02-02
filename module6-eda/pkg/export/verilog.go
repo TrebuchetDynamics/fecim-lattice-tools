@@ -106,8 +106,8 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] SL,  // Source Lines (2T1R: transistor source)\n", numCols-1))
 		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] CSL, // Column Select Lines (2T1R: column select transistor)\n", numCols-1))
 	}
-	sb.WriteString("    input  wire       VDD, // Power supply\n")
-	sb.WriteString("    input  wire       VSS  // Ground\n")
+	sb.WriteString("    inout  wire       VPWR, // Power supply\n")
+	sb.WriteString("    inout  wire       VGND  // Ground\n")
 	sb.WriteString(");\n\n")
 
 	// Parameters for documentation
@@ -146,8 +146,8 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 			sb.WriteString(fmt.Sprintf("        .SL  (SL[%d]),\n", cell.Col))
 			sb.WriteString(fmt.Sprintf("        .CSL (CSL[%d]),\n", cell.Col))
 		}
-		sb.WriteString("        .VDD (VDD),\n")
-		sb.WriteString("        .VSS (VSS)\n")
+		sb.WriteString("        .VPWR (VPWR),\n")
+		sb.WriteString("        .VGND (VGND)\n")
 		sb.WriteString("    );\n\n")
 	}
 

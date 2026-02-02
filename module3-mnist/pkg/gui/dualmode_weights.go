@@ -517,7 +517,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 			}
 		}
 		rangeMsg := fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax)
-		levelsMsg := fmt.Sprintf("Levels: %d/30", len(distinctMap))
+		levelsMsg := fmt.Sprintf("Levels: %d/%d", len(distinctMap), app.network().GetNumLevels())
 		fyne.Do(func() {
 			app.weightRangeLabel.SetText(rangeMsg)
 			app.weightLevelsLabel.SetText(levelsMsg)

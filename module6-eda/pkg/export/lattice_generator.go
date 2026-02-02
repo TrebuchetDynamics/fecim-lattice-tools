@@ -27,8 +27,8 @@ func GenerateLatticeVerilog(rows, cols int) string {
 	sb.WriteString(fmt.Sprintf("module lattice_%dx%d (\n", rows, cols))
 	sb.WriteString(fmt.Sprintf("    input  wire [%d:0] WL,  // Word Lines\n", rows-1))
 	sb.WriteString(fmt.Sprintf("    inout  wire [%d:0] BL,  // Bit Lines\n", cols-1))
-	sb.WriteString("    input  wire       VDD,\n")
-	sb.WriteString("    input  wire       VSS\n")
+	sb.WriteString("    inout  wire       VPWR,\n")
+	sb.WriteString("    inout  wire       VGND\n")
 	sb.WriteString(");\n\n")
 
 	// Cell instantiations
@@ -39,8 +39,8 @@ func GenerateLatticeVerilog(rows, cols int) string {
 			sb.WriteString(fmt.Sprintf("    fecim_bit %s (\n", instanceName))
 			sb.WriteString(fmt.Sprintf("        .WL  (WL[%d]),\n", row))
 			sb.WriteString(fmt.Sprintf("        .BL  (BL[%d]),\n", col))
-			sb.WriteString("        .VDD (VDD),\n")
-			sb.WriteString("        .VSS (VSS)\n")
+			sb.WriteString("        .VPWR (VPWR),\n")
+			sb.WriteString("        .VGND (VGND)\n")
 			sb.WriteString("    );\n\n")
 		}
 	}
@@ -106,7 +106,7 @@ func GenerateLatticeDEF(rows, cols int) string {
 	sb.WriteString("\n")
 
 	// Pins section
-	numPins := rows + cols + 2 // WL + BL + VDD + VSS
+	numPins := rows + cols + 2 // WL + BL + VPWR + VGND
 	sb.WriteString(fmt.Sprintf("PINS %d ;\n", numPins))
 
 	// Word Line pins (left edge)
@@ -126,10 +126,10 @@ func GenerateLatticeDEF(rows, cols int) string {
 	}
 
 	// Power pins
-	sb.WriteString("    - VDD + NET VDD + DIRECTION INPUT + USE POWER\n")
+	sb.WriteString("    - VPWR + NET VPWR + DIRECTION INPUT + USE POWER\n")
 	sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( %d 160 ) + FIXED ( 0 %d ) N ;\n",
 		dieWidthDBU, dieHeightDBU-160))
-	sb.WriteString("    - VSS + NET VSS + DIRECTION INPUT + USE GROUND\n")
+	sb.WriteString("    - VGND + NET VGND + DIRECTION INPUT + USE GROUND\n")
 	sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( %d 160 ) + FIXED ( 0 0 ) N ;\n", dieWidthDBU))
 
 	sb.WriteString("END PINS\n")
@@ -160,18 +160,18 @@ func GenerateLatticeDEF(rows, cols int) string {
 	}
 
 	// Power nets
-	sb.WriteString("    - VDD ( PIN VDD )")
+	sb.WriteString("    - VPWR ( PIN VPWR )")
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
-			sb.WriteString(fmt.Sprintf(" ( cell_%d_%d VDD )", row, col))
+			sb.WriteString(fmt.Sprintf(" ( cell_%d_%d VPWR )", row, col))
 		}
 	}
 	sb.WriteString(" ;\n")
 
-	sb.WriteString("    - VSS ( PIN VSS )")
+	sb.WriteString("    - VGND ( PIN VGND )")
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
-			sb.WriteString(fmt.Sprintf(" ( cell_%d_%d VSS )", row, col))
+			sb.WriteString(fmt.Sprintf(" ( cell_%d_%d VGND )", row, col))
 		}
 	}
 	sb.WriteString(" ;\n")

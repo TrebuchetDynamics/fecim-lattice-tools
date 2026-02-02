@@ -13,6 +13,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,7 +65,7 @@ func main() {
 
 	// Electrical parameters
 	vdd := flag.Float64("vdd", 1.8, "Supply voltage (V)")
-	gmin := flag.Float64("gmin", 1.0, "Min conductance (μS)")
+	gmin := flag.Float64("gmin", 10.0, "Min conductance (μS)")
 	gmax := flag.Float64("gmax", 100.0, "Max conductance (μS)")
 
 	// Export options
@@ -134,7 +135,7 @@ func main() {
 	logging.Printf("  Array Size:   %d × %d (%d cells)\n", config.ArrayRows, config.ArrayCols, config.ArrayRows*config.ArrayCols)
 	logging.Printf("  Technology:   %s\n", config.Technology)
 	logging.Printf("  Architecture: %s\n", config.Architecture)
-	logging.Printf("  Levels:       %d (%.2f bits/cell)\n", config.Levels, float64(config.Levels)/6.0)
+	logging.Printf("  Levels:       %d (%.2f bits/cell)\n", config.Levels, math.Log2(float64(config.Levels)))
 	logging.Printf("  Conductance:  %.1f - %.1f μS\n", config.GMin, config.GMax)
 	if opMode == compiler.ModeCompute && config.ComputeConfig.InitialWeights != nil {
 		logging.Printf("  Weights:      %dx%d loaded\n",

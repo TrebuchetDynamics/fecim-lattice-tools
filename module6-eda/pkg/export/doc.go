@@ -46,8 +46,8 @@
 // Both passive crossbar and 1T1R architectures are supported. The architecture
 // affects cell instantiation in Verilog and placement pitch in DEF:
 //
-//   - Passive: fecim_bit cells with WL, BL, VDD, VSS pins
-//   - 1T1R: fecim_1t1r cells with WL, BL, SL, VDD, VSS pins
+//   - Passive: fecim_bit cells with WL, BL, VPWR, VGND pins
+//   - 1T1R: fecim_1t1r cells with WL, BL, SL, VPWR, VGND pins
 //
 // # Usage Example
 //

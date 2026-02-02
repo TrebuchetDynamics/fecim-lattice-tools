@@ -36,7 +36,7 @@ func Compile(weights [][]float64) []CellAssignment {
 	// Compile each weight to a cell
 	var cells []CellAssignment
 	levels := 30
-	gMin, gMax := 1.0, 100.0 // μS
+	gMin, gMax := 10.0, 100.0 // μS
 
 	for i, row := range weights {
 		for j, w := range row {
@@ -104,5 +104,5 @@ func main() {
 	fmt.Println("=== COMPILATION SUCCESSFUL ===")
 	fmt.Printf("Total cells: %d\n", len(cells))
 	fmt.Printf("Levels used: 30 (FeCIM standard)\n")
-	fmt.Printf("Conductance range: 1.0 - 100.0 μS\n")
+	fmt.Printf("Conductance range: 10.0 - 100.0 μS\n")
 }

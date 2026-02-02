@@ -181,7 +181,7 @@ func NewArrayConfig(mode OperationMode, rows, cols int) *ArrayConfig {
 		CellPitch:    0.46,  // SKY130 compatible
 		RowHeight:    2.72,  // SKY130 standard cell height
 		Levels:       30,    // FeCIM standard
-		GMin:         1.0,   // μS
+		GMin:         10.0,  // μS
 		GMax:         100.0, // μS
 		VProgMin:     2.0,   // V
 		VProgMax:     5.0,   // V
@@ -241,6 +241,7 @@ func NewComputeConfig(rows, cols int) *ArrayConfig {
 func (c *ArrayConfig) With1T1R() *ArrayConfig {
 	c.Architecture = Arch1T1R
 	c.CellPitch = 0.92 // Larger cell for transistor
+	c.RowHeight = 3.40 // Taller for transistor + FeFET stack
 	return c
 }
 
