@@ -308,23 +308,44 @@ func buildGoldenSetSection() fyne.CanvasObject {
 
 func buildMaterialDefaultsSection() fyne.CanvasObject {
 	mat := physics.FeCIMMaterial()
+	coerciveV := mat.CoerciveVoltage()
+	capacitance := mat.Capacitance()
+	switchEnergy := mat.SwitchingEnergy()
 	rows := [][]string{
 		{"Parameter", "Value"},
-		{"Pr", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Pr, mat.Pr*100)},
-		{"Ps", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Ps, mat.Ps*100)},
-		{"Ec", fmt.Sprintf("%.2f MV/cm", mat.Ec/1e8)},
-		{"Thickness", fmt.Sprintf("%.0f nm", mat.Thickness*1e9)},
-		{"Area", fmt.Sprintf("%.0f nm^2", mat.Area*1e18)},
+		{"Pr (remanent polarization)", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Pr, mat.Pr*100)},
+		{"Ps (saturation polarization)", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Ps, mat.Ps*100)},
+		{"Ec (coercive field)", fmt.Sprintf("%.2f MV/cm", mat.Ec/1e8)},
+		{"Vc (coercive voltage)", fmt.Sprintf("%.2f V (Ec * t)", coerciveV)},
+		{"Thickness (t)", fmt.Sprintf("%.0f nm", mat.Thickness*1e9)},
+		{"Area (A)", fmt.Sprintf("%.0f nm^2", mat.Area*1e18)},
+		{"Capacitance (C)", fmt.Sprintf("%.2f fF", capacitance*1e15)},
 		{"Tau (pulse width)", fmt.Sprintf("%.0f ns", mat.Tau*1e9)},
+		{"Tau0 (attempt time)", fmt.Sprintf("%.0f ps", mat.Tau0*1e12)},
+		{"Ea (activation energy)", fmt.Sprintf("%.2f eV", mat.Ea)},
+		{"Alpha (KAI exponent)", fmt.Sprintf("%.2f", mat.Alpha)},
+		{"Tau0NLS (Merz attempt)", fmt.Sprintf("%.0f ps", mat.Tau0NLS*1e12)},
+		{"EaNLS (Merz field)", fmt.Sprintf("%.1f MV/cm", mat.EaNLS/1e8)},
+		{"SwitchingEnergy", fmt.Sprintf("%.2f fJ", switchEnergy*1e15)},
+		{"Epsilon (relative)", fmt.Sprintf("%.0f", mat.Epsilon)},
+		{"EpsilonLF (low freq)", fmt.Sprintf("%.0f", mat.EpsilonLF)},
+		{"LossAngle (tan delta)", fmt.Sprintf("%.3f", mat.LossAngle)},
 		{"BetaLandau", fmt.Sprintf("%.3e J*m^5/C^4", mat.BetaLandau)},
 		{"GammaLandau", fmt.Sprintf("%.3e J*m^9/C^6", mat.GammaLandau)},
 		{"RhoViscosity", fmt.Sprintf("%.2f Ohm*m", mat.RhoViscosity)},
 		{"SeriesResistance", fmt.Sprintf("%.0f Ohm", mat.SeriesResistanceOhm)},
 		{"K_dep", fmt.Sprintf("%.2e V*m/C", mat.K_dep)},
+		{"Q11", fmt.Sprintf("%.3f m^4/C^2", mat.Q11)},
 		{"Q12", fmt.Sprintf("%.3f m^4/C^2", mat.Q12)},
 		{"Stress", fmt.Sprintf("%.1f GPa", mat.StressGPa)},
 		{"CurieTemp", fmt.Sprintf("%.0f K", mat.CurieTemp)},
 		{"CurieConst", fmt.Sprintf("%.1e K", mat.CurieConst)},
+		{"TempCoeffEc", fmt.Sprintf("%.2e V/m/K", mat.TempCoeffEc)},
+		{"TempCoeffPr", fmt.Sprintf("%.2e C/m^2/K", mat.TempCoeffPr)},
+		{"EnduranceCycles", fmt.Sprintf("%.1e cycles", mat.EnduranceCycles)},
+		{"RetentionTime", fmt.Sprintf("%.1e s", mat.RetentionTime)},
+		{"ImprintField", fmt.Sprintf("%.2e V/m", mat.ImrintField)},
+		{"NumLevels", fmt.Sprintf("%d", mat.GetNumLevels())},
 		{"Gmin/Gmax", fmt.Sprintf("%.0f / %.0f uS", mat.Gmin*1e6, mat.Gmax*1e6)},
 	}
 
