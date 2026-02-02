@@ -103,11 +103,11 @@ func DefaultHalfSelectConfig() *HalfSelectConfig
 
 ## Quantization
 
-The crossbar uses 30 discrete analog levels (representing 4.9 bits per cell) to model ferroelectric switching. All weight values are automatically quantized to these levels.
+The crossbar uses a 30-level baseline (representing ~4.9 bits per cell, conference claim; pending peer review) to model ferroelectric switching. All weight values are automatically quantized to these levels.
 
 ### QuantizeToLevels
 
-Quantizes a floating-point value to one of 30 discrete levels (0-29).
+Quantizes a floating-point value to one of 30 discrete levels (0-29) in the demo baseline.
 
 **Signature:**
 ```go
@@ -1590,4 +1590,3 @@ for tech, stats := range results {
 - 0T1R and 1T1R architectures have different sneak/IR drop characteristics
 - Drift coefficient for FeFET is estimated (not directly measured) from retention requirements
 - Process variation combines random device variation with spatial gradients
-
