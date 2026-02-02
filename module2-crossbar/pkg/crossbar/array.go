@@ -323,7 +323,7 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 }
 
 // QuantizeToLevels quantizes a value to exactly discrete levels (0-29).
-// This matches the standard 30 discrete analog states.
+// This matches the demo 30-level baseline (conference claim).
 // Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
 	quantized := physics.QuantizeTo30Levels(value)
