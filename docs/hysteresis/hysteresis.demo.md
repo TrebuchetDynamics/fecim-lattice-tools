@@ -191,6 +191,7 @@ The WRD controller now recalibrates **during runtime** when convergence is poor:
 
 - **Field bounds**: `VMin ≥ 0`, `VMax ≤ MaxField`.
 - **Overshoot reset**: uses a **deep reset** of `±1.5 × MaxField` with sign based on direction.
+- **Reset direction**: locked at overshoot detection to prevent sign flips during reset; next pulse sign is re-derived from target vs. current.
 - **Retry limit**: `MaxRetries = 50` (configurable).
 - **Directionality**: pulse sign derives from target vs. current level (and target branch when reset).
 - **Overshoot detection**: compares the last verified level to the post‑pulse level using the pulse direction to detect true crossings.

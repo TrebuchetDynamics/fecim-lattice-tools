@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"image/color"
 	"log"
+	"math"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -27,6 +31,7 @@ type TermChip struct {
 	label        *widget.Label
 	tooltipPopup *widget.PopUp
 	tooltipLabel *widget.Label
+	tooltipBody  *fyne.Container
 }
 
 // NewTermChip creates a new term chip with hover tooltip text.
@@ -71,9 +76,14 @@ func (t *TermChip) showTooltip(e *desktop.MouseEvent) {
 	} else {
 		t.tooltipLabel.SetText(t.tooltip)
 	}
-	if t.tooltipPopup == nil {
-		t.tooltipPopup = widget.NewPopUp(container.NewPadded(t.tooltipLabel), t.parent.Canvas())
+	popupSize := sizeTooltip(t.tooltipLabel, t.tooltip, tooltipMaxWidth)
+	if t.tooltipBody == nil {
+		t.tooltipBody = container.NewPadded(t.tooltipLabel)
 	}
+	if t.tooltipPopup == nil {
+		t.tooltipPopup = widget.NewPopUp(t.tooltipBody, t.parent.Canvas())
+	}
+	t.tooltipPopup.Resize(popupSize)
 	pos := fyne.NewPos(e.AbsolutePosition.X+10, e.AbsolutePosition.Y+10)
 	t.tooltipPopup.ShowAtPosition(pos)
 }
@@ -193,6 +203,7 @@ type Hotspot struct {
 	tooltip      string
 	tooltipPopup *widget.PopUp
 	tooltipLabel *widget.Label
+	tooltipBody  *fyne.Container
 	debug        bool
 }
 
@@ -265,9 +276,14 @@ func (h *Hotspot) showTooltipAt(pos fyne.Position) {
 	} else {
 		h.tooltipLabel.SetText(h.tooltip)
 	}
-	if h.tooltipPopup == nil {
-		h.tooltipPopup = widget.NewPopUp(container.NewPadded(h.tooltipLabel), h.parent.Canvas())
+	popupSize := sizeTooltip(h.tooltipLabel, h.tooltip, tooltipMaxWidth)
+	if h.tooltipBody == nil {
+		h.tooltipBody = container.NewPadded(h.tooltipLabel)
 	}
+	if h.tooltipPopup == nil {
+		h.tooltipPopup = widget.NewPopUp(h.tooltipBody, h.parent.Canvas())
+	}
+	h.tooltipPopup.Resize(popupSize)
 	h.tooltipPopup.ShowAtPosition(fyne.NewPos(pos.X+10, pos.Y+10))
 }
 
@@ -293,10 +309,16 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 		hotspotWidgets = append(hotspotWidgets, NewHotspot(parent, spot.Tooltip, debug))
 	}
 
-	image := canvas.NewImageFromFile(svgPath)
+	image := loadFrankesteinEquationSVG(svgPath)
 	image.FillMode = canvas.ImageFillContain
 	if minSize.Width > 0 && minSize.Height > 0 {
-		image.SetMinSize(minSize)
+		canvasSize := parent.Canvas().Size()
+		targetWidth := minSize.Width
+		if canvasSize.Width > 0 {
+			targetWidth = canvasSize.Width * 0.85
+		}
+		scale := targetWidth / minSize.Width
+		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
 	}
 
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
@@ -310,6 +332,86 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 		stack,
 		caption,
 	)
+}
+
+const tooltipMaxWidth float32 = 320
+
+func sizeTooltip(label *widget.Label, text string, maxWidth float32) fyne.Size {
+	textSize := theme.TextSize()
+	style := label.TextStyle
+	lineHeight := fyne.MeasureText("M", textSize, style).Height
+	if maxWidth <= 0 {
+		maxWidth = 280
+	}
+
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return paddedSize(maxWidth, lineHeight)
+	}
+
+	spaceWidth := fyne.MeasureText(" ", textSize, style).Width
+	lines := 1
+	lineWidth := float32(0)
+
+	for _, word := range words {
+		wordWidth := fyne.MeasureText(word, textSize, style).Width
+		if lineWidth == 0 {
+			if wordWidth > maxWidth {
+				extraLines := int(math.Ceil(float64(wordWidth/maxWidth))) - 1
+				if extraLines > 0 {
+					lines += extraLines
+				}
+				lineWidth = float32(math.Mod(float64(wordWidth), float64(maxWidth)))
+				if lineWidth == 0 {
+					lineWidth = maxWidth
+				}
+			} else {
+				lineWidth = wordWidth
+			}
+			continue
+		}
+
+		if lineWidth+spaceWidth+wordWidth <= maxWidth {
+			lineWidth += spaceWidth + wordWidth
+			continue
+		}
+
+		lines++
+		if wordWidth > maxWidth {
+			extraLines := int(math.Ceil(float64(wordWidth/maxWidth))) - 1
+			if extraLines > 0 {
+				lines += extraLines
+			}
+			lineWidth = float32(math.Mod(float64(wordWidth), float64(maxWidth)))
+			if lineWidth == 0 {
+				lineWidth = maxWidth
+			}
+		} else {
+			lineWidth = wordWidth
+		}
+	}
+
+	label.Resize(fyne.NewSize(maxWidth, float32(lines)*lineHeight))
+	return paddedSize(maxWidth, float32(lines)*lineHeight)
+}
+
+func paddedSize(width, height float32) fyne.Size {
+	padding := theme.Padding()
+	return fyne.NewSize(width+padding*2, height+padding*2)
+}
+
+func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
+	data, err := os.ReadFile(svgPath)
+	if err != nil {
+		return canvas.NewImageFromFile(svgPath)
+	}
+	white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+	recolored, err := canvas.RecolorSVG(data, white)
+	if err != nil {
+		recolored = data
+	}
+	resource := fyne.NewStaticResource(filepath.Base(svgPath), recolored)
+	return canvas.NewImageFromResource(resource)
 }
 
 func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {

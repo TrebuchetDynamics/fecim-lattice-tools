@@ -85,6 +85,7 @@ type WriteController struct {
 	// Overshoot tracking (for autonomous recalibration)
 	OvershootCount int // Overshoots in current target cycle
 	OvershootTotal int // Overshoots across runtime
+	resetDirection int // Sticky reset direction after overshoot (-1 or +1)
 
 	// Binary Search State (for ISPP)
 	VMin float64 // Lower bound of safe voltage (won't overshoot)
@@ -121,6 +122,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.LastError = 0
 	wc.previousLevel = 0
 	wc.previousField = 0
+	wc.resetDirection = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -208,13 +210,16 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// Determine reset polarity based on direction
 		// If we were going UP and overshot, we are stuck High. Reset Low (-Max).
 		// If we were going DOWN and overshot, we are stuck Low. Reset High (+Max).
-		resetDir := wc.directionToTarget(currentLevel)
+		resetDir := wc.resetDirection
 		if resetDir == 0 {
-			// Fall back to last pulse direction if we're exactly on target.
-			if pulseDirection(wc.CurrentField) >= 0 {
-				resetDir = -1
-			} else {
-				resetDir = 1
+			resetDir = wc.directionToTarget(currentLevel)
+			if resetDir == 0 {
+				// Fall back to last pulse direction if we're exactly on target.
+				if pulseDirection(wc.CurrentField) >= 0 {
+					resetDir = -1
+				} else {
+					resetDir = 1
+				}
 			}
 		}
 		if resetDir < 0 {
@@ -244,8 +249,12 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.VMin = 0 // Reset to safe baseline
 			wc.CurrentField = (wc.VMin + wc.VMax) / 2.0
 
-			// Apply sign based on direction
-			if resetDir < 0 {
+			// Apply sign based on next target direction (not reset direction).
+			nextDir := wc.directionToTarget(currentLevel)
+			if nextDir == 0 {
+				nextDir = -resetDir
+			}
+			if nextDir < 0 {
 				wc.CurrentField = -wc.CurrentField
 			}
 
@@ -254,6 +263,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.InitialLevel = currentLevel
 
 			wc.PulseCount++
+			wc.resetDirection = 0
 			log.Printf("ISPP RESET DONE. Binary search: VMax=%.3f×Ec (failed), VMin=%.3f×Ec, trying E=%.3f×Ec",
 				wc.VMax/wc.EcField, wc.VMin/wc.EcField, wc.CurrentField/wc.EcField)
 		}
@@ -308,6 +318,11 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			if overshoot {
 				wc.OvershootCount++
 				wc.OvershootTotal++
+				if pulseDir != 0 {
+					wc.resetDirection = -pulseDir
+				} else {
+					wc.resetDirection = -wc.directionToTarget(currentLevel)
+				}
 				log.Printf("ISPP OVERSHOOT detected! Resetting state... (count=%d)", wc.OvershootCount)
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
