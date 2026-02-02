@@ -3,6 +3,7 @@ package gui
 import (
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,10 @@ const (
 	hysteresisDataLogBuffer = 8192
 	mvPerCm                 = 1e8
 	ucPerCm2                = 1e2
+	// Downsample CSV logging by simulation time to avoid huge files and UI stalls.
+	// Default: 250ms => ~4 samples/sec at most.
+	// Override with FECIM_HYSTERESIS_LOG_INTERVAL_MS (float, milliseconds).
+	hysteresisDataLogMinSimInterval = 2.5e-1
 )
 
 type HysteresisDataLogger struct {
@@ -27,6 +32,9 @@ type HysteresisDataLogger struct {
 	wg     sync.WaitGroup
 	closed uint32
 	step   uint64
+
+	minSimInterval  float64
+	lastSimTimeBits uint64
 }
 
 type HysteresisSnapshot struct {
@@ -105,10 +113,24 @@ func NewHysteresisDataLogger(materialName string) (*HysteresisDataLogger, error)
 		return nil, fmt.Errorf("create data log file: %w", err)
 	}
 
+	minInterval := hysteresisDataLogMinSimInterval
+	if v := strings.TrimSpace(os.Getenv("FECIM_HYSTERESIS_LOG_INTERVAL_MS")); v != "" {
+		if ms, err := strconv.ParseFloat(v, 64); err == nil {
+			if ms <= 0 {
+				minInterval = 0
+			} else {
+				minInterval = ms / 1000.0
+			}
+		}
+	}
+
 	logger := &HysteresisDataLogger{
 		path: path,
 		file: file,
 		rows: make(chan HysteresisSnapshot, hysteresisDataLogBuffer),
+		// Throttle CSV logging to keep runtime smooth and files manageable.
+		minSimInterval:  minInterval,
+		lastSimTimeBits: math.Float64bits(-1),
 	}
 	logger.wg.Add(1)
 	go logger.run()
@@ -120,6 +142,22 @@ func (l *HysteresisDataLogger) Path() string {
 		return ""
 	}
 	return l.path
+}
+
+func (l *HysteresisDataLogger) shouldRecord(simTime float64) bool {
+	if l == nil || atomic.LoadUint32(&l.closed) == 1 {
+		return false
+	}
+	if l.minSimInterval <= 0 {
+		return true
+	}
+	lastBits := atomic.LoadUint64(&l.lastSimTimeBits)
+	last := math.Float64frombits(lastBits)
+	if last >= 0 && simTime >= last && (simTime-last) < l.minSimInterval {
+		return false
+	}
+	atomic.StoreUint64(&l.lastSimTimeBits, math.Float64bits(simTime))
+	return true
 }
 
 func (l *HysteresisDataLogger) Record(snapshot HysteresisSnapshot) {
@@ -403,11 +441,11 @@ func (a *App) recordDataSnapshot(dt float64) {
 	if mat == nil {
 		return
 	}
-
-	temp := 0.0
-	if a.preisach != nil {
-		temp = a.preisach.Temperature
+	if !a.dataLogger.shouldRecord(a.simTime) {
+		return
 	}
+
+	temp := a.currentTemperature()
 
 	snapshot := HysteresisSnapshot{
 		Timestamp:      time.Now().UTC().Format(time.RFC3339Nano),

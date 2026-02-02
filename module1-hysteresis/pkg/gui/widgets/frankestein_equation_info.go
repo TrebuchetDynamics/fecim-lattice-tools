@@ -374,7 +374,7 @@ func buildAssumptionsSection() fyne.CanvasObject {
 			"Depolarization modeled by k_dep term (interfacial layer approximation).",
 			"Series resistance folded into rho_eff for RC delay.",
 			"Noise term optional; default disabled for deterministic checks.",
-			"GUI hysteresis still uses Preisach; L-K is exercised in headless mode.",
+			"GUI can run either L-K dynamics or Preisach (toggle in controls); headless uses L-K.",
 		})),
 	)
 }

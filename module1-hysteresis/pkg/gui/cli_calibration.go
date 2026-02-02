@@ -54,7 +54,7 @@ func RunCLICalibration(opts CLICalibrationOptions) error {
 	}
 
 	for _, mat := range materialsToCalibrate {
-		calibFile := calibrationFileForMaterial(mat.Name)
+		calibFile := calibrationFileForMaterial(mat.Name, PhysicsPreisach)
 
 		// Skip if file exists and not forcing
 		if !opts.Force {
@@ -476,7 +476,7 @@ func absInt(x int) int {
 
 // loadCalibrationData loads calibration from JSON file
 func loadCalibrationData(materialName string) (*CalibrationData, error) {
-	filePath := calibrationFileForMaterial(materialName)
+	filePath := calibrationFileForMaterial(materialName, PhysicsPreisach)
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -492,7 +492,7 @@ func loadCalibrationData(materialName string) (*CalibrationData, error) {
 
 // saveCalibrationData writes calibration to JSON file
 func saveCalibrationData(materialName string, data *CalibrationData) error {
-	filePath := calibrationFileForMaterial(materialName)
+	filePath := calibrationFileForMaterial(materialName, PhysicsPreisach)
 
 	f, err := os.Create(filePath)
 	if err != nil {

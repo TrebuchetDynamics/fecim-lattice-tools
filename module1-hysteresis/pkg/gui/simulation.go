@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fyne.io/fyne/v2"
 )
 
@@ -70,9 +71,9 @@ const calibrationDir = "data/calibrations"
 // Reduced from 25 to 15 since boundary oscillation tolerance kicks in at retry 10
 const maxWrdRetries = 15
 
-// calibrationFileForMaterial returns the calibration file path for a given material.
+// calibrationFileForMaterial returns the calibration file path for a given material and engine.
 // Material names are sanitized to be filesystem-safe.
-func calibrationFileForMaterial(materialName string) string {
+func calibrationFileForMaterial(materialName string, engine PhysicsEngine) string {
 	// Sanitize material name for use as filename
 	safe := strings.Map(func(r rune) rune {
 		switch {
@@ -101,7 +102,11 @@ func calibrationFileForMaterial(materialName string) string {
 		safe = "unknown"
 	}
 
-	return filepath.Join(calibrationDir, safe+".json")
+	filename := safe
+	if engine == PhysicsLandau {
+		filename = safe + "-lk"
+	}
+	return filepath.Join(calibrationDir, filename+".json")
 }
 
 // saveCalibration persists calibration data to disk (v2: multi-temperature)
@@ -123,10 +128,7 @@ func (a *App) saveCalibration() error {
 
 	// MONOTONICITY ENFORCEMENT before saving: fix any runtime corruption
 	// This ensures saved calibration values are always monotonic.
-	Ec := a.material.Ec
-	if a.preisach != nil {
-		Ec = a.preisach.GetEffectiveEc()
-	}
+	Ec := a.effectiveEc()
 	numLevels := len(a.calibrationUp)
 	step := Ec * 0.02 // 2% of Ec minimum step
 
@@ -167,7 +169,7 @@ func (a *App) saveCalibration() error {
 	}
 
 	// Get per-material calibration file path
-	calibFile := calibrationFileForMaterial(a.material.Name)
+	calibFile := calibrationFileForMaterial(a.material.Name, a.physicsEngine)
 
 	// Ensure calibration directory exists
 	dir := filepath.Dir(calibFile)
@@ -199,7 +201,7 @@ func (a *App) loadCalibration() bool {
 	}
 
 	// Get per-material calibration file path
-	calibFile := calibrationFileForMaterial(a.material.Name)
+	calibFile := calibrationFileForMaterial(a.material.Name, a.physicsEngine)
 
 	jsonData, err := os.ReadFile(calibFile)
 	if err != nil {
@@ -295,7 +297,7 @@ func (a *App) loadCalibration() bool {
 	}
 
 	// Load calibration for current temperature (interpolate or use nearest)
-	currentTemp := a.preisach.Temperature
+	currentTemp := a.currentTemperature()
 	a.loadCalibrationForTemperature(currentTemp)
 
 	log.Printf("Calibration loaded: %s (%d levels, %d temperatures)", calibFile, a.numLevels, len(a.tempCalibrations))
@@ -359,10 +361,7 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 	}
 
 	// MONOTONICITY ENFORCEMENT on load: fix any corrupted values from file
-	Ec := a.material.Ec
-	if a.preisach != nil {
-		Ec = a.preisach.GetEffectiveEc()
-	}
+	Ec := a.effectiveEc()
 	numLevels := len(a.calibrationUp)
 	step := Ec * 0.02 // 2% of Ec minimum step
 
@@ -584,7 +583,9 @@ func (a *App) hasCalibrationNear(tempK float64) bool {
 // MUST be called with a.mu held
 func (a *App) onTemperatureChanged(newTemp float64) {
 	// Update Preisach model temperature
-	a.preisach.SetTemperature(newTemp)
+	if a.preisach != nil {
+		a.preisach.SetTemperature(newTemp)
+	}
 	if a.lkSolver != nil {
 		a.lkSolver.Temperature = newTemp
 	}
@@ -704,8 +705,8 @@ func (a *App) updatePhysics(dt float64) {
 		return
 	}
 
-	Emax := mat.Ec * 2.5 // Scale for full loop traversal
-	Ec := mat.Ec
+	Ec := a.effectiveEc()
+	Emax := Ec * 2.5 // Scale for full loop traversal
 	a.simTime += dt
 	phaseDuration := 1.0 / a.frequency
 	rampRate := 4.0 * Emax * a.frequency
@@ -1073,7 +1074,7 @@ func (a *App) updatePhysics(dt float64) {
 					// Runtime auto recalibration (run between targets to avoid state disruption)
 					if a.autoRecalibrate && a.recalibratePending {
 						log.Printf("AUTO RECAL start: %s", a.recalibrateReason)
-						a.calibrateLevelsAtTemperature(a.preisach.Temperature)
+						a.calibrateLevelsAtTemperature(a.currentTemperature())
 						if err := a.saveCalibration(); err != nil {
 							log.Printf("Warning: failed to save calibration: %v", err)
 						}
@@ -1173,17 +1174,32 @@ func (a *App) updatePhysics(dt float64) {
 
 	// Update physics
 	prevP := a.polarization
-	// Use standard Update (Dynamic update removed in clean-up)
-	a.polarization = a.preisach.Update(a.electricField)
-	a.normalizedP = a.preisach.NormalizedPolarization()
-	maxLevel := a.numLevels - 1
-	a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
-	if a.discreteLevel < 0 {
-		a.discreteLevel = 0
+	if a.useLKSolver() {
+		if a.lkSolver != nil {
+			a.polarization = a.lkSolver.Step(a.electricField, dt)
+		} else {
+			a.polarization = 0
+		}
+		if mat.Ps != 0 {
+			a.normalizedP = a.polarization / mat.Ps
+		} else {
+			a.normalizedP = 0
+		}
+		if a.normalizedP > 1 {
+			a.normalizedP = 1
+		} else if a.normalizedP < -1 {
+			a.normalizedP = -1
+		}
+	} else {
+		if a.preisach != nil {
+			a.polarization = a.preisach.Update(a.electricField)
+			a.normalizedP = a.preisach.NormalizedPolarization()
+		} else {
+			a.polarization = 0
+			a.normalizedP = 0
+		}
 	}
-	if a.discreteLevel > maxLevel {
-		a.discreteLevel = maxLevel
-	}
+	a.syncDiscreteLevelLocked()
 
 	// Calculate energy: integral of E·dP ≈ |E| * |ΔP|
 	// During write/read cycles, accumulate energy for the cycle (phases 0-4)
@@ -1302,7 +1318,7 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 
 		// Update temperature-dependent metrics (must hold lock during preisach access)
 		a.mu.RLock()
-		effEc := a.preisach.GetEffectiveEc()
+		effEc := a.effectiveEc()
 		// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
 		effPr := a.material.Pr
 		switchedFraction := (a.normalizedP + 1) / 2
@@ -1584,12 +1600,18 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 // Sets Preisach temperature before calibrating, stores result in cache.
 // MUST be called with a.mu held.
 func (a *App) calibrateLevelsAtTemperature(tempK float64) {
-	if a.preisach == nil || a.material == nil {
+	if a.material == nil {
 		return
 	}
 
-	// Set Preisach temperature before calibrating
-	a.preisach.SetTemperature(tempK)
+	// Set engine temperature before calibrating
+	if a.useLKSolver() {
+		if a.lkSolver != nil {
+			a.lkSolver.Temperature = tempK
+		}
+	} else if a.preisach != nil {
+		a.preisach.SetTemperature(tempK)
+	}
 	a.calibrationTemp = tempK
 
 	// Perform calibration
@@ -1625,7 +1647,14 @@ func (a *App) calibrateLevelsAtTemperature(tempK float64) {
 // FIXED: Uses binary search with fresh saturation for each level to avoid
 // Preisach state corruption from the previous sweep-based approach.
 func (a *App) calibrateLevels() {
-	if a.preisach == nil || a.material == nil {
+	if a.material == nil {
+		return
+	}
+	if a.useLKSolver() {
+		a.calibrateLevelsLK()
+		return
+	}
+	if a.preisach == nil {
 		return
 	}
 
@@ -1843,10 +1872,206 @@ func (a *App) calibrateLevels() {
 	// Level maxLevel is at positive saturation, no field needed from that state
 	a.calibrationDown[maxLevel] = 0
 
+	a.finalizeCalibration(Ec)
+}
+
+// calibrateLevelsLK performs calibration using the Landau-Khalatnikov solver.
+// It runs the same WriteController loop against the L-K dynamics to derive per-level fields.
+// MUST be called with a.mu held.
+func (a *App) calibrateLevelsLK() {
+	if a.material == nil {
+		return
+	}
+
+	numLevels := a.numLevels
+	if numLevels < 2 {
+		numLevels = 2
+	}
+	maxLevel := numLevels - 1
+
+	// Ensure calibration arrays are sized correctly
+	if len(a.calibrationUp) != numLevels {
+		a.calibrationUp = make([]float64, numLevels)
+	}
+	if len(a.calibrationDown) != numLevels {
+		a.calibrationDown = make([]float64, numLevels)
+	}
+	if len(a.calibUpLow) != numLevels {
+		a.calibUpLow = make([]float64, numLevels)
+	}
+	if len(a.calibUpHigh) != numLevels {
+		a.calibUpHigh = make([]float64, numLevels)
+	}
+	if len(a.calibDownLow) != numLevels {
+		a.calibDownLow = make([]float64, numLevels)
+	}
+	if len(a.calibDownHigh) != numLevels {
+		a.calibDownHigh = make([]float64, numLevels)
+	}
+	if len(a.lastErrorUp) != numLevels {
+		a.lastErrorUp = make([]int, numLevels)
+	}
+	if len(a.lastErrorDown) != numLevels {
+		a.lastErrorDown = make([]int, numLevels)
+	}
+	if len(a.relaxCompUp) != numLevels {
+		a.relaxCompUp = make([]float64, numLevels)
+	}
+	if len(a.relaxCompDown) != numLevels {
+		a.relaxCompDown = make([]float64, numLevels)
+	}
+
+	Ec := a.material.Ec
+	if Ec == 0 {
+		Ec = 1e8
+	}
+	for i := 0; i < numLevels; i++ {
+		a.calibUpLow[i] = Ec * 0.3
+		a.calibUpHigh[i] = Ec * 2.0
+		a.calibDownLow[i] = -Ec * 2.0
+		a.calibDownHigh[i] = -Ec * 0.3
+		a.relaxCompUp[i] = 0
+		a.relaxCompDown[i] = 0
+		a.lastErrorUp[i] = 0
+		a.lastErrorDown[i] = 0
+	}
+
+	// Local solver for calibration (deterministic, no noise)
+	solver := sharedphysics.NewLKSolver()
+	solver.ConfigureFromMaterial(a.material)
+	solver.Temperature = a.currentTemperature()
+	solver.EnableNoise = false
+	solver.UseNLS = false
+	solver.UpdateParams()
+
+	// Pulse timing (match headless defaults)
+	pulseDuration := a.material.Tau
+	if pulseDuration <= 0 {
+		pulseDuration = 10e-9
+	}
+
+	dtNominal := 1e-4
+	dtMin := 1e-6
+	dtMax := 0.025
+	stableNominal := pulseDuration / 10000.0
+	if stableNominal > 0 && stableNominal < dtNominal {
+		dtNominal = stableNominal
+	}
+	if dtNominal <= 0 {
+		dtNominal = 1e-12
+	}
+	if dtMin > dtNominal {
+		dtMin = dtNominal
+	}
+	if pulseDuration > 0 && pulseDuration < dtMax {
+		dtMax = pulseDuration
+	}
+
+	// Level mapping from polarization
+	effPs := a.material.Ps
+	if effPs == 0 {
+		effPs = a.material.Pr
+	}
+	if effPs == 0 {
+		effPs = 1.0
+	}
+
+	levelFromP := func(P float64) int {
+		normalizedP := P / effPs
+		if normalizedP > 1.0 {
+			normalizedP = 1.0
+		}
+		if normalizedP < -1.0 {
+			normalizedP = -1.0
+		}
+		level := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
+		if level < 0 {
+			level = 0
+		}
+		if level > maxLevel {
+			level = maxLevel
+		}
+		return level
+	}
+
+	satP := effPs
+	if satP == 0 {
+		satP = 0.3
+	}
+
+	runWrite := func(targetIdx int, startPol float64) (float64, bool) {
+		wc := controller.NewWriteController(numLevels, Ec, Ec*2.5, nil)
+		wc.PulseDuration = pulseDuration
+		wc.Start(targetIdx+1, true)
+
+		solver.SetState(startPol)
+		solver.Time = 0
+
+		currentField := 0.0
+		elapsed := 0.0
+		maxSimTime := pulseDuration * float64(wc.MaxRetries+100)
+
+		for elapsed < maxSimTime {
+			currentLevel := levelFromP(solver.GetState()) + 1
+			step := dtNominal
+			if Ec > 0 {
+				distPlus := math.Abs(currentField - Ec)
+				distMinus := math.Abs(currentField + Ec)
+				if math.Min(distPlus, distMinus) < 1e7 {
+					step = dtMin
+				}
+			}
+			if step > dtMax {
+				step = dtMax
+			}
+
+			targetField, done := wc.Update(step, currentField, currentLevel)
+			currentField = targetField
+			solver.Step(currentField, step)
+			elapsed += step
+
+			if done {
+				return wc.CurrentField, wc.State == controller.StateSuccess
+			}
+		}
+
+		return wc.CurrentField, false
+	}
+
+	// Ascending calibration (from negative saturation)
+	for idx := 1; idx < numLevels; idx++ {
+		field, ok := runWrite(idx, -math.Abs(satP))
+		if ok {
+			a.calibrationUp[idx] = field
+		} else {
+			a.calibrationUp[idx] = Ec
+		}
+	}
+	a.calibrationUp[0] = 0
+
+	// Descending calibration (from positive saturation)
+	for idx := maxLevel - 1; idx >= 0; idx-- {
+		field, ok := runWrite(idx, math.Abs(satP))
+		if ok {
+			a.calibrationDown[idx] = field
+		} else {
+			a.calibrationDown[idx] = -Ec
+		}
+	}
+	a.calibrationDown[maxLevel] = 0
+
+	a.finalizeCalibration(Ec)
+}
+
+// finalizeCalibration enforces monotonicity, resets state, and syncs to CalibrationManager.
+// MUST be called with a.mu held.
+func (a *App) finalizeCalibration(Ec float64) {
+	numLevels := a.numLevels
+	if numLevels <= 0 {
+		numLevels = 1
+	}
+
 	// MONOTONICITY ENFORCEMENT: Fix any non-monotonic values (spikes)
-	// This is critical for preventing large errors when Preisach resolution
-	// causes binary search to converge to non-monotonic values.
-	//
 	// For ascending (calibrationUp): E-field must increase with level
 	// For descending (calibrationDown): E-field must decrease (more negative) with decreasing level
 
@@ -1854,7 +2079,6 @@ func (a *App) calibrateLevels() {
 	for i := 1; i < numLevels-1; i++ {
 		if a.calibrationUp[i+1] < a.calibrationUp[i] {
 			// Spike detected - interpolate from neighbors
-			// Find next valid (higher) value
 			nextValid := a.calibrationUp[i]
 			for j := i + 1; j < numLevels; j++ {
 				if a.calibrationUp[j] > a.calibrationUp[i] {
@@ -1862,7 +2086,6 @@ func (a *App) calibrateLevels() {
 					break
 				}
 			}
-			// Interpolate
 			a.calibrationUp[i+1] = (a.calibrationUp[i] + nextValid) / 2
 		}
 	}
@@ -1870,7 +2093,6 @@ func (a *App) calibrateLevels() {
 	// Second pass: ensure strict monotonicity from bottom up
 	for i := 1; i < numLevels; i++ {
 		if a.calibrationUp[i] <= a.calibrationUp[i-1] {
-			// Add small increment to maintain monotonicity
 			step := Ec * 0.02 // 2% of Ec per level minimum step
 			a.calibrationUp[i] = a.calibrationUp[i-1] + step
 		}
@@ -1879,7 +2101,6 @@ func (a *App) calibrateLevels() {
 	// Fix descending calibration: ensure calibrationDown[i] >= calibrationDown[i-1] (less negative for higher levels)
 	for i := numLevels - 2; i > 0; i-- {
 		if a.calibrationDown[i-1] > a.calibrationDown[i] {
-			// Spike detected - interpolate
 			prevValid := a.calibrationDown[i]
 			for j := i - 1; j >= 0; j-- {
 				if a.calibrationDown[j] < a.calibrationDown[i] {
@@ -1894,16 +2115,24 @@ func (a *App) calibrateLevels() {
 	// Second pass: ensure strict monotonicity from top down
 	for i := numLevels - 2; i >= 0; i-- {
 		if a.calibrationDown[i] >= a.calibrationDown[i+1] {
-			// Add small decrement to maintain monotonicity
 			step := Ec * 0.02 // 2% of Ec per level minimum step
 			a.calibrationDown[i] = a.calibrationDown[i+1] - step
 		}
 	}
 
-	// Reset Preisach to neutral state after calibration
-	a.preisach.Reset()
+	// Reset physics state to neutral after calibration
+	if a.useLKSolver() {
+		if a.lkSolver != nil {
+			a.lkSolver.SetState(0)
+			a.lkSolver.Time = 0
+		}
+	} else if a.preisach != nil {
+		a.preisach.Reset()
+	}
 	a.electricField = 0
 	a.polarization = 0
+	a.normalizedP = 0
+	a.syncDiscreteLevelLocked()
 
 	// Sync to CalibrationManager (Refactoring)
 	if a.calibManager != nil {
@@ -1913,7 +2142,6 @@ func (a *App) calibrateLevels() {
 		a.calibManager.CalibUpHigh = append([]float64(nil), a.calibUpHigh...)
 		a.calibManager.CalibDownLow = append([]float64(nil), a.calibDownLow...)
 		a.calibManager.CalibDownHigh = append([]float64(nil), a.calibDownHigh...)
-		// LastError and RelaxComp reset during calibration usually, so copying current state (likely zeros) is fine
 		a.calibManager.LastErrorUp = append([]int(nil), a.lastErrorUp...)
 		a.calibManager.LastErrorDown = append([]int(nil), a.lastErrorDown...)
 		a.calibManager.RelaxCompUp = append([]float64(nil), a.relaxCompUp...)

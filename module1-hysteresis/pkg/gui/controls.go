@@ -146,6 +146,28 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	a.waveformSelect.SetSelected("Write/Read Demo")
 
+	// Physics engine selector
+	engines := []string{PhysicsLandau.String(), PhysicsPreisach.String()}
+	a.physicsSelect = widget.NewSelect(engines, func(s string) {
+		log.Selection("PhysicsEngine", s)
+		switch s {
+		case PhysicsLandau.String():
+			a.setPhysicsEngine(PhysicsLandau)
+		case PhysicsPreisach.String():
+			a.setPhysicsEngine(PhysicsPreisach)
+		}
+
+		// Update plot markers for the active engine
+		a.mu.RLock()
+		effEc := a.effectiveEc()
+		effPr := a.material.Pr
+		a.mu.RUnlock()
+		if a.plot != nil {
+			a.plot.SetMaterialParams(effEc, effPr)
+		}
+	})
+	a.physicsSelect.SetSelected(a.physicsEngine.String())
+
 	// Material button - shows current material, opens picker on click
 	a.materialBtn = widget.NewButton(a.material.Name, func() {
 		sharedwidgets.ShowMaterialPicker(a.mainWindow, a.getCurrentMaterialID(), func(id string, mat *physics.Material) {
@@ -228,11 +250,18 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		log.Button("Reset")
 		a.mu.Lock()
 		// Reset physics model
-		a.preisach.Reset()
+		if a.useLKSolver() {
+			if a.lkSolver != nil {
+				a.lkSolver.SetState(0)
+				a.lkSolver.Time = 0
+			}
+		} else if a.preisach != nil {
+			a.preisach.Reset()
+		}
 		a.electricField = 0
 		a.polarization = 0
 		a.normalizedP = 0
-		a.discreteLevel = a.numLevels / 2 // Reset to middle of current range
+		a.syncDiscreteLevelLocked()
 
 		// Reset trail history
 		a.eHistory = a.eHistory[:0]
@@ -318,7 +347,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		log.SliderChange("Stress", v)
 		a.mu.Lock()
 		// Pass stress to physics engine
-		a.preisach.SetStress(v) // v is in GPa
+		if a.preisach != nil {
+			a.preisach.SetStress(v) // v is in GPa
+		}
 		if a.lkSolver != nil {
 			a.lkSolver.Stress = v * 1e9
 		}
@@ -338,10 +369,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		go func() {
 			a.mu.Lock()
 			// Capture previous temperature before change
-			previousTemp := a.preisach.Temperature
+			previousTemp := a.currentTemperature()
 			a.onTemperatureChanged(v)
 			// Get current temperature after change
-			currentTemp := a.preisach.Temperature
+			currentTemp := a.currentTemperature()
 
 			// Clear history if temperature changed significantly (>25K)
 			if math.Abs(currentTemp-previousTemp) > 25 {
@@ -350,7 +381,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 
 			// Get plot markers with temperature-corrected Ec and nominal Pr
-			effEc := a.preisach.GetEffectiveEc()
+			effEc := a.effectiveEc()
 			// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
 			effPr := a.material.Pr
 			a.mu.Unlock()
@@ -388,6 +419,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	return container.NewVBox(
 		a.materialBtn,
 		a.waveformSelect,
+		a.physicsSelect,
 		a.levelsLabel,
 		a.levelsEntry,
 		container.NewHBox(a.eFieldLabel, a.eFieldModeLabel),
@@ -453,14 +485,12 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 
 	a.mu.Lock()
 	// Capture temperature before material change
-	savedTemp := a.preisach.Temperature
+	savedTemp := a.currentTemperature()
 
 	a.matIndex = newIdx
 	a.material = hzoMat
-	// Use fixed high-resolution grid for physics accuracy
+	// Recreate Preisach model for the new material (used in Preisach mode)
 	a.preisach = ferroelectric.NewPreisachModel(a.material)
-
-	// Restore temperature
 	a.preisach.SetTemperature(savedTemp)
 
 	// Clear history for new material
@@ -472,6 +502,10 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.polarization = 0
 	a.normalizedP = 0
 	a.simTime = 0
+	if a.lkSolver != nil {
+		a.lkSolver.SetState(0)
+		a.lkSolver.Time = 0
+	}
 
 	// Reset time-resolved animation state
 	a.timeResAnimating = false
@@ -489,7 +523,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.wrdCycleEnergy = 0
 
 	// Get temperature-corrected Ec and nominal Pr
-	effEc := a.preisach.GetEffectiveEc()
+	effEc := a.effectiveEc()
 	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
 	effPr := a.material.Pr
 
@@ -505,6 +539,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	}
 	if a.lkSolver != nil {
 		a.lkSolver.ConfigureFromMaterial(a.material)
+		a.lkSolver.Temperature = savedTemp
 	}
 	// Update level indicator and cell visualizer
 	if a.levelIndicator != nil {

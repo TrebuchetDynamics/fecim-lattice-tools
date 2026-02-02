@@ -71,12 +71,14 @@ type App struct {
 	dataLogger *HysteresisDataLogger
 
 	// UI state
-	running   bool
-	paused    bool
-	autoMode  bool
-	waveform  WaveformType
-	frequency float64
-	simTime   float64
+	running       bool
+	paused        bool
+	autoMode      bool
+	waveform      WaveformType
+	physicsEngine PhysicsEngine
+	physicsSelect *widget.Select
+	frequency     float64
+	simTime       float64
 
 	// Write/Read Demo state (improved physics)
 	wrdPhase       int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
@@ -263,6 +265,25 @@ func (w WaveformType) String() string {
 	}
 }
 
+// PhysicsEngine selects the polarization dynamics model.
+type PhysicsEngine int
+
+const (
+	PhysicsLandau PhysicsEngine = iota
+	PhysicsPreisach
+)
+
+func (p PhysicsEngine) String() string {
+	switch p {
+	case PhysicsLandau:
+		return "L-K (Dynamic)"
+	case PhysicsPreisach:
+		return "Preisach (Quasi-Static)"
+	default:
+		return "Unknown"
+	}
+}
+
 // WriteReadDebugLog stores debug data for write/read operations
 type WriteReadDebugLog struct {
 	Timestamp string           `json:"timestamp"`
@@ -406,6 +427,7 @@ func NewApp() *App {
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
 		waveform:                WaveformSine,
+		physicsEngine:           PhysicsLandau,
 		frequency:               0.5, // 0.5 Hz default
 		wrdTargetLevel:          28,  // Start high for dramatic first write
 		autoRecalibrate:         true,
@@ -484,6 +506,7 @@ func NewAppWithMaterial(materialName string) *App {
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
+		physicsEngine:           PhysicsLandau,
 		frequency:               0.5,
 		paused:                  false,
 		autoRecalibrate:         true,
@@ -565,8 +588,8 @@ func (a *App) createUI() fyne.CanvasObject {
 	a.cellViz.SetMinSize(fyne.NewSize(180, 200)) // Increased 30% for prominence
 
 	// Create P-E plot - will expand to fill space
-	// Use temperature-corrected Ec and nominal Pr for initial plot setup
-	effEc := a.preisach.GetEffectiveEc()
+	// Use engine-specific Ec and nominal Pr for initial plot setup
+	effEc := a.effectiveEc()
 	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
 	effPr := a.material.Pr
 	a.plot = widgets.NewPEPlot(effEc*2.5, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
@@ -610,21 +633,25 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create simulation vs experiment comparison widget (H16)
 	a.simVsExpWidget = widgets.NewSimVsExpComparison()
-	// Set initial values from Preisach model/material
+	// Set initial values from active physics engine/material
 	simPr := a.material.Pr
-	simEc := a.preisach.GetEffectiveEc()
-	// Calculate squareness from model
-	a.preisach.Reset()
-	a.preisach.Update(simEc * 2) // Saturate
-	psat := a.preisach.Polarization()
-	a.preisach.Update(0) // Return to zero
-	pr := a.preisach.Polarization()
+	simEc := a.effectiveEc()
 	squareness := 0.0
-	if psat > 0 {
-		squareness = pr / psat
+	if a.physicsEngine == PhysicsPreisach && a.preisach != nil {
+		// Calculate squareness from Preisach loop
+		a.preisach.Reset()
+		a.preisach.Update(simEc * 2) // Saturate
+		psat := a.preisach.Polarization()
+		a.preisach.Update(0) // Return to zero
+		pr := a.preisach.Polarization()
+		if psat > 0 {
+			squareness = pr / psat
+		}
+		a.preisach.Reset() // Reset for normal operation
+	} else if a.material.Ps > 0 {
+		squareness = simPr / a.material.Ps
 	}
 	a.simVsExpWidget.SetSimulatedValues(simPr, simEc, squareness)
-	a.preisach.Reset() // Reset for normal operation
 
 	// Create ISPP visualization widget (H14)
 	a.isppWidget = widgets.NewISPPVisualization()

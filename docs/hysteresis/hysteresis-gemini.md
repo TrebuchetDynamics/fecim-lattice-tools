@@ -212,7 +212,7 @@ FeCIM HZO (L-K Enabled)
 ```
 
 **Notes:**
-- The GUI hysteresis demo still uses the **Preisach** model; L‑K parameters are exercised in headless mode.
+- The GUI hysteresis demo can run **L‑K dynamics or Preisach** (toggle in controls); headless mode uses L‑K.
 - Conductance mapping in hysteresis mode is **linear** between `P = -Ps` and `P = +Ps` (see §5).
 - Headless mode sets `UseNLS=false` and `EnableNoise=false` in `cmd/fecim-lattice-tools/mode.go` for deterministic equation checks; `UseEffectiveViscosity` remains enabled.
 - The extended reliability and distribution blocks below remain a roadmap item; they are documented but not yet wired

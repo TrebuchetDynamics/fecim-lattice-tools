@@ -65,9 +65,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 		ps = a.material.Ps
 		pr = a.material.Pr
 	}
-	if a.preisach != nil {
-		temp = a.preisach.Temperature
-	}
+	temp = a.currentTemperature()
 	a.mu.RUnlock()
 
 	// Convert to convenient units (MV/cm and μC/cm²)

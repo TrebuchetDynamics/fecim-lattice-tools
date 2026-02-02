@@ -49,6 +49,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		pHistory:        make([]float64, 0, 2000),
 		autoMode:        true,
 		waveform:        WaveformSine,
+		physicsEngine:   PhysicsLandau,
 		frequency:       0.5, // 0.5 Hz default
 		wrdTargetLevel:  28,  // Start high for dramatic first write
 		maxLogLines:     12,

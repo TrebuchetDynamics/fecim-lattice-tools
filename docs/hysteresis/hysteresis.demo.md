@@ -90,6 +90,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 - **E-field Slider**: Drag to control electric field (Manual mode)
 - **Waveform Dropdown**: Select input waveform type
 - **Material Dropdown**: Switch between HZO variants
+- **Physics Engine Dropdown**: Toggle between L‑K (dynamic) and Preisach (quasi‑static)
 - **Frequency Slider**: Adjust speed (affects all auto modes)
 - **Trail Slider**: Adjust plot history length
 - **Pause/Resume Button**: Control simulation
@@ -114,7 +115,12 @@ For detailed physics, see [hysteresis.physics.md](hysteresis.physics.md).
 
 ### Quick Summary
 
-The demo implements the **Mayergoyz Preisach model**:
+The demo supports two physics engines:
+
+- **L‑K (dynamic)**: Landau‑Khalatnikov time‑domain solver (same equation as headless).
+- **Preisach (quasi‑static)**: Mayergoyz hysteron stack for fast loop visualization.
+
+Preisach form (when selected):
 
 ```
 P(E) = ∫∫ μ(α, β) γ_αβ dα dβ  →  Discretized: P = Σ μᵢ × γᵢ

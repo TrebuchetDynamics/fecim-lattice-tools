@@ -63,7 +63,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 	case fyne.KeyT:
 		// Increase temperature by 25K
 		a.mu.Lock()
-		currentTemp := a.preisach.Temperature
+		currentTemp := a.currentTemperature()
 		newTemp := currentTemp + 25
 		if newTemp > 700 {
 			newTemp = 700
@@ -81,7 +81,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 	case fyne.KeyG:
 		// Decrease temperature by 25K
 		a.mu.Lock()
-		currentTemp := a.preisach.Temperature
+		currentTemp := a.currentTemperature()
 		newTemp := currentTemp - 25
 		if newTemp < 200 {
 			newTemp = 200
@@ -155,11 +155,18 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		// Reset simulation
 		log.Info("Reset simulation")
 		a.mu.Lock()
-		a.preisach.Reset()
+		if a.useLKSolver() {
+			if a.lkSolver != nil {
+				a.lkSolver.SetState(0)
+				a.lkSolver.Time = 0
+			}
+		} else if a.preisach != nil {
+			a.preisach.Reset()
+		}
 		a.electricField = 0
 		a.polarization = 0
 		a.normalizedP = 0
-		a.discreteLevel = a.numLevels / 2 // Reset to middle of current range
+		a.syncDiscreteLevelLocked()
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
