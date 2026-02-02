@@ -4,7 +4,7 @@
 
 ## 1. Executive Summary
 
-Ferroelectric Compute-in-Memory (FeCIM) leverages crossbar array architectures to perform analog Matrix-Vector Multiplication (MVM) directly within the memory fabric. By utilizing the 30 discrete analog states of HfO₂-ZrO₂ superlattice FeFETs, these systems achieve massive parallelization and energy efficiency. While passive (0T1R) architectures offer maximum density (4F²), non-idealities such as IR drop and sneak paths necessitate the use of isolated architectures (1T1R, 2T1R) for large-scale deployments. Peer-reviewed results demonstrate MNIST accuracies up to 98.24% with energy improvements of 25-100× over traditional NAND-based systems.
+Ferroelectric Compute-in-Memory (FeCIM) leverages crossbar array architectures to perform analog Matrix-Vector Multiplication (MVM) directly within the memory fabric. This project uses a 30-level demo baseline (conference claim; pending peer review) while peer‑reviewed devices report 32–140 states. While passive (0T1R) architectures offer maximum density (4F²), non-idealities such as IR drop and sneak paths necessitate the use of isolated architectures (1T1R, 2T1R) for large-scale deployments. Peer-reviewed results demonstrate MNIST accuracies up to 98.24% with energy improvements of 25-100× over traditional NAND-based systems.
 
 ---
 

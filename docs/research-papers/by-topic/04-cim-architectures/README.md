@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains research on compute-in-memory architectures, with emphasis on analog crossbar arrays for matrix-vector multiplication (MVM), peripheral circuit design (ADC/DAC/TIA), and system-level integration. These architectures exploit physical laws (Ohm's law, Kirchhoff's current law) to perform massively parallel computations in the analog domain, achieving 10-1000× energy efficiency improvements over digital approaches. Critical for understanding how FeCIM's 30 analog states translate to system-level performance.
+This directory contains research on compute-in-memory architectures, with emphasis on analog crossbar arrays for matrix-vector multiplication (MVM), peripheral circuit design (ADC/DAC/TIA), and system-level integration. These architectures exploit physical laws (Ohm's law, Kirchhoff's current law) to perform massively parallel computations in the analog domain, achieving 10-1000× energy efficiency improvements over digital approaches. Critical for understanding how FeCIM's 30-level demo baseline (conference claim) translates to system-level performance.
 
 ## Papers in this Directory
 

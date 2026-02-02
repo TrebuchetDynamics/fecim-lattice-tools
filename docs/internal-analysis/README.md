@@ -46,7 +46,7 @@ docs/internal-analysis/        ← Synthesized analysis (this folder)
 All claims in these documents follow the project's honesty policy:
 
 - **Verified claims** include DOIs and peer-reviewed sources
-- **Unverified claims** (e.g., Dr. Tour's 30 states) are explicitly marked
+- **Unverified claims** (e.g., the 30-state conference claim) are explicitly marked
 - Full audit: [/docs/comparison/HONESTY_AUDIT.md](/docs/comparison/HONESTY_AUDIT.md)
 
 ## Contributing

@@ -41,7 +41,7 @@ func (app *DualModeApp) StartQuickDemo() {
 
 		// Step 1: Introduction
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 1/5: Welcome. We'll compare 30-level baseline vs 2 levels.")
+			app.statusLabel.SetText("QUICK DEMO | Step 1/5: Welcome. We'll compare 30-level baseline (claim) vs 2 levels.")
 		})
 		if app.waitOrStop(stepIntroHold) {
 			return
@@ -50,7 +50,7 @@ func (app *DualModeApp) StartQuickDemo() {
 		// Step 2: Load sample and show ideal prediction
 		fyne.Do(func() {
 			app.applyPreset(30, 0.01, 8, 8)
-			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading a test digit with 30-level baseline (ideal).")
+			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading a test digit with 30-level baseline (claim, ideal).")
 		})
 		if app.waitOrStop(stepPresetHold) {
 			return
@@ -64,7 +64,7 @@ func (app *DualModeApp) StartQuickDemo() {
 
 		// Step 3: Show success with 30 levels
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 3/5: 30-level baseline → FP and CIM match. Compare the results.")
+			app.statusLabel.SetText("QUICK DEMO | Step 3/5: 30-level baseline (claim) → FP and CIM match. Compare the results.")
 		})
 		if app.waitOrStop(stepSuccessHold) {
 			return
@@ -104,7 +104,7 @@ func (app *DualModeApp) StartQuickDemo() {
 		// Restore ideal settings
 		fyne.Do(func() {
 			app.applyPreset(30, 0.01, 8, 8)
-			app.statusLabel.SetText("RESTORE | Returning to 30-level baseline. Notice the predictions recover.")
+			app.statusLabel.SetText("RESTORE | Returning to 30-level baseline (claim). Notice the predictions recover.")
 		})
 		if app.waitOrStop(stepRestoreHold) {
 			return
@@ -119,7 +119,7 @@ func (app *DualModeApp) StartQuickDemo() {
 			return
 		}
 		fyne.Do(func() {
-			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30-level baseline enables high accuracy and energy efficiency.")
+			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30-level baseline (claim) enables high accuracy and energy efficiency.")
 		})
 		if app.waitOrStop(stepWrapHold) {
 			return

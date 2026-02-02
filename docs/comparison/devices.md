@@ -72,7 +72,7 @@ P← (left):  ⊖⊖⊖⊖ → Positive Vth shift → Less current
 
 #### Multi-Level Storage
 - **Research**: 32-140 levels demonstrated in lab conditions [VERIFIED - Oh 2017, Song 2024]
-- **Tour device**: 30 levels claimed by Dr. Tour (COSM 2025) [PLAUSIBLE - within demonstrated range]
+- **Conference claim**: 30-level baseline (COSM 2025; pending peer review) [PLAUSIBLE - within demonstrated range]
 - **Mechanism**: Partial polarization via domain distribution
 
 #### Endurance
@@ -318,7 +318,7 @@ Antiparallel (AP): ↓↓↓ | ↑↑↑ → High resistance
 | **Endurance** | 10⁹-10¹² demonstrated | IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂) [VERIFIED] |
 | **Retention** | 10 years (extrapolated) | Literature |
 | **Thickness** | 5-10 nm | Optimal for ferroelectricity |
-| **States** | 30 discrete (Tour), 32-140 (others) | COSM 2025 [PLAUSIBLE], Oh 2017, Song 2024 [VERIFIED] |
+| **States** | 30 discrete (conference claim baseline), 32-140 (others) | COSM 2025 [PLAUSIBLE], Oh 2017, Song 2024 [VERIFIED] |
 
 ---
 

@@ -45,7 +45,7 @@ All effects are combined simultaneously in every calculation:
 | Material | Levels | Notes |
 |----------|--------|-------|
 | HZO (Si-doped) | 30 | Baseline |
-| FeCIM HZO | 30 | Dr. Tour specs |
+| FeCIM HZO | 30 | Conference-claim baseline (pending peer review) |
 | Literature Superlattice | 64 | Cheema 2020 |
 | Cryogenic HZO | 30 | 75 µC/cm² at 4K |
 | HZO Standard 32 | 32 | Oh 2017 |

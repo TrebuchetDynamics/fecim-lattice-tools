@@ -55,7 +55,7 @@ func main() {
 	fmt.Printf("  Hidden layer: %d neurons\n", *hiddenSize)
 	fmt.Printf("  Output layer: 10 classes (digits 0-9)\n")
 	fmt.Printf("  Device noise: %.2f%%\n", *noiseLevel*100)
-	fmt.Printf("  Discrete levels: 30 (FeCIM advantage)\n")
+	fmt.Printf("  Discrete levels: 30 (demo baseline; conference claim)\n")
 	fmt.Printf("  Target accuracy: Physics-limited\n")
 
 	if *exportLevels != "" {

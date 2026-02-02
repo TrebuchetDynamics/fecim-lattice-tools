@@ -303,7 +303,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 		dialog.ShowInformation("30 Analog Levels (Conference Claim)",
 			"This demo assumes 30 discrete conductance states per cell (conference claim; pending peer review).\n"+
 				"Peer-reviewed devices report 32–140 states in related materials.\n\n"+
-				"30 levels ≈ 4.9 bits/cell vs 1 bit for binary memory.\n\n"+
+				"30-level baseline (claim) ≈ 4.9 bits/cell vs 1 bit for binary memory.\n\n"+
 				"Each level represents a stable polarization state in the FeFET.", ca.window)
 	})
 	levelsInfoBtn.Importance = widget.LowImportance

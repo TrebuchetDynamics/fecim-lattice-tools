@@ -21,7 +21,7 @@ func init() {
 //
 //	DefaultHZO()           - Baseline: Standard Si-doped HZO from literature
 //	FeCIMMaterial()        - FeCIM: Dr. Tour's DEMONSTRATED values (conservative)
-//	FeCIMMaterialTarget()  - FeCIM: Dr. Tour's stated TARGETS (aspirational)
+//	FeCIMMaterialTarget()  - FeCIM: conference-claim targets (aspirational)
 //	LiteratureSuperlattice() - Academic: Best-case from Cheema et al. 2020
 //
 // For honest educational visualization, prefer FeCIMMaterial() which uses

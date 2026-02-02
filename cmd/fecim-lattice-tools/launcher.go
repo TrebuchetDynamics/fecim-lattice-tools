@@ -857,7 +857,7 @@ type ResponsiveFooter struct {
 // NewResponsiveFooter creates a footer that simplifies on small screens
 func NewResponsiveFooter() *ResponsiveFooter {
 	f := &ResponsiveFooter{
-		metricsText: canvas.NewText("30 States*  |  96-98% MNIST  |  25-100× vs NAND  |  10⁹ Cycles  |  TRL 4  (*pending peer review)", color.RGBA{0, 212, 255, 230}),
+		metricsText: canvas.NewText("30 States (conference claim) | 96-98% MNIST | 25-100× vs NAND | 10⁹ Cycles | TRL 4", color.RGBA{0, 212, 255, 230}),
 		journeyText: canvas.NewText("1. Physics → 2. Compute → 3. Application → 4. System → 5. Business → 6. Design", color.RGBA{200, 210, 220, 255}), // UI-003: Increased contrast from (150,170,190,200) to (200,210,220,255)
 		separator:   widget.NewSeparator(),
 	}
@@ -899,13 +899,13 @@ func (r *responsiveFooterRenderer) layoutWithSize(size fyne.Size) {
 	case sharedwidgets.BreakpointSM:
 		metricsSize = 11
 		// Shorter metrics text for mobile
-		f.metricsText.Text = "30 States* | 96-98% MNIST | TRL 4"
+		f.metricsText.Text = "30 States (claim) | 96-98% MNIST | TRL 4"
 	case sharedwidgets.BreakpointMD:
 		metricsSize, journeySize = 12, 11
-		f.metricsText.Text = "30 States* | 96-98% MNIST | 25-100× vs NAND | TRL 4"
+		f.metricsText.Text = "30 States (claim) | 96-98% MNIST | 25-100× vs NAND | TRL 4"
 	default:
 		metricsSize, journeySize = 13, 12
-		f.metricsText.Text = "30 States*  |  96-98% MNIST  |  25-100× vs NAND  |  10⁹ Cycles  |  TRL 4  (*pending peer review)"
+		f.metricsText.Text = "30 States (conference claim) | 96-98% MNIST | 25-100× vs NAND | 10⁹ Cycles | TRL 4"
 	}
 
 	f.metricsText.TextSize = metricsSize

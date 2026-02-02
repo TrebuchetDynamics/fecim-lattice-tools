@@ -23,7 +23,7 @@ This directory contains research on neuromorphic computing implementations using
 | Aspect | FeCIM (Analog CIM) | Neuromorphic FeFET |
 |--------|-------------------|-------------------|
 | **Computing Model** | Synchronous MVM | Event-driven spikes |
-| **Precision** | 30 analog states | 2-16 states typical |
+| **Precision** | 30 analog states (demo baseline; conference claim) | 2-16 states typical |
 | **Energy/Op** | ~1 pJ/MAC | ~0.01 pJ/spike |
 | **Throughput** | High (parallel MVM) | Variable (spike-dependent) |
 | **Training** | Backpropagation (off-chip) | STDP (on-chip possible) |
@@ -120,7 +120,7 @@ Combine ferroelectric switching with magnetic domain dynamics for:
 
 **Shared Device Technology:**
 1. **HfO₂-ZrO₂ FeFET**: Same base device for CIM and neuromorphic
-2. **30 analog states**: Sufficient for both MVM weights and synaptic weights
+2. **30 analog states (demo baseline; conference claim)**: Sufficient for both MVM weights and synaptic weights
 3. **CMOS integration**: Compatible process flows
 4. **3D stacking**: Both benefit from vertical integration
 

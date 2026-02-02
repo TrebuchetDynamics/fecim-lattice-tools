@@ -192,7 +192,7 @@ func (r *PERenderer) RenderDomainStates(alphas, betas []float64, states []int) s
 func (r *PERenderer) RenderDiscreteStates(states []DiscreteState) string {
 	var sb strings.Builder
 
-	sb.WriteString("30 Discrete Analog States (FeCIM):\n")
+	sb.WriteString("30 Discrete Analog States (demo baseline; conference claim):\n")
 	sb.WriteString(strings.Repeat("═", 65) + "\n\n")
 
 	// Header

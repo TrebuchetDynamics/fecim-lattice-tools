@@ -35,7 +35,7 @@ func aboutScienceData() []ScienceSection {
 			LearnMore: "https://en.wikipedia.org/wiki/Compute-in-memory",
 		},
 		{
-			Title:    "30 Analog States",
+			Title:    "30 Analog States (Claim)",
 			IconName: theme.IconNameList,
 			Summary:  "Multi-level cell storage (~4.9 bits/cell)",
 			Details: "This demo uses a 30-level baseline from a conference claim (COSM 2025; pending peer review). " +
@@ -54,7 +54,7 @@ func aboutScienceData() []ScienceSection {
 				"- Apply positive field: polarization goes positive\n" +
 				"- Remove field: polarization stays at +Pr (stored '1')\n" +
 				"- Apply negative field: switches to -Pr (stored '0')\n\n" +
-				"This bistability (or multi-stability with dozens of levels; the demo uses 30) is what makes ferroelectric memory non-volatile.",
+				"This bistability (or multi-stability with dozens of levels; the demo uses a 30-level baseline) is what makes ferroelectric memory non-volatile.",
 			LearnMore: "https://en.wikipedia.org/wiki/Ferroelectric_RAM",
 		},
 		{

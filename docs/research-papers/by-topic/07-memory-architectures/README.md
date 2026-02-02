@@ -143,7 +143,7 @@ GPU (complex ops) ← 10 pJ/bit → HBM (temporary data)
 ```
 
 **Hybrid Strategy:**
-1. **Frequent MVM operations**: FeCIM crossbar (30 analog states, non-volatile)
+1. **Frequent MVM operations**: FeCIM crossbar (30-level demo baseline; conference claim, non-volatile)
 2. **Irregular access**: HBM-PIM (flexible, high bandwidth)
 3. **Long-term storage**: Flash/SSD (high capacity)
 

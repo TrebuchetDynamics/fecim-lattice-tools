@@ -263,7 +263,7 @@ FeFET stores Q, K, V projection weights non-volatilely
 ### Secondary Connections
 - **[Topic 1: FeFET Fundamentals](../01-fefet-fundamentals/)** - Device enabler
   - Non-volatile phase control is unique advantage
-  - 30 analog states enable precise optical weights
+  - 30 analog states (demo baseline; conference claim) enable precise optical weights
   - Fast switching (ns) matches photonic speed
 
 - **[Topic 6: 3D Integration](../06-3d-integration/)** - Packaging solution

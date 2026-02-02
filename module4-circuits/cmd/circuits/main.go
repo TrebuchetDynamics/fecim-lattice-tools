@@ -116,7 +116,7 @@ func showSystemOverview() {
 	fmt.Println("            ┌────────────────────┐")
 	fmt.Println("            │                    │")
 	fmt.Println("            │     CROSSBAR       │")
-	fmt.Println("            │   30-Level FeFET   │")
+	fmt.Println("            │ 30-Level FeFET     │")
 	fmt.Println("            │                    │")
 	fmt.Println("            └────────────────────┘")
 	fmt.Println()
@@ -152,7 +152,7 @@ func showDACDemo(level int) {
 	fmt.Println()
 
 	// Show voltage ladder
-	fmt.Println("Voltage Ladder (30 FeCIM levels):")
+	fmt.Println("Voltage Ladder (30 FeCIM levels, demo baseline):")
 	fmt.Println()
 	for i := 0; i < 30; i++ {
 		v := dac.Convert(i)

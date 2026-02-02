@@ -43,7 +43,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewLabel("• Peer-reviewed range: 32-140 states demonstrated"),
 		widget.NewLabel("  - 32 states: Oh et al., IEEE EDL 2017 (VERIFIED)"),
 		widget.NewLabel("  - 140 states: Song et al., Adv. Science 2024 (VERIFIED)"),
-		widget.NewLabel("• Conclusion: 30 states is PLAUSIBLE (within demonstrated range)"),
+		widget.NewLabel("• Conclusion: 30 states is a conference-claim baseline (plausible within demonstrated range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Physics Justification", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -77,7 +77,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Why Not 64 Levels (6-bit ADC maximum)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("This demo assumes 30 levels as a conservative baseline; practical limits vary by process:"),
+		widget.NewLabel("This demo assumes 30 levels as a conservative baseline (conference claim); practical limits vary by process:"),
 		widget.NewLabel("1. Device-to-device variation: ~2.75% (process variation)"),
 		widget.NewLabel("2. Cycle-to-cycle variation: ~1.5% (retention drift)"),
 		widget.NewLabel("3. Read noise: ~0.5% σ/μ (thermal Johnson noise)"),

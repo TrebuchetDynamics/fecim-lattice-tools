@@ -42,7 +42,7 @@ This directory contains research on training algorithms specifically designed fo
 - **1-bit (binary)**: 5-15% accuracy loss, best for edge inference applications
 
 ### FeCIM-Specific Insights
-1. **30 analog states (4.9 bits)** exceeds requirements for most QAT algorithms designed for 4-bit systems
+1. **30 analog states (4.9 bits; demo baseline, conference claim)** exceeds requirements for most QAT algorithms designed for 4-bit systems
 2. **High endurance (10⁹-10¹² cycles)** enables true in-situ training, not just inference
 3. **Variation resilience** in FeFET BNNs suggests robust operation even with device-to-device variation
 

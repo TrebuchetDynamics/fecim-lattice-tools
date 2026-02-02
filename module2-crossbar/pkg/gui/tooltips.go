@@ -30,7 +30,7 @@ func ConductanceTooltip(row, col int, G float64, array *crossbar.Array) string {
 			"Details:\n"+
 			"  Normalized value: %.6f\n"+
 			"  Position: (%d, %d)\n"+
-			"  30-level analog storage\n",
+			"  30-level baseline (conference claim)\n",
 		row, col,
 		level, float64(level)/29.0*100,
 		conductanceUS,

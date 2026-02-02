@@ -93,7 +93,7 @@ This physics enables **O(1) time matrix-vector multiplication** without active a
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| Quantization levels | 30 states | ~4.9 bits/cell |
+| Quantization levels | 30 states (demo baseline; conference claim) | ~4.9 bits/cell |
 | Conductance range | 10-100 µS | Normalized 0.0-1.0 |
 | Wire resistance | 2.5 Ω/segment | Typical metal interconnect |
 | Temperature coefficient | 0.00393 K⁻¹ | For drift modeling |
@@ -166,7 +166,7 @@ This physics enables **O(1) time matrix-vector multiplication** without active a
 
 ### Finding 2: Consistent 30-Level Quantization
 
-Both modules use 30 discrete analog states:
+Both modules use the 30-level demo baseline (conference claim):
 
 - **Module 2**: Conductance 10-100 µS (normalized 0.0-1.0)
 - **Module 4**: Voltage -1.5V to +1.5V (96.8 mV/level)

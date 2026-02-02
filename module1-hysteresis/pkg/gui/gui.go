@@ -373,7 +373,7 @@ func (a *App) initDebugLog() {
 	a.logEntries = append(a.logEntries, "══════════════════════")
 	a.logEntries = append(a.logEntries, fmt.Sprintf("Material: %s", materialName))
 	a.logEntries = append(a.logEntries, fmt.Sprintf("Ec: %.1f MV/cm", materialEc/1e8))
-	a.logEntries = append(a.logEntries, "30 LEVELS = 4.91 bits/cell")
+	a.logEntries = append(a.logEntries, "30 LEVELS (claim) = 4.91 bits/cell")
 	a.logEntries = append(a.logEntries, "──────────────────────")
 }
 

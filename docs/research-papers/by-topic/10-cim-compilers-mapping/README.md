@@ -28,7 +28,7 @@ These compiler tools are directly relevant to the FeCIM Lattice Tools project:
 
 - **Module3 MNIST Implementation**: Our neural network module can benefit from mapping algorithms that optimize layer assignments to 30-level ferroelectric cells
 - **Crossbar Simulation Validation**: COMPASS IR drop models validate our module2 crossbar non-ideality simulations
-- **Quantization Strategy**: CIM-Explorer's quantization methods inform how we leverage 30 discrete analog levels (vs. binary or ternary alternatives)
+- **Quantization Strategy**: CIM-Explorer's quantization methods inform how we leverage the 30-level demo baseline (conference claim) versus binary/ternary alternatives
 - **Future Compiler Integration**: These papers provide roadmap for adding automatic model-to-hardware compilation to our toolkit
 - **Accuracy Prediction**: Compiler fault models help predict real-world accuracy given manufacturing defects and variability
 

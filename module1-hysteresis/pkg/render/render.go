@@ -305,7 +305,7 @@ type Renderer struct {
 	config  *Config
 	plot    *HysteresisPlot
 	cell    *CellDisplay
-	levels  *LevelIndicator // 30-level indicator per Dr. Tour's specs
+levels  *LevelIndicator // 30-level indicator (conference-claim baseline)
 	running bool
 
 	// Callbacks

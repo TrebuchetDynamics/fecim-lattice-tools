@@ -728,6 +728,47 @@ materials:
       energy_reduction: 0.5     # 50% energy reduction vs conventional
 
     # =========================================================================
+    # LANDAU-KHALATNIKOV PARAMETERS (for Frankenstein equation)
+    # Estimated from 2D ferroelectric theory and scaling from HZO
+    # NOTE: These are ESTIMATES - peer-reviewed L-K fits for In₂Se₃ are sparse
+    # =========================================================================
+
+    # Depolarization factor k_dep for E_dep = -k_dep * P
+    # Lower than HZO due to lower Pr (scales roughly with Pr/ε)
+    depolarization_factor_vm_c: 1.5e8  # Estimated, lower than HZO (2.5e8)
+
+    # Landau-Devonshire thermodynamic coefficients
+    thermodynamics:
+      # β < 0 indicates first-order transition
+      # In₂Se₃ has weaker first-order character than HZO
+      beta_landau: -1.0e8       # First-order barrier [J m^5 / C^4] (weaker than HZO)
+      # γ > 0 ensures stability at high polarization
+      gamma_landau: 8.0e9       # Stability [J m^9 / C^6] (scaled for lower Ps)
+      # Viscosity determines switching dynamics: ρ_eff = ρ + R*A/d
+      # Higher than HZO (slower switching: 10ns vs 1ns)
+      rho_viscosity: 0.5        # Damping/Viscosity (Ohm·m), tuned for ~10ns switching
+      # Curie constant for α calculation via Curie-Weiss law
+      curie_const_k: 1.0e5      # Curie constant (K), estimated from Tc=700K
+
+    # Electromechanical coupling (piezoelectric/electrostriction)
+    coupling:
+      # Q12 is transverse electrostriction coefficient
+      # 2D vdW materials have weaker coupling than bulk oxides
+      q12_electrostriction: -0.01  # Transverse electrostriction (m^4 / C^2), weaker than HZO
+
+    # Circuit model parameters
+    circuit:
+      # Series resistance affects ρ_eff and RC dynamics
+      series_resistance_ohm: 100   # Slightly higher than HZO due to 2D contact resistance
+
+    # Nucleation-Limited Switching (NLS) parameters
+    nls:
+      # Activation field for domain nucleation
+      activation_field_v_m: 2.5e8  # Ea/kT barrier field (lower than Ec)
+      # Intrinsic attempt time
+      tau_inf_s: 1.0e-12           # Attempt period (~1 ps)
+
+    # =========================================================================
     # NOTES & LIMITATIONS
     # =========================================================================
     # Advantages:

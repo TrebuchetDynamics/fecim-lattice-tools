@@ -451,7 +451,7 @@ Where F includes:
 
 1. **Physics-accurate Preisach model** with emergent hysteresis
 2. **Temperature-dependent Ec/Pr** following literature scaling
-3. **30-level quantization** matching Tour Lab specifications
+3. **30-level quantization** using the demo baseline (conference claim; pending peer review)
 4. **Minor loop support** via hysteron state persistence
 5. **Real-time visualization** at 60 FPS
 

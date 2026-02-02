@@ -223,7 +223,7 @@ func (p *PredictionDisplay) SetPredictions(
 
 ```go
 func computeEnergyCIM(numOutputs int) float64 {
-    // Based on Tour's specs and research (mnist.research.md)
+    // Based on the conference-claim baseline and research (mnist.research.md)
     const (
         energyPerMAC = 50e-15  // 50 femtojoules per MAC
         dacEnergy    = 10e-12  // 10 picojoules per conversion
@@ -1113,7 +1113,7 @@ Location: `docs/papers/by-topic/`
 
 ### FeCIM Energy Model
 
-**Based on**: `docs/mnist/mnist.research.md`, Dr. Tour's specifications
+**Based on**: `docs/mnist/mnist.research.md`, conference-claim baseline
 
 ```
 Components:
