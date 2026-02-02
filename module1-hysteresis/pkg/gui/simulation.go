@@ -884,42 +884,50 @@ func (a *App) updatePhysics(dt float64) {
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
 
 			switch a.wrdPhase {
-			case 0: // PREP (wake-up) - ensure known starting state before writing
-				// OPTIMIZED: Skip saturation if already at valid remanent state for target direction
-				// For upper targets (>midLevel): need NEGATIVE remanent to write UP
-				// For lower targets (<=midLevel): need POSITIVE remanent to write DOWN
-				saturationThreshold := 0.7 * mat.Ps // Threshold for "already saturated"
+			case 0: // PREP (wake-up) - prepare starting state before writing
+				// REAL ISPP MODE: Skip saturation and use incremental stepping from current level
+				// Only saturate if we're at the WRONG polarity for the target direction
+				// (e.g., at +Pr but need to write UP, or at -Pr but need to write DOWN)
+				saturationThreshold := 0.5 * mat.Ps // Only saturate if strongly wrong polarity
 
 				// Decide skip vs saturate ONLY at phase start, store in a.wrdPrepSkip
 				if a.wrdPhaseTimer < 0.001 {
-					if targetLevel > midLevel {
-						// Upper target: need negative starting point to write UP
-						if a.polarization <= -saturationThreshold {
-							a.wrdPrepSkip = true
-							a.wrdPrepE = 0
-						} else {
-							a.wrdPrepSkip = false
-							a.wrdPrepE = -Ec * 2.0
-						}
-					} else {
-						// Lower target: need positive starting point to write DOWN
+					currentLevel := a.discreteLevel + 1
+
+					// Check if we're on the WRONG side of the hysteresis for the target
+					// Wrong side = need to cross the full loop, not just move along current branch
+					needSaturation := false
+
+					if targetLevel > currentLevel {
+						// Writing UP: only need saturation if at POSITIVE saturation
+						// (because we can't increase P from +Pr without reset)
 						if a.polarization >= saturationThreshold {
-							a.wrdPrepSkip = true
-							a.wrdPrepE = 0
-						} else {
-							a.wrdPrepSkip = false
-							a.wrdPrepE = Ec * 2.0
+							needSaturation = true
+							a.wrdPrepE = -Ec * 2.0 // Saturate negative first
+						}
+					} else if targetLevel < currentLevel {
+						// Writing DOWN: only need saturation if at NEGATIVE saturation
+						// (because we can't decrease P from -Pr without reset)
+						if a.polarization <= -saturationThreshold {
+							needSaturation = true
+							a.wrdPrepE = Ec * 2.0 // Saturate positive first
 						}
 					}
+					// If targetLevel == currentLevel, no saturation needed (early exit will handle it)
+
+					a.wrdPrepSkip = !needSaturation
 
 					// If skipping, transition immediately to SETTLE
 					if a.wrdPrepSkip {
-						log.Printf("WRD PREP SKIP: already at valid remanent | P=%.2f µC/cm² | L=%d | target=%d",
-							a.polarization*100, a.discreteLevel+1, targetLevel)
+						log.Printf("WRD PREP SKIP: using incremental ISPP from L=%d | P=%.2f µC/cm² | target=%d",
+							currentLevel, a.polarization*100, targetLevel)
 						a.wrdResetEndP = a.polarization * 100
-						a.wrdResetEndLvl = a.discreteLevel + 1
+						a.wrdResetEndLvl = currentLevel
 						a.wrdPhase = 1
 						a.wrdPhaseTimer = 0
+					} else {
+						log.Printf("WRD PREP SATURATE: wrong polarity, need reset | P=%.2f µC/cm² | L=%d | target=%d",
+							a.polarization*100, currentLevel, targetLevel)
 					}
 				}
 
@@ -974,9 +982,10 @@ func (a *App) updatePhysics(dt float64) {
 						a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
 
 					// Initialize WriteController
-					// Always fromSaturation=true since PREP now saturates to opposite polarity
+					// fromSaturation=true only if PREP actually saturated; false if skipped
+					// When false, ISPP uses incremental stepping from current level instead of calibration
 					currentLevel := a.discreteLevel + 1
-					fromSaturation := true
+					fromSaturation := !a.wrdPrepSkip // Use incremental ISPP if PREP was skipped
 					_ = currentLevel // Used by WriteController.Start
 
 					// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
