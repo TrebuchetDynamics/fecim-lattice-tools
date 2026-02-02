@@ -169,7 +169,7 @@ For default FeCIM ADC (INL=0.5 LSB, DNL=0.25 LSB):
 
 $$ENOB = 5 - \log_2\sqrt{1 + 0.5^2 + 0.25^2} = 5 - 0.20 = 4.80 \text{ bits}$$
 
-This means the ADC actually provides **4.66 bits of resolution** instead of 5.
+This means the ADC actually provides **~4.80 bits of resolution** instead of 5.
 
 #### Signal-to-Noise Ratio (SNR)
 
@@ -342,19 +342,18 @@ Default configuration from `DefaultTIA()`:
 
 The TIA input transistor (and feedback resistor) generate **Johnson noise**:
 
-$$I_{\text{noise,rms}} = \sqrt{\frac{4kT \times BW}{R_f}}$$
+$$i_{\text{noise,density}} = \sqrt{\frac{4kT}{R_f}}$$
 
 where:
 - k = 1.38 × 10^-23 J/K (Boltzmann constant)
 - T = 300 K (room temperature)
-- BW = bandwidth (Hz)
 - Rf = feedback resistance (Ω)
 
-For FeCIM TIA:
-$$I_{\text{noise,rms}} = \sqrt{\frac{4 \times 1.38 \times 10^{-23} \times 300 \times 100 \times 10^6}{10^4}}$$
-$$I_{\text{noise,rms}} = \sqrt{1.656 \times 10^{-27}} = 1.28 \text{ pA}$$
+For FeCIM TIA (Rf = 10 kΩ):
+$$i_{\text{noise,density}} \approx 1.3 \text{ pA/√Hz}$$
 
-This matches the specified **1 pA/√Hz** input noise.
+We model this as **1 pA/√Hz** (same order of magnitude). Over 100 MHz:
+$$I_{\text{noise,rms}} \approx 1 \text{ pA/√Hz} \times \sqrt{100MHz} \approx 10 \text{ nA}$$
 
 **Output noise voltage:**
 $$V_{\text{noise,density}} = I_{\text{noise}} \times R_f = 1 \text{ pA/√Hz} \times 10k\Omega = 10 \text{ nV/√Hz}$$

@@ -91,6 +91,11 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.PhaseTimer = 0
 	wc.PulseCount = 0
 	wc.OvershootCount = 0
+	wc.CurrentField = 0
+	wc.LastVerifyLevel = 0
+	wc.LastError = 0
+	wc.previousLevel = 0
+	wc.previousField = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -121,6 +126,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 	if !wc.InitialLevelSet {
 		wc.InitialLevel = currentLevel
 		wc.InitialLevelSet = true
+		wc.LastVerifyLevel = currentLevel
+		wc.previousLevel = currentLevel
 	}
 
 	// Pulse duration constant (could be configurable)
@@ -165,12 +172,16 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// Determine reset polarity based on direction
 		// If we were going UP and overshot, we are stuck High. Reset Low (-Max).
 		// If we were going DOWN and overshot, we are stuck Low. Reset High (+Max).
-		goingUp := wc.TargetLevel > wc.InitialLevel
-		if wc.TargetLevel == wc.InitialLevel {
-			goingUp = currentLevel < wc.TargetLevel
+		resetDir := wc.directionToTarget(currentLevel)
+		if resetDir == 0 {
+			// Fall back to last pulse direction if we're exactly on target.
+			if pulseDirection(wc.CurrentField) >= 0 {
+				resetDir = -1
+			} else {
+				resetDir = 1
+			}
 		}
-
-		if goingUp {
+		if resetDir < 0 {
 			targetField = -wc.MaxField * 1.5 // Deep Negative
 		} else {
 			targetField = wc.MaxField * 1.5 // Deep Positive
@@ -191,7 +202,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.CurrentField = (wc.VMin + wc.VMax) / 2.0
 
 			// Apply sign based on direction
-			if !goingUp {
+			if resetDir < 0 {
 				wc.CurrentField = -wc.CurrentField
 			}
 
@@ -212,11 +223,15 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// Wait for field to settle to 0
 		if wc.PhaseTimer > pulseDur*0.3 && math.Abs(currentField) < 0.01*wc.MaxField {
 			// VERIFY LOGIC
-			wc.LastVerifyLevel = currentLevel
+			prevLevel := wc.LastVerifyLevel
+			if prevLevel == 0 {
+				prevLevel = currentLevel
+			}
 			wc.LastError = currentLevel - wc.TargetLevel
 
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
+				wc.LastVerifyLevel = currentLevel
 				wc.State = StateSuccess
 				wc.SuccessCount++
 				// Update calibration (simple average learning)
@@ -229,15 +244,18 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// If we passed the target, we are on the wrong hysteresis branch.
 			// Standard servoing (reducing voltage) won't work due to remanence.
 			// Must RESET.
-			goingUp := wc.TargetLevel > wc.InitialLevel
-			if wc.TargetLevel == wc.InitialLevel {
-				goingUp = currentLevel < wc.TargetLevel
+			pulseDir := pulseDirection(wc.CurrentField)
+			overshoot := false
+			if pulseDir > 0 {
+				overshoot = prevLevel <= wc.TargetLevel && currentLevel > wc.TargetLevel
+			} else if pulseDir < 0 {
+				overshoot = prevLevel >= wc.TargetLevel && currentLevel < wc.TargetLevel
 			}
-			overshoot := (goingUp && currentLevel > wc.TargetLevel) || (!goingUp && currentLevel < wc.TargetLevel)
 
 			// DEBUG: Always log the overshoot check
-			log.Printf("ISPP VERIFY: currentLevel=%d, targetLevel=%d, initialLevel=%d, goingUp=%v, overshoot=%v",
-				currentLevel, wc.TargetLevel, wc.InitialLevel, goingUp, overshoot)
+			log.Printf("ISPP VERIFY: currentLevel=%d, targetLevel=%d, prevLevel=%d, pulseDir=%d, overshoot=%v",
+				currentLevel, wc.TargetLevel, prevLevel, pulseDir, overshoot)
+			wc.LastVerifyLevel = currentLevel
 
 			if overshoot {
 				wc.OvershootCount++
@@ -280,6 +298,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 // calculateNextField determines the field for the next pulse using binary search
 func (wc *WriteController) calculateNextField(currentLevel int) {
 	targetLevel := wc.TargetLevel
+	direction := wc.directionToTarget(currentLevel)
 
 	// Determine which saturation state we're writing from
 	atNegativeSat := currentLevel <= 3                  // Near Level 1 (-Pr)
@@ -291,34 +310,38 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		var initialGuess float64
 
 		// Use calibration if available and we're at saturation
-		if wc.FromSaturation && wrdTargetIdx >= 0 && wrdTargetIdx < len(wc.CalibManager.CalibrationUp) {
+		if wc.FromSaturation && wc.CalibManager != nil && wrdTargetIdx >= 0 && wrdTargetIdx < len(wc.CalibManager.CalibrationUp) {
 			if atNegativeSat {
 				// Starting from -Pr, use CalibrationUp
-				initialGuess = wc.CalibManager.CalibrationUp[wrdTargetIdx]
+				initialGuess = math.Abs(wc.CalibManager.CalibrationUp[wrdTargetIdx])
 				log.Printf("ISPP INIT: target=%d, calib=%.3f×Ec (from -Pr), bounds=[%.3f, %.3f]×Ec",
 					targetLevel, initialGuess/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 			} else if atPositiveSat {
 				// Starting from +Pr, use CalibrationDown (already negative)
-				initialGuess = wc.CalibManager.CalibrationDown[wrdTargetIdx]
+				initialGuess = math.Abs(wc.CalibManager.CalibrationDown[wrdTargetIdx])
 				log.Printf("ISPP INIT: target=%d, calib=%.3f×Ec (from +Pr), bounds=[%.3f, %.3f]×Ec",
 					targetLevel, initialGuess/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 			} else {
 				// Not at saturation - take a single Ec step toward target
-				initialGuess = wc.EcField
-				if targetLevel < currentLevel {
-					initialGuess = -initialGuess
-				}
+				initialGuess = math.Abs(wc.EcField)
 				log.Printf("ISPP INIT: target=%d, Ec-step=%.3f×Ec (not at sat), bounds=[%.3f, %.3f]×Ec",
 					targetLevel, initialGuess/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 			}
 		} else {
 			// No calibration or not from saturation - take a single Ec step toward target
-			initialGuess = wc.EcField
-			if targetLevel < currentLevel {
-				initialGuess = -initialGuess
-			}
+			initialGuess = math.Abs(wc.EcField)
 			log.Printf("ISPP INIT: target=%d, Ec-step=%.3f×Ec (no calib), bounds=[%.3f, %.3f]×Ec",
 				targetLevel, initialGuess/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+		}
+
+		if direction == 0 {
+			wc.CurrentField = 0
+			log.Printf("ISPP INIT: already at target level %d, no pulse scheduled", currentLevel)
+			return
+		}
+
+		if direction < 0 {
+			initialGuess = -initialGuess
 		}
 
 		wc.CurrentField = initialGuess
@@ -347,54 +370,55 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	// Update binary search bounds
 	absCurrentField := math.Abs(wc.CurrentField)
 
-	if error < 0 {
-		// We're BELOW target
-		// If we were trying to go UP → Undershoot, need more voltage
-		// Update VMin = currentVoltage (this voltage is safe, didn't overshoot)
+	if direction > 0 {
+		// We're BELOW target, need stronger positive field
 		wc.VMin = absCurrentField
 		log.Printf("ISPP BINARY: Undershoot (level=%d < target=%d), VMin=%.3f×Ec → VMin=%.3f×Ec",
 			currentLevel, targetLevel, wc.VMin/wc.EcField, absCurrentField/wc.EcField)
-	} else if error > 0 {
-		// We're ABOVE target
-		// If we were trying to go DOWN → Undershoot in reverse direction
-		// But wait - this means we haven't moved enough in the negative direction
-		// Actually, for going DOWN, we need to treat this differently
-
-		// Check the intended direction
-		goingDown := targetLevel < wc.InitialLevel
-		if targetLevel == wc.InitialLevel {
-			goingDown = currentLevel > targetLevel
-		}
-		if goingDown {
-			// We're trying to go DOWN but still above target
-			// Current field wasn't strong enough (in negative direction)
-			// Need stronger negative field
-			wc.VMin = absCurrentField
-			log.Printf("ISPP BINARY: Going DOWN, still above (level=%d > target=%d), V Min=%.3f×Ec",
-				currentLevel, targetLevel, absCurrentField/wc.EcField)
-		} else {
-			// Going UP but we're above target - this shouldn't happen in VERIFY
-			// because it should have been caught as overshoot
-			// Treat as needing less voltage
-			wc.VMax = absCurrentField
-			log.Printf("ISPP BINARY: Unexpected state (level=%d > target=%d while going UP), VMax=%.3f×Ec",
-				currentLevel, targetLevel, absCurrentField/wc.EcField)
-		}
+	} else if direction < 0 {
+		// We're ABOVE target, need stronger negative field
+		wc.VMin = absCurrentField
+		log.Printf("ISPP BINARY: Undershoot (level=%d > target=%d), VMin=%.3f×Ec → VMin=%.3f×Ec",
+			currentLevel, targetLevel, wc.VMin/wc.EcField, absCurrentField/wc.EcField)
+	} else {
+		// Already at target; nothing to do.
+		wc.CurrentField = 0
+		log.Printf("ISPP BINARY: already at target level %d, no pulse scheduled", currentLevel)
+		return
 	}
 
 	// Calculate next voltage as midpoint of bounds
+	if wc.VMax < wc.VMin {
+		wc.VMax = wc.VMin
+	}
 	nextVoltage := (wc.VMin + wc.VMax) / 2.0
 
 	// Apply sign based on direction
-	goingDown := targetLevel < wc.InitialLevel
-	if targetLevel == wc.InitialLevel {
-		goingDown = currentLevel > targetLevel
-	}
-	if goingDown {
+	if direction < 0 {
 		nextVoltage = -nextVoltage
 	}
 
 	wc.CurrentField = nextVoltage
 	log.Printf("ISPP BINARY: Next pulse E=%.3f×Ec, bounds=[%.3f, %.3f]×E c",
 		wc.CurrentField/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+}
+
+func (wc *WriteController) directionToTarget(currentLevel int) int {
+	if currentLevel < wc.TargetLevel {
+		return 1
+	}
+	if currentLevel > wc.TargetLevel {
+		return -1
+	}
+	return 0
+}
+
+func pulseDirection(field float64) int {
+	if field > 0 {
+		return 1
+	}
+	if field < 0 {
+		return -1
+	}
+	return 0
 }

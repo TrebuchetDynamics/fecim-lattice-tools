@@ -193,6 +193,7 @@ The WRD controller now recalibrates **during runtime** when convergence is poor:
 - **Overshoot reset**: uses a **deep reset** of `±1.5 × MaxField` with sign based on direction.
 - **Retry limit**: `MaxRetries = 50` (configurable).
 - **Directionality**: pulse sign derives from target vs. current level (and target branch when reset).
+- **Overshoot detection**: compares the last verified level to the post‑pulse level using the pulse direction to detect true crossings.
 - **Quantization**: level readout uses `normalizedP` → discrete level mapping (0–N‑1).
 
 #### Headless L‑K ISPP (`--mode hysteresis`)

@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	frankesteinEquationSVGPath     = "data/equations/frankestein.svg"
-	frankesteinEquationHotspotPath = "data/equations/frankestein.hotspots.json"
+	frankesteinEquationSVGPath     = "shared/assets/equations/frankestein.svg"
+	frankesteinEquationHotspotPath = "shared/assets/equations/frankestein.hotspots.json"
 )
 
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.

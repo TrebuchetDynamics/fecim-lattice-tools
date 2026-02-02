@@ -92,6 +92,9 @@ go run ./module4-circuits/cmd/circuits -pump
 go run ./module4-circuits/cmd/circuits -linearity
 go run ./module4-circuits/cmd/circuits -timing
 go run ./module4-circuits/cmd/circuits -power
+
+# Run ISPP write/verify demo (shared hysteresis physics)
+go run ./module4-circuits/cmd/circuits -ispp
 ```
 
 ### Run GUI Visualization

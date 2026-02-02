@@ -8,10 +8,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"strings"
 
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/peripherals"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 func main() {
@@ -24,6 +26,7 @@ func main() {
 	showLinearity := flag.Bool("linearity", false, "Show INL/DNL linearity analysis")
 	showTiming := flag.Bool("timing", false, "Show timing diagrams")
 	showPower := flag.Bool("power", false, "Show power breakdown")
+	showISPP := flag.Bool("ispp", false, "Run ISPP write/verify demo (shared hysteresis physics)")
 	demoLevel := flag.Int("level", 15, "Demo level for conversion (0-29)")
 	enableLogger := flag.Bool("logger", false, "Enable file logging (logs/)")
 	verbosity := flag.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
@@ -71,6 +74,9 @@ func main() {
 	// Show power breakdown
 	if *showPower || *showAll {
 		showPowerBreakdown()
+	}
+	if *showISPP {
+		showISPPDemo(*demoLevel)
 	}
 
 	// If no specific flag, show brief overview of all
@@ -232,6 +238,65 @@ func showTIADemo() {
 		snr := tia.SNR(current)
 		fmt.Printf("  %5.0f µA → %.3f V (SNR: %.1f dB)\n", current*1e6, voltage, snr)
 	}
+	fmt.Println()
+}
+
+func showISPPDemo(level int) {
+	fmt.Println("┌─────────────────────────────────────────────┐")
+	fmt.Println("│  ISPP Write/Verify (Shared Hysteresis)      │")
+	fmt.Println("└─────────────────────────────────────────────┘")
+	fmt.Println()
+
+	mat := sharedphysics.FeCIMMaterial()
+	numLevels := mat.GetNumLevels()
+	if numLevels <= 0 {
+		numLevels = 30
+	}
+
+	if level < 0 || level >= numLevels {
+		level = numLevels / 2
+	}
+
+	gmin := mat.Gmin
+	gmax := mat.Gmax
+	if gmin == 0 && gmax == 0 {
+		gmin = 1e-6
+		gmax = 100e-6
+	}
+
+	// Use the same physics path as the hysteresis module (L-K + write controller).
+	solver := sharedphysics.NewLKSolver()
+	solver.ConfigureFromMaterial(mat)
+	solver.Temperature = 300
+	solver.EnableNoise = false
+	solver.UseNLS = false
+	solver.UpdateParams()
+
+	controller := sharedphysics.NewWriteController(solver, mat)
+	controller.MaxIterations = 15
+	controller.Tolerance = 1.5e-6
+	controller.PulseWidth = mat.Tau
+	if mat.Ec > 0 && mat.Thickness > 0 {
+		controller.MaxVoltage = mat.Ec * mat.Thickness * 2.5
+	}
+
+	targetG := mat.DiscreteLevel(level, numLevels)
+	attempts, success, overshoots := controller.WriteTargetWithReset(targetG, true)
+
+	finalP := solver.GetState()
+	finalG := sharedphysics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+	finalLevel := int(math.Round((finalG - gmin) / (gmax - gmin) * float64(numLevels-1)))
+	if finalLevel < 0 {
+		finalLevel = 0
+	}
+	if finalLevel >= numLevels {
+		finalLevel = numLevels - 1
+	}
+
+	fmt.Printf("Target Level: %d of %d\n", level, numLevels-1)
+	fmt.Printf("Target Conductance: %.2f µS\n", targetG*1e6)
+	fmt.Printf("Attempts: %d | Overshoots: %d | Success: %v\n", attempts, overshoots, success)
+	fmt.Printf("Final Conductance: %.2f µS (Level ~%d)\n", finalG*1e6, finalLevel)
 	fmt.Println()
 }
 

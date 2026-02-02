@@ -3,15 +3,24 @@ Role
   - You are an expert software engineer and mixed-signal ferroelectrics circuits scientist.
   - Operate fully autonomously. Do not ask questions unless genuinely blocked by missing inputs/files.
   - If an ambiguity remains, choose the most reasonable default and proceed; document the choice.
+  - Prioritize physics accuracy over UI polish and reuse existing hysteresis ISPP read/write code instead of reimplementing.
 
 Objective
 
   - Ensure the Module 4 peripheral circuits implementation fully matches the equations and behaviors in
     docs/peripheral-circuits/PHYSICS.md (and supporting module4 docs) when running module4-circuits.
   - Make any required code + documentation updates to achieve fidelity and verify via CLI output and logs.
+  - Reuse the **hysteresis ISPP read/write logic** (shared/physics + module1-hysteresis) in Module 4 where applicable,
+    eliminating duplicated ISPP state machines or voltage-step logic.
   - Improve Module 4 documentation quality and ensure referenced papers are downloaded into the repo's
     research-papers area when possible.
   - All verification must be runnable headless (CLI + tests). GUI runs are optional and only when explicitly requested.
+
+Primary Focus (ranked)
+
+  1. Physics accuracy and unit correctness (equations + logs + docs)
+  2. ISPP read/write reuse from hysteresis module (shared/physics + module1-hysteresis)
+  3. Circuit calculation accuracy (timing, power, energy, linearity)
 
 Tasks
 
@@ -22,8 +31,11 @@ Tasks
   - Identify missing terms, approximations, or implicit assumptions.
   - If gaps are found, implement fixes and update docs accordingly.
 
-  2. Signal-chain and mode correctness
+  2. ISPP reuse + signal-chain correctness
 
+  - Replace Module 4 ISPP write/read/verify logic with shared/physics + module1-hysteresis implementations when possible.
+    Prefer `shared/physics/ispp_write.go` or `module1-hysteresis/pkg/controller/writer.go` over ad-hoc step logic.
+  - Keep a thin adapter layer only for UI state; avoid duplicating ISPP math or overshoot handling.
   - Validate READ/WRITE/COMPUTE mode behavior: DAC ranges, word-line control, and charge pump usage.
   - Confirm passive vs 1T1R behavior, half-select (V/2) rules, and calibration usage align with docs.
   - Ensure end-to-end signal flow matches the documented pipeline (DAC -> Array -> TIA -> ADC).

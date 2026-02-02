@@ -51,5 +51,5 @@ sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-lat
 Regenerate the equation SVG after edits:
 
 ```bash
-go run ./cmd/latex-svg -in data/equations/frankestein.tex -out data/equations/frankestein.svg
+go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg
 ```

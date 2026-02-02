@@ -29,20 +29,20 @@ Primary Focus (ranked)
 Scope / Files of Interest
 
 - Widget: `module1-hysteresis/pkg/gui/widgets/frankestein_equation.go`
-- LaTeX source: `data/equations/frankestein.tex`
-- Hotspots: `data/equations/frankestein.hotspots.json`
-- SVG output: `data/equations/frankestein.svg`
+- LaTeX source: `shared/assets/equations/frankestein.tex`
+- Hotspots: `shared/assets/equations/frankestein.hotspots.json`
+- SVG output: `shared/assets/equations/frankestein.svg`
 - CLI generator: `cmd/latex-svg`
 
 Tasks
 
 1) LaTeX → SVG pipeline
-- Use `cmd/latex-svg` to generate SVG from `data/equations/frankestein.tex`.
-- Ensure the SVG writes to `data/equations/frankestein.svg`.
+- Use `cmd/latex-svg` to generate SVG from `shared/assets/equations/frankestein.tex`.
+- Ensure the SVG writes to `shared/assets/equations/frankestein.svg`.
 
 2) Hotspot alignment
 - Enable `FECIM_EQUATION_DEBUG=1` to visualize hotspot boxes.
-- Adjust `data/equations/frankestein.hotspots.json` (x/y/w/h normalized to SVG bounds).
+- Adjust `shared/assets/equations/frankestein.hotspots.json` (x/y/w/h normalized to SVG bounds).
 - Validate that each tooltip matches the correct term.
 
 3) Widget behavior
@@ -53,7 +53,7 @@ Tasks
 Validation
 
 - Run (regenerate SVG):
-  - `go run ./cmd/latex-svg -in data/equations/frankestein.tex -out data/equations/frankestein.svg`
+  - `go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg`
 - Visual check (debug overlay):
   - `FECIM_EQUATION_DEBUG=1 ./launch.sh`
 
@@ -67,6 +67,6 @@ Deliverable
 
 Baseline (update each run)
 
-- SVG generated:
-- Hotspots aligned:
-- Widget status:
+- SVG generated: 2026-02-02 via `go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg` (success).
+- Hotspots aligned: 2026-02-02 updated `shared/assets/equations/frankestein.hotspots.json` using font-based SVG bounds; GUI overlay not yet visually verified.
+- Widget status: not validated in GUI (needs `FECIM_EQUATION_DEBUG=1 ./launch.sh` for hover/tap/fallback confirmation).
