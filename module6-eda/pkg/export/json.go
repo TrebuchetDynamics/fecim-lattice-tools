@@ -2,10 +2,10 @@
 package export
 
 import (
-	"encoding/json"
 	"os"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/logging"
 )
 
@@ -22,25 +22,19 @@ func ExportJSON(design *compiler.ArrayDesign, path string) error {
 		"activeCells": design.Stats.ActiveCells,
 	})
 
-	data, err := json.MarshalIndent(design, "", "  ")
-	if err != nil {
+	if err := sharedio.SaveJSON(path, design); err != nil {
 		logJSON.ErrorContext("ExportJSON", err, map[string]interface{}{
-			"operation": "marshal JSON",
+			"operation": "save JSON",
 			"path":      path,
 		})
 		return err
 	}
 
-	err = os.WriteFile(path, data, 0644)
-	if err != nil {
-		logJSON.ErrorContext("ExportJSON", err, map[string]interface{}{
-			"operation": "write file",
-			"path":      path,
-		})
-		return err
+	if info, err := os.Stat(path); err == nil {
+		logJSON.Debug("ExportJSON: Exported design to %s (size: %d bytes)", path, info.Size())
+	} else {
+		logJSON.Debug("ExportJSON: Exported design to %s", path)
 	}
-
-	logJSON.Debug("ExportJSON: Exported design to %s (size: %d bytes)", path, len(data))
 
 	return nil
 }

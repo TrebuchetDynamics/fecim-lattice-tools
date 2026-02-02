@@ -20,8 +20,7 @@ import (
 
 // EmbeddedDocsApp is the embeddable documentation viewer
 type EmbeddedDocsApp struct {
-	// Existing
-	content     fyne.CanvasObject
+	sharedWidgets.EmbeddedAppBase
 	currentFile string
 	docsPath    string
 
@@ -63,6 +62,7 @@ type docEntry struct {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
+	app.EmbeddedAppBase.Init(fyneApp, window)
 	app.window = window
 	app.docsPath = utils.FindDirectory("docs")
 
@@ -84,12 +84,13 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 		app.buildTopBar(),      // search button, title
 	)
 
-	app.content = app.layoutManager.BuildLayout()
+	content := app.layoutManager.BuildLayout()
+	app.SetContent(content)
 
 	// Setup keyboard shortcut for search
 	SetupSearchShortcut(window, app.searchDialog)
 
-	return app.content
+	return content
 }
 
 // createUIComponents initializes all UI widgets
@@ -500,10 +501,12 @@ func (app *EmbeddedDocsApp) scanEntry(path string, info os.DirEntry) *docEntry {
 
 // Start is called when this demo tab is selected
 func (app *EmbeddedDocsApp) Start() {
+	app.EmbeddedAppBase.Start()
 	// No background processes to start
 }
 
 // Stop is called when this demo tab is deselected
 func (app *EmbeddedDocsApp) Stop() {
 	// No background processes to stop
+	app.EmbeddedAppBase.Stop()
 }

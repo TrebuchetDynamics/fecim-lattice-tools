@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 // DocsHistory manages recent documents and favorites with thread-safe persistence
@@ -136,18 +138,7 @@ func (h *DocsHistory) Save() error {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	data, err := json.MarshalIndent(h, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	// Ensure directory exists
-	dir := filepath.Dir(h.configPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	return os.WriteFile(h.configPath, data, 0644)
+	return sharedio.SaveJSON(h.configPath, h)
 }
 
 // Load reads from disk

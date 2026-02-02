@@ -45,17 +45,12 @@ func NewNetworkController(inputSize, hiddenSize, outputSize int) *NetworkControl
 		dataDir = "module3-mnist/data" // Default fallback
 	}
 
-	weightsDir := ""
-	weightCandidates := []string{
-		filepath.Join("data", "pretrained-weigths"),
-		filepath.Join("data", "pretrained-weights"),
-		filepath.Join("module3-mnist", "data"),
+	weightsDir := utils.FindDirectoryWithMarker(filepath.Join("data", "pretrained-weigths"), "pretrained_weights.json")
+	if weightsDir == "" {
+		weightsDir = utils.FindDirectoryWithMarker(filepath.Join("data", "pretrained-weights"), "pretrained_weights.json")
 	}
-	for _, candidate := range weightCandidates {
-		if _, err := os.Stat(filepath.Join(candidate, "pretrained_weights.json")); err == nil {
-			weightsDir = candidate
-			break
-		}
+	if weightsDir == "" {
+		weightsDir = utils.FindDirectoryWithMarker(filepath.Join("module3-mnist", "data"), "pretrained_weights.json")
 	}
 	if weightsDir == "" {
 		weightsDir = dataDir

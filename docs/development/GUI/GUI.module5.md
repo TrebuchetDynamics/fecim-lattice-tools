@@ -31,98 +31,98 @@ Screens:
       - Border:
           Top:
             - Component:
-                Type: HBox
-                Purpose: Header with title, subtitle, and reset button
-                file: app.go:291-296
+                Type: VBox
+                Purpose: Simulation warning banner + header with reset button
+                file: app.go:260-315
                 State: Static
                 Children:
                   - Component:
-                      Type: Label
-                      Purpose: Main title "FeCIM: The Energy Revolution"
-                      file: app.go:271-273
-                      State: Static (HighImportance, Bold)
+                      Type: Label (warningBanner)
+                      Purpose: TRL 4 warning banner
+                      file: app.go:264-270
+                      State: Static (Bold, Centered)
                   - Component:
-                      Type: Label
-                      Purpose: Subtitle "Dr. external research group | COSM 2025"
-                      file: app.go:275-276
-                      State: Static (Italic)
-                  - Component:
-                      Type: Spacer
-                      Purpose: Push reset button to right
-                  - Component:
-                      Type: Button
-                      Purpose: Reset all animations
-                      file: app.go:278-289
-                      Bindings: Calls Reset() on all hero widgets
+                      Type: HBox
+                      Purpose: Header with subtitle and reset button
+                      file: app.go:279-289
+                      Children:
+                        - Component:
+                            Type: Label
+                            Purpose: Subtitle "Dr. external research group | COSM 2025"
+                            file: app.go:283-284
+                            State: Static (Italic)
+                        - Component:
+                            Type: Spacer
+                            Purpose: Push reset button to right
+                        - Component:
+                            Type: Button
+                            Purpose: Reset all animations
+                            file: app.go:287-298
+                            Bindings: Calls Reset() on all hero widgets
           Bottom:
             - Component:
                 Type: HBox
-                Purpose: Footer with status and disclaimer
-                file: app.go:359-363
+                Purpose: Footer with status
+                file: app.go:356-361
                 Children:
                   - Component:
                       Type: Label (statusLabel)
                       Purpose: Display current operation status
-                      file: app.go:267-268
-                      State: ca.lastStatusText (cached)
+                      file: app.go:252-253
+                      State: statusBar cache
                       Bindings: updateStatus()
                       Bug: BUG-M5-002
                   - Component:
                       Type: Spacer
-                      Purpose: Push disclaimer to right
-                  - Component:
-                      Type: Label
-                      Purpose: TRL 4 disclaimer
-                      file: app.go:356-357
-                      State: Static (Italic)
+                      Purpose: Push status to left
           Center:
             - Component:
-                Type: AppTabs
-                Purpose: Three main presentation tabs
-                file: app.go:344-351
-                State: ca.presentationMode (Manual/Auto/Investor/Engineer)
+                Type: Scroll
+                Purpose: Unified technical briefing view (stacked sections)
+                file: app.go:324-354
                 Children:
-                  - Tab: "The Energy Problem"
-                    component:
-                      Type: AnimatedEnergyRace (hero widget)
-                      Purpose: Show 80-90% energy reduction hero message
-                      file: hero.go:42-261
-                      State: animProgress, showWinner, pulsePhase
-                      Bindings: UpdateAnimation(dt), Reset()
-                      Bug: BUG-M5-003
-                      DataFlow:
-                        - Trigger: animationLoop (30 FPS)
-                          Source: app.go:152-221
-                          Updates: animProgress, pulsePhase
-                          file: hero.go:76-91
-                      Layout:
-                        - Component:
-                            Type: Text (heroText)
-                            Purpose: Giant "80-90%" text
-                            file: hero.go:113-116
-                            State: 96pt bold, pulsing color
-                        - Component:
-                            Type: Text (heroSubtext)
-                            Purpose: "DATA CENTER ENERGY REDUCTION"
-                            file: hero.go:118-121
-                            State: 28pt bold cyan
-                        - Component:
-                            Type: Rectangle (gpuBar)
-                            Purpose: GPU energy bar (100 units)
-                            file: hero.go:140-144
-                            State: Animated width based on animProgress
-                        - Component:
-                            Type: Rectangle (fecimBar)
-                            Purpose: FeCIM energy bar (~10 units)
-                            file: hero.go:164-168
-                            State: Animated width (10% of GPU)
-                        - Component:
-                            Type: Text (statStrip)
-                            Purpose: "1000x less than CPU | 100x less than GPU"
-                            file: hero.go:183-186
-                            State: Static cyan
+                  - Section: "THE ENERGY PROBLEM"
+                    Layout:
+                      - Component:
+                          Type: AnimatedEnergyRace (hero widget)
+                          Purpose: Show 80-90% energy reduction hero message
+                          file: hero.go:42-261
+                          State: animProgress, showWinner, pulsePhase
+                          Bindings: UpdateAnimation(dt), Reset()
+                          Bug: BUG-M5-003
+                          DataFlow:
+                            - Trigger: animationLoop (30 FPS)
+                              Source: app.go:152-221
+                              Updates: animProgress, pulsePhase
+                              file: hero.go:76-91
+                          Layout:
+                            - Component:
+                                Type: Text (heroText)
+                                Purpose: Giant "80-90%" text
+                                file: hero.go:113-116
+                                State: 48pt bold, pulsing color
+                            - Component:
+                                Type: Text (heroSubtext)
+                                Purpose: "⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verified"
+                                file: hero.go:118-121
+                                State: 14pt bold amber
+                            - Component:
+                                Type: Rectangle (gpuBar)
+                                Purpose: GPU energy bar (100 units)
+                                file: hero.go:140-144
+                                State: Animated width based on animProgress
+                            - Component:
+                                Type: Rectangle (fecimBar)
+                                Purpose: FeCIM energy bar (~10 units)
+                                file: hero.go:164-168
+                                State: Animated width (10% of GPU)
+                            - Component:
+                                Type: Text (statStrip)
+                                Purpose: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
+                                file: hero.go:183-186
+                                State: Static cyan
 
-                  - Tab: "Market Opportunity"
+                  - Section: "MARKET OPPORTUNITY"
                     Layout:
                       - Component:
                           Type: MarketOpportunityChart (hero widget)
@@ -136,12 +136,12 @@ Screens:
                                 Type: Text (heroText)
                                 Purpose: Giant "$721B" text
                                 file: market.go:106-109
-                                State: 96pt bold, pulsing
+                                State: 48pt bold, pulsing
                             - Component:
                                 Type: Text (heroSubtext)
-                                Purpose: "ADDRESSABLE MARKET BY 2030"
+                                Purpose: "⚠️ SIMULATION ONLY | Market Projections Unverified | TRL 4→9 Required"
                                 file: market.go:111-114
-                                State: 28pt bold cyan
+                                State: 13pt bold amber
                             - Component:
                                 Type: Rectangle Array (marketBoxes)
                                 Purpose: Three market segment boxes
@@ -190,7 +190,7 @@ Screens:
                                 Type: Text (heroText)
                                 Purpose: "Only FeCIM has checkmarks in ALL categories"
                                 file: market.go:262-265
-                                State: Static 20pt cyan
+                                State: Static 12pt cyan
                             - Component:
                                 Type: Grid (6 columns)
                                 Purpose: Header row
@@ -202,7 +202,7 @@ Screens:
                                 file: market.go:280-307
                                 State: FeCIM (all ✓), Google TPU, Intel Loihi, IBM, ReRAM
 
-                  - Tab: "ROI Calculator"
+                  - Section: "ROI CALCULATOR"
                     Layout:
                       - Component:
                           Type: HBox
@@ -220,7 +220,7 @@ Screens:
                                 Type: Slider (inferencesSlider)
                                 Purpose: Set inferences per second
                                 file: app.go:242-249
-                                State: ca.currentInferences (100-100000)
+                                State: ca.currentInferences (1000-50000)
                                 Bindings: updateCalculations()
                             - Component:
                                 Type: Label (inferencesLabel)
@@ -245,12 +245,12 @@ Screens:
                                 Type: Text (heroSavingsText)
                                 Purpose: Giant savings amount (e.g. "$42M")
                                 file: widgets.go:366-369
-                                State: 72pt green, formatted with formatHeroMoney()
+                                State: 48pt green, formatted with formatHeroMoney()
                             - Component:
                                 Type: Text (heroSavingsLabel)
                                 Purpose: "ANNUAL SAVINGS"
                                 file: widgets.go:371-374
-                                State: 24pt bold cyan
+                                State: 14pt bold cyan
                             - Component:
                                 Type: HBox
                                 Purpose: Configuration display row
@@ -265,17 +265,24 @@ Screens:
                                       Type: Text (gpuCostText)
                                       Purpose: GPU baseline monthly cost
                                       file: widgets.go:391-393
-                                      State: 20pt red
+                                      State: 12pt red
                                   - Component:
                                       Type: Text (fecimCostText)
-                                      Purpose: FeCIM projected monthly cost
+                                      Purpose: FeCIM projected monthly cost (TRL 4 est.)
                                       file: widgets.go:395-397
-                                      State: 20pt green
+                                      State: 12pt green
                                   - Component:
                                       Type: Text (savingsPercent)
                                       Purpose: Savings percentage
                                       file: widgets.go:399-402
-                                      State: 28pt bold cyan
+                                      State: 16pt bold cyan
+
+                  - Section: "FABRICATION REALITY"
+                    Layout:
+                      - Component:
+                          Type: FabricationReality
+                          Purpose: Honest development timeline and cost expectations
+                          file: fabrication_reality.go:20-140
 
 DataFlow:
   - Flow: Animation Loop
@@ -287,8 +294,9 @@ DataFlow:
     Bug: BUG-M5-001
     Details: |
       Ticker runs every 33ms, updates simTime and calls UpdateAnimation(dt)
-      on each hero widget. Uses RLock for reading running/paused state,
-      full Lock for writing simTime. Calls fyne.Do() for UI refresh.
+      on each hero widget. Uses a single animMu Lock to read running/paused
+      and update simTime, then releases before UpdateAnimation(). Calls
+      fyne.Do() for UI refresh.
 
   - Flow: Workload Calculation
     Trigger: User selects workload or adjusts slider
@@ -324,8 +332,8 @@ DataFlow:
     file: app.go:480-486
     Bug: BUG-M5-002
     Details: |
-      Updates cached lastStatusText to avoid redundant SetText() calls
-      which can trigger resize loops on some window managers.
+      updateStatus() uses StatusBar.Update() to cache the last message and
+      skip redundant SetText() calls that can trigger resize loops.
 
   - Flow: Hero Widget Animation
     Trigger: animationLoop calls UpdateAnimation(dt)
@@ -356,31 +364,23 @@ BugDetails:
     component: animationLoop
     severity: Medium
     description: |
-      Potential mutex lock ordering issue in animation loop. Function uses
-      RLock to check running/paused state, then full Lock to update simTime.
-      If another goroutine holds Lock and tries to acquire something that
-      this goroutine holds, deadlock could occur.
-    expected: Safe lock ordering or single lock acquisition
-    actual: Split RLock/Unlock then Lock/Unlock pattern
+      Fixed: animationLoop now uses a single animMu Lock to read running/paused
+      and update simTime, eliminating split RLock/Lock ordering risks.
+    expected: Single lock acquisition for the critical section
+    actual: Single Lock acquisition in animationLoop
     file: app.go:163-182
-    suggested_fix: |
-      Option 1: Use single Lock acquisition for entire critical section
-      Option 2: Add lock ordering documentation and verify no inverse orders
-      Option 3: Use atomic operations for simTime instead of mutex
+    suggested_fix: Implemented (single Lock acquisition)
 
   - id: BUG-M5-002
     component: Status Label
     severity: Low
     description: |
-      Status label caches lastStatusText to avoid redundant SetText() calls,
-      but cache is only checked in updateStatus(). If status is updated via
-      direct statusLabel.SetText() elsewhere, cache gets out of sync.
+      Fixed: StatusBar.Update() caches last status text and updateStatus()
+      is the single path used by the app to set status.
     expected: All status updates go through updateStatus() with cache check
-    actual: Cache implemented but not enforced
+    actual: StatusBar enforces cache and guards redundant SetText()
     file: app.go:79-80, 480-486
-    suggested_fix: |
-      Make statusLabel private and enforce all updates through updateStatus().
-      Add comment documentation that direct SetText() bypasses cache.
+    suggested_fix: Implemented (StatusBar cache + updateStatus-only path)
 
   - id: BUG-M5-003
     component: Hero Widgets (AnimatedEnergyRace, MarketOpportunityChart)

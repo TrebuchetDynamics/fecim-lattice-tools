@@ -18,9 +18,9 @@ func init() {
 // TanhEverett implements the EverettFunction interface using Bo Jiang's Tanh model.
 // This preserves the existing "S-shape" characteristic of the simulation.
 type TanhEverett struct {
-	Ps     float64
-	Ec     float64
-	Delta  float64 // Distribution width
+	Ps    float64
+	Ec    float64
+	Delta float64 // Distribution width
 }
 
 // Calculate returns the polarization contribution for a hysteron switching region.
@@ -44,24 +44,26 @@ func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
 	// F(x) = Tanh((x - Ec) / Delta) ?
 	// No, Tanh is symmetric around Ec (if we account for bias).
 	// Let's assume standard centered loop for the hysteron distribution Basis.
-	
+
 	// Major ascending branch: P_asc(E)
 	// Major descending branch: P_desc(E)
-	
+
 	// Factorized Everett function formulation:
 	// E(alpha, beta) ~ (P_asc(alpha) - P_desc(beta)) / 2
-	
+
 	valAlpha := math.Tanh((alpha - t.Ec) / t.Delta)
-	valBeta  := math.Tanh((beta + t.Ec) / t.Delta) // Note offset for descending
-	
-	// We return the "volume" of dipoles in the triangle (alpha, beta)
-	// Scaling factor Ps is handled outside or here? 
-	// The stack sums 2 * Everett. 
-	// P = -Ps + 2 * Sum.
-	// If Sum = (valAlpha - valBeta)/2 * Ps
-	// Then 2*Sum = (valAlpha - valBeta) * Ps
-	
-	return (valAlpha - valBeta) * 0.5 * t.Ps
+	valBeta := math.Tanh((beta + t.Ec) / t.Delta) // Offset for descending branch
+
+	// We return the "volume" of dipoles in the triangle (alpha, beta).
+	// Everett areas must be non-negative; clamp to preserve physical meaning.
+	val := (valAlpha - valBeta) * 0.5 * t.Ps
+	if val < 0 {
+		return 0
+	}
+	if val > t.Ps {
+		return t.Ps
+	}
+	return val
 }
 
 // PreisachModel implements the Preisach hysteresis model for ferroelectrics.
@@ -72,7 +74,7 @@ type PreisachModel struct {
 	material *HZOMaterial
 	stack    *physics.PreisachStack
 	everett  *TanhEverett
-	
+
 	Temperature float64
 	Stress      float64 // GPa
 }
@@ -91,7 +93,7 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 		Ec:    material.Ec,
 		Delta: material.Ec * 0.25, // 25% distribution width
 	}
-	
+
 	// E_saturation should be > Ec. typically 3-5x Ec.
 	E_sat := material.Ec * 5.0
 
@@ -106,11 +108,11 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 
 // DiscreteState represents a single programmable state.
 type DiscreteState struct {
-	Level       int
+	Level        int
 	Polarization float64
-	NormalizedP float64
-	Voltage     float64
-	Conductance float64
+	NormalizedP  float64
+	Voltage      float64
+	Conductance  float64
 }
 
 // DiscreteStates returns the polarization values for n evenly spaced discrete states.
@@ -143,9 +145,9 @@ func (p *PreisachModel) Reset() {
 // Update applies a new electric field and returns the resulting polarization.
 func (p *PreisachModel) Update(E float64) float64 {
 	log.Input("Update", map[string]interface{}{"E": E})
-	
+
 	P := p.stack.Update(E)
-	
+
 	log.Calculation("Update", map[string]interface{}{"E": E}, P)
 	return P
 }
@@ -156,7 +158,7 @@ func (p *PreisachModel) Polarization() float64 {
 	// Implementing a getter on stack would be cleaner, but Update returns it.
 	// For now, assume state is consistent or store last P if needed.
 	// But Update(LastE) is idempotent in theory (no change).
-	return p.stack.Update(p.stack.LastE) 
+	return p.stack.Update(p.stack.LastE)
 }
 
 // NormalizedPolarization returns polarization as fraction of Ps (-1 to +1).
@@ -198,23 +200,27 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 // SetTemperature updates the simulation temperature and scales material parameters.
 func (p *PreisachModel) SetTemperature(tempK float64) {
 	p.Temperature = tempK
-	
+
 	// Scale Ec and Ps based on linear temperature coefficients
 	// Ec(T) = Ec0 + Coeff * (T - 300)
 	// Note: We use 300K as reference, assuming params are defined at RT
-	
+
 	deltaT := tempK - 300.0
-	
+
 	// Retrieve coefficients from material config (HZOMaterial needs these fields exposed)
 	// Assuming HZOMaterial has TempCoeffEc and TempCoeffPr
-	
-	newEc := p.material.Ec + p.material.TempCoeffEc * deltaT
-	newPs := p.material.Ps + p.material.TempCoeffPr * deltaT
-	
+
+	newEc := p.material.Ec + p.material.TempCoeffEc*deltaT
+	newPs := p.material.Ps + p.material.TempCoeffPr*deltaT
+
 	// Safety clamps
-	if newEc < 1e5 { newEc = 1e5 } // Minimum 0.001 MV/cm
-	if newPs < 1e-6 { newPs = 1e-6 } // Minimum polarization
-	
+	if newEc < 1e5 {
+		newEc = 1e5
+	} // Minimum 0.001 MV/cm
+	if newPs < 1e-6 {
+		newPs = 1e-6
+	} // Minimum polarization
+
 	// Update Everett function
 	p.everett.Ec = newEc
 	p.everett.Ps = newPs
@@ -232,7 +238,7 @@ func (p *PreisachModel) GetEffectiveEc() float64 {
 // Alpha = AlphaT - 2*Q12*Stress
 func (p *PreisachModel) SetStress(stressGPa float64) {
 	p.Stress = stressGPa
-	
+
 	// Recalculate everything (Temperature and Stress)
 	p.updateEffectiveParameters()
 }
@@ -242,41 +248,45 @@ func (p *PreisachModel) updateEffectiveParameters() {
 	// Base parameters at 300K, 1GPa (if calibrated there) or 0GPa?
 	// Let's assume material.Ec is at 300K and defined Stress (usually 1GPa for HZO).
 	// For simplicity, we use linear temp scaling + alpha-based stress scaling relative to baseline.
-	
+
 	// 1. Temperature Scaling
 	deltaT := p.Temperature - 300.0
-	ec_T := p.material.Ec + p.material.TempCoeffEc * deltaT
-	ps_T := p.material.Ps + p.material.TempCoeffPr * deltaT
-	
+	ec_T := p.material.Ec + p.material.TempCoeffEc*deltaT
+	ps_T := p.material.Ps + p.material.TempCoeffPr*deltaT
+
 	// 2. Stress Scaling
 	// Relative change in Alpha
 	// Alpha_ref = Alpha(300K, 1GPa)
 	// Alpha_new = Alpha(T, Stress)
-	
+
 	// Need material Landau coefficients. If not available, assume default.
 	// HZO defaults:
 	// Q12 ~ -0.026
 	// Alpha_0 ~ -1e9 (at 300K)
-	
+
 	// If material struct doesn't have Q12, we can't do accurate stress scaling.
 	// We will skip stress scaling if Q12 is 0 or missing, to avoid breaking logic.
-	
+
 	// Assuming linear stress effect on Ec for now if we lack full Landau params:
 	// Ec increases with tensile stress (negative Q12 makes alpha more negative).
 	// Sensitivity: dEc/dStress approx 0.1 MV/cm per GPa?
-	
+
 	// Let's implement a simplified linear sensitivity based on literature if coefficients missing
 	// dEc/dSigma ~ +5% per GPa for HZO
-	
-	stressFactor := 1.0 + 0.05 * (p.Stress - 1.0) // Relative to 1GPa baseline
-	
+
+	stressFactor := 1.0 + 0.05*(p.Stress-1.0) // Relative to 1GPa baseline
+
 	newEc := ec_T * stressFactor
 	newPs := ps_T // Ps is less sensitive to stress in first order
 
 	// Safety
-	if newEc < 1e5 { newEc = 1e5 }
-	if newPs < 1e-6 { newPs = 1e-6 }
-	
+	if newEc < 1e5 {
+		newEc = 1e5
+	}
+	if newPs < 1e-6 {
+		newPs = 1e-6
+	}
+
 	// Update Everett
 	p.everett.Ec = newEc
 	p.everett.Ps = newPs

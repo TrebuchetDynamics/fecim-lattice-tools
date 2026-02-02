@@ -7,18 +7,15 @@ import (
 	"image/color"
 	"math/rand"
 	"strconv"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	configphysics "fecim-lattice-tools/config/physics"
 	sharedphysics "fecim-lattice-tools/shared/physics"
-	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -208,56 +205,15 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	})
 
 	// Tools button with status indicators
-	crosssimStatus := widget.NewLabel("○")
-	badcrossbarStatus := widget.NewLabel("○")
-	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
-	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
-
-	updateToolStatus := func() {
-		crosssimInfo := validation.CrossSimInfo()
-		badcrossbarInfo := validation.BadCrossbarInfo()
-		fyne.Do(func() {
-			crosssimStatus.SetText(crosssimInfo.Status.Symbol())
-			badcrossbarStatus.SetText(badcrossbarInfo.Status.Symbol())
-		})
-	}
-
-	toolsBtn := widget.NewButton("Tools", func() {
-		go func() {
-			fyne.Do(func() {
-				crosssimStatus.SetText("...")
-				badcrossbarStatus.SetText("...")
-			})
-
-			installResults := validation.InstallToolsIfNeeded()
-			validateResults := validation.ValidateAllTools()
-
-			var messages []string
-			for i, r := range validateResults {
-				installMsg := ""
-				if i < len(installResults) && installResults[i].Output != "Already installed" && installResults[i].Success {
-					installMsg = " (installed)"
-				}
-				status := "X FAIL"
-				if r.Passed {
-					status = "V PASS"
-				} else if r.Error != nil && strings.Contains(r.Error.Error(), "not installed") {
-					status = "O NOT INSTALLED"
-				}
-				messages = append(messages, fmt.Sprintf("%s: %s%s", r.Tool, status, installMsg))
-			}
-
-			fyne.Do(func() {
-				updateToolStatus()
-				if ca.window != nil {
-					content := widget.NewLabel(strings.Join(messages, "\n"))
-					dialog.ShowCustom("Validation Tools", "Close", content, ca.window)
-				}
-			})
-		}()
+	toolWidgets := sharedwidgets.NewToolValidationWidgets(sharedwidgets.ToolValidationOptions{
+		Window:              ca.window,
+		ButtonLabel:         "Tools",
+		DialogTitle:         "Validation Tools",
+		StatusLabelMode:     sharedwidgets.ToolStatusSymbolOnly,
+		MessageStyle:        sharedwidgets.ToolMessageASCII,
+		IncludeInstall:      true,
+		IncludeInstallNotes: true,
 	})
-
-	go updateToolStatus()
 
 	// Zoom controls
 	ca.zoomLabel = widget.NewLabel("100%")
@@ -294,12 +250,11 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.zoomLabel,
 		fitBtn,
 		layout.NewSpacer(),
-		crosssimStatus,
-		badcrossbarStatus,
-		toolsBtn,
+		toolWidgets.CrossSimStatus,
+		toolWidgets.BadCrossbarStatus,
+		toolWidgets.Button,
 	)
 }
-
 
 // ValidArraySizes defines the supported array dimensions
 var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64}
@@ -629,7 +584,6 @@ func (ca *CircuitsApp) updateModeButtons() {
 	})
 }
 
-
 // updateActionButtons enables/disables action buttons based on current mode
 func (ca *CircuitsApp) updateActionButtons() {
 	if ca.deviceState == nil {
@@ -940,91 +894,42 @@ func (ca *CircuitsApp) updateWriteTargetLabel() {
 
 // createArchitectureToggle creates the PASSIVE/1T1R/2T1R toggle buttons
 func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
-	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
-	ca.arch1T1RBtn = widget.NewButton("1T1R", nil)
-	ca.arch2T1RBtn = widget.NewButton("2T1R", nil)
-
-	// Helper to update button styles based on selection
-	updateArchButtons := func() {
-		ca.archPassiveBtn.Importance = widget.LowImportance
-		ca.arch1T1RBtn.Importance = widget.LowImportance
-		ca.arch2T1RBtn.Importance = widget.LowImportance
-		switch ca.architecture {
-		case sharedwidgets.Architecture0T1R:
-			ca.archPassiveBtn.Importance = widget.HighImportance
-		case sharedwidgets.Architecture1T1R:
-			ca.arch1T1RBtn.Importance = widget.HighImportance
-		case sharedwidgets.Architecture2T1R:
-			ca.arch2T1RBtn.Importance = widget.HighImportance
-		default:
-			ca.archPassiveBtn.Importance = widget.HighImportance
-		}
-		ca.archPassiveBtn.Refresh()
-		ca.arch1T1RBtn.Refresh()
-		ca.arch2T1RBtn.Refresh()
-	}
-
-	// Set initial state
-	updateArchButtons()
-
-	// Wire up callbacks
-	ca.archPassiveBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture0T1R {
-			return
-		}
+	handleArchChange := func(arch string) {
 		ca.mu.Lock()
-		ca.architecture = sharedwidgets.Architecture0T1R
+		ca.architecture = arch
 		ca.mu.Unlock()
-		updateArchButtons()
-		// Passive mode: all WLs always active, cannot be changed
-		ca.deviceState.SetPassiveMode(true)
-		ca.updateWLCheckboxesForArchitecture()
-		ca.recomputeAndRefresh()
-		ca.updateArchitectureSpecificUI()
-	}
 
-	ca.arch1T1RBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture1T1R {
-			return
-		}
-		ca.mu.Lock()
-		ca.architecture = sharedwidgets.Architecture1T1R
-		ca.mu.Unlock()
-		updateArchButtons()
-		// 1T1R: disable passive mode, set WLs based on current operation mode
-		ca.deviceState.SetPassiveMode(false)
-		// Preserve WL state based on operation mode
-		if ca.deviceState.GetOperationMode() == OpModeCompute {
-			ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
+		if arch == sharedwidgets.Architecture0T1R {
+			// Passive mode: all WLs always active, cannot be changed
+			ca.deviceState.SetPassiveMode(true)
 		} else {
-			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+			// 1T1R/2T1R: disable passive mode, set WLs based on current operation mode
+			ca.deviceState.SetPassiveMode(false)
+			// Preserve WL state based on operation mode
+			if ca.deviceState.GetOperationMode() == OpModeCompute {
+				ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
+			} else {
+				ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
+			}
 		}
+
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()
 		ca.updateArchitectureSpecificUI()
 	}
 
-	ca.arch2T1RBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture2T1R {
-			return
-		}
-		ca.mu.Lock()
-		ca.architecture = sharedwidgets.Architecture2T1R
-		ca.mu.Unlock()
-		updateArchButtons()
-		// 2T1R: disable passive mode, set WLs based on current operation mode
-		ca.deviceState.SetPassiveMode(false)
-		// Preserve WL state based on operation mode
-		if ca.deviceState.GetOperationMode() == OpModeCompute {
-			ca.deviceState.SetWLAll() // COMPUTE needs all rows for MVM
-		} else {
-			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
-		}
-		ca.updateWLCheckboxesForArchitecture()
-		ca.recomputeAndRefresh()
-		ca.updateArchitectureSpecificUI()
-	}
+	toggle := sharedwidgets.NewArchitectureToggle(sharedwidgets.ArchitectureToggleOptions{
+		Initial:      ca.architecture,
+		Style:        sharedwidgets.ArchitectureToggleStylePlain,
+		LabelPassive: "PASSIVE",
+		Label1T1R:    "1T1R",
+		Label2T1R:    "2T1R",
+		OnChanged:    handleArchChange,
+	})
 
+	ca.archPassiveBtn = toggle.PassiveButton
+	ca.arch1T1RBtn = toggle.OneT1RButton
+	ca.arch2T1RBtn = toggle.TwoT1RButton
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
 	archLabel := widget.NewLabel("Array:")

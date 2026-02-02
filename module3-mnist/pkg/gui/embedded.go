@@ -12,11 +12,13 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/utils"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // EmbeddedMNISTApp holds the state for an embedded MNIST demo instance
 type EmbeddedMNISTApp struct {
 	*MNISTApp
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedMNISTApp creates a new embedded MNIST GUI application
@@ -75,11 +77,13 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedMNISTApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
 	// Create main layout
 	content := e.createMainLayout()
+	e.SetContent(content)
 
 	// Initialize
 	e.updateStatus("Ready. Draw a digit or load test data.")
@@ -89,17 +93,20 @@ func (e *EmbeddedMNISTApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Wind
 
 // Start initializes anything that needs to run after UI is visible
 func (e *EmbeddedMNISTApp) Start() {
+	e.EmbeddedAppBase.Start()
 	// Nothing to start - MNIST demo is event-driven
 }
 
 // Stop cleans up any running processes
 func (e *EmbeddedMNISTApp) Stop() {
 	e.stopAutoDemoLoop()
+	e.EmbeddedAppBase.Stop()
 }
 
 // EmbeddedDualModeApp holds the state for the dual-mode (FP vs CIM) MNIST demo.
 type EmbeddedDualModeApp struct {
 	*DualModeApp
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedDualModeApp creates a new embedded dual-mode MNIST GUI application.
@@ -110,15 +117,20 @@ func NewEmbeddedDualModeApp() *EmbeddedDualModeApp {
 // BuildContent creates the UI content for embedding in a tab.
 // The fyne.App instance must be provided by the parent.
 func (e *EmbeddedDualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	return e.DualModeApp.BuildContent(fyneApp, parentWindow)
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
+	content := e.DualModeApp.BuildContent(fyneApp, parentWindow)
+	e.SetContent(content)
+	return content
 }
 
 // Start initializes anything that needs to run after UI is visible.
 func (e *EmbeddedDualModeApp) Start() {
+	e.EmbeddedAppBase.Start()
 	e.DualModeApp.Start()
 }
 
 // Stop cleans up any running processes.
 func (e *EmbeddedDualModeApp) Stop() {
 	e.DualModeApp.Stop()
+	e.EmbeddedAppBase.Stop()
 }

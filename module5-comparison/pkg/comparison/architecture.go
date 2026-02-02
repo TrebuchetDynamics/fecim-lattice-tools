@@ -92,6 +92,7 @@ func GPUAccelerator() *Architecture {
 //   - 30 discrete analog states (VERIFIED - Dr. Tour; peer-reviewed: 32-140 states)
 //   - 96.6-98.24% MNIST accuracy (VERIFIED - peer-reviewed: Nature Commun. 2023, ScienceDirect 2025)
 //   - 25-100× lower energy than NAND (VERIFIED - Samsung Nature 2025)
+//
 // UNVERIFIED claims (removed from tool):
 //   - Dr. Tour's "87% MNIST" (below peer-reviewed benchmarks)
 //   - "10M× lower energy than NAND" (no peer-reviewed data)
@@ -203,16 +204,15 @@ type Workload struct {
 
 // MNISTWorkload creates an MNIST classification workload.
 func MNISTWorkload() Workload {
-	// 784-128-64-10 network
+	// 784-128-10 network
 	// Layer 1: 784*128 = 100352 MACs
-	// Layer 2: 128*64 = 8192 MACs
-	// Layer 3: 64*10 = 640 MACs
+	// Layer 2: 128*10 = 1280 MACs
 	return Workload{
 		Name:        "MNIST",
 		Description: "Handwritten digit recognition",
-		TotalOps:    109184, // 100352 + 8192 + 640
-		Layers:      3,
-		Parameters:  109184,
+		TotalOps:    101632, // 100352 + 1280
+		Layers:      2,
+		Parameters:  101632,
 	}
 }
 
@@ -275,10 +275,10 @@ type DataCenterMetrics struct {
 // ScaleToDataCenter calculates data center scale metrics.
 func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Workload) DataCenterMetrics {
 	log.Input("ScaleToDataCenter", map[string]interface{}{
-		"architecture":      arch.Name,
-		"targetThroughput":  targetThroughput,
-		"workload":          workload.Name,
-		"workloadTotalOps":  workload.TotalOps,
+		"architecture":     arch.Name,
+		"targetThroughput": targetThroughput,
+		"workload":         workload.Name,
+		"workloadTotalOps": workload.TotalOps,
 	})
 
 	// Run single chip inference

@@ -31,7 +31,7 @@ type TempCalibration struct {
 
 // CalibrationData holds persistent calibration state (v2+: multi-temperature support)
 type CalibrationData struct {
-	Version      int                      `json:"version"`       // Schema version (3 = Ps-normalized calib)
+	Version      int                      `json:"version"`       // Schema version (4 = Everett clamp fix)
 	MaterialName string                   `json:"material_name"` // Material these calibrations are for
 	NumLevels    int                      `json:"num_levels"`    // Number of discrete levels
 	Calibrations map[int]*TempCalibration `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
@@ -50,7 +50,7 @@ type CalibrationData struct {
 	RelaxCompDown   []float64 `json:"relax_comp_down,omitempty"`
 }
 
-const calibrationVersion = 3
+const calibrationVersion = 4
 
 // Key temperatures for automotive range calibration (Kelvin)
 var keyTemperatures = []float64{
@@ -727,7 +727,7 @@ func (a *App) updatePhysics(dt float64) {
 					resetE = 2.0 * Ec
 				}
 
-				// Ramp to reset field
+				// Ramp to prep field
 				diff := resetE - a.electricField
 				step := rampRate * dt
 				if math.Abs(diff) < step {
@@ -861,17 +861,15 @@ func (a *App) updatePhysics(dt float64) {
 				a.electricField = Emax * (4*p - 4)
 			}
 		case WaveformWriteReadDemo:
-			// Correct ferroelectric write/read physics with RESET-AND-RETRY approach:
-			//
-			// PHYSICS: Hysteresis is PATH-DEPENDENT and NON-REVERSIBLE.
-			// If you overshoot a target level, you CANNOT correct by applying less field
-			// or opposite field (that's a different branch of the hysteresis loop).
-			// You MUST reset to a known saturation state and apply precise programming pulse.
+			// Write/read demo with directional pre-bias + ISPP:
+			// - Do NOT saturate every cycle.
+			// - Apply ±Ec in direction of next target, return to 0.
+			// - Full saturation is only used on overshoot recovery inside WriteController.
 			//
 			// Phase mapping:
-			// 0 = RESET (saturate in opposite direction to target)
-			// 1 = HOLD_RESET (return to zero - now at known remanent: level 1 or N)
-			// 2 = WRITE (apply calibrated field toward target)
+			// 0 = PREP (apply ±Ec bias toward target)
+			// 1 = HOLD_PREP (return to zero)
+			// 2 = WRITE (apply calibrated/ISPP field toward target)
 			// 3 = HOLD_WRITE (return to zero, polarization persists)
 			// 4 = READ (small sense pulse below Ec)
 			// 5 = DISPLAY (show result, pick next target)
@@ -886,24 +884,23 @@ func (a *App) updatePhysics(dt float64) {
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
 
 			switch a.wrdPhase {
-			case 0: // RESET - saturate in opposite direction to target
-				var resetE float64
-				// Use absolute level position (not relative to start) for consistent calibration
-				// Calibration was measured from saturated states, so we must match that
-				if targetLevel > midLevel {
-					// Target in upper half: saturate negative first (reach level 1), then apply ascending cal
-					resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
+			case 0: // PREP - apply ±Ec in direction of target (no full saturation)
+				currentLevel := a.discreteLevel + 1
+				var prepE float64
+				if targetLevel > currentLevel {
+					prepE = Ec
+				} else if targetLevel < currentLevel {
+					prepE = -Ec
 				} else {
-					// Target in lower half: saturate positive first (reach level N), then apply descending cal
-					resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
+					prepE = 0
 				}
-				a.wrdSaturateE = resetE // Store for logging
+				a.wrdPrepE = prepE // Store for logging
 
 				// Ramp to reset field
-				diff := resetE - a.electricField
+				diff := prepE - a.electricField
 				step := rampRate * dt
 				if math.Abs(diff) < step {
-					a.electricField = resetE
+					a.electricField = prepE
 				} else if diff > 0 {
 					a.electricField += step
 				} else {
@@ -911,11 +908,11 @@ func (a *App) updatePhysics(dt float64) {
 				}
 
 				// Transition when field reached and held briefly
-				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-resetE) < 0.01*Emax {
-					// Capture end-of-RESET state for logging
+				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax {
+					// Capture end-of-PREP state for logging
 					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
 					a.wrdResetEndLvl = a.discreteLevel + 1
-					log.Printf("WRD PHASE 0→1: RESET done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+					log.Printf("WRD PHASE 0→1: PREP done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
 						a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
 					a.wrdPhase = 1
 					a.wrdPhaseTimer = 0

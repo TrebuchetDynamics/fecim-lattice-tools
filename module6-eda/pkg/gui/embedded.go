@@ -9,13 +9,14 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/module6-eda/pkg/gui/tabs"
 	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 var log = logging.NewLogger("eda")
 
 // EmbeddedEDAApp is the embeddable version of the EDA app
 type EmbeddedEDAApp struct {
-	content fyne.CanvasObject
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedEDAApp creates a new embedded EDA app instance
@@ -51,15 +52,16 @@ func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
 	// Use CreateModuleContent with full Learn tab
-	app.content = CreateModuleContent(window)
-	return app.content
+	app.EmbeddedAppBase.Init(fyneApp, window)
+	content := CreateModuleContent(window)
+	app.SetContent(content)
+	return content
 }
-
-
 
 // Start is called when this demo tab is selected
 func (app *EmbeddedEDAApp) Start() {
 	logging.GlobalInfo("[EDA] Module started")
+	app.EmbeddedAppBase.Start()
 	// No background processes to start
 }
 
@@ -67,4 +69,5 @@ func (app *EmbeddedEDAApp) Start() {
 func (app *EmbeddedEDAApp) Stop() {
 	logging.GlobalInfo("[EDA] Module stopped")
 	// No background processes to stop
+	app.EmbeddedAppBase.Stop()
 }

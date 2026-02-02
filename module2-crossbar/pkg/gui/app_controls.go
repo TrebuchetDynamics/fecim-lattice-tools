@@ -3,7 +3,6 @@ package gui
 
 import (
 	"fmt"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -12,7 +11,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -298,6 +296,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 	ca.statusLabel.Wrapping = fyne.TextWrapOff
+	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	// 30 Levels info tooltip
 	levelsInfoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {

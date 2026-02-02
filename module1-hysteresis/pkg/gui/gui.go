@@ -76,12 +76,12 @@ type App struct {
 	simTime   float64
 
 	// Write/Read Demo state (improved physics)
-	wrdPhase       int     // 0=saturate, 1=settle, 2=hold, 3=read, 4=display, 5=retention, 6=verify
+	wrdPhase       int     // 0=prep, 1=hold-prep, 2=write, 3=hold-write, 4=read, 5=display
 	wrdTargetLevel int     // Target level to write (1-30)
 	wrdReadLevel   int     // Level read back
 	wrdPhaseTimer  float64 // Time in current phase
 	wrdWriteE      float64 // E-field during write
-	wrdSaturateE   float64 // Saturation E-field (±Emax)
+	wrdPrepE       float64 // Pre-bias E-field (±Ec) toward target
 	wrdSettleE     float64 // Settle E-field (determines final level)
 	wrdStartLevel  int     // Level at start of write cycle
 	wrdDebugLog    *WriteReadDebugLog
@@ -368,7 +368,7 @@ func NewApp() *App {
 	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
-	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	numLevels := 30 // Default: FeCIM's 30 discrete analog states
 	// preisachGridSize := 200 // DEPRECATED: PhysicsStack uses adaptive steps
 	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
@@ -405,7 +405,7 @@ func NewApp() *App {
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
-	
+
 	return uiApp
 }
 
@@ -444,7 +444,7 @@ func NewAppWithMaterial(materialName string) *App {
 		matIndex = 0
 	}
 
-	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	numLevels := 30 // Default: FeCIM's 30 discrete analog states
 	// preisachGridSize := 200 // DEPRECATED
 	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
@@ -478,12 +478,12 @@ func NewAppWithMaterial(materialName string) *App {
 		manualTargetLevel: 15,
 		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
-	
+
 	// Initialize L-K Solver and Adaptive ISPP
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
-	
+
 	return uiApp
 }
 

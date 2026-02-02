@@ -14,6 +14,7 @@ import (
 
 	"fecim-lattice-tools/shared/logging"
 	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Package-level logger using shared logging infrastructure
@@ -29,6 +30,11 @@ const (
 	cpuEnergyPJPerMAC   = 1000.0 // 1000 pJ/MAC
 	gpuEnergyPJPerMAC   = 100.0  // 100 pJ/MAC
 	fecimEnergyPJPerMAC = 1.0    // ~1 pJ/MAC (conservative for claimed "<1 pJ")
+)
+
+const (
+	hoursPerMonth         = 730.0
+	electricityCostPerKWh = 0.10
 )
 
 // EnergySpec holds energy per MAC specifications with sources.
@@ -78,8 +84,8 @@ type ComparisonApp struct {
 	// Status
 	// IMPORTANT: All status updates MUST go through updateStatus() method to use cache
 	// and prevent redundant SetText calls that bypass Fyne's internal caching.
-	statusLabel    *widget.Label
-	lastStatusText string // Cache to avoid redundant SetText calls
+	statusLabel *widget.Label
+	statusBar   *sharedwidgets.StatusBar
 
 	// Current settings
 	currentWorkload   string
@@ -266,6 +272,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// Status
 	ca.statusLabel = widget.NewLabel("Status: Ready")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	// === SIMULATION WARNING BANNER ===
 	// CRITICAL: Per Dr. Tour critique - must prominently display TRL status
@@ -399,20 +406,17 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 // createVerifiedClaimsWidget creates a compact verified/claimed section.
 // Dr. Tour recommendation: Show explicit energy numbers with units and citations
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
-	verifiedLabel := widget.NewLabelWithStyle("VERIFIED:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	verifiedItems := widget.NewLabel("• 30 analog levels (within 7-140 demonstrated range)\n• 96-98% MNIST (peer-reviewed)\n• CMOS compatible\n• Non-volatile")
+	verifiedLabel := widget.NewLabelWithStyle("VERIFIED (peer-reviewed):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	verifiedItems := widget.NewLabel("• 30 analog levels\n• 96-98% MNIST\n• CMOS compatible")
 
 	// Explicit energy numbers with units (Dr. Tour recommendation)
 	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	energyItems := widget.NewLabel(fmt.Sprintf(
-		"• CPU+DRAM: %d pJ ✓\n• GPU+HBM: %d pJ ✓\n• FeCIM: ~%.1f pJ (TRL4)",
+		"• CPU+DRAM: %d pJ ✓ (verified)\n• GPU+HBM: %d pJ ✓ (verified)\n• FeCIM: ~%.1f pJ (TRL 4 est.)",
 		int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC))
 
 	claimedLabel := widget.NewLabelWithStyle("CLAIMED (not verified):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	claimedItems := widget.NewLabel(fmt.Sprintf(
-		"• %d× less vs CPU\n• %d× less vs GPU\n• 80-90%% DC savings",
-		int(cpuEnergyPJPerMAC/fecimEnergyPJPerMAC),
-		int(gpuEnergyPJPerMAC/fecimEnergyPJPerMAC)))
+	claimedItems := widget.NewLabel("• 25-100× vs NAND\n• 1000× vs DRAM\n• 80-90% DC savings")
 
 	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
 
@@ -436,27 +440,22 @@ func (ca *ComparisonApp) onWorkloadChanged(workload string) {
 	ca.updateCalculations()
 }
 
+func energyPowerCost(macs int, energyFJ, inferences float64) (energyUJ, powerW, monthlyCost float64) {
+	energyUJ = float64(macs) * energyFJ / 1e9
+	powerW = energyUJ * inferences / 1e6
+	monthlyCost = powerW / 1000 * hoursPerMonth * electricityCostPerKWh
+	return energyUJ, powerW, monthlyCost
+}
+
 // updateCalculations recalculates all values.
 func (ca *ComparisonApp) updateCalculations() {
 	debug.Printf("updateCalculations: workload=%s, inferences=%.0f", ca.currentWorkload, ca.currentInferences)
 
 	macs := ca.getWorkloadMACs()
 
-	// Calculate energy per inference (µJ) = MACs × fJ/MAC / 1e9
-	cpuEnergy := float64(macs) * ca.cpuSpec.EnergyFJ / 1e9
-	gpuEnergy := float64(macs) * ca.gpuSpec.EnergyFJ / 1e9
-	fecimEnergy := float64(macs) * ca.fecimSpec.EnergyFJ / 1e9
-
-	// Calculate power (W) = µJ/inf × inf/s / 1e6
-	cpuPower := cpuEnergy * ca.currentInferences / 1e6
-	gpuPower := gpuEnergy * ca.currentInferences / 1e6
-	fecimPower := fecimEnergy * ca.currentInferences / 1e6
-
-	// Monthly cost at $0.10/kWh
-	hoursPerMonth := 730.0
-	cpuCost := cpuPower / 1000 * hoursPerMonth * 0.10
-	gpuCost := gpuPower / 1000 * hoursPerMonth * 0.10
-	fecimCost := fecimPower / 1000 * hoursPerMonth * 0.10
+	cpuEnergy, cpuPower, cpuCost := energyPowerCost(macs, ca.cpuSpec.EnergyFJ, ca.currentInferences)
+	gpuEnergy, gpuPower, gpuCost := energyPowerCost(macs, ca.gpuSpec.EnergyFJ, ca.currentInferences)
+	fecimEnergy, fecimPower, fecimCost := energyPowerCost(macs, ca.fecimSpec.EnergyFJ, ca.currentInferences)
 
 	// Update calculator
 	ca.calculator.SetResults(
@@ -499,16 +498,11 @@ func (ca *ComparisonApp) getWorkloadMACs() int {
 // updateStatus updates the status label using cache to prevent redundant SetText calls.
 // All status updates should go through this method to avoid bypassing Fyne's internal cache.
 func (ca *ComparisonApp) updateStatus(status string) {
-	if ca.statusLabel == nil {
-		return
+	if ca.statusBar == nil {
+		if ca.statusLabel == nil {
+			return
+		}
+		ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 	}
-	newText := "Status: " + status
-	// Only update if text has actually changed (cache bypass prevention)
-	if ca.lastStatusText == newText {
-		return
-	}
-	ca.lastStatusText = newText
-	fyne.Do(func() {
-		ca.statusLabel.SetText(newText)
-	})
+	ca.statusBar.Update(status)
 }

@@ -2,12 +2,11 @@
 package gui
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
+
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 // ComputeLogEntry represents a single MVM compute operation
@@ -189,20 +188,7 @@ func SaveComputeLog() error {
 		return nil
 	}
 
-	// Create directory if needed
-	dir := filepath.Dir(globalComputeLog.filePath)
-	if dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create log directory: %w", err)
-		}
-	}
-
-	data, err := json.MarshalIndent(globalComputeLog.entries, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal compute log: %w", err)
-	}
-
-	if err := os.WriteFile(globalComputeLog.filePath, data, 0644); err != nil {
+	if err := sharedio.SaveJSON(globalComputeLog.filePath, globalComputeLog.entries); err != nil {
 		return fmt.Errorf("failed to write compute log: %w", err)
 	}
 
@@ -220,20 +206,7 @@ func SaveComputeLogTo(path string) error {
 		return nil
 	}
 
-	// Create directory if needed
-	dir := filepath.Dir(path)
-	if dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create log directory: %w", err)
-		}
-	}
-
-	data, err := json.MarshalIndent(entries, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal compute log: %w", err)
-	}
-
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := sharedio.SaveJSON(path, entries); err != nil {
 		return fmt.Errorf("failed to write compute log: %w", err)
 	}
 

@@ -12,6 +12,7 @@ import (
 // EmbeddedCircuitsApp holds the state for an embedded demo instance
 type EmbeddedCircuitsApp struct {
 	*CircuitsApp
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedCircuitsApp creates a new embedded circuits app (for use in unified visualizer)
@@ -59,17 +60,20 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedCircuitsApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
 	// Create main tabbed layout (same as standalone)
 	content := e.createMainLayout()
+	e.SetContent(content)
 
 	return content
 }
 
 // Start begins any background processes when the tab is selected
 func (e *EmbeddedCircuitsApp) Start() {
+	e.EmbeddedAppBase.Start()
 	// Reset stop state so goroutines can run again
 	e.mu.Lock()
 	if e.stopped {
@@ -120,4 +124,5 @@ func (e *EmbeddedCircuitsApp) Stop() {
 		e.deviceState.CancelWriteSequence()
 		e.deviceState.CancelISPP()
 	}
+	e.EmbeddedAppBase.Stop()
 }

@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"math/rand"
 
-	"fyne.io/fyne/v2"
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
+	"fyne.io/fyne/v2"
 )
 
 // EmbeddedCrossbarApp holds the state for an embedded crossbar demo instance
 type EmbeddedCrossbarApp struct {
 	*CrossbarApp
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application.
@@ -55,11 +57,13 @@ func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
 	// Create enhanced layout (embedded version always uses enhanced features)
 	content := e.createEnhancedMainLayout()
+	e.SetContent(content)
 
 	// Initialize displays
 	e.updateConductanceDisplay()
@@ -100,6 +104,7 @@ func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindo
 
 // Start initializes anything that needs to run after UI is visible
 func (e *EmbeddedCrossbarApp) Start() {
+	e.EmbeddedAppBase.Start()
 	// Auto-run MVM once on first visit to populate all analysis data
 	if !e.hasRunInitialMVM {
 		e.hasRunInitialMVM = true
@@ -112,4 +117,5 @@ func (e *EmbeddedCrossbarApp) Start() {
 // Stop cleans up any running processes
 func (e *EmbeddedCrossbarApp) Stop() {
 	e.stopAutoDemoLoop()
+	e.EmbeddedAppBase.Stop()
 }

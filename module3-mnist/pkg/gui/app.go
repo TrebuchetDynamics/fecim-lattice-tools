@@ -23,6 +23,7 @@ import (
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/utils"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 var debug *logging.Logger
@@ -98,6 +99,7 @@ type MNISTApp struct {
 
 	// Labels
 	statusLabel     *widget.Label
+	statusBar       *sharedwidgets.StatusBar
 	predictionLabel *widget.Label
 	confidenceLabel *widget.Label
 	hoverInfoLabel  *widget.Label
@@ -236,6 +238,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	// Status labels
 	ma.statusLabel = widget.NewLabel("● IDLE | Ready to draw or load test data")
 	ma.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ma.statusBar = sharedwidgets.NewStatusBarWithLabel(ma.statusLabel, "Status: ")
 
 	ma.predictionLabel = widget.NewLabel("Prediction: -")
 	ma.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
@@ -684,12 +687,13 @@ func (ma *MNISTApp) onConfusionCellTapped(actual, predicted, count int) {
 
 // updateStatus updates the status label.
 func (ma *MNISTApp) updateStatus(status string) {
-	if ma.statusLabel == nil {
-		return
+	if ma.statusBar == nil {
+		if ma.statusLabel == nil {
+			return
+		}
+		ma.statusBar = sharedwidgets.NewStatusBarWithLabel(ma.statusLabel, "Status: ")
 	}
-	fyne.Do(func() {
-		ma.statusLabel.SetText("Status: " + status)
-	})
+	ma.statusBar.Update(status)
 }
 
 // generateSyntheticData creates simple synthetic digit patterns for demo.

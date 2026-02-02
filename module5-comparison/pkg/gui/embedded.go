@@ -4,17 +4,20 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // EmbeddedComparisonApp holds the state for an embedded demo instance
 type EmbeddedComparisonApp struct {
 	*ComparisonApp
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedComparisonApp creates a new embedded comparison app (for use in unified visualizer)
 func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	ca := &ComparisonApp{
-		currentWorkload:   "MNIST",
+		currentWorkload:   "GPT-2",
 		currentInferences: 10000,
 	}
 
@@ -50,10 +53,12 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 
 // BuildContent creates the UI content for embedding in a tab
 func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
 	content := e.createMainLayout()
+	e.SetContent(content)
 
 	// Note: updateCalculations() is called via onWorkloadChanged when SetSelected triggers
 	// No need for explicit call here - it causes duplicate calculation
@@ -64,6 +69,7 @@ func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne
 
 // Start begins any background processes (called when tab is selected)
 func (e *EmbeddedComparisonApp) Start() {
+	e.EmbeddedAppBase.Start()
 	e.animMu.Lock()
 	if e.running {
 		e.animMu.Unlock()
@@ -89,4 +95,5 @@ func (e *EmbeddedComparisonApp) Stop() {
 	e.animMu.Unlock()
 
 	debug.Println("EmbeddedComparisonApp: Animation stopped")
+	e.EmbeddedAppBase.Stop()
 }

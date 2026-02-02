@@ -36,22 +36,22 @@ const (
 
 // ToolValidationOptions configures the shared tool validation UI.
 type ToolValidationOptions struct {
-	Window               fyne.Window
-	ButtonLabel          string
-	DialogTitle          string
-	StatusLabelMode      ToolStatusLabelMode
-	MessageStyle         ToolValidationMessageStyle
-	IncludeInstall       bool
-	IncludeInstallNotes  bool
-	DialogFooter         string
+	Window              fyne.Window
+	ButtonLabel         string
+	DialogTitle         string
+	StatusLabelMode     ToolStatusLabelMode
+	MessageStyle        ToolValidationMessageStyle
+	IncludeInstall      bool
+	IncludeInstallNotes bool
+	DialogFooter        string
 }
 
 // ToolValidationWidgets bundles the status labels and button for tool validation.
 type ToolValidationWidgets struct {
-	CrossSimStatus   *widget.Label
+	CrossSimStatus    *widget.Label
 	BadCrossbarStatus *widget.Label
-	Button           *widget.Button
-	Update           func()
+	Button            *widget.Button
+	Update            func()
 }
 
 // NewToolValidationWidgets creates status labels and a validation button.
@@ -159,9 +159,9 @@ func NewToolValidationWidgets(opts ToolValidationOptions) *ToolValidationWidgets
 	go update()
 
 	return &ToolValidationWidgets{
-		CrossSimStatus:   crosssimStatus,
+		CrossSimStatus:    crosssimStatus,
 		BadCrossbarStatus: badcrossbarStatus,
-		Button:           toolsBtn,
-		Update:           update,
+		Button:            toolsBtn,
+		Update:            update,
 	}
 }

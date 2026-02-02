@@ -43,7 +43,7 @@ func main() {
 	coreSamples := flag.Int("core-samples", 1000, "Samples for core-eval (0=all)")
 	coreLevels := flag.String("core-levels", "", "Comma-separated levels for core-eval sweep (e.g., 8,16,24,31)")
 	exportLevels := flag.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
-	exportDir := flag.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths,module3-mnist/data)")
+	exportDir := flag.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths)")
 	flag.Parse()
 
 	fmt.Println("================================================")
@@ -68,7 +68,7 @@ func main() {
 			log.Fatalf("Invalid export directories: %v", err)
 		}
 		if len(outDirs) == 0 {
-			outDirs = []string{filepath.Join("data", "pretrained-weigths"), "module3-mnist/data"}
+			outDirs = []string{filepath.Join("data", "pretrained-weigths")}
 		}
 		if err := runExportQuantizedWeights(levels, *loadWeights, outDirs, *hiddenSize); err != nil {
 			log.Fatalf("Export failed: %v", err)

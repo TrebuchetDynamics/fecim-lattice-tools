@@ -76,16 +76,16 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	resetButton      *widget.Button
-	arraySizeSelect  *widget.Select // Dropdown for array size
-	arraySizeLabel   *widget.Label  // Label for slider display
-	arraySizeSlider  *widget.Slider // Slider for array size
-	noiseLabel       *widget.Label
-	noiseSlider      *widget.Slider
-	adcBitsLabel     *widget.Label
-	adcBitsSlider    *widget.Slider
-	colormapSelect   *widget.Select
-	statsLabel       *widget.Label
+	resetButton     *widget.Button
+	arraySizeSelect *widget.Select // Dropdown for array size
+	arraySizeLabel  *widget.Label  // Label for slider display
+	arraySizeSlider *widget.Slider // Slider for array size
+	noiseLabel      *widget.Label
+	noiseSlider     *widget.Slider
+	adcBitsLabel    *widget.Label
+	adcBitsSlider   *widget.Slider
+	colormapSelect  *widget.Select
+	statsLabel      *widget.Label
 
 	// Track colormap per tab
 	condColormap  string
@@ -93,14 +93,15 @@ type CrossbarApp struct {
 	sneakColormap string
 
 	// Architecture toggle (Dr. Tour: clarify 0T1R vs 1T1R vs 2T1R)
-	archToggle       *fyne.Container // Container with toggle buttons
-	archPassiveBtn   *widget.Button
-	arch1T1RBtn      *widget.Button
-	arch2T1RBtn      *widget.Button
-	architecture     string // "1T1R (Transistor)", "0T1R (Passive)", or "2T1R (Dual Transistor)"
+	archToggle     *fyne.Container // Container with toggle buttons
+	archPassiveBtn *widget.Button
+	arch1T1RBtn    *widget.Button
+	arch2T1RBtn    *widget.Button
+	architecture   string // "1T1R (Transistor)", "0T1R (Passive)", or "2T1R (Dual Transistor)"
 
 	// Status
 	statusLabel    *widget.Label
+	statusBar      *sharedwidgets.StatusBar
 	infoLabel      *widget.Label
 	hoverInfoLabel *widget.Label
 
@@ -147,10 +148,10 @@ type CrossbarApp struct {
 	isMVMRunning bool
 
 	// Responsive layout support
-	responsiveDetector  *sharedwidgets.ResponsiveDetector
-	leftCenterSplit     *container.Split
-	mainSplit           *container.Split
-	currentBreakpoint   sharedwidgets.Breakpoint
+	responsiveDetector *sharedwidgets.ResponsiveDetector
+	leftCenterSplit    *container.Split
+	mainSplit          *container.Split
+	currentBreakpoint  sharedwidgets.Breakpoint
 
 	// Tab badge state for accessibility/discoverability (C2 fix)
 	// Tracks which tabs have new/unseen data
@@ -270,7 +271,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Create color legends for each heatmap
 	// Conductance displayed as discrete level (0-29) per FeCIM 30-level spec
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis") // Typical IR drop range ~1-10%
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis")    // Typical IR drop range ~1-10%
 	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma") // Sneak ratio: 0-100% of signal
 
 	// Create MVM visualization with bar charts
@@ -422,6 +423,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
 		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
@@ -564,11 +566,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Use Border layout: controls at top (fixed), stats fills rest (scrollable)
 	// This eliminates nested scroll containers that compete for scroll events
 	rightPanel := container.NewBorder(
-		controlsBox,  // top - fixed controls
-		nil,          // bottom
-		nil,          // left
-		nil,          // right
-		statsScroll,  // center - scrollable stats
+		controlsBox, // top - fixed controls
+		nil,         // bottom
+		nil,         // left
+		nil,         // right
+		statsScroll, // center - scrollable stats
 	)
 
 	// Left panel using simple labels (no custom widgets)
@@ -725,7 +727,13 @@ func (ca *CrossbarApp) updateConductanceDisplay() {
 
 // updateStatus updates the status label.
 func (ca *CrossbarApp) updateStatus(status string) {
-	ca.statusLabel.SetText("Status: " + status)
+	if ca.statusBar == nil {
+		if ca.statusLabel == nil {
+			return
+		}
+		ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
+	}
+	ca.statusBar.Update(status)
 }
 
 // setEducationalContent updates the educational panel.

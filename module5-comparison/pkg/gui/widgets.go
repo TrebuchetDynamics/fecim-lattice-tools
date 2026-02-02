@@ -293,6 +293,14 @@ type DataCenterCalculator struct {
 	annualSavings     float64
 }
 
+const dataCenterServerScale = 10000.0
+
+func annualSavingsForScale(gpuCost, fecimCost float64) float64 {
+	monthlyGpuCost := gpuCost * dataCenterServerScale
+	monthlyFecimCost := fecimCost * dataCenterServerScale
+	return (monthlyGpuCost - monthlyFecimCost) * 12
+}
+
 // NewDataCenterCalculator creates a new calculator widget.
 func NewDataCenterCalculator() *DataCenterCalculator {
 	d := &DataCenterCalculator{}
@@ -318,10 +326,9 @@ func (d *DataCenterCalculator) SetResults(
 	d.currentFecimCost = fecimCost
 
 	// Calculate annual savings (monthly * 12 * 10,000 server scale factor)
-	serverScale := 10000.0
-	monthlyGpuCost := gpuCost * serverScale
-	monthlyFecimCost := fecimCost * serverScale
-	d.annualSavings = (monthlyGpuCost - monthlyFecimCost) * 12
+	monthlyGpuCost := gpuCost * dataCenterServerScale
+	monthlyFecimCost := fecimCost * dataCenterServerScale
+	d.annualSavings = annualSavingsForScale(gpuCost, fecimCost)
 
 	fyne.Do(func() {
 		if d.workloadLabel != nil {
@@ -343,7 +350,7 @@ func (d *DataCenterCalculator) SetResults(
 			canvas.Refresh(d.gpuCostText)
 		}
 		if d.fecimCostText != nil {
-			d.fecimCostText.Text = fmt.Sprintf("FeCIM: %s/month", formatCost(monthlyFecimCost))
+			d.fecimCostText.Text = fmt.Sprintf("FeCIM (TRL 4 est.): %s/month", formatCost(monthlyFecimCost))
 			canvas.Refresh(d.fecimCostText)
 		}
 		if d.savingsPercent != nil {
@@ -395,7 +402,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	d.gpuCostText.TextSize = 12
 	d.gpuCostText.Alignment = fyne.TextAlignCenter
 
-	d.fecimCostText = canvas.NewText("FeCIM: $0/month", color.RGBA{46, 204, 113, 255}) // Green
+	d.fecimCostText = canvas.NewText("FeCIM (TRL 4 est.): $0/month", color.RGBA{46, 204, 113, 255}) // Green
 	d.fecimCostText.TextSize = 12
 	d.fecimCostText.Alignment = fyne.TextAlignCenter
 
@@ -457,21 +464,20 @@ func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
 	titleLabel := widget.NewLabel("Verified vs Claimed")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	verifiedLabel := widget.NewLabel("VERIFIED (from Dr. Tour):")
+	verifiedLabel := widget.NewLabel("VERIFIED (peer-reviewed):")
 	verifiedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	verified := container.NewVBox(
 		widget.NewLabel("  30 discrete analog levels"),
-		widget.NewLabel("  96.6-98.24% MNIST (peer-reviewed)"),
-		widget.NewLabel("  CMOS compatible fab"),
-		widget.NewLabel("  Non-volatile (no refresh)"),
+		widget.NewLabel("  96-98% MNIST (peer-reviewed)"),
+		widget.NewLabel("  CMOS compatible"),
 	)
 
 	claimedLabel := widget.NewLabel("CLAIMED (not verified):")
 	claimedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	claimed := container.NewVBox(
-		widget.NewLabel("  25-100× lower than NAND (verified)"),
+		widget.NewLabel("  25-100× lower than NAND"),
 		widget.NewLabel("  1000× lower than DRAM"),
 		widget.NewLabel("  80-90% DC energy savings"),
 	)

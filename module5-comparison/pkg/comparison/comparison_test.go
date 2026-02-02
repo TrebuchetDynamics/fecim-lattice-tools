@@ -71,11 +71,11 @@ func TestMNISTWorkload(t *testing.T) {
 	if mnist.Name != "MNIST" {
 		t.Errorf("Expected 'MNIST', got '%s'", mnist.Name)
 	}
-	if mnist.TotalOps != 109184 {
-		t.Errorf("Expected 109184 ops, got %d", mnist.TotalOps)
+	if mnist.TotalOps != 101632 {
+		t.Errorf("Expected 101632 ops, got %d", mnist.TotalOps)
 	}
-	if mnist.Layers != 3 {
-		t.Errorf("Expected 3 layers, got %d", mnist.Layers)
+	if mnist.Layers != 2 {
+		t.Errorf("Expected 2 layers, got %d", mnist.Layers)
 	}
 }
 

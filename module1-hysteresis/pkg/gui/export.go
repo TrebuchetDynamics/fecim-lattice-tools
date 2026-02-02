@@ -2,13 +2,14 @@ package gui
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"fyne.io/fyne/v2"
+
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 // PEDataExport represents the complete P-E hysteresis data export structure
@@ -19,22 +20,22 @@ type PEDataExport struct {
 
 // ExportMetadata contains material and simulation parameters
 type ExportMetadata struct {
-	Material      string  `json:"material"`
-	EcMVcm        float64 `json:"ec_mv_cm"`
-	PsUcCm2       float64 `json:"ps_uc_cm2"`
-	PrUcCm2       float64 `json:"pr_uc_cm2"`
-	TemperatureK  float64 `json:"temperature_k"`
-	NumLevels     int     `json:"num_levels"`
-	ExportedAt    string  `json:"exported_at"`
-	DataPoints    int     `json:"data_points"`
-	Waveform      string  `json:"waveform"`
-	FrequencyHz   float64 `json:"frequency_hz,omitempty"`
+	Material     string  `json:"material"`
+	EcMVcm       float64 `json:"ec_mv_cm"`
+	PsUcCm2      float64 `json:"ps_uc_cm2"`
+	PrUcCm2      float64 `json:"pr_uc_cm2"`
+	TemperatureK float64 `json:"temperature_k"`
+	NumLevels    int     `json:"num_levels"`
+	ExportedAt   string  `json:"exported_at"`
+	DataPoints   int     `json:"data_points"`
+	Waveform     string  `json:"waveform"`
+	FrequencyHz  float64 `json:"frequency_hz,omitempty"`
 }
 
 // ExportData contains the actual measurement data
 type ExportData struct {
-	EFieldMVcm         []float64 `json:"e_field_mv_cm"`
-	PolarizationUcCm2  []float64 `json:"polarization_uc_cm2"`
+	EFieldMVcm        []float64 `json:"e_field_mv_cm"`
+	PolarizationUcCm2 []float64 `json:"polarization_uc_cm2"`
 }
 
 // exportPEDataToJSON exports P-E hysteresis data to a JSON file
@@ -73,23 +74,23 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	eFieldMVcm := make([]float64, len(eData))
 	polarizationUcCm2 := make([]float64, len(pData))
 	for i := range eData {
-		eFieldMVcm[i] = eData[i] / 1e8      // V/m to MV/cm
+		eFieldMVcm[i] = eData[i] / 1e8        // V/m to MV/cm
 		polarizationUcCm2[i] = pData[i] * 1e2 // C/m² to μC/cm²
 	}
 
 	// Build export structure
 	export := PEDataExport{
 		Metadata: ExportMetadata{
-			Material:      materialName,
-			EcMVcm:        ec / 1e8,
-			PsUcCm2:       ps * 1e2,
-			PrUcCm2:       pr * 1e2,
-			TemperatureK:  temp,
-			NumLevels:     numLevels,
-			ExportedAt:    time.Now().Format(time.RFC3339),
-			DataPoints:    len(eData),
-			Waveform:      waveform,
-			FrequencyHz:   frequency,
+			Material:     materialName,
+			EcMVcm:       ec / 1e8,
+			PsUcCm2:      ps * 1e2,
+			PrUcCm2:      pr * 1e2,
+			TemperatureK: temp,
+			NumLevels:    numLevels,
+			ExportedAt:   time.Now().Format(time.RFC3339),
+			DataPoints:   len(eData),
+			Waveform:     waveform,
+			FrequencyHz:  frequency,
 		},
 		Data: ExportData{
 			EFieldMVcm:        eFieldMVcm,
@@ -97,14 +98,8 @@ func (a *App) exportPEDataToJSON(filename string) error {
 		},
 	}
 
-	// Marshal to JSON with indentation
-	jsonData, err := json.MarshalIndent(export, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
 	// Write to file
-	if err := os.WriteFile(filename, jsonData, 0644); err != nil {
+	if err := sharedio.SaveJSON(filename, export); err != nil {
 		return fmt.Errorf("failed to write JSON file: %w", err)
 	}
 
@@ -141,8 +136,8 @@ func (a *App) exportPEDataToCSV(filename string) error {
 
 	// Write data rows
 	for i := range eData {
-		eMVcm := eData[i] / 1e8      // V/m to MV/cm
-		pUcCm2 := pData[i] * 1e2     // C/m² to μC/cm²
+		eMVcm := eData[i] / 1e8  // V/m to MV/cm
+		pUcCm2 := pData[i] * 1e2 // C/m² to μC/cm²
 
 		row := []string{
 			fmt.Sprintf("%.6f", eMVcm),

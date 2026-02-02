@@ -139,7 +139,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
-	e.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | Laboratory Estimates | Not Production Verified", heroAmberColor)
+	e.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verified", heroAmberColor)
 	e.heroSubtext.TextSize = 14
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter
@@ -195,7 +195,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === KEY STAT STRIP ===
-	e.statStrip = canvas.NewText("1000x less than CPU  |  100x less than GPU  |  ~1 pJ per MAC", heroCyanColor)
+	e.statStrip = canvas.NewText("1000x less than CPU  |  100x less than GPU  |  ~1 pJ/MAC (TRL 4 est.)", heroCyanColor)
 	e.statStrip.TextSize = 11
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter

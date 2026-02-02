@@ -12,11 +12,13 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // EmbeddedApp holds the state for an embedded demo instance
 type EmbeddedApp struct {
 	*App
+	sharedwidgets.EmbeddedAppBase
 }
 
 // NewEmbeddedApp creates a new embedded GUI application (for use in unified visualizer)
@@ -24,7 +26,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
-	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	numLevels := 30 // Default: FeCIM's 30 discrete analog states
 	// preisachGridSize := 200 // DEPRECATED
 	preisach := ferroelectric.NewPreisachModel(mat)
 
@@ -54,7 +56,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		lastLogPhase:    -1,
 		// isppCalc:        physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
-	
+
 	// Initialize L-K Solver and Adaptive ISPP
 	app.lkSolver = physics.NewLKSolver()
 	app.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
@@ -71,17 +73,21 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 		log = logging.NewLogger("hysteresis")
 	}
 
+	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
+
 	e.fyneApp = fyneApp
 	e.mainWindow = parentWindow
 
 	// Create UI components
 	content := e.createUI()
+	e.SetContent(content)
 
 	return content
 }
 
 // Start begins the simulation loop (call after BuildContent)
 func (e *EmbeddedApp) Start() {
+	e.EmbeddedAppBase.Start()
 	e.running = true
 
 	// Load or run calibration at startup (ensures calibration files exist)
@@ -112,4 +118,6 @@ func (e *EmbeddedApp) Stop() {
 		log.Printf("Warning: failed to save calibration: %v", err)
 	}
 	e.mu.Unlock()
+
+	e.EmbeddedAppBase.Stop()
 }
