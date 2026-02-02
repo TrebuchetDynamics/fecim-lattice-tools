@@ -15,7 +15,7 @@ This meta-study synthesizes research from 40+ papers focused on crossbar array a
 1. **Matrix-Vector Multiplication (MVM)** is the fundamental operation—physics does the computation via Ohm's Law (I = G×V) and Kirchhoff's Current Law
 2. **IR drop limits scalability** to ~256×256 arrays without compensation circuits
 3. **Sneak paths** cause 2-15% error in passive arrays; 1T1R (one transistor per cell) eliminates this
-4. **30 discrete levels** matches literature-reported multi-level FeFET capabilities (4.9 bits/cell)
+4. **30 discrete levels (demo baseline)** aligns with peer-reviewed multi-level FeFET capabilities (32–140 states)
 5. **ADC power dominates** (50-80% of total CIM energy)—ADC-less designs emerging
 6. **FeFET advantages**: Low switching energy (~10 fJ), self-rectifying possible, CMOS compatible
 
@@ -350,7 +350,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 **Paper:** "FeFET_Crossbar_MNIST_Hardware_arXiv.pdf"
 - **Result:** 87% MNIST accuracy demonstrated in hardware
 - **Array:** 128×64 FeFET crossbar
-- **Finding:** 30 analog states achieved, matching our 30-level model
+- **Finding:** 30 analog states are a **conference claim**; peer-reviewed devices report 32–140 states that bracket the demo baseline
 
 **Paper:** "multilevel_fefet_crossbar_2023.pdf"
 - **Result:** 32 levels demonstrated with write-verify
@@ -367,7 +367,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 2. **No Joule heating:** Displacement current, not filament formation
 3. **CMOS compatible:** Same fab as standard logic
 4. **Self-rectifying possible:** Reduces sneak paths in passive arrays
-5. **30 discrete states:** High precision without multi-cell encoding
+5. **30-level baseline (conference claim):** High precision without multi-cell encoding
 
 ---
 
@@ -379,7 +379,7 @@ Based on literature analysis, our current implementation aligns well:
 
 | Feature | Literature Best Practice | Our Implementation | Status |
 |---------|--------------------------|-------------------|--------|
-| Quantization | 4-5 bits (16-32 levels) | 30 levels (4.9 bits) | ✅ Correct |
+| Quantization | 4-5 bits (16-32 levels) | 30 levels (4.9 bits, demo baseline) | ✅ Baseline |
 | Array size | 64×64 to 256×256 | Configurable | ✅ Correct |
 | IR drop model | Wire resistance + node voltages | Iterative relaxation | ✅ Correct |
 | Sneak path model | Three-cell model | Three-cell + statistics | ✅ Correct |
@@ -433,7 +433,7 @@ Based on literature analysis, our current implementation aligns well:
 1. **Crossbar arrays enable 10-1000× efficiency gain** over GPUs for inference
 2. **Non-idealities are manageable** with proper design (1T1R, compensation)
 3. **FeFET is the most promising technology** for high-precision, low-power CIM
-4. **30 discrete levels** is achievable and matches production targets
+4. **30 discrete levels** is a plausible baseline; production targets vary by process
 5. **ADC power is the next frontier** - ADC-less designs emerging
 
 ### 9.2 Implications for FeCIM Project
@@ -441,7 +441,7 @@ Based on literature analysis, our current implementation aligns well:
 Our crossbar simulation module is well-aligned with literature best practices:
 - ✅ Correct physics model (Ohm's Law + Kirchhoff's)
 - ✅ Realistic non-ideality models (IR drop, sneak paths, variation)
-- ✅ Appropriate quantization (30 levels, 6-bit ADC)
+- ✅ Demo baseline quantization (30 levels, 6-bit ADC)
 - ✅ Configurable array sizes
 
 **Next Steps:**

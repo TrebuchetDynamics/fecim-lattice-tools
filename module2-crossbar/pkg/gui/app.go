@@ -239,7 +239,7 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 			"4. Explore IR Drop & Sneak\n"+
 			"   Path analysis tabs\n\n"+
 			"Key Concepts:\n"+
-			"• 30 analog levels/cell\n"+
+			"• 30 analog levels/cell (baseline; conference claim)\n"+
 			"• MVM = Matrix × Vector\n"+
 			"• All rows compute in 1 step\n\n"+
 			"Try: Switch tabs to see\n"+
@@ -426,7 +426,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
+		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
 
@@ -750,7 +750,7 @@ func (ca *CrossbarApp) setKeyStatValue(value string) {
 // updateInfoLabel updates the info label with current config.
 func (ca *CrossbarApp) updateInfoLabel() {
 	ca.infoLabel.SetText(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
+		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
 }

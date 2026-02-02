@@ -76,7 +76,7 @@ Technology Readiness Level - Scale from 1 (basic principles) to 9 (production re
 Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.
 
 ### Bits per Cell
-Information density in single memory element. FeCIM: ~4.9 bits/cell (30 analog states), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.
+Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, conference claim), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.
 
 ### MNIST Accuracy
 Handwritten digit classification accuracy (0-9). State-of-art FeCIM: 98.24% (FTJ reservoir computing, ScienceDirect 2025), 96.6% (HZO crossbar, Nature Commun. 2023). Software: 99.7%.

@@ -13,7 +13,7 @@ This meta-study synthesizes research from 30+ papers focused on peripheral circu
 ### Key Findings
 
 1. **ADC power dominates CIM energy budget** — 50-80% of total chip power in typical designs
-2. **5-6 bit ADC precision** is sufficient for most neural network workloads (matches our 30 levels)
+2. **5-6 bit ADC precision** is sufficient for most neural network workloads (matches our 30-level baseline)
 3. **SAR ADC is the optimal architecture** for CIM — best energy efficiency at 5-8 bit resolution
 4. **Charge pumps are essential** for generating write voltages (±1.5V) from low CMOS supply (1V)
 5. **TIA design determines read accuracy** — noise and bandwidth are critical trade-offs

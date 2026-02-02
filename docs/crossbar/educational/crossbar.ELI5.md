@@ -4,6 +4,8 @@
 
 ---
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Part 1: The Water Park Analogy
 
 ### What's a Crossbar Array?
@@ -216,7 +218,7 @@ We read: 0.75  (rounded)
 - ✅ Barely any heat (displacement current, not burning)
 - ✅ Can be self-rectifying (built-in sneak path fix)
 - ✅ Works in normal chip factories
-- ✅ 30 analog states (very precise!)
+- ⚠️ 30 analog states (demo baseline; very precise)
 - ✅ Lasts 10¹² cycles (basically forever)
 
 ---
@@ -397,7 +399,7 @@ func GetDiscreteLevel(conductance float64) int {
 **Requirements:**
 - Linear mapping from [0, 1] to {0, 1, 2, ..., 29}
 - Conductance range: 1 µS to 100 µS (linear)
-- Consistent with Dr. Tour's 30-state specification
+- Consistent with the demo's 30‑level baseline (conference claim)
 
 ---
 
@@ -563,7 +565,7 @@ func Test30LevelQuantization(t *testing.T) {
 | Requirement | Description | Priority |
 |-------------|-------------|----------|
 | ✅ MVM/VMM | Matrix operations with Ohm's Law | CRITICAL |
-| ✅ 30 levels | Exact quantization to Dr. Tour's spec | CRITICAL |
+| ✅ 30 levels | Demo baseline (conference claim; pending peer review) | CRITICAL |
 | ✅ IR drop | Resistive network solver | HIGH |
 | ✅ Sneak paths | Three-cell model minimum | HIGH |
 | ✅ Variation | 5% D2D Gaussian | HIGH |
@@ -578,7 +580,7 @@ func Test30LevelQuantization(t *testing.T) {
 ## Summary: What Makes a Perfect Crossbar Module
 
 1. **Physics Accuracy:** Ohm's Law (I=GV) and Kirchhoff's Law (currents sum)
-2. **30-Level Quantization:** Matches FeCIM's demonstrated capability
+2. **30-Level Quantization:** Demo baseline (conference claim; peer-reviewed range 32–140)
 3. **Non-Idealities:** IR drop, sneak paths, variation, drift (all toggleable)
 4. **Peripheral Models:** Realistic ADC/DAC quantization
 5. **Visualization:** Real-time heatmaps and MVM animation

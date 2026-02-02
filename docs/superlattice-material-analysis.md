@@ -166,7 +166,7 @@ Partial polarization switching within domains creates continuous states quantize
 | Standard ALD | Yes | No (MBE/CVD) | HZO |
 | "Not exotic" | Yes | Debatable | HZO |
 | Low voltage | Yes (~2V) | Yes (~2V) | Tie |
-| 30 states | Demonstrated | Demonstrated | Tie |
+| 30 states | Conference claim (pending peer review) | Conference claim (pending peer review) | Tie |
 | Endurance | 10^9-10^11 | 10^6-10^9 | HZO |
 | Production ready | TRL 4-5 | TRL 2-3 | HZO |
 

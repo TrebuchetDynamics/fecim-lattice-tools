@@ -4,6 +4,8 @@
 
 ---
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Part 1: What is Hysteresis? (The Rubber Band)
 
 ### The Simplest Explanation
@@ -155,7 +157,7 @@ Like a dimmer switch with 30 positions!
 | Memory Type | Bits per Cell | Cells for 1 MB |
 |-------------|---------------|----------------|
 | Binary | 1 bit | 8,388,608 cells |
-| FeCIM (30 levels) | ~5 bits | ~1,677,722 cells |
+| FeCIM (30-level baseline) | ~5 bits | ~1,677,722 cells |
 
 **Same storage, 5x fewer cells!**
 
@@ -388,7 +390,7 @@ Pr_aged = model.material.EnduranceAtCycles(1e10)
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **30 discrete levels** | Linear in polarization | ✅ Implemented |
+| **30 discrete levels (baseline)** | Linear in polarization | ✅ Implemented |
 | **Level-to-voltage mapping** | V_prog for each level | ✅ DiscreteStates() |
 | **Level-to-conductance** | G for crossbar integration | ✅ Implemented |
 | **Programming sequence** | Write-verify cycles | ⚠️ Not visualized |
@@ -585,7 +587,7 @@ $ fecim-hysteresis interactive
 
 1. **The loop shape** comes from millions of tiny switches (hysterons)
 2. **The memory** comes from the gap between "flip up" and "flip down" voltages
-3. **30 levels** give us ~5x more storage than binary
+3. **30-level baseline** gives us ~5x more storage than binary
 4. **Write vs Read** is controlled by the Ec threshold
 
 ### What Demo 1 Shows
@@ -593,7 +595,7 @@ $ fecim-hysteresis interactive
 | Feature | What It Demonstrates |
 |---------|---------------------|
 | P-E Loop | How polarization responds to field |
-| 30 Levels | Multi-level storage capability |
+| 30 Levels (baseline) | Multi-level storage capability |
 | WRITE/READ | Threshold-based memory operations |
 | Minor Loops | History-dependent behavior |
 | Material Compare | Different HZO variants |
@@ -610,7 +612,7 @@ The fact that the path up is different from the path down means the system REMEM
 |---------|---------------|
 | Ferroelectric | A material with stubborn magnets inside |
 | Hysteresis | The magnets remember which way you pushed them |
-| 30 Levels | Like a 30-floor parking garage for data |
+| 30 Levels (baseline) | Like a 30-floor parking garage for data |
 | Non-volatile | Remembers even when unplugged (like a carved rock) |
 | Compute-in-Memory | Do math where the data lives (no commute!) |
 
@@ -622,7 +624,7 @@ For the curious, here's what the demo actually computes:
 |--------------|------------------------|
 | The loop shape | ~450 hysterons, each with different thresholds, summed together |
 | The smooth curve | Hysterons distributed as a 2D Gaussian around ±Ec |
-| The 30 levels | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
+| The 30 levels (baseline) | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
 | Memory effect | Each hysteron stays put between its thresholds |
 | WRITE/READ indicator | Compares `|E|` vs `Ec` in real-time |
 | Memory Log | Tracks phase transitions in Write/Read Demo mode |

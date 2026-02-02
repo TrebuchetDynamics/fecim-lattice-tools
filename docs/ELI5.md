@@ -218,9 +218,9 @@ Binary (easy):           Decimal (hard):
 
 With only two levels, even a noisy signal is easy to read. This is why binary won.
 
-**But wait!** Ferroelectric CIM uses 30 levels. How does that work?
+**But wait!** This demo uses a **30-level baseline** (conference claim; pending peer review). How does multi-level storage work?
 
-The secret: **analog precision**. Ferroelectric materials can maintain stable, distinguishable states at 30 levels because:
+The secret: **analog precision**. Ferroelectric materials can maintain stable, distinguishable **multi-level** states; this demo assumes 30 levels because:
 1. The physics is very stable (crystal structure shifts)
 2. The separation between levels is large enough
 3. Error correction can handle small variations
@@ -1471,10 +1471,10 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 ## Performance Targets
 
-| Metric | Target | Achieved |
+| Metric | Target | Status |
 |--------|--------|----------|
-| Analog states | 30 levels | ✅ 30 levels |
-| MNIST accuracy | 87% (Tour, unverified) | Software: 98-99% |
+| Analog states | 30 levels | ⚠️ Conference claim (pending peer review) |
+| MNIST accuracy | 87% (Tour, unverified) | Peer-reviewed: 96.6–98.24% |
 | Energy vs NAND | 10,000,000× lower | Claimed* |
 | Energy vs DRAM | 1,000× lower | Claimed* |
 
@@ -1773,7 +1773,7 @@ and "ubiquitous infrastructure"!
 ## Basic Questions
 
 **Q: Is this real or theoretical?**
-A: Real! Dr. Tour's lab at external research institution has fabricated and tested HZO devices with 30 analog states. The material exists and works.
+A: The **material is real**, and multi-level ferroelectric devices are peer-reviewed (32–140 states). The **30-level count** in this demo is a **conference claim** (COSM 2025) pending peer review.
 
 **Q: When will products be available?**
 A: Timeline is uncertain. Lab demo → mass production typically takes 5-10 years for new memory technologies. Key milestones ahead include foundry partnerships and manufacturing scale-up.

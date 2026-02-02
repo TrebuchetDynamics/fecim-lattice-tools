@@ -156,7 +156,7 @@ mobile := container.NewAppTabs(
 
 ### Quantization Pattern
 
-All FeCIM modules quantize analog values to 30 discrete levels:
+All FeCIM modules quantize analog values to the 30-level demo baseline:
 
 ```go
 // Standard quantization function (used across all modules)

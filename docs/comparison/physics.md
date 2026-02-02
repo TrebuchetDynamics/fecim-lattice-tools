@@ -423,7 +423,7 @@ Efficiency (TOPS/W)
 ### FeFET-Specific Research
 
 5. **Tour, J. R.** (2025). "Ferroelectric Compute-in-Memory: A New Paradigm for AI Hardware." *COSM 2025 Conference*.
-   - **30 analog states in HfO₂-ZrO₂ superlattice**
+   - **30 analog states in HfO₂-ZrO₂ superlattice** (conference claim; pending peer review)
 
 6. **Cheng, C.-H., et al.** (2021). "Ferroelectric FET for Analog Computing." *IEEE Transactions on Electron Devices*.
    - **FeFET CIM: 36.5 TOPS/W (3-bit)**

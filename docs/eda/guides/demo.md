@@ -10,7 +10,7 @@ The FeCIM Design Suite is a universal chip design tool supporting three distinct
 
 | Mode | Application | Description |
 |------|-------------|-------------|
-| **Storage** | NAND Flash Replacement | High-density non-volatile storage (30 levels/cell = ~4.9 bits) |
+| **Storage** | NAND Flash Replacement | High-density non-volatile storage (30-level baseline = ~4.9 bits; conference claim) |
 | **Memory** | DRAM Replacement | High-speed zero-refresh memory (~10ns access) |
 | **Compute** | AI Accelerator | Analog compute-in-memory for neural network inference |
 

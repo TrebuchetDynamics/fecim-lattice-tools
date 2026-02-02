@@ -2,10 +2,10 @@
 
 ## Overview
 
-This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with **30 discrete analog levels**. It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with peer-reviewed accuracy context in the UI (96.6–98.24%).
+This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with a **30-level baseline** (conference claim; pending peer review). It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with peer-reviewed accuracy context in the UI (96.6–98.24%).
 
 **Key Questions Answered:**
-1. What are 30 analog levels? (Physics + competitive advantage)
+1. What is the 30-level baseline? (Physics + competitive advantage)
 2. How do FP vs CIM results diverge? (Quantization + noise effects)
 3. What happens when hardware degrades? (Quantization cliff, noise wall)
 4. Why does this matter? (Verified energy-efficiency advantage range)
@@ -91,7 +91,7 @@ Only 30 are reliably distinguishable due to:
 2. Cycle-to-cycle variation (~1.5%)
 3. Read noise (~0.5% σ/μ)
 
-With 3σ separation requirement, 30 levels is the practical limit.
+With 3σ separation requirement, 30 levels is a **conservative demo baseline** (practical limits vary by process).
 
 ---
 
@@ -99,7 +99,7 @@ With 3σ separation requirement, 30 levels is the practical limit.
 
 ### Why CIM Diverges from FP
 
-**Simulation (this demo):** With low noise and 30 levels, CIM can approach FP accuracy.
+**Simulation (this demo):** With low noise and the 30-level baseline, CIM can approach FP accuracy.
 
 **Hardware (literature):** Peer‑reviewed FeFET/FTJ work reports 96.6–98.24% (simulation); a conference‑only 87% claim exists but is unverified and not used as a target here.
 
@@ -256,10 +256,10 @@ Click **ℹ Info** to open a tabbed dialog with:
 The **Quick Demo** button runs an automated walkthrough:
 
 1. **Welcome** - Intro to FeCIM + 30‑level advantage
-2. **Ideal** - Load a digit at 30 levels (low noise)
-3. **Success** - FP and CIM agree at 30 levels
+2. **Ideal** - Load a digit at the 30-level baseline (low noise)
+3. **Success** - FP and CIM agree at the 30-level baseline
 4. **Break It** - Switch to 2 levels (binary collapse)
-5. **Restore** - Return to 30 levels and conclude
+5. **Restore** - Return to the 30-level baseline and conclude
 
 ---
 
@@ -383,7 +383,7 @@ Only 30 are reliably distinguishable due to:
 2. Cycle-to-cycle variation (~1.5%)
 3. Read noise (~0.5% σ/μ)
 
-With 3σ separation requirement, 30 levels is the practical limit.
+With 3σ separation requirement, 30 levels is a **conservative demo baseline** (practical limits vary by process).
 
 ### Can we train on-chip?
 

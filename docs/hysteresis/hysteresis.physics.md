@@ -2,6 +2,8 @@
 
 Start here if you've never studied ferroelectrics before.
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ---
 
 ## Part 1: What Are We Even Talking About?
@@ -528,7 +530,7 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 | P from E | Preisach model (hysteron sum) | ✅ Physics-accurate |
 | Hysteresis | Emergent from hysteron memory | ✅ Physics-accurate |
 | Loop shape | From Gaussian distribution (σ=20%) | ✅ Emergent, not forced |
-| 30 levels | Linear discretization of P | ✅ Simple & correct |
+| 30 levels (baseline) | Linear discretization of P | ✅ Simple & correct |
 | Minor loops | Implicit via hysteron states | ✅ Works correctly |
 | Write vs Read | |E| > Ec threshold detection | ✅ Physics-accurate |
 | τ switching | Defined but not used in viz | ⚠️ Quasistatic approx |
@@ -544,7 +546,7 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 | Sine Wave | Full hysteresis loop traversal |
 | Triangle Wave | Linear ramps showing Ec threshold |
 | Square Wave | Fast switching dynamics |
-| Random Walk | Multi-level storage (30 states) |
+| Random Walk | Multi-level storage (30-level baseline) |
 | Write/Read Demo | Complete memory operation cycle |
 
 ---

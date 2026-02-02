@@ -698,7 +698,7 @@ Priorities 8-9, 13-16 cover:
 
 ### Neural Network Performance
 1. **6-bit weight quantization** sufficient for most inference tasks
-2. **87% MNIST accuracy** demonstrated with 30-level FeFET crossbar
+2. **87% MNIST accuracy** was a conference claim (unverified; removed from tool)
 3. **ADC dominates** energy (50-80%); ADC-less architectures emerging
 4. **QAT recovers** 90%+ of accuracy lost to quantization
 

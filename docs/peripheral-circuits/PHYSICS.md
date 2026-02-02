@@ -38,7 +38,7 @@ The ADC performs **quantization**: mapping continuous voltages to discrete digit
 The Ferroelectric CIM system uses a **5-bit Successive Approximation Register (SAR)** ADC:
 
 - **5 bits** = 2^5 = **32 possible codes** (0 to 31)
-- **FeCIM uses 30 levels** (codes 0-29, reserving 30-31)
+- **Demo baseline uses 30 levels** (conference claim; codes 0-29, reserving 30-31)
 - **Architecture:** SAR compares input voltage against a DAC reference iteratively
 
 #### SAR Conversion Process

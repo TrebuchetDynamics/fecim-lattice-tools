@@ -186,7 +186,7 @@ FeCIM leverages **HfO₂-ZrO₂ (HZO) superlattice** ferroelectric materials to 
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| **Discrete States** | 30 levels (~4.9 bits/cell) | Dr. Tour COSM 2025; Jerry 2017: 32 states |
+| **Discrete States** | 30-level baseline (~4.9 bits/cell) | Conference claim (COSM 2025); peer‑reviewed 32–140 states |
 | **Remanent Polarization (Pr)** | 15-34 μC/cm² | Nature Commun. 2025, ACS 2020 |
 | **Coercive Field (Ec)** | 1.0-1.5 MV/cm | Nature Commun. 2025 |
 | **Endurance Target** | 10¹² cycles | Achieved in HZO superlattice (PMC 2024) |
@@ -206,9 +206,11 @@ Module 6 supports three FeCIM operation modes:
 │   NAND replacement │   DRAM replacement │   AI accelerator           │
 │   No weights       │   No weights       │   Weights optional         │
 │   10+ year retain  │   ~10ns access     │   Analog MVM               │
-│   30 levels/cell   │   Fast switching   │   Matrix-vector multiply   │
+│   30 levels/cell*  │   Fast switching   │   Matrix-vector multiply   │
 └────────────────────┴────────────────────┴────────────────────────────┘
 ```
+
+*30 levels/cell refers to the demo baseline (conference claim; pending peer review).
 
 ### 2.3 Dr. Tour / IronLattice Research Status
 
@@ -216,8 +218,8 @@ Module 6 supports three FeCIM operation modes:
 
 | Claim | Status | Source |
 |-------|--------|--------|
-| 30 analog states | ✅ Confirmed | COSM 2025 presentation |
-| 87% MNIST accuracy | ✅ Hardware-tested | COSM 2025 presentation |
+| 30 analog states | ⚠️ Conference claim (pending peer review) | COSM 2025 presentation |
+| 87% MNIST accuracy | ❌ Unverified (removed from tool) | COSM 2025 presentation |
 | 10¹² cycle endurance | ⚠️ Target, not achieved | Dr. Tour: "still have to get this up to 10¹²" |
 | TRL 4 status | ✅ Confirmed | Dr. Tour explicitly stated at COSM 2025 |
 | 10M× vs NAND energy | ❌ Unverified | Dr. Tour claim only; peer-reviewed max: 25-100× |

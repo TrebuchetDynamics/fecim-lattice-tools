@@ -87,7 +87,7 @@ Analog states are achieved through **partial polarization switching**:
 3. **ISPP (Incremental Step Pulse Program)**: Best linearity, 90 states demonstrated
 
 **Module 4 Implementation:**
-- 30 discrete levels (FeCIM standard)
+- 30 discrete levels (demo baseline; conference claim)
 - Linear voltage mapping: Level 0 → Vc, Level 29 → 2.5×Vc
 - Each level corresponds to a conductance state
 

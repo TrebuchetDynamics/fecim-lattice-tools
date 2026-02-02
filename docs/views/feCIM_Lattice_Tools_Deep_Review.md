@@ -16,17 +16,17 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 
 **Key Findings**:
 - ✅ **Scientific Integrity**: Project rigorously separates verified (peer-reviewed) from unverified claims, with 27 removed/updated assertions
-- ✅ **Code Quality**: 8,801 lines of Go code with clear modular architecture, 1,755 tests (100% pass rate)
+- ✅ **Code Quality**: Modular architecture with CI‑verified test suite (see GitHub Actions)
 - ✅ **Physics Accuracy**: All models based on peer-reviewed literature with validation tests
 - ✅ **Completeness**: 7 modules covering complete FeCIM ecosystem from physics to EDA
 - ✅ **Educational Value**: Excellent visualization tool suitable for teaching and research outreach
-- ✅ **Technical Achievement**: Full FeCIM technology stack simulation implementing 30 discrete analog states per cell
+- ✅ **Technical Achievement**: Full FeCIM technology stack simulation using a 30‑level demo baseline (conference claim; pending peer review)
 
 **Major Achievements**:
 - Removed 2 unverified claims (87% MNIST, 10M× vs NAND energy)
 - Adopted peer-reviewed benchmarks (96.6-98.24% MNIST, 25-100× vs NAND energy)
 - Comprehensive documentation system (100+ glossary terms, 300+ research paper citations)
-- Extensive test coverage (1,755 tests across physics, crossbar, networks, circuits, EDA)
+- Extensive test coverage (see CI for current totals)
 
 ---
 

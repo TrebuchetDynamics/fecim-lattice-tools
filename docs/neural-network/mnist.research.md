@@ -154,7 +154,7 @@ quantized[i][j] = -wMax + float64(bin) * levelStep
 | 8 | 256 | 98% (baseline) | Standard |
 | FP32 | Continuous | 98.5% | Ideal |
 
-**Key Finding:** Diminishing returns above 5 bits (~30 levels). FeCIM's 30 levels is nearly optimal.
+**Key Finding:** Diminishing returns above 5 bits (~30 levels). The 30-level baseline is nearly optimal in simulation.
 
 ### 3.3 Quantization-Aware Training (QAT)
 
@@ -546,7 +546,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 ### 12.1 Key Takeaways
 
-1. **30 levels is sufficient** for MNIST—near optimal accuracy with practical hardware
+1. **30-level baseline is sufficient** for MNIST—near‑optimal accuracy in simulation
 2. **ADC precision matters more** than weight quantization for energy efficiency
 3. **Noise is the main accuracy limiter**—FeFET's low noise is a significant advantage
 4. **Dual-mode visualization** effectively demonstrates FP vs. CIM trade-offs

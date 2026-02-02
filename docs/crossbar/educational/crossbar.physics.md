@@ -10,9 +10,11 @@
 
 This document provides the deep technical foundation for understanding crossbar array physics, from basic principles to real-world non-idealities. It covers:
 - Matrix-Vector Multiplication (MVM) using Ohm's and Kirchhoff's laws
-- 30-level conductance quantization in ferroelectric devices
+- 30-level conductance quantization in ferroelectric devices (demo baseline; conference claim)
 - Non-idealities: IR drop, sneak paths, device variation, ADC quantization
 - Physics-accurate simulation methodology
+
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
 
 ---
 
@@ -177,7 +179,7 @@ Low conductance (small weight):      High conductance (large weight):
 
 For ferroelectric cells, we control conductance by:
 - Polarization state (from Demo 1!) controls how conductive the channel is
-- 30 analog states → 30 possible weight values per cell
+- Demo baseline (30 levels) → 30 possible weight values per cell
 
 ### Weight Range
 
@@ -187,7 +189,7 @@ For ferroelectric cells, we control conductance by:
 | G_mid | 0.5 | Medium weight |
 | G_max | 1.0 | Maximum weight |
 
-**Resolution:** With 30 states, we get ~5 bits of precision per cell.
+**Resolution:** With the 30-level baseline, we get ~5 bits of precision per cell.
 
 ---
 
@@ -279,7 +281,7 @@ Quantized output: 0.71 (rounded down)
 - ✅ No Joule heating (displacement current, not filament)
 - ✅ Self-rectifying possible (reduces sneak paths)
 - ✅ CMOS-compatible (same fab as regular chips)
-- ✅ 30 analog states (high precision)
+- ⚠️ 30-level baseline (conference claim; high precision)
 - ✅ 10¹² cycle endurance
 
 ---

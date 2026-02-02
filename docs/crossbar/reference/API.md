@@ -264,7 +264,7 @@ output, err := array.VMM(input)
 
 ### ProgramWeight
 
-Programs a single weight value to a cell. The value is automatically quantized to one of 30 levels.
+Programs a single weight value to a cell. The value is automatically quantized to one of 30 levels (demo baseline).
 
 **Signature:**
 ```go
@@ -532,7 +532,7 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator
 
 **Parameters:**
 - `rows`, `cols`: Array dimensions
-- `levels`: Number of discrete levels (typically 30 for FeCIM)
+- `levels`: Number of discrete levels (typically 30 for demo baseline)
 
 **Returns:**
 - `*DriftSimulator`: Initialized with random conductance levels, default assumed drift model
@@ -1406,7 +1406,7 @@ const (
 ### Quantization
 
 ```go
-const DefaultQuantizationLevels = 30  // FeCIM discrete states
+const DefaultQuantizationLevels = 30  // Demo baseline discrete states (conference claim)
 ```
 
 ### Physical Constants
@@ -1585,7 +1585,7 @@ for tech, stats := range results {
 - Fraunhofer IPMS 2024: >10 year retention at 85°C (AEC-Q100 automotive)
 
 **Implementation Notes:**
-- All weights automatically quantize to 30 discrete levels
+- All weights automatically quantize to 30 discrete levels (demo baseline)
 - Temperature effects use Arrhenius model (E_a ≈ 0.5 eV)
 - 0T1R and 1T1R architectures have different sneak/IR drop characteristics
 - Drift coefficient for FeFET is estimated (not directly measured) from retention requirements

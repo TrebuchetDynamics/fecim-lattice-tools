@@ -510,7 +510,7 @@ Notes:
   - Debug logging to JSON (logs/hysteresis-TIMESTAMP.json)
   - Export feature: Ctrl+E saves P-E data to data/pe-data-YYYY-MM-DDTHH-MM-SS.{json,csv}
   - Metrics dashboard shows temperature-corrected Ec(T), Pr(T), squareness, switched fraction
-  - 30 discrete levels = 4.91 bits/cell
+  - 30 discrete levels (baseline) = 4.91 bits/cell
   - Keyboard shortcuts fully documented in keyboard.go:140-175
   - Responsive layout adapts to mobile via AdaptiveLayout
   - Theme uses FeCIM blue (#003264) from theme.go

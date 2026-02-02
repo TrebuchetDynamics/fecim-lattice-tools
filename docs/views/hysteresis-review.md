@@ -134,7 +134,7 @@ The module implements **8 CMOS-compatible ferroelectric materials**:
 | Material | States | Pr (µC/cm²) | Ec (MV/cm) | Source |
 |----------|--------|-------------|------------|--------|
 | **DefaultHZO** | 30 | 25 | 1.2 | Park et al. 2015 |
-| **FeCIMMaterial** | 30 | 30 | 1.0 | Tour's demonstrated values |
+| **FeCIMMaterial** | 30 | 30 | 1.0 | Conference claim baseline (pending peer review) |
 | **FeCIMTarget** | 30 | 30 | 1.0 | Tour's stated targets |
 | **LiteratureSuperlattice** | 64 | 45 | 0.8 | Cheema et al. 2020 |
 | **CryogenicHZO (4K)** | 48 | 75 | 1.5 | Adv. Elec. Mat. 2024 |

@@ -6,6 +6,8 @@
 
 **Scope:** Voltage values for 300K nominal operation. Timing parameters and pulse widths are documented separately in `config/physics.yaml`.
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review).
+
 ---
 
 ## Table of Contents

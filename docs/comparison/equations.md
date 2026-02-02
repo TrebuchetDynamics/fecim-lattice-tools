@@ -676,7 +676,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 ## 10. Design Rules of Thumb
 
 ### Quantization
-- **30 levels**: Minimum for high-accuracy neural networks (FeCIM target)
+- **30 levels (baseline)**: Minimum for high-accuracy neural networks (demo assumption)
 - **16 levels (4-bit)**: Acceptable for many workloads
 - **< 8 levels**: Severe accuracy degradation
 

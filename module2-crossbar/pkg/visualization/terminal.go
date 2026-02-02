@@ -80,7 +80,7 @@ func (v *TerminalVisualizer) ShowCrossbarState() {
 	fmt.Println("+")
 
 	// Legend
-	fmt.Println("\nLevel Legend (30 discrete states):")
+	fmt.Println("\nLevel Legend (30-level baseline):")
 	fmt.Print("  Low ")
 	for l := 0; l < 30; l += 3 {
 		char := v.levelToChar(l)

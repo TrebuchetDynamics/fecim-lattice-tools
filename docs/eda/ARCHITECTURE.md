@@ -9,7 +9,7 @@ Module 6 (EDA - Electronic Design Automation) is the fabrication-grade design in
 **Supported Technology Nodes**: SkyWater 130nm (SKY130), GlobalFoundries 180nm (GF180MCU), IHP 130nm (IHP_SG13G2)
 
 **Operation Modes**:
-- **Storage**: High-density non-volatile NAND replacement (30 levels/cell, ~4.9 bits/cell)
+- **Storage**: High-density non-volatile NAND replacement (30-level baseline, ~4.9 bits/cell; conference claim)
 - **Memory**: High-speed zero-refresh DRAM replacement (10ns access time)
 - **Compute**: AI accelerator with optional pre-trained weight initialization
 

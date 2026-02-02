@@ -216,7 +216,7 @@ The ADC is a power HOG!
 - Each comparison uses energy
 - More precision (bits) = more comparisons = more power
 
-**The good news:** FeCIM only needs 5-bit precision (30 levels), not 8 or 10 bits. This saves LOTS of power!
+**The good news:** The demo baseline assumes 5-bit precision (~30 levels, conference claim), not 8 or 10 bits. This saves LOTS of power!
 
 ---
 

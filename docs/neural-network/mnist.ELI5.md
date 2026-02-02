@@ -4,6 +4,8 @@
 
 ---
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Part 1: What is MNIST? (The Picture Problem)
 
 ### The Simplest Explanation
@@ -247,9 +249,9 @@ Level 29: ───────────────────────�
 | Type | Precision | Storage | Energy |
 |------|-----------|---------|--------|
 | Regular (32-bit) | Excellent | 32 bits/weight | High |
-| FeCIM (30 levels) | Good enough | ~5 bits/weight | **10,000× less!** |
+| FeCIM (30-level baseline) | Good enough | ~5 bits/weight | **10,000× less!** |
 
-**Key insight:** 30 levels is ENOUGH for MNIST! We only lose ~1-2% accuracy.
+**Key insight:** The 30-level baseline is **enough in simulation** for MNIST! We only lose ~1-2% accuracy.
 
 ---
 
@@ -562,7 +564,7 @@ Compare to GPU: ~1 mJ (millijoules) per inference
 1. **MNIST** = 784 pixels → 10 digit classes
 2. **Neural network** = millions of multiply-add operations
 3. **FeCIM** = stores weights as conductances, computes via Ohm's Law
-4. **30 levels** = enough precision for 95%+ accuracy
+4. **30-level baseline** = enough precision for 95%+ accuracy (simulation)
 5. **Energy savings** = 100-10,000× vs. traditional computers
 
 ### What the Demo Shows

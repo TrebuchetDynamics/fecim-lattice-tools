@@ -80,7 +80,7 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 			"4. Explore IR Drop & Sneak\n"+
 			"   Path analysis tabs\n\n"+
 			"Key Concepts:\n"+
-			"• 30 analog levels/cell\n"+
+			"• 30 analog levels/cell (baseline; conference claim)\n"+
 			"• MVM = Matrix × Vector\n"+
 			"• All rows compute in 1 step")
 

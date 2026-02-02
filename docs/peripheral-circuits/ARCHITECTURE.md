@@ -291,7 +291,7 @@ func NewCircuitsApp() *CircuitsApp {
     ca := &CircuitsApp{
         arrayRows:    8,           // Default 8x8 array
         arrayCols:    8,
-        quantLevels:  30,          // FeCIM always 30 levels
+        quantLevels:  30,          // Demo baseline (conference claim)
         dacBits:      5,
         adcBits:      5,
         vMin:         1.2,         // Write range

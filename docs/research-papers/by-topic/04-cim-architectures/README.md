@@ -110,7 +110,7 @@ From most to least significant:
 1. **Non-destructive read**: Unlike FeCAP, FeFET read doesn't disturb state
 2. **3-terminal device**: Gate-controlled, easier peripheral integration
 3. **CMOS compatibility**: Direct integration with logic transistors
-4. **Multi-level capability**: 30+ states demonstrated (vs. 8-16 for RRAM)
+4. **Multi-level capability**: 32–140 states demonstrated in peer-reviewed devices; demo baseline uses 30 levels (conference claim)
 
 **Challenges:**
 1. **Read disturb**: Small but non-zero, mitigated by read voltage control

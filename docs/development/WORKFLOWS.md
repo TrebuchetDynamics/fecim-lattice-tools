@@ -705,7 +705,7 @@ Before submitting a pull request, verify:
 ### Physics & Accuracy
 
 - [ ] Physics constants have citations (Dr. Tour, Nature Commun., etc.)?
-- [ ] 30-level quantization verified?
+- [ ] 30-level demo baseline verified?
 - [ ] Edge cases tested (zero, negative, extreme values)?
 - [ ] Units documented (MV/cm, µC/cm², etc.)?
 

@@ -341,7 +341,7 @@ Eight built-in materials with peer-reviewed parameters:
 | Material | Pr (µC/cm²) | Ec (MV/cm) | Endurance | Use Case |
 |----------|-------------|------------|-----------|----------|
 | **DefaultHZO** | 25 | 1.2 | 10¹⁰ | Si-doped baseline |
-| **FeCIMMaterial** | 30 | 1.0 | 10⁹ | Tour device (demonstrated) |
+| **FeCIMMaterial** | 30 | 1.0 | 10⁹ | Tour device (conference claim baseline) |
 | **FeCIMMaterialTarget** | 30 | 1.0 | 10¹² | Aspirational target |
 | **LiteratureSuperlattice** | 45 | 0.8 | 10¹⁰ | Cheema 2020 (NC benefit) |
 | **CryogenicHZO** | 75 | 1.5 | 10¹⁰ | 4K operation |

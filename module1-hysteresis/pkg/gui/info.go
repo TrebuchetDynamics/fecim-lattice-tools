@@ -320,9 +320,9 @@ func (a *App) showELI5Dialog() {
 			"• E = Electric Field (the \"push\" you apply)\n" +
 			"• P = Polarization (material's response)\n" +
 			"• When E = 0, P stays at ±Pr → MEMORY!\n\n" +
-			"🎚️ Why 30 Levels?\n" +
+			"🎚️ Why 30 Levels (Demo Baseline)?\n" +
 			"• Binary: Like a light switch (ON/OFF) = 1 bit\n" +
-			"• FeCIM: Like a dimmer with 30 positions = ~5 bits\n" +
+			"• FeCIM: Like a dimmer with 30 positions = ~5 bits (conference claim)\n" +
 			"• Same chip, 5× more storage!\n\n" +
 			"📝 Write vs Read:\n" +
 			"• WRITE: |E| > Ec → Data changes\n" +

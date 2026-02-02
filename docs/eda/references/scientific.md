@@ -15,7 +15,7 @@ This tool implements simulation models based on published research. It is **not 
 *Published research that our simulation models are based on.*
 
 * **30-State FeFET Device:** *"Flash In2Se3 for Neuromorphic Computing"* (Shin, Tour, et al., 2025). [View](https://www.researchgate.net/publication/388360521_Flash_In2Se3_for_neuromorphic_computing)
-  * *How we use it:* Our 30-level quantization model is based on this demonstrated capability.
+  * *How we use it:* We treat 30 levels as a **conference-claim baseline** (pending peer review) and cite peer‑reviewed 32–140 state devices for context.
 
 * **Flash Joule Heating Synthesis:** *"Stoichiometric Engineering... by Flash-within-Flash"* (2025).
   * *How we use it:* Referenced for material properties; we do not implement this manufacturing process.

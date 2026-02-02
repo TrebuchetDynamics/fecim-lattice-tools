@@ -125,7 +125,7 @@ Cell Area: 4F² (F = minimum feature size)
 **How It Works:**
 1. Apply voltage between WL and BL
 2. Current flows directly through ferroelectric element: I = G × V
-3. Conductance G is programmed by polarization state (30 levels)
+3. Conductance G is programmed by polarization state (30-level baseline)
 
 **Key Feature:** Maximum density (no transistor overhead).
 

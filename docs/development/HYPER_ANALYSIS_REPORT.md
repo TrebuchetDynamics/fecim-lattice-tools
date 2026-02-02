@@ -95,7 +95,7 @@ Module 1 demonstrates ferroelectric hysteresis behavior using the Preisach model
 - Shows READ operation (|E| < Ec, non-destructive)
 - "WRITING LEVEL 3" checkbox shows multi-level programming demo
 - "This is how we STORE data" - educational text excellent
-- WHY THIS MATTERS section: "vs DRAM: 1000× less energy, vs Flash: 10× faster, 30 levels = 4.9 bits/cell, Non-volatile: no refresh" - MATCHES DR. TOUR SPECS
+- WHY THIS MATTERS section: "vs DRAM: 1000× less energy, vs Flash: 10× faster, 30 levels = 4.9 bits/cell, Non-volatile: no refresh" - matches conference-claim baseline
 
 **UI/UX Analysis**:
 - READ button now shown (green) instead of WRITE
@@ -600,7 +600,7 @@ Module 4 demonstrates FeCIM peripheral circuits: DAC (Digital-to-Analog Converte
 **UI Layout**:
 - Left panel: CONFIGURATION
   - Array Size: 8x8, 16x16 options
-  - Quantization: 30 levels (matching FeCIM spec)
+  - Quantization: 30 levels (demo baseline; conference claim)
   - Voltage Range: 2.0V min, 5.0V max
   - Pulse Width: 50 ns
   - Cell Selection: Row/Col dropdowns
@@ -771,8 +771,8 @@ Table showing:
 | FeCIM | <1 pJ | ✓ | ✓ | ✓ |
 
 **6. Analog States** (Center-right)
-- Visual showing binary (2 states) vs FeCIM (30 states)
-- "30 states = 4.9 bits/cell" - MATCHES DR. TOUR SPEC
+- Visual showing binary (2 states) vs FeCIM (30 states, demo baseline)
+- "30 states = 4.9 bits/cell" - matches demo baseline (conference claim)
 - Color gradient showing multi-level capability
 
 **7. Commercialization Strategy** (Left-bottom)
@@ -961,7 +961,7 @@ ok  	fecim-lattice-tools/shared/theme
 | Specification | Test Coverage | Status |
 |--------------|---------------|--------|
 | 30 discrete levels (conference claim baseline) | `TestQuantizeTo30Levels*`, `TestDiscreteStatesCount` | ✓ |
-| 4.9 bits/cell | log₂(30) = 4.91 bits, verified in quantization | ✓ |
+| 4.9 bits/cell | log₂(30) = 4.91 bits, derived from demo baseline | ✓ |
 | Pr ~25 µC/cm² | `TestMaterialParameters` | ✓ |
 | Ec ~1 MV/cm | `TestCoerciveFieldSwitching` | ✓ |
 | Hysteresis behavior | `TestHysteresisLoopExists`, `TestHysteresisAsymmetry` | ✓ |

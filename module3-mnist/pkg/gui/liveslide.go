@@ -302,7 +302,7 @@ func (e *MNISTEducationalPanel) SetIdleExplanation() {
 		"with high accuracy\n" +
 		"(peer-reviewed: 96-98%).\n\n" +
 		"784 → 128 → 10 neurons\n" +
-		"30 analog levels per cell\n" +
+		"30-level baseline per cell (claim)\n" +
 		"2 clock cycles total"
 	e.SetContent("MNIST Recognition", content)
 }

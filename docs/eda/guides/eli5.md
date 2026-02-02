@@ -4,6 +4,8 @@
 
 ---
 
+**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Part 1: What is EDA? (The Simple Version)
 
 ### The Lego Analogy

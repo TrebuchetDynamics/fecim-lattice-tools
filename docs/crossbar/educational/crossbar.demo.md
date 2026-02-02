@@ -13,7 +13,7 @@ Demo 2 provides an interactive visualization of how Ferroelectric CIM performs a
 ### What This Demo Shows
 
 1. **Matrix-Vector Multiplication (MVM)** — Parallel analog computation using conductance × voltage = current
-2. **30 Discrete Conductance Levels** — Each cell stores ~4.9 bits (30 states) of synaptic weight
+2. **30 Discrete Conductance Levels** — Demo baseline (~4.9 bits, conference claim; pending peer review)
 3. **Non-Idealities Modeling** — IR drop, sneak paths, device variation, ADC quantization
 4. **Real-time Crossbar Visualization** — Interactive heatmap with cell-level inspection
 

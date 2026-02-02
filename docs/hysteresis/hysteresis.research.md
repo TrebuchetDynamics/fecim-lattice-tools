@@ -166,7 +166,7 @@ Where:
 **Superlattice Enhancement (Tour Lab):**
 - HfO2/ZrO2 superlattice structure
 - Enhanced endurance: 10^10-10^12 cycles demonstrated
-- 30 discrete analog states achieved
+- 30 discrete analog states claimed (conference; pending peer review)
 - Critical thickness per layer: ~1-2 nm
 
 ### 2.4 Temperature Effects

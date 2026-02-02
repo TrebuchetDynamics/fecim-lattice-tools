@@ -190,7 +190,7 @@ type ReferenceEntry struct {
 ### Metrics (6 terms)
 - **TRL**: Technology Readiness Level (1-9 scale)
 - **TOPS/W**: Tera-Operations Per Second per Watt
-- **Bits per Cell**: 4.9 bits (30 states), up to 7.1 bits (140 states)
+- **Bits per Cell**: 4.9 bits (30-level baseline; conference claim), up to 7.1 bits (140 states)
 - **MNIST Accuracy**: 96.6%-98.24% (vs 99.7% software)
 - **Retention Time**: >10 years at 85°C
 - **Write Energy**: 1-10 fJ/bit (vs 100 fJ/bit NAND)

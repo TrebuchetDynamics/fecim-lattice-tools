@@ -35,7 +35,7 @@ GDSII (fabrication-ready)
 ### Key Concepts
 
 - **Quantization**: Neural network weights are quantized to 30 discrete conductance levels
-- **30-Level System**: Each FeCIM cell stores one of 30 analog states (~4.9 bits/cell)
+- **30-Level System**: Demo baseline uses 30 analog states (~4.9 bits/cell; conference claim)
 - **Three Modes**: Storage (NAND replacement), Memory (DRAM replacement), Compute (AI accelerator)
 - **Passive Architecture**: Default crossbar with wordlines and bitlines (sneak path effects possible)
 - **1T1R Architecture**: Transistor-gated array (optional, mitigates sneak paths)

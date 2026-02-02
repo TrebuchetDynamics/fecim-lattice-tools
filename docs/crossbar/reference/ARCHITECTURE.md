@@ -89,7 +89,7 @@ type Config struct {
 **Physical Constants**:
 - `GMin` = 10 µS (OFF state)
 - `GMax` = 100 µS (ON state)
-- `DefaultQuantizationLevels` = 30 discrete states
+- `DefaultQuantizationLevels` = 30-level baseline (conference claim)
 
 #### `Cell` - Individual Memory Cell
 
@@ -884,10 +884,10 @@ EnergyEfficiency = GPUEnergy / FeCIMEnergy
 
 ### 1. 30 Discrete Levels
 
-**Decision**: Fixed to 30 analog states per cell.
+**Decision**: Demo baseline fixed to 30 analog states per cell (conference claim; pending peer review).
 
 **Rationale**:
-- Dr. external research group COSM 2025: "It's got 30 discrete states. Not 0-1-0-1."
+- Dr. external research group COSM 2025: "It's got 30 discrete states. Not 0-1-0-1." (conference claim)
 - Other peer-reviewed work: 32-140 states demonstrated
 - Provides ~4.9 bits/cell (log₂(30) ≈ 4.9)
 - Balances precision vs device programming complexity
@@ -953,7 +953,7 @@ EnergyEfficiency = GPUEnergy / FeCIMEnergy
 **Test Categories**:
 
 1. **Physics Tests** (`physics_test.go`):
-   - Quantization accuracy (30 discrete levels)
+   - Quantization accuracy (30-level baseline)
    - Conductance models (linear, exponential, lookup)
    - Temperature effects (cryogenic to automotive)
 
