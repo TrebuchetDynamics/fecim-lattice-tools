@@ -2,7 +2,7 @@
 
 ## Overview
 
-The module2-crossbar package implements a physics-accurate ferroelectric crossbar array simulator for the FeCIM (Ferroelectric Compute-in-Memory) platform. It models 30 discrete analog states per cell (~4.9 bits/cell) with comprehensive non-ideality simulation including IR drop, sneak paths, process variation, drift, and temperature effects.
+The module2-crossbar package implements a physics-accurate ferroelectric crossbar array simulator for the FeCIM (Ferroelectric Compute-in-Memory) platform. It models a 30-level baseline (~4.9 bits/cell, conference claim; pending peer review) with comprehensive non-ideality simulation including IR drop, sneak paths, process variation, drift, and temperature effects.
 
 The architecture is organized into five core layers:
 

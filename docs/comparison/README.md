@@ -685,7 +685,7 @@ Priorities 8-9, 13-16 cover:
 ## Key Findings Summary
 
 ### Core Physics Consensus
-1. **30 discrete analog states** demonstrated in FeFET devices (Pr/2 = 20-40 µC/cm²)
+1. **30 discrete analog states** (conference claim; pending peer review). Peer-reviewed devices report 32–140 states (Pr/2 = 20-40 µC/cm²)
 2. **10¹² cycle endurance** achievable with HfO₂/ZrO₂ superlattices
 3. **CMOS compatible** fabrication process (<500°C BEOL)
 4. **Sub-10fJ switching energy** per device (no Joule heating)
