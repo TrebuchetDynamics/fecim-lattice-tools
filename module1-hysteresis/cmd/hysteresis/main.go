@@ -87,7 +87,7 @@ func getMaterialKey(m *ferroelectric.HZOMaterial) string {
 
 func main() {
 	// Command line flags
-	materialName := flag.String("material", "default", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
+	materialName := flag.String("material", "superlattice", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
 	freq := flag.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := flag.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := flag.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")

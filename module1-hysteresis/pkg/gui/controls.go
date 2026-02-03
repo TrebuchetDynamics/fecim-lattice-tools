@@ -552,6 +552,7 @@ func (a *App) getCurrentMaterialID() string {
 		"HZO (Si-doped)":                        "default_hzo",
 		"FeCIM HZO":                             "fecim_hzo",
 		"FeCIM HZO (TARGET - NOT DEMONSTRATED)": "fecim_hzo_target",
+		"Literature Superlattice":               "literature_superlattice",
 		"Literature Superlattice (Cheema 2020)": "literature_superlattice",
 		"Cryogenic HZO (4K)":                    "cryogenic_hzo",
 		"HZO Standard (32 states)":              "hzo_standard_32",
@@ -564,7 +565,7 @@ func (a *App) getCurrentMaterialID() string {
 			return id
 		}
 	}
-	return "default_hzo"
+	return "literature_superlattice"
 }
 
 // onMaterialPickerSelected handles selection from the material picker dialog.

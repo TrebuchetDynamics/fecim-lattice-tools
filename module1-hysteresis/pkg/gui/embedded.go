@@ -24,8 +24,7 @@ type EmbeddedApp struct {
 // NewEmbeddedApp creates a new embedded GUI application (for use in unified visualizer)
 func NewEmbeddedApp() *EmbeddedApp {
 	materials := ferroelectric.AllMaterials()
-
-	mat := materials[0]
+	mat, matIndex := defaultMaterialSelection(materials)
 	numLevels := 30 // Default: FeCIM's 30 discrete analog states
 	// preisachGridSize := 200 // DEPRECATED
 	preisach := ferroelectric.NewPreisachModel(mat)
@@ -40,7 +39,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		material:           mat,
 		preisach:           preisach,
 		materials:          materials,
-		matIndex:           0,
+		matIndex:           matIndex,
 		numLevels:          numLevels,
 		calibrationUp:      make([]float64, numLevels),
 		calibrationDown:    make([]float64, numLevels),

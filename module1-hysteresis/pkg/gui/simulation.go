@@ -1758,14 +1758,45 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 
 	// Update phase indicator based on current mode and phase
 	waveform := snapshot.waveform
-	wrdPhaseVal := snapshot.wrdPhase
 	manPhaseVal := snapshot.manualPhase
 	animating := snapshot.manualAnimating
+	const (
+		wrdPhaseProgram = 0
+		wrdPhaseVerify  = 1
+		wrdPhaseResult  = 2
+	)
+	wrdDisplayPhase := -1
+	wrdSettled := false
+	lastPhase := -1
+
+	if waveform == WaveformWriteReadDemo {
+		a.mu.RLock()
+		lastPhase = a.lastLogPhase
+		a.mu.RUnlock()
+
+		atTarget := (dL + 1) == snapshot.wrdTargetLevel
+		eFieldSettled := false
+		if eC > 0 {
+			eFieldSettled = math.Abs(fE) < 0.01*eC
+		} else {
+			eFieldSettled = math.Abs(fE) < 1e-9
+		}
+		wrdSettled = atTarget && eFieldSettled
+
+		wrdDisplayPhase = wrdPhaseProgram
+		if wrdSettled {
+			wrdDisplayPhase = wrdPhaseResult
+		} else if snapshot.controllerState == controller.StateVerify ||
+			snapshot.controllerState == controller.StateSuccess ||
+			lastPhase == wrdPhaseVerify {
+			wrdDisplayPhase = wrdPhaseVerify
+		}
+	}
 
 	if a.phaseIndicator != nil {
 		switch waveform {
 		case WaveformWriteReadDemo:
-			a.phaseIndicator.SetPhase(wrdPhaseVal, "wrd")
+			a.phaseIndicator.SetPhase(wrdDisplayPhase, "wrd")
 		case WaveformManual:
 			if animating {
 				a.phaseIndicator.SetPhase(manPhaseVal, "manual")
@@ -1792,50 +1823,30 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		a.statusLabel.SetText("⏸ Paused")
 	} else {
 		currentWaveform := snapshot.waveform
-		wrdPhase := snapshot.wrdPhase
 		wrdTarget := snapshot.wrdTargetLevel
 		wrdRead := snapshot.wrdReadLevel
 		wrdTotalWrites := snapshot.wrdTotalWrites
 		wrdSuccessWrites := snapshot.wrdSuccessWrites
 		wrdTotalEnergyfJ := snapshot.wrdTotalEnergyfJ
 		midLevel := numLevels / 2 // Dynamic middle level for direction logic
-		a.mu.RLock()
-		lastPhase := a.lastLogPhase
-		a.mu.RUnlock()
 
 		switch currentWaveform {
 		case WaveformWriteReadDemo:
 			var phaseStr string
-			// Log phase transitions (PREP, SETTLE, PROG/VERIFY, HOLD, READBACK, RESULT)
-			if wrdPhase != lastPhase {
+			// Log phase transitions (PROGRAM, VERIFY, RESULT)
+			if wrdDisplayPhase != lastPhase {
 				a.mu.Lock()
-				a.lastLogPhase = wrdPhase
-				switch wrdPhase {
-				case 0:
-					// PREP: Pre-bias to set branch (if enabled)
-					direction := "-sat"
-					if wrdTarget <= midLevel {
-						direction = "+sat"
-					}
-					a.addLogEntry(fmt.Sprintf("◆◆ PREP    | %s | bias", direction))
-				case 1:
-					// SETTLE: Return to zero (known state)
-					a.addLogEntry("░░ SETTLE  | E=0 | ready")
-				case 2:
-					// PROGRAM/VERIFY: ISPP apply+verify loop
+				a.lastLogPhase = wrdDisplayPhase
+				switch wrdDisplayPhase {
+				case wrdPhaseProgram:
 					direction := "+"
 					if wrdTarget <= midLevel {
 						direction = "-"
 					}
-					a.addLogEntry(fmt.Sprintf("▓▓ PROG/VERIFY L%d | %sE>Ec", wrdTarget, direction))
-				case 3:
-					// HOLD: Return to zero, polarization persists
-					a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0", dL+1))
-				case 4:
-					// READBACK: Non-destructive sense
-					a.addLogEntry("▒▒ READBACK | E<Ec")
-				case 5:
-					// RESULT: Show outcome
+					a.addLogEntry(fmt.Sprintf("▓▓ PROGRAM L%d | %sE>Ec", wrdTarget, direction))
+				case wrdPhaseVerify:
+					a.addLogEntry(fmt.Sprintf("▒▒ VERIFY L%d | E=0", wrdTarget))
+				case wrdPhaseResult:
 					status := "✓ MATCH"
 					if wrdRead != wrdTarget {
 						diff := abs(wrdRead - wrdTarget)
@@ -1850,8 +1861,6 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 						successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
 					}
 					a.addLogEntry(fmt.Sprintf("●● RESULT L%d %s [%.0f%% rate]", wrdTarget, status, successRate))
-				case 6:
-					a.addLogEntry("▓▓ RETRY   | adjust pulse")
 				}
 				a.mu.Unlock()
 			}
@@ -1860,37 +1869,25 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 			energyTotal := wrdTotalEnergyfJ
 			writeCount := wrdTotalWrites
 
-			switch wrdPhase {
-			case 0:
-				direction := "-sat"
-				if wrdTarget <= midLevel {
-					direction = "+sat"
-				}
-				phaseStr = fmt.Sprintf("◆ PREP | %s | biasing", direction)
-			case 1:
-				phaseStr = "░ SETTLE | E=0 | ready"
-			case 2:
+			switch wrdDisplayPhase {
+			case wrdPhaseProgram:
 				direction := "+"
 				if wrdTarget <= midLevel {
 					direction = "-"
 				}
-				phaseStr = fmt.Sprintf("▓ PROG/VERIFY L%d | %sE>Ec", wrdTarget, direction)
-			case 3:
-				phaseStr = fmt.Sprintf("░ HOLD L%d | E=0", dL+1)
-			case 4:
-				phaseStr = fmt.Sprintf("▒ READBACK | Sense L%d", dL+1)
-			case 5:
+				phaseStr = fmt.Sprintf("PROGRAM L%d | %sE>Ec", wrdTarget, direction)
+			case wrdPhaseVerify:
+				phaseStr = fmt.Sprintf("VERIFY L%d | E=0", wrdTarget)
+			case wrdPhaseResult:
 				successRate := 0.0
 				if writeCount > 0 {
 					successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100
 				}
 				if wrdRead == wrdTarget {
-					phaseStr = fmt.Sprintf("● RESULT L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
+					phaseStr = fmt.Sprintf("RESULT L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
 				} else {
-					phaseStr = fmt.Sprintf("● RESULT L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
+					phaseStr = fmt.Sprintf("RESULT L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
 				}
-			case 6:
-				phaseStr = "▓ RETRY | adjust pulse"
 			}
 			a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
 		case WaveformManual:
@@ -1978,20 +1975,14 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	if currentMode == WaveformWriteReadDemo {
 		// Show target until point SETTLES at target level (not just crosses it)
 		// Settled = level matches target AND E-field is near zero
-		atTarget := (dL + 1) == currentWrdTrg         // level is 0-indexed, target is 1-indexed
-		eFieldSettled := math.Abs(fE) < 0.01*matEcVal // E-field near zero (1% of Ec)
-		settled := atTarget && eFieldSettled
+		settled := wrdSettled
 
 		// Keep highlight on from WRITE through DISPLAY, until settled at target
 		highlight := currentWrdPh >= 2 && currentWrdPh <= 5 && !settled
 		mode := widgets.TargetModeWrite
-		if ctrlState == controller.StateVerify {
+		if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess {
+			// Keep yellow through SUCCESS until field settles at 0.
 			mode = widgets.TargetModeVerify
-		}
-		// Clear highlight immediately on success.
-		if ctrlState == controller.StateSuccess {
-			highlight = false
-			mode = widgets.TargetModeNone
 		}
 		a.levelIndicator.SetTargetLevelMode(currentWrdTrg, highlight, mode)
 	} else if currentMode == WaveformManual && manAnim {

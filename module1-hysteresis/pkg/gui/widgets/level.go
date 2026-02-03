@@ -360,7 +360,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		modeText := ""
 		switch targetMode {
 		case TargetModeWrite:
-			modeText = "WRITE"
+			modeText = "PROGRAM"
 		case TargetModeVerify:
 			modeText = "VERIFY"
 		case TargetModeManual:

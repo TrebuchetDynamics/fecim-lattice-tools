@@ -2398,5 +2398,41 @@
     "downloaded": false,
     "local_path": null,
     "notes": "Performance optimization study for edge computing IMC"
+  },
+  {
+    "title": "Mathematical Models of Hysteresis",
+    "filename": "mayergoyz_mathematical_models_hysteresis_1992_osti",
+    "url": "https://digital.library.unt.edu/ark:/67531/metadc1188581/m2/1/high_res_d/6946876.pdf",
+    "doi": null,
+    "arxiv_id": null,
+    "authors": [
+      "Mayergoyz"
+    ],
+    "year": 1992,
+    "source": "osti",
+    "category": "foundational",
+    "downloaded": true,
+    "local_path": "<local-path>",
+    "notes": "Open report copy of the classic Preisach theory text"
+  },
+  {
+    "title": "Preisach model for the simulation of ferroelectric capacitors",
+    "filename": "preisach_fecap_jap_2001",
+    "url": "https://juser.fz-juelich.de/record/36264/files/4398.pdf",
+    "doi": "10.1063/1.1335639",
+    "arxiv_id": null,
+    "authors": [
+      "Bartic",
+      "Wouters",
+      "Maes",
+      "Rickes",
+      "Waser"
+    ],
+    "year": 2001,
+    "source": "aip",
+    "category": "simulation",
+    "downloaded": true,
+    "local_path": "<local-path>",
+    "notes": "J. Appl. Phys. 89(6), 2001"
   }
 ]

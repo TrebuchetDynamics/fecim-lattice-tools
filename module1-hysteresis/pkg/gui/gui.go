@@ -197,7 +197,7 @@ type App struct {
 	plot            *widgets.PEPlot
 	levelIndicator  *widgets.LevelIndicator
 	cellViz         *widgets.CellVisualizer
-	phaseIndicator  *widgets.PhaseIndicator // State machine phase indicator (RESET|SETTLE|WRITE|READ|VERIFY)
+	phaseIndicator  *widgets.PhaseIndicator // State machine phase indicator (PROGRAM|VERIFY|RESULT)
 	eFieldSlider    *widget.Slider
 	eFieldLabel     *widget.Label
 	eFieldModeLabel *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
@@ -413,8 +413,7 @@ func (a *App) initDebugLog() {
 // NewApp creates a new GUI application
 func NewApp() *App {
 	materials := ferroelectric.AllMaterials()
-
-	mat := materials[0]
+	mat, matIndex := defaultMaterialSelection(materials)
 	numLevels := 30 // Default: FeCIM's 30 discrete analog states
 	// preisachGridSize := 200 // DEPRECATED: PhysicsStack uses adaptive steps
 	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
@@ -429,7 +428,7 @@ func NewApp() *App {
 		material:                mat,
 		preisach:                preisach,
 		materials:               materials,
-		matIndex:                0,
+		matIndex:                matIndex,
 		numLevels:               numLevels,
 		calibrationUp:           make([]float64, numLevels),
 		calibrationDown:         make([]float64, numLevels),
@@ -495,8 +494,7 @@ func NewAppWithMaterial(materialName string) *App {
 	}
 	// Fallback to first material if not found
 	if mat == nil {
-		mat = materials[0]
-		matIndex = 0
+		mat, matIndex = defaultMaterialSelection(materials)
 	}
 
 	numLevels := 30 // Default: FeCIM's 30 discrete analog states

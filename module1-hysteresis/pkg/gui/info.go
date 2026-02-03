@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
@@ -21,7 +22,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.stateLabel = widget.NewLabel("Intermediate")
 
 	// Phase indicator for state machine visualization
-	// Shows operation sequence: RESET | SETTLE | WRITE | READ | VERIFY
+	// Shows operation sequence: PROGRAM | VERIFY | RESULT
 	a.phaseIndicator = widgets.NewPhaseIndicator()
 	a.phaseIndicator.SetMinSize(fyne.NewSize(140, 50))
 
@@ -152,8 +153,18 @@ func (a *App) getSlideText() string {
 	a.mu.RLock()
 	level := a.discreteLevel + 1
 	numLevels := a.numLevels
-	wrdPhase := a.wrdPhase
 	wrdTarget := a.wrdTargetLevel
+	ctrlState := controller.StateIdle
+	if a.writeController != nil {
+		ctrlState = a.writeController.State
+	}
+	lastPhase := a.lastLogPhase
+	const wrdPhaseVerify = 1
+	eField := a.electricField
+	matEc := 0.0
+	if a.material != nil {
+		matEc = a.material.Ec
+	}
 	isWrite := math.Abs(a.electricField) > a.material.Ec
 	waveform := a.waveform
 	wrdTotalWrites := a.wrdTotalWrites
@@ -193,21 +204,27 @@ func (a *App) getSlideText() string {
 			failRate = stats.GetFailureRate() * 100 // Convert to percentage
 		}
 
-		switch wrdPhase {
-		case 0:
-			return fmt.Sprintf("PREP → L%d\nPre-bias to set branch", wrdTarget)
-		case 1:
-			return fmt.Sprintf("SETTLE L%d\nE=0, P persists", level)
-		case 2:
-			return fmt.Sprintf("PROGRAM/VERIFY L%d\nISPP pulses + verify", wrdTarget)
-		case 4:
-			return fmt.Sprintf("READBACK L%d\n|E| < Ec, non-destructive", level)
-		case 5:
+		eFieldSettled := matEc > 0 && math.Abs(eField) < 0.01*matEc
+		atTarget := level == wrdTarget
+		settled := atTarget && eFieldSettled
+		phase := "PROGRAM"
+		if settled {
+			phase = "RESULT"
+		} else if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess || lastPhase == wrdPhaseVerify {
+			phase = "VERIFY"
+		}
+
+		switch phase {
+		case "PROGRAM":
+			return fmt.Sprintf("PROGRAM L%d\nISPP pulses toward target", wrdTarget)
+		case "VERIFY":
+			return fmt.Sprintf("VERIFY L%d\nE=0 check", wrdTarget)
+		case "RESULT":
 			if level == wrdTarget {
-				return fmt.Sprintf("OK L%d\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ\nAvg: %.1f pulses | Fail: %.2f%%",
+				return fmt.Sprintf("RESULT L%d ✓\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ\nAvg: %.1f pulses | Fail: %.2f%%",
 					level, wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000, avgPulses, failRate)
 			}
-			return fmt.Sprintf("L%d (want %d)\nWrites: %d (%.0f%%)\nAvg: %.1f pulses | Fail: %.2f%%",
+			return fmt.Sprintf("RESULT L%d (want %d)\nWrites: %d (%.0f%%)\nAvg: %.1f pulses | Fail: %.2f%%",
 				level, wrdTarget, wrdTotalWrites, successRate, avgPulses, failRate)
 		}
 		return ""

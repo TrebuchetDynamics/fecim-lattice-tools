@@ -1,7 +1,7 @@
 # FeCIM Research Papers Index
 
-**Last Updated:** 2026-02-02
-**Total Papers:** 167+ (organized by topic)
+**Last Updated:** 2026-02-03
+**Total Papers:** 169+ (organized by topic)
 **Topics:** 23 comprehensive research areas
 **Coverage:** Physics, Materials, Simulation, CIM Architectures, AI/ML, Manufacturing, and Applications
 
@@ -11,7 +11,7 @@
 
 | Topic | Papers | Coverage |
 |-------|--------|----------|
-| [01. Ferroelectric Materials](#01-ferroelectric-materials) | 42 | Core physics, HfO₂, ZrO₂, superlattices, domain dynamics |
+| [01. Ferroelectric Materials](#01-ferroelectric-materials) | 44 | Core physics, HfO₂, ZrO₂, superlattices, domain dynamics |
 | [02. Training Algorithms](#02-training-algorithms) | 11 | Quantization, low-precision networks, analog training |
 | [03. Simulation Tools](#03-simulation-tools) | 11 | CrossSim, FerroX, NeuroSim, compilers |
 | [04. CIM Architectures](#04-cim-architectures) | 34 | Crossbars, ADC design, sneak paths, multi-level cells |
@@ -42,7 +42,7 @@
 ### 01. Ferroelectric Materials
 **Focus:** Core physics, crystal structures, switching dynamics, Preisach modeling
 
-**42 papers covering:**
+**44 papers covering:**
 - HfO₂ ferroelectric discovery and characterization
 - HZO superlattices (first-principles, stability, polarization)
 - Domain wall dynamics and switching pathways
@@ -63,6 +63,8 @@
 - `first_principles_hfo2_superlattice_2024.pdf`
 - `Preisach_Ferroelectric_Modeling_arXiv.pdf`
 - `physical_reality_preisach_2018.pdf`
+- `preisach_fecap_jap_2001.pdf`
+- `mayergoyz_mathematical_models_hysteresis_1992_osti.pdf`
 - `Salahuddin_Datta_2007_Negative_Capacitance_arXiv.pdf`
 - `transition_state_landau_ferroelectric_2024.pdf`
 - `hzo_superlattice_stability_2025.pdf`

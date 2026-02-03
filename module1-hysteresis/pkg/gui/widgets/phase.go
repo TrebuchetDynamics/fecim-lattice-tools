@@ -11,7 +11,7 @@ import (
 )
 
 // PhaseIndicator displays the current state machine phase prominently.
-// Shows phases: PREP, PROGRAM/VERIFY, READBACK, RESULT with color-coded backgrounds.
+// Shows phases: PROGRAM, VERIFY, RESULT with color-coded backgrounds.
 type PhaseIndicator struct {
 	widget.BaseWidget
 
@@ -21,16 +21,12 @@ type PhaseIndicator struct {
 	minSize fyne.Size
 }
 
-// Phase constants for Write/Read Demo (7 phases)
+// Phase constants for Write/Read Demo (3 phases)
 const (
-	PhaseReset   = 0
-	PhaseSettle  = 1
-	PhaseWrite   = 2
-	PhaseHold    = 3
-	PhaseRead    = 4
-	PhaseDisplay = 5
-	PhaseBoost   = 6 // Undershoot retry - skip RESET, apply more field
-	NumWRDPhases = 7
+	PhaseProgram = 0
+	PhaseVerify  = 1
+	PhaseResult  = 2
+	NumWRDPhases = 3
 )
 
 // Manual mode phases (4 phases)
@@ -44,13 +40,9 @@ const (
 
 // Phase colors for Write/Read Demo
 var wrdPhaseColors = map[int]color.RGBA{
-	PhaseReset:   {180, 100, 220, 255}, // Purple for reset
-	PhaseSettle:  {100, 150, 200, 255}, // Blue-gray for settle
-	PhaseWrite:   {255, 100, 100, 255}, // Red for write
-	PhaseHold:    {100, 200, 100, 255}, // Green for hold
-	PhaseRead:    {100, 180, 255, 255}, // Blue for read
-	PhaseDisplay: {255, 200, 100, 255}, // Yellow for display
-	PhaseBoost:   {255, 150, 50, 255},  // Orange for boost (undershoot retry)
+	PhaseProgram: {255, 100, 100, 255}, // Red for program
+	PhaseVerify:  {100, 180, 255, 255}, // Blue for verify
+	PhaseResult:  {255, 200, 100, 255}, // Yellow for result
 }
 
 // Phase colors for Manual mode
@@ -63,13 +55,9 @@ var manualPhaseColors = map[int]color.RGBA{
 
 // Phase names for Write/Read Demo
 var wrdPhaseNames = map[int]string{
-	PhaseReset:   "PREP",
-	PhaseSettle:  "SETTLE",
-	PhaseWrite:   "PROG/VERIFY",
-	PhaseHold:    "HOLD",
-	PhaseRead:    "READBACK",
-	PhaseDisplay: "RESULT",
-	PhaseBoost:   "RETRY",
+	PhaseProgram: "PROGRAM",
+	PhaseVerify:  "VERIFY",
+	PhaseResult:  "RESULT",
 }
 
 // Phase names for Manual mode
@@ -243,18 +231,12 @@ func (r *phaseRenderer) layoutWithSize(size fyne.Size) {
 	descText := ""
 	if mode == "wrd" {
 		switch phase {
-		case PhaseReset:
-			descText = "Saturating to known state..."
-		case PhaseSettle:
-			descText = "Settling at E=0"
-		case PhaseWrite:
-			descText = "Applying E-field..."
-		case PhaseHold:
-			descText = "E=0, data persists!"
-		case PhaseRead:
-			descText = "Sensing level..."
-		case PhaseDisplay:
-			descText = "Comparing result"
+		case PhaseProgram:
+			descText = "Applying ISPP pulses..."
+		case PhaseVerify:
+			descText = "Verifying at E=0"
+		case PhaseResult:
+			descText = "Result stable at E=0"
 		}
 	} else if mode == "manual" {
 		switch phase {
