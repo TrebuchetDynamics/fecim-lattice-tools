@@ -976,6 +976,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						}
 					}
 
+					// End manual animation after completion to avoid repeated logging/calibration.
+					a.manualAnimating = false
+					a.manualPhase = 0
+					a.manualPhaseTime = 0
 				}
 			}
 		}
@@ -1484,6 +1488,10 @@ type uiSnapshot struct {
 	eC float64
 	hE []float64
 	hP []float64
+	effEc       float64
+	effPr       float64
+	materialPs  float64
+	normalizedP float64
 
 	numLevels     int
 	waveform      WaveformType
@@ -1583,8 +1591,15 @@ func (a *App) updateUI() {
 		ctrlState = a.writeController.State
 	}
 	materialEc := 0.0
+	effEc := 0.0
+	effPr := 0.0
+	materialPs := 0.0
+	normalizedP := a.normalizedP
 	if a.material != nil {
 		materialEc = a.material.Ec
+		effEc = a.effectiveEc()
+		effPr = a.material.Pr
+		materialPs = a.material.Ps
 	}
 	histLen := len(a.eHistory)
 	stride := 1
@@ -1610,6 +1625,10 @@ func (a *App) updateUI() {
 		eC:                materialEc,
 		hE:                eHist,
 		hP:                pHist,
+		effEc:             effEc,
+		effPr:             effPr,
+		materialPs:        materialPs,
+		normalizedP:       normalizedP,
 		numLevels:         numLevels,
 		waveform:          waveform,
 		physicsEngine:     physicsEngine,
@@ -1637,6 +1656,10 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	eC := snapshot.eC
 	hE := snapshot.hE
 	hP := snapshot.hP
+	effEc := snapshot.effEc
+	effPr := snapshot.effPr
+	materialPs := snapshot.materialPs
+	normalizedP := snapshot.normalizedP
 	// Update labels
 	a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", fE/1e8))
 	a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pV*100))
@@ -1699,19 +1722,12 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		a.cyclePhaseLabel.SetText(phase)
 	}
 
-	// Update temperature-dependent metrics (must hold lock during preisach access)
-	a.mu.RLock()
-	effEc := a.effectiveEc()
-	// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
-	effPr := a.material.Pr
-	switchedFraction := (a.normalizedP + 1) / 2
-
-	// Calculate squareness (Pr/Ps ratio)
+	// Update temperature-dependent metrics
+	switchedFraction := (normalizedP + 1) / 2
 	squareness := 0.0
-	if a.material != nil && a.material.Ps > 0 {
-		squareness = effPr / a.material.Ps
+	if materialPs > 0 {
+		squareness = effPr / materialPs
 	}
-	a.mu.RUnlock()
 
 	if a.effEcLabel != nil {
 		// Show Ec with ±15% uncertainty (typical device-to-device variation)
@@ -1756,7 +1772,9 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	// Normalize by Ec for display (-1.5 to +1.5 range)
 	shouldUpdateSlider := snapshot.waveform != WaveformManual || snapshot.manualAnimating
 	if shouldUpdateSlider {
-		a.eFieldSlider.SetValue(fE / eC)
+		if eC != 0 {
+			a.eFieldSlider.SetValue(fE / eC)
+		}
 	}
 
 	// Update status and logging

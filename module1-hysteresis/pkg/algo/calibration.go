@@ -2,7 +2,42 @@ package algo
 
 import (
 	"log"
+	"sync"
+	"time"
 )
+
+const calibLogInterval = 500 * time.Millisecond
+
+type logLimiter struct {
+	mu   sync.Mutex
+	last map[string]time.Time
+}
+
+func newLogLimiter() *logLimiter {
+	return &logLimiter{
+		last: make(map[string]time.Time),
+	}
+}
+
+func (l *logLimiter) allow(key string, interval time.Duration) bool {
+	now := time.Now()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if last, ok := l.last[key]; ok && now.Sub(last) < interval {
+		return false
+	}
+	l.last[key] = now
+	return true
+}
+
+var calibLogLimiter = newLogLimiter()
+
+func logCalibf(key string, format string, args ...any) {
+	if !calibLogLimiter.allow(key, calibLogInterval) {
+		return
+	}
+	log.Printf(format, args...)
+}
 
 // CalibrationManager handles the storage and update logic for hysteresis loop calibration.
 // It manages the voltage levels required to reach specific polarization states.
@@ -145,11 +180,11 @@ func (cm *CalibrationManager) UpdateCalibrationUp(targetIdx int, levelError int,
 			cm.RelaxCompUp[targetIdx] = 0.25
 		}
 		if cm.RelaxCompUp[targetIdx] != oldRelaxComp {
-			log.Printf("RELAX_UP[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, cm.RelaxCompUp[targetIdx], levelError)
+			logCalibf("relax_up", "RELAX_UP[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, cm.RelaxCompUp[targetIdx], levelError)
 		}
 	}
 
-	log.Printf("CALIB_UP[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
+	logCalibf("calib_up", "CALIB_UP[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,
 		cm.CalibUpLow[targetIdx]/1e8, cm.CalibUpHigh[targetIdx]/1e8)
 }
@@ -266,11 +301,11 @@ func (cm *CalibrationManager) UpdateCalibrationDown(targetIdx int, levelError in
 			cm.RelaxCompDown[targetIdx] = 0.25
 		}
 		if cm.RelaxCompDown[targetIdx] != oldRelaxComp {
-			log.Printf("RELAX_DOWN[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, cm.RelaxCompDown[targetIdx], levelError)
+			logCalibf("relax_down", "RELAX_DOWN[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, cm.RelaxCompDown[targetIdx], levelError)
 		}
 	}
 
-	log.Printf("CALIB_DOWN[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
+	logCalibf("calib_down", "CALIB_DOWN[%d]: old=%.3f new=%.3f MV/cm, err=%+d, bounds=[%.3f,%.3f]",
 		targetIdx, oldVal/1e8, newVal/1e8, levelError,
 		cm.CalibDownLow[targetIdx]/1e8, cm.CalibDownHigh[targetIdx]/1e8)
 }

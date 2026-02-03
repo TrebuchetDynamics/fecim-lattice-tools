@@ -57,7 +57,7 @@ type CircuitsApp struct {
 	selectedCol  int
 	targetLevel  int
 	arrayWeights [][]int // Current programmed levels
-	inputVector  []int     // Input vector for compute
+	inputVector  []int   // Input vector for compute
 	outputVector []float64
 	architecture string // "1T1R" or "0T1R" - affects row selection behavior
 
@@ -195,7 +195,7 @@ type CircuitsApp struct {
 	stopped         bool          // True when Stop() has been called
 
 	// Zoom state
-	zoomLevel  float64        // 1.0 = 100%, range 0.5 to 3.0
+	zoomLevel  float64 // 1.0 = 100%, range 0.5 to 3.0
 	zoomSlider *widget.Slider
 	zoomLabel  *widget.Label
 
@@ -224,7 +224,7 @@ type CircuitsApp struct {
 	materialBtn *widget.Button
 
 	// Unified view WL selector widgets
-	unifiedWLChecks   []*widget.Check
+	unifiedWLChecks    []*widget.Check
 	unifiedWLHelpLabel *widget.Label // Shows "Checked = Active" or passive mode explanation
 
 	// Unified view mode buttons (READ/WRITE/COMPUTE)
@@ -245,25 +245,26 @@ type CircuitsApp struct {
 	mfuxWriteLevelLabel   *widget.Label
 	mfuxWriteVoltageLabel *widget.Label
 	mfuxWriteTargetLabel  *widget.Label // H2 FIX: Shows "Target: Row X, Col Y"
+	isppEngineSelect      *widget.Select
 
 	// Voltage rules UI widgets
-	writeSequencePanel       *fyne.Container // 4-phase timing diagram container
-	halfSelectIndicator      *widget.Label   // V/2 bias status indicator
-	hysteresisDirectionLabel *widget.Label   // Direction indicator (^/v)
+	writeSequencePanel       *fyne.Container   // 4-phase timing diagram container
+	halfSelectIndicator      *widget.Label     // V/2 bias status indicator
+	hysteresisDirectionLabel *widget.Label     // Direction indicator (^/v)
 	passiveVoltagePanel      fyne.CanvasObject // 0T1R voltage panel
 	activeVoltagePanel       fyne.CanvasObject // 1T1R/2T1R voltage panel
 
 	// Compute mode panel with input vector entries
-	computeModePanel       *fyne.Container
-	computeInputTitle      *widget.Label     // Title label (updated on resize)
-	computeInputContainer  *fyne.Container   // Container for input entries (rebuilt on resize)
-	mfuxInputVectorEntry   []*widget.Entry
-	mfuxInputVectorLabels  []*widget.Label
+	computeModePanel      *fyne.Container
+	computeInputTitle     *widget.Label   // Title label (updated on resize)
+	computeInputContainer *fyne.Container // Container for input entries (rebuilt on resize)
+	mfuxInputVectorEntry  []*widget.Entry
+	mfuxInputVectorLabels []*widget.Label
 
 	// H3 FIX: Undo history for array changes
-	undoHistory     [][]int // Previous array state
-	undoHistoryBtn  *widget.Button
-	hasUndoHistory  bool
+	undoHistory    [][]int // Previous array state
+	undoHistoryBtn *widget.Button
+	hasUndoHistory bool
 
 	// Action buttons (stored for mode-based enable/disable)
 	actionWriteCellBtn *widget.Button
@@ -286,7 +287,7 @@ func NewCircuitsApp() *CircuitsApp {
 		selectedRow:   3,
 		selectedCol:   5,
 		targetLevel:   15,
-		compArraySize: 8,                             // Start with 8x8 array for comparison
+		compArraySize: 8,                              // Start with 8x8 array for comparison
 		architecture:  sharedwidgets.Architecture0T1R, // Default to passive for educational demo
 		zoomLevel:     1.0,                            // Default zoom 100%
 	}

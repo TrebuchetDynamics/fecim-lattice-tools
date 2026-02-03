@@ -627,9 +627,14 @@ func (a *App) createUI() fyne.CanvasObject {
 			targetLevel, a.discreteLevel, a.normalizedP, a.waveform, a.manualAnimating)
 
 		if a.waveform == WaveformManual && !a.manualAnimating {
+			currentLevel := a.discreteLevel + 1
+			if targetLevel == currentLevel {
+				a.addLogEntry(fmt.Sprintf("ALREADY → Level %d", targetLevel))
+				return
+			}
 			// Start animation to target level
 			a.manualTargetLevel = targetLevel
-			a.manualStartLevel = a.discreteLevel + 1 // Capture starting level (1-indexed)
+			a.manualStartLevel = currentLevel // Capture starting level (1-indexed)
 			a.manualAnimating = true
 			a.manualPhase = 0 // Start at RESET phase (saturate opposite direction first)
 			a.manualPhaseTime = 0

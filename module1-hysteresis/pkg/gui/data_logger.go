@@ -35,6 +35,9 @@ type HysteresisDataLogger struct {
 
 	minSimInterval  float64
 	lastSimTimeBits uint64
+
+	dropped     uint64
+	lastDropLog int64
 }
 
 type HysteresisSnapshot struct {
@@ -169,7 +172,24 @@ func (l *HysteresisDataLogger) Record(snapshot HysteresisSnapshot) {
 	defer func() {
 		_ = recover()
 	}()
-	l.rows <- snapshot
+	select {
+	case l.rows <- snapshot:
+		return
+	default:
+		atomic.AddUint64(&l.dropped, 1)
+		if log == nil {
+			return
+		}
+		now := time.Now().UnixNano()
+		last := atomic.LoadInt64(&l.lastDropLog)
+		if last != 0 && now-last < int64(time.Second) {
+			return
+		}
+		if atomic.CompareAndSwapInt64(&l.lastDropLog, last, now) {
+			dropped := atomic.LoadUint64(&l.dropped)
+			log.Printf("Hysteresis data log backlog: dropped %d samples", dropped)
+		}
+	}
 }
 
 func (l *HysteresisDataLogger) Close() error {

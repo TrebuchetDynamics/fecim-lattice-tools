@@ -157,6 +157,9 @@ type DeviceState struct {
 
 	// Shared ISPP calculator for voltage math
 	isppCalc *sharedphysics.ISPPCalculator
+
+	// ISPP engine selection
+	isppEngine ISPPEngine
 }
 
 // NewDeviceState creates a new device state with specified dimensions
@@ -190,7 +193,8 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 			LastLevel: make(map[string]int),
 			Direction: make(map[string]HysteresisDirection),
 		},
-		isppState: ISPPState{MaxIter: ISPPMaxIterations},
+		isppState:  ISPPState{MaxIter: ISPPMaxIterations},
+		isppEngine: ISPPEngineLevel,
 	}
 
 	// Initialize ISPP calculator with default material
@@ -322,6 +326,66 @@ func (ds *DeviceState) GetMaterialName() string {
 		return ds.material.Name
 	}
 	return "Unknown"
+}
+
+// SetISPPEngine changes the ISPP engine used by the write path.
+func (ds *DeviceState) SetISPPEngine(engine ISPPEngine) {
+	ds.mu.Lock()
+	ds.isppEngine = engine
+	ds.mu.Unlock()
+}
+
+// GetISPPEngine returns the active ISPP engine.
+func (ds *DeviceState) GetISPPEngine() ISPPEngine {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.isppEngine
+}
+
+// conductanceBounds returns the material conductance bounds with a safe fallback.
+func (ds *DeviceState) conductanceBounds() (float64, float64) {
+	mat := ds.material
+	if mat == nil {
+		mat = sharedphysics.FeCIMMaterial()
+	}
+	gmin := mat.Gmin
+	gmax := mat.Gmax
+	if gmin == 0 && gmax == 0 {
+		gmin = 1e-6   // Match material.DiscreteLevel fallback
+		gmax = 100e-6 // Match material.DiscreteLevel fallback
+	}
+	return gmin, gmax
+}
+
+// levelToConductance maps a discrete level to conductance using the active material.
+func (ds *DeviceState) levelToConductance(level, levels int) float64 {
+	mat := ds.material
+	if mat == nil {
+		mat = sharedphysics.FeCIMMaterial()
+	}
+	if levels <= 0 {
+		levels = mat.GetNumLevels()
+	}
+	if levels <= 0 {
+		levels = 30
+	}
+	return mat.DiscreteLevel(level, levels)
+}
+
+// conductanceToLevel maps conductance to a discrete level using material bounds.
+func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
+	if levels <= 0 {
+		levels = ds.writeRange.NumLevels
+	}
+	if levels <= 0 {
+		levels = 30
+	}
+	gmin, gmax := ds.conductanceBounds()
+	if gmax <= gmin {
+		return 0
+	}
+	gNorm := (gPhys - gmin) / (gmax - gmin)
+	return sharedphysics.GetLevel(gNorm, levels)
 }
 
 // GetReadRange returns the voltage range for read/compute operations
@@ -1254,6 +1318,25 @@ func GetPhaseDuration(phase WritePhase) int {
 // 4. ISPP STATE MACHINE WITH OVERSHOOT HANDLING
 // ============================================================================
 
+// ISPPEngine selects which ISPP implementation to use.
+type ISPPEngine int
+
+const (
+	ISPPEngineLevel ISPPEngine = iota // Fast, level-based ISPP (legacy)
+	ISPPEngineLK                      // Physics-based ISPP using L-K solver
+)
+
+func (e ISPPEngine) String() string {
+	switch e {
+	case ISPPEngineLevel:
+		return "Fast (Level)"
+	case ISPPEngineLK:
+		return "L-K (Physics)"
+	default:
+		return "Unknown"
+	}
+}
+
 // ISPPResult represents the result of an ISPP iteration
 type ISPPResult int
 
@@ -1500,6 +1583,48 @@ func (ds *DeviceState) CancelISPP() {
 	ds.isppState.Active = false
 	ds.isppState.Complete = true
 	ds.isppState.Success = false
+}
+
+func (ds *DeviceState) beginISPPTracking(row, col, targetLevel, currentLevel int, direction HysteresisDirection, maxIter int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	if maxIter <= 0 {
+		maxIter = ISPPMaxIterations
+	}
+
+	ds.isppState.Active = true
+	ds.isppState.Iteration = 0
+	ds.isppState.MaxIter = maxIter
+	ds.isppState.TargetRow = row
+	ds.isppState.TargetCol = col
+	ds.isppState.TargetLevel = targetLevel
+	ds.isppState.CurrentLevel = currentLevel
+	ds.isppState.Voltage = 0
+	ds.isppState.Direction = direction
+	ds.isppState.Verified = false
+	ds.isppState.Complete = false
+	ds.isppState.Success = false
+}
+
+func (ds *DeviceState) updateISPPTracking(iteration int, voltage float64, currentLevel int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	ds.isppState.Iteration = iteration
+	ds.isppState.Voltage = voltage
+	ds.isppState.CurrentLevel = currentLevel
+}
+
+func (ds *DeviceState) endISPPTracking(success bool, currentLevel int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	ds.isppState.Active = false
+	ds.isppState.Complete = true
+	ds.isppState.Success = success
+	ds.isppState.Verified = success
+	ds.isppState.CurrentLevel = currentLevel
 }
 
 // ============================================================================

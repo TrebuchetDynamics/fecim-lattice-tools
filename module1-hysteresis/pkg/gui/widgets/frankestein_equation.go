@@ -129,14 +129,18 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 }
 
 func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
-	eqPanel := buildPreisachEquationPanel(parent)
-	summaryCard := buildPreisachSummaryCard()
+	detailPanel, detailCard := newTermDetailPanel()
+	selectTerm := func(termID, fallback string) {
+		detailPanel.SetDetail(termID, fallback)
+	}
 
-	summaryScroll := container.NewVScroll(summaryCard)
-	summaryScroll.SetMinSize(fyne.NewSize(320, 220))
+	eqPanel := buildPreisachEquationPanel(parent, selectTerm)
 
-	split := container.NewHSplit(eqPanel, summaryScroll)
-	split.Offset = 0.6
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+
+	split := container.NewHSplit(eqPanel, detailScroll)
+	split.Offset = 0.62
 
 	infoTabs := buildPreisachInfoTabs()
 
@@ -251,7 +255,8 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 	)
 }
 
-func buildPreisachEquationPanel(parent fyne.Window) fyne.CanvasObject {
+func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
+	sections := []fyne.CanvasObject{}
 	if img := loadPreisachEquationSVG(); img != nil {
 		img.FillMode = canvas.ImageFillContain
 		if parent != nil {
@@ -270,12 +275,52 @@ func buildPreisachEquationPanel(parent fyne.Window) fyne.CanvasObject {
 
 		caption := widget.NewLabel("Quasi-static hysteron superposition model (no explicit dP/dt term).")
 		caption.TextStyle = fyne.TextStyle{Italic: true}
-		return container.NewVBox(img, caption)
+		sections = append(sections, container.NewVBox(img, caption))
 	}
 
+	sections = append(sections, buildPreisachEquationTextPanel(selectTerm))
+	sections = append(sections, buildPreisachSummaryCard())
+
+	return container.NewVBox(sections...)
+}
+
+func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject {
+	term := func(id, label, tooltip string) *TermChip {
+		return NewTermChip(id, label, tooltip, selectTerm)
+	}
+
+	line1 := container.NewHBox(
+		mathLabel("P(E) = ∬ "),
+		term("preisach_mu", "\\mu(\\alpha,\\beta)", "Weight/density of hysterons with thresholds (alpha, beta)."),
+		mathLabel(" * "),
+		term("preisach_gamma", "\\gamma_{\\alpha,\\beta}(E)", "Bistable hysteron state (+1/-1) with memory."),
+		mathLabel(" d\\alpha d\\beta"),
+	)
+
+	line2 := container.NewHBox(
+		mathLabel("\\gamma_{\\alpha,\\beta}(E) = +1 if E >= "),
+		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		mathLabel("; -1 if E <= "),
+		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+	)
+
+	line3 := container.NewHBox(
+		mathLabel("hold if "),
+		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+		mathLabel(" < E < "),
+		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		mathLabel("; state follows history "),
+		term("preisach_history", "history", "Turning-point memory that makes the model hysteretic."),
+	)
+
+	caption := widget.NewLabel("Tap a term to see its meaning and code mapping.")
+	caption.TextStyle = fyne.TextStyle{Italic: true}
+
 	return container.NewVBox(
-		equationBlock("P(E) = double_integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta"),
-		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; hold if beta < E < alpha"),
+		line1,
+		line2,
+		line3,
+		caption,
 	)
 }
 

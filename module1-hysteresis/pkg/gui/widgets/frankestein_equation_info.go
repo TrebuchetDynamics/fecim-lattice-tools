@@ -255,6 +255,66 @@ func termDetails() map[string]termDetail {
 				"RC delay aggregation (effective viscosity approximation)",
 			},
 		},
+		"preisach_mu": {
+			ID:           "preisach_mu",
+			Title:        "mu(alpha,beta) (hysteron density)",
+			Equation:     "mu(alpha,beta)",
+			Meaning:      "Weighting function that defines how many hysterons sit at each (alpha,beta) threshold pair.",
+			Units:        "Model density (normalized weight).",
+			DefaultValue: "Implemented via the Everett function (tanh-based distribution in the default model).",
+			CodeRef:      "module1-hysteresis/pkg/ferroelectric/preisach.go (TanhEverett.Calculate)",
+			References: []string{
+				"Preisach hysteresis density function",
+			},
+		},
+		"preisach_gamma": {
+			ID:           "preisach_gamma",
+			Title:        "gamma_{alpha,beta}(E) (hysteron state)",
+			Equation:     "gamma_{alpha,beta}(E)",
+			Meaning:      "Bistable relay output for a single hysteron (+1/-1) with memory between thresholds.",
+			Units:        "Unitless (+1 / -1).",
+			DefaultValue: "Switches at alpha or beta, otherwise holds last state.",
+			CodeRef:      "shared/physics/preisach.go (Update, ComputePolarization)",
+			References: []string{
+				"Preisach relay operator (memory element)",
+			},
+		},
+		"preisach_alpha": {
+			ID:           "preisach_alpha",
+			Title:        "alpha (upper switching threshold)",
+			Equation:     "alpha",
+			Meaning:      "Upper threshold where a hysteron switches to +1 on an increasing field.",
+			Units:        "V/m",
+			DefaultValue: "Distributed across the Preisach plane; not a single scalar.",
+			CodeRef:      "shared/physics/preisach.go (TurningPoint, Update)",
+			References: []string{
+				"Preisach plane (alpha, beta thresholds)",
+			},
+		},
+		"preisach_beta": {
+			ID:           "preisach_beta",
+			Title:        "beta (lower switching threshold)",
+			Equation:     "beta",
+			Meaning:      "Lower threshold where a hysteron switches to -1 on a decreasing field.",
+			Units:        "V/m",
+			DefaultValue: "Distributed across the Preisach plane; not a single scalar.",
+			CodeRef:      "shared/physics/preisach.go (TurningPoint, Update)",
+			References: []string{
+				"Preisach plane (alpha, beta thresholds)",
+			},
+		},
+		"preisach_history": {
+			ID:           "preisach_history",
+			Title:        "History / turning points",
+			Equation:     "Turning points stack",
+			Meaning:      "Compressed input history that determines which hysterons are currently switched.",
+			Units:        "N/A (state memory).",
+			DefaultValue: "Managed by the wipe-out stack (turning points).",
+			CodeRef:      "shared/physics/preisach.go (PreisachStack, TurningPoint)",
+			References: []string{
+				"Wipe-out property and Preisach memory",
+			},
+		},
 	}
 }
 
@@ -309,6 +369,8 @@ func buildPreisachSection() fyne.CanvasObject {
 		bodyLabel("Each hysteron switches based on its thresholds and retains memory between them:"),
 		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; hold if beta < E < alpha"),
 		bodyLabel("Quasi-static means rate-independent: there is no explicit dP/dt term and switching depends on input history."),
+		bodyLabel("If you sweep faster or slower but preserve the same ordering of field values, the predicted loop is unchanged."),
+		bodyLabel("Dynamics like viscosity, switching delay, and RC effects are intentionally omitted in this model."),
 	)
 
 	return container.NewVBox(section...)

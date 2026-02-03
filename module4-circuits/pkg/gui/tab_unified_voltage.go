@@ -5,6 +5,7 @@ package gui
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -12,6 +13,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // ====================================================================================
@@ -150,6 +153,11 @@ func (ca *CircuitsApp) updateWriteSequenceUI() {
 // - Hysteresis direction tracking
 // - V/2 visualization for 0T1R mode
 func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
+	if ca.deviceState != nil && ca.deviceState.GetISPPEngine() == ISPPEngineLK {
+		ca.runISPPWithLK(row, col, targetLevel)
+		return
+	}
+
 	const iterationDelay = 300 * time.Millisecond
 
 	// Get current level
@@ -285,6 +293,135 @@ cleanup:
 
 	// Record the write in hysteresis state
 	ca.deviceState.RecordWrite(row, col, currentLevel)
+
+	ca.recomputeAndRefresh()
+}
+
+func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
+	const uiDelay = 150 * time.Millisecond
+
+	ds := ca.deviceState
+	if ds == nil {
+		return
+	}
+
+	// Get current level
+	ca.mu.RLock()
+	currentLevel := 0
+	if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+		currentLevel = ca.arrayWeights[row][col]
+	}
+	ca.mu.RUnlock()
+
+	// Determine direction
+	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
+	if direction == DirectionUnknown {
+		if ca.operationsStatusLabel != nil {
+			fyne.Do(func() {
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("Already at target [%d,%d] = Level %d", row, col, targetLevel))
+			})
+		}
+		return
+	}
+
+	// Enable V/2 visualization if in passive (0T1R) mode
+	if ds.IsPassiveMode() {
+		voltage := ds.GetVoltageForLevel(targetLevel, direction == DirectionAscending)
+		ds.EnableHalfSelectVisualization(row, col, voltage)
+		ca.updateHalfSelectVisualization()
+	}
+
+	mat := ds.GetMaterial()
+	if mat == nil {
+		mat = sharedphysics.FeCIMMaterial()
+	}
+	levels := ds.GetWriteRange().NumLevels
+	if levels <= 0 {
+		levels = ca.quantLevels
+	}
+
+	// Initialize solver state from current level.
+	gmin, gmax := ds.conductanceBounds()
+	currentG := ds.levelToConductance(currentLevel, levels)
+	currentP := sharedphysics.ConductanceToPolarization(currentG, gmin, gmax, mat.Ps)
+
+	solver := sharedphysics.NewLKSolver()
+	solver.ConfigureFromMaterial(mat)
+	solver.Temperature = 300
+	solver.EnableNoise = false
+	solver.UseNLS = false
+	solver.UpdateParams()
+	solver.SetState(currentP)
+
+	ctrl := sharedphysics.NewWriteController(solver, mat)
+	ctrl.MaxIterations = ISPPMaxIterations
+	ctrl.PulseWidth = mat.Tau
+	if ctrl.PulseWidth <= 0 {
+		ctrl.PulseWidth = 100e-9
+	}
+	ctrl.MaxVoltage = ds.GetWriteRange().Max
+	if ctrl.MaxVoltage <= 0 {
+		ctrl.MaxVoltage = 1.5
+	}
+	stepG := (gmax - gmin) / float64(levels-1)
+	if stepG <= 0 {
+		stepG = 1e-6
+	}
+	ctrl.Tolerance = stepG * 0.5
+
+	ds.beginISPPTracking(row, col, targetLevel, currentLevel, direction, ctrl.MaxIterations)
+
+	ctrl.EventHook = func(event sharedphysics.WriteEvent) {
+		if ca.shouldStop() {
+			return
+		}
+		level := ds.conductanceToLevel(event.CurrentG, levels)
+		ds.updateISPPTracking(event.Attempt, math.Abs(event.VPulse), level)
+		ca.updateISPPUI()
+		if ca.operationsStatusLabel != nil {
+			msg := fmt.Sprintf("L-K ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
+				event.Attempt, ctrl.MaxIterations, level, targetLevel, math.Abs(event.VPulse), event.Phase)
+			fyne.Do(func() {
+				ca.operationsStatusLabel.SetText(msg)
+			})
+		}
+		if event.Phase == "Verify" {
+			time.Sleep(uiDelay)
+		}
+	}
+
+	targetG := ds.levelToConductance(targetLevel, levels)
+	attempts, success, overshoots := ctrl.WriteTargetWithReset(targetG, false)
+
+	finalP := solver.GetState()
+	finalG := sharedphysics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+	finalLevel := ds.conductanceToLevel(finalG, levels)
+
+	ds.endISPPTracking(success, finalLevel)
+
+	ca.mu.Lock()
+	if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+		ca.arrayWeights[row][col] = finalLevel
+	}
+	ca.mu.Unlock()
+
+	if ca.operationsStatusLabel != nil {
+		status := "PARTIAL"
+		if success {
+			status = "SUCCESS"
+		}
+		fyne.Do(func() {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("%s [%d,%d] = Level %d | %d attempts | overshoots=%d",
+				status, row, col, finalLevel, attempts, overshoots))
+		})
+	}
+
+	// Disable V/2 visualization
+	ds.DisableHalfSelectVisualization()
+	ca.updateHalfSelectVisualization()
+
+	// Record the write in hysteresis state
+	ds.RecordWrite(row, col, finalLevel)
 
 	ca.recomputeAndRefresh()
 }
@@ -460,10 +597,37 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 	ca.hysteresisDirectionLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Single row: Target | Slider | Level | Voltage | Direction
-	return container.NewBorder(nil, nil,
+	writeRow := container.NewBorder(nil, nil,
 		container.NewHBox(ca.mfuxWriteTargetLabel, widget.NewLabel("Write:")),
 		container.NewHBox(ca.mfuxWriteLevelLabel, ca.mfuxWriteVoltageLabel, ca.hysteresisDirectionLabel),
 		ca.mfuxWriteLevelSlider,
+	)
+
+	engineSelect := widget.NewSelect([]string{"Fast (Level)", "L-K (Physics)"}, func(s string) {
+		if s == "" || ca.deviceState == nil {
+			return
+		}
+		engine := ISPPEngineLevel
+		if s == "L-K (Physics)" {
+			engine = ISPPEngineLK
+		}
+		ca.deviceState.SetISPPEngine(engine)
+		if ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP Engine: %s", engine.String()))
+		}
+	})
+	selectedEngine := "Fast (Level)"
+	if ca.deviceState != nil {
+		selectedEngine = ca.deviceState.GetISPPEngine().String()
+	}
+	engineSelect.SetSelected(selectedEngine)
+	ca.isppEngineSelect = engineSelect
+
+	engineRow := container.NewHBox(widget.NewLabel("ISPP Engine:"), engineSelect)
+
+	return container.NewVBox(
+		writeRow,
+		engineRow,
 	)
 }
 
