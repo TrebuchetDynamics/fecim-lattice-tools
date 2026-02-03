@@ -2,26 +2,31 @@
 
 ## What This Module Does
 
-- Curriculum-first documentation viewer
+- Provides a curriculum-first documentation viewer.
+- Offers search, breadcrumbs, ToC, and glossary integration.
+- Adds module shortcuts for ELI5, PHYSICS, FEATURES, and TOOLS.
 
 ## Primary Components
 
 - `module7-docs/pkg/gui/embedded.go`
 - `module7-docs/pkg/gui/search.go`
 - `module7-docs/pkg/gui/navigation.go`
+- `module7-docs/pkg/gui/glossary_integration.go`
 
 ## Key Workflows
 
-- Open a module page -> jump with quick-access shortcuts.
-- Use Cmd/Ctrl+K to search across curriculum docs.
+- Select a document from the curriculum tree.
+- Use module shortcuts to jump between learning layers.
+- Use search and glossary pills for cross-topic navigation.
 
 ## Extension Points
 
-- Curriculum-focused tree and search.
-- Breadcrumbs, ToC, glossary pills, favorites.
+- Add new category rules in `search.go`.
+- Extend the module shortcuts panel for new curriculum layers.
+- Customize layout breakpoints in `layout.go`.
 
 ## Known Limitations
 
-- No semantic embedding search.
-- Glossary links depend on shared/widgets term list.
-
+- Markdown rendering is limited to supported Fyne widgets.
+- Search is in-memory and optimized for repo scale.
+- No external URLs are fetched or embedded.

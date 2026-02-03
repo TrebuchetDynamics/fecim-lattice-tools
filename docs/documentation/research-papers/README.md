@@ -1,7 +1,7 @@
 # Research Papers Index
 
 This index links into the main research library at `docs/research-papers`.
-The curriculum does not duplicate PDFs; it points you to the curated topics.
+The curriculum does not duplicate PDFs; it points you to curated topics.
 
 ## Topics (By Folder)
 
@@ -31,9 +31,9 @@ The curriculum does not duplicate PDFs; it points you to the curated topics.
 | Automotive/harsh environments | [22-automotive-harsh-env](../../research-papers/by-topic/22-automotive-harsh-env/) |
 | Cryogenic operation | [23-cryogenic-operation](../../research-papers/by-topic/23-cryogenic-operation/) |
 
-## How to Use
+## How To Use
 
-- Start with module PHYSICS pages, then jump into a topic folder.
-- For crossbar compiler references, see the CIM compilers topic.
+- Start with a module PHYSICS page, then jump into the matching topic folder.
 - For device physics, start with ferroelectric materials and reviews.
-
+- For compiler references, start with CIM compilers and mapping.
+- Keep notes about which papers are directly cited in Sources sections.

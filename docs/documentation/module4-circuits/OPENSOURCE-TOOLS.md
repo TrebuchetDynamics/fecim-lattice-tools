@@ -1,20 +1,19 @@
 # Module 4: Circuits - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- ngspice: reference SPICE simulator for analog verification.
-- Xyce: scalable SPICE for large or stiff circuits.
-- Qucs-S: schematic capture with SPICE backends.
-- Xschem: analog schematic editor used in open EDA flows.
-- PySpice: Python automation layer for ngspice.
-- OpenVAF: Verilog-A compiler for custom device models.
+- Validating circuit blocks with SPICE-level detail.
+- Exploring alternative ADC/DAC architectures.
+- Building layout-aware timing and power models.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/circuit-simulation-tools.md`
-- `docs/opensource-tools/circuit-analysis-libraries.md`
+- ngspice or Xyce for circuit simulation.
+- Qucs-S for schematic-level exploration.
+- KiCad for block-level schematics and documentation.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- Export SPICE netlists from `module6-eda/pkg/export/spice.go`.
+- Peripheral parameters live in `module4-circuits/pkg/peripherals/`.
+- Use the circuits GUI to sanity check behavior before SPICE runs.

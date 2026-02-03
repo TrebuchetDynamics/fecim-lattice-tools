@@ -1,19 +1,19 @@
 # Module 5: Comparison - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- DNN+NeuroSim: device-circuit-architecture co-simulator for energy and latency.
-- NeuroSim: chip-level estimation for memory and compute arrays.
-- MNSIM 2.0: system-level CIM performance and energy modeling.
-- CrossSim: array-level validation feeding system-level estimates.
+- Validating modeled results against public benchmarks.
+- Building custom roofline or throughput models.
+- Creating high-quality plots for reports.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/memristor-rram-tools.md`
-- `docs/opensource-tools/opensource-crossbar.md`
-- `docs/opensource-tools/tool-comparison-matrix.md`
+- MLPerf results for public benchmark baselines.
+- Pandas or Polars for data wrangling and aggregation.
+- Matplotlib or Vega-Lite for visualizations.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- Reference honesty constraints in `docs/comparison/HONESTY_AUDIT.md`.
+- Architecture definitions live in `module5-comparison/pkg/comparison/architecture.go`.
+- Use `docs/research-papers/by-topic/08-industry-reports/` for context.

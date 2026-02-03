@@ -3,26 +3,48 @@ package main
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	hysgui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
 )
 
-func runMode(mode string) error {
+func runMode(mode string, engine string) error {
 	switch mode {
 	case "hysteresis":
-		return runHysteresisMode()
+		return runHysteresisMode(engine)
 	default:
 		return fmt.Errorf("unknown mode %q (expected: hysteresis)", mode)
 	}
 }
 
-func runHysteresisMode() error {
+func normalizeEngine(engine string) string {
+	engine = strings.ToLower(strings.TrimSpace(engine))
+	switch engine {
+	case "", "preisach", "p":
+		return "preisach"
+	case "lk", "l-k", "landau":
+		return "lk"
+	default:
+		return engine
+	}
+}
+
+func runHysteresisMode(engine string) error {
 	log := logging.NewLogger("hysteresis-mode")
+	engine = normalizeEngine(engine)
+	if engine == "" {
+		engine = "preisach"
+	}
+	if engine != "preisach" && engine != "lk" {
+		return fmt.Errorf("unknown hysteresis engine %q (expected: preisach|lk)", engine)
+	}
+	log.Info("Headless hysteresis engine: %s", engine)
 
 	mat := physics.FeCIMMaterial()
 	numLevels := mat.GetNumLevels()
@@ -51,17 +73,43 @@ func runHysteresisMode() error {
 		}()
 	}
 
-	solver := physics.NewLKSolver()
-	solver.ConfigureFromMaterial(mat)
-	solver.Temperature = 300
-	solver.EnableNoise = false
-	solver.UseNLS = false
-	solver.UpdateParams()
+	var (
+		solver        *physics.LKSolver
+		preisachModel *ferroelectric.PreisachModel
+		engineTemp    float64
+		simTime       float64
+		currentP      float64
+	)
+	switch engine {
+	case "lk":
+		solver = physics.NewLKSolver()
+		solver.ConfigureFromMaterial(mat)
+		solver.Temperature = 300
+		solver.EnableNoise = false
+		solver.UseNLS = false
+		solver.UpdateParams()
+		engineTemp = solver.Temperature
+		currentP = solver.GetState()
 
-	log.Info("LK config: Beta=%.3e Gamma=%.3e Rho=%.3e K_dep=%.3e Q12=%.3e Stress=%.2f GPa SeriesR=%.1f Ohm Thickness=%.2e m Area=%.2e m^2 CurieTemp=%.1fK CurieConst=%.2e UseEffVisc=%v UseNLS=%v Noise=%v",
-		solver.Beta, solver.Gamma, solver.Rho, solver.K_dep, solver.Q12, solver.Stress/1e9, solver.SeriesResistance, solver.Thickness, solver.Area,
-		solver.CurieTemp, solver.CurieConst, solver.UseEffectiveViscosity, solver.UseNLS, solver.EnableNoise)
-	log.Info("LK alpha(T,σ)=%.3e at T=%.1fK", solver.Alpha, solver.Temperature)
+		log.Info("LK config: Beta=%.3e Gamma=%.3e Rho=%.3e K_dep=%.3e Q12=%.3e Stress=%.2f GPa SeriesR=%.1f Ohm Thickness=%.2e m Area=%.2e m^2 CurieTemp=%.1fK CurieConst=%.2e UseEffVisc=%v UseNLS=%v Noise=%v",
+			solver.Beta, solver.Gamma, solver.Rho, solver.K_dep, solver.Q12, solver.Stress/1e9, solver.SeriesResistance, solver.Thickness, solver.Area,
+			solver.CurieTemp, solver.CurieConst, solver.UseEffectiveViscosity, solver.UseNLS, solver.EnableNoise)
+		log.Info("LK alpha(T,σ)=%.3e at T=%.1fK", solver.Alpha, solver.Temperature)
+	case "preisach":
+		preisachModel = ferroelectric.NewPreisachModel(mat)
+		preisachModel.SetTemperature(300)
+		engineTemp = preisachModel.Temperature
+		currentP = preisachModel.Polarization()
+		log.Info("Preisach config: Ec=%.3e Ps=%.3e Delta=%.3e Temp=%.1fK",
+			mat.Ec, mat.Ps, mat.Ec*0.25, engineTemp)
+	}
+
+	stepPolarization := func(E, dt float64) float64 {
+		if solver != nil {
+			return solver.Step(E, dt)
+		}
+		return preisachModel.Update(E)
+	}
 
 	Emax := mat.Ec * 1.2
 	dt := 1e-12
@@ -72,6 +120,12 @@ func runHysteresisMode() error {
 	perfDtMax := 0.0
 	perfDtSum := 0.0
 	perfStepTime := time.Duration(0)
+	perfDtMinHits := 0
+	perfDtMinThreshold := 0.0
+	sweepLabel := "LK_SWEEP"
+	if engine == "preisach" {
+		sweepLabel = "PREISACH_SWEEP"
+	}
 
 	resetPerf := func() {
 		if !perfEnabled {
@@ -82,6 +136,7 @@ func runHysteresisMode() error {
 		perfDtMax = 0
 		perfDtSum = 0
 		perfStepTime = 0
+		perfDtMinHits = 0
 	}
 
 	recordPerf := func(step float64, elapsed time.Duration) {
@@ -97,6 +152,9 @@ func runHysteresisMode() error {
 		}
 		perfDtSum += step
 		perfStepTime += elapsed
+		if perfDtMinThreshold > 0 && step <= perfDtMinThreshold*1.001 {
+			perfDtMinHits++
+		}
 	}
 
 	logPerf := func(label string) {
@@ -104,21 +162,27 @@ func runHysteresisMode() error {
 			return
 		}
 		dtMean := perfDtSum / float64(perfSteps)
-		log.Info("LK_PERF %s: steps=%d dtMin=%.3e dtMean=%.3e dtMax=%.3e solverMs=%.2f",
-			label, perfSteps, perfDtMin, dtMean, perfDtMax, perfStepTime.Seconds()*1000.0)
+		minShare := 0.0
+		if perfSteps > 0 {
+			minShare = float64(perfDtMinHits) / float64(perfSteps) * 100.0
+		}
+		log.Info("%s_PERF %s: steps=%d dtMin=%.3e dtMean=%.3e dtMax=%.3e dtMinHits=%d (%.1f%%) solverMs=%.2f",
+			strings.ToUpper(engine), label, perfSteps, perfDtMin, dtMean, perfDtMax, perfDtMinHits, minShare, perfStepTime.Seconds()*1000.0)
 	}
 
-	log.Info("Landau-Khalatnikov diagnostic sweep starting")
+	log.Info("Hysteresis diagnostic sweep starting")
 	resetPerf()
+	perfDtMinThreshold = 0
 	for _, E := range []float64{-Emax, -0.5 * Emax, 0, 0.5 * Emax, Emax} {
 		if perfEnabled {
 			stepStart := time.Now()
-			solver.Step(E, dt)
+			currentP = stepPolarization(E, dt)
 			recordPerf(dt, time.Since(stepStart))
 		} else {
-			solver.Step(E, dt)
+			currentP = stepPolarization(E, dt)
 		}
-		recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, nil, dt, E, "LK_SWEEP", "SWEEP", nil)
+		simTime += dt
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
 	}
 	logPerf("SWEEP")
 
@@ -176,12 +240,12 @@ func runHysteresisMode() error {
 
 	for i, step := range steps {
 		resetPerf()
+		perfDtMinThreshold = dtMin
 		_, targetLevel := headlessLevelFromConductance(step.targetG, gmin, gmax, numLevels)
 		currentField := 0.0
-		currentP := solver.GetState()
 		currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
 		_, currentLevel := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
-		stepStart := solver.Time
+		stepStart := simTime
 		maxSimTime := phaseDuration * float64(writeController.MaxRetries+100)
 		wrd := &headlessWRDState{
 			phase:         0,
@@ -195,7 +259,7 @@ func runHysteresisMode() error {
 			successWrites: wrdSuccessWrites,
 		}
 
-		recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
 
 		targetDone := false
 		// Track "written P" - the polarization captured at end of pulse (before E→0)
@@ -206,10 +270,7 @@ func runHysteresisMode() error {
 		// Track the state at success for accurate reporting (before DISPLAY relaxation)
 		var successP float64
 		var successLevel int
-		for solver.Time-stepStart < maxSimTime && !targetDone {
-			// Compute current level from solver state (previous step)
-			currentP := solver.GetState()
-
+		for simTime-stepStart < maxSimTime && !targetDone {
 			// Capture "written P" at transition from WAIT to VERIFY (before E→0)
 			// This gives the true written state before depolarization relaxation
 			if writeController.State == controller.StateVerify && lastControllerState == controller.StateWait {
@@ -370,21 +431,22 @@ func runHysteresisMode() error {
 
 			if perfEnabled {
 				stepStart := time.Now()
-				solver.Step(currentField, currentStep)
+				currentP = stepPolarization(currentField, currentStep)
 				recordPerf(currentStep, time.Since(stepStart))
 			} else {
-				solver.Step(currentField, currentStep)
+				currentP = stepPolarization(currentField, currentStep)
 			}
-			recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
+			simTime += currentStep
+			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
 		}
 
 		if !targetDone {
-			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, solver.Time-stepStart)
+			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
 		}
 		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 
 		// Use the captured success state if available, otherwise use relaxed state
-		finalP := solver.GetState()
+		finalP := currentP
 		finalG := physics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
 		_, finalLevel := headlessLevelFromConductance(finalG, gmin, gmax, numLevels)
 		success := writeController.State == controller.StateSuccess
@@ -426,6 +488,12 @@ type headlessWRDState struct {
 	settleE            float64
 	startLevel         int
 	saturatedDirection int // -1 for negative sat, +1 for positive sat, 0 for not saturated
+}
+
+type headlessEngineState struct {
+	time         float64
+	temperature  float64
+	polarization float64
 }
 
 func headlessLevelFromConductance(g, gmin, gmax float64, numLevels int) (int, int) {
@@ -484,8 +552,8 @@ func headlessWRDPhaseName(phase int) string {
 }
 
 func headlessPhaseForState(state, waveform string) (int, string) {
-	if waveform == "LK_SWEEP" {
-		return -1, "LK_SWEEP"
+	if strings.HasSuffix(waveform, "_SWEEP") {
+		return -1, waveform
 	}
 	switch state {
 	case "RESETTING":
@@ -505,7 +573,7 @@ func headlessPhaseForState(state, waveform string) (int, string) {
 
 func recordHeadlessSnapshot(
 	logger *hysgui.HysteresisDataLogger,
-	solver *physics.LKSolver,
+	state headlessEngineState,
 	mat *physics.HZOMaterial,
 	gmin float64,
 	gmax float64,
@@ -517,11 +585,11 @@ func recordHeadlessSnapshot(
 	stateOverride string,
 	wrd *headlessWRDState,
 ) {
-	if logger == nil || solver == nil || mat == nil {
+	if logger == nil || mat == nil {
 		return
 	}
 
-	currentP := solver.GetState()
+	currentP := state.polarization
 	currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
 	levelIdx, level := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 	normalizedP := 0.0
@@ -534,9 +602,9 @@ func recordHeadlessSnapshot(
 		}
 	}
 
-	state := stateOverride
+	stateLabel := stateOverride
 	if ctrl != nil {
-		state = ctrl.State.String()
+		stateLabel = ctrl.State.String()
 	}
 
 	wrdPhase := -1
@@ -567,17 +635,17 @@ func recordHeadlessSnapshot(
 		wrdSettleE = wrd.settleE
 		wrdStartLevel = wrd.startLevel
 	} else {
-		wrdPhase, wrdPhaseName = headlessPhaseForState(state, waveform)
+		wrdPhase, wrdPhaseName = headlessPhaseForState(stateLabel, waveform)
 	}
 
 	snapshot := hysgui.HysteresisSnapshot{
 		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
-		SimTime:       solver.Time,
+		SimTime:       state.time,
 		Dt:            dt,
 		Waveform:      waveform,
 		AutoMode:      true,
 		Material:      mat.Name,
-		TemperatureK:  solver.Temperature,
+		TemperatureK:  state.temperature,
 		EcMVcm:        mat.Ec / headlessMVPerCM,
 		PsUcCm2:       mat.Ps * headlessUCPerCM2,
 		PrUcCm2:       mat.Pr * headlessUCPerCM2,
@@ -605,7 +673,7 @@ func recordHeadlessSnapshot(
 		WrdSettleE:     wrdSettleE,
 		WrdStartLevel:  wrdStartLevel,
 
-		ControllerState:          state,
+		ControllerState:          stateLabel,
 		ControllerPhaseTimer:     0,
 		ControllerTargetLevel:    0,
 		ControllerCurrentField:   0,

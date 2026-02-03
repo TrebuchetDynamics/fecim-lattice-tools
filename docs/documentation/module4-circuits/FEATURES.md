@@ -2,25 +2,31 @@
 
 ## What This Module Does
 
-- Peripheral circuits (DAC, ADC, TIA, charge pump)
+- Models DAC, ADC, TIA, and charge pump behavior.
+- Estimates timing and power for peripheral operations.
+- Visualizes signal flow and circuit-level effects.
 
 ## Primary Components
 
 - `module4-circuits/pkg/peripherals/dac.go`
 - `module4-circuits/pkg/peripherals/adc.go`
 - `module4-circuits/pkg/peripherals/tia.go`
+- `module4-circuits/pkg/peripherals/analysis.go`
 
 ## Key Workflows
 
-- Configure DAC/ADC parameters -> compute timing/power tradeoffs.
+- Convert digital inputs to analog voltages for array drive.
+- Convert array currents into voltages and digital codes.
+- Estimate timing and power breakdown for conversions.
 
 ## Extension Points
 
-- Peripheral models with timing and power analysis helpers.
-- Signal flow visualization of data movement.
+- Add new ADC/DAC architectures or nonlinearity models.
+- Extend power analysis with additional blocks.
+- Connect to exported SPICE netlists from module 6.
 
 ## Known Limitations
 
-- No transistor-level verification in this module.
-- Simplified noise and nonlinearity models.
-
+- Behavior is analytic, not SPICE-accurate.
+- Parameter defaults are for teaching, not silicon tuning.
+- Timing is approximate and does not include full routing effects.

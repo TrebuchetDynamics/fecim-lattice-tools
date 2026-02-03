@@ -11,6 +11,7 @@ This directory contains research on compute-in-memory architectures, with emphas
 - **`Analog_AI_Accelerators_Survey_arXiv.pdf`** - Survey of analog AI accelerator architectures and design trade-offs
 - **`Analog_AI_Promise_arXiv.pdf`** - Vision paper on analog AI's potential and challenges
 - **`Analog_CIM_Energy_Efficiency_arXiv.pdf`** - Energy efficiency analysis of analog CIM vs. digital accelerators
+- **`FeFET_CIM_Energy_Efficiency_arXiv_2024.pdf`** - FeFET CIM energy efficiency study (arXiv 2024)
 - **`ferroelectric_CIM_review_2023.pdf`** - Comprehensive review of ferroelectric-based CIM systems
 - **`In_Memory_Computing_Deep_Learning_arXiv.pdf`** - In-memory computing for deep learning applications
 - **`Memristor_CIM_Survey_arXiv.pdf`** - Memristive CIM architectures and programming strategies
@@ -42,6 +43,7 @@ This directory contains research on compute-in-memory architectures, with emphas
 ### Optimization Techniques
 - **`memory_tech_crossbar_dnn_accuracy_2024.pdf`** - Memory technology impact on DNN accuracy
 - **`simple_packing_algorithm_nvm_2024.pdf`** - Weight packing algorithms for non-volatile memory
+- **`Bit_Slicing_Techniques_arXiv_2024.pdf`** - Bit-slicing techniques for CIM accuracy/efficiency
 - **`Temperature_Resilient_FeFET_CIM_2024.pdf`** - Temperature compensation for FeFET CIM (-40°C to 125°C)
 
 ### Safety-Critical and Specialized Applications

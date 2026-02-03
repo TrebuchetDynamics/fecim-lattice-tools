@@ -225,10 +225,10 @@ WL₂ ───○──●────○───●────○───�
 
 | Parameter | Passive (0T1R) | 1T1R |
 |-----------|----------------|------|
-| Single pulse write | 50-100ns | 50-100ns |
+| Single pulse write | 100ns | 100ns |
 | Write-verify iterations | 3-5 | 1-2 |
-| Total write time | 200-500ns | 50-150ns |
-| Energy per write | 10-50 fJ | 10-30 fJ |
+| Total write time | ~203ns | ~203ns |
+| Energy per write | ~2.15 pJ | ~2.15 pJ |
 | Endurance | 10¹⁰ cycles | 10¹⁰ cycles |
 
 **Source:** *Analog_CIM_Energy_Efficiency_arXiv*, IEEE IRPS 2022
@@ -373,11 +373,11 @@ WL₂ ───○──●────○───●────○───�
 
 | Parameter | Passive (0T1R) | 1T1R |
 |-----------|----------------|------|
-| TIA settling | 10ns | 10ns |
+| TIA settling | 11ns | 11ns |
 | ADC conversion | 50ns | 50ns |
-| Total read time | ~60ns | ~60ns |
+| Total read time | ~76ns | ~76ns |
 | Read accuracy | ±2-3 levels | ±0.5 levels |
-| Read energy | 1-5 fJ | 2-8 fJ |
+| Read energy | ~46 fJ | ~46 fJ |
 
 ---
 
@@ -401,10 +401,10 @@ Computed in O(1) time (single analog cycle)!
 ```
 
 **Timing:**
-- DAC settling: 5-10ns
+- DAC settling: 10ns
 - Array propagation: 5ns
-- TIA/ADC: 50-60ns
-- **Total MVM: ~60-70ns** (regardless of array size!)
+- TIA+ADC: ~61ns
+- **Total MVM: ~76ns** (regardless of array size!)
 
 **Paper Reference:** *Analog_CIM_Energy_Efficiency_arXiv* reports 10-1000× energy efficiency over digital MACs.
 
@@ -513,11 +513,11 @@ Even with all transistors ON, 1T1R provides benefits:
 |-----------|----------------|------|
 | DAC settling | 10ns | 10ns |
 | Array compute | 5ns | 5ns |
-| TIA settling | 10ns | 10ns |
+| TIA settling | 11ns | 11ns |
 | ADC conversion | 50ns | 50ns |
-| **Total MVM** | **~75ns** | **~75ns** |
+| **Total MVM** | **~76ns** | **~76ns** |
 | Throughput (64×64) | 54 GOPS | 54 GOPS |
-| Throughput (256×256) | 870 GOPS | 870 GOPS |
+| Throughput (256×256) | 862 GOPS | 862 GOPS |
 
 **Note:** Timing is identical; the difference is accuracy.
 
@@ -561,12 +561,12 @@ Even with all transistors ON, 1T1R provides benefits:
 
 ### 6.1 Operating Voltages
 
-| Operation | Target Voltage | Unselected Voltage | Duration |
-|-----------|---------------|--------------------| ---------|
-| WRITE (positive) | +1.2 to +1.5V | V/2 or floating | 50-100ns |
-| WRITE (negative) | -1.2 to -1.5V | V/2 or floating | 50-100ns |
-| READ | +0.1 to +0.5V | 0V or floating | 10-20ns |
-| COMPUTE (input) | 0 to +1.0V | N/A (all active) | 5-10ns |
+| Operation | Target Voltage | Unselected Voltage | Duration (typical window) |
+|-----------|---------------|--------------------| --------------------------|
+| WRITE (positive) | +1.2 to +1.5V | V/2 or floating | ~203ns total |
+| WRITE (negative) | -1.2 to -1.5V | V/2 or floating | ~203ns total |
+| READ | +0.1 to +0.5V | 0V or floating | ~76ns total |
+| COMPUTE (input) | 0 to +1.0V | N/A (all active) | ~76ns total |
 
 ### 6.2 Voltage Zones
 
@@ -767,15 +767,15 @@ The mode help text dynamically updates based on architecture:
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FeCIM OPERATION QUICK REFERENCE              │
 ├─────────────────────────────────────────────────────────────────┤
-│ WRITE (1.2-1.5V, 50-100ns)                                      │
+│ WRITE (1.2-1.5V, ~203ns total)                                  │
 │   Passive: V/2 bias unselected, watch for disturb               │
 │   1T1R:    Single row ON, full isolation                        │
 ├─────────────────────────────────────────────────────────────────┤
-│ READ (0.1-0.5V, ~60ns total)                                    │
+│ READ (0.1-0.5V, ~76ns total)                                    │
 │   Passive: Expect 5-20% sneak path error                        │
 │   1T1R:    Single row ON, clean signal                          │
 ├─────────────────────────────────────────────────────────────────┤
-│ COMPUTE (0-1V inputs, ~75ns total)                              │
+│ COMPUTE (0-1V inputs, ~76ns total)                              │
 │   Passive: ALL rows active, 5-15% error                         │
 │   1T1R:    ALL transistors ON, 1-3% error                       │
 ├─────────────────────────────────────────────────────────────────┤

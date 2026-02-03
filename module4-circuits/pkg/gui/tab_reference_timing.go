@@ -165,16 +165,16 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 		img.Set(x, axisY, axisColor)
 	}
 
-	// Time markers: 0ns, 17ns, 35ns, 52ns, 70ns
+	// Time markers: 0ns, 51ns, 102ns, 152ns, 203ns
 	timeMarkers := []struct {
 		pct   int
 		label string
 	}{
 		{0, "0ns"},
-		{25, "17ns"},
-		{50, "35ns"},
-		{75, "52ns"},
-		{100, "70ns"},
+		{25, "51ns"},
+		{50, "102ns"},
+		{75, "152ns"},
+		{100, "203ns"},
 	}
 
 	for _, tm := range timeMarkers {
@@ -192,7 +192,7 @@ func (ca *CircuitsApp) drawTimingWrite(w, h int) image.Image {
 	}
 
 	// Total time label
-	drawSimpleText(img, "70ns total", w-80, axisY+7, sharedtheme.ColorGreen)
+	drawSimpleText(img, "203ns total", w-80, axisY+7, sharedtheme.ColorGreen)
 
 	return img
 }
@@ -302,16 +302,16 @@ func (ca *CircuitsApp) drawTimingRead(w, h int) image.Image {
 		img.Set(x, axisY, axisColor)
 	}
 
-	// Time markers: 0ns, 5ns, 10ns, 15ns, 20ns
+	// Time markers: 0ns, 19ns, 38ns, 57ns, 76ns
 	timeMarkers := []struct {
 		pct   int
 		label string
 	}{
 		{0, "0ns"},
-		{25, "5ns"},
-		{50, "10ns"},
-		{75, "15ns"},
-		{100, "20ns"},
+		{25, "19ns"},
+		{50, "38ns"},
+		{75, "57ns"},
+		{100, "76ns"},
 	}
 
 	for _, tm := range timeMarkers {
@@ -329,7 +329,7 @@ func (ca *CircuitsApp) drawTimingRead(w, h int) image.Image {
 	}
 
 	// Total time label
-	drawSimpleText(img, "20ns total", w-80, axisY+7, sharedtheme.ColorGreen)
+	drawSimpleText(img, "76ns total", w-80, axisY+7, sharedtheme.ColorGreen)
 
 	return img
 }
@@ -445,9 +445,9 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 		endPct   int
 		label    string
 	}{
-		{10, 35, "DAC 5ns"},
+		{10, 35, "DAC 10ns"},
 		{35, 60, "ARRAY 5ns"},
-		{55, 90, "ADC 10ns"},
+		{55, 90, "TIA+ADC 61ns"},
 	}
 
 	for _, phase := range phases {
@@ -477,16 +477,16 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 		img.Set(x, axisY, axisColor)
 	}
 
-	// Time markers: 0ns, 5ns, 10ns, 15ns, 20ns
+	// Time markers: 0ns, 19ns, 38ns, 57ns, 76ns
 	timeMarkers := []struct {
 		pct   int
 		label string
 	}{
 		{0, "0ns"},
-		{25, "5ns"},
-		{50, "10ns"},
-		{75, "15ns"},
-		{100, "20ns"},
+		{25, "19ns"},
+		{50, "38ns"},
+		{75, "57ns"},
+		{100, "76ns"},
 	}
 
 	for _, tm := range timeMarkers {
@@ -498,7 +498,7 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 	}
 
 	// Total time label
-	drawSimpleText(img, "20ns total", w-80, axisY-2, sharedtheme.ColorGreen)
+	drawSimpleText(img, "76ns total", w-80, axisY-2, sharedtheme.ColorGreen)
 
 	return img
 }
@@ -525,30 +525,30 @@ func (ca *CircuitsApp) onAnimateTiming() {
 	switch selectedOp {
 	case "WRITE":
 		steps = []string{
-			"Phase 1: CLK rising edge (0ns)...",
-			"Phase 2: ROW_SEL and COL_SEL active (10ns)...",
-			"Phase 3: DAC_EN enables voltage conversion (15ns)...",
-			"Phase 4: V_PROG writes polarization state (20-70ns)...",
-			"Phase 5: DONE signal asserted (85ns)...",
-			"Write complete: Total 70ns",
+			"Phase 1: DAC settle (0-10ns)...",
+			"Phase 2: Charge pump rise (10-98ns)...",
+			"Phase 3: V_PROG write pulse (98-198ns)...",
+			"Phase 4: Array settle (198-203ns)...",
+			"Phase 5: DONE asserted (203ns)...",
+			"Write complete: Total 203ns",
 		}
 	case "READ":
 		steps = []string{
-			"Phase 1: CLK rising edge (0ns)...",
-			"Phase 2: V_READ applied to cell (10ns)...",
-			"Phase 3: I_SENSE measures current (15ns)...",
-			"Phase 4: ADC_EN converts analog to digital (40-70ns)...",
-			"Phase 5: DATA_OUT valid (75ns)...",
-			"Read complete: Total 20ns",
+			"Phase 1: DAC settle (0-10ns)...",
+			"Phase 2: Array settle (10-15ns)...",
+			"Phase 3: TIA settle (15-26ns)...",
+			"Phase 4: ADC convert (26-76ns)...",
+			"Phase 5: DATA_OUT valid (76ns)...",
+			"Read complete: Total 76ns",
 		}
 	case "COMPUTE":
 		steps = []string{
-			"Phase 1: INPUT_VALID asserted (5ns)...",
-			"Phase 2: DAC_ALL converts inputs to voltages (10-35ns)...",
-			"Phase 3: ARRAY_SETTLE - currents accumulate via Kirchhoff's law (35-60ns)...",
-			"Phase 4: ADC_ALL digitizes summed currents (55-90ns)...",
-			"Phase 5: OUTPUT_VALID - MVM result ready (90ns)...",
-			"Compute complete: Total 20ns for full MVM",
+			"Phase 1: INPUT_VALID asserted (0ns)...",
+			"Phase 2: DAC_ALL converts inputs (0-10ns)...",
+			"Phase 3: ARRAY_SETTLE (10-15ns)...",
+			"Phase 4: TIA+ADC digitizes summed currents (15-76ns)...",
+			"Phase 5: OUTPUT_VALID - MVM result ready (76ns)...",
+			"Compute complete: Total 76ns for full MVM",
 		}
 	default:
 		steps = []string{"Select an operation to animate"}

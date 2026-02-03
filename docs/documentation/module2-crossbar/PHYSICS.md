@@ -8,37 +8,41 @@
 
 ## Core Model
 
-- Crossbar performs y = G * v where G is conductance matrix.
-- Non-idealities (IR drop, sneak paths, drift) perturb ideal results.
+- A crossbar computes y = G * v, where G is conductance.
+- Non-idealities such as IR drop and sneak paths perturb results.
+- Quantization and noise approximate device limits.
 
 ## Key Equations (Simplified)
 
 ```
 I = G * V
-y_i = sum_j G_ij * v_j
+I_i = sum_j G_ij * V_j
+V_drop ≈ I * R_wire
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
 | G | Conductance | Siemens |
 | V | Input voltage | Volts |
 | I | Output current | Amps |
+| R_wire | Wire resistance | Ohms |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
 - Linear conductance model for ideal MVM.
-- Noise injected as simple additive perturbations.
+- Non-idealities are simplified and not device-calibrated.
+- Noise is modeled as additive perturbations.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
 - `module2-crossbar/pkg/crossbar/array.go`
 - `module2-crossbar/pkg/crossbar/nonidealities.go`
-- `module2-crossbar/pkg/gui/tabs/irdrop_tab.go`
+- `module2-crossbar/pkg/crossbar/irdrop.go`
+- `module2-crossbar/pkg/crossbar/sneakpath.go`
 
 ## Sources
 
 - `docs/development/scriptReference.md#demo-2-crossbar-module2-crossbar`
 - `docs/ELI5.md`
-

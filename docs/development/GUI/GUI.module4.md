@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-02-02
+Last Updated: 2026-02-03
 ---
 
 Conventions:
@@ -43,6 +43,14 @@ Conventions:
 - [x] UX-H4: WL labels unclear - FIXED (2026-01-27): "Row 0" labels, disabled in passive mode
 - [x] UX-M4-001: ADC saturation threshold hardcoded - FIXED (2026-01-28): Uses dynamic `adc.Bits` to calculate max level
 - [x] UX-M4-002: Fallback numLevels undocumented - FIXED (2026-01-28): Added comment documenting FeCIMLevels consistency
+
+---
+
+## Recent Changes (2026-02-03)
+
+### Physics Alignment
+- Updated timing/energy labels and reference diagrams to match `docs/peripheral-circuits/PHYSICS.md` (Read ~76ns, Write ~203ns).
+- Updated comparison/specs panels to use the same read-latency baseline and revised FeFET timing labels.
 
 ---
 

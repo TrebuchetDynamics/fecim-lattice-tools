@@ -228,18 +228,18 @@ Each translator takes time:
 
 ```
 Write Operation Timeline:
-│────────│────────────│──────────────────────────│
-   DAC      Pump Rise        Write Pulse
-   10ns       40ns              100ns
-                                            Total: ~150 ns
+│────────│────────────────────│──────────────────────────│
+   DAC        Pump Rise             Write Pulse
+   10ns         88ns                  100ns
+                                                     Total: ~203 ns
 
 Read Operation Timeline:
-│────────│────────────│
-   TIA      ADC Convert
-   10ns       50ns
-                       Total: ~60 ns
+│────────│──────│────────│────────────────────│
+   DAC    Array   TIA        ADC Convert
+   10ns    5ns    11ns          50ns
+                                        Total: ~76 ns
 
-Full Cycle: ~210 ns = ~5 million operations per second
+Full Cycle: ~279 ns = ~3.6 million operations per second
 ```
 
 **The bottleneck:** The charge pump and write pulse are the slowest. But since we read MUCH more than write, overall speed is good!

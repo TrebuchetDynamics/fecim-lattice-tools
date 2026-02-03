@@ -624,8 +624,17 @@ func (a *App) simulationLoop() {
 	perfDtMax := 0.0
 	perfDtSum := 0.0
 	perfPhysics := time.Duration(0)
+	perfSolver := time.Duration(0)
 	perfRender := time.Duration(0)
 	perfEngine := "L-K"
+	perfDtMinHits := 0
+
+	// Adaptive Time-Stepping Constants
+	const (
+		dtMax     = 0.025 // 25ms cap to prevent explosion after pause
+		dtNominal = 1e-4  // 0.1ms nominal physics step (good for standard loop)
+		dtMin     = 1e-6  // 1µs minimum step near critical field (Ec)
+	)
 
 	resetPerfWindow := func(now time.Time) {
 		perfWindowStart = now
@@ -636,7 +645,9 @@ func (a *App) simulationLoop() {
 		perfDtMax = 0
 		perfDtSum = 0
 		perfPhysics = 0
+		perfSolver = 0
 		perfRender = 0
+		perfDtMinHits = 0
 	}
 
 	recordPhysicsStep := func(step float64) {
@@ -649,12 +660,16 @@ func (a *App) simulationLoop() {
 			}
 			perfDtSum += step
 			perfDtCount++
+			if step <= dtMin*1.001 {
+				perfDtMinHits++
+			}
 			stepStart := time.Now()
-			a.updatePhysics(step)
+			solverDur := a.updatePhysics(step, true)
 			perfPhysics += time.Since(stepStart)
+			perfSolver += solverDur
 			return
 		}
-		a.updatePhysics(step)
+		a.updatePhysics(step, false)
 	}
 
 	logPerfWindow := func(now time.Time) {
@@ -671,27 +686,29 @@ func (a *App) simulationLoop() {
 		avgSubSteps := float64(perfSubSteps) / float64(perfFrames)
 		dtMean := perfDtSum / float64(perfDtCount)
 		physicsMs := perfPhysics.Seconds() * 1000.0
+		solverMs := perfSolver.Seconds() * 1000.0
 		renderMs := perfRender.Seconds() * 1000.0
 		totalMs := physicsMs + renderMs
 		physicsShare := 0.0
 		if totalMs > 0 {
 			physicsShare = (physicsMs / totalMs) * 100.0
 		}
-		log.Debug("LK perf (%s): frames=%d avgSubSteps=%.1f dtMin=%.3e dtMean=%.3e dtMax=%.3e physicsMs=%.2f renderMs=%.2f physicsShare=%.1f%%",
-			perfEngine, perfFrames, avgSubSteps, perfDtMin, dtMean, perfDtMax, physicsMs, renderMs, physicsShare)
+		solverShare := 0.0
+		if physicsMs > 0 {
+			solverShare = (solverMs / physicsMs) * 100.0
+		}
+		minShare := 0.0
+		if perfDtCount > 0 {
+			minShare = float64(perfDtMinHits) / float64(perfDtCount) * 100.0
+		}
+		log.Debug("LK perf (%s): frames=%d avgSubSteps=%.1f dtMin=%.3e dtMean=%.3e dtMax=%.3e dtMinHits=%d (%.1f%%) solverMs=%.2f physicsMs=%.2f renderMs=%.2f solverShare=%.1f%% physicsShare=%.1f%%",
+			perfEngine, perfFrames, avgSubSteps, perfDtMin, dtMean, perfDtMax, perfDtMinHits, minShare, solverMs, physicsMs, renderMs, solverShare, physicsShare)
 		resetPerfWindow(now)
 	}
 
 	if perfEnabled {
 		resetPerfWindow(time.Now())
 	}
-
-	// Adaptive Time-Stepping Constants
-	const (
-		dtMax     = 0.025 // 25ms cap to prevent explosion after pause
-		dtNominal = 1e-4  // 0.1ms nominal physics step (good for standard loop)
-		dtMin     = 1e-6  // 1µs minimum step near critical field (Ec)
-	)
 
 	for a.running {
 		<-ticker.C
@@ -803,12 +820,13 @@ func (a *App) simulationLoop() {
 
 // updatePhysics handles the physics and state transitions.
 // MUST be called with a.mu held.
-func (a *App) updatePhysics(dt float64) {
+// Returns time spent inside the active physics engine when perfEnabled is true.
+func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 	// a.mu.Lock() -> Removed, caller holds lock
 
 	mat := a.material
 	if mat == nil {
-		return
+		return 0
 	}
 
 	Ec := a.effectiveEc()
@@ -987,8 +1005,15 @@ func (a *App) updatePhysics(dt float64) {
 
 			// Apply queued target at the start of PREP so UI and controller stay aligned.
 			if a.wrdPhase == 0 && a.wrdPhaseTimer <= dt && a.wrdNextTargetLevel > 0 {
-				a.wrdTargetLevel = a.wrdNextTargetLevel
+				nextTarget := a.wrdNextTargetLevel
+				a.wrdTargetLevel = nextTarget
 				a.wrdNextTargetLevel = 0
+				ctrlTarget := 0
+				if a.writeController != nil {
+					ctrlTarget = a.writeController.TargetLevel
+				}
+				log.Printf("WRD TARGET APPLY: active=%d queued=%d phase=%d level=%d ctrlTarget=%d E=%.3f MV/cm P=%.2f µC/cm²",
+					a.wrdTargetLevel, nextTarget, a.wrdPhase, a.discreteLevel+1, ctrlTarget, a.electricField/1e8, a.polarization*100)
 			}
 			targetLevel := a.wrdTargetLevel // 1-indexed
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
@@ -1283,9 +1308,16 @@ func (a *App) updatePhysics(dt float64) {
 
 	// Update physics
 	prevP := a.polarization
+	var solverDur time.Duration
 	if a.useLKSolver() {
 		if a.lkSolver != nil {
-			a.polarization = a.lkSolver.Step(a.electricField, dt)
+			if perfEnabled {
+				stepStart := time.Now()
+				a.polarization = a.lkSolver.Step(a.electricField, dt)
+				solverDur = time.Since(stepStart)
+			} else {
+				a.polarization = a.lkSolver.Step(a.electricField, dt)
+			}
 		} else {
 			a.polarization = 0
 		}
@@ -1301,7 +1333,13 @@ func (a *App) updatePhysics(dt float64) {
 		}
 	} else {
 		if a.preisach != nil {
-			a.polarization = a.preisach.Update(a.electricField)
+			if perfEnabled {
+				stepStart := time.Now()
+				a.polarization = a.preisach.Update(a.electricField)
+				solverDur = time.Since(stepStart)
+			} else {
+				a.polarization = a.preisach.Update(a.electricField)
+			}
 			a.normalizedP = a.preisach.NormalizedPolarization()
 		} else {
 			a.polarization = 0
@@ -1340,6 +1378,8 @@ func (a *App) updatePhysics(dt float64) {
 
 	// Always record full-resolution data snapshot for offline analysis.
 	a.recordDataSnapshot(dt)
+
+	return solverDur
 }
 
 type uiSnapshot struct {
@@ -1349,6 +1389,23 @@ type uiSnapshot struct {
 	eC float64
 	hE []float64
 	hP []float64
+
+	numLevels     int
+	waveform      WaveformType
+	physicsEngine PhysicsEngine
+	paused        bool
+
+	wrdPhase          int
+	wrdTargetLevel    int
+	wrdReadLevel      int
+	wrdTotalWrites    int
+	wrdSuccessWrites  int
+	wrdTotalEnergyfJ  float64
+	manualAnimating   bool
+	manualPhase       int
+	manualTargetLevel int
+	manualStartLevel  int
+	controllerState   controller.WriteState
 }
 
 // ensureUIUpdateLoop starts the async UI update loop exactly once.
@@ -1392,7 +1449,7 @@ func (a *App) uiUpdateLoop() {
 		}
 	Apply:
 		fyne.Do(func() {
-			a.refreshGUI(snapshot.fE, snapshot.pV, snapshot.dL, snapshot.eC, snapshot.hE, snapshot.hP)
+			a.refreshGUI(snapshot)
 		})
 	}
 }
@@ -1405,6 +1462,24 @@ func (a *App) updateUI() {
 	fE := a.electricField
 	pV := a.polarization
 	dL := a.discreteLevel
+	numLevels := a.numLevels
+	waveform := a.waveform
+	physicsEngine := a.physicsEngine
+	paused := a.paused
+	wrdPhase := a.wrdPhase
+	wrdTargetLevel := a.wrdTargetLevel
+	wrdReadLevel := a.wrdReadLevel
+	wrdTotalWrites := a.wrdTotalWrites
+	wrdSuccessWrites := a.wrdSuccessWrites
+	wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
+	manualAnimating := a.manualAnimating
+	manualPhase := a.manualPhase
+	manualTargetLevel := a.manualTargetLevel
+	manualStartLevel := a.manualStartLevel
+	ctrlState := controller.StateIdle
+	if a.writeController != nil {
+		ctrlState = a.writeController.State
+	}
 	materialEc := 0.0
 	if a.material != nil {
 		materialEc = a.material.Ec
@@ -1416,24 +1491,48 @@ func (a *App) updateUI() {
 	a.mu.RUnlock()
 
 	a.queueUIUpdate(uiSnapshot{
-		fE: fE,
-		pV: pV,
-		dL: dL,
-		eC: materialEc,
-		hE: eHist,
-		hP: pHist,
+		fE:                fE,
+		pV:                pV,
+		dL:                dL,
+		eC:                materialEc,
+		hE:                eHist,
+		hP:                pHist,
+		numLevels:         numLevels,
+		waveform:          waveform,
+		physicsEngine:     physicsEngine,
+		paused:            paused,
+		wrdPhase:          wrdPhase,
+		wrdTargetLevel:    wrdTargetLevel,
+		wrdReadLevel:      wrdReadLevel,
+		wrdTotalWrites:    wrdTotalWrites,
+		wrdSuccessWrites:  wrdSuccessWrites,
+		wrdTotalEnergyfJ:  wrdTotalEnergyfJ,
+		manualAnimating:   manualAnimating,
+		manualPhase:       manualPhase,
+		manualTargetLevel: manualTargetLevel,
+		manualStartLevel:  manualStartLevel,
+		controllerState:   ctrlState,
 	})
 }
 
 // refreshGUI updates all UI elements with the latest simulation data.
 // Must be called on the main/UI thread.
-func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float64, hP []float64) {
+func (a *App) refreshGUI(snapshot uiSnapshot) {
+	fE := snapshot.fE
+	pV := snapshot.pV
+	dL := snapshot.dL
+	eC := snapshot.eC
+	hE := snapshot.hE
+	hP := snapshot.hP
 	// Update labels
 	a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", fE/1e8))
 	a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pV*100))
-	a.mu.RLock()
-	numLevels := a.numLevels
-	a.mu.RUnlock()
+	numLevels := snapshot.numLevels
+	if numLevels <= 0 {
+		a.mu.RLock()
+		numLevels = a.numLevels
+		a.mu.RUnlock()
+	}
 	a.levelLabel.SetText(fmt.Sprintf("%d/%d", dL+1, numLevels))
 
 	// Update state descriptor (divide into thirds)
@@ -1519,12 +1618,10 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 	}
 
 	// Update phase indicator based on current mode and phase
-	a.mu.RLock()
-	waveform := a.waveform
-	wrdPhaseVal := a.wrdPhase
-	manPhaseVal := a.manualPhase
-	animating := a.manualAnimating
-	a.mu.RUnlock()
+	waveform := snapshot.waveform
+	wrdPhaseVal := snapshot.wrdPhase
+	manPhaseVal := snapshot.manualPhase
+	animating := snapshot.manualAnimating
 
 	if a.phaseIndicator != nil {
 		switch waveform {
@@ -1544,27 +1641,25 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 	// Update slider to match current E-field (only if not being manually controlled)
 	// During Manual animation, the slider reflects the animated E-field
 	// Normalize by Ec for display (-1.5 to +1.5 range)
-	a.mu.RLock()
-	shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
-	a.mu.RUnlock()
+	shouldUpdateSlider := snapshot.waveform != WaveformManual || snapshot.manualAnimating
 	if shouldUpdateSlider {
 		a.eFieldSlider.SetValue(fE / eC)
 	}
 
 	// Update status and logging
-	if a.paused {
+	if snapshot.paused {
 		a.statusLabel.SetText("⏸ Paused")
 	} else {
+		currentWaveform := snapshot.waveform
+		wrdPhase := snapshot.wrdPhase
+		wrdTarget := snapshot.wrdTargetLevel
+		wrdRead := snapshot.wrdReadLevel
+		wrdTotalWrites := snapshot.wrdTotalWrites
+		wrdSuccessWrites := snapshot.wrdSuccessWrites
+		wrdTotalEnergyfJ := snapshot.wrdTotalEnergyfJ
+		midLevel := numLevels / 2 // Dynamic middle level for direction logic
 		a.mu.RLock()
-		currentWaveform := a.waveform
-		wrdPhase := a.wrdPhase
-		wrdTarget := a.wrdTargetLevel
-		wrdRead := a.wrdReadLevel
 		lastPhase := a.lastLogPhase
-		wrdTotalWrites := a.wrdTotalWrites
-		wrdSuccessWrites := a.wrdSuccessWrites
-		wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
-		midLevel := a.numLevels / 2 // Dynamic middle level for direction logic
 		a.mu.RUnlock()
 
 		switch currentWaveform {
@@ -1655,12 +1750,10 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 			a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
 		case WaveformManual:
 			// Manual mode status with RESET-AND-RETRY physics
-			a.mu.RLock()
-			animAnimating := a.manualAnimating
-			manPhase := a.manualPhase
-			manTarget := a.manualTargetLevel
-			manStart := a.manualStartLevel
-			a.mu.RUnlock()
+			animAnimating := snapshot.manualAnimating
+			manPhase := snapshot.manualPhase
+			manTarget := snapshot.manualTargetLevel
+			manStart := snapshot.manualStartLevel
 
 			if animAnimating {
 				var phaseStr string
@@ -1720,9 +1813,7 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 	a.logText.SetText(logText)
 
 	// Update plot
-	a.mu.RLock()
-	engine := a.physicsEngine
-	a.mu.RUnlock()
+	engine := snapshot.physicsEngine
 	a.plot.SetSpikeFiltering(engine != PhysicsLandau)
 	a.plot.SetData(hE, hP, fE, pV)
 	a.plot.Refresh()
@@ -1731,18 +1822,13 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 	a.levelIndicator.SetLevel(dL)
 
 	// Highlight target level during animations
-	a.mu.RLock()
-	currentMode := a.waveform
-	currentWrdPh := a.wrdPhase
-	currentWrdTrg := a.wrdTargetLevel
-	ctrlState := controller.StateIdle
-	if a.writeController != nil {
-		ctrlState = a.writeController.State
-	}
-	manAnim := a.manualAnimating
-	manTrg := a.manualTargetLevel
-	matEcVal := a.material.Ec // For settled threshold
-	a.mu.RUnlock()
+	currentMode := snapshot.waveform
+	currentWrdPh := snapshot.wrdPhase
+	currentWrdTrg := snapshot.wrdTargetLevel
+	ctrlState := snapshot.controllerState
+	manAnim := snapshot.manualAnimating
+	manTrg := snapshot.manualTargetLevel
+	matEcVal := eC // For settled threshold
 
 	if currentMode == WaveformWriteReadDemo {
 		// Show target until point SETTLES at target level (not just crosses it)

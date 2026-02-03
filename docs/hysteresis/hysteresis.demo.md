@@ -202,20 +202,22 @@ The WRD controller now recalibrates **during runtime** when convergence is poor:
 - **Overshoot detection**: compares the last verified level to the post‑pulse level using the pulse direction to detect true crossings.
 - **Quantization**: level readout uses `normalizedP` → discrete level mapping (0–N‑1).
 
-#### Headless L‑K ISPP (`--mode hysteresis`)
+#### Headless ISPP (`--mode hysteresis --engine preisach|lk`)
 
 The headless diagnostics path uses the **same WRD phase machine + WriteController**
-as the GUI (`module1-hysteresis/pkg/controller`) while driving the Landau‑Khalatnikov
-solver (`shared/physics/landau.go`) for physics. Targets are resolved to **discrete
-levels** from the conductance mapping (Gmin/Gmax), then the controller steers field
-pulses to hit those levels exactly.
+as the GUI (`module1-hysteresis/pkg/controller`). By default it runs the **Preisach
+quasi‑static engine** (`module1-hysteresis/pkg/ferroelectric/preisach.go`) for WRD/ISPP
+parity with the GUI. Use `--engine lk` to switch to the dynamic Landau‑Khalatnikov
+solver (`shared/physics/landau.go`) for performance profiling and equation checks.
+Targets are resolved to **discrete levels** from the conductance mapping (Gmin/Gmax),
+then the controller steers field pulses to hit those levels exactly.
 
 **Sequence:**
 1. **PREP**: saturate to the **opposite polarity** of the target (`±2 × Ec`, threshold `0.75 × Ps`).
 2. **WRITE (controller)**: Apply → Wait → Verify
    - **Apply**: pulse field from calibration (if available) or `~1 × Ec` toward target.
    - **Wait**: hold field near target for the pulse window.
-   - **Verify**: settle to 0, read level via L‑K (`P → G → level`).
+   - **Verify**: settle to 0, read level via active engine (`P → G → level`).
 3. **Resetting**: if the level crosses the target in the wrong direction, apply reverse‑direction correction pulses.
 4. **DISPLAY**: ramp to 0 and advance to the next target.
 
@@ -238,12 +240,17 @@ sequence (`pos-1`, `pos-2`, `neg-1`) to confirm end‑to‑end ISPP convergence 
 positive and negative branches without forcing a full reset between each step.
 
 **Authoritative validation (headless‑first):** Headless mode is the acceptance gate
-for physics + ISPP correctness. Run `./launch.sh --logger --verbosity debug --mode hysteresis`
-and confirm:
+for physics + ISPP correctness. Run `./launch.sh --logger --verbosity debug --mode hysteresis --engine preisach`
+(default engine) and confirm:
+- `ISPP` logs show `APPLY → WAIT → VERIFY → (RESETTING)` sequences per step.
+- CSV rows show `wrd_target_level` matching `controller_target_level` during WRITE/VERIFY.
+- Headless runs emit a full‑resolution CSV at `logs/hysteresis-<material>-<timestamp>.csv` (same schema as GUI)
+  with `controller_*` fields for ISPP state transitions.
+
+For L‑K equation verification and perf counters, run
+`./launch.sh --logger --verbosity debug --mode hysteresis --engine lk` and confirm:
 - `lk-solver` logs include `E_applied`, `E_dep`, `E_eff`, `dG_dP`, `rho_eff`, `Alpha`, `Beta`, `Gamma`, `K_dep`.
 - `ISPP` logs show `APPLY → WAIT → VERIFY → (RESETTING)` sequences per step.
-- Headless runs also emit a full‑resolution CSV at `logs/hysteresis-<material>-<timestamp>.csv` (same schema as GUI)
-  with `controller_*` fields for ISPP state transitions.
 GUI runs are **illustrative only**; physics verification is done headlessly.
 
 ### Key Parameters (HZO Materials)

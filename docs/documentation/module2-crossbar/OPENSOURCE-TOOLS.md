@@ -1,19 +1,19 @@
 # Module 2: Crossbar - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- CrossSim (Sandia): iterative crossbar solver with GPU support.
-- badcrossbar (UCL): nodal-analysis crossbar solver for validation.
-- MemTorch: PyTorch-based memristive crossbar simulation with non-idealities.
-- DNN+NeuroSim: chip-level energy and latency estimation for crossbar networks.
+- Validating array behavior with circuit-level solvers.
+- Exploring layout-aware wire models.
+- Scaling simulations beyond interactive GUI limits.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/opensource-crossbar.md`
-- `docs/opensource-tools/memristor-rram-tools.md`
-- `docs/opensource-tools/nn-hardware-mapping-tools.md`
+- ngspice or Xyce for circuit-level verification.
+- KLayout for quick layout visualization and parasitic awareness.
+- NumPy for large parameter sweeps and statistics.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- Crossbar parameters live in `module2-crossbar/pkg/crossbar/array.go`.
+- Non-idealities are implemented in `module2-crossbar/pkg/crossbar/nonidealities.go`.
+- For export flows, see `module6-eda/pkg/export/spice.go`.

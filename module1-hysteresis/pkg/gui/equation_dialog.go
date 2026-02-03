@@ -13,6 +13,14 @@ func (a *App) showFrankesteinEquationDialog() {
 		return
 	}
 
+	wasPaused := a.paused
+	if !wasPaused {
+		a.paused = true
+		if a.pauseBtn != nil {
+			a.pauseBtn.SetText("Resume")
+		}
+	}
+
 	content := widgets.NewFrankesteinEquationWidget(a.mainWindow)
 	scroll := container.NewScroll(content)
 	scroll.Direction = container.ScrollBoth
@@ -31,6 +39,12 @@ func (a *App) showFrankesteinEquationDialog() {
 	closeBtn := widget.NewButton("Close", func() {
 		if dialog != nil {
 			dialog.Hide()
+		}
+		if !wasPaused && a.paused {
+			a.paused = false
+			if a.pauseBtn != nil {
+				a.pauseBtn.SetText("Pause")
+			}
 		}
 	})
 

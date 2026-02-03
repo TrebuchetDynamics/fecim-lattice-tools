@@ -2,28 +2,29 @@
 
 ## Learning Objectives
 
-- Build intuition for architecture and business-case comparison.
-- Understand what the simulator is modeling versus simplifying.
-- Know which page to read next.
+- Understand why we compare architectures and what metrics matter.
+- See the difference between demonstrated and modeled claims.
+- Know which page to read next for formal detail.
 
 ## Intuition
 
-This module compares different compute approaches on the same workload.
-We look at energy, speed, and scaling to data-center levels.
-It is a structured way to ask: when does CIM help most?
+Comparing hardware is like comparing cars: speed, efficiency, and cost all matter.
+This module collects those metrics so you can see tradeoffs side by side.
+
+The key idea is honesty: modeled results are not the same as measured results.
 
 ## Key Analogies
 
-- Comparing cars on the same track: same route, different fuel economy.
-- Comparing kitchens: same recipe, different appliances.
+- Comparing fuel economy and horsepower across car models.
+- Comparing battery life and performance across phones.
 
-## What the Simulator Simplifies
+## What The Simulator Simplifies
 
-- Uses modeled parameters, not vendor-validated chip measurements.
-- Assumes ideal utilization for high-level comparisons.
+- System-level metrics are computed from simplified models.
+- Benchmarks are representative, not exhaustive.
+- Results are directional, not guarantees.
 
 ## Next Steps
 
 - Read the formal model in [PHYSICS.md](PHYSICS.md).
 - Connect to implementation details in [FEATURES.md](FEATURES.md).
-

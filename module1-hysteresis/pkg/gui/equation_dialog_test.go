@@ -15,7 +15,10 @@ func TestShowFrankesteinEquationDialog_NoWindow(t *testing.T) {
 func TestShowFrankesteinEquationDialog_AddsOverlay(t *testing.T) {
 	test.NewApp()
 	win := test.NewWindow(widget.NewLabel("host"))
-	a := &App{mainWindow: win}
+	a := &App{
+		mainWindow: win,
+		pauseBtn:   widget.NewButton("Pause", nil),
+	}
 
 	before := len(win.Canvas().Overlays().List())
 	a.showFrankesteinEquationDialog()
@@ -23,5 +26,8 @@ func TestShowFrankesteinEquationDialog_AddsOverlay(t *testing.T) {
 
 	if after != before+1 {
 		t.Fatalf("expected overlays to increase by 1, got before=%d after=%d", before, after)
+	}
+	if !a.paused {
+		t.Fatal("expected equation dialog to pause simulation")
 	}
 }

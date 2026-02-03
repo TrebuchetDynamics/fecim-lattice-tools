@@ -482,7 +482,7 @@ Equations:
 |--------|-----------|-------------|-------------|
 | **Energy/MAC** | ~100 fJ | ~1000 fJ | 10× |
 | **Energy Efficiency** | 885 TOPS/W | 1-10 TOPS/W | 100-1000× |
-| **Latency/MVM** | 60-75 ns | µs-ms | 1000× |
+| **Latency/MVM** | ~76 ns | µs-ms | 1000× |
 | **Power (typical)** | 153.6 µW | 100+ W | 10⁶× |
 
 ### 4.7 Handling Signed Weights
@@ -573,8 +573,8 @@ Step 1: Digital to Analog Conversion
 │ Level = 15? │  If not, increment voltage
 └─────────────┘
 
-Timing: DAC(10ns) + Pump(40ns) + Write(100ns) ≈ 150ns
-Energy: ~30 fJ total
+Timing: DAC(10ns) + Pump(88ns) + Write(100ns) + Array(5ns) ≈ 203ns
+Energy: ~2.15 pJ total (pump-dominated)
 ```
 
 ### 5.2 Complete Read Path
@@ -607,8 +607,8 @@ Step 1: Select Cell
 │  Level 15   │  Digital output
 └─────────────┘
 
-Timing: TIA(10ns) + ADC(50ns) ≈ 60ns
-Energy: ~50 fJ total
+Timing: DAC(10ns) + Array(5ns) + TIA(11ns) + ADC(50ns) ≈ 76ns
+Energy: ~46 fJ total
 ```
 
 ### 5.3 Complete MVM Path
@@ -655,9 +655,9 @@ Step 3: Sense Output Currents
 │           y = [y₀, y₁, y₂, y₃]          │  Digital outputs
 └─────────────────────────────────────────┘
 
-Timing: DAC(10ns) + Array(5ns) + TIA(10ns) + ADC(50ns) ≈ 75ns
-Energy: ~200 fJ for 4×4 MVM (16 MACs)
-Energy per MAC: ~12.5 fJ (100× better than digital!)
+Timing: DAC(10ns) + Array(5ns) + TIA(11ns) + ADC(50ns) ≈ 76ns
+Energy: ~184 fJ for 4×4 MVM (16 MACs)
+Energy per MAC: ~11.5 fJ (100× better than digital!)
 ```
 
 ---
@@ -718,9 +718,9 @@ Tradeoff: Slower (integration time), precision limited
 
 | Operation | Voltage | Duration | Energy | Notes |
 |-----------|---------|----------|--------|-------|
-| **READ** | 0.5-1.0 V | 60 ns | 50 fJ | Non-destructive |
-| **WRITE** | 1.2-1.5 V | 150 ns | 30 fJ | Per cell |
-| **COMPUTE** | 0-1.0 V (input) | 75 ns | 12 fJ/MAC | Array-wide |
+| **READ** | 0.5-1.0 V | 76 ns | ~46 fJ | Non-destructive |
+| **WRITE** | 1.2-1.5 V | 203 ns | ~2.15 pJ | Per cell (pump-dominated) |
+| **COMPUTE** | 0-1.0 V (input) | 76 ns | ~46 fJ/row read | Array-wide |
 
 ---
 

@@ -2,40 +2,46 @@
 
 ## Prerequisites
 
-- Units (J, W, ops/s)
-- Basic scaling intuition
+- Basic performance metrics
+- Power and energy concepts
+- Log-scale charts and ratios
 
 ## Core Model
 
-- Energy per inference = energy per op * ops per inference.
-- System scaling uses linear or simple aggregate models.
+- Each architecture is described by compute, memory, and energy parameters.
+- Workloads estimate latency, throughput, and energy.
+- Comparisons focus on relative differences, not absolute claims.
 
 ## Key Equations (Simplified)
 
 ```
-E_infer = E_op * Ops_infer
-Efficiency = Ops/s / W
+Energy = Power * Time
+Throughput = Ops / Time
+Efficiency = Ops / Energy
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
-| E_op | Energy per op | J |
-| Ops/s | Throughput | operations/second |
+| P | Power | Watts |
+| t | Time | seconds |
+| E | Energy | Joules |
+| T | Throughput | ops/s |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
-- High-level models; does not replace detailed power analysis.
-- Comparisons depend on workload choice.
+- Modeled numbers depend on configuration assumptions.
+- Benchmarks are representative subsets.
+- Comparisons should be interpreted with the honesty audit.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
 - `module5-comparison/pkg/comparison/architecture.go`
 - `module5-comparison/pkg/comparison/render.go`
+- `module5-comparison/pkg/gui/widgets.go`
 
 ## Sources
 
-- `docs/development/scriptReference.md#demo-5-comparison-module5-comparison`
 - `docs/comparison/HONESTY_AUDIT.md`
-
+- `docs/development/scriptReference.md#demo-5-comparison-module5-comparison`

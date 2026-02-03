@@ -3,42 +3,46 @@
 ## Prerequisites
 
 - Ohm's law
-- Sampling/quantization
-- Basic op-amp intuition
+- Basic sampling and quantization
+- Simple RC concepts
 
 ## Core Model
 
-- DAC: digital code -> analog voltage steps.
-- ADC: analog voltage -> digital code with quantization error.
-- TIA: V_out = I_in * R (first-order model).
+- DAC maps digital codes to analog voltages.
+- TIA maps analog currents to voltages.
+- ADC maps analog voltages back to digital codes.
 
 ## Key Equations (Simplified)
 
 ```
-V_out = I_in * R
-Quantization step = V_ref / (2^N - 1)
+LSB = Vref / (2^N)
+V_out = I_in * R_tia
+QuantizationError ≈ ±0.5 LSB
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
+| Vref | Reference voltage | Volts |
 | N | Converter resolution | bits |
-| V_ref | Reference voltage | Volts |
-| R | TIA resistance | Ohms |
+| I_in | Input current | Amps |
+| R_tia | TIA resistance | Ohms |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
-- Linear converter models without layout parasitics.
-- Noise treated as additive for analysis.
+- Idealized converter behavior by default.
+- No full transistor-level modeling.
+- Nonlinearity and noise are simplified.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
 - `module4-circuits/pkg/peripherals/dac.go`
 - `module4-circuits/pkg/peripherals/adc.go`
 - `module4-circuits/pkg/peripherals/tia.go`
+- `module4-circuits/pkg/gui/app.go`
 
 ## Sources
 
 - `docs/development/scriptReference.md#demo-4-circuits-module4-circuits`
-
+- `module4-circuits/pkg/peripherals/analysis.go`

@@ -2,24 +2,30 @@
 
 ## What This Module Does
 
-- Architecture and business-case comparison
+- Builds architecture profiles for CPU, GPU, and FeCIM.
+- Runs workload estimates and compares metrics.
+- Renders charts and summary advantages.
 
 ## Primary Components
 
 - `module5-comparison/pkg/comparison/architecture.go`
 - `module5-comparison/pkg/comparison/render.go`
+- `module5-comparison/pkg/gui/app.go`
 
 ## Key Workflows
 
-- Pick workload -> compare architectures -> review efficiency deltas.
+- Select a workload and compare architectures.
+- Scale results to data center assumptions.
+- Render charts for energy, latency, and throughput.
 
 ## Extension Points
 
-- Comparison tables and charts for multiple architectures.
-- Workload presets (MNIST, ResNet, BERT, GPT-2, LLM).
+- Add new workloads or benchmark definitions.
+- Extend architecture parameters with new fields.
+- Add new chart styles or visual summaries.
 
 ## Known Limitations
 
-- Numbers are model-based and should be treated as directional.
-- No direct integration with live benchmarking in this module.
-
+- Values are modeled, not measured.
+- Cross-architecture comparisons depend on assumptions.
+- Not a replacement for benchmarking on real hardware.

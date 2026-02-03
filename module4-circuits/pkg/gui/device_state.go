@@ -4,6 +4,7 @@ package gui
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
 	"fecim-lattice-tools/config/physics"
@@ -147,11 +148,11 @@ type DeviceState struct {
 	enableDACNonlinearity bool // Apply DAC INL/DNL in compute path
 
 	// Embedded state machines (previously global)
-	hysteresisState      HysteresisState
-	writeSequenceState   WriteSequenceState
-	isppState            ISPPState
-	halfSelectState      HalfSelectVisualization
-	voltageCalibration   *PerLevelVoltageCalibration
+	hysteresisState    HysteresisState
+	writeSequenceState WriteSequenceState
+	isppState          ISPPState
+	halfSelectState    HalfSelectVisualization
+	voltageCalibration *PerLevelVoltageCalibration
 
 	// Shared ISPP calculator for voltage math
 	isppCalc *sharedphysics.ISPPCalculator
@@ -178,8 +179,8 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		saturated:    make([]bool, rows),
 		selectedRow:  0,
 		selectedCol:  0,
-		material:     defaultMaterial,              // Default to FeCIM material
-		calibParams:  loadCalibrationParams(),      // Load from physics.yaml
+		material:     defaultMaterial,         // Default to FeCIM material
+		calibParams:  loadCalibrationParams(), // Load from physics.yaml
 		tia:          tia,
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
@@ -957,6 +958,37 @@ func (ds *DeviceState) GetVoltageForLevel(level int, ascending bool) float64 {
 	result := ds.getVoltageForLevelInternal(level, ascending)
 	ds.mu.Unlock()
 	return result
+}
+
+// GetLevelForVoltage estimates the nearest discrete level for a given write voltage.
+// Uses the calibrated per-level voltage table (ascending/descending) to avoid ad-hoc mapping.
+func (ds *DeviceState) GetLevelForVoltage(voltage float64, ascending bool) int {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	if ds.voltageCalibration == nil {
+		ds.initVoltageCalibrationInternal()
+	}
+
+	levels := ds.voltageCalibration.AscendingVoltages
+	if !ascending {
+		levels = ds.voltageCalibration.DescendingVoltages
+	}
+	if len(levels) == 0 {
+		return 0
+	}
+
+	closest := 0
+	minDiff := math.Abs(levels[0] - voltage)
+	for i, v := range levels {
+		diff := math.Abs(v - voltage)
+		if diff < minDiff {
+			minDiff = diff
+			closest = i
+		}
+	}
+
+	return closest
 }
 
 // ============================================================================

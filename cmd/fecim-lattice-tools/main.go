@@ -470,6 +470,7 @@ func main() {
 	verifyFlag := flag.Bool("verify", false, "Verify calibration accuracy after calibrating")
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
 	modeFlag := flag.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
+	engineFlag := flag.String("engine", "", "Headless hysteresis engine for --mode hysteresis: preisach|lk (default: preisach)")
 	var moduleFlag = flag.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
 	flag.Parse()
 
@@ -527,7 +528,7 @@ func main() {
 
 	// Handle --mode (headless diagnostics) after logging is initialized
 	if *modeFlag != "" {
-		if err := runMode(*modeFlag); err != nil {
+		if err := runMode(*modeFlag, *engineFlag); err != nil {
 			fmt.Fprintf(os.Stderr, "Mode error: %v\n", err)
 			os.Exit(1)
 		}

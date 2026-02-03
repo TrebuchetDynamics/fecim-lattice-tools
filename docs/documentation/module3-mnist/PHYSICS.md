@@ -2,43 +2,48 @@
 
 ## Prerequisites
 
-- Linear algebra basics
-- Activation functions
-- Quantization
+- Vectors and matrices
+- Basic neural network concepts
+- Probability and normalization
 
 ## Core Model
 
-- Forward pass is a sequence of matrix multiplies and nonlinearities.
-- CIM path quantizes weights/activations to discrete levels and injects noise.
+- A feed-forward network computes logits from inputs.
+- ReLU introduces nonlinearity; softmax produces probabilities.
+- The CIM path applies quantization and noise to weights and activations.
 
 ## Key Equations (Simplified)
 
 ```
-a_{l+1} = f(W_l a_l + b_l)
-Quantize(x) -> nearest discrete level
+Hidden = ReLU(W1 * x + b1)
+Logits = W2 * Hidden + b2
+Probs = softmax(Logits)
+QuantizedValue = round(value * (L-1)) / (L-1)
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
-| NumLevels | Quantization levels | count |
-| NoiseLevel | Additive noise std | unitless |
-| ADCBits | ADC resolution | bits |
+| x | Input vector (784) | unitless |
+| W | Weight matrix | unitless |
+| b | Bias vector | unitless |
+| L | Quantization levels | levels |
+| sigma | Noise coefficient | unitless |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
-- Feedforward network only (no training loop in the GUI).
-- Noise modeled as simple Gaussian perturbation.
+- The architecture is a small MLP for visualization speed.
+- Quantization is uniform with optional per-layer levels.
+- Noise is modeled as additive perturbations.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
-- `module3-mnist/pkg/core/network.go`
+- `module3-mnist/pkg/core/network_inference.go`
 - `module3-mnist/pkg/core/quantize.go`
 - `module3-mnist/pkg/gui/dualmode.go`
 
 ## Sources
 
 - `docs/development/scriptReference.md#demo-3-mnist-module3-mnist`
-- `docs/ELI5.md`
-
+- `module3-mnist/pkg/core/network_inference.go`

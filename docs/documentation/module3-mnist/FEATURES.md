@@ -2,27 +2,31 @@
 
 ## What This Module Does
 
-- Neural inference: full-precision vs CIM
+- Runs dual-path inference: full precision vs CIM.
+- Visualizes activations and confidence differences.
+- Supports calibration mode for single-layer hardware mapping.
 
 ## Primary Components
 
 - `module3-mnist/pkg/core/network.go`
-- `module3-mnist/pkg/core/quantize.go`
+- `module3-mnist/pkg/core/network_inference.go`
 - `module3-mnist/pkg/gui/dualmode.go`
+- `module3-mnist/pkg/gui/canvas.go`
 
 ## Key Workflows
 
-- Load weights -> draw digit -> compare FP vs CIM prediction.
-- Adjust ADC/DAC bits -> observe accuracy shift.
+- Load pretrained weights and run inference.
+- Adjust quantization, noise, ADC/DAC bits and compare outputs.
+- Use drawing canvas for live digit input.
 
 ## Extension Points
 
-- Dual-mode inference (FP vs CIM) with side-by-side metrics.
-- Interactive drawing canvas for digit input.
-- Quantization stats and activation visualizations.
+- Add new weight files and quantization schemes.
+- Extend visualization for more layers or metrics.
+- Integrate other datasets for comparison.
 
 ## Known Limitations
 
-- Weights are pre-trained and not re-trained inside the GUI.
-- Model size is fixed for the demo workflow.
-
+- Inference only; training is offline.
+- Small network chosen for interactivity, not SOTA accuracy.
+- Hardware non-idealities are simplified.

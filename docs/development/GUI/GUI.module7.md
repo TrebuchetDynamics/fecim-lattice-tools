@@ -10,6 +10,7 @@ Description: |
   and favorites persistence.
   Defaults to docs/documentation/ curriculum structure with module shortcuts panel
   (ELI5/Physics/Features/Tools) for guided learning paths.
+  Includes quick links to curriculum overview, module index, and research index.
   Category detection provides visual indicators via icons and metadata badges.
   No physics simulation - utility module only.
 ---
@@ -39,6 +40,9 @@ contains all curriculum materials organized by module and topic.
 
 This structure allows learners to start simple (ELI5) and progressively deepen understanding (Physics),
 while engineers jump directly to implementation details (Features, Tools).
+
+**Quick Links:** The sidebar includes a compact set of buttons for curriculum overview, module index,
+and research index to reduce hunting at the root level.
 
 ---
 
@@ -81,6 +85,10 @@ Screens:
                       type: widget.Label
                       text: "Curriculum"
                       style: Bold, centered
+                  - CurriculumLinks (VBox):
+                      type: container.VBox
+                      purpose: Quick links to README, MODULES, and research index
+                      file: embedded.go (buildCurriculumLinks)
                   - ModuleShortcuts (ModuleShortcutsPanel):
                       type: ModuleShortcutsPanel
                       purpose: Quick links to ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS for current module

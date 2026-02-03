@@ -14,7 +14,7 @@
 | [01. Ferroelectric Materials](#01-ferroelectric-materials) | 42 | Core physics, HfO₂, ZrO₂, superlattices, domain dynamics |
 | [02. Training Algorithms](#02-training-algorithms) | 11 | Quantization, low-precision networks, analog training |
 | [03. Simulation Tools](#03-simulation-tools) | 11 | CrossSim, FerroX, NeuroSim, compilers |
-| [04. CIM Architectures](#04-cim-architectures) | 32 | Crossbars, ADC design, sneak paths, multi-level cells |
+| [04. CIM Architectures](#04-cim-architectures) | 34 | Crossbars, ADC design, sneak paths, multi-level cells |
 | [05. Neuromorphic Computing](#05-neuromorphic) | 7 | Synaptic transistors, spike-based systems |
 | [06. Photonic Computing](#06-photonic-computing) | 5 | Optical DNNs, photonic accelerators |
 | [07. Memory Architectures](#07-memory-architectures) | 3 | 3D memory, HBM, side acceleration |
@@ -159,6 +159,8 @@
 - `sneak_path_self_rectifying_arrays_2022.pdf`
 - `multilevel_fefet_crossbar_2023.pdf`
 - `FeFET_Crossbar_MNIST_Hardware_arXiv.pdf`
+- `FeFET_CIM_Energy_Efficiency_arXiv_2024.pdf`
+- `Bit_Slicing_Techniques_arXiv_2024.pdf`
 - `hcim_adcless_hybrid_cim_2024.pdf`
 - `Temperature_Resilient_FeFET_CIM_2024.pdf`
 - `cim_landscape_overview_2024.pdf`

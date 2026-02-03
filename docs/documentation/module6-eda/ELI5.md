@@ -2,28 +2,28 @@
 
 ## Learning Objectives
 
-- Build intuition for crossbar compiler and export tools.
-- Understand what the simulator is modeling versus simplifying.
-- Know which page to read next.
+- Understand what it means to map a network onto a crossbar array.
+- See how a compiler turns math into hardware placement.
+- Know which page to read next for formal detail.
 
 ## Intuition
 
-EDA turns a neural network into a layout-friendly crossbar plan.
-Think of it as a seating chart: which weight goes into which crossbar cell.
-The compiler also exports CSV, JSON, and SPICE-like representations.
+Think of the network weights as a big spreadsheet.
+The compiler cuts the spreadsheet into tiles that fit the hardware array.
+Each tile becomes a crossbar block, and the compiler tracks where each piece goes.
 
 ## Key Analogies
 
-- A packing algorithm: fit weights into fixed-size grids.
-- A blueprint printer: export the same plan in multiple formats.
+- Packing a large image into smaller tiles.
+- Assigning seats in a theater with fixed rows and columns.
 
-## What the Simulator Simplifies
+## What The Simulator Simplifies
 
-- Uses deterministic mapping heuristics for clarity.
-- Physical design constraints are simplified to row/col limits.
+- Placement is rule-based, not fully optimized.
+- Routing and layout parasitics are not modeled.
+- Compilation focuses on mapping correctness, not timing closure.
 
 ## Next Steps
 
 - Read the formal model in [PHYSICS.md](PHYSICS.md).
 - Connect to implementation details in [FEATURES.md](FEATURES.md).
-

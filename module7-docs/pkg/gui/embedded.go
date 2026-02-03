@@ -143,6 +143,7 @@ func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 
 	sidebarTop := container.NewVBox(
 		widget.NewLabelWithStyle("Curriculum", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		app.buildCurriculumLinks(),
 		app.moduleShortcuts,
 		widget.NewSeparator(),
 	)
@@ -152,6 +153,40 @@ func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 		nil, nil, nil,
 		app.tree,
 	)
+}
+
+// buildCurriculumLinks creates quick links to top-level curriculum pages.
+func (app *EmbeddedDocsApp) buildCurriculumLinks() fyne.CanvasObject {
+	if app.docsPath == "" {
+		return widget.NewLabel("")
+	}
+
+	links := []struct {
+		label string
+		path  string
+	}{
+		{label: "Overview", path: filepath.Join(app.docsPath, "README.md")},
+		{label: "Module Index", path: filepath.Join(app.docsPath, "MODULES.md")},
+		{label: "Research Index", path: filepath.Join(app.docsPath, "research-papers", "README.md")},
+	}
+
+	items := []fyne.CanvasObject{
+		widget.NewLabelWithStyle("Curriculum Links", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+	}
+
+	for _, link := range links {
+		path := link.path
+		btn := widget.NewButton(link.label, func() {
+			app.loadDocument(path)
+		})
+		btn.Importance = widget.LowImportance
+		if _, err := os.Stat(path); err != nil {
+			btn.Disable()
+		}
+		items = append(items, btn)
+	}
+
+	return container.NewVBox(items...)
 }
 
 // buildPathMap recursively builds the path lookup map

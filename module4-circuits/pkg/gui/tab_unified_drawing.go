@@ -427,7 +427,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 
 	// Draw gauge background zones
 	readZoneW := int(float64(gaugeW) * (0.5 * vcThreshold / maxV))
-	cautionZoneW := int(float64(gaugeW) * (vcThreshold / maxV)) - readZoneW
+	cautionZoneW := int(float64(gaugeW)*(vcThreshold/maxV)) - readZoneW
 	writeZoneW := gaugeW - readZoneW - cautionZoneW
 
 	// Read zone (safe) - blue
@@ -505,12 +505,12 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	var energyColor color.RGBA
 	switch mode {
 	case OpModeRead:
-		energyText = "~45fJ"
-		timingText = "65ns"
+		energyText = "~46fJ"
+		timingText = "76ns"
 		energyColor = color.RGBA{100, 200, 255, 200}
 	case OpModeWrite:
-		energyText = "~55fJ"
-		timingText = "170ns"
+		energyText = "~2.15pJ"
+		timingText = "203ns"
 		energyColor = color.RGBA{255, 180, 100, 200}
 	case OpModeCompute:
 		// MVM energy scales with active cells
@@ -532,7 +532,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 				activeCols++
 			}
 		}
-		energyFJ := 50 * activeCells // ~50fJ per cell
+		energyFJ := 46 * activeCells // ~46fJ per cell (read path)
 		energyText = fmt.Sprintf("~%dfJ", energyFJ)
 		timingText = fmt.Sprintf("%dx%d=%d", activeRows, activeCols, activeCells)
 		energyColor = color.RGBA{200, 150, 255, 200}
@@ -724,11 +724,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	infoColor := color.RGBA{150, 150, 170, 180}
 	switch ca.deviceState.GetOperationMode() {
 	case OpModeRead:
-		drawSimpleText(img, "READ ~45fJ 65ns", infoX, infoY, color.RGBA{100, 180, 220, 180})
+		drawSimpleText(img, "READ ~46fJ 76ns", infoX, infoY, color.RGBA{100, 180, 220, 180})
 	case OpModeWrite:
-		drawSimpleText(img, "WRITE ~55fJ 170ns", infoX, infoY, color.RGBA{220, 160, 80, 180})
+		drawSimpleText(img, "WRITE ~2.15pJ 203ns", infoX, infoY, color.RGBA{220, 160, 80, 180})
 	case OpModeCompute:
-		drawSimpleText(img, "MVM: y=Wx ~75ns", infoX, infoY, color.RGBA{180, 140, 220, 180})
+		drawSimpleText(img, "MVM: y=Wx ~76ns", infoX, infoY, color.RGBA{180, 140, 220, 180})
 	default:
 		drawSimpleText(img, "Array 45% | DAC/ADC 40%", infoX, infoY, infoColor)
 	}
@@ -747,8 +747,8 @@ func (ca *CircuitsApp) drawRowTransistors(img *image.RGBA, offsetX, offsetY, cel
 
 		var bodyCol, gateCol, channelCol, terminalCol color.RGBA
 		if transistorOn {
-			bodyCol = color.RGBA{60, 200, 80, 255}    // Green body when ON
-			gateCol = color.RGBA{100, 255, 120, 255}  // Bright green gate
+			bodyCol = color.RGBA{60, 200, 80, 255}   // Green body when ON
+			gateCol = color.RGBA{100, 255, 120, 255} // Bright green gate
 			channelCol = color.RGBA{80, 220, 100, 255}
 			terminalCol = color.RGBA{150, 255, 150, 255}
 		} else {
@@ -841,8 +841,8 @@ func (ca *CircuitsApp) drawColTransistors(img *image.RGBA, offsetX, offsetY, cel
 
 		var bodyCol, gateCol, channelCol, terminalCol color.RGBA
 		if transistorOn {
-			bodyCol = color.RGBA{60, 180, 200, 255}    // Cyan body when ON
-			gateCol = color.RGBA{100, 220, 255, 255}   // Bright cyan gate
+			bodyCol = color.RGBA{60, 180, 200, 255}  // Cyan body when ON
+			gateCol = color.RGBA{100, 220, 255, 255} // Bright cyan gate
 			channelCol = color.RGBA{80, 200, 220, 255}
 			terminalCol = color.RGBA{150, 230, 255, 255}
 		} else {

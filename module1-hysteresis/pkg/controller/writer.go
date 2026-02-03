@@ -101,6 +101,10 @@ type WriteController struct {
 
 	// Stuck detection (no level change across verifies)
 	StuckCount int
+
+	// Progress detection (error not improving across verifies)
+	LastAbsError   int
+	NoImproveCount int
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -127,6 +131,8 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.CurrentField = 0
 	wc.LastVerifyLevel = 0
 	wc.LastError = 0
+	wc.LastAbsError = -1
+	wc.NoImproveCount = 0
 	wc.previousLevel = 0
 	wc.previousField = 0
 	wc.resetDirection = 0
@@ -156,6 +162,8 @@ func (wc *WriteController) ResetState() {
 	wc.FailureCount = 0
 	wc.OvershootCount = 0
 	wc.OvershootTotal = 0
+	wc.LastAbsError = -1
+	wc.NoImproveCount = 0
 }
 
 // ResetDirection exposes the current sticky reset direction for diagnostics/logging.
@@ -298,6 +306,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				currentLevel, wc.TargetLevel, prevLevel, currentField/wc.EcField)
 			prevError := wc.LastError
 			wc.LastError = currentLevel - wc.TargetLevel
+			absErr := int(math.Abs(float64(wc.LastError)))
 
 			// Stuck detection: no level change since last verify
 			if currentLevel == prevLevel {
@@ -305,6 +314,18 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			} else {
 				wc.StuckCount = 0
 			}
+
+			// Progress detection: error not decreasing across verifies
+			if wc.LastAbsError >= 0 {
+				if absErr >= wc.LastAbsError {
+					wc.NoImproveCount++
+				} else {
+					wc.NoImproveCount = 0
+				}
+			} else {
+				wc.NoImproveCount = 0
+			}
+			wc.LastAbsError = absErr
 
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
@@ -384,6 +405,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.VMinSet = false
 				wc.VMaxSet = false
 				wc.StuckCount = 0
+				wc.NoImproveCount = 0
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
 				return 0, false
@@ -583,7 +605,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	}
 
 	// If we have bounds from verify, use bisection for faster convergence.
-	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 {
+	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 && wc.NoImproveCount < 3 {
 		prevVoltage := math.Abs(wc.CurrentField)
 		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
 		// Nudge if midpoint is too close to current voltage (avoid stalling).
@@ -604,8 +626,8 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		return
 	}
 
-	// Stuck escalation: if we haven't moved levels for several verifies, increase step.
-	if wc.StuckCount >= 3 {
+	// Stuck or no-improvement escalation: boost step and clear bounds.
+	if wc.StuckCount >= 3 || wc.NoImproveCount >= 3 {
 		if stepSize < 0.12*wc.EcField {
 			stepSize = 0.12 * wc.EcField
 		}
@@ -615,6 +637,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		wc.VMinSet = false
 		wc.VMaxSet = false
 		wc.StuckCount = 0
+		wc.NoImproveCount = 0
 		log.Printf("ISPP STUCK: boosting step to %.3f×Ec and clearing bounds", stepSize/wc.EcField)
 	}
 

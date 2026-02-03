@@ -197,18 +197,18 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	drawRect(img, marginLeft, gpuY, gpuW, barH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "50ns", marginLeft+gpuW+5, gpuY+8, valueColor)
 
-	// FeFET bar (20ns - 4% width)
+	// FeFET bar (76ns - ~15% width)
 	fefetY := gpuY + spacing
-	fefetW := maxBarW * 20 / 500
+	fefetW := maxBarW * 76 / 500
 	if fefetW < 20 {
 		fefetW = 20
 	}
 	drawSimpleText(img, "FeFET", 5, fefetY+8, sharedtheme.ColorPrimary)
 	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
-	drawSimpleText(img, "20ns", marginLeft+fefetW+5, fefetY+8, valueColor)
+	drawSimpleText(img, "76ns", marginLeft+fefetW+5, fefetY+8, valueColor)
 
 	// Speedup annotation
-	drawSimpleText(img, "25x faster!", w-80, fefetY+8, sharedtheme.ColorAccent)
+	drawSimpleText(img, "≈6.6x vs CPU", w-110, fefetY+8, sharedtheme.ColorAccent)
 
 	// X-axis
 	axisY := h - 25
@@ -283,15 +283,15 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	drawRect(img, marginLeft, gpuY, gpuW, barH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "6400 pJ", marginLeft+gpuW+5, gpuY+8, valueColor)
 
-	// FeFET bar (3.2 pJ - tiny, need minimum visible)
+	// FeFET bar (~2.9 pJ - tiny, need minimum visible)
 	fefetY := gpuY + spacing
-	fefetW := maxBarW * 32 / 64000 // 3.2 pJ scaled
+	fefetW := maxBarW * 29 / 64000 // 2.9 pJ scaled
 	if fefetW < 8 {
 		fefetW = 8 // Minimum visible
 	}
 	drawSimpleText(img, "FeFET", 5, fefetY+8, sharedtheme.ColorPrimary)
 	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
-	drawSimpleText(img, "3.2 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
+	drawSimpleText(img, "2.9 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
 
 	// Energy savings annotation (conservative claim per CLAUDE.md accuracy policy)
 	drawSimpleText(img, "10-100x savings", w-120, fefetY+8, sharedtheme.ColorAccent)
@@ -322,7 +322,7 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	headers := []string{"", "Time", "Energy", "TOPS/W"}
 	cpuRow := []string{"CPU", "500 ns", "64,000 pJ", "0.5"}
 	gpuRow := []string{"GPU", "50 ns", "6,400 pJ", "5.0"}
-	fefetRow := []string{"FeFET", "20 ns", "3.2 pJ", "2,000"}
+	fefetRow := []string{"FeFET", "76 ns", "2.9 pJ", "22"}
 
 	grid := container.NewGridWithColumns(4)
 	for i, h := range headers {
@@ -372,7 +372,7 @@ func (ca *CircuitsApp) onRunComparison() {
 		}
 	})
 
-	ca.compStatusLabel.SetText("Comparison complete: FeFET wins by 20,000x energy efficiency!")
+	ca.compStatusLabel.SetText("Comparison complete: FeFET energy advantage reflects in-memory compute; see PHYSICS.md for calibrated values.")
 }
 
 func (ca *CircuitsApp) onAnimateComparison() {
@@ -384,8 +384,8 @@ func (ca *CircuitsApp) onAnimateComparison() {
 		"Step 2: CPU computes MVM (250ns)...",
 		"Step 3: GPU loads data from HBM (25ns)...",
 		"Step 4: GPU computes MVM (25ns)...",
-		"Step 5: FeFET performs in-memory compute (20ns)...",
-		"Animation complete: FeFET 25x faster than CPU!",
+		"Step 5: FeFET performs in-memory compute (76ns)...",
+		"Animation complete: FeFET ≈6.6x faster than CPU (latency model)",
 	}
 
 	go func() {
@@ -425,11 +425,11 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 
 	cpuTime := int(500 * scaleFactor)
 	gpuTime := int(50 * scaleFactor)
-	fefetTime := int(20 * scaleFactor)
+	fefetTime := int(76 * scaleFactor)
 
 	cpuEnergy := int(64000 * scaleFactor)
 	gpuEnergy := int(6400 * scaleFactor)
-	fefetEnergy := float64(3.2 * scaleFactor)
+	fefetEnergy := float64(2.9 * scaleFactor)
 
 	// Update table labels
 	fyne.Do(func() {

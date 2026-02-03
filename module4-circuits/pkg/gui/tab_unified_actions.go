@@ -137,10 +137,10 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		time.Sleep(iterationDelay / 2)
 
 		// Check if target reached
-		// Write cycle: ~170ns per iteration, Energy: ~100fJ (pulse + verify)
+		// Write cycle: ~203ns per iteration, Energy: ~2.2pJ (pump + verify)
 		if currentLevel == targetLevel {
-			totalTimeNs := iteration * 170
-			totalEnergyFJ := iteration * 100
+			totalTimeNs := iteration * 203
+			totalEnergyFJ := iteration * 2200
 			fyne.Do(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d] = State %d | %d iter | ~%dns, ~%dfJ",
 					row, col, targetLevel, iteration, totalTimeNs, totalEnergyFJ))
@@ -232,9 +232,9 @@ func (ca *CircuitsApp) onUnifiedRead() {
 	ca.mu.RUnlock()
 
 	// Update status with single-cell sense result including energy/timing
-	// Read cycle: ~65ns, Energy: DAC(15fJ) + TIA(5fJ) + ADC(25fJ) = ~45fJ
+	// Read cycle: ~76ns, Energy: DAC(14.4fJ) + TIA(6.3fJ) + ADC(25fJ) = ~46fJ
 	fyne.Do(func() {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.1fuA -> TIA=%.2fV -> ADC=%d | ~65ns, ~45fJ",
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.1fuA -> TIA=%.2fV -> ADC=%d | ~76ns, ~46fJ",
 			selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
 	})
 }
@@ -263,13 +263,13 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 	ca.recomputeAndRefresh()
 
 	// Save compute log for debugging
-	// MVM: ~20ns (parallel), Energy: N x ~50fJ where N = active cells
+	// MVM: ~76ns (parallel row read), Energy: N x ~46fJ where N = active cells
 	activeCells := ca.arrayRows * ca.arrayCols
-	energyFJ := activeCells * 50 // ~50fJ per cell
+	energyFJ := activeCells * 46 // ~46fJ per cell (read path)
 	if err := SaveComputeLog(); err != nil {
 		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM done (log error: %v)", err))
 	} else {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM complete: %dx%d array | ~20ns, ~%dfJ total | saved log",
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM complete: %dx%d array | ~76ns, ~%dfJ total | saved log",
 			ca.arrayRows, ca.arrayCols, energyFJ))
 	}
 }
@@ -292,7 +292,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
 		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText("Step 1: DAC conversion (5ns)")
+			ca.operationsStatusLabel.SetText("Step 1: DAC conversion (10ns)")
 		})
 		if ca.sleep(600) {
 			return // Interrupted
@@ -307,7 +307,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
 		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText("Step 2: Array MVM (5ns)")
+			ca.operationsStatusLabel.SetText("Step 2: Array settle (5ns)")
 		})
 		if ca.sleep(600) {
 			return // Interrupted
@@ -322,7 +322,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
 		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText("Step 3: TIA+ADC conversion (10ns)")
+			ca.operationsStatusLabel.SetText("Step 3: TIA+ADC conversion (~61ns)")
 		})
 		if ca.sleep(600) {
 			return // Interrupted
@@ -335,7 +335,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.mu.Unlock()
 		ca.recomputeAndRefresh()
 		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText("Complete in ~20ns")
+			ca.operationsStatusLabel.SetText("Complete in ~76ns")
 		})
 	}()
 }

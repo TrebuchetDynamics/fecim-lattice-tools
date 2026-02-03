@@ -173,8 +173,9 @@ Each module has a concrete implementation:
 | Documentation | `EmbeddedDocsApp` | `module7-docs/pkg/gui/embedded.go` |
 
 Module 7 (Documentation) is curriculum-first: it indexes `docs/documentation` by default, orders
-module folders first with the research-papers index next, and exposes module quick-access
-shortcuts for ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS pages.
+module folders first with the research-papers index next, exposes module quick-access
+shortcuts for ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS pages, and includes quick links to the
+curriculum overview, module index, and research index.
 
 ### 2. Application Composition
 
@@ -740,6 +741,7 @@ Mode Selection (READ / WRITE / COMPUTE)
 - `shared/peripherals` (DAC/ADC/TIA/ChargePump + analysis)
 - `shared/physics` (HZOMaterial, conductance mapping)
 - `config/physics.yaml` (FieldMinRatio/FieldMaxRatio calibration)
+- Timing/power baselines from `shared/peripherals.AnalyzeTiming/AnalyzePower` (read ~76ns, write ~203ns).
 
 ### Example: Module 1 (Hysteresis) Data Flow
 

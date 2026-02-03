@@ -1,20 +1,20 @@
 # Module 6: EDA - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- OpenLane: RTL-to-GDS flow integrating open-source tools.
-- OpenROAD: place-and-route for digital layouts.
-- Yosys: RTL synthesis to gate-level netlists.
-- Magic: layout editor and DRC.
-- Netgen: LVS (layout vs schematic).
-- KLayout: GDS viewer and cleanup.
-- Xschem + ngspice: analog schematic and simulation.
+- Running full synthesis, placement, and routing flows.
+- Verifying SPICE netlists at device or circuit level.
+- Visualizing layout and parasitics.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/eda-tools.md`
+- OpenROAD or OpenLane for open-source RTL to GDS flows.
+- KLayout for layout inspection and editing.
+- Yosys for synthesis and netlist generation.
+- ngspice or Xyce for circuit simulation.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- EDA docs live in `docs/eda/README.md` and `docs/eda/guides/`.
+- Export formats are implemented in `module6-eda/pkg/export/`.
+- Use `docs/eda/references/cli-reference.md` for CLI usage.

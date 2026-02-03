@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="180" viewBox="0 0 1200 180">
+  <rect width="100%" height="100%" fill="none" />
+  <text x="20" y="60" font-family="monospace" font-size="24" fill="#FFFFFF">
+    P(E) = double_integral_{alpha&gt;=beta} mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta
+  </text>
+  <text x="20" y="120" font-family="monospace" font-size="24" fill="#FFFFFF">
+    gamma_{alpha,beta}(E) = +1 if E &gt;= alpha; -1 if E &lt;= beta; hold if beta &lt; E &lt; alpha
+  </text>
+</svg>

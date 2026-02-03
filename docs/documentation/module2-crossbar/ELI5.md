@@ -2,26 +2,26 @@
 
 ## Learning Objectives
 
-- Build intuition for array physics, mvm, and non-idealities.
-- Understand what the simulator is modeling versus simplifying.
-- Know which page to read next.
+- Build intuition for crossbar arrays and hardware MVM.
+- Understand what the simulator models versus what it simplifies.
+- Know which page to read next for formal detail.
 
 ## Intuition
 
 Imagine a grid of tiny adjustable resistors.
-You apply voltages on one side and currents add up on the other.
-That is matrix-vector multiplication happening in parallel, in hardware.
+You apply voltages on the rows and measure currents on the columns.
+Because each column sums currents, the grid performs matrix-vector multiply in parallel.
 
 ## Key Analogies
 
-- A city grid of water pipes: each intersection sets how much water flows.
-- A mixing board: each slider scales a signal, and outputs are sums.
+- A city grid of water pipes: each intersection controls flow.
+- A mixing board: each slider scales a signal and outputs a sum.
 
-## What the Simulator Simplifies
+## What The Simulator Simplifies
 
-- Ohm's law is treated as linear in the core model.
-- Conductance is quantized to 30 levels (demo baseline; conference claim).
-- IR drop and sneak paths are modeled with simplified wire parameters.
+- Conductance is treated as linear in the core model.
+- Device states are quantized to a fixed number of levels.
+- Wire resistance and sneak paths use simplified parameters.
 
 ## Next Steps
 

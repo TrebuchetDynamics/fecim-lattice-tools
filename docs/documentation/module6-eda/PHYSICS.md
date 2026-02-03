@@ -2,32 +2,40 @@
 
 ## Prerequisites
 
-- Matrix dimensions
-- Basic mapping constraints
+- Matrix shapes and dimensions
+- Basic constraints and tiling
+- Understanding of quantization levels
 
 ## Core Model
 
-- Mapping assigns each weight to a specific crossbar coordinate.
-- Compile stats summarize utilization and fragmentation.
+- A weight matrix is partitioned into crossbar-sized tiles.
+- Each tile is assigned to a physical array location.
+- Exports preserve mapping for downstream tools.
 
 ## Key Equations (Simplified)
 
 ```
-Utilization = assigned_cells / total_cells
+TilesRows = ceil(R / ArrayRows)
+TilesCols = ceil(C / ArrayCols)
+TileIndex = (rowTile, colTile)
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
-| Rows | Crossbar rows | count |
-| Cols | Crossbar cols | count |
+| R | Weight matrix rows | count |
+| C | Weight matrix cols | count |
+| ArrayRows | Crossbar rows | count |
+| ArrayCols | Crossbar cols | count |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
-- No placement-and-route; mapping is logical not physical.
+- No detailed routing or placement optimization.
+- Focus is on mapping correctness and export format.
+- Quantization levels are assumed to match array configuration.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
 - `module6-eda/pkg/compiler/compiler.go`
 - `module6-eda/pkg/compiler/types.go`
@@ -36,5 +44,4 @@ Utilization = assigned_cells / total_cells
 ## Sources
 
 - `docs/eda/README.md`
-- `docs/eda/references/cli-reference.md`
-
+- `docs/development/scriptReference.md#module-6-eda-tools-module6-eda`

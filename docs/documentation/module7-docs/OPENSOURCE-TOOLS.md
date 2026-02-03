@@ -1,18 +1,19 @@
 # Module 7: Docs - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- MkDocs: static documentation sites with navigation and search.
-- Docusaurus: curriculum-style docs with versioning and sidebar control.
-- mdBook: book-style Markdown publishing.
-- docsify: client-side documentation rendering.
-- Sphinx: long-form technical documentation (Python ecosystem).
+- Generating static documentation sites.
+- Running broader search across multiple repositories.
+- Publishing docs with custom theming and CI.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/README.md`
+- MkDocs for fast markdown-to-site builds.
+- Docusaurus for structured documentation portals.
+- Lunr.js or Tantivy for external search indexing.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- Viewer behavior is documented in `docs/development/GUI/GUI.module7.md`.
+- Search category rules live in `module7-docs/pkg/gui/search.go`.
+- Curriculum structure is defined in `docs/documentation/`.

@@ -861,9 +861,9 @@ func (ca *CircuitsApp) updateOperationClassification() {
 		}
 	case OpModeCompute:
 		if arch == sharedwidgets.Architecture0T1R {
-			helpText = fmt.Sprintf("COMPUTE: All rows, 0-%.1fV. Passive natural MVM mode (~75ns).", readRange.Max)
+			helpText = fmt.Sprintf("COMPUTE: All rows, 0-%.1fV. Passive natural MVM mode (~76ns).", readRange.Max)
 		} else {
-			helpText = fmt.Sprintf("COMPUTE: All transistors ON, 0-%.1fV. Full MVM in ~75ns.", readRange.Max)
+			helpText = fmt.Sprintf("COMPUTE: All transistors ON, 0-%.1fV. Full MVM in ~76ns.", readRange.Max)
 		}
 	default:
 		helpText = "Select a mode: READ, WRITE, or COMPUTE."

@@ -1,30 +1,52 @@
 Role
 
   - You are an expert software engineer and mixed-signal ferroelectrics circuits scientist.
-  - Operate fully autonomously. Do not ask questions unless genuinely blocked by missing inputs/files.
-  - If an ambiguity remains, choose the most reasonable default and proceed; document the choice.
-  - Prioritize physics accuracy over UI polish and reuse existing hysteresis ISPP read/write code instead of reimplementing.
+  - Operate autonomously. Only ask questions when a required file/input is missing or a decision materially changes scope.
+  - If ambiguity remains, choose the most reasonable default and document it.
+  - Prioritize physics accuracy over UI polish.
 
 Objective
 
-  - Ensure the Module 4 peripheral circuits implementation fully matches the equations and behaviors in
-    docs/peripheral-circuits/PHYSICS.md (and supporting module4 docs) when running module4-circuits.
-  - Make any required code + documentation updates to achieve fidelity and verify via CLI output and logs.
-  - Reuse the **hysteresis ISPP read/write logic** (shared/physics + module1-hysteresis) in Module 4 where applicable,
-    eliminating duplicated ISPP state machines or voltage-step logic.
-  - Improve Module 4 documentation quality and ensure referenced papers are downloaded into the repo's
-    research-papers area when possible.
+  - Ensure Module 4 peripheral circuits match the equations and behaviors in
+    `docs/peripheral-circuits/PHYSICS.md` (and supporting Module 4 docs) when running `module4-circuits`.
+  - Reuse the **hysteresis ISPP read/write logic** from `shared/physics` and `module1-hysteresis` where applicable.
+    Avoid duplicating ISPP math or overshoot handling; keep only a thin UI adapter.
+  - Improve Module 4 documentation clarity and consistency.
+  - Ensure referenced papers are present in `docs/research-papers/` when open access is available.
   - All verification must be runnable headless (CLI + tests). GUI runs are optional and only when explicitly requested.
+
+Project Map (Module 4)
+
+  - Physics models: `shared/peripherals/` (DAC/ADC/TIA/ChargePump + analysis)
+  - GUI: `module4-circuits/pkg/gui/` (DeviceState, unified tabs, timing diagrams)
+  - CLI: `module4-circuits/cmd/circuits`
+  - ISPP shared logic:
+      - `shared/physics/ispp_write.go` (WriteController + L-K solver)
+      - `shared/physics/ispp_legacy.go` (ISPPCalculator)
+      - `module1-hysteresis/pkg/controller/writer.go` (full ISPP state machine)
 
 Primary Focus (ranked)
 
   1. Physics accuracy and unit correctness (equations + logs + docs)
-  2. ISPP read/write reuse from hysteresis module (shared/physics + module1-hysteresis)
+  2. ISPP reuse from shared/physics and module1-hysteresis (thin UI adapter only)
   3. Circuit calculation accuracy (timing, power, energy, linearity)
+
+Key Physics Targets (from PHYSICS.md)
+
+  - DAC: 5-bit, ±1.5 V, settle 10 ns, INL 0.5 LSB, DNL 0.25 LSB
+    - Energy/conv ≈ 1.44e-14 J (14.4 fJ)
+  - ADC: 5-bit SAR, 0–1.0 V, INL 0.5 LSB, DNL 0.25 LSB, conversion 50 ns
+    - ENOB ≈ 4.80 bits
+  - TIA: 10 kΩ, 100 MHz, 1 pA/√Hz, 5 mV offset
+    - Settling ≈ 11 ns, Power ≈ 8.3e-8 W
+  - Charge Pump: 1 V → ±1.5 V, 2 stages, 50 MHz, 100 pF, 70% eff
+    - Rise ≈ 88 ns, ActualOutput ≈ 1.5 V (clamped)
+  - Timing: Read ≈ 76 ns, Write ≈ 203 ns, Cycle ≈ 279 ns
+  - Energy: Read ≈ 46 fJ, Write ≈ 2.15 pJ (pump-dominated)
 
 Tasks
 
-  1. Physics fidelity (no approximations unless explicitly called out)
+  1. Physics fidelity
 
   - Verify DAC, ADC, TIA, and charge pump equations, ranges, nonlinearities, noise, timing, and power.
   - Cross-check variable names, units, and parameter mappings between code and docs.
@@ -33,49 +55,47 @@ Tasks
 
   2. ISPP reuse + signal-chain correctness
 
-  - Replace Module 4 ISPP write/read/verify logic with shared/physics + module1-hysteresis implementations when possible.
-    Prefer `shared/physics/ispp_write.go` or `module1-hysteresis/pkg/controller/writer.go` over ad-hoc step logic.
-  - Keep a thin adapter layer only for UI state; avoid duplicating ISPP math or overshoot handling.
-  - Validate READ/WRITE/COMPUTE mode behavior: DAC ranges, word-line control, and charge pump usage.
+  - Replace ad-hoc ISPP step/verify logic in Module 4 with shared/physics or module1-hysteresis logic where possible.
+  - Keep a thin adapter layer only for UI state/animation (no duplicated math).
+  - Validate READ/WRITE/COMPUTE mode behavior: DAC ranges, WL control, charge pump usage.
   - Confirm passive vs 1T1R behavior, half-select (V/2) rules, and calibration usage align with docs.
-  - Ensure end-to-end signal flow matches the documented pipeline (DAC -> Array -> TIA -> ADC).
+  - Ensure end-to-end signal flow matches the documented pipeline (DAC → Array → TIA → ADC).
 
-  3. Architecture documentation
+  3. Documentation alignment
 
-  - Update docs/peripheral-circuits/ARCHITECTURE.md and docs/development/ARCHITECTURE.md to reflect
-    Module 4 data flow, responsibilities, and interfaces.
-  - Update docs/development/GUI/GUI.module4.md with diagrams and related visual explanations as needed.
+  - Update `docs/peripheral-circuits/ARCHITECTURE.md` to reflect current timing/energy values and data flow.
+  - Update `docs/development/ARCHITECTURE.md` with Module 4 data-flow responsibilities if needed.
+  - Update `docs/development/GUI/GUI.module4.md` if UI text/diagrams change.
+  - If other Module 4 docs (ELI5/operations/fundamentals/research) contain conflicting timing/energy values, reconcile them to PHYSICS.md.
 
-  4. Analysis outputs and multi-architecture support
+  4. Research papers
 
-  - Ensure CLI analysis outputs (linearity, timing, power) match documented formulas and defaults.
-  - Confirm multiple architectures (passive, 1T1R) and multi-row compute behavior work end-to-end.
-  - If missing, implement a minimal end-to-end path and validate.
+  - Ensure referenced papers in Module 4 docs exist in `docs/research-papers/`.
+  - For open-access arXiv papers, download PDFs and place them under the correct `by-topic/` directory.
+  - Update indexes/README entries if a new paper is added.
 
-Validation
+Validation (Headless Required)
 
-  - Headless primary run:
-      - go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2
+  - CLI:
+      - `go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2`
   - Tests:
-      - go test ./module4-circuits/...
-      - go test ./shared/peripherals
-  - Log verification (must be headless):
-      - Find newest log in logs/ (ls -lt logs | head -n 1).
-      - Confirm key evidence lines exist (rg on the log file):
-          - DAC.EnergyPerConversion (energy ~1.4e-14 J / 14.4 fJ for default 5-bit DAC).
-          - ADC.ENOB (≈4.80 bits with INL=0.5, DNL=0.25).
-          - ChargePump.ActualOutputVoltage (≈1.5 V with regulation clamp).
-          - AnalyzeTiming (Read ≈76 ns, Write ≈203 ns, Cycle ≈279 ns for defaults).
-          - AnalyzePower (Total ≈2.19e-12 J; pump dominates).
+      - `go test ./module4-circuits/...`
+      - `go test ./shared/peripherals`
+  - Log verification:
+      - `ls -lt logs | head -n 1` (newest log)
+      - `rg` the newest log for evidence lines:
+          - `DAC.EnergyPerConversion` ≈ 1.44e-14 J
+          - `ADC.ENOB` ≈ 4.80 bits
+          - `ChargePump.ActualOutputVoltage` ≈ 1.5 V
+          - `AnalyzeTiming` Read ≈ 7.6e-8 s, Write ≈ 2.03e-7 s, Cycle ≈ 2.79e-7 s
+          - `AnalyzePower` TotalEnergy ≈ 2.19e-12 J (pump dominates)
       - If values deviate, reconcile code/docs or update expected numbers with rationale.
-  - GUI runs are optional and only when explicitly requested:
-      - ./launch.sh --logger --verbosity debug --module circuits
-  - If any command fails, fix and re-run until it succeeds or a clear blocker exists.
+  - GUI runs are optional and only when explicitly requested.
 
 Execution Rules (Autonomous)
 
   - No human intermediaries: run commands, inspect logs, make edits, and validate independently.
-  - Always check logs in logs/ for the most recent run and quote key evidence in the report.
+  - Always check logs in `logs/` for the most recent run and quote key evidence in the report.
   - Keep validation headless unless a GUI run is explicitly requested.
   - Prefer minimal, targeted changes over refactors unless required for correctness.
   - Keep code changes within the smallest possible surface area.

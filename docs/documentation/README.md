@@ -1,8 +1,9 @@
 # FeCIM Lattice Tools Curriculum
 
 This curriculum is a concise, research-grade path through the physics, math, and software
-that power FeCIM Lattice Tools. It is structured to teach intuition first, then formal models,
-then implementation details.
+that power FeCIM Lattice Tools. It teaches intuition first, then formal models, then
+implementation details, with clear separation between demonstrated results and modeled
+assumptions.
 
 ## Learning Path (Recommended Order)
 
@@ -16,34 +17,38 @@ then implementation details.
 
 ## Why This Sequence
 
-- We start at the device level (hysteresis) because it defines the physics limits.
-- Crossbar arrays turn device physics into computation.
-- The MNIST demo shows algorithm impact from hardware constraints.
-- Circuits provide the bridging infrastructure.
-- Comparison and EDA translate technical insight into system-level and tooling decisions.
-- The Docs module ties it all together and accelerates learning.
+- Device physics sets the limits, so we start with hysteresis.
+- Crossbar arrays translate device behavior into computation.
+- MNIST shows how hardware constraints shape algorithm behavior.
+- Circuits provide the peripheral infrastructure the array needs.
+- Comparison and EDA move from device-level understanding to system design.
+- The Docs module ties everything together and accelerates learning.
 
 ## Prerequisites
 
 - Basic algebra and unit awareness
-- Comfort with graphs and simple functions
+- Comfort reading plots and simple functions
 - Optional: linear algebra (vectors, matrices)
 
-## Fast Path (For Readers Already Comfortable with Physics)
+## Optional Deep Dives
+
+- Device physics: `docs/research-papers/by-topic/01-ferroelectric-materials/`
+- Crossbar modeling: `docs/research-papers/by-topic/04-cim-architectures/`
+- Compilers and mapping: `docs/research-papers/by-topic/10-cim-compilers-mapping/`
+
+## Fast Path (Already Comfortable With Physics)
 
 - Skip ELI5 pages and go straight to PHYSICS and FEATURES.
-- Use MODULES.md as your index and jump by topic.
+- Use `MODULES.md` as the index to jump by topic.
 
 ## Lab vs Literature (Honesty First)
 
-- **Demonstrated:** Use the "Sources" section in each module to trace claims to internal docs.
-- **Modeled:** Simulation values (for example, quantization levels and noise) are modeling choices
-  and should not be treated as device measurements unless explicitly cited.
-- **Aspirational:** Architectural comparisons are directional, not guarantees.
+- Demonstrated: use the Sources sections to trace claims to internal docs.
+- Modeled: simulator parameters are modeling choices unless explicitly cited.
+- Aspirational: architectural comparisons are directional, not guarantees.
 
-## How to Use This Curriculum
+## How To Use This Curriculum
 
-- Start with the module README index: [MODULES.md](MODULES.md).
+- Start with the module index: `MODULES.md`.
 - Each module has four pages: ELI5, PHYSICS, FEATURES, OPENSOURCE-TOOLS.
-- If a topic is unfamiliar, open [docs/GLOSSARY.md](../GLOSSARY.md).
-
+- If a term is unfamiliar, check `docs/GLOSSARY.md`.

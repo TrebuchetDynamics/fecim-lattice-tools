@@ -3,9 +3,11 @@ package widgets
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
@@ -283,14 +285,33 @@ func buildOverviewSection() fyne.CanvasObject {
 }
 
 func buildPreisachSection() fyne.CanvasObject {
-	return container.NewVBox(
+	section := []fyne.CanvasObject{
 		sectionTitle("Preisach Model (Quasi-Static)"),
+	}
+
+	if img := loadPreisachEquationSVG(); img != nil {
+		img.FillMode = canvas.ImageFillContain
+		img.SetMinSize(fyne.NewSize(900, 140))
+		section = append(section, img)
+	}
+
+	section = append(section,
 		bodyLabel("The quasi-static Preisach model represents polarization as a weighted sum of bistable hysterons:"),
 		equationBlock("P(E) = double_integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta"),
 		bodyLabel("Each hysteron switches based on its thresholds and retains memory between them:"),
-		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; else hold state"),
+		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; hold if beta < E < alpha"),
 		bodyLabel("Quasi-static means rate-independent: there is no explicit dP/dt term and switching depends on input history."),
 	)
+
+	return container.NewVBox(section...)
+}
+
+func loadPreisachEquationSVG() *canvas.Image {
+	const svgPath = "shared/assets/equations/preisach.svg"
+	if _, err := os.Stat(svgPath); err != nil {
+		return nil
+	}
+	return loadFrankesteinEquationSVG(svgPath)
 }
 
 func buildAlphaSection() fyne.CanvasObject {

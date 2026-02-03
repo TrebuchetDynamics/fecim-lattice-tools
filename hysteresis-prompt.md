@@ -13,12 +13,15 @@ Objectives
   (terms, signs, units, and effective viscosity).
 - Keep **both physics engines** (L-K and Preisach) supported and coherent. Do not remove Preisach.
 - Avoid regressions: WRD/ISPP convergence and autonomous calibration must remain stable.
+- **Run headless WRD/ISPP in Preisach mode** for parity with GUI and to debug target/marker mismatches.
+- Find and fix the **yellow target mismatch bug** (GUI) with evidence from logs and headless parity.
 
 Non‑Negotiables
 
 - **Both modes must remain**: L-K (dynamic) and Preisach (quasi-static).
 - GUI and headless must use the same **L-K solver equation** when L-K is selected.
 - GUI Preisach path remains available and stable for fast visualization.
+- Headless must be able to run **Preisach** (default for WRD/ISPP validation).
 - No GUI updates from goroutines without `fyne.Do(func(){...})`.
 
 Primary Focus (ranked)
@@ -38,6 +41,8 @@ Primary Focus (ranked)
 - No “stuck at one level” loops.
 - Overshoot recovery only when overshoot truly happens.
 - Bounds/bisection never collapse or invert.
+- **Target/marker parity:** GUI yellow target must track the **active** target (not pre-selected next target).
+  - If polarization relaxes at E=0, do **not** update the target; target highlight must reflect controller target.
 
 4) Autonomous calibration (no regressions)
 - Trigger only when convergence is poor and run **between targets**.
@@ -52,6 +57,8 @@ Implementation Notes
 - **Physics engines**:
   - L-K (dynamic): adaptive sub‑stepping near Ec.
   - Preisach (quasi-static): single step per frame for performance.
+  - **Headless WRD/ISPP**: run Preisach to match GUI behavior and isolate controller issues.
+  - If a CLI engine flag is missing, **inspect the headless entry point** and wire it up.
 - **Logging**:
   - Per‑step physics logs only at `--verbosity trace`.
   - For performance runs, prefer **aggregated counters** (per frame or per second) over per‑step logs.
@@ -81,26 +88,44 @@ Tasks
 - Reset bounds after overshoot or invalid bracket.
 - Add stuck detection: if level does not change for several verifies, boost step size and reset bounds.
 - Never saturate unless overshoot recovery requires it.
+- Detect **no‑improvement** (error not decreasing) and break deadlocks (boost step + clear bounds).
 
 4) Autonomous recalibration (no regressions)
 - Trigger on repeated overshoots or excessive pulses.
 - Run between targets to avoid corrupting active state.
 - Persist and sync into `CalibrationManager`.
 
-5) Documentation updates
+5) Target/marker parity (bug hunt)
+- Ensure GUI yellow target reflects the **current** target only.
+- Next target must be **queued** and only applied at PREP start.
+- If mismatch persists, instrument **phase-boundary logs** to compare:
+  - `wrdTargetLevel`
+  - `writeController.TargetLevel`
+  - `wrdNextTargetLevel`
+  - `wrdPhase`
+  - `discreteLevel`
+  - E/P at the same time
+  - (GUI) target label text
+- Log only on phase transitions or once per second; avoid per-frame spam.
+- If controller target is correct but GUI target is wrong, check UI refresh uses the **same snapshot** as physics step.
+
+6) Documentation updates
 - Update docs only when behavior or equations change.
 
 Validation
 
 - **Headless (always first):**
-  - `FECIM_HYSTERESIS_LOG_INTERVAL_MS=250 ./launch.sh --logger --verbosity debug --mode hysteresis`
+  - Preisach WRD/ISPP: `FECIM_HYSTERESIS_LOG_INTERVAL_MS=250 ./launch.sh --logger --verbosity debug --mode hysteresis --engine preisach`
+  - L-K performance: `FECIM_HYSTERESIS_LOG_INTERVAL_MS=250 ./launch.sh --logger --verbosity debug --mode hysteresis --engine lk`
   - Use `--verbosity trace` only when validating L-K equation terms.
+- If `--engine` is not supported, **derive engine selection from code** (config/env/flag) and document it.
 - **Performance evidence:**
   - Capture solver time, sub-step counts, and `dt` stats from the aggregated counters.
   - If pprof is enabled, collect a short CPU profile; otherwise rely on counters.
 - **GUI WRD:**
   - `FECIM_HYSTERESIS_LOG_INTERVAL_MS=250 ./launch.sh --logger --verbosity debug`
   - Confirm “TARGET HIT” lines appear in WRD logs.
+  - Verify GUI target highlight matches `writeController.TargetLevel` through WRITE→DISPLAY.
 
 Frankestein Equation Checklist
 
@@ -117,6 +142,9 @@ WRD/ISPP Correctness Checklist
 - Overshoot reset only on true overshoot.
 - Bounds never invert; bisection uses valid bracket.
 - Stuck detection escalates and breaks deadlocks.
+- No‑improvement detection breaks deadlocks.
+- GUI yellow target == active controller target (no early jump).
+- GUI target label text == controller target at PREP/WRITE/VERIFY/DISPLAY boundaries.
 
 Execution Rules (Autonomous)
 
@@ -132,6 +160,7 @@ Deliverable
   - Why L-K math is slow (dominant hot path + evidence).
   - Frankestein equation verification (what terms/logs confirmed).
   - WRD/ISPP target-hit evidence (log lines).
+  - Target/marker parity evidence (log lines showing target alignment).
   - Documentation updates (file paths + summary).
   - Gaps/issues and next iteration target.
 - Include validation command and log path.
@@ -141,9 +170,9 @@ Baseline (update each run)
 - Latest headless log path:
   - logs/2026-02-02_16-58-26-fecim.log (stale; rerun headless)
 - Latest WRD log path:
-  - logs/2026-02-02_17-49-53-fecim.log
+  - logs/2026-02-02_18-24-44-fecim.log
 - Latest WRD CSV path:
-  - logs/hysteresis-hzo-si-doped-2026-02-02_17-50-01.csv
+  - logs/hysteresis-hzo-si-doped-2026-02-02_18-24-48.csv
 
 Recent Changes (2026-02-02)
 
@@ -154,3 +183,5 @@ Recent Changes (2026-02-02)
 5) Per-step physics logs moved to `trace` verbosity.
 6) Preisach GUI loop uses single step per frame for performance.
 7) ISPP now has bounds + bisection and stuck detection.
+8) WRD target is queued and only applied at PREP start (prevents early target jump).
+9) ISPP now detects no‑improvement across verifies and breaks deadlocks.

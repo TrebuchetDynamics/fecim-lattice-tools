@@ -210,28 +210,12 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 			}
 		}
 
-		// Simulate write: move toward target (same logic as existing writeReadVerifyLoop)
+		// Simulate write: map current ISPP voltage to nearest calibrated level
+		ascending := isppStatus.Direction == DirectionAscending
+		estimatedLevel := ca.deviceState.GetLevelForVoltage(isppStatus.Voltage, ascending)
 		ca.mu.Lock()
 		if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
-			if currentLevel < targetLevel {
-				step := 1
-				if targetLevel-currentLevel > 3 {
-					step = 2
-				}
-				currentLevel += step
-				if currentLevel > targetLevel {
-					currentLevel = targetLevel
-				}
-			} else if currentLevel > targetLevel {
-				step := 1
-				if currentLevel-targetLevel > 3 {
-					step = 2
-				}
-				currentLevel -= step
-				if currentLevel < targetLevel {
-					currentLevel = targetLevel
-				}
-			}
+			currentLevel = estimatedLevel
 			ca.arrayWeights[row][col] = currentLevel
 		}
 		ca.mu.Unlock()

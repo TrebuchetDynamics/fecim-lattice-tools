@@ -399,16 +399,18 @@ Future FeCIM versions may adopt ADC-less for:
 
 | Component | Energy (typical) | Our Model |
 |-----------|------------------|-----------|
-| DAC (5-bit) | 5-20 fJ | ~15 fJ |
-| Array MVM | 10-100 fJ | ~50 fJ |
-| TIA | 10-50 fJ | ~20 fJ |
+| DAC (5-bit) | 5-20 fJ | ~14.4 fJ |
+| Array MVM | 10-100 fJ | (not explicitly modeled) |
+| TIA | 10-50 fJ | ~6.3 fJ |
 | ADC (5-bit) | 10-50 fJ | ~25 fJ |
-| **Total** | **35-220 fJ** | **~110 fJ** |
+| **Total (read)** | **35-220 fJ** | **~46 fJ** |
+| **Charge Pump (write)** | **1-5 pJ** | **~2.14 pJ** |
+| **Total (write)** | **1-5 pJ** | **~2.19 pJ** |
 
 **Comparison with Digital:**
 - GPU MAC operation: ~1000 fJ
-- CIM MAC operation: ~100 fJ
-- **10× improvement** from CIM
+- CIM MAC operation: ~46 fJ (per read path)
+- **~20× improvement** from CIM (model default)
 
 ### 7.3 Our Power Analysis Implementation
 
@@ -439,25 +441,27 @@ func AnalyzePower(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump, timing *Timing
 ```
 Write Operation:
 ├── DAC Settling: 10 ns
-├── Charge Pump Rise: 40 ns
+├── Charge Pump Rise: 88 ns
 ├── Write Pulse: 100 ns (FeFET switching)
-└── Total Write: ~150 ns
+└── Total Write: ~203 ns
 
 Read Operation:
-├── TIA Settling: 10 ns
+├── DAC Settling: 10 ns
+├── Array Settle: 5 ns
+├── TIA Settling: 11 ns
 ├── ADC Conversion: 50 ns
-└── Total Read: ~60 ns
+└── Total Read: ~76 ns
 
-Full Cycle: ~210 ns → ~5 MHz operation rate
+Full Cycle: ~279 ns → ~3.6 MHz operation rate
 ```
 
 ### 8.2 Throughput Calculations
 
 | Array Size | Parallel Outputs | Throughput |
 |------------|-----------------|------------|
-| 64×64 | 64 | 64 × 5 MHz = 320 MOPS |
-| 128×128 | 128 | 128 × 5 MHz = 640 MOPS |
-| 256×256 | 256 | 256 × 5 MHz = 1.28 GOPS |
+| 64×64 | 64 | 64 × 3.6 MHz = 230.4 MOPS |
+| 128×128 | 128 | 128 × 3.6 MHz = 460.8 MOPS |
+| 256×256 | 256 | 256 × 3.6 MHz = 0.92 GOPS |
 
 **Note:** GOPS = Giga Operations Per Second (MAC operations)
 

@@ -2,23 +2,26 @@
 
 ## Prerequisites
 
-- Basic E-field concepts
-- Units and plotting
-- Simple integrals
+- Electric field and polarization basics
+- Units and dimensional analysis
+- Simple integrals and summations
 
 ## Core Model
 
-- Polarization responds with history dependence, creating a loop in P-E space.
-- Preisach model approximates the loop as a weighted sum of bistable elements.
+- Hysteresis is modeled as history-dependent polarization versus electric field.
+- The Preisach model represents the material as a weighted sum of bistable elements.
+- Each element switches at thresholds and contributes to total polarization.
 
 ## Key Equations (Simplified)
 
 ```
-P(E) = integral integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta
-Ec = coercive field; Pr = remanent polarization
+P(E) = ∬ μ(α,β) γ_{α,β}(E) dα dβ
+γ_{α,β}(E) ∈ { -1, +1 }
+Pr = P(E = 0) after saturation
+Ec ≈ field where P crosses 0 on the major loop
 ```
 
-## Parameters and Units
+## Parameters And Units
 
 | Symbol | Meaning | Units |
 |---|---|---|
@@ -27,19 +30,21 @@ Ec = coercive field; Pr = remanent polarization
 | Ec | Coercive field | V/m |
 | Pr | Remanent polarization | C/m^2 |
 
-## Assumptions and Limits
+## Assumptions And Limits
 
-- Quasi-static loops (no high-frequency switching dynamics).
-- Single-material parameterization (no gradients or grain effects).
+- Quasi-static loops, no high-frequency domain dynamics.
+- Uniform material properties, no spatial gradients.
+- Preisach elements are idealized, not microstructural.
 
-## Where It Lives in Code
+## Where It Lives In Code
 
 - `module1-hysteresis/pkg/ferroelectric/preisach.go`
+- `module1-hysteresis/pkg/ferroelectric/preisach_advanced.go`
 - `module1-hysteresis/pkg/ferroelectric/material.go`
 - `module1-hysteresis/pkg/gui/embedded.go`
 
 ## Sources
 
 - `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md`
-- `docs/development/scriptReference.md#quick-function-lookups`
-
+- `docs/research-papers/by-topic/01-ferroelectric-materials/`
+- `docs/development/scriptReference.md#demo-1-hysteresis-module1-hysteresis`

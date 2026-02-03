@@ -612,8 +612,8 @@ tia := peripherals.DefaultTIA()
 tsettle := tia.SettlingTime() // ~11 ns typical
 
 // Verify TIA is fast enough for read operations
-if tsettle < 50e-9 { // 50 ns budget
-    fmt.Println("TIA settling acceptable for 50ns read")
+if tsettle < 76e-9 { // 76 ns budget
+    fmt.Println("TIA settling acceptable for 76ns read")
 }
 ```
 
@@ -1374,26 +1374,29 @@ func main() {
 - **0.5-1.0 LSB**: Good
 - **> 1.0 LSB**: Poor
 
-### Timing Constraints
+### Timing Constraints (Model Defaults)
 
-For 30ns read operation target:
-- TIA settle: < 10ns
-- ADC convert: 20-50ns
-- Total read: < 30ns
+For read operation target:
+- DAC settle: 10ns
+- Array settle: 5ns
+- TIA settle: ~11ns
+- ADC convert: 50ns
+- Total read: ~76ns
 
 For complete cycle (read + write):
-- Write: 100-150ns
-- Read: 30-50ns
-- Total: 150-200ns
+- Write: ~203ns
+- Read: ~76ns
+- Total: ~279ns
 
-### Power Estimation
+### Power Estimation (Model Defaults)
 
 Typical per-operation breakdown:
-- DAC: 10-20 fJ (switching)
-- ADC: 20-50 fJ (SAR conversion)
-- TIA: 10-20 fJ (sense)
-- Pump: 50-100 fJ (write voltage)
-- Total: 100-200 fJ/operation
+- DAC: ~14.4 fJ (switching)
+- ADC: ~25 fJ (SAR conversion)
+- TIA: ~6.3 fJ per read window
+- Pump: ~2.14 pJ per write (input energy)
+- Total read: ~46 fJ
+- Total write: ~2.19 pJ
 
 ---
 

@@ -2,29 +2,31 @@
 
 ## Learning Objectives
 
-- Build intuition for neural inference: full-precision vs cim.
-- Understand what the simulator is modeling versus simplifying.
-- Know which page to read next.
+- Understand why MNIST is a useful demo for hardware-aware inference.
+- See how full-precision and CIM paths differ.
+- Know which page to read next for formal detail.
 
 ## Intuition
 
-We teach a small neural network to recognize handwritten digits.
-Then we run it two ways: perfect math (full precision) and hardware-like math (CIM).
-You can compare accuracy and see where hardware noise matters.
+The MNIST demo asks a simple question: can the hardware-inspired path
+predict digits as reliably as the ideal digital path? We run the same
+network twice, once with perfect math and once with quantization and noise.
+
+The gap between the two shows how hardware constraints shape accuracy.
 
 ## Key Analogies
 
-- Two cooks follow the same recipe: one measures exactly, one uses a rough spoon.
-- A blurry photo vs a crisp photo: the answer can still be right, but errors appear sooner.
+- Two chefs following the same recipe, one with perfect measurements and
+  one with coarse measuring cups.
+- Two calculators: one exact, one with rounded results.
 
-## What the Simulator Simplifies
+## What The Simulator Simplifies
 
-- Uses fixed, pre-trained weights for demos.
-- Noise and quantization are simplified into configurable parameters.
-- Only MNIST-sized inputs (28x28) are supported in the demo.
+- The network is small and fixed to be fast and visual.
+- Noise and quantization are modeled, not measured from devices.
+- Training is done offline; the demo focuses on inference.
 
 ## Next Steps
 
 - Read the formal model in [PHYSICS.md](PHYSICS.md).
 - Connect to implementation details in [FEATURES.md](FEATURES.md).
-

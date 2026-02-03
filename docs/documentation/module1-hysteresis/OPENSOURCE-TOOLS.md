@@ -1,21 +1,20 @@
 # Module 1: Hysteresis - Open-Source Tools
 
-## Goal-aligned tools (external)
+## When To Use External Tools
 
-- FerroX: GPU-accelerated phase-field ferroelectric domain simulation (HfO2).
-- FERRET (MOOSE): multiphysics phase-field ferroelectric modeling.
-- python-preisach: educational Preisach hysteresis model implementation.
-- Preisachmodel (fddf22): forward/inverse Preisach identification.
-- pyhist: discrete Preisach model with FORC analysis.
-- JAmodel: Jiles-Atherton style hysteresis modeling (MATLAB/Octave).
+- Calibrating model parameters against published measurements.
+- Running higher-fidelity hysteresis or domain simulations.
+- Producing publication-quality plots for reports.
 
-## Where to read more in this repo
+## Recommended Tools (With Rationale)
 
-- `docs/opensource-tools/hysteresis-modeling-tools.md`
-- `docs/opensource-tools/ferroelectric-simulation-tools.md`
-- `docs/opensource-tools/tool-comparison-matrix.md`
+- NumPy and SciPy for data fitting and parameter sweeps.
+- Matplotlib for high-quality P-E loop plots.
+- Jupyter for reproducible, shareable experiments.
+- ngspice or Xyce for circuit-level validation of polarization models.
 
-## Notes
+## Integration Notes
 
-- These are external tools available online; we do not vendor them here.
-- Use `FEATURES.md` for in-repo implementation details.
+- Source parameter ranges from `docs/research-papers/by-topic/01-ferroelectric-materials/`.
+- Use `module1-hysteresis/pkg/ferroelectric/material.go` as the local parameter baseline.
+- If you export data, keep units explicit and consistent with PHYSICS tables.

@@ -398,19 +398,19 @@ func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("3.2 mW"),
 		widget.NewLabel("0.02 mm²"),
-		widget.NewLabel("5 ns"),
+		widget.NewLabel("10 ns"),
 
 		widget.NewLabel("TIAs"),
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("1.6 mW"),
 		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("2 ns"),
+		widget.NewLabel("11 ns"),
 
 		widget.NewLabel("ADCs"),
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("16 mW"),
 		widget.NewLabel("0.04 mm²"),
-		widget.NewLabel("10 ns"),
+		widget.NewLabel("50 ns"),
 
 		widget.NewLabel("Control"),
 		widget.NewLabel("1"),
@@ -422,13 +422,13 @@ func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
 		widget.NewLabel(""),
 		widget.NewLabelWithStyle("21.4 mW", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle("0.09 mm²", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("20 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("76 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
 
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs / 20ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(fmt.Sprintf("%d MACs / 76ns = %.1f GOPS", cells, throughput)),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
@@ -456,7 +456,7 @@ func (ca *CircuitsApp) updateSpecSummary() {
 	}
 
 	cells := size * size
-	throughput := float64(cells) / 20.0 // MACs per ns = GOPS
+	throughput := float64(cells) / 76.0 // MACs per ns = GOPS
 
 	// Component summary table
 	summaryGrid := container.NewGridWithColumns(5,
@@ -476,19 +476,19 @@ func (ca *CircuitsApp) updateSpecSummary() {
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("3.2 mW"),
 		widget.NewLabel("0.02 mm²"),
-		widget.NewLabel("5 ns"),
+		widget.NewLabel("10 ns"),
 
 		widget.NewLabel("TIAs"),
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("1.6 mW"),
 		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("2 ns"),
+		widget.NewLabel("11 ns"),
 
 		widget.NewLabel("ADCs"),
 		widget.NewLabel(fmt.Sprintf("%d", size)),
 		widget.NewLabel("16 mW"),
 		widget.NewLabel("0.04 mm²"),
-		widget.NewLabel("10 ns"),
+		widget.NewLabel("50 ns"),
 
 		widget.NewLabel("Control"),
 		widget.NewLabel("1"),
@@ -500,13 +500,13 @@ func (ca *CircuitsApp) updateSpecSummary() {
 		widget.NewLabel(""),
 		widget.NewLabelWithStyle("21.4 mW", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle("0.09 mm²", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("20 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("76 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
 
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs / 20ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(fmt.Sprintf("%d MACs / 76ns = %.1f GOPS", cells, throughput)),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
@@ -535,6 +535,6 @@ func (ca *CircuitsApp) onExportSpecs() {
 func (ca *CircuitsApp) onCompareToGPU() {
 	// Show comparison summary in status label
 	fyne.Do(func() {
-		ca.specStatusLabel.SetText("FeFET vs GPU: 25x faster (20ns vs 500ns), 2000x more efficient (2392 vs ~5 GOPS/W), 100x smaller area")
+		ca.specStatusLabel.SetText("FeFET vs GPU: ~6.6x faster than CPU (76ns vs 500ns). FeFET per-MAC energy ~46 fJ in this model.")
 	})
 }

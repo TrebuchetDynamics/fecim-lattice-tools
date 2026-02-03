@@ -848,25 +848,26 @@ calibration:
 ### Typical Timing (from AnalyzeTiming)
 
 - DAC settling: ~10 ns
-- Charge pump rise: ~100 ns
+- Charge pump rise: ~88 ns
 - Write pulse: ~100 ns
-- TIA settling: ~35 ns
+- TIA settling: ~11 ns
 - ADC conversion (5-bit SAR): 50 ns
-- Total read cycle: ~85 ns
-- Full write+read cycle: ~295 ns
+- Total read cycle: ~76 ns
+- Total write cycle: ~203 ns
+- Full write+read cycle: ~279 ns
 
 ### Throughput
 
-- Max operations: ~3.4 million operations/second (1/295ns)
+- Max operations: ~3.6 million operations/second (1/279ns)
 - Parallel read: 128 columns simultaneously
 - Parallel compute: 128x128 MVM in single cycle
 
 ### Power Estimates
 
-- DAC: ~5-10 fJ per conversion
+- DAC: ~14.4 fJ per conversion
 - ADC: ~25 fJ per conversion
-- TIA: Load-dependent (~50 pW typical)
-- Charge pump: ~50 fJ per write (with losses)
+- TIA: ~83 nW dynamic power (~6.3 fJ per read window)
+- Charge pump: ~2.14 pJ per write (input energy, pump-dominated)
 
 ## Key Files & Line Counts
 
