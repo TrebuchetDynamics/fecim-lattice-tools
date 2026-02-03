@@ -12,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/config/physics"
+	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -640,6 +642,18 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	newLevels := a.material.GetNumLevels()
 	a.numLevels = newLevels
 
+	// Recreate calibration manager + write controller for the new material/levels
+	a.calibManager = algo.NewCalibrationManager(newLevels)
+	a.writeController = controller.NewWriteController(newLevels, a.material.Ec, a.material.Ec*2.5, a.calibManager)
+	a.writeController.ResetState()
+	a.wrdLastControllerState = controller.StateIdle
+	a.wrdLastControllerPulse = 0
+	a.wrdLastProgressLog = 0
+	a.wrdRetryCount = 0
+	a.wrdLastBranch = 0
+	a.wrdForceReset = false
+	a.wrdSkipPrep = true
+
 	// Initialize ISPP calculator with new material parameters
 	// a.isppCalc = sharedphysics.NewISPPCalculator(effEc, newLevels)
 	// Update Adaptive ISPP
@@ -669,6 +683,14 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Resize calibration arrays
 	a.calibrationUp = make([]float64, newLevels)
 	a.calibrationDown = make([]float64, newLevels)
+	a.calibUpLow = make([]float64, newLevels)
+	a.calibUpHigh = make([]float64, newLevels)
+	a.calibDownLow = make([]float64, newLevels)
+	a.calibDownHigh = make([]float64, newLevels)
+	a.lastErrorUp = make([]int, newLevels)
+	a.lastErrorDown = make([]int, newLevels)
+	a.relaxCompUp = make([]float64, newLevels)
+	a.relaxCompDown = make([]float64, newLevels)
 
 	// Mark calibration as stale
 	a.calibrated = false
