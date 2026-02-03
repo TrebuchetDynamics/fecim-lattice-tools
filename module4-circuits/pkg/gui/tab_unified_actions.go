@@ -154,14 +154,14 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		// Adjust voltage for next iteration (ISPP: increment voltage if undershoot)
 		if currentLevel < targetLevel {
 			// Need higher voltage to switch more domains
-			voltageStep := (writeRange.Max - writeRange.Min) / 40.0 // ~5% of range per step
+			voltageStep := (writeRange.Max - writeRange.Min) / 80.0 // ~1.25% of range per step
 			voltage += voltageStep
 			if voltage > writeRange.Max {
 				voltage = writeRange.Max
 			}
 		} else {
 			// Need lower voltage (less aggressive write)
-			voltageStep := (writeRange.Max - writeRange.Min) / 40.0 // ~5% of range per step
+			voltageStep := (writeRange.Max - writeRange.Min) / 80.0 // ~1.25% of range per step
 			voltage -= voltageStep
 			if voltage < writeRange.Min {
 				voltage = writeRange.Min

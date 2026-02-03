@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 const testEpsilon = 1e-6
@@ -408,14 +408,14 @@ func TestGetWriteDirection_AllCases(t *testing.T) {
 }
 
 // ============================================================================
-// Category 5: 4-Phase Write Sequence
+// Category 5: Program-Verify Sequence
 // ============================================================================
 
 func TestStartWriteSequence_Initialization(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	ds.StartWriteSequence(2, 3, 15)
+	ds.StartWriteSequence(2, 3, 15, 0)
 
 	ws := ds.GetWritePhaseInfo()
 	if !ws.Active {
@@ -441,14 +441,66 @@ func TestStartWriteSequence_Initialization(t *testing.T) {
 	}
 }
 
+func TestStartWriteSequence_SkipResetSameBranch(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	key := cellKey(0, 0)
+	ds.hysteresisState.LastLevel[key] = 5
+	ds.hysteresisState.Direction[key] = DirectionAscending
+
+	ds.StartWriteSequence(0, 0, 10, 5)
+
+	ws := ds.GetWritePhaseInfo()
+	if ws.Phase != PhaseHold1 {
+		t.Errorf("phase should skip RESET on same branch: got %d, want PhaseHold1 (%d)", ws.Phase, PhaseHold1)
+	}
+	if math.Abs(ws.Progress-0.2) > testEpsilon {
+		t.Errorf("progress should start at 0.2 when skipping reset: got %.2f", ws.Progress)
+	}
+}
+
+func TestStartWriteSequence_ResetOnDirectionChange(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	key := cellKey(0, 0)
+	ds.hysteresisState.LastLevel[key] = 10
+	ds.hysteresisState.Direction[key] = DirectionAscending
+
+	ds.StartWriteSequence(0, 0, 5, 10)
+
+	ws := ds.GetWritePhaseInfo()
+	if ws.Phase != PhaseReset {
+		t.Errorf("phase should include RESET on direction change: got %d, want PhaseReset (%d)", ws.Phase, PhaseReset)
+	}
+}
+
+func TestStartWriteSequence_ForceResetAfterOvershoot(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	key := cellKey(0, 0)
+	ds.hysteresisState.LastLevel[key] = 5
+	ds.hysteresisState.Direction[key] = DirectionAscending
+	ds.forceResetNextSeq = true
+
+	ds.StartWriteSequence(0, 0, 10, 5)
+
+	ws := ds.GetWritePhaseInfo()
+	if ws.Phase != PhaseReset {
+		t.Errorf("phase should include RESET when overshoot flag set: got %d, want PhaseReset (%d)", ws.Phase, PhaseReset)
+	}
+}
+
 func TestAdvanceWritePhase_Progression(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	ds.StartWriteSequence(0, 0, 15)
+	ds.StartWriteSequence(0, 0, 15, 0)
 
-	expectedPhases := []WritePhase{PhaseHold1, PhaseWrite, PhaseHold2, PhaseIdle}
-	expectedProgress := []float64{0.25, 0.5, 0.75, 1.0}
+	expectedPhases := []WritePhase{PhaseHold1, PhaseWrite, PhaseHold2, PhaseVerify, PhaseIdle}
+	expectedProgress := []float64{0.2, 0.4, 0.6, 0.8, 1.0}
 
 	for i, expectedPhase := range expectedPhases {
 		complete := ds.AdvanceWritePhase()
@@ -465,7 +517,7 @@ func TestAdvanceWritePhase_Progression(t *testing.T) {
 			t.Errorf("sequence should not be complete at phase %d", i+1)
 		}
 		if i == len(expectedPhases)-1 && !complete {
-			t.Error("sequence should be complete after 4 advances")
+			t.Error("sequence should be complete after 5 advances")
 		}
 	}
 }
@@ -474,20 +526,20 @@ func TestAdvanceWritePhase_Completion(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	ds.StartWriteSequence(0, 0, 15)
+	ds.StartWriteSequence(0, 0, 15, 0)
 
-	// Advance 4 times (RESET -> HOLD1 -> WRITE -> HOLD2 -> IDLE)
-	for i := 0; i < 3; i++ {
+	// Advance 5 times (RESET -> HOLD1 -> WRITE -> HOLD2 -> VERIFY -> IDLE)
+	for i := 0; i < 4; i++ {
 		complete := ds.AdvanceWritePhase()
 		if complete {
 			t.Errorf("should not be complete after %d advances", i+1)
 		}
 	}
 
-	// 4th advance should complete
+	// 5th advance should complete
 	complete := ds.AdvanceWritePhase()
 	if !complete {
-		t.Error("should be complete after 4 advances")
+		t.Error("should be complete after 5 advances")
 	}
 
 	ws := ds.GetWritePhaseInfo()
@@ -500,7 +552,7 @@ func TestCancelWriteSequence_Reset(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	ds.StartWriteSequence(0, 0, 15)
+	ds.StartWriteSequence(0, 0, 15, 0)
 	ds.AdvanceWritePhase() // Move to HOLD1
 
 	ds.CancelWriteSequence()
@@ -590,7 +642,7 @@ func TestISPPIterate_Overshoot(t *testing.T) {
 	ds := newTestDeviceState(8, 8)
 
 	// Test ascending overshoot
-	ds.StartISPP(0, 0, 15, 5) // Target 15, starting from 5
+	ds.StartISPP(0, 0, 15, 5)    // Target 15, starting from 5
 	result := ds.ISPPIterate(20) // Overshoot to 20
 	if result != ISPPResultOvershoot {
 		t.Errorf("ascending overshoot: got %d, want ISPPResultOvershoot (%d)", result, ISPPResultOvershoot)
@@ -892,7 +944,7 @@ func TestCompute_WithWeights(t *testing.T) {
 
 	// Different weights per row
 	weights := [][]int{
-		{5, 5, 5, 5},   // Low weight
+		{5, 5, 5, 5},     // Low weight
 		{15, 15, 15, 15}, // Medium weight
 		{25, 25, 25, 25}, // High weight
 		{29, 29, 29, 29}, // Max weight

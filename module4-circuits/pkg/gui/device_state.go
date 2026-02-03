@@ -153,6 +153,7 @@ type DeviceState struct {
 	isppState          ISPPState
 	halfSelectState    HalfSelectVisualization
 	voltageCalibration *PerLevelVoltageCalibration
+	forceResetNextSeq  bool
 
 	// Shared ISPP calculator for voltage math
 	isppCalc *sharedphysics.ISPPCalculator
@@ -1060,29 +1061,31 @@ func (ds *DeviceState) GetLastHysteresisDirection(row, col int) HysteresisDirect
 }
 
 // ============================================================================
-// 3. 4-PHASE WRITE SEQUENCE STATE MACHINE
+// 3. 5-PHASE PROGRAM-VERIFY SEQUENCE STATE MACHINE
 // ============================================================================
 
-// WritePhase represents the current phase in a 4-phase write sequence
+// WritePhase represents the current phase in a program-verify sequence
 type WritePhase int
 
 const (
-	PhaseIdle  WritePhase = iota // No write in progress
-	PhaseReset                   // Applying -V_sat (100ns)
-	PhaseHold1                   // Zero field hold (50ns)
-	PhaseWrite                   // Applying calibrated voltage (200ns)
-	PhaseHold2                   // Zero field hold (50ns)
+	PhaseIdle   WritePhase = iota // No write in progress
+	PhaseReset                    // Applying -V_sat (100ns)
+	PhaseHold1                    // Zero field hold (50ns)
+	PhaseWrite                    // Applying calibrated voltage (200ns)
+	PhaseHold2                    // Zero field hold (50ns)
+	PhaseVerify                   // Read/verify at low voltage (80ns)
 )
 
 // Phase timing constants (in nanoseconds for display, not real-time)
 const (
-	PhaseResetDurationNs = 100
-	PhaseHold1DurationNs = 50
-	PhaseWriteDurationNs = 200
-	PhaseHold2DurationNs = 50
+	PhaseResetDurationNs  = 100
+	PhaseHold1DurationNs  = 50
+	PhaseWriteDurationNs  = 200
+	PhaseHold2DurationNs  = 50
+	PhaseVerifyDurationNs = 80
 )
 
-// WriteSequenceState holds the state of an active 4-phase write
+// WriteSequenceState holds the state of an active program-verify sequence
 type WriteSequenceState struct {
 	Active       bool
 	Phase        WritePhase
@@ -1091,15 +1094,16 @@ type WriteSequenceState struct {
 	TargetLevel  int
 	CurrentLevel int
 	WriteVoltage float64 // Calibrated voltage for target level
+	PhaseVoltage float64 // Actual applied voltage for current phase
 	Progress     float64 // 0.0 to 1.0 progress through sequence
 }
 
-// StartWriteSequence begins a 4-phase write sequence
-func (ds *DeviceState) StartWriteSequence(row, col, targetLevel int) {
+// StartWriteSequence begins a program-verify sequence
+func (ds *DeviceState) StartWriteSequence(row, col, targetLevel, currentLevel int) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
-	direction := ds.GetWriteDirection(row, col, 0, targetLevel) // Assume starting from current
+	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
 	// Initialize voltage calibration if needed
 	if ds.voltageCalibration == nil {
 		ds.initVoltageCalibrationInternal()
@@ -1110,13 +1114,31 @@ func (ds *DeviceState) StartWriteSequence(row, col, targetLevel int) {
 	// Ensure voltage calibration is initialized
 	ds.initVoltageCalibrationInternal()
 
+	// Skip RESET if staying on the same hysteresis branch and no overshoot flag.
+	lastDir := DirectionUnknown
+	if dir, exists := ds.hysteresisState.Direction[cellKey(row, col)]; exists {
+		lastDir = dir
+	}
+	sameBranch := lastDir != DirectionUnknown && lastDir == direction
+	startPhase := PhaseReset
+	if sameBranch && !ds.forceResetNextSeq {
+		startPhase = PhaseHold1
+	}
+	ds.forceResetNextSeq = false
+
 	ds.writeSequenceState.Active = true
-	ds.writeSequenceState.Phase = PhaseReset
+	ds.writeSequenceState.Phase = startPhase
 	ds.writeSequenceState.TargetRow = row
 	ds.writeSequenceState.TargetCol = col
 	ds.writeSequenceState.TargetLevel = targetLevel
+	ds.writeSequenceState.CurrentLevel = currentLevel
 	ds.writeSequenceState.WriteVoltage = ds.getVoltageForLevelInternal(targetLevel, ascending)
-	ds.writeSequenceState.Progress = 0.0
+	if startPhase == PhaseHold1 {
+		ds.writeSequenceState.Progress = 0.2
+	} else {
+		ds.writeSequenceState.Progress = 0.0
+	}
+	ds.updateWriteSequencePhaseVoltageLocked()
 }
 
 // AdvanceWritePhase moves to the next phase in the sequence
@@ -1132,20 +1154,41 @@ func (ds *DeviceState) AdvanceWritePhase() bool {
 	switch ds.writeSequenceState.Phase {
 	case PhaseReset:
 		ds.writeSequenceState.Phase = PhaseHold1
-		ds.writeSequenceState.Progress = 0.25
+		ds.writeSequenceState.Progress = 0.2
 	case PhaseHold1:
 		ds.writeSequenceState.Phase = PhaseWrite
-		ds.writeSequenceState.Progress = 0.5
+		ds.writeSequenceState.Progress = 0.4
 	case PhaseWrite:
 		ds.writeSequenceState.Phase = PhaseHold2
-		ds.writeSequenceState.Progress = 0.75
+		ds.writeSequenceState.Progress = 0.6
 	case PhaseHold2:
+		ds.writeSequenceState.Phase = PhaseVerify
+		ds.writeSequenceState.Progress = 0.8
+	case PhaseVerify:
 		ds.writeSequenceState.Phase = PhaseIdle
 		ds.writeSequenceState.Active = false
 		ds.writeSequenceState.Progress = 1.0
+		ds.writeSequenceState.PhaseVoltage = 0.0
 		return true
 	}
+	ds.updateWriteSequencePhaseVoltageLocked()
 	return false
+}
+
+func (ds *DeviceState) updateWriteSequencePhaseVoltageLocked() {
+	switch ds.writeSequenceState.Phase {
+	case PhaseWrite:
+		ds.writeSequenceState.PhaseVoltage = ds.writeSequenceState.WriteVoltage
+	case PhaseVerify:
+		// Use a safe read voltage for verify (below coercive voltage).
+		verifyVoltage := ds.readRange.Max * 0.5
+		if verifyVoltage < 0 {
+			verifyVoltage = 0
+		}
+		ds.writeSequenceState.PhaseVoltage = verifyVoltage
+	default:
+		ds.writeSequenceState.PhaseVoltage = 0.0
+	}
 }
 
 // GetWritePhaseInfo returns the current write sequence state for UI display
@@ -1163,6 +1206,7 @@ func (ds *DeviceState) CancelWriteSequence() {
 	ds.writeSequenceState.Active = false
 	ds.writeSequenceState.Phase = PhaseIdle
 	ds.writeSequenceState.Progress = 0.0
+	ds.writeSequenceState.PhaseVoltage = 0.0
 }
 
 // GetPhaseName returns a human-readable name for a write phase
@@ -1178,6 +1222,8 @@ func GetPhaseName(phase WritePhase) string {
 		return "WRITE"
 	case PhaseHold2:
 		return "HOLD"
+	case PhaseVerify:
+		return "VERIFY"
 	default:
 		return "UNKNOWN"
 	}
@@ -1194,6 +1240,8 @@ func GetPhaseDuration(phase WritePhase) int {
 		return PhaseWriteDurationNs
 	case PhaseHold2:
 		return PhaseHold2DurationNs
+	case PhaseVerify:
+		return PhaseVerifyDurationNs
 	default:
 		return 0
 	}
@@ -1216,7 +1264,7 @@ const (
 
 // ISPP constants
 const (
-	ISPPMaxIterations   = 20 // More pulses for fine convergence (matched to shared/physics)
+	ISPPMaxIterations   = 40 // More pulses for finer convergence (matched to shared/physics)
 	ISPPToleranceLevels = 0  // Exact match required
 )
 
@@ -1372,7 +1420,7 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 			ds.isppState.Voltage = ds.isppCalc.CalculateNextVoltage(ds.isppState.Voltage, sharedDirection)
 		} else {
 			// Fallback to manual voltage adjustment
-			voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 40.0 // ~2.5% of range per step
+			voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 80.0 // ~1.25% of range per step
 			if ds.isppState.Direction == DirectionAscending {
 				ds.isppState.Voltage += voltageStep
 				if ds.isppState.Voltage > ds.writeRange.Max {
@@ -1428,6 +1476,8 @@ func (ds *DeviceState) HandleOvershoot(row, col int) bool {
 	} else {
 		ds.isppState.Voltage = calibratedVoltage
 	}
+
+	ds.forceResetNextSeq = true
 
 	return true
 }

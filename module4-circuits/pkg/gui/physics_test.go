@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/config/physics"
-	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // =============================================================================
@@ -53,8 +53,8 @@ func TestMVMEquation(t *testing.T) {
 		// I = 4 × G(level) × V
 		level := testLevels[r]
 		conductanceS := mat.DiscreteLevel(level, quantLevels)
-		conductanceUS := conductanceS * 1e6                  // Convert to µS
-		expectedCurrent := 4 * conductanceUS * testVoltage   // 4 columns × G × V
+		conductanceUS := conductanceS * 1e6                // Convert to µS
+		expectedCurrent := 4 * conductanceUS * testVoltage // 4 columns × G × V
 
 		actualCurrent := ds.GetRowCurrent(r)
 
@@ -571,7 +571,7 @@ func TestISPPOvershoot(t *testing.T) {
 	}
 }
 
-// TestWritePhaseSequence verifies 4-phase write sequence
+// TestWritePhaseSequence verifies program-verify sequence
 // Per VOLTAGE_RULES.md Section 3.2.1 "4-Phase Write Sequence"
 func TestWritePhaseSequence(t *testing.T) {
 	tia := peripherals.DefaultTIA()
@@ -579,7 +579,7 @@ func TestWritePhaseSequence(t *testing.T) {
 	ds := NewDeviceState(8, 8, tia, adc)
 
 	// Start write sequence
-	ds.StartWriteSequence(2, 3, 25)
+	ds.StartWriteSequence(2, 3, 25, 0)
 
 	info := ds.GetWritePhaseInfo()
 	if !info.Active {
@@ -593,7 +593,7 @@ func TestWritePhaseSequence(t *testing.T) {
 	}
 
 	// Advance through phases
-	expectedPhases := []WritePhase{PhaseHold1, PhaseWrite, PhaseHold2, PhaseIdle}
+	expectedPhases := []WritePhase{PhaseHold1, PhaseWrite, PhaseHold2, PhaseVerify, PhaseIdle}
 	for _, expected := range expectedPhases {
 		complete := ds.AdvanceWritePhase()
 		info = ds.GetWritePhaseInfo()

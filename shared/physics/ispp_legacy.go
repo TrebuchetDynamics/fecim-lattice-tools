@@ -1,8 +1,7 @@
 package physics
 
 import (
-    "math"
-
+	"math"
 )
 
 // Legacy compatibility for other modules (e.g. Module 4 Circuits)
@@ -50,8 +49,8 @@ type ISPPConfig struct {
 func DefaultISPPConfig() ISPPConfig {
 	return ISPPConfig{
 		StartRatio:  0.7,
-		StepPercent: 0.02,
-		MaxPulses:   20,
+		StepPercent: 0.01,
+		MaxPulses:   40,
 		SafetyCap:   2.2,
 		Tolerance:   0,
 	}
@@ -152,10 +151,10 @@ func (c *ISPPCalculator) CheckResult(currentLevel, targetLevel int, direction Hy
 	}
 
 	diff := currentLevel - targetLevel
-    // Tolerance check
-    if int(math.Abs(float64(diff))) <= c.Config.Tolerance {
-        return ISPPSuccess
-    }
+	// Tolerance check
+	if int(math.Abs(float64(diff))) <= c.Config.Tolerance {
+		return ISPPSuccess
+	}
 
 	if direction == DirectionAscending {
 		if diff > 0 { // current > target
@@ -194,11 +193,11 @@ func (c *ISPPCalculator) GetSaturationVoltage(direction HysteresisDirection) flo
 
 // EstimatePulsesNeeded estimates how many pulses might be needed (heuristic).
 func (c *ISPPCalculator) EstimatePulsesNeeded(currentLevel, targetLevel int, voltage float64) int {
-    if currentLevel == targetLevel {
-        return 1
-    }
-    // Simple heuristic
-    return int(math.Abs(float64(targetLevel - currentLevel))) + 1
+	if currentLevel == targetLevel {
+		return 1
+	}
+	// Simple heuristic
+	return int(math.Abs(float64(targetLevel-currentLevel))) + 1
 }
 
 // LevelError calculates signed error.
@@ -208,9 +207,9 @@ func LevelError(current, target int) int {
 
 // IsOvershoot check.
 func (c *ISPPCalculator) IsOvershoot(current, target int, direction HysteresisDirection) bool {
-    diff := current - target
-    if direction == DirectionAscending {
-        return diff > 0
-    }
-    return diff < 0
+	diff := current - target
+	if direction == DirectionAscending {
+		return diff > 0
+	}
+	return diff < 0
 }

@@ -15,7 +15,7 @@ import (
 )
 
 // ====================================================================================
-// VOLTAGE RULES UI - 4-Phase Write Sequence, ISPP Animation, V/2 Overlay
+// VOLTAGE RULES UI - Program-Verify Sequence, ISPP Animation, V/2 Overlay
 // ====================================================================================
 
 // AnimationFrameDelayMs is the animation frame delay for smooth updates
@@ -32,8 +32,8 @@ var (
 	colorPhaseInactive = color.RGBA{80, 80, 90, 255}    // Dim for inactive phase
 )
 
-// drawWriteSequenceTimingDiagram draws the 4-phase timing diagram
-// Shows: RESET -> HOLD -> WRITE -> HOLD with phase highlighting
+// drawWriteSequenceTimingDiagram draws the program-verify timing diagram
+// Shows: RESET -> HOLD -> WRITE -> HOLD -> VERIFY with phase highlighting
 func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 	phaseInfo := ca.deviceState.GetWritePhaseInfo()
 
@@ -47,6 +47,7 @@ func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 		{"HOLD", PhaseHold1DurationNs, PhaseHold1},
 		{"WRITE", PhaseWriteDurationNs, PhaseWrite},
 		{"HOLD", PhaseHold2DurationNs, PhaseHold2},
+		{"VERIFY", PhaseVerifyDurationNs, PhaseVerify},
 	}
 
 	phaseBoxes := container.NewHBox()
@@ -76,19 +77,19 @@ func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 	progress.Min = 0
 	progress.Max = 1
 
-	// Voltage label showing current write voltage
-	voltageLabel := widget.NewLabel(fmt.Sprintf("Write Voltage: %.2fV", phaseInfo.WriteVoltage))
+	// Voltage label showing current applied phase voltage
+	voltageLabel := widget.NewLabel(fmt.Sprintf("Phase Voltage: %.2fV", phaseInfo.PhaseVoltage))
 	voltageLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	return container.NewVBox(
-		widget.NewLabelWithStyle("4-Phase Write Sequence", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Program-Verify Sequence", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		phaseBoxes,
 		progress,
 		voltageLabel,
 	)
 }
 
-// animateWriteSequence runs the 4-phase write animation
+// animateWriteSequence runs the program-verify animation
 // This is called from a goroutine
 func (ca *CircuitsApp) animateWriteSequence() {
 	for {
@@ -130,7 +131,7 @@ func (ca *CircuitsApp) animateWriteSequence() {
 	}
 }
 
-// updateWriteSequenceUI refreshes the 4-phase timing display
+// updateWriteSequenceUI refreshes the program-verify timing display
 func (ca *CircuitsApp) updateWriteSequenceUI() {
 	fyne.Do(func() {
 		if ca.writeSequencePanel != nil {
@@ -144,7 +145,7 @@ func (ca *CircuitsApp) updateWriteSequenceUI() {
 
 // runISPPWithAnimation runs the ISPP loop with visual feedback
 // This ENHANCES the existing writeReadVerifyLoop() by adding:
-// - 4-phase sequence animation within each iteration
+// - Program-verify sequence animation within each iteration
 // - Calibrated per-level voltage lookup
 // - Hysteresis direction tracking
 // - V/2 visualization for 0T1R mode
@@ -185,14 +186,14 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 			break
 		}
 
-		// Start 4-phase write sequence for this iteration
-		ca.deviceState.StartWriteSequence(row, col, targetLevel)
+		// Start program-verify sequence for this iteration
+		ca.deviceState.StartWriteSequence(row, col, targetLevel, currentLevel)
 		go ca.animateWriteSequence()
 
 		// Update ISPP UI
 		ca.updateISPPUI()
 
-		// Wait for 4-phase sequence to complete
+		// Wait for program-verify sequence to complete
 		for {
 			if ca.shouldStop() {
 				ca.deviceState.CancelWriteSequence()
@@ -419,7 +420,7 @@ func (ca *CircuitsApp) createCompactActivePanel() fyne.CanvasObject {
 	return label
 }
 
-// createCompactWritePanel creates a compact write panel without the 4-phase sequence UI
+// createCompactWritePanel creates a compact write panel without the program-verify sequence UI
 func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 	maxLevel := ca.quantLevels - 1
 	midLevel := ca.quantLevels / 2
@@ -503,7 +504,7 @@ func (ca *CircuitsApp) updateHysteresisDirectionUI(targetLevel int) {
 }
 
 // createEnhancedWriteModePanel creates an enhanced write panel with voltage rules UI
-// This adds hysteresis direction and 4-phase sequence display to the existing write panel
+// This adds hysteresis direction and program-verify sequence display to the existing write panel
 func (ca *CircuitsApp) createEnhancedWriteModePanel() fyne.CanvasObject {
 	// Existing write panel components
 	maxLevel := ca.quantLevels - 1
@@ -556,7 +557,7 @@ func (ca *CircuitsApp) createEnhancedWriteModePanel() fyne.CanvasObject {
 		ca.mfuxWriteVoltageLabel,
 	)
 
-	// 4-phase sequence container (populated during write)
+	// Program-verify sequence container (populated during write)
 	ca.writeSequencePanel = container.NewStack()
 
 	return container.NewVBox(
