@@ -270,7 +270,7 @@ func (w WaveformType) String() string {
 	case WaveformTriangle:
 		return "Triangle Wave"
 	case WaveformWriteReadDemo:
-		return "Write/Read Demo"
+		return "ISPP (Write/Read)"
 	case WaveformTimeResolved:
 		return "Time-Resolved Switching"
 	default:

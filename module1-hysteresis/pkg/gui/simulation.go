@@ -1978,15 +1978,20 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	if currentMode == WaveformWriteReadDemo {
 		// Show target until point SETTLES at target level (not just crosses it)
 		// Settled = level matches target AND E-field is near zero
-		atTarget := (dL + 1) == currentWrdTrg                     // level is 0-indexed, target is 1-indexed
-		eFieldSettled := math.Abs(fE) < 0.01*matEcVal             // E-field near zero (1% of Ec)
-		settled := atTarget && eFieldSettled && currentWrdPh >= 3 // Must be past WRITE phase
+		atTarget := (dL + 1) == currentWrdTrg         // level is 0-indexed, target is 1-indexed
+		eFieldSettled := math.Abs(fE) < 0.01*matEcVal // E-field near zero (1% of Ec)
+		settled := atTarget && eFieldSettled
 
 		// Keep highlight on from WRITE through DISPLAY, until settled at target
 		highlight := currentWrdPh >= 2 && currentWrdPh <= 5 && !settled
 		mode := widgets.TargetModeWrite
-		if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess {
+		if ctrlState == controller.StateVerify {
 			mode = widgets.TargetModeVerify
+		}
+		// Clear highlight immediately on success.
+		if ctrlState == controller.StateSuccess {
+			highlight = false
+			mode = widgets.TargetModeNone
 		}
 		a.levelIndicator.SetTargetLevelMode(currentWrdTrg, highlight, mode)
 	} else if currentMode == WaveformManual && manAnim {

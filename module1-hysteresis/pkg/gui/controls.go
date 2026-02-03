@@ -36,7 +36,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.eFieldModeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Waveform selector
-	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo", "Time-Resolved Switching"}
+	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "ISPP (Write/Read)", "Time-Resolved Switching"}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
 		log.Selection("Waveform", s)
 		a.mu.Lock()
@@ -87,7 +87,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.levelIndicator != nil {
 				a.levelIndicator.SetInteractive(false)
 			}
-		case "Write/Read Demo":
+		case "ISPP (Write/Read)":
 			a.waveform = WaveformWriteReadDemo
 			a.autoMode = true
 			if a.eFieldSlider != nil {
@@ -101,7 +101,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 			// Lazy calibration: run on first use of WRD mode
 			if a.needsCalibration {
-				log.Printf("Running deferred calibration (Write/Read Demo activated)")
+				log.Printf("Running deferred calibration (ISPP (Write/Read) activated)")
 				a.calibrateLevels()
 				if err := a.saveCalibration(); err != nil {
 					log.Printf("Warning: failed to save calibration: %v", err)
@@ -149,7 +149,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.timeResDataSwitch = nil
 		}
 	})
-	a.waveformSelect.SetSelected("Write/Read Demo")
+	a.waveformSelect.SetSelected("ISPP (Write/Read)")
 
 	// Physics engine selector
 	engines := []string{PhysicsLandau.String(), PhysicsPreisach.String()}

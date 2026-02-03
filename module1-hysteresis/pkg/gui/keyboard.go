@@ -127,13 +127,13 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		log.Info("Frequency decreased to %.3g Hz", newFreq)
 
 	case fyne.KeyW:
-		// Cycle to next waveform (5 modes: Manual, Sine, Triangle, Write/Read, Time-Resolved)
+		// Cycle to next waveform (5 modes: Manual, Sine, Triangle, ISPP (Write/Read), Time-Resolved)
 		a.mu.Lock()
 		nextWaveform := (a.waveform + 1) % 5
 		a.mu.Unlock()
 
 		// Trigger the same logic as waveformSelect.OnChanged
-		waveformNames := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo", "Time-Resolved Switching"}
+		waveformNames := []string{"Manual", "Sine Wave", "Triangle Wave", "ISPP (Write/Read)", "Time-Resolved Switching"}
 		selectedName := waveformNames[nextWaveform]
 
 		// Call the select widget to trigger the OnChanged callback

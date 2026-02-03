@@ -1,167 +1,184 @@
 # Physics Realism Audit
 
-Date: 2026-02-03
-Scope: physics and physics-adjacent models in modules 1–6 and shared physics/peripherals.
+**Date:** 2026-02-03
+**Scope:** Physics and physics-adjacent models in modules 1–6 and shared physics/peripherals
+**Status:** Living document - update as improvements are made
 
-## Purpose
-This audit documents where models are physically grounded versus simplified, heuristic, or purely illustrative. The goal is not to remove all simplifications, but to make them explicit and prioritize upgrades that improve scientific fidelity without breaking the educational UI.
+---
 
-## Method
-- Read code paths that implement physics or physics-adjacent behavior.
-- Tag each model as **High**, **Medium**, or **Low** realism.
-- Note the main non-physics shortcuts and their consequences.
-- Provide targeted upgrade suggestions.
+## Executive Summary
 
-## Summary (by module)
+This simulator prioritizes **educational clarity** over predictive accuracy. Most models are **Medium to Low realism** - sufficient for teaching concepts but not for hardware design or device validation.
 
-| Area | Realism | Main Non-Physics Behaviors | Primary Evidence |
-|---|---|---|---|
-| Hysteresis (Preisach) | Medium | Quasi-static hysteresis, tanh Everett, heuristic stress/temp scaling | `module1-hysteresis/pkg/ferroelectric/preisach.go` |
-| Hysteresis (Landau) | Medium | 1D ODE, lumped depolarization term, empirical NLS | `shared/physics/landau.go` |
-| Crossbar (array + non-idealities) | Medium | Linear conductance mapping, iterative IR drop solver, Elmore RC, assumed drift | `module2-crossbar/pkg/crossbar/*.go` |
-| MNIST (CIM inference) | Low | Linear quantization, software-only inference, noise as proxy | `module3-mnist/pkg/core/*.go` |
-| Circuits (DAC/ADC/TIA/chargepump) | Low | Parametric formulas, estimated energy, no transistor-level behavior | `shared/peripherals/*.go` |
-| Comparison/EDA | Low | Estimated chip metrics, analytic latency/energy, no P&R or parasitic extraction | `module5-comparison/pkg/comparison/architecture.go`, `module6-eda/pkg/compiler/compiler.go` |
+| Realism Level | Meaning | Use Case |
+|---------------|---------|----------|
+| **High** | Calibrated to measured data, validated against literature | Device design, prediction |
+| **Medium** | Physically-motivated but uses heuristics or uncalibrated parameters | Concept education, qualitative exploration |
+| **Low** | Parametric/analytic approximations, not tied to device physics | Visualization, intuition building |
 
-## Findings by Area
+**Key takeaway:** All simplified models should have explicit disclaimers in the UI and docs.
 
-### 1) Hysteresis: Preisach Model
-Realism: **Medium**
+---
 
-Key simplifications:
-1. Quasi-static hysteresis (no switching kinetics or domain dynamics). This captures memory but not time-dependent switching.
-2. Everett function is a **tanh approximation**, not a calibrated distribution of hysterons.
-3. Stress and temperature scaling are **linear/heuristic**, not derived from a full Landau free energy model.
-4. Discrete states are evenly spaced between ±Ps (not derived from device physics).
+## Realism Summary by Module
 
-Evidence:
-- `module1-hysteresis/pkg/ferroelectric/preisach.go`
-- `shared/physics/material.go`
+| Area | Realism | Status | Main Simplifications |
+|------|---------|--------|---------------------|
+| Hysteresis (Preisach) | Medium | Active | Quasi-static, tanh Everett, heuristic scaling |
+| Hysteresis (Landau) | Medium | Active | 1D ODE, lumped depolarization, empirical NLS |
+| Crossbar Array | Medium | Active | Linear conductance, iterative IR drop, Elmore RC |
+| MNIST CIM | Low | Active | Linear quantization, software noise proxy |
+| Circuits (DAC/ADC/TIA) | Low | Active | Parametric formulas, no transistor-level |
+| Comparison/EDA | Low | Active | Estimated metrics, no P&R or parasitics |
 
-Impact:
-- Correct qualitative hysteresis behavior, but limited quantitative accuracy for switching speed, minor-loop curvature, and temperature-stress coupling.
+---
 
-Recent fix already applied:
-- Added reversible dielectric polarization so P relaxes when E is reduced.
+## Detailed Findings
 
-### 2) Hysteresis: Landau‑Khalatnikov Solver
-Realism: **Medium**
+### 1. Hysteresis: Preisach Model
 
-Key simplifications:
-1. Single-domain 1D ODE. No spatial domain structure or phase-field dynamics.
-2. Depolarization term `K_dep` is a tuning knob to create analog slope, not a first-principles interface model.
-3. Nucleation-limited switching is empirical; time constants are not calibrated to device data.
+**Realism:** Medium
+**Files:** `module1-hysteresis/pkg/ferroelectric/preisach.go`, `shared/physics/material.go`
 
-Evidence:
-- `shared/physics/landau.go`
+| Simplification | Impact | Upgrade Path |
+|----------------|--------|--------------|
+| Quasi-static hysteresis (no switching kinetics) | Captures memory, not time-dependent switching | Add KAI model or measured switching times |
+| tanh Everett function | Smooth but uncalibrated | Fit to measured first-order reversal curves (FORC) |
+| Linear stress/temperature scaling | Qualitative only | Derive from Landau free energy expansion |
+| Evenly-spaced discrete states | Not physics-based | Use measured state distributions |
 
-Impact:
-- Produces plausible dynamic switching curves but cannot predict domain wall behavior, stochastic switching distributions, or size scaling.
+**Validation target:** Match published P-E loop (e.g., HZO from Nature Commun. 2025).
 
-### 3) Crossbar Array + Non-Idealities
-Realism: **Medium**
+---
 
-Key simplifications:
-1. Conductance mapping is linear/exponential/lookup and not a compact device model.
-2. IR-drop solver is iterative and approximate, not a full circuit simulator.
-3. RC delay uses Elmore approximation with assumed wire capacitances.
-4. Drift uses assumed coefficients; not tied to measured retention curves.
-5. Half-select disturb is linear and per-pulse.
+### 2. Hysteresis: Landau-Khalatnikov Solver
 
-Evidence:
-- `module2-crossbar/pkg/crossbar/array.go`
-- `module2-crossbar/pkg/crossbar/nonidealities.go`
-- `module2-crossbar/pkg/crossbar/drift.go`
-- `module2-crossbar/pkg/crossbar/irdrop.go`
-- `module2-crossbar/pkg/crossbar/sneakpath.go`
+**Realism:** Medium
+**Files:** `shared/physics/landau.go`
 
-Impact:
-- Good for qualitative non-ideality education, not for predictive circuit accuracy or process-node scaling.
+| Simplification | Impact | Upgrade Path |
+|----------------|--------|--------------|
+| Single-domain 1D ODE | No spatial effects | Add multi-domain or phase-field |
+| K_dep as tuning knob | Creates analog slope but not physical | Model interface depolarization field |
+| Empirical NLS time constants | Uncalibrated | Fit to measured switching distributions |
 
-### 4) MNIST CIM Inference
-Realism: **Low**
+**Validation target:** Reproduce switching transient from Muller et al. or similar.
 
-Key simplifications:
-1. Quantization is purely mathematical (linear binning), not a device write/read process.
-2. Noise injection is a software proxy, not a modeled circuit readout or variability distribution.
-3. No peripheral circuit constraints (ADC/DAC timing, settling, bandwidth).
+---
 
-Evidence:
-- `module3-mnist/pkg/core/quantize.go`
-- `module3-mnist/pkg/core/network.go`
+### 3. Crossbar Array + Non-Idealities
 
-Impact:
-- Useful for exploring quantization sensitivity, not for predicting hardware accuracy or energy.
+**Realism:** Medium
+**Files:** `module2-crossbar/pkg/crossbar/*.go`
 
-### 5) Circuits (DAC/ADC/TIA/Charge Pump)
-Realism: **Low**
+| Component | Simplification | Upgrade Path |
+|-----------|----------------|--------------|
+| Conductance mapping | Linear/exponential, no compact model | Add FeFET I-V model |
+| IR drop solver | Iterative approximation | Validate vs SPICE for 8x8 |
+| RC delay | Elmore with assumed C | Extract from layout or PDK |
+| Drift model | Assumed coefficients | Calibrate to retention data |
+| Half-select disturb | Linear per-pulse | Add cumulative/threshold model |
 
-Key simplifications:
-1. Uses parametric formulas for INL/DNL, energy, and settling.
-2. No transistor-level modeling, noise spectra, or PVT variation.
-3. Energy estimates are heuristic and calibrated to “typical” values, not measured data.
+**Validation target:** Cross-validate IR drop vs SPICE for small array.
 
-Evidence:
-- `shared/peripherals/dac.go`
-- `shared/peripherals/adc.go`
-- `shared/peripherals/tia.go`
-- `shared/peripherals/chargepump.go`
+---
 
-Impact:
-- Good for intuition but not for circuit design or signoff.
+### 4. MNIST CIM Inference
 
-### 6) Comparison + EDA
-Realism: **Low**
+**Realism:** Low
+**Files:** `module3-mnist/pkg/core/quantize.go`, `module3-mnist/pkg/core/network.go`
 
-Key simplifications:
-1. FeCIM architecture metrics are explicitly estimated and not experimentally validated.
-2. Latency/energy computed analytically without model-specific bottlenecks or IO constraints.
-3. EDA compiler does mapping and export, not placement, routing, or parasitic extraction.
+| Simplification | Impact | Upgrade Path |
+|----------------|--------|--------------|
+| Linear binning quantization | Not a device model | Add write/read cycle model |
+| Software noise injection | Proxy only | Model ADC noise, cell variation |
+| No peripheral constraints | Missing real bottlenecks | Add ADC/DAC timing limits |
 
-Evidence:
-- `module5-comparison/pkg/comparison/architecture.go`
-- `module6-eda/pkg/compiler/compiler.go`
+**Validation target:** Compare quantization error to measured device variation.
 
-Impact:
-- Suitable for visualization and early trade studies, not for hardware planning.
+---
 
-### 7) Materials and Calibration Inputs
-Realism: **Mixed**
+### 5. Circuits (DAC/ADC/TIA/Charge Pump)
 
-Key issues:
-1. FeCIM target parameters include estimated values and conference claims.
-2. Some parameters are literature-based but not tied to a specific measurement setup.
+**Realism:** Low
+**Files:** `shared/peripherals/*.go`
 
-Evidence:
-- `shared/physics/material.go`
-- `data/calibrations/*.json`
+| Simplification | Impact | Upgrade Path |
+|----------------|--------|--------------|
+| Parametric INL/DNL formulas | Heuristic only | Use measured ADC data |
+| No transistor-level modeling | Missing noise, PVT | Add SPICE macromodels |
+| Heuristic energy estimates | Not calibrated | Tie to measured power |
 
-Impact:
-- Material parameters are reasonable for education but should not be treated as device-validated.
+**Validation target:** Validate ADC SNR against known model.
+
+---
+
+### 6. Comparison + EDA
+
+**Realism:** Low
+**Files:** `module5-comparison/pkg/comparison/architecture.go`, `module6-eda/pkg/compiler/compiler.go`
+
+| Simplification | Impact | Upgrade Path |
+|----------------|--------|--------------|
+| Estimated FeCIM metrics | Not experimentally validated | Replace with measured data when available |
+| Analytic latency/energy | No model-specific bottlenecks | Add IO and memory bandwidth limits |
+| No placement/routing | Missing parasitics | Add basic floorplan model |
+
+---
 
 ## Priority Recommendations
 
-P0 (Correctness and disclosure)
-1. Ensure every simplified model has a clear in-UI warning or docs statement that it is non-physical or heuristic.
-2. Keep “conference claim” and “target” values clearly labeled in UI and docs.
+### P0: Correctness & Disclosure (Required)
 
-P1 (Physics quality with minimal risk)
-1. Calibrate Preisach/everett distribution to at least one measured P–E dataset.
-2. Add measured retention/relaxation curves for drift and update drift coefficients.
-3. Replace linear quantization in MNIST with a device-level write/read model (even a simplified one).
+| Task | Status | Owner |
+|------|--------|-------|
+| Add UI warning on all simplified models | [ ] | - |
+| Label "conference claim" values distinctly | [x] | - |
+| Document model limitations in tooltips | [ ] | - |
 
-P2 (Higher fidelity)
-1. Add SPICE-validated peripheral models for DAC/ADC/TIA (even coarse macromodels).
-2. Add a compact FeFET conductance model for crossbar cells (V, T, history dependence).
-3. Add spatial domain effects for Landau (phase-field or simplified multi-domain).
+### P1: Physics Quality (Low Risk)
 
-## Suggested Validation Tests
+| Task | Status | Validation |
+|------|--------|------------|
+| Calibrate Preisach to one measured P-E dataset | [ ] | Match loop shape within 10% |
+| Add measured retention curve for drift | [ ] | Reproduce published decay |
+| Replace linear quantization with device model | [ ] | Compare to measured cell distribution |
 
-1. Match a published P–E loop with calibrated Preisach and Landau models.
-2. Reproduce a published retention curve to verify drift coefficients.
-3. Cross-validate IR drop vs. SPICE for a small array (e.g., 8×8).
-4. Use a known ADC model to validate quantization error and SNR.
+### P2: Higher Fidelity (Future)
 
-## Notes
-- This audit focuses on physics realism, not UI correctness or performance.
-- The project already includes honesty disclaimers and a related audit in `docs/comparison/HONESTY_AUDIT.md`.
+| Task | Status | Notes |
+|------|--------|-------|
+| SPICE-validated DAC/ADC macromodels | [ ] | Requires PDK or published model |
+| Compact FeFET conductance model | [ ] | V, T, history dependence |
+| Multi-domain Landau (phase-field lite) | [ ] | Significant complexity increase |
+
+---
+
+## Validation Test Plan
+
+| Test | Target | Pass Criteria |
+|------|--------|---------------|
+| P-E loop matching | Published HZO data | RMS error < 10% |
+| Retention curve | Published 10-year extrapolation | Same decay exponent |
+| IR drop vs SPICE | 8x8 array | Max error < 5% |
+| ADC quantization | Known ADC model | SNR within 3 dB |
+
+---
+
+## References
+
+Key literature for calibration and validation:
+
+1. **HZO P-E characteristics:** Nature Communications 2025 (Pr: 15-34 µC/cm²)
+2. **Switching dynamics:** Muller et al., various IEEE publications
+3. **Retention/endurance:** Nano Letters 2024 (V:HfO₂, 10¹² cycles)
+4. **CIM accuracy benchmarks:** Nature Communications 2023 (96.6% MNIST)
+
+---
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-02-03 | Initial audit created |
+| 2026-02-03 | Added executive summary, actionable task tables, validation plan |
