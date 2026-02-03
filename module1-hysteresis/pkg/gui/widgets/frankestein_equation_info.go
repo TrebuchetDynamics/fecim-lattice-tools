@@ -334,6 +334,7 @@ func buildLkInfoTabs() fyne.CanvasObject {
 func buildPreisachInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
+		container.NewTabItem("Model Notes", scrollSection(buildPreisachNotesSection())),
 		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
 		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)

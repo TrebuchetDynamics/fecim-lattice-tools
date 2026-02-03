@@ -106,9 +106,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		}
 		a.frequency = newFreq
 		// Reset trail when frequency changes
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-		a.lastHistorySample = -1
+		a.resetHistoryLocked()
 		a.simTime = 0
 		a.mu.Unlock()
 		log.Info("Frequency increased to %.3g Hz", newFreq)
@@ -123,9 +121,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		}
 		a.frequency = newFreq
 		// Reset trail when frequency changes
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-		a.lastHistorySample = -1
+		a.resetHistoryLocked()
 		a.simTime = 0
 		a.mu.Unlock()
 		log.Info("Frequency decreased to %.3g Hz", newFreq)
@@ -171,9 +167,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		a.polarization = 0
 		a.normalizedP = 0
 		a.syncDiscreteLevelLocked()
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-		a.lastHistorySample = -1
+		a.resetHistoryLocked()
 		a.simTime = 0
 		// Reset Time-Resolved animation state
 		a.timeResAnimating = false

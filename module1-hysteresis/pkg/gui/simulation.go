@@ -1027,16 +1027,20 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				if a.writeController != nil {
 					ctrlTarget = a.writeController.TargetLevel
 				}
-				log.Printf("WRD TARGET APPLY: active=%d queued=%d phase=%d level=%d ctrlTarget=%d E=%.3f MV/cm P=%.2f µC/cm²",
-					a.wrdTargetLevel, nextTarget, a.wrdPhase, a.discreteLevel+1, ctrlTarget, a.electricField/1e8, a.polarization*100)
+				if logging.IsVerbose(logging.VerbosityDebug) {
+					log.Printf("WRD TARGET APPLY: active=%d queued=%d phase=%d level=%d ctrlTarget=%d E=%.3f MV/cm P=%.2f µC/cm²",
+						a.wrdTargetLevel, nextTarget, a.wrdPhase, a.discreteLevel+1, ctrlTarget, a.electricField/1e8, a.polarization*100)
+				}
 				if a.wrdPhase == 2 && a.writeController != nil {
 					// Skip PREP: start controller directly from current state.
 					a.writeController.PulseDuration = phaseDuration * 0.4
 					a.writeController.Start(a.wrdTargetLevel, false)
 					a.wrdStartLevel = a.discreteLevel + 1
 					a.wrdWriteStartP = a.polarization * 100
-					log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
-						a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+					if logging.IsVerbose(logging.VerbosityDebug) {
+						log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
+							a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+					}
 				}
 			}
 			targetLevel := a.wrdTargetLevel // 1-indexed
@@ -1067,8 +1071,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.wrdResetStartP = a.polarization * 100
 					a.wrdStartLevel = a.discreteLevel + 1
 					a.wrdWriteStartP = a.polarization * 100
-					log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | target=%d | P=%.2f µC/cm²",
-						a.wrdTotalWrites+1, a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+					if logging.IsVerbose(logging.VerbosityDebug) {
+						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | target=%d | P=%.2f µC/cm²",
+							a.wrdTotalWrites+1, a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+					}
 				}
 
 				diff := prepE - a.electricField
@@ -1094,8 +1100,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					// Capture end-of-PREP state for logging
 					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
 					a.wrdResetEndLvl = a.discreteLevel + 1
-					log.Printf("WRD PHASE 0→2: PREP done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
-						a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
+					if logging.IsVerbose(logging.VerbosityDebug) {
+						log.Printf("WRD PHASE 0→2: PREP done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+							a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
+					}
 
 					// Initialize WriteController directly (skip HOLD_RESET)
 					a.writeController.PulseDuration = phaseDuration * 0.4
@@ -1120,8 +1128,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						a.writeController.Start(targetLevel, false)
 						a.wrdStartLevel = a.discreteLevel + 1
 						a.wrdWriteStartP = a.polarization * 100
-						log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
-							a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+						if logging.IsVerbose(logging.VerbosityDebug) {
+							log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
+								a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+						}
 					}
 				}
 
@@ -1129,31 +1139,35 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
 
 				if a.writeController != nil && (a.wrdLastControllerState != a.writeController.State || a.wrdLastControllerPulse != a.writeController.PulseCount) {
-					log.Printf("WRD ISPP STATE: state=%s pulse=%d target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm targetE=%.3f×Ec pulseE=%.3f×Ec overshoots=%d",
-						a.writeController.State,
-						a.writeController.PulseCount,
-						targetLevel,
-						currentLevel,
-						a.polarization*100,
-						a.electricField/1e8,
-						targetField/mat.Ec,
-						a.writeController.CurrentField/mat.Ec,
-						a.writeController.OvershootCount)
+					if logging.IsVerbose(logging.VerbosityDebug) {
+						log.Printf("WRD ISPP STATE: state=%s pulse=%d target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm targetE=%.3f×Ec pulseE=%.3f×Ec overshoots=%d",
+							a.writeController.State,
+							a.writeController.PulseCount,
+							targetLevel,
+							currentLevel,
+							a.polarization*100,
+							a.electricField/1e8,
+							targetField/mat.Ec,
+							a.writeController.CurrentField/mat.Ec,
+							a.writeController.OvershootCount)
+					}
 					a.wrdLastControllerState = a.writeController.State
 					a.wrdLastControllerPulse = a.writeController.PulseCount
 				}
 				if a.simTime-a.wrdLastProgressLog > 0.5 && a.writeController != nil {
-					log.Printf("WRD ISPP PROGRESS: target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm state=%s pulse=%d targetE=%.3f×Ec pulseE=%.3f×Ec bounds=[%.3f, %.3f]×Ec",
-						targetLevel,
-						currentLevel,
-						a.polarization*100,
-						a.electricField/1e8,
-						a.writeController.State,
-						a.writeController.PulseCount,
-						targetField/mat.Ec,
-						a.writeController.CurrentField/mat.Ec,
-						a.writeController.VMin/mat.Ec,
-						a.writeController.VMax/mat.Ec)
+					if logging.IsVerbose(logging.VerbosityDebug) {
+						log.Printf("WRD ISPP PROGRESS: target=%d level=%d P=%.2f µC/cm² E=%.3f MV/cm state=%s pulse=%d targetE=%.3f×Ec pulseE=%.3f×Ec bounds=[%.3f, %.3f]×Ec",
+							targetLevel,
+							currentLevel,
+							a.polarization*100,
+							a.electricField/1e8,
+							a.writeController.State,
+							a.writeController.PulseCount,
+							targetField/mat.Ec,
+							a.writeController.CurrentField/mat.Ec,
+							a.writeController.VMin/mat.Ec,
+							a.writeController.VMax/mat.Ec)
+					}
 					a.wrdLastProgressLog = a.simTime
 				}
 
@@ -1457,7 +1471,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 	if !skipHistory {
 		shouldAppend := true
 		if a.physicsEngine == PhysicsLandau {
-			if a.lastHistorySample < 0 || len(a.eHistory) == 0 {
+			if a.lastHistorySample < 0 || a.historyLengthLocked() == 0 {
 				a.lastHistorySample = a.simTime
 			} else if (a.simTime - a.lastHistorySample) < lkHistorySampleInterval {
 				shouldAppend = false
@@ -1466,12 +1480,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 			}
 		}
 		if shouldAppend {
-			a.eHistory = append(a.eHistory, a.electricField)
-			a.pHistory = append(a.pHistory, a.polarization)
-			if len(a.eHistory) > a.maxHistory {
-				a.eHistory = a.eHistory[1:]
-				a.pHistory = a.pHistory[1:]
-			}
+			a.appendHistoryLocked(a.electricField, a.polarization)
 		}
 	}
 
@@ -1601,7 +1610,7 @@ func (a *App) updateUI() {
 		effPr = a.material.Pr
 		materialPs = a.material.Ps
 	}
-	histLen := len(a.eHistory)
+	histLen := a.historyLengthLocked()
 	stride := 1
 	if histLen > uiMaxPlotPoints {
 		stride = histLen / uiMaxPlotPoints
@@ -1613,8 +1622,9 @@ func (a *App) updateUI() {
 	eHist := make([]float64, 0, points)
 	pHist := make([]float64, 0, points)
 	for i := 0; i < histLen; i += stride {
-		eHist = append(eHist, a.eHistory[i])
-		pHist = append(pHist, a.pHistory[i])
+		eVal, pVal := a.historyAtLocked(i)
+		eHist = append(eHist, eVal)
+		pHist = append(pHist, pVal)
 	}
 	a.mu.RUnlock()
 

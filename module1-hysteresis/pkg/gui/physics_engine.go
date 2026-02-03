@@ -86,9 +86,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 	}
 
 	a.syncDiscreteLevelLocked()
-	a.eHistory = a.eHistory[:0]
-	a.pHistory = a.pHistory[:0]
-	a.lastHistorySample = -1
+	a.resetHistoryLocked()
 }
 
 // syncDiscreteLevelLocked updates normalized polarization and discrete level.

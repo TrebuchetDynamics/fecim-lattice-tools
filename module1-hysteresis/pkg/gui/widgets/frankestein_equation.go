@@ -160,13 +160,14 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
 	if _, err := os.Stat(frankesteinEquationSVGPath); err == nil {
 		if widget := buildLkEquationImagePanel(parent, selectTerm); widget != nil {
-			return widget
+			textPanel := buildLkEquationTextPanel(selectTerm, false)
+			return container.NewVBox(widget, textPanel)
 		}
 	}
-	return buildLkEquationTextPanel(selectTerm)
+	return buildLkEquationTextPanel(selectTerm, true)
 }
 
-func buildLkEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject {
+func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool) fyne.CanvasObject {
 	line1 := container.NewHBox(
 		NewTermChip("rho_eff_main", "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
@@ -203,17 +204,21 @@ func buildLkEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject
 		mathLabel(" A) / d"),
 	)
 
-	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
-	caption.TextStyle = fyne.TextStyle{Italic: true}
-
-	return container.NewVBox(
+	objects := []fyne.CanvasObject{
 		line1,
 		line2,
 		lkRow,
 		line3,
 		line4,
-		caption,
-	)
+	}
+
+	if withCaption {
+		caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
+		caption.TextStyle = fyne.TextStyle{Italic: true}
+		objects = append(objects, caption)
+	}
+
+	return container.NewVBox(objects...)
 }
 
 func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
@@ -279,7 +284,6 @@ func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, stri
 	}
 
 	sections = append(sections, buildPreisachEquationTextPanel(selectTerm))
-	sections = append(sections, buildPreisachSummaryCard())
 
 	return container.NewVBox(sections...)
 }
@@ -324,8 +328,9 @@ func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.Canvas
 	)
 }
 
-func buildPreisachSummaryCard() fyne.CanvasObject {
-	summary := container.NewVBox(
+func buildPreisachNotesSection() fyne.CanvasObject {
+	return container.NewVBox(
+		sectionTitle("Model Notes"),
 		bodyLabel("Preisach treats hysteresis as a weighted sum of bistable hysterons:"),
 		bodyLabel(bullets([]string{
 			"Each hysteron flips at thresholds (alpha, beta) and retains memory between them.",
@@ -334,7 +339,6 @@ func buildPreisachSummaryCard() fyne.CanvasObject {
 			"Use Preisach for static loop shape; use L-K for switching dynamics.",
 		})),
 	)
-	return widget.NewCard("Model Notes", "", summary)
 }
 
 type hotspotDef struct {

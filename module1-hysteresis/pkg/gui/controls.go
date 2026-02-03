@@ -270,9 +270,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.syncDiscreteLevelLocked()
 
 		// Reset trail history
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-		a.lastHistorySample = -1
+		a.resetHistoryLocked()
 		a.simTime = 0
 
 		// Reset WRD (Write/Read Demo) state
@@ -392,9 +390,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Lock()
 		a.frequency = v
 		// Reset trail when frequency changes
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-		a.lastHistorySample = -1
+		a.resetHistoryLocked()
 		a.simTime = 0
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %s", formatHz(v)))
@@ -489,9 +485,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 			// Clear history if temperature changed significantly (>25K)
 			if math.Abs(currentTemp-previousTemp) > 25 {
-				a.eHistory = a.eHistory[:0]
-				a.pHistory = a.pHistory[:0]
-				a.lastHistorySample = -1
+				a.resetHistoryLocked()
 			}
 
 			// Get plot markers with temperature-corrected Ec and nominal Pr
@@ -519,12 +513,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	trailSlider.OnChanged = func(v float64) {
 		log.SliderChange("TrailLength", v)
 		a.mu.Lock()
-		a.maxHistory = int(v)
-		// Immediately trim if history exceeds new max
-		if len(a.eHistory) > a.maxHistory {
-			a.eHistory = a.eHistory[len(a.eHistory)-a.maxHistory:]
-			a.pHistory = a.pHistory[len(a.pHistory)-a.maxHistory:]
-		}
+		a.resizeHistoryLocked(int(v))
 		a.mu.Unlock()
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
@@ -612,9 +601,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.preisach.SetTemperature(savedTemp)
 
 	// Clear history for new material
-	a.eHistory = a.eHistory[:0]
-	a.pHistory = a.pHistory[:0]
-	a.lastHistorySample = -1
+	a.resetHistoryLocked()
 
 	// Reset simulation state
 	a.electricField = 0

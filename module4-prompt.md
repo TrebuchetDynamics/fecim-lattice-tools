@@ -11,6 +11,10 @@ Objective
     `docs/peripheral-circuits/PHYSICS.md` (and supporting Module 4 docs) when running `module4-circuits`.
   - Reuse the **hysteresis ISPP read/write logic** from `shared/physics` and `module1-hysteresis` where applicable.
     Avoid duplicating ISPP math or overshoot handling; keep only a thin UI adapter.
+  - Maintain the Module 4 **ISPP engine toggle**:
+      - `Fast (Level)` = shared/physics `ISPPCalculator` (default for big arrays).
+      - `L-K (Physics)` = shared/physics `WriteController` + `LKSolver` (small arrays / physics demos).
+    Default must remain fast and responsive.
   - Improve Module 4 documentation clarity and consistency.
   - Ensure referenced papers are present in `docs/research-papers/` when open access is available.
   - All verification must be runnable headless (CLI + tests). GUI runs are optional and only when explicitly requested.
@@ -24,6 +28,7 @@ Project Map (Module 4)
       - `shared/physics/ispp_write.go` (WriteController + L-K solver)
       - `shared/physics/ispp_legacy.go` (ISPPCalculator)
       - `module1-hysteresis/pkg/controller/writer.go` (full ISPP state machine)
+  - ISPP engine toggle UI: `module4-circuits/pkg/gui/tab_unified_voltage.go`
 
 Primary Focus (ranked)
 
@@ -57,6 +62,7 @@ Tasks
 
   - Replace ad-hoc ISPP step/verify logic in Module 4 with shared/physics or module1-hysteresis logic where possible.
   - Keep a thin adapter layer only for UI state/animation (no duplicated math).
+  - Preserve the ISPP engine toggle (Fast vs L-K). Fast must stay default for large arrays.
   - Validate READ/WRITE/COMPUTE mode behavior: DAC ranges, WL control, charge pump usage.
   - Confirm passive vs 1T1R behavior, half-select (V/2) rules, and calibration usage align with docs.
   - Ensure end-to-end signal flow matches the documented pipeline (DAC → Array → TIA → ADC).

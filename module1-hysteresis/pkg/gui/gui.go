@@ -67,6 +67,8 @@ type App struct {
 	pHistory          []float64
 	maxHistory        int
 	lastHistorySample float64
+	historyHead       int
+	historySize       int
 
 	// Full data logging (CSV)
 	dataLogger *HysteresisDataLogger

@@ -44,10 +44,7 @@ type ExportData struct {
 func (a *App) exportPEDataToJSON(filename string) error {
 	// Copy data under lock
 	a.mu.RLock()
-	eData := make([]float64, len(a.eHistory))
-	pData := make([]float64, len(a.pHistory))
-	copy(eData, a.eHistory)
-	copy(pData, a.pHistory)
+	eData, pData := a.historySnapshotLocked()
 
 	// Copy metadata
 	materialName := "Unknown"
@@ -111,10 +108,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 func (a *App) exportPEDataToCSV(filename string) error {
 	// Copy data under lock
 	a.mu.RLock()
-	eData := make([]float64, len(a.eHistory))
-	pData := make([]float64, len(a.pHistory))
-	copy(eData, a.eHistory)
-	copy(pData, a.pHistory)
+	eData, pData := a.historySnapshotLocked()
 	a.mu.RUnlock()
 
 	// Create CSV file
@@ -171,7 +165,7 @@ func (a *App) exportPEData() {
 
 	// Check if there's data to export
 	a.mu.RLock()
-	dataPoints := len(a.eHistory)
+	dataPoints := a.historyLengthLocked()
 	a.mu.RUnlock()
 
 	if dataPoints == 0 {
