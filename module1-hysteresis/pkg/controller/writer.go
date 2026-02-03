@@ -461,27 +461,27 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	var stepSize float64
 	switch {
 	case levelError > 10:
-		stepSize = 0.20 * wc.EcField // Large step when very far
+		stepSize = 0.15 * wc.EcField // Large step when very far
 	case levelError > 5:
-		stepSize = 0.12 * wc.EcField // Medium-large step
+		stepSize = 0.08 * wc.EcField // Medium-large step
 	case levelError > 2:
-		stepSize = 0.06 * wc.EcField // Medium step
+		stepSize = 0.04 * wc.EcField // Medium step
 	case levelError > 0:
-		stepSize = 0.03 * wc.EcField // Small step when close
+		stepSize = 0.02 * wc.EcField // Small step when close
 	default:
-		stepSize = 0.02 * wc.EcField // Tiny step (shouldn't reach here)
+		stepSize = 0.01 * wc.EcField // Tiny step (shouldn't reach here)
 	}
 
 	// Near saturation levels (1-3 or 28-30), use larger steps due to K_dep feedback
 	if targetLevel <= 3 || targetLevel >= (wc.NumLevels-2) {
-		if stepSize < 0.08*wc.EcField {
-			stepSize = 0.08 * wc.EcField // Larger step for saturation targets
+		if stepSize < 0.06*wc.EcField {
+			stepSize = 0.06 * wc.EcField // Larger step for saturation targets
 		}
 	}
 
 	// After overshoot, use smaller steps (but not too small)
 	if wc.OvershootCount > 0 {
-		stepSize = 0.03 * wc.EcField // Fine step after overshoot
+		stepSize = 0.02 * wc.EcField // Fine step after overshoot
 	}
 
 	// FIRST PULSE: Start with calibration hint or small step

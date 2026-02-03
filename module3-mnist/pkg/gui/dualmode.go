@@ -96,7 +96,8 @@ type DualModeApp struct {
 	initialized bool // true after UI is fully built
 
 	// Last inference result for refresh
-	lastPixels []float64
+	lastPixels    []float64
+	lastRawPixels []float64
 
 	// P1 Enhancement Widgets
 	quantizationWidget   *QuantizationWidget   // P1.1: Shows weight quantization
@@ -109,6 +110,10 @@ type DualModeApp struct {
 	quickDemoRunning    bool          // True when quick demo is active
 	quickDemoStopChan   chan struct{} // Channel to stop quick demo
 	animationEnabled    bool          // Enable/disable inference animation
+	preprocessEnabled   bool          // Normalize drawn digits before inference
+
+	// Preprocess toggle
+	preprocessToggle *widget.Check
 
 	// P2 Enhancement: Weight Comparison
 	weightComparisonWidget *WeightComparisonWidget
@@ -132,7 +137,8 @@ type DualModeApp struct {
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
 		// Create network controller (ARCH-001: network management extracted)
-		networkCtrl: NewNetworkController(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize),
+		networkCtrl:       NewNetworkController(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize),
+		preprocessEnabled: true,
 	}
 
 	return app

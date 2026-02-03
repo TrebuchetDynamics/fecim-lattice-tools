@@ -16,12 +16,16 @@ import (
 
 // onDigitChanged handles canvas drawing updates.
 func (app *DualModeApp) onDigitChanged(pixels []float64) {
-	pixels = preprocessIfUserInput(app.digitCanvas, pixels)
-	app.lastPixels = pixels
+	app.lastRawPixels = pixels
+	effective := pixels
+	if app.preprocessEnabled {
+		effective = preprocessIfUserInput(app.digitCanvas, pixels)
+	}
+	app.lastPixels = effective
 	if app.animationEnabled {
-		go app.runInferenceAnimated(pixels)
+		go app.runInferenceAnimated(effective)
 	} else {
-		app.runInference(pixels)
+		app.runInference(effective)
 	}
 }
 
@@ -169,6 +173,7 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 // resetResults clears the result displays.
 func (app *DualModeApp) resetResults() {
 	app.lastPixels = nil
+	app.lastRawPixels = nil
 	app.fpPredLabel.SetText("Prediction: -")
 	app.fpConfBar.SetValue(0)
 	app.cimPredLabel.SetText("Prediction: -")

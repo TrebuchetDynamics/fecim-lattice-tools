@@ -74,6 +74,31 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		})),
 		app.noiseLabel, app.noiseSlider)
 
+	// Preprocess toggle
+	preprocessTitle := widget.NewLabel("Preprocess:")
+	preprocessInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Input Preprocessing", "Normalizes drawn digits to match MNIST style:\n• Threshold background\n• Crop to bounding box\n• Scale to 20×20\n• Center by mass\n\nRandom test samples are never altered.", app.window)
+	})
+	app.preprocessToggle = widget.NewCheck("", func(checked bool) {
+		app.preprocessEnabled = checked
+		mnistLog.Selection("Preprocess", map[bool]string{true: "On", false: "Off"}[checked])
+		if len(app.lastRawPixels) > 0 {
+			effective := app.lastRawPixels
+			if app.preprocessEnabled {
+				effective = preprocessIfUserInput(app.digitCanvas, app.lastRawPixels)
+			}
+			app.lastPixels = effective
+			app.runInference(effective)
+		}
+	})
+	app.preprocessToggle.SetChecked(app.preprocessEnabled)
+
+	preprocessRow := container.NewHBox(
+		container.NewHBox(preprocessTitle, preprocessInfo),
+		layout.NewSpacer(),
+		app.preprocessToggle,
+	)
+
 	// Preset buttons
 	idealBtn := widget.NewButton("Ideal", func() {
 		mnistLog.Button("Preset:Ideal")
@@ -98,6 +123,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		container.NewHBox(label, layout.NewSpacer()),
 		levelsRow,
 		noiseRow,
+		preprocessRow,
 		presetRow,
 	)
 }

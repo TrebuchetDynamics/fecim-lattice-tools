@@ -1161,9 +1161,9 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						if a.writeController.OvershootCount > 0 {
 							a.wrdForceReset = true
 						}
-						if targetLevel > midLevel {
+						if targetLevel > a.wrdStartLevel {
 							a.wrdLastBranch = 1
-						} else {
+						} else if targetLevel < a.wrdStartLevel {
 							a.wrdLastBranch = -1
 						}
 
@@ -1272,30 +1272,41 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						a.addLogEntry(fmt.Sprintf("Accuracy: %.0f%%", successRate))
 					}
 
-					// Pick new target - alternate between high and low
-					midLvl := a.numLevels / 2
-					rangeSize := a.numLevels / 3
-					if rangeSize < 2 {
-						rangeSize = 2
+					// Pick new target - prefer same-branch moves to avoid unnecessary PREP.
+					minLevel := 2
+					maxLevel := a.numLevels - 1
+					currentLevel := a.discreteLevel + 1
+					preferDir := a.wrdLastBranch
+					if preferDir == 0 {
+						if currentLevel <= a.numLevels/2 {
+							preferDir = 1
+						} else {
+							preferDir = -1
+						}
 					}
 					nextTarget := a.wrdTargetLevel
-					if a.wrdTargetLevel > midLvl {
-						// Low range: 2 to rangeSize+1 (avoid extremes)
-						nextTarget = rand.Intn(rangeSize) + 2
-						if nextTarget > a.numLevels-1 {
-							nextTarget = a.numLevels - 1
+					if preferDir > 0 {
+						low := currentLevel + 1
+						high := maxLevel
+						if low <= high {
+							nextTarget = rand.Intn(high-low+1) + low
+						} else {
+							preferDir = -1
 						}
-					} else {
-						// High range: (numLevels - rangeSize) to numLevels-1
-						nextTarget = a.numLevels - rangeSize + rand.Intn(rangeSize)
-						if nextTarget < 2 {
-							nextTarget = 2
+					}
+					if preferDir < 0 {
+						low := minLevel
+						high := currentLevel - 1
+						if low <= high {
+							nextTarget = rand.Intn(high-low+1) + low
 						}
 					}
 					a.wrdNextTargetLevel = nextTarget
-					nextBranch := -1
-					if nextTarget > midLvl {
+					nextBranch := 0
+					if nextTarget > currentLevel {
 						nextBranch = 1
+					} else if nextTarget < currentLevel {
+						nextBranch = -1
 					}
 					usePrep := a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch)
 					a.wrdForceReset = false

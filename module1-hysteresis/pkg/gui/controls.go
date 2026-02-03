@@ -114,6 +114,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.wrdTargetLevel = rand.Intn(a.numLevels) + 1
 			a.wrdNextTargetLevel = 0
 			a.wrdStartLevel = a.discreteLevel + 1
+			a.wrdLastBranch = 0
+			a.wrdForceReset = true
 			// Reset Dr. Tour demo metrics
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
