@@ -321,6 +321,7 @@ func termDetails() map[string]termDetail {
 func buildLkInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
+		container.NewTabItem("Model Notes", scrollSection(buildLkNotesSection())),
 		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
 		container.NewTabItem("Parameters", scrollSection(buildGoldenSetSection())),
 		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
@@ -350,6 +351,18 @@ func buildOverviewSection() fyne.CanvasObject {
 		equationBlock("E_eff = E_applied - k_dep P"),
 		equationBlock("dG/dP = 2alphaP + 4betaP^3 + 6gammaP^5"),
 		bodyLabel("This widget adds depolarization and series-resistance aggregation used in the headless L-K path."),
+	)
+}
+
+func buildLkNotesSection() fyne.CanvasObject {
+	return container.NewVBox(
+		sectionTitle("Model Notes"),
+		bodyLabel("Landau-Khalatnikov captures dynamic switching with an explicit dP/dt term."),
+		bodyLabel(bullets([]string{
+			"Tap a coefficient or the LK nonlinearity row to see its meaning and code mapping.",
+			"Includes depolarization and effective viscosity (series resistance aggregation).",
+			"Use L-K for rate-dependent behavior; use Preisach for static loop shape.",
+		})),
 	)
 }
 
