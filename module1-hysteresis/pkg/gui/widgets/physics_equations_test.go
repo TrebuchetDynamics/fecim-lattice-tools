@@ -9,13 +9,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func TestNewFrankesteinEquationWidget(t *testing.T) {
+func TestNewPhysicsEquationsWidget(t *testing.T) {
 	test.NewApp()
 	win := test.NewWindow(widget.NewLabel("host"))
 
-	obj := NewFrankesteinEquationWidget(win)
+	obj := NewPhysicsEquationsWidget(win)
 	if obj == nil {
-		t.Fatal("NewFrankesteinEquationWidget should return non-nil")
+		t.Fatal("NewPhysicsEquationsWidget should return non-nil")
 	}
 
 	root, ok := obj.(*fyne.Container)

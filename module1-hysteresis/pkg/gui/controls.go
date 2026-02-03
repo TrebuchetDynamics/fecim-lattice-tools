@@ -319,10 +319,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.showELI5Dialog()
 	})
 	eli5Btn.Importance = widget.LowImportance
-	// Frankestein equation button (educational widget)
+	// Physics equations button (educational widget)
 	eqBtn := widget.NewButton("Eq", func() {
 		log.Button("Equation")
-		a.showFrankesteinEquationDialog()
+		a.showPhysicsEquationsDialog()
 	})
 	eqBtn.Importance = widget.LowImportance
 
@@ -518,11 +518,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
+	physicsRow := container.NewHBox(a.physicsSelect, eqBtn)
+
 	// Compact layout
 	return container.NewVBox(
 		a.materialBtn,
 		a.waveformSelect,
-		a.physicsSelect,
+		physicsRow,
 		a.levelsLabel,
 		a.levelsEntry,
 		container.NewHBox(a.eFieldLabel, a.eFieldModeLabel),
@@ -537,7 +539,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		tempSlider,
 		trailLabel,
 		trailSlider,
-		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn, eqBtn),
+		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
 		stressLabel,
 		stressSlider,
 	)

@@ -37,8 +37,8 @@ Primary Focus (ranked)
 
 Scope / Files of Interest
 
-- Widget: `module1-hysteresis/pkg/gui/widgets/frankestein_equation.go`
-- Term info panel: `module1-hysteresis/pkg/gui/widgets/frankestein_equation_info.go`
+- Widget: `module1-hysteresis/pkg/gui/widgets/physics_equations.go`
+- Term info panel: `module1-hysteresis/pkg/gui/widgets/physics_equations_info.go`
 - LaTeX source: `shared/assets/equations/frankestein.tex`
 - LaTeX source: `shared/assets/equations/preisach.tex`
 - Hotspots: `shared/assets/equations/frankestein.hotspots.json`
@@ -93,4 +93,4 @@ Baseline (update each run)
 - SVG generated (Frankestein): 2026-02-02 via `go run ./cmd/latex-svg -in shared/assets/equations/frankestein.tex -out shared/assets/equations/frankestein.svg` (success; viewBox normalized to 0,0 and `<use>` glyphs inlined for Fyne SVG rendering).
 - SVG generated (Preisach): 2026-02-02 via `go run ./cmd/latex-svg -in shared/assets/equations/preisach.tex -out shared/assets/equations/preisach.svg`.
 - Hotspots aligned: 2026-02-02 updated `shared/assets/equations/frankestein.hotspots.json` using font-based SVG bounds; includes LK row and alpha definition hotspot.
-- Materials/References: 2026-02-02 expanded Materials tab fields (Pr, Ps, Ec, Vc, C, switching energy, NLS params, etc.) and references list in `module1-hysteresis/pkg/gui/widgets/frankestein_equation_info.go`.
+- Materials/References: 2026-02-02 expanded Materials tab fields (Pr, Ps, Ec, Vc, C, switching energy, NLS params, etc.) and references list in `module1-hysteresis/pkg/gui/widgets/physics_equations_info.go`.

@@ -15,10 +15,11 @@ import (
 type EmbeddedCrossbarApp struct {
 	*CrossbarApp
 	sharedwidgets.EmbeddedAppBase
+	initialized bool
 }
 
 // NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application.
-// Returns an error if the crossbar array cannot be initialized.
+// The crossbar array is lazily initialized when the module is first opened.
 func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 	ca := &CrossbarApp{
 		selectedRow:   -1, // No selection initially
@@ -26,7 +27,7 @@ func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 		tabHasNewData: make(map[string]bool),
 	}
 
-	// Initialize with default config
+	// Initialize with default config (array created lazily)
 	ca.config = &crossbar.Config{
 		Rows:       64,
 		Cols:       64,
@@ -35,23 +36,32 @@ func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 		DACBits:    8,
 	}
 
-	// Create crossbar array
+	return &EmbeddedCrossbarApp{CrossbarApp: ca}, nil
+}
+
+// initArray lazily initializes the crossbar array on first use
+func (e *EmbeddedCrossbarApp) initArray() error {
+	if e.initialized {
+		return nil
+	}
+
 	var err error
-	ca.array, err = crossbar.NewArray(ca.config)
+	e.array, err = crossbar.NewArray(e.config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create crossbar array: %w", err)
+		return fmt.Errorf("failed to create crossbar array: %w", err)
 	}
 
 	// Program initial random weights
-	for i := 0; i < ca.config.Rows; i++ {
-		for j := 0; j < ca.config.Cols; j++ {
+	for i := 0; i < e.config.Rows; i++ {
+		for j := 0; j < e.config.Cols; j++ {
 			level := rand.Intn(30)
 			weight := float64(level) / 29.0
-			ca.array.ProgramWeight(i, j, weight)
+			e.array.ProgramWeight(i, j, weight)
 		}
 	}
 
-	return &EmbeddedCrossbarApp{CrossbarApp: ca}, nil
+	e.initialized = true
+	return nil
 }
 
 // BuildContent creates the UI content for embedding in a tab
@@ -60,6 +70,12 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
+
+	// Lazily initialize the crossbar array on first BuildContent call
+	if err := e.initArray(); err != nil {
+		// Return error placeholder if init fails
+		return fyne.NewContainerWithLayout(nil)
+	}
 
 	// Create enhanced layout (embedded version always uses enhanced features)
 	content := e.createEnhancedMainLayout()
@@ -91,6 +107,11 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
 	e.fyneApp = fyneApp
 	e.window = parentWindow
+
+	// Lazily initialize the crossbar array on first BuildContent call
+	if err := e.initArray(); err != nil {
+		return fyne.NewContainerWithLayout(nil)
+	}
 
 	// Create standard layout
 	content := e.createMainLayout()

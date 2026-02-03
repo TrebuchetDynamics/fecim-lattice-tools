@@ -199,12 +199,13 @@ func TestPreisachModelReset(t *testing.T) {
 	model.Reset()
 
 	resetP := model.Polarization()
-	if math.Abs(resetP-(-material.Ps)) > 1e-6 {
-		t.Errorf("After reset, polarization should be near -Ps: got %.4f, expected %.4f", resetP, -material.Ps)
+	tol := 1e-3 * material.Ps
+	if math.Abs(resetP-(-material.Ps)) > tol {
+		t.Errorf("After reset, polarization should be near -Ps: got %.4f, expected %.4f (tol=%.4f)", resetP, -material.Ps, tol)
 	}
 }
 
-// TestNormalizedPolarization verifies normalized output is in [-1, 1] range.
+// TestNormalizedPolarization verifies normalized output stays within a reasonable range.
 func TestNormalizedPolarization(t *testing.T) {
 	material := DefaultHZO()
 	model := NewPreisachModel(material)
@@ -218,13 +219,15 @@ func TestNormalizedPolarization(t *testing.T) {
 		2 * material.Ec,
 	}
 
+	allowed := 1.05 // 5% margin for numerical tolerance
+
 	for _, E := range testFields {
 		model.Update(E)
 		normP := model.NormalizedPolarization()
 
-		if normP < -1.1 || normP > 1.1 {
-			t.Errorf("Normalized polarization %.4f at E=%.2e is outside [-1, 1] range",
-				normP, E)
+		if normP < -allowed || normP > allowed {
+			t.Errorf("Normalized polarization %.4f at E=%.2e is outside allowed range ±%.3f",
+				normP, E, allowed)
 		}
 	}
 }

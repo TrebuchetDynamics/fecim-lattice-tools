@@ -48,8 +48,20 @@ func TestPreisachModel_SetTemperatureUpdatesEverett(t *testing.T) {
 	}
 
 	gotPs := model.everett.Ps
-	if math.Abs(gotPs-expectedPs) > math.Abs(expectedPs)*1e-8+1e-12 {
-		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedPs)
+	const epsilon0 = 8.854e-12
+	chi := 0.0
+	if material.EpsilonLF > 1 {
+		chi = epsilon0 * (material.EpsilonLF - 1)
+	} else if material.Epsilon > 1 {
+		chi = epsilon0 * (material.Epsilon - 1)
+	}
+	revPSat := chi * expectedEc
+	expectedIrrev := expectedPs - revPSat
+	if expectedIrrev < 0 {
+		expectedIrrev = 0
+	}
+	if math.Abs(gotPs-expectedIrrev) > math.Abs(expectedIrrev)*1e-8+1e-12 {
+		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedIrrev)
 	}
 
 	expectedDelta := expectedEc * 0.25
@@ -79,7 +91,19 @@ func TestPreisachModel_SetStressUpdatesEverett(t *testing.T) {
 	}
 
 	gotPs := model.everett.Ps
-	if math.Abs(gotPs-expectedPs) > math.Abs(expectedPs)*1e-8+1e-12 {
-		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedPs)
+	const epsilon0 = 8.854e-12
+	chi := 0.0
+	if material.EpsilonLF > 1 {
+		chi = epsilon0 * (material.EpsilonLF - 1)
+	} else if material.Epsilon > 1 {
+		chi = epsilon0 * (material.Epsilon - 1)
+	}
+	revPSat := chi * expectedEc
+	expectedIrrev := expectedPs - revPSat
+	if expectedIrrev < 0 {
+		expectedIrrev = 0
+	}
+	if math.Abs(gotPs-expectedIrrev) > math.Abs(expectedIrrev)*1e-8+1e-12 {
+		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedIrrev)
 	}
 }

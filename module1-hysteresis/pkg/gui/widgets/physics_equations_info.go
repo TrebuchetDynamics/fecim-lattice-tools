@@ -432,7 +432,7 @@ func loadPreisachEquationSVG() *canvas.Image {
 	if _, err := os.Stat(svgPath); err != nil {
 		return nil
 	}
-	return loadFrankesteinEquationSVG(svgPath)
+	return loadEquationSVG(svgPath)
 }
 
 func buildAlphaSection() fyne.CanvasObject {

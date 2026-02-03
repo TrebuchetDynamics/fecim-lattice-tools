@@ -17,17 +17,17 @@ import (
 )
 
 const (
-	frankesteinEquationSVGPath     = "shared/assets/equations/frankestein.svg"
-	frankesteinEquationHotspotPath = "shared/assets/equations/frankestein.hotspots.json"
+	lkEquationSVGPath     = "shared/assets/equations/frankestein.svg"
+	lkEquationHotspotPath = "shared/assets/equations/frankestein.hotspots.json"
 )
 
 var (
 	equationSVGCacheMu sync.Mutex
 	equationSVGCache   = map[string]fyne.Resource{}
 
-	frankesteinHotspotsOnce sync.Once
-	cachedFrankesteinSpots  []hotspotDef
-	cachedFrankesteinSize   fyne.Size
+	lkHotspotsOnce sync.Once
+	cachedLkSpots  []hotspotDef
+	cachedLkSize   fyne.Size
 )
 
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
@@ -89,8 +89,8 @@ func mathLabel(text string) *widget.Label {
 	return label
 }
 
-// NewFrankesteinEquationWidget builds the equation display with tooltips.
-func NewFrankesteinEquationWidget(parent fyne.Window) fyne.CanvasObject {
+// NewPhysicsEquationsWidget builds the equation display with tooltips.
+func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("L-K Equation", buildLkEquationTab(parent)),
 		container.NewTabItem("Preisach Equation", buildPreisachEquationTab(parent)),
@@ -158,7 +158,7 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 }
 
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
-	if _, err := os.Stat(frankesteinEquationSVGPath); err == nil {
+	if _, err := os.Stat(lkEquationSVGPath); err == nil {
 		if widget := buildLkEquationImagePanel(parent, selectTerm); widget != nil {
 			textPanel := buildLkEquationTextPanel(selectTerm, false)
 			return container.NewVBox(widget, textPanel)
@@ -222,7 +222,7 @@ func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool)
 }
 
 func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
-	hotspots, minSize := loadFrankesteinHotspots()
+	hotspots, minSize := loadLkHotspots()
 	debug := os.Getenv("FECIM_EQUATION_DEBUG") == "1"
 
 	var hotspotWidgets []fyne.CanvasObject
@@ -230,7 +230,7 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 		hotspotWidgets = append(hotspotWidgets, NewHotspot(spot.ID, spot.Tooltip, debug, selectTerm))
 	}
 
-	image := loadFrankesteinEquationSVG(frankesteinEquationSVGPath)
+	image := loadEquationSVG(lkEquationSVGPath)
 	if image == nil {
 		return nil
 	}
@@ -447,28 +447,28 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 	return res, true
 }
 
-func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
+func loadEquationSVG(svgPath string) *canvas.Image {
 	if res, ok := loadEquationSVGResource(svgPath); ok {
 		return canvas.NewImageFromResource(res)
 	}
 	return canvas.NewImageFromFile(svgPath)
 }
 
-func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
-	frankesteinHotspotsOnce.Do(func() {
-		defaultHotspots, defaultSize := defaultFrankesteinHotspots()
-		data, err := os.ReadFile(frankesteinEquationHotspotPath)
+func loadLkHotspots() ([]hotspotDef, fyne.Size) {
+	lkHotspotsOnce.Do(func() {
+		defaultHotspots, defaultSize := defaultLkHotspots()
+		data, err := os.ReadFile(lkEquationHotspotPath)
 		if err != nil {
-			cachedFrankesteinSpots = defaultHotspots
-			cachedFrankesteinSize = defaultSize
+			cachedLkSpots = defaultHotspots
+			cachedLkSize = defaultSize
 			return
 		}
 
 		var cfg hotspotConfig
 		if err := json.Unmarshal(data, &cfg); err != nil {
 			log.Printf("failed to parse hotspots file: %v", err)
-			cachedFrankesteinSpots = defaultHotspots
-			cachedFrankesteinSize = defaultSize
+			cachedLkSpots = defaultHotspots
+			cachedLkSize = defaultSize
 			return
 		}
 
@@ -482,14 +482,14 @@ func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
 			size = fyne.NewSize(cfg.BaseWidth, cfg.BaseHeight)
 		}
 
-		cachedFrankesteinSpots = hotspots
-		cachedFrankesteinSize = size
+		cachedLkSpots = hotspots
+		cachedLkSize = size
 	})
 
-	return cachedFrankesteinSpots, cachedFrankesteinSize
+	return cachedLkSpots, cachedLkSize
 }
 
-func defaultFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
+func defaultLkHotspots() ([]hotspotDef, fyne.Size) {
 	return []hotspotDef{
 		{
 			ID:      "rho_eff_main",

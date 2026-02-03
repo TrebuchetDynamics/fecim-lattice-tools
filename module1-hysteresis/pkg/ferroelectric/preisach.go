@@ -77,6 +77,12 @@ type PreisachModel struct {
 
 	Temperature float64
 	Stress      float64 // GPa
+
+	// Reversible (nonlinear) contribution derived from permittivity and Ec.
+	reversibleChi  float64 // C/(V*m)
+	reversiblePSat float64 // Saturating reversible polarization (C/m^2)
+
+	effectivePs float64 // Temperature/stress-adjusted total Ps
 }
 
 // NewPreisachModel creates a new Preisach model with the given material.
@@ -97,13 +103,16 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 	// E_saturation should be > Ec. typically 3-5x Ec.
 	E_sat := material.Ec * 5.0
 
-	return &PreisachModel{
+	model := &PreisachModel{
 		material:    material,
 		stack:       physics.NewPreisachStack(E_sat, everett),
 		everett:     everett,
 		Temperature: 300.0,
 		Stress:      1.0, // Default 1 GPa
+		effectivePs: material.Ps,
 	}
+	model.updateReversibleParams()
+	return model
 }
 
 // DiscreteState represents a single programmable state.
@@ -134,7 +143,8 @@ func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
 	return states
 }
 
-// Reset clears the history and sets polarization to negative saturation.
+// Reset clears the history and sets the model to negative saturation
+// (including the reversible dielectric contribution at -E_sat).
 func (p *PreisachModel) Reset() {
 	// Re-initialize stack
 	E_sat := p.material.Ec * 5.0
@@ -148,7 +158,8 @@ func (p *PreisachModel) Update(E float64) float64 {
 		log.Input("Update", map[string]interface{}{"E": E})
 	}
 
-	P := p.stack.Update(E)
+	Pirrev := p.stack.Update(E)
+	P := Pirrev + p.reversiblePolarization(E)
 
 	if logging.IsVerbose(logging.VerbosityTrace) {
 		log.Calculation("Update", map[string]interface{}{"E": E}, P)
@@ -158,16 +169,64 @@ func (p *PreisachModel) Update(E float64) float64 {
 
 // Polarization returns the current polarization state.
 func (p *PreisachModel) Polarization() float64 {
-	// We need to expose P from stack or cache it.
-	// Implementing a getter on stack would be cleaner, but Update returns it.
-	// For now, assume state is consistent or store last P if needed.
-	// But Update(LastE) is idempotent in theory (no change).
-	return p.stack.Update(p.stack.LastE)
+	// Compute polarization at current field without mutating history.
+	Pirrev := p.stack.ComputePolarization(p.stack.LastE)
+	return Pirrev + p.reversiblePolarization(p.stack.LastE)
 }
 
-// NormalizedPolarization returns polarization as fraction of Ps (-1 to +1).
+// NormalizedPolarization returns polarization as fraction of Ps.
 func (p *PreisachModel) NormalizedPolarization() float64 {
-	return p.Polarization() / p.material.Ps
+	denom := p.effectivePs
+	if denom == 0 {
+		denom = p.material.Ps
+	}
+	if denom == 0 {
+		return 0
+	}
+	return p.Polarization() / denom
+}
+
+// reversiblePolarization returns the nonlinear reversible contribution.
+// The small-signal slope matches the material permittivity.
+func (p *PreisachModel) reversiblePolarization(E float64) float64 {
+	if p.reversiblePSat == 0 || p.everett == nil || p.everett.Ec <= 0 {
+		return 0
+	}
+	return p.reversiblePSat * math.Tanh(E/p.everett.Ec)
+}
+
+func (p *PreisachModel) updateReversibleParams() {
+	if p.material == nil || p.everett == nil {
+		return
+	}
+
+	// Linear susceptibility from permittivity (low frequency preferred).
+	const epsilon0 = 8.854e-12
+	if p.material.EpsilonLF > 1 {
+		p.reversibleChi = epsilon0 * (p.material.EpsilonLF - 1.0)
+	} else if p.material.Epsilon > 1 {
+		p.reversibleChi = epsilon0 * (p.material.Epsilon - 1.0)
+	} else {
+		p.reversibleChi = 0
+	}
+
+	if p.reversibleChi > 0 && p.everett.Ec > 0 {
+		p.reversiblePSat = p.reversibleChi * p.everett.Ec
+	} else {
+		p.reversiblePSat = 0
+	}
+
+	// Split saturation into irreversible + reversible components so total Ps is preserved.
+	totalPs := p.effectivePs
+	if totalPs == 0 {
+		totalPs = p.material.Ps
+	}
+	psIrrev := totalPs - p.reversiblePSat
+	if psIrrev < 0 {
+		psIrrev = 0
+		p.reversiblePSat = totalPs
+	}
+	p.everett.Ps = psIrrev
 }
 
 // GetHysteresisLoop generates a full P-E hysteresis loop.
@@ -227,8 +286,9 @@ func (p *PreisachModel) SetTemperature(tempK float64) {
 
 	// Update Everett function
 	p.everett.Ec = newEc
-	p.everett.Ps = newPs
 	p.everett.Delta = newEc * 0.25
+	p.effectivePs = newPs
+	p.updateReversibleParams()
 }
 
 // GetEffectiveEc returns the current temperature-scaled Coercive Field.
@@ -293,6 +353,7 @@ func (p *PreisachModel) updateEffectiveParameters() {
 
 	// Update Everett
 	p.everett.Ec = newEc
-	p.everett.Ps = newPs
 	p.everett.Delta = newEc * 0.25
+	p.effectivePs = newPs
+	p.updateReversibleParams()
 }

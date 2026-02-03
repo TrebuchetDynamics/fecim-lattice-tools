@@ -8,7 +8,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
-func (a *App) showFrankesteinEquationDialog() {
+func (a *App) showPhysicsEquationsDialog() {
 	if a.mainWindow == nil {
 		return
 	}
@@ -21,7 +21,7 @@ func (a *App) showFrankesteinEquationDialog() {
 		}
 	}
 
-	content := widgets.NewFrankesteinEquationWidget(a.mainWindow)
+	content := widgets.NewPhysicsEquationsWidget(a.mainWindow)
 	canvasSize := a.mainWindow.Canvas().Size()
 	width := canvasSize.Width * 0.92
 	height := canvasSize.Height * 0.72

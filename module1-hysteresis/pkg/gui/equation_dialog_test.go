@@ -7,12 +7,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func TestShowFrankesteinEquationDialog_NoWindow(t *testing.T) {
+func TestShowPhysicsEquationsDialog_NoWindow(t *testing.T) {
 	a := &App{}
-	a.showFrankesteinEquationDialog()
+	a.showPhysicsEquationsDialog()
 }
 
-func TestShowFrankesteinEquationDialog_AddsOverlay(t *testing.T) {
+func TestShowPhysicsEquationsDialog_AddsOverlay(t *testing.T) {
 	test.NewApp()
 	win := test.NewWindow(widget.NewLabel("host"))
 	a := &App{
@@ -21,7 +21,7 @@ func TestShowFrankesteinEquationDialog_AddsOverlay(t *testing.T) {
 	}
 
 	before := len(win.Canvas().Overlays().List())
-	a.showFrankesteinEquationDialog()
+	a.showPhysicsEquationsDialog()
 	after := len(win.Canvas().Overlays().List())
 
 	if after != before+1 {
