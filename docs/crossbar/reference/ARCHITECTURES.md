@@ -17,7 +17,7 @@
 7. [Implementation in Codebase](#implementation-in-codebase)
 8. [Sneak Path Current Flow Analysis](#sneak-path-current-flow-analysis)
 9. [Mathematical Models](#mathematical-models)
-10. [Peer-Reviewed References](#peer-reviewed-references)
+10. [Peer-Reviewed References](#reported in literature-references)
 11. [Future: Self-Rectifying Devices](#future-self-rectifying-devices)
 
 ---

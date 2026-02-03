@@ -86,7 +86,7 @@ bits_per_cell = log₂(30) = 4.91 bits/cell
 Compare to:
 - NAND Flash MLC: 2 bits/cell (4 levels)
 - NAND Flash TLC: 3 bits/cell (8 levels)
-- FeCIM: 4.91 bits/cell (30-level baseline; conference claim)
+- FeCIM: 4.91 bits/cell (30-level baseline; simulation baseline)
 
 ### `boltzmann_ev` (8.617×10⁻⁵ eV/K)
 **Physical Meaning:** Boltzmann constant in electron-volt units.

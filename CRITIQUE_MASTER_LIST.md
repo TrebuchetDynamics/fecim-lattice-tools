@@ -37,7 +37,7 @@
 | C01 | Add "SIMULATION ONLY" banners to Module 5 | academic review (archived) | ✅ | Done |
 | C02 | Change "30 states" from fact to hypothesis language | academic review (archived) | ✅ | Done |
 | C03 | Add TRL disclaimer to energy comparison charts | drtour_todo_fixes | ✅ | Done |
-| C04 | Update 87% MNIST to show peer-reviewed context (96.6-98.24%) | drtour_todo_fixes | ✅ | Done |
+| C04 | Update 87% MNIST to show reported in literature context (96.6-98.24%) | drtour_todo_fixes | ✅ | Done |
 | C05 | Add "Why 30?" dialog with verification status | drtour_todo_fixes | ✅ | Done |
 
 ### P1-D2: Medium-Effort Critical Fixes
@@ -172,66 +172,41 @@
 
 ## Recommended Execution Order
 
-### Sprint 1: Critical Easy Wins (1 day)
-1. C01 - Add "SIMULATION ONLY" banners
-2. C02 - Change "30 states" language
-3. H06 - Cite strain coefficients
-4. H07 - Add Preisach grid size reference
+### Sprint 1: Citations + Transparency (1 day)
+1. H03 - Voltage range citations (Circuits reference voltage)
+2. H04 - Read parameter sources / mark as assumed
+3. H13 - GPU comparison nuance (batched throughput caveat)
 
-### Sprint 2: Critical Medium Effort (2-3 days)
-1. C06 - Add error bars to physics parameters
-2. C07 - Fix temperature-dependent retention
-3. C09 - Label extrapolated accuracy as "projected"
-4. C10 - Add total system power breakdown
+### Sprint 2: About + Media (2-4 days)
+1. L05 - About the Science section (global entry point)
+2. L07 - Demo video creation (2-3 min walkthrough)
 
-### Sprint 3: High Priority Physics (1 week)
-1. C11 - Device-to-device variation
-2. C12 - Write-verify statistics
-3. H10 - Write disturb model
-4. H15 - Thermal physics implementation
-
-### Sprint 4: Validation (2+ weeks)
-1. C13 - Validate Preisach against experimental data
-2. H16 - Simulation vs Experiment tab
-3. H14 - ISPP visualization
+### Sprint 3: Platform Extensions (2-4 weeks)
+1. L08 - Web deployment (WASM)
+2. L09 - Vulkan rendering implementation
+3. L10 - 3D multi-layer visualization
 
 ---
 
 ## Progress Tracking
 
-**Completed:** 25/58 (43%)
-**Critical Remaining:** 10
-**High Remaining:** 9
-**Medium Remaining:** 9
+**Completed:** 50/58 (86%)
+**Critical Remaining:** 0
+**High Remaining:** 3
+**Medium Remaining:** 0
 **Low Remaining:** 5
 
-**Estimated Total Remaining Effort:** ~150 hours
+**Estimated Total Remaining Effort:** ~50-80 hours (dominated by WASM/3D work)
 
 ---
 
 ## Cross-Reference: Document Reconciliation
 
-### Items Merged from Multiple Sources
-
-| Final ID | drtour_todo_fixes | a.md | Notes |
-|----------|-------------------|------|-------|
-| C01 | CRIT-001 (done) | Tier 1 #2 | Both require TRL disclaimers |
-| C02 | CRIT-002 | Tier 1 #1 | 30 states language |
-| C11 | n/a | Tier 2 #1 | New from academic review |
-| H15 | CRIT-004 (verified) | Tier 1 #3 | Temperature dependence |
-
-### Items Only in a.md (New)
-- All Tier 2 physics items (SAR ADC, write disturb, parasitic C)
-- Fabrication Reality section
-- ISPP visualization
-- Simulation vs Experiment tab
-
-### Items Only in drtour_todo_fixes (UI/UX)
-- All UI-### items (typography, spacing, contrast)
-- Sneak path comparison view
-- Cell-level inspection tooltips
+- **a.md is not present in this repo**; items from the academic review are preserved by ID and labeled `academic review (archived)` in the Source column.
+- **drtour_todo_fixes.md** remains the primary status log for Tour critique and UI/UX items.
+- **TODO.md** remains the source for longer-term platform work (WASM/Vulkan/3D).
 
 ---
 
-*Document auto-generated 2026-01-29*
-*Next update: After Sprint 1 completion*
+*Document updated 2026-02-03*
+*Next update: After H03/H04/H13 and L05 are complete*

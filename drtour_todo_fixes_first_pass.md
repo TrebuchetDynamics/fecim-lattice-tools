@@ -13,7 +13,7 @@
 **Initial Assessment:** This is an exceptionally well-developed educational and design tool for ferroelectric compute-in-memory. After reviewing 43 screenshots, 78 research papers, and 380 lines of honesty auditing, the project demonstrates:
 
 - **Strong Foundation:** Real EDA outputs (Verilog, DEF, LEF, Liberty), tests passing in CI
-- **Scientific Rigor:** Honest classification of claims, peer-reviewed sourcing
+- **Scientific Rigor:** Honest classification of claims, reported in literature sourcing
 - **Technical Depth:** ISPP implementation, temperature calibration, 30-level quantization
 - **Educational Value:** Interactive demos across 7 modules
 
@@ -28,7 +28,7 @@
 ### Scientific Integrity ✅
 
 The **HONESTY_AUDIT.md** (380 lines) is exemplary. It classifies 124 claims by evidence tier:
-- 71% verified from peer-reviewed sources
+- 71% verified from reported in literature sources
 - 6% explicitly marked as unverified
 - 2 removed (87% MNIST claim, 10M× energy claim)
 
@@ -72,7 +72,7 @@ This level of transparency is rare in educational software. Every uncertainty is
 ### 🔴 C02: "30 States" Presented as Fact
 
 **Location:** All modules referencing multi-level capability  
-**Issue:** Tour's 30-state claim is presented alongside peer-reviewed 32-140 state demonstrations without clear distinction.  
+**Issue:** Tour's 30-state claim is presented alongside reported multi-level states state demonstrations without clear distinction.  
 **Fix:** Change language to hypothesis framing:
 ```
 BEFORE: "30 discrete states"
@@ -370,7 +370,7 @@ AFTER:  "30 discrete states (demonstrated range: 7-140 in literature)"
 | ID | Item | Fixed Date |
 |----|------|------------|
 | C03 | TRL disclaimer on energy charts | Jan 27 |
-| C04 | 87% MNIST → peer-reviewed context | Jan 27 |
+| C04 | 87% MNIST → reported in literature context | Jan 27 |
 | C05 | "Why 30?" dialog with verification | Jan 27 |
 | C06 | Temperature dependence functional | Jan 27 |
 | C07 | Accuracy degradation chart sources | Jan 27 |

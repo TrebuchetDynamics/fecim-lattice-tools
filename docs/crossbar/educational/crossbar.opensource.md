@@ -95,7 +95,7 @@ Technology tech(22);  // 22nm
 
 // Create FeFET device
 FeFET fefet(
-    30,      // Demo baseline levels (conference claim)
+    30,      // Demo baseline levels (simulation baseline)
     1e-6,    // Gmin
     100e-6,  // Gmax
     1e10     // Endurance
@@ -144,7 +144,7 @@ from aihwkit.nn import AnalogLinear
 from aihwkit.simulator.configs import SingleRPUConfig
 from aihwkit.simulator.configs.devices import ConstantStepDevice
 
-# Define analog device (30-level demo baseline = ~5 bits; conference claim)
+# Define analog device (30-level demo baseline = ~5 bits; simulation baseline)
 rpu_config = SingleRPUConfig(device=ConstantStepDevice())
 rpu_config.device.w_min = -1.0
 rpu_config.device.w_max = 1.0
@@ -465,7 +465,7 @@ V_WL1 WL1 0 0.0
 - Real-time MVM animation
 - IR drop heatmaps
 - Sneak path visualization
-- 30-level demo baseline conductance display (conference claim)
+- 30-level demo baseline conductance display (simulation baseline)
 - Interactive controls
 
 **Key Files:**

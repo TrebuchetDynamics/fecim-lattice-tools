@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document analyzes the current physics implementation in Module 4 (peripheral circuits) and proposes improvements based on peer-reviewed CIM research (2023-2026). The analysis identifies **12 critical gaps** and proposes **prioritized enhancements** to improve simulation accuracy.
+This document analyzes the current physics implementation in Module 4 (peripheral circuits) and proposes improvements based on reported in literature CIM research (2023-2026). The analysis identifies **12 critical gaps** and proposes **prioritized enhancements** to improve simulation accuracy.
 
 **Current State:** Good foundational models with proper SI units and basic nonlinearity. Missing key real-world effects that impact accuracy by 10-30%.
 

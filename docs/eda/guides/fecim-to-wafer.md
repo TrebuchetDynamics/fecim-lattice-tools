@@ -1,5 +1,7 @@
 # FECIM TO WAFER: Complete Design-to-Fabrication Roadmap
 
+> **Scope & Disclaimer**: This is an exploratory planning guide. All costs, timelines, readiness levels, and vendor references are **illustrative** and require independent verification. Nothing here should be treated as validated hardware data or a fabrication commitment.
+
 > **Document Purpose**: Comprehensive guide for taking FeCIM array designs from Module 6 EDA tools to physical silicon fabrication.
 >
 > **Last Updated**: 2026-01-24
@@ -136,7 +138,7 @@ Your tool is the **first critical step** - it bridges the gap between "I have an
 |---------|---------------------|
 | "I want a 256×256 FeCIM array" | Click, configure, done |
 | "I need files for OpenLane" | Generates Verilog + DEF automatically |
-| "What about 30-level quantization?" | Built-in (demo baseline; conference claim) |
+| "What about quantization?" | Built-in (demo baseline, configurable) |
 | "Storage vs Memory vs Compute mode?" | All three supported |
 | "How do I place thousands of cells?" | Auto-generates placement grid |
 
@@ -178,53 +180,9 @@ go run ./cmd/eda-cli -mode compute -rows 256 -cols 256 -output ./chip
 
 ---
 
-## 4. Technology Foundation
+## 4. Scientific Context (Scope Note)
 
-### 2.1 Ferroelectric Memory Principles
-
-FeCIM leverages **HfO₂-ZrO₂ (HZO) superlattice** ferroelectric materials to achieve:
-
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| **Discrete States** | 30-level baseline (~4.9 bits/cell) | Conference claim (COSM 2025); peer‑reviewed 32–140 states |
-| **Remanent Polarization (Pr)** | 15-34 μC/cm² | Nature Commun. 2025, ACS 2020 |
-| **Coercive Field (Ec)** | 1.0-1.5 MV/cm | Nature Commun. 2025 |
-| **Endurance Target** | 10¹² cycles | Achieved in HZO superlattice (PMC 2024) |
-| **Data Retention** | >10 years | 4nm HZO capacitors demonstrated |
-| **CMOS Compatibility** | Yes | BEOL integration <400°C |
-
-### 2.2 Three Operating Modes
-
-Module 6 supports three FeCIM operation modes:
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    FeCIM Operation Modes                             │
-├────────────────────┬────────────────────┬────────────────────────────┤
-│   Storage Mode     │   Memory Mode      │   Compute Mode             │
-│   ─────────────    │   ───────────      │   ────────────             │
-│   NAND replacement │   DRAM replacement │   AI accelerator           │
-│   No weights       │   No weights       │   Weights optional         │
-│   10+ year retain  │   ~10ns access     │   Analog MVM               │
-│   30 levels/cell*  │   Fast switching   │   Matrix-vector multiply   │
-└────────────────────┴────────────────────┴────────────────────────────┘
-```
-
-*30 levels/cell refers to the demo baseline (conference claim; pending peer review).
-
-### 2.3 Dr. Tour / IronLattice Research Status
-
-**IronLattice** is Dr. external research group's ferroelectric CIM technology developed at external research institution:
-
-| Claim | Status | Source |
-|-------|--------|--------|
-| 30 analog states | ⚠️ Conference claim (pending peer review) | COSM 2025 presentation |
-| 87% MNIST accuracy | ❌ Unverified (removed from tool) | COSM 2025 presentation |
-| 10¹² cycle endurance | ⚠️ Target, not achieved | Dr. Tour: "still have to get this up to 10¹²" |
-| TRL 4 status | ✅ Confirmed | Dr. Tour explicitly stated at COSM 2025 |
-| 10M× vs NAND energy | ❌ Unverified | Dr. Tour claim only; peer-reviewed max: 25-100× |
-
-**Verified Funding**: Rice Innovation "One Small Step Grant" ($50,000) January 2025
+This guide focuses on workflow and tooling. It does **not** assert device performance or scientific claims. External claims (if any) are tracked in `docs/comparison/HONESTY_AUDIT.md`.
 
 ---
 
@@ -262,7 +220,7 @@ Module 6 is a universal chip design tool that generates physical layouts for FeC
 # Storage mode - High-density non-volatile storage
 go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -name storage_array
 
-# Memory mode - High-speed DRAM replacement
+# Memory mode - Memory-oriented mode
 go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -name memory_array
 
 # Compute mode - AI accelerator with weights
@@ -603,7 +561,7 @@ core_params = CoreParams(
 - Device-to-device variability modeling
 - IR drop simulation
 - Sneak path analysis for passive arrays
-- 30-level quantization support
+- Configurable quantization levels (default 30)
 
 **Links**: [CrossSim GitHub](https://github.com/sandialabs/cross-sim)
 

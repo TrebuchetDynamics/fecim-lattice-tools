@@ -9,9 +9,9 @@ Module 6 (EDA - Electronic Design Automation) is the **educational** design infr
 **Supported Technology Nodes**: SkyWater 130nm (SKY130), GlobalFoundries 180nm (GF180MCU), IHP 130nm (IHP_SG13G2)
 
 **Operation Modes**:
-- **Storage**: High-density non-volatile NAND replacement (30-level baseline, ~4.9 bits/cell; conference claim)
-- **Memory**: High-speed zero-refresh DRAM replacement (10ns access time)
-- **Compute**: AI accelerator with optional pre-trained weight initialization
+- **Storage**: Storage-oriented mode with retention/endurance parameters
+- **Memory**: Memory-oriented mode with access/bandwidth parameters
+- **Compute**: AI acceleration mode with optional pre-trained weight initialization
 
 ## Architecture Overview
 
@@ -80,8 +80,8 @@ Design      Formats     Checks      Integration
 #### OperationMode (enum)
 ```go
 const (
-    ModeStorage OperationMode = iota  // NAND replacement
-    ModeMemory                         // DRAM replacement
+    ModeStorage OperationMode = iota  // Storage-oriented
+    ModeMemory                         // Memory-oriented
     ModeCompute                        // AI accelerator
 )
 ```
@@ -132,7 +132,7 @@ Complete design output:
 |----------|---------|
 | `GenerateDesign(config)` | Main entry point: dispatch to mapWeights or GenerateBlank |
 | `GenerateBlank(config)` | Initialize array without weights (Level 0, GMin) |
-| `mapWeights(config)` | Quantize weight matrix to 30 levels (demo baseline; conference claim), calculate stats |
+| `mapWeights(config)` | Quantize weight matrix to config.Levels (default 30), calculate stats |
 
 **Weight Quantization Logic** (mapWeights):
 1. Find weight range: [wMin, wMax]
@@ -559,7 +559,7 @@ result, _ := runner.RunYosys("read_verilog crossbar.v; hierarchy -check", "outpu
 ## Key Design Decisions
 
 ### 1. Why 30 Conductance Levels?
-Based on Dr. external research group's FeCIM device characterization (COSM 2025), the HfO₂-ZrO₂ superlattice reliably programs to 30 distinct conductance states, yielding ~4.9 bits/cell. This is the balance point between write time and resolution.
+Default designs quantize to `config.Levels` (30 by default). This is a simulation baseline; change it in `ArrayConfig` to explore other quantization granularities.
 
 ### 2. Quantization Strategy
 **Linear quantization in conductance space** (not weight space) because:
@@ -658,7 +658,7 @@ go test -v ./module6-eda/pkg/compiler/  # Verbose compiler tests
 
 - **OpenLane Flow**: https://openlane.readthedocs.io/
 - **SkyWater PDK**: https://skywater-pdk.readthedocs.io/
-- **Dr. external research group, FeCIM Fundamentals**: COSM 2025 transcript (docs/video-transcripts/)
+- **COSM 2025 transcript**: Archival transcript (not a technical source for this tool)
 - **Verilog/LEF/DEF Standards**: IEEE 1364, LEF/DEF 5.8 spec
 - **Liberty Format**: Open Access Tutorial
 
@@ -670,9 +670,9 @@ go test -v ./module6-eda/pkg/compiler/  # Verbose compiler tests
 - **ArrayDesign**: Low-level physical design (cells, coordinates, conductances)
 - **Crossbar**: NxM grid of FeCIM devices with WL/BL select
 - **DEF**: Design Exchange Format (placement constraints)
-- **FeCIM**: Ferroelectric Compute-in-Memory (HfO₂-ZrO₂ superlattice device)
+- **FeCIM**: Ferroelectric Compute-in-Memory (simulated crossbar concept)
 - **LEF**: Library Exchange Format (cell abstractions)
-- **Level**: Programmed conductance state (0-29 for 30-level demo baseline; conference claim)
+- **Level**: Programmed conductance state (0 to Levels-1, configurable)
 - **OpenLane**: Automated RTL-to-GDSII flow (uses Yosys, OpenROAD, KLayout)
 - **Quantization**: Mapping continuous weights to discrete levels
 - **Sneak Path**: Unwanted current leakage through unselected cells in passive crossbar

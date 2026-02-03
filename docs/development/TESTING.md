@@ -72,7 +72,7 @@ go test -race ./...
 **Location:** `module2-crossbar/pkg/crossbar/physics_test.go`, `module3-mnist/pkg/core/physics_test.go`
 
 #### FeCIM 30-Level Quantization
-- `TestFeCIM30LevelPhysics` - Verifies 30-level demo baseline (conference claim)
+- `TestFeCIM30LevelPhysics` - Verifies 30-level demo baseline
 - `TestLevelSpacingUniformity` - Linear DAC spacing verification
 - `TestQuantizationSymmetry` - Symmetric bipolar quantization q(-x) ≈ -q(x)
 - `TestQuantizationCliff` - Validates 2→30 level MSE/PSNR improvement

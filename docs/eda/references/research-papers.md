@@ -10,15 +10,15 @@
 
 This document collects and references 310+ papers, tools, and resources gathered during the FeCIM Visualizer project. It organizes findings by topic and provides links to original sources for those interested in FeCIM/CIM research.
 
-**Important Disclaimer:** This is a literature collection, not original research. The papers and tools listed here are the work of their respective authors and institutions. We have not validated claims made in these papers.
+**Important Disclaimer:** This is a literature collection, not original research. The papers and tools listed here are the work of their respective authors and institutions. We have not validated claims made in these papers, and numeric values should be treated as reported, not verified.
 
-### Key Findings
+### Key Findings (Reported, Not Verified)
 
 1. **Open-source EDA is production-ready for digital CMOS** but requires custom integration for FeFET/CIM designs
 2. **The FeFET modeling gap is closing** with OpenVAF and Verilog-A compact models enabling SPICE simulation
 3. **Architecture-level tools (NeuroSim, CiMLoop) are mature** and can guide design decisions before circuit implementation
 4. **IHP's open PDK with RRAM support** provides the closest path to fabricating CIM arrays in the open ecosystem
-5. **30-level quantization** used in this project is a demo baseline (conference claim) bracketed by peer‑reviewed 32–140 state devices
+5. **Quantization levels are configurable** in this project (default 30 for the demo)
 
 ---
 
@@ -56,11 +56,11 @@ This document collects and references 310+ papers, tools, and resources gathered
 
 ### 2.1 FeFET Device Physics
 
-**Consensus Points:**
-- HfO₂-ZrO₂ superlattices achieve >10¹² cycle endurance (vs. 10⁴-10⁵ for standard HfO₂)
-- Coercive field Ec ≈ 1 MV/cm; Remanent polarization Pr ≈ 25 µC/cm²
-- 30 discrete analog states (conference claim; pending peer review) aligned with project baseline; peer-reviewed devices report 32–140 states
-- Temperature effects require Verilog-A models with history tracking
+**Consensus Points (Reported in Literature):**
+- HfO2-ZrO2 superlattices are reported to improve endurance relative to standard HfO2
+- Ec and Pr ranges vary by material stack and process
+- Project demo defaults to 30 discrete levels (configurable)
+- Temperature effects often require Verilog-A models with history tracking
 
 **Key Papers:**
 | Paper | Finding | Relevance |

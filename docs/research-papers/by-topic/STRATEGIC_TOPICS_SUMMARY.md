@@ -199,7 +199,7 @@ Topic 23 (Cryogenic)
 
 ## Validation Sources
 
-All claims backed by peer-reviewed literature:
+All claims backed by reported in literature literature:
 - **177 PDFs** in research library
 - **Nature, Science, IEEE, ACS** publications
 - **Industry reports:** Fraunhofer, Samsung, IBM, Google

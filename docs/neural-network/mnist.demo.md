@@ -2,7 +2,7 @@
 
 ## Overview
 
-This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with a **30-level baseline** (conference claim; pending peer review). It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with peer-reviewed accuracy context in the UI (96.6–98.24%).
+This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with a **30-level baseline** (simulation baseline (configurable). It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with reported in literature accuracy context in the UI (96.6–98.24%).
 
 **Key Questions Answered:**
 1. What is the 30-level baseline? (Physics + competitive advantage)
@@ -65,7 +65,7 @@ The demo runs both paths simultaneously:
 ## Why 30 Levels?
 
 ### Physics Justification
-- **HZO Ferroelectric:** Demo baseline uses 30 states (conference claim); peer‑reviewed devices report 32–140 states
+- **HZO Ferroelectric:** Demo baseline uses 30 states (simulation baseline); literature reports multi-level states (unverified)
 - **Domain Wall Pinning:** Natural quantization from crystal defects
 - **ADC Resolution:** 6-bit (64 levels) → 30 reliably distinguishable
 
@@ -193,7 +193,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 |---------------|----------|--------|
 | FP (float32) | 98.1% | Training script |
 | 30-level quantized (sim) | 96.8% | Quantize weights (demo baseline) |
-| Conference-only claim (unverified) | ~87% | Dr. Tour (Nov 2024, not peer-reviewed) |
+| Conference-only claim (unverified) | ~87% | Dr. Tour (Nov 2024, not reported in literature) |
 
 ---
 
@@ -203,7 +203,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 
 | Paper | Architecture | Accuracy | Notes |
 |-------|--------------|----------|-------|
-| **This Demo** | 784→128→10 | **92–96% (sim, noise‑dependent)** | UI highlights peer‑reviewed baselines |
+| **This Demo** | 784→128→10 | **92–96% (sim, noise‑dependent)** | UI highlights reported in literature baselines |
 | Jerry+ IEDM 2017 | 784→256→10 | 90% | 75ns pulse optimization |
 | Nature Comms 2023 | Multi-level FeFET | 96.6% | Simulation only |
 | Variation-Resilient 2024 | Binary NN | 94.2% | BNN with FeFET |

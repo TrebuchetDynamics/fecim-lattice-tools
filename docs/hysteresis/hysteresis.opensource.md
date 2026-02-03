@@ -10,7 +10,7 @@
 
 This document catalogs open-source tools, libraries, and frameworks for simulating ferroelectric hysteresis, Preisach models, domain dynamics, and related phenomena. It covers tools from academic research, industry, and the open-source community.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 

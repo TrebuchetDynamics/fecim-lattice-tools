@@ -278,7 +278,7 @@ func (ir *IRDropSimulator) SimulateMatrix() {
 - `DriftModelAssumed` (0.001) - conservative estimate
 - `DriftModelLiterature` (0.0005) - derived from retention requirements
 
-**Problem:** Coefficients lack direct peer-reviewed citations.
+**Problem:** Coefficients lack direct reported in literature citations.
 
 **Proposed Improvement: Literature-Calibrated Presets with DOIs**
 

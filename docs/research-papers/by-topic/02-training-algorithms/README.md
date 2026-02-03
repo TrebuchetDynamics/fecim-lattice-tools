@@ -4,7 +4,7 @@
 
 This directory contains research on training algorithms specifically designed for analog AI hardware, with emphasis on quantization-aware training (QAT), low-precision neural networks, and hardware-software co-design approaches. These techniques are critical for deploying neural networks on analog compute-in-memory (CIM) systems where continuous weight values must be discretized to finite analog states, and where hardware non-idealities affect accuracy.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ## Papers in this Directory
 
@@ -44,7 +44,7 @@ This directory contains research on training algorithms specifically designed fo
 - **1-bit (binary)**: 5-15% accuracy loss, best for edge inference applications
 
 ### FeCIM-Specific Insights
-1. **30 analog states (4.9 bits; demo baseline, conference claim)** exceeds requirements for most QAT algorithms designed for 4-bit systems
+1. **30 analog states (4.9 bits; demo baseline, simulation baseline)** exceeds requirements for most QAT algorithms designed for 4-bit systems
 2. **High endurance (10⁹-10¹² cycles)** enables true in-situ training, not just inference
 3. **Variation resilience** in FeFET BNNs suggests robust operation even with device-to-device variation
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains research on compute-in-memory architectures, with emphasis on analog crossbar arrays for matrix-vector multiplication (MVM), peripheral circuit design (ADC/DAC/TIA), and system-level integration. These architectures exploit physical laws (Ohm's law, Kirchhoff's current law) to perform massively parallel computations in the analog domain, achieving 10-1000× energy efficiency improvements over digital approaches. Critical for understanding how FeCIM's 30-level demo baseline (conference claim) translates to system-level performance.
+This directory contains research on compute-in-memory architectures, with emphasis on analog crossbar arrays for matrix-vector multiplication (MVM), peripheral circuit design (ADC/DAC/TIA), and system-level integration. These architectures exploit physical laws (Ohm's law, Kirchhoff's current law) to perform massively parallel computations in the analog domain, achieving 10-1000× energy efficiency improvements over digital approaches. Critical for understanding how FeCIM's 30-level demo baseline translates to system-level performance.
 
 ## Papers in this Directory
 
@@ -94,7 +94,7 @@ where G is conductance matrix (stored weights)
 **3. Cell Conductance Levels:**
 - **2-4 levels**: Binary/ternary, extreme efficiency, low accuracy
 - **8-16 levels**: Good accuracy, manageable peripheral circuits
-- **30 levels (FeCIM demo baseline; conference claim)**: Near-optimal accuracy, requires 5-bit DAC/8-bit ADC
+- **30 levels (FeCIM demo baseline; simulation baseline)**: Near-optimal accuracy, requires 5-bit DAC/8-bit ADC
 - **64+ levels**: Marginal accuracy gain, complex peripherals
 
 ### Non-Ideality Hierarchy (Impact on Accuracy)
@@ -112,7 +112,7 @@ From most to least significant:
 1. **Non-destructive read**: Unlike FeCAP, FeFET read doesn't disturb state
 2. **3-terminal device**: Gate-controlled, easier peripheral integration
 3. **CMOS compatibility**: Direct integration with logic transistors
-4. **Multi-level capability**: 32–140 states demonstrated in peer-reviewed devices; demo baseline uses 30 levels (conference claim)
+4. **Multi-level capability**: multi-level states (reported) demonstrated in reported in literature devices; demo baseline uses 30 levels (simulation baseline)
 
 **Challenges:**
 1. **Read disturb**: Small but non-zero, mitigated by read voltage control
@@ -145,7 +145,7 @@ Recent findings (Temperature_Resilient_FeFET_CIM_2024.pdf):
 
 **2. 30-State Operation (Module 3)**
 - Peripheral circuits: 5-bit DAC input, 8-bit ADC output
-- Expected accuracy: 96-98% MNIST (validated by peer-reviewed 96.6% result)
+- Expected accuracy: 96-98% MNIST (validated by reported in literature 96.6% result)
 - Device variation: σ/μ = 10% tolerable with QAT
 
 **3. 3D Integration Roadmap**
@@ -165,7 +165,7 @@ Recent findings (Temperature_Resilient_FeFET_CIM_2024.pdf):
 - **GPU (NVIDIA T4)**: ~10 mJ/inference (1000× worse)
 
 **Area (28nm CMOS + FeFET BEOL):**
-- **Weight storage**: 128×128×30 states (demo baseline; conference claim) = 80 kb (FeFET)
+- **Weight storage**: 128×128×30 states (demo baseline; simulation baseline) = 80 kb (FeFET)
 - **Peripheral circuits**: ~2× area overhead (DAC/ADC/TIA)
 - **Total**: <0.5 mm² (vs. 10 mm² for SRAM equivalent)
 

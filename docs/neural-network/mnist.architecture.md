@@ -30,7 +30,7 @@ The MNIST module demonstrates FeCIM's capabilities for neural network inference 
 ### Architecture Goals
 
 - **Educational**: Demonstrate FeCIM benefits clearly
-- **Accurate**: Model realistic hardware behavior with peer-reviewed parameters
+- **Accurate**: Model realistic hardware behavior with reported in literature parameters
 - **Interactive**: Allow users to explore parameter effects in real-time
 
 ---

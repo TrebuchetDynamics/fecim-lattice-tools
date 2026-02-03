@@ -710,7 +710,7 @@ ngspice -b 1t1c_cell.cir -o 1t1c_cell.log
 ### HfO₂ Preset Configuration
 
 ```spice
-* HfO₂ ferroelectric capacitor (30 levels, conference claim; COSM 2025)
+* HfO₂ ferroelectric capacitor (30 levels, simulation baseline; COSM 2025)
 .model hfo2_fc pfecap (
 +   Pr=20e-6         W=10e-9 L=10e-9
 +   Ps=25e-6
@@ -1139,7 +1139,7 @@ E_field_MV_cm, Polarization_uC_cm2
 **Before publishing results:**
 
 - [ ] P-E curves validated against literature
-- [ ] Landau coefficients from peer-reviewed source
+- [ ] Landau coefficients from reported in literature source
 - [ ] Domain structure matches microscopy (if available)
 - [ ] Switching time constants reasonable (~ns for HfO₂)
 - [ ] Temperature dependence physically sensible

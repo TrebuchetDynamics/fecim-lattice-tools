@@ -6,7 +6,7 @@ Module 4 implements a complete peripheral circuit simulation environment for fer
 
 **Key Concept**: The module demonstrates how digital input signals are converted to analog control voltages, processed through a ferroelectric crossbar array, and converted back to digital output levels through a complete signal chain.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ## Project Structure
 
@@ -267,7 +267,7 @@ type CircuitsApp struct {
 
     // Configuration state
     arrayRows, arrayCols int  // Array dimensions (8-128)
-    quantLevels          int  // 30 for demo baseline (conference claim)
+    quantLevels          int  // 30 for demo baseline
     dacBits, adcBits     int  // Resolution in bits
     vMin, vMax           float64 // Write voltage range
     readVoltage          float64 // Safe read voltage
@@ -293,7 +293,7 @@ func NewCircuitsApp() *CircuitsApp {
     ca := &CircuitsApp{
         arrayRows:    8,           // Default 8x8 array
         arrayCols:    8,
-        quantLevels:  30,          // Demo baseline (conference claim)
+        quantLevels:  30,          // Demo baseline (simulation baseline)
         dacBits:      5,
         adcBits:      5,
         vMin:         1.2,         // Write range
@@ -793,7 +793,7 @@ go test ./module4-circuits/...
 ### Physical Constants
 
 ```go
-FeCIMLevels    = 30  // Demo baseline (conference claim)
+FeCIMLevels    = 30  // Demo baseline (simulation baseline)
 MaxArraySize   = 128 // Maximum supported array dimension
 DefaultSize    = 8   // Default 8x8 demo array
 DefaultDACBits = 5   // 32 levels, use 30

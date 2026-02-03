@@ -33,7 +33,7 @@ Neural-network digit recognition demo with FP vs CIM comparison.
 | **Read Noise** | Gaussian multiplicative (sigma/u) |
 | **DAC Quantization** | Input voltage resolution (2^bits levels) |
 | **ADC Quantization** | Output current resolution (2^bits levels) |
-| **Energy Model** | 10 fJ x log2(levels) per MAC + ADC/DAC overhead |
+| **Energy Model** | Simple, configurable estimate for relative comparisons (not hardware) |
 
 ---
 
@@ -41,7 +41,7 @@ Neural-network digit recognition demo with FP vs CIM comparison.
 
 | Parameter | Default | Notes |
 |---|---:|---|
-| Levels | 30 | Demo baseline (conference claim) |
+| Levels | 30 | Demo baseline (configurable) |
 | Noise sigma/u | 0.01 | UI default (1%) |
 | ADC / DAC | 8 / 8 | UI defaults |
 | Hidden Size | 128 | 784 -> 128 -> 10 network |
@@ -51,4 +51,4 @@ Neural-network digit recognition demo with FP vs CIM comparison.
 ## Accuracy Notes
 
 - Reported accuracy is computed from the current weights and settings.
-- Literature benchmarks and verified claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.
+- External benchmarks are treated as literature notes and are **not** simulator claims. See `docs/comparison/HONESTY_AUDIT.md`.

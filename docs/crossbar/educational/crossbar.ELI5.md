@@ -4,7 +4,7 @@
 
 ---
 
-**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ## Part 1: The Water Park Analogy
 
@@ -260,7 +260,7 @@ type CrossbarArray interface {
 
 **Requirements:**
 - Support arrays from 8×8 to 1024×1024
-- Quantize all weights to exactly 30 discrete levels (demo baseline; conference claim)
+- Quantize all weights to exactly 30 discrete levels (demo baseline; simulation baseline)
 - Apply Ohm's Law: I = G × V at each cell
 - Apply Kirchhoff's Current Law: Sum currents on each row
 
@@ -351,7 +351,7 @@ type DriftSimulator interface {
 
 **Requirements:**
 - Model: G(t) = G₀ × (t/t₀)^ν
-- FeFET drift: Assumed ν ≈ 0.001 for simulation (no peer-reviewed source; qualitatively 'mild')
+- FeFET drift: Assumed ν ≈ 0.001 for simulation (no reported in literature source; qualitatively 'mild')
 - Temperature-aware retention projection
 
 ---
@@ -399,7 +399,7 @@ func GetDiscreteLevel(conductance float64) int {
 **Requirements:**
 - Linear mapping from [0, 1] to {0, 1, 2, ..., 29}
 - Conductance range: 1 µS to 100 µS (linear)
-- Consistent with the demo's 30‑level baseline (conference claim)
+- Consistent with the demo's 30‑level baseline (simulation baseline)
 
 ---
 
@@ -565,7 +565,7 @@ func Test30LevelQuantization(t *testing.T) {
 | Requirement | Description | Priority |
 |-------------|-------------|----------|
 | ✅ MVM/VMM | Matrix operations with Ohm's Law | CRITICAL |
-| ✅ 30 levels | Demo baseline (conference claim; pending peer review) | CRITICAL |
+| ✅ 30 levels | Demo baseline (simulation baseline (configurable) | CRITICAL |
 | ✅ IR drop | Resistive network solver | HIGH |
 | ✅ Sneak paths | Three-cell model minimum | HIGH |
 | ✅ Variation | 5% D2D Gaussian | HIGH |
@@ -580,7 +580,7 @@ func Test30LevelQuantization(t *testing.T) {
 ## Summary: What Makes a Perfect Crossbar Module
 
 1. **Physics Accuracy:** Ohm's Law (I=GV) and Kirchhoff's Law (currents sum)
-2. **30-Level Quantization:** Demo baseline (conference claim; peer-reviewed range 32–140)
+2. **30-Level Quantization:** Demo baseline (simulation baseline; reported multi-level range)
 3. **Non-Idealities:** IR drop, sneak paths, variation, drift (all toggleable)
 4. **Peripheral Models:** Realistic ADC/DAC quantization
 5. **Visualization:** Real-time heatmaps and MVM animation

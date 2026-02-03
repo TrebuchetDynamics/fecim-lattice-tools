@@ -600,7 +600,7 @@ Module 4 demonstrates FeCIM peripheral circuits: DAC (Digital-to-Analog Converte
 **UI Layout**:
 - Left panel: CONFIGURATION
   - Array Size: 8x8, 16x16 options
-  - Quantization: 30 levels (demo baseline; conference claim)
+  - Quantization: 30 levels (demo baseline; simulation baseline)
   - Voltage Range: 2.0V min, 5.0V max
   - Pulse Width: 50 ns
   - Cell Selection: Row/Col dropdowns
@@ -772,7 +772,7 @@ Table showing:
 
 **6. Analog States** (Center-right)
 - Visual showing binary (2 states) vs FeCIM (30 states, demo baseline)
-- "30 states = 4.9 bits/cell" - matches demo baseline (conference claim)
+- "30 states = 4.9 bits/cell" - matches demo baseline
 - Color gradient showing multi-level capability
 
 **7. Commercialization Strategy** (Left-bottom)
@@ -908,7 +908,7 @@ PROGRESS: 65/65 screenshots complete (Modules 1-5)
 - ✓ `TestHysteresisLoopExists` - P-E curve generation
 - ✓ `TestHysteresisAsymmetry` - Path-dependent behavior
 - ✓ `TestCoerciveFieldSwitching` - Polarization switching at Ec
-- ✓ `TestDiscreteStatesCount` - **30 discrete states (conference claim baseline)**
+- ✓ `TestDiscreteStatesCount` - **30 discrete states (default baseline)**
 - ✓ `TestMaterialParameters` - HZO material validation
 - ✓ `TestPreisachModelReset` - Model state management
 - ✓ `TestNormalizedPolarization` - Output range validation
@@ -960,7 +960,7 @@ ok  	fecim-lattice-tools/shared/theme
 ### Baseline Specifications Covered by Tests
 | Specification | Test Coverage | Status |
 |--------------|---------------|--------|
-| 30 discrete levels (conference claim baseline) | `TestQuantizeTo30Levels*`, `TestDiscreteStatesCount` | ✓ |
+| 30 discrete levels (default baseline) | `TestQuantizeTo30Levels*`, `TestDiscreteStatesCount` | ✓ |
 | 4.9 bits/cell | log₂(30) = 4.91 bits, derived from demo baseline | ✓ |
 | Pr ~25 µC/cm² | `TestMaterialParameters` | ✓ |
 | Ec ~1 MV/cm | `TestCoerciveFieldSwitching` | ✓ |

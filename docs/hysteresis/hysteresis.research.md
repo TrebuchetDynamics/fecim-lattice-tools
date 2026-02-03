@@ -14,7 +14,7 @@ This meta-study synthesizes research from 50+ papers focused on ferroelectric hy
 
 1. **The Mayergoyz Preisach model** is the gold standard for ferroelectric hysteresis simulation with physics-accurate minor loop handling
 2. **HfO2-ZrO2 superlattices** achieve 10^12 cycle endurance vs. 10^4-10^5 for standard HfO2
-3. **30 discrete analog states** (conference claim; pending peer review) align with our project's quantization baseline; peer-reviewed devices report 32–140 states
+3. **30 discrete analog states** (simulation baseline (configurable) align with our project's quantization baseline; literature reports multi-level states (unverified)
 4. **Temperature dependence** follows Ec(T) ~ (1 - T/Tc)^0.5 requiring dynamic model adjustment
 5. **Preisach-based simulators** with GPU acceleration can achieve real-time 60+ FPS hysteresis visualization
 
@@ -166,7 +166,7 @@ Where:
 **Superlattice Enhancement (Tour Lab):**
 - HfO2/ZrO2 superlattice structure
 - Enhanced endurance: 10^10-10^12 cycles demonstrated
-- 30 discrete analog states claimed (conference; pending peer review)
+- 30 discrete analog states claimed (conference; unverified)
 - Critical thickness per layer: ~1-2 nm
 
 ### 2.4 Temperature Effects
@@ -451,7 +451,7 @@ Where F includes:
 
 1. **Physics-accurate Preisach model** with emergent hysteresis
 2. **Temperature-dependent Ec/Pr** following literature scaling
-3. **30-level quantization** using the demo baseline (conference claim; pending peer review)
+3. **30-level quantization** using the demo baseline (configurable)
 4. **Minor loop support** via hysteron state persistence
 5. **Real-time visualization** at 60 FPS
 
@@ -470,7 +470,7 @@ Where F includes:
 - Memory effect (history dependence)
 - Minor loops
 - Temperature scaling
-- 30-level analog storage (demo baseline; conference claim)
+- 30-level analog storage (demo baseline; simulation baseline)
 
 **This is research-grade educational software**, not a toy approximation.
 

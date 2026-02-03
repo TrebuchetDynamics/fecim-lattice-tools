@@ -13,7 +13,7 @@ Demo 2 provides an interactive visualization of how Ferroelectric CIM performs a
 ### What This Demo Shows
 
 1. **Matrix-Vector Multiplication (MVM)** — Parallel analog computation using conductance × voltage = current
-2. **30 Discrete Conductance Levels** — Demo baseline (~4.9 bits, conference claim; pending peer review)
+2. **30 Discrete Conductance Levels** — Demo baseline (~4.9 bits, simulation baseline (configurable)
 3. **Non-Idealities Modeling** — IR drop, sneak paths, device variation, ADC quantization
 4. **Real-time Crossbar Visualization** — Interactive heatmap with cell-level inspection
 
@@ -82,7 +82,7 @@ Cross-platform native GUI featuring:
   - Array size (8×8 to 128×128)
   - Noise level (0-20%)
   - ADC resolution (4-10 bits)
-- **Custom "Ferroelectric CIM" colormap** matching the 30-level demo baseline (conference claim)
+- **Custom "Ferroelectric CIM" colormap** matching the 30-level demo baseline
 - **30-level (conference-claim baseline) discrete indicator widget**
 - **Vector bar charts** for input/output visualization
 - **One-click MVM, IR Drop, and Sneak Path analysis**
@@ -315,7 +315,7 @@ Test coverage:
 - MVM correctness verification
 - IR drop calculation
 - Sneak path current analysis
-- 30-level conductance quantization (demo baseline; conference claim)
+- 30-level conductance quantization (demo baseline; simulation baseline)
 - Non-ideality impact on accuracy
 
 ---

@@ -1,5 +1,8 @@
 # 🍪 Baking in the Pantry: A Simple Guide to FeCIM
 
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+
+
 Welcome! If you've ever wondered how we can make computers faster and save the planet at the same time, you're in the right place. Let's talk about **FeCIM** (pronounced *fee-sim*).
 
 ---
@@ -23,7 +26,7 @@ FeCIM stands for **Ferroelectric Compute-in-Memory**. That's a big name for a si
 
 ### 💡 The Dimmer Switch (Analog)
 Most computers are like a **Light Switch**: they are either **ON (1)** or **OFF (0)**. 
-FeCIM is like a **Dimmer Switch**: it can be 0, 1, or any of **30 different levels** in between! 
+FeCIM is like a **Dimmer Switch**: it can be 0, 1, or many levels in between (the demo defaults to 30 levels, and it is configurable). 
 *   This means one tiny FeCIM cell can store much more information than a regular computer cell. 
 
 ### 🧠 Computing Where You Live
@@ -33,22 +36,13 @@ Instead of moving data to the brain, FeCIM does the math *inside* the storage. I
 
 ## 🌿 3. Why It Matters: Saving Energy
 
-Because we aren't "running back and forth" anymore, we save a **HUGE** amount of energy. 
-
-> **📏 The "Honesty Check":**
-> *   **The Peer-Reviewed Science**: Big companies like Samsung have measured it at **25 to 100 times** more efficient than regular memory (NAND flash). For specialized AI tasks like running large language models, researchers have measured up to **70,000 times** better efficiency!
-> *   **The Bottom Line**: Even the smaller number (25×) is like turning a car that gets 20 miles per gallon into one that gets 500 miles per gallon! 🚗✨
-> *   **Note**: Some earlier promotional claims suggested even higher numbers, but peer-reviewed science is what counts. See `HONESTY_AUDIT.md` for full details.
+Because we aren't "running back and forth" anymore, we can **reduce data movement**. That *can* save energy in memory-bound workloads. The exact savings depend on the hardware and workload.
 
 ---
 
 ## 🔬 4. Reality Check: Are we there yet?
 
-Not quite! 
-
-*   **It works in the lab**: Scientists have proven it works on their workbenches (this is called "TRL 4").
-*   **It’s not in phones yet**: It will take a few more years to make it small enough and tough enough to put in your pocket.
-*   **Real Science**: Dr. Tour is a very famous professor at external research institution with hundreds of inventions, but this specific technology is still "early days."
+Not quite! This project is a **simulation tool** that helps explore the idea. Real-world devices require fabrication, measurement, and validation.
 
 ---
 

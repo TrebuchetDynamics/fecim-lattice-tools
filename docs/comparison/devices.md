@@ -1,5 +1,7 @@
 # Compute-in-Memory (CIM) Device Technologies
 
+> **Note:** This document summarizes reported values from literature. These values are **not verified** by this project. See `docs/comparison/HONESTY_AUDIT.md` for the current verification scope.
+
 Comprehensive comparison of analog memory technologies for compute-in-memory applications, with deep dive into FeFET devices.
 
 ---
@@ -19,12 +21,12 @@ Comprehensive comparison of analog memory technologies for compute-in-memory app
 
 ## 1. Device Technologies Comparison
 
-| Technology | Mechanism | States | Speed | Endurance | Energy | CMOS Compatible | Maturity |
+| Technology | Mechanism | States | Speed | Endurance | Energy | CMOS Compatible | Maturity (reported) |
 |------------|-----------|--------|-------|-----------|--------|-----------------|----------|
-| **FeFET** | Ferroelectric polarization → Vth | 32-140 [VERIFIED] | 10-100 ns | 10⁹-10¹² [VERIFIED] | Ultra-low | ✅ Yes | TRL 4-6 |
-| **ReRAM** | Conductive filament | 2-16 | 1-100 ns | 10⁶-10¹⁰ | Low | ✅ Yes | TRL 6-8 |
-| **PCM** | Crystalline ↔ Amorphous | 4-16 | 50-500 ns | 10⁸-10⁹ | Medium | ✅ Yes | TRL 9 (Intel Optane) |
-| **MRAM** | MTJ spin switching | 2-4 | 2-20 ns | >10¹⁵ | Low-Medium | ⚠️ Partial | TRL 8-9 |
+| **FeFET** | Ferroelectric polarization → Vth | multi-level (reported) [REPORTED] | 10-100 ns | 10⁹-10¹² [REPORTED] | Ultra-low | ✅ Yes | Reported TRL 4-6 |
+| **ReRAM** | Conductive filament | 2-16 | 1-100 ns | 10⁶-10¹⁰ | Low | ✅ Yes | Reported TRL 6-8 |
+| **PCM** | Crystalline ↔ Amorphous | 4-16 | 50-500 ns | 10⁸-10⁹ | Medium | ✅ Yes | Reported TRL 9 (Intel Optane) |
+| **MRAM** | MTJ spin switching | 2-4 | 2-20 ns | >10¹⁵ | Low-Medium | ⚠️ Partial | Reported TRL 8-9 |
 
 ### Key Metrics Explained
 
@@ -71,12 +73,12 @@ P← (left):  ⊖⊖⊖⊖ → Positive Vth shift → Less current
 - **Multi-level**: Intermediate polarization states create multiple Vth levels
 
 #### Multi-Level Storage
-- **Research**: 32-140 levels demonstrated in lab conditions [VERIFIED - Oh 2017, Song 2024]
-- **Conference claim**: 30-level baseline (COSM 2025; pending peer review) [PLAUSIBLE - within demonstrated range]
+- **Research**: multi-level levels (reported in literature) demonstrated in lab conditions [REPORTED - Oh 2017, Song 2024]
+- **Simulation baseline**: 30-level baseline (unverified) [PLAUSIBLE - within demonstrated range]
 - **Mechanism**: Partial polarization via domain distribution
 
 #### Endurance
-- **Demonstrated**: 10⁹-10¹² cycles [VERIFIED - IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂), Science 2024]
+- **Demonstrated**: 10⁹-10¹² cycles [REPORTED - IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂), Science 2024]
 - **V-doped HfO₂**: 10¹² cycles achieved with vanadium doping
 - **Failure mechanism**: Wake-up, fatigue (domain pinning)
 
@@ -95,13 +97,13 @@ P← (left):  ⊖⊖⊖⊖ → Positive Vth shift → Less current
 
 #### Advantages
 ✅ CMOS-compatible (same fab tools)
-✅ High multi-level capability (32–140 states verified; 30-level baseline is a conference claim)
+✅ High multi-level capability (multi-level states (reported) verified; 30-level baseline is a demo baseline (configurable))
 ✅ Ultra-low energy (~10 fJ/bit)
 ✅ Non-volatile (retains data without power)
-✅ High endurance (10⁹-10¹² cycles demonstrated) [VERIFIED]
+✅ High endurance (10⁹-10¹² cycles demonstrated) [REPORTED]
 
 #### Challenges
-❌ Limited commercial availability (TRL 4-6)
+❌ Limited commercial availability (reported TRL 4-6)
 ❌ Retention needs improvement (10 years target)
 ❌ Cycle-to-cycle variation (stochastic switching)
 
@@ -217,7 +219,7 @@ Crystalline → Amorphous: Fast heating (600°C), rapid quench
 - **Mitigation**: Periodic refresh, drift-compensated encoding
 
 #### Advantages
-✅ Mature technology (Intel Optane, TRL 9)
+✅ Mature technology (Intel Optane, reported TRL 9)
 ✅ Fast read (20-50 ns)
 ✅ High endurance (10⁸-10⁹)
 ✅ CMOS-compatible
@@ -313,12 +315,12 @@ Antiparallel (AP): ↓↓↓ | ↑↑↑ → High resistance
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| **Pr** (Remanent Polarization) | 15-34 µC/cm² (RT), 75 µC/cm² (4K) | Nature Commun. 2025, Adv. Elec. Mat. 2024 [VERIFIED] |
-| **Ec** (Coercive Field) | 0.6-1.5 MV/cm | Nature Commun. 2025, Nano Letters 2024 [VERIFIED] |
-| **Endurance** | 10⁹-10¹² demonstrated | IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂) [VERIFIED] |
+| **Pr** (Remanent Polarization) | 15-34 µC/cm² (RT), 75 µC/cm² (4K) | Nature Commun. 2025, Adv. Elec. Mat. 2024 [REPORTED] |
+| **Ec** (Coercive Field) | 0.6-1.5 MV/cm | Nature Commun. 2025, Nano Letters 2024 [REPORTED] |
+| **Endurance** | 10⁹-10¹² demonstrated | IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂) [REPORTED] |
 | **Retention** | 10 years (extrapolated) | Literature |
 | **Thickness** | 5-10 nm | Optimal for ferroelectricity |
-| **States** | 30 discrete (conference claim baseline), 32-140 (others) | COSM 2025 [PLAUSIBLE], Oh 2017, Song 2024 [VERIFIED] |
+| **States** | 30 discrete (demo baseline (configurable)), multi-level (reported) (others) | COSM 2025 [PLAUSIBLE], Oh 2017, Song 2024 [REPORTED] |
 
 ---
 
@@ -367,7 +369,7 @@ Traditional ferroelectrics: 2 states (binary)
 #### Domain Switching Dynamics
 - **Single domain**: Switches abruptly at Ec (coercive field)
 - **Multi-domain ensemble**: Gradual switching over voltage range (distribution of Ec values)
-- **Result**: Continuous analog tuning → discretized into 30 levels for digital compatibility (demo baseline; conference claim)
+- **Result**: Continuous analog tuning → discretized into 30 levels for digital compatibility (demo baseline; demo baseline (configurable))
 
 #### 30 States = 4.9 bits/cell
 ```
@@ -376,7 +378,7 @@ log₂(30) ≈ 4.9 bits/cell
 Compare to:
   NAND Flash: 3 bits/cell (TLC), 4 bits/cell (QLC)
   ReRAM: 2-4 bits/cell
-  FeFET: 4.9 bits/cell (30-level demo baseline; conference claim)
+  FeFET: 4.9 bits/cell (30-level demo baseline; demo baseline (configurable))
 ```
 
 ---
@@ -430,7 +432,7 @@ func (p *PreisachModel) Update(E float64) float64 {
 
 func (p *PreisachModel) DiscreteStates(N int) []float64 {
     // Extract N discrete polarization levels
-    // Used to get 30 discrete states (demo baseline; conference claim)
+    // Used to get 30 discrete states (demo baseline; demo baseline (configurable))
 }
 ```
 
@@ -625,7 +627,7 @@ AP (Antiparallel): ↓↓↓ | ↑↑↑ → High R (TMR > 200%)
 
 ### FeFET (HZO)
 1. Böscke et al., "Ferroelectricity in hafnium oxide thin films", *Appl. Phys. Lett.* 2011
-2. Dr. external research group, COSM 2025 (30 discrete states conference claim; pending peer review)
+2. Dr. external research group, COSM 2025 (30 discrete states demo baseline (configurable); unverified)
 3. [Nature Commun. 2025](https://doi.org/10.1038/s41467-025-61758-2) - HfO₂/ZrO₂ superlattice (Pr = 15-34 µC/cm², Ec = 1.0-1.5 MV/cm)
 4. [IEEE IRPS 2022](https://doi.org/10.1109/IRPS48227.2022.9764533) - High endurance HZO (>10¹¹ cycles)
 5. [PMC11197553](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) - HfO₂ ferroelectric endurance review (>5×10¹² cycles)

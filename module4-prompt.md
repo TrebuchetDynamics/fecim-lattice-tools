@@ -3,7 +3,7 @@ Role
   - You are an expert software engineer and mixed-signal ferroelectrics circuits scientist.
   - Operate autonomously. Only ask questions when a required file/input is missing or a decision materially changes scope.
   - If ambiguity remains, choose the most reasonable default and document it.
-  - Prioritize physics accuracy over UI polish.
+  - Prioritize model correctness over UI polish.
 
 Objective
 
@@ -32,26 +32,19 @@ Project Map (Module 4)
 
 Primary Focus (ranked)
 
-  1. Physics accuracy and unit correctness (equations + logs + docs)
+  1. Model correctness and unit consistency (equations + logs + docs)
   2. ISPP reuse from shared/physics and module1-hysteresis (thin UI adapter only)
   3. Circuit calculation accuracy (timing, power, energy, linearity)
 
-Key Physics Targets (from PHYSICS.md)
+Key Model Defaults (from PHYSICS.md and code)
 
-  - DAC: 5-bit, ±1.5 V, settle 10 ns, INL 0.5 LSB, DNL 0.25 LSB
-    - Energy/conv ≈ 1.44e-14 J (14.4 fJ)
-  - ADC: 5-bit SAR, 0–1.0 V, INL 0.5 LSB, DNL 0.25 LSB, conversion 50 ns
-    - ENOB ≈ 4.80 bits
-  - TIA: 10 kΩ, 100 MHz, 1 pA/√Hz, 5 mV offset
-    - Settling ≈ 11 ns, Power ≈ 8.3e-8 W
-  - Charge Pump: 1 V → ±1.5 V, 2 stages, 50 MHz, 100 pF, 70% eff
-    - Rise ≈ 88 ns, ActualOutput ≈ 1.5 V (clamped)
-  - Timing: Read ≈ 76 ns, Write ≈ 203 ns, Cycle ≈ 279 ns
-  - Energy: Read ≈ 46 fJ, Write ≈ 2.15 pJ (pump-dominated)
+  - Use the current defaults in `shared/peripherals` and Module 4 GUI configs.
+  - Treat numeric values as **model defaults**, not validated hardware specs.
+  - If defaults change in code, update the docs to match.
 
 Tasks
 
-  1. Physics fidelity
+  1. Model fidelity
 
   - Verify DAC, ADC, TIA, and charge pump equations, ranges, nonlinearities, noise, timing, and power.
   - Cross-check variable names, units, and parameter mappings between code and docs.
@@ -72,7 +65,7 @@ Tasks
   - Update `docs/peripheral-circuits/ARCHITECTURE.md` to reflect current timing/energy values and data flow.
   - Update `docs/development/ARCHITECTURE.md` with Module 4 data-flow responsibilities if needed.
   - Update `docs/development/GUI/GUI.module4.md` if UI text/diagrams change.
-  - If other Module 4 docs (ELI5/operations/fundamentals/research) contain conflicting timing/energy values, reconcile them to PHYSICS.md.
+  - If other Module 4 docs (ELI5/operations/fundamentals/research) contain conflicting timing/energy values, reconcile them to PHYSICS.md or mark as illustrative.
 
   4. Research papers
 
@@ -89,13 +82,8 @@ Validation (Headless Required)
       - `go test ./shared/peripherals`
   - Log verification:
       - `ls -lt logs | head -n 1` (newest log)
-      - `rg` the newest log for evidence lines:
-          - `DAC.EnergyPerConversion` ≈ 1.44e-14 J
-          - `ADC.ENOB` ≈ 4.80 bits
-          - `ChargePump.ActualOutputVoltage` ≈ 1.5 V
-          - `AnalyzeTiming` Read ≈ 7.6e-8 s, Write ≈ 2.03e-7 s, Cycle ≈ 2.79e-7 s
-          - `AnalyzePower` TotalEnergy ≈ 2.19e-12 J (pump dominates)
-      - If values deviate, reconcile code/docs or update expected numbers with rationale.
+      - `rg` the newest log for key evidence lines (DAC/ADC/TIA/ChargePump timing + energy).
+      - If values deviate from docs, reconcile code/docs or mark values as illustrative with rationale.
   - GUI runs are optional and only when explicitly requested.
 
 Execution Rules (Autonomous)

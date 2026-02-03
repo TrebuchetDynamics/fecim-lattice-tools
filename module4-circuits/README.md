@@ -1,67 +1,67 @@
 # Module 4: Peripheral Circuits
 
-Peripheral circuit simulation for FeCIM (Ferroelectric Compute-in-Memory) crossbar arrays. This module models the complete signal chain required for integrated analog memory operations: Digital-to-Analog Conversion (DAC), Transimpedance Amplification (TIA), and Analog-to-Digital Conversion (ADC), with interactive Fyne-based visualization.
+Peripheral circuit simulation for FeCIM (Ferroelectric Compute-in-Memory) crossbar arrays. This module models the signal chain required for integrated analog memory operations: Digital-to-Analog Conversion (DAC), Transimpedance Amplification (TIA), and Analog-to-Digital Conversion (ADC), with interactive Fyne-based visualization.
 
 ## Overview
 
-Module 4 provides physics-accurate models of peripheral circuits essential for ferroelectric CIM systems. Each cell in a crossbar array requires precise voltage control (via DAC) for writes and sensitive current sensing (via TIA/ADC) for reads. This module handles:
+Module 4 provides **simulation models** of peripheral circuits essential for ferroelectric CIM systems. Each cell in a crossbar array requires voltage control (via DAC) for writes and current sensing (via TIA/ADC) for reads. The values below reflect **default parameters** from `shared/peripherals/` and are not device measurements.
 
-- **DAC**: Maps digital levels (0-29) to programmable voltages (-1.5V to +1.5V)
-- **TIA**: Converts crossbar column currents to measurable voltages (10 kΩ gain)
-- **ADC**: Quantizes sensed voltages back to digital levels (5-bit, 32 levels)
-- **Charge Pump**: Boosts 1V CMOS supply to ±1.5V write voltages (Dickson topology)
+- **DAC**: Maps digital codes (0-31) to programmable voltages (-1.5V to +1.5V); demo uses 30 of 32 levels
+- **TIA**: Converts crossbar column currents to measurable voltages (10 kOhm gain default)
+- **ADC**: Quantizes sensed voltages back to digital levels (5-bit, 32 levels default)
+- **Charge Pump**: Boosts 1V CMOS supply to +/-1.5V write voltages (Dickson topology model)
 
 The visualization supports interactive simulation with a Mode-First UX that automatically configures word lines and DAC ranges based on operation (READ, WRITE, or COMPUTE).
 
 ## Key Features
 
-### ADC: 5-Bit Successive Approximation Register
+### ADC: 5-Bit Successive Approximation Register (Default Model)
 
-- Resolution: 5 bits (32 levels, using 30 for FeCIM)
+- Resolution: 5 bits (32 levels, demo uses 30)
 - Input range: 0V to 1.0V (safe sensing below coercive voltage)
 - INL: 0.5 LSB (Integral Nonlinearity)
 - DNL: 0.25 LSB (Differential Nonlinearity)
 - Conversion time: 50 ns (SAR architecture)
 - ENOB: 4.87 bits (accounting for nonlinearity)
-- Energy: ~25 fJ/conversion
+- Energy: ~25 fJ/conversion (model estimate)
 
-**Physics**: ADC models realistic quantization errors via INL/DNL, essential for predicting actual system performance versus ideal behavior.
+**Modeling**: ADC includes quantization errors via INL/DNL and optional SAR noise modeling.
 
-### DAC: 5-Bit Voltage Generation
+### DAC: 5-Bit Voltage Generation (Default Model)
 
-- Resolution: 5 bits (32 levels, using 30 for FeCIM)
+- Resolution: 5 bits (32 levels, demo uses 30)
 - Output range: -1.5V to +1.5V (write voltage window)
 - Settling time: 10 ns
 - INL: 0.5 LSB
 - DNL: 0.25 LSB
-- Energy: ~15 fJ/conversion
+- Energy: ~15 fJ/conversion (model estimate)
 - Supports both positive and negative write pulses
 
-**Physics**: Maps discrete levels to the full ferroelectric write window, enabling multi-level programming from a single DAC.
+**Modeling**: Maps discrete levels to the configured write window.
 
-### TIA: 10 kΩ Transimpedance Amplifier
+### TIA: 10 kOhm Transimpedance Amplifier (Default Model)
 
 - Gain: 10 kΩ (10V/µA)
 - Bandwidth: 100 MHz
-- Input-referred noise: 1 pA/√Hz
+- Input-referred noise: 1 pA/sqrt(Hz)
 - Output offset: 5 mV
 - Maximum input current: 100 µA
 - Maximum output voltage: 1.0V (matches ADC input range)
-- Dynamic range: >80 dB
+- Dynamic range: computed from defaults via `TIA.DynamicRange()`
 
-**Physics**: Models current-to-voltage conversion for sensing resistive changes in ferroelectric cells. Noise and bandwidth directly impact ADC resolution and read latency.
+**Modeling**: Current-to-voltage conversion with noise and output clamping.
 
-### Charge Pump: 1V → ±1.5V Boost
+### Charge Pump: 1V to +/-1.5V Boost (Default Model)
 
 - Topology: 2-stage Dickson pump
 - Input: 1V (standard CMOS supply)
 - Ideal output: 3.0V (1V × 3 stages)
-- Actual output: ~1.5V (accounting for MOS threshold drops and IR losses)
+- Actual output: clamped to target voltage after modeled drops
 - Clock frequency: 50 MHz
 - Efficiency: 70%
-- Output ripple: ~0.2 mV (with 1 nF Cout)
+- Output ripple: computed by `ChargePump.OutputRipple()` (default output cap = 10x flying cap)
 
-**Physics**: Dickson pump charge redistribution enables write voltage generation without off-chip supplies, essential for integration.
+**Modeling**: Dickson pump charge redistribution enables write voltage generation without off-chip supplies.
 
 ## Quick Start
 

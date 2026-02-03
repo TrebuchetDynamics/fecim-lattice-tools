@@ -23,7 +23,7 @@ This directory contains research on neuromorphic computing implementations using
 | Aspect | FeCIM (Analog CIM) | Neuromorphic FeFET |
 |--------|-------------------|-------------------|
 | **Computing Model** | Synchronous MVM | Event-driven spikes |
-| **Precision** | 30 analog states (demo baseline; conference claim) | 2-16 states typical |
+| **Precision** | 30 analog states (demo baseline; simulation baseline) | 2-16 states typical |
 | **Energy/Op** | ~1 pJ/MAC | ~0.01 pJ/spike |
 | **Throughput** | High (parallel MVM) | Variable (spike-dependent) |
 | **Training** | Backpropagation (off-chip) | STDP (on-chip possible) |
@@ -38,7 +38,7 @@ This directory contains research on neuromorphic computing implementations using
 4. **Paired-pulse facilitation**: Enhanced response to closely spaced spikes
 
 **FeFET Advantages for Synapses:**
-- **Multi-level states**: 8-30 levels enable analog-like weight storage (30 is demo baseline; conference claim)
+- **Multi-level states**: 8-30 levels enable analog-like weight storage (30 is demo baseline; simulation baseline)
 - **Non-volatility**: Weights persist without power (unlike SRAM-based synapses)
 - **Low energy**: ~1 fJ/spike for weight update (1000× less than digital)
 - **Scalability**: CMOS-compatible, 3D stackable
@@ -120,7 +120,7 @@ Combine ferroelectric switching with magnetic domain dynamics for:
 
 **Shared Device Technology:**
 1. **HfO₂-ZrO₂ FeFET**: Same base device for CIM and neuromorphic
-2. **30 analog states (demo baseline; conference claim)**: Sufficient for both MVM weights and synaptic weights
+2. **30 analog states (demo baseline; simulation baseline)**: Sufficient for both MVM weights and synaptic weights
 3. **CMOS integration**: Compatible process flows
 4. **3D stacking**: Both benefit from vertical integration
 

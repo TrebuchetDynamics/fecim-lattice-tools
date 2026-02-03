@@ -18,7 +18,7 @@ This plan outlines improvements to Module 2 (Crossbar) based on learnings from t
 
 | Feature | Status | Location |
 |---------|--------|----------|
-| 30-level quantization (demo baseline; conference claim) | ✅ Complete | `array.go` |
+| 30-level quantization (demo baseline; simulation baseline) | ✅ Complete | `array.go` |
 | Basic MVM (I = G × V) | ✅ Complete | `array.go:450-517` |
 | IR drop (damped Jacobi) | ✅ Working | `nonidealities.go:119-229` |
 | 3-cell sneak paths | ✅ Working | `enhanced.go:302-357` |

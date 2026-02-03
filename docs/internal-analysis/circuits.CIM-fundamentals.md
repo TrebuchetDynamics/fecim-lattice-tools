@@ -87,7 +87,7 @@ Analog states are achieved through **partial polarization switching**:
 3. **ISPP (Incremental Step Pulse Program)**: Best linearity, 90 states demonstrated
 
 **Module 4 Implementation:**
-- 30 discrete levels (demo baseline; conference claim)
+- 30 discrete levels (demo baseline; simulation baseline)
 - Linear voltage mapping: Level 0 → Vc, Level 29 → 2.5×Vc
 - Each level corresponds to a conductance state
 
@@ -218,7 +218,7 @@ G = Gmin + (Gmax - Gmin) × sigmoid(k × (P - P_threshold))
 
 ### 5.3 ADC Requirements
 
-For 30-level FeCIM demo baseline (conference claim):
+For 30-level FeCIM demo baseline:
 - **Minimum bits**: 5-bit (32 levels)
 - **Effective bits**: 4.5-bit with INL/DNL
 - **Power trade-off**: Higher resolution = higher power

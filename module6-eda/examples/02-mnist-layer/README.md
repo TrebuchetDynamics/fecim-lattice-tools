@@ -4,7 +4,7 @@ Compile the first layer of a trained MNIST classifier to a FeCIM crossbar.
 
 ## Overview
 
-This example compiles a realistic neural-network weight matrix: the first fully connected layer of an MNIST digit classifier (784x128).
+This example compiles an example neural-network weight matrix: the first fully connected layer of an MNIST digit classifier (784x128).
 
 **Note:** For practicality, we use a 32x32 subset (first 32 inputs for 32 output neurons).
 
@@ -62,17 +62,11 @@ subset = weights[:32, :32]
 
 ### Level Distribution
 
-For trained neural-network weights, expect:
-- Most weights near zero -> levels 14-15 (middle range)
-- Some positive outliers -> levels 20-29
-- Some negative outliers -> levels 0-9
+Weight distributions are dataset- and training-dependent. With symmetric quantization, many weights often cluster near mid-levels, with fewer values at the extremes.
 
 ### PSNR
 
-Quantization error is measured as PSNR:
-- **> 40 dB:** Excellent
-- **30-40 dB:** Good
-- **< 30 dB:** May need more levels or retraining
+PSNR is reported as a **rough indicator** of quantization error. It is not a direct measure of task accuracy.
 
 ### Conductance Mapping (Default)
 
@@ -81,6 +75,8 @@ Weight: -0.9 -> Level: 0  -> G: 10.0 uS
 Weight:  0.0 -> Level: 15 -> G: 50.5 uS
 Weight: +0.9 -> Level: 29 -> G: 100.0 uS
 ```
+
+Values above assume the CLI defaults for `gmin`/`gmax`. Change those flags to alter the mapping.
 
 ## Extending to Full Network
 
@@ -93,6 +89,6 @@ Total: ~101,000 FeCIM cells
 
 ## Next Steps
 
-1. Measure inference accuracy with quantized weights.
-2. Compare with floating-point baseline.
-3. Integrate with Module 3 (MNIST visualization) for end-to-end demo.
+1. Measure inference accuracy with quantized weights in your own pipeline.
+2. Compare with a floating-point baseline.
+3. Integrate with Module 3 (MNIST visualization) for an end-to-end demo.

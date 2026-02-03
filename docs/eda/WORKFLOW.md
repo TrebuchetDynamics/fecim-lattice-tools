@@ -37,9 +37,9 @@ GDSII (illustrative)
 
 ### Key Concepts
 
-- **Quantization**: Neural network weights are quantized to 30 discrete conductance levels (demo baseline; conference claim)
-- **30-Level System**: Demo baseline uses 30 analog states (~4.9 bits/cell; conference claim)
-- **Three Modes**: Storage (NAND replacement), Memory (DRAM replacement), Compute (AI accelerator)
+- **Quantization**: Neural network weights are quantized to `levels` (default 30)
+- **Default Levels**: Demo baseline uses 30 discrete states (simulation default)
+- **Three Modes**: Storage-oriented, Memory-oriented, Compute (AI accelerator)
 - **Passive Architecture**: Default crossbar with wordlines and bitlines (sneak path effects possible)
 - **1T1R Architecture**: Transistor-gated array (optional, mitigates sneak paths)
 
@@ -108,8 +108,8 @@ Weights must be provided as a JSON file with the following structure:
 
 - **Value Range**: Weights can be any real number. The compiler automatically finds min/max and normalizes.
 - **Array Size**: Weight dimensions must fit within physical array (check `-rows` and `-cols` flags)
-- **Positive/Negative**: The system supports both positive and negative weights through 30-level baseline quantization (conference claim)
-- **PSNR Target**: Aim for 40+ dB quantization PSNR for minimal accuracy loss
+- **Positive/Negative**: The system supports both positive and negative weights through configured quantization levels (default 30)
+- **PSNR Target**: PSNR is a rough indicator of quantization error; use it as a rule of thumb, not a guarantee of task accuracy
 
 ### Quantization Process
 
@@ -117,7 +117,7 @@ The compiler automatically:
 
 1. Finds min and max weight values
 2. Normalizes weights to [-1, +1] range
-3. Quantizes to integer level (0-29)
+3. Quantizes to integer level (0 to levels-1)
 4. Maps level to conductance value (G_min to G_max)
 
 No manual quantization needed-the CLI handles it automatically.
@@ -864,7 +864,7 @@ cd module6-eda/examples/01-basic-8x8
 bash run.sh
 ```
 
-**Outputs:** Fully validated 8x8 design with reference outputs
+**Outputs:** 8x8 design artifacts (educational outputs, not signoff)
 
 ---
 
@@ -872,7 +872,7 @@ bash run.sh
 
 See `<local-path>`
 
-Compile realistic neural network weights:
+Compile example neural network weights:
 
 ```bash
 cd module6-eda/examples/02-mnist-layer
@@ -883,7 +883,7 @@ cd output
 ngspice -b ../testbench.sp -o sim_results.log
 ```
 
-**Outputs:** 32x32 MNIST layer with simulation validation
+**Outputs:** 32x32 MNIST layer artifacts (optional simulation if you provide a testbench)
 
 ---
 
@@ -891,7 +891,7 @@ ngspice -b ../testbench.sp -o sim_results.log
 
 See `<local-path>`
 
-Complete workflow from weights to GDSII:
+Complete workflow from weights to GDSII (educational):
 
 ```bash
 cd module6-eda/examples/03-openlane-integration
@@ -906,7 +906,7 @@ bash run_openlane.sh
 klayout output/gds/fecim_crossbar.gds
 ```
 
-**Outputs:** GDSII-ready design with full OpenLane integration
+**Outputs:** OpenLane-generated GDSII for exploration (not signoff)
 
 ---
 

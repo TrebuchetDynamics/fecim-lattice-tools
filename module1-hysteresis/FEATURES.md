@@ -17,10 +17,10 @@ P-E curve simulator for ferroelectric memory physics.
 
 - **Interactive P-E Loop** - Real-time hysteresis curve with polarization animation
 - **Discrete Level Programming** - Write/Read/Verify state machine with ISPP-style calibration
-- **Material Library** - HZO baseline, FeCIM baseline, literature superlattice, cryogenic HZO, 32-level HZO, 140-level FTJ, AlScN
-- **Temperature Control** - 200-700 K slider with temperature-aware calibration cache
+- **Material Presets** - HZO baseline, FeCIM baseline, superlattice, cryogenic HZO, 32-level HZO, 140-level FTJ, AlScN (all presets are illustrative)
+- **Temperature Control** - Temperature slider with calibration cache (range configurable in code)
 - **Waveform Modes** - Manual, sine, triangle, write/read demo, time-resolved switching
-- **Multi-Mode UI** - Fyne GUI, TUI, headless ASCII, Vulkan renderer
+- **Multi-Mode UI** - Fyne GUI, TUI, headless ASCII
 
 ---
 
@@ -28,13 +28,13 @@ P-E curve simulator for ferroelectric memory physics.
 
 | Material | Levels | Notes |
 |---|---:|---|
-| HZO (Si-doped) | 30 | Baseline demo material |
-| FeCIM HZO | 30 | Conference-claim baseline (pending peer review) |
-| Literature Superlattice | 64 | Academic best-case preset |
-| Cryogenic HZO | 30 | Cryo preset (see material config) |
-| HZO Standard 32 | 32 | Multi-level demonstration preset |
-| HZO FTJ 140 | 140 | High-level FTJ preset |
-| AlScN | 8-16 | High-Pr material preset |
+| HZO (Si-doped) | 30 | Baseline demo preset (configurable) |
+| FeCIM HZO | 30 | Simulation baseline (configurable) |
+| Literature Superlattice | 64 | Preset (illustrative) |
+| Cryogenic HZO | 30 | Preset (illustrative) |
+| HZO Standard 32 | 32 | Preset (illustrative) |
+| HZO FTJ 140 | 140 | Preset (illustrative) |
+| AlScN | 8-16 | Preset (illustrative) |
 
 ---
 

@@ -1,57 +1,62 @@
 # Scientific Honesty Audit: FeCIM Lattice Tools
 
-**Version**: 4.0 | **Date**: 2026-02-03 | **Status**: Updated for verified-only claims
+**Version:** 4.0 | **Date:** 2026-02-03 | **Status:** Active (verified + unverified tagged)
 
 ---
 
-## 1. Scope & Policy
+## Summary
 
-This audit tracks **scientific claims** used in the FeCIM Lattice Tools project. Claims are classified as:
-
-- **VERIFIED**: Supported by peer-reviewed sources (journals or top-tier conferences).
-- **UNVERIFIED**: Conference-only, press, or internal estimates.
-- **REMOVED**: Contradicted or unsupported claims removed from messaging.
-
-**Rule:** Only VERIFIED claims may be presented as facts. Everything else must be labeled as **unverified** or **assumed**.
+This repository is **simulation-only**. External scientific claims must be explicitly verified before being presented as facts. If a claim is not listed in **Verified Claims** below, treat it as **unverified** or **assumed** and label it accordingly.
 
 ---
 
-## 2. Verified Claims (Peer-Reviewed)
+## Verified Claims (External)
 
-### 2.1 MNIST Accuracy (Reservoir Computing)
-
-| Claim | Evidence | Notes |
-|---|---|---|
-| **98.24% MNIST accuracy** | Journal of Alloys and Compounds (2025), DOI: 10.1016/j.jallcom.2025.181869 | Reported for a reservoir computing system using 5 nm HZO ferroelectric tunnel junctions. Not a FeCIM device claim. |
+1. **98.24% MNIST accuracy** reported for **HZO ferroelectric tunnel junction (FTJ) reservoir computing** in *Journal of Alloys and Compounds* (2025), DOI: `10.1016/j.jallcom.2025.181869`.
+   - **Scope note:** This is **not** a FeCIM device claim and should not be attributed to this simulator. It is a literature benchmark for a related ferroelectric device.
 
 ---
 
-## 3. Unverified / Pending Claims
+## Unverified or Assumed Claims (Do Not Present as Facts)
 
-The following items have appeared in project docs historically, but are **not verified in this audit** and must be labeled accordingly:
+The following appear in historical docs, research notes, or prior drafts. They are **not verified** in this audit and must be labeled as **unverified** or **assumed** if retained as context:
 
-- **30 analog states** (Dr. Tour COSM 2025) - conference claim, pending peer review.
-- **32-140 analog states** - cited in older docs but not verified in this audit.
-- **Pr / Ec ranges** (e.g., Pr 15-34 uC/cm^2, Ec 0.6-1.5 MV/cm).
-- **Endurance 10^9-10^12 cycles**.
-- **Energy vs NAND (e.g., 25-100x)**.
-- **3D BEOL 22nm integration**.
-- **AEC-Q100 Grade 0 qualification**.
-- **Cryogenic operation claims** (4K-5K behavior).
-
-These may be real, but **must not** be presented as verified until primary sources are confirmed and logged here.
-
----
-
-## 4. Removed Claims
-
-- **10M x vs NAND energy** (no measurement data).
-- **87% MNIST accuracy (Tour COSM 2025)** (conference-only and below peer-reviewed results).
+- 30 discrete analog states for a specific device (conference/talk claims)
+- multi-level (reported) analog state ranges for FeFET/FTJ devices
+- Pr/Ec numeric ranges (e.g., Pr 15-34 uC/cm^2, Ec 0.6-1.5 MV/cm)
+- Endurance figures (e.g., 10^9-10^12 cycles)
+- Energy multipliers vs NAND or GPUs (e.g., 25-100x)
+- 22nm BEOL integration claims
+- AEC-Q100 automotive qualification claims
+- Cryogenic operation claims and numeric retention improvements
+- TRL statements outside code-level documentation
 
 ---
 
-## 5. Guidance for Documentation
+## Policy
 
-- Prefer referencing this audit instead of duplicating numeric claims across docs.
-- If a claim is needed in UI or docs and is not VERIFIED here, label it **unverified**.
-- Add new verified claims only after adding primary sources in this file.
+- **Only VERIFIED claims may be presented as facts.**
+- **Assumed** values must be labeled as simulation defaults or placeholders.
+- **Unverified** claims may appear only as historical context with explicit labels.
+- **Marketing or talk claims** are not acceptable as technical facts.
+
+---
+
+## Scope
+
+Documents reviewed or historically containing claims:
+- `docs/README.md`
+- `README.md`
+- `docs/ELI5.md`
+- `docs/comparison/*`
+- `docs/crossbar/*`
+- `docs/hysteresis/*`
+- `docs/eda/*`
+- `docs/research-papers/*`
+- `docs/video-transcripts/*`
+
+---
+
+## Notes
+
+If additional claims are verified in the future, update this file first, then update downstream documentation to match.

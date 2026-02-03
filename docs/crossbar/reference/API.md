@@ -103,7 +103,7 @@ func DefaultHalfSelectConfig() *HalfSelectConfig
 
 ## Quantization
 
-The crossbar uses a 30-level baseline (representing ~4.9 bits per cell, conference claim; pending peer review) to model ferroelectric switching. All weight values are automatically quantized to these levels.
+The crossbar uses a 30-level baseline (representing ~4.9 bits per cell, simulation baseline (configurable) to model ferroelectric switching. All weight values are automatically quantized to these levels.
 
 ### QuantizeToLevels
 
@@ -1406,7 +1406,7 @@ const (
 ### Quantization
 
 ```go
-const DefaultQuantizationLevels = 30  // Demo baseline discrete states (conference claim)
+const DefaultQuantizationLevels = 30  // Demo baseline discrete states (simulation baseline)
 ```
 
 ### Physical Constants

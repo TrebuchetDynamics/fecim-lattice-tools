@@ -17,7 +17,7 @@ Continuity (for endless reruns)
 
 Objective (priority-ordered)
 
-  1. Physics correctness (non-negotiable): mapping, quantization, units, and topology must be faithful.
+  1. Model correctness (non-negotiable): mapping, quantization, units, and topology must be faithful.
   2. OpenLane integration correctness: configs, netlists, and validation outputs must agree.
   3. Export format fidelity: JSON/CSV/SPICE/Verilog/DEF/LEF/Liberty/SVG match docs.
   4. Documentation alignment: update docs to reflect real behavior and limitations.
@@ -25,11 +25,9 @@ Objective (priority-ordered)
 
 Current Baselines (keep aligned in code + docs)
 
-  - GMin default: 10.0 μS; GMax default: 100.0 μS.
-  - Power pins: VPWR/VGND (not VDD/VSS) in Verilog/LEF/Liberty/DEF.
-  - 1T1R geometry: 0.92 × 3.40 μm cell; row height 3.40 μm.
-  - Verilog BL buses are inout (passive + 1T1R); SL is input for 1T1R.
-- 30 levels (demo baseline; conference claim) => 4.91 bits/cell (log2(30)).
+  - Read defaults from code (`module6-eda/pkg/compiler`, `module6-eda/pkg/export`) before updating docs.
+  - Power pins, geometry, and conductance ranges should match current generated artifacts.
+  - Treat any numeric values as **model defaults**, not measured hardware specs.
 
 Tasks
 
@@ -37,11 +35,10 @@ Tasks
 
   - Verify ArrayConfig/CellConfig defaults (rows, cols, levels, gmin/gmax, vdd, tech, architecture).
   - Validate storage/memory/compute mode behavior and mode-specific parameters.
-- Confirm weight mapping and quantization to 30 levels (demo baseline; conference claim) and N-level support, including sign handling.
+  - Confirm weight mapping and quantization to configured levels, including sign handling.
   - Ensure architecture toggles (passive, 1T1R, 2T1R) produce correct nets/pins (WL, BL, SL, CSL).
   - Cross-check variable names, units, and parameter mappings between code and docs.
-  - Validate that Module 6 uses the same physics constants and quantization behavior as module2-crossbar
-    (FeCIMLevels, QuantizeTo30Levels, gmin/gmax expectations).
+  - If Module 6 differs from Module 2 quantization/physics helpers, document the differences.
   - If gaps are found, implement fixes and update docs accordingly.
 
   2. Export format correctness
@@ -83,11 +80,10 @@ Validation
 
 Expected CLI output checks (sanity)
 
-  - Header shows "FeCIM Array Generator - Compute Mode".
-  - Levels line shows: "Levels:       30 (4.91 bits/cell, claim)".
-  - Conductance line shows: "Conductance:  10.0 - 100.0 μS".
-  - Exports include: data/fecim_array_design.json, data/fecim_array_cells.csv, data/fecim_array.sp, data/fecim_array.v, data/fecim_array.def.
-  - CLI log file lives at ~/.fecim/logs/module6-eda-cli.log (stdout still the primary evidence).
+  - Header shows the selected mode (storage/memory/compute).
+  - Levels and conductance range reflect the configured defaults or CLI flags.
+  - Exports include JSON/CSV/SPICE/Verilog/DEF in the configured output directory.
+  - CLI log file location matches code defaults (stdout still the primary evidence).
   - If any command fails, fix and re-run until it succeeds or a clear blocker exists.
 
 Execution Rules (Autonomous)

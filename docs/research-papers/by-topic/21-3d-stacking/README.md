@@ -110,7 +110,7 @@ Two-dimensional crossbar arrays, while useful for compute-in-memory demonstratio
 | **TSV Resistance** | 1Ω | 2Ω | 5Ω | Higher for smaller diameter |
 | **TSV Capacitance** | 100fF | 50fF | 20fF | Scales with area |
 | **Bits per String** | 256-512 | 512 | 1024 | = Layer count |
-| **Bits per Cell** | 4.9 | 4.9 | 5.0+ | 30 analog levels (demo baseline; conference claim) |
+| **Bits per Cell** | 4.9 | 4.9 | 5.0+ | 30 analog levels (demo baseline; simulation baseline) |
 | **Array Footprint** | 1mm² | 0.5mm² | 0.25mm² | Peripheral scaling |
 
 ### Layer Count Roadmap (Updated with FeCIM Advantage)

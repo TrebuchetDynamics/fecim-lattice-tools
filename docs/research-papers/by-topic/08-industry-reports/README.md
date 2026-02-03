@@ -35,7 +35,7 @@ Review of wafer-scale integration techniques and challenges, relevant for unders
 
 These industry reports inform the FeCIM Lattice Tools project in several critical ways:
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 - **Competitive Positioning**: Understanding where 30-level demo baseline ferroelectric cells fit against commercial alternatives (Flash, ReRAM, PCM)
 - **Use Case Validation**: Real-world deployments (face classification) validate the MNIST and neural network modules in this toolkit

@@ -16,7 +16,7 @@ Coercive Field - Electric field required to switch ferroelectric polarization st
 Remnant Polarization - Polarization remaining after electric field removal. Verified range: 15-34 µC/cm² at room temperature, 75 µC/cm² at 4K. Higher Pr enables larger on/off ratios and analog storage capacity.
 
 ### HZO
-Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible. Conference claim: 30 discrete analog states per cell (~4.9 bits/cell), pending peer review; peer-reviewed devices report 32–140 states in related materials. Optimal composition: x ≈ 0.5.
+Hafnium Zirconium Oxide (Hf₁₋ₓZrₓO₂) - ferroelectric superlattice material. CMOS-compatible. Simulation baseline: 30 discrete analog states per cell (~4.9 bits/cell), unverified; literature reports multi-level states (unverified) in related materials. Optimal composition: x ≈ 0.5.
 
 ### Hysteresis Loop
 P-E (Polarization-Electric Field) curve showing path-dependent behavior. Area enclosed represents energy dissipation per cycle. Shape determines analog state density and retention.
@@ -76,7 +76,7 @@ Technology Readiness Level - Scale from 1 (basic principles) to 9 (production re
 Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.
 
 ### Bits per Cell
-Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, conference claim), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.
+Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, simulation baseline), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.
 
 ### MNIST Accuracy
 Handwritten digit classification accuracy (0-9). State-of-art FeCIM: 98.24% (FTJ reservoir computing, ScienceDirect 2025), 96.6% (HZO crossbar, Nature Commun. 2023). Software: 99.7%.

@@ -19,7 +19,7 @@ This document details the operational rules for FeCIM crossbar arrays in two arc
 - *Crossbar_Sneak_Path_Analysis_arXiv* — Sneak path modeling
 - *sneak_path_self_rectifying_arrays_2022* — Self-rectifying mitigation
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 - *multilevel_fefet_crossbar_2023* — Multi-level FeFET programming
 - *FeFET_Crossbar_MNIST_Hardware_arXiv* — Hardware demonstration
 - *ferroelectric_CIM_review_2023* — Comprehensive FeCIM review
@@ -219,7 +219,7 @@ WL₂ ───○──●────○───●────○───�
 - Disturb rate: 0% (transistor provides ~1000:1 isolation)
 - Write variation: 3-5% (device-to-device only)
 
-**Paper Reference:** *Multi_Level_FeFET_Programming_arXiv* shows 1T1R enables 32-140 discrete levels with <5% variation.
+**Paper Reference:** *Multi_Level_FeFET_Programming_arXiv* shows 1T1R enables multi-level (reported) discrete levels with <5% variation.
 
 ### 2.4 Write Timing Comparison
 

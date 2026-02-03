@@ -357,7 +357,7 @@ beol3d := ProcessConfig{
 
 ### Phase 1: Literature Validation (Current)
 - [x] Collect process papers from Topic 18 (ALD control)
-- [x] Extract parameter ranges from peer-reviewed sources
+- [x] Extract parameter ranges from reported in literature sources
 - [x] Document industry status (foundries, PDKs)
 - [x] Propose process corner definitions
 

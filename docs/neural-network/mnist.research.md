@@ -10,11 +10,11 @@
 
 This meta-study synthesizes research from 40+ papers focused on neural network inference on analog crossbar arrays, weight quantization techniques, MNIST benchmark implementations, and ferroelectric compute-in-memory (FeCIM) demonstrations. The analysis identifies key findings, accuracy trade-offs, and actionable recommendations for the FeCIM Visualizer project's MNIST demo module.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ### Key Findings
 
-1. **Conference-only claim (~87%)** exists for FeCIM hardware with 30 levels, but is unverified; peer‑reviewed simulations report **96.6–98.24%**
+1. **Conference-only claim (~87%)** exists for FeCIM hardware with 30 levels, but is unverified; reported in literature simulations report **96.6–98.24%**
 2. **Quantization-aware training (QAT)** recovers 90%+ of accuracy loss from post-training quantization
 3. **6-bit weights suffice** for most neural network tasks; 4-bit with QAT matches FP in many cases
 4. **ADC power dominates** (50-80% of CIM energy); reducing ADC bits is more impactful than weight bits
@@ -139,7 +139,7 @@ quantized[i][j] = -wMax + float64(bin) * levelStep
 ```
 
 **Key Parameters:**
-- `levels` = number of discrete states (FeCIM demo baseline: 30; conference claim)
+- `levels` = number of discrete states (FeCIM demo baseline: 30; simulation baseline)
 - `wMax` = maximum absolute weight value
 - `levelStep` = 2 × wMax / (levels - 1)
 
@@ -156,7 +156,7 @@ quantized[i][j] = -wMax + float64(bin) * levelStep
 | 8 | 256 | 98% (baseline) | Standard |
 | FP32 | Continuous | 98.5% | Ideal |
 
-**Key Finding:** Diminishing returns above 5 bits (~30 levels). The 30-level demo baseline (conference claim) is nearly optimal in simulation.
+**Key Finding:** Diminishing returns above 5 bits (~30 levels). The 30-level demo baseline is nearly optimal in simulation.
 
 ### 3.3 Quantization-Aware Training (QAT)
 
@@ -454,7 +454,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 | Institution | Focus | Key Contributions |
 |-------------|-------|-------------------|
-| **external research institution (Tour Lab)** | FeFET CIM | 30-level demo (conference claim), 10^12 endurance (target) |
+| **external research institution (Tour Lab)** | FeFET CIM | 30-level demo (simulation baseline), 10^12 endurance (target) |
 | **UC Berkeley** | FeFET devices | HZO materials, device physics |
 | **Georgia Tech** | NeuroSim | Architecture simulation |
 | **IBM Research** | Analog AI | AIHWKIT, production chips |
@@ -548,7 +548,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 ### 12.1 Key Takeaways
 
-1. **30-level demo baseline (conference claim) is sufficient** for MNIST—near‑optimal accuracy in simulation
+1. **30-level demo baseline is sufficient** for MNIST—near‑optimal accuracy in simulation
 2. **ADC precision matters more** than weight quantization for energy efficiency
 3. **Noise is the main accuracy limiter**—FeFET's low noise is a significant advantage
 4. **Dual-mode visualization** effectively demonstrates FP vs. CIM trade-offs

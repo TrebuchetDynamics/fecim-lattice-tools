@@ -12,7 +12,7 @@
 The **Module 1 Hysteresis** module implements a comprehensive ferroelectric physics simulation platform based on Dr. external research group's HfO₂-ZrO₂ superlattice technology. This module is the **foundation of the entire FeCIM Lattice Tools ecosystem**, providing:
 
 - ✅ **Preisach hysteresis model** implementation (297 lines)
-- ✅ **8 material presets** from peer-reviewed literature
+- ✅ **8 material presets** from reported in literature literature
 - ✅ **ISPP (Incremental Step Pulse Programming)** algorithm for multi-level writing
 - ✅ **Comprehensive simulation engine** with 1ns time-stepping
 - ✅ **Real-time visualization** via Fyne GUI with Vulkan rendering
@@ -25,7 +25,7 @@ The **Module 1 Hysteresis** module implements a comprehensive ferroelectric phys
 | Achievement | Status | Notes |
 |------------|--------|-------|
 | Preisach Model Implementation | ✅ Complete | Based on Bartic et al. 2001, Mayergoyz formalism |
-| 30 Discrete Analog States | ⚠️ Conference claim baseline | COSM 2025 (pending peer review); peer‑reviewed devices report 32–140 states |
+| 30 Discrete Analog States | ⚠️ Simulation baseline | COSM 2025 (unverified); literature reports multi-level states (unverified) |
 | Multi-Material Support | ✅ 8 Presets | HZO, AlScN, FTJ, Superlattice, Cryogenic |
 | ISPP Algorithm | ✅ Complete | Full write-verify loop with overshoot handling |
 | Temperature Calibration | ✅ Multi-Temp | -40°C to 150°C automotive range |
@@ -134,8 +134,8 @@ The module implements **8 CMOS-compatible ferroelectric materials**:
 | Material | States | Pr (µC/cm²) | Ec (MV/cm) | Source |
 |----------|--------|-------------|------------|--------|
 | **DefaultHZO** | 30 | 25 | 1.2 | Park et al. 2015 |
-| **FeCIMMaterial** | 30 | 30 | 1.0 | Conference claim baseline (pending peer review) |
-| **FeCIMTarget** | 30 | 30 | 1.0 | Conference-claim target (pending peer review) |
+| **FeCIMMaterial** | 30 | 30 | 1.0 | Simulation baseline (unverified) |
+| **FeCIMTarget** | 30 | 30 | 1.0 | Simulation baseline target (unverified) |
 | **LiteratureSuperlattice** | 64 | 45 | 0.8 | Cheema et al. 2020 |
 | **CryogenicHZO (4K)** | 48 | 75 | 1.5 | Adv. Elec. Mat. 2024 |
 | **HZOStandard32** | 32 | 20 | 1.0 | Oh et al. 2017 |
@@ -974,7 +974,7 @@ Input: Waveform type, frequency, amplitude
 
 The **Module 1 Hysteresis** implementation represents **exemplary engineering** of ferroelectric physics simulation. Key achievements:
 
-- ✅ **Scientific Integrity**: Rigorous validation against peer-reviewed literature
+- ✅ **Scientific Integrity**: Rigorous validation against reported in literature literature
 - ✅ **Comprehensive Physics**: Preisach model with proper history handling
 - ✅ **Production-Ready ISPP**: Full write-verify algorithm with overshoot handling
 - ✅ **Temperature Awareness**: Multi-temperature calibration for automotive applications

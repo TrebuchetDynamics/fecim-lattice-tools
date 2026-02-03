@@ -85,7 +85,7 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
 - 6-bit weight precision sufficient for most CV tasks
 - Stochastic rounding during weight updates improves convergence
 - Training-aware quantization: 1-2% accuracy loss vs full precision
-- FeFET 30-level states (demo baseline; conference claim) provide 4.9-bit effective precision
+- FeFET 30-level states (demo baseline; simulation baseline) provide 4.9-bit effective precision
 
 **Relevance:** Validates FeFET's 30-state capability for training.
 

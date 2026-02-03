@@ -141,7 +141,7 @@ Input Embeddings (n × d)
 ### FeFET Advantages for LLMs
 
 1. **Non-volatile KV-cache:** Zero refresh power for stored context
-2. **High density:** 30 analog levels (demo baseline; conference claim) = 4.9 bits effective precision
+2. **High density:** 30 analog levels (demo baseline; simulation baseline) = 4.9 bits effective precision
 3. **In-memory MVM:** Eliminates weight transfer bottleneck
 4. **Low energy:** 1-10 fJ per MAC (vs 1-10 pJ for SRAM)
 5. **Scalability:** 3D stacking for billion-parameter models

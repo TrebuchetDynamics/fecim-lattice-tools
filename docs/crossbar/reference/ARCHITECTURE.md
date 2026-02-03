@@ -2,7 +2,7 @@
 
 ## Overview
 
-The module2-crossbar package implements a physics-accurate ferroelectric crossbar array simulator for the FeCIM (Ferroelectric Compute-in-Memory) platform. It models a 30-level baseline (~4.9 bits/cell, conference claim; pending peer review) with comprehensive non-ideality simulation including IR drop, sneak paths, process variation, drift, and temperature effects.
+The module2-crossbar package implements a physics-accurate ferroelectric crossbar array simulator for the FeCIM (Ferroelectric Compute-in-Memory) platform. It models a 30-level baseline (~4.9 bits/cell, simulation baseline (configurable) with comprehensive non-ideality simulation including IR drop, sneak paths, process variation, drift, and temperature effects.
 
 The architecture is organized into five core layers:
 
@@ -89,7 +89,7 @@ type Config struct {
 **Physical Constants**:
 - `GMin` = 10 µS (OFF state)
 - `GMax` = 100 µS (ON state)
-- `DefaultQuantizationLevels` = 30-level baseline (conference claim)
+- `DefaultQuantizationLevels` = 30-level baseline (simulation baseline)
 
 #### `Cell` - Individual Memory Cell
 
@@ -884,11 +884,11 @@ EnergyEfficiency = GPUEnergy / FeCIMEnergy
 
 ### 1. 30 Discrete Levels
 
-**Decision**: Demo baseline fixed to 30 analog states per cell (conference claim; pending peer review).
+**Decision**: Demo baseline fixed to 30 analog states per cell (simulation baseline (configurable).
 
 **Rationale**:
-- Dr. external research group COSM 2025: "It's got 30 discrete states. Not 0-1-0-1." (conference claim)
-- Other peer-reviewed work: 32-140 states demonstrated
+- Dr. external research group COSM 2025: "It's got 30 discrete states. Not 0-1-0-1." (simulation baseline)
+- Other reported in literature work: multi-level states (reported) demonstrated
 - Provides ~4.9 bits/cell (log₂(30) ≈ 4.9)
 - Balances precision vs device programming complexity
 

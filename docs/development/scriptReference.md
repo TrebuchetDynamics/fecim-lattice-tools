@@ -262,7 +262,7 @@ newDemoApp := newdemo.NewEmbeddedNewDemoApp()
 ```go
 // module2-crossbar/pkg/crossbar/array.go
 const (
-    FeCIMLevels = 30  // Conference claim (COSM 2025), pending peer review
+    FeCIMLevels = 30  // Simulation baseline (COSM 2025), unverified
     NewParam    = 42  // [Citation required] - add DOI or source
 )
 ```
@@ -285,7 +285,7 @@ func TestNewParamPhysics(t *testing.T) {
 
 Current implementation:
 ```go
-// QuantizeTo30Levels maps [0,1] to one of 30 discrete levels (demo baseline; conference claim)
+// QuantizeTo30Levels maps [0,1] to one of 30 discrete levels (demo baseline; simulation baseline)
 func QuantizeTo30Levels(value float64) float64 {
     if value < 0 {
         value = 0
@@ -510,7 +510,7 @@ fecim-lattice-tools/
 
 ```go
 // module2-crossbar/pkg/crossbar/array.go
-const FeCIMLevels = 30  // Conference claim (COSM 2025), pending peer review
+const FeCIMLevels = 30  // Simulation baseline (COSM 2025), unverified
 
 // shared/theme/theme.go
 ColorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan

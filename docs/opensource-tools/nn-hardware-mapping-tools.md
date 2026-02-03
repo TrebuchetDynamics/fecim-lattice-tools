@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document catalogs open-source tools for neural network quantization, hardware-aware training, and mapping to compute-in-memory (CIM) hardware like FeCIM crossbar arrays. This project uses a 30-level demo baseline (conference claim; pending peer review), making arbitrary-precision quantization tools essential.
+This document catalogs open-source tools for neural network quantization, hardware-aware training, and mapping to compute-in-memory (CIM) hardware like FeCIM crossbar arrays. This project uses a 30-level demo baseline (configurable), making arbitrary-precision quantization tools essential.
 
 ### The Problem We Solve
 

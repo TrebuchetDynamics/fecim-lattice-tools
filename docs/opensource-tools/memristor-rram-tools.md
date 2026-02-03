@@ -1458,7 +1458,7 @@ make -j$(nproc)
 
 ### Long-term (6-12 Months)
 
-- [ ] Publish FeCIM simulator results in peer-reviewed venue
+- [ ] Publish FeCIM simulator results in reported in literature venue
 - [ ] Release FeCIM tool stack as community resource
 - [ ] Contribute device models back to MemTorch/CrossSim projects
 

@@ -21,7 +21,7 @@
 
 | Feature | Implementation | Quality |
 |---------|----------------|---------|
-| **30-level quantization** | `QuantizeToLevels()` | Excellent - matches demo baseline (conference claim) |
+| **30-level quantization** | `QuantizeToLevels()` | Excellent - matches demo baseline |
 | **MVM physics** | Ohm's Law + KCL summation | Correct |
 | **DAC/ADC quantization** | Configurable bits (4-12) | Good |
 | **IR drop model** | Cumulative WL/BL resistance | Good |
@@ -435,12 +435,12 @@ Current code uses fixed 300K temperature. Wire resistance TCR exists but other p
 **Files:** `module2-crossbar/pkg/crossbar/drift.go`
 
 **Problem:**
-Line 69-70 notes: "FeFET drift coefficient 0.001 is an assumed value for simulation. No peer-reviewed source."
+Line 69-70 notes: "FeFET drift coefficient 0.001 is an assumed value for simulation. No reported in literature source."
 
 **Changes:**
 
 1. Research and document actual FeFET drift from literature:
-   - Find peer-reviewed drift measurements for HZO FeFET
+   - Find reported in literature drift measurements for HZO FeFET
    - Document source and conditions
    - Update coefficient or mark as "estimated"
 
@@ -449,7 +449,7 @@ Line 69-70 notes: "FeFET drift coefficient 0.001 is an assumed value for simulat
    type DriftModel int
    const (
        DriftModelAssumed DriftModel = iota // Current 0.001
-       DriftModelLiterature                 // From peer-reviewed source
+       DriftModelLiterature                 // From reported in literature source
        DriftModelMeasured                   // From user calibration
    )
    ```

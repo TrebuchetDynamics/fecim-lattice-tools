@@ -2,6 +2,8 @@
 
 Comprehensive catalog of research sources for Compute-in-Memory (CIM) technology, covering ferroelectric devices, crossbar arrays, neural network inference, and the complete FeCIM design suite.
 
+> **Note:** This is a literature catalog. Values and claims are reported from sources and are **not verified** by this project. See `docs/comparison/HONESTY_AUDIT.md` for the current verification scope.
+
 ## Overview
 
 This document organizes 300+ research sources and URLs across 50 priority categories, supporting documentation for:
@@ -138,8 +140,8 @@ This document organizes 300+ research sources and URLs across 50 priority catego
 
 | Paper | Hardware | Accuracy | Endurance |
 |-------|----------|----------|-----------|
-| Flash In2Se3 for Neuromorphic Computing | In₂Se₃ FeFET | 87% | Gram-scale synthesis |
-| FeFET Crossbar MNIST Hardware Demo | 128×64 FeFET array | 87% | 10⁹+ cycles |
+| Flash In2Se3 for Neuromorphic Computing | In₂Se₃ FeFET | Reported (unverified) | Gram-scale synthesis |
+| FeFET Crossbar MNIST Hardware Demo | 128×64 FeFET array | Reported (unverified) | 10⁹+ cycles (reported) |
 | Ferroelectric Memristor RC Arrays | Ferroelectric devices | 98.78% | 2025 publication |
 | Multi-Level FeFET Crossbar | Multi-level FeFET | 96.6% | Write-verify capable |
 | FeCap/FeFET CIM Elements | Comparison study | Variable | Different topologies |
@@ -393,7 +395,7 @@ CIM Power Budget (Typical):
 
 | Paper | Source | Year | Finding |
 |-------|--------|------|---------|
-| In₂Se₃ for Neuromorphic Computing | Advanced Electronic Materials | 2025 | Flash-within-flash synthesis, 87% MNIST |
+| In₂Se₃ for Neuromorphic Computing | Advanced Electronic Materials | 2025 | Flash-within-flash synthesis, reported MNIST |
 | Fully Ferroelectric-Gated 2D CIM | Science Advances | 2024 | 96.36% yield, 10¹² endurance |
 | 2D Ferroelectric Hybrid CIM | Science Advances | 2025 | Dynamic tracking accuracy |
 | Emerging 2D FE for CIM | Advanced Materials | 2025 | In-sensor computing |
@@ -684,29 +686,21 @@ Priorities 8-9, 13-16 cover:
 
 ## Key Findings Summary
 
-### Core Physics Consensus
-1. **30 discrete analog states** (conference claim; pending peer review). Peer-reviewed devices report 32–140 states (Pr/2 = 20-40 µC/cm²)
-2. **10¹² cycle endurance** achievable with HfO₂/ZrO₂ superlattices
-3. **CMOS compatible** fabrication process (<500°C BEOL)
-4. **Sub-10fJ switching energy** per device (no Joule heating)
+### Core Physics Summary (Reported, Not Verified)
+- The simulator uses a configurable **30-level baseline** for quantization.
+- Literature reports multi-level ferroelectric behavior, endurance, and CMOS integration, but these values are **not verified** here.
+- Energy and switching metrics vary widely by device and process; treat reported values as context only.
 
-### Crossbar Performance
-1. **IR drop limits** practical arrays to ~256×256 without compensation
-2. **Sneak paths** contribute 5-20% error in passive arrays; 1T1R eliminates
-3. **Device variation** is 3-8% cycle-to-cycle for FeFET (best of non-volatile technologies)
-4. **Drift is minimal** for FeFET (ν << RRAM/PCM)
+### Crossbar Performance (Model Focus)
+- IR drop and sneak paths are primary non-idealities modeled in this project.
+- Variation and drift are modeled with configurable parameters; real values must be measured.
 
-### Neural Network Performance
-1. **6-bit weight quantization** sufficient for most inference tasks
-2. **87% MNIST accuracy** was a conference claim (unverified; removed from tool)
-3. **ADC dominates** energy (50-80%); ADC-less architectures emerging
-4. **QAT recovers** 90%+ of accuracy lost to quantization
+### Neural Network Performance (Model Focus)
+- Quantization and ADC/DAC precision drive accuracy tradeoffs in simulation.
+- Noise-aware training can improve robustness, but results depend on model and dataset.
 
-### Advanced Applications
-1. **70,000× energy reduction** for transformer attention (Nature 2025)
-2. **94.9% SNN accuracy** on all-ferroelectric systems
-3. **1.36 aJ/search** for cryogenic PUF (lowest reported)
-4. **96.36% yield** for 2D ferroelectric CIM (Nature 2024)
+### Advanced Applications (Out of Scope)
+- Application-specific metrics (e.g., SNN accuracy, cryogenic PUFs) require primary sources and device validation.
 
 ---
 
@@ -745,7 +739,7 @@ URLs are provided in the source documents and the DOWNLOAD_PLAN.md.
 
 ## Accuracy and Verification Notes
 
-This document catalogs peer-reviewed publications and established research sources from:
+This document catalogs reported in literature publications and established research sources from:
 - Nature family journals (Nature, Nature Communications, Nature Electronics)
 - IEEE venues (JSSC, TCAD, TED, IEDM, VLSI)
 - Academic conferences (ASPLOS, DAC, ICCAD)

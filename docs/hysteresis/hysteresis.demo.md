@@ -3,7 +3,7 @@
 **FeCIM Visualizer - Ferroelectric P-E Curve Demo**
 
 > *"It's got 30 discrete states. So it's not 0-1-0-1."* — Dr. external research group  
-> *Conference claim (pending peer review).*
+> *Simulation baseline (unverified).*
 
 **Complexity:** Beginner (Graphics only)
 
@@ -16,7 +16,7 @@ The Hysteresis demo provides an interactive visualization of ferroelectric hyste
 ### What This Demo Shows
 
 1. **P-E Hysteresis Loop** — The characteristic polarization-electric field curve of ferroelectric materials
-2. **30 Discrete States (Baseline)** — Demo baseline for multi-level cell (MLC) storage (~4.9 bits/cell; conference claim)
+2. **30 Discrete States (Baseline)** — Demo baseline for multi-level cell (MLC) storage (~4.9 bits/cell; simulation baseline)
 3. **Preisach Hysteresis Model** — Physics-accurate simulation of domain switching
 4. **Real-time Simulation** — Interactive control of electric field and waveforms
 5. **Write/Read Operations** — Demonstrates non-volatile memory behavior

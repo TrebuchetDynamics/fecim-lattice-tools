@@ -14,7 +14,7 @@
 
 ## Claims Policy
 
-- **Conference claims** (e.g., 30-level baseline) are labeled as pending peer review.
+- **Simulation baselines** (e.g., 30-level baseline) are labeled as unverified.
 - **Peer-reviewed claims** are cited explicitly in docs and UI.
 
 ## Testing

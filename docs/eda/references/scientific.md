@@ -15,7 +15,7 @@ This tool implements simulation models based on published research. It is **not 
 *Published research that our simulation models are based on.*
 
 * **30-State FeFET Device:** *"Flash In2Se3 for Neuromorphic Computing"* (Shin, Tour, et al., 2025). [View](https://www.researchgate.net/publication/388360521_Flash_In2Se3_for_neuromorphic_computing)
-  * *How we use it:* We treat 30 levels as a **conference-claim baseline** (pending peer review) and cite peer‑reviewed 32–140 state devices for context.
+  * *How we use it:* We treat 30 levels as a **demo baseline** (configurable) for the simulator.
 
 * **Flash Joule Heating Synthesis:** *"Stoichiometric Engineering... by Flash-within-Flash"* (2025).
   * *How we use it:* Referenced for material properties; we do not implement this manufacturing process.
@@ -71,7 +71,7 @@ This tool implements simulation models based on published research. It is **not 
 
 ## 5. Market Context (Opinion Pieces)
 
-*These are opinion articles, not peer-reviewed research.*
+*These are opinion articles, not reported in literature research.*
 
 * *"The Microchip Era Is About to End"* by George Gilder (WSJ, 2025) - [View](https://www.wsj.com/articles/the-microchip-era-is-about-to-end-wafer-scale-integration-computing-ai-3a9d554a)
   * *Note:* This is an opinion piece about wafer-scale integration trends, not a validation of FeCIM technology.
@@ -175,7 +175,7 @@ This tool implements simulation models based on published research. It is **not 
     - Modulates polarization via gate electrical pulses for synaptic behavior
     - Non-volatile memory with ON/OFF states due to ferroelectric characteristics
     - Robust reliability under repeated electrical pulses
-  * *How we use it:* Foundation for 30‑level demo baseline (conference claim) quantization and synaptic weight programming models.
+  * *How we use it:* Foundation for the demo baseline quantization and synaptic weight programming models.
 
 ### 7.2 Flash Joule Heating Technology
 

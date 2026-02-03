@@ -6,7 +6,7 @@
 
 ---
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ## Table of Contents
 
@@ -585,7 +585,7 @@ klayout            # GDSII viewing
 
 **Strengths:**
 - Fastest way to generate realistic P-E curves
-- Based on peer-reviewed Garrity et al. 2014 model
+- Based on reported in literature Garrity et al. 2014 model
 - Simple YAML configuration
 - BaTiO₃ and CrCA pre-configured
 

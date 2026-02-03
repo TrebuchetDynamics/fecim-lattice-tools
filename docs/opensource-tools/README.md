@@ -8,7 +8,7 @@
 
 This documentation catalogs 100+ open-source tools relevant to ferroelectric compute-in-memory systems based on Dr. external research group's HfO₂-ZrO₂ superlattice research. Whether you're simulating hysteresis loops, designing crossbar arrays, training neural networks, or characterizing devices in the lab, this guide connects you to the right tools.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ### Why This Matters for FeCIM Development
 

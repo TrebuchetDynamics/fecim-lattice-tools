@@ -23,7 +23,6 @@ Educational design-suite for FeCIM arrays (exploration, not signoff).
 |---|---:|---|
 | Levels | 30 | Demo baseline |
 | Gmin / Gmax | 10 / 100 uS | Conductance range |
-| Vprog | 2.0-5.0 V | Programming window |
 | Cell pitch / height | 0.46 / 2.72 um | SKY130 defaults |
 
 ---

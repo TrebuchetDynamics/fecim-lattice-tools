@@ -17,7 +17,7 @@ We analyzed two open-source crossbar simulation projects to improve our FeCIM im
 
 **Key Recommendation:** Use CrossSim's iterative solver for performance, badcrossbar for validation.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 

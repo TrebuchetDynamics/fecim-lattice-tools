@@ -7,7 +7,7 @@ Matrix-Vector Multiply (MVM) simulator with non-idealities and visualization.
 ## Features
 
 - **Analog MVM/VMM** - Kirchhoff-law current summation (I = G x V)
-- **30-Level Quantization** - Demo baseline (conference claim; pending peer review)
+- **30-Level Quantization** - Demo baseline (configurable)
 - **Conductance Models** - Linear, exponential, and lookup-table mapping
 - **Non-Idealities** - IR drop, sneak paths, drift, RC delay, process variation, endurance, half-select disturb
 - **GPU Acceleration (Optional)** - Compute-shader MVM with CPU fallback
@@ -32,7 +32,7 @@ Matrix-Vector Multiply (MVM) simulator with non-idealities and visualization.
 
 | Parameter | Default | Notes |
 |---|---:|---|
-| Levels | 30 | Demo baseline (conference claim) |
+| Levels | 30 | Demo baseline (configurable) |
 | Gmin / Gmax | 10 uS / 100 uS | Conductance range |
 | Wire R | 2.5 Ohm/cell | `DefaultWireParams()` |
 | Wire C | 0.2 fF/cell | `DefaultWireParams()` |

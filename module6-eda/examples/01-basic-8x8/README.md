@@ -4,7 +4,7 @@ A minimal example demonstrating FeCIM weight compilation for an 8x8 crossbar arr
 
 ## Overview
 
-This example compiles a simple 8x8 weight matrix with mixed positive and negative values, showcasing 30-level quantization.
+This example compiles a simple 8x8 weight matrix with mixed positive and negative values, showcasing configurable quantization levels.
 
 ## Files
 
@@ -38,7 +38,7 @@ You should see a compute-mode run with export confirmations similar to:
 FeCIM Array Generator - Compute Mode
 Configuration:
   Array Size:   8 x 8
-  Levels:       30
+  Levels:       <configured>
 Exporting files to examples/01-basic-8x8/output/
   OK ..._design.json
   OK ..._cells.csv
@@ -59,24 +59,22 @@ Default file names (if `-name` is not provided):
 
 ### `fecim_array_design.json`
 
+Note: The snippet below shows the **structure** only. Values are determined by your inputs and current defaults.
+
 ```json
 {
   "config": {
     "array_rows": 8,
     "array_cols": 8,
-    "levels": 30,
-    "g_min": 10.0,
-    "g_max": 100.0
+    "levels": <configured>,
+    "g_min": <configured>,
+    "g_max": <configured>
   },
   "cells": [
-    {"row": 0, "col": 0, "level": 16, "conductance": 55.17, "program_v": 3.12, "initial_weight": 0.10},
+    {"row": 0, "col": 0, "level": <int>, "conductance": <uS>, "program_v": <V>, "initial_weight": <float>},
     ...
   ],
-  "stats": {
-    "total_cells": 64,
-    "active_cells": 64,
-    "quant_psnr_db": 42.3
-  }
+  "stats": { ... }
 }
 ```
 
@@ -84,8 +82,8 @@ Default file names (if `-name` is not provided):
 
 ```csv
 row,col,weight,level,conductance_uS,resistance_ohm,program_V
-0,0,0.100000,16,55.1700,18125.00,3.1200
-0,1,-0.200000,13,44.8300,22319.00,2.9400
+0,0,<weight>,<level>,<conductance_uS>,<resistance_ohm>,<program_V>
+0,1,<weight>,<level>,<conductance_uS>,<resistance_ohm>,<program_V>
 ...
 ```
 
@@ -107,8 +105,8 @@ endmodule
 
 ```def
 COMPONENTS 64 ;
-  - cell_0_0 fecim_bit + FIXED ( 5000 5000 ) N ;
-  - cell_0_1 fecim_bit + FIXED ( 5460 5000 ) N ;
+  - cell_0_0 fecim_bit + FIXED ( <x> <y> ) N ;
+  - cell_0_1 fecim_bit + FIXED ( <x> <y> ) N ;
   ...
 END COMPONENTS
 ```
@@ -116,10 +114,10 @@ END COMPONENTS
 ## Validation
 
 ```bash
-# Verify SPICE syntax
+# Verify SPICE syntax (optional)
 ngspice -b -c 'source output/fecim_array.sp; listing'
 
-# Verify Verilog syntax
+# Verify Verilog syntax (optional)
 iverilog -o /dev/null output/fecim_array.v
 echo "Verilog syntax OK"
 ```

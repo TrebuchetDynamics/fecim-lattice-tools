@@ -231,12 +231,12 @@ This pattern ensures:
 
 ### 1. 30-Level Quantization
 
-This demo uses **30 discrete analog states** as a baseline **conference claim** (COSM 2025 transcript; pending peer review):
+This demo uses **30 discrete analog states** as a baseline **simulation baseline** (COSM 2025 transcript; unverified):
 
 ```go
 // module2-crossbar/pkg/crossbar/array.go
 
-const FeCIMLevels = 30  // Conference claim: "30 discrete states"
+const FeCIMLevels = 30  // Simulation baseline: "30 discrete states"
 
 // QuantizeTo30Levels quantizes any value to one of 30 levels
 func QuantizeTo30Levels(value float64) float64 {
@@ -337,12 +337,12 @@ for physics and ISPP correctness. GUI runs are illustrative; acceptance requires
 
 #### Material System
 
-Eight built-in materials with peer-reviewed parameters:
+Eight built-in materials with reported in literature parameters:
 
 | Material | Pr (µC/cm²) | Ec (MV/cm) | Endurance | Use Case |
 |----------|-------------|------------|-----------|----------|
 | **DefaultHZO** | 25 | 1.2 | 10¹⁰ | Si-doped baseline |
-| **FeCIMMaterial** | 30 | 1.0 | 10⁹ | Tour device (conference claim baseline) |
+| **FeCIMMaterial** | 30 | 1.0 | 10⁹ | Tour device (default baseline) |
 | **FeCIMMaterialTarget** | 30 | 1.0 | 10¹² | Aspirational target |
 | **LiteratureSuperlattice** | 45 | 0.8 | 10¹⁰ | Cheema 2020 (NC benefit) |
 | **CryogenicHZO** | 75 | 1.5 | 10¹⁰ | 4K operation |

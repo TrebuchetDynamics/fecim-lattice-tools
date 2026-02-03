@@ -15,7 +15,7 @@ This meta-study synthesizes research from 40+ papers focused on crossbar array a
 1. **Matrix-Vector Multiplication (MVM)** is the fundamental operation—physics does the computation via Ohm's Law (I = G×V) and Kirchhoff's Current Law
 2. **IR drop limits scalability** to ~256×256 arrays without compensation circuits
 3. **Sneak paths** cause 2-15% error in passive arrays; 1T1R (one transistor per cell) eliminates this
-4. **30 discrete levels (demo baseline)** aligns with peer-reviewed multi-level FeFET capabilities (32–140 states)
+4. **30 discrete levels (demo baseline)** aligns with multi-level FeFET capability reported in literature (not verified here)
 5. **ADC power dominates** (50-80% of total CIM energy)—ADC-less designs emerging
 6. **FeFET advantages**: Low switching energy (~10 fJ), self-rectifying possible, CMOS compatible
 
@@ -350,7 +350,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 **Paper:** "FeFET_Crossbar_MNIST_Hardware_arXiv.pdf"
 - **Result:** 87% MNIST accuracy demonstrated in hardware
 - **Array:** 128×64 FeFET crossbar
-- **Finding:** 30 analog states are a **conference claim**; peer-reviewed devices report 32–140 states that bracket the demo baseline
+- **Finding:** 30 analog states are a **simulation baseline**; literature reports multi-level states (unverified) that bracket the demo baseline
 
 **Paper:** "multilevel_fefet_crossbar_2023.pdf"
 - **Result:** 32 levels demonstrated with write-verify
@@ -367,7 +367,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 2. **No Joule heating:** Displacement current, not filament formation
 3. **CMOS compatible:** Same fab as standard logic
 4. **Self-rectifying possible:** Reduces sneak paths in passive arrays
-5. **30-level baseline (conference claim):** High precision without multi-cell encoding
+5. **30-level baseline (simulation baseline):** High precision without multi-cell encoding
 
 ---
 

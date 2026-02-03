@@ -10,14 +10,15 @@ Objective
   - Ensure the Module 5 technology comparison implementation fully matches the equations, calculations, and behaviors
     in docs/development/GUI/GUI.module5.md and related Module 5 documentation.
   - Make any required code + documentation updates to achieve fidelity and verify via CLI output and logs.
-  - Ensure all energy claims are properly marked with verification status (verified vs TRL 4 claimed).
-  - Maintain technical briefing presentation quality with prominent TRL 4 disclaimers.
+  - Ensure all energy values are clearly labeled as **model inputs** (not measured hardware).
+  - Keep presentation copy honest: no verification claims or TRL assertions in UI or docs.
 
 Tasks
 
   1. Energy specifications and calculations (no approximations unless explicitly called out)
 
-  - Verify CPU/GPU/FeCIM energy per MAC values: CPU (1000 pJ/MAC), GPU (100 pJ/MAC), FeCIM (~1 pJ/MAC).
+  - Use the energy-per-MAC constants defined in code (do not invent new numbers).
+  - Ensure UI labels call them **model inputs** and not verified hardware specs.
   - Validate energy per inference calculation: µJ = MACs × fJ/MAC / 1e9.
   - Confirm power calculation: W = µJ/inf × inf/s / 1e6.
   - Validate monthly cost calculation: cost = power/1000 × hoursPerMonth × $0.10/kWh.
@@ -27,25 +28,16 @@ Tasks
 
   2. Workload MAC estimates
 
-  - Validate MACs per inference for all workloads:
-    - MNIST: 101,632 (784×128 + 128×10)
-    - ResNet-50: 4,000,000,000 (~4 GMACs)
-    - BERT-Base: 11,000,000,000 (~11 GMACs)
-    - GPT-2: 35,000,000,000 (~35 GMACs)
-    - LLM-70B: 140,000,000,000,000 (~140 TMACs)
+  - Validate MACs per inference for all workloads against code defaults.
   - Ensure workload selector matches documented options and defaults to GPT-2.
-  - If missing workloads, add with documented MAC estimates.
+  - If missing workloads, add them and document the **assumed** MAC estimates as model inputs.
 
   3. Market data and projections
 
-  - Validate market segment projections:
-    - NAND Flash: $72B (2024) → $98B (2030)
-    - DRAM: $130B (2024) → $220B (2030)
-    - AI Semiconductor: $140B (2024) → $403B (2030)
-    - TOTAL: $721B by 2030
-  - Confirm sources (WSTS Semiconductor Trade Statistics, Gartner AI Forecasts).
-  - Verify market animation targets animate correctly to values.
-  - Cross-check competitive matrix shows only FeCIM with all checkmarks.
+  - Treat market projections as **scenario inputs** for visualization.
+  - Do not claim specific sources unless they are already documented and in-repo.
+  - Verify market animation targets animate correctly to configured values.
+  - Cross-check competitive matrix shows whatever the code defines (avoid “only FeCIM wins” claims unless explicitly labeled as a demo assumption).
   - If gaps are found, implement fixes and update docs accordingly.
 
   4. ROI calculator fidelity
@@ -70,25 +62,17 @@ Tasks
   - Check for potential deadlock in RLock/Unlock + Lock/Unlock pattern (BUG-M5-001).
   - If issues found, implement fixes and update docs accordingly.
 
-  6. TRL 4 disclaimers and honesty
+  6. Honesty and labeling
 
-  - Ensure all FeCIM energy claims are marked as TRL 4 (laboratory validation only).
-  - Verify CPU/GPU specs are marked as verified (Intel/AMD, NVIDIA H100).
-  - Confirm prominent TRL 4 warning banner: "⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 LAB PROTOTYPE".
-  - Validate verified vs claimed sections clearly distinguish:
-    - Verified: 32–140 levels (peer-reviewed), 96–98% MNIST, CMOS compatible
-    - Claimed: 30 levels (conference; pending peer review)
-    - Claimed: 25-100× vs NAND, 1000× vs DRAM, 80-90% DC savings
-  - If disclaimers are missing or unclear, add prominently and update docs.
+  - Ensure all FeCIM numbers are labeled **model inputs** or **demo assumptions**.
+  - Avoid “verified” language unless the value is derived from code or tests.
+  - Use a single, clear banner: "SIMULATION ONLY — NOT MEASURED HARDWARE".
+  - Remove/avoid TRL claims and conference attributions in UI copy.
 
   7. Visualizations and hero widgets
 
-  - Validate AnimatedEnergyRace: GPU bar (100 units) vs FeCIM bar (~10 units), hero text pulsing.
-  - Confirm MarketOpportunityChart: $721B market size, animated segment boxes.
-  - Verify CompetitiveMatrix: Shows only FeCIM with checkmarks in ALL categories.
-  - Confirm PhasedStrategyDiagram: 3-phase entry strategy (NAND → DRAM → Full CIM).
-  - Verify DataCenterTransformation: Before (1000W GPU, 10 racks) vs After (100W FeCIM, 2 racks).
-  - Confirm FabricationReality widget shows honest development expectations.
+  - Validate visualization behaviors against code defaults (bar ratios, labels, animation cadence).
+  - Ensure labels clarify that values are **model inputs** and **not** verified hardware data.
   - If animations don't match documented behavior, fix and update docs.
 
   8. Embedded mode and lifecycle
@@ -134,6 +118,6 @@ Execution Rules (Autonomous)
 Deliverable
 
   - A concise report that includes:
-      - What was validated (energy specs, calculations, market data, ROI, animations, TRL 4 disclaimers)
+      - What was validated (energy specs, calculations, market data, ROI, animations, labeling)
       - Documentation changes made (file paths + summary)
       - Any gaps, issues, or follow-ups needed

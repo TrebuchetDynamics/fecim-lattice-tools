@@ -9,12 +9,12 @@
 
 ## Executive Summary
 
-The hysteresis module is a well-architected ferroelectric simulation system implementing the Preisach hysteresis model for HfO₂-ZrO₂ (HZO) materials. The module demonstrates strong physics foundations with peer-reviewed parameter accuracy, comprehensive test coverage (179 tests), and proper thread-safe GUI design. However, several areas warrant attention:
+The hysteresis module is a well-architected ferroelectric simulation system implementing the Preisach hysteresis model for HfO₂-ZrO₂ (HZO) materials. The module demonstrates strong physics foundations with reported in literature parameter accuracy, comprehensive test coverage (179 tests), and proper thread-safe GUI design. However, several areas warrant attention:
 
 | Area | Rating | Key Finding |
 |------|--------|-------------|
 | **Physics Accuracy** | ★★★★☆ | MayergoyzPreisach is correct; simplified model has history issues |
-| **Material Parameters** | ★★★★★ | All parameters verified against peer-reviewed literature |
+| **Material Parameters** | ★★★★★ | All parameters verified against reported in literature literature |
 | **ISPP Algorithm** | ★★★★☆ | Solid servo control; voltage/field unit confusion |
 | **Code Architecture** | ★★★★★ | Excellent separation of concerns, thread-safe |
 | **UX/GUI** | ★★★☆☆ | Information overload; needs progressive disclosure |

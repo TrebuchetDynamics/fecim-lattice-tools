@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - Unified tabbed GUI application (`cmd/fecim-lattice-tools/`)
 - Modules 1-5 fully implemented and tested
-- 117 passing tests across all modules
+- Test coverage expanded across modules
 - Lattice generator with fractal placement algorithm
 
 ### Changed
@@ -58,7 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **Module 3: MNIST Classifier**
   - Dual-mode inference (floating-point vs CIM)
-  - 87% accuracy demonstration
+  - Demo with adjustable quantization/noise (no fixed accuracy claim)
   - Non-ideality impact visualization
 - **Module 4: Peripheral Circuits**
   - DAC/ADC visualization
@@ -77,7 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - IR drop analysis with heatmap
   - Sneak path detection
   - Drift simulation over time
-- 30-level quantization throughout
+- Default quantization levels (configurable)
 
 ## [0.5.0] - 2026-01-15
 

@@ -6,7 +6,7 @@
 
 **Scope:** Voltage values for 300K nominal operation. Timing parameters and pulse widths are documented separately in `config/physics.yaml`.
 
-**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review).
+**Note:** References to “30 levels” refer to the demo baseline (configurable).
 
 ---
 
@@ -103,7 +103,7 @@ This document provides the authoritative reference for all voltage values used i
 
 **Verified Values:**
 - All peripheral circuit voltages are hard-coded in source files.
-- Physics parameters (Ec) are peer-reviewed and material-specific.
+- Physics parameters (Ec) are reported in literature and material-specific.
 - Transistor control voltages follow standard CMOS logic levels.
 - **V/2 half-select is explicitly implemented** in `ApplyHalfSelectWrite()` for passive (0T1R) mode.
 
@@ -204,7 +204,7 @@ Half-selected cells experience V/2 = 0.75V
 
 #### Per-Level Voltage Calibration
 
-Each of the 30 analog levels (demo baseline; conference claim) requires a different E-field to achieve:
+Each of the 30 analog levels (demo baseline; simulation baseline) requires a different E-field to achieve:
 
 **Calibration Arrays:**
 ```
@@ -1534,7 +1534,7 @@ Sneak Path Suppression:
 | Content | Source | Location |
 |---------|--------|----------|
 | FeCIM 30-level concept | COSM 2025 Conference | docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md |
-| Note: Conference presentation, not peer-reviewed | | |
+| Note: Conference presentation, not reported in literature | | |
 
 ---
 
@@ -1552,7 +1552,7 @@ Sneak Path Suppression:
 ║                                                                            ║
 ║  PHYSICS LIMITS (300K, 10nm HZO)                                           ║
 ║  ───────────────────────────────────────────────────────────────────────   ║
-║   Coercive Field (Ec):    0.6-1.5 MV/cm  (peer-reviewed)                  ║
+║   Coercive Field (Ec):    0.6-1.5 MV/cm  (reported in literature)                  ║
 ║   Coercive Voltage (Vc):  0.6-1.5 V      (Ec × 10nm)                      ║
 ║   Read Max (field_min_ratio):  0.7 × Vc  (30% safety margin below Vc)    ║
 ║                                                                            ║

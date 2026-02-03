@@ -63,7 +63,7 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign
 **Example:**
 
 ```go
-// Storage mode (NAND replacement)
+// Storage mode (storage-oriented)
 config := compiler.NewStorageConfig(256, 256)
 design := compiler.GenerateBlank(config)
 fmt.Printf("Created storage chip: %.2f mm²\n", design.Stats.AreaMM2)
@@ -154,8 +154,8 @@ type ArrayConfig struct {
 
 ```go
 const (
-    ModeStorage  // NAND replacement: high-density, data retention
-    ModeMemory   // DRAM replacement: high-speed, zero-refresh
+    ModeStorage  // Storage-oriented: retention/endurance focus
+    ModeMemory   // Memory-oriented: access/bandwidth focus
     ModeCompute  // AI accelerator: analog compute-in-memory
 )
 ```
@@ -744,7 +744,7 @@ design := compiler.GenerateBlank(config)
 
 ## References
 
-- FeCIM Technology: Dr. external research group, COSM 2025
+- FeCIM concept: simulated crossbar models used by this tool (no device source required)
 - LEF/DEF 5.8: Si2/OpenAccess Coalition
 - Liberty Timing: Synopsys standard format
 - OpenLane: https://openlane.readthedocs.io/

@@ -26,7 +26,7 @@
 
 ## Module 1: The Hysteresis Simulator
 
-**Juan:** *clicks Module 1* "This is the P-E curve simulator. It uses the Mayergoyz Preisach model with an adaptive hysteron grid (min 200; scaled for calibration)."
+**Juan:** *clicks Module 1* "This is the P-E curve simulator. It uses the Mayergoyz Preisach model with an adaptive hysteron grid and calibration-aware resolution."
 
 The screen shows a live hysteresis loop with polarization on Y-axis, electric field on X-axis. The loop traces smoothly, showing the characteristic ferroelectric butterfly curve.
 
@@ -52,7 +52,7 @@ The screen shows a live hysteresis loop with polarization on Y-axis, electric fi
 
 **Dr. Tour:** "Where did you get those conductance numbers?"
 
-**Juan:** "Calculated from literature values. HZO resistivity, film thickness, device geometry. But I marked them as 'estimated' in the source—there's a 380-line HONESTY_AUDIT document that classifies every claim by evidence tier."
+**Juan:** "Calculated from literature values. HZO resistivity, film thickness, device geometry. But I marked them as 'estimated' in the source—there's a 190-line HONESTY_AUDIT document that classifies every claim by evidence tier."
 
 **Dr. Jaeho:** *looks at Dr. Tour* "He built a car without knowing the engine specs. But the chassis is correct."
 
@@ -86,7 +86,7 @@ The screen shows a 4×4 grid of cells, each colored by conductance. Input voltag
 
 **Dr. Jaeho:** "The Arrhenius parameters?"
 
-**Juan:** "Extracted from peer‑reviewed sources where available. Activation energy is configurable (default 0.5 eV). Parameters are documented with citations when possible and marked as assumed otherwise."
+**Juan:** "Extracted from reported in literature sources where available. Activation energy is configurable (default 0.5 eV). Parameters are documented with citations when possible and marked as assumed otherwise."
 
 ---
 
@@ -102,15 +102,15 @@ Both panels show "Prediction: 3" with confidence scores. Full precision: 97.2%. 
 
 **Dr. Tour:** "What accuracy are you claiming?"
 
-**Juan:** "I don't claim any. The tool achieves 96-98% depending on configuration, but I removed all Tour-specific accuracy claims. Instead, I cite peer-reviewed benchmarks: 96.6% from Nature Communications 2023, 98.24% from ScienceDirect 2025."
+**Juan:** "I don't claim any. The tool shows reported in literature benchmarks—96.6% (Nature Communications 2023) and 98.24% (ScienceDirect 2025)—and lets users see how configuration affects accuracy. Tour‑specific claims are removed."
 
 **Dr. Jaeho:** "What happened to the 87%?"
 
-**Juan:** "Removed it. It wasn't peer-reviewed. The tool now uses ONLY verified literature values. If users want to see what their own parameters achieve, they can adjust quantization levels, noise, ADC/DAC bits, and see the accuracy change in real-time."
+**Juan:** "Removed it. It wasn't reported in literature. The tool uses verified literature values for benchmarks, and it labels unverified claims as such. If users want to see what their own parameters achieve, they can adjust quantization levels, noise, ADC/DAC bits, and see the accuracy change in real-time."
 
-**Dr. Tour:** *pauses* "You removed my claim because it wasn't peer-reviewed?"
+**Dr. Tour:** *pauses* "You removed my claim because it wasn't reported in literature?"
 
-**Juan:** "Yes. The HONESTY_AUDIT classified your COSM 2025 presentation as Tier 5—promotional material, not peer-reviewed science. The tool only uses Tier 1-2 sources now."
+**Juan:** "Yes. The HONESTY_AUDIT classified your COSM 2025 presentation as Tier 5—promotional material, not reported in literature science. Only Tier 1-2 sources are treated as facts; everything else is labeled assumed or unverified."
 
 **Dr. Tour:** *looks at Dr. Jaeho, then back* "That's... actually correct. Continue."
 
@@ -130,7 +130,7 @@ The screen shows a circuit diagram: DAC → Crossbar → TIA → ADC.
 
 **Dr. Tour:** "Power?"
 
-**Juan:** "Array power, peripheral power, total system power. I show the breakdown: the crossbar uses ~20% of energy, ADC/DAC uses ~60%, control logic uses ~20%. That's why 8-bit ADCs matter—every bit adds power."
+**Juan:** "Array power, peripheral power, total system power. I show an estimated breakdown across DAC, array, TIA, and ADC, and label the numbers as estimates. That's why ADC resolution matters—every bit adds power."
 
 ---
 
@@ -140,11 +140,11 @@ The screen shows a circuit diagram: DAC → Crossbar → TIA → ADC.
 
 A bar chart appears: CPU+DRAM at ~1000 pJ/MAC, GPU+HBM at ~100 pJ/MAC, FeCIM at ~1 pJ/MAC (TRL 4 estimate).
 
-**Juan:** "FeCIM is 25-100× more energy-efficient than NAND, per Samsung's Nature 2025 paper. I removed the '10 million×' claim because no peer-reviewed data supported it."
+**Juan:** "The tool shows literature ranges (e.g., 25–100× vs NAND) with TRL caveats. I removed the '10 million×' claim because no reported in literature data supported it."
 
 **Dr. Tour:** "You removed another of my claims?"
 
-**Juan:** "Yes. The tool only shows 25-100× now. That's verified. The 10M× was... aspirational."
+**Juan:** "Yes. The tool only shows literature ranges now and labels them; the 10M× was... aspirational."
 
 **Dr. Tour:** *chuckles* "It was. We think we can get there, but we haven't measured it."
 
@@ -184,7 +184,7 @@ fecim_bit #(.LEVEL(16)) R_0_0 (
 
 **Dr. Jaeho:** "The timing numbers in the Liberty file—where do those come from?"
 
-**Juan:** "Educated estimates based on 22nm FD-SOI characterization and FeFET RC constants from literature. I marked them as 'estimated' in the comments. To get real numbers, I'd need your actual device data."
+**Juan:** "Educational placeholders based on public literature and reasonable RC estimates. I marked them as 'estimated' in the comments. To get real numbers, I'd need your actual device data."
 
 **Dr. Tour:** *exchanges look with Dr. Jaeho* "Show me the design flow."
 
@@ -216,15 +216,15 @@ The screen shows search results: 12 documents, including papers on 10⁹ cycle e
 
 ## The HONESTY_AUDIT
 
-**Juan:** *opens a text file* "This is the document I'm most proud of. 380 lines."
+**Juan:** *opens a text file* "This is the document I'm most proud of. 190 lines of audit trail."
 
-**Dr. Tour:** *reads aloud* "'Dr. Tour's COSM 2025 presentation is Tier 5—not peer-reviewed, promotional context.' You really wrote that?"
+**Dr. Tour:** *reads aloud* "'Dr. Tour's COSM 2025 presentation is Tier 5—not reported in literature, promotional context.' You really wrote that?"
 
-**Juan:** "Yes. And '10M× vs NAND energy: REMOVED—no peer-reviewed data exists for this claim.' And '87% MNIST accuracy: REMOVED—below peer-reviewed 96.6-98.24%.'"
+**Juan:** "Yes. And '10M× vs NAND energy: REMOVED—no reported in literature data exists for this claim.' And '87% MNIST accuracy: REMOVED—below reported in literature 96.6-98.24%.'"
 
 **Dr. Jaeho:** "You've audited your own sources and Jim's claims."
 
-**Juan:** "124 claims total. 71% verified from peer-reviewed sources. 6% explicitly marked as unverified. 2 removed because they contradicted better evidence. Every uncertainty is documented. Every verified fact has a DOI."
+**Juan:** "Every claim is tagged as verified, assumed, unverified, or removed. The open items are listed explicitly, and the docs link back to sources wherever possible."
 
 **Dr. Tour:** *quiet for a moment* "Do you know how rare this is? Most people building tools like this would just use my numbers because I'm famous. You actually checked."
 
@@ -253,7 +253,7 @@ The screen shows search results: 12 documents, including papers on 10⁹ cycle e
 **Dr. Tour:** *turns to screen* "Juan, I have three options for you."
 
 **Option A: Independent Path**
-Continue alone. Keep using peer-reviewed sources only. Publish as open-source educational software. Never get our data, but maintain complete independence.
+Continue alone. Keep using reported in literature sources as the factual baseline. Publish as open-source educational software. Never get our data, but maintain complete independence.
 
 **Option B: Collaboration Path**
 Share device parameters. Let us calibrate the models. Co-publish if results are interesting. Risk: IP complications, potential rejection.
@@ -279,7 +279,7 @@ Continue developing independently with honest documentation. Repo is ready if we
 
 **Dr. Tour:** *sits back down* "You have a 58-item critique list and you're working through it systematically."
 
-**Juan:** "25 done, 33 to go. About 150 hours of work remaining."
+**Juan:** "50 done, 8 to go. About 50–80 hours of work remaining."
 
 **Dr. Tour:** "To reach what state?"
 
@@ -308,12 +308,12 @@ Continue developing independently with honest documentation. Repo is ready if we
 | Modules | 7 | Complete |
 | Research papers catalogued | 37 | Markdown summaries in `docs/research-papers/` |
 | Documentation files | 206 | `docs/**/*.md` |
-| HONESTY_AUDIT lines | 380 | Update after audit refresh |
+| HONESTY_AUDIT lines | 190 | Snapshot count |
 | EDA output formats | 4 (v, def, lef, lib) | Educational artifacts |
 | Critique items completed | 50/58 | Pending: HIGH-003/004, MED-004, LOW-002, L07-L10 |
 | ISPP implementation | ✅ | Implemented |
 | Temperature calibration | ✅ | Implemented |
-| GPU acceleration | Vulkan renderer + compute shader | Present |
+| GPU acceleration | Optional Vulkan renderer/compute | Experimental (SDK/GPU dependent) |
 
 ---
 

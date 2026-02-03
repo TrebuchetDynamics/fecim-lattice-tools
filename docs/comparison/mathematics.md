@@ -1,5 +1,8 @@
 # CIM Mathematics: Comprehensive Equation Reference
 
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+
+
 **FeCIM Lattice Tools - Complete Mathematical Derivations for Compute-in-Memory**
 
 > This document provides rigorous mathematical foundations for all CIM operations, complete with equation derivations, code references, and experimental validation data.
@@ -484,7 +487,7 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 
 ### 4.1 Linear Quantization (30 Levels)
 
-This demo uses a 30-level baseline (conference claim per Dr. Tour; pending peer review).
+This demo uses a 30-level baseline (configurable).
 
 **Quantization formula:**
 ```
@@ -539,7 +542,7 @@ RMSE = Δ / (2√3) = (G_max - G_min) / (58√3)
 
 ### 4.4 Impact on Neural Networks
 
-From experimental results (literature + our simulations):
+Illustrative example (reported literature + simulation placeholders):
 
 | Quantization Bits | Levels | MNIST Accuracy | ImageNet Top-5 |
 |-------------------|--------|----------------|----------------|
@@ -550,9 +553,6 @@ From experimental results (literature + our simulations):
 | 4-bit (16)        | 16     | 97.8%          | 88.5%          |
 | 3-bit (8)         | 8      | 96.2%          | 84.3%          |
 
-**Dr. Tour's reported MNIST accuracy:** 87%
-**Gap from ideal:** ~11 percentage points
-**Attributable to:** Quantization (0.9%) + Non-idealities (10.1%)
 
 ### 4.5 Neural Network Error Propagation
 
@@ -568,14 +568,14 @@ where:
 - `||W||_F` = Frobenius norm of weights
 - `||x||_2` = L2 norm of input
 
-**Practical rule:** Each additional layer adds ~0.1-0.2% error for 30-level demo baseline quantization.
+**Practical rule (illustrative):** Error tends to grow with more layers and lower precision.
 
 ### 4.6 Code Implementation
 
 From `module2-crossbar/pkg/crossbar/array.go`:
 
 ```go
-// FeCIMLevels is the number of discrete analog states in the demo baseline (conference claim)
+// FeCIMLevels is the number of discrete analog states in the demo baseline (configurable)
 const FeCIMLevels = 30
 
 // QuantizeTo30Levels quantizes a value to exactly 30 discrete levels (0-29)
@@ -863,19 +863,15 @@ func (a *Array) MVMWithAllEffects(input []float64) (*MVMResult, error) {
 
 ### 6.4 Validation Data
 
-Our implementation has been validated against:
-- Published FeCIM results (Dr. Tour group, Nature Communications 2025)
-- Commercial CIM simulator outputs (CrossSim, NeuroSim)
-- Experimental silicon data (where available)
+Validation is **in progress** and should be documented with primary sources before publishing claims. Use this section as a placeholder for future measurements or benchmark comparisons.
 
-**MNIST accuracy comparison:**
+**MNIST accuracy comparison (placeholder):**
 
 | Configuration | Our Sim | Literature | Hardware |
 |--------------|---------|------------|----------|
-| Ideal (float32) | 99.2% | 99.2% | N/A |
-| 30-level quant | 98.3% | 98.5% | N/A |
-| With IR drop | 97.1% | 97.3% | N/A |
-| With all effects | 87.2% | 87.0% | 87% (Tour) |
+| Ideal (float32) | TBD | TBD | N/A |
+| Quantized | TBD | TBD | N/A |
+| With non-idealities | TBD | TBD | TBD |
 
 ---
 
@@ -895,12 +891,9 @@ All equations are implemented in `module2-crossbar/pkg/crossbar/` with extensive
 
 ## References
 
-1. Dr. external research group, "AI Hardware Breakthrough," COSM 2025
-2. Nature Communications 2025: "HfO₂-ZrO₂ Ferroelectric Superlattices"
-3. IEEE IRPS 2022: "Endurance Characteristics of FeFET Arrays"
-4. PMC 2024: "Ferroelectric Materials for CIM"
-5. CrossSim Documentation: LLNL analog crossbar simulator
-6. NeuroSim: Georgia Tech CIM simulator reference
+1. CrossSim Documentation (Sandia Labs)
+2. NeuroSim Documentation (ASU)
+3. Primary papers and device measurements (to be filled with verified sources)
 
 ---
 

@@ -1,10 +1,13 @@
 # CIM Simulation Tools and Validation Methodology
 
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+
+
 ## Overview
 
-This document covers the simulation hierarchy, industry-standard tools (CrossSim, NeuroSim), and validation methodology for Compute-in-Memory (CIM) architectures. It compares our FeCIM simulator against established tools and provides a rigorous validation protocol.
+This document covers the simulation hierarchy, industry-standard tools (CrossSim, NeuroSim), and validation methodology for Compute-in-Memory (CIM) architectures. It compares our FeCIM simulator against established tools and provides a validation protocol.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** The demo default is 30 levels (configurable). Numeric values in this document are **illustrative** and should be verified against primary sources.
 
 ---
 
@@ -29,7 +32,7 @@ CIM simulation spans four abstraction levels, each with specialized tools:
 
 ## 2. CrossSim Deep Dive (Sandia National Labs)
 
-**Latest Version:** V3.1 (January 2025)
+**Latest Version:** Check upstream project (versions change)
 
 CrossSim is the industry-standard GPU-accelerated Python simulator for analog crossbar arrays, developed by Sandia National Labs.
 
@@ -63,7 +66,7 @@ xbar = CrossSim(
     device_params={
         'g_on': 100e-6,      # 100 µS
         'g_off': 1e-6,       # 1 µS
-        'states': 30,        # 30-level demo baseline (conference claim)
+        'states': 30,        # Demo baseline (configurable)
         'drift_nu': 0.001    # Drift exponent
     },
     wire_resistance=2.5,     # Ω per cell
@@ -96,9 +99,7 @@ output = xbar.matvec(weights, inputs)
 
 ## 3. NeuroSim / DNN+NeuroSim
 
-**Latest Versions:**
-- NeuroSim V1.5 (May 2025) - Inference-only
-- DNN+NeuroSim V2.1 (August 2025) - On-chip training
+**Latest Versions:** Check upstream projects (versions change)
 
 NeuroSim is a comprehensive framework for estimating CIM chip performance, energy, and area across multiple technology nodes.
 
@@ -320,13 +321,11 @@ with torch.no_grad():
 
 baseline_accuracy = 100.0 * correct / total
 print(f"FP32 Baseline: {baseline_accuracy:.2f}%")
-# Expected: 98.2-98.5%
+# Record this baseline for your model and dataset
 ```
 
 **Success Criteria:**
-- MNIST: 98.2-98.5%
-- CIFAR-10: 89.4-92.0% (architecture-dependent)
-- ImageNet: 76.1% (ResNet18)
+- Record baseline accuracy for your chosen model and dataset
 
 ### Step 2: Post-Training Quantization
 
@@ -356,8 +355,8 @@ print(f"Degradation: {baseline_accuracy - quantized_accuracy:.2f}%")
 ```
 
 **Success Criteria:**
-- Accuracy drop: <0.5% (ideal quantization)
-- If >0.5%: Need quantization-aware training (QAT)
+- Record the accuracy drop from quantization
+- If the drop is large for your workload, consider quantization-aware training (QAT)
 
 ### Step 3: Ideal Hardware Simulation
 
@@ -404,13 +403,13 @@ assert diff < 1e-6, f"Mismatch: {diff}"
 **Procedure:**
 Enable non-idealities incrementally and measure impact:
 
-| Non-Ideality | Setting | Expected Impact |
-|--------------|---------|-----------------|
-| Conductance Variation | σ/µ = 5% (Gaussian) | 0.2-0.5% accuracy drop |
-| Read Noise | 1% Gaussian | 0.1-0.3% accuracy drop |
-| ADC Quantization | 6-bit | 0.3-0.7% accuracy drop |
-| IR Drop | 2.5 Ω/cell wire resistance | 0.5-1.5% accuracy drop |
-| Drift | ν = 0.001, 1 year | 0.2-0.8% accuracy drop |
+| Non-Ideality | Setting | Observed Impact (measure) |
+|--------------|---------|---------------------------|
+| Conductance Variation | σ/µ = 5% (Gaussian) | Measure for your model |
+| Read Noise | 1% Gaussian | Measure for your model |
+| ADC Quantization | 6-bit | Measure for your model |
+| IR Drop | 2.5 Ω/cell wire resistance | Measure for your model |
+| Drift | ν = 0.001, 1 year | Measure for your model |
 
 **Cumulative Configuration:**
 ```go
@@ -440,9 +439,8 @@ print(f"Mean Accuracy: {mean_acc:.2f}% ± {ci_99:.2f}%")
 ```
 
 **Success Criteria:**
-- MNIST: 97.4-97.7% (0.5-1% degradation vs ideal)
-- CIFAR-10: 87.5-89.1% (1-2% degradation)
-- Statistical variation: <0.5% std dev
+- Record mean accuracy and confidence intervals for your setup
+- Document sensitivity to each non-ideality
 
 ### Step 5: Noise-Aware Training (Optional)
 
@@ -479,8 +477,7 @@ model = nn.Sequential(
 ```
 
 **Success Criteria:**
-- Recover to within 1% of FP32 baseline
-- MNIST: 97.5-98.0% (noise-aware trained)
+- Record recovery relative to the FP32 baseline for your model
 
 ### Step 6: Statistical Validation
 
@@ -492,92 +489,30 @@ model = nn.Sequential(
 3. Report 99% confidence intervals
 4. Verify distribution is Gaussian
 
-**Statistical Report Format:**
+**Statistical Report Format (Example):**
 ```
-MNIST Accuracy (100 trials, 6-bit ADC, 2.5 Ω wire resistance)
-─────────────────────────────────────────────────────────────
-Mean:       97.52%
-Std Dev:    0.18%
-99% CI:     97.52% ± 0.05%
-Min:        97.12%
-Max:        97.89%
-Distribution: Normal (Shapiro-Wilk p=0.82)
+Accuracy (N trials)
+───────────────────
+Mean:       <value>
+Std Dev:    <value>
+99% CI:     <value>
+Min/Max:    <value>
+Distribution: <test>
 ```
 
 **Validation Checklist:**
 
-- [ ] **Quantized accuracy** matches within 0.5% of FP32
+- [ ] **Quantized accuracy** is recorded and compared to FP32 baseline
 - [ ] **Ideal hardware** matches quantized software bit-exact
 - [ ] **IR drop model** matches SPICE or extracted parasitics
 - [ ] **Variation model** matches measured device σ from fabrication data
-- [ ] **Drift model** captures temporal behavior over 1+ years
-- [ ] **MNIST 87%** claim reproducible (Dr. Tour's reference)
-- [ ] **Statistical validation** shows <0.5% std dev over 100 trials
-- [ ] **Noise-aware training** recovers to within 1% of baseline
+- [ ] **Drift model** captures temporal behavior over time
+- [ ] **Statistical validation** reports variance over trials
+- [ ] **Noise-aware training** recovery is documented
 
 ---
 
-## 6. Validation Against Dr. Tour's MNIST Claim
-
-**Claim:** "87% accuracy on MNIST with FeCIM crossbar" (COSM 2025)
-
-**Validation Strategy:**
-
-1. **Reproduce baseline:**
-   - Train simple CNN on MNIST (FP32)
-   - Target: 98-99% accuracy
-
-2. **Apply severe non-idealities:**
-   - 10% conductance variation (high)
-   - 3% read noise (high)
-   - 4-bit ADC (low precision)
-   - 5 Ω/cell wire resistance (high)
-   - No noise-aware training
-
-3. **Expected result:**
-   - Accuracy should drop to ~87-90%
-   - Matches Dr. Tour's conservative estimate
-
-4. **Interpretation:**
-   - 87% is likely a **worst-case scenario**
-   - With proper calibration and training: 95-97% achievable
-   - Our simulator should bracket this range
-
-**Code Path:**
-```
-module3-mnist/pkg/mnist/
-├── network.go           # Network architecture
-├── training.go          # Training loop
-└── inference.go         # Inference with crossbar
-```
-
----
-
-## 7. Expected Accuracy Ranges (Literature Review)
-
-| Dataset | Network | Software (FP32) | Quantized (INT8) | CIM (Ideal) | CIM (Realistic) | CIM (Noise-Aware) |
-|---------|---------|-----------------|------------------|-------------|-----------------|-------------------|
-| **MNIST** | Simple CNN | 98.2-98.5% | 98.0-98.3% | 98.0-98.3% | 97.4-97.7% | 97.8-98.1% |
-| **MNIST** | MLP | 97.5-97.8% | 97.2-97.5% | 97.2-97.5% | 96.5-97.0% | 96.8-97.3% |
-| **CIFAR-10** | VGG8 | 92.0% | 91.5% | 91.5% | 89.1% | 90.5% |
-| **CIFAR-10** | ResNet20 | 91.5% | 90.8% | 90.8% | 87.5% | 89.2% |
-| **ImageNet** | ResNet18 | 76.1% | 75.2% | 75.2% | 74.0% | 75.0% |
-
-**Sources:**
-- CrossSim V3.1 validation report (Sandia, 2025)
-- NeuroSim V1.5 benchmarks (ASU, 2025)
-- IBM PCM chip measurements (Nature 2021)
-- Stanford RRAM chip measurements (ISSCC 2023)
-
-**Key Insights:**
-1. **Quantization loss:** <1% for INT8, <1.5% for 30-level
-2. **Non-ideality impact:** 1-3% additional degradation
-3. **Noise-aware training:** Recovers 50-80% of lost accuracy
-4. **Statistical variation:** ±0.3-0.5% across trials
-
----
-
-## 8. Future Work: Closing the Gap
+## 6. Future Work: Closing the Gap
 
 **Priority 1: PyTorch Integration**
 - [ ] Wrap FeCIM simulator as PyTorch `nn.Module`

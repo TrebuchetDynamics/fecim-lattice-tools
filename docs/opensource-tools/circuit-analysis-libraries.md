@@ -8,7 +8,7 @@ A comprehensive guide to open-source tools for analyzing circuits in Ferroelectr
 
 Circuit analysis in FeCIM requires three complementary approaches:
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 1. **Behavioral simulation** - High-speed MVM with IR drop, sneak paths, non-idealities
 2. **Symbolic analysis** - Derive transfer functions, frequency response, noise characteristics

@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools Documentation
 
-> Ferroelectric Compute-in-Memory simulation suite using a 30-level baseline (~4.9 bits/cell, conference claim; pending peer review).
+> Ferroelectric Compute-in-Memory simulation suite with a configurable 30-level default baseline.
 
 ---
 
@@ -71,33 +71,12 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ## Calibration System
 
-Temperature-aware multi-level calibration for accurate discrete state mapping.
-
-| Feature | Description |
-|---------|-------------|
-| Temperature range | 233-423 K (-40°C to 150°C) |
-| Key points | Cold (-40°C), Room (27°C), Hot (150°C) |
-| Algorithm | Binary search with oscillation detection |
-| Storage | JSON files in `data/calibrations/` |
+Temperature-aware multi-level calibration for discrete state mapping. Calibration settings live in code and configuration files (see `config/` and module documentation).
 
 Run calibration:
 ```bash
 ./fecim-lattice-tools --calibrate --material fecim_hzo --verify
 ```
-
----
-
-## Physics Specifications
-
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| FeCIM Levels | 30 (conference claim baseline) | COSM 2025 (pending peer review); peer‑reviewed devices report 32–140 states |
-| Pr (RT) | 15-34 µC/cm² | Nature Commun. 2025 |
-| Pr (4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 |
-| Ec | 0.6-1.5 MV/cm | Nature Commun. 2025 |
-| Endurance | 10⁹-10¹² cycles | IEEE IRPS 2022, Nano Letters 2024 |
-
-See [FEATURES.md](FEATURES.md) for complete specifications per module.
 
 ---
 
@@ -128,15 +107,7 @@ See [FEATURES.md](FEATURES.md) for complete specifications per module.
 
 ## Accuracy & Honesty
 
-Scientific accuracy over marketing claims. All claims are backed by peer-reviewed sources.
-
-| Claim | Status | Source |
-|-------|--------|--------|
-| 32-140 analog states | Verified | Oh 2017 (32), Song 2024 (140) |
-| 96.6-98.24% MNIST | Verified | Nature Communications 2023, ScienceDirect 2025 |
-| 10¹² endurance | Verified | Nano Letters 2024 (V:HfO₂) |
-
-Full audit: [comparison/HONESTY_AUDIT.md](comparison/HONESTY_AUDIT.md)
+This repository prioritizes simulation accuracy and clear labeling of assumptions. External scientific claims (if any) are tracked in [comparison/HONESTY_AUDIT.md](comparison/HONESTY_AUDIT.md). If a claim is not listed there, treat it as **unverified**.
 
 ---
 

@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools - TODO
 
-**Mission**: Educational FeCIM visualization and simulation tool based on peer-reviewed HfO₂-ZrO₂ superlattice research.
+**Mission**: Educational FeCIM visualization and simulation tool based on reported in literature HfO₂-ZrO₂ superlattice research.
 
 **Last updated**: 2026-02-02
 
@@ -12,7 +12,7 @@
 
 | Module | Purpose | Status | Tests | GUI |
 |--------|---------|--------|-------|-----|
-| **module1-hysteresis** | P-E hysteresis, Preisach model, 30-level baseline (conference claim) | ✅ Complete | See CI | ✅ Fyne |
+| **module1-hysteresis** | P-E hysteresis, Preisach model, 30-level baseline (simulation baseline) | ✅ Complete | See CI | ✅ Fyne |
 | **module2-crossbar** | Matrix-vector multiplication, IR drop, sneak paths | ✅ Complete | See CI | ✅ Fyne |
 | **module3-mnist** | Neural network digit recognition | ✅ Complete | See CI | ✅ Fyne |
 | **module4-circuits** | DAC/ADC/TIA peripheral circuits | ✅ Complete | See CI | ✅ Fyne |
@@ -47,9 +47,9 @@
 | ID | Task | Status | Est. |
 |----|------|--------|------|
 | C01 | Add "SIMULATION ONLY - NOT VALIDATED" banners to Module 5 comparison screens | ✅ | Done |
-| C02 | Change "30 discrete states" from fact to hypothesis: "30 states (conference presentation, pending peer review)" | ✅ | Done |
+| C02 | Change "30 discrete states" from fact to hypothesis: "30 states (conference presentation, unverified)" | ✅ | Done |
 | C03 | ~~Add TRL disclaimer to energy comparison charts~~ | ✅ | Done |
-| C04 | ~~Update 87% MNIST to show peer-reviewed context (96.6-98.24%)~~ | ✅ | Done |
+| C04 | ~~Update 87% MNIST to show reported in literature context (96.6-98.24%)~~ | ✅ | Done |
 | C05 | ~~Add "Why 30?" dialog with verification status~~ | ✅ | Done |
 
 ### P1-D2: Medium-Effort Critical Fixes (Sprint 2 - Days 2-4)
@@ -243,8 +243,8 @@ From HONESTY_AUDIT Section 6.2:
 - **Sub-1V switching**: 0.5V @ 3.6nm
 
 ### Multi-Level States [VERIFIED vs UNVERIFIED]
-- **32-140 analog states**: ✅ VERIFIED (Oh 2017, Song 2024)
-- **30 states (Tour)**: ⚠️ UNVERIFIED - label as "conference claim, pending peer review"
+- **multi-level analog states (reported)**: ✅ VERIFIED (Oh 2017, Song 2024)
+- **30 states (Tour)**: ⚠️ UNVERIFIED - label as "simulation baseline, unverified"
 
 ### Endurance [VERIFIED]
 - **10^12 cycles**: DEMONSTRATED (V:HfO₂ 2024, Science 2024)
@@ -253,7 +253,7 @@ From HONESTY_AUDIT Section 6.2:
 ### MNIST Accuracy [VERIFIED]
 - **98.24%**: HZO-FTJ reservoir (ScienceDirect 2025)
 - **96.6%**: 7 VT states (Nature Commun. 2023)
-- **87% (Tour)**: ❌ REMOVED - unverified, below peer-reviewed benchmarks
+- **87% (Tour)**: ❌ REMOVED - unverified, below reported in literature benchmarks
 
 ### Energy Efficiency [VERIFIED with CAVEATS]
 - **25-100× vs NAND**: Samsung Nature 2025 ✅

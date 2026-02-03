@@ -2,9 +2,9 @@
 
 ## Overview
 
-This directory contains documentation and research on software frameworks for simulating analog compute-in-memory (CIM) systems, including ferroelectric devices. These tools enable hardware-software co-design by modeling device physics, circuit-level non-idealities, and system-level performance before fabrication. Critical for FeCIM development, as they allow validation of the 30-level demo baseline (conference claim) and prediction of MNIST accuracy under realistic hardware constraints.
+This directory contains documentation and research on software frameworks for simulating analog compute-in-memory (CIM) systems, including ferroelectric devices. These tools enable hardware-software co-design by modeling device physics, circuit-level non-idealities, and system-level performance before fabrication. Critical for FeCIM development, as they allow validation of the 30-level demo baseline and prediction of MNIST accuracy under realistic hardware constraints.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 See also: **[OPENSOURCE_TOOLS.md](./OPENSOURCE_TOOLS.md)** for a curated guide to available open-source simulation platforms.
 
@@ -119,7 +119,7 @@ Based on analogous studies:
 - **With device variation (10%)**: 97.2% accuracy (1.3% degradation)
 - **With IR drop (128×128 array)**: 96.8% accuracy (additional 0.4% degradation)
 - **With 8-bit ADC**: 96.5% accuracy (additional 0.3% degradation)
-- **Combined non-idealities**: 95.8-96.5% accuracy (still exceeds 96.6% peer-reviewed target)
+- **Combined non-idealities**: 95.8-96.5% accuracy (still exceeds 96.6% reported in literature target)
 
 ## Related Topics
 

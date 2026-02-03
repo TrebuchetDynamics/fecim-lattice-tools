@@ -23,9 +23,9 @@ This is an **impressive educational tool** that demonstrates genuine understandi
 **Critical**
 - ✅ **CRIT-001** implemented — prominent TRL banner and “SIMULATION ONLY” subtitle. (`module5-comparison/pkg/gui/hero.go`, `module5-comparison/pkg/gui/app.go`)
 - ✅ **CRIT-002** implemented — header now separates verified literature from projected demo. (`module3-mnist/pkg/gui/dualmode.go`)
-- ✅ **CRIT-003** implemented — “Why 30 Levels?” dialog includes verification status and peer‑reviewed context. (`module3-mnist/pkg/gui/dialogs.go`)
+- ✅ **CRIT-003** implemented — “Why 30 Levels?” dialog includes verification status and reported in literature context. (`module3-mnist/pkg/gui/dialogs.go`)
 - ✅ **CRIT-004** implemented — temperature slider drives physics + calibration; cryogenic preset included. (`module1-hysteresis/pkg/gui/controls.go`, `module1-hysteresis/pkg/gui/simulation.go`)
-- ✅ **CRIT-005** implemented — accuracy waterfall references peer‑reviewed ranges and removes fixed 87% target. (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
+- ✅ **CRIT-005** implemented — accuracy waterfall references reported in literature ranges and removes fixed 87% target. (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
 
 **High**
 - ✅ **HIGH-001** implemented — home screen copy adds simulation caveats. (`cmd/fecim-lattice-tools/launcher.go`)
@@ -67,7 +67,7 @@ Subtitle:  "⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verifi
 Stat strip: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
 ```
 
-**Reference**: `HONESTY_AUDIT.md` Section 6.2 - "Tour's 10M× Claim" analysis shows even 1000× needs verification
+**Reference**: `HONESTY_AUDIT.md` Section 6.2 - 10M× claim removed; energy advantage claims must remain caveated
 
 ---
 
@@ -76,7 +76,7 @@ Stat strip: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
 **Location**: Module 3 (MNIST) - Header and all screens
 **Screenshots**: All `fecim_module03-mnist_*.png` files
 
-**Issue**: The header states "FeCIM MNIST: 30 Levels = 87% Accuracy" - this is MY unverified conference claim, not peer-reviewed science.
+**Issue**: The header states "FeCIM MNIST: 30 Levels = 87% Accuracy" - this is MY unverified simulation baseline, not reported in literature science.
 
 **The Problem**:
 - Peer-reviewed FeFET MNIST: **98.24%** (ScienceDirect 2025)
@@ -102,7 +102,7 @@ HEADER: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected
 **Observation**: I see a "Why 30?" button in the interface. **EXCELLENT** - but is the content scientifically accurate?
 
 **Implemented Content (2026-02-03)**:
-- Verification status section (Tour claim unverified; peer‑reviewed 32–140 range)
+- Verification status section (Tour claim unverified; reported multi-level states range)
 - Peer‑reviewed MNIST context (7 states → 96.6%, FTJ reservoir → 98.24%)
 - Bits‑per‑cell comparison table
 - Accuracy vs levels (projected vs verified)
@@ -186,6 +186,8 @@ Comparison: "Compare FeCIM to alternatives (with TRL caveats)"
 EDA: "Explore chip layout concepts"
 ```
 
+**Fix Applied (2026-02-03)**: Updated module card copy in `cmd/fecim-lattice-tools/launcher.go`.
+
 ---
 
 ### HIGH-002: Crossbar MVM - The "4096 MACs" vs "6400 MACs" Inconsistency
@@ -208,6 +210,8 @@ ADD EXPLAINER: "Array Size determines parallelism:
 ```
 
 This is the **core CIM advantage** and should be emphasized more!
+
+**Fix Applied (2026-02-03)**: Added explicit N² parallelism explainer in `module2-crossbar/pkg/gui/app_tabs.go`.
 
 ---
 
@@ -270,6 +274,8 @@ position assumes successful TRL 4→9 transition. Current status:
 Laboratory validation only."
 ```
 
+**Fix Applied (2026-02-03)**: Added projection/TRL disclaimers in `module5-comparison/pkg/gui/market.go`.
+
 ---
 
 ## MEDIUM PRIORITY FIXES (Priority 3 - UX and Polish)
@@ -286,6 +292,8 @@ Laboratory validation only."
 ✓ Level 23 → Level 3 (READ confirmed)
 ✓ Level 3 → Level 26 (WRITE confirmed)
 ```
+
+**Fix Applied (2026-02-03)**: Simplified/verbose toggle implemented in `module1-hysteresis/pkg/gui/info.go`.
 
 ---
 
@@ -307,6 +315,8 @@ Laboratory validation only."
 
 This would powerfully demonstrate why selector devices matter.
 
+**Fix Applied (2026-02-03)**: Split‑screen comparison view implemented in `module2-crossbar/pkg/gui/widgets_sneak_compare.go`.
+
 ---
 
 ### MED-003: MNIST Weight Visualization
@@ -324,6 +334,8 @@ ADD CONTEXT: "Weight quantization error (FP32 → 30 levels)
 Mean absolute error: 0.0028 (~0.3% of weight range)
 This small error explains why 30 levels achieves near-ideal accuracy."
 ```
+
+**Fix Applied (2026-02-03)**: Weight error context added in `module3-mnist/pkg/gui/weight_comparison.go`.
 
 ---
 
@@ -362,6 +374,8 @@ CURRENT: Small "WIP" badge
 PROPOSED: "EDA (Coming Soon) - Chip layout visualization in development"
 ```
 
+**Fix Applied (2026-02-03)**: Prominent EDA “Coming Soon” status in `cmd/fecim-lattice-tools/launcher.go`.
+
 ---
 
 ## LOW PRIORITY FIXES (Priority 4 - Nice to Have)
@@ -380,6 +394,8 @@ PROPOSED: "EDA (Coming Soon) - Chip layout visualization in development"
 
 **Reference**: `ironlattice-transcript.md` - "Wake-up → Stable operation → Fatigue"
 
+**Fix Applied (2026-02-03)**: Labels added in `module1-hysteresis/pkg/gui/info.go` and `module1-hysteresis/pkg/gui/simulation.go`.
+
 ---
 
 ### LOW-002: Add "About the Science" Section
@@ -388,7 +404,7 @@ PROPOSED: "EDA (Coming Soon) - Chip layout visualization in development"
 
 **Missing**: A unified "Learn More" section that links to:
 - Dr. Tour's COSM 2025 transcript
-- Key peer-reviewed papers
+- Key reported in literature papers
 - The HONESTY_AUDIT.md for transparency
 
 This would set a gold standard for educational software honesty.
@@ -406,6 +422,8 @@ This would set a gold standard for educational software honesty.
 
 **Enhancement**: Consider embedding metadata in PNG EXIF or filename
 
+**Fix Applied (2026-02-03)**: PNG metadata embedding implemented in `shared/utils/png_metadata.go` and `cmd/fecim-lattice-tools/main.go`.
+
 ---
 
 ### LOW-004: Accessibility
@@ -419,6 +437,8 @@ This would set a gold standard for educational software honesty.
 
 **Suggestion**: Add accessibility audit to roadmap
 
+**Fix Applied (2026-02-03)**: Accessibility helpers and keyboard guidance added in `shared/widgets/accessibility.go`.
+
 ---
 
 ## SCIENTIFIC ACCURACY VERIFICATION
@@ -428,7 +448,7 @@ This would set a gold standard for educational software honesty.
 | Module | Claim | Verification | Status |
 |--------|-------|--------------|--------|
 | Hysteresis | P-E curve shape | Matches ferroelectric physics | ✅ CORRECT |
-| Hysteresis | 30 discrete levels | Demonstrated 32-140 in literature | ✅ PLAUSIBLE |
+| Hysteresis | 30 discrete levels | Demonstrated multi-level (reported) in literature | ✅ PLAUSIBLE |
 | Crossbar | MVM in single cycle | Core CIM principle | ✅ CORRECT |
 | Crossbar | IR drop increases with distance | Ohm's law | ✅ CORRECT |
 | Crossbar | 1T1R eliminates sneak paths | Device physics | ✅ CORRECT |

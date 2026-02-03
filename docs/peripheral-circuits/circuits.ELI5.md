@@ -18,7 +18,7 @@ Your brain (digital)  ←→  Translators  ←→  Memory (analog)
 
 **Peripheral circuits are the translators** between the digital world (numbers) and the analog world (voltages and currents).
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 
@@ -39,7 +39,7 @@ The number you pick → The voltage you get
 ```
 
 **In FeCIM:**
-- We have 30 settings (levels 0-29) in the demo baseline (conference claim)
+- We have 30 settings (levels 0-29) in the demo baseline
 - Each setting tells the memory cell "store this much"
 - The DAC converts "level 15" into "0.75 volts"
 
@@ -218,7 +218,7 @@ The ADC is a power HOG!
 - Each comparison uses energy
 - More precision (bits) = more comparisons = more power
 
-**The good news:** The demo baseline assumes 5-bit precision (~30 levels, conference claim), not 8 or 10 bits. This saves LOTS of power!
+**The good news:** The demo baseline assumes 5-bit precision (~30 levels, simulation baseline), not 8 or 10 bits. This saves LOTS of power!
 
 ---
 

@@ -25,7 +25,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 
 **Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 
-> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not peer-reviewed).
+> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not reported in literature).
 
 ## Build & Run
 
@@ -80,7 +80,7 @@ Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_
 
 - 30 analog states for Tour device (conference-only reference)
 - 87% MNIST accuracy (conference-only reference)
-- Energy multipliers vs NAND or GPUs without peer-reviewed measurement evidence
+- Energy multipliers vs NAND or GPUs without reported in literature measurement evidence
 
 ## Testing
 

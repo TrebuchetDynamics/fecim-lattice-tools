@@ -188,7 +188,7 @@ curl "https://api.semanticscholar.org/graph/v1/author/search?query=James+Tour+Ri
 2. **10⁶× lower energy** consumption
 3. **80-90% datacenter energy reduction** possible with CIM
 4. **Hybrid memory/compute** architecture
-5. **~30 discrete analog states** per cell (demo baseline; conference claim)
+5. **~30 discrete analog states** per cell (demo baseline; simulation baseline)
 6. **Non-volatile** operation
 
 ### Ferroelectric CIM Technology

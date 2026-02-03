@@ -8,7 +8,7 @@
 
 **If you only have 60 seconds, read this.**
 
-> ⚠️ **DISCLAIMER:** Ferroelectric CIM is at **TRL 4** (lab validation) — Dr. Tour explicitly stated this at COSM 2025 [1]. The **30 states** and **87% MNIST** figures are **conference-only claims** from Dr. Tour's presentation (not peer-reviewed). Peer‑reviewed devices report **32–140 states** and **96.6–98.24% MNIST**, which bracket the demo baseline [2][3]. The **"10M× vs NAND"** energy claim is from Dr. Tour's presentation and remains **unverified** in peer-reviewed research (verified range: 25-100× [4]).
+> **Note:** This guide is a conceptual explanation. It does **not** assert device performance. The simulator defaults to 30 discrete levels (configurable). External scientific claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.
 
 ## The Problem
 AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
@@ -21,51 +21,10 @@ Traditional computers have a "commute problem." The memory (where data lives) an
 
 Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory cells that can also compute. When you apply a voltage, the current that flows out IS the multiplication result. Physics does the math for free!
 
-## The Magic Numbers
-
-| What | Traditional | Ferroelectric CIM | Improvement | Source |
-|------|-------------|-------------------|-------------|--------|
-| Energy per operation | 10 pJ | 0.24 fJ | **25-100×** vs NAND | [Nature 2025](https://doi.org/10.1038/s41586-025-09793-3) |
-| Energy vs GPU (AI) | 100 pJ | ~1 fJ | **up to 70,000×** | [Nature Comp. Sci. 2025](https://doi.org/10.1038/s43588-025-00854-1) |
-| Data movement | Billions of trips | Zero | **Eliminated** | CIM architecture |
-| Operations in parallel | 1-1000 | Millions | **1000×** | Crossbar arrays |
-| States per cell | 1 bit (0 or 1) | 5-7 bits (32-140 levels) | **5-7×** | [Jerry 2017](https://doi.org/10.1109/IEDM.2017.8268338), [Song 2024](https://doi.org/10.1002/advs.202308588) |
-
-## The Proof
-
-**From Dr. Tour's COSM 2025 Presentation [1]:**
-- ⚠️ 30 discrete analog states claimed at external research institution (conference claim; pending peer review)
-- ❌ 87% MNIST accuracy on hardware (unverified; removed from tool)
-- ✅ Works with standard CMOS manufacturing
-- ⚠️ TRL 4 — "We are at Technology Readiness Level TRL4" — Dr. Tour
-- ⚠️ Endurance: "We still have to get this up to the required 10^12 cycles" — Dr. Tour
-
-**Corroborated by Peer-Reviewed Literature:**
-- ✅ 32-140 discrete states demonstrated [Jerry 2017, Song 2024]
-- ✅ 96.6–98.24% MNIST accuracy achieved [Nature Commun. 2023, ScienceDirect 2025]
-- ⚠️ 10⁹ cycles demonstrated; 10¹² is target (Dr. Tour: 'still have to get this up')
-
 ## The Vision
-A future where:
-- Your phone runs ChatGPT locally without draining the battery
-- Data centers use **50-80% less power** for memory-bound AI workloads
-- AI is fast, cheap, and everywhere
+A future where compute happens close to memory, reducing data movement and enabling new energy-efficient architectures.
 
-*Note: Specific savings depend on workload characteristics. Memory-bound tasks benefit most from CIM.*
-
-**That's Ferroelectric CIM.**
-
----
-
-### Sources for Part 0
-
-[1] Dr. external research group, "Ferroelectric CIM," COSM 2025 — [Full Transcript](../videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
-
-[2] Jerry et al., IEEE IEDM 2017 — 32 states (DOI: 10.1109/IEDM.2017.8268338)
-
-[3] Song et al., Advanced Science 2024 — 140 levels (DOI: 10.1002/advs.202308588)
-
-[4] Nature 2025 — 94-96% energy reduction vs NAND (DOI: 10.1038/s41586-025-09793-3)
+**That's Ferroelectric CIM (as a concept).**
 
 ---
 
@@ -218,12 +177,9 @@ Binary (easy):           Decimal (hard):
 
 With only two levels, even a noisy signal is easy to read. This is why binary won.
 
-**But wait!** This demo uses a **30-level baseline** (conference claim; pending peer review). How does multi-level storage work?
+**But wait!** This demo uses a **30-level baseline** (configurable). How does multi-level storage work?
 
-The secret: **analog precision**. Ferroelectric materials can maintain stable, distinguishable **multi-level** states; this demo assumes 30 levels because:
-1. The physics is very stable (crystal structure shifts)
-2. The separation between levels is large enough
-3. Error correction can handle small variations
+The idea: **analog precision**. The simulator models multi-level states and lets you explore how quantization and noise affect accuracy.
 
 ---
 
@@ -371,11 +327,10 @@ What if memory could also do math? No walking needed!
 Walking distance: ZERO! 🎉
 ```
 
-**Result:**
-- 25-100× less energy than NAND flash (Samsung Nature 2025); Dr. Tour claims 10M× (unverified)
-- 1,000× less energy than DRAM
-- Much faster
-- Smaller chips
+**Result (conceptually):**
+- Less data movement
+- Potential energy savings for memory-bound workloads
+- Parallel analog computation
 
 ## How Can Memory Do Math?
 
@@ -396,11 +351,9 @@ If we:
 
 **Physics does the math at the speed of light. No instructions needed!**
 
-## Dr. Tour's Words
+## Dr. Tour's Words (Historical Context)
 
 > "Compute in memory where the same device does the memory and the computation."
-
-> "This could lower the requirements in a data center by 80 to 90% of the energy requirements."
 
 ---
 
@@ -547,7 +500,7 @@ When you push and release, the polarization traces a loop:
 
 ## 30 Analog States (Demo Baseline; Conference Claim)
 
-By stopping at different points, HZO can store multiple levels; this demo uses a 30-level baseline (conference claim):
+By stopping at different points, HZO can store multiple levels; this demo uses a 30-level baseline (configurable):
 
 ```
 Polarization
@@ -566,10 +519,10 @@ Polarization
 ```
 
 Regular memory: 1 bit (ON/OFF)
-Ferroelectric CIM: ~5 bits (30-state demo baseline ≈ 2⁵; conference claim)
+Ferroelectric CIM: ~5 bits (30-level demo baseline, configurable)
 
 > "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour  
-> *Conference claim (COSM 2025; pending peer review).*
+> *Simulation baseline (unverified).*
 
 ---
 
@@ -652,7 +605,7 @@ Stacked layers:
 | Thickness | ~10 nm | Fits in tiny chips! |
 | Voltage to switch | ~1-3 V | Works with phone batteries |
 | Endurance | 10¹² cycles | Lasts basically forever |
-| States | 32–140 levels (peer‑reviewed); demo baseline 30 | Stores way more info |
+| States | Multi-level (demo baseline 30) | Stores more info per cell |
 | CMOS compatible | ✅ | Can use existing factories |
 
 > "Works on a standard CMOS line and can translate just like that." — Dr. Tour
@@ -784,37 +737,27 @@ Polarization UP:        Polarization DOWN:
 └───────────┘           └───────────┘
 ```
 
-**Pros:**
-- 30-level demo baseline (conference claim)
-- Ultra-low energy
-- 10¹² cycle endurance
-- CMOS compatible
-- No thermal budget issues
+**Pros (conceptual):**
+- Multi-level states in the simulator (default 30, configurable)
+- Non-volatile memory behavior (conceptual model)
+- CMOS integration is a common research target
 
 **Cons:**
 - Relatively new (scaling still being explored)
 - Requires careful fabrication
 
-## Head-to-Head Comparison
+## Head-to-Head Comparison (Qualitative)
 
-| Property | ReRAM | PCM | MRAM | **HZO (Ferroelectric CIM)** |
-|----------|-------|-----|------|----------------------|
-| Analog levels | 2-4 | 4-8 | 2 | **30 (conference claim baseline)** |
-| Write energy | Medium | High | Low | **Very Low** |
-| Endurance | 10⁶ | 10⁸ | 10¹⁵ | **10¹²** |
-| Speed | Fast | Slow | Very Fast | **Fast** |
-| Variability | High | Medium | Low | **Low** |
-| CMOS compatible | Yes | Yes | Needs MTJ | **Yes** |
-| Maturity | Medium | High | Medium | **Emerging** |
+Different memory technologies trade off density, speed, endurance, and analog precision. This guide focuses on the **concept** of multi-level storage rather than specific performance numbers.
 
-## Why Ferroelectric CIM Wins for AI
+## Why Multi-Level Matters for AI
 
-The killer feature is **30 analog levels (conference claim baseline)**:
+The demo highlights **multi-level storage** (default 30 levels, configurable):
 
 ```
 AI Weight Storage Comparison:
 
-ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30-level baseline, claim):
+ReRAM (2 levels):     PCM (4 levels):      Ferroelectric CIM (30-level baseline):
 █░                    █░░░                 █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 1 bit                 2 bits               ~5 bits
 
@@ -822,7 +765,7 @@ To store same information:
 ReRAM: 5 cells        PCM: 2-3 cells       Ferroelectric CIM: 1 cell!
 ```
 
-More levels per cell = fewer cells needed = smaller chips = less energy!
+More levels per cell can reduce cell count for a given precision target.
 
 ---
 
@@ -873,17 +816,15 @@ Input Image (28×28 pixels):          Output:
 "That's a 3!"
 ```
 
-## Ferroelectric CIM MNIST Performance
+## Ferroelectric CIM MNIST Performance (Simulation)
 
-> "We're at 87% validation here." — Dr. Tour (unverified conference claim)
-
-**Hardware achieved 87% accuracy** (unverified conference claim). Simulation may exceed this under idealized conditions.
+The simulator's MNIST accuracy depends on quantization, noise, ADC/DAC settings, and weight quality. This project does **not** claim hardware accuracy.
 
 ## Training
 
 Start with random weights → show lots of examples → adjust weights to reduce errors → repeat millions of times
 
-Ferroelectric CIM can potentially do training 1000× faster than regular computers!
+In-memory compute can reduce data movement during training and inference. Specific speedups depend on hardware and workload.
 
 ## Step-by-Step: A Complete MNIST Inference
 
@@ -1139,7 +1080,7 @@ Run: cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./cro
 - Confusion matrix with clickable cells
 - Per-class metrics (precision, recall, F1)
 
-**Hardware accuracy:** 87% (unverified conference claim)
+**Simulation accuracy:** Depends on quantization, noise, and weights (no hardware claim)
 
 **Who it's for:** Investors, media, conferences
 
@@ -1167,7 +1108,7 @@ Run: cd module4-circuits && go run ./cmd/circuits --all
 - 2D heat map visualization
 - Real-time heat diffusion
 - Hotspot identification
-- Ferroelectric CIM's low-power advantage
+- Thermal model visualization for array activity
 
 **Who it's for:** Design engineers, thermal analysts
 
@@ -1181,7 +1122,7 @@ Run: cd demo5-thermal && go run ./cmd/thermal --realtime
 - 3D rendered layer stack (ASCII)
 - Via connections between layers
 - Data flow visualization
-- Energy comparison and yield estimation
+- Model-based energy and yield estimates (illustrative)
 
 **Who it's for:** Architects, investors
 
@@ -1218,16 +1159,7 @@ Run: cd module5-comparison && go run ./cmd/comparison --all --workload=bert
 ```
 
 ```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    DRAM     │  │    GPU      │  │ Ferroelectric CIM │
-│    +CPU     │  │   (CUDA)    │  │    (CIM)    │
-├─────────────┤  ├─────────────┤  ├─────────────┤
-│ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
-│ Energy: 100 │  │ Energy: 50  │  │ Energy: 0.1 │
-│ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
-└─────────────┘  └─────────────┘  └─────────────┘
-
-⚠️  Ferroelectric CIM specs are ESTIMATES (TRL 4, lab only)
+Comparison outputs are illustrative and model-based. See module5 documentation for details.
 ```
 
 ---
@@ -1244,7 +1176,7 @@ fecim-lattice-tools/
 │
 ├── module2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
 │   ├── cmd/crossbar-gui/  ← Main program
-│   ├── pkg/crossbar/      ← Array model (30-level baseline)
+│   ├── pkg/crossbar/      ← Array model (default 30-level baseline)
 │   └── pkg/gui/           ← IR drop, sneak paths tabs
 │
 ├── module3-mnist/           ✅ MNIST classifier (Fyne GUI)
@@ -1448,73 +1380,12 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 ---
 
-# Part 15: The People
-
-## The Ferroelectric CIM Team
-
-| Person | Role | What They Do |
-|--------|------|--------------|
-| **Dr. external research group** | Principal Investigator | Science, vision, fundraising |
-| **Dr. Jaeho Shin** | Device Engineer | Fabrication, lab validation |
-| **Tawfik Jarjour** | Commercialization | Business, partnerships |
-
-## What They Need Help With
-
-- Visualizing the technology (that's us!)
-- Design exploration tools
-- Investor pitch materials
-- Educational resources
-- Recruiting engineers
-
----
-
-# Part 16: The Numbers That Matter
-
-## Performance Targets
-
-| Metric | Target | Status |
-|--------|--------|----------|
-| Analog states | 30 levels | ⚠️ Conference claim (pending peer review) |
-| MNIST accuracy | 87% (Tour, unverified) | Peer-reviewed: 96.6–98.24% |
-| Energy vs NAND | 10,000,000× lower | Claimed* |
-| Energy vs DRAM | 1,000× lower | Claimed* |
-
-*Energy claims from Dr. Tour's presentation, not independently verified
-
-## Comparison
-
-| Metric | DRAM+CPU | GPU | Ferroelectric CIM |
-|--------|----------|-----|-------------|
-| Memory bandwidth | 100 GB/s | 1 TB/s | ∞ (in-situ) |
-| Energy per MAC | 10 pJ | 1 pJ | 0.001 pJ |
-| Latency | 100 ns | 10 ns | 1 ns |
-| Data movement | O(n²) | O(n²) | 0 |
-
----
-
-# Part 17: Dr. Tour's Quotes
-
-> "It's got **30 discrete states**. So it's not 0-1-0-1."  
-> *Conference claim (COSM 2025; pending peer review).*
-
-> "We're at **87% validation** here." (unverified conference claim)
-
-> "**Compute in memory** where the same device does the memory and the computation."
-
-> "This could lower the requirements in a data center by **80 to 90%** of the energy requirements."
-
-> "Works on a **standard CMOS line** and can translate just like that."
-
-> "There's **no exotic materials** in here. There's no graphene."
-
----
-
 # Part 18: Current Status
 
 ## All 8 Demos Complete!
 
 **GUI Demos (Fyne):**
-- ✅ Demo 1: Hysteresis visualizer with 30-level (conference-claim baseline) indicator
+- ✅ Demo 1: Hysteresis visualizer with 30-level (default baseline) indicator
 - ✅ Demo 2: Crossbar MVM with IR drop & sneak path tabs
 - ✅ Demo 3: MNIST classifier with confusion matrix
 
@@ -1527,16 +1398,6 @@ Ferroelectric CIM is arriving at exactly the right moment.
 
 **Testing & Quality:**
 - ✅ Automated tests (see CI for latest status)
-- ✅ Honesty disclaimers on estimated specs
-- ✅ TRL 4 warnings in investor-facing demos
-
-## Important Accuracy Notes
-
-**Hardware (Dr. Tour's lab):** 87% MNIST accuracy (unverified conference claim)
-
-**Simulation:** May exceed hardware due to idealized conditions - simulation does not include all real-world non-idealities.
-
-**Energy claims:** 10M× vs NAND is from Dr. Tour's presentation and has NOT been independently verified.
 
 ## The Dream
 
@@ -1555,18 +1416,15 @@ AI is transforming everything, but it's hitting a wall:
 
 Ferroelectric CIM breaks through that wall by doing math where the data lives.
 
-## The Impact
+## The Impact (Conceptual)
 
-- Data centers use 80-90% less power
-- AI runs 1000× faster
-- Phones get smarter without draining batteries
-- Edge devices can run real AI locally
+- Potential energy savings by reducing data movement
+- Faster inference for memory-bound workloads
+- More on-device AI in edge devices
 
 ## The Future
 
-This isn't science fiction. The technology works. Dr. Tour's team has demonstrated it in the lab. Now it needs to scale to production.
-
-These demos help tell that story.
+These demos illustrate the idea and help explore the design space. Real-world performance depends on device measurements and validation.
 
 ---
 
@@ -1582,7 +1440,7 @@ Current phone AI:
 │      │                             │
 │      ▼                             │
 │ [Send to cloud] ───→ [Process] ───→│ Answer
-│      500ms latency                 │
+│      Higher latency                │
 │      Uses network + data center    │
 └────────────────────────────────────┘
 
@@ -1592,7 +1450,7 @@ With Ferroelectric CIM:
 │      │                             │
 │      ▼                             │
 │ [Process locally on chip]          │ Answer
-│      5ms latency                   │
+│      Lower latency                 │
 │      No network needed!            │
 └────────────────────────────────────┘
 ```
@@ -1632,56 +1490,17 @@ With Ferroelectric CIM:
 - Smaller = more design flexibility
 
 ### 3. Data Centers
-```
-Current data center:
-┌─────────────────────────────────────────────┐
-│  ⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡  │
-│  ████████████████████████████████████████  │ GPUs
-│  🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️🌡️  │ (HOT!)
-│  ❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️❄️  │ Cooling
-│                                             │
-│  Power: 100 MW    Cooling: 40 MW            │
-│  Total: 140 MW (power a small city)         │
-└─────────────────────────────────────────────┘
 
-With Ferroelectric CIM:
-┌─────────────────────────────────────────────┐
-│  ⚡⚡                                        │
-│  ████                                       │ Ferroelectric CIM
-│  🌡️ (warm)                                  │
-│  ❄️ (minimal cooling)                       │
-│                                             │
-│  Power: 10 MW    Cooling: 2 MW              │
-│  Total: 12 MW (90% reduction!)              │
-└─────────────────────────────────────────────┘
-```
+Data centers spend a lot of energy on compute and cooling. Compute-in-memory could reduce data movement and **potentially** lower power and cooling needs, but the actual savings depend on workload and hardware.
 
-**Benefits:**
-- 80-90% less electricity
-- Minimal cooling needed
-- More compute in same space
-- Lower carbon footprint
+**Benefits (conceptual):**
+- Lower electricity use for memory-bound workloads
+- Reduced cooling needs
+- More compute density in the same space
 
 ### 4. Medical Devices
-```
-Implantable AI for seizure prediction:
 
-Traditional:
-┌──────────────────┐
-│ Battery: 6 months│  ← Needs surgery to replace
-│ Size: Golf ball  │
-│ Processing: Basic│
-└──────────────────┘
-
-With Ferroelectric CIM:
-┌──────────────────┐
-│ Battery: 10 years│  ← Life-changing!
-│ Size: Rice grain │
-│ Processing: Full │
-│         neural   │
-│         network  │
-└──────────────────┘
-```
+Lower-power compute could enable longer battery life and smaller form factors in implantable or wearable devices. The exact impact depends on device design and validation.
 
 ### 5. IoT and Edge Devices
 ```
@@ -1774,54 +1593,7 @@ and "ubiquitous infrastructure"!
 
 ## Basic Questions
 
-**Q: Is this real or theoretical?**
-A: The **material is real**, and multi-level ferroelectric devices are peer-reviewed (32–140 states). The **30-level count** in this demo is a **conference claim** (COSM 2025) pending peer review.
-
-**Q: When will products be available?**
-A: Timeline is uncertain. Lab demo → mass production typically takes 5-10 years for new memory technologies. Key milestones ahead include foundry partnerships and manufacturing scale-up.
-
-**Q: What's the catch?**
-A: Every technology has challenges:
-- Scaling to very small (sub-10nm) sizes is still being explored
-- Manufacturing requires precise control
-- Full ecosystem (software, toolchains) needs development
-- Competition is intense (big companies also researching)
-
-## Technical Questions
-
-**Q: How accurate can it get?**
-A: Dr. Tour claimed 87% MNIST accuracy (unverified conference claim). State-of-the-art digital achieves ~99%. The gap comes from:
-- Quantization (30-level baseline vs. 32-bit float)
-- Analog noise and non-idealities
-This is acceptable for many applications; techniques like quantization-aware training help.
-
-**Q: Can it do training, or just inference?**
-A: Both! Training requires writing new weights, which HZO handles well. The crossbar can compute gradients using the same physics. However, most near-term applications will focus on inference (training once on powerful hardware, deploying to Ferroelectric CIM).
-
-**Q: What about large language models like GPT?**
-A: LLMs are a perfect fit because they're dominated by matrix multiplications. An Ferroelectric CIM chip could accelerate transformer inference significantly. The challenge is scale—GPT-4 has ~1 trillion parameters, requiring many crossbar arrays working together.
-
-**Q: Does temperature affect it?**
-A: Yes, but HZO is remarkably stable. Ferroelectric properties persist across typical operating temperatures (-40°C to 125°C). This is better than many competing technologies.
-
-**Q: What if a cell fails?**
-A: Like any memory, redundancy and error correction are used. The 30-level demo baseline has built-in margin—small variations don't cause misclassification. For critical applications, extra cells provide fault tolerance.
-
-## Business Questions
-
-**Q: Who are the competitors?**
-A: Major players include:
-- **Samsung**: Working on MRAM-based compute
-- **Intel**: Invested in ReRAM
-- **IBM**: PCM research
-- **Startups**: Mythic (ReRAM), Syntiant (mixed-signal), Rain AI
-Ferroelectric CIM's advantage is multi-level HZO; this demo uses a 30-level baseline (conference claim).
-
-**Q: What's the market size?**
-A: AI accelerator market is projected at $100+ billion by 2030. Memory market is $150+ billion. Compute-in-memory could capture significant share of both.
-
-**Q: Who would manufacture it?**
-A: Any CMOS foundry (TSMC, Samsung, GlobalFoundries) can potentially add HZO to their process. This is a key advantage—no exotic equipment needed.
+**Q: Is this real or theoretical?**\nA: This project is a **simulator**. It models concepts and does not validate hardware performance.\n\n**Q: When will products be available?**\nA: Commercial timelines are outside the scope of this guide.\n\n**Q: What's the catch?**\nA: Real-world devices face manufacturing, variability, and integration challenges. The simulator does not resolve those challenges; it helps explore them.\n\n## Technical Questions\n\n**Q: How accurate can it get?**\nA: Accuracy depends on quantization, noise, and weights. The simulator does **not** claim hardware accuracy.\n\n**Q: Can it do training, or just inference?**\nA: The simulator includes training and inference utilities for experimentation.\n\n**Q: Does temperature affect it?**\nA: The simulator includes temperature scaling models. Real devices vary and require measurement.\n\n**Q: What if a cell fails?**\nA: Reliability is addressed with redundancy and error correction in real systems; the simulator provides simplified models.\n\n## Business Questions\n\n**Q: Who would manufacture it?**\nA: Ferroelectric integration typically targets standard CMOS flows, but real integration depends on foundry processes and device validation.
 
 ---
 
@@ -2299,14 +2071,12 @@ Where:
   I = read current (~μA)
   t = read time (~ns)
 
-Typical: E_MAC ≈ 1 fJ = 10^-15 J
+Example: E_MAC ≈ 1 fJ = 10^-15 J (illustrative)
 ```
 
-Compare to digital:
+Compare to digital (illustrative only):
 ```
 E_MAC(digital) ≈ 10 pJ = 10^-11 J
-
-Improvement: 10,000×!
 ```
 
 ---
@@ -2324,16 +2094,15 @@ Improvement: 10,000×!
 │                                                            │
 │  Ohm's Law:     I = V × G    (physics does multiplication)│
 │  MVM:           I = G × V    (matrix-vector multiply)     │
-│  States:        30 levels (conference-claim baseline)     │
-│  MNIST:         87% (Tour, unverified)                    │
+│  States:        30 levels (default baseline)              │
+│  MNIST:         Simulation-only (config dependent)        │
 │                                                            │
 │  GUI Demos:     module1-hysteresis, module2-crossbar,         │
 │                 module3-mnist (Fyne)                        │
 │  CLI Demos:     demo4-8 (go run ./cmd/...)                │
 │  Run Tests:     go test ./... (see CI status)             │
 │                                                            │
-│  ⚠️  TRL 4: Lab validation only                           │
-│  ⚠️  Energy claims not independently verified              │
+│  ⚠️  Simulation-only: no hardware claims                  │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```

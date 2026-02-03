@@ -145,7 +145,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 ### Strengths (Enhanced)
 
 - In₂Se₃ references (his latest work)
-- **98.24% MNIST accuracy** (peer-reviewed, exceeds conference claims)
+- **98.24% MNIST accuracy** (reported in literature, exceeds simulation baselines)
 - OpenLane integration (shows fab awareness)
 - Honest TRL 4 disclaimer
 - **Three operation modes** (Storage/Memory/Compute)
@@ -154,7 +154,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 - **Cryogenic support** (4K quantum computing, Pr +30%)
 - **SNN coverage** (100-10,000× energy efficiency)
 - **7 functional modules** (including integrated documentation browser)
-- **169 peer-reviewed papers** documented with DOIs
+- **169 reported in literature papers** documented with DOIs
 
 ### Remaining Gaps
 
@@ -212,7 +212,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 **A+ (97/100)** - Comprehensive literature review with:
 - **230+ papers** identified and documented (36% increase from Jan 27)
 - **25 topic directories** with detailed READMEs (added simulation-tools)
-- **120+ peer-reviewed papers** (Tier 1-2 journals)
+- **120+ reported in literature papers** (Tier 1-2 journals)
 - **195+ recent papers** (2024-2026, cutting-edge)
 - Core material (HfO₂-ZrO₂ superlattice): 35+ papers
 - CIM architectures: 35+ papers with benchmarks
@@ -246,7 +246,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 > **Three Operation Modes:**
 > - Storage: NAND Flash replacement (51.2 Gb/mm² density target)
 > - Memory: DRAM replacement (25-100× lower energy vs NAND)
-> - Compute: AI accelerator (98.24% MNIST peer-reviewed, LLM-ready)
+> - Compute: AI accelerator (98.24% MNIST reported in literature, LLM-ready)
 >
 > **Key Differentiators:**
 > - Automotive-qualified operation (AEC-Q100 Grade 0: -40°C to 150°C)
@@ -256,7 +256,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 > - Integrated documentation browser with 169 searchable papers
 >
 > **Research Grounding:**
-> - 169 papers reviewed (88 peer-reviewed Tier 1-2)
+> - 169 papers reviewed (88 reported in literature Tier 1-2)
 > - 135 papers from 2024-2025 (cutting-edge)
 > - Nature/Science-level references with DOIs
 > - Industry specs from Fraunhofer, Samsung, SK Hynix, CEA-Leti

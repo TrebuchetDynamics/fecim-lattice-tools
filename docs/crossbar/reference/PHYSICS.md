@@ -25,7 +25,7 @@ The crossbar array represents analog states as conductance values between minimu
 | **Gmin** | 10 | µS | Design choice (OFF state) |
 | **Gmax** | 100 | µS | Design choice (ON state) |
 | **Ratio** | 10:1 | dimensionless | Gmax/Gmin |
-| **Quantization Levels** | 30 | discrete states | Demo baseline (conference claim) |
+| **Quantization Levels** | 30 | discrete states | Demo baseline (simulation baseline) |
 
 ### Linear Model
 
@@ -282,7 +282,7 @@ Where:
 | **PCM (comparison)** | 0.1 | ✅ Measured | Highest among emerging memories |
 | **Flash (comparison)** | 0.02 | ✅ Measured | Well-characterized in industry |
 
-**Important:** FeFET drift coefficient 0.001 is **derived** from retention requirements, not directly measured. No peer-reviewed source provides explicit FeFET drift coefficients in the same format as RRAM/PCM papers.
+**Important:** FeFET drift coefficient 0.001 is **derived** from retention requirements, not directly measured. No reported in literature source provides explicit FeFET drift coefficients in the same format as RRAM/PCM papers.
 
 ### Thermal Activation (Arrhenius)
 

@@ -2,18 +2,18 @@
 
 **Universal EDA Tool for Ferroelectric Compute-in-Memory Chip Design**
 
-Generate physical chip layouts for FeCIM arrays ready for OpenLane/OpenROAD fabrication flow.
+Generate physical chip layouts for FeCIM arrays compatible with OpenLane/OpenROAD flows (educational, not signoff-ready).
 
 ## Overview
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** The demo defaults to 30 conductance levels. This is a configurable simulation baseline, not a hardware claim.
 
 The FeCIM Design Suite is a universal chip design tool supporting three distinct FeCIM operation modes:
 
 | Mode | Application | Description |
 |------|-------------|-------------|
-| **Storage** | NAND Flash Replacement | High-density non-volatile storage (30-level baseline = ~4.9 bits; conference claim) |
-| **Memory** | DRAM Replacement | High-speed zero-refresh memory (~10ns access) |
+| **Storage** | Storage-oriented | Retention/endurance focused settings |
+| **Memory** | Memory-oriented | Access/bandwidth focused settings |
 | **Compute** | AI Accelerator | Analog compute-in-memory for neural network inference |
 
 ```
@@ -22,9 +22,9 @@ The FeCIM Design Suite is a universal chip design tool supporting three distinct
 ├────────────────────┬────────────────────┬────────────────────────────┤
 │   Storage Mode     │   Memory Mode      │   Compute Mode             │
 │   ─────────────    │   ───────────      │   ────────────             │
-│   NAND replacement │   DRAM replacement │   AI accelerator           │
+│   Storage-oriented │   Memory-oriented  │   AI accelerator           │
 │   No weights       │   No weights       │   Weights optional         │
-│   10+ year retain  │   10ns access      │   Analog MVM               │
+│   Configurable     │   Configurable     │   Analog MVM               │
 └────────────────────┴────────────────────┴────────────────────────────┘
                               │
                               ▼
@@ -76,9 +76,9 @@ Configure FeCIM array parameters for your target application.
 ├─────────────┬────────────────┬────────────────────────────┤
 │  Storage    │    Memory      │    Compute                │
 │  ─────────  │    ──────      │    ───────                │
-│  NAND-like  │    DRAM-like   │    AI Accelerator         │
+│  Storage    │    Memory      │    AI Accelerator         │
 │  No weights │    No weights  │    Weights optional       │
-│  30 lvl/cell│    10ns access │    Analog MVM             │
+│  Levels cfg │    Levels cfg  │    Analog MVM             │
 └─────────────┴────────────────┴────────────────────────────┘
 ```
 
@@ -227,9 +227,9 @@ See [eda.integration.md](./eda.integration.md) for detailed OpenLane integration
 
 ## Key Concepts
 
-### 30-Level Quantization
+### Default Quantization (Configurable)
 
-FeCIM cells support a 30‑level demo baseline (conference claim; not binary), enabling ~4.9 bits/cell:
+The demo uses a 30-level baseline by default. You can change the number of levels in the configuration:
 
 ```
 Level 0  → G_min (lowest conductance, highest resistance)

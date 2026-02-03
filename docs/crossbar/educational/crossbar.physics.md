@@ -10,11 +10,11 @@
 
 This document provides the deep technical foundation for understanding crossbar array physics, from basic principles to real-world non-idealities. It covers:
 - Matrix-Vector Multiplication (MVM) using Ohm's and Kirchhoff's laws
-- 30-level conductance quantization in ferroelectric devices (demo baseline; conference claim)
+- 30-level conductance quantization in ferroelectric devices (demo baseline; simulation baseline)
 - Non-idealities: IR drop, sneak paths, device variation, ADC quantization
 - Physics-accurate simulation methodology
 
-**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 
@@ -281,7 +281,7 @@ Quantized output: 0.71 (rounded down)
 - ✅ No Joule heating (displacement current, not filament)
 - ✅ Self-rectifying possible (reduces sneak paths)
 - ✅ CMOS-compatible (same fab as regular chips)
-- ⚠️ 30-level baseline (conference claim; high precision)
+- ⚠️ 30-level baseline (simulation baseline; high precision)
 - ✅ 10¹² cycle endurance
 
 ---

@@ -1,5 +1,8 @@
 # CIM Equation Quick Reference
 
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+
+
 **Complete collection of key equations for Compute-in-Memory (CIM) systems.**
 
 Last Updated: January 2026
@@ -263,7 +266,7 @@ G_level = G_min + (level/(N-1)) × (G_max - G_min)
 **Variables:**
 - `G_level`: Conductance for quantization level
 - `level`: Integer level index (0, 1, 2, ..., N-1)
-- `N`: Number of discrete levels (30 for demo baseline; conference claim)
+- `N`: Number of discrete levels (30 for demo baseline; demo baseline (configurable))
 - `G_min`: Minimum conductance (typically 1 µS)
 - `G_max`: Maximum conductance (typically 100 µS)
 
@@ -290,7 +293,7 @@ bits = log₂(N)
 **Examples:**
 - 2 levels (binary) = 1 bit/cell
 - 16 levels = 4 bits/cell
-- 30 levels = **4.9 bits/cell** (FeCIM demo baseline; conference claim)
+- 30 levels = **4.9 bits/cell** (FeCIM demo baseline; demo baseline (configurable))
 - 32 levels = 5 bits/cell
 
 **Source:** Shannon information theory
@@ -403,7 +406,7 @@ G(t) = G₀ × (1 + ν × log(t/t₀))
 
 **Source:** Drift literature (empirical model)
 
-**Note:** The 0.001 value for FeFET is assumed for simulation purposes. No peer-reviewed source exists for FeFET-specific drift coefficients. The value is qualitatively expected to be lower than RRAM/PCM based on retention characteristics.
+**Note:** The 0.001 value for FeFET is assumed for simulation purposes. No reported in literature source exists for FeFET-specific drift coefficients. The value is qualitatively expected to be lower than RRAM/PCM based on retention characteristics.
 
 **Drift coefficients (from IEEE TCAD 2022 for RRAM/PCM, FeFET assumed):**
 | Memory Type | ν (drift coefficient) | 10-Year Retention | Source |
@@ -483,7 +486,7 @@ CIM_advantage = E_digital / E_CIM
 
 **Typical values:**
 - MAC alone: 10-100× (4.6 pJ / 50 fJ = 92×)
-- **Including data movement: 1000-10000×** (200 pJ / 20 fJ = 10,000×)
+- **Including data movement:** illustrative order-of-magnitude example (verify with sources)
 
 **Source:** IBM, Mythic AI, various CIM papers
 
@@ -502,7 +505,7 @@ CIM_advantage = E_digital / E_CIM
 |-----------|---------|-------|-----------|
 | Single MAC | 100 pJ | 10-50 fJ | 2000-10000× |
 | 64×64 MVM | 640 nJ | 0.6-3 nJ | 200-1000× |
-| MNIST inference (full) | 50 mJ | 5 µJ | 10,000× |
+| MNIST inference (full) | 50 mJ | 5 µJ | illustrative |
 
 **Note:** Advantage decreases with smaller batch sizes (peripheral overhead).
 
@@ -525,7 +528,7 @@ acc_loss ≈ f(q_error, ir_drop, sneak_ratio, noise_σ)
 
 **Typical total accuracy loss:** 0.5-1.5% for well-designed systems (128×128, 1T1R, 6-bit ADC)
 
-**Source:** Benchmark papers (FeFET MNIST, crossbar surveys)
+**Source:** Placeholder benchmarks (update with verified sources)
 
 ---
 
@@ -572,7 +575,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 ---
 
-### 7.4 MNIST Accuracy vs. ADC Bits (Empirical)
+### 7.4 MNIST Accuracy vs. ADC Bits (Illustrative)
 
 **Source:** IEEE TCAD 2022 (from crossbar.research.md)
 
@@ -625,7 +628,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 | Parameter | Symbol | Value | Source |
 |-----------|--------|-------|--------|
-| **Drift coefficient** | ν | **0.001** | **Assumed (no peer-reviewed source)** |
+| **Drift coefficient** | ν | **0.001** | **Assumed (no reported in literature source)** |
 | Device-to-device variation | σ_D2D | ~3% | HZO studies |
 | Cycle-to-cycle variation | σ_C2C | ~1% | FeFET papers |
 | Read noise (thermal) | σ_thermal | 0.5% σ/µ | Johnson noise in sense amps |
@@ -687,7 +690,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 - **> 512×512**: Severe IR drop (not recommended without advanced mitigation)
 
 ### ADC Bits
-- **4-bit**: Minimal (85-90% MNIST accuracy)
+- **4-bit**: Lower accuracy (illustrative)
 - **6-bit**: **Sweet spot** (90-95% accuracy, 4× power vs 4-bit)
 - **8-bit**: Overkill for most CIM workloads (16× power)
 
@@ -728,4 +731,4 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 **Maintained by:** FeCIM Lattice Tools Project
 **For:** AI agents, researchers, and developers working with CIM systems
-**Last verification:** January 2026 against peer-reviewed literature
+**Last verification:** January 2026 against reported in literature literature

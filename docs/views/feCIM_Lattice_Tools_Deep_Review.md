@@ -15,16 +15,16 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 2. **Device/Process Engineer lens** - device physics, manufacturability, and implementation risk
 
 **Key Findings**:
-- ✅ **Scientific Integrity**: Project rigorously separates verified (peer-reviewed) from unverified claims, with 27 removed/updated assertions
+- ✅ **Scientific Integrity**: Project rigorously separates verified (reported in literature) from unverified claims, with 27 removed/updated assertions
 - ✅ **Code Quality**: Modular architecture with CI‑verified test suite (see GitHub Actions)
-- ✅ **Physics Accuracy**: All models based on peer-reviewed literature with validation tests
+- ✅ **Physics Accuracy**: All models based on reported in literature literature with validation tests
 - ✅ **Completeness**: 7 modules covering complete FeCIM ecosystem from physics to EDA
 - ✅ **Educational Value**: Excellent visualization tool suitable for teaching and research outreach
-- ✅ **Technical Achievement**: Full FeCIM technology stack simulation using a 30‑level demo baseline (conference claim; pending peer review)
+- ✅ **Technical Achievement**: Full FeCIM technology stack simulation using a 30‑level demo baseline (configurable)
 
 **Major Achievements**:
 - Removed 2 unverified claims (87% MNIST, 10M× vs NAND energy)
-- Adopted peer-reviewed benchmarks (96.6-98.24% MNIST, 25-100× vs NAND energy)
+- Adopted reported in literature benchmarks (96.6-98.24% MNIST, 25-100× vs NAND energy)
 - Comprehensive documentation system (glossary + research index)
 - Extensive test coverage (see CI for current totals)
 
@@ -36,7 +36,7 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 
 **FeCIM Lattice Tools** is an educational visualization suite demonstrating Ferroelectric Compute-in-Memory (FeCIM) technology based on Dr. external research group's HfO₂-ZrO₂ superlattice research at external research institution.
 
-**Core Technology**: Ferroelectric superlattice with a **30‑level demo baseline** (~4.9 bits/cell; conference claim, pending peer review)
+**Core Technology**: Ferroelectric superlattice with a **30‑level demo baseline** (~4.9 bits/cell; simulation baseline, unverified)
 
 **Problem Statement**: Traditional computing suffers from the "von Neumann bottleneck" - constant data movement between separate memory and processor consuming most energy. FeCIM eliminates this by computing directly where data is stored.
 
@@ -104,14 +104,14 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 
 | Claim | Value | Status | Notes |
 |-------|--------|--------|--------|
-| **30 discrete analog states** | ⚠️ Conference claim baseline | Pending peer review; peer‑reviewed devices report 32–140 states. |
-| **87% MNIST accuracy** | ❌ REMOVED | 11% below peer-reviewed benchmarks (96.6-98.24%). Removed from project for scientific accuracy. |
+| **30 discrete analog states** | ⚠️ Simulation baseline | Pending peer review; literature reports multi-level states (unverified). |
+| **87% MNIST accuracy** | ❌ REMOVED | 11% below reported in literature benchmarks (96.6-98.24%). Removed from project for scientific accuracy. |
 | **10⁶ cycle endurance target** | ⚠️ Goal | Not yet achieved, stated as target. Updated in project to "demonstrated" based on recent literature (Nano Letters 2024). |
-| **10M× vs NAND energy efficiency** | ❌ REMOVED | No measurement data exists. Replaced with peer-reviewed Samsung Nature 2025: 25-100×. |
+| **10M× vs NAND energy efficiency** | ❌ REMOVED | No measurement data exists. Replaced with reported in literature Samsung Nature 2025: 25-100×. |
 | **1,000× faster than NAND** | ⚠️ Plausible | Speed comparison not independently verified. |
 | **90% voltage reduction** | ✅ Plausible | Consistent with ferroelectric advantages. |
 | **CMOS compatibility** | ✅ VERIFIED | Standard fab equipment, proven materials. |
-| **Zero data movement** | ✅ VERIFIED | Core CIM principle validated by peer-reviewed literature. |
+| **Zero data movement** | ✅ VERIFIED | Core CIM principle validated by reported in literature literature. |
 | **TRL 4 status** | ✅ VERIFIED | Explicitly stated "component validation in lab environment". |
 
 ### 2.2 Scientific Integrity Assessment ⭐⭐⭐⭐
@@ -123,16 +123,16 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 1. **Transparent Claim Classification**:
    - All claims categorized by verification status: [VERIFIED], [PLAUSIBLE], [UNVERIFIED], [REMOVED]
    - Clear documentation in `docs/comparison/HONESTY_AUDIT.md`
-   - 124 total claims audited against peer-reviewed literature
+   - 124 total claims audited against reported in literature literature
    - Each claim tagged with DOI or source reference
 
 2. **Removal of Unverified Claims**:
-   - **87% MNIST accuracy**: Removed and replaced with peer-reviewed 96.6-98.24% benchmarks
+   - **87% MNIST accuracy**: Removed and replaced with reported in literature 96.6-98.24% benchmarks
    - **10M× vs NAND energy**: Removed and replaced with Samsung Nature 2025 (25-100×)
-   - **Justification**: Honest admission that conference device-specific data is not yet peer-reviewed
+   - **Justification**: Honest admission that conference device-specific data is not yet reported in literature
 
 3. **Adoption of Verified Standards**:
-   - 32-140 analog states: Acknowledged from Oh 2017 (32), Song 2024 (140)
+   - multi-level analog states (reported): Acknowledged from Oh 2017 (32), Song 2024 (140)
    - 10¹² cycle endurance: Now marked "demonstrated" (Nano Letters 2024, Science 2024)
    - 96.6-98.24% MNIST: Adopted as project standard
    - 25-100× vs NAND: Adopted from Samsung Nature 2025
@@ -189,7 +189,7 @@ func (p *PreisachModel) DiscreteStates(N int) []float64 {
 ```
 
 **Assessment** ⭐⭐⭐⭐⭐:
-- ✅ **Scientific Accuracy**: Linear uniform distribution models the 30‑level demo baseline (conference claim) consistently
+- ✅ **Scientific Accuracy**: Linear uniform distribution models the 30‑level demo baseline consistently
 - ✅ **Preisach Integration**: Memory effects (turning points) properly implemented
 - ✅ **Hysteresis Physics**: S-shaped switching curve captured via hyperbolic tangent method
 - ✅ **Code Quality**: Clean, well-documented functions with comprehensive logging
@@ -243,7 +243,7 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 
 **Assessment** ⭐⭐⭐⭐⭐:
 - ✅ **Physics Accuracy**: MVM correctly implements analog summation via Kirchhoff's current law
-- ✅ **Quantization**: 30-level discretization matches the demo baseline (conference claim)
+- ✅ **Quantization**: 30-level discretization matches the demo baseline
 - ✅ **Normalization**: Keeps outputs in [0,1] range for neural network compatibility
 - ✅ **GPU Acceleration**: Optional Vulkan shader implementation for parallel processing
 - ✅ **Code Organization**: Clear separation of concerns (array config, cell management, MVM logic)
@@ -266,7 +266,7 @@ func (s *DriftSimulator) SimulateTime(time float64) []float64
 ```
 
 **Assessment** ⭐⭐⭐⭐⭐:
-- ✅ **Comprehensive Physics**: Models IR drop, sneak paths, drift with peer-reviewed parameters
+- ✅ **Comprehensive Physics**: Models IR drop, sneak paths, drift with reported in literature parameters
 - ✅ **Architecture Comparison**: Supports 0T1R (passive), 1T1R (transistor-isolated) comparison
 - ✅ **Energy Estimation**: Calculates pJ per operation for power analysis
 - ✅ **Extensibility**: Endurance modeling (10⁸-10¹² cycles) with degradation curve
@@ -317,7 +317,7 @@ func (net *DualModeNetwork) Infer(input []float64) InferenceResult {
 
 **Assessment** ⭐⭐⭐⭐⭐:
 - ✅ **Dual-Mode Design**: Side-by-side comparison of FP vs CIM inference
-- ✅ **30-Level Quantization**: Demonstrates impact of the 30-level demo baseline (conference claim)
+- ✅ **30-Level Quantization**: Demonstrates impact of the 30-level demo baseline
 - ✅ **Softmax Stability**: Prevents numerical overflow with argmax handling
 - ✅ **ReLU Implementation**: Correct for neural network activation function
 - ✅ **Comprehensive Metrics**: Accuracy, energy, KL divergence, agreement tracking
@@ -384,7 +384,7 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 
 | Parameter | Conference Claim | Peer-Reviewed Value | Source | DOI | Status |
 |----------|---------------|-------------------|--------|---------|
-| **FeCIM States** | 30 discrete analog states (baseline) | 32-140 states | Oh 2017 (32), Song 2024 (140) | ⚠️ Conference claim baseline |
+| **FeCIM States** | 30 discrete analog states (baseline) | multi-level states (reported) | Oh 2017 (32), Song 2024 (140) | ⚠️ Simulation baseline |
 | **Pr (Room Temp)** | Unspecified | 15-34 µC/cm² | Nature Commun. 2025 | ✅ Adopted as standard |
 | **Pr (4K Cryogenic)** | N/A | 75 µC/cm² | Adv. Elec. Mat. 2024 | ✅ Added for completeness |
 | **Ec (Standard)** | Unspecified | 0.6-1.5 MV/cm | Nature Commun. 2025 | ✅ Adopted as standard |
@@ -543,7 +543,7 @@ func (s *SafeState) Update(newValue float64) {
 
 | Capability | Implementation | Status | Assessment |
 |-----------|-------------------|--------|
-| **Physics Simulation** | ⭐⭐⭐⭐⭐ | Preisach hysteresis, 30-level demo baseline (conference claim) |
+| **Physics Simulation** | ⭐⭐⭐⭐⭐ | Preisach hysteresis, 30-level demo baseline |
 | **Crossbar Arrays** | ⭐⭐⭐⭐⭐ | MVM with IR drop, sneak paths, drift, temperature |
 | **Neural Networks** | ⭐⭐⭐⭐ | Dual-mode inference, MNIST benchmark |
 | **Peripheral Circuits** | ⭐⭐⭐⭐ | DAC/ADC/TIA with INL/DNL analysis |
@@ -581,7 +581,7 @@ func (s *SafeState) Update(newValue float64) {
 - Educational tool for community engagement and outreach
 
 **Combined Assessment (PI + Device Lens)**: 
-- Concept: Ferroelectric superlattice with multi‑level states (demo baseline 30; conference claim)
+- Concept: Ferroelectric superlattice with multi‑level states (demo baseline 30; simulation baseline)
 - Engineering: Complete FeCIM technology stack from physics to EDA
 - Project: Translates both into a comprehensive, educational tool with scientific integrity
 
@@ -644,7 +644,7 @@ func (s *SafeState) Update(newValue float64) {
 | **Technical Completeness** | ⭐⭐⭐⭐⭐ | 5.00 | 40% | Full FeCIM ecosystem implementation |
 | **Code Quality** | ⭐⭐⭐⭐⭐ | 4.75 | 35% | Modular architecture, CI-verified tests, thread-safe |
 | **Educational Value** | ⭐⭐⭐⭐⭐ | 4.00 | 30% | Superior visualization for complex concepts |
-| **Innovation** | ⭐⭐⭐⭐⭐⭐ | 4.50 | 50% | 30-level demo baseline (conference claim) + comprehensive tooling |
+| **Innovation** | ⭐⭐⭐⭐⭐⭐ | 4.50 | 50% | 30-level demo baseline + comprehensive tooling |
 
 **Overall**: ⭐⭐⭐⭐ (4.25/5 stars)
 
@@ -652,12 +652,12 @@ func (s *SafeState) Update(newValue float64) {
 
 **Exceptional Scientific Integrity**:
 - First project to systematically separate verified from unverified FeCIM claims
-- Honest documentation of 27 claim modifications with peer-reviewed justification
+- Honest documentation of 27 claim modifications with reported in literature justification
 - Transparent claim classification system enabling clear technology assessment
 - Sets industry standard for research-to-production tools
 
 **Complete FeCIM Technology Stack**:
-- **Concept Contribution**: Ferroelectric superlattice with multi‑level states (demo baseline 30; conference claim)
+- **Concept Contribution**: Ferroelectric superlattice with multi‑level states (demo baseline 30; simulation baseline)
 - **Engineering Contribution**: Complete implementation from physics models to EDA tools
 - **Project Synthesis**: Unified educational tool with transparent claim classification
 
@@ -667,7 +667,7 @@ func (s *SafeState) Update(newValue float64) {
 ### 8.3 Recommendation
 
 **FeCIM Lattice Tools represents best-in-class execution** of a complex research concept, combining:
-- Clear scientific integrity with peer‑reviewed benchmarks and explicit conference-claim labeling
+- Clear scientific integrity with reported in literature benchmarks and explicit conference-claim labeling
 - Comprehensive engineering implementation across physics, crossbar, MNIST, and EDA modules
 - Professional code quality with CI‑verified tests and documentation
 

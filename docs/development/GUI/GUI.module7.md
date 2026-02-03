@@ -251,7 +251,7 @@ Start with intuitive explanations without mathematics. Ideal for:
 
 ### Path 2: Physicist (Physics → Research Papers)
 
-Deep-dive into physics with equations and peer-reviewed publications. Ideal for:
+Deep-dive into physics with equations and reported in literature publications. Ideal for:
 - Device physicists
 - Materials scientists
 - Researchers

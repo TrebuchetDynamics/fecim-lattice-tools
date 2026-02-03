@@ -1,5 +1,8 @@
 # Compute-in-Memory Physics: Why Analog Computing Matters
 
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+
+
 **Document Purpose**: Explain the physical and mathematical foundations of Compute-in-Memory (CIM) architectures, with focus on memristor/FeFET crossbar arrays.
 
 **Target Audience**: Engineers, researchers, and students seeking to understand why CIM offers fundamental advantages over von Neumann architectures for AI workloads.
@@ -130,11 +133,11 @@ For analog computing, memristors/FeFETs store weights as **discrete conductance 
 $$G_i = G_{\text{min}} + i \times \frac{G_{\text{max}} - G_{\text{min}}}{N - 1}, \quad i = 0, 1, \ldots, N-1$$
 
 Where:
-- $N$ = number of analog states (e.g., 30 for demo baseline; conference claim)
+- $N$ = number of analog states (e.g., 30 for demo baseline; demo baseline (configurable))
 - $G_{\text{min}}$, $G_{\text{max}}$ = minimum/maximum conductance
 - $i$ = programmed state index
 
-**Example for FeFET with 30 states (demo baseline; conference claim):**
+**Example for FeFET with 30 states (demo baseline; demo baseline (configurable)):**
 - $G_{\text{min}} = 1 \mu S$, $G_{\text{max}} = 100 \mu S$
 - State 0: $G_0 = 1 \mu S$
 - State 15: $G_{15} = 52.1 \mu S$
@@ -423,7 +426,7 @@ Efficiency (TOPS/W)
 ### FeFET-Specific Research
 
 5. **Tour, J. R.** (2025). "Ferroelectric Compute-in-Memory: A New Paradigm for AI Hardware." *COSM 2025 Conference*.
-   - **30 analog states in HfO₂-ZrO₂ superlattice** (conference claim; pending peer review)
+   - **30 analog states in HfO₂-ZrO₂ superlattice** (demo baseline (configurable); unverified)
 
 6. **Cheng, C.-H., et al.** (2021). "Ferroelectric FET for Analog Computing." *IEEE Transactions on Electron Devices*.
    - **FeFET CIM: 36.5 TOPS/W (3-bit)**

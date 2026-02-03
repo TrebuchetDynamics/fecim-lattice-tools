@@ -2,7 +2,7 @@
 
 Start here if you've never studied ferroelectrics before.
 
-**Note:** References to “30 levels” refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 

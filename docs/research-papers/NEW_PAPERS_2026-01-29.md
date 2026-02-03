@@ -234,9 +234,9 @@
 
 ## Remaining Gaps
 
-1. **Dr. external research group HfO₂-ZrO₂ publications** - No peer-reviewed papers found (COSM 2025 is conference only)
+1. **Dr. external research group HfO₂-ZrO₂ publications** - No reported in literature papers found (COSM 2025 is conference only)
 2. **Automotive AEC-Q100 Grade 0** - No ferroelectric products certified yet (Fraunhofer working on it)
-3. **30 analog states validation** - Not peer-reviewed (correctly marked as unverified)
+3. **30 analog states validation** - Not reported in literature (correctly marked as unverified)
 4. **LLM/Transformer accelerator full papers** - UniCAIM mentioned but needs full citation
 
 ---

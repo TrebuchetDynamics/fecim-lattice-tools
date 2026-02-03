@@ -16,7 +16,7 @@ Compute-in-Memory (CIM) eliminates the von Neumann bottleneck by performing comp
 
 **Key Insight:** CIM leverages Ohm's Law (V = I × R for multiplication) and Kirchhoff's Current Law (current summation for accumulation) to perform MAC operations in O(1) time, achieving 10-1000× energy efficiency over digital processors.
 
-**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+**Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
 ---
 

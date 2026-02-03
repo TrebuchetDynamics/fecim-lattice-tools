@@ -1,7 +1,7 @@
 # Internal Analysis Documents
 
 > **Purpose**: Synthesized research analysis for the FeCIM Lattice Tools project.
-> These documents integrate findings from 230+ peer-reviewed papers in `/docs/research-papers/`.
+> These documents integrate findings from 230+ reported in literature papers in `/docs/research-papers/`.
 
 ## Document Index
 
@@ -33,7 +33,7 @@ docs/internal-analysis/        ← Synthesized analysis (this folder)
 | Parameter | Value | Source |
 |-----------|-------|--------|
 | FeCIM Levels | 30 | Dr. Tour COSM 2025 (unverified) |
-| Peer-reviewed levels | 32-140 | Oh 2017, Song 2024 |
+| Peer-reviewed levels | multi-level (reported) | Oh 2017, Song 2024 |
 | Pr (RT) | 15-34 µC/cm² | Nature Commun. 2025 |
 | Pr (4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 |
 | Ec | 0.6-1.5 MV/cm | Nature Commun. 2025 |
@@ -45,8 +45,8 @@ docs/internal-analysis/        ← Synthesized analysis (this folder)
 
 All claims in these documents follow the project's honesty policy:
 
-- **Verified claims** include DOIs and peer-reviewed sources
-- **Unverified claims** (e.g., the 30-state conference claim) are explicitly marked
+- **Verified claims** include DOIs and reported in literature sources
+- **Unverified claims** (e.g., the 30-state simulation baseline) are explicitly marked
 - Full audit: [/docs/comparison/HONESTY_AUDIT.md](/docs/comparison/HONESTY_AUDIT.md)
 
 ## Contributing
@@ -55,5 +55,5 @@ When adding new analysis documents:
 
 1. Include DOIs for all key claims
 2. Reference specific papers from `/docs/research-papers/`
-3. Mark any unverified conference claims
+3. Mark any unverified simulation baselines
 4. Add entry to this README
