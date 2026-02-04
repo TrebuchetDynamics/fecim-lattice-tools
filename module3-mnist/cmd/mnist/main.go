@@ -3,7 +3,7 @@
 // This demo allows users to draw digits and see them classified
 // through a neural network implemented on ferroelectric crossbar arrays.
 // Target: Physics-limited accuracy (typically 85-90% with 30 levels)
-package main
+package mnistcli
 
 import (
 	"bufio"
@@ -26,25 +26,54 @@ import (
 	"fecim-lattice-tools/shared/logging"
 )
 
-func main() {
+func Run(args []string) error {
 	logging.EnableFileLogging()
 	_ = logging.NewLogger("mnist-cli")
 
+	fs := flag.NewFlagSet("mnist", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+
 	// Command-line flags
-	train := flag.Bool("train", false, "Train the network on MNIST")
-	evaluate := flag.Bool("evaluate", false, "Evaluate trained network on test set")
-	interactive := flag.Bool("interactive", false, "Interactive digit drawing mode")
-	epochs := flag.Int("epochs", 5, "Number of training epochs")
-	hiddenSize := flag.Int("hidden", 128, "Hidden layer size")
-	noiseLevel := flag.Float64("noise", 0.02, "Device noise level (0-1)")
-	loadWeights := flag.String("load", "", "Load weights from file")
-	saveWeights := flag.String("save", "", "Save weights to file")
-	coreEvaluate := flag.Bool("core-eval", false, "Evaluate using dual-mode core network (FP vs CIM)")
-	coreSamples := flag.Int("core-samples", 1000, "Samples for core-eval (0=all)")
-	coreLevels := flag.String("core-levels", "", "Comma-separated levels for core-eval sweep (e.g., 8,16,24,31)")
-	exportLevels := flag.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
-	exportDir := flag.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths)")
-	flag.Parse()
+	train := fs.Bool("train", false, "Train the network on MNIST")
+	evaluate := fs.Bool("evaluate", false, "Evaluate trained network on test set")
+	interactive := fs.Bool("interactive", false, "Interactive digit drawing mode")
+	epochs := fs.Int("epochs", 5, "Number of training epochs")
+	hiddenSize := fs.Int("hidden", 128, "Hidden layer size")
+	noiseLevel := fs.Float64("noise", 0.02, "Device noise level (0-1)")
+	loadWeights := fs.String("load", "", "Load weights from file")
+	saveWeights := fs.String("save", "", "Save weights to file")
+	coreEvaluate := fs.Bool("core-eval", false, "Evaluate using dual-mode core network (FP vs CIM)")
+	coreSamples := fs.Int("core-samples", 1000, "Samples for core-eval (0=all)")
+	coreLevels := fs.String("core-levels", "", "Comma-separated levels for core-eval sweep (e.g., 8,16,24,31)")
+	exportLevels := fs.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
+	exportDir := fs.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths)")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM MNIST CLI")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools mnist cli [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	fmt.Println("================================================")
 	fmt.Println("  FeCIM Demo 3: MNIST Digit Recognition")
@@ -73,7 +102,7 @@ func main() {
 		if err := runExportQuantizedWeights(levels, *loadWeights, outDirs, *hiddenSize); err != nil {
 			log.Fatalf("Export failed: %v", err)
 		}
-		return
+		return nil
 	}
 
 	if *coreEvaluate {
@@ -82,7 +111,7 @@ func main() {
 			log.Fatalf("Invalid core levels: %v", err)
 		}
 		runCoreEvaluation(*hiddenSize, *noiseLevel, *loadWeights, *coreSamples, levels)
-		return
+		return nil
 	}
 
 	// Create crossbar arrays for each layer
@@ -143,20 +172,22 @@ func main() {
 	// Training mode
 	if *train {
 		runTraining(net, *epochs, *saveWeights)
-		return
+		return nil
 	}
 
 	// Evaluation mode
 	if *evaluate {
 		runEvaluation(net)
-		return
+		return nil
 	}
 
 	// Interactive mode (default)
 	if *interactive || (!*train && !*evaluate) {
 		runInteractive(net)
-		return
+		return nil
 	}
+
+	return nil
 }
 
 func runTraining(net *training.MNISTNetwork, epochs int, saveFile string) {

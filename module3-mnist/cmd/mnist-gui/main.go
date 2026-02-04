@@ -11,13 +11,14 @@
 // - Precision, recall, F1 score display
 //
 // Run with: go run ./cmd/mnist-gui
-package main
+package mnistgui
 
 import (
 	"fecim-lattice-tools/module3-mnist/pkg/gui"
 )
 
-func main() {
+func Run(args []string) error {
 	app := gui.NewMNISTApp()
 	app.Run()
+	return nil
 }

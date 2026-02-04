@@ -30,7 +30,7 @@
 // - Energy comparison badges
 // - Enhanced MVM with integrated non-idealities
 // - Data export (CSV, JSON)
-package main
+package crossbarcmd
 
 import (
 	"flag"
@@ -40,16 +40,7 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/gui"
 )
 
-func main() {
-	if len(os.Args) > 1 && os.Args[1] == "inference" {
-		runInference(os.Args[2:])
-		return
-	}
-
-	runGUI(os.Args[1:])
-}
-
-func runGUI(args []string) {
+func RunGUI(args []string) error {
 	fs := flag.NewFlagSet("crossbar-gui", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
 
@@ -95,18 +86,20 @@ func runGUI(args []string) {
 	if err := fs.Parse(args); err != nil {
 		fmt.Fprintln(fs.Output(), "Error:", err)
 		fs.Usage()
-		return
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
 	}
 
 	if *help || *helpShort {
 		fs.Usage()
-		return
+		return nil
 	}
 
 	app, err := gui.NewCrossbarApp()
 	if err != nil {
-		fmt.Printf("Error: Failed to initialize crossbar app: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize crossbar app: %w", err)
 	}
 
 	if *enhanced {
@@ -118,4 +111,6 @@ func runGUI(args []string) {
 		fmt.Println("→ Run with -enhanced for all features")
 		app.Run()
 	}
+
+	return nil
 }

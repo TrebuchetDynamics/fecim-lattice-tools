@@ -1,4 +1,4 @@
-package main
+package crossbarcmd
 
 import (
 	"flag"
@@ -12,7 +12,7 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/visualization"
 )
 
-func runInference(args []string) {
+func RunInference(args []string) error {
 	fs := flag.NewFlagSet("inference", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
 
@@ -45,12 +45,15 @@ func runInference(args []string) {
 	if err := fs.Parse(args); err != nil {
 		fmt.Fprintln(fs.Output(), "Error:", err)
 		fs.Usage()
-		return
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
 	}
 
 	if *help || *helpShort {
 		fs.Usage()
-		return
+		return nil
 	}
 
 	fmt.Println("============================================")
@@ -74,7 +77,7 @@ func runInference(args []string) {
 
 	array, err := crossbar.NewArray(arrayCfg)
 	if err != nil {
-		log.Fatalf("Failed to create crossbar array: %v", err)
+		return fmt.Errorf("failed to create crossbar array: %w", err)
 	}
 
 	vis := visualization.NewTerminalVisualizer(array, !*noColor)
@@ -94,12 +97,12 @@ func runInference(args []string) {
 
 		output, err := array.MVM(input)
 		if err != nil {
-			log.Fatalf("MVM failed: %v", err)
+			return fmt.Errorf("MVM failed: %w", err)
 		}
 
 		vis.ShowCrossbarState()
 		vis.ShowMVMOperation(input, output)
-		return
+		return nil
 	}
 
 	if *showIRDrop || *showNonidealities {
@@ -117,7 +120,7 @@ func runInference(args []string) {
 		vis.ShowIRDropAnalysis(irAnalysis)
 
 		if !*showNonidealities {
-			return
+			return nil
 		}
 	}
 
@@ -135,7 +138,7 @@ func runInference(args []string) {
 		vis.ShowSneakPathAnalysis(sneakAnalysis, selectedRow, selectedCol)
 
 		if !*showNonidealities {
-			return
+			return nil
 		}
 	}
 
@@ -149,17 +152,17 @@ func runInference(args []string) {
 
 		idealOutput, err := array.MVM(input)
 		if err != nil {
-			log.Fatalf("MVM failed: %v", err)
+			return fmt.Errorf("MVM failed: %w", err)
 		}
 
 		wireParams := crossbar.DefaultWireParams()
 		actualOutput, irAnalysis, err := array.MVMWithIRDrop(input, wireParams)
 		if err != nil {
-			log.Fatalf("MVM with IR drop failed: %v", err)
+			return fmt.Errorf("MVM with IR drop failed: %w", err)
 		}
 
 		vis.ShowMVMWithNonidealities(input, idealOutput, actualOutput, irAnalysis)
-		return
+		return nil
 	}
 
 	netCfg := &network.Config{
@@ -171,12 +174,12 @@ func runInference(args []string) {
 
 	net, err := network.NewNetwork(netCfg, array)
 	if err != nil {
-		log.Fatalf("Failed to create network: %v", err)
+		return fmt.Errorf("failed to create network: %w", err)
 	}
 
 	if *benchmark {
 		runBenchmark(net, *batchSize)
-		return
+		return nil
 	}
 
 	fmt.Println("\n--- Running Neural Network Inference Demo ---")
@@ -185,7 +188,7 @@ func runInference(args []string) {
 
 	output, err := net.Forward(input)
 	if err != nil {
-		log.Fatalf("Inference failed: %v", err)
+		return fmt.Errorf("inference failed: %w", err)
 	}
 
 	maxIdx := 0
@@ -202,6 +205,7 @@ func runInference(args []string) {
 
 	fmt.Println("\n--- Demo Complete ---")
 	fmt.Println("Note: Weights are randomly initialized. Train with MNIST for accurate predictions.")
+	return nil
 }
 
 func runBenchmark(net *network.Network, batchSize int) {

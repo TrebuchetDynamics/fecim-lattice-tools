@@ -8,7 +8,7 @@
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
 //   - --vulkan: Vulkan-based graphical interface (advanced)
-package main
+package hysteresiscli
 
 import (
 	"flag"
@@ -85,20 +85,49 @@ func getMaterialKey(m *ferroelectric.HZOMaterial) string {
 	}
 }
 
-func main() {
+func Run(args []string) error {
+	fs := flag.NewFlagSet("hysteresis", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+
 	// Command line flags
-	materialName := flag.String("material", "superlattice", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
-	freq := flag.Float64("freq", 1e6, "Waveform frequency in Hz")
-	headless := flag.Bool("headless", false, "Run in headless mode (static ASCII output)")
-	tuiMode := flag.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := flag.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
-	listMats := flag.Bool("list-materials", false, "List available materials and exit")
-	flag.Parse()
+	materialName := fs.String("material", "superlattice", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
+	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
+	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
+	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
+	vulkan := fs.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
+	listMats := fs.Bool("list-materials", false, "List available materials and exit")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM Hysteresis Visualizer")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools hysteresis [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	// List materials and exit
 	if *listMats {
 		listMaterials()
-		return
+		return nil
 	}
 
 	// Get selected material
@@ -118,7 +147,7 @@ func main() {
 		engine := simulation.NewEngine(material)
 		engine.SetFrequency(*freq)
 		runHeadless(engine, material)
-		return
+		return nil
 	}
 
 	if *tuiMode {
@@ -131,7 +160,7 @@ func main() {
 			engine.SetFrequency(*freq)
 			runHeadless(engine, material)
 		}
-		return
+		return nil
 	}
 
 	if *vulkan {
@@ -147,7 +176,7 @@ func main() {
 		engine := simulation.NewEngine(material)
 		engine.SetFrequency(*freq)
 		runGraphical(engine, material)
-		return
+		return nil
 	}
 
 	// Default: Fyne GUI mode (recommended)
@@ -165,6 +194,8 @@ func main() {
 			runHeadless(engine, material)
 		}
 	}
+
+	return nil
 }
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {
