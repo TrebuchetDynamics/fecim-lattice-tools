@@ -53,8 +53,9 @@ type WriteController struct {
 	NumLevels       int
 	EcField         float64
 	MaxField        float64
-	MaxRetries      int // Max ISPP pulses before giving up
-	ForceResetLimit int // Max retries before forcing a full reset
+	MinStep         float64 // Hard lower bound on step size (prevents tiny increments)
+	MaxRetries      int     // Max ISPP pulses per attempt before forcing a reset (<=0 disables)
+	ForceResetLimit int     // Max resets before giving up (<=0 disables)
 	Attempts        int
 	SuccessCount    int
 	FailureCount    int
@@ -111,13 +112,18 @@ type WriteController struct {
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
+	minStep := 0.04 * ec
+	if emax > 0 && minStep > emax {
+		minStep = emax
+	}
 	return &WriteController{
 		NumLevels:       numLevels,
 		EcField:         ec,
 		MaxField:        emax,
-		MaxRetries:      50,   // Stubborn: Try hard to converge
-		ForceResetLimit: 100,  // Effectively disabled, only for total failure
-		PulseDuration:   0.15, // Default safe value
+		MinStep:         minStep, // Avoid overly tiny steps near target
+		MaxRetries:      0,       // Unlimited pulses per attempt (no forced reset)
+		ForceResetLimit: 0,       // Unlimited resets by default (never give up)
+		PulseDuration:   0.15,    // Default safe value
 		CalibManager:    calib,
 		State:           StateIdle,
 	}
@@ -487,15 +493,16 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			}
 
 			// Not converged. Check retries.
-			if wc.PulseCount >= wc.MaxRetries {
-				// We tried hard. If we still failed, we might need a BIG reset.
-				// But we are "Stubborn", so we only give up if we hit the limit.
+			if wc.MaxRetries > 0 && wc.PulseCount >= wc.MaxRetries {
+				// Per-attempt pulse budget exceeded: force a full reset and retry.
 				wc.RetryCount++
-				wc.FailureCount++
-
-				// Don't resets immediately. Just count it as a "failed cycle" but maybe keep trying?
-				// For now, adhere to the "Give Up" logic if MaxRetries hit, but MaxRetries is high (50).
-				wc.State = StateFailed
+				if wc.ForceResetLimit > 0 && wc.RetryCount > wc.ForceResetLimit {
+					wc.FailureCount++
+					wc.State = StateFailed
+					return 0, true
+				}
+				log.Printf("ISPP RETRY LIMIT: forcing full reset (retry=%d target=%d)", wc.RetryCount, wc.TargetLevel)
+				wc.State = StateForceReset
 				return 0, true
 			}
 
@@ -649,6 +656,9 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			if wc.OvershootCount > 2 {
 				reverseStep = 0.03 * wc.EcField
 			}
+			if wc.MinStep > reverseStep {
+				reverseStep = wc.MinStep
+			}
 
 			var nextVoltage float64
 			if prevVoltage < minReverseField {
@@ -684,6 +694,9 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
 		// Nudge if midpoint is too close to current voltage (avoid stalling).
 		minStep := 0.02 * wc.EcField
+		if wc.MinStep > minStep {
+			minStep = wc.MinStep
+		}
 		if math.Abs(nextVoltage-prevVoltage) < minStep {
 			if wc.LastError < 0 {
 				nextVoltage = math.Min(wc.VMax, prevVoltage+minStep)
@@ -713,9 +726,13 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		log.Printf("ISPP STUCK: boosting step (floor=%.3f×Ec) and clearing bounds", wc.stepFloor/wc.EcField)
 	}
 
-	// Enforce step floor if set (prevents tiny steps that never cross quantization boundaries).
-	if wc.stepFloor > 0 && stepSize < wc.stepFloor {
-		stepSize = wc.stepFloor
+	// Enforce hard minimum step (and dynamic step floor) to avoid tiny increments.
+	minStep := wc.MinStep
+	if wc.stepFloor > minStep {
+		minStep = wc.stepFloor
+	}
+	if minStep > 0 && stepSize < minStep {
+		stepSize = minStep
 	}
 
 	// Undershoot: increase voltage by step
