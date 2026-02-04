@@ -118,14 +118,16 @@ func runHysteresisMode(engine string) error {
 		solver.Temperature = 300
 		solver.EnableNoise = false
 		solver.UseNLS = false
-		solver.UpdateParams()
+		if !solver.UseMaterialAlpha {
+			solver.UpdateParams()
+		}
 		engineTemp = solver.Temperature
 		currentP = solver.GetState()
 
-		log.Info("LK config: Beta=%.3e Gamma=%.3e Rho=%.3e K_dep=%.3e Q12=%.3e Stress=%.2f GPa SeriesR=%.1f Ohm Thickness=%.2e m Area=%.2e m^2 CurieTemp=%.1fK CurieConst=%.2e UseEffVisc=%v UseNLS=%v Noise=%v",
+		log.Info("LK config: Beta=%.3e Gamma=%.3e Rho=%.3e K_dep=%.3e Q12=%.3e Stress=%.2f GPa SeriesR=%.1f Ohm Thickness=%.2e m Area=%.2e m^2 CurieTemp=%.1fK CurieConst=%.2e UseEffVisc=%v UseNLS=%v Noise=%v UseMaterialAlpha=%v",
 			solver.Beta, solver.Gamma, solver.Rho, solver.K_dep, solver.Q12, solver.Stress/1e9, solver.SeriesResistance, solver.Thickness, solver.Area,
-			solver.CurieTemp, solver.CurieConst, solver.UseEffectiveViscosity, solver.UseNLS, solver.EnableNoise)
-		log.Info("LK alpha(T,σ)=%.3e at T=%.1fK", solver.Alpha, solver.Temperature)
+			solver.CurieTemp, solver.CurieConst, solver.UseEffectiveViscosity, solver.UseNLS, solver.EnableNoise, solver.UseMaterialAlpha)
+		log.Info("LK alpha=%.3e at T=%.1fK", solver.Alpha, solver.Temperature)
 	case "preisach":
 		preisachModel = ferroelectric.NewPreisachModel(mat)
 		preisachModel.SetTemperature(300)

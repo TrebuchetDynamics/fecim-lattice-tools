@@ -2406,7 +2406,9 @@ func (a *App) calibrateLevelsLK() {
 	solver.Temperature = a.currentTemperature()
 	solver.EnableNoise = false
 	solver.UseNLS = false
-	solver.UpdateParams()
+	if !solver.UseMaterialAlpha {
+		solver.UpdateParams()
+	}
 
 	// Pulse timing (match headless defaults)
 	pulseDuration := a.material.Tau

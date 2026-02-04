@@ -270,7 +270,9 @@ func showISPPDemo(level int) {
 	solver.Temperature = 300
 	solver.EnableNoise = false
 	solver.UseNLS = false
-	solver.UpdateParams()
+	if !solver.UseMaterialAlpha {
+		solver.UpdateParams()
+	}
 
 	controller := sharedphysics.NewWriteController(solver, mat)
 	controller.MaxIterations = 15

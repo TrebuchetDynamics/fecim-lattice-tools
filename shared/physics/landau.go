@@ -18,6 +18,10 @@ type LKSolver struct {
 	Gamma float64 // Stability coefficient (Positive)
 	Rho   float64 // Viscosity / Damping (Ohm-meters)
 
+	// Optional LK04 mitigation: allow material-calibrated alpha (instead of Curie-Weiss).
+	// When enabled, Alpha is treated as constant and UpdateParams() is skipped.
+	UseMaterialAlpha bool
+
 	// Electrostriction & Stress
 	Q12    float64 // Electrostriction coefficient (m^4/C^2)
 	Stress float64 // In-plane tensile stress (Pa)
@@ -172,6 +176,18 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	if mat.Pr != 0 {
 		s.P = -math.Abs(mat.Pr)
 	}
+
+	// LK04 mitigation: choose Alpha so that the zero-field equilibrium satisfies
+	// dG/dP=0 at |P|=Pr for the configured (Beta,Gamma).
+	//
+	// Given dG/dP = 2αP + 4βP^3 + 6γP^5, enforcing dG/dP(P=Pr)=0 yields:
+	//   α = -2βPr^2 - 3γPr^4
+	// This improves consistency between the advertised Pr and the Landau potential.
+	if mat.Pr != 0 && s.Gamma != 0 {
+		pr := math.Abs(mat.Pr)
+		s.Alpha = -2.0*s.Beta*pr*pr - 3.0*s.Gamma*math.Pow(pr, 4)
+		s.UseMaterialAlpha = true
+	}
 	// Configure saturation clamp using material Ps/Pr when available.
 	pMax := math.Max(math.Abs(mat.Ps), math.Abs(mat.Pr))
 	if pMax > 0 {
@@ -196,6 +212,8 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 		"SeriesResistance": s.SeriesResistance,
 		"ActivationField":  s.ActivationField,
 		"TauInf":           s.TauInf,
+		"UseMaterialAlpha": s.UseMaterialAlpha,
+		"Alpha":            s.Alpha,
 		"InitPolarization": s.P,
 	})
 }
@@ -225,7 +243,9 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 // Step performs one Runge-Kutta 4 (RK4) integration step.
 // Returns the new Polarization P.
 func (s *LKSolver) Step(E, dt float64) float64 {
-	s.UpdateParams() // Ensure Alpha is current
+	if !s.UseMaterialAlpha {
+		s.UpdateParams() // Ensure Alpha is current
+	}
 
 	rhoEff := s.effectiveRho()
 	noise := s.noiseTerm(dt, rhoEff)

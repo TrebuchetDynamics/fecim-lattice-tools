@@ -350,7 +350,9 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	solver.Temperature = 300
 	solver.EnableNoise = false
 	solver.UseNLS = false
-	solver.UpdateParams()
+	if !solver.UseMaterialAlpha {
+		solver.UpdateParams()
+	}
 	solver.SetState(currentP)
 
 	ctrl := sharedphysics.NewWriteController(solver, mat)
