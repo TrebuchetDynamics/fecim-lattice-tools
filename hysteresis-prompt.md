@@ -80,11 +80,32 @@ Implementation Notes
 Tasks
 
 1) L-K performance accounting (why it's slow)
+
+### Latest performance evidence (headless)
+
+- **FeCIM HZO (LK)**: `LK_PERF ISPP_*` shows ~21k solver steps per target at `dt≈1e-12` (100% dtMinHits).
+  - Example (HI2): `steps=21466 dtMin=1.000e-12 dtMean=1.000e-12 ... solverMs=1.90`
+- **Literature Superlattice (LK)**: `LK_PERF ISPP_*` shows 100k–220k solver steps per target at `dt≈5e-14` (100% dtMinHits).
+  - Example (MID): `steps=221301 dtMin=5.000e-14 dtMean=5.000e-14 ... solverMs=16.87`
+
+Interpretation:
+- Headless LK runtime is dominated by **extremely small dt** (set by `dtNominal := pulseDuration/10000`), which explodes solver step counts.
+- This is **math-bound** (many RK4 evaluations), not render/GUI bound.
 - Add/verify counters for **sub-steps per frame**, `dt` min/mean/max, and **time spent in L-K solver** vs render.
 - Record whether adaptive stepping is dominating (e.g., long runs of tiny `dt` near Ec).
 - Confirm whether overhead is math-bound (`pow`/polynomial evals) or glue-bound (allocations/logging/GUI sync).
 
 2) Frankenstein equation (no missing terms)
+
+### Latest equation trace evidence
+
+With `--verbosity trace`, LK emits `LKStep(...)` including all required terms:
+- `E_applied`, `E_dep = K_dep*P`, `E_eff = E_applied - E_dep`
+- `dG_dP = 2*Alpha*P + 4*Beta*P^3 + 6*Gamma*P^5`
+- `rho_eff` (effective viscosity)
+
+Example (FeCIM HZO): see `/tmp/lk_trace.txt` or re-run:
+`FECIM_MATERIAL=fecim_hzo ./launch.sh --logger --verbosity trace --mode hysteresis --engine lk`
 - Verify: `dP/dt = (E_applied - k_dep*P - (2*alpha*P + 4*beta*P^3 + 6*gamma*P^5) + xi) / rho_eff`.
 - Ensure `rho_eff = rho + (R_series * A / d)` only when `UseEffectiveViscosity=true`.
 - Confirm `E_eff = E_applied - k_dep*P` is what the solver actually uses.
