@@ -176,9 +176,39 @@ func (wc *WriteController) ResetDirection() int {
 	return wc.resetDirection
 }
 
+// raiseStepFloor increases the minimum step size to break out of stalls.
+// It only raises the floor (never decreases) and logs once per change.
+func (wc *WriteController) raiseStepFloor(minStep float64, reason string) {
+	if minStep <= 0 {
+		return
+	}
+	if wc.MaxField > 0 && minStep > wc.MaxField {
+		minStep = wc.MaxField
+	}
+	if minStep <= wc.stepFloor {
+		return
+	}
+	old := wc.stepFloor
+	wc.stepFloor = minStep
+	scale := wc.EcField
+	if scale <= 0 {
+		scale = 1
+	}
+	if old == 0 {
+		log.Printf("ISPP STEP FLOOR SET: %.3f×Ec (%s)", wc.stepFloor/scale, reason)
+	} else {
+		log.Printf("ISPP STEP FLOOR RAISED: %.3f×Ec→%.3f×Ec (%s)", old/scale, wc.stepFloor/scale, reason)
+	}
+}
+
 // Update advances the controller state logic.
-func (wc *WriteController) Update(dt float64, currentField float64, currentLevel int) (targetField float64, done bool) {
+func (wc *WriteController) Update(dt float64, currentField float64, currentLevel int, guardSign int) (targetField float64, done bool) {
 	wc.PhaseTimer += dt
+	if guardSign > 0 {
+		guardSign = 1
+	} else if guardSign < 0 {
+		guardSign = -1
+	}
 
 	// Capture initial level on first update
 	if !wc.InitialLevelSet {
@@ -299,6 +329,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 	case StateVerify:
 		// Target is 0V for verification
 		targetField = 0.0
+		guardActive := false
 
 		// Wait for field to settle to 0
 		if wc.PhaseTimer > pulseDur*0.3 && math.Abs(currentField) < 0.01*wc.MaxField {
@@ -330,7 +361,19 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			} else {
 				wc.NoImproveCount = 0
 			}
+			if wc.LastError == 0 && guardSign != 0 {
+				wc.LastError = guardSign
+				absErr = int(math.Abs(float64(wc.LastError)))
+				guardActive = true
+				log.Printf("ISPP GUARD: level=%d target=%d sign=%d", currentLevel, wc.TargetLevel, guardSign)
+			}
 			wc.LastAbsError = absErr
+
+			if guardActive {
+				// Guard-band correction: avoid treating "no level change" as stuck.
+				wc.StuckCount = 0
+				wc.NoImproveCount = 0
+			}
 
 			// Escalate minimum step size if we are not making observable progress.
 			if currentLevel != prevLevel {
@@ -458,7 +501,11 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 			// Continue ISPP (Next Pulse)
 			wc.PulseCount++
-			wc.calculateNextField(currentLevel)
+			calcLevel := currentLevel
+			if guardActive {
+				calcLevel = currentLevel + guardSign
+			}
+			wc.calculateNextField(calcLevel)
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 		}
@@ -592,10 +639,11 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			// Cap at 0.95×Ec to avoid sharp switching that causes ping-pong
 			prevVoltage := math.Abs(wc.CurrentField)
 
-			// Start at 0.7×Ec, increment by 0.05×Ec, cap at 0.95×Ec
+			// Start at 0.7×Ec, increment by 0.05×Ec, cap at 1.5×Ec
+			// Note: L-K dynamics need higher fields than Preisach's sharp Ec threshold
 			minReverseField := 0.7 * wc.EcField
 			reverseStep := 0.05 * wc.EcField
-			maxReverseField := 0.95 * wc.EcField // Stay below sharp switching threshold
+			maxReverseField := 1.5 * wc.EcField // Allow higher fields for L-K gradual switching
 
 			// After multiple overshoots, use even finer steps
 			if wc.OvershootCount > 2 {

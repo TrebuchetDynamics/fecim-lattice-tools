@@ -283,6 +283,7 @@ materials:
     description: "Best academic HfO2/ZrO2 superlattice results"
     reference: "Cheema et al., Nature 580, 478 (2020) [2]; Nature Commun. 2025 [3]"
     analog_states: 64           # Enhanced superlattice supports more states
+    target_range_frac: 0.98     # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P

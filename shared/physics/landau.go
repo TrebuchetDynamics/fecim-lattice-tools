@@ -247,12 +247,30 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 		}
 	}
 
-	// RK4 Integration
+	// RK4 Integration with rate limiting for numerical stability
 	prevP := s.P
-	k1 := s.dPdT(0, s.P, E, noise, rhoEff)
-	k2 := s.dPdT(dt/2, s.P+0.5*dt*k1, E, noise, rhoEff)
-	k3 := s.dPdT(dt/2, s.P+0.5*dt*k2, E, noise, rhoEff)
-	k4 := s.dPdT(dt, s.P+dt*k3, E, noise, rhoEff)
+
+	// Rate limiter: cap dP/dt to prevent overflow with high Gamma materials
+	// Max rate = 2*Ps per characteristic time (allows full swing in ~τ)
+	maxRate := 2.0 * s.PMax / (rhoEff + 1e-12) // Ps/ρ is characteristic rate
+	if maxRate > 1e12 {
+		maxRate = 1e12 // Absolute cap to prevent overflow
+	}
+
+	clampRate := func(rate float64) float64 {
+		if rate > maxRate {
+			return maxRate
+		}
+		if rate < -maxRate {
+			return -maxRate
+		}
+		return rate
+	}
+
+	k1 := clampRate(s.dPdT(0, s.P, E, noise, rhoEff))
+	k2 := clampRate(s.dPdT(dt/2, s.P+0.5*dt*k1, E, noise, rhoEff))
+	k3 := clampRate(s.dPdT(dt/2, s.P+0.5*dt*k2, E, noise, rhoEff))
+	k4 := clampRate(s.dPdT(dt, s.P+dt*k3, E, noise, rhoEff))
 
 	if invalidFloat(k1) || invalidFloat(k2) || invalidFloat(k3) || invalidFloat(k4) {
 		s.logNumericalIssue("k", E, dt, rhoEff, noise, prevP)

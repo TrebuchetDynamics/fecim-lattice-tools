@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -18,6 +19,52 @@ import (
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
+
+const rangeCalibrationDebounce = 500 * time.Millisecond
+
+func (a *App) rangeFracLabelText(frac float64) string {
+	frac = clampRangeFrac(frac)
+	a.mu.RLock()
+	ps := 0.0
+	if a.material != nil {
+		ps = a.material.Ps
+	}
+	a.mu.RUnlock()
+	if ps > 0 {
+		effective := ps * frac * 100
+		return fmt.Sprintf("Target Range: %.1f%% (±%.1f µC/cm²)", frac*100, effective)
+	}
+	return fmt.Sprintf("Target Range: %.1f%%", frac*100)
+}
+
+func (a *App) scheduleRangeCalibration() {
+	if a == nil {
+		return
+	}
+	if a.wrdRangeTimer != nil {
+		a.wrdRangeTimer.Stop()
+	}
+	a.wrdRangeTimer = time.AfterFunc(rangeCalibrationDebounce, func() {
+		a.mu.Lock()
+		if a.material == nil || !a.needsCalibration {
+			a.mu.Unlock()
+			return
+		}
+		temp := a.currentTemperature()
+		if log != nil {
+			log.Printf("Running calibration for target range %.2f...", a.wrdRangeFrac)
+		}
+		a.tempCalibrations = make(map[int]*TempCalibration)
+		a.calibrateLevelsAtTemperature(temp)
+		if err := a.saveCalibration(); err != nil {
+			if log != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
+		}
+		a.needsCalibration = false
+		a.mu.Unlock()
+	})
+}
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
 	// E-field slider (no logging - too frequent)
@@ -239,6 +286,29 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		}
 		a.needsCalibration = false
 		a.mu.Unlock()
+	}
+
+	// Target range (effective Ps back-off for level mapping)
+	a.wrdRangeLabel = widget.NewLabel(a.rangeFracLabelText(a.wrdRangeFrac))
+	a.wrdRangeSlider = widget.NewSlider(0.8, 1.0)
+	a.wrdRangeSlider.Step = 0.005
+	a.wrdRangeSlider.Value = clampRangeFrac(a.wrdRangeFrac)
+	a.wrdRangeSlider.OnChanged = func(v float64) {
+		v = clampRangeFrac(v)
+		a.mu.Lock()
+		if math.Abs(a.wrdRangeFrac-v) < 1e-6 {
+			a.mu.Unlock()
+			return
+		}
+		a.wrdRangeFrac = v
+		a.calibrated = false
+		a.needsCalibration = true
+		a.tempCalibrations = make(map[int]*TempCalibration)
+		a.mu.Unlock()
+		if a.wrdRangeLabel != nil {
+			a.wrdRangeLabel.SetText(a.rangeFracLabelText(v))
+		}
+		a.scheduleRangeCalibration()
 	}
 
 	// Pause/Resume button
@@ -538,6 +608,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		physicsRow,
 		a.levelsLabel,
 		a.levelsEntry,
+		a.wrdRangeLabel,
+		a.wrdRangeSlider,
 		container.NewHBox(a.eFieldLabel, a.eFieldModeLabel),
 		a.eFieldSlider,
 		freqLabel,
@@ -610,6 +682,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 
 	a.matIndex = newIdx
 	a.material = hzoMat
+	a.wrdRangeFrac = rangeFracForMaterial(a.material)
 	// Recreate Preisach model for the new material (used in Preisach mode)
 	a.preisach = ferroelectric.NewPreisachModel(a.material)
 	a.preisach.SetTemperature(savedTemp)
@@ -637,6 +710,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Reset write/read demo state
 	a.wrdPhase = 0
 	a.wrdPhaseTimer = 0
+	a.wrdReadLevel = 0
 	a.wrdTotalWrites = 0
 	a.wrdSuccessWrites = 0
 	a.wrdTotalEnergyfJ = 0
@@ -728,6 +802,12 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	}
 	if a.levelsLabel != nil {
 		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+	}
+	if a.wrdRangeLabel != nil {
+		a.wrdRangeLabel.SetText(a.rangeFracLabelText(a.wrdRangeFrac))
+	}
+	if a.wrdRangeSlider != nil {
+		a.wrdRangeSlider.SetValue(clampRangeFrac(a.wrdRangeFrac))
 	}
 
 	// Reset level indicator to middle

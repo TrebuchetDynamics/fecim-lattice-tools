@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on reported in literature HfO₂-ZrO₂ superlattice research.
 
-**Last updated**: 2026-02-02
+**Last updated**: 2026-02-04
 
 **Master Critique Source**: See `CRITIQUE_MASTER_LIST.md` for consolidated items (snapshot). Current status lives in `docs/project/STATUS.md`.
 
@@ -151,6 +151,7 @@
 | L02 | Screenshot metadata embedding (PNG EXIF with parameters) | ✅ | Done |
 | L03 | Add GitHub URL to glossary widget TODO | ✅ | Done (existing) |
 | L04 | Hysteresis polarization bar indicator - increase to 16px with pulsing | ✅ | Done |
+| L11 | Investigate "imagine" issue (user report: "imagine is not fix") | ⏳ | 1hr |
 
 ### P4-D2: Medium-Effort Low-Priority Fixes
 
@@ -269,17 +270,69 @@ All external performance/material claims must be treated as **reported** or **un
 
 ---
 
-## 12. Progress Summary
+## 12. Landau-Khalatnikov Physics Engine Issues (NEW)
+
+**Status**: In Progress | **Priority**: P2 | **Added**: 2026-02-03
+
+The L-K dynamic physics engine has issues with ISPP write/read demo, particularly with high-Gamma materials like Literature Superlattice.
+
+### Fixed Issues
+
+| ID | Issue | File | Fix |
+|----|-------|------|-----|
+| LK01 | UseNLS not disabled for GUI | `physics_engine.go:68` | Added `UseNLS = false` ✅ |
+| LK02 | Reverse step cap too low (0.95×Ec) | `writer.go:645` | Increased to 1.5×Ec ✅ |
+| LK03 | Numerical overflow in RK4 | `landau.go:250` | Added rate limiter ✅ |
+
+### Open Issues
+
+| ID | Issue | Priority | Difficulty |
+|----|-------|----------|------------|
+| LK04 | L-K coefficients not calibrated to Ec/Pr | P2 | D3 |
+| LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 |
+| LK06 | Missing Q12 in some materials | P3 | D1 |
+| LK07 | Need longer WAIT phases for L-K settling | P2 | D2 |
+
+### LK04: L-K Parameters Don't Match Material Ec/Pr
+**Problem**: Landau coefficients (Alpha, Beta, Gamma) don't produce hysteresis matching defined Ec/Pr.
+**Symptoms**: Narrow/collapsed hysteresis, wrong switching fields
+**Solution Options**:
+1. Auto-calibrate from Ec/Pr: `Ec ≈ 2*sqrt(α³/β)`, `Pr ≈ sqrt(-α/β)`
+2. Pre-validated parameter sets per material
+3. Runtime calibration routine
+
+### LK05: ISPP Controller Assumes Preisach Behavior
+**Problem**: ISPP designed for quasi-static switching; L-K has time-dependent dynamics
+**Symptoms**: Stuck at intermediate levels, overshoots
+**Solution**: Physics-engine-aware step sizes, longer settling times
+
+### Testing Checklist
+- [ ] DefaultHZO + L-K + ISPP → all 30 levels
+- [ ] LiteratureSuperlattice + L-K + ISPP → all 30 levels
+- [ ] L-K + Sine Wave → proper hysteresis loop
+- [ ] Switch Preisach → L-K mid-sim → smooth transition
+
+### Code Locations
+| Component | File |
+|-----------|------|
+| L-K Solver | `shared/physics/landau.go` |
+| Material Params | `shared/physics/material.go` |
+| Physics Switch | `module1-hysteresis/pkg/gui/physics_engine.go` |
+| ISPP Controller | `module1-hysteresis/pkg/controller/writer.go` |
+
+---
+
+## 13. Progress Summary
 
 | Priority | Total | Done | Remaining | % Complete |
 |----------|-------|------|-----------|------------|
 | P1 Critical | 13 | 13 | 0 | 100% |
 | P2 High | 16 | 16 | 0 | 100% |
 | P3 Medium | 16 | 16 | 0 | 100% |
-| P4 Low | 10 | 7 | 3 | 70% |
-| **TOTAL** | **55** | **52** | **3** | **95%** |
+| P4 Low | 11 | 7 | 4 | 64% |
+| **TOTAL** | **56** | **52** | **4** | **93%** |
 
-**Estimated Remaining Effort**: ~27 hours
+**Estimated Remaining Effort**: ~28 hours
 
 **Session Progress (2026-01-29)**:
 - Sprint 2: C06 ✅, C07 ✅, C09 ✅, C10 ✅

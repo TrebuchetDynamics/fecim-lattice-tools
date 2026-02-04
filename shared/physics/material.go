@@ -84,7 +84,8 @@ type HZOMaterial struct {
 	ImrintField     float64 // Imprint field shift (V/m)
 
 	// Analog state capability
-	NumLevels int // Number of discrete analog states (0 = use default 30)
+	NumLevels       int     // Number of discrete analog states (0 = use default 30)
+	TargetRangeFrac float64 // Fraction of Ps used for outer level targets (0..1)
 
 	// NLS (Nucleation-Limited Switching) parameters for Merz law dynamics
 	// tau(E) = Tau0NLS * exp(EaNLS / |E|)
@@ -529,6 +530,7 @@ func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
 		RetentionTime:       m.RetentionTimeS,
 		ImrintField:         m.ImprintFieldVM,
 		NumLevels:           m.GetNumLevels(cfg),
+		TargetRangeFrac:     m.TargetRangeFrac,
 		K_dep:               m.DepolarizationFactorVMC,
 		BetaLandau:          m.Thermodynamics.BetaLandau,
 		GammaLandau:         m.Thermodynamics.GammaLandau,

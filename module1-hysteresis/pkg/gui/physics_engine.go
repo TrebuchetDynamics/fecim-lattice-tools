@@ -36,6 +36,23 @@ func (a *App) currentTemperature() float64 {
 	return 0
 }
 
+func (a *App) effectiveRangeFrac() float64 {
+	if a == nil {
+		return 1
+	}
+	if a.wrdRangeFrac > 0 && a.wrdRangeFrac <= 1 {
+		return a.wrdRangeFrac
+	}
+	return 1
+}
+
+func (a *App) effectivePsForLevels() float64 {
+	if a == nil || a.material == nil || a.material.Ps == 0 {
+		return 0
+	}
+	return a.material.Ps * a.effectiveRangeFrac()
+}
+
 // setPhysicsEngine switches the active polarization dynamics model.
 // This resets history and synchronizes the discrete level to avoid stale state.
 func (a *App) setPhysicsEngine(engine PhysicsEngine) {
@@ -65,6 +82,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		}
 		a.lkSolver.SetState(a.polarization)
 		a.lkSolver.Time = 0
+		a.lkSolver.UseNLS = false // Disable NLS for deterministic ISPP behavior
 		a.needsCalibration = true
 		a.calibrated = false
 		log.Printf("Physics engine switched to L-K (dynamic)")
@@ -113,7 +131,16 @@ func (a *App) syncDiscreteLevelLocked() {
 	if maxLevel < 1 {
 		maxLevel = 1
 	}
-	a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
+	levelNorm := a.normalizedP
+	if effPs := a.effectivePsForLevels(); effPs != 0 {
+		levelNorm = a.polarization / effPs
+	}
+	if levelNorm > 1 {
+		levelNorm = 1
+	} else if levelNorm < -1 {
+		levelNorm = -1
+	}
+	a.discreteLevel = int(math.Round((levelNorm + 1) / 2 * float64(maxLevel)))
 	if a.discreteLevel < 0 {
 		a.discreteLevel = 0
 	}

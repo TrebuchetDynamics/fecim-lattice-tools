@@ -64,7 +64,7 @@ func TestPreisachModel_SetTemperatureUpdatesEverett(t *testing.T) {
 		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedIrrev)
 	}
 
-	expectedDelta := expectedEc * 0.25
+	expectedDelta := tuneDeltaForPr(expectedEc, model.stack.SaturationE, expectedIrrev, material.Pr)
 	if math.Abs(model.everett.Delta-expectedDelta) > math.Abs(expectedDelta)*1e-8+1e-12 {
 		t.Fatalf("Delta mismatch: got %.6e, expected %.6e", model.everett.Delta, expectedDelta)
 	}

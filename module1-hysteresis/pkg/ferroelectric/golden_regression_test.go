@@ -272,7 +272,7 @@ func TestGoldenDataVersioning(t *testing.T) {
 		{
 			name:        "loop data",
 			file:        "golden_loop_default_hzo.json",
-			expectedVer: "1.3.0",
+			expectedVer: "1.4.0",
 			checkFields: func(data interface{}) error {
 				d := data.(*GoldenLoopData)
 				if d.Material != "DefaultHZO" {

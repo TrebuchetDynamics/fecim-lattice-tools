@@ -39,6 +39,25 @@ func abs(x int) int {
 	return x
 }
 
+const defaultWriteRangeFrac = 0.98
+
+func clampRangeFrac(frac float64) float64 {
+	if frac <= 0 || frac > 1 {
+		return defaultWriteRangeFrac
+	}
+	return frac
+}
+
+func rangeFracForMaterial(mat *ferroelectric.HZOMaterial) float64 {
+	if mat == nil {
+		return defaultWriteRangeFrac
+	}
+	if mat.TargetRangeFrac > 0 && mat.TargetRangeFrac <= 1 {
+		return mat.TargetRangeFrac
+	}
+	return defaultWriteRangeFrac
+}
+
 // App holds the main application state
 type App struct {
 	fyneApp    fyne.App
@@ -114,9 +133,12 @@ type App struct {
 	wrdLastControllerState controller.WriteState
 	wrdLastControllerPulse int
 	wrdLastProgressLog     float64
-	wrdLastBranch          int  // -1 lower branch, +1 upper branch, 0 unknown
-	wrdForceReset          bool // Force PREP on next cycle (overshoot/direction change)
-	wrdSkipPrep            bool // Skip PREP/RESET and write directly from current state
+	wrdLastBranch          int     // -1 lower branch, +1 upper branch, 0 unknown
+	wrdForceReset          bool    // Force PREP on next cycle (overshoot/direction change)
+	wrdSkipPrep            bool    // Skip PREP/RESET and write directly from current state
+	wrdRangeFrac           float64 // Fraction of Ps used for outer level targets (0..1)
+	wrdGuardFrac           float64 // Guard band fraction for MLC verify (0..0.5)
+	wrdRangeTimer          *time.Timer
 
 	// UI update throttling
 	lastUIUpdate time.Time
@@ -222,8 +244,10 @@ type App struct {
 	switchedLabel   *widget.Label
 
 	// Levels selector
-	levelsEntry *widget.Entry
-	levelsLabel *widget.Label
+	levelsEntry    *widget.Entry
+	levelsLabel    *widget.Label
+	wrdRangeLabel  *widget.Label
+	wrdRangeSlider *widget.Slider
 
 	// Educational slide and log
 	slideTitle   *widget.Label
@@ -446,6 +470,8 @@ func NewApp() *App {
 		wrdTargetLevel:          28, // Start high for dramatic first write
 		wrdNextTargetLevel:      0,
 		wrdSkipPrep:             true,
+		wrdRangeFrac:            rangeFracForMaterial(mat),
+		wrdGuardFrac:            0.15,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -534,6 +560,8 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdTargetLevel:     15,
 		wrdNextTargetLevel: 0,
 		wrdStartLevel:      15,
+		wrdRangeFrac:       rangeFracForMaterial(mat),
+		wrdGuardFrac:       0.15,
 		wrdBitsStored:      4.91,
 		manualTargetLevel:  15,
 		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),

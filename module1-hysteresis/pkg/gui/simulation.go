@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
 	sharedphysics "fecim-lattice-tools/shared/physics"
@@ -34,11 +35,12 @@ type TempCalibration struct {
 
 // CalibrationData holds persistent calibration state (v2+: multi-temperature support)
 type CalibrationData struct {
-	Version      int                      `json:"version"`       // Schema version (4 = Everett clamp fix)
-	MaterialName string                   `json:"material_name"` // Material these calibrations are for
-	NumLevels    int                      `json:"num_levels"`    // Number of discrete levels
-	Calibrations map[int]*TempCalibration `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
-	SavedAt      string                   `json:"saved_at"`      // Timestamp
+	Version         int                      `json:"version"`           // Schema version (4 = Everett clamp fix)
+	MaterialName    string                   `json:"material_name"`     // Material these calibrations are for
+	NumLevels       int                      `json:"num_levels"`        // Number of discrete levels
+	TargetRangeFrac float64                  `json:"target_range_frac"` // Effective Ps range used for level mapping
+	Calibrations    map[int]*TempCalibration `json:"calibrations"`      // Key: temperature in Kelvin (rounded)
+	SavedAt         string                   `json:"saved_at"`          // Timestamp
 
 	// Legacy v1 fields (for migration, not used in v2)
 	CalibrationUp   []float64 `json:"calibration_up,omitempty"`
@@ -164,11 +166,12 @@ func (a *App) saveCalibration() error {
 	}
 
 	data := CalibrationData{
-		Version:      calibrationVersion,
-		MaterialName: a.material.Name,
-		NumLevels:    a.numLevels,
-		Calibrations: calibrations,
-		SavedAt:      time.Now().Format(time.RFC3339),
+		Version:         calibrationVersion,
+		MaterialName:    a.material.Name,
+		NumLevels:       a.numLevels,
+		TargetRangeFrac: a.wrdRangeFrac,
+		Calibrations:    calibrations,
+		SavedAt:         time.Now().Format(time.RFC3339),
 	}
 
 	// Get per-material calibration file path
@@ -225,6 +228,14 @@ func (a *App) loadCalibration() bool {
 	}
 	if data.NumLevels != a.numLevels {
 		log.Printf("Calibration levels mismatch (got %d, want %d), will recalibrate", data.NumLevels, a.numLevels)
+		return false
+	}
+	if data.TargetRangeFrac <= 0 {
+		log.Printf("Calibration missing target_range_frac, will recalibrate")
+		return false
+	}
+	if math.Abs(data.TargetRangeFrac-a.wrdRangeFrac) > 1e-6 {
+		log.Printf("Calibration target range mismatch (file=%.3f, current=%.3f), will recalibrate", data.TargetRangeFrac, a.wrdRangeFrac)
 		return false
 	}
 
@@ -984,21 +995,26 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 			}
 		}
 	} else if a.autoMode {
-		Emax := mat.Ec * 2 // Use local copy for thread safety
+		Emax := mat.Ec * 2 // Default auto drive
+		driveMax := Emax
+		if a.physicsEngine == PhysicsLandau {
+			// L-K needs a stronger drive to traverse the full loop.
+			driveMax = mat.Ec * 2.5
+		}
 		// Wrap phase to prevent floating-point precision loss over long times
 		phase := math.Mod(2*math.Pi*a.frequency*a.simTime, 2*math.Pi)
 
 		switch a.waveform {
 		case WaveformSine:
-			a.electricField = Emax * math.Sin(phase)
+			a.electricField = driveMax * math.Sin(phase)
 		case WaveformTriangle:
 			p := phase / (2 * math.Pi)
 			if p < 0.25 {
-				a.electricField = Emax * (4 * p)
+				a.electricField = driveMax * (4 * p)
 			} else if p < 0.75 {
-				a.electricField = Emax * (2 - 4*p)
+				a.electricField = driveMax * (2 - 4*p)
 			} else {
-				a.electricField = Emax * (4*p - 4)
+				a.electricField = driveMax * (4*p - 4)
 			}
 		case WaveformWriteReadDemo:
 			// Write/read demo with deterministic pre-bias + ISPP:
@@ -1142,7 +1158,24 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				}
 
 				currentLevel := a.discreteLevel + 1
-				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
+				guardSign := 0
+				if a.material != nil && a.material.Ps != 0 && a.wrdGuardFrac > 0 {
+					bins := ferroelectric.NewLevelBins(a.material.Ps, a.numLevels, a.wrdRangeFrac, a.wrdGuardFrac)
+					level, inError, delta := bins.LevelForP(a.polarization)
+					currentLevel = level
+					if inError && level == targetLevel {
+						if delta > 0 {
+							guardSign = 1
+						} else if delta < 0 {
+							guardSign = -1
+						}
+						if guardSign != 0 && logging.IsVerbose(logging.VerbosityDebug) {
+							log.Printf("WRD GUARD: level=%d target=%d delta=%.4g (guard=%.2f)",
+								level, targetLevel, delta, a.wrdGuardFrac)
+						}
+					}
+				}
+				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel, guardSign)
 
 				if a.writeController != nil && (a.wrdLastControllerState != a.writeController.State || a.wrdLastControllerPulse != a.writeController.PulseCount) {
 					if logging.IsVerbose(logging.VerbosityDebug) {
@@ -1280,6 +1313,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.electricField -= step
 				} else {
 					a.electricField += step
+				}
+				// Final read at E=0 to verify the level (stable state).
+				if math.Abs(a.electricField) < 0.01*Ec {
+					a.wrdReadLevel = a.discreteLevel + 1
 				}
 				// Transition to next cycle
 				if a.wrdPhaseTimer > phaseDuration*0.6 {
@@ -2148,8 +2185,8 @@ func (a *App) calibrateLevels() {
 		a.relaxCompDown[i] = 0.0
 	}
 
-	// Normalize using Ps to match runtime discrete-level mapping
-	effPs := a.material.Ps
+	// Normalize using effective Ps to match runtime discrete-level mapping
+	effPs := a.effectivePsForLevels()
 	if effPs <= 0 {
 		effPs = a.material.Pr
 	}
@@ -2394,8 +2431,8 @@ func (a *App) calibrateLevelsLK() {
 		dtMax = pulseDuration
 	}
 
-	// Level mapping from polarization
-	effPs := a.material.Ps
+	// Level mapping from polarization (effective Ps for range back-off)
+	effPs := a.effectivePsForLevels()
 	if effPs == 0 {
 		effPs = a.material.Pr
 	}
@@ -2452,7 +2489,7 @@ func (a *App) calibrateLevelsLK() {
 				step = dtMax
 			}
 
-			targetField, done := wc.Update(step, currentField, currentLevel)
+			targetField, done := wc.Update(step, currentField, currentLevel, 0)
 			currentField = targetField
 			solver.Step(currentField, step)
 			elapsed += step

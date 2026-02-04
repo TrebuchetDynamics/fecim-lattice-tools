@@ -55,6 +55,8 @@ func NewEmbeddedApp() *EmbeddedApp {
 		wrdTargetLevel:     28, // Start high for dramatic first write
 		wrdNextTargetLevel: 0,
 		wrdSkipPrep:        true,
+		wrdRangeFrac:       rangeFracForMaterial(mat),
+		wrdGuardFrac:       0.15,
 		maxLogLines:        12,
 		logEntries:         make([]string, 0, 12),
 		lastLogPhase:       -1,

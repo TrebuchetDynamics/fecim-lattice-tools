@@ -42,6 +42,7 @@ Preisach‑type models are appropriate for systems exhibiting **wipe‑out** and
 - `shared/physics/preisach.go`
 - `module1-hysteresis/pkg/ferroelectric/preisach.go`
 - `shared/physics/material.go`
+- `module1-hysteresis/pkg/ferroelectric/level_bins.go` (MLC guard‑band binning)
 
 **Algorithmic Structure**
 - A **turning‑point stack** stores input extrema; direction changes push turning points.
@@ -50,7 +51,7 @@ Preisach‑type models are appropriate for systems exhibiting **wipe‑out** and
 
 **Everett Function Used**
 - The Everett function is implemented with a **tanh‑based surrogate** to reproduce a smooth S‑shaped major loop.
-- The distribution width is set as `Delta = 0.25 * Ec` and saturation field `E_sat = 5 * Ec`.
+- The distribution width `Delta` is **tuned per material** so the remanent polarization matches `Pr` (fallback: `0.25 * Ec`), and the saturation field is `E_sat = 5 * Ec`.
 
 **Reversible (Nonlinear) Relaxation**
 - We add a **nonlinear reversible component** derived from permittivity (no tuning knobs):
@@ -60,6 +61,38 @@ Preisach‑type models are appropriate for systems exhibiting **wipe‑out** and
 - To preserve total saturation **Ps**, the irreversible saturation is reduced to:
   - `Ps_irrev = Ps − P_rev_sat`
 - This yields curved relaxation when E decreases, without manual parameters.
+
+**MLC Level Binning + Guard Band (Read Margin)**
+- We model discrete MLC levels as **bins with guard bands** rather than a hard round‑to‑nearest only.
+- Binning uses centers spaced by `2*Ps/(N-1)` (consistent with the current round‑mapping).
+- Each bin has a **guard fraction** (default `0.15`) that marks edge regions as unsafe for reliable read.
+- Implementation: `module1-hysteresis/pkg/ferroelectric/level_bins.go` (`LevelBins.LevelForP`).
+
+**Write‑Verify Behavior with Guard Bands**
+- During the ISPP write‑verify loop, the simulation treats “in‑guard” reads as **not yet valid** even if the level index matches the target.
+- The controller receives a guard‑direction hint and applies a small correction pulse toward the bin center.
+- This models real MLC behavior where the sense amplifier rejects edge states and forces extra program/verify iterations.
+
+**Short Example (30 Levels)**
+Assume `Ps = 0.55 C/m²`, `N = 30`, `GuardFrac = 0.15`.
+
+```text
+Step = 2*Ps/(N-1) = 2*0.55/29 ≈ 0.03793 C/m²
+Guard width = 0.15*Step ≈ 0.00569 C/m²
+
+Level k center: Pk = -Ps + (k-1)*Step
+Safe zone: [Pk - 0.5*Step + Guard, Pk + 0.5*Step - Guard]
+```
+
+If a read lands inside the guard zone, the write‑verify loop treats it as “not yet valid”
+and nudges the state toward the bin center.
+
+**Guard Band Diagram (One Bin)**
+
+```text
+|---edge guard---|======= safe =======|---edge guard---|
+Pk - 0.5*Step    Pk                   Pk + 0.5*Step
+```
 
 **Temperature & Stress Effects**
 - Effective Ec and Ps are updated via linear scaling in the material model.

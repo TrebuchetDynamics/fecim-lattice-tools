@@ -66,6 +66,96 @@ func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
 	return val
 }
 
+// tuneDeltaForPr estimates a Tanh Everett distribution width (Delta) so that
+// the remanent polarization after a full saturation-and-return matches targetPr.
+// This keeps the Preisach loop consistent with the material Pr/Ps ratio.
+func tuneDeltaForPr(ec, saturationE, psIrrev, targetPr float64) float64 {
+	if ec <= 0 {
+		return 0
+	}
+	if psIrrev <= 0 || targetPr <= 0 {
+		return ec * 0.25
+	}
+
+	satE := math.Abs(saturationE)
+	if satE <= 0 {
+		satE = ec * 5.0
+	}
+
+	targetRatio := targetPr / psIrrev
+	if targetRatio <= 0 {
+		return ec * 2.0
+	}
+	if targetRatio > 0.999 {
+		targetRatio = 0.999
+	}
+	if targetRatio < 0.01 {
+		targetRatio = 0.01
+	}
+
+	ratioFor := func(delta float64) float64 {
+		if delta <= 0 {
+			return 0
+		}
+		everett := &TanhEverett{
+			Ps:    psIrrev,
+			Ec:    ec,
+			Delta: delta,
+		}
+		stack := physics.NewPreisachStack(satE, everett)
+		stack.Update(satE)
+		pr := stack.Update(0)
+		if psIrrev == 0 {
+			return 0
+		}
+		ratio := pr / psIrrev
+		if ratio < 0 {
+			return 0
+		}
+		if ratio > 1 {
+			return 1
+		}
+		return ratio
+	}
+
+	lo := ec * 0.05
+	hi := ec * 2.0
+	rLo := ratioFor(lo)
+	rHi := ratioFor(hi)
+	if rLo < rHi {
+		lo, hi = hi, lo
+		rLo, rHi = rHi, rLo
+	}
+
+	// Expand search bounds if needed to bracket target.
+	for rLo < targetRatio && lo > ec*1e-6 {
+		lo *= 0.5
+		rLo = ratioFor(lo)
+	}
+	for rHi > targetRatio && hi < ec*10.0 {
+		hi *= 1.5
+		rHi = ratioFor(hi)
+	}
+
+	if targetRatio >= rLo {
+		return lo
+	}
+	if targetRatio <= rHi {
+		return hi
+	}
+
+	for i := 0; i < 32; i++ {
+		mid := 0.5 * (lo + hi)
+		rMid := ratioFor(mid)
+		if rMid > targetRatio {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return 0.5 * (lo + hi)
+}
+
 // PreisachModel implements the Preisach hysteresis model for ferroelectrics.
 // Wraps the shared/physics.PreisachStack engine.
 // PreisachModel implements the Preisach hysteresis model for ferroelectrics.
@@ -97,7 +187,7 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 	everett := &TanhEverett{
 		Ps:    material.Ps,
 		Ec:    material.Ec,
-		Delta: material.Ec * 0.25, // 25% distribution width
+		Delta: material.Ec * 0.25, // Initial guess; tuned to match Pr in updateReversibleParams
 	}
 
 	// E_saturation should be > Ec. typically 3-5x Ec.
@@ -227,6 +317,13 @@ func (p *PreisachModel) updateReversibleParams() {
 		p.reversiblePSat = totalPs
 	}
 	p.everett.Ps = psIrrev
+
+	// Tune Delta so that remanent polarization matches material Pr.
+	satE := p.everett.Ec * 5.0
+	if p.stack != nil && p.stack.SaturationE > 0 {
+		satE = p.stack.SaturationE
+	}
+	p.everett.Delta = tuneDeltaForPr(p.everett.Ec, satE, p.everett.Ps, p.material.Pr)
 }
 
 // GetHysteresisLoop generates a full P-E hysteresis loop.
@@ -286,7 +383,6 @@ func (p *PreisachModel) SetTemperature(tempK float64) {
 
 	// Update Everett function
 	p.everett.Ec = newEc
-	p.everett.Delta = newEc * 0.25
 	p.effectivePs = newPs
 	p.updateReversibleParams()
 }
@@ -353,7 +449,6 @@ func (p *PreisachModel) updateEffectiveParameters() {
 
 	// Update Everett
 	p.everett.Ec = newEc
-	p.everett.Delta = newEc * 0.25
 	p.effectivePs = newPs
 	p.updateReversibleParams()
 }

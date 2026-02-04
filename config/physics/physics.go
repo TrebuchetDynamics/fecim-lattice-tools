@@ -69,9 +69,10 @@ type Material struct {
 	Reference   string `yaml:"reference"`
 
 	// Multi-level capability
-	AnalogStates   int  `yaml:"analog_states,omitempty"`   // Number of discrete states (e.g., 30, 32, 140)
-	TRLLevel       int  `yaml:"trl_level,omitempty"`       // Technology Readiness Level (1-9)
-	CMOSCompatible bool `yaml:"cmos_compatible,omitempty"` // CMOS fabrication compatible
+	AnalogStates    int     `yaml:"analog_states,omitempty"`     // Number of discrete states (e.g., 30, 32, 140)
+	TargetRangeFrac float64 `yaml:"target_range_frac,omitempty"` // Fraction of Ps used for outer level targets (0..1)
+	TRLLevel        int     `yaml:"trl_level,omitempty"`         // Technology Readiness Level (1-9)
+	CMOSCompatible  bool    `yaml:"cmos_compatible,omitempty"`   // CMOS fabrication compatible
 
 	// Depolarization (Polycrystalline Analog Behavior)
 	DepolarizationFactorVMC float64 `yaml:"depolarization_factor_vm_c,omitempty"` // V*m/C - Creates "slant" for 30-level operation
@@ -119,17 +120,17 @@ type Material struct {
 	ScFraction float64 `yaml:"sc_fraction,omitempty"` // Scandium fraction in AlScN
 
 	// In2Se3-specific (2D ferroelectric)
-	PrInplaneCM2       float64 `yaml:"pr_inplane_c_m2,omitempty"`       // In-plane Pr for 2D materials
-	EcThinVM           float64 `yaml:"ec_thin_v_m,omitempty"`           // Ec for ultrathin films
-	EcThickVM          float64 `yaml:"ec_thick_v_m,omitempty"`          // Ec for thicker films
-	BandgapEV          float64 `yaml:"bandgap_ev,omitempty"`            // Bandgap for semiconductor FE
-	MinThicknessM      float64 `yaml:"min_thickness_m,omitempty"`       // Minimum viable thickness
-	QuintupleLayerNm   float64 `yaml:"quintuple_layer_nm,omitempty"`    // QL thickness for 2D
-	VdWMaterial        bool    `yaml:"vdw_material,omitempty"`          // Van der Waals layered
-	Stacking           string  `yaml:"stacking,omitempty"`              // Stacking type (3R, 2H)
-	Phase              string  `yaml:"phase,omitempty"`                 // Crystal phase (alpha, beta)
-	AlphaToBetaTempK   float64 `yaml:"alpha_to_beta_temp_k,omitempty"`  // Phase transition temp
-	LinearityImprovement bool  `yaml:"linearity_improvement,omitempty"` // Better linearity at cryo
+	PrInplaneCM2         float64 `yaml:"pr_inplane_c_m2,omitempty"`       // In-plane Pr for 2D materials
+	EcThinVM             float64 `yaml:"ec_thin_v_m,omitempty"`           // Ec for ultrathin films
+	EcThickVM            float64 `yaml:"ec_thick_v_m,omitempty"`          // Ec for thicker films
+	BandgapEV            float64 `yaml:"bandgap_ev,omitempty"`            // Bandgap for semiconductor FE
+	MinThicknessM        float64 `yaml:"min_thickness_m,omitempty"`       // Minimum viable thickness
+	QuintupleLayerNm     float64 `yaml:"quintuple_layer_nm,omitempty"`    // QL thickness for 2D
+	VdWMaterial          bool    `yaml:"vdw_material,omitempty"`          // Van der Waals layered
+	Stacking             string  `yaml:"stacking,omitempty"`              // Stacking type (3R, 2H)
+	Phase                string  `yaml:"phase,omitempty"`                 // Crystal phase (alpha, beta)
+	AlphaToBetaTempK     float64 `yaml:"alpha_to_beta_temp_k,omitempty"`  // Phase transition temp
+	LinearityImprovement bool    `yaml:"linearity_improvement,omitempty"` // Better linearity at cryo
 
 	// Synaptic device parameters
 	Synaptic MaterialSynaptic `yaml:"synaptic,omitempty"`

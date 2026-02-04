@@ -358,7 +358,7 @@ func runHysteresisMode(engine string) error {
 			// Phase 1 is now skipped - transition goes directly from PREP (0) to WRITE (2)
 
 			case 2: // WRITE - delegated to WriteController
-				targetField, done := writeController.Update(currentStep, currentField, currentLevel)
+				targetField, done := writeController.Update(currentStep, currentField, currentLevel, 0)
 
 				diff := targetField - currentField
 				stepSize := 3.0 * mat.Ec * 2 * frequency * 1.5 * currentStep
