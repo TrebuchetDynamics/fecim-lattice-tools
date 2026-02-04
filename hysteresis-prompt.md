@@ -125,7 +125,7 @@ Example (FeCIM HZO): see `/tmp/lk_trace.txt` or re-run:
 - Persist and sync into `CalibrationManager`.
 
 5) Target/marker parity (bug hunt)
-- Ensure GUI yellow target reflects the **current** target only.
+- Ensure GUI yellow target reflects the **current** target only (source of truth: `writeController.TargetLevel` while active).
 - Next target must be **queued** and only applied at PREP start.
 - If mismatch persists, instrument **phase-boundary logs** to compare:
   - `wrdTargetLevel`
@@ -141,6 +141,7 @@ Example (FeCIM HZO): see `/tmp/lk_trace.txt` or re-run:
 6) Documentation updates
 - Update docs only when behavior or equations change.
 - Keep `TODO.md` and the physics equations UI scope in sync with current tasks.
+- Calibration JSON hygiene: calibration baselines are tracked; use `git update-index --assume-unchanged` locally to avoid accidental commits of auto-updated drift.
 
 Validation
 
@@ -220,6 +221,11 @@ Recent evidence (L-K)
   - MID still converges (evidence: `ISPP step 5 (MID): ... success=true ... writtenLevel=42` in `logs/2026-02-03_20-16-15-fecim.log`).
 
 Recent Changes (2026-02-02)
+
+Recent GUI Layout Changes (2026-02-04)
+
+- Hysteresis GUI layout refactor: sectioned controls (Cards), scrollable controls panel, VSplit for Info vs Log, scrollable Physics Equations equation pane, and smaller min sizes for better small-window usability.
+  - Commit: `26e4a2c refactor: improve hysteresis GUI layout`
 
 1) Dual physics engines in GUI: L-K (dynamic) and Preisach (quasi-static) toggle.
 2) L-K solver wired into GUI simulation path; Preisach preserved as mode.

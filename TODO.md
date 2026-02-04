@@ -6,6 +6,15 @@
 
 ## LK Tracking (headless)
 
+## Calibration JSON hygiene
+
+- Calibration baselines live in `cmd/fecim-lattice-tools/data/calibrations/*.json`.
+- These files are **tracked** (so `.gitignore` will not help). To prevent accidental commits of auto-updated calibration drift, mark them locally as unchanged:
+  - `git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/literature_superlattice.json`
+  - (reverse: `git update-index --no-assume-unchanged <file>`)
+- Policy: do **not** commit calibration JSON changes unless intentionally updating the baseline + evidence logs.
+
+
 - LK04: ✅ Ec-normalization implemented (scale Landau coefficients to match material Ec while preserving Pr). Evidence: `logs/2026-02-03_20-16-15-fecim.log` shows HI2/LO5/MID targets converging under Literature Superlattice.
 - LK05/LK07: still pending (reduce overshoot/oscillation around MID and tighten bounds/step logic; see overshoots in MID).
 
@@ -124,7 +133,7 @@
 | M04 | ~~Energy breakdown annotation (peripheral percentages)~~ | ✅ | Done |
 | M05 | ~~Glossary widget integration~~ | ✅ | Done |
 | M06 | ~~References widget with DOI links~~ | ✅ | Done |
-| M16 | Physics equations UI: cover hysteresis ISPP, Preisach, and Landau (labels + links) | ⏳ | 1hr |
+| M16 | Physics equations UI: cover hysteresis ISPP, Preisach, and Landau (labels + links) | ✅ | Done |
 
 ### P3-D2: Medium-Effort Medium-Priority Fixes
 
