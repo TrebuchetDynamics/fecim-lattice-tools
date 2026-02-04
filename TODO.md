@@ -291,7 +291,7 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 |----|-------|----------|------------|
 | LK04 | L-K coefficients not calibrated to Ec/Pr | P2 | D3 |
 | LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 |
-| LK06 | Missing Q12 in some materials | P3 | D1 |
+| LK06 | Missing Q12 in some materials | P3 | D1 | (headless presets patched; defaults cover remaining)
 | LK07 | Need longer WAIT phases for L-K settling | P2 | D2 |
 
 ### LK04: L-K Parameters Don't Match Material Ec/Pr
