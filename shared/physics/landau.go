@@ -7,6 +7,29 @@ import (
 	"fecim-lattice-tools/shared/logging"
 )
 
+func estimateLandauEc(alpha, beta, gamma, pr float64) float64 {
+	if pr <= 0 {
+		return 0
+	}
+	// Coarse grid search: Ec ~ max |dG/dP| over (-Pr,Pr).
+	// With first-order Landau (beta<0,gamma>0), the switching saddle typically
+	// occurs on the opposite-polarity branch (e.g. negative P when writing up),
+	// so using |dG/dP| is robust.
+	const n = 8000
+	maxAbs := 0.0
+	for i := 1; i < n; i++ {
+		p := -pr + 2*pr*float64(i)/float64(n)
+		p2 := p * p
+		p3 := p2 * p
+		p5 := p3 * p2
+		dg := (2 * alpha * p) + (4 * beta * p3) + (6 * gamma * p5)
+		if v := math.Abs(dg); v > maxAbs {
+			maxAbs = v
+		}
+	}
+	return maxAbs
+}
+
 // Package-level logger for Landau-Khalatnikov solver diagnostics.
 var lkLog *logging.Logger
 
@@ -187,6 +210,29 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 		pr := math.Abs(mat.Pr)
 		s.Alpha = -2.0*s.Beta*pr*pr - 3.0*s.Gamma*math.Pow(pr, 4)
 		s.UseMaterialAlpha = true
+
+		// Optional LK04: scale Landau coefficients to match the material's advertised Ec.
+		// The raw (alpha,beta,gamma) sets often imply coercive fields far from mat.Ec,
+		// which makes the LK engine effectively unswitchable within the controller's MaxField.
+		//
+		// We compute a coarse theoretical coercive field from the Landau polynomial
+		// E_L(P) = dG/dP (without depolarization) and scale (alpha,beta,gamma) by a
+		// single factor so that Ec_theory ≈ mat.Ec while preserving Pr.
+		if mat.Ec > 0 {
+			ecTheory := estimateLandauEc(s.Alpha, s.Beta, s.Gamma, pr)
+			if ecTheory > 0 {
+				scale := mat.Ec / ecTheory
+				// Clamp to a sane range to avoid pathological configs.
+				if scale < 1e-3 {
+					scale = 1e-3
+				} else if scale > 1e3 {
+					scale = 1e3
+				}
+				s.Beta *= scale
+				s.Gamma *= scale
+				s.Alpha *= scale
+			}
+		}
 	}
 	// Configure saturation clamp using material Ps/Pr when available.
 	pMax := math.Max(math.Abs(mat.Ps), math.Abs(mat.Pr))

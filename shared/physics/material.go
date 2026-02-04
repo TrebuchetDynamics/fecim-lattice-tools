@@ -185,6 +185,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 		RetentionTime:   1e10, // Literature best-case
 		ImrintField:     0.5e6,
 		NumLevels:       64,      // Enhanced superlattice can achieve more states
+		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps (≈Pr) for reachability under depolarization/relaxation
 		Tau0NLS:         0.5e-10, // 50 ps (faster switching)
 		EaNLS:           10e8,    // 10 MV/cm (lower barrier)
 		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower due to better control)

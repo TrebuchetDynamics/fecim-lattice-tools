@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -90,6 +91,17 @@ func runHysteresisMode(engine string) error {
 		gmin = 1e-6
 		gmax = 100e-6
 	}
+
+	rangeFrac := mat.TargetRangeFrac
+	if s := strings.TrimSpace(os.Getenv("FECIM_RANGE_FRAC")); s != "" {
+		if v, err := strconv.ParseFloat(s, 64); err == nil {
+			rangeFrac = v
+		}
+	}
+	if rangeFrac <= 0 || rangeFrac > 1 {
+		rangeFrac = 1
+	}
+	effPs := mat.Ps * rangeFrac
 
 	var dataLogger *hysgui.HysteresisDataLogger
 	if logger, err := hysgui.NewHysteresisDataLogger(mat.Name); err != nil {
@@ -220,6 +232,7 @@ func runHysteresisMode(engine string) error {
 	logPerf("SWEEP")
 
 	log.Info("ISPP write-verify sequence starting")
+	log.Info("Headless level mapping: effPs=%.3e C/m^2 (rangeFrac=%.3f, matPs=%.3e)", effPs, rangeFrac, mat.Ps)
 	calibManager := algo.NewCalibrationManager(numLevels)
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
@@ -294,7 +307,7 @@ func runHysteresisMode(engine string) error {
 		perfDtMinThreshold = dtMin
 		_, targetLevel := headlessLevelFromConductance(step.targetG, gmin, gmax, numLevels)
 		currentField := 0.0
-		currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
+		currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 		_, currentLevel := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 		stepStart := simTime
 		maxSimTime := phaseDuration * float64(writeController.MaxRetries+100)
@@ -340,7 +353,7 @@ func runHysteresisMode(engine string) error {
 				}
 			}
 
-			currentG := physics.PolarizationToConductance(effectiveP, mat.Ps, gmin, gmax)
+			currentG := physics.PolarizationToConductance(effectiveP, effPs, gmin, gmax)
 			_, currentLevel = headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 			wrd.readLevel = currentLevel
 
@@ -484,7 +497,7 @@ func runHysteresisMode(engine string) error {
 
 		// Use the captured success state if available, otherwise use relaxed state
 		finalP := currentP
-		finalG := physics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+		finalG := physics.PolarizationToConductance(finalP, effPs, gmin, gmax)
 		_, finalLevel := headlessLevelFromConductance(finalG, gmin, gmax, numLevels)
 		success := writeController.State == controller.StateSuccess
 		attempts := writeController.PulseCount
@@ -497,7 +510,7 @@ func runHysteresisMode(engine string) error {
 			reportP = successP
 			reportLevel = successLevel
 		}
-		reportG := physics.PolarizationToConductance(reportP, mat.Ps, gmin, gmax)
+		reportG := physics.PolarizationToConductance(reportP, effPs, gmin, gmax)
 
 		log.Info("ISPP step %d (%s): targetG=%.3e targetLevel=%d attempts=%d success=%v overshoots=%d writtenLevel=%d writtenP=%.3e writtenG=%.3e (relaxedP=%.3e)",
 			i+1, step.label, step.targetG, targetLevel, attempts, success, overshoots, reportLevel, reportP, reportG, finalP)
@@ -627,11 +640,16 @@ func recordHeadlessSnapshot(
 	}
 
 	currentP := state.polarization
-	currentG := physics.PolarizationToConductance(currentP, mat.Ps, gmin, gmax)
+	rangeFrac := mat.TargetRangeFrac
+	if rangeFrac <= 0 || rangeFrac > 1 {
+		rangeFrac = 1
+	}
+	effPs := mat.Ps * rangeFrac
+	currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 	levelIdx, level := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 	normalizedP := 0.0
-	if mat.Ps != 0 {
-		normalizedP = currentP / mat.Ps
+	if effPs != 0 {
+		normalizedP = currentP / effPs
 		if normalizedP < -1 {
 			normalizedP = -1
 		} else if normalizedP > 1 {
