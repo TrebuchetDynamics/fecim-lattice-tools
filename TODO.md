@@ -88,6 +88,52 @@
 
 ## 4. HIGH PRIORITY (P2) - Fix Before Academic Use
 
+## Engineering Guardrails (Architecture Review)
+
+### P1: Reproducibility + drift control
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G01 | Calibration drift guard: add `scripts/calib-guard.sh` to fail CI if `cmd/fecim-lattice-tools/data/calibrations/*.json` changes unless `ALLOW_CALIBRATION_UPDATES=1` | ⏳ | 1-2hr |
+| G02 | Add “intentional calibration update” policy: require linking the evidence log/CSV paths in the commit message/body when calibrations are updated | ⏳ | 30m |
+| G03 | Provide optional `pre-commit` hook template to block calibration JSON commits by default (not auto-installed) | ⏳ | 30m |
+
+### P1: Engine parity / regression evidence (headless-first)
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G04 | Headless WRD/ISPP regression suite: Preisach target-hit within N pulses for HI/MID/LO; emits a compact JSON summary artifact | ⏳ | 2-4hr |
+| G05 | Headless LK regression suite: same targets + overshoot/pulse stats (looser thresholds OK), emits JSON summary | ⏳ | 2-4hr |
+| G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}` or document actual selector); ensure all docs/runbooks reference the same mechanism | ⏳ | 30-60m |
+
+### P2: LK05/LK07 stabilization accounting (make it measurable)
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G07 | Add LK ISPP overshoot accounting counters: overshoots/target, max overshoot Δ(level), stuck-breaker invocations, bisection usage rate | ⏳ | 1-2hr |
+| G08 | Define acceptance criteria for Literature Superlattice MID stability (overshoot rate/variance bounds) and record evidence in `hysteresis-prompt.md` | ⏳ | 30-60m |
+
+### P2: Performance diagnosis tooling
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G09 | Add a single command/script to generate LK perf evidence for 3 targets (steps, dt min/mean/max, solverMs, %dtMinHits) and save output under `logs/` | ⏳ | 1-2hr |
+| G10 | (Optional) Add `pprof` toggle for headless hysteresis runs (`FECIM_PPROF=1`) and document usage | ⏳ | 1-2hr |
+
+### P2: GUI correctness guardrails
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G11 | Throttled WRD phase-boundary logging spec: log `wrdTargetLevel`, `wrdNextTargetLevel`, `controller.TargetLevel`, `controller.State`, `discreteLevel` at transitions (no per-frame spam) | ⏳ | 1hr |
+| G12 | Add “GUI parity smoke test” checklist (5-min manual run) with expected log lines + what screenshots to capture | ⏳ | 30-60m |
+
+### P3: UX polish standard
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| G13 | Define minimum supported GUI size (e.g., 1024×768) and ensure key widgets (Physics Equations, Log, Controls) remain usable (scroll/min-size conventions) | ⏳ | 30-60m |
+
+
 ### P2-D1: Easy High-Priority Fixes
 
 | ID | Task | Status | Est. |
