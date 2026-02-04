@@ -104,6 +104,7 @@
 |----|------|--------|------|
 | G04 | Headless WRD/ISPP regression suite: Preisach target-hit within N pulses for HI/MID/LO; emits a compact JSON summary artifact | ⏳ | 2-4hr |
 | G04b | One-source-of-truth ISPP write engine: refactor so the ISPP state machine lives in `shared/physics` and is reused by module1-hysteresis (GUI + headless) and module4-circuits (GUI + CLI). Remove duplicate controllers (`module1-hysteresis/pkg/controller/WriteController` vs `shared/physics/WriteController` vs module4 local ISPP state) or make them thin adapters. | ⏳ | 4-12hr |
+| G04c | Shared ISPP migration plan: define the shared API (target=level and/or conductance), mapping adapters per module, and a deprecation plan for old controllers; add parity tests to prove behavior matches across modules | ⏳ | 1-2hr |
 | G05 | Headless LK regression suite: same targets + overshoot/pulse stats (looser thresholds OK), emits JSON summary | ⏳ | 2-4hr |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}` or document actual selector); ensure all docs/runbooks reference the same mechanism | ⏳ | 30-60m |
 | G06b | Verification matrix: for each material, verify both Preisach + LK run and hit a small target set (HI/MID/LO) without crashes; record a one-line PASS/FAIL summary | ⏳ | 1-2hr |
