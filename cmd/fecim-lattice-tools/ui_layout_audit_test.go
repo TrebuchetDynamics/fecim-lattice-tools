@@ -6,12 +6,14 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
@@ -88,6 +90,7 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 				img := captureWindow(w)
 				saveTestScreenshot(t, img, baseName)
 				verifyImageNotEmpty(t, img, baseName)
+				captureOverlays(t, w, content, m.name, int(sz.w), int(sz.h), "base")
 
 				// Traverse all AppTabs (including nested). For each tab set, capture each tab.
 				tabSets := findAllAppTabs(content)
@@ -99,6 +102,7 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 						img := captureWindow(w)
 						saveTestScreenshot(t, img, name)
 						verifyImageNotEmpty(t, img, name)
+						captureOverlays(t, w, content, m.name, int(sz.w), int(sz.h), fmt.Sprintf("tabs%d_i%d", k, i))
 					}
 				}
 			}
@@ -169,6 +173,138 @@ func findAllAppTabs(root fyne.CanvasObject) []*container.AppTabs {
 
 	walk(root)
 	return out
+}
+
+func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, module string, w, h int, phase string) {
+	t.Helper()
+
+	// Conservative allow-list: text labels that typically open popups/modals.
+	allow := map[string]bool{
+		"about":    true,
+		"help":     true,
+		"docs":     true,
+		"glossary": true,
+		"info":     true,
+		"learn":    true,
+	}
+	closeWords := map[string]bool{
+		"close":   true,
+		"back":    true,
+		"dismiss": true,
+		"ok":      true,
+		"done":    true,
+	}
+
+	buttons := findAllButtons(root)
+	seenLabel := map[string]int{}
+
+	for _, b := range buttons {
+		label := strings.TrimSpace(b.Text)
+		if label == "" {
+			continue
+		}
+		norm := strings.ToLower(label)
+		if !allow[norm] {
+			continue
+		}
+		if b.OnTapped == nil {
+			continue
+		}
+
+		// Trigger overlay
+		b.OnTapped()
+		time.Sleep(150 * time.Millisecond)
+
+		idx := seenLabel[norm]
+		seenLabel[norm] = idx + 1
+		name := fmt.Sprintf("layout_%s_%dx%d_overlay_%s_%s_%d", module, w, h, safeName(norm), safeName(phase), idx)
+		img := captureWindow(win)
+		saveTestScreenshot(t, img, name)
+		verifyImageNotEmpty(t, img, name)
+
+		// Best-effort close: look for a close/back/dismiss button and tap it.
+		for _, cb := range findAllButtons(root) {
+			cl := strings.ToLower(strings.TrimSpace(cb.Text))
+			if closeWords[cl] && cb.OnTapped != nil {
+				cb.OnTapped()
+				break
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func findAllButtons(root fyne.CanvasObject) []*widget.Button {
+	seenObj := map[uintptr]bool{}
+	seenBtn := map[uintptr]bool{}
+	var out []*widget.Button
+
+	var walk func(o fyne.CanvasObject)
+	walk = func(o fyne.CanvasObject) {
+		if o == nil {
+			return
+		}
+		ptr := ptrID(o)
+		if ptr != 0 {
+			if seenObj[ptr] {
+				return
+			}
+			seenObj[ptr] = true
+		}
+
+		if b, ok := o.(*widget.Button); ok {
+			bid := ptrID(b)
+			if bid == 0 || !seenBtn[bid] {
+				if bid != 0 {
+					seenBtn[bid] = true
+				}
+				out = append(out, b)
+			}
+			return
+		}
+
+		if tabs, ok := o.(*container.AppTabs); ok {
+			for _, it := range tabs.Items {
+				walk(it.Content)
+			}
+			return
+		}
+
+		if c, ok := o.(*fyne.Container); ok {
+			for _, child := range c.Objects {
+				walk(child)
+			}
+			return
+		}
+
+		// Reflection-based fallback for wrappers (e.g., Scroll) that hold a single child.
+		v := reflect.ValueOf(o)
+		if v.Kind() == reflect.Pointer {
+			v = v.Elem()
+		}
+		if v.IsValid() && v.Kind() == reflect.Struct {
+			for _, fieldName := range []string{"Content", "content"} {
+				f := v.FieldByName(fieldName)
+				if f.IsValid() && f.CanInterface() {
+					if child, ok := f.Interface().(fyne.CanvasObject); ok {
+						walk(child)
+					}
+				}
+			}
+		}
+	}
+
+	walk(root)
+	return out
+}
+
+func safeName(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	s = strings.ReplaceAll(s, " ", "-")
+	s = strings.ReplaceAll(s, "/", "-")
+	s = strings.ReplaceAll(s, "\\", "-")
+	s = strings.ReplaceAll(s, ":", "-")
+	return s
 }
 
 func ptrID(o any) uintptr {
