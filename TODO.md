@@ -4,6 +4,11 @@
 
 **Last updated**: 2026-02-04
 
+## LK Tracking (headless)
+
+- LK04: ✅ Ec-normalization implemented (scale Landau coefficients to match material Ec while preserving Pr). Evidence: `logs/2026-02-03_20-16-15-fecim.log` shows HI2/LO5/MID targets converging under Literature Superlattice.
+- LK05/LK07: still pending (reduce overshoot/oscillation around MID and tighten bounds/step logic; see overshoots in MID).
+
 **Master Critique Source**: See `CRITIQUE_MASTER_LIST.md` for consolidated items (snapshot). Current status lives in `docs/project/STATUS.md`.
 
 ---
