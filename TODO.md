@@ -135,6 +135,9 @@
 | ID | Task | Status | Est. |
 |----|------|--------|------|
 | G13 | Define minimum supported GUI size (e.g., 1024×768) and ensure key widgets (Physics Equations, Log, Controls) remain usable (scroll/min-size conventions) | ⏳ | 30-60m |
+| G14 | GUI overlap audit: reproduce widget overlap/clipping on resize (controls cards, log, plot/level, equations tab) and fix via min-sizes, scrolls, and split offsets (layout-only) | ⏳ | 1-2hr |
+| G15 | GUI layout doc sync: update `docs/development/GUI/GUI.module1.md` to match current code (post-2026-02-04 layout refactor), including correct min sizes, scroll containers, splits, and component hierarchy | ⏳ | 1-2hr |
+| G16 | Documentation mapping sweep: audit `docs/development/GUI/GUI.module{1..7}.md` for drift vs code; add a lightweight checklist + update “Last Updated” stamps when verified | ⏳ | 2-4hr |
 
 
 ### P2-D1: Easy High-Priority Fixes

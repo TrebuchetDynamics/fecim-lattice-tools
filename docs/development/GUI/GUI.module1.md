@@ -3,7 +3,7 @@ Module: module1-hysteresis
 Name: Hysteresis Visualizer
 Entry: cmd/hysteresis/main.go
 Package: fecim-lattice-tools/module1-hysteresis/pkg/gui
-Last Updated: 2026-02-02
+Last Updated: 2026-02-04
 ---
 
 Conventions:
@@ -88,16 +88,15 @@ Screens:
                         - name: cellViz
                           type: widgets.CellVisualizer
                           purpose: Visual representation of ferroelectric cell
-                          file: gui.go:327-328, widgets/cell.go:17-241
-                          state: [level (0-29), minSize=180x200]
+                          file: gui.go (createUI), widgets/cell.go:17-241
+                          state: [level (0-29), minSize=160x180]
                           bindings: [SetLevel, Refresh]
                   center:
-                    - Container: Scroll
+                    - Container: VSplit
+                      purpose: Info stack (scrollable) above Log panel
                       Components:
-                        - name: infoPanel
-                          type: container.VBox
-                          purpose: Display state and material info
-                          file: info.go:16-54
+                        - top: container.VScroll (infoStack)
+                        - bottom: logPanel (padded)
                           Components:
                             - name: stateGrid
                               type: container.GridWithColumns(2)
@@ -131,10 +130,10 @@ Screens:
                           state: [slideText with wrapping]
                           bindings: [SetText from getSlideText]
                         - name: logPanel
-                          type: widget.Label
-                          purpose: Memory operations log
-                          file: info.go:65-69
-                          state: [logText with wrapping]
+                          type: container.VBox
+                          purpose: Memory operations log (scrollable)
+                          file: info.go:createLogPanel
+                          state: [logText with wrapping, toggle]
                           bindings: [SetText from getLogText]
                         - name: metricsGrid
                           type: container.GridWithColumns(2)
@@ -160,7 +159,7 @@ Screens:
                   - name: plot
                     type: widgets.PEPlot
                     purpose: Display hysteresis P-E curve
-                    file: gui.go:331-332, widgets/peplot.go:16-398
+                    file: gui.go (createUI), widgets/peplot.go:16-398
                     state:
                       - eData: []float64 (history)
                       - pData: []float64 (history)
@@ -168,7 +167,7 @@ Screens:
                       - currentP: float64
                       - eMax: float64 (bounds)
                       - pMax: float64 (bounds)
-                      - minSize: 400x350
+                      - minSize: 360x300
                     bindings:
                       - SetBounds(eMax, pMax)
                       - SetData(eHist, pHist, currentE, currentP)
@@ -183,7 +182,7 @@ Screens:
                       - targetLevel: int (for highlighting)
                       - highlightTarget: bool
                       - interactive: bool (shows CLICK TO SET vs AUTO indicator)
-                      - minSize: 80x350
+                      - minSize: 70x300
                       - OnLevelClicked: func(targetLevel int)
                     bindings:
                       - SetLevel(level)
@@ -194,9 +193,9 @@ Screens:
                     bugs: [BUG-M1-006]
 
               - name: rightColumn
-                type: container.VBox
-                purpose: Control panel with sliders and buttons
-                file: gui.go:399-402
+                type: container.Border
+                purpose: Controls panel (scrollable) with fixed min width for responsive layouts
+                file: gui.go:createUI
                 Components:
                   - name: controlsPanel
                     type: container.VBox
