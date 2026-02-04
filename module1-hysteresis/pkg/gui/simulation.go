@@ -1562,17 +1562,19 @@ type uiSnapshot struct {
 	physicsEngine PhysicsEngine
 	paused        bool
 
-	wrdPhase          int
-	wrdTargetLevel    int
-	wrdReadLevel      int
-	wrdTotalWrites    int
-	wrdSuccessWrites  int
-	wrdTotalEnergyfJ  float64
-	manualAnimating   bool
-	manualPhase       int
-	manualTargetLevel int
-	manualStartLevel  int
-	controllerState   controller.WriteState
+	wrdPhase              int
+	wrdTargetLevel        int
+	wrdReadLevel          int
+	wrdTotalWrites        int
+	wrdSuccessWrites      int
+	wrdTotalEnergyfJ      float64
+	manualAnimating       bool
+	manualPhase           int
+	manualTargetLevel     int
+	manualStartLevel      int
+	controllerState       controller.WriteState
+	controllerTargetLevel int
+	controllerField       float64
 }
 
 // ensureUIUpdateLoop starts the async UI update loop exactly once.
@@ -1651,8 +1653,12 @@ func (a *App) updateUI() {
 	manualTargetLevel := a.manualTargetLevel
 	manualStartLevel := a.manualStartLevel
 	ctrlState := controller.StateIdle
+	ctrlTargetLevel := 0
+	ctrlField := 0.0
 	if a.writeController != nil {
 		ctrlState = a.writeController.State
+		ctrlTargetLevel = a.writeController.TargetLevel
+		ctrlField = a.writeController.CurrentField
 	}
 	materialEc := 0.0
 	effEc := 0.0
@@ -1684,31 +1690,33 @@ func (a *App) updateUI() {
 	a.mu.RUnlock()
 
 	a.queueUIUpdate(uiSnapshot{
-		fE:                fE,
-		pV:                pV,
-		dL:                dL,
-		eC:                materialEc,
-		hE:                eHist,
-		hP:                pHist,
-		effEc:             effEc,
-		effPr:             effPr,
-		materialPs:        materialPs,
-		normalizedP:       normalizedP,
-		numLevels:         numLevels,
-		waveform:          waveform,
-		physicsEngine:     physicsEngine,
-		paused:            paused,
-		wrdPhase:          wrdPhase,
-		wrdTargetLevel:    wrdTargetLevel,
-		wrdReadLevel:      wrdReadLevel,
-		wrdTotalWrites:    wrdTotalWrites,
-		wrdSuccessWrites:  wrdSuccessWrites,
-		wrdTotalEnergyfJ:  wrdTotalEnergyfJ,
-		manualAnimating:   manualAnimating,
-		manualPhase:       manualPhase,
-		manualTargetLevel: manualTargetLevel,
-		manualStartLevel:  manualStartLevel,
-		controllerState:   ctrlState,
+		fE:                    fE,
+		pV:                    pV,
+		dL:                    dL,
+		eC:                    materialEc,
+		hE:                    eHist,
+		hP:                    pHist,
+		effEc:                 effEc,
+		effPr:                 effPr,
+		materialPs:            materialPs,
+		normalizedP:           normalizedP,
+		numLevels:             numLevels,
+		waveform:              waveform,
+		physicsEngine:         physicsEngine,
+		paused:                paused,
+		wrdPhase:              wrdPhase,
+		wrdTargetLevel:        wrdTargetLevel,
+		wrdReadLevel:          wrdReadLevel,
+		wrdTotalWrites:        wrdTotalWrites,
+		wrdSuccessWrites:      wrdSuccessWrites,
+		wrdTotalEnergyfJ:      wrdTotalEnergyfJ,
+		manualAnimating:       manualAnimating,
+		manualPhase:           manualPhase,
+		manualTargetLevel:     manualTargetLevel,
+		manualStartLevel:      manualStartLevel,
+		controllerState:       ctrlState,
+		controllerTargetLevel: ctrlTargetLevel,
+		controllerField:       ctrlField,
 	})
 }
 
@@ -2021,8 +2029,33 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	// Highlight target level during animations
 	currentMode := snapshot.waveform
 	currentWrdPh := snapshot.wrdPhase
-	currentWrdTrg := snapshot.wrdTargetLevel
 	ctrlState := snapshot.controllerState
+	ctrlTarget := snapshot.controllerTargetLevel
+	currentWrdTrg := snapshot.wrdTargetLevel
+	if ctrlTarget > 0 {
+		currentWrdTrg = ctrlTarget
+	}
+	// If the controller is active, trust its target as the UI source of truth.
+	// This prevents the yellow target highlight from desyncing when a queued target
+	// is pending or a mid-phase correction temporarily overrides the nominal WRD target.
+	if snapshot.waveform == WaveformWriteReadDemo && ctrlTarget > 0 && ctrlTarget != snapshot.wrdTargetLevel {
+		if a != nil {
+			a.mu.Lock()
+			if a.lastTargetMismatchLog.IsZero() || time.Since(a.lastTargetMismatchLog) > time.Second {
+				a.lastTargetMismatchLog = time.Now()
+				log.Printf("WRD TARGET MISMATCH: wrdTarget=%d ctrlTarget=%d ctrlState=%s phase=%d read=%d E=%.3f×Ec",
+					snapshot.wrdTargetLevel, ctrlTarget, ctrlState.String(), snapshot.wrdPhase, snapshot.wrdReadLevel,
+					func() float64 {
+						if snapshot.eC != 0 {
+							return snapshot.fE / snapshot.eC
+						}
+						return 0
+					}(),
+				)
+			}
+			a.mu.Unlock()
+		}
+	}
 	manAnim := snapshot.manualAnimating
 	manTrg := snapshot.manualTargetLevel
 	matEcVal := eC // For settled threshold

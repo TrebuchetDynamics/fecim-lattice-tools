@@ -141,7 +141,8 @@ type App struct {
 	wrdRangeTimer          *time.Timer
 
 	// UI update throttling
-	lastUIUpdate time.Time
+	lastUIUpdate          time.Time
+	lastTargetMismatchLog time.Time
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations

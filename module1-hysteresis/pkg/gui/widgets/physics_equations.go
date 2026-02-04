@@ -92,8 +92,9 @@ func mathLabel(text string) *widget.Label {
 // NewPhysicsEquationsWidget builds the equation display with tooltips.
 func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
 	tabs := container.NewAppTabs(
-		container.NewTabItem("L-K Equation", buildLkEquationTab(parent)),
-		container.NewTabItem("Preisach Equation", buildPreisachEquationTab(parent)),
+		container.NewTabItem("L-K (dynamic)", buildLkEquationTab(parent)),
+		container.NewTabItem("Preisach (quasi-static)", buildPreisachEquationTab(parent)),
+		container.NewTabItem("ISPP / WRD", buildIsppControllerTab(parent)),
 	)
 	tabs.SetTabLocation(container.TabLocationTop)
 	return container.NewVBox(tabs)
@@ -145,13 +146,64 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	infoTabs := buildPreisachInfoTabs()
 
 	title := widget.NewLabelWithStyle(
-		"Preisach Equation (Module 1)",
+		"Preisach Model (Module 1)",
 		fyne.TextAlignLeading,
 		fyne.TextStyle{Bold: true},
 	)
 
 	return container.NewPadded(container.NewVBox(
 		title,
+		split,
+		infoTabs,
+	))
+}
+
+func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
+	_ = parent
+	detailPanel, detailCard := newTermDetailPanel()
+	selectTerm := func(termID, fallback string) {
+		detailPanel.SetDetail(termID, fallback)
+	}
+
+	// Simple, code-faithful controller summary. This is intentionally not a single
+	// closed-form equation; it is a state machine with bounds/bisection.
+	line1 := container.NewHBox(
+		mathLabel("Goal: write discrete level L* such that "),
+		NewTermChip("ispp_verify", "L_read == L_target", "VERIFY compares the read-back discrete level against the active controller target.", selectTerm),
+	)
+	line2 := container.NewHBox(
+		NewTermChip("ispp_bounds", "Bounds", "Maintain Vmin<Vmax as a bracket around the target; bisection uses the bracket when available.", selectTerm),
+		mathLabel(": Vmin < Vpulse < Vmax"),
+	)
+	line3 := container.NewHBox(
+		NewTermChip("ispp_step", "Step", "Adaptive step-size: increases when stuck/no-improve; shrinks near target to avoid overshoot.", selectTerm),
+		mathLabel(": V_{k+1} = clamp(V_k ± ΔV, [Vmin,Vmax])"),
+	)
+	line4 := container.NewHBox(
+		NewTermChip("ispp_overshoot", "Overshoot", "If we cross past the target level, reset bounds/state and apply a short reverse correction.", selectTerm),
+	)
+	caption := widget.NewLabel("See code for exact states/transitions: module1-hysteresis/pkg/controller + headless runner in cmd/fecim-lattice-tools/mode.go")
+	caption.Wrapping = fyne.TextWrapWord
+	caption.TextStyle = fyne.TextStyle{Italic: true}
+
+	eqPanel := container.NewVBox(
+		widget.NewLabelWithStyle("ISPP / Write-Read-Demo Controller", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		line1,
+		line2,
+		line3,
+		line4,
+		caption,
+	)
+
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+
+	split := container.NewHSplit(eqPanel, detailScroll)
+	split.Offset = 0.62
+
+	infoTabs := buildIsppInfoTabs()
+
+	return container.NewPadded(container.NewVBox(
 		split,
 		infoTabs,
 	))

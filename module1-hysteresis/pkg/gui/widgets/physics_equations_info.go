@@ -332,6 +332,16 @@ func buildLkInfoTabs() fyne.CanvasObject {
 	return tabs
 }
 
+func buildIsppInfoTabs() fyne.CanvasObject {
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Overview", scrollSection(buildIsppOverviewSection())),
+		container.NewTabItem("States", scrollSection(buildIsppStatesSection())),
+		container.NewTabItem("Stability", scrollSection(buildIsppStabilitySection())),
+		container.NewTabItem("Code refs", scrollSection(buildIsppCodeRefsSection())),
+	)
+	return tabs
+}
+
 func buildPreisachInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
