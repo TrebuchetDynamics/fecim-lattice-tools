@@ -120,12 +120,16 @@ func (e *EmbeddedApp) Stop() {
 	e.running = false
 	e.stopDataLogger()
 
-	// Save calibration for next session
-	e.mu.Lock()
-	if err := e.saveCalibration(); err != nil {
-		log.Printf("Warning: failed to save calibration: %v", err)
-	}
-	e.mu.Unlock()
+	// Save calibration for next session (async to avoid UI stalls on view switches)
+	go func() {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		if err := e.saveCalibration(); err != nil {
+			if log != nil {
+				log.Printf("Warning: failed to save calibration: %v", err)
+			}
+		}
+	}()
 
 	e.EmbeddedAppBase.Stop()
 }
