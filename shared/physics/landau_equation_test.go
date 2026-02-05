@@ -77,3 +77,30 @@ func TestLKSolver_SetState_IgnoresInvalid(t *testing.T) {
 		t.Fatal("solver should ignore invalid polarization values")
 	}
 }
+
+func TestLKSolver_SwitchesUnderStrongField(t *testing.T) {
+	mat := LiteratureSuperlattice()
+	if mat == nil {
+		t.Fatal("expected material config")
+	}
+	s := NewLKSolver()
+	s.ConfigureFromMaterial(mat)
+	s.Temperature = 300
+	s.EnableNoise = false
+	s.UseNLS = false
+	if !s.UseMaterialAlpha {
+		s.UpdateParams()
+	}
+	s.SetState(0)
+
+	dt := 1e-4
+	E := 2.5 * mat.Ec
+	start := s.GetState()
+	for i := 0; i < 2000; i++ {
+		s.Step(E, dt)
+	}
+	end := s.GetState()
+	if math.Abs(end) <= math.Abs(start)+0.1 {
+		t.Fatalf("expected polarization to move under strong field: start=%.4f end=%.4f", start, end)
+	}
+}

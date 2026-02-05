@@ -313,38 +313,34 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 		}
 	}
 
-	// RK4 Integration with rate limiting for numerical stability
+	// RK4 Integration with stability guards.
 	prevP := s.P
 
-	// Rate limiter: cap dP/dt to prevent overflow with high-Gamma materials.
-	//
-	// IMPORTANT: dP/dt has physical units; using rhoEff here as a time scale makes the
-	// clamp far too aggressive (it effectively freezes dynamics at small dt).
-	//
-	// For numerical safety we instead bound dP/dt so that P cannot change by more than
-	// ~2*PMax per integration step, with a generous absolute ceiling.
-	maxRate := 0.0
-	if dt > 0 {
-		maxRate = 2.0 * s.PMax / dt
-	}
-	if maxRate <= 0 || maxRate > 1e12 {
-		maxRate = 1e12 // Absolute cap to prevent overflow
-	}
-
+	// Rate limiter: cap |dP/dt| with a fixed ceiling to avoid overflow without
+	// canceling the RK4 step (dt-scaled clamps can cause k1/k2 sign flipping).
+	const maxAbsRate = 1e12
 	clampRate := func(rate float64) float64 {
-		if rate > maxRate {
-			return maxRate
+		if rate > maxAbsRate {
+			return maxAbsRate
 		}
-		if rate < -maxRate {
-			return -maxRate
+		if rate < -maxAbsRate {
+			return -maxAbsRate
 		}
 		return rate
 	}
 
-	k1 := clampRate(s.dPdT(0, s.P, E, noise, rhoEff))
-	k2 := clampRate(s.dPdT(dt/2, s.P+0.5*dt*k1, E, noise, rhoEff))
-	k3 := clampRate(s.dPdT(dt/2, s.P+0.5*dt*k2, E, noise, rhoEff))
-	k4 := clampRate(s.dPdT(dt, s.P+dt*k3, E, noise, rhoEff))
+	// Clamp intermediate polarization states to keep RK4 evaluation stable.
+	clampState := func(p float64) float64 {
+		return s.clampP(p)
+	}
+
+	k1 := clampRate(s.dPdT(0, prevP, E, noise, rhoEff))
+	p2 := clampState(prevP + 0.5*dt*k1)
+	k2 := clampRate(s.dPdT(dt/2, p2, E, noise, rhoEff))
+	p3 := clampState(prevP + 0.5*dt*k2)
+	k3 := clampRate(s.dPdT(dt/2, p3, E, noise, rhoEff))
+	p4 := clampState(prevP + dt*k3)
+	k4 := clampRate(s.dPdT(dt, p4, E, noise, rhoEff))
 
 	if invalidFloat(k1) || invalidFloat(k2) || invalidFloat(k3) || invalidFloat(k4) {
 		s.logNumericalIssue("k", E, dt, rhoEff, noise, prevP)
@@ -353,6 +349,15 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	}
 
 	dP := (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
+	// Prevent pathological single-step jumps while preserving direction.
+	if s.PMax > 0 {
+		maxDelta := 2.0 * s.PMax
+		if dP > maxDelta {
+			dP = maxDelta
+		} else if dP < -maxDelta {
+			dP = -maxDelta
+		}
+	}
 	if invalidFloat(dP) {
 		s.logNumericalIssue("dP", E, dt, rhoEff, noise, prevP)
 		s.Time += dt

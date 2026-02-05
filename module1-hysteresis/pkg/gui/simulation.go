@@ -1159,8 +1159,15 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 
 				currentLevel := a.discreteLevel + 1
 				guardSign := 0
-				if a.material != nil && a.material.Ps != 0 && a.wrdGuardFrac > 0 {
-					bins := ferroelectric.NewLevelBins(a.material.Ps, a.numLevels, a.wrdRangeFrac, a.wrdGuardFrac)
+				if a.material != nil && a.wrdGuardFrac > 0 {
+					ps := a.material.Ps
+					if a.physicsEngine == PhysicsLandau && a.material.Pr > 0 {
+						ps = a.material.Pr
+					}
+					if ps == 0 {
+						ps = a.material.Ps
+					}
+					bins := ferroelectric.NewLevelBins(ps, a.numLevels, a.wrdRangeFrac, a.wrdGuardFrac)
 					level, inError, delta := bins.LevelForP(a.polarization)
 					currentLevel = level
 					if inError && level == targetLevel {

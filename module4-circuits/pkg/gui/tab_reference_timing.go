@@ -27,6 +27,7 @@ func (ca *CircuitsApp) createReferenceTimingSection() fyne.CanvasObject {
 
 	// Operation selector
 	ca.timingOpSelect = widget.NewSelect([]string{"WRITE", "READ", "COMPUTE"}, func(s string) {
+		logInput("timing_op=%s", s)
 		ca.refreshTimingDiagrams()
 	})
 	ca.timingOpSelect.SetSelected("WRITE")
@@ -518,6 +519,7 @@ func (ca *CircuitsApp) refreshTimingDiagrams() {
 }
 
 func (ca *CircuitsApp) onAnimateTiming() {
+	logAction("timing_animate")
 	// Animate signal phases step by step with status updates
 	selectedOp := ca.timingOpSelect.Selected
 
@@ -575,6 +577,7 @@ func (ca *CircuitsApp) onAnimateTiming() {
 }
 
 func (ca *CircuitsApp) onExportTimingSVG() {
+	logAction("timing_export_svg")
 	// Show "Coming soon" dialog for SVG export feature
 	if ca.window != nil {
 		dialog.ShowInformation("Export SVG",

@@ -47,10 +47,18 @@ func (a *App) effectiveRangeFrac() float64 {
 }
 
 func (a *App) effectivePsForLevels() float64 {
-	if a == nil || a.material == nil || a.material.Ps == 0 {
+	if a == nil || a.material == nil {
 		return 0
 	}
-	return a.material.Ps * a.effectiveRangeFrac()
+	base := a.material.Ps
+	// L-K dynamics settle around Pr (remanent), so map levels to Pr-range in Landau mode.
+	if a.physicsEngine == PhysicsLandau && a.material.Pr > 0 {
+		base = a.material.Pr
+	}
+	if base == 0 {
+		return 0
+	}
+	return base * a.effectiveRangeFrac()
 }
 
 // setPhysicsEngine switches the active polarization dynamics model.

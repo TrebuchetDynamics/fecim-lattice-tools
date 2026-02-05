@@ -224,6 +224,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.mu.Lock()
 		ca.zoomLevel = v
 		ca.mu.Unlock()
+		logInput("zoom=%.2f", v)
 		ca.zoomLabel.SetText(fmt.Sprintf("%.0f%%", v*100))
 		fyne.Do(func() {
 			if ca.sharedArrayCanvas != nil {
@@ -233,6 +234,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	}
 
 	fitBtn := widget.NewButton("Fit", func() {
+		logAction("button_zoom_fit")
 		ca.zoomSlider.SetValue(1.0)
 	})
 
@@ -271,6 +273,7 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 		var rows, cols int
 		n, _ := fmt.Sscanf(selected, "%dx%d", &rows, &cols)
 		if n == 2 && rows > 0 && rows <= MaxArraySize && cols > 0 && cols <= MaxArraySize {
+			logInput("array_size=%s", selected)
 			ca.resizeArray(rows, cols)
 		}
 	})
@@ -357,6 +360,7 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 				if m.Name == mat.Name {
 					ca.deviceState.SetMaterial(m)
 					ca.materialBtn.SetText(m.Name)
+					logInput("material=%s", m.Name)
 					ca.updateDACRangeModeLabel()
 					ca.recomputeAndRefresh()
 					ca.operationsStatusLabel.SetText(fmt.Sprintf("Material: %s (Vc=%.2fV)", m.Name, m.CoerciveVoltage()))
@@ -403,6 +407,7 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 		default:
 			bits = 5
 		}
+		logInput("adc_bits=%d", bits)
 		ca.deviceState.SetADCBits(bits)
 		ca.recomputeAndRefresh()
 		levels := 1 << bits
@@ -432,6 +437,7 @@ func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 	allEntry := widget.NewEntry()
 	allEntry.SetPlaceHolder("0.50")
 	allEntry.OnSubmitted = func(s string) {
+		logInput("dac_all_submit=%s", s)
 		ca.setAllUnifiedDACVoltages(s)
 	}
 
@@ -480,8 +486,11 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	if ca.deviceState == nil {
 		return
 	}
-
+	prev := ca.deviceState.GetOperationMode()
 	ca.deviceState.SetOperationMode(mode)
+	if prev != mode {
+		logAction("mode_switch %s -> %s", opModeLabel(prev), opModeLabel(mode))
+	}
 
 	// In passive mode, all WLs are always on - skip WL configuration
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
@@ -635,6 +644,7 @@ func (ca *CircuitsApp) onDACVoltageChanged(col int, voltageStr string) {
 		voltage = 2.0
 	}
 
+	logInput("dac_col=%d voltage=%.3f", col, voltage)
 	ca.deviceState.SetDACVoltage(col, voltage)
 	ca.recomputeAndRefresh()
 }
@@ -658,6 +668,7 @@ func (ca *CircuitsApp) setAllUnifiedDACVoltages(voltageStr string) {
 	if err != nil {
 		return
 	}
+	logInput("dac_all=%.3f", voltage)
 	ca.deviceState.SetAllDACVoltages(voltage)
 	ca.updateDACEntries()
 	ca.recomputeAndRefresh()
@@ -687,6 +698,7 @@ func (ca *CircuitsApp) setWLModeAll() {
 // onUnifiedCellTapped handles cell selection
 // In READ/WRITE mode: selects row transistor (WL) and column transistor (BL)
 func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
+	logInput("cell_selected row=%d col=%d", row, col)
 	ca.deviceState.SetSelectedCell(row, col)
 
 	mode := ca.deviceState.GetOperationMode()
@@ -898,6 +910,7 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.mu.Lock()
 		ca.architecture = arch
 		ca.mu.Unlock()
+		logInput("architecture=%s", arch)
 
 		if arch == sharedwidgets.Architecture0T1R {
 			// Passive mode: all WLs always active, cannot be changed
@@ -994,6 +1007,7 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 
 	// Calculate voltage for display only (don't apply to DAC)
 	voltage := ca.deviceState.CalculateVoltageForState(level, ca.quantLevels)
+	logInput("write_level=%d voltage=%.3f", level, voltage)
 
 	fyne.Do(func() {
 		if ca.mfuxWriteLevelLabel != nil {
@@ -1114,6 +1128,7 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 	if value > 255 {
 		value = 255
 	}
+	logInput("input_vector x%d=%d", col, value)
 
 	// Always store the value (for when user switches to COMPUTE mode)
 	ca.mu.Lock()
@@ -1150,6 +1165,7 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 		valuesCopy[i] = ca.inputVector[i]
 	}
 	ca.mu.Unlock()
+	logAction("input_vector_randomized len=%d", len(valuesCopy))
 
 	// Update entry widgets (no lock - use copy)
 	fyne.Do(func() {
@@ -1185,6 +1201,7 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 	// IMPORTANT: Unlock BEFORE fyne.Do to prevent deadlock.
 	// SetText triggers OnChanged which acquires ca.mu.
 	ca.mu.Unlock()
+	logAction("input_vector_cleared len=%d", len(ca.inputVector))
 
 	// Update entry widgets (no lock held - safe)
 	fyne.Do(func() {

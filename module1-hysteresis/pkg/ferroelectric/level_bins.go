@@ -66,10 +66,10 @@ func (b LevelBins) LevelForP(P float64) (level int, inError bool, delta float64)
 		return 1, true, P
 	}
 
-	if P > b.Ps {
-		P = b.Ps
-	} else if P < -b.Ps {
-		P = -b.Ps
+	if P > effectivePs {
+		P = effectivePs
+	} else if P < -effectivePs {
+		P = -effectivePs
 	}
 
 	step := b.Step()

@@ -43,6 +43,7 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 
 	selectedRow := ca.deviceState.GetSelectedRow()
 	selectedCol := ca.deviceState.GetSelectedCol()
+	logAction("write_start row=%d col=%d target=%d", selectedRow, selectedCol, targetLevel)
 
 	// H3 FIX: Save current state to undo history before modifying
 	ca.saveUndoHistory()
@@ -194,6 +195,7 @@ func (ca *CircuitsApp) onUnifiedRead() {
 
 	selectedRow := ca.deviceState.GetSelectedRow()
 	selectedCol := ca.deviceState.GetSelectedCol()
+	logAction("read row=%d col=%d", selectedRow, selectedCol)
 
 	// Per VOLTAGE_RULES.md: Only selected row active
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
@@ -246,6 +248,7 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 		ca.operationsStatusLabel.SetText("Error: Switch to COMPUTE mode first")
 		return
 	}
+	logAction("compute_mvm rows=%d cols=%d", ca.arrayRows, ca.arrayCols)
 
 	// Ensure all rows are active for MVM
 	ca.deviceState.SetWLAll()
@@ -350,6 +353,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 func (ca *CircuitsApp) onUnifiedReset() {
 	// Save current state to undo history before resetting
 	ca.saveUndoHistory()
+	logAction("reset_array rows=%d cols=%d", ca.arrayRows, ca.arrayCols)
 
 	// Reset all array weights to mid-level (e.g., 15 for 30 levels)
 	midLevel := ca.quantLevels / 2
@@ -385,6 +389,7 @@ func (ca *CircuitsApp) onUnifiedReset() {
 func (ca *CircuitsApp) onUnifiedRandomArray() {
 	// H3 FIX: Save current state to undo history before modifying
 	ca.saveUndoHistory()
+	logAction("randomize_array rows=%d cols=%d", ca.arrayRows, ca.arrayCols)
 
 	ca.mu.Lock()
 	for r := range ca.arrayWeights {
@@ -425,6 +430,7 @@ func (ca *CircuitsApp) onUndo() {
 		ca.mu.Unlock()
 		return
 	}
+	logAction("undo_array rows=%d cols=%d", ca.arrayRows, ca.arrayCols)
 
 	// Restore array from history with defensive length check
 	for i := range ca.arrayWeights {

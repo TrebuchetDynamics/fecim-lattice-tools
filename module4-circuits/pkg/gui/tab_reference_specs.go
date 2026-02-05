@@ -115,13 +115,16 @@ func (ca *CircuitsApp) createReferenceSpecsSection() fyne.CanvasObject {
 func (ca *CircuitsApp) createSpecArraySection() fyne.CanvasObject {
 	sizeOptions := []string{"8", "16", "32", "64", "128"}
 	ca.specArraySizeSelect = widget.NewSelect(sizeOptions, func(s string) {
+		logInput("spec_array_size=%s", s)
 		// Update the summary when size changes
 		ca.updateSpecSummary()
 	})
 	ca.specArraySizeSelect.SetSelected("32")
 
 	levelOptions := []string{"2", "4", "8", "16", "30", "32", "64", "128", "256"}
-	ca.specQuantLevelSelect = widget.NewSelect(levelOptions, nil)
+	ca.specQuantLevelSelect = widget.NewSelect(levelOptions, func(s string) {
+		logInput("spec_quant_levels=%s", s)
+	})
 	ca.specQuantLevelSelect.SetSelected("30")
 
 	// Calculate storage
@@ -152,7 +155,9 @@ func (ca *CircuitsApp) createSpecArraySection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) createSpecDACSection() fyne.CanvasObject {
 	dacBitsOptions := []string{"4", "5", "6", "7", "8", "10", "12"}
-	ca.specDACBitsSelect = widget.NewSelect(dacBitsOptions, nil)
+	ca.specDACBitsSelect = widget.NewSelect(dacBitsOptions, func(s string) {
+		logInput("spec_dac_bits=%s", s)
+	})
 	ca.specDACBitsSelect.SetSelected("8")
 
 	specGrid := container.NewGridWithColumns(3,
@@ -213,7 +218,9 @@ func (ca *CircuitsApp) createSpecDACSection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) createSpecADCSection() fyne.CanvasObject {
 	adcBitsOptions := []string{"4", "5", "6", "7", "8", "10", "12"}
-	ca.specADCBitsSelect = widget.NewSelect(adcBitsOptions, nil)
+	ca.specADCBitsSelect = widget.NewSelect(adcBitsOptions, func(s string) {
+		logInput("spec_adc_bits=%s", s)
+	})
 	ca.specADCBitsSelect.SetSelected("8")
 
 	specGrid := container.NewGridWithColumns(3,
@@ -270,7 +277,9 @@ func (ca *CircuitsApp) createSpecADCSection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) createSpecTIASection() fyne.CanvasObject {
 	tiaGainOptions := []string{"1", "10", "100"}
-	ca.specTIAGainSelect = widget.NewSelect(tiaGainOptions, nil)
+	ca.specTIAGainSelect = widget.NewSelect(tiaGainOptions, func(s string) {
+		logInput("spec_tia_gain=%s", s)
+	})
 	ca.specTIAGainSelect.SetSelected("10")
 
 	specGrid := container.NewGridWithColumns(3,
@@ -524,6 +533,7 @@ func (ca *CircuitsApp) updateSpecSummary() {
 }
 
 func (ca *CircuitsApp) onExportSpecs() {
+	logAction("specs_export")
 	// Show "Coming soon" dialog for specs export feature
 	if ca.window != nil {
 		dialog.ShowInformation("Export Specifications",
@@ -533,6 +543,7 @@ func (ca *CircuitsApp) onExportSpecs() {
 }
 
 func (ca *CircuitsApp) onCompareToGPU() {
+	logAction("specs_compare_gpu")
 	// Show comparison summary in status label
 	fyne.Do(func() {
 		ca.specStatusLabel.SetText("FeFET vs GPU: ~6.6x faster than CPU (76ns vs 500ns). FeFET per-MAC energy ~46 fJ in this model.")

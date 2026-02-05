@@ -34,9 +34,8 @@ func TestLevelBinsLevelForPUsesEffectivePs(t *testing.T) {
 	if inError {
 		t.Fatalf("LevelForP(1.0) inError=true want=false")
 	}
-	wantDelta := 0.2
-	if math.Abs(delta-wantDelta) > 1e-9 {
-		t.Fatalf("LevelForP(1.0) delta=%.6f want=%.6f", delta, wantDelta)
+	if math.Abs(delta) > 1e-9 {
+		t.Fatalf("LevelForP(1.0) delta=%.6f want=0", delta)
 	}
 }
 

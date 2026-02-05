@@ -29,6 +29,7 @@ func (ca *CircuitsApp) createReferenceTab() fyne.CanvasObject {
 
 	// Section selector (callback now safe - sections are assigned)
 	sectionSelect := widget.NewSelect([]string{"TIMING DIAGRAMS", "SPECIFICATIONS", "VOLTAGE RULES"}, func(s string) {
+		logInput("reference_section=%s", s)
 		ca.onReferenceSectionChanged(s)
 	})
 	sectionSelect.SetSelected("TIMING DIAGRAMS")

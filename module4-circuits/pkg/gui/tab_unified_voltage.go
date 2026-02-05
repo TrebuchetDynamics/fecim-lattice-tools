@@ -39,6 +39,12 @@ var (
 // Shows: RESET -> HOLD -> WRITE -> HOLD -> VERIFY with phase highlighting
 func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 	phaseInfo := ca.deviceState.GetWritePhaseInfo()
+	if phaseInfo.Phase == PhaseWrite {
+		isppStatus := ca.deviceState.GetISPPStatus()
+		if isppStatus.Active {
+			phaseInfo.PhaseVoltage = isppStatus.Voltage
+		}
+	}
 
 	// Phase labels with durations
 	phases := []struct {
@@ -110,6 +116,8 @@ func (ca *CircuitsApp) animateWriteSequence() {
 			return
 		}
 
+		ca.applyWritePhaseVoltages(phaseInfo)
+
 		// Get phase duration for timing
 		duration := GetPhaseDuration(phaseInfo.Phase)
 
@@ -128,6 +136,9 @@ func (ca *CircuitsApp) animateWriteSequence() {
 		// Advance to next phase
 		complete := ca.deviceState.AdvanceWritePhase()
 		if complete {
+			// Reset voltages after sequence completes
+			finalPhase := ca.deviceState.GetWritePhaseInfo()
+			ca.applyWritePhaseVoltages(finalPhase)
 			ca.updateWriteSequenceUI()
 			return
 		}
@@ -221,7 +232,7 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 
 		// Simulate write: move at most one level per pulse toward the calibrated level
 		ascending := isppStatus.Direction == DirectionAscending
-		estimatedLevel := ca.deviceState.GetLevelForVoltage(isppStatus.Voltage, ascending)
+		estimatedLevel := ca.deviceState.GetLevelForVoltage(math.Abs(isppStatus.Voltage), ascending)
 		nextLevel := currentLevel
 		if ascending {
 			if estimatedLevel > currentLevel {
@@ -236,12 +247,23 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 				nextLevel = targetLevel
 			}
 		}
+		changed := false
 		ca.mu.Lock()
 		if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
 			currentLevel = nextLevel
-			ca.arrayWeights[row][col] = currentLevel
+			if ca.arrayWeights[row][col] != currentLevel {
+				ca.arrayWeights[row][col] = currentLevel
+				changed = true
+			}
 		}
 		ca.mu.Unlock()
+
+		neighborChanges := ca.applyHalfSelectDisturb(row, col, isppStatus.Voltage, ascending)
+		if changed || neighborChanges > 0 {
+			logAction("ispp_step row=%d col=%d level=%d voltage=%.3fV neighbors=%d",
+				row, col, currentLevel, isppStatus.Voltage, neighborChanges)
+			ca.recomputeAndRefresh()
+		}
 
 		// ISPP iteration with verification
 		result := ca.deviceState.ISPPIterate(currentLevel)
@@ -294,6 +316,7 @@ cleanup:
 	// Record the write in hysteresis state
 	ca.deviceState.RecordWrite(row, col, currentLevel)
 
+	ca.deviceState.ResetWriteVoltages()
 	ca.recomputeAndRefresh()
 }
 
@@ -380,6 +403,41 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		level := ds.conductanceToLevel(event.CurrentG, levels)
 		ds.updateISPPTracking(event.Attempt, math.Abs(event.VPulse), level)
 		ca.updateISPPUI()
+		if event.Phase == "Predict" || event.Phase == "BinarySearch" {
+			ca.applyWritePhaseVoltages(WriteSequenceState{
+				Phase:        PhaseWrite,
+				TargetRow:    row,
+				TargetCol:    col,
+				PhaseVoltage: math.Abs(event.VPulse),
+			})
+		}
+		if event.Phase == "Verify" {
+			verifyV := ds.GetReadRange().Max * 0.5
+			ca.applyWritePhaseVoltages(WriteSequenceState{
+				Phase:        PhaseVerify,
+				TargetRow:    row,
+				TargetCol:    col,
+				PhaseVoltage: verifyV,
+			})
+		}
+		if event.Phase == "Verify" || event.Phase == "Success" {
+			ca.mu.Lock()
+			updated := false
+			if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+				if ca.arrayWeights[row][col] != level {
+					ca.arrayWeights[row][col] = level
+					updated = true
+				}
+			}
+			ca.mu.Unlock()
+
+			neighborChanges := ca.applyHalfSelectDisturb(row, col, event.VPulse, direction == DirectionAscending)
+			if updated || neighborChanges > 0 {
+				logAction("lk_ispp_step row=%d col=%d level=%d voltage=%.3fV neighbors=%d",
+					row, col, level, math.Abs(event.VPulse), neighborChanges)
+				ca.recomputeAndRefresh()
+			}
+		}
 		if ca.operationsStatusLabel != nil {
 			msg := fmt.Sprintf("L-K ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
 				event.Attempt, ctrl.MaxIterations, level, targetLevel, math.Abs(event.VPulse), event.Phase)
@@ -425,7 +483,139 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	// Record the write in hysteresis state
 	ds.RecordWrite(row, col, finalLevel)
 
+	ds.ResetWriteVoltages()
 	ca.recomputeAndRefresh()
+}
+
+func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
+	if ca.deviceState == nil {
+		return
+	}
+
+	row := phaseInfo.TargetRow
+	col := phaseInfo.TargetCol
+	isPassive := ca.deviceState.IsPassiveMode()
+
+	switch phaseInfo.Phase {
+	case PhaseWrite:
+		writeVoltage := phaseInfo.PhaseVoltage
+		if isppStatus := ca.deviceState.GetISPPStatus(); isppStatus.Active {
+			writeVoltage = isppStatus.Voltage
+		}
+		if isPassive {
+			ca.deviceState.ApplyHalfSelectWrite(row, col, writeVoltage)
+		} else {
+			ca.deviceState.SetWLSingle(row)
+			ca.deviceState.SetAllDACVoltages(0)
+			ca.deviceState.SetDACVoltage(col, writeVoltage)
+		}
+		ca.deviceState.SetDACRangeMode(DACRangeWrite)
+
+	case PhaseVerify:
+		verifyVoltage := phaseInfo.PhaseVoltage
+		if !isPassive {
+			ca.deviceState.SetWLSingle(row)
+		}
+		ca.deviceState.SetAllDACVoltages(0)
+		ca.deviceState.SetDACVoltage(col, verifyVoltage)
+		ca.deviceState.SetDACRangeMode(DACRangeRead)
+
+	default:
+		ca.deviceState.ResetWriteVoltages()
+	}
+
+	ca.recomputeAndRefresh()
+}
+
+func (ca *CircuitsApp) applyHalfSelectDisturb(row, col int, fullVoltage float64, ascending bool) int {
+	if ca.deviceState == nil {
+		return 0
+	}
+	if !ca.deviceState.IsPassiveMode() {
+		return 0
+	}
+	if fullVoltage == 0 {
+		return 0
+	}
+
+	halfVoltage := math.Abs(fullVoltage) * HalfSelectVoltageRatio
+	if halfVoltage <= 0 {
+		return 0
+	}
+
+	targetLevel := ca.deviceState.GetLevelForVoltage(halfVoltage, ascending)
+	if targetLevel < 0 {
+		targetLevel = 0
+	}
+	if targetLevel >= ca.quantLevels {
+		targetLevel = ca.quantLevels - 1
+	}
+
+	changes := 0
+	ca.mu.Lock()
+	defer ca.mu.Unlock()
+
+	if row < 0 || row >= len(ca.arrayWeights) {
+		return 0
+	}
+	if col < 0 || col >= len(ca.arrayWeights[row]) {
+		return 0
+	}
+
+	// Same column (other rows)
+	for r := 0; r < len(ca.arrayWeights); r++ {
+		if r == row {
+			continue
+		}
+		if col >= len(ca.arrayWeights[r]) {
+			continue
+		}
+		level := ca.arrayWeights[r][col]
+		next := level
+		if ascending && targetLevel > level {
+			next = level + 1
+		}
+		if !ascending && targetLevel < level {
+			next = level - 1
+		}
+		if next < 0 {
+			next = 0
+		}
+		if next >= ca.quantLevels {
+			next = ca.quantLevels - 1
+		}
+		if next != level {
+			ca.arrayWeights[r][col] = next
+			changes++
+		}
+	}
+
+	// Same row (other columns)
+	for c := 0; c < len(ca.arrayWeights[row]); c++ {
+		if c == col {
+			continue
+		}
+		level := ca.arrayWeights[row][c]
+		next := level
+		if ascending && targetLevel > level {
+			next = level + 1
+		}
+		if !ascending && targetLevel < level {
+			next = level - 1
+		}
+		if next < 0 {
+			next = 0
+		}
+		if next >= ca.quantLevels {
+			next = ca.quantLevels - 1
+		}
+		if next != level {
+			ca.arrayWeights[row][c] = next
+			changes++
+		}
+	}
+
+	return changes
 }
 
 // updateISPPUI refreshes the ISPP status display

@@ -357,6 +357,7 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 }
 
 func (ca *CircuitsApp) onRunComparison() {
+	logAction("comparison_run")
 	ca.compStatusLabel.SetText("Running comparison for 8×8 MVM...")
 
 	// Refresh canvases
@@ -376,6 +377,7 @@ func (ca *CircuitsApp) onRunComparison() {
 }
 
 func (ca *CircuitsApp) onAnimateComparison() {
+	logAction("comparison_animate")
 	// Animate the comparison showing CPU vs GPU vs FeFET timing step by step
 	ca.compStatusLabel.SetText("Animating comparison...")
 
@@ -407,6 +409,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 }
 
 func (ca *CircuitsApp) onScaleUpComparison() {
+	logAction("comparison_scale_up")
 	// Cycle through array sizes and update comparison values
 	sizes := []int{8, 16, 32, 64}
 

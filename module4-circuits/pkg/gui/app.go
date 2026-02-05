@@ -366,6 +366,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	// Update view based on selection
 	viewSelector.OnChanged = func(view string) {
 		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
+		logAction("view_switch %s", view)
 		if view == currentView {
 			return
 		}
