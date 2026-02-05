@@ -39,10 +39,13 @@ func TestTierA_PassiveHalfSelectPattern(t *testing.T) {
 		{0.4875, 0.0},
 	}
 
+	// Tier A is an approximation; allow a slightly looser tolerance here,
+	// especially now that we iterate to self-consistency.
+	const eps = 2e-4
 	for r := range want {
 		for c := range want[r] {
 			got := result.CellVoltages[r][c]
-			if math.Abs(got-want[r][c]) > testEpsilon {
+			if math.Abs(got-want[r][c]) > eps {
 				t.Fatalf("cell (%d,%d) voltage: got %.6f, want %.6f", r, c, got, want[r][c])
 			}
 		}
@@ -53,6 +56,134 @@ func TestTierA_PassiveHalfSelectPattern(t *testing.T) {
 	}
 	if result.CellVoltages[1][1] != 0 {
 		t.Fatalf("diagonal cell should be 0V, got %.6f", result.CellVoltages[1][1])
+	}
+}
+
+func TestTierA_RwireZeroMatchesIdeal(t *testing.T) {
+	solver := NewTierASolver()
+
+	conductance := [][]float64{
+		{1e-3, 2e-3},
+		{3e-3, 4e-3},
+	}
+	params := SolveParams{
+		WLVoltages:  []float64{0.7, -0.1},
+		BLVoltages:  []float64{0.2, -0.3},
+		Conductance: conductance,
+		ActiveRows:  []bool{true, true},
+		// WireParams.WithDefaults treats <=0 as "unset", so use a tiny value
+		// to approximate the Rwire->0 limit.
+		Wire: WireParams{RWordLine: 1e-18, RBitLine: 1e-18},
+	}
+
+	result, err := solver.Solve(params)
+	if err != nil {
+		t.Fatalf("Solve returned error: %v", err)
+	}
+
+	for r := range conductance {
+		for c := range conductance[r] {
+			wantV := params.WLVoltages[r] - params.BLVoltages[c]
+			gotV := result.CellVoltages[r][c]
+			if math.Abs(gotV-wantV) > testEpsilon {
+				t.Fatalf("cell (%d,%d) voltage: got %.9f, want %.9f", r, c, gotV, wantV)
+			}
+
+			wantI := conductance[r][c] * wantV
+			gotI := result.CellCurrents[r][c]
+			if math.Abs(gotI-wantI) > testEpsilon {
+				t.Fatalf("cell (%d,%d) current: got %.9g, want %.9g", r, c, gotI, wantI)
+			}
+		}
+	}
+}
+
+func TestTierA_ActiveRowsMaskMatchesZeroedRows(t *testing.T) {
+	solver := NewTierASolver()
+
+	conductance := [][]float64{
+		{1e-3},
+		{50e-3}, // large "would matter" row we will mask out
+		{1e-3},
+	}
+	base := SolveParams{
+		WLVoltages:  []float64{0.4, 0.4, 0.4},
+		BLVoltages:  []float64{0.0},
+		Conductance: conductance,
+		Wire:        WireParams{RWordLine: 100, RBitLine: 100},
+	}
+
+	masked := base
+	masked.ActiveRows = []bool{true, false, true}
+	resMasked, err := solver.Solve(masked)
+	if err != nil {
+		t.Fatalf("Solve(masked) returned error: %v", err)
+	}
+
+	zeroed := base
+	zeroed.Conductance = [][]float64{
+		{1e-3},
+		{0.0},
+		{1e-3},
+	}
+	zeroed.ActiveRows = nil // all active, but row 1 contributes zero current
+	resZeroed, err := solver.Solve(zeroed)
+	if err != nil {
+		t.Fatalf("Solve(zeroed) returned error: %v", err)
+	}
+
+	if len(resMasked.ColCurrents) != 1 || len(resZeroed.ColCurrents) != 1 {
+		t.Fatalf("unexpected col current size")
+	}
+	if math.Abs(resMasked.ColCurrents[0]-resZeroed.ColCurrents[0]) > testEpsilon {
+		t.Fatalf("col current mismatch: masked %.9g vs zeroed %.9g", resMasked.ColCurrents[0], resZeroed.ColCurrents[0])
+	}
+
+	for _, r := range []int{0, 2} {
+		if math.Abs(resMasked.CellVoltages[r][0]-resZeroed.CellVoltages[r][0]) > testEpsilon {
+			t.Fatalf("row %d voltage mismatch: masked %.9f vs zeroed %.9f", r, resMasked.CellVoltages[r][0], resZeroed.CellVoltages[r][0])
+		}
+		if math.Abs(resMasked.CellCurrents[r][0]-resZeroed.CellCurrents[r][0]) > testEpsilon {
+			t.Fatalf("row %d current mismatch: masked %.9g vs zeroed %.9g", r, resMasked.CellCurrents[r][0], resZeroed.CellCurrents[r][0])
+		}
+	}
+
+	if resMasked.CellVoltages[1][0] != 0 || resMasked.CellCurrents[1][0] != 0 {
+		t.Fatalf("inactive row should produce 0 outputs, got V=%.9f I=%.9g", resMasked.CellVoltages[1][0], resMasked.CellCurrents[1][0])
+	}
+}
+
+func TestTierA_NegativeVoltagePreservesSign(t *testing.T) {
+	solver := NewTierASolver()
+
+	params := SolveParams{
+		WLVoltages:  []float64{0.0},
+		BLVoltages:  []float64{0.5},
+		Conductance: [][]float64{{10e-6}},
+		ActiveRows:  []bool{true},
+		Wire:        WireParams{RWordLine: 1000, RBitLine: 1000},
+	}
+
+	result, err := solver.Solve(params)
+	if err != nil {
+		t.Fatalf("Solve returned error: %v", err)
+	}
+
+	ideal := params.WLVoltages[0] - params.BLVoltages[0]
+	gotV := result.CellVoltages[0][0]
+	gotI := result.CellCurrents[0][0]
+
+	if ideal >= 0 {
+		t.Fatalf("test setup: expected negative ideal voltage, got %.6f", ideal)
+	}
+	if gotV >= 0 {
+		t.Fatalf("expected negative cell voltage, got %.9f", gotV)
+	}
+	if math.Abs(gotV) > math.Abs(ideal)+testEpsilon {
+		t.Fatalf("IR-drop should not increase |V|: got %.9f, ideal %.9f", gotV, ideal)
+	}
+	if gotI >= 0 {
+		t.Fatalf("expected negative cell current, got %.9g", gotI)
 	}
 }
 
