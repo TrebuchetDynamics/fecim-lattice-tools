@@ -286,6 +286,55 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 	return (E_eff + noise - dG_dP) / rhoEff
 }
 
+func (s *LKSolver) dFdP(P, rhoEff float64) float64 {
+	if rhoEff == 0 {
+		return 0
+	}
+	P2 := P * P
+	P4 := P2 * P2
+	d2G := (2 * s.Alpha) + (12 * s.Beta * P2) + (30 * s.Gamma * P4)
+	return -(s.K_dep + d2G) / rhoEff
+}
+
+func (s *LKSolver) stepImplicit(prevP, E, dt, noise, rhoEff float64) (float64, bool) {
+	if dt <= 0 {
+		return prevP, true
+	}
+	guess := prevP + dt*s.dPdT(0, prevP, E, noise, rhoEff)
+	if s.PMax > 0 {
+		guess = s.clampP(guess)
+	}
+	tol := 1e-6
+	if s.PMax > 0 {
+		tol = 1e-6 * s.PMax
+	}
+	const maxIter = 6
+	for i := 0; i < maxIter; i++ {
+		f := s.dPdT(0, guess, E, noise, rhoEff)
+		g := guess - prevP - dt*f
+		if math.Abs(g) < tol {
+			return guess, true
+		}
+		dfdp := s.dFdP(guess, rhoEff)
+		denom := 1 - dt*dfdp
+		if invalidFloat(denom) || denom == 0 {
+			return guess, false
+		}
+		step := g / denom
+		if invalidFloat(step) {
+			return guess, false
+		}
+		guess -= step
+		if s.PMax > 0 {
+			guess = s.clampP(guess)
+		}
+		if math.Abs(step) < tol {
+			return guess, true
+		}
+	}
+	return guess, !invalidFloat(guess)
+}
+
 // Step performs one Runge-Kutta 4 (RK4) integration step.
 // Returns the new Polarization P.
 func (s *LKSolver) Step(E, dt float64) float64 {
@@ -297,7 +346,11 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	noise := s.noiseTerm(dt, rhoEff)
 	if invalidFloat(s.P) {
 		s.logNumericalIssue("state", E, dt, rhoEff, noise, s.P)
-		s.P = 0
+		if s.PMax > 0 {
+			s.P = -math.Abs(s.PMax)
+		} else {
+			s.P = 0
+		}
 	}
 	if s.PMax > 0 {
 		s.P = s.clampP(s.P)
@@ -315,6 +368,20 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 
 	// RK4 Integration with stability guards.
 	prevP := s.P
+
+	// Implicit step for stiff regimes (improves stability with larger dt).
+	stiffness := math.Abs(s.dFdP(prevP, rhoEff)) * dt
+	const stiffThreshold = 0.5
+	if stiffness > stiffThreshold {
+		nextP, ok := s.stepImplicit(prevP, E, dt, noise, rhoEff)
+		if ok && !invalidFloat(nextP) {
+			nextP = s.clampP(nextP)
+			s.P = nextP
+			s.Time += dt
+			s.logStep(E, dt, rhoEff, noise, s.dPdT(0, prevP, E, noise, rhoEff))
+			return s.P
+		}
+	}
 
 	// Rate limiter: cap |dP/dt| with a fixed ceiling to avoid overflow without
 	// canceling the RK4 step (dt-scaled clamps can cause k1/k2 sign flipping).
