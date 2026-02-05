@@ -233,9 +233,9 @@ type CircuitsApp struct {
 	unifiedWLHelpLabel *widget.Label // Shows "Checked = Active" or passive mode explanation
 
 	// Unified view mode buttons (READ/WRITE/COMPUTE)
-	modeReadBtn    *widget.Button
-	modeWriteBtn   *widget.Button
-	modeComputeBtn *widget.Button
+	modeReadBtn    *TooltipButton
+	modeWriteBtn   *TooltipButton
+	modeComputeBtn *TooltipButton
 
 	// Unified view output labels
 	unifiedOutputLabels []*widget.Label
@@ -265,6 +265,8 @@ type CircuitsApp struct {
 	computeInputContainer *fyne.Container // Container for input entries (rebuilt on resize)
 	mfuxInputVectorEntry  []*widget.Entry
 	mfuxInputVectorLabels []*widget.Label
+	computeRandomBtn      *widget.Button
+	computeClearBtn       *widget.Button
 
 	// H3 FIX: Undo history for array changes
 	undoHistory    [][]int // Previous array state
@@ -272,8 +274,11 @@ type CircuitsApp struct {
 	hasUndoHistory bool
 
 	// Action buttons (stored for mode-based enable/disable)
-	actionWriteCellBtn *widget.Button
-	actionComputeBtn   *widget.Button
+	actionWriteCellBtn   *TooltipButton
+	actionComputeBtn     *widget.Button
+	actionRandomArrayBtn *widget.Button
+	actionResetArrayBtn  *widget.Button
+	actionFitBtn         *widget.Button
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.

@@ -605,14 +605,33 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 		}
 
 	case DACInputVector:
-		// Convert input vector (0-255) to voltage for MVM
-		// Maps 0 -> 0V, 255 -> readRange.Max (proper MVM: I = G × V)
+		// Convert input vector to per-column voltages for MVM.
+		//
+		// Physics meaning:
+		//   - Each column j is driven with an analog input Vj.
+		//   - Row currents follow I_i = Σ_j (G_ij × Vj).
+		//
+		// Mapping (units):
+		//   - UI supplies "byte-like" codes in the range 0..255.
+		//   - We map 0 → 0V and 255 → readRange.Max (compute-safe full-scale).
+		//
+		// Bounds / clamping:
+		//   - Any param below 0 is clamped to 0.
+		//   - Any param above 255 is clamped to 255.
 		ds.dacRangeMode = DACRangeRead
 		for i := range ds.dacVoltages {
-			if i < len(params) {
-				normalized := params[i] / 255.0
-				ds.dacVoltages[i] = normalized * ds.readRange.Max // 0 input = 0 voltage
+			if i >= len(params) {
+				continue
 			}
+			code := params[i]
+			if code < 0 {
+				code = 0
+			}
+			if code > 255 {
+				code = 255
+			}
+			normalized := code / 255.0
+			ds.dacVoltages[i] = normalized * ds.readRange.Max
 		}
 
 	case DACRandom:
@@ -654,7 +673,7 @@ func (ds *DeviceState) SetDACVoltageForState(col int, targetState int, numLevels
 }
 
 // CalculateVoltageForState calculates the write voltage for a target state without setting it
-// Used for UI preview - actual voltage is only applied when user presses "Write Cell"
+// Used for UI preview - actual voltage is only applied when user presses "Program Cell"
 func (ds *DeviceState) CalculateVoltageForState(targetState int, numLevels int) float64 {
 	if numLevels <= 0 {
 		numLevels = ds.writeRange.NumLevels

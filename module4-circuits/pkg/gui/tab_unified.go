@@ -149,15 +149,24 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	adcBitsSelector := ca.createADCBitsSelector()
 
 	// Mode buttons
-	ca.modeReadBtn = widget.NewButton("READ", func() {
-		ca.setOperationMode(OpModeRead)
-	})
-	ca.modeWriteBtn = widget.NewButton("WRITE", func() {
-		ca.setOperationMode(OpModeWrite)
-	})
-	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() {
-		ca.setOperationMode(OpModeCompute)
-	})
+	ca.modeReadBtn = NewTooltipButton(
+		"READ",
+		"READ mode: safe read voltage on selected column; no programming.",
+		ca.window,
+		func() { ca.setOperationMode(OpModeRead) },
+	)
+	ca.modeWriteBtn = NewTooltipButton(
+		"WRITE",
+		"WRITE mode: arms write range and WL gating; no voltage until Program Cell.",
+		ca.window,
+		func() { ca.setOperationMode(OpModeWrite) },
+	)
+	ca.modeComputeBtn = NewTooltipButton(
+		"COMPUTE",
+		"COMPUTE mode: applies input vector across all rows for MVM.",
+		ca.window,
+		func() { ca.setOperationMode(OpModeCompute) },
+	)
 
 	// Set initial highlight (READ mode by default)
 	ca.modeReadBtn.Importance = widget.HighImportance
@@ -183,9 +192,12 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 // createUnifiedActionRow creates the action buttons row
 func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Primary action buttons
-	ca.actionWriteCellBtn = widget.NewButton("Write", func() {
-		ca.onUnifiedProgram()
-	})
+	ca.actionWriteCellBtn = NewTooltipButton(
+		"Program Cell",
+		"Apply DAC write pulse to selected cell (ISPP). Passive arrays use V/2 half-select.",
+		ca.window,
+		func() { ca.onUnifiedProgram() },
+	)
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
 
 	ca.actionComputeBtn = widget.NewButton("MVM", func() {
@@ -198,11 +210,11 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	})
 	ca.undoHistoryBtn.Disable()
 
-	randomBtn := widget.NewButton("Random", func() {
+	ca.actionRandomArrayBtn = widget.NewButton("Random Array", func() {
 		ca.onUnifiedRandomArray()
 	})
 
-	resetBtn := widget.NewButton("Reset", func() {
+	ca.actionResetArrayBtn = widget.NewButton("Reset Array", func() {
 		ca.onUnifiedReset()
 	})
 
@@ -235,24 +247,24 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		})
 	}
 
-	fitBtn := widget.NewButton("Fit", func() {
+	ca.actionFitBtn = widget.NewButton("Fit", func() {
 		logAction("button_zoom_fit")
 		ca.zoomSlider.SetValue(1.0)
 	})
 
-	// Row: Write | MVM | Sep | Undo | Random | Reset | Sep | Zoom controls | Spacer | Tools status
+	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
 		ca.actionComputeBtn,
 		widget.NewSeparator(),
 		ca.undoHistoryBtn,
-		randomBtn,
-		resetBtn,
+		ca.actionRandomArrayBtn,
+		ca.actionResetArrayBtn,
 		widget.NewSeparator(),
 		widget.NewLabel("Zoom:"),
 		ca.zoomSlider,
 		ca.zoomLabel,
-		fitBtn,
+		ca.actionFitBtn,
 		layout.NewSpacer(),
 		toolWidgets.CrossSimStatus,
 		toolWidgets.BadCrossbarStatus,
@@ -481,11 +493,22 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	})
 }
 
-// setOperationMode sets the operation mode and configures WL/DAC accordingly
-// READ: Single row, safe voltage (0-0.5V)
-// WRITE: Single row, write voltage (1.2-1.5V on selected column)
-// COMPUTE: All rows active, input vector (0-1V)
-// NOTE: In passive mode (0T1R), all WLs are ALWAYS on - WL configuration is skipped
+// setOperationMode sets the operation mode and configures WL/DAC accordingly.
+//
+// Physics meaning:
+//   - READ: bias a *single selected column* with a small, non-destructive sense voltage
+//     in the material-derived read range (≈ 0 .. readRange.Max).
+//   - WRITE: arm the material-derived write range (≈ writeRange.Min .. writeRange.Max)
+//     but keep the array at 0V until the user explicitly presses "Program Cell".
+//   - COMPUTE: apply a per-column input vector (digital 0–255) mapped to voltages
+//     0 .. readRange.Max and enable all rows for MVM (I = G×V).
+//
+// Bounds / clamping notes:
+//   - Read/compute voltages should stay below Vc to avoid disturb.
+//   - Write pulses are clamped to the write range and practical DAC limits.
+//
+// NOTE (architecture): In passive mode (0T1R), WLs are effectively ALWAYS on (no gating),
+// so WL configuration is skipped and WRITE uses a V/2 half-select scheme.
 func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	if ca.deviceState == nil {
 		return
@@ -606,7 +629,7 @@ func (ca *CircuitsApp) updateActionButtons() {
 	mode := ca.deviceState.GetOperationMode()
 
 	fyne.Do(func() {
-		// Write Cell: only in WRITE mode
+		// Program Cell: only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
 				ca.actionWriteCellBtn.Enable()
@@ -915,11 +938,11 @@ func (ca *CircuitsApp) updateOperationClassification() {
 		}
 	case OpModeWrite:
 		if arch == sharedwidgets.Architecture2T1R {
-			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 2T1R selects single cell.", writeRange.Min, writeRange.Max)
+			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 2T1R selects single cell. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
 		} else if arch == sharedwidgets.Architecture1T1R {
-			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 1T1R gates selected row.", writeRange.Min, writeRange.Max)
+			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 1T1R gates selected row. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
 		} else {
-			helpText = fmt.Sprintf("WRITE: %.1f-%.1fV. Passive: V/2 scheme reduces half-select disturb.", writeRange.Min, writeRange.Max)
+			helpText = fmt.Sprintf("WRITE: %.1f-%.1fV. Passive: V/2 scheme reduces half-select disturb. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
 		}
 	case OpModeCompute:
 		if arch == sharedwidgets.Architecture0T1R {
@@ -1003,7 +1026,19 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 // MODE-FIRST UX PANELS (Phase 1)
 // ============================================================================
 
-// createWriteModePanel creates the write mode panel with level slider
+// createWriteModePanel creates the write mode panel with a *state/level* slider.
+//
+// Physics meaning:
+//   - The slider selects the desired discrete FeFET state index L ∈ [0, quantLevels-1]
+//     (i.e., a conductance/polarization level), not a voltage.
+//   - The UI shows a voltage *preview* computed from the material-derived write range.
+//   - The actual programming pulse(s) are applied only when the user presses "Program Cell"
+//     (ISPP-style write/verify loop).
+//
+// Bounds / clamping:
+//   - Slider is integer-stepped and clamped by its min/max.
+//   - Voltage preview clamps to the write range.
+//
 // This addresses UX-004: No target level selector for WRITE mode
 func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
 	// Slider: 0 to (quantLevels-1) - uses configured level count
@@ -1047,9 +1082,15 @@ func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
 	)
 }
 
-// onWriteLevelChanged handles write level slider changes
-// Only updates UI labels - does NOT apply voltage to DAC
-// Voltage is only applied when user presses "Write Cell" button
+// onWriteLevelChanged handles target state changes from the WRITE slider.
+//
+// Physics meaning:
+//   - Updates the displayed "nominal write pulse amplitude" associated with the requested
+//     final state index, based on the configured write voltage window.
+//
+// Safety / bounds:
+//   - This is a *preview only* and does NOT apply voltage to the DAC.
+//   - Voltage is only applied when the user presses the "Program Cell" button.
 func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	if ca.deviceState == nil {
 		return
@@ -1079,24 +1120,30 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 	cols := ca.arrayCols
 
-	// Title with array size info
+	// Title with array size + units info.
+	// Physics meaning: each entry is a digital code (0–255) mapped to a column voltage
+	// Vj = (code/255) * readRange.Max (compute-safe range).
+	readMax := 1.0
+	if ca.deviceState != nil {
+		readMax = ca.deviceState.GetReadRange().Max
+	}
 	titleLabel := widget.NewLabelWithStyle(
-		fmt.Sprintf("Input Vector (%d inputs, 0-255):", cols),
+		fmt.Sprintf("Input Vector (%d inputs, 0–255 → 0–%.2fV):", cols, readMax),
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	ca.computeInputTitle = titleLabel
 
 	// Random button to populate with random values
-	randomBtn := widget.NewButton("Random", func() {
+	ca.computeRandomBtn = widget.NewButton("Random Inputs", func() {
 		ca.randomizeInputVectorEntries()
 	})
 
 	// Clear button
-	clearBtn := widget.NewButton("Clear", func() {
+	ca.computeClearBtn = widget.NewButton("Clear Inputs", func() {
 		ca.clearInputVectorEntries()
 	})
 
 	// Title row with buttons
-	titleRow := container.NewHBox(titleLabel, layout.NewSpacer(), randomBtn, clearBtn)
+	titleRow := container.NewHBox(titleLabel, layout.NewSpacer(), ca.computeRandomBtn, ca.computeClearBtn)
 
 	// Horizontal container for input entries
 	ca.computeInputContainer = container.NewHBox()
@@ -1154,10 +1201,14 @@ func (ca *CircuitsApp) rebuildComputeInputs() {
 		return
 	}
 
-	// Update title
+	// Update title (keep units explicit).
 	if ca.computeInputTitle != nil {
+		readMax := 1.0
+		if ca.deviceState != nil {
+			readMax = ca.deviceState.GetReadRange().Max
+		}
 		fyne.Do(func() {
-			ca.computeInputTitle.SetText(fmt.Sprintf("Input Vector (%d inputs, 0-255):", ca.arrayCols))
+			ca.computeInputTitle.SetText(fmt.Sprintf("Input Vector (%d inputs, 0–255 → 0–%.2fV):", ca.arrayCols, readMax))
 		})
 	}
 
@@ -1168,8 +1219,16 @@ func (ca *CircuitsApp) rebuildComputeInputs() {
 	})
 }
 
-// onInputVectorEntryChanged handles input vector entry changes
-// Only applies DAC changes in COMPUTE mode to prevent state corruption
+// onInputVectorEntryChanged handles input vector code changes.
+//
+// Physics meaning:
+//   - Each entry is a digital code d (0..255) mapped to an analog column voltage
+//     V = (d/255) * readRange.Max for compute-safe MVM.
+//
+// Bounds / clamping:
+//   - Codes are clamped to [0,255].
+//   - DAC updates are only applied in COMPUTE mode to avoid unintentionally biasing
+//     the array in READ/WRITE modes.
 func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
