@@ -61,8 +61,8 @@ func DefaultMVMOptions() *MVMOptions {
 		EnableIRDrop:     true,
 		EnableSneakPaths: true,
 		EnableVariation:  true,
-		EnableDrift:      false, // Drift usually simulated separately over time
-		Temperature:      300.0, // Room temperature
+		EnableDrift:      false,  // Drift usually simulated separately over time
+		Temperature:      300.0,  // Room temperature
 		Architecture:     "0T1R", // Default to passive crossbar (simpler, higher density)
 	}
 }
@@ -74,10 +74,10 @@ type MVMResult struct {
 	ActualOutput []float64 // Output with non-idealities
 
 	// Error metrics
-	RMSE          float64 // Root mean square error
-	MaxError      float64 // Maximum absolute error
-	MeanError     float64 // Mean absolute error
-	AccuracyLoss  float64 // Estimated accuracy loss percentage
+	RMSE         float64 // Root mean square error
+	MaxError     float64 // Maximum absolute error
+	MeanError    float64 // Mean absolute error
+	AccuracyLoss float64 // Estimated accuracy loss percentage
 
 	// Energy metrics (estimated)
 	ArrayEnergy float64 // Energy for MVM computation (pJ)
@@ -152,8 +152,12 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 		}
 
 		// Apply temperature effect on wire resistance
-		if opts.Temperature != 300.0 {
-			tempFactor := 1.0 + 0.00393*(opts.Temperature-300.0) // Copper TCR
+		tempK := opts.Temperature
+		if tempK <= 0 {
+			tempK = 300.0
+		}
+		if tempK != 300.0 {
+			tempFactor := 1.0 + 0.00393*(tempK-300.0) // Copper TCR
 			params.RwordLine *= tempFactor
 			params.RbitLine *= tempFactor
 		}
@@ -381,11 +385,11 @@ func (a *Array) ComputeFullMVMSneak(input []float64, opts *MVMOptions) []float64
 // GetSneakPathContribution returns detailed sneak path analysis for a single row.
 // Useful for visualization and debugging.
 type SneakPathContribution struct {
-	SourceRow    int
-	SourceCol    int
-	ExitCol      int
-	PathG        float64 // Effective path conductance
-	PathCurrent  float64 // Current through this path
+	SourceRow   int
+	SourceCol   int
+	ExitCol     int
+	PathG       float64 // Effective path conductance
+	PathCurrent float64 // Current through this path
 }
 
 // AnalyzeSneakContributions returns the top sneak path contributors for a row.
@@ -604,18 +608,18 @@ func (a *Array) ProgramMatrixWithVariation(targetLevels [][]int, stats *WriteSta
 
 // WriteVariationAnalysis contains statistics about write variation.
 type WriteVariationAnalysis struct {
-	NumWrites        int       // Total number of write operations
-	NumErrors        int       // Number of writes with level error
-	ErrorRate        float64   // Percentage of writes with errors
-	AvgLevelError    float64   // Average absolute level error
-	MaxLevelError    int       // Maximum level error observed
-	ErrorDistribution []int    // Histogram of error magnitudes [0, ±1, ±2, ±3, ...]
+	NumWrites         int     // Total number of write operations
+	NumErrors         int     // Number of writes with level error
+	ErrorRate         float64 // Percentage of writes with errors
+	AvgLevelError     float64 // Average absolute level error
+	MaxLevelError     int     // Maximum level error observed
+	ErrorDistribution []int   // Histogram of error magnitudes [0, ±1, ±2, ±3, ...]
 }
 
 // AnalyzeWriteVariation tests write variation by programming random levels.
 func (a *Array) AnalyzeWriteVariation(stats *WriteStatistics, numTests int) *WriteVariationAnalysis {
 	result := &WriteVariationAnalysis{
-		NumWrites:        numTests,
+		NumWrites:         numTests,
 		ErrorDistribution: make([]int, 10), // Track errors up to ±9 levels
 	}
 
@@ -661,12 +665,12 @@ func (a *Array) AnalyzeWriteVariation(stats *WriteStatistics, numTests int) *Wri
 
 // AnalysisReport contains a complete analysis of the array state.
 type AnalysisReport struct {
-	Timestamp   time.Time `json:"timestamp"`
-	ArraySize   [2]int    `json:"array_size"`
-	TotalMACs   int       `json:"total_macs"`
-	Levels      int       `json:"levels"`
-	NoiseLevel  float64   `json:"noise_level"`
-	ADCBits     int       `json:"adc_bits"`
+	Timestamp  time.Time `json:"timestamp"`
+	ArraySize  [2]int    `json:"array_size"`
+	TotalMACs  int       `json:"total_macs"`
+	Levels     int       `json:"levels"`
+	NoiseLevel float64   `json:"noise_level"`
+	ADCBits    int       `json:"adc_bits"`
 
 	// Accuracy metrics
 	IdealAccuracy  float64 `json:"ideal_accuracy,omitempty"`
@@ -787,9 +791,9 @@ func (a *Array) ExportAnalysisJSON(path string, mvmResult *MVMResult) error {
 
 // AccuracyDegradation tracks accuracy degradation from non-idealities.
 type AccuracyDegradation struct {
-	BaselineAccuracy float64            `json:"baseline_accuracy"`
-	Degradations     []DegradationStep  `json:"degradations"`
-	FinalAccuracy    float64            `json:"final_accuracy"`
+	BaselineAccuracy float64           `json:"baseline_accuracy"`
+	Degradations     []DegradationStep `json:"degradations"`
+	FinalAccuracy    float64           `json:"final_accuracy"`
 }
 
 // DegradationStep represents one source of accuracy loss.
@@ -809,7 +813,12 @@ func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy flo
 	currentAccuracy := baselineAccuracy
 
 	// Step 1: ADC/DAC quantization
-	opts := &MVMOptions{}
+	// Start from defaults to ensure physical parameters (e.g., temperature) are valid.
+	opts := DefaultMVMOptions()
+	opts.EnableIRDrop = false
+	opts.EnableSneakPaths = false
+	opts.EnableVariation = false
+	opts.EnableDrift = false
 	mvmIdeal, _ := a.MVMWithNonIdealities(input, opts)
 	quantLoss := mvmIdeal.RMSE * 100 / 3.0 // Empirical: 3% RMSE = 1% accuracy loss
 	currentAccuracy -= quantLoss
