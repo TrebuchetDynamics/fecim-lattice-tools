@@ -258,10 +258,9 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 		}
 		ca.mu.Unlock()
 
-		neighborChanges := ca.applyHalfSelectDisturb(row, col, isppStatus.Voltage, ascending)
-		if changed || neighborChanges > 0 {
-			logAction("ispp_step row=%d col=%d level=%d voltage=%.3fV neighbors=%d",
-				row, col, currentLevel, isppStatus.Voltage, neighborChanges)
+		if changed {
+			logAction("ispp_step row=%d col=%d level=%d voltage=%.3fV",
+				row, col, currentLevel, isppStatus.Voltage)
 			ca.recomputeAndRefresh()
 		}
 
@@ -431,10 +430,9 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 			}
 			ca.mu.Unlock()
 
-			neighborChanges := ca.applyHalfSelectDisturb(row, col, event.VPulse, direction == DirectionAscending)
-			if updated || neighborChanges > 0 {
-				logAction("lk_ispp_step row=%d col=%d level=%d voltage=%.3fV neighbors=%d",
-					row, col, level, math.Abs(event.VPulse), neighborChanges)
+			if updated {
+				logAction("lk_ispp_step row=%d col=%d level=%d voltage=%.3fV",
+					row, col, level, math.Abs(event.VPulse))
 				ca.recomputeAndRefresh()
 			}
 		}
@@ -510,6 +508,10 @@ func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
 			ca.deviceState.SetDACVoltage(col, writeVoltage)
 		}
 		ca.deviceState.SetDACRangeMode(DACRangeWrite)
+		neighborChanges := ca.applyHalfSelectDisturb(row, col)
+		if neighborChanges > 0 {
+			logAction("write_disturb rows=%d cols=%d changes=%d", ca.arrayRows, ca.arrayCols, neighborChanges)
+		}
 
 	case PhaseVerify:
 		verifyVoltage := phaseInfo.PhaseVoltage
@@ -527,139 +529,81 @@ func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
 	ca.recomputeAndRefresh()
 }
 
-func (ca *CircuitsApp) applyHalfSelectDisturb(row, col int, fullVoltage float64, ascending bool) int {
+func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 	if ca.deviceState == nil {
 		return 0
 	}
-	if fullVoltage == 0 {
+
+	mat := ca.deviceState.GetMaterial()
+	if mat == nil {
+		mat = sharedphysics.FeCIMMaterial()
+	}
+	if mat.Thickness <= 0 || mat.Ps == 0 {
 		return 0
 	}
 
-	if ca.deviceState.IsPassiveMode() {
-		halfVoltage := math.Abs(fullVoltage) * HalfSelectVoltageRatio
-		if halfVoltage <= 0 {
-			return 0
-		}
-
-		targetLevel := ca.deviceState.GetLevelForVoltage(halfVoltage, ascending)
-		if targetLevel < 0 {
-			targetLevel = 0
-		}
-		if targetLevel >= ca.quantLevels {
-			targetLevel = ca.quantLevels - 1
-		}
-
-		changes := 0
-		ca.mu.Lock()
-		defer ca.mu.Unlock()
-
-		if row < 0 || row >= len(ca.arrayWeights) {
-			return 0
-		}
-		if col < 0 || col >= len(ca.arrayWeights[row]) {
-			return 0
-		}
-
-		// Same column (other rows)
-		for r := 0; r < len(ca.arrayWeights); r++ {
-			if r == row {
-				continue
-			}
-			if col >= len(ca.arrayWeights[r]) {
-				continue
-			}
-			level := ca.arrayWeights[r][col]
-			next := level
-			if ascending && targetLevel > level {
-				next = level + 1
-			}
-			if !ascending && targetLevel < level {
-				next = level - 1
-			}
-			if next < 0 {
-				next = 0
-			}
-			if next >= ca.quantLevels {
-				next = ca.quantLevels - 1
-			}
-			if next != level {
-				ca.arrayWeights[r][col] = next
-				changes++
-			}
-		}
-
-		// Same row (other columns)
-		for c := 0; c < len(ca.arrayWeights[row]); c++ {
-			if c == col {
-				continue
-			}
-			level := ca.arrayWeights[row][c]
-			next := level
-			if ascending && targetLevel > level {
-				next = level + 1
-			}
-			if !ascending && targetLevel < level {
-				next = level - 1
-			}
-			if next < 0 {
-				next = 0
-			}
-			if next >= ca.quantLevels {
-				next = ca.quantLevels - 1
-			}
-			if next != level {
-				ca.arrayWeights[row][c] = next
-				changes++
-			}
-		}
-
-		return changes
+	pulseWidth := mat.Tau
+	if pulseWidth <= 0 {
+		pulseWidth = float64(PhaseWriteDurationNs) * 1e-9
 	}
 
-	// 1T1R / 2T1R: disturb only if WL is active and BL voltage is applied
-	const minWireVoltage = 0.01
+	gmin, gmax := ca.deviceState.conductanceBounds()
+	levels := ca.quantLevels
+
+	solver := sharedphysics.NewLKSolver()
+	solver.ConfigureFromMaterial(mat)
+	solver.Temperature = 300
+	solver.EnableNoise = false
+	solver.UseNLS = false
+	if !solver.UseMaterialAlpha {
+		solver.UpdateParams()
+	}
+
 	changes := 0
 
 	ca.mu.Lock()
 	defer ca.mu.Unlock()
 
 	for r := 0; r < len(ca.arrayWeights); r++ {
-		if !ca.deviceState.IsRowActive(r) {
+		if !ca.deviceState.IsPassiveMode() && !ca.deviceState.IsRowActive(r) {
 			continue
 		}
 		for c := 0; c < len(ca.arrayWeights[r]); c++ {
-			if r == row && c == col {
+			if r == targetRow && c == targetCol {
 				continue
 			}
-			voltage := ca.deviceState.GetDACVoltage(c)
-			if math.Abs(voltage) < minWireVoltage {
+
+			var vCell float64
+			if ca.deviceState.IsPassiveMode() {
+				vCell = ca.deviceState.GetWLVoltage(r) - ca.deviceState.GetDACVoltage(c)
+			} else {
+				vCell = ca.deviceState.GetDACVoltage(c)
+			}
+
+			if vCell == 0 {
 				continue
-			}
-			dirAscending := voltage >= 0
-			targetLevel := ca.deviceState.GetLevelForVoltage(math.Abs(voltage), dirAscending)
-			if targetLevel < 0 {
-				targetLevel = 0
-			}
-			if targetLevel >= ca.quantLevels {
-				targetLevel = ca.quantLevels - 1
 			}
 
 			level := ca.arrayWeights[r][c]
-			next := level
-			if dirAscending && targetLevel > level {
-				next = level + 1
+			conductance := ca.deviceState.levelToConductance(level, levels)
+			polarization := sharedphysics.ConductanceToPolarization(conductance, gmin, gmax, mat.Ps)
+
+			solver.SetState(polarization)
+			eField := vCell / mat.Thickness
+			solver.Step(eField, pulseWidth)
+
+			newP := solver.GetState()
+			newG := sharedphysics.PolarizationToConductance(newP, mat.Ps, gmin, gmax)
+			newLevel := ca.deviceState.conductanceToLevel(newG, levels)
+
+			if newLevel < 0 {
+				newLevel = 0
 			}
-			if !dirAscending && targetLevel < level {
-				next = level - 1
+			if newLevel >= levels {
+				newLevel = levels - 1
 			}
-			if next < 0 {
-				next = 0
-			}
-			if next >= ca.quantLevels {
-				next = ca.quantLevels - 1
-			}
-			if next != level {
-				ca.arrayWeights[r][c] = next
+			if newLevel != level {
+				ca.arrayWeights[r][c] = newLevel
 				changes++
 			}
 		}

@@ -155,16 +155,24 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		// Reset simulation
 		log.Info("Reset simulation")
 		a.mu.Lock()
+		a.electricField = 0
 		if a.useLKSolver() {
+			resetP := a.lkDefaultPolarization()
 			if a.lkSolver != nil {
-				a.lkSolver.SetState(0)
+				a.lkSolver.SetState(resetP)
 				a.lkSolver.Time = 0
+				a.polarization = a.lkSolver.GetState()
+			} else {
+				a.polarization = resetP
 			}
 		} else if a.preisach != nil {
 			a.preisach.Reset()
+			a.polarization = 0
+			a.normalizedP = 0
+		} else {
+			a.polarization = 0
+			a.normalizedP = 0
 		}
-		a.electricField = 0
-		a.polarization = 0
 		a.normalizedP = 0
 		a.syncDiscreteLevelLocked()
 		a.resetHistoryLocked()

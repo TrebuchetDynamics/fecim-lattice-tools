@@ -1080,11 +1080,15 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.wrdPhaseTimer = 0
 					break
 				}
-				// Headless-aligned pre-saturation to the opposite polarity of the target.
-				saturationThreshold := 0.75 * mat.Ps
-				prepE := Ec * 2.0
+				// Pre-bias toward the opposite polarity of the target.
+				// Use stronger fields only for near-saturation targets.
+				prepMag := Ec
+				if forcePrep {
+					prepMag = Ec * 2.0
+				}
+				prepE := prepMag
 				if targetLevel > midLevel {
-					prepE = -Ec * 2.0 // Upper targets: saturate NEGATIVE first
+					prepE = -prepMag // Upper targets: bias NEGATIVE first
 				}
 				a.wrdPrepE = prepE
 
@@ -1109,16 +1113,48 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.electricField -= step
 				}
 
-				// Check if saturated (use prepE direction)
-				var saturated bool
-				if prepE < 0 {
-					saturated = a.polarization <= -saturationThreshold
-				} else {
-					saturated = a.polarization >= saturationThreshold
+				biasRef := mat.Pr
+				if biasRef == 0 {
+					biasRef = mat.Ps
+				}
+				biasThreshold := 0.0
+				if biasRef > 0 {
+					biasThreshold = 0.2 * biasRef
 				}
 
-				// Transition when field reached AND polarization saturated
-				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
+				satRef := mat.Ps
+				if satRef == 0 {
+					satRef = mat.Pr
+				}
+				satThreshold := 0.0
+				if satRef > 0 {
+					satThreshold = 0.5 * satRef
+				}
+
+				biased := biasThreshold == 0
+				saturated := satThreshold == 0
+				if prepE < 0 {
+					if biasThreshold > 0 {
+						biased = a.polarization <= -biasThreshold
+					}
+					if satThreshold > 0 {
+						saturated = a.polarization <= -satThreshold
+					}
+				} else {
+					if biasThreshold > 0 {
+						biased = a.polarization >= biasThreshold
+					}
+					if satThreshold > 0 {
+						saturated = a.polarization >= satThreshold
+					}
+				}
+				ready := biased
+				if forcePrep {
+					ready = saturated
+				}
+
+				// Transition when field reached AND bias criteria satisfied
+				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && ready {
 					// Capture end-of-PREP state for logging
 					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
 					a.wrdResetEndLvl = a.discreteLevel + 1
@@ -1129,7 +1165,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 
 					// Initialize WriteController directly (skip HOLD_RESET)
 					a.writeController.PulseDuration = phaseDuration * 0.4
-					a.writeController.Start(targetLevel, true)
+					a.writeController.Start(targetLevel, saturated)
 
 					a.wrdPhase = 2
 					a.wrdPhaseTimer = 0
@@ -1161,11 +1197,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				guardSign := 0
 				if a.material != nil && a.wrdGuardFrac > 0 {
 					ps := a.material.Ps
-					if a.physicsEngine == PhysicsLandau && a.material.Pr > 0 {
-						ps = a.material.Pr
-					}
 					if ps == 0 {
-						ps = a.material.Ps
+						ps = a.material.Pr
 					}
 					bins := ferroelectric.NewLevelBins(ps, a.numLevels, a.wrdRangeFrac, a.wrdGuardFrac)
 					level, inError, delta := bins.LevelForP(a.polarization)
@@ -1254,7 +1287,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
 						log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
-						if !a.wrdSkipPrep && a.writeController.OvershootCount > 0 {
+						if a.writeController.OvershootCount > 0 {
 							a.wrdForceReset = true
 						}
 						if targetLevel > a.wrdStartLevel {
@@ -1373,35 +1406,40 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					}
 
 					// Pick new target - prefer same-branch moves to avoid unnecessary PREP.
-					minLevel := 2
-					maxLevel := a.numLevels - 1
+					nextTarget := a.wrdNextTargetLevel
+					if nextTarget == 0 {
+						minLevel := 2
+						maxLevel := a.numLevels - 1
+						currentLevel := a.discreteLevel + 1
+						preferDir := a.wrdLastBranch
+						if preferDir == 0 {
+							if currentLevel <= a.numLevels/2 {
+								preferDir = 1
+							} else {
+								preferDir = -1
+							}
+						}
+						nextTarget = a.wrdTargetLevel
+						if preferDir > 0 {
+							low := currentLevel + 1
+							high := maxLevel
+							if low <= high {
+								nextTarget = rand.Intn(high-low+1) + low
+							} else {
+								preferDir = -1
+							}
+						}
+						if preferDir < 0 {
+							low := minLevel
+							high := currentLevel - 1
+							if low <= high {
+								nextTarget = rand.Intn(high-low+1) + low
+							}
+						}
+						a.wrdNextTargetLevel = nextTarget
+					}
 					currentLevel := a.discreteLevel + 1
-					preferDir := a.wrdLastBranch
-					if preferDir == 0 {
-						if currentLevel <= a.numLevels/2 {
-							preferDir = 1
-						} else {
-							preferDir = -1
-						}
-					}
-					nextTarget := a.wrdTargetLevel
-					if preferDir > 0 {
-						low := currentLevel + 1
-						high := maxLevel
-						if low <= high {
-							nextTarget = rand.Intn(high-low+1) + low
-						} else {
-							preferDir = -1
-						}
-					}
-					if preferDir < 0 {
-						low := minLevel
-						high := currentLevel - 1
-						if low <= high {
-							nextTarget = rand.Intn(high-low+1) + low
-						}
-					}
-					a.wrdNextTargetLevel = nextTarget
+					nextTarget = a.wrdNextTargetLevel
 					nextBranch := 0
 					if nextTarget > currentLevel {
 						nextBranch = 1
@@ -1409,7 +1447,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						nextBranch = -1
 					}
 					forcePrep := nextTarget <= 3 || nextTarget >= (a.numLevels-2)
-					usePrep := forcePrep || (!a.wrdSkipPrep && (a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch)))
+					usePrep := forcePrep || a.wrdForceReset || (!a.wrdSkipPrep && (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch))
 					a.wrdForceReset = false
 					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 					// Spike detection in plot widget handles any discontinuities
@@ -1460,7 +1498,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 			if math.IsNaN(a.polarization) || math.IsInf(a.polarization, 0) {
 				fallback := prevP
 				if math.IsNaN(fallback) || math.IsInf(fallback, 0) {
-					fallback = 0
+					fallback = a.lkDefaultPolarization()
 				}
 				a.polarization = fallback
 				a.lkSolver.SetState(fallback)
@@ -2629,14 +2667,21 @@ func (a *App) finalizeCalibration(Ec float64) {
 	// Reset physics state to neutral after calibration
 	if a.useLKSolver() {
 		if a.lkSolver != nil {
-			a.lkSolver.SetState(0)
+			resetP := a.lkDefaultPolarization()
+			a.lkSolver.SetState(resetP)
 			a.lkSolver.Time = 0
+			a.polarization = a.lkSolver.GetState()
+		} else {
+			a.polarization = a.lkDefaultPolarization()
 		}
 	} else if a.preisach != nil {
 		a.preisach.Reset()
+		a.polarization = 0
+	}
+	if !a.useLKSolver() && a.preisach == nil {
+		a.polarization = 0
 	}
 	a.electricField = 0
-	a.polarization = 0
 	a.normalizedP = 0
 	a.syncDiscreteLevelLocked()
 

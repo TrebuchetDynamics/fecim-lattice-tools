@@ -271,9 +271,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		return targetField, false
 
 	case StateResetting:
-		// REAL ISPP OVERSHOOT RECOVERY:
-		// Instead of full saturation reset, just apply voltage in OPPOSITE direction
-		// with a smaller step to nudge back toward target.
+		// Overshoot recovery: apply a reset pulse on the opposite branch,
+		// then restart the search with a lower field.
 		resetDir := wc.resetDirection
 		if resetDir == 0 {
 			resetDir = -pulseDirection(wc.CurrentField) // Opposite of last pulse
@@ -282,20 +281,25 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			}
 		}
 
-		// Use a moderate correction pulse (not full saturation)
-		// Step size decreases with more overshoots for finer control
-		correctionStep := wc.EcField * 0.8 // Start with 0.8×Ec correction
-		if wc.OvershootCount > 1 {
-			correctionStep = wc.EcField * 0.4 // Smaller after multiple overshoots
+		resetMag := wc.EcField
+		if resetMag <= 0 {
+			resetMag = math.Abs(wc.CurrentField)
 		}
-		if wc.OvershootCount > 3 {
-			correctionStep = wc.EcField * 0.2 // Even smaller for persistent issues
+		if wc.VMaxSet && wc.VMax > 0 && wc.VMax < resetMag {
+			resetMag = wc.VMax
+		}
+		minReset := 0.8 * wc.EcField
+		if minReset > 0 && resetMag < minReset {
+			resetMag = minReset
+		}
+		if wc.MaxField > 0 && resetMag > wc.MaxField {
+			resetMag = wc.MaxField
 		}
 
 		if resetDir < 0 {
-			targetField = -correctionStep
+			targetField = -resetMag
 		} else {
-			targetField = correctionStep
+			targetField = resetMag
 		}
 
 		if wc.PhaseTimer <= dt {
@@ -307,27 +311,21 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 
-			// Set up next pulse toward target
+			// Set up next pulse toward target using the updated bounds.
 			nextDir := wc.directionToTarget(currentLevel)
 			if nextDir == 0 {
 				// Hit target during reset - go to verify
 				wc.CurrentField = 0
 				wc.State = StateVerify
 			} else {
-				// After overshoot correction, we need STRONG reverse pulses
-				// Start at 0.6×Ec - the Preisach model needs fields near Ec to switch
-				reverseField := wc.EcField * 0.6
-				if nextDir < 0 {
-					wc.CurrentField = -reverseField
-				} else {
-					wc.CurrentField = reverseField
-				}
+				wc.CurrentField = targetField
+				wc.calculateNextField(currentLevel)
 			}
 
 			// Don't reset InitialLevel - keep tracking original direction
 			wc.PulseCount++
 			wc.resetDirection = 0
-			log.Printf("ISPP CORRECTION DONE: level=%d, next E=%.3f×Ec toward target=%d",
+			log.Printf("ISPP RESET DONE: level=%d, next E=%.3f×Ec toward target=%d",
 				currentLevel, wc.CurrentField/wc.EcField, wc.TargetLevel)
 		}
 		return targetField, false
@@ -473,11 +471,18 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 					wc.resetDirection = -wc.directionToTarget(currentLevel)
 				}
 				log.Printf("ISPP OVERSHOOT detected! Resetting state... (count=%d)", wc.OvershootCount)
-				// Clear bounds after overshoot; hysteresis branch changed.
-				wc.VMin = 0
-				wc.VMax = wc.MaxField
-				wc.VMinSet = false
-				wc.VMaxSet = false
+				// Keep a bracket so the next pulse restarts with a lower field.
+				absField := math.Abs(wc.CurrentField)
+				if absField > 0 {
+					if !wc.VMaxSet || absField < wc.VMax {
+						wc.VMax = absField
+					}
+					wc.VMaxSet = true
+				}
+				if !wc.VMinSet {
+					wc.VMin = 0
+					wc.VMinSet = true
+				}
 				wc.StuckCount = 0
 				wc.NoImproveCount = 0
 				wc.stepFloor = 0

@@ -47,18 +47,28 @@ func (a *App) effectiveRangeFrac() float64 {
 }
 
 func (a *App) effectivePsForLevels() float64 {
-	if a == nil || a.material == nil {
+	if a == nil || a.material == nil || a.material.Ps == 0 {
 		return 0
 	}
-	base := a.material.Ps
-	// L-K dynamics settle around Pr (remanent), so map levels to Pr-range in Landau mode.
-	if a.physicsEngine == PhysicsLandau && a.material.Pr > 0 {
-		base = a.material.Pr
-	}
-	if base == 0 {
+	return a.material.Ps * a.effectiveRangeFrac()
+}
+
+func (a *App) lkDefaultPolarization() float64 {
+	if a == nil {
 		return 0
 	}
-	return base * a.effectiveRangeFrac()
+	if a.material != nil {
+		if a.material.Pr != 0 {
+			return -math.Abs(a.material.Pr)
+		}
+		if a.material.Ps != 0 {
+			return -math.Abs(a.material.Ps)
+		}
+	}
+	if a.lkSolver != nil && a.lkSolver.PMax > 0 {
+		return -math.Abs(a.lkSolver.PMax)
+	}
+	return 0
 }
 
 // setPhysicsEngine switches the active polarization dynamics model.
@@ -88,9 +98,15 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		if a.preisach != nil {
 			a.lkSolver.Temperature = a.preisach.Temperature
 		}
-		a.lkSolver.SetState(a.polarization)
+		initP := a.polarization
+		if math.Abs(initP) < 1e-9 || math.IsNaN(initP) || math.IsInf(initP, 0) {
+			initP = a.lkDefaultPolarization()
+		}
+		a.lkSolver.SetState(initP)
+		a.polarization = a.lkSolver.GetState()
 		a.lkSolver.Time = 0
 		a.lkSolver.UseNLS = false // Disable NLS for deterministic ISPP behavior
+		a.wrdSkipPrep = false
 		a.needsCalibration = true
 		a.calibrated = false
 		log.Printf("Physics engine switched to L-K (dynamic)")
@@ -108,6 +124,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		}
 		a.needsCalibration = true
 		a.calibrated = false
+		a.wrdSkipPrep = true
 		log.Printf("Physics engine switched to Preisach (quasi-static)")
 	}
 

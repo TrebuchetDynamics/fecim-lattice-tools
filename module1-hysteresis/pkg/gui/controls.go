@@ -158,14 +158,20 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 				a.needsCalibration = false
 			}
 			// Reset write/read demo state with improved physics
-			a.wrdPhase = 2
+			startPhase := 2
+			skipPrep := true
+			if a.useLKSolver() {
+				startPhase = 0
+				skipPrep = false
+			}
+			a.wrdPhase = startPhase
 			a.wrdPhaseTimer = 0
 			a.wrdTargetLevel = rand.Intn(a.numLevels) + 1
 			a.wrdNextTargetLevel = 0
 			a.wrdStartLevel = a.discreteLevel + 1
 			a.wrdLastBranch = 0
 			a.wrdForceReset = false
-			a.wrdSkipPrep = true
+			a.wrdSkipPrep = skipPrep
 			// Reset Dr. Tour demo metrics
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
@@ -328,17 +334,25 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	resetBtn := widget.NewButton("Reset", func() {
 		log.Button("Reset")
 		a.mu.Lock()
+		a.electricField = 0
 		// Reset physics model
 		if a.useLKSolver() {
+			resetP := a.lkDefaultPolarization()
 			if a.lkSolver != nil {
-				a.lkSolver.SetState(0)
+				a.lkSolver.SetState(resetP)
 				a.lkSolver.Time = 0
+				a.polarization = a.lkSolver.GetState()
+			} else {
+				a.polarization = resetP
 			}
 		} else if a.preisach != nil {
 			a.preisach.Reset()
+			a.polarization = 0
+			a.normalizedP = 0
+		} else {
+			a.polarization = 0
+			a.normalizedP = 0
 		}
-		a.electricField = 0
-		a.polarization = 0
 		a.normalizedP = 0
 		a.syncDiscreteLevelLocked()
 
@@ -359,7 +373,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.wrdLastProgressLog = 0
 		a.wrdLastBranch = 0
 		a.wrdForceReset = false
-		a.wrdSkipPrep = true
+		a.wrdSkipPrep = !a.useLKSolver()
 		a.wrdTotalWrites = 0
 		a.wrdSuccessWrites = 0
 		a.wrdTotalEnergyfJ = 0
@@ -711,11 +725,8 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 
 	// Reset simulation state
 	a.electricField = 0
-	a.polarization = 0
-	a.normalizedP = 0
 	a.simTime = 0
 	if a.lkSolver != nil {
-		a.lkSolver.SetState(0)
 		a.lkSolver.Time = 0
 	}
 
@@ -754,7 +765,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.wrdRetryCount = 0
 	a.wrdLastBranch = 0
 	a.wrdForceReset = false
-	a.wrdSkipPrep = true
+	a.wrdSkipPrep = !a.useLKSolver()
 
 	// Initialize ISPP calculator with new material parameters
 	// a.isppCalc = sharedphysics.NewISPPCalculator(effEc, newLevels)
@@ -766,6 +777,21 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.lkSolver.ConfigureFromMaterial(a.material)
 		a.lkSolver.Temperature = savedTemp
 	}
+	if a.useLKSolver() {
+		resetP := a.lkDefaultPolarization()
+		if a.lkSolver != nil {
+			a.lkSolver.SetState(resetP)
+			a.polarization = a.lkSolver.GetState()
+		} else {
+			a.polarization = resetP
+		}
+		a.normalizedP = 0
+	} else {
+		a.polarization = 0
+		a.normalizedP = 0
+	}
+	a.syncDiscreteLevelLocked()
+	initialLevel := a.discreteLevel
 	// Update level indicator and cell visualizer
 	if a.levelIndicator != nil {
 		a.levelIndicator.SetNumLevels(newLevels)
@@ -773,13 +799,11 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	if a.cellViz != nil {
 		a.cellViz.SetNumLevels(newLevels)
 	}
-	// Reset discrete level to middle of new range
-	a.discreteLevel = newLevels / 2
 	// Reset target levels
-	a.wrdTargetLevel = newLevels / 2
+	a.wrdTargetLevel = initialLevel
 	a.wrdNextTargetLevel = 0
-	a.wrdStartLevel = newLevels / 2
-	a.manualTargetLevel = newLevels / 2
+	a.wrdStartLevel = initialLevel
+	a.manualTargetLevel = initialLevel
 	// Update bits stored
 	a.wrdBitsStored = math.Log2(float64(newLevels))
 	// Resize calibration arrays
@@ -832,7 +856,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 
 	// Reset level indicator to middle
 	if a.levelIndicator != nil {
-		a.levelIndicator.SetLevel(newLevels / 2)
+		a.levelIndicator.SetLevel(initialLevel)
 	}
 
 	// Load or run calibration for new material
