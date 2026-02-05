@@ -531,87 +531,137 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(row, col int, fullVoltage float64,
 	if ca.deviceState == nil {
 		return 0
 	}
-	if !ca.deviceState.IsPassiveMode() {
-		return 0
-	}
 	if fullVoltage == 0 {
 		return 0
 	}
 
-	halfVoltage := math.Abs(fullVoltage) * HalfSelectVoltageRatio
-	if halfVoltage <= 0 {
-		return 0
+	if ca.deviceState.IsPassiveMode() {
+		halfVoltage := math.Abs(fullVoltage) * HalfSelectVoltageRatio
+		if halfVoltage <= 0 {
+			return 0
+		}
+
+		targetLevel := ca.deviceState.GetLevelForVoltage(halfVoltage, ascending)
+		if targetLevel < 0 {
+			targetLevel = 0
+		}
+		if targetLevel >= ca.quantLevels {
+			targetLevel = ca.quantLevels - 1
+		}
+
+		changes := 0
+		ca.mu.Lock()
+		defer ca.mu.Unlock()
+
+		if row < 0 || row >= len(ca.arrayWeights) {
+			return 0
+		}
+		if col < 0 || col >= len(ca.arrayWeights[row]) {
+			return 0
+		}
+
+		// Same column (other rows)
+		for r := 0; r < len(ca.arrayWeights); r++ {
+			if r == row {
+				continue
+			}
+			if col >= len(ca.arrayWeights[r]) {
+				continue
+			}
+			level := ca.arrayWeights[r][col]
+			next := level
+			if ascending && targetLevel > level {
+				next = level + 1
+			}
+			if !ascending && targetLevel < level {
+				next = level - 1
+			}
+			if next < 0 {
+				next = 0
+			}
+			if next >= ca.quantLevels {
+				next = ca.quantLevels - 1
+			}
+			if next != level {
+				ca.arrayWeights[r][col] = next
+				changes++
+			}
+		}
+
+		// Same row (other columns)
+		for c := 0; c < len(ca.arrayWeights[row]); c++ {
+			if c == col {
+				continue
+			}
+			level := ca.arrayWeights[row][c]
+			next := level
+			if ascending && targetLevel > level {
+				next = level + 1
+			}
+			if !ascending && targetLevel < level {
+				next = level - 1
+			}
+			if next < 0 {
+				next = 0
+			}
+			if next >= ca.quantLevels {
+				next = ca.quantLevels - 1
+			}
+			if next != level {
+				ca.arrayWeights[row][c] = next
+				changes++
+			}
+		}
+
+		return changes
 	}
 
-	targetLevel := ca.deviceState.GetLevelForVoltage(halfVoltage, ascending)
-	if targetLevel < 0 {
-		targetLevel = 0
-	}
-	if targetLevel >= ca.quantLevels {
-		targetLevel = ca.quantLevels - 1
-	}
-
+	// 1T1R / 2T1R: disturb only if WL is active and BL voltage is applied
+	const minWireVoltage = 0.01
 	changes := 0
+
 	ca.mu.Lock()
 	defer ca.mu.Unlock()
 
-	if row < 0 || row >= len(ca.arrayWeights) {
-		return 0
-	}
-	if col < 0 || col >= len(ca.arrayWeights[row]) {
-		return 0
-	}
-
-	// Same column (other rows)
 	for r := 0; r < len(ca.arrayWeights); r++ {
-		if r == row {
+		if !ca.deviceState.IsRowActive(r) {
 			continue
 		}
-		if col >= len(ca.arrayWeights[r]) {
-			continue
-		}
-		level := ca.arrayWeights[r][col]
-		next := level
-		if ascending && targetLevel > level {
-			next = level + 1
-		}
-		if !ascending && targetLevel < level {
-			next = level - 1
-		}
-		if next < 0 {
-			next = 0
-		}
-		if next >= ca.quantLevels {
-			next = ca.quantLevels - 1
-		}
-		if next != level {
-			ca.arrayWeights[r][col] = next
-			changes++
-		}
-	}
+		for c := 0; c < len(ca.arrayWeights[r]); c++ {
+			if r == row && c == col {
+				continue
+			}
+			voltage := ca.deviceState.GetDACVoltage(c)
+			if math.Abs(voltage) < minWireVoltage {
+				continue
+			}
+			dirAscending := voltage >= 0
+			targetLevel := ca.deviceState.GetLevelForVoltage(math.Abs(voltage), dirAscending)
+			if targetLevel < 0 {
+				targetLevel = 0
+			}
+			if targetLevel >= ca.quantLevels {
+				targetLevel = ca.quantLevels - 1
+			}
 
-	// Same row (other columns)
-	for c := 0; c < len(ca.arrayWeights[row]); c++ {
-		if c == col {
-			continue
-		}
-		level := ca.arrayWeights[row][c]
-		next := level
-		if ascending && targetLevel > level {
-			next = level + 1
-		}
-		if !ascending && targetLevel < level {
-			next = level - 1
-		}
-		if next < 0 {
-			next = 0
-		}
-		if next >= ca.quantLevels {
-			next = ca.quantLevels - 1
-		}
-		if next != level {
-			ca.arrayWeights[row][c] = next
-			changes++
+			level := ca.arrayWeights[r][c]
+			next := level
+			if dirAscending && targetLevel > level {
+				next = level + 1
+			}
+			if !dirAscending && targetLevel < level {
+				next = level - 1
+			}
+			if next < 0 {
+				next = 0
+			}
+			if next >= ca.quantLevels {
+				next = ca.quantLevels - 1
+			}
+			if next != level {
+				ca.arrayWeights[r][c] = next
+				changes++
+			}
 		}
 	}
 
