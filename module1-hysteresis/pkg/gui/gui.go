@@ -58,6 +58,19 @@ func rangeFracForMaterial(mat *ferroelectric.HZOMaterial) float64 {
 	return defaultWriteRangeFrac
 }
 
+func (a *App) updateLevelIndicatorRange() {
+	if a == nil || a.levelIndicator == nil || a.material == nil {
+		return
+	}
+	effPr := a.material.Pr
+	if effPr == 0 {
+		effPr = a.material.Ps
+	}
+	plotPMax := effPr * 1.2
+	effPs := a.effectivePsForLevels()
+	a.levelIndicator.SetPolarizationRange(plotPMax, effPs)
+}
+
 // App holds the main application state
 type App struct {
 	fyneApp    fyne.App
@@ -673,6 +686,7 @@ func (a *App) createUI() fyne.CanvasObject {
 			a.addLogEntry(fmt.Sprintf("WRITE → Level %d", targetLevel))
 		}
 	}
+	a.updateLevelIndicatorRange()
 
 	// Create controls panel
 	controls := a.createControlsPanel()

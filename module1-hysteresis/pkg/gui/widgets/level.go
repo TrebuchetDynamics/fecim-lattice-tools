@@ -20,10 +20,12 @@ import (
 type LevelIndicator struct {
 	widget.BaseWidget
 
-	mu        sync.RWMutex
-	level     int
-	numLevels int // Number of discrete levels (default 30)
-	minSize   fyne.Size
+	mu          sync.RWMutex
+	level       int
+	numLevels   int // Number of discrete levels (default 30)
+	minSize     fyne.Size
+	plotPMax    float64 // P-axis max used by the plot (for vertical alignment)
+	effectivePs float64 // Effective saturation used for level spacing (Ps * rangeFrac)
 
 	// Interactive mode callback - called when user clicks a level
 	OnLevelClicked func(targetLevel int)
@@ -55,6 +57,43 @@ const (
 	TargetModeManual
 )
 
+const (
+	levelIndicatorMarginTop    = float32(50)
+	levelIndicatorMarginBottom = float32(35)
+)
+
+// levelIndicatorSegmentGeometry returns the top Y position for the top segment,
+// the segment height, and whether the geometry is valid.
+func levelIndicatorSegmentGeometry(size fyne.Size, numLevels int, plotPMax, effectivePs float64) (float32, float32, bool) {
+	if size.Height <= 0 || numLevels < 2 {
+		return 0, 0, false
+	}
+	plotH := size.Height - levelIndicatorMarginTop - levelIndicatorMarginBottom
+	if plotH <= 0 {
+		return 0, 0, false
+	}
+
+	if plotPMax > 0 && effectivePs > 0 && numLevels > 1 {
+		stepP := 2 * effectivePs / float64(numLevels-1)
+		segH := float32(stepP/plotPMax) * plotH / 2
+		if segH > 0 {
+			centerY := levelIndicatorMarginTop + plotH/2
+			topCenter := centerY - float32(effectivePs/plotPMax)*plotH/2
+			return topCenter - segH/2, segH, true
+		}
+	}
+
+	// Fallback to legacy scaling (assumes plot spans ~1.2*Ps)
+	pMaxScale := float32(1.2)
+	levelRangeH := plotH / pMaxScale
+	segH := levelRangeH / float32(numLevels)
+	topSegTop := levelIndicatorMarginTop + plotH/2 - levelRangeH/2
+	if segH <= 0 {
+		return 0, 0, false
+	}
+	return topSegTop, segH, true
+}
+
 // NewLevelIndicator creates a new level indicator with default 30 levels
 func NewLevelIndicator() *LevelIndicator {
 	l := &LevelIndicator{
@@ -83,6 +122,25 @@ func (l *LevelIndicator) SetNumLevels(n int) {
 	}
 	l.mu.Unlock()
 	l.Refresh()
+}
+
+// SetPolarizationRange sets the plot P-axis max and the effective Ps used for level centers.
+// This keeps the level bars aligned with the P-E plot's vertical scale.
+func (l *LevelIndicator) SetPolarizationRange(plotPMax, effectivePs float64) {
+	if plotPMax < 0 {
+		plotPMax = -plotPMax
+	}
+	if effectivePs < 0 {
+		effectivePs = -effectivePs
+	}
+	l.mu.Lock()
+	changed := l.plotPMax != plotPMax || l.effectivePs != effectivePs
+	l.plotPMax = plotPMax
+	l.effectivePs = effectivePs
+	l.mu.Unlock()
+	if changed {
+		l.Refresh()
+	}
 }
 
 // NumLevels returns the current number of levels
@@ -212,31 +270,23 @@ func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
 
 	l.mu.RLock()
 	numLevels := l.numLevels
+	plotPMax := l.plotPMax
+	effectivePs := l.effectivePs
 	l.mu.RUnlock()
 
 	if numLevels < 2 {
 		numLevels = 30
 	}
 
-	// Match the renderer's layout EXACTLY
-	// See layoutWithSize() for the reference implementation
-	marginH := float32(50)
-	marginBottom := float32(35)
-	totalH := size.Height - marginH - marginBottom
-	if totalH <= 0 {
+	topSegTop, segH, ok := levelIndicatorSegmentGeometry(size, numLevels, plotPMax, effectivePs)
+	if !ok || segH <= 0 {
 		return
 	}
 
-	centerY := marginH + totalH/2
-	pMaxScale := float32(1.2)
-	levelRangeH := totalH / pMaxScale
-	levelTop := centerY - levelRangeH/2
-	segH := levelRangeH / float32(numLevels)
-
 	// Calculate which segment was clicked
-	// Renderer draws: y = levelTop + (numLevels-1-i)*segH where i is 0 to numLevels-1, level = i+1
+	// Renderer draws: y = topSegTop + (numLevels-1-i)*segH where i is 0 to numLevels-1, level = i+1
 	// So level N (i=N-1) is at top, level 1 (i=0) is at bottom
-	relY := e.Position.Y - levelTop
+	relY := e.Position.Y - topSegTop
 
 	// Find segment index from top (0 = level N, N-1 = level 1)
 	segFromTop := int(relY / segH)
@@ -309,6 +359,8 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	pulseProgress := r.indicator.pulseProgress
 	polBarProgress := r.indicator.polBarProgress
 	interactive := r.indicator.interactive
+	plotPMax := r.indicator.plotPMax
+	effectivePs := r.indicator.effectivePs
 	r.indicator.mu.RUnlock()
 
 	if numLevels < 2 {
@@ -374,38 +426,18 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, label)
 	}
 
-	// Draw 30 level segments
-	// Match P-E plot margins for proper Y-axis alignment
-	// The plot uses marginTop=50, marginBottom=35
-	// However, the plot's legend (at marginTop+10) and +Ec/+Pr labels cause
-	// the visual data area to appear shifted down by ~15px
-	// Shift level bars down to align with plot's visual ±Pr positions
-	visualOffset := float32(15)                // Offset to align with plot's +Pr/-Pr visual positions
-	marginH := float32(50) + visualOffset      // Increased top margin shifts levels down
-	marginBottom := float32(35) - visualOffset // Decreased bottom margin compensates
+	// Draw level segments aligned to the plot's vertical scale.
 	marginW := float32(6)
 	labelW := float32(28)
 	barW := size.Width - 2*marginW - labelW
-	totalH := size.Height - marginH - marginBottom
-
-	// Calculate center Y (same as plot's centerY)
-	centerY := marginH + totalH/2
-
-	// The plot shows P from -Ps*1.2 to +Ps*1.2
-	// Levels 1-N should map to -Ps to +Ps (the inner 1/1.2 = 83% of plot range)
-	pMaxScale := float32(1.2)
-	// The actual Y range for the N levels (±Ps portion of the plot)
-	levelRangeH := totalH / pMaxScale // ~83% of totalH
-	segH := levelRangeH / float32(numLevels)
+	topSegTop, segH, ok := levelIndicatorSegmentGeometry(size, numLevels, plotPMax, effectivePs)
+	if !ok {
+		return
+	}
 	gap := float32(1)
 	if numLevels > 64 {
 		gap = 0 // No gaps for many levels
 	}
-
-	// Y positions for level range (screen coords: y increases downward)
-	// levelTop = where level 30 (+Ps) should be = centerY - levelRangeH/2
-	// levelBottom = where level 1 (-Ps) should be = centerY + levelRangeH/2
-	levelTop := centerY - levelRangeH/2
 
 	// Color constants
 	colorCurrent := color.RGBA{50, 255, 100, 255} // Green for current level
@@ -417,8 +449,8 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	for i := 0; i < numLevels; i++ {
 		// Level i=0 is level 1 (bottom, -Ps), i=numLevels-1 is level numLevels (top, +Ps)
 		// Invert: level N at top, level 1 at bottom
-		// y = levelTop + (numLevels-1-i) * segH
-		y := levelTop + float32(numLevels-1-i)*segH
+		// y = topSegTop + (numLevels-1-i) * segH
+		y := topSegTop + float32(numLevels-1-i)*segH
 
 		// Color gradient (blue to red)
 		t := float64(i) / float64(numLevels-1)

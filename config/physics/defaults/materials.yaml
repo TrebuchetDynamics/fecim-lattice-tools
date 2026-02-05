@@ -87,6 +87,7 @@ materials:
     description: "Standard Si-doped HfO2-ZrO2 from literature"
     reference: "Park et al., Adv. Mater. 27, 1811 (2015) [1]"
     analog_states: 30           # Standard HZO achieves ~30 discrete states
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Polarization parameters [1][4]
     pr_c_m2: 0.25               # Remanent polarization (C/m²) = 25 µC/cm²
@@ -155,6 +156,7 @@ materials:
     description: "Dr. Tour's FeCIM - DEMONSTRATED values only"
     reference: "Dr. external research group, COSM 2025 [17]"
     analog_states: 30           # 30 discrete states - VERIFIED (Dr. Tour)
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
@@ -225,6 +227,7 @@ materials:
     description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"
     reference: "Dr. external research group, COSM 2025"
     analog_states: 30           # Same as FeCIM demonstrated
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
@@ -283,7 +286,7 @@ materials:
     description: "Best academic HfO2/ZrO2 superlattice results"
     reference: "Cheema et al., Nature 580, 478 (2020) [2]; Nature Commun. 2025 [3]"
     analog_states: 64           # Enhanced superlattice supports more states
-    target_range_frac: 0.98     # Back-off from saturation for level mapping
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
@@ -354,6 +357,7 @@ materials:
     description: "HZO performance at 4K for quantum computing"
     reference: "Adv. Electron. Mater. 2024 [10]; 2025 [11]"
     analog_states: 48           # Enhanced polarization at cryo enables more states
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
@@ -428,6 +432,7 @@ materials:
     description: "Standard HZO FeFET demonstrating 32 analog states"
     reference: "Oh et al., IEEE EDL 38(6), 732 (2017) [21]"
     analog_states: 32           # PEER-REVIEWED: 32 discrete states
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
@@ -494,6 +499,7 @@ materials:
     description: "HZO Ferroelectric Tunnel Junction with >7-bit operation"
     reference: "Song et al., Adv. Science 2024 [22]; ACS AMI 2022 [23]"
     analog_states: 140          # PEER-REVIEWED: >7-bit = 128-140 states
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P (model default)
@@ -568,6 +574,7 @@ materials:
     description: "Aluminum Scandium Nitride - high Pr but high Ec limits granularity"
     reference: "Nature Commun. 2025 [24]; APL Materials 2023 [25]"
     analog_states: 16           # PEER-REVIEWED: 8-16 states (penta-level demonstrated)
+    target_range_frac: 0.90    # Back-off from saturation for level mapping
     trl_level: 4                # Lower technology readiness
 
     # Polarization - VERY HIGH [24][25]

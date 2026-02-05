@@ -38,6 +38,52 @@ var (
 	sharedLogPath   string
 )
 
+// lazyWriter writes to the shared log writer if available, otherwise discards.
+// This lets loggers created before EnableFileLogging() start emitting once
+// the shared writer is initialized.
+type lazyWriter struct{}
+
+func (w *lazyWriter) Write(p []byte) (int, error) {
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+	if writer == nil {
+		return len(p), nil
+	}
+	return writer.Write(p)
+}
+
+func ensureSharedLogWriter() {
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+
+	if sharedLogWriter != nil {
+		return
+	}
+
+	logsDir := getLogsDir()
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		// Fallback to stdout only
+		sharedLogWriter = os.Stdout
+		return
+	}
+
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	sharedLogPath = filepath.Join(logsDir, timestamp+"-fecim.log")
+
+	var err error
+	sharedLogFile, err = os.Create(sharedLogPath)
+	if err != nil {
+		// Fallback to stdout only
+		sharedLogWriter = os.Stdout
+		sharedLogPath = ""
+		return
+	}
+
+	// Write to both file and stdout
+	sharedLogWriter = io.MultiWriter(os.Stdout, sharedLogFile)
+}
+
 // SetVerbosity sets the global verbosity level
 func SetVerbosity(level VerbosityLevel) {
 	verbosityMu.Lock()
@@ -63,6 +109,7 @@ func EnableFileLogging() {
 	fileLoggingMu.Lock()
 	fileLoggingEnabled = true
 	fileLoggingMu.Unlock()
+	ensureSharedLogWriter()
 }
 
 // IsFileLoggingEnabled returns true if file logging is enabled
@@ -93,48 +140,31 @@ func NewNoOpLogger() *Logger {
 // All loggers share a single log file to avoid creating multiple files
 // If file logging is not enabled (via EnableFileLogging()), returns a no-op logger
 func NewLogger(demoName string) *Logger {
-	// If file logging is not enabled, return a no-op logger
-	if !IsFileLoggingEnabled() {
-		return NewNoOpLogger()
-	}
-
-	sharedLogMu.Lock()
-	defer sharedLogMu.Unlock()
-
-	// Initialize shared log file if not already done
-	if sharedLogWriter == nil {
-		logsDir := getLogsDir()
-		if err := os.MkdirAll(logsDir, 0755); err != nil {
-			// Fallback to stdout only
-			sharedLogWriter = os.Stdout
-		} else {
-			timestamp := time.Now().Format("2006-01-02_15-04-05")
-			sharedLogPath = filepath.Join(logsDir, timestamp+"-fecim.log")
-
-			var err error
-			sharedLogFile, err = os.Create(sharedLogPath)
-			if err != nil {
-				// Fallback to stdout only
-				sharedLogWriter = os.Stdout
-			} else {
-				// Write to both file and stdout
-				sharedLogWriter = io.MultiWriter(os.Stdout, sharedLogFile)
-			}
-		}
+	if IsFileLoggingEnabled() {
+		ensureSharedLogWriter()
 	}
 
 	logger := &Logger{
-		Logger:   log.New(sharedLogWriter, "["+demoName+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
+		Logger:   log.New(&lazyWriter{}, "["+demoName+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
 		logFile:  nil, // Don't store file reference - shared file is managed globally
 		demoName: demoName,
 	}
 
 	// Only log the path once for the first logger
+	sharedLogMu.Lock()
+	firstPath := sharedLogPath
 	if sharedLogPath != "" {
-		logger.Printf("Logging to: %s", sharedLogPath)
-		// Hook standard log package to write to the shared log file as well
-		log.SetOutput(sharedLogWriter)
 		sharedLogPath = "" // Clear to avoid repeating
+	}
+	writerReady := sharedLogWriter != nil
+	sharedLogMu.Unlock()
+
+	if firstPath != "" {
+		logger.Printf("Logging to: %s", firstPath)
+	}
+	if writerReady {
+		// Hook standard log package to write to the shared log file as well
+		log.SetOutput(&lazyWriter{})
 	}
 
 	return logger

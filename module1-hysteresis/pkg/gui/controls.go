@@ -308,6 +308,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		if a.wrdRangeLabel != nil {
 			a.wrdRangeLabel.SetText(a.rangeFracLabelText(v))
 		}
+		a.updateLevelIndicatorRange()
 		a.scheduleRangeCalibration()
 	}
 
@@ -803,6 +804,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.plot.SetMaterialParams(effEc, effPr)
 	a.plot.SetData(nil, nil, 0, 0)
 	a.plot.Refresh()
+	a.updateLevelIndicatorRange()
 
 	// Reset E-field slider
 	if a.eFieldSlider != nil {
