@@ -71,10 +71,6 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 
 	// Check if using V/2 half-select (passive mode)
 	isPassive := ca.deviceState.IsPassiveMode()
-	direction := DirectionAscending
-	if currentLevel > targetLevel {
-		direction = DirectionDescending
-	}
 	if isPassive {
 		defer func() {
 			ca.deviceState.DisableHalfSelectVisualization()
@@ -98,7 +94,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, appliedVoltage, iteration, maxIterations))
 			})
 		}
-		ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
+		ca.applyHalfSelectDisturb(row, col)
 		ca.recomputeAndRefresh()
 		time.Sleep(iterationDelay / 2)
 

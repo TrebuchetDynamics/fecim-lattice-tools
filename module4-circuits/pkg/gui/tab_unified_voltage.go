@@ -221,7 +221,7 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
 			ca.updateHalfSelectVisualization()
 		}
-		ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
+		ca.applyHalfSelectDisturb(row, col)
 		ca.recomputeAndRefresh()
 
 		// Update ISPP UI
@@ -429,7 +429,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 				ds.EnableHalfSelectVisualization(row, col, appliedVoltage)
 				ca.updateHalfSelectVisualization()
 			}
-			ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
+			ca.applyHalfSelectDisturb(row, col)
 			ca.recomputeAndRefresh()
 		}
 
@@ -887,9 +887,9 @@ func (ca *CircuitsApp) applyWriteVoltages(row, col int, targetVoltage float64) (
 	return applied, dacCode
 }
 
-// applyHalfSelectDisturb updates neighbor polarization based on V/2 exposure.
+// applyHalfSelectDisturbLegacy updates neighbor polarization based on V/2 exposure.
 // This is a lightweight, deterministic drift model for live UI feedback.
-func (ca *CircuitsApp) applyHalfSelectDisturb(row, col int, direction HysteresisDirection, appliedVoltage float64) {
+func (ca *CircuitsApp) applyHalfSelectDisturbLegacy(row, col int, direction HysteresisDirection, appliedVoltage float64) {
 	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
 		return
 	}
