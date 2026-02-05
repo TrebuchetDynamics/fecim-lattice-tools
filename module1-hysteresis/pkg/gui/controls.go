@@ -146,7 +146,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 				a.eFieldModeLabel.SetText("AUTO")
 			}
 			if a.levelIndicator != nil {
-				a.levelIndicator.SetInteractive(false)
+				a.levelIndicator.SetInteractive(true) // Allow manual target selection
 			}
 			// Lazy calibration: run on first use of WRD mode
 			if a.needsCalibration {

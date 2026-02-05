@@ -684,6 +684,14 @@ func (a *App) createUI() fyne.CanvasObject {
 			log.Printf("ANIMATION START: target=%d, start=%d, numLevels=%d",
 				targetLevel, a.manualStartLevel, a.numLevels)
 			a.addLogEntry(fmt.Sprintf("WRITE → Level %d", targetLevel))
+			return
+		}
+
+		if a.waveform == WaveformWriteReadDemo {
+			// Queue a manual target for the next ISPP cycle.
+			a.wrdNextTargetLevel = targetLevel
+			a.addLogEntry(fmt.Sprintf("NEXT TARGET → Level %d", targetLevel))
+			log.Printf("WRD MANUAL TARGET: queued=%d currentLevel=%d phase=%d", targetLevel, a.discreteLevel+1, a.wrdPhase)
 		}
 	}
 	a.updateLevelIndicatorRange()
