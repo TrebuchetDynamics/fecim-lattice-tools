@@ -266,12 +266,18 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 	// MVM: ~76ns (parallel row read), Energy: N x ~46fJ where N = active cells
 	activeCells := ca.arrayRows * ca.arrayCols
 	energyFJ := activeCells * 46 // ~46fJ per cell (read path)
-	if err := SaveComputeLog(); err != nil {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM done (log error: %v)", err))
-	} else {
+	if ComputeLogEnabled() {
+		if err := SaveComputeLog(); err != nil {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM done (log error: %v)", err))
+			return
+		}
 		ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM complete: %dx%d array | ~76ns, ~%dfJ total | saved log",
 			ca.arrayRows, ca.arrayCols, energyFJ))
+		return
 	}
+
+	ca.operationsStatusLabel.SetText(fmt.Sprintf("MVM complete: %dx%d array | ~76ns, ~%dfJ total",
+		ca.arrayRows, ca.arrayCols, energyFJ))
 }
 
 // onUnifiedAnimate animates the signal flow

@@ -26,6 +26,7 @@ func (ca *CrossbarApp) runIRDropAnalysis() {
 	}
 
 	params := crossbar.DefaultWireParams()
+	ca.applyTemperatureToWireParams(params)
 	analysis := ca.array.AnalyzeIRDrop(input, params)
 
 	// Protected write to lastIRDropAnalysis
@@ -91,6 +92,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 	// Analyze IR drop
 	params := crossbar.DefaultWireParams()
+	ca.applyTemperatureToWireParams(params)
 	analysis := ca.array.AnalyzeIRDrop(input, params)
 
 	// Update IR drop heatmap

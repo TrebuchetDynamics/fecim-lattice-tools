@@ -102,7 +102,7 @@ func runMNISTSubcommand(args []string) error {
 }
 
 func runCircuitsSubcommand(args []string) error {
-	if len(args) == 0 || args[0] == "gui" {
+	if len(args) == 0 || args[0] == "gui" || strings.HasPrefix(args[0], "-") {
 		return circuitsgui.Run(args[cmdSkip(args):])
 	}
 

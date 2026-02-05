@@ -805,6 +805,12 @@ type DegradationStep struct {
 
 // ComputeAccuracyDegradation computes stepwise accuracy loss.
 func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy float64) (*AccuracyDegradation, error) {
+	return a.ComputeAccuracyDegradationWithOptions(input, baselineAccuracy, nil)
+}
+
+// ComputeAccuracyDegradationWithOptions computes stepwise accuracy loss with custom options
+// (e.g., temperature or architecture). Non-ideality toggles are controlled internally.
+func (a *Array) ComputeAccuracyDegradationWithOptions(input []float64, baselineAccuracy float64, opts *MVMOptions) (*AccuracyDegradation, error) {
 	result := &AccuracyDegradation{
 		BaselineAccuracy: baselineAccuracy,
 		Degradations:     []DegradationStep{},
@@ -814,12 +820,15 @@ func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy flo
 
 	// Step 1: ADC/DAC quantization
 	// Start from defaults to ensure physical parameters (e.g., temperature) are valid.
-	opts := DefaultMVMOptions()
-	opts.EnableIRDrop = false
-	opts.EnableSneakPaths = false
-	opts.EnableVariation = false
-	opts.EnableDrift = false
-	mvmIdeal, _ := a.MVMWithNonIdealities(input, opts)
+	baseOpts := DefaultMVMOptions()
+	if opts != nil {
+		*baseOpts = *opts
+	}
+	baseOpts.EnableIRDrop = false
+	baseOpts.EnableSneakPaths = false
+	baseOpts.EnableVariation = false
+	baseOpts.EnableDrift = false
+	mvmIdeal, _ := a.MVMWithNonIdealities(input, baseOpts)
 	quantLoss := mvmIdeal.RMSE * 100 / 3.0 // Empirical: 3% RMSE = 1% accuracy loss
 	currentAccuracy -= quantLoss
 	result.Degradations = append(result.Degradations, DegradationStep{
@@ -829,8 +838,8 @@ func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy flo
 	})
 
 	// Step 2: Add IR drop
-	opts.EnableIRDrop = true
-	mvmIR, _ := a.MVMWithNonIdealities(input, opts)
+	baseOpts.EnableIRDrop = true
+	mvmIR, _ := a.MVMWithNonIdealities(input, baseOpts)
 	irLoss := (mvmIR.RMSE - mvmIdeal.RMSE) * 100 / 3.0
 	currentAccuracy -= irLoss
 	result.Degradations = append(result.Degradations, DegradationStep{
@@ -840,8 +849,8 @@ func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy flo
 	})
 
 	// Step 3: Add device variation
-	opts.EnableVariation = true
-	mvmVar, _ := a.MVMWithNonIdealities(input, opts)
+	baseOpts.EnableVariation = true
+	mvmVar, _ := a.MVMWithNonIdealities(input, baseOpts)
 	varLoss := (mvmVar.RMSE - mvmIR.RMSE) * 100 / 3.0
 	currentAccuracy -= varLoss
 	result.Degradations = append(result.Degradations, DegradationStep{
@@ -851,8 +860,8 @@ func (a *Array) ComputeAccuracyDegradation(input []float64, baselineAccuracy flo
 	})
 
 	// Step 4: Add sneak paths
-	opts.EnableSneakPaths = true
-	mvmSneak, _ := a.MVMWithNonIdealities(input, opts)
+	baseOpts.EnableSneakPaths = true
+	mvmSneak, _ := a.MVMWithNonIdealities(input, baseOpts)
 	sneakLoss := (mvmSneak.RMSE - mvmVar.RMSE) * 100 / 3.0
 	currentAccuracy -= sneakLoss
 	result.Degradations = append(result.Degradations, DegradationStep{

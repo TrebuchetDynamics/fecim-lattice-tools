@@ -63,28 +63,39 @@ Preisach‑type models are appropriate for systems exhibiting **wipe‑out** and
 - This yields curved relaxation when E decreases, without manual parameters.
 
 **MLC Level Binning + Guard Band (Read Margin)**
-- We model discrete MLC levels as **bins with guard bands** rather than a hard round‑to‑nearest only.
-- Binning uses centers spaced by `2*Ps/(N-1)` (consistent with the current round‑mapping).
+- We model discrete MLC levels as **bins with guard bands** rather than a hard round-to-nearest only.
+- Levels are **evenly spaced in polarization**, not in electric field, and use an **effective** saturation range.
+- `effectivePs = Ps * rangeFrac`.
+- `rangeFrac` comes from `TargetRangeFrac` in the material (defaults to `0.98` via `module1-hysteresis/pkg/gui/gui.go`).
+- Spacing: `step = 2 * effectivePs / (NumLevels - 1)` (`module1-hysteresis/pkg/ferroelectric/level_bins.go`).
+- Level 1 center: `-effectivePs`.
+- Level N center: `+effectivePs`.
+- GUI level mapping (used for `a.discreteLevel`) normalizes by the effective range.
+- `levelNorm = clamp(P / effectivePs, -1, 1)`.
+- `level_index = round((levelNorm + 1) / 2 * (NumLevels - 1))`.
+- Stored as 0-based `level_index`; logged as both `level_index` and `level = level_index + 1` (`module1-hysteresis/pkg/gui/physics_engine.go`, `module1-hysteresis/pkg/gui/data_logger.go`).
 - Each bin has a **guard fraction** (default `0.15`) that marks edge regions as unsafe for reliable read.
+- The guard band **does not change bin width**; it only shrinks the "safe" region used during verify (`module1-hysteresis/pkg/ferroelectric/level_bins.go`).
 - Implementation: `module1-hysteresis/pkg/ferroelectric/level_bins.go` (`LevelBins.LevelForP`).
 
 **Write‑Verify Behavior with Guard Bands**
-- During the ISPP write‑verify loop, the simulation treats “in‑guard” reads as **not yet valid** even if the level index matches the target.
+- During the ISPP write‑verify loop, the simulation treats "in-guard" reads as **not yet valid** even if the level index matches the target.
 - The controller receives a guard‑direction hint and applies a small correction pulse toward the bin center.
 - This models real MLC behavior where the sense amplifier rejects edge states and forces extra program/verify iterations.
 
 **Short Example (30 Levels)**
-Assume `Ps = 0.55 C/m²`, `N = 30`, `GuardFrac = 0.15`.
+Assume `Ps = 0.55 C/m²`, `N = 30`, `GuardFrac = 0.15`, `rangeFrac = 0.98`.
 
 ```text
-Step = 2*Ps/(N-1) = 2*0.55/29 ≈ 0.03793 C/m²
-Guard width = 0.15*Step ≈ 0.00569 C/m²
+effectivePs = Ps * rangeFrac = 0.55 * 0.98 = 0.539 C/m²
+Step = 2*effectivePs/(N-1) = 2*0.539/29 ≈ 0.03717 C/m²
+Guard width = 0.15*Step ≈ 0.00558 C/m²
 
-Level k center: Pk = -Ps + (k-1)*Step
+Level k center: Pk = -effectivePs + (k-1)*Step
 Safe zone: [Pk - 0.5*Step + Guard, Pk + 0.5*Step - Guard]
 ```
 
-If a read lands inside the guard zone, the write‑verify loop treats it as “not yet valid”
+If a read lands inside the guard zone, the write-verify loop treats it as "not yet valid"
 and nudges the state toward the bin center.
 
 **Guard Band Diagram (One Bin)**
@@ -93,6 +104,10 @@ and nudges the state toward the bin center.
 |---edge guard---|======= safe =======|---edge guard---|
 Pk - 0.5*Step    Pk                   Pk + 0.5*Step
 ```
+
+**Tuning Note**
+If you want the outer levels closer to full saturation, increase `target_range_frac` in `config/materials.yaml`
+(e.g., `literature_superlattice.target_range_frac`).
 
 **Temperature & Stress Effects**
 - Effective Ec and Ps are updated via linear scaling in the material model.

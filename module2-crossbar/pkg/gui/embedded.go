@@ -25,6 +25,7 @@ func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
 		selectedRow:   -1, // No selection initially
 		selectedCol:   -1,
 		tabHasNewData: make(map[string]bool),
+		temperatureK:  300.0,
 	}
 
 	// Initialize with default config (array created lazily)

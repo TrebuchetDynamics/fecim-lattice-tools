@@ -3,10 +3,13 @@ package gui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
 	sharedio "fecim-lattice-tools/shared/io"
+	"fecim-lattice-tools/shared/logging"
 )
 
 // ComputeLogEntry represents a single MVM compute operation
@@ -51,8 +54,8 @@ type ComputeLog struct {
 
 var globalComputeLog = &ComputeLog{
 	entries:  make([]ComputeLogEntry, 0),
-	filePath: "compute_log.json",
-	enabled:  true,
+	filePath: filepath.Join(logging.LogsDir(), "compute_log.json"),
+	enabled:  os.Getenv("FECIM_CIRCUITS_COMPUTE_LOG") != "",
 }
 
 // EnableComputeLog enables or disables compute logging
@@ -60,6 +63,13 @@ func EnableComputeLog(enabled bool) {
 	globalComputeLog.mu.Lock()
 	defer globalComputeLog.mu.Unlock()
 	globalComputeLog.enabled = enabled
+}
+
+// ComputeLogEnabled reports whether compute logging is currently enabled.
+func ComputeLogEnabled() bool {
+	globalComputeLog.mu.Lock()
+	defer globalComputeLog.mu.Unlock()
+	return globalComputeLog.enabled
 }
 
 // SetComputeLogPath sets the path for the compute log file

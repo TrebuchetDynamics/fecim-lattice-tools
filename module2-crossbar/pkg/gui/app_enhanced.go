@@ -66,6 +66,7 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 	if arch != "" {
 		opts.Architecture = arch
 	}
+	opts.Temperature = ca.currentTemperatureK()
 
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
@@ -144,6 +145,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	if arch != "" {
 		opts.Architecture = arch
 	}
+	opts.Temperature = ca.currentTemperatureK()
 
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
 	if err != nil {
@@ -214,6 +216,7 @@ func (ca *CrossbarApp) runEnhancedMVMWithCurrentInput() {
 	// Perform enhanced MVM with all non-idealities
 	opts := crossbar.DefaultMVMOptions()
 	opts.Architecture = arch // Always set architecture explicitly
+	opts.Temperature = ca.currentTemperatureK()
 	getDebug().Printf("[ARCH SWITCH] opts.Architecture=%s, Is1T1R=%v", opts.Architecture, opts.Is1T1R())
 
 	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)

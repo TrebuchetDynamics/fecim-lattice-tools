@@ -48,7 +48,12 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 
 	// Update accuracy waterfall
 	if ca.accuracyWaterfall != nil {
-		degradation, _ := ca.array.ComputeAccuracyDegradation(input, baselineAcc)
+		opts := crossbar.DefaultMVMOptions()
+		ca.stateMu.RLock()
+		opts.Architecture = ca.architecture
+		ca.stateMu.RUnlock()
+		opts.Temperature = ca.currentTemperatureK()
+		degradation, _ := ca.array.ComputeAccuracyDegradationWithOptions(input, baselineAcc, opts)
 		if degradation != nil {
 			steps := make([]WaterfallStep, len(degradation.Degradations))
 			colors := []color.RGBA{
@@ -114,6 +119,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		passiveParams := crossbar.DefaultWireParams()
 		passiveParams.RwordLine *= 1.5
 		passiveParams.RbitLine *= 1.5
+		ca.applyTemperatureToWireParams(passiveParams)
 		passiveIR := ca.array.AnalyzeIRDrop(input, passiveParams)
 		ca.stateMu.Lock()
 		ca.baselineMaxIRDrop = passiveIR.MaxIRDrop * 100

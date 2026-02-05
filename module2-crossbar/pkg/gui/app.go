@@ -76,16 +76,18 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	resetButton     *widget.Button
-	arraySizeSelect *widget.Select // Dropdown for array size
-	arraySizeLabel  *widget.Label  // Label for slider display
-	arraySizeSlider *widget.Slider // Slider for array size
-	noiseLabel      *widget.Label
-	noiseSlider     *widget.Slider
-	adcBitsLabel    *widget.Label
-	adcBitsSlider   *widget.Slider
-	colormapSelect  *widget.Select
-	statsLabel      *widget.Label
+	resetButton       *widget.Button
+	arraySizeSelect   *widget.Select // Dropdown for array size
+	arraySizeLabel    *widget.Label  // Label for slider display
+	arraySizeSlider   *widget.Slider // Slider for array size
+	noiseLabel        *widget.Label
+	noiseSlider       *widget.Slider
+	adcBitsLabel      *widget.Label
+	adcBitsSlider     *widget.Slider
+	temperatureLabel  *widget.Label
+	temperatureSlider *widget.Slider
+	colormapSelect    *widget.Select
+	statsLabel        *widget.Label
 
 	// Track colormap per tab
 	condColormap  string
@@ -107,7 +109,7 @@ type CrossbarApp struct {
 
 	// Mutex for protecting state accessed by multiple goroutines
 	// Protects: lastInput, lastOutput, lastMVMResult, lastIRDropAnalysis,
-	// lastSneakAnalysis, selectedRow, selectedCol
+	// lastSneakAnalysis, selectedRow, selectedCol, temperatureK
 	stateMu sync.RWMutex
 
 	// Current state (protected by stateMu)
@@ -116,6 +118,7 @@ type CrossbarApp struct {
 	lastMVMResult      *crossbar.MVMResult
 	lastIRDropAnalysis *crossbar.IRDropAnalysis
 	lastSneakAnalysis  *crossbar.SneakPathAnalysis
+	temperatureK       float64
 
 	// Baseline values from 0T1R (passive) for legend scaling
 	// These provide consistent reference for comparing architectures
@@ -163,6 +166,7 @@ type CrossbarApp struct {
 func NewCrossbarApp() (*CrossbarApp, error) {
 	ca := &CrossbarApp{
 		tabHasNewData: make(map[string]bool),
+		temperatureK:  300.0,
 	}
 
 	// Create Fyne app
@@ -335,6 +339,22 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.runEnhancedMVMInstant()
 	}
 
+	// Temperature slider (Kelvin)
+	ca.temperatureLabel = widget.NewLabel(ca.formatTemperatureLabel(ca.currentTemperatureK()))
+	ca.temperatureLabel.Wrapping = fyne.TextWrapOff
+	ca.temperatureSlider = widget.NewSlider(77, 450)
+	ca.temperatureSlider.Step = 5
+	ca.temperatureSlider.Value = ca.currentTemperatureK()
+	ca.temperatureSlider.OnChanged = func(v float64) {
+		ca.temperatureLabel.SetText(ca.formatTemperatureLabel(v))
+		ca.setTemperatureK(v)
+		ca.stateMu.Lock()
+		ca.baselineMaxIRDrop = 0
+		ca.stateMu.Unlock()
+		ca.updateInfoLabel()
+		ca.runEnhancedMVMInstant()
+	}
+
 	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
 		ca.conductanceHeatmap.SetColormap(s)
 		ca.condLegend.SetColormap(s)
@@ -425,10 +445,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
-	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
-		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
-	))
+	ca.infoLabel = widget.NewLabel("")
+	ca.updateInfoLabel()
 
 	// Hover info label - shows cell info on mouse hover
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
@@ -530,6 +548,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Signal quality - inline labels
 	noiseRow := container.NewBorder(nil, nil, widget.NewLabel("Noise:"), ca.noiseLabel, ca.noiseSlider)
 	adcRow := container.NewBorder(nil, nil, widget.NewLabel("ADC:"), ca.adcBitsLabel, ca.adcBitsSlider)
+	tempRow := container.NewBorder(nil, nil, widget.NewLabel("Temp:"), ca.temperatureLabel, ca.temperatureSlider)
 
 	// Colormap row
 	colormapRow := container.NewBorder(nil, nil, widget.NewLabel("Color:"), nil, ca.colormapSelect)
@@ -547,6 +566,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 		noiseRow,
 		adcRow,
+		tempRow,
 		widget.NewSeparator(),
 		colormapRow,
 		widget.NewSeparator(),
@@ -747,11 +767,48 @@ func (ca *CrossbarApp) setKeyStatValue(value string) {
 	ca.keyStatValue.SetText(value)
 }
 
+func (ca *CrossbarApp) currentTemperatureK() float64 {
+	ca.stateMu.RLock()
+	tempK := ca.temperatureK
+	ca.stateMu.RUnlock()
+	if tempK <= 0 {
+		tempK = 300.0
+	}
+	return tempK
+}
+
+func (ca *CrossbarApp) setTemperatureK(tempK float64) {
+	if tempK <= 0 {
+		tempK = 300.0
+	}
+	ca.stateMu.Lock()
+	ca.temperatureK = tempK
+	ca.stateMu.Unlock()
+}
+
+func (ca *CrossbarApp) formatTemperatureLabel(tempK float64) string {
+	tempC := tempK - 273.15
+	return fmt.Sprintf("%.0f K (%.0f°C)", tempK, tempC)
+}
+
+func (ca *CrossbarApp) applyTemperatureToWireParams(params *crossbar.WireParams) {
+	if params == nil {
+		return
+	}
+	tempK := ca.currentTemperatureK()
+	if tempK != 300.0 {
+		tempEffects := crossbar.NewTemperatureEffects(tempK)
+		params.RwordLine = tempEffects.AdjustedWireResistance(params.RwordLine)
+		params.RbitLine = tempEffects.AdjustedWireResistance(params.RbitLine)
+	}
+}
+
 // updateInfoLabel updates the info label with current config.
 func (ca *CrossbarApp) updateInfoLabel() {
+	tempK := ca.currentTemperatureK()
 	ca.infoLabel.SetText(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
-		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
+		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits | Temp: %.0fK",
+		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits, tempK,
 	))
 }
 

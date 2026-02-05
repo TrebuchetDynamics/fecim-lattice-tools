@@ -38,6 +38,13 @@ func (ca *CrossbarApp) setControlsEnabled(enabled bool) {
 			ca.adcBitsSlider.Disable()
 		}
 	}
+	if ca.temperatureSlider != nil {
+		if enabled {
+			ca.temperatureSlider.Enable()
+		} else {
+			ca.temperatureSlider.Disable()
+		}
+	}
 	// Disable/enable architecture toggle buttons
 	if ca.archPassiveBtn != nil {
 		if enabled {
@@ -110,6 +117,22 @@ func (ca *CrossbarApp) createControlWidgets() {
 		bits := int(v)
 		ca.adcBitsLabel.SetText(fmt.Sprintf("%d bits", bits))
 		ca.config.ADCBits = bits
+		ca.runEnhancedMVMInstant()
+	}
+
+	// Temperature slider (Kelvin)
+	ca.temperatureLabel = widget.NewLabel(ca.formatTemperatureLabel(ca.currentTemperatureK()))
+	ca.temperatureLabel.Wrapping = fyne.TextWrapOff
+	ca.temperatureSlider = widget.NewSlider(77, 450)
+	ca.temperatureSlider.Step = 5
+	ca.temperatureSlider.Value = ca.currentTemperatureK()
+	ca.temperatureSlider.OnChanged = func(v float64) {
+		ca.temperatureLabel.SetText(ca.formatTemperatureLabel(v))
+		ca.setTemperatureK(v)
+		ca.stateMu.Lock()
+		ca.baselineMaxIRDrop = 0
+		ca.stateMu.Unlock()
+		ca.updateInfoLabel()
 		ca.runEnhancedMVMInstant()
 	}
 
@@ -229,6 +252,12 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 		ca.adcBitsLabel,
 		ca.adcBitsSlider,
 	)
+	tempRow := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("Temp:"),
+		ca.temperatureLabel,
+		ca.temperatureSlider,
+	)
 
 	// === DISPLAY & ACTIONS - Combined compact row ===
 	colormapRow := container.NewBorder(
@@ -269,6 +298,7 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 		widget.NewSeparator(),
 		noiseRow,
 		adcRow,
+		tempRow,
 		widget.NewSeparator(),
 		colormapRow,
 		widget.NewSeparator(),
@@ -308,11 +338,9 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	})
 	levelsInfoBtn.Importance = widget.LowImportance
 
-	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
-		"Crossbar: %dx%d | Levels: 30 (claim) | Noise: %.1f%% | ADC: %d bits",
-		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
-	))
+	ca.infoLabel = widget.NewLabel("")
 	ca.infoLabel.Wrapping = fyne.TextWrapOff
+	ca.updateInfoLabel()
 
 	infoRow := container.NewHBox(ca.infoLabel, levelsInfoBtn)
 

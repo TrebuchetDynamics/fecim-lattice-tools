@@ -530,6 +530,11 @@ func main() {
 		log = logging.NewNoOpLogger()
 	}
 
+	// Module 4 compute logging (JSON) is opt-in; tie to --logger for convenience.
+	if *loggerFlag {
+		demo4gui.EnableComputeLog(true)
+	}
+
 	// Handle --mode (headless diagnostics) after logging is initialized
 	if *modeFlag != "" {
 		if err := runMode(*modeFlag, *engineFlag); err != nil {
