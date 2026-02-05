@@ -33,10 +33,11 @@ const (
 	FeCIMDefaultADC    = 8                     // 8-bit ADC resolution
 	FeCIMDefaultDAC    = 8                     // 8-bit DAC resolution
 
-	// Energy efficiency (model input; literature ranges are reported, not verified here)
-	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
-	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
-	EnergyRatioGPU    = 100     // Illustrative ratio for UI (model-based, not verified)
+	// Energy efficiency
+	//
+	// FeCIM energy is computed in core (bit-scaled fJ/MAC + ADC/DAC overhead) and then shown in the GUI.
+	// GPU energy here is a simple per-MAC constant (dominated by data movement; Horowitz 2014).
+	GPUEnergyPerMAC = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
 
 	// Accuracy reference (peer-reviewed baselines, not targets)
 	// Note: Accuracy varies with noise, levels, and architecture
