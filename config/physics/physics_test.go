@@ -11,10 +11,6 @@ func TestLoad(t *testing.T) {
 	}
 
 	// Verify constants
-	if cfg.Constants.FeCIMLevels != 30 {
-		t.Errorf("Expected 30 FeCIM levels, got %d", cfg.Constants.FeCIMLevels)
-	}
-
 	if cfg.Constants.BitsPerCell < 4.9 || cfg.Constants.BitsPerCell > 5.0 {
 		t.Errorf("Expected ~4.91 bits/cell, got %f", cfg.Constants.BitsPerCell)
 	}

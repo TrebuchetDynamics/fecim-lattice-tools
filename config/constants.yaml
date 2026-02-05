@@ -5,7 +5,6 @@
 # GLOBAL CONSTANTS
 # =============================================================================
 constants:
-  fecim_levels: 30              # Discrete analog states ("30 discrete states" - Dr. Tour)
   bits_per_cell: 4.91           # log2(30) = 4.91 bits/cell
   boltzmann_ev: 8.617e-5        # Boltzmann constant (eV/K)
   epsilon_0: 8.854e-12          # Vacuum permittivity (F/m)
