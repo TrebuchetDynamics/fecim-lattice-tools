@@ -9,6 +9,10 @@ const (
 	CouplingIdeal CouplingMode = iota
 	// CouplingTierA enables the Tier A approximate IR-drop / half-select model.
 	CouplingTierA
+	// CouplingTierB enables the Tier B DC nodal (MNA/KCL) model.
+	//
+	// Tier B is not selected by default; callers must explicitly opt in.
+	CouplingTierB
 )
 
 // CellGeometry captures physical cell dimensions and wire geometry (SI units).
