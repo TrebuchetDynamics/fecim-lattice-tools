@@ -227,9 +227,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			klayoutImage.File = absPath
-			klayoutImage.Resource = nil
 			fyne.Do(func() {
+				klayoutImage.File = absPath
+				klayoutImage.Resource = nil
 				klayoutStatus.SetText("Generated: " + filepath.Base(pngPath))
 				klayoutImage.Refresh()
 			})
@@ -242,9 +242,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			yosysImage.File = absPath
-			yosysImage.Resource = nil
 			fyne.Do(func() {
+				yosysImage.File = absPath
+				yosysImage.Resource = nil
 				yosysStatus.SetText("Generated: " + filepath.Base(pngPath))
 				yosysImage.Refresh()
 			})
@@ -265,9 +265,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			openroadImage.File = absPath
-			openroadImage.Resource = nil
 			fyne.Do(func() {
+				openroadImage.File = absPath
+				openroadImage.Resource = nil
 				openroadStatus.SetText("Generated: " + filepath.Base(pngPath))
 				openroadImage.Refresh()
 			})
