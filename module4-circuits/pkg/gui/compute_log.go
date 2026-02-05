@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/logging"
 )
@@ -169,6 +170,16 @@ func (ds *DeviceState) LogCompute(weights [][]int, quantLevels int) {
 			conductanceUS := entry.Conductances[r][c]
 			voltage := ds.dacVoltages[c]
 			currentUA := conductanceUS * voltage
+			if ds.couplingMode == arraysim.CouplingTierA && ds.coupledCellVoltages != nil {
+				if r < len(ds.coupledCellVoltages) && c < len(ds.coupledCellVoltages[r]) {
+					voltage = ds.coupledCellVoltages[r][c]
+				}
+			}
+			if ds.couplingMode == arraysim.CouplingTierA && ds.coupledCellCurrents != nil {
+				if r < len(ds.coupledCellCurrents) && c < len(ds.coupledCellCurrents[r]) {
+					currentUA = ds.coupledCellCurrents[r][c] * 1e6
+				}
+			}
 
 			result.CellDetail[c] = CellMVM{
 				Col:           c,

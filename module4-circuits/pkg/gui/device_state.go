@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"fecim-lattice-tools/config/physics"
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
@@ -145,6 +146,14 @@ type DeviceState struct {
 	adc *peripherals.ADC
 	dac *peripherals.DAC
 
+	// Coupling simulation (Tier A arraysim)
+	couplingMode        arraysim.CouplingMode
+	arrayEngine         arraysim.Engine
+	cellGeometry        arraysim.CellGeometry
+	wireParams          arraysim.WireParams
+	coupledCellVoltages [][]float64 // Last coupled Vcell (V)
+	coupledCellCurrents [][]float64 // Last coupled Icell (A)
+
 	enableDACNonlinearity bool // Apply DAC INL/DNL in compute path
 
 	// Embedded state machines (previously global)
@@ -166,6 +175,15 @@ type DeviceState struct {
 // Loads calibration parameters from physics.yaml for voltage range calculation
 func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) *DeviceState {
 	defaultMaterial := sharedphysics.FeCIMMaterial()
+	defaultGeometry := arraysim.DefaultCellGeometry()
+	if defaultMaterial != nil {
+		if defaultMaterial.Thickness > 0 {
+			defaultGeometry.Thickness = defaultMaterial.Thickness
+		}
+		if defaultMaterial.Area > 0 {
+			defaultGeometry.ActiveArea = defaultMaterial.Area
+		}
+	}
 
 	ds := &DeviceState{
 		rows:         rows,
@@ -188,6 +206,10 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		tia:          tia,
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
+		couplingMode: arraysim.CouplingIdeal,
+		arrayEngine:  arraysim.NewTierASolver(),
+		cellGeometry: defaultGeometry,
+		wireParams:   arraysim.WireParams{},
 		// Initialize embedded state machines
 		hysteresisState: HysteresisState{
 			LastLevel: make(map[string]int),
@@ -279,6 +301,12 @@ func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 		ec := mat.CoerciveVoltage()
 		numLevels := mat.GetNumLevels()
 		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
+		if mat.Thickness > 0 {
+			ds.cellGeometry.Thickness = mat.Thickness
+		}
+		if mat.Area > 0 {
+			ds.cellGeometry.ActiveArea = mat.Area
+		}
 	}
 }
 
@@ -295,6 +323,38 @@ func (ds *DeviceState) SetDACNonlinearity(enable bool) {
 // IsDACNonlinearityEnabled returns whether DAC nonlinearity is applied
 func (ds *DeviceState) IsDACNonlinearityEnabled() bool {
 	return ds.enableDACNonlinearity
+}
+
+// SetCouplingMode enables/disables array coupling simulation.
+func (ds *DeviceState) SetCouplingMode(mode arraysim.CouplingMode) {
+	ds.mu.Lock()
+	ds.couplingMode = mode
+	if mode == arraysim.CouplingIdeal {
+		ds.coupledCellVoltages = nil
+		ds.coupledCellCurrents = nil
+	}
+	ds.mu.Unlock()
+}
+
+// GetCouplingMode returns the active coupling model.
+func (ds *DeviceState) GetCouplingMode() arraysim.CouplingMode {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.couplingMode
+}
+
+// SetCellGeometry updates the cell geometry used for coupling calculations.
+func (ds *DeviceState) SetCellGeometry(geom arraysim.CellGeometry) {
+	ds.mu.Lock()
+	ds.cellGeometry = geom.WithDefaults()
+	ds.mu.Unlock()
+}
+
+// GetCellGeometry returns the current cell geometry.
+func (ds *DeviceState) GetCellGeometry() arraysim.CellGeometry {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.cellGeometry
 }
 
 // SetADCBits changes the ADC resolution (5, 6, 7, or 8 bits)
@@ -548,12 +608,38 @@ func (ds *DeviceState) effectiveCellVoltageLocked(row, col int) float64 {
 	if row < 0 || row >= ds.rows || col < 0 || col >= ds.cols {
 		return 0
 	}
+	if ds.couplingMode == arraysim.CouplingTierA && ds.coupledCellVoltages != nil {
+		if row < len(ds.coupledCellVoltages) && col < len(ds.coupledCellVoltages[row]) {
+			return ds.coupledCellVoltages[row][col]
+		}
+	}
 	bl := ds.dacVoltages[col]
 	if ds.isPassive {
 		wl := ds.wlVoltages[row]
 		return wl - bl
 	}
 	return bl
+}
+
+// applyDACNonlinearityLocked applies DAC nonlinearity for read/compute path voltages.
+// Caller must hold ds.mu.
+func (ds *DeviceState) applyDACNonlinearityLocked(voltage float64) float64 {
+	if !ds.enableDACNonlinearity || ds.dac == nil || ds.dacRangeMode != DACRangeRead {
+		return voltage
+	}
+	voltageMag := math.Abs(voltage)
+	normalized := 0.0
+	if ds.readRange.Max > 0 {
+		normalized = voltageMag / ds.readRange.Max
+	}
+	if normalized > 1.0 {
+		normalized = 1.0
+	}
+	if normalized < 0 {
+		normalized = 0
+	}
+	level := int(normalized * float64(ds.dac.Levels()-1))
+	return math.Copysign(ds.dac.ConvertWithNonlinearity(level), voltage)
 }
 
 // SetDACPreset applies a preset pattern using material-derived voltage ranges
@@ -809,7 +895,21 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
-	// Perform computation
+	if ds.couplingMode == arraysim.CouplingTierA && ds.arrayEngine != nil {
+		if ds.computeWithArraysimLocked(weights, quantLevels) {
+			ds.LogCompute(weights, quantLevels)
+			return
+		}
+	}
+
+	// Fallback: ideal computation path (existing behavior).
+	ds.coupledCellVoltages = nil
+	ds.coupledCellCurrents = nil
+	ds.computeIdealLocked(weights, quantLevels)
+	ds.LogCompute(weights, quantLevels)
+}
+
+func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 	for r := 0; r < ds.rows; r++ {
 		if !ds.activeRows[r] {
 			ds.rowCurrents[r] = 0
@@ -822,25 +922,14 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		// Sum currents from all active columns
 		totalCurrent := 0.0
 		for c := 0; c < ds.cols; c++ {
-			blVoltage := ds.dacVoltages[c]
 			voltage := ds.effectiveCellVoltageLocked(r, c)
 
 			// Apply DAC nonlinearity if enabled (read/compute path only).
 			if ds.enableDACNonlinearity && ds.dac != nil && ds.dacRangeMode == DACRangeRead {
-				// Convert voltage magnitude to level and back through DAC with nonlinearity.
-				voltageMag := math.Abs(voltage)
-				normalizedV := voltageMag / ds.readRange.Max
-				if normalizedV > 1.0 {
-					normalizedV = 1.0
-				}
-				if normalizedV < 0 {
-					normalizedV = 0
-				}
-				level := int(normalizedV * float64(ds.dac.Levels()-1))
-				voltage = math.Copysign(ds.dac.ConvertWithNonlinearity(level), voltage)
+				voltage = ds.applyDACNonlinearityLocked(voltage)
 			} else if ds.isPassive {
 				// For passive mode, use WL/BL effective voltage even without DAC nonlinearity.
-				voltage = ds.wlVoltages[r] - blVoltage
+				voltage = ds.wlVoltages[r] - ds.dacVoltages[c]
 			}
 
 			if math.Abs(voltage) < 0.01 {
@@ -905,11 +994,15 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 				// Single-cell read: use standard TIA conversion
 				ds.rowVoltages[r] = ds.tia.Convert(currentA)
 			}
+		} else {
+			ds.rowVoltages[r] = 0
 		}
 
 		// ADC conversion: voltage to level
 		if ds.adc != nil {
 			ds.rowLevels[r] = ds.adc.Convert(ds.rowVoltages[r])
+		} else {
+			ds.rowLevels[r] = 0
 		}
 
 		// Check saturation
@@ -919,9 +1012,156 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		}
 		ds.saturated[r] = ds.rowLevels[r] >= adcMaxLevel
 	}
+}
 
-	// Log compute for debugging
-	ds.LogCompute(weights, quantLevels)
+func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels int) bool {
+	if ds.arrayEngine == nil {
+		return false
+	}
+
+	rows := ds.rows
+	cols := ds.cols
+	if rows == 0 || cols == 0 {
+		return true
+	}
+
+	conductance := make([][]float64, rows)
+	for r := 0; r < rows; r++ {
+		conductance[r] = make([]float64, cols)
+		for c := 0; c < cols; c++ {
+			level := 0
+			if r < len(weights) && c < len(weights[r]) {
+				level = weights[r][c]
+			}
+			conductance[r][c] = ds.levelToConductance(level, quantLevels)
+		}
+	}
+
+	blApplied := make([]float64, cols)
+	for c := 0; c < cols; c++ {
+		blApplied[c] = ds.applyDACNonlinearityLocked(ds.dacVoltages[c])
+	}
+
+	wlApplied := make([]float64, rows)
+	if ds.isPassive {
+		copy(wlApplied, ds.wlVoltages)
+	}
+
+	blSolve := blApplied
+	if !ds.isPassive {
+		blSolve = make([]float64, cols)
+		for c := 0; c < cols; c++ {
+			blSolve[c] = -blApplied[c]
+		}
+	}
+
+	params := arraysim.SolveParams{
+		WLVoltages:  wlApplied,
+		BLVoltages:  blSolve,
+		Conductance: conductance,
+		ActiveRows:  ds.activeRows,
+		Geometry:    ds.cellGeometry,
+		Wire:        ds.wireParams,
+	}
+	result, err := ds.arrayEngine.Solve(params)
+	if err != nil {
+		return false
+	}
+
+	ds.coupledCellVoltages = result.CellVoltages
+	ds.coupledCellCurrents = result.CellCurrents
+
+	for r := 0; r < rows; r++ {
+		if !ds.activeRows[r] {
+			ds.rowCurrents[r] = 0
+			ds.rowVoltages[r] = 0
+			ds.rowLevels[r] = 0
+			ds.saturated[r] = false
+			continue
+		}
+
+		rowCurrentA := 0.0
+		if r < len(result.RowCurrents) {
+			rowCurrentA = result.RowCurrents[r]
+		} else if r < len(result.CellCurrents) {
+			for c := 0; c < len(result.CellCurrents[r]); c++ {
+				rowCurrentA += result.CellCurrents[r][c]
+			}
+		}
+
+		ds.rowCurrents[r] = rowCurrentA * 1e6
+
+		if ds.tia == nil {
+			ds.rowVoltages[r] = 0
+			ds.rowLevels[r] = 0
+			ds.saturated[r] = false
+			continue
+		}
+
+		activeColCount := 0
+		expectedMaxCurrentA := 0.0
+		for c := 0; c < cols; c++ {
+			vcell := blApplied[c]
+			if ds.isPassive {
+				vcell = wlApplied[r] - blApplied[c]
+			}
+			if math.Abs(vcell) > 0.01 {
+				activeColCount++
+			}
+			expectedMaxCurrentA += conductance[r][c] * math.Abs(vcell)
+		}
+
+		effectiveGain := ds.tia.Gain
+		if activeColCount > 1 {
+			effectiveGain = effectiveGain / float64(activeColCount)
+		}
+		if expectedMaxCurrentA > 0 {
+			targetV := 0.9 * ds.tia.MaxOutputVoltage
+			if expectedMaxCurrentA*effectiveGain > targetV {
+				effectiveGain = targetV / expectedMaxCurrentA
+			}
+		}
+
+		vref := 0.0
+		if activeColCount <= 1 {
+			vref = ds.tia.OutputOffset
+		}
+
+		if ds.adc == nil {
+			vout := vref + rowCurrentA*effectiveGain
+			if vout < 0 {
+				vout = 0
+			}
+			if vout > ds.tia.MaxOutputVoltage {
+				vout = ds.tia.MaxOutputVoltage
+			}
+			ds.rowVoltages[r] = vout
+			ds.rowLevels[r] = 0
+			ds.saturated[r] = false
+			continue
+		}
+
+		sense := arraysim.SenseChain{
+			TIA: arraysim.TIAConfig{
+				Rf:   effectiveGain,
+				Vref: vref,
+				Vmin: 0,
+				Vmax: ds.tia.MaxOutputVoltage,
+			},
+			ADC: arraysim.ADCConfig{
+				Bits: ds.adc.Bits,
+				Vmin: ds.adc.VrefLow,
+				Vmax: ds.adc.VrefHigh,
+			},
+		}
+		senseResult := sense.ConvertCurrent(rowCurrentA)
+		ds.rowVoltages[r] = senseResult.Vout
+		ds.rowLevels[r] = senseResult.Code
+		adcMaxLevel := (1 << ds.adc.Bits) - 1
+		ds.saturated[r] = senseResult.TIASaturated || senseResult.ADCSaturated || ds.rowLevels[r] >= adcMaxLevel
+	}
+
+	return true
 }
 
 // GetRowCurrent returns the computed current for a row
@@ -1033,6 +1273,8 @@ func (ds *DeviceState) Resize(rows, cols int) {
 		ds.rowVoltages = make([]float64, rows)
 		ds.rowLevels = make([]int, rows)
 		ds.saturated = make([]bool, rows)
+		ds.coupledCellVoltages = nil
+		ds.coupledCellCurrents = nil
 		// Reset to single row 0
 		if rows > 0 {
 			ds.activeRows[0] = true
@@ -1042,6 +1284,8 @@ func (ds *DeviceState) Resize(rows, cols int) {
 	if cols != ds.cols {
 		ds.cols = cols
 		ds.dacVoltages = make([]float64, cols)
+		ds.coupledCellVoltages = nil
+		ds.coupledCellCurrents = nil
 		// Reset to read preset (use material-derived safe read voltage)
 		readVoltage := ds.readRange.Max * 0.5 // 50% of max safe read voltage
 		for i := range ds.dacVoltages {

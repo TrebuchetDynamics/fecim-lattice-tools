@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	configphysics "fecim-lattice-tools/config/physics"
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -148,6 +149,9 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
+	// Coupling model toggle
+	couplingToggle := ca.createCouplingToggle()
+
 	// Mode buttons
 	ca.modeReadBtn = NewTooltipButton(
 		"READ",
@@ -179,6 +183,7 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 		materialSelector,
 		arraySizeSelector,
 		adcBitsSelector,
+		couplingToggle,
 		widget.NewSeparator(),
 		widget.NewLabel("Mode:"),
 		ca.modeReadBtn,
@@ -270,6 +275,53 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		toolWidgets.BadCrossbarStatus,
 		toolWidgets.Button,
 	)
+}
+
+// createCouplingToggle creates the Ideal vs Tier A coupling toggle.
+func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
+	current := arraysim.CouplingIdeal
+	if ca.deviceState != nil {
+		current = ca.deviceState.GetCouplingMode()
+	}
+
+	idealBtn := widget.NewButton("Ideal", nil)
+	approxBtn := widget.NewButton("Approx (Tier A)", nil)
+
+	apply := func(mode arraysim.CouplingMode) {
+		idealBtn.Importance = widget.LowImportance
+		approxBtn.Importance = widget.LowImportance
+		switch mode {
+		case arraysim.CouplingTierA:
+			approxBtn.Importance = widget.HighImportance
+		default:
+			idealBtn.Importance = widget.HighImportance
+		}
+		idealBtn.Refresh()
+		approxBtn.Refresh()
+	}
+
+	setMode := func(mode arraysim.CouplingMode) {
+		if current == mode {
+			return
+		}
+		current = mode
+		if ca.deviceState != nil {
+			ca.deviceState.SetCouplingMode(mode)
+		}
+		apply(mode)
+		ca.recomputeAndRefresh()
+	}
+
+	idealBtn.OnTapped = func() { setMode(arraysim.CouplingIdeal) }
+	approxBtn.OnTapped = func() { setMode(arraysim.CouplingTierA) }
+
+	ca.couplingIdealBtn = idealBtn
+	ca.couplingApproxBtn = approxBtn
+	ca.couplingToggle = container.NewGridWithColumns(2, idealBtn, approxBtn)
+
+	apply(current)
+
+	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle)
 }
 
 // ValidArraySizes defines the supported array dimensions
