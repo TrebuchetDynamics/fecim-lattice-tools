@@ -99,3 +99,42 @@ func TestSenseChain_CurrentRangeSaturation(t *testing.T) {
 		t.Fatalf("expected high saturation, got TIA=%v ADC=%v", high.TIASaturated, high.ADCSaturated)
 	}
 }
+
+func TestSenseChain_ADCQuantization_RoundToNearestHalfUp(t *testing.T) {
+	sense := SenseChain{
+		TIA: TIAConfig{
+			Rf:   1.0,
+			Vref: 0.0,
+			Vmin: -10.0,
+			Vmax: 10.0,
+		},
+		ADC: ADCConfig{
+			Bits: 3, // 8 levels, codes 0..7
+			Vmin: 0.0,
+			Vmax: 1.0,
+		},
+	}
+
+	// For an N-bit ADC with codes 0..maxCode, the ideal LSB is span/maxCode.
+	levels := 1 << uint(sense.ADC.Bits)
+	maxCode := float64(levels - 1)
+	lsbV := (sense.ADC.Vmax - sense.ADC.Vmin) / maxCode
+
+	// Exactly half an LSB above code 0 should round up to code 1 (ties half-up).
+	res := sense.ConvertCurrent(0.5 * lsbV)
+	if res.Code != 1 {
+		t.Fatalf("half-LSB: got code=%d, want 1", res.Code)
+	}
+
+	// Slightly below the half-LSB threshold should stay at code 0.
+	res = sense.ConvertCurrent(0.5*lsbV - 1e-12)
+	if res.Code != 0 {
+		t.Fatalf("just-below-half-LSB: got code=%d, want 0", res.Code)
+	}
+
+	// Midpoint between codes 3 and 4 should round up to 4.
+	res = sense.ConvertCurrent((3.5) * lsbV)
+	if res.Code != 4 {
+		t.Fatalf("midpoint 3.5 LSB: got code=%d, want 4", res.Code)
+	}
+}

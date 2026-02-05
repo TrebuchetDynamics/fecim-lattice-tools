@@ -12,6 +12,14 @@ type TIAConfig struct {
 }
 
 // ADCConfig captures the minimal ADC model for sense conversion.
+//
+// Quantization policy:
+//   - The ADC code is computed by rounding to the nearest integer code (ties half-up).
+//   - Inputs are clamped to [Vmin, Vmax] before quantization.
+//   - The output code is clamped to [0, 2^Bits-1].
+//
+// This matches the GUI/CPU peripheral model in shared/peripherals/adc.go and the GPU shader
+// in module4-circuits/shaders/adc.comp.
 type ADCConfig struct {
 	Bits int     // Resolution in bits
 	Vmin float64 // Minimum input voltage (V)
@@ -69,7 +77,8 @@ func (s SenseChain) ConvertCurrent(currentA float64) SenseResult {
 	if span > 0 {
 		fraction = (adcV - s.ADC.Vmin) / span
 	}
-	code := int(math.Round(fraction * float64(levels-1)))
+	// Round-to-nearest, ties half-up (same convention as shared/peripherals/adc.go).
+	code := int(math.Floor(fraction*float64(levels-1) + 0.5))
 	if code < 0 {
 		code = 0
 	}

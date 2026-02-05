@@ -19,6 +19,9 @@ The visualization supports interactive simulation with a Mode-First UX that auto
 
 - Resolution: 5 bits (32 levels, demo uses 30)
 - Input range: 0V to 1.0V (safe sensing below coercive voltage)
+- Quantization: **round-to-nearest code (ties half-up)** after clamping to [VrefLow, VrefHigh]
+  - Ideal code: `code = round((V - VrefLow)/(VrefHigh - VrefLow) * (2^bits - 1))`
+  - LSB: `(VrefHigh - VrefLow)/(2^bits - 1)`
 - INL: 0.5 LSB (Integral Nonlinearity)
 - DNL: 0.25 LSB (Differential Nonlinearity)
 - Conversion time: 50 ns (SAR architecture)

@@ -22,7 +22,7 @@ Peripheral-circuit demo: DAC -> charge pump -> FeFET array -> TIA -> ADC.
 | Circuit | Default Specs |
 |---|---|
 | **DAC** | 5-bit, +/-1.5 V range, 10 ns settle, INL 0.5 LSB, DNL 0.25 LSB |
-| **ADC** | 5-bit SAR, 0-1.0 V range, 50 ns convert, INL 0.5 LSB, DNL 0.25 LSB |
+| **ADC** | 5-bit SAR, 0-1.0 V range, 50 ns convert, **round-to-nearest (ties half-up)**, INL 0.5 LSB, DNL 0.25 LSB |
 | **TIA** | 10 kOhm gain, 100 MHz BW, 1 pA/sqrtHz input noise |
 | **Charge Pump** | 2-stage Dickson, 1.0 V -> 1.5 V, 70% efficiency |
 

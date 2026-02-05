@@ -226,6 +226,7 @@ func (ca *CircuitsApp) createVoltageSafetyRules() fyne.CanvasObject {
 - Input DAC: 0-1.0V
 - Output ADC: 0-1.0V (after TIA)
 - Prevents clipping and saturation
+- ADC quantization policy: round-to-nearest code (ties half-up) after clamping to the ADC reference window
 
 ### Architecture Selection Guide
 
