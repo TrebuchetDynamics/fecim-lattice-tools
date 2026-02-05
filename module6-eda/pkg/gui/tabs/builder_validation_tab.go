@@ -1138,18 +1138,13 @@ Date: %s
 		widget.NewLabel("Arch:"), archToggle,
 	)
 
-	// Horizontal stats - pipe separated for compactness
-	statsRow := container.NewHBox(
+	// Horizontal stats - grid for even spacing
+	statsRow := container.NewGridWithColumns(6,
 		totalLabel,
-		widget.NewLabel("|"),
 		areaLabel,
-		widget.NewLabel("|"),
 		utilizationLabel,
-		widget.NewLabel("|"),
 		wlLengthLabel,
-		widget.NewLabel("|"),
 		blLengthLabel,
-		widget.NewLabel("|"),
 		densityLabel,
 	)
 
@@ -1193,62 +1188,61 @@ Date: %s
 	)
 	previewTabs.SetTabLocation(container.TabLocationTop)
 
-	// Action buttons
+	// Action buttons - highlight primary actions
+	generateAllBtn.Importance = widget.HighImportance
+	validateAllBtn.Importance = widget.MediumImportance
 	actionButtons := container.NewHBox(
 		generateAllBtn,
 		validateAllBtn,
 		exportPackageBtn,
 	)
 
-	// Validation results - 2x2 card-style grid with better spacing
-	validationResultsGrid := container.NewGridWithColumns(2,
-		widget.NewCard("", "", container.NewHBox(
+	// Validation results - compact 4-column single row
+	validationResultsGrid := container.NewGridWithColumns(4,
+		container.NewHBox(
 			widget.NewLabelWithStyle("Yosys:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			yosysResult,
-		)),
-		widget.NewCard("", "", container.NewHBox(
+		),
+		container.NewHBox(
 			widget.NewLabelWithStyle("DEF:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			defResult,
-		)),
-		widget.NewCard("", "", container.NewHBox(
+		),
+		container.NewHBox(
 			widget.NewLabelWithStyle("Cross-Check:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			crossResult,
-		)),
-		widget.NewCard("", "", container.NewHBox(
+		),
+		container.NewHBox(
 			widget.NewLabelWithStyle("Placement:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			placementResult,
-		)),
+		),
+	)
+	validationHeader := container.NewHBox(
+		widget.NewLabelWithStyle("Validation Results:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		validationSummary,
+		layout.NewSpacer(),
+		widget.NewLabelWithStyle("OpenLane:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		dockerStatus,
+		pdkStatus,
+		pullImageBtn,
 	)
 	validationRow := container.NewVBox(
-		container.NewHBox(
-			widget.NewLabelWithStyle("Validation Results:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			validationSummary,
-		),
+		validationHeader,
 		validationResultsGrid,
 	)
 
-	// Compact OpenLane status - single row
-	openLaneRow := container.NewHBox(
-		widget.NewLabelWithStyle("OpenLane:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Docker:"), dockerStatus,
-		widget.NewLabel("|"), widget.NewLabel("PDK:"), pdkStatus,
-		pullImageBtn,
-	)
-
 	// Log section with improved visibility
-	logOutput.SetMinRowsVisible(10) // More visible rows
+	logOutput.SetMinRowsVisible(6)
 	logHeader := container.NewHBox(
 		widget.NewLabelWithStyle("Validation Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		clearLogBtn,
 	)
 	logScroll := container.NewScroll(logOutput)
-	logScroll.SetMinSize(fyne.NewSize(0, 220)) // Larger fixed height for better readability
+	logScroll.SetMinSize(fyne.NewSize(0, 140))
 
 	// Bottom validation section - more compact
 	validationSection := container.NewVBox(
 		widget.NewSeparator(),
 		validationRow,
-		openLaneRow,
 		logHeader,
 		logScroll,
 	)
@@ -1272,7 +1266,7 @@ Date: %s
 		previewTabs,
 		validationSection,
 	)
-	mainSplit.SetOffset(0.65)
+	mainSplit.SetOffset(0.55)
 
 	// Main layout: fixed top section, resizable middle/bottom
 	mainContent := container.NewBorder(
