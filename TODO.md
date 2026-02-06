@@ -28,6 +28,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | M1-D1 | Docs | Document run modes (GUI/TUI/headless/Vulkan) and clarify L-K vs Preisach defaults in `docs/documentation/module1-hysteresis/*.md` | ⏳ | 30-60m |
 | M1-U1 | UI/UX | Fix WRD target marker parity (single snapshot for target/marker/logs) | ✅ | 1-2hr |
 | M1-U2 | UI/UX | Equation widget perf acceptance: cold <1s, warm <200ms, no UI freeze (async load + SVG cache reuse; measure via `FECIM_EQUATION_PERF=1` logs or benchmarks). | ✅ | 30-60m |
+| M1-U3 | UI/UX | Keep improving the Physics Equations modal (SVG readability/contrast, no clipping, responsive layout, zoom controls) + verify with headless screenshots (desktop+mobile). | ⏳ | 1-3hr |
 | M1-P1 | Physics | L-K performance accounting + ISPP stabilization evidence (HI/MID/LO) vs `docs/hysteresis/hysteresis-gemini.md` | ⏳ | 2-4hr |
 
 ### Module 2: Crossbar (Physics + UI/UX + Docs)
