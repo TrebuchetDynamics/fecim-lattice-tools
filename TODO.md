@@ -86,6 +86,16 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 
 **Decision (2026-02-05):** Keep WRITE as the mode selector; make `Program Cell` the only write action with explicit tooltips. Remaining work: M4-U2d.
 
+**Module 4 progress notes (2026-02-06):**
+- ✅ Tier-A sense-chain UI now exposes: **TIA Vout**, inferred **I(V)**, **ADC code**, and **CLIP/saturation** details + measurement-path presets (M4-U3).
+- ✅ Geometry is SSOT via `shared/physics.CellGeometry` and is wired into arraysim + disturb path with tests (M4-P3).
+- ✅ Peripheral-circuits doc honesty + defaults map landed in `docs/peripheral-circuits/PHYSICS.md` (DOC-CITE-3).
+- ⏳ Still needed:
+  - **M4-U2d:** targeted tests/visual checks for half-select disturb + applied DAC voltage display.
+  - **M4-U1:** validate ISPP engine toggle wiring (Fast vs L-K) + thin adapter to `shared/physics`.
+  - **M4-P1:** audit DAC/ADC/TIA/ChargePump equations vs `docs/peripheral-circuits/PHYSICS.md`.
+  - **M4-P4:** Tier-B DC solver + regression tests (larger project).
+
 ### Module 5: Comparison (Physics + UI/UX + Docs)
 
 | ID | Area | Task | Status | Est. |
