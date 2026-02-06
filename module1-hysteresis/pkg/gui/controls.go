@@ -624,7 +624,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	}
 
 	return container.NewVBox(
-		section("Material & Mode",
+		section("Material",
 			a.materialBtn,
 			a.waveformSelect,
 			physicsRow,

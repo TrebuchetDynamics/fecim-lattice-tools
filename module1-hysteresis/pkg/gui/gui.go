@@ -808,7 +808,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
 		// Desktop: Left (Cell+Info) | Plot | Controls
 		innerSplit := container.NewHSplit(zones[1], zones[2])
-		innerSplit.SetOffset(0.70) // Plot gets more space while keeping controls readable
+		innerSplit.SetOffset(0.65) // Give controls more room (35% instead of 30%)
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
 		outerSplit.SetOffset(0.22) // Slightly wider left column for log readability

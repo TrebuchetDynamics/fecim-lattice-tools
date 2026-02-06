@@ -392,18 +392,18 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).
 func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
-	label := widget.NewLabel("Draw Digit")
+	label := widget.NewLabel("Draw")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
 	app.digitCanvas = NewDigitCanvas()
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
 
-	// Pixel count display
-	pixelCountLabel := widget.NewLabel("Pixels: 0/784")
+	// Pixel count display (shortened for narrow widths)
+	pixelCountLabel := widget.NewLabel("0/784")
 	pixelCountLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	app.digitCanvas.OnPixelCountChanged = func(count, total int) {
 		fyne.Do(func() {
-			pixelCountLabel.SetText(fmt.Sprintf("Pixels: %d/%d", count, total))
+			pixelCountLabel.SetText(fmt.Sprintf("%d/%d", count, total))
 		})
 	}
 

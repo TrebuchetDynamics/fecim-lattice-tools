@@ -1138,13 +1138,18 @@ Date: %s
 		widget.NewLabel("Arch:"), archToggle,
 	)
 
-	// Horizontal stats - grid for even spacing
-	statsRow := container.NewGridWithColumns(6,
+	// Horizontal stats - use HBox with separators for proper spacing
+	statsRow := container.NewHBox(
 		totalLabel,
+		widget.NewLabel(" | "),
 		areaLabel,
-		utilizationLabel,
+		widget.NewLabel(" | "),
 		wlLengthLabel,
+		widget.NewLabel(" | "),
 		blLengthLabel,
+		widget.NewLabel(" | "),
+		utilizationLabel,
+		widget.NewLabel(" | "),
 		densityLabel,
 	)
 

@@ -233,21 +233,19 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	ca.updateStatus("Ready | Array initialized with random weights. Click 'Run MVM' to start!")
 
 	// m5 UX fix: Set first-load onboarding content
-	ca.setEducationalContent("Getting Started",
-		"Welcome to Crossbar MVM!\n\n"+
+	ca.setEducationalContent("Quick Guide",
+		"Welcome to Crossbar!\n\n"+
 			"Quick Start:\n"+
-			"1. Hover over cells to see\n"+
-			"   conductance values\n"+
-			"2. Click cells for details\n"+
-			"3. Adjust controls on right\n"+
-			"4. Explore IR Drop & Sneak\n"+
-			"   Path analysis tabs\n\n"+
+			"1. Hover over cells\n"+
+			"2. Click for details\n"+
+			"3. Use controls (right)\n"+
+			"4. Explore tabs\n\n"+
 			"Key Concepts:\n"+
-			"• 30 analog levels/cell (baseline; conference claim)\n"+
-			"• MVM = Matrix × Vector\n"+
-			"• All rows compute in 1 step\n\n"+
-			"Try: Switch tabs to see\n"+
-			"different non-idealities!")
+			"• 30 levels/cell\n"+
+			"• MVM = W × V\n"+
+			"• Parallel compute\n\n"+
+			"Switch tabs for\n"+
+			"analysis views!")
 
 	getDebug().Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
@@ -443,9 +441,13 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ca.statusLabel.Wrapping = fyne.TextWrapOff
+	ca.statusLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	ca.infoLabel = widget.NewLabel("")
+	ca.infoLabel.Wrapping = fyne.TextWrapOff
+	ca.infoLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.updateInfoLabel()
 
 	// Hover info label - shows cell info on mouse hover
@@ -453,6 +455,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
+	ca.hoverInfoLabel.Alignment = fyne.TextAlignLeading
 
 	// Create tabbed heatmap view with legends on the right
 	conductanceWithLegend := container.NewBorder(nil, nil, nil, ca.condLegend, ca.conductanceHeatmap)
@@ -608,14 +611,13 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	leftPanel := container.NewVScroll(leftPanelContent)
 
 	// Simple status footer with hover info
-	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
-	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(450, 20), ca.hoverInfoLabel)
+	// Use minimum width container to allow flexibility at narrow widths
 	simpleFooter := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		hoverInfoContainer,
+		ca.hoverInfoLabel,
 		widget.NewSeparator(),
 		ca.infoLabel,
 	)

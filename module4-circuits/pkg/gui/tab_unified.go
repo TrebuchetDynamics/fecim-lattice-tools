@@ -325,7 +325,7 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 	}
 
 	idealBtn := widget.NewButton("Ideal", nil)
-	approxBtn := widget.NewButton("Approx (Tier A)", nil)
+	approxBtn := widget.NewButton("Tier A", nil)
 
 	apply := func(mode arraysim.CouplingMode) {
 		idealBtn.Importance = widget.LowImportance
@@ -387,7 +387,7 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 	// Set default selection
 	selector.SetSelected(fmt.Sprintf("%dx%d", ca.arrayRows, ca.arrayCols))
 
-	return container.NewHBox(widget.NewLabel("Array:"), selector)
+	return container.NewHBox(widget.NewLabel("Size:"), selector)
 }
 
 // resizeArray changes the array dimensions and reinitializes all related state
@@ -1275,7 +1275,7 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	toggle := sharedwidgets.NewArchitectureToggle(sharedwidgets.ArchitectureToggleOptions{
 		Initial:      ca.architecture,
 		Style:        sharedwidgets.ArchitectureToggleStylePlain,
-		LabelPassive: "PASSIVE",
+		LabelPassive: "0T1R",
 		Label1T1R:    "1T1R",
 		Label2T1R:    "2T1R",
 		OnChanged:    handleArchChange,
@@ -1286,7 +1286,7 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	ca.arch2T1RBtn = toggle.TwoT1RButton
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
-	archLabel := widget.NewLabel("Array:")
+	archLabel := widget.NewLabel("Arch:")
 	return container.NewHBox(archLabel, ca.archToggle)
 }
 
