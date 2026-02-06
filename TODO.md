@@ -263,13 +263,13 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| UI-AUDIT-1 | Run app headlessly with Xvfb, capture screenshots of all 8 screens (Home + 7 modules) | ⏳ | 30m |
-| UI-AUDIT-2 | Analyze screenshots for layout overlaps, clipped text, bad tooltips, broken modals, alignment issues | ⏳ | 30m |
-| UI-AUDIT-3 | Fix layout overlaps and widget clipping across all modules | ⏳ | 1-2hr |
-| UI-AUDIT-4 | Fix bad tooltips (positioning, content, hover behavior) | ⏳ | 1-2hr |
-| UI-AUDIT-5 | Fix broken modals and dialog issues | ⏳ | 1-2hr |
-| UI-AUDIT-6 | Fix alignment and padding inconsistencies | ⏳ | 1-2hr |
-| UI-AUDIT-7 | Re-capture screenshots to verify all fixes | ⏳ | 30m |
+| UI-AUDIT-1 | Run app headlessly with Xvfb, capture screenshots of all 8 screens (Home + 7 modules) | ✅ | 30m |
+| UI-AUDIT-2 | Analyze screenshots for layout overlaps, clipped text, bad tooltips, broken modals, alignment issues | ✅ | 30m |
+| UI-AUDIT-3 | Fix layout overlaps and widget clipping across all modules (M1 split offset, M2 educational text, M3 header overlap, M4 arch labels, M5 energy labels, M6 metric spacing) | ✅ | 1-2hr |
+| UI-AUDIT-4 | Fix bad tooltips (positioning, content, hover behavior) | ✅ No tooltip bugs found | - |
+| UI-AUDIT-5 | Fix broken modals and dialog issues | ✅ No modal bugs found | - |
+| UI-AUDIT-6 | Fix alignment and padding inconsistencies | ✅ Fixed via layout changes above | - |
+| UI-AUDIT-7 | Re-capture screenshots to verify all fixes | ✅ | 30m |
 
 ### P3: UX polish standard
 
