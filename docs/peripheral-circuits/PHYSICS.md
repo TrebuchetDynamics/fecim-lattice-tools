@@ -600,7 +600,13 @@ $$\eta_{\text{ideal}} = \frac{V_{\text{out,unreg}}}{(N+1) \times V_{in}}$$
 
 With regulation to the 1.5V rail, we assume **70% power efficiency** as a practical switched‑cap value for this model.
 
-$$P_{\text{in}} = \frac{P_{\text{out}}}{\eta} = \frac{1.5V \times 10\mu A}{0.7} = 21.4 \text{ µW}$$
+$$P_{\text{in}} = \frac{P_{\text{out}}}{\eta}$$
+
+For the regulated/clamped case (default target rail +1.5V with achievable unregulated headroom), the model uses:
+$$P_{\text{out}} \approx V_{\text{out,actual}} \times I_{\text{load}} \approx 1.5V \times 10\mu A = 15 \text{ µW}$$
+$$P_{\text{in}} \approx \frac{15\text{ µW}}{0.7} = 21.4 \text{ µW}$$
+
+If the pump cannot reach the target rail (unregulated output below target), the code computes $P_{\text{out}}$ using the **actual achievable output voltage** returned by `ChargePump.ActualOutputVoltage()`.
 
 Most power is dissipated in:
 1. Diode drops: 60% of loss
@@ -894,11 +900,11 @@ $$t_{rise} = \frac{N \times 2.2}{f_{clk}}$$
 
 ### Timing
 
-**Read cycle:**
-$$t_{read} = t_{DAC} + t_{TIA} + t_{ADC}$$
+**Read cycle (as implemented in `AnalyzeTiming`):**
+$$t_{read} = t_{DAC} + t_{array\_settle} + t_{TIA} + t_{ADC}$$
 
-**Write cycle:**
-$$t_{write} = t_{DAC} + t_{pump\_rise} + t_{pulse}$$
+**Write cycle (as implemented in `AnalyzeTiming`):**
+$$t_{write} = t_{DAC} + t_{pump\_rise} + t_{pulse} + t_{array\_settle}$$
 
 **Full inference (64×64 weight matrix):**
 $$t_{inference} = 64 \times t_{read}$$

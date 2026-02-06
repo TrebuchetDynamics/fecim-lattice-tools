@@ -169,6 +169,37 @@ func TestChargePumpEfficiency(t *testing.T) {
 	}
 }
 
+func TestChargePumpEnergyMonotonicWithPulseDuration(t *testing.T) {
+	pump := DefaultChargePump()
+
+	d1 := 10e-9
+	d2 := 20e-9
+
+	e1 := pump.EnergyPerOperation(d1)
+	e2 := pump.EnergyPerOperation(d2)
+
+	if e2 <= e1 {
+		t.Fatalf("Energy should increase with pulse duration: E(%.0fns)=%.3e, E(%.0fns)=%.3e",
+			d1*1e9, e1, d2*1e9, e2)
+	}
+}
+
+func TestChargePumpPowerOutputUsesActualVoltage(t *testing.T) {
+	pump := DefaultChargePump()
+
+	// Force a case where target rail is unattainable due to huge diode drops.
+	pump.OutputVoltage = 1.5
+	pump.DiodeDrop = 2.0 // unrealistically large; makes unregulated headroom small
+
+	vActual := math.Abs(pump.ActualOutputVoltage())
+	pOut := pump.PowerOutput()
+
+	expected := vActual * math.Abs(pump.LoadCurrent)
+	if math.Abs(pOut-expected) > 1e-18 {
+		t.Fatalf("PowerOutput should use actual voltage: got %.3e, expected %.3e", pOut, expected)
+	}
+}
+
 // TestDACToADCRoundTrip verifies end-to-end conversion.
 func TestDACToADCRoundTrip(t *testing.T) {
 	dac := DefaultDAC()
