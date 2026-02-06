@@ -8,6 +8,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
+// showPhysicsEquationsDialog opens the equations modal. Kept unexported for normal UI wiring.
 func (a *App) showPhysicsEquationsDialog() {
 	if a.mainWindow == nil {
 		return
@@ -56,4 +57,10 @@ func (a *App) showPhysicsEquationsDialog() {
 	dialog.Resize(fyne.NewSize(width, height))
 
 	dialog.Show()
+}
+
+// ShowPhysicsEquationsDialogForCapture is a small exported wrapper used by the
+// headless screenshot harness (scripts/capture_fyne_window.go).
+func (a *App) ShowPhysicsEquationsDialogForCapture() {
+	a.showPhysicsEquationsDialog()
 }

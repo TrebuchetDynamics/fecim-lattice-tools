@@ -3,6 +3,7 @@ package widgets
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -24,8 +26,8 @@ const (
 )
 
 var (
-	equationSVGCacheMu sync.Mutex
-	equationSVGCache   = map[string]*equationSVGCacheEntry{}
+	equationSVGCacheMu  sync.Mutex
+	equationSVGCache    = map[string]*equationSVGCacheEntry{}
 	equationPerfEnabled = os.Getenv("FECIM_EQUATION_PERF") == "1"
 
 	lkHotspotsOnce sync.Once
@@ -105,6 +107,13 @@ func logEquationPerf(format string, args ...interface{}) {
 	log.Printf(format, args...)
 }
 
+func equationThemeKey() string {
+	c := theme.ForegroundColor()
+	r, g, b, a := c.RGBA()
+	// RGBA() returns 16-bit components.
+	return fmt.Sprintf("%02x%02x%02x%02x", uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8))
+}
+
 func newEquationLoadingSlot(message string) (*fyne.Container, *widget.ProgressBarInfinite) {
 	label := widget.NewLabel(message)
 	label.TextStyle = fyne.TextStyle{Italic: true}
@@ -146,8 +155,20 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	detailScroll := container.NewVScroll(detailCard)
 	detailScroll.SetMinSize(fyne.NewSize(240, 220))
 
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	useVertical := false
+	if parent != nil {
+		sz := parent.Canvas().Size()
+		useVertical = sz.Width > 0 && sz.Width < 620
+	}
+
+	var split *container.Split
+	if useVertical {
+		split = container.NewVSplit(eqScroll, detailScroll)
+		split.Offset = 0.62
+	} else {
+		split = container.NewHSplit(eqScroll, detailScroll)
+		split.Offset = 0.58
+	}
 
 	infoTabs := buildLkInfoTabs()
 
@@ -178,8 +199,20 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	detailScroll := container.NewVScroll(detailCard)
 	detailScroll.SetMinSize(fyne.NewSize(240, 220))
 
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	useVertical := false
+	if parent != nil {
+		sz := parent.Canvas().Size()
+		useVertical = sz.Width > 0 && sz.Width < 620
+	}
+
+	var split *container.Split
+	if useVertical {
+		split = container.NewVSplit(eqScroll, detailScroll)
+		split.Offset = 0.62
+	} else {
+		split = container.NewHSplit(eqScroll, detailScroll)
+		split.Offset = 0.58
+	}
 
 	infoTabs := buildPreisachInfoTabs()
 
@@ -197,7 +230,6 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 }
 
 func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
-	_ = parent
 	detailPanel, detailCard := newTermDetailPanel()
 	selectTerm := func(termID, fallback string) {
 		detailPanel.SetDetail(termID, fallback)
@@ -239,8 +271,20 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 	detailScroll := container.NewVScroll(detailCard)
 	detailScroll.SetMinSize(fyne.NewSize(240, 220))
 
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	useVertical := false
+	if parent != nil {
+		sz := parent.Canvas().Size()
+		useVertical = sz.Width > 0 && sz.Width < 620
+	}
+
+	var split *container.Split
+	if useVertical {
+		split = container.NewVSplit(eqScroll, detailScroll)
+		split.Offset = 0.62
+	} else {
+		split = container.NewHSplit(eqScroll, detailScroll)
+		split.Offset = 0.58
+	}
 
 	infoTabs := buildIsppInfoTabs()
 
@@ -346,6 +390,85 @@ func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool)
 	return container.NewVBox(objects...)
 }
 
+func buildEquationDiagramWithZoom(parent fyne.Window, stack fyne.CanvasObject, baseSize fyne.Size, aspectFallback float32) fyne.CanvasObject {
+	// baseSize is the "natural" SVG size (used for aspect ratio). When unavailable,
+	// fall back to aspectFallback = height/width.
+	zoom := float32(1.0)
+
+	// update sizes based on window width; on narrow screens use more width.
+	update := func() {
+		canvasW := float32(0)
+		if parent != nil {
+			canvasW = parent.Canvas().Size().Width
+		}
+		if canvasW <= 0 {
+			canvasW = 900
+		}
+		frac := float32(0.62)
+		if canvasW < 620 {
+			frac = 0.92
+		}
+		targetW := canvasW * frac * zoom
+		if targetW < 260 {
+			targetW = 260
+		}
+		var targetH float32
+		if baseSize.Width > 0 && baseSize.Height > 0 {
+			s := targetW / baseSize.Width
+			targetH = baseSize.Height * s
+		} else if aspectFallback > 0 {
+			targetH = targetW * aspectFallback
+		} else {
+			targetH = 180
+		}
+
+		// Best-effort: if the stack contains a canvas.Image as the first child,
+		// set its min size. (LK uses this for correct contain sizing.)
+		if c, ok := stack.(*fyne.Container); ok {
+			if len(c.Objects) > 0 {
+				if img, ok := c.Objects[0].(*canvas.Image); ok {
+					img.SetMinSize(fyne.NewSize(targetW, targetH))
+				}
+			}
+		}
+	}
+
+	slider := widget.NewSlider(0.7, 2.2)
+	slider.Step = 0.05
+	slider.Value = float64(zoom)
+	slider.OnChanged = func(v float64) {
+		zoom = float32(v)
+		update()
+	}
+
+	minusBtn := widget.NewButton("-", func() {
+		z := zoom - 0.1
+		if z < 0.7 {
+			z = 0.7
+		}
+		slider.SetValue(float64(z))
+	})
+	plusBtn := widget.NewButton("+", func() {
+		z := zoom + 0.1
+		if z > 2.2 {
+			z = 2.2
+		}
+		slider.SetValue(float64(z))
+	})
+
+	zoomLabel := widget.NewLabel("Zoom")
+	zoomLabel.TextStyle = fyne.TextStyle{Bold: true}
+	controls := container.NewHBox(zoomLabel, minusBtn, slider, plusBtn)
+
+	bg := canvas.NewRectangle(theme.InputBackgroundColor())
+	bg.StrokeColor = theme.ShadowColor()
+	bg.StrokeWidth = 1
+	framed := container.NewPadded(container.NewStack(bg, stack))
+
+	update()
+	return container.NewVBox(controls, framed)
+}
+
 func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string), res fyne.Resource, hotspots []hotspotDef, minSize fyne.Size) fyne.CanvasObject {
 	debug := os.Getenv("FECIM_EQUATION_DEBUG") == "1"
 
@@ -357,24 +480,15 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 	if res == nil {
 		return nil
 	}
+
 	image := canvas.NewImageFromResource(res)
 	image.FillMode = canvas.ImageFillContain
-	if minSize.Width > 0 && minSize.Height > 0 {
-		canvasSize := fyne.NewSize(0, 0)
-		if parent != nil {
-			canvasSize = parent.Canvas().Size()
-		}
-		targetWidth := minSize.Width
-		if canvasSize.Width > 0 {
-			targetWidth = canvasSize.Width * 0.6
-		}
-		scale := targetWidth / minSize.Width
-		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
-	}
 
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
 	stack := container.NewStack(image, overlay)
-	return stack
+
+	// LK: we know the SVG base size from the hotspot file, so aspect stays correct.
+	return buildEquationDiagramWithZoom(parent, stack, minSize, 0.35)
 }
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
@@ -407,23 +521,13 @@ func buildPreisachEquationImagePanel(parent fyne.Window, res fyne.Resource) fyne
 
 	img := canvas.NewImageFromResource(res)
 	img.FillMode = canvas.ImageFillContain
-	if parent != nil {
-		canvasSize := parent.Canvas().Size()
-		if canvasSize.Width > 0 {
-			targetWidth := canvasSize.Width * 0.6
-			minSize := img.MinSize()
-			if minSize.Width > 0 && minSize.Height > 0 {
-				scale := targetWidth / minSize.Width
-				img.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
-			} else {
-				img.SetMinSize(fyne.NewSize(targetWidth, 140))
-			}
-		}
-	}
+
+	stack := container.NewStack(img)
+	diagram := buildEquationDiagramWithZoom(parent, stack, fyne.NewSize(0, 0), 0.40)
 
 	caption := widget.NewLabel("Quasi-static hysteron superposition model (no explicit dP/dt term).")
 	caption.TextStyle = fyne.TextStyle{Italic: true}
-	return container.NewVBox(img, caption)
+	return container.NewVBox(diagram, caption)
 }
 
 func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject {
@@ -568,10 +672,11 @@ func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 
 func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 	equationSVGCacheMu.Lock()
-	entry := equationSVGCache[svgPath]
+	cacheKey := svgPath + "|" + equationThemeKey()
+	entry := equationSVGCache[cacheKey]
 	if entry == nil {
 		entry = &equationSVGCacheEntry{}
-		equationSVGCache[svgPath] = entry
+		equationSVGCache[cacheKey] = entry
 	}
 	equationSVGCacheMu.Unlock()
 
@@ -584,9 +689,9 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 		}
 		readDur := time.Since(start)
 
-		white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+		fg := theme.ForegroundColor()
 		recolorStart := time.Now()
-		recolored, err := canvas.RecolorSVG(data, white)
+		recolored, err := canvas.RecolorSVG(data, fg)
 		recolorDur := time.Since(recolorStart)
 		if err != nil {
 			logEquationPerf("equation svg recolor failed path=%s err=%v", svgPath, err)
