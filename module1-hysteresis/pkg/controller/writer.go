@@ -772,17 +772,24 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		return
 	}
 
-	// Stuck or no-improvement escalation: boost step and clear bounds.
+	// Stuck or no-improvement escalation: boost step and relax bounds.
 	if wc.StuckCount >= 3 || wc.NoImproveCount >= 3 {
 		wc.raiseStepFloor(0.12*wc.EcField, "stuck/no-improve>=3")
-		// Reset bounds to avoid being trapped by stale bracket.
-		wc.VMin = 0
+		// Don't hard-reset bounds to 0. That shows up in logs/CSVs as "VMin reset",
+		// and it also discards useful convergence progress. Instead:
+		// - Keep (or set) a non-zero lower bound at the last attempted magnitude.
+		// - Drop the upper bound (set VMax to MaxField, mark VMaxSet=false) so the
+		//   next steps can grow beyond any stale bracket.
+		if absCur := math.Abs(wc.CurrentField); absCur > 0 {
+			wc.VMin = absCur
+			wc.VMinSet = true
+		}
 		wc.VMax = wc.MaxField
-		wc.VMinSet = false
 		wc.VMaxSet = false
 		wc.StuckCount = 0
 		wc.NoImproveCount = 0
-		log.Printf("ISPP STUCK: boosting step (floor=%.3f×Ec) and clearing bounds", wc.stepFloor/wc.EcField)
+		log.Printf("ISPP STUCK: boosting step (floor=%.3f×Ec) and relaxing bounds to [%.3f, %.3f]×Ec",
+			wc.stepFloor/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 	}
 
 	// Enforce hard minimum step (and dynamic step floor) to avoid tiny increments.

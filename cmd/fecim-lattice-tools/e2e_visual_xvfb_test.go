@@ -4,7 +4,9 @@
 package main
 
 import (
+	"errors"
 	"image"
+	"os"
 	"testing"
 	"time"
 
@@ -24,6 +26,12 @@ func TestVisualXvfbRegressionCrossbar(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping visual test in short mode")
 	}
+	if os.Getenv("FECIM_RUN_XVFB") != "1" {
+		t.Skip("Set FECIM_RUN_XVFB=1 to enable real-driver Xvfb visual tests")
+	}
+	if os.Getenv("DISPLAY") == "" {
+		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
+	}
 
 	module, err := demo2gui.NewEmbeddedCrossbarApp()
 	if err != nil {
@@ -40,6 +48,12 @@ func TestVisualXvfbRegressionMNIST(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping visual test in short mode")
 	}
+	if os.Getenv("FECIM_RUN_XVFB") != "1" {
+		t.Skip("Set FECIM_RUN_XVFB=1 to enable real-driver Xvfb visual tests")
+	}
+	if os.Getenv("DISPLAY") == "" {
+		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
+	}
 
 	module := demo3gui.NewEmbeddedDualModeApp()
 
@@ -52,6 +66,21 @@ func TestVisualXvfbRegressionMNIST(t *testing.T) {
 func captureWithRealApp(t *testing.T, module moduleLifecycle, size fyne.Size, settle time.Duration) image.Image {
 	t.Helper()
 
+	var (
+		img image.Image
+		err error
+	)
+
+	runOnMainGoroutine(func() {
+		img, err = captureWithRealAppOnMain(module, size, settle)
+	})
+	if err != nil {
+		t.Fatalf("Failed to capture screenshot with real app: %v", err)
+	}
+	return img
+}
+
+func captureWithRealAppOnMain(module moduleLifecycle, size fyne.Size, settle time.Duration) (image.Image, error) {
 	a := app.New()
 
 	imgCh := make(chan image.Image, 1)
@@ -80,14 +109,14 @@ func captureWithRealApp(t *testing.T, module moduleLifecycle, size fyne.Size, se
 		})
 	})
 
-	// NOTE: GLFW requires Run() be called from the main goroutine.
+	// NOTE: GLFW requires Run() be called from the process main goroutine; we
+	// enforce that via runOnMainGoroutine().
 	a.Run()
 
 	select {
 	case img := <-imgCh:
-		return img
+		return img, nil
 	case <-time.After(5 * time.Second):
-		t.Fatal("timed out waiting for screenshot capture")
-		return nil
+		return nil, errors.New("timed out waiting for screenshot capture")
 	}
 }
