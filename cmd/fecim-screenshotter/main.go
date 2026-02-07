@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -36,6 +37,7 @@ func main() {
 	sizeW := flag.Int("w", 1200, "window width")
 	sizeH := flag.Int("h", 800, "window height")
 	only := flag.String("only", "", "capture only a single module (hysteresis|crossbar|mnist|circuits|comparison|eda)")
+	hysEngine := flag.String("hys-engine", "preisach", "hysteresis physics engine: preisach|lk")
 	flag.Parse()
 
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
@@ -63,13 +65,20 @@ func main() {
 			continue
 		}
 		fmt.Printf("[screenshotter] capturing %s...\n", m.name)
-		if err := captureOne(*outDir, m.name+"_initial", fyne.NewSize(float32(*sizeW), float32(*sizeH)), m.settle, m.start, m.create); err != nil {
+		settle := m.settle
+		if m.name == "hysteresis" {
+			// LK needs a bit more time to populate a meaningful loop.
+			if strings.ToLower(strings.TrimSpace(*hysEngine)) == "lk" {
+				settle = 2500 * time.Millisecond
+			}
+		}
+		if err := captureOne(*outDir, m.name+"_initial", fyne.NewSize(float32(*sizeW), float32(*sizeH)), settle, m.start, *hysEngine, m.create); err != nil {
 			fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
 		}
 	}
 }
 
-func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, start bool, create func() (moduleLifecycle, error)) error {
+func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, start bool, hysEngine string, create func() (moduleLifecycle, error)) error {
 	module, err := create()
 	if err != nil {
 		return err
@@ -91,6 +100,14 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 		bg := canvas.NewRectangle(theme.BackgroundColor())
 		w.SetContent(container.NewMax(bg, content))
 		w.Show()
+
+		if strings.HasPrefix(fileBase, "hysteresis_") {
+			if h, ok := module.(*demo1gui.EmbeddedApp); ok {
+				// OnStarted runs on the UI thread; calling fyne.DoAndWait here trips Fyne's guard.
+				h.SetPhysicsEngineName(hysEngine)
+				w.Canvas().Refresh(w.Content())
+			}
+		}
 
 		if start {
 			module.Start()

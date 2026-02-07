@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -19,6 +20,30 @@ import (
 type EmbeddedApp struct {
 	*App
 	sharedwidgets.EmbeddedAppBase
+}
+
+// SetPhysicsEngine switches the active physics engine for the embedded module.
+// Note: this mutates simulation state and resets history (see App.setPhysicsEngine).
+func (e *EmbeddedApp) SetPhysicsEngine(engine PhysicsEngine) {
+	if e == nil || e.App == nil {
+		return
+	}
+	e.App.setPhysicsEngine(engine)
+}
+
+// SetPhysicsEngineName is a convenience wrapper for automation.
+// Accepts: "preisach"|"p" (default) and "lk"|"l-k"|"landau".
+func (e *EmbeddedApp) SetPhysicsEngineName(name string) {
+	if e == nil || e.App == nil {
+		return
+	}
+	name = strings.ToLower(strings.TrimSpace(name))
+	switch name {
+	case "lk", "l-k", "landau", "landau-k", "landau-khalatnikov":
+		e.App.setPhysicsEngine(PhysicsLandau)
+	default:
+		e.App.setPhysicsEngine(PhysicsPreisach)
+	}
 }
 
 // NewEmbeddedApp creates a new embedded GUI application (for use in unified visualizer)
