@@ -48,6 +48,15 @@ func runHysteresisMode(engine string) error {
 	}
 	log.Info("Headless hysteresis engine: %s", engine)
 
+	ensureFinite := func(label string, values ...float64) error {
+		for _, v := range values {
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				return fmt.Errorf("non-finite %s=%v", label, v)
+			}
+		}
+		return nil
+	}
+
 	mat := func() *physics.HZOMaterial {
 		// Optional material selector for headless testing.
 		// Examples:
@@ -79,6 +88,14 @@ func runHysteresisMode(engine string) error {
 			return physics.FeCIMMaterial()
 		}
 	}()
+
+	if mat.Ec > 0 {
+		// Headless LK diagnostics assume SI units (V/m). Catch MV/cm or V/cm mixups early.
+		// Typical Ec values for HZO presets are O(1e8) V/m (≈ 1 MV/cm).
+		if mat.Ec < 1e6 || mat.Ec > 1e10 {
+			return fmt.Errorf("material Ec=%g looks non-SI; expected V/m (~1e8). Refuse headless run", mat.Ec)
+		}
+	}
 	numLevels := mat.GetNumLevels()
 	if numLevels <= 0 {
 		numLevels = 30
@@ -227,6 +244,9 @@ func runHysteresisMode(engine string) error {
 			currentP = stepPolarization(E, dt)
 		}
 		simTime += dt
+		if err := ensureFinite("sweep", currentP, E); err != nil {
+			return err
+		}
 		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
 	}
 	logPerf("SWEEP")
@@ -487,11 +507,14 @@ func runHysteresisMode(engine string) error {
 				currentP = stepPolarization(currentField, currentStep)
 			}
 			simTime += currentStep
+			if err := ensureFinite("ispp", currentP, currentField, currentStep); err != nil {
+				return err
+			}
 			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
 		}
 
 		if !targetDone {
-			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
+			return fmt.Errorf("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
 		}
 		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 

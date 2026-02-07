@@ -141,7 +141,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 |----|------|------------|--------|
 | LK-C01 | Verify LK equation terms/signs in `shared/physics/landau.go` match the compendium (E_eff = E_applied - k_dep·P; dP/dt = (E_eff - dG/dP + noise)/rho_eff; dG/dP = 2αP + 4βP^3 + 6γP^5). | `go test ./shared/physics -run TestLKSolver_dPdT_Equation` | ✅ |
 | LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` when `UseEffectiveViscosity=true`. | `go test ./shared/physics -run TestLKSolver_effectiveRho` | ✅ |
-| LK-C03 | Headless LK run uses E-field units and completes the 5-target ISPP sequence without NaN/Inf states. | `go run ./cmd/fecim-lattice-tools --mode hysteresis --engine lk` | ⏳ |
+| LK-C03 | Headless LK run uses E-field units and completes the 5-target ISPP sequence without NaN/Inf states. | `go test ./cmd/fecim-lattice-tools -run TestHeadlessLKRun_CompletesISPP` (or `go run ./cmd/fecim-lattice-tools --mode hysteresis --engine lk`) | ✅ |
 | LK-C04 | Doc parity: note `UseMaterialAlpha` (Pr-calibrated α) vs dynamic α in compendium. | Check `docs/hysteresis/hysteresis-gemini.md` update. | ✅ |
 
 ## Calibration JSON hygiene
