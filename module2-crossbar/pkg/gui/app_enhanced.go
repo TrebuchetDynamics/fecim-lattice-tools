@@ -164,8 +164,10 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 		return
 	}
 
+	ca.stateMu.Lock()
 	ca.lastOutput = mvmResult.ActualOutput
 	ca.lastMVMResult = mvmResult
+	ca.stateMu.Unlock()
 
 	// Phase 3: Output currents collected (300ms)
 	fyne.Do(func() {
