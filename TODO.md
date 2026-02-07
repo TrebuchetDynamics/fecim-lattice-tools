@@ -117,7 +117,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | ID | Area | Task | Status | Est. |
 |----|------|------|--------|------|
 | M7-D1 | Docs | Confirm curriculum tree order + shortcuts match `docs/documentation/`; update README/MODULES if needed | ⏳ | 30-60m |
-| M7-U2 | UI/UX | Add colored category badges in tree rows to match curriculum-first UI spec | ⏳ | 30-60m |
+| M7-U2 | UI/UX | Add colored category badges in tree rows to match curriculum-first UI spec. **AC:** Open Module 7 → left Curriculum tree shows a small badge per row (ELI5/Physics/Guide/Research/Module) and the row remains clickable (badge must not steal selection). Verify at 1200×800 and 420×900 via screenshotter: `xvfb-run -a go run ./cmd/fecim-screenshotter -only docs -tag after_badges -out output/ui_screenshots -w 1200 -h 800` and `... -w 420 -h 900`. | ✅ | 30-60m |
 | M7-U3 | UI/UX | Hide the “On This Page” sidebar when ToC has < 3 headings | ✅ | 30-60m |
 | M7-U1 | UI/UX | Validate layout breakpoints + click targets vs `docs/development/GUI/GUI.module7.md` | ⏳ | 1-2hr |
 | M7-P1 | Physics | Verify search ranking + reading time math vs `docs/documentation/module7-docs/PHYSICS.md` | ⏳ | 1-2hr |

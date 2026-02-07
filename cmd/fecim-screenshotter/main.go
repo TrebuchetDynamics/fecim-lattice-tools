@@ -24,6 +24,7 @@ import (
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
+	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 )
 
 type moduleLifecycle interface {
@@ -36,7 +37,8 @@ func main() {
 	outDir := flag.String("out", "cmd/fecim-lattice-tools/testdata/screenshots", "output directory for screenshots")
 	sizeW := flag.Int("w", 1200, "window width")
 	sizeH := flag.Int("h", 800, "window height")
-	only := flag.String("only", "", "capture only a single module (hysteresis|crossbar|mnist|circuits|comparison|eda)")
+	only := flag.String("only", "", "capture only a single module (hysteresis|crossbar|mnist|circuits|comparison|eda|docs)")
+	tag := flag.String("tag", "initial", "filename tag suffix (e.g. initial|after_badges)")
 	hysEngine := flag.String("hys-engine", "preisach", "hysteresis physics engine: preisach|lk")
 	flag.Parse()
 
@@ -58,6 +60,7 @@ func main() {
 		{"circuits", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo4gui.NewEmbeddedCircuitsApp(), nil }},
 		{"comparison", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo5gui.NewEmbeddedComparisonApp(), nil }},
 		{"eda", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo6gui.NewEmbeddedEDAApp(), nil }},
+		{"docs", 900 * time.Millisecond, false, func() (moduleLifecycle, error) { return demo7gui.NewEmbeddedDocsApp(), nil }},
 	}
 
 	for _, m := range mods {
@@ -72,7 +75,8 @@ func main() {
 				settle = 2500 * time.Millisecond
 			}
 		}
-		if err := captureOne(*outDir, m.name+"_initial", fyne.NewSize(float32(*sizeW), float32(*sizeH)), settle, m.start, *hysEngine, m.create); err != nil {
+		fileBase := m.name + "_" + strings.TrimSpace(*tag)
+		if err := captureOne(*outDir, fileBase, fyne.NewSize(float32(*sizeW), float32(*sizeH)), settle, m.start, *hysEngine, m.create); err != nil {
 			fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
 		}
 	}
