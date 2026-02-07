@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -266,21 +267,38 @@ func runHysteresisMode(engine string) error {
 		phaseDuration = pulseDuration
 	}
 
-	dtNominal := 1e-4
-	dtMin := 1e-6
-	dtMax := 0.025
-	stableNominal := pulseDuration / 10000.0
-	if stableNominal > 0 && stableNominal < dtNominal {
-		dtNominal = stableNominal
+	// Headless integration tests can become extremely slow if we pick time steps that
+	// are too small relative to the pulse duration. Provide deterministic, opt-in
+	// speed controls via environment variables.
+	//
+	//   FECIM_ISPP_STEPS_PER_PULSE: target number of simulation steps per pulse (int)
+	//   FECIM_HEADLESS_FAST=1: convenience preset for CI (sets steps-per-pulse to 200)
+	stepsPerPulse := 2000
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_STEPS_PER_PULSE")); s != "" {
+		if v, err := strconv.Atoi(s); err == nil {
+			stepsPerPulse = v
+		}
 	}
+	if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" {
+		stepsPerPulse = 200
+	}
+	if stepsPerPulse < 20 {
+		stepsPerPulse = 20
+	}
+
+	// Nominal dt is pulseDuration/stepsPerPulse; allow dtMin to get smaller only
+	// near coercive points (for stability) but never below 1e-15 s.
+	dtNominal := pulseDuration / float64(stepsPerPulse)
 	if dtNominal <= 0 {
 		dtNominal = 1e-12
 	}
-	if dtMin > dtNominal {
-		dtMin = dtNominal
+	dtMin := dtNominal / 20.0
+	if dtMin < 1e-15 {
+		dtMin = 1e-15
 	}
-	if pulseDuration > 0 && pulseDuration < dtMax {
-		dtMax = pulseDuration
+	dtMax := pulseDuration / 2.0
+	if dtMax <= 0 {
+		dtMax = dtNominal
 	}
 
 	gWindow := gmax - gmin
@@ -296,27 +314,88 @@ func runHysteresisMode(engine string) error {
 		return gmin + float64(level-1)/float64(numLevels-1)*gWindow
 	}
 
-	lo3 := 3
-	lo5 := 5
-	hi2 := numLevels - 2
-	hi3 := numLevels - 3
-	mid := int(math.Round(0.66 * float64(numLevels)))
-	if mid < 1 {
-		mid = 1
+	// Build a deterministic target list that mixes extremes and mid-levels.
+	//
+	// Controls:
+	//   FECIM_ISPP_TARGETS: number of targets to run (default 5)
+	//   FECIM_ISPP_TARGET_SEED: deterministic seed for randomized fill (default 1)
+	targetCount := 5
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_TARGETS")); s != "" {
+		if v, err := strconv.Atoi(s); err == nil {
+			targetCount = v
+		}
 	}
-	if mid > numLevels {
-		mid = numLevels
+	if targetCount < 1 {
+		targetCount = 1
+	}
+	if targetCount > numLevels {
+		targetCount = numLevels
 	}
 
-	steps := []struct {
+	seed := int64(1)
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_TARGET_SEED")); s != "" {
+		if v, err := strconv.ParseInt(s, 10, 64); err == nil {
+			seed = v
+		}
+	}
+
+	buildTargets := func(numLevels, n int, seed int64) []int {
+		if n <= 0 {
+			return nil
+		}
+		if n > numLevels {
+			n = numLevels
+		}
+		mid := numLevels / 2
+		q1 := int(math.Round(0.25 * float64(numLevels)))
+		q3 := int(math.Round(0.75 * float64(numLevels)))
+		base := []int{1, 2, 3, q1, mid, q3, numLevels - 2, numLevels - 1, numLevels}
+		seen := map[int]bool{}
+		out := make([]int, 0, n)
+		push := func(level int) {
+			if level < 1 {
+				level = 1
+			}
+			if level > numLevels {
+				level = numLevels
+			}
+			if len(out) >= n {
+				return
+			}
+			if !seen[level] {
+				seen[level] = true
+				out = append(out, level)
+			}
+		}
+		for _, lvl := range base {
+			push(lvl)
+		}
+		rng := rand.New(rand.NewSource(seed))
+		for len(out) < n {
+			lvl := 1 + rng.Intn(numLevels)
+			push(lvl)
+		}
+		// Shuffle deterministically (we want a mixture during the run, not sorted).
+		for i := len(out) - 1; i > 0; i-- {
+			j := rng.Intn(i + 1)
+			out[i], out[j] = out[j], out[i]
+		}
+		return out
+	}
+
+	targetLevels := buildTargets(numLevels, targetCount, seed)
+	steps := make([]struct {
 		label   string
 		targetG float64
-	}{
-		{"HI2", levelToG(hi2)},
-		{"LO5", levelToG(lo5)},
-		{"HI3", levelToG(hi3)},
-		{"LO3", levelToG(lo3)},
-		{"MID", levelToG(mid)},
+	}, 0, len(targetLevels))
+	for i, lvl := range targetLevels {
+		steps = append(steps, struct {
+			label   string
+			targetG float64
+		}{
+			label:   fmt.Sprintf("T%02d_L%02d", i+1, lvl),
+			targetG: levelToG(lvl),
+		})
 	}
 
 	wrdTotalWrites := 0
@@ -606,19 +685,19 @@ func headlessStateBand(levelIndex int, numLevels int) string {
 func headlessWRDPhaseName(phase int) string {
 	switch phase {
 	case 0:
-		return "RESET"
+		return "PREP"
 	case 1:
-		return "HOLD_RESET"
+		return "SETTLE"
 	case 2:
-		return "WRITE"
+		return "PROG_VERIFY"
 	case 3:
-		return "HOLD_WRITE"
+		return "HOLD"
 	case 4:
-		return "READ"
+		return "READBACK"
 	case 5:
-		return "DISPLAY"
+		return "RESULT"
 	case 6:
-		return "BOOST"
+		return "RETRY"
 	default:
 		return "UNKNOWN"
 	}
