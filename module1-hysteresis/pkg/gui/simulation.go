@@ -791,13 +791,9 @@ func (a *App) simulationLoop() {
 					minDist := math.Min(distPlus, distMinus)
 
 					// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
-					// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait.
-					// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
-					// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
-					// So 0.1 MV/cm = 10^7 V/m.
-					// Let's use 10 MV/m (1e7) as threshold.
-
-					threshold := 1e7 // 0.1 MV/cm
+					// Internal units are V/m.
+					// 1 MV/cm = 1e8 V/m ⇒ 0.1 MV/cm = 1e7 V/m.
+					threshold := 1e7 // 0.1 MV/cm in V/m
 					if minDist < threshold {
 						currentStep = dtMin
 					}
@@ -2063,6 +2059,14 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	a.logText.SetText(logText)
 
 	// Update plot
+	// Note: Plot view is a presentation transform only (does not alter simulation/history logging).
+	a.mu.RLock()
+	plotMode := a.plotViewMode
+	a.mu.RUnlock()
+	if plotMode == PlotViewLastCycle {
+		hE, hP = lastCompleteCycle(hE, hP)
+	}
+
 	engine := snapshot.physicsEngine
 	a.plot.SetSpikeFiltering(engine != PhysicsLandau)
 	a.plot.SetData(hE, hP, fE, pV)

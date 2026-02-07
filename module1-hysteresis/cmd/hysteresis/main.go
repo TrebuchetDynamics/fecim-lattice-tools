@@ -21,6 +21,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/render"
 	"fecim-lattice-tools/module1-hysteresis/pkg/simulation"
 	"fecim-lattice-tools/module1-hysteresis/pkg/tui"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // Available materials for --material flag
@@ -202,7 +203,7 @@ func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 	fmt.Println("\nMaterial Parameters:")
 	fmt.Printf("  Remanent Polarization (Pr): %.1f μC/cm²\n", m.Pr*100)
 	fmt.Printf("  Saturation Polarization (Ps): %.1f μC/cm²\n", m.Ps*100)
-	fmt.Printf("  Coercive Field (Ec): %.2f MV/cm\n", m.Ec/1e8)
+	fmt.Printf("  Coercive Field (Ec): %.2f MV/cm\n", sharedphysics.VPerMToMVPerCm(m.Ec))
 	fmt.Printf("  Coercive Voltage (Vc): %.2f V\n", m.CoerciveVoltage())
 	fmt.Printf("  Film Thickness: %.0f nm\n", m.Thickness*1e9)
 	fmt.Printf("  Relative Permittivity: %.0f\n", m.Epsilon)
@@ -241,7 +242,7 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	fmt.Println()
 	fmt.Printf("  Material: %s\n", material.Name)
 	fmt.Printf("  Remanent Polarization: %.1f µC/cm²\n", material.Pr*100)
-	fmt.Printf("  Coercive Field: %.2f MV/cm\n", material.Ec/1e8)
+	fmt.Printf("  Coercive Field: %.2f MV/cm\n", sharedphysics.VPerMToMVPerCm(material.Ec))
 	fmt.Printf("  Switching Time: %.2f ns\n", material.Tau*1e9)
 	fmt.Printf("  Endurance: %.0e cycles\n", material.EnduranceCycles)
 	fmt.Printf("  30 Discrete States (conference-claim baseline): %.1f bits/cell\n", 4.91)
