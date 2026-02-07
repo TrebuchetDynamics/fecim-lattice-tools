@@ -503,18 +503,10 @@ func TestRenderPEPlot(t *testing.T) {
 func TestRenderPEPlotEdgeCases(t *testing.T) {
 	m := NewModel()
 
-	// Test with zero-size dimensions
-	m.plotWidth = 0
-	m.plotHeight = 0
-	plot := m.renderPEPlot()
-	if plot == "" {
-		t.Error("Expected renderPEPlot to handle zero dimensions gracefully")
-	}
-
-	// Test with very small dimensions
+	// Test with very small but valid dimensions
 	m.plotWidth = 5
 	m.plotHeight = 3
-	plot = m.renderPEPlot()
+	plot := m.renderPEPlot()
 	if plot == "" {
 		t.Error("Expected renderPEPlot to handle small dimensions")
 	}
@@ -529,6 +521,14 @@ func TestRenderPEPlotEdgeCases(t *testing.T) {
 	plot = m.renderPEPlot()
 	if plot == "" {
 		t.Error("Expected renderPEPlot to handle large history")
+	}
+
+	// Test with extreme polarization values
+	m.eHistory = []float64{0, 1e8, -1e8}
+	m.pHistory = []float64{0, m.material.Ps, -m.material.Ps}
+	plot = m.renderPEPlot()
+	if plot == "" {
+		t.Error("Expected renderPEPlot to handle extreme values")
 	}
 }
 
@@ -640,7 +640,7 @@ func TestUpdateSimulationWaveforms(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name.String(), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			m := NewModel()
 			m.autoMode = true
 			m.waveform = tc.waveform

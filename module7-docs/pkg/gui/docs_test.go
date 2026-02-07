@@ -497,24 +497,21 @@ func TestDocsHistory(t *testing.T) {
 	}
 }
 
-// TestDocsHistory_Persistence verifies save/load
+// TestDocsHistory_Persistence verifies save/load using absolute paths
+// to avoid os.Chdir races with parallel tests.
 func TestDocsHistory_Persistence(t *testing.T) {
 	tmpDir := t.TempDir()
-	origDir, _ := os.Getwd()
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-	defer os.Chdir(origDir)
-
-	// Create .omc directory
-	if err := os.MkdirAll(".omc", 0755); err != nil {
+	omcDir := filepath.Join(tmpDir, ".omc")
+	if err := os.MkdirAll(omcDir, 0755); err != nil {
 		t.Fatalf("Failed to create .omc directory: %v", err)
 	}
 
-	// Create and populate history
-	history1 := NewDocsHistory()
+	histPath := filepath.Join(omcDir, "docs-history.json")
 
-	// Wait a bit to ensure async operations are done (if any)
+	// Create and populate history with explicit configPath
+	history1 := NewDocsHistory()
+	history1.configPath = histPath
+
 	history1.mu.Lock()
 	history1.Recent = []string{"/docs/file1.md", "/docs/file2.md"}
 	history1.Favorites = []string{"/docs/fav1.md"}
@@ -527,7 +524,7 @@ func TestDocsHistory_Persistence(t *testing.T) {
 	}
 
 	// Verify file was created and has content
-	data, err := os.ReadFile(".omc/docs-history.json")
+	data, err := os.ReadFile(histPath)
 	if err != nil {
 		t.Fatalf("History file was not created: %v", err)
 	}
@@ -535,8 +532,12 @@ func TestDocsHistory_Persistence(t *testing.T) {
 		t.Fatal("History file is empty")
 	}
 
-	// Load into new instance (this calls Load() internally)
+	// Load into new instance with same path
 	history2 := NewDocsHistory()
+	history2.configPath = histPath
+	if err := history2.Load(); err != nil {
+		t.Fatalf("Failed to load history: %v", err)
+	}
 
 	// Verify data was loaded
 	recent := history2.GetRecent()

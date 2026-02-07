@@ -464,12 +464,6 @@ func TestDockerCommandConstruction(t *testing.T) {
 	config := DefaultConfig()
 	runner := NewRunner(manager, config)
 
-	// Test environment variable construction for Docker
-	envVars := map[string]string{
-		"CELL_LEF": "/path/to/cell.lef",
-		"DEF_FILE": "/path/to/design.def",
-	}
-
 	// We can't easily test the full command construction without mocking exec,
 	// but we can verify the helper functions work correctly
 	workDir := "/test/work"
