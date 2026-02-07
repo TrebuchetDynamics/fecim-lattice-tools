@@ -119,6 +119,13 @@ func runHysteresisMode(engine string) error {
 	if rangeFrac <= 0 || rangeFrac > 1 {
 		rangeFrac = 1
 	}
+	// Many LK presets cannot reliably reach full ±Ps due to depolarization and relaxation.
+	// Materials provide TargetRangeFrac as the recommended "reachable" outer range.
+	// Clamp upward overrides to avoid pathological headless runs that time out.
+	if engine == "lk" && mat.TargetRangeFrac > 0 && mat.TargetRangeFrac <= 1 && rangeFrac > mat.TargetRangeFrac {
+		log.Info("Headless rangeFrac=%.3f exceeds material TargetRangeFrac=%.3f; clamping for reachability", rangeFrac, mat.TargetRangeFrac)
+		rangeFrac = mat.TargetRangeFrac
+	}
 	effPs := mat.Ps * rangeFrac
 
 	var dataLogger *hysgui.HysteresisDataLogger
@@ -248,7 +255,7 @@ func runHysteresisMode(engine string) error {
 		if err := ensureFinite("sweep", currentP, E); err != nil {
 			return err
 		}
-		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
 	}
 	logPerf("SWEEP")
 
@@ -418,6 +425,15 @@ func runHysteresisMode(engine string) error {
 		if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" && pulseBudget < 1200 {
 			pulseBudget = 1200
 		}
+		// Headless-fast LK runs must not spin forever on difficult/unreachable targets.
+		// Prefer explicit controller failure/reset to a simulation-time timeout.
+		if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" && engine == "lk" {
+			writeController.MaxRetries = pulseBudget / 4
+			if writeController.MaxRetries < 100 {
+				writeController.MaxRetries = 100
+			}
+			writeController.ForceResetLimit = 1
+		}
 		maxSimTime := phaseDuration * float64(pulseBudget)
 		wrd := &headlessWRDState{
 			phase:         0,
@@ -431,7 +447,7 @@ func runHysteresisMode(engine string) error {
 			successWrites: wrdSuccessWrites,
 		}
 
-		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
 
 		targetDone := false
 		// Track "written P" - the polarization captured at end of pulse (before E→0)
@@ -598,7 +614,7 @@ func runHysteresisMode(engine string) error {
 			if err := ensureFinite("ispp", currentP, currentField, currentStep); err != nil {
 				return err
 			}
-			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
+			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
 		}
 
 		if !targetDone {
@@ -736,6 +752,7 @@ func recordHeadlessSnapshot(
 	logger *hysgui.HysteresisDataLogger,
 	state headlessEngineState,
 	mat *physics.HZOMaterial,
+	effPs float64,
 	gmin float64,
 	gmax float64,
 	numLevels int,
@@ -751,11 +768,13 @@ func recordHeadlessSnapshot(
 	}
 
 	currentP := state.polarization
-	rangeFrac := mat.TargetRangeFrac
-	if rangeFrac <= 0 || rangeFrac > 1 {
-		rangeFrac = 1
+	if effPs == 0 {
+		rangeFrac := mat.TargetRangeFrac
+		if rangeFrac <= 0 || rangeFrac > 1 {
+			rangeFrac = 1
+		}
+		effPs = mat.Ps * rangeFrac
 	}
-	effPs := mat.Ps * rangeFrac
 	currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 	levelIdx, level := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 	normalizedP := 0.0

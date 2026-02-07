@@ -299,39 +299,30 @@ func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) f
 	textContainer, _ := textPanel.(*fyne.Container)
 	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
 	caption.TextStyle = fyne.TextStyle{Italic: true}
-	captionAdded := false
 
 	imageSlot, bar := newEquationLoadingSlot("Loading L-K equation diagram...")
 
-	go func() {
-		res, ok := loadEquationSVGResource(lkEquationSVGPath)
-		if !ok {
-			fyne.Do(func() {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				if textContainer != nil && !captionAdded {
-					textContainer.Objects = append(textContainer.Objects, caption)
-					textContainer.Refresh()
-					captionAdded = true
-				}
-			})
-			return
+	res, ok := loadEquationSVGResource(lkEquationSVGPath)
+	if !ok {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+		if textContainer != nil {
+			textContainer.Objects = append(textContainer.Objects, caption)
+			textContainer.Refresh()
 		}
+		return container.NewVBox(imageSlot, textPanel)
+	}
 
-		hotspots, minSize := loadLkHotspots()
-		fyne.Do(func() {
-			panel := buildLkEquationImagePanel(parent, selectTerm, res, hotspots, minSize)
-			if panel == nil {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				if textContainer != nil && !captionAdded {
-					textContainer.Objects = append(textContainer.Objects, caption)
-					textContainer.Refresh()
-					captionAdded = true
-				}
-				return
-			}
-			swapEquationSlotContent(imageSlot, bar, panel)
-		})
-	}()
+	hotspots, minSize := loadLkHotspots()
+	panel := buildLkEquationImagePanel(parent, selectTerm, res, hotspots, minSize)
+	if panel == nil {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+		if textContainer != nil {
+			textContainer.Objects = append(textContainer.Objects, caption)
+			textContainer.Refresh()
+		}
+		return container.NewVBox(imageSlot, textPanel)
+	}
+	swapEquationSlotContent(imageSlot, bar, panel)
 
 	return container.NewVBox(imageSlot, textPanel)
 }
@@ -493,20 +484,13 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
 	imageSlot, bar := newEquationLoadingSlot("Loading Preisach equation diagram...")
-	go func() {
-		res, ok := loadEquationSVGResource(preisachEquationSVGPath)
-		if !ok {
-			fyne.Do(func() {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-			})
-			return
-		}
-
-		fyne.Do(func() {
-			panel := buildPreisachEquationImagePanel(parent, res)
-			swapEquationSlotContent(imageSlot, bar, panel)
-		})
-	}()
+	res, ok := loadEquationSVGResource(preisachEquationSVGPath)
+	if !ok {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+	} else {
+		panel := buildPreisachEquationImagePanel(parent, res)
+		swapEquationSlotContent(imageSlot, bar, panel)
+	}
 
 	return container.NewVBox(
 		imageSlot,

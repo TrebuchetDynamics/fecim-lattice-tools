@@ -21,14 +21,23 @@ type StatusBar struct {
 
 // safeUIUpdate executes fn on the UI thread if a Fyne app is running,
 // otherwise executes directly (safe for tests and initialization).
+//
+// Note: fyne.Do does not serialize work when using fyne/test's driver. We add
+// a package-level lock so concurrent helpers (e.g. SafeUpdateLabel) remain safe
+// under the race detector.
 func safeUIUpdate(fn func()) {
+	wrapped := func() {
+		lockUI()
+		defer unlockUI()
+		fn()
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			// No Fyne app running, execute directly
-			fn()
+			wrapped()
 		}
 	}()
-	fyne.Do(fn)
+	fyne.Do(wrapped)
 }
 
 // NewStatusBar creates a new status bar with an optional prefix.
@@ -116,4 +125,3 @@ func (s *StatusBar) GetText() string {
 	}
 	return s.lastText
 }
-

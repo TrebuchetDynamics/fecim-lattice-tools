@@ -14,9 +14,9 @@ func (a *App) showPhysicsEquationsDialog() {
 		return
 	}
 
-	wasPaused := a.paused
+	wasPaused := a.paused.Load()
 	if !wasPaused {
-		a.paused = true
+		a.paused.Store(true)
 		if a.pauseBtn != nil {
 			a.pauseBtn.SetText("Resume")
 		}
@@ -39,8 +39,8 @@ func (a *App) showPhysicsEquationsDialog() {
 		if dialog != nil {
 			dialog.Hide()
 		}
-		if !wasPaused && a.paused {
-			a.paused = false
+		if !wasPaused && a.paused.Load() {
+			a.paused.Store(false)
 			if a.pauseBtn != nil {
 				a.pauseBtn.SetText("Pause")
 			}

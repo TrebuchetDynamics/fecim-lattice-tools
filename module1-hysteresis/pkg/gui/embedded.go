@@ -3,7 +3,9 @@
 package gui
 
 import (
+	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -20,6 +22,11 @@ import (
 type EmbeddedApp struct {
 	*App
 	sharedwidgets.EmbeddedAppBase
+
+	loopMu  sync.Mutex
+	stopCh  chan struct{}
+	simWG   sync.WaitGroup
+	calibWG sync.WaitGroup
 }
 
 // SetPhysicsEngine switches the active physics engine for the embedded module.
@@ -119,42 +126,87 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 // Start begins the simulation loop (call after BuildContent)
 func (e *EmbeddedApp) Start() {
 	e.EmbeddedAppBase.Start()
-	e.running = true
+
+	e.loopMu.Lock()
+	if e.stopCh != nil {
+		e.loopMu.Unlock()
+		return
+	}
+	stopCh := make(chan struct{})
+	e.stopCh = stopCh
+	e.running.Store(true)
+	e.loopMu.Unlock()
+
 	e.startDataLogger()
 
 	// Load or run calibration at startup (ensures calibration files exist)
-	go func() {
-		time.Sleep(100 * time.Millisecond) // Let UI settle
-		e.mu.Lock()
-		if !e.loadCalibration() {
-			// No valid saved calibration - run immediately
-			log.Printf("Running calibration for %s at startup...", e.material.Name)
-			e.calibrateLevelsAtTemperature(300)
-			if err := e.saveCalibration(); err != nil {
-				log.Printf("Warning: failed to save calibration: %v", err)
-			}
-		}
-		e.mu.Unlock()
-	}()
+	if os.Getenv("FECIM_DISABLE_STARTUP_CALIBRATION") != "1" {
+		e.calibWG.Add(1)
+		go func() {
+			defer e.calibWG.Done()
 
-	go e.simulationLoop()
+			timer := time.NewTimer(100 * time.Millisecond) // Let UI settle
+			defer timer.Stop()
+			select {
+			case <-stopCh:
+				return
+			case <-timer.C:
+			}
+
+			select {
+			case <-stopCh:
+				return
+			default:
+			}
+
+			e.mu.Lock()
+			defer e.mu.Unlock()
+			if !e.loadCalibration() {
+				// No valid saved calibration - run immediately
+				log.Printf("Running calibration for %s at startup...", e.material.Name)
+				e.calibrateLevelsAtTemperature(300)
+				if err := e.saveCalibration(); err != nil {
+					log.Printf("Warning: failed to save calibration: %v", err)
+				}
+			}
+		}()
+	}
+
+	e.simWG.Add(1)
+	go func() {
+		defer e.simWG.Done()
+		e.simulationLoop(stopCh)
+	}()
 }
 
 // Stop ends the simulation loop
 func (e *EmbeddedApp) Stop() {
-	e.running = false
+	var stopCh chan struct{}
+	e.loopMu.Lock()
+	stopCh = e.stopCh
+	if stopCh == nil {
+		e.loopMu.Unlock()
+		e.EmbeddedAppBase.Stop()
+		return
+	}
+	e.stopCh = nil
+	e.running.Store(false)
+	close(stopCh)
+	e.loopMu.Unlock()
+
+	e.simWG.Wait()
+	e.calibWG.Wait()
+
 	e.stopDataLogger()
 
-	// Save calibration for next session (async to avoid UI stalls on view switches)
-	go func() {
-		e.mu.Lock()
-		defer e.mu.Unlock()
-		if err := e.saveCalibration(); err != nil {
-			if log != nil {
-				log.Printf("Warning: failed to save calibration: %v", err)
-			}
+	// Save calibration for next session (disabled in tests via env gate).
+	e.mu.Lock()
+	if err := e.saveCalibration(); err != nil {
+		if log != nil {
+			log.Printf("Warning: failed to save calibration: %v", err)
 		}
-	}()
+	}
+	e.mu.Unlock()
 
 	e.EmbeddedAppBase.Stop()
 }

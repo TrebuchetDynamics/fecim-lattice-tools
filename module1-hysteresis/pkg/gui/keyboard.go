@@ -142,8 +142,9 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 
 	case fyne.KeySpace:
 		// Toggle pause
-		a.paused = !a.paused
-		if a.paused {
+		paused := !a.paused.Load()
+		a.paused.Store(paused)
+		if paused {
 			log.Info("Paused")
 			a.pauseBtn.SetText("Resume")
 		} else {

@@ -720,7 +720,7 @@ func (ca *CircuitsApp) updateActionButtons() {
 
 	mode := ca.deviceState.GetOperationMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Program Cell: only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
@@ -933,13 +933,14 @@ func (ca *CircuitsApp) recomputeAndRefresh() {
 
 // recomputeAndRefreshNow forces an immediate recompute + UI refresh.
 func (ca *CircuitsApp) recomputeAndRefreshNow() {
+	// Hold the read lock for the duration of Compute() so concurrent writers
+	// (e.g. ISPP animation goroutines) cannot mutate the backing slices while
+	// the device simulator iterates.
 	ca.mu.RLock()
 	weights := ca.arrayWeights
 	levels := ca.quantLevels
-	ca.mu.RUnlock()
-
-	// Run device simulation
 	ca.deviceState.Compute(weights, levels)
+	ca.mu.RUnlock()
 
 	// Update output display
 	ca.updateOutputDisplay()
@@ -989,7 +990,7 @@ func (ca *CircuitsApp) scheduleRecomputeAndRefresh(force bool) {
 // refreshUnifiedArray refreshes the array canvas
 func (ca *CircuitsApp) refreshUnifiedArray() {
 	if ca.sharedArrayCanvas != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.sharedArrayCanvas.Refresh()
 		})
 	}

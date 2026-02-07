@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ============================================================================
@@ -505,7 +506,7 @@ func (ca *CircuitsApp) drawTimingCompute(w, h int) image.Image {
 }
 
 func (ca *CircuitsApp) refreshTimingDiagrams() {
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.timingWriteCanvas != nil {
 			ca.timingWriteCanvas.Refresh()
 		}

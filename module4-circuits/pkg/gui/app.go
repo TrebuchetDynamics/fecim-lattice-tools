@@ -501,7 +501,7 @@ func (ca *CircuitsApp) createLabeledBoxWithLabel(title string, valueLbl *widget.
 // refreshWriteArray refreshes the write mode array canvas (legacy)
 func (ca *CircuitsApp) refreshWriteArray() {
 	if ca.writeArrayCanvas != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.writeArrayCanvas.Refresh()
 		})
 	}
@@ -510,7 +510,7 @@ func (ca *CircuitsApp) refreshWriteArray() {
 // refreshWritePulse refreshes the write pulse visualization (legacy)
 func (ca *CircuitsApp) refreshWritePulse() {
 	if ca.writePulseCanvas != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.writePulseCanvas.Refresh()
 		})
 	}
@@ -519,7 +519,7 @@ func (ca *CircuitsApp) refreshWritePulse() {
 // refreshReadZone refreshes the read zone visualization (legacy)
 func (ca *CircuitsApp) refreshReadZone() {
 	if ca.readZoneCanvas != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.readZoneCanvas.Refresh()
 		})
 	}

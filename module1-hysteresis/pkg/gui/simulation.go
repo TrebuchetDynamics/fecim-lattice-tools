@@ -15,7 +15,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
 	sharedphysics "fecim-lattice-tools/shared/physics"
-	"fyne.io/fyne/v2"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // TempCalibration holds calibration data for a specific temperature
@@ -117,6 +117,10 @@ func calibrationFileForMaterial(materialName string, engine PhysicsEngine) strin
 // saveCalibration persists calibration data to disk (v2: multi-temperature)
 func (a *App) saveCalibration() error {
 	if a.material == nil || !a.calibrated {
+		return nil
+	}
+	// GUI integration tests should not mutate repo-tracked calibration baselines.
+	if strings.TrimSpace(os.Getenv("FECIM_DISABLE_CALIBRATION_SAVE")) == "1" {
 		return nil
 	}
 
@@ -620,9 +624,9 @@ func (a *App) onTemperatureChanged(newTemp float64) {
 	}
 }
 
-// simulationLoop runs the main simulation loop at ~60 FPS
-// simulationLoop runs the main simulation loop at ~60 FPS with adaptive physics stepping
-func (a *App) simulationLoop() {
+// simulationLoop runs the main simulation loop at ~60 FPS with adaptive physics stepping.
+// stopCh must be closed to request shutdown (used by embedded lifecycle tests).
+func (a *App) simulationLoop(stopCh <-chan struct{}) {
 	ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS targeting
 	defer ticker.Stop()
 
@@ -723,14 +727,18 @@ func (a *App) simulationLoop() {
 		resetPerfWindow(time.Now())
 	}
 
-	for a.running {
-		<-ticker.C
+	for a.running.Load() {
+		select {
+		case <-stopCh:
+			return
+		case <-ticker.C:
+		}
 
 		now := time.Now()
 		frameDtRaw := now.Sub(lastTime).Seconds()
 		lastTime = now
 
-		if a.paused {
+		if a.paused.Load() {
 			continue
 		}
 
@@ -1458,13 +1466,12 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target
 
 					// Reset ISPP widget to idle state for new target
-					if a.isppWidget != nil {
-						// UI update must be on main thread
-						fyne.Do(func() {
-							a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
-						})
+						if a.isppWidget != nil {
+							sharedwidgets.SafeDo(func() {
+								a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
+							})
+						}
 					}
-				}
 
 			case 6: // Legacy BOOST phase - redirect to Controller
 				// The generic WriteController handles retries/boost internally or via re-entry to Case 2
@@ -1618,53 +1625,7 @@ type uiSnapshot struct {
 	controllerField       float64
 }
 
-// ensureUIUpdateLoop starts the async UI update loop exactly once.
-func (a *App) ensureUIUpdateLoop() {
-	a.uiUpdateOnce.Do(func() {
-		a.uiUpdates = make(chan uiSnapshot, 1)
-		go a.uiUpdateLoop()
-	})
-}
-
-// queueUIUpdate sends the latest UI snapshot without blocking physics.
-func (a *App) queueUIUpdate(snapshot uiSnapshot) {
-	a.ensureUIUpdateLoop()
-	select {
-	case a.uiUpdates <- snapshot:
-		return
-	default:
-		// Drop stale update and enqueue the latest.
-		select {
-		case <-a.uiUpdates:
-		default:
-		}
-		select {
-		case a.uiUpdates <- snapshot:
-		default:
-		}
-	}
-}
-
-// uiUpdateLoop serializes UI updates on the main thread and coalesces frames.
-func (a *App) uiUpdateLoop() {
-	for snapshot := range a.uiUpdates {
-		// Coalesce to the most recent snapshot if multiple are queued.
-		for {
-			select {
-			case newer := <-a.uiUpdates:
-				snapshot = newer
-			default:
-				goto Apply
-			}
-		}
-	Apply:
-		fyne.Do(func() {
-			a.refreshGUI(snapshot)
-		})
-	}
-}
-
-// updateUI prepares data and queues refreshGUI on the main thread.
+// updateUI snapshots state and refreshes GUI on the Fyne thread.
 // Safe to call without holding a.mu (it snapshots under a read lock).
 func (a *App) updateUI() {
 	const uiMinInterval = 33 * time.Millisecond
@@ -1682,7 +1643,7 @@ func (a *App) updateUI() {
 	numLevels := a.numLevels
 	waveform := a.waveform
 	physicsEngine := a.physicsEngine
-	paused := a.paused
+	paused := a.paused.Load()
 	wrdPhase := a.wrdPhase
 	wrdTargetLevel := a.wrdTargetLevel
 	wrdReadLevel := a.wrdReadLevel
@@ -1730,7 +1691,7 @@ func (a *App) updateUI() {
 	}
 	a.mu.RUnlock()
 
-	a.queueUIUpdate(uiSnapshot{
+	snapshot := uiSnapshot{
 		fE:                    fE,
 		pV:                    pV,
 		dL:                    dL,
@@ -1758,6 +1719,10 @@ func (a *App) updateUI() {
 		controllerState:       ctrlState,
 		controllerTargetLevel: ctrlTargetLevel,
 		controllerField:       ctrlField,
+	}
+
+	sharedwidgets.SafeDo(func() {
+		a.refreshGUI(snapshot)
 	})
 }
 

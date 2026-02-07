@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -106,10 +107,8 @@ type App struct {
 	dataLogger *HysteresisDataLogger
 
 	// UI state
-	running       bool
-	paused        bool
-	uiUpdateOnce  sync.Once
-	uiUpdates     chan uiSnapshot
+	running       atomic.Bool
+	paused        atomic.Bool
 	autoMode      bool
 	waveform      WaveformType
 	physicsEngine PhysicsEngine
@@ -574,7 +573,6 @@ func NewAppWithMaterial(materialName string) *App {
 		physicsEngine:           PhysicsPreisach,
 		frequency:               0.5,
 		timeScale:               1.0,
-		paused:                  false,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -628,7 +626,9 @@ func (a *App) run() error {
 	a.setupShortcuts()
 
 	// Start simulation loop
-	a.running = true
+	a.running.Store(true)
+	stopCh := make(chan struct{})
+	var simWG sync.WaitGroup
 
 	// Try to load saved calibration, or perform fresh calibration at room temp
 	go func() {
@@ -644,10 +644,16 @@ func (a *App) run() error {
 		a.mu.Unlock()
 	}()
 
-	go a.simulationLoop()
+	simWG.Add(1)
+	go func() {
+		defer simWG.Done()
+		a.simulationLoop(stopCh)
+	}()
 
 	a.mainWindow.ShowAndRun()
-	a.running = false
+	a.running.Store(false)
+	close(stopCh)
+	simWG.Wait()
 	return nil
 }
 

@@ -26,6 +26,7 @@ import (
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // testScreenshotDir is the directory for test screenshots
@@ -262,7 +263,11 @@ func TestVisualAllModulesScreenshot(t *testing.T) {
 
 // captureWindow captures the window content as an image
 func captureWindow(window fyne.Window) image.Image {
-	return window.Canvas().Capture()
+	var img image.Image
+	sharedwidgets.WithUILock(func() {
+		img = window.Canvas().Capture()
+	})
+	return img
 }
 
 // saveTestScreenshot saves a screenshot to the test data directory

@@ -235,7 +235,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 	switch wc.State {
 	case StateApply:
 		// If we're already at target, skip pulses entirely.
-		if wc.PulseCount == 0 && currentLevel == wc.TargetLevel {
+		// Guard against triggering mid-pulse: PulseCount stays 0 until the first VERIFY,
+		// so only consider this "early exit" at the very start of the operation.
+		if wc.PulseCount == 0 && wc.PhaseTimer <= dt && currentLevel == wc.TargetLevel {
 			wc.LastVerifyLevel = currentLevel
 			wc.LastError = 0
 			wc.State = StateSuccess
@@ -313,6 +315,12 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 		// Wait for correction pulse to complete
 		if wc.PhaseTimer > pulseDur*0.6 && math.Abs(currentField-targetField) < 0.05*wc.MaxField {
+			// Count the overshoot recovery pulse before choosing the next programming
+			// pulse. This ensures calculateNextField uses the post-first-pulse logic
+			// (bisection/bracketing), instead of restarting with the aggressive
+			// first-pulse initializer that tends to re-overshoot near saturation.
+			wc.PulseCount++
+
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 
@@ -328,7 +336,6 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			}
 
 			// Don't reset InitialLevel - keep tracking original direction
-			wc.PulseCount++
 			wc.resetDirection = 0
 			log.Printf("ISPP RESET DONE: level=%d, next E=%.3f×Ec toward target=%d",
 				currentLevel, wc.CurrentField/wc.EcField, wc.TargetLevel)
@@ -521,7 +528,18 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 					wc.VMaxSet = true
 				}
 				if !wc.VMinSet {
-					wc.VMin = 0
+					// Avoid resetting the lower bracket bound to exactly 0.
+					// This shows up in logs/CSVs as "VMin reset to minimum" and is
+					// rarely useful in practice (fields below MinStep are typically
+					// ineffective for state changes).
+					min := wc.MinStep
+					if min <= 0 {
+						min = 0.02 * wc.EcField
+					}
+					if min < 0 {
+						min = 0
+					}
+					wc.VMin = min
 					wc.VMinSet = true
 				}
 				wc.StuckCount = 0

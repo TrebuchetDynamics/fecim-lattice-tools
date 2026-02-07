@@ -29,6 +29,9 @@ func runOnMainGoroutine(fn func()) {
 }
 
 func TestMain(m *testing.M) {
+	_ = os.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
+	_ = os.Setenv("FECIM_DISABLE_STARTUP_CALIBRATION", "1")
+
 	// Fyne's GLFW driver is also sensitive to the main OS thread.
 	runtime.LockOSThread()
 
