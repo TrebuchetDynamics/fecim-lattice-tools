@@ -614,6 +614,28 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
+	// Plot view selector (presentation-only)
+	a.plotViewSelect = widget.NewSelect([]string{
+		"Full history (time trace)",
+		"Last cycle only",
+	}, func(s string) {
+		log.Selection("PlotView", s)
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		switch s {
+		case "Last cycle only":
+			a.plotViewMode = PlotViewLastCycle
+		default:
+			a.plotViewMode = PlotViewFullHistory
+		}
+	})
+	// Default selection
+	if a.plotViewMode == PlotViewLastCycle {
+		a.plotViewSelect.SetSelected("Last cycle only")
+	} else {
+		a.plotViewSelect.SetSelected("Full history (time trace)")
+	}
+
 	physicsRow := container.NewBorder(nil, nil, a.physicsSelect, eqBtn, nil)
 	eFieldHeader := container.NewBorder(nil, nil, a.eFieldLabel, a.eFieldModeLabel, nil)
 	freqEntryRow := container.NewGridWithColumns(2, freqEntry, unitSelect)
@@ -654,6 +676,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		section("Trail",
 			trailLabel,
 			trailSlider,
+			widget.NewLabel("Plot view:"),
+			a.plotViewSelect,
 		),
 		section("Run",
 			actionRow,

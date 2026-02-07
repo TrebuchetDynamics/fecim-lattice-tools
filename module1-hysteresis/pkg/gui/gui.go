@@ -114,9 +114,14 @@ type App struct {
 	waveform      WaveformType
 	physicsEngine PhysicsEngine
 	physicsSelect *widget.Select
-	frequency     float64
-	timeScale     float64 // Simulation time scaling (1.0 = real-time)
-	simTime       float64
+
+	// Plot view (presentation-only)
+	plotViewMode   PlotViewMode
+	plotViewSelect *widget.Select
+
+	frequency float64
+	timeScale float64 // Simulation time scaling (1.0 = real-time)
+	simTime   float64
 
 	// Write/Read Demo state (improved physics)
 	wrdPhase           int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
@@ -479,6 +484,7 @@ func NewApp() *App {
 		autoMode:                true,
 		waveform:                WaveformSine,
 		physicsEngine:           PhysicsPreisach,
+		plotViewMode:            PlotViewFullHistory,
 		frequency:               0.5, // 0.5 Hz default
 		timeScale:               1.0,
 		wrdTargetLevel:          28, // Start high for dramatic first write
