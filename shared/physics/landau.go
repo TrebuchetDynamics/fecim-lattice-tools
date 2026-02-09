@@ -1,6 +1,7 @@
 package physics
 
 import (
+	"hash/fnv"
 	"math"
 	"math/rand"
 
@@ -70,6 +71,9 @@ type LKSolver struct {
 	// Noise (Langevin Dynamics)
 	EnableNoise bool
 
+	// Deterministic RNG for NLS/noise (per-solver). If nil, uses math/rand global.
+	rng *rand.Rand
+
 	// Series-resistance aggregation (ρ_eff = ρ + R_series*A/d)
 	UseEffectiveViscosity bool
 
@@ -87,7 +91,18 @@ type LKSolver struct {
 	// Numerical stability logging (rate-limited)
 	nanCount int
 	nanLimit int
+
+	// Polydomain / multi-domain ensemble mode (for multi-level remanent states).
+	//
+	// A single-domain Landau double-well only supports two stable remanent states at E=0.
+	// Multi-level (multi-bit) behavior requires partial switching across many domains with
+	// distributed thresholds; ensemble mode approximates this by averaging many LK domains.
+	ensemble []*LKSolver
+	ensembleImprint []float64 // per-domain imprint / bias field (V/m) added to applied E
+	ensembleScale []float64   // per-domain coefficient scale (dimensionless)
+	ensembleSeed uint64
 }
+
 
 // NewLKSolver creates a new solver with default "Golden Set" parameters for 10nm HZO.
 func NewLKSolver() *LKSolver {
@@ -116,6 +131,7 @@ func NewLKSolver() *LKSolver {
 
 		EnableNoise:           false,
 		UseEffectiveViscosity: true,
+		rng:                   rand.New(rand.NewSource(1)), // deterministic default
 
 		Temperature: 300.0,
 
@@ -152,6 +168,17 @@ func (s *LKSolver) UpdateParams() {
 // Critical for ensuring the depolarization field (K_dep) matches the material configuration.
 func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	if mat == nil {
+		return
+	}
+	// If configured previously in ensemble mode, rebuild domain configs from the new material.
+	if len(s.ensemble) > 0 {
+		n := len(s.ensemble)
+		seed := s.ensembleSeed
+		s.ensemble = nil
+		s.ensembleImprint = nil
+		s.ensembleScale = nil
+		s.ensembleSeed = seed
+		s.EnableEnsemble(n, mat, seed)
 		return
 	}
 
@@ -338,6 +365,29 @@ func (s *LKSolver) stepImplicit(prevP, E, dt, noise, rhoEff float64) (float64, b
 // Step performs one Runge-Kutta 4 (RK4) integration step.
 // Returns the new Polarization P.
 func (s *LKSolver) Step(E, dt float64) float64 {
+	// Ensemble mode: average many LK domains with per-domain imprint biases.
+	if len(s.ensemble) > 0 {
+		if dt <= 0 {
+			return s.P
+		}
+		sum := 0.0
+		for i, d := range s.ensemble {
+			// Keep shared external state in sync.
+			d.Temperature = s.Temperature
+			d.Stress = s.Stress
+			d.UseNLS = s.UseNLS
+			d.EnableNoise = s.EnableNoise
+				bias := 0.0
+			if i < len(s.ensembleImprint) {
+				bias = s.ensembleImprint[i]
+			}
+			sum += d.Step(E+bias, dt)
+		}
+		s.P = sum / float64(len(s.ensemble))
+		s.Time += dt
+		return s.P
+	}
+
 	if !s.UseMaterialAlpha {
 		s.UpdateParams() // Ensure Alpha is current
 	}
@@ -477,6 +527,9 @@ func (s *LKSolver) checkIncubation(E, dt float64) bool {
 	// Probability of nucleation in dt: P_nuc = 1 - exp(-dt / t_inc)
 
 	prob := 1.0 - math.Exp(-dt/tNum)
+	if s.rng != nil {
+		return s.rng.Float64() < prob
+	}
 	return rand.Float64() < prob
 }
 
@@ -495,6 +548,9 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 
 	const kB = 1.380649e-23 // J/K
 	sigma := math.Sqrt(2 * kB * s.Temperature * rhoEff / dt)
+	if s.rng != nil {
+		return s.rng.NormFloat64() * sigma
+	}
 	return rand.NormFloat64() * sigma
 }
 
@@ -578,9 +634,97 @@ func (s *LKSolver) SetState(P float64) {
 	if invalidFloat(P) {
 		return
 	}
+	if len(s.ensemble) > 0 {
+		for _, d := range s.ensemble {
+			d.SetState(P)
+			d.Time = 0
+		}
+		s.P = s.clampP(P)
+		return
+	}
 	s.P = s.clampP(P)
 }
 
 func (s *LKSolver) GetState() float64 {
 	return s.P
+}
+
+// EnableEnsemble switches this solver into a polydomain ensemble mode.
+//
+// The ensemble approximates multi-level remanent states by averaging many LK domains
+// with slightly different switching thresholds (modeled here as an imprint/bias field).
+//
+// Determinism: if seed==0, a seed is derived from material name + domain count.
+func (s *LKSolver) EnableEnsemble(numDomains int, mat *HZOMaterial, seed uint64) {
+	if numDomains <= 1 {
+		s.ensemble = nil
+		s.ensembleImprint = nil
+		s.ensembleScale = nil
+		s.ensembleSeed = 0
+		return
+	}
+	if mat == nil {
+		return
+	}
+	if seed == 0 {
+		h := fnv.New64a()
+		_, _ = h.Write([]byte(mat.Name))
+		// mix in domain count
+		_ = h.Sum64()
+		seed = h.Sum64() ^ uint64(numDomains*0x9e3779b1)
+	}
+	// Build domains.
+	rng := rand.New(rand.NewSource(int64(seed)))
+	domains := make([]*LKSolver, 0, numDomains)
+	imprint := make([]float64, 0, numDomains)
+	scales := make([]float64, 0, numDomains)
+
+	// Domain dispersion:
+	// - imprint/bias field shifts switching threshold (proxy for imprint/defects)
+	// - coefficient scale perturbs (alpha,beta,gamma) together (proxy for grain-to-grain variation)
+	imprintSigma := 0.10 * mat.Ec
+	scaleSigma := 0.20 // 20% 1-sigma
+	for i := 0; i < numDomains; i++ {
+		d := NewLKSolver()
+		// Per-domain deterministic RNG
+		d.rng = rand.New(rand.NewSource(int64(seed) + int64(i+1)*0x9e3779b97f4a7c1))
+		d.ConfigureFromMaterial(mat)
+		// Keep settings aligned.
+		d.EnableNoise = s.EnableNoise
+		d.UseNLS = s.UseNLS
+		d.Temperature = s.Temperature
+		d.Stress = s.Stress
+
+		// Seeded per-domain variations.
+		scale := 1.0 + rng.NormFloat64()*scaleSigma
+		if scale < 0.5 {
+			scale = 0.5
+		} else if scale > 1.8 {
+			scale = 1.8
+		}
+		// Scale Landau coefficients together to perturb coercive response while preserving Pr relation.
+		d.Alpha *= scale
+		d.Beta *= scale
+		d.Gamma *= scale
+
+		bias := rng.NormFloat64() * imprintSigma
+		domains = append(domains, d)
+		imprint = append(imprint, bias)
+		scales = append(scales, scale)
+	}
+
+	s.ensemble = domains
+	s.ensembleImprint = imprint
+	s.ensembleScale = scales
+	s.ensembleSeed = seed
+
+	// Initialise ensemble to current state (or sensible default).
+	initP := s.P
+	if initP == 0 {
+		initP = -math.Abs(mat.Pr)
+		if initP == 0 {
+			initP = -math.Abs(mat.Ps)
+		}
+	}
+	s.SetState(initP)
 }
