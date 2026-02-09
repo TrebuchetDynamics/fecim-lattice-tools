@@ -31,6 +31,15 @@ import (
 // testScreenshotDir is the directory for test screenshots
 const testScreenshotDir = "testdata/screenshots"
 
+// fyneUI runs fn on the Fyne UI thread.
+//
+// Some drivers (incl. the test driver) can warn/error if window operations are
+// executed off-thread.
+func fyneUI(t *testing.T, fn func()) {
+	t.Helper()
+	fyne.DoAndWait(fn)
+}
+
 // =============================================================================
 // VISUAL REGRESSION TESTS
 // =============================================================================
@@ -40,30 +49,41 @@ func TestVisualRegressionHysteresis(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping visual test in short mode")
 	}
+	// Visual tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	app := test.NewApp()
 	defer app.Quit()
 
-	window := app.NewWindow("Visual Test - Hysteresis")
-	window.Resize(fyne.NewSize(1200, 800))
+	var (
+		window   fyne.Window
+		demo     = demo1gui.NewEmbeddedApp()
+		img      image.Image
+		savePath string
+	)
 
-	demo := demo1gui.NewEmbeddedApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - Hysteresis")
+		window.Resize(fyne.NewSize(1200, 800))
 
-	// Start the module
-	demo.Start()
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
 
 	// Allow time for rendering
 	time.Sleep(500 * time.Millisecond)
 
-	// Capture screenshot
-	img := captureWindow(window)
-	savePath := saveTestScreenshot(t, img, "hysteresis_initial")
+	fyneUI(t, func() {
+		img = captureWindow(window)
+	})
+	savePath = saveTestScreenshot(t, img, "hysteresis_initial")
 
-	// Stop module
-	demo.Stop()
+	fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
 
 	t.Logf("Hysteresis screenshot saved: %s", savePath)
 	verifyImageNotEmpty(t, img, "hysteresis")
@@ -90,26 +110,32 @@ func TestVisualRegressionCircuits(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	window := app.NewWindow("Visual Test - Circuits")
-	window.Resize(fyne.NewSize(1200, 800))
+	var (
+		window   fyne.Window
+		demo     = demo4gui.NewEmbeddedCircuitsApp()
+		img      image.Image
+		savePath string
+	)
 
-	demo := demo4gui.NewEmbeddedCircuitsApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - Circuits")
+		window.Resize(fyne.NewSize(1200, 800))
 
-	// Start the module
-	demo.Start()
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
 
-	// Allow time for rendering
 	time.Sleep(500 * time.Millisecond)
 
-	// Capture screenshot
-	img := captureWindow(window)
-	savePath := saveTestScreenshot(t, img, "circuits_initial")
+	fyneUI(t, func() { img = captureWindow(window) })
+	savePath = saveTestScreenshot(t, img, "circuits_initial")
 
-	// Stop module
-	demo.Stop()
+	fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
 
 	t.Logf("Circuits screenshot saved: %s", savePath)
 	verifyImageNotEmpty(t, img, "circuits")
@@ -124,26 +150,32 @@ func TestVisualRegressionComparison(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	window := app.NewWindow("Visual Test - Comparison")
-	window.Resize(fyne.NewSize(1200, 800))
+	var (
+		window   fyne.Window
+		demo     = demo5gui.NewEmbeddedComparisonApp()
+		img      image.Image
+		savePath string
+	)
 
-	demo := demo5gui.NewEmbeddedComparisonApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - Comparison")
+		window.Resize(fyne.NewSize(1200, 800))
 
-	// Start the module (triggers animation)
-	demo.Start()
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
 
-	// Allow time for rendering
 	time.Sleep(500 * time.Millisecond)
 
-	// Capture screenshot
-	img := captureWindow(window)
-	savePath := saveTestScreenshot(t, img, "comparison_initial")
+	fyneUI(t, func() { img = captureWindow(window) })
+	savePath = saveTestScreenshot(t, img, "comparison_initial")
 
-	// Stop module
-	demo.Stop()
+	fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
 
 	t.Logf("Comparison screenshot saved: %s", savePath)
 	verifyImageNotEmpty(t, img, "comparison")
@@ -158,26 +190,32 @@ func TestVisualRegressionEDA(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	window := app.NewWindow("Visual Test - EDA")
-	window.Resize(fyne.NewSize(1200, 800))
+	var (
+		window   fyne.Window
+		demo     = demo6gui.NewEmbeddedEDAApp()
+		img      image.Image
+		savePath string
+	)
 
-	demo := demo6gui.NewEmbeddedEDAApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - EDA")
+		window.Resize(fyne.NewSize(1200, 800))
 
-	// Start the module
-	demo.Start()
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
 
-	// Allow time for rendering
 	time.Sleep(500 * time.Millisecond)
 
-	// Capture screenshot
-	img := captureWindow(window)
-	savePath := saveTestScreenshot(t, img, "eda_initial")
+	fyneUI(t, func() { img = captureWindow(window) })
+	savePath = saveTestScreenshot(t, img, "eda_initial")
 
-	// Stop module
-	demo.Stop()
+	fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
 
 	t.Logf("EDA screenshot saved: %s", savePath)
 	verifyImageNotEmpty(t, img, "eda")
@@ -192,12 +230,18 @@ func TestVisualAllModulesScreenshot(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping visual test in short mode")
 	}
+	// Visual tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	app := test.NewApp()
 	defer app.Quit()
 
-	window := app.NewWindow("Visual Test - All Modules")
-	window.Resize(fyne.NewSize(1200, 800))
+	var window fyne.Window
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - All Modules")
+		window.Resize(fyne.NewSize(1200, 800))
+		window.Show()
+	})
 
 	type moduleInfo struct {
 		name   string
@@ -237,18 +281,22 @@ func TestVisualAllModulesScreenshot(t *testing.T) {
 				t.Fatalf("Failed to create %s module: %v", m.name, err)
 			}
 
-			content := module.BuildContent(app, window)
-			window.SetContent(container.NewMax(content))
-			window.Show()
+			var img image.Image
 
-			module.Start()
+			fyneUI(t, func() {
+				content := module.BuildContent(app, window)
+				window.SetContent(container.NewMax(content))
+				window.Show()
+				module.Start()
+			})
+
 			time.Sleep(300 * time.Millisecond)
 
-			img := captureWindow(window)
+			fyneUI(t, func() { img = captureWindow(window) })
 			savePath := saveTestScreenshot(t, img, m.name+"_all_test")
 			verifyImageNotEmpty(t, img, m.name)
 
-			module.Stop()
+			fyneUI(t, func() { module.Stop() })
 			time.Sleep(100 * time.Millisecond)
 
 			t.Logf("%s screenshot saved: %s", m.name, savePath)
@@ -351,9 +399,9 @@ func compareImages(img1, img2 image.Image) float64 {
 			r2, g2, b2, a2 := img2.At(x, y).RGBA()
 
 			// Check if pixel differs significantly (threshold for anti-aliasing)
-			threshold := uint32(256 * 16) // ~6% tolerance
-			if abs(r1-r2) > threshold || abs(g1-g2) > threshold ||
-				abs(b1-b2) > threshold || abs(a1-a2) > threshold {
+			threshold := int64(256 * 16) // ~6% tolerance
+			if absDiff(r1, r2) > threshold || absDiff(g1, g2) > threshold ||
+				absDiff(b1, b2) > threshold || absDiff(a1, a2) > threshold {
 				differentPixels++
 			}
 		}
@@ -362,11 +410,12 @@ func compareImages(img1, img2 image.Image) float64 {
 	return float64(differentPixels) / float64(totalPixels)
 }
 
-func abs(x uint32) uint32 {
-	if x < 0 {
-		return 0 // unsigned, can't be negative
+func absDiff(a, b uint32) int64 {
+	d := int64(a) - int64(b)
+	if d < 0 {
+		return -d
 	}
-	return x
+	return d
 }
 
 // =============================================================================

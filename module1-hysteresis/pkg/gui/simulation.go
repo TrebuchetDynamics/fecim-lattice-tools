@@ -119,6 +119,10 @@ func (a *App) saveCalibration() error {
 	if a.material == nil || !a.calibrated {
 		return nil
 	}
+	// Tests and CI sometimes need to run without mutating tracked calibration JSON.
+	if os.Getenv("FECIM_DISABLE_CALIBRATION_SAVE") == "1" {
+		return nil
+	}
 
 	// Build calibrations map from active calibration and cache
 	calibrations := make(map[int]*TempCalibration)
