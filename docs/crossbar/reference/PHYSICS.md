@@ -3,7 +3,7 @@
 This document describes the physics models implemented in module2-crossbar, covering conductance models, matrix operations, non-idealities, and device physics.
 
 > **Note:** These are simplified models for simulation and visualization. Numeric values are model defaults or reported ranges, not validated hardware specs.
-> **Literature values are unverified in this project; add DOI citations before external use (DOI: (add)).**
+> **Literature values are unverified in this project; add peer-reviewed citations before external use (CITATION NEEDED).**
 
 **Table of Contents**
 - [Conductance Models](#conductance-models)
@@ -125,7 +125,7 @@ For each row i:
 - Reduces output precision
 
 **Impact on Accuracy:**
-- ~1% accuracy loss per 3% RMSE for neural networks (illustrative; DOI: (add))
+- ~1% accuracy loss per 3% RMSE for neural networks (illustrative; CITATION NEEDED)
 - 8-bit ADC/DAC: acceptable for inference (assumption; depends on model)
 - 12+ bits: suitable for training (assumption; depends on model)
 
@@ -143,7 +143,7 @@ Voltage drop due to wire resistance and cumulative current flow along metal line
 | $R_{\text{bl}}$ | 2.5 | Ω/pitch | 1-10 | Bit line resistance per cell pitch |
 | $R_{\text{contact}}$ | 50 | Ω | 10-100 | Contact resistance |
 
-Based on a 45nm-era assumption (illustrative; DOI: (add)). Scales with feature size.
+Based on a 45nm-era assumption (illustrative; CITATION NEEDED). Scales with feature size.
 
 ### Voltage Drop Formula
 
@@ -264,7 +264,7 @@ Conductance drift over time, causing accuracy degradation.
 
 ### Physics Basis
 
-Literature reports long retention for FeFETs (e.g., >10 years at 85°C), but this is unverified here (DOI: (add)). Drift is modeled logarithmically:
+Literature reports long retention for FeFETs (e.g., >10 years at 85°C), but this is unverified here (CITATION NEEDED). Drift is modeled logarithmically:
 
 $$G(t) = G_0 \times \left(1 - \beta \times \ln\left(\frac{t}{t_0}\right)\right)$$
 
@@ -299,7 +299,7 @@ Drift processes are thermally activated:
 $$\text{drift rate} \propto \exp\left(-\frac{E_a}{k_B T}\right)$$
 
 Where:
-- $E_a$ = activation energy ≈ 0.5 eV (assumed; DOI: (add))
+- $E_a$ = activation energy ≈ 0.5 eV (assumed; CITATION NEEDED)
 - $k_B$ = Boltzmann constant = 1.38×10^-23 J/K
 - $T$ = absolute temperature (K)
 
@@ -322,7 +322,7 @@ Temperature affects multiple physics parameters.
 
 **Implementation note:** `TemperatureEffects` provides these scalings. Current MVM-with-non-idealities applies temperature to wire resistance (IR drop); other temperature scalings (conductance window, noise, drift rate) are exposed via helpers and the drift simulator but are not auto-applied in the baseline MVM path.
 
-**Note:** Numeric temperature effects below are illustrative or literature-reported and are not verified here (DOI: (add)).
+**Note:** Numeric temperature effects below are illustrative or literature-reported and are not verified here (CITATION NEEDED).
 
 ### Wire Resistance
 
@@ -435,8 +435,8 @@ $$\text{fatigue ratio} = \frac{\text{cycles} - \text{fatigue threshold}}{\text{f
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| Fatigue Threshold | 10^8 cycles | IEEE IRPS 2022 (DOI: (add)) |
-| Failure Threshold | 10^12 cycles | Nano Letters 2024 (V:HfO₂) (DOI: (add)) |
+| Fatigue Threshold | 10^8 cycles | IEEE IRPS (CITATION NEEDED) |
+| Failure Threshold | 10^12 cycles | Claim requires peer-reviewed support (CITATION NEEDED) |
 | Window Narrowing | 50% at failure | Assumed FeFET behavior (unverified) |
 
 **Note:** Endurance modeling off by default (performance optimization). Enable for cycle-specific studies.
@@ -556,11 +556,9 @@ type MVMOptions struct {
 
 ## References
 
-**Peer-Reviewed Sources:**
-- IEEE IRPS 2022: FeFET endurance characterization (DOI: (add))
-- Nature Communications 2025: HZO properties, Pr measurements (DOI: (add))
-- Nano Letters 2024: V:HfO₂ 10^12 cycle endurance (DOI: (add))
-- Fraunhofer IPMS 2024: >10 year retention at 85°C (DOI: (add))
+**Peer-Reviewed Sources (CITATION NEEDED):**
+- Add specific endurance/retention citations for FeFET/FE devices used to justify default thresholds.
+- Avoid future-dated or placeholder citations; include full reference + DOI when verified.
 
 **Implementation Notes:**
 - Physics models are literature-informed but not fully validated

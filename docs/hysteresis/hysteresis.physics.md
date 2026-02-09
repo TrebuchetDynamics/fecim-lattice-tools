@@ -2,7 +2,7 @@
 
 Start here if you've never studied ferroelectrics before.
 
-**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a DOI is provided (DOI: (add)).
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a peer-reviewed citation is provided (**CITATION NEEDED**).
 
 ---
 
