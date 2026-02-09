@@ -434,12 +434,12 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	currentView = "OPERATIONS"
 
 	// Header with inline view selector (title moved to main navbar)
-	headerRow := container.NewHBox(
+	headerRow := container.NewHScroll(container.NewHBox(
 		widget.NewLabel("View:"),
 		viewSelector,
 		layout.NewSpacer(),
 		widget.NewLabel("3 Views | DAC -> FeFET -> TIA -> ADC"),
-	)
+	))
 
 	header := container.NewVBox(
 		headerRow,

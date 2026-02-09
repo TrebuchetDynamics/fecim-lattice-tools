@@ -86,9 +86,13 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Row 1: Config + Mode + Architecture (unified row)
 	configModeRow := ca.createUnifiedConfigModeRow()
+	// Make the top rows resilient on narrow windows: allow horizontal scrolling
+	// instead of overlap/truncation.
+	configModeRow = container.NewHScroll(configModeRow)
 
 	// Row 2: Action buttons
 	actionRow := ca.createUnifiedActionRow()
+	actionRow = container.NewHScroll(actionRow)
 
 	// Mode-specific panels (only visible when mode is active)
 	writePanelContent := ca.createCompactWritePanel()
