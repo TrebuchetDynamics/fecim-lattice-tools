@@ -43,6 +43,8 @@ func TestE2EGUIAllModulesLifecycle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping E2E GUI test in short mode")
 	}
+	// GUI/E2E tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	// Skip if no display available (CI environment)
 	if isHeadlessEnvironment() {
@@ -187,6 +189,8 @@ func TestE2EGUIModuleSwitching(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping E2E GUI test in short mode")
 	}
+	// GUI/E2E tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	if isHeadlessEnvironment() {
 		t.Skip("Skipping GUI test in headless environment")
@@ -256,6 +260,8 @@ func TestE2EGUIRapidModuleSwitching(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping E2E GUI test in short mode")
 	}
+	// GUI/E2E tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	if isHeadlessEnvironment() {
 		t.Skip("Skipping GUI test in headless environment")
@@ -307,6 +313,8 @@ func TestE2EGUIConcurrentOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping E2E GUI test in short mode")
 	}
+	// GUI/E2E tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 
 	if isHeadlessEnvironment() {
 		t.Skip("Skipping GUI test in headless environment")
