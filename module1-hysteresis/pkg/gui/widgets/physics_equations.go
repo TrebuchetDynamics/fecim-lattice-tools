@@ -173,7 +173,8 @@ func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
 		container.NewTabItem("ISPP / WRD", buildIsppControllerTab(parent)),
 	)
 	tabs.SetTabLocation(container.TabLocationTop)
-	return container.NewVBox(tabs)
+	// Border ensures the tabs expand and reduces vbox-induced sizing surprises in dialogs.
+	return container.NewBorder(nil, nil, nil, nil, tabs)
 }
 
 func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
@@ -194,6 +195,8 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	split.Offset = 0.58
 
 	infoTabs := buildLkInfoTabs()
+	infoScroll := container.NewVScroll(infoTabs)
+	infoScroll.SetMinSize(fyne.NewSize(240, 170))
 
 	title := widget.NewLabelWithStyle(
 		"Landau-Khalatnikov Equation (Module 1)",
@@ -201,11 +204,11 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	return container.NewPadded(container.NewVBox(
-		title,
-		split,
-		infoTabs,
-	))
+	// Use a vertical split so info never overlaps the equation area on small windows.
+	vs := container.NewVSplit(split, infoScroll)
+	vs.Offset = 0.72
+
+	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
 }
 
 func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
@@ -226,6 +229,8 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	split.Offset = 0.58
 
 	infoTabs := buildPreisachInfoTabs()
+	infoScroll := container.NewVScroll(infoTabs)
+	infoScroll.SetMinSize(fyne.NewSize(240, 170))
 
 	title := widget.NewLabelWithStyle(
 		"Preisach Model (Module 1)",
@@ -233,11 +238,10 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	return container.NewPadded(container.NewVBox(
-		title,
-		split,
-		infoTabs,
-	))
+	vs := container.NewVSplit(split, infoScroll)
+	vs.Offset = 0.72
+
+	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
 }
 
 func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
@@ -295,11 +299,14 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 }
 
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
-	textPanel := buildLkEquationTextPanel(selectTerm, false)
-	textContainer, _ := textPanel.(*fyne.Container)
-	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
-	caption.TextStyle = fyne.TextStyle{Italic: true}
-	captionAdded := false
+	// Default view should be the SVG diagram + term inspector. The text form is
+	// still available, but collapsed to avoid overflow/visual clutter.
+	textPanel := buildLkEquationTextPanel(selectTerm, true)
+	textAcc := widget.NewAccordion(
+		widget.NewAccordionItem("Equation (text form)", container.NewVScroll(textPanel)),
+	)
+	// Collapsed by default.
+	textAcc.CloseAll()
 
 	imageSlot, bar := newEquationLoadingSlot("Loading L-K equation diagram...")
 
@@ -308,11 +315,7 @@ func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) f
 		if !ok {
 			fyne.Do(func() {
 				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				if textContainer != nil && !captionAdded {
-					textContainer.Objects = append(textContainer.Objects, caption)
-					textContainer.Refresh()
-					captionAdded = true
-				}
+				textAcc.Open(0)
 			})
 			return
 		}
@@ -322,18 +325,14 @@ func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) f
 			panel := buildLkEquationImagePanel(parent, selectTerm, res, hotspots, minSize)
 			if panel == nil {
 				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				if textContainer != nil && !captionAdded {
-					textContainer.Objects = append(textContainer.Objects, caption)
-					textContainer.Refresh()
-					captionAdded = true
-				}
+				textAcc.Open(0)
 				return
 			}
 			swapEquationSlotContent(imageSlot, bar, panel)
 		})
 	}()
 
-	return container.NewVBox(imageSlot, textPanel)
+	return container.NewVBox(imageSlot, textAcc)
 }
 
 func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool) fyne.CanvasObject {
@@ -423,11 +422,19 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
 	imageSlot, bar := newEquationLoadingSlot("Loading Preisach equation diagram...")
+
+	textPanel := buildPreisachEquationTextPanel(selectTerm)
+	textAcc := widget.NewAccordion(
+		widget.NewAccordionItem("Equation (text form)", container.NewVScroll(textPanel)),
+	)
+	textAcc.CloseAll()
+
 	go func() {
 		res, ok := loadEquationSVGResource(preisachEquationSVGPath)
 		if !ok {
 			fyne.Do(func() {
 				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+				textAcc.Open(0)
 			})
 			return
 		}
@@ -438,10 +445,7 @@ func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, stri
 		})
 	}()
 
-	return container.NewVBox(
-		imageSlot,
-		buildPreisachEquationTextPanel(selectTerm),
-	)
+	return container.NewVBox(imageSlot, textAcc)
 }
 
 func buildPreisachEquationImagePanel(parent fyne.Window, res fyne.Resource) fyne.CanvasObject {

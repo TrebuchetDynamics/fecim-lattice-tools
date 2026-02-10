@@ -126,9 +126,18 @@ func TestVisualRegressionHysteresis_EquationModal(t *testing.T) {
 		demo   = demo1gui.NewEmbeddedApp()
 	)
 
+	sizes := []struct {
+		name string
+		sz   fyne.Size
+		dSz  fyne.Size
+	}{
+		{name: "desktop", sz: fyne.NewSize(1200, 800), dSz: fyne.NewSize(1100, 650)},
+		{name: "mobile", sz: fyne.NewSize(390, 844), dSz: fyne.NewSize(370, 760)},
+	}
+
 	fyneUI(t, func() {
 		window = app.NewWindow("Visual Test - Hysteresis (Equation Modal)")
-		window.Resize(fyne.NewSize(1200, 800))
+		window.Resize(sizes[0].sz)
 
 		content := demo.BuildContent(app, window)
 		window.SetContent(container.NewMax(content))
@@ -160,27 +169,33 @@ func TestVisualRegressionHysteresis_EquationModal(t *testing.T) {
 	footer := container.NewHBox(layout.NewSpacer(), closeBtn)
 	body := container.NewBorder(nil, footer, nil, nil, container.NewPadded(content))
 
-	fyneUI(t, func() {
-		d = dialog.NewCustom("Physics Equations", "", body, window)
-		d.Resize(fyne.NewSize(1100, 650))
-		d.Show()
-	})
-	time.Sleep(450 * time.Millisecond)
-
-	tabNames := []string{"lk", "preisach", "ispp"}
-	for idx, name := range tabNames {
+	for _, cfg := range sizes {
 		fyneUI(t, func() {
-			tabs.SelectIndex(idx)
+			window.Resize(cfg.sz)
+			d = dialog.NewCustom("Physics Equations", "", body, window)
+			d.Resize(cfg.dSz)
+			d.Show()
 		})
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(450 * time.Millisecond)
 
-		var img image.Image
-		fyneUI(t, func() {
-			img = captureWindow(window)
-		})
-		savePath := saveTestScreenshot(t, img, "hysteresis_equation_modal_"+name)
-		t.Logf("Equation modal (%s) screenshot saved: %s", name, savePath)
-		verifyImageNotEmpty(t, img, "equation_modal_"+name)
+		tabNames := []string{"lk", "preisach", "ispp"}
+		for idx, name := range tabNames {
+			fyneUI(t, func() {
+				tabs.SelectIndex(idx)
+			})
+			time.Sleep(350 * time.Millisecond)
+
+			var img image.Image
+			fyneUI(t, func() {
+				img = captureWindow(window)
+			})
+			savePath := saveTestScreenshot(t, img, "hysteresis_equation_modal_"+cfg.name+"_"+name)
+			t.Logf("Equation modal (%s/%s) screenshot saved: %s", cfg.name, name, savePath)
+			verifyImageNotEmpty(t, img, "equation_modal_"+cfg.name+"_"+name)
+		}
+
+		fyneUI(t, func() { d.Hide() })
+		time.Sleep(120 * time.Millisecond)
 	}
 }
 
