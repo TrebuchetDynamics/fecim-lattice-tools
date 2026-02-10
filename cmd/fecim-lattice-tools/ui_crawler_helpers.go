@@ -13,7 +13,17 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Note: ptrID is already defined in ui_layout_audit_test.go and will be reused
+// ptrID returns the pointer address of an interface value for deduplication.
+func ptrID(o any) uintptr {
+	v := reflect.ValueOf(o)
+	if !v.IsValid() {
+		return 0
+	}
+	if v.Kind() != reflect.Pointer {
+		return 0
+	}
+	return v.Pointer()
+}
 
 // Advanced UI discovery functions for the screenshot crawler
 
