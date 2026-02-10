@@ -1,8 +1,12 @@
 package gui
 
 import (
+	"math"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
@@ -22,21 +26,25 @@ func (a *App) showPhysicsEquationsDialog() {
 	}
 
 	content := widgets.NewPhysicsEquationsWidget(a.mainWindow)
-	canvasSize := a.mainWindow.Canvas().Size()
-	width := canvasSize.Width * 0.92
-	height := canvasSize.Height * 0.72
-	if width <= 0 {
-		width = 900
-	}
-	if height <= 0 {
-		height = 520
-	}
 	framed := container.NewPadded(content)
 
-	var dialog *widget.PopUp
+	// Responsive sizing: keep it large on desktop but never exceed the window.
+	canvasSize := a.mainWindow.Canvas().Size()
+	width := float32(900)
+	height := float32(560)
+	if canvasSize.Width > 0 {
+		width = float32(math.Min(float64(width), float64(canvasSize.Width*0.95)))
+		width = float32(math.Max(float64(width), 640))
+	}
+	if canvasSize.Height > 0 {
+		height = float32(math.Min(float64(height), float64(canvasSize.Height*0.88)))
+		height = float32(math.Max(float64(height), 420))
+	}
+
+	var d dialog.Dialog
 	closeBtn := widget.NewButton("Close", func() {
-		if dialog != nil {
-			dialog.Hide()
+		if d != nil {
+			d.Hide()
 		}
 		if !wasPaused && a.paused {
 			a.paused = false
@@ -46,14 +54,10 @@ func (a *App) showPhysicsEquationsDialog() {
 		}
 	})
 
-	dialog = widget.NewModalPopUp(
-		container.NewVBox(
-			framed,
-			closeBtn,
-		),
-		a.mainWindow.Canvas(),
-	)
-	dialog.Resize(fyne.NewSize(width, height))
+	footer := container.NewHBox(layout.NewSpacer(), closeBtn)
+	body := container.NewBorder(nil, footer, nil, nil, framed)
 
-	dialog.Show()
+	d = dialog.NewCustom("Physics Equations", "", body, a.mainWindow)
+	d.Resize(fyne.NewSize(width, height))
+	d.Show()
 }

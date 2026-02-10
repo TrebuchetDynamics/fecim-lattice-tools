@@ -366,19 +366,20 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns the minimum size for the picker.
 func (mp *MaterialPicker) MinSize() fyne.Size {
-	return fyne.NewSize(1100, 450)
+	// Prefer a wide layout (table + details) on desktop, but keep it usable on
+	// smaller windows (e.g., 1024x768 and below).
+	return fyne.NewSize(720, 420)
 }
 
 // ShowMaterialPicker displays the material picker in a modal dialog.
 func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected func(string, *physics.Material)) {
 	picker := NewMaterialPicker(nil)
 
-	// Pre-select current material
+	// Pre-select current material.
 	if currentMaterialID != "" {
 		picker.SetSelected(currentMaterialID)
 	}
 
-	// Create dialog
 	d := dialog.NewCustomConfirm(
 		"Select Ferroelectric Material",
 		"Select",
@@ -392,7 +393,36 @@ func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected
 		parent,
 	)
 
-	d.Resize(fyne.NewSize(1150, 500))
+	// Responsive sizing: never exceed the window; keep a sensible minimum.
+	canvasSize := parent.Canvas().Size()
+	w := float32(1150)
+	h := float32(520)
+	if canvasSize.Width > 0 {
+		maxW := canvasSize.Width * 0.95
+		if w > maxW {
+			w = maxW
+		}
+		if w < 680 {
+			w = 680
+		}
+	}
+	if canvasSize.Height > 0 {
+		maxH := canvasSize.Height * 0.90
+		if h > maxH {
+			h = maxH
+		}
+		if h < 420 {
+			h = 420
+		}
+	}
+	if w <= 0 {
+		w = 900
+	}
+	if h <= 0 {
+		h = 500
+	}
+
+	d.Resize(fyne.NewSize(w, h))
 	d.Show()
 }
 
