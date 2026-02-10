@@ -18,9 +18,13 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
+	demo1widgets "fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
 	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
@@ -38,6 +42,23 @@ const testScreenshotDir = "testdata/screenshots"
 func fyneUI(t *testing.T, fn func()) {
 	t.Helper()
 	fyne.DoAndWait(fn)
+}
+
+func findFirstAppTabs(root fyne.CanvasObject) *container.AppTabs {
+	if root == nil {
+		return nil
+	}
+	if tabs, ok := root.(*container.AppTabs); ok {
+		return tabs
+	}
+	if c, ok := root.(*fyne.Container); ok {
+		for _, child := range c.Objects {
+			if found := findFirstAppTabs(child); found != nil {
+				return found
+			}
+		}
+	}
+	return nil
 }
 
 // =============================================================================
@@ -87,6 +108,80 @@ func TestVisualRegressionHysteresis(t *testing.T) {
 
 	t.Logf("Hysteresis screenshot saved: %s", savePath)
 	verifyImageNotEmpty(t, img, "hysteresis")
+}
+
+// TestVisualRegressionHysteresis_EquationModal captures the equation modal, including all tabs.
+func TestVisualRegressionHysteresis_EquationModal(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping visual test in short mode")
+	}
+	// Visual tests should not mutate tracked calibration baselines.
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
+
+	app := test.NewApp()
+	defer app.Quit()
+
+	var (
+		window fyne.Window
+		demo   = demo1gui.NewEmbeddedApp()
+	)
+
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - Hysteresis (Equation Modal)")
+		window.Resize(fyne.NewSize(1200, 800))
+
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
+	defer fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
+
+	// Let base UI render.
+	time.Sleep(600 * time.Millisecond)
+
+	// Build the equation modal content directly so the test can reliably
+	// switch tabs and capture each state.
+	content := demo1widgets.NewPhysicsEquationsWidget(window)
+	tabs := findFirstAppTabs(content)
+	if tabs == nil {
+		t.Fatal("equation modal tabs not found in content")
+	}
+
+	var d dialog.Dialog
+	closeBtn := widget.NewButton("Close", func() {
+		if d != nil {
+			d.Hide()
+		}
+	})
+	footer := container.NewHBox(layout.NewSpacer(), closeBtn)
+	body := container.NewBorder(nil, footer, nil, nil, container.NewPadded(content))
+
+	fyneUI(t, func() {
+		d = dialog.NewCustom("Physics Equations", "", body, window)
+		d.Resize(fyne.NewSize(1100, 650))
+		d.Show()
+	})
+	time.Sleep(450 * time.Millisecond)
+
+	tabNames := []string{"lk", "preisach", "ispp"}
+	for idx, name := range tabNames {
+		fyneUI(t, func() {
+			tabs.SelectIndex(idx)
+		})
+		time.Sleep(300 * time.Millisecond)
+
+		var img image.Image
+		fyneUI(t, func() {
+			img = captureWindow(window)
+		})
+		savePath := saveTestScreenshot(t, img, "hysteresis_equation_modal_"+name)
+		t.Logf("Equation modal (%s) screenshot saved: %s", name, savePath)
+		verifyImageNotEmpty(t, img, "equation_modal_"+name)
+	}
 }
 
 // TestVisualRegressionCrossbar captures the crossbar module initial state.

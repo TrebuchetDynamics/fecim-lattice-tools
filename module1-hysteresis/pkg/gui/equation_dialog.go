@@ -12,6 +12,14 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
+// ShowPhysicsEquationsDialog displays the equation modal.
+//
+// This is exported so automated visual tests and screenshot crawlers can
+// reliably open the modal without fragile widget-tree clicking.
+func (a *App) ShowPhysicsEquationsDialog() {
+	a.showPhysicsEquationsDialog()
+}
+
 func (a *App) showPhysicsEquationsDialog() {
 	if a.mainWindow == nil {
 		return
