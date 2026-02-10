@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -201,25 +202,10 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	eqPanel := buildLkEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(240, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
-
-	useVertical := false
-	if parent != nil {
-		sz := parent.Canvas().Size()
-		useVertical = sz.Width > 0 && sz.Width < 620
-	}
-
-	var split *container.Split
-	if useVertical {
-		split = container.NewVSplit(eqScroll, detailScroll)
-		split.Offset = 0.62
-	} else {
-		split = container.NewHSplit(eqScroll, detailScroll)
-		split.Offset = 0.58
-	}
+	detailScroll.SetMinSize(fyne.NewSize(240, 100))
 
 	infoTabs := buildLkInfoTabs()
 
@@ -229,11 +215,14 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	return container.NewPadded(container.NewVBox(
-		title,
-		split,
-		infoTabs,
-	))
+	// Equation on top, selected-term detail below, info tabs at the bottom.
+	// Use VSplit so equation + detail share vertical space and fill the modal.
+	upper := container.NewVSplit(eqScroll, detailScroll)
+	upper.Offset = 0.65
+
+	return container.NewBorder(title, nil, nil, nil,
+		container.NewVSplit(upper, infoTabs),
+	)
 }
 
 func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
@@ -245,25 +234,10 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	eqPanel := buildPreisachEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(240, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
-
-	useVertical := false
-	if parent != nil {
-		sz := parent.Canvas().Size()
-		useVertical = sz.Width > 0 && sz.Width < 620
-	}
-
-	var split *container.Split
-	if useVertical {
-		split = container.NewVSplit(eqScroll, detailScroll)
-		split.Offset = 0.62
-	} else {
-		split = container.NewHSplit(eqScroll, detailScroll)
-		split.Offset = 0.58
-	}
+	detailScroll.SetMinSize(fyne.NewSize(240, 100))
 
 	infoTabs := buildPreisachInfoTabs()
 
@@ -273,11 +247,12 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	return container.NewPadded(container.NewVBox(
-		title,
-		split,
-		infoTabs,
-	))
+	upper := container.NewVSplit(eqScroll, detailScroll)
+	upper.Offset = 0.65
+
+	return container.NewBorder(title, nil, nil, nil,
+		container.NewVSplit(upper, infoTabs),
+	)
 }
 
 func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
@@ -317,32 +292,19 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(240, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
-
-	useVertical := false
-	if parent != nil {
-		sz := parent.Canvas().Size()
-		useVertical = sz.Width > 0 && sz.Width < 620
-	}
-
-	var split *container.Split
-	if useVertical {
-		split = container.NewVSplit(eqScroll, detailScroll)
-		split.Offset = 0.62
-	} else {
-		split = container.NewHSplit(eqScroll, detailScroll)
-		split.Offset = 0.58
-	}
+	detailScroll.SetMinSize(fyne.NewSize(240, 100))
 
 	infoTabs := buildIsppInfoTabs()
 
-	return container.NewPadded(container.NewVBox(
-		split,
-		infoTabs,
-	))
+	upper := container.NewVSplit(eqScroll, detailScroll)
+	upper.Offset = 0.65
+
+	return container.NewBorder(nil, nil, nil, nil,
+		container.NewVSplit(upper, infoTabs),
+	)
 }
 
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {

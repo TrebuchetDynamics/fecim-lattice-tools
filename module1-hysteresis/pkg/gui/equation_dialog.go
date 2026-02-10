@@ -25,12 +25,12 @@ func (a *App) showPhysicsEquationsDialog() {
 	content := widgets.NewPhysicsEquationsWidget(a.mainWindow)
 	canvasSize := a.mainWindow.Canvas().Size()
 	width := canvasSize.Width * 0.92
-	height := canvasSize.Height * 0.72
+	height := canvasSize.Height * 0.95
 	if width <= 0 {
 		width = 900
 	}
 	if height <= 0 {
-		height = 520
+		height = 700
 	}
 	framed := container.NewPadded(content)
 
@@ -48,10 +48,7 @@ func (a *App) showPhysicsEquationsDialog() {
 	})
 
 	dialog = widget.NewModalPopUp(
-		container.NewVBox(
-			framed,
-			closeBtn,
-		),
+		container.NewBorder(nil, closeBtn, nil, nil, framed),
 		a.mainWindow.Canvas(),
 	)
 	dialog.Resize(fyne.NewSize(width, height))
