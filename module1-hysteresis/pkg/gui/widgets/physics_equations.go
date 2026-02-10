@@ -186,17 +186,18 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	eqPanel := buildLkEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(320, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+	detailScroll.SetMinSize(fyne.NewSize(200, 180))
 
+	// Give the equation panel ~70% of horizontal space so the SVG is not truncated.
 	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	split.Offset = 0.70
 
 	infoTabs := buildLkInfoTabs()
 	infoScroll := container.NewVScroll(infoTabs)
-	infoScroll.SetMinSize(fyne.NewSize(240, 170))
+	infoScroll.SetMinSize(fyne.NewSize(240, 140))
 
 	title := widget.NewLabelWithStyle(
 		"Landau-Khalatnikov Equation (Module 1)",
@@ -206,7 +207,7 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 
 	// Use a vertical split so info never overlaps the equation area on small windows.
 	vs := container.NewVSplit(split, infoScroll)
-	vs.Offset = 0.72
+	vs.Offset = 0.65
 
 	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
 }
@@ -220,17 +221,17 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	eqPanel := buildPreisachEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(320, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+	detailScroll.SetMinSize(fyne.NewSize(200, 180))
 
 	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	split.Offset = 0.70
 
 	infoTabs := buildPreisachInfoTabs()
 	infoScroll := container.NewVScroll(infoTabs)
-	infoScroll.SetMinSize(fyne.NewSize(240, 170))
+	infoScroll.SetMinSize(fyne.NewSize(240, 140))
 
 	title := widget.NewLabelWithStyle(
 		"Preisach Model (Module 1)",
@@ -239,7 +240,7 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	vs := container.NewVSplit(split, infoScroll)
-	vs.Offset = 0.72
+	vs.Offset = 0.65
 
 	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
 }
@@ -282,20 +283,22 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(240, 240))
+	eqScroll.SetMinSize(fyne.NewSize(320, 200))
 
 	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+	detailScroll.SetMinSize(fyne.NewSize(200, 180))
 
 	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.58
+	split.Offset = 0.70
 
 	infoTabs := buildIsppInfoTabs()
+	infoScroll := container.NewVScroll(infoTabs)
+	infoScroll.SetMinSize(fyne.NewSize(240, 140))
 
-	return container.NewPadded(container.NewVBox(
-		split,
-		infoTabs,
-	))
+	vs := container.NewVSplit(split, infoScroll)
+	vs.Offset = 0.65
+
+	return container.NewPadded(container.NewBorder(nil, nil, nil, nil, vs))
 }
 
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
@@ -407,9 +410,19 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 		if parent != nil {
 			canvasSize = parent.Canvas().Size()
 		}
+		// The image sits inside an HSplit (offset ~0.70) inside a dialog (~85% of
+		// window width), so available horizontal space is roughly
+		//   windowWidth * 0.85 * 0.70 ≈ 0.60 * windowWidth.
+		// Use 0.42 to leave comfortable margin for the detail panel + padding.
 		targetWidth := minSize.Width
 		if canvasSize.Width > 0 {
-			targetWidth = canvasSize.Width * 0.6
+			targetWidth = canvasSize.Width * 0.42
+		}
+		if targetWidth < 350 {
+			targetWidth = 350
+		}
+		if targetWidth > 500 {
+			targetWidth = 500
 		}
 		scale := targetWidth / minSize.Width
 		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
@@ -417,7 +430,7 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
 	stack := container.NewStack(image, overlay)
-	return stack
+	return container.NewPadded(stack)
 }
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
@@ -458,7 +471,13 @@ func buildPreisachEquationImagePanel(parent fyne.Window, res fyne.Resource) fyne
 	if parent != nil {
 		canvasSize := parent.Canvas().Size()
 		if canvasSize.Width > 0 {
-			targetWidth := canvasSize.Width * 0.6
+			targetWidth := canvasSize.Width * 0.42
+			if targetWidth < 350 {
+				targetWidth = 350
+			}
+			if targetWidth > 550 {
+				targetWidth = 550
+			}
 			minSize := img.MinSize()
 			if minSize.Width > 0 && minSize.Height > 0 {
 				scale := targetWidth / minSize.Width

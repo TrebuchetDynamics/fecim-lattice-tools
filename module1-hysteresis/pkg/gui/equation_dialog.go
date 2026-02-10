@@ -38,8 +38,8 @@ func (a *App) showPhysicsEquationsDialog() {
 
 	// Responsive sizing: keep it large on desktop but never exceed the window.
 	canvasSize := a.mainWindow.Canvas().Size()
-	width := float32(900)
-	height := float32(560)
+	width := float32(1000)
+	height := float32(620)
 	if canvasSize.Width > 0 {
 		width = float32(math.Min(float64(width), float64(canvasSize.Width*0.95)))
 		width = float32(math.Max(float64(width), 640))

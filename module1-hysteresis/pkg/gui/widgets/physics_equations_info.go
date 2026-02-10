@@ -319,41 +319,44 @@ func termDetails() map[string]termDetail {
 }
 
 func buildLkInfoTabs() fyne.CanvasObject {
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
-		container.NewTabItem("Model Notes", scrollSection(buildLkNotesSection())),
-		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
-		container.NewTabItem("Parameters", scrollSection(buildGoldenSetSection())),
-		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
-		container.NewTabItem("Dynamics", scrollSection(buildDynamicsSection())),
-		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
-		container.NewTabItem("References", scrollSection(buildReferencesSection())),
+	acc := widget.NewAccordion(
+		widget.NewAccordionItem("Overview", buildOverviewSection()),
+		widget.NewAccordionItem("Model Notes", buildLkNotesSection()),
+		widget.NewAccordionItem("α(T,σ)", buildAlphaSection()),
+		widget.NewAccordionItem("Parameters", buildGoldenSetSection()),
+		widget.NewAccordionItem("Materials", buildMaterialDefaultsSection()),
+		widget.NewAccordionItem("Dynamics", buildDynamicsSection()),
+		widget.NewAccordionItem("Assumptions", buildAssumptionsSection()),
+		widget.NewAccordionItem("References", buildReferencesSection()),
 	)
-	return tabs
+	acc.Open(0) // Show overview by default.
+	return acc
 }
 
 func buildIsppInfoTabs() fyne.CanvasObject {
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Overview", scrollSection(buildIsppOverviewSection())),
-		container.NewTabItem("States", scrollSection(buildIsppStatesSection())),
-		container.NewTabItem("Stability", scrollSection(buildIsppStabilitySection())),
-		container.NewTabItem("Code refs", scrollSection(buildIsppCodeRefsSection())),
+	acc := widget.NewAccordion(
+		widget.NewAccordionItem("Overview", buildIsppOverviewSection()),
+		widget.NewAccordionItem("States", buildIsppStatesSection()),
+		widget.NewAccordionItem("Stability", buildIsppStabilitySection()),
+		widget.NewAccordionItem("Code refs", buildIsppCodeRefsSection()),
 	)
-	return tabs
+	acc.Open(0)
+	return acc
 }
 
 func buildPreisachInfoTabs() fyne.CanvasObject {
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
-		container.NewTabItem("Model Notes", scrollSection(buildPreisachNotesSection())),
-		container.NewTabItem("alpha(T,sigma)", scrollSection(buildPreisachAlphaSection())),
-		container.NewTabItem("Parameters", scrollSection(buildPreisachParametersSection())),
-		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
-		container.NewTabItem("Dynamics", scrollSection(buildPreisachDynamicsSection())),
-		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
-		container.NewTabItem("References", scrollSection(buildReferencesSection())),
+	acc := widget.NewAccordion(
+		widget.NewAccordionItem("Overview", buildPreisachSection()),
+		widget.NewAccordionItem("Model Notes", buildPreisachNotesSection()),
+		widget.NewAccordionItem("α(T,σ)", buildPreisachAlphaSection()),
+		widget.NewAccordionItem("Parameters", buildPreisachParametersSection()),
+		widget.NewAccordionItem("Materials", buildMaterialDefaultsSection()),
+		widget.NewAccordionItem("Dynamics", buildPreisachDynamicsSection()),
+		widget.NewAccordionItem("Assumptions", buildAssumptionsSection()),
+		widget.NewAccordionItem("References", buildReferencesSection()),
 	)
-	return tabs
+	acc.Open(0)
+	return acc
 }
 
 func buildOverviewSection() fyne.CanvasObject {

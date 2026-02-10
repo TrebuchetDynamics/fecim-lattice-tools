@@ -25,6 +25,7 @@ import (
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo1widgets "fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
 	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
@@ -131,8 +132,8 @@ func TestVisualRegressionHysteresis_EquationModal(t *testing.T) {
 		sz   fyne.Size
 		dSz  fyne.Size
 	}{
-		{name: "desktop", sz: fyne.NewSize(1200, 800), dSz: fyne.NewSize(1100, 650)},
-		{name: "mobile", sz: fyne.NewSize(390, 844), dSz: fyne.NewSize(370, 760)},
+		{name: "desktop_1200x800", sz: fyne.NewSize(1200, 800), dSz: fyne.NewSize(1100, 650)},
+		{name: "laptop_1024x768", sz: fyne.NewSize(1024, 768), dSz: fyne.NewSize(950, 620)},
 	}
 
 	fyneUI(t, func() {
@@ -193,6 +194,81 @@ func TestVisualRegressionHysteresis_EquationModal(t *testing.T) {
 			t.Logf("Equation modal (%s/%s) screenshot saved: %s", cfg.name, name, savePath)
 			verifyImageNotEmpty(t, img, "equation_modal_"+cfg.name+"_"+name)
 		}
+
+		fyneUI(t, func() { d.Hide() })
+		time.Sleep(120 * time.Millisecond)
+	}
+}
+
+// TestVisualRegressionHysteresis_MaterialPicker captures the material picker dialog.
+func TestVisualRegressionHysteresis_MaterialPicker(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping visual test in short mode")
+	}
+	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
+
+	app := test.NewApp()
+	defer app.Quit()
+
+	var window fyne.Window
+	demo := demo1gui.NewEmbeddedApp()
+
+	sizes := []struct {
+		name string
+		sz   fyne.Size
+	}{
+		{"desktop_1200x800", fyne.NewSize(1200, 800)},
+		{"laptop_1024x768", fyne.NewSize(1024, 768)},
+	}
+
+	fyneUI(t, func() {
+		window = app.NewWindow("Visual Test - Material Picker")
+		window.Resize(sizes[0].sz)
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+		demo.Start()
+	})
+	defer fyneUI(t, func() {
+		demo.Stop()
+		window.Close()
+	})
+
+	time.Sleep(600 * time.Millisecond)
+
+	for _, cfg := range sizes {
+		fyneUI(t, func() {
+			window.Resize(cfg.sz)
+		})
+		time.Sleep(200 * time.Millisecond)
+
+		// Open material picker via the shared widget directly.
+		var d dialog.Dialog
+		fyneUI(t, func() {
+			picker := sharedwidgets.NewMaterialPicker(nil)
+			picker.SetSelected("default_hzo")
+			d = dialog.NewCustomConfirm("Select Ferroelectric Material", "Select", "Cancel", picker, func(bool) {}, window)
+			cs := window.Canvas().Size()
+			w := cs.Width * 0.90
+			h := cs.Height * 0.85
+			if w < 680 {
+				w = 680
+			}
+			if h < 420 {
+				h = 420
+			}
+			d.Resize(fyne.NewSize(w, h))
+			d.Show()
+		})
+		time.Sleep(500 * time.Millisecond)
+
+		var img image.Image
+		fyneUI(t, func() {
+			img = captureWindow(window)
+		})
+		savePath := saveTestScreenshot(t, img, "hysteresis_material_picker_"+cfg.name)
+		t.Logf("Material picker (%s) screenshot saved: %s", cfg.name, savePath)
+		verifyImageNotEmpty(t, img, "material_picker_"+cfg.name)
 
 		fyneUI(t, func() { d.Hide() })
 		time.Sleep(120 * time.Millisecond)
