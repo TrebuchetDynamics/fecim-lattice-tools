@@ -318,8 +318,10 @@ func termDetails() map[string]termDetail {
 	}
 }
 
-func buildLkInfoTabs() fyne.CanvasObject {
+func buildLkInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.AppTabs, *container.TabItem) {
+	termTab := container.NewTabItem("Selected Term", scrollSection(detailCard))
 	tabs := container.NewAppTabs(
+		termTab,
 		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
 		container.NewTabItem("Model Notes", scrollSection(buildLkNotesSection())),
 		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
@@ -329,21 +331,28 @@ func buildLkInfoTabs() fyne.CanvasObject {
 		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
 		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)
-	return tabs
+	// Default to Overview, not the empty Selected Term tab.
+	tabs.SelectIndex(1)
+	return tabs, termTab
 }
 
-func buildIsppInfoTabs() fyne.CanvasObject {
+func buildIsppInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.AppTabs, *container.TabItem) {
+	termTab := container.NewTabItem("Selected Term", scrollSection(detailCard))
 	tabs := container.NewAppTabs(
+		termTab,
 		container.NewTabItem("Overview", scrollSection(buildIsppOverviewSection())),
 		container.NewTabItem("States", scrollSection(buildIsppStatesSection())),
 		container.NewTabItem("Stability", scrollSection(buildIsppStabilitySection())),
 		container.NewTabItem("Code refs", scrollSection(buildIsppCodeRefsSection())),
 	)
-	return tabs
+	tabs.SelectIndex(1)
+	return tabs, termTab
 }
 
-func buildPreisachInfoTabs() fyne.CanvasObject {
+func buildPreisachInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.AppTabs, *container.TabItem) {
+	termTab := container.NewTabItem("Selected Term", scrollSection(detailCard))
 	tabs := container.NewAppTabs(
+		termTab,
 		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
 		container.NewTabItem("Model Notes", scrollSection(buildPreisachNotesSection())),
 		container.NewTabItem("alpha(T,sigma)", scrollSection(buildPreisachAlphaSection())),
@@ -353,7 +362,8 @@ func buildPreisachInfoTabs() fyne.CanvasObject {
 		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
 		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)
-	return tabs
+	tabs.SelectIndex(1)
+	return tabs, termTab
 }
 
 func buildOverviewSection() fyne.CanvasObject {
