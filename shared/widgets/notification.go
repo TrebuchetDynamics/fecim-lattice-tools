@@ -817,7 +817,9 @@ func (nb *NotificationButton) updateBadge() {
 		nb.badge.Hide()
 		nb.badgeBg.Hide()
 	}
-	nb.Refresh()
+	// Do NOT call nb.Refresh() here - it causes infinite recursion
+	// because CreateRenderer() calls updateBadge().
+	// Show/Hide already trigger necessary updates.
 }
 
 // CreateRenderer creates the renderer for the notification button
