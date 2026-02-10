@@ -131,13 +131,64 @@ func swapEquationSlotContent(slot *fyne.Container, bar *widget.ProgressBarInfini
 }
 
 // NewPhysicsEquationsWidget builds the equation display with tooltips.
+// The first (visible) tab is built synchronously; the other two are
+// constructed lazily on first selection so the dialog opens fast.
 func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
+	type lazyTab struct {
+		slot    *fyne.Container
+		bar     *widget.ProgressBarInfinite
+		loaded  bool
+		builder func() fyne.CanvasObject
+	}
+
+	// First tab: build synchronously (user sees it immediately).
+	lkContent := buildLkEquationTab(parent)
+	lk := &lazyTab{
+		slot:   container.NewStack(lkContent),
+		loaded: true,
+	}
+
+	// Other tabs: deferred until selected.
+	makeDeferred := func(builder func() fyne.CanvasObject) *lazyTab {
+		slot, bar := newEquationLoadingSlot("Loading…")
+		return &lazyTab{slot: slot, bar: bar, builder: builder}
+	}
+	preisach := makeDeferred(func() fyne.CanvasObject { return buildPreisachEquationTab(parent) })
+	ispp := makeDeferred(func() fyne.CanvasObject { return buildIsppControllerTab(parent) })
+
+	lazyTabs := []*lazyTab{lk, preisach, ispp}
+
 	tabs := container.NewAppTabs(
-		container.NewTabItem("L-K (dynamic)", buildLkEquationTab(parent)),
-		container.NewTabItem("Preisach (quasi-static)", buildPreisachEquationTab(parent)),
-		container.NewTabItem("ISPP / WRD", buildIsppControllerTab(parent)),
+		container.NewTabItem("L-K (dynamic)", lk.slot),
+		container.NewTabItem("Preisach (quasi-static)", preisach.slot),
+		container.NewTabItem("ISPP / WRD", ispp.slot),
 	)
 	tabs.SetTabLocation(container.TabLocationTop)
+
+	tabs.OnSelected = func(item *container.TabItem) {
+		idx := -1
+		for i, t := range tabs.Items {
+			if t == item {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 || idx >= len(lazyTabs) {
+			return
+		}
+		lt := lazyTabs[idx]
+		if lt.loaded {
+			return
+		}
+		lt.loaded = true
+		go func() {
+			content := lt.builder()
+			fyne.Do(func() {
+				swapEquationSlotContent(lt.slot, lt.bar, content)
+			})
+		}()
+	}
+
 	return container.NewVBox(tabs)
 }
 
