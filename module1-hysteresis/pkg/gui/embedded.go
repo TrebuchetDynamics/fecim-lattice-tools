@@ -13,6 +13,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -138,6 +139,9 @@ func (e *EmbeddedApp) Start() {
 	e.loopMu.Unlock()
 
 	e.startDataLogger()
+
+	// Pre-warm equation SVG cache so the dialog opens instantly.
+	go widgets.PrefetchEquationAssets()
 
 	// Load or run calibration at startup (ensures calibration files exist)
 	if os.Getenv("FECIM_DISABLE_STARTUP_CALIBRATION") != "1" {

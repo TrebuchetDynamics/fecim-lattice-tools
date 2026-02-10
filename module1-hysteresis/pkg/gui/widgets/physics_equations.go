@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"image/color"
 	"log"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -17,12 +15,14 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	eqassets "fecim-lattice-tools/shared/assets/equations"
 )
 
+// Equation asset identifiers (used as cache keys).
 const (
-	lkEquationSVGPath       = "shared/assets/equations/frankestein.svg"
-	lkEquationHotspotPath   = "shared/assets/equations/frankestein.hotspots.json"
-	preisachEquationSVGPath = "shared/assets/equations/preisach.svg"
+	lkEquationID       = "lk"
+	preisachEquationID = "preisach"
 )
 
 var (
@@ -353,7 +353,7 @@ func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) f
 
 	imageSlot, bar := newEquationLoadingSlot("Loading L-K equation diagram...")
 
-	res, ok := loadEquationSVGResource(lkEquationSVGPath)
+	res, ok := loadEquationSVGResource(lkEquationID)
 	if !ok {
 		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
 		if textContainer != nil {
@@ -535,7 +535,7 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
 	imageSlot, bar := newEquationLoadingSlot("Loading Preisach equation diagram...")
-	res, ok := loadEquationSVGResource(preisachEquationSVGPath)
+	res, ok := loadEquationSVGResource(preisachEquationID)
 	if !ok {
 		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
 	} else {
@@ -705,9 +705,21 @@ func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 	h.Tapped(nil)
 }
 
-func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
+// embeddedSVGData returns the embedded SVG bytes for a given equation ID.
+func embeddedSVGData(eqID string) []byte {
+	switch eqID {
+	case lkEquationID:
+		return eqassets.LkEquationSVG
+	case preisachEquationID:
+		return eqassets.PreisachEquationSVG
+	default:
+		return nil
+	}
+}
+
+func loadEquationSVGResource(eqID string) (fyne.Resource, bool) {
 	equationSVGCacheMu.Lock()
-	cacheKey := svgPath + "|" + equationThemeKey()
+	cacheKey := eqID + "|" + equationThemeKey()
 	entry := equationSVGCache[cacheKey]
 	if entry == nil {
 		entry = &equationSVGCacheEntry{}
@@ -717,29 +729,27 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 
 	entry.once.Do(func() {
 		start := time.Now()
-		data, err := os.ReadFile(svgPath)
-		if err != nil {
-			logEquationPerf("equation svg load failed path=%s err=%v", svgPath, err)
+		data := embeddedSVGData(eqID)
+		if data == nil {
+			logEquationPerf("equation svg embed missing id=%s", eqID)
 			return
 		}
-		readDur := time.Since(start)
 
 		fg := theme.ForegroundColor()
 		recolorStart := time.Now()
 		recolored, err := canvas.RecolorSVG(data, fg)
 		recolorDur := time.Since(recolorStart)
 		if err != nil {
-			logEquationPerf("equation svg recolor failed path=%s err=%v", svgPath, err)
+			logEquationPerf("equation svg recolor failed id=%s err=%v", eqID, err)
 			recolored = data
 		}
-		entry.res = fyne.NewStaticResource(filepath.Base(svgPath), recolored)
+		entry.res = fyne.NewStaticResource(eqID+".svg", recolored)
 		entry.ok = true
 
 		logEquationPerf(
-			"equation svg loaded path=%s bytes=%d read=%s recolor=%s total=%s",
-			svgPath,
+			"equation svg loaded id=%s bytes=%d recolor=%s total=%s",
+			eqID,
 			len(recolored),
-			readDur,
 			recolorDur,
 			time.Since(start),
 		)
@@ -748,36 +758,38 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 	return entry.res, entry.ok
 }
 
-func loadEquationSVG(svgPath string) *canvas.Image {
-	if res, ok := loadEquationSVGResource(svgPath); ok {
+func loadEquationSVG(eqID string) *canvas.Image {
+	if res, ok := loadEquationSVGResource(eqID); ok {
 		return canvas.NewImageFromResource(res)
 	}
-	return canvas.NewImageFromFile(svgPath)
+	return nil
+}
+
+// PrefetchEquationAssets pre-warms the SVG recolor cache for the current theme.
+// Call from a background goroutine at app startup so the equations dialog opens instantly.
+func PrefetchEquationAssets() {
+	loadEquationSVGResource(lkEquationID)
+	loadEquationSVGResource(preisachEquationID)
+	loadLkHotspots()
 }
 
 func loadLkHotspots() ([]hotspotDef, fyne.Size) {
 	lkHotspotsOnce.Do(func() {
 		defaultHotspots, defaultSize := defaultLkHotspots()
 		start := time.Now()
-		data, err := os.ReadFile(lkEquationHotspotPath)
-		if err != nil {
-			logEquationPerf("equation hotspots load failed path=%s err=%v", lkEquationHotspotPath, err)
-			cachedLkSpots = defaultHotspots
-			cachedLkSize = defaultSize
-			return
-		}
-		readDur := time.Since(start)
+		data := eqassets.LkHotspotsJSON
 
 		var cfg hotspotConfig
 		parseStart := time.Now()
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			log.Printf("failed to parse hotspots file: %v", err)
-			logEquationPerf("equation hotspots parse failed path=%s err=%v", lkEquationHotspotPath, err)
+			log.Printf("failed to parse embedded hotspots: %v", err)
+			logEquationPerf("equation hotspots parse failed err=%v", err)
 			cachedLkSpots = defaultHotspots
 			cachedLkSize = defaultSize
 			return
 		}
 		parseDur := time.Since(parseStart)
+		_ = start // used below
 
 		hotspots := defaultHotspots
 		if len(cfg.Hotspots) > 0 {
@@ -793,10 +805,8 @@ func loadLkHotspots() ([]hotspotDef, fyne.Size) {
 		cachedLkSize = size
 
 		logEquationPerf(
-			"equation hotspots loaded path=%s spots=%d read=%s parse=%s total=%s",
-			lkEquationHotspotPath,
+			"equation hotspots loaded (embedded) spots=%d parse=%s total=%s",
 			len(hotspots),
-			readDur,
 			parseDur,
 			time.Since(start),
 		)
