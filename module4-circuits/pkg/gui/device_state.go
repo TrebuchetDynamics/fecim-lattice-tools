@@ -566,6 +566,45 @@ func (ds *DeviceState) GetEffectiveCellVoltage(row, col int) float64 {
 	return ds.effectiveCellVoltageLocked(row, col)
 }
 
+// GetCoupledCellCurrent returns the last coupled per-cell current (A) from arraysim.
+// Returns 0 when coupling is disabled, no solve has run yet, or indices are out of range.
+func (ds *DeviceState) GetCoupledCellCurrent(row, col int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	if row < 0 || row >= ds.rows || col < 0 || col >= ds.cols {
+		return 0
+	}
+	if ds.coupledCellCurrents == nil {
+		return 0
+	}
+	if row >= len(ds.coupledCellCurrents) || col >= len(ds.coupledCellCurrents[row]) {
+		return 0
+	}
+	return ds.coupledCellCurrents[row][col]
+}
+
+// GetCoupledCellSnapshot returns deep copies of the latest per-cell coupled
+// voltages (V) and currents (A). Nil slices are returned when no coupled solve
+// result is available.
+func (ds *DeviceState) GetCoupledCellSnapshot() ([][]float64, [][]float64) {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+
+	copy2D := func(src [][]float64) [][]float64 {
+		if src == nil {
+			return nil
+		}
+		dst := make([][]float64, len(src))
+		for r := range src {
+			dst[r] = make([]float64, len(src[r]))
+			copy(dst[r], src[r])
+		}
+		return dst
+	}
+
+	return copy2D(ds.coupledCellVoltages), copy2D(ds.coupledCellCurrents)
+}
+
 func (ds *DeviceState) dacWriteVoltageLocked(targetVoltage float64) (float64, int) {
 	if ds.dac == nil {
 		return targetVoltage, -1
