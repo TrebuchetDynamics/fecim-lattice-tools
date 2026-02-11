@@ -16,7 +16,7 @@
 |----|------|--------|
 | FOCUS-01 | Make READ behavior physically consistent (array-level, not independent cells) | ⏳ |
 | FOCUS-02 | Include material-dependent behavior in READ path | ⏳ |
-| FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ⏳ |
+| FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ✅ |
 | FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ⏳ |
 | FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ⏳ |
 
@@ -162,7 +162,7 @@
 | M4-U1 | Validate ISPP engine toggle wiring (Fast vs L-K) | `module4-circuits` | ⏳ | 1-2hr |
 | M4-U3 | Sense-chain UI: TIA output, ADC code/saturation, measurement presets | `module4-circuits` | ⏳ | 1-2hr |
 | M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ⏳ | 2-4hr |
-| M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ⏳ | 1-2hr |
+| M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ✅ | 1-2hr |
 | M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ⏳ | 4-12hr |
 | M4-U2d | Tests/visual checks for half-select disturb + DAC voltage display | `module4-circuits` | ⏳ | 1-2hr |
 

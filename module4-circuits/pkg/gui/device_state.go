@@ -176,14 +176,7 @@ type DeviceState struct {
 func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) *DeviceState {
 	defaultMaterial := sharedphysics.FeCIMMaterial()
 	defaultGeometry := arraysim.DefaultCellGeometry()
-	if defaultMaterial != nil {
-		if defaultMaterial.Thickness > 0 {
-			defaultGeometry.Film.Thickness = defaultMaterial.Thickness
-		}
-		if defaultMaterial.Area > 0 {
-			defaultGeometry.Film.Area = defaultMaterial.Area
-		}
-	}
+	defaultGeometry.Film = sharedphysics.GeometryFromMaterial(defaultMaterial)
 
 	ds := &DeviceState{
 		rows:         rows,
@@ -303,12 +296,7 @@ func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 		ec := mat.CoerciveVoltage()
 		numLevels := mat.GetNumLevels()
 		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
-		if mat.Thickness > 0 {
-			ds.cellGeometry.Film.Thickness = mat.Thickness
-		}
-		if mat.Area > 0 {
-			ds.cellGeometry.Film.Area = mat.Area
-		}
+		ds.cellGeometry.Film = sharedphysics.GeometryFromMaterial(mat)
 	}
 }
 
@@ -430,7 +418,8 @@ func (ds *DeviceState) conductanceBounds() (float64, float64) {
 		gmin = 1e-6   // Match material.DiscreteLevel fallback
 		gmax = 100e-6 // Match material.DiscreteLevel fallback
 	}
-	return gmin, gmax
+	scale := ds.cellGeometry.Film.ConductanceScale(sharedphysics.GeometryFromMaterial(mat))
+	return gmin * scale, gmax * scale
 }
 
 // levelToConductance maps a discrete level to conductance using the active material.
@@ -445,7 +434,9 @@ func (ds *DeviceState) levelToConductance(level, levels int) float64 {
 	if levels <= 0 {
 		levels = 30
 	}
-	return mat.DiscreteLevel(level, levels)
+	baseG := mat.DiscreteLevel(level, levels)
+	referenceGeom := sharedphysics.GeometryFromMaterial(mat)
+	return baseG * ds.cellGeometry.Film.ConductanceScale(referenceGeom)
 }
 
 // conductanceToLevel maps conductance to a discrete level using material bounds.
