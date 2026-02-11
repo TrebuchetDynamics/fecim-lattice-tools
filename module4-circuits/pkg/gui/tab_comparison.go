@@ -21,7 +21,7 @@ import (
 
 func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
 	// Header with description
-	headerLabel := widget.NewRichTextFromMarkdown("**COMPARISON**: Compare FeFET crossbar architecture against traditional von Neumann systems (CPU/GPU). FeFET performs computation in-memory using analog physics (Ohm's law), avoiding the memory bottleneck that limits conventional digital systems.")
+	headerLabel := widget.NewRichTextFromMarkdown("**COMPARISON**: Compare FeFET crossbar architecture against traditional von Neumann systems (CPU/GPU). FeFET performs computation in-memory using analog physics (Ohm's law), avoiding the memory bottleneck that limits conventional digital systems. **Context**: numbers here emphasize single-operation latency/energy; GPUs recover throughput with large batched workloads at higher total power.")
 	headerLabel.Wrapping = fyne.TextWrapWord
 
 	// Architecture comparison
@@ -349,9 +349,12 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	}
 
 	arraySizeLabel := widget.NewLabel("Array Size: 8 × 8 = 64 MACs")
+	contextLabel := widget.NewLabel("GPU row shown as sequential-equivalent work for one MVM; batched GPU kernels can raise throughput while using more system power.")
+	contextLabel.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(
 		arraySizeLabel,
+		contextLabel,
 		widget.NewSeparator(),
 		grid,
 	)
@@ -374,7 +377,7 @@ func (ca *CircuitsApp) onRunComparison() {
 		}
 	})
 
-	ca.compStatusLabel.SetText("Comparison complete: FeFET energy advantage reflects in-memory compute; see PHYSICS.md for calibrated values.")
+	ca.compStatusLabel.SetText("Comparison complete: FeFET advantage shown for per-operation latency/energy; GPUs can improve throughput with batching at higher power.")
 }
 
 func (ca *CircuitsApp) onAnimateComparison() {
