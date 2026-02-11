@@ -24,8 +24,12 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-06 | Ensure hysteresis outputs from Module 1 feed Module 4 correctly | ⏳ |
-| FOCUS-07 | Keep cell-size/access/conductance dependencies consistent across both modules | ⏳ |
+| FOCUS-06 | Ensure hysteresis outputs from Module 1 feed Module 4 correctly | ✅ |
+| FOCUS-07 | Keep cell-size/access/conductance dependencies consistent across both modules | ✅ |
+
+**Evidence (2026-02-11):**
+- Added cross-module integration tests in `module4-circuits/pkg/gui/module1_module4_integration_test.go` validating Module 1 material outputs (Vc/levels/conductance) propagate into Module 4.
+- Fixed `module4-circuits/pkg/gui/device_state.go` ideal compute path to use `levelToConductance(...)`, aligning geometry scaling with coupled path.
 
 ### 3. UI Fixes
 
@@ -75,7 +79,7 @@
 |----|------|--------|--------|------|
 | LK-C01 | Verify LK equation terms/signs match compendium (E_eff = E_applied - k_dep·P) | `shared/physics/landau.go` | ✅ | 2hr |
 | LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` | `shared/physics/landau.go` | ✅ | 1hr |
-| LK-C03 | Headless LK run: E-field units, 5-target ISPP without NaN/Inf | `cmd/fecim-lattice-tools` | ⏳ | 2hr |
+| LK-C03 | Headless LK run: E-field units, 5-target ISPP without NaN/Inf | `cmd/fecim-lattice-tools` | ✅ | 2hr |
 
 ### Documentation Accuracy
 
