@@ -2,9 +2,49 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO₂-ZrO₂ superlattice research.
 
-**Last Updated**: 2026-02-07 (Consolidated from all sources)
+**Last Updated**: 2026-02-11 (Refocused priorities)
 
 **Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, code comments
+
+---
+
+## Current Focus & Direction
+
+### 1. Module 4 Circuits: Physics Correction (HIGH PRIORITY)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-01 | Make READ behavior physically consistent (array-level, not independent cells) | ⏳ |
+| FOCUS-02 | Include material-dependent behavior in READ path | ⏳ |
+| FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ⏳ |
+| FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ⏳ |
+| FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ⏳ |
+
+### 2. Module Linkage: Module 1 → Module 4
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-06 | Ensure hysteresis outputs from Module 1 feed Module 4 correctly | ⏳ |
+| FOCUS-07 | Keep cell-size/access/conductance dependencies consistent across both modules | ⏳ |
+
+### 3. UI Fixes
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-08 | Improve UI where percentages are too small / poorly ranged | ⏳ |
+| FOCUS-09 | Re-range values and layout so output is readable and meaningful | ⏳ |
+
+### 4. Scope Control
+
+- **Skip/defer Module 5** for now to reduce complexity.
+- **Focus on Module 4 + integration path** with Module 1.
+
+### 5. CMOS / OpenLane-OpenROAD Path (Module 6 Direction)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-10 | Push integration framing for chip-design flow using open-source EDA tools | ⏳ |
+| FOCUS-11 | Keep physics assumptions consistent when moving toward schematic/chip flow | ⏳ |
 
 ---
 
@@ -301,13 +341,14 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
+| **Current Focus** | **11** | **0** | **11** |
 | 🔴 Critical | 8 | 0 | 8 |
 | 🟠 High | 48 | 0 | 48 |
 | 🟡 Medium | 32 | 0 | 32 |
 | 🟢 Low | 22 | 0 | 22 |
-| **Total** | **110** | **0** | **110** |
+| **Total** | **121** | **0** | **121** |
 
-*Note: Many items from previous TODO were marked complete. This represents remaining work only.*
+*Note: "Current Focus" items (FOCUS-01 through FOCUS-11) are the active work direction. Module 5 is deferred.*
 
 ---
 
@@ -332,6 +373,12 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 ---
 
+## Deferred
+
+| Item | Reason |
+|------|--------|
+| Module 5 (Comparison) | Deferred to reduce complexity; focus on Module 4 + integration path |
+
 ## Out of Scope
 
 | Item | Reason |
@@ -354,4 +401,4 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 ---
 
 *This TODO prioritizes scientific rigor and educational honesty over promotional considerations.*
-*Document consolidated: 2026-02-07*
+*Document consolidated: 2026-02-07 | Refocused: 2026-02-11*
