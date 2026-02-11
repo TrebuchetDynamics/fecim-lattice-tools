@@ -219,7 +219,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Info label with network specs - distinguish verified vs simulated
-	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 (claim) | Literature: 96-98% (non-FeCIM) | Demo: projected")
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 (baseline) | Literature: 96-98% (non-FeCIM) | Demo: modeled")
 
 	// Control buttons - organized into groups
 	clearBtn := widget.NewButton("Clear", func() {

@@ -30,6 +30,7 @@ func (net *DualModeNetwork) GetNumLevels() int {
 }
 
 // SetNoiseLevel updates the noise level for CIM inference.
+// Noise is clamped to [0.0, 0.20] to match the GUI control range and docs.
 func (net *DualModeNetwork) SetNoiseLevel(noise float64) {
 	oldNoise := net.Config.NoiseLevel
 	net.mu.Lock()
@@ -38,8 +39,8 @@ func (net *DualModeNetwork) SetNoiseLevel(noise float64) {
 	if noise < 0 {
 		noise = 0
 	}
-	if noise > 0.5 {
-		noise = 0.5
+	if noise > 0.20 {
+		noise = 0.20
 	}
 	net.Config.NoiseLevel = noise
 

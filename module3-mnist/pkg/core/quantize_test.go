@@ -288,6 +288,11 @@ func TestDualModeNetwork_SetParameters(t *testing.T) {
 		t.Errorf("NoiseLevel should be clamped to 0, got %f", net.Config.NoiseLevel)
 	}
 
+	net.SetNoiseLevel(0.5)
+	if net.Config.NoiseLevel != 0.20 {
+		t.Errorf("NoiseLevel should be clamped to 0.20, got %f", net.Config.NoiseLevel)
+	}
+
 	// Test SetADCBits
 	net.SetADCBits(6)
 	if net.Config.ADCBits != 6 {

@@ -119,7 +119,7 @@ func (cm *ConfusionMatrix) CreateRenderer() fyne.WidgetRenderer {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	accuracyLabel := widget.NewLabel(fmt.Sprintf("Accuracy: %.1f%%", cm.GetAccuracy()*100))
+	accuracyLabel := widget.NewLabel(fmt.Sprintf("Accuracy (modeled): %.1f%%", cm.GetAccuracy()*100))
 	accuracyLabel.Alignment = fyne.TextAlignCenter
 
 	// Use Max container for raster to fill available space
@@ -326,7 +326,7 @@ func (mp *MetricsPanel) CreateRenderer() fyne.WidgetRenderer {
 	titleLabel.Alignment = fyne.TextAlignCenter
 
 	summaryLabel := widget.NewLabel(fmt.Sprintf(
-		"Accuracy: %.1f%% | Avg F1: %.3f",
+		"Accuracy (modeled): %.1f%% | Avg F1: %.3f",
 		mp.accuracy*100, mp.avgF1,
 	))
 	summaryLabel.Alignment = fyne.TextAlignCenter

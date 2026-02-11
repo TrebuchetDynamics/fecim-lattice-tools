@@ -12,7 +12,7 @@ Neural-network digit recognition demo with FP vs CIM comparison.
 - **Noise Injection** - Gaussian multiplicative read noise (UI: 0-20%)
 - **DAC/ADC Modeling** - Adjustable bit-depth (core 3-16; UI defaults to 8-bit)
 - **Quick Demo** - Guided 5-step walkthrough (ideal -> failure modes -> recover)
-- **Activation & Metrics** - Hidden-layer activations, confusion matrix, per-class stats
+- **Activation & Metrics** - Hidden-layer activations, confusion matrix, modeled per-class stats
 - **Energy Widget** - Model-based energy estimate (not measured hardware)
 - **Weight Comparison** - FP vs quantized weight visualization
 

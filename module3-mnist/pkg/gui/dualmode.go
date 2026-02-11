@@ -361,7 +361,7 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	// Header with peer-reviewed accuracy context (87% claim removed)
 	// C09: Distinguish verified literature results from simulated demo results
-	title := widget.NewLabel("FeCIM MNIST Demo | Literature: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: projected")
+	title := widget.NewLabel("FeCIM MNIST Demo | Literature: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: modeled")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action

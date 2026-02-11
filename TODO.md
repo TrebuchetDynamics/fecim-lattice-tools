@@ -156,9 +156,9 @@
 | M2-U1 | Align `crossbar-gui -help` with implemented features | `cmd/crossbar-gui` | ⏳ | 30-60m |
 | M2-P1 | Full physics audit vs PHYSICS.md (IR drop, sneak, drift, temp) | `module2-crossbar` | ⏳ | 2-4hr |
 | M2-P2 | Temperature scalings beyond wire resistance | `module2-crossbar` | ⏳ | 1-2hr |
-| M3-D1 | Sync docs with file paths and core vs training split | `docs/.../module3-mnist/` | ⏳ | 30-60m |
-| M3-D2 | Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) | `module3-mnist` | ⏳ | 15-30m |
-| M3-U1 | Audit GUI labels: accuracy/energy labeled as modeled (not verified) | `module3-mnist` | ⏳ | 30-60m |
+| M3-D1 | Sync docs with file paths and core vs training split | `docs/.../module3-mnist/` | ✅ | Done (docs/documentation/module3-mnist/FEATURES.md updated with runtime vs training map) |
+| M3-D2 | Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) | `module3-mnist` | ✅ | Done (core clamp now 0.20 in `pkg/core/network_config.go`, tests updated) |
+| M3-U1 | Audit GUI labels: accuracy/energy labeled as modeled (not verified) | `module3-mnist` | ✅ | Done (`dualmode.go`, `app.go`, `metrics.go` labels switched to modeled wording) |
 | M3-P1 | Verify FP vs CIM inference pipeline + quantization/noise injection | `module3-mnist` | ⏳ | 2-4hr |
 | M3-P2 | Align energy model between core and GUI widgets | `module3-mnist` | ⏳ | 1-2hr |
 | M3-U2 | Decide dual-mode confusion matrix/metrics exposure | `module3-mnist` | ⏳ | 1-2hr |

@@ -211,9 +211,8 @@ func TestNetworkConfigBounds(t *testing.T) {
 	}
 
 	net.SetNoiseLevel(1.0)
-	if net.Config.NoiseLevel > 0.5 {
-		// Note: Some implementations may allow higher noise for testing
-		t.Log("NoiseLevel might want to be capped")
+	if net.Config.NoiseLevel > 0.20 {
+		t.Errorf("NoiseLevel should be clamped to <= 0.20, got %f", net.Config.NoiseLevel)
 	}
 
 	// Test ADC bounds
