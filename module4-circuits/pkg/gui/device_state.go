@@ -1045,17 +1045,11 @@ func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 				level = weights[r][c]
 			}
 
-			// Use material's DiscreteLevel for physics-accurate conductance
-			// DiscreteLevel returns conductance in Siemens (S)
-			var conductanceS float64
-			if ds.material != nil {
-				conductanceS = ds.material.DiscreteLevel(level, quantLevels)
-			} else {
-				// Fallback: linear mapping 1-100 µS
-				conductanceS = (1.0 + float64(level)/float64(quantLevels-1)*99.0) * 1e-6
-			}
+			// Use shared level→conductance mapping so ideal and coupled paths
+			// respect the same material + geometry scaling dependencies.
+			conductanceS := ds.levelToConductance(level, quantLevels)
 
-			// Convert to µS for current calculation
+			// Convert to µS for current calculation.
 			conductanceUS := conductanceS * 1e6
 			current := conductanceUS * math.Abs(voltage) // I = G * |V| (in µA since G is in µS)
 			totalCurrent += current
