@@ -84,6 +84,11 @@ fecim-lattice-tools hysteresis [options]
 - `ftj140` - HZO FTJ (140 states)
 - `alscn` - AlScN (8-16 states)
 
+Mode precedence (if flags are combined): `--headless` → `--tui` → `--vulkan` → GUI default.
+
+For authoritative run-mode and Preisach/L-K default behavior, see:
+`docs/documentation/module1-hysteresis/RUN_MODES.md`.
+
 ### Examples
 
 List materials as JSON:

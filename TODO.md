@@ -85,7 +85,7 @@
 | DOC-CITE-2 | Verify/replace literature DOIs in crossbar voltage/physics references | `docs/crossbar/reference/` | ✅ | 2-4hr |
 | DOC-CITE-3 | Cite peripheral timing/energy assumptions or label as placeholders | `docs/peripheral-circuits/PHYSICS.md` | ✅ | 1-2hr |
 | DOC-CITE-4 | Cite hysteresis parameter values or label as placeholders | `docs/hysteresis/hysteresis.physics.md` | ✅ | 1-2hr |
-| DOC-LINK-1 | Fix 110 broken internal markdown links (prioritize docs/README.md) | `docs/` | ⏳ | 2-4hr |
+| DOC-LINK-1 | Fix broken internal markdown links in docs/ (112 links fixed; docs/README.md prioritized) | `docs/` | ✅ | 2-4hr |
 
 ---
 
@@ -145,7 +145,7 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| M1-D1 | Document run modes (GUI/TUI/headless/Vulkan), L-K vs Preisach defaults | `docs/.../module1-hysteresis/` | ⏳ | 30-60m |
+| M1-D1 | Document run modes (GUI/TUI/headless/Vulkan), L-K vs Preisach defaults | `docs/.../module1-hysteresis/` | ✅ | 30-60m |
 | M1-U1 | Fix WRD target marker parity (single snapshot for target/marker/logs) | `module1-hysteresis` | ⏳ | 1-2hr |
 | M1-U2 | Equation widget perf: cold <1s, warm <200ms, no freeze | `module1-hysteresis` | ⏳ | 30-60m |
 | M1-P1 | L-K performance accounting + ISPP stabilization evidence | `module1-hysteresis` | ⏳ | 2-4hr |

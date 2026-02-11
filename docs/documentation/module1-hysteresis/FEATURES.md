@@ -13,6 +13,8 @@
 - `module1-hysteresis/pkg/gui/simulation.go`
 - `module1-hysteresis/pkg/render/plot.go`
 
+See also: [RUN_MODES.md](./RUN_MODES.md) for GUI/TUI/headless/Vulkan behavior and Preisach vs L-K defaults.
+
 ## Key Workflows
 
 - Sweep electric field to generate a P-E loop.
