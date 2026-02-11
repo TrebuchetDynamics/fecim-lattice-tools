@@ -320,8 +320,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 	// Pause/Resume button
 	a.pauseBtn = widget.NewButton("Pause", func() {
-		a.paused = !a.paused
-		if a.paused {
+		wasPaused := a.paused.Load()
+		a.paused.Store(!wasPaused)
+		if !wasPaused {
 			log.Button("Pause (now paused)")
 			a.pauseBtn.SetText("Resume")
 		} else {

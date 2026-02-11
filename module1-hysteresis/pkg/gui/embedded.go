@@ -179,7 +179,7 @@ func (e *EmbeddedApp) Start() {
 	e.simWG.Add(1)
 	go func() {
 		defer e.simWG.Done()
-		e.simulationLoop(stopCh)
+		e.simulationLoop()
 	}()
 }
 

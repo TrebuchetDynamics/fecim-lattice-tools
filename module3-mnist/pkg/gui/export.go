@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 
+	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/export"
 )
 
@@ -74,7 +75,16 @@ func (app *DualModeApp) exportInferenceData() {
 	if app.lastPixels != nil && len(app.lastPixels) > 0 {
 		// Run inference to get probabilities
 		result := app.networkCtrl.Infer(app.lastPixels)
-		
+
+		// Calculate energy ratio (same logic as dualmode_inference.go)
+		fecimEnergyJ := result.EnergyUsed * 1e-6
+		est := core.EstimateInferenceEnergyJ(app.networkCtrl.Network().Config, MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
+		gpuEnergyJ := float64(est.TotalMACs) * GPUEnergyPerMAC
+		energyRatio := 0.0
+		if fecimEnergyJ > 0 {
+			energyRatio = gpuEnergyJ / fecimEnergyJ
+		}
+
 		config.InferenceResults = &InferenceResults{
 			DrawnDigit:       app.lastPixels,
 			FPPrediction:     result.FPPrediction,
@@ -84,7 +94,7 @@ func (app *DualModeApp) exportInferenceData() {
 			CIMConfidence:    result.CIMConfidence,
 			CIMProbabilities: result.CIMProbabilities,
 			Agreement:        result.Agree,
-			EnergyRatio:      EnergyRatioGPU,
+			EnergyRatio:      energyRatio,
 			Timestamp:        time.Now(),
 		}
 	}

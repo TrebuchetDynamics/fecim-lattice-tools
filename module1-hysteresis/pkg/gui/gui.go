@@ -257,6 +257,10 @@ type App struct {
 	fatigueLabel    *widget.Label
 	cyclePhaseLabel *widget.Label // L01: Shows current phase (WAKE-UP, STABLE, FATIGUE)
 
+	// UI update loop (async UI updates from simulation goroutine)
+	uiUpdateOnce sync.Once
+	uiUpdates    chan uiSnapshot
+
 	// Temperature-dependent metrics labels
 	effEcLabel      *widget.Label
 	effPrLabel      *widget.Label
@@ -649,7 +653,7 @@ func (a *App) run() error {
 	simWG.Add(1)
 	go func() {
 		defer simWG.Done()
-		a.simulationLoop(stopCh)
+		a.simulationLoop()
 	}()
 
 	a.mainWindow.ShowAndRun()

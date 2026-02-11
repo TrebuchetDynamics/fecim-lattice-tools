@@ -27,34 +27,59 @@ func getGUITestApp() fyne.App {
 	return guiTestApp
 }
 
+// mainGoroutineJob allows tests to dispatch work onto the main OS thread,
+// which is required by Fyne's GLFW driver for app.Run/ShowAndRun.
+type mainGoroutineJob struct {
+	fn   func()
+	done chan struct{}
+}
+
+var mainGoroutineJobs = make(chan mainGoroutineJob)
+
+func runOnMainGoroutine(fn func()) {
+	job := mainGoroutineJob{fn: fn, done: make(chan struct{})}
+	mainGoroutineJobs <- job
+	<-job.done
+}
+
 func TestMain(m *testing.M) {
+	_ = os.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
+	_ = os.Setenv("FECIM_DISABLE_STARTUP_CALIBRATION", "1")
+
 	// Fyne's GLFW driver requires app.Run() on the process main goroutine.
-	// go test executes tests in goroutines, so we use this pattern:
-	// - Create a singleton app
-	// - Run tests in a goroutine
-	// - Run the app event loop on the main goroutine
-	// - Quit the app when tests complete
-	// NOTE: Running a real GLFW-backed app event loop inside `go test` is fragile in
-	// headless/Xvfb environments and has caused intermittent panics on teardown.
 	// Default to the safer mode (just run tests) unless explicitly opted-in.
-	//
 	// To force the real event loop (local dev only): set FECIM_GLFW_TESTMAIN=1.
 	if isHeadlessEnvironment() || os.Getenv("FECIM_GLFW_TESTMAIN") != "1" {
-		os.Exit(m.Run())
+		// Still service mainGoroutineJobs for xvfb tests.
+		runtime.LockOSThread()
+
+		exitCh := make(chan int, 1)
+		go func() {
+			exitCh <- m.Run()
+		}()
+
+		for {
+			select {
+			case job := <-mainGoroutineJobs:
+				job.fn()
+				close(job.done)
+			case code := <-exitCh:
+				os.Exit(code)
+			}
+		}
 	}
 
 	runtime.LockOSThread()
-	app := getGUITestApp()
+	a := getGUITestApp()
 
 	codeCh := make(chan int, 1)
 	go func() {
 		codeCh <- m.Run()
-		// Stop the event loop after tests finish.
 		fyne.DoAndWait(func() {
-			app.Quit()
+			a.Quit()
 		})
 	}()
 
-	app.Run()
+	a.Run()
 	os.Exit(<-codeCh)
 }

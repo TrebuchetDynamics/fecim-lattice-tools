@@ -18,11 +18,6 @@ func VPerMToMVPerCm(vPerM float64) float64 { return vPerM / VPerMPerMVPerCm }
 // MVPerCmToVPerM converts electric field from MV/cm to V/m.
 func MVPerCmToVPerM(mvPerCm float64) float64 { return mvPerCm * VPerMPerMVPerCm }
 
-// FormatElectricField formats an electric field given in V/m as MV/cm.
-func FormatElectricField(vPerM float64) string {
-	return fmt.Sprintf("%.3f MV/cm", VPerMToMVPerCm(vPerM))
-}
-
 // FormatEnergy formats energy in Joules with appropriate SI prefix.
 // Automatically scales from fJ (femtojoules) to J (joules).
 //

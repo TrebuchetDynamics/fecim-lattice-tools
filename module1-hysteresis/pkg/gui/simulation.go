@@ -727,14 +727,14 @@ func (a *App) simulationLoop() {
 		resetPerfWindow(time.Now())
 	}
 
-	for a.running {
+	for a.running.Load() {
 		<-ticker.C
 
 		now := time.Now()
 		frameDtRaw := now.Sub(lastTime).Seconds()
 		lastTime = now
 
-		if a.paused {
+		if a.paused.Load() {
 			continue
 		}
 
@@ -1690,7 +1690,7 @@ func (a *App) updateUI() {
 	numLevels := a.numLevels
 	waveform := a.waveform
 	physicsEngine := a.physicsEngine
-	paused := a.paused
+	paused := a.paused.Load()
 	wrdPhase := a.wrdPhase
 	wrdTargetLevel := a.wrdTargetLevel
 	wrdReadLevel := a.wrdReadLevel
