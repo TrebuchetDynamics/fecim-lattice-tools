@@ -36,7 +36,7 @@ func createFixedHeightContainer(content fyne.CanvasObject, minHeight float32) fy
 
 const (
 	minSenseRfKOhm      = 1.0
-	maxSenseRfKOhm      = 100.0
+	maxSenseRfKOhm      = 1000.0
 	minSenseADCVref     = 0.0
 	maxSenseADCVref     = 1.5
 	minSenseADCVrefSpan = 1e-3
@@ -54,6 +54,7 @@ var senseMeasurementPresets = []senseMeasurementPreset{
 	{Name: "High Sensitivity", Rf: 50.0, Vmin: 0.00, Vmax: 1.00},
 	{Name: "Wide Current Range", Rf: 5.0, Vmin: 0.00, Vmax: 1.20},
 	{Name: "Low-Current Focus", Rf: 100.0, Vmin: 0.10, Vmax: 0.90},
+	{Name: "Ultra-Low Current", Rf: 500.0, Vmin: 0.20, Vmax: 0.80},
 }
 
 const customSensePresetName = "Custom"
@@ -309,8 +310,8 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 
 	// Zoom controls
 	ca.zoomLabel = widget.NewLabel("100%")
-	ca.zoomSlider = widget.NewSlider(0.5, 3.0)
-	ca.zoomSlider.Step = 0.1
+	ca.zoomSlider = widget.NewSlider(0.25, 4.0)
+	ca.zoomSlider.Step = 0.05
 	ca.zoomSlider.Value = 1.0
 	ca.zoomSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()
@@ -1256,7 +1257,11 @@ func (ca *CircuitsApp) updateSensePanel() {
 	if levels > 1 {
 		fullScale := float64(levels - 1)
 		pct := (float64(code) / fullScale) * 100.0
-		codeText = fmt.Sprintf("Code %d / %d (%.1f%% FS)", code, levels-1, pct)
+		if levels > 64 {
+			codeText = fmt.Sprintf("Code %d / %d (%.2f%% FS)", code, levels-1, pct)
+		} else {
+			codeText = fmt.Sprintf("Code %d / %d (%.1f%% FS)", code, levels-1, pct)
+		}
 	}
 
 	rowText := fmt.Sprintf("Row %d", row)
@@ -1565,7 +1570,7 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 
 	ca.senseCurrentLabel = widget.NewLabel("0 A")
 	ca.senseVoltageLabel = widget.NewLabel("0.000 V (TIA out)")
-	ca.senseCodeLabel = widget.NewLabel("Code 0 / 31 (0.0% FS)")
+	ca.senseCodeLabel = widget.NewLabel("Code 0 / 31 (0.00% FS)")
 	ca.senseCodeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	ca.senseSaturationLabel = widget.NewLabel("Linear")
 	ca.senseSaturationLabel.TextStyle = fyne.TextStyle{Bold: true}
@@ -1591,9 +1596,9 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	})
 	lsbInfo.Importance = widget.LowImportance
 
-	rangeRow := container.NewHBox(
-		widget.NewLabel("Measurable I-range:"), ca.senseRangeLabel, rangeInfo,
-		widget.NewLabel("Current LSB:"), ca.senseLSBLabel, lsbInfo,
+	rangeRow := container.NewGridWithColumns(2,
+		container.NewHBox(widget.NewLabel("Measurable I-range:"), ca.senseRangeLabel, rangeInfo),
+		container.NewHBox(widget.NewLabel("Current LSB:"), ca.senseLSBLabel, lsbInfo),
 	)
 
 	ca.senseRfEntry = widget.NewEntry()
@@ -1638,11 +1643,11 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	})
 	ca.setSensePresetSelection(senseMeasurementPresets[0].Name)
 
-	controlsRow := container.NewHBox(
-		widget.NewLabel("Preset:"), ca.sensePresetSelect,
-		widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry,
-		widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry,
-		widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry,
+	controlsRow := container.NewGridWithColumns(4,
+		container.NewHBox(widget.NewLabel("Preset:"), ca.sensePresetSelect),
+		container.NewHBox(widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry),
+		container.NewHBox(widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry),
+		container.NewHBox(widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry),
 	)
 
 	return container.NewVBox(

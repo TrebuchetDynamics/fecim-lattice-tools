@@ -321,13 +321,12 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
-	// m1 UX fix: Changed noise step from 0.5% to 1.0% for simpler interaction
-	ca.noiseLabel = widget.NewLabel("2%")
-	ca.noiseSlider = widget.NewSlider(0, 20)
-	ca.noiseSlider.Step = 1.0
+	ca.noiseLabel = widget.NewLabel("2.0%")
+	ca.noiseSlider = widget.NewSlider(0, 50)
+	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("%.0f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
 		ca.config.NoiseLevel = v / 100.0
 		ca.runEnhancedMVMInstant()
 	}

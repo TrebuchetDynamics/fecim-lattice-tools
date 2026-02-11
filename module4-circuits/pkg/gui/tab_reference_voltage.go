@@ -43,8 +43,6 @@ func (ca *CircuitsApp) createVoltageRulesContent() fyne.CanvasObject {
 // createPassiveVoltageRules creates the voltage rules content for Passive (0T1R) architecture
 func (ca *CircuitsApp) createPassiveVoltageRules() fyne.CanvasObject {
 	// Get key values from physics
-	mat := ca.deviceState.GetMaterial()
-	Vc := mat.CoerciveVoltage()
 	readMax := ca.deviceState.GetReadRange().Max
 
 	content := widget.NewRichTextFromMarkdown(fmt.Sprintf(`
@@ -55,12 +53,12 @@ func (ca *CircuitsApp) createPassiveVoltageRules() fyne.CanvasObject {
 ### READ Mode
 | Parameter | Value | Constraint |
 |-----------|-------|------------|
-| WL Voltage | 0.1-0.5V | Applied to word line |
+| WL Voltage | 0.1-0.5V | Empirical simulation default (read-disturb not yet device-calibrated) |
 | BL Voltage | Sense | Current flows to TIA |
 | Unselected WLs | 0V | Grounded |
-| **Read Max** | %.2fV | < 0.7 x Vc (non-destructive) |
+| **Read Max** | %.2fV | Empirical guardrail: < 0.7 x Vc |
 
-**Why?** Read voltage must stay below 70%% of Vc (%.2fV) to avoid disturbing stored polarization.
+**Why?** The 70%% of Vc read limit is an empirical simulator guard band (assumed for now) to reduce disturb risk; treat as architecture guidance, not a universally validated device limit.
 
 ### WRITE Mode (V/2 Half-Select Scheme)
 | Parameter | Value | Purpose |
@@ -86,7 +84,7 @@ Passive arrays suffer from sneak currents through unselected cells.
 - Sneak/Signal ratio: ~2:1 (200%%) in worst case
 - Mitigation: V/2 biasing reduces but doesn't eliminate sneak paths
 - Best for: Small arrays (<=32x32)
-`, readMax, Vc))
+`, readMax))
 
 	return container.NewPadded(content)
 }
@@ -200,16 +198,19 @@ func (ca *CircuitsApp) createVoltageSafetyRules() fyne.CanvasObject {
 ### Material Parameters (Current: %s)
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| Coercive Voltage (Vc) | %.2fV | Ec x thickness |
-| Read Max | %.2fV | 0.7 x Vc (30%% margin) |
-| Write Min | %.2fV | >= Vc |
-| Write Max | %.2fV | 2.5 x Vc |
+| Coercive Voltage (Vc) | %.2fV | Derived: Ec x thickness (sim model); Ec is thickness/process dependent |
+| Read Max | %.2fV | Empirical simulator guard band: 0.7 x Vc (assumed; needs per-device validation) |
+| Write Min | %.2fV | Derived from Vc threshold in current model |
+| Write Max | %.2fV | Simulator ceiling: 2.5 x Vc (engineering safety margin) |
+
+**Thickness-dependent note:** Reported Ec varies with stack engineering/thickness (often cited ~0.6-1.5 MV/cm for HZO families), so required write voltage is not universal.
+**Literature context:** Sub-1V switching has been reported in aggressively scaled ferroelectric stacks (~3.6 nm) (ACS Applied Materials & Interfaces, 2024). This simulator keeps conservative defaults for educational stability.
 
 ### Critical Safety Rules
 
-**Rule 1: V_read < 0.7 x Vc**
-- Read voltage must stay 30%% below coercive voltage
-- Prevents disturbing stored polarization
+**Rule 1: V_read < 0.7 x Vc (empirical simulator rule)**
+- Read voltage stays 30%% below coercive voltage in this model
+- Used as a conservative non-disturb assumption (not yet tied to a single measured source)
 - Current setting: %.2fV < %.2fV (OK)
 
 **Rule 2: V_write >= Vc**

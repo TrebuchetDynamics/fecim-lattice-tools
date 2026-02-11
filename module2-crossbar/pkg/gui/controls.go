@@ -77,9 +77,9 @@ func NewControlPanel() *ControlPanel {
 		}
 	}
 
-	// Noise level slider (0 to 20%)
+	// Noise level slider (0 to 50%)
 	cp.noiseLabel = widget.NewLabel("Noise: 2.0%")
-	cp.NoiseSlider = widget.NewSlider(0, 20)
+	cp.NoiseSlider = widget.NewSlider(0, 50)
 	cp.NoiseSlider.Step = 0.5
 	cp.NoiseSlider.Value = 2
 	cp.NoiseSlider.OnChanged = func(v float64) {

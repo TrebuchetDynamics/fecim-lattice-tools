@@ -97,13 +97,13 @@ func (ca *CrossbarApp) createControlWidgets() {
 	}
 
 	// m1 UX fix: Changed noise step from 0.5% to 1.0% for simpler interaction
-	ca.noiseLabel = widget.NewLabel("2%")
+	ca.noiseLabel = widget.NewLabel("2.0%")
 	ca.noiseLabel.Wrapping = fyne.TextWrapOff
-	ca.noiseSlider = widget.NewSlider(0, 20)
-	ca.noiseSlider.Step = 1.0 // Was 0.5, simplified for easier use
+	ca.noiseSlider = widget.NewSlider(0, 50)
+	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("%.0f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
 		ca.config.NoiseLevel = v / 100.0
 		ca.runEnhancedMVMInstant()
 	}

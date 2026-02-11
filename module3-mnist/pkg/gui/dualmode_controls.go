@@ -72,13 +72,13 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	// Noise slider
 	noiseTitle := widget.NewLabel("Noise:")
-	app.noiseLabel = widget.NewLabel(fmt.Sprintf("%.2f", FeCIMDefaultNoise))
-	app.noiseSlider = widget.NewSlider(0.0, 0.20)
-	app.noiseSlider.Step = 0.01
+	app.noiseLabel = widget.NewLabel(fmt.Sprintf("%.1f%%", FeCIMDefaultNoise*100))
+	app.noiseSlider = widget.NewSlider(0.0, core.MaxNoiseLevel)
+	app.noiseSlider.Step = 0.005
 	app.noiseSlider.Value = FeCIMDefaultNoise
 	app.noiseSlider.OnChanged = func(v float64) {
 		mnistLog.SliderChange("Noise", v)
-		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
+		app.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v*100))
 		app.network().SetNoiseLevel(v)
 		if len(app.lastPixels) > 0 {
 			app.runInference(app.lastPixels)

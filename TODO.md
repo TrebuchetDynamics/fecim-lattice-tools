@@ -14,8 +14,8 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-01 | Make READ behavior physically consistent (array-level, not independent cells) | ⏳ |
-| FOCUS-02 | Include material-dependent behavior in READ path | ⏳ |
+| FOCUS-01 | Make READ behavior physically consistent (array-level, not independent cells) | ✅ |
+| FOCUS-02 | Include material-dependent behavior in READ path | ✅ |
 | FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ✅ |
 | FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ⏳ |
 | FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ⏳ |
@@ -30,6 +30,12 @@
 **Evidence (2026-02-11):**
 - Added cross-module integration tests in `module4-circuits/pkg/gui/module1_module4_integration_test.go` validating Module 1 material outputs (Vc/levels/conductance) propagate into Module 4.
 - Fixed `module4-circuits/pkg/gui/device_state.go` ideal compute path to use `levelToConductance(...)`, aligning geometry scaling with coupled path.
+- FOCUS-01: `NewDeviceState(...)` now defaults coupling mode to `CouplingTierA`, so READ path uses coupled array-level simulation by default instead of independent-cell ideal math.
+- FOCUS-02: READ conductance mapping now resolves quantization via material-native levels (`resolveConductanceLevels`), and READ current changes with material selection are covered by tests.
+- Added/strengthened tests in `module4-circuits/pkg/gui/device_state_read_coupling_test.go`:
+  - `TestReadCoupling_DefaultsToTierA`
+  - `TestReadCoupling_MaterialSelectionChangesReadCurrent`
+  - Existing signed per-cell READ coupling test retained.
 
 ### 3. UI Fixes
 
@@ -183,9 +189,9 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| H03 | Voltage range citations (thickness-dependent) | `drtour_todo_fixes.md` | ⏳ | 1hr |
-| H04 | Read parameter sources - mark as empirical | `drtour_todo_fixes.md` | ⏳ | 1hr |
-| H13 | GPU comparison nuance - add batched operation context | `drtour_todo_fixes.md` | ⏳ | 1hr |
+| H03 | Voltage range citations (thickness-dependent) | `drtour_todo_fixes.md` | ✅ | Done (`module4-circuits/pkg/gui/tab_reference_voltage.go`: added thickness-dependent Ec note + sub-1V@~3.6nm citation context) |
+| H04 | Read parameter sources - mark as empirical | `drtour_todo_fixes.md` | ✅ | Done (`module4-circuits/pkg/gui/tab_reference_voltage.go`: read thresholds labeled empirical/assumed simulator guardrails) |
+| H13 | GPU comparison nuance - add batched operation context | `drtour_todo_fixes.md` | ✅ | Done (`module4-circuits/pkg/gui/tab_comparison.go`: per-op vs batched throughput caveats in header/table/status) |
 
 ---
 
