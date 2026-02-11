@@ -121,8 +121,8 @@
 | G03 | Provide optional pre-commit hook template that warns on calibration JSON changes | Process | ✅ | 30m |
 | G04 | Headless WRD/ISPP regression suite: Preisach HI/MID/LO targets + JSON summary | Shared | ⏳ | 2-4hr |
 | G05 | Headless LK regression suite: same targets + overshoot/pulse stats | Shared | ⏳ | 2-4hr |
-| G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ⏳ | 30-60m |
-| G06b | Verification matrix: Preisach + LK for each material → HI/MID/LO | Testing | ⏳ | 1-2hr |
+| G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ✅ | 30-60m |
+| G06b | Verification matrix: Preisach + LK for each material → HI/MID/LO | Testing | ✅ | 1-2hr |
 | G04b | One-source-of-truth ISPP write engine: refactor duplicates to `shared/physics` | `shared/physics` | ⏳ | 4-12hr |
 | G04c | Shared ISPP migration plan: define API, adapters, deprecation plan | Architecture | ⏳ | 1-2hr |
 
