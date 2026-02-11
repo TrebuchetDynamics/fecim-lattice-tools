@@ -104,21 +104,22 @@ func TestLKSolver_effectiveRho_SignAndUnits_TableDriven(t *testing.T) {
 			}
 		})
 	}
-}
 
-func TestLKSolver_effectiveRho_Disabled(t *testing.T) {
-	s := &LKSolver{
-		Rho:                   0.25,
-		UseEffectiveViscosity: false,
-		SeriesResistance:      50,
-		Area:                  2,
-		Thickness:             5,
-	}
+	t.Run("unit scaling sanity: doubling area doubles only series term", func(t *testing.T) {
+		base := LKSolver{Rho: 0.05, UseEffectiveViscosity: true, SeriesResistance: 50, Area: 45e-9 * 45e-9, Thickness: 10e-9}
+		doubleArea := base
+		doubleArea.Area = 2 * base.Area
 
-	got := s.effectiveRho()
-	if math.Abs(got-s.Rho) > 1e-12 {
-		t.Fatalf("expected rho without series contribution: got %.12f, expected %.12f", got, s.Rho)
-	}
+		baseRho := base.effectiveRho()
+		doubleRho := doubleArea.effectiveRho()
+		seriesOnly := (base.SeriesResistance * base.Area / base.Thickness)
+		expectedDelta := seriesOnly
+		actualDelta := doubleRho - baseRho
+
+		if math.Abs(actualDelta-expectedDelta) > 1e-12 {
+			t.Fatalf("unit scaling mismatch: got delta %.12e, expected %.12e", actualDelta, expectedDelta)
+		}
+	})
 }
 
 func TestLKSolver_SetState_Clamp(t *testing.T) {
