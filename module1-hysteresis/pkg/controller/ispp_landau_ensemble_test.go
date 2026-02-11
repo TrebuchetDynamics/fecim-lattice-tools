@@ -11,7 +11,7 @@ import (
 // Landau-Khalatnikov in polydomain ensemble mode. The ensemble approximates
 // partial domain switching, enabling stable intermediate remanent states.
 func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
-	t.Skip("WIP: polydomain LK now shows a remanent staircase, but WriteController pulse/verify timing not yet tuned for this stochastic NLS-based ensemble")
+	t.Skip("skipped: LK ensemble ISPP convergence not yet stable. See module1-hysteresis/pkg/controller/diagnostics_remanent_staircase.md. To unskip: tune WriteController pulse/verify timing (PulseDuration + adequate relax-at-E=0 verify window), integration dt used by LKSolver.Step, and retry/iteration limits (MaxRetries, max iters) until convergence is deterministic across representative targets.")
 	mat := ferroelectric.LiteratureSuperlattice()
 
 	solver := sharedphysics.NewLKSolver()
