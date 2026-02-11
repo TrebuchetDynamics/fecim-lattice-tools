@@ -392,6 +392,16 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 ---
 
+## Agent Work Policy
+
+Any agent tackling a task from this TODO **must**:
+
+1. **Work fully autonomously** — complete the task end-to-end without stopping for manual intervention.
+2. **Validate progress continuously** — run `go test ./...` (headless) or launch the GUI to verify changes work. Never claim "done" without fresh test/build evidence.
+3. **Update this TODO.md** — mark completed items as ✅, add any new tasks discovered during implementation, and update the progress summary.
+
+---
+
 ## Contributing
 
 See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
