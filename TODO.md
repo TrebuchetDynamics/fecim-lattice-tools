@@ -55,8 +55,8 @@
 |----|------|--------|
 | FOCUS-08 | Improve UI where percentages are too small / poorly ranged | ⏳ |
 | FOCUS-09 | Re-range values and layout so output is readable and meaningful | ⏳ |
-| FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ⏳ |
-| FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ⏳ |
+| FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ✅ |
+| FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ✅ |
 | FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ⏳ |
 | FOCUS-34 | Debug layout tracker uses unbounded maps (`layoutCallCounts`, `lastLayoutTime`) — memory leak risk | ✅ |
 | FOCUS-35 | Debug output goes to `fmt.Printf` (stdout) instead of logging system | ✅ |
@@ -67,10 +67,10 @@
 |----|------|--------|
 | FOCUS-36 | CIM forward pass is purely semantic (delegates to FP) — conductance mapping Gmin/Gmax only in comments | ⏳ |
 | FOCUS-37 | DAC quantization assumes input [0,1] but never validates — silent clamp | ✅ (2026-02-11: added invalid-range validation + clamp warning in `quantizeDAC`) |
-| FOCUS-38 | Silent fallback to CPU on GPU error with no user notification | ⏳ |
-| FOCUS-39 | Silent fallback to default weights if level-specific file missing — user not warned | ⏳ |
+| FOCUS-38 | Silent fallback to CPU on GPU error with no user notification | ✅ (2026-02-11: emit user notice on GPU→CPU fallback in `forwardFP`) |
+| FOCUS-39 | Silent fallback to default weights if level-specific file missing — user not warned | ✅ (2026-02-11: controller now warns when loading default weights due to missing level-specific file) |
 | FOCUS-40 | ADC dialog says "6-bit (64 levels)" but code defaults to 8-bit — mismatch | ✅ (2026-02-11: dialog text reconciled to 8-bit default / finite-resolution wording) |
-| FOCUS-41 | `SetNumLevels` silently clamps values — user sets 50, gets 31 with no feedback | ⏳ |
+| FOCUS-41 | `SetNumLevels` silently clamps values — user sets 50, gets 31 with no feedback | ✅ (2026-02-11: emit user notice with actual clamped level) |
 
 ### 3c. CLI & Configuration
 

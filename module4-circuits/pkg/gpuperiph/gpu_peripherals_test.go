@@ -324,3 +324,41 @@ func TestGPUPeripherals_Destroy(t *testing.T) {
 		t.Error("IsAvailable should return false after Destroy")
 	}
 }
+
+func TestStructToBytes_UnsupportedTypeReturnsError(t *testing.T) {
+	type unsupported struct{ X int32 }
+
+	b, err := structToBytes(&unsupported{X: 1})
+	if err == nil {
+		t.Fatalf("expected error for unsupported type, got nil (bytes=%v)", b)
+	}
+}
+
+func TestStructToBytes_SupportedTypesNoPanic(t *testing.T) {
+	tests := []struct {
+		name string
+		in   interface{}
+	}{
+		{name: "DACParams", in: &DACParams{}},
+		{name: "ADCParams", in: &ADCParams{}},
+		{name: "TIAParams", in: &TIAParams{}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b, err := structToBytes(tc.in)
+			if err != nil {
+				t.Fatalf("structToBytes returned error: %v", err)
+			}
+			if len(b) != 32 {
+				t.Fatalf("expected 32-byte uniform payload, got %d", len(b))
+			}
+		})
+	}
+}
+
+func TestValidateGPUPeripheralStructLayout_ReturnsNilForCurrentLayout(t *testing.T) {
+	if err := validateGPUPeripheralStructLayout(); err != nil {
+		t.Fatalf("expected valid layout, got error: %v", err)
+	}
+}

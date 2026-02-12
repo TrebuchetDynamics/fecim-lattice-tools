@@ -28,6 +28,7 @@ package physics
 import (
 	"embed"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -421,7 +422,7 @@ func Load() (*Config, error) {
 	return globalConfig, configErr
 }
 
-// MustLoad loads the config and panics on error.
+// MustLoad loads the config and terminates the process on error.
 // This should only be used in initialization code where errors are unrecoverable.
 // For graceful error handling, use Load() instead.
 //
@@ -429,10 +430,7 @@ func Load() (*Config, error) {
 func MustLoad() *Config {
 	cfg, err := Load()
 	if err != nil {
-		panic(fmt.Sprintf("failed to load physics config: %v\n\nTo fix this:\n"+
-			"  1. Ensure config/*.yaml files exist in the working directory\n"+
-			"  2. Or run from the repository root: cd fecim-lattice-tools && ./launcher\n"+
-			"  3. Check file permissions on config directory", err))
+		log.Fatalf("failed to load physics config: %v\n\nTo fix this:\n  1. Ensure config/*.yaml files exist in the working directory\n  2. Or run from the repository root: cd fecim-lattice-tools && ./launcher\n  3. Check file permissions on config directory", err)
 	}
 	return cfg
 }
