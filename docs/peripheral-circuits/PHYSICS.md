@@ -183,6 +183,16 @@ func (a *ADC) ConvertWithNonlinearity(voltage float64) int {
 }
 ```
 
+### Optional SAR Noise Model (Code Path)
+
+Beyond INL/DNL, `shared/peripherals/adc.go` also includes an optional SAR noise path (`EnableSARNoise`) with:
+
+- Comparator metastability parameters
+- Reference drift (temperature + aging)
+- kT/C thermal sampling noise
+
+These effects are configured through `SARNoiseConfig` and are **not automatically active** unless SAR noise is explicitly enabled.
+
 ### ADC Performance Metrics
 
 #### Effective Number of Bits (ENOB)

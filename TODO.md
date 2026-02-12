@@ -548,6 +548,23 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
   - `go test ./module4-circuits/pkg/gui -run TestComparisonTab_HasScrollGuardsForResize` (PASS)
   - `go test ./module6-eda/pkg/gui/tabs -run TestMakeLearnTab_ContentScrollUsesCompactMinSize -v` (PASS)
 
+## UX Polish Audit (2026-02-11)
+
+| ID | Finding / Task | Module | Status |
+|----|----------------|--------|--------|
+| UXP-01 | Replace hardcoded unified action labels with shared constants (Program/Run MVM/Undo/Random/Reset/Export/Overlay/Zoom) to reduce drift and ease localization | module4-circuits | ✅ |
+| UXP-02 | Add error handling for invalid array-size selection parsing (`NxN`) instead of silent ignore | module4-circuits | ✅ |
+| UXP-03 | Add error handling for invalid ADC dropdown values instead of silent fallback to 5-bit | module4-circuits | ✅ |
+| UXP-04 | Add accessibility labels for key unified operation controls (program, compute, undo, random, reset, export, zoom, overlay selector) | module4-circuits | ✅ |
+| UXP-05 | Add missing keyboard shortcuts for high-frequency actions (zoom in/out, fit, export, undo) in unified view | module4-circuits | ✅ |
+| UXP-06 | Update keyboard-shortcut help text to match actual bindings and naming (`Run MVM`) | module4-circuits | ✅ |
+| UXP-07 | Add accessibility labels for icon-only docs top-bar buttons (search, TOC toggle, sidebar toggle) | module7-docs | ✅ |
+| UXP-08 | Add accessibility label for search query entry field in docs search dialog | module7-docs | ✅ |
+| UXP-09 | Add explicit keyboard shortcut to open docs search using `/` in addition to Cmd/Ctrl+K | module7-docs | ⏳ |
+| UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ⏳ |
+| UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ⏳ |
+| UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ⏳ |
+
 ### Array Simulation Fidelity (from docs)
 
 | ID | Task | Source | Status | Est. |
@@ -871,3 +888,14 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 6. Added `IsRunning()` helper for safe lifecycle checks.
 7. Added targeted renderer tests (`render_test.go`) for config, init, run lifecycle, and init guard.
 8. Removed/resolved all TODO/FIXME/HACK/XXX comment markers from `.go` files discovered in this audit.
+
+## Race Safety Audit (2026-02-11)
+
+| ID | Module/File | Finding | Risk | Status | Fix/Evidence |
+|----|-------------|---------|------|--------|--------------|
+| RACE-01 | `shared/widgets/notification.go` | `ToastContainer.Add()` called `Dismiss()` while holding `tc.mu`; dismiss callback can re-enter `Remove()` and deadlock on same mutex. | Critical (UI deadlock) | ✅ Fixed | `Add()` now captures oldest toast under lock, unlocks, then calls `Dismiss()` outside lock. |
+| RACE-02 | `shared/progress/cli.go` | `CLIProgress.Stop()` closed `done` channel unguarded; concurrent/double stop panics (`close of closed channel`). | High | ✅ Fixed | Added `stopOnce sync.Once`; `Stop()` now idempotent. |
+| RACE-03 | `shared/progress/cli.go` | `MultiCLIProgress.Stop()` had same unguarded close on shared `done` channel. | High | ✅ Fixed | Added `stopOnce sync.Once`; `Stop()` now idempotent. |
+| RACE-04 | `shared/widgets/tutorial_controller.go` | `TutorialController.run()` loop read `t.currentStep` in loop condition without lock while other methods mutate it under lock (`JumpToStep`, `PreviousStep`). | High | ✅ Fixed | Reworked run loop to check step bounds inside `RLock` each iteration. |
+| RACE-05 | `shared/widgets/tutorial_controller.go` | `NewTutorialControlBar` toggled `fastMode` via direct field read (`ctrl.fastMode`) without lock from UI callback. | Medium | ✅ Fixed | Added `FastMode()` getter with `RLock`; callback now uses `ctrl.FastMode()`. |
+| RACE-06 | `shared/recentfiles/recentfiles.go` | `notifyChange()` shallow-copied `[]*RecentFile`; callbacks could race with manager updates through shared pointers. | High | ✅ Fixed | Switched to deep-copy of each `RecentFile` before async callback dispatch. |

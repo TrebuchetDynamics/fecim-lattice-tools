@@ -318,19 +318,20 @@ level = model.get_level()  # 0-29
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Temperature-dependent Ec** | Ec(T) = Ec₀ × (1 - T/Tc)^0.5 | ✅ Implemented |
-| **Temperature-dependent Pr** | Pr(T) scaling | ✅ Implemented |
-| **Curie temperature** | Loss of ferroelectricity above Tc | ✅ Implemented |
-| **Real-time T adjustment** | GUI slider for temperature | ⚠️ Model ready, GUI missing |
+| **Temperature-dependent Ec** | Linear scaling around 300K via `TempCoeffEc` | ✅ Implemented |
+| **Temperature-dependent Pr/Ps** | Linear scaling via `TempCoeffPr` | ✅ Implemented |
+| **Curie-law collapse above Tc** | Ec,Pr → 0 above Tc | ❌ Not implemented in code |
+| **Real-time T adjustment** | GUI slider for temperature | ⚠️ Partial/limited GUI support |
 
 **What "production-ready" looks like:**
 ```python
 model.set_temperature(350)  # Kelvin
 # Ec and Pr automatically adjust
 
-# Above Curie temperature
-model.set_temperature(800)  # > Tc = 723K
-# Returns Ec = 0, Pr = 0 (no ferroelectricity)
+# High-temperature behavior in current simulator
+model.set_temperature(800)
+# Applies linear coefficient scaling + safety clamps
+# (does NOT force Ec = 0, Pr = 0 by Curie-law collapse)
 ```
 
 ---
@@ -413,19 +414,16 @@ for state in states:
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **Hysteron grid** | Show α-β plane | ✅ GetPreisachPlane() |
-| **State coloring** | +1 vs -1 hysterons | ✅ Returns states |
-| **Distribution weights** | Show μ(α,β) | ✅ GetDistribution() |
-| **Interactive display** | Watch hysterons flip | ⚠️ Model ready, GUI missing |
+| **Hysteron grid** | Show α-β plane | ❌ Not exposed by current API |
+| **State coloring** | +1 vs -1 hysterons | ❌ No `GetPreisachPlane()` in current code |
+| **Distribution weights** | Show μ(α,β) | ❌ No public getter in module API |
+| **Interactive display** | Watch hysterons flip | ❌ Depends on missing plane/state API |
 
 **What "production-ready" looks like:**
 ```python
-alphas, betas, states = model.get_preisach_plane()
-
-# Visualize: scatter plot colored by state
-# α on y-axis, β on x-axis
-# Blue = -1 (down), Red = +1 (up)
-# Valid region: α > β (lower triangle)
+# Not yet available in current module API:
+# alphas, betas, states = model.get_preisach_plane()
+# A dedicated export/debug API is required first.
 ```
 
 ---
@@ -573,7 +571,7 @@ $ fecim-hysteresis interactive
 
 ### Advanced
 
-- **preisach_advanced.go** source code
+- `module1-hysteresis/pkg/ferroelectric/preisach.go` source code
 - **Mayergoyz "Mathematical Models of Hysteresis" (1986)**
 - **Park et al. "Ferroelectricity in Doped Hafnium Oxide" (2015)**
 
@@ -622,10 +620,10 @@ For the curious, here's what the demo actually computes:
 
 | What you see | What's really happening |
 |--------------|------------------------|
-| The loop shape | ~450 hysterons, each with different thresholds, summed together |
-| The smooth curve | Hysterons distributed as a 2D Gaussian around ±Ec |
+| The loop shape | Preisach stack + tanh Everett kernel (history dependent) |
+| The smooth curve | Controlled by Everett width parameter `Delta` |
 | The 30 levels (baseline) | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
-| Memory effect | Each hysteron stays put between its thresholds |
+| Memory effect | Turning-point/stack memory in Preisach operator |
 | WRITE/READ indicator | Compares `|E|` vs `Ec` in real-time |
 | Memory Log | Tracks phase transitions in Write/Read Demo mode |
 
@@ -659,9 +657,9 @@ The physics is real — the loop is **emergent**, not drawn!
 │     Level = round((P/Ps + 1) × 14.5)   [0 to 29]          │
 │     Bits/cell = log₂(30) ≈ 4.9                             │
 │                                                             │
-│  TEMPERATURE:                                               │
-│     Ec(T) = Ec₀ × (1 - T/Tc)^0.5                           │
-│     T > Tc → No ferroelectricity                           │
+│  TEMPERATURE (current simulator):                           │
+│     Ec(T) = Ec_300K + TempCoeffEc·(T-300K)                │
+│     Ps(T) = Ps_300K + TempCoeffPr·(T-300K)                │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```

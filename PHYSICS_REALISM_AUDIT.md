@@ -215,3 +215,4 @@ Key literature for calibration and validation:
 | 2026-02-03 | Initial audit created |
 | 2026-02-03 | Added executive summary, actionable task tables, validation plan |
 | 2026-02-11 | Major update: refreshed all sections with current validation status, added precise physics equations, expanded upgrade paths, added polydomain and Tier-B status, cross-referenced TODO.md items |
+| 2026-02-11 | Physics-doc gap audit added to TODO (`PGAP-01..PGAP-08`); corrected top critical doc-code mismatches (Preisach implementation path/model, temperature law claims, missing Preisach-plane API claims, 2T1R architecture docs, SAR-noise docs) |

@@ -384,47 +384,22 @@ Phase 1: WRITE     Phase 2: HOLD      Phase 3: READ      Phase 4: DISPLAY
 
 This section documents what the code does — based on code review.
 
-### Core Model: Mayergoyz Preisach
+### Core Model: Preisach stack + Tanh Everett (current code)
 
-The demo uses the **classical Preisach model** (not tanh approximation). The implementation is in `module1-hysteresis/pkg/ferroelectric/preisach_advanced.go`.
+The module currently uses a **Preisach-stack formulation with a tanh-based Everett function**, not an explicit per-hysteron `[]Hysteron` mesh in this file.
 
-**Key insight:** The macroscopic P-E loop EMERGES from many microscopic hysterons, each with its own switching thresholds.
+- Main implementation: `module1-hysteresis/pkg/ferroelectric/preisach.go`
+- Stack engine: `shared/physics/preisach.go`
+- Everett kernel: `TanhEverett.Calculate(alpha, beta)` in `module1-hysteresis/pkg/ferroelectric/preisach.go`
 
-### Hysteron Definition
-
-```go
-type Hysteron struct {
-    Alpha float64 // Field where hysteron switches UP (+1)
-    Beta  float64 // Field where hysteron switches DOWN (-1)
-    State int     // Current state: +1 or -1 (persists between thresholds)
-}
-```
-
-### How P is Calculated from E
-
-The core physics happens in `Update()` (lines 166-192):
+`PreisachModel.Update(E)` computes:
 
 ```go
-func (m *MayergoyzPreisach) Update(E float64) float64 {
-    // Step 1: Update each hysteron's state
-    for i := range m.hysterons {
-        if E >= m.hysterons[i].Alpha {
-            m.hysterons[i].State = +1  // Switch UP
-        } else if E <= m.hysterons[i].Beta {
-            m.hysterons[i].State = -1  // Switch DOWN
-        }
-        // Between Beta and Alpha: state UNCHANGED (memory effect!)
-    }
-
-    // Step 2: Sum contributions: P = Σ μ(αᵢ, βᵢ) × γᵢ
-    m.polarization = 0
-    for i, h := range m.hysterons {
-        m.polarization += m.distribution[i][0] * float64(h.State)
-    }
-
-    return m.polarization
-}
+Pirrev := p.stack.Update(E)              // irreversible Preisach contribution
+P := Pirrev + p.reversiblePolarization(E) // reversible dielectric branch
 ```
+
+So the P-E loop remains history-dependent and Preisach-like, but the current representation is **stack/turning-point based**, with Everett-weighted areas, rather than the explicit `Hysteron{Alpha,Beta,State}` loop shown in older drafts.
 
 ### Where Hysteresis Comes From
 
@@ -449,19 +424,14 @@ State: +1 ─────────────────────┬─ 
 The gap between α and β is where hysteresis lives!
 ```
 
-### Hysteron Distribution (Why the Loop is Square-ish)
+### Everett Shape Parameter (Why the Loop is Square-ish)
 
-Hysterons are distributed on the Preisach plane with a 2D Gaussian:
+In the current implementation, loop squareness is controlled primarily by the Everett width parameter `Delta` in `TanhEverett`.
 
-```go
-AlphaMean:   material.Ec,        // Centers positive thresholds at +Ec
-BetaMean:    -material.Ec,       // Centers negative thresholds at -Ec
-AlphaSigma:  material.Ec * 0.2,  // 20% spread
-BetaSigma:   material.Ec * 0.2,  // 20% spread
-```
+- Smaller `Delta` → sharper switching and squarer loop
+- Larger `Delta` → softer/slanted transitions
 
-**Narrow σ (20%) = sharp switching = square loop.**
-A wider σ would give a more slanted/soft loop.
+`Delta` is tuned (`tuneDeltaForPr`) to match material remanent polarization (`Pr`) relative to irreversible saturation (`Ps`).
 
 ### How 30 Levels Are Discretized
 
@@ -515,13 +485,14 @@ But this function is **not called** during the interactive visualization loop. T
 
 ### Temperature Dependence
 
-The coercive field scales with temperature:
+Current code applies **linear temperature scaling around 300 K** using material coefficients (`TempCoeffEc`, `TempCoeffPr`) in `PreisachModel.SetTemperature`:
 
-```go
-Ec(T) = Ec₀ × (1 - T/Tc)^0.5
-```
+- `Ec(T) = Ec_300K + TempCoeffEc*(T-300K)`
+- `Ps(T) = Ps_300K + TempCoeffPr*(T-300K)`
 
-Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material loses ferroelectricity (Ec → 0).
+Then safety clamps are applied (minimum `Ec` and `Ps`).
+
+This is a pragmatic simulator model; it is **not** currently a Curie-law collapse model (`Ec→0` above `Tc`) in the implementation.
 
 ---
 
@@ -531,7 +502,7 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 |--------|---------------|--------|
 | P from E | Preisach model (hysteron sum) | ✅ Model-based |
 | Hysteresis | Emergent from hysteron memory | ✅ Model-based |
-| Loop shape | From Gaussian distribution (σ=20%) | ✅ Emergent, not forced |
+| Loop shape | From Everett kernel shape (`Delta`) + Preisach stack memory | ✅ Emergent, not forced |
 | 30 levels (baseline) | Linear discretization of P | ✅ Simple & correct |
 | Minor loops | Implicit via hysteron states | ✅ Works correctly |
 | Write vs Read | |E| > Ec threshold detection | ✅ Model-based |

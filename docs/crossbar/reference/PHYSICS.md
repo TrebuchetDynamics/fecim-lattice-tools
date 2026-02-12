@@ -194,6 +194,11 @@ IR drop is computed iteratively:
 - Lower effective current on lines
 - 5-10% IR drop is an illustrative range ([CITATION NEEDED - placeholder value])
 
+**2T1R (Dual-Transistor Isolation):**
+- Code-supported architecture option (`MVMOptions.Architecture` recognizes `2T1R`/`Dual`)
+- Uses stronger isolation assumptions than 1T1R in non-ideality scaling
+- Treated as lower sneak/IR coupling than 1T1R in current simulator heuristics
+
 ---
 
 ## Sneak Path Model
@@ -539,7 +544,7 @@ type MVMOptions struct {
     EnableVariation  bool
     EnableDrift      bool
     Temperature      float64 // Kelvin
-    Architecture     string  // "1T1R" or "0T1R"
+    Architecture     string  // "0T1R", "1T1R", or "2T1R"
 }
 ```
 
