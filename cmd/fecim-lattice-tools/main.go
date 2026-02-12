@@ -133,7 +133,7 @@ func takeScreenshot(window fyne.Window, sectionName string) string {
 	// Create screenshots directory if it doesn't exist
 	screenshotDir := screenshotOutputDir
 	if err := os.MkdirAll(screenshotDir, 0755); err != nil {
-		fmt.Println("Error creating screenshots directory:", err)
+		logging.Printf("Error creating screenshots directory: %v", err)
 		return ""
 	}
 
@@ -150,7 +150,7 @@ func takeScreenshot(window fyne.Window, sectionName string) string {
 
 	// L02: Save with embedded metadata
 	if err := utils.SavePNGWithMetadata(img, filename, meta); err != nil {
-		fmt.Println("Error saving screenshot with metadata:", err)
+		logging.Printf("Error saving screenshot with metadata: %v", err)
 		return ""
 	}
 
@@ -835,7 +835,7 @@ func main() {
 			outputFile, err := recordingState.stopRecording()
 			if err != nil {
 				log.Debug("Error stopping recording: %v", err)
-				fmt.Println("Error stopping recording:", err)
+				logging.Printf("Error stopping recording: %v", err)
 				return
 			}
 			log.Debug("Recording saved: %s", outputFile)
@@ -863,7 +863,7 @@ func main() {
 
 			// Start recording
 			if err := recordingState.startRecording(window); err != nil {
-				fmt.Println("Error starting recording:", err)
+				logging.Printf("Error starting recording: %v", err)
 				// Show error toast notification
 				notificationManager.Error("Recording Error", err.Error())
 				return
@@ -1388,6 +1388,9 @@ func main() {
 	helpMenu := fyne.NewMenu("Help",
 		fyne.NewMenuItem("Help Topics", func() {
 			helpBrowser.Show()
+		}),
+		fyne.NewMenuItem("About the Science (Learn More)", func() {
+			sharedwidgets.ShowAboutScience(window)
 		}),
 		fyne.NewMenuItem("About", func() {
 			dialog.ShowInformation("About FeCIM Lattice Tools",

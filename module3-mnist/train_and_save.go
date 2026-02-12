@@ -365,12 +365,18 @@ func main() {
 
 	// Create crossbar arrays and export quantized weights
 	fmt.Println("\nCreating crossbar arrays and quantizing to 30 levels (demo baseline)...")
-	layer1, _ := crossbar.NewArray(&crossbar.Config{
+	layer1, err := crossbar.NewArray(&crossbar.Config{
 		Rows: 128, Cols: 784, NoiseLevel: 0.01, ADCBits: 8, DACBits: 8,
 	})
-	layer2, _ := crossbar.NewArray(&crossbar.Config{
+	if err != nil {
+		log.Fatalf("failed to create layer1 crossbar: %v", err)
+	}
+	layer2, err := crossbar.NewArray(&crossbar.Config{
 		Rows: 10, Cols: 128, NoiseLevel: 0.01, ADCBits: 8, DACBits: 8,
 	})
+	if err != nil {
+		log.Fatalf("failed to create layer2 crossbar: %v", err)
+	}
 
 	net.QuantizeAndExport(layer1, layer2)
 

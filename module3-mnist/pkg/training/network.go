@@ -199,7 +199,11 @@ func (n *MNISTNetwork) TrainEpochWithConfig(images [][]float64, labels []int, cf
 }
 
 func (n *MNISTNetwork) forwardHidden(input []float64) []float64 {
-	hidden, _ := n.layer1.MVM(input)
+	hidden, err := n.layer1.MVM(input)
+	if err != nil {
+		log.Printf("warning: layer1 MVM failed, using zero hidden activations: %v", err)
+		hidden = make([]float64, n.hiddenSize)
+	}
 	for i := range hidden {
 		hidden[i] = (hidden[i]-0.5)*4.0 + n.biases1[i]
 		if hidden[i] < 0 {
@@ -210,7 +214,11 @@ func (n *MNISTNetwork) forwardHidden(input []float64) []float64 {
 }
 
 func (n *MNISTNetwork) forwardOutput(hidden []float64) []float64 {
-	output, _ := n.layer2.MVM(hidden)
+	output, err := n.layer2.MVM(hidden)
+	if err != nil {
+		log.Printf("warning: layer2 MVM failed, using zero logits: %v", err)
+		output = make([]float64, len(n.biases2))
+	}
 	for i := range output {
 		output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
 	}

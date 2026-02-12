@@ -44,7 +44,11 @@ func Run(args []string) error {
 
 	// Create and train network
 	fmt.Println("\nTraining single-layer network...")
-	net := training.NewSingleLayerNetwork()
+	net, err := training.NewSingleLayerNetwork()
+	if err != nil {
+		fmt.Printf("Error creating single-layer network: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Train for 20 epochs with learning rate 0.1
 	bestAcc := net.Train(trainImages, trainLabels, testImages, testLabels, 20, 0.1)

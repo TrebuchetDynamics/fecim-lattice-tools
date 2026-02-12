@@ -15,12 +15,12 @@ import (
 // Architecture: 784 -> 10 (no hidden layer)
 // Note: Peer-reviewed FeCIM achieves 96.6-98.24% MNIST accuracy; software baseline is 98-99%
 type SingleLayerNetwork struct {
-	layer   *crossbar.Array // 784 -> 10
-	biases  []float64       // Output biases
+	layer  *crossbar.Array // 784 -> 10
+	biases []float64       // Output biases
 }
 
 // NewSingleLayerNetwork creates a new single-layer MNIST network.
-func NewSingleLayerNetwork() *SingleLayerNetwork {
+func NewSingleLayerNetwork() (*SingleLayerNetwork, error) {
 	// Create crossbar array: 10 rows (outputs) x 784 cols (inputs)
 	cfg := &crossbar.Config{
 		Rows:       10,
@@ -29,7 +29,10 @@ func NewSingleLayerNetwork() *SingleLayerNetwork {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	layer, _ := crossbar.NewArray(cfg)
+	layer, err := crossbar.NewArray(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create single-layer crossbar: %w", err)
+	}
 
 	net := &SingleLayerNetwork{
 		layer:  layer,
@@ -37,7 +40,7 @@ func NewSingleLayerNetwork() *SingleLayerNetwork {
 	}
 
 	net.initializeWeights()
-	return net
+	return net, nil
 }
 
 func (n *SingleLayerNetwork) initializeWeights() {

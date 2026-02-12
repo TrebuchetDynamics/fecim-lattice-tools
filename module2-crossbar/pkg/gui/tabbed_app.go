@@ -14,6 +14,7 @@ import (
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
+	"fecim-lattice-tools/shared/logging"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -48,7 +49,15 @@ func NewTabbedCrossbarApp() *TabbedCrossbarApp {
 		ADCBits:    6,
 		DACBits:    8,
 	}
-	app.array, _ = crossbar.NewArray(cfg)
+	var err error
+	app.array, err = crossbar.NewArray(cfg)
+	if err != nil {
+		logging.Printf("[module2-crossbar] failed to initialize default array config, using minimal fallback: %v", err)
+		app.array, err = crossbar.NewArray(&crossbar.Config{Rows: 1, Cols: 1, NoiseLevel: 0, ADCBits: 6, DACBits: 8})
+		if err != nil {
+			logging.Printf("[module2-crossbar] failed to initialize fallback array: %v", err)
+		}
+	}
 
 	// Initialize tabs
 	app.idealTab = tabs.NewIdealTab(app.array, func() {

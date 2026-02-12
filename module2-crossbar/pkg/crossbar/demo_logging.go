@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -22,8 +23,8 @@ func main() {
 	}
 	arr, err := crossbar.NewArray(cfg)
 	if err != nil {
-		fmt.Printf("Error: Failed to create crossbar array: %v\n", err)
-		fmt.Println("Check that the crossbar configuration is valid.")
+		fmt.Fprintf(os.Stderr, "failed to create crossbar array: %v\n", err)
+		fmt.Fprintln(os.Stderr, "check that the crossbar configuration is valid")
 		os.Exit(1)
 	}
 
@@ -36,7 +37,11 @@ func main() {
 	// Perform MVM
 	fmt.Println("Performing MVM...")
 	input := []float64{1.0, 0.8, 0.6, 0.4}
-	output, _ := arr.MVM(input)
+	output, err := arr.MVM(input)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "MVM failed: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Printf("Output: %v\n\n", output)
 
 	// Analyze IR drop

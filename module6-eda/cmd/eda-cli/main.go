@@ -51,21 +51,24 @@ type EDAConfig struct {
 
 // EDAResult represents design generation results for JSON output.
 type EDAResult struct {
-	DesignName     string  `json:"design_name"`
-	Mode           string  `json:"mode"`
-	Rows           int     `json:"rows"`
-	Cols           int     `json:"cols"`
-	TotalCells     int     `json:"total_cells"`
-	ActiveCells    int     `json:"active_cells"`
-	AreaMM2        float64 `json:"area_mm2"`
-	PowerMW        float64 `json:"power_mw"`
-	ThroughputGOPS float64 `json:"throughput_gops,omitempty"`
-	Technology     string  `json:"technology"`
+	DesignName     string   `json:"design_name"`
+	Mode           string   `json:"mode"`
+	Rows           int      `json:"rows"`
+	Cols           int      `json:"cols"`
+	TotalCells     int      `json:"total_cells"`
+	ActiveCells    int      `json:"active_cells"`
+	AreaMM2        float64  `json:"area_mm2"`
+	PowerMW        float64  `json:"power_mw"`
+	ThroughputGOPS float64  `json:"throughput_gops,omitempty"`
+	Technology     string   `json:"technology"`
 	OutputFiles    []string `json:"output_files"`
 }
 
 func Run(args []string) error {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resolve user home dir for logging: %w", err)
+	}
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-cli.log")
 	if err := logging.Init("module6-eda-cli", logPath); err != nil {
 		logging.GlobalError("Failed to initialize logging: %v\n", err)

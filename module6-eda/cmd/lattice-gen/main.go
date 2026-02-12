@@ -15,7 +15,10 @@ import (
 
 func Run(args []string) error {
 	// Initialize logger
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resolve user home dir for logging: %w", err)
+	}
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-lattice-gen.log")
 	if err := logging.Init("module6-eda-lattice-gen", logPath); err != nil {
 		// Fallback to standard error if logger init fails
