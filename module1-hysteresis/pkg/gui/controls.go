@@ -203,6 +203,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.timeResDataPols = nil
 			a.timeResDataSwitch = nil
 		}
+		a.syncLKSolverDomainModeLocked()
 	})
 	// Default to WRD mode explicitly so PROGRAM/VERIFY/RESULT state indicator is active on startup.
 	// (SetSelected callback behavior can vary by toolkit/runtime init ordering.)
@@ -619,6 +620,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
+	lkPolydomainCheck := widget.NewCheck("Polydomain LK for ISPP", func(on bool) {
+		a.mu.Lock()
+		a.lkISPPPolydomainEnabled = on
+		a.syncLKSolverDomainModeLocked()
+		a.mu.Unlock()
+	})
+	lkPolydomainCheck.SetChecked(a.lkISPPPolydomainEnabled)
+
 	physicsRow := container.NewBorder(nil, nil, a.physicsSelect, eqBtn, nil)
 	eFieldHeader := container.NewBorder(nil, nil, a.eFieldLabel, a.eFieldModeLabel, nil)
 	freqEntryRow := container.NewGridWithColumns(2, freqEntry, unitSelect)
@@ -641,6 +650,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			withInfo(a.materialBtn, tips.Material),
 			withInfo(a.waveformSelect, tips.Waveform),
 			withInfo(physicsRow, tips.PhysicsEngine),
+			lkPolydomainCheck,
 		),
 		section("Levels & Range",
 			withInfo(container.NewVBox(a.levelsLabel, a.levelsEntry), tips.Levels),
@@ -780,6 +790,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.lkSolver.ConfigureFromMaterial(a.material)
 		a.lkSolver.Temperature = savedTemp
 	}
+	a.syncLKSolverDomainModeLocked()
 	if a.useLKSolver() {
 		resetP := a.lkDefaultPolarization()
 		if a.lkSolver != nil {

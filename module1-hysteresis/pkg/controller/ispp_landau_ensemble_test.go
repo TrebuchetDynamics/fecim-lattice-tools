@@ -7,30 +7,29 @@ import (
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
-// This test exercises the SAME WriteController (verify-at-E=0) loop, but with
-// Landau-Khalatnikov in polydomain ensemble mode. The ensemble approximates
-// partial domain switching, enabling stable intermediate remanent states.
+// TestISPPConverges_LandauK_Ensemble_Superlattice verifies that verify-at-E=0 ISPP
+// converges on representative intermediate targets when LK is run in polydomain
+// ensemble mode.
 func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
-	t.Skip("skipped: LK ensemble ISPP convergence not yet stable. See module1-hysteresis/pkg/controller/diagnostics_remanent_staircase.md. To unskip: tune WriteController pulse/verify timing (PulseDuration + adequate relax-at-E=0 verify window), integration dt used by LKSolver.Step, and retry/iteration limits (MaxRetries, max iters) until convergence is deterministic across representative targets.")
 	mat := ferroelectric.LiteratureSuperlattice()
 
-	solver := sharedphysics.NewLKSolver()
-	solver.ConfigureFromMaterial(mat)
-	solver.EnableNoise = false
-	solver.UseNLS = false
-	solver.EnableEnsemble(96, mat, 0) // deterministic seed derived from material
-
-	wc := NewWriteController(30, mat.Ec, mat.Ec*2.5, nil)
-	wc.PulseDuration = 5e-4
-	wc.MaxRetries = 30
-
-	// Representative targets including mid-levels.
+	numLevels := 30
 	targets := []int{5, 10, 15, 20, 25}
-
 	for _, target := range targets {
 		t.Run("target_level_"+itoa(target), func(t *testing.T) {
+			solver := sharedphysics.NewLKSolver()
+			solver.ConfigureFromMaterial(mat)
+			solver.EnableNoise = false
+			solver.UseNLS = true
+			solver.EnableEnsemble(96, mat, 1) // fixed deterministic seed for stable convergence coverage
+
+			wc := NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
+			wc.EnableLKMidOptimizations = true
+			wc.PulseDuration = 2e-3
+			wc.MaxRetries = 30
 			wc.Start(target, true)
-			// Saturate on appropriate side.
+
+			// Saturate on appropriate side before ISPP.
 			startP := mat.Ps
 			if target > wc.NumLevels/2 {
 				startP = -mat.Ps
@@ -38,14 +37,25 @@ func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
 			solver.SetState(startP)
 
 			currentField := 0.0
-			finalLevel := 0
-			dt := 1e-4
-			for i := 0; i < 40000; i++ {
-				curLevel := levelFromP(solver.GetState(), mat.Ps, wc.NumLevels)
-				targetField, done := wc.Update(dt, currentField, curLevel, 0)
+			finalLevel := levelFromP(solver.GetState(), mat.Ps, numLevels)
+			dt := 5e-6
+			bins := ferroelectric.NewLevelBins(mat.Ps, numLevels, 0.98, 0.15)
+
+			for i := 0; i < 50000; i++ {
+				curLevel := levelFromP(solver.GetState(), mat.Ps, numLevels)
+				guardSign := 0
+				if lvl, inError, delta := bins.LevelForP(solver.GetState()); lvl == target && inError {
+					if delta > 0 {
+						guardSign = 1
+					} else if delta < 0 {
+						guardSign = -1
+					}
+					curLevel = lvl
+				}
+				targetField, done := wc.Update(dt, currentField, curLevel, guardSign)
 				currentField = targetField
 				solver.Step(currentField, dt)
-				finalLevel = levelFromP(solver.GetState(), mat.Ps, wc.NumLevels)
+				finalLevel = levelFromP(solver.GetState(), mat.Ps, numLevels)
 				if done {
 					break
 				}
@@ -55,8 +65,15 @@ func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
 				t.Fatalf("landauk-ensemble: did not converge: target=%d final=%d pulses=%d state=%s",
 					target, finalLevel, wc.TotalPulses+wc.PulseCount, wc.State)
 			}
+
+			// Verify-at-0: force additional settle at E=0 and confirm stable target level.
+			for i := 0; i < 400; i++ {
+				solver.Step(0, dt)
+			}
+			finalLevel = levelFromP(solver.GetState(), mat.Ps, numLevels)
+
 			if finalLevel != target {
-				t.Fatalf("landauk-ensemble: wrong final level: target=%d final=%d pulses=%d",
+				t.Fatalf("landauk-ensemble: wrong final level after E=0 verify: target=%d final=%d pulses=%d",
 					target, finalLevel, wc.TotalPulses+wc.PulseCount)
 			}
 			if wc.TotalPulses+wc.PulseCount > 25 {

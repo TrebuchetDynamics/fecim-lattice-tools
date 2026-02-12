@@ -296,6 +296,12 @@ type App struct {
 	adaptiveISPP *physics.AdaptiveISPP // NEW: Phase 2 Adaptive ISPP
 	lkSolver     *physics.LKSolver     // Shared L-K Solver for time-domain physics
 
+	// LK polydomain ensemble toggle for ISPP waveform only.
+	lkISPPPolydomainEnabled bool
+	lkISPPPolydomainDomains int
+	lkISPPPolydomainSeed    uint64
+	lkEnsembleActive        bool
+
 	// State stability indicator (M12)
 	stabilityIndicator *widgets.StabilityIndicator
 }
@@ -503,6 +509,8 @@ func NewApp() *App {
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
 		maxLogLines:             12,
+		lkISPPPolydomainEnabled: false,
+		lkISPPPolydomainDomains: 96,
 		logEntries:              make([]string, 0, 12),
 		lastLogPhase:            -1,
 		// isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
@@ -584,6 +592,8 @@ func NewAppWithMaterial(materialName string) *App {
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
+		lkISPPPolydomainEnabled: false,
+		lkISPPPolydomainDomains: 96,
 		// Write/Read Demo fields initialized to defaults
 		wrdPhase:           0,
 		wrdTargetLevel:     15,

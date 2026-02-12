@@ -11,6 +11,39 @@ func (a *App) useLKSolver() bool {
 	return a != nil && a.physicsEngine == PhysicsLandau
 }
 
+// syncLKSolverDomainModeLocked applies LK single-domain vs polydomain ensemble mode.
+// Caller must hold a.mu.
+func (a *App) syncLKSolverDomainModeLocked() {
+	if a == nil || a.lkSolver == nil || a.material == nil {
+		return
+	}
+	wantEnsemble := a.physicsEngine == PhysicsLandau && a.waveform == WaveformWriteReadDemo && a.lkISPPPolydomainEnabled
+	if wantEnsemble == a.lkEnsembleActive {
+		return
+	}
+	currentP := a.polarization
+	if math.IsNaN(currentP) || math.IsInf(currentP, 0) {
+		currentP = a.lkDefaultPolarization()
+	}
+	if wantEnsemble {
+		domains := a.lkISPPPolydomainDomains
+		if domains < 2 {
+			domains = 96
+		}
+		a.lkSolver.EnableEnsemble(domains, a.material, a.lkISPPPolydomainSeed)
+	} else {
+		a.lkSolver.EnableEnsemble(1, a.material, 0)
+	}
+	a.lkSolver.SetState(currentP)
+	a.polarization = a.lkSolver.GetState()
+	a.lkEnsembleActive = wantEnsemble
+	if wantEnsemble {
+		log.Printf("L-K ISPP mode: polydomain ensemble enabled (%d domains)", a.lkISPPPolydomainDomains)
+	} else {
+		log.Printf("L-K ISPP mode: single-domain enabled")
+	}
+}
+
 func (a *App) effectiveEc() float64 {
 	if a == nil || a.material == nil {
 		return 0
@@ -106,6 +139,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		a.polarization = a.lkSolver.GetState()
 		a.lkSolver.Time = 0
 		a.lkSolver.UseNLS = false // Disable NLS for deterministic ISPP behavior
+		a.syncLKSolverDomainModeLocked()
 		a.wrdSkipPrep = false
 		a.needsCalibration = true
 		a.calibrated = false
@@ -124,6 +158,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		a.needsCalibration = true
 		a.calibrated = false
 		a.wrdSkipPrep = true
+		a.syncLKSolverDomainModeLocked()
 		log.Printf("Physics engine switched to Preisach (quasi-static)")
 	}
 
