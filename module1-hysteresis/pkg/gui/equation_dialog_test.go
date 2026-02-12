@@ -9,7 +9,7 @@ import (
 
 func TestShowPhysicsEquationsDialog_NoWindow(t *testing.T) {
 	a := &App{}
-	a.ShowPhysicsEquationsDialog()
+	a.showPhysicsEquationsDialog()
 }
 
 func TestShowPhysicsEquationsDialog_AddsOverlay(t *testing.T) {
@@ -21,7 +21,7 @@ func TestShowPhysicsEquationsDialog_AddsOverlay(t *testing.T) {
 	}
 
 	before := len(win.Canvas().Overlays().List())
-	a.ShowPhysicsEquationsDialog()
+	a.showPhysicsEquationsDialog()
 	after := len(win.Canvas().Overlays().List())
 
 	if after != before+1 {
