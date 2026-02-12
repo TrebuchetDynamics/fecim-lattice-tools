@@ -94,6 +94,7 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 	if wire.RWordLine <= 0 || wire.RBitLine <= 0 {
 		return DCResult{}, errors.New("arraysim: invalid wire parameters")
 	}
+	boundary := params.Boundary.WithDefaults(wire)
 
 	rowActive := func(r int) bool {
 		if params.ActiveRows == nil {
@@ -110,6 +111,16 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 	idxB := func(r, c int) int { return rows*cols + r*cols + c }
 	gWL := 1.0 / wire.RWordLine
 	gBL := 1.0 / wire.RBitLine
+	gWLDrive := 1.0 / boundary.WLDriveResistance
+	gBLDrive := 1.0 / boundary.BLDriveResistance
+	gWLTerm := 0.0
+	if boundary.WLTerminationResistance > 0 {
+		gWLTerm = 1.0 / boundary.WLTerminationResistance
+	}
+	gBLTerm := 0.0
+	if boundary.BLTerminationResistance > 0 {
+		gBLTerm = 1.0 / boundary.BLTerminationResistance
+	}
 
 	diag := make([]float64, n)
 	b := make([]float64, n)
@@ -130,8 +141,12 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 				if r < len(params.WLVoltages) {
 					wlV = params.WLVoltages[r]
 				}
-				diag[w] += gWL
-				b[w] += gWL * wlV
+				diag[w] += gWLDrive
+				b[w] += gWLDrive * wlV
+			}
+			if c == cols-1 && gWLTerm > 0 {
+				diag[w] += gWLTerm
+				b[w] += gWLTerm * boundary.WLTerminationVoltage
 			}
 
 			if r > 0 {
@@ -145,15 +160,16 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 				if c < len(params.BLVoltages) {
 					blV = params.BLVoltages[c]
 				}
-				diag[bl] += gBL
-				b[bl] += gBL * blV
+				diag[bl] += gBLDrive
+				b[bl] += gBLDrive * blV
+			}
+			if r == rows-1 && gBLTerm > 0 {
+				diag[bl] += gBLTerm
+				b[bl] += gBLTerm * boundary.BLTerminationVoltage
 			}
 
-			gcell := 0.0
-			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
-				gcell = params.Conductance[r][c]
-			}
-			if !rowActive(r) || !selectorEnabled(params, r, c) {
+			gcell := effectiveCellConductance(params, r, c)
+			if !rowActive(r) {
 				gcell = 0
 			}
 			diag[w] += gcell
@@ -185,11 +201,8 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 					down := idxB(r+1, c)
 					y[bl] -= gBL * x[down]
 				}
-				gcell := 0.0
-				if r < len(params.Conductance) && c < len(params.Conductance[r]) {
-					gcell = params.Conductance[r][c]
-				}
-				if !rowActive(r) || !selectorEnabled(params, r, c) {
+				gcell := effectiveCellConductance(params, r, c)
+				if !rowActive(r) {
 					gcell = 0
 				}
 				if gcell != 0 {
@@ -223,11 +236,8 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 			wlNodes[r][c] = vw
 			blNodes[r][c] = vb
 
-			gcell := 0.0
-			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
-				gcell = params.Conductance[r][c]
-			}
-			if !rowActive(r) || !selectorEnabled(params, r, c) {
+			gcell := effectiveCellConductance(params, r, c)
+			if !rowActive(r) {
 				gcell = 0
 			}
 

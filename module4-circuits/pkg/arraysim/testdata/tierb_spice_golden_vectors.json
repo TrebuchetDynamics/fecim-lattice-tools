@@ -1,0 +1,66 @@
+{
+  "description": "Small-array golden vectors from SPICE-equivalent resistive netlists (WL left-drive, BL top-drive, optional far-end terminations, selector series model).",
+  "units": {
+    "voltage": "V",
+    "current": "A",
+    "conductance": "S",
+    "resistance": "ohm"
+  },
+  "cases": [
+    {
+      "name": "2x2_read_selector_with_termination",
+      "params": {
+        "WLVoltages": [1.0, 0.3],
+        "BLVoltages": [0.0, 0.1],
+        "Conductance": [[0.000008, 0.000002], [0.000001, 0.000006]],
+        "Wire": {"RWordLine": 0.8, "RBitLine": 1.2},
+        "Boundary": {
+          "WLTerminationResistance": 40.0,
+          "BLTerminationResistance": 25.0,
+          "WLTerminationVoltage": 0.0,
+          "BLTerminationVoltage": 0.0
+        },
+        "SelectorMode": "read",
+        "ReadMask": [[true, false], [true, true]],
+        "Selector": {"Enabled": true, "OnConductance": 0.00004, "OffConductance": 0.000000001}
+      },
+      "expected": {
+        "WLNodes": [[0.9807640982595589, 0.9615334272199728], [0.29422975828566444, 0.28845974620629605]],
+        "BLNodes": [[0.000007816707780785342, 0.09562156554457887], [0.000007787369184317052, 0.0912431300478987]],
+        "CellVoltages": [[0.9807562815517781, 0.8659118616753939], [0.2942219709164801, 0.19721661615839736]],
+        "CellCurrents": [[0.0000065383752103451875, 0.0000000008654791221143369], [0.00000028704582528437084, 0.0000010289562582177255]],
+        "RowCurrents": [0.000006539240689467302, 0.0000013160020835020964],
+        "ColCurrents": [0.000006825421035629558, 0.0000010298217373398398]
+      }
+    },
+    {
+      "name": "3x2_write_selector_active_rows_with_termination",
+      "params": {
+        "WLVoltages": [1.2, 0.8, 0.4],
+        "BLVoltages": [0.05, 0.15],
+        "Conductance": [[0.000005, 0.000003], [0.000004, 0.000009], [0.000002, 0.000007]],
+        "ActiveRows": [true, true, false],
+        "Wire": {"RWordLine": 1.0, "RBitLine": 0.9},
+        "Boundary": {
+          "WLDriveResistance": 0.6,
+          "BLDriveResistance": 0.7,
+          "WLTerminationResistance": 60.0,
+          "BLTerminationResistance": 30.0,
+          "WLTerminationVoltage": 0.0,
+          "BLTerminationVoltage": 0.02
+        },
+        "SelectorMode": "write",
+        "WriteMask": [[false, true], [true, true], [false, true]],
+        "Selector": {"Enabled": true, "OnConductance": 0.000025, "OffConductance": 0.000000002}
+      },
+      "expected": {
+        "WLNodes": [[1.1883100877129995, 1.1688269028449971], [0.7922038103800828, 0.7792127254164192], [0.396103896102896, 0.3896103896077227]],
+        "BLNodes": [[0.049355554422152455, 0.14720467367591994], [0.0485269794870497, 0.14360821984851466], [0.047696096589368506, 0.1400079804354512]],
+        "CellVoltages": [[1.138954533290847, 1.0216222291690773], [0.7436768308930332, 0.6356045055679045], [0.34840779951352746, 0.2496024091722715]],
+        "CellCurrents": [[0.000000002276998267274784, 0.000002736488113845743], [0.00000256440286514839, 0.000004206206286846426], [0, 0]],
+        "RowCurrents": [0.0000027387651121130175, 0.000006770609151994816, 0],
+        "ColCurrents": [0.0000025666798634156647, 0.000006942694400692169]
+      }
+    }
+  ]
+}

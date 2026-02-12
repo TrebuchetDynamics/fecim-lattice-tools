@@ -430,8 +430,8 @@ Evidence (2026-02-11):
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | TIERB-1 | Replace dense reference solver with scalable sparse/iterative solver | `module4-circuits/pkg/arraysim/tier_b.go` | ✅ | 4-8hr |
-| TIERB-2 | Add realistic boundary conditions and selector devices | `module4-circuits/pkg/arraysim/tier_b.go` | ⏳ | 2-4hr |
-| TIERB-3 | Validate against SPICE golden vectors | `module4-circuits/pkg/arraysim/tier_b.go` | ⏳ | 4-8hr |
+| TIERB-2 | Add realistic boundary conditions and selector devices | `module4-circuits/pkg/arraysim/tier_b.go` | ✅ | 2-4hr |
+| TIERB-3 | Validate against SPICE golden vectors | `module4-circuits/pkg/arraysim/tier_b_spice_golden_test.go` | ✅ | 4-8hr |
 | TIERB-4 | Revisit boundary conditions to match SPICE conventions | `module4-circuits/pkg/arraysim/refsolve_dense.go` | ✅ | 2-4hr |
 
 **Evidence (TIERB-1 / TIERB-4 / M4-P4, 2026-02-11):**
@@ -443,6 +443,22 @@ Evidence (2026-02-11):
 - Added Tier-B DC regression coverage in:
   - `module4-circuits/pkg/arraysim/tier_b_test.go` (dense-oracle equivalence + 64x64 convergence + boundary convention behavior),
   - `module4-circuits/pkg/arraysim/tier_b_regression_test.go` (multi-size randomized oracle regressions).
+- Verification commands:
+  - `go test ./module4-circuits/pkg/arraysim -count=1` (PASS)
+  - `go test -race ./module4-circuits/pkg/arraysim -count=1` (PASS)
+
+**Evidence (TIERB-2 / TIERB-3 completion, 2026-02-11):**
+- Added realistic boundary modeling knobs to array solver inputs (`BoundaryParams`):
+  - configurable WL/BL drive resistance,
+  - optional far-end WL/BL termination resistance and reference voltage.
+- Added selector-device series modeling (`SelectorDeviceParams`) with on/off conductance and mask-aware equivalent conductance in both:
+  - `module4-circuits/pkg/arraysim/tier_b.go`
+  - `module4-circuits/pkg/arraysim/refsolve_dense.go`
+- Added targeted regression tests for new physics knobs:
+  - `module4-circuits/pkg/arraysim/tier_b_boundary_selector_test.go`
+- Added SPICE-style golden-vector validation for small arrays:
+  - vectors: `module4-circuits/pkg/arraysim/testdata/tierb_spice_golden_vectors.json`
+  - test harness: `module4-circuits/pkg/arraysim/tier_b_spice_golden_test.go`
 - Verification commands:
   - `go test ./module4-circuits/pkg/arraysim -count=1` (PASS)
   - `go test -race ./module4-circuits/pkg/arraysim -count=1` (PASS)

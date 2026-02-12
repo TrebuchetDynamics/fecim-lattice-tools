@@ -103,6 +103,37 @@ const (
 	SelectorWrite
 )
 
+// BoundaryParams defines optional realistic driver and far-end termination settings.
+// Zero/negative resistances are treated as open-circuit except drive resistances,
+// which default to one wire segment resistance to match existing SPICE convention.
+type BoundaryParams struct {
+	WLDriveResistance       float64 // WL source resistance at c=0 (ohm)
+	BLDriveResistance       float64 // BL source resistance at r=0 (ohm)
+	WLTerminationResistance float64 // WL far-end termination at c=cols-1 (ohm), <=0 => open
+	BLTerminationResistance float64 // BL far-end termination at r=rows-1 (ohm), <=0 => open
+	WLTerminationVoltage    float64 // Termination reference voltage for WL far end (V)
+	BLTerminationVoltage    float64 // Termination reference voltage for BL far end (V)
+}
+
+func (b BoundaryParams) WithDefaults(wire WireParams) BoundaryParams {
+	if b.WLDriveResistance <= 0 {
+		b.WLDriveResistance = wire.RWordLine
+	}
+	if b.BLDriveResistance <= 0 {
+		b.BLDriveResistance = wire.RBitLine
+	}
+	return b
+}
+
+// SelectorDeviceParams models a selector device in series with each memory element.
+// Equivalent cell conductance is computed as series combination of gCell and gSelector.
+// If Enabled=false, selector behavior falls back to ideal mask gating (legacy behavior).
+type SelectorDeviceParams struct {
+	Enabled        bool
+	OnConductance  float64 // Selector conductance when path selected (S); <=0 => ideal/pass-through
+	OffConductance float64 // Selector conductance when path not selected (S); <=0 => open
+}
+
 type SolveParams struct {
 	WLVoltages  []float64   // Row (WL) driver voltages (V)
 	BLVoltages  []float64   // Column (BL) driver voltages (V)
@@ -115,9 +146,11 @@ type SolveParams struct {
 	SelectorMode SelectorMode
 	ReadMask     [][]bool
 	WriteMask    [][]bool
+	Selector     SelectorDeviceParams
 
 	Geometry CellGeometry
 	Wire     WireParams
+	Boundary BoundaryParams
 }
 
 // SolveResult captures Tier A solver outputs.

@@ -41,6 +41,7 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 	if wire.RWordLine <= 0 || wire.RBitLine <= 0 {
 		return DCResult{}, errors.New("arraysim: invalid wire parameters")
 	}
+	boundary := params.Boundary.WithDefaults(wire)
 
 	rowActive := func(r int) bool {
 		if params.ActiveRows == nil {
@@ -65,6 +66,16 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 
 	gWL := 1.0 / wire.RWordLine
 	gBL := 1.0 / wire.RBitLine
+	gWLDrive := 1.0 / boundary.WLDriveResistance
+	gBLDrive := 1.0 / boundary.BLDriveResistance
+	gWLTerm := 0.0
+	if boundary.WLTerminationResistance > 0 {
+		gWLTerm = 1.0 / boundary.WLTerminationResistance
+	}
+	gBLTerm := 0.0
+	if boundary.BLTerminationResistance > 0 {
+		gBLTerm = 1.0 / boundary.BLTerminationResistance
+	}
 
 	addConductance := func(i, j int, g float64) {
 		if g == 0 {
@@ -103,7 +114,10 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 				}
 				// Even if the row is inactive, the line itself is still held at its driver voltage;
 				// only the cell conductances are gated off.
-				addToSource(w, gWL, wlV)
+				addToSource(w, gWLDrive, wlV)
+			}
+			if c == cols-1 && gWLTerm > 0 {
+				addToSource(w, gWLTerm, boundary.WLTerminationVoltage)
 			}
 
 			// Bitline neighbor segments (add each segment once).
@@ -115,15 +129,15 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 				if c < len(params.BLVoltages) {
 					blV = params.BLVoltages[c]
 				}
-				addToSource(bl, gBL, blV)
+				addToSource(bl, gBLDrive, blV)
+			}
+			if r == rows-1 && gBLTerm > 0 {
+				addToSource(bl, gBLTerm, boundary.BLTerminationVoltage)
 			}
 
 			// Cell conductance.
-			gcell := 0.0
-			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
-				gcell = params.Conductance[r][c]
-			}
-			if !active || !selectorEnabled(params, r, c) {
+			gcell := effectiveCellConductance(params, r, c)
+			if !active {
 				gcell = 0
 			}
 			addConductance(w, bl, gcell)
@@ -153,11 +167,8 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 			wlNodes[r][c] = vw
 			blNodes[r][c] = vb
 
-			gcell := 0.0
-			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
-				gcell = params.Conductance[r][c]
-			}
-			if !rowActive(r) || !selectorEnabled(params, r, c) {
+			gcell := effectiveCellConductance(params, r, c)
+			if !rowActive(r) {
 				gcell = 0
 			}
 

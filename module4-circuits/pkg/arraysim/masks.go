@@ -1,5 +1,7 @@
 package arraysim
 
+import "math"
+
 func selectorEnabled(params SolveParams, r, c int) bool {
 	switch params.SelectorMode {
 	case SelectorRead:
@@ -15,6 +17,43 @@ func selectorEnabled(params SolveParams, r, c int) bool {
 	default:
 		return true
 	}
+}
+
+func effectiveCellConductance(params SolveParams, r, c int) float64 {
+	gCell := 0.0
+	if r >= 0 && r < len(params.Conductance) && c >= 0 && c < len(params.Conductance[r]) {
+		gCell = params.Conductance[r][c]
+	}
+	if gCell <= 0 {
+		return 0
+	}
+
+	enabled := selectorEnabled(params, r, c)
+	if !params.Selector.Enabled {
+		if enabled {
+			return gCell
+		}
+		return 0
+	}
+
+	gSel := params.Selector.OffConductance
+	if enabled {
+		gSel = params.Selector.OnConductance
+	}
+	return seriesConductance(gCell, gSel)
+}
+
+func seriesConductance(g1, g2 float64) float64 {
+	if g1 <= 0 || g2 <= 0 {
+		return 0
+	}
+	if math.IsInf(g2, 1) {
+		return g1
+	}
+	if math.IsInf(g1, 1) {
+		return g2
+	}
+	return 1.0 / (1.0/g1 + 1.0/g2)
 }
 
 func maskAt(mask [][]bool, r, c int) bool {
