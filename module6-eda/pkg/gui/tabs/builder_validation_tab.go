@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
@@ -1123,12 +1124,12 @@ Date: %s
 
 	cellConfigGrid := container.NewGridWithColumns(8,
 		widget.NewLabel("Name"), nameEntry,
-		widget.NewLabel("W"), widthEntry,
-		widget.NewLabel("H"), heightEntry,
+		widget.NewLabel("Width"), widthEntry,
+		widget.NewLabel("Height"), heightEntry,
 		widget.NewLabel("Rise"), riseEntry,
 		widget.NewLabel("Fall"), fallEntry,
-		widget.NewLabel("Cap"), capEntry,
-		widget.NewLabel("Leak"), leakageEntry,
+		widget.NewLabel("Capacitance"), capEntry,
+		widget.NewLabel("Leakage"), leakageEntry,
 		cellAreaLabel,
 	)
 

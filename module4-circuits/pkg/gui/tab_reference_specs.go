@@ -42,8 +42,8 @@ func (ca *CircuitsApp) createReferenceSpecsSection() fyne.CanvasObject {
 	summarySection := ca.createSpecSummarySection()
 
 	// Buttons
-	exportBtn := widget.NewButton("EXPORT SPECS", ca.onExportSpecs)
-	compareBtn := widget.NewButton("COMPARE TO GPU", ca.onCompareToGPU)
+	exportBtn := widget.NewButton("Export Specs", ca.onExportSpecs)
+	compareBtn := widget.NewButton("Compare to GPU", ca.onCompareToGPU)
 
 	ca.specStatusLabel = widget.NewLabel("System specifications")
 

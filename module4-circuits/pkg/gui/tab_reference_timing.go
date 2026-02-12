@@ -38,8 +38,8 @@ func (ca *CircuitsApp) createReferenceTimingSection() fyne.CanvasObject {
 	computeSection := ca.createTimingComputeSection()
 
 	// Buttons
-	animateBtn := widget.NewButton("ANIMATE", ca.onAnimateTiming)
-	exportBtn := widget.NewButton("EXPORT SVG", ca.onExportTimingSVG)
+	animateBtn := widget.NewButton("Animate", ca.onAnimateTiming)
+	exportBtn := widget.NewButton("Export SVG", ca.onExportTimingSVG)
 
 	ca.timingStatusLabel = widget.NewLabel("Select operation to view timing")
 

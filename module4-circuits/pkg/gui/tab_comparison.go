@@ -37,11 +37,11 @@ func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
 	tableSection := ca.createCompTableSection()
 
 	// Buttons
-	runBtn := widget.NewButton("RUN COMPARISON", ca.onRunComparison)
+	runBtn := widget.NewButton("Run Comparison", ca.onRunComparison)
 	runBtn.Importance = widget.HighImportance
 
-	animateBtn := widget.NewButton("ANIMATE", ca.onAnimateComparison)
-	scaleBtn := widget.NewButton("SCALE UP", ca.onScaleUpComparison)
+	animateBtn := widget.NewButton("Animate", ca.onAnimateComparison)
+	scaleBtn := widget.NewButton("Scale Up", ca.onScaleUpComparison)
 
 	ca.compStatusLabel = widget.NewLabel("8×8 Matrix-Vector Multiply Comparison")
 

@@ -571,8 +571,8 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | UXP-07 | Add accessibility labels for icon-only docs top-bar buttons (search, TOC toggle, sidebar toggle) | module7-docs | ✅ |
 | UXP-08 | Add accessibility label for search query entry field in docs search dialog | module7-docs | ✅ |
 | UXP-09 | Add explicit keyboard shortcut to open docs search using `/` in addition to Cmd/Ctrl+K | module7-docs | ⏳ |
-| UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ⏳ |
-| UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ⏳ |
+| UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ✅ |
+| UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ✅ |
 | UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ⏳ |
 
 **Evidence (UXP-01..UXP-08, 2026-02-11):**
@@ -838,7 +838,7 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 | ERR-12 | `cmd/fecim-lattice-tools/main.go:153` | `fmt.Println` used for operational error path | Medium | ✅ Fixed | Routed screenshot metadata save errors through shared logging. |
 | ERR-13 | `cmd/fecim-lattice-tools/main.go:838` | `fmt.Println` used for recording-stop error path | Medium | ✅ Fixed | Routed recording stop errors through shared logging. |
 | ERR-14 | `cmd/fecim-lattice-tools/main.go:866` | `fmt.Println` used for recording-start error path | Medium | ✅ Fixed | Routed recording start errors through shared logging. |
-| ERR-15 | `shared/widgets/ui_lock.go:36` | Bare panic in non-test code | Medium | ⏳ Open | Panic enforces goroutine ownership contract; needs design decision (convert to error/log+no-op?). |
+| ERR-15 | `shared/widgets/ui_lock.go:36` | Bare panic in non-test code | Medium | ✅ Fixed | `unlockUI()` now logs ownership violations and safely no-ops instead of panicking in production. |
 
 ## Security & Robustness Audit (2026-02-11)
 
