@@ -89,6 +89,7 @@
 - `cmd/fecim-lattice-tools/main.go`: added `--screenshot-dir` and `--recording-dir`; replaced hardcoded `screenshots/` and `recordings/` outputs with flag-driven directories.
 - `shared/cli/cli.go`: added config path resolution with XDG/home search roots (`$XDG_CONFIG_HOME/fecim`, `$HOME/.config/fecim`) plus `~/` expansion.
 - `shared/cli/cli_test.go`: added path-resolution tests for XDG and home config fallback.
+- Verification snapshot: `go run ./cmd/fecim-lattice-tools --help` now lists both new directory flags and all 9 headless env vars.
 
 ### 3d. Error Handling (panic → graceful)
 

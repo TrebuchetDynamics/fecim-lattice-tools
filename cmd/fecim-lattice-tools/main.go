@@ -514,6 +514,8 @@ func main() {
 		fmt.Fprintln(out, "  FECIM_ISPP_TARGET_LEVELS    Explicit ISPP target levels (e.g., lo,mid,hi or numeric list)")
 		fmt.Fprintln(out, "  FECIM_ISPP_MAX_PULSES       Per-target pulse budget override")
 		fmt.Fprintln(out, "  FECIM_HEADLESS_ALLOW_TIMEOUT Continue after per-target timeout when set to 1")
+		fmt.Fprintln(out, "  FECIM_PPROF                 Enable headless pprof endpoint when set to 1")
+		fmt.Fprintln(out, "  FECIM_PPROF_ADDR            Optional pprof listen address (default 127.0.0.1:6060)")
 	}
 	flag.Parse()
 
@@ -922,14 +924,14 @@ func main() {
 
 	// Map view index to help context key
 	viewContextKeys := []string{
-		"home",                                   // 0 - Home
-		"hysteresis",                             // 1 - Hysteresis
-		"crossbar",                               // 2 - Crossbar
-		"mnist",                                  // 3 - MNIST
-		"circuits",                               // 4 - Circuits
-		"comparison",                             // 5 - Comparison
-		"eda",                                    // 6 - EDA
-		"docs",                                   // 7 - Documentation
+		"home",       // 0 - Home
+		"hysteresis", // 1 - Hysteresis
+		"crossbar",   // 2 - Crossbar
+		"mnist",      // 3 - MNIST
+		"circuits",   // 4 - Circuits
+		"comparison", // 5 - Comparison
+		"eda",        // 6 - EDA
+		"docs",       // 7 - Documentation
 	}
 
 	// Handle view changes - start/stop simulations as needed
@@ -1048,10 +1050,10 @@ func main() {
 	fmt.Println("[STARTUP] Initializing help system...")
 	helpSystem := help.GetHelpSystem()
 	helpSystem.Init(window)
-	
+
 	// Create help browser
 	helpBrowser := help.NewHelpBrowser(helpSystem, window)
-	
+
 	// Set up help callbacks
 	helpSystem.SetCallbacks(
 		func(topic *help.HelpTopic) {
@@ -1063,10 +1065,10 @@ func main() {
 			helpBrowser.Show()
 		},
 	)
-	
+
 	// Set up F1 keyboard shortcut for contextual help
 	help.SetupF1Shortcut(window, helpSystem)
-	
+
 	// Create tip manager for startup tips
 	tipManager := help.NewTipManager(fyneApp.Preferences(), window)
 	fmt.Println("[STARTUP] Help system initialized")

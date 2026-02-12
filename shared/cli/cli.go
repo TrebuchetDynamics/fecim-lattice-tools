@@ -178,6 +178,54 @@ func NewConfigLoader(path string) *ConfigLoader {
 	return &ConfigLoader{configPath: path}
 }
 
+func configSearchRoots() []string {
+	roots := make([]string, 0, 2)
+	if xdg := strings.TrimSpace(os.Getenv("XDG_CONFIG_HOME")); xdg != "" {
+		roots = append(roots, filepath.Join(xdg, "fecim"))
+	}
+	if home := strings.TrimSpace(os.Getenv("HOME")); home != "" {
+		roots = append(roots, filepath.Join(home, ".config", "fecim"))
+	}
+	return roots
+}
+
+func resolveConfigPath(path string) (string, error) {
+	trimmed := strings.TrimSpace(path)
+	if trimmed == "" {
+		return "", fmt.Errorf("empty path")
+	}
+
+	expanded := trimmed
+	if strings.HasPrefix(expanded, "~/") || expanded == "~" {
+		home := strings.TrimSpace(os.Getenv("HOME"))
+		if home == "" {
+			return "", fmt.Errorf("HOME is not set for ~ expansion")
+		}
+		if expanded == "~" {
+			expanded = home
+		} else {
+			expanded = filepath.Join(home, expanded[2:])
+		}
+	}
+
+	if filepath.IsAbs(expanded) {
+		return expanded, nil
+	}
+
+	if _, err := os.Stat(expanded); err == nil {
+		return expanded, nil
+	}
+
+	for _, root := range configSearchRoots() {
+		candidate := filepath.Join(root, expanded)
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+
+	return expanded, nil
+}
+
 // Load loads and parses a config file into the target struct.
 // Supports YAML (.yaml, .yml) and JSON (.json) formats.
 func (cl *ConfigLoader) Load(target interface{}) error {
@@ -185,12 +233,17 @@ func (cl *ConfigLoader) Load(target interface{}) error {
 		return nil // No config file specified
 	}
 
-	data, err := os.ReadFile(cl.configPath)
+	resolvedPath, err := resolveConfigPath(cl.configPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve config file %q: %w", cl.configPath, err)
+	}
+
+	data, err := os.ReadFile(resolvedPath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	ext := strings.ToLower(filepath.Ext(cl.configPath))
+	ext := strings.ToLower(filepath.Ext(resolvedPath))
 	switch ext {
 	case ".yaml", ".yml":
 		if err := yaml.Unmarshal(data, target); err != nil {

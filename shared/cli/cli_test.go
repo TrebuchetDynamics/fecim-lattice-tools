@@ -180,6 +180,57 @@ levels:
 	}
 }
 
+func TestResolveConfigPath_XDGConfigHome(t *testing.T) {
+	tmpDir := t.TempDir()
+	xdgDir := filepath.Join(tmpDir, "xdg")
+	configDir := filepath.Join(xdgDir, "fecim")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("failed to create xdg config dir: %v", err)
+	}
+	configPath := filepath.Join(configDir, "sample.yaml")
+	if err := os.WriteFile(configPath, []byte("name: xdg"), 0644); err != nil {
+		t.Fatalf("failed to write config file: %v", err)
+	}
+
+	t.Setenv("XDG_CONFIG_HOME", xdgDir)
+	t.Setenv("HOME", filepath.Join(tmpDir, "home"))
+
+	resolved, err := resolveConfigPath("sample.yaml")
+	if err != nil {
+		t.Fatalf("resolveConfigPath() failed: %v", err)
+	}
+	if resolved != configPath {
+		t.Fatalf("expected %q, got %q", configPath, resolved)
+	}
+}
+
+func TestResolveConfigPath_HomeConfigFallback(t *testing.T) {
+	tmpDir := t.TempDir()
+	homeDir := filepath.Join(tmpDir, "home")
+	configDir := filepath.Join(homeDir, ".config", "fecim")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("failed to create home config dir: %v", err)
+	}
+	configPath := filepath.Join(configDir, "module", "sample.json")
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		t.Fatalf("failed to create nested config dir: %v", err)
+	}
+	if err := os.WriteFile(configPath, []byte(`{"name":"home"}`), 0644); err != nil {
+		t.Fatalf("failed to write config file: %v", err)
+	}
+
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", homeDir)
+
+	resolved, err := resolveConfigPath("module/sample.json")
+	if err != nil {
+		t.Fatalf("resolveConfigPath() failed: %v", err)
+	}
+	if resolved != configPath {
+		t.Fatalf("expected %q, got %q", configPath, resolved)
+	}
+}
+
 func TestConfigLoader_JSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.json")
