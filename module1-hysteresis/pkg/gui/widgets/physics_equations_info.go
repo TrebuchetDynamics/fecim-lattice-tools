@@ -341,7 +341,9 @@ func buildIsppInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.AppTa
 		container.NewTabItem("Overview", scrollSection(buildIsppOverviewSection())),
 		container.NewTabItem("States", scrollSection(buildIsppStatesSection())),
 		container.NewTabItem("Stability", scrollSection(buildIsppStabilitySection())),
-		container.NewTabItem("Code refs", scrollSection(buildIsppCodeRefsSection())),
+		container.NewTabItem("Code References", scrollSection(buildIsppCodeRefsSection())),
+		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
+		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)
 	tabs.SelectIndex(1)
 	return tabs, termTab
@@ -425,7 +427,6 @@ func buildPreisachDynamicsSection() fyne.CanvasObject {
 		bodyLabel("To model switching delay or inertia, use the L-K dynamics tab."),
 	)
 }
-
 
 func buildAlphaSection() fyne.CanvasObject {
 	return container.NewVBox(

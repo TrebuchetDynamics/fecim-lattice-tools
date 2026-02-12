@@ -3,7 +3,10 @@ package core
 import (
 	"fmt"
 	"math"
+	"sync"
 )
+
+var cimSemanticNoticeOnce sync.Once
 
 // Infer runs dual-path inference (FP + CIM) and returns comparison results.
 // Returns nil if input length doesn't match expected InputSize.
@@ -229,25 +232,18 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 	return output
 }
 
-// forwardCIM performs CIM (Compute-in-Memory) matrix multiplication using conductance-based computation.
+// forwardCIM performs the current educational CIM approximation.
 //
-// Physical Model:
-// - Each quantized weight represents a discrete conductance level: G = Gmin + (Gmax-Gmin) * normalized_weight
-// - Using Gmin=10µS, Gmax=100µS (from docs)
-// - The math result is identical to forwardFP for inference, but models the physical process
-//
-// The difference from forwardFP is semantic:
-// - forwardFP is called with full-precision (float64) weights
-// - forwardCIM is called with quantized weights (30-level FeCIM representation)
-// - forwardCIM conceptually represents conductance-based analog computation
-//
-// This wrapper exists for code clarity to distinguish the two inference paths.
+// IMPORTANT LIMITATION (FOCUS-36):
+// This path uses quantized weights but does not yet run an explicit physical
+// conductance-domain solve (e.g., differential pair current accumulation with
+// explicit Gmin/Gmax currents per cell). It currently reuses the same matrix
+// multiply math as forwardFP, with CIM effects coming from quantization,
+// DAC/ADC quantization, and injected noise around that pipeline.
 func (net *DualModeNetwork) forwardCIM(input []float64, weights [][]float64, bias []float64) []float64 {
-	// The quantized weights are already mapped to discrete levels
-	// In hardware, these would be conductance levels G = Gmin + (Gmax-Gmin) * normalized_weight
-	// For computational efficiency, we keep normalized values but the mapping is:
-	// Gmin = 10e-6 S, Gmax = 100e-6 S
-	// The multiplication and accumulation is mathematically identical to FP
+	cimSemanticNoticeOnce.Do(func() {
+		log.Warn("forwardCIM uses a semantic CIM approximation (quantized weights + DAC/ADC/noise) and not a full conductance-domain current solve yet")
+	})
 	return net.forwardFP(input, weights, bias)
 }
 

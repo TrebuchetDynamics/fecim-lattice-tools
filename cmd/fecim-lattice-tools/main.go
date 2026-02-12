@@ -1263,14 +1263,23 @@ func main() {
 	fmt.Println("[STARTUP] Creating File menu...")
 	recentFilesMenu := recentfiles.NewRefreshableRecentMenu(recentFilesManager, "Recent Files", recentfiles.FileTypeAny)
 	recentFilesMenu.SetOnOpen(func(file *recentfiles.RecentFile) {
+		if file == nil {
+			return
+		}
 		log.Debug("Opening recent file: %s", file.Path)
-		// Show notification about the file
-		notificationManager.Info("Opening Recent File", file.Name)
-		// TODO: Implement actual file opening based on file type
-		// For now, we just log it. In the future, this could:
-		// - Open configs in the appropriate module
-		// - Open export files in the default application
-		// - Load project files
+		if _, err := os.Stat(file.Path); err != nil {
+			notificationManager.Error("Recent File Missing", fmt.Sprintf("%s no longer exists", file.Name))
+			return
+		}
+
+		cmd := exec.Command("xdg-open", file.Path)
+		if err := cmd.Start(); err != nil {
+			notificationManager.Error("Open Failed", err.Error())
+			return
+		}
+
+		recentFilesManager.Add(file.Path, file.Type, viewContextKeys[currentViewIndex])
+		notificationManager.Success("Opening Recent File", file.Name)
 	})
 
 	fileMenu := fyne.NewMenu("File",

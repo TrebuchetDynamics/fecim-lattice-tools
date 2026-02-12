@@ -169,6 +169,24 @@
 | FOCUS-73 | Module 7 sidebar order: module folders first, then research-papers, then README/MODULES | ✅ |
 | FOCUS-74 | Content standards: distinguish demonstrated vs modeled vs aspirational in all docs | ✅ |
 
+### 3j. User Observations (from OBSERVATIONS.md)
+
+#### Module 1
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-75 | PROGRAM STATE indicator never turns on | ⏳ |
+| FOCUS-76 | Validate "Simulation vs Experiment" info labels (literature, simulated, etc.) | ⏳ |
+| FOCUS-77 | ISPP has trouble hitting targets (especially target 2) — need more automated testing coverage | ⏳ |
+| FOCUS-78 | Material selection should show more parameters and tag engine support: [P] = Preisach, [LK] = Landau-Khalatnikov, [P,LK] = both | ⏳ |
+| FOCUS-79 | All information displayed below State and Material sections needs validation | ⏳ |
+
+#### Module 2
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-80 | Screenshot opens a modal and is intrusive — use non-blocking toast or save silently | ⏳ |
+
 ### 4. Scope Control
 
 - **Skip/defer Module 5** for now to reduce complexity.

@@ -47,18 +47,26 @@ var materialColumns = []struct {
 	Name        string
 	Width       float32
 	Description string
-	Models      string // [P] for Preisach
+	Models      string // [P] for Preisach, [LK] for Landau-Khalatnikov
 }{
 	{"Name", 160, "Material name", ""},
 	{"States", 70, "Number of analog states (bits/cell)", ""},
-	{"Pr", 85, "Remanent polarization (µC/cm²)", "[P]"},
-	{"Ps", 85, "Saturation polarization (µC/cm²)", "[P]"},
-	{"Ec", 85, "Coercive field (MV/cm)", "[P]"},
+	{"Pr", 85, "Remanent polarization (µC/cm²)", "[P][LK]"},
+	{"Ps", 85, "Saturation polarization (µC/cm²)", "[P][LK]"},
+	{"Ec", 85, "Coercive field (MV/cm)", "[P][LK]"},
 	{"τ", 70, "Switching time", "[P]"},
-	{"Tc", 80, "Curie temperature", "[P]"},
+	{"Tc", 80, "Curie temperature", "[P][LK]"},
 	{"Endurance", 90, "Write cycle endurance", ""},
-	{"Thickness", 70, "Film thickness (nm)", "[P]"},
+	{"Thickness", 70, "Film thickness (nm)", "[P][LK]"},
 	{"Reference", 200, "Data source / citation", ""},
+}
+
+func isLKCompatible(mat *physics.Material) bool {
+	if mat == nil {
+		return false
+	}
+	thermo := mat.Thermodynamics
+	return thermo.BetaLandau != 0 && thermo.GammaLandau != 0 && thermo.RhoViscosity != 0
 }
 
 // NewMaterialPicker creates a new material picker widget.
@@ -197,7 +205,11 @@ func (mp *MaterialPicker) getCellValue(row, col int) string {
 
 	switch col {
 	case 0: // Name
-		return mat.Name
+		name := mat.Name
+		if isLKCompatible(mat) {
+			name += " [LK]"
+		}
+		return name
 	case 1: // States
 		if mat.AnalogStates > 0 {
 			bits := math.Log2(float64(mat.AnalogStates))
@@ -254,7 +266,7 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	// Info label for tooltips
-	mp.infoLabel = widget.NewLabel("Click a row to select. [P] = Used in Preisach model.")
+	mp.infoLabel = widget.NewLabel("Click a row to select. [P] = Preisach parameter, [LK] = Landau-Khalatnikov compatible material/field.")
 	mp.infoLabel.Wrapping = fyne.TextWrapWord
 	mp.infoLabel.TextStyle = fyne.TextStyle{Italic: true}
 

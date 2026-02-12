@@ -9,7 +9,7 @@ func buildIsppOverviewSection() fyne.CanvasObject {
 	return container.NewVBox(
 		sectionTitle("ISPP (Incremental Step Pulse Programming)"),
 		bodyLabel("ISPP is a write-verify loop: apply a programming pulse, then VERIFY by reading the discrete level at E≈0."),
-		bodyLabel("Unlike the Preisach/L-K equations, ISPP is a controller (state machine), not a closed-form model."),
+		bodyLabel("Unlike the L-K and Preisach tabs, ISPP is a controller (state machine), not a closed-form constitutive equation."),
 		bodyLabel("The key invariant: the UI target highlight should reflect the *active controller target* during WRITE/VERIFY/SUCCESS until the field settles."),
 	)
 }
