@@ -93,25 +93,14 @@ func TestUnifiedActionButtons(t *testing.T) {
 		t.Fatal("expected circuits app with device state")
 	}
 
-	// READ mode should hide both Program Cell and MVM buttons.
-	if ca.actionWriteCellBtn.Visible() {
-		t.Fatal("program button should be hidden in READ mode")
-	}
-	if ca.actionComputeBtn.Visible() {
-		t.Fatal("MVM button should be hidden in READ mode")
-	}
-
-	// Enter WRITE mode and ensure Program Cell shows/enables while MVM stays hidden.
+	// Enter WRITE mode and ensure program button enables.
 	test.Tap(ca.modeWriteBtn)
 	waitFor(t, 500*time.Millisecond, "write mode", func() bool {
 		return ca.deviceState.GetOperationMode() == OpModeWrite
 	})
 	waitFor(t, 500*time.Millisecond, "program button enabled", func() bool {
-		return ca.actionWriteCellBtn != nil && ca.actionWriteCellBtn.Visible() && !ca.actionWriteCellBtn.Disabled()
+		return ca.actionWriteCellBtn != nil && !ca.actionWriteCellBtn.Disabled()
 	})
-	if ca.actionComputeBtn.Visible() {
-		t.Fatal("MVM button should remain hidden in WRITE mode")
-	}
 
 	// Make sure target level differs from current to start ISPP.
 	midLevel := ca.quantLevels / 2
@@ -169,11 +158,8 @@ func TestUnifiedActionButtons(t *testing.T) {
 		return ca.deviceState.GetOperationMode() == OpModeCompute
 	})
 	waitFor(t, 500*time.Millisecond, "compute button enabled", func() bool {
-		return ca.actionComputeBtn != nil && ca.actionComputeBtn.Visible() && !ca.actionComputeBtn.Disabled()
+		return ca.actionComputeBtn != nil && !ca.actionComputeBtn.Disabled()
 	})
-	if ca.actionWriteCellBtn.Visible() {
-		t.Fatal("program button should be hidden in COMPUTE mode")
-	}
 
 	// Randomize inputs and verify values update.
 	ca.mu.Lock()

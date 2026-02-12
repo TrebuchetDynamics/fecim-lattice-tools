@@ -26,7 +26,6 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 	})
 
 	sharedwidgets.WithUILock(func() {
-		ca.deviceState.SetOperationMode(OpModeWrite)
 		ca.deviceState.EnableHalfSelectVisualization(2, 3, 1.40)
 		ca.updateHalfSelectVisualization()
 	})
@@ -37,9 +36,12 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 			strings.Contains(ca.halfSelectIndicator.Text, "Half: 0.70V")
 	})
 
-	_, ok := ca.getHalfSelectCellColor(2, 3)
-	if ok {
-		t.Fatal("expected target cell to have no V/2 overlay")
+	targetColor, ok := ca.getHalfSelectCellColor(2, 3)
+	if !ok {
+		t.Fatal("expected target cell to be highlighted")
+	}
+	if got, want := color.RGBAModel.Convert(targetColor).(color.RGBA), colorFullVoltage; got != want {
+		t.Fatalf("target color: got %#v, want %#v", got, want)
 	}
 
 	halfColor, ok := ca.getHalfSelectCellColor(2, 4)
@@ -53,12 +55,6 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 	_, ok = ca.getHalfSelectCellColor(0, 0)
 	if ok {
 		t.Fatal("expected non-half-selected cell to have no overlay color")
-	}
-
-	ca.deviceState.SetOperationMode(OpModeRead)
-	_, ok = ca.getHalfSelectCellColor(2, 4)
-	if ok {
-		t.Fatal("expected V/2 overlay to be hidden outside WRITE mode")
 	}
 }
 

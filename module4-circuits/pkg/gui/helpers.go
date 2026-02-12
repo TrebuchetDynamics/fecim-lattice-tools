@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"math"
 	"time"
 
 	"fecim-lattice-tools/shared/utils"
@@ -213,7 +212,7 @@ func drawDACColumn(img *image.RGBA, x, y, w, h int, voltage float64, label strin
 		}
 	}
 
-	vText := fmt.Sprintf("%.2fV", voltage)
+	vText := fmt.Sprintf("%.2f", voltage)
 	drawPeripheralBox(img, x, y, w, h, style, vText)
 
 	// Draw label above
@@ -227,28 +226,41 @@ func drawDACColumn(img *image.RGBA, x, y, w, h int, voltage float64, label strin
 }
 
 // drawTIAADCRow draws TIA+ADC boxes to the right of a row with current/level display
-func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, level int, label string, highlighted, dimmed bool, tia interface{ Convert(float64) float64 }, _ interface{ Convert(float64) int }) {
-	// TIA box - show output voltage (with explicit units).
+func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, level int, label string, highlighted, dimmed bool, _ interface{ Convert(float64) float64 }, _ interface{ Convert(float64) int }) {
+	// TIA box - shows input current (level is pre-computed by DeviceState.Compute with proper MVM gain scaling)
 	tiaStyle := TIAStyle(highlighted, dimmed)
-	vout := 0.0
-	if tia != nil {
-		vout = tia.Convert(current * 1e-6) // current is in uA; TIA expects A
-	}
+	// Format shows current
+	// Handle range from sub-uA to mA with appropriate units
+	// Keep text short to fit in TIA box (min 50px width = ~8 chars)
 	var tiaText string
-	absV := math.Abs(vout)
-	switch {
-	case absV < 1e-3:
-		tiaText = fmt.Sprintf("%.0fmV", vout*1e3)
-	case absV < 10:
-		tiaText = fmt.Sprintf("%.2fV", vout)
-	default:
-		tiaText = fmt.Sprintf("%.1fV", vout)
+	if current < 0.1 {
+		tiaText = fmt.Sprintf("%.2f", current)
+	} else if current < 1 {
+		tiaText = fmt.Sprintf("%.1f", current)
+	} else if current < 10 {
+		tiaText = fmt.Sprintf("%.1f", current)
+	} else if current < 100 {
+		tiaText = fmt.Sprintf("%.0f", current)
+	} else if current < 1000 {
+		tiaText = fmt.Sprintf("%.0f", current)
+	} else {
+		// Convert to mA for values >= 1000 uA to fit in box
+		currentMA := current / 1000.0
+		if currentMA < 10 {
+			tiaText = fmt.Sprintf("%.1fm", currentMA)
+		} else if currentMA < 100 {
+			tiaText = fmt.Sprintf("%.0fm", currentMA)
+		} else {
+			// Very large currents (>100mA) - unlikely but handle gracefully
+			tiaText = fmt.Sprintf("%.0f", currentMA)
+		}
 	}
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 
-	// ADC box (to the right of TIA) - show output with explicit code/LSB units.
+	// ADC box (to the right of TIA) - shows decoded state (0-29 for 30 analog states)
+	// Use the pre-computed level from DeviceState.Compute() which has proper MVM gain scaling
 	adcStyle := ADCStyle(highlighted, dimmed)
-	adcText := fmt.Sprintf("%dLSB", level)
+	adcText := fmt.Sprintf("%d", level)
 	drawPeripheralBox(img, x+tiaW+2, y, adcW, h, adcStyle, adcText)
 
 	// Draw label to the left (row number)
