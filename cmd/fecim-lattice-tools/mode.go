@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -40,6 +43,9 @@ func normalizeEngine(engine string) string {
 
 func runHysteresisMode(engine string) error {
 	log := logging.NewLogger("hysteresis-mode")
+	if stop, enabled := maybeStartHeadlessPprof(log); enabled {
+		defer stop()
+	}
 	engine = normalizeEngine(engine)
 	if engine == "" {
 		engine = "preisach"
@@ -502,6 +508,9 @@ func runHysteresisMode(engine string) error {
 		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
 
 		targetDone := false
+		maxLevelDelta := 0
+		stuckBreakerCount := 0
+		lastGuardPulseCount := writeController.GuardPulseCount
 		// Track "written P" - the polarization captured at end of pulse (before E→0)
 		// This is critical because high K_dep causes P to relax toward 0 when E=0,
 		// which would give wrong level readings during VERIFY phase.
@@ -532,6 +541,13 @@ func runHysteresisMode(engine string) error {
 			currentG := physics.PolarizationToConductance(effectiveP, effPs, gmin, gmax)
 			_, currentLevel = headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 			wrd.readLevel = currentLevel
+			levelDelta := currentLevel - targetLevel
+			if levelDelta < 0 {
+				levelDelta = -levelDelta
+			}
+			if levelDelta > maxLevelDelta {
+				maxLevelDelta = levelDelta
+			}
 
 			currentStep := dtNominal
 			if mat.Ec > 0 {
@@ -654,6 +670,10 @@ func runHysteresisMode(engine string) error {
 			}
 
 			wrd.retryCount = writeController.RetryCount
+			if writeController.GuardPulseCount > lastGuardPulseCount {
+				stuckBreakerCount += writeController.GuardPulseCount - lastGuardPulseCount
+			}
+			lastGuardPulseCount = writeController.GuardPulseCount
 
 			if perfEnabled {
 				stepStart := time.Now()
@@ -696,11 +716,38 @@ func runHysteresisMode(engine string) error {
 		}
 		reportG := physics.PolarizationToConductance(reportP, effPs, gmin, gmax)
 
-		log.Info("ISPP step %d (%s): targetG=%.3e targetLevel=%d attempts=%d success=%v overshoots=%d writtenLevel=%d writtenP=%.3e writtenG=%.3e (relaxedP=%.3e)",
-			i+1, step.label, step.targetG, targetLevel, attempts, success, overshoots, reportLevel, reportP, reportG, finalP)
+		log.Info("ISPP step %d (%s): targetG=%.3e targetLevel=%d attempts=%d success=%v overshoots=%d maxLevelDelta=%d stuckBreakers=%d writtenLevel=%d writtenP=%.3e writtenG=%.3e (relaxedP=%.3e)",
+			i+1, step.label, step.targetG, targetLevel, attempts, success, overshoots, maxLevelDelta, stuckBreakerCount, reportLevel, reportP, reportG, finalP)
 	}
 
 	return nil
+}
+
+func maybeStartHeadlessPprof(log *logging.Logger) (func(), bool) {
+	if strings.TrimSpace(os.Getenv("FECIM_PPROF")) != "1" {
+		return nil, false
+	}
+	addr := strings.TrimSpace(os.Getenv("FECIM_PPROF_ADDR"))
+	if addr == "" {
+		addr = "127.0.0.1:6060"
+	}
+
+	srv := &http.Server{Addr: addr}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Info("Headless pprof server error: %v", err)
+		}
+	}()
+	log.Info("Headless pprof enabled at http://%s/debug/pprof/", addr)
+
+	stop := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Info("Headless pprof shutdown error: %v", err)
+		}
+	}
+	return stop, true
 }
 
 const (
