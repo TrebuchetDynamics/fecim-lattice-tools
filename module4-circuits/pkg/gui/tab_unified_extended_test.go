@@ -8,6 +8,7 @@ import (
 
 	"fyne.io/fyne/v2/test"
 
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -677,7 +678,7 @@ func TestUnifiedTabSensePanelLayoutAndPresets(t *testing.T) {
 	}
 }
 
-// TestUnifiedTabCouplingMode tests coupling mode toggle
+// TestUnifiedTabCouplingMode tests fidelity tier selector wiring.
 func TestUnifiedTabCouplingMode(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
@@ -688,22 +689,24 @@ func TestUnifiedTabCouplingMode(t *testing.T) {
 	if ca == nil || ca.deviceState == nil {
 		t.Fatal("expected circuits app with device state")
 	}
-
-	if ca.couplingIdealBtn == nil || ca.couplingApproxBtn == nil {
-		t.Fatal("expected coupling mode buttons")
+	if ca.couplingTierSelect == nil {
+		t.Fatal("expected fidelity tier selector")
 	}
 
-	// Test switching to Tier A
-	test.Tap(ca.couplingApproxBtn)
-	waitFor(t, 200*time.Millisecond, "tier A mode", func() bool {
-		return ca.deviceState.GetCouplingMode() != 0 // CouplingTierA
-	})
-
-	// Test switching back to Ideal
-	test.Tap(ca.couplingIdealBtn)
-	waitFor(t, 200*time.Millisecond, "ideal mode", func() bool {
-		return ca.deviceState.GetCouplingMode() == 0 // CouplingIdeal
-	})
+	cases := []struct {
+		label string
+		mode  arraysim.CouplingMode
+	}{
+		{label: "Ideal", mode: arraysim.CouplingIdeal},
+		{label: "Tier-A", mode: arraysim.CouplingTierA},
+		{label: "Tier-B", mode: arraysim.CouplingTierB},
+	}
+	for _, tc := range cases {
+		ca.couplingTierSelect.SetSelected(tc.label)
+		waitFor(t, 200*time.Millisecond, "coupling mode set", func() bool {
+			return ca.deviceState.GetCouplingMode() == tc.mode
+		})
+	}
 }
 
 // TestUnifiedTabISPPEngine tests ISPP engine selector

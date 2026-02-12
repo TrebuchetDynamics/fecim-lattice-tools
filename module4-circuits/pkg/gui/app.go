@@ -213,10 +213,11 @@ type CircuitsApp struct {
 	arch2T1RBtn    *widget.Button
 	archToggle     *fyne.Container
 
-	// Coupling model toggle (Ideal vs Tier A)
-	couplingIdealBtn  *widget.Button
-	couplingApproxBtn *widget.Button
-	couplingToggle    *fyne.Container
+	// Coupling model selector (Ideal / Tier A / Tier B)
+	couplingIdealBtn   *widget.Button // legacy test hooks
+	couplingApproxBtn  *widget.Button // legacy test hooks
+	couplingToggle     *fyne.Container
+	couplingTierSelect *widget.Select
 
 	// ============================================================================
 	// UNIFIED DEVICE SIMULATION VIEW (tab_unified.go)

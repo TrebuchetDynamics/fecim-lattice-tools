@@ -379,49 +379,36 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 		current = ca.deviceState.GetCouplingMode()
 	}
 
-	idealBtn := widget.NewButton("Ideal", nil)
-	approxBtn := widget.NewButton("Tier A", nil)
-
-	apply := func(mode arraysim.CouplingMode) {
-		idealBtn.Importance = widget.LowImportance
-		approxBtn.Importance = widget.LowImportance
-		switch mode {
-		case arraysim.CouplingTierA:
-			approxBtn.Importance = widget.HighImportance
-		default:
-			idealBtn.Importance = widget.HighImportance
-		}
-		idealBtn.Refresh()
-		approxBtn.Refresh()
+	labelToMode := map[string]arraysim.CouplingMode{
+		"Ideal":  arraysim.CouplingIdeal,
+		"Tier-A": arraysim.CouplingTierA,
+		"Tier-B": arraysim.CouplingTierB,
+	}
+	modeToLabel := map[arraysim.CouplingMode]string{
+		arraysim.CouplingIdeal: "Ideal",
+		arraysim.CouplingTierA: "Tier-A",
+		arraysim.CouplingTierB: "Tier-B",
 	}
 
-	setMode := func(mode arraysim.CouplingMode) {
-		if current == mode {
-			return
+	selector := widget.NewSelect([]string{"Ideal", "Tier-A", "Tier-B"}, func(selected string) {
+		mode, ok := labelToMode[selected]
+		if !ok {
+			mode = arraysim.CouplingIdeal
 		}
-		current = mode
 		if ca.deviceState != nil {
 			ca.deviceState.SetCouplingMode(mode)
 		}
-		apply(mode)
 		ca.recomputeAndRefresh()
-	}
-
-	idealBtn.OnTapped = func() { setMode(arraysim.CouplingIdeal) }
-	approxBtn.OnTapped = func() { setMode(arraysim.CouplingTierA) }
-
-	ca.couplingIdealBtn = idealBtn
-	ca.couplingApproxBtn = approxBtn
-	ca.couplingToggle = container.NewGridWithColumns(2, idealBtn, approxBtn)
-
-	apply(current)
+	})
+	selector.SetSelected(modeToLabel[current])
+	ca.couplingTierSelect = selector
 
 	couplingInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("Coupling Model",
-			"Ideal: No parasitic effects.\n\nApprox: Includes IR drop, sneak paths, and line resistance for realistic array behavior.", ca.window)
+		dialog.ShowInformation("Fidelity Tier",
+			"Ideal: no array parasitics (fastest).\n\nTier-A: approximate IR-drop + sneak coupling.\n\nTier-B: DC nodal reference solver (highest fidelity, slower, small arrays).", ca.window)
 	})
 	couplingInfo.Importance = widget.LowImportance
-	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle, couplingInfo)
+	return container.NewHBox(widget.NewLabel("Fidelity:"), selector, couplingInfo)
 }
 
 // ValidArraySizes defines the supported array dimensions
