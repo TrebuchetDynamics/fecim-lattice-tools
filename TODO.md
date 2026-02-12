@@ -17,7 +17,7 @@
 | FOCUS-01 | Make READ behavior physically consistent (array-level, not independent cells) | ✅ |
 | FOCUS-02 | Include material-dependent behavior in READ path | ✅ |
 | FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ✅ |
-| FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ⏳ |
+| FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ✅ |
 | FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ⏳ |
 
 ### 2. Module Linkage: Module 1 → Module 4
@@ -32,11 +32,17 @@
 - Fixed `module4-circuits/pkg/gui/device_state.go` ideal compute path to use `levelToConductance(...)`, aligning geometry scaling with coupled path.
 - FOCUS-01: `NewDeviceState(...)` now defaults coupling mode to `CouplingTierA`, so READ path uses coupled array-level simulation by default instead of independent-cell ideal math.
 - FOCUS-02: READ conductance mapping now resolves quantization via material-native levels (`resolveConductanceLevels`), and READ current changes with material selection are covered by tests.
+- FOCUS-04: `module4-circuits/pkg/arraysim/tier_a.go` now solves READ coupling through the full WL/BL resistive network via dense DC nodal solve (`referenceSolveDense`), eliminating Tier-A per-cell ideal approximation.
+- Added/strengthened Tier-A network tests in `module4-circuits/pkg/arraysim/tier_a_test.go`:
+  - `TestTierA_MatchesDenseReferenceSolve` (Tier-A result equality vs full nodal reference)
+  - Updated passive half-select + active-row masking assertions for coupled-network behavior
 - Added/strengthened tests in `module4-circuits/pkg/gui/device_state_read_coupling_test.go`:
   - `TestReadCoupling_DefaultsToTierA`
   - `TestReadCoupling_MaterialSelectionChangesReadCurrent`
   - Existing signed per-cell READ coupling test retained.
 - Verification command: `go test ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent)" -count=1 -v` (PASS).
+- FOCUS-34: `shared/widgets/debug.go` now bounds layout debug maps with `maxTrackedLayoutWidgets=1024` and periodic cleanup (`layoutCleanupInterval=256`) to prevent unbounded growth of `layoutCallCounts`/`lastLayoutTime`.
+- FOCUS-35: `shared/widgets/debug.go` debug prints (`[LAYOUT]`, `[RESIZE]`, `[RESIZE-BUG]`, `[INTERACTION]`) were migrated from `fmt.Printf` to `shared/logging.Printf` so debug output flows through the project logging system.
 
 ### 3. UI Fixes
 
@@ -47,18 +53,18 @@
 | FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ⏳ |
 | FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ⏳ |
 | FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ⏳ |
-| FOCUS-34 | Debug layout tracker uses unbounded maps (`layoutCallCounts`, `lastLayoutTime`) — memory leak risk | ⏳ |
-| FOCUS-35 | Debug output goes to `fmt.Printf` (stdout) instead of logging system | ⏳ |
+| FOCUS-34 | Debug layout tracker uses unbounded maps (`layoutCallCounts`, `lastLayoutTime`) — memory leak risk | ✅ |
+| FOCUS-35 | Debug output goes to `fmt.Printf` (stdout) instead of logging system | ✅ |
 
 ### 3b. Module 3 MNIST Consistency
 
 | ID | Task | Status |
 |----|------|--------|
 | FOCUS-36 | CIM forward pass is purely semantic (delegates to FP) — conductance mapping Gmin/Gmax only in comments | ⏳ |
-| FOCUS-37 | DAC quantization assumes input [0,1] but never validates — silent clamp | ⏳ |
+| FOCUS-37 | DAC quantization assumes input [0,1] but never validates — silent clamp | ✅ (2026-02-11: added invalid-range validation + clamp warning in `quantizeDAC`) |
 | FOCUS-38 | Silent fallback to CPU on GPU error with no user notification | ⏳ |
 | FOCUS-39 | Silent fallback to default weights if level-specific file missing — user not warned | ⏳ |
-| FOCUS-40 | ADC dialog says "6-bit (64 levels)" but code defaults to 8-bit — mismatch | ⏳ |
+| FOCUS-40 | ADC dialog says "6-bit (64 levels)" but code defaults to 8-bit — mismatch | ✅ (2026-02-11: dialog text reconciled to 8-bit default / finite-resolution wording) |
 | FOCUS-41 | `SetNumLevels` silently clamps values — user sets 50, gets 31 with no feedback | ⏳ |
 
 ### 3c. CLI & Configuration
@@ -74,9 +80,15 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-46 | GPU peripherals `structToBytes` panics on unknown type — should return error (`gpu_peripherals.go:382`) | ⏳ |
-| FOCUS-47 | GPU peripherals size mismatch panics — should return error (`gpu_peripherals.go:506`) | ⏳ |
-| FOCUS-48 | Physics config init panics on missing YAML — should use `log.Fatal` or return error (`physics.go:432`) | ⏳ |
+| FOCUS-46 | GPU peripherals `structToBytes` panics on unknown type — should return error (`gpu_peripherals.go:382`) | ✅ |
+| FOCUS-47 | GPU peripherals size mismatch panics — should return error (`gpu_peripherals.go:506`) | ✅ |
+| FOCUS-48 | Physics config init panics on missing YAML — should use `log.Fatal` or return error (`physics.go:432`) | ✅ |
+
+**Evidence (FOCUS-46/47/48, 2026-02-11):**
+- `module4-circuits/pkg/gpuperiph/gpu_peripherals.go`: `structToBytes` now returns `([]byte, error)`; unknown struct types return `error` (no panic).
+- `module4-circuits/pkg/gpuperiph/gpu_peripherals.go`: runtime layout check moved to `validateGPUPeripheralStructLayout() error`; `NewGPUPeripherals()` now returns wrapped error on mismatch instead of panicking.
+- `config/physics/physics.go`: `MustLoad()` now uses `log.Fatalf(...)` (no panic path).
+- Added tests in `module4-circuits/pkg/gpuperiph/gpu_peripherals_test.go` for unsupported type error + supported type success + layout validation.
 
 ### 3e. Module 1 Hysteresis (from hysteresis-prompt.md)
 

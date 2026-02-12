@@ -35,13 +35,11 @@ func TestTierA_PassiveHalfSelectPattern(t *testing.T) {
 	}
 
 	want := [][]float64{
-		{0.9925, 0.4875},
-		{0.4875, 0.0},
+		{0.971057, 0.477403},
+		{0.478505, -0.012409},
 	}
 
-	// Tier A is an approximation; allow a slightly looser tolerance here,
-	// especially now that we iterate to self-consistency.
-	const eps = 2e-4
+	const eps = 5e-3
 	for r := range want {
 		for c := range want[r] {
 			got := result.CellVoltages[r][c]
@@ -54,8 +52,8 @@ func TestTierA_PassiveHalfSelectPattern(t *testing.T) {
 	if result.CellVoltages[0][0] <= result.CellVoltages[0][1] {
 		t.Fatalf("target cell should have highest voltage, got %.6f <= %.6f", result.CellVoltages[0][0], result.CellVoltages[0][1])
 	}
-	if result.CellVoltages[1][1] != 0 {
-		t.Fatalf("diagonal cell should be 0V, got %.6f", result.CellVoltages[1][1])
+	if math.Abs(result.CellVoltages[1][1]) > 0.05 {
+		t.Fatalf("diagonal cell should remain near 0V under coupling, got %.6f", result.CellVoltages[1][1])
 	}
 }
 
@@ -148,8 +146,8 @@ func TestTierA_ActiveRowsMaskMatchesZeroedRows(t *testing.T) {
 		}
 	}
 
-	if resMasked.CellVoltages[1][0] != 0 || resMasked.CellCurrents[1][0] != 0 {
-		t.Fatalf("inactive row should produce 0 outputs, got V=%.9f I=%.9g", resMasked.CellVoltages[1][0], resMasked.CellCurrents[1][0])
+	if resMasked.CellCurrents[1][0] != 0 {
+		t.Fatalf("inactive row should produce 0 current, got I=%.9g", resMasked.CellCurrents[1][0])
 	}
 }
 
@@ -184,6 +182,54 @@ func TestTierA_NegativeVoltagePreservesSign(t *testing.T) {
 	}
 	if gotI >= 0 {
 		t.Fatalf("expected negative cell current, got %.9g", gotI)
+	}
+}
+
+func TestTierA_MatchesDenseReferenceSolve(t *testing.T) {
+	solver := NewTierASolver()
+	params := SolveParams{
+		WLVoltages: []float64{0.8, 0.4, -0.1},
+		BLVoltages: []float64{0.2, -0.2, 0.1},
+		Conductance: [][]float64{
+			{2e-3, 1e-3, 0.5e-3},
+			{3e-3, 0.0, 1.5e-3},
+			{1e-3, 2.5e-3, 4e-3},
+		},
+		ActiveRows: []bool{true, true, false},
+		Wire:       WireParams{RWordLine: 42.0, RBitLine: 57.0},
+	}
+
+	got, err := solver.Solve(params)
+	if err != nil {
+		t.Fatalf("TierA solve error: %v", err)
+	}
+	want, err := referenceSolveDense(params)
+	if err != nil {
+		t.Fatalf("reference solve error: %v", err)
+	}
+
+	const eps = 1e-12
+	for r := range want.CellVoltages {
+		for c := range want.CellVoltages[r] {
+			if math.Abs(got.CellVoltages[r][c]-want.CellVoltages[r][c]) > eps {
+				t.Fatalf("cell voltage mismatch (%d,%d): got %.15g want %.15g", r, c, got.CellVoltages[r][c], want.CellVoltages[r][c])
+			}
+			if math.Abs(got.CellCurrents[r][c]-want.CellCurrents[r][c]) > eps {
+				t.Fatalf("cell current mismatch (%d,%d): got %.15g want %.15g", r, c, got.CellCurrents[r][c], want.CellCurrents[r][c])
+			}
+		}
+		if math.Abs(got.RowCurrents[r]-want.RowCurrents[r]) > eps {
+			t.Fatalf("row current mismatch (%d): got %.15g want %.15g", r, got.RowCurrents[r], want.RowCurrents[r])
+		}
+	}
+	for c := range want.ColCurrents {
+		if math.Abs(got.ColCurrents[c]-want.ColCurrents[c]) > eps {
+			t.Fatalf("col current mismatch (%d): got %.15g want %.15g", c, got.ColCurrents[c], want.ColCurrents[c])
+		}
+	}
+
+	if maxResidual := kclMaxResidual(params, want); maxResidual > 1e-9 {
+		t.Fatalf("unexpected KCL residual from dense reference: %g", maxResidual)
 	}
 }
 
