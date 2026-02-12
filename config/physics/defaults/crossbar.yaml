@@ -7,8 +7,8 @@
 # References: [13][14][15][16]
 crossbar:
   # Default array dimensions [15]
-  default_rows: 128
-  default_cols: 128
+  default_rows: 128  # Default crossbar row count.
+  default_cols: 128  # Default crossbar column count.
   max_demonstrated_rows: 145    # 145×145 demonstrated [ferroelectric memristor 2025]
 
   # Quantization [15][17]
@@ -35,6 +35,6 @@ crossbar:
 
   # Sneak path parameters
   # Note: FCM (capacitive) arrays avoid IR drop and DC sneak paths
-  sneak_path_enabled: true
+  sneak_path_enabled: true  # Enables explicit sneak-path leakage model.
   sneak_conductance_ratio: 0.01 # Leakage/on ratio
   fcm_sneak_free: true          # Capacitive arrays are sneak-free

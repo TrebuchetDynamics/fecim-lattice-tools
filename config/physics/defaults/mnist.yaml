@@ -12,9 +12,9 @@ mnist:
   output_size: 10               # 10 digit classes
 
   # Training
-  epochs: 10
-  batch_size: 64
-  learning_rate: 0.001
+  epochs: 10  # Full training passes over dataset.
+  batch_size: 64  # Samples per optimization batch.
+  learning_rate: 0.001  # Optimizer learning rate (dimensionless).
 
   # Reference accuracy (peer-reviewed benchmarks, not targets)
   # Note: Accuracy varies with noise, levels, and architecture

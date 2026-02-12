@@ -15,4 +15,4 @@ benchmarks:
 
   # Security/PUF
   puf_ml_attack_resistance: 10000000  # Resists 10M sample ML attacks
-  puf_reconfigurability: "near_ideal"
+  puf_reconfigurability: "near_ideal"  # Qualitative PUF reconfigurability level.
