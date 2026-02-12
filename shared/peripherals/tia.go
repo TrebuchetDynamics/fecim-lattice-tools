@@ -16,14 +16,17 @@ type TIA struct {
 }
 
 // DefaultTIA returns a TIA configured for crossbar sense operations.
+//
+// Defaults are heuristic and chosen so that 0-100 µA array current maps into
+// the default ADC 0-1V range via Vout ~= Iin * 10kΩ.
 func DefaultTIA() *TIA {
 	tia := &TIA{
-		Gain:             10e3,   // 10 kΩ transimpedance
-		Bandwidth:        100e6,  // 100 MHz bandwidth
-		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) input noise
+		Gain:             10e3,   // 10 kΩ transimpedance (heuristic baseline)
+		Bandwidth:        100e6,  // 100 MHz bandwidth (heuristic baseline)
+		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) placeholder input-referred noise
 		OutputOffset:     5e-3,   // 5 mV output offset
 		MaxInputCurrent:  100e-6, // 100 µA max input
-		MaxOutputVoltage: 1.0,    // 1V max output
+		MaxOutputVoltage: 1.0,    // 1V max output (aligned with ADCVrefHigh)
 	}
 	log.Calculation("DefaultTIA", map[string]interface{}{
 		"gain":               tia.Gain,

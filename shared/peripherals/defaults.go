@@ -19,9 +19,11 @@ const (
 // DAC reference voltage constants
 const (
 	// DACVrefHigh is the high reference voltage for write operations (+1.5V).
+	// Heuristic simulation baseline for bipolar write sweeps.
 	DACVrefHigh = 1.5
 
 	// DACVrefLow is the low reference voltage for write operations (-1.5V).
+	// Heuristic simulation baseline for bipolar write sweeps.
 	DACVrefLow = -1.5
 
 	// DACSettleTime is the typical DAC settling time in nanoseconds.
@@ -31,6 +33,7 @@ const (
 // ADC reference voltage constants
 const (
 	// ADCVrefHigh is the high reference voltage for read operations (1.0V).
+	// Set to align with default TIA full-scale output.
 	ADCVrefHigh = 1.0
 
 	// ADCVrefLow is the low reference voltage for read operations (0.0V).
@@ -42,10 +45,10 @@ const (
 
 // Nonlinearity specifications (in LSB)
 const (
-	// DefaultINL is the typical integral nonlinearity.
+	// DefaultINL is a placeholder integral nonlinearity for SAR-style studies.
 	DefaultINL = 0.5
 
-	// DefaultDNL is the typical differential nonlinearity.
+	// DefaultDNL is a placeholder differential nonlinearity for SAR-style studies.
 	DefaultDNL = 0.25
 )
 

@@ -435,6 +435,9 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 
 	// Rate limiter: cap |dP/dt| with a fixed ceiling to avoid overflow without
 	// canceling the RK4 step (dt-scaled clamps can cause k1/k2 sign flipping).
+	//
+	// 1e12 1/s corresponds to ~ps-scale polarization evolution and is used here
+	// as a conservative numerical guardrail for stability.
 	const maxAbsRate = 1e12
 	clampRate := func(rate float64) float64 {
 		if rate > maxAbsRate {

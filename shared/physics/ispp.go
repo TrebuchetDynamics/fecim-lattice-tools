@@ -170,11 +170,16 @@ func GetDirection(currentLevel, targetLevel int) HysteresisDirection {
 }
 
 // ISPPConfig holds configuration for the ISPP algorithm.
+//
+// NOTE: StartRatio/StepPercent/SafetyCap/MaxPulses are heuristic defaults for
+// simulation stability. They represent standard ISPP write-verify behavior
+// (increment + verify + clamp), but are not tied to one foundry-qualified
+// FeFET PDK.
 type ISPPConfig struct {
-	StartRatio  float64 // Ratio of calibrated voltage to start at (default 0.7)
-	StepPercent float64 // Step size as percentage of Ec (default 0.02)
-	MaxPulses   int     // Max pulses before stopping (default 20)
-	SafetyCap   float64 // Maximum voltage multiplier relative to Ec (default 2.2)
+	StartRatio  float64 // Ratio of calibrated voltage to start at (default 0.7; heuristic)
+	StepPercent float64 // Step size as percentage of Ec (default 0.01; heuristic)
+	MaxPulses   int     // Max pulses before stopping (default 40; heuristic)
+	SafetyCap   float64 // Maximum voltage multiplier relative to Ec (default 2.2; heuristic)
 	Tolerance   int     // Allowed level error (default 0 for exact match)
 }
 
