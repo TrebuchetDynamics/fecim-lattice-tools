@@ -917,6 +917,51 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 7. Added targeted renderer tests (`render_test.go`) for config, init, run lifecycle, and init guard.
 8. Removed/resolved all TODO/FIXME/HACK/XXX comment markers from `.go` files discovered in this audit.
 
+## Test Coverage Gaps (2026-02-11)
+
+Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-failed).
+
+### Packages <50% Coverage
+
+| ID | Package | Before | After | Status | Notes |
+|----|---------|--------|-------|--------|-------|
+| COV-01 | `module1-hysteresis/pkg/ferroelectric` | 41.5% | 82.3% | ✅ Fixed | Added `render_coverage_test.go` covering all 6 renderer methods (PELoop, DomainStates, SwitchingDynamics, Temperature, MaterialComparison) |
+| COV-02 | `module1-hysteresis/pkg/render` | 22.1% | — | ⏳ | Vulkan renderer stubs; limited testable surface beyond lifecycle (already tested in `render_test.go`) |
+| COV-03 | `module2-crossbar/pkg/gui` | 3.8% | — | ⏳ | GUI package; requires Fyne test app harness for meaningful coverage |
+| COV-04 | `module3-mnist/pkg/gui` | 8.4% | — | ⏳ | GUI package; same Fyne harness constraint |
+| COV-05 | `module5-comparison/pkg/gui` | 1.4% | — | ⏳ | GUI package |
+| COV-06 | `module6-eda/pkg/gui` | 46.9% | — | ⏳ | Partially tested; remaining coverage in GUI tab widgets |
+| COV-07 | `shared/export` | 25.5% | 26.8% | 🔄 | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
+| COV-08 | `shared/help` | 37.1% | — | ⏳ | Help system rendering |
+| COV-09 | `shared/themes` | 39.1% | — | ⏳ | Theme variants |
+| COV-10 | `shared/validation` | 37.4% | 53.8% | ✅ Fixed | Added `crossbar_tools_coverage_test.go` covering ToolStatus String/Symbol, CheckAllTools, GetProjectRoot, HasLocalClone, ValidateAllTools, InstallToolsIfNeeded |
+| COV-11 | `module6-eda/pkg/openlane` | 39.8% | 39.8% | 🔄 | Added `openlane_coverage_test.go` (config round-trip, path helpers, defaults); runner/manager require Docker so limited to config surface |
+| COV-12 | `shared/accessibility` | 0.0% | — | ⏳ | Accessibility hooks package |
+| COV-13 | `cmd/latex-svg` | 43.1% | — | ⏳ | LaTeX→SVG pipeline; requires `latex` binary on host |
+
+### Critical Physics/Algorithm Files <70% Coverage
+
+| ID | File | Coverage | Status | Notes |
+|----|------|----------|--------|-------|
+| COV-14 | `config/physics/physics.go` | 63.5% → 73.7% | ✅ Fixed | Added `physics_coverage_test.go` covering SaveToFile, LoadWithDefaults, Reload, GetNumLevels, unknown material, PsMicroCcm2 |
+| COV-15 | `module2-crossbar/pkg/crossbar/array.go` | 68.7% | ⏳ | Large array operations file; partially covered by existing focus tests |
+| COV-16 | `module1-hysteresis/pkg/render/render.go` | 69.5% | ⏳ | Vulkan renderer; lifecycle tests exist |
+| COV-17 | `module6-eda/pkg/openlane` (package) | 39.8% | 🔄 | Config paths tested; runner requires Docker |
+| COV-18 | `module6-eda/pkg/validation` (package) | 27.0% | ⏳ | Circuit/layout image generation + DEF validation; requires external tools |
+| COV-19 | `shared/export/export.go` | ~25% | 🔄 | Non-GUI export paths tested; Fyne canvas capture untestable in unit tests |
+| COV-20 | `module5-comparison/pkg/comparison` | 62.8% | ⏳ | Comparison engine; partially covered |
+
+### Summary
+
+- **5 test files written** covering the 5 most critical uncovered physics paths:
+  1. `module1-hysteresis/pkg/ferroelectric/render_coverage_test.go` — P-E rendering, domain states, switching dynamics, temperature, material comparison
+  2. `config/physics/physics_coverage_test.go` — config save/load round-trip, material helpers, reload
+  3. `shared/export/export_coverage_test.go` — CSV/JSON/HTML/PNG export pipelines, QuickExport dispatch
+  4. `shared/validation/crossbar_tools_coverage_test.go` — tool detection, project root, clone paths, validation
+  5. `module6-eda/pkg/openlane/openlane_coverage_test.go` — OpenLane config save/load round-trip, path helpers
+- **Coverage improvements**: ferroelectric 41.5%→82.3%, config/physics 63.5%→73.7%, shared/validation 37.4%→53.8%
+- **Build failures** (11 packages): GUI compile errors in module1/module4 (`wrdPhaseProgram` undefined, `boundaryParams` undefined), `shared/cli` (`readFileWithLimit` undefined), `shared/widgets` (test redeclaration)
+
 ## Race Safety Audit (2026-02-11)
 
 | ID | Module/File | Finding | Risk | Status | Fix/Evidence |
