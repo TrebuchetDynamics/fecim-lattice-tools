@@ -398,9 +398,15 @@ func (m *Manager) Save() {
 
 // notifyChange calls all registered change callbacks
 func (m *Manager) notifyChange() {
-	// Make a copy of files for callbacks
+	// Deep copy files for callbacks to avoid sharing mutable entries across goroutines.
 	files := make([]*RecentFile, len(m.files))
-	copy(files, m.files)
+	for i, f := range m.files {
+		if f == nil {
+			continue
+		}
+		clone := *f
+		files[i] = &clone
+	}
 
 	// Make a copy of callbacks (we're already holding the lock)
 	callbacks := make([]func([]*RecentFile), len(m.onChange))
@@ -409,7 +415,9 @@ func (m *Manager) notifyChange() {
 	// Release lock before calling callbacks
 	go func() {
 		for _, cb := range callbacks {
-			cb(files)
+			if cb != nil {
+				cb(files)
+			}
 		}
 	}()
 }

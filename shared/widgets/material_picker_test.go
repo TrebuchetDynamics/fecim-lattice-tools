@@ -1,7 +1,6 @@
 package widgets
 
 import (
-	"math"
 	"strings"
 	"testing"
 

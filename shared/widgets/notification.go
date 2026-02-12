@@ -544,18 +544,22 @@ func NewToastContainer(maxVisible int) *ToastContainer {
 
 // Add adds a toast to the container
 func (tc *ToastContainer) Add(toast *Toast) {
-	tc.mu.Lock()
-	defer tc.mu.Unlock()
+	var toDismiss *Toast
 
+	tc.mu.Lock()
 	tc.toasts = append(tc.toasts, toast)
 
-	// Limit visible toasts
+	// Limit visible toasts. Do NOT dismiss while holding tc.mu because
+	// Dismiss triggers callbacks that can re-enter ToastContainer.Remove.
 	if len(tc.toasts) > tc.maxVisible {
-		// Dismiss oldest toast
-		tc.toasts[0].Dismiss()
+		toDismiss = tc.toasts[0]
 	}
-
 	tc.rebuildContainer()
+	tc.mu.Unlock()
+
+	if toDismiss != nil {
+		toDismiss.Dismiss()
+	}
 }
 
 // Remove removes a toast from the container

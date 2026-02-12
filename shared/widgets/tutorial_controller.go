@@ -148,6 +148,13 @@ func (t *TutorialController) SetFastMode(fast bool) {
 	t.fastMode = fast
 }
 
+// FastMode returns whether fast mode is enabled.
+func (t *TutorialController) FastMode() bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.fastMode
+}
+
 // SetOnStepStart sets callback for when a step starts.
 func (t *TutorialController) SetOnStepStart(fn func(step int, total int, ts TutorialStep)) {
 	t.mu.Lock()
@@ -360,11 +367,15 @@ func (t *TutorialController) run() {
 
 	total := len(t.steps)
 
-	for t.currentStep < total {
+	for {
 		t.mu.RLock()
 		if !t.running {
 			t.mu.RUnlock()
 			return
+		}
+		if t.currentStep >= total {
+			t.mu.RUnlock()
+			break
 		}
 		step := t.steps[t.currentStep]
 		stepIdx := t.currentStep
@@ -586,7 +597,7 @@ func NewTutorialControlBar(ctrl *TutorialController) *TutorialControlBar {
 	})
 
 	bar.speedBtn = widget.NewButton("1x", func() {
-		ctrl.SetFastMode(!ctrl.fastMode)
+		ctrl.SetFastMode(!ctrl.FastMode())
 	})
 
 	bar.container = container.NewHBox(

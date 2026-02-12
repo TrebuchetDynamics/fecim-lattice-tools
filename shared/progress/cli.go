@@ -18,6 +18,7 @@ type CLIProgress struct {
 	width    int
 	ticker   *time.Ticker
 	done     chan struct{}
+	stopOnce sync.Once
 	mu       sync.Mutex
 	lastLine string
 	showRate bool
@@ -100,7 +101,9 @@ func (c *CLIProgress) Start() {
 
 // Stop stops the progress bar and prints a final line
 func (c *CLIProgress) Stop() {
-	close(c.done)
+	c.stopOnce.Do(func() {
+		close(c.done)
+	})
 	c.renderFinal()
 }
 
@@ -255,6 +258,7 @@ type MultiCLIProgress struct {
 	writer     io.Writer
 	ticker     *time.Ticker
 	done       chan struct{}
+	stopOnce   sync.Once
 	mu         sync.Mutex
 	lineCount  int
 }
@@ -300,7 +304,9 @@ func (m *MultiCLIProgress) Start() {
 
 // Stop stops all progress bars
 func (m *MultiCLIProgress) Stop() {
-	close(m.done)
+	m.stopOnce.Do(func() {
+		close(m.done)
+	})
 	m.renderFinal()
 }
 
