@@ -26,6 +26,52 @@ func makeAppliedVoltages(rng *rand.Rand, cols int) []float64 {
 	return applied
 }
 
+func benchmarkArrayMVM(b *testing.B, rows, cols int) {
+	rng := rand.New(rand.NewSource(7))
+	cfg := &Config{
+		Rows:       rows,
+		Cols:       cols,
+		NoiseLevel: 0,
+		ADCBits:    8,
+		DACBits:    8,
+	}
+	arr, err := NewArray(cfg)
+	if err != nil {
+		b.Fatalf("NewArray: %v", err)
+	}
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			arr.cells[i][j].Conductance = 0.2 + 0.6*rng.Float64()
+		}
+	}
+
+	input := make([]float64, cols)
+	for j := range input {
+		input[j] = 0.1 + 0.8*rng.Float64()
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		out, err := arr.MVM(input)
+		if err != nil {
+			b.Fatalf("MVM: %v", err)
+		}
+		if len(out) != rows {
+			b.Fatalf("unexpected output length: got %d want %d", len(out), rows)
+		}
+	}
+}
+
+func BenchmarkArrayMVM_8x8(b *testing.B) {
+	benchmarkArrayMVM(b, 8, 8)
+}
+
+func BenchmarkArrayMVM_32x32(b *testing.B) {
+	benchmarkArrayMVM(b, 32, 32)
+}
+
 func BenchmarkParasiticSolverSolveMVM_64x64(b *testing.B) {
 	rng := rand.New(rand.NewSource(1))
 	rows, cols := 64, 64

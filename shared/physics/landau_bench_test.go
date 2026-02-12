@@ -21,6 +21,23 @@ func BenchmarkLKSolverStep(b *testing.B) {
 	}
 }
 
+func BenchmarkLKSolverStep_SingleRK4Step(b *testing.B) {
+	mat := DefaultHZO()
+	s := NewLKSolver()
+	s.ConfigureFromMaterial(mat)
+	s.SetState(0)
+
+	// dt chosen to stay in explicit RK4 path (below stiffness threshold).
+	E := 0.8 * mat.Ec
+	dt := 1e-12
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = s.Step(E, dt)
+	}
+}
+
 func BenchmarkLKSolverStep_StiffImplicitPath(b *testing.B) {
 	mat := DefaultHZO()
 	s := NewLKSolver()

@@ -253,9 +253,33 @@ func BenchmarkAdaptiveISPP_BinarySearchWrite(b *testing.B) {
 	ispp := NewAdaptiveISPP(solver, mat)
 	ispp.MaxIterations = 10
 
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		solver.SetState(-mat.Pr)
 		ispp.BinarySearchWrite(0.3 * mat.Pr)
+	}
+}
+
+func BenchmarkAdaptiveISPP_SingleCellConvergence(b *testing.B) {
+	mat := DefaultHZO()
+	solver := NewLKSolver()
+	solver.ConfigureFromMaterial(mat)
+	solver.EnableNoise = false
+	solver.UseNLS = false
+
+	ispp := NewAdaptiveISPP(solver, mat)
+	ispp.MaxIterations = 20
+	ispp.TargetTolerance = 0.02
+	targetP := 0.5 * mat.Pr
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		solver.SetState(-mat.Pr)
+		finalP, _, _ := ispp.BinarySearchWrite(targetP)
+		if math.IsNaN(finalP) || math.IsInf(finalP, 0) {
+			b.Fatalf("invalid final polarization: %v", finalP)
+		}
 	}
 }
