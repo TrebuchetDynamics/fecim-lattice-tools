@@ -4,8 +4,11 @@ import (
 	"math"
 )
 
-// ADC represents an Analog-to-Digital Converter for crossbar read operations.
-// 5-bit ADC quantizes current/voltage to 30 discrete levels.
+// ADC models the read-path analog-to-digital converter that maps sensed voltage
+// (V) into quantized digital codes used as compute/readout levels.
+//
+// In this stack a nominal 5-bit path (32 codes) is typically used with 30
+// usable ferroelectric levels plus margins/saturation behavior.
 //
 // H09: Includes SAR ADC noise modeling for realistic simulation:
 // - Comparator metastability (decision errors near thresholds)
@@ -84,7 +87,8 @@ func (a *ADC) Levels() int {
 	return 1 << a.Bits
 }
 
-// Convert performs ADC conversion from voltage to digital level.
+// Convert quantizes input voltage (V) into an integer output code using the
+// configured reference range [VrefLow, VrefHigh].
 func (a *ADC) Convert(voltage float64) int {
 	log.Input("ADC.Convert", map[string]interface{}{
 		"voltage":   voltage,
@@ -121,12 +125,12 @@ func (a *ADC) ConvertWithNonlinearity(voltage float64) int {
 	return a.ConvertWithCondition(voltage, referenceTemperatureK, CornerTypical)
 }
 
-// Resolution returns the voltage per LSB.
+// Resolution returns nominal ADC step size (V/LSB).
 func (a *ADC) Resolution() float64 {
 	return (a.VrefHigh - a.VrefLow) / float64(a.Levels()-1)
 }
 
-// ENOB returns the Effective Number of Bits considering nonlinearity.
+// ENOB estimates effective resolution (bits) after INL/DNL nonidealities.
 func (a *ADC) ENOB() float64 {
 	log.Input("ADC.ENOB", map[string]interface{}{
 		"bits": a.Bits,
@@ -301,8 +305,8 @@ func (a *ADC) GetMetastabilityErrorRate(inputVoltage float64, thresholdVoltage f
 	return prob
 }
 
-// ConvertWithSARNoise performs ADC conversion with SAR-specific noise effects.
-// This provides more realistic simulation than basic INL/DNL modeling.
+// ConvertWithSARNoise performs SAR conversion with reference drift, kT/C noise,
+// and comparator metastability effects to emulate non-ideal readout behavior.
 func (a *ADC) ConvertWithSARNoise(voltage float64, seed int64) int {
 	if a.NoiseConfig == nil {
 		return a.Convert(voltage)

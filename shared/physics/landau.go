@@ -34,8 +34,18 @@ func estimateLandauEc(alpha, beta, gamma, pr float64) float64 {
 // Package-level logger for Landau-Khalatnikov solver diagnostics.
 var lkLog *logging.Logger
 
-// LKSolver implements the First-Order Landau-Khalatnikov dynamics
-// for ferroelectric polarization evolution.
+// LKSolver integrates Landau-Khalatnikov (LK) polarization dynamics for a
+// ferroelectric capacitor/device.
+//
+// Core equation (single-domain mode):
+//
+//	rho_eff * dP/dt = E_applied - K_dep*P - dG/dP + noise
+//
+// where P is C/m^2, E is V/m, rho_eff is Ohm·m, and dG/dP comes from the
+// Landau free-energy polynomial (alpha, beta, gamma).
+//
+// The solver supports temperature/stress coupling, optional NLS switching
+// statistics, and an ensemble mode for multi-domain analog-level behavior.
 type LKSolver struct {
 	// Static Material Properties (from calibration)
 	Beta  float64 // First-order barrier coefficient (Negative)
@@ -97,14 +107,17 @@ type LKSolver struct {
 	// A single-domain Landau double-well only supports two stable remanent states at E=0.
 	// Multi-level (multi-bit) behavior requires partial switching across many domains with
 	// distributed thresholds; ensemble mode approximates this by averaging many LK domains.
-	ensemble []*LKSolver
+	ensemble        []*LKSolver
 	ensembleImprint []float64 // per-domain imprint / bias field (V/m) added to applied E
-	ensembleScale []float64   // per-domain coefficient scale (dimensionless)
-	ensembleSeed uint64
+	ensembleScale   []float64 // per-domain coefficient scale (dimensionless)
+	ensembleSeed    uint64
 }
 
-
-// NewLKSolver creates a new solver with default "Golden Set" parameters for 10nm HZO.
+// NewLKSolver returns an LK solver seeded with a practical 10 nm HZO baseline
+// parameter set used across FeCIM simulations.
+//
+// Returned state is initialized near negative remanence (P<0) so depolarization
+// effects are active from t=0, which is important for analog write trajectories.
 func NewLKSolver() *LKSolver {
 	return &LKSolver{
 		// Default to "Golden Set" (Set I)
@@ -163,9 +176,14 @@ func (s *LKSolver) UpdateParams() {
 	s.Alpha = alphaT - alphaMech
 }
 
-// ConfigureFromMaterial updates solver parameters from HZOMaterial.
-// This should be called after NewLKSolver() to override defaults with material-specific values.
-// Critical for ensuring the depolarization field (K_dep) matches the material configuration.
+// ConfigureFromMaterial maps an HZOMaterial data record into LK coefficients
+// and operating constants.
+//
+// Units are preserved from the material model: Ec in V/m, thickness in m,
+// polarization in C/m^2, viscosity in Ohm·m, and resistance in Ohm.
+//
+// This is the key bridge between calibrated material datasets and dynamic
+// switching simulation; call it after NewLKSolver before stepping.
 func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	if mat == nil {
 		return
@@ -362,8 +380,12 @@ func (s *LKSolver) stepImplicit(prevP, E, dt, noise, rhoEff float64) (float64, b
 	return guess, !invalidFloat(guess)
 }
 
-// Step performs one Runge-Kutta 4 (RK4) integration step.
-// Returns the new Polarization P.
+// Step advances polarization by one timestep under applied field E (V/m) and
+// timestep dt (s), returning updated polarization P (C/m^2).
+//
+// It uses RK4 in nominal regimes, falls back to an implicit Newton step for
+// stiff conditions, enforces physical clamps, and optionally includes NLS/noise
+// terms. In ensemble mode it returns the domain-averaged polarization.
 func (s *LKSolver) Step(E, dt float64) float64 {
 	// Ensemble mode: average many LK domains with per-domain imprint biases.
 	if len(s.ensemble) > 0 {
@@ -377,7 +399,7 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 			d.Stress = s.Stress
 			d.UseNLS = s.UseNLS
 			d.EnableNoise = s.EnableNoise
-				bias := 0.0
+			bias := 0.0
 			if i < len(s.ensembleImprint) {
 				bias = s.ensembleImprint[i]
 			}
@@ -633,6 +655,10 @@ func (s *LKSolver) logNumericalIssue(stage string, E, dt, rhoEff, noise, prevP f
 		stage, E, dt, prevP, rhoEff, noise, s.Alpha, s.Beta, s.Gamma)
 }
 
+// SetState forcibly sets polarization state P (C/m^2), with NaN/Inf rejection
+// and solver clamp rules for numerical safety.
+//
+// In ensemble mode the requested state is broadcast to all domains.
 func (s *LKSolver) SetState(P float64) {
 	if invalidFloat(P) {
 		return
@@ -648,6 +674,7 @@ func (s *LKSolver) SetState(P float64) {
 	s.P = s.clampP(P)
 }
 
+// GetState returns the current solver polarization P in C/m^2.
 func (s *LKSolver) GetState() float64 {
 	return s.P
 }

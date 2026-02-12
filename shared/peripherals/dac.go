@@ -7,8 +7,11 @@ import (
 
 var log = logging.NewLogger("peripherals")
 
-// DAC represents a Digital-to-Analog Converter for crossbar write operations.
-// 5-bit DAC maps 30 discrete levels to write voltages.
+// DAC models the write-path digital-to-analog converter that generates program
+// voltages (V) from discrete control codes for ferroelectric state updates.
+//
+// A 5-bit configuration provides 32 codes, typically mapped to 30 active levels
+// with guard codes near saturation extremes.
 type DAC struct {
 	Bits       int     // Resolution in bits (5 for 30 levels)
 	VrefHigh   float64 // High reference voltage (+1.5V)
@@ -50,7 +53,8 @@ func (d *DAC) Levels() int {
 	return 1 << d.Bits
 }
 
-// Convert maps a digital level (0-29) to an analog voltage.
+// Convert maps a digital code to output voltage (V) across the configured
+// reference span, with input clamped to valid code range.
 func (d *DAC) Convert(level int) float64 {
 	log.Input("DAC.Convert", map[string]interface{}{
 		"level":     level,
@@ -100,13 +104,13 @@ func (d *DAC) VoltageRange() (min, max float64) {
 	return d.VrefLow, d.VrefHigh
 }
 
-// Resolution returns the voltage per LSB.
+// Resolution returns DAC output granularity in V/LSB.
 func (d *DAC) Resolution() float64 {
 	return (d.VrefHigh - d.VrefLow) / float64(d.Levels()-1)
 }
 
-// EnergyPerConversion estimates energy consumption per DAC conversion.
-// Based on typical switched-capacitor DAC.
+// EnergyPerConversion estimates per-update DAC energy (J) using a simplified
+// switched-capacitor scaling model.
 func (d *DAC) EnergyPerConversion() float64 {
 	log.Input("DAC.EnergyPerConversion", map[string]interface{}{
 		"bits":      d.Bits,

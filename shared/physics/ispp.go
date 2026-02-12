@@ -194,14 +194,19 @@ func DefaultISPPConfig() ISPPConfig {
 	}
 }
 
-// ISPPCalculator handles the logic for Incremental Step Pulse Programming.
+// ISPPCalculator computes write-verify pulse amplitudes and stop conditions for
+// Incremental Step Pulse Programming (ISPP) over discrete ferroelectric levels.
+//
+// Ec is treated as an effective coercive field/scale in volts for the chosen
+// programming path, and NumLevels defines quantized target states.
 type ISPPCalculator struct {
 	Ec        float64 // Coercive Field (V)
 	NumLevels int     // Total number of levels
 	Config    ISPPConfig
 }
 
-// NewISPPCalculator creates a new calculator with default config.
+// NewISPPCalculator creates an ISPP helper using default heuristic policy
+// parameters (start ratio, step percent, pulse cap, and safety limits).
 func NewISPPCalculator(ec float64, numLevels int) *ISPPCalculator {
 	return &ISPPCalculator{
 		Ec:        ec,
@@ -219,12 +224,15 @@ func NewISPPCalculatorWithConfig(ec float64, numLevels int, config ISPPConfig) *
 	}
 }
 
-// CalculateStartVoltage returns the initial programming voltage based on calibration.
+// CalculateStartVoltage returns the first pulse amplitude (V) as a fraction of
+// a calibrated endpoint voltage. This approximates practical ISPP flows that
+// start sub-coercive and ramp with verify feedback.
 func (c *ISPPCalculator) CalculateStartVoltage(calibratedVoltage float64) float64 {
 	return calibratedVoltage * c.Config.StartRatio
 }
 
-// CalculateVoltageStep returns the voltage increment.
+// CalculateVoltageStep returns the per-pulse increment magnitude in volts.
+// The step is Ec*StepPercent and sets the write-resolution/latency tradeoff.
 func (c *ISPPCalculator) CalculateVoltageStep() float64 {
 	return c.Ec * c.Config.StepPercent
 }
@@ -282,7 +290,9 @@ func (r ISPPResult) String() string {
 	}
 }
 
-// CheckResult evaluates the verify result against the target.
+// CheckResult classifies the latest verify measurement versus target level and
+// returns whether to continue, declare success, flag overshoot, or stop for
+// pulse-count limit.
 func (c *ISPPCalculator) CheckResult(currentLevel, targetLevel int, direction HysteresisDirection, pulseCount int) ISPPResult {
 	if pulseCount >= c.Config.MaxPulses {
 		return ISPPMaxPulses

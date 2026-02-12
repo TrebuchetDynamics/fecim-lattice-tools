@@ -4,8 +4,11 @@ import (
 	"math"
 )
 
-// TIA represents a Transimpedance Amplifier for current-to-voltage conversion.
-// Used in crossbar read path to sense column currents.
+// TIA models a transimpedance amplifier used in the crossbar read chain to
+// convert summed column current (A) into a measurable voltage (V).
+//
+// Physics/circuit context: in FeFET arrays, cell conductance and read bias set
+// microamp-level column currents that are converted via Vout ~= Iin*Gain + offset.
 type TIA struct {
 	Gain             float64 // Transimpedance gain (Ohms)
 	Bandwidth        float64 // -3dB bandwidth (Hz)
@@ -38,7 +41,8 @@ func DefaultTIA() *TIA {
 	return tia
 }
 
-// Convert performs current-to-voltage conversion.
+// Convert applies ideal current-to-voltage conversion from input current (A) to
+// output voltage (V), including output offset and range clamps.
 func (t *TIA) Convert(current float64) float64 {
 	log.Input("TIA.Convert", map[string]interface{}{
 		"current": current,
@@ -64,7 +68,8 @@ func (t *TIA) Convert(current float64) float64 {
 	return output
 }
 
-// ConvertWithNoise adds thermal noise to conversion.
+// ConvertWithNoise returns converted output voltage (V) with a simple
+// input-referred noise model mapped through transimpedance gain and bandwidth.
 func (t *TIA) ConvertWithNoise(current float64) float64 {
 	idealOutput := t.Convert(current)
 
@@ -86,7 +91,7 @@ func (t *TIA) ConvertWithNoise(current float64) float64 {
 	return noisy
 }
 
-// SNR returns the signal-to-noise ratio for a given input current.
+// SNR returns signal-to-noise ratio in dB for a specified input current (A).
 func (t *TIA) SNR(current float64) float64 {
 	log.Input("TIA.SNR", map[string]interface{}{
 		"current":   current,
