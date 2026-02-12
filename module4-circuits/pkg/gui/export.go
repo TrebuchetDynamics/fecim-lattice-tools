@@ -17,10 +17,13 @@ import (
 
 // CircuitsExportConfig contains the configuration for circuits exports
 type CircuitsExportConfig struct {
-	Metadata      export.ExportMetadata `json:"metadata"`
-	ArrayConfig   ArrayConfig           `json:"array_config"`
-	PeripheralConfig PeripheralConfig   `json:"peripheral_config"`
-	SimulationState  *SimulationState   `json:"simulation_state,omitempty"`
+	Metadata         export.ExportMetadata  `json:"metadata"`
+	ArrayConfig      ArrayConfig            `json:"array_config"`
+	PeripheralConfig PeripheralConfig       `json:"peripheral_config"`
+	SimulationState  *SimulationState       `json:"simulation_state,omitempty"`
+	SneakMetrics     *SneakPathMetrics      `json:"sneak_metrics,omitempty"`
+	TopSneakCells    []SneakCellImpact      `json:"top_sneak_cells,omitempty"`
+	ExportedFiles    map[string]string      `json:"exported_files,omitempty"`
 }
 
 // ArrayConfig represents the crossbar array configuration
@@ -44,35 +47,88 @@ type PeripheralConfig struct {
 
 // SimulationState represents the current simulation state
 type SimulationState struct {
-	SelectedRow   int         `json:"selected_row"`
-	SelectedCol   int         `json:"selected_col"`
-	TargetLevel   int         `json:"target_level"`
-	CurrentLevel  int         `json:"current_level"`
-	ArrayWeights  [][]int     `json:"array_weights"`
-	InputVector   []int       `json:"input_vector"`
-	OutputVector  []float64   `json:"output_vector"`
-	Timestamp     time.Time   `json:"timestamp"`
+	SelectedRow  int       `json:"selected_row"`
+	SelectedCol  int       `json:"selected_col"`
+	TargetLevel  int       `json:"target_level"`
+	CurrentLevel int       `json:"current_level"`
+	ArrayWeights [][]int   `json:"array_weights"`
+	InputVector  []int     `json:"input_vector"`
+	OutputVector []float64 `json:"output_vector"`
+	Timestamp    time.Time `json:"timestamp"`
 }
 
-// exportSimulationData exports the current simulation data to CSV and JSON files
+type peripheralSnapshotRow struct {
+	Row            int
+	Col            int
+	WeightLevel    int
+	CellVoltageV   float64
+	CellCurrentA   float64
+	IsTargetCell   bool
+	IsHalfSelected bool
+}
+
+// exportSimulationData exports the current simulation data, peripheral snapshot, and diagram.
 func (ca *CircuitsApp) exportSimulationData() {
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 
-	// Ensure data/circuits folder exists
 	dataDir := filepath.Join("exports", "circuits")
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		ca.showExportError(fmt.Sprintf("Cannot create exports folder: %v", err))
 		return
 	}
 
-	// Build export configuration
+	ca.mu.RLock()
+	weights := make([][]int, ca.arrayRows)
+	for i := range ca.arrayWeights {
+		weights[i] = append([]int(nil), ca.arrayWeights[i]...)
+	}
+	inputVector := append([]int(nil), ca.inputVector...)
+	outputVector := append([]float64(nil), ca.outputVector...)
+	selectedRow := ca.selectedRow
+	selectedCol := ca.selectedCol
+	targetLevel := ca.targetLevel
+	currentLevel := 0
+	if selectedRow >= 0 && selectedRow < len(weights) && selectedCol >= 0 && selectedCol < len(weights[selectedRow]) {
+		currentLevel = weights[selectedRow][selectedCol]
+	}
+	rows := ca.arrayRows
+	cols := ca.arrayCols
+	quantLevels := ca.quantLevels
+	arch := ca.architecture
+	ca.mu.RUnlock()
+
+	var coupledVoltages, coupledCurrents [][]float64
+	if ca.deviceState != nil {
+		coupledVoltages, coupledCurrents = ca.deviceState.GetCoupledCellSnapshot()
+	}
+	if coupledVoltages == nil {
+		coupledVoltages = make([][]float64, rows)
+		for r := 0; r < rows; r++ {
+			coupledVoltages[r] = make([]float64, cols)
+			for c := 0; c < cols; c++ {
+				if ca.deviceState != nil {
+					coupledVoltages[r][c] = ca.deviceState.GetEffectiveCellVoltage(r, c)
+				}
+			}
+		}
+	}
+	if coupledCurrents == nil {
+		coupledCurrents = make([][]float64, rows)
+		for r := 0; r < rows; r++ {
+			coupledCurrents[r] = make([]float64, cols)
+		}
+	}
+
+	sneakMetrics := computeSneakPathMetrics(coupledCurrents, selectedRow, selectedCol)
+	peripheralRows := buildPeripheralSnapshotRows(weights, coupledVoltages, coupledCurrents, selectedRow, selectedCol)
+
 	config := CircuitsExportConfig{
 		Metadata: *export.NewExportMetadata("module4-circuits"),
 		ArrayConfig: ArrayConfig{
-			Rows:         ca.arrayRows,
-			Cols:         ca.arrayCols,
-			QuantLevels:  ca.quantLevels,
-			Architecture: string(ca.architecture),
+			Rows:         rows,
+			Cols:         cols,
+			QuantLevels:  quantLevels,
+			Architecture: string(arch),
 		},
 		PeripheralConfig: PeripheralConfig{
 			DACBits:     ca.dacBits,
@@ -83,60 +139,69 @@ func (ca *CircuitsApp) exportSimulationData() {
 			ReadVoltage: ca.readVoltage,
 			TIAGain:     ca.tiaGain,
 		},
+		SimulationState: &SimulationState{
+			SelectedRow:  selectedRow,
+			SelectedCol:  selectedCol,
+			TargetLevel:  targetLevel,
+			CurrentLevel: currentLevel,
+			ArrayWeights: weights,
+			InputVector:  inputVector,
+			OutputVector: outputVector,
+			Timestamp:    time.Now(),
+		},
+		SneakMetrics:  &sneakMetrics,
+		TopSneakCells: sneakMetrics.TopAffectedCells,
+		ExportedFiles: map[string]string{},
 	}
 
-	// Add simulation state
-	ca.mu.RLock()
-	config.SimulationState = &SimulationState{
-		SelectedRow:  ca.selectedRow,
-		SelectedCol:  ca.selectedCol,
-		TargetLevel:  ca.targetLevel,
-		CurrentLevel: ca.arrayWeights[ca.selectedRow][ca.selectedCol],
-		ArrayWeights: ca.arrayWeights,
-		InputVector:  ca.inputVector,
-		OutputVector: ca.outputVector,
-		Timestamp:    time.Now(),
-	}
-	ca.mu.RUnlock()
-
-	// Export JSON configuration
-	exporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-config_%s", timestamp))
-	jsonResult := exporter.ExportJSON(config)
+	jsonExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-config_%s", timestamp))
+	jsonResult := jsonExporter.ExportJSON(config)
 	if jsonResult.Error != nil {
 		ca.showExportError(fmt.Sprintf("JSON export failed: %v", jsonResult.Error))
 		return
 	}
+	config.ExportedFiles["config_json"] = jsonResult.FilePath
 
-	// Export array weights as CSV
-	csvExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-weights_%s", timestamp))
-	
-	// Build headers (columns)
-	headers := make([]string, ca.arrayCols+1)
+	headers := make([]string, cols+1)
 	headers[0] = "Row"
-	for j := 0; j < ca.arrayCols; j++ {
+	for j := 0; j < cols; j++ {
 		headers[j+1] = fmt.Sprintf("Col%d", j)
 	}
-	
-	// Build rows
-	csvData := export.NewCSVData(headers...)
-	ca.mu.RLock()
-	for i := 0; i < ca.arrayRows; i++ {
-		row := make([]string, ca.arrayCols+1)
+	weightsCSV := export.NewCSVData(headers...)
+	for i := 0; i < rows; i++ {
+		row := make([]string, cols+1)
 		row[0] = fmt.Sprintf("%d", i)
-		for j := 0; j < ca.arrayCols; j++ {
-			row[j+1] = fmt.Sprintf("%d", ca.arrayWeights[i][j])
+		for j := 0; j < cols; j++ {
+			row[j+1] = fmt.Sprintf("%d", weights[i][j])
 		}
-		csvData.AddRow(row...)
+		weightsCSV.AddRow(row...)
 	}
-	ca.mu.RUnlock()
-	
-	csvResult := csvExporter.ExportCSV(csvData.Headers, csvData.Rows)
-	if csvResult.Error != nil {
-		ca.showExportError(fmt.Sprintf("CSV export failed: %v", csvResult.Error))
+	weightsExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-weights_%s", timestamp))
+	weightsResult := weightsExporter.ExportCSV(weightsCSV.Headers, weightsCSV.Rows)
+	if weightsResult.Error != nil {
+		ca.showExportError(fmt.Sprintf("Weights CSV export failed: %v", weightsResult.Error))
 		return
 	}
+	config.ExportedFiles["weights_csv"] = weightsResult.FilePath
 
-	ca.showExportSuccess(fmt.Sprintf("Exported:\n• %s\n• %s", jsonResult.FilePath, csvResult.FilePath))
+	peripheralCSV := peripheralSnapshotCSV(peripheralRows)
+	periphExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-peripheral_%s", timestamp))
+	periphResult := periphExporter.ExportCSV(peripheralCSV.Headers, peripheralCSV.Rows)
+	if periphResult.Error != nil {
+		ca.showExportError(fmt.Sprintf("Peripheral CSV export failed: %v", periphResult.Error))
+		return
+	}
+	config.ExportedFiles["peripheral_csv"] = periphResult.FilePath
+
+	if ca.window != nil {
+		vizExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
+		vizResult := vizExporter.ExportPNG(ca.window.Canvas().Capture())
+		if vizResult.Error == nil {
+			config.ExportedFiles["diagram_png"] = vizResult.FilePath
+		}
+	}
+
+	ca.showExportSuccess(fmt.Sprintf("Exported:\n• %s\n• %s\n• %s", jsonResult.FilePath, weightsResult.FilePath, periphResult.FilePath))
 }
 
 // exportVisualization exports the current visualization as a PNG
@@ -223,6 +288,12 @@ func (p *circuitsExportProvider) GetJSONConfig() (interface{}, error) {
 			TIAGain:     p.app.tiaGain,
 		},
 	}
+	if p.app.deviceState != nil {
+		_, currents := p.app.deviceState.GetCoupledCellSnapshot()
+		metrics := computeSneakPathMetrics(currents, p.app.deviceState.GetSelectedRow(), p.app.deviceState.GetSelectedCol())
+		config.SneakMetrics = &metrics
+		config.TopSneakCells = metrics.TopAffectedCells
+	}
 	return config, nil
 }
 
@@ -232,6 +303,45 @@ func (p *circuitsExportProvider) GetVisualization() (image.Image, error) {
 		return nil, fmt.Errorf("window not available")
 	}
 	return p.app.window.Canvas().Capture(), nil
+}
+
+func buildPeripheralSnapshotRows(weights [][]int, voltages [][]float64, currents [][]float64, selectedRow, selectedCol int) []peripheralSnapshotRow {
+	rows := make([]peripheralSnapshotRow, 0)
+	for r := range weights {
+		for c := range weights[r] {
+			cell := peripheralSnapshotRow{
+				Row:            r,
+				Col:            c,
+				WeightLevel:    weights[r][c],
+				IsTargetCell:   r == selectedRow && c == selectedCol,
+				IsHalfSelected: (r == selectedRow || c == selectedCol) && !(r == selectedRow && c == selectedCol),
+			}
+			if r < len(voltages) && c < len(voltages[r]) {
+				cell.CellVoltageV = voltages[r][c]
+			}
+			if r < len(currents) && c < len(currents[r]) {
+				cell.CellCurrentA = currents[r][c]
+			}
+			rows = append(rows, cell)
+		}
+	}
+	return rows
+}
+
+func peripheralSnapshotCSV(rows []peripheralSnapshotRow) *export.CSVData {
+	data := export.NewCSVData("Row", "Col", "WeightLevel", "CellVoltage_V", "CellCurrent_A", "IsTargetCell", "IsHalfSelected")
+	for _, row := range rows {
+		data.AddRow(
+			fmt.Sprintf("%d", row.Row),
+			fmt.Sprintf("%d", row.Col),
+			fmt.Sprintf("%d", row.WeightLevel),
+			fmt.Sprintf("%.9g", row.CellVoltageV),
+			fmt.Sprintf("%.9g", row.CellCurrentA),
+			fmt.Sprintf("%t", row.IsTargetCell),
+			fmt.Sprintf("%t", row.IsHalfSelected),
+		)
+	}
+	return data
 }
 
 // showExportError displays an export error dialog

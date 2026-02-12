@@ -643,10 +643,14 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 					}
 				}
 			}
-			// Draw warning label with sneak path count
-			sneakCount := (rows - 1) * (cols - 1)
-			warnText := fmt.Sprintf("0T1R: %d sneak paths, %d half-select", sneakCount, rows+cols-2)
-			drawSimpleText(img, warnText, 10, h-15, color.RGBA{255, 150, 100, 200})
+			// Draw quantified sneak impact: magnitude + affected cells + strongest offender.
+			_, coupledCurrents := ca.deviceState.GetCoupledCellSnapshot()
+			metrics := SneakPathMetrics{}
+			if coupledCurrents != nil {
+				metrics = computeSneakPathMetrics(coupledCurrents, selectedRow, selectedCol)
+			}
+			warnText := formatSneakPathSummary(metrics)
+			drawSimpleText(img, warnText, 10, h-15, color.RGBA{255, 150, 100, 220})
 		}
 	}
 

@@ -437,11 +437,11 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| PERIPH-1 | Export functionality (diagrams/data) | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 2-4hr |
+| PERIPH-1 | Export functionality (diagrams/data) | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
 | PERIPH-2 | Temperature-dependent INL/DNL model | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 2-4hr |
 | PERIPH-3 | Fast/slow/typical process corner analysis | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 4-8hr |
 | PERIPH-4 | Write-verify animation (iterative cycle) | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 2-4hr |
-| PERIPH-5 | Sneak path quantification display | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 1-2hr |
+| PERIPH-5 | Sneak path quantification display | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 1-2hr |
 
 ### Accessibility (from audit)
 
