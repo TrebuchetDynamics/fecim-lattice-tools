@@ -425,8 +425,8 @@ func TestBoundaryConductance_Extremes(t *testing.T) {
 		{"high", 0.9},
 		{"near-max", 0.99},
 		{"max", 1.0},
-		{"over-max", 1.5},    // Should clamp to 1.0
-		{"negative", -0.5},   // Should clamp to 0.0
+		{"over-max", 1.5},  // Should clamp to 1.0
+		{"negative", -0.5}, // Should clamp to 0.0
 		{"very-negative", -10.0},
 	}
 

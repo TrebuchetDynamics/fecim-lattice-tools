@@ -181,7 +181,7 @@ func TestGenerateOpenLaneConfig(t *testing.T) {
 	// Test critical variables
 	criticalVars := []string{
 		"DESIGN_NAME",
-		"FP_DEF_TEMPLATE",  // CRITICAL: must be this, not PLACEMENT_CURRENT_DEF
+		"FP_DEF_TEMPLATE", // CRITICAL: must be this, not PLACEMENT_CURRENT_DEF
 		"RUN_CTS",
 		"DESIGN_IS_CORE",
 		"SYNTH_ELABORATE_ONLY",

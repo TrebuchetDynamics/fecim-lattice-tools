@@ -83,6 +83,7 @@ type DemoCard struct {
 	info     DemoInfo
 	onTapped func()
 	minSize  fyne.Size
+	focused  bool
 }
 
 // NewDemoCard creates a new demo card
@@ -108,9 +109,36 @@ func (c *DemoCard) Tapped(*fyne.PointEvent) {
 
 func (c *DemoCard) TappedSecondary(*fyne.PointEvent) {}
 
+// FocusGained implements fyne.Focusable.
+func (c *DemoCard) FocusGained() {
+	c.focused = true
+	c.Refresh()
+}
+
+// FocusLost implements fyne.Focusable.
+func (c *DemoCard) FocusLost() {
+	c.focused = false
+	c.Refresh()
+}
+
+// TypedRune implements fyne.Focusable.
+func (c *DemoCard) TypedRune(_ rune) {}
+
+// TypedKey implements fyne.Focusable.
+func (c *DemoCard) TypedKey(ev *fyne.KeyEvent) {
+	if ev == nil {
+		return
+	}
+	if ev.Name == fyne.KeyReturn || ev.Name == fyne.KeySpace {
+		c.Tapped(nil)
+	}
+}
+
 func (c *DemoCard) CreateRenderer() fyne.WidgetRenderer {
 	return &demoCardRenderer{card: c}
 }
+
+var _ fyne.Focusable = (*DemoCard)(nil)
 
 type demoCardRenderer struct {
 	card    *DemoCard
@@ -174,6 +202,10 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 		subtitleColor = color.RGBA{100, 110, 120, 255}
 		descColor = color.RGBA{100, 110, 120, 255}
 		numberBgColor = color.RGBA{50, 60, 70, 255}
+	}
+
+	if r.card.focused {
+		borderColor = color.RGBA{255, 165, 0, 255}
 	}
 
 	// Height scaling for responsive layouts (base reference: 140px)
@@ -957,15 +989,16 @@ func (r *responsiveFooterRenderer) Destroy() {}
 func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	demos := GetDemos()
 
-	// Create demo cards
+	// Create demo cards with focus indicators for keyboard accessibility.
 	cards := make([]fyne.CanvasObject, len(demos))
 	for i, demo := range demos {
 		d := demo // Capture for closure
-		cards[i] = NewDemoCard(d, func() {
+		card := NewDemoCard(d, func() {
 			if onDemoSelected != nil {
 				onDemoSelected(d.Number)
 			}
 		})
+		cards[i] = sharedwidgets.WrapWithFocus(card)
 	}
 
 	// Create responsive header that scales with screen width

@@ -340,20 +340,20 @@ var CrossbarTooltips = struct {
 
 // MNISTTooltips contains all tooltips for the MNIST module.
 var MNISTTooltips = struct {
-	Levels       TooltipContent
-	Noise        TooltipContent
-	ADCBits      TooltipContent
-	DACBits      TooltipContent
-	Preprocess   TooltipContent
-	DrawCanvas   TooltipContent
-	Activations  TooltipContent
-	WeightMap    TooltipContent
-	Confidence   TooltipContent
-	Comparison   TooltipContent
-	Energy       TooltipContent
-	PresetIdeal  TooltipContent
-	PresetHW     TooltipContent
-	PresetNoisy  TooltipContent
+	Levels      TooltipContent
+	Noise       TooltipContent
+	ADCBits     TooltipContent
+	DACBits     TooltipContent
+	Preprocess  TooltipContent
+	DrawCanvas  TooltipContent
+	Activations TooltipContent
+	WeightMap   TooltipContent
+	Confidence  TooltipContent
+	Comparison  TooltipContent
+	Energy      TooltipContent
+	PresetIdeal TooltipContent
+	PresetHW    TooltipContent
+	PresetNoisy TooltipContent
 }{
 	Levels: TooltipContent{
 		Title:       "Quantization Levels",
@@ -648,18 +648,18 @@ var CircuitsTooltips = struct {
 
 // ComparisonTooltips contains all tooltips for the Comparison module.
 var ComparisonTooltips = struct {
-	Workload      TooltipContent
-	EnergyPerMAC  TooltipContent
-	Throughput    TooltipContent
-	PowerDraw     TooltipContent
-	CostPerOp     TooltipContent
-	TRL           TooltipContent
-	DRAM          TooltipContent
-	NAND          TooltipContent
-	GPU           TooltipContent
-	CPU           TooltipContent
-	FeCIM         TooltipContent
-	DataCenter    TooltipContent
+	Workload     TooltipContent
+	EnergyPerMAC TooltipContent
+	Throughput   TooltipContent
+	PowerDraw    TooltipContent
+	CostPerOp    TooltipContent
+	TRL          TooltipContent
+	DRAM         TooltipContent
+	NAND         TooltipContent
+	GPU          TooltipContent
+	CPU          TooltipContent
+	FeCIM        TooltipContent
+	DataCenter   TooltipContent
 }{
 	Workload: TooltipContent{
 		Title:       "Workload Selection",
@@ -802,16 +802,16 @@ var ComparisonTooltips = struct {
 
 // EDATooltips contains all tooltips for the EDA module.
 var EDATooltips = struct {
-	CellLibrary  TooltipContent
-	Placement    TooltipContent
-	Routing      TooltipContent
-	GDS          TooltipContent
-	DEF          TooltipContent
-	LEF          TooltipContent
-	DRC          TooltipContent
-	LVS          TooltipContent
-	Floorplan    TooltipContent
-	PowerGrid    TooltipContent
+	CellLibrary TooltipContent
+	Placement   TooltipContent
+	Routing     TooltipContent
+	GDS         TooltipContent
+	DEF         TooltipContent
+	LEF         TooltipContent
+	DRC         TooltipContent
+	LVS         TooltipContent
+	Floorplan   TooltipContent
+	PowerGrid   TooltipContent
 }{
 	CellLibrary: TooltipContent{
 		Title:       "Standard Cell Library",

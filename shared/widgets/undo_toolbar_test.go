@@ -85,10 +85,10 @@ func TestUndoRedoKeyHandler(t *testing.T) {
 
 func TestUndoStatusWidgetCreation(t *testing.T) {
 	manager := undo.NewManager(10)
-	
+
 	// Clear the onChange callback before creating widget to prevent fyne.Do issues
 	manager.SetOnChange(nil)
-	
+
 	status := NewUndoStatusWidget(manager)
 
 	if status == nil {

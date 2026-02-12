@@ -175,7 +175,7 @@ func TestManagerConcurrency(t *testing.T) {
 
 func TestGetThemeColors(t *testing.T) {
 	tests := []struct {
-		theme    ThemeType
+		theme        ThemeType
 		checkPrimary string
 	}{
 		{ThemeDark, "#00D4FF"},

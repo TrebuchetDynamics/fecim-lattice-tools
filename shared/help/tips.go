@@ -93,10 +93,10 @@ var quickTips = []QuickTip{
 
 // TipManager handles startup tips display.
 type TipManager struct {
-	tips       []QuickTip
-	prefs      fyne.Preferences
-	window     fyne.Window
-	currentIdx int
+	tips        []QuickTip
+	prefs       fyne.Preferences
+	window      fyne.Window
+	currentIdx  int
 	showOnStart bool
 }
 
@@ -148,7 +148,7 @@ func (tm *TipManager) ShowStartupTip() {
 	if !tm.showOnStart || tm.window == nil {
 		return
 	}
-	
+
 	tm.currentIdx = rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(tm.tips))
 	tm.showTipDialog()
 }
@@ -252,7 +252,7 @@ func (tb *TipBanner) CreateRenderer() fyne.WidgetRenderer {
 
 	leftContent := container.NewHBox(icon, container.NewVBox(title, content))
 	c := container.NewBorder(nil, nil, nil, dismissBtn, leftContent)
-	
+
 	// Add background
 	bg := canvas.NewRectangle(theme.OverlayBackgroundColor())
 	full := container.NewStack(bg, container.NewPadded(c))

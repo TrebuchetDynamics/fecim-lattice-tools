@@ -279,7 +279,7 @@ func TestResponsiveGridLayout_calculateLayout(t *testing.T) {
 		maxWidth   float32 // item width should not exceed MaxItemWidth
 	}{
 		{"Mobile single column", 400, 1, 550},
-		{"Desktop two columns", 1200, 2, 550},    // Capped at MaxItemWidth
+		{"Desktop two columns", 1200, 2, 550},      // Capped at MaxItemWidth
 		{"Ultra-wide three columns", 1800, 3, 550}, // Capped at MaxItemWidth
 	}
 

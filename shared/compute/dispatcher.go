@@ -25,8 +25,9 @@ func DefaultWorkgroup() WorkgroupConfig {
 // Returns (groupCountX, groupCountY, groupCountZ).
 //
 // Example:
-//   totalElements = 1000, LocalSizeX = 256
-//   Returns (4, 1, 1) - 4 workgroups of 256 = 1024 threads
+//
+//	totalElements = 1000, LocalSizeX = 256
+//	Returns (4, 1, 1) - 4 workgroups of 256 = 1024 threads
 func CalculateDispatchSize(totalElements uint32, config WorkgroupConfig) (uint32, uint32, uint32) {
 	if totalElements == 0 {
 		return 0, 0, 0
@@ -41,8 +42,9 @@ func CalculateDispatchSize(totalElements uint32, config WorkgroupConfig) (uint32
 // Returns (groupCountX, groupCountY, groupCountZ).
 //
 // Example:
-//   width = 1024, height = 768, LocalSizeX = 16, LocalSizeY = 16
-//   Returns (64, 48, 1) - 64×48 = 3072 workgroups
+//
+//	width = 1024, height = 768, LocalSizeX = 16, LocalSizeY = 16
+//	Returns (64, 48, 1) - 64×48 = 3072 workgroups
 func CalculateDispatchSize2D(width, height uint32, config WorkgroupConfig) (uint32, uint32, uint32) {
 	if width == 0 || height == 0 {
 		return 0, 0, 0

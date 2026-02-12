@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
 )
 
@@ -271,5 +272,26 @@ func TestDrawPreviewThumbnailEdgeCases(t *testing.T) {
 	objects = drawPreviewThumbnail(2, 100, 100, 200, 150, accentColor)
 	if len(objects) == 0 {
 		t.Error("Preview should generate objects with larger size")
+	}
+}
+
+func TestDemoCardKeyboardActivation(t *testing.T) {
+	called := false
+	card := NewDemoCard(DemoInfo{Number: 1, Ready: true}, func() { called = true })
+	card.TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
+	if !called {
+		t.Fatal("enter key should activate demo card")
+	}
+}
+
+func TestDemoCardFocusState(t *testing.T) {
+	card := NewDemoCard(DemoInfo{Number: 1, Ready: true}, nil)
+	card.FocusGained()
+	if !card.focused {
+		t.Fatal("card should be focused after FocusGained")
+	}
+	card.FocusLost()
+	if card.focused {
+		t.Fatal("card should not be focused after FocusLost")
 	}
 }

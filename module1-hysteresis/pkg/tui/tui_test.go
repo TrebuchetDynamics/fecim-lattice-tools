@@ -708,11 +708,11 @@ func TestUpdateSimulationDiscreteLevelBounds(t *testing.T) {
 		normalizedP   float64
 		expectedLevel int
 	}{
-		{-1.0, 0},   // Min
-		{0.0, 15},   // Middle
-		{1.0, 29},   // Max
-		{-2.0, 0},   // Below min (should clamp)
-		{2.0, 29},   // Above max (should clamp)
+		{-1.0, 0}, // Min
+		{0.0, 15}, // Middle
+		{1.0, 29}, // Max
+		{-2.0, 0}, // Below min (should clamp)
+		{2.0, 29}, // Above max (should clamp)
 	}
 
 	for _, tc := range testCases {

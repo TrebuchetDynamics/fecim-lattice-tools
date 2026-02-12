@@ -12,11 +12,11 @@ import (
 
 // Manager handles preset storage, retrieval, and organization
 type Manager struct {
-	mu           sync.RWMutex
-	presets      map[string]*Preset // ID -> Preset
-	presetsDir   string
-	providers    map[Module]PresetProvider
-	changeHooks  []func(preset *Preset, action string)
+	mu          sync.RWMutex
+	presets     map[string]*Preset // ID -> Preset
+	presetsDir  string
+	providers   map[Module]PresetProvider
+	changeHooks []func(preset *Preset, action string)
 }
 
 // NewManager creates a new preset manager

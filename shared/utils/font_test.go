@@ -34,9 +34,9 @@ func TestDrawSimpleText(t *testing.T) {
 
 func TestDrawSimpleChar(t *testing.T) {
 	tests := []struct {
-		char    rune
-		exists  bool
-		name    string
+		char   rune
+		exists bool
+		name   string
 	}{
 		{'0', true, "digit 0"},
 		{'9', true, "digit 9"},
@@ -168,9 +168,9 @@ func TestDrawTextMultipleCharacters(t *testing.T) {
 		startX int
 		endX   int
 	}{
-		{5, 10},   // A
-		{12, 17},  // B
-		{19, 24},  // C
+		{5, 10},  // A
+		{12, 17}, // B
+		{19, 24}, // C
 	}
 
 	for i, region := range regions {

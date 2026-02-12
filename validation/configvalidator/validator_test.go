@@ -161,15 +161,15 @@ func TestValidateCalibrationConfig(t *testing.T) {
 			expectErrs:  []string{"temperature_k", "between"},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateJSON([]byte(tt.json))
-			
+
 			if result.Valid != tt.expectValid {
 				t.Errorf("expected valid=%v, got valid=%v\nErrors: %v", tt.expectValid, result.Valid, result.Errors)
 			}
-			
+
 			for _, errStr := range tt.expectErrs {
 				found := false
 				for _, err := range result.Errors {
@@ -182,7 +182,7 @@ func TestValidateCalibrationConfig(t *testing.T) {
 					t.Errorf("expected error containing %q, but not found. Errors: %v", errStr, result.Errors)
 				}
 			}
-			
+
 			for _, warnStr := range tt.expectWarns {
 				found := false
 				for _, warn := range result.Warnings {
@@ -293,15 +293,15 @@ func TestValidatePreisachConfig(t *testing.T) {
 			expectErrs:  []string{"correlation", "between"},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateJSON([]byte(tt.json))
-			
+
 			if result.Valid != tt.expectValid {
 				t.Errorf("expected valid=%v, got valid=%v\nErrors: %v", tt.expectValid, result.Valid, result.Errors)
 			}
-			
+
 			for _, errStr := range tt.expectErrs {
 				found := false
 				for _, err := range result.Errors {
@@ -379,15 +379,15 @@ func TestValidateWeightMatrixConfig(t *testing.T) {
 			expectErrs:  []string{"name", "empty"},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateJSON([]byte(tt.json))
-			
+
 			if result.Valid != tt.expectValid {
 				t.Errorf("expected valid=%v, got valid=%v\nErrors: %v", tt.expectValid, result.Valid, result.Errors)
 			}
-			
+
 			for _, errStr := range tt.expectErrs {
 				found := false
 				for _, err := range result.Errors {
@@ -471,15 +471,15 @@ func TestValidateOpenLaneConfig(t *testing.T) {
 			expectErrs:  []string{"DIE_AREA", "x1 must be greater"},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateJSON([]byte(tt.json))
-			
+
 			if result.Valid != tt.expectValid {
 				t.Errorf("expected valid=%v, got valid=%v\nErrors: %v", tt.expectValid, result.Valid, result.Errors)
 			}
-			
+
 			for _, errStr := range tt.expectErrs {
 				found := false
 				for _, err := range result.Errors {
@@ -597,15 +597,15 @@ func TestValidateArrayDesignConfig(t *testing.T) {
 			expectErrs:  []string{"g_max", "greater than g_min"},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateJSON([]byte(tt.json))
-			
+
 			if result.Valid != tt.expectValid {
 				t.Errorf("expected valid=%v, got valid=%v\nErrors: %v", tt.expectValid, result.Valid, result.Errors)
 			}
-			
+
 			for _, errStr := range tt.expectErrs {
 				found := false
 				for _, err := range result.Errors {
@@ -660,14 +660,14 @@ func TestDetectConfigType(t *testing.T) {
 			expectType: ConfigTypeUnknown,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var data map[string]any
 			if err := json.Unmarshal([]byte(tt.json), &data); err != nil {
 				t.Fatalf("failed to parse JSON: %v", err)
 			}
-			
+
 			configType := detectConfigType(data)
 			if configType != tt.expectType {
 				t.Errorf("expected config type %s, got %s", tt.expectType, configType)
@@ -682,16 +682,16 @@ func TestValidateInvalidJSON(t *testing.T) {
 	invalidJSONs := []string{
 		`{invalid json}`,
 		`{"unclosed": "string`,
-		``,          // Empty
+		``, // Empty
 	}
-	
+
 	for _, js := range invalidJSONs {
 		result := ValidateJSON([]byte(js))
 		if result.Valid {
 			t.Errorf("expected invalid JSON to fail validation: %s", js)
 		}
 	}
-	
+
 	// JSON array is valid JSON but not a config object - should be valid with warning
 	arrayResult := ValidateJSON([]byte(`[1, 2, 3]`))
 	if !arrayResult.Valid {
@@ -714,9 +714,9 @@ func TestValidationResultString(t *testing.T) {
 	}
 	result.AddError("version", "missing required field", nil)
 	result.AddWarning("saved_at", "invalid timestamp", "bad-date")
-	
+
 	str := result.String()
-	
+
 	if !strings.Contains(str, "INVALID") {
 		t.Error("expected 'INVALID' in result string")
 	}
@@ -741,11 +741,11 @@ func TestValidateRealConfigs(t *testing.T) {
 					if err != nil {
 						t.Fatalf("failed to validate file: %v", err)
 					}
-					
+
 					if result.ConfigType != string(ConfigTypeCalibration) {
 						t.Errorf("expected calibration type, got %s", result.ConfigType)
 					}
-					
+
 					// Log any errors/warnings for debugging
 					if !result.Valid {
 						t.Logf("Validation issues in %s:\n%s", f.Name(), result.String())
@@ -754,7 +754,7 @@ func TestValidateRealConfigs(t *testing.T) {
 			}
 		}
 	}
-	
+
 	// Test preisach state configs
 	preisachDir := "../../data/preisach_states"
 	if files, err := os.ReadDir(preisachDir); err == nil {
@@ -766,11 +766,11 @@ func TestValidateRealConfigs(t *testing.T) {
 					if err != nil {
 						t.Fatalf("failed to validate file: %v", err)
 					}
-					
+
 					if result.ConfigType != string(ConfigTypePreisach) {
 						t.Errorf("expected preisach type, got %s", result.ConfigType)
 					}
-					
+
 					if !result.Valid {
 						t.Logf("Validation issues in %s:\n%s", f.Name(), result.String())
 					}
@@ -778,7 +778,7 @@ func TestValidateRealConfigs(t *testing.T) {
 			}
 		}
 	}
-	
+
 	// Test weight matrix configs
 	weightsDir := "../../module6-eda/data"
 	if files, err := os.ReadDir(weightsDir); err == nil {
@@ -790,7 +790,7 @@ func TestValidateRealConfigs(t *testing.T) {
 					if err != nil {
 						t.Fatalf("failed to validate file: %v", err)
 					}
-					
+
 					if !result.Valid {
 						t.Logf("Validation issues in %s:\n%s", f.Name(), result.String())
 					}
@@ -822,10 +822,10 @@ func BenchmarkValidateCalibration(b *testing.B) {
 			}
 		}
 	}`
-	
+
 	data := []byte(calibJSON)
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		ValidateJSON(data)
 	}

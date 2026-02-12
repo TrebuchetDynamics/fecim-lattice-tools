@@ -10,18 +10,19 @@ import (
 )
 
 // Property categories organized by role in the Frankenstein L-K equation:
-//   ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
-//   ρ_eff = ρ + (R_series·A)/d
-//   α(T,σ) = (T-Tc)/(2ε₀C) - 2Q₁₂σ
+//
+//	ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
+//	ρ_eff = ρ + (R_series·A)/d
+//	α(T,σ) = (T-Tc)/(2ε₀C) - 2Q₁₂σ
 const (
-	CategoryCore         = "Core (Pr, Ps, Ec)"      // Reference polarization/field
-	CategoryGeometry     = "Geometry (A, d)"        // For ρ_eff calculation
-	CategoryLandau       = "Landau (β, γ, ρ)"       // L-K coefficients
-	CategoryAlpha        = "Alpha (Tc, C, Q₁₂, σ)"  // Dynamic stiffness α(T,σ)
-	CategoryDepol        = "Depolarization (k_dep)" // Slanted loop
-	CategoryCircuit      = "Circuit (R_series)"     // Series resistance
-	CategoryNLS          = "NLS (τ∞, Ea)"           // Merz law dynamics
-	CategoryConductance  = "Conductance (G)"        // P→G mapping
+	CategoryCore        = "Core (Pr, Ps, Ec)"      // Reference polarization/field
+	CategoryGeometry    = "Geometry (A, d)"        // For ρ_eff calculation
+	CategoryLandau      = "Landau (β, γ, ρ)"       // L-K coefficients
+	CategoryAlpha       = "Alpha (Tc, C, Q₁₂, σ)"  // Dynamic stiffness α(T,σ)
+	CategoryDepol       = "Depolarization (k_dep)" // Slanted loop
+	CategoryCircuit     = "Circuit (R_series)"     // Series resistance
+	CategoryNLS         = "NLS (τ∞, Ea)"           // Merz law dynamics
+	CategoryConductance = "Conductance (G)"        // P→G mapping
 )
 
 // ModelUsage indicates which physics models use a parameter.
@@ -56,9 +57,9 @@ type FormattedProperty struct {
 
 // Model usage markers
 var (
-	lkModel      = ModelUsage{LandauKh: true}
+	lkModel       = ModelUsage{LandauKh: true}
 	preisachModel = ModelUsage{Preisach: true}
-	bothModels   = ModelUsage{LandauKh: true, Preisach: true}
+	bothModels    = ModelUsage{LandauKh: true, Preisach: true}
 )
 
 // FormatPolarization converts C/m² to µC/cm² display string.
@@ -210,7 +211,8 @@ func FormatPercent(v float64) string {
 
 // GetMaterialProperties extracts properties relevant to the Frankenstein L-K equation.
 // Parameters are organized by their role in:
-//   ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
+//
+//	ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
 func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 	props := []FormattedProperty{}
 

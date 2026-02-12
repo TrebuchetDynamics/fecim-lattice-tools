@@ -14,11 +14,11 @@ import (
 // UndoToolbar provides undo/redo buttons with keyboard shortcut support.
 type UndoToolbar struct {
 	widget.BaseWidget
-	manager    *undo.Manager
-	undoBtn    *widget.Button
-	redoBtn    *widget.Button
-	container  *fyne.Container
-	
+	manager   *undo.Manager
+	undoBtn   *widget.Button
+	redoBtn   *widget.Button
+	container *fyne.Container
+
 	// Optional: show tooltips with action descriptions
 	showTooltips bool
 }
@@ -181,13 +181,13 @@ func NewUndoStatusWidget(manager *undo.Manager) *UndoStatusWidget {
 func (w *UndoStatusWidget) updateLabel() {
 	undoCount := w.manager.UndoCount()
 	redoCount := w.manager.RedoCount()
-	
+
 	text := fmt.Sprintf("Undo: %d | Redo: %d", undoCount, redoCount)
-	
+
 	if desc := w.manager.UndoDescription(); desc != "" && undoCount > 0 {
 		text = fmt.Sprintf("Undo (%d): %s | Redo: %d", undoCount, desc, redoCount)
 	}
-	
+
 	w.label.SetText(text)
 }
 
@@ -200,9 +200,9 @@ func (w *UndoStatusWidget) CreateRenderer() fyne.WidgetRenderer {
 // This is useful for adding keyboard support to existing containers.
 type WithUndoKeyboard struct {
 	widget.BaseWidget
-	content  fyne.CanvasObject
-	handler  *UndoRedoKeyHandler
-	window   fyne.Window
+	content fyne.CanvasObject
+	handler *UndoRedoKeyHandler
+	window  fyne.Window
 }
 
 // NewWithUndoKeyboard wraps content with undo/redo keyboard handling.
@@ -213,25 +213,25 @@ func NewWithUndoKeyboard(content fyne.CanvasObject, manager *undo.Manager, windo
 		window:  window,
 	}
 	w.ExtendBaseWidget(w)
-	
+
 	// Install keyboard handler on the window canvas
 	if window != nil {
 		w.installKeyboardHandler(window)
 	}
-	
+
 	return w
 }
 
 // installKeyboardHandler sets up the window to handle undo/redo shortcuts.
 func (w *WithUndoKeyboard) installKeyboardHandler(window fyne.Window) {
 	canvas := window.Canvas()
-	
+
 	// Add keyboard shortcut for Ctrl+Z
 	canvas.AddShortcut(&fyne.ShortcutUndo{}, func(_ fyne.Shortcut) {
 		w.handler.manager.Undo()
 		DebugInteraction("Undo (shortcut)")
 	})
-	
+
 	// Add keyboard shortcut for Ctrl+Y (and Ctrl+Shift+Z is handled by Fyne as ShortcutRedo)
 	canvas.AddShortcut(&fyne.ShortcutRedo{}, func(_ fyne.Shortcut) {
 		w.handler.manager.Redo()

@@ -173,8 +173,8 @@ func TestHighContrastThemeLargerText(t *testing.T) {
 
 func TestGetContrastColor(t *testing.T) {
 	tests := []struct {
-		name    string
-		bgColor color.Color
+		name      string
+		bgColor   color.Color
 		wantLight bool // true = expect white, false = expect black
 	}{
 		{"Dark background", color.RGBA{0, 50, 100, 255}, true},
@@ -265,8 +265,8 @@ func TestThemeIcon(t *testing.T) {
 func TestColorConstants(t *testing.T) {
 	// Verify key color constants
 	tests := []struct {
-		name  string
-		color color.RGBA
+		name       string
+		color      color.RGBA
 		r, g, b, a uint8
 	}{
 		{"DarkPrimary", DarkPrimary, 0, 212, 255, 255},

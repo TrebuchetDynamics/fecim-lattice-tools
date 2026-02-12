@@ -78,7 +78,7 @@ func TestFeCIMError(t *testing.T) {
 		err := ConfigError("config missing").
 			WithDetails("looked in /etc/app/config.yaml").
 			WithRecovery("create the config file")
-		
+
 		msg := err.FullMessage()
 		if !strings.Contains(msg, "Configuration") {
 			t.Error("FullMessage should include category")
@@ -190,7 +190,7 @@ func TestErrorExtraction(t *testing.T) {
 	t.Run("GetFeCIMError with wrapped", func(t *testing.T) {
 		inner := DataError("corrupt")
 		outer := fmt.Errorf("wrapping: %w", inner)
-		
+
 		extracted := GetFeCIMError(outer)
 		if extracted == nil {
 			t.Error("should extract wrapped FeCIMError")
@@ -259,7 +259,7 @@ func TestLocation(t *testing.T) {
 func TestWrapWithCategory(t *testing.T) {
 	inner := errors.New("file not found")
 	wrapped := WrapWithCategory(inner, CategoryIO, "failed to load config")
-	
+
 	if wrapped.Category != CategoryIO {
 		t.Errorf("expected CategoryIO, got %v", wrapped.Category)
 	}
@@ -274,7 +274,7 @@ func TestWrapWithCategory(t *testing.T) {
 func TestWrapPreservesCategory(t *testing.T) {
 	inner := DataError("invalid JSON")
 	outer := Wrap(inner, "parse failed")
-	
+
 	if outer.Category != CategoryData {
 		t.Errorf("Wrap should preserve category, got %v", outer.Category)
 	}

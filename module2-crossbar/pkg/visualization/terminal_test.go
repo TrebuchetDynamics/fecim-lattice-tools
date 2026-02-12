@@ -302,12 +302,12 @@ func TestShowNeuralNetworkInference(t *testing.T) {
 			},
 		},
 		{
-			name:          "no activations",
-			layers:        0,
-			input:         []float64{0.5},
-			activations:   [][]float64{},
-			prediction:    0,
-			confidence:    0.5,
+			name:        "no activations",
+			layers:      0,
+			input:       []float64{0.5},
+			activations: [][]float64{},
+			prediction:  0,
+			confidence:  0.5,
 			expectedParts: []string{
 				"Predicted digit: 0",
 			},
@@ -529,13 +529,13 @@ func TestLevelToChar(t *testing.T) {
 		level        int
 		expectedChar string
 	}{
-		{0, " "},     // Lowest level
-		{7, "░"},     // Low level
-		{15, "▒"},    // Medium level
-		{22, "▓"},    // High level
-		{29, "█"},    // Highest level
-		{30, "█"},    // Beyond max (clamped)
-		{100, "█"},   // Far beyond max (clamped)
+		{0, " "},   // Lowest level
+		{7, "░"},   // Low level
+		{15, "▒"},  // Medium level
+		{22, "▓"},  // High level
+		{29, "█"},  // Highest level
+		{30, "█"},  // Beyond max (clamped)
+		{100, "█"}, // Far beyond max (clamped)
 	}
 
 	for _, tt := range tests {
@@ -559,12 +559,12 @@ func TestLevelToColor(t *testing.T) {
 		level         int
 		expectedColor string
 	}{
-		{0, "\033[94m"},   // Blue (low)
-		{9, "\033[94m"},   // Blue
-		{10, "\033[97m"},  // White (mid)
-		{19, "\033[97m"},  // White
-		{20, "\033[91m"},  // Red (high)
-		{29, "\033[91m"},  // Red
+		{0, "\033[94m"},  // Blue (low)
+		{9, "\033[94m"},  // Blue
+		{10, "\033[97m"}, // White (mid)
+		{19, "\033[97m"}, // White
+		{20, "\033[91m"}, // Red (high)
+		{29, "\033[91m"}, // Red
 	}
 
 	for _, tt := range tests {
@@ -588,16 +588,16 @@ func TestValueToBar(t *testing.T) {
 		value       float64
 		expectedBar string
 	}{
-		{0.0, "▁"},    // 0.0 * 7 = 0 -> bars[0]
-		{0.14, "▁"},   // 0.14 * 7 = 0.98 -> int(0.98) = 0 -> bars[0]
-		{0.28, "▂"},   // 0.28 * 7 = 1.96 -> int(1.96) = 1 -> bars[1]
-		{0.42, "▃"},   // 0.42 * 7 = 2.94 -> int(2.94) = 2 -> bars[2]
-		{0.57, "▄"},   // 0.57 * 7 = 3.99 -> int(3.99) = 3 -> bars[3]
-		{0.71, "▅"},   // 0.71 * 7 = 4.97 -> int(4.97) = 4 -> bars[4]
-		{0.85, "▆"},   // 0.85 * 7 = 5.95 -> int(5.95) = 5 -> bars[5]
-		{1.0, "█"},    // 1.0 * 7 = 7 -> int(7) = 7 -> bars[7]
-		{-0.5, "▁"},   // Clamped to 0
-		{1.5, "█"},    // Clamped to 1
+		{0.0, "▁"},  // 0.0 * 7 = 0 -> bars[0]
+		{0.14, "▁"}, // 0.14 * 7 = 0.98 -> int(0.98) = 0 -> bars[0]
+		{0.28, "▂"}, // 0.28 * 7 = 1.96 -> int(1.96) = 1 -> bars[1]
+		{0.42, "▃"}, // 0.42 * 7 = 2.94 -> int(2.94) = 2 -> bars[2]
+		{0.57, "▄"}, // 0.57 * 7 = 3.99 -> int(3.99) = 3 -> bars[3]
+		{0.71, "▅"}, // 0.71 * 7 = 4.97 -> int(4.97) = 4 -> bars[4]
+		{0.85, "▆"}, // 0.85 * 7 = 5.95 -> int(5.95) = 5 -> bars[5]
+		{1.0, "█"},  // 1.0 * 7 = 7 -> int(7) = 7 -> bars[7]
+		{-0.5, "▁"}, // Clamped to 0
+		{1.5, "█"},  // Clamped to 1
 	}
 
 	for _, tt := range tests {
@@ -652,13 +652,13 @@ func TestIRDropToColor(t *testing.T) {
 		value         float64
 		expectedColor string
 	}{
-		{0.0, "\033[92m"},   // Green
+		{0.0, "\033[92m"}, // Green
 		{0.1, "\033[92m"},
-		{0.2, "\033[93m"},   // Yellow
+		{0.2, "\033[93m"}, // Yellow
 		{0.3, "\033[93m"},
-		{0.4, "\033[91m"},   // Red
+		{0.4, "\033[91m"}, // Red
 		{0.6, "\033[91m"},
-		{0.7, "\033[95m"},   // Magenta
+		{0.7, "\033[95m"}, // Magenta
 		{1.0, "\033[95m"},
 	}
 
@@ -714,13 +714,13 @@ func TestSneakToColor(t *testing.T) {
 		value         float64
 		expectedColor string
 	}{
-		{0.0, "\033[90m"},   // Dark gray
+		{0.0, "\033[90m"}, // Dark gray
 		{0.05, "\033[90m"},
-		{0.1, "\033[94m"},   // Blue
+		{0.1, "\033[94m"}, // Blue
 		{0.2, "\033[94m"},
-		{0.3, "\033[93m"},   // Yellow
+		{0.3, "\033[93m"}, // Yellow
 		{0.5, "\033[93m"},
-		{0.6, "\033[91m"},   // Red
+		{0.6, "\033[91m"}, // Red
 		{1.0, "\033[91m"},
 	}
 
@@ -762,9 +762,9 @@ func TestShowCrossbarStateWithDifferentValues(t *testing.T) {
 	defer array.Destroy()
 
 	// Set some specific conductance values using ProgramWeight
-	array.ProgramWeight(0, 0, 0.0)  // Min
-	array.ProgramWeight(0, 1, 0.5)  // Mid
-	array.ProgramWeight(0, 2, 1.0)  // Max
+	array.ProgramWeight(0, 0, 0.0) // Min
+	array.ProgramWeight(0, 1, 0.5) // Mid
+	array.ProgramWeight(0, 2, 1.0) // Max
 
 	vis := NewTerminalVisualizer(array, false)
 

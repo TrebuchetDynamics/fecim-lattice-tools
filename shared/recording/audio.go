@@ -31,8 +31,8 @@ type AudioMonitor struct {
 	mu sync.RWMutex
 
 	// State
-	isRunning   atomic.Bool
-	stopChan    chan struct{}
+	isRunning    atomic.Bool
+	stopChan     chan struct{}
 	currentLevel atomic.Int32 // 0-100 percentage
 	peakLevel    atomic.Int32 // Peak level for visualization
 

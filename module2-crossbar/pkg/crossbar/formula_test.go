@@ -348,13 +348,13 @@ func TestQuantizationTo30Levels(t *testing.T) {
 		expected int
 	}{
 		{0.0, 0},
-		{0.017, 0},   // Just below level 1 threshold
-		{0.034, 1},   // Level 1
-		{0.5, 15},    // Midpoint (level 14-15)
-		{0.966, 28},  // Level 28
-		{1.0, 29},    // Max level
-		{-0.5, 0},    // Clamp negative to 0
-		{1.5, 29},    // Clamp overflow to 29
+		{0.017, 0},  // Just below level 1 threshold
+		{0.034, 1},  // Level 1
+		{0.5, 15},   // Midpoint (level 14-15)
+		{0.966, 28}, // Level 28
+		{1.0, 29},   // Max level
+		{-0.5, 0},   // Clamp negative to 0
+		{1.5, 29},   // Clamp overflow to 29
 	}
 
 	for _, tc := range testCases {
@@ -376,8 +376,8 @@ func TestADCDACQuantization(t *testing.T) {
 		input    float64
 		expected float64
 	}{
-		{4, 0.5, 8.0 / 15},  // 4-bit: 16 levels, level 8
-		{8, 0.5, 128.0 / 255}, // 8-bit: 256 levels, level 128
+		{4, 0.5, 8.0 / 15},       // 4-bit: 16 levels, level 8
+		{8, 0.5, 128.0 / 255},    // 8-bit: 256 levels, level 128
 		{12, 0.5, 2048.0 / 4095}, // 12-bit: 4096 levels, level 2048
 	}
 
@@ -408,7 +408,7 @@ func TestADCDACQuantization(t *testing.T) {
 
 			// Verify result is quantized (within one quantum)
 			if math.Mod(result[0], quantumSize) > quantumSize*0.1 &&
-			   math.Mod(result[0], quantumSize) < quantumSize*0.9 {
+				math.Mod(result[0], quantumSize) < quantumSize*0.9 {
 				t.Errorf("Result %.6f not properly quantized (quantum=%.6f)", result[0], quantumSize)
 			}
 

@@ -127,13 +127,13 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		minStep = emax
 	}
 	return &WriteController{
-		NumLevels:       numLevels,
-		EcField:         ec,
-		MaxField:        emax,
-		MinStep:         minStep, // Avoid overly tiny steps near target
-		MaxRetries:      0,       // Unlimited pulses per attempt (no forced reset)
-		ForceResetLimit: 0,       // Unlimited resets by default (never give up)
-		PulseDuration:            0.15, // Default safe value
+		NumLevels:                numLevels,
+		EcField:                  ec,
+		MaxField:                 emax,
+		MinStep:                  minStep, // Avoid overly tiny steps near target
+		MaxRetries:               0,       // Unlimited pulses per attempt (no forced reset)
+		ForceResetLimit:          0,       // Unlimited resets by default (never give up)
+		PulseDuration:            0.15,    // Default safe value
 		CalibManager:             calib,
 		State:                    StateIdle,
 		EnableLKMidOptimizations: false,

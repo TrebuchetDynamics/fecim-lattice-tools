@@ -179,9 +179,9 @@ func DefaultHZO() *HZOMaterial {
 func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "Literature Superlattice (Cheema 2020)",
-		Pr:              50e-2,   // 50 μC/cm² (superlattice enhanced) [5]
-		Ps:              55e-2,   // 55 μC/cm²
-		Ec:              0.85e8,  // 0.85 MV/cm (Nature Commun. 2025) [3]
+		Pr:              50e-2,  // 50 μC/cm² (superlattice enhanced) [5]
+		Ps:              55e-2,  // 55 μC/cm²
+		Ec:              0.85e8, // 0.85 MV/cm (Nature Commun. 2025) [3]
 		Epsilon:         35,
 		EpsilonLF:       50,
 		LossAngle:       0.015,
@@ -195,8 +195,8 @@ func LiteratureSuperlattice() *HZOMaterial {
 		CurieConst:      1.5e5,
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e10,    // 10^10 verified [3][4], 10^12 claimed but rare
-		RetentionTime:   3.15e8,  // 10-year at 85°C verified
+		EnduranceCycles: 1e10,   // 10^10 verified [3][4], 10^12 claimed but rare
+		RetentionTime:   3.15e8, // 10-year at 85°C verified
 		ImrintField:     0.5e6,
 		NumLevels:       64,      // Enhanced superlattice can achieve more states
 		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps (≈Pr) for reachability under depolarization/relaxation
@@ -498,16 +498,16 @@ func AlScN() *HZOMaterial {
 		EnduranceCycles: 1e9, // 10^9 cycles
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
-		NumLevels: 12, // 8-16 states (high Ec limits granularity)
+		NumLevels:       12, // 8-16 states (high Ec limits granularity)
 		// AlScN switching defaults are estimated placeholders anchored to
 		// reported high-field/faster-switching trends, pending full calibration.
 		// References to calibrate against:
 		//   - APL Materials (2023), doi:10.1063/5.0148068
 		//   - Nature Communications (2025), doi:10.1038/s41467-025-62904-6
-		Tau0NLS:         1e-11,  // 10 ps estimated attempt time (placeholder)
-		EaNLS:           22e8,   // 22 MV/cm estimated activation field (placeholder)
-		Gmin:            0.2e-6, // 0.2 µS at HRS (high Pr → excellent off state)
-		Gmax:            300e-6, // 300 µS at LRS (very high Pr → strong modulation)
+		Tau0NLS: 1e-11,  // 10 ps estimated attempt time (placeholder)
+		EaNLS:   22e8,   // 22 MV/cm estimated activation field (placeholder)
+		Gmin:    0.2e-6, // 0.2 µS at HRS (high Pr → excellent off state)
+		Gmax:    300e-6, // 300 µS at LRS (very high Pr → strong modulation)
 	}
 }
 

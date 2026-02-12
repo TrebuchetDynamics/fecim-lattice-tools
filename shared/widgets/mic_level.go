@@ -18,8 +18,8 @@ type MicLevel struct {
 	widget.BaseWidget
 
 	mu           sync.RWMutex
-	level        int  // 0-100
-	peak         int  // 0-100
+	level        int // 0-100
+	peak         int // 0-100
 	isMonitoring bool
 	isRecording  bool
 

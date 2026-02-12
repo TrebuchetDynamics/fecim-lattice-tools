@@ -346,7 +346,7 @@ func runTutorial(id string) {
 	ctrl.Start()
 
 	// Wait for completion (use shorter durations for text demo)
-	time.Sleep(time.Duration(len(tutorial.Steps)*100) * time.Millisecond + 500*time.Millisecond)
+	time.Sleep(time.Duration(len(tutorial.Steps)*100)*time.Millisecond + 500*time.Millisecond)
 }
 
 func runAnimation(name string) {

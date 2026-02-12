@@ -12,15 +12,15 @@ import (
 func RunYosysCheck(verilogPath string) (string, error) {
 	// Command: yosys -p "read_verilog <file>; hierarchy -check; check"
 	cmdStr := fmt.Sprintf("read_verilog %s; hierarchy -check; check", verilogPath)
-	
+
 	cmd := exec.Command("yosys", "-p", cmdStr)
-	
+
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
 	cmd.Stderr = &errBuf
 
 	err := cmd.Run()
-	
+
 	output := outBuf.String()
 	if err != nil {
 		// Append stderr if there was an error

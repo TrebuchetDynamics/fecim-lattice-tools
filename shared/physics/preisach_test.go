@@ -98,8 +98,8 @@ func TestPreisachStack_Update_WipeOut(t *testing.T) {
 	ps := NewPreisachStack(sat, everett)
 
 	// Create a minor loop: go up to 0.5, down to 0.2, then up past 0.5
-	ps.Update(0.5)  // Up
-	ps.Update(0.2)  // Down
+	ps.Update(0.5) // Up
+	ps.Update(0.2) // Down
 	stackBeforeWipe := len(ps.Stack)
 
 	// Now exceed the previous max - should wipe out the minor loop

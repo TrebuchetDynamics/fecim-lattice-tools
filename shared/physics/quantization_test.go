@@ -14,7 +14,7 @@ func TestQuantizeToLevels(t *testing.T) {
 	}{
 		{"zero", 0.0, 30, 0.0},
 		{"one", 1.0, 30, 1.0},
-		{"mid", 0.5, 30, 0.5172413793103448}, // level 15/29
+		{"mid", 0.5, 30, 0.5172413793103448},      // level 15/29
 		{"quarter", 0.25, 30, 0.2413793103448276}, // level 7/29
 		{"clamp_negative", -0.5, 30, 0.0},
 		{"clamp_above", 1.5, 30, 1.0},
@@ -82,8 +82,8 @@ func TestNormalizeFromLevel(t *testing.T) {
 		{0, 30, 0.0},
 		{29, 30, 1.0},
 		{15, 30, 15.0 / 29.0},
-		{-1, 30, 0.0},   // clamped
-		{100, 30, 1.0},  // clamped
+		{-1, 30, 0.0},  // clamped
+		{100, 30, 1.0}, // clamped
 	}
 
 	for _, tt := range tests {

@@ -29,7 +29,8 @@ func randRange(r *rand.Rand, lo, hi float64) float64 {
 //   - polarization escaping [-PMax, +PMax]
 //
 // It is deterministic by default (seeded), and can be expanded by setting:
-//   FECIM_FUZZ_ITERS, FECIM_FUZZ_STEPS.
+//
+//	FECIM_FUZZ_ITERS, FECIM_FUZZ_STEPS.
 func TestFuzz_LKStep_NoNaNsAndBounds(t *testing.T) {
 	iters := 50
 	steps := 200
@@ -48,12 +49,12 @@ func TestFuzz_LKStep_NoNaNsAndBounds(t *testing.T) {
 		s := NewLKSolver()
 		// Keep ranges broad enough to shake out numerical issues but not so broad
 		// that we only test obviously unphysical/overflow regimes.
-		s.Beta = -randRange(r, 1e6, 5e9)     // negative
-		s.Gamma = randRange(r, 1e8, 5e11)    // positive
-		s.Rho = randRange(r, 1e-4, 1.0)      // >0
-		s.Q12 = randRange(r, -0.05, 0.0)     // typical negative
-		s.Stress = randRange(r, 0, 2.0e9)    // 0..2 GPa
-		s.K_dep = randRange(r, 0, 5e8)       // allow 0
+		s.Beta = -randRange(r, 1e6, 5e9)  // negative
+		s.Gamma = randRange(r, 1e8, 5e11) // positive
+		s.Rho = randRange(r, 1e-4, 1.0)   // >0
+		s.Q12 = randRange(r, -0.05, 0.0)  // typical negative
+		s.Stress = randRange(r, 0, 2.0e9) // 0..2 GPa
+		s.K_dep = randRange(r, 0, 5e8)    // allow 0
 		s.SeriesResistance = randRange(r, 0, 200)
 		s.Thickness = randRange(r, 5e-9, 30e-9)
 		s.Area = randRange(r, 20e-9*20e-9, 80e-9*80e-9)

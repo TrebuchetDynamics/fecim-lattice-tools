@@ -115,10 +115,10 @@ const (
 // Breakpoint thresholds in device-independent pixels
 // M13: <1024px=1-col, 1024-1600px=2-col, >1600px=3-col
 const (
-	ThresholdSM  = 576
-	ThresholdMD  = 768
-	ThresholdLG  = 1024  // M13: 1-col threshold
-	ThresholdXL  = 1600  // M13: 2-col threshold
+	ThresholdSM = 576
+	ThresholdMD = 768
+	ThresholdLG = 1024 // M13: 1-col threshold
+	ThresholdXL = 1600 // M13: 2-col threshold
 )
 
 // GetBreakpoint returns the current breakpoint for a given width.

@@ -57,17 +57,17 @@ func TestXvfbCrawlerCircuits(t *testing.T) {
 	for _, size := range sizes {
 		t.Run(size.name, func(t *testing.T) {
 			img := captureWithXvfbRealApp(t, module, fyne.NewSize(size.width, size.height), xvfbSettleTime)
-			
+
 			outputDir := filepath.Join(crawlerScreenshotBaseDir, "circuits", "xvfb")
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				t.Fatalf("Failed to create output directory: %v", err)
 			}
-			
+
 			filename := filepath.Join(outputDir, fmt.Sprintf("base_%s_%dx%d.png", size.name, int(size.width), int(size.height)))
 			if err := saveCrawlerScreenshot(img, filename); err != nil {
 				t.Fatalf("Failed to save screenshot: %v", err)
 			}
-			
+
 			t.Logf("Circuits %s screenshot saved: %s", size.name, filename)
 			verifyImageNotEmpty(t, img, fmt.Sprintf("circuits_%s", size.name))
 		})
@@ -135,19 +135,19 @@ func runXvfbDetailedCrawl(t *testing.T, module moduleLifecycle, moduleName strin
 	tabSets := findAllAppTabs(content)
 	for tabSetIdx, tabs := range tabSets {
 		originalSelection := tabs.SelectedIndex()
-		
+
 		for tabIdx := 0; tabIdx < len(tabs.Items); tabIdx++ {
 			tabs.SelectIndex(tabIdx)
 			time.Sleep(xvfbTabDelay)
-			
+
 			tabText := ""
 			if tabIdx < len(tabs.Items) {
 				tabText = tabs.Items[tabIdx].Text
 			}
-			
+
 			img := w.Canvas().Capture()
 			if img != nil {
-				name := fmt.Sprintf("tab_set%d_idx%d_%s_%dx%d", 
+				name := fmt.Sprintf("tab_set%d_idx%d_%s_%dx%d",
 					tabSetIdx, tabIdx, safeCrawlerName(tabText), int(size.Width), int(size.Height))
 				filename := filepath.Join(outputDir, name+".png")
 				if err := saveCrawlerScreenshot(img, filename); err != nil {
@@ -157,7 +157,7 @@ func runXvfbDetailedCrawl(t *testing.T, module moduleLifecycle, moduleName strin
 				}
 			}
 		}
-		
+
 		// Restore original selection
 		if originalSelection >= 0 && originalSelection < len(tabs.Items) {
 			tabs.SelectIndex(originalSelection)
@@ -167,14 +167,14 @@ func runXvfbDetailedCrawl(t *testing.T, module moduleLifecycle, moduleName strin
 	// Crawl interactive elements
 	elements := findInteractiveElements(content)
 	triggers := findPopupTriggers(elements)
-	
+
 	for _, trigger := range triggers {
 		if triggerInteractiveElement(trigger) {
 			time.Sleep(xvfbTabDelay)
-			
+
 			img := w.Canvas().Capture()
 			if img != nil {
-				name := fmt.Sprintf("trigger_%s_%s_%dx%d", 
+				name := fmt.Sprintf("trigger_%s_%s_%dx%d",
 					trigger.Type, safeCrawlerName(trigger.Text), int(size.Width), int(size.Height))
 				filename := filepath.Join(outputDir, name+".png")
 				if err := saveCrawlerScreenshot(img, filename); err != nil {
@@ -183,7 +183,7 @@ func runXvfbDetailedCrawl(t *testing.T, module moduleLifecycle, moduleName strin
 					screenshots[name] = img
 				}
 			}
-			
+
 			// Try to close any opened dialogs/overlays
 			closeElements := findCloseElements(findInteractiveElements(content))
 			for _, closer := range closeElements {
@@ -222,11 +222,11 @@ func captureWithXvfbRealApp(t *testing.T, module moduleLifecycle, size fyne.Size
 	runOnMainGoroutine(func() {
 		img, err = captureWithXvfbOnMain(module, size, settle)
 	})
-	
+
 	if err != nil {
 		t.Fatalf("Failed to capture screenshot with xvfb real app: %v", err)
 	}
-	
+
 	return img
 }
 

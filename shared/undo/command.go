@@ -18,14 +18,14 @@ type Command interface {
 // Manager manages the undo/redo history stack.
 // It is thread-safe and can be used from multiple goroutines.
 type Manager struct {
-	mu           sync.Mutex
-	undoStack    []Command
-	redoStack    []Command
-	maxHistory   int
-	onChange     func() // Callback when stacks change
-	grouping     bool   // Whether we're currently grouping commands
-	groupedCmds  []Command
-	groupDesc    string
+	mu          sync.Mutex
+	undoStack   []Command
+	redoStack   []Command
+	maxHistory  int
+	onChange    func() // Callback when stacks change
+	grouping    bool   // Whether we're currently grouping commands
+	groupedCmds []Command
+	groupDesc   string
 }
 
 // NewManager creates a new undo/redo manager with the specified maximum history size.

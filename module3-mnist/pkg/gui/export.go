@@ -36,16 +36,16 @@ type NetworkConfig struct {
 
 // InferenceResults contains the results of MNIST inference
 type InferenceResults struct {
-	DrawnDigit       []float64   `json:"drawn_digit,omitempty"`
-	FPPrediction     int         `json:"fp_prediction"`
-	FPConfidence     float64     `json:"fp_confidence"`
-	FPProbabilities  []float64   `json:"fp_probabilities"`
-	CIMPrediction    int         `json:"cim_prediction"`
-	CIMConfidence    float64     `json:"cim_confidence"`
-	CIMProbabilities []float64   `json:"cim_probabilities"`
-	Agreement        bool        `json:"agreement"`
-	EnergyRatio      float64     `json:"energy_ratio"`
-	Timestamp        time.Time   `json:"timestamp"`
+	DrawnDigit       []float64 `json:"drawn_digit,omitempty"`
+	FPPrediction     int       `json:"fp_prediction"`
+	FPConfidence     float64   `json:"fp_confidence"`
+	FPProbabilities  []float64 `json:"fp_probabilities"`
+	CIMPrediction    int       `json:"cim_prediction"`
+	CIMConfidence    float64   `json:"cim_confidence"`
+	CIMProbabilities []float64 `json:"cim_probabilities"`
+	Agreement        bool      `json:"agreement"`
+	EnergyRatio      float64   `json:"energy_ratio"`
+	Timestamp        time.Time `json:"timestamp"`
 }
 
 // exportInferenceData exports the current inference data to CSV and JSON files
@@ -111,7 +111,7 @@ func (app *DualModeApp) exportInferenceData() {
 	if config.InferenceResults != nil {
 		csvExporter := export.NewExporter(dataDir, "mnist-probs")
 		headers := []string{"Digit", "FP_Probability", "CIM_Probability", "Difference"}
-		
+
 		csvData := export.NewCSVData(headers...)
 		for i := 0; i < 10; i++ {
 			fpProb := 0.0
@@ -129,13 +129,13 @@ func (app *DualModeApp) exportInferenceData() {
 				fmt.Sprintf("%.6f", fpProb-cimProb),
 			)
 		}
-		
+
 		csvResult := csvExporter.ExportCSV(csvData.Headers, csvData.Rows)
 		if csvResult.Error != nil {
 			app.showExportError(fmt.Sprintf("CSV export failed: %v", csvResult.Error))
 			return
 		}
-		
+
 		app.showExportSuccess(fmt.Sprintf("Exported:\n• %s\n• %s", jsonResult.FilePath, csvResult.FilePath))
 	} else {
 		app.showExportSuccess(fmt.Sprintf("Exported configuration:\n• %s", jsonResult.FilePath))
@@ -157,12 +157,12 @@ func (app *DualModeApp) exportVisualization() {
 	exporter := export.NewExporter(dataDir, "mnist-viz")
 	img := app.window.Canvas().Capture()
 	result := exporter.ExportPNG(img)
-	
+
 	if result.Error != nil {
 		app.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
 		return
 	}
-	
+
 	app.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
 }
 
@@ -170,7 +170,7 @@ func (app *DualModeApp) exportVisualization() {
 func (app *DualModeApp) createExportButtons() fyne.CanvasObject {
 	config := export.DefaultExportConfig("mnist")
 	config.OutputDir = filepath.Join("exports", "mnist")
-	
+
 	return export.NewExportButtons(config, &mnistExportProvider{app: app}, app.window)
 }
 

@@ -17,7 +17,7 @@ import (
 const (
 	physicsRegressionDataDir = "testdata/physics_regression"
 	physicsRegressionVersion = "v1"
-	updatePhysicsGoldenEnv    = "FECIM_UPDATE_PHYSICS_GOLDEN"
+	updatePhysicsGoldenEnv   = "FECIM_UPDATE_PHYSICS_GOLDEN"
 )
 
 type curveReference struct {
@@ -203,15 +203,15 @@ func TestPhysicsRegressionCurves(t *testing.T) {
 	update := os.Getenv(updatePhysicsGoldenEnv) != ""
 
 	tests := []struct {
-		scenario     string
-		jsonFile     string
-		csvFile      string
-		generate     func() (x, y []float64, params map[string]interface{})
-		xTolMaxAbs   func(params map[string]interface{}) float64
-		yTolRMS      func(params map[string]interface{}) float64
-		yTolMaxAbs   func(params map[string]interface{}) float64
-		minPoints    int
-		assumptions  string
+		scenario    string
+		jsonFile    string
+		csvFile     string
+		generate    func() (x, y []float64, params map[string]interface{})
+		xTolMaxAbs  func(params map[string]interface{}) float64
+		yTolRMS     func(params map[string]interface{}) float64
+		yTolMaxAbs  func(params map[string]interface{}) float64
+		minPoints   int
+		assumptions string
 	}{
 		{
 			scenario: "preisach_loop_default_hzo",
@@ -230,7 +230,7 @@ func TestPhysicsRegressionCurves(t *testing.T) {
 				ps, _ := params["Ps"].(float64)
 				return 0.03 * ps
 			},
-			minPoints: 200,
+			minPoints:   200,
 			assumptions: "PreisachModel hysteresis loop is deterministic for DefaultHZO and fixed point count.",
 		},
 		{
@@ -249,7 +249,7 @@ func TestPhysicsRegressionCurves(t *testing.T) {
 				pMax, _ := params["pMax"].(float64)
 				return 0.05 * pMax
 			},
-			minPoints: 700,
+			minPoints:   700,
 			assumptions: "LK loop uses a fixed triangular E(t) waveform and fixed dt with noise/NLS disabled; output should be stable across platforms for the same solver code.",
 		},
 	}

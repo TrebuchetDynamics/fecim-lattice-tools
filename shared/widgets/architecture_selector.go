@@ -25,7 +25,7 @@ type ArchitectureSelector struct {
 	architecture string
 
 	// UI components
-	label  *widget.Label
+	label   *widget.Label
 	select_ *widget.Select
 
 	// Callback when architecture changes

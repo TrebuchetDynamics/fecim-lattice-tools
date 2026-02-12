@@ -455,7 +455,7 @@ func TestPreisachStack_WipeOutPropertyAscending(t *testing.T) {
 	ps := NewPreisachStack(satE, everett)
 
 	// Create a minor loop: -5 -> +2 -> -1 -> +3
-	ps.Update(2.0)  // Stack: [Min(-5)], ascending, no reversal yet
+	ps.Update(2.0) // Stack: [Min(-5)], ascending, no reversal yet
 	initialLen := len(ps.Stack)
 
 	ps.Update(-1.0) // Reversal: creates Max(2), now Stack: [Min(-5), Max(2)]
@@ -576,8 +576,8 @@ func TestPreisachStack_ComplexHysteresisLoop(t *testing.T) {
 
 	// Verify that we get different polarizations for same E values depending on history
 	// E=0 appears at indices 1, 7, 9 with different histories
-	P_first := polarizations[1]  // After -5 -> 0 (ascending)
-	P_last := polarizations[9]   // After -5 -> 0 again
+	P_first := polarizations[1] // After -5 -> 0 (ascending)
+	P_last := polarizations[9]  // After -5 -> 0 again
 
 	// Due to hysteresis, these should differ (unless wiped out)
 	// Actually, after going to -5 again, the history is wiped, so P_last should equal P_first

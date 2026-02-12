@@ -130,8 +130,8 @@ func TestEmbeddedAppBase_SafeOperations(t *testing.T) {
 	base := &EmbeddedAppBase{}
 
 	// These should not panic
-	base.UpdateStatus("test") // No status bar set
-	base.RefreshContent()     // No content set
+	base.UpdateStatus("test")                 // No status bar set
+	base.RefreshContent()                     // No content set
 	base.ShowNotification("title", "content") // No app set
 
 	// Verify state is still valid

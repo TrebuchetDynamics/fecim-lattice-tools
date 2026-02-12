@@ -65,13 +65,13 @@ func TestLKSolverStep_RK4_TableDriven(t *testing.T) {
 		// ODE when Beta=Gamma=Kdep=0: dP/dt = (E - 2*Alpha*P)/rho.
 		// Analytic: P(t) = E/(2α) + (P0 - E/(2α)) * exp(-(2α/ρ)t)
 		tests := []struct {
-			name  string
-			P0    float64
-			E     float64
-			alpha float64
-			rho   float64
-			dt    float64
-			steps int
+			name   string
+			P0     float64
+			E      float64
+			alpha  float64
+			rho    float64
+			dt     float64
+			steps  int
 			relTol float64
 		}{
 			{name: "Mild", P0: 0.3, E: 1.2, alpha: 2.0, rho: 3.0, dt: 1e-3, steps: 1000, relTol: 3e-6},

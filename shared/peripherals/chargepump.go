@@ -211,9 +211,9 @@ func (c *ChargePump) SupportsLevel(level int, maxLevel int) bool {
 	supported := math.Abs(requiredV) <= math.Abs(actualV)
 
 	log.Calculation("ChargePump.SupportsLevel", map[string]interface{}{
-		"level":       level,
-		"required_v":  requiredV,
-		"actual_v":    actualV,
+		"level":      level,
+		"required_v": requiredV,
+		"actual_v":   actualV,
 	}, supported)
 
 	return supported

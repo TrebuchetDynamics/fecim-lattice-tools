@@ -65,7 +65,7 @@ func (b *MenuBuilder) BuildRecentProjectsMenu() *fyne.Menu {
 	return fyne.NewMenu("Recent Projects", items...)
 }
 
-// BuildRecentPresetsMenu creates a submenu for recent presets only  
+// BuildRecentPresetsMenu creates a submenu for recent presets only
 func (b *MenuBuilder) BuildRecentPresetsMenu() *fyne.Menu {
 	items := b.buildRecentItems(FileTypePreset)
 	return fyne.NewMenu("Recent Presets", items...)
@@ -217,13 +217,13 @@ func CreateFileMenu(
 
 // RefreshableRecentMenu wraps a recent files menu that can be refreshed
 type RefreshableRecentMenu struct {
-	manager     *Manager
-	menu        *fyne.Menu
-	menuItem    *fyne.MenuItem
-	fileType    FileType
-	onOpen      func(file *RecentFile)
-	onClear     func()
-	maxItems    int
+	manager  *Manager
+	menu     *fyne.Menu
+	menuItem *fyne.MenuItem
+	fileType FileType
+	onOpen   func(file *RecentFile)
+	onClear  func()
+	maxItems int
 }
 
 // NewRefreshableRecentMenu creates a recent files menu that can refresh its contents

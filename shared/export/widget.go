@@ -48,15 +48,15 @@ func DefaultExportConfig(moduleName string) *ExportButtonsConfig {
 // ExportButtons provides a container with export buttons for a module
 type ExportButtons struct {
 	widget.BaseWidget
-	
+
 	config   *ExportButtonsConfig
 	provider ExportDataProvider
 	window   fyne.Window
-	
-	csvBtn   *widget.Button
-	jsonBtn  *widget.Button
-	pngBtn   *widget.Button
-	
+
+	csvBtn  *widget.Button
+	jsonBtn *widget.Button
+	pngBtn  *widget.Button
+
 	statusLabel *widget.Label
 	container   *fyne.Container
 }
@@ -68,10 +68,10 @@ func NewExportButtons(config *ExportButtonsConfig, provider ExportDataProvider, 
 		provider: provider,
 		window:   window,
 	}
-	
+
 	eb.ExtendBaseWidget(eb)
 	eb.buildUI()
-	
+
 	return eb
 }
 
@@ -79,24 +79,24 @@ func NewExportButtons(config *ExportButtonsConfig, provider ExportDataProvider, 
 func (eb *ExportButtons) buildUI() {
 	eb.statusLabel = widget.NewLabel("")
 	eb.statusLabel.Wrapping = fyne.TextTruncate
-	
+
 	var buttons []fyne.CanvasObject
-	
+
 	if eb.config.EnableCSV {
 		eb.csvBtn = widget.NewButtonWithIcon("Export CSV", theme.DocumentSaveIcon(), eb.exportCSV)
 		buttons = append(buttons, eb.csvBtn)
 	}
-	
+
 	if eb.config.EnableJSON {
 		eb.jsonBtn = widget.NewButtonWithIcon("Export Config", theme.FileIcon(), eb.exportJSON)
 		buttons = append(buttons, eb.jsonBtn)
 	}
-	
+
 	if eb.config.EnablePNG {
 		eb.pngBtn = widget.NewButtonWithIcon("Save Image", theme.MediaPhotoIcon(), eb.exportPNG)
 		buttons = append(buttons, eb.pngBtn)
 	}
-	
+
 	buttonsRow := container.NewHBox(buttons...)
 	eb.container = container.NewVBox(
 		buttonsRow,
@@ -115,26 +115,26 @@ func (eb *ExportButtons) exportCSV() {
 		eb.showError("No data provider configured")
 		return
 	}
-	
+
 	data, err := eb.provider.GetCSVData()
 	if err != nil {
 		eb.showError(fmt.Sprintf("Failed to get CSV data: %v", err))
 		return
 	}
-	
+
 	if data == nil || len(data.Rows) == 0 {
 		eb.showError("No data to export")
 		return
 	}
-	
+
 	exporter := NewExporter(eb.config.OutputDir, eb.config.FilePrefix+"-data")
 	result := exporter.ExportCSV(data.Headers, data.Rows)
-	
+
 	if result.Error != nil {
 		eb.showError(fmt.Sprintf("Export failed: %v", result.Error))
 		return
 	}
-	
+
 	eb.showSuccess(fmt.Sprintf("CSV exported: %s (%d rows)", result.FilePath, len(data.Rows)))
 }
 
@@ -144,21 +144,21 @@ func (eb *ExportButtons) exportJSON() {
 		eb.showError("No data provider configured")
 		return
 	}
-	
+
 	config, err := eb.provider.GetJSONConfig()
 	if err != nil {
 		eb.showError(fmt.Sprintf("Failed to get config: %v", err))
 		return
 	}
-	
+
 	exporter := NewExporter(eb.config.OutputDir, eb.config.FilePrefix+"-config")
 	result := exporter.ExportJSON(config)
-	
+
 	if result.Error != nil {
 		eb.showError(fmt.Sprintf("Export failed: %v", result.Error))
 		return
 	}
-	
+
 	eb.showSuccess(fmt.Sprintf("Config exported: %s", result.FilePath))
 }
 
@@ -168,21 +168,21 @@ func (eb *ExportButtons) exportPNG() {
 		eb.showError("No data provider configured")
 		return
 	}
-	
+
 	img, err := eb.provider.GetVisualization()
 	if err != nil {
 		eb.showError(fmt.Sprintf("Failed to capture visualization: %v", err))
 		return
 	}
-	
+
 	exporter := NewExporter(eb.config.OutputDir, eb.config.FilePrefix+"-viz")
 	result := exporter.ExportPNG(img)
-	
+
 	if result.Error != nil {
 		eb.showError(fmt.Sprintf("Export failed: %v", result.Error))
 		return
 	}
-	
+
 	eb.showSuccess(fmt.Sprintf("Image saved: %s", result.FilePath))
 }
 
@@ -240,28 +240,28 @@ func (eb *ExportButtons) ClearStatus() {
 // CreateExportMenu creates a menu with export options
 func CreateExportMenu(config *ExportButtonsConfig, provider ExportDataProvider, window fyne.Window) *fyne.Menu {
 	items := make([]*fyne.MenuItem, 0)
-	
+
 	if config.EnableCSV {
 		items = append(items, fyne.NewMenuItem("Export CSV...", func() {
 			eb := &ExportButtons{config: config, provider: provider, window: window}
 			eb.exportCSV()
 		}))
 	}
-	
+
 	if config.EnableJSON {
 		items = append(items, fyne.NewMenuItem("Export Config...", func() {
 			eb := &ExportButtons{config: config, provider: provider, window: window}
 			eb.exportJSON()
 		}))
 	}
-	
+
 	if config.EnablePNG {
 		items = append(items, fyne.NewMenuItem("Save Image...", func() {
 			eb := &ExportButtons{config: config, provider: provider, window: window}
 			eb.exportPNG()
 		}))
 	}
-	
+
 	return fyne.NewMenu("Export", items...)
 }
 
@@ -269,9 +269,9 @@ func CreateExportMenu(config *ExportButtonsConfig, provider ExportDataProvider, 
 func CreateCompactExportButton(config *ExportButtonsConfig, provider ExportDataProvider, window fyne.Window) *widget.Button {
 	return widget.NewButtonWithIcon("Export", theme.DocumentSaveIcon(), func() {
 		items := make([]*fyne.MenuItem, 0)
-		
+
 		eb := &ExportButtons{config: config, provider: provider, window: window}
-		
+
 		if config.EnableCSV {
 			items = append(items, fyne.NewMenuItem("Export Data (CSV)", eb.exportCSV))
 		}
@@ -281,7 +281,7 @@ func CreateCompactExportButton(config *ExportButtonsConfig, provider ExportDataP
 		if config.EnablePNG {
 			items = append(items, fyne.NewMenuItem("Save Visualization (PNG)", eb.exportPNG))
 		}
-		
+
 		menu := fyne.NewMenu("", items...)
 		popup := widget.NewPopUpMenu(menu, window.Canvas())
 		popup.ShowAtPosition(fyne.CurrentApp().Driver().AbsolutePositionForObject(window.Canvas().Content()))

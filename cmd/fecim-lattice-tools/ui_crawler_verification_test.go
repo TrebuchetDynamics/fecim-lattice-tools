@@ -123,7 +123,7 @@ func TestUICrawlerInfrastructureVerification(t *testing.T) {
 	t.Run("ui_discovery_helpers", func(t *testing.T) {
 		// Test that UI discovery helper functions exist and are callable
 		// We can't test them without actual UI objects, but we can verify they exist
-		
+
 		// Test with nil input (should handle gracefully)
 		elements := findInteractiveElements(nil)
 		if elements == nil {

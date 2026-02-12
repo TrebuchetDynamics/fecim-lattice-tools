@@ -282,12 +282,12 @@ func TestFormatPolarization(t *testing.T) {
 	}{
 		{0, "0 µC/cm²"},
 		{-0.1, "0 µC/cm²"},
-		{0.001, "0.10 µC/cm²"},    // 0.1 µC/cm²
-		{0.05, "5.00 µC/cm²"},     // 5 µC/cm²
-		{0.20, "20.0 µC/cm²"},     // 20 µC/cm² (typical HZO Pr)
-		{0.35, "35.0 µC/cm²"},     // 35 µC/cm² (high performance)
-		{1.0, "100 µC/cm²"},       // 100 µC/cm² (very high)
-		{1.5, "150 µC/cm²"},       // 150 µC/cm²
+		{0.001, "0.10 µC/cm²"}, // 0.1 µC/cm²
+		{0.05, "5.00 µC/cm²"},  // 5 µC/cm²
+		{0.20, "20.0 µC/cm²"},  // 20 µC/cm² (typical HZO Pr)
+		{0.35, "35.0 µC/cm²"},  // 35 µC/cm² (high performance)
+		{1.0, "100 µC/cm²"},    // 100 µC/cm² (very high)
+		{1.5, "150 µC/cm²"},    // 150 µC/cm²
 	}
 
 	for _, tt := range tests {
@@ -305,12 +305,12 @@ func TestFormatElectricField(t *testing.T) {
 	}{
 		{0, "0 V/m"},
 		{-1e8, "0 V/m"},
-		{1e2, "1.00 V/cm"},        // 1 V/cm (very low field)
-		{1e5, "1.00 kV/cm"},       // 1 kV/cm
-		{5e5, "5.00 kV/cm"},       // 5 kV/cm
-		{1e8, "1.00 MV/cm"},       // 1 MV/cm (typical Ec for HZO)
-		{1.5e8, "1.50 MV/cm"},     // 1.5 MV/cm
-		{3e8, "3.00 MV/cm"},       // 3 MV/cm (high field)
+		{1e2, "1.00 V/cm"},    // 1 V/cm (very low field)
+		{1e5, "1.00 kV/cm"},   // 1 kV/cm
+		{5e5, "5.00 kV/cm"},   // 5 kV/cm
+		{1e8, "1.00 MV/cm"},   // 1 MV/cm (typical Ec for HZO)
+		{1.5e8, "1.50 MV/cm"}, // 1.5 MV/cm
+		{3e8, "3.00 MV/cm"},   // 3 MV/cm (high field)
 	}
 
 	for _, tt := range tests {

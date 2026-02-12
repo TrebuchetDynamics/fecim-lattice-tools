@@ -27,9 +27,9 @@ func TestLoad_TableDriven_ConfigOverrides(t *testing.T) {
 			wantBits: 4.91,
 		},
 		{
-			name: "override-constants",
+			name:         "override-constants",
 			constantsYML: "constants:\n  bits_per_cell: 3.14\n  boltzmann_ev: 8.617e-5\n  epsilon_0: 8.854e-12\n  room_temperature: 300\n",
-			wantBits: 3.14,
+			wantBits:     3.14,
 		},
 	}
 

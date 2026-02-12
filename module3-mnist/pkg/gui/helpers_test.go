@@ -15,13 +15,13 @@ func TestFormatEnergy(t *testing.T) {
 		joules   float64
 		expected string
 	}{
-		{1e-15, "1.00 fJ"},    // fJ range (shared/physics adds fJ support)
-		{1e-13, "100.00 fJ"},  // fJ range (1e-13 J = 100 fJ)
-		{5e-10, "500.00 pJ"},  // pJ range
+		{1e-15, "1.00 fJ"},   // fJ range (shared/physics adds fJ support)
+		{1e-13, "100.00 fJ"}, // fJ range (1e-13 J = 100 fJ)
+		{5e-10, "500.00 pJ"}, // pJ range
 		{1e-9, "1.00 nJ"},
-		{5e-7, "500.00 nJ"},   // nJ range
+		{5e-7, "500.00 nJ"}, // nJ range
 		{1e-6, "1.00 µJ"},
-		{5e-4, "500.00 µJ"},   // µJ range
+		{5e-4, "500.00 µJ"}, // µJ range
 		{1e-3, "1.00 mJ"},
 		{0.5, "500.00 mJ"},
 		{1.0, "1.00 J"},
@@ -106,14 +106,14 @@ func TestClamp(t *testing.T) {
 		v, min, max float64
 		expected    float64
 	}{
-		{5, 0, 10, 5},      // In range
-		{-1, 0, 10, 0},     // Below min
-		{15, 0, 10, 10},    // Above max
-		{0, 0, 10, 0},      // At min
-		{10, 0, 10, 10},    // At max
-		{0.5, 0, 1, 0.5},   // Float in range
-		{-0.1, 0, 1, 0},    // Float below min
-		{1.5, 0, 1, 1},     // Float above max
+		{5, 0, 10, 5},    // In range
+		{-1, 0, 10, 0},   // Below min
+		{15, 0, 10, 10},  // Above max
+		{0, 0, 10, 0},    // At min
+		{10, 0, 10, 10},  // At max
+		{0.5, 0, 1, 0.5}, // Float in range
+		{-0.1, 0, 1, 0},  // Float below min
+		{1.5, 0, 1, 1},   // Float above max
 	}
 
 	for _, tc := range tests {

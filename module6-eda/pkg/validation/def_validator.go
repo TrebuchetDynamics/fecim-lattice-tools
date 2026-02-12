@@ -25,19 +25,19 @@ func ValidateDEF(defPath string) error {
 		return fmt.Errorf("cannot open DEF file: %v", err)
 	}
 	defer file.Close()
-	
+
 	scanner := bufio.NewScanner(file)
 	var lines []string
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading DEF file: %v", err)
 	}
-	
+
 	content := strings.Join(lines, "\n")
-	
+
 	// Check for required keywords
 	requiredKeywords := []string{"VERSION", "DESIGN", "UNITS", "DIEAREA", "COMPONENTS", "END COMPONENTS"}
 	for _, keyword := range requiredKeywords {
@@ -45,7 +45,7 @@ func ValidateDEF(defPath string) error {
 			return fmt.Errorf("missing required keyword: %s", keyword)
 		}
 	}
-	
+
 	// Validate COMPONENTS count
 	componentsLine := ""
 	endComponentsFound := false
@@ -58,23 +58,23 @@ func ValidateDEF(defPath string) error {
 			endComponentsFound = true
 		}
 	}
-	
+
 	if componentsLine == "" {
 		return fmt.Errorf("COMPONENTS declaration not found")
 	}
 	if !endComponentsFound {
 		return fmt.Errorf("END COMPONENTS not found")
 	}
-	
+
 	// Extract declared component count
 	re := regexp.MustCompile(`COMPONENTS\s+(\d+)`)
 	matches := re.FindStringSubmatch(componentsLine)
 	if len(matches) < 2 {
 		return fmt.Errorf("invalid COMPONENTS declaration format")
 	}
-	
+
 	declaredCount, _ := strconv.Atoi(matches[1])
-	
+
 	// Count actual component instances (lines starting with "  -")
 	actualCount := 0
 	inComponents := false
@@ -92,11 +92,11 @@ func ValidateDEF(defPath string) error {
 			actualCount++
 		}
 	}
-	
+
 	if declaredCount != actualCount {
 		return fmt.Errorf("component count mismatch: declared %d, found %d instances", declaredCount, actualCount)
 	}
-	
+
 	return nil
 }
 
@@ -109,13 +109,13 @@ func GetDEFStats(defPath string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	defer file.Close()
-	
+
 	stats := make(map[string]interface{})
 	scanner := bufio.NewScanner(file)
-	
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		
+
 		// Extract design name
 		if strings.HasPrefix(line, "DESIGN") {
 			parts := strings.Fields(line)
@@ -123,7 +123,7 @@ func GetDEFStats(defPath string) (map[string]interface{}, error) {
 				stats["design_name"] = parts[1]
 			}
 		}
-		
+
 		// Extract component count
 		if strings.HasPrefix(line, "COMPONENTS") {
 			re := regexp.MustCompile(`COMPONENTS\s+(\d+)`)
@@ -133,12 +133,12 @@ func GetDEFStats(defPath string) (map[string]interface{}, error) {
 				stats["component_count"] = count
 			}
 		}
-		
+
 		// Extract die area
 		if strings.HasPrefix(line, "DIEAREA") {
 			stats["die_area"] = line
 		}
 	}
-	
+
 	return stats, nil
 }

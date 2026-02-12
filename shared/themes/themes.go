@@ -75,9 +75,9 @@ type DarkTheme struct{}
 // Dark theme color palette
 var (
 	// Primary brand colors (dark)
-	DarkPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan #00D4FF
-	DarkSecondary  = color.RGBA{255, 107, 107, 255} // Coral red #FF6B6B
-	DarkAccent     = color.RGBA{78, 205, 196, 255}  // Teal #4ECDC4
+	DarkPrimary   = color.RGBA{0, 212, 255, 255}   // Cyan #00D4FF
+	DarkSecondary = color.RGBA{255, 107, 107, 255} // Coral red #FF6B6B
+	DarkAccent    = color.RGBA{78, 205, 196, 255}  // Teal #4ECDC4
 
 	// Semantic colors (dark)
 	DarkWarning = color.RGBA{255, 200, 87, 255}  // Amber #FFC857
@@ -86,11 +86,11 @@ var (
 	DarkInfo    = color.RGBA{0, 212, 255, 255}   // Cyan #00D4FF
 
 	// Background hierarchy (dark to light)
-	DarkBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	DarkSurface    = color.RGBA{0, 70, 130, 255}  // Medium blue #004682
-	DarkSurfaceAlt = color.RGBA{0, 90, 160, 255}  // Lighter blue #005AA0
-	DarkInput      = color.RGBA{0, 80, 140, 255}  // Input background #00508C
-	DarkButton     = color.RGBA{0, 70, 130, 255}  // Button background
+	DarkBackground = color.RGBA{0, 50, 100, 255} // FeCIM blue #003264
+	DarkSurface    = color.RGBA{0, 70, 130, 255} // Medium blue #004682
+	DarkSurfaceAlt = color.RGBA{0, 90, 160, 255} // Lighter blue #005AA0
+	DarkInput      = color.RGBA{0, 80, 140, 255} // Input background #00508C
+	DarkButton     = color.RGBA{0, 70, 130, 255} // Button background
 
 	// Text colors (dark)
 	DarkText         = color.RGBA{240, 244, 248, 255} // Off-white #F0F4F8
@@ -186,15 +186,15 @@ type LightTheme struct{}
 // Light theme color palette
 var (
 	// Primary brand colors (light)
-	LightPrimary    = color.RGBA{0, 120, 180, 255}  // Deep blue #0078B4
-	LightSecondary  = color.RGBA{220, 80, 80, 255}  // Muted red #DC5050
-	LightAccent     = color.RGBA{50, 160, 150, 255} // Teal #32A096
+	LightPrimary   = color.RGBA{0, 120, 180, 255}  // Deep blue #0078B4
+	LightSecondary = color.RGBA{220, 80, 80, 255}  // Muted red #DC5050
+	LightAccent    = color.RGBA{50, 160, 150, 255} // Teal #32A096
 
 	// Semantic colors (light)
-	LightWarning = color.RGBA{200, 140, 40, 255}  // Darker amber #C88C28
-	LightSuccess = color.RGBA{50, 160, 100, 255}  // Darker green #32A064
-	LightError   = color.RGBA{200, 60, 60, 255}   // Darker red #C83C3C
-	LightInfo    = color.RGBA{0, 120, 180, 255}   // Deep blue #0078B4
+	LightWarning = color.RGBA{200, 140, 40, 255} // Darker amber #C88C28
+	LightSuccess = color.RGBA{50, 160, 100, 255} // Darker green #32A064
+	LightError   = color.RGBA{200, 60, 60, 255}  // Darker red #C83C3C
+	LightInfo    = color.RGBA{0, 120, 180, 255}  // Deep blue #0078B4
 
 	// Background hierarchy (light to dark)
 	LightBackground = color.RGBA{250, 252, 255, 255} // Near-white #FAFCFF
@@ -204,8 +204,8 @@ var (
 	LightButton     = color.RGBA{0, 120, 180, 255}   // Primary color for buttons
 
 	// Text colors (light)
-	LightText         = color.RGBA{20, 35, 50, 255}   // Near-black #142332
-	LightTextDim      = color.RGBA{80, 100, 120, 255} // Dim text #506478
+	LightText         = color.RGBA{20, 35, 50, 255}    // Near-black #142332
+	LightTextDim      = color.RGBA{80, 100, 120, 255}  // Dim text #506478
 	LightTextDisabled = color.RGBA{140, 155, 170, 255} // Disabled text #8C9BAA
 
 	// UI structure (light)
@@ -297,22 +297,22 @@ type HighContrastTheme struct{}
 // High contrast theme color palette
 var (
 	// Primary brand colors (high contrast)
-	HCPrimary    = color.RGBA{0, 255, 255, 255}   // Pure cyan
-	HCSecondary  = color.RGBA{255, 100, 100, 255} // Bright red
-	HCAccent     = color.RGBA{0, 255, 180, 255}   // Bright teal
+	HCPrimary   = color.RGBA{0, 255, 255, 255}   // Pure cyan
+	HCSecondary = color.RGBA{255, 100, 100, 255} // Bright red
+	HCAccent    = color.RGBA{0, 255, 180, 255}   // Bright teal
 
 	// Semantic colors (high contrast)
-	HCWarning = color.RGBA{255, 255, 0, 255}   // Pure yellow
-	HCSuccess = color.RGBA{0, 255, 0, 255}     // Pure green
-	HCError   = color.RGBA{255, 0, 0, 255}     // Pure red
-	HCInfo    = color.RGBA{0, 255, 255, 255}   // Pure cyan
+	HCWarning = color.RGBA{255, 255, 0, 255} // Pure yellow
+	HCSuccess = color.RGBA{0, 255, 0, 255}   // Pure green
+	HCError   = color.RGBA{255, 0, 0, 255}   // Pure red
+	HCInfo    = color.RGBA{0, 255, 255, 255} // Pure cyan
 
 	// Background hierarchy (maximum contrast)
-	HCBackground = color.RGBA{0, 0, 0, 255}       // Pure black
-	HCSurface    = color.RGBA{20, 20, 30, 255}    // Near-black
-	HCSurfaceAlt = color.RGBA{40, 40, 60, 255}    // Dark gray
-	HCInput      = color.RGBA{10, 10, 20, 255}    // Very dark
-	HCButton     = color.RGBA{0, 200, 200, 255}   // Cyan button
+	HCBackground = color.RGBA{0, 0, 0, 255}     // Pure black
+	HCSurface    = color.RGBA{20, 20, 30, 255}  // Near-black
+	HCSurfaceAlt = color.RGBA{40, 40, 60, 255}  // Dark gray
+	HCInput      = color.RGBA{10, 10, 20, 255}  // Very dark
+	HCButton     = color.RGBA{0, 200, 200, 255} // Cyan button
 
 	// Text colors (high contrast)
 	HCText         = color.RGBA{255, 255, 255, 255} // Pure white

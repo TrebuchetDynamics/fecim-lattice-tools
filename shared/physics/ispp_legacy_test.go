@@ -173,11 +173,11 @@ func TestCalculateStartVoltage(t *testing.T) {
 	calc := NewISPPCalculator(1.0, 30)
 
 	tests := []struct {
-		name               string
-		calibratedVoltage  float64
-		wantStartVoltage   float64
+		name              string
+		calibratedVoltage float64
+		wantStartVoltage  float64
 	}{
-		{"Standard", 2.0, 1.4},   // 2.0 * 0.7
+		{"Standard", 2.0, 1.4}, // 2.0 * 0.7
 		{"Zero", 0.0, 0.0},
 		{"Negative", -2.0, -1.4}, // -2.0 * 0.7
 		{"LargeValue", 10.0, 7.0},
@@ -200,9 +200,9 @@ func TestCalculateVoltageStep(t *testing.T) {
 		ec   float64
 		want float64
 	}{
-		{"StandardEc", 1.0, 0.01},  // 1.0 * 0.01
-		{"LargeEc", 2.0, 0.02},     // 2.0 * 0.01
-		{"SmallEc", 0.5, 0.005},    // 0.5 * 0.01
+		{"StandardEc", 1.0, 0.01}, // 1.0 * 0.01
+		{"LargeEc", 2.0, 0.02},    // 2.0 * 0.01
+		{"SmallEc", 0.5, 0.005},   // 0.5 * 0.01
 	}
 
 	for _, tt := range tests {
@@ -454,8 +454,8 @@ func TestIsOvershoot(t *testing.T) {
 		{"DescendingAtTarget", 10, 10, DirectionDescending, false},
 
 		// Unknown: treated as Descending (checks diff < 0)
-		{"UnknownAbove", 15, 10, DirectionUnknown, false},  // diff=5 > 0
-		{"UnknownBelow", 5, 10, DirectionUnknown, true},    // diff=-5 < 0 (overshoot)
+		{"UnknownAbove", 15, 10, DirectionUnknown, false},    // diff=5 > 0
+		{"UnknownBelow", 5, 10, DirectionUnknown, true},      // diff=-5 < 0 (overshoot)
 		{"UnknownAtTarget", 10, 10, DirectionUnknown, false}, // diff=0
 	}
 

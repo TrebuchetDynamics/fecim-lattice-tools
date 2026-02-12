@@ -101,7 +101,7 @@ endmodule
 		// Check if it's a "yosys not found" type error
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed, skipping validation test")
 		}
 		// Otherwise it's a real validation error
@@ -136,7 +136,7 @@ endmodule
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed, skipping path handling test")
 		}
 	}
@@ -161,7 +161,7 @@ func TestRunYosysCheck_OutputFormat(t *testing.T) {
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed, skipping output format test")
 		}
 
@@ -189,7 +189,7 @@ func TestRunYosysCheck_EmptyVerilogFile(t *testing.T) {
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed, skipping empty file test")
 		}
 
@@ -229,7 +229,7 @@ endmodule
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed, skipping multi-module test")
 		}
 		t.Logf("Multi-module validation error: %v", err)
@@ -272,7 +272,7 @@ func TestRunYosysCheck_OutputNotNilOnError(t *testing.T) {
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "executable file not found") ||
-		   strings.Contains(errMsg, "command not found") {
+			strings.Contains(errMsg, "command not found") {
 			t.Skip("Yosys not installed")
 		}
 

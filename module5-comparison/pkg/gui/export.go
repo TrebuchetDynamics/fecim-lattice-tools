@@ -17,18 +17,18 @@ import (
 
 // ComparisonExportConfig contains the configuration for comparison exports
 type ComparisonExportConfig struct {
-	Metadata          export.ExportMetadata  `json:"metadata"`
-	WorkloadConfig    WorkloadConfig         `json:"workload_config"`
-	EnergySpecs       EnergySpecsExport      `json:"energy_specs"`
-	CalculatedResults *CalculatedResults     `json:"calculated_results,omitempty"`
+	Metadata          export.ExportMetadata `json:"metadata"`
+	WorkloadConfig    WorkloadConfig        `json:"workload_config"`
+	EnergySpecs       EnergySpecsExport     `json:"energy_specs"`
+	CalculatedResults *CalculatedResults    `json:"calculated_results,omitempty"`
 }
 
 // WorkloadConfig represents the workload configuration
 type WorkloadConfig struct {
-	WorkloadName     string  `json:"workload_name"`
-	InferencesPerDay int     `json:"inferences_per_day"`
-	MACsPerInference int64   `json:"macs_per_inference"`
-	Description      string  `json:"description,omitempty"`
+	WorkloadName     string `json:"workload_name"`
+	InferencesPerDay int    `json:"inferences_per_day"`
+	MACsPerInference int64  `json:"macs_per_inference"`
+	Description      string `json:"description,omitempty"`
 }
 
 // EnergySpecsExport represents energy specifications for export
@@ -49,16 +49,16 @@ type EnergySpecExport struct {
 
 // CalculatedResults contains the calculated comparison results
 type CalculatedResults struct {
-	TotalMACsPerDay     float64 `json:"total_macs_per_day"`
-	CPUEnergyKWh        float64 `json:"cpu_energy_kwh_per_day"`
-	GPUEnergyKWh        float64 `json:"gpu_energy_kwh_per_day"`
-	FeCIMEnergyKWh      float64 `json:"fecim_energy_kwh_per_day"`
-	CPUSavingsKWh       float64 `json:"cpu_savings_kwh_per_day"`
-	GPUSavingsKWh       float64 `json:"gpu_savings_kwh_per_day"`
-	CPUSavingsPercent   float64 `json:"cpu_savings_percent"`
-	GPUSavingsPercent   float64 `json:"gpu_savings_percent"`
-	AnnualCostSavingsM  float64 `json:"annual_cost_savings_millions"`
-	Timestamp           time.Time `json:"timestamp"`
+	TotalMACsPerDay    float64   `json:"total_macs_per_day"`
+	CPUEnergyKWh       float64   `json:"cpu_energy_kwh_per_day"`
+	GPUEnergyKWh       float64   `json:"gpu_energy_kwh_per_day"`
+	FeCIMEnergyKWh     float64   `json:"fecim_energy_kwh_per_day"`
+	CPUSavingsKWh      float64   `json:"cpu_savings_kwh_per_day"`
+	GPUSavingsKWh      float64   `json:"gpu_savings_kwh_per_day"`
+	CPUSavingsPercent  float64   `json:"cpu_savings_percent"`
+	GPUSavingsPercent  float64   `json:"gpu_savings_percent"`
+	AnnualCostSavingsM float64   `json:"annual_cost_savings_millions"`
+	Timestamp          time.Time `json:"timestamp"`
 }
 
 // exportComparisonData exports the current comparison data to CSV and JSON files
@@ -110,7 +110,7 @@ func (ca *ComparisonApp) exportComparisonData() {
 	cpuEnergy := totalMACs * ca.cpuSpec.EnergyFJ / 1e15 / 3600 // fJ to kWh
 	gpuEnergy := totalMACs * ca.gpuSpec.EnergyFJ / 1e15 / 3600
 	fecimEnergy := totalMACs * ca.fecimSpec.EnergyFJ / 1e15 / 3600
-	
+
 	config.CalculatedResults = &CalculatedResults{
 		TotalMACsPerDay:    totalMACs,
 		CPUEnergyKWh:       cpuEnergy,
@@ -134,9 +134,9 @@ func (ca *ComparisonApp) exportComparisonData() {
 
 	// Export comparison as CSV
 	csvExporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-data_%s", timestamp))
-	
+
 	csvData := export.NewCSVData("Architecture", "Energy_FJ_per_MAC", "Energy_kWh_per_day", "Savings_vs_FeCIM_percent")
-	csvData.AddRow("CPU + DRAM", 
+	csvData.AddRow("CPU + DRAM",
 		fmt.Sprintf("%.0f", ca.cpuSpec.EnergyFJ),
 		fmt.Sprintf("%.6f", cpuEnergy),
 		fmt.Sprintf("%.2f", config.CalculatedResults.CPUSavingsPercent))
@@ -148,7 +148,7 @@ func (ca *ComparisonApp) exportComparisonData() {
 		fmt.Sprintf("%.0f", ca.fecimSpec.EnergyFJ),
 		fmt.Sprintf("%.6f", fecimEnergy),
 		"0.00")
-	
+
 	csvResult := csvExporter.ExportCSV(csvData.Headers, csvData.Rows)
 	if csvResult.Error != nil {
 		ca.showExportError(fmt.Sprintf("CSV export failed: %v", csvResult.Error))
@@ -174,12 +174,12 @@ func (ca *ComparisonApp) exportVisualization() {
 	exporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-viz_%s", timestamp))
 	img := ca.window.Canvas().Capture()
 	result := exporter.ExportPNG(img)
-	
+
 	if result.Error != nil {
 		ca.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
 		return
 	}
-	
+
 	ca.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
 }
 
@@ -187,7 +187,7 @@ func (ca *ComparisonApp) exportVisualization() {
 func (ca *ComparisonApp) createExportButtons() fyne.CanvasObject {
 	config := export.DefaultExportConfig("comparison")
 	config.OutputDir = filepath.Join("exports", "comparison")
-	
+
 	return export.NewExportButtons(config, &comparisonExportProvider{app: ca}, ca.window)
 }
 

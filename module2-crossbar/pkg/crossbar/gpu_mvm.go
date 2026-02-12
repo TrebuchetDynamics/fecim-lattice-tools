@@ -109,10 +109,10 @@ func (g *GPUAccelerator) createMVMPipeline(repoRoot string) error {
 		ShaderPath: filepath.Join(repoRoot, "shared/compute/shaders/mvm.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(CrossbarParams{}))}, // 32 bytes
-			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0},                                        // ConductanceBuffer (dynamic)
-			{Binding: 2, Type: compute.BindingTypeStorage, Size: 0},                                        // InputVoltageBuffer (dynamic)
-			{Binding: 3, Type: compute.BindingTypeStorage, Size: 0},                                        // OutputCurrentBuffer (dynamic)
-			{Binding: 4, Type: compute.BindingTypeStorage, Size: 0},                                        // VariationBuffer (dynamic)
+			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0},                                       // ConductanceBuffer (dynamic)
+			{Binding: 2, Type: compute.BindingTypeStorage, Size: 0},                                       // InputVoltageBuffer (dynamic)
+			{Binding: 3, Type: compute.BindingTypeStorage, Size: 0},                                       // OutputCurrentBuffer (dynamic)
+			{Binding: 4, Type: compute.BindingTypeStorage, Size: 0},                                       // VariationBuffer (dynamic)
 		},
 	}
 

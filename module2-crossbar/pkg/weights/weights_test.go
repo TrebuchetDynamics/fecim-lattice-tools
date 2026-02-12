@@ -690,7 +690,7 @@ func BenchmarkQuantizeWeights_8bit(b *testing.B) {
 		Data: make([]float64, 784*128), // MNIST first layer size
 	}
 	for i := range layer.Data {
-		layer.Data[i] = float64(i%1000) / 500.0 - 1.0
+		layer.Data[i] = float64(i%1000)/500.0 - 1.0
 	}
 
 	b.ResetTimer()

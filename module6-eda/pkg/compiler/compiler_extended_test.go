@@ -422,7 +422,7 @@ func TestQuantization_30Levels(t *testing.T) {
 	weights := make([][]float64, 1)
 	weights[0] = make([]float64, 30)
 	for i := 0; i < 30; i++ {
-		weights[0][i] = float64(i) / 29.0 * 2.0 - 1.0 // Range from -1 to 1
+		weights[0][i] = float64(i)/29.0*2.0 - 1.0 // Range from -1 to 1
 	}
 
 	config := NewComputeConfig(64, 64)

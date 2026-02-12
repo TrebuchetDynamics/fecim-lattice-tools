@@ -13,10 +13,10 @@ import (
 // - Approximate odd symmetry for unbiased materials (P(E) \approx -P(-E))
 //
 // Notes/assumptions:
-// - The model includes a reversible dielectric contribution that saturates via tanh.
-//   Therefore we allow a small overshoot margin over |Ps|.
-// - We test symmetry only at deep saturation and along a monotone ramp starting from
-//   negative saturation (where Preisach is expected to be approximately odd).
+//   - The model includes a reversible dielectric contribution that saturates via tanh.
+//     Therefore we allow a small overshoot margin over |Ps|.
+//   - We test symmetry only at deep saturation and along a monotone ramp starting from
+//     negative saturation (where Preisach is expected to be approximately odd).
 func TestPreisach_TableDriven_MonotonicityBoundsAndSymmetry(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -126,7 +126,7 @@ func TestPreisach_TableDriven_MonotonicityBoundsAndSymmetry(t *testing.T) {
 				if denom == 0 {
 					denom = 1
 				}
-				asym := math.Abs(pPos + pNeg) / denom
+				asym := math.Abs(pPos+pNeg) / denom
 				if asym > 0.03 { // 3% of Ps
 					t.Fatalf("odd-symmetry violation at saturation: P(+)=%.6e P(-)=%.6e asym=%.3f%%", pPos, pNeg, 100*asym)
 				}

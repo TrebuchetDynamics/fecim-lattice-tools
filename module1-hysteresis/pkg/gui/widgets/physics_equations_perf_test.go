@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func resetEquationCachesForTest() {
+func resetEquationCachesForPerfTest() {
 	equationSVGCacheMu.Lock()
 	equationSVGCache = map[string]*equationSVGCacheEntry{}
 	equationSVGCacheMu.Unlock()
@@ -37,7 +37,7 @@ func TestEquationWidgetPerf_OpenBudgets(t *testing.T) {
 	w := test.NewWindow(widget.NewLabel("host"))
 	defer w.Close()
 
-	resetEquationCachesForTest()
+	resetEquationCachesForPerfTest()
 	cold := measureEquationOpen(t, 1*time.Second)
 
 	PrefetchEquationAssets()
@@ -54,7 +54,7 @@ func BenchmarkEquationWidgetOpen_ColdWarm(b *testing.B) {
 
 	b.Run("cold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			resetEquationCachesForTest()
+			resetEquationCachesForPerfTest()
 			start := time.Now()
 			_ = NewPhysicsEquationsWidget(nil)
 			b.ReportMetric(float64(time.Since(start).Milliseconds()), "open_ms")

@@ -7,8 +7,8 @@ import (
 
 func TestTierA_V2HalfSelectVoltageDistribution_NoIRDrop(t *testing.T) {
 	tests := []struct {
-		name      string
-		writeV    float64
+		name       string
+		writeV     float64
 		wlSelected float64
 		blSelected float64
 		wantTarget float64

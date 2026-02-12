@@ -40,8 +40,8 @@ func createTestNetwork() *DualModeNetwork {
 	copy(net.QuantBias1, net.FPBias1)
 	copy(net.QuantBias2, net.FPBias2)
 
-	net.Config.ADCBits = 16 // No quantization for tests
-	net.Config.DACBits = 16 // No quantization for tests
+	net.Config.ADCBits = 16     // No quantization for tests
+	net.Config.DACBits = 16     // No quantization for tests
 	net.Config.NoiseLevel = 0.0 // No noise for deterministic tests
 
 	return net
@@ -330,11 +330,11 @@ func TestInferCIMOnly_DACDACEffect(t *testing.T) {
 
 func TestQuantizeDAC_BitLevels(t *testing.T) {
 	testCases := []struct {
-		bits          int
+		bits           int
 		expectedLevels int
 	}{
-		{3, 8},    // 2^3 = 8 levels
-		{8, 256},  // 2^8 = 256 levels
+		{3, 8},   // 2^3 = 8 levels
+		{8, 256}, // 2^8 = 256 levels
 	}
 
 	for _, tc := range testCases {

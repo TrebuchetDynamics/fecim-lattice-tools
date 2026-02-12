@@ -91,11 +91,11 @@ func getGlobalPresets() []*Preset {
 			CategoryResearch,
 			[]string{"research", "precision", "data"},
 			map[string]interface{}{
-				"animation_speed":   1.0,
-				"auto_demo":         false,
-				"high_precision":    true,
-				"enable_data_log":   true,
-				"export_on_change":  false,
+				"animation_speed":  1.0,
+				"auto_demo":        false,
+				"high_precision":   true,
+				"enable_data_log":  true,
+				"export_on_change": false,
 			},
 		),
 	}
@@ -631,10 +631,10 @@ func getEDAPresets() []*Preset {
 			CategoryEducational,
 			[]string{"learning", "layout", "basics"},
 			map[string]interface{}{
-				"show_layout":   true,
-				"show_layers":   true,
-				"zoom_level":    1.0,
-				"guided_mode":   true,
+				"show_layout": true,
+				"show_layers": true,
+				"zoom_level":  1.0,
+				"guided_mode": true,
 			},
 		),
 
@@ -660,10 +660,10 @@ func getEDAPresets() []*Preset {
 			CategoryResearch,
 			[]string{"research", "timing", "STA"},
 			map[string]interface{}{
-				"analysis_mode":  "timing",
-				"show_slack":     true,
-				"show_paths":     true,
-				"num_paths":      10,
+				"analysis_mode": "timing",
+				"show_slack":    true,
+				"show_paths":    true,
+				"num_paths":     10,
 			},
 		),
 
@@ -676,10 +676,10 @@ func getEDAPresets() []*Preset {
 			CategoryDemo,
 			[]string{"demo", "visual", "flow"},
 			map[string]interface{}{
-				"show_flow":      true,
-				"animate_flow":   true,
-				"show_outputs":   true,
-				"demo_mode":      true,
+				"show_flow":    true,
+				"animate_flow": true,
+				"show_outputs": true,
+				"demo_mode":    true,
 			},
 		),
 	}

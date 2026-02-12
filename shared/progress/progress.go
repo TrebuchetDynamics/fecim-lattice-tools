@@ -583,19 +583,19 @@ func formatDuration(d time.Duration) string {
 
 // ProgressInfo returns a snapshot of the current progress state
 type ProgressInfo struct {
-	Operation   string
-	Phase       string
-	Detail      string
-	Current     int64
-	Total       int64
-	Percent     float64
-	State       State
-	Elapsed     time.Duration
-	ETA         time.Duration
-	Rate        float64
-	Error       error
-	StartTime   time.Time
-	EndTime     time.Time
+	Operation string
+	Phase     string
+	Detail    string
+	Current   int64
+	Total     int64
+	Percent   float64
+	State     State
+	Elapsed   time.Duration
+	ETA       time.Duration
+	Rate      float64
+	Error     error
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 // Info returns a snapshot of the current progress state

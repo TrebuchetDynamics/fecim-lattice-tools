@@ -387,18 +387,21 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 type OutputBarChart struct {
 	widget.BaseWidget
 
-	values    []float64
-	labels    []string
-	predicted int
-	raster    *canvas.Raster
+	values      []float64
+	labels      []string
+	predicted   int
+	selectedBar int
+	focused     bool
+	raster      *canvas.Raster
 }
 
 // NewOutputBarChart creates a new output bar chart.
 func NewOutputBarChart() *OutputBarChart {
 	obc := &OutputBarChart{
-		values:    make([]float64, 10),
-		labels:    []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
-		predicted: -1,
+		values:      make([]float64, 10),
+		labels:      []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
+		predicted:   -1,
+		selectedBar: 0,
 	}
 	obc.ExtendBaseWidget(obc)
 	return obc
@@ -426,6 +429,45 @@ func (obc *OutputBarChart) SetValues(values []float64) {
 // GetPrediction returns the predicted class.
 func (obc *OutputBarChart) GetPrediction() int {
 	return obc.predicted
+}
+
+// FocusGained implements fyne.Focusable.
+func (obc *OutputBarChart) FocusGained() {
+	obc.focused = true
+	obc.Refresh()
+}
+
+// FocusLost implements fyne.Focusable.
+func (obc *OutputBarChart) FocusLost() {
+	obc.focused = false
+	obc.Refresh()
+}
+
+// TypedRune implements fyne.Focusable.
+func (obc *OutputBarChart) TypedRune(_ rune) {}
+
+// TypedKey enables keyboard navigation across class bars.
+func (obc *OutputBarChart) TypedKey(ev *fyne.KeyEvent) {
+	if ev == nil || len(obc.values) == 0 {
+		return
+	}
+	switch ev.Name {
+	case fyne.KeyLeft:
+		if obc.selectedBar > 0 {
+			obc.selectedBar--
+		}
+	case fyne.KeyRight:
+		if obc.selectedBar < len(obc.values)-1 {
+			obc.selectedBar++
+		}
+	case fyne.KeyHome:
+		obc.selectedBar = 0
+	case fyne.KeyEnd:
+		obc.selectedBar = len(obc.values) - 1
+	default:
+		return
+	}
+	obc.Refresh()
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -484,9 +526,11 @@ func (obc *OutputBarChart) generateImage(w, h int) image.Image {
 		y0 := h - padding - barHeight
 		y1 := h - padding
 
-		// Color based on prediction
+		// Color based on prediction and keyboard selection
 		var c color.RGBA
-		if i == obc.predicted {
+		if i == obc.selectedBar {
+			c = color.RGBA{255, 180, 60, 255} // Orange for focused/selected bar
+		} else if i == obc.predicted {
 			c = color.RGBA{0, 230, 180, 255} // Cyan for predicted
 		} else {
 			c = color.RGBA{100, 100, 120, 255} // Gray for others
@@ -508,5 +552,19 @@ func (obc *OutputBarChart) generateImage(w, h int) image.Image {
 		img.Set(x, h-padding, axisColor)
 	}
 
+	if obc.focused {
+		focusColor := color.RGBA{255, 165, 0, 255}
+		for x := 0; x < w; x++ {
+			img.Set(x, 0, focusColor)
+			img.Set(x, h-1, focusColor)
+		}
+		for y := 0; y < h; y++ {
+			img.Set(0, y, focusColor)
+			img.Set(w-1, y, focusColor)
+		}
+	}
+
 	return img
 }
+
+var _ fyne.Focusable = (*OutputBarChart)(nil)

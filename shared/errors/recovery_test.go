@@ -125,9 +125,9 @@ func TestMustRecover(t *testing.T) {
 }
 
 type mockCloser struct {
-	closed  bool
-	err     error
-	panics  bool
+	closed bool
+	err    error
+	panics bool
 }
 
 func (m *mockCloser) Close() error {
@@ -235,7 +235,7 @@ func TestErrorCollector(t *testing.T) {
 		c := NewErrorCollector()
 		c.Add(errors.New("error 1"))
 		c.Add(errors.New("error 2"))
-		
+
 		if !c.HasErrors() {
 			t.Error("should have errors")
 		}
@@ -252,7 +252,7 @@ func TestErrorCollector(t *testing.T) {
 		c := NewErrorCollector()
 		orig := errors.New("single error")
 		c.Add(orig)
-		
+
 		combined := c.Combined()
 		if combined != orig {
 			t.Error("single error should return original")
@@ -264,7 +264,7 @@ func TestErrorCollector(t *testing.T) {
 		c.Add(errors.New("error 1"))
 		c.Add(errors.New("error 2"))
 		c.Add(errors.New("error 3"))
-		
+
 		combined := c.Combined()
 		if combined == nil {
 			t.Fatal("Combined should not return nil")
@@ -278,7 +278,7 @@ func TestErrorCollector(t *testing.T) {
 	t.Run("concurrent adds", func(t *testing.T) {
 		c := NewErrorCollector()
 		var wg sync.WaitGroup
-		
+
 		for i := 0; i < 100; i++ {
 			wg.Add(1)
 			go func(n int) {
@@ -286,7 +286,7 @@ func TestErrorCollector(t *testing.T) {
 				c.Add(fmt.Errorf("error %d", n))
 			}(i)
 		}
-		
+
 		wg.Wait()
 		if c.Count() != 100 {
 			t.Errorf("expected 100 errors, got %d", c.Count())
@@ -298,7 +298,7 @@ func TestErrorCollector(t *testing.T) {
 		c.AddFromRecover("test", func() {
 			panic("test panic")
 		})
-		
+
 		if !c.HasErrors() {
 			t.Error("should have captured panic")
 		}
@@ -320,7 +320,7 @@ func TestGracefulDegradation(t *testing.T) {
 			},
 			Default: -1,
 		}
-		
+
 		result, err := g.Execute()
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
@@ -342,7 +342,7 @@ func TestGracefulDegradation(t *testing.T) {
 			},
 			Default: -1,
 		}
-		
+
 		result, err := g.Execute()
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
@@ -367,7 +367,7 @@ func TestGracefulDegradation(t *testing.T) {
 			},
 			Default: -1,
 		}
-		
+
 		result, err := g.Execute()
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
@@ -389,7 +389,7 @@ func TestGracefulDegradation(t *testing.T) {
 			},
 			Default: -1,
 		}
-		
+
 		result, err := g.Execute()
 		if err == nil {
 			t.Error("expected error when all fail")
@@ -411,7 +411,7 @@ func TestGracefulDegradation(t *testing.T) {
 			},
 			Default: -1,
 		}
-		
+
 		result, err := g.Execute()
 		if err != nil {
 			t.Errorf("expected no error after fallback, got %v", err)
@@ -424,7 +424,7 @@ func TestGracefulDegradation(t *testing.T) {
 	t.Run("onFallback callback", func(t *testing.T) {
 		var callbackCalled bool
 		var callbackAttempt int
-		
+
 		g := &GracefulDegradation[int]{
 			Primary: func() (int, error) {
 				return 0, errors.New("failed")
@@ -439,7 +439,7 @@ func TestGracefulDegradation(t *testing.T) {
 				callbackAttempt = attempt
 			},
 		}
-		
+
 		g.Execute()
 		if !callbackCalled {
 			t.Error("OnFallback should be called")
@@ -457,11 +457,11 @@ func TestSetRecoveryHandler(t *testing.T) {
 			called = true
 		})
 		defer SetRecoveryHandler(nil) // Reset to default
-		
+
 		_ = RecoverFunc(func() error {
 			panic("test")
 		})
-		
+
 		if !called {
 			t.Error("custom handler should be called")
 		}
@@ -493,12 +493,12 @@ func TestRetry(t *testing.T) {
 	t.Run("succeeds first try", func(t *testing.T) {
 		cfg := DefaultRetryConfig()
 		attempts := 0
-		
+
 		err := cfg.Retry(func() error {
 			attempts++
 			return nil
 		})
-		
+
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -511,7 +511,7 @@ func TestRetry(t *testing.T) {
 		cfg := DefaultRetryConfig()
 		cfg.RetryOn = func(err error) bool { return true }
 		attempts := 0
-		
+
 		err := cfg.Retry(func() error {
 			attempts++
 			if attempts < 3 {
@@ -519,7 +519,7 @@ func TestRetry(t *testing.T) {
 			}
 			return nil
 		})
-		
+
 		if err != nil {
 			t.Errorf("expected eventual success, got %v", err)
 		}
@@ -533,12 +533,12 @@ func TestRetry(t *testing.T) {
 		cfg.MaxAttempts = 2
 		cfg.RetryOn = func(err error) bool { return true }
 		attempts := 0
-		
+
 		err := cfg.Retry(func() error {
 			attempts++
 			return errors.New("persistent error")
 		})
-		
+
 		if err == nil {
 			t.Error("expected error after max attempts")
 		}
@@ -554,12 +554,12 @@ func TestRetry(t *testing.T) {
 		cfg := DefaultRetryConfig()
 		cfg.RetryOn = func(err error) bool { return false }
 		attempts := 0
-		
+
 		err := cfg.Retry(func() error {
 			attempts++
 			return errors.New("fatal error")
 		})
-		
+
 		if err == nil {
 			t.Error("expected error")
 		}

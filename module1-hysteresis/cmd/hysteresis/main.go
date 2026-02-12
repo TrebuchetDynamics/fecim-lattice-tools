@@ -102,17 +102,17 @@ type HysteresisConfig struct {
 
 // HysteresisResult represents the output for JSON mode.
 type HysteresisResult struct {
-	Material           string  `json:"material"`
-	RemanentPol        float64 `json:"remanent_polarization_uC_cm2"`
-	SaturationPol      float64 `json:"saturation_polarization_uC_cm2"`
-	CoerciveField      float64 `json:"coercive_field_MV_cm"`
-	CoerciveVoltage    float64 `json:"coercive_voltage_V"`
-	Thickness          float64 `json:"thickness_nm"`
-	Permittivity       float64 `json:"permittivity"`
-	SwitchingTime      float64 `json:"switching_time_ns"`
-	EnduranceCycles    float64 `json:"endurance_cycles"`
-	DiscreteLevels     int     `json:"discrete_levels"`
-	BitsPerCell        float64 `json:"bits_per_cell"`
+	Material        string  `json:"material"`
+	RemanentPol     float64 `json:"remanent_polarization_uC_cm2"`
+	SaturationPol   float64 `json:"saturation_polarization_uC_cm2"`
+	CoerciveField   float64 `json:"coercive_field_MV_cm"`
+	CoerciveVoltage float64 `json:"coercive_voltage_V"`
+	Thickness       float64 `json:"thickness_nm"`
+	Permittivity    float64 `json:"permittivity"`
+	SwitchingTime   float64 `json:"switching_time_ns"`
+	EnduranceCycles float64 `json:"endurance_cycles"`
+	DiscreteLevels  int     `json:"discrete_levels"`
+	BitsPerCell     float64 `json:"bits_per_cell"`
 }
 
 func Run(args []string) error {

@@ -24,6 +24,7 @@ type ConfusionMatrix struct {
 	// Selection
 	selectedRow int
 	selectedCol int
+	focused     bool
 
 	// Rendering
 	raster *canvas.Raster
@@ -150,19 +151,83 @@ func (cm *ConfusionMatrix) Tapped(e *fyne.PointEvent) {
 	row := int((e.Position.Y - padding) / cellSize)
 
 	if row >= 0 && row < 10 && col >= 0 && col < 10 {
-		cm.selectedRow = row
-		cm.selectedCol = col
-		fyne.Do(func() {
-			cm.Refresh()
-		})
-
-		if cm.OnCellTapped != nil {
-			cm.OnCellTapped(row, col, cm.matrix[row][col])
-		}
+		cm.selectCell(row, col, true)
 	}
 }
 
+func (cm *ConfusionMatrix) selectCell(row, col int, triggerCallback bool) {
+	if row < 0 || row > 9 || col < 0 || col > 9 {
+		return
+	}
+	cm.selectedRow = row
+	cm.selectedCol = col
+	fyne.Do(func() {
+		cm.Refresh()
+	})
+	if triggerCallback && cm.OnCellTapped != nil {
+		cm.OnCellTapped(row, col, cm.matrix[row][col])
+	}
+}
+
+// FocusGained implements fyne.Focusable.
+func (cm *ConfusionMatrix) FocusGained() {
+	cm.focused = true
+	if cm.selectedRow < 0 || cm.selectedCol < 0 {
+		cm.selectedRow, cm.selectedCol = 0, 0
+	}
+	cm.Refresh()
+}
+
+// FocusLost implements fyne.Focusable.
+func (cm *ConfusionMatrix) FocusLost() {
+	cm.focused = false
+	cm.Refresh()
+}
+
+// TypedRune implements fyne.Focusable.
+func (cm *ConfusionMatrix) TypedRune(_ rune) {}
+
+// TypedKey enables keyboard navigation with arrow keys.
+func (cm *ConfusionMatrix) TypedKey(ev *fyne.KeyEvent) {
+	if ev == nil {
+		return
+	}
+	if cm.selectedRow < 0 || cm.selectedCol < 0 {
+		cm.selectedRow, cm.selectedCol = 0, 0
+	}
+	row, col := cm.selectedRow, cm.selectedCol
+	switch ev.Name {
+	case fyne.KeyLeft:
+		if col > 0 {
+			col--
+		}
+	case fyne.KeyRight:
+		if col < 9 {
+			col++
+		}
+	case fyne.KeyUp:
+		if row > 0 {
+			row--
+		}
+	case fyne.KeyDown:
+		if row < 9 {
+			row++
+		}
+	case fyne.KeyHome:
+		row, col = 0, 0
+	case fyne.KeyEnd:
+		row, col = 9, 9
+	case fyne.KeyReturn, fyne.KeySpace:
+		cm.selectCell(cm.selectedRow, cm.selectedCol, true)
+		return
+	default:
+		return
+	}
+	cm.selectCell(row, col, false)
+}
+
 var _ fyne.Tappable = (*ConfusionMatrix)(nil)
+var _ fyne.Focusable = (*ConfusionMatrix)(nil)
 
 // generateImage creates the confusion matrix image.
 func (cm *ConfusionMatrix) generateImage(w, h int) image.Image {

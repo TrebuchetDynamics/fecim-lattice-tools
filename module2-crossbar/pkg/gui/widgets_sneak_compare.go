@@ -18,25 +18,25 @@ type SneakCompareWidget struct {
 	widget.BaseWidget
 
 	// Heatmaps for each architecture
-	passiveHeatmap *CrossbarHeatmap
+	passiveHeatmap    *CrossbarHeatmap
 	active1T1RHeatmap *CrossbarHeatmap
 
 	// Data storage
-	passiveSneakData [][]float64
+	passiveSneakData    [][]float64
 	active1T1RSneakData [][]float64
 
 	// Labels and stats
-	passiveLabel *widget.Label
-	activeLabel *widget.Label
-	statsLabel *widget.Label
+	passiveLabel    *widget.Label
+	activeLabel     *widget.Label
+	statsLabel      *widget.Label
 	comparisonLabel *widget.Label
 
 	// Analysis results
 	passiveAnalysis *crossbar.SneakPathAnalysis
-	activeAnalysis *crossbar.SneakPathAnalysis
+	activeAnalysis  *crossbar.SneakPathAnalysis
 
 	// Array reference
-	array *crossbar.Array
+	array      *crossbar.Array
 	rows, cols int
 
 	// Callbacks
@@ -46,9 +46,9 @@ type SneakCompareWidget struct {
 // NewSneakCompareWidget creates a new sneak path comparison widget.
 func NewSneakCompareWidget(rows, cols int) *SneakCompareWidget {
 	w := &SneakCompareWidget{
-		rows: rows,
-		cols: cols,
-		passiveHeatmap: NewCrossbarHeatmap(rows, cols),
+		rows:              rows,
+		cols:              cols,
+		passiveHeatmap:    NewCrossbarHeatmap(rows, cols),
 		active1T1RHeatmap: NewCrossbarHeatmap(rows, cols),
 	}
 
@@ -193,8 +193,8 @@ func (w *SneakCompareWidget) updateStats() {
 
 	statsText := fmt.Sprintf(
 		"PASSIVE (0T1R): %.3f µA total sneak\n"+
-		"1T1R (Active): %.3f µA total sneak\n"+
-		"Reduction: %.1f%%",
+			"1T1R (Active): %.3f µA total sneak\n"+
+			"Reduction: %.1f%%",
 		passiveTotal*1e6,
 		activeTotal*1e6,
 		reduction,

@@ -12,12 +12,12 @@ import (
 
 // Test constants for reproducibility and clarity
 const (
-	testRNGSeed       = 42    // Fixed seed for reproducible tests
-	testHiddenSize    = 64    // Smaller hidden layer for faster tests
-	testSampleCount   = 100   // Number of training samples
-	testLearningRate  = 0.1   // Learning rate for training tests
-	testMNISTInputs   = 784   // 28x28 MNIST images
-	testMNISTOutputs  = 10    // 10 digit classes
+	testRNGSeed      = 42  // Fixed seed for reproducible tests
+	testHiddenSize   = 64  // Smaller hidden layer for faster tests
+	testSampleCount  = 100 // Number of training samples
+	testLearningRate = 0.1 // Learning rate for training tests
+	testMNISTInputs  = 784 // 28x28 MNIST images
+	testMNISTOutputs = 10  // 10 digit classes
 )
 
 // generateSyntheticMNIST creates synthetic MNIST-like data for testing when

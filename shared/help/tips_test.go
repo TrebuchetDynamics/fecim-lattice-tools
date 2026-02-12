@@ -30,7 +30,7 @@ func TestTipManagerGetRandomTip(t *testing.T) {
 		tips:        quickTips,
 		showOnStart: true,
 	}
-	
+
 	// Get a random tip
 	tip := tm.GetRandomTip()
 	if tip.Title == "" {
@@ -43,7 +43,7 @@ func TestTipManagerGetTipForModule(t *testing.T) {
 		tips:        quickTips,
 		showOnStart: true,
 	}
-	
+
 	// Get a tip for hysteresis module
 	tip := tm.GetTipForModule("hysteresis")
 	if tip != nil {
@@ -51,7 +51,7 @@ func TestTipManagerGetTipForModule(t *testing.T) {
 			t.Errorf("Expected hysteresis tip, got module '%s'", tip.Module)
 		}
 	}
-	
+
 	// Get a tip for a module that doesn't have specific tips
 	tip = tm.GetTipForModule("nonexistent")
 	if tip != nil {
@@ -66,13 +66,13 @@ func TestModuleSpecificTipsExist(t *testing.T) {
 		"mnist":      false,
 		"comparison": false,
 	}
-	
+
 	for _, tip := range quickTips {
 		if tip.Module != "" {
 			modules[tip.Module] = true
 		}
 	}
-	
+
 	for mod, found := range modules {
 		if !found {
 			t.Errorf("Expected at least one tip for module '%s'", mod)

@@ -715,11 +715,11 @@ func TestCoupledArchitectureComparison(t *testing.T) {
 // TestCoupledDriftWithMVM verifies drift affects MVM accuracy over time.
 //
 // Physical basis:
-// - Conductance drift causes weight values to shift from programmed values
-// - Drift rate depends on temperature (Arrhenius) and time (log model)
-// - Drifted conductances interact with other non-idealities
-// - The drift model uses thermal activation factor exp(-Ea/kT) which results in
-//   very small drift for realistic temperatures (this is physically correct for FeFET)
+//   - Conductance drift causes weight values to shift from programmed values
+//   - Drift rate depends on temperature (Arrhenius) and time (log model)
+//   - Drifted conductances interact with other non-idealities
+//   - The drift model uses thermal activation factor exp(-Ea/kT) which results in
+//     very small drift for realistic temperatures (this is physically correct for FeFET)
 //
 // Note: The drift simulator's thermal activation factor at 85C is ~10^-9, which
 // combined with drift coefficient 0.001 and log(time) results in very small drift.

@@ -34,13 +34,13 @@ func DefaultDEFConfig() DEFConfig {
 	return DEFConfig{
 		DesignName:   "fecim_crossbar",
 		CellName:     "fecim_bit",
-		CellWidth:    0.46,  // SKY130 compatible: 2 * 0.23um site width
-		CellHeight:   2.72,  // SKY130 standard cell row height
-		OriginX:      10.0,  // 10um from left edge
-		OriginY:      10.0,  // 10um from bottom edge
-		MarginX:      20.0,  // 20um margin on each side
-		MarginY:      20.0,  // 20um margin on top/bottom
-		DatabaseUnit: 1000,  // DEF standard: 1000 units = 1 micron
+		CellWidth:    0.46, // SKY130 compatible: 2 * 0.23um site width
+		CellHeight:   2.72, // SKY130 standard cell row height
+		OriginX:      10.0, // 10um from left edge
+		OriginY:      10.0, // 10um from bottom edge
+		MarginX:      20.0, // 20um margin on each side
+		MarginY:      20.0, // 20um margin on top/bottom
+		DatabaseUnit: 1000, // DEF standard: 1000 units = 1 micron
 	}
 }
 

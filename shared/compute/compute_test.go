@@ -337,10 +337,10 @@ func TestWorkgroupConfig(t *testing.T) {
 		cfg := WorkgroupConfig{LocalSizeX: 256, LocalSizeY: 1, LocalSizeZ: 1}
 
 		tests := []struct {
-			elements     uint32
+			elements            uint32
 			wantX, wantY, wantZ uint32
 		}{
-			{0, 0, 0, 0},       // Zero elements returns all zeros
+			{0, 0, 0, 0}, // Zero elements returns all zeros
 			{1, 1, 1, 1},
 			{256, 1, 1, 1},
 			{257, 2, 1, 1},
@@ -365,7 +365,7 @@ func TestWorkgroupConfig(t *testing.T) {
 			width, height       uint32
 			wantX, wantY, wantZ uint32
 		}{
-			{0, 0, 0, 0, 0},         // Zero dimensions returns all zeros
+			{0, 0, 0, 0, 0}, // Zero dimensions returns all zeros
 			{16, 16, 1, 1, 1},
 			{17, 16, 2, 1, 1},
 			{16, 17, 1, 2, 1},
@@ -510,8 +510,8 @@ func BenchmarkGPUBuffer_Upload(b *testing.B) {
 	defer ctx.Destroy()
 
 	sizes := []uint64{
-		1024,           // 1 KB
-		1024 * 1024,    // 1 MB
+		1024,             // 1 KB
+		1024 * 1024,      // 1 MB
 		10 * 1024 * 1024, // 10 MB
 	}
 
@@ -550,8 +550,8 @@ func BenchmarkGPUBuffer_Download(b *testing.B) {
 	defer ctx.Destroy()
 
 	sizes := []uint64{
-		1024,           // 1 KB
-		1024 * 1024,    // 1 MB
+		1024,             // 1 KB
+		1024 * 1024,      // 1 MB
 		10 * 1024 * 1024, // 10 MB
 	}
 
@@ -592,9 +592,9 @@ func BenchmarkGPUBuffer_Float32Upload(b *testing.B) {
 	defer ctx.Destroy()
 
 	elementCounts := []int{
-		1024,      // 4 KB
-		262144,    // 1 MB
-		2621440,   // 10 MB
+		1024,    // 4 KB
+		262144,  // 1 MB
+		2621440, // 10 MB
 	}
 
 	for _, count := range elementCounts {

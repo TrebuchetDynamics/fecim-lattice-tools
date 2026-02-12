@@ -8,12 +8,12 @@ import (
 // Table-driven property tests for the Landau-Khalatnikov (dynamic) solver.
 //
 // Focus:
-// - Saturation/finite bounds: P remains finite and within clamp limits
-// - Monotonic switching (up to small jitter) under a strong constant field when starting from opposite polarization
-// - Odd symmetry when the configuration is unbiased and depolarization is disabled:
+//   - Saturation/finite bounds: P remains finite and within clamp limits
+//   - Monotonic switching (up to small jitter) under a strong constant field when starting from opposite polarization
+//   - Odd symmetry when the configuration is unbiased and depolarization is disabled:
 //     P(t; E, P0) = -P(t; -E, -P0)
-// - Energy sanity: a driven field cycle should dissipate non-negative work density
-//   (approx via integral \int E dP over a cycle), with reasonable magnitude.
+//   - Energy sanity: a driven field cycle should dissipate non-negative work density
+//     (approx via integral \int E dP over a cycle), with reasonable magnitude.
 //
 // Assumptions:
 // - Tests disable NLS and noise for determinism.

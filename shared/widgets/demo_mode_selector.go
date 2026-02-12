@@ -18,11 +18,11 @@ import (
 type DemoMode int
 
 const (
-	DemoModeNone DemoMode = iota
-	DemoModeQuick       // Quick automated demo
-	DemoModeTutorial    // Interactive step-by-step tutorial
-	DemoModeAnimation   // Educational animation playback
-	DemoModeSandbox     // Free exploration with hints
+	DemoModeNone      DemoMode = iota
+	DemoModeQuick              // Quick automated demo
+	DemoModeTutorial           // Interactive step-by-step tutorial
+	DemoModeAnimation          // Educational animation playback
+	DemoModeSandbox            // Free exploration with hints
 )
 
 func (m DemoMode) String() string {
@@ -63,7 +63,7 @@ type DemoModeSelector struct {
 	modeList     *widget.List
 	startBtn     *widget.Button
 	detailsPanel *fyne.Container
-	
+
 	// State
 	selectedIndex int
 
@@ -157,7 +157,7 @@ func (s *DemoModeSelector) CreateRenderer() fyne.WidgetRenderer {
 
 			mode := s.modes[id]
 			nameLabel.SetText(mode.Name)
-			
+
 			if mode.Duration > 0 {
 				durationLabel.SetText(formatDuration(mode.Duration))
 			} else {
@@ -259,25 +259,25 @@ func formatDuration(d time.Duration) string {
 type DemoProgressPanel struct {
 	widget.BaseWidget
 
-	title        *widget.Label
-	step         *widget.Label
-	progress     *widget.ProgressBar
-	explanation  *widget.Label
-	controls     *fyne.Container
-	
+	title       *widget.Label
+	step        *widget.Label
+	progress    *widget.ProgressBar
+	explanation *widget.Label
+	controls    *fyne.Container
+
 	// Control buttons
-	pauseBtn     *widget.Button
-	stopBtn      *widget.Button
-	skipBtn      *widget.Button
+	pauseBtn *widget.Button
+	stopBtn  *widget.Button
+	skipBtn  *widget.Button
 
 	// State
-	isPaused     bool
+	isPaused bool
 
 	// Callbacks
-	onPause      func()
-	onResume     func()
-	onStop       func()
-	onSkip       func()
+	onPause  func()
+	onResume func()
+	onStop   func()
+	onSkip   func()
 }
 
 // NewDemoProgressPanel creates a new progress panel.

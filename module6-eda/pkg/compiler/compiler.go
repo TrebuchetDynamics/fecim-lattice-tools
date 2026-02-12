@@ -28,8 +28,8 @@ func GenerateDesign(config *ArrayConfig) (*ArrayDesign, error) {
 
 	// Check for Compute Mode with Weights
 	if config.Mode == ModeCompute &&
-	   config.ComputeConfig != nil &&
-	   config.ComputeConfig.InitialWeights != nil {
+		config.ComputeConfig != nil &&
+		config.ComputeConfig.InitialWeights != nil {
 		design, err = mapWeights(config)
 	} else {
 		// Default: Generate Blank Array
@@ -123,11 +123,11 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	cols := len(weights[0])
 
 	log.Input("mapWeights", map[string]interface{}{
-		"weightRows":     rows,
-		"weightCols":     cols,
-		"arrayRows":      config.ArrayRows,
-		"arrayCols":      config.ArrayCols,
-		"levels":         config.Levels,
+		"weightRows": rows,
+		"weightCols": cols,
+		"arrayRows":  config.ArrayRows,
+		"arrayCols":  config.ArrayCols,
+		"levels":     config.Levels,
 	})
 
 	if rows > config.ArrayRows || cols > config.ArrayCols {
@@ -146,12 +146,18 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	wMin, wMax := weights[0][0], weights[0][0]
 	for i := range weights {
 		for j := range weights[i] {
-			if weights[i][j] < wMin { wMin = weights[i][j] }
-			if weights[i][j] > wMax { wMax = weights[i][j] }
+			if weights[i][j] < wMin {
+				wMin = weights[i][j]
+			}
+			if weights[i][j] > wMax {
+				wMax = weights[i][j]
+			}
 		}
 	}
 	wAbsMax := math.Max(math.Abs(wMin), math.Abs(wMax))
-	if wAbsMax == 0 { wAbsMax = 1.0 }
+	if wAbsMax == 0 {
+		wAbsMax = 1.0
+	}
 
 	var cells []CellAssignment
 	var mseSum float64
@@ -203,32 +209,32 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	if mse > 1e-9 {
 		psnr = 10 * math.Log10((wAbsMax*wAbsMax)/mse)
 	}
-	
-	totalAreaMM2 := float64(config.ArrayRows * config.ArrayCols) * (config.CellPitch * config.RowHeight) * 1e-6
+
+	totalAreaMM2 := float64(config.ArrayRows*config.ArrayCols) * (config.CellPitch * config.RowHeight) * 1e-6
 
 	design := &ArrayDesign{
 		Config: config,
 		Cells:  cells,
 		Stats: DesignStats{
-			TotalCells:     config.ArrayRows * config.ArrayCols,
-			ActiveCells:    numWeights,
-			UsedCells:      numWeights, // Deprecated: kept for backward compatibility
-			AreaMM2:        totalAreaMM2,
-			PowerMW:        0.1, // Estimate active power
-			QuantMSE:       mse,
-			QuantPSNR:      psnr,
-			WeightMin:      wMin,
-			WeightMax:      wMax,
+			TotalCells:  config.ArrayRows * config.ArrayCols,
+			ActiveCells: numWeights,
+			UsedCells:   numWeights, // Deprecated: kept for backward compatibility
+			AreaMM2:     totalAreaMM2,
+			PowerMW:     0.1, // Estimate active power
+			QuantMSE:    mse,
+			QuantPSNR:   psnr,
+			WeightMin:   wMin,
+			WeightMax:   wMax,
 		},
 	}
 
 	log.Calculation("mapWeights", map[string]interface{}{
-		"totalCells":  design.Stats.TotalCells,
+		"totalCells":    design.Stats.TotalCells,
 		"activeWeights": numWeights,
-		"levelsUsed":  len(levelsUsed),
-		"quantMSE":    mse,
-		"quantPSNR":   psnr,
-		"areaMM2":     totalAreaMM2,
+		"levelsUsed":    len(levelsUsed),
+		"quantMSE":      mse,
+		"quantPSNR":     psnr,
+		"areaMM2":       totalAreaMM2,
 	}, design)
 
 	return design, nil
@@ -242,9 +248,9 @@ func Compile(weights [][]float64, legacyConfig CompileConfig) (*CrossbarMapping,
 	// or we just use it as is if it's the exact same struct layout.
 	// However, since ArrayConfig added fields (StorageConfig, etc), we should be careful.
 	// Since types.go says 'type CompileConfig = ArrayConfig', they are identical types.
-	
+
 	config := &legacyConfig // Pointer to the config
-	
+
 	// If weights provided, attach them to the config for mapping
 	if weights != nil {
 		config.Mode = ModeCompute

@@ -92,12 +92,12 @@ func TestQualityPresetFromString(t *testing.T) {
 
 func TestVideoFormatValues(t *testing.T) {
 	tests := []struct {
-		format         VideoFormat
-		expectedExt    string
-		expectedCodec  VideoCodec
-		expectedMIME   string
-		supportsAudio  bool
-		supportsAlpha  bool
+		format        VideoFormat
+		expectedExt   string
+		expectedCodec VideoCodec
+		expectedMIME  string
+		supportsAudio bool
+		supportsAlpha bool
 	}{
 		{FormatMP4, ".mp4", CodecH264, "video/mp4", true, false},
 		{FormatWebM, ".webm", CodecVP9, "video/webm", true, true},
@@ -590,7 +590,7 @@ func TestEstimatedBitrate(t *testing.T) {
 			settings: NewSettingsFromPreset(QualityMedium),
 			width:    1280,
 			height:   720,
-			minBps:   500_000,  // 500 Kbps minimum
+			minBps:   500_000,   // 500 Kbps minimum
 			maxBps:   5_000_000, // 5 Mbps maximum
 		},
 		{

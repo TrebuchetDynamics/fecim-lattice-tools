@@ -147,11 +147,11 @@ func TestStressSARNoiseModeling(t *testing.T) {
 
 	// Test various noise levels - focus on configs that produce measurable variation
 	noiseConfigs := []struct {
-		name       string
-		capF       float64
-		metaProb   float64
-		tempK      float64
-		minLevels  int // Minimum unique levels expected
+		name      string
+		capF      float64
+		metaProb  float64
+		tempK     float64
+		minLevels int // Minimum unique levels expected
 	}{
 		{"Low", 10e-12, 1e-6, 300, 2},
 		{"Medium", 1e-12, 1e-5, 350, 3},
@@ -362,9 +362,9 @@ func TestStressChargePumpVoltageSweep(t *testing.T) {
 
 func TestStressChargePumpPowerConservation(t *testing.T) {
 	configs := []struct {
-		name       string
-		stages     int
-		efficiency float64
+		name        string
+		stages      int
+		efficiency  float64
 		loadCurrent float64
 	}{
 		{"Low efficiency", 2, 0.5, 10e-6},

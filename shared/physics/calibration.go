@@ -19,11 +19,11 @@ type CalibrationState struct {
 // Calibrator implements iterative calibration with binary search and
 // write-verify-retry logic for ferroelectric memory levels.
 type Calibrator struct {
-	NumLevels   int
-	Ec          float64 // Coercive field for this material
-	MinStep     float64 // Minimum step between levels (default: 2% of Ec)
-	MaxRetries  int     // Maximum retries per target (default: 3)
-	Tolerance   int     // Tolerance for "success" in levels (default: 1)
+	NumLevels  int
+	Ec         float64 // Coercive field for this material
+	MinStep    float64 // Minimum step between levels (default: 2% of Ec)
+	MaxRetries int     // Maximum retries per target (default: 3)
+	Tolerance  int     // Tolerance for "success" in levels (default: 1)
 
 	// Ascending calibration (from negative saturation)
 	Up []CalibrationState
@@ -258,9 +258,9 @@ func (c *Calibrator) SetDescendingValues(values []float64) {
 
 // VerifyResult represents the result of a write-verify check.
 type VerifyResult struct {
-	Success    bool // True if read level matches target within tolerance
-	ReadLevel  int  // The level that was read back
-	Error      int  // readLevel - targetLevel
+	Success     bool // True if read level matches target within tolerance
+	ReadLevel   int  // The level that was read back
+	Error       int  // readLevel - targetLevel
 	ShouldRetry bool // True if should retry (not success and retries remaining)
 }
 

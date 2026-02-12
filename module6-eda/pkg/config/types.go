@@ -3,17 +3,18 @@
 //
 // References:
 // [1] SkyWater SKY130 PDK: https://skywater-pdk.readthedocs.io/
-//     Cell dimensions based on SKY130 unithd site (0.46 × 2.72 μm)
+//
+//	Cell dimensions based on SKY130 unithd site (0.46 × 2.72 μm)
 package config
 
 // CellConfig defines configuration for a single FeCIM bitcell
 // Used for generating LEF, Liberty, and Verilog files
 type CellConfig struct {
-	Name         string  // Cell name, e.g., "fecim_bitcell"
-	Width        float64 // Cell width in μm (SKY130 unithd site width: 0.46 μm)
-	Height       float64 // Cell height in μm (SKY130 standard cell height: 2.72 μm)
-	CellType     string  // "passive" (0T1R) or "1t1r" (with selector)
-	Technology   string  // Target PDK, e.g., "sky130"
+	Name       string  // Cell name, e.g., "fecim_bitcell"
+	Width      float64 // Cell width in μm (SKY130 unithd site width: 0.46 μm)
+	Height     float64 // Cell height in μm (SKY130 standard cell height: 2.72 μm)
+	CellType   string  // "passive" (0T1R) or "1t1r" (with selector)
+	Technology string  // Target PDK, e.g., "sky130"
 
 	// Operating conditions (for Liberty file generation)
 	Voltage     float64 // Operating voltage in V (default: 1.8V for SKY130)
@@ -49,11 +50,11 @@ type ArrayConfig struct {
 // All timing values are PLACEHOLDERS requiring characterization
 func DefaultCellConfig() CellConfig {
 	return CellConfig{
-		Name:         "fecim_bitcell",
-		Width:        0.46,  // μm (SKY130 unithd site width)
-		Height:       2.72,  // μm (SKY130 standard cell height)
-		CellType:     "passive",
-		Technology:   "sky130",
+		Name:       "fecim_bitcell",
+		Width:      0.46, // μm (SKY130 unithd site width)
+		Height:     2.72, // μm (SKY130 standard cell height)
+		CellType:   "passive",
+		Technology: "sky130",
 		// Operating conditions (SKY130 typical corner)
 		Voltage:     1.8,  // V (SKY130 nominal VDD)
 		Temperature: 25.0, // °C (typical corner)
@@ -75,10 +76,10 @@ func DefaultArrayConfig() ArrayConfig {
 	return ArrayConfig{
 		Rows:         4,
 		Cols:         4,
-		Mode:         "storage",    // "storage", "memory", or "compute"
-		Architecture: "passive",    // "passive" (0T1R) or "1t1r"
+		Mode:         "storage", // "storage", "memory", or "compute"
+		Architecture: "passive", // "passive" (0T1R) or "1t1r"
 		Technology:   "sky130",
-		CellWidth:    0.46,  // μm (from DefaultCellConfig)
-		CellHeight:   2.72,  // μm (from DefaultCellConfig)
+		CellWidth:    0.46, // μm (from DefaultCellConfig)
+		CellHeight:   2.72, // μm (from DefaultCellConfig)
 	}
 }

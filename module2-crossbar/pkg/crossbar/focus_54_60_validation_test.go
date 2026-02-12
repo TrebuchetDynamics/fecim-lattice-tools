@@ -174,7 +174,7 @@ func TestFocus58_DriftTemperatureArrheniusAndVariation(t *testing.T) {
 
 func TestFocus59_EnduranceAndHalfSelectDisturb(t *testing.T) {
 	cfg := &Config{Rows: 5, Cols: 5, ADCBits: 8, DACBits: 8, ConductanceModel: ConductanceLinear,
-		Endurance: &EnduranceConfig{Enabled: true, FatigueThreshold: 10, FailureThreshold: 100},
+		Endurance:  &EnduranceConfig{Enabled: true, FatigueThreshold: 10, FailureThreshold: 100},
 		HalfSelect: &HalfSelectConfig{Enabled: true, DisturbThreshold: 0.3, DisturbRate: 0.01},
 	}
 	arr, err := NewArray(cfg)

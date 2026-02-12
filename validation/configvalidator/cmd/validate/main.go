@@ -13,12 +13,12 @@ import (
 
 func main() {
 	var (
-		recursive   = flag.Bool("r", false, "Recursively validate all JSON files in directories")
+		recursive    = flag.Bool("r", false, "Recursively validate all JSON files in directories")
 		showWarnings = flag.Bool("w", false, "Show warnings (not just errors)")
-		summary     = flag.Bool("s", false, "Show summary only (no individual file results)")
-		quiet       = flag.Bool("q", false, "Quiet mode (only exit code)")
+		summary      = flag.Bool("s", false, "Show summary only (no individual file results)")
+		quiet        = flag.Bool("q", false, "Quiet mode (only exit code)")
 	)
-	
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] <file.json|directory> ...\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Validates FeCIM configuration JSON files.\n\n")
@@ -35,16 +35,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s -r data/\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -w -s .\n", os.Args[0])
 	}
-	
+
 	flag.Parse()
-	
+
 	if flag.NArg() == 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
-	
+
 	var allResults []*configvalidator.ValidationResult
-	
+
 	// Process each argument
 	for _, arg := range flag.Args() {
 		info, err := os.Stat(arg)
@@ -52,7 +52,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: cannot access %s: %v\n", arg, err)
 			continue
 		}
-		
+
 		if info.IsDir() {
 			if *recursive {
 				results, err := configvalidator.ValidateDirectory(arg)
@@ -89,11 +89,11 @@ func main() {
 			allResults = append(allResults, result)
 		}
 	}
-	
+
 	// Process results
 	var totalFiles, validFiles, invalidFiles int
 	var totalErrors, totalWarnings int
-	
+
 	for _, result := range allResults {
 		totalFiles++
 		if result.Valid {
@@ -103,7 +103,7 @@ func main() {
 		}
 		totalErrors += len(result.Errors)
 		totalWarnings += len(result.Warnings)
-		
+
 		// Print individual results unless in quiet or summary mode
 		if !*quiet && !*summary {
 			if !result.Valid || (*showWarnings && len(result.Warnings) > 0) {
@@ -112,7 +112,7 @@ func main() {
 			}
 		}
 	}
-	
+
 	// Print summary
 	if !*quiet {
 		if *summary || totalFiles > 1 {
@@ -126,7 +126,7 @@ func main() {
 			}
 		}
 	}
-	
+
 	// Exit with appropriate code
 	if invalidFiles > 0 {
 		os.Exit(1)

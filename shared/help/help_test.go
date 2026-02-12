@@ -16,13 +16,13 @@ func TestGetHelpSystem(t *testing.T) {
 
 func TestEmbeddedTopicsRegistered(t *testing.T) {
 	hs := GetHelpSystem()
-	
+
 	// Check that embedded topics are registered
 	topics := hs.GetAllTopics()
 	if len(topics) == 0 {
 		t.Error("Expected embedded topics to be registered")
 	}
-	
+
 	// Check for key topics
 	expectedIDs := []string{
 		"overview",
@@ -37,7 +37,7 @@ func TestEmbeddedTopicsRegistered(t *testing.T) {
 		"troubleshooting",
 		"about.fecim",
 	}
-	
+
 	for _, id := range expectedIDs {
 		topic := hs.GetTopic(id)
 		if topic == nil {
@@ -49,11 +49,11 @@ func TestEmbeddedTopicsRegistered(t *testing.T) {
 func TestGetTopicsByCategory(t *testing.T) {
 	hs := GetHelpSystem()
 	categories := hs.GetTopicsByCategory()
-	
+
 	if len(categories) == 0 {
 		t.Error("Expected categories to be present")
 	}
-	
+
 	// Check for expected categories
 	expectedCategories := []string{"Getting Started", "Modules", "Reference", "About"}
 	for _, cat := range expectedCategories {
@@ -65,7 +65,7 @@ func TestGetTopicsByCategory(t *testing.T) {
 
 func TestSetContext(t *testing.T) {
 	hs := GetHelpSystem()
-	
+
 	// Set context to hysteresis
 	hs.SetContext("hysteresis")
 	topic := hs.GetContextualTopic()
@@ -75,7 +75,7 @@ func TestSetContext(t *testing.T) {
 	if topic != nil && topic.ID != "module.hysteresis" {
 		t.Errorf("Expected module.hysteresis topic, got %s", topic.ID)
 	}
-	
+
 	// Set context to home
 	hs.SetContext("home")
 	topic = hs.GetContextualTopic()
@@ -89,13 +89,13 @@ func TestSetContext(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	hs := GetHelpSystem()
-	
+
 	// Search for "hysteresis"
 	results := hs.Search("hysteresis")
 	if len(results) == 0 {
 		t.Error("Expected search results for 'hysteresis'")
 	}
-	
+
 	// First result should be the hysteresis module
 	if len(results) > 0 {
 		found := false
@@ -109,13 +109,13 @@ func TestSearch(t *testing.T) {
 			t.Error("Expected hysteresis module to be in search results")
 		}
 	}
-	
+
 	// Search for "F1"
 	results = hs.Search("F1")
 	if len(results) == 0 {
 		t.Error("Expected search results for 'F1'")
 	}
-	
+
 	// Search for nonsense should return nothing
 	results = hs.Search("xyzzy12345")
 	if len(results) != 0 {
@@ -125,7 +125,7 @@ func TestSearch(t *testing.T) {
 
 func TestTopicContent(t *testing.T) {
 	hs := GetHelpSystem()
-	
+
 	// Each topic should have content
 	topics := hs.GetAllTopics()
 	for _, topic := range topics {
@@ -147,7 +147,7 @@ func TestTopicContent(t *testing.T) {
 
 func TestModuleHelp(t *testing.T) {
 	hs := GetHelpSystem()
-	
+
 	modules := []string{"hysteresis", "crossbar", "mnist", "circuits", "comparison", "eda", "docs"}
 	for _, mod := range modules {
 		topic := hs.ModuleHelp(mod)

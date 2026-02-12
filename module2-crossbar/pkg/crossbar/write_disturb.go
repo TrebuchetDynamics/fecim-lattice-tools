@@ -11,9 +11,9 @@
 //   - In active (1T1R/2T1R) arrays, transistors reduce half-select stress
 //
 // Write disturb mechanisms:
-//   1. Field-induced switching: |V| < Vc but repeated stress accumulates
-//   2. Charge injection: Incomplete switching creates trapped charge
-//   3. Domain wall motion: Sub-threshold fields cause gradual domain drift
+//  1. Field-induced switching: |V| < Vc but repeated stress accumulates
+//  2. Charge injection: Incomplete switching creates trapped charge
+//  3. Domain wall motion: Sub-threshold fields cause gradual domain drift
 //
 // References:
 //   - IEEE IEDM 2022 (FeFET write disturb characterization)
@@ -55,12 +55,12 @@ type WriteDisturbConfig struct {
 // DefaultWriteDisturbConfig returns default write disturb settings.
 func DefaultWriteDisturbConfig() *WriteDisturbConfig {
 	return &WriteDisturbConfig{
-		Enable:                    false,                  // Disabled by default
-		HalfSelectRatio:           0.5,                    // V/2 scheme
-		StressAccumulationRate:    1e-4,                   // 0.01% per exposure
-		StressThreshold:           1.0,                    // 1 unit = 1 level shift
-		Architecture1T1R:          true,                   // Default to 1T1R
-		Architecture1T1RReduction: 0.1,                    // 10x reduction with transistor
+		Enable:                    false, // Disabled by default
+		HalfSelectRatio:           0.5,   // V/2 scheme
+		StressAccumulationRate:    1e-4,  // 0.01% per exposure
+		StressThreshold:           1.0,   // 1 unit = 1 level shift
+		Architecture1T1R:          true,  // Default to 1T1R
+		Architecture1T1RReduction: 0.1,   // 10x reduction with transistor
 	}
 }
 
@@ -76,11 +76,11 @@ type WriteDisturbEngine struct {
 	cols   int
 
 	// Statistics
-	TotalWriteOps     int     // Total write operations
-	TotalHalfSelects  int     // Total half-select exposures
-	DisturbedCells    int     // Cells that shifted due to disturb
-	MaxStress         float64 // Maximum accumulated stress
-	AvgStress         float64 // Average stress across array
+	TotalWriteOps    int     // Total write operations
+	TotalHalfSelects int     // Total half-select exposures
+	DisturbedCells   int     // Cells that shifted due to disturb
+	MaxStress        float64 // Maximum accumulated stress
+	AvgStress        float64 // Average stress across array
 }
 
 // NewWriteDisturbEngine creates a new write disturb engine.

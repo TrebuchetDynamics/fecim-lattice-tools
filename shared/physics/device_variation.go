@@ -46,19 +46,19 @@ type DeviceVariationConfig struct {
 // DefaultDeviceVariationConfig returns default variation settings based on literature.
 func DefaultDeviceVariationConfig() *DeviceVariationConfig {
 	return &DeviceVariationConfig{
-		Enable:          false,          // Disabled by default for deterministic demos
-		EcSigmaRelative: 0.15,           // 15% Ec variation (IEEE IRPS 2022)
-		PrSigmaRelative: 0.20,           // 20% Pr variation (slightly higher)
-		EcPrCorrelation: 0.2,            // Small positive correlation
-		Seed:            0,              // Time-based seed
+		Enable:          false, // Disabled by default for deterministic demos
+		EcSigmaRelative: 0.15,  // 15% Ec variation (IEEE IRPS 2022)
+		PrSigmaRelative: 0.20,  // 20% Pr variation (slightly higher)
+		EcPrCorrelation: 0.2,   // Small positive correlation
+		Seed:            0,     // Time-based seed
 	}
 }
 
 // DeviceVariationEngine generates device-specific Ec/Pr values with Gaussian variation.
 type DeviceVariationEngine struct {
-	config     *DeviceVariationConfig
-	rng        *rand.Rand
-	mu         sync.Mutex
+	config *DeviceVariationConfig
+	rng    *rand.Rand
+	mu     sync.Mutex
 
 	// Cache of generated variations per device (row, col)
 	deviceCache map[deviceKey]*DeviceVariation

@@ -18,10 +18,10 @@ type ComparisonConfig struct {
 
 // ComparisonJSONResult represents the comparison results for JSON output.
 type ComparisonJSONResult struct {
-	Workload     string                   `json:"workload"`
-	Throughput   float64                  `json:"target_throughput"`
-	Architectures []ArchitectureResult    `json:"architectures"`
-	Advantages   AdvantagesResult         `json:"advantages"`
+	Workload      string               `json:"workload"`
+	Throughput    float64              `json:"target_throughput"`
+	Architectures []ArchitectureResult `json:"architectures"`
+	Advantages    AdvantagesResult     `json:"advantages"`
 }
 
 type ArchitectureResult struct {
@@ -34,10 +34,10 @@ type ArchitectureResult struct {
 }
 
 type AdvantagesResult struct {
-	VsCPU_EnergyReduction  float64 `json:"vs_cpu_energy_reduction"`
-	VsCPU_CostReduction    float64 `json:"vs_cpu_cost_reduction"`
-	VsGPU_PowerReduction   float64 `json:"vs_gpu_power_reduction"`
-	VsGPU_AreaReduction    float64 `json:"vs_gpu_area_reduction"`
+	VsCPU_EnergyReduction float64 `json:"vs_cpu_energy_reduction"`
+	VsCPU_CostReduction   float64 `json:"vs_cpu_cost_reduction"`
+	VsGPU_PowerReduction  float64 `json:"vs_gpu_power_reduction"`
+	VsGPU_AreaReduction   float64 `json:"vs_gpu_area_reduction"`
 }
 
 func Run(args []string) error {

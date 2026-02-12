@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
 // Styles using lipgloss

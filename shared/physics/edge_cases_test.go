@@ -14,10 +14,10 @@ import (
 func TestQuantizeToLevels_ZeroLevels(t *testing.T) {
 	// Edge case: 0 or 1 levels
 	tests := []struct {
-		name      string
-		value     float64
-		levels    int
-		knownNaN  bool // Document known NaN-producing edge cases
+		name     string
+		value    float64
+		levels   int
+		knownNaN bool // Document known NaN-producing edge cases
 	}{
 		{"zero levels", 0.5, 0, false},
 		{"one level", 0.5, 1, true}, // KNOWN ISSUE: 1 level causes division by 0 (levels-1)
@@ -234,14 +234,14 @@ func TestHZOMaterial_SwitchingTime_ExtremeTemperatures(t *testing.T) {
 		wantZero bool
 		wantInf  bool
 	}{
-		{"absolute zero", 0, false, true},         // exp(Ea/0) = Inf
-		{"near absolute zero", 1, false, false},   // very large but finite
-		{"cryogenic", 4, false, false},            // liquid helium
+		{"absolute zero", 0, false, true},       // exp(Ea/0) = Inf
+		{"near absolute zero", 1, false, false}, // very large but finite
+		{"cryogenic", 4, false, false},          // liquid helium
 		{"liquid nitrogen", 77, false, false},
 		{"room temperature", 300, false, false},
 		{"industrial", 358, false, false},
 		{"automotive", 423, false, false},
-		{"above Curie", 1000, false, false},       // should still compute
+		{"above Curie", 1000, false, false}, // should still compute
 		{"extreme high", 10000, false, false},
 	}
 
@@ -274,8 +274,8 @@ func TestHZOMaterial_CoerciveFieldAtTemp_ExtremeTemperatures(t *testing.T) {
 	mat := DefaultHZO()
 
 	tests := []struct {
-		name       string
-		tempK      float64
+		name         string
+		tempK        float64
 		shouldBeZero bool
 	}{
 		{"absolute zero", 0, false},
@@ -431,7 +431,7 @@ func TestLKSolver_ExtremeTemperatures(t *testing.T) {
 			s.UseNLS = false
 
 			// Try to step the solver
-			E := 1e9 // 10 MV/cm field
+			E := 1e9    // 10 MV/cm field
 			dt := 1e-11 // 10 ps
 
 			for i := 0; i < 100; i++ {
@@ -759,9 +759,9 @@ func TestHZOMaterial_NegativeParameters(t *testing.T) {
 
 func TestLKSolver_Step_ExtremeFields(t *testing.T) {
 	tests := []struct {
-		name  string
-		E     float64
-		dt    float64
+		name string
+		E    float64
+		dt   float64
 	}{
 		{"zero field", 0, 1e-11},
 		{"very small field", 1e-10, 1e-11},

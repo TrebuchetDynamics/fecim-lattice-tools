@@ -23,15 +23,15 @@ type TutorialStep struct {
 	Action      func() // Action to execute for this step
 
 	// Optional features
-	HighlightElement string            // Element ID to highlight (for UI highlighting)
-	Animation        *AnimationConfig  // Optional animation to play
-	UserPrompt       string            // Prompt user for action (empty = auto-advance)
-	QuizQuestion     *QuizQuestion     // Optional quiz for comprehension check
-	Duration         time.Duration     // Wait time before next step (0 = wait for user)
-	SkippedWhenFast  bool              // Skip this step in fast mode
-	Tags             []string          // Tags for filtering (e.g., "physics", "engineering")
-	DifficultyLevel  TutorialLevel     // Beginner/Intermediate/Advanced
-	Annotations      []StepAnnotation  // Visual annotations to display
+	HighlightElement string           // Element ID to highlight (for UI highlighting)
+	Animation        *AnimationConfig // Optional animation to play
+	UserPrompt       string           // Prompt user for action (empty = auto-advance)
+	QuizQuestion     *QuizQuestion    // Optional quiz for comprehension check
+	Duration         time.Duration    // Wait time before next step (0 = wait for user)
+	SkippedWhenFast  bool             // Skip this step in fast mode
+	Tags             []string         // Tags for filtering (e.g., "physics", "engineering")
+	DifficultyLevel  TutorialLevel    // Beginner/Intermediate/Advanced
+	Annotations      []StepAnnotation // Visual annotations to display
 }
 
 // TutorialLevel represents tutorial difficulty.
@@ -61,12 +61,12 @@ func (l TutorialLevel) String() string {
 
 // StepAnnotation is a visual annotation on the visualization.
 type StepAnnotation struct {
-	ID       string    // Unique identifier
-	Type     string    // "arrow", "circle", "box", "text"
+	ID       string // Unique identifier
+	Type     string // "arrow", "circle", "box", "text"
 	Position fyne.Position
 	Size     fyne.Size
-	Color    string    // Hex color
-	Text     string    // For text annotations
+	Color    string // Hex color
+	Text     string // For text annotations
 }
 
 // QuizQuestion is an optional comprehension check.
@@ -88,15 +88,15 @@ type AnimationConfig struct {
 
 // TutorialController manages interactive tutorial playback with rich features.
 type TutorialController struct {
-	steps        []TutorialStep
-	currentStep  int
-	running      bool
-	paused       bool
-	fastMode     bool
-	levelFilter  TutorialLevel
-	ctx          context.Context
-	cancel       context.CancelFunc
-	mu           sync.RWMutex
+	steps       []TutorialStep
+	currentStep int
+	running     bool
+	paused      bool
+	fastMode    bool
+	levelFilter TutorialLevel
+	ctx         context.Context
+	cancel      context.CancelFunc
+	mu          sync.RWMutex
 
 	// Progress tracking
 	completedSteps map[int]bool
@@ -105,12 +105,12 @@ type TutorialController struct {
 	stepTimes      []time.Duration
 
 	// Callbacks
-	onStepStart     func(step int, total int, ts TutorialStep)
-	onStepEnd       func(step int, total int, ts TutorialStep)
-	onComplete      func(stats TutorialStats)
-	onQuizAnswer    func(step int, correct bool)
-	onHighlight     func(elementID string, highlight bool)
-	onAnnotation    func(annotations []StepAnnotation, show bool)
+	onStepStart  func(step int, total int, ts TutorialStep)
+	onStepEnd    func(step int, total int, ts TutorialStep)
+	onComplete   func(stats TutorialStats)
+	onQuizAnswer func(step int, correct bool)
+	onHighlight  func(elementID string, highlight bool)
+	onAnnotation func(annotations []StepAnnotation, show bool)
 }
 
 // TutorialStats contains statistics about a completed tutorial.
@@ -620,11 +620,11 @@ func (bar *TutorialControlBar) CreateRenderer() fyne.WidgetRenderer {
 
 // AnimationFrame represents a single animation frame.
 type AnimationFrame struct {
-	Title      string
-	Content    string
-	Highlight  string
-	Duration   time.Duration
-	DrawFunc   func(canvas fyne.Canvas) // Custom drawing function
+	Title     string
+	Content   string
+	Highlight string
+	Duration  time.Duration
+	DrawFunc  func(canvas fyne.Canvas) // Custom drawing function
 }
 
 // AnimationController manages educational animations.

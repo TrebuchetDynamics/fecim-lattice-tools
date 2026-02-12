@@ -25,9 +25,9 @@ type WriteVerifyStats struct {
 	mu sync.RWMutex
 
 	// Total counts
-	TotalWrites     int // Total write operations attempted
+	TotalWrites      int // Total write operations attempted
 	SuccessfulWrites int // Writes that converged to target
-	FailedWrites    int // Writes that failed (max iterations, stuck)
+	FailedWrites     int // Writes that failed (max iterations, stuck)
 
 	// Pulses to converge histogram (index = pulses, value = count)
 	// PulsesHistogram[0] = writes that converged in 1 pulse
@@ -39,7 +39,7 @@ type WriteVerifyStats struct {
 	ResetCount     int // Number of reset operations
 
 	// Cycle-dependent failure tracking
-	CycleCount       int       // Total write cycles on array
+	CycleCount         int       // Total write cycles on array
 	FailureRateHistory []float64 // Failure rate at each 100-cycle checkpoint
 
 	// Per-level statistics (which levels are hardest to hit)
@@ -47,7 +47,7 @@ type WriteVerifyStats struct {
 	LevelSuccesses [256]int // Successes per target level (supports up to 140+ levels)
 
 	// Timing statistics (in microseconds)
-	TotalWriteTimeUs float64 // Total time spent in write operations
+	TotalWriteTimeUs  float64 // Total time spent in write operations
 	AvgPulsesPerWrite float64 // Running average pulses per write
 }
 
@@ -164,8 +164,8 @@ func (s *WriteVerifyStats) GetHardestLevels(n int) []int {
 
 	// Find n levels with lowest success rate (that have been attempted)
 	type levelRate struct {
-		level int
-		rate  float64
+		level    int
+		rate     float64
 		attempts int
 	}
 

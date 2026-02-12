@@ -31,16 +31,16 @@ import (
 
 // CrossbarArray represents a ferroelectric compute-in-memory crossbar
 type CrossbarArray struct {
-	Rows    int           // Number of word lines (input size)
-	Cols    int           // Number of bit lines (output size)
-	Weights [][]float64   // Conductance matrix [Rows][Cols]
-	Levels  int           // Number of discrete analog levels (e.g., 30)
-	Gmin    float64       // Minimum conductance (S)
-	Gmax    float64       // Maximum conductance (S)
-	Noise   float64       // Conductance variation (σ/μ)
-	IRDrop  bool          // Simulate IR drop effects
-	Rline   float64       // Wire resistance (Ω)
-	Vread   float64       // Read voltage (V)
+	Rows    int         // Number of word lines (input size)
+	Cols    int         // Number of bit lines (output size)
+	Weights [][]float64 // Conductance matrix [Rows][Cols]
+	Levels  int         // Number of discrete analog levels (e.g., 30)
+	Gmin    float64     // Minimum conductance (S)
+	Gmax    float64     // Maximum conductance (S)
+	Noise   float64     // Conductance variation (σ/μ)
+	IRDrop  bool        // Simulate IR drop effects
+	Rline   float64     // Wire resistance (Ω)
+	Vread   float64     // Read voltage (V)
 }
 
 // NewCrossbarArray creates a new crossbar with given dimensions
@@ -49,11 +49,11 @@ func NewCrossbarArray(rows, cols, levels int) *CrossbarArray {
 		Rows:   rows,
 		Cols:   cols,
 		Levels: levels,
-		Gmin:   1e-7,   // 100 nS minimum
-		Gmax:   1e-5,   // 10 µS maximum
-		Noise:  0.01,   // 1% device variation
-		Rline:  5.0,    // 5 Ω wire resistance
-		Vread:  0.2,    // 200 mV read voltage
+		Gmin:   1e-7, // 100 nS minimum
+		Gmax:   1e-5, // 10 µS maximum
+		Noise:  0.01, // 1% device variation
+		Rline:  5.0,  // 5 Ω wire resistance
+		Vread:  0.2,  // 200 mV read voltage
 	}
 
 	// Initialize weight matrix
@@ -163,7 +163,7 @@ func (cb *CrossbarArray) GetEnergyPerMVM() float64 {
 	// Scales with log2(levels): E = 10 fJ × log2(levels) per MAC
 	macs := cb.Rows * cb.Cols
 	bitsPerCell := math.Log2(float64(cb.Levels))
-	energyPerMAC := 10.0 * bitsPerCell // femtojoules
+	energyPerMAC := 10.0 * bitsPerCell         // femtojoules
 	return float64(macs) * energyPerMAC / 1000 // picojoules
 }
 

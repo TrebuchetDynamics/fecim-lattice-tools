@@ -283,7 +283,7 @@ func (dc *DigitCanvas) generateImage(w, h int) image.Image {
 		cy := int(float64(dc.keyboardCursor.y) * cellH)
 		cw := int(cellW)
 		ch := int(cellH)
-		
+
 		// Draw cursor border (2px thick)
 		for t := 0; t < 2; t++ {
 			// Top edge
@@ -490,7 +490,7 @@ type keyboardCursor struct {
 // drawAtGrid draws a pixel at the given grid coordinates.
 func (dc *DigitCanvas) drawAtGrid(px, py int) {
 	dc.lastInputSource = InputUser
-	
+
 	// Apply brush with soft falloff
 	radius := dc.brushRadius
 	for dy := -2; dy <= 2; dy++ {

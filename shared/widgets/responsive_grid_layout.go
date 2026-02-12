@@ -31,13 +31,13 @@ type ResponsiveGridLayout struct {
 func NewResponsiveGridLayout() *ResponsiveGridLayout {
 	return &ResponsiveGridLayout{
 		MinItemWidth: 300,
-		MaxItemWidth: 550,  // Moderate max width
-		ItemHeightSM: 200,  // UI-002: Increased from 180 to 200
-		ItemHeightMD: 200,  // UI-002: Increased from 180 to 200
-		ItemHeightLG: 220,  // UI-002: Increased from 200 to 220
-		ItemHeightXL: 230,  // UI-002: Increased from 210 to 230
-		RowSpacing:   24,   // UI-002: Increased from 20 to 24px
-		ColSpacing:   24,   // UI-002: Increased from 20 to 24px
+		MaxItemWidth: 550, // Moderate max width
+		ItemHeightSM: 200, // UI-002: Increased from 180 to 200
+		ItemHeightMD: 200, // UI-002: Increased from 180 to 200
+		ItemHeightLG: 220, // UI-002: Increased from 200 to 220
+		ItemHeightXL: 230, // UI-002: Increased from 210 to 230
+		RowSpacing:   24,  // UI-002: Increased from 20 to 24px
+		ColSpacing:   24,  // UI-002: Increased from 20 to 24px
 	}
 }
 

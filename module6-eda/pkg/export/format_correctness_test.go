@@ -33,11 +33,21 @@ func TestExportFormats_JSONCSVSPICEVerilogDEF(t *testing.T) {
 	vPath := filepath.Join(dir, "a.v")
 	defPath := filepath.Join(dir, "a.def")
 
-	if err := ExportJSON(design, jsonPath); err != nil { t.Fatalf("ExportJSON: %v", err) }
-	if err := ExportCSV(design, csvPath); err != nil { t.Fatalf("ExportCSV: %v", err) }
-	if err := ExportSPICE(design, spPath, 1.8); err != nil { t.Fatalf("ExportSPICE: %v", err) }
-	if err := ExportVerilog(design, vPath); err != nil { t.Fatalf("ExportVerilog: %v", err) }
-	if err := ExportDEF(design, defPath); err != nil { t.Fatalf("ExportDEF: %v", err) }
+	if err := ExportJSON(design, jsonPath); err != nil {
+		t.Fatalf("ExportJSON: %v", err)
+	}
+	if err := ExportCSV(design, csvPath); err != nil {
+		t.Fatalf("ExportCSV: %v", err)
+	}
+	if err := ExportSPICE(design, spPath, 1.8); err != nil {
+		t.Fatalf("ExportSPICE: %v", err)
+	}
+	if err := ExportVerilog(design, vPath); err != nil {
+		t.Fatalf("ExportVerilog: %v", err)
+	}
+	if err := ExportDEF(design, defPath); err != nil {
+		t.Fatalf("ExportDEF: %v", err)
+	}
 
 	// JSON format correctness
 	jsonBytes, _ := os.ReadFile(jsonPath)
@@ -51,10 +61,14 @@ func TestExportFormats_JSONCSVSPICEVerilogDEF(t *testing.T) {
 
 	// CSV correctness + indexing
 	csvFile, err := os.Open(csvPath)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer csvFile.Close()
 	records, err := csv.NewReader(csvFile).ReadAll()
-	if err != nil { t.Fatalf("invalid CSV export: %v", err) }
+	if err != nil {
+		t.Fatalf("invalid CSV export: %v", err)
+	}
 	if len(records) != 7 { // header + 6 mapped cells
 		t.Fatalf("csv row count mismatch: got %d want 7", len(records))
 	}

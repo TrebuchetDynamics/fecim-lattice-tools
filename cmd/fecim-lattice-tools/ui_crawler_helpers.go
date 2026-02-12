@@ -31,18 +31,18 @@ func ptrID(o any) uintptr {
 func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 	seen := map[uintptr]bool{}
 	elements := make([]interactiveElement, 0) // Ensure non-nil slice
-	
+
 	// Return empty slice if root is nil
 	if root == nil {
 		return elements
 	}
-	
+
 	var walk func(o fyne.CanvasObject)
 	walk = func(o fyne.CanvasObject) {
 		if o == nil {
 			return
 		}
-		
+
 		ptr := ptrID(o)
 		if ptr != 0 && seen[ptr] {
 			return
@@ -50,7 +50,7 @@ func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 		if ptr != 0 {
 			seen[ptr] = true
 		}
-		
+
 		// Check for different types of interactive elements
 		switch obj := o.(type) {
 		case *widget.Button:
@@ -65,7 +65,7 @@ func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 		case *widget.Hyperlink:
 			if obj.OnTapped != nil && obj.Text != "" {
 				elements = append(elements, interactiveElement{
-					Type:   "hyperlink", 
+					Type:   "hyperlink",
 					Text:   obj.Text,
 					Object: obj,
 					Action: "tap",
@@ -109,7 +109,7 @@ func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 				})
 			}
 		}
-		
+
 		// Recurse into containers
 		if tabs, ok := o.(*container.AppTabs); ok {
 			for _, item := range tabs.Items {
@@ -141,7 +141,7 @@ func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 			}
 		}
 	}
-	
+
 	walk(root)
 	return elements
 }
@@ -157,60 +157,60 @@ type interactiveElement struct {
 // findPopupTriggers identifies buttons likely to trigger popups or dialogs
 func findPopupTriggers(elements []interactiveElement) []interactiveElement {
 	triggers := make([]interactiveElement, 0) // Ensure non-nil slice
-	
+
 	// Keywords that commonly indicate popup/dialog triggers
 	triggerKeywords := map[string]bool{
 		// Dialog triggers
-		"about":        true,
-		"settings":     true,
-		"preferences":  true,
-		"config":       true,
+		"about":         true,
+		"settings":      true,
+		"preferences":   true,
+		"config":        true,
 		"configuration": true,
-		"options":      true,
-		"tools":        true,
-		"help":         true,
-		"info":         true,
-		"details":      true,
-		"properties":   true,
-		
+		"options":       true,
+		"tools":         true,
+		"help":          true,
+		"info":          true,
+		"details":       true,
+		"properties":    true,
+
 		// Modal triggers
-		"export":       true,
-		"import":       true,
-		"save":         true,
-		"load":         true,
-		"open":         true,
-		"new":          true,
-		"create":       true,
-		"add":          true,
-		"edit":         true,
-		"delete":       true,
-		"remove":       true,
-		
+		"export": true,
+		"import": true,
+		"save":   true,
+		"load":   true,
+		"open":   true,
+		"new":    true,
+		"create": true,
+		"add":    true,
+		"edit":   true,
+		"delete": true,
+		"remove": true,
+
 		// Info/overlay triggers
-		"learn":        true,
-		"more":         true,
-		"show":         true,
-		"view":         true,
-		"display":      true,
-		"advanced":     true,
-		"expert":       true,
-		
+		"learn":    true,
+		"more":     true,
+		"show":     true,
+		"view":     true,
+		"display":  true,
+		"advanced": true,
+		"expert":   true,
+
 		// Material/component pickers
-		"material":     true,
-		"select":       true,
-		"choose":       true,
-		"pick":         true,
-		"browse":       true,
+		"material": true,
+		"select":   true,
+		"choose":   true,
+		"pick":     true,
+		"browse":   true,
 	}
-	
+
 	for _, element := range elements {
 		if element.Type != "button" && element.Type != "hyperlink" {
 			continue
 		}
-		
+
 		text := strings.ToLower(strings.TrimSpace(element.Text))
 		words := strings.Fields(text)
-		
+
 		for _, word := range words {
 			// Clean word of punctuation
 			word = strings.Trim(word, ".,!?()[]{}:;")
@@ -220,38 +220,38 @@ func findPopupTriggers(elements []interactiveElement) []interactiveElement {
 			}
 		}
 	}
-	
+
 	return triggers
 }
 
 // findCloseElements identifies elements that likely close dialogs or overlays
 func findCloseElements(elements []interactiveElement) []interactiveElement {
 	closers := make([]interactiveElement, 0) // Ensure non-nil slice
-	
+
 	closeKeywords := map[string]bool{
-		"close":    true,
-		"cancel":   true,
-		"back":     true,
-		"dismiss":  true,
-		"ok":       true,
-		"done":     true,
-		"finish":   true,
-		"exit":     true,
-		"quit":     true,
-		"hide":     true,
+		"close":   true,
+		"cancel":  true,
+		"back":    true,
+		"dismiss": true,
+		"ok":      true,
+		"done":    true,
+		"finish":  true,
+		"exit":    true,
+		"quit":    true,
+		"hide":    true,
 	}
-	
+
 	for _, element := range elements {
 		if element.Type != "button" {
 			continue
 		}
-		
+
 		text := strings.ToLower(strings.TrimSpace(element.Text))
 		if closeKeywords[text] {
 			closers = append(closers, element)
 		}
 	}
-	
+
 	return closers
 }
 
@@ -285,7 +285,7 @@ func triggerInteractiveElement(element interactiveElement) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -293,18 +293,18 @@ func triggerInteractiveElement(element interactiveElement) bool {
 func findMenus(root fyne.CanvasObject) []menuInfo {
 	seen := map[uintptr]bool{}
 	menus := make([]menuInfo, 0) // Ensure non-nil slice
-	
+
 	// Return empty slice if root is nil
 	if root == nil {
 		return menus
 	}
-	
+
 	var walk func(o fyne.CanvasObject)
 	walk = func(o fyne.CanvasObject) {
 		if o == nil {
 			return
 		}
-		
+
 		ptr := ptrID(o)
 		if ptr != 0 && seen[ptr] {
 			return
@@ -312,7 +312,7 @@ func findMenus(root fyne.CanvasObject) []menuInfo {
 		if ptr != 0 {
 			seen[ptr] = true
 		}
-		
+
 		// Look for menu-like structures
 		switch obj := o.(type) {
 		case *widget.Select:
@@ -328,7 +328,7 @@ func findMenus(root fyne.CanvasObject) []menuInfo {
 				Object:  obj,
 			})
 		}
-		
+
 		// Recurse
 		if tabs, ok := o.(*container.AppTabs); ok {
 			for _, item := range tabs.Items {
@@ -355,7 +355,7 @@ func findMenus(root fyne.CanvasObject) []menuInfo {
 			}
 		}
 	}
-	
+
 	walk(root)
 	return menus
 }
@@ -370,7 +370,7 @@ type menuInfo struct {
 // exploreMenuOptions triggers different states of menu components
 func exploreMenuOptions(menu menuInfo) []string {
 	var states []string
-	
+
 	switch menu.Type {
 	case "select":
 		if sel, ok := menu.Object.(*widget.Select); ok {
@@ -393,18 +393,18 @@ func exploreMenuOptions(menu menuInfo) []string {
 			radio.SetSelected(original)
 		}
 	}
-	
+
 	return states
 }
 
 // findToolTips discovers elements that might have tooltips (future implementation)
 func findToolTips(root fyne.CanvasObject) []tooltipInfo {
 	tips := make([]tooltipInfo, 0) // Ensure non-nil slice
-	
+
 	// Placeholder for tooltip discovery
 	// Fyne tooltips are not easily discoverable via reflection
 	// This would require platform-specific implementations
-	
+
 	return tips
 }
 

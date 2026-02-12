@@ -13,21 +13,21 @@ type Action string
 
 // Common keyboard actions across all modules.
 const (
-	ActionSave        Action = "save"         // Ctrl+S: Save current state/data
-	ActionExport      Action = "export"       // Ctrl+E: Export data
-	ActionReset       Action = "reset"        // Ctrl+R: Reset simulation/view
-	ActionPauseResume Action = "pause_resume" // Space: Toggle pause/resume
-	ActionNavigateUp  Action = "nav_up"       // Up arrow: Navigate up
-	ActionNavigateDown Action = "nav_down"    // Down arrow: Navigate down
-	ActionNavigateLeft Action = "nav_left"    // Left arrow: Navigate left/previous
-	ActionNavigateRight Action = "nav_right"  // Right arrow: Navigate right/next
-	ActionHelp        Action = "help"         // ? or /: Show keyboard help
-	ActionStepForward Action = "step_forward" // ]: Step forward (animations)
-	ActionStepBack    Action = "step_back"    // [: Step backward (animations)
-	ActionIncrease    Action = "increase"     // +/=: Increase value
-	ActionDecrease    Action = "decrease"     // -: Decrease value
-	ActionNextTab     Action = "next_tab"     // Tab: Next tab
-	ActionPrevTab     Action = "prev_tab"     // Shift+Tab: Previous tab
+	ActionSave          Action = "save"         // Ctrl+S: Save current state/data
+	ActionExport        Action = "export"       // Ctrl+E: Export data
+	ActionReset         Action = "reset"        // Ctrl+R: Reset simulation/view
+	ActionPauseResume   Action = "pause_resume" // Space: Toggle pause/resume
+	ActionNavigateUp    Action = "nav_up"       // Up arrow: Navigate up
+	ActionNavigateDown  Action = "nav_down"     // Down arrow: Navigate down
+	ActionNavigateLeft  Action = "nav_left"     // Left arrow: Navigate left/previous
+	ActionNavigateRight Action = "nav_right"    // Right arrow: Navigate right/next
+	ActionHelp          Action = "help"         // ? or /: Show keyboard help
+	ActionStepForward   Action = "step_forward" // ]: Step forward (animations)
+	ActionStepBack      Action = "step_back"    // [: Step backward (animations)
+	ActionIncrease      Action = "increase"     // +/=: Increase value
+	ActionDecrease      Action = "decrease"     // -: Decrease value
+	ActionNextTab       Action = "next_tab"     // Tab: Next tab
+	ActionPrevTab       Action = "prev_tab"     // Shift+Tab: Previous tab
 )
 
 // Handler is a function called when a keyboard action is triggered.
@@ -168,16 +168,16 @@ func (m *Manager) GetHelpText() string {
 // FormatHelpText formats shortcuts into a human-readable help string.
 func FormatHelpText(shortcuts []Shortcut) string {
 	text := "Keyboard Shortcuts:\n\n"
-	
+
 	// Group shortcuts by category
 	categories := map[string][]Shortcut{
-		"Navigation":     {},
-		"Simulation":     {},
-		"Data":           {},
-		"Animation":      {},
-		"Misc":           {},
+		"Navigation": {},
+		"Simulation": {},
+		"Data":       {},
+		"Animation":  {},
+		"Misc":       {},
 	}
-	
+
 	for _, s := range shortcuts {
 		switch s.Action {
 		case ActionNavigateUp, ActionNavigateDown, ActionNavigateLeft, ActionNavigateRight, ActionNextTab, ActionPrevTab:
@@ -192,7 +192,7 @@ func FormatHelpText(shortcuts []Shortcut) string {
 			categories["Misc"] = append(categories["Misc"], s)
 		}
 	}
-	
+
 	order := []string{"Navigation", "Simulation", "Data", "Animation", "Misc"}
 	for _, cat := range order {
 		shortcuts := categories[cat]
@@ -205,7 +205,7 @@ func FormatHelpText(shortcuts []Shortcut) string {
 		}
 		text += "\n"
 	}
-	
+
 	return text
 }
 
@@ -224,7 +224,7 @@ func formatKey(key fyne.KeyName, modifier fyne.KeyModifier) string {
 	if modifier&fyne.KeyModifierSuper != 0 {
 		result += "Super+"
 	}
-	
+
 	// Map key names to human-readable strings
 	keyStr := string(key)
 	switch key {
@@ -251,6 +251,6 @@ func formatKey(key fyne.KeyName, modifier fyne.KeyModifier) string {
 	case fyne.KeySlash:
 		keyStr = "?//"
 	}
-	
+
 	return result + keyStr
 }

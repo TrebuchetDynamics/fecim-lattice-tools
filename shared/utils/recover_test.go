@@ -14,7 +14,7 @@ func TestSafeGo(t *testing.T) {
 		SafeGo("test", func() {
 			executed <- true
 		})
-		
+
 		select {
 		case <-executed:
 			// Success
@@ -29,7 +29,7 @@ func TestSafeGo(t *testing.T) {
 			defer func() { done <- true }()
 			panic("intentional panic")
 		})
-		
+
 		select {
 		case <-done:
 			// Success - panic was recovered and defer executed
@@ -44,20 +44,20 @@ func TestSafeGoWithCallback(t *testing.T) {
 	t.Run("no panic", func(t *testing.T) {
 		executed := make(chan bool, 1)
 		callbackCalled := false
-		
+
 		SafeGoWithCallback("test", func() {
 			executed <- true
 		}, func(name string, v interface{}) {
 			callbackCalled = true
 		})
-		
+
 		select {
 		case <-executed:
 			// Success
 		case <-time.After(time.Second):
 			t.Error("function did not execute")
 		}
-		
+
 		if callbackCalled {
 			t.Error("callback should not be called when no panic")
 		}
@@ -67,7 +67,7 @@ func TestSafeGoWithCallback(t *testing.T) {
 		callbackDone := make(chan bool, 1)
 		var panicName string
 		var panicValue interface{}
-		
+
 		SafeGoWithCallback("callback-test", func() {
 			panic("test panic value")
 		}, func(name string, v interface{}) {
@@ -75,7 +75,7 @@ func TestSafeGoWithCallback(t *testing.T) {
 			panicValue = v
 			callbackDone <- true
 		})
-		
+
 		select {
 		case <-callbackDone:
 			if panicName != "callback-test" {
@@ -96,7 +96,7 @@ func TestSafeGoWithCallback(t *testing.T) {
 			defer func() { done <- true }()
 			panic("test")
 		}, nil)
-		
+
 		select {
 		case <-done:
 			// Success
@@ -113,7 +113,7 @@ func TestSafeCall(t *testing.T) {
 			executed = true
 			return nil
 		})
-		
+
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -127,7 +127,7 @@ func TestSafeCall(t *testing.T) {
 		err := SafeCall("test", func() error {
 			return expectedErr
 		})
-		
+
 		if err != expectedErr {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
@@ -137,7 +137,7 @@ func TestSafeCall(t *testing.T) {
 		err := SafeCall("panic-test", func() error {
 			panic("test panic")
 		})
-		
+
 		if err == nil {
 			t.Error("expected error from panic")
 		}
@@ -151,10 +151,10 @@ func TestSafeCall(t *testing.T) {
 }
 
 type mockCloser struct {
-	closed  bool
-	err     error
-	panics  bool
-	mu      sync.Mutex
+	closed bool
+	err    error
+	panics bool
+	mu     sync.Mutex
 }
 
 func (m *mockCloser) Close() error {
@@ -177,7 +177,7 @@ func TestSafeClose(t *testing.T) {
 	t.Run("successful close", func(t *testing.T) {
 		m := &mockCloser{}
 		err := SafeClose("test", m)
-		
+
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -190,7 +190,7 @@ func TestSafeClose(t *testing.T) {
 		expectedErr := errors.New("close error")
 		m := &mockCloser{err: expectedErr}
 		err := SafeClose("test", m)
-		
+
 		if err != expectedErr {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
@@ -203,7 +203,7 @@ func TestSafeClose(t *testing.T) {
 		m := &mockCloser{panics: true}
 		// Should not panic
 		err := SafeClose("panic-close", m)
-		
+
 		// Error may or may not be returned depending on implementation
 		_ = err
 		// If we get here without crashing, the panic was recovered
@@ -221,7 +221,7 @@ func TestConcurrentSafeGo(t *testing.T) {
 	// Test that multiple SafeGo calls work correctly concurrently
 	var wg sync.WaitGroup
 	counter := make(chan int, 100)
-	
+
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		n := i
@@ -230,15 +230,15 @@ func TestConcurrentSafeGo(t *testing.T) {
 			counter <- n
 		})
 	}
-	
+
 	wg.Wait()
 	close(counter)
-	
+
 	count := 0
 	for range counter {
 		count++
 	}
-	
+
 	if count != 100 {
 		t.Errorf("expected 100 executions, got %d", count)
 	}

@@ -3,7 +3,9 @@
 //
 // References:
 // [1] Liberty Timing Format - Synopsys standard for timing libraries
-//     https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf
+//
+//	https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf
+//
 // [2] SkyWater SKY130 PDK: https://skywater-pdk.readthedocs.io/
 //
 // ⚠️ CRITICAL DISCLAIMER: ALL TIMING VALUES ARE PLACEHOLDERS

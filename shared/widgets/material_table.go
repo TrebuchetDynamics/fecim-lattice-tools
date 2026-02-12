@@ -148,10 +148,10 @@ type MaterialDetailPanel struct {
 	properties []FormattedProperty
 
 	// UI components
-	nameLabel   *widget.Label
-	descLabel   *widget.Label
-	refLabel    *widget.Label
-	propsTable  *MaterialTable
+	nameLabel  *widget.Label
+	descLabel  *widget.Label
+	refLabel   *widget.Label
+	propsTable *MaterialTable
 }
 
 // NewMaterialDetailPanel creates a new detailed material panel.

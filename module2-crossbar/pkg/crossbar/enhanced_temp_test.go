@@ -158,12 +158,12 @@ func TestScaleAroundMidpoint01_Clamping(t *testing.T) {
 		x      float64
 		factor float64
 	}{
-		{0.0, 2.0},   // Should stay at 0
-		{1.0, 2.0},   // Should stay at 1
-		{0.1, 10.0},  // Large factor, should clamp to 0
-		{0.9, 10.0},  // Large factor, should clamp to 1
-		{-0.5, 1.0},  // Negative input, should clamp to range first
-		{1.5, 1.0},   // Out of range input, should clamp to range first
+		{0.0, 2.0},  // Should stay at 0
+		{1.0, 2.0},  // Should stay at 1
+		{0.1, 10.0}, // Large factor, should clamp to 0
+		{0.9, 10.0}, // Large factor, should clamp to 1
+		{-0.5, 1.0}, // Negative input, should clamp to range first
+		{1.5, 1.0},  // Out of range input, should clamp to range first
 	}
 
 	for _, tc := range testCases {

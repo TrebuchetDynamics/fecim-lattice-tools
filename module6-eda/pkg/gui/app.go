@@ -28,15 +28,15 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	}
 
 	// Create tab contents
-	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w)  // Tab 1
-	learnContent := tabs.MakeLearnTab(nil, w)                        // Tab 2
+	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w) // Tab 1
+	learnContent := tabs.MakeLearnTab(nil, w)                       // Tab 2
 
 	// View names for selector
 	viewNames := []string{
 		"1. Builder & Validation",
 		"2. Learn",
 	}
-	
+
 	allViews := []fyne.CanvasObject{
 		builderContent,
 		learnContent,

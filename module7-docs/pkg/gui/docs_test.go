@@ -36,8 +36,8 @@ func TestSearchIndex_BuildIndex(t *testing.T) {
 
 	// Create test markdown files
 	testFiles := map[string]string{
-		"README.md": "# Welcome\n\nThis is a test document about ferroelectric materials.",
-		"physics.md": "# Physics\n\n## Hysteresis Loop\n\nThe hysteresis loop shows polarization switching.",
+		"README.md":       "# Welcome\n\nThis is a test document about ferroelectric materials.",
+		"physics.md":      "# Physics\n\n## Hysteresis Loop\n\nThe hysteresis loop shows polarization switching.",
 		"subdir/guide.md": "# Guide\n\nStep-by-step instructions for simulation.",
 	}
 
@@ -722,7 +722,7 @@ func TestSearchIndex_QueryLimit(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		// Use zero-padded numbers for valid filenames
 		filename := filepath.Join(tmpDir, strings.ReplaceAll(strings.ReplaceAll(
-			"doc_test_", " ", "_"), "\x00", "") + string(rune('a'+i)) + ".md")
+			"doc_test_", " ", "_"), "\x00", "")+string(rune('a'+i))+".md")
 		content := "# Document\n\nThis is a test document with test content."
 		if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
 			t.Fatalf("Failed to write test file: %v", err)

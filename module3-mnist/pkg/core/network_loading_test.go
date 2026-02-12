@@ -113,10 +113,10 @@ func TestScanAvailableQATLevels_SkipsPTQFile(t *testing.T) {
 
 	// Create test files
 	testFiles := []string{
-		"pretrained_weights.json",      // 30 levels (default)
-		"pretrained_weights_20.json",   // 20 levels
-		"pretrained_weights_ptq.json",  // Should be ignored (PTQ file)
-		"other_file.json",              // Should be ignored (wrong pattern)
+		"pretrained_weights.json",     // 30 levels (default)
+		"pretrained_weights_20.json",  // 20 levels
+		"pretrained_weights_ptq.json", // Should be ignored (PTQ file)
+		"other_file.json",             // Should be ignored (wrong pattern)
 	}
 
 	for _, filename := range testFiles {

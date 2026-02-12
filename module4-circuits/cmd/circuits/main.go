@@ -39,12 +39,12 @@ type CircuitsResult struct {
 }
 
 type DACResult struct {
-	Bits            int     `json:"bits"`
-	Levels          int     `json:"levels"`
-	VrefLow         float64 `json:"vref_low_v"`
-	VrefHigh        float64 `json:"vref_high_v"`
-	Resolution      float64 `json:"resolution_v"`
-	EnergyPerConv   float64 `json:"energy_fj"`
+	Bits          int     `json:"bits"`
+	Levels        int     `json:"levels"`
+	VrefLow       float64 `json:"vref_low_v"`
+	VrefHigh      float64 `json:"vref_high_v"`
+	Resolution    float64 `json:"resolution_v"`
+	EnergyPerConv float64 `json:"energy_fj"`
 }
 
 type ADCResult struct {
@@ -56,10 +56,10 @@ type ADCResult struct {
 }
 
 type TIAResult struct {
-	Gain            float64 `json:"gain_kohm"`
-	Bandwidth       float64 `json:"bandwidth_mhz"`
-	DynamicRange    float64 `json:"dynamic_range_db"`
-	Power           float64 `json:"power_uw"`
+	Gain         float64 `json:"gain_kohm"`
+	Bandwidth    float64 `json:"bandwidth_mhz"`
+	DynamicRange float64 `json:"dynamic_range_db"`
+	Power        float64 `json:"power_uw"`
 }
 
 type PumpResult struct {

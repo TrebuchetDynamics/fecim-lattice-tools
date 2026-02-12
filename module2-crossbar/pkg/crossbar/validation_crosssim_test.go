@@ -265,8 +265,8 @@ func TestCrossSim_NormalProportionalError(t *testing.T) {
 
 	// Test at different conductance levels
 	testCases := []struct {
-		gTarget         float64
-		expectedRelStd  float64 // Relative std should be ~sigma
+		gTarget        float64
+		expectedRelStd float64 // Relative std should be ~sigma
 	}{
 		{0.2, 0.1},
 		{0.5, 0.1},

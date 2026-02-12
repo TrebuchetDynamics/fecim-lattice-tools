@@ -197,10 +197,10 @@ func LevelToColor(level, maxLevel int) color.RGBA {
 	if t < 0.5 {
 		// Blue to White: level 0 -> mid
 		// t=0: Blue (0, 0, 255), t=0.5: White (255, 255, 255)
-		s := t * 2.0        // Scale to 0-1 for this half
-		r = uint8(s * 255)  // 0 -> 255
-		g = uint8(s * 255)  // 0 -> 255
-		b = 255             // Always 255 (full blue)
+		s := t * 2.0       // Scale to 0-1 for this half
+		r = uint8(s * 255) // 0 -> 255
+		g = uint8(s * 255) // 0 -> 255
+		b = 255            // Always 255 (full blue)
 	} else {
 		// White to Red: mid -> max level
 		// t=0.5: White (255, 255, 255), t=1: Red (255, 0, 0)

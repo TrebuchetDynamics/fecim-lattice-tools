@@ -45,9 +45,9 @@ func (v *ISPPVisualization) MinSize() fyne.Size {
 }
 
 func (v *ISPPVisualization) GetStats() *physics.WriteVerifyStats {
-return v.stats
+	return v.stats
 }
 
 func (v *ISPPVisualization) SetAnimationState(_ float64, _ float64, _ int, _ float64, _ bool) {
-// Placeholder
+	// Placeholder
 }

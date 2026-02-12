@@ -367,7 +367,7 @@ func TestWriteController_Stress_PredictState(t *testing.T) {
 		{"PositiveFar", 0.9 * mat.Ps, true},
 		{"NegativeNear", -0.3 * mat.Ps, false},
 		{"NegativeFar", -0.9 * mat.Ps, false},
-		{"VeryPositive", 1.2 * mat.Ps, true},  // Beyond Ps
+		{"VeryPositive", 1.2 * mat.Ps, true},   // Beyond Ps
 		{"VeryNegative", -1.2 * mat.Ps, false}, // Beyond -Ps
 	}
 

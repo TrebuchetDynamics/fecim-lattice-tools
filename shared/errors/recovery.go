@@ -123,10 +123,10 @@ func SafeCloseAll(closers ...interface{ Close() error }) []error {
 
 // Retry executes a function with retries and exponential backoff.
 type RetryConfig struct {
-	MaxAttempts int           // Maximum number of attempts (default: 3)
-	InitialWait int           // Initial wait in milliseconds (default: 100)
-	MaxWait     int           // Maximum wait in milliseconds (default: 5000)
-	Multiplier  float64       // Backoff multiplier (default: 2.0)
+	MaxAttempts int              // Maximum number of attempts (default: 3)
+	InitialWait int              // Initial wait in milliseconds (default: 100)
+	MaxWait     int              // Maximum wait in milliseconds (default: 5000)
+	Multiplier  float64          // Backoff multiplier (default: 2.0)
 	RetryOn     func(error) bool // Function to determine if error is retryable
 }
 
@@ -149,26 +149,26 @@ func DefaultRetryConfig() *RetryConfig {
 // This is a simplified version for demonstration.
 func (c *RetryConfig) Retry(fn func() error) error {
 	var lastErr error
-	
+
 	for attempt := 1; attempt <= c.MaxAttempts; attempt++ {
 		err := RecoverFunc(fn)
 		if err == nil {
 			return nil
 		}
 		lastErr = err
-		
+
 		// Check if we should retry
 		if c.RetryOn != nil && !c.RetryOn(err) {
 			return err
 		}
-		
+
 		// Don't sleep on last attempt
 		if attempt < c.MaxAttempts {
 			// In real implementation, would use time.Sleep here
 			// For now, this is a template
 		}
 	}
-	
+
 	return Wrap(lastErr, fmt.Sprintf("failed after %d attempts", c.MaxAttempts))
 }
 
@@ -191,19 +191,19 @@ func (g *GracefulDegradation[T]) Execute() (T, error) {
 	if err == nil {
 		return result, nil
 	}
-	
+
 	// Try fallbacks
 	for i, fb := range g.Fallbacks {
 		if g.OnFallback != nil {
 			g.OnFallback(i+1, err)
 		}
-		
+
 		result, err = RecoverFuncValue(fb)
 		if err == nil {
 			return result, nil
 		}
 	}
-	
+
 	// Return default
 	return g.Default, err
 }
@@ -266,14 +266,14 @@ func (c *ErrorCollector) Errors() []error {
 func (c *ErrorCollector) Combined() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	if len(c.errors) == 0 {
 		return nil
 	}
 	if len(c.errors) == 1 {
 		return c.errors[0]
 	}
-	
+
 	var sb fmt.Stringer = &errorSummary{errors: c.errors}
 	return fmt.Errorf("%d errors occurred: %s", len(c.errors), sb)
 }

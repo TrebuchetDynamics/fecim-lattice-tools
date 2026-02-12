@@ -93,6 +93,34 @@ func TestEquationPipeline_SVGViewBoxAlignsWithHotspotBaseSize(t *testing.T) {
 	}
 }
 
+func TestEquationPipeline_HotspotLayoutOrderMatchesEquationTerms(t *testing.T) {
+	hotspots, _ := loadLkHotspots()
+	byID := make(map[string]hotspotDef, len(hotspots))
+	for _, spot := range hotspots {
+		byID[spot.ID] = spot
+	}
+
+	orderedTopRow := []string{"rho_eff_main", "e_applied", "k_dep", "alpha", "beta", "gamma", "noise"}
+	lastX := float32(-1)
+	for _, id := range orderedTopRow {
+		spot, ok := byID[id]
+		if !ok {
+			t.Fatalf("missing expected top-row hotspot id=%q", id)
+		}
+		if spot.Y > 0.12 {
+			t.Fatalf("top-row hotspot %q unexpectedly low (y=%g)", id, spot.Y)
+		}
+		if spot.X <= lastX {
+			t.Fatalf("top-row hotspot %q is out of left-to-right order (x=%g <= %g)", id, spot.X, lastX)
+		}
+		lastX = spot.X
+	}
+
+	if terms := byID["lk_terms"]; terms.Y < 0.20 || terms.Y > 0.36 {
+		t.Fatalf("lk_terms hotspot expected around nonlinearity row, got y=%g", terms.Y)
+	}
+}
+
 func absf(v float32) float32 {
 	if v < 0 {
 		return -v

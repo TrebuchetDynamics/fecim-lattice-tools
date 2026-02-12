@@ -5,11 +5,11 @@ package help
 func registerEmbeddedTopics(hs *HelpSystem) {
 	// Overview / Getting Started
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "overview",
-		Title:    "Welcome to FeCIM Lattice Tools",
-		Summary:  "Getting started with the FeCIM visualization and simulation suite",
-		Category: "Getting Started",
-		Keywords: []string{"start", "begin", "introduction", "welcome", "overview"},
+		ID:          "overview",
+		Title:       "Welcome to FeCIM Lattice Tools",
+		Summary:     "Getting started with the FeCIM visualization and simulation suite",
+		Category:    "Getting Started",
+		Keywords:    []string{"start", "begin", "introduction", "welcome", "overview"},
 		ContextKeys: []string{"home", "launcher"},
 		Content: `# Welcome to FeCIM Lattice Tools
 
@@ -51,12 +51,12 @@ FeCIM Lattice Tools is an interactive educational platform for exploring Ferroel
 
 	// Hysteresis Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.hysteresis",
-		Title:    "Hysteresis Module",
-		Summary:  "Understanding ferroelectric memory cells and the P-E hysteresis loop",
-		Category: "Modules",
-		Module:   "hysteresis",
-		Keywords: []string{"hysteresis", "polarization", "ferroelectric", "memory", "loop", "P-E curve", "Preisach"},
+		ID:          "module.hysteresis",
+		Title:       "Hysteresis Module",
+		Summary:     "Understanding ferroelectric memory cells and the P-E hysteresis loop",
+		Category:    "Modules",
+		Module:      "hysteresis",
+		Keywords:    []string{"hysteresis", "polarization", "ferroelectric", "memory", "loop", "P-E curve", "Preisach"},
 		ContextKeys: []string{"hysteresis", "FeCIM Hysteresis Simulation"},
 		Content: `# Hysteresis Module
 
@@ -104,12 +104,12 @@ Unlike binary memory, ferroelectric cells can store multiple levels:
 
 	// Crossbar Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.crossbar",
-		Title:    "Crossbar Module",
-		Summary:  "Visualizing matrix-vector multiplication in crossbar arrays",
-		Category: "Modules",
-		Module:   "crossbar",
-		Keywords: []string{"crossbar", "array", "MVM", "matrix", "vector", "multiply", "conductance"},
+		ID:          "module.crossbar",
+		Title:       "Crossbar Module",
+		Summary:     "Visualizing matrix-vector multiplication in crossbar arrays",
+		Category:    "Modules",
+		Module:      "crossbar",
+		Keywords:    []string{"crossbar", "array", "MVM", "matrix", "vector", "multiply", "conductance"},
 		ContextKeys: []string{"crossbar", "FeCIM Crossbar Array Visualization"},
 		Content: `# Crossbar Module
 
@@ -175,12 +175,12 @@ Crossbar computing:
 
 	// MNIST Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.mnist",
-		Title:    "MNIST Neural Network",
-		Summary:  "Real neural network inference comparing floating-point vs CIM hardware",
-		Category: "Modules",
-		Module:   "mnist",
-		Keywords: []string{"MNIST", "neural", "network", "inference", "AI", "digits", "recognition", "accuracy"},
+		ID:          "module.mnist",
+		Title:       "MNIST Neural Network",
+		Summary:     "Real neural network inference comparing floating-point vs CIM hardware",
+		Category:    "Modules",
+		Module:      "mnist",
+		Keywords:    []string{"MNIST", "neural", "network", "inference", "AI", "digits", "recognition", "accuracy"},
 		ContextKeys: []string{"mnist", "FeCIM MNIST Neural Network"},
 		Content: `# MNIST Neural Network Module
 
@@ -244,12 +244,12 @@ Even with hardware non-idealities, FeCIM maintains high accuracy while using ord
 
 	// Circuits Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.circuits",
-		Title:    "Peripheral Circuits",
-		Summary:  "Understanding DACs, ADCs, and driver circuits for FeCIM systems",
-		Category: "Modules",
-		Module:   "circuits",
-		Keywords: []string{"circuits", "DAC", "ADC", "driver", "peripheral", "analog", "digital", "converter"},
+		ID:          "module.circuits",
+		Title:       "Peripheral Circuits",
+		Summary:     "Understanding DACs, ADCs, and driver circuits for FeCIM systems",
+		Category:    "Modules",
+		Module:      "circuits",
+		Keywords:    []string{"circuits", "DAC", "ADC", "driver", "peripheral", "analog", "digital", "converter"},
 		ContextKeys: []string{"circuits", "FeCIM Peripheral Circuits Visualizer"},
 		Content: `# Peripheral Circuits Module
 
@@ -313,12 +313,12 @@ The module illustrates key trade-offs:
 
 	// Comparison Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.comparison",
-		Title:    "Technology Comparison",
-		Summary:  "Why FeCIM outperforms traditional computing for AI workloads",
-		Category: "Modules",
-		Module:   "comparison",
-		Keywords: []string{"comparison", "energy", "efficiency", "GPU", "CPU", "TOPS", "performance"},
+		ID:          "module.comparison",
+		Title:       "Technology Comparison",
+		Summary:     "Why FeCIM outperforms traditional computing for AI workloads",
+		Category:    "Modules",
+		Module:      "comparison",
+		Keywords:    []string{"comparison", "energy", "efficiency", "GPU", "CPU", "TOPS", "performance"},
 		ContextKeys: []string{"comparison", "FeCIM: The Energy Revolution"},
 		Content: `# Technology Comparison Module
 
@@ -379,12 +379,12 @@ FeCIM isn't just incrementally better—it's a paradigm shift that makes previou
 
 	// EDA Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.eda",
-		Title:    "EDA Design Suite",
-		Summary:  "Integration with open-source chip design tools",
-		Category: "Modules",
-		Module:   "eda",
-		Keywords: []string{"EDA", "OpenLane", "PDK", "chip", "design", "GDSII", "layout", "synthesis"},
+		ID:          "module.eda",
+		Title:       "EDA Design Suite",
+		Summary:     "Integration with open-source chip design tools",
+		Category:    "Modules",
+		Module:      "eda",
+		Keywords:    []string{"EDA", "OpenLane", "PDK", "chip", "design", "GDSII", "layout", "synthesis"},
 		ContextKeys: []string{"eda", "FeCIM EDA Design Suite (Work In Progress)"},
 		Content: `# EDA Design Suite
 
@@ -444,12 +444,12 @@ This module is marked "Work In Progress" as full tool integration depends on ext
 
 	// Documentation Module
 	hs.RegisterTopic(&HelpTopic{
-		ID:       "module.docs",
-		Title:    "Documentation Browser",
-		Summary:  "Navigating the built-in documentation and curriculum",
-		Category: "Modules",
-		Module:   "docs",
-		Keywords: []string{"documentation", "docs", "curriculum", "search", "glossary"},
+		ID:          "module.docs",
+		Title:       "Documentation Browser",
+		Summary:     "Navigating the built-in documentation and curriculum",
+		Category:    "Modules",
+		Module:      "docs",
+		Keywords:    []string{"documentation", "docs", "curriculum", "search", "glossary"},
 		ContextKeys: []string{"docs", "Documentation"},
 		Content: `# Documentation Browser
 

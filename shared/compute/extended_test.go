@@ -436,4 +436,3 @@ func TestGPUBuffer_CreateWithInvalidUsage(t *testing.T) {
 		t.Error("CreateBuffer() with invalid usage should fail")
 	}
 }
-

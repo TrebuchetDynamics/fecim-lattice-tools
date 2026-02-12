@@ -535,18 +535,24 @@ func (r *MVMSneakTraceReport) FormatText(maxRows, maxPaths int) string {
 	b.WriteString(fmt.Sprintf("Total sneak current: %.6f\n", r.TotalSneak))
 	b.WriteString(fmt.Sprintf("Peak row: %d (%.6f)\n", r.PeakRow, r.PeakCurrent))
 	limit := len(r.Rows)
-	if limit > maxRows { limit = maxRows }
+	if limit > maxRows {
+		limit = maxRows
+	}
 	for i := 0; i < limit; i++ {
 		row := r.Rows[i]
 		b.WriteString(fmt.Sprintf("- Row %d: I_sneak=%.6f\n", row.Row, row.SneakCurrent))
 		pathLimit := len(row.TopPaths)
-		if pathLimit > maxPaths { pathLimit = maxPaths }
+		if pathLimit > maxPaths {
+			pathLimit = maxPaths
+		}
 		for p := 0; p < pathLimit; p++ {
 			sp := row.TopPaths[p]
 			b.WriteString(fmt.Sprintf("    path #%d src(r=%d,c=%d)->exit(c=%d), G=%.6f, I=%.6f\n", p+1, sp.SourceRow, sp.SourceCol, sp.ExitCol, sp.PathG, sp.PathCurrent))
 		}
 	}
-	if len(r.Rows) > limit { b.WriteString(fmt.Sprintf("... %d more rows omitted\n", len(r.Rows)-limit)) }
+	if len(r.Rows) > limit {
+		b.WriteString(fmt.Sprintf("... %d more rows omitted\n", len(r.Rows)-limit))
+	}
 	return b.String()
 }
 

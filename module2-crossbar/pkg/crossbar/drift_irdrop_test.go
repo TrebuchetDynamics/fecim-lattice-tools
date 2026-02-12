@@ -107,9 +107,9 @@ func TestSetMeasuredDriftCoeff(t *testing.T) {
 
 func TestGetDriftModelInfo_Metadata(t *testing.T) {
 	tests := []struct {
-		name         string
-		model        DriftModel
-		wantName     string
+		name          string
+		model         DriftModel
+		wantName      string
 		wantIsAssumed bool
 	}{
 		{"Assumed", DriftModelAssumed, "Assumed (Default)", true},

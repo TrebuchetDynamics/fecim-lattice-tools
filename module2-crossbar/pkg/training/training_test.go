@@ -348,11 +348,11 @@ func TestClip(t *testing.T) {
 	tests := []struct {
 		v, min, max, expected float64
 	}{
-		{0.5, 0.0, 1.0, 0.5},   // In range
-		{-0.5, 0.0, 1.0, 0.0},  // Below min
-		{1.5, 0.0, 1.0, 1.0},   // Above max
-		{0.0, 0.0, 1.0, 0.0},   // At min
-		{1.0, 0.0, 1.0, 1.0},   // At max
+		{0.5, 0.0, 1.0, 0.5},  // In range
+		{-0.5, 0.0, 1.0, 0.0}, // Below min
+		{1.5, 0.0, 1.0, 1.0},  // Above max
+		{0.0, 0.0, 1.0, 0.0},  // At min
+		{1.0, 0.0, 1.0, 1.0},  // At max
 	}
 
 	for _, tc := range tests {

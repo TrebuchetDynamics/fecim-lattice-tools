@@ -17,8 +17,8 @@ type testData struct {
 
 // nestedTestData represents nested struct for JSON testing.
 type nestedTestData struct {
-	ID       string     `json:"id"`
-	Items    []testData `json:"items"`
+	ID       string            `json:"id"`
+	Items    []testData        `json:"items"`
 	Metadata map[string]string `json:"metadata"`
 }
 

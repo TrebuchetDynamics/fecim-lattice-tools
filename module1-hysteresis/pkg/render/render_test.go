@@ -83,9 +83,9 @@ func TestNormalizeToScreen(t *testing.T) {
 	hp := NewHysteresisPlot(2.0, 50.0)
 
 	tests := []struct {
-		name     string
-		E        float64
-		P        float64
+		name      string
+		E         float64
+		P         float64
 		expectedX float64
 		expectedY float64
 	}{

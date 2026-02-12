@@ -196,7 +196,7 @@ func TestWriteController_GuardSign_NoFlip(t *testing.T) {
 	wc.LastVerifyLevel = 15
 	wc.CurrentField = 0.8 // Some positive field
 
-	currentLevel := 15 // At target
+	currentLevel := 15  // At target
 	currentField := 0.0 // Field has settled
 	guardSign := 1      // Guard wants to push higher
 	dt := 0.01

@@ -72,11 +72,11 @@ var CircuitsTooltips = struct {
 	OutputCurrent circuitsTooltip
 
 	// Array tooltips
-	ArraySize     circuitsTooltip
-	CellState     circuitsTooltip
-	Conductance   circuitsTooltip
-	IRDrop        circuitsTooltip
-	SneakPath     circuitsTooltip
+	ArraySize   circuitsTooltip
+	CellState   circuitsTooltip
+	Conductance circuitsTooltip
+	IRDrop      circuitsTooltip
+	SneakPath   circuitsTooltip
 
 	// Visualization tooltips
 	TimingDiagram   circuitsTooltip

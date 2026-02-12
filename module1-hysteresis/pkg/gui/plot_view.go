@@ -28,8 +28,9 @@ func trimTail(hE, hP []float64, max int) ([]float64, []float64) {
 // time-ordered history by slicing between two successive cycle markers.
 //
 // Heuristic:
-//  1) Prefer last two local maxima of E (peak-to-peak).
-//  2) Fallback: rising zero-crossing to rising zero-crossing.
+//  1. Prefer last two local maxima of E (peak-to-peak).
+//  2. Fallback: rising zero-crossing to rising zero-crossing.
+//
 // If it cannot infer a stable cycle, it returns the input unchanged.
 func lastCompleteCycle(hE, hP []float64) ([]float64, []float64) {
 	if len(hE) < 10 || len(hE) != len(hP) {

@@ -73,7 +73,7 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 			result.AddError("DESIGN_NAME", "must be a valid Verilog identifier", designName)
 		}
 	}
-	
+
 	// Validate VERILOG_FILES (required)
 	verilogFiles, ok := getString(data, "VERILOG_FILES")
 	if !ok {
@@ -81,7 +81,7 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 	} else if verilogFiles == "" {
 		result.AddError("VERILOG_FILES", "must not be empty", verilogFiles)
 	}
-	
+
 	// Validate CLOCK_PERIOD (required)
 	clockPeriod, ok := getFloat(data, "CLOCK_PERIOD")
 	if !ok {
@@ -94,14 +94,14 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 			result.AddWarning("CLOCK_PERIOD", "unusually long clock period (slow design)", clockPeriod)
 		}
 	}
-	
+
 	// Validate CLOCK_PORT if present
 	if clockPort, ok := getString(data, "CLOCK_PORT"); ok {
 		if clockPort == "" {
 			result.AddWarning("CLOCK_PORT", "empty clock port name", clockPort)
 		}
 	}
-	
+
 	// Validate PDK (required)
 	pdk, ok := getString(data, "PDK")
 	if !ok {
@@ -111,7 +111,7 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 			result.AddWarning("PDK", "unknown PDK (expected: sky130A, sky130B, gf180mcuC, gf180mcuD, asap7)", pdk)
 		}
 	}
-	
+
 	// Validate STD_CELL_LIBRARY
 	if stdCellLib, ok := getString(data, "STD_CELL_LIBRARY"); ok {
 		if pdk != "" {
@@ -128,14 +128,14 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 			}
 		}
 	}
-	
+
 	// Validate FP_SIZING if present
 	if fpSizing, ok := getString(data, "FP_SIZING"); ok {
 		if !validFPSizing[fpSizing] {
 			result.AddError("FP_SIZING", "must be 'absolute' or 'relative'", fpSizing)
 		}
 	}
-	
+
 	// Validate DIE_AREA if present
 	if dieArea, ok := getString(data, "DIE_AREA"); ok {
 		if !dieAreaRegex.MatchString(dieArea) {
@@ -145,10 +145,10 @@ func validateOpenLaneConfig(data map[string]any, result *ValidationResult) {
 			validateDIEArea(dieArea, result)
 		}
 	}
-	
+
 	// Validate boolean/integer flags
 	validateOpenLaneFlags(data, result)
-	
+
 	// Validate file references
 	validateOpenLaneFileRefs(data, result)
 }
@@ -160,7 +160,7 @@ func validateDIEArea(dieArea string, result *ValidationResult) {
 	if err != nil || n != 4 {
 		return // Already caught by regex
 	}
-	
+
 	// Validate coordinates make sense
 	if x1 <= x0 {
 		result.AddError("DIE_AREA", "x1 must be greater than x0", dieArea)
@@ -171,12 +171,12 @@ func validateDIEArea(dieArea string, result *ValidationResult) {
 	if x0 < 0 || y0 < 0 {
 		result.AddError("DIE_AREA", "coordinates must be non-negative", dieArea)
 	}
-	
+
 	// Warn about unusually small/large areas
 	width := x1 - x0
 	height := y1 - y0
 	area := width * height
-	
+
 	if area < 1 { // Less than 1 µm²
 		result.AddWarning("DIE_AREA", "unusually small die area", area)
 	}
@@ -199,7 +199,7 @@ func validateOpenLaneFlags(data map[string]any, result *ValidationResult) {
 		"QUIT_ON_TR_DRC",
 		"PL_SKIP_INITIAL_PLACEMENT",
 	}
-	
+
 	for _, flag := range booleanFlags {
 		if v, ok := getInt(data, flag); ok {
 			if v != 0 && v != 1 {
@@ -218,7 +218,7 @@ func validateOpenLaneFileRefs(data map[string]any, result *ValidationResult) {
 		"VERILOG_FILES_BLACKBOX",
 		"PLACEMENT_CURRENT_DEF",
 	}
-	
+
 	for _, field := range fileRefFields {
 		if v, ok := getString(data, field); ok {
 			// Check for common OpenLane file reference patterns

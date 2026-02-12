@@ -21,13 +21,13 @@ type OptimizedParasiticSolver struct {
 	conductances [][]float64
 
 	// Pre-allocated work buffers (reused across calls)
-	dV       [][]float64 // Device voltages
-	Ires     [][]float64 // Device currents
-	IsumCol  [][]float64 // Cumulative column currents
-	IsumRow  [][]float64 // Cumulative row currents
+	dV        [][]float64 // Device voltages
+	Ires      [][]float64 // Device currents
+	IsumCol   [][]float64 // Cumulative column currents
+	IsumRow   [][]float64 // Cumulative row currents
 	VdropsCol [][]float64 // Column voltage drops
 	VdropsRow [][]float64 // Row voltage drops
-	VerrMat  [][]float64 // Voltage error matrix
+	VerrMat   [][]float64 // Voltage error matrix
 
 	// Output buffer (reused for result building)
 	output []float64

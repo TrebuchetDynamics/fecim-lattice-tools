@@ -52,12 +52,12 @@ func TestDeviceErrorDistribution_NormalIndependent(t *testing.T) {
 	//   boundary effects from clamping
 
 	const (
-		nSamples     = 10000
-		sigma        = 0.05
-		seed         = 42
-		ksThreshold  = 0.02 // Relaxed due to clamping effects
-		meanTolStd   = 3.0  // Within 3 standard errors of zero
-		sigmaTolPct  = 10.0 // Within 10% of expected sigma
+		nSamples    = 10000
+		sigma       = 0.05
+		seed        = 42
+		ksThreshold = 0.02 // Relaxed due to clamping effects
+		meanTolStd  = 3.0  // Within 3 standard errors of zero
+		sigmaTolPct = 10.0 // Within 10% of expected sigma
 	)
 
 	config := &ReadNoiseConfig{
@@ -152,9 +152,9 @@ func TestDeviceErrorDistribution_NormalProportional(t *testing.T) {
 	// constant standard deviation equal to the configured sigma.
 
 	const (
-		nSamples      = 5000
-		sigma         = 0.10 // 10% programming error
-		seed          = 123
+		nSamples       = 5000
+		sigma          = 0.10 // 10% programming error
+		seed           = 123
 		relSigmaTolPct = 15.0 // Allow 15% deviation due to finite samples
 	)
 
@@ -244,10 +244,10 @@ func TestQuantizationDistribution_30Levels(t *testing.T) {
 	// - Chi-squared critical value at df=29, alpha=0.05 ≈ 42.56
 
 	const (
-		nSamples        = 30000
-		nLevels         = 30
-		seed            = 456
-		chiSqThreshold  = 50.0 // Slightly relaxed from 42.56 for numerical rounding
+		nSamples       = 30000
+		nLevels        = 30
+		seed           = 456
+		chiSqThreshold = 50.0 // Slightly relaxed from 42.56 for numerical rounding
 	)
 
 	rng := rand.New(rand.NewSource(seed))
@@ -355,10 +355,10 @@ func TestMonteCarloConvergence_MVM(t *testing.T) {
 	// - Noise level 5% for visible but not dominant effects
 
 	const (
-		arraySize     = 8
-		noiseLevel    = 0.05
-		seed          = 789
-		convergeTol   = 0.3 // Allow 30% deviation from sqrt(N) scaling
+		arraySize   = 8
+		noiseLevel  = 0.05
+		seed        = 789
+		convergeTol = 0.3 // Allow 30% deviation from sqrt(N) scaling
 	)
 
 	sampleSizes := []int{100, 400, 1600}
@@ -512,41 +512,41 @@ func TestErrorModelStatistics(t *testing.T) {
 	// - Multiple error models tested
 
 	const (
-		nSamples   = 10000
-		sigma      = 0.05
-		gTarget    = 0.5
-		alpha      = 0.05 // Significance level
+		nSamples = 10000
+		sigma    = 0.05
+		gTarget  = 0.5
+		alpha    = 0.05 // Significance level
 	)
 
 	testCases := []struct {
-		name        string
-		model       ErrorModel
+		name         string
+		model        ErrorModel
 		expectedMean float64 // Expected mean error (relative or absolute depending on model)
-		checkMean   bool
+		checkMean    bool
 	}{
 		{
-			name:        "NormalIndependent",
-			model:       ErrorModelNormalIndependent,
+			name:         "NormalIndependent",
+			model:        ErrorModelNormalIndependent,
 			expectedMean: 0.0,
-			checkMean:   true,
+			checkMean:    true,
 		},
 		{
-			name:        "NormalProportional",
-			model:       ErrorModelNormalProportional,
+			name:         "NormalProportional",
+			model:        ErrorModelNormalProportional,
 			expectedMean: 0.0,
-			checkMean:   true,
+			checkMean:    true,
 		},
 		{
-			name:        "UniformIndependent",
-			model:       ErrorModelUniformIndependent,
+			name:         "UniformIndependent",
+			model:        ErrorModelUniformIndependent,
 			expectedMean: 0.0,
-			checkMean:   true,
+			checkMean:    true,
 		},
 		{
-			name:        "UniformProportional",
-			model:       ErrorModelUniformProportional,
+			name:         "UniformProportional",
+			model:        ErrorModelUniformProportional,
 			expectedMean: 0.0,
-			checkMean:   true,
+			checkMean:    true,
 		},
 	}
 
@@ -583,7 +583,7 @@ func TestErrorModelStatistics(t *testing.T) {
 			// Test statistic: t = (mean - expectedMean) / stderr
 			// Critical value at alpha=0.05, two-tailed, df large ≈ 1.96
 			if tc.checkMean {
-				tStat := math.Abs(mean - tc.expectedMean) / stderr
+				tStat := math.Abs(mean-tc.expectedMean) / stderr
 				tCritical := 1.96 // z-approximation for large n
 
 				if tStat > tCritical {
@@ -636,11 +636,11 @@ func TestErrorModelStatistics(t *testing.T) {
 
 func TestErrorModelIndependence(t *testing.T) {
 	const (
-		nSamples        = 5000
-		seed            = 111
-		sigma           = 0.05
-		gTarget         = 0.5
-		correlationTol  = 0.05 // Autocorrelation should be < 5%
+		nSamples       = 5000
+		seed           = 111
+		sigma          = 0.05
+		gTarget        = 0.5
+		correlationTol = 0.05 // Autocorrelation should be < 5%
 	)
 
 	config := &ProgrammingErrorConfig{

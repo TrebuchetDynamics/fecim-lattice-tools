@@ -23,10 +23,10 @@ type DenseLayerGPU struct {
 	outputBuffer *compute.GPUBuffer
 
 	// Batch processing pipeline and buffers
-	batchPipeline      *compute.ComputePipeline
-	batchInputBuffer   *compute.GPUBuffer
-	batchOutputBuffer  *compute.GPUBuffer
-	maxBatchSize       int // Maximum batch size supported
+	batchPipeline     *compute.ComputePipeline
+	batchInputBuffer  *compute.GPUBuffer
+	batchOutputBuffer *compute.GPUBuffer
+	maxBatchSize      int // Maximum batch size supported
 
 	maxRows int // Output features
 	maxCols int // Input features
@@ -123,10 +123,10 @@ func (d *DenseLayerGPU) createBatchPipeline(repoRoot string) error {
 		ShaderPath: filepath.Join(repoRoot, "shared/gpu/shaders/dense_mvm_batch.comp.spv"),
 		Bindings: []compute.BindingInfo{
 			{Binding: 0, Type: compute.BindingTypeUniform, Size: uint64(unsafe.Sizeof(BatchLayerParams{}))}, // 16 bytes
-			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0}, // WeightBuffer (dynamic)
-			{Binding: 2, Type: compute.BindingTypeStorage, Size: 0}, // BiasBuffer (dynamic)
-			{Binding: 3, Type: compute.BindingTypeStorage, Size: 0}, // InputBuffer batch (dynamic)
-			{Binding: 4, Type: compute.BindingTypeStorage, Size: 0}, // OutputBuffer batch (dynamic)
+			{Binding: 1, Type: compute.BindingTypeStorage, Size: 0},                                         // WeightBuffer (dynamic)
+			{Binding: 2, Type: compute.BindingTypeStorage, Size: 0},                                         // BiasBuffer (dynamic)
+			{Binding: 3, Type: compute.BindingTypeStorage, Size: 0},                                         // InputBuffer batch (dynamic)
+			{Binding: 4, Type: compute.BindingTypeStorage, Size: 0},                                         // OutputBuffer batch (dynamic)
 		},
 	}
 

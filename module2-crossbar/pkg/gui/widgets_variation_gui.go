@@ -21,10 +21,10 @@ type VariationModelGUI struct {
 	widget.BaseWidget
 
 	// Configuration
-	progSigma  float64 // Programming error sigma (%)
-	readSigma  float64 // Read noise sigma (%)
-	arrayRows  int
-	arrayCols  int
+	progSigma float64 // Programming error sigma (%)
+	readSigma float64 // Read noise sigma (%)
+	arrayRows int
+	arrayCols int
 
 	// Results
 	yieldPrediction float64
@@ -42,20 +42,20 @@ type VariationModelGUI struct {
 
 // VariationStats holds statistics about device variation.
 type VariationStats struct {
-	MeanError       float64
-	StdError        float64
-	MaxError        float64
-	Cells3Sigma     float64 // % of cells within 3-sigma
-	Cells6Sigma     float64 // % of cells within 6-sigma
-	LevelErrorRate  float64 // % of cells with level errors
-	PredictedYield  float64 // Manufacturing yield prediction
+	MeanError      float64
+	StdError       float64
+	MaxError       float64
+	Cells3Sigma    float64 // % of cells within 3-sigma
+	Cells6Sigma    float64 // % of cells within 6-sigma
+	LevelErrorRate float64 // % of cells with level errors
+	PredictedYield float64 // Manufacturing yield prediction
 }
 
 // NewVariationModelGUI creates a new variation modeling GUI widget.
 func NewVariationModelGUI() *VariationModelGUI {
 	w := &VariationModelGUI{
-		progSigma: 5.0,  // 5% programming error default
-		readSigma: 1.0,  // 1% read noise default
+		progSigma: 5.0, // 5% programming error default
+		readSigma: 1.0, // 1% read noise default
 		arrayRows: 64,
 		arrayCols: 64,
 	}

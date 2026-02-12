@@ -128,4 +128,3 @@ func (s *StatusBar) GetText() string {
 	}
 	return s.lastText
 }
-

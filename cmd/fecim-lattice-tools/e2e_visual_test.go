@@ -25,12 +25,12 @@ import (
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo1widgets "fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
-	sharedwidgets "fecim-lattice-tools/shared/widgets"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
 	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // testScreenshotDir is the directory for test screenshots

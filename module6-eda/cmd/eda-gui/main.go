@@ -19,9 +19,9 @@ func Run(args []string) error {
 		// Fallback to current directory if home dir unavailable
 		homeDir = "."
 	}
-	
+
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda.log")
-	
+
 	// Create log directory if it doesn't exist
 	logDir := filepath.Dir(logPath)
 	if err := os.MkdirAll(logDir, 0755); err != nil {

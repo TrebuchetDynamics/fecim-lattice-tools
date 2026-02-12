@@ -374,9 +374,9 @@ func TestAdaptiveOmega(t *testing.T) {
 func TestFallbackMechanism(t *testing.T) {
 	// Test that fallback works when SOR diverges
 	config := &SORConfig{
-		MaxIterations: 20, // Low to trigger fallback
+		MaxIterations: 20,    // Low to trigger fallback
 		Tolerance:     1e-10, // Very tight to potentially not converge
-		OmegaInitial:  1.9, // Aggressive, might diverge
+		OmegaInitial:  1.9,   // Aggressive, might diverge
 		OmegaMin:      0.5,
 		OmegaDecay:    0.99,
 		AdaptiveOmega: true,

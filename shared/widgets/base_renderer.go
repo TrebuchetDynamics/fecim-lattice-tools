@@ -129,7 +129,7 @@ Safe Layout Pattern Checklist:
 // LayoutCache tracks the last layout size to avoid redundant layout operations.
 // Use this in renderers to prevent layout cascade bugs.
 type LayoutCache struct {
-	LastSize fyne.Size
+	LastSize  fyne.Size
 	HasLayout bool
 }
 

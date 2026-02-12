@@ -22,9 +22,9 @@ type MetricsPanel struct {
 	accuracyDelta  float64
 
 	// Energy metrics
-	fecimEnergy   float64
-	gpuEnergy     float64
-	efficiency    float64
+	fecimEnergy float64
+	gpuEnergy   float64
+	efficiency  float64
 
 	// Performance
 	macOps  int

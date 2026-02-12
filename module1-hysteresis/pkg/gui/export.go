@@ -71,7 +71,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	polarizationUcCm2 := make([]float64, len(pData))
 	for i := range eData {
 		eFieldMVcm[i] = sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
-		polarizationUcCm2[i] = pData[i] * 1e2 // C/m² to μC/cm²
+		polarizationUcCm2[i] = pData[i] * 1e2                  // C/m² to μC/cm²
 	}
 
 	// Build export structure
@@ -130,7 +130,7 @@ func (a *App) exportPEDataToCSV(filename string) error {
 	// Write data rows
 	for i := range eData {
 		eMVcm := sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
-		pUcCm2 := pData[i] * 1e2 // C/m² to μC/cm²
+		pUcCm2 := pData[i] * 1e2                        // C/m² to μC/cm²
 
 		row := []string{
 			fmt.Sprintf("%.6f", eMVcm),

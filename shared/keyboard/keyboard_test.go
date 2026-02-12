@@ -9,11 +9,11 @@ import (
 
 func TestDefaultShortcuts(t *testing.T) {
 	shortcuts := DefaultShortcuts()
-	
+
 	if len(shortcuts) == 0 {
 		t.Error("Expected default shortcuts, got none")
 	}
-	
+
 	// Check that essential shortcuts are present
 	essential := map[Action]bool{
 		ActionSave:        false,
@@ -22,13 +22,13 @@ func TestDefaultShortcuts(t *testing.T) {
 		ActionPauseResume: false,
 		ActionHelp:        false,
 	}
-	
+
 	for _, s := range shortcuts {
 		if _, ok := essential[s.Action]; ok {
 			essential[s.Action] = true
 		}
 	}
-	
+
 	for action, found := range essential {
 		if !found {
 			t.Errorf("Missing essential shortcut: %s", action)
@@ -39,15 +39,15 @@ func TestDefaultShortcuts(t *testing.T) {
 func TestFormatHelpText(t *testing.T) {
 	shortcuts := DefaultShortcuts()
 	text := FormatHelpText(shortcuts)
-	
+
 	if !strings.Contains(text, "Keyboard Shortcuts") {
 		t.Error("Help text should contain header")
 	}
-	
+
 	if !strings.Contains(text, "Space") {
 		t.Error("Help text should mention Space key")
 	}
-	
+
 	if !strings.Contains(text, "Ctrl+S") {
 		t.Error("Help text should mention Ctrl+S")
 	}
@@ -68,7 +68,7 @@ func TestFormatKey(t *testing.T) {
 		{fyne.KeyTab, fyne.KeyModifierShift, "Shift+Tab"},
 		{fyne.KeyE, fyne.KeyModifierControl | fyne.KeyModifierShift, "Ctrl+Shift+E"},
 	}
-	
+
 	for _, tt := range tests {
 		result := formatKey(tt.key, tt.modifier)
 		if result != tt.expected {
@@ -83,19 +83,19 @@ func TestManagerHandlers(t *testing.T) {
 		handlers:  make(map[Action]func()),
 		shortcuts: DefaultShortcuts(),
 	}
-	
+
 	called := false
 	m.SetHandler(ActionSave, func() {
 		called = true
 	})
-	
+
 	// Verify handler was set
 	if handler, ok := m.handlers[ActionSave]; ok {
 		handler()
 	} else {
 		t.Error("Handler not set")
 	}
-	
+
 	if !called {
 		t.Error("Handler was not called")
 	}
@@ -106,18 +106,18 @@ func TestManagerSetHandlers(t *testing.T) {
 		handlers:  make(map[Action]func()),
 		shortcuts: DefaultShortcuts(),
 	}
-	
+
 	saveCalled := false
 	exportCalled := false
-	
+
 	m.SetHandlers(map[Action]func(){
 		ActionSave:   func() { saveCalled = true },
 		ActionExport: func() { exportCalled = true },
 	})
-	
+
 	m.handlers[ActionSave]()
 	m.handlers[ActionExport]()
-	
+
 	if !saveCalled {
 		t.Error("Save handler not called")
 	}
@@ -132,16 +132,16 @@ func TestManagerPauseState(t *testing.T) {
 		shortcuts: DefaultShortcuts(),
 		paused:    false,
 	}
-	
+
 	if m.IsPaused() {
 		t.Error("Should not be paused initially")
 	}
-	
+
 	m.SetPaused(true)
 	if !m.IsPaused() {
 		t.Error("Should be paused after SetPaused(true)")
 	}
-	
+
 	result := m.TogglePaused()
 	if result != false {
 		t.Error("TogglePaused should return new state (false)")
@@ -156,15 +156,15 @@ func TestAddCustomShortcut(t *testing.T) {
 		handlers:  make(map[Action]func()),
 		shortcuts: DefaultShortcuts(),
 	}
-	
+
 	initialLen := len(m.shortcuts)
-	
+
 	m.AddCustomShortcut("custom_action", fyne.KeyF1, 0, "Custom Action")
-	
+
 	if len(m.shortcuts) != initialLen+1 {
 		t.Error("Custom shortcut was not added")
 	}
-	
+
 	lastShortcut := m.shortcuts[len(m.shortcuts)-1]
 	if lastShortcut.Action != "custom_action" {
 		t.Error("Custom shortcut has wrong action")
@@ -176,7 +176,7 @@ func TestAddCustomShortcut(t *testing.T) {
 
 func TestQuickHelpText(t *testing.T) {
 	text := QuickHelpText()
-	
+
 	if !strings.Contains(text, "Space") {
 		t.Error("Quick help should mention Space")
 	}

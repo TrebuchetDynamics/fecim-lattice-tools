@@ -160,10 +160,10 @@ func TestRelativeError(t *testing.T) {
 
 func TestWithinTolerance(t *testing.T) {
 	tests := []struct {
-		measured    float64
-		expected    float64
+		measured     float64
+		expected     float64
 		tolerancePct float64
-		within      bool
+		within       bool
 	}{
 		{100.0, 100.0, 5.0, true},
 		{105.0, 100.0, 5.0, true},

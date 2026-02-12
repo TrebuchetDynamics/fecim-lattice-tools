@@ -425,7 +425,7 @@ func TestIs1T1RHelper(t *testing.T) {
 		opts     *MVMOptions
 		expected bool
 	}{
-		{"nil opts", nil, false},                                      // Default is 0T1R (passive)
+		{"nil opts", nil, false},                                     // Default is 0T1R (passive)
 		{"empty architecture", &MVMOptions{Architecture: ""}, false}, // Default is 0T1R (passive)
 		{"1T1R string", &MVMOptions{Architecture: "1T1R"}, true},
 		{"1T1R with label", &MVMOptions{Architecture: "1T1R (Transistor)"}, true},

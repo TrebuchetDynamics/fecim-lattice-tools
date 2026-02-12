@@ -174,7 +174,7 @@ func (t *TemperatureEffects) GetAdjustedParams() *TemperatureAdjustedParams {
 		WireResistanceFactor: t.AdjustedWireResistance(1.0), // Factor for 1Ω base
 		GminAdjusted:         adjGmin,
 		GmaxAdjusted:         adjGmax,
-		DriftRateFactor:      t.AdjustedDriftRate(1.0),      // Factor for base rate
+		DriftRateFactor:      t.AdjustedDriftRate(1.0), // Factor for base rate
 		NoiseFactor:          t.AdjustedNoise(),
 		RetentionFactor:      t.AdjustedRetention(),
 	}
@@ -216,7 +216,7 @@ type RetentionCurve struct {
 //   - refRetentionS: Reference retention time at 85°C (seconds)
 //   - activationEV: Activation energy (eV), typically 1.0-1.2 for HZO
 func GenerateRetentionCurve(refRetentionS, activationEV float64) *RetentionCurve {
-	const kB = 8.617e-5 // Boltzmann constant in eV/K
+	const kB = 8.617e-5    // Boltzmann constant in eV/K
 	const refTempK = 358.0 // 85°C reference
 
 	// Temperature points from 25°C to 150°C
@@ -316,11 +316,11 @@ func NewThermalPhysicsModel(material string, curieTempK, refPr, refEc, activatio
 func DefaultHZOThermalModel() *ThermalPhysicsModel {
 	return NewThermalPhysicsModel(
 		"HZO",
-		723,    // Curie temp ~450°C
-		25e-2,  // Pr = 25 µC/cm²
-		1.0e8,  // Ec = 1.0 MV/cm
-		1.1,    // Ea = 1.1 eV
-		1e7,    // 10^7 s retention at 85°C
+		723,   // Curie temp ~450°C
+		25e-2, // Pr = 25 µC/cm²
+		1.0e8, // Ec = 1.0 MV/cm
+		1.1,   // Ea = 1.1 eV
+		1e7,   // 10^7 s retention at 85°C
 	)
 }
 
@@ -387,14 +387,14 @@ func (m *ThermalPhysicsModel) GetAutomotiveReport(nominalLevels int) AutomotiveC
 		Material: m.Material,
 
 		// Grade 0: -40°C to +150°C
-		Grade0LevelsAt150C:  m.EffectiveLevelsAtTemperature(423, nominalLevels),
-		Grade0RetentionYrs:  m.RetentionCurve.RetentionYearsAt(423),
-		Grade0Pass10Year:    m.RetentionCurve.MeetsAutomotiveGrade(0, 10),
+		Grade0LevelsAt150C: m.EffectiveLevelsAtTemperature(423, nominalLevels),
+		Grade0RetentionYrs: m.RetentionCurve.RetentionYearsAt(423),
+		Grade0Pass10Year:   m.RetentionCurve.MeetsAutomotiveGrade(0, 10),
 
 		// Grade 1: -40°C to +125°C
-		Grade1LevelsAt125C:  m.EffectiveLevelsAtTemperature(398, nominalLevels),
-		Grade1RetentionYrs:  m.RetentionCurve.RetentionYearsAt(398),
-		Grade1Pass10Year:    m.RetentionCurve.MeetsAutomotiveGrade(1, 10),
+		Grade1LevelsAt125C: m.EffectiveLevelsAtTemperature(398, nominalLevels),
+		Grade1RetentionYrs: m.RetentionCurve.RetentionYearsAt(398),
+		Grade1Pass10Year:   m.RetentionCurve.MeetsAutomotiveGrade(1, 10),
 
 		// Industrial: 85°C
 		IndustrialLevels:    m.EffectiveLevelsAtTemperature(358, nominalLevels),

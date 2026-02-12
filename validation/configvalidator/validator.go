@@ -28,10 +28,10 @@ func (e ValidationError) Error() string {
 
 // ValidationResult contains all validation errors found.
 type ValidationResult struct {
-	Valid    bool
-	Errors   []ValidationError
-	Warnings []ValidationError
-	FilePath string
+	Valid      bool
+	Errors     []ValidationError
+	Warnings   []ValidationError
+	FilePath   string
 	ConfigType string
 }
 
@@ -63,27 +63,27 @@ func (r *ValidationResult) String() string {
 	if r.ConfigType != "" {
 		sb.WriteString(fmt.Sprintf("Type: %s\n", r.ConfigType))
 	}
-	
+
 	if r.Valid {
 		sb.WriteString("Status: VALID\n")
 	} else {
 		sb.WriteString("Status: INVALID\n")
 	}
-	
+
 	if len(r.Errors) > 0 {
 		sb.WriteString(fmt.Sprintf("Errors (%d):\n", len(r.Errors)))
 		for _, err := range r.Errors {
 			sb.WriteString(fmt.Sprintf("  - %s\n", err.Error()))
 		}
 	}
-	
+
 	if len(r.Warnings) > 0 {
 		sb.WriteString(fmt.Sprintf("Warnings (%d):\n", len(r.Warnings)))
 		for _, w := range r.Warnings {
 			sb.WriteString(fmt.Sprintf("  - %s\n", w.Error()))
 		}
 	}
-	
+
 	return sb.String()
 }
 
@@ -105,7 +105,7 @@ func ValidateFile(path string) (*ValidationResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	result := ValidateJSON(data)
 	result.FilePath = path
 	return result, nil
@@ -114,7 +114,7 @@ func ValidateFile(path string) (*ValidationResult, error) {
 // ValidateJSON validates JSON config data and returns detailed results.
 func ValidateJSON(data []byte) *ValidationResult {
 	result := &ValidationResult{Valid: true}
-	
+
 	// First, check if it's valid JSON (try object first, then array)
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -128,11 +128,11 @@ func ValidateJSON(data []byte) *ValidationResult {
 		result.AddError("", "invalid JSON syntax", err.Error())
 		return result
 	}
-	
+
 	// Detect config type and validate accordingly
 	configType := detectConfigType(raw)
 	result.ConfigType = string(configType)
-	
+
 	switch configType {
 	case ConfigTypeCalibration:
 		validateCalibrationConfig(raw, result)
@@ -148,30 +148,30 @@ func ValidateJSON(data []byte) *ValidationResult {
 		result.AddWarning("", "unknown config type, performing basic validation", nil)
 		validateBasicJSON(raw, result)
 	}
-	
+
 	return result
 }
 
 // ValidateDirectory validates all JSON files in a directory recursively.
 func ValidateDirectory(dir string) ([]*ValidationResult, error) {
 	var results []*ValidationResult
-	
+
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Skip non-JSON files
 		if info.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".json") {
 			return nil
 		}
-		
+
 		// Skip certain directories
 		base := filepath.Base(filepath.Dir(path))
 		if base == "node_modules" || base == ".git" || base == ".omc" {
 			return nil
 		}
-		
+
 		result, err := ValidateFile(path)
 		if err != nil {
 			result = &ValidationResult{
@@ -181,10 +181,10 @@ func ValidateDirectory(dir string) ([]*ValidationResult, error) {
 			result.AddError("", "failed to validate", err.Error())
 		}
 		results = append(results, result)
-		
+
 		return nil
 	})
-	
+
 	return results, err
 }
 
@@ -202,33 +202,33 @@ func detectConfigType(data map[string]any) ConfigType {
 			return ConfigTypeCalibration
 		}
 	}
-	
+
 	// Check for preisach state (has hysteron_states)
 	if _, ok := data["hysteron_states"]; ok {
 		return ConfigTypePreisach
 	}
-	
+
 	// Check for array design (has config with array_rows/array_cols)
 	if cfg, ok := data["config"].(map[string]any); ok {
 		if _, hasRows := cfg["array_rows"]; hasRows {
 			return ConfigTypeArrayDesign
 		}
 	}
-	
+
 	// Check for weight matrix (has weights array and rows/cols)
 	if _, hasWeights := data["weights"]; hasWeights {
 		if _, hasRows := data["rows"]; hasRows {
 			return ConfigTypeWeightMatrix
 		}
 	}
-	
+
 	// Check for OpenLane config (has DESIGN_NAME and VERILOG_FILES)
 	if _, ok := data["DESIGN_NAME"]; ok {
 		if _, hasVerilog := data["VERILOG_FILES"]; hasVerilog {
 			return ConfigTypeOpenLane
 		}
 	}
-	
+
 	return ConfigTypeUnknown
 }
 

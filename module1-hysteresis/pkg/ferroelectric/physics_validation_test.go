@@ -25,12 +25,12 @@ import (
 // against peer-reviewed ranges. This prevents unrealistic marketing claims.
 func TestLiteraturePolarizationConstants(t *testing.T) {
 	tests := []struct {
-		name          string
-		material      *HZOMaterial
-		minPr         float64 // C/m²
-		maxPr         float64 // C/m²
-		description   string
-		tolerancePct  float64 // Allow % tolerance for engineering margin
+		name         string
+		material     *HZOMaterial
+		minPr        float64 // C/m²
+		maxPr        float64 // C/m²
+		description  string
+		tolerancePct float64 // Allow % tolerance for engineering margin
 	}{
 		{
 			name:         "DefaultHZO",
@@ -67,8 +67,8 @@ func TestLiteraturePolarizationConstants(t *testing.T) {
 		{
 			name:         "CryogenicHZO",
 			material:     CryogenicHZO(),
-			minPr:        64e-2,  // 75 µC/cm² - 15% tolerance
-			maxPr:        86e-2,  // 75 µC/cm² + 15% tolerance
+			minPr:        64e-2, // 75 µC/cm² - 15% tolerance
+			maxPr:        86e-2, // 75 µC/cm² + 15% tolerance
 			description:  "Cryogenic Pr ~75 µC/cm² from Adv. Elec. Mat. 2024",
 			tolerancePct: 0, // Already includes tolerance in min/max
 		},

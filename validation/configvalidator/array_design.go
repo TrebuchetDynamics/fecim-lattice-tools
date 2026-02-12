@@ -14,22 +14,22 @@ type ArrayDesignConfig struct {
 
 // ArrayConfigParams contains the main array configuration parameters.
 type ArrayConfigParams struct {
-	Name          string            `json:"name"`
-	Mode          int               `json:"mode"`
-	ArrayRows     int               `json:"array_rows"`
-	ArrayCols     int               `json:"array_cols"`
-	Technology    string            `json:"technology"`
-	Architecture  string            `json:"architecture"`
-	CellPitch     float64           `json:"cell_pitch"`
-	RowHeight     float64           `json:"row_height"`
-	Levels        int               `json:"levels"`
-	GMin          float64           `json:"g_min"`
-	GMax          float64           `json:"g_max"`
-	VProgMin      float64           `json:"v_prog_min"`
-	VProgMax      float64           `json:"v_prog_max"`
-	TPulse        float64           `json:"t_pulse"`
-	Peripherals   PeripheralConfig  `json:"peripherals"`
-	ComputeConfig ComputeConfig     `json:"compute_config"`
+	Name          string           `json:"name"`
+	Mode          int              `json:"mode"`
+	ArrayRows     int              `json:"array_rows"`
+	ArrayCols     int              `json:"array_cols"`
+	Technology    string           `json:"technology"`
+	Architecture  string           `json:"architecture"`
+	CellPitch     float64          `json:"cell_pitch"`
+	RowHeight     float64          `json:"row_height"`
+	Levels        int              `json:"levels"`
+	GMin          float64          `json:"g_min"`
+	GMax          float64          `json:"g_max"`
+	VProgMin      float64          `json:"v_prog_min"`
+	VProgMax      float64          `json:"v_prog_max"`
+	TPulse        float64          `json:"t_pulse"`
+	Peripherals   PeripheralConfig `json:"peripherals"`
+	ComputeConfig ComputeConfig    `json:"compute_config"`
 }
 
 // PeripheralConfig contains DAC/ADC configuration.
@@ -62,42 +62,42 @@ type CellConfig struct {
 
 // ArrayStats contains computed statistics for the array.
 type ArrayStats struct {
-	TotalCells    int     `json:"total_cells"`
-	ActiveCells   int     `json:"active_cells"`
-	AreaMM2       float64 `json:"area_mm2"`
-	PowerMW       float64 `json:"power_mw"`
+	TotalCells     int     `json:"total_cells"`
+	ActiveCells    int     `json:"active_cells"`
+	AreaMM2        float64 `json:"area_mm2"`
+	PowerMW        float64 `json:"power_mw"`
 	ThroughputGOPS float64 `json:"throughput_gops"`
-	QuantMSE      float64 `json:"quant_mse"`
-	QuantPSNRdB   float64 `json:"quant_psnr_db"`
-	WeightMin     float64 `json:"weight_min"`
-	WeightMax     float64 `json:"weight_max"`
-	UsedCells     int     `json:"used_cells"`
+	QuantMSE       float64 `json:"quant_mse"`
+	QuantPSNRdB    float64 `json:"quant_psnr_db"`
+	WeightMin      float64 `json:"weight_min"`
+	WeightMax      float64 `json:"weight_max"`
+	UsedCells      int     `json:"used_cells"`
 }
 
 // Array design constraints
 const (
-	MinArrayDim     = 1
-	MaxArrayDim     = 4096
-	MinLevels       = 2
-	MaxLevels       = 256
-	MinConductance  = 0.0
-	MaxConductance  = 1e6  // 1 MS
-	MinVoltage      = 0.0
-	MaxVoltage      = 10.0
-	MinDACBits      = 1
-	MaxDACBits      = 16
-	MinTPulse       = 0.1   // ns
-	MaxTPulse       = 1e9   // ns (1s)
+	MinArrayDim    = 1
+	MaxArrayDim    = 4096
+	MinLevels      = 2
+	MaxLevels      = 256
+	MinConductance = 0.0
+	MaxConductance = 1e6 // 1 MS
+	MinVoltage     = 0.0
+	MaxVoltage     = 10.0
+	MinDACBits     = 1
+	MaxDACBits     = 16
+	MinTPulse      = 0.1 // ns
+	MaxTPulse      = 1e9 // ns (1s)
 )
 
 // Valid technologies
 var validTechnologies = map[string]bool{
-	"SKY130":   true,
-	"GF180":    true,
-	"TSMC28":   true,
-	"TSMC16":   true,
-	"TSMC7":    true,
-	"generic":  true,
+	"SKY130":  true,
+	"GF180":   true,
+	"TSMC28":  true,
+	"TSMC16":  true,
+	"TSMC7":   true,
+	"generic": true,
 }
 
 // Valid architectures
@@ -125,13 +125,13 @@ func validateArrayDesignConfig(data map[string]any, result *ValidationResult) {
 		result.AddError("config", "required field missing or invalid type", nil)
 		return
 	}
-	
+
 	// Validate config parameters
 	arrayRows, arrayCols := validateArrayConfigParams(config, result)
-	
+
 	// Validate cells array
 	validateCellsArray(data, arrayRows, arrayCols, config, result)
-	
+
 	// Validate stats if present
 	if stats, ok := getMap(data, "stats"); ok {
 		validateArrayStats(stats, arrayRows, arrayCols, result)
@@ -145,7 +145,7 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 	if ok && name == "" {
 		result.AddWarning("config.name", "empty name provided", name)
 	}
-	
+
 	// Validate array dimensions
 	arrayRows, ok := getInt(config, "array_rows")
 	if !ok {
@@ -156,7 +156,7 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddError("config.array_rows", fmt.Sprintf("must be between %d and %d", MinArrayDim, MaxArrayDim), arrayRows)
 		}
 	}
-	
+
 	arrayCols, ok := getInt(config, "array_cols")
 	if !ok {
 		result.AddError("config.array_cols", "required field missing or invalid type", config["array_cols"])
@@ -166,21 +166,21 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddError("config.array_cols", fmt.Sprintf("must be between %d and %d", MinArrayDim, MaxArrayDim), arrayCols)
 		}
 	}
-	
+
 	// Validate technology (optional - some configs don't specify)
 	if tech, ok := getString(config, "technology"); ok {
 		if !validTechnologies[tech] {
 			result.AddWarning("config.technology", "unknown technology (expected: SKY130, GF180, TSMC28, TSMC16, TSMC7, generic)", tech)
 		}
 	}
-	
+
 	// Validate architecture if present
 	if arch, ok := getString(config, "architecture"); ok {
 		if !validArchitectures[arch] {
 			result.AddWarning("config.architecture", "unknown architecture (expected: passive, 1T1R, 2T2R, 1S1R)", arch)
 		}
 	}
-	
+
 	// Validate levels
 	levels, ok := getInt(config, "levels")
 	if !ok {
@@ -190,7 +190,7 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddError("config.levels", fmt.Sprintf("must be between %d and %d", MinLevels, MaxLevels), levels)
 		}
 	}
-	
+
 	// Validate conductance range
 	gMin, hasGMin := getFloat(config, "g_min")
 	gMax, hasGMax := getFloat(config, "g_max")
@@ -205,7 +205,7 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddWarning("config.g_max", "unusually high conductance value", gMax)
 		}
 	}
-	
+
 	// Validate voltage range
 	vMin, hasVMin := getFloat(config, "v_prog_min")
 	vMax, hasVMax := getFloat(config, "v_prog_max")
@@ -220,7 +220,7 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddWarning("config.v_prog_max", "unusually high programming voltage", vMax)
 		}
 	}
-	
+
 	// Validate t_pulse if present
 	if tPulse, ok := getFloat(config, "t_pulse"); ok {
 		if tPulse < MinTPulse {
@@ -230,17 +230,17 @@ func validateArrayConfigParams(config map[string]any, result *ValidationResult) 
 			result.AddWarning("config.t_pulse", "unusually long pulse duration", tPulse)
 		}
 	}
-	
+
 	// Validate peripherals if present
 	if periph, ok := getMap(config, "peripherals"); ok {
 		validatePeripherals(periph, result)
 	}
-	
+
 	// Validate compute_config if present
 	if computeCfg, ok := getMap(config, "compute_config"); ok {
 		validateComputeConfig(computeCfg, arrayRows, arrayCols, result)
 	}
-	
+
 	return arrayRows, arrayCols
 }
 
@@ -252,28 +252,28 @@ func validatePeripherals(periph map[string]any, result *ValidationResult) {
 			result.AddError("config.peripherals.dac_bits", fmt.Sprintf("must be between %d and %d", MinDACBits, MaxDACBits), dacBits)
 		}
 	}
-	
+
 	// Validate ADC bits
 	if adcBits, ok := getInt(periph, "adc_bits"); ok {
 		if adcBits < MinDACBits || adcBits > MaxDACBits {
 			result.AddError("config.peripherals.adc_bits", fmt.Sprintf("must be between %d and %d", MinDACBits, MaxDACBits), adcBits)
 		}
 	}
-	
+
 	// Validate TIA gain
 	if tiaGain, ok := getFloat(periph, "tia_gain"); ok {
 		if tiaGain <= 0 {
 			result.AddError("config.peripherals.tia_gain", "must be positive", tiaGain)
 		}
 	}
-	
+
 	// Validate VDD
 	if vdd, ok := getFloat(periph, "vdd"); ok {
 		if vdd <= 0 || vdd > MaxVoltage {
 			result.AddError("config.peripherals.vdd", fmt.Sprintf("must be between 0 and %.1f V", MaxVoltage), vdd)
 		}
 	}
-	
+
 	// Validate clock frequency (MHz)
 	if clockFreq, ok := getFloat(periph, "clock_freq"); ok {
 		if clockFreq <= 0 {
@@ -290,17 +290,17 @@ func validateComputeConfig(computeCfg map[string]any, arrayRows, arrayCols int, 
 	// Validate initial_weights dimensions
 	if weights, ok := computeCfg["initial_weights"].([]any); ok {
 		if arrayRows > 0 && len(weights) != arrayRows {
-			result.AddError("config.compute_config.initial_weights", 
+			result.AddError("config.compute_config.initial_weights",
 				fmt.Sprintf("row count (%d) must match array_rows (%d)", len(weights), arrayRows), len(weights))
 		}
-		
+
 		for i, row := range weights {
 			if rowArr, ok := row.([]any); ok {
 				if arrayCols > 0 && len(rowArr) != arrayCols {
 					result.AddError(fmt.Sprintf("config.compute_config.initial_weights[%d]", i),
 						fmt.Sprintf("column count (%d) must match array_cols (%d)", len(rowArr), arrayCols), len(rowArr))
 				}
-				
+
 				// Validate weight values
 				for j, w := range rowArr {
 					if wf, ok := w.(float64); ok {
@@ -317,21 +317,21 @@ func validateComputeConfig(computeCfg map[string]any, arrayRows, arrayCols int, 
 			}
 		}
 	}
-	
+
 	// Validate quant_levels
 	if quantLevels, ok := getInt(computeCfg, "quant_levels"); ok {
 		if quantLevels < MinLevels {
 			result.AddError("config.compute_config.quant_levels", fmt.Sprintf("must be at least %d", MinLevels), quantLevels)
 		}
 	}
-	
+
 	// Validate accumulator_bits
 	if accBits, ok := getInt(computeCfg, "accumulator_bits"); ok {
 		if accBits < 8 || accBits > 64 {
 			result.AddError("config.compute_config.accumulator_bits", "must be between 8 and 64", accBits)
 		}
 	}
-	
+
 	// Validate activation_func
 	if actFunc, ok := getString(computeCfg, "activation_func"); ok {
 		if !validActivationFuncs[actFunc] {
@@ -347,44 +347,44 @@ func validateCellsArray(data map[string]any, arrayRows, arrayCols int, config ma
 		result.AddError("cells", "required field missing or invalid type", nil)
 		return
 	}
-	
+
 	expectedCells := arrayRows * arrayCols
 	if expectedCells > 0 && len(cells) != expectedCells {
 		result.AddError("cells", fmt.Sprintf("length (%d) must match array_rows * array_cols (%d)", len(cells), expectedCells), len(cells))
 	}
-	
+
 	// Get levels for validation
 	levels, _ := getInt(config, "levels")
 	gMin, hasGMin := getFloat(config, "g_min")
 	gMax, hasGMax := getFloat(config, "g_max")
 	vMin, hasVMin := getFloat(config, "v_prog_min")
 	vMax, hasVMax := getFloat(config, "v_prog_max")
-	
+
 	seenPositions := make(map[string]bool)
-	
+
 	for i, cell := range cells {
 		cellMap, ok := cell.(map[string]any)
 		if !ok {
 			result.AddError(fmt.Sprintf("cells[%d]", i), "must be an object", cell)
 			continue
 		}
-		
+
 		// Validate row/col
 		row, hasRow := getInt(cellMap, "row")
 		col, hasCol := getInt(cellMap, "col")
-		
+
 		if !hasRow {
 			result.AddError(fmt.Sprintf("cells[%d].row", i), "required field missing", nil)
 		} else if row < 0 || (arrayRows > 0 && row >= arrayRows) {
 			result.AddError(fmt.Sprintf("cells[%d].row", i), fmt.Sprintf("must be between 0 and %d", arrayRows-1), row)
 		}
-		
+
 		if !hasCol {
 			result.AddError(fmt.Sprintf("cells[%d].col", i), "required field missing", nil)
 		} else if col < 0 || (arrayCols > 0 && col >= arrayCols) {
 			result.AddError(fmt.Sprintf("cells[%d].col", i), fmt.Sprintf("must be between 0 and %d", arrayCols-1), col)
 		}
-		
+
 		// Check for duplicate positions
 		if hasRow && hasCol {
 			posKey := fmt.Sprintf("%d,%d", row, col)
@@ -393,14 +393,14 @@ func validateCellsArray(data map[string]any, arrayRows, arrayCols int, config ma
 			}
 			seenPositions[posKey] = true
 		}
-		
+
 		// Validate level
 		if level, ok := getInt(cellMap, "level"); ok {
 			if level < 0 || (levels > 0 && level >= levels) {
 				result.AddError(fmt.Sprintf("cells[%d].level", i), fmt.Sprintf("must be between 0 and %d", levels-1), level)
 			}
 		}
-		
+
 		// Validate conductance
 		if cond, ok := getFloat(cellMap, "conductance"); ok {
 			if hasGMin && hasGMax {
@@ -412,14 +412,14 @@ func validateCellsArray(data map[string]any, arrayRows, arrayCols int, config ma
 				result.AddError(fmt.Sprintf("cells[%d].conductance", i), "must be non-negative", cond)
 			}
 		}
-		
+
 		// Validate resistance
 		if res, ok := getFloat(cellMap, "resistance"); ok {
 			if res <= 0 {
 				result.AddError(fmt.Sprintf("cells[%d].resistance", i), "must be positive", res)
 			}
 		}
-		
+
 		// Validate program_v
 		if progV, ok := getFloat(cellMap, "program_v"); ok {
 			if hasVMin && hasVMax {
@@ -428,7 +428,7 @@ func validateCellsArray(data map[string]any, arrayRows, arrayCols int, config ma
 				}
 			}
 		}
-		
+
 		// Validate conductance/resistance consistency
 		if cond, hasCond := getFloat(cellMap, "conductance"); hasCond {
 			if res, hasRes := getFloat(cellMap, "resistance"); hasRes {
@@ -437,7 +437,7 @@ func validateCellsArray(data map[string]any, arrayRows, arrayCols int, config ma
 					relError := math.Abs(res-expectedRes) / expectedRes
 					if relError > 0.01 { // 1% tolerance
 						// Note: This is just a warning as units may vary
-						result.AddWarning(fmt.Sprintf("cells[%d]", i), 
+						result.AddWarning(fmt.Sprintf("cells[%d]", i),
 							"conductance and resistance may be inconsistent (check units)", nil)
 					}
 				}
@@ -455,7 +455,7 @@ func validateArrayStats(stats map[string]any, arrayRows, arrayCols int, result *
 			result.AddWarning("stats.total_cells", fmt.Sprintf("expected %d (rows * cols)", expected), totalCells)
 		}
 	}
-	
+
 	// Validate active_cells <= total_cells
 	totalCells, _ := getInt(stats, "total_cells")
 	if activeCells, ok := getInt(stats, "active_cells"); ok {
@@ -466,7 +466,7 @@ func validateArrayStats(stats map[string]any, arrayRows, arrayCols int, result *
 			result.AddError("stats.active_cells", "cannot exceed total_cells", activeCells)
 		}
 	}
-	
+
 	// Validate non-negative metrics
 	nonNegativeFields := []string{"area_mm2", "power_mw", "throughput_gops", "quant_mse"}
 	for _, field := range nonNegativeFields {
@@ -474,7 +474,7 @@ func validateArrayStats(stats map[string]any, arrayRows, arrayCols int, result *
 			result.AddError("stats."+field, "must be non-negative", v)
 		}
 	}
-	
+
 	// Validate weight_min <= weight_max
 	if wMin, hasMin := getFloat(stats, "weight_min"); hasMin {
 		if wMax, hasMax := getFloat(stats, "weight_max"); hasMax {
