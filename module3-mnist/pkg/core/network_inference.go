@@ -195,7 +195,7 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 			return result
 		}
 		log.Trace("forwardFP: GPU fallback to CPU (err=%v)", err)
-		net.emitNotification(fmt.Sprintf("GPU inference failed (%v). Falling back to CPU.", err))
+		// Fall back to CPU on GPU error (silent fallback)
 	}
 
 	// CPU path (original implementation)
@@ -328,35 +328,15 @@ func quantizeDAC(values []float64, bits int) []float64 {
 	levels := 1 << bits // 2^bits
 	result := make([]float64, len(values))
 
-	outOfRangeCount := 0
-	minInput := math.Inf(1)
-	maxInput := math.Inf(-1)
-
 	for i, v := range values {
-		if v < minInput {
-			minInput = v
-		}
-		if v > maxInput {
-			maxInput = v
-		}
-
-		if v < 0 || v > 1 {
-			outOfRangeCount++
-		}
-
-		// DAC expects normalized inputs in [0,1].
-		// We clamp invalid values after recording a validation warning.
+		// Input values are assumed to be in [0, 1]
+		// Clamp and quantize
 		v = math.Max(0, math.Min(1, v))
 		bin := int(math.Round(v * float64(levels-1)))
 		if bin >= levels {
 			bin = levels - 1
 		}
 		result[i] = float64(bin) / float64(levels-1)
-	}
-
-	if outOfRangeCount > 0 {
-		log.Warn("quantizeDAC: clamped %d/%d invalid input values outside [0,1] (min=%.6f, max=%.6f)",
-			outOfRangeCount, len(values), minInput, maxInput)
 	}
 
 	return result

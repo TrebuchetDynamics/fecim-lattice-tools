@@ -83,9 +83,6 @@ type DualModeNetwork struct {
 
 	// GPU acceleration flag
 	useGPU bool
-
-	// Optional user-facing notification sink for non-fatal fallbacks/clamps.
-	notifyUser func(message string)
 }
 
 // InferenceResult holds results from dual-path inference.
