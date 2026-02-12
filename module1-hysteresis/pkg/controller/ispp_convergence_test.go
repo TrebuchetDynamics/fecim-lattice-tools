@@ -131,6 +131,7 @@ func runISPPWithLandauK(t *testing.T, targetLevel int, mat *sharedphysics.HZOMat
 	solver.UseNLS = false
 
 	wc := NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
+	wc.EnableLKMidOptimizations = true
 	wc.PulseDuration = 5e-4
 	wc.MaxRetries = 30
 	wc.Start(targetLevel, true)

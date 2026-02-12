@@ -113,6 +113,12 @@ type WriteController struct {
 	// Guard pulse tracking: counts consecutive guard corrections at the target level.
 	// After MaxGuardPulses, accept the level as converged to prevent direction flips.
 	GuardPulseCount int
+
+	// LK dynamics tuning knobs:
+	// - EnableLKMidOptimizations reduces overshoot near MID targets.
+	// - WaitSettleScale extends WAIT/VERIFY windows for remanent settling.
+	EnableLKMidOptimizations bool
+	WaitSettleScale          float64
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -127,9 +133,11 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		MinStep:         minStep, // Avoid overly tiny steps near target
 		MaxRetries:      0,       // Unlimited pulses per attempt (no forced reset)
 		ForceResetLimit: 0,       // Unlimited resets by default (never give up)
-		PulseDuration:   0.15,    // Default safe value
-		CalibManager:    calib,
-		State:           StateIdle,
+		PulseDuration:            0.15, // Default safe value
+		CalibManager:             calib,
+		State:                    StateIdle,
+		EnableLKMidOptimizations: false,
+		WaitSettleScale:          1.0,
 	}
 }
 
@@ -271,7 +279,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		if wc.PhaseTimer <= dt {
 			log.Printf("ISPP WAIT: holding E=%.3f×Ec for verify (pulse=%d)", wc.CurrentField/wc.EcField, wc.PulseCount+1)
 		}
-		if wc.PhaseTimer > pulseDur*0.3 {
+		if wc.PhaseTimer > pulseDur*0.3*wc.waitSettleScale() {
 			wc.State = StateVerify // Go to Verify
 			wc.PhaseTimer = 0
 		}
@@ -348,7 +356,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		guardActive := false
 
 		// Wait for field to settle to 0
-		if wc.PhaseTimer > pulseDur*0.3 && math.Abs(currentField) < 0.01*wc.MaxField {
+		if wc.PhaseTimer > pulseDur*0.3*wc.waitSettleScale() && math.Abs(currentField) < 0.01*wc.MaxField {
 			// VERIFY LOGIC
 			prevLevel := wc.LastVerifyLevel
 			if prevLevel == 0 {
@@ -691,6 +699,20 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			}
 		}
 
+		// Near MID targets in LK runs are overshoot-sensitive; damp the first pulse.
+		if weight := wc.midTargetWeight(); weight > 0 {
+			damp := 1.0 - 0.30*weight
+			if damp < 0.65 {
+				damp = 0.65
+			}
+			initialField *= damp
+			minMid := 0.7 * wc.EcField
+			if initialField < minMid {
+				initialField = minMid
+			}
+			log.Printf("ISPP INIT MID DAMP: target=%d weight=%.2f damp=%.2f start=%.3f×Ec", targetLevel, weight, damp, initialField/wc.EcField)
+		}
+
 		// Apply direction
 		if direction < 0 {
 			initialField = -initialField
@@ -768,7 +790,8 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	// If we have bounds from verify, use bisection for faster convergence.
 	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 && wc.NoImproveCount < 3 && wc.stepFloor == 0 {
 		prevVoltage := math.Abs(wc.CurrentField)
-		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
+		bias := wc.lowerBoundBias()
+		nextVoltage := wc.VMin + bias*(wc.VMax-wc.VMin)
 		// Nudge if midpoint is too close to current voltage (avoid stalling).
 		minStep := 0.02 * wc.EcField
 		if wc.MinStep > minStep {
@@ -785,8 +808,8 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			nextVoltage = -nextVoltage
 		}
 		wc.CurrentField = nextVoltage
-		log.Printf("ISPP BISECT: level=%d→%d, E=%.3f×Ec→%.3f×Ec bounds=[%.3f, %.3f]×Ec",
-			currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+		log.Printf("ISPP BISECT: level=%d→%d, E=%.3f×Ec→%.3f×Ec bounds=[%.3f, %.3f]×Ec bias=%.2f",
+			currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField, bias)
 		return
 	}
 
@@ -858,4 +881,54 @@ func pulseDirection(field float64) int {
 		return -1
 	}
 	return 0
+}
+
+func (wc *WriteController) midTargetWeight() float64 {
+	if !wc.EnableLKMidOptimizations || wc.NumLevels <= 2 {
+		return 0
+	}
+	mid := float64(wc.NumLevels+1) / 2.0
+	halfSpan := float64(wc.NumLevels-1) / 2.0
+	if halfSpan <= 0 {
+		return 0
+	}
+	distNorm := math.Abs(float64(wc.TargetLevel)-mid) / halfSpan
+	if distNorm > 1 {
+		distNorm = 1
+	}
+	weight := 1 - distNorm
+	if weight < 0 {
+		return 0
+	}
+	return weight
+}
+
+func (wc *WriteController) lowerBoundBias() float64 {
+	bias := 0.5
+	weight := wc.midTargetWeight()
+	if weight <= 0 {
+		return bias
+	}
+	bias -= 0.18 * weight
+	if bias < 0.30 {
+		bias = 0.30
+	}
+	return bias
+}
+
+func (wc *WriteController) waitSettleScale() float64 {
+	scale := wc.WaitSettleScale
+	if scale <= 0 {
+		scale = 1.0
+	}
+	weight := wc.midTargetWeight()
+	if weight <= 0 {
+		return scale
+	}
+	// Near-MID LK targets need longer settling between pulses and verify-at-zero.
+	scale *= (1.0 + 0.9*weight)
+	if scale < 1.0 {
+		scale = 1.0
+	}
+	return scale
 }

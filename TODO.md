@@ -332,8 +332,8 @@ Evidence (2026-02-11):
 |----|------|--------|--------|------|
 | G07 | LK ISPP overshoot accounting: overshoots/target, max Δ, stuck-breaker count | `shared/physics` | ✅ | Done (headless LK logs now include `overshoots`, `maxLevelDelta`, `stuckBreakers` per target) |
 | G08 | Define acceptance criteria for Literature Superlattice MID stability | `hysteresis-prompt.md` | ✅ | Done (`docs/development/LITERATURE_SUPERLATTICE_MID_STABILITY_SPEC.md`, evidence: `docs/development/evidence/G08-mid-stability-evidence-2026-02-11.md`) |
-| LK05 | ISPP controller not optimized for L-K dynamics (overshoots near MID) | `module1-hysteresis` | ⏳ | 4-8hr |
-| LK07 | Need longer WAIT phases for L-K settling | `module1-hysteresis` | ⏳ | 2-4hr |
+| LK05 | ISPP controller not optimized for L-K dynamics (overshoots near MID) | `module1-hysteresis` | ✅ | Done (`writer.go`: MID-target LK bias + damped first pulse + lower-bound-biased bisection, gated by `EnableLKMidOptimizations`) |
+| LK07 | Need longer WAIT phases for L-K settling | `module1-hysteresis` | ✅ | Done (`writer.go`: dynamic `waitSettleScale()` extends WAIT/VERIFY settle near MID LK targets) |
 
 ### Performance Diagnosis
 
@@ -356,9 +356,9 @@ Evidence (2026-02-11):
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | M1-D1 | Document run modes (GUI/TUI/headless/Vulkan), L-K vs Preisach defaults | `docs/.../module1-hysteresis/` | ✅ | 30-60m |
-| M1-U1 | Fix WRD target marker parity (single snapshot for target/marker/logs) | `module1-hysteresis` | ⏳ | 1-2hr |
-| M1-U2 | Equation widget perf: cold <1s, warm <200ms, no freeze | `module1-hysteresis` | ⏳ | 30-60m |
-| M1-P1 | L-K performance accounting + ISPP stabilization evidence | `module1-hysteresis` | ⏳ | 2-4hr |
+| M1-U1 | Fix WRD target marker parity (single snapshot for target/marker/logs) | `module1-hysteresis` | ✅ | Done (`module1-hysteresis/pkg/gui/simulation.go` + `module1-hysteresis/pkg/gui/ui_sync_test.go`: target/phase/log now derived from one `uiSnapshot` payload) |
+| M1-U2 | Equation widget perf: cold <1s, warm <200ms, no freeze | `module1-hysteresis` | ✅ | Done (`module1-hysteresis/pkg/gui/widgets/physics_equations_perf_test.go`: adds cold/warm open timing test + benchmark harness) |
+| M1-P1 | L-K performance accounting + ISPP stabilization evidence | `module1-hysteresis` | ✅ | Done (`scripts/lk_perf_evidence.sh` evidence pipeline; run artifacts in `logs/lk-perf-evidence-*.log`) |
 | M2-U1 | Align `crossbar-gui -help` with implemented features | `cmd/crossbar-gui` | ✅ | 30-60m |
 | M2-P1 | Full physics audit vs PHYSICS.md (IR drop, sneak, drift, temp) | `module2-crossbar` | ✅ | 2-4hr |
 | M2-P2 | Temperature scalings beyond wire resistance | `module2-crossbar` | ✅ | 1-2hr |
