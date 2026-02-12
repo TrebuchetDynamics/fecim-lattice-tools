@@ -51,7 +51,7 @@
 2. **PF/TAT Junction Leakage Current**
    - Real ferroelectrics are **not ideal capacitors** - they leak even in "OFF" state
    - Poole-Frenkel and Trap-Assisted Tunneling dominate at E > 0.5 MV/cm
-   - **Result**: Polarization degrades over time → retention loss (hours to days, not years)
+   - **Result**: Polarization degrades over time → retention loss (hours to days, not years) **[CITATION NEEDED]**
 
 3. **Stochastic Switching Variability**
    - Thermal noise causes switching thresholds to drift by ±10-15%
@@ -211,7 +211,7 @@ func (m *MayergoyzPreisach) Update(E_field MVcm) float64 {
 ### ⭐⭐⭐⭐ **P1.2: Leakage Current Modeling** (NEW - HIGH)
 **Priority**: **HIGH** | **Complexity**: MEDIUM | **Impact**: **Critical for Retention**
 
-**Why**: Real ferroelectrics leak current even in "OFF" state. Without leakage modeling, retention time predictions are wrong by orders of magnitude.
+**Why**: Real ferroelectrics leak current even in "OFF" state. Without leakage modeling, retention time predictions are wrong by orders of magnitude **[CITATION NEEDED]**.
 
 **Physics Background**:
 - **Poole-Frenkel (PF) Emission**: Dominant at high E > 0.5 MV/cm
@@ -1061,7 +1061,7 @@ Add to GUI:
 ### ✅ **P9: Imprint Field Modeling** ⭐⭐
 **Priority**: LOW-MEDIUM | **Complexity**: LOW | **Impact**: LOW-MEDIUM
 
-**Why**: Long-term retention degradation. ImprintField defined but unused.
+**Why**: Long-term retention degradation. ImprintField defined but unused **[CITATION NEEDED]**.
 
 **Implementation**:
 ```go

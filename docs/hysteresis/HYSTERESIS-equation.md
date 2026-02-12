@@ -126,7 +126,7 @@ Code anchor: `shared/physics/landau.go` (checkIncubation).
 
 ---
 
-## 8. Preisach Representation (multi-domain memory)
+## 8. Preisach Representation (multi-domain memory) [CITATION NEEDED for HZO-specific polydomain mapping]
 
 For domain-history modeling, hysteresis can be represented as:
 

@@ -140,7 +140,7 @@ Where D is displacement, E is electric field, P is polarization.
 
 **Why It Matters:**
 - **Memory:** Pr determines the signal difference between "0" and "1" states
-- **Analog levels:** Higher Pr allows more distinguishable intermediate states
+- **Analog levels:** Higher Pr allows more distinguishable intermediate states (e.g., partial-switching FeFET demonstrations in Jerry et al., 2017; Pešić et al., *Adv. Funct. Mater.* 2016)
 - **Read margin:** ΔQ = 2 × Pr × Area determines charge difference
 
 **Material Values:**

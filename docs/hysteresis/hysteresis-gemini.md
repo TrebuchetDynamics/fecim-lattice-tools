@@ -323,7 +323,7 @@ During the implementation of the **Adaptive Binary ISPP** (Incremental Step Puls
 
 * **Symptom:** The material switched instantly from State 0 to State 30 upon applying any positive field ($E > 0$), with no intermediate stable states.
 * **Root Cause:** The simulation was modeling an ideal **Single-Domain Crystal** (Square Hysteresis), effectively presenting a vertical "Digital Cliff" to the control algorithm.
-* **Solution:** Implementation of a **Depolarization Field (Edep)** term in the Landau-Khalatnikov solver. This approximates the multi-domain / interfacial layer effects of polycrystalline HZO, creating the "Slanted" hysteresis loop required for analog addressability.
+* **Solution:** Implementation of a **Depolarization Field (Edep)** term in the Landau-Khalatnikov solver. This approximates the multi-domain / interfacial layer effects of polycrystalline HZO, creating the "Slanted" hysteresis loop required for analog addressability (supported by Siannas et al., *Commun. Phys.* 2022; Zhou et al., *Sci. Adv.* 2022).
 
 ### 2. Root Cause Analysis: The "Digital Cliff"
 
@@ -398,7 +398,7 @@ Once implemented, the ISPP algorithm will encounter a slanted curve.
 1. **Pulse 1 (Low V):** Only overcomes the barrier for the "easiest" conceptual grains. $P$ moves slightly up the slope.
 2. **Verify:** Conductance is read.
 3. **Pulse 2 (Higher V):** Overcomes the barrier + depolarization penalty for more grains. $P$ moves further up.
-4. **Result:** Stable convergence to intermediate states (Level 14, Level 26, etc.).
+4. **Result:** Stable convergence to intermediate states (Level 14, Level 26, etc.) [CITATION NEEDED for quantitative level-count retention in this exact stack].
 
 ### 5. References & Validation Sources
 
@@ -409,9 +409,10 @@ are stored in `docs/research-papers/` when available.
 |-----------|-------------|------------------|
 | **Siannas, N. et al. (2022)** Commun. Phys. 5, 178 | Depolarization fields introduce a linear restoring term (slanted loop). | `docs/research-papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf` |
 | **Zhou, S. et al. (2022)** Sci. Adv. 8, eadd5953 | Strain/phase stability supports depolarization‑field modeling in HZO. | `docs/research-papers/by-topic/01-ferroelectric-materials/Zhou_2022_Strain_induced_antipolar_phase.pdf` |
-| **Park, M. H., et al. (2019)** | Slanted loop / depolarization in HZO (citation ambiguous in legacy notes). | Not resolved yet; see `docs/research-papers/by-topic/01-ferroelectric-materials/README.md`. |
+| **Park, M. H., et al. (2019)** | Slanted loop / depolarization in HZO (citation ambiguous in legacy notes). | **[CITATION NEEDED]** Not resolved yet; see `docs/research-papers/by-topic/01-ferroelectric-materials/README.md`. |
 | **Salahuddin & Datta (2008)** | Negative‑capacitance stack modeling (Edep = −kdep·P). | Open-access arXiv preprint (2007) saved as `docs/research-papers/by-topic/01-ferroelectric-materials/Salahuddin_Datta_2007_Negative_Capacitance_arXiv.pdf` (journal version still paywalled). |
 | **Jerry, M., et al. (2017)** | 32‑level FeFET analog states via partial switching. | `docs/research-papers/by-topic/01-ferroelectric-materials/Jerry_2017_Ferroelectric_FET_Analog_Synapse_arXiv.pdf` (arXiv preprint). |
+| **Pešić, M., et al. (2016)** *Adv. Funct. Mater.* 26, 4601–4612 | Demonstrates FeFET multi-level operation/partial polarization switching with retained intermediate states. | External journal reference (DOI: 10.1002/adfm.201600590). |
 | **Damjanovic, D. (1998)** | Rayleigh‑region linear analog response in ferroelectrics. | Paywalled (IOP); metadata only. |
 
 ---

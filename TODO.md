@@ -356,7 +356,7 @@ Evidence (2026-02-11):
 | LK-PD-3 | Implement polydomain LK model (domain ensemble with distributed thresholds/parameters, not just additive bias). Must hold intermediate remanent states at E=0 | `shared/physics/landau.go` | 🔄 | 4-12hr |
 | LK-PD-4 | Wire GUI ISPP (Write/Read waveform) to use polydomain LK when engine=LandauK (toggle), keep single-domain for baseline hysteresis unless enabled | `module1-hysteresis/pkg/gui` | ⏳ | 2-4hr |
 | LK-PD-5 | ISPP convergence test for polydomain LK: targets {5,10,15,20,25} within <=25 pulses (verify-at-0) | `module1-hysteresis/pkg/controller` | ⏳ | 1-3hr |
-| LK-PD-6 | Literature grounding: cite hafnia/HZO polydomain/partial switching or “intermediate state retention” sources; mark any claim as CITATION NEEDED until done | `docs/hysteresis/*` + HONESTY | 🔄 | 2-6hr |
+| LK-PD-6 | Literature grounding: cite hafnia/HZO polydomain/partial switching or “intermediate state retention” sources; mark any claim as CITATION NEEDED until done | `docs/hysteresis/*` + HONESTY | ✅ | 2-6hr |
 
 ### Engineering Guardrails
 
