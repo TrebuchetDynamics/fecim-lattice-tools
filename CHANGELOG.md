@@ -1,113 +1,68 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [2026-02-11] Massive TODO Sprint
 
-## [Unreleased]
+This sprint closed a large TODO backlog across physics fidelity, validation, reliability, UX, accessibility, docs, and performance.
 
-### Changed
-- **Module 6: Array Builder** - FeCIM crossbar array builder for OpenLane integration
-  - Generates LEF, Liberty, Verilog, and DEF files for OpenLane flow
-  - Added three operation modes: Storage (NAND), Memory (DRAM), Compute (AI)
-  - New `GenerateDesign()` API supporting all three modes
-  - CLI tool updated with `-mode` flag (storage, memory, compute)
-  - All export formats (JSON, CSV, SPICE, Verilog, DEF) work with all modes
+### Major Highlights
 
-## [0.9.0] - 2026-01-23
+- **Physics model rigor expanded**
+  - Added/validated Landau-Khalatnikov and Preisach ISPP/WRD behaviors.
+  - Improved convergence diagnostics, staircase/remanent behavior checks, and headless evidence output.
+  - Tightened model sign/unit handling and non-finite protections.
 
-### Added
-- **Module 6: FeCIM Design Suite** with 7-tab interface
-  - Tab 1: Cell Builder (LEF/Liberty/Verilog generation)
-  - Tab 2: Layout (visual crossbar grid)
-  - Tab 3: HDL (Verilog + DEF generation)
-  - Tab 6: Export (JSON, CSV, SPICE, Verilog, DEF)
-  - Tab 7: Learn (OpenLane documentation)
-- **OpenLane integration documentation**
-  - `docs/eda/eda.integration.md` - Complete integration guide
-  - `docs/eda/eda.demo.md` - Demo interface guide
-  - `docs/eda/OPENLANE_STUDY.md` - Validated findings from OpenLane source
-  - `docs/eda/plan-demo6.md` - Implementation plan with architecture reference
-- **Working examples**
-  - `examples/01-basic-8x8/` - Basic crossbar array generation
-  - `examples/02-mnist-layer/` - Neural network layer mapping
-  - `examples/03-openlane-integration/` - Full OpenLane workflow
-- **CLI tool** for automated/headless EDA file generation
-- **Verilog netlist generation** with passive/1T1R support
-- **DEF placement file generation** with FIXED keyword
+- **Module 4 circuit realism upgrades**
+  - Completed major Tier-A/Tier-B solver and dispatch improvements.
+  - Strengthened sense-chain wiring and READ-path observability.
+  - Added ISPP coupling paths and circuit-level reporting/overlays.
 
-### Improved
-- Root README with Quick Start, team info, key quotes
-- Module 6 README with detailed OpenLane integration
-- Package documentation (godoc comments)
+- **Cross-module validation and coverage push**
+  - Added broad regression coverage for critical physics paths.
+  - Expanded tests for crossbar/comparison/help/themes/accessibility and UI-engine sync.
+  - Increased parity checks across CLI/GUI and headless workflows.
 
-## [0.8.0] - 2026-01-22
+- **Performance and stability work**
+  - Reduced hot-path allocations (physics, quantization, inference pipeline).
+  - Added material construction caching and bounded map/allocation safety fixes.
+  - Resolved key concurrency/race hazards in shared UI/progress managers.
 
-### Added
-- Unified tabbed GUI application (`cmd/fecim-lattice-tools/`)
-- Modules 1-5 fully implemented and tested
-- Test coverage expanded across modules
-- Lattice generator with fractal placement algorithm
+- **Error handling and safety hardening**
+  - Replaced panic-prone paths with explicit error handling.
+  - Hardened CLI/IO boundaries and renderer loop behavior.
+  - Closed critical audit findings across MNIST/GUI/EDA paths.
 
-### Changed
-- Renamed `demo*` directories to `module*` for clarity
-- Consolidated non-idealities into Module 2 tabs
+- **UX and accessibility improvements**
+  - Added keyboard shortcuts, docs search affordances, and clearer labels.
+  - Improved DPI/layout resilience and readability consistency.
+  - Added accessibility registry/announcements, text alternatives, reduced-motion support.
 
-## [0.7.0] - 2026-01-20
+- **Documentation and honesty/audit alignment**
+  - Fixed large sets of broken internal docs links.
+  - Closed documentation gaps and marked heuristic/citation-needed areas clearly.
+  - Synced module docs with implemented behavior and acceptance criteria.
 
-### Added
-- **Module 3: MNIST Classifier**
-  - Dual-mode inference (floating-point vs CIM)
-  - Demo with adjustable quantization/noise (no fixed accuracy claim)
-  - Non-ideality impact visualization
-- **Module 4: Peripheral Circuits**
-  - DAC/ADC visualization
-  - TIA design
-  - INL/DNL analysis
-- **Module 5: Technology Comparison**
-  - Energy comparison bar chart
-  - Competitive technology matrix
-  - Data center savings calculator
+- **EDA and architecture progress**
+  - Added foundations for force-directed placement and Manhattan routing.
+  - Expanded module6 validation tests and export/CLI/GUI parity checks.
+  - Added multicell hysteresis API + MVM sneak trace reporting architecture work.
 
-## [0.6.0] - 2026-01-18
+### Representative Commits
 
-### Added
-- **Module 2: Crossbar Array**
-  - Matrix-vector multiply (MVM) visualization
-  - IR drop analysis with heatmap
-  - Sneak path detection
-  - Drift simulation over time
-- Default quantization levels (configurable)
+- `cb6c703` Implement ARCH-2 multicell API and ARCH-3 MVM sneak tracing
+- `fb59aae` Implement ARCH-4 training foundation and VK-4 Vulkan cleanup
+- `1b00cce` Add peripheral PVT INL/DNL model, corner analysis, and ISPP cycle trail
+- `5364137` Add headless WRD/ISPP Preisach+LK regression suites with JSON summaries
+- `b6faaf1` docs: fix 112 broken internal markdown links in docs
+- `b09f4da` race-safety: fix top concurrency hazards in shared UI/progress managers
+- `898782e` audit: fix critical error-handling gaps across mnist/gui/eda
+- `c198bef` perf: reduce hot-path allocations in physics and quantization
+- `75c6b02` perf: cache material construction
+- `868dd72` perf: reduce inference pipeline allocations (PERF-02)
 
-## [0.5.0] - 2026-01-15
+### Sprint Outcome
 
-### Added
-- **Module 1: Hysteresis Visualization**
-  - P-E curve animation
-  - Preisach model implementation
-  - Multi-cell array visualization
-
-### Changed
-- Migrated to Fyne v2.7.2 GUI framework
-
-## [0.1.0] - 2026-01-10
-
-### Added
-- Initial project structure
-- Basic ferroelectric physics simulation
-- Proof of concept visualization
-
----
-
-## Roadmap
-
-### v1.0.0 (Target: Q1 2026)
-- [ ] OpenLane flow integration testing
-- [ ] Custom FeCIM cell LEF/GDS in Magic
-- [ ] Liberty timing model generation
-- [ ] ngspice simulation bridge
-
-### v1.1.0 (Target: Q2 2026)
-- [ ] Design space explorer (Tab 4)
-- [ ] Multi-layer stacked crossbar support
-- [ ] Automated DRC/LVS validation
+- Significant reduction of high-priority TODO items.
+- Better alignment between documented claims and model behavior.
+- Stronger test/race baseline and improved maintainability for next development cycle.
