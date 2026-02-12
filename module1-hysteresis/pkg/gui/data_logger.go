@@ -23,6 +23,11 @@ const (
 	// Default: 250ms => ~4 samples/sec at most.
 	// Override with FECIM_HYSTERESIS_LOG_INTERVAL_MS (float, milliseconds).
 	hysteresisDataLogMinSimInterval = 2.5e-1
+
+	// During ISPP write operations, use a much finer recording interval so that the
+	// CSV log captures the actual E-field ramp and polarization trajectory instead of
+	// showing apparent "teleportation" jumps between coarsely-sampled records.
+	hysteresisDataLogISPPInterval = 1e-2 // 10ms => ~100 samples/sec during ISPP
 )
 
 type HysteresisDataLogger struct {
@@ -148,15 +153,21 @@ func (l *HysteresisDataLogger) Path() string {
 }
 
 func (l *HysteresisDataLogger) shouldRecord(simTime float64) bool {
+	return l.shouldRecordAt(simTime, l.minSimInterval)
+}
+
+// shouldRecordAt is like shouldRecord but accepts a custom minimum interval.
+// Use a shorter interval for high-resolution phases (e.g., ISPP writes).
+func (l *HysteresisDataLogger) shouldRecordAt(simTime float64, minInterval float64) bool {
 	if l == nil || atomic.LoadUint32(&l.closed) == 1 {
 		return false
 	}
-	if l.minSimInterval <= 0 {
+	if minInterval <= 0 {
 		return true
 	}
 	lastBits := atomic.LoadUint64(&l.lastSimTimeBits)
 	last := math.Float64frombits(lastBits)
-	if last >= 0 && simTime >= last && (simTime-last) < l.minSimInterval {
+	if last >= 0 && simTime >= last && (simTime-last) < minInterval {
 		return false
 	}
 	atomic.StoreUint64(&l.lastSimTimeBits, math.Float64bits(simTime))
@@ -461,7 +472,21 @@ func (a *App) recordDataSnapshot(dt float64) {
 	if mat == nil {
 		return
 	}
-	if !a.dataLogger.shouldRecord(a.simTime) {
+
+	// During ISPP writes, use a finer recording interval so that the CSV log
+	// captures the E-field ramp and P trajectory (prevents apparent teleportation).
+	// Also force-record on controller state transitions (APPLY→WAIT→VERIFY etc.)
+	// to capture exact transition points regardless of the throttle interval.
+	if a.waveform == WaveformWriteReadDemo {
+		forceRecord := false
+		if a.writeController != nil && a.writeController.State != a.wrdLastLogState {
+			forceRecord = true
+			a.wrdLastLogState = a.writeController.State
+		}
+		if !forceRecord && !a.dataLogger.shouldRecordAt(a.simTime, hysteresisDataLogISPPInterval) {
+			return
+		}
+	} else if !a.dataLogger.shouldRecord(a.simTime) {
 		return
 	}
 

@@ -152,6 +152,7 @@ type App struct {
 	wrdLastControllerState controller.WriteState
 	wrdLastControllerPulse int
 	wrdLastProgressLog     float64
+	wrdLastLogState        controller.WriteState // last controller state written to CSV (force-record on transition)
 	wrdLastBranch          int     // -1 lower branch, +1 upper branch, 0 unknown
 	wrdForceReset          bool    // Force PREP on next cycle (overshoot/direction change)
 	wrdSkipPrep            bool    // Skip PREP/RESET and write directly from current state
