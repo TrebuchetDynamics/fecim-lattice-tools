@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	"fecim-lattice-tools/shared/export"
 )
 
@@ -196,6 +197,15 @@ func (ca *CircuitsApp) exportSimulationData() {
 	}
 	config.ExportedFiles["peripheral_csv"] = periphResult.FilePath
 
+	if ca.deviceState != nil {
+		spicePath := filepath.Join(dataDir, fmt.Sprintf("circuits-crossbar_%s.sp", timestamp))
+		if spiceNetlist, err := ca.buildSpiceNetlist(weights); err == nil {
+			if writeErr := os.WriteFile(spicePath, []byte(spiceNetlist), 0644); writeErr == nil {
+				config.ExportedFiles["crossbar_spice"] = spicePath
+			}
+		}
+	}
+
 	if ca.window != nil && ca.window.Canvas() != nil {
 		vizExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
 		vizResult := vizExporter.ExportPNG(ca.window.Canvas().Capture())
@@ -341,6 +351,39 @@ func buildPeripheralSnapshotRows(weights [][]int, voltages [][]float64, currents
 		}
 	}
 	return rows
+}
+
+func (ca *CircuitsApp) buildSpiceNetlist(weights [][]int) (string, error) {
+	if ca == nil || ca.deviceState == nil {
+		return "", fmt.Errorf("device state unavailable")
+	}
+	ca.deviceState.mu.RLock()
+	defer ca.deviceState.mu.RUnlock()
+
+	rows := ca.deviceState.rows
+	cols := ca.deviceState.cols
+	conductance := make([][]float64, rows)
+	for r := 0; r < rows; r++ {
+		conductance[r] = make([]float64, cols)
+		for c := 0; c < cols; c++ {
+			level := 0
+			if r < len(weights) && c < len(weights[r]) {
+				level = weights[r][c]
+			}
+			conductance[r][c] = ca.deviceState.levelToConductance(level, ca.quantLevels)
+		}
+	}
+
+	params := arraysim.SolveParams{
+		WLVoltages:  append([]float64(nil), ca.deviceState.wlVoltages...),
+		BLVoltages:  append([]float64(nil), ca.deviceState.dacVoltages...),
+		Conductance: conductance,
+		ActiveRows:  append([]bool(nil), ca.deviceState.activeRows...),
+		Geometry:    ca.deviceState.cellGeometry,
+		Wire:        ca.deviceState.wireParams,
+		Boundary:    ca.deviceState.boundaryParams,
+	}
+	return arraysim.ExportCrossbarSPICE(params, arraysim.SpiceExportConfig{Title: "Module4 Circuits crossbar behavioral deck"})
 }
 
 func peripheralSnapshotCSV(rows []peripheralSnapshotRow) *export.CSVData {

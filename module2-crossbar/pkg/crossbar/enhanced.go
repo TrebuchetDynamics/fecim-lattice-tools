@@ -119,7 +119,6 @@ type MVMResult struct {
 	// Non-ideality analysis
 	IRDropAnalysis    *IRDropAnalysis
 	SneakPathAnalysis *SneakPathAnalysis
-	SneakTrace        *MVMSneakTraceReport
 
 	// Comparison with GPU
 	GPUEquivalentEnergy float64 // Estimated GPU energy for same operation (pJ)
@@ -303,7 +302,6 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 			isolationFactor = 0.001 // 1000x isolation from single transistor
 		}
 		result.SneakPathAnalysis = a.AnalyzeSneakPathsWithIsolation(centerRow, centerCol, isolationFactor)
-		result.SneakTrace = a.GenerateMVMSneakTrace(input, opts, 3)
 	}
 
 	// Step 4: Compute error metrics
@@ -470,39 +468,6 @@ func (a *Array) ComputeFullMVMSneak(input []float64, opts *MVMOptions) []float64
 	return sneakPerRow
 }
 
-// GenerateMVMSneakTrace builds an architecture-level sneak current trace report.
-// It aggregates per-row sneak current and includes the strongest path contributors.
-func (a *Array) GenerateMVMSneakTrace(input []float64, opts *MVMOptions, maxPaths int) *MVMSneakTraceReport {
-	if maxPaths <= 0 {
-		maxPaths = 3
-	}
-	if opts == nil {
-		opts = DefaultMVMOptions()
-	}
-
-	report := &MVMSneakTraceReport{Architecture: opts.Architecture}
-	sneakPerRow := a.ComputeFullMVMSneak(input, opts)
-	report.Rows = make([]MVMSneakTraceRow, 0, len(sneakPerRow))
-	report.PeakRow = -1
-
-	for row := 0; row < len(sneakPerRow); row++ {
-		iSneak := sneakPerRow[row]
-		report.TotalSneak += iSneak
-		if iSneak > report.PeakCurrent {
-			report.PeakCurrent = iSneak
-			report.PeakRow = row
-		}
-
-		traceRow := MVMSneakTraceRow{Row: row, SneakCurrent: iSneak}
-		if iSneak > 0 {
-			traceRow.TopPaths = a.AnalyzeSneakContributions(row, input, maxPaths)
-		}
-		report.Rows = append(report.Rows, traceRow)
-	}
-
-	return report
-}
-
 // GetSneakPathContribution returns detailed sneak path analysis for a single row.
 // Useful for visualization and debugging.
 type SneakPathContribution struct {
@@ -511,63 +476,6 @@ type SneakPathContribution struct {
 	ExitCol     int
 	PathG       float64 // Effective path conductance
 	PathCurrent float64 // Current through this path
-}
-
-// MVMSneakTraceRow captures sneak current aggregation for one output row.
-type MVMSneakTraceRow struct {
-	Row          int
-	SneakCurrent float64
-	TopPaths     []SneakPathContribution
-}
-
-// MVMSneakTraceReport provides architecture-level sneak-path tracing for one MVM call.
-type MVMSneakTraceReport struct {
-	Architecture string
-	Rows         []MVMSneakTraceRow
-	TotalSneak   float64
-	PeakRow      int
-	PeakCurrent  float64
-}
-
-// FormatText returns a compact text report suitable for CLI/terminal visualization.
-func (r *MVMSneakTraceReport) FormatText(maxRows, maxPaths int) string {
-	if r == nil {
-		return "MVM Sneak Path Trace: <nil report>"
-	}
-	if maxRows <= 0 {
-		maxRows = 8
-	}
-	if maxPaths <= 0 {
-		maxPaths = 3
-	}
-
-	var b strings.Builder
-	b.WriteString("MVM Sneak Path Trace\n")
-	b.WriteString(fmt.Sprintf("Architecture: %s\n", r.Architecture))
-	b.WriteString(fmt.Sprintf("Total sneak current: %.6f\n", r.TotalSneak))
-	b.WriteString(fmt.Sprintf("Peak row: %d (%.6f)\n", r.PeakRow, r.PeakCurrent))
-
-	limit := len(r.Rows)
-	if limit > maxRows {
-		limit = maxRows
-	}
-	for i := 0; i < limit; i++ {
-		row := r.Rows[i]
-		b.WriteString(fmt.Sprintf("- Row %d: I_sneak=%.6f\n", row.Row, row.SneakCurrent))
-		pathLimit := len(row.TopPaths)
-		if pathLimit > maxPaths {
-			pathLimit = maxPaths
-		}
-		for p := 0; p < pathLimit; p++ {
-			sp := row.TopPaths[p]
-			b.WriteString(fmt.Sprintf("    path #%d src(r=%d,c=%d)->exit(c=%d), G=%.6f, I=%.6f\n",
-				p+1, sp.SourceRow, sp.SourceCol, sp.ExitCol, sp.PathG, sp.PathCurrent))
-		}
-	}
-	if len(r.Rows) > limit {
-		b.WriteString(fmt.Sprintf("... %d more rows omitted\n", len(r.Rows)-limit))
-	}
-	return b.String()
 }
 
 // AnalyzeSneakContributions returns the top sneak path contributors for a row.

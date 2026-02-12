@@ -194,13 +194,6 @@ func RunInference(args []string) error {
 		}
 		vis.ShowSneakPathAnalysis(sneakAnalysis, selectedRow, selectedCol)
 
-		traceInput := make([]float64, *arraySize)
-		for i := range traceInput {
-			traceInput[i] = rng.Float64()
-		}
-		trace := array.GenerateMVMSneakTrace(traceInput, crossbar.DefaultMVMOptions(), 3)
-		vis.ShowMVMSneakTrace(trace)
-
 		if !*showNonidealities {
 			return nil
 		}

@@ -100,16 +100,12 @@ type ProcessVariationConfig struct {
 }
 
 // DefaultProcessVariationConfig returns default process variation settings.
-//
-// NOTE: These are heuristic simulation defaults for sensitivity analysis, not
-// calibrated foundry numbers. Surface them as tunable parameters in UI/CLI when
-// running quantitative studies.
 func DefaultProcessVariationConfig() *ProcessVariationConfig {
 	return &ProcessVariationConfig{
-		DeviceSigma: 0.02,  // 2% device-to-device variation (heuristic)
-		GradientX:   0.001, // 0.1% per cell horizontal gradient (heuristic)
-		GradientY:   0.001, // 0.1% per cell vertical gradient (heuristic)
-		EdgeEffect:  0.05,  // 5% edge degradation (heuristic)
+		DeviceSigma: 0.02,  // 2% device-to-device variation
+		GradientX:   0.001, // 0.1% per cell horizontal gradient
+		GradientY:   0.001, // 0.1% per cell vertical gradient
+		EdgeEffect:  0.05,  // 5% edge degradation
 	}
 }
 
@@ -121,13 +117,11 @@ type HalfSelectConfig struct {
 }
 
 // DefaultHalfSelectConfig returns default half-select settings.
-// Disturb parameters are heuristic placeholders until calibrated against array
-// disturb measurements for a specific technology node.
 func DefaultHalfSelectConfig() *HalfSelectConfig {
 	return &HalfSelectConfig{
 		Enabled:          false, // Off by default for performance
-		DisturbThreshold: 0.3,   // 30% of Vc threshold (heuristic)
-		DisturbRate:      0.001, // 0.1% conductance shift per pulse (heuristic)
+		DisturbThreshold: 0.3,   // 30% of Vc threshold
+		DisturbRate:      0.001, // 0.1% conductance shift per pulse
 	}
 }
 

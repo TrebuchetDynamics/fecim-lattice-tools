@@ -410,25 +410,6 @@ func (v *TerminalVisualizer) ShowSneakPathAnalysis(analysis *crossbar.SneakPathA
 }
 
 // ShowMVMWithNonidealities shows MVM operation with non-ideality effects.
-// ShowMVMSneakTrace prints a per-row MVM sneak-current trace report.
-func (v *TerminalVisualizer) ShowMVMSneakTrace(report *crossbar.MVMSneakTraceReport) {
-	fmt.Println("\n=== MVM Sneak Path Current Trace ===")
-	if report == nil {
-		fmt.Println("No trace data available")
-		return
-	}
-	fmt.Printf("Architecture: %s\n", report.Architecture)
-	fmt.Printf("Total sneak current: %.6f\n", report.TotalSneak)
-	fmt.Printf("Peak row: %d (%.6f)\n", report.PeakRow, report.PeakCurrent)
-	for _, row := range report.Rows {
-		fmt.Printf("  Row %2d: I_sneak=%.6f\n", row.Row, row.SneakCurrent)
-		for i, path := range row.TopPaths {
-			fmt.Printf("    #%d src(r=%d,c=%d) -> exit(c=%d), G=%.6f, I=%.6f\n",
-				i+1, path.SourceRow, path.SourceCol, path.ExitCol, path.PathG, path.PathCurrent)
-		}
-	}
-}
-
 func (v *TerminalVisualizer) ShowMVMWithNonidealities(input, idealOutput, actualOutput []float64, irAnalysis *crossbar.IRDropAnalysis) {
 	fmt.Println("\n=== MVM with Non-Idealities ===")
 
