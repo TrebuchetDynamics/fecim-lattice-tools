@@ -106,6 +106,9 @@ type DualModeNetwork struct {
 	// Separate mutex for RNG access to prevent races under RLock
 	rngMu sync.Mutex
 
+	// Scratch buffers reused by Infer() to reduce per-call allocations.
+	inferScratch inferScratch
+
 	// GPU acceleration flag
 	useGPU bool
 

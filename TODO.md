@@ -402,7 +402,7 @@ Evidence (2026-02-11):
 | ID | Benchmark | Baseline | Threshold Trigger | Status | Notes |
 |----|-----------|----------|-------------------|--------|-------|
 | PERF-01 | `BenchmarkQuantize30Levels` (`module3-mnist/pkg/core`) | 1,234,561 ns/op, 165 allocs/op | >1ms/op and >10 allocs/op | ✅ | Optimized quantization output allocation to single contiguous backing slice in `module3-mnist/pkg/core/quantize.go`.
-| PERF-02 | `BenchmarkDualModeInference` (`module3-mnist/pkg/core`) | 723,934 ns/op, 427 allocs/op | >10 allocs/op | ⏳ | High allocation pressure in inference pipeline (`quantizeDAC`/`quantizeADC`/`relu`/`softmax` staging). Follow-up required for scratch-buffer/in-place path.
+| PERF-02 | `BenchmarkDualModeInference` (`module3-mnist/pkg/core`) | 723,934 ns/op, 427 allocs/op | >10 allocs/op | ✅ | Implemented scratch-buffer + in-place path for `quantizeDAC`/`quantizeADC`/`relu`/`softmax` and reused inference buffers. New bench (`-count=3`): 559,821-617,198 ns/op, 7 allocs/op.
 | PERF-03 | `BenchmarkPreisachStack_Update` (`shared/physics`) | 2,033 ns/op, 45 allocs/op | >10 allocs/op | ✅ | Eliminated per-call temporary slice in `ComputePolarization` (allocation-free stack traversal) in `shared/physics/preisach.go`.
 | PERF-04 | `BenchmarkDiscreteLevel` (`shared/physics`) | 4,091 ns/op, 32 allocs/op | >10 allocs/op | ✅ | Removed hot-path structured debug logging allocations in `DiscreteLevel` (`shared/physics/material.go`).
 | PERF-05 | `BenchmarkAllMaterials` (`shared/physics`) | 2,240 ns/op, 14 allocs/op | >10 allocs/op | ✅ | Cached AllMaterials construction after first load and return shallow-copy slice: benchmark now ~30 ns/op, 1 alloc/op (count=3).

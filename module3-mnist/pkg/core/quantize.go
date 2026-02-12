@@ -220,17 +220,21 @@ func ComputeQuantizationStats(original, quantized [][]float64) QuantizationStats
 // amplitude. This matches the σ/μ interpretation used in the MNIST docs.
 func AddGaussianNoise(values []float64, noiseLevel float64, rng *RandomSource) []float64 {
 	log.Trace("AddGaussianNoise: noiseLevel=%.4f, len=%d", noiseLevel, len(values))
-
 	if noiseLevel <= 0 {
 		return values
 	}
-
-	result := make([]float64, len(values))
-	for i, v := range values {
-		// Multiplicative Gaussian noise: sigma scales with |v|
-		result[i] = v + rng.NormFloat64()*math.Abs(v)*noiseLevel
-	}
+	result := append([]float64(nil), values...)
+	AddGaussianNoiseInPlace(result, noiseLevel, rng)
 	return result
+}
+
+func AddGaussianNoiseInPlace(values []float64, noiseLevel float64, rng *RandomSource) {
+	if noiseLevel <= 0 {
+		return
+	}
+	for i, v := range values {
+		values[i] = v + rng.NormFloat64()*math.Abs(v)*noiseLevel
+	}
 }
 
 // RandomSource provides deterministic random number generation.

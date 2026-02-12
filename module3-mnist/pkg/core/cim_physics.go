@@ -28,7 +28,8 @@ func applyNoiseComponent(values []float64, sigma float64, rng *RandomSource) []f
 	if sigma <= 0 {
 		return values
 	}
-	return AddGaussianNoise(values, sigma, rng)
+	AddGaussianNoiseInPlace(values, sigma, rng)
+	return values
 }
 
 func applyDecomposedNoise(values []float64, c CIMNoiseComponents, rng *RandomSource) []float64 {
@@ -101,9 +102,14 @@ func (net *DualModeNetwork) cimNoiseComponentsLocked() CIMNoiseComponents {
 // forwardCIMConductance computes differential-pair conductance-domain MVM.
 func (net *DualModeNetwork) forwardCIMConductance(input []float64, weights [][]float64, bias []float64) []float64 {
 	out := make([]float64, len(bias))
+	net.forwardCIMConductanceInto(input, weights, bias, out)
+	return out
+}
+
+func (net *DualModeNetwork) forwardCIMConductanceInto(input []float64, weights [][]float64, bias []float64, out []float64) {
 	if len(weights) == 0 || len(weights[0]) == 0 {
 		copy(out, bias)
-		return out
+		return
 	}
 
 	wMax := 0.0
@@ -117,7 +123,7 @@ func (net *DualModeNetwork) forwardCIMConductance(input []float64, weights [][]f
 	}
 	if wMax == 0 {
 		copy(out, bias)
-		return out
+		return
 	}
 
 	gSpan := cimGMaxS - cimGMinS
@@ -139,7 +145,6 @@ func (net *DualModeNetwork) forwardCIMConductance(input []float64, weights [][]f
 		}
 		out[i] = sum
 	}
-	return out
 }
 
 func (net *DualModeNetwork) adcReadLatencySecondsLocked(rows int) float64 {

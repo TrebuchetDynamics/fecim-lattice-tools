@@ -8,138 +8,96 @@ import (
 
 var cimSemanticNoticeOnce sync.Once
 
+type inferScratch struct {
+	fpHidden  []float64
+	fpOutput  []float64
+	fpProbs   []float64
+	cimInput  []float64
+	cimHidden []float64
+	cimOutput []float64
+	cimProbs  []float64
+}
+
+func ensureLen(buf []float64, n int) []float64 {
+	if cap(buf) < n {
+		return make([]float64, n)
+	}
+	return buf[:n]
+}
+
 // Infer runs dual-path inference (FP + CIM) and returns comparison results.
 // Returns nil if input length doesn't match expected InputSize.
 func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
-	// Compute input stats for logging
-	inputMin, inputMax, inputMean := 1.0, 0.0, 0.0
-	for _, v := range input {
-		if v < inputMin {
-			inputMin = v
-		}
-		if v > inputMax {
-			inputMax = v
-		}
-		inputMean += v
-	}
-	if len(input) > 0 {
-		inputMean /= float64(len(input))
-	}
-
-	log.Input("Infer", map[string]interface{}{
-		"inputLen":  len(input),
-		"inputMin":  inputMin,
-		"inputMax":  inputMax,
-		"inputMean": inputMean,
-		"levels":    net.Config.NumLevels,
-		"noise":     net.Config.NoiseLevel,
-		"adcBits":   net.Config.ADCBits,
-		"dacBits":   net.Config.DACBits,
-		"singleLyr": net.Config.SingleLayer,
-	})
-
 	net.mu.RLock()
 	defer net.mu.RUnlock()
 
-	// Validate input length
 	if len(input) != net.InputSize {
 		log.Error(fmt.Errorf("input length %d != expected %d", len(input), net.InputSize), "Infer")
 		return nil
 	}
 
-	result := &InferenceResult{}
-
-	var fpOutput, fpProbs []float64
-	var fpHidden []float64
-	var cimOutput, cimProbs []float64
-	var cimHidden []float64
+	s := &net.inferScratch
 	cimReadLatencyS := 0.0
 
 	if net.Config.SingleLayer {
-		// ============================================
-		// SINGLE-LAYER MODE: (784→10)
-		// Simpler architecture for demonstration
-		// ============================================
+		s.fpOutput = ensureLen(s.fpOutput, len(net.SingleLayerBias))
+		net.forwardFPInto(input, net.SingleLayerWeights, net.SingleLayerBias, s.fpOutput)
+		s.fpProbs = softmaxInto(s.fpProbs, s.fpOutput)
 
-		// FP PATH (single layer)
-		fpOutput = net.forwardFP(input, net.SingleLayerWeights, net.SingleLayerBias)
-		fpProbs = softmax(fpOutput)
-		fpHidden = nil // No hidden layer in Tour mode
-
-		// CIM PATH (single layer with quantization)
-		dacInput := quantizeDAC(input, net.Config.DACBits)
-		cimOutput = net.forwardCIM(dacInput, net.QuantSingleLayerWeights, net.QuantSingleLayerBias)
+		s.cimInput = quantizeDACInto(s.cimInput, input, net.Config.DACBits)
+		s.cimOutput = ensureLen(s.cimOutput, len(net.QuantSingleLayerBias))
+		net.forwardCIMConductanceInto(s.cimInput, net.QuantSingleLayerWeights, net.QuantSingleLayerBias, s.cimOutput)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantSingleLayerWeights))
-		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
-		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
-		cimProbs = softmax(cimOutput)
-		cimHidden = nil // No hidden layer in Tour mode
-
+		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits)
+		s.cimOutput = net.safeNoise(s.cimOutput, net.Config.NoiseLevel)
+		s.cimProbs = softmaxInto(s.cimProbs, s.cimOutput)
 	} else {
-		// ============================================
-		// STANDARD MODE: Two-Layer (784→128→10)
-		// Higher accuracy (~93%+) due to hidden layer capacity
-		// ============================================
+		s.fpHidden = ensureLen(s.fpHidden, len(net.FPBias1))
+		net.forwardFPInto(input, net.FPWeights1, net.FPBias1, s.fpHidden)
+		reluInPlace(s.fpHidden)
+		s.fpOutput = ensureLen(s.fpOutput, len(net.FPBias2))
+		net.forwardFPInto(s.fpHidden, net.FPWeights2, net.FPBias2, s.fpOutput)
+		s.fpProbs = softmaxInto(s.fpProbs, s.fpOutput)
 
-		// FP PATH (Ideal Digital)
-		fpHidden = net.forwardFP(input, net.FPWeights1, net.FPBias1)
-		fpHidden = relu(fpHidden)
-		fpOutput = net.forwardFP(fpHidden, net.FPWeights2, net.FPBias2)
-		fpProbs = softmax(fpOutput)
-
-		// CIM PATH (Realistic Hardware)
-		dacInput := quantizeDAC(input, net.Config.DACBits)
-
-		// Layer 1: Use QUANTIZED weights (30-level FeCIM quantization)
-		cimHidden = net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
+		s.cimInput = quantizeDACInto(s.cimInput, input, net.Config.DACBits)
+		s.cimHidden = ensureLen(s.cimHidden, len(net.QuantBias1))
+		net.forwardCIMConductanceInto(s.cimInput, net.QuantWeights1, net.QuantBias1, s.cimHidden)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights1))
-		cimHidden = quantizeADC(cimHidden, net.Config.ADCBits)
-		cimHidden = net.safeNoise(cimHidden, net.Config.NoiseLevel)
-		cimHidden = relu(cimHidden)
+		s.cimHidden = quantizeADCInto(s.cimHidden, s.cimHidden, net.Config.ADCBits)
+		s.cimHidden = net.safeNoise(s.cimHidden, net.Config.NoiseLevel)
+		reluInPlace(s.cimHidden)
 
-		// Layer 2: Use QUANTIZED weights (30-level FeCIM quantization)
-		cimOutput = net.forwardCIM(cimHidden, net.QuantWeights2, net.QuantBias2)
+		s.cimOutput = ensureLen(s.cimOutput, len(net.QuantBias2))
+		net.forwardCIMConductanceInto(s.cimHidden, net.QuantWeights2, net.QuantBias2, s.cimOutput)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights2))
-		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
-		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
-		cimProbs = softmax(cimOutput)
-
+		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits)
+		s.cimOutput = net.safeNoise(s.cimOutput, net.Config.NoiseLevel)
+		s.cimProbs = softmaxInto(s.cimProbs, s.cimOutput)
 	}
 
-	// Store FP results
-	result.FPLogits = fpOutput
-	result.FPProbabilities = fpProbs
-	result.FPPrediction = argmax(fpProbs)
-	result.FPConfidence = fpProbs[result.FPPrediction]
-	result.FPHidden = fpHidden
+	result := &InferenceResult{
+		FPLogits:         append([]float64(nil), s.fpOutput...),
+		FPProbabilities:  append([]float64(nil), s.fpProbs...),
+		CIMLogits:        append([]float64(nil), s.cimOutput...),
+		CIMProbabilities: append([]float64(nil), s.cimProbs...),
+		ReadLatencyUS:    cimReadLatencyS * 1e6,
+		FPHidden:         nil,
+		CIMHidden:        nil,
+	}
+	if !net.Config.SingleLayer {
+		result.FPHidden = append([]float64(nil), s.fpHidden...)
+		result.CIMHidden = append([]float64(nil), s.cimHidden...)
+	}
 
-	// Store CIM results
-	result.CIMLogits = cimOutput
-	result.CIMProbabilities = cimProbs
-	result.CIMPrediction = argmax(cimProbs)
-	result.CIMConfidence = cimProbs[result.CIMPrediction]
-	result.CIMHidden = cimHidden
-	result.ReadLatencyUS = cimReadLatencyS * 1e6
-
-	// ============================================
-	// COMPARISON
-	// ============================================
+	result.FPPrediction = argmax(result.FPProbabilities)
+	result.FPConfidence = result.FPProbabilities[result.FPPrediction]
+	result.CIMPrediction = argmax(result.CIMProbabilities)
+	result.CIMConfidence = result.CIMProbabilities[result.CIMPrediction]
 	result.Agree = (result.FPPrediction == result.CIMPrediction)
 	result.Disagreement = klDivergence(result.FPProbabilities, result.CIMProbabilities)
 
-	// Energy calculation uses the shared model (core energy SSOT).
 	est := EstimateInferenceEnergyJ(net.Config, net.InputSize, net.HiddenSize, net.OutputSize)
 	result.EnergyUsed = est.TotalJ * 1e6
-
-	log.Calculation("Infer", map[string]interface{}{
-		"fpPred":       result.FPPrediction,
-		"fpConf":       result.FPConfidence,
-		"cimPred":      result.CIMPrediction,
-		"cimConf":      result.CIMConfidence,
-		"agree":        result.Agree,
-		"disagreement": result.Disagreement,
-		"energy_uJ":    result.EnergyUsed,
-	}, result)
 
 	return result
 }
@@ -195,7 +153,6 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 // forwardFP performs standard FP matrix multiplication.
 // Uses GPU acceleration when available and input is large enough.
 func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias []float64) []float64 {
-	// Try GPU path if available and input is large enough to benefit
 	if net.useGPU && len(input) >= 128 {
 		result, err := net.forwardFPGPU(input, weights, bias)
 		if err == nil {
@@ -206,9 +163,12 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 		net.emitNotification(fmt.Sprintf("GPU inference failed (%v). Falling back to CPU.", err))
 	}
 
-	// CPU path (original implementation)
 	output := make([]float64, len(bias))
+	net.forwardFPInto(input, weights, bias, output)
+	return output
+}
 
+func (net *DualModeNetwork) forwardFPInto(input []float64, weights [][]float64, bias []float64, output []float64) {
 	for i := 0; i < len(weights); i++ {
 		sum := bias[i]
 		for j := 0; j < len(input); j++ {
@@ -216,25 +176,6 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 		}
 		output[i] = sum
 	}
-
-	// Log activation stats
-	if len(output) > 0 {
-		outMin, outMax, outMean := output[0], output[0], 0.0
-		for _, v := range output {
-			if v < outMin {
-				outMin = v
-			}
-			if v > outMax {
-				outMax = v
-			}
-			outMean += v
-		}
-		outMean /= float64(len(output))
-		log.Trace("forwardFP: CPU path (input=%d, output=%d, min=%.3f, max=%.3f, mean=%.3f)",
-			len(input), len(output), outMin, outMax, outMean)
-	}
-
-	return output
 }
 
 // forwardCIM performs conductance-domain CIM MVM using a differential-pair map.
@@ -247,20 +188,29 @@ func (net *DualModeNetwork) forwardCIM(input []float64, weights [][]float64, bia
 
 // relu applies ReLU activation.
 func relu(x []float64) []float64 {
-	result := make([]float64, len(x))
-	for i, v := range x {
-		if v > 0 {
-			result[i] = v
+	result := append([]float64(nil), x...)
+	reluInPlace(result)
+	return result
+}
+
+func reluInPlace(x []float64) {
+	for i := range x {
+		if x[i] < 0 {
+			x[i] = 0
 		}
 	}
-	return result
 }
 
 // softmax applies softmax activation.
 func softmax(x []float64) []float64 {
+	return softmaxInto(nil, x)
+}
+
+func softmaxInto(dst []float64, x []float64) []float64 {
 	if len(x) == 0 {
 		return nil
 	}
+	dst = ensureLen(dst, len(x))
 
 	max := x[0]
 	for _, v := range x {
@@ -270,17 +220,18 @@ func softmax(x []float64) []float64 {
 	}
 
 	expSum := 0.0
-	result := make([]float64, len(x))
 	for i, v := range x {
-		result[i] = math.Exp(v - max)
-		expSum += result[i]
+		e := math.Exp(v - max)
+		dst[i] = e
+		expSum += e
 	}
 
-	for i := range result {
-		result[i] /= expSum
+	inv := 1.0 / expSum
+	for i := range dst {
+		dst[i] *= inv
 	}
 
-	return result
+	return dst
 }
 
 // argmax returns the index of the maximum value.
@@ -315,12 +266,16 @@ func klDivergence(p, q []float64) float64 {
 
 // quantizeDAC simulates N-bit DAC quantization of input voltages.
 func quantizeDAC(values []float64, bits int) []float64 {
+	return quantizeDACInto(nil, values, bits)
+}
+
+func quantizeDACInto(dst []float64, values []float64, bits int) []float64 {
 	if bits >= 16 {
-		return values // No quantization
+		return values
 	}
 
-	levels := 1 << bits // 2^bits
-	result := make([]float64, len(values))
+	levels := 1 << bits
+	dst = ensureLen(dst, len(values))
 
 	outOfRangeCount := 0
 	minInput := math.Inf(1)
@@ -333,19 +288,19 @@ func quantizeDAC(values []float64, bits int) []float64 {
 		if v > maxInput {
 			maxInput = v
 		}
-
 		if v < 0 || v > 1 {
 			outOfRangeCount++
 		}
-
-		// DAC expects normalized inputs in [0,1].
-		// We clamp invalid values after recording a validation warning.
-		v = math.Max(0, math.Min(1, v))
+		if v < 0 {
+			v = 0
+		} else if v > 1 {
+			v = 1
+		}
 		bin := int(math.Round(v * float64(levels-1)))
 		if bin >= levels {
 			bin = levels - 1
 		}
-		result[i] = float64(bin) / float64(levels-1)
+		dst[i] = float64(bin) / float64(levels-1)
 	}
 
 	if outOfRangeCount > 0 {
@@ -353,22 +308,23 @@ func quantizeDAC(values []float64, bits int) []float64 {
 			outOfRangeCount, len(values), minInput, maxInput)
 	}
 
-	return result
+	return dst
 }
 
 // quantizeADC simulates N-bit ADC quantization of output currents.
 func quantizeADC(values []float64, bits int) []float64 {
+	return quantizeADCInto(nil, values, bits)
+}
+
+func quantizeADCInto(dst []float64, values []float64, bits int) []float64 {
 	if len(values) == 0 {
 		return values
 	}
-
 	if bits >= 16 {
-		return values // No quantization
+		return values
 	}
 
-	levels := 1 << bits // 2^bits
-
-	// Find range
+	levels := 1 << bits
 	vMin, vMax := values[0], values[0]
 	for _, v := range values {
 		if v < vMin {
@@ -385,8 +341,7 @@ func quantizeADC(values []float64, bits int) []float64 {
 	}
 
 	step := vRange / float64(levels-1)
-
-	result := make([]float64, len(values))
+	dst = ensureLen(dst, len(values))
 	for i, v := range values {
 		bin := int(math.Round((v - vMin) / step))
 		if bin < 0 {
@@ -395,8 +350,8 @@ func quantizeADC(values []float64, bits int) []float64 {
 		if bin >= levels {
 			bin = levels - 1
 		}
-		result[i] = vMin + float64(bin)*step
+		dst[i] = vMin + float64(bin)*step
 	}
 
-	return result
+	return dst
 }
