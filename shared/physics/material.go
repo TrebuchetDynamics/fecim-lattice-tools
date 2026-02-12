@@ -59,9 +59,13 @@ type HZOMaterial struct {
 	Alpha float64 // Switching exponent (KAI model)
 
 	// Depolarization (Polycrystalline Analog Behavior)
-	K_dep float64 // Depolarization coefficient (V*m/C) - creates "slant" for 30-level operation
+	// Physics rule: E_dep = -k_dep·P. For stack-derived models, k_dep can be estimated from
+	// k_dep ≈ (ε_FE/ε_dead)·(d_dead/d_FE) with dead-layer assumptions.
+	K_dep float64 // Depolarization coefficient (V*m/C); [CITATION NEEDED: measured HZO depolarization extraction for 10nm stack]
 
 	// Landau-Khalatnikov parameters (dynamic equation)
+	// "Golden Set I" defaults are used in this repo; provenance is currently incomplete.
+	// [CITATION NEEDED: Materlik et al., J. Appl. Phys. 117, 134109 (2015) or equivalent HZO LK/LGD fit]
 	BetaLandau   float64 // Landau β coefficient (J m^5 / C^4)
 	GammaLandau  float64 // Landau γ coefficient (J m^9 / C^6)
 	RhoViscosity float64 // Viscosity / damping (Ohm·m)
@@ -89,13 +93,16 @@ type HZOMaterial struct {
 
 	// NLS (Nucleation-Limited Switching) parameters for Merz law dynamics
 	// tau(E) = Tau0NLS * exp(EaNLS / |E|)
-	// These are per-material since different ferroelectrics have different switching behavior
+	// These are per-material since different ferroelectrics have different switching behavior.
+	// [CITATION NEEDED: Muller et al., IEEE TED (HZO switching-time distributions) and/or
+	// Jo et al., Nano Lett. 2021 for extraction workflow]
 	Tau0NLS float64 // Attempt time for NLS (s), typically 1e-10 to 1e-12 for HfO2
 	EaNLS   float64 // Activation field for NLS (V/m), typically 10-15 MV/cm for HfO2
 
 	// FeFET conductance parameters (for CIM applications)
 	// G = Gmin + (Gmax-Gmin) * (P/Ps + 1) / 2
-	// Based on FeFET channel conductance modulation by ferroelectric polarization
+	// Default 10:1 to 100:1 windows in this repo are simulation-facing presets.
+	// [CITATION NEEDED: measured FeFET I-V ON/OFF conductance window for chosen node]
 	Gmin float64 // Minimum conductance (S) at P = -Ps (HRS state)
 	Gmax float64 // Maximum conductance (S) at P = +Ps (LRS state)
 
@@ -485,9 +492,14 @@ func AlScN() *HZOMaterial {
 		EnduranceCycles: 1e9, // 10^9 cycles
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
-		NumLevels:       12,     // 8-16 states (high Ec limits granularity)
-		Tau0NLS:         1e-11,  // 10 ps (faster attempt time)
-		EaNLS:           22e8,   // 22 MV/cm (higher Ec material)
+		NumLevels: 12, // 8-16 states (high Ec limits granularity)
+		// AlScN switching defaults are estimated placeholders anchored to
+		// reported high-field/faster-switching trends, pending full calibration.
+		// References to calibrate against:
+		//   - APL Materials (2023), doi:10.1063/5.0148068
+		//   - Nature Communications (2025), doi:10.1038/s41467-025-62904-6
+		Tau0NLS:         1e-11,  // 10 ps estimated attempt time (placeholder)
+		EaNLS:           22e8,   // 22 MV/cm estimated activation field (placeholder)
 		Gmin:            0.2e-6, // 0.2 µS at HRS (high Pr → excellent off state)
 		Gmax:            300e-6, // 300 µS at LRS (very high Pr → strong modulation)
 	}

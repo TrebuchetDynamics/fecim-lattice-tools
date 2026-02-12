@@ -27,9 +27,9 @@ The crossbar array represents analog states as conductance values between minimu
 
 | Parameter | Value | Unit | Source |
 |-----------|-------|------|--------|
-| **Gmin** | 10 | µS | Design choice (OFF state) |
-| **Gmax** | 100 | µS | Design choice (ON state) |
-| **Ratio** | 10:1 | dimensionless | Gmax/Gmin |
+| **Gmin** | 10 | µS | Simulation placeholder **[CITATION NEEDED: measured FeFET OFF-state conductance]** |
+| **Gmax** | 100 | µS | Simulation placeholder **[CITATION NEEDED: measured FeFET ON-state conductance]** |
+| **Ratio** | 10:1 | dimensionless | Placeholder window; **[CITATION NEEDED: device-specific ON/OFF conductance ratio]** |
 | **Quantization Levels** | 30 | discrete states | Demo baseline (simulation baseline) |
 
 ### Linear Model
