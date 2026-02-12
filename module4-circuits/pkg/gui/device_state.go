@@ -1066,7 +1066,7 @@ func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 
 			// Convert to µS for current calculation.
 			conductanceUS := conductanceS * 1e6
-			current := conductanceUS * math.Abs(voltage) // I = G * |V| (in µA since G is in µS)
+			current := conductanceUS * voltage // I = G * V (signed µA since G is in µS)
 			totalCurrent += current
 		}
 

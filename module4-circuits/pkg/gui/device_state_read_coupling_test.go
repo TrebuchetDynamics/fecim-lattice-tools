@@ -143,3 +143,65 @@ func TestReadCoupling_MaterialSelectionChangesReadCurrent(t *testing.T) {
 		t.Fatalf("material-dependent READ current not observed: FeCIM=%.9f uA superlattice=%.9f uA", feCIMCurrentUA, superCurrentUA)
 	}
 }
+
+func TestReadChain_EndToEndKnownConductanceToADCCode(t *testing.T) {
+	ds := newTestDeviceState(1, 1)
+	ds.SetOperationMode(OpModeRead)
+	ds.SetWLSingle(0)
+	// Exercise ideal math path directly so the DAC->G*V->TIA->ADC chain is explicit.
+	ds.SetCouplingMode(arraysim.CouplingIdeal)
+
+	weights := [][]int{{29}} // top level to maximize SNR vs quantization
+	quantLevels := 30
+
+	tests := []struct {
+		name   string
+		dacV   float64
+		wantUp bool
+	}{
+		{name: "positive read voltage", dacV: +0.25, wantUp: true},
+		{name: "negative read voltage", dacV: -0.25, wantUp: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ds.SetDACVoltage(0, tc.dacV)
+			ds.Compute(weights, quantLevels)
+
+			gS := ds.levelToConductance(weights[0][0], quantLevels)
+			iA := gS * ds.GetDACVoltage(0) // signed array current into TIA
+
+			wantV := ds.tia.OutputOffset + iA*ds.tia.Gain
+			if wantV < 0 {
+				wantV = 0
+			}
+			if wantV > ds.tia.MaxOutputVoltage {
+				wantV = ds.tia.MaxOutputVoltage
+			}
+			wantCode := ds.adc.Convert(wantV)
+
+			gotCurrentA := ds.GetRowCurrent(0) * 1e-6 // stored as µA
+			if math.Abs(gotCurrentA-iA) > 1e-12 {
+				t.Fatalf("row current mismatch: got %.9e A, want %.9e A", gotCurrentA, iA)
+			}
+			if gotV := ds.GetRowVoltage(0); math.Abs(gotV-wantV) > 1e-12 {
+				t.Fatalf("TIA output mismatch: got %.9f V, want %.9f V", gotV, wantV)
+			}
+			if gotCode := ds.GetRowLevel(0); gotCode != wantCode {
+				t.Fatalf("ADC code mismatch: got %d, want %d (Vout=%.9f V)", gotCode, wantCode, wantV)
+			}
+		})
+	}
+
+	// End-to-end sign sanity: positive DAC input should produce higher ADC code
+	// than negative DAC input for the same conductance.
+	ds.SetDACVoltage(0, -0.25)
+	ds.Compute(weights, quantLevels)
+	negCode := ds.GetRowLevel(0)
+	ds.SetDACVoltage(0, +0.25)
+	ds.Compute(weights, quantLevels)
+	posCode := ds.GetRowLevel(0)
+	if posCode <= negCode {
+		t.Fatalf("sign convention error: expected code(+V) > code(-V), got +V=%d -V=%d", posCode, negCode)
+	}
+}

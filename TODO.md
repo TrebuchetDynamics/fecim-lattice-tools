@@ -18,7 +18,7 @@
 | FOCUS-02 | Include material-dependent behavior in READ path | ✅ |
 | FOCUS-03 | Include geometry scaling (area/thickness) into resistance/conductance path | ✅ |
 | FOCUS-04 | Treat crossbar as full resistor network (not per-cell ideal) | ✅ |
-| FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ⏳ |
+| FOCUS-05 | Reconcile input voltages and TIA conversion with correct math/signs/end-to-end consistency | ✅ |
 
 ### 2. Module Linkage: Module 1 → Module 4
 
@@ -40,7 +40,12 @@
   - `TestReadCoupling_DefaultsToTierA`
   - `TestReadCoupling_MaterialSelectionChangesReadCurrent`
   - Existing signed per-cell READ coupling test retained.
-- Verification command: `go test ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent)" -count=1 -v` (PASS).
+  - New `TestReadChain_EndToEndKnownConductanceToADCCode` (1x1 known conductance, ±DAC voltage polarity, checks DAC→array current→TIA output→ADC code exact consistency).
+- Reconciled sign math in ideal compute path (`module4-circuits/pkg/gui/device_state.go`): row current now uses `I = G × V` (signed), matching coupled solver conventions and sense-chain polarity.
+- Verification commands:
+  - `go test ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent|ReadChain_EndToEndKnownConductanceToADCCode)" -count=1 -v` (PASS)
+  - `go test -race ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent|ReadChain_EndToEndKnownConductanceToADCCode)" -count=1` (PASS)
+  - `go test -race ./...` currently blocked by pre-existing unrelated compile failure in `module1-hysteresis/pkg/gui/equation_dialog_test.go` (`ShowPhysicsEquationsDialog` vs `showPhysicsEquationsDialog`).
 - FOCUS-34: `shared/widgets/debug.go` now bounds layout debug maps with `maxTrackedLayoutWidgets=1024` and periodic cleanup (`layoutCleanupInterval=256`) to prevent unbounded growth of `layoutCallCounts`/`lastLayoutTime`.
 - FOCUS-35: `shared/widgets/debug.go` debug prints (`[LAYOUT]`, `[RESIZE]`, `[RESIZE-BUG]`, `[INTERACTION]`) were migrated from `fmt.Printf` to `shared/logging.Printf` so debug output flows through the project logging system.
 
