@@ -494,10 +494,10 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| A11Y-7 | Text alternatives for all visualizations | `docs/ACCESSIBILITY_AUDIT.md` | ⏳ | 4-8hr |
-| A11Y-8 | Accessible data export (CSV, HTML) | `docs/ACCESSIBILITY_AUDIT.md` | ⏳ | 2-4hr |
-| A11Y-9 | Large text mode option | `docs/ACCESSIBILITY_AUDIT.md` | ⏳ | 2-4hr |
-| A11Y-10 | Reduced motion preference | `docs/ACCESSIBILITY_AUDIT.md` | ⏳ | 1-2hr |
+| A11Y-7 | Text alternatives for all visualizations | `docs/ACCESSIBILITY_AUDIT.md` | ✅ (2026-02-11: added live text alternative summary to `CrossbarHeatmap` renderer via `TextAlternative()` label) | 4-8hr |
+| A11Y-8 | Accessible data export (CSV, HTML) | `docs/ACCESSIBILITY_AUDIT.md` | ✅ (2026-02-11: added semantic HTML table export `ExportHTMLTable` + `FormatHTML` + QuickExport path + tests) | 2-4hr |
+| A11Y-9 | Large text mode option | `docs/ACCESSIBILITY_AUDIT.md` | ✅ (2026-02-11: added persisted large-text preference + theme scaling wrapper + Settings toggle) | 2-4hr |
+| A11Y-10 | Reduced motion preference | `docs/ACCESSIBILITY_AUDIT.md` | ✅ (2026-02-11: added persisted reduced-motion preference + Settings toggle + progress indeterminate animation suppression) | 1-2hr |
 
 ### Sky130 PDK (from docs)
 

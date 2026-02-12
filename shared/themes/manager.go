@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"fyne.io/fyne/v2"
+
+	"fecim-lattice-tools/shared/accessibility"
 )
 
 const (
@@ -47,7 +49,7 @@ func (m *Manager) LoadPreference() {
 	}
 
 	// Apply the theme
-	m.app.Settings().SetTheme(GetTheme(m.currentTheme))
+	m.applyThemeLocked()
 }
 
 // CurrentTheme returns the currently active theme type
@@ -67,7 +69,7 @@ func (m *Manager) SetTheme(t ThemeType) {
 	m.currentTheme = t
 
 	// Apply the theme
-	m.app.Settings().SetTheme(GetTheme(t))
+	m.applyThemeLocked()
 
 	// Persist the preference
 	m.app.Preferences().SetString(PreferenceKeyTheme, string(t))
@@ -124,6 +126,24 @@ func (m *Manager) CycleTheme() ThemeType {
 	return ThemeDark
 }
 
+// ApplyAccessibilityPreferences reapplies the currently selected theme with
+// accessibility preferences (e.g., large text scaling).
+func (m *Manager) ApplyAccessibilityPreferences() {
+	m.mu.Lock()
+	m.applyThemeLocked()
+	m.mu.Unlock()
+}
+
+func (m *Manager) applyThemeLocked() {
+	base := GetTheme(m.currentTheme)
+	scale := accessibility.TextScale(m.app)
+	if scale != 1.0 {
+		m.app.Settings().SetTheme(NewScaledTheme(base, scale))
+		return
+	}
+	m.app.Settings().SetTheme(base)
+}
+
 // App returns the Fyne app associated with this manager
 func (m *Manager) App() fyne.App {
 	return m.app
@@ -141,13 +161,13 @@ func (m *Manager) GetCurrentColors() ThemeColors {
 
 // ThemeColors provides easy access to common theme colors
 type ThemeColors struct {
-	Primary     ColorSet
-	Background  ColorSet
-	Surface     ColorSet
-	Text        ColorSet
-	Success     ColorSet
-	Warning     ColorSet
-	Error       ColorSet
+	Primary    ColorSet
+	Background ColorSet
+	Surface    ColorSet
+	Text       ColorSet
+	Success    ColorSet
+	Warning    ColorSet
+	Error      ColorSet
 }
 
 // ColorSet contains a main color and related variants

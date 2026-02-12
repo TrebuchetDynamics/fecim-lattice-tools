@@ -196,6 +196,44 @@ func TestQuickExport_CSV(t *testing.T) {
 	}
 }
 
+func TestExporter_ExportHTMLTable(t *testing.T) {
+	tmpDir := t.TempDir()
+	exporter := NewExporter(tmpDir, "table")
+
+	headers := []string{"Metric", "Value"}
+	rows := [][]string{{"Energy", "12.5 pJ"}, {"Latency", "76 ns"}}
+
+	result := exporter.ExportHTMLTable("FeCIM Results", headers, rows)
+	if result.Error != nil {
+		t.Fatalf("ExportHTMLTable failed: %v", result.Error)
+	}
+	if result.Format != FormatHTML {
+		t.Fatalf("expected format html, got %s", result.Format)
+	}
+	content, err := os.ReadFile(result.FilePath)
+	if err != nil {
+		t.Fatalf("failed reading HTML file: %v", err)
+	}
+	out := string(content)
+	if !strings.Contains(out, "<table>") || !strings.Contains(out, "<caption>FeCIM Results</caption>") {
+		t.Fatalf("accessible table structure missing: %s", out)
+	}
+}
+
+func TestQuickExport_HTML(t *testing.T) {
+	tmpDir := t.TempDir()
+	data := NewCSVData("col1", "col2")
+	data.AddRow("a", "b")
+
+	result := QuickExport(tmpDir, "quick", FormatHTML, data)
+	if result.Error != nil {
+		t.Fatalf("QuickExport HTML failed: %v", result.Error)
+	}
+	if !strings.HasSuffix(result.FilePath, ".html") {
+		t.Fatalf("expected .html extension, got %s", result.FilePath)
+	}
+}
+
 func TestExportMetadata(t *testing.T) {
 	meta := NewExportMetadata("test-module")
 

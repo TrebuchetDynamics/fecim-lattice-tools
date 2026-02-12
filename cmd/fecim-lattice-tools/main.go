@@ -40,6 +40,7 @@ import (
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
+	"fecim-lattice-tools/shared/accessibility"
 	"fecim-lattice-tools/shared/help"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/recentfiles"
@@ -600,6 +601,7 @@ func main() {
 	fmt.Println("[STARTUP] Initializing theme manager...")
 	themeManager := themes.NewManager(fyneApp)
 	themeManager.LoadPreference()
+	themeManager.ApplyAccessibilityPreferences()
 	fmt.Printf("[STARTUP] Theme loaded: %s\n", themeManager.CurrentTheme())
 
 	// Load saved window size from preferences
@@ -1352,7 +1354,18 @@ func main() {
 		fyne.NewMenuItem("Documentation", func() { selectView(7) }),
 	)
 
-	// Create Settings menu (includes accessibility theme options)
+	// Create Settings menu (includes accessibility options)
+	largeTextItem := fyne.NewMenuItem("Toggle Large Text Mode", func() {
+		enabled := !accessibility.IsLargeTextModeEnabled(fyneApp)
+		accessibility.SetLargeTextMode(fyneApp, enabled)
+		themeManager.ApplyAccessibilityPreferences()
+		notificationManager.Info("Accessibility", fmt.Sprintf("Large text mode %s", map[bool]string{true: "enabled", false: "disabled"}[enabled]))
+	})
+	reducedMotionItem := fyne.NewMenuItem("Toggle Reduced Motion", func() {
+		enabled := !accessibility.IsReducedMotionEnabled(fyneApp)
+		accessibility.SetReducedMotion(fyneApp, enabled)
+		notificationManager.Info("Accessibility", fmt.Sprintf("Reduced motion %s", map[bool]string{true: "enabled", false: "disabled"}[enabled]))
+	})
 	settingsMenu := fyne.NewMenu("Settings",
 		fyne.NewMenuItem("Theme: Dark (FeCIM)", func() {
 			themeManager.SetTheme(themes.ThemeDark)
@@ -1363,6 +1376,9 @@ func main() {
 		fyne.NewMenuItem("Theme: High Contrast", func() {
 			themeManager.SetTheme(themes.ThemeHighContrast)
 		}),
+		fyne.NewMenuItemSeparator(),
+		largeTextItem,
+		reducedMotionItem,
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Keyboard Shortcuts", func() {
 			sharedwidgets.ShowKeyboardHelp(window)

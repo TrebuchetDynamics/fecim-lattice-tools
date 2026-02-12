@@ -2,6 +2,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -64,9 +65,9 @@ type CrossbarHeatmap struct {
 	dataMu sync.RWMutex
 
 	// Fixed scale (disables auto-scaling)
-	useFixedScale  bool
-	fixedMinVal    float64
-	fixedMaxVal    float64
+	useFixedScale bool
+	fixedMinVal   float64
+	fixedMaxVal   float64
 }
 
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
@@ -274,10 +275,28 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 // CreateRenderer implements fyne.Widget.
 func (h *CrossbarHeatmap) CreateRenderer() fyne.WidgetRenderer {
 	h.raster = canvas.NewRaster(h.generateImage)
+	altLabel := widget.NewLabel(h.TextAlternative())
+	altLabel.Wrapping = fyne.TextWrapWord
+	altLabel.TextStyle = fyne.TextStyle{Italic: true}
 	return &heatmapRenderer{
-		heatmap: h,
-		raster:  h.raster,
+		heatmap:  h,
+		raster:   h.raster,
+		altLabel: altLabel,
 	}
+}
+
+// TextAlternative returns a screen-reader-friendly textual summary of the heatmap.
+func (h *CrossbarHeatmap) TextAlternative() string {
+	h.dataMu.RLock()
+	defer h.dataMu.RUnlock()
+
+	selectedText := "none"
+	if h.showSelection && h.selectedRow >= 0 && h.selectedRow < h.rows && h.selectedCol >= 0 && h.selectedCol < h.cols {
+		selectedText = fmt.Sprintf("row %d, col %d = %.4g", h.selectedRow, h.selectedCol, h.data[h.selectedRow][h.selectedCol])
+	}
+
+	return fmt.Sprintf("Crossbar heatmap %dx%d. Range %.4g to %.4g. Colormap %s. Selected cell: %s.",
+		h.rows, h.cols, h.minVal, h.maxVal, h.colormap, selectedText)
 }
 
 // MinSize returns the minimum size of the widget.
@@ -700,9 +719,10 @@ func divergingColor(t float64) color.RGBA {
 
 // heatmapRenderer implements fyne.WidgetRenderer.
 type heatmapRenderer struct {
-	heatmap *CrossbarHeatmap
-	raster  *canvas.Raster
-	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
+	heatmap  *CrossbarHeatmap
+	raster   *canvas.Raster
+	altLabel *widget.Label
+	cache    sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *heatmapRenderer) Layout(size fyne.Size) {
@@ -710,7 +730,18 @@ func (r *heatmapRenderer) Layout(size fyne.Size) {
 	if !r.cache.ShouldLayout(size) {
 		return
 	}
-	r.raster.Resize(size)
+	labelHeight := float32(36)
+	if size.Height <= labelHeight {
+		r.raster.Resize(size)
+		r.altLabel.Hide()
+		r.cache.MarkLayout(size)
+		return
+	}
+	r.altLabel.Show()
+	r.raster.Move(fyne.NewPos(0, 0))
+	r.raster.Resize(fyne.NewSize(size.Width, size.Height-labelHeight))
+	r.altLabel.Move(fyne.NewPos(0, size.Height-labelHeight))
+	r.altLabel.Resize(fyne.NewSize(size.Width, labelHeight))
 	r.cache.MarkLayout(size)
 }
 
@@ -722,10 +753,12 @@ func (r *heatmapRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("heatmapRenderer", r.heatmap.Size())
 	// Only refresh if data has actually changed - the heatmap controls this via its rate limiter
 	r.raster.Refresh()
+	r.altLabel.SetText(r.heatmap.TextAlternative())
+	r.altLabel.Refresh()
 }
 
 func (r *heatmapRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{r.raster}
+	return []fyne.CanvasObject{r.raster, r.altLabel}
 }
 
 func (r *heatmapRenderer) Destroy() {}

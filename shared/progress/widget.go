@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+
+	"fecim-lattice-tools/shared/accessibility"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
@@ -304,6 +306,10 @@ func (w *ProgressWidget) Refresh() {
 func (w *ProgressWidget) startIndeterminateAnimation() {
 	if w.indeterminateAnim != nil {
 		return // Already running
+	}
+	if accessibility.IsReducedMotionEnabled(fyne.CurrentApp()) {
+		w.progressBar.SetValue(0.5)
+		return
 	}
 
 	w.indeterminateAnim = canvas.NewPositionAnimation(

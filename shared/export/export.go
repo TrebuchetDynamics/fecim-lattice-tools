@@ -7,10 +7,12 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"html"
 	"image"
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -22,6 +24,7 @@ type ExportFormat string
 
 const (
 	FormatCSV  ExportFormat = "csv"
+	FormatHTML ExportFormat = "html"
 	FormatJSON ExportFormat = "json"
 	FormatPNG  ExportFormat = "png"
 )
@@ -47,10 +50,10 @@ func NewExportMetadata(moduleName string) *ExportMetadata {
 
 // ExportResult represents the result of an export operation
 type ExportResult struct {
-	FilePath string
-	Format   ExportFormat
+	FilePath     string
+	Format       ExportFormat
 	BytesWritten int64
-	Error    error
+	Error        error
 }
 
 // Exporter provides a unified interface for exporting data
@@ -121,6 +124,55 @@ func (e *Exporter) ExportCSV(headers []string, rows [][]string) *ExportResult {
 }
 
 // ExportCSVFromFloats exports float64 data columns to CSV
+// ExportHTMLTable exports tabular data as an accessible HTML table.
+// The output includes <caption>, <thead>, and semantic table markup for screen readers.
+func (e *Exporter) ExportHTMLTable(title string, headers []string, rows [][]string) *ExportResult {
+	result := &ExportResult{Format: FormatHTML}
+
+	if err := e.ensureOutputDir(); err != nil {
+		result.Error = fmt.Errorf("failed to create output directory: %w", err)
+		return result
+	}
+
+	result.FilePath = e.generateFilename("html")
+
+	var b strings.Builder
+	b.WriteString("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">")
+	b.WriteString("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
+	b.WriteString("<title>")
+	b.WriteString(html.EscapeString(title))
+	b.WriteString("</title>")
+	b.WriteString("<style>body{font-family:sans-serif;padding:1rem;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:.4rem;text-align:left;}caption{font-weight:700;text-align:left;margin-bottom:.5rem;}</style>")
+	b.WriteString("</head><body><table>")
+	b.WriteString("<caption>")
+	b.WriteString(html.EscapeString(title))
+	b.WriteString("</caption><thead><tr>")
+	for _, header := range headers {
+		b.WriteString("<th scope=\"col\">")
+		b.WriteString(html.EscapeString(header))
+		b.WriteString("</th>")
+	}
+	b.WriteString("</tr></thead><tbody>")
+	for _, row := range rows {
+		b.WriteString("<tr>")
+		for _, col := range row {
+			b.WriteString("<td>")
+			b.WriteString(html.EscapeString(col))
+			b.WriteString("</td>")
+		}
+		b.WriteString("</tr>")
+	}
+	b.WriteString("</tbody></table></body></html>")
+
+	payload := []byte(b.String())
+	if err := os.WriteFile(result.FilePath, payload, 0644); err != nil {
+		result.Error = fmt.Errorf("failed to write HTML file: %w", err)
+		return result
+	}
+	result.BytesWritten = int64(len(payload))
+	return result
+}
+
 func (e *Exporter) ExportCSVFromFloats(headers []string, columns ...[]float64) *ExportResult {
 	if len(columns) == 0 {
 		return &ExportResult{Error: fmt.Errorf("no data columns provided")}
@@ -228,7 +280,7 @@ func ShowExportDialog(window fyne.Window, title string, filter []string, callbac
 		writer.Close()
 		callback(path, nil)
 	}, window)
-	
+
 	saveDialog.SetFileName(fmt.Sprintf("fecim_export_%s", time.Now().Format("2006-01-02_15-04-05")))
 	saveDialog.Show()
 }
@@ -236,7 +288,7 @@ func ShowExportDialog(window fyne.Window, title string, filter []string, callbac
 // QuickExport provides one-click export with automatic filename generation
 func QuickExport(outputDir, prefix string, format ExportFormat, data interface{}) *ExportResult {
 	exporter := NewExporter(outputDir, prefix)
-	
+
 	switch format {
 	case FormatJSON:
 		return exporter.ExportJSON(data)
@@ -246,6 +298,11 @@ func QuickExport(outputDir, prefix string, format ExportFormat, data interface{}
 			return exporter.ExportCSV(csvData.Headers, csvData.Rows)
 		}
 		return &ExportResult{Error: fmt.Errorf("CSV export requires *CSVData type")}
+	case FormatHTML:
+		if csvData, ok := data.(*CSVData); ok {
+			return exporter.ExportHTMLTable("FeCIM Export", csvData.Headers, csvData.Rows)
+		}
+		return &ExportResult{Error: fmt.Errorf("HTML export requires *CSVData type")}
 	case FormatPNG:
 		if img, ok := data.(image.Image); ok {
 			return exporter.ExportPNG(img)
