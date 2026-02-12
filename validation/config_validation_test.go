@@ -106,6 +106,30 @@ func TestConfigValidation_EndToEnd_MalformedConfigsProduceDescriptiveErrors(t *t
 			}`,
 			errSubstrs: []string{"rows", "invalid type"},
 		},
+		{
+			name: "nested field path included",
+			json: `{
+				"version": 2,
+				"material_name": "HZO",
+				"num_levels": 2,
+				"calibrations": {
+					"300": {
+						"temperature_k": 300,
+						"calibration_up": [0, 1],
+						"calibration_down": [-1, 0],
+						"calib_up_low": [0, 0],
+						"calib_up_high": [1, 1],
+						"calib_down_low": [-1, -1],
+						"calib_down_high": [0, 0],
+						"last_error_up": [0, 0],
+						"last_error_down": [0, 0],
+						"relax_comp_up": [0, 2],
+						"relax_comp_down": [0, 0]
+					}
+				}
+			}`,
+			errSubstrs: []string{"calibrations.300.relax_comp_up[1]", "between 0.0 and 1.0"},
+		},
 	}
 
 	for _, tt := range tests {
