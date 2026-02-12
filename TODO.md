@@ -144,22 +144,22 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-61 | Verify FP path math: linear layers, ReLU, softmax, normalization, output probabilities | ⏳ |
-| FOCUS-62 | Validate CIM path: weight quantization to N levels, DAC/ADC quantization, noise injection order | ⏳ |
-| FOCUS-63 | Confirm disagreement metrics (KL divergence), accuracy tracking, confusion matrix logic | ⏳ |
-| FOCUS-64 | Verify energy/performance models in GUI match documented formulas and defaults | ⏳ |
-| FOCUS-65 | Validate MNIST IDX parsing, bounds checks, and sanity limits for dataset sizes | ⏳ |
-| FOCUS-66 | Verify weight file loading, QAT level selection, and fallback behavior — document silent fallbacks | ⏳ |
+| FOCUS-61 | Verify FP path math: linear layers, ReLU, softmax, normalization, output probabilities | ✅ |
+| FOCUS-62 | Validate CIM path: weight quantization to N levels, DAC/ADC quantization, noise injection order | ✅ |
+| FOCUS-63 | Confirm disagreement metrics (KL divergence), accuracy tracking, confusion matrix logic | ✅ |
+| FOCUS-64 | Verify energy/performance models in GUI match documented formulas and defaults | ✅ |
+| FOCUS-65 | Validate MNIST IDX parsing, bounds checks, and sanity limits for dataset sizes | ✅ |
+| FOCUS-66 | Verify weight file loading, QAT level selection, and fallback behavior — document silent fallbacks | ✅ |
 
 ### 3h. Module 6 EDA (from module6-prompt.md)
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-67 | Verify ArrayConfig/CellConfig defaults (rows, cols, levels, gmin/gmax, vdd, tech, architecture) | ⏳ |
-| FOCUS-68 | Validate storage/memory/compute mode behavior and mode-specific parameters | ⏳ |
-| FOCUS-69 | Confirm weight mapping and quantization including sign handling | ⏳ |
-| FOCUS-70 | Validate export format correctness: JSON/CSV/SPICE/Verilog/DEF contents and indexing | ⏳ |
-| FOCUS-71 | Ensure CLI and GUI flows produce equivalent outputs given same configuration | ⏳ |
+| FOCUS-67 | Verify ArrayConfig/CellConfig defaults (rows, cols, levels, gmin/gmax, vdd, tech, architecture) | ✅ |
+| FOCUS-68 | Validate storage/memory/compute mode behavior and mode-specific parameters | ✅ |
+| FOCUS-69 | Confirm weight mapping and quantization including sign handling | ✅ |
+| FOCUS-70 | Validate export format correctness: JSON/CSV/SPICE/Verilog/DEF contents and indexing | ✅ |
+| FOCUS-71 | Ensure CLI and GUI flows produce equivalent outputs given same configuration | ✅ |
 
 ### 3i. Documentation Curriculum (from documentation-prompt.md)
 

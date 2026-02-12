@@ -425,12 +425,23 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 func (net *DualModeNetwork) LoadWeightsForLevel(dataDir string, levels int) error {
 	// Find the best matching weights file
 	bestLevel := GetBestMatchingWeightsLevel(dataDir, levels)
+	if bestLevel != levels {
+		net.emitNotification(fmt.Sprintf(
+			"LoadWeightsForLevel requested %d levels; using nearest available %d",
+			levels, bestLevel,
+		))
+	}
+
 	filename := GetWeightsFilename(dataDir, bestLevel)
 
-	// Check if the file exists
+	// Check if the selected file exists; if not, fall back to default weights.
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		// Fall back to default weights
-		filename = filepath.Join(dataDir, "pretrained_weights.json")
+		fallback := filepath.Join(dataDir, "pretrained_weights.json")
+		net.emitNotification(fmt.Sprintf(
+			"Weight file %s not found; falling back to %s",
+			filepath.Base(filename), filepath.Base(fallback),
+		))
+		filename = fallback
 	}
 
 	return net.LoadWeights(filename)

@@ -1,6 +1,9 @@
 package core
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -43,4 +46,44 @@ func TestForwardFP_GPUFallbackEmitsNotification(t *testing.T) {
 	if !strings.Contains(notices[0], "Falling back to CPU") {
 		t.Fatalf("expected fallback message, got %q", notices[0])
 	}
+}
+
+func TestLoadWeightsForLevel_FallbackEmitsNotification(t *testing.T) {
+	tmp := t.TempDir()
+	wf := createValidTestWeights()
+	wf.QuantLevels = 20
+	path := filepath.Join(tmp, "pretrained_weights_20.json")
+	if err := os.WriteFile(path, []byte(marshalWeightsFile(t, wf)), 0o644); err != nil {
+		t.Fatalf("write weights: %v", err)
+	}
+
+	net := NewDualModeNetwork(784, 128, 10)
+	var notices []string
+	net.SetNotificationHandler(func(message string) {
+		notices = append(notices, message)
+	})
+
+	if err := net.LoadWeightsForLevel(tmp, 17); err != nil {
+		t.Fatalf("LoadWeightsForLevel failed: %v", err)
+	}
+
+	found := false
+	for _, n := range notices {
+		if strings.Contains(n, "requested 17") && strings.Contains(n, "nearest available 20") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected nearest-level fallback notification, got %v", notices)
+	}
+}
+
+func marshalWeightsFile(t *testing.T, wf *WeightsFile) string {
+	t.Helper()
+	b, err := json.Marshal(wf)
+	if err != nil {
+		t.Fatalf("marshal weights: %v", err)
+	}
+	return string(b)
 }
