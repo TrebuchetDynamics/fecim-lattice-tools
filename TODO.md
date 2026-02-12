@@ -987,6 +987,21 @@ These require analysis/simulation before a fix can be proposed. Each produces a 
 | M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ⏳ | Current comparison is static strings. Should compute TOPS/W, latency, energy/op from actual array config + peripheral params. |
 | M4-INV-07 | SPICE export from Module 4 state | Medium | ⏳ | Allow exporting current array configuration (conductances, voltages, architecture) as ngspice-ready netlist for external validation. |
 
+## Module 4: UI/Physics Observations from User Testing (2026-02-12)
+
+Direct observations from Juan's live interaction with Module 4 Operations view.
+
+| ID | Observation | Priority | Status | Acceptance Criteria |
+|----|------------|----------|--------|---------------------|
+| M4-OBS-01 | Read-mode metric labels unclear (TIA/current/voltage/LSB/R0 ambiguous) | Critical | ⏳ | Every displayed number has label + unit + formula sublabel |
+| M4-OBS-02 | Overlay toggle adds phantom/extra cell | High | ⏳ | Overlay cell count == arrayRows × arrayCols, no extra cells |
+| M4-OBS-03 | Program Cell button not disabled during active ISPP write | High | ⏳ | Controls locked during programming, status shows "PROGRAMMING" |
+| M4-OBS-04 | VC legend lacks units, sign convention, and color mapping explanation | High | ⏳ | Legend shows "Cell Voltage (V)", signed range, color semantics |
+| M4-OBS-05 | 0T1R passive mode appears too localized (missing row/col half-select effects) | High | ⏳ | Either fix disturb propagation or add explicit model boundary disclosure |
+| M4-OBS-06 | ISPP engine label uses speed marketing ("Fast") instead of model provenance | Medium | ⏳ | Labels read "Preisach (Level-based)" / "L-K (Physics ODE)" |
+| M4-OBS-07 | Per-cell dual numbers confusing (two similar values without clear distinction) | High | ⏳ | Top = "L: XX" (level), Bottom = "V: ±X.XX V" or "I: ±X.XX µA" |
+| M4-OBS-08 | Read-mode UI precision: displayed values need consistent decimal places and ranges | Medium | ⏳ | All currents to 2 decimal µA, voltages to 3 decimal mV, ADC codes as integers |
+
 ## Module 4: CMOS Cell Physics & Selector Model (2026-02-12)
 
 Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC) with real wire parasitics and noise, but the selector transistor in 1T1R/2T1R is a boolean mask, not a sized MOSFET. Cell area is film-only (100 nm²), not layout footprint.
