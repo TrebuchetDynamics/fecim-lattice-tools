@@ -36,7 +36,8 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		return nil
 	}
 
-	s := &net.inferScratch
+	s := net.scratchPool.Get().(*inferScratch)
+	defer net.scratchPool.Put(s)
 	cimReadLatencyS := 0.0
 
 	if net.Config.SingleLayer {

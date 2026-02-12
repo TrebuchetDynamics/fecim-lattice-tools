@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 )
 
 // Lazy-initialized logger to ensure it's created after EnableFileLogging() is called
@@ -304,7 +305,7 @@ func (a *Array) mvmGPU(input []float64) ([]float64, error) {
 	for i := 0; i < a.config.Rows; i++ {
 		normalizedSum := float64(outputs32[i]) / maxCurrent
 		output[i] = a.quantizeADC(normalizedSum)
-		a.totalReads++
+		atomic.AddInt64(&a.totalReads, 1)
 	}
 
 	return output, nil
@@ -340,7 +341,7 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 
 	a.cells[row][col].Conductance = quantized
 	a.cells[row][col].SwitchingCount++
-	a.totalWrites++
+	atomic.AddInt64(&a.totalWrites, 1)
 
 	return nil
 }
@@ -535,7 +536,7 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 
 		// Quantize output through ADC
 		output[i] = a.quantizeADC(normalizedSum)
-		a.totalReads++
+		atomic.AddInt64(&a.totalReads, 1)
 	}
 
 	return output, nil
@@ -573,7 +574,7 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 
 		// Quantize output through ADC
 		output[j] = a.quantizeADC(sum / float64(len(input)))
-		a.totalReads++
+		atomic.AddInt64(&a.totalReads, 1)
 	}
 
 	getLog().Calculation("VMM", map[string]interface{}{
@@ -603,7 +604,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 
 // GetStats returns array statistics.
 func (a *Array) GetStats() (reads, writes int64) {
-	return a.totalReads, a.totalWrites
+	return atomic.LoadInt64(&a.totalReads), atomic.LoadInt64(&a.totalWrites)
 }
 
 // GetConductanceMatrix returns the current conductance values as a matrix.

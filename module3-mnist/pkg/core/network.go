@@ -106,8 +106,8 @@ type DualModeNetwork struct {
 	// Separate mutex for RNG access to prevent races under RLock
 	rngMu sync.Mutex
 
-	// Scratch buffers reused by Infer() to reduce per-call allocations.
-	inferScratch inferScratch
+	// Pool of scratch buffers for concurrent Infer() calls.
+	scratchPool sync.Pool
 
 	// GPU acceleration flag
 	useGPU bool
@@ -165,6 +165,9 @@ func NewDualModeNetwork(inputSize, hiddenSize, outputSize int) *DualModeNetwork 
 		OutputSize: outputSize,
 		Config:     DefaultNetworkConfig(),
 		rng:        NewRandomSource(seed),
+		scratchPool: sync.Pool{
+			New: func() interface{} { return &inferScratch{} },
+		},
 	}
 
 	// Initialize weight matrices
