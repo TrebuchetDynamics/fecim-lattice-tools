@@ -973,6 +973,20 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | RACE-05 | `shared/widgets/tutorial_controller.go` | `NewTutorialControlBar` toggled `fastMode` via direct field read (`ctrl.fastMode`) without lock from UI callback. | Medium | ✅ Fixed | Added `FastMode()` getter with `RLock`; callback now uses `ctrl.FastMode()`. |
 | RACE-06 | `shared/recentfiles/recentfiles.go` | `notifyChange()` shallow-copied `[]*RecentFile`; callbacks could race with manager updates through shared pointers. | High | ✅ Fixed | Switched to deep-copy of each `RecentFile` before async callback dispatch. |
 
+## Module 4: Physics Investigations (2026-02-12)
+
+These require analysis/simulation before a fix can be proposed. Each produces a short findings doc + proposed implementation.
+
+| ID | Investigation | Priority | Status | Notes |
+|----|--------------|----------|--------|-------|
+| M4-INV-01 | Selector Ron impact on read margin vs array size | High | ⏳ | At 64×64 and 128×128, how much does finite Ron (from MOSFET selector) degrade the voltage seen by TIA? Quantify margin loss in LSBs. |
+| M4-INV-02 | Wordline RC delay vs array size | High | ⏳ | WL delay = R_wire × (C_wire + N×C_gate). At what N does delay exceed write pulse width (~10ns)? Determines max practical array size per tech node. |
+| M4-INV-03 | Half-select disturb budget | Medium | ⏳ | How many write cycles to adjacent cells before a half-selected cell drifts one discrete level? Use current disturb accumulation model to estimate. |
+| M4-INV-04 | Thermal noise floor vs ADC resolution | Medium | ⏳ | At what ADC bit count does thermal noise (from TIA + wires) exceed quantization noise? That's the useful ADC ceiling for a given array size. |
+| M4-INV-05 | Charge pump efficiency model | Low | ⏳ | Dickson model assumes ideal caps. What's realistic efficiency at 3V boost on SKY130? Affects write energy estimates. |
+| M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ⏳ | Current comparison is static strings. Should compute TOPS/W, latency, energy/op from actual array config + peripheral params. |
+| M4-INV-07 | SPICE export from Module 4 state | Medium | ⏳ | Allow exporting current array configuration (conductances, voltages, architecture) as ngspice-ready netlist for external validation. |
+
 ## Module 4: CMOS Cell Physics & Selector Model (2026-02-12)
 
 Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC) with real wire parasitics and noise, but the selector transistor in 1T1R/2T1R is a boolean mask, not a sized MOSFET. Cell area is film-only (100 nm²), not layout footprint.
