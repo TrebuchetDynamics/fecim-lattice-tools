@@ -1,0 +1,16 @@
+{
+  "DESIGN_IS_CORE": 0,
+  "DESIGN_NAME": "fecim_crossbar_2x2",
+  "DIE_AREA": "0 0 2.920 7.440",
+  "EXTRA_GDS_FILES": "dir::cells/fecim_bitcell/fecim_bitcell.gds",
+  "EXTRA_LEFS": "dir::cells/fecim_bitcell/fecim_bitcell.lef",
+  "EXTRA_LIBS": "dir::cells/fecim_bitcell/fecim_bitcell.lib",
+  "FP_DEF_TEMPLATE": "dir::output/fecim_crossbar_2x2.def",
+  "FP_SIZING": "absolute",
+  "PL_SKIP_INITIAL_PLACEMENT": 1,
+  "PL_TARGET_DENSITY": 0.6,
+  "RUN_CTS": 0,
+  "SYNTH_ELABORATE_ONLY": 1,
+  "VERILOG_FILES": "dir::output/fecim_crossbar_2x2.v",
+  "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bitcell/fecim_bitcell.v"
+}

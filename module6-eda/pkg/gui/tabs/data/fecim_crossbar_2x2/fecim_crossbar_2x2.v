@@ -1,0 +1,44 @@
+// FeCIM Crossbar Array - Auto-generated
+// Date: 2026-02-12
+// Rows: 2, Cols: 2
+// Mode: storage
+// Architecture: passive
+// NOTE: Cell is placeholder. Real behavior requires FeFET model.
+
+module fecim_crossbar_2x2 (
+    input  wire [1:0] WL,    // Word Lines (row select)
+    inout  wire [1:0] BL,    // Bit Lines (column data)
+    inout  wire VPWR,         // Power
+    inout  wire VGND          // Ground
+);
+
+// Cell instantiations
+fecim_bitcell cell_0_0 (
+    .WL(WL[0]),
+    .BL(BL[0]),
+    .VPWR(VPWR),
+    .VGND(VGND)
+);
+
+fecim_bitcell cell_0_1 (
+    .WL(WL[0]),
+    .BL(BL[1]),
+    .VPWR(VPWR),
+    .VGND(VGND)
+);
+
+fecim_bitcell cell_1_0 (
+    .WL(WL[1]),
+    .BL(BL[0]),
+    .VPWR(VPWR),
+    .VGND(VGND)
+);
+
+fecim_bitcell cell_1_1 (
+    .WL(WL[1]),
+    .BL(BL[1]),
+    .VPWR(VPWR),
+    .VGND(VGND)
+);
+
+endmodule

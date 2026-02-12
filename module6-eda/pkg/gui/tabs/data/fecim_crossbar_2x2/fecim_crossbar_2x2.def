@@ -1,0 +1,29 @@
+VERSION 5.8 ;
+DIVIDERCHAR "/" ;
+BUSBITCHARS "[]" ;
+DESIGN fecim_crossbar_2x2 ;
+UNITS DISTANCE MICRONS 1000 ;
+
+DIEAREA ( 0 0 ) ( 2920 7440 ) ;
+
+ROW ROW_0 fecim_site 1000 1000 N DO 2 BY 1 STEP 460 0 ;
+
+ROW ROW_1 fecim_site 1000 3720 FS DO 2 BY 1 STEP 460 0 ;
+
+COMPONENTS 4 ;
+    - cell_0_0 fecim_bitcell + FIXED ( 1000 1000 ) N ;
+    - cell_0_1 fecim_bitcell + FIXED ( 1460 1000 ) N ;
+    - cell_1_0 fecim_bitcell + FIXED ( 1000 3720 ) FS ;
+    - cell_1_1 fecim_bitcell + FIXED ( 1460 3720 ) FS ;
+END COMPONENTS
+
+PINS 6 ;
+    - VPWR + NET VPWR + DIRECTION INOUT + USE POWER ;
+    - VGND + NET VGND + DIRECTION INOUT + USE GROUND ;
+    - WL[0] + NET WL[0] + DIRECTION INPUT + USE SIGNAL ;
+    - WL[1] + NET WL[1] + DIRECTION INPUT + USE SIGNAL ;
+    - BL[0] + NET BL[0] + DIRECTION OUTPUT + USE SIGNAL ;
+    - BL[1] + NET BL[1] + DIRECTION OUTPUT + USE SIGNAL ;
+END PINS
+
+END DESIGN
