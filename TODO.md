@@ -930,7 +930,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-03 | `module2-crossbar/pkg/gui` | 3.8% | — | ⏳ | GUI package; requires Fyne test app harness for meaningful coverage |
 | COV-04 | `module3-mnist/pkg/gui` | 8.4% | — | ⏳ | GUI package; same Fyne harness constraint |
 | COV-05 | `module5-comparison/pkg/gui` | 1.4% | — | ⏳ | GUI package |
-| COV-06 | `module6-eda/pkg/gui` | 46.9% | — | ⏳ | Partially tested; remaining coverage in GUI tab widgets |
+| COV-06 | `module6-eda/pkg/gui` | 46.9% | 94.9% | ✅ | Keyboard nav, selector cycling, nil-safety, shortcut handlers tested |
 | COV-07 | `shared/export` | 25.5% | 26.8% | 🔄 | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
 | COV-08 | `shared/help` | 37.1% | 61.0% | ✅ | Help system rendering |
 | COV-09 | `shared/themes` | 39.1% | 78.5% | ✅ | Theme variants |
