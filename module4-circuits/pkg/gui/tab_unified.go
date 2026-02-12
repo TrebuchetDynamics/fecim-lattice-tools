@@ -1260,6 +1260,34 @@ func (ca *CircuitsApp) senseChainConfig() (arraysim.SenseChain, bool) {
 	}, true
 }
 
+func (ca *CircuitsApp) composedSenseSNRdB(currentA float64, sense arraysim.SenseChain) float64 {
+	if ca.tia == nil {
+		return math.NaN()
+	}
+	signalRMS := math.Abs(currentA)
+	bandwidth := ca.tia.Bandwidth
+	if bandwidth <= 0 {
+		bandwidth = 1
+	}
+
+	// Input-referred noise composition (A_rms): TIA input noise + shot noise + ADC quantization.
+	tiaNoiseRMS := math.Abs(ca.tia.InputNoiseRMS) * math.Sqrt(bandwidth)
+	const electronChargeC = 1.602176634e-19
+	shotNoiseRMS := math.Sqrt(2 * electronChargeC * math.Abs(currentA) * bandwidth)
+	quantNoiseRMS := 0.0
+	if lsb := sense.CurrentLSB(); lsb > 0 {
+		quantNoiseRMS = lsb / math.Sqrt(12)
+	}
+	totalNoiseRMS := math.Sqrt(tiaNoiseRMS*tiaNoiseRMS + shotNoiseRMS*shotNoiseRMS + quantNoiseRMS*quantNoiseRMS)
+	if totalNoiseRMS == 0 {
+		return math.Inf(1)
+	}
+	if signalRMS == 0 {
+		return math.Inf(-1)
+	}
+	return 20 * math.Log10(signalRMS/totalNoiseRMS)
+}
+
 // updateSensePanel updates the compact sense-chain readout.
 func (ca *CircuitsApp) updateSensePanel() {
 	if ca.sensePanel == nil || ca.deviceState == nil {
@@ -1277,12 +1305,21 @@ func (ca *CircuitsApp) updateSensePanel() {
 
 	rangeText := "n/a"
 	lsbText := "n/a"
+	snrText := "n/a"
 	if sense, ok := ca.senseChainConfig(); ok {
 		imin, imax := sense.CurrentRange()
 		lsb := sense.CurrentLSB()
 		if lsb > 0 {
 			rangeText = fmt.Sprintf("%s .. %s", formatCurrentA(imin), formatCurrentA(imax))
 			lsbText = formatCurrentA(lsb)
+		}
+		snrDB := ca.composedSenseSNRdB(currentA, sense)
+		if math.IsInf(snrDB, 1) {
+			snrText = "+Inf dB"
+		} else if math.IsNaN(snrDB) {
+			snrText = "n/a"
+		} else {
+			snrText = fmt.Sprintf("%.1f dB", snrDB)
 		}
 	}
 
@@ -1329,6 +1366,9 @@ func (ca *CircuitsApp) updateSensePanel() {
 		}
 		if ca.senseCodeLabel != nil {
 			ca.senseCodeLabel.SetText(codeText)
+		}
+		if ca.senseSNRLabel != nil {
+			ca.senseSNRLabel.SetText(snrText)
 		}
 		if ca.senseSaturationLabel != nil {
 			ca.senseSaturationLabel.SetText(satText)
@@ -1605,6 +1645,7 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	ca.senseVoltageLabel = widget.NewLabel("0.000 V (TIA out)")
 	ca.senseCodeLabel = widget.NewLabel("Code 0 / 31 (0.00% FS)")
 	ca.senseCodeLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.senseSNRLabel = widget.NewLabel("SNR n/a")
 	ca.senseSaturationLabel = widget.NewLabel("Linear")
 	ca.senseSaturationLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -1612,6 +1653,7 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 		container.NewHBox(widget.NewLabel("Row Current:"), ca.senseCurrentLabel),
 		container.NewHBox(widget.NewLabel("TIA Vout:"), ca.senseVoltageLabel),
 		container.NewHBox(widget.NewLabel("ADC Code:"), ca.senseCodeLabel),
+		container.NewHBox(widget.NewLabel("SNR:"), ca.senseSNRLabel),
 		container.NewHBox(widget.NewLabel("Status:"), ca.senseSaturationLabel),
 	)
 

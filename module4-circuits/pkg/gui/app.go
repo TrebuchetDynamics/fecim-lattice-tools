@@ -285,6 +285,7 @@ type CircuitsApp struct {
 	senseCurrentLabel    *widget.Label
 	senseVoltageLabel    *widget.Label
 	senseCodeLabel       *widget.Label
+	senseSNRLabel        *widget.Label
 	senseSaturationLabel *widget.Label
 	senseRangeLabel      *widget.Label
 	senseLSBLabel        *widget.Label
