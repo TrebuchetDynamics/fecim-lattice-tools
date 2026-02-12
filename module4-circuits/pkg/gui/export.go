@@ -17,13 +17,13 @@ import (
 
 // CircuitsExportConfig contains the configuration for circuits exports
 type CircuitsExportConfig struct {
-	Metadata         export.ExportMetadata  `json:"metadata"`
-	ArrayConfig      ArrayConfig            `json:"array_config"`
-	PeripheralConfig PeripheralConfig       `json:"peripheral_config"`
-	SimulationState  *SimulationState       `json:"simulation_state,omitempty"`
-	SneakMetrics     *SneakPathMetrics      `json:"sneak_metrics,omitempty"`
-	TopSneakCells    []SneakCellImpact      `json:"top_sneak_cells,omitempty"`
-	ExportedFiles    map[string]string      `json:"exported_files,omitempty"`
+	Metadata         export.ExportMetadata `json:"metadata"`
+	ArrayConfig      ArrayConfig           `json:"array_config"`
+	PeripheralConfig PeripheralConfig      `json:"peripheral_config"`
+	SimulationState  *SimulationState      `json:"simulation_state,omitempty"`
+	SneakMetrics     *SneakPathMetrics     `json:"sneak_metrics,omitempty"`
+	TopSneakCells    []SneakCellImpact     `json:"top_sneak_cells,omitempty"`
+	ExportedFiles    map[string]string     `json:"exported_files,omitempty"`
 }
 
 // ArrayConfig represents the crossbar array configuration
@@ -78,9 +78,14 @@ func (ca *CircuitsApp) exportSimulationData() {
 	}
 
 	ca.mu.RLock()
-	weights := make([][]int, ca.arrayRows)
-	for i := range ca.arrayWeights {
-		weights[i] = append([]int(nil), ca.arrayWeights[i]...)
+	rows := ca.arrayRows
+	cols := ca.arrayCols
+	weights := make([][]int, rows)
+	for i := 0; i < rows; i++ {
+		weights[i] = make([]int, cols)
+		if i < len(ca.arrayWeights) {
+			copy(weights[i], ca.arrayWeights[i])
+		}
 	}
 	inputVector := append([]int(nil), ca.inputVector...)
 	outputVector := append([]float64(nil), ca.outputVector...)
@@ -91,8 +96,6 @@ func (ca *CircuitsApp) exportSimulationData() {
 	if selectedRow >= 0 && selectedRow < len(weights) && selectedCol >= 0 && selectedCol < len(weights[selectedRow]) {
 		currentLevel = weights[selectedRow][selectedCol]
 	}
-	rows := ca.arrayRows
-	cols := ca.arrayCols
 	quantLevels := ca.quantLevels
 	arch := ca.architecture
 	ca.mu.RUnlock()
@@ -193,7 +196,7 @@ func (ca *CircuitsApp) exportSimulationData() {
 	}
 	config.ExportedFiles["peripheral_csv"] = periphResult.FilePath
 
-	if ca.window != nil {
+	if ca.window != nil && ca.window.Canvas() != nil {
 		vizExporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
 		vizResult := vizExporter.ExportPNG(ca.window.Canvas().Capture())
 		if vizResult.Error == nil {
@@ -220,12 +223,12 @@ func (ca *CircuitsApp) exportVisualization() {
 	exporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
 	img := ca.window.Canvas().Capture()
 	result := exporter.ExportPNG(img)
-	
+
 	if result.Error != nil {
 		ca.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
 		return
 	}
-	
+
 	ca.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
 }
 
@@ -233,7 +236,7 @@ func (ca *CircuitsApp) exportVisualization() {
 func (ca *CircuitsApp) createExportButtons() fyne.CanvasObject {
 	config := export.DefaultExportConfig("circuits")
 	config.OutputDir = filepath.Join("exports", "circuits")
-	
+
 	return export.NewExportButtons(config, &circuitsExportProvider{app: ca}, ca.window)
 }
 
@@ -244,6 +247,10 @@ type circuitsExportProvider struct {
 
 // GetCSVData returns circuits array data as CSV
 func (p *circuitsExportProvider) GetCSVData() (*export.CSVData, error) {
+	if p == nil || p.app == nil {
+		return nil, fmt.Errorf("app state not initialized")
+	}
+
 	p.app.mu.RLock()
 	defer p.app.mu.RUnlock()
 
@@ -253,14 +260,18 @@ func (p *circuitsExportProvider) GetCSVData() (*export.CSVData, error) {
 	for j := 0; j < p.app.arrayCols; j++ {
 		headers[j+1] = fmt.Sprintf("Col%d", j)
 	}
-	
+
 	// Build rows
 	data := export.NewCSVData(headers...)
 	for i := 0; i < p.app.arrayRows; i++ {
 		row := make([]string, p.app.arrayCols+1)
 		row[0] = fmt.Sprintf("%d", i)
 		for j := 0; j < p.app.arrayCols; j++ {
-			row[j+1] = fmt.Sprintf("%d", p.app.arrayWeights[i][j])
+			w := 0
+			if i < len(p.app.arrayWeights) && j < len(p.app.arrayWeights[i]) {
+				w = p.app.arrayWeights[i][j]
+			}
+			row[j+1] = fmt.Sprintf("%d", w)
 		}
 		data.AddRow(row...)
 	}
@@ -270,6 +281,10 @@ func (p *circuitsExportProvider) GetCSVData() (*export.CSVData, error) {
 
 // GetJSONConfig returns circuits configuration as JSON-serializable data
 func (p *circuitsExportProvider) GetJSONConfig() (interface{}, error) {
+	if p == nil || p.app == nil {
+		return nil, fmt.Errorf("app state not initialized")
+	}
+
 	config := CircuitsExportConfig{
 		Metadata: *export.NewExportMetadata("module4-circuits"),
 		ArrayConfig: ArrayConfig{
@@ -299,7 +314,7 @@ func (p *circuitsExportProvider) GetJSONConfig() (interface{}, error) {
 
 // GetVisualization returns the current visualization as an image
 func (p *circuitsExportProvider) GetVisualization() (image.Image, error) {
-	if p.app.window == nil {
+	if p == nil || p.app == nil || p.app.window == nil || p.app.window.Canvas() == nil {
 		return nil, fmt.Errorf("window not available")
 	}
 	return p.app.window.Canvas().Capture(), nil

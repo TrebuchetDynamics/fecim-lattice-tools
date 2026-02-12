@@ -273,18 +273,18 @@ func (ds *DeviceState) updateVoltageRanges() {
 		NumLevels: numLevels,
 	}
 
-	// Write range: Vc to FieldMaxRatio * Vc
-	// Must exceed Vc to switch polarization
-	writeMin := Vc
-	writeMax := ds.calibParams.FieldMaxRatio * Vc
-	if writeMax > MaxPracticalVoltage {
-		writeMax = MaxPracticalVoltage
+	// Write range: bipolar and derived from material coercive voltage.
+	// Ferroelectric WRITE needs both polarities (ERASE/PROGRAM), so map DAC
+	// to [-Vmax, +Vmax], where Vmax scales from material Vc.
+	writeMaxAbs := ds.calibParams.FieldMaxRatio * Vc
+	if writeMaxAbs > MaxPracticalVoltage {
+		writeMaxAbs = MaxPracticalVoltage
 	}
 
 	ds.writeRange = VoltageRange{
-		Min:       writeMin,
-		Max:       writeMax,
-		StepSize:  (writeMax - writeMin) / float64(numLevels-1),
+		Min:       -writeMaxAbs,
+		Max:       +writeMaxAbs,
+		StepSize:  (2 * writeMaxAbs) / float64(numLevels-1),
 		NumLevels: numLevels,
 	}
 }
@@ -737,15 +737,26 @@ func (ds *DeviceState) effectiveCellVoltageLocked(row, col int) float64 {
 	if row < 0 || row >= ds.rows || col < 0 || col >= ds.cols {
 		return 0
 	}
-	if ds.couplingMode == arraysim.CouplingTierA && ds.coupledCellVoltages != nil {
+	if ds.couplingMode != arraysim.CouplingIdeal && ds.coupledCellVoltages != nil {
 		if row < len(ds.coupledCellVoltages) && col < len(ds.coupledCellVoltages[row]) {
-			return ds.coupledCellVoltages[row][col]
+			v := ds.coupledCellVoltages[row][col]
+			if math.Abs(v) < 1e-12 {
+				return 0
+			}
+			return v
 		}
 	}
 	bl := ds.dacVoltages[col]
 	if ds.isPassive {
 		wl := ds.wlVoltages[row]
-		return wl - bl
+		v := wl - bl
+		if math.Abs(v) < 1e-12 {
+			return 0
+		}
+		return v
+	}
+	if math.Abs(bl) < 1e-12 {
+		return 0
 	}
 	return bl
 }
@@ -1252,6 +1263,8 @@ func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels in
 				rowCurrentA += result.CellCurrents[r][c]
 			}
 		}
+		// arraysim uses solver-current sign conventions; sense chain expects read-magnitude polarity.
+		rowCurrentA = math.Abs(rowCurrentA)
 
 		ds.rowCurrents[r] = rowCurrentA * 1e6
 

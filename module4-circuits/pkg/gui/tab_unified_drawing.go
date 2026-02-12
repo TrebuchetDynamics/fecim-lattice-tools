@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"math"
 
+	"fecim-lattice-tools/module4-circuits/pkg/gui/unified/display"
+	"fecim-lattice-tools/module4-circuits/pkg/gui/unified/overlay"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -261,8 +262,12 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			isSelected := r == selectedRow && c == selectedCol
 			isActive := ca.deviceState.IsRowActive(r) && ca.deviceState.GetDACVoltage(c) > 0.01
 
-			// Cell color based on level - always full brightness
+			// Cell color based on level.
 			cellColor := levelToColor(level, levels)
+			// In READ overlay mode, use clean dimming for unselected cells instead of fuzzy overlays.
+			if overlayEnabled && !isSelected {
+				cellColor = overlay.DimmedCellColor(cellColor)
+			}
 
 			// Animation highlight (only during compute animation)
 			if animStep == 2 && isActive {
@@ -336,40 +341,27 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 				}
 			}
 
-			if overlayEnabled && cellSize >= 36 {
-				// Keep overlay legible and cheap for larger arrays by showing one label every N cells.
-				overlayStep := 1
-				switch {
-				case rows > 48 || cols > 48:
-					overlayStep = 8
-				case rows > 24 || cols > 24:
-					overlayStep = 4
-				case rows > 12 || cols > 12:
-					overlayStep = 2
+			if display.ShouldShowSelectedOnly(overlayEnabled, isSelected, cellSize) {
+				vCell := ca.deviceState.GetEffectiveCellVoltage(r, c)
+				overlayText := ""
+				overlayColor := color.RGBA{210, 235, 255, 220}
+				if overlayMode == "Vcell" {
+					overlayText = formatSignedScaled(vCell, []scaledUnit{{unit: "V", scale: 1.0}, {unit: "mV", scale: 1e-3}, {unit: "uV", scale: 1e-6}, {unit: "nV", scale: 1e-9}})
+					overlayColor = color.RGBA{120, 220, 255, 220}
+				} else if overlayMode == "Icell" {
+					conductanceS := 0.0
+					material := ca.deviceState.GetMaterial()
+					if material != nil {
+						conductanceS = material.DiscreteLevel(level, levels)
+					} else if levels > 1 {
+						conductanceS = (1.0 + float64(level)/float64(levels-1)*99.0) * 1e-6
+					}
+					iCell := conductanceS * vCell
+					overlayText = formatSignedScaled(iCell, []scaledUnit{{unit: "A", scale: 1.0}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}, {unit: "nA", scale: 1e-9}, {unit: "pA", scale: 1e-12}})
+					overlayColor = color.RGBA{160, 255, 190, 220}
 				}
-				if (r%overlayStep == 0 && c%overlayStep == 0) || isSelected {
-					vCell := ca.deviceState.GetEffectiveCellVoltage(r, c)
-					overlayText := ""
-					overlayColor := color.RGBA{210, 235, 255, 220}
-					if overlayMode == "Vcell" {
-						overlayText = formatSignedScaled(vCell, []scaledUnit{{unit: "V", scale: 1.0}, {unit: "mV", scale: 1e-3}, {unit: "uV", scale: 1e-6}, {unit: "nV", scale: 1e-9}})
-						overlayColor = color.RGBA{120, 220, 255, 220}
-					} else if overlayMode == "Icell" {
-						// Fast local estimate to avoid additional per-cell state allocations.
-						conductanceS := 0.0
-						material := ca.deviceState.GetMaterial()
-						if material != nil {
-							conductanceS = material.DiscreteLevel(level, levels)
-						} else if levels > 1 {
-							conductanceS = (1.0 + float64(level)/float64(levels-1)*99.0) * 1e-6
-						}
-						iCell := conductanceS * vCell
-						overlayText = formatSignedScaled(iCell, []scaledUnit{{unit: "A", scale: 1.0}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}, {unit: "nA", scale: 1e-9}, {unit: "pA", scale: 1e-12}})
-						overlayColor = color.RGBA{160, 255, 190, 220}
-					}
-					if overlayText != "" {
-						drawSimpleText(img, overlayText, x0+2, y0+ch-10, overlayColor)
-					}
+				if overlayText != "" {
+					drawSimpleText(img, overlayText, x0+2, y0+ch-10, overlayColor)
 				}
 			}
 
@@ -585,22 +577,18 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		drawSimpleText(img, timingText, w-50, 34, color.RGBA{150, 150, 170, 180})
 	}
 
-	// Draw sneak path indicators for passive (0T1R) mode
-	// Sneak currents flow through half-selected cells, causing read errors
-	if arch == sharedwidgets.Architecture0T1R && ca.deviceState != nil {
-		selectedRow := ca.deviceState.GetSelectedRow()
-		selectedCol := ca.deviceState.GetSelectedCol()
-		voltage := math.Abs(ca.deviceState.GetEffectiveCellVoltage(selectedRow, selectedCol))
+	// Draw V/2 half-select indicators only during WRITE in passive (0T1R) mode.
+	if arch == sharedwidgets.Architecture0T1R && ca.deviceState != nil && ca.deviceState.GetOperationMode() == OpModeWrite {
+		hsState := ca.deviceState.GetHalfSelectState()
+		if hsState.Enabled {
+			selectedRow := hsState.SelectedRow
+			selectedCol := hsState.SelectedCol
 
-		// Only show sneak paths when there's active voltage
-		if voltage > 0.05 {
-			sneakPathColor := color.RGBA{255, 100, 100, 60} // Red tint for sneak path cells
-
-			// Highlight half-selected cells (same row OR same column as target)
 			for r := 0; r < rows; r++ {
 				for c := 0; c < cols; c++ {
-					if r == selectedRow && c == selectedCol {
-						continue // Skip the target cell itself
+					// Overlay only unselected half-selected cells (same row OR same col, but not target).
+					if !((r == selectedRow || c == selectedCol) && !(r == selectedRow && c == selectedCol)) {
+						continue
 					}
 
 					x0 := offsetX + c*cellSize + 2
@@ -608,49 +596,26 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 					cw := cellSize - 4
 					ch := cellSize - 4
 
-					if r == selectedRow || c == selectedCol {
-						// Half-selected cell (V/2 voltage) - orange tint
-						for dy := 0; dy < ch; dy++ {
-							for dx := 0; dx < cw; dx++ {
-								px, py := x0+dx, y0+dy
-								if px >= 0 && px < w && py >= 0 && py < h {
-									// Blend with existing color
-									existing := img.RGBAAt(px, py)
-									blended := color.RGBA{
-										uint8(min(int(existing.R)+30, 255)),
-										uint8(min(int(existing.G)+15, 255)),
-										existing.B,
-										255,
-									}
-									img.Set(px, py, blended)
+					for dy := 0; dy < ch; dy++ {
+						for dx := 0; dx < cw; dx++ {
+							px, py := x0+dx, y0+dy
+							if px >= 0 && px < w && py >= 0 && py < h {
+								existing := img.RGBAAt(px, py)
+								blended := color.RGBA{
+									uint8(min(int(existing.R)+30, 255)),
+									uint8(min(int(existing.G)+15, 255)),
+									existing.B,
+									255,
 								}
-							}
-						}
-						// Draw "V/2" label for larger cells
-						if cellSize >= 30 {
-							drawSimpleText(img, "V/2", x0+cw/2-9, y0+ch-8, color.RGBA{255, 200, 100, 200})
-						}
-					} else {
-						// Sneak path cell (receives current via L-path) - subtle red tint
-						for dy := 0; dy < ch; dy += 2 {
-							for dx := 0; dx < cw; dx += 2 {
-								px, py := x0+dx, y0+dy
-								if px >= 0 && px < w && py >= 0 && py < h {
-									img.Set(px, py, sneakPathColor)
-								}
+								img.Set(px, py, blended)
 							}
 						}
 					}
+					if cellSize >= 30 {
+						drawSimpleText(img, "V/2", x0+cw/2-9, y0+ch-8, color.RGBA{255, 200, 100, 200})
+					}
 				}
 			}
-			// Draw quantified sneak impact: magnitude + affected cells + strongest offender.
-			_, coupledCurrents := ca.deviceState.GetCoupledCellSnapshot()
-			metrics := SneakPathMetrics{}
-			if coupledCurrents != nil {
-				metrics = computeSneakPathMetrics(coupledCurrents, selectedRow, selectedCol)
-			}
-			warnText := formatSneakPathSummary(metrics)
-			drawSimpleText(img, warnText, 10, h-15, color.RGBA{255, 150, 100, 220})
 		}
 	}
 
@@ -720,13 +685,13 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			}
 			expectedCurrent := conductanceUS * voltage
 
-			// Draw info near selected cell
-			cellX := offsetX + selectedCol*cellSize + cellSize/2
-			cellY := offsetY + selectedRow*cellSize - 12
-			if cellY > 20 {
-				infoText := fmt.Sprintf("%.1fuA", expectedCurrent)
-				drawSimpleText(img, infoText, cellX-len(infoText)*3, cellY, color.RGBA{255, 255, 100, 220})
-			}
+			// Draw current annotation centered on the selected cell.
+			cellCX := offsetX + selectedCol*cellSize + cellSize/2
+			cellCY := offsetY + selectedRow*cellSize + cellSize/2
+			infoText := fmt.Sprintf("%.1fuA", expectedCurrent)
+			textX := cellCX - len(infoText)*3
+			textY := cellCY - 3
+			drawSimpleText(img, infoText, textX, textY, color.RGBA{255, 255, 100, 220})
 		}
 	}
 

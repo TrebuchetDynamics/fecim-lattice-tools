@@ -171,6 +171,7 @@ func (ca *CircuitsApp) updateWriteSequenceUI() {
 // - Hysteresis direction tracking
 // - V/2 visualization for 0T1R mode
 func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
+	defer ca.updateActionButtons()
 	if ca.deviceState != nil && ca.deviceState.GetISPPEngine() == ISPPEngineLK {
 		ca.runISPPWithLK(row, col, targetLevel)
 		return
@@ -249,9 +250,14 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 		// Clear write voltages before verify/next iteration
 		ca.deviceState.ResetWriteVoltages()
 
-		// Simulate write: move at most one level per pulse toward the calibrated level
+		// Simulate write: move at most one level per pulse toward calibrated level.
+		// Use effective coupled target-cell voltage so per-cell hysteresis follows array coupling.
 		ascending := isppStatus.Direction == DirectionAscending
-		estimatedLevel := ca.deviceState.GetLevelForVoltage(math.Abs(isppStatus.Voltage), ascending)
+		effectiveV := math.Abs(ca.deviceState.GetEffectiveCellVoltage(row, col))
+		if effectiveV == 0 {
+			effectiveV = math.Abs(isppStatus.Voltage)
+		}
+		estimatedLevel := ca.deviceState.GetLevelForVoltage(effectiveV, ascending)
 		nextLevel := currentLevel
 		if ascending {
 			if estimatedLevel > currentLevel {
@@ -730,16 +736,14 @@ func (ca *CircuitsApp) updateHalfSelectVisualization() {
 // Used by array visualization to color cells during V/2 mode
 func (ca *CircuitsApp) getHalfSelectCellColor(row, col int) (color.Color, bool) {
 	hsState := ca.deviceState.GetHalfSelectState()
-	if !hsState.Enabled {
+	if !hsState.Enabled || ca.deviceState.GetOperationMode() != OpModeWrite {
 		return nil, false
 	}
 
-	// Target cell gets full voltage color
+	// Only show V/2 overlay on unselected half-selected neighbors.
 	if row == hsState.SelectedRow && col == hsState.SelectedCol {
-		return colorFullVoltage, true
+		return nil, false
 	}
-
-	// Check if half-selected
 	if ca.deviceState.IsHalfSelected(row, col) {
 		return colorHalfSelect, true
 	}
