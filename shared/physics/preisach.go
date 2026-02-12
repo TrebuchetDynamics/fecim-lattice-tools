@@ -117,39 +117,33 @@ func (ps *PreisachStack) Update(E float64) float64 {
 	return ps.ComputePolarization(E)
 }
 
-// ComputePolarization sums the hysterons based on the geometric shape of the stack
+// ComputePolarization sums the hysterons based on the geometric shape of the stack.
+// Allocation-free fast path for hot-loop updates.
 func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 	// P = -Ps + 2 * Sum
 	// Sum = E(M1, m0) - E(M1, m1) + E(M2, m1) - E(M2, m2) + ...
-	
-	// Create a temporary list of points including current E
-	points := make([]float64, 0, len(ps.Stack)+1)
-	for _, tp := range ps.Stack {
-		points = append(points, tp.E)
-	}
-	points = append(points, currentE)
-	
-	// points[0] is always Min0 (-Sat)
-	// points[1] is Max1
-	// points[2] is Min1
-	// ...
-	
 	sum := 0.0
-	
-	// Iterate over Max points (indices 1, 3, 5...)
-	for i := 1; i < len(points); i += 2 {
-		Max := points[i]
-		MinPrev := points[i-1] // always exists
-		
-		// Add the UP switching triangle
-		sum += ps.Everett.Calculate(Max, MinPrev)
-		
-		// Check for DOWN switching triangle (subtraction)
-		if i+1 < len(points) {
-			MinNext := points[i+1]
-			sum -= ps.Everett.Calculate(Max, MinNext)
+	n := len(ps.Stack)
+
+	// Initial branch: stack only has m0, so currentE acts as first max segment.
+	if n == 1 {
+		sum += ps.Everett.Calculate(currentE, ps.Stack[0].E)
+		return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
+	}
+
+	// Stack points are [m0, M1, m1, M2, m2, ...]
+	for i := 1; i < n; i += 2 {
+		maxVal := ps.Stack[i].E
+		minPrev := ps.Stack[i-1].E
+		sum += ps.Everett.Calculate(maxVal, minPrev)
+
+		// Next min in stack, or currentE if this is the last max segment.
+		if i+1 < n {
+			sum -= ps.Everett.Calculate(maxVal, ps.Stack[i+1].E)
+		} else {
+			sum -= ps.Everett.Calculate(maxVal, currentE)
 		}
 	}
-	
+
 	return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
 }

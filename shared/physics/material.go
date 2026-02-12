@@ -728,11 +728,6 @@ func (m *HZOMaterial) RetentionAtTime(t, T float64) float64 {
 //
 // This matches the Preisach model's polarizationToConductance() for consistency.
 func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
-	matLog.Input("DiscreteLevel", map[string]interface{}{
-		"level":       level,
-		"totalLevels": totalLevels,
-	})
-
 	if totalLevels <= 1 {
 		return (m.Gmin + m.Gmax) / 2 // Return midpoint for degenerate case
 	}
@@ -752,14 +747,5 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 	// FeFET conductance model: G = Gmin + (Gmax-Gmin) * (normalizedP + 1) / 2
 	// At P = -Ps (normalizedP = -1): G = Gmin
 	// At P = +Ps (normalizedP = +1): G = Gmax
-	conductance := Gmin + (Gmax-Gmin)*(normalizedP+1)/2
-
-	matLog.Calculation("DiscreteLevel", map[string]interface{}{
-		"level":       level,
-		"normalizedP": normalizedP,
-		"Gmin":        Gmin,
-		"Gmax":        Gmax,
-	}, conductance)
-
-	return conductance
+	return Gmin + (Gmax-Gmin)*(normalizedP+1)/2
 }

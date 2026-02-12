@@ -31,17 +31,6 @@ const MaxDemoLevels = FeCIMLevels + 1
 // For computational efficiency, we store normalized values [−W_max, +W_max] but the
 // conceptual mapping to [Gmin, Gmax] is implicit.
 func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
-	log.Input("QuantizeWeights", map[string]interface{}{
-		"levels": levels,
-		"rows":   len(fpWeights),
-		"cols": func() int {
-			if len(fpWeights) > 0 {
-				return len(fpWeights[0])
-			}
-			return 0
-		}(),
-	})
-
 	if levels < 2 {
 		err := fmt.Errorf("quantize: levels must be >= 2, got %d", levels)
 		log.ErrorContext("QuantizeWeights", err, nil)
@@ -72,38 +61,34 @@ func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 	}
 
 	// 2. Quantize to integer bins [0, levels-1]
-	// Each bin represents a discrete conductance level in the FeCIM device
+	// Each bin represents a discrete conductance level in the FeCIM device.
+	// Allocate a single contiguous backing array to reduce heap churn.
 	quantized := make([][]float64, rows)
+	backing := make([]float64, rows*cols)
+	for i := 0; i < rows; i++ {
+		quantized[i] = backing[i*cols : (i+1)*cols]
+	}
+
 	levelStep := 2.0 * wMax / float64(levels-1) // Level spacing
+	normScale := float64(levels-1) / (2.0 * wMax)
 
 	for i := 0; i < rows; i++ {
-		quantized[i] = make([]float64, cols)
+		rowIn := fpWeights[i]
+		rowOut := quantized[i]
 		for j := 0; j < cols; j++ {
-			// Map [-wMax, +wMax] → [0, 1]
-			normalized := (fpWeights[i][j] + wMax) / (2.0 * wMax)
+			// Map [-wMax, +wMax] → [0, levels-1]
+			bin := int(math.Round((rowIn[j] + wMax) * normScale))
 
-			// Quantize to bin (conductance level)
-			bin := int(math.Round(normalized * float64(levels-1)))
-
-			// Clamp
 			if bin < 0 {
 				bin = 0
-			}
-			if bin >= levels {
+			} else if bin >= levels {
 				bin = levels - 1
 			}
 
 			// Map back to [-wMax, +wMax]
-			// In hardware: this represents G = Gmin + bin/(levels-1) * (Gmax - Gmin)
-			quantized[i][j] = -wMax + float64(bin)*levelStep
+			rowOut[j] = -wMax + float64(bin)*levelStep
 		}
 	}
-
-	log.Calculation("QuantizeWeights", map[string]interface{}{
-		"wMax":      wMax,
-		"levelStep": levelStep,
-		"dims":      fmt.Sprintf("%dx%d", rows, cols),
-	}, "quantized")
 
 	return quantized, nil
 }
