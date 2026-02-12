@@ -1002,6 +1002,18 @@ Direct observations from Juan's live interaction with Module 4 Operations view.
 | M4-OBS-07 | Per-cell dual numbers confusing (two similar values without clear distinction) | High | ⏳ | Top = "L: XX" (level), Bottom = "V: ±X.XX V" or "I: ±X.XX µA" |
 | M4-OBS-08 | Read-mode UI precision: displayed values need consistent decimal places and ranges | Medium | ⏳ | All currents to 2 decimal µA, voltages to 3 decimal mV, ADC codes as integers |
 
+## Module 1: UI/Physics Observations from User Testing (2026-02-12)
+
+| ID | Observation | Priority | Status | Acceptance Criteria |
+|----|------------|----------|--------|---------------------|
+| M1-OBS-01 | Polarization teleport on waveform/mode change | P0 | ⏳ | History buffer cleared on every waveform switch, no visual jump |
+| M1-OBS-02 | ISPP freeze at intermediate level (stuck at level 5) | P0 | ⏳ | ISPP completes or fails gracefully with bounded retry, no hang |
+| M1-OBS-03 | Unintended negative/reset in ISPP loop after ~4 tries | P0 | ⏳ | Reset only on explicit overshoot policy, not spurious |
+| M1-OBS-04 | Reset button behavior inconsistent/non-deterministic | P1 | ⏳ | Reset always returns to known state with explicit re-init |
+| M1-OBS-05 | Layout: excessive scrolling in material/state/mode sections | P1 | ⏳ | Compact layout, reduced whitespace, no unnecessary scroll |
+| M1-OBS-06 | Environment controls (temp/stress) may not couple to equations | P1 | ⏳ | Either wire to physics or label "Display only — not coupled" |
+| M1-OBS-07 | Target range/LE5/wave-mode semantics need inline explanation | P2 | ⏳ | Concise sublabels or tooltips on each control |
+
 ## Module 4: CMOS Cell Physics & Selector Model (2026-02-12)
 
 Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC) with real wire parasitics and noise, but the selector transistor in 1T1R/2T1R is a boolean mask, not a sized MOSFET. Cell area is film-only (100 nm²), not layout footprint.
