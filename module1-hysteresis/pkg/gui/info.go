@@ -88,15 +88,10 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.squarenessLabel = widget.NewLabel(fmt.Sprintf("Squareness: %.2f", sqVal))
 	a.switchedLabel = widget.NewLabel("Switched: 0%")
 
-	metricsRow1 := container.NewHBox(
+	metricsGrid := container.NewGridWithColumns(2,
 		a.effEcLabel,
-		widget.NewLabel(" "),
 		a.effPrLabel,
-	)
-
-	metricsRow2 := container.NewHBox(
 		a.squarenessLabel,
-		widget.NewLabel(" "),
 		a.switchedLabel,
 	)
 
@@ -104,14 +99,10 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		levelRow,
 		container.NewCenter(a.stateLabel),
 		a.stabilityIndicator, // M12: State stability warning
-		widget.NewSeparator(),
 		a.phaseIndicator,
-		widget.NewSeparator(),
-		container.NewHBox(matLine, matInfoBtn),
+		container.NewGridWithColumns(2, matLine, matInfoBtn),
 		statsRow,
-		widget.NewSeparator(),
-		metricsRow1,
-		metricsRow2,
+		metricsGrid,
 	)
 }
 

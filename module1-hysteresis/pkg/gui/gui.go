@@ -153,11 +153,11 @@ type App struct {
 	wrdLastControllerPulse int
 	wrdLastProgressLog     float64
 	wrdLastLogState        controller.WriteState // last controller state written to CSV (force-record on transition)
-	wrdLastBranch          int     // -1 lower branch, +1 upper branch, 0 unknown
-	wrdForceReset          bool    // Force PREP on next cycle (overshoot/direction change)
-	wrdSkipPrep            bool    // Skip PREP/RESET and write directly from current state
-	wrdRangeFrac           float64 // Fraction of Ps used for outer level targets (0..1)
-	wrdGuardFrac           float64 // Guard band fraction for MLC verify (0..0.5)
+	wrdLastBranch          int                   // -1 lower branch, +1 upper branch, 0 unknown
+	wrdForceReset          bool                  // Force PREP on next cycle (overshoot/direction change)
+	wrdSkipPrep            bool                  // Skip PREP/RESET and write directly from current state
+	wrdRangeFrac           float64               // Fraction of Ps used for outer level targets (0..1)
+	wrdGuardFrac           float64               // Guard band fraction for MLC verify (0..0.5)
 	wrdRangeTimer          *time.Timer
 
 	// UI update throttling
@@ -251,6 +251,7 @@ type App struct {
 	stateLabel      *widget.Label  // State description (Negative P, Intermediate, Positive P)
 	materialBtn     *widget.Button // Opens material picker, shows current material name
 	waveformSelect  *widget.Select
+	waveformHelp    *widget.Label
 	statusLabel     *widget.Label
 	pauseBtn        *widget.Button
 
@@ -735,9 +736,7 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create controls panel
 	controls := a.createControlsPanel()
-	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 260},
-		container.NewPadded(controls),
-	)
+	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 260}, controls)
 	controlsScroll := container.NewVScroll(controlsContent)
 	controlsScroll.SetMinSize(fyne.NewSize(260, 0))
 
@@ -792,17 +791,16 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(a.cellViz),
 	)
 
-	infoCard := widget.NewCard("State & Material", "", container.NewPadded(info))
+	infoCard := widget.NewCard("State & Material", "", info)
 	infoStack := container.NewVBox(
 		infoCard,
-		container.NewPadded(a.isppWidget),
-		container.NewPadded(a.simVsExpWidget),
+		a.isppWidget,
+		a.simVsExpWidget,
 	)
 	infoScroll := container.NewVScroll(infoStack)
 	infoScroll.SetMinSize(fyne.NewSize(220, 0))
 
-	logPanelWrapped := container.NewPadded(logPanel)
-	leftSplit := container.NewVSplit(infoScroll, logPanelWrapped)
+	leftSplit := container.NewVSplit(infoScroll, logPanel)
 	leftSplit.SetOffset(0.66)
 
 	// Left column: Fixed cell at top, scrollable info below
