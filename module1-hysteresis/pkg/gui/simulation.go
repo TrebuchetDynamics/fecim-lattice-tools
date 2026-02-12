@@ -1254,6 +1254,23 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.wrdLastProgressLog = a.simTime
 				}
 
+				// Hard ISPP timeout guard: force completion after global pulse budget.
+				pulseLimit := isppPulseLimit(a.isppMaxPulses)
+				totalPulses := a.writeController.TotalPulses + a.writeController.PulseCount
+				if !done && totalPulses >= pulseLimit {
+					bestLevel := a.writeController.BestVerifyLevel
+					if bestLevel <= 0 {
+						bestLevel = currentLevel
+					}
+					a.wrdReadLevel = bestLevel
+					a.wrdPhase = 5
+					a.wrdPhaseTimer = 0
+					a.wrdTotalWrites++
+					log.Printf("WRD ISPP TIMEOUT: target=%d pulse=%d/%d state=%s bestLevel=%d (forced complete)",
+						targetLevel, totalPulses, pulseLimit, a.writeController.State, bestLevel)
+					done = true
+				}
+
 				// Autonomous runtime recalibration trigger (overshoots or too many pulses)
 				if a.autoRecalibrate && !a.recalibratePending {
 					if a.writeController.OvershootCount >= a.recalibrateOvershootMax {
@@ -1291,7 +1308,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
 						log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
-						if a.writeController.OvershootCount > 0 {
+						if shouldForceResetAfterISPP(a.writeController, false) {
 							a.wrdForceReset = true
 						}
 						if targetLevel > a.wrdStartLevel {
@@ -1328,10 +1345,22 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						}
 
 					case controller.StateForceReset:
-						// RETRY LIMIT: Trigger Full Reset
-						log.Printf("WRD RETRY LIMIT: Full RESET to saturation (retry %d)", a.writeController.RetryCount)
-						a.wrdPhase = 0 // RESET phase
-						a.wrdPhaseTimer = 0
+						// Retry limit reached. Only allow full RESET on severe overshoot.
+						if shouldForceResetAfterISPP(a.writeController, false) {
+							log.Printf("WRD RETRY LIMIT: Full RESET to saturation (retry %d, overshootDelta=%d)", a.writeController.RetryCount, a.writeController.MaxOvershootDelta)
+							a.wrdPhase = 0 // RESET phase
+							a.wrdPhaseTimer = 0
+						} else {
+							bestLevel := a.writeController.BestVerifyLevel
+							if bestLevel <= 0 {
+								bestLevel = a.writeController.LastVerifyLevel
+							}
+							a.wrdReadLevel = bestLevel
+							a.wrdPhase = 5
+							a.wrdPhaseTimer = 0
+							a.wrdTotalWrites++
+							log.Printf("WRD RETRY LIMIT: suppressing reset (overshootDelta=%d<=3), forced complete at level=%d target=%d", a.writeController.MaxOvershootDelta, bestLevel, targetLevel)
+						}
 
 					case controller.StateFailed:
 						// Generic failure (shouldn't happen with infinite retries enabled, but just in case)
@@ -1640,6 +1669,9 @@ type uiSnapshot struct {
 	controllerState       controller.WriteState
 	controllerTargetLevel int
 	controllerField       float64
+	controllerPulseTotal  int
+	controllerBestLevel   int
+	isppPulseLimit        int
 
 	widgets widgetSnapshot
 	logText string
@@ -1723,10 +1755,15 @@ func (a *App) updateUI() {
 	ctrlState := controller.StateIdle
 	ctrlTargetLevel := 0
 	ctrlField := 0.0
+	ctrlPulseTotal := 0
+	ctrlBestLevel := 0
+	isppLimit := isppPulseLimit(a.isppMaxPulses)
 	if a.writeController != nil {
 		ctrlState = a.writeController.State
 		ctrlTargetLevel = a.writeController.TargetLevel
 		ctrlField = a.writeController.CurrentField
+		ctrlPulseTotal = a.writeController.TotalPulses + a.writeController.PulseCount
+		ctrlBestLevel = a.writeController.BestVerifyLevel
 	}
 	lastLogPhase := a.lastLogPhase
 	logEntries := append([]string(nil), a.logEntries...)
@@ -1789,12 +1826,32 @@ func (a *App) updateUI() {
 		controllerState:       ctrlState,
 		controllerTargetLevel: ctrlTargetLevel,
 		controllerField:       ctrlField,
+		controllerPulseTotal:  ctrlPulseTotal,
+		controllerBestLevel:   ctrlBestLevel,
+		isppPulseLimit:        isppLimit,
 		widgets:               a.buildWidgetSnapshot(fE, dL, materialEc, waveform, wrdPhase, wrdTargetLevel, manualAnimating, manualPhase, manualTargetLevel, ctrlState, ctrlTargetLevel, lastLogPhase),
 		logText:               logText,
 	})
 }
 
 const wrdPhaseBoundaryLogMinInterval = 400 * time.Millisecond
+
+func isppPulseLimit(maxPulses int) int {
+	if maxPulses <= 0 {
+		return 30
+	}
+	return maxPulses * 3
+}
+
+func shouldForceResetAfterISPP(ctrl *controller.WriteController, explicitReset bool) bool {
+	if explicitReset {
+		return true
+	}
+	if ctrl == nil {
+		return false
+	}
+	return ctrl.MaxOvershootDelta > 3
+}
 
 func (a *App) shouldEmitWRDPhaseBoundaryLog(wrdTarget int) bool {
 	now := time.Now()
@@ -2049,6 +2106,19 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		switch currentWaveform {
 		case WaveformWriteReadDemo:
 			var phaseStr string
+			if snapshot.wrdPhase == 2 && snapshot.controllerState != controller.StateIdle {
+				pulseLimit := snapshot.isppPulseLimit
+				if pulseLimit <= 0 {
+					pulseLimit = 30
+				}
+				state := snapshot.controllerState.String()
+				best := snapshot.controllerBestLevel
+				if best <= 0 {
+					best = dL + 1
+				}
+				a.statusLabel.SetText(fmt.Sprintf("⚡ ISPP: target L%d, pulse %d/%d, state=%s, best=L%d", wrdTarget, snapshot.controllerPulseTotal, pulseLimit, state, best))
+				break
+			}
 			// Log phase transitions (PROGRAM, VERIFY, RESULT) with boundary throttling.
 			if wrdDisplayPhase != lastPhase {
 				a.mu.Lock()

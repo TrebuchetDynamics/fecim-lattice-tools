@@ -98,8 +98,11 @@ type WriteController struct {
 	VMaxSet bool
 
 	// Outputs
-	LastVerifyLevel int
-	LastError       int
+	LastVerifyLevel   int
+	LastError         int
+	BestVerifyLevel   int // Closest verified level observed during this target write
+	BestAbsError      int // |BestVerifyLevel - TargetLevel|, -1 when uninitialized
+	MaxOvershootDelta int // Maximum overshoot distance beyond target (levels)
 
 	// Stuck detection (no level change across verifies)
 	StuckCount int
@@ -154,6 +157,9 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.CurrentField = 0
 	wc.LastVerifyLevel = 0
 	wc.LastError = 0
+	wc.BestVerifyLevel = 0
+	wc.BestAbsError = -1
+	wc.MaxOvershootDelta = 0
 	wc.LastAbsError = -1
 	wc.NoImproveCount = 0
 	wc.previousLevel = 0
@@ -236,6 +242,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		wc.InitialLevel = currentLevel
 		wc.InitialLevelSet = true
 		wc.LastVerifyLevel = currentLevel
+		wc.BestVerifyLevel = currentLevel
+		wc.BestAbsError = int(math.Abs(float64(currentLevel - wc.TargetLevel)))
 		wc.previousLevel = currentLevel
 	}
 
@@ -330,6 +338,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// (bisection/bracketing), instead of restarting with the aggressive
 			// first-pulse initializer that tends to re-overshoot near saturation.
 			wc.PulseCount++
+			wc.TotalPulses++
 
 			wc.State = StateApply
 			wc.PhaseTimer = 0
@@ -413,6 +422,10 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.GuardPulseCount = 0
 			}
 			wc.LastAbsError = absErr
+			if wc.BestAbsError < 0 || absErr < wc.BestAbsError {
+				wc.BestAbsError = absErr
+				wc.BestVerifyLevel = currentLevel
+			}
 
 			if guardActive {
 				// Guard-band correction: avoid treating "no level change" as stuck.
@@ -574,6 +587,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			if overshoot {
 				wc.OvershootCount++
 				wc.OvershootTotal++
+				if delta := absErr; delta > wc.MaxOvershootDelta {
+					wc.MaxOvershootDelta = delta
+				}
 
 				// Hard limit: terminate ping-pong oscillation for unreachable targets.
 				// Repeated overshoots prove we've bracketed the target voltage;
@@ -647,6 +663,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 			// Continue ISPP (Next Pulse)
 			wc.PulseCount++
+			wc.TotalPulses++
 			calcLevel := currentLevel
 			if guardActive {
 				// Guard correction: nudge calcLevel toward the side that needs
