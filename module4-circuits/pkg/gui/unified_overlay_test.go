@@ -42,7 +42,7 @@ func TestReadOverlaySelectorUpdatesMode(t *testing.T) {
 	})
 }
 
-func TestReadOverlayAffectsReadCanvasOnly(t *testing.T) {
+func TestReadOverlayAffectsAllOperationModes(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
 	defer win.Close()
@@ -63,7 +63,7 @@ func TestReadOverlayAffectsReadCanvasOnly(t *testing.T) {
 		t.Fatalf("expected overlay to change read canvas rendering")
 	}
 
-	// In WRITE mode, overlay selection should not affect array rendering.
+	// WRITE mode should also reflect per-cell overlay toggles.
 	test.Tap(ca.modeWriteBtn)
 	waitFor(t, 500*time.Millisecond, "write mode", func() bool {
 		return ca.deviceState.GetOperationMode() == OpModeWrite
@@ -73,8 +73,21 @@ func TestReadOverlayAffectsReadCanvasOnly(t *testing.T) {
 	offWrite := imageChecksum(ca.drawUnifiedArray(900, 700))
 	ca.readOverlaySelect.SetSelected("Vcell")
 	vcellWrite := imageChecksum(ca.drawUnifiedArray(900, 700))
-	if offWrite != vcellWrite {
-		t.Fatalf("expected overlay selection ignored outside READ mode")
+	if offWrite == vcellWrite {
+		t.Fatalf("expected overlay selection to affect WRITE rendering")
+	}
+
+	// COMPUTE mode should also keep overlays available.
+	test.Tap(ca.modeComputeBtn)
+	waitFor(t, 500*time.Millisecond, "compute mode", func() bool {
+		return ca.deviceState.GetOperationMode() == OpModeCompute
+	})
+	ca.readOverlaySelect.SetSelected("Off")
+	offCompute := imageChecksum(ca.drawUnifiedArray(900, 700))
+	ca.readOverlaySelect.SetSelected("Icell")
+	iCellCompute := imageChecksum(ca.drawUnifiedArray(900, 700))
+	if offCompute == iCellCompute {
+		t.Fatalf("expected overlay selection to affect COMPUTE rendering")
 	}
 }
 

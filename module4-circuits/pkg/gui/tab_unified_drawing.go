@@ -39,7 +39,8 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	if ca.deviceState == nil {
 		return img
 	}
-	overlayEnabled := ca.deviceState.GetOperationMode() == OpModeRead && overlayMode != "Off"
+	// Overlay can be enabled in READ/WRITE/COMPUTE for per-cell observability.
+	overlayEnabled := overlayMode != "Off"
 
 	// Draw gradient background
 	bgTop := color.RGBA{12, 20, 35, 255}
