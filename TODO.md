@@ -279,7 +279,7 @@
 | M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ✅ | Done (`docs/documentation/module4-circuits/PHYSICS.md` equations aligned to `shared/peripherals/{dac,adc,tia,chargepump}.go`) |
 | M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ✅ | 1-2hr |
 | M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ⏳ | 4-12hr |
-| M4-U2d | Tests/visual checks for half-select disturb + DAC voltage display | `module4-circuits` | ⏳ | 1-2hr |
+| M4-U2d | Tests/visual checks for half-select disturb + DAC voltage display | `module4-circuits` | ✅ | Done (`tab_unified_halfselect_voltage_test.go`: verifies V/2 indicator text + overlay colors, disturb change reporting count, and ISPP status DAC voltage/code display) |
 
 ### Tier B Array Simulation (from code TODOs)
 
@@ -321,8 +321,8 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| CM-P1 | Define "physics accuracy" acceptance criteria per module | Shared | ⏳ | 30-60m |
-| CM-D1 | Keep HONESTY_AUDIT.md as SSOT; ensure UI labels match | Shared | ⏳ | 30-60m |
+| CM-P1 | Define "physics accuracy" acceptance criteria per module | Shared | ✅ | 30-60m |
+| CM-D1 | Keep HONESTY_AUDIT.md as SSOT; ensure UI labels match | Shared | ✅ | 30-60m |
 | CM-U1 | Ensure UI values/plots never desync from engine state | Shared | ⏳ | 1-2hr |
 | CM-D2 | Equation widgets pipeline: LaTeX→SVG SSOT, hotspot alignment | Shared | ⏳ | 1-2hr |
 | CM-P2 | Minimal headless regression suite per engine with JSON summary | Shared | ⏳ | 2-4hr |
@@ -332,7 +332,7 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| G13 | Define minimum supported GUI size (1024×768) | UX | ⏳ | 30-60m |
+| G13 | Define minimum supported GUI size (1024×768) | UX | ✅ | 30-60m |
 | G14 | GUI overlap audit: fix widget overlap/clipping on resize | UX | ⏳ | 1-2hr |
 | G15 | Update GUI layout docs to match current code | `docs/development/GUI/` | ⏳ | 1-2hr |
 | G16 | Documentation mapping sweep: audit docs for drift vs code | `docs/development/GUI/` | ⏳ | 2-4hr |
