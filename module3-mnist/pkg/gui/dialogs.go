@@ -50,7 +50,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewLabel("• Material: HfO₂-ZrO₂ (HZO) ferroelectric superlattice"),
 		widget.NewLabel("• Mechanism: dozens of stable polarization states from domain wall pinning"),
 		widget.NewLabel("• Crystal defects: Oxygen vacancies create energy barriers"),
-		widget.NewLabel("• ADC limitation: 6-bit (64 levels) → fewer reliably distinguishable levels in practice"),
+		widget.NewLabel("• ADC limitation: finite ADC resolution (default 8-bit / 256 levels in this demo) → fewer reliably distinguishable levels in practice"),
 		widget.NewLabel("• Separation: 3σ noise margin between adjacent levels"),
 		widget.NewSeparator(),
 
@@ -76,7 +76,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewLabel("Note: Accuracy depends on implementation quality and non-idealities"),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Why Not 64 Levels (6-bit ADC maximum)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Why Not 64+ Levels (ADC/Noise limited in practice)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("This demo assumes 30 levels as a conservative baseline (conference claim); practical limits vary by process:"),
 		widget.NewLabel("1. Device-to-device variation: ~2.75% (process variation)"),
 		widget.NewLabel("2. Cycle-to-cycle variation: ~1.5% (retention drift)"),
