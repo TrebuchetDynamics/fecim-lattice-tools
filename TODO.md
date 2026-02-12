@@ -119,13 +119,26 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-54 | Verify conductance models (linear, exponential, lookup) and quantization to 30 levels match docs | ⏳ |
-| FOCUS-55 | Validate MVM/VMM equations, Ohm's law, DAC/ADC quantization, output normalization vs PHYSICS.md | ⏳ |
-| FOCUS-56 | Confirm IR drop solver (wire params, iterative relaxation, effective voltage) matches docs | ⏳ |
-| FOCUS-57 | Confirm sneak path modeling (3-cell paths, simplified vs full) and SNR math | ⏳ |
-| FOCUS-58 | Validate drift models (log/power-law), temperature effects (Arrhenius), and variation | ⏳ |
-| FOCUS-59 | Verify endurance/fatigue and half-select disturb behavior if enabled | ⏳ |
-| FOCUS-60 | Ensure MVMWithNonIdealities pipeline ordering matches documented signal flow | ⏳ |
+| FOCUS-54 | Verify conductance models (linear, exponential, lookup) and quantization to 30 levels match docs | ✅ |
+| FOCUS-55 | Validate MVM/VMM equations, Ohm's law, DAC/ADC quantization, output normalization vs PHYSICS.md | ✅ |
+| FOCUS-56 | Confirm IR drop solver (wire params, iterative relaxation, effective voltage) matches docs | ✅ |
+| FOCUS-57 | Confirm sneak path modeling (3-cell paths, simplified vs full) and SNR math | ✅ |
+| FOCUS-58 | Validate drift models (log/power-law), temperature effects (Arrhenius), and variation | ✅ |
+| FOCUS-59 | Verify endurance/fatigue and half-select disturb behavior if enabled | ✅ |
+| FOCUS-60 | Ensure MVMWithNonIdealities pipeline ordering matches documented signal flow | ✅ |
+
+**Evidence (FOCUS-54..60, 2026-02-11):**
+- Added `module2-crossbar/pkg/crossbar/focus_54_60_validation_test.go` covering:
+  - conductance models (linear/exponential/lookup) + exact 30-level quantization cardinality,
+  - MVM/VMM Ohm’s-law accumulation with DAC/ADC quantization + normalization,
+  - IR-drop solver consistency (`AnalyzeIRDrop` vs `AnalyzeIRDropIterative`) and effective-voltage bounds,
+  - 3-cell sneak-path topology + SNR formula `20*log10(I_signal/I_sneak)`,
+  - drift temperature dependence (Arrhenius scaling) with controlled random seed,
+  - endurance fatigue degradation + half-select disturb fanout accounting,
+  - non-ideality pipeline ordering via `ComputeAccuracyDegradation` step sequence.
+- Validation runs:
+  - `go test ./module2-crossbar/pkg/crossbar -run 'TestFocus5[4-9]|TestFocus60'` ✅
+  - `go test -race ./module2-crossbar/pkg/crossbar -run 'TestFocus5[4-9]|TestFocus60'` ✅
 
 ### 3g. Module 3 MNIST (from module3-prompt.md)
 
@@ -152,9 +165,9 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-72 | Ensure `docs/documentation/` has complete curriculum: ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS per module | ⏳ |
-| FOCUS-73 | Module 7 sidebar order: module folders first, then research-papers, then README/MODULES | ⏳ |
-| FOCUS-74 | Content standards: distinguish demonstrated vs modeled vs aspirational in all docs | ⏳ |
+| FOCUS-72 | Ensure `docs/documentation/` has complete curriculum: ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS per module | ✅ |
+| FOCUS-73 | Module 7 sidebar order: module folders first, then research-papers, then README/MODULES | ✅ |
+| FOCUS-74 | Content standards: distinguish demonstrated vs modeled vs aspirational in all docs | ✅ |
 
 ### 4. Scope Control
 
@@ -333,7 +346,7 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 | CM-U1 | Ensure UI values/plots never desync from engine state | Shared | ⏳ | 1-2hr |
 | CM-D2 | Equation widgets pipeline: LaTeX→SVG SSOT, hotspot alignment | Shared | ⏳ | 1-2hr |
 | CM-P2 | Minimal headless regression suite per engine with JSON summary | Shared | ⏳ | 2-4hr |
-| CM-D3 | Tighten module docs: equations, assumptions, units, validated labels | Shared | ⏳ | 2-4hr |
+| CM-D3 | Tighten module docs: equations, assumptions, units, validated labels | Shared | ✅ | 2-4hr |
 
 ### UX Polish
 
