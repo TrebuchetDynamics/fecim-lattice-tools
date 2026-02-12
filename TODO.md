@@ -44,6 +44,39 @@
 |----|------|--------|
 | FOCUS-08 | Improve UI where percentages are too small / poorly ranged | ⏳ |
 | FOCUS-09 | Re-range values and layout so output is readable and meaningful | ⏳ |
+| FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ⏳ |
+| FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ⏳ |
+| FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ⏳ |
+| FOCUS-34 | Debug layout tracker uses unbounded maps (`layoutCallCounts`, `lastLayoutTime`) — memory leak risk | ⏳ |
+| FOCUS-35 | Debug output goes to `fmt.Printf` (stdout) instead of logging system | ⏳ |
+
+### 3b. Module 3 MNIST Consistency
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-36 | CIM forward pass is purely semantic (delegates to FP) — conductance mapping Gmin/Gmax only in comments | ⏳ |
+| FOCUS-37 | DAC quantization assumes input [0,1] but never validates — silent clamp | ⏳ |
+| FOCUS-38 | Silent fallback to CPU on GPU error with no user notification | ⏳ |
+| FOCUS-39 | Silent fallback to default weights if level-specific file missing — user not warned | ⏳ |
+| FOCUS-40 | ADC dialog says "6-bit (64 levels)" but code defaults to 8-bit — mismatch | ⏳ |
+| FOCUS-41 | `SetNumLevels` silently clamps values — user sets 50, gets 31 with no feedback | ⏳ |
+
+### 3c. CLI & Configuration
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-42 | Recent Files menu TODO — clicking doesn't load file (`main.go:1228`) | ⏳ |
+| FOCUS-43 | 9 undocumented env vars (FECIM_MATERIAL, FECIM_RANGE_FRAC, etc.) — add to `--help` output | ⏳ |
+| FOCUS-44 | Screenshots/recordings dirs hardcoded to `screenshots/` and `recordings/` — no CLI override | ⏳ |
+| FOCUS-45 | Config search only uses relative paths — no XDG_CONFIG_HOME or `~/.config/fecim/` support | ⏳ |
+
+### 3d. Error Handling (panic → graceful)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-46 | GPU peripherals `structToBytes` panics on unknown type — should return error (`gpu_peripherals.go:382`) | ⏳ |
+| FOCUS-47 | GPU peripherals size mismatch panics — should return error (`gpu_peripherals.go:506`) | ⏳ |
+| FOCUS-48 | Physics config init panics on missing YAML — should use `log.Fatal` or return error (`physics.go:432`) | ⏳ |
 
 ### 4. Scope Control
 
@@ -354,14 +387,14 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **11** | **0** | **11** |
-| 🔴 Critical | 8 | 0 | 8 |
-| 🟠 High | 48 | 0 | 48 |
-| 🟡 Medium | 32 | 0 | 32 |
+| **Current Focus** | **48** | **4** | **44** |
+| 🔴 Critical | 8 | 3 | 5 |
+| 🟠 High | 48 | 15 | 33 |
+| 🟡 Medium | 32 | 5 | 27 |
 | 🟢 Low | 22 | 0 | 22 |
-| **Total** | **121** | **0** | **121** |
+| **Total** | **158** | **27** | **131** |
 
-*Note: "Current Focus" items (FOCUS-01 through FOCUS-11) are the active work direction. Module 5 is deferred.*
+*Note: "Current Focus" items (FOCUS-01 through FOCUS-48) are the active work direction. Module 5 is deferred.*
 
 ---
 
