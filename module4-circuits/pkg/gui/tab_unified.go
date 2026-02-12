@@ -795,23 +795,27 @@ func (ca *CircuitsApp) updateActionButtons() {
 	mode := ca.deviceState.GetOperationMode()
 
 	sharedwidgets.SafeDo(func() {
-		// Program Cell: only in WRITE mode
+		// Program Cell: visible/enabled only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
+				ca.actionWriteCellBtn.Show()
 				ca.actionWriteCellBtn.Enable()
 				ca.actionWriteCellBtn.Importance = widget.HighImportance
 			} else {
+				ca.actionWriteCellBtn.Hide()
 				ca.actionWriteCellBtn.Disable()
 				ca.actionWriteCellBtn.Importance = widget.MediumImportance
 			}
 			ca.actionWriteCellBtn.Refresh()
 		}
 
-		// Compute MVM: only in COMPUTE mode
+		// MVM: visible/enabled only in COMPUTE mode
 		if ca.actionComputeBtn != nil {
 			if mode == OpModeCompute {
+				ca.actionComputeBtn.Show()
 				ca.actionComputeBtn.Enable()
 			} else {
+				ca.actionComputeBtn.Hide()
 				ca.actionComputeBtn.Disable()
 			}
 		}
@@ -1642,18 +1646,34 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	})
 	ca.setSensePresetSelection(senseMeasurementPresets[0].Name)
 
-	controlsRow := container.NewGridWithColumns(4,
-		container.NewHBox(widget.NewLabel("Preset:"), ca.sensePresetSelect),
-		container.NewHBox(widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry),
-		container.NewHBox(widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry),
-		container.NewHBox(widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry),
+	controlWithHelp := func(label, title, msg string, input fyne.CanvasObject) fyne.CanvasObject {
+		info := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+			dialog.ShowInformation(title, msg, ca.window)
+		})
+		info.Importance = widget.LowImportance
+		labelRow := container.NewHBox(widget.NewLabel(label), info)
+		row := container.NewBorder(nil, nil, labelRow, nil, input)
+		return container.NewGridWrap(fyne.NewSize(260, 36), row)
+	}
+
+	controlsContent := container.NewHBox(
+		controlWithHelp("Preset:", "Sense Preset",
+			"Preset configures the read chain end-to-end (DAC Vread → array current → TIA gain → ADC range). Choose by expected current magnitude.", ca.sensePresetSelect),
+		controlWithHelp("Rf (kΩ):", "TIA Feedback Resistor (Rf)",
+			"TIA stage converts row current to voltage: Vout = Irow × Rf. Larger Rf increases sensitivity but can saturate sooner.", ca.senseRfEntry),
+		controlWithHelp("ADC Vmin (V):", "ADC Lower Reference (Vmin)",
+			"ADC maps TIA output to codes between Vmin and Vmax. Set Vmin near the minimum expected TIA output in READ mode.", ca.senseAdcVminEntry),
+		controlWithHelp("ADC Vmax (V):", "ADC Upper Reference (Vmax)",
+			"ADC full-scale top for the read chain. Keep Vmax above expected TIA output peaks to avoid clipping and preserve linear code mapping.", ca.senseAdcVmaxEntry),
 	)
+	controlsScroll := container.NewHScroll(controlsContent)
+	controlsScroll.SetMinSize(fyne.NewSize(980, 44))
 
 	return container.NewVBox(
 		headerRow,
 		metricsRow,
 		rangeRow,
-		controlsRow,
+		controlsScroll,
 	)
 }
 
