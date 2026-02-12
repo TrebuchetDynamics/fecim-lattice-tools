@@ -135,12 +135,24 @@ func (ps *PreisachStack) Update(E float64) float64 {
 func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 	// P = -Ps + 2 * Sum
 	// Sum = E(M1, m0) - E(M1, m1) + E(M2, m1) - E(M2, m2) + ...
+	//
+	// Use compensated accumulation (Kahan summation) to reduce loss of
+	// significance when long turning-point histories produce many alternating
+	// positive/negative terms.
 	sum := 0.0
+	compensation := 0.0
+	addCompensated := func(v float64) {
+		y := v - compensation
+		t := sum + y
+		compensation = (t - sum) - y
+		sum = t
+	}
+
 	n := len(ps.Stack)
 
 	// Initial branch: stack only has m0, so currentE acts as first max segment.
 	if n == 1 {
-		sum += ps.Everett.Calculate(currentE, ps.Stack[0].E)
+		addCompensated(ps.Everett.Calculate(currentE, ps.Stack[0].E))
 		return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
 	}
 
@@ -148,13 +160,13 @@ func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 	for i := 1; i < n; i += 2 {
 		maxVal := ps.Stack[i].E
 		minPrev := ps.Stack[i-1].E
-		sum += ps.Everett.Calculate(maxVal, minPrev)
+		addCompensated(ps.Everett.Calculate(maxVal, minPrev))
 
 		// Next min in stack, or currentE if this is the last max segment.
 		if i+1 < n {
-			sum -= ps.Everett.Calculate(maxVal, ps.Stack[i+1].E)
+			addCompensated(-ps.Everett.Calculate(maxVal, ps.Stack[i+1].E))
 		} else {
-			sum -= ps.Everett.Calculate(maxVal, currentE)
+			addCompensated(-ps.Everett.Calculate(maxVal, currentE))
 		}
 	}
 
