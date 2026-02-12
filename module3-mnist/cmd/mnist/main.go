@@ -43,14 +43,14 @@ type MNISTConfig struct {
 
 // EvaluationResult represents evaluation results for JSON output.
 type EvaluationResult struct {
-	Samples      int     `json:"samples"`
-	Accuracy     float64 `json:"accuracy"`
-	FPAccuracy   float64 `json:"fp_accuracy,omitempty"`
-	CIMAccuracy  float64 `json:"cim_accuracy,omitempty"`
-	AgreeRate    float64 `json:"agree_rate,omitempty"`
-	AvgKL        float64 `json:"avg_kl,omitempty"`
-	AvgEnergy    float64 `json:"avg_energy_uj,omitempty"`
-	Levels       int     `json:"levels,omitempty"`
+	Samples     int     `json:"samples"`
+	Accuracy    float64 `json:"accuracy"`
+	FPAccuracy  float64 `json:"fp_accuracy,omitempty"`
+	CIMAccuracy float64 `json:"cim_accuracy,omitempty"`
+	AgreeRate   float64 `json:"agree_rate,omitempty"`
+	AvgKL       float64 `json:"avg_kl,omitempty"`
+	AvgEnergy   float64 `json:"avg_energy_uj,omitempty"`
+	Levels      int     `json:"levels,omitempty"`
 }
 
 func Run(args []string) error {
@@ -335,6 +335,14 @@ type coreEvalMetrics struct {
 	sample0    *core.InferenceResult
 	sample0Hit bool
 	samples    int
+	fpConf     [10][10]int
+	cimConf    [10][10]int
+	fpPrec     [10]float64
+	fpRec      [10]float64
+	fpF1       [10]float64
+	cimPrec    [10]float64
+	cimRec     [10]float64
+	cimF1      [10]float64
 }
 
 func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxSamples int, levels []int) {
@@ -416,6 +424,16 @@ func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxS
 			fmt.Printf("Agreement Rate: %.1f%%\n", metrics.agreeRate*100)
 			fmt.Printf("Average KL Divergence: %.6f\n", metrics.avgKL)
 			fmt.Printf("Average Energy: %.6f μJ\n", metrics.avgEnergy)
+
+			fmt.Println("\nFP Confusion Matrix")
+			showConfusionMatrix(matrix10ToSlice(metrics.fpConf))
+			fmt.Println("\nFP Per-class metrics")
+			showPerClassMetrics(array10ToSlice(metrics.fpPrec), array10ToSlice(metrics.fpRec), array10ToSlice(metrics.fpF1))
+
+			fmt.Println("\nCIM Confusion Matrix")
+			showConfusionMatrix(matrix10ToSlice(metrics.cimConf))
+			fmt.Println("\nCIM Per-class metrics")
+			showPerClassMetrics(array10ToSlice(metrics.cimPrec), array10ToSlice(metrics.cimRec), array10ToSlice(metrics.cimF1))
 		}
 
 		log.Printf("Core evaluation complete (levels=%d): fpAcc=%.1f%% cimAcc=%.1f%% agree=%.1f%% avgKL=%.6f avgEnergy_uJ=%.6f samples=%d",
@@ -425,47 +443,33 @@ func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxS
 }
 
 func evaluateCoreMetrics(net *core.DualModeNetwork, images [][]float64, labels []int) coreEvalMetrics {
-	var fpCorrect, cimCorrect, agreeCount int
-	var totalKL, totalEnergy float64
-	var evaluated int
-	var sample0 *core.InferenceResult
-
-	for i := 0; i < len(images); i++ {
-		result := net.Infer(images[i])
-		if result == nil {
-			continue
-		}
-		evaluated++
-		if result.FPPrediction == labels[i] {
-			fpCorrect++
-		}
-		if result.CIMPrediction == labels[i] {
-			cimCorrect++
-		}
-		if result.Agree {
-			agreeCount++
-		}
-		totalKL += result.Disagreement
-		totalEnergy += result.EnergyUsed
-
-		if i == 0 {
-			sample0 = result
-		}
-	}
-
-	if evaluated == 0 {
+	dm := core.EvaluateDualModeDataset(net, images, labels)
+	if dm.Samples == 0 {
 		return coreEvalMetrics{}
 	}
 
+	var sample0 *core.InferenceResult
+	if len(images) > 0 {
+		sample0 = net.Infer(images[0])
+	}
+
 	return coreEvalMetrics{
-		fpAcc:      float64(fpCorrect) / float64(evaluated),
-		cimAcc:     float64(cimCorrect) / float64(evaluated),
-		agreeRate:  float64(agreeCount) / float64(evaluated),
-		avgKL:      totalKL / float64(evaluated),
-		avgEnergy:  totalEnergy / float64(evaluated),
+		fpAcc:      dm.FP.Accuracy,
+		cimAcc:     dm.CIM.Accuracy,
+		agreeRate:  dm.Agreement,
+		avgKL:      dm.AvgKL,
+		avgEnergy:  dm.AvgEnergy,
 		sample0:    sample0,
 		sample0Hit: sample0 != nil,
-		samples:    evaluated,
+		samples:    dm.Samples,
+		fpConf:     dm.FP.Confusion,
+		cimConf:    dm.CIM.Confusion,
+		fpPrec:     dm.FP.Precision,
+		fpRec:      dm.FP.Recall,
+		fpF1:       dm.FP.F1,
+		cimPrec:    dm.CIM.Precision,
+		cimRec:     dm.CIM.Recall,
+		cimF1:      dm.CIM.F1,
 	}
 }
 
@@ -892,6 +896,25 @@ func activationToChar(value float64) string {
 		return "▓"
 	}
 	return "█"
+}
+
+func matrix10ToSlice(matrix [10][10]int) [][]int {
+	out := make([][]int, 10)
+	for i := 0; i < 10; i++ {
+		out[i] = make([]int, 10)
+		for j := 0; j < 10; j++ {
+			out[i][j] = matrix[i][j]
+		}
+	}
+	return out
+}
+
+func array10ToSlice(v [10]float64) []float64 {
+	out := make([]float64, 10)
+	for i := 0; i < 10; i++ {
+		out[i] = v[i]
+	}
+	return out
 }
 
 func showConfusionMatrix(matrix [][]int) {
