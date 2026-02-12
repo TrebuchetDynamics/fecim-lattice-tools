@@ -135,6 +135,11 @@ Data:
   Ctrl+E    Export (use tab buttons)
   Ctrl+R    Reset to first view
 
+Builder Actions:
+  Ctrl+Shift+G  Generate All
+  Ctrl+Shift+V  Validate All
+  Ctrl+Shift+E  Export Package
+
 Help:
   / or ?    Show this help dialog
 

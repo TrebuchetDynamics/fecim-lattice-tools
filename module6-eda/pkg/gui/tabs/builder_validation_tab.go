@@ -1210,6 +1210,28 @@ Date: %s
 		exportPackageBtn,
 	)
 
+	// Builder action shortcuts:
+	// Cmd/Ctrl+Shift+G => Generate All
+	// Cmd/Ctrl+Shift+V => Validate All
+	// Cmd/Ctrl+Shift+E => Export Package
+	triggerAction := func(btn *widget.Button) {
+		if btn == nil || btn.Disabled() || btn.OnTapped == nil {
+			return
+		}
+		btn.OnTapped()
+	}
+	if window != nil {
+		window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyG, Modifier: fyne.KeyModifierShortcutDefault | fyne.KeyModifierShift}, func(fyne.Shortcut) {
+			triggerAction(generateAllBtn)
+		})
+		window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyV, Modifier: fyne.KeyModifierShortcutDefault | fyne.KeyModifierShift}, func(fyne.Shortcut) {
+			triggerAction(validateAllBtn)
+		})
+		window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyE, Modifier: fyne.KeyModifierShortcutDefault | fyne.KeyModifierShift}, func(fyne.Shortcut) {
+			triggerAction(exportPackageBtn)
+		})
+	}
+
 	// Validation results - compact 4-column single row
 	validationResultsGrid := container.NewGridWithColumns(4,
 		container.NewHBox(

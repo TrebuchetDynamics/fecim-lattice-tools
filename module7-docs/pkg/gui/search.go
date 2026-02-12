@@ -867,7 +867,7 @@ func (s *searchShortcut) ShortcutName() string {
 	return "Search"
 }
 
-// SetupSearchShortcut configures Cmd/Ctrl+K shortcut for search.
+// SetupSearchShortcut configures search shortcuts (Cmd/Ctrl+K and /).
 func SetupSearchShortcut(window fyne.Window, searchDialog *SearchDialog) {
 	if window == nil || searchDialog == nil {
 		return
@@ -879,6 +879,15 @@ func SetupSearchShortcut(window fyne.Window, searchDialog *SearchDialog) {
 		Modifier: fyne.KeyModifierShortcutDefault,
 	}
 	window.Canvas().AddShortcut(ctrlK, func(shortcut fyne.Shortcut) {
+		searchDialog.Show()
+	})
+
+	// Add keyboard shortcut for / (quick find style)
+	slashShortcut := &desktop.CustomShortcut{
+		KeyName:  fyne.KeySlash,
+		Modifier: 0,
+	}
+	window.Canvas().AddShortcut(slashShortcut, func(shortcut fyne.Shortcut) {
 		searchDialog.Show()
 	})
 
