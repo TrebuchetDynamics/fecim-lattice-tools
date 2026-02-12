@@ -26,6 +26,7 @@ func newSyncTestApp(t *testing.T) *App {
 		levelLabel:     widget.NewLabel(""),
 		statusLabel:    widget.NewLabel(""),
 		logText:        widget.NewLabel(""),
+		phaseIndicator: widgets.NewPhaseIndicator(),
 		numLevels:      30,
 		logEntries:     []string{},
 	}
@@ -104,6 +105,11 @@ func TestRefreshGUI_WRDTargetUsesControllerStateAsTruth(t *testing.T) {
 	}
 	if got := a.logText.Text; got != "snapshot log" {
 		t.Fatalf("log text should come from snapshot; got %q", got)
+	}
+
+	phase, phaseMode := a.phaseIndicator.CurrentPhase()
+	if phase != widgets.PhaseVerify || phaseMode != "wrd" {
+		t.Fatalf("phase indicator desync: got phase=%d mode=%q, want VERIFY/wrd", phase, phaseMode)
 	}
 }
 

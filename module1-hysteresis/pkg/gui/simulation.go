@@ -1859,10 +1859,17 @@ func (a *App) buildWidgetSnapshot(
 		wrdSettled := atTarget && eFieldSettled
 
 		displayPhase := wrdPhaseProgram
-		if wrdSettled {
-			displayPhase = wrdPhaseResult
-		} else if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess || lastLogPhase == wrdPhaseVerify {
+		switch ctrlState {
+		case controller.StateVerify:
 			displayPhase = wrdPhaseVerify
+		case controller.StateSuccess, controller.StateFailed:
+			displayPhase = wrdPhaseResult
+		default:
+			if wrdSettled {
+				displayPhase = wrdPhaseResult
+			} else if lastLogPhase == wrdPhaseVerify {
+				displayPhase = wrdPhaseVerify
+			}
 		}
 		ws.phase = phaseWidgetSnapshot{mode: "wrd", phase: displayPhase}
 
@@ -2163,11 +2170,12 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 
 	// Slide panel removed - was distracting and flickering
 
-	// Update log text
-	a.mu.RLock()
-	logText := a.getLogText()
-	a.mu.RUnlock()
-	a.logText.SetText(logText)
+	// Update log text from the same snapshot payload.
+	if snapshot.logText != "" {
+		a.logText.SetText(snapshot.logText)
+	} else {
+		a.logText.SetText(a.getLogText())
+	}
 
 	// Update plot
 	engine := snapshot.physicsEngine
