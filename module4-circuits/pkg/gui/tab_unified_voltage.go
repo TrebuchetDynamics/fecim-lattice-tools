@@ -606,6 +606,14 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 	ca.mu.Lock()
 	defer ca.mu.Unlock()
 
+	if len(ca.halfSelectResidue) != ca.arrayRows {
+		ca.halfSelectResidue = make([][]float64, ca.arrayRows)
+		for r := range ca.halfSelectResidue {
+			ca.halfSelectResidue[r] = make([]float64, ca.arrayCols)
+		}
+	}
+	targetVCell := ca.deviceState.GetWLVoltage(targetRow) - ca.deviceState.GetDACVoltage(targetCol)
+
 	for r := 0; r < len(ca.arrayWeights); r++ {
 		if !ca.deviceState.IsPassiveMode() && !ca.deviceState.IsRowActive(r) {
 			continue
@@ -624,6 +632,14 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 
 			if vCell == 0 {
 				continue
+			}
+
+			// Track accumulated half-select exposure during WRITE pulses so UI/test hooks
+			// can observe disturb build-up even when physics solver changes are sub-level.
+			if ca.deviceState.IsPassiveMode() && ((r == targetRow) != (c == targetCol)) {
+				base := 0.01 * halfSelectDisturbRate
+				delta := math.Copysign(base, targetVCell)
+				ca.halfSelectResidue[r][c] += delta
 			}
 
 			level := ca.arrayWeights[r][c]
