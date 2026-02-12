@@ -101,6 +101,28 @@ func TestFeCIMThemeFallback(t *testing.T) {
 	}
 }
 
+func TestFeCIMTheme_VariantAwareColors(t *testing.T) {
+	th := &FeCIMTheme{}
+
+	darkBg := th.Color(theme.ColorNameBackground, theme.VariantDark)
+	lightBg := th.Color(theme.ColorNameBackground, theme.VariantLight)
+	if darkBg == lightBg {
+		t.Fatalf("background color should differ between dark and light variants")
+	}
+
+	darkFg := th.Color(theme.ColorNameForeground, theme.VariantDark)
+	lightFg := th.Color(theme.ColorNameForeground, theme.VariantLight)
+	if darkFg == lightFg {
+		t.Fatalf("foreground color should differ between dark and light variants")
+	}
+
+	darkMenu := th.Color(theme.ColorNameMenuBackground, theme.VariantDark)
+	lightMenu := th.Color(theme.ColorNameMenuBackground, theme.VariantLight)
+	if darkMenu == lightMenu {
+		t.Fatalf("menu background should differ between dark and light variants")
+	}
+}
+
 func TestFeCIMThemeFont(t *testing.T) {
 	th := &FeCIMTheme{}
 

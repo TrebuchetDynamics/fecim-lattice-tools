@@ -46,6 +46,9 @@
   - `go test ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent|ReadChain_EndToEndKnownConductanceToADCCode)" -count=1 -v` (PASS)
   - `go test -race ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent|ReadChain_EndToEndKnownConductanceToADCCode)" -count=1` (PASS)
   - `go test -race ./...` currently blocked by pre-existing unrelated compile failure in `module1-hysteresis/pkg/gui/equation_dialog_test.go` (`ShowPhysicsEquationsDialog` vs `showPhysicsEquationsDialog`).
+- FOCUS-31: `shared/widgets/notification.go` toast renderer now derives layout spacing/sizes from Fyne theme metrics (`SizeNameInnerPadding`, `SizeNameInlineIcon`, `SizeNamePadding`) instead of fixed `12/20/24`, making toast layout DPI/theme-scale aware.
+- FOCUS-32: `shared/theme/theme.go` now honors `variant` in `FeCIMTheme.Color()` with distinct light/dark palette outputs. Added regression test `TestFeCIMTheme_VariantAwareColors` in `shared/theme/theme_test.go`.
+- Verification (FOCUS-31/32): `go test ./shared/theme`; `go test -race ./shared/theme ./shared/widgets -run TestFeCIMTheme_VariantAwareColors -count=1`; `go test -race ./shared/widgets -run TestNotificationType_String -count=1` (PASS).
 - FOCUS-34: `shared/widgets/debug.go` now bounds layout debug maps with `maxTrackedLayoutWidgets=1024` and periodic cleanup (`layoutCleanupInterval=256`) to prevent unbounded growth of `layoutCallCounts`/`lastLayoutTime`.
 - FOCUS-35: `shared/widgets/debug.go` debug prints (`[LAYOUT]`, `[RESIZE]`, `[RESIZE-BUG]`, `[INTERACTION]`) were migrated from `fmt.Printf` to `shared/logging.Printf` so debug output flows through the project logging system.
 
@@ -455,12 +458,12 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **74** | **4** | **70** |
+| **Current Focus** | **74** | **6** | **68** |
 | 🔴 Critical | 8 | 3 | 5 |
 | 🟠 High | 48 | 15 | 33 |
 | 🟡 Medium | 32 | 5 | 27 |
 | 🟢 Low | 22 | 0 | 22 |
-| **Total** | **184** | **27** | **157** |
+| **Total** | **184** | **29** | **155** |
 
 *Note: "Current Focus" items (FOCUS-01 through FOCUS-74) are the active work direction. Module 5 is deferred.*
 

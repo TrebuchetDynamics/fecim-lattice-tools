@@ -441,37 +441,65 @@ type toastRenderer struct {
 }
 
 func (r *toastRenderer) Layout(size fyne.Size) {
-	padding := float32(12)
-	iconSize := float32(20)
-	closeBtnSize := float32(24)
+	th := r.toast.Theme()
+	padding := th.Size(theme.SizeNameInnerPadding)
+	iconSize := th.Size(theme.SizeNameInlineIcon)
+	closeBtnSize := iconSize + th.Size(theme.SizeNamePadding)
+	contentGap := th.Size(theme.SizeNameInnerPadding)
+	lineGap := th.Size(theme.SizeNamePadding)
 
 	// Background fills entire size
 	r.bg.Resize(size)
 
 	// Icon on the left
-	r.icon.Resize(fyne.NewSize(iconSize, iconSize))
+	r.icon.Resize(fyne.NewSquareSize(iconSize))
 	r.icon.Move(fyne.NewPos(padding, padding))
 
 	// Close button on the right
-	r.closeBtn.Resize(fyne.NewSize(closeBtnSize, closeBtnSize))
+	r.closeBtn.Resize(fyne.NewSquareSize(closeBtnSize))
 	r.closeBtn.Move(fyne.NewPos(size.Width-closeBtnSize-padding/2, padding/2))
 
-	// Title next to icon
-	titleX := padding + iconSize + 8
-	titleWidth := size.Width - titleX - closeBtnSize - padding
-	r.title.Move(fyne.NewPos(titleX, padding))
-	r.title.Resize(fyne.NewSize(titleWidth, 16))
+	// Content area between icon and close button
+	contentX := padding + iconSize + contentGap
+	contentRight := size.Width - closeBtnSize - padding
+	contentWidth := fyne.Max(1, contentRight-contentX)
 
-	// Message below title
-	r.message.Move(fyne.NewPos(titleX, padding+18))
-	r.message.Resize(fyne.NewSize(titleWidth, 14))
+	titleMin := r.title.MinSize()
+	msgMin := r.message.MinSize()
+	tsMin := r.timestamp.MinSize()
 
-	// Timestamp at bottom right
-	r.timestamp.Move(fyne.NewPos(size.Width-60-padding, size.Height-18))
+	// Title + message
+	r.title.Move(fyne.NewPos(contentX, padding))
+	r.title.Resize(fyne.NewSize(contentWidth, titleMin.Height))
+
+	msgY := padding + titleMin.Height + lineGap
+	r.message.Move(fyne.NewPos(contentX, msgY))
+	r.message.Resize(fyne.NewSize(contentWidth, msgMin.Height))
+
+	// Timestamp bottom-right, clamped to content area
+	tsX := fyne.Max(contentX, size.Width-padding-tsMin.Width)
+	tsY := fyne.Max(msgY+msgMin.Height+lineGap, size.Height-padding-tsMin.Height)
+	r.timestamp.Move(fyne.NewPos(tsX, tsY))
 }
 
 func (r *toastRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(280, 60)
+	th := r.toast.Theme()
+	padding := th.Size(theme.SizeNameInnerPadding)
+	iconSize := th.Size(theme.SizeNameInlineIcon)
+	closeBtnSize := iconSize + th.Size(theme.SizeNamePadding)
+	contentGap := th.Size(theme.SizeNameInnerPadding)
+	lineGap := th.Size(theme.SizeNamePadding)
+
+	titleMin := r.title.MinSize()
+	msgMin := r.message.MinSize()
+	tsMin := r.timestamp.MinSize()
+
+	contentWidth := fyne.Max(fyne.Max(titleMin.Width, msgMin.Width), tsMin.Width)
+	minWidth := padding + iconSize + contentGap + contentWidth + contentGap + closeBtnSize + padding/2
+	textHeight := titleMin.Height + lineGap + msgMin.Height + lineGap + tsMin.Height
+	minHeight := fyne.Max(iconSize+2*padding, padding+textHeight+padding)
+
+	return fyne.NewSize(minWidth, minHeight)
 }
 
 func (r *toastRenderer) Refresh() {
