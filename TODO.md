@@ -945,7 +945,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 |----|------|----------|--------|-------|
 | COV-14 | `config/physics/physics.go` | 63.5% → 73.7% | ✅ Fixed | Added `physics_coverage_test.go` covering SaveToFile, LoadWithDefaults, Reload, GetNumLevels, unknown material, PsMicroCcm2 |
 | COV-15 | `module2-crossbar/pkg/crossbar/array.go` | 87.2% | ✅ | Added array operation tests (matrix programming, stats/config accessors, cycle aging/reset, bounds/error branches, GPU init fallback path) |
-| COV-16 | `module1-hysteresis/pkg/render/render.go` | 69.5% | ⏳ | Vulkan renderer; lifecycle tests exist |
+| COV-16 | `module1-hysteresis/pkg/render/render.go` | 99.8% | ✅ | Added lifecycle/config/error-path/headless-loop tests (`go test -cover ./module1-hysteresis/pkg/render`) |
 | COV-17 | `module6-eda/pkg/openlane` (package) | 39.8% | 🔄 | Config paths tested; runner requires Docker |
 | COV-18 | `module6-eda/pkg/validation` (package) | 27.0% | ⏳ | Circuit/layout image generation + DEF validation; requires external tools |
 | COV-19 | `shared/export/export.go` | ~25% | 🔄 | Non-GUI export paths tested; Fyne canvas capture untestable in unit tests |
