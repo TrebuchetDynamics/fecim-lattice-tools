@@ -305,7 +305,7 @@ type Renderer struct {
 	config  *Config
 	plot    *HysteresisPlot
 	cell    *CellDisplay
-levels  *LevelIndicator // 30-level indicator (conference-claim baseline)
+	levels  *LevelIndicator // 30-level indicator (conference-claim baseline)
 	running bool
 
 	// Callbacks
@@ -383,9 +383,13 @@ func (r *Renderer) Stop() {
 	r.running = false
 }
 
-// Cleanup releases all Vulkan resources.
+// Cleanup releases renderer state/resources.
 func (r *Renderer) Cleanup() {
-	// TODO: Release Vulkan resources
+	r.running = false
+	r.plot = nil
+	r.cell = nil
+	r.levels = nil
+	r.onUpdate = nil
 }
 
 // DrawAxes generates vertices for plot axes.

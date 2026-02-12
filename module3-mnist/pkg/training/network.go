@@ -165,70 +165,36 @@ func (n *MNISTNetwork) GetOutputProbabilities(input []float64) []float64 {
 	return n.Forward(input)
 }
 
-// TrainEpoch runs one epoch of training using stochastic gradient descent.
+// TrainEpoch runs one epoch of training using single-sample updates.
+// Foundation implementation: pluggable loss + optimizer (defaults to SGD).
 func (n *MNISTNetwork) TrainEpoch(images [][]float64, labels []int, learningRate float64) float64 {
-	totalLoss := 0.0
+	cfg := DefaultTrainingConfig()
+	cfg.LearningRate = learningRate
+	cfg.Optimizer = NewSGDOptimizer(learningRate)
+	return n.TrainEpochWithConfig(images, labels, cfg)
+}
 
-	// Shuffle indices
-	indices := rand.Perm(len(images))
-
-	for _, idx := range indices {
-		input := images[idx]
-		target := labels[idx]
-
-		// Forward pass - keep raw hidden activations for gradient
-		hiddenRaw, _ := n.layer1.MVM(input)
-		hidden := make([]float64, len(hiddenRaw))
-		for i := range hiddenRaw {
-			hidden[i] = (hiddenRaw[i]-0.5)*4.0 + n.biases1[i]
-			if hidden[i] < 0 {
-				hidden[i] = 0 // ReLU
-			}
-		}
-
-		output, _ := n.layer2.MVM(hidden)
-		for i := range output {
-			output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
-		}
-		probs := softmax(output)
-
-		// Compute cross-entropy loss
-		loss := -math.Log(probs[target] + 1e-10)
-		totalLoss += loss
-
-		// Backward pass
-		// Compute output gradients
-		outputGrad := make([]float64, 10)
-		for i := range outputGrad {
-			outputGrad[i] = probs[i]
-			if i == target {
-				outputGrad[i] -= 1.0
-			}
-		}
-
-		// IMPORTANT: Get layer2 weights BEFORE updating
-		layer2Weights := n.layer2.GetConductanceMatrix()
-
-		// Compute hidden gradients using ORIGINAL weights
-		hiddenGrad := make([]float64, n.hiddenSize)
-		for j := 0; j < n.hiddenSize; j++ {
-			for i := 0; i < 10; i++ {
-				effectiveWeight := (layer2Weights[i][j] - 0.5) * 4.0
-				hiddenGrad[j] += outputGrad[i] * effectiveWeight
-			}
-			// ReLU derivative
-			if hidden[j] <= 0 {
-				hiddenGrad[j] = 0
-			}
-		}
-
-		// Now update layer 2 weights and biases
-		n.updateLayer2(hidden, outputGrad, learningRate)
-
-		// Update layer 1 weights and biases
-		n.updateLayer1(input, hiddenGrad, learningRate)
+// TrainEpochWithConfig trains for one epoch with configurable loss/optimizer.
+func (n *MNISTNetwork) TrainEpochWithConfig(images [][]float64, labels []int, cfg TrainingConfig) float64 {
+	if len(images) == 0 {
+		return 0
+	}
+	if cfg.Loss == nil {
+		cfg.Loss = CrossEntropyLoss{}
+	}
+	if cfg.Optimizer == nil {
+		cfg.Optimizer = NewSGDOptimizer(cfg.LearningRate)
 	}
 
+	totalLoss := 0.0
+	indices := rand.Perm(len(images))
+	for _, idx := range indices {
+		cache := n.forwardWithCache(images[idx])
+		loss, outputGrad := cfg.Loss.Forward(cache.Logits, labels[idx])
+		grads := n.backward(cache, outputGrad)
+		n.applyGradients(grads, cfg)
+		totalLoss += loss
+	}
 	return totalLoss / float64(len(images))
 }
 

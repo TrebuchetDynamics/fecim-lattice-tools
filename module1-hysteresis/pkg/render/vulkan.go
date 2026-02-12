@@ -1409,56 +1409,98 @@ func (r *VulkanRenderer) Cleanup() {
 	if r.device != nil {
 		vk.DeviceWaitIdle(r.device)
 
-		// Destroy vertex buffer
 		if r.vertexBuffer != nil {
 			vk.DestroyBuffer(r.device, r.vertexBuffer, nil)
+			r.vertexBuffer = nil
 		}
 		if r.vertexBufferMemory != nil {
 			vk.FreeMemory(r.device, r.vertexBufferMemory, nil)
+			r.vertexBufferMemory = nil
 		}
 
-		vk.DestroySemaphore(r.device, r.imageAvailableSem, nil)
-		vk.DestroySemaphore(r.device, r.renderFinishedSem, nil)
-		vk.DestroyFence(r.device, r.inFlightFence, nil)
-
-		vk.DestroyCommandPool(r.device, r.commandPool, nil)
-
-		for _, fb := range r.framebuffers {
-			vk.DestroyFramebuffer(r.device, fb, nil)
+		if r.imageAvailableSem != nil {
+			vk.DestroySemaphore(r.device, r.imageAvailableSem, nil)
+			r.imageAvailableSem = nil
 		}
+		if r.renderFinishedSem != nil {
+			vk.DestroySemaphore(r.device, r.renderFinishedSem, nil)
+			r.renderFinishedSem = nil
+		}
+		if r.inFlightFence != nil {
+			vk.DestroyFence(r.device, r.inFlightFence, nil)
+			r.inFlightFence = nil
+		}
+
+		if r.commandPool != nil {
+			vk.DestroyCommandPool(r.device, r.commandPool, nil)
+			r.commandPool = nil
+		}
+		r.commandBuffers = nil
+
+		for i, fb := range r.framebuffers {
+			if fb != nil {
+				vk.DestroyFramebuffer(r.device, fb, nil)
+				r.framebuffers[i] = nil
+			}
+		}
+		r.framebuffers = nil
 
 		if r.pipeline != nil {
 			vk.DestroyPipeline(r.device, r.pipeline, nil)
+			r.pipeline = nil
 		}
 		if r.linePipeline != nil {
 			vk.DestroyPipeline(r.device, r.linePipeline, nil)
+			r.linePipeline = nil
 		}
-		vk.DestroyPipelineLayout(r.device, r.pipelineLayout, nil)
-		vk.DestroyRenderPass(r.device, r.renderPass, nil)
+		if r.pipelineLayout != nil {
+			vk.DestroyPipelineLayout(r.device, r.pipelineLayout, nil)
+			r.pipelineLayout = nil
+		}
+		if r.renderPass != nil {
+			vk.DestroyRenderPass(r.device, r.renderPass, nil)
+			r.renderPass = nil
+		}
 
-		// Destroy shader modules
 		if r.vertShaderModule != nil {
 			vk.DestroyShaderModule(r.device, r.vertShaderModule, nil)
+			r.vertShaderModule = nil
 		}
 		if r.fragShaderModule != nil {
 			vk.DestroyShaderModule(r.device, r.fragShaderModule, nil)
+			r.fragShaderModule = nil
 		}
 
-		for _, iv := range r.imageViews {
-			vk.DestroyImageView(r.device, iv, nil)
+		for i, iv := range r.imageViews {
+			if iv != nil {
+				vk.DestroyImageView(r.device, iv, nil)
+				r.imageViews[i] = nil
+			}
+		}
+		r.imageViews = nil
+		r.swapchainImages = nil
+
+		if r.swapchain != nil {
+			vk.DestroySwapchain(r.device, r.swapchain, nil)
+			r.swapchain = nil
 		}
 
-		vk.DestroySwapchain(r.device, r.swapchain, nil)
 		vk.DestroyDevice(r.device, nil)
+		r.device = nil
 	}
 
 	if r.instance != nil {
-		vk.DestroySurface(r.instance, r.surface, nil)
+		if r.surface != nil {
+			vk.DestroySurface(r.instance, r.surface, nil)
+			r.surface = nil
+		}
 		vk.DestroyInstance(r.instance, nil)
+		r.instance = nil
 	}
 
 	if r.window != nil {
 		r.window.Destroy()
+		r.window = nil
 	}
 	glfw.Terminate()
 }

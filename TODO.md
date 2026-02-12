@@ -641,7 +641,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | VK-1 | Implement actual Vulkan calls using go-vk or vgpu | `module1-hysteresis/pkg/render/render.go:303` | ⏳ | 16-24hr |
 | VK-2 | Implement actual Vulkan initialization | `module1-hysteresis/pkg/render/render.go:351` | ⏳ | 4-8hr |
 | VK-3 | Implement actual render loop | `module1-hysteresis/pkg/render/render.go:365` | ⏳ | 8-12hr |
-| VK-4 | Release Vulkan resources properly | `module1-hysteresis/pkg/render/render.go:388` | ⏳ | 1-2hr |
+| VK-4 | Release Vulkan resources properly | `module1-hysteresis/pkg/render/render.go:388` | ✅ | 1-2hr |
 
 ### Platform Extensions
 
@@ -661,7 +661,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | ARCH-1 | Module 6 (EDA): Complete placement algorithm | `docs/development/ARCHITECTURE.md` | ✅ (2026-02-11: added basic force-directed macro placer in `module6-eda/pkg/layout/placement_routing.go` with overlap resolution, site snapping, die-bounded placement + tests) | 8-16hr |
 | ARCH-2 | Multi-cell arrays in Module 1 | `docs/development/ARCHITECTURE.md` | ✅ | 4-8hr |
 | ARCH-3 | Advanced MVM sneak path current tracing visualization | `docs/development/ARCHITECTURE.md` | ✅ | 4-8hr |
-| ARCH-4 | Custom neural network training in Module 3 | `docs/development/ARCHITECTURE.md` | ⏳ | 8-16hr |
+| ARCH-4 | Custom neural network training in Module 3 | `docs/development/ARCHITECTURE.md` | ✅ | 8-16hr |
 | ARCH-5 | More chip peripheral types in Module 4 | `docs/development/ARCHITECTURE.md` | ✅ | 4-8hr |
 | ARCH-6 | Behavioral model export (SPICE) | `docs/development/ARCHITECTURE.md` | ✅ | 8-16hr |
 | ARCH-7 | EDA routing algorithm completion | `docs/development/ARCHITECTURE.md` | ✅ (2026-02-11: added basic Manhattan grid router in `module6-eda/pkg/layout/placement_routing.go` using BFS with macro obstacles; emits segmented met1/met2 paths + tests) | 8-16hr |
