@@ -479,6 +479,8 @@ func NewApp() *App {
 	// Refactoring: Initialize managers
 	calibManager := algo.NewCalibrationManager(numLevels)
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
+	writeController.MaxRetries = 10
+	writeController.ForceResetLimit = 3
 
 	uiApp := &App{
 		calibManager:            calibManager,
@@ -570,6 +572,8 @@ func NewAppWithMaterial(materialName string) *App {
 	// Refactoring: Initialize managers
 	calibManager := algo.NewCalibrationManager(numLevels)
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
+	writeController.MaxRetries = 10
+	writeController.ForceResetLimit = 3
 
 	uiApp := &App{
 		calibManager:            calibManager,

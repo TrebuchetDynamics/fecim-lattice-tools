@@ -1,28 +1,31 @@
 # Module 4 Operations: Observation Resolution Report
 **Date:** 2026-02-12
 **Source:** Juan's live testing feedback
-**Status:** In progress — 5 lanes active
+**Status:** In progress
+
+Reconciliation note (m1-reconcile lane): checked `git log --grep 'obs01|obs02|obs03|obs04|obs05|M4-OBS-0[1-5]' -i` after pull/rebase. No completed lane commits for obs01..obs05 were found yet (only planning commit `9ee3c55`).
 
 ## M4-OBS-01: Metric Semantics Table
-Status: Lane active (obs01-metrics)
+- Status: lane active (no completed obs01 commit in log)
+- Evidence: pending
 
 ## M4-OBS-02: Overlay Phantom Cell
-Status: Lane active (obs02-overlay)
+- Status: lane active (no completed obs02 commit in log)
+- Evidence: pending
 
 ## M4-OBS-03: Program Control Lock
-Status: Lane active (obs03-lock)
+- Status: lane active (no completed obs03 commit in log)
+- Evidence: pending
 
 ## M4-OBS-04: VC Legend
-Status: Lane active (obs04-legend)
+- Status: lane active (no completed obs04 commit in log)
+- Evidence: pending
 
 ## M4-OBS-05: 0T1R Behavior
-Status: Lane active (obs05-0t1r)
+- Status: lane active (no completed obs05 commit in log)
+- Evidence: pending
 
-## M4-OBS-06: ISPP Wording
-Status: Lane active (obs03-lock, combined)
-
-## M4-OBS-07: Dual-Number Disambiguation
-Status: Lane active (obs02-overlay, combined)
-
-## M4-OBS-08: Read Precision
-Status: Lane active (obs01-metrics, combined)
+## Combined follow-ons
+- M4-OBS-06 ISPP wording: lane active
+- M4-OBS-07 dual-number disambiguation: lane active
+- M4-OBS-08 read precision: lane active
