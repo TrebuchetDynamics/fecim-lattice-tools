@@ -194,48 +194,58 @@
 
 ### 3j. User Observations (from OBSERVATIONS.md)
 
-#### Module 1
+#### Module 1 — Hysteresis / ISPP
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-75 | PROGRAM STATE indicator never turns on | ✅ (2026-02-11: default waveform initialization now explicitly enters WRD mode so PROGRAM/VERIFY/RESULT indicator activates on startup) |
-| FOCUS-76 | Validate "Simulation vs Experiment" info labels (literature, simulated, etc.) | ✅ (2026-02-11: relabeled to Simulation vs Literature range, removed placeholder warning, corrected citation wording to literature envelope) |
-| FOCUS-77 | ISPP has trouble hitting targets (especially target 2) — need more automated testing coverage | ⏳ |
-| FOCUS-78 | Material selection should show more parameters and tag engine support: [P] = Preisach, [LK] = Landau-Khalatnikov, [P,LK] = both | ✅ (2026-02-11: material picker now includes Eng tag column + extra params εHF/β/γ/ρ and uses [P]/[LK]/[P,LK]) |
-| FOCUS-79 | All information displayed below State and Material sections needs validation | ✅ (2026-02-11: normalized units/labels; initialized Ec(T), Pr(T), squareness from active material instead of placeholders) |
+| FOCUS-75 | PROGRAM STATE indicator never activates — the ISPP controller state machine (APPLY/WAIT/VERIFY) should reflect its current phase in the GUI, but the state label stays idle | ✅ (2026-02-11: default waveform initialization now explicitly enters WRD mode so PROGRAM/VERIFY/RESULT indicator activates on startup) |
+| FOCUS-76 | Validate provenance labels — each displayed parameter must be tagged as literature-sourced, simulation-fitted, or assumed; "Simulation vs Experiment" wording was ambiguous | ✅ (2026-02-11: relabeled to Simulation vs Literature range, removed placeholder warning, corrected citation wording to literature envelope) |
+| FOCUS-77 | ISPP convergence failures on mid-range targets (especially target 2) — binary search bounds collapse or guard-sign overshoot causes the controller to stall; needs expanded regression coverage across all material presets | ⏳ |
+| FOCUS-78 | Material picker should display key physics parameters (Pr, Ec, α/β/γ) and tag solver compatibility: [P] = Preisach only, [LK] = Landau-Khalatnikov only, [P,LK] = both engines | ✅ (2026-02-11: material picker now includes Eng tag column + extra params εHF/β/γ/ρ and uses [P]/[LK]/[P,LK]) |
+| FOCUS-79 | Validate all GUI fields below State and Material panels — coercive field, remanent polarization, viscosity, depolarization factor, and derived quantities must match active material preset values | ✅ (2026-02-11: normalized units/labels; initialized Ec(T), Pr(T), squareness from active material instead of placeholders) |
 
-#### Module 2
-
-| ID | Task | Status |
-|----|------|--------|
-| FOCUS-80 | Screenshot opens a modal and is intrusive — use non-blocking toast or save silently | ✅ (2026-02-11: screenshot capture now saves silently; removed intrusive success popup behavior) |
-
-#### Module 4
+#### Module 2 — Crossbar
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-81 | All cells show V/2 and it's unclear why — needs explanation or fix | ⏳ |
-| FOCUS-82 | Electrical Current value appears above the cell instead of inside it — looks like it belongs to another cell | ⏳ |
-| FOCUS-83 | TIA cell number has no units displayed | ⏳ |
-| FOCUS-84 | ADC cell number has no units displayed | ⏳ |
-| FOCUS-85 | DAC cell number has no units displayed | ⏳ |
-| FOCUS-86 | Preset, Rf, ADC Vmin/Vmax don't fit layout — also needs Info button | ⏳ |
-| FOCUS-87 | Zoom slider is too small | ⏳ |
-| FOCUS-88 | In READ mode, MVM and Program Cell buttons should be hidden (confusing) | ⏳ |
-| FOCUS-89 | In WRITE mode, MVM button should be hidden (confusing) | ⏳ |
-| FOCUS-90 | Validation tools must be installed (missing dependency check) | ⏳ |
-| FOCUS-91 | DAC needs min/max voltage input; digital 0 should map to negative voltage; slider range (1.0V–2.50V) is wrong — must learn actual min/max from hysteresis module per material and reuse code | ⏳ |
-| FOCUS-92 | View dropdown is unnecessary — only OPERATIONS view will exist | ⏳ |
-| FOCUS-93 | DAC only shows positive values, but TIA shows negative — inconsistency | ⏳ |
-| FOCUS-94 | Overlay dropdown appears to do nothing | ⏳ |
-| FOCUS-95 | Random inputs don't always update DAC after changing array size | ⏳ |
-| FOCUS-96 | Export crashes the app | ⏳ |
-| FOCUS-97 | ADC shows all 0s | ⏳ |
-| FOCUS-98 | Cells show nV even in 2T1R architecture — should show 0 | ⏳ |
-| FOCUS-99 | On READ, unselected cells look fuzzy — undesirable visual effect | ⏳ |
-| FOCUS-100 | PROGRAM CELLS must affect involved cells by their hysteresis profile and circuit | ⏳ |
-| FOCUS-101 | PROGRAM CELL button should be disabled while programming is in progress | ⏳ |
-| FOCUS-102 | Refactor Module 4 for easier maintenance | ⏳ |
+| FOCUS-80 | Screenshot capture opens a blocking modal dialog — replace with non-blocking toast notification or silent file save to `--screenshot-dir` | ✅ (2026-02-11: screenshot capture now saves silently; removed intrusive success popup behavior) |
+
+#### Module 4 — Peripheral Circuits
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-81 | Half-select V/2 shown on all cells — in a 1T1R/passive crossbar, unselected WL/BL lines sit at V/2 to minimize disturb, but the overlay should only appear on unselected rows/columns during WRITE, not universally | ⏳ |
+| FOCUS-82 | Cell current annotation misaligned — the per-cell read current (I = G × V_applied) label renders above its cell, visually associating it with the wrong row; anchor label to cell center | ⏳ |
+| FOCUS-83 | TIA output missing units — transimpedance amplifier output should show V (volts) since V_out = I_cell × R_f | ⏳ |
+| FOCUS-84 | ADC output missing units — ADC digital code is dimensionless but should display "LSB" or "code" to distinguish from analog values | ⏳ |
+| FOCUS-85 | DAC output missing units — DAC analog output should show V (volts), representing the converted digital-to-analog voltage applied to the wordline | ⏳ |
+| FOCUS-86 | Sense-chain controls overflow layout — measurement Preset, TIA feedback resistance R_f, ADC reference V_min/V_max need wider container; add Info tooltip explaining each parameter's role in the read chain (DAC → array → TIA → ADC) | ⏳ |
+| FOCUS-87 | Array zoom slider too small to control precisely — increase track length or add +/− step buttons | ⏳ |
+| FOCUS-88 | READ mode should hide MVM and Program Cell buttons — READ performs single-cell sense (V_read → I → TIA → ADC); MVM and WRITE/Program are separate operations and showing them is misleading | ⏳ |
+| FOCUS-89 | WRITE mode should hide MVM button — WRITE applies ISPP pulses to program cell conductance; MVM is a READ-path bulk operation (matrix-vector multiply) not relevant during programming | ⏳ |
+| FOCUS-90 | Validation tools dependency check missing — app should verify required external tools are present at startup and warn if absent | ⏳ |
+| FOCUS-91 | DAC voltage range incorrect — slider shows 1.0V–2.50V but ferroelectric WRITE requires bipolar pulses (−V_c to +V_c). DAC code 0 should map to −V_max (erase polarity). Range must be derived per-material from hysteresis coercive voltage (V_c = E_c × d_FE) | ⏳ |
+| FOCUS-92 | Remove View dropdown — only the OPERATIONS view will be used; eliminate dead UI selector | ⏳ |
+| FOCUS-93 | DAC/TIA sign inconsistency — DAC shows only positive voltages while TIA shows negative. Bipolar WRITE requires both polarities from DAC; TIA output sign depends on current direction (V_out = −I_cell × R_f for inverting topology) | ⏳ |
+| FOCUS-94 | Overlay dropdown has no visible effect — overlay rendering (half-select voltage map, sneak-path current, disturb indicators) is either not wired to the canvas or draw calls are no-ops | ⏳ |
+| FOCUS-95 | Random input vector does not update DAC codes after array resize — DAC input buffer length must match new row/column count; stale buffer causes dimension mismatch | ⏳ |
+| FOCUS-96 | Export crashes the app — likely nil pointer or uninitialized peripheral state during serialization; needs guarded error handling | ⏳ |
+| FOCUS-97 | ADC output shows all zeros — quantization path (V_TIA → clamp to [V_min, V_max] → map to N-bit code) may not receive valid TIA output, or ADC reference range is misconfigured so all inputs fall below V_min | ⏳ |
+| FOCUS-98 | Cells display residual nanovolts in 2T1R architecture — when the selector transistor is OFF the cell node should be fully isolated (0 V); residual nV is floating-point noise; clamp below threshold (e.g. < 1 pV → 0) | ⏳ |
+| FOCUS-99 | Unselected cells in READ mode render with fuzzy/blurred overlay — replace with cleaner visual (dimmed opacity or diagonal hatching) to distinguish selected vs unselected without obscuring conductance state | ⏳ |
+| FOCUS-100 | PROGRAM CELLS must use per-cell hysteresis — each cell's conductance update during ISPP should follow its own P-E curve (material-dependent E_c, fatigue, retention) and account for array-level coupling (IR drop, half-select disturb on neighbors) | ⏳ |
+| FOCUS-101 | Disable PROGRAM CELL button during active ISPP sequence — the controller state machine is non-reentrant; a second trigger mid-pulse would corrupt binary-search bounds and verification state | ⏳ |
+| FOCUS-102 | Refactor Module 4 for maintainability — the unified tab file is large; extract sense-chain, ISPP control, overlay rendering, and array display into focused sub-packages | ⏳ |
+
+#### Module 1 — Equation Widgets (from equation-hysteresis-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-103 | LaTeX→SVG pipeline: regenerate Frankenstein (L-K) and Preisach SVGs from `.tex` source via `cmd/latex-svg`; SVGs are the single source of truth for equation rendering in Fyne | ⏳ |
+| FOCUS-104 | Frankenstein hotspot alignment: verify interactive hotspot regions in `frankestein.hotspots.json` align with visible SVG terms; tap/click must select the correct L-K term and update the detail panel | ⏳ |
+| FOCUS-105 | Equation SVG rendering quality: ensure SVGs render crisply in Fyne without pixelated raster fallback; keep SVGs lean (vector-only, no embedded bitmaps) | ⏳ |
+| FOCUS-106 | Equation widget performance: SVG parsing must be cached (one-time load), not re-parsed per frame; debug overlay (`FECIM_EQUATION_DEBUG=1`) must be opt-in only | ⏳ |
+| FOCUS-107 | Equation fallback: if SVG file is missing at runtime, widget must gracefully fall back to text-based equation layout instead of blank or crash | ⏳ |
 
 ### 4. Scope Control
 
@@ -650,14 +660,14 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **83** | **53** | **30** |
+| **Current Focus** | **88** | **58** | **30** |
 | 🔴 Critical | 8 | 8 | 0 |
 | 🟠 High | 52 | 35 | 17 |
 | 🟡 Medium | 36 | 34 | 2 |
 | 🟢 Low | 22 | 6 | 16 |
-| **Total** | **201** | **136** | **65** |
+| **Total** | **206** | **141** | **65** |
 
-*Note: "Current Focus" items (FOCUS-01 through FOCUS-102) are the active work direction. Module 5 is deferred.*
+*Note: "Current Focus" items (FOCUS-01 through FOCUS-107) are the active work direction. Module 5 is deferred.*
 
 ---
 
