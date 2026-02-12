@@ -223,12 +223,12 @@
 | FOCUS-87 | Array zoom slider too small to control precisely — increase track length or add +/− step buttons | ✅ |
 | FOCUS-88 | READ mode should hide MVM and Program Cell buttons — READ performs single-cell sense (V_read → I → TIA → ADC); MVM and WRITE/Program are separate operations and showing them is misleading | ✅ |
 | FOCUS-89 | WRITE mode should hide MVM button — WRITE applies ISPP pulses to program cell conductance; MVM is a READ-path bulk operation (matrix-vector multiply) not relevant during programming | ✅ |
-| FOCUS-90 | Validation tools dependency check missing — app should verify required external tools are present at startup and warn if absent | ⏳ |
-| FOCUS-91 | DAC voltage range incorrect — slider shows 1.0V–2.50V but ferroelectric WRITE requires bipolar pulses (−V_c to +V_c). DAC code 0 should map to −V_max (erase polarity). Range must be derived per-material from hysteresis coercive voltage (V_c = E_c × d_FE) | ⏳ |
-| FOCUS-92 | Remove View dropdown — only the OPERATIONS view will be used; eliminate dead UI selector | ⏳ |
-| FOCUS-93 | DAC/TIA sign inconsistency — DAC shows only positive voltages while TIA shows negative. Bipolar WRITE requires both polarities from DAC; TIA output sign depends on current direction (V_out = −I_cell × R_f for inverting topology) | ⏳ |
-| FOCUS-94 | Overlay dropdown has no visible effect — overlay rendering (half-select voltage map, sneak-path current, disturb indicators) is either not wired to the canvas or draw calls are no-ops | ⏳ |
-| FOCUS-95 | Random input vector does not update DAC codes after array resize — DAC input buffer length must match new row/column count; stale buffer causes dimension mismatch | ⏳ |
+| FOCUS-90 | Validation tools dependency check missing — app should verify required external tools are present at startup and warn if absent | ✅ |
+| FOCUS-91 | DAC voltage range incorrect — slider shows 1.0V–2.50V but ferroelectric WRITE requires bipolar pulses (−V_c to +V_c). DAC code 0 should map to −V_max (erase polarity). Range must be derived per-material from hysteresis coercive voltage (V_c = E_c × d_FE) | ✅ |
+| FOCUS-92 | Remove View dropdown — only the OPERATIONS view will be used; eliminate dead UI selector | ✅ |
+| FOCUS-93 | DAC/TIA sign inconsistency — DAC shows only positive voltages while TIA shows negative. Bipolar WRITE requires both polarities from DAC; TIA output sign depends on current direction (V_out = −I_cell × R_f for inverting topology) | ✅ |
+| FOCUS-94 | Overlay dropdown has no visible effect — overlay rendering (half-select voltage map, sneak-path current, disturb indicators) is either not wired to the canvas or draw calls are no-ops | ✅ |
+| FOCUS-95 | Random input vector does not update DAC codes after array resize — DAC input buffer length must match new row/column count; stale buffer causes dimension mismatch | ✅ |
 | FOCUS-96 | Export crashes the app — likely nil pointer or uninitialized peripheral state during serialization; needs guarded error handling | ✅ |
 | FOCUS-97 | ADC output shows all zeros — quantization path (V_TIA → clamp to [V_min, V_max] → map to N-bit code) may not receive valid TIA output, or ADC reference range is misconfigured so all inputs fall below V_min | ✅ |
 | FOCUS-98 | Cells display residual nanovolts in 2T1R architecture — when the selector transistor is OFF the cell node should be fully isolated (0 V); residual nV is floating-point noise; clamp below threshold (e.g. < 1 pV → 0) | ✅ |
@@ -237,6 +237,14 @@
 | FOCUS-101 | Disable PROGRAM CELL button during active ISPP sequence — the controller state machine is non-reentrant; a second trigger mid-pulse would corrupt binary-search bounds and verification state | ✅ |
 | FOCUS-102 | Refactor Module 4 for maintainability — the unified tab file is large; extract sense-chain, ISPP control, overlay rendering, and array display into focused sub-packages | ✅ |
 
+**Evidence (FOCUS-90..95, 2026-02-11):**
+- `module4-circuits/pkg/gui/device_state.go`: write range is bipolar and derived from material coercive-voltage scaling.
+- `module4-circuits/pkg/gui/app.go`: dead `View` selector removed; OPERATIONS-only layout.
+- `module4-circuits/pkg/gui/tab_unified.go`: resize path preserves operation-mode/input-vector wiring so random input updates DAC codes after array resize.
+- `module4-circuits/pkg/gui/tab_unified_drawing.go` + `module4-circuits/pkg/gui/unified_overlay_test.go`: overlay selector is wired to READ canvas rendering.
+- Added focused regressions in `module4-circuits/pkg/gui/focus_90_95_test.go`:
+  - `TestFocus91_WriteRangeIsBipolarFromMaterialVc`
+  - `TestFocus95_RandomInputVectorAppliesAfterResize`
 
 #### Module 1 — Equation Widgets (from equation-hysteresis-prompt.md)
 

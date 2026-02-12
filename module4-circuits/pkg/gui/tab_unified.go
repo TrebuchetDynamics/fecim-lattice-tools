@@ -326,6 +326,16 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		})
 	}
 
+	zoomOutBtn := widget.NewButton("−", func() {
+		ca.zoomSlider.SetValue(ca.zoomSlider.Value - ca.zoomSlider.Step)
+	})
+	zoomOutBtn.Importance = widget.LowImportance
+	zoomInBtn := widget.NewButton("+", func() {
+		ca.zoomSlider.SetValue(ca.zoomSlider.Value + ca.zoomSlider.Step)
+	})
+	zoomInBtn.Importance = widget.LowImportance
+	zoomSliderWrap := container.NewGridWrap(fyne.NewSize(220, 36), ca.zoomSlider)
+
 	ca.actionFitBtn = widget.NewButton("Fit", func() {
 		logAction("button_zoom_fit")
 		ca.zoomSlider.SetValue(1.0)
@@ -362,7 +372,9 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.readOverlaySelect,
 		widget.NewSeparator(),
 		widget.NewLabel("Zoom:"),
-		ca.zoomSlider,
+		zoomOutBtn,
+		zoomSliderWrap,
+		zoomInBtn,
 		ca.zoomLabel,
 		ca.actionFitBtn,
 		layout.NewSpacer(),
