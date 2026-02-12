@@ -266,7 +266,7 @@
 | G05 | Headless LK regression suite: same targets + overshoot/pulse stats | Shared | ✅ | Done (`module1-hysteresis/pkg/controller/headless_regression_test.go`, `validation/testdata/ispp_regression/lk_wrd_ispp_regression.json`, `scripts/run_headless_ispp_regressions.sh`) |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ✅ | 30-60m |
 | G06b | Verification matrix: Preisach + LK for each material → HI/MID/LO | Testing | ✅ | 1-2hr |
-| G04b | One-source-of-truth ISPP write engine: refactor duplicates to `shared/physics` | `shared/physics` | ⏳ | 4-12hr |
+| G04b | One-source-of-truth ISPP write engine: refactor duplicates to `shared/physics` | `shared/physics` | ✅ | Done (`shared/physics/ispp.go` now hosts both Adaptive + level-based ISPP APIs; module4 callers removed manual fallback math and lazily require shared calculator) |
 | G04c | Shared ISPP migration plan: define API, adapters, deprecation plan | Architecture | ✅ | Done (`docs/development/ISPP_MIGRATION.md`) |
 
 **Evidence (G04c, 2026-02-11):**

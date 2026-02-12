@@ -1825,8 +1825,7 @@ const (
 
 // ISPP constants
 const (
-	ISPPMaxIterations   = 40 // More pulses for finer convergence (matched to shared/physics)
-	ISPPToleranceLevels = 0  // Exact match required
+	ISPPMaxIterations = 40 // More pulses for finer convergence (matched to shared/physics)
 )
 
 // ISPPState holds the state of an active ISPP (Incremental Step Pulse Programming) loop
@@ -1884,13 +1883,8 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 	// Calculate starting voltage using shared calculator
 	ascending := localDirection == DirectionAscending
 	calibratedVoltage := ds.getVoltageForLevelInternal(targetLevel, ascending)
-	startVoltage := calibratedVoltage
-	if ds.isppCalc != nil {
-		startVoltage = ds.isppCalc.CalculateStartVoltage(calibratedVoltage)
-	} else {
-		// Fallback if calculator not initialized
-		startVoltage = calibratedVoltage * 0.7
-	}
+	isppCalc := ds.ensureISPPCalculatorLocked()
+	startVoltage := isppCalc.CalculateStartVoltage(calibratedVoltage)
 
 	ds.isppState.Active = true
 	ds.isppState.Iteration = 0
@@ -1931,31 +1925,13 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 	}
 
 	// Use shared ISPP calculator to check result
-	var result sharedphysics.ISPPResult
-	if ds.isppCalc != nil {
-		result = ds.isppCalc.CheckResult(
-			ds.isppState.CurrentLevel,
-			ds.isppState.TargetLevel,
-			sharedDirection,
-			ds.isppState.Iteration,
-		)
-	} else {
-		// Fallback to manual checks if calculator not initialized
-		diff := ds.isppState.TargetLevel - ds.isppState.CurrentLevel
-		if diff < 0 {
-			diff = -diff
-		}
-		if diff <= ISPPToleranceLevels {
-			result = sharedphysics.ISPPSuccess
-		} else if (ds.isppState.Direction == DirectionAscending && ds.isppState.CurrentLevel > ds.isppState.TargetLevel) ||
-			(ds.isppState.Direction == DirectionDescending && ds.isppState.CurrentLevel < ds.isppState.TargetLevel) {
-			result = sharedphysics.ISPPOvershoot
-		} else if ds.isppState.Iteration >= ds.isppState.MaxIter {
-			result = sharedphysics.ISPPMaxPulses
-		} else {
-			result = sharedphysics.ISPPContinue
-		}
-	}
+	isppCalc := ds.ensureISPPCalculatorLocked()
+	result := isppCalc.CheckResult(
+		ds.isppState.CurrentLevel,
+		ds.isppState.TargetLevel,
+		sharedDirection,
+		ds.isppState.Iteration,
+	)
 
 	// Map shared result to local result type and update state
 	switch result {
@@ -1977,23 +1953,7 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 
 	case sharedphysics.ISPPContinue:
 		// Calculate next voltage using shared calculator
-		if ds.isppCalc != nil {
-			ds.isppState.Voltage = ds.isppCalc.CalculateNextVoltage(ds.isppState.Voltage, sharedDirection)
-		} else {
-			// Fallback to manual voltage adjustment
-			voltageStep := (ds.writeRange.Max - ds.writeRange.Min) / 80.0 // ~1.25% of range per step
-			if ds.isppState.Direction == DirectionAscending {
-				ds.isppState.Voltage += voltageStep
-				if ds.isppState.Voltage > ds.writeRange.Max {
-					ds.isppState.Voltage = ds.writeRange.Max
-				}
-			} else {
-				ds.isppState.Voltage -= voltageStep
-				if ds.isppState.Voltage < ds.writeRange.Min {
-					ds.isppState.Voltage = ds.writeRange.Min
-				}
-			}
-		}
+		ds.isppState.Voltage = isppCalc.CalculateNextVoltage(ds.isppState.Voltage, sharedDirection)
 		return ISPPResultContinue
 
 	default:
@@ -2058,6 +2018,26 @@ func (ds *DeviceState) CancelISPP() {
 	ds.isppState.Active = false
 	ds.isppState.Complete = true
 	ds.isppState.Success = false
+}
+
+func (ds *DeviceState) ensureISPPCalculatorLocked() *sharedphysics.ISPPCalculator {
+	if ds.isppCalc != nil {
+		return ds.isppCalc
+	}
+	ec := 1.0
+	numLevels := ds.writeRange.NumLevels
+	if ds.material != nil {
+		ec = ds.material.CoerciveVoltage()
+		numLevels = ds.material.GetNumLevels()
+	}
+	if ec <= 0 {
+		ec = 1.0
+	}
+	if numLevels < 2 {
+		numLevels = 30
+	}
+	ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
+	return ds.isppCalc
 }
 
 func (ds *DeviceState) beginISPPTracking(row, col, targetLevel, currentLevel int, direction HysteresisDirection, maxIter int) {
