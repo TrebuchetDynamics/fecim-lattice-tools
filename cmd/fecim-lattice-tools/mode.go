@@ -196,6 +196,7 @@ func runHysteresisMode(engine string) error {
 	perfDtMax := 0.0
 	perfDtSum := 0.0
 	perfStepTime := time.Duration(0)
+	perfWallTime := time.Duration(0)
 	perfDtMinHits := 0
 	perfDtMinThreshold := 0.0
 	sweepLabel := "LK_SWEEP"
@@ -212,6 +213,7 @@ func runHysteresisMode(engine string) error {
 		perfDtMax = 0
 		perfDtSum = 0
 		perfStepTime = 0
+		perfWallTime = 0
 		perfDtMinHits = 0
 	}
 
@@ -242,13 +244,24 @@ func runHysteresisMode(engine string) error {
 		if perfSteps > 0 {
 			minShare = float64(perfDtMinHits) / float64(perfSteps) * 100.0
 		}
-		log.Info("%s_PERF %s: steps=%d dtMin=%.3e dtMean=%.3e dtMax=%.3e dtMinHits=%d (%.1f%%) solverMs=%.2f",
-			strings.ToUpper(engine), label, perfSteps, perfDtMin, dtMean, perfDtMax, perfDtMinHits, minShare, perfStepTime.Seconds()*1000.0)
+		solverMs := perfStepTime.Seconds() * 1000.0
+		wallMs := perfWallTime.Seconds() * 1000.0
+		solverShare := 0.0
+		if wallMs > 0 {
+			solverShare = (solverMs / wallMs) * 100.0
+		}
+		stepNs := 0.0
+		if perfSteps > 0 {
+			stepNs = perfStepTime.Seconds() * 1e9 / float64(perfSteps)
+		}
+		log.Info("%s_PERF %s: steps=%d dtMin=%.3e dtMean=%.3e dtMax=%.3e dtMinHits=%d (%.1f%%) solverMs=%.2f wallMs=%.2f solverShare=%.1f%% stepNs=%.1f",
+			strings.ToUpper(engine), label, perfSteps, perfDtMin, dtMean, perfDtMax, perfDtMinHits, minShare, solverMs, wallMs, solverShare, stepNs)
 	}
 
 	log.Info("Hysteresis diagnostic sweep starting")
 	resetPerf()
 	perfDtMinThreshold = 0
+	sweepStartWall := time.Now()
 	for _, E := range []float64{-Emax, -0.5 * Emax, 0, 0.5 * Emax, Emax} {
 		if perfEnabled {
 			stepStart := time.Now()
@@ -263,6 +276,7 @@ func runHysteresisMode(engine string) error {
 		}
 		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
 	}
+	perfWallTime = time.Since(sweepStartWall)
 	logPerf("SWEEP")
 
 	log.Info("ISPP write-verify sequence starting")
@@ -319,6 +333,7 @@ func runHysteresisMode(engine string) error {
 	if dtMax <= 0 {
 		dtMax = dtNominal
 	}
+	log.Info("LK_DIAG timing: pulseDuration=%.3e s stepsPerPulse=%d dtNominal=%.3e s dtMin=%.3e s dtMax=%.3e s", pulseDuration, stepsPerPulse, dtNominal, dtMin, dtMax)
 
 	gWindow := gmax - gmin
 	// Test targets span near-saturation + low + mid-range.
@@ -466,6 +481,7 @@ func runHysteresisMode(engine string) error {
 	for i, step := range steps {
 		resetPerf()
 		perfDtMinThreshold = dtMin
+		targetWallStart := time.Now()
 		_, targetLevel := headlessLevelFromConductance(step.targetG, gmin, gmax, numLevels)
 		currentField := 0.0
 		currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
@@ -697,6 +713,7 @@ func runHysteresisMode(engine string) error {
 				return timeoutErr
 			}
 		}
+		perfWallTime = time.Since(targetWallStart)
 		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 
 		// Use the captured success state if available, otherwise use relaxed state

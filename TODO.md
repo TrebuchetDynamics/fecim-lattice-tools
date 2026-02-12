@@ -112,11 +112,26 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-49 | L-K performance: quantify why slow — dtNominal too small, 21k-221k solver steps/target, math-bound | ⏳ |
-| FOCUS-50 | Frankenstein equation fidelity: verify all terms/signs/units match `hysteresis-gemini.md` formulation | ⏳ |
+| FOCUS-49 | L-K performance: quantify why slow — dtNominal too small, 21k-221k solver steps/target, math-bound | ✅ (2026-02-11: added headless LK diagnostics: dtNominal/dtMin/dtMax + per-target wallMs, solverShare, stepNs; profiled RK4 path with CPU pprof) |
+| FOCUS-50 | Frankenstein equation fidelity: verify all terms/signs/units match `hysteresis-gemini.md` formulation | ✅ (2026-02-11: equation identity + units test added for `rho_eff*dP/dt = E_applied - k_dep·P - (2αP+4βP^3+6γP^5) + ξ(t)`) |
 | FOCUS-51 | Target/marker parity: GUI yellow target must match active controller target (no early jump to next) | ⏳ |
 | FOCUS-52 | Headless Preisach WRD/ISPP parity with GUI — run headless to debug target/marker mismatches | ⏳ |
 | FOCUS-53 | Physics equations UI: keep labels/links coherent across L-K, Preisach, and ISPP tabs | ✅ (2026-02-11: ISPP equation info tabs now align naming with L-K/Preisach: `Code References`, `Assumptions`, `References`) |
+
+**Evidence (FOCUS-49/50, 2026-02-11):**
+- `cmd/fecim-lattice-tools/mode.go`:
+  - Added `LK_DIAG timing` log with `pulseDuration`, `stepsPerPulse`, `dtNominal`, `dtMin`, `dtMax`.
+  - Extended `<ENGINE>_PERF` logs with `wallMs`, `solverShare`, and `stepNs` to quantify whether LK runtime is math-bound per target.
+- `shared/physics/landau_equation_test.go`:
+  - Added `TestLKSolver_FrankensteinEquation_IdentityAndUnits` validating exact algebra/signs against docs formulation:
+    `rho_eff*dP/dt = E_applied - k_dep*P - (2αP + 4βP^3 + 6γP^5) + noise`.
+  - Added unit check for `rho_eff = rho + (R_series*A/d)`.
+- Performance profiling evidence (solver kernel):
+  - `go test ./shared/physics -run '^$' -bench BenchmarkLKSolverStep -benchmem -count=5`
+    - `BenchmarkLKSolverStep`: ~63–65 ns/op, 0 allocs
+    - `BenchmarkLKSolverStep_StiffImplicitPath`: ~64–67 ns/op, 0 allocs
+  - `go tool pprof -top /tmp/lk_cpu.prof` from benchmark profile:
+    - `math.archExp` 66.78% flat, `checkIncubation` 88.26% cumulative → compute/math dominated (NLS exponential path), not allocation-bound.
 
 ### 3f. Module 2 Crossbar (from module2-prompt.md)
 
@@ -454,10 +469,28 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | PERIPH-1 | Export functionality (diagrams/data) | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
-| PERIPH-2 | Temperature-dependent INL/DNL model | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 2-4hr |
-| PERIPH-3 | Fast/slow/typical process corner analysis | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 4-8hr |
-| PERIPH-4 | Write-verify animation (iterative cycle) | `docs/peripheral-circuits/circuits.operations.md` | ⏳ | 2-4hr |
+| PERIPH-2 | Temperature-dependent INL/DNL model | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
+| PERIPH-3 | Fast/slow/typical process corner analysis | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 4-8hr |
+| PERIPH-4 | Write-verify animation (iterative cycle) | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
 | PERIPH-5 | Sneak path quantification display | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 1-2hr |
+
+**Evidence (PERIPH-2 / PERIPH-3 / PERIPH-4, 2026-02-11):**
+- Added temperature + process-corner PVT model for INL/DNL, with new conditioned converters:
+  - `shared/peripherals/pvt.go`
+  - `DAC.ConvertWithCondition(...)`, `ADC.ConvertWithCondition(...)`
+  - `EffectiveINLDNL(...)` scaling model (temperature and fast/typical/slow corners).
+- Added process-corner analysis API for typical/fast/slow summaries:
+  - `shared/peripherals/analysis.go`
+  - `AnalyzeINLDNLAtCondition(...)`, `AnalyzeProcessCorners(...)`.
+- Integrated peripheral PVT into GUI device-state DAC nonlinearity path:
+  - `module4-circuits/pkg/gui/device_state.go`
+  - New `SetPeripheralPVT(...)` and `GetPeripheralPVT(...)`.
+- Added iterative write-verify cycle visualization trail in ISPP status text:
+  - `module4-circuits/pkg/gui/device_state.go` (`ISPPState.History` tracking)
+  - `module4-circuits/pkg/gui/tab_unified_voltage.go` ("cycle Lx->Ly->...").
+- Added tests:
+  - `shared/peripherals/pvt_test.go`
+  - `module4-circuits/pkg/gui/device_state_pvt_test.go`
 
 ### Accessibility (from audit)
 

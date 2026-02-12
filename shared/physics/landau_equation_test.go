@@ -15,7 +15,7 @@ func TestLKSolver_dPdT_EquationSignAndTerms_TableDriven(t *testing.T) {
 		rhoEff float64
 	}{
 		{
-			name: "reference case with positive depolarization penalty",
+			name:   "reference case with positive depolarization penalty",
 			solver: LKSolver{Alpha: 1.2, Beta: -0.5, Gamma: 0.25, K_dep: 2.0},
 			P:      0.3,
 			E:      5.0,
@@ -23,7 +23,7 @@ func TestLKSolver_dPdT_EquationSignAndTerms_TableDriven(t *testing.T) {
 			rhoEff: 1.5,
 		},
 		{
-			name: "negative polarization increases effective field via -k_dep*P",
+			name:   "negative polarization increases effective field via -k_dep*P",
 			solver: LKSolver{Alpha: 0.8, Beta: -0.2, Gamma: 0.05, K_dep: 3.0},
 			P:      -0.4,
 			E:      2.0,
@@ -31,7 +31,7 @@ func TestLKSolver_dPdT_EquationSignAndTerms_TableDriven(t *testing.T) {
 			rhoEff: 0.9,
 		},
 		{
-			name: "zero depolarization reduces to classic LK drive",
+			name:   "zero depolarization reduces to classic LK drive",
 			solver: LKSolver{Alpha: 1.0, Beta: -0.3, Gamma: 0.07, K_dep: 0.0},
 			P:      0.2,
 			E:      -1.0,
@@ -120,6 +120,39 @@ func TestLKSolver_effectiveRho_SignAndUnits_TableDriven(t *testing.T) {
 			t.Fatalf("unit scaling mismatch: got delta %.12e, expected %.12e", actualDelta, expectedDelta)
 		}
 	})
+}
+
+func TestLKSolver_FrankensteinEquation_IdentityAndUnits(t *testing.T) {
+	s := LKSolver{
+		Alpha:                 -1.0e8, // V·m/C
+		Beta:                  -2.16e8,
+		Gamma:                 1.653e10,
+		K_dep:                 2.5e8,
+		Rho:                   0.05,
+		UseEffectiveViscosity: true,
+		SeriesResistance:      50.0,
+		Area:                  45e-9 * 45e-9,
+		Thickness:             10e-9,
+	}
+	P := 0.18
+	Eapplied := 1.2e8
+	noise := 2.5e5
+	rhoEff := s.effectiveRho()
+
+	got := s.dPdT(0, P, Eapplied, noise, rhoEff)
+
+	landauGrad := (2 * s.Alpha * P) + (4 * s.Beta * math.Pow(P, 3)) + (6 * s.Gamma * math.Pow(P, 5))
+	rhs := Eapplied - s.K_dep*P - landauGrad + noise
+	lhs := rhoEff * got
+
+	if math.Abs(lhs-rhs) > 1e-6*math.Max(1.0, math.Abs(rhs)) {
+		t.Fatalf("Frankenstein identity mismatch: rho_eff*dPdt=%.9e rhs=%.9e", lhs, rhs)
+	}
+
+	seriesTerm := s.SeriesResistance * s.Area / s.Thickness
+	if math.Abs((rhoEff-s.Rho)-seriesTerm) > 1e-18 {
+		t.Fatalf("rho_eff units mismatch: got delta %.12e expected %.12e", rhoEff-s.Rho, seriesTerm)
+	}
 }
 
 func TestLKSolver_SetState_Clamp(t *testing.T) {
