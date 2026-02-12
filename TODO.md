@@ -328,7 +328,7 @@
 |----|------|--------|--------|------|
 | M6-D1 | Sync docs with actual exports (JSON/CSV/SPICE/Verilog/DEF/LEF/Liberty/SVG) | `docs/.../module6-eda/` | ✅ | Done (`module6-eda/README.md`, `docs/documentation/module6-eda/FEATURES.md`: export coverage clarified by surface: CLI vs GUI/API) |
 | M6-U1 | Check GUI/CLI parity (Start/Stop, defaults) | `module6-eda` | ✅ | Done (documented parity matrix: CLI defaults `compute 128x128`, GUI defaults `storage 4x4`; Start/Stop no background workers in embedded app) |
-| M6-P1 | Audit mapping/quantization/topology vs docs | `module6-eda` | ⏳ | 2-4hr |
+| M6-P1 | Audit mapping/quantization/topology vs docs | `module6-eda` | ✅ | Done (added focused validation tests for defaults, mode behavior, quantization/sign symmetry, export correctness, and CLI/GUI DEF topology parity; README claims match observed behavior) |
 | M7-D1 | Confirm curriculum tree order + shortcuts match docs | `module7-docs` | ✅ | Done (`docs_test.go`: `TestEmbeddedDocsApp_SortEntries_*`, `TestModuleShortcutsPanel_MappingAndDisableState`) |
 | M7-U1 | Validate layout breakpoints + click targets | `module7-docs` | ✅ | Done (`docs_test.go`: breakpoint coverage + `TestEmbeddedDocsApp_TreeClickTargets` for folder/file row behavior) |
 | M7-U2 | Add colored category badges in tree rows | `module7-docs` | ✅ | Done (`embedded.go`: centralized `treeCategory` mapping + tree row badge rendering; `docs_test.go`: `TestEmbeddedDocsApp_TreeCategoryBadges`) |
@@ -336,6 +336,7 @@
 | M7-P1 | Verify search ranking + reading time math | `module7-docs` | ✅ | Done (`search.go`: IDF floor fix for common terms; `docs_test.go`: `TestRankResults`, `TestExtractMetadata_ReadingTimeMath`) |
 
 Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...` passed after docs sync + new module7 curriculum/layout interaction tests.
+Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode_quantization_validation_test.go`, `module6-eda/pkg/export/format_correctness_test.go`, `module6-eda/pkg/gui/tabs/cli_gui_equivalence_test.go`; `go test ./module6-eda/...` passed.
 
 ### Cross-Module
 
