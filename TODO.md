@@ -414,10 +414,24 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| ASIM-1 | Add explicit "fidelity tier" selector to GUI | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 2-4hr |
+| ASIM-1 | Add explicit "fidelity tier" selector to GUI | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 2-4hr |
 | ASIM-2 | Add DC nodal solver for passive sneak paths | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 4-8hr |
 | ASIM-3 | Implement 2T1R masks | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 2-4hr |
-| ASIM-4 | Add headless test suite for coupling + tiers | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 2-4hr |
+| ASIM-4 | Add headless test suite for coupling + tiers | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 2-4hr |
+
+**Evidence (ASIM-1 / ASIM-4, 2026-02-11):**
+- GUI now exposes explicit fidelity selector in Module 4 toolbar: `Fidelity: Ideal / Tier-A / Tier-B`.
+  - File: `module4-circuits/pkg/gui/tab_unified.go`.
+- Fidelity selection is wired into `DeviceState` coupling engine dispatch.
+  - Tier-A -> `arraysim.NewTierASolver()`
+  - Tier-B -> `arraysim.NewTierBSolver()`
+  - Ideal -> direct path (no coupled snapshot)
+  - File: `module4-circuits/pkg/gui/device_state.go`.
+- Added headless table-driven coupling tier suite:
+  - `module4-circuits/pkg/gui/device_state_coupling_tiers_test.go`
+  - Verifies expected per-tier behavior and ideal snapshot reset semantics.
+- Updated GUI wiring test for selector:
+  - `module4-circuits/pkg/gui/tab_unified_extended_test.go` (`TestUnifiedTabCouplingMode`).
 
 ### Peripheral Circuits Enhancements
 

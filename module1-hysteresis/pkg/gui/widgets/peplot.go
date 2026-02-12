@@ -98,6 +98,16 @@ func (p *PEPlot) SetData(eData, pData []float64, currentE, currentP float64) {
 	p.mu.Unlock()
 }
 
+// DataSnapshot returns a copy of the currently displayed plot payload.
+// It is used by headless UI-sync verification tests.
+func (p *PEPlot) DataSnapshot() (eData, pData []float64, currentE, currentP float64, filterSpikes bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	eData = append([]float64(nil), p.eData...)
+	pData = append([]float64(nil), p.pData...)
+	return eData, pData, p.currentE, p.currentP, p.filterSpikes
+}
+
 func (p *PEPlot) CreateRenderer() fyne.WidgetRenderer {
 	return &peplotRenderer{plot: p}
 }

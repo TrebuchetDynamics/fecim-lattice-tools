@@ -164,6 +164,13 @@ func (l *LevelIndicator) SetLevel(level int) {
 	l.mu.Unlock()
 }
 
+// Level returns the currently displayed level index (0-based).
+func (l *LevelIndicator) Level() int {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.level
+}
+
 // SetInteractive sets whether the level indicator is clickable.
 // When true, shows "CLICK TO SET" hint; when false, shows "AUTO" indicator.
 func (l *LevelIndicator) SetInteractive(interactive bool) {
@@ -187,6 +194,14 @@ func (l *LevelIndicator) IsInteractive() bool {
 // When highlight is true, starts a pulsing animation that auto-refreshes.
 func (l *LevelIndicator) SetTargetLevel(level int, highlight bool) {
 	l.SetTargetLevelMode(level, highlight, TargetModeWrite)
+}
+
+// TargetState returns the currently rendered target/highlight state.
+// Primarily intended for deterministic UI sync verification tests.
+func (l *LevelIndicator) TargetState() (level int, highlight bool, mode TargetMode) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.targetLevel, l.highlightTarget, l.targetMode
 }
 
 // SetTargetLevelMode sets the target level and rendering mode for clearer feedback.
