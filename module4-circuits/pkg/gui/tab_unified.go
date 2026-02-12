@@ -20,6 +20,7 @@ import (
 
 	configphysics "fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -180,6 +181,16 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Cell info display (updated on cell click)
 	ca.sharedCellInfoLabel = widget.NewLabel("Click a cell to select")
+	ca.sharedCellDisplayToggle = widget.NewButton("Show V / Show I: V", func() {
+		ca.showCurrentInCellInfo = !ca.showCurrentInCellInfo
+		mode := "V"
+		if ca.showCurrentInCellInfo {
+			mode = "I"
+		}
+		ca.sharedCellDisplayToggle.SetText(fmt.Sprintf("Show V / Show I: %s", mode))
+		ca.updateCellInfo()
+	})
+	ca.sharedCellDisplayToggle.Importance = widget.LowImportance
 
 	// Array info (updated on resize)
 	totalCells := ca.arrayRows * ca.arrayCols
@@ -189,6 +200,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Compact info row below canvas
 	infoRow := container.NewHBox(
+		ca.sharedCellDisplayToggle,
 		ca.sharedCellInfoLabel,
 		layout.NewSpacer(),
 		ca.sharedArrayInfoLabel,
@@ -237,6 +249,9 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	// Array size selector
 	arraySizeSelector := ca.createArraySizeSelector()
 
+	// DAC bits selector
+	dacBitsSelector := ca.createDACBitsSelector()
+
 	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
@@ -265,6 +280,7 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	return container.NewHBox(
 		materialSelector,
 		arraySizeSelector,
+		dacBitsSelector,
 		adcBitsSelector,
 		couplingToggle,
 		widget.NewSeparator(),
@@ -445,7 +461,7 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 }
 
 // ValidArraySizes defines the supported array dimensions
-var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64}
+var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64, 128}
 
 // createArraySizeSelector creates a dropdown to select array size (1x1 to 128x128)
 func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
@@ -592,6 +608,47 @@ func (ca *CircuitsApp) getCurrentMaterialID() string {
 		}
 	}
 	return "fecim_hzo" // Default fallback
+}
+
+// createDACBitsSelector creates a dropdown to select DAC resolution (4-8 bits)
+func (ca *CircuitsApp) createDACBitsSelector() fyne.CanvasObject {
+	options := []string{"4-bit (16)", "5-bit (32)", "6-bit (64)", "7-bit (128)", "8-bit (256)"}
+
+	selector := widget.NewSelect(options, func(selected string) {
+		var bits int
+		switch selected {
+		case "4-bit (16)":
+			bits = 4
+		case "5-bit (32)":
+			bits = 5
+		case "6-bit (64)":
+			bits = 6
+		case "7-bit (128)":
+			bits = 7
+		case "8-bit (256)":
+			bits = 8
+		default:
+			dialog.ShowError(fmt.Errorf("unsupported DAC selection %q", selected), ca.window)
+			return
+		}
+
+		logInput("dac_bits=%d", bits)
+		ca.dacBits = bits
+		ca.deviceState.SetDACBits(bits)
+		ca.recomputeAndRefresh()
+		levels := 1 << bits
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("DAC: %d-bit (%d levels, 0-%d)", bits, levels, levels-1))
+	})
+
+	selector.SetSelected("5-bit (32)")
+	sharedwidgets.SetAccessibleLabel(selector, "DAC resolution selector")
+
+	dacInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("DAC Resolution",
+			"Digital-to-analog converter bit width.\nHigher resolution improves write-voltage granularity but increases area and energy.", ca.window)
+	})
+	dacInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("DAC:"), selector, dacInfo)
 }
 
 // createADCBitsSelector creates a dropdown to select ADC resolution (5-8 bits)
@@ -1202,7 +1259,7 @@ func (ca *CircuitsApp) updateCellInfo() {
 	matName := ca.deviceState.GetMaterialName()
 
 	// Calculate expected current I = G x V
-	expectedCurrent := conductanceUS * math.Abs(effectiveVoltage) // uA
+	expectedCurrent := conductanceUS * effectiveVoltage // uA (signed)
 
 	// Get actual row output (includes all cells in row if active)
 	rowCurrent := ca.deviceState.GetRowCurrent(selectedRow)
@@ -1213,21 +1270,41 @@ func (ca *CircuitsApp) updateCellInfo() {
 
 	sharedwidgets.SafeDo(func() {
 		// Build detailed info string with signal chain data
+		displayMode := "V"
+		if ca.showCurrentInCellInfo {
+			displayMode = "I"
+		}
 		var infoStr string
 		if isActive && math.Abs(effectiveVoltage) > 0.01 {
 			// Show full signal chain: G -> I -> TIA -> ADC
 			if isPassive {
-				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | WL=%.2fV BL=%.2fV -> Vcell=%.2fV -> I=%.1fuA -> TIA=%.2fV -> ADC=%d | %s",
-					selectedRow, selectedCol, level, levels-1, conductanceUS, wlVoltage, blVoltage, effectiveVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+				if ca.showCurrentInCellInfo {
+					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | WL=%+.2fV BL=%+.2fV -> Icell=%+.1fuA -> TIA=%+.2fV -> ADC=%d | %s",
+						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, wlVoltage, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+				} else {
+					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | WL=%+.2fV BL=%+.2fV -> Vcell=%+.2fV -> TIA=%+.2fV -> ADC=%d | %s",
+						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, wlVoltage, blVoltage, effectiveVoltage, rowVoltage, adcLevel, matName)
+				}
 			} else {
-				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | BL=%.2fV -> I=%.1fuA -> TIA=%.2fV -> ADC=%d | %s",
-					selectedRow, selectedCol, level, levels-1, conductanceUS, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+				if ca.showCurrentInCellInfo {
+					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | BL=%+.2fV -> Icell=%+.1fuA -> TIA=%+.2fV -> ADC=%d | %s",
+						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+				} else {
+					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | BL=%+.2fV -> Vcell=%+.2fV -> TIA=%+.2fV -> ADC=%d | %s",
+						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, blVoltage, effectiveVoltage, rowVoltage, adcLevel, matName)
+				}
 			}
 		} else {
 			// Cell not being sensed
-			infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | (Row %s, BL=%.2fV) | %s",
-				selectedRow, selectedCol, level, levels-1, conductanceUS,
-				map[bool]string{true: "ON", false: "OFF"}[isActive], blVoltage, matName)
+			if ca.showCurrentInCellInfo {
+				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | (Row %s, Icell=%+.1fuA) | %s",
+					selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS,
+					map[bool]string{true: "ON", false: "OFF"}[isActive], expectedCurrent, matName)
+			} else {
+				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | (Row %s, Vcell=%+.2fV) | %s",
+					selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS,
+					map[bool]string{true: "ON", false: "OFF"}[isActive], effectiveVoltage, matName)
+			}
 		}
 		ca.sharedCellInfoLabel.SetText(infoStr)
 	})
@@ -1272,20 +1349,13 @@ func (ca *CircuitsApp) composedSenseSNRdB(currentA float64, sense arraysim.Sense
 
 	// Input-referred noise composition (A_rms): TIA input noise + shot noise + ADC quantization.
 	tiaNoiseRMS := math.Abs(ca.tia.InputNoiseRMS) * math.Sqrt(bandwidth)
-	const electronChargeC = 1.602176634e-19
-	shotNoiseRMS := math.Sqrt(2 * electronChargeC * math.Abs(currentA) * bandwidth)
+	shotNoiseRMS := peripherals.ShotNoiseCurrentRMS(math.Abs(currentA), bandwidth)
 	quantNoiseRMS := 0.0
 	if lsb := sense.CurrentLSB(); lsb > 0 {
 		quantNoiseRMS = lsb / math.Sqrt(12)
 	}
-	totalNoiseRMS := math.Sqrt(tiaNoiseRMS*tiaNoiseRMS + shotNoiseRMS*shotNoiseRMS + quantNoiseRMS*quantNoiseRMS)
-	if totalNoiseRMS == 0 {
-		return math.Inf(1)
-	}
-	if signalRMS == 0 {
-		return math.Inf(-1)
-	}
-	return 20 * math.Log10(signalRMS/totalNoiseRMS)
+	totalNoiseRMS := math.Sqrt(peripherals.TotalNoiseVariance(tiaNoiseRMS, shotNoiseRMS, quantNoiseRMS))
+	return peripherals.SNRDB(signalRMS, totalNoiseRMS)
 }
 
 // updateSensePanel updates the compact sense-chain readout.

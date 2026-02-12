@@ -575,6 +575,40 @@ func TestUnifiedTabCellSelection(t *testing.T) {
 	}
 }
 
+func TestUnifiedTabCellInfoSignedToggle(t *testing.T) {
+	embedded, app, win := setupUnifiedTestApp(t)
+	defer app.Quit()
+	defer win.Close()
+	defer embedded.Stop()
+
+	ca := embedded.CircuitsApp
+	if ca == nil || ca.deviceState == nil {
+		t.Fatal("expected circuits app with device state")
+	}
+	if ca.sharedCellDisplayToggle == nil {
+		t.Fatal("expected Show V / Show I toggle")
+	}
+
+	ca.onUnifiedCellTapped(0, 0)
+	ca.updateCellInfo()
+
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Show=V") {
+		t.Fatalf("expected voltage display mode, got %q", ca.sharedCellInfoLabel.Text)
+	}
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Vcell=+") && !strings.Contains(ca.sharedCellInfoLabel.Text, "BL=+") {
+		t.Fatalf("expected explicit signed voltage, got %q", ca.sharedCellInfoLabel.Text)
+	}
+
+	test.Tap(ca.sharedCellDisplayToggle)
+	ca.updateCellInfo()
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Show=I") {
+		t.Fatalf("expected current display mode after toggle, got %q", ca.sharedCellInfoLabel.Text)
+	}
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Icell=+") && !strings.Contains(ca.sharedCellInfoLabel.Text, "Icell=-") {
+		t.Fatalf("expected explicit signed current, got %q", ca.sharedCellInfoLabel.Text)
+	}
+}
+
 // TestUnifiedTabSensePanel tests sense panel visibility and updates
 func TestUnifiedTabSensePanel(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)

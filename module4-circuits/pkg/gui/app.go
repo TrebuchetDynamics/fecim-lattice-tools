@@ -143,6 +143,8 @@ type CircuitsApp struct {
 	// Shared array section
 	sharedArrayCanvas        *canvas.Raster
 	sharedCellInfoLabel      *widget.Label
+	sharedCellDisplayToggle  *widget.Button
+	showCurrentInCellInfo    bool
 	sharedArrayInfoLabel     *widget.Label
 	sharedArrayCellSize      int // For click detection
 	sharedArrayOffsetX       int
@@ -311,23 +313,24 @@ type CircuitsApp struct {
 // NewCircuitsApp creates and initializes the circuits demo application.
 func NewCircuitsApp() *CircuitsApp {
 	ca := &CircuitsApp{
-		arrayRows:       DefaultSize,
-		arrayCols:       DefaultSize,
-		quantLevels:     FeCIMLevels,
-		dacBits:         DefaultDACBits,
-		adcBits:         DefaultADCBits,
-		vMin:            1.2, // Minimum write voltage (just above Vc for 10nm HZO)
-		vMax:            1.5, // Maximum write voltage
-		pulseWidth:      50.0,
-		readVoltage:     0.5,
-		tiaGain:         10.0,
-		selectedRow:     3,
-		selectedCol:     5,
-		targetLevel:     15,
-		compArraySize:   8,                              // Start with 8x8 array for comparison
-		architecture:    sharedwidgets.Architecture0T1R, // Default to passive for educational demo
-		zoomLevel:       1.0,                            // Default zoom 100%
-		readOverlayMode: "Off",
+		arrayRows:             DefaultSize,
+		arrayCols:             DefaultSize,
+		quantLevels:           FeCIMLevels,
+		dacBits:               DefaultDACBits,
+		adcBits:               DefaultADCBits,
+		vMin:                  1.2, // Minimum write voltage (just above Vc for 10nm HZO)
+		vMax:                  1.5, // Maximum write voltage
+		pulseWidth:            50.0,
+		readVoltage:           0.5,
+		tiaGain:               10.0,
+		selectedRow:           3,
+		selectedCol:           5,
+		targetLevel:           15,
+		compArraySize:         8,                              // Start with 8x8 array for comparison
+		architecture:          sharedwidgets.Architecture0T1R, // Default to passive for educational demo
+		zoomLevel:             1.0,                            // Default zoom 100%
+		readOverlayMode:       "Off",
+		showCurrentInCellInfo: false,
 	}
 
 	// Create Fyne app
