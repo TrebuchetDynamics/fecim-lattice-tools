@@ -1073,7 +1073,7 @@ From deep source-code review of M1/M4/M6 shared physics.
 | ID | Task | Status |
 |----|------|--------|
 | M1-WC-01 | Implement PUND measurement mode (P/U/N/D pulse sequencing + switching charge extraction) | ✅ |
-| M1-WC-02 | Build retention experiment workflow (program-hold-read with log-time sweep and Arrhenius summary) | ⬜ |
+| M1-WC-02 | Build retention experiment workflow (program-hold-read with log-time sweep and Arrhenius summary) | ✅ |
 | M1-WC-03 | Build fatigue + wake-up experiment runner with cycle schedule and Pr/Ec degradation report | ⬜ |
 | M1-WC-04 | Add C(V) butterfly measurement mode using dQ/dV from hysteresis sweep | ⬜ |
 | M1-WC-05 | Add I-V leakage characterization panel with Schottky / Poole-Frenkel / Fowler-Nordheim fits | ⬜ |
@@ -1083,7 +1083,7 @@ From deep source-code review of M1/M4/M6 shared physics.
 | M1-WC-09 | Add FORC workflow and Preisach-density visualization/export | ⬜ |
 | M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison | ⬜ |
 | M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
-| M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ⬜ |
+| M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ✅ |
 | M4-WC-03 | Integrate process variation Monte Carlo into compute/read metrics and UI | ⬜ |
 | M4-WC-04 | Implement endurance-aware accuracy degradation pipeline (cycles → conductance drift → accuracy drop) | ⬜ |
 | M4-WC-05 | Add batch benchmark mode (MNIST now, extensible to VGG/ResNet configs) | ⬜ |
