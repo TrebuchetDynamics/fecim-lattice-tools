@@ -5,6 +5,7 @@ package gui
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"sync"
 	"time"
@@ -150,6 +151,11 @@ type CircuitsApp struct {
 	sharedArrayOffsetX       int
 	sharedArrayOffsetY       int
 	computeInputRowContainer *fyne.Container // Input row shown above array in COMPUTE mode
+
+	// Cached static layer for unified array rendering (redraw on resize/layout changes only)
+	unifiedStaticCache       *image.RGBA
+	unifiedStaticCacheKey    string
+	unifiedStaticRedrawCount int
 
 	// Write mode panel widgets (ops prefix to distinguish from legacy)
 	writeConfigPanel     *fyne.Container

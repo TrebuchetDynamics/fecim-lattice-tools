@@ -18,8 +18,6 @@ import (
 
 // drawUnifiedArray draws the unified array visualization
 func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-
 	ca.mu.RLock()
 	rows := ca.arrayRows
 	cols := ca.arrayCols
@@ -37,68 +35,25 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	}
 
 	if ca.deviceState == nil {
-		return img
+		return image.NewRGBA(image.Rect(0, 0, w, h))
 	}
 	// Overlay can be enabled in READ/WRITE/COMPUTE for per-cell observability.
 	overlayEnabled := overlayMode != "Off"
 
-	// Draw gradient background
-	bgTop := color.RGBA{12, 20, 35, 255}
-	bgBottom := color.RGBA{8, 14, 28, 255}
-	drawGradientRect(img, 0, 0, w, h, bgTop, bgBottom)
-
 	if weights == nil || len(weights) == 0 {
-		return img
+		return image.NewRGBA(image.Rect(0, 0, w, h))
 	}
 
-	// Calculate margins - increased for larger peripheral boxes
-	topMargin := 65    // Increased from 50 for larger DAC boxes + column labels
-	rightMargin := 130 // Increased from 20 for larger TIA+ADC boxes
-	bottomMargin := 30 // Slightly increased
-	leftMargin := 30   // Slightly increased
+	layout := buildUnifiedArrayLayout(w, h, rows, cols, arch, zoom)
+	cellSize := layout.cellSize
+	gridW := layout.gridW
+	gridH := layout.gridH
+	offsetX := layout.offsetX
+	offsetY := layout.offsetY
+	is1T1R := layout.is1T1R
+	is2T1R := layout.is2T1R
 
-	is1T1R := arch == sharedwidgets.Architecture1T1R
-	is2T1R := arch == sharedwidgets.Architecture2T1R
-	if is1T1R || is2T1R {
-		leftMargin = 55
-	}
-	if is2T1R {
-		bottomMargin = 55
-	}
-
-	availableW := w - leftMargin - rightMargin
-	availableH := h - topMargin - bottomMargin
-
-	// Scale max/min cell size based on array dimensions AND zoom
-	maxCellSize := int(float64(70) * zoom) // Default for small arrays, scaled by zoom
-	minCellSize := int(float64(18) * zoom) // Default minimum, scaled by zoom
-
-	// For larger arrays, reduce cell size to fit
-	if cols > 32 || rows > 32 {
-		maxCellSize = int(float64(30) * zoom)
-		minCellSize = int(float64(8) * zoom)
-	} else if cols > 16 || rows > 16 {
-		maxCellSize = int(float64(40) * zoom)
-		minCellSize = int(float64(12) * zoom)
-	}
-
-	// Calculate cell size to fit in available space
-	cellW := availableW / cols
-	cellH := availableH / rows
-	cellSize := min(cellW, cellH)
-
-	// Apply cell size limits (now scaled by zoom)
-	if cellSize > maxCellSize {
-		cellSize = maxCellSize
-	}
-	if cellSize < minCellSize {
-		cellSize = minCellSize
-	}
-
-	gridW := cols * cellSize
-	gridH := rows * cellSize
-	offsetX := leftMargin + (availableW-gridW)/2
-	offsetY := topMargin + (availableH-gridH)/2
+	img := ca.getUnifiedStaticLayer(w, h, layout, levels)
 
 	// Store for click detection
 	ca.mu.Lock()
@@ -110,11 +65,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	selectedRow := ca.deviceState.GetSelectedRow()
 	selectedCol := ca.deviceState.GetSelectedCol()
 
-	// Draw array background panel
-	panelColor := color.RGBA{18, 28, 45, 255}
-	drawRoundedRect(img, offsetX-6, offsetY-6, gridW+12, gridH+12, 8, panelColor)
-
-	// Draw BIT LINES (vertical) - color based on DAC voltage
+	// Draw BIT LINES (vertical) - color based on DAC voltage (dynamic overlay over cached static grid)
 	writeThreshold := ca.deviceState.GetWriteRange().Min
 	for c := 0; c < cols; c++ {
 		x := offsetX + c*cellSize + cellSize/2
@@ -187,69 +138,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		ca.drawColTransistors(img, offsetX, offsetY, cellSize, cols, gridW, gridH, w, h)
 	}
 
-	// Draw signal line labels (BL = Bit Line, WL = Word Line, SL = Source Line)
-	// BL label at top of grid
-	drawSimpleText(img, "BL", offsetX+gridW/2-6, offsetY-35, color.RGBA{100, 180, 255, 200})
-	// WL label at left of grid
-	drawSimpleText(img, "WL", offsetX-25, offsetY+gridH/2-3, color.RGBA{255, 180, 100, 200})
-	// SL label at bottom for 2T1R
-	if is2T1R {
-		drawSimpleText(img, "SL", offsetX+gridW/2-6, offsetY+gridH+45, color.RGBA{100, 220, 255, 200})
-	}
-
-	// Draw row indices on left side of array
-	// For large arrays, only show every Nth index to avoid overlap
-	rowLabelStep := 1
-	if rows > 64 {
-		rowLabelStep = 16
-	} else if rows > 32 {
-		rowLabelStep = 8
-	} else if rows > 16 {
-		rowLabelStep = 4
-	} else if rows > 8 {
-		rowLabelStep = 2
-	}
-
-	for r := 0; r < rows; r++ {
-		// Only draw label at intervals or if selected
-		if r%rowLabelStep != 0 && r != selectedRow {
-			continue
-		}
-		y := offsetY + r*cellSize + cellSize/2 - 3
-		indexColor := color.RGBA{150, 150, 170, 200}
-		if r == selectedRow {
-			indexColor = color.RGBA{255, 220, 100, 255} // Highlight selected row
-		}
-		rowText := fmt.Sprintf("%d", r)
-		drawSimpleText(img, rowText, 5, y, indexColor)
-	}
-
-	// Draw column indices below array (above DAC boxes position)
-	// For large arrays, only show every Nth index to avoid overlap
-	colLabelStep := 1
-	if cols > 64 {
-		colLabelStep = 16
-	} else if cols > 32 {
-		colLabelStep = 8
-	} else if cols > 16 {
-		colLabelStep = 4
-	} else if cols > 8 {
-		colLabelStep = 2
-	}
-
-	for c := 0; c < cols; c++ {
-		// Only draw label at intervals or if selected
-		if c%colLabelStep != 0 && c != selectedCol {
-			continue
-		}
-		x := offsetX + c*cellSize + cellSize/2 - 3
-		indexColor := color.RGBA{150, 150, 170, 200}
-		if c == selectedCol {
-			indexColor = color.RGBA{255, 220, 100, 255} // Highlight selected column
-		}
-		colText := fmt.Sprintf("%d", c)
-		drawSimpleText(img, colText, x, offsetY+gridH+5, indexColor)
-	}
+	// Signal labels and static grid labels are drawn in cached static layer.
 
 	// Draw cells using shared bounded dimensions (prevents overlay/base extent mismatch).
 	drawRows, drawCols := ca.overlayDrawableDims(rows, cols, weights)

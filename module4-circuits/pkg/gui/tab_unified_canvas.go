@@ -9,8 +9,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
-
-	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ============================================================================
@@ -67,54 +65,10 @@ func (t *UnifiedTappableCanvas) Tapped(e *fyne.PointEvent) {
 
 	// If stored values not set yet, calculate them (fallback)
 	if cellSize == 0 {
-		w := int(size.Width)
-		h := int(size.Height)
-
-		// MUST match drawUnifiedArray margins exactly
-		topMargin := 65
-		rightMargin := 130
-		bottomMargin := 30
-		leftMargin := 30
-
-		is1T1R := arch == sharedwidgets.Architecture1T1R
-		is2T1R := arch == sharedwidgets.Architecture2T1R
-		if is1T1R || is2T1R {
-			leftMargin = 55
-		}
-		if is2T1R {
-			bottomMargin = 55
-		}
-
-		availableW := w - leftMargin - rightMargin
-		availableH := h - topMargin - bottomMargin
-
-		// Scale max/min cell size based on array dimensions AND zoom (must match drawUnifiedArray)
-		maxCellSize := int(float64(70) * zoom)
-		minCellSize := int(float64(18) * zoom)
-		if cols > 32 || rows > 32 {
-			maxCellSize = int(float64(30) * zoom)
-			minCellSize = int(float64(8) * zoom)
-		} else if cols > 16 || rows > 16 {
-			maxCellSize = int(float64(40) * zoom)
-			minCellSize = int(float64(12) * zoom)
-		}
-
-		cellW := availableW / cols
-		cellH := availableH / rows
-		cellSize = min(cellW, cellH)
-
-		// Apply cell size limits (scaled by zoom)
-		if cellSize > maxCellSize {
-			cellSize = maxCellSize
-		}
-		if cellSize < minCellSize {
-			cellSize = minCellSize
-		}
-
-		gridW := cols * cellSize
-		gridH := rows * cellSize
-		offsetX = leftMargin + (availableW-gridW)/2
-		offsetY = topMargin + (availableH-gridH)/2
+		layout := buildUnifiedArrayLayout(int(size.Width), int(size.Height), rows, cols, arch, zoom)
+		cellSize = layout.cellSize
+		offsetX = layout.offsetX
+		offsetY = layout.offsetY
 	}
 
 	col := (int(e.Position.X) - offsetX) / cellSize
