@@ -97,31 +97,15 @@ func showInfoDialog(w fyne.Window, title, message string) {
 
 // ShowKeyboardHelp displays a dialog with all keyboard shortcuts
 func ShowKeyboardHelp(w fyne.Window) {
-	helpText := `Keyboard Shortcuts:
-
-Navigation:
-  ←/→       Switch views
-  Space     Cycle through views
-  1         Go to Builder & Validation
-  2         Go to Learn
-
-Data:
-  Ctrl+S    Save (coming soon)
-  Ctrl+E    Export (use tab buttons)
-  Ctrl+R    Reset to first view
-
-Builder Actions:
-  Ctrl+Shift+G  Generate All
-  Ctrl+Shift+V  Validate All
-  Ctrl+Shift+E  Export Package
-
-Help:
-  / or ?    Show this help dialog
-
-Tips:
-• Use number keys (1-2) to quickly jump to views
-• Each tab has its own export functionality
-• Generated files are educational examples only`
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "Navigation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "←/→", Description: "Switch views"}, {Key: "Space", Description: "Cycle through views"}, {Key: "1", Description: "Go to Builder & Validation"}, {Key: "2", Description: "Go to Learn"}}},
+			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save (coming soon)"}, {Key: "Ctrl+E", Description: "Export (use tab buttons)"}, {Key: "Ctrl+R", Description: "Reset to first view"}}},
+			{Title: "Builder Actions", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+Shift+G", Description: "Generate All"}, {Key: "Ctrl+Shift+V", Description: "Validate All"}, {Key: "Ctrl+Shift+E", Description: "Export Package"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{"Use number keys (1-2) to quickly jump to views", "Each tab has its own export functionality", "Generated files are educational examples only"},
+	})
 
 	keyboard.ShowHelpTextDialog(w, "Keyboard Shortcuts", helpText, 360, 320)
 }

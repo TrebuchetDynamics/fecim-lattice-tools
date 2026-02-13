@@ -202,35 +202,21 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (a *App) showKeyboardHelp() {
-	helpText := `Keyboard Shortcuts:
-
-E-Field Control (Manual Mode Only):
-  E         Increase E-field by 0.1×Ec
-  D         Decrease E-field by 0.1×Ec
-
-Temperature Control:
-  T         Increase temperature by 25K
-  G         Decrease temperature by 25K
-
-Frequency Control:
-  F         Double frequency
-  V         Halve frequency (min 1e-9 Hz)
-
-Waveform & Simulation:
-  W         Cycle to next waveform
-  Space     Toggle pause/resume
-  R         Reset simulation
-
-Data Export:
-  Ctrl+E         Export P-E data to JSON and CSV
-  Ctrl+Shift+E   Copy CSV-formatted P-E data to clipboard
-
-Help:
-  / or ?    Show this help dialog
-
-Note: E and D keys only work in Manual mode.
-Switch to Manual mode using the waveform selector.
-Exported files are saved to the data/ directory with timestamps.`
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "E-Field Control (Manual Mode Only)", Shortcuts: []keyboard.ShortcutMetadata{{Key: "E", Description: "Increase E-field by 0.1×Ec"}, {Key: "D", Description: "Decrease E-field by 0.1×Ec"}}},
+			{Title: "Temperature Control", Shortcuts: []keyboard.ShortcutMetadata{{Key: "T", Description: "Increase temperature by 25K"}, {Key: "G", Description: "Decrease temperature by 25K"}}},
+			{Title: "Frequency Control", Shortcuts: []keyboard.ShortcutMetadata{{Key: "F", Description: "Double frequency"}, {Key: "V", Description: "Halve frequency (min 1e-9 Hz)"}}},
+			{Title: "Waveform & Simulation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "W", Description: "Cycle to next waveform"}, {Key: "Space", Description: "Toggle pause/resume"}, {Key: "R", Description: "Reset simulation"}}},
+			{Title: "Data Export", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+E", Description: "Export P-E data to JSON and CSV"}, {Key: "Ctrl+Shift+E", Description: "Copy CSV-formatted P-E data to clipboard"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{
+			"E and D keys only work in Manual mode.",
+			"Switch to Manual mode using the waveform selector.",
+			"Exported files are saved to the data/ directory with timestamps.",
+		},
+	})
 
 	keyboard.ShowHelpTextDialog(a.mainWindow, "Keyboard Shortcuts", helpText, 500, 400)
 }

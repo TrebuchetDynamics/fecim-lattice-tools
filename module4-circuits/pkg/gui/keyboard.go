@@ -297,48 +297,16 @@ func (ca *CircuitsApp) exportData() {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (ca *CircuitsApp) showKeyboardHelp() {
-	helpText := `Keyboard Shortcuts:
-
-Navigation:
-  ↑/↓       Adjust target level (Write mode)
-  ←/→       Navigate selected cell
-  Tab       Next tab
-  Shift+Tab Previous tab
-
-Operations:
-  Space     Toggle animation
-  A         Toggle animation
-  Ctrl+R    Reset array
-  P         Program selected cell (Write mode)
-  R         Read selected cell (Read mode)
-  C         Run MVM operation (Compute mode)
-  Z         Undo last operation
-  E         Export simulation snapshot
-
-Mode Switching:
-  W         Switch to Write mode
-  D         Switch to Read mode
-  M         Switch to Compute mode
-
-Configuration:
-  +/=       Increase DAC bits
-  -         Decrease DAC bits
-  =         Zoom in array view
-  -         Zoom out array view
-  F         Reset zoom to 100%
-
-Data:
-  Ctrl+S    Save/Export data
-  Ctrl+E    Export data
-
-Help:
-  / or ?    Show this help dialog
-
-Tips:
-• Use W/D/M to quickly switch between modes
-• Arrow keys navigate the array in all modes
-• Up/Down adjusts write level in Write mode
-• Press P to program, R to read, C to compute`
-
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "Navigation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "↑/↓", Description: "Adjust target level (Write mode)"}, {Key: "←/→", Description: "Navigate selected cell"}, {Key: "Tab", Description: "Next tab"}, {Key: "Shift+Tab", Description: "Previous tab"}}},
+			{Title: "Operations", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Space", Description: "Toggle animation"}, {Key: "A", Description: "Toggle animation"}, {Key: "Ctrl+R", Description: "Reset array"}, {Key: "P", Description: "Program selected cell (Write mode)"}, {Key: "R", Description: "Read selected cell (Read mode)"}, {Key: "C", Description: "Run MVM operation (Compute mode)"}, {Key: "Z", Description: "Undo last operation"}, {Key: "E", Description: "Export simulation snapshot"}}},
+			{Title: "Mode Switching", Shortcuts: []keyboard.ShortcutMetadata{{Key: "W", Description: "Switch to Write mode"}, {Key: "D", Description: "Switch to Read mode"}, {Key: "M", Description: "Switch to Compute mode"}}},
+			{Title: "Configuration", Shortcuts: []keyboard.ShortcutMetadata{{Key: "+/=", Description: "Increase DAC bits"}, {Key: "-", Description: "Decrease DAC bits"}, {Key: "=", Description: "Zoom in array view"}, {Key: "-", Description: "Zoom out array view"}, {Key: "F", Description: "Reset zoom to 100%"}}},
+			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save/Export data"}, {Key: "Ctrl+E", Description: "Export data"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{"Use W/D/M to quickly switch between modes", "Arrow keys navigate the array in all modes", "Up/Down adjusts write level in Write mode", "Press P to program, R to read, C to compute"},
+	})
 	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 420, 450)
 }

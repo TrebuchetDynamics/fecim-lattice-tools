@@ -161,31 +161,14 @@ func (ca *ComparisonApp) exportComparison() {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (ca *ComparisonApp) showKeyboardHelp() {
-	helpText := `Keyboard Shortcuts:
-
-Navigation:
-  ←/→       Cycle workloads
-  ↑/↓       Adjust inference count
-  +/=       Increase inferences
-  -         Decrease inferences
-
-Simulation:
-  Space     Toggle pause/resume
-  Ctrl+R    Reset to defaults
-  N         Next demo phase
-  P         Previous demo phase
-
-Data:
-  Ctrl+S    Save/Export comparison
-  Ctrl+E    Export comparison
-
-Help:
-  / or ?    Show this help dialog
-
-Tips:
-• Use arrow keys to explore different workloads
-• Watch the energy comparison animations
-• Adjust inference count to see scaling effects`
-
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "Navigation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "←/→", Description: "Cycle workloads"}, {Key: "↑/↓", Description: "Adjust inference count"}, {Key: "+/=", Description: "Increase inferences"}, {Key: "-", Description: "Decrease inferences"}}},
+			{Title: "Simulation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Space", Description: "Toggle pause/resume"}, {Key: "Ctrl+R", Description: "Reset to defaults"}, {Key: "N", Description: "Next demo phase"}, {Key: "P", Description: "Previous demo phase"}}},
+			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save/Export comparison"}, {Key: "Ctrl+E", Description: "Export comparison"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{"Use arrow keys to explore different workloads", "Watch the energy comparison animations", "Adjust inference count to see scaling effects"},
+	})
 	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 380, 340)
 }

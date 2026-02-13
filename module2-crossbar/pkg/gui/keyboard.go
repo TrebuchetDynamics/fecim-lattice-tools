@@ -215,38 +215,15 @@ func (ca *CrossbarApp) prevTab() {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (ca *CrossbarApp) showKeyboardHelp() {
-	helpText := `Keyboard Shortcuts:
-
-Navigation:
-  ↑/↓/←/→   Navigate selected cell
-  Tab       Next tab
-  Shift+Tab Previous tab
-
-Simulation:
-  Space     Toggle auto demo pause/resume
-  Ctrl+R    Reset array with random weights
-  M         Run MVM operation
-  N         Randomize weights
-  ]         Step forward (run MVM)
-
-Data:
-  Ctrl+S    Save/Export data
-  Ctrl+E    Export data
-
-Configuration:
-  +/=       Increase noise level
-  -         Decrease noise level
-  T         Increase temperature (+25K)
-  G         Decrease temperature (-25K)
-  A         Toggle architecture (0T1R/1T1R/2T1R)
-
-Help:
-  / or ?    Show this help dialog
-
-Tips:
-• Use arrow keys to explore cells in the heatmap
-• Watch IR Drop and Sneak Path tabs after running MVM
-• Toggle architecture to see sneak path differences`
-
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "Navigation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "↑/↓/←/→", Description: "Navigate selected cell"}, {Key: "Tab", Description: "Next tab"}, {Key: "Shift+Tab", Description: "Previous tab"}}},
+			{Title: "Simulation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Space", Description: "Toggle auto demo pause/resume"}, {Key: "Ctrl+R", Description: "Reset array with random weights"}, {Key: "M", Description: "Run MVM operation"}, {Key: "N", Description: "Randomize weights"}, {Key: "]", Description: "Step forward (run MVM)"}}},
+			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save/Export data"}, {Key: "Ctrl+E", Description: "Export data"}}},
+			{Title: "Configuration", Shortcuts: []keyboard.ShortcutMetadata{{Key: "+/=", Description: "Increase noise level"}, {Key: "-", Description: "Decrease noise level"}, {Key: "T", Description: "Increase temperature (+25K)"}, {Key: "G", Description: "Decrease temperature (-25K)"}, {Key: "A", Description: "Toggle architecture (0T1R/1T1R/2T1R)"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{"Use arrow keys to explore cells in the heatmap", "Watch IR Drop and Sneak Path tabs after running MVM", "Toggle architecture to see sneak path differences"},
+	})
 	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 450, 420)
 }

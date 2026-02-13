@@ -123,35 +123,15 @@ func (ma *MNISTApp) toggleAutoDemo() {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (ma *MNISTApp) showKeyboardHelp() {
-	helpText := `Keyboard Shortcuts:
-
-Navigation:
-  ←/→       Load random test digit
-  ]         Step forward (load random digit)
-
-Simulation:
-  Space     Toggle auto demo pause/resume
-  Ctrl+R    Clear canvas
-
-Data:
-  Ctrl+S    Save (future)
-  Ctrl+E    Export (future)
-  C         Clear canvas
-  R         Load random test digit
-  E         Evaluate network on test data
-  L         Load test data
-
-Demo Mode:
-  Space     Toggle auto demo
-
-Help:
-  / or ?    Show this help dialog
-
-Tips:
-• Draw a digit on the canvas to see predictions
-• Use R to load random MNIST test samples
-• Press E to run full evaluation on test set
-• Watch the network activations in the center panel`
-
+	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
+		Sections: []keyboard.ShortcutSection{
+			{Title: "Navigation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "←/→", Description: "Load random test digit"}, {Key: "]", Description: "Step forward (load random digit)"}}},
+			{Title: "Simulation", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Space", Description: "Toggle auto demo pause/resume"}, {Key: "Ctrl+R", Description: "Clear canvas"}}},
+			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save (future)"}, {Key: "Ctrl+E", Description: "Export (future)"}, {Key: "C", Description: "Clear canvas"}, {Key: "R", Description: "Load random test digit"}, {Key: "E", Description: "Evaluate network on test data"}, {Key: "L", Description: "Load test data"}}},
+			{Title: "Demo Mode", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Space", Description: "Toggle auto demo"}}},
+			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
+		},
+		Tips: []string{"Draw a digit on the canvas to see predictions", "Use R to load random MNIST test samples", "Press E to run full evaluation on test set", "Watch the network activations in the center panel"},
+	})
 	keyboard.ShowHelpTextDialog(ma.window, "Keyboard Shortcuts", helpText, 400, 380)
 }
