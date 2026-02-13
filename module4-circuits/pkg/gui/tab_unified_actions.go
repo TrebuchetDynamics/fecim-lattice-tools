@@ -17,10 +17,17 @@ import (
 // onUnifiedProgram programs the selected cell using Write-ReadVerify loop
 // This simulates ISPP (Incremental Step Pulse Programming) behavior
 func (ca *CircuitsApp) onUnifiedProgram() {
+	if ca.isProgrammingActive() {
+		if ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText("PROGRAMMING — controls locked")
+		}
+		return
+	}
+
 	// Check if ISPP already in progress - prevent concurrent operations
 	isppStatus := ca.deviceState.GetISPPStatus()
 	if isppStatus.Active {
-		ca.operationsStatusLabel.SetText("Write in progress - please wait")
+		ca.setProgrammingActive(true)
 		return
 	}
 
@@ -45,6 +52,8 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 
 	// H3 FIX: Save current state to undo history before modifying
 	ca.saveUndoHistory()
+
+	ca.setProgrammingActive(true)
 
 	// Run Write-ReadVerify loop in background goroutine
 	go ca.runISPPWithAnimation(selectedRow, selectedCol, targetLevel)
@@ -239,7 +248,7 @@ func (ca *CircuitsApp) onUnifiedRead() {
 	// Update status with single-cell sense result including energy/timing
 	// Read cycle: ~76ns, Energy: DAC(14.4fJ) + TIA(6.3fJ) + ADC(25fJ) = ~46fJ
 	sharedwidgets.SafeDo(func() {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.1fuA -> TIA=%.2fV -> ADC=%d | ~76ns, ~46fJ",
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.2f µA -> TIA=%.2f V -> ADC=%d | ~76ns, ~46fJ",
 			selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
 	})
 }
