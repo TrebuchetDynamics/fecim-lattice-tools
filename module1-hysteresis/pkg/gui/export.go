@@ -1,10 +1,12 @@
 package gui
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -39,15 +41,103 @@ type ExportData struct {
 	PolarizationUcCm2 []float64 `json:"polarization_uc_cm2"`
 }
 
+func defaultCSVColumns() []string {
+	return []string{"e_field_mv_cm", "polarization_uc_cm2"}
+}
+
+func resolveCSVColumnsFromEnv() []string {
+	raw := strings.TrimSpace(os.Getenv("FECIM_EXPORT_COLUMNS"))
+	if raw == "" {
+		return defaultCSVColumns()
+	}
+
+	valid := map[string]bool{
+		"index":               true,
+		"e_field_mv_cm":       true,
+		"polarization_uc_cm2": true,
+		"e_field_v_m":         true,
+		"polarization_c_m2":   true,
+	}
+
+	out := make([]string, 0, 5)
+	seen := make(map[string]bool)
+	for _, tok := range strings.Split(raw, ",") {
+		key := strings.ToLower(strings.TrimSpace(tok))
+		if key == "" || seen[key] || !valid[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, key)
+	}
+
+	if len(out) == 0 {
+		return defaultCSVColumns()
+	}
+	return out
+}
+
+func csvHeaderForColumns(cols []string) []string {
+	headers := make([]string, 0, len(cols))
+	for _, c := range cols {
+		switch c {
+		case "index":
+			headers = append(headers, "Index")
+		case "e_field_mv_cm":
+			headers = append(headers, "E_field_MV_cm")
+		case "polarization_uc_cm2":
+			headers = append(headers, "Polarization_uC_cm2")
+		case "e_field_v_m":
+			headers = append(headers, "E_field_V_m")
+		case "polarization_c_m2":
+			headers = append(headers, "Polarization_C_m2")
+		}
+	}
+	return headers
+}
+
+func csvRowForColumns(cols []string, i int, e, p float64) []string {
+	row := make([]string, 0, len(cols))
+	for _, c := range cols {
+		switch c {
+		case "index":
+			row = append(row, fmt.Sprintf("%d", i))
+		case "e_field_mv_cm":
+			row = append(row, fmt.Sprintf("%.6f", sharedphysics.VPerMToMVPerCm(e)))
+		case "polarization_uc_cm2":
+			row = append(row, fmt.Sprintf("%.6f", p*1e2))
+		case "e_field_v_m":
+			row = append(row, fmt.Sprintf("%.6e", e))
+		case "polarization_c_m2":
+			row = append(row, fmt.Sprintf("%.6e", p))
+		}
+	}
+	return row
+}
+
+func buildCSVContent(eData, pData []float64, cols []string) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+
+	if err := writer.Write(csvHeaderForColumns(cols)); err != nil {
+		return nil, err
+	}
+	for i := range eData {
+		if err := writer.Write(csvRowForColumns(cols, i, eData[i], pData[i])); err != nil {
+			return nil, err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // exportPEDataToJSON exports P-E hysteresis data to a JSON file
-// THREAD-SAFE: Copies data under lock, then writes without lock.
-// Safe to call from goroutines - no UI updates needed.
 func (a *App) exportPEDataToJSON(filename string) error {
-	// Copy data under lock
 	a.mu.RLock()
 	eData, pData := a.historySnapshotLocked()
 
-	// Copy metadata
 	materialName := "Unknown"
 	ec := 0.0
 	ps := 0.0
@@ -66,15 +156,13 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	temp = a.currentTemperature()
 	a.mu.RUnlock()
 
-	// Convert to convenient units (MV/cm and μC/cm²)
 	eFieldMVcm := make([]float64, len(eData))
 	polarizationUcCm2 := make([]float64, len(pData))
 	for i := range eData {
-		eFieldMVcm[i] = sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
-		polarizationUcCm2[i] = pData[i] * 1e2                  // C/m² to μC/cm²
+		eFieldMVcm[i] = sharedphysics.VPerMToMVPerCm(eData[i])
+		polarizationUcCm2[i] = pData[i] * 1e2
 	}
 
-	// Build export structure
 	export := PEDataExport{
 		Metadata: ExportMetadata{
 			Material:     materialName,
@@ -94,7 +182,6 @@ func (a *App) exportPEDataToJSON(filename string) error {
 		},
 	}
 
-	// Write to file
 	if err := sharedio.SaveJSON(filename, export); err != nil {
 		return fmt.Errorf("failed to write JSON file: %w", err)
 	}
@@ -103,53 +190,52 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	return nil
 }
 
-// exportPEDataToCSV exports P-E hysteresis data to a CSV file
-// THREAD-SAFE: Copies data under lock, then writes without lock.
-// Safe to call from goroutines - no UI updates needed.
+// exportPEDataToCSV exports P-E hysteresis data to CSV (configurable via FECIM_EXPORT_COLUMNS)
 func (a *App) exportPEDataToCSV(filename string) error {
-	// Copy data under lock
 	a.mu.RLock()
 	eData, pData := a.historySnapshotLocked()
 	a.mu.RUnlock()
 
-	// Create CSV file
-	file, err := os.Create(filename)
+	cols := resolveCSVColumnsFromEnv()
+	content, err := buildCSVContent(eData, pData, cols)
 	if err != nil {
+		return fmt.Errorf("failed to build CSV data: %w", err)
+	}
+	if err := os.WriteFile(filename, content, 0644); err != nil {
 		return fmt.Errorf("failed to create CSV file: %w", err)
 	}
-	defer file.Close()
 
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
+	log.Info("Exported P-E data to CSV: %s (%d points, columns=%s)", filename, len(eData), strings.Join(cols, ","))
+	return nil
+}
 
-	// Write header
-	if err := writer.Write([]string{"E_field_MV_cm", "Polarization_uC_cm2"}); err != nil {
-		return fmt.Errorf("failed to write CSV header: %w", err)
+// exportPEDataToClipboard copies CSV-formatted P-E data to the system clipboard.
+func (a *App) exportPEDataToClipboard() error {
+	a.mu.RLock()
+	eData, pData := a.historySnapshotLocked()
+	a.mu.RUnlock()
+
+	if len(eData) == 0 {
+		return fmt.Errorf("no data to export")
+	}
+	if a.mainWindow == nil || a.mainWindow.Clipboard() == nil {
+		return fmt.Errorf("clipboard unavailable")
 	}
 
-	// Write data rows
-	for i := range eData {
-		eMVcm := sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
-		pUcCm2 := pData[i] * 1e2                        // C/m² to μC/cm²
-
-		row := []string{
-			fmt.Sprintf("%.6f", eMVcm),
-			fmt.Sprintf("%.6f", pUcCm2),
-		}
-
-		if err := writer.Write(row); err != nil {
-			return fmt.Errorf("failed to write CSV row %d: %w", i, err)
-		}
+	content, err := buildCSVContent(eData, pData, resolveCSVColumnsFromEnv())
+	if err != nil {
+		return fmt.Errorf("failed to build clipboard CSV: %w", err)
 	}
 
-	log.Info("Exported P-E data to CSV: %s (%d points)", filename, len(eData))
+	fyne.Do(func() {
+		a.mainWindow.Clipboard().SetContent(string(content))
+		a.setStatus(fmt.Sprintf("Copied %d points to clipboard", len(eData)))
+	})
 	return nil
 }
 
 // exportPEData exports P-E hysteresis data to both JSON and CSV formats
-// THREAD-SAFE: Safe to call from goroutines. Uses fyne.Do() for UI updates.
 func (a *App) exportPEData() {
-	// Create data directory if it doesn't exist
 	dataDir := "data"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		log.Printf("Error creating data directory: %v", err)
@@ -159,12 +245,10 @@ func (a *App) exportPEData() {
 		return
 	}
 
-	// Generate timestamped filenames
 	timestamp := time.Now().Format("2006-01-02T15-04-05")
 	jsonFile := filepath.Join(dataDir, fmt.Sprintf("pe-data-%s.json", timestamp))
 	csvFile := filepath.Join(dataDir, fmt.Sprintf("pe-data-%s.csv", timestamp))
 
-	// Check if there's data to export
 	a.mu.RLock()
 	dataPoints := a.historyLengthLocked()
 	a.mu.RUnlock()
@@ -177,7 +261,6 @@ func (a *App) exportPEData() {
 		return
 	}
 
-	// Export JSON
 	if err := a.exportPEDataToJSON(jsonFile); err != nil {
 		log.Printf("Error exporting JSON: %v", err)
 		fyne.Do(func() {
@@ -186,7 +269,6 @@ func (a *App) exportPEData() {
 		return
 	}
 
-	// Export CSV
 	if err := a.exportPEDataToCSV(csvFile); err != nil {
 		log.Printf("Error exporting CSV: %v", err)
 		fyne.Do(func() {
@@ -195,7 +277,6 @@ func (a *App) exportPEData() {
 		return
 	}
 
-	// Success - update status
 	fyne.Do(func() {
 		a.setStatus(fmt.Sprintf("Exported %d points to data/", dataPoints))
 	})

@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -17,7 +19,7 @@ func (s *exportShortcut) ShortcutName() string {
 
 // setupShortcuts registers custom keyboard shortcuts
 func (a *App) setupShortcuts() {
-	// Register Ctrl+E for export
+	// Register Ctrl+E for file export
 	ctrlE := &desktop.CustomShortcut{
 		KeyName:  fyne.KeyE,
 		Modifier: fyne.KeyModifierControl,
@@ -25,8 +27,23 @@ func (a *App) setupShortcuts() {
 
 	a.mainWindow.Canvas().AddShortcut(ctrlE, func(shortcut fyne.Shortcut) {
 		log.Info("Export shortcut triggered (Ctrl+E)")
-		// Run export in background to avoid blocking UI
 		go a.exportPEData()
+	})
+
+	// Register Ctrl+Shift+E for clipboard export
+	ctrlShiftE := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyE,
+		Modifier: fyne.KeyModifierControl | fyne.KeyModifierShift,
+	}
+	a.mainWindow.Canvas().AddShortcut(ctrlShiftE, func(shortcut fyne.Shortcut) {
+		go func() {
+			if err := a.exportPEDataToClipboard(); err != nil {
+				log.Printf("Clipboard export failed: %v", err)
+				fyne.Do(func() {
+					a.setStatus(fmt.Sprintf("Clipboard export failed: %v", err))
+				})
+			}
+		}()
 	})
 }
 
@@ -218,7 +235,8 @@ Waveform & Simulation:
   R         Reset simulation
 
 Data Export:
-  Ctrl+E    Export P-E data to JSON and CSV
+  Ctrl+E         Export P-E data to JSON and CSV
+  Ctrl+Shift+E   Copy CSV-formatted P-E data to clipboard
 
 Help:
   / or ?    Show this help dialog
