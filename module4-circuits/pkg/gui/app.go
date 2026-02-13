@@ -4,7 +4,6 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"sync"
@@ -400,88 +399,25 @@ func (ca *CircuitsApp) Run() {
 	ca.window.ShowAndRun()
 }
 
-// createMainLayout builds the main application layout with 3 views.
+// createMainLayout builds the main application layout.
+// FOCUS-92: keep Module 4 in OPERATIONS-only mode (remove dead View dropdown).
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
-	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	operationsContent := ca.createUnifiedView()   // UNIFIED: from tab_unified.go (replaces tab_operations.go)
-	comparisonContent := ca.createComparisonTab() // KEEP: from tab_comparison.go
-	referenceContent := ca.createReferenceTab()   // KEEP: from tab_reference.go
-
-	// All views for Hide/Show toggling
-	viewNames := []string{"OPERATIONS", "COMPARISON", "REFERENCE"}
-	allViews := []fyne.CanvasObject{
-		operationsContent, comparisonContent, referenceContent,
-	}
-
-	// View selector dropdown
-	viewSelector := widget.NewSelect(viewNames, nil)
-	viewSelector.SetSelected("OPERATIONS")
-
-	// Content container using Stack
-	contentContainer := container.NewStack(allViews...)
-
-	// Track current view
-	currentView := ""
-
-	// Update view based on selection
-	viewSelector.OnChanged = func(view string) {
-		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
-		logAction("view_switch %s", view)
-		if view == currentView {
-			return
-		}
-		currentView = view
-
-		// Hide all views, then show selected
-		for i, v := range allViews {
-			if viewNames[i] == view {
-				v.Show()
-			} else {
-				v.Hide()
-			}
-		}
-
-		// Refresh canvases when specific views shown
-		if view == "OPERATIONS" {
-			ca.refreshUnifiedArray()
-		} else if view == "REFERENCE" {
-			ca.refreshTimingDiagrams()
-		}
-	}
-
-	// Initialize: show first view, hide others
-	for i, v := range allViews {
-		if i == 0 {
-			v.Show()
-		} else {
-			v.Hide()
-		}
-	}
-	currentView = "OPERATIONS"
-
-	// Header with inline view selector (title moved to main navbar)
-	headerRow := container.NewHScroll(container.NewHBox(
-		widget.NewLabel("View:"),
-		viewSelector,
-		layout.NewSpacer(),
-		widget.NewLabel("3 Views | DAC -> FeFET -> TIA -> ADC"),
-	))
+	operationsContent := ca.createUnifiedView()
 
 	header := container.NewVBox(
-		headerRow,
+		container.NewHBox(
+			widget.NewLabel("OPERATIONS"),
+			layout.NewSpacer(),
+			widget.NewLabel("DAC -> FeFET -> TIA -> ADC"),
+		),
 		widget.NewSeparator(),
 	)
 
-	// Footer
 	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Published Research")
 	footerLabel.Alignment = fyne.TextAlignCenter
+	footer := container.NewVBox(widget.NewSeparator(), footerLabel)
 
-	footer := container.NewVBox(
-		widget.NewSeparator(),
-		footerLabel,
-	)
-
-	return container.NewBorder(header, footer, nil, nil, contentContainer)
+	return container.NewBorder(header, footer, nil, nil, operationsContent)
 }
 
 // ============================================================================
