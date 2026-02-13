@@ -6,11 +6,19 @@ import (
 )
 
 func TestLiteratureValidation(t *testing.T) {
-	t.Run("TestPreisachLoop_VsPark2015", runPreisachLoopVsPark2015)
-	t.Run("TestLKSwitchingTime_VsTrentzsch2016", runLKSwitchingTimeVsTrentzsch2016)
-	t.Run("TestConductanceWindow_VsJerry2017", runConductanceWindowVsJerry2017)
-	t.Run("TestNLS_VsGuo2018", runNLSVsGuo2018)
-	t.Run("TestCurieWeiss_VsLiterature", runCurieWeissVsLiterature)
+	tests := []struct {
+		name string
+		fn   func(*testing.T)
+	}{
+		{name: "TestPreisachLoop_VsPark2015", fn: runPreisachLoopVsPark2015},
+		{name: "TestLKSwitchingTime_VsTrentzsch2016", fn: runLKSwitchingTimeVsTrentzsch2016},
+		{name: "TestConductanceWindow_VsJerry2017", fn: runConductanceWindowVsJerry2017},
+		{name: "TestNLS_VsGuo2018", fn: runNLSVsGuo2018},
+		{name: "TestCurieWeiss_VsLiterature", fn: runCurieWeissVsLiterature},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, tc.fn)
+	}
 }
 
 func TestPreisachLoop_VsPark2015(t *testing.T)         { runPreisachLoopVsPark2015(t) }
@@ -114,11 +122,20 @@ func runLKSwitchingTimeVsTrentzsch2016(t *testing.T) {
 }
 
 func runConductanceWindowVsJerry2017(t *testing.T) {
-	mat := DefaultHZO()
-	ratio := mat.Gmax / mat.Gmin
-	t.Logf("Gmax = %.1f µS, Gmin = %.1f µS → Gmax/Gmin = %.1f:1", mat.Gmax*1e6, mat.Gmin*1e6, ratio)
-	if ratio < 10.0 || ratio > 1000.0 {
-		t.Fatalf("Gmax/Gmin = %.1f:1, want literature-informed range 10:1 to 1000:1", ratio)
+	cases := []struct {
+		name string
+		mat  *HZOMaterial
+	}{
+		{name: "DefaultHZO", mat: DefaultHZO()},
+		{name: "LiteratureSuperlattice", mat: LiteratureSuperlattice()},
+	}
+
+	for _, c := range cases {
+		ratio := c.mat.Gmax / c.mat.Gmin
+		t.Logf("%s: Gmax = %.1f µS, Gmin = %.1f µS → Gmax/Gmin = %.1f:1", c.name, c.mat.Gmax*1e6, c.mat.Gmin*1e6, ratio)
+		if ratio < 10.0 || ratio > 1000.0 {
+			t.Fatalf("%s: Gmax/Gmin = %.1f:1, want literature-informed range 10:1 to 1000:1", c.name, ratio)
+		}
 	}
 }
 
