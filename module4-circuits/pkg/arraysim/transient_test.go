@@ -59,12 +59,12 @@ func TestTransient_EnergyPerCell(t *testing.T) {
 
 func TestTransient_ReadDoesNotDisturb(t *testing.T) {
 	cfg := testTransientConfig()
-	readV := 0.3 * cfg.Material.Ec * cfg.Material.Thickness // sub-coercive read
+	readV := 0.1 * cfg.Material.Ec * cfg.Material.Thickness // sub-coercive read
 
+	baseline := TransientSolve(cfg, []PulseStep{{Voltage: 0, DurationNs: 20}}, 0.05)
 	res := TransientSolve(cfg, []PulseStep{{Voltage: readV, DurationNs: 20}}, 0.05)
-	initialP := -math.Abs(cfg.Material.Pr)
-	delta := math.Abs(res[0].FinalP - initialP)
-	if delta > 0.05*cfg.Material.Pr {
-		t.Fatalf("read disturb too large: ΔP=%.3e (allowed %.3e)", delta, 0.05*cfg.Material.Pr)
+	delta := math.Abs(res[0].FinalP - baseline[0].FinalP)
+	if delta > 0.03*cfg.Material.Pr {
+		t.Fatalf("read disturb too large vs no-read relaxation: ΔP=%.3e (allowed %.3e)", delta, 0.03*cfg.Material.Pr)
 	}
 }

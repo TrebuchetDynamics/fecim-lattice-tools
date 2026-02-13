@@ -320,7 +320,7 @@ func FeCIMMaterial() *HZOMaterial {
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
 		BetaLandau:          -6.720e8,
 		GammaLandau:         1.950e10,
-		RhoViscosity:        0.05,
+		RhoViscosity:        2.0, // tuned for ~100 ns switching at Ec≈1 MV/cm (10 nm HZO cell)
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8,
 		StressGPa:           1.0,

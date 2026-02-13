@@ -34,13 +34,9 @@ func TransientSolve(config ArrayConfig, waveform []PulseStep, dt float64) []Tran
 	geom := cfg.Geometry.WithDefaults()
 
 	totalNs := 0.0
-	maxAbsV := 0.0
 	for _, s := range waveform {
 		if s.DurationNs > 0 {
 			totalNs += s.DurationNs
-		}
-		if av := math.Abs(s.Voltage); av > maxAbsV {
-			maxAbsV = av
 		}
 	}
 	if totalNs <= 0 {
@@ -63,7 +59,7 @@ func TransientSolve(config ArrayConfig, waveform []PulseStep, dt float64) []Tran
 		solver := sharedphysics.NewLKSolver()
 		solver.ConfigureFromMaterial(mat)
 		solver.EnableNoise = false
-		solver.UseNLS = true
+		solver.UseNLS = false
 		solver.SetState(-math.Abs(mat.Pr))
 
 		res := TransientResult{
@@ -94,27 +90,16 @@ func TransientSolve(config ArrayConfig, waveform []PulseStep, dt float64) []Tran
 				}
 				dtThisS := dtThisNs * 1e-9
 
-				localT := float64(i) * dt
+				stepT := float64(i) * dt
 				v := step.Voltage
-				if step.RiseTimeNs > 0 && localT < step.RiseTimeNs {
-					v = step.Voltage * (localT / step.RiseTimeNs)
+				if step.RiseTimeNs > 0 && stepT < step.RiseTimeNs {
+					v = step.Voltage * (stepT / step.RiseTimeNs)
 				}
 
 				writeThreshold := 0.8 * math.Abs(mat.Ec*geom.Thickness)
 				e := geom.ElectricField(v)
-				if math.Abs(v) >= writeThreshold {
-					// Duration-aware boost: short pulses stay partial, long pulses can fully switch.
-					boost := 1.0 + 4.0*(1.0-math.Exp(-localT/30.0))
-					e *= boost
-				}
 				p := solver.Step(e, dtThisS)
 				dPdt := (p - prevP) / dtThisS
-				const maxDPdt = 5e7 // C/m^2/s, smooths one-step LK spikes for current/energy reporting
-				if dPdt > maxDPdt {
-					dPdt = maxDPdt
-				} else if dPdt < -maxDPdt {
-					dPdt = -maxDPdt
-				}
 				displacementI := geom.CurrentFromDPdt(dPdt)
 
 				gmin := mat.Gmin
@@ -153,26 +138,6 @@ func TransientSolve(config ArrayConfig, waveform []PulseStep, dt float64) []Tran
 
 		res.FinalP = prevP
 		res.Switched = sawNeg && sawPos
-
-		writeEcV := math.Abs(mat.Ec * geom.Thickness)
-		if maxAbsV >= writeEcV {
-			if totalNs >= 80 {
-				if res.FinalP < 0.9*mat.Pr {
-					res.FinalP = 0.9 * mat.Pr
-				}
-				res.Switched = true
-				if res.Energy_fJ < 1 {
-					res.Energy_fJ = 10
-				} else if res.Energy_fJ > 100 {
-					res.Energy_fJ = 80
-				}
-			} else if totalNs <= 20 {
-				limit := 0.7 * mat.Pr
-				if res.FinalP > limit {
-					res.FinalP = limit
-				}
-			}
-		}
 		results[cell] = res
 	}
 
