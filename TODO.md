@@ -1054,11 +1054,25 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 
 ---
 
+## Physics Weakness Audit (2026-02-13)
+
+From deep source-code review of M1/M4/M6 shared physics.
+
+| ID | Task | File | Severity | Status | Notes |
+|----|------|------|----------|--------|-------|
+| WEAK-01 | TransientSolve uses hardcoded boost factors and post-hoc clamping of FinalP/Energy — replace with physics-derived pulse response | `module4-circuits/pkg/arraysim/transient.go` (~L100-130) | Critical | ✅ | `1cfe4e7` rho corrected to 0.005 per Alessandri IEEE EDL 2018; hacks deleted |
+| WEAK-02 | LK Alpha-scaling logic (LK04 mitigation) may produce inconsistent Ec across operating points — audit and document or fix | `shared/physics/landau.go` | High | ✅ | Fixed as part of rho/NLS overhaul; 65/65 tests pass |
+| WEAK-03 | Cell Verilog export is PLACEHOLDER behavioral model — implement real FeFET behavioral Verilog with state-dependent conductance | `module6-eda/export/verilog.go` | High | ✅ | `c874326` L-K equivalent circuit SPICE subcircuit (Sivasubramanian & Widom) |
+| WEAK-04 | K_dep = 2.5e8 has CITATION NEEDED — derive from dielectric stack formula or cite measured data | `shared/physics/material.go` | Medium | ✅ | Zero CITATION NEEDED remaining per Riju |
+| WEAK-05 | NLS tau parameters have CITATION NEEDED — fit to Muller or Jo published switching distributions | `shared/physics/material.go` | Medium | ✅ | `1fcf120` cumulative log-normal NLS (Guo et al. APL 2018) replacing coin-flip |
+| WEAK-06 | Conductance window (Gmin=10µS, Gmax=100µS) has CITATION NEEDED — cite FeFET I-V data or derive from device physics | `shared/physics/material.go` | Medium | ✅ | `a6d394c` subthreshold exponential conductance model added |
+| WEAK-07 | SPICE FeFET subcircuit uses simplified resistor+cap model with no switching dynamics — add voltage-dependent state transition | `module6-eda/export/spice.go` | High | ✅ | `c874326` L-K equivalent circuit with switching dynamics |
+
 ## World-Class Roadmap Additions (2026-02-13)
 
 | ID | Task | Status |
 |----|------|--------|
-| M1-WC-01 | Implement PUND measurement mode (P/U/N/D pulse sequencing + switching charge extraction) | ⬜ |
+| M1-WC-01 | Implement PUND measurement mode (P/U/N/D pulse sequencing + switching charge extraction) | ✅ |
 | M1-WC-02 | Build retention experiment workflow (program-hold-read with log-time sweep and Arrhenius summary) | ⬜ |
 | M1-WC-03 | Build fatigue + wake-up experiment runner with cycle schedule and Pr/Ec degradation report | ⬜ |
 | M1-WC-04 | Add C(V) butterfly measurement mode using dQ/dV from hysteresis sweep | ⬜ |
