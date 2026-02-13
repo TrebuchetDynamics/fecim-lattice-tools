@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -117,50 +119,57 @@ func TestCreateMainWindow_ViewSelectionTogglesVisibleContent(t *testing.T) {
 	w := CreateMainWindow(app)
 	defer w.Close()
 
-	selectWidget, stack := findSelectAndTwoViewStack(w.Content())
+	selectWidget, stack := findSelectAndViewStack(w.Content())
 	if selectWidget == nil {
 		t.Fatal("did not find view selector in window content")
 	}
-	if stack == nil || len(stack.Objects) != 2 {
-		t.Fatal("did not find 2-view stack container in window content")
+	if stack == nil || len(stack.Objects) < 2 {
+		t.Fatal("did not find multi-view stack container in window content")
 	}
 
-	if !stack.Objects[0].Visible() || stack.Objects[1].Visible() {
-		t.Fatalf("initial visibility unexpected: first=%v second=%v", stack.Objects[0].Visible(), stack.Objects[1].Visible())
+	if !stack.Objects[0].Visible() {
+		t.Fatalf("initial visibility unexpected: first view should be visible")
+	}
+	for i := 1; i < len(stack.Objects); i++ {
+		if stack.Objects[i].Visible() {
+			t.Fatalf("initial visibility unexpected: view %d visible", i)
+		}
 	}
 
 	// Same selection should be a no-op.
 	selectWidget.SetSelected("1. Builder & Validation")
-	if !stack.Objects[0].Visible() || stack.Objects[1].Visible() {
-		t.Fatalf("same-selection should not toggle visibility: first=%v second=%v", stack.Objects[0].Visible(), stack.Objects[1].Visible())
+	if !stack.Objects[0].Visible() {
+		t.Fatalf("same-selection should keep first view visible")
 	}
 
-	selectWidget.SetSelected("2. Learn")
-	if stack.Objects[0].Visible() || !stack.Objects[1].Visible() {
-		t.Fatalf("after selecting Learn: first=%v second=%v", stack.Objects[0].Visible(), stack.Objects[1].Visible())
+	selectWidget.SetSelected("3. Learn")
+	if stack.Objects[0].Visible() || !stack.Objects[2].Visible() {
+		t.Fatalf("after selecting Learn: builder=%v learn=%v", stack.Objects[0].Visible(), stack.Objects[2].Visible())
 	}
 
-	selectWidget.SetSelected("1. Builder & Validation")
-	if !stack.Objects[0].Visible() || stack.Objects[1].Visible() {
-		t.Fatalf("after selecting Builder: first=%v second=%v", stack.Objects[0].Visible(), stack.Objects[1].Visible())
+	selectWidget.SetSelected("2. Export Viewer")
+	if !stack.Objects[1].Visible() {
+		t.Fatalf("after selecting Export Viewer: second view not visible")
 	}
 }
 
-func findSelectAndTwoViewStack(root fyne.CanvasObject) (*widget.Select, *fyne.Container) {
+func findSelectAndViewStack(root fyne.CanvasObject) (*widget.Select, *fyne.Container) {
 	var foundSelect *widget.Select
-	var foundStack *fyne.Container
+	var candidates []*fyne.Container
 
 	var walk func(obj fyne.CanvasObject)
 	walk = func(obj fyne.CanvasObject) {
 		if obj == nil {
 			return
 		}
-		if sel, ok := obj.(*widget.Select); ok && foundSelect == nil {
-			foundSelect = sel
+		if sel, ok := obj.(*widget.Select); ok {
+			if len(sel.Options) > 0 && strings.Contains(sel.Options[0], "Builder & Validation") {
+				foundSelect = sel
+			}
 		}
 		if c, ok := obj.(*fyne.Container); ok {
-			if len(c.Objects) == 2 && c.Objects[0].Visible() && !c.Objects[1].Visible() && foundStack == nil {
-				foundStack = c
+			if len(c.Objects) >= 2 {
+				candidates = append(candidates, c)
 			}
 			for _, child := range c.Objects {
 				walk(child)
@@ -174,5 +183,27 @@ func findSelectAndTwoViewStack(root fyne.CanvasObject) (*widget.Select, *fyne.Co
 	}
 
 	walk(root)
-	return foundSelect, foundStack
+
+	if foundSelect == nil {
+		return nil, nil
+	}
+	for _, c := range candidates {
+		if len(c.Objects) != len(foundSelect.Options) {
+			continue
+		}
+		if c.Layout == nil || !strings.Contains(fmt.Sprintf("%T", c.Layout), "stack") {
+			continue
+		}
+		visibleCount := 0
+		for _, o := range c.Objects {
+			if o.Visible() {
+				visibleCount++
+			}
+		}
+		if visibleCount == 1 {
+			return foundSelect, c
+		}
+	}
+
+	return foundSelect, nil
 }

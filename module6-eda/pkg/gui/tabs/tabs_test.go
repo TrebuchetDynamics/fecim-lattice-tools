@@ -125,6 +125,25 @@ func TestMakeLearnTab_WithState(t *testing.T) {
 	}
 }
 
+func TestMakeExportViewerTab(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window := testApp.NewWindow("Test")
+	defer window.Close()
+
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72}
+	content := MakeExportViewerTab(cfg, window)
+	if content == nil {
+		t.Fatal("MakeExportViewerTab returned nil")
+	}
+
+	v, source := loadExportPreviewContent("Verilog", cfg)
+	if v == "" || source == "" {
+		t.Fatal("loadExportPreviewContent returned empty verilog/source")
+	}
+}
+
 func TestMakeLearnTab_NilWindow(t *testing.T) {
 	testApp := test.NewApp()
 	defer testApp.Quit()
