@@ -121,30 +121,53 @@ func conductanceAtLevel(mat *sharedphysics.HZOMaterial, level, levels int) float
 }
 
 func readAllCellsADCInput(cfg ArrayConfig, gCell float64) [][]float64 {
+	currents := readAllCellsCurrents(cfg, gCell)
 	vouts := make([][]float64, cfg.Rows)
 	for r := 0; r < cfg.Rows; r++ {
 		vouts[r] = make([]float64, cfg.Cols)
 		for c := 0; c < cfg.Cols; c++ {
-			scale := couplingScale(cfg.CouplingMode, cfg.Rows, cfg.Cols, r, c)
-			currentA := gCell * cfg.ReadVoltageV * scale
-			vouts[r][c] = cfg.Sense.ConvertCurrent(currentA).Vout
+			vouts[r][c] = cfg.Sense.ConvertCurrent(currents[r][c]).Vout
 		}
 	}
 	return vouts
 }
 
-func couplingScale(mode CouplingMode, rows, cols, r, c int) float64 {
-	distance := float64(r+c) / float64(rows+cols)
-	switch mode {
-	case CouplingIdeal:
-		return 1.0
-	case CouplingTierA:
-		return 1.0 / (1.0 + 1.0*distance + 0.002*float64(rows))
-	case CouplingTierB:
-		return 1.0 / (1.0 + 1.5*distance + 0.003*float64(rows))
-	default:
-		return 1.0
+func readAllCellsCurrents(cfg ArrayConfig, gCell float64) [][]float64 {
+	conductance := make([][]float64, cfg.Rows)
+	for r := 0; r < cfg.Rows; r++ {
+		conductance[r] = make([]float64, cfg.Cols)
+		for c := 0; c < cfg.Cols; c++ {
+			conductance[r][c] = gCell
+		}
 	}
+
+	currents := make([][]float64, cfg.Rows)
+	for r := 0; r < cfg.Rows; r++ {
+		wl := make([]float64, cfg.Rows)
+		bl := make([]float64, cfg.Cols)
+		wl[r] = cfg.ReadVoltageV
+
+		res, ok := solveRead(cfg, SolveParams{
+			WLVoltages:  wl,
+			BLVoltages:  bl,
+			Conductance: conductance,
+			Geometry:    DefaultCellGeometry(),
+			Wire:        cfg.Wire,
+			Boundary:    cfg.Boundary,
+		})
+
+		currents[r] = make([]float64, cfg.Cols)
+		if !ok {
+			for c := 0; c < cfg.Cols; c++ {
+				currents[r][c] = gCell * cfg.ReadVoltageV
+			}
+			continue
+		}
+		for c := 0; c < cfg.Cols; c++ {
+			currents[r][c] = math.Abs(res.CellCurrents[r][c])
+		}
+	}
+	return currents
 }
 
 func solveRead(cfg ArrayConfig, params SolveParams) (SolveResult, bool) {
