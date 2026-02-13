@@ -2251,6 +2251,9 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	a.plot.SetData(hE, hP, fE, pV)
 	a.plot.Refresh()
 
+	// Update literature overlay text panel (if dataset loaded)
+	a.updateLiteratureOverlayFromData(hE, hP)
+
 	// Update level indicator (level is 0-indexed, display is 1-indexed)
 	a.levelIndicator.SetLevel(dL)
 

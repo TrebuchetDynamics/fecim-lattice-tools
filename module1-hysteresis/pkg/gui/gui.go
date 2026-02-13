@@ -290,6 +290,12 @@ type App struct {
 	// Simulation vs Experiment comparison widget (H16)
 	simVsExpWidget *widgets.SimVsExpComparison
 
+	// Literature overlay (M1-WC-10)
+	literatureDataset      *LiteratureDataset
+	literatureSummaryLabel *widget.Label
+	literatureMetricsLabel *widget.Label
+	literatureTableLabel   *widget.Label
+
 	// ISPP visualization widget (H14)
 	isppWidget *widgets.ISPPVisualization
 
@@ -796,10 +802,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	)
 
 	infoCard := widget.NewCard("State & Material", "", info)
+	literatureCard := a.createLiteratureOverlayPanel()
 	infoStack := container.NewVBox(
 		infoCard,
 		a.isppWidget,
 		a.simVsExpWidget,
+		literatureCard,
 	)
 	infoScroll := container.NewVScroll(infoStack)
 	infoScroll.SetMinSize(fyne.NewSize(220, 0))

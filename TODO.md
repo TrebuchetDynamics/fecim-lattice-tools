@@ -1142,8 +1142,8 @@ Stretch roadmap to push FeCIM Lattice Tools beyond current world-class targets.
 | M1-WC-06 | Add small-signal capacitance mode (AC perturbation around bias point) | ⬜ |
 | M1-WC-07 | Add batch/recipe engine for sequenced measurements and automated reports | ⬜ |
 | M1-WC-08 | Productize frequency-dispersion characterization (loop metrics vs frequency sweep) | ✅ |
-| M1-WC-09 | Add FORC workflow and Preisach-density visualization/export | ⬜ |
-| M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison | ⬜ |
+| M1-WC-09 | Add FORC workflow and Preisach-density visualization/export | ✅ |
+| M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison | ✅ |
 | M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
 | M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ✅ |
 | M4-WC-03 | Integrate process variation Monte Carlo into compute/read metrics and UI | ✅ |
