@@ -4,7 +4,6 @@ import (
 	"math"
 	"testing"
 
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
@@ -15,7 +14,7 @@ func TestModule1MaterialFeedsModule4VoltageRanges(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(4, 4)
 
-	module1Mat := ferroelectric.CryogenicHZO()
+	module1Mat := sharedphysics.CryogenicHZO()
 	ds.SetMaterial(module1Mat)
 
 	writeRange := ds.GetWriteRange()
@@ -56,7 +55,7 @@ func TestModule1ToModule4ConductanceConsistency(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(2, 2)
 
-	module1Mat := ferroelectric.FeCIMMaterial()
+	module1Mat := sharedphysics.FeCIMMaterial()
 	ds.SetMaterial(module1Mat)
 
 	levels := module1Mat.GetNumLevels()
@@ -75,7 +74,7 @@ func TestIdealComputeHonorsGeometryScaling(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(1, 1)
 
-	mat := ferroelectric.FeCIMMaterial()
+	mat := sharedphysics.FeCIMMaterial()
 	ds.SetMaterial(mat)
 	ds.SetCouplingMode(arraysim.CouplingIdeal)
 	ds.SetWLSingle(0)

@@ -15,58 +15,8 @@ func init() {
 	log = logging.NewLogger("preisach")
 }
 
-// TanhEverett implements the EverettFunction interface using Bo Jiang's Tanh model.
-// This preserves the existing "S-shape" characteristic of the simulation.
-type TanhEverett struct {
-	Ps    float64
-	Ec    float64
-	Delta float64 // Distribution width
-}
-
-// Calculate returns the polarization contribution for a hysteron switching region.
-// Note: The shared/physics.PreisachStack uses this to sum triangular areas.
-// For the Tanh model, we treat the major loop function P_major(E) as the
-// integral of the Everett function along the line beta = -E_sat.
-// Simplification: We return P_major(alpha) - P_major(beta) ??
-//
-// Actually, the shared stack implementation computes:
-// P = -Ps + 2 * Sum( Everett(Max, Min) )
-// If we want to match the analytic Tanh model:
-// P(E) = Ps * Tanh((E - Ec)/Delta)
-//
-// We need to map the "Everett(Max, Min)" call to something that reconstructs this.
-// A common approximation for independent hysterons (like Tanh) is:
-// Everett(alpha, beta) = (F(alpha) - F(beta)) / 2 * Ps
-// where F is the cumulative distribution function (the major loop normalized to 0..1).
-//
-// Let's implement this factorization.
-func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
-	// Product-form Everett function for the factorized sech² Preisach density:
-	//
-	//   µ(α,β) = (Ps / 4Δ²) · sech²((α − Ec)/Δ) · sech²((β + Ec)/Δ)
-	//
-	// The Everett integral over the triangle {α' ≤ α, β' ≥ β} gives:
-	//
-	//   E(α,β) = (Ps/4) · [1 + tanh((α − Ec)/Δ)] · [1 − tanh((β + Ec)/Δ)]
-	//
-	// Both factors lie in [0, 2], so the product is always non-negative.
-	// This preserves the Preisach wipe-out continuity property that the
-	// previous factorized-difference form violated (it went negative for
-	// minor loops within the coercive gap, requiring a hard zero-clamp
-	// that caused polarization teleportation during ISPP programming).
-	//
-	// The major loop shape and remanent polarization are identical to the
-	// difference form because for Esat >> Ec the limit factors collapse
-	// to the same expression.
-	ascCDF := 1.0 + math.Tanh((alpha-t.Ec)/t.Delta)   // CDF of ascending distribution ∈ [0, 2]
-	descSurv := 1.0 - math.Tanh((beta+t.Ec)/t.Delta)  // Survival of descending distribution ∈ [0, 2]
-
-	val := ascCDF * descSurv * t.Ps * 0.25
-	if val > t.Ps {
-		return t.Ps // Safety clamp for floating-point edge cases
-	}
-	return val
-}
+// TanhEverett is a compatibility alias for shared Preisach Everett adapter.
+type TanhEverett = physics.TanhEverett
 
 // tuneDeltaForPr estimates a Tanh Everett distribution width (Delta) so that
 // the remanent polarization after a full saturation-and-return matches targetPr.
