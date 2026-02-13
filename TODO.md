@@ -1020,8 +1020,8 @@ Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC
 
 | ID | Task | Priority | Status | Notes |
 |----|------|----------|--------|-------|
-| M4-CMOS-01 | Add MOSFET selector model with W/L, Vth, Ion/Ioff, Cgate | High | ⏳ | Affects read current accuracy, write disturb, and leakage. Implement in `shared/physics/selector.go` |
-| M4-CMOS-02 | Cell footprint calculator: FeFET area + selector area + routing overhead | High | ⏳ | 0T1R=4F², 1T1R≈6-12F², 2T1R≈12-20F². Needed for density comparison vs SRAM (120-150F²) |
+| M4-CMOS-01 | Add MOSFET selector model with W/L, Vth, Ion/Ioff, Cgate | High | ✅ | Implemented in `shared/physics/selector.go` (commit `dd2ecdd`). |
+| M4-CMOS-02 | Cell footprint calculator: FeFET area + selector area + routing overhead | High | ✅ | Implemented in `shared/physics/cell_footprint.go` (commit `7ecb04a`), covering 0T1R/1T1R/2T1R/SRAM F² bands. |
 | M4-CMOS-03 | Technology node selector in Module 4 UI (130nm, 65nm, 28nm, 14nm) | Medium | ⏳ | Scale wire R, transistor params, leakage with node. Shared with Module 6 technology config |
 | M4-CMOS-04 | Selector I-V curve in read path: Ion limits read current, Ioff contributes sneak | Medium | ⏳ | Replace boolean selector mask with conductance-based series model in `arraysim/` solvers |
 | M4-CMOS-05 | Gate capacitance loading on wordline from selector transistors | Low | ⏳ | WL RC delay = R_wire × (C_wire + N×C_gate). Currently only wire R modeled |
