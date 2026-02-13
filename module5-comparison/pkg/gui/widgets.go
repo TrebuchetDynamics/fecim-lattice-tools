@@ -615,8 +615,9 @@ func (d *DataCenterTransformation) SetValues(beforeW, afterW float64) {
 }
 
 // UpdateAnimation advances the animation (not used in widget version).
-func (d *DataCenterTransformation) UpdateAnimation(dt float64) {
+func (d *DataCenterTransformation) UpdateAnimation(dt float64) bool {
 	// Animation handled by Refresh
+	return false
 }
 
 // MinSize returns minimum size.

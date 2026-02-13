@@ -77,12 +77,15 @@ func (e *AnimatedEnergyRace) SetLogScale(log bool) {}
 
 // UpdateAnimation advances the animation by dt seconds.
 // BUG-M5-004 FIX: Check thresholds BEFORE formatting to avoid unnecessary recalculations
-func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
+func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	dirty := false
+
 	if e.animProgress < 1.0 {
 		e.animProgress += dt * 0.4 // Slightly slower for dramatic effect
+		dirty = true
 		if e.animProgress > 1.0 {
 			e.animProgress = 1.0
 			e.showWinner = true
@@ -91,6 +94,7 @@ func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
 
 	if e.showWinner {
 		e.pulsePhase += dt * 2.0
+		dirty = true
 	}
 
 	// BUG-M5-004 FIX: Check if progress crossed a 1-point threshold before marking for update
@@ -102,7 +106,10 @@ func (e *AnimatedEnergyRace) UpdateAnimation(dt float64) {
 		e.needsTextUpdate = true
 		e.lastGpuProgress = newGpuProgress
 		e.lastFecimProgress = newFecimProgress
+		dirty = true
 	}
+
+	return dirty
 }
 
 // Reset resets the animation.
@@ -354,17 +361,20 @@ func NewPhasedStrategyDiagram() *PhasedStrategyDiagram {
 }
 
 // UpdateAnimation advances the animation.
-func (p *PhasedStrategyDiagram) UpdateAnimation(dt float64) {
+func (p *PhasedStrategyDiagram) UpdateAnimation(dt float64) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	dirty := false
 	if p.animProgress < 1.0 {
 		p.animProgress += dt * 0.3
 		if p.animProgress > 1.0 {
 			p.animProgress = 1.0
 		}
+		dirty = true
 	}
 	p.pulsePhase += dt * 2.0
+	return dirty
 }
 
 // Reset resets the animation.
@@ -485,7 +495,7 @@ func NewAnalogStatesComparison() *AnalogStatesComparison {
 }
 
 // UpdateAnimation advances the animation.
-func (a *AnalogStatesComparison) UpdateAnimation(dt float64) {
+func (a *AnalogStatesComparison) UpdateAnimation(dt float64) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.animProgress < 1.0 {
@@ -493,7 +503,9 @@ func (a *AnalogStatesComparison) UpdateAnimation(dt float64) {
 		if a.animProgress > 1.0 {
 			a.animProgress = 1.0
 		}
+		return true
 	}
+	return false
 }
 
 // Reset resets the animation.

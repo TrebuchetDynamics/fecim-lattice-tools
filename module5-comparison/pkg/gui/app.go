@@ -57,14 +57,15 @@ type ComparisonApp struct {
 	fecimSpec EnergySpec
 
 	// Animation state (protected by animMu)
-	animMu           sync.RWMutex
-	animWG           sync.WaitGroup
-	running          bool
-	paused           bool
-	simTime          float64
-	presentationMode PresentationMode
-	currentPhase     AutoDemoPhase
-	phaseTimer       float64
+	animMu            sync.RWMutex
+	animWG            sync.WaitGroup
+	running           bool
+	paused            bool
+	foregroundVisible bool
+	simTime           float64
+	presentationMode  PresentationMode
+	currentPhase      AutoDemoPhase
+	phaseTimer        float64
 
 	// GUI components - Hero visualizations
 	energyRace        *AnimatedEnergyRace
@@ -91,6 +92,11 @@ type ComparisonApp struct {
 	// Current settings
 	currentWorkload   string
 	currentInferences float64
+	uiMode            string
+	scenarioProfile   ScenarioProfile
+	lastRun           ScenarioRun
+
+	recomputeBus *sharedwidgets.CoalesceBus
 }
 
 // NewComparisonApp creates the comparison demo application.
@@ -99,6 +105,10 @@ func NewComparisonApp() *ComparisonApp {
 	ca := &ComparisonApp{
 		currentWorkload:   "GPT-2",
 		currentInferences: 10000,
+		uiMode:            "Technical Review",
+		scenarioProfile:   ScenarioBaseline,
+		foregroundVisible: true,
+		recomputeBus:      sharedwidgets.NewCoalesceBus(40 * time.Millisecond),
 	}
 
 	ca.fyneApp = app.NewWithID("com.fecim.comparison-demo")
@@ -144,6 +154,7 @@ func (ca *ComparisonApp) Run() {
 
 	// Setup keyboard shortcuts
 	ca.setupKeyboard()
+	ca.setupVisibilityHooks()
 
 	ca.updateCalculations()
 	ca.updateStatus("Ready. Select workload and adjust parameters. Press ? for shortcuts.")
@@ -164,6 +175,9 @@ func (ca *ComparisonApp) Run() {
 	ca.running = false
 	ca.animMu.Unlock()
 	ca.animWG.Wait()
+	if ca.recomputeBus != nil {
+		ca.recomputeBus.Close()
+	}
 }
 
 // animationLoop runs the main animation at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs).
@@ -180,12 +194,13 @@ func (ca *ComparisonApp) animationLoop() {
 		ca.animMu.Lock()
 		running := ca.running
 		paused := ca.paused
+		visible := ca.foregroundVisible
 		if !running {
 			ca.animMu.Unlock()
 			return
 		}
 
-		if paused {
+		if paused || !visible {
 			ca.animMu.Unlock()
 			lastTime = time.Now()
 			continue
@@ -196,42 +211,49 @@ func (ca *ComparisonApp) animationLoop() {
 		ca.simTime += dt
 		ca.animMu.Unlock()
 
-		// Update animated widgets
-		if ca.energyRace != nil {
-			ca.energyRace.UpdateAnimation(dt)
-		}
-		if ca.marketChart != nil {
-			ca.marketChart.UpdateAnimation(dt)
-		}
-		if ca.phasedStrategy != nil {
-			ca.phasedStrategy.UpdateAnimation(dt)
-		}
-		if ca.analogStates != nil {
-			ca.analogStates.UpdateAnimation(dt)
-		}
-		if ca.dcTransformation != nil {
-			ca.dcTransformation.UpdateAnimation(dt)
+		dirtyEnergy := ca.energyRace != nil && ca.energyRace.UpdateAnimation(dt)
+		dirtyMarket := ca.marketChart != nil && ca.marketChart.UpdateAnimation(dt)
+		dirtyPhased := ca.phasedStrategy != nil && ca.phasedStrategy.UpdateAnimation(dt)
+		dirtyAnalog := ca.analogStates != nil && ca.analogStates.UpdateAnimation(dt)
+		dirtyTransform := ca.dcTransformation != nil && ca.dcTransformation.UpdateAnimation(dt)
+
+		if !(dirtyEnergy || dirtyMarket || dirtyPhased || dirtyAnalog || dirtyTransform) {
+			continue
 		}
 
-		// Refresh UI
+		// Refresh only dirty widgets.
 		sharedwidgets.SafeDo(func() {
-			if ca.energyRace != nil {
+			if dirtyEnergy {
 				ca.energyRace.Refresh()
 			}
-			if ca.marketChart != nil {
+			if dirtyMarket {
 				ca.marketChart.Refresh()
 			}
-			if ca.phasedStrategy != nil {
+			if dirtyPhased {
 				ca.phasedStrategy.Refresh()
 			}
-			if ca.analogStates != nil {
+			if dirtyAnalog {
 				ca.analogStates.Refresh()
 			}
-			if ca.dcTransformation != nil {
+			if dirtyTransform {
 				ca.dcTransformation.Refresh()
 			}
 		})
 	}
+}
+
+func (ca *ComparisonApp) setupVisibilityHooks() {
+	lifecycle := ca.fyneApp.Lifecycle()
+	lifecycle.SetOnEnteredForeground(func() {
+		ca.animMu.Lock()
+		ca.foregroundVisible = true
+		ca.animMu.Unlock()
+	})
+	lifecycle.SetOnExitedForeground(func() {
+		ca.animMu.Lock()
+		ca.foregroundVisible = false
+		ca.animMu.Unlock()
+	})
 }
 
 // createMainLayout builds the main application layout.
@@ -252,16 +274,37 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 	ca.workloadSelect.SetSelected("GPT-2")
 
+	uiModeSelect := widget.NewSelect([]string{"Technical Review", "Presentation"}, func(v string) {
+		if v == "" {
+			return
+		}
+		ca.uiMode = v
+		ca.scheduleRecompute()
+	})
+	uiModeSelect.SetSelected(ca.uiMode)
+
+	scenarioSelect := widget.NewSelect([]string{string(ScenarioConservative), string(ScenarioBaseline), string(ScenarioOptimistic)}, func(v string) {
+		ca.scenarioProfile = ScenarioProfileFromString(v)
+		ca.scheduleRecompute()
+	})
+	scenarioSelect.SetSelected(string(ca.scenarioProfile))
+
 	// Inferences slider - wider and reasonable range
 	ca.inferencesLabel = widget.NewLabel("Inferences/sec: 10,000")
-	ca.inferencesSlider = widget.NewSlider(1000, 50000)
+	throttled := sharedwidgets.NewThrottledSlider(1000, 50000, 40*time.Millisecond,
+		func(v float64) {
+			ca.currentInferences = v
+			ca.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", v))
+		},
+		func(v float64) {
+			ca.currentInferences = v
+			ca.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", v))
+			ca.scheduleRecompute()
+		},
+	)
+	ca.inferencesSlider = throttled.Slider
 	ca.inferencesSlider.Value = 10000
 	ca.inferencesSlider.Step = 1000
-	ca.inferencesSlider.OnChanged = func(v float64) {
-		ca.currentInferences = v
-		ca.inferencesLabel.SetText(fmt.Sprintf("Inferences/sec: %.0f", v))
-		ca.updateCalculations()
-	}
 
 	// Calculate button
 	var calcBtn *widget.Button
@@ -323,6 +366,8 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	energySection := container.NewVBox(
 		sectionEnergyHeader,
 		container.NewPadded(container.NewPadded(ca.energyRace)),
+		ca.createPlainTextEvidencePanel("Energy comparison visualization"),
+		ca.createEvidenceFirstPanel(),
 	)
 
 	// SECTION 2: MARKET OPPORTUNITY
@@ -334,12 +379,15 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	marketSection := container.NewVBox(
 		sectionMarketHeader,
 		container.NewPadded(ca.marketChart),
+		ca.createPlainTextEvidencePanel("Market opportunity chart"),
 		widget.NewCard(
 			"Phased Entry Strategy",
 			"De-risking through staged market entry",
 			container.NewPadded(ca.phasedStrategy),
 		),
+		ca.createPlainTextEvidencePanel("Phased entry strategy visualization"),
 		container.NewPadded(ca.competitiveMatrix),
+		ca.createPlainTextEvidencePanel("Competitive matrix comparison"),
 	)
 
 	// SECTION 3: ROI CALCULATOR
@@ -358,8 +406,15 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	exportImageBtn := widget.NewButton("Save Image", func() {
 		ca.exportVisualization()
 	})
+	exportReproBtn := widget.NewButton("Export Repro Pack", func() {
+		ca.exportReproducibilityPack()
+	})
 
 	configRow := container.NewHBox(
+		widget.NewLabel("Mode:"),
+		uiModeSelect,
+		widget.NewLabel("Scenario:"),
+		scenarioSelect,
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
 		layout.NewSpacer(),
@@ -369,11 +424,14 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 		exportDataBtn,
 		exportImageBtn,
+		exportReproBtn,
 	)
 	roiSection := container.NewVBox(
 		sectionROIHeader,
 		container.NewPadded(configRow),
 		container.NewPadded(ca.calculator),
+		ca.createPlainTextEvidencePanel("ROI and calculator panel"),
+		ca.createScenarioDiffPanel(),
 	)
 
 	// SECTION 4: FABRICATION REALITY (H08)
@@ -423,6 +481,56 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	return mainContent
 }
 
+func (ca *ComparisonApp) createEvidenceFirstPanel() fyne.CanvasObject {
+	run := ca.lastRun
+	if len(run.Inputs) == 0 {
+		run = BuildScenarioRun(ca.scenarioProfile, PresetScenarioConfig(ca.scenarioProfile))
+	}
+
+	if ca.uiMode == "Presentation" {
+		summary := widget.NewLabel(fmt.Sprintf("Scenario: %s | Energy %.1f%% | Latency %.1f%% | TCO %.1f%% | CO2 %.1f%%",
+			run.Profile,
+			run.Outputs["energy_reduction_pct"].Value,
+			run.Outputs["latency_reduction_pct"].Value,
+			run.Outputs["tco_reduction_pct"].Value,
+			run.Outputs["co2_reduction_pct"].Value,
+		))
+		caveat := widget.NewLabel("Caveat: Presentation mode simplifies outputs. Switch to Technical Review for raw assumptions and uncertainty.")
+		return widget.NewCard("Evidence Summary", "Presentation", container.NewVBox(summary, caveat))
+	}
+
+	assumptions := widget.NewLabel(PlainTextEvidence("Assumptions & outputs", run))
+	sensitivity := SensitivityRanking(run, "tco_reduction_pct")
+	top := "n/a"
+	if len(sensitivity) > 0 {
+		top = fmt.Sprintf("Top sensitivity: %s impact %.2f%%", sensitivity[0].InputName, sensitivity[0].ImpactPct)
+	}
+	caveat := widget.NewLabel("Caveat: all values are model inputs/derived estimates (TRL4).")
+	return widget.NewCard("Evidence-first panel", "Assumptions + outputs + caveat", container.NewVBox(assumptions, widget.NewLabel(top), caveat))
+}
+
+func (ca *ComparisonApp) createPlainTextEvidencePanel(title string) fyne.CanvasObject {
+	run := ca.lastRun
+	if len(run.Inputs) == 0 {
+		run = BuildScenarioRun(ca.scenarioProfile, PresetScenarioConfig(ca.scenarioProfile))
+	}
+	text := widget.NewLabel(PlainTextEvidence(title, run))
+	text.Wrapping = fyne.TextWrapWord
+	return widget.NewCard("Plain-text evidence", "Screen-reader-first", text)
+}
+
+func (ca *ComparisonApp) createScenarioDiffPanel() fyne.CanvasObject {
+	baseline := BuildScenarioRun(ScenarioBaseline, PresetScenarioConfig(ScenarioBaseline))
+	current := ca.lastRun
+	if len(current.Inputs) == 0 {
+		current = BuildScenarioRun(ca.scenarioProfile, PresetScenarioConfig(ca.scenarioProfile))
+	}
+	diff := DiffScenarios(baseline, current)
+	content := widget.NewLabel(fmt.Sprintf("Changed assumptions: %d\nOutput deltas: %v\nAttribution: %v", len(diff.ChangedAssumptions), diff.OutputDeltas, diff.Attribution))
+	content.Wrapping = fyne.TextWrapWord
+	return widget.NewCard("Scenario Diff (Run A vs Run B)", "A=baseline, B=current", content)
+}
+
 // createVerifiedClaimsWidget creates a compact model input / scenario input section.
 // Dr. Tour recommendation: Show explicit energy numbers with units and citations (as model inputs)
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
@@ -457,7 +565,15 @@ func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 // onWorkloadChanged handles workload selection.
 func (ca *ComparisonApp) onWorkloadChanged(workload string) {
 	ca.currentWorkload = workload
-	ca.updateCalculations()
+	ca.scheduleRecompute()
+}
+
+func (ca *ComparisonApp) scheduleRecompute() {
+	if ca.recomputeBus == nil {
+		ca.updateCalculations()
+		return
+	}
+	ca.recomputeBus.Submit("module5-calculation", ca.updateCalculations)
 }
 
 func energyPowerCost(macs int, energyFJ, inferences float64) (energyUJ, powerW, monthlyCost float64) {
@@ -472,6 +588,12 @@ func (ca *ComparisonApp) updateCalculations() {
 	debug.Printf("updateCalculations: workload=%s, inferences=%.0f", ca.currentWorkload, ca.currentInferences)
 
 	macs := ca.getWorkloadMACs()
+
+	cfg := PresetScenarioConfig(ca.scenarioProfile)
+	ca.lastRun = BuildScenarioRun(ca.scenarioProfile, cfg)
+	ca.cpuSpec.EnergyFJ = cfg.CPUEnergyPJPerMAC * 1000
+	ca.gpuSpec.EnergyFJ = cfg.GPUEnergyPJPerMAC * 1000
+	ca.fecimSpec.EnergyFJ = cfg.FeCIMEnergyPJPerMAC * 1000
 
 	cpuEnergy, cpuPower, cpuCost := energyPowerCost(macs, ca.cpuSpec.EnergyFJ, ca.currentInferences)
 	gpuEnergy, gpuPower, gpuCost := energyPowerCost(macs, ca.gpuSpec.EnergyFJ, ca.currentInferences)
@@ -488,7 +610,7 @@ func (ca *ComparisonApp) updateCalculations() {
 	// Update transformation widget
 	ca.dcTransformation.SetValues(gpuPower, fecimPower)
 
-	ca.updateStatus(fmt.Sprintf("Calculated for %s @ %.0f inf/s", ca.currentWorkload, ca.currentInferences))
+	ca.updateStatus(fmt.Sprintf("Calculated for %s @ %.0f inf/s | mode=%s | scenario=%s", ca.currentWorkload, ca.currentInferences, ca.uiMode, ca.scenarioProfile))
 }
 
 // getWorkloadMACs returns MACs per inference for common neural network workloads.
