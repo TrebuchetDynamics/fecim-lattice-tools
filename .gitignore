@@ -53,3 +53,29 @@ command*.md
 a.md
 5module-plan.md
 skills/
+
+# Generated exports and validation output
+/exports/
+/output/validation/
+
+# Validation report artifacts (generated per-run)
+validation/calibration/*.json
+validation/heracles/*.json
+
+# Temporary analysis docs in root
+EXPERT_CRITIQUE.md
+FYNE_GO_GUI_PERFORMANCE_RESEARCH.md
+MODULE5_DEEP_CRITIQUE*.md
+RIJU_ACTION_PLAN*.md
+full-test.md
+
+# Temporary probe/scratch files
+.tmp_*
+tmp_*
+
+# Generated EDA data in cmd/
+cmd/fecim-lattice-tools/cells/
+cmd/fecim-lattice-tools/data/
+
+# Widget regression output
+shared/widgets/output/
