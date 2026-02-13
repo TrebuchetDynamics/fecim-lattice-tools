@@ -2,9 +2,6 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
 )
@@ -156,12 +153,5 @@ Tips:
 • Press E to run full evaluation on test set
 • Watch the network activations in the center panel`
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(400, 380))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, ma.window)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(ma.window, "Keyboard Shortcuts", helpText, 400, 380)
 }

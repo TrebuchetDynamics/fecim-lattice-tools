@@ -3,11 +3,9 @@ package gui
 import (
 	"fmt"
 
+	"fecim-lattice-tools/shared/keyboard"
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/widget"
 )
 
 // exportShortcut implements fyne.Shortcut for Ctrl+E (export).
@@ -245,13 +243,5 @@ Note: E and D keys only work in Manual mode.
 Switch to Manual mode using the waveform selector.
 Exported files are saved to the data/ directory with timestamps.`
 
-	// Create a scrollable label for the help text
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(500, 400))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, a.mainWindow)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(a.mainWindow, "Keyboard Shortcuts", helpText, 500, 400)
 }
