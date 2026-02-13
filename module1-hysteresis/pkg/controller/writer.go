@@ -829,18 +829,41 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			// Cap at 0.95×Ec to avoid sharp switching that causes ping-pong
 			prevVoltage := math.Abs(wc.CurrentField)
 
-			// Start at 0.7×Ec, increment by 0.05×Ec, cap at 1.5×Ec
-			// Note: L-K dynamics need higher fields than Preisach's sharp Ec threshold
+			// Start at 0.7×Ec, then increase with error-proportional reverse steps.
+			// Small overshoot errors (e.g. 1 level) must use tiny reverse nudges to
+			// avoid branch ping-pong near saturation.
 			minReverseField := 0.7 * wc.EcField
 			reverseStep := 0.05 * wc.EcField
 			maxReverseField := 1.5 * wc.EcField // Allow higher fields for L-K gradual switching
 
-			// After multiple overshoots, use even finer steps
+			// After multiple overshoots, use finer base steps.
 			if wc.OvershootCount > 2 {
 				reverseStep = 0.03 * wc.EcField
 			}
-			if wc.MinStep > reverseStep {
-				reverseStep = wc.MinStep
+
+			// Dampen reverse step by level error: 1-level error => very small step,
+			// large errors retain stronger correction. Cap at 0.5 to avoid over-scaling.
+			errorScale := 0.0
+			if wc.NumLevels > 0 {
+				errorScale = float64(levelError) / float64(wc.NumLevels)
+			}
+			if errorScale > 0.5 {
+				errorScale = 0.5
+			}
+			if errorScale > 0 {
+				reverseStep *= errorScale
+			}
+
+			// Keep a tiny floor for numerical progress on very small errors.
+			minReverseStep := 0.005 * wc.EcField
+			if reverseStep < minReverseStep {
+				reverseStep = minReverseStep
+			}
+
+			// Guardrail: never change reverse field by more than 0.1×Ec per pulse.
+			maxReverseDelta := 0.10 * wc.EcField
+			if reverseStep > maxReverseDelta {
+				reverseStep = maxReverseDelta
 			}
 
 			var nextVoltage float64

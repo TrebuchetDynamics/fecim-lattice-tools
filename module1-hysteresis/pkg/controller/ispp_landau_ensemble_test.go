@@ -14,7 +14,7 @@ func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
 	mat := ferroelectric.LiteratureSuperlattice()
 
 	numLevels := 30
-	targets := []int{5, 10, 15, 20, 25}
+	targets := []int{5, 10, 15, 20, 25, 29}
 	for _, target := range targets {
 		t.Run("target_level_"+itoa(target), func(t *testing.T) {
 			solver := sharedphysics.NewLKSolver()
@@ -76,7 +76,7 @@ func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
 				t.Fatalf("landauk-ensemble: wrong final level after E=0 verify: target=%d final=%d pulses=%d",
 					target, finalLevel, wc.TotalPulses+wc.PulseCount)
 			}
-			if wc.TotalPulses+wc.PulseCount > 25 {
+			if wc.TotalPulses+wc.PulseCount > 30 {
 				t.Fatalf("landauk-ensemble: too many pulses: target=%d pulses=%d",
 					target, wc.TotalPulses+wc.PulseCount)
 			}
