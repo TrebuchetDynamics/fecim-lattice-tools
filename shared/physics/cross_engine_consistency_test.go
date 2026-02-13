@@ -113,24 +113,31 @@ func preisachPrEcAtTemp(tempK float64) (pr, ec float64) {
 	return pr, ec
 }
 
+func collectCrossEngineSweep(t *testing.T) (temps, prPreisach, prLK, ecPreisach, ecLK []float64) {
+	t.Helper()
+	for temp := 200.0; temp <= 450.0; temp += 25.0 {
+		prP, ecP := preisachPrEcAtTemp(temp)
+		prL, ecL := lkExtractPrEcAtTemp(t, temp)
+		temps = append(temps, temp)
+		prPreisach = append(prPreisach, prP)
+		prLK = append(prLK, prL)
+		ecPreisach = append(ecPreisach, ecP)
+		ecLK = append(ecLK, ecL)
+	}
+	return
+}
+
 func TestCrossEngine_PrVsTemperature(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping cross-engine consistency test in short mode")
 	}
-	for temp := 200.0; temp <= 450.0; temp += 25.0 {
-		prPreisach, _ := preisachPrEcAtTemp(temp)
-		prLK, _ := lkExtractPrEcAtTemp(t, temp)
-
-		if temp > 200.0 {
-			prevPreisach, _ := preisachPrEcAtTemp(temp - 25.0)
-			prevLK, _ := lkExtractPrEcAtTemp(t, temp-25.0)
-
-			if prPreisach > prevPreisach+1e-9 {
-				t.Fatalf("Preisach Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temp-25.0, prevPreisach, temp, prPreisach)
-			}
-			if prLK > prevLK+1e-9 {
-				t.Fatalf("LK Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temp-25.0, prevLK, temp, prLK)
-			}
+	temps, prPreisach, prLK, _, _ := collectCrossEngineSweep(t)
+	for i := 1; i < len(temps); i++ {
+		if prPreisach[i] > prPreisach[i-1]+1e-9 {
+			t.Fatalf("Preisach Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temps[i-1], prPreisach[i-1], temps[i], prPreisach[i])
+		}
+		if prLK[i] > prLK[i-1]+1e-9 {
+			t.Fatalf("LK Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temps[i-1], prLK[i-1], temps[i], prLK[i])
 		}
 	}
 }
@@ -139,20 +146,13 @@ func TestCrossEngine_EcVsTemperature(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping cross-engine consistency test in short mode")
 	}
-	for temp := 200.0; temp <= 450.0; temp += 25.0 {
-		_, ecPreisach := preisachPrEcAtTemp(temp)
-		_, ecLK := lkExtractPrEcAtTemp(t, temp)
-
-		if temp > 200.0 {
-			_, prevPreisach := preisachPrEcAtTemp(temp - 25.0)
-			_, prevLK := lkExtractPrEcAtTemp(t, temp-25.0)
-
-			if ecPreisach > prevPreisach+1e-6 {
-				t.Fatalf("Preisach Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temp-25.0, prevPreisach, temp, ecPreisach)
-			}
-			if ecLK > prevLK+1e-6 {
-				t.Fatalf("LK Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temp-25.0, prevLK, temp, ecLK)
-			}
+	temps, _, _, ecPreisach, ecLK := collectCrossEngineSweep(t)
+	for i := 1; i < len(temps); i++ {
+		if ecPreisach[i] > ecPreisach[i-1]+1e-6 {
+			t.Fatalf("Preisach Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temps[i-1], ecPreisach[i-1], temps[i], ecPreisach[i])
+		}
+		if ecLK[i] > ecLK[i-1]+1e-6 {
+			t.Fatalf("LK Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temps[i-1], ecLK[i-1], temps[i], ecLK[i])
 		}
 	}
 }
