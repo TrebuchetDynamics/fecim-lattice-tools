@@ -19,6 +19,34 @@ import (
 // TAB 4: COMPARISON (FeFET vs GPU vs CPU)
 // ============================================================================
 
+type compMetrics struct {
+	TimeNS   float64
+	EnergyPJ float64
+	TOPSW    float64
+}
+
+const (
+	compBaselineArraySize = 8.0
+	compBaselineMACs      = compBaselineArraySize * compBaselineArraySize
+)
+
+func compMetricsForArray(size int, baseline compMetrics) compMetrics {
+	if size <= 0 {
+		size = int(compBaselineArraySize)
+	}
+	scale := float64(size*size) / compBaselineMACs
+	timeNS := baseline.TimeNS * scale
+	energyPJ := baseline.EnergyPJ * scale
+	opsPerMVM := 2.0 * float64(size*size)
+	opsPerSecond := opsPerMVM / (timeNS * 1e-9)
+	powerW := (energyPJ * 1e-12) / (timeNS * 1e-9)
+	topsw := 0.0
+	if powerW > 0 {
+		topsw = (opsPerSecond / 1e12) / powerW
+	}
+	return compMetrics{TimeNS: timeNS, EnergyPJ: energyPJ, TOPSW: topsw}
+}
+
 func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
 	// Header with description
 	headerLabel := widget.NewRichTextFromMarkdown("**COMPARISON**: Compare FeFET crossbar architecture against traditional von Neumann systems (CPU/GPU). FeFET performs computation in-memory using analog physics (Ohm's law), avoiding the memory bottleneck that limits conventional digital systems. **Context**: numbers here emphasize single-operation latency/energy; GPUs recover throughput with large batched workloads at higher total power.")
@@ -322,11 +350,12 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	// Create table labels
 	ca.compTableLabels = make([]*widget.Label, 16)
+	cpu, gpu, fefet := computeComparisonMetrics(8)
 
 	headers := []string{"", "Time", "Energy", "TOPS/W"}
-	cpuRow := []string{"CPU", "500 ns", "64,000 pJ", "0.5"}
-	gpuRow := []string{"GPU", "50 ns", "6,400 pJ", "5.0"}
-	fefetRow := []string{"FeFET", "76 ns", "2.9 pJ", "22"}
+	cpuRow := []string{cpu.Label, metricLatency(cpu.LatencyNS), metricEnergy(cpu.EnergyPJ), metricTOPSW(cpu.TOPSW)}
+	gpuRow := []string{gpu.Label, metricLatency(gpu.LatencyNS), metricEnergy(gpu.EnergyPJ), metricTOPSW(gpu.TOPSW)}
+	fefetRow := []string{fefet.Label, metricLatency(fefet.LatencyNS), metricEnergy(fefet.EnergyPJ), metricTOPSW(fefet.TOPSW)}
 
 	grid := container.NewGridWithColumns(4)
 	for i, h := range headers {
@@ -432,32 +461,23 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 	}
 	ca.compArraySize = currentSize
 
-	// Calculate scaled values
-	scaleFactor := float64(currentSize*currentSize) / 64.0 // 64 = 8x8 baseline
-
-	cpuTime := int(500 * scaleFactor)
-	gpuTime := int(50 * scaleFactor)
-	fefetTime := int(76 * scaleFactor)
-
-	cpuEnergy := int(64000 * scaleFactor)
-	gpuEnergy := int(6400 * scaleFactor)
-	fefetEnergy := float64(2.9 * scaleFactor)
+	cpu, gpu, fefet := computeComparisonMetrics(currentSize)
 
 	// Update table labels
 	sharedwidgets.SafeDo(func() {
-		// Update CPU row
-		ca.compTableLabels[5].SetText(fmt.Sprintf("%d ns", cpuTime))
-		ca.compTableLabels[6].SetText(fmt.Sprintf("%d pJ", cpuEnergy))
+		ca.compTableLabels[5].SetText(metricLatency(cpu.LatencyNS))
+		ca.compTableLabels[6].SetText(metricEnergy(cpu.EnergyPJ))
+		ca.compTableLabels[7].SetText(metricTOPSW(cpu.TOPSW))
 
-		// Update GPU row
-		ca.compTableLabels[9].SetText(fmt.Sprintf("%d ns", gpuTime))
-		ca.compTableLabels[10].SetText(fmt.Sprintf("%d pJ", gpuEnergy))
+		ca.compTableLabels[9].SetText(metricLatency(gpu.LatencyNS))
+		ca.compTableLabels[10].SetText(metricEnergy(gpu.EnergyPJ))
+		ca.compTableLabels[11].SetText(metricTOPSW(gpu.TOPSW))
 
-		// Update FeFET row
-		ca.compTableLabels[13].SetText(fmt.Sprintf("%d ns", fefetTime))
-		ca.compTableLabels[14].SetText(fmt.Sprintf("%.1f pJ", fefetEnergy))
+		ca.compTableLabels[13].SetText(metricLatency(fefet.LatencyNS))
+		ca.compTableLabels[14].SetText(metricEnergy(fefet.EnergyPJ))
+		ca.compTableLabels[15].SetText(metricTOPSW(fefet.TOPSW))
 
-		// Update status
-		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d array (%d MACs)", currentSize, currentSize, currentSize*currentSize))
+		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d (%d MACs): FeFET %.3f TOPS/W, %.3f pJ/op",
+			currentSize, currentSize, currentSize*currentSize, fefet.TOPSW, fefet.EnergyOpPJ))
 	})
 }

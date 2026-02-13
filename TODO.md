@@ -981,13 +981,13 @@ These require analysis/simulation before a fix can be proposed. Each produces a 
 
 | ID | Investigation | Priority | Status | Notes |
 |----|--------------|----------|--------|-------|
-| M4-INV-01 | Selector Ron impact on read margin vs array size | High | ⏳ | At 64×64 and 128×128, how much does finite Ron (from MOSFET selector) degrade the voltage seen by TIA? Quantify margin loss in LSBs. |
-| M4-INV-02 | Wordline RC delay vs array size | High | ⏳ | WL delay = R_wire × (C_wire + N×C_gate). At what N does delay exceed write pulse width (~10ns)? Determines max practical array size per tech node. |
-| M4-INV-03 | Half-select disturb budget | Medium | ⏳ | How many write cycles to adjacent cells before a half-selected cell drifts one discrete level? Use current disturb accumulation model to estimate. |
-| M4-INV-04 | Thermal noise floor vs ADC resolution | Medium | ⏳ | At what ADC bit count does thermal noise (from TIA + wires) exceed quantization noise? That's the useful ADC ceiling for a given array size. |
-| M4-INV-05 | Charge pump efficiency model | Low | ⏳ | Dickson model assumes ideal caps. What's realistic efficiency at 3V boost on SKY130? Affects write energy estimates. |
-| M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ⏳ | Current comparison is static strings. Should compute TOPS/W, latency, energy/op from actual array config + peripheral params. |
-| M4-INV-07 | SPICE export from Module 4 state | Medium | ⏳ | Allow exporting current array configuration (conductances, voltages, architecture) as ngspice-ready netlist for external validation. |
+| M4-INV-01 | Selector Ron impact on read margin vs array size | High | ✅ | Completed with `TestM4INV01_ReadMarginVsSelectorRon` and results in `docs/validation/m4-inv-01-results.md` (commit: pending). |
+| M4-INV-02 | Wordline RC delay vs array size | High | ✅ | Completed with `TestM4INV02_WordlineRCDelayBudget` and results in `docs/validation/m4-inv-02-results.md` (commit: pending). |
+| M4-INV-03 | Half-select disturb budget | Medium | ✅ | Completed with `TestM4INV03_HalfSelectDisturbBudget` and results in `docs/validation/m4-inv-03-results.md` (commit: pending). |
+| M4-INV-04 | Thermal noise floor vs ADC resolution | Medium | ✅ | Refined via `TestM4INV04_ThermalNoiseVsADCRefine` + noise sweeps; results in `docs/validation/m4-inv-04-results.md` (commit: pending). |
+| M4-INV-05 | Charge pump efficiency model | Low | ✅ | Completed with `TestM4INV05_ChargePumpDicksonEfficiencyAt3V`; results in `docs/validation/m4-inv-05-results.md` (commit: pending). |
+| M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ✅ | Dynamic metrics implemented (`computeComparisonMetrics`) and validated in `TestM4INV06_DynamicTOPSWMetrics`; results in `docs/validation/m4-inv-06-results.md` (commit: pending). |
+| M4-INV-07 | SPICE export from Module 4 state | Medium | ✅ | ngspice export validated via `TestM4INV07_SPICEExportFromArrayState`; results in `docs/validation/m4-inv-07-results.md` (commit: pending). |
 
 ## Module 4: UI/Physics Observations from User Testing (2026-02-12)
 
