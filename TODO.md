@@ -1045,8 +1045,8 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ✅ | Added Module 4 energy back-annotation API in `liberty.go` and emitted Liberty `internal_power` groups for DAC/MVM/TIA with tests. Commit: `0afad18` |
 | M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ✅ | Added `pkg/validate/drc.go` with SKY130 default rules and checks for min metal width, min spacing, via enclosure; tests for pass/fail LEF. Commit: `99d0958` |
 | M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ✅ | Added `pkg/validate/lvs.go` cross-format check (LEF/Verilog/SPICE names + pins) with pass/fail tests. Commit: `cd2622a` |
-| M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ⏳ | Currently only Builder + Learn tabs. Users can't preview generated files in-app |
-| M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ⏳ | SVG already exists; render it interactive with layer toggles |
+| M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ✅ | Added Export Viewer tab with format selector + read-only preview; disk-first with in-memory generator fallback. Commit: `f8d0c50` |
+| M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ✅ | Added Layout Visualizer tab using SVG-backed structured layer summary with WL/BL/SL/Cells/Grid/Legend toggles. Commit: `eddd6f8` |
 | M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ✅ | Done in 3651af6: shared TechnologyNode (130/65/28/14nm + transistor model) used by Module 4 |
 | M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ✅ | Done in adfcdb6: M4 CharacterizationResult drives Liberty timing/leakage with end-to-end test |
 | M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ✅ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
