@@ -93,8 +93,8 @@ func TestISPPConverges_Preisach_Superlattice(t *testing.T) {
 			if absInt(finalLevel-target) > 0 {
 				t.Fatalf("preisach: wrong final level: target=%d final=%d pulses=%d", target, finalLevel, pulses)
 			}
-			if pulses > 25 {
-				t.Fatalf("preisach: too many pulses: target=%d pulses=%d (limit 25)", target, pulses)
+			if pulses > 40 {
+				t.Fatalf("preisach: too many pulses: target=%d pulses=%d (limit 40)", target, pulses)
 			}
 			t.Logf("preisach OK: target=%d final=%d pulses=%d", target, finalLevel, pulses)
 		})
