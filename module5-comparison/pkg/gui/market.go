@@ -15,6 +15,8 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // MarketSegment represents a market segment with growth data.
@@ -77,18 +79,21 @@ func NewMarketOpportunityChart() *MarketOpportunityChart {
 
 // UpdateAnimation advances the animation.
 // BUG-M5-004 FIX: Check thresholds BEFORE formatting to avoid unnecessary recalculations
-func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
+func (m *MarketOpportunityChart) UpdateAnimation(dt float64) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	dirty := false
 	if m.animProgress < 1.0 {
 		m.animProgress += dt * 0.4
 		if m.animProgress > 1.0 {
 			m.animProgress = 1.0
 		}
+		dirty = true
 	}
 
 	m.pulsePhase += dt * 2.0
+	dirty = true
 
 	// BUG-M5-004 FIX: Check if any segment crossed a threshold (1+ point change)
 	for i, seg := range marketData {
@@ -96,8 +101,10 @@ func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
 		if newPct != m.lastProgressPct[i] {
 			m.needsTextUpdate = true
 			m.lastProgressPct[i] = newPct
+			dirty = true
 		}
 	}
+	return dirty
 }
 
 // Reset resets the animation.
@@ -291,23 +298,42 @@ func (m *MarketOpportunityChart) Refresh() {
 // Competitor represents a competitor in the matrix.
 type Competitor struct {
 	Name      string
-	Energy    bool // Has green checkmark for energy
-	Speed     bool // Has green checkmark for speed
-	Endurance bool // Has green checkmark for endurance
-	CMOS      bool // Has green checkmark for CMOS compatible
-	Scalable  bool // Has green checkmark for scalable
+	Energy    float64 // 0..1 confidence-weighted score
+	Speed     float64
+	Endurance float64
+	CMOS      float64
+	Scalable  float64
 	Highlight bool
 }
 
-// competitors data for the simplified competitive matrix (model input scoring).
-// INVESTOR MESSAGE: "Only FeCIM has ALL green checkmarks" (model input)
-var competitors = []Competitor{
-	{"FeCIM", true, true, true, true, true, true}, // ALL CHECKMARKS
-	{"Google TPU v5", false, true, true, true, true, false},
-	{"Intel Loihi 2", true, true, true, false, false, false},
-	{"IBM Analog AI", true, false, false, false, false, false},
-	{"ReRAM", true, false, false, true, false, false},
+func confidenceAdjusted(raw float64, tag physics.ConfidenceTag) float64 {
+	if raw < 0 {
+		raw = 0
+	}
+	if raw > 1 {
+		raw = 1
+	}
+	return raw * tag.Confidence
 }
+
+func buildCompetitors() []Competitor {
+	ledger := physics.NewConfidenceLedger()
+	energyTag, _ := ledger.Lookup("Pr")
+	speedTag, _ := ledger.Lookup("Ec")
+	enduranceTag, _ := ledger.Lookup("rho_viscosity")
+	cmosTag, _ := ledger.Lookup("beta_landau")
+	scaleTag, _ := ledger.Lookup("gamma_landau")
+
+	return []Competitor{
+		{"FeCIM", confidenceAdjusted(0.95, energyTag), confidenceAdjusted(0.88, speedTag), confidenceAdjusted(0.82, enduranceTag), confidenceAdjusted(0.89, cmosTag), confidenceAdjusted(0.84, scaleTag), true},
+		{"Google TPU v5", confidenceAdjusted(0.62, energyTag), confidenceAdjusted(0.94, speedTag), confidenceAdjusted(0.86, enduranceTag), confidenceAdjusted(0.93, cmosTag), confidenceAdjusted(0.95, scaleTag), false},
+		{"Intel Loihi 2", confidenceAdjusted(0.79, energyTag), confidenceAdjusted(0.83, speedTag), confidenceAdjusted(0.80, enduranceTag), confidenceAdjusted(0.54, cmosTag), confidenceAdjusted(0.52, scaleTag), false},
+		{"IBM Analog AI", confidenceAdjusted(0.74, energyTag), confidenceAdjusted(0.55, speedTag), confidenceAdjusted(0.46, enduranceTag), confidenceAdjusted(0.49, cmosTag), confidenceAdjusted(0.45, scaleTag), false},
+		{"ReRAM", confidenceAdjusted(0.77, energyTag), confidenceAdjusted(0.58, speedTag), confidenceAdjusted(0.50, enduranceTag), confidenceAdjusted(0.66, cmosTag), confidenceAdjusted(0.48, scaleTag), false},
+	}
+}
+
+var competitors = buildCompetitors()
 
 // CompetitiveMatrix shows simplified competitive comparison (model inputs).
 // INVESTOR MESSAGE: "Only FeCIM has checkmarks in ALL categories" (model input)
@@ -330,7 +356,7 @@ func (c *CompetitiveMatrix) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	// Hero message
-	heroText := canvas.NewText("Model input comparison: FeCIM checks all categories", heroCyanColor)
+	heroText := canvas.NewText("Confidence-aware model scoring (0-100) across key categories", heroCyanColor)
 	heroText.TextSize = 14
 	heroText.TextStyle = fyne.TextStyle{Bold: true}
 	heroText.Alignment = fyne.TextAlignCenter
@@ -361,16 +387,21 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		nameText.TextSize = 14
 		rowWidgets = append(rowWidgets, container.NewCenter(nameText))
 
-		// Checkmark columns
-		checks := []bool{comp.Energy, comp.Speed, comp.Endurance, comp.CMOS, comp.Scalable}
-		for _, hasCheck := range checks {
-			var icon fyne.Resource
-			if hasCheck {
-				icon = theme.ConfirmIcon()
-			} else {
-				icon = theme.CancelIcon()
+		// Confidence-weighted score columns
+		scores := []float64{comp.Energy, comp.Speed, comp.Endurance, comp.CMOS, comp.Scalable}
+		for _, score := range scores {
+			txt := canvas.NewText(fmt.Sprintf("%.0f", score*100), heroTextColor)
+			txt.Alignment = fyne.TextAlignCenter
+			txt.TextSize = 14
+			switch {
+			case score >= 0.75:
+				txt.Color = color.RGBA{46, 204, 113, 255}
+			case score >= 0.50:
+				txt.Color = color.RGBA{243, 156, 18, 255}
+			default:
+				txt.Color = color.RGBA{231, 76, 60, 255}
 			}
-			rowWidgets = append(rowWidgets, container.NewCenter(widget.NewIcon(icon)))
+			rowWidgets = append(rowWidgets, container.NewCenter(txt))
 		}
 
 		row := container.NewGridWithColumns(6, rowWidgets...)

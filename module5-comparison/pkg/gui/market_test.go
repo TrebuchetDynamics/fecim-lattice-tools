@@ -76,3 +76,14 @@ func TestCompetitorFeCIMHighlighted(t *testing.T) {
 		t.Error("FeCIM not found in competitors list")
 	}
 }
+
+func TestCompetitorScoresAreConfidenceBounded(t *testing.T) {
+	for _, comp := range competitors {
+		scores := []float64{comp.Energy, comp.Speed, comp.Endurance, comp.CMOS, comp.Scalable}
+		for _, score := range scores {
+			if score < 0 || score > 1 {
+				t.Fatalf("score out of bounds for %s: %.3f", comp.Name, score)
+			}
+		}
+	}
+}
