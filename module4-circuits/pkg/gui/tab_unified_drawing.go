@@ -251,9 +251,10 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		drawSimpleText(img, colText, x, offsetY+gridH+5, indexColor)
 	}
 
-	// Draw cells
-	for r := 0; r < rows && r < len(weights); r++ {
-		for c := 0; c < cols && c < len(weights[r]); c++ {
+	// Draw cells using shared bounded dimensions (prevents overlay/base extent mismatch).
+	drawRows, drawCols := ca.overlayDrawableDims(rows, cols, weights)
+	for r := 0; r < drawRows; r++ {
+		for c := 0; c < drawCols; c++ {
 			x0 := offsetX + c*cellSize + 2
 			y0 := offsetY + r*cellSize + 2
 			cw := cellSize - 4
