@@ -404,6 +404,11 @@ func (ca *CircuitsApp) Run() {
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	operationsContent := ca.createUnifiedView()
 
+	// Initialize comparison/reference tabs so their fields (compStatusLabel, etc.)
+	// are non-nil even though we only show OPERATIONS view (FOCUS-92).
+	_ = ca.createComparisonTab()
+	_ = ca.createReferenceTab()
+
 	header := container.NewVBox(
 		container.NewHBox(
 			widget.NewLabel("OPERATIONS"),
