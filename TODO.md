@@ -951,7 +951,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | ID | Package | Before | After | Status | Notes |
 |----|---------|--------|-------|--------|-------|
 | COV-01 | `module1-hysteresis/pkg/ferroelectric` | 41.5% | 82.3% | ✅ Fixed | Added `render_coverage_test.go` covering all 6 renderer methods (PELoop, DomainStates, SwitchingDynamics, Temperature, MaterialComparison) |
-| COV-02 | `module1-hysteresis/pkg/render` | 22.1% | — | ⏳ | Vulkan renderer stubs; limited testable surface beyond lifecycle (already tested in `render_test.go`) |
+| COV-02 | `module1-hysteresis/pkg/render` coverage 29.1% (non-Vulkan code 100%, vulkan.go 0% — requires GPU hardware) | ✅ | Coverage maximized without Vulkan: render.go+plot.go at 100%, vulkan.go blocked on hardware | Vulkan renderer stubs; limited testable surface beyond lifecycle (already tested in `render_test.go`) |
 | COV-03 | `module2-crossbar/pkg/gui` | 3.8% | 15.6% | ✅ | Added logic-focused tests for tooltips, heatmap/color mapping, liveslide content/state, and comparison helper paths |
 | COV-04 | `module3-mnist/pkg/gui` | 8.4% | 18.3% | ✅ | Added non-widget logic tests for comparison card render helpers, max-confidence/second-best logic, and weight comparison render/stat paths |
 | COV-05 | `module5-comparison/pkg/gui` | 1.4% | 15.6% | ✅ | Added tests for formatting/calculation helpers, mode/phase mapping, educational panel/log state paths, and widget image generators |
