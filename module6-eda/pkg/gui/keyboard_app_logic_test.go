@@ -142,9 +142,9 @@ func TestCreateMainWindow_ViewSelectionTogglesVisibleContent(t *testing.T) {
 		t.Fatalf("same-selection should keep first view visible")
 	}
 
-	selectWidget.SetSelected("3. Learn")
-	if stack.Objects[0].Visible() || !stack.Objects[2].Visible() {
-		t.Fatalf("after selecting Learn: builder=%v learn=%v", stack.Objects[0].Visible(), stack.Objects[2].Visible())
+	selectWidget.SetSelected("4. Learn")
+	if stack.Objects[0].Visible() || !stack.Objects[3].Visible() {
+		t.Fatalf("after selecting Learn: builder=%v learn=%v", stack.Objects[0].Visible(), stack.Objects[3].Visible())
 	}
 
 	selectWidget.SetSelected("2. Export Viewer")

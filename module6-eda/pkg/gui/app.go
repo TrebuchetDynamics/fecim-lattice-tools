@@ -30,18 +30,21 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	// Create tab contents
 	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w) // Tab 1
 	exportViewerContent := tabs.MakeExportViewerTab(arrayConfig, w) // Tab 2
-	learnContent := tabs.MakeLearnTab(nil, w)                       // Tab 3
+	layoutVisualizerContent := tabs.MakeLayoutVisualizerTab(arrayConfig, w)
+	learnContent := tabs.MakeLearnTab(nil, w) // Tab 4
 
 	// View names for selector
 	viewNames := []string{
 		"1. Builder & Validation",
 		"2. Export Viewer",
-		"3. Learn",
+		"3. Layout Visualizer",
+		"4. Learn",
 	}
 
 	allViews := []fyne.CanvasObject{
 		builderContent,
 		exportViewerContent,
+		layoutVisualizerContent,
 		learnContent,
 	}
 

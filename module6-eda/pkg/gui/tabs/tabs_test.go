@@ -144,6 +144,26 @@ func TestMakeExportViewerTab(t *testing.T) {
 	}
 }
 
+func TestMakeLayoutVisualizerTab(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window := testApp.NewWindow("Test")
+	defer window.Close()
+
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72}
+	content := MakeLayoutVisualizerTab(cfg, window)
+	if content == nil {
+		t.Fatal("MakeLayoutVisualizerTab returned nil")
+	}
+
+	svg, _ := loadLayoutSVGContent(cfg)
+	summary := buildLayerSummary(svg, layerFilter{WL: true, BL: true, SL: true, Cells: true, Grid: true, Legend: true})
+	if summary == "" || !containsString(summary, "WL wires") {
+		t.Fatal("buildLayerSummary did not include expected layer output")
+	}
+}
+
 func TestMakeLearnTab_NilWindow(t *testing.T) {
 	testApp := test.NewApp()
 	defer testApp.Quit()
