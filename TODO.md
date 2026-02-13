@@ -8,6 +8,13 @@
 
 **Phase 5 note (2026-02-12):** M1–M4 claim-matrix FALSE-claim cleanup completed: Claim 18 fixed in code/tests (signed V/I cell-info toggle now functional), Claim 5 marked DEFERRED with rationale (missing calibrated PZT/BTO presets), and Claim 19 marked DEFERRED as Module 5 scope (SRAM/ReRAM/MRAM comparison).
 
+**Open-Source Toolchain proof-mode updates (2026-02-13):**
+- ✅ OST-01 External Tool Inventory — commit `8dc7170`
+- ✅ OST-02 Tool Checker Script — commit `3cfa37d`
+- ✅ OST-04 Heracles Comparator Harness — commit `9fb66a6`
+- ✅ OST-06 ngspice Round-Trip — commit `3c991a3`
+- ✅ OST-08 Compatibility Matrix — commit `318a3db`
+
 ---
 
 ## Current Focus & Direction
