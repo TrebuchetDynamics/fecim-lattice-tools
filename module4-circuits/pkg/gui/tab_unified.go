@@ -617,30 +617,27 @@ func (ca *CircuitsApp) createTechnologyNodeSelector() fyne.CanvasObject {
 }
 
 func (ca *CircuitsApp) applyTechnologyNode(node string) {
-	var geom arraysim.CellGeometry
-	var selectorRon, leakageS float64
-	switch node {
-	case "14nm":
-		geom = arraysim.CellGeometry{PitchX: 0.14e-6, PitchY: 0.70e-6, WireWidth: 0.032e-6, WireThickness: 0.09e-6, MetalResistivity: 1.68e-8}
-		selectorRon = 0.8e3
-		leakageS = 5e-11
-		ca.selectedTechNodeNm = 14
-	case "28nm":
-		geom = arraysim.CellGeometry{PitchX: 0.19e-6, PitchY: 0.90e-6, WireWidth: 0.045e-6, WireThickness: 0.12e-6, MetalResistivity: 1.68e-8}
-		selectorRon = 1.5e3
-		leakageS = 2e-11
-		ca.selectedTechNodeNm = 28
-	case "65nm":
-		geom = arraysim.CellGeometry{PitchX: 0.30e-6, PitchY: 1.50e-6, WireWidth: 0.09e-6, WireThickness: 0.20e-6, MetalResistivity: 1.68e-8}
-		selectorRon = 3.5e3
-		leakageS = 5e-12
-		ca.selectedTechNodeNm = 65
-	default:
-		geom = arraysim.DefaultCellGeometry()
-		selectorRon = 7.0e3
-		leakageS = 1e-12
-		ca.selectedTechNodeNm = 130
+	tech := sharedphysics.TechnologyNodeFromName(node)
+	geom := arraysim.CellGeometry{
+		PitchX:           tech.CellPitchX,
+		PitchY:           tech.CellRowHeight,
+		WireWidth:        tech.MetalWidth,
+		WireThickness:    tech.MetalThickness,
+		MetalResistivity: tech.MetalResistivity,
 	}
+
+	var selectorRon, leakageS float64
+	switch tech.Name {
+	case "14nm":
+		selectorRon, leakageS, ca.selectedTechNodeNm = 0.8e3, 5e-11, 14
+	case "28nm":
+		selectorRon, leakageS, ca.selectedTechNodeNm = 1.5e3, 2e-11, 28
+	case "65nm":
+		selectorRon, leakageS, ca.selectedTechNodeNm = 3.5e3, 5e-12, 65
+	default:
+		selectorRon, leakageS, ca.selectedTechNodeNm = 7.0e3, 1e-12, 130
+	}
+
 	if ca.deviceState != nil {
 		ca.deviceState.SetCellGeometry(geom)
 		ca.deviceState.SetWireParams(arraysim.WireParams{})

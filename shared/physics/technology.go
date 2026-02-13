@@ -2,9 +2,18 @@ package physics
 
 import "strings"
 
+// TransistorModel captures simplified transistor behavior anchors for a process node.
+type TransistorModel struct {
+	NMOSVth  float64 // V
+	PMOSVth  float64 // V
+	NMOSIon  float64 // A/um (sat current anchor)
+	PMOSIon  float64 // A/um
+	GateCapF float64 // F/um
+}
+
 // TechnologyNode captures process-node-dependent physical and layout parameters (SI units).
 type TechnologyNode struct {
-	Name             string  // "SKY130", "GF180MCU", "TSMC28", "TSMC14"
+	Name             string
 	FeatureSize      float64 // m (e.g., 130e-9)
 	MetalPitch       float64 // m (met1 pitch)
 	MetalWidth       float64 // m (met1 min width)
@@ -13,11 +22,12 @@ type TechnologyNode struct {
 	VDD              float64 // V (nominal supply)
 	CellPitchX       float64 // m (standard cell X pitch)
 	CellRowHeight    float64 // m (standard cell row height)
+	Transistor       TransistorModel
 }
 
-func SKY130() TechnologyNode {
+func Node130nm() TechnologyNode {
 	return TechnologyNode{
-		Name:             "SKY130",
+		Name:             "130nm",
 		FeatureSize:      130e-9,
 		MetalPitch:       0.46e-6,
 		MetalWidth:       0.14e-6,
@@ -26,26 +36,28 @@ func SKY130() TechnologyNode {
 		VDD:              1.8,
 		CellPitchX:       0.46e-6,
 		CellRowHeight:    2.72e-6,
+		Transistor:       TransistorModel{NMOSVth: 0.52, PMOSVth: -0.58, NMOSIon: 0.55e-3, PMOSIon: 0.32e-3, GateCapF: 1.2e-15},
 	}
 }
 
-func GF180MCU() TechnologyNode {
+func Node65nm() TechnologyNode {
 	return TechnologyNode{
-		Name:             "GF180MCU",
-		FeatureSize:      180e-9,
-		MetalPitch:       0.56e-6,
-		MetalWidth:       0.23e-6,
-		MetalThickness:   0.40e-6,
+		Name:             "65nm",
+		FeatureSize:      65e-9,
+		MetalPitch:       0.20e-6,
+		MetalWidth:       0.09e-6,
+		MetalThickness:   0.20e-6,
 		MetalResistivity: 1.68e-8,
-		VDD:              1.8,
-		CellPitchX:       0.56e-6,
-		CellRowHeight:    3.24e-6,
+		VDD:              1.2,
+		CellPitchX:       0.30e-6,
+		CellRowHeight:    1.50e-6,
+		Transistor:       TransistorModel{NMOSVth: 0.45, PMOSVth: -0.48, NMOSIon: 0.85e-3, PMOSIon: 0.52e-3, GateCapF: 0.95e-15},
 	}
 }
 
-func TSMC28() TechnologyNode {
+func Node28nm() TechnologyNode {
 	return TechnologyNode{
-		Name:             "TSMC28",
+		Name:             "28nm",
 		FeatureSize:      28e-9,
 		MetalPitch:       0.09e-6,
 		MetalWidth:       0.045e-6,
@@ -54,12 +66,13 @@ func TSMC28() TechnologyNode {
 		VDD:              1.0,
 		CellPitchX:       0.19e-6,
 		CellRowHeight:    0.90e-6,
+		Transistor:       TransistorModel{NMOSVth: 0.37, PMOSVth: -0.40, NMOSIon: 1.2e-3, PMOSIon: 0.78e-3, GateCapF: 0.68e-15},
 	}
 }
 
-func TSMC14() TechnologyNode {
+func Node14nm() TechnologyNode {
 	return TechnologyNode{
-		Name:             "TSMC14",
+		Name:             "14nm",
 		FeatureSize:      14e-9,
 		MetalPitch:       0.064e-6,
 		MetalWidth:       0.032e-6,
@@ -68,27 +81,34 @@ func TSMC14() TechnologyNode {
 		VDD:              0.8,
 		CellPitchX:       0.14e-6,
 		CellRowHeight:    0.70e-6,
+		Transistor:       TransistorModel{NMOSVth: 0.31, PMOSVth: -0.34, NMOSIon: 1.6e-3, PMOSIon: 1.05e-3, GateCapF: 0.51e-15},
 	}
 }
 
+// Backward-compatible aliases.
+func SKY130() TechnologyNode   { return Node130nm() }
+func TSMC28() TechnologyNode   { return Node28nm() }
+func TSMC14() TechnologyNode   { return Node14nm() }
+func GF180MCU() TechnologyNode { return Node130nm() }
+
 func AllTechnologyNodes() []TechnologyNode {
-	return []TechnologyNode{GF180MCU(), SKY130(), TSMC28(), TSMC14()}
+	return []TechnologyNode{Node130nm(), Node65nm(), Node28nm(), Node14nm()}
 }
 
 // TechnologyNodeFromName resolves common technology aliases.
-// Unknown inputs default to SKY130 to preserve legacy behavior.
+// Unknown inputs default to 130nm to preserve legacy behavior.
 func TechnologyNodeFromName(name string) TechnologyNode {
 	n := strings.ToUpper(strings.TrimSpace(name))
 	switch n {
-	case "GF180", "GF180MCU":
-		return GF180MCU()
-	case "SKY130", "SKY130A", "SKYWATER130":
-		return SKY130()
-	case "TSMC28", "N28", "28NM", "28":
-		return TSMC28()
-	case "TSMC14", "N14", "14NM", "14":
-		return TSMC14()
+	case "130", "130NM", "SKY130", "SKY130A", "SKYWATER130", "GF180", "GF180MCU":
+		return Node130nm()
+	case "65", "65NM", "N65", "TSMC65":
+		return Node65nm()
+	case "28", "28NM", "N28", "TSMC28":
+		return Node28nm()
+	case "14", "14NM", "N14", "TSMC14":
+		return Node14nm()
 	default:
-		return SKY130()
+		return Node130nm()
 	}
 }

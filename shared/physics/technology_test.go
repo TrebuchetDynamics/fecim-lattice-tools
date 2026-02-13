@@ -17,38 +17,41 @@ func TestAllTechnologyNodesPositiveValues(t *testing.T) {
 				n.MetalResistivity <= 0 || n.VDD <= 0 || n.CellPitchX <= 0 || n.CellRowHeight <= 0 {
 				t.Fatalf("all physical parameters must be positive: %+v", n)
 			}
+			if n.Transistor.NMOSVth <= 0 || n.Transistor.PMOSVth >= 0 || n.Transistor.NMOSIon <= 0 || n.Transistor.PMOSIon <= 0 || n.Transistor.GateCapF <= 0 {
+				t.Fatalf("transistor model must be populated: %+v", n.Transistor)
+			}
 		})
 	}
 }
 
 func TestVDDDecreasesWithSmallerNodes(t *testing.T) {
-	if SKY130().VDD <= TSMC14().VDD {
-		t.Fatalf("expected SKY130 VDD > TSMC14 VDD, got %.2f <= %.2f", SKY130().VDD, TSMC14().VDD)
+	if Node130nm().VDD <= Node14nm().VDD {
+		t.Fatalf("expected 130nm VDD > 14nm VDD, got %.2f <= %.2f", Node130nm().VDD, Node14nm().VDD)
 	}
-	if math.Abs(SKY130().VDD-1.8) > 1e-9 {
-		t.Fatalf("expected SKY130 VDD ~1.8V, got %.3f", SKY130().VDD)
+	if math.Abs(Node130nm().VDD-1.8) > 1e-9 {
+		t.Fatalf("expected 130nm VDD ~1.8V, got %.3f", Node130nm().VDD)
 	}
-	if math.Abs(TSMC14().VDD-0.8) > 1e-9 {
-		t.Fatalf("expected TSMC14 VDD ~0.8V, got %.3f", TSMC14().VDD)
+	if math.Abs(Node14nm().VDD-0.8) > 1e-9 {
+		t.Fatalf("expected 14nm VDD ~0.8V, got %.3f", Node14nm().VDD)
 	}
 }
 
 func TestMetalPitchDecreasesWithNode(t *testing.T) {
-	n130 := SKY130()
-	n28 := TSMC28()
-	n14 := TSMC14()
-	if !(n130.MetalPitch > n28.MetalPitch && n28.MetalPitch > n14.MetalPitch) {
-		t.Fatalf("expected pitch trend SKY130 > TSMC28 > TSMC14, got %.3gnm > %.3gnm > %.3gnm",
-			n130.MetalPitch*1e9, n28.MetalPitch*1e9, n14.MetalPitch*1e9)
+	n130 := Node130nm()
+	n65 := Node65nm()
+	n28 := Node28nm()
+	n14 := Node14nm()
+	if !(n130.MetalPitch > n65.MetalPitch && n65.MetalPitch > n28.MetalPitch && n28.MetalPitch > n14.MetalPitch) {
+		t.Fatalf("expected pitch trend 130nm > 65nm > 28nm > 14nm")
 	}
 }
 
 func TestFeatureSizeMatchesName(t *testing.T) {
 	expected := map[string]float64{
-		"SKY130":  130e-9,
-		"GF180MCU": 180e-9,
-		"TSMC28":  28e-9,
-		"TSMC14":  14e-9,
+		"130nm": 130e-9,
+		"65nm":  65e-9,
+		"28nm":  28e-9,
+		"14nm":  14e-9,
 	}
 	for _, n := range AllTechnologyNodes() {
 		want, ok := expected[n.Name]
@@ -68,9 +71,11 @@ func TestFeatureSizeMatchesName(t *testing.T) {
 		name string
 		want string
 	}{
-		{name: "unknown", want: "SKY130"},
-		{name: "N28", want: "TSMC28"},
-		{name: "14nm", want: "TSMC14"},
+		{name: "unknown", want: "130nm"},
+		{name: "N28", want: "28nm"},
+		{name: "14nm", want: "14nm"},
+		{name: "sky130", want: "130nm"},
+		{name: "65", want: "65nm"},
 	} {
 		t.Run(fmt.Sprintf("alias_%s", tc.name), func(t *testing.T) {
 			if got := TechnologyNodeFromName(tc.name).Name; got != tc.want {
