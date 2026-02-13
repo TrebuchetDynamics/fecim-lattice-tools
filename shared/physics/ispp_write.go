@@ -100,7 +100,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	c.VMax = c.MaxVoltage
 
 	currentP := c.Solver.GetState()
-	currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+	currentG := PolarizationToConductanceWithParams(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax, ParseConductanceModel(c.Material.ConductanceModel), c.Material.KvT, c.Material.VGSReadV, c.Material.VT0V)
 	direction := 1.0
 	if reset {
 		if targetP < 0 {
@@ -114,7 +114,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		pr := math.Abs(c.Material.Pr)
 		c.Solver.SetState(-direction * pr)
 		currentP = c.Solver.GetState()
-		currentG = PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		currentG = PolarizationToConductanceWithParams(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax, ParseConductanceModel(c.Material.ConductanceModel), c.Material.KvT, c.Material.VGSReadV, c.Material.VT0V)
 	}
 
 	crossingInitial := currentP*targetP < 0
@@ -159,7 +159,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	var i int
 	for i = 0; i < c.MaxIterations; i++ {
 		currentP := c.Solver.GetState()
-		currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		currentG := PolarizationToConductanceWithParams(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax, ParseConductanceModel(c.Material.ConductanceModel), c.Material.KvT, c.Material.VGSReadV, c.Material.VT0V)
 		crossingNow := currentP*targetP < 0
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"attempt":  i + 1,
@@ -268,7 +268,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		}, nil)
 
 		postP := c.Solver.GetState()
-		postG := PolarizationToConductance(postP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		postG := PolarizationToConductanceWithParams(postP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax, ParseConductanceModel(c.Material.ConductanceModel), c.Material.KvT, c.Material.VGSReadV, c.Material.VT0V)
 
 		error := postG - targetG
 		crossingAfter := postP*targetP < 0
@@ -433,7 +433,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 
 	if !success {
 		finalP := c.Solver.GetState()
-		finalG := PolarizationToConductance(finalP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		finalG := PolarizationToConductanceWithParams(finalP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax, ParseConductanceModel(c.Material.ConductanceModel), c.Material.KvT, c.Material.VGSReadV, c.Material.VT0V)
 		finalErr := finalG - targetG
 		c.FailureReason = "max iterations exceeded"
 		// If we are still undershooting while already at max voltage, treat as unreachable by bounds.

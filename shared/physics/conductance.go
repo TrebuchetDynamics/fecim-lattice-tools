@@ -1,7 +1,10 @@
 // Package physics provides shared physics utilities for FeCIM simulations.
 package physics
 
-import "math"
+import (
+	"math"
+	"strings"
+)
 
 // Conductance range constants (physical units in Siemens)
 const (
@@ -24,13 +27,19 @@ const (
 	ConductanceLinear ConductanceModel = iota
 
 	// ConductanceExponential uses exponential scaling: G = Gmin * exp(ln(Gmax/Gmin) * gNorm)
-	// Models realistic FeFET behavior where conductance varies exponentially with polarization.
+	// Legacy name retained for compatibility; equivalent to ConductanceSubthreshold.
 	ConductanceExponential
 
 	// ConductanceLookup uses a pre-defined calibration table.
 	// Most accurate when calibration data is available.
 	ConductanceLookup
+
+	// ConductanceSaturation approximates above-threshold IDS ∝ (VGS - VT)^2 behavior.
+	ConductanceSaturation
 )
+
+// ConductanceSubthreshold is an alias for the exponential model.
+const ConductanceSubthreshold = ConductanceExponential
 
 // String returns the string representation of the conductance model.
 func (m ConductanceModel) String() string {
@@ -41,8 +50,24 @@ func (m ConductanceModel) String() string {
 		return "Exponential"
 	case ConductanceLookup:
 		return "Lookup"
+	case ConductanceSaturation:
+		return "Saturation"
 	default:
 		return "Unknown"
+	}
+}
+
+// ParseConductanceModel parses config strings with linear default.
+func ParseConductanceModel(model string) ConductanceModel {
+	switch strings.ToLower(strings.TrimSpace(model)) {
+	case "subthreshold", "exponential":
+		return ConductanceSubthreshold
+	case "saturation":
+		return ConductanceSaturation
+	case "lookup":
+		return ConductanceLookup
+	default:
+		return ConductanceLinear
 	}
 }
 

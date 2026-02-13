@@ -492,7 +492,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	attempts, success, overshoots := ctrl.WriteTargetWithReset(targetG, false)
 
 	finalP := solver.GetState()
-	finalG := sharedphysics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+	finalG := sharedphysics.PolarizationToConductanceWithParams(finalP, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
 	finalLevel := ds.conductanceToLevel(finalG, levels)
 
 	ds.endISPPTracking(success, finalLevel)
@@ -573,12 +573,13 @@ func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
 // applyHalfSelectDisturb updates disturb state during WRITE pulses.
 //
 // 0T1R architecture truth table (WRITE to target cell rt,ct):
-//   Cell class                          | Expected Vcell | Disturb handling
-//   ------------------------------------|----------------|---------------------------
-//   Target (r=rt, c=ct)                 | full write V   | excluded (programmed path)
-//   Same row only (r=rt, c!=ct)         | ~V/2           | half-select disturb
-//   Same column only (r!=rt, c=ct)      | ~V/2           | half-select disturb
-//   Neither same row nor same column    | ~0             | no half-select residue
+//
+//	Cell class                          | Expected Vcell | Disturb handling
+//	------------------------------------|----------------|---------------------------
+//	Target (r=rt, c=ct)                 | full write V   | excluded (programmed path)
+//	Same row only (r=rt, c!=ct)         | ~V/2           | half-select disturb
+//	Same column only (r!=rt, c=ct)      | ~V/2           | half-select disturb
+//	Neither same row nor same column    | ~0             | no half-select residue
 //
 // Note: 0T1R uses V/2 disturb on the full selected row + selected column.
 func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
@@ -663,7 +664,7 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 			solver.Step(eField, pulseWidth)
 
 			newP := solver.GetState()
-			newG := sharedphysics.PolarizationToConductance(newP, mat.Ps, gmin, gmax)
+			newG := sharedphysics.PolarizationToConductanceWithParams(newP, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
 			newLevel := ca.deviceState.conductanceToLevel(newG, levels)
 
 			if newLevel < 0 {

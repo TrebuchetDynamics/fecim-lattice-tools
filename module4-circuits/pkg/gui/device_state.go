@@ -613,7 +613,7 @@ func (ds *DeviceState) programLevelFromCoupledVoltage(currentLevel int, effectiv
 	solver.Step(eField, pulseWidth)
 
 	newP := solver.GetState()
-	newG := sharedphysics.PolarizationToConductance(newP, mat.Ps, gmin, gmax)
+	newG := sharedphysics.PolarizationToConductanceWithParams(newP, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
 	newLevel := ds.conductanceToLevel(newG, levels)
 	if newLevel < 0 {
 		newLevel = 0

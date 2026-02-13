@@ -401,7 +401,7 @@ func showISPPDemo(level int) {
 	attempts, success, overshoots := controller.WriteTargetWithReset(targetG, true)
 
 	finalP := solver.GetState()
-	finalG := sharedphysics.PolarizationToConductance(finalP, mat.Ps, gmin, gmax)
+	finalG := sharedphysics.PolarizationToConductanceWithParams(finalP, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
 	finalLevel := int(math.Round((finalG - gmin) / (gmax - gmin) * float64(numLevels-1)))
 	if finalLevel < 0 {
 		finalLevel = 0
