@@ -1097,11 +1097,11 @@ Reference: `FYNE_GO_GUI_PERFORMANCE_RESEARCH.md`
 
 | ID | Task | Status |
 |----|------|--------|
-| GUI-PERF-01 | Add refresh profiler: count `Refresh()` calls by component/tab and emit hotspot report | ⏳ |
-| GUI-PERF-02 | Implement UI update coalescing bus (30-50ms debounce windows for burst status updates) | ⏳ |
-| GUI-PERF-03 | Canonical-size layout CI (1024x768, 1200x800, 1366x768) with no overlap/out-of-bounds assertions | ⏳ |
-| GUI-PERF-04 | Add interaction throttle for slider-drag paths (fast preview while drag, full recompute on release) | ⏳ |
-| GUI-PERF-05 | Add tab-switch/resize latency benchmarks (p50/p95/p99) and fail gates on regression | ⏳ |
+| GUI-PERF-01 | Add refresh profiler: count `Refresh()` calls by component/tab and emit hotspot report | ✅ |
+| GUI-PERF-02 | Implement UI update coalescing bus (30-50ms debounce windows for burst status updates) | ✅ |
+| GUI-PERF-03 | Canonical-size layout CI (1024x768, 1200x800, 1366x768) with no overlap/out-of-bounds assertions | ✅ |
+| GUI-PERF-04 | Add interaction throttle for slider-drag paths (fast preview while drag, full recompute on release) | ✅ |
+| GUI-PERF-05 | Add tab-switch/resize latency benchmarks (p50/p95/p99) and fail gates on regression | ✅ |
 | GUI-PERF-06 | Refactor Module 4 rendering into static-layer cache + dynamic overlay redraw path | ✅ |
 | GUI-PERF-07 | Lazy initialize heavy tabs/dialogs to improve startup and first-interaction latency | ✅ |
 | GUI-PERF-08 | Add 5-minute scripted interaction stress test (1000 tab switches + rapid control changes) with memory growth budget | ✅ |
