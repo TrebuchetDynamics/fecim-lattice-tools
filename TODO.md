@@ -1101,9 +1101,9 @@ Goal: benchmark FeCIM outputs against external/open models where sensible, and k
 | OST-02 | Add `scripts/toolchain/check_tools.sh` | ✅ | `3cfa37d` |
 | OST-03 | Install helpers doc for Linux/macOS | ✅ | See `scripts/toolchain/install_helpers.md` |
 | OST-04 | Heracles comparator harness with RMSE reports | ✅ | `9fb66a6` |
-| OST-05 | Add CrossSim interoperability test: export compatible inputs, run baseline scenario, compare trend-level outputs | ⏳ |
+| OST-05 | CrossSim interop test (skip-when-missing) | ✅ | `validation/external/crosssim_interop_test.go` |
 | OST-06 | ngspice round-trip validation | ✅ | `3c991a3` |
-| OST-07 | Add Verilog simulation sanity checks (iverilog/verilator if available) for generated behavioral models | ⏳ |
+| OST-07 | Verilog sanity checks (skip-when-missing) | ✅ | `validation/external/verilog_sanity_test.go` |
 | OST-08 | Compatibility matrix doc | ✅ | `318a3db` |
 | OST-09 | Add confidence policy: external-tool agreement bands (`green/yellow/red`) for each metric type | ✅ `89d26c6` |
 | OST-10 | Add CI job that runs available external-tool validations when tools exist; skips with explicit reason when missing | ✅ `ffb757c` |
