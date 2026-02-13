@@ -570,6 +570,17 @@ func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
 	ca.recomputeAndRefresh()
 }
 
+// applyHalfSelectDisturb updates disturb state during WRITE pulses.
+//
+// 0T1R architecture truth table (WRITE to target cell rt,ct):
+//   Cell class                          | Expected Vcell | Disturb handling
+//   ------------------------------------|----------------|---------------------------
+//   Target (r=rt, c=ct)                 | full write V   | excluded (programmed path)
+//   Same row only (r=rt, c!=ct)         | ~V/2           | half-select disturb
+//   Same column only (r!=rt, c=ct)      | ~V/2           | half-select disturb
+//   Neither same row nor same column    | ~0             | no half-select residue
+//
+// Note: 0T1R uses V/2 disturb on the full selected row + selected column.
 func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 	if ca.deviceState == nil {
 		return 0
@@ -636,6 +647,7 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 
 			// Track accumulated half-select exposure during WRITE pulses so UI/test hooks
 			// can observe disturb build-up even when physics solver changes are sub-level.
+			// 0T1R: V/2 disturb on full row + column.
 			if ca.deviceState.IsPassiveMode() && ((r == targetRow) != (c == targetCol)) {
 				base := 0.01 * halfSelectDisturbRate
 				delta := math.Copysign(base, targetVCell)
@@ -822,7 +834,7 @@ func (ca *CircuitsApp) createActiveVoltagePanel() fyne.CanvasObject {
 // createCompactPassivePanel creates a single-line info for passive mode
 func (ca *CircuitsApp) createCompactPassivePanel() fyne.CanvasObject {
 	// V/2 indicator (updated during write operations)
-	ca.halfSelectIndicator = widget.NewLabel("0T1R: V/2 scheme - sneak currents add 5-20% error")
+	ca.halfSelectIndicator = widget.NewLabel("0T1R: V/2 on row+col")
 	ca.halfSelectIndicator.TextStyle = fyne.TextStyle{Italic: true}
 	return ca.halfSelectIndicator
 }

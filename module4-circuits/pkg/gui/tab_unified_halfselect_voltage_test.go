@@ -58,6 +58,21 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 	}
 }
 
+func TestPassiveDisclosureText_RowAndColumnHalfSelect(t *testing.T) {
+	embedded, app, win := setupUnifiedTestApp(t)
+	defer app.Quit()
+	defer win.Close()
+	defer embedded.Stop()
+
+	ca := embedded.CircuitsApp
+	if ca == nil || ca.halfSelectIndicator == nil {
+		t.Fatal("expected half-select indicator")
+	}
+	if got, want := ca.halfSelectIndicator.Text, "0T1R: V/2 on row+col"; got != want {
+		t.Fatalf("passive disclosure mismatch: got %q, want %q", got, want)
+	}
+}
+
 func TestUnifiedDisturbAndDACDisplay_ReportChangesAndDACCode(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
