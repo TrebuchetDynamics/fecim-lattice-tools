@@ -24,6 +24,18 @@ func CellLeakagePower(voltage, iOff float64) float64 {
 	return voltage * iOff
 }
 
+// CellShortCircuitPower returns short-circuit overlap power during switching.
+// Model: P_sc = I_sc * V * alpha, where alpha is overlap/activity factor [0,1].
+func CellShortCircuitPower(voltage, iShort, overlapFactor float64) float64 {
+	if iShort <= 0 || overlapFactor <= 0 {
+		return 0
+	}
+	if overlapFactor > 1 {
+		overlapFactor = 1
+	}
+	return voltage * iShort * overlapFactor
+}
+
 // ArrayPowerParams defines array-level parameters for dynamic and static power estimation.
 type ArrayPowerParams struct {
 	Rows           int
@@ -35,6 +47,8 @@ type ArrayPowerParams struct {
 	ReadVoltage     float64 // V (used for leakage)
 	Frequency       float64 // Hz
 	SelectorIoff    float64 // A
+	SelectorIShort  float64 // A (short-circuit overlap current)
+	OverlapFactor   float64 // [0,1], overlap/activity factor for short-circuit power
 	PeripheralPower float64 // W (DAC + TIA + ADC + control)
 
 	// Optional area term for power density reporting.
@@ -44,17 +58,18 @@ type ArrayPowerParams struct {
 
 // ArrayPowerResult captures aggregate array power metrics.
 type ArrayPowerResult struct {
-	DynamicPower    float64 // W
-	LeakagePower    float64 // W
-	PeripheralPower float64 // W
-	TotalPower      float64 // W
+	DynamicPower      float64 // W
+	LeakagePower      float64 // W
+	ShortCircuitPower float64 // W
+	PeripheralPower   float64 // W
+	TotalPower        float64 // W
 
-	EnergyPerOp float64 // J (array-level energy per operation/cycle)
+	EnergyPerOp  float64 // J (array-level energy per operation/cycle)
 	PowerDensity float64 // W/mm²
 }
 
 // ArrayPower computes total array power for an array:
-// P_total = N_active * P_dyn_cell + N_total * P_leak_cell + P_peripheral.
+// P_total = N_active*P_dyn_cell + N_total*P_leak_cell + N_active*P_sc_cell + P_peripheral.
 func ArrayPower(params ArrayPowerParams) ArrayPowerResult {
 	rows := params.Rows
 	if rows < 0 {
@@ -77,14 +92,16 @@ func ArrayPower(params ArrayPowerParams) ArrayPowerResult {
 
 	pDynCell := CellDynamicPower(params.CellCapacitance, params.WriteVoltage, params.Frequency)
 	pLeakCell := CellLeakagePower(params.ReadVoltage, params.SelectorIoff)
+	pShortCell := CellShortCircuitPower(params.WriteVoltage, params.SelectorIShort, params.OverlapFactor)
 
 	dynamic := nActive * pDynCell
 	leakage := nTotal * pLeakCell
+	shortCircuit := nActive * pShortCell
 	peripheral := params.PeripheralPower
 	if peripheral < 0 {
 		peripheral = 0
 	}
-	total := dynamic + leakage + peripheral
+	total := dynamic + leakage + shortCircuit + peripheral
 
 	energyPerOp := 0.0
 	if params.Frequency > 0 {
@@ -97,11 +114,12 @@ func ArrayPower(params ArrayPowerParams) ArrayPowerResult {
 	}
 
 	return ArrayPowerResult{
-		DynamicPower:    dynamic,
-		LeakagePower:    leakage,
-		PeripheralPower: peripheral,
-		TotalPower:      total,
-		EnergyPerOp:     energyPerOp,
-		PowerDensity:    powerDensity,
+		DynamicPower:      dynamic,
+		LeakagePower:      leakage,
+		ShortCircuitPower: shortCircuit,
+		PeripheralPower:   peripheral,
+		TotalPower:        total,
+		EnergyPerOp:       energyPerOp,
+		PowerDensity:      powerDensity,
 	}
 }
