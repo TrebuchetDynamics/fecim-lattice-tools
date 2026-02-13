@@ -1,0 +1,176 @@
+package physics_test
+
+import (
+	"math"
+	"testing"
+
+	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/shared/physics"
+)
+
+func lkExtractPrEcAtTemp(t *testing.T, tempK float64) (pr, ec float64) {
+	t.Helper()
+
+	mat := physics.DefaultHZO()
+	s := physics.NewLKSolver()
+	s.ConfigureFromMaterial(mat)
+	s.UseNLS = false
+	s.EnableNoise = false
+	s.UseMaterialAlpha = false // ensure alpha(T) coupling is active
+	s.Temperature = tempK
+	s.UpdateParams()
+	s.SetState(-math.Abs(mat.Pr))
+
+	eMax := 3.0 * mat.Ec
+	const (
+		nPtsHalf      = 241
+		stepsPerPoint = 400
+		dt            = 2e-12
+	)
+
+	fields := make([]float64, 0, 2*nPtsHalf)
+	pols := make([]float64, 0, 2*nPtsHalf)
+
+	for i := 0; i < nPtsHalf; i++ {
+		E := -eMax + (2*eMax*float64(i))/float64(nPtsHalf-1)
+		for k := 0; k < stepsPerPoint; k++ {
+			s.Step(E, dt)
+		}
+		fields = append(fields, E)
+		pols = append(pols, s.GetState())
+	}
+	for i := 0; i < nPtsHalf; i++ {
+		E := eMax - (2*eMax*float64(i))/float64(nPtsHalf-1)
+		for k := 0; k < stepsPerPoint; k++ {
+			s.Step(E, dt)
+		}
+		fields = append(fields, E)
+		pols = append(pols, s.GetState())
+	}
+
+	// Pr from E=0 crossings.
+	var prVals []float64
+	for i := 1; i < len(fields); i++ {
+		if fields[i-1] == 0 {
+			prVals = append(prVals, math.Abs(pols[i-1]))
+			continue
+		}
+		if fields[i-1]*fields[i] <= 0 {
+			dx := fields[i] - fields[i-1]
+			if dx != 0 {
+				f := -fields[i-1] / dx
+				if f >= 0 && f <= 1 {
+					p0 := pols[i-1] + f*(pols[i]-pols[i-1])
+					prVals = append(prVals, math.Abs(p0))
+				}
+			}
+		}
+	}
+	if len(prVals) == 0 {
+		t.Fatalf("LK: failed to extract Pr at T=%.1fK", tempK)
+	}
+	for _, v := range prVals {
+		pr += v
+	}
+	pr /= float64(len(prVals))
+
+	// Ec from P=0 crossings.
+	var ecVals []float64
+	for i := 1; i < len(pols); i++ {
+		if pols[i-1]*pols[i] <= 0 {
+			dy := pols[i] - pols[i-1]
+			if dy != 0 {
+				f := -pols[i-1] / dy
+				if f >= 0 && f <= 1 {
+					ec0 := fields[i-1] + f*(fields[i]-fields[i-1])
+					ecVals = append(ecVals, math.Abs(ec0))
+				}
+			}
+		}
+	}
+	if len(ecVals) == 0 {
+		t.Fatalf("LK: failed to extract Ec at T=%.1fK", tempK)
+	}
+	for _, v := range ecVals {
+		ec += v
+	}
+	ec /= float64(len(ecVals))
+
+	return pr, ec
+}
+
+func preisachPrEcAtTemp(tempK float64) (pr, ec float64) {
+	mat := ferroelectric.DefaultHZO()
+	model := ferroelectric.NewPreisachModel(mat)
+	model.SetTemperature(tempK)
+
+	satE := 3.0 * model.GetEffectiveEc()
+	model.Reset()
+	model.Update(-satE)
+	model.Update(satE)
+	pr = math.Abs(model.Update(0))
+	ec = math.Abs(model.GetEffectiveEc())
+	return pr, ec
+}
+
+func TestCrossEngine_PrVsTemperature(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cross-engine consistency test in short mode")
+	}
+	for temp := 200.0; temp <= 450.0; temp += 25.0 {
+		prPreisach, _ := preisachPrEcAtTemp(temp)
+		prLK, _ := lkExtractPrEcAtTemp(t, temp)
+
+		if temp > 200.0 {
+			prevPreisach, _ := preisachPrEcAtTemp(temp - 25.0)
+			prevLK, _ := lkExtractPrEcAtTemp(t, temp-25.0)
+
+			if prPreisach > prevPreisach+1e-9 {
+				t.Fatalf("Preisach Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temp-25.0, prevPreisach, temp, prPreisach)
+			}
+			if prLK > prevLK+1e-9 {
+				t.Fatalf("LK Pr not monotonically decreasing: Tprev=%.1fK Prprev=%.6e, T=%.1fK Pr=%.6e", temp-25.0, prevLK, temp, prLK)
+			}
+		}
+	}
+}
+
+func TestCrossEngine_EcVsTemperature(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cross-engine consistency test in short mode")
+	}
+	for temp := 200.0; temp <= 450.0; temp += 25.0 {
+		_, ecPreisach := preisachPrEcAtTemp(temp)
+		_, ecLK := lkExtractPrEcAtTemp(t, temp)
+
+		if temp > 200.0 {
+			_, prevPreisach := preisachPrEcAtTemp(temp - 25.0)
+			_, prevLK := lkExtractPrEcAtTemp(t, temp-25.0)
+
+			if ecPreisach > prevPreisach+1e-6 {
+				t.Fatalf("Preisach Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temp-25.0, prevPreisach, temp, ecPreisach)
+			}
+			if ecLK > prevLK+1e-6 {
+				t.Fatalf("LK Ec not monotonically decreasing: Tprev=%.1fK Ecprev=%.6e, T=%.1fK Ec=%.6e", temp-25.0, prevLK, temp, ecLK)
+			}
+		}
+	}
+}
+
+func TestCrossEngine_PrMagnitudeAgreement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cross-engine consistency test in short mode")
+	}
+	temp := 300.0
+	prPreisach, _ := preisachPrEcAtTemp(temp)
+	prLK, _ := lkExtractPrEcAtTemp(t, temp)
+
+	if prPreisach <= 0 || prLK <= 0 {
+		t.Fatalf("invalid Pr values: Preisach=%.6e LK=%.6e", prPreisach, prLK)
+	}
+
+	relDiff := math.Abs(prPreisach-prLK) / math.Max(prPreisach, prLK)
+	if relDiff > 0.30 {
+		t.Fatalf("Pr mismatch exceeds 30%% at %.1fK: Preisach=%.6e LK=%.6e relDiff=%.2f%%", temp, prPreisach, prLK, relDiff*100)
+	}
+}
