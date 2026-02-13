@@ -60,9 +60,6 @@ func GenerateLibertyFromCharacterization(cfg config.CellConfig, char *Characteri
 	if char.ReadTimeNs > 0 {
 		cfgWithChar.FallTime = char.ReadTimeNs
 	}
-	if char.ReadEnergy_fJ > 0 {
-		cfgWithChar.LeakagePower = char.ReadEnergy_fJ * 1e-6
-	}
 	return GenerateLiberty(cfgWithChar)
 }
 
@@ -82,9 +79,6 @@ func GenerateLibertyFromCharacterizationWithEnergy(cfg config.CellConfig, char *
 	}
 	if char.ReadTimeNs > 0 {
 		cfgWithChar.FallTime = char.ReadTimeNs
-	}
-	if char.ReadEnergy_fJ > 0 {
-		cfgWithChar.LeakagePower = char.ReadEnergy_fJ * 1e-6
 	}
 	return injectModule4InternalPower(GenerateLiberty(cfgWithChar), cfgWithChar, energy)
 }
