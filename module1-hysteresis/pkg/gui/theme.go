@@ -2,23 +2,21 @@
 package gui
 
 import (
-	"image/color"
-
+	sharedtheme "fecim-lattice-tools/shared/theme"
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/theme"
 )
 
 // Exported colors - accessible from widgets subpackage
 var (
-	ColorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan
-	ColorSecondary  = color.RGBA{255, 107, 107, 255} // Coral red
-	ColorAccent     = color.RGBA{78, 205, 196, 255}  // Teal
-	ColorWarning    = color.RGBA{255, 230, 109, 255} // Yellow
-	ColorBackground = color.RGBA{0, 50, 100, 255}    // FeCIM blue #003264
-	ColorGrid       = color.RGBA{0, 70, 130, 128}    // Grid lines (lighter blue)
-	ColorAxis       = color.RGBA{150, 180, 200, 255} // Axis lines
-	ColorPositive   = color.RGBA{255, 100, 100, 255} // Positive polarization
-	ColorNegative   = color.RGBA{100, 150, 255, 255} // Negative polarization
+	ColorPrimary    = sharedtheme.ColorPrimary
+	ColorSecondary  = sharedtheme.ColorSecondary
+	ColorAccent     = sharedtheme.ColorAccent
+	ColorWarning    = sharedtheme.ColorWarning
+	ColorBackground = sharedtheme.ColorBackground
+	ColorGrid       = sharedtheme.ColorGrid
+	ColorAxis       = sharedtheme.ColorAxis
+	ColorPositive   = sharedtheme.ColorPositive
+	ColorNegative   = sharedtheme.ColorNegative
 )
 
 // Legacy unexported aliases for backward compatibility within gui package
@@ -33,43 +31,6 @@ var (
 	colorPositive   = ColorPositive
 	colorNegative   = ColorNegative
 )
-
-// ============================================================
-// Custom Theme
-// ============================================================
-
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return ColorBackground // FeCIM blue #003264
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return ColorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255} // Separator lines
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
-}
 
 // ============================================================
 // Fixed Width Layout

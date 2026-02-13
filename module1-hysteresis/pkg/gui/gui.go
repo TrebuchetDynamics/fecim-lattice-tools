@@ -25,6 +25,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
+	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -638,7 +639,7 @@ func (a *App) run() error {
 	defer a.stopDataLogger()
 
 	a.fyneApp = app.New()
-	a.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	a.fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	a.mainWindow = a.fyneApp.NewWindow("FeCIM Hysteresis Visualizer - Demo 1")
 	a.mainWindow.Resize(fyne.NewSize(1280, 900))
