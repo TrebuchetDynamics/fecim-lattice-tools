@@ -2,9 +2,6 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
 )
@@ -209,45 +206,12 @@ func (ca *CircuitsApp) adjustDACBits(delta int) {
 
 // nextTab switches to the next tab
 func (ca *CircuitsApp) nextTab() {
-	if ca.mainTabs == nil {
-		return
-	}
-	items := ca.mainTabs.Items
-	if len(items) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, item := range items {
-		if item == ca.mainTabs.Selected() {
-			currentIdx = i
-			break
-		}
-	}
-	nextIdx := (currentIdx + 1) % len(items)
-	ca.mainTabs.Select(items[nextIdx])
+	keyboard.SelectNextTab(ca.mainTabs)
 }
 
 // prevTab switches to the previous tab
 func (ca *CircuitsApp) prevTab() {
-	if ca.mainTabs == nil {
-		return
-	}
-	items := ca.mainTabs.Items
-	if len(items) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, item := range items {
-		if item == ca.mainTabs.Selected() {
-			currentIdx = i
-			break
-		}
-	}
-	prevIdx := currentIdx - 1
-	if prevIdx < 0 {
-		prevIdx = len(items) - 1
-	}
-	ca.mainTabs.Select(items[prevIdx])
+	keyboard.SelectPrevTab(ca.mainTabs)
 }
 
 // programSelectedCell programs the currently selected cell
@@ -376,12 +340,5 @@ Tips:
 • Up/Down adjusts write level in Write mode
 • Press P to program, R to read, C to compute`
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(420, 450))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, ca.window)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 420, 450)
 }

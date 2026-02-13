@@ -2,9 +2,6 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
 )
@@ -208,45 +205,12 @@ func (ca *CrossbarApp) toggleArchitecture() {
 
 // nextTab switches to the next tab
 func (ca *CrossbarApp) nextTab() {
-	if ca.tabs == nil {
-		return
-	}
-	items := ca.tabs.Items
-	if len(items) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, item := range items {
-		if item == ca.tabs.Selected() {
-			currentIdx = i
-			break
-		}
-	}
-	nextIdx := (currentIdx + 1) % len(items)
-	ca.tabs.Select(items[nextIdx])
+	keyboard.SelectNextTab(ca.tabs)
 }
 
 // prevTab switches to the previous tab
 func (ca *CrossbarApp) prevTab() {
-	if ca.tabs == nil {
-		return
-	}
-	items := ca.tabs.Items
-	if len(items) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, item := range items {
-		if item == ca.tabs.Selected() {
-			currentIdx = i
-			break
-		}
-	}
-	prevIdx := currentIdx - 1
-	if prevIdx < 0 {
-		prevIdx = len(items) - 1
-	}
-	ca.tabs.Select(items[prevIdx])
+	keyboard.SelectPrevTab(ca.tabs)
 }
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
@@ -284,12 +248,5 @@ Tips:
 • Watch IR Drop and Sneak Path tabs after running MVM
 • Toggle architecture to see sneak path differences`
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(450, 420))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, ca.window)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 450, 420)
 }

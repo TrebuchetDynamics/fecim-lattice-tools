@@ -2,9 +2,6 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
 )
@@ -118,45 +115,12 @@ func (ca *ComparisonApp) adjustInferences(delta float64) {
 
 // nextWorkload cycles to the next workload
 func (ca *ComparisonApp) nextWorkload() {
-	if ca.workloadSelect == nil {
-		return
-	}
-	options := ca.workloadSelect.Options
-	if len(options) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, opt := range options {
-		if opt == ca.workloadSelect.Selected {
-			currentIdx = i
-			break
-		}
-	}
-	nextIdx := (currentIdx + 1) % len(options)
-	ca.workloadSelect.SetSelected(options[nextIdx])
+	keyboard.SelectNextOption(ca.workloadSelect)
 }
 
 // prevWorkload cycles to the previous workload
 func (ca *ComparisonApp) prevWorkload() {
-	if ca.workloadSelect == nil {
-		return
-	}
-	options := ca.workloadSelect.Options
-	if len(options) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, opt := range options {
-		if opt == ca.workloadSelect.Selected {
-			currentIdx = i
-			break
-		}
-	}
-	prevIdx := currentIdx - 1
-	if prevIdx < 0 {
-		prevIdx = len(options) - 1
-	}
-	ca.workloadSelect.SetSelected(options[prevIdx])
+	keyboard.SelectPrevOption(ca.workloadSelect)
 }
 
 // nextPhase advances to the next demo phase
@@ -223,12 +187,5 @@ Tips:
 • Watch the energy comparison animations
 • Adjust inference count to see scaling effects`
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(380, 340))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, ca.window)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(ca.window, "Keyboard Shortcuts", helpText, 380, 340)
 }

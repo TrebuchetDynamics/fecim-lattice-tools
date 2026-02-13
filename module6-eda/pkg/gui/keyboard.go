@@ -2,8 +2,8 @@
 package gui
 
 import (
+	"fecim-lattice-tools/shared/keyboard"
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
@@ -77,18 +77,7 @@ func SetupKeyboard(w fyne.Window, viewSelector *widget.Select) {
 
 // cycleViewSelector cycles to the next view
 func cycleViewSelector(selector *widget.Select) {
-	if selector == nil || len(selector.Options) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, opt := range selector.Options {
-		if opt == selector.Selected {
-			currentIdx = i
-			break
-		}
-	}
-	nextIdx := (currentIdx + 1) % len(selector.Options)
-	selector.SetSelected(selector.Options[nextIdx])
+	keyboard.SelectNextOption(selector)
 }
 
 // nextView switches to the next view
@@ -98,21 +87,7 @@ func nextView(selector *widget.Select) {
 
 // prevView switches to the previous view
 func prevView(selector *widget.Select) {
-	if selector == nil || len(selector.Options) == 0 {
-		return
-	}
-	currentIdx := 0
-	for i, opt := range selector.Options {
-		if opt == selector.Selected {
-			currentIdx = i
-			break
-		}
-	}
-	prevIdx := currentIdx - 1
-	if prevIdx < 0 {
-		prevIdx = len(selector.Options) - 1
-	}
-	selector.SetSelected(selector.Options[prevIdx])
+	keyboard.SelectPrevOption(selector)
 }
 
 // showInfoDialog shows a simple info dialog
@@ -148,12 +123,5 @@ Tips:
 • Each tab has its own export functionality
 • Generated files are educational examples only`
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(360, 320))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, w)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialog(w, "Keyboard Shortcuts", helpText, 360, 320)
 }
