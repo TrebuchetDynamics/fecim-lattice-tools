@@ -1043,14 +1043,14 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ⏳ | Currently only "typical" corner. Need FF/TT/SS at -40/25/125°C |
 | M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ⏳ | Currently placeholder leakage only (0.0003 nW). Need switching + leakage + short-circuit |
 | M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ⏳ | Module 4 has DAC/MVM/TIA energy. Should feed M6 Liberty internal_power groups |
-| M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ⏳ | At minimum: metal spacing, via enclosure, minimum width checks on generated LEF |
-| M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ⏳ | Currently no cross-format validation |
+| M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ✅ | Added `pkg/validate/drc.go` with SKY130 default rules and checks for min metal width, min spacing, via enclosure; tests for pass/fail LEF. Commit: `99d0958` |
+| M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ✅ | Added `pkg/validate/lvs.go` cross-format check (LEF/Verilog/SPICE names + pins) with pass/fail tests. Commit: `cd2622a` |
 | M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ⏳ | Currently only Builder + Learn tabs. Users can't preview generated files in-app |
 | M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ⏳ | SVG already exists; render it interactive with layer toggles |
 | M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ⏳ | Unify cell dimensions, wire params, transistor models. Put in `shared/physics/technology.go` |
 | M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ⏳ | Timing from M4 transient sim → M6 Liberty. Power from M4 energy model → M6 Liberty |
 | M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ✅ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
-| M6-VALID-02 | Validate generated files against PDK constraints (SKY130 metal rules) | Medium | ⏳ | Pin placement within cell bounds, metal width ≥ min, spacing ≥ min |
+| M6-VALID-02 | Validate generated files against PDK constraints (SKY130 metal rules) | Medium | ✅ | Extended DRC validation with pin-in-bounds checks and generated-export tests; updated LEF generator pin geometries to meet SKY130 min width. Commit: `dd4842e` |
 
 ---
 
@@ -1085,7 +1085,7 @@ From deep source-code review of M1/M4/M6 shared physics.
 | M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
 | M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ✅ |
 | M4-WC-03 | Integrate process variation Monte Carlo into compute/read metrics and UI | ✅ |
-| M4-WC-04 | Implement endurance-aware accuracy degradation pipeline (cycles → conductance drift → accuracy drop) | ⬜ |
+| M4-WC-04 | Implement endurance-aware accuracy degradation pipeline (cycles → conductance drift → accuracy drop) | ✅ |
 | M4-WC-05 | Add batch benchmark mode (MNIST now, extensible to VGG/ResNet configs) | ⬜ |
 | M4-WC-06 | Create validated peripheral calibration workflow against SPICE/post-layout references | ⬜ |
 | M4-WC-07 | Add MLC programming characterization panel (linearity, verify count, drift) | ⬜ |
