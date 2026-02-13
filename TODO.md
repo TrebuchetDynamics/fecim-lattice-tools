@@ -1039,16 +1039,16 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-SPICE-02 | Add ferroelectric capacitance to SPICE model (C_fe = ε₀·εr·A/t) | High | ✅ | Added `C_fe` ferroelectric capacitor in FeFET subcircuit; default HZO params produce fF-range capacitance |
 | M6-SPICE-03 | Generate SPICE subcircuit for 1T1R/2T1R with MOSFET + FeFET | High | ✅ | Added SKY130 MOSFET model card from selector presets + 1T1R/2T1R subcircuits with FeFET instance and verified node mappings. Commit: `33f6dd3` |
 | M6-LIB-01 | Replace Liberty placeholder timing with published FeFET characterization data | High | ✅ | Sources: Muller 2013 (28nm FDSOI), Trentzsch 2016 (28nm), Dunkel 2017 (22nm). File: `export/liberty.go` |
-| M6-LIB-02 | Add NLDM lookup tables to Liberty (rise/fall vs input slew × output load) | Medium | ⏳ | Currently scalar values only. 7×7 table minimum for STA accuracy |
-| M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ⏳ | Currently only "typical" corner. Need FF/TT/SS at -40/25/125°C |
+| M6-LIB-02 | Add NLDM lookup tables to Liberty (rise/fall vs input slew × output load) | Medium | ✅ | Done in 2127a2d: 7×7 NLDM tables with rise_transition/fall_transition table format |
+| M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ✅ | Done in 2127a2d: GenerateMultiCornerLiberty() emits FF/TT/SS @ -40/25/125°C |
 | M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ✅ | Extended `shared/physics/power.go` with switching, leakage, and short-circuit components plus array-level aggregation and known-value tests. Commit: `6c25605` |
 | M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ✅ | Added Module 4 energy back-annotation API in `liberty.go` and emitted Liberty `internal_power` groups for DAC/MVM/TIA with tests. Commit: `0afad18` |
 | M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ✅ | Added `pkg/validate/drc.go` with SKY130 default rules and checks for min metal width, min spacing, via enclosure; tests for pass/fail LEF. Commit: `99d0958` |
 | M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ✅ | Added `pkg/validate/lvs.go` cross-format check (LEF/Verilog/SPICE names + pins) with pass/fail tests. Commit: `cd2622a` |
 | M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ⏳ | Currently only Builder + Learn tabs. Users can't preview generated files in-app |
 | M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ⏳ | SVG already exists; render it interactive with layer toggles |
-| M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ⏳ | Unify cell dimensions, wire params, transistor models. Put in `shared/physics/technology.go` |
-| M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ⏳ | Timing from M4 transient sim → M6 Liberty. Power from M4 energy model → M6 Liberty |
+| M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ✅ | Done in 3651af6: shared TechnologyNode (130/65/28/14nm + transistor model) used by Module 4 |
+| M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ✅ | Done in adfcdb6: M4 CharacterizationResult drives Liberty timing/leakage with end-to-end test |
 | M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ✅ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
 | M6-VALID-02 | Validate generated files against PDK constraints (SKY130 metal rules) | Medium | ✅ | Extended DRC validation with pin-in-bounds checks and generated-export tests; updated LEF generator pin geometries to meet SKY130 min width. Commit: `dd4842e` |
 
