@@ -592,20 +592,20 @@ func TestUnifiedTabCellInfoSignedToggle(t *testing.T) {
 	ca.onUnifiedCellTapped(0, 0)
 	ca.updateCellInfo()
 
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Show=V") {
-		t.Fatalf("expected voltage display mode, got %q", ca.sharedCellInfoLabel.Text)
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "V_cell (V):") {
+		t.Fatalf("expected explicit voltage label, got %q", ca.sharedCellInfoLabel.Text)
 	}
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Vcell=+") && !strings.Contains(ca.sharedCellInfoLabel.Text, "BL=+") {
-		t.Fatalf("expected explicit signed voltage, got %q", ca.sharedCellInfoLabel.Text)
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
+		t.Fatalf("expected explicit current label, got %q", ca.sharedCellInfoLabel.Text)
+	}
+	if !(strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (mV):") || strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (V):")) || !strings.Contains(ca.sharedCellInfoLabel.Text, "ADC Code:") {
+		t.Fatalf("expected TIA/ADC labels, got %q", ca.sharedCellInfoLabel.Text)
 	}
 
 	test.Tap(ca.sharedCellDisplayToggle)
 	ca.updateCellInfo()
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Show=I") {
-		t.Fatalf("expected current display mode after toggle, got %q", ca.sharedCellInfoLabel.Text)
-	}
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "Icell=+") && !strings.Contains(ca.sharedCellInfoLabel.Text, "Icell=-") {
-		t.Fatalf("expected explicit signed current, got %q", ca.sharedCellInfoLabel.Text)
+	if !strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
+		t.Fatalf("expected current label after toggle, got %q", ca.sharedCellInfoLabel.Text)
 	}
 }
 
@@ -770,8 +770,8 @@ func TestUnifiedTabISPPEngine(t *testing.T) {
 		label    string
 		expected ISPPEngine
 	}{
-		{label: "Fast (Level)", expected: ISPPEngineLevel},
-		{label: "L-K (Physics)", expected: ISPPEngineLK},
+		{label: "Preisach (Level-based)", expected: ISPPEngineLevel},
+		{label: "Landau-Khalatnikov (Physics ODE)", expected: ISPPEngineLK},
 	}
 	for _, tc := range cases {
 		ca.isppEngineSelect.SetSelected(tc.label)
