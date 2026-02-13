@@ -117,9 +117,10 @@ type LKSolver struct {
 // effects are active from t=0, which is important for analog write trajectories.
 func NewLKSolver() *LKSolver {
 	return &LKSolver{
-		// Default to "Golden Set" (Set I)
-		Beta:   -2.160e8,
-		Gamma:  1.653e10,
+		// Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229
+		// ferroelectric HfO2 (orthorhombic Pca21) LGD coefficients.
+		Beta:   -6.720e8,
+		Gamma:  1.950e10,
 		Rho:    0.05,
 		Q12:    -0.026,
 		Stress: 1.0e9, // 1 GPa

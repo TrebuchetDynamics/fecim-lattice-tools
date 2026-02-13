@@ -90,7 +90,7 @@ materials:
     target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Polarization parameters [1][4]
-    pr_c_m2: 0.25               # Remanent polarization (C/m²) = 25 µC/cm²
+    pr_c_m2: 0.245              # Remanent polarization (C/m²) = 24.5 µC/cm² midpoint of Park et al. 2015 range
     ps_c_m2: 0.30               # Saturation polarization (C/m²) = 30 µC/cm²
 
     # Field parameters [1][7]
@@ -126,11 +126,10 @@ materials:
     # k_dep ≈ (epsilon_fe/epsilon_dead) * (d_dead/d_fe).
     depolarization_factor_vm_c: 2.5e8  # [CITATION NEEDED: measured/extracted HZO stack value]
 
-    # Landau-Khalatnikov parameters (10nm HZO "Golden Set I")
-    # [CITATION NEEDED: direct source for β, γ, ρ set; suggested Materlik et al. JAP 117, 134109 (2015)]
+    # Landau-Khalatnikov parameters (Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229) for β/γ; ρ kept as calibrated damping
     thermodynamics:
-      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
-      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      beta_landau: -6.720e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.950e10    # Stability (Positive) [J m^9 / C^6]
       rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
       curie_const_k: 1.5e5      # Curie constant (K)
 
@@ -203,8 +202,8 @@ materials:
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [Gemini Compendium]
     # =========================================================================
     thermodynamics:
-      beta_landau: -2.160e8       # First-order barrier (Negative) [J m^5 / C^4]
-      gamma_landau: 1.653e10      # Stability (Positive) [J m^9 / C^6]
+      beta_landau: -6.720e8       # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.950e10      # Stability (Positive) [J m^9 / C^6]
       rho_viscosity: 0.05         # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
       curie_const_k: 1.5e5        # Curie constant (K)
     
@@ -262,8 +261,8 @@ materials:
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
     # =========================================================================
     thermodynamics:
-      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
-      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      beta_landau: -6.720e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.950e10    # Stability (Positive) [J m^9 / C^6]
       rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
       curie_const_k: 1.5e5      # Curie constant (K)
 
@@ -404,8 +403,8 @@ materials:
     # Cryo-specific LGD coefficients are not widely published; defaults match 10nm HZO [29][30]
     # =========================================================================
     thermodynamics:
-      beta_landau: -2.160e8     # HZO default (room-temp reference)
-      gamma_landau: 1.653e10    # HZO default (room-temp reference)
+      beta_landau: -6.720e8     # HZO default (room-temp reference)
+      gamma_landau: 1.950e10    # HZO default (room-temp reference)
       rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), model default
       curie_const_k: 1.5e5      # Curie constant (K), model default
 
@@ -475,8 +474,8 @@ materials:
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
     # =========================================================================
     thermodynamics:
-      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
-      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      beta_landau: -6.720e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.950e10    # Stability (Positive) [J m^9 / C^6]
       rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
       curie_const_k: 1.5e5      # Curie constant (K)
 
@@ -546,8 +545,8 @@ materials:
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
     # =========================================================================
     thermodynamics:
-      beta_landau: -2.160e8     # First-order barrier (Negative) [J m^5 / C^4]
-      gamma_landau: 1.653e10    # Stability (Positive) [J m^9 / C^6]
+      beta_landau: -6.720e8     # First-order barrier (Negative) [J m^5 / C^4]
+      gamma_landau: 1.950e10    # Stability (Positive) [J m^9 / C^6]
       rho_viscosity: 0.05       # Damping/Viscosity (Ohm·m), tuned for ~1ns switching
       curie_const_k: 1.5e5      # Curie constant (K)
 

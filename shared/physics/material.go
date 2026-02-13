@@ -70,11 +70,13 @@ type HZOMaterial struct {
 	K_dep float64 // Depolarization coefficient (V*m/C); [CITATION NEEDED: measured HZO depolarization extraction for 10nm stack]
 
 	// Landau-Khalatnikov parameters (dynamic equation)
-	// "Golden Set I" defaults are used in this repo; provenance is currently incomplete.
-	// [CITATION NEEDED: Materlik et al., J. Appl. Phys. 117, 134109 (2015) or equivalent HZO LK/LGD fit]
+	// Materlik et al., J. Appl. Phys. 117, 134109 (2015) report LGD coefficients
+	// for orthorhombic ferroelectric HfO2 (Pca21), commonly used as a baseline:
+	// β ≈ -6.72×10^8 J·m^5/C^4, γ ≈ +1.95×10^10 J·m^9/C^6,
+	// with Curie-Weiss α(T) parameterized by Tc≈598 K and C0≈5.3×10^5 K.
 	BetaLandau   float64 // Landau β coefficient (J m^5 / C^4)
 	GammaLandau  float64 // Landau γ coefficient (J m^9 / C^6)
-	RhoViscosity float64 // Viscosity / damping (Ohm·m)
+	RhoViscosity float64 // Viscosity / damping (Ohm·m), calibrated dynamic parameter
 
 	// Circuit parasitics (for series resistance coupling)
 	SeriesResistanceOhm float64 // Series resistance (Ohms)
@@ -129,8 +131,8 @@ type HZOMaterial struct {
 // Ref: Park et al., Adv. Mater. 27, 1811 (2015)
 func DefaultHZO() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO (Si-doped)",
-		Pr:              25e-2,   // 25 μC/cm² = 0.25 C/m²
+		Name:            "HZO (Si-doped, Park 2015 midpoint)",
+		Pr:              24.5e-2, // 24.5 μC/cm² midpoint of Park et al. (2015) reported 15-34 μC/cm² range
 		Ps:              30e-2,   // 30 μC/cm² = 0.30 C/m²
 		Ec:              1.2e8,   // 1.2 MV/cm = 1.2e8 V/m
 		Epsilon:         30,      // High frequency permittivity
@@ -155,15 +157,60 @@ func DefaultHZO() *HZOMaterial {
 		EaNLS:           12e8,    // 12 MV/cm activation field
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
-		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8, // Depolarization factor for analog slope
 		StressGPa:           1.0,
 		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
 		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
+	}
+}
+
+// MaterlikHfO2 returns an LK-focused HfO2 preset anchored to:
+//
+//	T. Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229
+//
+// using β=-6.72e8 J·m^5/C^4, γ=1.95e10 J·m^9/C^6, Tc≈598 K, C0≈5.3e5 K.
+//
+// Operating target used in this repository for validation:
+// Pr≈20 µC/cm², Ec≈1.0 MV/cm at 300 K and 10 nm thickness.
+func MaterlikHfO2() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "HfO2 (Materlik 2015)",
+		Pr:              20e-2,
+		Ps:              25e-2,
+		Ec:              1.5e8,
+		Epsilon:         30,
+		EpsilonLF:       38,
+		LossAngle:       0.02,
+		Thickness:       10e-9,
+		Area:            100e-12,
+		Tau:             1e-9,
+		Tau0:            1e-13,
+		Ea:              0.7,
+		Alpha:           2.0,
+		CurieTemp:       598,
+		CurieConst:      5.3e5,
+		TempCoeffEc:     -2e5,
+		TempCoeffPr:     -5e-5,
+		EnduranceCycles: 1e10,
+		RetentionTime:   3.15e9,
+		ImrintField:     1e6,
+		NumLevels:       30,
+		TargetRangeFrac: 0.90,
+		Tau0NLS:         1e-10,
+		EaNLS:           12e8,
+		Gmin:            1e-6,
+		Gmax:            100e-6,
+		BetaLandau:      -6.720e8,
+		GammaLandau:     1.950e10,
+		RhoViscosity:    0.05,
+		K_dep:           2.5e8,
+		Q11:             0.089,
+		Q12:             -0.026,
 	}
 }
 
@@ -267,9 +314,9 @@ func FeCIMMaterial() *HZOMaterial {
 		EaNLS:           12e8,   // 12 MV/cm activation field
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
-		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8,
@@ -326,9 +373,9 @@ func CryogenicHZO() *HZOMaterial {
 		EaNLS:           15e8,    // 15 MV/cm (higher barrier at cryo)
 		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower leakage at cryo)
 		Gmax:            200e-6,  // 200 µS at LRS (higher Pr → better modulation)
-		// Landau-Khalatnikov parameters (Golden Set I defaults; cryo-specific LGD not widely published)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline; cryo-specific LGD not widely published)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		CurieConst:          1.5e5,
 		SeriesResistanceOhm: 50.0,
@@ -370,9 +417,9 @@ func HZOStandard32() *HZOMaterial {
 		EaNLS:           12e8,  // 12 MV/cm activation field
 		Gmin:            2e-6,  // 2 µS at HRS (2017 era device)
 		Gmax:            80e-6, // 80 µS at LRS, ~40x on/off ratio
-		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		CurieConst:          1.5e5,
 		SeriesResistanceOhm: 50.0,
@@ -415,9 +462,9 @@ func HZOFJT140() *HZOMaterial {
 		EaNLS:           10e8,   // 10 MV/cm
 		Gmin:            0.1e-6, // 0.1 µS at HRS (FTJ: tunneling → lower current)
 		Gmax:            10e-6,  // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
-		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		CurieConst:          1.5e5,
 		SeriesResistanceOhm: 50.0,
@@ -458,9 +505,9 @@ func HZOCustom14() *HZOMaterial {
 		EaNLS:           12e8,
 		Gmin:            1e-6,
 		Gmax:            100e-6,
-		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
-		BetaLandau:          -2.160e8,
-		GammaLandau:         1.653e10,
+		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
+		BetaLandau:          -6.720e8,
+		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		CurieConst:          1.5e5,
 		SeriesResistanceOhm: 50.0,

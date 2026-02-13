@@ -13,11 +13,11 @@ func TestNewLKSolver_Defaults(t *testing.T) {
 	s := NewLKSolver()
 
 	// Verify Golden Set parameters
-	if s.Beta != -2.160e8 {
-		t.Errorf("Beta = %e, want -2.160e8", s.Beta)
+	if s.Beta != -6.720e8 {
+		t.Errorf("Beta = %e, want -6.720e8", s.Beta)
 	}
-	if s.Gamma != 1.653e10 {
-		t.Errorf("Gamma = %e, want 1.653e10", s.Gamma)
+	if s.Gamma != 1.950e10 {
+		t.Errorf("Gamma = %e, want 1.950e10", s.Gamma)
 	}
 	if s.Rho != 0.05 {
 		t.Errorf("Rho = %f, want 0.05", s.Rho)

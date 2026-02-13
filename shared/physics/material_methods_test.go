@@ -66,10 +66,10 @@ func TestAllPresets_NonNilAndValidFields(t *testing.T) {
 func TestPreset_DefaultHZO_Values(t *testing.T) {
 	mat := DefaultHZO()
 
-	if mat.Name != "HZO (Si-doped)" {
-		t.Errorf("Name = %q, want %q", mat.Name, "HZO (Si-doped)")
+	if mat.Name != "HZO (Si-doped, Park 2015 midpoint)" {
+		t.Errorf("Name = %q, want %q", mat.Name, "HZO (Si-doped, Park 2015 midpoint)")
 	}
-	assertClose(t, mat.Pr, 25e-2, "Pr")
+	assertClose(t, mat.Pr, 24.5e-2, "Pr")
 	assertClose(t, mat.Ps, 30e-2, "Ps")
 	assertClose(t, mat.Ec, 1.2e8, "Ec")
 	assertClose(t, mat.Thickness, 10e-9, "Thickness")
