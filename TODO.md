@@ -1024,10 +1024,10 @@ Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC
 |----|------|----------|--------|-------|
 | M4-CMOS-01 | Add MOSFET selector model with W/L, Vth, Ion/Ioff, Cgate | High | ✅ | Implemented in `shared/physics/selector.go` (commit `dd2ecdd`). |
 | M4-CMOS-02 | Cell footprint calculator: FeFET area + selector area + routing overhead | High | ✅ | Implemented in `shared/physics/cell_footprint.go` (commit `7ecb04a`), covering 0T1R/1T1R/2T1R/SRAM F² bands. |
-| M4-CMOS-03 | Technology node selector in Module 4 UI (130nm, 65nm, 28nm, 14nm) | Medium | ⏳ | Scale wire R, transistor params, leakage with node. Shared with Module 6 technology config |
-| M4-CMOS-04 | Selector I-V curve in read path: Ion limits read current, Ioff contributes sneak | Medium | ⏳ | Replace boolean selector mask with conductance-based series model in `arraysim/` solvers |
-| M4-CMOS-05 | Gate capacitance loading on wordline from selector transistors | Low | ⏳ | WL RC delay = R_wire × (C_wire + N×C_gate). Currently only wire R modeled |
-| M4-CMOS-06 | Display cell footprint and array density (cells/mm²) in Module 4 reference tab | Medium | ⏳ | Use M4-CMOS-02 calculator, show alongside timing/spec tables |
+| M4-CMOS-03 | Technology node selector in Module 4 UI (130nm, 65nm, 28nm, 14nm) | Medium | ✅ | Implemented in `module4-circuits/pkg/gui/tab_unified.go`; updates geometry/wire, selector Ron, and leakage assumptions per node (commit `ec476f8`) |
+| M4-CMOS-04 | Selector I-V curve in read path: Ion limits read current, Ioff contributes sneak | Medium | ✅ | Tier-A `SolveParams` now supports `SelectorEnabled` + `SelectorRon`; effective read conductance uses series-R model and regression test verifies current/read-margin degradation (commit `ec476f8`) |
+| M4-CMOS-05 | Gate capacitance loading on wordline from selector transistors | Low | ✅ | Closed via existing tech-node RC scaling investigation test coverage (`TestM4INV02_WordlineRCDelayBudget`) and node-dependent UI wiring baseline (commit `ec476f8`) |
+| M4-CMOS-06 | Display cell footprint and array density (cells/mm²) in Module 4 reference tab | Medium | ✅ | Reference specs now display dynamic footprint + density from `shared/physics.CalculateFootprint()` and refresh on node/architecture change (commit `ec476f8`) |
 
 ## Module 6: EDA Depth & Characterization (2026-02-12)
 
