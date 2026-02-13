@@ -1,7 +1,10 @@
 // Package arraysim provides approximate array coupling solvers for module4-circuits.
 package arraysim
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 // TIAConfig captures the minimal transimpedance amplifier model.
 type TIAConfig struct {
@@ -101,6 +104,17 @@ func (s SenseChain) ConvertCurrents(currents []float64) []SenseResult {
 		results[i] = s.ConvertCurrent(current)
 	}
 	return results
+}
+
+func (s SenseChain) ConvertCurrentWithNoise(currentA float64, rng *rand.Rand) SenseResult {
+	if rng == nil {
+		return s.ConvertCurrent(currentA)
+	}
+	kT := 1.38e-23 * 300.0
+	bw := 100e6
+	noiseSigma := math.Sqrt(4 * kT * bw / s.TIA.Rf)
+	noiseI := rng.NormFloat64() * noiseSigma
+	return s.ConvertCurrent(currentA + noiseI)
 }
 
 // EffectiveVoltageRange returns the measurable voltage window after TIA rails and ADC references are applied.

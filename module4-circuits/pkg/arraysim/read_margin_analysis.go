@@ -3,12 +3,16 @@ package arraysim
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
-const defaultReadMarginThresholdV = 50e-3
+const (
+	defaultReadMarginThresholdV = 50e-3
+	readMarginMonteCarloSamples = 100
+)
 
 // ReadMarginResult summarizes adjacent-level separation after the full read chain.
 type ReadMarginResult struct {
@@ -34,37 +38,69 @@ func (m CouplingMode) String() string {
 }
 
 // ReadMarginAnalysis computes level-to-level read margin after DAC→array→TIA→ADC.
+// Margin is reported as worst-case over Monte Carlo thermal noise samples.
 func ReadMarginAnalysis(config ArrayConfig, levels int) ReadMarginResult {
 	cfg := withAnalysisDefaults(config)
-	rows, cols := cfg.Rows, cfg.Cols
+	rng := rand.New(rand.NewSource(1))
+	return readMarginAnalysisInternal(cfg, levels, readMarginMonteCarloSamples, rng)
+}
 
-	levelVout := make([][][]float64, levels)
+func readMarginAnalysisDeterministic(config ArrayConfig, levels int) ReadMarginResult {
+	cfg := withAnalysisDefaults(config)
+	return readMarginAnalysisInternal(cfg, levels, 1, nil)
+}
+
+func readMarginAnalysisInternal(cfg ArrayConfig, levels int, samples int, rng *rand.Rand) ReadMarginResult {
+	rows, cols := cfg.Rows, cfg.Cols
+	if levels < 2 {
+		return ReadMarginResult{ArraySize: rows, Levels: levels, CouplingMode: cfg.CouplingMode.String()}
+	}
+	if samples < 1 {
+		samples = 1
+	}
+
+	levelCurrents := make([][][]float64, levels)
 	for level := 0; level < levels; level++ {
 		g := conductanceAtLevel(cfg.Material, level, levels)
-		levelVout[level] = readAllCellsADCInput(cfg, g)
+		levelCurrents[level] = readAllCellsCurrents(cfg, g)
 	}
 
-	margins := make([]float64, 0, levels-1)
+	margins := make([]float64, levels-1)
+	for i := range margins {
+		margins[i] = math.Inf(1)
+	}
 	globalMin := math.Inf(1)
-	for level := 0; level < levels-1; level++ {
-		pairMin := math.Inf(1)
-		for r := 0; r < rows; r++ {
-			for c := 0; c < cols; c++ {
-				delta := math.Abs(levelVout[level+1][r][c] - levelVout[level][r][c])
-				if delta < pairMin {
-					pairMin = delta
-				}
-				if delta < globalMin {
-					globalMin = delta
+
+	for sample := 0; sample < samples; sample++ {
+		levelVout := make([][][]float64, levels)
+		for level := 0; level < levels; level++ {
+			levelVout[level] = convertCurrentsToVout(cfg.Sense, levelCurrents[level], rng)
+		}
+
+		for level := 0; level < levels-1; level++ {
+			pairMin := math.Inf(1)
+			for r := 0; r < rows; r++ {
+				for c := 0; c < cols; c++ {
+					delta := math.Abs(levelVout[level+1][r][c] - levelVout[level][r][c])
+					if delta < pairMin {
+						pairMin = delta
+					}
+					if delta < globalMin {
+						globalMin = delta
+					}
 				}
 			}
+			if pairMin < margins[level] {
+				margins[level] = pairMin
+			}
 		}
-		if math.IsInf(pairMin, 1) {
-			pairMin = 0
-		}
-		margins = append(margins, pairMin)
 	}
 
+	for i := range margins {
+		if math.IsInf(margins[i], 1) {
+			margins[i] = 0
+		}
+	}
 	if math.IsInf(globalMin, 1) {
 		globalMin = 0
 	}
@@ -78,6 +114,21 @@ func ReadMarginAnalysis(config ArrayConfig, levels int) ReadMarginResult {
 		MarginPerLevel: margins,
 		Reliable:       globalMin > threshold,
 	}
+}
+
+func convertCurrentsToVout(sense SenseChain, currents [][]float64, rng *rand.Rand) [][]float64 {
+	vouts := make([][]float64, len(currents))
+	for r := range currents {
+		vouts[r] = make([]float64, len(currents[r]))
+		for c := range currents[r] {
+			if rng == nil {
+				vouts[r][c] = sense.ConvertCurrent(currents[r][c]).Vout
+				continue
+			}
+			vouts[r][c] = sense.ConvertCurrentWithNoise(currents[r][c], rng).Vout
+		}
+	}
+	return vouts
 }
 
 func withAnalysisDefaults(cfg ArrayConfig) ArrayConfig {
@@ -118,18 +169,6 @@ func conductanceAtLevel(mat *sharedphysics.HZOMaterial, level, levels int) float
 		mat = sharedphysics.FeCIMMaterial()
 	}
 	return mat.DiscreteLevel(level, levels)
-}
-
-func readAllCellsADCInput(cfg ArrayConfig, gCell float64) [][]float64 {
-	currents := readAllCellsCurrents(cfg, gCell)
-	vouts := make([][]float64, cfg.Rows)
-	for r := 0; r < cfg.Rows; r++ {
-		vouts[r] = make([]float64, cfg.Cols)
-		for c := 0; c < cfg.Cols; c++ {
-			vouts[r][c] = cfg.Sense.ConvertCurrent(currents[r][c]).Vout
-		}
-	}
-	return vouts
 }
 
 func readAllCellsCurrents(cfg ArrayConfig, gCell float64) [][]float64 {
