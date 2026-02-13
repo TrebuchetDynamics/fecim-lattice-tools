@@ -1079,7 +1079,7 @@ From deep source-code review of M1/M4/M6 shared physics.
 | M1-WC-05 | Add I-V leakage characterization panel with Schottky / Poole-Frenkel / Fowler-Nordheim fits | ⬜ |
 | M1-WC-06 | Add small-signal capacitance mode (AC perturbation around bias point) | ⬜ |
 | M1-WC-07 | Add batch/recipe engine for sequenced measurements and automated reports | ⬜ |
-| M1-WC-08 | Productize frequency-dispersion characterization (loop metrics vs frequency sweep) | ⬜ |
+| M1-WC-08 | Productize frequency-dispersion characterization (loop metrics vs frequency sweep) | ✅ |
 | M1-WC-09 | Add FORC workflow and Preisach-density visualization/export | ⬜ |
 | M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison | ⬜ |
 | M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
