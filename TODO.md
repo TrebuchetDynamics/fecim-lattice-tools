@@ -25,8 +25,8 @@
 | SHARE-002 | Consolidate all keyboard help strings into structured shortcut metadata (single source; no duplicated multiline literals) | M1/M2/M3/M4/M5/M6 | ~120-180 LOC dedup + consistency | ✅ `a4e2365` |
 | SHARE-003 | Move ferroelectric Preisach model adapter (`TanhEverett`, `PreisachModel`) from `module1-hysteresis/pkg/ferroelectric` to `shared/physics` with compatibility shim | M1/M4 (+future modules) | ~250-400 LOC reuse | ✅ `7639df8` |
 | SHARE-004 | Remove Module4→Module1 physics coupling import by switching integration tests/callers to `shared/physics` | M4/M1 | architecture cleanup + dependency isolation | ✅ (verified; no `module1-hysteresis` imports remain in `module4-circuits`) |
-| SHARE-005 | Standardize export provider wiring (`createExportButtons`, success/error messaging) behind shared helper wrapper | M3/M4/M5 | ~90-140 LOC dedup | ⏳ |
-| SHARE-006 | Consolidate tab/select navigation wrappers now that shared helpers exist; remove module-local wrapper funcs where not adding behavior | M2/M4/M5/M6 | ~40-80 LOC dedup | ⏳ |
+| SHARE-005 | Standardize export provider wiring (`createExportButtons`, success/error messaging) behind shared helper wrapper | M3/M4/M5 | ~90-140 LOC dedup | ✅ (`shared/export/CreateExportButton` + module button callsites unified) |
+| SHARE-006 | Consolidate tab/select navigation wrappers now that shared helpers exist; remove module-local wrapper funcs where not adding behavior | M2/M4/M5/M6 | ~40-80 LOC dedup | ✅ (verified: no redundant module-local wrappers; direct shared helper usage in place) |
 | SHARE-007 | Unify GUI theme boilerplate (`theme.go` + repeated font/color/icon overrides) into shared theme variants | M1/M2 (+shared/themes) | ~120-200 LOC dedup | ⏳ |
 
 ## Current Focus & Direction

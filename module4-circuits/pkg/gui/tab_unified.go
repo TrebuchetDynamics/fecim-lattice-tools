@@ -20,6 +20,7 @@ import (
 
 	configphysics "fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -380,10 +381,10 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	sharedwidgets.SetAccessibleLabel(ca.actionFitBtn, "Reset zoom to 100 percent")
 
 	// Export button
-	exportBtn := widget.NewButton(actionLabelExport, func() {
+	exportBtn := sharedexport.CreateExportButton(actionLabelExport, func() {
 		logAction("button_export")
 		ca.exportSimulationData()
-	})
+	}, ca.window)
 	sharedwidgets.SetAccessibleLabel(exportBtn, "Export current simulation state")
 
 	ca.readOverlaySelect = widget.NewSelect([]string{"Off", "Vcell", "Icell"}, func(mode string) {

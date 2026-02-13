@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
+	sharedexport "fecim-lattice-tools/shared/export"
 )
 
 // createControlsZone creates the hardware control panel (Zone 3).
@@ -149,15 +150,15 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	exportLabel := widget.NewLabel("Export")
 	exportLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	exportDataBtn := widget.NewButtonWithIcon("Export Data", theme.DocumentSaveIcon(), func() {
+	exportDataBtn := sharedexport.CreateExportButton("Export Data", func() {
 		mnistLog.Button("ExportData")
 		app.exportInferenceData()
-	})
+	}, app.window)
 
-	exportImageBtn := widget.NewButtonWithIcon("Save Image", theme.MediaPhotoIcon(), func() {
+	exportImageBtn := sharedexport.CreateExportButton("Save Image", func() {
 		mnistLog.Button("ExportImage")
 		app.exportVisualization()
-	})
+	}, app.window)
 
 	exportRow := container.NewGridWithColumns(2, exportDataBtn, exportImageBtn)
 

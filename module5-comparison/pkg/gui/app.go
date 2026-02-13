@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/logging"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -400,15 +401,15 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	sliderContainer := container.NewGridWrap(fyne.NewSize(200, 30), ca.inferencesSlider)
 
 	// Export buttons
-	exportDataBtn := widget.NewButton("Export Data", func() {
+	exportDataBtn := sharedexport.CreateExportButton("Export Data", func() {
 		ca.exportComparisonData()
-	})
-	exportImageBtn := widget.NewButton("Save Image", func() {
+	}, ca.window)
+	exportImageBtn := sharedexport.CreateExportButton("Save Image", func() {
 		ca.exportVisualization()
-	})
-	exportReproBtn := widget.NewButton("Export Repro Pack", func() {
+	}, ca.window)
+	exportReproBtn := sharedexport.CreateExportButton("Export Repro Pack", func() {
 		ca.exportReproducibilityPack()
-	})
+	}, ca.window)
 
 	configRow := container.NewHBox(
 		widget.NewLabel("Mode:"),
