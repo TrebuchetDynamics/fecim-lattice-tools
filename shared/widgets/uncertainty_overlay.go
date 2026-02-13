@@ -13,6 +13,7 @@ func FormatUncertaintyAnnotation(value, uncertainty float64, confidencePct float
 }
 
 // NewUncertaintyOverlay creates a readout annotation label for UI overlays.
+// Text format is fixed as: "value ± uncertainty (confidence%)".
 func NewUncertaintyOverlay(value, uncertainty float64, confidencePct float64) *widget.Label {
 	return widget.NewLabel(FormatUncertaintyAnnotation(value, uncertainty, confidencePct))
 }
