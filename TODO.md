@@ -1068,6 +1068,28 @@ From deep source-code review of M1/M4/M6 shared physics.
 | WEAK-06 | Conductance window (Gmin=10µS, Gmax=100µS) has CITATION NEEDED — cite FeFET I-V data or derive from device physics | `shared/physics/material.go` | Medium | ✅ | `a6d394c` subthreshold exponential conductance model added |
 | WEAK-07 | SPICE FeFET subcircuit uses simplified resistor+cap model with no switching dynamics — add voltage-dependent state transition | `module6-eda/export/spice.go` | High | ✅ | `c874326` L-K equivalent circuit with switching dynamics |
 
+## Open-Source Toolchain Integration & Cross-Validation Roadmap (2026-02-13)
+
+Goal: benchmark FeCIM outputs against external/open models where sensible, and keep dependencies current.
+
+| ID | Task | Status |
+|----|------|--------|
+| OST-01 | Build `tools/external/README.md` inventory: CrossSim, Heracles, Verilog/SPICE simulators, install method, version pin, license, use-case | ⏳ |
+| OST-02 | Add `scripts/toolchain/check_tools.sh` that verifies required external tools installed and prints versions | ⏳ |
+| OST-03 | Add `scripts/toolchain/install_helpers.md` with reproducible install steps for Linux/macOS for each external tool | ⏳ |
+| OST-04 | Integrate Heracles comparator harness (P-V sweeps and transient behavior) with RMSE/error reports | ⏳ |
+| OST-05 | Add CrossSim interoperability test: export compatible inputs, run baseline scenario, compare trend-level outputs | ⏳ |
+| OST-06 | Add ngspice round-trip validation from Module 6 exported netlists (syntax + basic transient checks) | ⏳ |
+| OST-07 | Add Verilog simulation sanity checks (iverilog/verilator if available) for generated behavioral models | ⏳ |
+| OST-08 | Add compatibility matrix doc: which comparisons are apples-to-apples vs conceptual-only | ⏳ |
+| OST-09 | Add confidence policy: external-tool agreement bands (`green/yellow/red`) for each metric type | ⏳ |
+| OST-10 | Add CI job that runs available external-tool validations when tools exist; skips with explicit reason when missing | ⏳ |
+| OST-11 | Create `validation/external/baselines/` and store locked comparator baselines per tool+version | ⏳ |
+| OST-12 | Add drift detector that flags when dependency version changes invalidate prior baselines | ⏳ |
+| OST-13 | Add quarterly dependency review checklist (security + model-quality + compatibility impact) | ⏳ |
+| OST-14 | Evaluate “Verox” feasibility: define exact target tool/package, supported IO format, and meaningful validation scope | ⏳ |
+| OST-15 | Publish “100% coverage boundary” doc: what can be fully tested internally vs what requires external data/fab measurements | ⏳ |
+
 ## Module 5 Deep Upgrade Roadmap (2026-02-13)
 
 Reference: `MODULE5_DEEP_CRITIQUE_2026-02-13.md`
@@ -1142,8 +1164,8 @@ Stretch roadmap to push FeCIM Lattice Tools beyond current world-class targets.
 | M1-WC-06 | Add small-signal capacitance mode (AC perturbation around bias point) | ⬜ |
 | M1-WC-07 | Add batch/recipe engine for sequenced measurements and automated reports | ⬜ |
 | M1-WC-08 | Productize frequency-dispersion characterization (loop metrics vs frequency sweep) | ✅ |
-| M1-WC-09 | Add FORC workflow and Preisach-density visualization/export | ✅ |
-| M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison | ✅ |
+| M1-WC-09 | Add FORC workflow and Preisach-density visualization/export (closed by `60e1f10`) | ✅ |
+| M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison (closed by `fa6d12e`) | ✅ |
 | M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
 | M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ✅ |
 | M4-WC-03 | Integrate process variation Monte Carlo into compute/read metrics and UI | ✅ |
