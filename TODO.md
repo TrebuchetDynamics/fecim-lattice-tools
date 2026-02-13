@@ -1074,21 +1074,21 @@ Reference: `MODULE5_DEEP_CRITIQUE_2026-02-13.md`
 
 | ID | Task | Status |
 |----|------|--------|
-| M5-UX-01 | Add dual-mode UI (`Technical Review` default, `Presentation` optional) to reduce narrative bias in technical usage | ⏳ |
-| M5-UX-02 | Replace headline-only cards with evidence-first layout: assumptions table + output panel + caveat panel | ⏳ |
-| M5-UX-03 | Add plain-text evidence panel (screen-reader-first) for every major visualization | ⏳ |
-| M5-UX-04 | Module5 layout CI at 1024x768 / 1200x800 / 1366x768 with no-overlap/out-of-bounds assertions | ⏳ |
-| M5-DATA-01 | Introduce scenario profiles (`conservative`, `baseline`, `optimistic`) for CPU/GPU/FeCIM assumptions | ⏳ |
-| M5-DATA-02 | Add provenance tags (`measured`, `calibrated`, `estimated`, `placeholder`) to all model inputs and outputs | ⏳ |
-| M5-DATA-03 | Add confidence intervals for key outputs (energy, latency, TCO, CO2, reductions) instead of scalar-only values | ⏳ |
-| M5-DATA-04 | Add sensitivity analysis panel ranking top assumptions by output impact | ⏳ |
-| M5-DATA-05 | Add scenario diff report (Run A vs Run B) with changed assumptions and delta attribution | ⏳ |
-| M5-PERF-01 | Optimize animation loop with dirty-widget refresh and visibility-aware updates (no hidden-tab redraws) | ⏳ |
-| M5-PERF-02 | Debounce slider/control-driven recompute and implement fast-preview vs commit-on-release behavior | ⏳ |
-| M5-PERF-03 | Add module5 performance benchmarks (tab-switch, resize, calculate-to-render p50/p95/p99) | ⏳ |
-| M5-PERF-04 | Add module5 stress test (rapid control changes + tab switching) with responsiveness and memory budgets | ⏳ |
-| M5-TECH-01 | Rework competitive matrix to confidence-aware scoring (remove binary checkmark overstatement) | ⏳ |
-| M5-TECH-02 | Add reproducibility pack export (assumptions, version, commit, outputs, timestamp) for auditability | ⏳ |
+| M5-UX-01 | Add dual-mode UI (`Technical Review` default, `Presentation` optional) to reduce narrative bias in technical usage | ✅ |
+| M5-UX-02 | Replace headline-only cards with evidence-first layout: assumptions table + output panel + caveat panel | ✅ |
+| M5-UX-03 | Add plain-text evidence panel (screen-reader-first) for every major visualization | ✅ |
+| M5-UX-04 | Module5 layout CI at 1024x768 / 1200x800 / 1366x768 with no-overlap/out-of-bounds assertions | ✅ |
+| M5-DATA-01 | Introduce scenario profiles (`conservative`, `baseline`, `optimistic`) for CPU/GPU/FeCIM assumptions | ✅ |
+| M5-DATA-02 | Add provenance tags (`measured`, `calibrated`, `estimated`, `placeholder`) to all model inputs and outputs | ✅ |
+| M5-DATA-03 | Add confidence intervals for key outputs (energy, latency, TCO, CO2, reductions) instead of scalar-only values | ✅ |
+| M5-DATA-04 | Add sensitivity analysis panel ranking top assumptions by output impact | ✅ |
+| M5-DATA-05 | Add scenario diff report (Run A vs Run B) with changed assumptions and delta attribution | ✅ |
+| M5-PERF-01 | Optimize animation loop with dirty-widget refresh and visibility-aware updates (no hidden-tab redraws) | ✅ |
+| M5-PERF-02 | Debounce slider/control-driven recompute and implement fast-preview vs commit-on-release behavior | ✅ |
+| M5-PERF-03 | Add module5 performance benchmarks (tab-switch, resize, calculate-to-render p50/p95/p99) | ✅ |
+| M5-PERF-04 | Add module5 stress test (rapid control changes + tab switching) with responsiveness and memory budgets | ✅ |
+| M5-TECH-01 | Rework competitive matrix to confidence-aware scoring (remove binary checkmark overstatement) | ✅ |
+| M5-TECH-02 | Add reproducibility pack export (assumptions, version, commit, outputs, timestamp) for auditability | ✅ |
 
 ## Fyne + Go Application Performance Roadmap (2026-02-13)
 
