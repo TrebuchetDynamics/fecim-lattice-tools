@@ -1101,7 +1101,7 @@ Goal: benchmark FeCIM outputs against external/open models where sensible, and k
 |----|------|--------|
 | OST-01 | Build `tools/external/README.md` inventory | ✅ | `8dc7170` |
 | OST-02 | Add `scripts/toolchain/check_tools.sh` | ✅ | `3cfa37d` |
-| OST-03 | Add `scripts/toolchain/install_helpers.md` with reproducible install steps for Linux/macOS for each external tool | ⏳ |
+| OST-03 | Install helpers doc for Linux/macOS | ✅ | See `scripts/toolchain/install_helpers.md` |
 | OST-04 | Heracles comparator harness with RMSE reports | ✅ | `9fb66a6` |
 | OST-05 | Add CrossSim interoperability test: export compatible inputs, run baseline scenario, compare trend-level outputs | ⏳ |
 | OST-06 | ngspice round-trip validation | ✅ | `3c991a3` |
