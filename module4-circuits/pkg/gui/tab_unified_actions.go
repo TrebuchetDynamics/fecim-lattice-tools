@@ -10,6 +10,11 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
+func formatReadStatusLine(row, col, level int, currentUA, tiaVoltageV float64, adcCode int) string {
+	return fmt.Sprintf("READ [%d,%d]: State=%d | I=%+.2f µA -> TIA=%+.2f V -> ADC=%d | ~76ns, ~46fJ",
+		row, col, level, currentUA, tiaVoltageV, adcCode)
+}
+
 // ============================================================================
 // ACTION HANDLERS
 // ============================================================================
@@ -248,8 +253,7 @@ func (ca *CircuitsApp) onUnifiedRead() {
 	// Update status with single-cell sense result including energy/timing
 	// Read cycle: ~76ns, Energy: DAC(14.4fJ) + TIA(6.3fJ) + ADC(25fJ) = ~46fJ
 	sharedwidgets.SafeDo(func() {
-		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.2f µA -> TIA=%.2f V -> ADC=%d | ~76ns, ~46fJ",
-			selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
+		ca.operationsStatusLabel.SetText(formatReadStatusLine(selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
 	})
 }
 
