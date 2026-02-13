@@ -17,6 +17,18 @@
 
 ---
 
+## SHARE Backlog (Shared Code Consolidation)
+
+| ID | Opportunity | Modules | Est. Impact | Status |
+|----|-------------|---------|-------------|--------|
+| SHARE-001 | Finish keyboard unification in Module 1 (replace bespoke shortcut wiring with `shared/keyboard.Manager`) | M1 (+shared) | ~150-220 LOC dedup | ⏳ |
+| SHARE-002 | Consolidate all keyboard help strings into structured shortcut metadata (single source; no duplicated multiline literals) | M1/M2/M3/M4/M5/M6 | ~120-180 LOC dedup + consistency | ⏳ |
+| SHARE-003 | Move ferroelectric Preisach model adapter (`TanhEverett`, `PreisachModel`) from `module1-hysteresis/pkg/ferroelectric` to `shared/physics` with compatibility shim | M1/M4 (+future modules) | ~250-400 LOC reuse | ⏳ |
+| SHARE-004 | Remove Module4→Module1 physics coupling import by switching integration tests/callers to `shared/physics` | M4/M1 | architecture cleanup + dependency isolation | ⏳ |
+| SHARE-005 | Standardize export provider wiring (`createExportButtons`, success/error messaging) behind shared helper wrapper | M3/M4/M5 | ~90-140 LOC dedup | ⏳ |
+| SHARE-006 | Consolidate tab/select navigation wrappers now that shared helpers exist; remove module-local wrapper funcs where not adding behavior | M2/M4/M5/M6 | ~40-80 LOC dedup | ⏳ |
+| SHARE-007 | Unify GUI theme boilerplate (`theme.go` + repeated font/color/icon overrides) into shared theme variants | M1/M2 (+shared/themes) | ~120-200 LOC dedup | ⏳ |
+
 ## Current Focus & Direction
 
 ### 1. Module 4 Circuits: Physics Correction (HIGH PRIORITY)
