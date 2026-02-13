@@ -1201,3 +1201,13 @@ Stretch roadmap to push FeCIM Lattice Tools beyond current world-class targets.
 | M4-WC-08 | Add tiled architecture model (multi-array + global accumulation/buffer costs) | ⬜ |
 | M4-WC-09 | Upgrade write-verify loop to support technology-calibrated device programming models | ✅ |
 | M4-WC-10 | Build rigorous device-technology comparison suite (RRAM/PCM/FeFET/SRAM side-by-side) | ⬜ |
+
+## Experimental Data Anchoring (2026-02-13)
+
+| ID | Task | Status |
+|----|------|--------|
+| EXP-01 | Create `experimental-data/` directory tree for HZO/HfO2/crossbar datasets | ✅ |
+| EXP-02 | Add `experimental-data/README.md` schema + units + uncertainty guidance for `LiteratureDataset` | ✅ |
+| EXP-03 | Add literature-backed datasets: Park 2015 (DOI:10.1002/adma.201404531), Materlik 2015 (DOI:10.1063/1.4916707), Jerry 2017 (DOI:10.1109/IEDM.2017.8268338) | ✅ |
+| EXP-04 | Replace representative/synthesized calibration citations in `validation/calibration/calibration_targets.go` with DOI-anchored references + dataset paths | ✅ |
+| EXP-05 | Add `validation/experimental_data_test.go` (`TestExperimentalDataValidation`) for schema checks + sim-vs-experiment RMSE on P-E data | ✅ |

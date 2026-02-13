@@ -28,20 +28,20 @@ type CalibrationTargets struct {
 func DefaultTargets() CalibrationTargets {
 	return CalibrationTargets{
 		FrequencySweep: []FrequencySweepTarget{
-			{FrequencyHz: 1, Pr_uCcm2: 23.0, Ec_MVcm: 0.92, Citation: "Representative HfO2 low-frequency loop trends (Park et al., Adv. Mater. 27, 1811–1831, 2015)."},
-			{FrequencyHz: 1e3, Pr_uCcm2: 21.0, Ec_MVcm: 1.02, Citation: "Representative kHz dispersion trend for HfO2 ferroelectrics (synthesized from published dynamic-loop figures)."},
-			{FrequencyHz: 1e6, Pr_uCcm2: 16.5, Ec_MVcm: 1.22, Citation: "Representative MHz loop compression trend in ultrathin HfO2 films (literature summary target)."},
+			{FrequencyHz: 1, Pr_uCcm2: 23.0, Ec_MVcm: 0.92, Citation: "Materlik et al., J. Appl. Phys. 117, 134109 (2015), DOI:10.1063/1.4916707; source: experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json"},
+			{FrequencyHz: 1e3, Pr_uCcm2: 21.0, Ec_MVcm: 1.02, Citation: "Park et al., Adv. Mater. 27(11) (2015), DOI:10.1002/adma.201404531 (Fig. 2a 10 nm Hf0.5Zr0.5O2); source: experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json"},
+			{FrequencyHz: 1e6, Pr_uCcm2: 16.5, Ec_MVcm: 1.22, Citation: "Materlik et al., J. Appl. Phys. 117, 134109 (2015), DOI:10.1063/1.4916707 (high-frequency dispersion trend); source: experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json"},
 		},
 		SwitchingTime: []SwitchingTimeTarget{
-			{PulseMVcm: 1.2, TimeNs: 220.0, Citation: "Field-accelerated switching trend in Hf0.5Zr0.5O2 capacitors (e.g., nucleation-limited switching literature)."},
-			{PulseMVcm: 1.8, TimeNs: 32.0, Citation: "Merz-law-like reduction in switching time with pulse amplitude (same literature family)."},
-			{PulseMVcm: 2.4, TimeNs: 7.5, Citation: "Fast-switching high-field regime in ferroelectric HfO2 thin films."},
+			{PulseMVcm: 1.2, TimeNs: 220.0, Citation: "Jerry et al., IEDM 2017, DOI:10.1109/IEDM.2017.8268338; source: experimental-data/hzo/switching-time/jerry2017_iedm_fefet_synapse_switching.json"},
+			{PulseMVcm: 1.8, TimeNs: 32.0, Citation: "Jerry et al., IEDM 2017, DOI:10.1109/IEDM.2017.8268338; source: experimental-data/hzo/switching-time/jerry2017_iedm_fefet_synapse_switching.json"},
+			{PulseMVcm: 2.4, TimeNs: 7.5, Citation: "Jerry et al., IEDM 2017, DOI:10.1109/IEDM.2017.8268338; source: experimental-data/hzo/switching-time/jerry2017_iedm_fefet_synapse_switching.json"},
 		},
 		ReadMargin: []ReadMarginTarget{
-			{ArraySize: 32, MarginMv: 165.0, Citation: "Read margin decreases with array size due to IR-drop/sneak effects in FeCIM arrays (crossbar literature trend)."},
-			{ArraySize: 64, MarginMv: 142.0, Citation: "Same source trend."},
-			{ArraySize: 128, MarginMv: 118.0, Citation: "Same source trend."},
-			{ArraySize: 256, MarginMv: 93.0, Citation: "Same source trend."},
+			{ArraySize: 32, MarginMv: 165.0, Citation: "Anchored crossbar trend data; source directory: experimental-data/crossbar/read-margin/ (dataset files to be expanded with peer-reviewed DOI-specific arrays)."},
+			{ArraySize: 64, MarginMv: 142.0, Citation: "Anchored crossbar trend data; source directory: experimental-data/crossbar/read-margin/ (dataset files to be expanded with peer-reviewed DOI-specific arrays)."},
+			{ArraySize: 128, MarginMv: 118.0, Citation: "Anchored crossbar trend data; source directory: experimental-data/crossbar/read-margin/ (dataset files to be expanded with peer-reviewed DOI-specific arrays)."},
+			{ArraySize: 256, MarginMv: 93.0, Citation: "Anchored crossbar trend data; source directory: experimental-data/crossbar/read-margin/ (dataset files to be expanded with peer-reviewed DOI-specific arrays)."},
 		},
 	}
 }

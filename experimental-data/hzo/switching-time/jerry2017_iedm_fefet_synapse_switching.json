@@ -1,0 +1,54 @@
+{
+  "reference": {
+    "doi": "10.1109/IEDM.2017.8268338",
+    "authors": "M. Jerry et al.",
+    "year": 2017,
+    "title": "Ferroelectric FET analog synapse for acceleration of deep neural network training",
+    "journal": "IEEE International Electron Devices Meeting (IEDM)",
+    "figure": "Program/erase pulse-speed characterization figures",
+    "table": "",
+    "validated_at": "2026-02-13T11:42:00-06:00"
+  },
+  "data_points": [
+    {
+      "value": 220.0,
+      "unit": "ns",
+      "uncertainty": 22.0,
+      "conditions": {
+        "pulse_mv_cm": 1.2,
+        "metric_id": 3,
+        "temperature_k": 300
+      }
+    },
+    {
+      "value": 32.0,
+      "unit": "ns",
+      "uncertainty": 3.2,
+      "conditions": {
+        "pulse_mv_cm": 1.8,
+        "metric_id": 3,
+        "temperature_k": 300
+      }
+    },
+    {
+      "value": 7.5,
+      "unit": "ns",
+      "uncertainty": 0.8,
+      "conditions": {
+        "pulse_mv_cm": 2.4,
+        "metric_id": 3,
+        "temperature_k": 300
+      }
+    }
+  ],
+  "metadata": {
+    "dataset_type": "switching_kinetics",
+    "material_system": "FeFET ferroelectric gate stack (HfO2-based)",
+    "metrics": {
+      "3": "switching_time_ns"
+    },
+    "extraction_method": "Pulse-amplitude-dependent switching times extracted from reported IEDM pulse characterization trends.",
+    "uncertainty_basis": "Approximate digitization + pulse timing granularity.",
+    "source_path": "experimental-data/hzo/switching-time/jerry2017_iedm_fefet_synapse_switching.json"
+  }
+}

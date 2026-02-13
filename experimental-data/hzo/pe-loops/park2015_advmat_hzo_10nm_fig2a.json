@@ -1,0 +1,49 @@
+{
+  "reference": {
+    "doi": "10.1002/adma.201404531",
+    "authors": "M. H. Park et al.",
+    "year": 2015,
+    "title": "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films",
+    "journal": "Advanced Materials 27(11)",
+    "figure": "Figure 2a",
+    "table": "",
+    "validated_at": "2026-02-13T11:40:00-06:00"
+  },
+  "data_points": [
+    {
+      "value": 24.0,
+      "unit": "uC/cm2",
+      "uncertainty": 1.5,
+      "conditions": {
+        "metric_id": 1,
+        "frequency_hz": 1000,
+        "thickness_nm": 10,
+        "zr_fraction": 0.5,
+        "temperature_k": 300
+      }
+    },
+    {
+      "value": 1.0,
+      "unit": "MV/cm",
+      "uncertainty": 0.08,
+      "conditions": {
+        "metric_id": 2,
+        "frequency_hz": 1000,
+        "thickness_nm": 10,
+        "zr_fraction": 0.5,
+        "temperature_k": 300
+      }
+    }
+  ],
+  "metadata": {
+    "dataset_type": "pe_loop_metrics",
+    "material": "Hf0.5Zr0.5O2",
+    "metrics": {
+      "1": "Pr_uC_cm2",
+      "2": "Ec_MV_cm"
+    },
+    "extraction_method": "Figure-derived extraction from Figure 2a for 10 nm Hf0.5Zr0.5O2, 1 kHz loop.",
+    "uncertainty_basis": "Axis-resolution + manual digitization uncertainty envelope.",
+    "source_path": "experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json"
+  }
+}

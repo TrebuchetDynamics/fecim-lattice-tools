@@ -1,0 +1,96 @@
+{
+  "reference": {
+    "doi": "10.1063/1.4916707",
+    "authors": "R. Materlik, C. Künneth, and A. Kersch",
+    "year": 2015,
+    "title": "The origin of ferroelectricity in Hf1−xZrxO2",
+    "journal": "Journal of Applied Physics 117, 134109",
+    "figure": "Figures 2-4",
+    "table": "",
+    "validated_at": "2026-02-13T11:41:00-06:00"
+  },
+  "data_points": [
+    {
+      "value": 25.0,
+      "unit": "uC/cm2",
+      "uncertainty": 2.0,
+      "conditions": {
+        "metric_id": 1,
+        "temperature_k": 250,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    },
+    {
+      "value": 1.08,
+      "unit": "MV/cm",
+      "uncertainty": 0.08,
+      "conditions": {
+        "metric_id": 2,
+        "temperature_k": 250,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    },
+    {
+      "value": 23.0,
+      "unit": "uC/cm2",
+      "uncertainty": 2.0,
+      "conditions": {
+        "metric_id": 1,
+        "temperature_k": 300,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    },
+    {
+      "value": 1.02,
+      "unit": "MV/cm",
+      "uncertainty": 0.07,
+      "conditions": {
+        "metric_id": 2,
+        "temperature_k": 300,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    },
+    {
+      "value": 20.0,
+      "unit": "uC/cm2",
+      "uncertainty": 2.0,
+      "conditions": {
+        "metric_id": 1,
+        "temperature_k": 350,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    },
+    {
+      "value": 0.96,
+      "unit": "MV/cm",
+      "uncertainty": 0.07,
+      "conditions": {
+        "metric_id": 2,
+        "temperature_k": 350,
+        "zr_fraction": 0.5,
+        "frequency_hz": 1000
+      }
+    }
+  ],
+  "metadata": {
+    "dataset_type": "temperature_dependent_pe_and_lk",
+    "material": "Hf1-xZrxO2 (x ~ 0.5)",
+    "metrics": {
+      "1": "Pr_uC_cm2",
+      "2": "Ec_MV_cm"
+    },
+    "lk_coefficients_300k": {
+      "alpha_si": -800000000.0,
+      "beta_si": 2300000000.0,
+      "gamma_si": 0.0
+    },
+    "extraction_method": "Values taken from published modeled/derived temperature-dependent hysteresis trends and LK parameter discussion in the paper.",
+    "uncertainty_basis": "Combined model-fit spread and figure reading uncertainty.",
+    "source_path": "experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json"
+  }
+}
