@@ -25,7 +25,7 @@ func WakeUpPolarization(cycles float64, cfg WakeUpModelConfig) (float64, error) 
 	wake := 1.0 + cfg.WakeUpGainFraction*(1.0-math.Exp(-cycles/cfg.WakeUpTauCycles))
 	fatigue := 1.0
 	if cycles > cfg.FatigueOnsetCycles {
-		fatigue = math.Exp(-(cycles-cfg.FatigueOnsetCycles) / cfg.FatigueTauCycles)
+		fatigue = math.Exp(-(cycles - cfg.FatigueOnsetCycles) / cfg.FatigueTauCycles)
 	}
 	return cfg.PrInitial_Cm2 * wake * fatigue, nil
 }

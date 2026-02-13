@@ -7,9 +7,9 @@ import (
 
 // HysteresisMetrics summarizes key loop observables.
 type HysteresisMetrics struct {
-	FrequencyHz float64
-	Pr_Cm2      float64
-	Ec_Vm       float64
+	FrequencyHz  float64
+	Pr_Cm2       float64
+	Ec_Vm        float64
 	LoopArea_Jm3 float64
 }
 
@@ -43,9 +43,9 @@ func ApplyFrequencyDispersion(base HysteresisMetrics, targetHz float64, cfg Freq
 	areaMult := clamp(1 + cfg.LoopAreaLogSlope*logRatio)
 
 	return HysteresisMetrics{
-		FrequencyHz: targetHz,
-		Pr_Cm2:      base.Pr_Cm2 * prMult,
-		Ec_Vm:       base.Ec_Vm * ecMult,
+		FrequencyHz:  targetHz,
+		Pr_Cm2:       base.Pr_Cm2 * prMult,
+		Ec_Vm:        base.Ec_Vm * ecMult,
 		LoopArea_Jm3: base.LoopArea_Jm3 * areaMult,
 	}, nil
 }

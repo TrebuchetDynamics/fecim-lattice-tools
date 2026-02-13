@@ -13,11 +13,11 @@ func TestLiteratureValidation(t *testing.T) {
 	t.Run("TestCurieWeiss_VsLiterature", runCurieWeissVsLiterature)
 }
 
-func TestPreisachLoop_VsPark2015(t *testing.T)          { runPreisachLoopVsPark2015(t) }
-func TestLKSwitchingTime_VsTrentzsch2016(t *testing.T)  { runLKSwitchingTimeVsTrentzsch2016(t) }
-func TestConductanceWindow_VsJerry2017(t *testing.T)    { runConductanceWindowVsJerry2017(t) }
-func TestNLS_VsGuo2018(t *testing.T)                    { runNLSVsGuo2018(t) }
-func TestCurieWeiss_VsLiterature(t *testing.T)          { runCurieWeissVsLiterature(t) }
+func TestPreisachLoop_VsPark2015(t *testing.T)         { runPreisachLoopVsPark2015(t) }
+func TestLKSwitchingTime_VsTrentzsch2016(t *testing.T) { runLKSwitchingTimeVsTrentzsch2016(t) }
+func TestConductanceWindow_VsJerry2017(t *testing.T)   { runConductanceWindowVsJerry2017(t) }
+func TestNLS_VsGuo2018(t *testing.T)                   { runNLSVsGuo2018(t) }
+func TestCurieWeiss_VsLiterature(t *testing.T)         { runCurieWeissVsLiterature(t) }
 
 func runPreisachLoopVsPark2015(t *testing.T) {
 	mat := DefaultHZO()
