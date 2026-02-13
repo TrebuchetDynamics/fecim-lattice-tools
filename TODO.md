@@ -1081,14 +1081,14 @@ Goal: benchmark FeCIM outputs against external/open models where sensible, and k
 
 | ID | Task | Status |
 |----|------|--------|
-| OST-01 | Build `tools/external/README.md` inventory: CrossSim, Heracles, Verilog/SPICE simulators, install method, version pin, license, use-case | ⏳ |
-| OST-02 | Add `scripts/toolchain/check_tools.sh` that verifies required external tools installed and prints versions | ⏳ |
+| OST-01 | Build `tools/external/README.md` inventory | ✅ | `8dc7170` |
+| OST-02 | Add `scripts/toolchain/check_tools.sh` | ✅ | `3cfa37d` |
 | OST-03 | Add `scripts/toolchain/install_helpers.md` with reproducible install steps for Linux/macOS for each external tool | ⏳ |
-| OST-04 | Integrate Heracles comparator harness (P-V sweeps and transient behavior) with RMSE/error reports | ⏳ |
+| OST-04 | Heracles comparator harness with RMSE reports | ✅ | `9fb66a6` |
 | OST-05 | Add CrossSim interoperability test: export compatible inputs, run baseline scenario, compare trend-level outputs | ⏳ |
-| OST-06 | Add ngspice round-trip validation from Module 6 exported netlists (syntax + basic transient checks) | ⏳ |
+| OST-06 | ngspice round-trip validation | ✅ | `3c991a3` |
 | OST-07 | Add Verilog simulation sanity checks (iverilog/verilator if available) for generated behavioral models | ⏳ |
-| OST-08 | Add compatibility matrix doc: which comparisons are apples-to-apples vs conceptual-only | ⏳ |
+| OST-08 | Compatibility matrix doc | ✅ | `318a3db` |
 | OST-09 | Add confidence policy: external-tool agreement bands (`green/yellow/red`) for each metric type | ⏳ |
 | OST-10 | Add CI job that runs available external-tool validations when tools exist; skips with explicit reason when missing | ⏳ |
 | OST-11 | Create `validation/external/baselines/` and store locked comparator baselines per tool+version | ⏳ |
