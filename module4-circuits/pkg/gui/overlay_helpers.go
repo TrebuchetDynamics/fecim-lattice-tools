@@ -36,14 +36,9 @@ func (ca *CircuitsApp) overlayDrawableDims(rows, cols int, weights [][]int) (int
 
 // overlayCellInfo composes dual-line overlay labels for selected cell diagnostics.
 func (ca *CircuitsApp) overlayCellInfo(level, quantLevels int, value float64, mode string) overlayCellLabels {
-	top := fmt.Sprintf("G:L%d/%d", level, quantLevels-1)
-	bottom := ""
-	switch mode {
-	case "Icell":
-		bottom = fmt.Sprintf("I:%.3gA", value)
-	default:
-		bottom = fmt.Sprintf("V:%.3gV", value)
-	}
+	_ = quantLevels // kept for compatibility with call sites/tests
+	top := fmt.Sprintf("L: %d", level)
+	bottom := formatOverlayBottomValue(mode, value)
 	return overlayCellLabels{TopLabel: top, BottomLabel: bottom}
 }
 

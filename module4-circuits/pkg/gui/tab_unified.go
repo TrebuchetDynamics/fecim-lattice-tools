@@ -873,6 +873,62 @@ func (ca *CircuitsApp) updateModeButtons() {
 	})
 }
 
+func (ca *CircuitsApp) isProgrammingActive() bool {
+	ca.mu.RLock()
+	active := ca.programmingActive
+	ca.mu.RUnlock()
+	return active
+}
+
+func (ca *CircuitsApp) setProgrammingActive(active bool) {
+	ca.mu.Lock()
+	ca.programmingActive = active
+	ca.mu.Unlock()
+
+	sharedwidgets.SafeDo(func() {
+		if ca.mfuxWriteLevelSlider != nil {
+			if active {
+				ca.mfuxWriteLevelSlider.Disable()
+			} else {
+				ca.mfuxWriteLevelSlider.Enable()
+			}
+		}
+		if ca.archPassiveBtn != nil {
+			if active {
+				ca.archPassiveBtn.Disable()
+			} else {
+				ca.archPassiveBtn.Enable()
+			}
+		}
+		if ca.arch1T1RBtn != nil {
+			if active {
+				ca.arch1T1RBtn.Disable()
+			} else {
+				ca.arch1T1RBtn.Enable()
+			}
+		}
+		if ca.arch2T1RBtn != nil {
+			if active {
+				ca.arch2T1RBtn.Disable()
+			} else {
+				ca.arch2T1RBtn.Enable()
+			}
+		}
+		if ca.isppEngineSelect != nil {
+			if active {
+				ca.isppEngineSelect.Disable()
+			} else {
+				ca.isppEngineSelect.Enable()
+			}
+		}
+		if active && ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText("PROGRAMMING — controls locked")
+		}
+	})
+
+	ca.updateActionButtons()
+}
+
 // updateActionButtons enables/disables action buttons based on current mode
 func (ca *CircuitsApp) updateActionButtons() {
 	if ca.deviceState == nil {
@@ -880,13 +936,18 @@ func (ca *CircuitsApp) updateActionButtons() {
 	}
 
 	mode := ca.deviceState.GetOperationMode()
+	programmingActive := ca.isProgrammingActive()
 
 	sharedwidgets.SafeDo(func() {
-		// Program Cell: visible/enabled only in WRITE mode
+		// Program Cell: visible in WRITE mode, but disabled while programming is active
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
 				ca.actionWriteCellBtn.Show()
-				ca.actionWriteCellBtn.Enable()
+				if programmingActive {
+					ca.actionWriteCellBtn.Disable()
+				} else {
+					ca.actionWriteCellBtn.Enable()
+				}
 				ca.actionWriteCellBtn.Importance = widget.HighImportance
 			} else {
 				ca.actionWriteCellBtn.Hide()
@@ -1106,6 +1167,9 @@ func (ca *CircuitsApp) setWLModeAll() {
 // onUnifiedCellTapped handles cell selection
 // In READ/WRITE mode: selects row transistor (WL) and column transistor (BL)
 func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
+	if ca.isProgrammingActive() {
+		return
+	}
 	logInput("cell_selected row=%d col=%d", row, col)
 	ca.deviceState.SetSelectedCell(row, col)
 
@@ -1269,50 +1333,35 @@ func (ca *CircuitsApp) updateCellInfo() {
 	isPassive := ca.deviceState.IsPassiveMode()
 
 	sharedwidgets.SafeDo(func() {
-		// Build detailed info string with signal chain data
-		displayMode := "V"
-		if ca.showCurrentInCellInfo {
-			displayMode = "I"
+		rowState := "OFF"
+		if isActive {
+			rowState = "ON"
 		}
-		var infoStr string
-		if isActive && math.Abs(effectiveVoltage) > 0.01 {
-			// Show full signal chain: G -> I -> TIA -> ADC
-			if isPassive {
-				if ca.showCurrentInCellInfo {
-					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | WL=%+.2fV BL=%+.2fV -> Icell=%+.1fuA -> TIA=%+.2fV -> ADC=%d | %s",
-						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, wlVoltage, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
-				} else {
-					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | WL=%+.2fV BL=%+.2fV -> Vcell=%+.2fV -> TIA=%+.2fV -> ADC=%d | %s",
-						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, wlVoltage, blVoltage, effectiveVoltage, rowVoltage, adcLevel, matName)
-				}
-			} else {
-				if ca.showCurrentInCellInfo {
-					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | BL=%+.2fV -> Icell=%+.1fuA -> TIA=%+.2fV -> ADC=%d | %s",
-						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
-				} else {
-					infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | BL=%+.2fV -> Vcell=%+.2fV -> TIA=%+.2fV -> ADC=%d | %s",
-						selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS, blVoltage, effectiveVoltage, rowVoltage, adcLevel, matName)
-				}
-			}
-		} else {
-			// Cell not being sensed
-			if ca.showCurrentInCellInfo {
-				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | (Row %s, Icell=%+.1fuA) | %s",
-					selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS,
-					map[bool]string{true: "ON", false: "OFF"}[isActive], expectedCurrent, matName)
-			} else {
-				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | Show=%s | G=%.1fuS | (Row %s, Vcell=%+.2fV) | %s",
-					selectedRow, selectedCol, level, levels-1, displayMode, conductanceUS,
-					map[bool]string{true: "ON", false: "OFF"}[isActive], effectiveVoltage, matName)
-			}
+		vCellField := fmt.Sprintf("V_cell (V): %+.2f V", effectiveVoltage)
+		if isPassive {
+			vCellField = fmt.Sprintf("WL (V): %+.2f V | BL (V): %+.2f V | V_cell (V): %+.2f V", wlVoltage, blVoltage, effectiveVoltage)
 		}
+		infoStr := fmt.Sprintf(
+			"Cell [%d,%d] | Level: %s/%d | G (µS): %s | %s | I_cell (µA): %s | V_TIA (V): %s | ADC Code: %s | Row: %s | Material: %s",
+			selectedRow,
+			selectedCol,
+			formatMetricLevel(level),
+			levels-1,
+			formatMetricConductanceUS(conductanceUS),
+			vCellField,
+			formatMetricICellUA(expectedCurrent),
+			formatMetricVTIAMV(rowVoltage),
+			formatMetricADCCode(adcLevel),
+			rowState,
+			matName,
+		)
 		ca.sharedCellInfoLabel.SetText(infoStr)
 	})
 
 	// Also update array info label with total row current
 	if ca.sharedArrayInfoLabel != nil {
 		sharedwidgets.SafeDo(func() {
-			ca.sharedArrayInfoLabel.SetText(fmt.Sprintf("Array: %dx%d | %d levels | Row %d sum: I=%.1fuA",
+			ca.sharedArrayInfoLabel.SetText(fmt.Sprintf("Array: %dx%d | Quantization Levels: %d | Row %d I_row (µA): %+.2f µA",
 				ca.arrayRows, ca.arrayCols, ca.quantLevels, selectedRow, rowCurrent))
 		})
 	}
@@ -1368,7 +1417,7 @@ func (ca *CircuitsApp) updateSensePanel() {
 	currentA := ca.deviceState.GetRowCurrent(row) * 1e-6
 	voltage := ca.deviceState.GetRowVoltage(row)
 	code := ca.deviceState.GetRowLevel(row)
-	levels := ca.deviceState.GetADCLevels()
+	_ = ca.deviceState.GetADCLevels()
 	saturated := ca.deviceState.IsSaturated(row)
 	isActive := ca.deviceState.IsRowActive(row)
 	mode := ca.deviceState.GetOperationMode()
@@ -1393,16 +1442,7 @@ func (ca *CircuitsApp) updateSensePanel() {
 		}
 	}
 
-	codeText := fmt.Sprintf("Code %d", code)
-	if levels > 1 {
-		fullScale := float64(levels - 1)
-		pct := (float64(code) / fullScale) * 100.0
-		if levels > 64 {
-			codeText = fmt.Sprintf("Code %d / %d (%.2f%% FS)", code, levels-1, pct)
-		} else {
-			codeText = fmt.Sprintf("Code %d / %d (%.1f%% FS)", code, levels-1, pct)
-		}
-	}
+	codeText := formatMetricADCCode(code)
 
 	rowText := fmt.Sprintf("Row %d", row)
 	if !isActive {
@@ -1429,13 +1469,13 @@ func (ca *CircuitsApp) updateSensePanel() {
 			ca.senseRowLabel.SetText(rowText)
 		}
 		if ca.senseCurrentLabel != nil {
-			ca.senseCurrentLabel.SetText(formatCurrentA(currentA))
+			ca.senseCurrentLabel.SetText(formatMetricICellUA(currentA * 1e6))
 		}
 		if ca.senseVoltageLabel != nil {
-			ca.senseVoltageLabel.SetText(fmt.Sprintf("%.3f V (TIA out)", voltage))
+			ca.senseVoltageLabel.SetText(fmt.Sprintf("V_TIA out: %s (I × R_fb)", formatMetricVTIAMV(voltage)))
 		}
 		if ca.senseCodeLabel != nil {
-			ca.senseCodeLabel.SetText(codeText)
+			ca.senseCodeLabel.SetText(fmt.Sprintf("Code: %s", codeText))
 		}
 		if ca.senseSNRLabel != nil {
 			ca.senseSNRLabel.SetText(snrText)
@@ -1711,17 +1751,17 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 
 	headerRow := container.NewHBox(titleLabel, layout.NewSpacer(), ca.senseRowLabel)
 
-	ca.senseCurrentLabel = widget.NewLabel("0 A")
-	ca.senseVoltageLabel = widget.NewLabel("0.000 V (TIA out)")
-	ca.senseCodeLabel = widget.NewLabel("Code 0 / 31 (0.00% FS)")
+	ca.senseCurrentLabel = widget.NewLabel("+0.00 µA")
+	ca.senseVoltageLabel = widget.NewLabel("V_TIA out: 0.0 mV (I × R_fb)")
+	ca.senseCodeLabel = widget.NewLabel("Code: 0")
 	ca.senseCodeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	ca.senseSNRLabel = widget.NewLabel("SNR n/a")
 	ca.senseSaturationLabel = widget.NewLabel("Linear")
 	ca.senseSaturationLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	metricsRow := container.NewGridWithColumns(2,
-		container.NewHBox(widget.NewLabel("Row Current:"), ca.senseCurrentLabel),
-		container.NewHBox(widget.NewLabel("TIA Vout:"), ca.senseVoltageLabel),
+		container.NewHBox(widget.NewLabel("I_cell (µA):"), ca.senseCurrentLabel),
+		container.NewHBox(widget.NewLabel("V_TIA (V):"), ca.senseVoltageLabel),
 		container.NewHBox(widget.NewLabel("ADC Code:"), ca.senseCodeLabel),
 		container.NewHBox(widget.NewLabel("SNR:"), ca.senseSNRLabel),
 		container.NewHBox(widget.NewLabel("Status:"), ca.senseSaturationLabel),
