@@ -235,20 +235,27 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 		vout = tia.Convert(current * 1e-6) // current is in uA; TIA expects A
 	}
 	var tiaText string
-	absV := math.Abs(vout)
-	switch {
-	case absV < 1e-3:
-		tiaText = fmt.Sprintf("%.0fmV", vout*1e3)
-	case absV < 10:
-		tiaText = fmt.Sprintf("%.2fV", vout)
-	default:
-		tiaText = fmt.Sprintf("%.1fV", vout)
+	if dimmed {
+		tiaText = "OFF"
+	} else {
+		absV := math.Abs(vout)
+		switch {
+		case absV < 1e-3:
+			tiaText = fmt.Sprintf("%.0fmV", vout*1e3)
+		case absV < 10:
+			tiaText = fmt.Sprintf("%.2fV", vout)
+		default:
+			tiaText = fmt.Sprintf("%.1fV", vout)
+		}
 	}
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 
 	// ADC box (to the right of TIA) - show output in LSB/code units.
 	adcStyle := ADCStyle(highlighted, dimmed)
 	adcText := fmt.Sprintf("%dLSB", level)
+	if dimmed {
+		adcText = "OFF"
+	}
 	drawPeripheralBox(img, x+tiaW+2, y, adcW, h, adcStyle, adcText)
 
 	// Draw label to the left (row number)
@@ -265,10 +272,10 @@ func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, le
 // drawPeripheralLabels draws the "DAC" and "TIA+ADC" labels at fixed positions
 func drawPeripheralLabels(img *image.RGBA, dacLabelX, dacLabelY, adcLabelX, adcLabelY int, showDAC, showADC bool) {
 	if showDAC {
-		utils.DrawSimpleText(img, "DAC", dacLabelX, dacLabelY, color.RGBA{170, 140, 220, 255})
+		utils.DrawSimpleText(img, "DAC(V)", dacLabelX, dacLabelY, color.RGBA{170, 140, 220, 255})
 	}
 	if showADC {
-		utils.DrawSimpleText(img, "TIA", adcLabelX, adcLabelY, color.RGBA{220, 180, 100, 255})
-		utils.DrawSimpleText(img, "ADC", adcLabelX+30, adcLabelY, color.RGBA{130, 210, 170, 255})
+		utils.DrawSimpleText(img, "TIA(V)", adcLabelX, adcLabelY, color.RGBA{220, 180, 100, 255})
+		utils.DrawSimpleText(img, "ADC", adcLabelX+42, adcLabelY, color.RGBA{130, 210, 170, 255})
 	}
 }

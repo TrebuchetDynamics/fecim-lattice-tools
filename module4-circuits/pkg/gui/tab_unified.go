@@ -88,7 +88,7 @@ type scaledUnit struct {
 
 func formatSignedScaled(value float64, units []scaledUnit) string {
 	absValue := math.Abs(value)
-	if absValue < 1e-15 {
+	if absValue < 1e-12 {
 		return fmt.Sprintf("0 %s", units[0].unit)
 	}
 
@@ -372,7 +372,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	})
 	sharedwidgets.SetAccessibleLabel(zoomInBtn, "Zoom in")
 	zoomInBtn.Importance = widget.LowImportance
-	zoomSliderWrap := container.NewGridWrap(fyne.NewSize(220, 36), ca.zoomSlider)
+	zoomSliderWrap := container.NewGridWrap(fyne.NewSize(320, 36), ca.zoomSlider)
 
 	ca.actionFitBtn = widget.NewButton("Fit", func() {
 		logAction("button_zoom_fit")
@@ -800,7 +800,7 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 		if mode == OpModeWrite {
 			var text string
 			if rangeMode == DACRangeWrite {
-				text = fmt.Sprintf("DAC: Write (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
+				text = fmt.Sprintf("DAC: Write (-%.1fV RESET .. +%.1fV SET)", currentRange.Max, currentRange.Max)
 			} else {
 				text = fmt.Sprintf("DAC: Read (0-%.1fV)", currentRange.Max)
 			}
@@ -988,6 +988,13 @@ func (ca *CircuitsApp) setProgrammingActive(active bool) {
 				ca.isppEngineSelect.Enable()
 			}
 		}
+		if ca.actionWriteCellBtn != nil {
+			if active {
+				ca.actionWriteCellBtn.SetText("Programming...")
+			} else {
+				ca.actionWriteCellBtn.SetText(actionLabelProgram)
+			}
+		}
 		if active && ca.operationsStatusLabel != nil {
 			ca.operationsStatusLabel.SetText("PROGRAMMING — controls locked")
 		}
@@ -996,7 +1003,7 @@ func (ca *CircuitsApp) setProgrammingActive(active bool) {
 	ca.updateActionButtons()
 }
 
-// updateActionButtons enables/disables action buttons based on current mode
+// updateActionButtons enables/disables and shows/hides action buttons based on current mode
 func (ca *CircuitsApp) updateActionButtons() {
 	if ca.deviceState == nil {
 		return
@@ -1006,7 +1013,7 @@ func (ca *CircuitsApp) updateActionButtons() {
 	programmingActive := ca.isProgrammingActive()
 
 	sharedwidgets.SafeDo(func() {
-		// Program Cell: visible in WRITE mode, but disabled while programming is active
+		// Program Cell: visible only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
 				ca.actionWriteCellBtn.Show()
@@ -1024,7 +1031,7 @@ func (ca *CircuitsApp) updateActionButtons() {
 			ca.actionWriteCellBtn.Refresh()
 		}
 
-		// MVM: visible/enabled only in COMPUTE mode
+		// MVM: visible only in COMPUTE mode
 		if ca.actionComputeBtn != nil {
 			if mode == OpModeCompute {
 				ca.actionComputeBtn.Show()
@@ -1034,6 +1041,28 @@ func (ca *CircuitsApp) updateActionButtons() {
 				ca.actionComputeBtn.Disable()
 			}
 		}
+
+		// Random Array: visible in WRITE and COMPUTE modes (not READ - read is non-destructive)
+		if ca.actionRandomArrayBtn != nil {
+			if mode == OpModeRead {
+				ca.actionRandomArrayBtn.Hide()
+			} else {
+				ca.actionRandomArrayBtn.Show()
+			}
+		}
+
+		// Reset Array: visible in WRITE and COMPUTE modes
+		if ca.actionResetArrayBtn != nil {
+			if mode == OpModeRead {
+				ca.actionResetArrayBtn.Hide()
+			} else {
+				ca.actionResetArrayBtn.Show()
+			}
+		}
+
+		// Undo: always visible (can undo in any mode)
+		// Export: always visible (can export in any mode)
+		// These don't need mode filtering
 	})
 }
 
@@ -1758,16 +1787,33 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	appliedVoltage := targetVoltage
 	logInput("write_level=%d voltage=%.3f", level, targetVoltage)
 
+	// Determine direction based on current cell level vs target
+	selectedRow := ca.deviceState.GetSelectedRow()
+	selectedCol := ca.deviceState.GetSelectedCol()
+	ca.mu.RLock()
+	currentLevel := 0
+	if selectedRow < len(ca.arrayWeights) && selectedCol < len(ca.arrayWeights[selectedRow]) {
+		currentLevel = ca.arrayWeights[selectedRow][selectedCol]
+	}
+	ca.mu.RUnlock()
+
+	dirLabel := "SET"
+	if level < currentLevel {
+		dirLabel = "RESET"
+	} else if level == currentLevel {
+		dirLabel = "—"
+	}
+
+	// Show bipolar write range from material
+	writeRange := ca.deviceState.GetWriteRange()
+
 	sharedwidgets.SafeDo(func() {
 		if ca.mfuxWriteLevelLabel != nil {
 			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("L:%d", level))
 		}
 		if ca.mfuxWriteVoltageLabel != nil {
-			if math.Abs(appliedVoltage-targetVoltage) > 0.01 {
-				ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV (DAC %.2fV)", targetVoltage, appliedVoltage))
-			} else {
-				ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV", appliedVoltage))
-			}
+			voltText := fmt.Sprintf("%s %.2fV [±%.1fV]", dirLabel, appliedVoltage, writeRange.Max)
+			ca.mfuxWriteVoltageLabel.SetText(voltText)
 		}
 	})
 }

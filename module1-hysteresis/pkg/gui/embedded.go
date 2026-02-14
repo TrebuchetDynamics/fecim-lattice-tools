@@ -165,10 +165,30 @@ func (e *EmbeddedApp) Start() {
 
 			e.mu.Lock()
 			defer e.mu.Unlock()
+
+			// Stop() may be requested while we're waiting for the timer or acquiring
+			// locks; bail out before doing expensive calibration or disk writes.
+			select {
+			case <-stopCh:
+				return
+			default:
+			}
+			if !e.running.Load() {
+				return
+			}
+
 			if !e.loadCalibration() {
 				// No valid saved calibration - run immediately
 				log.Printf("Running calibration for %s at startup...", e.material.Name)
 				e.calibrateLevelsAtTemperature(300)
+				select {
+				case <-stopCh:
+					return
+				default:
+				}
+				if !e.running.Load() {
+					return
+				}
 				if err := e.saveCalibration(); err != nil {
 					log.Printf("Warning: failed to save calibration: %v", err)
 				}

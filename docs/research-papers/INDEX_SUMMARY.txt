@@ -315,7 +315,7 @@ In docs/research-papers/:
   - paper_metadata.json     (machine-readable)
 
 In docs/development/:
-  - scriptReference.md      (code-to-paper connections)
+  - SCRIPT_REFERENCE.md      (code-to-paper connections)
   - TESTING.md              (test methodology)
   - HYPER_ANALYSIS_REPORT.md (UI analysis)
 

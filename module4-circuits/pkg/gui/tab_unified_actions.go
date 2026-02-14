@@ -425,6 +425,27 @@ func (ca *CircuitsApp) onUnifiedRandomArray() {
 	}
 	ca.mu.Unlock()
 
+	// Apply default read voltage after randomization so DAC/TIA/ADC reflect the new array state
+	if ca.deviceState != nil {
+		mode := ca.deviceState.GetOperationMode()
+		if mode == OpModeRead {
+			// Apply read voltage to selected column
+			readVoltage := ca.deviceState.GetReadRange().Max * 0.4
+			if readVoltage < 0.1 {
+				readVoltage = 0.2
+			}
+			ca.deviceState.SetAllDACVoltages(0)
+			ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), readVoltage)
+		} else if mode == OpModeCompute {
+			// Re-apply input vector as DAC voltages
+			params := make([]float64, len(ca.inputVector))
+			for i, v := range ca.inputVector {
+				params[i] = float64(v)
+			}
+			ca.deviceState.SetDACPreset(DACInputVector, params...)
+		}
+	}
+
 	ca.recomputeAndRefresh()
 	ca.operationsStatusLabel.SetText("Array randomized")
 }

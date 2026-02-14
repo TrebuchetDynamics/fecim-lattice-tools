@@ -99,7 +99,7 @@ Run calibration:
 |-----|---------|
 | [ARCHITECTURE.md](development/ARCHITECTURE.md) | System design |
 | [TESTING.md](development/TESTING.md) | Test guide (see CI for current status) |
-| [scriptReference.md](development/scriptReference.md) | Function lookups |
+| [SCRIPT_REFERENCE.md](development/SCRIPT_REFERENCE.md) | Function lookups |
 | [FYNE_NOTES.md](development/GUI/FYNE_NOTES.md) | Fyne GUI development |
 | [HYPER_ANALYSIS_REPORT.md](development/HYPER_ANALYSIS_REPORT.md) | UI analysis |
 

@@ -14,13 +14,7 @@ func (a *App) showPhysicsEquationsDialog() {
 		return
 	}
 
-	wasPaused := a.paused.Load()
-	if !wasPaused {
-		a.paused.Store(true)
-		if a.pauseBtn != nil {
-			a.pauseBtn.SetText("Resume")
-		}
-	}
+	resume := a.pauseSimulationForModal()
 
 	initialTab := 0 // L-K
 	if a.physicsEngine == PhysicsPreisach {
@@ -43,12 +37,7 @@ func (a *App) showPhysicsEquationsDialog() {
 		if dialog != nil {
 			dialog.Hide()
 		}
-		if !wasPaused && a.paused.Load() {
-			a.paused.Store(false)
-			if a.pauseBtn != nil {
-				a.pauseBtn.SetText("Pause")
-			}
-		}
+		resume()
 	})
 
 	dialog = widget.NewModalPopUp(

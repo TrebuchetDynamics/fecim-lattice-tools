@@ -15,12 +15,12 @@ Module: `module1-hysteresis`
 
 ```bash
 xvfb-run -a ./fecim-screenshotter -only hysteresis \
-  -out docs/development/evidence/g12-gui-parity-screenshots -w 1280 -h 800
+  -out docs/development/evidence/G12-gui-parity-screenshots -w 1280 -h 800
 ```
 
 ## Screenshot artifacts
 
-- `docs/development/evidence/g12-gui-parity-screenshots/hysteresis_initial.png`
+- `docs/development/evidence/G12-gui-parity-screenshots/hysteresis_initial.png`
 
 ## Log-line evidence (excerpt)
 

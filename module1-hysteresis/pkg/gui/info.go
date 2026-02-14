@@ -44,7 +44,8 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 
 	// Material info button (shows details in dialog with uncertainty ranges)
 	matInfoBtn := widget.NewButtonWithIcon("Material Info", theme.InfoIcon(), func() {
-		dialog.ShowInformation("Material Properties",
+		resume := a.pauseSimulationForModal()
+		d := dialog.NewInformation("Material Properties",
 			fmt.Sprintf("Material: %s\n\n"+
 				"Pr (Remanent): %.0f µC/cm² [literature: 15-34]\n"+
 				"Ps (Saturation): %.0f µC/cm² [±10%%]\n"+
@@ -55,7 +56,11 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 				"Note: Ranges from peer-reviewed literature.\n"+
 				"Actual values depend on process conditions.",
 				a.material.Name, a.material.Pr*100, a.material.Ps*100,
-				a.material.Ec/1e8, a.material.EnduranceCycles), a.mainWindow)
+				a.material.Ec/1e8, a.material.EnduranceCycles),
+			a.mainWindow,
+		)
+		d.SetOnClosed(resume)
+		d.Show()
 	})
 	matInfoBtn.Importance = widget.LowImportance
 
@@ -336,6 +341,7 @@ func (a *App) getLogText() string {
 
 // showELI5Dialog displays the "Explain Like I'm 5" hysteresis guide
 func (a *App) showELI5Dialog() {
+	resume := a.pauseSimulationForModal()
 	// Create content with key concepts from the ELI5 guide
 	content := widget.NewLabel(
 		"HYSTERESIS EXPLAINED LIKE YOU'RE 5\n\n" +
@@ -376,6 +382,7 @@ func (a *App) showELI5Dialog() {
 		if dialog != nil {
 			dialog.Hide()
 		}
+		resume()
 	})
 
 	dialog = widget.NewModalPopUp(

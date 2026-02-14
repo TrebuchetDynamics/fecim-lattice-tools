@@ -289,4 +289,4 @@ Potential additions (not yet implemented):
 - `CLAUDE.md` - Project instructions with key physics constants
 - `docs/cim/HONESTY_AUDIT.md` - Scientific verification status
 - `docs/cim/physics.md` - Detailed physics documentation
-- `docs/development/scriptReference.md` - Function reference guide
+- `docs/development/SCRIPT_REFERENCE.md` - Function reference guide

@@ -105,7 +105,7 @@ Note: filename intentionally follows requested spelling `modul1`.
 - `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md` - Cross-module physics thresholds
 - `docs/development/CI.md` - Continuous integration configuration
 - `docs/development/HEADLESS.md` - Headless execution requirements
-- `docs/development/scriptReference.md` - Function lookups and error resolution
+- `docs/development/SCRIPT_REFERENCE.md` - Function lookups and error resolution
 - `docs/development/TESTING.md` - Test execution reference
 - `docs/development/evidence/G08-mid-stability-evidence-2026-02-11.md` - ISPP regression evidence
 - `docs/development/GUI/FYNE_NOTES.md` - GUI-specific testing (out of scope for headless)

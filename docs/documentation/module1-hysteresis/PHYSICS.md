@@ -58,5 +58,5 @@ Ec ≈ field where P crosses 0 on the major loop
 
 - `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md`
 - `docs/research-papers/by-topic/01-ferroelectric-materials/`
-- `docs/development/scriptReference.md#demo-1-hysteresis-module1-hysteresis`
+- `docs/development/SCRIPT_REFERENCE.md#demo-1-hysteresis-module1-hysteresis`
 - HZO P-E loop examples (DOI: (add))

@@ -231,7 +231,7 @@ Beyond open-source tools, see also:
 | Document | Purpose |
 |----------|---------|
 | `CLAUDE.md` | Project overview, physics constants, accuracy policy |
-| `docs/development/scriptReference.md` | Function lookup, error resolution, decision trees |
+| `docs/development/SCRIPT_REFERENCE.md` | Function lookup, error resolution, decision trees |
 | `docs/development/TESTING.md` | Test framework, running tests before commit |
 | `docs/development/GUI/FYNE_NOTES.md` | GUI framework notes for module updates |
 | `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/` | COSM 2025 transcript (archival) |
@@ -308,7 +308,7 @@ For GPU acceleration (CUDA), see individual tool documentation.
 ### Integration questions?
 - See "Recommended Workflows" in each tool's documentation
 - Study code examples in this documentation
-- Check `docs/development/scriptReference.md` for module APIs
+- Check `docs/development/SCRIPT_REFERENCE.md` for module APIs
 
 ### Need help?
 - Tool-specific GitHub issues (most active)

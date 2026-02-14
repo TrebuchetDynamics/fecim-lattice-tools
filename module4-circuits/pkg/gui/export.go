@@ -70,6 +70,13 @@ type peripheralSnapshotRow struct {
 
 // exportSimulationData exports the current simulation data, peripheral snapshot, and diagram.
 func (ca *CircuitsApp) exportSimulationData() {
+	// Guard against nil state / panics during export
+	defer func() {
+		if r := recover(); r != nil {
+			ca.showExportError(fmt.Sprintf("Export failed unexpectedly: %v", r))
+		}
+	}()
+
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 
 	dataDir := filepath.Join("exports", "circuits")
@@ -231,7 +238,12 @@ func (ca *CircuitsApp) exportVisualization() {
 
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 	exporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
-	img := ca.window.Canvas().Capture()
+	cnv := ca.window.Canvas()
+	if cnv == nil {
+		ca.showExportError("Canvas not available")
+		return
+	}
+	img := cnv.Capture()
 	result := exporter.ExportPNG(img)
 
 	if result.Error != nil {

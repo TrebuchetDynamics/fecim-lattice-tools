@@ -330,7 +330,7 @@ Located in `module3-mnist/data/`:
 
 - [FeCIM Honesty Audit](../../docs/comparison/HONESTY_AUDIT.md) - Verified claims and sources
 - [MNIST Fixes TODO](mnist.fixes.todo.md) - Issue tracking
-- [Development Reference](../development/scriptReference.md) - Code patterns
+- [Development Reference](../development/SCRIPT_REFERENCE.md) - Code patterns
 
 ---
 

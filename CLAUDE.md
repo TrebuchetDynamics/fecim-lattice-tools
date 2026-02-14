@@ -2,14 +2,14 @@
 
 ## For AI Agents
 
-**Full reference:** See `docs/development/scriptReference.md` for detailed lookups.
+**Full reference:** See `docs/development/SCRIPT_REFERENCE.md` for detailed lookups.
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function | `docs/development/scriptReference.md#quick-function-lookups` |
-| Fix an error | `docs/development/scriptReference.md#error-resolution-guide` |
-| Add a feature | `docs/development/scriptReference.md#decision-trees` |
-| Check thread safety | `docs/development/scriptReference.md#thread-safety-guide` |
+| Find a function | `docs/development/SCRIPT_REFERENCE.md#quick-function-lookups` |
+| Fix an error | `docs/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
+| Add a feature | `docs/development/SCRIPT_REFERENCE.md#decision-trees` |
+| Check thread safety | `docs/development/SCRIPT_REFERENCE.md#thread-safety-guide` |
 | Fix Fyne GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
 | Run/understand tests | `docs/development/TESTING.md` |
 | Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |

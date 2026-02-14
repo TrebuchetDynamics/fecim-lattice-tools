@@ -248,6 +248,9 @@ type App struct {
 	eFieldSlider    *widget.Slider
 	eFieldLabel     *widget.Label
 	eFieldModeLabel *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
+	tempSlider      *widget.Slider
+	stressSlider    *widget.Slider
+	envAccordion    *widget.AccordionItem // Environment section (disabled for Preisach)
 	pLabel          *widget.Label
 	levelLabel      *widget.Label
 	stateLabel      *widget.Label  // State description (Negative P, Intermediate, Positive P)

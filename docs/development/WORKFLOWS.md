@@ -960,9 +960,9 @@ ffmpeg -version
 
 | Need | Location |
 |------|----------|
-| Function lookups | `docs/development/scriptReference.md` |
-| Error resolution | `docs/development/scriptReference.md#error-resolution-guide` |
-| Physics details | `docs/development/scriptReference.md` |
+| Function lookups | `docs/development/SCRIPT_REFERENCE.md` |
+| Error resolution | `docs/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
+| Physics details | `docs/development/SCRIPT_REFERENCE.md` |
 | Fyne GUI patterns | `docs/development/FYNE_NOTES.md` |
 | Testing procedures | `docs/development/TESTING.md` |
 | Physics accuracy report | `docs/development/HYPER_ANALYSIS_REPORT.md` |
@@ -1019,7 +1019,7 @@ go vet ./...                  # Static analysis
 - **CLAUDE.md** - Project-level rules and constants
 - **TESTING.md** - Detailed test documentation
 - **FYNE_NOTES.md** - Fyne GUI framework patterns
-- **scriptReference.md** - Function and error reference
+- **SCRIPT_REFERENCE.md** - Function and error reference
 - **README.md** (each module) - Module-specific details
 
 ---

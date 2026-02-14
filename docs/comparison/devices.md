@@ -673,5 +673,5 @@ AP (Antiparallel): ↓↓↓ | ↑↑↑ → High R (TMR > 200%)
 **Verification**: See `HONESTY_AUDIT.md` for full claim verification details
 **Related Docs**:
 - `CLAUDE.md` (physics constants)
-- `docs/development/scriptReference.md` (implementation)
+- `docs/development/SCRIPT_REFERENCE.md` (implementation)
 - `module1-hysteresis/` (Preisach model code)

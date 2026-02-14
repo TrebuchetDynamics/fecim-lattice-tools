@@ -56,5 +56,5 @@ V_drop ≈ I * R_wire
 
 ## Sources
 
-- `docs/development/scriptReference.md#demo-2-crossbar-module2-crossbar`
+- `docs/development/SCRIPT_REFERENCE.md#demo-2-crossbar-module2-crossbar`
 - `docs/ELI5.md`

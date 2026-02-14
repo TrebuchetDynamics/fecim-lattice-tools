@@ -2,6 +2,9 @@ package gui
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
 	"fyne.io/fyne/v2"
@@ -202,6 +205,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 
 // showKeyboardHelp displays a dialog with all keyboard shortcuts
 func (a *App) showKeyboardHelp() {
+	resume := a.pauseSimulationForModal()
 	helpText := keyboard.FormatHelpMetadata(keyboard.HelpMetadata{
 		Sections: []keyboard.ShortcutSection{
 			{Title: "E-Field Control (Manual Mode Only)", Shortcuts: []keyboard.ShortcutMetadata{{Key: "E", Description: "Increase E-field by 0.1×Ec"}, {Key: "D", Description: "Decrease E-field by 0.1×Ec"}}},
@@ -218,5 +222,13 @@ func (a *App) showKeyboardHelp() {
 		},
 	})
 
-	keyboard.ShowHelpTextDialog(a.mainWindow, "Keyboard Shortcuts", helpText, 500, 400)
+	helpLabel := widget.NewLabel(helpText)
+	helpLabel.Wrapping = fyne.TextWrapWord
+
+	helpContent := container.NewVScroll(helpLabel)
+	helpContent.SetMinSize(fyne.NewSize(500, 400))
+
+	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, a.mainWindow)
+	helpDialog.SetOnClosed(resume)
+	helpDialog.Show()
 }

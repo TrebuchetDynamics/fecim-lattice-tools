@@ -232,7 +232,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 				}
 			}
 
-			if display.ShouldShowSelectedOnly(overlayEnabled, isSelected, cellSize) {
+			if display.ShouldShowOverlay(overlayEnabled, isSelected, cellSize) {
 				vCell := ca.deviceState.GetEffectiveCellVoltage(r, c)
 				overlayText := ""
 				overlayColor := color.RGBA{210, 235, 255, 220}
@@ -502,7 +502,10 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 							}
 						}
 					}
-					if cellSize >= 30 {
+					if cellSize >= 45 {
+						vText := fmt.Sprintf("V/2=%.2f", hsState.HalfVoltage)
+						drawSimpleText(img, vText, x0+cw/2-len(vText)*3, y0+ch-8, color.RGBA{255, 200, 100, 200})
+					} else if cellSize >= 30 {
 						drawSimpleText(img, "V/2", x0+cw/2-9, y0+ch-8, color.RGBA{255, 200, 100, 200})
 					}
 				}
@@ -565,7 +568,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 		ca.mu.RUnlock()
 
-		if voltage > 0.05 && level > 0 {
+		if voltage > 0.05 && level > 0 && cellSize >= 45 {
 			// Calculate expected current for selected cell
 			var conductanceUS float64
 			material := ca.deviceState.GetMaterial()
@@ -576,13 +579,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			}
 			expectedCurrent := conductanceUS * voltage
 
-			// Draw current annotation centered on the selected cell.
-			cellCX := offsetX + selectedCol*cellSize + cellSize/2
-			cellCY := offsetY + selectedRow*cellSize + cellSize/2
-			infoText := fmt.Sprintf("%.2f µA", expectedCurrent)
-			textX := cellCX - len(infoText)*3
-			textY := cellCY - 3
-			drawSimpleText(img, infoText, textX, textY, color.RGBA{255, 255, 100, 220})
+			// Draw current annotation INSIDE the selected cell (lower portion)
+			cellX0 := offsetX + selectedCol*cellSize + 3
+			cellY0 := offsetY + selectedRow*cellSize + cellSize - 14
+			infoText := fmt.Sprintf("I:%.1fuA", expectedCurrent)
+			drawSimpleText(img, infoText, cellX0, cellY0, color.RGBA{255, 255, 100, 240})
 		}
 	}
 
@@ -590,7 +591,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	legendX := 8
 	legendY := 26
 	if overlayEnabled {
-		drawSimpleText(img, fmt.Sprintf("Overlay:%s", overlayMode), legendX, legendY-12, color.RGBA{180, 220, 255, 210})
+		overlayHint := fmt.Sprintf("Overlay:%s", overlayMode)
+		if cellSize < 36 {
+			overlayHint += " (zoom in to see values)"
+		}
+		drawSimpleText(img, overlayHint, legendX, legendY-12, color.RGBA{180, 220, 255, 210})
 	}
 
 	// Draw semi-transparent background

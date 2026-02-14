@@ -52,4 +52,4 @@ reading_time_minutes = ceil(word_count / 200)
 ## Sources
 
 - `docs/development/GUI/GUI.module7.md`
-- `docs/development/scriptReference.md#module-7-documentation-module7-docs`
+- `docs/development/SCRIPT_REFERENCE.md#module-7-documentation-module7-docs`

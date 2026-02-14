@@ -91,7 +91,7 @@ docs/development/GUI/GUI.module7.md
 docs/development/GUI/module4.mermaid.ui.md
 docs/development/GUI/README.md
 docs/development/HYPER_ANALYSIS_REPORT.md
-docs/development/scriptReference.md
+docs/development/SCRIPT_REFERENCE.md
 docs/development/TESTING.md
 docs/development/WORKFLOWS.md
 ```

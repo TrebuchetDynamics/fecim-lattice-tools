@@ -730,6 +730,12 @@ func (a *App) simulationLoop() {
 	for a.running.Load() {
 		<-ticker.C
 
+		// Stop can be requested while we're sleeping on the ticker. Exit without
+		// doing another full frame of physics.
+		if !a.running.Load() {
+			return
+		}
+
 		now := time.Now()
 		frameDtRaw := now.Sub(lastTime).Seconds()
 		lastTime = now
@@ -775,6 +781,16 @@ func (a *App) simulationLoop() {
 				steps = 1
 			}
 			for i := 0; i < steps && remainingDt > 0; i++ {
+				// Stop requests should abort calibration/simulation immediately on tab/window changes.
+				if !a.running.Load() {
+					steps = i
+					break
+				}
+				// Allow modal-driven pauses to interrupt a long frame immediately.
+				if a.paused.Load() {
+					steps = i
+					break
+				}
 				step := remainingDt / float64(steps-i)
 				recordPhysicsStep(step)
 				remainingDt -= step
@@ -782,6 +798,14 @@ func (a *App) simulationLoop() {
 			subSteps = steps
 		} else {
 			for remainingDt > 0 && subSteps < maxSubSteps {
+				// Stop requests should abort calibration/simulation immediately on tab/window changes.
+				if !a.running.Load() {
+					break
+				}
+				// Allow modal-driven pauses to interrupt a long LK substep burst immediately.
+				if a.paused.Load() {
+					break
+				}
 				// Determine step size based on physics state
 				// If E-field is near Ec, use smaller steps to capture switching dynamics.
 
@@ -828,6 +852,10 @@ func (a *App) simulationLoop() {
 		}
 
 		a.mu.Unlock()
+
+		if !a.running.Load() {
+			return
+		}
 
 		// Update UI once per frame with the final state (without holding a.mu).
 		renderStart := time.Time{}
@@ -1480,6 +1508,13 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 							high := currentLevel - 1
 							if low <= high {
 								nextTarget = rand.Intn(high-low+1) + low
+							} else {
+								// At bottom edge — flip to ascending
+								low = currentLevel + 1
+								high = maxLevel
+								if low <= high {
+									nextTarget = rand.Intn(high-low+1) + low
+								}
 							}
 						}
 						a.wrdNextTargetLevel = nextTarget
@@ -1598,23 +1633,9 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 		a.wrdCycleEnergy += energyfJ
 	}
 
-	// Record history (skip RESET and BOOST phases in WRD mode to avoid visual spikes)
-	// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY, 6=BOOST
-	skipHistory := a.waveform == WaveformWriteReadDemo && (a.wrdPhase <= 1 || a.wrdPhase == 6)
-	if a.waveform == WaveformWriteReadDemo {
-		// Suppress verify/hold segments to avoid zig-zag in the P-E trace.
-		if a.writeController != nil {
-			switch a.writeController.State {
-			case controller.StateVerify, controller.StateWait, controller.StateHold:
-				skipHistory = true
-			}
-		}
-		// Also skip near-zero E-field (verify/readback) samples.
-		if Ec > 0 && math.Abs(a.electricField) < 0.15*Ec {
-			skipHistory = true
-		}
-	}
-	if !skipHistory {
+	// Record history unconditionally — trail should always be visible.
+	// The renderer's spike filter handles visual discontinuities.
+	{
 		shouldAppend := true
 		if a.physicsEngine == PhysicsLandau {
 			if a.lastHistorySample < 0 || a.historyLengthLocked() == 0 {
@@ -2288,6 +2309,10 @@ func (a *App) calibrateLevelsAtTemperature(tempK float64) {
 	if a.material == nil {
 		return
 	}
+	// Allow fast cancellation when module view/window switches and Stop() is called.
+	if !a.running.Load() {
+		return
+	}
 
 	// Set engine temperature before calibrating
 	if a.useLKSolver() {
@@ -2301,6 +2326,10 @@ func (a *App) calibrateLevelsAtTemperature(tempK float64) {
 
 	// Perform calibration
 	a.calibrateLevels()
+
+	if !a.running.Load() {
+		return
+	}
 
 	// Store in cache
 	tempKRounded := int(math.Round(tempK))
@@ -2333,6 +2362,10 @@ func (a *App) calibrateLevelsAtTemperature(tempK float64) {
 // Preisach state corruption from the previous sweep-based approach.
 func (a *App) calibrateLevels() {
 	if a.material == nil {
+		return
+	}
+	// Allow fast cancellation when module view/window switches and Stop() is called.
+	if !a.running.Load() {
 		return
 	}
 	if a.useLKSolver() {
@@ -2418,14 +2451,23 @@ func (a *App) calibrateLevels() {
 	// Helper function to test what level results from a given field
 	// starting from negative saturation (for ascending calibration)
 	testLevelAscending := func(testE float64) int {
+		if !a.running.Load() {
+			return 0
+		}
 		// Reset and saturate negative
 		a.preisach.Reset()
 		for i := 0; i < 50; i++ {
+			if !a.running.Load() {
+				return 0
+			}
 			a.preisach.Update(-Emax)
 		}
 		a.preisach.Update(0) // At level 1 (negative remanent)
 
 		// Apply test field and return to zero
+		if !a.running.Load() {
+			return 0
+		}
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
@@ -2449,14 +2491,23 @@ func (a *App) calibrateLevels() {
 
 	// Helper function for descending calibration (from positive saturation)
 	testLevelDescending := func(testE float64) int {
+		if !a.running.Load() {
+			return 0
+		}
 		// Reset and saturate positive
 		a.preisach.Reset()
 		for i := 0; i < 50; i++ {
+			if !a.running.Load() {
+				return 0
+			}
 			a.preisach.Update(Emax)
 		}
 		a.preisach.Update(0) // At level N (positive remanent)
 
 		// Apply test field (negative) and return to zero
+		if !a.running.Load() {
+			return 0
+		}
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
@@ -2481,6 +2532,9 @@ func (a *App) calibrateLevels() {
 	// Calibrate ASCENDING using binary search for each level
 	// Start with initial estimates based on linear interpolation
 	for targetLevel := 1; targetLevel < numLevels; targetLevel++ {
+		if !a.running.Load() {
+			return
+		}
 		// Initial estimate: linear interpolation between Ec and 2*Ec
 		ratio := float64(targetLevel) / float64(maxLevel)
 		initialGuess := Ec * (0.8 + ratio*1.2) // Range: 0.8*Ec to 2.0*Ec
@@ -2493,6 +2547,9 @@ func (a *App) calibrateLevels() {
 
 		// Binary search with 15 iterations (precision: ~0.003% of range)
 		for iter := 0; iter < 15; iter++ {
+			if !a.running.Load() {
+				return
+			}
 			midE := (lowE + highE) / 2
 			resultLevel := testLevelAscending(midE)
 
@@ -2521,6 +2578,9 @@ func (a *App) calibrateLevels() {
 
 	// Calibrate DESCENDING using binary search for each level
 	for targetLevel := maxLevel - 1; targetLevel >= 0; targetLevel-- {
+		if !a.running.Load() {
+			return
+		}
 		// Initial estimate: linear interpolation between -Ec and -2*Ec
 		ratio := float64(maxLevel-targetLevel) / float64(maxLevel)
 		initialGuess := -Ec * (0.8 + ratio*1.2) // Range: -0.8*Ec to -2.0*Ec
@@ -2532,6 +2592,9 @@ func (a *App) calibrateLevels() {
 		bestDiff := numLevels
 
 		for iter := 0; iter < 15; iter++ {
+			if !a.running.Load() {
+				return
+			}
 			midE := (lowE + highE) / 2
 			resultLevel := testLevelDescending(midE)
 
@@ -2565,6 +2628,9 @@ func (a *App) calibrateLevels() {
 // MUST be called with a.mu held.
 func (a *App) calibrateLevelsLK() {
 	if a.material == nil {
+		return
+	}
+	if !a.running.Load() {
 		return
 	}
 
@@ -2699,6 +2765,9 @@ func (a *App) calibrateLevelsLK() {
 		maxSimTime := pulseDuration * float64(wc.MaxRetries+100)
 
 		for elapsed < maxSimTime {
+			if !a.running.Load() {
+				return wc.CurrentField, false
+			}
 			currentLevel := levelFromP(solver.GetState()) + 1
 			step := dtNominal
 			if Ec > 0 {
@@ -2727,6 +2796,9 @@ func (a *App) calibrateLevelsLK() {
 
 	// Ascending calibration (from negative saturation)
 	for idx := 1; idx < numLevels; idx++ {
+		if !a.running.Load() {
+			return
+		}
 		field, ok := runWrite(idx, -math.Abs(satP))
 		if ok {
 			a.calibrationUp[idx] = field
@@ -2738,6 +2810,9 @@ func (a *App) calibrateLevelsLK() {
 
 	// Descending calibration (from positive saturation)
 	for idx := maxLevel - 1; idx >= 0; idx-- {
+		if !a.running.Load() {
+			return
+		}
 		field, ok := runWrite(idx, math.Abs(satP))
 		if ok {
 			a.calibrationDown[idx] = field

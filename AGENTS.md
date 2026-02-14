@@ -48,14 +48,14 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 
 ### Quick Reference
 
-**Full detailed API reference:** `docs/development/scriptReference.md`
+**Full detailed API reference:** `docs/development/SCRIPT_REFERENCE.md`
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function signature | `docs/development/scriptReference.md#quick-function-lookups` |
-| Understand an error | `docs/development/scriptReference.md#error-resolution-guide` |
-| Implement a new feature | `docs/development/scriptReference.md#decision-trees` |
-| Check thread safety | `docs/development/scriptReference.md#thread-safety-guide` |
+| Find a function signature | `docs/development/SCRIPT_REFERENCE.md#quick-function-lookups` |
+| Understand an error | `docs/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
+| Implement a new feature | `docs/development/SCRIPT_REFERENCE.md#decision-trees` |
+| Check thread safety | `docs/development/SCRIPT_REFERENCE.md#thread-safety-guide` |
 | Fix Fyne GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
 | Run tests | `docs/development/TESTING.md` |
 | Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |
@@ -255,7 +255,7 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ## Common Tasks
 
 ### Add a New Feature
-1. **Plan:** Read `docs/development/scriptReference.md#decision-trees`
+1. **Plan:** Read `docs/development/SCRIPT_REFERENCE.md#decision-trees`
 2. **Implement:** Follow module pattern; use `fyne.Do()` for UI updates
 3. **Test:** Add `*_test.go` with unit and integration tests
 4. **Verify:** `go test ./...` passes, `go test -race ./...` passes

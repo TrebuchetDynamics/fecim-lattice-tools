@@ -106,5 +106,5 @@ Noise path (`ConvertWithNoise`):
 
 ## Sources
 
-- `docs/development/scriptReference.md#demo-4-circuits-module4-circuits`
+- `docs/development/SCRIPT_REFERENCE.md#demo-4-circuits-module4-circuits`
 - `shared/peripherals/analysis.go`

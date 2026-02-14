@@ -344,7 +344,7 @@ Machine-readable `paper_metadata.json` includes:
 ## Related Resources
 
 - **Module documentation** — `docs/development/`
-- **Physics reference** — `docs/development/scriptReference.md`
+- **Physics reference** — `docs/development/SCRIPT_REFERENCE.md`
 - **GUI analysis** — `docs/development/HYPER_ANALYSIS_REPORT.md`
 - **EDA guides** — `docs/eda/`
 - **Testing guide** — `docs/development/TESTING.md`

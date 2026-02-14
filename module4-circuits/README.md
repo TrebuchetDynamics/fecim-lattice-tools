@@ -419,5 +419,5 @@ Part of fecim-lattice-tools. See repository LICENSE for details.
 ## Questions?
 
 - Check `docs/development/GUI/FYNE_NOTES.md` for Fyne-specific issues
-- See `docs/development/scriptReference.md` for function lookups
+- See `docs/development/SCRIPT_REFERENCE.md` for function lookups
 - Review `docs/comparison/HONESTY_AUDIT.md` for physics verification

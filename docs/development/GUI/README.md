@@ -312,9 +312,9 @@ go run ./cmd/fecim-lattice-tools eda
 - [Fyne Container API](https://docs.fyne.io/explore/container.html)
 
 ### Internal References
-- [Physics Constants & Accuracy Policy](../scriptReference.md#accuracy--honesty-policy)
+- [Physics Constants & Accuracy Policy](../SCRIPT_REFERENCE.md#accuracy--honesty-policy)
 - [Testing Guide](../TESTING.md)
-- [Development Setup](../scriptReference.md)
+- [Development Setup](../SCRIPT_REFERENCE.md)
 
 ## Contribution Guidelines
 

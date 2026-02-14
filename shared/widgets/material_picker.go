@@ -49,9 +49,9 @@ var materialColumns = []struct {
 	Description string
 	Models      string // [P] for Preisach, [LK] for Landau-Khalatnikov, [P,LK] for both
 }{
-	{"Name", 170, "Material name", ""},
+	{"Name", 200, "Material name", ""},
 	{"Eng", 65, "Engine support: [P], [LK], [P,LK]", ""},
-	{"States", 72, "Number of analog states (bits/cell)", ""},
+	{"States", 82, "Number of analog states (bits/cell)", ""},
 	{"Pr", 80, "Remanent polarization (µC/cm²)", "[P,LK]"},
 	{"Ps", 80, "Saturation polarization (µC/cm²)", "[P,LK]"},
 	{"Ec", 80, "Coercive field (MV/cm)", "[P,LK]"},
@@ -61,9 +61,9 @@ var materialColumns = []struct {
 	{"γ", 75, "Landau γ coefficient", "[LK]"},
 	{"ρ", 75, "L-K viscosity coefficient", "[LK]"},
 	{"Tc", 70, "Curie temperature", "[P,LK]"},
-	{"Endurance", 88, "Write cycle endurance", ""},
-	{"Thickness", 72, "Film thickness (nm)", "[P,LK]"},
-	{"Reference", 190, "Data source / citation", ""},
+	{"Endurance", 90, "Write cycle endurance", ""},
+	{"Thickness", 78, "Film thickness (nm)", "[P,LK]"},
+	{"Reference", 250, "Data source / citation", ""},
 }
 
 func isLKCompatible(mat *physics.Material) bool {
@@ -280,7 +280,7 @@ func (mp *MaterialPicker) getCellValue(row, col int) string {
 		return FormatThickness(mat.ThicknessM)
 	case 14: // Reference
 		if mat.Reference != "" {
-			return TruncateString(mat.Reference, 35)
+			return TruncateString(mat.Reference, 45)
 		}
 		return "—"
 	default:
@@ -425,7 +425,7 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 func (mp *MaterialPicker) MinSize() fyne.Size {
 	// Prefer a wide layout (table + details) on desktop, but keep it usable on
 	// smaller windows (e.g., 1024x768 and below).
-	return fyne.NewSize(720, 420)
+	return fyne.NewSize(1200, 520)
 }
 
 // ShowMaterialPicker displays the material picker in a modal dialog.
@@ -451,16 +451,17 @@ func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected
 	)
 
 	// Responsive sizing: never exceed the window; keep a sensible minimum.
+	// The table has 15 columns totaling ~1360px, so target ~1440px to fit all.
 	canvasSize := parent.Canvas().Size()
-	w := float32(1150)
-	h := float32(520)
+	w := float32(1440)
+	h := float32(640)
 	if canvasSize.Width > 0 {
 		maxW := canvasSize.Width * 0.95
 		if w > maxW {
 			w = maxW
 		}
-		if w < 680 {
-			w = 680
+		if w < 900 {
+			w = 900
 		}
 	}
 	if canvasSize.Height > 0 {
@@ -468,15 +469,15 @@ func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected
 		if h > maxH {
 			h = maxH
 		}
-		if h < 420 {
-			h = 420
+		if h < 480 {
+			h = 480
 		}
 	}
 	if w <= 0 {
-		w = 900
+		w = 1200
 	}
 	if h <= 0 {
-		h = 500
+		h = 600
 	}
 
 	d.Resize(fyne.NewSize(w, h))

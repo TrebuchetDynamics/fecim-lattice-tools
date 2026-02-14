@@ -1073,7 +1073,7 @@ array.set_wire_resistance(2.5)  # Match Go: 2.5 Ω per cell
 - **[Crossbar Physics](../crossbar/educational/../educational/crossbar.physics.md)** - Understand weight mapping to conductance
 - **[MNIST Demo](../neural-network/mnist.demo.md)** - Run the MNIST demo with quantization
 - **[Crossbar Non-Idealities](../crossbar/educational/crossbar.opensource.md)** - IR drop, sneak paths, drift models
-- **[Development Reference](../development/scriptReference.md)** - FeCIM API reference
+- **[Development Reference](../development/SCRIPT_REFERENCE.md)** - FeCIM API reference
 - **[Testing Guide](../development/TESTING.md)** - Run verification tests
 
 ---

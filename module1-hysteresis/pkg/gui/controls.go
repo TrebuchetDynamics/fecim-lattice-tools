@@ -252,14 +252,31 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		if a.plot != nil {
 			a.plot.SetMaterialParams(effEc, effPr)
 		}
+
+		// Temperature/stress controls only apply to L-K (Preisach has no intrinsic T/σ physics)
+		isLK := s == PhysicsLandau.String()
+		if a.tempSlider != nil {
+			if isLK {
+				a.tempSlider.Enable()
+			} else {
+				a.tempSlider.SetValue(300) // reset to room temperature
+				a.tempSlider.Disable()
+			}
+		}
+		if a.stressSlider != nil {
+			if isLK {
+				a.stressSlider.Enable()
+			} else {
+				a.stressSlider.SetValue(1.0) // reset to default
+				a.stressSlider.Disable()
+			}
+		}
 	})
 	a.physicsSelect.SetSelected(a.physicsEngine.String())
 
 	// Material button - shows current material, opens picker on click
 	a.materialBtn = widget.NewButton(a.material.Name, func() {
-		sharedwidgets.ShowMaterialPicker(a.mainWindow, a.getCurrentMaterialID(), func(id string, mat *physics.Material) {
-			a.onMaterialPickerSelected(id, mat)
-		})
+		a.showMaterialPickerDialog()
 	})
 
 	// Levels selector (2-64 levels)
@@ -569,8 +586,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	initialScale := a.timeScale
 	a.mu.RUnlock()
 	updateDisplayLabel(initialFreq, initialScale)
-	// Mechanical stress control (active physics coupling)
+	// Mechanical stress control (active physics coupling — L-K only)
 	stressSlider := widget.NewSlider(0, 5.0) // 0 to 5 GPa
+	a.stressSlider = stressSlider
 	stressSlider.Step = 0.1
 	stressSlider.Value = 1.0
 	stressLabel := widget.NewLabel("Mechanical Stress: 1.0 GPa")
@@ -592,8 +610,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		stressLabel.SetText(fmt.Sprintf("Mechanical Stress: %.1f GPa", v))
 	}
 
-	// Temperature slider (Dr. Tour recommendation: show HZO's high Tc advantage)
+	// Temperature slider (L-K only — Preisach has no intrinsic T dependence)
 	tempSlider := widget.NewSlider(200, 700)
+	a.tempSlider = tempSlider
 	tempSlider.Step = 25
 	tempSlider.Value = 300 // Room temperature (300K = 27°C)
 	tempLabel := widget.NewLabel("T: 300 K (27°C)")
@@ -631,6 +650,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		celsius := v - 273
 		tcRatio := v / a.material.CurieTemp * 100
 		tempLabel.SetText(fmt.Sprintf("T: %.0f K (%.0f°C) [%.0f%% Tc]", v, celsius, tcRatio))
+	}
+
+	// Disable T/stress sliders when default engine is Preisach
+	if a.physicsEngine == PhysicsPreisach {
+		tempSlider.Disable()
+		stressSlider.Disable()
 	}
 
 	// Trail length slider
