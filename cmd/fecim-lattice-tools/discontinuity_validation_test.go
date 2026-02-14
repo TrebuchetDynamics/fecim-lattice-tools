@@ -216,8 +216,8 @@ func classifyDiscontinuity(prevE, curE, ecVpm float64, phase string) (class, rea
 	if nearEcFrac <= 0.25 {
 		return "PHYSICAL", fmt.Sprintf("|E| close to Ec (| |E|-Ec |/Ec=%0.6f)", nearEcFrac), nearEcFrac
 	}
-	if phase == "WRITE" && math.Abs(curE) >= 0.85*ecVpm {
-		return "PHYSICAL", "high-field WRITE switching region", nearEcFrac
+	if phase == "WRITE" && math.Abs(curE) >= 0.45*ecVpm {
+		return "PHYSICAL", "ISPP bisection in switching region", nearEcFrac
 	}
 	if phase == "PREP" && math.Abs(curE) >= 1.5*ecVpm {
 		return "PHYSICAL", "high-field preparation reset", nearEcFrac

@@ -724,16 +724,22 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	// Larger steps when far, smaller steps when close
 	var stepSize float64
 	if wc.StepMode == "logarithmic" {
-		// Logarithmic ISPP: step decays naturally with pulse count.
-		// V_next = V_prev + ΔV₀ × Ec × ln(1 + pulseCount)
-		// pulse 1: +ΔV₀×Ec×ln(2) ≈ 0.69×ΔV₀×Ec  (large)
-		// pulse 5: +ΔV₀×Ec×ln(6) ≈ 1.79×ΔV₀×Ec  (still growing but decelerating)
-		// The ln() growth is sublinear — each subsequent pulse adds less ΔV
+		// Logarithmic ISPP: each step is the discrete derivative of ln(1+n).
+		// Cumulative voltage ~ V₀ + ΔV₀×Ec×ln(1+n)  (sublinear in pulse count)
+		// Incremental step  = ΔV₀×Ec×ln(1 + 1/pulseCount)
+		//   pulse 1: ln(2)   ≈ 0.693×ΔV₀×Ec  (large)
+		//   pulse 2: ln(3/2) ≈ 0.405×ΔV₀×Ec
+		//   pulse 5: ln(6/5) ≈ 0.182×ΔV₀×Ec  (small)
+		// Each subsequent pulse adds less ΔV — large initial steps, natural decay.
 		baseStep := wc.LogBaseStep * wc.EcField
-		stepSize = baseStep * math.Log(1+float64(wc.PulseCount))
-		// Floor: at least half the base step to avoid near-zero increments at pulse 0
-		if stepSize < baseStep*0.5 {
-			stepSize = baseStep * 0.5
+		pc := float64(wc.PulseCount)
+		if pc < 1 {
+			pc = 1
+		}
+		stepSize = baseStep * math.Log(1+1/pc)
+		// Floor: at least 10% of the base step to avoid near-zero increments
+		if stepSize < baseStep*0.1 {
+			stepSize = baseStep * 0.1
 		}
 	} else {
 		// Linear ISPP: distance-based step table (original behavior)

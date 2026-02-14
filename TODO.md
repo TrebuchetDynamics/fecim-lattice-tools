@@ -44,9 +44,9 @@
 | RG-VAL-01 | Enforce **fully headless** required gates: no `DISPLAY`, no `WAYLAND_DISPLAY`, no `xvfb-run` for mandatory regression lanes | M1/M4 + CI | ✅ (2026-02-13: hard gate added in `scripts/ci/go-test-all.sh`, `scripts/ci/go-test-race.sh`, `scripts/run_headless_ispp_regressions.sh`, `scripts/run_headless_module4_regressions.sh`) |
 | RG-VAL-02 | Material-aware gating with per-material verdicts | ✅ | See commit |
 | RG-VAL-03 | Add versioned **material profile map** (PR-gate vs nightly-gate sets) and fail when any required material verdict is missing | M1/M4 | ✅ (material profile registry + gate enforcement; see commit TBD) |
-| RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ⏳ |
-| RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ⏳ |
-| RG-VAL-06 | Fix red test: WRD target must not change during `PROG_VERIFY` (or update invariant + phase labeling) — currently failing `TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence` | M1 (headless harness + logs) | 🔴 |
+| RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ✅ |
+| RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ✅ |
+| RG-VAL-06 | Fix red test: WRD target must not change during `PROG_VERIFY` (or update invariant + phase labeling) — currently failing `TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence` | M1 (headless harness + logs) | ✅ |
 
 ### 0b. GUI vs Headless Physics Parity (NEW, HIGH PRIORITY)
 

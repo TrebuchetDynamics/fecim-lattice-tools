@@ -79,3 +79,5 @@ cmd/fecim-lattice-tools/data/
 
 # Widget regression output
 shared/widgets/output/
+output/regression/
+module1-hysteresis/pkg/controller/output/

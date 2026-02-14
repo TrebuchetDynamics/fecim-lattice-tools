@@ -31,15 +31,32 @@ type regressionCaseSummary struct {
 	FinalFieldMVcm float64 `json:"final_field_mv_cm"`
 }
 
+type materialPhysicsSnapshot struct {
+	MaterialID      string  `json:"material_id"`
+	MaterialName    string  `json:"material_name"`
+	EcVPerM         float64 `json:"ec_v_per_m"`
+	EcMVcm          float64 `json:"ec_mv_cm"`
+	PsCPerM2        float64 `json:"ps_c_per_m2"`
+	PsUCPerCM2      float64 `json:"ps_uc_per_cm2"`
+	PrCPerM2        float64 `json:"pr_c_per_m2"`
+	PrUCPerCM2      float64 `json:"pr_uc_per_cm2"`
+	ThicknessM      float64 `json:"thickness_m"`
+	ThicknessNm     float64 `json:"thickness_nm"`
+	GminS           float64 `json:"gmin_s"`
+	GmaxS           float64 `json:"gmax_s"`
+	TargetRangeFrac float64 `json:"target_range_frac"`
+}
+
 type regressionSummary struct {
-	Suite       string                  `json:"suite"`
-	Material    string                  `json:"material"`
-	Model       string                  `json:"model"`
-	Timestamp   string                  `json:"timestamp"`
-	TargetSet   []regressionTarget      `json:"targets"`
-	Cases       []regressionCaseSummary `json:"cases"`
-	AllPass     bool                    `json:"all_pass"`
-	OutputNotes string                  `json:"output_notes"`
+	Suite            string                  `json:"suite"`
+	Material         string                  `json:"material"`
+	Model            string                  `json:"model"`
+	Timestamp        string                  `json:"timestamp"`
+	MaterialSnapshot materialPhysicsSnapshot `json:"material_snapshot"`
+	TargetSet        []regressionTarget      `json:"targets"`
+	Cases            []regressionCaseSummary `json:"cases"`
+	AllPass          bool                    `json:"all_pass"`
+	OutputNotes      string                  `json:"output_notes"`
 }
 
 func regressionOutputDir(t *testing.T) string {
@@ -107,6 +124,21 @@ func TestHeadlessRegression_WRD_ISPP_Preisach(t *testing.T) {
 				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
 				Model:     "preisach",
 				Timestamp: time.Now().Format(time.RFC3339),
+				MaterialSnapshot: materialPhysicsSnapshot{
+					MaterialID:      tc.id,
+					MaterialName:    mat.Name,
+					EcVPerM:         mat.Ec,
+					EcMVcm:          mat.Ec / 1e8,
+					PsCPerM2:        mat.Ps,
+					PsUCPerCM2:      mat.Ps * 1e2,
+					PrCPerM2:        mat.Pr,
+					PrUCPerCM2:      mat.Pr * 1e2,
+					ThicknessM:      mat.Thickness,
+					ThicknessNm:     mat.Thickness * 1e9,
+					GminS:           mat.Gmin,
+					GmaxS:           mat.Gmax,
+					TargetRangeFrac: mat.TargetRangeFrac,
+				},
 				TargetSet: targets,
 				OutputNotes: "Set FECIM_REGRESSION_JSON_DIR to control output location. " +
 					"Default is $TMPDIR/fecim-regression.",
@@ -234,6 +266,21 @@ func TestHeadlessRegression_WRD_ISPP_LK(t *testing.T) {
 				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
 				Model:     "landau-khalatnikov",
 				Timestamp: time.Now().Format(time.RFC3339),
+				MaterialSnapshot: materialPhysicsSnapshot{
+					MaterialID:      tc.id,
+					MaterialName:    mat.Name,
+					EcVPerM:         mat.Ec,
+					EcMVcm:          mat.Ec / 1e8,
+					PsCPerM2:        mat.Ps,
+					PsUCPerCM2:      mat.Ps * 1e2,
+					PrCPerM2:        mat.Pr,
+					PrUCPerCM2:      mat.Pr * 1e2,
+					ThicknessM:      mat.Thickness,
+					ThicknessNm:     mat.Thickness * 1e9,
+					GminS:           mat.Gmin,
+					GmaxS:           mat.Gmax,
+					TargetRangeFrac: mat.TargetRangeFrac,
+				},
 				TargetSet: targets,
 				OutputNotes: "LK single-domain is expected to miss some intermediate targets; " +
 					"suite enforces bounded pulses/overshoots and deterministic completion.",

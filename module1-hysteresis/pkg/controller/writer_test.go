@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -55,11 +56,11 @@ func TestLogISPP_DefaultIsLinear(t *testing.T) {
 }
 
 // TestLogISPP_StepGrowsSublinearly verifies that in logarithmic mode the
-// voltage steps grow but decelerate: step(n+1)-step(n) < step(n)-step(n-1).
+// incremental voltage steps decay: each pulse adds less ΔV than the previous.
 func TestLogISPP_StepGrowsSublinearly(t *testing.T) {
 	wc := NewWriteController(30, 1.0, 2.5, nil)
 	wc.StepMode = "logarithmic"
-	wc.LogBaseStep = 0.05
+	wc.LogBaseStep = 0.30 // Large base step so log decay is visible above MinStep floor
 	wc.TargetLevel = 20
 
 	// Collect voltage magnitudes across several pulses in undershoot (forward) mode.
@@ -77,7 +78,7 @@ func TestLogISPP_StepGrowsSublinearly(t *testing.T) {
 		voltages = append(voltages, math.Abs(wc.CurrentField))
 	}
 
-	// Verify sublinear growth: successive increments should decrease.
+	// Verify decaying increments: each delta should be smaller than the previous.
 	for i := 2; i < len(voltages); i++ {
 		delta1 := voltages[i-1] - voltages[i-2]
 		delta2 := voltages[i] - voltages[i-1]
@@ -85,58 +86,73 @@ func TestLogISPP_StepGrowsSublinearly(t *testing.T) {
 			continue // skip if voltage didn't grow (floor/cap effects)
 		}
 		if delta2 >= delta1+1e-9 {
-			t.Errorf("step %d→%d: delta=%.6f >= previous delta=%.6f (not sublinear)",
+			t.Errorf("pulse %d→%d: delta=%.6f >= previous delta=%.6f (steps should decay)",
 				i-1, i, delta2, delta1)
 		}
 	}
-}
 
-// TestLogISPP_ConvergesToTarget runs a full ISPP cycle with logarithmic mode
-// using the Preisach model and verifies convergence.
-func TestLogISPP_ConvergesToTarget(t *testing.T) {
-	mat := ferroelectric.LiteratureSuperlattice()
-	model := ferroelectric.NewPreisachModel(mat)
-	model.Reset()
-
-	numLevels := 30
-	target := 15
-	wc := NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
-	wc.StepMode = "logarithmic"
-	wc.PulseDuration = 5e-4
-	wc.Start(target, true)
-
-	p := -mat.Ps // start from negative saturation
-	currentField := 0.0
-	const (
-		maxIters = 40000
-		dt       = 5e-6
-	)
-
-	for i := 0; i < maxIters; i++ {
-		curLevel := levelFromP(p, mat.Ps, numLevels)
-		targetField, done := wc.Update(dt, currentField, curLevel, 0)
-		currentField = targetField
-		p = model.Update(currentField)
-		if done {
-			break
+	// Also verify that voltages are strictly increasing (steps are positive).
+	for i := 1; i < len(voltages); i++ {
+		if voltages[i] <= voltages[i-1] {
+			t.Errorf("voltage did not increase: V[%d]=%.6f <= V[%d]=%.6f",
+				i, voltages[i], i-1, voltages[i-1])
 		}
 	}
+}
 
-	if wc.State != StateSuccess {
-		finalLevel := levelFromP(p, mat.Ps, numLevels)
-		t.Fatalf("logarithmic ISPP did not converge: state=%s target=%d final=%d pulses=%d",
-			wc.State, target, finalLevel, wc.TotalPulses+wc.PulseCount)
+// TestLogISPP_ConvergesToTarget runs full ISPP cycles with logarithmic mode
+// using the Preisach model and verifies convergence for multiple targets.
+func TestLogISPP_ConvergesToTarget(t *testing.T) {
+	mat := ferroelectric.LiteratureSuperlattice()
+	numLevels := 30
+
+	// Test a range of targets including easy (mid) and hard (near-saturation).
+	for _, target := range []int{5, 10, 15, 20, 25} {
+		t.Run(fmt.Sprintf("target_%d", target), func(t *testing.T) {
+			model := ferroelectric.NewPreisachModel(mat)
+			model.Reset()
+
+			wc := NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
+			wc.StepMode = "logarithmic"
+			wc.PulseDuration = 5e-4
+			wc.Start(target, true)
+
+			p := -mat.Ps // start from negative saturation
+			currentField := 0.0
+			const (
+				maxIters = 40000
+				dt       = 5e-6
+			)
+
+			for i := 0; i < maxIters; i++ {
+				curLevel := levelFromP(p, mat.Ps, numLevels)
+				targetField, done := wc.Update(dt, currentField, curLevel, 0)
+				currentField = targetField
+				p = model.Update(currentField)
+				if done {
+					break
+				}
+			}
+
+			finalLevel := levelFromP(p, mat.Ps, numLevels)
+			pulses := wc.TotalPulses + wc.PulseCount
+			t.Logf("target=%d final=%d pulses=%d state=%s", target, finalLevel, pulses, wc.State)
+
+			if wc.State != StateSuccess {
+				t.Fatalf("logarithmic ISPP did not converge: state=%s target=%d final=%d pulses=%d",
+					wc.State, target, finalLevel, pulses)
+			}
+		})
 	}
 }
 
-// TestLogISPP_FewerPulsesThanLinear compares pulse counts for the same target.
+// TestLogISPP_FewerPulsesThanLinear compares pulse counts across multiple targets.
 // Logarithmic mode should use comparable or fewer pulses than linear.
 func TestLogISPP_FewerPulsesThanLinear(t *testing.T) {
 	mat := ferroelectric.LiteratureSuperlattice()
 	numLevels := 30
-	target := 15
 
-	runMode := func(mode string) int {
+	runMode := func(mode string, target int) (int, float64) {
 		t.Helper()
 		model := ferroelectric.NewPreisachModel(mat)
 		model.Reset()
@@ -163,20 +179,23 @@ func TestLogISPP_FewerPulsesThanLinear(t *testing.T) {
 		if wc.State != StateSuccess {
 			t.Fatalf("%s mode did not converge for target %d", mode, target)
 		}
-		return wc.TotalPulses + wc.PulseCount
+		return wc.TotalPulses + wc.PulseCount, wc.CumulativeAbsVoltage
 	}
 
-	linearPulses := runMode("linear")
-	logPulses := runMode("logarithmic")
+	for _, target := range []int{5, 10, 15, 20, 25} {
+		t.Run(fmt.Sprintf("target_%d", target), func(t *testing.T) {
+			linearPulses, linearEnergy := runMode("linear", target)
+			logPulses, logEnergy := runMode("logarithmic", target)
 
-	t.Logf("linear=%d pulses, logarithmic=%d pulses", linearPulses, logPulses)
+			t.Logf("linear: %d pulses, energy=%.2f | logarithmic: %d pulses, energy=%.2f",
+				linearPulses, linearEnergy, logPulses, logEnergy)
 
-	// Allow up to 50% more pulses — the goal is "comparable", not strictly fewer.
-	// Logarithmic mode may take slightly more pulses on some materials but uses
-	// less cumulative voltage (energy).
-	limit := linearPulses + linearPulses/2
-	if logPulses > limit {
-		t.Errorf("logarithmic used %d pulses vs linear %d (>150%% ratio)", logPulses, linearPulses)
+			// Allow up to 50% more pulses — the goal is "comparable", not strictly fewer.
+			limit := linearPulses + linearPulses/2 + 1 // +1 avoids zero-pulse edge case
+			if logPulses > limit {
+				t.Errorf("logarithmic used %d pulses vs linear %d (>150%% ratio)", logPulses, linearPulses)
+			}
+		})
 	}
 }
 

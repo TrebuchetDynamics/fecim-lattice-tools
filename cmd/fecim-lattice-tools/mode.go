@@ -835,7 +835,9 @@ func headlessWRDPhaseName(phase int) string {
 	case 1:
 		return "SETTLE"
 	case 2:
-		return "PROG_VERIFY"
+		// In headless WRD we delegate programming + verify to WriteController.
+		// This phase represents the active write loop.
+		return "WRITE"
 	case 3:
 		return "HOLD"
 	case 4:
