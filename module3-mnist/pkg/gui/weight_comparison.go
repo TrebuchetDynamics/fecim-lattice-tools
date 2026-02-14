@@ -4,6 +4,7 @@ package gui
 
 import (
 	"fmt"
+	"os"
 	"image"
 	"image/color"
 	"math"
@@ -67,6 +68,12 @@ func (wcw *WeightComparisonWidget) SetWeights(fpWeights, quantWeights [][]float6
 
 	// Calculate statistics
 	wcw.calculateStats()
+
+	if os.Getenv("FECIM_FYNE_TEST") == "1" {
+		// Avoid fyne.Do() in the test driver (no render loop); stats correctness is validated elsewhere.
+		wcw.updateStatsLabel()
+		return
+	}
 
 	fyne.Do(func() {
 		wcw.updateStatsLabel()

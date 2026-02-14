@@ -29,6 +29,25 @@ The repo uses seven practical categories:
 
 ### A. Baseline / all tests
 
+### Headless, material-aware parity lanes (required gates)
+
+These lanes are designed to be **fully headless** (no `DISPLAY`, no `WAYLAND_DISPLAY`, no `xvfb-run`) while still exercising the same physics paths the GUI uses.
+
+```bash
+# Required headless regression lanes (material-aware)
+./scripts/run_headless_ispp_regressions.sh
+./scripts/run_headless_module4_regressions.sh
+
+# CI-like wrappers (also enforce headless requirements)
+./scripts/ci/go-test-all.sh
+./scripts/ci/go-test-race.sh
+```
+
+Notes:
+- These runners emit per-material verdicts; aggregate PASS must not hide a single failing material.
+- GUI lifecycle and screenshot/visual tests are optional and explicitly gated behind xvfb env vars.
+
+
 ```bash
 go test ./...
 ```

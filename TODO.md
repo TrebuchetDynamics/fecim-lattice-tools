@@ -61,9 +61,9 @@
 
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
-| RG-DOC-01 | Integrate `module4-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M4 | ⏳ |
-| RG-DOC-02 | Integrate `modul1-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M1 | ⏳ |
-| RG-DOC-03 | Update `docs/testing/TEST_GUIDE.md` with fully-headless material-aware parity lanes and commands | Docs | ⏳ |
+| RG-DOC-01 | Integrate `module4-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M4 | ✅ (plan→lanes map documented in `docs/development/rg-doc-plan-integration.md`) |
+| RG-DOC-02 | Integrate `modul1-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M1 | ✅ (plan→lanes map documented in `docs/development/rg-doc-plan-integration.md`) |
+| RG-DOC-03 | Update `docs/testing/TEST_GUIDE.md` with fully-headless material-aware parity lanes and commands | Docs | ✅ (added headless parity lanes section) |
 
 ### 1. Module 4 Circuits: Physics Correction (HIGH PRIORITY)
 
