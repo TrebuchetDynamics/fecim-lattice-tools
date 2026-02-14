@@ -1194,6 +1194,18 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 }
 
 func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
+	// During programming, the sense chain (TIA/ADC) is disconnected.
+	// Don't compute row currents using write-level WL/BL voltages.
+	if ds.dacRangeMode == DACRangeWrite {
+		for r := 0; r < ds.rows; r++ {
+			ds.rowCurrents[r] = 0
+			ds.rowVoltages[r] = 0
+			ds.rowLevels[r] = 0
+			ds.saturated[r] = false
+		}
+		return
+	}
+
 	for r := 0; r < ds.rows; r++ {
 		if !ds.activeRows[r] {
 			ds.rowCurrents[r] = 0

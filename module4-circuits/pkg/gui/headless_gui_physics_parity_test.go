@@ -1,8 +1,12 @@
 package gui
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +30,25 @@ type parityWriteTrace struct {
 	Result           ISPPResult
 }
 
+type parityStepArtifact struct {
+	Material           string  `json:"material"`
+	Scenario           string  `json:"scenario"` // 0T1R / 1T1R
+	StepType           string  `json:"step_type"` // READ / COMPUTE / WRITE_STEP
+	Tolerance          float64 `json:"tolerance"`
+	MaxObservedDelta   float64 `json:"max_observed_delta"`
+	Pass              bool    `json:"pass"`
+	FailingIndex       int     `json:"failing_index,omitempty"`
+	DeltaKind          string  `json:"delta_kind"` // voltage|current_ua|level|write
+	AdditionalMetadata any     `json:"additional_metadata,omitempty"`
+}
+
+type parityArtifact struct {
+	Version        string             `json:"version"`
+	Profile        string             `json:"profile"`
+	GeneratedUnix  int64              `json:"generated_unix"`
+	Records        []parityStepArtifact `json:"records"`
+}
+
 func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(t *testing.T) {
 	materials := []struct {
 		name string
@@ -33,6 +56,26 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 	}{
 		{name: "fecim_hzo", mat: sharedphysics.FeCIMMaterial()},
 		{name: "literature_superlattice", mat: sharedphysics.LiteratureSuperlattice()},
+	}
+	if sel := strings.TrimSpace(os.Getenv("FECIM_PARITY_MATERIALS")); sel != "" {
+		want := map[string]bool{}
+		for _, part := range strings.Split(sel, ",") {
+			want[strings.TrimSpace(part)] = true
+		}
+		filtered := materials[:0]
+		for _, m := range materials {
+			if want[m.name] {
+				filtered = append(filtered, m)
+			}
+		}
+		materials = filtered
+	}
+
+	artifact := parityArtifact{
+		Version:       "v1",
+		Profile:       os.Getenv("FECIM_MATERIAL_PROFILE"),
+		GeneratedUnix: time.Now().Unix(),
+		Records:       nil,
 	}
 
 	architectures := []struct {
@@ -44,6 +87,8 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 		{name: "0T1R", mode: sharedwidgets.Architecture0T1R, isPassive: true, coupling: arraysim.CouplingTierA},
 		{name: "1T1R", mode: sharedwidgets.Architecture1T1R, isPassive: false, coupling: arraysim.CouplingTierA},
 	}
+
+	defer writeParityArtifact(t, &artifact)
 
 	for _, mc := range materials {
 		mc := mc
@@ -81,13 +126,13 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 				guiRead := runGUIReadParity(ca, row, col)
 				headlessReadDS := newHeadlessParityState(ca, mc.mat, ac.isPassive, ac.coupling)
 				headlessRead := runHeadlessReadParity(headlessReadDS, cloneInt2D(weights), ca.quantLevels, row, col)
-				assertParitySnapshotEqual(t, "read", guiRead, headlessRead, 1e-6, 1e-3)
+				artifact.Records = append(artifact.Records, compareSnapshotAndRecord(t, &artifact, mc.name, ac.name, "READ", guiRead, headlessRead, 1e-6, 1e-3)...)
 
 				// COMPUTE parity: GUI action path vs headless harness path.
 				guiCompute := runGUIComputeParity(ca, row, col, inputs)
 				headlessComputeDS := newHeadlessParityState(ca, mc.mat, ac.isPassive, ac.coupling)
 				headlessCompute := runHeadlessComputeParity(headlessComputeDS, cloneInt2D(weights), ca.quantLevels, row, col, inputs)
-				assertParitySnapshotEqual(t, "compute", guiCompute, headlessCompute, 1e-6, 1e-3)
+				artifact.Records = append(artifact.Records, compareSnapshotAndRecord(t, &artifact, mc.name, ac.name, "COMPUTE", guiCompute, headlessCompute, 1e-6, 1e-3)...)
 
 				// WRITE one-step trajectory parity: same ISPP pulse request and resulting next-level update.
 				current := weights[row][col]
@@ -105,7 +150,7 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 				guiWrite := runGUIWriteStepParity(ca, row, col, target)
 				headlessWriteDS := newHeadlessParityState(ca, mc.mat, ac.isPassive, ac.coupling)
 				headlessWrite := runHeadlessWriteStepParity(headlessWriteDS, cloneInt2D(weights), ca.quantLevels, row, col, target)
-				assertParityWriteTraceEqual(t, guiWrite, headlessWrite, 1e-6)
+				artifact.Records = append(artifact.Records, compareWriteAndRecord(t, mc.name, ac.name, guiWrite, headlessWrite, 1e-6))
 			})
 		}
 	}

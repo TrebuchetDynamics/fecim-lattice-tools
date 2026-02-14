@@ -14,8 +14,8 @@ Note: filename intentionally follows requested spelling `modul1`.
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Requirements coverage | 51% (17/33) | 100% |
-| Test functions | 23 across 11 files (controller + headless) | ~60 across ~20 files |
+| Requirements coverage | 51% (17/33) | 100% (45/45) |
+| Test functions | 23 across 11 files (controller + headless) | ~100 across ~30 files |
 | Machine-readable JSON artifacts | 2/23 tests | All regression tests |
 | Materials in deep regression | 1/9 (literature_superlattice only) | 9/9 |
 | Cross-engine Pr agreement | ~30% relative error | <10% |
@@ -28,6 +28,14 @@ Note: filename intentionally follows requested spelling `modul1`.
 | TanhEverett product form | Mathematically correct | Maintain |
 | LK solver numerical guards | 14 mechanisms present | All tested |
 | Fuzz test robustness | 10,000+ steps, zero NaN/Inf | Maintain |
+| Inter-module interface tests | None | M1→M2, M1→M3, M1→M4 contracts |
+| Polydomain ensemble validation | Basic averaging | Convergence + distribution shape |
+| Imprint/bias-stress testing | None | DC imprint shift + AC stress |
+| Performance benchmarks | None | ns/step regression, memory scaling |
+| Race condition testing | Ad hoc | Systematic `-race` coverage |
+| Calibration round-trip | None | CSV→fit→export→reimport identity |
+| Literature quantitative comparison | None | vs 3+ published datasets |
+| Numerical precision tracking | None | Long-run drift < 1e-12 |
 
 ### Implementation Snapshot
 
@@ -50,6 +58,14 @@ Note: filename intentionally follows requested spelling `modul1`.
 | 8 | **8 of 9 materials missing** from deep regression suite | Only literature_superlattice has deep tests | T1 | CRITICAL |
 | 9 | **No PUND switching symmetry test** | Core measurement modality untested | T1 | HIGH |
 | 10 | **No loop area energy density validation** | Thermodynamic consistency unverified | T2 | MEDIUM |
+| 11 | **No inter-module interface contract tests** | Module 2/3/4 consume M1 outputs without validation | T1 | HIGH |
+| 12 | **Polydomain ensemble convergence untested** | Cannot prove N_domains is sufficient for averaging | T2 | HIGH |
+| 13 | **No imprint characterization** | DC bias-induced voltage shift unmeasured | T2 | MEDIUM |
+| 14 | **No performance benchmarks** | Solver speed regressions undetectable | T3 | MEDIUM |
+| 15 | **No calibration round-trip test** | Import/export identity unproven | T2 | MEDIUM |
+| 16 | **No systematic race condition coverage** | Concurrent access only tested ad hoc | T2 | HIGH |
+| 17 | **No literature quantitative comparison** | Simulation vs published experimental data unvalidated | T1 | HIGH |
+| 18 | **No numerical precision tracking** | Long-run accumulation errors undetectable | T2 | MEDIUM |
 
 ---
 
@@ -315,6 +331,49 @@ Every output listed here must be (a) computable headlessly, (b) exported to JSON
 | JSON export | Full bundle | `ExportCalibrationBundle()` | T3.7 |
 | Model types | `preisach` (tanh) or `lk` (polynomial) | `CalibrationModel` enum | T3.7 |
 
+### 10. Inter-Module Interface Outputs
+
+| Output | Units | Source API | Test Coverage |
+|--------|-------|------------|---------------|
+| Conductance from polarization | Siemens | `ConductanceFromPolarization()` in `shared/physics/conductance.go` | NEW |
+| Discrete level index | Integer (0-N) | `QuantizeTo30Levels()` in `crossbar/array.go` | NEW |
+| Weight matrix for MVM | Float64 array | Module 2 `Array.SetWeight()` interface | NEW |
+| Device state snapshot | `DeviceState` struct | Module 4 `GetDeviceState()` | NEW |
+
+### 11. Polydomain Ensemble Outputs
+
+| Output | Units | Source API | Test Coverage |
+|--------|-------|------------|---------------|
+| Per-domain polarization | C/m^2 array | `PolydomainLK.DomainStates()` | NEW |
+| Ensemble-averaged P | C/m^2 | `PolydomainLK.AveragePolarization()` | NEW |
+| Domain switching fraction | Fraction [0,1] | `PolydomainLK.SwitchedFraction()` | NEW |
+| Ensemble Pr convergence vs N | C/m^2 vs integer | Sweep over N_domains | NEW |
+
+### 12. Imprint Characterization
+
+| Output | Units | Source API | Test Coverage |
+|--------|-------|------------|---------------|
+| Voltage shift after DC hold | V/m | Loop center offset measurement | NEW |
+| Imprint vs hold time | V/m vs seconds | Time-dependent offset tracking | NEW |
+| Asymmetric coercive fields | V/m pair | Ec+ vs Ec- after imprint | NEW |
+
+### 13. Calibration Round-Trip
+
+| Output | Units | Source API | Test Coverage |
+|--------|-------|------------|---------------|
+| Import fidelity | RMSE | CSV import → internal → CSV export diff | NEW |
+| Fit parameter stability | Relative error | Fit → export JSON → reimport → refit | NEW |
+| Model selection consistency | Boolean | Same model type selected on re-import | NEW |
+
+### 14. Performance Metrics
+
+| Output | Units | Source API | Test Coverage |
+|--------|-------|------------|---------------|
+| LK solver time per step | ns/step | `testing.B` benchmark | NEW |
+| Preisach update time per step | ns/step | `testing.B` benchmark | NEW |
+| Memory per 1000-step history | bytes | `runtime.MemStats` | NEW |
+| ISPP convergence wall time | ms/target | End-to-end timing | NEW |
+
 ---
 
 ## Physics Invariants (What MUST Hold)
@@ -358,6 +417,24 @@ Every output listed here must be (a) computable headlessly, (b) exported to JSON
 20. **Coercive Field**: Ec > 0 (must require non-zero field to switch)
 21. **Remanence**: 0 < Pr < Ps (remanent polarization at E=0)
 22. **Temperature**: Ec(T), Pr(T) must decrease monotonically with T up to Curie point
+
+### Inter-Module Contracts
+
+23. **Conductance Monotonicity Across Modules**: G(level) from Module 1 must match G(level) consumed by Module 2 and Module 4
+24. **Level Index Consistency**: Module 1 level index n maps to same physical state in all downstream modules
+25. **Weight Range Contract**: Module 2 weights must stay within [Gmin, Gmax] set by Module 1 material
+
+### Ensemble Properties
+
+26. **Law of Large Numbers**: Ensemble Pr must converge to single-domain Pr ± σ/√N as N_domains → ∞
+27. **Domain Independence**: Shuffling domain initial conditions must not change ensemble average (< 0.1%)
+28. **Polydomain Depolarization**: Depolarization field K_dep must yield intermediate states between ±Pr
+
+### Numerical Robustness
+
+29. **Deterministic Reproducibility**: Identical inputs + seed → bit-identical outputs across runs
+30. **Long-Run Stability**: P drift < 1e-12 C/m² per 10,000 idle steps at E=0
+31. **Concurrent Safety**: No data races under `go test -race` for all physics APIs
 
 ---
 

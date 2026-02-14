@@ -534,6 +534,9 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 
 	ca.mu.Unlock()
 
+	// Reset disturb engine on resize (will be lazy-reinited with new dimensions)
+	ca.writeDisturbEngine = nil
+
 	// Reinitialize device state with new dimensions
 	ca.deviceState = NewDeviceState(rows, cols, ca.tia, ca.adc)
 

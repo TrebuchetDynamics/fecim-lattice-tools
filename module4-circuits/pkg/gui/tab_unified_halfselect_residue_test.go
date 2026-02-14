@@ -26,20 +26,25 @@ func TestApplyHalfSelectDisturb_AccumulatesResidueDuringWrite(t *testing.T) {
 		t.Fatalf("unexpected negative change count: %d", changes)
 	}
 
-	// Half-selected neighbors should accumulate signed residue.
+	// Half-selected neighbors should accumulate stress via WriteDisturbEngine.
+	if ca.writeDisturbEngine == nil {
+		t.Fatal("expected writeDisturbEngine to be initialized")
+	}
+
 	nonZero := 0
-	for r := range ca.halfSelectResidue {
-		for c := range ca.halfSelectResidue[r] {
+	stressMatrix := ca.writeDisturbEngine.GetStressMatrix()
+	for r := range stressMatrix {
+		for c := range stressMatrix[r] {
 			if r == targetRow && c == targetCol {
 				continue
 			}
-			if ca.halfSelectResidue[r][c] != 0 {
+			if stressMatrix[r][c] != 0 {
 				nonZero++
 			}
 		}
 	}
 	if nonZero == 0 {
-		t.Fatalf("expected non-zero half-select residue after write disturb pulse")
+		t.Fatalf("expected non-zero stress on half-selected cells after write disturb pulse")
 	}
 }
 
@@ -64,20 +69,24 @@ func TestApplyHalfSelectDisturb_8x8_WriteAt2x3_DisturbsFullRowAndColumn(t *testi
 	ca.deviceState.ApplyHalfSelectWrite(targetRow, targetCol, writeV)
 	ca.applyHalfSelectDisturb(targetRow, targetCol)
 
+	if ca.writeDisturbEngine == nil {
+		t.Fatal("expected writeDisturbEngine to be initialized")
+	}
+
 	for c := 0; c < 8; c++ {
 		if c == targetCol {
 			continue
 		}
-		if ca.halfSelectResidue[targetRow][c] == 0 {
-			t.Fatalf("expected non-zero halfSelectResidue on target row cell (%d,%d)", targetRow, c)
+		if ca.writeDisturbEngine.GetCellStress(targetRow, c) == 0 {
+			t.Fatalf("expected non-zero stress on target row cell (%d,%d)", targetRow, c)
 		}
 	}
 	for r := 0; r < 8; r++ {
 		if r == targetRow {
 			continue
 		}
-		if ca.halfSelectResidue[r][targetCol] == 0 {
-			t.Fatalf("expected non-zero halfSelectResidue on target col cell (%d,%d)", r, targetCol)
+		if ca.writeDisturbEngine.GetCellStress(r, targetCol) == 0 {
+			t.Fatalf("expected non-zero stress on target col cell (%d,%d)", r, targetCol)
 		}
 	}
 }

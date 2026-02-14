@@ -24,5 +24,24 @@ go test ./module1-hysteresis/pkg/controller \
 echo "[regression] per-material verdicts:" 
 grep -E 'VERDICT material=' -n "$OUT_DIR/test.log" || true
 
+# RG-VAL-03: enforce required-material verdict coverage.
+PROFILE="${FECIM_MATERIAL_PROFILE:-pr}"
+REQUIRED_MATS=$(go run ./cmd/material-profile -profile "$PROFILE" -sep ' ')
+
+missing=0
+for m in $REQUIRED_MATS; do
+  if ! grep -q "VERDICT material=$m" "$OUT_DIR/test.log"; then
+    echo "[regression] ERROR: missing required material verdict: $m (profile=$PROFILE)" >&2
+    missing=1
+  fi
+done
+
+if [[ "$missing" -ne 0 ]]; then
+  echo "[regression] FAIL: required-material verdicts incomplete (profile=$PROFILE)" >&2
+  exit 1
+fi
+
+echo "[regression] PASS: required-material verdicts complete (profile=$PROFILE)"
+
 echo "[regression] summaries:"
 ls -1 "$OUT_DIR"/*.json

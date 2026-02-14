@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
 	sharedtheme "fecim-lattice-tools/shared/theme"
@@ -63,6 +64,7 @@ type CircuitsApp struct {
 	arrayWeights      [][]int     // Current programmed levels
 	halfSelectResidue [][]float64 // Fractional disturb accumulation for half-selected cells
 	inputVector       []int       // Input vector for compute
+	writeDisturbEngine *crossbar.WriteDisturbEngine // Module 2 cumulative stress model for V/2 disturb
 	outputVector      []float64
 	architecture      string // "1T1R" or "0T1R" - affects row selection behavior
 

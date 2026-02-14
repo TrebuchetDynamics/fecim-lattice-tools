@@ -28,31 +28,33 @@ func TestPassiveBehavior_0T1R_HalfSelectResidue_RowAndColumn(t *testing.T) {
 	ca.deviceState.ApplyHalfSelectWrite(targetRow, targetCol, writeV)
 	_ = ca.applyHalfSelectDisturb(targetRow, targetCol)
 
-	ca.mu.RLock()
-	defer ca.mu.RUnlock()
+	// Verify stress accumulated on half-selected cells via WriteDisturbEngine.
+	if ca.writeDisturbEngine == nil {
+		t.Fatal("expected writeDisturbEngine to be initialized after disturb")
+	}
 
-	// Same row (r=2, c!=3) should show non-zero residue.
+	// Same row (r=2, c!=3) should show non-zero stress.
 	for c := 0; c < 8; c++ {
 		if c == targetCol {
 			continue
 		}
-		if ca.halfSelectResidue[targetRow][c] == 0 {
-			t.Fatalf("expected non-zero halfSelectResidue at same-row cell (%d,%d)", targetRow, c)
+		if ca.writeDisturbEngine.GetCellStress(targetRow, c) == 0 {
+			t.Fatalf("expected non-zero stress at same-row cell (%d,%d)", targetRow, c)
 		}
 	}
 
-	// Same column (c=3, r!=2) should show non-zero residue.
+	// Same column (c=3, r!=2) should show non-zero stress.
 	for r := 0; r < 8; r++ {
 		if r == targetRow {
 			continue
 		}
-		if ca.halfSelectResidue[r][targetCol] == 0 {
-			t.Fatalf("expected non-zero halfSelectResidue at same-col cell (%d,%d)", r, targetCol)
+		if ca.writeDisturbEngine.GetCellStress(r, targetCol) == 0 {
+			t.Fatalf("expected non-zero stress at same-col cell (%d,%d)", r, targetCol)
 		}
 	}
 
-	// Unselected cell should stay zero/minimal; model uses exactly 0 for non-row/non-col.
-	if got := ca.halfSelectResidue[0][0]; got != 0 {
-		t.Fatalf("expected zero residue at unselected cell (0,0), got %.6f", got)
+	// Unselected cell (different row AND column) should have zero stress.
+	if got := ca.writeDisturbEngine.GetCellStress(0, 0); got != 0 {
+		t.Fatalf("expected zero stress at unselected cell (0,0), got %.6f", got)
 	}
 }
