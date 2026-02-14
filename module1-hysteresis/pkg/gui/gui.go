@@ -152,6 +152,7 @@ type App struct {
 	wrdReadStartP          float64 // Polarization at start of READ phase
 	wrdLastControllerState controller.WriteState
 	wrdLastControllerPulse int
+	wrdLastGuardLogPulse   int // rate-limit guard log to once per pulse
 	wrdLastProgressLog     float64
 	wrdLastLogState        controller.WriteState // last controller state written to CSV (force-record on transition)
 	wrdLastBranch          int                   // -1 lower branch, +1 upper branch, 0 unknown

@@ -29,7 +29,6 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -41,7 +40,7 @@ import (
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 	"fecim-lattice-tools/shared/accessibility"
-	"fecim-lattice-tools/shared/help"
+
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/recentfiles"
 	"fecim-lattice-tools/shared/recording"
@@ -616,11 +615,6 @@ func main() {
 	window.Resize(savedSize)
 	fmt.Println("[STARTUP] Window created")
 
-	// Create notification manager for toast notifications
-	fmt.Println("[STARTUP] Creating notification manager...")
-	notificationManager := sharedwidgets.NewNotificationManager(window, 100)
-	toastContainer := sharedwidgets.NewToastContainer(5)
-
 	// Create undo manager for parameter changes
 	fmt.Println("[STARTUP] Creating undo manager...")
 	undoManager = undo.NewManager(100) // Keep 100 actions in history
@@ -636,29 +630,10 @@ func main() {
 	}
 	fmt.Println("[STARTUP] Recent files manager created")
 
-	// Wire up toast display callbacks
-	notificationManager.SetToastCallbacks(
-		func(toast *sharedwidgets.Toast) {
-			toastContainer.Add(toast)
-		},
-		func(toast *sharedwidgets.Toast) {
-			toastContainer.Remove(toast)
-		},
-	)
-
-	// Set global notification manager for demos to use
-	sharedwidgets.SetGlobalNotificationManager(notificationManager)
-	fmt.Println("[STARTUP] Notification manager created")
-
 	// Create demo instances with error handling
 	demo2, err := demo2gui.NewEmbeddedCrossbarApp()
 	if err != nil {
 		log.Printf("[ERROR] Failed to create crossbar demo: %v", err)
-		// Defer notification until after UI is ready
-		utils.SafeGo("crossbar-error-notification", func() {
-			time.Sleep(1 * time.Second)
-			notificationManager.Error("Crossbar Demo Error", "Failed to initialize crossbar demo. Check logs for details.")
-		})
 		// Create a placeholder - the demo tab will show an error
 		demo2 = nil
 	}
@@ -844,8 +819,6 @@ func main() {
 			recordTimeLabel.Hide()
 			// Update mic indicator
 			micLevelWidget.SetRecording(false)
-			// Show toast notification
-			notificationManager.Success("Recording Saved", outputFile)
 		} else {
 			log.Debug("Starting recording...")
 
@@ -864,8 +837,6 @@ func main() {
 			// Start recording
 			if err := recordingState.startRecording(window); err != nil {
 				logging.Printf("Error starting recording: %v", err)
-				// Show error toast notification
-				notificationManager.Error("Recording Error", err.Error())
 				return
 			}
 			recordBtn.SetText("Stop")
@@ -873,8 +844,6 @@ func main() {
 			recordTimeLabel.Show()
 			// Update mic indicator to show recording state (red dot)
 			micLevelWidget.SetRecording(true)
-			// Show info notification that recording started
-			notificationManager.Info("Recording Started", "Recording video with audio...")
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			utils.SafeGo("recording-timer", func() {
@@ -944,11 +913,6 @@ func main() {
 		// Update current module label
 		currentModuleLabel.SetText(viewName)
 
-		// Update help system context for F1 contextual help
-		if index < len(viewContextKeys) {
-			help.GetHelpSystem().SetContext(viewContextKeys[index])
-		}
-
 		// Stop previous demo
 		switch currentDemo {
 		case 1:
@@ -1014,20 +978,6 @@ func main() {
 	// Create theme toggle button (cycles through dark/light/high-contrast)
 	themeToggleBtn := themes.CreateQuickToggle(themeManager)
 
-	// Create notification history panel (initially hidden)
-	fmt.Println("[STARTUP] Creating notification history panel...")
-	notificationHistoryPanel := sharedwidgets.NewNotificationHistoryPanel(notificationManager)
-	notificationHistoryPanel.Hide()
-
-	// Create notification button with unread badge
-	notificationBtn := sharedwidgets.NewNotificationButton(notificationManager, func() {
-		log.Button("Notifications")
-		notificationHistoryPanel.Toggle()
-		if notificationHistoryPanel.IsVisible() {
-			notificationManager.MarkAllRead()
-		}
-	})
-
 	// Create undo/redo toolbar widget
 	fmt.Println("[STARTUP] Creating undo toolbar...")
 	undoToolbar := sharedwidgets.NewUndoToolbar(undoManager)
@@ -1047,45 +997,12 @@ func main() {
 		}
 	})
 
-	// Initialize help system
-	fmt.Println("[STARTUP] Initializing help system...")
-	helpSystem := help.GetHelpSystem()
-	helpSystem.Init(window)
-
-	// Create help browser
-	helpBrowser := help.NewHelpBrowser(helpSystem, window)
-
-	// Set up help callbacks
-	helpSystem.SetCallbacks(
-		func(topic *help.HelpTopic) {
-			// Show contextual help popup
-			help.NewContextualHelpDialog(topic, window).Show()
-		},
-		func() {
-			// Show full help browser
-			helpBrowser.Show()
-		},
-	)
-
-	// Set up F1 keyboard shortcut for contextual help
-	help.SetupF1Shortcut(window, helpSystem)
-
-	// Create tip manager for startup tips
-	tipManager := help.NewTipManager(fyneApp.Preferences(), window)
-	fmt.Println("[STARTUP] Help system initialized")
-
-	// Create help browser button (Shift+F1)
-	helpBtn := widget.NewButtonWithIcon("", theme.QuestionIcon(), func() {
-		log.Button("Help")
-		helpBrowser.Show()
-	})
-
 	// Create toolbar with module label left, buttons aligned right
 	fmt.Println("[STARTUP] Creating toolbar...")
 	toolbar := container.NewBorder(
 		nil, nil,
 		currentModuleLabel, // Left side: current module name
-		container.NewHBox(homeBtn, docsBtn, helpBtn, undoToolbar, themeToggleBtn, notificationBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons (mic shows levels always)
+		container.NewHBox(homeBtn, docsBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
 	)
 
 	// Stack content with toolbar on top
@@ -1095,29 +1012,8 @@ func main() {
 		contentStack,
 	)
 
-	// Create toast overlay positioned at top-right
-	toastOverlay := container.NewBorder(
-		container.NewHBox(layout.NewSpacer(), container.NewPadded(toastContainer)), // Top-right
-		nil, nil, nil,
-	)
-
-	// Create notification panel overlay (positioned at top-right, below toolbar)
-	notificationPanelOverlay := container.NewBorder(
-		nil, nil, nil,
-		container.NewVBox(
-			container.NewPadded(notificationHistoryPanel),
-		),
-	)
-
-	// Stack main content with overlays
-	contentWithOverlays := container.NewStack(
-		mainContent,
-		notificationPanelOverlay,
-		toastOverlay,
-	)
-
 	// Wrap in ForceMinSize container to prevent Wayland resize loops
-	rootContainer := container.New(&ForceMinSizeLayout{Min: fyne.NewSize(100, 100)}, contentWithOverlays)
+	rootContainer := container.New(&ForceMinSizeLayout{Min: fyne.NewSize(100, 100)}, mainContent)
 
 	// Set content in a deferred way to avoid fyne.Do() deadlock
 	// First set a placeholder, then set real content after event loop starts
@@ -1157,13 +1053,6 @@ func main() {
 			log.Debug("Started at module %s (index %d)", *moduleFlag, startIdx)
 			fmt.Printf("[STARTUP] %s tab selected\n", *moduleFlag)
 
-			// Show startup tip after a short delay
-			utils.SafeGo("startup-tip", func() {
-				time.Sleep(800 * time.Millisecond)
-				fyne.Do(func() {
-					tipManager.ShowStartupTip()
-				})
-			})
 		})
 	})
 
@@ -1269,18 +1158,17 @@ func main() {
 		}
 		log.Debug("Opening recent file: %s", file.Path)
 		if _, err := os.Stat(file.Path); err != nil {
-			notificationManager.Error("Recent File Missing", fmt.Sprintf("%s no longer exists", file.Name))
+			log.Debug("Recent file missing: %s", file.Path)
 			return
 		}
 
 		cmd := exec.Command("xdg-open", file.Path)
 		if err := cmd.Start(); err != nil {
-			notificationManager.Error("Open Failed", err.Error())
+			log.Debug("Failed to open file: %v", err)
 			return
 		}
 
 		recentFilesManager.Add(file.Path, file.Type, viewContextKeys[currentViewIndex])
-		notificationManager.Success("Opening Recent File", file.Name)
 	})
 
 	fileMenu := fyne.NewMenu("File",
@@ -1288,7 +1176,7 @@ func main() {
 			log.Button("File > Open Config")
 			dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
 				if err != nil {
-					notificationManager.Error("Error", err.Error())
+					log.Debug("Error opening config: %v", err)
 					return
 				}
 				if reader == nil {
@@ -1297,7 +1185,6 @@ func main() {
 				defer reader.Close()
 				path := reader.URI().Path()
 				recentFilesManager.AddConfig(path, viewContextKeys[currentViewIndex])
-				notificationManager.Success("Config Loaded", filepath.Base(path))
 			}, window)
 		}),
 		recentFilesMenu.MenuItem(),
@@ -1306,7 +1193,7 @@ func main() {
 			log.Button("File > Export")
 			dialog.ShowFileSave(func(writer fyne.URIWriteCloser, err error) {
 				if err != nil {
-					notificationManager.Error("Error", err.Error())
+					log.Debug("Error exporting: %v", err)
 					return
 				}
 				if writer == nil {
@@ -1315,7 +1202,6 @@ func main() {
 				defer writer.Close()
 				path := writer.URI().Path()
 				recentFilesManager.AddExport(path, viewContextKeys[currentViewIndex])
-				notificationManager.Info("Export", "Export destination: "+filepath.Base(path))
 			}, window)
 		}),
 		fyne.NewMenuItemSeparator(),
@@ -1358,12 +1244,10 @@ func main() {
 		enabled := !accessibility.IsLargeTextModeEnabled(fyneApp)
 		accessibility.SetLargeTextMode(fyneApp, enabled)
 		themeManager.ApplyAccessibilityPreferences()
-		notificationManager.Info("Accessibility", fmt.Sprintf("Large text mode %s", map[bool]string{true: "enabled", false: "disabled"}[enabled]))
 	})
 	reducedMotionItem := fyne.NewMenuItem("Toggle Reduced Motion", func() {
 		enabled := !accessibility.IsReducedMotionEnabled(fyneApp)
 		accessibility.SetReducedMotion(fyneApp, enabled)
-		notificationManager.Info("Accessibility", fmt.Sprintf("Reduced motion %s", map[bool]string{true: "enabled", false: "disabled"}[enabled]))
 	})
 	settingsMenu := fyne.NewMenu("Settings",
 		fyne.NewMenuItem("Theme: Dark (FeCIM)", func() {
@@ -1386,9 +1270,6 @@ func main() {
 
 	// Create Help menu
 	helpMenu := fyne.NewMenu("Help",
-		fyne.NewMenuItem("Help Topics", func() {
-			helpBrowser.Show()
-		}),
 		fyne.NewMenuItem("About the Science (Learn More)", func() {
 			sharedwidgets.ShowAboutScience(window)
 		}),

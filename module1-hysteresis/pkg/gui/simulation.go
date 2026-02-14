@@ -1043,6 +1043,11 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				nextTarget := a.wrdNextTargetLevel
 				a.wrdTargetLevel = nextTarget
 				a.wrdNextTargetLevel = 0
+				// Reset cumulative controller state for the new target so TotalPulses
+				// from prior targets don't trip the hard timeout guard immediately.
+				if a.writeController != nil {
+					a.writeController.ResetState()
+				}
 				ctrlTarget := 0
 				if a.writeController != nil {
 					ctrlTarget = a.writeController.TargetLevel
@@ -1220,7 +1225,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						} else if delta < 0 {
 							guardSign = -1
 						}
-						if guardSign != 0 && logging.IsVerbose(logging.VerbosityDebug) {
+						if guardSign != 0 && logging.IsVerbose(logging.VerbosityDebug) && a.writeController != nil && a.writeController.PulseCount != a.wrdLastGuardLogPulse {
+							a.wrdLastGuardLogPulse = a.writeController.PulseCount
 							log.Printf("WRD GUARD: level=%d target=%d delta=%.4g (guard=%.2f)",
 								level, targetLevel, delta, a.wrdGuardFrac)
 						}

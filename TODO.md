@@ -37,6 +37,34 @@
 
 ## Current Focus & Direction
 
+### 0. Research-Grade Validation Hardening (NEW, HIGH PRIORITY)
+
+| ID | Task | Scope | Status |
+|----|------|-------|--------|
+| RG-VAL-01 | Enforce **fully headless** required gates: no `DISPLAY`, no `WAYLAND_DISPLAY`, no `xvfb-run` for mandatory regression lanes | M1/M4 + CI | ⏳ |
+| RG-VAL-02 | Enforce **material-selected-aware** gating: every regression case must set explicit material and emit per-material verdict (no implicit default-only pass) | M1/M4 | ⏳ |
+| RG-VAL-03 | Add versioned **material profile map** (PR-gate vs nightly-gate sets) and fail when any required material verdict is missing | M1/M4 | ⏳ |
+| RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ⏳ |
+| RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ⏳ |
+
+### 0b. GUI vs Headless Physics Parity (NEW, HIGH PRIORITY)
+
+| ID | Task | Scope | Status |
+|----|------|-------|--------|
+| RG-PAR-01 | Prove headless and GUI use the **same physics path** for READ/WRITE/COMPUTE (no duplicate headless equations) | M4 | ⏳ |
+| RG-PAR-02 | Add parity test: same seed/material/scenario through GUI dispatch and headless harness, compare `effectiveCellVoltage`, row currents, ADC levels, and target-level trajectory | M4 | ⏳ |
+| RG-PAR-03 | Add parity trace artifact (`gui_vs_headless_parity.json`) with tolerance summary and failing step index | M4 | ⏳ |
+| RG-PAR-04 | Add Module 1 parity test: GUI WRD/ISPP target progression and headless mode progression agree on phase transitions and target sequencing | M1 | ⏳ |
+| RG-PAR-05 | Ban new headless-only physics branches in code review checklist and CI lint gate (path-level parity policy) | Shared process | ⏳ |
+
+### 0c. Plan Docs Integration (NEW)
+
+| ID | Task | Scope | Status |
+|----|------|-------|--------|
+| RG-DOC-01 | Integrate `module4-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M4 | ⏳ |
+| RG-DOC-02 | Integrate `modul1-automated-testing-plan.md` milestones into actionable implementation tickets/scripts/tests | M1 | ⏳ |
+| RG-DOC-03 | Update `docs/testing/TEST_GUIDE.md` with fully-headless material-aware parity lanes and commands | Docs | ⏳ |
+
 ### 1. Module 4 Circuits: Physics Correction (HIGH PRIORITY)
 
 | ID | Task | Status |
