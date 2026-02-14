@@ -105,7 +105,7 @@ func (ir *IRDropSimulator) SetAllInputs(voltages []float64) {
 	}
 }
 
-// Simulate runs the IR drop simulation using iterative method.
+// Simulate runs the IR drop simulation using Gauss-Seidel relaxation on KCL.
 func (ir *IRDropSimulator) Simulate(iterations int) {
 	getLog().Input("IRDropSimulator.Simulate", map[string]interface{}{
 		"iterations": iterations,
@@ -115,7 +115,7 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 		"colResist":  ir.ColResist,
 	})
 
-	// Initialize voltage arrays
+	// Initialize arrays
 	for i := range ir.RowVoltages {
 		ir.RowVoltages[i] = make([]float64, ir.Cols)
 		ir.ColVoltages[i] = make([]float64, ir.Cols)
@@ -123,58 +123,93 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 		ir.IRDropMap[i] = make([]float64, ir.Cols)
 	}
 
-	// Initialize row voltages to input
 	for i := 0; i < ir.Rows; i++ {
 		for j := 0; j < ir.Cols; j++ {
 			ir.RowVoltages[i][j] = ir.VoltageIn[i]
-			ir.ColVoltages[i][j] = ir.VoltageOut[j] // Usually 0V (virtual ground)
+			ir.ColVoltages[i][j] = ir.VoltageOut[j]
 		}
 	}
 
-	// Iterative relaxation method for coupled equations
+	if iterations <= 0 {
+		iterations = 1
+	}
+
+	gRow := 0.0
+	if ir.RowResist > 0 {
+		gRow = 1.0 / ir.RowResist
+	}
+	gCol := 0.0
+	if ir.ColResist > 0 {
+		gCol = 1.0 / ir.ColResist
+	}
+
 	for iter := 0; iter < iterations; iter++ {
-		// Calculate currents based on current voltage estimates
+		// Update row-wire nodes
 		for i := 0; i < ir.Rows; i++ {
 			for j := 0; j < ir.Cols; j++ {
-				vDrop := ir.RowVoltages[i][j] - ir.ColVoltages[i][j]
-				ir.CellCurrents[i][j] = vDrop * ir.Conductances[i][j]
-			}
-		}
+				gCell := ir.Conductances[i][j]
+				den := gCell
+				num := gCell * ir.ColVoltages[i][j]
 
-		// Update row voltages (accounting for resistive drops)
-		for i := 0; i < ir.Rows; i++ {
-			cumulativeCurrent := 0.0
-			for j := 0; j < ir.Cols; j++ {
-				// Current accumulates from left to right
-				cumulativeCurrent += ir.CellCurrents[i][j]
-				// Voltage drops due to accumulated current
-				if j > 0 {
-					ir.RowVoltages[i][j] = ir.VoltageIn[i] - cumulativeCurrent*ir.RowResist*float64(j)
+				// Left neighbor or driver
+				if j == 0 {
+					den += gRow
+					num += gRow * ir.VoltageIn[i]
+				} else {
+					den += gRow
+					num += gRow * ir.RowVoltages[i][j-1]
+				}
+
+				// Right neighbor (open at far end)
+				if j < ir.Cols-1 {
+					den += gRow
+					num += gRow * ir.RowVoltages[i][j+1]
+				}
+
+				if den > 0 {
+					ir.RowVoltages[i][j] = num / den
 				}
 			}
 		}
 
-		// Update column voltages (accounting for resistive rises)
-		for j := 0; j < ir.Cols; j++ {
-			cumulativeCurrent := 0.0
-			for i := ir.Rows - 1; i >= 0; i-- {
-				// Current accumulates from bottom to top
-				cumulativeCurrent += ir.CellCurrents[i][j]
-				// Voltage rises due to accumulated current
-				if i < ir.Rows-1 {
-					ir.ColVoltages[i][j] = ir.VoltageOut[j] + cumulativeCurrent*ir.ColResist*float64(ir.Rows-1-i)
+		// Update column-wire nodes
+		for i := 0; i < ir.Rows; i++ {
+			for j := 0; j < ir.Cols; j++ {
+				gCell := ir.Conductances[i][j]
+				den := gCell
+				num := gCell * ir.RowVoltages[i][j]
+
+				// Down neighbor or sense node
+				if i == ir.Rows-1 {
+					den += gCol
+					num += gCol * ir.VoltageOut[j]
+				} else {
+					den += gCol
+					num += gCol * ir.ColVoltages[i+1][j]
+				}
+
+				// Up neighbor (open at top)
+				if i > 0 {
+					den += gCol
+					num += gCol * ir.ColVoltages[i-1][j]
+				}
+
+				if den > 0 {
+					ir.ColVoltages[i][j] = num / den
 				}
 			}
 		}
 	}
 
-	// Calculate IR drop map
+	// Currents and IR drop map
 	var maxDrop float64
 	for i := 0; i < ir.Rows; i++ {
 		for j := 0; j < ir.Cols; j++ {
-			idealVoltage := ir.VoltageIn[i] - ir.VoltageOut[j]
-			actualVoltage := ir.RowVoltages[i][j] - ir.ColVoltages[i][j]
-			ir.IRDropMap[i][j] = math.Abs(idealVoltage - actualVoltage)
+			vActual := ir.RowVoltages[i][j] - ir.ColVoltages[i][j]
+			ir.CellCurrents[i][j] = vActual * ir.Conductances[i][j]
+
+			vIdeal := ir.VoltageIn[i] - ir.VoltageOut[j]
+			ir.IRDropMap[i][j] = math.Abs(vIdeal - vActual)
 			if ir.IRDropMap[i][j] > maxDrop {
 				maxDrop = ir.IRDropMap[i][j]
 			}
@@ -318,6 +353,25 @@ func (ir *IRDropSimulator) ApplyMitigation(mit IRDropMitigation) {
 		// Wider lines = lower resistance (R inversely proportional to width)
 		ir.RowResist /= mit.LineWidthIncrease
 		ir.ColResist /= mit.LineWidthIncrease
+	}
+
+	if mit.UseHierarchical {
+		// Simple hierarchical bus model: reduce effective series resistance.
+		ir.RowResist *= 0.5
+		ir.ColResist *= 0.5
+	}
+
+	if mit.UseTiledArray && mit.TileSize > 0 {
+		// Tiling reduces the effective wire length seen by any cell.
+		maxDim := ir.Rows
+		if ir.Cols > maxDim {
+			maxDim = ir.Cols
+		}
+		factor := float64(mit.TileSize) / float64(maxDim)
+		if factor > 0 && factor < 1 {
+			ir.RowResist *= factor
+			ir.ColResist *= factor
+		}
 	}
 
 	// Re-simulate with new parameters
