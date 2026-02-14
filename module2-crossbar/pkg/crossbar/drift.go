@@ -60,11 +60,13 @@ type DriftSimulator struct {
 	GMax         float64     // Maximum conductance (S)
 
 	// Drift parameters
-	DriftCoeff  float64    // Drift coefficient (see FeFETDriftCoefficients for sources)
-	DriftModel  DriftModel // Source of drift coefficient
-	ReadDisturb float64    // Read disturb probability per read
-	Temperature float64    // Operating temperature (K)
-	Time        float64    // Elapsed time (seconds)
+	DriftCoeff      float64    // Drift prefactor (fractional relaxation amplitude at t=1s, 300K)
+	DriftExponent   float64    // Power-law exponent ν (typical: 0.01–0.1)
+	DriftNoiseSigma float64    // Relative 1σ noise on drift (fraction of |Δ|); 0 disables
+	DriftModel      DriftModel // Source of drift coefficient
+	ReadDisturb     float64    // Read disturb probability per read
+	Temperature     float64    // Operating temperature (K)
+	Time            float64    // Elapsed time (seconds)
 
 	// Statistics
 	DriftHistory []DriftSnapshot
@@ -120,12 +122,14 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 		// Derived from: >10 year retention at 85°C requires coefficient <0.001.
 		// Compare to literature values: RRAM ~0.05, PCM ~0.1, Flash ~0.02.
 		// See FeFETDriftCoefficients for detailed source notes.
-		DriftCoeff:   FeFETDriftCoefficients.Assumed,
-		DriftModel:   DriftModelAssumed,
-		ReadDisturb:  1e-6, // Very low read disturb for FeFET
-		Temperature:  300,  // Room temperature
-		Time:         0,
-		DriftHistory: make([]DriftSnapshot, 0),
+		DriftCoeff:      FeFETDriftCoefficients.Assumed,
+		DriftExponent:   0.05, // within [0.01, 0.1] expected for FeFET-like drift
+		DriftNoiseSigma: 0.02, // small relative noise; tests set to 0 for determinism
+		DriftModel:      DriftModelAssumed,
+		ReadDisturb:     1e-6, // Very low read disturb for FeFET
+		Temperature:     300,  // Room temperature
+		Time:            0,
+		DriftHistory:    make([]DriftSnapshot, 0),
 	}
 
 	getLog().Output("NewDriftSimulator", sim)
@@ -225,41 +229,58 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 
 	d.Time += dt
 
-	// Thermal activation factor
-	kB := 1.38e-23 // Boltzmann constant
-	Ea := 0.5      // Activation energy (eV) - typical for FeFET
+	// Thermal activation factor (Arrhenius-like acceleration)
+	kB := 1.38e-23 // Boltzmann constant (J/K)
+	Ea := 0.5      // Activation energy (eV) - typical order for FeFET retention physics
 	eV := 1.6e-19  // eV to J
 	thermalFactor := math.Exp(-Ea * eV / (kB * d.Temperature))
+
+	// Compute ensemble mean of the INITIAL conductances.
+	// Drift direction is modeled as regression toward the mean.
+	meanG0 := 0.0
+	for i := 0; i < d.Rows; i++ {
+		for j := 0; j < d.Cols; j++ {
+			meanG0 += d.InitialConds[i][j]
+		}
+	}
+	meanG0 /= float64(d.Rows * d.Cols)
+
+	// Power-law drift fraction (clamped to avoid overshoot): frac(t) = coeff * (t/tref)^ν * thermalFactor.
+	const tref = 1.0
+	frac := 0.0
+	if d.Time > 0 && d.DriftCoeff > 0 {
+		frac = d.DriftCoeff * math.Pow(d.Time/tref, d.DriftExponent) * thermalFactor
+		if frac > 1 {
+			frac = 1
+		}
+		if frac < 0 {
+			frac = 0
+		}
+	}
 
 	var maxDrift float64
 	for i := 0; i < d.Rows; i++ {
 		for j := 0; j < d.Cols; j++ {
-			// Drift model: G(t) = G0 * (t/t0)^v
-			// For FeFET, v (drift coefficient) is very small
 			g0 := d.InitialConds[i][j]
+			deltaToMean := meanG0 - g0
+			drift := deltaToMean * frac
 
-			// Time-dependent drift with thermal activation
-			// Using log model for stability
-			if d.Time > 0 {
-				logT := math.Log(d.Time + 1) // +1 to avoid log(0)
-				drift := g0 * d.DriftCoeff * logT * thermalFactor
+			// Optional stochastic component (disabled in physics tests via DriftNoiseSigma=0).
+			if d.DriftNoiseSigma > 0 && drift != 0 {
+				drift += rand.NormFloat64() * d.DriftNoiseSigma * math.Abs(drift)
+			}
 
-				// Add random component (device-to-device variation)
-				drift += (rand.Float64() - 0.5) * 0.001 * g0 * thermalFactor
+			g := g0 + drift
+			if g < d.GMin {
+				g = d.GMin
+			}
+			if g > d.GMax {
+				g = d.GMax
+			}
+			d.Conductances[i][j] = g
 
-				d.Conductances[i][j] = g0 + drift
-
-				// Clamp to valid range
-				if d.Conductances[i][j] < d.GMin {
-					d.Conductances[i][j] = d.GMin
-				}
-				if d.Conductances[i][j] > d.GMax {
-					d.Conductances[i][j] = d.GMax
-				}
-
-				if math.Abs(drift) > maxDrift {
-					maxDrift = math.Abs(drift)
-				}
+			if math.Abs(drift) > maxDrift {
+				maxDrift = math.Abs(drift)
 			}
 		}
 	}
@@ -384,16 +405,16 @@ func (d *DriftSimulator) GetStats() DriftStats {
 
 	levelErrorRate := float64(numLevelErrors) / float64(d.Rows*d.Cols) * 100
 
-	// Estimate 10-year retention
-	// For FeFET, retention is excellent (>10 years at room temperature)
+	// Estimate 10-year retention (compact loss model)
+	// loss(t) = coeff*(t/tref)^ν*thermalFactor.
 	tenYearSeconds := 10 * 365.25 * 24 * 3600
-	logTenYear := math.Log(tenYearSeconds)
 	kB := 1.38e-23
 	Ea := 0.5
 	eV := 1.6e-19
 	thermalFactor := math.Exp(-Ea * eV / (kB * d.Temperature))
-	predictedDrift := d.DriftCoeff * logTenYear * thermalFactor
-	retention := (1 - predictedDrift) * 100
+	const tref = 1.0
+	predictedLoss := d.DriftCoeff * math.Pow(tenYearSeconds/tref, d.DriftExponent) * thermalFactor
+	retention := (1 - predictedLoss) * 100
 	if retention > 100 {
 		retention = 99.99
 	}
