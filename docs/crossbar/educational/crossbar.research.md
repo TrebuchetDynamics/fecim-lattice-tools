@@ -348,7 +348,7 @@ func (a *Array) quantizeADC(value float64) float64 {
 ### 6.2 FeFET-Specific Papers
 
 **Paper:** "FeFET_Crossbar_MNIST_Hardware_arXiv.pdf"
-- **Result:** 87% MNIST accuracy demonstrated in hardware
+- **Result:** 87% MNIST accuracy claimed (conference/arXiv only -- not peer-reviewed, unverified)
 - **Array:** 128×64 FeFET crossbar
 - **Finding:** 30 analog states are a **simulation baseline**; literature reports multi-level states (unverified) that bracket the demo baseline
 
@@ -458,7 +458,7 @@ Our crossbar simulation module is well-aligned with literature best practices:
 |-------|-------|--------------|
 | Crossbar_Sneak_Path_Analysis | Sneak paths | Three-cell model validated |
 | FeFET_Crossbar_Impact | Non-idealities | FeFET more robust than RRAM |
-| FeFET_Crossbar_MNIST_Hardware | Demo | 87% MNIST achieved |
+| FeFET_Crossbar_MNIST_Hardware | Demo | 87% MNIST claimed (unverified, arXiv only) |
 | multilevel_fefet_crossbar_2023 | Programming | 32 levels with write-verify |
 | sneak_path_self_rectifying_2022 | Mitigation | Self-rectifying enables 0T1R |
 | Memristor_CIM_Survey | Overview | Comprehensive taxonomy |

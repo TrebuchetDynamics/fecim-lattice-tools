@@ -258,7 +258,7 @@ Variation: 86.8% ▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   ↓ -1.6%
 Final: 85.2% ▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-Target (Dr. Tour): 87% ←
+Literature benchmark: 96.6% (Nature Comms 2023)
 ```
 
 ---
@@ -327,9 +327,9 @@ Test coverage:
 | 24×24 FE Memristor (sim) | 98.78% | ScienceDirect 2025 |
 | Multi-Level FeFET 28nm (sim) | 96.6% | Nature Comms 2023 |
 | FTJ Crossbar (sim) | 92% | SemiEngineering 2024 |
-| **Ferroelectric CIM Hardware** | **87%** | Dr. Tour COSM 2025 |
+| Multi-Level FeFET 28nm (hw) | 96.6% | Nature Comms 2023 (DOI: 10.1038/s41467-023-42110-y) |
 
-**Important Note:** Dr. Tour's hardware claims are unverified (conference presentation only). Our simulation may achieve higher accuracy because it doesn't capture all hardware non-idealities.
+**Note:** The 96.6% result is from a peer-reviewed multi-level FeFET crossbar demonstration at 885 TOPS/W in 28nm technology.
 
 ---
 

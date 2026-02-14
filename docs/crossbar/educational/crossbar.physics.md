@@ -53,7 +53,7 @@ Compute-in-Memory:
 │                                     │
 └─────────────────────────────────────┘
            ↑
-    10-1000× more energy efficient!
+    Potentially significant energy savings
 ```
 
 This is what Ferroelectric CIM does with **crossbar arrays**.

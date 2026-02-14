@@ -14,7 +14,7 @@ Compute-in-Memory (CIM) eliminates the von Neumann bottleneck by performing comp
 2. **WRITE** - Programming multi-level polarization states
 3. **COMPUTE** - In-situ matrix-vector multiplication (MVM)
 
-**Key Insight:** CIM leverages Ohm's Law (V = I × R for multiplication) and Kirchhoff's Current Law (current summation for accumulation) to perform MAC operations in O(1) time, achieving 10-1000× energy efficiency over digital processors.
+**Key Insight:** CIM leverages Ohm's Law (V = I × R for multiplication) and Kirchhoff's Current Law (current summation for accumulation) to perform MAC operations in O(1) time, potentially offering significant energy savings over digital processors by eliminating data movement.
 
 **Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 

@@ -520,7 +520,7 @@ Even with all transistors ON, 1T1R provides benefits:
 | MNIST accuracy | 98.5% | 96-98% |
 | CIFAR-10 accuracy | 92% | 88-91% |
 
-**Paper Reference:** *FeFET_Crossbar_MNIST_Hardware_arXiv* achieves 87% MNIST in first-generation hardware; *multilevel_fefet_crossbar_2023* projects 96%+ with optimized 1T1R.
+**Paper Reference:** *multilevel_fefet_crossbar_2023* (Nature Comms 2023, DOI: 10.1038/s41467-023-42110-y) demonstrates 96.6% MNIST with multi-level FeFET crossbar at 885 TOPS/W.
 
 ### 4.4 Compute Timing Comparison
 

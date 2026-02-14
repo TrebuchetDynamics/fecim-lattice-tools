@@ -65,9 +65,8 @@ Demonstrates:
 - Hardware mapping to crossbar arrays
 
 **Key Concepts**:
-- 30 analog levels ≈ 5 bits per weight
-- ~50 fJ per MAC (vs ~10 pJ digital)
-- ~200× energy reduction for matrix operations
+- 30 analog levels ≈ 5 bits per weight (simulation baseline, configurable)
+- Energy efficiency depends on array size, peripherals, and ADC resolution (see `shared/peripherals/analysis.go`)
 
 ## Running the Examples
 

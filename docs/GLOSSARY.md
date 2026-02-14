@@ -73,7 +73,7 @@ High-gain differential amplifier for detecting small signal differences in memor
 Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). This project does not assign TRL levels; treat any TRL references as external or archival context.
 
 ### TOPS/W
-Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.
+Tera-Operations Per Second per Watt - energy efficiency metric. Literature benchmark: 885 TOPS/W (multi-level FeFET crossbar, Nature Comms 2023, DOI: 10.1038/s41467-023-42110-y). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.
 
 ### Bits per Cell
 Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, simulation baseline), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.

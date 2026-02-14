@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -90,7 +91,22 @@ func TestUnifiedDisturbAndDACDisplay_ReportChangesAndDACCode(t *testing.T) {
 	row, col := 1, 1
 	ca.deviceState.SetSelectedCell(row, col)
 
+	// Pre-init engine with high stress rate so a single pulse exceeds the
+	// threshold and causes visible level changes in neighbors.
+	config := crossbar.DefaultWriteDisturbConfig()
+	config.Enable = true
+	config.Architecture1T1R = false
+	config.StressAccumulationRate = 2.0 // 1 pulse > threshold (1.0)
+	ca.writeDisturbEngine = crossbar.NewWriteDisturbEngine(ca.arrayRows, ca.arrayCols, config)
+
+	// Set weights away from midpoint so the toward-center stress shift
+	// actually changes levels (default weights are midLevel, which won't shift).
 	ca.mu.Lock()
+	for r := range ca.arrayWeights {
+		for c := range ca.arrayWeights[r] {
+			ca.arrayWeights[r][c] = 0
+		}
+	}
 	before := make([][]int, len(ca.arrayWeights))
 	for r := range ca.arrayWeights {
 		before[r] = append([]int(nil), ca.arrayWeights[r]...)

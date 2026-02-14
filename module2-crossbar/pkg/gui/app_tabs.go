@@ -58,7 +58,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Create accuracy waterfall
 	accWaterfall := NewAccuracyWaterfall()
-	accWaterfall.SetTarget(87.0) // Measured hardware target
+	accWaterfall.SetTarget(96.6) // Literature benchmark: multi-level FeFET crossbar (Nature Comms 2023, DOI: 10.1038/s41467-023-42110-y)
 
 	// Create before/after toggle
 	beforeAfter := NewBeforeAfterToggle(ca.config.Rows, ca.config.Cols)

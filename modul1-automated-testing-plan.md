@@ -785,6 +785,59 @@ Every output listed here must be (a) computable headlessly, (b) exported to JSON
 
 ---
 
+### Layer 13: Inter-Module Interface Contracts
+
+**Gap:** HIGH - Module 1 outputs consumed by Modules 2/3/4 without contract tests
+
+| Test ID | Description | Pass Criteria | Engine | Materials |
+|---------|-------------|---------------|--------|-----------|
+| T13.1 | Conductance mapping M1→M2 identity | Same G(P) function used in both modules | Both | All 9 |
+| T13.2 | Level index M1→M4 parity | Module 4 DeviceState.Level matches Module 1 discrete level | Both | DefaultHZO, FeCIM |
+| T13.3 | Weight matrix bounds | All weights in MVM within [Gmin, Gmax] from material spec | Preisach | All 9 |
+| T13.4 | ISPP trajectory M1→M4 agreement | GUI (Module 4) and headless (Module 1) produce same level sequence for identical target sequence | Both | FeCIM, LitSuperlattice |
+
+---
+
+### Layer 14: Polydomain Ensemble Validation
+
+**Gap:** HIGH - Ensemble averaging correctness unproven
+
+| Test ID | Description | Pass Criteria | Engine | Materials |
+|---------|-------------|---------------|--------|-----------|
+| T14.1 | Pr convergence vs N_domains | |Pr(2N) - Pr(N)| < Pr(N)/√N for N = {8, 16, 32, 64, 128} | LK | LitSuperlattice |
+| T14.2 | Domain shuffle invariance | Pr std < 0.1% across 10 random domain orderings | LK | DefaultHZO |
+| T14.3 | Ensemble vs single-domain Pr | Ensemble mean within 5% of single-domain for high-symmetry materials | LK | DefaultHZO, HZOStandard32 |
+| T14.4 | Depolarization field intermediate states | K_dep > 0 yields P values strictly between ±Pr at E=0 | LK | All 9 |
+
+---
+
+### Layer 15: Performance and Scalability
+
+**Gap:** MEDIUM - No benchmark regression gates
+
+| Test ID | Description | Pass Criteria | Engine | Materials |
+|---------|-------------|---------------|--------|-----------|
+| T15.1 | LK solver benchmark | < 500 ns/step (baseline), no > 2x regression | LK | DefaultHZO |
+| T15.2 | Preisach update benchmark | < 200 ns/step (baseline), no > 2x regression | Preisach | DefaultHZO |
+| T15.3 | ISPP wall time benchmark | < 50 ms per target level (30-level sweep) | Both | DefaultHZO |
+| T15.4 | Memory scaling | < 1 MB per 10,000-step simulation history | Both | DefaultHZO |
+| T15.5 | Race detector clean | `go test -race` passes for all physics packages | Both | DefaultHZO |
+
+---
+
+### Layer 16: Literature Quantitative Comparison
+
+**Gap:** HIGH - No quantitative comparison against published experimental data
+
+| Test ID | Description | Pass Criteria | Engine | Materials |
+|---------|-------------|---------------|--------|-----------|
+| T16.1 | Materlik 2015 P-E comparison | Simulated loop RMSE < 10% of Ps vs published HZO data | LK | DefaultHZO |
+| T16.2 | Published ISPP data comparison | Simulated convergence rate within 2x of published FTJ ISPP | Preisach | FeCIM |
+| T16.3 | Published retention comparison | Simulated retention decay within order of magnitude of published 10-year extrapolation | Both | DefaultHZO |
+| T16.4 | Published wake-up signature | Simulated wake-up Pr(cycles) qualitatively matches published concave-then-plateau shape | Both | DefaultHZO, FeCIM |
+
+---
+
 ## ISPP Convergence Physics Properties
 
 Beyond basic "did it converge" validation, these tests validate the physics properties of the ISPP convergence process itself.
@@ -1635,6 +1688,138 @@ Tests are classified into tiers by strictness and execution frequency. This exte
 
 ---
 
+### NT-10: Inter-Module Conductance Contract (Tier 1, HIGH)
+
+**File:** `shared/physics/interface_contract_test.go` (new)
+
+**Purpose:** Verify Module 1 conductance output matches what Modules 2/3/4 consume.
+
+**Method:**
+1. For each material, compute G(P) via Module 1's conductance mapping.
+2. Import the same mapping in Module 2's crossbar array.
+3. Compare G values for P at levels {0, 7, 15, 22, 29} (5 representative levels).
+4. Verify bit-identical results (same function, same code path).
+
+**Pass criteria:**
+- G values identical (not just close — same code path).
+- Level indices map to same physical states across modules.
+- Gmin and Gmax bounds respected in all modules.
+
+---
+
+### NT-11: Polydomain Ensemble Convergence (Tier 2, HIGH)
+
+**File:** `shared/physics/polydomain_convergence_test.go` (new)
+
+**Purpose:** Prove ensemble Pr converges with N_domains.
+
+**Method:**
+1. Run LK polydomain with N = {4, 8, 16, 32, 64, 128, 256}.
+2. Extract Pr at each N.
+3. Compute |Pr(2N) - Pr(N)| / Pr(N) for each doubling.
+4. Verify convergence ratio decreases approximately as 1/√N.
+
+**Pass criteria:**
+- Convergence ratio halves (±30%) with each doubling of N.
+- Pr at N=256 within 2% of N=128 (saturation).
+- All runs finite, deterministic (fixed seed).
+
+---
+
+### NT-12: Calibration Round-Trip Identity (Tier 2, MEDIUM)
+
+**File:** `module1-hysteresis/pkg/algo/calibration_roundtrip_test.go` (new)
+
+**Purpose:** Verify calibration export → reimport produces identical fit.
+
+**Method:**
+1. Import a reference CSV calibration dataset.
+2. Fit Preisach parameters via `FitCalibration()`.
+3. Export to JSON via `ExportCalibrationBundle()`.
+4. Re-import the JSON.
+5. Compare all fit parameters with original (relative error < 1e-10).
+
+**Pass criteria:**
+- All parameters identical within float64 precision.
+- Model type unchanged.
+- RMSE unchanged.
+
+---
+
+### NT-13: Performance Benchmark Regression (Tier 3, MEDIUM)
+
+**File:** `shared/physics/benchmark_test.go` (new)
+
+**Purpose:** Detect solver speed regressions.
+
+**Method:**
+1. `BenchmarkLKSolverStep`: Run 10,000 LK RK4 steps, report ns/op.
+2. `BenchmarkPreisachUpdate`: Run 10,000 Preisach updates, report ns/op.
+3. `BenchmarkISPPFullSweep`: Run 30-level ISPP sweep, report total ms.
+4. Compare against frozen baseline (stored in `validation/testdata/benchmarks/`).
+
+**Pass criteria:**
+- No benchmark > 2x slower than frozen baseline.
+- Informational: report ns/op trend for tracking.
+
+---
+
+### NT-14: Race Condition Systematic Coverage (Tier 2, HIGH)
+
+**File:** Existing test files run with `-race` flag
+
+**Purpose:** Ensure all physics APIs are safe for concurrent access.
+
+**Method:**
+1. Run `go test -race ./shared/physics/... ./module1-hysteresis/pkg/controller/... ./module1-hysteresis/pkg/ferroelectric/...`
+2. Any race detected = FAIL.
+3. Add concurrent access stress tests for `PreisachStack`, `PolydomainLK`, and `WriteController`.
+
+**Pass criteria:**
+- Zero races detected across all physics packages.
+- Concurrent stress tests complete without deadlock (30-second timeout).
+
+---
+
+### NT-15: Literature Quantitative Comparison (Tier 1, HIGH)
+
+**File:** `validation/literature_comparison_test.go` (new)
+
+**Purpose:** Quantitatively compare simulated outputs against published experimental data.
+
+**Method:**
+1. Load published P-E loop data from `validation/testdata/literature/` (digitized from papers).
+2. Run simulator with matching material parameters and conditions.
+3. Compute RMSE, correlation, and Ec/Pr agreement.
+4. Datasets: Materlik 2015 (HZO), Park 2015 (HZO ISPP), Muller 2012 (Si:HfO2).
+
+**Pass criteria:**
+- P-E loop shape correlation r > 0.90.
+- Pr within 20% of published value.
+- Ec within 20% of published value.
+- Qualitative features (loop shape, saturation) match.
+
+---
+
+### NT-16: Imprint Characterization (Tier 2, MEDIUM)
+
+**File:** `shared/physics/imprint_test.go` (new)
+
+**Purpose:** Validate imprint (voltage shift) after DC bias holding.
+
+**Method:**
+1. Apply DC bias at +0.5*Ec for simulated hold times {1s, 100s, 10000s}.
+2. Measure P-E loop after each hold.
+3. Extract Ec+ and Ec- (positive and negative coercive fields).
+4. Compute imprint shift: (Ec+ + Ec-) / 2.
+
+**Pass criteria:**
+- Imprint shift increases monotonically with hold time.
+- |Imprint shift| < 0.3 * Ec (physical bound — imprint cannot exceed coercive field).
+- Ec+ and Ec- both remain positive (loop doesn't flip).
+
+---
+
 ## JSON Schema for Regression Artifacts
 
 Current schema has 11 metrics/case. The following extended schema is required for research-grade artifacts.
@@ -2039,6 +2224,68 @@ Current schema has 11 metrics/case. The following extended schema is required fo
 
 ---
 
+### Section I: Inter-Module Interface Contract Suite
+
+**New tests:** 4 (Conductance mapping, Level parity, Weight bounds, ISPP trajectory)
+**Files:**
+- `shared/physics/interface_contract_test.go`
+- `module2-crossbar/pkg/crossbar/m1_contract_test.go`
+
+**Golden data:**
+- `validation/testdata/interface/conductance_mapping_*.json`
+- `validation/testdata/interface/level_parity_*.json`
+
+---
+
+### Section J: Polydomain Ensemble Suite
+
+**New tests:** 4 (Convergence, Shuffle invariance, Single-domain comparison, Depolarization states)
+**Files:**
+- `shared/physics/polydomain_convergence_test.go`
+- `shared/physics/polydomain_properties_test.go`
+
+**Golden data:**
+- `validation/testdata/polydomain/convergence_vs_N.json`
+- `validation/testdata/polydomain/ensemble_statistics.json`
+
+---
+
+### Section K: Performance and Concurrency Suite
+
+**New tests:** 5 (LK bench, Preisach bench, ISPP bench, Memory scaling, Race detector)
+**Files:**
+- `shared/physics/benchmark_test.go`
+- `shared/physics/concurrent_stress_test.go`
+
+**Golden data:**
+- `validation/testdata/benchmarks/baseline_ns_per_op.json`
+
+---
+
+### Section L: Literature Comparison Suite
+
+**New tests:** 4 (Materlik P-E, Published ISPP, Published retention, Wake-up signature)
+**Files:**
+- `validation/literature_comparison_test.go`
+
+**Golden data:**
+- `validation/testdata/literature/materlik_2015_hzo_pe.csv`
+- `validation/testdata/literature/park_2015_hzo_ispp.csv`
+- `validation/testdata/literature/muller_2012_sihfo2_pe.csv`
+
+---
+
+### Section M: Imprint and Bias-Stress Suite
+
+**New tests:** 3 (DC imprint shift, Imprint vs time, Asymmetric Ec)
+**Files:**
+- `shared/physics/imprint_test.go`
+
+**Golden data:**
+- `validation/testdata/imprint/dc_hold_shift_*.json`
+
+---
+
 ## Golden Data Strategy
 
 ### Existing Golden Files (Keep + Extend)
@@ -2062,8 +2309,13 @@ Current schema has 11 metrics/case. The following extended schema is required fo
 | Monte Carlo | 36 | 4 MC tests x 9 materials |
 | Noise | 27 | 3 noise tests x 9 materials |
 | L-K Dynamics | 36 | 4 switching tests x 9 materials + convergence |
+| Interface contracts | 18 | Conductance mapping (9 materials x 2 modules) |
+| Polydomain | 9 | Convergence curves (9 materials) |
+| Benchmarks | 1 | Baseline timing reference |
+| Literature | 3 | Digitized published datasets |
+| Imprint | 9 | DC hold shift (9 materials) |
 
-**Total new golden files:** ~254
+**Total new golden files:** ~254 + ~40 = **~294**
 
 **Update strategy:**
 - Environment variable: `FECIM_UPDATE_PHYSICS_GOLDEN=1` regenerates all
@@ -2427,6 +2679,43 @@ From `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`:
 
 ---
 
+### Phase 8: Interface Contracts, Ensemble, and Performance (Week 21-24)
+
+**Goal:** Close inter-module gaps, validate ensemble, establish performance baselines
+
+**Tasks:**
+1. **Week 21:** Inter-module interface contract tests (Section I, NT-10) - 4 tests
+2. **Week 22:** Polydomain ensemble validation (Section J, NT-11) - 4 tests
+3. **Week 23:** Performance benchmarks and race detection (Section K, NT-13, NT-14) - 5 tests
+4. **Week 24:** Calibration round-trip (NT-12) + integration
+
+**Deliverables:**
+- `shared/physics/interface_contract_test.go`
+- `shared/physics/polydomain_convergence_test.go`
+- `shared/physics/benchmark_test.go`
+- `module1-hysteresis/pkg/algo/calibration_roundtrip_test.go`
+- Benchmark baseline JSON
+
+---
+
+### Phase 9: Literature Comparison, Imprint, and Final Integration (Week 25-28)
+
+**Goal:** Validate against published data, add imprint physics, complete research suite
+
+**Tasks:**
+1. **Week 25-26:** Literature quantitative comparison (Section L, NT-15) - 4 tests + digitized datasets
+2. **Week 27:** Imprint characterization (Section M, NT-16) - 3 tests
+3. **Week 28:** Final integration: cross-reference all layers, generate complete research report, publication supplementary archive
+
+**Deliverables:**
+- `validation/literature_comparison_test.go`
+- `shared/physics/imprint_test.go`
+- 3 digitized literature CSV datasets
+- Complete research validation report
+- Publication supplementary data archive
+
+---
+
 ## CI Integration Details
 
 ### Fast Lane (PR Gate)
@@ -2657,6 +2946,29 @@ Maps each physics claim to validation tests and acceptance criteria.
   - CSV artifact summary (72 files)
   - Publication figure index (6 figure types)
 
+### Interface and Ensemble Deliverables
+
+- [ ] NT-10: Inter-module conductance contract test (`shared/physics/interface_contract_test.go`)
+- [ ] NT-11: Polydomain ensemble convergence test (`shared/physics/polydomain_convergence_test.go`)
+- [ ] NT-12: Calibration round-trip identity test (`module1-hysteresis/pkg/algo/calibration_roundtrip_test.go`)
+- [ ] T13.1-T13.4: Inter-module interface test layer
+- [ ] T14.1-T14.4: Polydomain ensemble test layer
+
+### Performance and Safety Deliverables
+
+- [ ] NT-13: Performance benchmark regression (`shared/physics/benchmark_test.go`)
+- [ ] NT-14: Race condition systematic coverage (CI `-race` flag gate)
+- [ ] T15.1-T15.5: Performance and scalability test layer
+- [ ] Benchmark baseline JSON in `validation/testdata/benchmarks/`
+
+### Literature and Imprint Deliverables
+
+- [ ] NT-15: Literature quantitative comparison (`validation/literature_comparison_test.go`)
+- [ ] NT-16: Imprint characterization (`shared/physics/imprint_test.go`)
+- [ ] T16.1-T16.4: Literature comparison test layer
+- [ ] 3 digitized literature CSV datasets in `validation/testdata/literature/`
+- [ ] Imprint golden data in `validation/testdata/imprint/`
+
 ---
 
 ## Completion Tracking
@@ -2670,17 +2982,22 @@ Maps each physics claim to validation tests and acceptance criteria.
 | Phase 5 | Core research tests (Sections A-D + PR1-PR7, EV1-EV3, P1-P5, R1-R3, M1-M4, T1-T3) | 5 weeks | Not started | Phase 4 |
 | Phase 6 | Extended research (Sections E, G, H + LK1-LK5, NLS-1-3, RD1, CE1-CE4) | 5 weeks | Not started | Phase 5 |
 | Phase 7 | Advanced research + CI (Section F + Figures + CSV artifacts) | 4 weeks | Not started | Phase 6 |
+| Phase 8 | Interface contracts + ensemble + performance (Sections I-K, NT-10 to NT-14) | 4 weeks | Not started | Phase 4 |
+| Phase 9 | Literature comparison + imprint + final integration (Sections L-M, NT-15 to NT-16) | 4 weeks | Not started | Phase 7, 8 |
 
-**Total:** 20 weeks (5 months)
+**Total:** 28 weeks (7 months)
 
-**Post-Phase 7 Status:**
-- **Test count:** ~277 (existing) + ~460 (new) = **~737 total tests**
-- **Golden data:** ~11 (existing) + ~254 (new) = **~265 total files**
+**Post-Phase 9 Status:**
+- **Test count:** ~277 (existing) + ~460 (Phases 1-7) + ~64 (Phases 8-9) = **~801 total tests**
+- **Golden data:** ~11 (existing) + ~294 (new) = **~305 total files**
 - **CSV artifacts:** 8 artifact types x 9 materials = **72 research data files**
 - **Figures:** 6 publication-quality figure types
-- **Coverage:** 50+ physics claims x 9 materials = **450+ claim-material pairs validated**
-- **New test IDs:** P1-P5, PR1-PR7, EV1-EV3, LK1-LK5, NLS-1 to NLS-3, R1-R3, RD1, T1-T3, CE1-CE4, M1-M4
-- **Publication readiness:** Methods section complete, supplementary data archived
+- **Coverage:** 60+ physics claims x 9 materials = **540+ claim-material pairs validated**
+- **New test IDs:** P1-P5, PR1-PR7, EV1-EV3, LK1-LK5, NLS-1 to NLS-3, R1-R3, RD1, T1-T3, CE1-CE4, M1-M4, T13.1-T13.4, T14.1-T14.4, T15.1-T15.5, T16.1-T16.4
+- **Inter-module coverage:** M1→M2, M1→M3, M1→M4 contract tests
+- **Performance baselines:** LK, Preisach, ISPP solver benchmarks frozen
+- **Literature validation:** 3+ published datasets compared quantitatively
+- **Publication readiness:** Methods section complete, supplementary data archived, literature comparison documented
 
 ---
 

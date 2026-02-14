@@ -219,13 +219,13 @@ We read: 0.75  (rounded)
 - ✅ Can be self-rectifying (built-in sneak path fix)
 - ✅ Works in normal chip factories
 - ⚠️ 30 analog states (demo baseline; very precise)
-- ✅ Lasts 10¹² cycles (basically forever)
+- ✅ Endurance: 10¹⁰ cycles demonstrated (V-doped HfO₂, Nano Letters 2024); 10¹² is a target
 
 ---
 
 ## Part 5: The One Sentence Summary
 
-> **A crossbar array is a grid where physics does all the multiplications at once, making AI 100× more energy efficient than regular computers.**
+> **A crossbar array is a grid where physics does all the multiplications at once, potentially offering significant energy savings over digital processors for matrix operations.**
 
 ---
 
