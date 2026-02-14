@@ -81,3 +81,4 @@ cmd/fecim-lattice-tools/data/
 shared/widgets/output/
 output/regression/
 module1-hysteresis/pkg/controller/output/
+web/fecim.wasm

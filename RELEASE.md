@@ -47,10 +47,25 @@ fyne-cross windows -arch amd64
 
 ### Verify Installation
 ```bash
-# Run validation suite
-bash scripts/reproduce_validation.sh
+# Run full validation suite
+go test ./...
 
-# Expected: 70 packages PASS, 0 FAIL
+# Expected: >=70 packages PASS, 0 FAIL
+```
+
+### Web (WASM) demo (experimental)
+This repository includes an experimental WASM entrypoint:
+- `cmd/fecim-web` (currently loads Module 7 documentation viewer)
+
+Build + run locally:
+```bash
+# Build
+GOOS=js GOARCH=wasm go build -o web/fecim.wasm ./cmd/fecim-web
+cp /usr/lib/go-1.22/misc/wasm/wasm_exec.js web/
+
+# Serve
+python3 -m http.server --directory web 8080
+# Then open: http://localhost:8080
 ```
 
 ### Minimum Hardware

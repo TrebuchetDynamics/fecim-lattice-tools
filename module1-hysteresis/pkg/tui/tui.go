@@ -1,3 +1,6 @@
+//go:build !js
+// +build !js
+
 // Package tui provides an enhanced terminal user interface for the hysteresis demo.
 // Uses charmbracelet/bubbletea for interactive TUI and lipgloss for styling.
 package tui

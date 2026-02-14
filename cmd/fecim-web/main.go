@@ -1,0 +1,27 @@
+package main
+
+import (
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2"
+
+	docs "fecim-lattice-tools/module7-docs/pkg/gui"
+)
+
+// fecim-web is a minimal WASM-safe entrypoint.
+//
+// Design goal (L08 spike): compile a browser demo without pulling in non-wasm
+// dependencies (Vulkan renderer, terminal TUI, etc.).
+func main() {
+	a := app.New()
+	w := a.NewWindow("FeCIM Lattice Tools (Web Demo)")
+	w.Resize(fyne.NewSize(1200, 800))
+
+	// Start with the documentation browser as the lowest-risk wasm-safe module.
+	// Additional modules can be added incrementally once the build graph is clean.
+	emb := docs.NewEmbeddedDocsApp()
+	docsUI := emb.BuildContent(a, w)
+
+	w.SetContent(container.NewBorder(nil, nil, nil, nil, docsUI))
+	w.ShowAndRun()
+}
