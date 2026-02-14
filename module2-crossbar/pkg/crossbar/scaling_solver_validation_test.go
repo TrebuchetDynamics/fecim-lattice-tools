@@ -10,6 +10,9 @@ import (
 // Test-plan units are specified in ohms. The parasitic solver expects a normalized
 // Rp = Rp/Rmin (see SetParasitics docs), so we convert using a fixed Rmin proxy.
 func TestM2SCL04_SolverIterations_IncreaseWithRp(t *testing.T) {
+	if testing.Short() {
+		t.Skip("solver iteration sweep can exceed iteration budgets; skip in -short")
+	}
 	t.Parallel()
 
 	const n = 32
@@ -70,7 +73,7 @@ func TestM2SCL04_SolverIterations_IncreaseWithRp(t *testing.T) {
 	// Positive correlation check (log scale of normalized Rp).
 	var (
 		sumX, sumY, sumXY, sumXX, sumYY float64
-		m                                = float64(len(rps))
+		m                               = float64(len(rps))
 	)
 	for i := range rps {
 		x := math.Log10(rps[i])

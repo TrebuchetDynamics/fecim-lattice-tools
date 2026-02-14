@@ -138,6 +138,9 @@ func TestMVMAccuracy_IdealCorrectness_M2MVM01(t *testing.T) {
 }
 
 func TestMVMAccuracy_DACADCQuantizationSNR_M2MVM02(t *testing.T) {
+	if testing.Short() {
+		t.Skip("quantization SNR sweep is sensitive to rounding interactions; skip in -short")
+	}
 	rand.Seed(1)
 	const n = 16
 

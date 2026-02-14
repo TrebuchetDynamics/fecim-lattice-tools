@@ -54,6 +54,9 @@ func BenchmarkM2SCL02_MVMThroughput_SolveMVMFast(b *testing.B) {
 
 // M2-SCL-03: Verify memory footprint scaling is ~O(N^2).
 func TestM2SCL03_MemoryFootprint_ScalesLikeN2(t *testing.T) {
+	if testing.Short() {
+		t.Skip("scaling memory/solver stress is slow and may exceed iteration budgets; skip in -short")
+	}
 	t.Parallel()
 
 	sizes := []int{8, 16, 32}

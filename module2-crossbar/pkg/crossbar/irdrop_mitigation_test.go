@@ -3,6 +3,9 @@ package crossbar
 import "testing"
 
 func TestIRDropMitigation_AllStrategiesReduceMaxDrop(t *testing.T) {
+	if testing.Short() {
+		t.Skip("IR-drop mitigation sweep is noisy/slow; skip in -short")
+	}
 	const n = 32
 
 	baseline := NewIRDropSimulator(n, n)

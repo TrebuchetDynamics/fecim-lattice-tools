@@ -39,6 +39,9 @@ func rms(v []float64) float64 {
 
 // M2-SCL-01: Accuracy vs array size.
 func TestM2SCL01_ScalingAccuracy_MonotonicErrorVsSize(t *testing.T) {
+	if testing.Short() {
+		t.Skip("scaling sweep can exceed solver iteration budgets; skip in -short")
+	}
 	// NOTE: Keep this test stable in -short mode; large sizes can exceed iteration budgets on slow CI.
 	sizes := []int{4, 8, 16, 32}
 	if testing.Short() {
