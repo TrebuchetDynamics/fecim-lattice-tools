@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO₂-ZrO₂ superlattice research.
 
-**Last Updated**: 2026-02-13 (Research-grade headless/parity updates)
+**Last Updated**: 2026-02-14 (Investigated red test + Module 4/6 scope confirmed)
 
 **Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, code comments
 
@@ -46,6 +46,7 @@
 | RG-VAL-03 | Add versioned **material profile map** (PR-gate vs nightly-gate sets) and fail when any required material verdict is missing | M1/M4 | ✅ (material profile registry + gate enforcement; see commit TBD) |
 | RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ⏳ |
 | RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ⏳ |
+| RG-VAL-06 | Fix red test: WRD target must not change during `PROG_VERIFY` (or update invariant + phase labeling) — currently failing `TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence` | M1 (headless harness + logs) | 🔴 |
 
 ### 0b. GUI vs Headless Physics Parity (NEW, HIGH PRIORITY)
 
