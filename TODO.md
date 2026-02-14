@@ -741,7 +741,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | L07 | Demo video creation (2-3 min walkthrough) | TODO.md | ✅ | 4hr |
-| L08 | Web deployment (WASM) for browser-based demos | TODO.md | ⏳ | 16hr |
+| L08 | Web deployment (WASM) for browser-based demos | TODO.md | ⏳ (spike: docs/development/l08-wasm-feasibility.md) | 16hr |
 | L09 | Vulkan rendering implementation for large arrays | TODO.md | ⏳ | 20hr |
 | L10 | 3D multi-layer visualization (512-layer roadmap) | TODO.md | ⏳ | 24hr |
 | L11 | Add [LK] indicators to material_picker.go | `module1-hysteresis` | ✅ (2026-02-11: LK-compatible materials now tagged `[LK]` in name column; legend text updated) | 1hr |
