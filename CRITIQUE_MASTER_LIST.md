@@ -12,9 +12,9 @@
 | Metric | Value |
 |--------|-------|
 | Total unique items | 58 |
-| Completed | 50 |
-| Pending | 8 |
-| Pending IDs | H03, H04, H13, L05, L07, L08, L09, L10 |
+| Completed | 53 |
+| Pending | 5 |
+| Pending IDs | L05, L07, L08, L09, L10 |
 | Source note | a.md not present in repo; items tracked by ID in this file |
 
 ---
