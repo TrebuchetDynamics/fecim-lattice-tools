@@ -1,4 +1,14 @@
-.PHONY: build test test-race test-short bench vet fmt lint coverage clean ci
+.PHONY: build test test-race test-short bench vet fmt lint coverage clean ci qa-a0
+
+qa-a0:
+	./scripts/qa_a0.sh
+
+# A0 is a deterministic package-level KPI gate using `go test -json`.
+# Output example:
+#   LIST_TOTAL=72 JSON_TOTAL=72
+#   PKG_SUM pass=72 fail=0 skip=0 total=72
+# Hard-fails if LIST_TOTAL != JSON_TOTAL (truncation/partial capture).
+
 
 GO ?= go
 GOFMT ?= gofmt
