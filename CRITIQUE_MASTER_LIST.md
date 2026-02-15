@@ -209,4 +209,4 @@
 ---
 
 *Document updated 2026-02-03*
-*Next update: After H03/H04/H13 and L05 are complete*
+*Next update: After L07 is complete*
