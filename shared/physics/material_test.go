@@ -122,6 +122,23 @@ func TestPZT(t *testing.T) {
 	}
 }
 
+func TestBTO(t *testing.T) {
+	mat := BTO()
+
+	if mat == nil {
+		t.Fatal("BTO should return non-nil")
+	}
+	if math.Abs(mat.Pr-0.20) > 1e-9 {
+		t.Fatalf("BTO Pr: got %f, want 0.20 C/m²", mat.Pr)
+	}
+	if math.Abs(mat.Ps-0.26) > 1e-9 {
+		t.Fatalf("BTO Ps: got %f, want 0.26 C/m²", mat.Ps)
+	}
+	if math.Abs(mat.Ec-3.0e6) > 1 {
+		t.Fatalf("BTO Ec: got %e, want 3.0e6 V/m", mat.Ec)
+	}
+}
+
 func TestAlScN(t *testing.T) {
 	mat := AlScN()
 
@@ -166,10 +183,11 @@ func TestCorePresetCount(t *testing.T) {
 		HZOStandard32(),
 		HZOFJT140(),
 		PZT(),
+		BTO(),
 		AlScN(),
 	}
-	if len(presets) != 9 {
-		t.Fatalf("expected 9 core presets, got %d", len(presets))
+	if len(presets) != 10 {
+		t.Fatalf("expected 10 core presets, got %d", len(presets))
 	}
 }
 

@@ -577,6 +577,51 @@ func PZT() *HZOMaterial {
 	}
 }
 
+// BTO returns parameters for Barium Titanate (BaTiO3).
+// Included as a classic ferroelectric reference preset.
+//
+// NOTE: This preset is **educational** until a DOI-backed calibration pack is added.
+// Values are representative room-temperature thin-film magnitudes.
+func BTO() *HZOMaterial {
+	return &HZOMaterial{
+		Name:                "BTO",
+		Pr:                  20e-2, // 20 µC/cm²
+		Ps:                  26e-2, // 26 µC/cm²
+		Ec:                  3.0e6, // 30 kV/cm
+		Epsilon:             800,
+		EpsilonLF:           1200,
+		LossAngle:           0.02,
+		Thickness:           100e-9,
+		Area:                100e-12,
+		Tau:                 50e-9,
+		Tau0:                1e-12,
+		Ea:                  0.4,
+		Alpha:               2.0,
+		CurieTemp:           393, // ~120°C
+		TempCoeffEc:         -2e4,
+		TempCoeffPr:         -2e-5,
+		EnduranceCycles:     1e8,
+		RetentionTime:       3.15e8,
+		ImrintField:         5e5,
+		NumLevels:           30,
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,
+		EaNLS:               3e7,
+		NLSSigma:            1.5,
+		Gmin:                1e-6,
+		Gmax:                100e-6,
+		BetaLandau:          -2.0e8,
+		GammaLandau:         1.0e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.0e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.0e8,
+		StressGPa:           0.5,
+		Q11:                 0.09,
+		Q12:                 -0.03,
+	}
+}
+
 // AlScN returns parameters for Aluminum Scandium Nitride.
 // AlScN has VERY HIGH Pr (120 µC/cm²) but also very high Ec (5 MV/cm),
 // which limits practical state granularity to 8-16 levels.
@@ -642,6 +687,7 @@ func AllMaterials() []*HZOMaterial {
 			HZOStandard32(),
 			HZOFJT140(),
 			PZT(),
+			BTO(),
 			AlScN(),
 		}
 	})
@@ -665,6 +711,7 @@ func AllMaterialsFromConfig(cfg *physics.Config) []*HZOMaterial {
 		"hzo_standard_32",
 		"hzo_ftj_140",
 		"pzt",
+		"bto",
 		"alscn",
 		"in2se3",
 	}
