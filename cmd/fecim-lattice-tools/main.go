@@ -29,6 +29,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -975,6 +976,15 @@ func main() {
 		selectView(7) // Documentation is view index 7
 	})
 
+	// L05: Unified "Learn More" entry point (About the Science)
+	learnMoreBtn := widget.NewButtonWithIcon("Learn More", theme.InfoIcon(), func() {
+		log.Button("LearnMore")
+		selectView(7)
+		// After switching to docs, navigate to the unified entry page.
+		demos.demo7.OpenAboutScience()
+	})
+	learnMoreBtn.Importance = widget.LowImportance
+
 	// Create theme toggle button (cycles through dark/light/high-contrast)
 	themeToggleBtn := themes.CreateQuickToggle(themeManager)
 
@@ -984,6 +994,11 @@ func main() {
 
 	// Add keyboard shortcuts for undo/redo (Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z)
 	canvas := window.Canvas()
+	// L05: F1 opens the unified Learn More page (About the Science)
+	canvas.AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyF1}, func(_ fyne.Shortcut) {
+		selectView(7)
+		demos.demo7.OpenAboutScience()
+	})
 	canvas.AddShortcut(&fyne.ShortcutUndo{}, func(_ fyne.Shortcut) {
 		if undoManager.Undo() {
 			log.Debug("Undo via keyboard shortcut")
@@ -1002,7 +1017,7 @@ func main() {
 	toolbar := container.NewBorder(
 		nil, nil,
 		currentModuleLabel, // Left side: current module name
-		container.NewHBox(homeBtn, docsBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
+		container.NewHBox(homeBtn, docsBtn, learnMoreBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
 	)
 
 	// Stack content with toolbar on top

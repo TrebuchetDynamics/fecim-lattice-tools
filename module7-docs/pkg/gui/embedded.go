@@ -53,6 +53,16 @@ func NewEmbeddedDocsApp() *EmbeddedDocsApp {
 	return &EmbeddedDocsApp{}
 }
 
+// OpenAboutScience navigates the docs viewer to the unified "About the Science" entry point.
+// Safe to call after BuildContent; if docsPath is not initialized yet it will no-op.
+func (app *EmbeddedDocsApp) OpenAboutScience() {
+	if app == nil || app.docsPath == "" {
+		return
+	}
+	path := filepath.Join(app.docsPath, "about", "About.Science.md")
+	app.loadDocument(path)
+}
+
 // docEntry represents a documentation file or folder
 type docEntry struct {
 	name     string
@@ -165,6 +175,7 @@ func (app *EmbeddedDocsApp) buildCurriculumLinks() fyne.CanvasObject {
 		label string
 		path  string
 	}{
+		{label: "About the Science", path: filepath.Join(app.docsPath, "about", "About.Science.md")},
 		{label: "Overview", path: filepath.Join(app.docsPath, "README.md")},
 		{label: "Module Index", path: filepath.Join(app.docsPath, "MODULES.md")},
 		{label: "Research Index", path: filepath.Join(app.docsPath, "research-papers", "README.md")},

@@ -12,9 +12,9 @@
 | Metric | Value |
 |--------|-------|
 | Total unique items | 58 |
-| Completed | 53 |
-| Pending | 5 |
-| Pending IDs | L05, L07, L08, L09, L10 |
+| Completed | 54 |
+| Pending | 4 |
+| Pending IDs | L07, L08, L09, L10 |
 | Source note | a.md not present in repo; items tracked by ID in this file |
 
 ---
@@ -144,7 +144,7 @@
 
 | ID | Item | Source | Status | Est. Time |
 |----|------|--------|--------|-----------|
-| L05 | About the Science section (unified Learn More) | drtour_todo_fixes | ⏳ | 2hr |
+| L05 | About the Science section (unified Learn More) | drtour_todo_fixes | ✅ | Done |
 | L06 | Accessibility audit (keyboard nav, high-contrast) | drtour_todo_fixes | ✅ | Done |
 | L07 | Demo video creation (2-3 min walkthrough) | TODO.md | ⏳ | 4hr |
 
