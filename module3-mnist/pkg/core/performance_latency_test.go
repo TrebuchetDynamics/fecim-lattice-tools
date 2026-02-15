@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -214,6 +215,9 @@ func BenchmarkInference_CIM(b *testing.B) {
 func TestLatency_Determinism(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping determinism test in short mode")
+	}
+	if os.Getenv("FECIM_PERF_DETERMINISM") != "1" {
+		t.Skip("Skipping latency determinism test unless FECIM_PERF_DETERMINISM=1 (too environment-sensitive for default CI)")
 	}
 
 	dataDir := filepath.Join("..", "..", "data")

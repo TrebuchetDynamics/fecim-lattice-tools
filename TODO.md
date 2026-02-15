@@ -47,6 +47,13 @@
 | RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ✅ |
 | RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ✅ |
 | RG-VAL-06 | Fix red test: WRD target must not change during `PROG_VERIFY` (or update invariant + phase labeling) — currently failing `TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence` | M1 (headless harness + logs) | ✅ |
+| RG-PHY-OBS-01 | **Major-loop P–E falsification**: simulate Preisach major loop on DOI-backed dataset sweep (non-calibrated preset), compute RMSE(P(E))/FS, Pr/Ec/%area errors, emit JSON + fail on threshold | M1 + validation/literature | ⏳ |
+| RG-PHY-OBS-02 | **Switching kinetics falsification**: validate τ(E) or switching probability vs Merz / cumulative log-normal NLS dataset; report fitted parameters + residuals with units | M1 + validation/literature | ⏳ |
+| RG-PHY-OBS-03 | **Minor loops / FORC falsification**: compare FORC distribution ρ(Ha,Hb) vs published digitized FORC dataset; report RMSE + qualitative invariants | M1 + validation/literature | ⏳ |
+| RG-VAL-M1-01 | Expand M1 deep regression materials from 3/9 → 9/9 with per-material verdict and documented SKIPs for missing params | M1 | ⏳ |
+| RG-VAL-M1-02 | Golden P–E loop regression for all materials × 2 engines (6+ sig figs drift detection) | M1 + validation/testdata | ⏳ |
+| RG-VAL-M1-03 | Export WriteVerifyStats into regression JSON (pulse counts, overshoot, stuck, guard pulses) and assert bounds | M1 | ⏳ |
+| RG-VAL-M1-04 | Monte Carlo uncertainty on P–E + ISPP (CI bands for Pr/Ec/area, seed determinism checks) | M1 | ⏳ |
 
 ### 0b. GUI vs Headless Physics Parity (NEW, HIGH PRIORITY)
 

@@ -65,6 +65,29 @@ The following formal validation test files have been created and pass:
 
 ## Critical Gaps for Research Grade
 
+### Actionable Roadmap Tickets (add to TODO.md)
+
+These are the remaining items required to complete **physics-behavior testing** (observable-backed falsification), beyond plumbing/invariants/determinism.
+
+- **RG-PHY-OBS-01 (Major-loop P–E falsification):**
+  - Input: DOI-backed digitized P–E dataset (E sweep + P points).
+  - Run: simulate same E sweep using the Preisach engine (non-calibrated material preset).
+  - Metrics (units): Pr [µC/cm²], Ec [MV/cm], RMSE(P(E))/FS, loop area error [%].
+  - Output: JSON artifact per material/dataset with full metadata (material snapshot + DOI + sweep params).
+
+- **RG-PHY-OBS-02 (Switching kinetics falsification):**
+  - Validate switching kinetics observable (e.g., τ(E) vs Merz law or NLS cumulative model) against DOI-backed dataset.
+  - Output: fitted parameters + residuals and acceptance thresholds.
+
+- **RG-PHY-OBS-03 (FORC / minor-loop falsification):**
+  - Compare FORC-derived distribution (ρ) or minor-loop behavior against published digitized FORC data.
+
+Additional completion items:
+- **RG-VAL-M1-01:** expand deep regression to 9/9 materials.
+- **RG-VAL-M1-02:** golden P–E loops for all materials × engines (6+ sig figs).
+- **RG-VAL-M1-03:** WriteVerifyStats exported into regression JSON.
+- **RG-VAL-M1-04:** Monte Carlo uncertainty quantification.
+
 | # | Gap | Impact | Tier | Priority |
 |---|-----|--------|------|----------|
 | 1 | **No timestep convergence study** | Cannot prove numerical accuracy of LK RK4 solver | T1 | CRITICAL |

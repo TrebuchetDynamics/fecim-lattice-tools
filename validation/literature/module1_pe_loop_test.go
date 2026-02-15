@@ -17,16 +17,16 @@ import (
 )
 
 type peLoopDataset struct {
-	Name        string
-	DOI         string
-	SourceCSV   string
-	MaterialID  string
-	Material    *sharedphysics.HZOMaterial
-	Engine      string // preisach
-	FieldUnit   string // MV/cm
-	PolarUnit   string // uC/cm2
-	Conditions  map[string]any
-	Notes       string
+	Name       string
+	DOI        string
+	SourceCSV  string
+	MaterialID string
+	Material   *sharedphysics.HZOMaterial
+	Engine     string // preisach
+	FieldUnit  string // MV/cm
+	PolarUnit  string // uC/cm2
+	Conditions map[string]any
+	Notes      string
 }
 
 type peLoopMetrics struct {
@@ -45,11 +45,12 @@ type peLoopMetrics struct {
 	EcSim_MV_cm  float64 `json:"ec_sim_MV_cm"`
 	EcErrPct     float64 `json:"ec_err_pct"`
 
-	RMSE_uC_cm2     float64 `json:"rmse_uC_cm2"`
-	RMSEFullScale   float64 `json:"rmse_full_scale"`
-	LoopAreaData    float64 `json:"loop_area_data_J_m3"`
-	LoopAreaSim     float64 `json:"loop_area_sim_J_m3"`
-	LoopAreaErrPct  float64 `json:"loop_area_err_pct"`
+	RMSE_uC_cm2    float64 `json:"rmse_uC_cm2"`
+	RMSEOverPs     float64 `json:"rmse_over_ps"` // RMSE(P(E)) / Ps (dimensionless)
+	Ps_uC_cm2      float64 `json:"ps_uC_cm2"`
+	LoopAreaData   float64 `json:"loop_area_data_J_m3"`
+	LoopAreaSim    float64 `json:"loop_area_sim_J_m3"`
+	LoopAreaErrPct float64 `json:"loop_area_err_pct"`
 
 	Pass bool `json:"pass"`
 }
@@ -57,9 +58,9 @@ type peLoopMetrics struct {
 // REQUIRED THRESHOLDS (Juan request)
 const (
 	thPrPct   = 10.0
-	thEcPct   = 15.0
-	thRMSEfs  = 0.05 // 5% full-scale
-	thAreaPct = 25.0 // not specified; set pragmatic bound for loop area
+	thEcPct   = 10.0
+	thRMSEps  = 0.05 // RMSE(P(E)) / Ps <= 5%
+	thAreaPct = 25.0 // loop area is a derived metric; keep pragmatic bound
 )
 
 func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
@@ -110,17 +111,17 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Esim, Psim := simulatePreisachLoop(ds.Material, Edata)
 			_ = Esim
 
-					prData := estimatePrAtZeroField(Pdata, Edata)
+			prData := estimatePrAtZeroField(Pdata, Edata)
 			prSim := estimatePrAtZeroField(Psim, Edata)
 
 			ecData := estimateEc(Pdata, Edata)
 			ecSim := estimateEc(Psim, Edata)
 
 			rmse := rmse(Psim, Pdata)
-			fs := maxAbs(Pdata)
-			rmseFS := 0.0
-			if fs > 0 {
-				rmseFS = rmse / fs
+			ps := ds.Material.Ps * 1e2 // C/m^2 -> uC/cm^2
+			rmsePs := 0.0
+			if ps > 0 {
+				rmsePs = rmse / ps
 			}
 
 			areaData := loopAreaEnergyDensity(Edata, Pdata)
@@ -139,9 +140,9 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				pass = false
 				t.Errorf("Ec error too large: ec_sim=%0.3f ec_data=%0.3f err=%0.2f%% (th=%0.1f%%)", ecSim, ecData, ecErrPct, thEcPct)
 			}
-			if rmseFS > thRMSEfs {
+			if rmsePs > thRMSEps {
 				pass = false
-				t.Errorf("RMSE too large: rmse=%0.3f uC/cm2 fs=%0.3f rmseFS=%0.4f (th=%0.4f)", rmse, fs, rmseFS, thRMSEfs)
+				t.Errorf("RMSE too large: rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f (th=%0.4f)", rmse, ps, rmsePs, thRMSEps)
 			}
 			if areaErrPct > thAreaPct {
 				pass = false
@@ -149,24 +150,25 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			}
 
 			m := peLoopMetrics{
-				MaterialID:    ds.MaterialID,
-				Material:      ds.Material.Name,
-				Engine:        ds.Engine,
-				DOI:           ds.DOI,
-				Dataset:       ds.Name,
-				Generated:     time.Now().UTC().Format(time.RFC3339),
-				PrData_uC_cm2: prData,
-				PrSim_uC_cm2:  prSim,
-				PrErrPct:      prErrPct,
-				EcData_MV_cm:  ecData,
-				EcSim_MV_cm:   ecSim,
-				EcErrPct:      ecErrPct,
-				RMSE_uC_cm2:   rmse,
-				RMSEFullScale: rmseFS,
-				LoopAreaData:  areaData,
-				LoopAreaSim:   areaSim,
+				MaterialID:     ds.MaterialID,
+				Material:       ds.Material.Name,
+				Engine:         ds.Engine,
+				DOI:            ds.DOI,
+				Dataset:        ds.Name,
+				Generated:      time.Now().UTC().Format(time.RFC3339),
+				PrData_uC_cm2:  prData,
+				PrSim_uC_cm2:   prSim,
+				PrErrPct:       prErrPct,
+				EcData_MV_cm:   ecData,
+				EcSim_MV_cm:    ecSim,
+				EcErrPct:       ecErrPct,
+				RMSE_uC_cm2:    rmse,
+				RMSEOverPs:     rmsePs,
+				Ps_uC_cm2:      ps,
+				LoopAreaData:   areaData,
+				LoopAreaSim:    areaSim,
 				LoopAreaErrPct: areaErrPct,
-				Pass:          pass,
+				Pass:           pass,
 			}
 
 			outPath := filepath.Join(outDir, fmt.Sprintf("module1_pe_loop_%s.json", ds.MaterialID))
@@ -174,8 +176,8 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				t.Fatalf("write %s: %v", outPath, err)
 			}
 
-			t.Logf("LITERATURE_METRICS material=%s doi=%s pr_sim=%0.3f pr_data=%0.3f err=%0.2f%% ec_sim=%0.3f ec_data=%0.3f err=%0.2f%% rmseFS=%0.4f areaErr=%0.2f%% pass=%v artifact=%s",
-				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, ecSim, ecData, ecErrPct, rmseFS, areaErrPct, pass, outPath)
+			t.Logf("LITERATURE_METRICS material=%s doi=%s pr_sim=%0.3f pr_data=%0.3f err=%0.2f%%(th=%0.1f%%) ec_sim=%0.3f ec_data=%0.3f err=%0.2f%%(th=%0.1f%%) rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f(th=%0.4f) areaErr=%0.2f%%(th=%0.1f%%) pass=%v artifact=%s",
+				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, thPrPct, ecSim, ecData, ecErrPct, thEcPct, rmse, ps, rmsePs, thRMSEps, areaErrPct, thAreaPct, pass, outPath)
 		})
 	}
 }
