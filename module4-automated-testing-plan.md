@@ -138,6 +138,21 @@ go test -count=1 -v ./module4-circuits/pkg/arraysim/...
 
 A gate fails when **any** threshold below is violated.
 
+### 5.0 Statistical and uncertainty policy (mandatory)
+- Scalar seeded metrics (e.g., pulse count, PSNR, BER): `n >= 30` nightly, `n >= 100` release.
+- Distribution checks (e.g., residual distribution drift): `n >= 200` per distribution.
+- Proportion metrics (success/failure rates): `n >= 200` trials per material.
+- CI method selection:
+  - Run Shapiro-Wilk (`alpha=0.05`) when `8 <= n <= 5000`.
+  - If normality not rejected (`p >= 0.05`): report two-sided 95% t-interval.
+  - Otherwise: report BCa bootstrap 95% CI (`2000` resamples nightly, `10000` release, fixed seed).
+- Proportions use Wilson 95% intervals.
+- KS drift gates:
+  - `p <= 0.01` fail
+  - `0.01 < p < 0.05` warn
+  - `p >= 0.05` pass
+- Missing sample-size minimums or missing CI metadata is a gate failure.
+
 ## 5.1 Physics/solver integrity
 - KCL residual: `max_residual <= 1e-6`
 - Tier-A dense residual: `||Ax-b||/||b|| < 1e-12`
@@ -190,6 +205,12 @@ Minimum required files:
 7. `solver_diagnostics.json` (residuals, iterations, condition number)
 8. `thermodynamics.json` (power/energy closure checks)
 9. `confidence_ledger.json` (`measured|estimated|placeholder` parameter tags)
+10. `uncertainty.json` with:
+   - per-metric CI bounds (95%)
+   - method metadata (`t|bootstrap_bca|wilson`)
+   - sample size
+   - normality result (if applicable)
+   - KS drift statistics and baseline reference
 
 **Artifact validity rules:**
 - Missing required artifact = gate fail.
