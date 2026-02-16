@@ -961,7 +961,7 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 | DOCA-09 | `training.yaml` had fields without inline field descriptions | ✅ Fixed | Added descriptions for `learning_rate`, `momentum`, `default_batch_size`, `gradient_clip` in `config/training.yaml`. |
 | DOCA-10 | Default mirrored training config had same missing field descriptions | ✅ Fixed | Added same descriptions in `config/physics/defaults/training.yaml`. |
 | DOCA-11 | Some config YAML files still contain undocumented scalar fields (notably large material catalogs and mirrored defaults) | ⚠️ Open (backlog) | Remaining candidates reported by audit across `config/materials.yaml` and `config/physics/defaults/materials.yaml`. |
-| DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ⚠️ Open (backlog) | `config/README.md` absent. |
+| DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ⚠️ Open (backlog) | ✅ Done (`config/README.md` added with table of all YAML files) |
 
 ## Discovered from Code Audit (2026-02-11)
 

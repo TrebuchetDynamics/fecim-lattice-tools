@@ -11,7 +11,7 @@ func TestEducationalPanelAndLogLogic(t *testing.T) {
 	a := fyneTest.NewApp()
 	defer a.Quit()
 
-	ep := NewEducationalPanel(EducationalPanelConfig{})
+	ep := NewEducationalPanel()
 	ep.SetMVMExplanation(0)
 	title, content := ep.GetContent()
 	if title != "Compute-in-Memory" || !strings.Contains(content, "Matrix-Vector") {
@@ -31,7 +31,7 @@ func TestEducationalPanelAndLogLogic(t *testing.T) {
 		t.Fatalf("unexpected idle content: %q", content)
 	}
 
-	log := NewOperationLog(OperationLogConfig{})
+	log := NewOperationLog()
 	for i := 0; i < 10; i++ {
 		log.Add("op")
 	}
