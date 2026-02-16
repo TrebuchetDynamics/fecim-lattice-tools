@@ -950,7 +950,7 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
 | ID | Gap | Status | Evidence |
 |----|-----|--------|----------|
-| DOCA-01 | Exported Go APIs missing doc comments in several packages (`cmd/`, `module2-crossbar`, `module3-mnist`, `module5-comparison`, etc.) | ⚠️ Open (repo-wide backlog) | Audit script found 967 exported decls lacking Godoc-style comments (non-test `.go` files). |
+| DOCA-01 | Exported Go APIs missing doc comments in several packages (`cmd/`, `module2-crossbar`, `module3-mnist`, `module5-comparison`, etc.) | ⚠️ Open (repo-wide backlog) | ✅ Done (added package docs to all 31 missing packages via doc.go files; 12 doc.go created, 8 cmd main.go updated) |
 | DOCA-02 | `ValidationError.Error()` lacked explicit Godoc comment | ✅ Fixed | `validation/configvalidator/validator.go` now documents `Error` method. |
 | DOCA-03 | Module README missing in `module1-hysteresis/` | ✅ Fixed | Added `module1-hysteresis/README.md`. |
 | DOCA-04 | Module README missing in `module3-mnist/` | ✅ Fixed | Added `module3-mnist/README.md`. |
