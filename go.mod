@@ -11,6 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -57,6 +58,4 @@ require (
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	gonum.org/v1/gonum v0.17.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
