@@ -1,74 +1,57 @@
-# Module 1 Automated Testing Plan (Execution-Ready, Enforceable)
+# Module 1 Automated Testing Plan (Execution-Grade)
 
-Scope: `module1-hysteresis` physics + controller validation in headless CI.
+Scope: `module1-hysteresis` physics/controller validation in headless CI.
 
-## 1) Objective and Operating Rules
+## Operating Contract
 
-**Objective:** falsify (not just regress) Module 1 behavior against DOI-backed observables, with deterministic artifacts and explicit pass/fail thresholds.
+- Headless only: `DISPLAY` and `WAYLAND_DISPLAY` must be unset.
+- No aggregate pass if any required material/dataset fails.
+- Required lanes must emit machine-readable artifacts.
+- Thresholds and runtime budgets below are hard gates.
 
-**Hard rules**
-- Required lanes are headless only (`DISPLAY` and `WAYLAND_DISPLAY` unset).
-- Every required test emits machine-readable artifacts.
-- No aggregate pass if any material/dataset fails.
-- Commands and runtime budgets in this plan are binding for CI gates.
+---
 
-## 2) Phased Delivery (P0/P1/P2)
+## P0 / P1 / P2 Waves
 
-## P0 — CI Safety Baseline (must exist before any claim)
+### P0 — CI Safety Baseline (required first)
+**Deliverables**
+- Deterministic build/test lane for Module 1.
+- Artifact emission for required validation tests.
+- Explicit material matrix (no implicit defaults).
 
-Deliverables
-- Deterministic build/test baseline for Module 1 lanes.
-- Artifact emission wired into required tests.
-- Material-explicit execution matrix (no implicit defaults).
+**Exit criteria**
+- PR and nightly lanes pass with complete artifacts.
+- Artifact schema validates for every required run.
 
-Acceptance
-- Gate commands (Section 3) run green in PR and nightly.
-- Artifact schema (Section 5) validates for every required run.
+### P1 — Physics Falsification Core (primary gate)
+**Deliverables**
+- `RG-PHY-OBS-01`: DOI-backed major-loop falsification.
+- `RG-VAL-M1-01`, `RG-VAL-M1-02`: 9-material regression + golden drift.
+- `RG-VAL-M1-03`: Write/Verify stats export + schema validation.
 
-## P1 — Physics Falsification Core (primary scientific gate)
-
-Deliverables
-- DOI-backed major-loop falsification (`RG-PHY-OBS-01`).
-- 9-material deep regression + golden loop drift checks (`RG-VAL-M1-01`, `RG-VAL-M1-02`).
-- Write/Verify stats exported and validated (`RG-VAL-M1-03`).
-
-Acceptance thresholds (must all pass)
+**Hard thresholds (all required)**
 - `|Pr_error| <= 10%`
 - `|Ec_error| <= 10%`
 - `RMSE(P(E))/Ps <= 0.05`
 - `LoopArea_error <= 25%`
-- Golden drift: normalized RMS drift `<= 1e-3` vs approved baseline artifact.
+- Golden normalized RMS drift `<= 1e-3`
 
-## P2 — Extended Falsification + Uncertainty
+### P2 — Extended Falsification + Uncertainty
+**Deliverables**
+- `RG-PHY-OBS-02`: switching kinetics falsification.
+- `RG-PHY-OBS-03`: FORC/minor-loop falsification.
+- `RG-VAL-M1-04`: Monte Carlo uncertainty propagation.
 
-Deliverables
-- Switching kinetics falsification (`RG-PHY-OBS-02`) with explicit fit quality.
-- FORC/minor-loop falsification (`RG-PHY-OBS-03`).
-- Monte Carlo uncertainty propagation (`RG-VAL-M1-04`).
-
-Acceptance thresholds (must all pass)
-- Kinetics fit: `R^2 >= 0.95` and parameter CI width <= 30% of estimate.
+**Hard thresholds (all required)**
+- Kinetics: `R^2 >= 0.95`, parameter CI width `<= 30%` of estimate.
 - FORC/minor-loop: normalized shape error `<= 0.10`, return-point error `<= 1% Ps`.
-- Uncertainty: literature target metric lies inside 95% CI for `Pr` and `Ec`.
+- UQ: literature target lies inside 95% CI for `Pr` and `Ec`.
 
-### Statistical Method Policy (enforceable)
+---
 
-Sample-size minima
-- Seeded scalar metrics (pulses, overshoots, drift): `n >= 30` runs per material/engine in nightly, `n >= 100` in release.
-- Distribution-comparison metrics (KS): `n >= 200` samples per distribution; otherwise mark test `insufficient_n` and fail gate.
-- Proportion metrics (success/failure rates): `n >= 200` writes per material.
+## Command Lanes (PR / Nightly / Release)
 
-Decision rules
-1. Run Shapiro-Wilk normality test at `alpha = 0.05` when `8 <= n <= 5000`.
-2. If normality not rejected (`p >= 0.05`), report two-sided 95% t-interval.
-3. Otherwise report BCa bootstrap 95% CI (`2000` resamples nightly, `10000` resamples release, fixed seed).
-4. For proportions, always use Wilson 95% CI (not Wald).
-5. Use two-sample KS only for continuous distributions and valid `n`; report `(D, p)`.
-6. KS gate rule: `p <= 0.01` fail, `0.01 < p < 0.05` warning, `p >= 0.05` pass.
-
-## 3) CI Gates with Exact Commands + Runtime Budgets
-
-All commands executed from repo root:
+Run from repo root:
 
 ```bash
 cd <local-path>
@@ -76,9 +59,8 @@ export DISPLAY=
 export WAYLAND_DISPLAY=
 ```
 
-## PR Gate (target <= 12 min, hard cap 15 min)
-
-Purpose: fail fast on regressions; run P0 + minimal P1.
+### PR lane (P0 + minimal P1)
+**Runtime budget:** target `<= 12 min`, hard cap `15 min`.
 
 ```bash
 go build ./... && go vet ./...
@@ -86,14 +68,13 @@ go test -short -count=1 ./...
 go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_LiteratureBacked
 ```
 
-Pass criteria
+**Pass requires**
 - Exit code 0 for every command.
-- Required falsification thresholds pass for each dataset/material in run.
-- Artifacts generated for each falsification test invocation.
+- P1 thresholds pass for each dataset/material exercised.
+- Required artifacts emitted.
 
-## Nightly Gate (target <= 45 min, hard cap 60 min)
-
-Purpose: full P1 + broad stability checks.
+### Nightly lane (full P1)
+**Runtime budget:** target `<= 45 min`, hard cap `60 min`.
 
 ```bash
 go build ./... && go vet ./...
@@ -103,13 +84,13 @@ bash scripts/run_literature_validation.sh
 go test -race ./module1-hysteresis/... ./shared/physics/...
 ```
 
-Pass criteria
-- All PR criteria, plus race-free execution.
-- 9-material matrix complete (no missing material verdicts).
+**Pass requires**
+- PR lane pass conditions.
+- Full 9-material matrix complete.
+- Race lane clean.
 
-## Release Gate (target <= 90 min, hard cap 120 min)
-
-Purpose: P0 + P1 + P2 publication-grade evidence.
+### Release lane (P0 + P1 + P2)
+**Runtime budget:** target `<= 90 min`, hard cap `120 min`.
 
 ```bash
 go build ./... && go vet ./...
@@ -120,110 +101,77 @@ bash scripts/run_literature_validation.sh
 go test -race ./...
 ```
 
-Pass criteria
-- All nightly criteria, plus P2 thresholds met.
-- Release artifact bundle produced (Section 5) with immutable commit hash.
+**Pass requires**
+- Nightly lane pass conditions.
+- All P2 thresholds satisfied.
+- Immutable release artifact bundle keyed by commit SHA.
 
-### Runtime Impact Estimates for Added Statistical Controls
+---
 
-Estimated incremental cost vs current non-statistical baseline (same hardware class):
-- Shapiro-Wilk + CI selection metadata: `< 30s` per nightly run.
-- BCa bootstrap (`2000` resamples, nightly): `+4 to +8 min`.
-- BCa bootstrap (`10000` resamples, release): `+15 to +30 min`.
-- KS drift checks across required artifacts: `+1 to +3 min`.
-- JSON uncertainty-schema validation: `< 1 min`.
+## Statistical Policy (enforced)
 
-These estimates are already included in the PR/Nightly/Release runtime budgets above.
+### Minimum sample sizes
+- Seeded scalar metrics: `n >= 30` nightly, `n >= 100` release.
+- Distribution metrics (KS): `n >= 200` per distribution.
+- Proportion metrics: `n >= 200` writes per material.
 
-## 4) Falsification Matrix (enforceable)
+If minima are unmet: mark `insufficient_n` and fail gate.
 
-| ID | Observable | Required metric(s) | Fail condition |
+### CI / hypothesis rules
+1. Shapiro-Wilk (`alpha=0.05`) when `8 <= n <= 5000`.
+2. If normality not rejected (`p >= 0.05`): two-sided 95% t-interval.
+3. Else: BCa bootstrap 95% CI (`2000` nightly, `10000` release; fixed seed).
+4. Proportions: Wilson 95% CI.
+5. KS for continuous distributions only; report `(D, p)`.
+6. KS gate: `p <= 0.01` fail; `0.01 < p < 0.05` warning; `p >= 0.05` pass.
+
+---
+
+## Falsification Matrix
+
+| ID | Observable | Required metrics | Hard fail condition |
 |---|---|---|---|
-| RG-PHY-OBS-01 | Major P–E loop vs DOI data | Pr error, Ec error, RMSE/Ps, loop area error | Any metric over threshold |
-| RG-PHY-OBS-02 | Switching kinetics vs DOI data | R^2, parameter CI width, residual diagnostics | R^2 < 0.95 or CI too wide |
-| RG-PHY-OBS-03 | FORC/minor loops vs DOI data | Shape error, return-point error | Any metric over threshold |
-| RG-VAL-M1-01 | 9-material regression | per-material pass count | Any material missing/failing |
-| RG-VAL-M1-02 | Golden regression | normalized RMS drift | Drift > 1e-3 |
-| RG-VAL-M1-03 | WriteVerifyStats export | schema compliance + finite values | Missing/invalid field |
+| RG-PHY-OBS-01 | Major P–E loop vs DOI data | Pr error, Ec error, RMSE/Ps, loop area error | Any metric above threshold |
+| RG-PHY-OBS-02 | Switching kinetics vs DOI data | R^2, parameter CI width, residual diagnostics | `R^2 < 0.95` or CI width too large |
+| RG-PHY-OBS-03 | FORC/minor loops vs DOI data | Shape error, return-point error | Any metric above threshold |
+| RG-VAL-M1-01 | 9-material regression | Per-material pass | Any missing/failing material |
+| RG-VAL-M1-02 | Golden regression | Normalized RMS drift | Drift `> 1e-3` |
+| RG-VAL-M1-03 | WriteVerifyStats export | Schema + finite values | Missing/invalid field |
 | RG-VAL-M1-04 | Monte Carlo UQ | 95% CI coverage | Target outside CI |
 
-## 5) Artifact Contract (required JSON schema)
+---
 
-Each required test writes one JSON artifact under:
+## Artifact Contract
+
+**Path**
 - `output/validation/module1/<gate>/<test_id>/<material>/<dataset>.json`
 
-Minimal schema (required keys)
+**Required keys**
+- `schema_version`, `timestamp_utc`, `commit`, `gate`, `test_id`
+- `material{...}`, `dataset{doi,source_ref,units}`
+- `metrics{...}`, `thresholds{...}`, `verdict`
+- `uncertainty{method,confidence,sample_size,ci,...}` where applicable
 
-```json
-{
-  "schema_version": "m1.validation.v1",
-  "timestamp_utc": "RFC3339",
-  "commit": "<git sha>",
-  "gate": "pr|nightly|release",
-  "test_id": "RG-PHY-OBS-01",
-  "material": {
-    "name": "string",
-    "Ec_Vm": 0,
-    "Ps_Cm2": 0,
-    "Pr_Cm2": 0,
-    "thickness_m": 0,
-    "Gmin_S": 0,
-    "Gmax_S": 0
-  },
-  "dataset": {
-    "doi": "string",
-    "source_ref": "figure/table identifier",
-    "units": {"E": "MV/cm", "P": "uC/cm2"}
-  },
-  "metrics": {
-    "pr_error_pct": 0,
-    "ec_error_pct": 0,
-    "rmse_over_ps": 0,
-    "loop_area_error_pct": 0,
-    "r2": 0,
-    "return_point_error_over_ps": 0
-  },
-  "uncertainty": {
-    "method": "t|bootstrap_bca|wilson",
-    "confidence": 0.95,
-    "sample_size": 0,
-    "normality": {"test": "shapiro_wilk", "p_value": 0},
-    "bootstrap": {"resamples": 0, "seed": 0},
-    "ks": {"d_stat": 0, "p_value": 0, "baseline_ref": "optional"},
-    "ci": {
-      "Pr_Cm2": {"low": 0, "high": 0},
-      "Ec_Vm": {"low": 0, "high": 0}
-    }
-  },
-  "thresholds": {
-    "pr_error_pct_max": 10,
-    "ec_error_pct_max": 10,
-    "rmse_over_ps_max": 0.05,
-    "loop_area_error_pct_max": 25
-  },
-  "verdict": "pass|fail",
-  "notes": "optional"
-}
-```
+**Enforcement**
+- Missing required key, NaN/Inf, or unit mismatch => fail.
+- Sample-size minima must be met.
+- `bootstrap_bca` must use `>=2000` nightly, `>=10000` release.
+- KS entries require `d_stat`, `p_value`, and baseline reference.
+- `verdict` must be derivable from metrics/thresholds (no manual override).
 
-Schema enforcement
-- Missing required key, NaN/Inf metric, or unit mismatch => automatic fail.
-- `uncertainty.sample_size` must satisfy policy minima for the metric class; otherwise fail.
-- If `uncertainty.method=bootstrap_bca`, `bootstrap.resamples` must be `>=2000` nightly and `>=10000` release.
-- If KS is used, `ks.p_value` and `ks.d_stat` are required and must reference a baseline artifact.
-- `verdict` must be derivable from metrics + thresholds (no manual override).
+---
 
-## 6) Execution Order (single source of truth)
+## Execution Order (authoritative)
 
-1. Run PR gate on every PR.
-2. Run nightly gate once per day on default branch.
-3. Run release gate before tagging release.
-4. Publish artifact bundle and keep immutable by commit hash.
+1. PR lane on every PR.
+2. Nightly lane once/day on default branch.
+3. Release lane before tagging release.
+4. Publish immutable artifact bundle keyed by commit SHA.
 
-## 7) Definition of Done
+## Definition of Done
 
-Plan execution is complete when:
-- P0, P1, P2 all implemented and passing at release gate.
-- All falsification IDs above have artifacts + explicit pass/fail verdicts.
-- Runtime budgets are met (or documented exception approved with reason).
+Done when all are true:
+- P0, P1, P2 implemented and passing in release lane.
+- All listed IDs have artifacts + explicit pass/fail verdicts.
+- Runtime budgets met (or exception documented/approved).
 - No unresolved per-material failures.
