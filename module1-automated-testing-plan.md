@@ -108,22 +108,26 @@ go test -race ./...
 
 ---
 
-## Statistical Policy (enforced)
+## Statistical Rigor Policy (enforced)
 
-### Minimum sample sizes
+### Minimum sample sizes (hard gate)
 - Seeded scalar metrics: `n >= 30` nightly, `n >= 100` release.
 - Distribution metrics (KS): `n >= 200` per distribution.
 - Proportion metrics: `n >= 200` writes per material.
 
 If minima are unmet: mark `insufficient_n` and fail gate.
 
-### CI / hypothesis rules
+### CI method selection (Shapiro/t vs BCa bootstrap)
 1. Shapiro-Wilk (`alpha=0.05`) when `8 <= n <= 5000`.
-2. If normality not rejected (`p >= 0.05`): two-sided 95% t-interval.
-3. Else: BCa bootstrap 95% CI (`2000` nightly, `10000` release; fixed seed).
+2. If normality not rejected (`p >= 0.05`): two-sided 95% t-interval (`method=t`).
+3. Else: BCa bootstrap 95% CI (`method=bootstrap_bca`; `2000` nightly, `10000` release; fixed seed).
 4. Proportions: Wilson 95% CI.
-5. KS for continuous distributions only; report `(D, p)`.
-6. KS gate: `p <= 0.01` fail; `0.01 < p < 0.05` warning; `p >= 0.05` pass.
+
+### KS thresholds
+- Apply KS only to continuous distributions with valid `n`; always report `(D, p)`.
+- Pass: `D <= 0.10` and `p >= 0.05`.
+- Warning: `0.10 < D <= 0.15` or `0.01 < p < 0.05`.
+- Fail: `D > 0.15` or `p <= 0.01`.
 
 ---
 
@@ -150,13 +154,15 @@ If minima are unmet: mark `insufficient_n` and fail gate.
 - `schema_version`, `timestamp_utc`, `commit`, `gate`, `test_id`
 - `material{...}`, `dataset{doi,source_ref,units}`
 - `metrics{...}`, `thresholds{...}`, `verdict`
-- `uncertainty{method,confidence,sample_size,ci,...}` where applicable
+- `uncertainty{method,confidence,sample_size,ci{Pr_Cm2,Ec_Vm}}`
+- Method fields when applicable: `normality{test,p_value}`, `bootstrap{resamples,seed}`, `ks{d_stat,p_value,baseline_ref}`
 
 **Enforcement**
 - Missing required key, NaN/Inf, or unit mismatch => fail.
 - Sample-size minima must be met.
-- `bootstrap_bca` must use `>=2000` nightly, `>=10000` release.
-- KS entries require `d_stat`, `p_value`, and baseline reference.
+- `method=t` requires `normality.test=shapiro_wilk` and `normality.p_value`.
+- `bootstrap_bca` requires `bootstrap.resamples`/`bootstrap.seed` and must use `>=2000` nightly, `>=10000` release.
+- KS entries require `d_stat`, `p_value`, baseline reference, and KS threshold verdicts above.
 - `verdict` must be derivable from metrics/thresholds (no manual override).
 
 ---
