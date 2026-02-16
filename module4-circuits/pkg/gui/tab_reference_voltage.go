@@ -205,12 +205,12 @@ func (ca *CircuitsApp) createVoltageSafetyRules() fyne.CanvasObject {
 | Parameter | Value | Source |
 |-----------|-------|--------|
 | Coercive Voltage (Vc) | %.2fV | Derived: Ec x thickness (sim model); Ec is thickness/process dependent |
-| Read Max | %.2fV | Empirical simulator guard band: 0.7 x Vc (assumed; needs per-device validation) |
+| Read Max | %.2fV | ASSUMED: Empirical simulator guard band: < 0.7 x Vc (needs per-device validation) |
 | Write Min | %.2fV | Derived from Vc threshold in current model |
 | Write Max | %.2fV | Simulator ceiling: 2.5 x Vc (engineering safety margin) |
 
-**Thickness-dependent note:** Reported Ec varies with stack engineering/thickness (often cited ~0.6-1.5 MV/cm for HZO families), so required write voltage is not universal.
-**Literature context:** Sub-1V switching has been reported in aggressively scaled ferroelectric stacks (~3.6 nm) (ACS Applied Materials & Interfaces, 2024). This simulator keeps conservative defaults for educational stability.
+**Thickness-dependent note:** Reported Ec varies with stack engineering/thickness (0.6-1.5 MV/cm). Required write voltage is not universal.
+**Literature context:** Sub-1V switching has been demonstrated at ~3.6 nm thickness (ACS AMI 2024). This simulator uses conservative defaults for educational stability.
 
 ### Critical Safety Rules
 

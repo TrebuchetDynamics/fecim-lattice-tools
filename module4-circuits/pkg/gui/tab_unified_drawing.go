@@ -411,7 +411,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	var archColor color.RGBA
 	switch arch {
 	case sharedwidgets.Architecture2T1R:
-		archText = "2T1R"
+		archText = "2T1R (DAPS)"
 		archColor = color.RGBA{100, 180, 220, 255}
 	case sharedwidgets.Architecture1T1R:
 		archText = "1T1R"

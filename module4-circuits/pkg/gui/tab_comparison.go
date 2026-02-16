@@ -381,7 +381,7 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	}
 
 	arraySizeLabel := widget.NewLabel("Array Size: 8 × 8 = 64 MACs")
-	contextLabel := widget.NewLabel("GPU row shown as sequential-equivalent work for one MVM; batched GPU kernels can raise throughput while using more system power.")
+	contextLabel := widget.NewLabel("GPU row shown as sequential-equivalent work for one MVM. FeCIM completes in 1 cycle. Note: GPUs compensate with massive parallelism (batching) at higher power.")
 	contextLabel.Wrapping = fyne.TextWrapWord
 
 	tableContent := container.NewVBox(
