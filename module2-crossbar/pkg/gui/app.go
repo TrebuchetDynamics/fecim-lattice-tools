@@ -758,13 +758,7 @@ func (ca *CrossbarApp) updateConductanceDisplay() {
 
 // updateStatus updates the status label.
 func (ca *CrossbarApp) updateStatus(status string) {
-	if ca.statusBar == nil {
-		if ca.statusLabel == nil {
-			return
-		}
-		ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
-	}
-	ca.statusBar.Update(status)
+	sharedwidgets.EnsureStatusBar(&ca.statusBar, ca.statusLabel, "Status: ", status)
 }
 
 // setEducationalContent updates the educational panel.

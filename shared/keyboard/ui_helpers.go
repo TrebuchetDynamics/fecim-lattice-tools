@@ -85,6 +85,12 @@ func SelectPrevOption(selector *widget.Select) bool {
 
 // ShowHelpTextDialog displays raw help text in a standard scrollable dialog.
 func ShowHelpTextDialog(w fyne.Window, title, helpText string, width, height float32) {
+	ShowHelpTextDialogWithCallback(w, title, helpText, width, height, nil)
+}
+
+// ShowHelpTextDialogWithCallback displays raw help text in a scrollable dialog
+// and calls onClose (if non-nil) when the dialog is dismissed.
+func ShowHelpTextDialogWithCallback(w fyne.Window, title, helpText string, width, height float32, onClose func()) {
 	helpLabel := widget.NewLabel(helpText)
 	helpLabel.Wrapping = fyne.TextWrapWord
 
@@ -92,5 +98,8 @@ func ShowHelpTextDialog(w fyne.Window, title, helpText string, width, height flo
 	helpContent.SetMinSize(fyne.NewSize(width, height))
 
 	helpDialog := dialog.NewCustom(title, "Close", helpContent, w)
+	if onClose != nil {
+		helpDialog.SetOnClosed(onClose)
+	}
 	helpDialog.Show()
 }

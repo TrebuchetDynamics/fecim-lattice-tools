@@ -4,14 +4,10 @@ package gui
 import (
 	"fmt"
 	"image/color"
-	"strings"
 	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -128,153 +124,51 @@ func (p AutoDemoPhase) PhaseDuration() time.Duration {
 
 // ComparisonModeIndicator shows the current mode.
 type ComparisonModeIndicator struct {
-	widget.BaseWidget
-
-	mu      sync.RWMutex
-	mode    ComparisonMode
-	minSize fyne.Size
+	*sharedwidgets.ModeIndicator
 }
 
 // NewComparisonModeIndicator creates a new mode indicator.
 func NewComparisonModeIndicator() *ComparisonModeIndicator {
 	m := &ComparisonModeIndicator{
-		mode:    ComparisonModeIdle,
-		minSize: fyne.NewSize(120, 40),
+		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
+			MinSize: fyne.NewSize(120, 40),
+			Styles: map[int]sharedwidgets.ModeStyle{
+				int(ComparisonModeIdle): {
+					Text:            "IDLE",
+					BackgroundColor: color.RGBA{60, 60, 80, 255},
+					BorderColor:     color.RGBA{100, 100, 130, 255},
+				},
+				int(ComparisonModeCalculating): {
+					Text:            "CALCULATING",
+					BackgroundColor: color.RGBA{80, 120, 50, 255},
+					BorderColor:     color.RGBA{140, 200, 100, 255},
+				},
+				int(ComparisonModeComparing): {
+					Text:            "COMPARING",
+					BackgroundColor: color.RGBA{50, 80, 150, 255},
+					BorderColor:     color.RGBA{100, 150, 255, 255},
+				},
+			},
+		}),
 	}
-	m.ExtendBaseWidget(m)
 	return m
 }
 
 // SetMode updates the current mode.
 func (m *ComparisonModeIndicator) SetMode(mode ComparisonMode) {
-	m.mu.Lock()
-	m.mode = mode
-	m.mu.Unlock()
-	fyne.Do(func() {
-		m.Refresh()
-	})
+	m.ModeIndicator.SetMode(int(mode))
 }
 
-// MinSize returns the minimum size.
-func (m *ComparisonModeIndicator) MinSize() fyne.Size {
-	return m.minSize
+// GetMode returns the current mode.
+func (m *ComparisonModeIndicator) GetMode() ComparisonMode {
+	return ComparisonMode(m.ModeIndicator.GetMode())
 }
-
-// CreateRenderer implements fyne.Widget.
-func (m *ComparisonModeIndicator) CreateRenderer() fyne.WidgetRenderer {
-	return &comparisonModeRenderer{indicator: m}
-}
-
-type comparisonModeRenderer struct {
-	indicator *ComparisonModeIndicator
-	objects   []fyne.CanvasObject
-	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
-}
-
-func (r *comparisonModeRenderer) MinSize() fyne.Size {
-	return r.indicator.minSize
-}
-
-func (r *comparisonModeRenderer) Layout(size fyne.Size) {
-	sharedwidgets.DebugLayoutCall("comparisonModeRenderer", size)
-	if !r.cache.ShouldLayout(size) {
-		return
-	}
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
-}
-
-func (r *comparisonModeRenderer) Refresh() {
-	sharedwidgets.DebugRefreshCall("comparisonModeRenderer", r.indicator.Size())
-	size := r.indicator.Size()
-	if !r.cache.ShouldLayout(size) {
-		return
-	}
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
-}
-
-func (r *comparisonModeRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
-	if size.Width <= 0 || size.Height <= 0 {
-		return
-	}
-
-	r.indicator.mu.RLock()
-	mode := r.indicator.mode
-	r.indicator.mu.RUnlock()
-
-	r.objects = r.objects[:0]
-
-	// Constrain to minimum size to prevent growing
-	minSize := r.indicator.minSize
-	if size.Width > minSize.Width {
-		size.Width = minSize.Width
-	}
-	if size.Height > minSize.Height {
-		size.Height = minSize.Height
-	}
-
-	var bgColor, borderColor color.RGBA
-	var modeText string
-
-	switch mode {
-	case ComparisonModeIdle:
-		bgColor = color.RGBA{60, 60, 80, 255}
-		borderColor = color.RGBA{100, 100, 130, 255}
-		modeText = "IDLE"
-	case ComparisonModeCalculating:
-		bgColor = color.RGBA{80, 120, 50, 255}
-		borderColor = color.RGBA{140, 200, 100, 255}
-		modeText = "CALCULATING"
-	case ComparisonModeComparing:
-		bgColor = color.RGBA{50, 80, 150, 255}
-		borderColor = color.RGBA{100, 150, 255, 255}
-		modeText = "COMPARING"
-	}
-
-	// Border
-	border := canvas.NewRectangle(borderColor)
-	border.Resize(size)
-	r.objects = append(r.objects, border)
-
-	// Background
-	padding := float32(2)
-	bg := canvas.NewRectangle(bgColor)
-	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
-	bg.Move(fyne.NewPos(padding, padding))
-	r.objects = append(r.objects, bg)
-
-	// Mode text
-	text := canvas.NewText(modeText, color.White)
-	fontSize := size.Height * 0.35
-	if fontSize > 14 {
-		fontSize = 14
-	}
-	if fontSize < 14 {
-		fontSize = 10
-	}
-	text.TextSize = fontSize
-	text.TextStyle = fyne.TextStyle{Bold: true}
-	textWidth := float32(len(modeText)) * fontSize * 0.6
-	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-fontSize)/2))
-	r.objects = append(r.objects, text)
-}
-
-func (r *comparisonModeRenderer) Objects() []fyne.CanvasObject {
-	return r.objects
-}
-
-func (r *comparisonModeRenderer) Destroy() {}
 
 // ComparisonEducationalPanel shows explanations.
 type ComparisonEducationalPanel struct {
-	widget.BaseWidget
+	*sharedwidgets.EducationalPanel
 
 	mu               sync.RWMutex
-	title            string
-	content          string
-	minSize          fyne.Size
 	presentationMode PresentationMode
 	currentPhase     AutoDemoPhase
 }
@@ -282,25 +176,15 @@ type ComparisonEducationalPanel struct {
 // NewComparisonEducationalPanel creates a new educational panel.
 func NewComparisonEducationalPanel() *ComparisonEducationalPanel {
 	e := &ComparisonEducationalPanel{
-		title:            "Why CIM Wins",
-		content:          "Compute-in-memory eliminates\nthe memory bottleneck.",
-		minSize:          fyne.NewSize(200, 200),
+		EducationalPanel: sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
+			Title:   "Why CIM Wins",
+			Content: "Compute-in-memory eliminates\nthe memory bottleneck.",
+			MinSize: fyne.NewSize(200, 200),
+		}),
 		presentationMode: PresentationModeManual,
 		currentPhase:     AutoDemoPhaseEnergyRace,
 	}
-	e.ExtendBaseWidget(e)
 	return e
-}
-
-// SetContent updates the content.
-func (e *ComparisonEducationalPanel) SetContent(title, content string) {
-	e.mu.Lock()
-	e.title = title
-	e.content = content
-	e.mu.Unlock()
-	fyne.Do(func() {
-		e.Refresh()
-	})
 }
 
 // SetPresentationMode sets the current presentation mode.
@@ -475,111 +359,20 @@ func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
 	e.SetContent("Why Compute-in-Memory Wins", content)
 }
 
-// MinSize returns the minimum size.
-func (e *ComparisonEducationalPanel) MinSize() fyne.Size {
-	return e.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (e *ComparisonEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
-	e.mu.RLock()
-	title := e.title
-	content := e.content
-	e.mu.RUnlock()
-
-	// Section title: 18-20pt Bold
-	titleLabel := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	titleLabel.Importance = widget.HighImportance
-
-	// Body text: 13-14pt Regular (default)
-	contentLabel := widget.NewLabel(content)
-	contentLabel.Wrapping = fyne.TextWrapWord
-
-	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
-	contentScroll := container.NewScroll(contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(240, 160))
-
-	box := container.NewVBox(
-		titleLabel,
-		widget.NewSeparator(),
-		contentScroll,
-	)
-
-	return widget.NewSimpleRenderer(box)
-}
-
 // ComparisonOperationLog shows timestamped operations.
 type ComparisonOperationLog struct {
-	widget.BaseWidget
-
-	mu         sync.RWMutex
-	entries    []string
-	maxEntries int
-	startTime  time.Time
-	minSize    fyne.Size
-
-	titleLabel   *widget.Label
-	contentLabel *widget.Label
+	*sharedwidgets.OperationLog
 }
 
 // NewComparisonOperationLog creates a new operation log.
 func NewComparisonOperationLog() *ComparisonOperationLog {
 	o := &ComparisonOperationLog{
-		maxEntries: 8,
-		startTime:  time.Now(),
-		minSize:    fyne.NewSize(200, 150),
-		entries:    make([]string, 0, 8),
+		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+			Title:        "Calculation Log",
+			MaxEntries:   8,
+			MinSize:      fyne.NewSize(200, 150),
+			UseMonospace: true,
+		}),
 	}
-	o.titleLabel = widget.NewLabelWithStyle("Calculation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	// Use monospace font for log entries for better readability
-	o.contentLabel = widget.NewLabel("Ready for calculations...")
-	o.contentLabel.Wrapping = fyne.TextWrapWord
-	o.contentLabel.TextStyle = fyne.TextStyle{Monospace: true}
-	o.ExtendBaseWidget(o)
 	return o
-}
-
-// Add adds a new log entry.
-func (o *ComparisonOperationLog) Add(entry string) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	elapsed := time.Since(o.startTime).Seconds()
-	timestamped := fmt.Sprintf("t=%.1fs >> %s", elapsed, entry)
-	o.entries = append(o.entries, timestamped)
-
-	if len(o.entries) > o.maxEntries {
-		o.entries = o.entries[1:]
-	}
-
-	o.updateContent()
-}
-
-func (o *ComparisonOperationLog) updateContent() {
-	text := "Ready for calculations..."
-	if len(o.entries) > 0 {
-		text = strings.Join(o.entries, "\n")
-	}
-	fyne.Do(func() {
-		o.contentLabel.SetText(text)
-	})
-}
-
-// MinSize returns the minimum size.
-func (o *ComparisonOperationLog) MinSize() fyne.Size {
-	return o.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (o *ComparisonOperationLog) CreateRenderer() fyne.WidgetRenderer {
-	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
-	contentScroll := container.NewScroll(o.contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(190, 120))
-
-	box := container.NewVBox(
-		o.titleLabel,
-		widget.NewSeparator(),
-		contentScroll,
-	)
-	return widget.NewSimpleRenderer(box)
 }

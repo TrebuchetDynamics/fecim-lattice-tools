@@ -122,3 +122,21 @@ func (s *StatusBar) GetText() string {
 	}
 	return s.lastText
 }
+
+// EnsureStatusBar lazy-initializes *bar from label (if nil) and calls Update.
+// This eliminates the common pattern where modules duplicate updateStatus().
+//
+// Usage:
+//
+//	func (app *FooApp) updateStatus(status string) {
+//	    sharedwidgets.EnsureStatusBar(&app.statusBar, app.statusLabel, "Status: ", status)
+//	}
+func EnsureStatusBar(bar **StatusBar, label *widget.Label, prefix, status string) {
+	if *bar == nil {
+		if label == nil {
+			return
+		}
+		*bar = NewStatusBarWithLabel(label, prefix)
+	}
+	(*bar).Update(status)
+}

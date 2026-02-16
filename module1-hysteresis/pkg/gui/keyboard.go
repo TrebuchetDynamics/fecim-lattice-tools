@@ -2,11 +2,9 @@ package gui
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/keyboard"
+
 	"fyne.io/fyne/v2"
 )
 
@@ -222,13 +220,5 @@ func (a *App) showKeyboardHelp() {
 		},
 	})
 
-	helpLabel := widget.NewLabel(helpText)
-	helpLabel.Wrapping = fyne.TextWrapWord
-
-	helpContent := container.NewVScroll(helpLabel)
-	helpContent.SetMinSize(fyne.NewSize(500, 400))
-
-	helpDialog := dialog.NewCustom("Keyboard Shortcuts", "Close", helpContent, a.mainWindow)
-	helpDialog.SetOnClosed(resume)
-	helpDialog.Show()
+	keyboard.ShowHelpTextDialogWithCallback(a.mainWindow, "Keyboard Shortcuts", helpText, 500, 400, resume)
 }

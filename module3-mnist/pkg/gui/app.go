@@ -665,13 +665,7 @@ func (ma *MNISTApp) onConfusionCellTapped(actual, predicted, count int) {
 
 // updateStatus updates the status label.
 func (ma *MNISTApp) updateStatus(status string) {
-	if ma.statusBar == nil {
-		if ma.statusLabel == nil {
-			return
-		}
-		ma.statusBar = sharedwidgets.NewStatusBarWithLabel(ma.statusLabel, "Status: ")
-	}
-	ma.statusBar.Update(status)
+	sharedwidgets.EnsureStatusBar(&ma.statusBar, ma.statusLabel, "Status: ", status)
 }
 
 // generateSyntheticData creates simple synthetic digit patterns for demo.

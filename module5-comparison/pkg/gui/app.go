@@ -641,11 +641,5 @@ func (ca *ComparisonApp) getWorkloadMACs() int {
 // updateStatus updates the status label using cache to prevent redundant SetText calls.
 // All status updates should go through this method to avoid bypassing Fyne's internal cache.
 func (ca *ComparisonApp) updateStatus(status string) {
-	if ca.statusBar == nil {
-		if ca.statusLabel == nil {
-			return
-		}
-		ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
-	}
-	ca.statusBar.Update(status)
+	sharedwidgets.EnsureStatusBar(&ca.statusBar, ca.statusLabel, "Status: ", status)
 }

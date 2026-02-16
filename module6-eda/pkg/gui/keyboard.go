@@ -5,6 +5,7 @@ import (
 	"fecim-lattice-tools/shared/keyboard"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -76,14 +77,11 @@ func SetupKeyboard(w fyne.Window, viewSelector *widget.Select) {
 	km.Register()
 }
 
-// showInfoDialog shows a simple info dialog (kept as helper used by handlers and help).
+// showInfoDialog shows a simple info dialog (kept as helper used by handlers).
 func showInfoDialog(w fyne.Window, title, message string) {
 	fyne.Do(func() {
-		d := w.Canvas()
-		_ = d // ensure canvas exists
+		dialog.ShowInformation(title, message, w)
 	})
-	// Use a lightweight approach consistent with other modules
-	keyboard.ShowHelpTextDialog(w, title, message, 300, 150)
 }
 
 // ShowKeyboardHelp displays a dialog with all keyboard shortcuts
