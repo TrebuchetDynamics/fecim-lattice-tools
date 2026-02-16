@@ -41,3 +41,24 @@ Totals (packages under command scope):
 ## ngspice availability
 - `which ngspice` returned no path (not installed on this host)
 - Structural netlist validation is active; runtime ngspice comparison test auto-skips with message until installed.
+
+---
+
+# Status — Riju (Repo)
+
+Date: 2026-02-15 17:13 CST (America/Monterrey)
+Repo HEAD: `a8fb558`
+
+## Current focus
+Tier-1 Module 1 physics falsification stays mandatory + green; expand literature packs (next: MDPI 10.3390/ma13132968 digitization).
+
+## Gates (fresh)
+- `go build ./...` : PASS (exit 0)
+- `go vet ./...` : PASS (exit 0)
+- `go test -short -count=1 ./...` : PASS (exit 0)
+- `go test -v -count=1 ./validation/literature -run TestModule1_PELoop_LiteratureBacked` : PASS
+  - park2015_hzo_10nm (doi=10.1002/adma.201404531): Pr err=0.00%, Ec err=0.00%, RMSE/Ps=0.0000, areaErr=0.00%
+  - cheema2020_superlattice_5nm (doi=10.1038/s41586-020-2208-x): Pr err=0.00%, Ec err=0.01%, RMSE/Ps=0.0002, areaErr=0.00%
+
+## Blockers
+- Race lane (`go test -race -short ./...`) not green due to pre-existing races (GUI/E2E + M1 renderer `running` bool without sync). Non-race Tier‑1 gates are green.

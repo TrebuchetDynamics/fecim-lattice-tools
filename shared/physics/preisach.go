@@ -1,7 +1,5 @@
 package physics
 
-import ()
-
 // EverettFunction abstract interface for the density distribution
 type EverettFunction interface {
 	// Calculate returns the integral of density distribution over the region defined by alpha, beta
@@ -18,8 +16,9 @@ type TurningPoint struct {
 // hysteretic polarization P(E) in ferroelectric media.
 //
 // Physics context:
-//   - E is electric field in V/m.
-//   - P returned by Update/ComputePolarization is polarization in C/m^2.
+//   - E is electric field in V/m (SI Unit).
+//   - P returned by Update/ComputePolarization is polarization in C/m^2 (SI Unit).
+//   - Literature often uses MV/cm and µC/cm², see shared/physics/units.go.
 //   - The stack keeps only reversal extrema and enforces the classical
 //     wipe-out property, which removes eclipsed minor loops while preserving
 //     major-loop memory.

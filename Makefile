@@ -1,4 +1,41 @@
-.PHONY: build test test-race test-short bench vet fmt lint coverage clean ci qa-a0
+.PHONY: build test test-race test-short bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared
+# Help target - self-documenting Makefile
+help:
+	@echo "FeCIM Lattice Tools Makefile"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make build          Build all packages"
+	@echo "  make test           Run all tests"
+	@echo "  make test-race      Run tests with race detector"
+	@echo "  make test-short     Run only short tests"
+	@echo "  make test-shared    Run tests for shared packages"
+	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
+	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
+	@echo "  make test-mnist     Run tests for Module 3 (MNIST)"
+	@echo "  make test-circuits  Run tests for Module 4 (Circuits)"
+	@echo "  make bench          Run all benchmarks"
+	@echo "  make vet            Run go vet"
+	@echo "  make fmt            Run gofmt"
+	@echo "  make lint           Run golangci-lint (if available)"
+	@echo "  make coverage       Generate coverage report"
+	@echo "  make clean          Clean build artifacts"
+	@echo ""
+
+# Module-specific test targets
+test-shared:
+	$(GO) test ./shared/...
+
+test-hys:
+	$(GO) test ./module1-hysteresis/...
+
+test-xbar:
+	$(GO) test ./module2-crossbar/...
+
+test-mnist:
+	$(GO) test ./module3-mnist/...
+
+test-circuits:
+	$(GO) test ./module4-circuits/...
 
 qa-a0:
 	./scripts/qa_a0.sh

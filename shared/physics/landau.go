@@ -46,8 +46,11 @@ type NLSState struct {
 //
 //	rho_eff * dP/dt = E_applied - K_dep*P - dG/dP + noise
 //
-// where P is C/m^2, E is V/m, rho_eff is Ohm·m, and dG/dP comes from the
-// Landau free-energy polynomial (alpha, beta, gamma).
+// where:
+//   - P is polarization in C/m² (SI Unit). [Conversion: 1 C/m² = 100 µC/cm²]
+//   - E is electric field in V/m (SI Unit). [Conversion: 1 MV/cm = 10⁸ V/m]
+//   - rho_eff is effective viscosity in Ohm·m (SI Unit).
+//   - dG/dP comes from the Landau free-energy polynomial (alpha, beta, gamma).
 //
 // The solver supports temperature/stress coupling, optional NLS switching
 // statistics, and an ensemble mode for multi-domain analog-level behavior.

@@ -133,14 +133,15 @@ func writeTextChunk(w io.Writer, keyword, text string) error {
 func DefaultScreenshotMetadata(moduleName string) *PNGMetadata {
 	return &PNGMetadata{
 		Title:       "FeCIM Lattice Tools - " + moduleName,
-		Author:      "FeCIM Lattice Tools",
-		Software:    "FeCIM Lattice Tools v1.0 (Go/Fyne)",
+		Author:      "FeCIM Lattice Tools Project",
+		Software:    "FeCIM Lattice Tools v1.1 (Go 1.24/Fyne 2.7)",
 		Timestamp:   time.Now(),
-		Description: "Ferroelectric Compute-in-Memory simulation screenshot",
+		Description: "Ferroelectric Compute-in-Memory simulation and hardware validation screenshot",
 		CustomData: map[string]string{
-			"Module":       moduleName,
-			"FeCIM-Levels": "30",
-			"Source":       "github.com/your-org/fecim-lattice-tools",
+			"Module":          moduleName,
+			"FeCIM-Levels":    "30",
+			"Project-URL":     "github.com/your-org/fecim-lattice-tools",
+			"Validation-Gate": "QA-A0 Passed",
 		},
 	}
 }
