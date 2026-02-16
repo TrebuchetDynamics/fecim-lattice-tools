@@ -11,34 +11,37 @@ func TestEducationalPanelAndLogLogic(t *testing.T) {
 	a := fyneTest.NewApp()
 	defer a.Quit()
 
-	ep := NewEducationalPanel()
+	ep := NewEducationalPanel(EducationalPanelConfig{})
 	ep.SetMVMExplanation(0)
-	if ep.title != "Compute-in-Memory" || !strings.Contains(ep.content, "Matrix-Vector") {
-		t.Fatalf("unexpected MVM content: title=%q content=%q", ep.title, ep.content)
+	title, content := ep.GetContent()
+	if title != "Compute-in-Memory" || !strings.Contains(content, "Matrix-Vector") {
+		t.Fatalf("unexpected MVM content: title=%q content=%q", title, content)
 	}
 	ep.SetMVMExplanation(1)
 	ep.SetMVMExplanation(2)
 	ep.SetIRDropExplanation()
-	if !strings.Contains(ep.title, "IR Drop") {
-		t.Fatalf("unexpected IR drop title: %q", ep.title)
+	title, _ = ep.GetContent()
+	if !strings.Contains(title, "IR Drop") {
+		t.Fatalf("unexpected IR drop title: %q", title)
 	}
 	ep.SetSneakPathExplanation()
 	ep.SetIdleExplanation()
-	if !strings.Contains(ep.content, "CROSSBAR") {
-		t.Fatalf("unexpected idle content: %q", ep.content)
+	_, content = ep.GetContent()
+	if !strings.Contains(content, "CROSSBAR") {
+		t.Fatalf("unexpected idle content: %q", content)
 	}
 
-	log := NewOperationLog()
+	log := NewOperationLog(OperationLogConfig{})
 	for i := 0; i < 10; i++ {
 		log.Add("op")
 	}
-	if len(log.entries) != log.maxEntries {
-		t.Fatalf("expected entries capped to %d, got %d", log.maxEntries, len(log.entries))
+	if len(log.GetEntries()) != log.GetMaxEntries() {
+		t.Fatalf("expected entries capped to %d, got %d", log.GetMaxEntries(), len(log.GetEntries()))
 	}
 	log.AddWithResult("mvm", "ok", true)
 	log.AddWithResult("mvm", "err", false)
 	log.Clear()
-	if len(log.entries) != 0 {
+	if len(log.GetEntries()) != 0 {
 		t.Fatal("expected clear to remove entries")
 	}
 }
