@@ -3,96 +3,87 @@ package gui
 
 import (
 	"fecim-lattice-tools/shared/keyboard"
+
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+)
+
+// Custom actions specific to EDA module.
+const (
+	actionGenerateAll keyboard.Action = "eda_generate_all"
+	actionValidateAll keyboard.Action = "eda_validate_all"
+	actionExportPkg   keyboard.Action = "eda_export_package"
+	actionJumpView1   keyboard.Action = "eda_view_1"
+	actionJumpView2   keyboard.Action = "eda_view_2"
 )
 
 // SetupKeyboard initializes keyboard shortcuts for the EDA window.
 func SetupKeyboard(w fyne.Window, viewSelector *widget.Select) {
-	// Register Ctrl+S for save
-	ctrlS := &desktop.CustomShortcut{
-		KeyName:  fyne.KeyS,
-		Modifier: fyne.KeyModifierControl,
-	}
-	w.Canvas().AddShortcut(ctrlS, func(_ fyne.Shortcut) {
-		showInfoDialog(w, "Save", "Save: Feature coming soon")
+	km := keyboard.NewManager(w)
+
+	// Standard handlers
+	km.SetHandlers(map[keyboard.Action]func(){
+		keyboard.ActionSave: func() {
+			showInfoDialog(w, "Save", "Save: Feature coming soon")
+		},
+		keyboard.ActionExport: func() {
+			showInfoDialog(w, "Export", "Export: Use the Export buttons in each tab")
+		},
+		keyboard.ActionReset: func() {
+			if viewSelector != nil && len(viewSelector.Options) > 0 {
+				viewSelector.SetSelected(viewSelector.Options[0])
+			}
+		},
+		keyboard.ActionPauseResume: func() {
+			if viewSelector != nil {
+				keyboard.SelectNextOption(viewSelector)
+			}
+		},
+		keyboard.ActionNavigateLeft: func() {
+			if viewSelector != nil {
+				keyboard.SelectPrevOption(viewSelector)
+			}
+		},
+		keyboard.ActionNavigateRight: func() {
+			if viewSelector != nil {
+				keyboard.SelectNextOption(viewSelector)
+			}
+		},
+		keyboard.ActionHelp: func() {
+			ShowKeyboardHelp(w)
+		},
 	})
 
-	// Register Ctrl+E for export
-	ctrlE := &desktop.CustomShortcut{
-		KeyName:  fyne.KeyE,
-		Modifier: fyne.KeyModifierControl,
-	}
-	w.Canvas().AddShortcut(ctrlE, func(_ fyne.Shortcut) {
-		showInfoDialog(w, "Export", "Export: Use the Export buttons in each tab")
-	})
-
-	// Register Ctrl+R for reset
-	ctrlR := &desktop.CustomShortcut{
-		KeyName:  fyne.KeyR,
-		Modifier: fyne.KeyModifierControl,
-	}
-	w.Canvas().AddShortcut(ctrlR, func(_ fyne.Shortcut) {
+	// M6-specific compound shortcuts
+	km.AddCustomShortcut(actionJumpView1, fyne.Key1, 0, "Go to Builder & Validation")
+	km.SetHandler(actionJumpView1, func() {
 		if viewSelector != nil && len(viewSelector.Options) > 0 {
 			viewSelector.SetSelected(viewSelector.Options[0])
 		}
 	})
 
-	// Handle non-modifier keys
-	w.Canvas().SetOnTypedKey(func(ke *fyne.KeyEvent) {
-		switch ke.Name {
-		case fyne.KeySpace:
-			// Toggle between views
-			if viewSelector != nil {
-				cycleViewSelector(viewSelector)
-			}
-
-		case fyne.Key1:
-			if viewSelector != nil && len(viewSelector.Options) > 0 {
-				viewSelector.SetSelected(viewSelector.Options[0])
-			}
-
-		case fyne.Key2:
-			if viewSelector != nil && len(viewSelector.Options) > 1 {
-				viewSelector.SetSelected(viewSelector.Options[1])
-			}
-
-		case fyne.KeySlash:
-			ShowKeyboardHelp(w)
-
-		case fyne.KeyLeft:
-			if viewSelector != nil {
-				prevView(viewSelector)
-			}
-
-		case fyne.KeyRight:
-			if viewSelector != nil {
-				nextView(viewSelector)
-			}
+	km.AddCustomShortcut(actionJumpView2, fyne.Key2, 0, "Go to Learn")
+	km.SetHandler(actionJumpView2, func() {
+		if viewSelector != nil && len(viewSelector.Options) > 1 {
+			viewSelector.SetSelected(viewSelector.Options[1])
 		}
 	})
+
+	km.AddCustomShortcut(actionGenerateAll, fyne.KeyG, fyne.KeyModifierControl|fyne.KeyModifierShift, "Generate All")
+	km.AddCustomShortcut(actionValidateAll, fyne.KeyV, fyne.KeyModifierControl|fyne.KeyModifierShift, "Validate All")
+	km.AddCustomShortcut(actionExportPkg, fyne.KeyE, fyne.KeyModifierControl|fyne.KeyModifierShift, "Export Package")
+
+	km.Register()
 }
 
-// cycleViewSelector cycles to the next view
-func cycleViewSelector(selector *widget.Select) {
-	keyboard.SelectNextOption(selector)
-}
-
-// nextView switches to the next view
-func nextView(selector *widget.Select) {
-	cycleViewSelector(selector)
-}
-
-// prevView switches to the previous view
-func prevView(selector *widget.Select) {
-	keyboard.SelectPrevOption(selector)
-}
-
-// showInfoDialog shows a simple info dialog
+// showInfoDialog shows a simple info dialog (kept as helper used by handlers and help).
 func showInfoDialog(w fyne.Window, title, message string) {
-	dialog.ShowInformation(title, message, w)
+	fyne.Do(func() {
+		d := w.Canvas()
+		_ = d // ensure canvas exists
+	})
+	// Use a lightweight approach consistent with other modules
+	keyboard.ShowHelpTextDialog(w, title, message, 300, 150)
 }
 
 // ShowKeyboardHelp displays a dialog with all keyboard shortcuts

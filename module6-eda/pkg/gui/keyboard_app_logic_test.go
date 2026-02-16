@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"fecim-lattice-tools/shared/keyboard"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
@@ -15,36 +17,36 @@ func TestSelectorCycleAndNavigation(t *testing.T) {
 	selector := widget.NewSelect([]string{"View A", "View B", "View C"}, nil)
 	selector.SetSelected("View A")
 
-	nextView(selector)
+	keyboard.SelectNextOption(selector)
 	if selector.Selected != "View B" {
-		t.Fatalf("nextView() = %q, want %q", selector.Selected, "View B")
+		t.Fatalf("SelectNextOption() = %q, want %q", selector.Selected, "View B")
 	}
 
-	prevView(selector)
+	keyboard.SelectPrevOption(selector)
 	if selector.Selected != "View A" {
-		t.Fatalf("prevView() = %q, want %q", selector.Selected, "View A")
+		t.Fatalf("SelectPrevOption() = %q, want %q", selector.Selected, "View A")
 	}
 
-	prevView(selector)
+	keyboard.SelectPrevOption(selector)
 	if selector.Selected != "View C" {
-		t.Fatalf("prevView() wrap = %q, want %q", selector.Selected, "View C")
+		t.Fatalf("SelectPrevOption() wrap = %q, want %q", selector.Selected, "View C")
 	}
 
-	cycleViewSelector(selector)
+	keyboard.SelectNextOption(selector)
 	if selector.Selected != "View A" {
-		t.Fatalf("cycleViewSelector() wrap = %q, want %q", selector.Selected, "View A")
+		t.Fatalf("SelectNextOption() wrap = %q, want %q", selector.Selected, "View A")
 	}
 }
 
 func TestSelectorNavigation_NilAndEmpty(t *testing.T) {
-	cycleViewSelector(nil)
-	nextView(nil)
-	prevView(nil)
+	keyboard.SelectNextOption(nil)
+	keyboard.SelectNextOption(nil)
+	keyboard.SelectPrevOption(nil)
 
 	empty := widget.NewSelect([]string{}, nil)
-	cycleViewSelector(empty)
-	nextView(empty)
-	prevView(empty)
+	keyboard.SelectNextOption(empty)
+	keyboard.SelectNextOption(empty)
+	keyboard.SelectPrevOption(empty)
 
 	if empty.Selected != "" {
 		t.Fatalf("empty selector selected = %q, want empty", empty.Selected)

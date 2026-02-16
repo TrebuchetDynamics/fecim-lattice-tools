@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/export"
@@ -144,26 +143,7 @@ func (app *DualModeApp) exportInferenceData() {
 
 // exportVisualization exports the current visualization as a PNG
 func (app *DualModeApp) exportVisualization() {
-	if app.window == nil {
-		return
-	}
-
-	dataDir := filepath.Join("exports", "mnist")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		app.showExportError(fmt.Sprintf("Cannot create exports folder: %v", err))
-		return
-	}
-
-	exporter := export.NewExporter(dataDir, "mnist-viz")
-	img := app.window.Canvas().Capture()
-	result := exporter.ExportPNG(img)
-
-	if result.Error != nil {
-		app.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
-		return
-	}
-
-	app.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
+	export.ExportVisualization(app.window, "mnist", mnistLog)
 }
 
 // createExportButtons creates the export button panel for MNIST
@@ -233,22 +213,12 @@ func (p *mnistExportProvider) GetVisualization() (image.Image, error) {
 
 // showExportError displays an export error dialog
 func (app *DualModeApp) showExportError(msg string) {
-	if app.window != nil {
-		fyne.Do(func() {
-			dialog.ShowError(fmt.Errorf("%s", msg), app.window)
-		})
-	}
-	mnistLog.Printf("Export error: %s", msg)
+	export.ShowExportError(app.window, mnistLog, msg)
 }
 
 // showExportSuccess displays an export success dialog
 func (app *DualModeApp) showExportSuccess(msg string) {
-	if app.window != nil {
-		fyne.Do(func() {
-			dialog.ShowInformation("Export Complete", msg, app.window)
-		})
-	}
-	mnistLog.Info("Export complete: %s", msg)
+	export.ShowExportSuccess(app.window, mnistLog, msg)
 }
 
 // maxWithConfidence returns the index and value of the maximum element

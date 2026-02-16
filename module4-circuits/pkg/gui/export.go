@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	"fecim-lattice-tools/shared/export"
@@ -226,32 +225,7 @@ func (ca *CircuitsApp) exportSimulationData() {
 
 // exportVisualization exports the current visualization as a PNG
 func (ca *CircuitsApp) exportVisualization() {
-	if ca.window == nil {
-		return
-	}
-
-	dataDir := filepath.Join("exports", "circuits")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		ca.showExportError(fmt.Sprintf("Cannot create exports folder: %v", err))
-		return
-	}
-
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	exporter := export.NewExporter(dataDir, fmt.Sprintf("circuits-viz_%s", timestamp))
-	cnv := ca.window.Canvas()
-	if cnv == nil {
-		ca.showExportError("Canvas not available")
-		return
-	}
-	img := cnv.Capture()
-	result := exporter.ExportPNG(img)
-
-	if result.Error != nil {
-		ca.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
-		return
-	}
-
-	ca.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
+	export.ExportVisualization(ca.window, "circuits", nil)
 }
 
 // createExportButtons creates the export button panel for circuits
@@ -415,18 +389,10 @@ func peripheralSnapshotCSV(rows []peripheralSnapshotRow) *export.CSVData {
 
 // showExportError displays an export error dialog
 func (ca *CircuitsApp) showExportError(msg string) {
-	if ca.window != nil {
-		fyne.Do(func() {
-			dialog.ShowError(fmt.Errorf("%s", msg), ca.window)
-		})
-	}
+	export.ShowExportError(ca.window, nil, msg)
 }
 
 // showExportSuccess displays an export success dialog
 func (ca *CircuitsApp) showExportSuccess(msg string) {
-	if ca.window != nil {
-		fyne.Do(func() {
-			dialog.ShowInformation("Export Complete", msg, ca.window)
-		})
-	}
+	export.ShowExportSuccess(ca.window, nil, msg)
 }

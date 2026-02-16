@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/shared/export"
 )
@@ -162,27 +161,7 @@ func (ca *ComparisonApp) exportComparisonData() {
 
 // exportVisualization exports the current visualization as a PNG
 func (ca *ComparisonApp) exportVisualization() {
-	if ca.window == nil {
-		return
-	}
-
-	dataDir := filepath.Join("exports", "comparison")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		ca.showExportError(fmt.Sprintf("Cannot create exports folder: %v", err))
-		return
-	}
-
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	exporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-viz_%s", timestamp))
-	img := ca.window.Canvas().Capture()
-	result := exporter.ExportPNG(img)
-
-	if result.Error != nil {
-		ca.showExportError(fmt.Sprintf("Image export failed: %v", result.Error))
-		return
-	}
-
-	ca.showExportSuccess(fmt.Sprintf("Image saved:\n• %s", result.FilePath))
+	export.ExportVisualization(ca.window, "comparison", debug)
 }
 
 // createExportButtons creates the export button panel for comparison
@@ -265,22 +244,12 @@ func (p *comparisonExportProvider) GetVisualization() (image.Image, error) {
 
 // showExportError displays an export error dialog
 func (ca *ComparisonApp) showExportError(msg string) {
-	if ca.window != nil {
-		fyne.Do(func() {
-			dialog.ShowError(fmt.Errorf("%s", msg), ca.window)
-		})
-	}
-	debug.Printf("Export error: %s", msg)
+	export.ShowExportError(ca.window, debug, msg)
 }
 
 // showExportSuccess displays an export success dialog
 func (ca *ComparisonApp) showExportSuccess(msg string) {
-	if ca.window != nil {
-		fyne.Do(func() {
-			dialog.ShowInformation("Export Complete", msg, ca.window)
-		})
-	}
-	debug.Printf("Export complete: %s", msg)
+	export.ShowExportSuccess(ca.window, debug, msg)
 }
 
 // getWorkloadMACs returns the MACs per inference for a given workload
