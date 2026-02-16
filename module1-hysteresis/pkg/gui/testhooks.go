@@ -125,3 +125,11 @@ func (a *App) WriteController() *controller.WriteController {
 	}
 	return a.writeController
 }
+
+// SetWrdGuardFrac sets the guard band fraction for testing.
+func (a *App) SetWrdGuardFrac(frac float64) {
+	if a == nil {
+		return
+	}
+	a.wrdGuardFrac = frac
+}
