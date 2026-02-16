@@ -81,6 +81,16 @@
 
 If runtime exceeds budget, gate **fails** unless an explicit waiver is merged before run.
 
+### Runtime impact of statistical policy (enforced cap)
+
+| Stage | Added stats workload | Max added wall-time vs non-stat run |
+|---|---|---|
+| **PR** | `n` minima + 1000-resample bootstrap where required | **<= +90s** |
+| **Nightly** | full `n` minima + 2000-resample bootstrap + KS drift checks | **<= +12 min** |
+| **Release** | release `n` minima + 10000-resample bootstrap + full KS drift matrix | **<= +35 min** |
+
+If added wall-time exceeds the cap, pipeline must reduce matrix breadth (not sample-size minima) or parallelize execution; otherwise gate fails.
+
 ---
 
 ## 4) Exact Commands (Canonical)
@@ -139,19 +149,30 @@ go test -count=1 -v ./module4-circuits/pkg/arraysim/...
 A gate fails when **any** threshold below is violated.
 
 ### 5.0 Statistical and uncertainty policy (mandatory)
-- Scalar seeded metrics (e.g., pulse count, PSNR, BER): `n >= 30` nightly, `n >= 100` release.
-- Distribution checks (e.g., residual distribution drift): `n >= 200` per distribution.
-- Proportion metrics (success/failure rates): `n >= 200` trials per material.
-- CI method selection:
-  - Run Shapiro-Wilk (`alpha=0.05`) when `8 <= n <= 5000`.
-  - If normality not rejected (`p >= 0.05`): report two-sided 95% t-interval.
-  - Otherwise: report BCa bootstrap 95% CI (`2000` resamples nightly, `10000` release, fixed seed).
-- Proportions use Wilson 95% intervals.
-- KS drift gates:
-  - `p <= 0.01` fail
-  - `0.01 < p < 0.05` warn
-  - `p >= 0.05` pass
-- Missing sample-size minimums or missing CI metadata is a gate failure.
+
+**Sample-size minima (per metric, per material, per operating corner):**
+- **PR gate (fast subset):** scalar `n >= 10`; proportions `n >= 60`; distribution tests `n >= 80`.
+- **Nightly gate:** scalar `n >= 30`; proportions `n >= 200`; distribution tests `n >= 200`.
+- **Release gate:** scalar `n >= 100`; proportions `n >= 500`; distribution tests `n >= 500`.
+- If a minimum is not met, verdict must be `FAIL_INSUFFICIENT_N` (no pass-by-omission).
+
+**CI method policy (95% two-sided, deterministic):**
+- `n < 8`: CI is invalid for gated metrics -> gate fail.
+- Continuous metrics, `8 <= n <= 5000`: run Shapiro-Wilk (`alpha=0.05`).
+  - `p >= 0.05` -> Student-t CI.
+  - `p < 0.05` -> BCa bootstrap CI.
+- Continuous metrics, `n > 5000`: skip Shapiro-Wilk; use BCa bootstrap CI.
+- Bootstrap resamples: PR `1000`, nightly `2000`, release `10000`; fixed seed required.
+- Proportion metrics: Wilson CI only (never normal approximation).
+
+**KS drift policy (two-sample, against pinned baseline artifact):**
+- Baseline and candidate must both meet distribution-test minimum `n`.
+- `p < 0.01` **and** `D >= 0.15` -> fail.
+- `0.01 <= p < 0.05` **or** `0.10 <= D < 0.15` -> warn.
+- Otherwise pass.
+- Missing baseline reference or KS metadata on required drift metrics -> gate fail.
+
+- Missing CI metadata, method/seed/resample count, or sample-size fields is a gate failure.
 
 ## 5.1 Physics/solver integrity
 - KCL residual: `max_residual <= 1e-6`
@@ -205,12 +226,19 @@ Minimum required files:
 7. `solver_diagnostics.json` (residuals, iterations, condition number)
 8. `thermodynamics.json` (power/energy closure checks)
 9. `confidence_ledger.json` (`measured|estimated|placeholder` parameter tags)
-10. `uncertainty.json` with:
-   - per-metric CI bounds (95%)
-   - method metadata (`t|bootstrap_bca|wilson`)
-   - sample size
-   - normality result (if applicable)
-   - KS drift statistics and baseline reference
+10. `provenance.json` with:
+   - `run_id`, `timestamp_utc`, `git_hash`, `git_dirty`
+   - `pipeline_stage` (`pr|nightly|release`), `command_manifest` (exact commands)
+   - `baseline_artifact_ref` (path + commit hash) for drift comparisons
+   - `data_sources[]` (`id`, `type`, `path_or_uri`, `sha256`, `doi?`, `license?`)
+   - `toolchain` (`go_version`, `os`, `arch`, script versions)
+11. `uncertainty.json` with required per-metric fields:
+   - `metric_id`, `units`, `material`, `corner`, `n`
+   - `ci_level` (=0.95), `ci_method` (`t|bootstrap_bca|wilson`)
+   - `estimate`, `ci_low`, `ci_high`
+   - `normality_test` (`name`, `p_value`, `alpha`, `result`) when applicable
+   - `bootstrap` (`resamples`, `seed`) when applicable
+   - `ks_drift` (`baseline_ref`, `n_candidate`, `n_baseline`, `D`, `p_value`, `verdict`) when applicable
 
 **Artifact validity rules:**
 - Missing required artifact = gate fail.
@@ -272,3 +300,4 @@ This plan is considered implemented when:
 ## 11) Change Log
 
 - **2026-02-16:** Refactored to concise execution-ready format; removed duplicate catalog tables; converted broad requirements into enforceable phase gates, exact commands, runtime budgets, hard falsification thresholds, and mandatory artifacts.
+- **2026-02-16 (stats tighten):** Added stage-specific sample-size minima, deterministic CI method policy, KS decision rules with effect-size guard, required `provenance.json`, strict `uncertainty.json` schema fields, and explicit PR/nightly/release runtime-impact caps.
