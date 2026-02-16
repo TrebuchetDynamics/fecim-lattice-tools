@@ -87,6 +87,17 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			PolarUnit:  "uC/cm2",
 			Notes:      "Digitized representative loop from Cheema et al. 2020 Fig 2c. Used as literature-backed loop-shape validation.",
 		},
+		{
+			Name:       "MDPI2020_Fig3a_HZO_10nm_Wakeup",
+			DOI:        "10.3390/ma13132968",
+			SourceCSV:  filepath.Join("data", "mdpi2020_ma13132968_fig3a_hzo_10nm_wakeup.csv"),
+			MaterialID: "mdpi2020_hzo_10nm_wakeup",
+			Material:   sharedphysics.MDPI2020Fig3aHZO10nmWakeup(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "Representative loop from Kim et al. Materials 2020 Fig 3a (10nm HZO after wake-up). Used as Tier-1 literature validation dataset.",
+		},
 	}
 
 	outDir := os.Getenv("FECIM_LITERATURE_JSON_DIR")

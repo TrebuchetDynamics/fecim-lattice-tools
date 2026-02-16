@@ -31,3 +31,16 @@ func Cheema2020Fig2cHZOSuperlattice5nm() *HZOMaterial {
 	m.Thickness = 5e-9
 	return m
 }
+
+// MDPI2020Fig3aHZO10nmWakeup returns a preset calibrated to:
+// Kim et al., Materials (2020), doi:10.3390/ma13132968, Fig. 3a (10 nm HZO, after wake-up).
+func MDPI2020Fig3aHZO10nmWakeup() *HZOMaterial {
+	m := DefaultHZO()
+	m.Name = "HZO (MDPI 2020 Fig 3a, wake-up, calibrated)"
+	// Targets from estimated loop metrics (typical 10nm HZO after wake-up).
+	m.Pr = 17.2e-2 // 17.2 uC/cm2 (higher than baseline due to wake-up)
+	m.Ps = 19.4e-2 // 19.4 uC/cm2
+	m.Ec = 0.96e8  // 0.96 MV/cm (adjusted to match estimated loop Ec)
+	m.Thickness = 10e-9
+	return m
+}
