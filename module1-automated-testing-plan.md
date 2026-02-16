@@ -51,6 +51,21 @@ Acceptance thresholds (must all pass)
 - FORC/minor-loop: normalized shape error `<= 0.10`, return-point error `<= 1% Ps`.
 - Uncertainty: literature target metric lies inside 95% CI for `Pr` and `Ec`.
 
+### Statistical Method Policy (enforceable)
+
+Sample-size minima
+- Seeded scalar metrics (pulses, overshoots, drift): `n >= 30` runs per material/engine in nightly, `n >= 100` in release.
+- Distribution-comparison metrics (KS): `n >= 200` samples per distribution; otherwise mark test `insufficient_n` and fail gate.
+- Proportion metrics (success/failure rates): `n >= 200` writes per material.
+
+Decision rules
+1. Run Shapiro-Wilk normality test at `alpha = 0.05` when `8 <= n <= 5000`.
+2. If normality not rejected (`p >= 0.05`), report two-sided 95% t-interval.
+3. Otherwise report BCa bootstrap 95% CI (`2000` resamples nightly, `10000` resamples release, fixed seed).
+4. For proportions, always use Wilson 95% CI (not Wald).
+5. Use two-sample KS only for continuous distributions and valid `n`; report `(D, p)`.
+6. KS gate rule: `p <= 0.01` fail, `0.01 < p < 0.05` warning, `p >= 0.05` pass.
+
 ## 3) CI Gates with Exact Commands + Runtime Budgets
 
 All commands executed from repo root:
@@ -109,6 +124,17 @@ Pass criteria
 - All nightly criteria, plus P2 thresholds met.
 - Release artifact bundle produced (Section 5) with immutable commit hash.
 
+### Runtime Impact Estimates for Added Statistical Controls
+
+Estimated incremental cost vs current non-statistical baseline (same hardware class):
+- Shapiro-Wilk + CI selection metadata: `< 30s` per nightly run.
+- BCa bootstrap (`2000` resamples, nightly): `+4 to +8 min`.
+- BCa bootstrap (`10000` resamples, release): `+15 to +30 min`.
+- KS drift checks across required artifacts: `+1 to +3 min`.
+- JSON uncertainty-schema validation: `< 1 min`.
+
+These estimates are already included in the PR/Nightly/Release runtime budgets above.
+
 ## 4) Falsification Matrix (enforceable)
 
 | ID | Observable | Required metric(s) | Fail condition |
@@ -157,6 +183,18 @@ Minimal schema (required keys)
     "r2": 0,
     "return_point_error_over_ps": 0
   },
+  "uncertainty": {
+    "method": "t|bootstrap_bca|wilson",
+    "confidence": 0.95,
+    "sample_size": 0,
+    "normality": {"test": "shapiro_wilk", "p_value": 0},
+    "bootstrap": {"resamples": 0, "seed": 0},
+    "ks": {"d_stat": 0, "p_value": 0, "baseline_ref": "optional"},
+    "ci": {
+      "Pr_Cm2": {"low": 0, "high": 0},
+      "Ec_Vm": {"low": 0, "high": 0}
+    }
+  },
   "thresholds": {
     "pr_error_pct_max": 10,
     "ec_error_pct_max": 10,
@@ -170,6 +208,9 @@ Minimal schema (required keys)
 
 Schema enforcement
 - Missing required key, NaN/Inf metric, or unit mismatch => automatic fail.
+- `uncertainty.sample_size` must satisfy policy minima for the metric class; otherwise fail.
+- If `uncertainty.method=bootstrap_bca`, `bootstrap.resamples` must be `>=2000` nightly and `>=10000` release.
+- If KS is used, `ks.p_value` and `ks.d_stat` are required and must reference a baseline artifact.
 - `verdict` must be derivable from metrics + thresholds (no manual override).
 
 ## 6) Execution Order (single source of truth)
