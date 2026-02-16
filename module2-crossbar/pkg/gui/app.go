@@ -551,7 +551,13 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	archLabel := widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	// Signal quality - inline labels
-	noiseRow := container.NewBorder(nil, nil, widget.NewLabel("Noise:"), ca.noiseLabel, ca.noiseSlider)
+	noiseTooltip := sharedwidgets.TooltipContent{
+		Title:       "Read/Write Noise",
+		Description: "Simulates random variations in conductance programming and read operations.",
+		Physics:     "Real analog hardware suffers from thermal noise and device variability. This parameter adds Gaussian noise (σ) to write and read operations to test network robustness.",
+		Range:       "0% - 50% (Typical: 1-5%)",
+	}
+	noiseRow := sharedwidgets.SliderWithTooltip("Noise:", ca.noiseSlider, ca.noiseLabel, noiseTooltip, ca.window)
 	adcRow := container.NewBorder(nil, nil, widget.NewLabel("ADC:"), ca.adcBitsLabel, ca.adcBitsSlider)
 	tempRow := container.NewBorder(nil, nil, widget.NewLabel("Temp:"), ca.temperatureLabel, ca.temperatureSlider)
 

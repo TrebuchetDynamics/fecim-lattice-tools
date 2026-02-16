@@ -477,7 +477,7 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 		ca.compTableLabels[14].SetText(metricEnergy(fefet.EnergyPJ))
 		ca.compTableLabels[15].SetText(metricTOPSW(fefet.TOPSW))
 
-		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d (%d MACs): FeFET %.3f TOPS/W, %.3f pJ/op",
+		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d (%d MACs (Ops)): FeFET %.3f TOPS/W, %.3f pJ/op",
 			currentSize, currentSize, currentSize*currentSize, fefet.TOPSW, fefet.EnergyOpPJ))
 	})
 }

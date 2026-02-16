@@ -69,7 +69,7 @@ func resolveWeightsPath(loadFile string) (string, error) {
 	}
 
 	candidates := []string{
-		filepath.Join("data", "pretrained-weigths", "pretrained_weights.json"),
+		filepath.Join("data", "pretrained-weights", "pretrained_weights.json"),
 		filepath.Join("data", "pretrained-weights", "pretrained_weights.json"),
 		filepath.Join("module3-mnist", "data", "pretrained_weights.json"),
 	}

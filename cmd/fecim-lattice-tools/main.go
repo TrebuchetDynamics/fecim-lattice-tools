@@ -917,25 +917,7 @@ func main() {
 	)
 
 	// Create Help menu
-	helpMenu := fyne.NewMenu("Help",
-		fyne.NewMenuItem("About the Science (Learn More)", func() {
-			sharedwidgets.ShowAboutScience(window)
-		}),
-		fyne.NewMenuItem("About", func() {
-			dialog.ShowInformation("About FeCIM Lattice Tools",
-				"FeCIM Lattice Tools v1.0\n\n"+
-					"A unified visualization and simulation suite for\n"+
-					"Ferroelectric Compute-in-Memory (FeCIM) technology.\n\n"+
-					"Includes 6 interactive demos covering:\n"+
-					"• Hysteresis simulation\n"+
-					"• Crossbar array visualization\n"+
-					"• MNIST neural network inference\n"+
-					"• Peripheral circuits\n"+
-					"• Technology comparison\n"+
-					"• EDA design suite",
-				window)
-		}),
-	)
+	helpMenu := fyne.NewMenu("Help", sharedwidgets.CreateHelpMenuItems(window)...)
 
 	// Set main menu
 	mainMenu := fyne.NewMainMenu(fileMenu, editMenu, viewMenu, settingsMenu, helpMenu)

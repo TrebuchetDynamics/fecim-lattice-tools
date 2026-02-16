@@ -450,7 +450,7 @@ func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs / 76ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(fmt.Sprintf("%d MACs (Ops) / 76ns = %.1f GOPS", cells, throughput)),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
@@ -528,7 +528,7 @@ func (ca *CircuitsApp) updateSpecSummary() {
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs / 76ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(fmt.Sprintf("%d MACs (Ops) / 76ns = %.1f GOPS", cells, throughput)),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
