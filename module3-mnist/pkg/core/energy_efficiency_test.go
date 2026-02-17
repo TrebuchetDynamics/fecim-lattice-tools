@@ -4,6 +4,7 @@ import (
 	"fecim-lattice-tools/shared/physics"
 	"fmt"
 	"math"
+	"sync"
 	"testing"
 )
 
@@ -239,6 +240,7 @@ func TestM3_ENERGY_04_ENAC_TradeoffCurve(t *testing.T) {
 
 	bestENAC := math.Inf(1)
 	var bestConfig string
+	var mu sync.Mutex
 
 	for _, tc := range tests {
 		tc := tc
@@ -254,10 +256,12 @@ func TestM3_ENERGY_04_ENAC_TradeoffCurve(t *testing.T) {
 			t.Logf("PASS: %s → acc=%.1f%%, E=%.1f pJ, ENAC=%.3f pJ",
 				tc.name, tc.accuracy*100, tc.energyPJ, enac)
 
+			mu.Lock()
 			if enac < bestENAC {
 				bestENAC = enac
 				bestConfig = tc.name
 			}
+			mu.Unlock()
 		})
 	}
 

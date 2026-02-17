@@ -61,9 +61,9 @@ func TestRendererSettersAndCleanup(t *testing.T) {
 		t.Fatalf("cell color not mapped to positive polarization: %+v", color)
 	}
 
-	r.running = true
+	r.running.Store(true)
 	r.Cleanup()
-	if r.running || r.initialized {
+	if r.running.Load() || r.initialized {
 		t.Fatalf("cleanup should reset runtime flags")
 	}
 	if r.plot != nil || r.cell != nil || r.levels != nil || r.onUpdate != nil {
@@ -92,7 +92,7 @@ func TestRendererRunErrorPaths(t *testing.T) {
 	if err := r.Initialize(); err != nil {
 		t.Fatalf("initialize failed: %v", err)
 	}
-	r.running = true
+	r.running.Store(true)
 	if err := r.Run(); !errors.Is(err, ErrRendererAlreadyRunning) {
 		t.Fatalf("expected already running error, got %v", err)
 	}

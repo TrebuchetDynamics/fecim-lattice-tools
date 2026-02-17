@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync/atomic"
 	"time"
 
 	"fecim-lattice-tools/shared/physics"
@@ -310,7 +311,7 @@ type Renderer struct {
 	plot        *HysteresisPlot
 	cell        *CellDisplay
 	levels      *LevelIndicator // 30-level indicator (conference-claim baseline)
-	running     bool
+	running     atomic.Bool     // guarded: concurrent-safe stop/run signalling
 	initialized bool
 
 	// Callbacks
@@ -387,7 +388,7 @@ func (r *Renderer) Initialize() error {
 	if r.levels == nil {
 		r.levels = NewLevelIndicator()
 	}
-	r.running = false
+	r.running.Store(false)
 	r.initialized = true
 	return nil
 }
@@ -404,20 +405,20 @@ func (r *Renderer) Run() error {
 	if !r.initialized {
 		return ErrRendererNotInitialized
 	}
-	if r.running {
+	if r.running.Load() {
 		return ErrRendererAlreadyRunning
 	}
 
-	r.running = true
+	r.running.Store(true)
 	frameDur := time.Second / time.Duration(r.config.TargetFPS)
 	if frameDur <= 0 {
 		frameDur = time.Millisecond
 	}
 	ticker := time.NewTicker(frameDur)
 	defer ticker.Stop()
-	defer func() { r.running = false }()
+	defer func() { r.running.Store(false) }()
 
-	for r.running {
+	for r.running.Load() {
 		<-ticker.C
 		if r.onUpdate != nil {
 			r.onUpdate()
@@ -429,17 +430,17 @@ func (r *Renderer) Run() error {
 
 // Stop terminates the render loop.
 func (r *Renderer) Stop() {
-	r.running = false
+	r.running.Store(false)
 }
 
 // IsRunning reports whether the render loop is active.
 func (r *Renderer) IsRunning() bool {
-	return r != nil && r.running
+	return r != nil && r.running.Load()
 }
 
 // Cleanup releases renderer state/resources.
 func (r *Renderer) Cleanup() {
-	r.running = false
+	r.running.Store(false)
 	r.plot = nil
 	r.cell = nil
 	r.levels = nil
