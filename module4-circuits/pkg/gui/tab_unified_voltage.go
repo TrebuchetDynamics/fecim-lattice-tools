@@ -14,7 +14,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -231,6 +230,8 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 		if ca.deviceState.IsPassiveMode() {
 			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
 			ca.updateHalfSelectVisualization()
+			// DAC-only column drive: all cells in the column see the full write voltage.
+			ca.applyColumnWrite(row, col, appliedVoltage)
 		}
 		ca.applyHalfSelectDisturb(row, col)
 		ca.recomputeAndRefresh()
@@ -458,6 +459,8 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 			if ds.IsPassiveMode() {
 				ds.EnableHalfSelectVisualization(row, col, appliedVoltage)
 				ca.updateHalfSelectVisualization()
+				// DAC-only column drive: all cells in the column see the full write voltage.
+				ca.applyColumnWrite(row, col, appliedVoltage)
 			}
 			ca.applyHalfSelectDisturb(row, col)
 			ca.recomputeAndRefresh()
@@ -596,58 +599,65 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
 		return 0
 	}
+	// Passive 0T mode uses DAC-only column drive (all WLs grounded, selected BL driven):
+	//   - Same-column cells see the full write voltage → handled by applyColumnWrite
+	//   - Same-row cells see 0V (unselected BLs grounded)      → no disturb
+	// The V/2 half-select stress model does not apply to this architecture.
+	return 0
+}
 
-	// Lazy-init the disturb engine
-	if ca.writeDisturbEngine == nil {
-		ca.mu.Lock()
-		config := crossbar.DefaultWriteDisturbConfig()
-		config.Enable = true
-		config.Architecture1T1R = !ca.deviceState.IsPassiveMode()
-		ca.writeDisturbEngine = crossbar.NewWriteDisturbEngine(ca.arrayRows, ca.arrayCols, config)
-		ca.mu.Unlock()
+// applyColumnWrite applies the write voltage physics to every cell in the target column
+// except the selected cell (which is managed by the ISPP loop).
+//
+// In passive 0T mode with DAC-only column drive (all WLs grounded, selected BL at V_write)
+// every cell in the column sees the same full write voltage. This function simulates that
+// effect by running a single-pulse LK step for each non-selected cell in the column.
+func (ca *CircuitsApp) applyColumnWrite(selectedRow, col int, writeVoltage float64) {
+	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
+		return
+	}
+	if math.Abs(writeVoltage) < 1e-12 {
+		return
+	}
+	nRows := ca.arrayRows
+	if nRows == 0 {
+		return
 	}
 
-	// Record this write pulse — accumulates stress on half-selected neighbors
-	ca.writeDisturbEngine.RecordWrite(targetRow, targetCol)
-
-	// Apply stress effects: when accumulated stress exceeds threshold,
-	// shift the cell level by ±1 (biased toward midpoint).
-	ca.mu.Lock()
-	defer ca.mu.Unlock()
-
-	changes := 0
-	levels := ca.quantLevels
-	midLevel := levels / 2
-	stressMatrix := ca.writeDisturbEngine.GetStressMatrix()
-
-	for r := 0; r < len(ca.arrayWeights); r++ {
-		for c := 0; c < len(ca.arrayWeights[r]); c++ {
-			if r == targetRow && c == targetCol {
-				continue
-			}
-			if r < len(stressMatrix) && c < len(stressMatrix[r]) {
-				if stressMatrix[r][c] >= 1.0 {
-					// Shift level by ±1, biased toward center (regression to mean)
-					level := ca.arrayWeights[r][c]
-					if level > midLevel {
-						ca.arrayWeights[r][c] = level - 1
-					} else if level < midLevel {
-						ca.arrayWeights[r][c] = level + 1
-					}
-					// Don't change if already at midpoint
-					if ca.arrayWeights[r][c] != level {
-						changes++
-					}
-				}
-			}
+	// Read current levels outside ca.mu to avoid holding two locks while calling
+	// programLevelFromCoupledVoltage (which acquires ds.mu internally).
+	ca.mu.RLock()
+	currentLevels := make([]int, nRows)
+	for r := 0; r < nRows && r < len(ca.arrayWeights); r++ {
+		if col < len(ca.arrayWeights[r]) {
+			currentLevels[r] = ca.arrayWeights[r][col]
 		}
 	}
+	ca.mu.RUnlock()
 
-	// Reset stress for cells that just shifted (partial reset)
-	// Note: we can't call engine methods while holding ca.mu, so we already got the matrix.
-	// The engine's internal stress tracking continues independently.
+	// Each cell independently responds to the write voltage based on its own state.
+	newLevels := make([]int, nRows)
+	copy(newLevels, currentLevels)
+	for r := 0; r < nRows; r++ {
+		if r == selectedRow {
+			continue // selected cell is driven by the ISPP loop
+		}
+		newLevels[r] = ca.deviceState.programLevelFromCoupledVoltage(
+			currentLevels[r], writeVoltage,
+			float64(PhaseWriteDurationNs)*1e-9, ca.quantLevels,
+		)
+	}
 
-	return changes
+	ca.mu.Lock()
+	for r := 0; r < nRows && r < len(ca.arrayWeights); r++ {
+		if r == selectedRow {
+			continue
+		}
+		if col < len(ca.arrayWeights[r]) {
+			ca.arrayWeights[r][col] = newLevels[r]
+		}
+	}
+	ca.mu.Unlock()
 }
 
 // updateISPPUI refreshes the ISPP status display

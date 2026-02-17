@@ -2,7 +2,13 @@ package gui
 
 import "testing"
 
-func TestApplyHalfSelectDisturb_AccumulatesResidueDuringWrite(t *testing.T) {
+// applyHalfSelectDisturb is a no-op for passive 0T mode with DAC-only column drive:
+//   - Same-column cells see the full write voltage → handled by applyColumnWrite
+//   - Same-row cells see 0V (unselected BLs grounded) → no disturb
+// These tests verify the no-op contract and delegate column-write coverage to
+// TestPassiveBehavior_0T1R_ColumnWriteAffectsEntireColumn.
+
+func TestApplyHalfSelectDisturb_NoOpForPassiveDACOnlyMode(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
 	defer win.Close()
@@ -22,33 +28,17 @@ func TestApplyHalfSelectDisturb_AccumulatesResidueDuringWrite(t *testing.T) {
 	ca.deviceState.ApplyHalfSelectWrite(targetRow, targetCol, writeV)
 
 	changes := ca.applyHalfSelectDisturb(targetRow, targetCol)
-	if changes < 0 {
-		t.Fatalf("unexpected negative change count: %d", changes)
+	if changes != 0 {
+		t.Fatalf("applyHalfSelectDisturb must return 0 in passive DAC-only mode, got %d", changes)
 	}
 
-	// Half-selected neighbors should accumulate stress via WriteDisturbEngine.
-	if ca.writeDisturbEngine == nil {
-		t.Fatal("expected writeDisturbEngine to be initialized")
-	}
-
-	nonZero := 0
-	stressMatrix := ca.writeDisturbEngine.GetStressMatrix()
-	for r := range stressMatrix {
-		for c := range stressMatrix[r] {
-			if r == targetRow && c == targetCol {
-				continue
-			}
-			if stressMatrix[r][c] != 0 {
-				nonZero++
-			}
-		}
-	}
-	if nonZero == 0 {
-		t.Fatalf("expected non-zero stress on half-selected cells after write disturb pulse")
+	// writeDisturbEngine must not be initialized (DAC-only drive doesn't use it).
+	if ca.writeDisturbEngine != nil {
+		t.Error("writeDisturbEngine must not be initialized in passive DAC-only mode")
 	}
 }
 
-func TestApplyHalfSelectDisturb_8x8_WriteAt2x3_DisturbsFullRowAndColumn(t *testing.T) {
+func TestApplyHalfSelectDisturb_8x8_NoStressInDACOnlyMode(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
 	defer win.Close()
@@ -69,24 +59,8 @@ func TestApplyHalfSelectDisturb_8x8_WriteAt2x3_DisturbsFullRowAndColumn(t *testi
 	ca.deviceState.ApplyHalfSelectWrite(targetRow, targetCol, writeV)
 	ca.applyHalfSelectDisturb(targetRow, targetCol)
 
-	if ca.writeDisturbEngine == nil {
-		t.Fatal("expected writeDisturbEngine to be initialized")
-	}
-
-	for c := 0; c < 8; c++ {
-		if c == targetCol {
-			continue
-		}
-		if ca.writeDisturbEngine.GetCellStress(targetRow, c) == 0 {
-			t.Fatalf("expected non-zero stress on target row cell (%d,%d)", targetRow, c)
-		}
-	}
-	for r := 0; r < 8; r++ {
-		if r == targetRow {
-			continue
-		}
-		if ca.writeDisturbEngine.GetCellStress(r, targetCol) == 0 {
-			t.Fatalf("expected non-zero stress on target col cell (%d,%d)", r, targetCol)
-		}
+	// No stress engine should be active — DAC-only drive has no V/2 half-select.
+	if ca.writeDisturbEngine != nil {
+		t.Error("writeDisturbEngine must not be initialized in passive DAC-only mode")
 	}
 }

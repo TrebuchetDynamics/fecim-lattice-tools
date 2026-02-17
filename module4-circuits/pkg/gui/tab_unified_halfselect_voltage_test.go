@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -98,48 +97,38 @@ func TestUnifiedDisturbAndDACDisplay_ReportChangesAndDACCode(t *testing.T) {
 	row, col := 1, 1
 	ca.deviceState.SetSelectedCell(row, col)
 
-	// Pre-init engine with high stress rate so a single pulse exceeds the
-	// threshold and causes visible level changes in neighbors.
-	config := crossbar.DefaultWriteDisturbConfig()
-	config.Enable = true
-	config.Architecture1T1R = false
-	config.StressAccumulationRate = 2.0 // 1 pulse > threshold (1.0)
-	ca.writeDisturbEngine = crossbar.NewWriteDisturbEngine(ca.arrayRows, ca.arrayCols, config)
-
-	// Set weights away from midpoint so the toward-center stress shift
-	// actually changes levels (default weights are midLevel, which won't shift).
+	// Set all weights to 0 so any write-induced level change is detectable.
 	ca.mu.Lock()
 	for r := range ca.arrayWeights {
 		for c := range ca.arrayWeights[r] {
 			ca.arrayWeights[r][c] = 0
 		}
 	}
-	before := make([][]int, len(ca.arrayWeights))
-	for r := range ca.arrayWeights {
-		before[r] = append([]int(nil), ca.arrayWeights[r]...)
-	}
 	ca.mu.Unlock()
 
-	// Intentionally large pulse to force visible disturb in neighboring cells.
-	ca.deviceState.ApplyHalfSelectWrite(row, col, 8.0)
-	changes := ca.applyHalfSelectDisturb(row, col)
-	if changes <= 0 {
-		t.Fatalf("expected disturb changes > 0, got %d", changes)
+	// In passive DAC-only mode, applyColumnWrite applies the full write voltage to
+	// all cells in the column (except the selected cell handled by ISPP).
+	writeV := ca.deviceState.GetWriteRange().Max
+	if writeV <= 0 {
+		writeV = 1.8
 	}
+	ca.deviceState.ApplyHalfSelectWrite(row, col, writeV)
+	ca.applyColumnWrite(row, col, writeV)
 
 	ca.mu.RLock()
-	diffCount := 0
+	anyChanged := false
 	for r := range ca.arrayWeights {
-		for c := range ca.arrayWeights[r] {
-			if before[r][c] != ca.arrayWeights[r][c] {
-				diffCount++
-			}
+		if r == row {
+			continue
+		}
+		if ca.arrayWeights[r][col] != 0 {
+			anyChanged = true
 		}
 	}
 	ca.mu.RUnlock()
 
-	if diffCount != changes {
-		t.Fatalf("disturb report mismatch: reported %d changes, observed %d", changes, diffCount)
+	if !anyChanged {
+		t.Fatal("expected same-column cells to change level after applyColumnWrite")
 	}
 
 	ca.deviceState.StartISPP(row, col, ca.quantLevels-1, 0)
