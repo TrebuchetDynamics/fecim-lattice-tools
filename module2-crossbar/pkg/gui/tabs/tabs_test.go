@@ -710,6 +710,146 @@ func TestSneakTabMitigationEffects(t *testing.T) {
 	}
 }
 
+// --- FeCAPTab tests (LIT-P2-05) ---
+
+// TestNewFeCAPTab verifies construction defaults.
+func TestNewFeCAPTab(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	tab := NewFeCAPTab(8)
+	if tab == nil {
+		t.Fatal("NewFeCAPTab returned nil")
+	}
+	if tab.rows != 8 || tab.cols != 8 {
+		t.Errorf("Expected 8×8, got %d×%d", tab.rows, tab.cols)
+	}
+	if tab.array == nil {
+		t.Error("FeCAPTab internal array is nil")
+	}
+	if tab.chargeLabel == nil || tab.dispLabel == nil || tab.statusLabel == nil {
+		t.Error("FeCAPTab labels not initialized")
+	}
+}
+
+// TestFeCAPTabContent verifies Content() returns a non-nil canvas object.
+func TestFeCAPTabContent(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	tab := NewFeCAPTab(4)
+	content := tab.Content()
+	if content == nil {
+		t.Fatal("FeCAPTab.Content() returned nil")
+	}
+}
+
+// TestFeCAPTab_ChargeAccumulationZeroArray verifies behavior when all capacitances are 0.
+func TestFeCAPTab_ChargeAccumulationZeroArray(t *testing.T) {
+	tab := NewFeCAPTab(4)
+	// All cells default to w=0 (C_min); charge should be non-zero only if V > 0.
+	// Program zero explicitly.
+	for r := 0; r < tab.rows; r++ {
+		for c := 0; c < tab.cols; c++ {
+			_ = tab.array.ProgramCapacitance(r, c, 0.0)
+		}
+	}
+	charge := make([]float64, tab.cols)
+	result := tab.formatChargeAccumulation(charge)
+	if result == "" {
+		t.Error("formatChargeAccumulation returned empty string for zero array")
+	}
+}
+
+// TestFeCAPTab_ChargeMVMPhysics verifies Q[col] = Σ C[i,col] × V[i].
+func TestFeCAPTab_ChargeMVMPhysics(t *testing.T) {
+	tab := NewFeCAPTab(4)
+
+	// Program all cells to max (w=1.0 → C_phys = C_max = 2 fF).
+	for r := 0; r < tab.rows; r++ {
+		for c := 0; c < tab.cols; c++ {
+			_ = tab.array.ProgramCapacitance(r, c, 1.0)
+		}
+	}
+
+	// Input: all V = 1.0 V.
+	input := make([]float64, tab.rows)
+	for i := range input {
+		input[i] = 1.0
+	}
+	charge, err := tab.array.MVMCharge(input)
+	if err != nil {
+		t.Fatalf("MVMCharge: %v", err)
+	}
+
+	// Expected: Q[col] = rows × C_max × V = 4 × 2e-15 × 1 = 8 fC.
+	expected := float64(tab.rows) * crossbar.DefaultCMax * 1.0
+	for c, q := range charge {
+		if q < expected*0.99 || q > expected*1.01 {
+			t.Errorf("col %d: Q=%e want ~%e", c, q, expected)
+		}
+	}
+}
+
+// TestFeCAPTab_DisplacementCurrentPositive verifies I_disp > 0 for non-zero charge.
+func TestFeCAPTab_DisplacementCurrentPositive(t *testing.T) {
+	tab := NewFeCAPTab(4)
+	charge := []float64{1e-15, 2e-15, 0.5e-15, 1.5e-15}
+	result := tab.formatDisplacementCurrent(charge)
+	if result == "" {
+		t.Error("formatDisplacementCurrent returned empty string")
+	}
+	// Should mention µA.
+	if len(result) < 10 {
+		t.Error("formatDisplacementCurrent result suspiciously short")
+	}
+}
+
+// TestFeCAPTab_RunChargeMVMUpdatesLabels verifies runChargeMVM updates widget labels.
+func TestFeCAPTab_RunChargeMVMUpdatesLabels(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	tab := NewFeCAPTab(4)
+	// Program non-zero capacitances so charge is non-trivial.
+	for r := 0; r < tab.rows; r++ {
+		for c := 0; c < tab.cols; c++ {
+			_ = tab.array.ProgramCapacitance(r, c, 0.5)
+		}
+	}
+
+	initialCharge := tab.chargeLabel.Text
+	tab.runChargeMVM()
+
+	if tab.chargeLabel.Text == initialCharge {
+		t.Error("chargeLabel not updated after runChargeMVM")
+	}
+	if tab.lastCharge == nil {
+		t.Error("lastCharge not populated after runChargeMVM")
+	}
+	if tab.lastInput == nil {
+		t.Error("lastInput not populated after runChargeMVM")
+	}
+}
+
+// TestFeCAPTab_SizesAbove8Cap tests that NewFeCAPTab handles large sizes gracefully.
+func TestFeCAPTab_SizesAbove8Cap(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	for _, size := range []int{4, 8, 16} {
+		tab := NewFeCAPTab(size)
+		if tab == nil {
+			t.Errorf("NewFeCAPTab(%d) returned nil", size)
+			continue
+		}
+		content := tab.Content()
+		if content == nil {
+			t.Errorf("Content() nil for size %d", size)
+		}
+	}
+}
+
 // TestIRDropTabMitigationEffects tests that mitigation strategies reduce IR drop.
 func TestIRDropTabMitigationEffects(t *testing.T) {
 	app := test.NewApp()

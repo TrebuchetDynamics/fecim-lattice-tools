@@ -29,6 +29,7 @@ type TabbedCrossbarApp struct {
 	irdropTab *tabs.IRDropTab
 	sneakTab  *tabs.SneakTab
 	driftTab  *tabs.DriftTab
+	fecapTab  *tabs.FeCAPTab
 
 	// UI
 	tabContainer *container.AppTabs
@@ -66,6 +67,7 @@ func NewTabbedCrossbarApp() *TabbedCrossbarApp {
 	app.irdropTab = tabs.NewIRDropTab(16)
 	app.sneakTab = tabs.NewSneakTab(16)
 	app.driftTab = tabs.NewDriftTab(16)
+	app.fecapTab = tabs.NewFeCAPTab(8) // 8×8 for responsive display
 
 	return app
 }
@@ -91,15 +93,17 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 	irdropContent := app.irdropTab.Content()
 	sneakContent := app.sneakTab.Content()
 	driftContent := app.driftTab.Content()
+	fecapContent := app.fecapTab.Content()
 
 	// All content in a Stack - we'll hide/show instead of swapping
-	allViews := []fyne.CanvasObject{idealContent, irdropContent, sneakContent, driftContent}
+	allViews := []fyne.CanvasObject{idealContent, irdropContent, sneakContent, driftContent, fecapContent}
 
 	// Button group for view selection
 	idealBtn := widget.NewButton("Conductance", func() {})
 	irDropBtn := widget.NewButton("IR Drop", func() {})
 	sneakBtn := widget.NewButton("Sneak Paths", func() {})
 	driftBtn := widget.NewButton("Input/Output", func() {})
+	fecapBtn := widget.NewButton("FeCAP Mode", func() {})
 
 	// Track current view to avoid redundant updates
 	currentView := -1
@@ -119,12 +123,13 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 		allViews[view].Show()
 
 		// Update button importance (without calling Refresh - Fyne handles it)
-		buttons := []*widget.Button{idealBtn, irDropBtn, sneakBtn, driftBtn}
+		buttons := []*widget.Button{idealBtn, irDropBtn, sneakBtn, driftBtn, fecapBtn}
 		statusTexts := []string{
 			"Ideal MVM - No non-idealities",
 			"IR Drop - Voltage drop along metal lines",
 			"Sneak Paths - Parasitic current paths",
 			"Drift - Conductance change over time",
+			"FeCAP Mode - Charge-domain MVM (Q = C×V, no sneak paths or IR drop)",
 		}
 
 		for i, btn := range buttons {
@@ -141,6 +146,7 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 	irDropBtn.OnTapped = func() { updateView(1) }
 	sneakBtn.OnTapped = func() { updateView(2) }
 	driftBtn.OnTapped = func() { updateView(3) }
+	fecapBtn.OnTapped = func() { updateView(4) }
 
 	toolWidgets := sharedwidgets.NewToolValidationWidgets(sharedwidgets.ToolValidationOptions{
 		Window:          app.window,
@@ -165,6 +171,7 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 		irDropBtn,
 		sneakBtn,
 		driftBtn,
+		fecapBtn,
 		layout.NewSpacer(),
 		toolWidgets.CrossSimStatus,
 		toolWidgets.BadCrossbarStatus,

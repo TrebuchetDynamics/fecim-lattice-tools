@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -111,6 +112,15 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		accWaterfall,
 	)
 
+	// FeCAP tab (LIT-P2-05): charge-domain MVM visualization with its own internal array.
+	// The closures in FeCAPTab button handlers keep the struct alive.
+	fecapRows := ca.config.Rows
+	if fecapRows > 8 {
+		fecapRows = 8 // Cap at 8×8 for readable bar charts
+	}
+	fecapTab := tabs.NewFeCAPTab(fecapRows)
+	fecapContent := fecapTab.Content()
+
 	// Create tabbed view with new tabs
 	ca.tabs = container.NewAppTabs(
 		container.NewTabItem("Conductance", condContent),
@@ -119,6 +129,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Input/Output", container.NewMax(ca.mvmVis)),
 		container.NewTabItem("Ideal vs Actual", beforeAfterTab),
 		container.NewTabItem("Accuracy Analysis", waterfallTab),
+		container.NewTabItem("FeCAP Mode", fecapContent),
 	)
 
 	// Update educational panel based on selected tab and preserve selection
@@ -221,6 +232,25 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 					"Peer-reviewed: 96-98%\n\n"+
 					"Shows where accuracy\n"+
 					"is lost and why.")
+		case "FeCAP Mode":
+			ca.setEducationalContent("FeCAP (Charge Domain)",
+				"FeCAP = ferroelectric\ncapacitor crossbar.\n\n"+
+					"State → capacitance C\n"+
+					"(not conductance G)\n\n"+
+					"MVM: Q = C × V\n"+
+					"(charge-domain)\n\n"+
+					"Key advantages:\n"+
+					"• No DC path → no sneak\n"+
+					"• No IR drop\n"+
+					"• E = ½CV² per cell\n"+
+					"• 14-57× lower energy\n\n"+
+					"Sensing:\n"+
+					"Charge amplifier detects\n"+
+					"I_disp = ΔQ/Δt during\n"+
+					"10 ns write pulse.\n\n"+
+					"Reference:\n"+
+					"Adv. Intell. Syst. 2022\n"+
+					"128×128 demo, 3.8 pJ/MVM")
 		}
 	}
 
@@ -354,6 +384,29 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 			ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f (%.2f%% of signal)",
 				row, col, sneakCurrent, sneakRatio))
 		}
+
+	case "FeCAP Mode":
+		ca.statsLabel.SetText(
+			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+				"FeCAP CHARGE-DOMAIN MVM\n" +
+				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
+				"Physics:\n" +
+				"  Q[j] = Σᵢ C[i,j] × V_DAC[i]\n" +
+				"  (charge domain, not current)\n\n" +
+				"Cell capacitance:\n" +
+				"  C_phys ∈ [0.5 fF, 2.0 fF]\n" +
+				"  ×4 modulation ratio (HZO)\n\n" +
+				"Read chain:\n" +
+				"  1. WL pulse (10 ns)\n" +
+				"  2. Charge accumulates on BL\n" +
+				"  3. Charge amp: V = Q/C_fb\n" +
+				"  4. ADC quantizes V_out\n\n" +
+				"No sneak paths — DC-blocked.\n" +
+				"No IR drop — no resistive WL.\n\n" +
+				"Use FeCAP controls to program\n" +
+				"capacitances and run Charge MVM.",
+		)
+		ca.updateStatus("FeCAP MODE | Charge-domain MVM (Q = C×V) — no sneak paths or IR drop")
 
 	case "Ideal vs Actual":
 		ca.onBeforeAfterCellTapped(row, col, true) // Reuse existing handler
