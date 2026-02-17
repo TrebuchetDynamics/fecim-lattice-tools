@@ -76,6 +76,8 @@ func TestMVMEquation(t *testing.T) {
 // Per material.go FeFET physics model
 func TestConductanceFromWeight(t *testing.T) {
 	mat := sharedphysics.FeCIMMaterial()
+	// Explicitly set to linear conductance model for this test since we're testing the linear formula
+	mat.ConductanceModel = "linear"
 	quantLevels := 30
 
 	// Test boundary conditions
@@ -157,9 +159,9 @@ func TestTIAConversion(t *testing.T) {
 func TestADCQuantization(t *testing.T) {
 	adc := peripherals.DefaultADC()
 
-	// Verify 5-bit ADC gives 32 levels (0-31)
-	if adc.Levels() != 32 {
-		t.Errorf("5-bit ADC should have 32 levels, got %d", adc.Levels())
+	// Verify 4-bit ADC gives 16 levels (0-15) - Updated 2026-02-16 per literature consensus
+	if adc.Levels() != 16 {
+		t.Errorf("4-bit ADC should have 16 levels, got %d", adc.Levels())
 	}
 
 	testCases := []struct {
@@ -168,10 +170,10 @@ func TestADCQuantization(t *testing.T) {
 		desc     string
 	}{
 		{0.0, 0, "0V should give level 0"},
-		{0.5, 16, "0.5V should give level 16 (midpoint of 0-31)"},
-		{1.0, 31, "1.0V should give level 31 (max)"},
+		{0.5, 8, "0.5V should give level 8 (midpoint of 0-15)"},
+		{1.0, 15, "1.0V should give level 15 (max)"},
 		{-0.1, 0, "Negative voltage should clamp to level 0"},
-		{1.5, 31, "Voltage > Vref should clamp to max level"},
+		{1.5, 15, "Voltage > Vref should clamp to max level"},
 	}
 
 	for _, tc := range testCases {
@@ -182,7 +184,7 @@ func TestADCQuantization(t *testing.T) {
 	}
 
 	// Verify resolution
-	expectedResolution := 1.0 / 31.0 // (VrefHigh - VrefLow) / (levels - 1)
+	expectedResolution := 1.0 / 15.0 // (VrefHigh - VrefLow) / (levels - 1)
 	actualResolution := adc.Resolution()
 	if math.Abs(actualResolution-expectedResolution) > 1e-10 {
 		t.Errorf("ADC resolution: expected %.6f V/LSB, got %.6f V/LSB",

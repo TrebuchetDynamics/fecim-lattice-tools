@@ -45,11 +45,11 @@ const ConductanceSubthreshold = ConductanceExponential
 func (m ConductanceModel) String() string {
 	switch m {
 	case ConductanceLinear:
-		return "Linear"
+		return "Linear (Educational/Simplified)"
 	case ConductanceExponential:
-		return "Exponential"
+		return "Exponential (Recommended)"
 	case ConductanceLookup:
-		return "Lookup"
+		return "Lookup (Calibrated)"
 	case ConductanceSaturation:
 		return "Saturation"
 	default:
@@ -57,17 +57,21 @@ func (m ConductanceModel) String() string {
 	}
 }
 
-// ParseConductanceModel parses config strings with linear default.
+// ParseConductanceModel parses config strings with exponential default.
+// Default changed from Linear to Exponential per 2024-2025 literature consensus
+// (Nature Comms 2018: linear model fundamentally wrong for ferroelectrics).
 func ParseConductanceModel(model string) ConductanceModel {
 	switch strings.ToLower(strings.TrimSpace(model)) {
-	case "subthreshold", "exponential":
-		return ConductanceSubthreshold
+	case "linear":
+		return ConductanceLinear // Educational/Simplified mode
 	case "saturation":
 		return ConductanceSaturation
 	case "lookup":
 		return ConductanceLookup
+	case "subthreshold", "exponential":
+		fallthrough
 	default:
-		return ConductanceLinear
+		return ConductanceExponential // Default: physics-accurate model
 	}
 }
 

@@ -28,8 +28,8 @@ const (
 	FeCIMLevels    = physics.DefaultLevels // Demo baseline (conference claim; from shared/physics)
 	MaxArraySize   = 128                   // Maximum array dimension
 	DefaultSize    = 8                     // Default array size
-	DefaultDACBits = 5                     // Default DAC resolution (matches peripherals.DefaultDAC)
-	DefaultADCBits = 5                     // Default ADC resolution (matches peripherals.DefaultADC)
+	DefaultDACBits = 4                     // Default DAC resolution (4-bit optimal per 2024-2025 literature)
+	DefaultADCBits = 4                     // Default ADC resolution (4-bit optimal per 2024-2025 literature)
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.

@@ -325,18 +325,19 @@ func TestComputeTransferFunction_Basic(t *testing.T) {
 		t.Fatal("ComputeTransferFunction returned nil")
 	}
 
-	// Should have 30 entries (FeCIM levels)
-	if len(tf.InputLevels) != 30 {
-		t.Errorf("Expected 30 input levels, got %d", len(tf.InputLevels))
+	// Should have entries matching DAC level count (16 for 4-bit default)
+	expectedLevels := dac.Levels()
+	if len(tf.InputLevels) != expectedLevels {
+		t.Errorf("Expected %d input levels, got %d", expectedLevels, len(tf.InputLevels))
 	}
-	if len(tf.DACVoltages) != 30 {
-		t.Errorf("Expected 30 DAC voltages, got %d", len(tf.DACVoltages))
+	if len(tf.DACVoltages) != expectedLevels {
+		t.Errorf("Expected %d DAC voltages, got %d", expectedLevels, len(tf.DACVoltages))
 	}
-	if len(tf.ADCLevels) != 30 {
-		t.Errorf("Expected 30 ADC levels, got %d", len(tf.ADCLevels))
+	if len(tf.ADCLevels) != expectedLevels {
+		t.Errorf("Expected %d ADC levels, got %d", expectedLevels, len(tf.ADCLevels))
 	}
-	if len(tf.Errors) != 30 {
-		t.Errorf("Expected 30 error values, got %d", len(tf.Errors))
+	if len(tf.Errors) != expectedLevels {
+		t.Errorf("Expected %d error values, got %d", expectedLevels, len(tf.Errors))
 	}
 }
 
@@ -348,8 +349,10 @@ func TestComputeTransferFunction_InputLevels(t *testing.T) {
 
 	tf := ComputeTransferFunction(dac, adc, tia, pump)
 
-	// Input levels should be 0-29
-	for i := 0; i < 30; i++ {
+	// Input levels should be 0-(N-1) where N is number of levels
+	// Updated 2026-02-16: Use actual number of levels (16 for 4-bit default)
+	numLevels := len(tf.InputLevels)
+	for i := 0; i < numLevels; i++ {
 		if tf.InputLevels[i] != i {
 			t.Errorf("InputLevel[%d] should be %d, got %d", i, i, tf.InputLevels[i])
 		}
@@ -364,8 +367,14 @@ func TestComputeTransferFunction_Monotonicity(t *testing.T) {
 
 	tf := ComputeTransferFunction(dac, adc, tia, pump)
 
+	// Updated 2026-02-16: Use actual number of levels (16 for 4-bit, not hardcoded 30)
+	numLevels := len(tf.DACVoltages)
+	if numLevels < 2 {
+		t.Fatalf("TransferFunction has too few levels: %d", numLevels)
+	}
+
 	// DAC voltages should be monotonically increasing
-	for i := 1; i < 30; i++ {
+	for i := 1; i < numLevels; i++ {
 		if tf.DACVoltages[i] <= tf.DACVoltages[i-1] {
 			t.Errorf("DAC not monotonic: V[%d]=%.4f <= V[%d]=%.4f",
 				i, tf.DACVoltages[i], i-1, tf.DACVoltages[i-1])
@@ -373,7 +382,7 @@ func TestComputeTransferFunction_Monotonicity(t *testing.T) {
 	}
 
 	// TIA voltages should also be monotonically increasing
-	for i := 1; i < 30; i++ {
+	for i := 1; i < numLevels; i++ {
 		if tf.TIAVoltages[i] <= tf.TIAVoltages[i-1] {
 			t.Errorf("TIA not monotonic: V[%d]=%.4f <= V[%d]=%.4f",
 				i, tf.TIAVoltages[i], i-1, tf.TIAVoltages[i-1])
@@ -390,7 +399,7 @@ func TestComputeTransferFunction_Errors(t *testing.T) {
 	tf := ComputeTransferFunction(dac, adc, tia, pump)
 
 	// Errors should be ADCLevel - InputLevel
-	for i := 0; i < 30; i++ {
+	for i := 0; i < len(tf.Errors); i++ {
 		expectedError := tf.ADCLevels[i] - tf.InputLevels[i]
 		if tf.Errors[i] != expectedError {
 			t.Errorf("Error[%d] should be %d, got %d", i, expectedError, tf.Errors[i])
@@ -417,13 +426,13 @@ func TestComputeTransferFunction_RoundTrip(t *testing.T) {
 
 	// Match ADC range to expected TIA output range
 	adc.VrefLow = tia.OutputOffset
-	adc.VrefHigh = tia.OutputOffset + tia.Gain*100e-6 // Max current at level 29
+	adc.VrefHigh = tia.OutputOffset + tia.Gain*100e-6 // Max current at max level
 
 	tf := ComputeTransferFunction(dac, adc, tia, pump)
 
 	// Check that round-trip preserves most values
 	maxError := 0
-	for i := 0; i < 30; i++ {
+	for i := 0; i < len(tf.Errors); i++ {
 		err := abs(tf.Errors[i])
 		if err > maxError {
 			maxError = err

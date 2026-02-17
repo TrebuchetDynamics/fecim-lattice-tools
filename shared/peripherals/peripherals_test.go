@@ -32,12 +32,14 @@ func TestDACConversion(t *testing.T) {
 	}
 }
 
-// TestDACLevels verifies 30 FeCIM levels.
+// TestDACLevels verifies DAC level count matches default bit resolution.
+// Updated 2026-02-16: Changed from 30 levels (5-bit) to 16 levels (4-bit) per literature.
 func TestDACLevels(t *testing.T) {
 	dac := DefaultDAC()
 
-	if dac.Levels() < 30 {
-		t.Errorf("DAC should support at least 30 levels, has %d", dac.Levels())
+	expectedLevels := 16 // 4-bit default per 2024-2025 literature consensus
+	if dac.Levels() != expectedLevels {
+		t.Errorf("DAC levels = %d, want %d (4-bit default)", dac.Levels(), expectedLevels)
 	}
 }
 

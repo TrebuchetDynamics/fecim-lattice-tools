@@ -23,9 +23,9 @@ func TestConductanceModelString(t *testing.T) {
 		model    ConductanceModel
 		expected string
 	}{
-		{ConductanceLinear, "Linear"},
-		{ConductanceExponential, "Exponential"},
-		{ConductanceLookup, "Lookup"},
+		{ConductanceLinear, "Linear (Educational/Simplified)"},
+		{ConductanceExponential, "Exponential (Recommended)"},
+		{ConductanceLookup, "Lookup (Calibrated)"},
 		{ConductanceModel(99), "Unknown"},
 	}
 

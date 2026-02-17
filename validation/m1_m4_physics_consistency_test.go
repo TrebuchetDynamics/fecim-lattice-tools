@@ -22,6 +22,9 @@ func TestM1M4PhysicsConsistency_DefaultHZO30Levels(t *testing.T) {
 		t.Fatalf("expected DefaultHZO to expose 30 levels, got %d", levels)
 	}
 
+	// Set to linear conductance model since PolarizationToConductance uses linear mapping
+	matM1.ConductanceModel = "linear"
+
 	ds := circuitsgui.NewDeviceState(1, 1, nil, nil)
 	ds.SetMaterial(matM1)
 	matM4 := ds.GetMaterial()

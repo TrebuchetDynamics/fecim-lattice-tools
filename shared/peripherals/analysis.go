@@ -355,16 +355,22 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 		"pump_eff": pump.Efficiency,
 	})
 
-	tf := &TransferFunction{
-		InputLevels:  make([]int, 30),
-		DACVoltages:  make([]float64, 30),
-		PumpVoltages: make([]float64, 30),
-		TIAVoltages:  make([]float64, 30),
-		ADCLevels:    make([]int, 30),
-		Errors:       make([]int, 30),
+	// Use actual level count from DAC configuration
+	levels := dac.Levels()
+	if levels > FeCIMLevels {
+		levels = FeCIMLevels // Cap at FeCIM max levels
 	}
 
-	for i := 0; i < 30; i++ {
+	tf := &TransferFunction{
+		InputLevels:  make([]int, levels),
+		DACVoltages:  make([]float64, levels),
+		PumpVoltages: make([]float64, levels),
+		TIAVoltages:  make([]float64, levels),
+		ADCLevels:    make([]int, levels),
+		Errors:       make([]int, levels),
+	}
+
+	for i := 0; i < levels; i++ {
 		tf.InputLevels[i] = i
 
 		// DAC conversion
@@ -383,7 +389,7 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 		Vread := 0.1
 		Gmin := 1e-6   // 1 µS
 		Gmax := 100e-6 // 100 µS
-		G := Gmin + (Gmax-Gmin)*float64(i)/29.0
+		G := Gmin + (Gmax-Gmin)*float64(i)/float64(levels-1)
 		current := G * Vread
 		tf.TIAVoltages[i] = tia.Convert(current)
 
@@ -395,7 +401,7 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 	}
 
 	log.Calculation("ComputeTransferFunction", map[string]interface{}{
-		"levels":    30,
+		"levels":    levels,
 		"max_error": maxAbsError(tf.Errors),
 	}, tf)
 

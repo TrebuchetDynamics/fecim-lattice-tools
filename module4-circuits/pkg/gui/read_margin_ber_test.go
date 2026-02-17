@@ -11,6 +11,8 @@ import (
 func TestReadMarginBER_AdjacentLevelsExceedThreeSigma(t *testing.T) {
 	ds := newTestDeviceState(1, 1)
 	mat := ds.GetMaterial()
+	// Use linear conductance model for uniform level spacing in this read margin test
+	mat.ConductanceModel = "linear"
 	sense := arraysim.SenseChain{
 		TIA: arraysim.TIAConfig{Rf: 10e3, Vref: 0.0, Vmin: 0.0, Vmax: 1.0},
 		ADC: arraysim.ADCConfig{Bits: 5, Vmin: 0.0, Vmax: 1.0},

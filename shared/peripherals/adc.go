@@ -7,8 +7,8 @@ import (
 // ADC models the read-path analog-to-digital converter that maps sensed voltage
 // (V) into quantized digital codes used as compute/readout levels.
 //
-// In this stack a nominal 5-bit path (32 codes) is typically used with 30
-// usable ferroelectric levels plus margins/saturation behavior.
+// Default 4-bit configuration (literature optimal) provides 16 codes, balancing
+// cost/performance per multiple 2024-2025 studies. Can be increased for precision.
 //
 // H09: Includes SAR ADC noise modeling for realistic simulation:
 // - Comparator metastability (decision errors near thresholds)
@@ -62,7 +62,7 @@ const (
 // DefaultADC returns an ADC configured for FeCIM read operations.
 func DefaultADC() *ADC {
 	adc := &ADC{
-		Bits:           5,    // 32 levels, we use 30
+		Bits:           4,    // 16 levels (4-bit optimal per 2024-2025 literature consensus)
 		VrefHigh:       1.0,  // Max sense voltage
 		VrefLow:        0.0,  // Min sense voltage
 		INL:            0.5,  // 0.5 LSB INL

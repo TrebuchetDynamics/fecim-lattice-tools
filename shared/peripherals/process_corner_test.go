@@ -81,8 +81,14 @@ func verifyPeripheralsWithinSpec(tempC, supplyScale float64, corner ProcessCorne
 	if v := dac.ConvertWithCondition(dac.Levels()-1, tempC+273.15, corner); v < dac.VrefHigh-0.2 || v > dac.VrefHigh+0.2 {
 		return fmt.Errorf("DAC high-code output out of spec: %.4f V", v)
 	}
-	if l := adc.ConvertWithCondition(0.5*(adc.VrefHigh+adc.VrefLow), tempC+273.15, corner); l < 10 || l > 21 {
-		return fmt.Errorf("ADC mid-scale code out of spec: %d", l)
+	// Updated 2026-02-16: Changed range for 4-bit default (16 levels, midpoint=7.5)
+	// Old: 10-21 for 5-bit (32 levels, midpoint=15.5)
+	// New: 6-9 for 4-bit (16 levels, midpoint=7.5) with process variation tolerance
+	expectedMid := adc.Levels() / 2
+	minCode := expectedMid - 2
+	maxCode := expectedMid + 2
+	if l := adc.ConvertWithCondition(0.5*(adc.VrefHigh+adc.VrefLow), tempC+273.15, corner); l < minCode || l > maxCode {
+		return fmt.Errorf("ADC mid-scale code out of spec: %d (expected %d±2)", l, expectedMid)
 	}
 
 	midCurrent := 50e-6

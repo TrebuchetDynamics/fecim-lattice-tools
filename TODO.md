@@ -2,9 +2,9 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO₂-ZrO₂ superlattice research.
 
-**Last Updated**: 2026-02-14 (Investigated red test + Module 4/6 scope confirmed)
+**Last Updated**: 2026-02-16 (Added literature review recommendations from comprehensive 2025 crossbar/circuits analysis)
 
-**Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, code comments
+**Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, `docs/research/crossbar-circuits-literature-review-2025.md`, code comments
 
 **Phase 5 note (2026-02-12):** M1–M4 claim-matrix FALSE-claim cleanup completed: Claim 18 fixed in code/tests (signed V/I cell-info toggle now functional), Claim 5 marked DEFERRED with rationale (missing calibrated PZT/BTO presets), and Claim 19 marked DEFERRED as Module 5 scope (SRAM/ReRAM/MRAM comparison).
 
@@ -374,6 +374,88 @@ These parameters lack literature citations in source code. Each must be either c
 Evidence (2026-02-11):
 - `docs/documentation/module6-eda/OPENSOURCE-TOOLS.md` now includes a concrete OpenLane/OpenROAD integration path (artifact generation, config injection points, run/verify steps).
 - `docs/documentation/module6-eda/PHYSICS.md` now includes a stage-by-stage physics simplification audit and consistency rules from mapping through signoff interpretation.
+
+### 6. Literature Review Recommendations (2026-02-16)
+
+**Source**: `docs/research/crossbar-circuits-literature-review-2025.md` - comprehensive review of 29 peer-reviewed papers (2017-2025)
+
+**Key Findings**:
+1. FeCAP (capacitive crossbars) eliminate sneak paths, IR drop, and static leakage entirely (14-57x energy improvement)
+2. ADCs consume 40-60% of total energy - must design system around ADC constraints, not as afterthought
+3. Multiple 2024-2025 studies converge on 4-bit DAC/ADC as optimal (not 5-bit, not 8-bit)
+
+#### P0: Immediate Actions (Week 1 - Config Changes Only)
+
+| ID | Task | Modules | Status |
+|----|------|---------|--------|
+| LIT-P0-01 | Change default DAC resolution from 5-bit to 4-bit (literature consensus from multiple 2024-2025 studies) | M2/M4 + shared/peripherals | ✅ (2026-02-16) |
+| LIT-P0-02 | Change default ADC resolution from 5-bit to 4-bit (hardware-aware quantization optimal) | M2/M4 + shared/peripherals | ✅ (2026-02-16) |
+| LIT-P0-03 | Change default conductance model from linear to exponential (linear is fundamentally wrong for ferroelectrics per Nature Comms 2018) | M2/M4 + shared/physics | ✅ (2026-02-16) |
+| LIT-P0-04 | Add UI label "Educational/Simplified Mode" for linear conductance option | M1/M2/M4 GUI | ✅ (2026-02-16) |
+
+**Rationale**: Zero new code required - just config defaults. Immediate alignment with literature consensus.
+
+**✅ COMPLETED (2026-02-16):**
+- Modified 6 source files + 2 test files
+- All tests pass: `go test ./shared/peripherals/... ./shared/physics/...`
+- Defaults verified: DAC/ADC=4-bit, conductance=exponential
+- UI labels: Linear="Educational/Simplified", Exponential="Recommended"
+
+#### P1: ADC Architecture & Physics Accuracy (Weeks 2-7)
+
+| ID | Task | Impact | Status |
+|----|------|--------|--------|
+| LIT-P1-01 | Add Flash ADC architecture (3-4 bit, 1-2ns latency, high energy) | Educational value + realistic tradeoff exploration | ⏳ |
+| LIT-P1-02 | Add Ramp/Slope ADC architecture (6-8 bit, 100ns+ latency, very low energy) | Column-shared use case | ⏳ |
+| LIT-P1-03 | Add Comparator-only mode (1-bit, 28x lower energy than 7-bit ADC) | Binary/ternary network support | ⏳ |
+| LIT-P1-04 | Add ADC sharing ratio config (per-column, shared-4, shared-8, shared-all) | 3x variation in energy-area product per arXiv 2024 | ⏳ |
+| LIT-P1-05 | Model area/latency/energy implications of ADC count | Realistic system-level metrics | ⏳ |
+| LIT-P1-06 | Add state-dependent C2C variation: `sigma(G) = sigma_base * f(G)` | ArXiv 2023 shows variation depends on conductance state | ⏳ |
+| LIT-P1-07 | Calibrate f(G) from arXiv 2023 FeFET data (28nm fabricated devices) | Measurement-backed model | ⏳ |
+
+**Deliverable (Week 4)**: Educational ADC comparison tool with Flash/SAR/Ramp options
+**Deliverable (Week 7)**: Measurement-backed state-dependent variation model
+
+#### P2: FeCAP Mode & Major Architecture (Weeks 8-12)
+
+| ID | Task | Scope | Status |
+|----|------|-------|--------|
+| LIT-P2-01 | Design capacitance matrix data structure (replace conductance for FeCAP mode) | M2 core architecture | ⏳ |
+| LIT-P2-02 | Implement charge-domain MVM: Q = C × V (vs current I = G × V) | M2 computation engine | ⏳ |
+| LIT-P2-03 | Add charge amplifier sensing (alternative to TIA for FeCAP) | M4 peripherals | ⏳ |
+| LIT-P2-04 | Implement transient pulse-based operation for FeCAP | M2/M4 timing | ⏳ |
+| LIT-P2-05 | Add FeCAP-specific GUI visualizations (charge integration, displacement current) | M2/M4 GUI | ⏳ |
+| LIT-P2-06 | Validate against Adv. Intell. Syst. 2022 (128x128 FeCAP demo, 3.8 pJ/MVM) | Validation | ⏳ |
+| LIT-P2-07 | Add non-linear I-V curves for FeFET subthreshold region | M2 physics | ⏳ |
+
+**Rationale**: FeCAP eliminates sneak paths, IR drop, and static leakage entirely - paradigm shift, not incremental improvement. Scientific Reports 2024 shows 10x power reduction for charge-domain sensing.
+
+**Deliverable (Week 12)**: Full FeCAP architecture support with charge-domain computation
+
+#### P3: Advanced Features (Post-MVP)
+
+| ID | Task | Scope | Status |
+|----|------|-------|--------|
+| LIT-P3-01 | Add DCC (Displacement Current Control) programming alternative to ISPP | M1/M4 write controller | ⏳ |
+| LIT-P3-02 | Extend sneak path model to multi-hop (beyond current 3-cell) for >128x128 passive arrays | M2 non-idealities | ⏳ |
+| LIT-P3-03 | Add configurable charge pump staging (2-stage for FeCAP 1.5V, 3-4 stage for FeFET 3-5V) | M4 peripherals | ⏳ |
+| LIT-P3-04 | Add thermometer/segmented DAC encoding (vs current binary) | M4 peripherals | ⏳ |
+| LIT-P3-05 | Model DAC glitch energy for binary encoding | M4 energy analysis | ⏳ |
+
+**Rationale**: Forward-looking features and completeness items. PMC 2024 shows DCC promise but less mature than ISPP.
+
+#### Implementation Roadmap
+
+**Phase 1 (Week 1)**: P0 config changes - immediate literature alignment
+**Phase 2 (Weeks 2-4)**: Multiple ADC architectures + GUI selector dropdown
+**Phase 3 (Weeks 5-7)**: State-dependent C2C + non-linear I-V physics
+**Phase 4 (Weeks 8-12)**: FeCAP mode with charge-domain MVM + validation
+**Phase 5 (Post-MVP)**: DCC programming, multi-hop sneak paths, advanced DAC features
+
+**Cross-references**:
+- Full analysis: `docs/research/crossbar-circuits-literature-review-2025.md`
+- Related: FOCUS-01 through FOCUS-11 (Module 4 physics correction)
+- Related: Peripheral Circuits Enhancements (Medium Priority section below)
 
 ---
 

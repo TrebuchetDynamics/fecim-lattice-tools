@@ -10,10 +10,10 @@ var log = logging.NewLogger("peripherals")
 // DAC models the write-path digital-to-analog converter that generates program
 // voltages (V) from discrete control codes for ferroelectric state updates.
 //
-// A 5-bit configuration provides 32 codes, typically mapped to 30 active levels
-// with guard codes near saturation extremes.
+// Default 4-bit configuration (literature optimal) provides 16 codes.
+// Can be increased to 5-bit (32 codes) or higher for high-precision applications.
 type DAC struct {
-	Bits       int     // Resolution in bits (5 for 30 levels)
+	Bits       int     // Resolution in bits (4-bit default per 2024-2025 literature)
 	VrefHigh   float64 // High reference voltage (+1.5V)
 	VrefLow    float64 // Low reference voltage (-1.5V)
 	INL        float64 // Integral nonlinearity (LSB)
@@ -24,7 +24,7 @@ type DAC struct {
 // DefaultDAC returns a DAC configured for FeCIM 30-level operation.
 func DefaultDAC() *DAC {
 	dac := &DAC{
-		Bits:       5,    // 32 levels, we use 30
+		Bits:       4,    // 16 levels (4-bit optimal per 2024-2025 literature consensus)
 		VrefHigh:   1.5,  // +1.5V for positive write
 		VrefLow:    -1.5, // -1.5V for negative write
 		INL:        0.5,  // 0.5 LSB INL
