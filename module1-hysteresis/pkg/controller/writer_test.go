@@ -44,11 +44,11 @@ func TestWriteController_CalculateNextField_StuckRelaxesBoundsWithoutResettingTo
 // L-ISPP (Logarithmic Step Mode) tests
 // ---------------------------------------------------------------------------
 
-// TestLogISPP_DefaultIsLinear verifies new controllers default to linear stepping.
-func TestLogISPP_DefaultIsLinear(t *testing.T) {
+// TestLogISPP_DefaultIsLogarithmic verifies new controllers default to logarithmic (A-ISPP) stepping.
+func TestLogISPP_DefaultIsLogarithmic(t *testing.T) {
 	wc := NewWriteController(30, 1.0, 2.5, nil)
-	if wc.StepMode != "linear" {
-		t.Fatalf("StepMode: got %q, want \"linear\"", wc.StepMode)
+	if wc.StepMode != "logarithmic" {
+		t.Fatalf("StepMode: got %q, want \"logarithmic\"", wc.StepMode)
 	}
 	if wc.LogBaseStep != 0.05 {
 		t.Fatalf("LogBaseStep: got %v, want 0.05", wc.LogBaseStep)

@@ -304,7 +304,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}()
 		}
 	})
-	a.isppMethodSelect.SetSelected("Linear (Standard)")
+	a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
 
 	// Material button - shows current material, opens picker on click
 	a.materialBtn = widget.NewButton(a.material.Name, func() {

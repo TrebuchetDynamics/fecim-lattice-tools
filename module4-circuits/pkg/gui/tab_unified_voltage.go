@@ -877,7 +877,7 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP Method: %s (applies to LK engine)", s))
 		}
 	})
-	methodSelect.SetSelected("Linear (Standard)")
+	methodSelect.SetSelected("Logarithmic (A-ISPP)")
 	ca.isppMethodSelect = methodSelect
 
 	engineRow := container.NewHBox(widget.NewLabel("ISPP Engine:"), engineSelect)

@@ -124,7 +124,7 @@ type WriteController struct {
 	EnableLKMidOptimizations bool
 	WaitSettleScale          float64
 
-	// Step mode: "linear" (default) or "logarithmic" (L-ISPP).
+	// Step mode: "logarithmic" (default, A-ISPP) or "linear".
 	// Logarithmic mode uses V_next = V_prev + ΔV₀·Ec·ln(1+pulseCount),
 	// giving large initial steps that naturally decay.
 	StepMode string
@@ -154,7 +154,7 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		State:                    StateIdle,
 		EnableLKMidOptimizations: false,
 		WaitSettleScale:          1.0,
-		StepMode:                 "linear",
+		StepMode:                 "logarithmic",
 		LogBaseStep:              0.05,
 	}
 }
