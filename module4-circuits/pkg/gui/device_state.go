@@ -1058,26 +1058,28 @@ func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 }
 
 // ============================================================================
-// V/2 HALF-SELECT SCHEME (Passive 0T1R Mode Only)
+// DAC-ONLY COLUMN DRIVE (Passive 0T1R Mode Only)
 // ============================================================================
 //
-// Per VOLTAGE_RULES.md Section 3.2 and 6.1:
-// For passive (0T1R) WRITE operations, use V/2 half-select biasing to minimize
-// write disturb on half-selected cells (same row or column as target).
+// For passive (0T1R) WRITE operations the DAC drives the selected BL while all
+// WLs are grounded through the TIA virtual ground. There is no V/2 splitting.
 //
 // Target cell (SET operation):
-//   - Selected WL: +V_write/2 (positive half)
-//   - Selected BL: -V_write/2 (negative half)
-//   - Effective ΔV = WL - BL = +V/2 - (-V/2) = V_write (full switching)
+//   - All WLs: 0V (grounded / TIA virtual ground)
+//   - Selected BL (DAC): -V_write (full write voltage)
+//   - Effective ΔV = WL − BL = 0 − (−V_write) = +V_write (full switching)
 //
-// Half-selected cells (same row or same column):
-//   - Same row: WL = +V/2, BL = 0 → ΔV = +V/2 (below Vc, minimal disturb)
-//   - Same col: WL = 0, BL = -V/2 → ΔV = +V/2 (below Vc, minimal disturb)
+// Column disturb (same column, different row):
+//   - WL = 0, BL = -V_write → ΔV = +V_write (FULL write — entire column switches)
 //
-// Unselected cells (diagonal):
+// Same-row cells (different column):
+//   - WL = 0, BL = 0 → ΔV = 0 (safe — unselected BLs grounded)
+//
+// Unselected cells (different row AND column):
 //   - WL = 0, BL = 0 → ΔV = 0 (no disturb)
 //
-// For 1T1R/2T1R modes, transistor isolation eliminates need for V/2.
+// For 1T1R/2T1R modes, transistor gate on selected row completes the circuit;
+// only the selected cell [row,col] can switch (transistor isolation).
 // ============================================================================
 
 // ApplyHalfSelectWrite applies voltage biasing for passive (0T1R) write operation.

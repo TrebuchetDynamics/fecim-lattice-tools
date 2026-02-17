@@ -862,17 +862,17 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					// Milestone celebrations
 					switch a.wrdTotalWrites {
 					case 10:
-						a.addLogEntry("★★ 10 ops! ~49 bits stored ★★")
+						a.addLogEntry(fmt.Sprintf("★★ 10 ops! ~%.0f bits stored ★★", 10*a.wrdBitsStored))
 					case 25:
-						a.addLogEntry("★★★ 25 ops! ~123 bits stored ★★★")
+						a.addLogEntry(fmt.Sprintf("★★★ 25 ops! ~%.0f bits stored ★★★", 25*a.wrdBitsStored))
 					case 50:
-						a.addLogEntry("★★★★ 50 ops! ~245 bits stored ★★★★")
-						a.addLogEntry("Binary would need 245 cells!")
+						a.addLogEntry(fmt.Sprintf("★★★★ 50 ops! ~%.0f bits stored ★★★★", 50*a.wrdBitsStored))
+						a.addLogEntry(fmt.Sprintf("Binary would need %.0f cells!", 50*a.wrdBitsStored))
 						a.addLogEntry("FeCIM: only 50 cells! (5× denser)")
 					case 100:
 						a.addLogEntry("★★★★★ 100 OPERATIONS! ★★★★★")
-						a.addLogEntry("~491 bits in 100 FeCIM cells")
-						a.addLogEntry("Binary: 491 cells needed!")
+						a.addLogEntry(fmt.Sprintf("~%.0f bits in 100 FeCIM cells", 100*a.wrdBitsStored))
+						a.addLogEntry(fmt.Sprintf("Binary: %.0f cells needed!", 100*a.wrdBitsStored))
 						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 						a.addLogEntry(fmt.Sprintf("Accuracy: %.0f%%", successRate))
 					}
