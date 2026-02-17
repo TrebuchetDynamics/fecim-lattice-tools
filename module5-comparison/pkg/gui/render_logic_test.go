@@ -67,7 +67,7 @@ func TestOperationLogAndComparisonText(t *testing.T) {
 	a := fyneTest.NewApp()
 	defer a.Quit()
 
-	log := NewComparisonOperationLog()
+	log := newComparisonOperationLog()
 	for i := 0; i < 12; i++ {
 		log.Add("step")
 	}

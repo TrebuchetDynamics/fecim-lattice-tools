@@ -3,7 +3,6 @@ package gui
 
 import (
 	"fmt"
-	"image/color"
 	"sync"
 	"time"
 
@@ -120,48 +119,6 @@ func (p AutoDemoPhase) PhaseDuration() time.Duration {
 	default:
 		return 10 * time.Second
 	}
-}
-
-// ComparisonModeIndicator shows the current mode.
-type ComparisonModeIndicator struct {
-	*sharedwidgets.ModeIndicator
-}
-
-// NewComparisonModeIndicator creates a new mode indicator.
-func NewComparisonModeIndicator() *ComparisonModeIndicator {
-	m := &ComparisonModeIndicator{
-		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
-			MinSize: fyne.NewSize(120, 40),
-			Styles: map[int]sharedwidgets.ModeStyle{
-				int(ComparisonModeIdle): {
-					Text:            "IDLE",
-					BackgroundColor: color.RGBA{60, 60, 80, 255},
-					BorderColor:     color.RGBA{100, 100, 130, 255},
-				},
-				int(ComparisonModeCalculating): {
-					Text:            "CALCULATING",
-					BackgroundColor: color.RGBA{80, 120, 50, 255},
-					BorderColor:     color.RGBA{140, 200, 100, 255},
-				},
-				int(ComparisonModeComparing): {
-					Text:            "COMPARING",
-					BackgroundColor: color.RGBA{50, 80, 150, 255},
-					BorderColor:     color.RGBA{100, 150, 255, 255},
-				},
-			},
-		}),
-	}
-	return m
-}
-
-// SetMode updates the current mode.
-func (m *ComparisonModeIndicator) SetMode(mode ComparisonMode) {
-	m.ModeIndicator.SetMode(int(mode))
-}
-
-// GetMode returns the current mode.
-func (m *ComparisonModeIndicator) GetMode() ComparisonMode {
-	return ComparisonMode(m.ModeIndicator.GetMode())
 }
 
 // ComparisonEducationalPanel shows explanations.
@@ -359,20 +316,12 @@ func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
 	e.SetContent("Why Compute-in-Memory Wins", content)
 }
 
-// ComparisonOperationLog shows timestamped operations.
-type ComparisonOperationLog struct {
-	*sharedwidgets.OperationLog
-}
-
-// NewComparisonOperationLog creates a new operation log.
-func NewComparisonOperationLog() *ComparisonOperationLog {
-	o := &ComparisonOperationLog{
-		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
-			Title:        "Calculation Log",
-			MaxEntries:   8,
-			MinSize:      fyne.NewSize(200, 150),
-			UseMonospace: true,
-		}),
-	}
-	return o
+// newComparisonOperationLog creates an operation log for calculation history.
+func newComparisonOperationLog() *sharedwidgets.OperationLog {
+	return sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+		Title:        "Calculation Log",
+		MaxEntries:   8,
+		MinSize:      fyne.NewSize(200, 150),
+		UseMonospace: true,
+	})
 }
