@@ -1318,22 +1318,22 @@ Stretch roadmap to push FeCIM Lattice Tools beyond current world-class targets.
 | M1-WC-02 | Build retention experiment workflow (program-hold-read with log-time sweep and Arrhenius summary) | ✅ |
 | M1-WC-03 | Build fatigue + wake-up experiment runner with cycle schedule and Pr/Ec degradation report | ✅ |
 | M1-WC-04 | Add C(V) butterfly measurement mode using dQ/dV from hysteresis sweep | ✅ |
-| M1-WC-05 | Add I-V leakage characterization panel with Schottky / Poole-Frenkel / Fowler-Nordheim fits | ⬜ |
-| M1-WC-06 | Add small-signal capacitance mode (AC perturbation around bias point) | ⬜ |
-| M1-WC-07 | Add batch/recipe engine for sequenced measurements and automated reports | ⬜ |
+| M1-WC-05 | Add I-V leakage characterization panel with Schottky / Poole-Frenkel / Fowler-Nordheim fits | ⬜ | DEFERRED (needs device-level I-V data from published FeFET characterization) |
+| M1-WC-06 | Add small-signal capacitance mode (AC perturbation around bias point) | ⬜ | DEFERRED (needs small-signal AC model implementation in physics engine) |
+| M1-WC-07 | Add batch/recipe engine for sequenced measurements and automated reports | ⬜ | DEFERRED (needs design doc + API spec for recipe file format) |
 | M1-WC-08 | Productize frequency-dispersion characterization (loop metrics vs frequency sweep) | ✅ |
 | M1-WC-09 | Add FORC workflow and Preisach-density visualization/export (closed by `60e1f10`) | ✅ |
 | M1-WC-10 | Add literature overlay loader (CSV/JSON) for direct curve-to-curve comparison (closed by `fa6d12e`) | ✅ |
-| M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ |
+| M4-WC-01 | Integrate algorithm-level loop: weight mapping and inference accuracy vs hardware non-idealities | ⬜ | DEFERRED (needs M2-M3 integration work beyond current scope) |
 | M4-WC-02 | Implement design-space exploration mode (array size × ADC bits × device) with Pareto export | ✅ |
 | M4-WC-03 | Integrate process variation Monte Carlo into compute/read metrics and UI | ✅ |
 | M4-WC-04 | Implement endurance-aware accuracy degradation pipeline (cycles → conductance drift → accuracy drop) | ✅ |
 | M4-WC-05 | Add batch benchmark mode (MNIST now, extensible to VGG/ResNet configs) | ✅ |
-| M4-WC-06 | Create validated peripheral calibration workflow against SPICE/post-layout references | ⬜ |
-| M4-WC-07 | Add MLC programming characterization panel (linearity, verify count, drift) | ⬜ |
-| M4-WC-08 | Add tiled architecture model (multi-array + global accumulation/buffer costs) | ⬜ |
+| M4-WC-06 | Create validated peripheral calibration workflow against SPICE/post-layout references | ⬜ | DEFERRED (needs external SPICE tool integration) |
+| M4-WC-07 | Add MLC programming characterization panel (linearity, verify count, drift) | ⬜ | DEFERRED (needs design doc + peripheral model extensions) |
+| M4-WC-08 | Add tiled architecture model (multi-array + global accumulation/buffer costs) | ⬜ | DEFERRED (needs architecture spec for multi-array coordination) |
 | M4-WC-09 | Upgrade write-verify loop to support technology-calibrated device programming models | ✅ |
-| M4-WC-10 | Build rigorous device-technology comparison suite (RRAM/PCM/FeFET/SRAM side-by-side) | ⬜ |
+| M4-WC-10 | Build rigorous device-technology comparison suite (RRAM/PCM/FeFET/SRAM side-by-side) | ⬜ | DEFERRED (needs M5 module expansion beyond current scope) |
 
 ## Experimental Data Anchoring (2026-02-13)
 
