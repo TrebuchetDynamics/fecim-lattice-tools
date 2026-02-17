@@ -20,7 +20,7 @@ import (
 // createInfoPanel creates the state and material information panel
 func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("0.00")
-	a.levelLabel = widget.NewLabel("15/30")
+	a.levelLabel = widget.NewLabel(fmt.Sprintf("%d/%d", a.numLevels/2, a.numLevels))
 	a.stateLabel = widget.NewLabel("Intermediate")
 
 	// Phase indicator for state machine visualization
@@ -55,8 +55,8 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 				"Ec = field needed to switch\n\n"+
 				"Note: Ranges from peer-reviewed literature.\n"+
 				"Actual values depend on process conditions.",
-				a.material.Name, a.material.Pr*100, a.material.Ps*100,
-				a.material.Ec/1e8, a.material.EnduranceCycles),
+				a.material.Name, a.material.Pr*100, a.material.Pr*80, a.material.Pr*120, a.material.Ps*100,
+				a.material.Ec/1e8, a.material.Ec*0.7/1e8, a.material.Ec*1.3/1e8, a.material.EnduranceCycles),
 			a.mainWindow,
 		)
 		d.SetOnClosed(resume)

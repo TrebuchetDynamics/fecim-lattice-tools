@@ -66,15 +66,18 @@ func (ca *CircuitsApp) createPassiveVoltageRules() fyne.CanvasObject {
 - Park et al. 2015 (10 nm HZO), doi:10.1002/adma.201404531
 - Cheema et al. 2020 (5 nm HZO superlattice), doi:10.1038/s41586-020-2208-x
 
-### WRITE Mode (V/2 Half-Select Scheme)
+### WRITE Mode (DAC-Only Column Drive)
 | Parameter | Value | Purpose |
 |-----------|-------|---------|
-| Selected WL | +V/2 | Half of write voltage |
-| Selected BL | -V/2 | Opposite polarity |
-| Target Cell dV | +/-1.5V | Full switching (> Vc) |
-| Half-Selected dV | +/-0.75V | Below Vc (minimal disturb) |
+| All WLs | 0V | Grounded (TIA virtual ground) |
+| Selected BL (DAC) | -V_write | Full write voltage on selected column |
+| Target cell ΔV | +V_write | Full switching (WL−BL = 0−(−V) = +V) |
+| Same-column cells ΔV | +V_write | Full disturb — entire column is written |
+| Same-row cells ΔV | 0V | Safe — unselected BLs grounded |
 
-**V/2 Scheme:** Splits write voltage between WL and BL to minimize disturb on half-selected cells.
+**DAC-Only Column Drive:** The DAC drives the selected BL; all WLs are grounded via TIA
+virtual ground. Every cell in the selected column sees the full write voltage. Transistors
+(1T1R/2T1R) provide per-cell isolation; in passive 0T mode there is no isolation.
 
 ### COMPUTE (MVM) Mode
 | Parameter | Value | Purpose |

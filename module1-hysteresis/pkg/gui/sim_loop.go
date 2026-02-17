@@ -850,12 +850,12 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						// NOTE: 10M× is Dr. Tour's unverified claim. Peer-reviewed: 25-100× (Samsung Nature 2025)
 						nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
 						dramEquiv := fecimEnergy * 1000 // 1000× worse
-						bitsStored := float64(a.wrdTotalWrites) * 4.91
+						bitsStored := float64(a.wrdTotalWrites) * a.wrdBitsStored
 						a.addLogEntry("━━ ENERGY COMPARISON ━━")
 						a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
 						a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (50×!)", nandEquiv))
 						a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (1000×)", dramEquiv))
-						a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.1f×binary)", bitsStored, 4.91))
+						a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.2f×binary)", bitsStored, a.wrdBitsStored))
 						a.addLogEntry("━━━━━━━━━━━━━━━━━━━━━━")
 					}
 

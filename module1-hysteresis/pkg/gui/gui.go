@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"math"
 	"os"
 	"path/filepath"
 	"sync"
@@ -515,7 +516,7 @@ func (a *App) initDebugLog() {
 	a.logEntries = append(a.logEntries, "══════════════════════")
 	a.logEntries = append(a.logEntries, fmt.Sprintf("Material: %s", materialName))
 	a.logEntries = append(a.logEntries, fmt.Sprintf("Ec: %.1f MV/cm", materialEc/1e8))
-	a.logEntries = append(a.logEntries, "30 LEVELS (claim) = 4.91 bits/cell")
+	a.logEntries = append(a.logEntries, fmt.Sprintf("%d LEVELS = %.2f bits/cell", a.numLevels, math.Log2(float64(a.numLevels))))
 	a.logEntries = append(a.logEntries, "──────────────────────")
 }
 
@@ -560,6 +561,7 @@ func NewApp() *App {
 		wrdSkipPrep:             true,
 		wrdRangeFrac:            rangeFracForMaterial(mat),
 		wrdGuardFrac:            0.15,
+		wrdBitsStored:           math.Log2(float64(numLevels)),
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -658,7 +660,7 @@ func NewAppWithMaterial(materialName string) *App {
 		wrdStartLevel:      15,
 		wrdRangeFrac:       rangeFracForMaterial(mat),
 		wrdGuardFrac:       0.15,
-		wrdBitsStored:      4.91,
+		wrdBitsStored:      math.Log2(float64(numLevels)),
 		manualTargetLevel:  15,
 		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
