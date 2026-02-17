@@ -1085,12 +1085,12 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.mu.Unlock()
 
 	// Update UI directly (we're already on the UI thread from dialog callback)
-	// Update plot bounds and markers
-	a.plot.SetBounds(effEc*2.5, effPr*1.2)
+	// Update plot bounds, markers, and clear data. updateLevelIndicatorRange sets
+	// the correct pMax (accounting for Ps*rangeFrac headroom) and syncs the plot.
+	a.updateLevelIndicatorRange()
 	a.plot.SetMaterialParams(effEc, effPr)
 	a.plot.SetData(nil, nil, 0, 0)
 	a.plot.Refresh()
-	a.updateLevelIndicatorRange()
 	a.updateSimVsExpWidget()
 
 	// Reset E-field slider and update range for new material

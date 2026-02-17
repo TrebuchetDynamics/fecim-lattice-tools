@@ -107,9 +107,19 @@ func (a *App) updateLevelIndicatorRange() {
 	if effPr == 0 {
 		effPr = a.material.Ps
 	}
-	plotPMax := effPr * 1.2
 	effPs := a.effectivePsForLevels()
+	// Ensure plot Y-axis covers the full target level range (Ps*rangeFrac) plus
+	// 5% headroom. For low-squareness materials Ps*rangeFrac can exceed Pr*1.2.
+	plotPMax := effPr * 1.2
+	if effPs*1.05 > plotPMax {
+		plotPMax = effPs * 1.05
+	}
 	a.levelIndicator.SetPolarizationRange(plotPMax, effPs)
+	// Keep P-E plot Y-axis in sync with the level indicator range.
+	if a.plot != nil {
+		a.plot.SetBounds(a.effectiveEc()*2.5, plotPMax)
+		a.plot.Refresh()
+	}
 }
 
 // App holds the main application state
