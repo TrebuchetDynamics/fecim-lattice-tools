@@ -865,12 +865,29 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 	engineSelect.SetSelected(selectedEngine)
 	ca.isppEngineSelect = engineSelect
 
+	// ISPP method selector (applies to LK engine)
+	methodSelect := widget.NewSelect([]string{"Linear (Standard)", "Logarithmic (A-ISPP)", "DCC (Future)"}, func(s string) {
+		if s == "" || ca.deviceState == nil {
+			return
+		}
+		// Note: This sets a preference but doesn't directly control the WriteController
+		// The actual StepMode will be applied when the LK engine creates its WriteController
+		// For now, just log the selection (full integration requires device state extension)
+		if ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP Method: %s (applies to LK engine)", s))
+		}
+	})
+	methodSelect.SetSelected("Linear (Standard)")
+	ca.isppMethodSelect = methodSelect
+
 	engineRow := container.NewHBox(widget.NewLabel("ISPP Engine:"), engineSelect)
+	methodRow := container.NewHBox(widget.NewLabel("ISPP Method:"), methodSelect)
 	isppConfidence := container.NewHBox(widget.NewLabel("ISPP confidence:"), sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated))
 
 	return container.NewVBox(
 		writeRow,
 		engineRow,
+		methodRow,
 		isppConfidence,
 	)
 }

@@ -111,11 +111,12 @@ type App struct {
 	running         atomic.Bool
 	paused          atomic.Bool
 	autoMode        bool
-	waveform        WaveformType
-	physicsEngine   PhysicsEngine
-	physicsSelect   *widget.Select
-	tempContainer   *fyne.Container // Temperature controls (L-K only)
-	stressContainer *fyne.Container // Stress controls (L-K only)
+	waveform          WaveformType
+	physicsEngine     PhysicsEngine
+	physicsSelect     *widget.Select
+	isppMethodSelect  *widget.Select
+	tempContainer     *fyne.Container // Temperature controls (L-K only)
+	stressContainer   *fyne.Container // Stress controls (L-K only)
 
 	// Plot view (presentation-only)
 	plotViewMode   PlotViewMode

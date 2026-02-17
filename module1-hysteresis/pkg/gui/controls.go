@@ -274,6 +274,38 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	a.physicsSelect.SetSelected(a.physicsEngine.String())
 
+	// ISPP method selector
+	isppMethods := []string{"Linear (Standard)", "Logarithmic (A-ISPP)", "DCC (Future)"}
+	a.isppMethodSelect = widget.NewSelect(isppMethods, func(s string) {
+		log.Selection("ISPPMethod", s)
+		a.mu.Lock()
+		defer a.mu.Unlock()
+
+		if a.writeController == nil {
+			return
+		}
+
+		switch s {
+		case "Linear (Standard)":
+			a.writeController.StepMode = "linear"
+		case "Logarithmic (A-ISPP)":
+			a.writeController.StepMode = "logarithmic"
+		case "DCC (Future)":
+			// TODO: Implement DCC method (Displacement Current Control)
+			log.Printf("DCC method not yet implemented - staying with current mode")
+			// Revert selection to current mode
+			go func() {
+				time.Sleep(100 * time.Millisecond)
+				if a.writeController.StepMode == "logarithmic" {
+					a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
+				} else {
+					a.isppMethodSelect.SetSelected("Linear (Standard)")
+				}
+			}()
+		}
+	})
+	a.isppMethodSelect.SetSelected("Linear (Standard)")
+
 	// Material button - shows current material, opens picker on click
 	a.materialBtn = widget.NewButton(a.material.Name, func() {
 		a.showMaterialPickerDialog()
@@ -711,6 +743,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			withInfo(a.materialBtn, tips.Material),
 			withInfo(container.NewVBox(a.waveformSelect, a.waveformHelp), tips.Waveform),
 			withInfo(physicsRow, tips.PhysicsEngine),
+			withInfo(a.isppMethodSelect, tips.ISPPMethod),
 			lkPolydomainCheck,
 		)),
 		widget.NewCard("Levels & Range", "", container.NewVBox(

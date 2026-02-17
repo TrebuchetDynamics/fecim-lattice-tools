@@ -277,6 +277,7 @@ type CircuitsApp struct {
 	mfuxWriteVoltageLabel *widget.Label
 	mfuxWriteTargetLabel  *widget.Label // H2 FIX: Shows "Target: Row X, Col Y"
 	isppEngineSelect      *widget.Select
+	isppMethodSelect      *widget.Select
 
 	// Voltage rules UI widgets
 	writeSequencePanel       *fyne.Container   // 4-phase timing diagram container

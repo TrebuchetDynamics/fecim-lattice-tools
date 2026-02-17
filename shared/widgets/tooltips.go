@@ -59,6 +59,7 @@ var HysteresisTooltips = struct {
 	Material      TooltipContent
 	Waveform      TooltipContent
 	PhysicsEngine TooltipContent
+	ISPPMethod    TooltipContent
 	Levels        TooltipContent
 	TargetRange   TooltipContent
 	EField        TooltipContent
@@ -99,6 +100,18 @@ var HysteresisTooltips = struct {
 			"LK is better for time-resolved switching simulations",
 			"Preisach is better for quasi-static hysteresis loops",
 			"Both should give similar steady-state P-E curves",
+		},
+	},
+	ISPPMethod: TooltipContent{
+		Title:       "ISPP Programming Method",
+		Description: "Algorithm for incremental step pulse programming. Different methods optimize for speed vs energy.",
+		Range:       "Linear (Standard), Logarithmic (A-ISPP), DCC (Future)",
+		Physics:     "Standard ISPP: Fixed step sizes (PMC 2023). A-ISPP (Adaptive): Large steps when far from target, small steps when close—literature state-of-the-art from Seoul National University. DCC (Displacement Current Control): One-shot programming optimized for FE polarization switching (PMC 2024).",
+		Tips: []string{
+			"Linear is the baseline method (standard in literature)",
+			"Logarithmic (A-ISPP) uses adaptive steps for efficiency",
+			"Both use binary search refinement after establishing bounds",
+			"See docs/research/crossbar-circuits-literature-review-2025.md",
 		},
 	},
 	Levels: TooltipContent{
