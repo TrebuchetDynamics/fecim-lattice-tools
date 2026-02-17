@@ -26,6 +26,11 @@ type pkgState struct {
 	last     string // last of pass/skip
 }
 
+// unmarshalEvent decodes one JSONL line from go test -json output.
+func unmarshalEvent(line []byte, ev *TestEvent) error {
+	return json.Unmarshal(line, ev)
+}
+
 func main() {
 	var r io.Reader = os.Stdin
 	if len(os.Args) >= 2 && os.Args[1] != "-" {
