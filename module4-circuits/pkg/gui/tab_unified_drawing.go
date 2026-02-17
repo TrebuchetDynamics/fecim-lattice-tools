@@ -468,7 +468,9 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		drawSimpleText(img, timingText, w-50, 34, color.RGBA{150, 150, 170, 180})
 	}
 
-	// Draw V/2 half-select indicators only during WRITE in passive (0T1R) mode.
+	// Draw column-disturb indicators during WRITE in passive (0T1R) mode.
+	// DAC-only column drive: selected BL = −V_write, all WLs = 0V.
+	// Same-column cells see full V_write (disturbed). Same-row cells see 0V (safe, no overlay).
 	if arch == sharedwidgets.Architecture0T1R && ca.deviceState != nil && ca.deviceState.GetOperationMode() == OpModeWrite {
 		hsState := ca.deviceState.GetHalfSelectState()
 		if hsState.Enabled {
@@ -477,8 +479,9 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 
 			for r := 0; r < rows; r++ {
 				for c := 0; c < cols; c++ {
-					// Overlay only unselected half-selected cells (same row OR same col, but not target).
-					if !((r == selectedRow || c == selectedCol) && !(r == selectedRow && c == selectedCol)) {
+					// Highlight only same-column cells that are not the target (full write disturb).
+					// Same-row cells see 0V in DAC-only drive — do not overlay them.
+					if !(c == selectedCol && r != selectedRow) {
 						continue
 					}
 

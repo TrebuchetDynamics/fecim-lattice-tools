@@ -81,11 +81,11 @@ Related (authoritative) control semantics:
 - Max 10 iterations with status display
 - States: `ISPPSuccess`, `ISPPOvershoot`, `ISPPMaxIter`, `ISPPCancelled`
 
-**V/2 Half-Select Visualization:**
+**Column-Write Visualization:**
 - Gold overlay for target cell during WRITE
-- Amber overlay for half-selected cells (V/2 voltage)
-- Architecture-specific: critical for passive (0T1R) mode
-- Shows sneak path risk in crossbar arrays
+- Amber overlay for same-column cells (full write voltage — entire column disturbed)
+- Same-row cells show no overlay (they see 0V in DAC-only drive)
+- Architecture-specific: passive (0T1R) mode only; 1T1R uses transistor isolation
 
 **Per-Level Voltage Calibration:**
 - 30-level voltage arrays for fine-grained control
@@ -518,9 +518,9 @@ type DeviceState struct {
 | `ISPPIterate(newLevel)` | Perform one ISPP iteration, returns result |
 | `GetISPPStatus()` | Get current ISPP state for UI display |
 | `CancelISPP()` | Cancel active ISPP operation |
-| `EnableHalfSelectVisualization(row, col, V)` | Enable V/2 overlay for write |
-| `DisableHalfSelectVisualization()` | Disable V/2 overlay |
-| `IsHalfSelected(row, col)` | Check if cell is in half-select state |
+| `EnableHalfSelectVisualization(row, col, V)` | Enable column-write overlay for write |
+| `DisableHalfSelectVisualization()` | Disable column-write overlay |
+| `IsHalfSelected(row, col)` | Check if cell is in column-disturb state |
 
 ---
 
@@ -608,35 +608,36 @@ type ISPPState struct {
 
 ---
 
-### V/2 Half-Select Visualization (device_state.go:1071-1165)
+### Column-Write Visualization (device_state.go)
 
-**Purpose**: Visualize half-select disturb risk in passive (0T1R) crossbar arrays.
+**Purpose**: Visualize column-write disturb in passive (0T1R) crossbar arrays.
 
-**Physics**: In passive arrays without transistor isolation:
-- Selected WL = +V/2, selected BL = −V/2 (symmetric half‑select)
-- Selected cell sees full write voltage ( +V/2 − (−V/2) = V )
-- Cells in same row or column see ±V/2 relative to ground
+**Physics**: DAC-only column drive — all WLs grounded, selected BL driven to −V_write:
+- Selected BL (DAC) = −V_write; all WLs = 0V
+- Target cell ΔV = 0 − (−V_write) = +V_write (full switching)
+- Same-column cells see the same ΔV = +V_write (full disturb — entire column switches)
+- Same-row cells see ΔV = 0V (safe — unselected BLs grounded)
 - Unselected cells remain at 0V
-- These V/2 cells may experience disturb over time
 
-**HalfSelectVisualization Struct**:
+**HalfSelectVisualization Struct** (name is historical):
 ```go
 type HalfSelectVisualization struct {
     Enabled        bool      // True when visualization active
-    TargetRow      int       // Selected cell row
-    TargetCol      int       // Selected cell column
-    FullVoltage    float64   // Voltage on target cell
-    HalfVoltage    float64   // V/2 voltage on half-selected cells
-    HalfSelectRows []int     // Rows with V/2 (same column)
-    HalfSelectCols []int     // Columns with V/2 (same row)
+    SelectedRow    int       // Selected cell row
+    SelectedCol    int       // Selected cell column
+    FullVoltage    float64   // Full write voltage on target and same-column cells
+    HalfVoltage    float64   // Equal to FullVoltage in DAC-only mode (no V/2 splitting)
+    HalfSelectRows []int     // Rows disturbed at full voltage (same column)
+    HalfSelectCols []int     // Always empty in DAC-only mode (same-row cells see 0V)
 }
 ```
 
 **UI Colors**:
 - **Gold** (`#FFD700`): Target cell receiving full write voltage
-- **Amber** (`#FFBF00`): Half-selected cells receiving V/2
+- **Amber** (`#FFBF00`): Same-column cells receiving full write voltage (column disturb)
 
-**Constant**: `HalfSelectVoltageRatio = 0.5`
+**Note**: `HalfSelectVoltageRatio = 0.5` is a legacy constant; in DAC-only drive the column
+disturb voltage equals the full write voltage, not V/2.
 
 ---
 
@@ -1744,7 +1745,7 @@ if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
 
 16. **ISPP Programming**: Incremental Step Pulse Programming with overshoot detection. If cell overshoots target, automatically resets to saturation and restarts. Max 10 iterations.
 
-17. **V/2 Half-Select Visualization**: In passive (0T1R) mode, shows cells receiving half voltage during write. Gold = target cell, Amber = half-selected cells at risk of disturb.
+17. **Column-Write Visualization**: In passive (0T1R) mode, shows column disturb during write. Gold = target cell, Amber = same-column cells receiving full write voltage (all switch).
 
 18. **Hysteresis Direction Tracking**: Each cell tracks whether it was last programmed ascending or descending. Affects voltage calculation for accurate programming.
 

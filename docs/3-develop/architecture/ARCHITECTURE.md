@@ -729,7 +729,7 @@ Mode Selection (READ / WRITE / COMPUTE)
     │   └─ ADC → Digital levels + saturation flags
     │
     ├─ Passive 0T1R write handling
-    │   └─ V/2 half‑select biasing (±V/2 on WL/BL)
+    │   └─ DAC-only column drive (all WL=0V, selected BL=−V_write; full column disturb)
     │
     └─ UI update
         ├─ Array canvas refresh

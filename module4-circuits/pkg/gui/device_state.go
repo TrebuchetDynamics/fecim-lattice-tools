@@ -2299,21 +2299,24 @@ func (ds *DeviceState) endISPPTracking(success bool, currentLevel int) {
 }
 
 // ============================================================================
-// 5. V/2 HALF-SELECT VISUALIZATION STATE
+// 5. COLUMN-WRITE VISUALIZATION STATE
 // ============================================================================
 
-// HalfSelectVoltageRatio is the V/2 ratio for half-selected cells
+// HalfSelectVoltageRatio is kept for backward compatibility; in DAC-only column drive
+// the column disturb voltage equals the full write voltage (ratio = 1.0 effectively).
+// The name is historical; do not rely on this being 0.5 (V/2 scheme is not used).
 const HalfSelectVoltageRatio = 0.5
 
-// HalfSelectVisualization holds the state for V/2 overlay visualization
+// HalfSelectVisualization holds the state for column-write overlay visualization.
+// Despite the name, this implements DAC-only column drive, not a V/2 half-select scheme.
 type HalfSelectVisualization struct {
 	Enabled        bool
 	FullVoltage    float64
-	HalfVoltage    float64
+	HalfVoltage    float64 // Set equal to FullVoltage in DAC-only mode (no V/2 splitting)
 	SelectedRow    int
 	SelectedCol    int
-	HalfSelectRows []int // Rows with V/2 (same column, different rows)
-	HalfSelectCols []int // Cols with V/2 (same row, different columns)
+	HalfSelectRows []int // Rows disturbed at full voltage (same column — all switch)
+	HalfSelectCols []int // Always empty in DAC-only mode (same-row cells see 0V)
 }
 
 // EnableHalfSelectVisualization enables the column-write overlay for a passive write operation.

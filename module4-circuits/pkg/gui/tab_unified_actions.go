@@ -81,7 +81,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 	}
 	ca.mu.Unlock()
 
-	// Check if using V/2 half-select (passive mode)
+	// Passive (0T1R) mode: DAC drives the selected BL; all WLs are grounded.
 	isPassive := ca.deviceState.IsPassiveMode()
 	if isPassive {
 		defer func() {
@@ -94,10 +94,9 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		// === WRITE PHASE ===
 		appliedVoltage, _ := ca.applyWriteVoltages(row, col, voltage)
 		if isPassive {
-			halfV := appliedVoltage / 2.0
 			sharedwidgets.SafeDo(func() {
-				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V/2 scheme WL=+%.2fV BL=-%.2fV (iter %d/%d)",
-					row, col, halfV, halfV, iteration, maxIterations))
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: Column drive BL=−%.2fV WL=0V (iter %d/%d)",
+					row, col, appliedVoltage, iteration, maxIterations))
 			})
 			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
 			ca.updateHalfSelectVisualization()
@@ -145,7 +144,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		})
 
 		// Reset write voltages before applying read voltage
-		// This clears V/2 biasing and puts array in safe read state
+		// Reset write voltages and return array to safe idle state
 		ca.deviceState.ResetWriteVoltages()
 
 		// Set DAC to read voltage for verification

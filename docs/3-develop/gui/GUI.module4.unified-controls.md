@@ -176,23 +176,25 @@ So:
 
 ---
 
-## Passive (0T1R) V/2 half-select pattern (WRITE)
+## Passive (0T1R) DAC-only column drive (WRITE)
 
-When programming a passive array, unselected cells cannot be isolated. The GUI implements a **symmetric ±V/2 half-select scheme**:
+When programming a passive array, unselected cells cannot be isolated by a transistor gate.
+The GUI implements **DAC-only column drive**: the DAC drives the selected BL while all WLs
+are grounded through the TIA virtual ground. There is no V/2 voltage splitting.
 
 Let the requested program amplitude be `Vwrite`.
 
-- **Selected WL (target row):** `+Vwrite/2`
-- **Selected BL (target col):** `−Vwrite/2`
-- **All other WL/BL:** `0V`
+- **All WLs:** `0V` (grounded / TIA virtual ground)
+- **Selected BL (target col, from DAC):** `−Vwrite`
+- **All other BLs:** `0V`
 
 Effective cell voltage is `Vcell = VWL − VBL`:
 
-- **Target cell:** `(+V/2) − (−V/2) = V` (full switching)
-- **Half-selected (same row):** `(+V/2) − 0 = V/2` (should be below switching threshold)
-- **Half-selected (same col):** `0 − (−V/2) = V/2` (should be below switching threshold)
+- **Target cell:** `0 − (−Vwrite) = +Vwrite` (full switching)
+- **Same-column cells:** `0 − (−Vwrite) = +Vwrite` (full disturb — entire column switches)
+- **Same-row cells:** `0 − 0 = 0` (safe — unselected BLs are grounded)
 - **Unselected:** `0 − 0 = 0`
 
-**Physics meaning:** Reduces write disturb by ensuring any non-target cell sees at most ~`V/2`.
-
-**Bounds / clamping:** ensure `V/2 < Vc` for minimal disturb; this is one reason `writeRange.Min` should be chosen with margin.
+**Consequence:** In passive 0T mode writing one cell writes the entire column. Transistors
+(1T1R/2T1R) restore per-cell isolation: the gate on the selected row completes the circuit
+only for `[row, col]`; all other transistors remain off.
