@@ -728,14 +728,18 @@ func (a *App) createUI() fyne.CanvasObject {
 				a.addLogEntry(fmt.Sprintf("ALREADY → Level %d", targetLevel))
 				return
 			}
-			// Start animation to target level
+			// Reset WriteController for clean ISPP sequence
+			if a.writeController != nil {
+				a.writeController.ResetState()
+			}
+			// Start ISPP animation to target level
 			a.manualTargetLevel = targetLevel
 			a.manualStartLevel = currentLevel // Capture starting level (1-indexed)
 			a.manualAnimating = true
-			a.manualPhase = 0 // Start at RESET phase (saturate opposite direction first)
+			a.manualPhase = 0 // Phase 0 = PREP (or skip to WRITE for Preisach in sim_loop)
 			a.manualPhaseTime = 0
 
-			log.Printf("ANIMATION START: target=%d, start=%d, numLevels=%d",
+			log.Printf("MANUAL ISPP START: target=%d, start=%d, numLevels=%d",
 				targetLevel, a.manualStartLevel, a.numLevels)
 			a.addLogEntry(fmt.Sprintf("WRITE → Level %d", targetLevel))
 			return

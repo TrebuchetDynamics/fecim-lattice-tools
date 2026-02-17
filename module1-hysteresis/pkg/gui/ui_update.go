@@ -327,16 +327,37 @@ func (a *App) buildWidgetSnapshot(
 	}
 
 	if waveform == WaveformManual {
-		phase := -1
 		if manualAnimating {
-			phase = manualPhase
+			// Map manual ISPP phases to WRD display phases (PROGRAM/VERIFY/RESULT)
+			displayPhase := 0 // PhaseProgram
+			switch manualPhase {
+			case 0: // PREP → PROGRAM
+				displayPhase = 0
+			case 1: // WRITE (controller active)
+				switch ctrlState {
+				case controller.StateVerify:
+					displayPhase = 1 // PhaseVerify
+				case controller.StateSuccess, controller.StateFailed:
+					displayPhase = 2 // PhaseResult
+				default:
+					displayPhase = 0 // PhaseProgram
+				}
+			case 2: // DISPLAY → RESULT
+				displayPhase = 2
+			}
+			ws.phase = phaseWidgetSnapshot{mode: "wrd", phase: displayPhase}
+		} else {
+			ws.phase = phaseWidgetSnapshot{mode: "", phase: -1}
 		}
-		ws.phase = phaseWidgetSnapshot{mode: "manual", phase: phase}
 
 		atTarget := (dL + 1) == manualTargetLevel
 		eFieldSettled := math.Abs(fE) < 0.01*eC
 		settled := atTarget && eFieldSettled
-		ws.target = targetWidgetSnapshot{level: manualTargetLevel, highlight: manualAnimating && !settled, mode: widgets.TargetModeManual}
+		targetMode := widgets.TargetModeWrite
+		if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess {
+			targetMode = widgets.TargetModeVerify
+		}
+		ws.target = targetWidgetSnapshot{level: manualTargetLevel, highlight: manualAnimating && !settled, mode: targetMode}
 	}
 
 	return ws
@@ -568,34 +589,40 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 			}
 			a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
 		case WaveformManual:
-			// Manual mode status with RESET-AND-RETRY physics
+			// Manual ISPP mode status (mirrors WRD status display)
 			animAnimating := snapshot.manualAnimating
 			manPhase := snapshot.manualPhase
 			manTarget := snapshot.manualTargetLevel
-			manStart := snapshot.manualStartLevel
 
 			if animAnimating {
 				var phaseStr string
 				switch manPhase {
 				case 0:
-					// RESET phase
-					if manTarget > manStart {
-						phaseStr = "RESET -sat..."
-					} else {
-						phaseStr = "RESET +sat..."
-					}
+					phaseStr = "PREP (saturating...)"
 				case 1:
-					phaseStr = "SETTLE E=0..."
+					if snapshot.controllerState != controller.StateIdle {
+						pulseLimit := snapshot.isppPulseLimit
+						if pulseLimit <= 0 {
+							pulseLimit = 30
+						}
+						state := snapshot.controllerState.String()
+						best := snapshot.controllerBestLevel
+						if best <= 0 {
+							best = dL + 1
+						}
+						phaseStr = fmt.Sprintf("ISPP: pulse %d/%d, state=%s, best=L%d",
+							snapshot.controllerPulseTotal, pulseLimit, state, best)
+					} else {
+						phaseStr = "WRITE (starting...)"
+					}
 				case 2:
-					phaseStr = fmt.Sprintf("WRITE → L%d...", manTarget)
-				case 3:
-					phaseStr = fmt.Sprintf("HOLD L%d...", dL+1)
+					phaseStr = fmt.Sprintf("RESULT L%d (target L%d)", dL+1, manTarget)
 				default:
 					phaseStr = fmt.Sprintf("Current: L%d", dL+1)
 				}
-				a.statusLabel.SetText(fmt.Sprintf("TARGET L%d | %s", manTarget, phaseStr))
+				a.statusLabel.SetText(fmt.Sprintf("⚡ MANUAL L%d | %s", manTarget, phaseStr))
 			} else {
-				a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", dL+1))
+				a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar to write, or drag E-field slider", dL+1))
 			}
 		case WaveformTimeResolved:
 			a.mu.RLock()

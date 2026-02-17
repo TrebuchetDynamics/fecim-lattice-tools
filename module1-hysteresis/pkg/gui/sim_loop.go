@@ -282,96 +282,130 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 		if a.manualAnimating {
 			a.manualPhaseTime += dt
 			targetLevel := a.manualTargetLevel // 1-indexed (1-N)
-			startLevel := a.manualStartLevel   // Captured at animation start
-			maxLevelIdx := a.numLevels - 1
+			midLevel := a.numLevels / 2
 
 			switch a.manualPhase {
-			case 0: // RESET phase
-				var resetE float64
-				if targetLevel > startLevel {
-					resetE = -2.0 * Ec
-				} else {
-					resetE = 2.0 * Ec
+			case 0: // PREP - saturate to known state opposite to target
+				// For Preisach engine skip PREP (same logic as WRD wrdSkipPrep)
+				if !a.useLKSolver() {
+					if a.writeController != nil {
+						a.writeController.PulseDuration = phaseDuration * 0.4
+						a.writeController.Start(targetLevel, false)
+					}
+					a.manualPhase = 1
+					a.manualPhaseTime = 0
+					break
 				}
 
-				// Ramp to prep field
-				diff := resetE - a.electricField
+				prepMag := Emax
+				prepE := prepMag
+				if targetLevel > midLevel {
+					prepE = -prepMag // Upper targets: bias NEGATIVE first
+				}
+
+				diff := prepE - a.electricField
 				step := rampRate * dt
 				if math.Abs(diff) < step {
-					a.electricField = resetE
+					a.electricField = prepE
 				} else if diff > 0 {
 					a.electricField += step
 				} else {
 					a.electricField -= step
 				}
 
-				// Transition when field reached and held briefly
-				if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField-resetE) < 0.01*Emax {
+				biasRef := mat.Pr
+				if biasRef == 0 {
+					biasRef = mat.Ps
+				}
+				biased := true
+				if biasRef > 0 {
+					threshold := 0.2 * biasRef
+					if prepE < 0 {
+						biased = a.polarization <= -threshold
+					} else {
+						biased = a.polarization >= threshold
+					}
+				}
+
+				if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField-prepE) < 0.01*Emax && biased {
+					if a.writeController != nil {
+						a.writeController.PulseDuration = phaseDuration * 0.4
+						a.writeController.Start(targetLevel, true)
+					}
 					a.manualPhase = 1
 					a.manualPhaseTime = 0
 				}
 
-			case 1: // HOLD_RESET - return to zero
-				step := rampRate * dt
-				if math.Abs(a.electricField) < step {
-					a.electricField = 0
-				} else if a.electricField > 0 {
-					a.electricField -= step
-				} else {
-					a.electricField += step
-				}
-
-				if a.manualPhaseTime > phaseDuration*0.2 && math.Abs(a.electricField) < 0.01*Emax {
-					a.manualPhase = 2
-					a.manualPhaseTime = 0
-				}
-
-			case 2: // WRITE - apply calibrated field
-				var writeE float64
-				targetIdx := targetLevel - 1
-				midLevel := a.numLevels / 2
-				goingUp := targetLevel > midLevel
-
-				if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
-					// Out of bounds - use fallback
-					ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-					if goingUp {
-						writeE = Ec * (0.9 + ratio*1.1)
-					} else {
-						writeE = -Ec * (0.9 + ratio*1.1)
+			case 1: // WRITE - delegate to WriteController (same as WRD case 2)
+				currentLevel := a.discreteLevel + 1
+				guardSign := 0
+				if a.material != nil && a.wrdGuardFrac > 0 {
+					ps := a.material.Ps
+					if ps == 0 {
+						ps = a.material.Pr
 					}
-				} else if goingUp {
-					writeE = a.calibrationUp[targetIdx]
-					if writeE == 0 {
-						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-						writeE = Ec * (0.9 + ratio*1.1)
-					}
-				} else {
-					writeE = a.calibrationDown[targetIdx]
-					if writeE == 0 {
-						ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
-						writeE = -Ec * (0.9 + ratio*1.1)
+					bins := ferroelectric.NewLevelBins(ps, a.numLevels, a.wrdRangeFrac, a.wrdGuardFrac)
+					level, inError, delta := bins.LevelForP(a.polarization)
+					currentLevel = level
+					if inError && level == targetLevel {
+						if delta > 0 {
+							guardSign = 1
+						} else if delta < 0 {
+							guardSign = -1
+						}
 					}
 				}
 
-				// Ramp to write field
-				diff := writeE - a.electricField
-				step := rampRate * dt
+				var targetField float64
+				done := false
+				if a.writeController != nil {
+					targetField, done = a.writeController.Update(dt, a.electricField, currentLevel, guardSign)
+				}
+
+				// Hard pulse timeout guard
+				if !done && a.writeController != nil {
+					pulseLimit := isppPulseLimit(a.isppMaxPulses)
+					totalPulses := a.writeController.TotalPulses + a.writeController.PulseCount
+					if totalPulses >= pulseLimit {
+						done = true
+					}
+				}
+
+				// Apply voltage ramp
+				step := rampRate * 1.5 * dt
+				diff := targetField - a.electricField
 				if math.Abs(diff) < step {
-					a.electricField = writeE
+					a.electricField = targetField
 				} else if diff > 0 {
 					a.electricField += step
 				} else {
 					a.electricField -= step
 				}
 
-				if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
-					a.manualPhase = 3
+				if done {
+					// Learn from successful ISPP write
+					if a.writeController != nil && a.writeController.State == controller.StateSuccess {
+						learnedE := a.writeController.CurrentField
+						targetIdx := targetLevel - 1
+						Ec := mat.Ec
+						if a.calibManager != nil {
+							if targetLevel > midLevel {
+								a.calibManager.UpdateCalibrationUp(targetIdx, 0, Ec)
+								a.calibManager.CalibrationUp[targetIdx] = learnedE
+								a.calibrationUp[targetIdx] = learnedE
+							} else {
+								a.calibManager.UpdateCalibrationDown(targetIdx, 0, Ec)
+								a.calibManager.CalibrationDown[targetIdx] = learnedE
+								a.calibrationDown[targetIdx] = learnedE
+							}
+						}
+					}
+					a.manualPhase = 2
 					a.manualPhaseTime = 0
 				}
 
-			case 3: // HOLD_WRITE - return to zero, polarization persists
-				step := rampRate * dt
+			case 2: // DISPLAY - return to zero, show result
+				step := rampRate * 0.4 * dt
 				if math.Abs(a.electricField) < step {
 					a.electricField = 0
 				} else if a.electricField > 0 {
@@ -380,34 +414,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.electricField += step
 				}
 
-				// Animation complete
-				if a.manualPhaseTime > phaseDuration*0.3 && math.Abs(a.electricField) < 0.01*Emax {
+				if a.manualPhaseTime > phaseDuration*0.4 && math.Abs(a.electricField) < 0.01*Emax {
 					finalLevel := a.discreteLevel + 1
-					levelError := finalLevel - targetLevel
-					adjIdx := targetLevel - 1
-					Ec := mat.Ec
-
-					// Log animation result with detailed state
-					log.Printf("MANUAL ANIMATION COMPLETE: target=%d, final=%d, error=%d",
-						targetLevel, finalLevel, levelError)
-
-					if levelError != 0 && a.calibrated && adjIdx >= 0 && adjIdx < len(a.calibrationUp) {
-						if targetLevel > startLevel { // startLevel defined outside case
-							// ASCENDING calibration adjustment
-							if a.calibManager != nil {
-								a.calibManager.UpdateCalibrationUp(adjIdx, levelError, Ec)
-								a.calibrationUp[adjIdx] = a.calibManager.CalibrationUp[adjIdx]
-							}
-						} else {
-							// DESCENDING calibration adjustment
-							if a.calibManager != nil {
-								a.calibManager.UpdateCalibrationDown(adjIdx, levelError, Ec)
-								a.calibrationDown[adjIdx] = a.calibManager.CalibrationDown[adjIdx]
-							}
-						}
-					}
-
-					// End manual animation after completion to avoid repeated logging/calibration.
+					log.Printf("MANUAL ANIMATION COMPLETE: target=%d, final=%d", targetLevel, finalLevel)
+					a.addLogEntry(fmt.Sprintf("RESULT L%d → L%d", targetLevel, finalLevel))
 					a.manualAnimating = false
 					a.manualPhase = 0
 					a.manualPhaseTime = 0
