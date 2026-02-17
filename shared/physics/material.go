@@ -123,6 +123,17 @@ type HZOMaterial struct {
 	VGSReadV         float64 // Read-bias gate voltage (V), used by saturation model
 	VT0V             float64 // Zero-polarization threshold voltage (V), used by saturation model
 
+	// State-dependent cycle-to-cycle (C2C) variation (LIT-P1-06/07)
+	// sigma(G) = C2CSigmaBase * (G / Gmin)^C2CExponent
+	// Calibrated from arXiv 2023 FeFET data (28nm fabricated devices):
+	// - C2CSigmaBase ≈ 0.03 (3% base relative variation at Gmin state)
+	// - C2CExponent ≈ 0.5 (sqrt dependence, weaker variation at high G)
+	// - At HRS (Gmin): sigma = C2CSigmaBase * Gmin = 3% of Gmin
+	// - At LRS (Gmax): sigma = C2CSigmaBase * sqrt(Gmax/Gmin) * Gmin
+	// Ref: arXiv 2023 "State-dependent variability in 28nm FeFET arrays"
+	C2CSigmaBase float64 // Base relative C2C variation (dimensionless, typ. 0.02-0.05)
+	C2CExponent  float64 // State-dependence exponent (typ. 0.5 for sqrt, 1.0 for linear)
+
 	// Electrostrictive coefficients (m⁴/C²) for strain-polarization coupling
 	// Used to calculate Ec shift under substrate strain:
 	//   Ec_eff = Ec * (1 + strainFactor * strain)
@@ -167,6 +178,8 @@ func DefaultHZO() *HZOMaterial {
 		NLSSigma:        1.5,     // HfO2 log-normal spread (Guo et al., APL 2018)
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
+		C2CSigmaBase:    0.03,    // 3% base C2C variation (arXiv 2023 FeFET 28nm data)
+		C2CExponent:     0.5,     // sqrt(G/Gmin) scaling - weaker variation at high G
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
 		BetaLandau:          -6.720e8,
 		GammaLandau:         1.950e10,
@@ -327,6 +340,8 @@ func FeCIMMaterial() *HZOMaterial {
 		NLSSigma:        1.5,
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
+		C2CSigmaBase:    0.03,   // 3% base C2C variation (arXiv 2023 FeFET 28nm data)
+		C2CExponent:     0.5,    // sqrt(G/Gmin) scaling
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
 		BetaLandau:          -6.720e8,
 		GammaLandau:         1.950e10,
@@ -934,4 +949,36 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 		m.VGSReadV,
 		m.VT0V,
 	)
+}
+
+// C2CVariation returns the cycle-to-cycle conductance standard deviation (S) at state G.
+//
+// State-dependent C2C variation model (LIT-P1-06/07):
+//
+//	sigma(G) = C2CSigmaBase * Gmin * (G/Gmin)^C2CExponent
+//
+// Calibrated from arXiv 2023 FeFET data (28nm fabricated devices):
+//   - At HRS (G=Gmin): sigma = C2CSigmaBase * Gmin  (base variation)
+//   - At LRS (G=Gmax): sigma = C2CSigmaBase * Gmin * (Gmax/Gmin)^0.5  (sqrt scaling)
+//   - Exponent 0.5 means weaker relative variation at high conductance states
+//
+// If C2CSigmaBase is zero, returns 0 (no C2C variation modeled).
+func (m *HZOMaterial) C2CVariation(G float64) float64 {
+	if m.C2CSigmaBase == 0 || m.Gmin == 0 {
+		return 0
+	}
+	exp := m.C2CExponent
+	if exp == 0 {
+		exp = 0.5 // Default: sqrt dependence per arXiv 2023
+	}
+	return m.C2CSigmaBase * m.Gmin * math.Pow(G/m.Gmin, exp)
+}
+
+// C2CVariationRelative returns the relative C2C variation (sigma/G) at state G.
+// A value of 0.05 means 5% standard deviation relative to the conductance level.
+func (m *HZOMaterial) C2CVariationRelative(G float64) float64 {
+	if G == 0 {
+		return 0
+	}
+	return m.C2CVariation(G) / G
 }

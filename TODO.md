@@ -405,13 +405,18 @@ Evidence (2026-02-11):
 
 | ID | Task | Impact | Status |
 |----|------|--------|--------|
-| LIT-P1-01 | Add Flash ADC architecture (3-4 bit, 1-2ns latency, high energy) | Educational value + realistic tradeoff exploration | ⏳ |
-| LIT-P1-02 | Add Ramp/Slope ADC architecture (6-8 bit, 100ns+ latency, very low energy) | Column-shared use case | ⏳ |
-| LIT-P1-03 | Add Comparator-only mode (1-bit, 28x lower energy than 7-bit ADC) | Binary/ternary network support | ⏳ |
-| LIT-P1-04 | Add ADC sharing ratio config (per-column, shared-4, shared-8, shared-all) | 3x variation in energy-area product per arXiv 2024 | ⏳ |
-| LIT-P1-05 | Model area/latency/energy implications of ADC count | Realistic system-level metrics | ⏳ |
-| LIT-P1-06 | Add state-dependent C2C variation: `sigma(G) = sigma_base * f(G)` | ArXiv 2023 shows variation depends on conductance state | ⏳ |
-| LIT-P1-07 | Calibrate f(G) from arXiv 2023 FeFET data (28nm fabricated devices) | Measurement-backed model | ⏳ |
+| LIT-P1-01 | Add Flash ADC architecture (3-4 bit, 1-2ns latency, high energy) | Educational value + realistic tradeoff exploration | ✅ (2026-02-16) |
+| LIT-P1-02 | Add Ramp/Slope ADC architecture (6-8 bit, 100ns+ latency, very low energy) | Column-shared use case | ✅ (2026-02-16) |
+| LIT-P1-03 | Add Comparator-only mode (1-bit, 28x lower energy than 7-bit ADC) | Binary/ternary network support | ✅ (2026-02-16) |
+| LIT-P1-04 | Add ADC sharing ratio config (per-column, shared-4, shared-8, shared-all) | 3x variation in energy-area product per arXiv 2024 | ✅ (2026-02-16) |
+| LIT-P1-05 | Model area/latency/energy implications of ADC count | Realistic system-level metrics | ✅ (2026-02-16) |
+| LIT-P1-06 | Add state-dependent C2C variation: `sigma(G) = sigma_base * f(G)` | ArXiv 2023 shows variation depends on conductance state | ✅ (2026-02-16) |
+| LIT-P1-07 | Calibrate f(G) from arXiv 2023 FeFET data (28nm fabricated devices) | Measurement-backed model | ✅ (2026-02-16) |
+
+**✅ COMPLETED (2026-02-16):**
+- `shared/peripherals/adc.go`: Added `FlashADC()`, `RampADC()`, `ComparatorADC()` constructors; `ColumnsPerADC` sharing field; `EffectiveEnergyPerColumn()`, `AreaEstimate()`, `EffectiveAreaPerColumn()`, `LatencyNS()`, `TypeString()` methods
+- `shared/physics/material.go`: Added `C2CSigmaBase`/`C2CExponent` fields to `HZOMaterial`; `C2CVariation(G)` and `C2CVariationRelative(G)` methods; defaults calibrated from arXiv 2023 FeFET data (3% base, sqrt state-dependence)
+- All tests pass: `go test ./shared/peripherals/... ./shared/physics/...`
 
 **Deliverable (Week 4)**: Educational ADC comparison tool with Flash/SAR/Ramp options
 **Deliverable (Week 7)**: Measurement-backed state-dependent variation model

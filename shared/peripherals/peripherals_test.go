@@ -384,6 +384,144 @@ func TestADCEnergyPerConversion_AllTypes(t *testing.T) {
 	}
 }
 
+// TestFlashADC_Properties verifies Flash ADC constructor and energy model.
+// Flash ADC uses 2^N parallel comparators: fastest but highest energy.
+func TestFlashADC_Properties(t *testing.T) {
+	adc := FlashADC(4)
+
+	if adc.Bits != 4 {
+		t.Errorf("Expected 4 bits, got %d", adc.Bits)
+	}
+	if adc.Type != ADCTypeFlash {
+		t.Errorf("Expected ADCTypeFlash, got %d", adc.Type)
+	}
+	if adc.ConversionTime > 5 { // Flash must be fast (≤5 ns)
+		t.Errorf("Flash ADC too slow: %.1f ns (expected ≤5 ns)", adc.ConversionTime)
+	}
+	// Flash energy should be much higher than SAR for same bits
+	sarADC := DefaultADC()
+	flashEnergy := adc.EnergyPerConversion()
+	sarEnergy := sarADC.EnergyPerConversion()
+	if flashEnergy <= sarEnergy {
+		t.Errorf("Flash energy %.2e should exceed SAR energy %.2e", flashEnergy, sarEnergy)
+	}
+	if adc.TypeString() != "Flash" {
+		t.Errorf("Expected TypeString 'Flash', got '%s'", adc.TypeString())
+	}
+}
+
+// TestRampADC_Properties verifies Ramp ADC constructor and energy model.
+// Ramp ADC uses one comparator with a ramp: lowest energy but slower.
+func TestRampADC_Properties(t *testing.T) {
+	adc := RampADC(4, 4)
+
+	if adc.Bits != 4 {
+		t.Errorf("Expected 4 bits, got %d", adc.Bits)
+	}
+	if adc.Type != ADCTypeRamp {
+		t.Errorf("Expected ADCTypeRamp, got %d", adc.Type)
+	}
+	if adc.ColumnsPerADC != 4 {
+		t.Errorf("Expected ColumnsPerADC=4, got %d", adc.ColumnsPerADC)
+	}
+	// Ramp should be slower than SAR
+	if adc.ConversionTime <= 50 {
+		t.Errorf("Ramp ADC should be slower than SAR (50ns): got %.1f ns", adc.ConversionTime)
+	}
+	// Ramp energy should be lower than SAR
+	sarADC := DefaultADC()
+	rampEnergy := adc.EnergyPerConversion()
+	sarEnergy := sarADC.EnergyPerConversion()
+	if rampEnergy >= sarEnergy {
+		t.Errorf("Ramp energy %.2e should be lower than SAR energy %.2e", rampEnergy, sarEnergy)
+	}
+	if adc.TypeString() != "Ramp/Slope" {
+		t.Errorf("Expected TypeString 'Ramp/Slope', got '%s'", adc.TypeString())
+	}
+}
+
+// TestComparatorADC_Properties verifies Comparator-only ADC (1-bit binary mode).
+// Per arXiv 2024: 28x lower energy than 7-bit ADC, for binary/ternary networks.
+func TestComparatorADC_Properties(t *testing.T) {
+	adc := ComparatorADC()
+
+	if adc.Bits != 1 {
+		t.Errorf("Expected 1 bit (binary), got %d", adc.Bits)
+	}
+	if adc.Levels() != 2 {
+		t.Errorf("Expected 2 levels, got %d", adc.Levels())
+	}
+	if adc.Type != ADCTypeComparator {
+		t.Errorf("Expected ADCTypeComparator, got %d", adc.Type)
+	}
+	if adc.ConversionTime > 1 { // Sub-nanosecond
+		t.Errorf("Comparator too slow: %.2f ns (expected <1 ns)", adc.ConversionTime)
+	}
+	// Energy should be far below SAR
+	sarADC := DefaultADC()
+	compEnergy := adc.EnergyPerConversion()
+	sarEnergy := sarADC.EnergyPerConversion()
+	if compEnergy >= sarEnergy {
+		t.Errorf("Comparator energy %.2e should be lower than SAR energy %.2e", compEnergy, sarEnergy)
+	}
+	if adc.TypeString() != "Comparator (1-bit)" {
+		t.Errorf("Expected TypeString 'Comparator (1-bit)', got '%s'", adc.TypeString())
+	}
+}
+
+// TestADCSharingRatio_EffectiveEnergyPerColumn verifies that sharing reduces per-column cost.
+// Per arXiv 2024: 3x variation in energy-area product with ADC sharing ratio.
+func TestADCSharingRatio_EffectiveEnergyPerColumn(t *testing.T) {
+	// Per-column ADC
+	perCol := RampADC(4, 1)
+	// Shared-4 ADC
+	shared4 := RampADC(4, 4)
+	// Shared-8 ADC
+	shared8 := RampADC(4, 8)
+
+	ePerCol := perCol.EffectiveEnergyPerColumn()
+	eShared4 := shared4.EffectiveEnergyPerColumn()
+	eShared8 := shared8.EffectiveEnergyPerColumn()
+
+	if eShared4 >= ePerCol {
+		t.Errorf("Shared-4 energy per column (%.2e) should be less than per-column (%.2e)",
+			eShared4, ePerCol)
+	}
+	if eShared8 >= eShared4 {
+		t.Errorf("Shared-8 energy per column (%.2e) should be less than shared-4 (%.2e)",
+			eShared8, eShared4)
+	}
+
+	// Shared-4 should be ~4x cheaper per column than per-column
+	ratio := ePerCol / eShared4
+	if ratio < 3.5 || ratio > 4.5 {
+		t.Errorf("Expected ~4x energy reduction for shared-4, got %.2f", ratio)
+	}
+}
+
+// TestADCAreaEstimate_ArchitectureComparison verifies area ordering.
+// Flash > SAR > Ramp > Comparator for same bit count.
+func TestADCAreaEstimate_ArchitectureComparison(t *testing.T) {
+	sar := DefaultADC() // 4-bit SAR
+	flash := FlashADC(4)
+	ramp := RampADC(4, 1)
+	comp := ComparatorADC()
+
+	flashArea := flash.AreaEstimate()
+	sarArea := sar.AreaEstimate()
+	rampArea := ramp.AreaEstimate()
+	compArea := comp.AreaEstimate()
+
+	// Flash uses 2^N comparators: must be largest
+	if flashArea <= sarArea {
+		t.Errorf("Flash area (%.1f) should exceed SAR area (%.1f)", flashArea, sarArea)
+	}
+	// Comparator is minimal: must be smallest
+	if compArea >= rampArea {
+		t.Errorf("Comparator area (%.1f) should be less than Ramp area (%.1f)", compArea, rampArea)
+	}
+}
+
 // TestADC_SARNoise_Enable verifies SAR noise enable/disable.
 func TestADC_SARNoise_Enable(t *testing.T) {
 	adc := DefaultADC()

@@ -23,6 +23,11 @@ type ADC struct {
 	ConversionTime float64 // Conversion time (ns)
 	Type           ADCType // Architecture type
 
+	// ADC sharing ratio (LIT-P1-04): number of columns sharing one ADC.
+	// 1 = per-column (default), 4 = shared-4, 8 = shared-8, 0 = shared-all.
+	// Higher sharing reduces energy/area per column at cost of throughput.
+	ColumnsPerADC int // Sharing ratio (1=per-column, N=1 ADC per N columns)
+
 	// SAR ADC Noise Parameters (H09)
 	NoiseConfig *SARNoiseConfig // SAR-specific noise modeling
 }
@@ -54,9 +59,11 @@ type SARNoiseConfig struct {
 type ADCType int
 
 const (
-	ADCTypeSAR        ADCType = iota // Successive Approximation Register
-	ADCTypeFlash                     // Flash (parallel)
-	ADCTypeSigmaDelta                // Sigma-Delta (oversampling)
+	ADCTypeSAR        ADCType = iota // Successive Approximation Register (default, 4-bit, 50ns, ~25fJ)
+	ADCTypeFlash                     // Flash parallel: 2^N comparators, fastest (1-2ns), highest energy (50-100fJ/level)
+	ADCTypeSigmaDelta                // Sigma-Delta oversampling: high resolution, very low noise, slow (µs range)
+	ADCTypeRamp                      // Ramp/Slope integrating: simplest, 6-8 bit, 100ns+, very low energy (column-shared)
+	ADCTypeComparator                // Comparator-only 1-bit: 28x lower energy than 7-bit per arXiv 2024, binary/ternary networks
 )
 
 // DefaultADC returns an ADC configured for FeCIM read operations.
@@ -69,6 +76,7 @@ func DefaultADC() *ADC {
 		DNL:            0.25, // 0.25 LSB DNL
 		ConversionTime: 50,   // 50 ns for SAR
 		Type:           ADCTypeSAR,
+		ColumnsPerADC:  1, // Per-column (one ADC per column)
 	}
 	log.Calculation("DefaultADC", map[string]interface{}{
 		"bits":            adc.Bits,
@@ -80,6 +88,61 @@ func DefaultADC() *ADC {
 		"type":            adc.Type,
 	}, adc)
 	return adc
+}
+
+// FlashADC returns a Flash (parallel) ADC.
+// Flash uses 2^N comparators in parallel for fastest conversion (1-2ns).
+// High energy cost: ~50-100 fJ/level, suitable for high-throughput low-bit applications.
+// Ref: ISSCC 2023 survey of FeCIM read architectures.
+func FlashADC(bits int) *ADC {
+	return &ADC{
+		Bits:           bits,
+		VrefHigh:       1.0,
+		VrefLow:        0.0,
+		INL:            0.3, // Flash has better INL due to parallel comparison
+		DNL:            0.2,
+		ConversionTime: 2.0, // 1-2 ns (parallel comparison)
+		Type:           ADCTypeFlash,
+		ColumnsPerADC:  1,
+	}
+}
+
+// RampADC returns a Ramp/Slope integrating ADC.
+// Simplest architecture: ramp voltage compared against input, count clock cycles.
+// Very low energy (~1-5 fJ/conversion), but slow (100-500ns for 4-bit).
+// Best suited for column-shared configurations (1 ADC per 4-8 columns).
+// Ref: arXiv 2024 hardware-aware quantization for FeCIM.
+func RampADC(bits int, columnsPerADC int) *ADC {
+	if columnsPerADC < 1 {
+		columnsPerADC = 4
+	}
+	convTime := 100.0 * math.Pow(2, float64(bits)) / 16.0 // Scales with levels: 4-bit=100ns, 8-bit=1600ns
+	return &ADC{
+		Bits:           bits,
+		VrefHigh:       1.0,
+		VrefLow:        0.0,
+		INL:            0.7, // Ramp limited by ramp linearity
+		DNL:            0.5,
+		ConversionTime: convTime,
+		Type:           ADCTypeRamp,
+		ColumnsPerADC:  columnsPerADC,
+	}
+}
+
+// ComparatorADC returns a 1-bit comparator-only ADC for binary/ternary networks.
+// 28x lower energy than a 7-bit SAR ADC per arXiv 2024 benchmarks.
+// Only distinguishes above/below a threshold — suitable for binary neural networks.
+func ComparatorADC() *ADC {
+	return &ADC{
+		Bits:           1,   // 1-bit: 2 levels (binary)
+		VrefHigh:       1.0,
+		VrefLow:        0.0,
+		INL:            0.1, // Single comparator has excellent linearity
+		DNL:            0.1,
+		ConversionTime: 0.5, // Sub-nanosecond
+		Type:           ADCTypeComparator,
+		ColumnsPerADC:  1,
+	}
 }
 
 // Levels returns the number of discrete output levels.
@@ -155,15 +218,88 @@ func (a *ADC) EnergyPerConversion() float64 {
 	switch a.Type {
 	case ADCTypeSAR:
 		// SAR: ~1-10 fJ/conversion-step
-		return 5e-15 * float64(a.Bits) // ~25 fJ for 5-bit
+		return 5e-15 * float64(a.Bits) // ~20 fJ for 4-bit
 	case ADCTypeFlash:
-		// Flash: ~50-100 fJ/level (2^N comparators)
-		return 50e-15 * float64(a.Levels())
+		// Flash: ~50-100 fJ/level (2^N comparators in parallel)
+		// Ref: ISSCC 2023 survey - high parallelism drives high energy
+		return 75e-15 * float64(a.Levels())
 	case ADCTypeSigmaDelta:
-		// Sigma-Delta: higher due to oversampling
+		// Sigma-Delta: higher due to oversampling ratio
 		return 100e-15 * float64(a.Bits)
+	case ADCTypeRamp:
+		// Ramp: very low energy - only 1 comparator + ramp generator
+		// ~1-5 fJ/conversion independent of resolution
+		// Ref: arXiv 2024 hardware-aware quantization for FeCIM
+		return 3e-15 * float64(a.Bits)
+	case ADCTypeComparator:
+		// Comparator-only: single comparison, minimal energy
+		// 28x lower than 7-bit ADC per arXiv 2024
+		return 1e-15 // ~1 fJ per comparison
 	default:
-		return 25e-15
+		return 20e-15
+	}
+}
+
+// EffectiveEnergyPerColumn returns energy cost per column, accounting for ADC sharing.
+// When multiple columns share one ADC, energy is amortized across ColumnsPerADC.
+// Ref: arXiv 2024 - 3x variation in energy-area product with ADC sharing ratio.
+func (a *ADC) EffectiveEnergyPerColumn() float64 {
+	cols := a.ColumnsPerADC
+	if cols < 1 {
+		cols = 1
+	}
+	return a.EnergyPerConversion() / float64(cols)
+}
+
+// AreaEstimate returns relative area estimate (normalized, SAR 4-bit = 1.0).
+// Flash requires 2^N comparators; Ramp requires ramp generator + 1 comparator.
+// Ref: ISSCC 2022 ADC survey area-efficiency figures of merit.
+func (a *ADC) AreaEstimate() float64 {
+	switch a.Type {
+	case ADCTypeSAR:
+		return float64(a.Bits) // Scales linearly with bits (log2(N) capacitors)
+	case ADCTypeFlash:
+		return float64(a.Levels()) // 2^N comparators - exponential area
+	case ADCTypeSigmaDelta:
+		return float64(a.Bits) * 2 // Oversampling filter adds area
+	case ADCTypeRamp:
+		return 1.5 // Ramp generator + 1 comparator: nearly constant
+	case ADCTypeComparator:
+		return 0.5 // Single comparator: minimal area
+	default:
+		return float64(a.Bits)
+	}
+}
+
+// EffectiveAreaPerColumn returns area cost per column, accounting for ADC sharing.
+func (a *ADC) EffectiveAreaPerColumn() float64 {
+	cols := a.ColumnsPerADC
+	if cols < 1 {
+		cols = 1
+	}
+	return a.AreaEstimate() / float64(cols)
+}
+
+// LatencyNS returns worst-case conversion latency in nanoseconds.
+func (a *ADC) LatencyNS() float64 {
+	return a.ConversionTime
+}
+
+// TypeString returns a human-readable name for the ADC architecture.
+func (a *ADC) TypeString() string {
+	switch a.Type {
+	case ADCTypeSAR:
+		return "SAR"
+	case ADCTypeFlash:
+		return "Flash"
+	case ADCTypeSigmaDelta:
+		return "Sigma-Delta"
+	case ADCTypeRamp:
+		return "Ramp/Slope"
+	case ADCTypeComparator:
+		return "Comparator (1-bit)"
+	default:
+		return "Unknown"
 	}
 }
 

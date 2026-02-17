@@ -426,3 +426,81 @@ func BenchmarkAllMaterials(b *testing.B) {
 		_ = AllMaterials()
 	}
 }
+
+// TestC2CVariation_DefaultHZO verifies state-dependent C2C variation model.
+// arXiv 2023: sigma(G) = sigma_base * Gmin * (G/Gmin)^0.5
+func TestC2CVariation_DefaultHZO(t *testing.T) {
+	mat := DefaultHZO()
+
+	if mat.C2CSigmaBase == 0 {
+		t.Fatal("DefaultHZO should have non-zero C2CSigmaBase")
+	}
+	if mat.C2CExponent == 0 {
+		t.Fatal("DefaultHZO should have non-zero C2CExponent")
+	}
+
+	// At HRS (Gmin): sigma = C2CSigmaBase * Gmin
+	sigmaAtHRS := mat.C2CVariation(mat.Gmin)
+	expectedHRS := mat.C2CSigmaBase * mat.Gmin
+	if sigmaAtHRS != expectedHRS {
+		t.Errorf("C2C at HRS: got %.3e S, expected %.3e S", sigmaAtHRS, expectedHRS)
+	}
+
+	// At LRS (Gmax): sigma should be larger (scales up)
+	sigmaAtLRS := mat.C2CVariation(mat.Gmax)
+	if sigmaAtLRS <= sigmaAtHRS {
+		t.Errorf("C2C at LRS (%.3e) should exceed HRS (%.3e)", sigmaAtLRS, sigmaAtHRS)
+	}
+
+	// Monotonically increasing with G
+	prev := 0.0
+	for i := 0; i <= 10; i++ {
+		G := mat.Gmin + float64(i)*(mat.Gmax-mat.Gmin)/10.0
+		sigma := mat.C2CVariation(G)
+		if sigma < prev {
+			t.Errorf("C2C variation not monotonic at G=%.3e (sigma=%.3e < prev=%.3e)", G, sigma, prev)
+		}
+		prev = sigma
+	}
+}
+
+// TestC2CVariation_RelativeDecreases verifies relative variation decreases at high G.
+// Physics: lower relative sigma at LRS than HRS (consistent with arXiv 2023).
+func TestC2CVariation_RelativeDecreases(t *testing.T) {
+	mat := DefaultHZO()
+
+	relHRS := mat.C2CVariationRelative(mat.Gmin)
+	relLRS := mat.C2CVariationRelative(mat.Gmax)
+
+	// For exponent < 1 (e.g., sqrt): relative variation must decrease at higher G
+	if mat.C2CExponent < 1.0 && relLRS >= relHRS {
+		t.Errorf("For exponent %.1f, relative C2C at LRS (%.4f) should be less than at HRS (%.4f)",
+			mat.C2CExponent, relLRS, relHRS)
+	}
+}
+
+// TestC2CVariation_ZeroBase verifies zero C2CSigmaBase returns 0.
+func TestC2CVariation_ZeroBase(t *testing.T) {
+	mat := FeCIMMaterial()
+	mat.C2CSigmaBase = 0
+
+	if sigma := mat.C2CVariation(mat.Gmax); sigma != 0 {
+		t.Errorf("Expected zero sigma when C2CSigmaBase=0, got %.3e", sigma)
+	}
+}
+
+// TestC2CVariation_FeCIMMaterial verifies FeCIM material has C2C defaults set.
+func TestC2CVariation_FeCIMMaterial(t *testing.T) {
+	mat := FeCIMMaterial()
+
+	if mat.C2CSigmaBase == 0 {
+		t.Error("FeCIMMaterial should have non-zero C2CSigmaBase")
+	}
+
+	// sigma at Gmin should be ~3% of Gmin
+	sigma := mat.C2CVariation(mat.Gmin)
+	relSigma := sigma / mat.Gmin
+	if relSigma < 0.01 || relSigma > 0.10 {
+		t.Errorf("Expected 1-10%% relative C2C at HRS, got %.1f%%", relSigma*100)
+	}
+}
