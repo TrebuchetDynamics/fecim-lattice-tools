@@ -18,6 +18,7 @@ screenshots/
 train-network
 train-single-layer
 !module3-mnist/cmd/train-network/main_test.go
+!module3-mnist/cmd/train-single-layer/main_test.go
 cmd/fecim-lattice-tools/logs/OpenLane/
 /OpenLane
 

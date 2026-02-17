@@ -37,7 +37,7 @@ func main() {
 	w.Show()
 
 	img := w.Canvas().Capture()
-	outPath := filepath.Join(*outDir, "frame_007_docs.png")
+	outPath := frameOutputPath(*outDir)
 	f, err := os.Create(outPath)
 	if err != nil {
 		fatalf("create %s: %v", outPath, err)
@@ -48,6 +48,10 @@ func main() {
 	}
 
 	fmt.Printf("wrote %s\n", outPath)
+}
+
+func frameOutputPath(outDir string) string {
+	return filepath.Join(outDir, "frame_007_docs.png")
 }
 
 func fatalf(msg string, args ...any) {
