@@ -23,6 +23,162 @@
 | **Crossbar tiling + mapping** | MemTorch: Crossbar.py / Passive.py / Program.py / **Tile.py** (20KB) | Large weight matrices need tile-based crossbar mapping — `shared/crossbar` should include a `Tile` abstraction for partitioning |
 | **Hardware-aware training loop** | IBM AIHWKIT: analog tile → rpucuda backend, noise injection per-MVM | `shared/neural` should support noise injection during inference (not just clean MVM) to match real hardware behavior |
 | **Quantization strategy abstraction** | Brevitas: arbitrary bit-width QAT with per-layer/per-channel/per-tensor granularity | `shared/neural` quantization should be configurable (2–8 bit, symmetric/asymmetric, per-layer vs per-channel) |
+| **Landau model class hierarchy** | Ferro: `LandauFilm` → `LandauSimple` / `LandauFull` + `HysteresisData` measurement class | `shared/physics` should have a `LandauModel` interface with simple (single-temp α) and full (α₀, T₀, ρ) implementations, plus a `HysteresisData` struct for importing measurement data |
+| **Compact model with history tracking** | PFECAP: Verilog-A Preisach with `a_V[]/b_V[]` turning-point arrays + Newton solver | `shared/physics/preisach.go` needs proper turning-point history management (ascending/descending branch pairs) and Newton iteration for charge→voltage inversion |
+| **Device variability parameter suite** | NIXSim: `sigma`, `alpha`, `sa0`, `sa1`, `read_noise` CLI params for device-to-device + cycle-to-cycle variation | `shared/crossbar/device_errors.go` should expose a `VariabilityConfig` struct with σ (D2D variation), α (global scaling), SA0/SA1 (stuck-at fault rates), and read noise factors |
+| **System-level cost models** | MNSIM 2.0: 9-module hierarchy — `Accuracy_Model`, `Area_Model`, `Energy_Model`, `Latency_Model`, `Power_Model`, `Mapping_Model`, `Hardware_Model`, `NoC`, `Interface` | Future `shared/system/` should support area/energy/latency estimation per crossbar tile, not just functional simulation |
+| **Neural layer ↔ analog core binding** | CrossSim `AnalogLinear`: wraps `AnalogCore` with `form_matrix()`, `apply()`, `get_core_weights()` — clean separation of NN semantics from hardware simulation | `shared/neural/` layers should wrap `shared/crossbar` cores, keeping NN logic (weight shaping, bias rows, batch handling) separate from crossbar physics |
+| **FORC diagram & envelope analysis** | hysteresis package: `curve.py` (42KB), `envelope.py` (12KB), `protocol.py` — First-Order Reversal Curve analysis and hysteresis envelope extraction | `shared/physics/` should support FORC analysis for ferroelectric characterization — extract Preisach distribution from measurement data |
+
+### Specific Code Patterns to Adopt
+
+These are concrete implementation patterns observed in the source of the top tools. They are not abstract principles — they are copy-worthy design decisions that have been validated in production.
+
+#### Pattern A: CrossSim ICore — Interface-First, Caller-Agnostic
+
+CrossSim's `crosssim/core/icore.py` is a pure abstract base class. Every caller in CrossSim's codebase (`AnalogLinear`, `AnalogConv2d`, all inference code) accepts `ICore` — never a concrete type. Swapping `AnalogCore` for `NumericCore` is a one-line config change.
+
+```go
+// Translate CrossSim's ICore to Go — define this BEFORE any implementation
+// File: shared/crossbar/core.go
+
+// CrossbarCore is the single abstraction all crossbar simulators implement.
+// All callers (shared/neural, module2-crossbar gui, module3-mnist) depend
+// only on this interface. Never on *BehavioralArray or *ExactKCLSolver.
+type CrossbarCore interface {
+    SetMatrix(conductances [][]float64, opts ...Option)
+    RunMVM(input []float64) []float64   // matrix-vector multiply (row drives)
+    RunVMM(input []float64) []float64   // vector-matrix multiply (col drives)
+    ReadMatrix() [][]float64
+}
+
+// CrossSim has 5 implementations. We start with 2 and grow:
+//   shared/crossbar/behavioral_core.go  → fast, approximation
+//   shared/crossbar/exact_core.go       → badcrossbar-style KCL, used as oracle
+
+// Constructors return the interface — callers never see the concrete type:
+func NewBehavioralCore(cfg Config) CrossbarCore { return &behavioralCore{cfg: cfg} }
+func NewExactKCLCore(cfg Config) CrossbarCore   { return &exactKCLCore{cfg: cfg} }
+```
+
+#### Pattern B: badcrossbar — Clean Four-Stage Solver Pipeline
+
+badcrossbar (`badcrossbar/core/arrays.py`, `utils.py`, `results.py`) uses a strict pipeline with no stage knowing about the others. This is exactly how `shared/crossbar/solver.go` should be structured.
+
+```go
+// File: shared/crossbar/solver.go — the four stages as separate functions
+
+// Stage 1: Fill — build the conductance matrix from the device array
+func BuildConductanceMatrix(devices [][]float64, wireR float64) SparseMatrix
+
+// Stage 2: KCL — stamp boundary conditions (applied voltages on word lines)
+func ApplyKCL(G SparseMatrix, wordLineV []float64) (SparseMatrix, Vector)
+
+// Stage 3: Solve — Gx = b, where x = node voltages
+func SolveNodeVoltages(G SparseMatrix, b Vector) (Vector, error)
+
+// Stage 4: Extract — compute branch currents from node voltages
+func ExtractCurrents(nodeV Vector, devices [][]float64) CrossbarSolution
+
+// Usage (mirroring badcrossbar's call pattern exactly):
+//   G := BuildConductanceMatrix(array.Conductances, array.WireResistance)
+//   A, b := ApplyKCL(G, inputVoltages)
+//   v, _ := SolveNodeVoltages(A, b)
+//   sol := ExtractCurrents(v, array.Conductances)
+```
+
+#### Pattern C: ferro_scripts — YAML Material Files, Zero Hardcoding
+
+Every material in ferro_scripts is a self-contained YAML file. The simulation engine reads it at startup. Adding HfO₂:La means creating `configs/materials/hfo2_la.yaml`, not editing Go source.
+
+```yaml
+# configs/materials/hfo2.yaml — the Go simulator reads this at runtime
+name: "HfO2"
+description: "Hafnium oxide ferroelectric, orthorhombic phase"
+remnant_polarisation: 25.0      # µC/cm² — measured, not guessed
+coercive_field: 1000.0          # kV/cm
+dielectric_constant: 30.0       # ε_r (linear part)
+film_thickness: 10.0            # nm
+landau_coefficients:
+  alpha: -1.2e8                 # J·m/C² (negative = ferroelectric phase)
+  beta:   5.4e8                 # J·m⁵/C⁴
+  gamma:  0.0                   # J·m⁹/C⁶ (cubic term, often zero)
+symmetrize: true
+source: "Cheema et al., Nature 2020"
+```
+
+```go
+// shared/physics/material_config.go — load the YAML above at runtime
+type MaterialConfig struct {
+    Name                string     `yaml:"name"`
+    Description         string     `yaml:"description"`
+    RemnantPolarisation float64    `yaml:"remnant_polarisation"` // µC/cm²
+    CoerciveField       float64    `yaml:"coercive_field"`       // kV/cm
+    DielectricConstant  float64    `yaml:"dielectric_constant"`
+    FilmThickness       float64    `yaml:"film_thickness"`       // nm
+    LandauCoefficients  struct {
+        Alpha float64 `yaml:"alpha"`
+        Beta  float64 `yaml:"beta"`
+        Gamma float64 `yaml:"gamma"`
+    } `yaml:"landau_coefficients"`
+    Symmetrize bool   `yaml:"symmetrize"`
+    Source     string `yaml:"source"`
+}
+
+func LoadMaterial(path string) (*MaterialConfig, error) {
+    data, err := os.ReadFile(path)
+    if err != nil { return nil, err }
+    var cfg MaterialConfig
+    return &cfg, yaml.Unmarshal(data, &cfg)
+}
+```
+
+#### Pattern D: Preisachmodel — Forward/Inverse Duality for ISPP Targeting
+
+The Preisachmodel library's key insight is that ISPP controllers need to **invert** the model: given a target polarization, find the required field. `preisachpy/model.py` implements `invert()` via bisection on the Everett function.
+
+```go
+// shared/physics/preisach.go — both directions, as in Preisachmodel
+
+// Forward: given applied field history → polarization
+func (m *PreisachModel) Polarization(field float64) float64
+
+// Inverse: given target polarization → required field (for ISPP)
+// Implements bisection on the Everett function, matching Preisachmodel's invert()
+func (m *PreisachModel) InverseField(targetP float64) (field float64, err error)
+
+// Everett function E(α, β) — the integral of the Preisach density
+// Product form (not factorized-difference): always non-negative for minor loops
+// E(α,β) = [1 + tanh((α-Ec)/Δ)] * [1 - tanh((β+Ec)/Δ)] * Ps/4
+func (m *PreisachModel) Everett(alpha, beta float64) float64
+```
+
+#### Pattern E: IBM AIHWKIT — Noise Injection at the MVM Level
+
+AIHWKIT's `AnalogTile.forward()` injects read noise and programming error directly inside the MVM call, not as a post-processing step. This is the correct architecture: the noise is part of the hardware model, not the application code.
+
+```go
+// shared/crossbar/noisy_core.go — noise injection inside RunMVM, not outside
+
+type NoisyCore struct {
+    inner  CrossbarCore   // wraps any CrossbarCore — decorator pattern
+    device DeviceModel    // provides noise parameters
+    rng    *rand.Rand
+}
+
+func (n *NoisyCore) RunMVM(input []float64) []float64 {
+    // 1. Get clean output from inner core
+    clean := n.inner.RunMVM(input)
+
+    // 2. Inject read noise per-output (σ proportional to conductance)
+    for i, v := range clean {
+        clean[i] = v + n.rng.NormFloat64()*n.device.ReadNoise(v)
+    }
+    return clean
+}
+// Callers just use NoisyCore as a CrossbarCore — noise is transparent.
+// No if-statements in application code to toggle noise on/off.
+```
 
 ---
 
@@ -66,6 +222,117 @@
 | StatusBar | custom | shared | shared | — | — | `shared/widgets/status_helper.go` ✅ |
 
 > M2 and M3 still define local wrappers instead of using shared.
+
+---
+
+## Detailed Module Inventory
+
+Per-file inventory of each module's `pkg/` directory, identifying what stays vs. what migrates to `shared/`.
+
+### Module 1 — Hysteresis (`module1-hysteresis/pkg/`)
+
+| Sub-package | Files | Key types | Migration target |
+|:---|:---|:---|:---|
+| `ferroelectric/` | `material.go`, `preisach.go`, `level_bins.go`, `render.go` + 12 tests | `Material`, `PreisachModel`, `LevelBins` | `shared/physics/` (merge with existing `material.go`, `landau.go`) |
+| `algo/` | `calibration.go`, `doc.go` + 1 test | `CalibrationManager` | `shared/physics/calibration.go` (merge) |
+| `controller/` | 13 files | GUI controller logic | **Stays** in module (UI-specific) |
+| `gui/` | 55 files | Fyne UI screens | **Stays** in module |
+| `render/` | 7 files | Rendering pipeline | **Stays** in module |
+| `simulation/` | 5 files | Simulation runner | **Stays** (uses shared/physics) |
+| `tui/` | 2 files | Terminal UI | **Stays** in module |
+
+### Module 2 — Crossbar (`module2-crossbar/pkg/`)
+
+| Sub-package | Files | Key types | Migration target |
+|:---|:---|:---|:---|
+| `crossbar/` | **88 files** (18 src + 65 tests + extras) | `CrossbarArray`, `IRDropSimulator`, `SneakPathAnalyzer`, `DriftModel`, `FeCap`, `NonlinearIV` | **→ `shared/crossbar/`** (Phase 0) |
+| `gui/` | 39 files | Fyne UI, liveslide, tooltips, keyboard | **Stays** (update imports) |
+| `network/` | 2 files | Network layer bindings | **Stays** |
+| `training/` | 2 files | Training helpers | **Stays** |
+| `visualization/` | 2 files | Visualization utils | **Stays** |
+| `weights/` | 3 files | Weight management | **Stays** |
+
+### Module 3 — MNIST (`module3-mnist/pkg/`)
+
+| Sub-package | Files | Key types | Migration target |
+|:---|:---|:---|:---|
+| `core/` | **46 files** (7 src + 39 tests) | `Network`, `QuantizationConfig`, `EnergyModel`, `CIMPhysics`, `DualModeMetrics` | **→ `shared/neural/`** (Phase 8) |
+| `gui/` | 30 files | Fyne UI screens | **Stays** in module |
+| `mnist/` | 3 files | MNIST data loader | **Stays** (dataset-specific) |
+| `training/` | 8 files | Training loops, single-layer | Reusable parts → `shared/neural/training/` |
+
+**Core file breakdown** (the 7 source files moving to `shared/neural/`):
+- `network.go` — Network struct, forward pass, weight loading
+- `network_config.go` — Configuration types
+- `network_gpu.go` — GPU-accelerated inference
+- `network_inference.go` — Inference pipeline
+- `network_quantization.go` — Quantization logic
+- `quantize.go` — Quantizer implementations
+- `energy_model.go` — Energy/power estimation
+- `cim_physics.go` — CIM noise, drift, device variation
+- `interfaces.go` — Core interfaces
+- `constants.go` — Physical constants
+- `dualmode_metrics.go` — Digital vs. analog comparison
+- `network_notifications.go` — Event system
+
+### Module 4 — Circuits (`module4-circuits/pkg/`)
+
+| Sub-package | Files | Key types | Migration target |
+|:---|:---|:---|:---|
+| `arraysim/` | **56 files** (15 src + 38 tests + extras) | `TierA`, `TierB`, `SenseChain`, `RefSolveDense`, `SpiceExport`, `Transient`, `ProgramScheduler`, `DesignSpaceExploration`, `MixedPrecisionPlanner` | Most **stays** (M4-specific array sim); `refsolve_dense.go` candidates for `shared/crossbar/` |
+| `gpuperiph/` | 2 files | GPU peripheral acceleration | **Stays** |
+| `gui/` | 89 files | Fyne UI (largest GUI) | **Stays** |
+
+**arraysim source file breakdown:**
+- `tier_a.go` / `tier_b.go` — Tiered simulation strategies (M4-specific)
+- `sensechain.go` — Sense amplifier chain modeling
+- `refsolve_dense.go` — Dense reference solver → candidate for `shared/crossbar/` or `shared/validation/`
+- `spice_export.go` — SPICE netlist generation → candidate for `shared/export/spice.go`
+- `transient.go` / `transient_characterization.go` — Time-domain simulation
+- `program_scheduler.go` — Write operation scheduling
+- `design_space_exploration.go` — DSE sweep engine
+- `mixed_precision_planner.go` — Multi-bit-width planning
+- `process_variation_mc.go` — Monte Carlo variation
+- `read_margin_analysis.go` — Sense margin calculations
+- `endurance_accuracy.go` — Endurance vs accuracy tradeoff
+- `batch_benchmark.go` — Performance benchmarking
+- `array_config.go` / `array_ispp.go` — Array configuration and ISPP
+- `masks.go` / `standard_patterns.go` — Test pattern generation
+
+### Module 6 — EDA (`module6-eda/pkg/`)
+
+| Sub-package | Files | Key types | Migration target |
+|:---|:---|:---|:---|
+| `compiler/` | 9 files | HDL compiler | **Stays** |
+| `config/` | 2 files | Config types | **Stays** |
+| `export/` | 54 files | Verilog/GDSII/LEF/DEF export | **Stays** (EDA-specific formats) |
+| `gui/` | 35 files | Fyne UI | **Stays** |
+| `layout/` | 5 files | Physical layout | **Stays** |
+| `openlane/` | 8 files | OpenLane integration | **Stays** |
+| `validate/` | 8 files | Design rule checks | **Stays** |
+| `validation/` | 13 files | Validation suite | **Stays** |
+
+### `shared/physics/` — Current Inventory (100+ files)
+
+Already-shared physics files that Module 1 should import from:
+
+| File | Purpose | Overlap with M1? |
+|:---|:---|:---|
+| `landau.go` | Landau-Devonshire energy functional | ⚠️ M1 has its own Landau logic in ferroelectric/ |
+| `material.go` | Material property definitions | ⚠️ M1 has `ferroelectric/material.go` |
+| `material_calibrated.go` | Calibrated material variants | — |
+| `ispp.go` / `ispp_write.go` / `ispp_legacy.go` | ISPP write algorithm | Also used by M4 `array_ispp.go` |
+| `calibration.go` / `calibration_studio.go` | Calibration pipeline | ⚠️ M1 has `algo/calibration.go` |
+| `conductance.go` | G↔resistance conversion | — |
+| `device_variation.go` | D2D and C2C variation | — |
+| `aging_engine.go` | Endurance/retention aging | — |
+| `cell_footprint.go` / `cell_geometry.go` | Physical cell dimensions | — |
+| `level_bins.go` | Multi-level state binning | ⚠️ M1 has `ferroelectric/level_bins.go` |
+| `dcc_write.go` | DCC write scheme | — |
+| `characterization.go` | Device characterization | — |
+| `confidence_ledger.go` | Statistical confidence tracking | — |
+| `pvt.go` | Process/Voltage/Temperature corners | — |
+| `preisach.go` | Preisach model (if exists) | ⚠️ M1 has `ferroelectric/preisach.go` |
 
 ---
 
@@ -349,6 +616,68 @@ func (tm *TileMapper) RunInference(tiles []Tile, input []float64) []float64
 
 ---
 
+### Phase 11 — System-Level Cost Models (NEW) ★
+
+> [!TIP]
+> **Inspired by MNSIM 2.0's 9-module architecture**: MNSIM separates area, energy, latency, power, and accuracy estimation into independent model packages that compose together. This enables design-space exploration before fabrication.
+
+Currently, M3 has `energy_model.go` and M4 has `design_space_exploration.go` — but these are module-local.
+
+#### Steps
+
+1. **Create** `shared/system/` with sub-packages:
+   - `shared/system/area.go` — Crossbar + peripheral area estimation per tile
+   - `shared/system/energy.go` — Static + dynamic energy per MVM operation (merge M3 `energy_model.go`)
+   - `shared/system/latency.go` — Pipeline latency: DAC → crossbar → ADC → accumulation
+   - `shared/system/power.go` — Leakage + switching power budget
+2. **Extract** reusable energy model from `module3/pkg/core/energy_model.go` → `shared/system/energy.go`.
+3. **Extract** DSE engine from `module4/pkg/arraysim/design_space_exploration.go` → `shared/system/dse.go`.
+4. **Keep** module-specific cost model tuning in each module.
+
+#### Future Enhancement: Unified DSE config
+
+```go
+// shared/system/dse.go — inspired by MNSIM 2.0 SimConfig.ini
+type DSEConfig struct {
+    ArraySizes      []int       `yaml:"array_sizes"`       // e.g. [64, 128, 256, 512]
+    ADCBits         []int       `yaml:"adc_bits"`          // e.g. [4, 6, 8]
+    CellBits        []int       `yaml:"cell_bits"`         // e.g. [1, 2, 4]
+    TechnologyNode  string      `yaml:"technology_node"`   // e.g. "130nm", "65nm", "28nm"
+    DeviceType      string      `yaml:"device_type"`       // e.g. "FeFET", "RRAM", "PCM"
+    Metrics         []string    `yaml:"metrics"`           // ["area", "energy", "latency", "accuracy"]
+}
+
+func RunDSE(config DSEConfig, model SystemModel) []DSEResult
+```
+
+---
+
+### Phase 12 — Compact Model Integration (NEW) ★
+
+> [!IMPORTANT]
+> **Inspired by PFECAP Verilog-A + DNN+NeuroSim**: PFECAP implements a circuit-simulator-compatible Preisach FeCap with Newton iteration. DNN+NeuroSim co-simulates PyTorch training with C++ NeuroSIM circuit models. These patterns suggest a `shared/compact/` package for device-level compact models.
+
+The PFECAP compact model implements:
+- `F(V, dir)` — Polarization switching function `Qs * tanh(a * (V - dir * Ec * tFE))`
+- `calc_m()` / `calc_b()` — Affine scaling between history branches
+- `Q(V)` — Total charge including linear dielectric: `P(V) + ε₀εᵣV/tFE`
+- `dQ(V)` — Derivative for Newton solver convergence
+- History tracking via `a_V[]/b_V[]` turning-point arrays with append/decrement logic
+
+#### Steps
+
+1. **Create** `shared/compact/fecap.go` — Port PFECAP's Preisach FeCap model to Go:
+   - `FeCap` struct with material params (`tFE`, `Ec`, `epsFE_r`, `Qs`, `a`, `rho`)
+   - `SwitchingFunction(V, dir)` — Core tanh hysteresis
+   - `TotalCharge(V, dir)` — P(V) + linear dielectric term
+   - `SolveVfe(Qin)` — Newton iteration to find V given Q
+   - History management (turning-point append/prune)
+2. **Create** `shared/compact/fefet.go` — Extend to FeFET with MOSFET body factor.
+3. **Create** `shared/compact/spice_bridge.go` — Generate Verilog-A or SPICE subcircuit from Go model parameters for external circuit simulation.
+4. **Add** `shared/compact/fecap_test.go` — Validate against PFECAP Verilog-A reference output.
+
+---
+
 ## Dependency Graph After Refactoring
 
 ```mermaid
@@ -428,6 +757,8 @@ graph TD
 | 8 | Neural core + quantization | Medium | High — enables HW-aware inference | ~2h | ★ enhanced |
 | 9 | Peripherals interface | Low (additive) | Medium — enables ADC/DAC plug-in arch | ~2h | ★ new |
 | 10 | Validation & benchmarking | Low (additive) | High — correctness assurance | ~3h | ★ new |
+| 11 | System-level cost models | Low (additive) | Medium — enables DSE | ~2h | ★ new |
+| 12 | Compact model integration | Low (additive) | High — enables SPICE-compatible models | ~3h | ★ new |
 
 ---
 
@@ -516,12 +847,387 @@ After all phases are complete:
 
 ---
 
-## Rules Going Forward
+## Engineering Rules — The FeCIM Shared Architecture Constitution
 
-1. **No cross-module imports.** Only `shared/` packages may be imported.
-2. **New shared code gets tests.** If moving code to shared, move or add tests.
-3. **Single `go.mod`.** Continue using the mono-module structure.
-4. **Package naming.** `shared/<domain>/` (e.g., `shared/crossbar`, `shared/neural`, `shared/physics`).
-5. **Interface-first design.** New shared packages should define interfaces before implementations (CrossSim pattern).
-6. **YAML-configurable parameters.** Domain-specific constants (material properties, device parameters, quantization configs) should be loadable from YAML/JSON config files, not hardcoded.
-7. **Validation oracles.** Every physics/math module should have a reference implementation (ported from an open-source tool) for correctness testing.
+> [!CAUTION]
+> These are **architectural laws**, not guidelines. Every rule is derived from a concrete failure mode that currently exists in the codebase OR was observed causing maintenance crises in the open-source tools studied. Violating a rule does not just create style debt — it reintroduces the specific structural damage this refactor was designed to repair.
+>
+> **How to use these rules:** Before opening a PR that touches `shared/` or moves code between modules, run through the [Quick-Reference Checklist](#quick-reference-checklist) at the bottom of this section. If any item is unchecked, fix it before requesting review.
+
+### Why These Rules Exist
+
+The codebase arrived at this refactor through specific, documented violations:
+
+| Violation | Consequence | Current evidence |
+|---|---|---|
+| `module3-mnist` imports `module2-crossbar/pkg/crossbar` | 12 files in M3 break whenever M2 changes its API | `grep -r module2-crossbar module3-mnist/` → 12 matches |
+| `module4-circuits` imports `module2-crossbar/pkg/crossbar` | M4 cannot be tested in isolation | `app.go` imports `WriteDisturbEngine` directly |
+| `embedded.go` duplicated in all 7 modules | Bug fixed in one copy is unfixed in 6 others | 7 `embedded.go` files with diverging implementations |
+| `module1/pkg/ferroelectric/material.go` duplicates `shared/physics/material.go` | Material constant updates require editing 2+ files | Both files define overlapping `Material` structs |
+| `shared/crossbar/` is empty | Code that 3 modules need lives in one module's `pkg/` | `ls shared/crossbar/` → only `logs/` dir |
+
+These are not hypothetical. They are the **actual reasons this plan exists**.
+
+---
+
+### Rule 1 — No Cross-Module Imports
+
+**Statement:** A module (`moduleN-*`) may **only** import from `shared/` packages. It must **never** import from another module's `pkg/` directory.
+
+**Why this matters:** Cross-module imports create hidden coupling. When Module 3 imports from Module 2's `pkg/crossbar`, it means Module 3 cannot be built, tested, or understood without Module 2. This makes every change to Module 2's crossbar package a potential breaking change for Module 3 — even if the Module 2 developer has no idea Module 3 exists. The current codebase has exactly this problem: 12 files in Module 3 and 1 file in Module 4 import directly from `module2-crossbar/pkg/crossbar`.
+
+**How to comply:**
+- If you need functionality from another module, **move it to `shared/`** first, then import from there.
+- If the code is truly module-specific, it should not be shared — re-implement the specific piece you need, or design a shared interface.
+
+**Anti-patterns:**
+```go
+// ❌ WRONG — importing from another module
+import "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+
+// ✅ CORRECT — importing from shared
+import "fecim-lattice-tools/shared/crossbar"
+```
+
+**Enforcement:** Run `grep -r 'module[0-9]-.*/pkg/' --include='*.go' moduleN-*/` before every PR. Zero matches required.
+
+---
+
+### Rule 2 — New Shared Code Gets Tests
+
+**Statement:** Any code moved to or created in `shared/` **must** have accompanying test coverage. No exceptions.
+
+**Why this matters:** `shared/` packages are consumed by multiple modules. A bug in `shared/physics/landau.go` silently corrupts results in Module 1 (hysteresis loops), Module 4 (circuit simulations), and potentially Module 3 (CIM physics). Without tests, these bugs are discovered late and are expensive to debug across module boundaries. The existing `shared/` packages already have 174 test files — this standard must be maintained.
+
+**How to comply:**
+- When **moving** code from a module to `shared/`, move the existing tests too and ensure they pass in the new location.
+- When **creating** new shared code, write tests before or alongside the implementation.
+- Minimum bar: every exported function and type must have at least one test exercising its primary path.
+- Prefer table-driven tests for functions with multiple input scenarios.
+
+**Anti-patterns:**
+```
+# ❌ WRONG — moving source without tests
+git mv module1/pkg/ferroelectric/preisach.go shared/physics/preisach.go
+# (no preisach_test.go moved or created)
+
+# ✅ CORRECT — moving source AND tests together
+git mv module1/pkg/ferroelectric/preisach.go shared/physics/preisach.go
+git mv module1/pkg/ferroelectric/preisach_test.go shared/physics/preisach_test.go
+```
+
+**Enforcement:** CI gate: `go test ./shared/...` must pass. Consider adding coverage threshold (e.g., ≥ 60% for new packages).
+
+---
+
+### Rule 3 — Single `go.mod`
+
+**Statement:** The entire project uses **one** `go.mod` at the repo root. Do not create separate `go.mod` files per module.
+
+**Why this matters:** A single Go module means all packages share the same dependency versions — no version skew between modules. It enables `go build ./...` and `go test ./...` to compile and test the entire project in one command. Multi-module repos (separate `go.mod` per `moduleN/`) create dependency hell: Module 3 might use `fyne.io/fyne/v2@2.4.0` while Module 2 uses `v2.3.5`, causing subtle runtime bugs.
+
+**How to comply:**
+- Never add a `go.mod` inside any `moduleN-*/` or `shared/` directory.
+- When adding a new dependency, run `go get` from the repo root.
+- Use `go mod tidy` from the repo root to clean up.
+
+**Anti-patterns:**
+```
+# ❌ WRONG — per-module go.mod
+module2-crossbar/go.mod
+module3-mnist/go.mod
+
+# ✅ CORRECT — single root go.mod
+go.mod   (at repo root, module path: fecim-lattice-tools)
+```
+
+**Enforcement:** CI check: `find . -name go.mod | wc -l` must equal `1`.
+
+---
+
+### Rule 4 — Canonical Package Naming
+
+**Statement:** Shared packages follow the convention `shared/<domain>/` where `<domain>` is a short, lowercase noun describing the domain. No abbreviations, no compound names, no nesting beyond one level unless justified.
+
+**Why this matters:** Consistent naming makes the codebase navigable. A developer looking for crossbar simulation code knows to look in `shared/crossbar/`. A developer looking for peripheral circuit models knows to check `shared/peripherals/`. Without this convention, shared code accumulates in ambiguous packages like `shared/utils/` or `shared/common/` — which become dumping grounds for unrelated code.
+
+**Approved package names and their domains:**
+
+| Package | Domain | Example contents |
+|:---|:---|:---|
+| `shared/crossbar` | Crossbar array simulation | Array, solver, IR drop, sneak path, device errors |
+| `shared/physics` | Ferroelectric physics | Landau, Preisach, material defs, ISPP, calibration |
+| `shared/neural` | Neural network inference | Network, quantize, energy model, CIM physics |
+| `shared/peripherals` | ADC/DAC/TIA circuits | ADC, DAC, charge amp, noise, PVT |
+| `shared/widgets` | Fyne UI components | Mode indicator, educational panel, key stat |
+| `shared/export` | Data export | CSV, JSON, image, SPICE netlist |
+| `shared/keyboard` | Keyboard shortcuts | Common shortcuts, registration |
+| `shared/theme` | Visual theming | Colors, fonts, dark/light mode |
+| `shared/gui` | GUI framework | Embedded app interface, app shell |
+| `shared/compute` | GPU compute pipeline | Shader loading, buffers, dispatching |
+| `shared/validation` | Reference implementations | Crossbar oracle, P-E loop oracle |
+| `shared/compact` | Device compact models | FeCap, FeFET, SPICE bridge |
+| `shared/system` | System-level estimation | Area, energy, latency, DSE |
+| `shared/presets` | Preset configurations | Preset provider, preset registry |
+| `shared/logging` | Structured logging | Log levels, file logging |
+
+**Anti-patterns:**
+```
+# ❌ WRONG — ambiguous names
+shared/utils/
+shared/common/
+shared/helpers/
+shared/misc/
+
+# ❌ WRONG — too deep nesting without justification
+shared/physics/ferroelectric/models/landau/simple/
+
+# ✅ CORRECT — flat, domain-specific
+shared/physics/
+shared/crossbar/
+shared/neural/
+```
+
+**Enforcement:** Code review: reject PRs that create `shared/utils/`, `shared/common/`, or `shared/helpers/`.
+
+---
+
+### Rule 5 — Interface-First Design
+
+**Statement:** When creating a new `shared/` package that will have multiple implementations, **define the interface first** in a dedicated file (e.g., `icore.go`, `iadc.go`), then provide concrete implementations in separate files.
+
+**Why this matters:** This pattern (directly observed in CrossSim's `ICore`, `IDevice`, `IADC`, `IArray` hierarchy) enables:
+- **Pluggability**: Swap a `FlashADC` for a `SarADC` without changing any consumer code.
+- **Testability**: Mock the interface in unit tests instead of instantiating complex simulators.
+- **Extensibility**: Add a new crossbar core type (e.g., `NonlinearCore`) without modifying existing code.
+
+**How to comply:**
+1. Create the interface file first: `shared/crossbar/core.go` → `type CrossbarCore interface { ... }`
+2. Implementations go in separate files: `shared/crossbar/ideal_core.go`, `shared/crossbar/irdrop_core.go`
+3. Constructors return the interface type, not the concrete type.
+4. Consumer code accepts the interface, never the concrete type.
+
+**Anti-patterns:**
+```go
+// ❌ WRONG — consumer depends on concrete type
+func RunSimulation(core *IdealCore) {}
+
+// ✅ CORRECT — consumer depends on interface
+func RunSimulation(core CrossbarCore) {}
+
+// ❌ WRONG — one giant file with interface + all implementations
+// shared/crossbar/everything.go (2000 lines)
+
+// ✅ CORRECT — interface and implementations in separate files
+// shared/crossbar/core.go       (interface definition)
+// shared/crossbar/ideal_core.go (ideal implementation)
+// shared/crossbar/irdrop_core.go (IR-drop implementation)
+```
+
+**Enforcement:** Code review: every new `shared/` package PR must document which interfaces it defines.
+
+---
+
+### Rule 6 — YAML-Configurable Parameters
+
+**Statement:** Domain-specific constants — material properties, device parameters, simulation configs, quantization settings, technology node specs — must be loadable from YAML or JSON config files. They must **not** be hardcoded as Go constants or struct literals in source code.
+
+**Why this matters:** This pattern (directly observed in ferro_scripts' `bto_params.yaml` and MNSIM 2.0's `SimConfig.ini`) enables:
+- **Rapid experimentation**: Switch from HfO₂ to BaTiO₃ by changing one config file, not editing Go source.
+- **Reproducibility**: Config files can be version-controlled alongside simulation results.
+- **User accessibility**: Non-programmers (e.g., materials scientists) can modify simulation parameters without touching Go code.
+- **Parameter sweeps**: DSE tools can programmatically generate config files for automated exploration.
+
+**What must be configurable:**
+
+| Category | Example parameters | Config file |
+|:---|:---|:---|
+| Material properties | Pr, Ec, εr, Landau α/β/γ, thickness | `configs/materials/hfo2.yaml` |
+| Device parameters | On/off conductance, levels, drift rate | `configs/devices/fefet_130nm.yaml` |
+| Array configuration | Rows, cols, wire resistance, selector | `configs/arrays/256x256.yaml` |
+| Quantization | Bits, symmetric, granularity, method | `configs/quantization/4bit_perchannel.yaml` |
+| Peripheral circuits | ADC bits, DAC bits, TIA gain | `configs/peripherals/default.yaml` |
+| Technology node | Feature size, metal layers, Vdd | `configs/technology/sky130.yaml` |
+
+**Anti-patterns:**
+```go
+// ❌ WRONG — hardcoded material properties
+const RemnantPolarization = 25.0 // µC/cm²
+const CoerciveField = 100.0      // kV/cm
+
+// ✅ CORRECT — loaded from config
+mat, err := physics.LoadMaterial("configs/materials/hfo2.yaml")
+fmt.Println(mat.RemnantPolarization) // 25.0
+```
+
+**Enforcement:** Code review: reject PRs that add new hardcoded physical constants. Exception: universal constants (π, ε₀, k_B, q_e) may remain as Go `const`.
+
+---
+
+### Rule 7 — Validation Oracles
+
+**Statement:** Every physics/math package in `shared/` must have a **reference implementation** (ported from a known-good open-source tool) that serves as a ground-truth oracle for correctness testing.
+
+**Why this matters:** Physics simulations can produce plausible-looking but wrong results. A crossbar MVM that is 5% off doesn't crash — it silently degrades inference accuracy. A P-E loop with the wrong coercive field still plots as a hysteresis curve. Without reference oracles, these errors go undetected until physical measurements contradict simulation.
+
+**Oracle sources (already studied):**
+
+| Shared package | Oracle source | What it validates |
+|:---|:---|:---|
+| `shared/crossbar` | badcrossbar (Python, exact KCL nodal analysis) | MVM accuracy, node voltages, branch currents at all array sizes |
+| `shared/physics` | ferro_scripts (Python, Landau + DFT-fitted P-E loops) | P-E loop shape, Ec, Pr, barrier height, Landau coefficients |
+| `shared/physics` | Preisachmodel (Python, forward + inverse Preisach) | Hysteresis loop minor loops, turning points, Everett function |
+| `shared/neural` | Brevitas (Python, quantization-aware training) | Quantization error, scale factors, clipping behavior at various bit widths |
+| `shared/compact` | PFECAP (Verilog-A, Preisach FeCap + Newton solver) | Charge–voltage curves, history-dependent switching, transient response |
+| `shared/peripherals` | CrossSim circuits/ (Python, ADC/DAC models) | ADC conversion accuracy, INL/DNL, quantization error |
+
+**How to comply:**
+1. For each shared physics package, create a corresponding `shared/validation/<package>_oracle.go`.
+2. The oracle implements the same computation using a known-good algorithm (ported from the source tool listed above).
+3. Benchmark tests compare the main implementation against the oracle across a sweep of input parameters.
+4. Acceptable error thresholds must be documented (e.g., "MVM output within 1e-6 of badcrossbar reference for arrays up to 512×512").
+
+**Anti-patterns:**
+```go
+// ❌ WRONG — testing only against self (circular validation)
+func TestLandau(t *testing.T) {
+    result := Landau(params)
+    // Only checks that result is non-zero — doesn't verify correctness
+    assert.NotZero(t, result)
+}
+
+// ✅ CORRECT — testing against known-good oracle
+func TestLandauVsFerroScripts(t *testing.T) {
+    result := Landau(params)
+    oracle := ferroScriptsOracle(params)  // ported from ferro_scripts
+    assert.InDelta(t, oracle, result, 1e-6)
+}
+```
+
+**Enforcement:** CI gate: `go test ./shared/validation/... -v` must pass. New shared physics packages must include oracle tests in their PR.
+
+---
+
+### Quick-Reference Checklist
+
+Use this checklist before every PR that touches `shared/` or module code:
+
+- [ ] **Rule 1**: `grep -r 'module[0-9]-.*/pkg/' --include='*.go' moduleN-*/` returns zero matches
+- [ ] **Rule 2**: Every new/moved `shared/` file has a corresponding `_test.go`
+- [ ] **Rule 3**: Only one `go.mod` exists at repo root
+- [ ] **Rule 4**: New `shared/` packages use approved names from the table above
+- [ ] **Rule 5**: Multi-implementation packages define interface in a dedicated file
+- [ ] **Rule 6**: No new hardcoded domain-specific constants (material, device, config)
+- [ ] **Rule 7**: New physics packages have oracle tests in `shared/validation/`
+- [ ] **Build**: `go build ./...` passes
+- [ ] **Vet**: `go vet ./...` passes
+- [ ] **Test**: `make test` passes
+- [ ] **Race**: `make test-race` passes
+
+---
+
+### What Breaks When Each Rule Is Violated
+
+This table maps rule violations to the exact failure modes they cause — drawn from current codebase evidence and observed failures in the open-source tools studied:
+
+| Rule | Violation | What breaks | Recovery cost |
+|---|---|---|---|
+| **R1** No cross-module imports | `module3` imports `module2/pkg/crossbar` | Changing crossbar API silently breaks module3 in ways only discovered at compile time | High — audit 12+ files across a module boundary |
+| **R1** No cross-module imports | `module4` imports `module2/pkg/crossbar` | Module4 cannot be tested without compiling module2 | Medium — 1 file, but creates test isolation problem |
+| **R2** Tests with shared code | Code moved to `shared/` without tests | `shared/physics` regression introduced; bug affects 3+ modules before detection | High — debug across module boundaries with no test pinning the location |
+| **R3** Single `go.mod` | Separate `go.mod` per module | `fyne v2.4` in M2 vs `fyne v2.3` in M3 → runtime type mismatch panic | Very high — dependency conflicts are hard to diagnose |
+| **R4** Package naming | `shared/utils/` created | Unrelated code accumulates; contributors can't find functionality; duplication grows | Medium — requires audit and restructuring later |
+| **R5** Interface-first | Concrete type leaked into function signature | Switching implementations (e.g., behavioral → exact KCL) requires changing every caller | High — shotgun refactor across all consuming code |
+| **R6** YAML-configurable | Material Ec/Pr hardcoded | Simulation can only target HfO₂; comparing materials requires code changes + rebuild | Medium — requires per-material code branches |
+| **R7** Validation oracles | No oracle test for crossbar MVM | 5% MVM error goes undetected; discovered only when experimental accuracy diverges | Very high — silent physics errors are the hardest to find |
+
+---
+
+### CI Enforcement Script
+
+Save as `scripts/check-architecture.sh` and run before every merge:
+
+```bash
+#!/usr/bin/env bash
+# scripts/check-architecture.sh
+# Enforces the 7 architectural rules. Exit code 0 = passing, 1 = violations found.
+set -euo pipefail
+
+FAIL=0
+
+echo "=== Rule 1: No cross-module imports ==="
+# Each moduleN directory must not import from any other moduleM directory
+for mod in module1-hysteresis module2-crossbar module3-mnist module4-circuits module5-comparison module6-eda; do
+    hits=$(grep -r '"fecim-lattice-tools/module' "$mod/" --include='*.go' 2>/dev/null \
+           | grep -v "/$mod/" | grep -v '_test.go' || true)
+    if [[ -n "$hits" ]]; then
+        echo "❌ RULE 1 VIOLATION in $mod:"
+        echo "$hits"
+        FAIL=1
+    fi
+done
+[[ $FAIL -eq 0 ]] && echo "✅ Rule 1 passed"
+
+echo ""
+echo "=== Rule 3: Single go.mod ==="
+count=$(find . -name 'go.mod' -not -path './.git/*' | wc -l)
+if [[ "$count" -ne 1 ]]; then
+    echo "❌ RULE 3 VIOLATION: found $count go.mod files (expected 1)"
+    find . -name 'go.mod' -not -path './.git/*'
+    FAIL=1
+else
+    echo "✅ Rule 3 passed (1 go.mod)"
+fi
+
+echo ""
+echo "=== Rule 4: No banned package names ==="
+banned=("utils" "common" "helpers" "misc" "core2" "internal2")
+for name in "${banned[@]}"; do
+    if [[ -d "shared/$name" ]]; then
+        echo "❌ RULE 4 VIOLATION: shared/$name/ exists (banned grab-bag name)"
+        FAIL=1
+    fi
+done
+[[ $FAIL -eq 0 ]] && echo "✅ Rule 4 passed"
+
+echo ""
+echo "=== Build & Vet ==="
+go build ./... && echo "✅ Build passed" || { echo "❌ Build failed"; FAIL=1; }
+go vet ./...  && echo "✅ Vet passed"  || { echo "❌ Vet failed"; FAIL=1; }
+
+echo ""
+if [[ $FAIL -eq 1 ]]; then
+    echo "❌ Architecture check FAILED — fix violations before merging"
+    exit 1
+else
+    echo "✅ All architecture checks passed"
+    exit 0
+fi
+```
+
+> Rules 2, 5, 6, and 7 require human code review — they cannot be fully automated by grep. The script above enforces the mechanically checkable rules (1, 3, 4, build).
+
+---
+
+### Decision Flowchart: "Where Does This Code Go?"
+
+```
+New code needed?
+       │
+       ├─ Only one module ever needs it?
+       │          │
+       │          └─ YES → Keep it in that module's pkg/
+       │
+       ├─ Two or more modules need it?
+       │          │
+       │          └─ YES → It belongs in shared/<domain>/
+       │                        │
+       │                        ├─ Has multiple implementations? → Define interface first (Rule 5)
+       │                        ├─ Contains physics constants?   → Make YAML-configurable (Rule 6)
+       │                        └─ Is physics/math code?         → Add oracle test (Rule 7)
+       │
+       └─ Unsure?
+                  │
+                  └─ Ask: "Would I need to import from another module to use this?"
+                           YES → Move to shared/  NO → Keep local
+```
