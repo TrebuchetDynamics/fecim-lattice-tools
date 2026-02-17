@@ -307,7 +307,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
 	programInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Program Cell",
-			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays use V/2 half-select.", ca.window)
+			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays: full column write (all WL=0V, selected BL=−V_write).", ca.window)
 	})
 	programInfo.Importance = widget.LowImportance
 
@@ -831,7 +831,7 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 //   - Write pulses are clamped to the write range and practical DAC limits.
 //
 // NOTE (architecture): In passive mode (0T1R), WLs are effectively ALWAYS on (no gating),
-// so WL configuration is skipped and WRITE uses a V/2 half-select scheme.
+// so WL configuration is skipped and WRITE uses DAC-only column drive (all WL=0V, selected BL=−V_write).
 func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	if ca.deviceState == nil {
 		return
@@ -1623,7 +1623,7 @@ func (ca *CircuitsApp) updateOperationClassification() {
 		} else if arch == sharedwidgets.Architecture1T1R {
 			helpText = fmt.Sprintf("WRITE: Single row, %.1f-%.1fV. 1T1R gates selected row. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
 		} else {
-			helpText = fmt.Sprintf("WRITE: %.1f-%.1fV. Passive: V/2 scheme reduces half-select disturb. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
+			helpText = fmt.Sprintf("WRITE: %.1f-%.1fV. Passive: DAC drives selected BL; entire column switches. Use Program Cell to apply pulse.", writeRange.Min, writeRange.Max)
 		}
 	case OpModeCompute:
 		if arch == sharedwidgets.Architecture0T1R {

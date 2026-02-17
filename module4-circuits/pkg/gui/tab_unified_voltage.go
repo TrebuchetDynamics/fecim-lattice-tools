@@ -429,8 +429,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	if ctrl.MaxVoltage <= 0 {
 		ctrl.MaxVoltage = 1.5
 	}
-	// Cap write voltage at 2×Vc so V/2 never exceeds coercive voltage.
-	// The V/2 half-select scheme is only valid when V/2 < Vc.
+	// Cap write voltage at 2×Vc to keep the full-column write pulse within the switching window.
 	if mat != nil {
 		vc := mat.CoerciveVoltage()
 		if vc > 0 && ctrl.MaxVoltage > 2*vc {

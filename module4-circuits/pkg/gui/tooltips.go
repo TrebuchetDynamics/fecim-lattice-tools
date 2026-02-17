@@ -206,7 +206,7 @@ var CircuitsTooltips = struct {
 		Title:       "Write Voltage (thickness-dependent)",
 		Description: "Amplitude of program pulse. Must exceed coercive voltage for switching.",
 		Range:       "Typical: V_write ≳ (1–3)×Vc, where Vc≈Ec×t (device- and thickness-dependent)",
-		Physics:     "Switching is driven by electric field E; coercive field Ec depends on stack and thickness. Coercive voltage is approximately Vc≈Ec×t. This simulator derives write ranges from the selected material (Ec,t) and applies architecture rules (e.g., V/2 half-select).",
+		Physics:     "Switching is driven by electric field E; coercive field Ec depends on stack and thickness. Coercive voltage is approximately Vc≈Ec×t. This simulator derives write ranges from the selected material (Ec,t) and applies architecture rules (e.g., DAC-only column drive for passive 0T, transistor isolation for 1T1R/2T1R).",
 		Tips: []string{
 			"Citations for calibrated Ec/t examples: Park 2015 (10 nm HZO, doi:10.1002/adma.201404531); Cheema 2020 (5 nm HZO superlattice, doi:10.1038/s41586-020-2208-x)",
 			"Treat write-voltage limits as model guidance unless you have measured breakdown/selector limits",

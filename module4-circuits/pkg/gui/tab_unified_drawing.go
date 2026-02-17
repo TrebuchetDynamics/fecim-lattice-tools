@@ -506,10 +506,10 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 						}
 					}
 					if cellSize >= 45 {
-						vText := fmt.Sprintf("V/2=%.2f", hsState.HalfVoltage)
+						vText := fmt.Sprintf("V=%.2f", hsState.FullVoltage)
 						drawSimpleText(img, vText, x0+cw/2-len(vText)*3, y0+ch-8, color.RGBA{255, 200, 100, 200})
 					} else if cellSize >= 30 {
-						drawSimpleText(img, "V/2", x0+cw/2-9, y0+ch-8, color.RGBA{255, 200, 100, 200})
+						drawSimpleText(img, "Full", x0+cw/2-9, y0+ch-8, color.RGBA{255, 200, 100, 200})
 					}
 				}
 			}

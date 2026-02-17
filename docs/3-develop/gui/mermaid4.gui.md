@@ -423,13 +423,13 @@ flowchart TD
         end
 
         subgraph Overlays["Visual Overlays"]
-            O1["V/2 half-select overlay<br/>active, shown on cells"]
+            O1["Column-write overlay<br/>same-column cells highlighted (full disturb)"]
             O2["No sneak path overlay<br/>isolated cells"]
             O3["Full selection scheme<br/>complete isolation"]
         end
 
         subgraph VoltagePanel["Right-Side Panel"]
-            VP1["Passive Voltage Info:<br/>WL, BL, V/2 indication"]
+            VP1["Passive Voltage Info:<br/>WL=0V, BL=−V_write (DAC-only column drive)"]
             VP2["1T1R Voltage Info:<br/>Row select voltage"]
             VP3["2T1R Voltage Info:<br/>Row + Column selects"]
         end
