@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // TestMNISTNetwork_Forward verifies forward pass produces valid outputs

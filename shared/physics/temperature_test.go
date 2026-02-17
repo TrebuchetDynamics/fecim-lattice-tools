@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	crossbar "fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/physics"
 )
 

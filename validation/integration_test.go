@@ -6,7 +6,7 @@ import (
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 func TestIntegration_PreisachLoopWithinLiteratureBounds(t *testing.T) {

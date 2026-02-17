@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 	mnistcore "fecim-lattice-tools/module3-mnist/pkg/core"
 	circuitsgui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	sharedphysics "fecim-lattice-tools/shared/physics"

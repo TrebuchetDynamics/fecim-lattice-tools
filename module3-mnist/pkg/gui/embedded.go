@@ -9,7 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/utils"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"

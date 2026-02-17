@@ -16,7 +16,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	crossbar "fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
 	sharedtheme "fecim-lattice-tools/shared/theme"

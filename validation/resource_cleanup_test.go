@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	crossbar "fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	crossbar "fecim-lattice-tools/shared/crossbar"
 )
 
 func TestResourceCleanup_NewArrayDoesNotLeakGoroutines(t *testing.T) {
