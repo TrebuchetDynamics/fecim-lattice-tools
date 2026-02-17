@@ -53,7 +53,7 @@
 | RG-VAL-M1-01 | Expand M1 deep regression materials from 3/9 → 9/9 with per-material verdict and documented SKIPs for missing params | M1 | ✅ (2026-02-16: `TestHeadlessHysteresis_VerificationMatrix_NoNaNOrCrash` covers all 9/9 materials × 2 engines) |
 | RG-VAL-M1-02 | Golden P–E loop regression for all materials × 2 engines (6+ sig figs drift detection) | M1 + validation/testdata | ✅ (2026-02-16: `TestPhysicsRegressionCurves_AllMaterials` in physics_regression_test.go; 9 golden JSON files in testdata/physics_regression/) |
 | RG-VAL-M1-03 | Export WriteVerifyStats into regression JSON (pulse counts, overshoot, stuck, guard pulses) and assert bounds | M1 | ✅ (2026-02-16: `validation/m1_write_verify_stats_test.go`; 3 materials × 3 targets pass, ≤26 pulses, 0 overshoots) |
-| RG-VAL-M1-04 | Monte Carlo uncertainty on P–E + ISPP (CI bands for Pr/Ec/area, seed determinism checks) | M1 | ⏳ |
+| RG-VAL-M1-04 | Monte Carlo uncertainty on P–E + ISPP (CI bands for Pr/Ec/area, seed determinism checks) | M1 | ✅ (2026-02-16: `validation/m1_montecarlo_uncertainty_test.go`; 200-trial PE CI bands Pr=29%, Ec=17%, Area=17%; ISPP 50/50 converge; seed determinism verified) |
 
 ### 0b. GUI vs Headless Physics Parity (NEW, HIGH PRIORITY)
 
