@@ -37,6 +37,23 @@ func (a *App) rangeFracLabelText(frac float64) string {
 	return fmt.Sprintf("Target Range: %.1f%%", frac*100)
 }
 
+// updateEFieldSliderRange updates the E-field slider min/max and range label to
+// match the current material's Ec (±2.5×Ec in MV/cm). Must be called on UI thread.
+func (a *App) updateEFieldSliderRange() {
+	if a.eFieldSlider == nil || a.material == nil {
+		return
+	}
+	ecMVcm := a.effectiveEc() / 1e8
+	emax := ecMVcm * 2.5
+	a.eFieldSlider.Min = -emax
+	a.eFieldSlider.Max = emax
+	a.eFieldSlider.Step = emax / 250
+	a.eFieldSlider.Refresh()
+	if a.eFieldRangeLabel != nil {
+		a.eFieldRangeLabel.SetText(fmt.Sprintf("range ±%.2f MV/cm", emax))
+	}
+}
+
 func (a *App) scheduleRangeCalibration() {
 	if a == nil {
 		return
@@ -67,19 +84,24 @@ func (a *App) scheduleRangeCalibration() {
 }
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
-	// E-field slider (no logging - too frequent)
-	a.eFieldSlider = widget.NewSlider(-1.5, 1.5)
-	a.eFieldSlider.Step = 0.01
+	// E-field slider — range is ±2.5×Ec in actual MV/cm, updated per material.
+	initialEcMVcm := a.material.Ec / 1e8
+	initialEmax := initialEcMVcm * 2.5
+	a.eFieldSlider = widget.NewSlider(-initialEmax, initialEmax)
+	a.eFieldSlider.Step = initialEmax / 250 // ~500 steps across full range
 	a.eFieldSlider.Value = 0
 	a.eFieldSlider.OnChanged = func(v float64) {
 		// Only accept slider input when in Manual mode AND not animating
 		if a.waveform == WaveformManual && !a.manualAnimating {
 			a.mu.Lock()
-			a.electricField = v * a.material.Ec
+			a.electricField = v * 1e8 // MV/cm → V/m
 			a.mu.Unlock()
 		}
 	}
 	a.eFieldLabel = widget.NewLabel("E: 0.00 MV/cm")
+	// Range label shows the current ±max in MV/cm so the user knows the slider extent
+	a.eFieldRangeLabel = widget.NewLabel(fmt.Sprintf("range ±%.2f MV/cm", initialEmax))
+	a.eFieldRangeLabel.TextStyle = fyne.TextStyle{Italic: true}
 	// Mode label shows whether slider is in manual or auto mode
 	a.eFieldModeLabel = widget.NewLabel("AUTO")
 	a.eFieldModeLabel.TextStyle = fyne.TextStyle{Italic: true}
@@ -751,7 +773,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			withInfo(rangeGrid, tips.TargetRange),
 		)),
 		widget.NewCard("Drive & Timing", "", container.NewVBox(
-			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider), tips.EField),
+			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider, a.eFieldRangeLabel), tips.EField),
 			withInfo(container.NewVBox(freqLabel, freqSlider, freqEntryRow), tips.Frequency),
 			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider, displayFreqLabel), tips.TimeScale),
 		)),
@@ -1069,8 +1091,10 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.plot.SetData(nil, nil, 0, 0)
 	a.plot.Refresh()
 	a.updateLevelIndicatorRange()
+	a.updateSimVsExpWidget()
 
-	// Reset E-field slider
+	// Reset E-field slider and update range for new material
+	a.updateEFieldSliderRange()
 	if a.eFieldSlider != nil {
 		a.eFieldSlider.SetValue(0)
 	}

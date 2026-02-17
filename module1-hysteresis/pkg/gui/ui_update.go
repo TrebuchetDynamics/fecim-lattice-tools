@@ -369,7 +369,6 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	fE := snapshot.fE
 	pV := snapshot.pV
 	dL := snapshot.dL
-	eC := snapshot.eC
 	hE := snapshot.hE
 	hP := snapshot.hP
 	effEc := snapshot.effEc
@@ -492,11 +491,10 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	// Update slider to match current E-field (only if not being manually controlled)
 	// During Manual animation, the slider reflects the animated E-field
 	// Normalize by Ec for display (-1.5 to +1.5 range)
+	// Slider is in actual MV/cm — update it whenever not in manual-idle mode.
 	shouldUpdateSlider := snapshot.waveform != WaveformManual || snapshot.manualAnimating
 	if shouldUpdateSlider {
-		if eC != 0 {
-			a.eFieldSlider.SetValue(fE / eC)
-		}
+		a.eFieldSlider.SetValue(fE / 1e8) // V/m → MV/cm
 	}
 
 	// Update status and logging

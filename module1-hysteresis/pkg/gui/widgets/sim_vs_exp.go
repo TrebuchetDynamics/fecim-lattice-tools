@@ -141,8 +141,8 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 
 	prRow := container.NewGridWithColumns(4,
 		widget.NewLabel("Pr (µC/cm²)"),
-		widget.NewLabel(fmt.Sprintf("%.1f", s.simPr*1e4)),
-		widget.NewLabel(fmt.Sprintf("%.0f - %.0f", s.expPrMin*1e4, s.expPrMax*1e4)),
+		widget.NewLabel(fmt.Sprintf("%.1f", s.simPr*100)),   // C/m² → µC/cm²
+		widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100)),
 		container.NewCenter(prStatusText),
 	)
 	rows.Add(prRow)
