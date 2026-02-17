@@ -268,84 +268,71 @@ func TestVoltageRulesCompliance(t *testing.T) {
 	t.Logf("Half-select safety margin: %.1f%% below Vc", halfSelectMargin)
 }
 
-// TestHalfSelectVoltageScheme verifies V/2 half-select biasing for passive 0T1R
-// Per VOLTAGE_RULES.md Section 3.2 and 6.1
+// TestHalfSelectVoltageScheme verifies DAC-Only Column Drive for passive 0T1R write.
+// Passive arrays ground all WLs; the selected BL is driven to -V_write.
+// This causes a COLUMN WRITE: all cells in the target column see full V_write.
 func TestHalfSelectVoltageScheme(t *testing.T) {
 	tia := peripherals.DefaultTIA()
 	adc := peripherals.DefaultADC()
 	ds := NewDeviceState(4, 4, tia, adc)
 	ds.SetPassiveMode(true) // Enable passive 0T1R mode
 
-	// Apply V/2 half-select for writing to cell (1, 2)
 	targetRow, targetCol := 1, 2
-	writeVoltage := 1.5 // Full write voltage
+	writeVoltage := 1.5
 
 	ds.ApplyHalfSelectWrite(targetRow, targetCol, writeVoltage)
 
-	halfV := writeVoltage / 2.0
-
-	// Verify WL voltages
+	// All WL voltages must be 0V (rows are always grounded in passive mode)
 	for r := 0; r < 4; r++ {
 		wlV := ds.GetWLVoltage(r)
-		if r == targetRow {
-			// Selected row should have +V/2
-			if math.Abs(wlV-halfV) > 0.001 {
-				t.Errorf("Selected WL[%d] should be +%.3f V, got %.3f V", r, halfV, wlV)
-			}
-		} else {
-			// Unselected rows should be 0V
-			if math.Abs(wlV) > 0.001 {
-				t.Errorf("Unselected WL[%d] should be 0V, got %.3f V", r, wlV)
-			}
+		if math.Abs(wlV) > 0.001 {
+			t.Errorf("WL[%d] should be 0V (all grounded), got %.3f V", r, wlV)
 		}
 	}
 
-	// Verify BL (DAC) voltages
+	// Selected BL = -V_write; unselected BLs = 0V
 	for c := 0; c < 4; c++ {
 		blV := ds.GetDACVoltage(c)
 		if c == targetCol {
-			// Selected column should have -V/2
-			if math.Abs(blV-(-halfV)) > 0.001 {
-				t.Errorf("Selected BL[%d] should be -%.3f V, got %.3f V", c, halfV, blV)
+			if math.Abs(blV-(-writeVoltage)) > 0.001 {
+				t.Errorf("Selected BL[%d] should be -%.3f V, got %.3f V", c, writeVoltage, blV)
 			}
 		} else {
-			// Unselected columns should be 0V
 			if math.Abs(blV) > 0.001 {
 				t.Errorf("Unselected BL[%d] should be 0V, got %.3f V", c, blV)
 			}
 		}
 	}
 
-	// Verify effective voltages on cells
-	// Target cell: ΔV = WL - BL = +V/2 - (-V/2) = V_write
+	// Target cell: ΔV = WL - BL = 0 - (-V_write) = +V_write
 	targetDeltaV := ds.GetWLVoltage(targetRow) - ds.GetDACVoltage(targetCol)
 	if math.Abs(targetDeltaV-writeVoltage) > 0.001 {
 		t.Errorf("Target cell ΔV should be %.3f V, got %.3f V", writeVoltage, targetDeltaV)
 	}
 
-	// Half-selected cells (same row): ΔV = WL - BL = +V/2 - 0 = +V/2
+	// Same-row cells: WL=0, BL=0 → ΔV=0 (safe, no disturb)
 	for c := 0; c < 4; c++ {
 		if c != targetCol {
-			halfSelectDeltaV := ds.GetWLVoltage(targetRow) - ds.GetDACVoltage(c)
-			if math.Abs(halfSelectDeltaV-halfV) > 0.001 {
-				t.Errorf("Half-selected cell (%d,%d) ΔV should be %.3f V, got %.3f V",
-					targetRow, c, halfV, halfSelectDeltaV)
+			sameRowDeltaV := ds.GetWLVoltage(targetRow) - ds.GetDACVoltage(c)
+			if math.Abs(sameRowDeltaV) > 0.001 {
+				t.Errorf("Half-selected cell (%d,%d) ΔV should be 0V (safe), got %.3f V",
+					targetRow, c, sameRowDeltaV)
 			}
 		}
 	}
 
-	// Half-selected cells (same column): ΔV = WL - BL = 0 - (-V/2) = +V/2
+	// Same-column cells: WL=0, BL=-V_write → ΔV=+V_write (full disturb — column write!)
 	for r := 0; r < 4; r++ {
 		if r != targetRow {
-			halfSelectDeltaV := ds.GetWLVoltage(r) - ds.GetDACVoltage(targetCol)
-			if math.Abs(halfSelectDeltaV-halfV) > 0.001 {
-				t.Errorf("Half-selected cell (%d,%d) ΔV should be %.3f V, got %.3f V",
-					r, targetCol, halfV, halfSelectDeltaV)
+			sameColDeltaV := ds.GetWLVoltage(r) - ds.GetDACVoltage(targetCol)
+			if math.Abs(sameColDeltaV-writeVoltage) > 0.001 {
+				t.Errorf("Column-disturbed cell (%d,%d) ΔV should be %.3f V (full disturb), got %.3f V",
+					r, targetCol, writeVoltage, sameColDeltaV)
 			}
 		}
 	}
 
-	// Unselected (diagonal) cells: ΔV = 0 - 0 = 0
+	// Diagonal cells (different row AND column): WL=0, BL=0 → ΔV=0
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
 			if r != targetRow && c != targetCol {

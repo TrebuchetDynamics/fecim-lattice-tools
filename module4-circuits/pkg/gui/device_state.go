@@ -1081,16 +1081,18 @@ func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 // ============================================================================
 
 // ApplyHalfSelectWrite applies voltage biasing for passive (0T1R) write operation.
-// CHANGE (2026-02-16): Removed V/2 scheme. Now implements DAC-Only Column Drive.
-// Since rows cannot be driven (must be 0V), the full V_write is applied to the column.
+// Implements DAC-Only Column Drive: since rows are grounded (TIA virtual ground),
+// the full write voltage is applied to the selected column.
 //
-// Target cell (SET/ERASE):
+// Target cell (SET operation):
 //   - All WLs: 0V (Grounded / TIA Virtual Ground)
-//   - Selected BL (DAC): -V_write (for SET +V across cell) or +V_write (for ERASE -V across cell)
-//   - Effective ΔV = WL - BL = 0 - (-V_write) = +V_write
+//   - Selected BL (DAC): -V_write (SET: positive ΔV across cell)
+//   - Effective ΔV = WL - BL = 0 - (-V_write) = +V_write (full switching)
 //
-// Consequence: unique to this architecture, this performs a COLUMN WRITE.
-// All cells in the selected column will see the full V_write and switch.
+// Consequence: this performs a COLUMN WRITE — all cells in the selected column
+// see the full V_write. Unselected columns see 0V (no disturb).
+//
+// For 1T1R/2T1R modes, transistor isolation eliminates need for column drive.
 func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVoltage float64) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
@@ -1102,17 +1104,12 @@ func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVolta
 		return
 	}
 
-	// DAC-Only Drive Scheme:
-	// Rows = 0V (Always)
+	// DAC-Only Drive Scheme: rows grounded, selected column driven to -V_write
 	for i := range ds.wlVoltages {
 		ds.wlVoltages[i] = 0
 	}
 
-	// Columns = Driven by DAC
-	// To achieve V_cell = writeVoltage (where V_cell = WL - BL = 0 - BL),
-	// we must set BL = -writeVoltage.
 	dacV := -writeVoltage
-
 	for i := range ds.dacVoltages {
 		if i == targetCol {
 			ds.dacVoltages[i] = dacV
@@ -2317,25 +2314,22 @@ type HalfSelectVisualization struct {
 	HalfSelectCols []int // Cols with V/2 (same row, different columns)
 }
 
-// EnableHalfSelectVisualization enables overlay for a write operation.
-// CHANGE (2026-02-16): Updated for DAC-Only Column Drive.
-// - "HalfVoltage" now represents the disturbed cell voltage (which is FULL voltage).
-// - "HalfSelectRows" (same column) see FULL voltage (Column Write).
-// - "HalfSelectCols" (same row) see 0V (Safe).
+// EnableHalfSelectVisualization enables the column-write overlay for a passive write operation.
+// In DAC-Only Column Drive, all rows in the selected column see full write voltage (disturbed).
+// Cells in the same row see 0V (safe — row is grounded, unselected BL is 0V).
 func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage float64) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
 	ds.halfSelectState.Enabled = true
 	ds.halfSelectState.FullVoltage = fullVoltage
-	// In DAC-only drive, the entire column sees the full write voltage.
-	// There is no "V/2", there is full disturb.
+	// In DAC-Only drive the whole column is disturbed at full voltage; no V/2 partial stress.
 	ds.halfSelectState.HalfVoltage = fullVoltage
 
 	ds.halfSelectState.SelectedRow = row
 	ds.halfSelectState.SelectedCol = col
 
-	// All other rows in the same column get Full Voltage (Disturbed)
+	// All other rows in the same column are disturbed (WL=0, BL=-V → ΔV=+V, full disturb)
 	ds.halfSelectState.HalfSelectRows = make([]int, 0)
 	for r := 0; r < ds.rows; r++ {
 		if r != row {
@@ -2343,9 +2337,7 @@ func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage f
 		}
 	}
 
-	// All other columns in the same row get 0V (Safe)
-	// Because row is grounded (0V) and unselected columns are grounded (0V).
-	// So we leave HalfSelectCols empty.
+	// Same-row cells see 0V (WL=0, BL=0) — no disturb, so HalfSelectCols is empty.
 	ds.halfSelectState.HalfSelectCols = make([]int, 0)
 }
 

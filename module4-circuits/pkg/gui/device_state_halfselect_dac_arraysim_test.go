@@ -25,7 +25,8 @@ func TestDeviceState_WritePath_AppliesDACQuantizedVoltage_ToTierACellVoltages(t 
 		t.Fatalf("test setup: expected quantization to change voltage, target=%.9f applied=%.9f", targetVoltage, applied)
 	}
 
-	// Apply the *applied* (post-DAC) voltage through the V/2 half-select scheme.
+	// DAC-Only Column Drive: all WLs grounded, selected BL driven to -V_write.
+	// All cells in the selected column see full V_write (column write).
 	row, col := 1, 1
 	ds.ApplyHalfSelectWrite(row, col, applied)
 
@@ -38,31 +39,30 @@ func TestDeviceState_WritePath_AppliesDACQuantizedVoltage_ToTierACellVoltages(t 
 
 	eps := 1e-6
 	wantTarget := applied
-	wantHalf := applied / 2.0
 
 	if got := ds.GetEffectiveCellVoltage(row, col); math.Abs(got-wantTarget) > eps {
 		t.Fatalf("target Vcell: got %.9f, want %.9f", got, wantTarget)
 	}
 
-	// Same row, different columns: +V/2 exposure.
+	// Same row, different columns: WL=0, BL=0 → ΔV=0 (safe, no disturb)
 	for c := 0; c < 3; c++ {
 		if c == col {
 			continue
 		}
-		if got := ds.GetEffectiveCellVoltage(row, c); math.Abs(got-wantHalf) > eps {
-			t.Fatalf("half-select same row cell (%d,%d): got %.9f, want %.9f", row, c, got, wantHalf)
+		if got := ds.GetEffectiveCellVoltage(row, c); math.Abs(got) > eps {
+			t.Fatalf("same-row cell (%d,%d): got %.9f, want 0 (safe — DAC-Only drive)", row, c, got)
 		}
 	}
-	// Same column, different rows: +V/2 exposure.
+	// Same column, different rows: WL=0, BL=-V_write → ΔV=+V_write (full disturb — column write!)
 	for r := 0; r < 3; r++ {
 		if r == row {
 			continue
 		}
-		if got := ds.GetEffectiveCellVoltage(r, col); math.Abs(got-wantHalf) > eps {
-			t.Fatalf("half-select same col cell (%d,%d): got %.9f, want %.9f", r, col, got, wantHalf)
+		if got := ds.GetEffectiveCellVoltage(r, col); math.Abs(got-wantTarget) > eps {
+			t.Fatalf("same-col cell (%d,%d): got %.9f, want %.9f (full disturb — column write)", r, col, got, wantTarget)
 		}
 	}
-	// Diagonal/unselected: 0V.
+	// Diagonal/unselected: WL=0, BL=0 → ΔV=0
 	for r := 0; r < 3; r++ {
 		for c := 0; c < 3; c++ {
 			if r == row || c == col {

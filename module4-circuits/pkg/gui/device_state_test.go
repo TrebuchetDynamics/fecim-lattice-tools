@@ -756,8 +756,9 @@ func TestEnableHalfSelectVisualization_State(t *testing.T) {
 	if hs.FullVoltage != fullVoltage {
 		t.Errorf("full voltage: got %.6f, want %.6f", hs.FullVoltage, fullVoltage)
 	}
-	if hs.HalfVoltage != fullVoltage*HalfSelectVoltageRatio {
-		t.Errorf("half voltage: got %.6f, want %.6f", hs.HalfVoltage, fullVoltage*HalfSelectVoltageRatio)
+	// In DAC-Only Column Drive, HalfVoltage equals FullVoltage (whole column disturbed)
+	if hs.HalfVoltage != fullVoltage {
+		t.Errorf("half voltage: got %.6f, want %.6f (full voltage — DAC-Only Column Drive)", hs.HalfVoltage, fullVoltage)
 	}
 	if hs.SelectedRow != 3 {
 		t.Errorf("selected row: got %d, want 3", hs.SelectedRow)
@@ -771,9 +772,9 @@ func TestEnableHalfSelectVisualization_State(t *testing.T) {
 		t.Errorf("half-select rows count: got %d, want 7", len(hs.HalfSelectRows))
 	}
 
-	// Check half-select cols (all cols except selected in same row)
-	if len(hs.HalfSelectCols) != 7 {
-		t.Errorf("half-select cols count: got %d, want 7", len(hs.HalfSelectCols))
+	// In DAC-Only Column Drive, same-row cells see 0V (safe) — HalfSelectCols is empty
+	if len(hs.HalfSelectCols) != 0 {
+		t.Errorf("half-select cols count: got %d, want 0 (DAC-Only: same-row cells are safe)", len(hs.HalfSelectCols))
 	}
 }
 
@@ -795,13 +796,13 @@ func TestIsHalfSelected_SameRow(t *testing.T) {
 
 	ds.EnableHalfSelectVisualization(3, 4, 2.0)
 
-	// Cells in same row (row 3), different column should be half-selected
+	// In DAC-Only Column Drive, same-row cells see 0V (WL=0, BL=0) — NOT half-selected
 	for col := 0; col < 8; col++ {
 		if col == 4 {
 			continue // Skip target cell
 		}
-		if !ds.IsHalfSelected(3, col) {
-			t.Errorf("cell (3,%d) should be half-selected (same row)", col)
+		if ds.IsHalfSelected(3, col) {
+			t.Errorf("cell (3,%d) should NOT be half-selected in DAC-Only mode (same row, 0V disturb)", col)
 		}
 	}
 }
@@ -1518,27 +1519,21 @@ func TestApplyHalfSelectWrite_PassiveMode(t *testing.T) {
 	// Enable passive mode (0T1R)
 	ds.SetPassiveMode(true)
 
-	// Apply V/2 write at cell (3, 5) with 1.5V write voltage
+	// DAC-Only Column Drive: all rows grounded, selected column driven to -V_write
 	writeVoltage := 1.5
 	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
 
-	halfV := writeVoltage / 2.0
-
-	// Check WL voltages: selected row should have +V/2, others 0
+	// All WL voltages should be 0V (rows are always grounded in passive mode)
 	for row := 0; row < 8; row++ {
 		wlV := ds.GetWLVoltage(row)
-		if row == 3 {
-			assertFloatEquals(t, "selected WL voltage", wlV, halfV)
-		} else {
-			assertFloatEquals(t, "unselected WL voltage", wlV, 0.0)
-		}
+		assertFloatEquals(t, "WL voltage (all grounded)", wlV, 0.0)
 	}
 
-	// Check BL (DAC) voltages: selected col should have -V/2, others 0
+	// Selected BL = -V_write; unselected BLs = 0V
 	for col := 0; col < 8; col++ {
 		blV := ds.GetDACVoltage(col)
 		if col == 5 {
-			assertFloatEquals(t, "selected BL voltage", blV, -halfV)
+			assertFloatEquals(t, "selected BL voltage", blV, -writeVoltage)
 		} else {
 			assertFloatEquals(t, "unselected BL voltage", blV, 0.0)
 		}
@@ -1644,7 +1639,7 @@ func TestApplyHalfSelectWrite_TargetCellEffectiveVoltage(t *testing.T) {
 	writeVoltage := 1.5
 	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
 
-	// Target cell effective voltage = WL - BL = +V/2 - (-V/2) = V
+	// Target cell effective voltage = WL - BL = 0 - (-V_write) = +V_write
 	wlV := ds.GetWLVoltage(3)
 	blV := ds.GetDACVoltage(5)
 	effectiveV := wlV - blV
@@ -1659,16 +1654,15 @@ func TestApplyHalfSelectWrite_HalfSelectedCellVoltages(t *testing.T) {
 	ds.SetPassiveMode(true)
 
 	writeVoltage := 1.5
-	halfV := writeVoltage / 2.0
 	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
 
-	// Same row, different column (half-selected): WL = +V/2, BL = 0 → ΔV = +V/2
-	sameRowEffectiveV := ds.GetWLVoltage(3) - ds.GetDACVoltage(0) // col 0 is unselected
-	assertFloatEquals(t, "same row half-selected voltage", sameRowEffectiveV, halfV)
+	// Same row, different column: WL = 0, BL = 0 → ΔV = 0 (safe, no disturb)
+	sameRowEffectiveV := ds.GetWLVoltage(3) - ds.GetDACVoltage(0) // col 0 is unselected BL=0
+	assertFloatEquals(t, "same row neighbor voltage (safe)", sameRowEffectiveV, 0.0)
 
-	// Different row, same column (half-selected): WL = 0, BL = -V/2 → ΔV = +V/2
-	sameColEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(5) // row 0 is unselected
-	assertFloatEquals(t, "same col half-selected voltage", sameColEffectiveV, halfV)
+	// Different row, same column: WL = 0, BL = -V_write → ΔV = +V_write (full disturb!)
+	sameColEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(5) // row 0 unselected WL=0
+	assertFloatEquals(t, "same col neighbor voltage (full disturb)", sameColEffectiveV, writeVoltage)
 
 	// Diagonal cell (unselected): WL = 0, BL = 0 → ΔV = 0
 	diagonalEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(0)
