@@ -91,3 +91,4 @@ cmd/gen-literature-loops/
 validation/literature/output/
 opensource/**
 !opensource/clone-all.sh
+!opensource/opensource-tools-summary.md

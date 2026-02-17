@@ -108,11 +108,18 @@ func (a *App) updateLevelIndicatorRange() {
 		effPr = a.material.Ps
 	}
 	effPs := a.effectivePsForLevels()
-	// Ensure plot Y-axis covers the full target level range (Ps*rangeFrac) plus
-	// 5% headroom. For low-squareness materials Ps*rangeFrac can exceed Pr*1.2.
+	rawPs := a.material.Ps
+	// plotPMax must cover: (1) Pr with 20% headroom, (2) the writable level range
+	// (effPs = Ps*wrdRangeFrac) with 5% headroom, AND (3) the full Ps with 5%
+	// headroom. Case (3) is required so the hysteresis loop is never clipped:
+	// effPs*1.05 = Ps*wrdRangeFrac*1.05 < Ps when wrdRangeFrac < ~0.95, which
+	// would clip the saturation region of the loop.
 	plotPMax := effPr * 1.2
 	if effPs*1.05 > plotPMax {
 		plotPMax = effPs * 1.05
+	}
+	if rawPs*1.05 > plotPMax {
+		plotPMax = rawPs * 1.05
 	}
 	a.levelIndicator.SetPolarizationRange(plotPMax, effPs)
 	// Keep P-E plot Y-axis in sync with the level indicator range.
