@@ -447,7 +447,7 @@ Evidence (2026-02-11):
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
 | LIT-P3-01 | Add DCC (Displacement Current Control) programming alternative to ISPP | M1/M4 write controller | ⏳ |
-| LIT-P3-02 | Extend sneak path model to multi-hop (beyond current 3-cell) for >128x128 passive arrays | M2 non-idealities | ⏳ |
+| LIT-P3-02 | Extend sneak path model to multi-hop (beyond current 3-cell) for >128x128 passive arrays | M2 non-idealities | ✅ (2026-02-16: `sneak_multihop.go` AnalyzeSneakPathsMultiHop(maxHops=2); exact ≤32×32, Monte Carlo sampling for larger; FiveHopRatio shows ~9525x path-count growth at 128×128) |
 | LIT-P3-03 | Add configurable charge pump staging (2-stage for FeCAP 1.5V, 3-4 stage for FeFET 3-5V) | M4 peripherals | ✅ (2026-02-16: `shared/peripherals/chargepump.go`; FeCAPChargePump, FeFETChargePump, StagesRequired, EnergyPerCycle) |
 | LIT-P3-04 | Add thermometer/segmented DAC encoding (vs current binary) | M4 peripherals | ✅ (2026-02-16: `shared/peripherals/dac.go`; DACEncoding enum, ThermometerDAC(), Encoding field in DAC struct) |
 | LIT-P3-05 | Model DAC glitch energy for binary encoding | M4 energy analysis | ✅ (2026-02-16: `shared/peripherals/dac.go`; GlitchTransitions(from,to), GlitchEnergy(from,to); thermometer=0 glitch, binary=popcount×C×Vlsb²) |
