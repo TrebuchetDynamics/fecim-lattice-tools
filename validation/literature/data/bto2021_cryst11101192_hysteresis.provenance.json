@@ -2,6 +2,9 @@
   "dataset_id": "bto2021_cryst11101192_hysteresis",
   "status": "calibrated_reference_curve",
   "tier": "candidate_tier1",
+  "reference": {
+    "doi": "10.3390/cryst11101192"
+  },
   "paper": {
     "title": "Magnetoelectric and Multiferroic Properties of BaTiO3/NiFe2O4/BaTiO3 Heterostructured Thin Films Grown by Pulsed Laser Deposition Technique",
     "journal": "Crystals",

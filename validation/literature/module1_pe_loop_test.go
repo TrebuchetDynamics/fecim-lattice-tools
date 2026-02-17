@@ -20,6 +20,7 @@ type peLoopDataset struct {
 	Name       string
 	DOI        string
 	SourceCSV  string
+	Provenance string
 	MaterialID string
 	Material   *sharedphysics.HZOMaterial
 	Engine     string // preisach
@@ -69,6 +70,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "Park2015_Fig2a_HZO_10nm",
 			DOI:        "10.1002/adma.201404531",
 			SourceCSV:  filepath.Join("data", "park2015_fig2a_hzo_10nm.csv"),
+			Provenance: filepath.Join("data", "park2015_fig2a_hzo_10nm.provenance.json"),
 			MaterialID: "park2015_hzo_10nm",
 			Material:   sharedphysics.Park2015Fig2aHZO10nm(),
 			Engine:     "preisach",
@@ -80,6 +82,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "Cheema2020_Fig2c_HZO_Superlattice_5nm",
 			DOI:        "10.1038/s41586-020-2208-x",
 			SourceCSV:  filepath.Join("data", "cheema2020_fig2c_hzo_superlattice_5nm.csv"),
+			Provenance: filepath.Join("data", "cheema2020_fig2c_hzo_superlattice_5nm.provenance.json"),
 			MaterialID: "cheema2020_superlattice_5nm",
 			Material:   sharedphysics.Cheema2020Fig2cHZOSuperlattice5nm(),
 			Engine:     "preisach",
@@ -91,6 +94,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "MDPI2020_Fig3a_HZO_10nm_Wakeup",
 			DOI:        "10.3390/ma13132968",
 			SourceCSV:  filepath.Join("data", "mdpi2020_ma13132968_fig3a_hzo_10nm_wakeup.csv"),
+			Provenance: filepath.Join("data", "mdpi2020_ma13132968_fig3a_hzo_10nm_wakeup.provenance.json"),
 			MaterialID: "mdpi2020_hzo_10nm_wakeup",
 			Material:   sharedphysics.MDPI2020Fig3aHZO10nmWakeup(),
 			Engine:     "preisach",
@@ -102,6 +106,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "Micromachines2022_Fig6a_AlScN_Pt_200nm",
 			DOI:        "10.3390/mi13101629",
 			SourceCSV:  filepath.Join("data", "alscn2022_pmc9607415_fig6a_pt_200nm.csv"),
+			Provenance: filepath.Join("data", "alscn2022_pmc9607415_fig6a_pt_200nm.provenance.json"),
 			MaterialID: "alscn2022_pmc9607415_fig6a_pt_200nm",
 			Material:   sharedphysics.Micromachines2022Fig6aAlScNPt200nm(),
 			Engine:     "preisach",
@@ -113,6 +118,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "Nanomaterials2024_Fig2_PZT_ThinFilm",
 			DOI:        "10.3390/nano14050432",
 			SourceCSV:  filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm.csv"),
+			Provenance: filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm.provenance.json"),
 			MaterialID: "pzt2024_nano14050432_fig2_thinfilm",
 			Material:   sharedphysics.Nanomaterials2024Fig2PZTThinFilm(),
 			Engine:     "preisach",
@@ -124,6 +130,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Name:       "Crystals2021_BTO_Hysteresis",
 			DOI:        "10.3390/cryst11101192",
 			SourceCSV:  filepath.Join("data", "bto2021_cryst11101192_hysteresis.csv"),
+			Provenance: filepath.Join("data", "bto2021_cryst11101192_hysteresis.provenance.json"),
 			MaterialID: "bto2021_cryst11101192_hysteresis",
 			Material:   sharedphysics.Crystals2021FigFerroelectricBTOTrilayer(),
 			Engine:     "preisach",
@@ -148,6 +155,10 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 	for _, ds := range datasets {
 		ds := ds
 		t.Run(ds.MaterialID, func(t *testing.T) {
+			if err := validateStrictProvenance(ds); err != nil {
+				t.Fatalf("provenance validation failed: %v", err)
+			}
+
 			Edata, Pdata, err := loadCSVLoop(ds.SourceCSV)
 			if err != nil {
 				t.Fatalf("load %s: %v", ds.SourceCSV, err)
@@ -228,6 +239,39 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, thPrPct, ecSim, ecData, ecErrPct, thEcPct, rmse, ps, rmsePs, thRMSEps, areaErrPct, thAreaPct, pass, outPath)
 		})
 	}
+}
+
+func validateStrictProvenance(ds peLoopDataset) error {
+	if ds.Provenance == "" {
+		return errors.New("dataset must declare provenance JSON path")
+	}
+	if _, err := os.Stat(ds.Provenance); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("provenance file does not exist: %s", ds.Provenance)
+		}
+		return fmt.Errorf("stat provenance file %s: %w", ds.Provenance, err)
+	}
+
+	raw, err := os.ReadFile(ds.Provenance)
+	if err != nil {
+		return fmt.Errorf("read provenance file %s: %w", ds.Provenance, err)
+	}
+
+	var prov struct {
+		Reference struct {
+			DOI string `json:"doi"`
+		} `json:"reference"`
+	}
+	if err := json.Unmarshal(raw, &prov); err != nil {
+		return fmt.Errorf("parse provenance file %s: %w", ds.Provenance, err)
+	}
+	if prov.Reference.DOI == "" {
+		return fmt.Errorf("provenance file %s missing reference.doi", ds.Provenance)
+	}
+	if prov.Reference.DOI != ds.DOI {
+		return fmt.Errorf("reference.doi mismatch for %s: got %q want %q", ds.Provenance, prov.Reference.DOI, ds.DOI)
+	}
+	return nil
 }
 
 func loadCSVLoop(path string) ([]float64, []float64, error) {

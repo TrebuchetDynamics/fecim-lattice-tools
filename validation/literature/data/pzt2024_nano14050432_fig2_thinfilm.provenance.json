@@ -2,6 +2,9 @@
   "dataset_id": "pzt2024_nano14050432_fig2_thinfilm",
   "status": "calibrated_reference_curve",
   "tier": "candidate_tier1",
+  "reference": {
+    "doi": "10.3390/nano14050432"
+  },
   "paper": {
     "title": "Interfacial Polarization Control Engineering and Ferroelectric PZT/Graphene Heterostructure Integrated Application",
     "journal": "Nanomaterials",

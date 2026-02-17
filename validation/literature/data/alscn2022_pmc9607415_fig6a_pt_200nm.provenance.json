@@ -2,6 +2,9 @@
   "dataset_id": "alscn2022_pmc9607415_fig6a_pt_200nm",
   "status": "calibrated_reference_curve",
   "tier": "candidate_tier1" ,
+  "reference": {
+    "doi": "10.3390/mi13101629"
+  },
   "paper": {
     "title": "Characterization of Ferroelectric Al0.7Sc0.3N Thin Film on Pt and Mo Electrodes",
     "journal": "Micromachines",
