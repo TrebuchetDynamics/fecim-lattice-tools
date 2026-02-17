@@ -129,3 +129,8 @@ func (e *EmbeddedCircuitsApp) Stop() {
 	}
 	e.EmbeddedAppBase.Stop()
 }
+
+// GetDeviceState exposes the module4 device state for programmatic proof/smoke tools.
+func (e *EmbeddedCircuitsApp) GetDeviceState() *DeviceState {
+	return e.deviceState
+}
