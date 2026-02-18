@@ -318,8 +318,8 @@ func validateStrictProvenance(ds peLoopDataset) error {
 	}
 	switch ds.MaterialID {
 	case "pzt2024_nano14050432_fig2_thinfilm", "pzt2024_nano14050432_fig2_thinfilm_traceB", "bto2021_cryst11101192_hysteresis":
-		// Both PZT and BTO are calibrated_reference_curve candidate_tier1 datasets.
-		// They share the same provenance contract requirements.
+		// PZT and current BTO dataset are calibrated_reference_curve candidate_tier1
+		// entries. They share the same strict provenance contract requirements.
 		if prov.Status != "calibrated_reference_curve" {
 			return fmt.Errorf("%s provenance status must be calibrated_reference_curve, got %q", ds.MaterialID, prov.Status)
 		}
