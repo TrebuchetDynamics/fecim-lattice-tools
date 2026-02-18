@@ -97,6 +97,22 @@ If added wall-time exceeds the cap, pipeline must reduce matrix breadth (not sam
 
 Run from repo root: `<local-path>`
 
+## 4.0 Single-command Module 4 full automation (developer/triage lane)
+
+Use this lane when you need a deterministic, one-command **full Module 4** check before pushing.
+
+```bash
+cd <local-path>
+unset DISPLAY WAYLAND_DISPLAY
+
+bash scripts/module4_automation.sh --full --json
+```
+
+Hard pass conditions:
+- Command exit code is `0`.
+- JSON summary reports `"mode":"full"` and `"fail":0`.
+- Suite includes P0/P1/P2 proxy checks: thermodynamics, patterns, Kirchhoff, retention, disturb, PVT, MVM, BER, INL/DNL, noise.
+
 ## 4.1 PR Gate Commands (required)
 
 ```bash
@@ -121,6 +137,7 @@ cd <local-path>
 unset DISPLAY WAYLAND_DISPLAY
 
 bash scripts/ci/go-test-all.sh
+bash scripts/module4_automation.sh --full --json
 bash scripts/run_headless_module4_regressions.sh
 bash scripts/run_headless_ispp_regressions.sh
 
@@ -135,6 +152,7 @@ unset DISPLAY WAYLAND_DISPLAY
 
 bash scripts/ci/go-test-all.sh
 bash scripts/ci/go-test-race.sh
+bash scripts/module4_automation.sh --full --json
 bash scripts/run_headless_module4_regressions.sh
 bash scripts/run_headless_ispp_regressions.sh
 
@@ -301,3 +319,4 @@ This plan is considered implemented when:
 
 - **2026-02-16:** Refactored to concise execution-ready format; removed duplicate catalog tables; converted broad requirements into enforceable phase gates, exact commands, runtime budgets, hard falsification thresholds, and mandatory artifacts.
 - **2026-02-16 (stats tighten):** Added stage-specific sample-size minima, deterministic CI method policy, KS decision rules with effect-size guard, required `provenance.json`, strict `uncertainty.json` schema fields, and explicit PR/nightly/release runtime-impact caps.
+- **2026-02-18 (full-lane enforceability):** Added canonical single-command full Module 4 automation lane (`scripts/module4_automation.sh --full --json`), explicit hard pass conditions for that lane, and required inclusion of the full lane in nightly and release command manifests.
