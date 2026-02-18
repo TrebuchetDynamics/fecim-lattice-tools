@@ -93,4 +93,7 @@ coverage:
 clean:
 	rm -f $(COVERAGE_OUT) $(COVERAGE_HTML)
 
-ci: fmt vet test-short
+arch-check:
+	@bash scripts/check-architecture.sh
+
+ci: fmt vet test-short arch-check

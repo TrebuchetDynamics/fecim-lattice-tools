@@ -23,6 +23,9 @@ jobs:
       - name: Run make ci
         run: make ci
 
+      - name: Architecture check
+        run: make arch-check
+
       - name: Race detection (core packages)
         run: go test -race -short ./shared/... ./validation/...
 
