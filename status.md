@@ -97,3 +97,21 @@ Closed final 5 [no test files] packages:
 
 ## Commit
 b04e623 — feat(a0): close all 5 remaining skips
+
+---
+
+# Status Update — 2026-02-17 21:21 CST
+
+- Repo HEAD: 	hash: `c6e6a5b`
+- A0 gate: `PKG_SUM pass=103 fail=0 skip=0 total=103`
+- Literature gate: PASS 7/7 datasets (HZO/Park2015, Superlattice/Cheema2020, HZO/MDPI2020, AlScN Pt, AlScN Mo, PZT2024, BTO2021)
+
+## This cycle work (RG-VAL-M1-02/03 follow-through)
+- Hardened strict provenance contract for **both AlScN conditions** in `validateStrictProvenance()`:
+  - `alscn2022_pmc9607415_fig6a_pt_200nm`
+  - `alscn2022_pmc9607415_fig6b_mo_200nm`
+- Added hard assertions for status/tier/point_count/method/placeholder flag.
+- Commit: `c6e6a5b`
+
+## Next objective
+- Replace AlScN calibrated placeholders with **direct OA pixel-digitized points** (Fig 6a + Fig 6b) including uncertainty metadata, while keeping Tier-1 gates green and A0 at fail=0.
