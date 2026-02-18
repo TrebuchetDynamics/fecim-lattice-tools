@@ -115,6 +115,18 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Notes:      "Al0.7Sc0.3N 200nm on Pt bottom electrode (PMC9607415 Fig 6a). Current CSV is provisional and should be replaced by direct digitization for final Tier-1 acceptance.",
 		},
 		{
+			Name:       "Micromachines2022_Fig6b_AlScN_Mo_200nm",
+			DOI:        "10.3390/mi13101629",
+			SourceCSV:  filepath.Join("data", "alscn2022_pmc9607415_fig6b_mo_200nm.csv"),
+			Provenance: filepath.Join("data", "alscn2022_pmc9607415_fig6b_mo_200nm.provenance.json"),
+			MaterialID: "alscn2022_pmc9607415_fig6b_mo_200nm",
+			Material:   sharedphysics.Micromachines2022Fig6bAlScNMo200nm(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "Al0.7Sc0.3N 200nm on Mo bottom electrode (PMC9607415 Fig 6b), OA second condition/stress dataset for Tier-1 expansion.",
+		},
+		{
 			Name:       "Nanomaterials2024_Fig2_PZT_ThinFilm",
 			DOI:        "10.3390/nano14050432",
 			SourceCSV:  filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm.csv"),
@@ -307,6 +319,24 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		}
 		if prov.Digitization.Method == "" {
 			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
+		}
+	case "alscn2022_pmc9607415_fig6a_pt_200nm", "alscn2022_pmc9607415_fig6b_mo_200nm":
+		// AlScN two-condition expansion: enforce explicit provenance contract for both
+		// Pt and Mo electrode condition datasets until pixel-digitized replacements land.
+		if prov.Status != "calibrated_reference_curve" {
+			return fmt.Errorf("%s provenance status must be calibrated_reference_curve, got %q", ds.MaterialID, prov.Status)
+		}
+		if prov.Tier != "candidate_tier1" {
+			return fmt.Errorf("%s provenance tier must be candidate_tier1, got %q", ds.MaterialID, prov.Tier)
+		}
+		if prov.Digitization.PointCount < 50 {
+			return fmt.Errorf("%s provenance point_count too small: got %d want >= 50", ds.MaterialID, prov.Digitization.PointCount)
+		}
+		if prov.Digitization.Method == "" {
+			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
+		}
+		if !prov.Digitization.IsPlaceholderForRefinement {
+			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=true until direct digitization is committed", ds.MaterialID)
 		}
 	}
 	return nil
