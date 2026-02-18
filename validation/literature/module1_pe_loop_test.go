@@ -292,18 +292,21 @@ func validateStrictProvenance(ds peLoopDataset) error {
 	if prov.Units.PolarizationDatasetUnit != "" && prov.Units.PolarizationDatasetUnit != ds.PolarUnit {
 		return fmt.Errorf("polarization unit mismatch for %s: got %q want %q", ds.Provenance, prov.Units.PolarizationDatasetUnit, ds.PolarUnit)
 	}
-	if ds.MaterialID == "pzt2024_nano14050432_fig2_thinfilm" {
+	switch ds.MaterialID {
+	case "pzt2024_nano14050432_fig2_thinfilm", "bto2021_cryst11101192_hysteresis":
+		// Both PZT and BTO are calibrated_reference_curve candidate_tier1 datasets.
+		// They share the same provenance contract requirements.
 		if prov.Status != "calibrated_reference_curve" {
-			return fmt.Errorf("PZT provenance status must be calibrated_reference_curve, got %q", prov.Status)
+			return fmt.Errorf("%s provenance status must be calibrated_reference_curve, got %q", ds.MaterialID, prov.Status)
 		}
 		if prov.Tier != "candidate_tier1" {
-			return fmt.Errorf("PZT provenance tier must be candidate_tier1, got %q", prov.Tier)
+			return fmt.Errorf("%s provenance tier must be candidate_tier1, got %q", ds.MaterialID, prov.Tier)
 		}
 		if prov.Digitization.PointCount < 50 {
-			return fmt.Errorf("PZT provenance point_count too small: got %d want >= 50", prov.Digitization.PointCount)
+			return fmt.Errorf("%s provenance point_count too small: got %d want >= 50", ds.MaterialID, prov.Digitization.PointCount)
 		}
 		if prov.Digitization.Method == "" {
-			return fmt.Errorf("PZT provenance missing digitization.method")
+			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
 		}
 	}
 	return nil
