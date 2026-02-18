@@ -258,9 +258,21 @@ func validateStrictProvenance(ds peLoopDataset) error {
 	}
 
 	var prov struct {
+		DatasetID string `json:"dataset_id"`
+		Status    string `json:"status"`
+		Tier      string `json:"tier"`
 		Reference struct {
 			DOI string `json:"doi"`
 		} `json:"reference"`
+		Units struct {
+			FieldDatasetUnit        string `json:"field_dataset_unit"`
+			PolarizationDatasetUnit string `json:"polarization_dataset_unit"`
+		} `json:"units"`
+		Digitization struct {
+			Method                  string `json:"method"`
+			PointCount              int    `json:"point_count"`
+			IsPlaceholderForRefinement bool `json:"is_placeholder_for_refinement"`
+		} `json:"digitization"`
 	}
 	if err := json.Unmarshal(raw, &prov); err != nil {
 		return fmt.Errorf("parse provenance file %s: %w", ds.Provenance, err)
@@ -270,6 +282,29 @@ func validateStrictProvenance(ds peLoopDataset) error {
 	}
 	if prov.Reference.DOI != ds.DOI {
 		return fmt.Errorf("reference.doi mismatch for %s: got %q want %q", ds.Provenance, prov.Reference.DOI, ds.DOI)
+	}
+	if prov.DatasetID != "" && prov.DatasetID != ds.MaterialID {
+		return fmt.Errorf("dataset_id mismatch for %s: got %q want %q", ds.Provenance, prov.DatasetID, ds.MaterialID)
+	}
+	if prov.Units.FieldDatasetUnit != "" && prov.Units.FieldDatasetUnit != ds.FieldUnit {
+		return fmt.Errorf("field unit mismatch for %s: got %q want %q", ds.Provenance, prov.Units.FieldDatasetUnit, ds.FieldUnit)
+	}
+	if prov.Units.PolarizationDatasetUnit != "" && prov.Units.PolarizationDatasetUnit != ds.PolarUnit {
+		return fmt.Errorf("polarization unit mismatch for %s: got %q want %q", ds.Provenance, prov.Units.PolarizationDatasetUnit, ds.PolarUnit)
+	}
+	if ds.MaterialID == "pzt2024_nano14050432_fig2_thinfilm" {
+		if prov.Status != "calibrated_reference_curve" {
+			return fmt.Errorf("PZT provenance status must be calibrated_reference_curve, got %q", prov.Status)
+		}
+		if prov.Tier != "candidate_tier1" {
+			return fmt.Errorf("PZT provenance tier must be candidate_tier1, got %q", prov.Tier)
+		}
+		if prov.Digitization.PointCount < 50 {
+			return fmt.Errorf("PZT provenance point_count too small: got %d want >= 50", prov.Digitization.PointCount)
+		}
+		if prov.Digitization.Method == "" {
+			return fmt.Errorf("PZT provenance missing digitization.method")
+		}
 	}
 	return nil
 }
