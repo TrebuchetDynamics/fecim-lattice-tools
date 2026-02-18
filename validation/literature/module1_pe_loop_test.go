@@ -320,6 +320,9 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		if prov.Digitization.Method == "" {
 			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
 		}
+		if !prov.Digitization.IsPlaceholderForRefinement {
+			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=true until direct pixel digitization is committed", ds.MaterialID)
+		}
 	case "alscn2022_pmc9607415_fig6a_pt_200nm", "alscn2022_pmc9607415_fig6b_mo_200nm":
 		// AlScN two-condition expansion: enforce explicit provenance contract for both
 		// Pt and Mo electrode condition datasets until pixel-digitized replacements land.

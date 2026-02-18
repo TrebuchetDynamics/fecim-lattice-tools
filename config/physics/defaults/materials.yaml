@@ -657,6 +657,13 @@ materials:
     endurance_cycles: 1.0e9     # 10^9 cycles
     retention_time_s: 3.15e8  # Retention horizon in seconds at stated condition (often extrapolated).
 
+    # Nucleation-limited switching (estimated placeholders, pending full calibration)
+    # NOTE: keeps AlScN in multimaterial Arrhenius/NLS validation lanes without skip.
+    nls:
+      activation_field_v_m: 2.2e9   # 22 MV/cm placeholder activation field
+      tau_inf_s: 1.0e-11            # 10 ps placeholder attempt time
+      sigma: 1.5                    # Log-normal spread
+
     # Limitations
     # - High Ec (5 MV/cm) requires high voltages, limits analog granularity
     # - Best for binary/few-level rather than 30-state applications
