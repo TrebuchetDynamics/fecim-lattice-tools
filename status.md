@@ -62,3 +62,38 @@ Tier-1 Module 1 physics falsification stays mandatory + green; expand literature
 
 ## Blockers
 - Race lane (`go test -race -short ./...`) not green due to pre-existing races (GUI/E2E + M1 renderer `running` bool without sync). Non-race Tier‑1 gates are green.
+
+---
+
+# Status — Riju Cycle End
+
+Date: 2026-02-17 20:37 CST
+Repo HEAD: `b04e623`
+
+## A0 Gate (canonical KPI)
+PKG_SUM pass=103 fail=0 skip=0 total=103 ✅
+**All 103 packages covered — zero skips achieved.**
+
+## Literature Gate
+PASS 7/7 datasets:
+- park2015_hzo_10nm: Pr=9.60%, Ec≤10%, RMSE/Ps≤5%
+- cheema2020_superlattice: Pr=7.41%
+- mdpi2020: Pr=7.73%
+- alscn2022_pmc9607415 (W electrode): Pr=5.92%
+- alscn2022_pmc9607415_fig6b_mo (Mo electrode, RG-VAL-M1-02/03): Pr≤10%
+- pzt2024_nano14050432: Pr=0% (calibrated reference)
+- bto2021_cryst11101192: Pr=0% (calibrated reference)
+
+## go test ./...
+PASS (exit 0)
+
+## Skip closure sprint (this cycle)
+Closed final 5 [no test files] packages:
+- module3-mnist/cmd/mnist: parseLevelList/parseDirList/EvaluationResult JSON
+- module3-mnist/cmd/mnist-gui: Run() signature contract
+- module5-comparison/cmd/comparison-gui: Run() signature contract
+- module6-eda/cmd/eda-gui: Run() signature contract
+- validation/configvalidator/cmd/validate: ValidateJSON + ValidateFile
+
+## Commit
+b04e623 — feat(a0): close all 5 remaining skips
