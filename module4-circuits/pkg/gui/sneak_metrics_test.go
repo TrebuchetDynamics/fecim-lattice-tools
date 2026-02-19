@@ -76,8 +76,13 @@ func TestPeripheralSnapshotCSV(t *testing.T) {
 	if !rows[0].IsTargetCell {
 		t.Fatal("row 0 should be target cell")
 	}
-	if !rows[1].IsHalfSelected {
-		t.Fatal("(0,1) should be half-selected")
+	// (0,1) is same-row — sees 0V in DAC-only column drive, should NOT be half-selected
+	if rows[1].IsHalfSelected {
+		t.Fatal("(0,1) is same-row and sees 0V; should not be half-selected")
+	}
+	// (1,0) is same-column — sees full write voltage, should be half-selected
+	if !rows[2].IsHalfSelected {
+		t.Fatal("(1,0) is same-column and sees full write voltage; should be half-selected")
 	}
 	csv := peripheralSnapshotCSV(rows)
 	if len(csv.Headers) != 7 {

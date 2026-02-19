@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 
 	"fecim-lattice-tools/module4-circuits/pkg/gui/unified/display"
 	"fecim-lattice-tools/module4-circuits/pkg/gui/unified/overlay"
@@ -66,15 +67,18 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	selectedCol := ca.deviceState.GetSelectedCol()
 
 	// Draw BIT LINES (vertical) - color based on DAC voltage (dynamic overlay over cached static grid)
+	// In passive 0T1R write mode the selected BL is driven to -V_write (negative), so we use
+	// the absolute value for threshold comparisons.
 	writeThreshold := ca.deviceState.GetWriteRange().Min
 	for c := 0; c < cols; c++ {
 		x := offsetX + c*cellSize + cellSize/2
 		voltage := ca.deviceState.GetDACVoltage(c)
+		absV := math.Abs(voltage)
 
 		var blCol color.RGBA
-		if voltage >= writeThreshold {
+		if absV >= writeThreshold {
 			blCol = color.RGBA{255, 100, 100, 255} // Red - write voltage
-		} else if voltage > 0.1 {
+		} else if absV > 0.1 {
 			blCol = color.RGBA{100, 180, 255, 255} // Blue - read/compute voltage
 		} else {
 			blCol = color.RGBA{50, 60, 80, 150} // Dim - no signal
@@ -360,8 +364,9 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	// Write zone - orange/red
 	drawRect(img, gaugeX+readZoneW+cautionZoneW, gaugeY, writeZoneW, gaugeH, color.RGBA{220, 100, 60, 200})
 
-	// Draw current voltage indicator
-	selectedVoltage := ca.deviceState.GetDACVoltage(ca.deviceState.GetSelectedCol())
+	// Draw current voltage indicator.
+	// In passive 0T1R write mode the selected BL is -V_write (negative), so use absolute value.
+	selectedVoltage := math.Abs(ca.deviceState.GetDACVoltage(ca.deviceState.GetSelectedCol()))
 	if selectedVoltage > 0 {
 		indicatorX := gaugeX + int(float64(gaugeW)*(selectedVoltage/maxV))
 		if indicatorX > gaugeX+gaugeW-2 {
@@ -518,10 +523,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 
 	// Draw current flow indicators during active operation
 	if animStep >= 2 {
-		// Draw current flow arrows on active bit lines (columns with voltage)
+		// Draw current flow arrows on active bit lines (columns with voltage).
+		// Use absolute value: passive 0T1R write drives selected BL to -V_write.
 		for c := 0; c < cols; c++ {
 			voltage := ca.deviceState.GetDACVoltage(c)
-			if voltage > 0.05 {
+			if math.Abs(voltage) > 0.05 {
 				x := offsetX + c*cellSize + cellSize/2
 				// Draw downward current arrow (electrons flow opposite to current)
 				arrowColor := color.RGBA{100, 255, 150, 200}

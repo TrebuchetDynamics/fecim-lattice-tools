@@ -522,10 +522,8 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 
 	// Reinitialize weight matrix
 	ca.arrayWeights = make([][]int, rows)
-	ca.halfSelectResidue = make([][]float64, rows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, cols)
-		ca.halfSelectResidue[i] = make([]float64, cols)
 		// Initialize to mid-level (like a fresh device)
 		for j := range ca.arrayWeights[i] {
 			ca.arrayWeights[i][j] = ca.quantLevels / 2

@@ -325,7 +325,9 @@ func buildPeripheralSnapshotRows(weights [][]int, voltages [][]float64, currents
 				Col:            c,
 				WeightLevel:    weights[r][c],
 				IsTargetCell:   r == selectedRow && c == selectedCol,
-				IsHalfSelected: (r == selectedRow || c == selectedCol) && !(r == selectedRow && c == selectedCol),
+				// In passive 0T1R DAC-only drive: same-column cells see full V_write (disturbed).
+			// Same-row cells see 0V (unselected BLs grounded) — they are NOT disturbed.
+			IsHalfSelected: c == selectedCol && r != selectedRow,
 			}
 			if r < len(voltages) && c < len(voltages[r]) {
 				cell.CellVoltageV = voltages[r][c]

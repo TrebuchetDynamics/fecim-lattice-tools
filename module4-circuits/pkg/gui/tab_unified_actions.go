@@ -378,11 +378,6 @@ func (ca *CircuitsApp) onUnifiedReset() {
 			ca.arrayWeights[r][c] = midLevel
 		}
 	}
-	for r := range ca.halfSelectResidue {
-		for c := range ca.halfSelectResidue[r] {
-			ca.halfSelectResidue[r][c] = 0
-		}
-	}
 	ca.mu.Unlock()
 
 	// Reset DAC to read preset (uses material-derived voltage range)
@@ -415,11 +410,6 @@ func (ca *CircuitsApp) onUnifiedRandomArray() {
 	for r := range ca.arrayWeights {
 		for c := range ca.arrayWeights[r] {
 			ca.arrayWeights[r][c] = rand.Intn(ca.quantLevels)
-		}
-	}
-	for r := range ca.halfSelectResidue {
-		for c := range ca.halfSelectResidue[r] {
-			ca.halfSelectResidue[r][c] = 0
 		}
 	}
 	ca.mu.Unlock()

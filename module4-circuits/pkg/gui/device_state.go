@@ -114,7 +114,7 @@ type DeviceState struct {
 	// WL configuration (derived from opMode)
 	wlMode     WLMode
 	activeRows []bool    // true = WL HIGH for that row
-	wlVoltages []float64 // WL voltages for V/2 scheme (passive mode write)
+	wlVoltages []float64 // WL voltages (passive 0T1R: all held at 0V via TIA virtual ground)
 
 	// DAC inputs (per column)
 	dacVoltages  []float64
@@ -1070,10 +1070,11 @@ func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 // ============================================================================
 //
 // For passive (0T1R) WRITE operations the DAC drives the selected BL while all
-// WLs are grounded through the TIA virtual ground. There is no V/2 splitting.
+// WLs are grounded through the TIA virtual ground. There is no V/2 splitting
+// because WL voltages cannot be independently controlled in this architecture.
 //
 // Target cell (SET operation):
-//   - All WLs: 0V (grounded / TIA virtual ground)
+//   - All WLs: 0V (grounded / TIA virtual ground — hardware constraint)
 //   - Selected BL (DAC): -V_write (full write voltage)
 //   - Effective ΔV = WL − BL = 0 − (−V_write) = +V_write (full switching)
 //
@@ -1091,11 +1092,12 @@ func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 // ============================================================================
 
 // ApplyHalfSelectWrite applies voltage biasing for passive (0T1R) write operation.
-// Implements DAC-Only Column Drive: since rows are grounded (TIA virtual ground),
-// the full write voltage is applied to the selected column.
+// Implements DAC-Only Column Drive: since rows are grounded (TIA virtual ground)
+// and WL voltages cannot be independently controlled, the full write voltage is
+// applied to the selected column. The entire column is written.
 //
 // Target cell (SET operation):
-//   - All WLs: 0V (Grounded / TIA Virtual Ground)
+//   - All WLs: 0V (Grounded / TIA Virtual Ground — hardware constraint)
 //   - Selected BL (DAC): -V_write (SET: positive ΔV across cell)
 //   - Effective ΔV = WL - BL = 0 - (-V_write) = +V_write (full switching)
 //
@@ -1162,15 +1164,19 @@ func (ds *DeviceState) GetWLVoltage(row int) float64 {
 	return 0
 }
 
-// GetHalfSelectVoltage returns V/2 value derived from material's write voltage
-// This is the voltage seen by half-selected cells (below Vc, minimal disturb)
+// GetHalfSelectVoltage is retained for test compatibility only.
+// In DAC-only column drive (passive 0T1R) there is NO V/2 scheme: all WLs are grounded,
+// the selected BL is driven to -V_write, and same-row cells see 0V (not V/2).
+// Do not call this from production UI code.
 func (ds *DeviceState) GetHalfSelectVoltage() float64 {
 	// Use middle of write range as reference
 	fullWriteV := (ds.writeRange.Min + ds.writeRange.Max) / 2
 	return fullWriteV / 2.0
 }
 
-// IsUsingHalfSelect returns true if V/2 scheme is active (passive mode write)
+// IsUsingHalfSelect is retained for test compatibility only.
+// In DAC-only column drive (passive 0T1R) there is no V/2 scheme.
+// Do not call this from production UI code.
 func (ds *DeviceState) IsUsingHalfSelect() bool {
 	return ds.isPassive && ds.opMode == OpModeWrite
 }
@@ -2362,11 +2368,6 @@ func (ds *DeviceState) endISPPTracking(success bool, currentLevel int) {
 // ============================================================================
 // 5. COLUMN-WRITE VISUALIZATION STATE
 // ============================================================================
-
-// HalfSelectVoltageRatio is kept for backward compatibility; in DAC-only column drive
-// the column disturb voltage equals the full write voltage (ratio = 1.0 effectively).
-// The name is historical; do not rely on this being 0.5 (V/2 scheme is not used).
-const HalfSelectVoltageRatio = 0.5
 
 // HalfSelectVisualization holds the state for column-write overlay visualization.
 // Despite the name, this implements DAC-only column drive, not a V/2 half-select scheme.

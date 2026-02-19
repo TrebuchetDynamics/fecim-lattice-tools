@@ -19,22 +19,16 @@ import (
 )
 
 // ====================================================================================
-// VOLTAGE RULES UI - Program-Verify Sequence, ISPP Animation, V/2 Overlay
+// VOLTAGE RULES UI - ISPP Animation, Write-Sequence Timing, Column-Write Visualization
 // ====================================================================================
 
 // AnimationFrameDelayMs is the animation frame delay for smooth updates
 const AnimationFrameDelayMs = 50
 
-// Half-select disturb modeling (simple, deterministic for live UI updates)
-const (
-	halfSelectDisturbThresholdRatio = 0.3  // Vhalf/Vc threshold before any drift
-	halfSelectDisturbRate           = 0.25 // Fractional level change per pulse at full strength
-)
-
 // UI Colors for voltage visualization
 var (
 	colorFullVoltage   = color.RGBA{255, 200, 0, 255}   // Bright Gold for target cell
-	colorHalfSelect    = color.RGBA{255, 165, 0, 255}   // Amber for V/2 cells
+	colorHalfSelect    = color.RGBA{255, 165, 0, 255}   // Amber for column-disturbed cells (full write voltage, NOT V/2)
 	colorZeroVoltage   = color.RGBA{50, 50, 60, 255}    // Dim Gray for inactive
 	colorAscending     = color.RGBA{100, 220, 120, 255} // Green for ascending
 	colorDescending    = color.RGBA{220, 100, 100, 255} // Red for descending
@@ -169,7 +163,7 @@ func (ca *CircuitsApp) updateWriteSequenceUI() {
 // - Program-verify sequence animation within each iteration
 // - Calibrated per-level voltage lookup
 // - Hysteresis direction tracking
-// - V/2 visualization for 0T1R mode
+// - Column-write visualization for 0T1R mode
 func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 	defer ca.setProgrammingActive(false)
 	if ca.deviceState != nil && ca.deviceState.GetISPPEngine() == ISPPEngineLK {
@@ -191,7 +185,7 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 	direction := ca.deviceState.GetWriteDirection(row, col, currentLevel, targetLevel)
 	ascending := direction == DirectionAscending
 
-	// Enable V/2 visualization if in passive (0T1R) mode
+	// Enable column-write visualization if in passive (0T1R) mode
 	if ca.deviceState.IsPassiveMode() {
 		applied := ca.deviceState.AppliedWriteVoltageForLevel(targetLevel, ascending)
 		// Cap applied voltage at 2×Vc
@@ -388,7 +382,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		return
 	}
 
-	// Enable V/2 visualization if in passive (0T1R) mode
+	// Enable column-write visualization if in passive (0T1R) mode
 	if ds.IsPassiveMode() {
 		voltage := ds.GetVoltageForLevel(targetLevel, direction == DirectionAscending)
 		ds.EnableHalfSelectVisualization(row, col, voltage)
@@ -546,119 +540,6 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	ca.recomputeAndRefresh()
 }
 
-func (ca *CircuitsApp) applyWritePhaseVoltages(phaseInfo WriteSequenceState) {
-	if ca.deviceState == nil {
-		return
-	}
-
-	row := phaseInfo.TargetRow
-	col := phaseInfo.TargetCol
-	isPassive := ca.deviceState.IsPassiveMode()
-
-	switch phaseInfo.Phase {
-	case PhaseWrite:
-		writeVoltage := phaseInfo.PhaseVoltage
-		if isppStatus := ca.deviceState.GetISPPStatus(); isppStatus.Active {
-			writeVoltage = isppStatus.Voltage
-		}
-		if isPassive {
-			ca.deviceState.ApplyHalfSelectWrite(row, col, writeVoltage)
-		} else {
-			ca.deviceState.SetWLSingle(row)
-			ca.deviceState.SetAllDACVoltages(0)
-			ca.deviceState.SetDACVoltage(col, writeVoltage)
-		}
-		ca.deviceState.SetDACRangeMode(DACRangeWrite)
-		neighborChanges := ca.applyHalfSelectDisturb(row, col)
-		if neighborChanges > 0 {
-			logAction("write_disturb rows=%d cols=%d changes=%d", ca.arrayRows, ca.arrayCols, neighborChanges)
-		}
-
-	case PhaseVerify:
-		verifyVoltage := phaseInfo.PhaseVoltage
-		if !isPassive {
-			ca.deviceState.SetWLSingle(row)
-		}
-		ca.deviceState.SetAllDACVoltages(0)
-		ca.deviceState.SetDACVoltage(col, verifyVoltage)
-		ca.deviceState.SetDACRangeMode(DACRangeRead)
-
-	default:
-		ca.deviceState.ResetWriteVoltages()
-	}
-
-	ca.recomputeAndRefresh()
-}
-
-// applyHalfSelectDisturb accumulates V/2 stress on half-selected cells using
-// Module 2's cumulative stress model. Each half-select exposure adds 0.01% stress;
-// after ~10,000 exposures a cell shifts by ±1 level (regression toward midpoint).
-// This replaces the previous LK-solver-per-pulse approach which caused catastrophic
-// neighbor switching when V/2 exceeded Vc.
-func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
-	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
-		return 0
-	}
-	// Passive 0T mode uses DAC-only column drive (all WLs grounded, selected BL driven):
-	//   - Same-column cells see the full write voltage → handled by applyColumnWrite
-	//   - Same-row cells see 0V (unselected BLs grounded)      → no disturb
-	// The V/2 half-select stress model does not apply to this architecture.
-	return 0
-}
-
-// applyColumnWrite applies the write voltage physics to every cell in the target column
-// except the selected cell (which is managed by the ISPP loop).
-//
-// In passive 0T mode with DAC-only column drive (all WLs grounded, selected BL at V_write)
-// every cell in the column sees the same full write voltage. This function simulates that
-// effect by running a single-pulse LK step for each non-selected cell in the column.
-func (ca *CircuitsApp) applyColumnWrite(selectedRow, col int, writeVoltage float64) {
-	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
-		return
-	}
-	if math.Abs(writeVoltage) < 1e-12 {
-		return
-	}
-	nRows := ca.arrayRows
-	if nRows == 0 {
-		return
-	}
-
-	// Read current levels outside ca.mu to avoid holding two locks while calling
-	// programLevelFromCoupledVoltage (which acquires ds.mu internally).
-	ca.mu.RLock()
-	currentLevels := make([]int, nRows)
-	for r := 0; r < nRows && r < len(ca.arrayWeights); r++ {
-		if col < len(ca.arrayWeights[r]) {
-			currentLevels[r] = ca.arrayWeights[r][col]
-		}
-	}
-	ca.mu.RUnlock()
-
-	// Each cell independently responds to the write voltage based on its own state.
-	newLevels := make([]int, nRows)
-	copy(newLevels, currentLevels)
-	for r := 0; r < nRows; r++ {
-		if r == selectedRow {
-			continue // selected cell is driven by the ISPP loop
-		}
-		newLevels[r] = ca.deviceState.programLevelFromCoupledVoltage(
-			currentLevels[r], writeVoltage,
-			float64(PhaseWriteDurationNs)*1e-9, ca.quantLevels,
-		)
-	}
-
-	ca.mu.Lock()
-	for r := 0; r < nRows && r < len(ca.arrayWeights); r++ {
-		if r == selectedRow {
-			continue
-		}
-		if col < len(ca.arrayWeights[r]) {
-			ca.arrayWeights[r][col] = newLevels[r]
-		}
-	}
-	ca.mu.Unlock()
-}
 
 // updateISPPUI refreshes the ISPP status display
 func (ca *CircuitsApp) updateISPPUI() {
@@ -744,15 +625,16 @@ func (ca *CircuitsApp) updateHalfSelectVisualization() {
 	ca.recomputeAndRefresh()
 }
 
-// getHalfSelectCellColor returns the color for a cell based on half-select state
-// Used by array visualization to color cells during V/2 mode
+// getHalfSelectCellColor returns the color for a cell based on column-write state.
+// In passive 0T1R mode, the target cell gets gold and column-disturbed cells get amber.
+// Same-row cells are NOT highlighted (they see 0V in DAC-only drive).
 func (ca *CircuitsApp) getHalfSelectCellColor(row, col int) (color.Color, bool) {
 	hsState := ca.deviceState.GetHalfSelectState()
 	if !hsState.Enabled {
 		return nil, false
 	}
 
-	// Target cell gets full-voltage highlight; neighbors get half-select highlight.
+	// Target cell gets gold highlight; column-disturbed cells (full write voltage) get amber.
 	if row == hsState.SelectedRow && col == hsState.SelectedCol {
 		return colorFullVoltage, true
 	}
@@ -776,7 +658,7 @@ func (ca *CircuitsApp) createPassiveVoltagePanel() fyne.CanvasObject {
 	infoLabel := widget.NewLabel(infoText)
 	infoLabel.Wrapping = fyne.TextWrapWord
 
-	// V/2 indicator (updated during write operations)
+	// Column-write indicator (updated during write operations)
 	ca.halfSelectIndicator = widget.NewLabel("Column Write: Inactive")
 	ca.halfSelectIndicator.TextStyle = fyne.TextStyle{Italic: true}
 
@@ -795,7 +677,7 @@ func (ca *CircuitsApp) createActiveVoltagePanel() fyne.CanvasObject {
 	infoText := `In active transistor mode:
 - Transistors isolate non-selected cells
 - Only the target cell sees write voltage
-- No V/2 disturb effects
+- No column-write disturb effects
 - Higher area overhead but cleaner writes`
 
 	infoLabel := widget.NewLabel(infoText)
@@ -919,111 +801,6 @@ func (ca *CircuitsApp) updateArchitectureSpecificUI() {
 	})
 }
 
-// applyWriteVoltages converts the target voltage through the DAC and applies
-// the resulting voltages to the array (including V/2 scheme in passive mode).
-func (ca *CircuitsApp) applyWriteVoltages(row, col int, targetVoltage float64) (float64, int) {
-	if ca.deviceState == nil {
-		return targetVoltage, -1
-	}
-	applied, dacCode := ca.deviceState.DACWriteVoltage(targetVoltage)
-
-	if ca.deviceState.IsPassiveMode() {
-		ca.deviceState.ApplyHalfSelectWrite(row, col, applied)
-	} else {
-		// Non-passive: pass-through voltages should be 0 on unselected BLs.
-		ca.deviceState.SetAllDACVoltages(0)
-		ca.deviceState.SetDACVoltage(col, applied)
-	}
-	ca.deviceState.SetDACRangeMode(DACRangeWrite)
-
-	return applied, dacCode
-}
-
-// applyHalfSelectDisturbLegacy updates neighbor polarization based on V/2 exposure.
-// This is a lightweight, deterministic drift model for live UI feedback.
-func (ca *CircuitsApp) applyHalfSelectDisturbLegacy(row, col int, direction HysteresisDirection, appliedVoltage float64) {
-	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
-		return
-	}
-
-	writeRange := ca.deviceState.GetWriteRange()
-	if writeRange.Min <= 0 {
-		return
-	}
-
-	halfVoltage := math.Abs(appliedVoltage) * HalfSelectVoltageRatio
-	ratio := halfVoltage / writeRange.Min
-	if ratio <= halfSelectDisturbThresholdRatio {
-		return
-	}
-
-	strength := (ratio - halfSelectDisturbThresholdRatio) / (1.0 - halfSelectDisturbThresholdRatio)
-	if strength <= 0 {
-		return
-	}
-	step := strength * halfSelectDisturbRate
-
-	deltaSign := 1.0
-	if direction == DirectionDescending {
-		deltaSign = -1.0
-	}
-
-	ca.mu.Lock()
-	defer ca.mu.Unlock()
-
-	if len(ca.halfSelectResidue) != ca.arrayRows {
-		ca.halfSelectResidue = make([][]float64, ca.arrayRows)
-		for r := range ca.halfSelectResidue {
-			ca.halfSelectResidue[r] = make([]float64, ca.arrayCols)
-		}
-	}
-
-	// Same row, different columns
-	for c := 0; c < ca.arrayCols; c++ {
-		if c == col {
-			continue
-		}
-		ca.applyDisturbToCellLocked(row, c, step*deltaSign)
-	}
-	// Same column, different rows
-	for r := 0; r < ca.arrayRows; r++ {
-		if r == row {
-			continue
-		}
-		ca.applyDisturbToCellLocked(r, col, step*deltaSign)
-	}
-}
-
-func (ca *CircuitsApp) applyDisturbToCellLocked(row, col int, delta float64) {
-	if row < 0 || row >= len(ca.arrayWeights) {
-		return
-	}
-	if col < 0 || col >= len(ca.arrayWeights[row]) {
-		return
-	}
-
-	ca.halfSelectResidue[row][col] += delta
-
-	for ca.halfSelectResidue[row][col] >= 1.0 {
-		if ca.arrayWeights[row][col] < ca.quantLevels-1 {
-			ca.arrayWeights[row][col]++
-		} else {
-			ca.halfSelectResidue[row][col] = 0
-			break
-		}
-		ca.halfSelectResidue[row][col] -= 1.0
-	}
-
-	for ca.halfSelectResidue[row][col] <= -1.0 {
-		if ca.arrayWeights[row][col] > 0 {
-			ca.arrayWeights[row][col]--
-		} else {
-			ca.halfSelectResidue[row][col] = 0
-			break
-		}
-		ca.halfSelectResidue[row][col] += 1.0
-	}
-}
 
 // updateHysteresisDirectionUI updates the direction indicator
 func (ca *CircuitsApp) updateHysteresisDirectionUI(targetLevel int) {

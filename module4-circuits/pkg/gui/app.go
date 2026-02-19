@@ -63,7 +63,6 @@ type CircuitsApp struct {
 	selectedCol        int
 	targetLevel        int
 	arrayWeights       [][]int                      // Current programmed levels
-	halfSelectResidue  [][]float64                  // Fractional disturb accumulation for half-selected cells
 	inputVector        []int                        // Input vector for compute
 	writeDisturbEngine *crossbar.WriteDisturbEngine // Module 2 cumulative stress model for V/2 disturb
 	outputVector       []float64
@@ -376,10 +375,8 @@ func NewCircuitsApp() *CircuitsApp {
 func (ca *CircuitsApp) initializeArray() {
 	midLevel := ca.quantLevels / 2
 	ca.arrayWeights = make([][]int, ca.arrayRows)
-	ca.halfSelectResidue = make([][]float64, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
-		ca.halfSelectResidue[i] = make([]float64, ca.arrayCols)
 		// All cells start at mid-level (neutral state)
 		for j := range ca.arrayWeights[i] {
 			ca.arrayWeights[i][j] = midLevel
