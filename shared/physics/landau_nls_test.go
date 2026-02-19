@@ -39,7 +39,7 @@ func TestNLS_DeterministicForGivenParams(t *testing.T) {
 func TestNLS_LogNormalShape(t *testing.T) {
 	s := NewLKSolver()
 	E := 1.5e8
-	times := []float64{1e-10, 5e-10, 1e-9, 2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 5e-7, 1e-6}
+	times := []float64{1e-7, 5e-7, 1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 5e-4, 1e-3}
 	vals := make([]float64, len(times))
 	for i, tt := range times {
 		vals[i] = s.nlsSwitchedFraction(E, tt)

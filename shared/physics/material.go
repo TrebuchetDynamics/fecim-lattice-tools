@@ -245,13 +245,13 @@ func MaterlikHfO2() *HZOMaterial {
 // Use this mode to understand what superlattice engineering CAN achieve
 // according to academic papers. For FeCIM-specific values, use FeCIMMaterial().
 //
-// Ref: Cheema et al., Nature 580, 478 (2020) - "Enhanced ferroelectricity
-// in ultrathin films grown directly on silicon"
+// Best-in-class HZO/ZrO₂ nanolaminate (1 nm layers); 2Pr ≈ 43 µC/cm² (Pr ≈ 22 µC/cm²).
+// PMC 12254504; RSC Nanoscale 2025.
 func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "Literature Superlattice (Cheema 2020)",
-		Pr:              50e-2,  // 50 μC/cm² (superlattice enhanced) [5]
-		Ps:              55e-2,  // 55 μC/cm²
+		Name:            "Literature Superlattice (HZO nanolaminate 2025)",
+		Pr:              22e-2,  // 22 µC/cm² (HZO/ZrO₂ 1nm nanolaminate, 2025); revised from Cheema 2020 (50 µC/cm²)
+		Ps:              27e-2,  // 27 µC/cm² (≈1.2×Pr)
 		Ec:              0.85e8, // 0.85 MV/cm (Nature Commun. 2025) [3]
 		Epsilon:         35,
 		EpsilonLF:       50,
@@ -266,7 +266,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 		CurieConst:      1.5e5,
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e10,   // 10^10 verified [3][4], 10^12 claimed but rare
+		EnduranceCycles: 1e10,   // 10^10 verified; 10^12 demonstrated (La-doped 3D-trench, ACS AMI 2024)
 		RetentionTime:   3.15e8, // 10-year at 85°C verified
 		ImrintField:     0.5e6,
 		NumLevels:       64,      // Enhanced superlattice can achieve more states

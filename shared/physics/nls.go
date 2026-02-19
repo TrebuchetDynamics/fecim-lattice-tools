@@ -29,7 +29,7 @@ type NLSKinetics struct {
 // NewNLSKinetics creates a new NLS model with default parameters typical for HZO.
 func NewNLSKinetics() *NLSKinetics {
 	return &NLSKinetics{
-		Tau0: 1e-13, // Phonon frequency limit (~100 fs)
+		Tau0: 1e-10, // Intrinsic attempt time for HZO (~100 ps); Guo et al. APL 112, 262903 (2018)
 		Ea:   8e8,   // Activation field (~8 MV/cm), typically higher than Ec
 	}
 }

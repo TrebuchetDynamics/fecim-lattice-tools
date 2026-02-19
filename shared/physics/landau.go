@@ -146,7 +146,7 @@ func NewLKSolver() *LKSolver {
 
 		UseNLS:          true,
 		ActivationField: 1.9e9, // 19 MV/cm (Merz activation field)
-		TauInf:          1.0e-13,
+		TauInf:          1.0e-10, // 100 ps intrinsic attempt time; Guo et al. APL 112, 262903 (2018)
 		NLSSigma:        1.5, // HfO2 default (Guo et al., APL 112, 262903, 2018)
 
 		CurieTemp:  723.0,

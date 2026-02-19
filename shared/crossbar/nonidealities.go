@@ -255,6 +255,26 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 
 // AnalyzeIRDropIterative performs physics-based IR drop analysis with configurable solver.
 func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, config *IRDropSolverConfig) *IRDropAnalysis {
+	// FeCAP arrays have no DC IR drop — capacitors block DC current,
+	// so no steady-state current flows through the word/bit lines.
+	if a.config.CellType == CellTypeFeCAP {
+		rows := a.config.Rows
+		cols := a.config.Cols
+		effV := make([][]float64, rows)
+		for i := range effV {
+			effV[i] = make([]float64, cols)
+			for j := range effV[i] {
+				effV[i][j] = 1.0 // No voltage drop
+			}
+		}
+		return &IRDropAnalysis{
+			EffectiveVoltage: effV,
+			MaxIRDrop:        0,
+			AvgIRDrop:        0,
+			IRDropVariance:   0,
+		}
+	}
+
 	if params == nil {
 		params = DefaultWireParams()
 	}
@@ -555,6 +575,21 @@ func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R b
 func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, isolationFactor float64) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
+
+	// FeCAP arrays have no DC sneak paths — capacitors block DC current.
+	if a.config.CellType == CellTypeFeCAP {
+		zeroMap := make([][]float64, rows)
+		for i := range zeroMap {
+			zeroMap[i] = make([]float64, cols)
+		}
+		return &SneakPathAnalysis{
+			SneakCurrents: zeroMap,
+			MaxSneakRatio: 0,
+			AvgSneakRatio: 0,
+			TotalSneak:    0,
+			TotalSignal:   0,
+		}
+	}
 
 	getLog().Input("AnalyzeSneakPathsWithIsolation", map[string]interface{}{
 		"selectedRow":     selectedRow,

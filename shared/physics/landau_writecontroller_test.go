@@ -53,8 +53,8 @@ func TestNewLKSolver_Defaults(t *testing.T) {
 	if s.ActivationField != 1.9e9 {
 		t.Errorf("ActivationField = %e, want 1.9e9", s.ActivationField)
 	}
-	if s.TauInf != 1.0e-13 {
-		t.Errorf("TauInf = %e, want 1.0e-13", s.TauInf)
+	if s.TauInf != 1.0e-10 {
+		t.Errorf("TauInf = %e, want 1.0e-10", s.TauInf)
 	}
 	if s.NLSSigma != 1.5 {
 		t.Errorf("NLSSigma = %f, want 1.5", s.NLSSigma)
