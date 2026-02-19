@@ -16,7 +16,7 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT"
 
 echo "=== Rule 1: No cross-module imports ==="
-MODS=(module1-hysteresis module2-crossbar module3-mnist module4-circuits module5-comparison module6-eda)
+MODS=(module1-hysteresis module2-crossbar module3-mnist module4-circuits module5-comparison module6-eda module7-docs)
 for mod in "${MODS[@]}"; do
     if [[ ! -d "$mod" ]]; then continue; fi
     for other in "${MODS[@]}"; do

@@ -5,6 +5,37 @@
 
 ---
 
+## Status Dashboard
+
+> Last audited: 2026-02-18. Run `./scripts/check-architecture.sh --fast` to verify Rules 1/3/4.
+
+| Phase | Description | Status |
+|:------|:------------|:------:|
+| 0 | Crossbar → `shared/crossbar/` | ✅ Complete |
+| 0b | `CrossbarCore` / `DeviceModel` interface layer | ✅ Complete |
+| 1 | Shared embedded-app base (`EmbeddedAppBase` in `shared/widgets/`) | ✅ Complete |
+| 2 | Keyboard shortcuts unified under `shared/keyboard/` | ✅ Complete |
+| 3 | LiveSlide & widget consolidation | ⚠️ Partial — `liveslide.go` still in M2/M3/M5 |
+| 4 | Export consolidation | ✅ Complete — modules have thin format-specific wrappers |
+| 5 | Tooltip consolidation | ⚠️ Partial — local `tooltips.go` still in M2, M4 |
+| 6 | Preset provider consolidation | ⚠️ Partial — `shared/presets/` exists, modules not yet migrated |
+| 7 | Ferroelectric core (Module 1 → `shared/physics/`) | ⚠️ Partial — dual-source on `material.go`; `preisach.go`/`level_bins.go` shared |
+| 8 | Neural network core (Module 3 → `shared/neural/`) | ❌ Not started |
+| 9 | Peripheral circuits interface (`ADCModel`, `DACModel`) | ✅ Complete |
+| 10 | Validation oracles (`crossbar_oracle`, `pe_loop_oracle`) | ✅ Complete |
+| 11 | System-level cost models (`shared/system/`) | ⚠️ Partial — `energy.go` exists; area/latency/power not yet done |
+| 12 | Compact device models (`shared/compact/`) | ⚠️ Partial — `fecap.go` exists; `fefet.go` / SPICE bridge pending |
+| — | Rule 6: YAML-configurable material parameters | ❌ Not started — all parameters still hardcoded in Go |
+| — | Architecture enforcement script | ✅ `scripts/check-architecture.sh` |
+
+**Rules 1–4 CI status** (run `./scripts/check-architecture.sh --fast`):
+- Rule 1 (no cross-module imports): ✅ Zero violations
+- Rule 3 (single `go.mod`): ✅
+- Rule 4 (no banned package names): ✅
+- Build + Vet: verify with `go build ./... && go vet ./...`
+
+---
+
 ## Lessons from Open-Source Tools
 
 > [!IMPORTANT]
@@ -190,15 +221,19 @@ func (n *NoisyCore) RunMVM(input []float64) []float64 {
 | Modules | 7 (`module1-hysteresis` … `module7-docs`) |
 | `shared/` packages | 25 subdirectories, 361+ files |
 | Shared tests | 174 test files |
-| `shared/crossbar/` | ⚠️ **Empty** (only `logs/` dir) |
+| `shared/crossbar/` | ✅ **86 files** (migrated from `module2-crossbar/pkg/crossbar/`; `CrossbarCore` interface in `core.go`) |
 
-### Cross-Module Dependencies (Must Eliminate)
+### Cross-Module Dependencies (Eliminated ✅)
 
-| Consumer | Imports from | Files affected |
-|:---|:---|:---|
-| **module3-mnist** | `module2-crossbar/pkg/crossbar` | **12 files** (gui, training, core, cmd) |
-| **module4-circuits** | `module2-crossbar/pkg/crossbar` | **1 file** (`app.go` — `WriteDisturbEngine`) |
-| module5-comparison | *(none found)* | — |
+All cross-module imports have been removed as part of Phase 0.
+
+| Consumer | Previously imported | Files fixed | Status |
+|:---|:---|:---|:---|
+| **module3-mnist** | `module2-crossbar/pkg/crossbar` | 12 files | ✅ Fixed |
+| **module4-circuits** | `module2-crossbar/pkg/crossbar` | 1 file (`app.go`) | ✅ Fixed |
+| module5-comparison | *(none found)* | — | — |
+
+Verify with: `grep -r '"fecim-lattice-tools/module' module{1..6}-*/ --include='*.go' | grep -v 'module[0-9]-[^/]*/pkg/'` → should return zero lines.
 
 ### Duplicated Files Across Modules
 
@@ -338,11 +373,11 @@ Already-shared physics files that Module 1 should import from:
 
 ## Refactoring Phases
 
-### Phase 0 — Crossbar to Shared (Critical Path) ★
+### Phase 0 — Crossbar to Shared (Critical Path) ★ ✅ COMPLETE
 
-**Why first?** Module 3 (12 files) and Module 4 (1 file) import `module2-crossbar/pkg/crossbar` directly. This **cross-module dependency** must be broken before anything else.
+**Why first?** Module 3 (12 files) and Module 4 (1 file) imported `module2-crossbar/pkg/crossbar` directly. This **cross-module dependency** has been broken.
 
-`shared/crossbar/` exists but is effectively empty (only a `logs/` dir).
+`shared/crossbar/` now has 86 Go files. `module2-crossbar/pkg/crossbar/` has been deleted. Zero cross-module imports remain.
 
 > [!IMPORTANT]
 > **Inspired by CrossSim + badcrossbar architecture**: The migrated crossbar package should be restructured with clean interfaces, not just a copy-paste. CrossSim uses `ICore` → 5 implementations + `IDevice` → error models. badcrossbar uses a clean fill→KCL→solve→extract pipeline.
@@ -360,9 +395,11 @@ Already-shared physics files that Module 1 should import from:
 5. **Delete** `module2-crossbar/pkg/crossbar/` after all tests pass.
 6. **Update** `module2-crossbar/pkg/gui/` imports to point to `shared/crossbar`.
 
-#### Future Enhancement (Post-Migration): Interface Layer
+#### Phase 0b — Interface Layer ✅ COMPLETE
 
-After migration, introduce CrossSim-style interfaces *(Phase 0b, non-blocking)*:
+`shared/crossbar/core.go` defines `CrossbarCore` (MVM/VMM/ProgramWeightMatrix/GetConductanceMatrix) and `DeviceModel` interfaces. `shared/peripherals/iadc.go` defines `ADCModel`. All implementations satisfy these interfaces.
+
+**Original plan note** — introduce CrossSim-style interfaces:
 
 ```go
 // shared/crossbar/core.go — inspired by CrossSim ICore
@@ -394,50 +431,37 @@ type Solver interface {
 
 ---
 
-### Phase 1 — GUI Embedded Apps (All Modules)
+### Phase 1 — GUI Embedded Apps (All Modules) ✅ COMPLETE
 
-Every module has an `embedded.go` that wraps the GUI `App` for the launcher. These should follow a shared interface.
+Every module has an `embedded.go` that wraps the GUI `App` for the launcher, implemented via `shared/widgets/EmbeddedAppBase`.
 
-#### Steps
+**Actual implementation** (differs from original plan — `shared/widgets` was used instead of a new `shared/gui/` package):
+- `shared/widgets/embedded_base.go` — `EmbeddedAppBase` struct with `Init()`, `Start()`, `Stop()`, `SetContent()`
+- `shared/widgets/embedded_base_test.go` — tests
+- Each module's `embedded.go` embeds `sharedwidgets.EmbeddedAppBase` and calls its lifecycle methods
 
-1. **Create** `shared/gui/embedded_interface.go` with:
-   ```go
-   type EmbeddedApp interface {
-       CreateEmbeddedContent() fyne.CanvasObject
-       Name() string
-       Icon() fyne.Resource
-   }
-   ```
-2. **Refactor** each module's `embedded.go` to implement this interface.
-3. **Move** common boilerplate (window setup, theme init) to `shared/gui/app_shell.go`.
+No further action needed. The `shared/gui/` package does not exist and is not required.
 
 ---
 
-### Phase 2 — Keyboard Shortcuts
+### Phase 2 — Keyboard Shortcuts ✅ COMPLETE
 
-6 modules have local `keyboard.go`. `shared/keyboard/keyboard.go` already exists.
+6 modules have local `keyboard.go`. `shared/keyboard/keyboard.go` is the canonical implementation with all common `Action` constants and `Manager` type.
 
-#### Steps
-
-1. **Audit** each module's keyboard handling for module-specific vs generic shortcuts.
-2. **Extract** common shortcuts (?, Ctrl+E, Ctrl+Z, Escape) into `shared/keyboard/`.
-3. **Update** modules to call `shared/keyboard.RegisterCommonShortcuts(window, handlers)`.
-4. **Keep** module-specific shortcuts (e.g., M1's waveform toggles) in the module.
+**Actual state**: Each module's local `keyboard.go` is a **thin module-specific adapter** that imports `shared/keyboard`, creates a `keyboard.NewManager(window)`, and registers only module-specific handlers. This is the correct pattern — not duplication. No further action needed.
 
 ---
 
-### Phase 3 — LiveSlide & Widget Consolidation
+### Phase 3 — LiveSlide & Widget Consolidation ⚠️ PARTIAL
 
-Modules 2, 3, and 5 have local `liveslide.go`. Modules 2 and 3 define local `ModeIndicator`, `EducationalPanel`, `OperationLog`, `KeyStat` wrappers.
+`shared/widgets/` provides `ModeIndicator`, `EducationalPanel`, `OperationLog`, `KeyStat`, `StatusBar` components. However `liveslide.go` remains in M2, M3, and M5 with no shared version.
 
-#### Steps
+**Remaining work:**
 
-1. **Delete** local `ModeIndicatorBox`, `EducationalPanel`, `OperationLog`, `KeyStatBox` from M2.
-   - Replace with imports from `shared/widgets`.
-2. **Delete** `MNISTModeIndicator`, `MNISTEducationalPanel`, `MNISTOperationLog`, `MNISTKeyStat` from M3.
-   - Replace with imports from `shared/widgets`.
-3. **Move** `liveslide.go` logic into `shared/widgets/liveslide.go` (create if not present).
-4. **Verify**: `make test-xbar && make test-mnist`
+1. **Audit** `module2-crossbar/pkg/gui/liveslide.go`, `module3-mnist/pkg/gui/liveslide.go`, `module5-comparison/pkg/gui/liveslide.go` for common vs module-specific logic.
+2. **Extract** shared sliding-panel logic into `shared/widgets/liveslide.go`.
+3. **Update** each module's `liveslide.go` to import from `shared/widgets` (keep only module-specific configuration).
+4. **Verify**: `go build ./... && go test ./module2-crossbar/... ./module3-mnist/... ./module5-comparison/...`
 
 ---
 
@@ -454,30 +478,33 @@ Modules 2, 3, and 5 have local `liveslide.go`. Modules 2 and 3 define local `Mod
 
 ---
 
-### Phase 5 — Tooltips
+### Phase 5 — Tooltips ⚠️ PARTIAL
 
-M2 and M4 have local `tooltips.go`. `shared/widgets/tooltips.go` already exists (50KB, comprehensive).
+`shared/widgets/tooltips.go` exists (comprehensive). M2 (`module2-crossbar/pkg/gui/tooltips.go`) and M4 (`module4-circuits/pkg/gui/tooltips.go`) still have local copies.
 
-#### Steps
+**Remaining work:**
 
-1. **Move** module-specific tooltip content from M2/M4 into `shared/widgets/tooltips.go` (or a `shared/widgets/tooltip_content.go` registry).
-2. **Delete** local `tooltips.go` from M2 and M4.
-3. **Modules** register their tooltips at startup using a shared `RegisterTooltips()` API.
-
----
-
-### Phase 6 — Preset Provider
-
-M1 and M2 have local `preset_provider.go`. `shared/presets/` already exists.
-
-#### Steps
-
-1. **Move** preset provider logic to `shared/presets/provider.go`.
-2. **Update** M1 and M2 to import from `shared/presets`.
+1. **Audit** local `tooltips.go` in M2 and M4: identify content that is genuinely module-specific vs duplicated from `shared/widgets/tooltips.go`.
+2. **Merge** any unique tooltip content into `shared/widgets/tooltips.go` (or a `shared/widgets/tooltip_registry.go` with per-package registration).
+3. **Delete** local `tooltips.go` from M2 and M4; replace call-sites with `shared/widgets` imports.
+4. **Verify**: `go build ./module2-crossbar/... ./module4-circuits/...`
 
 ---
 
-### Phase 7 — Ferroelectric/Algorithm Core (Module 1 → Shared) ★
+### Phase 6 — Preset Provider ⚠️ PARTIAL
+
+`shared/presets/` has a full implementation: `manager.go`, `providers.go`, `types.go`, `builtin.go`, `global.go`. However all 5 module `preset_provider.go` files (M1–M5) remain local and have not been migrated to use the shared infrastructure.
+
+**Remaining work:**
+
+1. **Audit** each module's `preset_provider.go` against `shared/presets/providers.go` — identify what's common vs module-specific.
+2. **Register** module-specific presets via the shared `PresetManager` (see `shared/presets/manager.go`).
+3. **Delete** each local `preset_provider.go` after migration; import from `shared/presets`.
+4. **Verify**: `go build ./... && go test ./shared/presets/...`
+
+---
+
+### Phase 7 — Ferroelectric/Algorithm Core (Module 1 → Shared) ★ ⚠️ PARTIAL
 
 Module 1 has domain-specific packages that are already partially shared via `shared/physics/`.
 
@@ -526,9 +553,9 @@ func (m *MaterialConfig) GeneratePELoop(eMax, nSamples float64) []PEPoint  // fe
 
 ---
 
-### Phase 8 — Neural Network Core (Module 3 → Shared) ★
+### Phase 8 — Neural Network Core (Module 3 → Shared) ★ ❌ NOT STARTED
 
-Module 3 has core neural network logic that could serve future modules.
+`shared/neural/` does not yet exist. Module 3's `pkg/core/` (46 files) remains the sole location for network, quantization, and CIM physics code.
 
 > [!IMPORTANT]
 > **Inspired by Brevitas + IBM AIHWKIT + CrossSim**:
@@ -573,7 +600,7 @@ func (tm *TileMapper) RunInference(tiles []Tile, input []float64) []float64
 
 ---
 
-### Phase 9 — Peripheral Circuits Abstraction (NEW) ★
+### Phase 9 — Peripheral Circuits Abstraction ★ ✅ COMPLETE
 
 > [!IMPORTANT]
 > **Inspired by CrossSim `circuits/`**: CrossSim separates peripherals into `IADC` (interface → 5 implementations: SAR, ramp, pipeline, cyclic, quantizer), `IDAC`, and `IArray` (4 array topologies). Current `shared/peripherals/` has implementations but **no interface abstraction**.
@@ -600,7 +627,7 @@ func (tm *TileMapper) RunInference(tiles []Tile, input []float64) []float64
 
 ---
 
-### Phase 10 — Validation & Cross-Tool Benchmarking (NEW) ★
+### Phase 10 — Validation & Cross-Tool Benchmarking ★ ✅ COMPLETE
 
 > [!TIP]
 > **Inspired by CrossSim/badcrossbar validation methodology**: CrossSim validates crossbar MVM against SPICE. badcrossbar provides exact nodal analysis for ground-truth comparison. These should be integrated as validation oracles.
@@ -616,7 +643,7 @@ func (tm *TileMapper) RunInference(tiles []Tile, input []float64) []float64
 
 ---
 
-### Phase 11 — System-Level Cost Models (NEW) ★
+### Phase 11 — System-Level Cost Models ★ ⚠️ PARTIAL
 
 > [!TIP]
 > **Inspired by MNSIM 2.0's 9-module architecture**: MNSIM separates area, energy, latency, power, and accuracy estimation into independent model packages that compose together. This enables design-space exploration before fabrication.
@@ -652,7 +679,7 @@ func RunDSE(config DSEConfig, model SystemModel) []DSEResult
 
 ---
 
-### Phase 12 — Compact Model Integration (NEW) ★
+### Phase 12 — Compact Model Integration ★ ⚠️ PARTIAL
 
 > [!IMPORTANT]
 > **Inspired by PFECAP Verilog-A + DNN+NeuroSim**: PFECAP implements a circuit-simulator-compatible Preisach FeCap with Newton iteration. DNN+NeuroSim co-simulates PyTorch training with C++ NeuroSIM circuit models. These patterns suggest a `shared/compact/` package for device-level compact models.
@@ -743,22 +770,23 @@ graph TD
 
 ## Execution Order (Priority)
 
-| # | Phase | Risk | Impact | Effort | New? |
-|:---|:---|:---|:---|:---|:---|
-| 0 | Crossbar → shared | **High** (18 files + 65 tests) | **Critical** — breaks M3→M2 dependency | ~2h | — |
-| 0b | Crossbar interface layer | Low (additive) | High — enables pluggable device models | ~2h | ★ |
-| 1 | Embedded interface | Low | Medium | ~1h | — |
-| 2 | Keyboard | Low | Low | ~30m | — |
-| 3 | LiveSlide + Widgets | Medium (API changes) | High (3 modules) | ~2h | — |
-| 4 | Export | Low | Medium | ~1h | — |
-| 5 | Tooltips | Low | Low | ~30m | — |
-| 6 | Presets | Low | Low | ~20m | — |
-| 7 | Ferroelectric core + YAML configs | Medium (physics overlap) | High — enables multi-material support | ~3h | ★ enhanced |
-| 8 | Neural core + quantization | Medium | High — enables HW-aware inference | ~2h | ★ enhanced |
-| 9 | Peripherals interface | Low (additive) | Medium — enables ADC/DAC plug-in arch | ~2h | ★ new |
-| 10 | Validation & benchmarking | Low (additive) | High — correctness assurance | ~3h | ★ new |
-| 11 | System-level cost models | Low (additive) | Medium — enables DSE | ~2h | ★ new |
-| 12 | Compact model integration | Low (additive) | High — enables SPICE-compatible models | ~3h | ★ new |
+| # | Phase | Risk | Impact | Effort | Status |
+|:---|:---|:---|:---|:---|:---:|
+| 0 | Crossbar → `shared/crossbar/` | **High** (18 files + 65 tests) | **Critical** — breaks M3→M2 dependency | ~2h | ✅ |
+| 0b | `CrossbarCore` / `DeviceModel` interface layer | Low (additive) | High — pluggable device models | ~2h | ✅ |
+| 1 | Embedded app base (`EmbeddedAppBase` in `shared/widgets/`) | Low | Medium | ~1h | ✅ |
+| 2 | Keyboard (module adapters use `shared/keyboard`) | Low | Low | ~30m | ✅ |
+| 4 | Export (`shared/export/` + thin module wrappers) | Low | Medium | ~1h | ✅ |
+| 9 | Peripheral circuits interface (`ADCModel`, `DACModel`) | Low (additive) | Medium | ~2h | ✅ |
+| 10 | Validation oracles (`crossbar_oracle`, `pe_loop_oracle`) | Low (additive) | High | ~3h | ✅ |
+| 3 | LiveSlide consolidation | Medium (API changes) | High (3 modules) | ~2h | ⚠️ |
+| 5 | Tooltips (remove M2/M4 local copies) | Low | Low | ~30m | ⚠️ |
+| 6 | Preset provider (migrate to `shared/presets/`) | Low | Low | ~1h | ⚠️ |
+| 7 | Ferroelectric core — unify `material.go` into `shared/physics/` | Medium (physics overlap) | High | ~2h | ⚠️ |
+| 11 | System-level cost models (area/latency/power missing) | Low (additive) | Medium | ~2h | ⚠️ |
+| 12 | Compact models (`fefet.go`, SPICE bridge missing) | Low (additive) | High | ~2h | ⚠️ |
+| 8 | Neural core (Module 3 → `shared/neural/`) | Medium | High — HW-aware inference | ~3h | ❌ |
+| — | Rule 6: YAML-configurable material parameters | Medium | High — multi-material without recompile | ~4h | ❌ |
 
 ---
 
