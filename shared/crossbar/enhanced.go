@@ -128,7 +128,11 @@ type MVMResult struct {
 
 // MVMWithNonIdealities performs MVM with all specified non-idealities.
 // This is the most accurate simulation mode.
+// For FeCAP arrays, use MVMCharge or MVMChargeQuantized instead.
 func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMResult, error) {
+	if a.config.CellType == CellTypeFeCAP {
+		return nil, fmt.Errorf("MVMWithNonIdealities requires CellTypeFeFET; use MVMCharge for FeCAP arrays")
+	}
 	if len(input) > a.config.Cols {
 		return nil, fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
 	}

@@ -693,7 +693,12 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 }
 
 // MVMWithIRDrop performs MVM with IR drop effects.
+// For FeCAP arrays, use MVMCharge or MVMChargeQuantized instead.
 func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *IRDropAnalysis, error) {
+	if a.config.CellType == CellTypeFeCAP {
+		return nil, nil, fmt.Errorf("MVMWithIRDrop requires CellTypeFeFET; use MVMCharge for FeCAP arrays (no DC IR drop)")
+	}
+
 	getLog().Input("MVMWithIRDrop", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
