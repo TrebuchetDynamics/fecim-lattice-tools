@@ -572,10 +572,6 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		updatingFreq = false
 	})
 	unitSelect.SetSelected("Hz")
-	displayFreqLabel := widget.NewLabel("Display: 0.50 Hz")
-	updateDisplayLabel := func(freq, scale float64) {
-		displayFreqLabel.SetText(fmt.Sprintf("Display: %s (scale %.3gx)", formatHz(freq*scale), scale))
-	}
 	setFrequency := func(v float64, source string) {
 		if v <= 0 || math.IsNaN(v) || math.IsInf(v, 0) {
 			return
@@ -591,7 +587,6 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.simTime = 0
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %s", formatHz(v)))
-		updateDisplayLabel(v, a.timeScale)
 		if source != "slider" && v >= freqSlider.Min && v <= freqSlider.Max {
 			freqSlider.SetValue(v)
 		}
@@ -632,24 +627,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.timeScale = scale
 		a.mu.Unlock()
 		timeScaleLabel.SetText(fmt.Sprintf("Time Scale: %.3gx", scale))
-		a.mu.RLock()
-		current := a.frequency
-		a.mu.RUnlock()
-		updateDisplayLabel(current, scale)
 	}
-	a.mu.RLock()
-	initialFreq := a.frequency
-	initialScale := a.timeScale
-	a.mu.RUnlock()
-	updateDisplayLabel(initialFreq, initialScale)
 	// Mechanical stress control (active physics coupling — L-K only)
 	stressSlider := widget.NewSlider(0, 5.0) // 0 to 5 GPa
 	a.stressSlider = stressSlider
 	stressSlider.Step = 0.1
 	stressSlider.Value = 1.0
 	stressLabel := widget.NewLabel("Mechanical Stress: 1.0 GPa")
-	stressCouplingLabel := widget.NewLabel("Active: modifies switching thresholds via stress-coupled Ec")
-	_ = stressCouplingLabel
 
 	// Stress slider (Phase 4.1: Electrostriction control)
 	stressSlider.OnChanged = func(v float64) {
@@ -672,8 +656,6 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	tempSlider.Step = 25
 	tempSlider.Value = 300 // Room temperature (300K = 27°C)
 	tempLabel := widget.NewLabel("T: 300 K (27°C)")
-	tempCouplingLabel := widget.NewLabel("Active: Ec scales as (1-T/Tc)^0.5, Pr scales similarly")
-	_ = tempCouplingLabel
 	tempSlider.OnChanged = func(v float64) {
 		log.SliderChange("Temperature", v)
 
@@ -735,24 +717,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	lkPolydomainCheck.SetChecked(a.lkISPPPolydomainEnabled)
 
-	physicsRow := container.NewBorder(nil, nil, a.physicsSelect, eqBtn, nil)
 	eFieldHeader := container.NewBorder(nil, nil, a.eFieldLabel, a.eFieldModeLabel, nil)
 	freqEntryRow := container.NewGridWithColumns(2, freqEntry, unitSelect)
-	actionRow := container.NewGridWithColumns(3, a.pauseBtn, resetBtn, eli5Btn)
+	actionRow := container.NewGridWithColumns(2, a.pauseBtn, resetBtn)
+	learnRow := container.NewGridWithColumns(2, eli5Btn, eqBtn)
 
-	levelsHint := widget.NewLabel("Number of discrete polarization levels (2–64)")
-	levelsHint.TextStyle = fyne.TextStyle{Italic: true}
-	rangeHint := widget.NewLabel("Fraction of Ec used for ISPP voltage bounds (0.5–1.0)")
-	rangeHint.TextStyle = fyne.TextStyle{Italic: true}
-
-	levelsGrid := container.NewGridWithColumns(2,
-		container.NewVBox(a.levelsLabel, levelsHint),
-		a.levelsEntry,
-	)
-	rangeGrid := container.NewGridWithColumns(2,
-		container.NewVBox(a.wrdRangeLabel, rangeHint),
-		a.wrdRangeSlider,
-	)
+	levelsGrid := container.NewGridWithColumns(2, a.levelsLabel, a.levelsEntry)
+	rangeGrid := container.NewGridWithColumns(2, a.wrdRangeLabel, a.wrdRangeSlider)
 
 	// Helper to create a row with an info button for tooltips
 	withInfo := func(content fyne.CanvasObject, tc sharedwidgets.TooltipContent) fyne.CanvasObject {
@@ -765,10 +736,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	mainSections := container.NewVBox(
 		widget.NewCard("Material & Mode", "", container.NewVBox(
 			withInfo(a.materialBtn, tips.Material),
-			withInfo(container.NewVBox(a.waveformSelect, a.waveformHelp), tips.Waveform),
-			withInfo(physicsRow, tips.PhysicsEngine),
+			withInfo(a.waveformSelect, tips.Waveform),
+			withInfo(a.physicsSelect, tips.PhysicsEngine),
 			withInfo(a.isppMethodSelect, tips.ISPPMethod),
-			lkPolydomainCheck,
 		)),
 		widget.NewCard("Levels & Range", "", container.NewVBox(
 			withInfo(levelsGrid, tips.Levels),
@@ -777,18 +747,22 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		widget.NewCard("Drive & Timing", "", container.NewVBox(
 			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider, a.eFieldRangeLabel), tips.EField),
 			withInfo(container.NewVBox(freqLabel, freqSlider, freqEntryRow), tips.Frequency),
-			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider, displayFreqLabel), tips.TimeScale),
+			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider), tips.TimeScale),
 		)),
-		widget.NewCard("Run", "", actionRow),
+		widget.NewCard("Run", "", container.NewVBox(
+			actionRow,
+			learnRow,
+		)),
 		a.createFORCPanel(),
 	)
 
 	advanced := widget.NewAccordion(
 		widget.NewAccordionItem("Environment", container.NewVBox(
-			withInfo(container.NewVBox(tempLabel, tempSlider, tempCouplingLabel), tips.Temperature),
-			withInfo(container.NewVBox(stressLabel, stressSlider, stressCouplingLabel), tips.Stress),
+			withInfo(container.NewVBox(tempLabel, tempSlider), tips.Temperature),
+			withInfo(container.NewVBox(stressLabel, stressSlider), tips.Stress),
 		)),
 		widget.NewAccordionItem("History / Trail", withInfo(container.NewVBox(trailLabel, trailSlider), tips.TrailLength)),
+		widget.NewAccordionItem("Advanced Physics", lkPolydomainCheck),
 	)
 
 	return container.NewVBox(mainSections, advanced)

@@ -92,3 +92,11 @@ validation/literature/output/
 opensource/**
 !opensource/clone-all.sh
 !opensource/opensource-tools-summary.md
+
+# Tool-specific dirs (not project code)
+.claude-flow/
+.swarm/
+.mcp.json
+2026-02-18_15-48.png
+
+.claude/
