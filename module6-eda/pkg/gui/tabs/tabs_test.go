@@ -331,6 +331,28 @@ func TestIsometric1T1RCrossbar(t *testing.T) {
 	}
 }
 
+func TestIsometric2T1RCrossbar(t *testing.T) {
+	tests := []struct {
+		name string
+		rows int
+		cols int
+	}{
+		{"3x3 array", 3, 3},
+		{"4x4 array", 4, 4},
+		{"1x1 minimal", 1, 1},
+		{"8x8 larger", 8, 8},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diagram := Isometric2T1RCrossbar(tt.rows, tt.cols)
+			if diagram == nil {
+				t.Errorf("Isometric2T1RCrossbar(%d, %d) returned nil", tt.rows, tt.cols)
+			}
+		})
+	}
+}
+
 func TestCellComparisonTable(t *testing.T) {
 	table := CellComparisonTable()
 	if table == nil {

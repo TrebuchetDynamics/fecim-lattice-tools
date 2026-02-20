@@ -337,3 +337,204 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 
 	return cont
 }
+
+// Isometric2T1RCrossbar creates an isometric diagram of a 2T1R (2 Transistor + 1 Resistor) crossbar.
+// In 2T1R, each cell has two access transistors:
+//   - Row transistor (gate on WL) isolates row-direction sneak paths
+//   - Column transistor (gate on CSL) isolates column-direction sneak paths
+//
+// This gives complete sneak path elimination, enabling arrays up to ~512×512.
+func Isometric2T1RCrossbar(rows, cols int) fyne.CanvasObject {
+	objects := []fyne.CanvasObject{}
+
+	cellSize := float32(52)
+	isoAngle := float32(30 * math.Pi / 180)
+	cosA := float32(math.Cos(float64(isoAngle)))
+	sinA := float32(math.Sin(float64(isoAngle)))
+
+	startX := float32(260)
+	startY := float32(90)
+	layerGap := float32(55) // tighter layers to fit 4 in the diagram
+
+	toIso := func(gridX, gridY, z float32) (float32, float32) {
+		x := startX + (gridX-gridY)*cellSize*cosA
+		y := startY + (gridX+gridY)*cellSize*sinA - z
+		return x, y
+	}
+
+	// Colors
+	colorCSL := color.RGBA{255, 165, 80, 255}  // orange — Column Select Line
+	colorSL2 := color.RGBA{100, 255, 100, 255} // green — Source Line
+	colorT2 := color.RGBA{255, 200, 80, 255}   // yellow — column transistor
+
+	// Title
+	title := canvas.NewText("2T1R Crossbar Structure", colorText)
+	title.TextSize = 16
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Move(fyne.NewPos(20, 10))
+	objects = append(objects, title)
+
+	subtitle := canvas.NewText("(Two transistors fully isolate each cell — ZERO sneak paths)", colorHighlight)
+	subtitle.TextSize = 14
+	subtitle.Move(fyne.NewPos(20, 30))
+	objects = append(objects, subtitle)
+
+	// Layer 0 (z=0): WL — row word lines
+	for i := 0; i <= rows; i++ {
+		x1, y1 := toIso(0, float32(i), 0)
+		x2, y2 := toIso(float32(cols), float32(i), 0)
+		line := canvas.NewLine(colorWL)
+		line.StrokeWidth = 4
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+		if i < rows {
+			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
+			label.TextSize = 13
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-50, y1-5))
+			objects = append(objects, label)
+		}
+	}
+
+	// Layer 1 (z=layerGap): CSL — column select lines (gate for column transistor)
+	for j := 0; j <= cols; j++ {
+		x1, y1 := toIso(float32(j), 0, layerGap)
+		x2, y2 := toIso(float32(j), float32(rows), layerGap)
+		line := canvas.NewLine(colorCSL)
+		line.StrokeWidth = 3
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+		if j < cols {
+			label := canvas.NewText("CSL"+string(rune('0'+j)), colorCSL)
+			label.TextSize = 13
+			label.Move(fyne.NewPos(x1-5, y1-28))
+			objects = append(objects, label)
+		}
+	}
+
+	// Layer 2 (z=2*layerGap): SL — source lines
+	for j := 0; j <= cols; j++ {
+		x1, y1 := toIso(float32(j), 0, 2*layerGap)
+		x2, y2 := toIso(float32(j), float32(rows), 2*layerGap)
+		line := canvas.NewLine(colorSL2)
+		line.StrokeWidth = 3
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+		if j < cols {
+			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL2)
+			label.TextSize = 13
+			label.Move(fyne.NewPos(x2+8, y2-5))
+			objects = append(objects, label)
+		}
+	}
+
+	// Layer 3 (z=3*layerGap): BL — bit lines (output)
+	for j := 0; j <= cols; j++ {
+		x1, y1 := toIso(float32(j), 0, 3*layerGap)
+		x2, y2 := toIso(float32(j), float32(rows), 3*layerGap)
+		line := canvas.NewLine(colorBL)
+		line.StrokeWidth = 4
+		line.Position1 = fyne.NewPos(x1, y1)
+		line.Position2 = fyne.NewPos(x2, y2)
+		objects = append(objects, line)
+		if j < cols {
+			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
+			label.TextSize = 13
+			label.TextStyle = fyne.TextStyle{Bold: true}
+			label.Move(fyne.NewPos(x1-5, y1-32))
+			objects = append(objects, label)
+		}
+	}
+
+	// Draw cells: row transistor (bottom) + column transistor (mid) + FeFET (upper)
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			xBot, yBot := toIso(float32(j)+0.5, float32(i)+0.5, 0)
+			xMid1, yMid1 := toIso(float32(j)+0.5, float32(i)+0.5, layerGap)
+			xMid2, yMid2 := toIso(float32(j)+0.5, float32(i)+0.5, 2*layerGap)
+			xTop, yTop := toIso(float32(j)+0.5, float32(i)+0.5, 3*layerGap)
+
+			// Row transistor (square, at WL level)
+			rowT := canvas.NewRectangle(colorHighlight)
+			rowT.Resize(fyne.NewSize(10, 10))
+			rowT.Move(fyne.NewPos(xBot-5, yBot-5))
+			objects = append(objects, rowT)
+
+			// Column transistor (square, at CSL level, different colour)
+			colT := canvas.NewRectangle(colorT2)
+			colT.Resize(fyne.NewSize(10, 10))
+			colT.Move(fyne.NewPos(xMid1-5, yMid1-5))
+			objects = append(objects, colT)
+
+			// FeFET device (circle, between CSL and SL)
+			device := canvas.NewCircle(colorFeFET)
+			device.Resize(fyne.NewSize(12, 12))
+			device.Move(fyne.NewPos(xMid2-6, yMid2-6))
+			objects = append(objects, device)
+
+			// Connect all layers
+			for _, pts := range [][4]float32{
+				{xBot, yBot, xMid1, yMid1},
+				{xMid1, yMid1, xMid2, yMid2},
+				{xMid2, yMid2, xTop, yTop},
+			} {
+				conn := canvas.NewLine(colorFeFET)
+				conn.StrokeWidth = 2
+				conn.Position1 = fyne.NewPos(pts[0], pts[1])
+				conn.Position2 = fyne.NewPos(pts[2], pts[3])
+				objects = append(objects, conn)
+			}
+		}
+	}
+
+	// Legend
+	_, bottomY := toIso(float32(cols), float32(rows), 0)
+	legendY := bottomY + float32(40)
+	legendX := float32(20)
+
+	legendItems := []struct {
+		shape string
+		col   color.Color
+		label string
+	}{
+		{"rect", colorHighlight, "Row Transistor (gate on WL)"},
+		{"rect", colorT2, "Column Transistor (gate on CSL)"},
+		{"circle", colorFeFET, "FeFET Device (stores weight)"},
+		{"bar", colorCSL, "Column Select Lines (CSL)"},
+	}
+	for k, item := range legendItems {
+		y := legendY + float32(k)*18
+		switch item.shape {
+		case "rect":
+			box := canvas.NewRectangle(item.col)
+			box.Resize(fyne.NewSize(14, 14))
+			box.Move(fyne.NewPos(legendX+3, y))
+			objects = append(objects, box)
+		case "circle":
+			c := canvas.NewCircle(item.col)
+			c.Resize(fyne.NewSize(14, 14))
+			c.Move(fyne.NewPos(legendX+3, y))
+			objects = append(objects, c)
+		case "bar":
+			bar := canvas.NewRectangle(item.col)
+			bar.Resize(fyne.NewSize(20, 12))
+			bar.Move(fyne.NewPos(legendX, y+1))
+			objects = append(objects, bar)
+		}
+		txt := canvas.NewText(item.label, colorTextMuted)
+		txt.TextSize = 13
+		txt.Move(fyne.NewPos(legendX+28, y))
+		objects = append(objects, txt)
+	}
+
+	rightX, _ := toIso(float32(cols), 0, 3*layerGap)
+	totalWidth := rightX + float32(60)
+	totalHeight := legendY + float32(90)
+
+	cont := container.NewWithoutLayout(objects...)
+	cont.Resize(fyne.NewSize(totalWidth, totalHeight))
+	return cont
+}

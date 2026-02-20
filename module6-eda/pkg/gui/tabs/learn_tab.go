@@ -232,6 +232,14 @@ func makeCrossbarContent() fyne.CanvasObject {
 	// Similar to passive: ~450x400
 	oneToneRDiagramContainer := sizedContainer(Isometric1T1RCrossbar(3, 3), 450, 400)
 
+	twoT1RTitle := widget.NewLabelWithStyle("2T1R (2 Transistors + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	twoT1RDesc := widget.NewLabel(`Ports: WL[], CSL[], BL[], SL[], VPWR, VGND | Cell Size: ~1.38 x 4.07 µm (3x width)
++ ZERO sneak paths (both row AND column transistors isolate each cell)
++ Scales to 512x512+ arrays | - Highest area and routing complexity`)
+	twoT1RDesc.Wrapping = fyne.TextWrapWord
+
+	twoT1RDiagramContainer := sizedContainer(Isometric2T1RCrossbar(3, 3), 500, 460)
+
 	// Comparison table with enforced minimum size
 	// Table: colWidths sum to 480, 7 rows * 28 = 196, plus margins ~500x216
 	comparisonContainer := sizedContainer(CellComparisonTable(), 500, 220)
@@ -254,6 +262,8 @@ func makeCrossbarContent() fyne.CanvasObject {
 	spacer3.Resize(fyne.NewSize(1, 15))
 	spacer4 := widget.NewLabel("")
 	spacer4.Resize(fyne.NewSize(1, 15))
+	spacer5 := widget.NewLabel("")
+	spacer5.Resize(fyne.NewSize(1, 15))
 
 	return container.NewVBox(
 		title,
@@ -269,6 +279,11 @@ func makeCrossbarContent() fyne.CanvasObject {
 		spacer3,
 		oneToneRDiagramContainer,
 		spacer4,
+		widget.NewSeparator(),
+		twoT1RTitle,
+		twoT1RDesc,
+		spacer5,
+		twoT1RDiagramContainer,
 		widget.NewSeparator(),
 		comparisonContainer,
 		widget.NewSeparator(),
