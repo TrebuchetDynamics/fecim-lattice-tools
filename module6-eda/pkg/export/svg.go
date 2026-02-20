@@ -47,6 +47,7 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	var sb strings.Builder
 
 	is1T1R := cfg.Architecture == "1t1r"
+	is2T1R := cfg.Architecture == "2t1r"
 
 	// Calculate dimensions
 	arrayWidth := float64(cfg.Cols) * svgCfg.CellWidth
@@ -54,8 +55,8 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	totalWidth := arrayWidth + 2*svgCfg.Margin
 	totalHeight := arrayHeight + 2*svgCfg.Margin
 
-	// If 1T1R, add space for SL labels at bottom
-	if is1T1R {
+	// If 1T1R or 2T1R, add space for extra labels at bottom
+	if is1T1R || is2T1R {
 		totalHeight += 30
 	}
 
@@ -67,7 +68,10 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
       .cell { stroke: #0088cc; stroke-width: 1; }
       .cell-passive { fill: #1a3a4a; }
       .cell-1t1r { fill: #2a4a3a; }
+      .cell-2t1r { fill: #3a2a5a; }
       .cell-transistor { fill: #3a5a4a; }
+      .cell-transistor2 { fill: #6a5a2a; }
+      .wire-csl { stroke: #ff8800; stroke-width: 1.5; }
       .wire-wl { stroke: #ff6600; stroke-width: 2; }
       .wire-bl { stroke: #00cc66; stroke-width: 2; }
       .wire-sl { stroke: #cc66ff; stroke-width: 2; }
@@ -89,6 +93,8 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	archLabel := "Passive"
 	if is1T1R {
 		archLabel = "1T1R"
+	} else if is2T1R {
+		archLabel = "2T1R"
 	}
 	sb.WriteString(fmt.Sprintf(`  <!-- Title -->
   <text x="%.0f" y="25" class="title" text-anchor="middle">FeCIM %dx%d Crossbar (%s)</text>
@@ -169,11 +175,30 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 		sb.WriteString("\n")
 	}
 
+	// Draw Column Select Lines for 2T1R (horizontal, offset from WL)
+	if is2T1R {
+		sb.WriteString("  <!-- Column Select Lines (2T1R) -->\n")
+		for row := 0; row < cfg.Rows; row++ {
+			y := svgCfg.Margin + float64(row)*svgCfg.CellHeight + svgCfg.CellHeight/2 + 8
+			sb.WriteString(fmt.Sprintf(`  <line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="wire-csl" stroke-dasharray="4,2"/>
+`, svgCfg.Margin-20, y, svgCfg.Margin+arrayWidth, y))
+			sb.WriteString(fmt.Sprintf(`  <circle cx="%.1f" cy="%.1f" r="3" fill="#ff8800"/>
+`, svgCfg.Margin-20, y))
+			if svgCfg.ShowLabels {
+				sb.WriteString(fmt.Sprintf(`  <text x="%.1f" y="%.1f" class="label" text-anchor="end" fill="#ff8800">CSL[%d]</text>
+`, svgCfg.Margin-30, y+4, row))
+			}
+		}
+		sb.WriteString("\n")
+	}
+
 	// Draw cells
 	sb.WriteString("  <!-- Cells -->\n")
 	cellClass := "cell-passive"
 	if is1T1R {
 		cellClass = "cell-1t1r"
+	} else if is2T1R {
+		cellClass = "cell-2t1r"
 	}
 
 	for row := 0; row < cfg.Rows; row++ {
@@ -181,7 +206,24 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 			x := svgCfg.Margin + float64(col)*svgCfg.CellWidth
 			y := svgCfg.Margin + float64(row)*svgCfg.CellHeight
 
-			if is1T1R {
+			if is2T1R {
+				// 2T1R cell: row transistor + column transistor + FeFET stack
+				thirdH := (svgCfg.CellHeight - 14) / 3
+				// Row transistor (top third, green)
+				sb.WriteString(fmt.Sprintf(`  <rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" class="cell cell-transistor" rx="2"/>
+`, x+4, y+4, svgCfg.CellWidth-8, thirdH))
+				// Column transistor (middle third, amber)
+				sb.WriteString(fmt.Sprintf(`  <rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" class="cell cell-transistor2" rx="2"/>
+`, x+4, y+4+thirdH+2, svgCfg.CellWidth-8, thirdH))
+				// FeFET (bottom third, purple)
+				sb.WriteString(fmt.Sprintf(`  <rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" class="cell %s" rx="2"/>
+`, x+4, y+4+2*thirdH+4, svgCfg.CellWidth-8, thirdH, cellClass))
+				cx := x + svgCfg.CellWidth/2
+				sb.WriteString(fmt.Sprintf(`  <line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#00ccff" stroke-width="1.5"/>
+`, cx, y+4+thirdH, cx, y+4+thirdH+2))
+				sb.WriteString(fmt.Sprintf(`  <line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#00ccff" stroke-width="1.5"/>
+`, cx, y+4+2*thirdH+2, cx, y+4+2*thirdH+4))
+			} else if is1T1R {
 				// 1T1R cell: transistor + FeFET stack
 				// Transistor (top half)
 				sb.WriteString(fmt.Sprintf(`  <rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" class="cell cell-transistor" rx="2"/>
@@ -212,7 +254,7 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 
 	// Legend
 	legendY := totalHeight - 20
-	if is1T1R {
+	if is1T1R || is2T1R {
 		legendY = totalHeight - 35
 	}
 	sb.WriteString(fmt.Sprintf(`  <!-- Legend -->
@@ -226,6 +268,11 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	if is1T1R {
 		sb.WriteString(`    <line x1="200" y1="0" x2="220" y2="0" class="wire-sl" stroke-dasharray="4,2"/>
     <text x="225" y="4" class="label-small">SL (Source Line)</text>
+`)
+	}
+	if is2T1R {
+		sb.WriteString(`    <line x1="200" y1="0" x2="220" y2="0" class="wire-csl" stroke-dasharray="4,2"/>
+    <text x="225" y="4" class="label-small" fill="#ff8800">CSL (Col Select)</text>
 `)
 	}
 	sb.WriteString("  </g>\n\n")

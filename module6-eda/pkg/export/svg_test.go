@@ -520,6 +520,114 @@ func TestGenerateLayoutSVG_RectangularArray(t *testing.T) {
 }
 
 // ============================================================================
+// GenerateLayoutSVG Tests - 2T1R Architecture
+// ============================================================================
+
+func TestGenerateLayoutSVG_2T1RTitle(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 4
+	arrayCfg.Cols = 4
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	if !strings.Contains(svg, "FeCIM 4x4 Crossbar (2T1R)") {
+		t.Error("Missing or incorrect 2T1R title")
+	}
+}
+
+func TestGenerateLayoutSVG_2T1RCSLLines(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 4
+	arrayCfg.Cols = 4
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	// 2T1R should have CSL wires
+	if !strings.Contains(svg, "class=\"wire-csl\"") {
+		t.Error("2T1R architecture should have CSL wire class")
+	}
+	// CSL labels
+	for i := 0; i < 4; i++ {
+		if !strings.Contains(svg, "CSL["+itoa(i)+"]") {
+			t.Errorf("Missing CSL[%d] label", i)
+		}
+	}
+}
+
+func TestGenerateLayoutSVG_2T1RNoSLLines(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 4
+	arrayCfg.Cols = 4
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	// 2T1R should NOT have standalone SL[] labels (CSL[] is used instead).
+	// Note: "CSL[" contains "SL[" as substring so we check for ">SL[" to match text nodes.
+	if strings.Contains(svg, ">SL[") {
+		t.Error("2T1R architecture should not have SL[] text labels")
+	}
+	if strings.Contains(svg, "class=\"wire-sl\"") {
+		t.Error("2T1R architecture should not have wire-sl elements")
+	}
+}
+
+func TestGenerateLayoutSVG_2T1RCells(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 2
+	arrayCfg.Cols = 2
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	// 2T1R cells should have both transistor classes
+	if !strings.Contains(svg, "cell-2t1r") {
+		t.Error("Missing cell-2t1r class")
+	}
+	if !strings.Contains(svg, "cell-transistor") {
+		t.Error("Missing cell-transistor (row transistor) in 2T1R cell")
+	}
+	if !strings.Contains(svg, "cell-transistor2") {
+		t.Error("Missing cell-transistor2 (column transistor) in 2T1R cell")
+	}
+}
+
+func TestGenerateLayoutSVG_2T1RLegend(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 4
+	arrayCfg.Cols = 4
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	if !strings.Contains(svg, "CSL (Col Select)") {
+		t.Error("2T1R legend missing CSL description")
+	}
+	// Should NOT show SL in legend
+	if strings.Contains(svg, "SL (Source Line)") {
+		t.Error("2T1R legend should not contain SL description")
+	}
+}
+
+func TestGenerateLayoutSVG_2T1RStyleCSS(t *testing.T) {
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 2
+	arrayCfg.Cols = 2
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	// CSS classes for 2T1R should be defined in all SVGs (in the style block)
+	if !strings.Contains(svg, ".cell-2t1r") {
+		t.Error("Missing .cell-2t1r CSS class definition")
+	}
+	if !strings.Contains(svg, ".wire-csl") {
+		t.Error("Missing .wire-csl CSS class definition")
+	}
+}
+
+// ============================================================================
 // Benchmarks
 // ============================================================================
 

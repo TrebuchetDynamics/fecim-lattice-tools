@@ -185,9 +185,11 @@ func buildLayerSummary(svg string, f layerFilter, cfg *config.ArrayConfig) strin
 	if f.Cells {
 		passive := strings.Count(svg, "class=\"cell-passive\"")
 		t1r := strings.Count(svg, "class=\"cell-1t1r\"")
-		xistors := strings.Count(svg, "class=\"cell-transistor\"")
+		t2r := strings.Count(svg, "class=\"cell-2t1r\"")
+		xistors := strings.Count(svg, "class=\"cell-transistor\"") + strings.Count(svg, "class=\"cell-transistor2\"")
 		sb.WriteString(fmt.Sprintf("  Passive cells:          %d\n", passive))
 		sb.WriteString(fmt.Sprintf("  1T1R cells:             %d\n", t1r))
+		sb.WriteString(fmt.Sprintf("  2T1R cells:             %d\n", t2r))
 		sb.WriteString(fmt.Sprintf("  Transistor visuals:     %d\n", xistors))
 	}
 	if f.Grid {

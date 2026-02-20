@@ -1216,9 +1216,9 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 ## Files
 
 ### Cell library
-- cells/fecim_bitcell.lef  — abstract view (geometry, pin locations)
-- cells/fecim_bitcell.lib  — Liberty timing/power model
-- cells/fecim_bitcell.v    — behavioral Verilog (Yosys blackbox)
+- cells/%s.lef  — abstract view (geometry, pin locations)
+- cells/%s.lib  — Liberty timing/power model
+- cells/%s.v    — behavioral Verilog (Yosys blackbox)
 
 ### Design files
 - %s.v          — structural array Verilog netlist
@@ -1263,6 +1263,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 - See design_summary.txt for detailed physical and electrical parameters.
 `, designName, time.Now().Format("2006-01-02"),
 				cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture, cfg.Technology,
+				exportCellName, exportCellName, exportCellName,
 				designName, designName, designName, outputDir)
 			if err := os.WriteFile(outputDir+"/README.md", []byte(readme), 0644); err != nil {
 				addLog("ERROR: Failed to write README: " + err.Error())
