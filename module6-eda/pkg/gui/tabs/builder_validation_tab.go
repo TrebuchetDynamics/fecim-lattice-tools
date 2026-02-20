@@ -298,8 +298,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	updateYosysImage()
 	updateOpenROADImage()
 
-	// Keep widgets import used
-	_ = widgets.NewLayoutCanvas
+	// Go-rendered layout canvas — live preview that mirrors the current cfg.
+	layoutCanvas := widgets.NewLayoutCanvas(cfg)
 
 	// isDefaultCellName reports whether name is one of the three per-architecture default
 	// cell names. When true, switching architecture auto-updates the name entry.
@@ -350,6 +350,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		heightEntry.SetText("2.720")
 		updateArchButtons()
 		updateLayoutImage()
+		layoutCanvas.Refresh()
 	}
 
 	arch1T1RBtn.OnTapped = func() {
@@ -366,6 +367,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()
+		layoutCanvas.Refresh()
 	}
 
 	arch2T1RBtn.OnTapped = func() {
@@ -382,6 +384,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()
+		layoutCanvas.Refresh()
 	}
 
 	// Architecture toggle container (3 buttons for passive, 1T1R, 2T1R)
@@ -794,6 +797,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			defContent := generateBuilderDEF(*cfg)
 			sharedwidgets.SafeDo(func() {
 				defPreview.SetText(defContent)
+				layoutCanvas.Refresh()
 			})
 
 			defFilename := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
@@ -1431,6 +1435,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		container.NewTabItem("Verilog", verilogTab),
 		container.NewTabItem("DEF", defTab),
 		container.NewTabItem("Layout", layoutTab),
+		container.NewTabItem("Go Layout", container.NewScroll(layoutCanvas)),
 		container.NewTabItem("Array Map", MakeConductanceHeatmapPanel(cfg)),
 	)
 	previewTabs.SetTabLocation(container.TabLocationTop)
