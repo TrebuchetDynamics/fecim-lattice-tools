@@ -198,6 +198,16 @@ func (a *App) simulationLoop() {
 				// If E-field is near Ec, use smaller steps to capture switching dynamics.
 
 				currentStep := dtNominal
+				// Prevent aliasing for periodic waveforms: dtNominal (0.1 ms) can equal an
+				// integer multiple of the waveform period (e.g. at 1 MHz, T=1 µs,
+				// so every step samples phase 200πn ≡ 0 → E≈0 always).
+				// Cap dt to 1/(50·frequency) to guarantee ≥50 simulation points per cycle.
+				if (a.waveform == WaveformSine || a.waveform == WaveformTriangle) && a.frequency > 0 {
+					waveformDt := 1.0 / (50.0 * a.frequency)
+					if waveformDt < currentStep && waveformDt >= dtMin {
+						currentStep = waveformDt
+					}
+				}
 				// Check proximity to Ec (switching region)
 				// Switching happens at +Ec (increasing) and -Ec (decreasing)
 				// But effective Ec varies. Use material Ec as baseline proxy.
