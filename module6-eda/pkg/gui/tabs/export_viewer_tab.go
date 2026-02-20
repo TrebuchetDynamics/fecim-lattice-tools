@@ -59,11 +59,18 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canva
 		dlg.Show()
 	})
 
+	copyBtn := widget.NewButton("Copy", func() {
+		if window != nil {
+			window.Clipboard().SetContent(preview.Text)
+		}
+	})
+
 	header := container.NewHBox(
 		widget.NewLabel("Format:"),
 		formatSelect,
 		refreshBtn,
 		saveBtn,
+		copyBtn,
 		widget.NewSeparator(),
 		status,
 	)

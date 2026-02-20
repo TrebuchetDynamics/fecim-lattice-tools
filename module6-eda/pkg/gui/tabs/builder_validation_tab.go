@@ -364,6 +364,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	blLengthLabel := widget.NewLabel(fmt.Sprintf("BL Length: %.2f µm", float64(cfg.Rows)*cfg.CellHeight))
 	densityLabel := widget.NewLabel(fmt.Sprintf("Density: %.2f cells/µm²", 0.0))
 	utilizationLabel := widget.NewLabel(fmt.Sprintf("Utilization: %.1f%%", 0.0))
+	archRecommLabel := widget.NewLabel("")
 
 	// Update statistics function
 	updateStats := func() {
@@ -426,6 +427,30 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			densityLabel.SetText(fmt.Sprintf("Density: %.4f cells/µm²", density))
 			utilizationLabel.SetText(fmt.Sprintf("Utilization: %.1f%%", utilization))
 			cellAreaLabel.SetText(fmt.Sprintf("Cell Area: %.4f µm²", cellW*cellH))
+
+			// Architecture recommendation based on array size
+			switch cfg.Architecture {
+			case "passive":
+				if rows > 32 || cols > 32 {
+					archRecommLabel.SetText("⚠ >32×32: switch to 1T1R or 2T1R")
+				} else if rows > 16 || cols > 16 {
+					archRecommLabel.SetText("⚠ >16×16: consider 1T1R")
+				} else {
+					archRecommLabel.SetText("✓ Good fit for passive")
+				}
+			case "1t1r":
+				if rows > 128 || cols > 128 {
+					archRecommLabel.SetText("⚠ >128×128: consider 2T1R")
+				} else {
+					archRecommLabel.SetText("✓ Good fit for 1T1R")
+				}
+			case "2t1r":
+				if rows > 512 || cols > 512 {
+					archRecommLabel.SetText("⚠ >512×512: beyond 2T1R limit")
+				} else {
+					archRecommLabel.SetText("✓ Good fit for 2T1R")
+				}
+			}
 		})
 	}
 
@@ -1320,6 +1345,8 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		utilizationLabel,
 		widget.NewLabel("|"),
 		densityLabel,
+		widget.NewLabel("|"),
+		archRecommLabel,
 	)
 	statsRow := container.NewVBox(statsRow1, statsRow2)
 
@@ -1545,6 +1572,9 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		validationSection,
 	)
 	mainSplit.SetOffset(0.55) // 55% preview tabs, 45% validation section
+
+	// Populate archRecommLabel with initial value based on cfg defaults.
+	updateStats()
 
 	// Main layout: fixed top section, resizable middle/bottom
 	mainContent := container.NewBorder(
