@@ -14,7 +14,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE"}
+var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -92,6 +92,8 @@ func formatExtension(format string) string {
 		return ".txt"
 	case "SPICE":
 		return ".sp"
+	case "Array Statistics":
+		return ".txt"
 	default:
 		return ".txt"
 	}
@@ -227,7 +229,134 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 		}
 		return preview, "generated (subcircuit preview)"
 
+	case "Array Statistics":
+		return generateArrayStatistics(cfg), "generated (in-memory)"
+
 	default:
 		return "", "unknown format"
 	}
+}
+
+// generateArrayStatistics produces a concise complexity and feasibility report
+// for the configured crossbar array. Values are computed from config only (no simulation).
+func generateArrayStatistics(cfg *config.ArrayConfig) string {
+	const quantLevels = 30
+	const bitsPerLevel = 4 // ≈ log2(30) ≈ 4.9, rounded for display
+
+	rows, cols := cfg.Rows, cfg.Cols
+	if rows <= 0 {
+		rows = 1
+	}
+	if cols <= 0 {
+		cols = 1
+	}
+	totalCells := rows * cols
+	dieW := float64(cols) * cfg.CellWidth
+	dieH := float64(rows) * cfg.CellHeight
+	dieArea := dieW * dieH
+
+	// Memory capacity in bits and bytes.
+	capacityBits := int64(totalCells) * bitsPerLevel
+	capacityKB := float64(capacityBits) / 8 / 1024
+
+	// Sneak path risk: passive crossbars scale as N² paths per write.
+	// 1T1R eliminates row sneak, 2T1R eliminates both.
+	sneakRisk := ""
+	switch cfg.Architecture {
+	case "passive":
+		pathsPerWrite := rows * cols
+		if pathsPerWrite > 32*32 { // > recommended passive limit (32×32)
+			sneakRisk = fmt.Sprintf("HIGH (%d×%d = %d sneak paths per write — use 1T1R or 2T1R)", rows, cols, pathsPerWrite)
+		} else if pathsPerWrite > 16*16 {
+			sneakRisk = fmt.Sprintf("MODERATE (%d paths per write — consider 1T1R)", pathsPerWrite)
+		} else {
+			sneakRisk = fmt.Sprintf("LOW (%d paths per write — acceptable for passive)", pathsPerWrite)
+		}
+	case "1t1r":
+		sneakRisk = fmt.Sprintf("ROW-ONLY (%d paths suppressed by row transistors)", rows)
+	case "2t1r":
+		sneakRisk = "NONE (both row and column transistors isolate cells)"
+	default:
+		sneakRisk = "Unknown"
+	}
+
+	// Word line and bit line wire resistance (rough estimate: sky130 M1 ~0.04 Ω/µm).
+	const metalRes = 0.04 // Ω/µm
+	wlRes := float64(cols) * cfg.CellWidth * metalRes
+	blRes := float64(rows) * cfg.CellHeight * metalRes
+
+	// Recommended maximum array size per architecture.
+	recMax := ""
+	switch cfg.Architecture {
+	case "passive":
+		recMax = "≤32×32 (sneak path limited)"
+		if rows > 32 || cols > 32 {
+			recMax = "⚠ EXCEEDS recommended 32×32 for passive — sneak paths likely dominant"
+		}
+	case "1t1r":
+		recMax = "≤128×128 (row transistor isolates sneak paths)"
+		if rows > 128 || cols > 128 {
+			recMax = "⚠ EXCEEDS recommended 128×128 for 1T1R"
+		}
+	case "2t1r":
+		recMax = "≤512×512 (dual transistors provide full isolation)"
+		if rows > 512 || cols > 512 {
+			recMax = "⚠ EXCEEDS recommended 512×512 for 2T1R"
+		}
+	}
+
+	out := fmt.Sprintf(`Array Statistics Report
+═══════════════════════════════════════════════════════
+
+CONFIGURATION
+  Architecture:   %s
+  Mode:           %s
+  Technology:     %s
+  Array size:     %d rows × %d columns
+  Cell size:      %.3f µm × %.3f µm
+
+PHYSICAL DIMENSIONS
+  Die width:      %.2f µm
+  Die height:     %.2f µm
+  Die area:       %.4f µm²  (%.6f mm²)
+  WL length:      %.2f µm  (R_sheet ≈ %.2f Ω)
+  BL length:      %.2f µm  (R_sheet ≈ %.2f Ω)
+
+CAPACITY
+  Total cells:    %d
+  States/cell:    %d (%d bits/cell)
+  Capacity:       %d bits  (%.2f KB)
+
+SNEAK PATH RISK
+  Assessment:     %s
+
+SCALABILITY
+  Recommended:    %s
+
+NOTES
+  • Cell resistance, WL/BL RC delay, and IR-drop require SPICE simulation.
+  • Liberty timing values in this tool are placeholders — not from SPICE char.
+  • Capacity estimate uses log2(%d) ≈ %d bits/cell; actual encoding may vary.
+  • Sneak path risk is a rough structural estimate; actual impact depends on
+    on/off ratio (ION/IOFF) of the FeFET device.
+`,
+		cfg.Architecture, cfg.Mode, func() string {
+			if cfg.Technology == "" {
+				return "sky130"
+			}
+			return cfg.Technology
+		}(),
+		rows, cols,
+		cfg.CellWidth, cfg.CellHeight,
+		dieW, dieH,
+		dieArea, dieArea/1e6,
+		float64(cols)*cfg.CellWidth, wlRes,
+		float64(rows)*cfg.CellHeight, blRes,
+		totalCells, quantLevels, bitsPerLevel,
+		capacityBits, capacityKB,
+		sneakRisk,
+		recMax,
+		quantLevels, bitsPerLevel,
+	)
+	return out
 }

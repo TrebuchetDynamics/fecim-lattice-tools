@@ -1031,6 +1031,45 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 			outputDir := fmt.Sprintf("data/%s", designName)
 			logging.GlobalInfo("[EDA-Builder] Export Package started to: %s", outputDir)
+
+			// === PRE-EXPORT CHECKLIST ===
+			// Warn about missing source files so the user knows what will be regenerated.
+			addLog("=== Pre-Export Checklist ===")
+			var preCheckCellDir, preCheckCellFile string
+			switch cfg.Architecture {
+			case "1t1r":
+				preCheckCellDir = "cells/fecim_1t1r_bitcell"
+				preCheckCellFile = "fecim_1t1r_bitcell"
+			case "2t1r":
+				preCheckCellDir = "cells/fecim_2t1r_bitcell"
+				preCheckCellFile = "fecim_2t1r_bitcell"
+			default:
+				preCheckCellDir = "cells/fecim_bitcell"
+				preCheckCellFile = "fecim_bitcell"
+			}
+			type checkEntry struct{ label, path string }
+			preChecks := []checkEntry{
+				{"Array Verilog", fmt.Sprintf("data/%s.v", designName)},
+				{"Array DEF", fmt.Sprintf("data/%s.def", designName)},
+				{"Cell LEF", preCheckCellDir + "/" + preCheckCellFile + ".lef"},
+				{"Cell Liberty", preCheckCellDir + "/" + preCheckCellFile + ".lib"},
+			}
+			missingCount := 0
+			for _, f := range preChecks {
+				if fileExists(f.path) {
+					addLog("  \u2713 " + f.label + ": " + f.path)
+				} else {
+					addLog("  \u26a0 " + f.label + " missing — will be regenerated: " + f.path)
+					missingCount++
+				}
+			}
+			if missingCount > 0 {
+				addLog(fmt.Sprintf("  %d file(s) missing; run Generate All first for best results.", missingCount))
+			} else {
+				addLog("  All source files present.")
+			}
+			addLog("")
+
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + outputDir + ": " + err.Error())
 				sharedwidgets.SafeDo(func() {

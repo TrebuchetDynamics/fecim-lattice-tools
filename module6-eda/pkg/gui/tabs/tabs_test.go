@@ -889,3 +889,77 @@ func TestNewConductanceHistogram(t *testing.T) {
 		t.Fatal("newConductanceHistogram(8×8 random): returned nil")
 	}
 }
+
+// =============================================================================
+// Array Statistics + Export Viewer Tests
+// =============================================================================
+
+func TestGenerateArrayStatistics_PassiveSmall(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows:         8,
+		Cols:         8,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+	stats := generateArrayStatistics(cfg)
+	if stats == "" {
+		t.Fatal("generateArrayStatistics returned empty string")
+	}
+	for _, want := range []string{"passive", "8 rows × 8 columns", "LOW", "Total cells:    64"} {
+		if !findSubstring(stats, want) {
+			t.Errorf("expected %q in stats output", want)
+		}
+	}
+}
+
+func TestGenerateArrayStatistics_PassiveLarge(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 64, Cols: 64, Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72,
+	}
+	stats := generateArrayStatistics(cfg)
+	if !findSubstring(stats, "HIGH") {
+		t.Error("64×64 passive array should report HIGH sneak path risk")
+	}
+	if !findSubstring(stats, "EXCEEDS") {
+		t.Error("64×64 passive should warn about exceeding recommended size")
+	}
+}
+
+func TestGenerateArrayStatistics_1T1R(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 32, Cols: 32, Architecture: "1t1r", CellWidth: 0.46, CellHeight: 4.07,
+	}
+	stats := generateArrayStatistics(cfg)
+	if !findSubstring(stats, "ROW-ONLY") {
+		t.Error("1T1R should report ROW-ONLY sneak path suppression")
+	}
+}
+
+func TestGenerateArrayStatistics_2T1R(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 64, Cols: 64, Architecture: "2t1r", CellWidth: 0.92, CellHeight: 4.07,
+	}
+	stats := generateArrayStatistics(cfg)
+	if !findSubstring(stats, "NONE") {
+		t.Error("2T1R should report NONE sneak path risk")
+	}
+}
+
+func TestExportViewerArrayStatisticsFormat(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 4, Cols: 4, Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",
+	}
+	content, source := loadExportPreviewContent("Array Statistics", cfg)
+	if content == "" {
+		t.Fatal("Array Statistics format returned empty content")
+	}
+	if source != "generated (in-memory)" {
+		t.Errorf("unexpected source: %s", source)
+	}
+	if !findSubstring(content, "Total cells:    16") {
+		t.Error("expected cell count in Array Statistics output")
+	}
+}
