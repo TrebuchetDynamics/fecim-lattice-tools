@@ -573,6 +573,10 @@ func TestExportViewerNewFormats(t *testing.T) {
 		{"Config (JSON)", ".json", "DESIGN_NAME"},
 		{"SDC", ".sdc", "set_input_delay"},
 		{"Design Summary", ".txt", "Physical"},
+		// DEF now generates in-memory via GenerateLatticeDEF
+		{"DEF", ".def", "DESIGN"},
+		// SPICE now generates a subcircuit preview
+		{"SPICE", ".sp", "FeCIM"},
 	}
 
 	for _, tc := range cases {
@@ -594,6 +598,62 @@ func TestExportViewerNewFormats(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExportViewerArchitectureAware(t *testing.T) {
+	baseCfg := config.ArrayConfig{
+		Rows: 4, Cols: 4, Mode: "storage",
+		Technology: "sky130", CellWidth: 0.46, CellHeight: 2.72,
+	}
+
+	t.Run("passive_LEF_uses_passive_cell_name", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "passive"
+		lef, _ := loadExportPreviewContent("LEF", &cfg)
+		if !containsString(lef, "fecim_bitcell") {
+			t.Error("passive LEF should contain fecim_bitcell")
+		}
+	})
+
+	t.Run("1t1r_LEF_uses_1t1r_cell_name", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "1t1r"
+		cfg.CellHeight = 3.40
+		lef, _ := loadExportPreviewContent("LEF", &cfg)
+		if !containsString(lef, "fecim_1t1r_bitcell") {
+			t.Error("1T1R LEF should contain fecim_1t1r_bitcell")
+		}
+	})
+
+	t.Run("1t1r_SPICE_includes_1t1r_subcircuit", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "1t1r"
+		spice, _ := loadExportPreviewContent("SPICE", &cfg)
+		if !containsString(spice, "fefet_1t1r") {
+			t.Error("1T1R SPICE preview should contain fefet_1t1r subcircuit")
+		}
+	})
+
+	t.Run("2t1r_SPICE_includes_2t1r_subcircuit", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "2t1r"
+		spice, _ := loadExportPreviewContent("SPICE", &cfg)
+		if !containsString(spice, "fefet_2t1r") {
+			t.Error("2T1R SPICE preview should contain fefet_2t1r subcircuit")
+		}
+	})
+
+	t.Run("DEF_generates_in_memory", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "passive"
+		def, source := loadExportPreviewContent("DEF", &cfg)
+		if !containsString(def, "DESIGN") {
+			t.Error("in-memory DEF should contain DESIGN keyword")
+		}
+		if !containsString(source, "in-memory") {
+			t.Errorf("DEF source should be in-memory, got %q", source)
+		}
+	})
 }
 
 func TestFileExists(t *testing.T) {

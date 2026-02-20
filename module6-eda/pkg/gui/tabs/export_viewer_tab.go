@@ -102,8 +102,21 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 	if tech == "" {
 		tech = "sky130"
 	}
+
+	// Derive cell name and directory from architecture so LEF/Liberty reflect the correct cell type.
+	cellName := "fecim_bitcell"
+	cellDir := "fecim_bitcell"
+	switch cfg.Architecture {
+	case "1t1r":
+		cellName = "fecim_1t1r_bitcell"
+		cellDir = "fecim_1t1r_bitcell"
+	case "2t1r":
+		cellName = "fecim_2t1r_bitcell"
+		cellDir = "fecim_2t1r_bitcell"
+	}
+
 	cellCfg := config.CellConfig{
-		Name:         "fecim_bitcell",
+		Name:         cellName,
 		Width:        cfg.CellWidth,
 		Height:       cfg.CellHeight,
 		CellType:     cfg.Architecture,
@@ -127,35 +140,35 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 
 	switch format {
 	case "LEF":
-		paths := []string{
-			filepath.Join("cells", "fecim_bitcell", "fecim_bitcell.lef"),
-			filepath.Join("cells", "fecim_1t1r_bitcell", "fecim_1t1r_bitcell.lef"),
-			filepath.Join("cells", "fecim_2t1r_bitcell", "fecim_2t1r_bitcell.lef"),
+		// Try the architecture-specific cell file first.
+		archLEF := filepath.Join("cells", cellDir, cellName+".lef")
+		if s, ok := tryRead(archLEF); ok {
+			return s, archLEF
 		}
-		for _, p := range paths {
-			if s, ok := tryRead(p); ok {
-				return s, p
-			}
+		// Fall back to the appropriate in-memory generator for the architecture.
+		switch cfg.Architecture {
+		case "1t1r":
+			return export.Generate1T1RLEF(cellCfg), "generated (in-memory)"
+		case "2t1r":
+			return export.Generate2T1RLEF(cellCfg), "generated (in-memory)"
+		default:
+			return export.GenerateLEF(cellCfg), "generated (in-memory)"
 		}
-		return export.GenerateLEF(cellCfg), "generated (in-memory)"
+
 	case "Liberty":
-		paths := []string{
-			filepath.Join("cells", "fecim_bitcell", "fecim_bitcell.lib"),
-			filepath.Join("cells", "fecim_1t1r_bitcell", "fecim_1t1r_bitcell.lib"),
-			filepath.Join("cells", "fecim_2t1r_bitcell", "fecim_2t1r_bitcell.lib"),
-		}
-		for _, p := range paths {
-			if s, ok := tryRead(p); ok {
-				return s, p
-			}
+		archLib := filepath.Join("cells", cellDir, cellName+".lib")
+		if s, ok := tryRead(archLib); ok {
+			return s, archLib
 		}
 		return export.GenerateLiberty(cellCfg), "generated (in-memory)"
+
 	case "Verilog":
 		p := filepath.Join(dataDir, design+".v")
 		if s, ok := tryRead(p); ok {
 			return s, p
 		}
 		return export.GenerateArrayVerilog(*cfg), "generated (in-memory)"
+
 	case "DEF":
 		paths := []string{
 			filepath.Join(dataDir, design+".def"),
@@ -166,22 +179,27 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 				return s, p
 			}
 		}
-		return "# DEF requires array compilation.\n# Generate via CLI:\n#   fecim-lattice-tools eda cli --def\n", "(not generated)"
+		// Generate structural DEF in-memory (no compiled design required).
+		return export.GenerateLatticeDEF(cfg.Rows, cfg.Cols), "generated (in-memory)"
+
 	case "Config (JSON)":
 		if s, ok := tryRead(filepath.Join(dataDir, "config.json")); ok {
 			return s, filepath.Join(dataDir, "config.json")
 		}
 		return export.GenerateLibreLaneConfig(*cfg), "generated (in-memory)"
+
 	case "SDC":
 		if s, ok := tryRead(filepath.Join(dataDir, "constraints.sdc")); ok {
 			return s, filepath.Join(dataDir, "constraints.sdc")
 		}
 		return export.GenerateSDC(*cfg), "generated (in-memory)"
+
 	case "Design Summary":
 		if s, ok := tryRead(filepath.Join(dataDir, "design_summary.txt")); ok {
 			return s, filepath.Join(dataDir, "design_summary.txt")
 		}
 		return export.GenerateDesignSummary(*cfg), "generated (in-memory)"
+
 	case "SPICE":
 		paths := []string{
 			filepath.Join(dataDir, design+".sp"),
@@ -192,7 +210,23 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 				return s, p
 			}
 		}
-		return "* SPICE export not found on disk\n* Expected: data/" + design + ".sp\n* CLI export supports SPICE output.", "not found"
+		// Generate a subcircuit preview: FeFET definition + architecture-specific bitcell.
+		mat := export.DefaultHzoFeFETMaterial()
+		preview := fmt.Sprintf(
+			"* FeCIM Array SPICE Subcircuit Preview\n"+
+				"* Array: %dx%d  Architecture: %s  Technology: %s\n"+
+				"* NOTE: This shows cell subcircuit definitions only.\n"+
+				"*       Full array netlist: use CLI with --spice flag.\n\n",
+			cfg.Rows, cfg.Cols, cfg.Architecture, tech)
+		preview += export.GenerateFeFETSubcircuit(mat)
+		switch cfg.Architecture {
+		case "1t1r":
+			preview += export.Generate1T1RSubcircuit()
+		case "2t1r":
+			preview += export.Generate2T1RSubcircuit()
+		}
+		return preview, "generated (subcircuit preview)"
+
 	default:
 		return "", "unknown format"
 	}
