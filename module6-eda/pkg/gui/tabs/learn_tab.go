@@ -233,8 +233,8 @@ func makeCrossbarContent() fyne.CanvasObject {
 	oneToneRDiagramContainer := sizedContainer(Isometric1T1RCrossbar(3, 3), 450, 400)
 
 	// Comparison table with enforced minimum size
-	// Table: colWidths sum to 440, 7 rows * 28 = 196, plus margins ~460x216
-	comparisonContainer := sizedContainer(CellComparisonTable(), 460, 220)
+	// Table: colWidths sum to 480, 7 rows * 28 = 196, plus margins ~500x216
+	comparisonContainer := sizedContainer(CellComparisonTable(), 500, 220)
 
 	// Sneak path explanation (clean prose, no ASCII)
 	sneakPathTitle := widget.NewLabelWithStyle("The Sneak Path Problem", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -243,7 +243,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 
 	// Recommendation card
 	recommendationCard := widget.NewCard("", "RECOMMENDATION",
-		widget.NewLabel("<= 16x16: Passive | 32x32: Either (depends on accuracy needs) | >= 64x64: 1T1R required"))
+		widget.NewLabel("≤16×16: Passive | 32×32: Either | ≥64×64: 1T1R | ≥256×256: 2T1R (row + column isolation)"))
 
 	// Add spacers for better vertical separation
 	spacer1 := widget.NewLabel("")
