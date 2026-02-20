@@ -124,7 +124,7 @@ func GenerateOpenSTAScript(cfg config.ArrayConfig) string {
 read_liberty cells/%s/%s.lib
 
 # ── Read netlist ──────────────────────────────────────────────────────────────
-read_verilog output/%s.v
+read_verilog %s.v
 link_design fecim_crossbar
 
 # ── Read constraints ──────────────────────────────────────────────────────────

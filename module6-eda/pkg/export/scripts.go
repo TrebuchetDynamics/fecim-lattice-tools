@@ -73,7 +73,7 @@ func GenerateSynthesisScript(cfg config.ArrayConfig) string {
 read_verilog -lib cells/%s/%s.v
 
 # ── Step 2: Read structural array netlist ────────────────────────────────────
-read_verilog output/%s.v
+read_verilog %s.v
 
 # ── Step 3: Hierarchy check ──────────────────────────────────────────────────
 # -check: assert all modules are defined
@@ -143,7 +143,7 @@ func GenerateKLayoutGDSScript(cfg config.ArrayConfig) string {
 # Usage:
 #   klayout -z -r gen_gds.py \
 #     -rd lef_file=cells/%s/%s.lef \
-#     -rd def_file=output/%s.def \
+#     -rd def_file=%s.def \
 #     -rd out_file=cells/%s/%s.gds
 #
 #   Or with Docker (OpenLane image contains klayout + pya):
@@ -151,7 +151,7 @@ func GenerateKLayoutGDSScript(cfg config.ArrayConfig) string {
 #     ghcr.io/the-openroad-project/openlane:latest \
 #     klayout -z -r gen_gds.py \
 #       -rd lef_file=cells/%s/%s.lef \
-#       -rd def_file=output/%s.def \
+#       -rd def_file=%s.def \
 #       -rd out_file=cells/%s/%s.gds
 
 import os
@@ -179,7 +179,7 @@ except ImportError:
 # KLayout passes -rd NAME=VALUE as module-level variables.
 # Default values are provided for standalone testing.
 _lef_file = getattr(pya, 'lef_file', None) or lef_file if 'lef_file' in dir() else "cells/%s/%s.lef"
-_def_file = getattr(pya, 'def_file', None) or def_file if 'def_file' in dir() else "output/%s.def"
+_def_file = getattr(pya, 'def_file', None) or def_file if 'def_file' in dir() else "%s.def"
 _out_file = getattr(pya, 'out_file', None) or out_file if 'out_file' in dir() else "cells/%s/%s.gds"
 
 print(f"KLayout GDS generator")
@@ -267,7 +267,7 @@ func GenerateOpenROADFlowScript(cfg config.ArrayConfig) string {
 #
 # Environment variables (set via -rd or export before running):
 #   CELL_LEF  — path to FeCIM bitcell LEF (default: cells/%s/%s.lef)
-#   DEF_FILE  — path to pre-placed DEF (default: output/%s.def)
+#   DEF_FILE  — path to pre-placed DEF (default: %s.def)
 #
 # What this script does:
 #   1. Read custom FeCIM cell LEF (no PDK needed for array-only check)
@@ -278,7 +278,7 @@ func GenerateOpenROADFlowScript(cfg config.ArrayConfig) string {
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 set cell_lef  [expr {[info exists ::env(CELL_LEF)] ? $::env(CELL_LEF) : "cells/%s/%s.lef"}]
-set def_file  [expr {[info exists ::env(DEF_FILE)]  ? $::env(DEF_FILE)  : "output/%s.def"}]
+set def_file  [expr {[info exists ::env(DEF_FILE)]  ? $::env(DEF_FILE)  : "%s.def"}]
 set out_dir   [expr {[info exists ::env(OUT_DIR)]   ? $::env(OUT_DIR)   : "output/openroad"}]
 
 puts "OpenROAD FeCIM Flow"
@@ -395,7 +395,6 @@ func GenerateFlowRunner(cfg config.ArrayConfig) string {
 set -e
 DESIGN="%s"
 CELL="%s"
-OUTPUT="output"
 CELLS_DIR="cells/${CELL}"
 
 echo "==================================================="
@@ -406,7 +405,7 @@ echo ""
 # ── Step 1: Yosys hierarchy check ────────────────────────────────────────────
 echo "Step 1: Yosys hierarchy check..."
 if command -v yosys &>/dev/null; then
-    yosys -p "read_verilog -lib ${CELLS_DIR}/${CELL}.v; read_verilog ${OUTPUT}/${DESIGN}.v; hierarchy -check -top fecim_crossbar; check; stat" \
+    yosys -p "read_verilog -lib ${CELLS_DIR}/${CELL}.v; read_verilog ${DESIGN}.v; hierarchy -check -top fecim_crossbar; check; stat" \
         2>&1 | tee output/yosys_check.log
     echo "  ✓ Yosys check passed — see output/yosys_check.log"
 else
@@ -422,7 +421,7 @@ mkdir -p "${CELLS_DIR}"
 if command -v klayout &>/dev/null; then
     klayout -z -r gen_gds.py \
         -rd lef_file="${CELLS_DIR}/${CELL}.lef" \
-        -rd def_file="${OUTPUT}/${DESIGN}.def" \
+        -rd def_file="${DESIGN}.def" \
         -rd out_file="${CELLS_DIR}/${CELL}.gds" \
         2>&1 | tee output/klayout_gds.log
     echo "  ✓ GDS written: ${CELLS_DIR}/${CELL}.gds"
@@ -438,7 +437,7 @@ echo "Step 3: OpenROAD placement check..."
 mkdir -p output/openroad
 if command -v openroad &>/dev/null; then
     CELL_LEF="${CELLS_DIR}/${CELL}.lef" \
-    DEF_FILE="${OUTPUT}/${DESIGN}.def" \
+    DEF_FILE="${DESIGN}.def" \
     OUT_DIR="output/openroad" \
     openroad -no_splash -exit openroad_flow.tcl \
         2>&1 | tee output/openroad_check.log
@@ -461,7 +460,7 @@ elif [[ -n "${OPENLANE_ROOT}" ]] && [[ -f "${OPENLANE_ROOT}/flow.tcl" ]]; then
     echo "  Note: For new projects, use LibreLane (pip install librelane)"
     mkdir -p "${OPENLANE_ROOT}/designs/fecim_array/src"
     mkdir -p "${OPENLANE_ROOT}/designs/fecim_array/cells"
-    cp "${OUTPUT}/${DESIGN}.v" "${OPENLANE_ROOT}/designs/fecim_array/src/"
+    cp "${DESIGN}.v" "${OPENLANE_ROOT}/designs/fecim_array/src/"
     cp "config.json" "${OPENLANE_ROOT}/designs/fecim_array/"
     cp -r "${CELLS_DIR}" "${OPENLANE_ROOT}/designs/fecim_array/cells/" 2>/dev/null || true
     cd "${OPENLANE_ROOT}"
@@ -482,8 +481,8 @@ echo ""
 echo "==================================================="
 echo "Flow complete for ${DESIGN}"
 echo "Outputs:"
-echo "  Verilog: ${OUTPUT}/${DESIGN}.v"
-echo "  DEF:     ${OUTPUT}/${DESIGN}.def"
+echo "  Verilog: ${DESIGN}.v"
+echo "  DEF:     ${DESIGN}.def"
 echo "  GDS:     ${CELLS_DIR}/${CELL}.gds"
 echo "  Config:  config.json"
 echo "==================================================="
@@ -517,7 +516,7 @@ func GenerateLibreLaneConfig(cfg config.ArrayConfig) string {
   "DESIGN_NAME": "%s",
   "DESIGN_IS_CORE": 0,
 
-  "VERILOG_FILES": "dir::output/%s.v",
+  "VERILOG_FILES": "dir::%s.v",
   "VERILOG_FILES_BLACKBOX": "dir::cells/%s/%s.v",
 
   "BASE_SDC_FILE": "dir::constraints.sdc",
@@ -527,7 +526,7 @@ func GenerateLibreLaneConfig(cfg config.ArrayConfig) string {
   "FP_SIZING": "absolute",
   "DIE_AREA": "0 0 %.3f %.3f",
 
-  "FP_DEF_TEMPLATE": "dir::output/%s.def",
+  "FP_DEF_TEMPLATE": "dir::%s.def",
   "PL_SKIP_INITIAL_PLACEMENT": 1,
   "PL_TARGET_DENSITY": 0.6,
 

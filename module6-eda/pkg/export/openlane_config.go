@@ -69,7 +69,7 @@ func GenerateOpenLaneConfig(cfg config.ArrayConfig) string {
 		"DESIGN_IS_CORE": 0, // Macro, not full chip core [Ref 1]
 
 		// Verilog sources
-		"VERILOG_FILES":          fmt.Sprintf("dir::output/%s.v", designName),
+		"VERILOG_FILES":          fmt.Sprintf("dir::%s.v", designName),
 		"VERILOG_FILES_BLACKBOX": fmt.Sprintf("%s/%s.v", cellDir, cellName),
 
 		// SDC timing constraints (clockless: all delays = 0)
@@ -82,7 +82,7 @@ func GenerateOpenLaneConfig(cfg config.ArrayConfig) string {
 		// Floorplanning: use pre-placed array DEF [Ref 3]
 		"FP_SIZING":                 "absolute",
 		"DIE_AREA":                  fmt.Sprintf("0 0 %.3f %.3f", dieWidth, dieHeight),
-		"FP_DEF_TEMPLATE":           fmt.Sprintf("dir::output/%s.def", designName),
+		"FP_DEF_TEMPLATE":           fmt.Sprintf("dir::%s.def", designName),
 		"PL_SKIP_INITIAL_PLACEMENT": 1,   // Trust pre-placed DEF [Ref 1]
 		"PL_TARGET_DENSITY":         0.6, // Relaxed density for array macros
 
