@@ -382,3 +382,39 @@ func TestGenerateDesignSummary_ArraySize(t *testing.T) {
 		t.Error("Design summary should mention total cell count of 128")
 	}
 }
+
+// TestGenerateDesignSummary_WLResistanceUsesCols verifies that WL resistance is
+// computed from cfg.Cols (WL spans columns), not cfg.Rows.  For a 3×8 array
+// wlResOhm must be 8Ω, not 3Ω.
+func TestGenerateDesignSummary_WLResistanceUsesCols(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows: 3, Cols: 8,
+		Mode: "memory", Architecture: "passive", Technology: "sky130",
+		CellWidth: 0.46, CellHeight: 2.72,
+	}
+	summary := GenerateDesignSummary(cfg)
+
+	// WL spans 8 cols → 8.0 Ω, and label must say "cols"
+	if !strings.Contains(summary, "8.0 Ω") {
+		t.Errorf("3×8 array: expected WL resistance 8.0 Ω (cols), got summary excerpt:\n%s",
+			extractSummarySection(summary, "WL line"))
+	}
+	if !strings.Contains(summary, "8 cols") {
+		t.Errorf("3×8 array: WL resistance label should say cols, got:\n%s",
+			extractSummarySection(summary, "WL line"))
+	}
+	// WL resistance line must NOT say "rows" (that would be the old bug)
+	wlLine := extractSummarySection(summary, "WL line")
+	if strings.Contains(wlLine, "rows") {
+		t.Errorf("3×8 array: WL resistance line must not say 'rows', got: %q", wlLine)
+	}
+}
+
+func extractSummarySection(s, keyword string) string {
+	for _, line := range strings.Split(s, "\n") {
+		if strings.Contains(line, keyword) {
+			return line
+		}
+	}
+	return "(not found)"
+}

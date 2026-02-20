@@ -55,7 +55,8 @@ func GenerateDesignSummary(cfg config.ArrayConfig) string {
 	nLevels := 30
 
 	// Wire resistance (1 Ω/cell estimate)
-	wlResOhm := float64(cfg.Rows) * 1.0
+	// WL is horizontal, spanning cfg.Cols cells; BL is vertical, spanning cfg.Rows cells.
+	wlResOhm := float64(cfg.Cols) * 1.0
 
 	// IR drop estimate: V_read × R_wire × G_mean
 	// For passive arrays, worst-case is far cell in large array
@@ -123,8 +124,8 @@ func GenerateDesignSummary(cfg config.ArrayConfig) string {
 	sb.WriteString(fmt.Sprintf("  G_min (HRS):        %.4f µS  (R = %.0f MΩ)\n",
 		gMinUS, 1.0/(gMinUS*1e-3)))
 	sb.WriteString(fmt.Sprintf("  Conductance levels: %d (30-level simulation baseline)\n", nLevels))
-	sb.WriteString(fmt.Sprintf("  WL line resistance: %.1f Ω  (%d rows × 1 Ω/cell estimate)\n",
-		wlResOhm, cfg.Rows))
+	sb.WriteString(fmt.Sprintf("  WL line resistance: %.1f Ω  (%d cols × 1 Ω/cell estimate)\n",
+		wlResOhm, cfg.Cols))
 	if strings.ToLower(cfg.Architecture) == "passive" {
 		sb.WriteString(fmt.Sprintf("  IR drop (est.):     %.2f mV  (worst case, far cell)\n", irDropMV))
 		sb.WriteString("  Sneak paths:        Present — use 1T1R for arrays > 16×16\n")
