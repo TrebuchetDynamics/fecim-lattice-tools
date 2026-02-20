@@ -627,6 +627,29 @@ func TestGenerateLayoutSVG_2T1RStyleCSS(t *testing.T) {
 	}
 }
 
+func TestGenerateLayoutSVG_2T1RCSLPerColumn(t *testing.T) {
+	// Non-square array: 4 rows × 3 cols.
+	// CSL is per-column (Verilog: input wire [Cols-1:0] CSL), so there must be
+	// exactly numCols=3 CSL labels, not numRows=4.
+	arrayCfg := config.DefaultArrayConfig()
+	arrayCfg.Rows = 4
+	arrayCfg.Cols = 3
+	arrayCfg.Architecture = "2t1r"
+
+	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
+
+	// Should have CSL[0..2] (one per column)
+	for i := 0; i < 3; i++ {
+		if !strings.Contains(svg, "CSL["+itoa(i)+"]") {
+			t.Errorf("Missing CSL[%d] for 4x3 2T1R array", i)
+		}
+	}
+	// Must NOT have CSL[3] (that would mean wrong per-row indexing)
+	if strings.Contains(svg, "CSL[3]") {
+		t.Error("CSL[3] should not exist for 3-column 2T1R array (CSL is per-column)")
+	}
+}
+
 // ============================================================================
 // Benchmarks
 // ============================================================================

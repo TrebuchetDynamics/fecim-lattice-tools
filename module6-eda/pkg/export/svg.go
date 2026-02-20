@@ -175,18 +175,22 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 		sb.WriteString("\n")
 	}
 
-	// Draw Column Select Lines for 2T1R (horizontal, offset from WL)
+	// Draw Column Select Lines for 2T1R (vertical, one per column like BL/SL)
+	// CSL[col] gates the column transistor for every cell in column col.
+	// Matches the Verilog port: input wire [numCols-1:0] CSL.
 	if is2T1R {
 		sb.WriteString("  <!-- Column Select Lines (2T1R) -->\n")
-		for row := 0; row < cfg.Rows; row++ {
-			y := svgCfg.Margin + float64(row)*svgCfg.CellHeight + svgCfg.CellHeight/2 + 8
+		for col := 0; col < cfg.Cols; col++ {
+			x := svgCfg.Margin + float64(col)*svgCfg.CellWidth + svgCfg.CellWidth/2 - 8
+			// CSL wire (vertical, offset left of BL)
 			sb.WriteString(fmt.Sprintf(`  <line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="wire-csl" stroke-dasharray="4,2"/>
-`, svgCfg.Margin-20, y, svgCfg.Margin+arrayWidth, y))
+`, x, svgCfg.Margin, x, svgCfg.Margin+arrayHeight+20))
+			// CSL pin at bottom
 			sb.WriteString(fmt.Sprintf(`  <circle cx="%.1f" cy="%.1f" r="3" fill="#ff8800"/>
-`, svgCfg.Margin-20, y))
+`, x, svgCfg.Margin+arrayHeight+20))
 			if svgCfg.ShowLabels {
-				sb.WriteString(fmt.Sprintf(`  <text x="%.1f" y="%.1f" class="label" text-anchor="end" fill="#ff8800">CSL[%d]</text>
-`, svgCfg.Margin-30, y+4, row))
+				sb.WriteString(fmt.Sprintf(`  <text x="%.1f" y="%.1f" class="label" text-anchor="middle" fill="#ff8800">CSL[%d]</text>
+`, x, svgCfg.Margin+arrayHeight+50, col))
 			}
 		}
 		sb.WriteString("\n")
