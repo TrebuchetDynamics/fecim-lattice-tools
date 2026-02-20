@@ -14,7 +14,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "SPICE"}
+var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -84,6 +84,12 @@ func formatExtension(format string) string {
 		return ".v"
 	case "DEF":
 		return ".def"
+	case "Config (JSON)":
+		return ".json"
+	case "SDC":
+		return ".sdc"
+	case "Design Summary":
+		return ".txt"
 	case "SPICE":
 		return ".sp"
 	default:
@@ -161,6 +167,21 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 			}
 		}
 		return "# DEF requires array compilation.\n# Generate via CLI:\n#   fecim-lattice-tools eda cli --def\n", "(not generated)"
+	case "Config (JSON)":
+		if s, ok := tryRead(filepath.Join(dataDir, "config.json")); ok {
+			return s, filepath.Join(dataDir, "config.json")
+		}
+		return export.GenerateLibreLaneConfig(*cfg), "generated (in-memory)"
+	case "SDC":
+		if s, ok := tryRead(filepath.Join(dataDir, "constraints.sdc")); ok {
+			return s, filepath.Join(dataDir, "constraints.sdc")
+		}
+		return export.GenerateSDC(*cfg), "generated (in-memory)"
+	case "Design Summary":
+		if s, ok := tryRead(filepath.Join(dataDir, "design_summary.txt")); ok {
+			return s, filepath.Join(dataDir, "design_summary.txt")
+		}
+		return export.GenerateDesignSummary(*cfg), "generated (in-memory)"
 	case "SPICE":
 		paths := []string{
 			filepath.Join(dataDir, design+".sp"),

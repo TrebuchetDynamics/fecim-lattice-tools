@@ -558,6 +558,44 @@ func TestContentMakers(t *testing.T) {
 	}
 }
 
+func TestExportViewerNewFormats(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 4, Cols: 4,
+		Mode: "storage", Architecture: "passive",
+		Technology: "sky130", CellWidth: 0.46, CellHeight: 2.72,
+	}
+
+	cases := []struct {
+		format  string
+		ext     string
+		wantKey string // substring that must appear in generated content
+	}{
+		{"Config (JSON)", ".json", "DESIGN_NAME"},
+		{"SDC", ".sdc", "set_input_delay"},
+		{"Design Summary", ".txt", "Physical"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.format, func(t *testing.T) {
+			// Verify extension mapping
+			if got := formatExtension(tc.format); got != tc.ext {
+				t.Errorf("formatExtension(%q) = %q, want %q", tc.format, got, tc.ext)
+			}
+			// Verify content generation (no disk files in test env)
+			content, source := loadExportPreviewContent(tc.format, cfg)
+			if content == "" {
+				t.Fatalf("loadExportPreviewContent(%q) returned empty content", tc.format)
+			}
+			if source == "" {
+				t.Errorf("loadExportPreviewContent(%q) returned empty source", tc.format)
+			}
+			if !containsString(content, tc.wantKey) {
+				t.Errorf("loadExportPreviewContent(%q) missing %q in output", tc.format, tc.wantKey)
+			}
+		})
+	}
+}
+
 func TestFileExists(t *testing.T) {
 	// Test with a file that definitely doesn't exist
 	if fileExists("/this/path/should/not/exist/test.txt") {

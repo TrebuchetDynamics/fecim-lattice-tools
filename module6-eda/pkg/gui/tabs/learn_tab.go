@@ -43,7 +43,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 		{"Quick Start", "Get started in 5 steps"},
 		{"What is FeCIM EDA?", "Overview & OpenLane flow"},
 		{"Crossbar Architecture", "Passive vs 1T1R design"},
-		{"EDA Files", "LEF, DEF, Verilog, Liberty"},
+		{"EDA Files", "LEF, DEF, Verilog, SDC + more"},
 		{"FAQ", "Troubleshooting & tips"},
 	}
 
@@ -124,7 +124,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	title.Truncation = fyne.TextTruncateEllipsis
 	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(w)
 	aboutScienceBtn.Importance = widget.LowImportance
-	subTitle := widget.NewLabel("Understanding OpenLane and where our tool fits in")
+	subTitle := widget.NewLabel("Understanding LibreLane/OpenLane and where our tool fits in")
 	subTitle.Wrapping = fyne.TextWrapWord
 	header := container.NewVBox(
 		container.NewBorder(nil, nil, nil, aboutScienceBtn, title),
@@ -179,7 +179,8 @@ func makeIntroContent() fyne.CanvasObject {
 		"Generate Liberty files (timing - placeholder values)",
 		"Generate Verilog netlists (behavioral models)",
 		"Generate DEF files (physical placement)",
-		"Export OpenLane configuration")
+		"Export LibreLane/OpenLane config + flow scripts (run_flow.sh, synthesis.tcl, ...)",
+		"Generate design_summary.txt + constraints.sdc")
 
 	dontList := makeBulletList("",
 		"We do NOT provide validated FeFET device models",
@@ -364,7 +365,13 @@ USING OPENROAD GUI:
 DEF: Physical placement with X,Y coordinates
 Verilog: Structural netlist (behavioral black boxes)
 Liberty: Timing info for synthesis (PLACEHOLDER values!)
-Config.json: OpenLane configuration pointing to our files
+design_summary.txt: Human-readable design report (area, electrical, timing)
+constraints.sdc: Timing constraints for synthesis and STA
+config.json: LibreLane/OpenLane configuration with MACROS dict
+synthesis.tcl: Yosys synthesis script
+openroad_flow.tcl: OpenROAD place & route TCL script
+gen_gds.py: KLayout GDS export and PNG rendering script
+run_flow.sh: One-shot script to run the full ASIC flow
 
 ⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
@@ -406,13 +413,13 @@ func makeQuickStartContent() fyne.CanvasObject {
 		widget.NewLabel("Click 'Validate All' to run Yosys syntax check, DEF validation, and cross-check. Green checkmarks indicate success."))
 
 	step4 := widget.NewCard("Step 4: Export Package", "",
-		widget.NewLabel("Click 'Export Package' to bundle all files for OpenLane integration. The package includes README with usage instructions."))
+		widget.NewLabel("Click 'Export Package' to bundle all files for LibreLane/OpenLane integration. The package includes LEF/LIB/V, design_summary.txt, config.json + constraints.sdc, flow scripts (synthesis.tcl, openroad_flow.tcl, gen_gds.py, run_flow.sh), and README.\n\nTo run the full flow:\n  cd <export_dir>/\n  bash run_flow.sh"))
 
 	step5 := widget.NewCard("Step 5: View Layout", "",
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))
 
 	tipCard := widget.NewCard("💡 Tips", "",
-		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation"))
+		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation\n• Tab 5 (Flow Scripts) previews all generated scripts before exporting"))
 
 	return container.NewVBox(
 		title,
@@ -438,8 +445,8 @@ func makeFAQContent() fyne.CanvasObject {
 	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", "",
 		widget.NewLabel("A: NO! Liberty values are placeholders. Real fabrication requires SPICE characterization with validated FeFET device models from a foundry."))
 
-	faq5 := widget.NewCard("Q: How do I use the generated files with OpenLane?", "",
-		widget.NewLabel("A: Export Package creates a ready-to-use directory. Copy it to OpenLane's designs/ folder and run: flow.tcl -design <your_design_name>"))
+	faq5 := widget.NewCard("Q: How do I use the generated files with LibreLane/OpenLane?", "",
+		widget.NewLabel("A: Export Package creates a ready-to-use directory with run_flow.sh.\n\nWith the bundled script (recommended):\n  cd <export_dir>/\n  bash run_flow.sh\n\nWith LibreLane directly:\n  librelane config.json\n\nWith OpenLane (Docker):\n  flow.tcl -design <your_design_name>"))
 
 	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
