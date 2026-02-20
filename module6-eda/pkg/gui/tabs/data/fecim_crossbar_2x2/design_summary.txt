@@ -1,0 +1,51 @@
+FeCIM Crossbar Design Summary — 2x2 (passive / sky130)
+────────────────────────────────────────────────────────────
+Generated:  2026-02-20 12:45
+Mode:       storage
+
+── Physical ───────────────────────────────────────────
+  Array size:         2 × 2 = 4 cells
+  Architecture:       Passive 0T1R — sneak paths present, recommend ≤16×16
+  Cell dimensions:    0.460 × 2.720 µm
+  Cell area:          1.2512 µm²
+  Array footprint:    5.0048 µm²  (0.920 × 5.440 µm)
+  Die area (est.):    1859.40 µm²  (40.9 × 45.4 µm, +20µm margin)
+  Array utilization:  0.3%  (array / die)
+  WL wire length:     0.920 µm  (2 cols × 0.460 µm/cell)
+  BL wire length:     5.440 µm  (2 rows × 2.720 µm/cell)
+
+── Electrical ─────────────────────────────────────────
+  VDD:                1.8 V
+  V_read (MVM):       0.10 V
+  G_max (LRS):        10.000 µS  (R = 100 kΩ)
+  G_min (HRS):        0.0010 µS  (R = 1000000 MΩ)
+  Conductance levels: 30 (30-level simulation baseline)
+  WL line resistance: 2.0 Ω  (2 cols × 1 Ω/cell estimate)
+  IR drop (est.):     0.00 mV  (worst case, far cell)
+  Sneak paths:        Present — use 1T1R for arrays > 16×16
+
+── Peripheral Circuits ────────────────────────────────
+  DAC resolution:     4 bits  (literature-optimal, Xu et al. 2021)
+  ADC resolution:     4 bits  (ADC dominates 40-60% system energy)
+  TIA:                Column sense amplifier (virtual GND)
+  Clock:              100 MHz  (peripheral control logic)
+
+── Timing (Published Anchors) ─────────────────────────
+  FE write time:      50 ns  (Trentzsch et al., IEDM 2016)
+  FE read time:       5 ns  (fast read; FE state sensed)
+  Input capacitance:  0.0150 pF  (mid-range FeFET estimate)
+  Leakage power:      0.0003 nW/cell  (NC-FinFET low-leak envelope)
+  Array leakage:      0.0012 nW  (4 cells)
+
+── Technology ─────────────────────────────────────────
+  PDK:                SKY130 (130nm, open-source via Volare)
+  Cell site:          0.46 × 2.72 µm  (unithd standard cell site)
+  Supply voltage:     1.8 V
+  Metal layers:       5 (met1–met5)
+
+── Confidence ─────────────────────────────────────────
+  [ESTIMATED] This summary uses simulation defaults, not SPICE-
+  characterized device models. Timing values are published FeFET
+  anchors, not measured on this array. IR drop and throughput
+  estimates assume idealized peripheral circuits.
+  For fabrication: replace with PDK-validated SPICE models.
