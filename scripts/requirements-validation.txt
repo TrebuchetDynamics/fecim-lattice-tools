@@ -1,0 +1,29 @@
+# Python dependencies for external validation tools
+# Used by: validation/external/badcrossbar_crossval_test.go
+#          validation/external/crosssim_interop_test.go
+#          validation/external/mvm_numpy_crossval_test.go
+#          validation/external/write_read_compute_external_test.go
+#
+# Install:
+#   pip3 install --break-system-packages -r scripts/requirements-validation.txt
+#   # OR (recommended, avoids modifying system Python):
+#   python3 -m venv .venv && source .venv/bin/activate && pip install -r scripts/requirements-validation.txt
+#
+# All tests skip gracefully if the corresponding package is absent.
+
+# Core numerical computing (usually already installed)
+numpy>=1.21
+scipy>=1.4.1
+
+# badcrossbar: passive crossbar nodal solver
+# Paper: Joksas & Mehonic, SoftwareX 14 (2020) 100617
+# doi:   10.1016/j.softx.2020.100617
+badcrossbar==1.1.0
+
+# CrossSim: GPU-accelerated analog in-memory computing simulator
+# Source: github.com/sandialabs/cross-sim  (not on PyPI)
+# Paper:  Melanson et al., IEEE Micro 2024
+# Install via:
+#   pip3 install git+https://github.com/sandialabs/cross-sim.git
+# Imported as: from simulator import AnalogCore, CrossSimParameters
+# (package name: CrossSim 3.1.1, import name: simulator)
