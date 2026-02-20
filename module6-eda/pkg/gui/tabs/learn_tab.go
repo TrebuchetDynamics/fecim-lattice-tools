@@ -494,7 +494,7 @@ func makeFAQContent() fyne.CanvasObject {
 		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull ghcr.io/the-openroad-project/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
 
 	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", "",
-		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays (risk grows as N×M). Literature recommends passive up to ~32×32; beyond that sneak currents typically dominate. 1T1R adds one access transistor per row to suppress row-direction sneak paths, enabling arrays to 128×128+. 2T1R adds a second transistor per column for full isolation, enabling up to ~512×512."))
+		widget.NewLabel("A: Passive arrays suffer from sneak path currents that grow with array size: (rows+cols-2) half-selected cells and (rows-1)×(cols-1) parasitic paths per write. Literature recommends passive up to ~32×32.\n\n1T1R: WL-gated transistor per cell blocks unselected rows (eliminates column-direction sneak paths from cells in different rows). Same-row half-select (cols-1 paths) still remains. Enables arrays to 128×128+.\n\n2T1R: Adds a second CSL-gated transistor per column for full isolation — both row and column directions blocked. Enables up to ~512×512."))
 
 	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", "",
 		widget.NewLabel("A: NO! Liberty values are placeholders. Real fabrication requires SPICE characterization with validated FeFET device models from a foundry."))
@@ -549,8 +549,8 @@ func makeFAQContent() fyne.CanvasObject {
 		widget.NewLabel("A: The 'Array Map' tab (inside Builder & Validation → Array Map) shows a\n"+
 			"synthetic conductance heatmap of the configured crossbar array.\n\n"+
 			"Each cell in the heatmap represents one FeCIM bitcell, colored by conductance:\n"+
-			"  • Blue  (dark) = G_min  — cell in low-conductance (LRS) state\n"+
-			"  • Yellow       = G_max  — cell in high-conductance (HRS) state\n\n"+
+			"  • Blue  (dark) = G_min  — cell in high-resistance (HRS/OFF) state\n"+
+			"  • Yellow       = G_max  — cell in low-resistance (LRS/ON) state\n\n"+
 			"Patterns are ILLUSTRATIVE, not from actual device simulation:\n"+
 			"  • Gradient     — smooth center-bright, edges-dark radial pattern\n"+
 			"  • Random       — uniform random values, new each Refresh\n"+
