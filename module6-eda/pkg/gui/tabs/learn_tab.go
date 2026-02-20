@@ -466,7 +466,7 @@ func makeQuickStartContent() fyne.CanvasObject {
 		widget.NewLabel("Click 'Validate All' to run Yosys syntax check, DEF validation, and cross-check. Green checkmarks indicate success."))
 
 	step4 := widget.NewCard("Step 4: Export Package", "",
-		widget.NewLabel("Click 'Export Package' to bundle all files for LibreLane/OpenLane integration. The package includes LEF/LIB/V, design_summary.txt, config.json + constraints.sdc, flow scripts (synthesis.tcl, openroad_flow.tcl, gen_gds.py, run_flow.sh), {design}.json metadata, and README.\n\nTo run the full flow:\n  cd data/{design}/\n  bash run_flow.sh"))
+		widget.NewLabel("Click 'Export Package' to bundle all files for LibreLane/OpenLane integration.\n\nThe package includes:\n• Cell library — LEF/LIB/V for the bitcell\n• Design files — Verilog, DEF, design_summary.txt\n• EDA flow — config.json + constraints.sdc, synthesis.tcl, openroad_flow.tcl,\n  gen_gds.py, opensta_check.tcl, config.tcl, macros.cfg, run_flow.sh\n• Verification — run_drc.sh (Magic DRC), run_lvs.sh (Netgen LVS)\n• Simulation — crosssim.yaml, run_crosssim.py, run_pyspice.py, fecim_lk.va\n• Metadata — {design}.json and README.md\n\nTo run the full flow:\n  cd data/{design}/\n  bash run_flow.sh"))
 
 	step5 := widget.NewCard("Step 5: View Layout", "",
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))

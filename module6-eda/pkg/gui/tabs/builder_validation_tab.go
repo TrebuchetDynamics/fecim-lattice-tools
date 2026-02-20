@@ -1213,23 +1213,60 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			}
 			time.Sleep(100 * time.Millisecond)
 
-			// Step 6: Flow scripts (Yosys + KLayout + OpenROAD + shell runner)
-			addLog("[6/8] Generating flow scripts...")
+			// Step 6: Flow scripts — all 16 EDA tool scripts matching Flow Scripts tab
+			addLog("[6/8] Generating flow scripts (16 scripts)...")
+			// Physical design flow
 			if err := os.WriteFile(outputDir+"/synthesis.tcl", []byte(export.GenerateSynthesisScript(*cfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write synthesis.tcl: " + err.Error())
-			}
-			if err := os.WriteFile(outputDir+"/gen_gds.py", []byte(export.GenerateKLayoutGDSScript(*cfg)), 0644); err != nil {
-				addLog("ERROR: Failed to write gen_gds.py: " + err.Error())
 			}
 			if err := os.WriteFile(outputDir+"/openroad_flow.tcl", []byte(export.GenerateOpenROADFlowScript(*cfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write openroad_flow.tcl: " + err.Error())
 			}
+			if err := os.WriteFile(outputDir+"/gen_gds.py", []byte(export.GenerateKLayoutGDSScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write gen_gds.py: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/opensta_check.tcl", []byte(export.GenerateOpenSTAScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write opensta_check.tcl: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/config.tcl", []byte(export.GenerateOpenLaneTCLConfig(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write config.tcl: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/macros.cfg", []byte(export.GenerateOpenLaneTCLMacroPlacement(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write macros.cfg: " + err.Error())
+			}
 			if err := os.WriteFile(outputDir+"/run_flow.sh", []byte(export.GenerateFlowRunner(*cfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write run_flow.sh: " + err.Error())
 			} else {
-				// Make the shell runner executable
 				_ = os.Chmod(outputDir+"/run_flow.sh", 0755)
 			}
+			// Verification scripts
+			if err := os.WriteFile(outputDir+"/run_drc.sh", []byte(export.GenerateMagicDRCScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write run_drc.sh: " + err.Error())
+			} else {
+				_ = os.Chmod(outputDir+"/run_drc.sh", 0755)
+			}
+			if err := os.WriteFile(outputDir+"/run_lvs.sh", []byte(export.GenerateNetgenLVSScript(cellCfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write run_lvs.sh: " + err.Error())
+			} else {
+				_ = os.Chmod(outputDir+"/run_lvs.sh", 0755)
+			}
+			// Simulation scripts
+			if err := os.WriteFile(outputDir+"/crosssim.yaml", []byte(export.GenerateCrossSIMConfig(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write crosssim.yaml: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/run_crosssim.py", []byte(export.GenerateCrossSIMRunScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write run_crosssim.py: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/run_pyspice.py", []byte(export.GeneratePySpiceScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write run_pyspice.py: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/fecim_lk.va", []byte(export.GenerateOpenVAFVerilogA(cellCfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write fecim_lk.va: " + err.Error())
+			}
+			addLog("  synthesis.tcl, openroad_flow.tcl, gen_gds.py, opensta_check.tcl")
+			addLog("  config.tcl, macros.cfg, run_flow.sh")
+			addLog("  run_drc.sh, run_lvs.sh")
+			addLog("  crosssim.yaml, run_crosssim.py, run_pyspice.py, fecim_lk.va")
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 7: Design metadata JSON
@@ -1265,9 +1302,22 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 - config.json              — LibreLane / OpenLane v1 configuration
 - constraints.sdc          — SDC timing constraints (referenced by config.json)
 - synthesis.tcl            — Yosys hierarchy check script
-- gen_gds.py               — KLayout DEF+LEF → GDS II stream-out
 - openroad_flow.tcl        — OpenROAD placement validation script
+- gen_gds.py               — KLayout DEF+LEF → GDS II stream-out
+- opensta_check.tcl        — OpenSTA standalone timing analysis
+- config.tcl               — OpenLane v1 TCL config (legacy format)
+- macros.cfg               — OpenLane v1 macro placement constraints
 - run_flow.sh              — Full flow orchestration (Yosys → KLayout → OpenROAD → LibreLane)
+
+### Verification
+- run_drc.sh               — Magic DRC (Design Rule Check)
+- run_lvs.sh               — Netgen LVS (Layout vs. Schematic)
+
+### Simulation
+- crosssim.yaml            — CrossSim hardware-accurate MVM simulation config
+- run_crosssim.py          — CrossSim Python runner script
+- run_pyspice.py           — PySpice/Ngspice crossbar simulation
+- fecim_lk.va              — OpenVAF Verilog-A L-K compact model
 
 ### Metadata
 - %s.json       — machine-readable design parameters
@@ -1326,8 +1376,12 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 							"DEF:           %s.def\n"+
 							"Summary:       design_summary.txt\n"+
 							"LibreLane:     config.json + constraints.sdc\n"+
-							"Flow scripts:  synthesis.tcl, run_flow.sh, gen_gds.py\n"+
-							"OpenROAD:      openroad_flow.tcl\n\n"+
+							"EDA flow:      synthesis.tcl, openroad_flow.tcl, gen_gds.py\n"+
+							"               opensta_check.tcl, config.tcl, macros.cfg\n"+
+							"Run flow:      run_flow.sh\n"+
+							"Verification:  run_drc.sh, run_lvs.sh\n"+
+							"Simulation:    crosssim.yaml, run_crosssim.py\n"+
+							"               run_pyspice.py, fecim_lk.va\n\n"+
 							"Run: cd %s && ./run_flow.sh",
 						absOutputDir, designName, designName, absOutputDir)
 					dialog.ShowInformation("Export Complete", message, window)
