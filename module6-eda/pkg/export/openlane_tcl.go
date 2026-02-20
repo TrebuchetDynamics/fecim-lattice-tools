@@ -260,8 +260,8 @@ set ::env(STD_CELL_LIBRARY) "%s"
 		// Input files (LEF + GDS)
 		cellName,
 		cellName,
-		// Die area
-		dieW, dieH, cfg.Cols, cfg.Rows,
+		// Die area (comment args: rows×cols for conventional notation)
+		dieW, dieH, cfg.Rows, cfg.Cols,
 		// Core area
 		coreX1, coreY1, coreX2, coreY2,
 		// Core util
