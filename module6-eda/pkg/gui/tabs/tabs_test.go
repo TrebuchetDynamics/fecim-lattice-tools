@@ -248,7 +248,7 @@ func TestMakeLayoutVisualizerTab(t *testing.T) {
 	}
 
 	svg, _ := loadLayoutSVGContent(cfg)
-	summary := buildLayerSummary(svg, layerFilter{WL: true, BL: true, SL: true, Cells: true, Grid: true, Legend: true})
+	summary := buildLayerSummary(svg, layerFilter{WL: true, BL: true, SL: true, Cells: true, Grid: true, Legend: true}, cfg)
 	if summary == "" || !containsString(summary, "WL wires") {
 		t.Fatal("buildLayerSummary did not include expected layer output")
 	}

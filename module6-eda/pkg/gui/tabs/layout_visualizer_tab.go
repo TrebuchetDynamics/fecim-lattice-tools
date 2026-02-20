@@ -64,7 +64,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 				Cells:  showCells.Checked,
 				Grid:   showGrid.Checked,
 				Legend: showLegend.Checked,
-			}))
+			}, cfg))
 		}
 	}
 
@@ -134,11 +134,30 @@ type layerFilter struct {
 	Legend     bool
 }
 
-func buildLayerSummary(svg string, f layerFilter) string {
+func buildLayerSummary(svg string, f layerFilter, cfg *config.ArrayConfig) string {
 	var sb strings.Builder
 	sb.WriteString("Layout Visualizer — SVG Layer Summary\n")
 	sb.WriteString("(Fyne has no native SVG renderer; use 'View SVG Source' + Save SVG to view in browser)\n")
 	sb.WriteString("─────────────────────────────────────────\n\n")
+
+	// Physical array summary derived from config.
+	if cfg != nil {
+		arch := cfg.Architecture
+		if arch == "" {
+			arch = "passive"
+		}
+		tech := cfg.Technology
+		if tech == "" {
+			tech = "sky130"
+		}
+		dieW := float64(cfg.Cols) * cfg.CellWidth
+		dieH := float64(cfg.Rows) * cfg.CellHeight
+		totalCells := cfg.Rows * cfg.Cols
+		sb.WriteString(fmt.Sprintf("Array:      %d × %d  Architecture: %s  Technology: %s\n",
+			cfg.Rows, cfg.Cols, arch, tech))
+		sb.WriteString(fmt.Sprintf("Die area:   %.2f µm × %.2f µm  (%.4f µm²)\n", dieW, dieH, dieW*dieH))
+		sb.WriteString(fmt.Sprintf("Total cells: %d   Cell: %.2f × %.2f µm\n\n", totalCells, cfg.CellWidth, cfg.CellHeight))
+	}
 
 	totalSize := len(svg)
 	sb.WriteString(fmt.Sprintf("SVG size: %d bytes\n\n", totalSize))
