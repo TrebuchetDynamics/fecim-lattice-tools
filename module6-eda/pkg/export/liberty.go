@@ -340,11 +340,11 @@ func cellMetadata(cfg config.CellConfig) (cellName string, area float64, blFunct
 		if cellName == "fecim_bitcell" {
 			cellName = "fecim_2t1r_bitcell"
 		}
-		if width < 1.1 {
-			width = 1.200
+		if width < 1.3 {
+			width = 1.380 // matches lef.go Generate2T1RLEF and compiler With2T1R
 		}
-		if height < 3.5 {
-			height = 3.800
+		if height < 3.0 {
+			height = 3.400 // matches lef.go Generate2T1RLEF and compiler With2T1R
 		}
 		blFunction = "(WL & CSL & SL)"
 		inputPins = fmt.Sprintf(`    pin(WL) {
