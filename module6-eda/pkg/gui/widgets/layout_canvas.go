@@ -35,6 +35,7 @@ var (
 	colorWL         = color.RGBA{255, 102, 0, 255}
 	colorBL         = color.RGBA{0, 204, 102, 255}
 	colorSL         = color.RGBA{204, 102, 255, 255}
+	colorCSL        = color.RGBA{255, 200, 80, 255}
 	colorPin        = color.RGBA{255, 204, 0, 255}
 	colorGrid       = color.RGBA{51, 68, 85, 128}
 	colorText       = color.RGBA{0, 204, 255, 255}
@@ -74,10 +75,12 @@ func (lc *LayoutCanvas) MinSize() fyne.Size {
 		return fyne.NewSize(500, 400)
 	}
 	width := lc.margin*2 + float32(lc.config.Cols)*lc.cellWidth
-	// Extra space for labels and legend (more for 1T1R with SL labels)
+	// Extra space for labels and legend (more for 1T1R/2T1R with SL/CSL labels)
 	legendSpace := float32(70)
 	if lc.config.Architecture == "1t1r" {
 		legendSpace = 90
+	} else if lc.config.Architecture == "2t1r" {
+		legendSpace = 110 // Extra space for SL + CSL labels
 	}
 	height := lc.margin*2 + float32(lc.config.Rows)*lc.cellHeight + legendSpace
 	// Ensure minimum usable size
@@ -127,6 +130,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 
 	var objects []fyne.CanvasObject
 	is1T1R := cfg.Architecture == "1t1r"
+	is2T1R := cfg.Architecture == "2t1r"
 
 	// Calculate dimensions
 	arrayWidth := float32(cfg.Cols) * lc.cellWidth
@@ -136,6 +140,8 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 	legendSpace := float32(60)
 	if is1T1R {
 		legendSpace = 80 // Extra space for SL legend
+	} else if is2T1R {
+		legendSpace = 100 // Extra space for SL + CSL legend
 	}
 	bg := canvas.NewRectangle(colorBackground)
 	bg.Resize(fyne.NewSize(arrayWidth+lc.margin*2, arrayHeight+lc.margin*2+legendSpace))
@@ -145,6 +151,8 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 	archLabel := "Passive"
 	if is1T1R {
 		archLabel = "1T1R"
+	} else if is2T1R {
+		archLabel = "2T1R"
 	}
 	title := canvas.NewText(fmt.Sprintf("FeCIM %dx%d Crossbar (%s)", cfg.Rows, cfg.Cols, archLabel), colorText)
 	title.TextSize = 14
@@ -251,13 +259,98 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 		}
 	}
 
+	// 2T1R: Column Select Lines (CSL, horizontal like WL but at row bottom, dashed)
+	// and Source Lines (SL, vertical like BL but offset)
+	if is2T1R {
+		// CSL wires — one per row, drawn at row-bottom (y + cellHeight - 10), dashed
+		for row := 0; row < cfg.Rows; row++ {
+			y := lc.margin + float32(row)*lc.cellHeight + lc.cellHeight - 10
+
+			// CSL wire (dashed effect)
+			for i := 0; i < int(arrayWidth)/8; i++ {
+				x1 := lc.margin + float32(i*8)
+				x2 := x1 + 4
+				if x2 > lc.margin+arrayWidth {
+					x2 = lc.margin + arrayWidth
+				}
+				cslLine := canvas.NewLine(colorCSL)
+				cslLine.Position1 = fyne.NewPos(x1, y)
+				cslLine.Position2 = fyne.NewPos(x2, y)
+				cslLine.StrokeWidth = 2
+				objects = append(objects, cslLine)
+			}
+
+			// CSL label (right side)
+			label := canvas.NewText(fmt.Sprintf("CSL[%d]", row), colorCSL)
+			label.TextSize = 11
+			label.Move(fyne.NewPos(lc.margin+arrayWidth+4, y-5))
+			objects = append(objects, label)
+		}
+
+		// SL wires — one per column, dashed vertical, offset from BL
+		for col := 0; col < cfg.Cols; col++ {
+			x := lc.margin + float32(col)*lc.cellWidth + lc.cellWidth/2 + 8
+
+			for i := 0; i < int(arrayHeight)/8; i++ {
+				y1 := lc.margin + float32(i*8)
+				y2 := y1 + 4
+				if y2 > lc.margin+arrayHeight {
+					y2 = lc.margin + arrayHeight
+				}
+				slLine := canvas.NewLine(colorSL)
+				slLine.Position1 = fyne.NewPos(x, y1)
+				slLine.Position2 = fyne.NewPos(x, y2)
+				slLine.StrokeWidth = 2
+				objects = append(objects, slLine)
+			}
+
+			// SL pin
+			pin := canvas.NewCircle(colorSL)
+			pin.Resize(fyne.NewSize(8, 8))
+			pin.Move(fyne.NewPos(x-4, lc.margin+arrayHeight+15))
+			objects = append(objects, pin)
+
+			// SL label (below BL label)
+			label := canvas.NewText(fmt.Sprintf("SL[%d]", col), colorSL)
+			label.TextSize = 14
+			label.Move(fyne.NewPos(x-10, lc.margin+arrayHeight+42))
+			objects = append(objects, label)
+		}
+	}
+
 	// Cells
 	for row := 0; row < cfg.Rows; row++ {
 		for col := 0; col < cfg.Cols; col++ {
 			x := lc.margin + float32(col)*lc.cellWidth
 			y := lc.margin + float32(row)*lc.cellHeight
 
-			if is1T1R {
+			if is2T1R {
+				// 2T1R: WL transistor (top) + FeFET (middle) + CSL transistor (bottom)
+				thirdH := lc.cellHeight/3 - 3
+				// WL transistor (top third)
+				wlTrans := canvas.NewRectangle(colorTransistor)
+				wlTrans.Resize(fyne.NewSize(lc.cellWidth-8, thirdH))
+				wlTrans.Move(fyne.NewPos(x+4, y+2))
+				wlTrans.StrokeColor = colorWL
+				wlTrans.StrokeWidth = 1
+				objects = append(objects, wlTrans)
+
+				// FeFET (middle third)
+				fefet := canvas.NewRectangle(colorCell1T1R)
+				fefet.Resize(fyne.NewSize(lc.cellWidth-8, thirdH))
+				fefet.Move(fyne.NewPos(x+4, y+lc.cellHeight/3+1))
+				fefet.StrokeColor = colorBL
+				fefet.StrokeWidth = 1
+				objects = append(objects, fefet)
+
+				// CSL transistor (bottom third)
+				cslTrans := canvas.NewRectangle(colorTransistor)
+				cslTrans.Resize(fyne.NewSize(lc.cellWidth-8, thirdH))
+				cslTrans.Move(fyne.NewPos(x+4, y+lc.cellHeight*2/3+1))
+				cslTrans.StrokeColor = colorCSL
+				cslTrans.StrokeWidth = 1
+				objects = append(objects, cslTrans)
+			} else if is1T1R {
 				// 1T1R: transistor (top) + FeFET (bottom)
 				// Transistor
 				trans := canvas.NewRectangle(colorTransistor)
@@ -297,6 +390,8 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 	legendY := lc.margin + arrayHeight + 55
 	if is1T1R {
 		legendY += 15
+	} else if is2T1R {
+		legendY += 15
 	}
 
 	// WL legend
@@ -332,6 +427,28 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 		slText.TextSize = 14
 		slText.Move(fyne.NewPos(lc.margin+145, legendY-5))
 		objects = append(objects, slText)
+	} else if is2T1R {
+		// SL legend
+		slLegend := canvas.NewLine(colorSL)
+		slLegend.Position1 = fyne.NewPos(lc.margin+120, legendY)
+		slLegend.Position2 = fyne.NewPos(lc.margin+140, legendY)
+		slLegend.StrokeWidth = 2
+		objects = append(objects, slLegend)
+		slText := canvas.NewText("SL", colorTextDim)
+		slText.TextSize = 14
+		slText.Move(fyne.NewPos(lc.margin+145, legendY-5))
+		objects = append(objects, slText)
+
+		// CSL legend
+		cslLegend := canvas.NewLine(colorCSL)
+		cslLegend.Position1 = fyne.NewPos(lc.margin+180, legendY)
+		cslLegend.Position2 = fyne.NewPos(lc.margin+200, legendY)
+		cslLegend.StrokeWidth = 2
+		objects = append(objects, cslLegend)
+		cslText := canvas.NewText("CSL", colorTextDim)
+		cslText.TextSize = 14
+		cslText.Move(fyne.NewPos(lc.margin+205, legendY-5))
+		objects = append(objects, cslText)
 	}
 
 	return objects

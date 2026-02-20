@@ -140,7 +140,7 @@ func Run(args []string) error {
 
 	// Technology selection
 	tech := fs.String("tech", "SKY130", "Technology: SKY130, GF180MCU, IHP_SG13G2")
-	arch := fs.String("arch", "passive", "Architecture: passive or 1T1R")
+	arch := fs.String("arch", "passive", "Architecture: passive, 1t1r, or 2t1r")
 
 	// Electrical parameters
 	vdd := fs.Float64("vdd", 1.8, "Supply voltage (V)")
@@ -256,8 +256,11 @@ func Run(args []string) error {
 	config.Peripherals.VDD = *vdd
 
 	// Handle architecture
-	if strings.ToLower(*arch) == "1t1r" {
+	switch strings.ToLower(*arch) {
+	case "1t1r":
 		config.With1T1R()
+	case "2t1r":
+		config.With2T1R()
 	}
 
 	// Load weights for compute mode (if provided)

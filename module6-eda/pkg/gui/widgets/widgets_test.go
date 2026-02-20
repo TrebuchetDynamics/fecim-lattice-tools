@@ -214,6 +214,34 @@ func TestLayoutCanvas_1T1RArchitecture(t *testing.T) {
 	window.Close()
 }
 
+func TestLayoutCanvas_2T1RArchitecture(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	cfg := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "memory",
+		Architecture: "2t1r",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   4.07,
+	}
+
+	canvas := NewLayoutCanvas(cfg)
+	minSize := canvas.MinSize()
+
+	// 2T1R should have extra height for SL + CSL legend
+	if minSize.Height < 400 {
+		t.Error("2T1R MinSize height is too small")
+	}
+
+	window := testApp.NewWindow("Test 2T1R")
+	window.SetContent(canvas)
+	window.Resize(fyne.NewSize(800, 600))
+	window.Close()
+}
+
 func TestLayoutCanvas_PassiveArchitecture(t *testing.T) {
 	testApp := test.NewApp()
 	defer testApp.Quit()
