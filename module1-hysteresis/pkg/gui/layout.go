@@ -116,17 +116,20 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	infoCard := widget.NewCard("Device Status", "", info)
 	literatureCard := a.createLiteratureOverlayPanel()
-	infoStack := container.NewVBox(
-		infoCard,
-		a.isppWidget,
-		a.simVsExpWidget,
-		literatureCard,
-	)
-	infoScroll := container.NewVScroll(infoStack)
-	infoScroll.SetMinSize(fyne.NewSize(220, 0))
 
-	leftSplit := container.NewVSplit(infoScroll, logPanel)
-	leftSplit.SetOffset(0.66) // 66% info/status panel, 34% log panel
+	// Two-tab layout eliminates need for a scrollable info column:
+	//   "Status" — Device Status card + Sim vs Experiment comparison
+	//   "Lit."   — Literature overlay panel
+	// isppWidget is kept allocated (used by sim loop) but not shown until implemented.
+	statusContent := container.NewVBox(infoCard, a.simVsExpWidget)
+	infoTabs := container.NewAppTabs(
+		container.NewTabItem("Status", statusContent),
+		container.NewTabItem("Lit.", literatureCard),
+	)
+	infoTabs.SetTabLocation(container.TabLocationTop)
+
+	leftSplit := container.NewVSplit(infoTabs, logPanel)
+	leftSplit.SetOffset(0.66) // 66% info tabs, 34% log panel
 
 	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(

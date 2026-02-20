@@ -672,6 +672,7 @@ func main() {
 		fyne.Do(func() {
 			fmt.Println("[STARTUP] Setting actual window content...")
 			window.SetContent(rootContainer)
+			window.RequestFocus() // Raise window in Sway/Wayland after content is ready
 			fmt.Println("[STARTUP] Window content set")
 
 			// Start at requested module
