@@ -128,6 +128,68 @@ func TestMakeBuilderValidationTab_RunPrimaryActions(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 }
 
+// TestArchitectureSwitch_UpdatesNameEntry verifies that the name entry auto-updates
+// to the architecture-specific default when switching between passive/1T1R/2T1R,
+// but leaves user-typed custom names untouched.
+func TestArchitectureSwitch_UpdatesNameEntry(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	w := app.NewWindow("arch-name")
+	defer w.Close()
+
+	cfg := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	root := MakeBuilderValidationTab(cfg, w)
+	passive := findButtonByText(root, "PASSIVE")
+	oneT1R := findButtonByText(root, "1T1R")
+	twoT1R := findButtonByText(root, "2T1R")
+	nameEntry := findEntryWithText(root, "fecim_bitcell")
+	if passive == nil || oneT1R == nil || twoT1R == nil || nameEntry == nil {
+		t.Fatal("failed to find required widgets")
+	}
+
+	// passive → 1T1R: name should update to fecim_1t1r_bitcell
+	oneT1R.OnTapped()
+	if nameEntry.Text != "fecim_1t1r_bitcell" {
+		t.Errorf("passive→1T1R: nameEntry = %q, want %q", nameEntry.Text, "fecim_1t1r_bitcell")
+	}
+
+	// 1T1R → 2T1R: name should update to fecim_2t1r_bitcell
+	twoT1R.OnTapped()
+	if nameEntry.Text != "fecim_2t1r_bitcell" {
+		t.Errorf("1T1R→2T1R: nameEntry = %q, want %q", nameEntry.Text, "fecim_2t1r_bitcell")
+	}
+
+	// 2T1R → passive: name should update back to fecim_bitcell
+	passive.OnTapped()
+	if nameEntry.Text != "fecim_bitcell" {
+		t.Errorf("2T1R→passive: nameEntry = %q, want %q", nameEntry.Text, "fecim_bitcell")
+	}
+
+	// Custom name: switching arch must NOT overwrite it
+	nameEntry.SetText("my_custom_cell")
+	oneT1R.OnTapped()
+	if nameEntry.Text != "my_custom_cell" {
+		t.Errorf("custom name overwritten on arch switch: got %q, want %q", nameEntry.Text, "my_custom_cell")
+	}
+	twoT1R.OnTapped()
+	if nameEntry.Text != "my_custom_cell" {
+		t.Errorf("custom name overwritten on 2T1R switch: got %q, want %q", nameEntry.Text, "my_custom_cell")
+	}
+	passive.OnTapped()
+	if nameEntry.Text != "my_custom_cell" {
+		t.Errorf("custom name overwritten on passive switch: got %q, want %q", nameEntry.Text, "my_custom_cell")
+	}
+}
+
 func waitUntil(t *testing.T, timeout time.Duration, cond func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)

@@ -286,6 +286,12 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// Keep widgets import used
 	_ = widgets.NewLayoutCanvas
 
+	// isDefaultCellName reports whether name is one of the three per-architecture default
+	// cell names. When true, switching architecture auto-updates the name entry.
+	isDefaultCellName := func(name string) bool {
+		return name == "fecim_bitcell" || name == "fecim_1t1r_bitcell" || name == "fecim_2t1r_bitcell"
+	}
+
 	// Architecture toggle buttons (same style as crossbar module)
 	archPassiveBtn := widget.NewButton("PASSIVE", nil)
 	arch1T1RBtn := widget.NewButton("1T1R", nil)
@@ -321,6 +327,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 		logging.GlobalDebug("[EDA-Builder] Architecture changed to: passive")
 		cfg.Architecture = "passive"
+		if isDefaultCellName(nameEntry.Text) {
+			nameEntry.SetText("fecim_bitcell")
+		}
 		// Reset to passive cell dimensions (triggers updateStats via OnChanged)
 		widthEntry.SetText("0.460")
 		heightEntry.SetText("2.720")
@@ -334,6 +343,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 		logging.GlobalDebug("[EDA-Builder] Architecture changed to: 1t1r")
 		cfg.Architecture = "1t1r"
+		if isDefaultCellName(nameEntry.Text) {
+			nameEntry.SetText("fecim_1t1r_bitcell")
+		}
 		// Update to 1T1R cell dimensions - SKY130 hvl standard (triggers updateStats via OnChanged)
 		widthEntry.SetText("0.460")
 		heightEntry.SetText("4.070")
@@ -347,6 +359,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 		logging.GlobalDebug("[EDA-Builder] Architecture changed to: 2t1r")
 		cfg.Architecture = "2t1r"
+		if isDefaultCellName(nameEntry.Text) {
+			nameEntry.SetText("fecim_2t1r_bitcell")
+		}
 		// Update to 2T1R cell dimensions - two SKY130 sites wide, hvl height (triggers updateStats via OnChanged)
 		widthEntry.SetText("0.920")
 		heightEntry.SetText("4.070")
