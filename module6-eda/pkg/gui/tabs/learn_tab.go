@@ -223,7 +223,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 	passiveDiagramContainer := sizedContainer(IsometricCrossbar(3, 3, true), 450, 400)
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VPWR, VGND | Cell Size: 0.92 x 3.40 um (2x width)
+	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VPWR, VGND | Cell Size: 0.92 x 4.07 µm (2x width, hvl height)
 + No sneak paths (transistor isolates) | + Scales to 128x128+ arrays
 - Larger cell area (2x) | - More complex routing`)
 	oneToneRDesc.Wrapping = fyne.TextWrapWord

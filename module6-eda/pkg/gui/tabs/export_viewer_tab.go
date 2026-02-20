@@ -42,6 +42,9 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canva
 	refreshBtn := widget.NewButton("Refresh", refresh)
 
 	saveBtn := widget.NewButton("Save to File…", func() {
+		if window == nil {
+			return
+		}
 		ext := formatExtension(formatSelect.Selected)
 		design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 		defaultName := design + ext

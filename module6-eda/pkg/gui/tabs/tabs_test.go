@@ -597,6 +597,41 @@ func TestContentMakers(t *testing.T) {
 	}
 }
 
+// TestMakeExportViewerTab_NilWindow verifies that constructing the export viewer
+// with a nil window does not panic, and that the save/copy button handlers
+// return safely rather than panicking when window is nil.
+func TestMakeExportViewerTab_NilWindow(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72}
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("MakeExportViewerTab panicked with nil window: %v", r)
+		}
+	}()
+
+	root := MakeExportViewerTab(cfg, nil)
+	if root == nil {
+		t.Fatal("MakeExportViewerTab returned nil with nil window")
+	}
+
+	// Tap the save button — should return silently, not panic.
+	saveBtn := findButtonByText(root, "Save to File…")
+	if saveBtn == nil {
+		t.Fatal("failed to find Save to File… button")
+	}
+	saveBtn.OnTapped()
+
+	// Tap copy — copyBtn already has a nil guard; confirm it also survives.
+	copyBtn := findButtonByText(root, "Copy")
+	if copyBtn == nil {
+		t.Fatal("failed to find Copy button")
+	}
+	copyBtn.OnTapped()
+}
+
 func TestExportViewerNewFormats(t *testing.T) {
 	cfg := &config.ArrayConfig{
 		Rows: 4, Cols: 4,
