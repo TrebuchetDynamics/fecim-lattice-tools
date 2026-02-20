@@ -118,7 +118,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 	}
 
-	cellAreaLabel := widget.NewLabel(fmt.Sprintf("Cell Area: %.4f µm²", 0.46*2.72))
+	cellAreaLabel := widget.NewLabel(fmt.Sprintf("Cell Area: %.4f µm²", initWidth*initHeight))
 
 	// ========== ARRAY CONFIG SECTION ==========
 	rowsEntry := widget.NewEntry()
