@@ -45,6 +45,12 @@ func GenerateLEF(cfg config.CellConfig) string {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
 
+	// Power rail stripes track the cell top edge (VPWR) and bottom edge (VGND).
+	// OBS occupies the interior 0.1 µm clear of each rail.
+	vpwrY1 := cfg.Height - metalWidth
+	obsX2 := cfg.Width - 0.100
+	obsY2 := cfg.Height - 0.100
+
 	result := fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
@@ -94,7 +100,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 2.580 0.460 2.720 ;
+      RECT 0.000 %.3f %.3f %.3f ;
     END
   END VPWR
 
@@ -103,19 +109,19 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 0.460 0.140 ;
+      RECT 0.000 0.000 %.3f 0.140 ;
     END
   END VGND
 
   OBS
     LAYER met1 ;
-    RECT 0.100 0.100 0.360 2.620 ;
+    RECT 0.100 0.100 %.3f %.3f ;
   END
 
 END %s
 
 END LIBRARY
-`, metalPitch, metalWidth, cfg.Width, cfg.Height, cfg.Name, cfg.Width, cfg.Height, cfg.Name)
+`, metalPitch, metalWidth, cfg.Width, cfg.Height, cfg.Name, cfg.Width, cfg.Height, vpwrY1, cfg.Width, cfg.Height, cfg.Width, obsX2, obsY2, cfg.Name)
 
 	logLEF.Calculation("GenerateLEF", map[string]interface{}{
 		"cellName": cfg.Name, "cellType": "passive", "width": cfg.Width, "height": cfg.Height,

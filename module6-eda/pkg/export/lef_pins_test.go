@@ -5,6 +5,7 @@
 package export
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"regexp"
@@ -314,6 +315,71 @@ func TestLEFPinAlignment(t *testing.T) {
 	}
 
 	t.Log("M6-LEF-02 PASS: Pin alignment correct")
+}
+
+// TestVPWRPinTracksHeight verifies that VPWR and OBS positions track cell height
+// dynamically for all three cell types (passive, 1T1R, 2T1R).
+// Regression test for the hardcoded-height bug fixed in commit c931c5b4 (1T1R/2T1R)
+// and the follow-up fix for passive cells.
+func TestVPWRPinTracksHeight(t *testing.T) {
+	tests := []struct {
+		name       string
+		cfg        config.CellConfig
+		wantVPWRY1 string // expected RECT Y1 for VPWR stripe
+		wantVPWRY2 string // expected RECT Y2 for VPWR stripe (= Height)
+	}{
+		{
+			// Passive default (SKY130 unithd row height)
+			name: "passive_height_2.72",
+			cfg:  config.CellConfig{Name: "fecim_bitcell", CellType: "passive", Width: 0.46, Height: 2.72, MetalPitch: 0.46, MetalWidth: 0.14},
+			wantVPWRY1: "2.580",
+			wantVPWRY2: "2.720",
+		},
+		{
+			// 1T1R default (SKY130 hvl row height)
+			name: "1t1r_height_3.40",
+			cfg:  config.CellConfig{Name: "fecim_1t1r_bitcell", CellType: "1t1r", Width: 0.92, Height: 3.40, MetalPitch: 0.46, MetalWidth: 0.14},
+			wantVPWRY1: "3.260",
+			wantVPWRY2: "3.400",
+		},
+		{
+			// 1T1R at builder default height (4.07 µm)
+			name: "1t1r_height_4.07",
+			cfg:  config.CellConfig{Name: "fecim_1t1r_bitcell", CellType: "1t1r", Width: 0.92, Height: 4.07, MetalPitch: 0.46, MetalWidth: 0.14},
+			wantVPWRY1: "3.930",
+			wantVPWRY2: "4.070",
+		},
+		{
+			// 2T1R at builder default height (4.07 µm)
+			name: "2t1r_height_4.07",
+			cfg:  config.CellConfig{Name: "fecim_2t1r_bitcell", CellType: "2t1r", Width: 1.38, Height: 4.07, MetalPitch: 0.46, MetalWidth: 0.14},
+			wantVPWRY1: "3.930",
+			wantVPWRY2: "4.070",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lef := GenerateLEF(tt.cfg)
+			wantRect := "RECT 0.000 " + tt.wantVPWRY1 + " " + fmt.Sprintf("%.3f", tt.cfg.Width) + " " + tt.wantVPWRY2
+			if !strings.Contains(lef, wantRect) {
+				// Extract VPWR section for diagnostic message
+				vpwrSection := ""
+				lines := strings.Split(lef, "\n")
+				for i, l := range lines {
+					if strings.Contains(l, "VPWR") {
+						end := i + 8
+						if end > len(lines) {
+							end = len(lines)
+						}
+						vpwrSection = strings.Join(lines[i:end], "\n")
+						break
+					}
+				}
+				t.Errorf("VPWR RECT mismatch:\n  want: %s\n  VPWR section:\n%s", wantRect, vpwrSection)
+			}
+		})
+	}
 }
 
 // Helper: parse pin geometries from LEF
