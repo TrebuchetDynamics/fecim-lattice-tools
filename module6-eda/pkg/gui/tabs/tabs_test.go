@@ -647,10 +647,12 @@ func TestExportViewerNewFormats(t *testing.T) {
 		{"Config (JSON)", ".json", "DESIGN_NAME"},
 		{"SDC", ".sdc", "set_input_delay"},
 		{"Design Summary", ".txt", "Physical"},
-		// DEF now generates in-memory via GenerateLatticeDEF
+		// DEF now generates in-memory via generateBuilderDEF (architecture-aware)
 		{"DEF", ".def", "DESIGN"},
 		// SPICE now generates a subcircuit preview
 		{"SPICE", ".sp", "FeCIM"},
+		// SVG Layout generates an in-memory SVG with WL/BL lines
+		{"SVG Layout", ".svg", "wire-wl"},
 	}
 
 	for _, tc := range cases {
@@ -726,6 +728,34 @@ func TestExportViewerArchitectureAware(t *testing.T) {
 		}
 		if !containsString(source, "in-memory") {
 			t.Errorf("DEF source should be in-memory, got %q", source)
+		}
+	})
+
+	t.Run("1t1r_DEF_includes_SL_pins", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "1t1r"
+		cfg.CellWidth = 0.92
+		cfg.CellHeight = 4.07
+		def, _ := loadExportPreviewContent("DEF", &cfg)
+		if !containsString(def, "SL[") {
+			t.Error("1T1R DEF should contain SL[] pins")
+		}
+		if containsString(def, "CSL[") {
+			t.Error("1T1R DEF should NOT contain CSL[] pins")
+		}
+	})
+
+	t.Run("2t1r_DEF_includes_SL_and_CSL_pins", func(t *testing.T) {
+		cfg := baseCfg
+		cfg.Architecture = "2t1r"
+		cfg.CellWidth = 1.38
+		cfg.CellHeight = 4.07
+		def, _ := loadExportPreviewContent("DEF", &cfg)
+		if !containsString(def, "SL[") {
+			t.Error("2T1R DEF should contain SL[] pins")
+		}
+		if !containsString(def, "CSL[") {
+			t.Error("2T1R DEF should contain CSL[] pins")
 		}
 	})
 }
