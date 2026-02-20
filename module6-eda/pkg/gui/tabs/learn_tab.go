@@ -440,7 +440,7 @@ func makeFAQContent() fyne.CanvasObject {
 		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull efabless/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
 
 	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", "",
-		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays. 1T1R adds a transistor per cell to isolate read/write operations, enabling larger arrays (64x64+)."))
+		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays (risk grows as N×M). Literature recommends passive up to ~32×32; beyond that sneak currents typically dominate. 1T1R adds one access transistor per row to suppress row-direction sneak paths, enabling arrays to 128×128+. 2T1R adds a second transistor per column for full isolation, enabling up to ~512×512."))
 
 	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", "",
 		widget.NewLabel("A: NO! Liberty values are placeholders. Real fabrication requires SPICE characterization with validated FeFET device models from a foundry."))
