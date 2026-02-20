@@ -251,3 +251,134 @@ func TestVerilogArrayNaming(t *testing.T) {
 		t.Error("Verilog should document architecture in header")
 	}
 }
+
+// ============================================================================
+// GenerateDesignSummary Tests
+// ============================================================================
+
+func TestGenerateDesignSummary_NonEmpty(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows:         8,
+		Cols:         8,
+		Mode:         "compute",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	summary := GenerateDesignSummary(cfg)
+	if summary == "" {
+		t.Fatal("GenerateDesignSummary returned empty string")
+	}
+}
+
+func TestGenerateDesignSummary_Sections(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "compute",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	summary := GenerateDesignSummary(cfg)
+
+	requiredSections := []string{
+		"Physical",
+		"Electrical",
+		"Peripheral Circuits",
+		"Timing",
+		"Technology",
+		"Confidence",
+		"ESTIMATED",
+	}
+	for _, section := range requiredSections {
+		if !strings.Contains(summary, section) {
+			t.Errorf("Design summary missing section: %q", section)
+		}
+	}
+}
+
+func TestGenerateDesignSummary_ComputeMode(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows:         16,
+		Cols:         16,
+		Mode:         "compute",
+		Architecture: "1t1r",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   4.07,
+	}
+
+	summary := GenerateDesignSummary(cfg)
+	if !strings.Contains(summary, "Compute Mode") {
+		t.Error("Design summary in compute mode should include Compute Mode section")
+	}
+	if !strings.Contains(summary, "GOPS") {
+		t.Error("Design summary in compute mode should include throughput estimate")
+	}
+}
+
+func TestGenerateDesignSummary_StorageMode(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	summary := GenerateDesignSummary(cfg)
+	// Storage mode should NOT include a compute section
+	if strings.Contains(summary, "MVM dimensions") {
+		t.Error("Design summary in storage mode should not include compute metrics")
+	}
+}
+
+func TestGenerateDesignSummary_Technologies(t *testing.T) {
+	techs := []struct {
+		tech    string
+		wantPDK string
+	}{
+		{"sky130", "SKY130"},
+		{"gf180mcu", "GF180MCU"},
+		{"ihp_sg13g2", "IHP SG13G2"},
+	}
+
+	cfg := config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72}
+	for _, tt := range techs {
+		t.Run(tt.tech, func(t *testing.T) {
+			cfg.Technology = tt.tech
+			summary := GenerateDesignSummary(cfg)
+			if !strings.Contains(summary, tt.wantPDK) {
+				t.Errorf("Design summary for tech=%q should mention %q", tt.tech, tt.wantPDK)
+			}
+		})
+	}
+}
+
+func TestGenerateDesignSummary_ArraySize(t *testing.T) {
+	cfg := config.ArrayConfig{
+		Rows:         8,
+		Cols:         16,
+		Mode:         "memory",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	summary := GenerateDesignSummary(cfg)
+	// Verify the array dimensions are mentioned
+	if !strings.Contains(summary, "8 × 16") {
+		t.Error("Design summary should mention array dimensions 8 × 16")
+	}
+	if !strings.Contains(summary, "128 cells") {
+		t.Error("Design summary should mention total cell count of 128")
+	}
+}

@@ -814,13 +814,18 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				}
 			}
 
-			// Generate OpenLane config
-			addLog("Generating OpenLane config...")
-			configContent := export.GenerateOpenLaneConfig(*cfg)
+			// Generate LibreLane/OpenLane config + SDC timing constraints
+			// SDC must accompany config.json (referenced via BASE_SDC_FILE)
+			addLog("Generating LibreLane config + SDC...")
+			configContent := export.GenerateLibreLaneConfig(*cfg)
 			if err := os.WriteFile("data/config.json", []byte(configContent), 0644); err != nil {
-				addLog("ERROR: Failed to write OpenLane config: " + err.Error())
+				addLog("ERROR: Failed to write config.json: " + err.Error())
 			}
-			addLog("  Config: data/config.json")
+			if err := os.WriteFile("data/constraints.sdc", []byte(export.GenerateSDC(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write constraints.sdc: " + err.Error())
+			}
+			addLog("  Config:      data/config.json")
+			addLog("  Constraints: data/constraints.sdc")
 
 			logging.GlobalInfo("[EDA-Builder] Generate All completed successfully")
 			sharedwidgets.SafeDo(func() {
@@ -1036,8 +1041,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			cellCfg := getCellConfig()
 
-			// Step 1: Cell library
-			addLog("[1/6] Generating cell library...")
+			// Step 1: Cell library (LEF + Liberty + Verilog)
+			addLog("[1/8] Generating cell library...")
 			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.lef", []byte(export.GenerateLEF(cellCfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write LEF: " + err.Error())
 			}
@@ -1050,54 +1055,124 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			time.Sleep(100 * time.Millisecond)
 
 			// Step 2: Array Verilog
-			addLog("[2/6] Generating array Verilog...")
+			addLog("[2/8] Generating array Verilog...")
 			if err := os.WriteFile(outputDir+"/"+designName+".v", []byte(export.GenerateArrayVerilog(*cfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write array Verilog: " + err.Error())
 			}
 			time.Sleep(100 * time.Millisecond)
 
-			// Step 3: DEF
-			addLog("[3/6] Generating DEF placement...")
+			// Step 3: DEF placement
+			addLog("[3/8] Generating DEF placement...")
 			if err := os.WriteFile(outputDir+"/"+designName+".def", []byte(generateBuilderDEF(*cfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write DEF: " + err.Error())
 			}
 			time.Sleep(100 * time.Millisecond)
 
-			// Step 4: Design JSON
-			addLog("[4/6] Generating design data...")
-			jsonContent := fmt.Sprintf(`{"design": "%s", "rows": %d, "cols": %d, "mode": "%s", "arch": "%s"}`,
-				designName, cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture)
+			// Step 4: Design summary
+			addLog("[4/8] Generating design summary...")
+			if err := os.WriteFile(outputDir+"/design_summary.txt", []byte(export.GenerateDesignSummary(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write design summary: " + err.Error())
+			}
+			time.Sleep(100 * time.Millisecond)
+
+			// Step 5: LibreLane config + SDC timing constraints
+			// config.json uses BASE_SDC_FILE=constraints.sdc so both must be present
+			addLog("[5/8] Generating LibreLane config + SDC constraints...")
+			if err := os.WriteFile(outputDir+"/config.json", []byte(export.GenerateLibreLaneConfig(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write config.json: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/constraints.sdc", []byte(export.GenerateSDC(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write constraints.sdc: " + err.Error())
+			}
+			time.Sleep(100 * time.Millisecond)
+
+			// Step 6: Flow scripts (Yosys + KLayout + OpenROAD + shell runner)
+			addLog("[6/8] Generating flow scripts...")
+			if err := os.WriteFile(outputDir+"/synthesis.tcl", []byte(export.GenerateSynthesisScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write synthesis.tcl: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/gen_gds.py", []byte(export.GenerateKLayoutGDSScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write gen_gds.py: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/openroad_flow.tcl", []byte(export.GenerateOpenROADFlowScript(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write openroad_flow.tcl: " + err.Error())
+			}
+			if err := os.WriteFile(outputDir+"/run_flow.sh", []byte(export.GenerateFlowRunner(*cfg)), 0644); err != nil {
+				addLog("ERROR: Failed to write run_flow.sh: " + err.Error())
+			} else {
+				// Make the shell runner executable
+				_ = os.Chmod(outputDir+"/run_flow.sh", 0755)
+			}
+			time.Sleep(100 * time.Millisecond)
+
+			// Step 7: Design metadata JSON
+			addLog("[7/8] Generating design metadata...")
+			jsonContent := fmt.Sprintf(
+				`{"design": "%s", "rows": %d, "cols": %d, "mode": "%s", "arch": "%s", "technology": "%s", "cell_width_um": %.3f, "cell_height_um": %.3f}`,
+				designName, cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture, cfg.Technology, cfg.CellWidth, cfg.CellHeight)
 			if err := os.WriteFile(outputDir+"/"+designName+".json", []byte(jsonContent), 0644); err != nil {
 				addLog("ERROR: Failed to write design JSON: " + err.Error())
 			}
 			time.Sleep(100 * time.Millisecond)
 
-			// Step 5: OpenLane config
-			addLog("[5/6] Generating OpenLane config...")
-			if err := os.WriteFile(outputDir+"/config.json", []byte(export.GenerateOpenLaneConfig(*cfg)), 0644); err != nil {
-				addLog("ERROR: Failed to write OpenLane config: " + err.Error())
-			}
-			time.Sleep(100 * time.Millisecond)
-
-			// Step 6: README
-			addLog("[6/6] Generating README...")
+			// Step 8: README
+			addLog("[8/8] Generating README...")
 			readme := fmt.Sprintf(`# %s
 
-Generated by FeCIM Design Suite
-Date: %s
+Generated by FeCIM Design Suite on %s.
+Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 
 ## Files
 
-- cells/ - FeCIM bitcell library (LEF/LIB/V)
-- %s.v - Verilog netlist
-- %s.def - Physical placement
-- config.json - OpenLane configuration
+### Cell library
+- cells/fecim_bitcell.lef  — abstract view (geometry, pin locations)
+- cells/fecim_bitcell.lib  — Liberty timing/power model
+- cells/fecim_bitcell.v    — behavioral Verilog (Yosys blackbox)
 
-## Usage
+### Design files
+- %s.v          — structural array Verilog netlist
+- %s.def        — pre-placed DEF (FIXED placement, no routing needed)
+- design_summary.txt       — physical/electrical/timing report
 
-1. Copy this directory to your OpenLane designs/
-2. Run: flow.tcl -design %s
-`, designName, time.Now().Format("2006-01-02"), designName, designName, designName)
+### EDA flow
+- config.json              — LibreLane / OpenLane v1 configuration
+- constraints.sdc          — SDC timing constraints (referenced by config.json)
+- synthesis.tcl            — Yosys hierarchy check script
+- gen_gds.py               — KLayout DEF+LEF → GDS II stream-out
+- openroad_flow.tcl        — OpenROAD placement validation script
+- run_flow.sh              — Full flow orchestration (Yosys → KLayout → OpenROAD → LibreLane)
+
+### Metadata
+- %s.json       — machine-readable design parameters
+
+## Quick Start
+
+### 1. Install LibreLane (recommended — successor to OpenLane)
+    pip install librelane
+
+### 2. Run the complete flow
+    cd %s
+    chmod +x run_flow.sh
+    ./run_flow.sh
+
+### 3. Or run LibreLane directly
+    python3 -m librelane --config-file config.json
+
+### 4. OpenLane v1 (legacy)
+    cd $OPENLANE_ROOT && ./flow.tcl -design fecim_array
+
+## Notes
+
+- This is a pre-placed structural design (SYNTH_ELABORATE_ONLY=1).
+  No logic synthesis is performed; Yosys validates hierarchy only.
+- RUN_CTS=0: the FeCIM crossbar is clockless (static write, capacitive read).
+- GDS stream-out requires KLayout or the OpenLane Docker image:
+    docker run --rm -v $PWD:/design -w /design \
+      ghcr.io/the-openroad-project/openlane:latest ./run_flow.sh
+- See design_summary.txt for detailed physical and electrical parameters.
+`, designName, time.Now().Format("2006-01-02"),
+				cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture, cfg.Technology,
+				designName, designName, designName, outputDir)
 			if err := os.WriteFile(outputDir+"/README.md", []byte(readme), 0644); err != nil {
 				addLog("ERROR: Failed to write README: " + err.Error())
 			}
@@ -1115,7 +1190,17 @@ Date: %s
 
 				// Show success dialog with export directory path
 				if window != nil {
-					message := fmt.Sprintf("Package exported successfully to:\n\n%s\n\nContents:\n• Cell library (LEF/LIB/V)\n• Verilog netlist\n• DEF placement\n• OpenLane config\n• README", absOutputDir)
+					message := fmt.Sprintf(
+						"Package exported to:\n%s\n\n"+
+							"Cell library:  cells/ (LEF/LIB/V)\n"+
+							"Verilog:       %s.v\n"+
+							"DEF:           %s.def\n"+
+							"Summary:       design_summary.txt\n"+
+							"LibreLane:     config.json + constraints.sdc\n"+
+							"Flow scripts:  synthesis.tcl, run_flow.sh, gen_gds.py\n"+
+							"OpenROAD:      openroad_flow.tcl\n\n"+
+							"Run: cd %s && ./run_flow.sh",
+						absOutputDir, designName, designName, absOutputDir)
 					dialog.ShowInformation("Export Complete", message, window)
 				}
 			})

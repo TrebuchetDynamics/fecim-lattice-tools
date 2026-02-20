@@ -42,11 +42,16 @@ func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 
 	logging.GlobalDebug("[EDA] Module content created with %dx%d array config", arrayConfig.Rows, arrayConfig.Cols)
 
-	// Create 2 tabs - consolidated architecture
-	return container.NewAppTabs(
+	// All 5 views, matching the standalone EDA GUI (app.go)
+	appTabs := container.NewAppTabs(
 		container.NewTabItem("1. Builder & Validation", tabs.MakeBuilderValidationTab(arrayConfig, window)),
-		container.NewTabItem("2. Learn", tabs.MakeLearnTab(nil, window)),
+		container.NewTabItem("2. Export Viewer", tabs.MakeExportViewerTab(arrayConfig, window)),
+		container.NewTabItem("3. Layout Visualizer", tabs.MakeLayoutVisualizerTab(arrayConfig, window)),
+		container.NewTabItem("4. Learn", tabs.MakeLearnTab(nil, window)),
+		container.NewTabItem("5. Flow Scripts", tabs.MakeFlowScriptsTab(arrayConfig, window)),
 	)
+	appTabs.SetTabLocation(container.TabLocationTop)
+	return appTabs
 }
 
 // BuildContent creates the UI content for embedding in the main app

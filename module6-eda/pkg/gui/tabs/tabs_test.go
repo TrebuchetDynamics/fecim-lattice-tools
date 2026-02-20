@@ -97,6 +97,96 @@ func TestMakeBuilderValidationTab_2T1RArchitecture(t *testing.T) {
 	}
 }
 
+func TestMakeFlowScriptsTab(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window := testApp.NewWindow("Test")
+	defer window.Close()
+
+	cfg := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "compute",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	content := MakeFlowScriptsTab(cfg, window)
+	if content == nil {
+		t.Fatal("MakeFlowScriptsTab returned nil")
+	}
+}
+
+func TestMakeFlowScriptsTab_NilConfig(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window := testApp.NewWindow("Test")
+	defer window.Close()
+
+	// nil config should use defaults without panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("MakeFlowScriptsTab panicked with nil config: %v", r)
+		}
+	}()
+
+	content := MakeFlowScriptsTab(nil, window)
+	if content == nil {
+		t.Error("MakeFlowScriptsTab returned nil with nil config")
+	}
+}
+
+func TestLoadFlowScriptContent_DesignSummary(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	content, desc := loadFlowScriptContent("Design Summary (design_summary.txt)", cfg)
+	if content == "" {
+		t.Fatal("loadFlowScriptContent Design Summary returned empty content")
+	}
+	if desc == "" {
+		t.Fatal("loadFlowScriptContent Design Summary returned empty desc")
+	}
+	if !containsString(content, "Physical") {
+		t.Error("Design summary should contain Physical section")
+	}
+}
+
+func TestFlowScriptExtension(t *testing.T) {
+	tests := []struct {
+		format string
+		want   string
+	}{
+		{"Design Summary (design_summary.txt)", ".txt"},
+		{"Yosys TCL (synthesis.tcl)", ".tcl"},
+		{"KLayout Python (gen_gds.py)", ".py"},
+		{"CrossSim YAML (crosssim.yaml)", ".yaml"},
+		{"Shell Runner (run_flow.sh)", ".sh"},
+		{"LibreLane JSON (config.json)", ".json"},
+		{"OpenVAF Verilog-A (fecim_lk.va)", ".va"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			got := flowScriptExtension(tt.format)
+			if got != tt.want {
+				t.Errorf("flowScriptExtension(%q) = %q, want %q", tt.format, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMakeLearnTab(t *testing.T) {
 	testApp := test.NewApp()
 	defer testApp.Quit()
