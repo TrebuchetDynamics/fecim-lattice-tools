@@ -37,10 +37,11 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	showWL := widget.NewCheck("WL", nil)
 	showBL := widget.NewCheck("BL", nil)
 	showSL := widget.NewCheck("SL", nil)
+	showCSL := widget.NewCheck("CSL", nil) // 2T1R column select line
 	showCells := widget.NewCheck("Cells", nil)
 	showGrid := widget.NewCheck("Grid", nil)
 	showLegend := widget.NewCheck("Legend", nil)
-	for _, c := range []*widget.Check{showWL, showBL, showSL, showCells, showGrid, showLegend} {
+	for _, c := range []*widget.Check{showWL, showBL, showSL, showCSL, showCells, showGrid, showLegend} {
 		c.SetChecked(true)
 	}
 
@@ -61,6 +62,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 				WL:     showWL.Checked,
 				BL:     showBL.Checked,
 				SL:     showSL.Checked,
+				CSL:    showCSL.Checked,
 				Cells:  showCells.Checked,
 				Grid:   showGrid.Checked,
 				Legend: showLegend.Checked,
@@ -102,6 +104,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	showWL.OnChanged = func(bool) { updateContent() }
 	showBL.OnChanged = func(bool) { updateContent() }
 	showSL.OnChanged = func(bool) { updateContent() }
+	showCSL.OnChanged = func(bool) { updateContent() }
 	showCells.OnChanged = func(bool) { updateContent() }
 	showGrid.OnChanged = func(bool) { updateContent() }
 	showLegend.OnChanged = func(bool) { updateContent() }
@@ -112,7 +115,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	header := container.NewVBox(
 		container.NewHBox(
 			widget.NewLabel("Layers:"),
-			showWL, showBL, showSL, showCells, showGrid, showLegend,
+			showWL, showBL, showSL, showCSL, showCells, showGrid, showLegend,
 			widget.NewButton("Refresh", updateContent),
 			widget.NewSeparator(),
 			svgSourceBtn,
@@ -135,10 +138,10 @@ func loadLayoutSVGContent(cfg *config.ArrayConfig) (string, string) {
 }
 
 type layerFilter struct {
-	WL, BL, SL bool
-	Cells      bool
-	Grid       bool
-	Legend     bool
+	WL, BL, SL, CSL bool
+	Cells           bool
+	Grid            bool
+	Legend          bool
 }
 
 func buildLayerSummary(svg string, f layerFilter, cfg *config.ArrayConfig) string {
@@ -181,6 +184,10 @@ func buildLayerSummary(svg string, f layerFilter, cfg *config.ArrayConfig) strin
 	if f.SL {
 		n := strings.Count(svg, "class=\"wire-sl\"")
 		sb.WriteString(fmt.Sprintf("  SL wires:               %d\n", n))
+	}
+	if f.CSL {
+		n := strings.Count(svg, "class=\"wire-csl\"")
+		sb.WriteString(fmt.Sprintf("  CSL wires (2T1R):       %d\n", n))
 	}
 	if f.Cells {
 		passive := strings.Count(svg, "class=\"cell-passive\"")

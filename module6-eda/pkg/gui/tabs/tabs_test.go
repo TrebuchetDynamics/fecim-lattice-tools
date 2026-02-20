@@ -248,9 +248,26 @@ func TestMakeLayoutVisualizerTab(t *testing.T) {
 	}
 
 	svg, _ := loadLayoutSVGContent(cfg)
-	summary := buildLayerSummary(svg, layerFilter{WL: true, BL: true, SL: true, Cells: true, Grid: true, Legend: true}, cfg)
+	summary := buildLayerSummary(svg, layerFilter{WL: true, BL: true, SL: true, CSL: true, Cells: true, Grid: true, Legend: true}, cfg)
 	if summary == "" || !containsString(summary, "WL wires") {
 		t.Fatal("buildLayerSummary did not include expected layer output")
+	}
+}
+
+func TestBuildLayerSummary_CSLWires_2T1R(t *testing.T) {
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "2t1r", CellWidth: 1.38, CellHeight: 3.40}
+	svg, _ := loadLayoutSVGContent(cfg)
+
+	// CSL enabled: summary must mention CSL wires line
+	withCSL := buildLayerSummary(svg, layerFilter{CSL: true}, cfg)
+	if !containsString(withCSL, "CSL wires") {
+		t.Errorf("buildLayerSummary with CSL=true did not include 'CSL wires' line")
+	}
+
+	// CSL disabled: CSL wires line must be absent
+	withoutCSL := buildLayerSummary(svg, layerFilter{CSL: false}, cfg)
+	if containsString(withoutCSL, "CSL wires") {
+		t.Errorf("buildLayerSummary with CSL=false should not include 'CSL wires' line")
 	}
 }
 
