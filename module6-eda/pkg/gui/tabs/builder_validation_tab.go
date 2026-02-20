@@ -644,6 +644,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// ========== STATUS ==========
 	statusLabel := widget.NewLabel("Ready")
+	// progressBar shows an animation while Generate/Validate/Export operations run.
+	progressBar := widget.NewProgressBarInfinite()
+	progressBar.Stop()
 
 	// ========== GENERATE ALL BUTTON ==========
 	var generateAllBtn *widget.Button
@@ -656,6 +659,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		validateAllBtn.Disable()
 		exportPackageBtn.Disable()
 		generateAllBtn.SetText("Generating...")
+		progressBar.Start()
 		go func() {
 			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Generating...")
@@ -687,6 +691,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + dir + ": " + err.Error())
 				sharedwidgets.SafeDo(func() {
+					progressBar.Stop()
 					statusLabel.SetText("Generation failed")
 					generateAllBtn.Enable()
 					validateAllBtn.Enable()
@@ -831,6 +836,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			logging.GlobalInfo("[EDA-Builder] Generate All completed successfully")
 			sharedwidgets.SafeDo(func() {
+				progressBar.Stop()
 				statusLabel.SetText("All files generated")
 				generateAllBtn.Enable()
 				validateAllBtn.Enable()
@@ -848,6 +854,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		generateAllBtn.Disable()
 		exportPackageBtn.Disable()
 		validateAllBtn.SetText("Validating...")
+		progressBar.Start()
 		go func() {
 			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Validating...")
@@ -983,6 +990,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if allPassed {
 				logging.GlobalInfo("[EDA-Builder] Validate All completed: all checks passed")
 				sharedwidgets.SafeDo(func() {
+					progressBar.Stop()
 					statusLabel.SetText("All validations passed")
 					validationSummary.SetText("✓ All checks passed")
 					validateAllBtn.Enable()
@@ -994,6 +1002,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			} else {
 				logging.GlobalInfo("[EDA-Builder] Validate All completed: some checks failed")
 				sharedwidgets.SafeDo(func() {
+					progressBar.Stop()
 					statusLabel.SetText("Some validations failed")
 					validationSummary.SetText("✗ Some checks failed - see log for details")
 					validateAllBtn.Enable()
@@ -1012,6 +1021,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		generateAllBtn.Disable()
 		validateAllBtn.Disable()
 		exportPackageBtn.SetText("Exporting...")
+		progressBar.Start()
 		go func() {
 			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Exporting package...")
@@ -1024,6 +1034,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + outputDir + ": " + err.Error())
 				sharedwidgets.SafeDo(func() {
+					progressBar.Stop()
 					statusLabel.SetText("Export failed")
 					exportPackageBtn.Enable()
 					generateAllBtn.Enable()
@@ -1035,6 +1046,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err := os.MkdirAll(outputDir+"/cells", 0755); err != nil {
 				addLog("ERROR: Failed to create cells directory: " + err.Error())
 				sharedwidgets.SafeDo(func() {
+					progressBar.Stop()
 					validateAllBtn.Enable()
 					exportPackageBtn.SetText("Export Package")
 				})
@@ -1184,6 +1196,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 
 			logging.GlobalInfo("[EDA-Builder] Export Package completed: %s", absOutputDir)
 			sharedwidgets.SafeDo(func() {
+				progressBar.Stop()
 				statusLabel.SetText("Package exported to " + outputDir)
 				exportPackageBtn.Enable()
 				generateAllBtn.Enable()
@@ -1308,6 +1321,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		container.NewTabItem("Verilog", verilogTab),
 		container.NewTabItem("DEF", defTab),
 		container.NewTabItem("Layout", layoutTab),
+		container.NewTabItem("Array Map", MakeConductanceHeatmapPanel(cfg)),
 	)
 	previewTabs.SetTabLocation(container.TabLocationTop)
 
@@ -1482,6 +1496,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		configAccordion,
 		widget.NewSeparator(),
 		actionsStatusRow,
+		progressBar,
 	)
 
 	// Use VSplit for resizable preview/validation areas

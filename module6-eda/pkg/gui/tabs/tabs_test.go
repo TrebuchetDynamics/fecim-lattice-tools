@@ -683,3 +683,151 @@ func findSubstring(s, substr string) bool {
 	}
 	return false
 }
+
+// =============================================================================
+// Conductance Heatmap Tests
+// =============================================================================
+
+func TestMakeConductanceHeatmapPanel(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4}
+	content := MakeConductanceHeatmapPanel(cfg)
+	if content == nil {
+		t.Fatal("MakeConductanceHeatmapPanel returned nil")
+	}
+}
+
+func TestMakeConductanceHeatmapPanel_NilConfig(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	content := MakeConductanceHeatmapPanel(nil)
+	if content == nil {
+		t.Fatal("MakeConductanceHeatmapPanel(nil) returned nil")
+	}
+}
+
+func TestNewConductanceRaster(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	// Empty matrix should return a valid (blank) raster.
+	r := newConductanceRaster(conductanceMatrix{})
+	if r == nil {
+		t.Fatal("newConductanceRaster(empty): returned nil")
+	}
+
+	// Non-empty matrix.
+	m := makeConductanceGradient(8, 8)
+	r = newConductanceRaster(m)
+	if r == nil {
+		t.Fatal("newConductanceRaster(8×8 gradient): returned nil")
+	}
+}
+
+func TestHeatColorCIM(t *testing.T) {
+	// Dark-blue at 0.
+	c := heatColorCIM(0)
+	if c.R != 0 || c.G != 0 || c.B != 80 {
+		t.Errorf("heatColorCIM(0): expected dark-blue {0,0,80}, got %v", c)
+	}
+	// Yellow at 1.
+	c = heatColorCIM(1)
+	if c.R != 255 || c.B != 0 {
+		t.Errorf("heatColorCIM(1): expected yellow (R=255,B=0), got %v", c)
+	}
+	// Negative clamped to dark-blue.
+	c = heatColorCIM(-0.5)
+	if c.R != 0 || c.G != 0 || c.B != 80 {
+		t.Errorf("heatColorCIM(-0.5): expected dark-blue, got %v", c)
+	}
+	// Mid-range should be non-black.
+	c = heatColorCIM(0.5)
+	if c.R == 0 && c.G == 0 && c.B == 0 {
+		t.Error("heatColorCIM(0.5): expected non-black color")
+	}
+}
+
+func TestConductancePatterns(t *testing.T) {
+	rows, cols := 4, 4
+
+	t.Run("Uniform_level", func(t *testing.T) {
+		m := makeConductanceUniform(rows, cols, 0.9)
+		if m.Rows != rows || m.Cols != cols {
+			t.Fatalf("wrong dims %d×%d", m.Rows, m.Cols)
+		}
+		for i := range m.Values {
+			for j := range m.Values[i] {
+				if m.Values[i][j] != 0.9 {
+					t.Errorf("[%d][%d]: expected 0.9, got %f", i, j, m.Values[i][j])
+				}
+			}
+		}
+	})
+
+	t.Run("Gradient_range", func(t *testing.T) {
+		m := makeConductanceGradient(rows, cols)
+		for i := range m.Values {
+			for j := range m.Values[i] {
+				v := m.Values[i][j]
+				if v < 0 || v > 1 {
+					t.Errorf("[%d][%d]: out of [0,1]: %f", i, j, v)
+				}
+			}
+		}
+	})
+
+	t.Run("Checker_alternating", func(t *testing.T) {
+		m := makeConductanceChecker(rows, cols)
+		for i := range m.Values {
+			for j := range m.Values[i] {
+				expected := 0.9
+				if (i+j)%2 != 0 {
+					expected = 0.1
+				}
+				if m.Values[i][j] != expected {
+					t.Errorf("[%d][%d]: expected %f, got %f", i, j, expected, m.Values[i][j])
+				}
+			}
+		}
+	})
+
+	t.Run("Random_range", func(t *testing.T) {
+		m := makeConductanceRandom(rows, cols, 42)
+		for i := range m.Values {
+			for j := range m.Values[i] {
+				v := m.Values[i][j]
+				if v < 0 || v > 1 {
+					t.Errorf("[%d][%d]: out of [0,1]: %f", i, j, v)
+				}
+			}
+		}
+	})
+
+	t.Run("Random_deterministic", func(t *testing.T) {
+		m1 := makeConductanceRandom(rows, cols, 42)
+		m2 := makeConductanceRandom(rows, cols, 42)
+		if m1.Values[0][0] != m2.Values[0][0] {
+			t.Error("same seed should produce identical values")
+		}
+	})
+
+	t.Run("Random_different_seeds", func(t *testing.T) {
+		m1 := makeConductanceRandom(rows, cols, 1)
+		m2 := makeConductanceRandom(rows, cols, 999)
+		same := true
+		for i := range m1.Values {
+			for j := range m1.Values[i] {
+				if m1.Values[i][j] != m2.Values[i][j] {
+					same = false
+					break
+				}
+			}
+		}
+		if same {
+			t.Error("different seeds produced identical matrices")
+		}
+	})
+}
