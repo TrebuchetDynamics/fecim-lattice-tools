@@ -203,7 +203,6 @@ print(f"Crossbar: %dx%d cells, {{ARCHITECTURE}} architecture")
 		designName,
 		cfg.Rows, cfg.Cols,
 		cfg.Rows, cfg.Cols,
-		cfg.Architecture,
 	)
 }
 
