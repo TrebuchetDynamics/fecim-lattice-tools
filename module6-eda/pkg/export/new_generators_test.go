@@ -229,6 +229,30 @@ func TestGenerateMagicDRCScript_TechFile(t *testing.T) {
 	}
 }
 
+// TestGenerateMagicDRCScript_HeredocExpansion verifies the heredoc uses unquoted EOF
+// so that bash expands ${INPUT_FILE} before passing to Magic's Tcl interpreter.
+// A single-quoted heredoc ('EOF') would prevent this expansion, causing Magic to
+// receive the literal string "${INPUT_FILE}" as an unset Tcl variable → load fails.
+func TestGenerateMagicDRCScript_HeredocExpansion(t *testing.T) {
+	cfg := config.DefaultArrayConfig()
+	got := GenerateMagicDRCScript(cfg)
+
+	// Must NOT use single-quoted heredoc (which prevents bash variable expansion)
+	if strings.Contains(got, "<< 'EOF'") {
+		t.Error("DRC script uses << 'EOF' heredoc: ${INPUT_FILE} will NOT be bash-expanded; use << EOF instead")
+	}
+
+	// Must use unquoted heredoc to allow ${INPUT_FILE} to expand
+	if !strings.Contains(got, "<< EOF") {
+		t.Error("DRC script missing unquoted << EOF heredoc (required for ${INPUT_FILE} bash expansion)")
+	}
+
+	// Tcl variable ${drc_count} must be escaped as \${drc_count} so bash passes it through
+	if !strings.Contains(got, `\${drc_count}`) {
+		t.Error("DRC script must escape Tcl var as \\${drc_count} to survive unquoted heredoc expansion")
+	}
+}
+
 func TestGenerateMagicExtractionScript_Smoke(t *testing.T) {
 	cfg := config.DefaultCellConfig()
 	got := GenerateMagicExtractionScript(cfg)

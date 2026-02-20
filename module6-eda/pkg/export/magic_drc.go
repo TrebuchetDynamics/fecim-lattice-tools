@@ -119,13 +119,14 @@ fi
 echo "Running Magic DRC on: ${INPUT_FILE}"
 
 # Run Magic in batch mode with Tcl DRC script
-magic -T "${TECH_FILE:-sky130A}" -noc -dnull << 'EOF'
+# Unquoted heredoc: bash expands ${INPUT_FILE}; Tcl vars (drc_count) are escaped as \$
+magic -T "${TECH_FILE:-sky130A}" -noc -dnull << EOF
 drc on
 load ${INPUT_FILE}
 drc check
 set drc_count [drc list count total]
-puts "DRC violations: ${drc_count}"
-if {${drc_count} > 0} {
+puts "DRC violations: \${drc_count}"
+if {\${drc_count} > 0} {
     puts "=== DRC Errors ==="
     drc listall why
 }
