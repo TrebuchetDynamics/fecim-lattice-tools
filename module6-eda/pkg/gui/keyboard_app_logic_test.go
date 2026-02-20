@@ -95,6 +95,72 @@ func TestSetupKeyboard_OnTypedKeyNavigation(t *testing.T) {
 	}
 }
 
+func TestSetupKeyboard_AllFiveViewShortcuts(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	w := app.NewWindow("keyboard5")
+	defer w.Close()
+
+	views := []string{
+		"1. Builder & Validation",
+		"2. Export Viewer",
+		"3. Layout Visualizer",
+		"4. Learn",
+		"5. Flow Scripts",
+	}
+	selector := widget.NewSelect(views, nil)
+	selector.SetSelected(views[0])
+	SetupKeyboard(w, selector)
+
+	onTypedKey := w.Canvas().OnTypedKey()
+	if onTypedKey == nil {
+		t.Fatal("expected typed-key handler to be registered")
+	}
+
+	cases := []struct {
+		key  fyne.KeyName
+		want string
+	}{
+		{fyne.Key1, "1. Builder & Validation"},
+		{fyne.Key2, "2. Export Viewer"},
+		{fyne.Key3, "3. Layout Visualizer"},
+		{fyne.Key4, "4. Learn"},
+		{fyne.Key5, "5. Flow Scripts"},
+	}
+
+	for _, tc := range cases {
+		onTypedKey(&fyne.KeyEvent{Name: tc.key})
+		if selector.Selected != tc.want {
+			t.Errorf("Key%s: selected = %q, want %q", string(tc.key), selector.Selected, tc.want)
+		}
+	}
+}
+
+// TestSetupKeyboard_KeysNoOpOnSmallerSelector ensures keys 3-5 safely
+// no-op when the selector has fewer entries (e.g., during testing with 2 views).
+func TestSetupKeyboard_KeysNoOpOnSmallerSelector(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+
+	w := app.NewWindow("keyboard2")
+	defer w.Close()
+
+	selector := widget.NewSelect([]string{"A", "B"}, nil)
+	selector.SetSelected("A")
+	SetupKeyboard(w, selector)
+
+	onTypedKey := w.Canvas().OnTypedKey()
+
+	// Keys 3/4/5 should not panic and should not change selection.
+	for _, key := range []fyne.KeyName{fyne.Key3, fyne.Key4, fyne.Key5} {
+		onTypedKey(&fyne.KeyEvent{Name: key})
+		if selector.Selected != "A" {
+			t.Errorf("Key%s changed selection on 2-item selector to %q (should be no-op)", string(key), selector.Selected)
+		}
+	}
+}
+
 func TestSetupKeyboard_NilSelectorAndHelpPath(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
