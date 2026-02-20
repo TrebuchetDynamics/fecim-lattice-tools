@@ -66,6 +66,7 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canva
 	copyBtn := widget.NewButton("Copy", func() {
 		if window != nil {
 			window.Clipboard().SetContent(preview.Text)
+			status.SetText(fmt.Sprintf("Copied %d bytes to clipboard", len(preview.Text)))
 		}
 	})
 
@@ -388,21 +389,24 @@ func generateArrayStatistics(cfg *config.ArrayConfig) string {
 	capacityBits := int64(totalCells) * bitsPerLevel
 	capacityKB := float64(capacityBits) / 8 / 1024
 
-	// Sneak path risk: passive crossbars scale as N² paths per write.
-	// 1T1R eliminates row sneak, 2T1R eliminates both.
+	// Sneak path risk: in a passive crossbar, writing one cell half-selects
+	// (rows-1) same-column cells and (cols-1) same-row cells = (rows+cols-2) half-select paths.
+	// The (rows-1)*(cols-1) unselected cells can also form parasitic paths.
+	// 1T1R eliminates column sneak, 2T1R eliminates both.
 	sneakRisk := ""
 	switch cfg.Architecture {
 	case "passive":
-		pathsPerWrite := rows * cols
-		if pathsPerWrite > 32*32 { // > recommended passive limit (32×32)
-			sneakRisk = fmt.Sprintf("HIGH (%d×%d = %d sneak paths per write — use 1T1R or 2T1R)", rows, cols, pathsPerWrite)
-		} else if pathsPerWrite > 16*16 {
-			sneakRisk = fmt.Sprintf("MODERATE (%d paths per write — consider 1T1R)", pathsPerWrite)
+		halfSelect := (rows - 1) + (cols - 1) // directly half-selected per write
+		parasitic := (rows - 1) * (cols - 1)  // unselected cells forming parasitic paths
+		if rows > 32 || cols > 32 { // > recommended passive limit (32×32)
+			sneakRisk = fmt.Sprintf("HIGH (%d half-select + %d parasitic paths per write — use 1T1R or 2T1R)", halfSelect, parasitic)
+		} else if rows > 16 || cols > 16 {
+			sneakRisk = fmt.Sprintf("MODERATE (%d half-select paths per write — consider 1T1R)", halfSelect)
 		} else {
-			sneakRisk = fmt.Sprintf("LOW (%d paths per write — acceptable for passive)", pathsPerWrite)
+			sneakRisk = fmt.Sprintf("LOW (%d half-select paths per write — acceptable for passive)", halfSelect)
 		}
 	case "1t1r":
-		sneakRisk = fmt.Sprintf("ROW-ONLY (%d paths suppressed by row transistors)", rows)
+		sneakRisk = fmt.Sprintf("COLUMN-ONLY (%d same-row half-select paths eliminated by transistor; %d column sneak remain)", cols-1, rows-1)
 	case "2t1r":
 		sneakRisk = "NONE (both row and column transistors isolate cells)"
 	default:
@@ -466,8 +470,9 @@ NOTES
   • Cell resistance, WL/BL RC delay, and IR-drop require SPICE simulation.
   • Liberty timing values in this tool are placeholders — not from SPICE char.
   • Capacity estimate uses log2(%d) ≈ %d bits/cell; actual encoding may vary.
-  • Sneak path risk is a rough structural estimate; actual impact depends on
-    on/off ratio (ION/IOFF) of the FeFET device.
+  • Sneak path risk counts: (rows+cols-2) directly half-selected cells +
+    (rows-1)×(cols-1) parasitic paths per write. Actual impact depends on
+    the on/off ratio (ION/IOFF) of the FeFET device.
 `,
 		cfg.Architecture, cfg.Mode, func() string {
 			if cfg.Technology == "" {
