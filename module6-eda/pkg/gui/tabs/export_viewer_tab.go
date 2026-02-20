@@ -14,7 +14,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics", "Export Manifest"}
+var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "SVG Layout", "Array Statistics", "Export Manifest"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -104,6 +104,8 @@ func formatExtension(format string) string {
 		return ".txt"
 	case "SPICE":
 		return ".sp"
+	case "SVG Layout":
+		return ".svg"
 	case "Array Statistics":
 		return ".txt"
 	case "Export Manifest":
@@ -245,6 +247,13 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 			preview += export.Generate2T1RSubcircuit()
 		}
 		return preview, "generated (subcircuit preview)"
+
+	case "SVG Layout":
+		p := filepath.Join("data", fmt.Sprintf("fecim_crossbar_%dx%d.svg", cfg.Rows, cfg.Cols))
+		if s, ok := tryRead(p); ok {
+			return s, p
+		}
+		return export.GenerateLayoutSVGWithDefaults(*cfg), "generated (in-memory)"
 
 	case "Array Statistics":
 		return generateArrayStatistics(cfg), "generated (in-memory)"
