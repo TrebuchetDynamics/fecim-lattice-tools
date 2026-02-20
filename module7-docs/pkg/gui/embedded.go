@@ -97,7 +97,7 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 	app.layoutManager.SetComponents(
 		app.buildSidebar(),     // tree + quick access
 		app.buildMainContent(), // breadcrumbs + metadata + content
-		app.buildTocSidebar(),  // table of contents
+		nil,                    // no right ToC panel
 		app.buildTopBar(),      // search button, title
 	)
 
@@ -417,7 +417,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 				}
 
 				if badge != nil {
-					if category == "" {
+					if category == "" || entry.isDir {
 						badge.Hide()
 					} else {
 						badge.SetCategory(category)
@@ -672,8 +672,11 @@ func (app *EmbeddedDocsApp) scanDocsDirectory() []*docEntry {
 func (app *EmbeddedDocsApp) scanEntry(path string, info os.DirEntry) *docEntry {
 	name := info.Name()
 
-	// Skip hidden files and non-markdown files
+	// Skip hidden files, non-markdown files, and the docs-viewer's own module dir
 	if strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
+		return nil
+	}
+	if strings.ToLower(name) == "module7-docs" {
 		return nil
 	}
 
