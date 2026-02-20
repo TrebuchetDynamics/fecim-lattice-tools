@@ -507,28 +507,41 @@ Architecture: %s
 Output dir:  %s
 
 CELL LIBRARY  (cells/)
-  %-38s  Abstract view (MACRO, PIN, LAYER)
-  %-38s  Timing/power model (placeholder — not signoff)
-  %-38s  Behavioral Verilog (Yosys hierarchy blackbox)
+  %-42s  Abstract view (MACRO, PIN, LAYER)
+  %-42s  Timing/power model (placeholder — not signoff)
+  %-42s  Behavioral Verilog (Yosys hierarchy blackbox)
 
 DESIGN FILES
-  %-38s  Structural array Verilog netlist
-  %-38s  Physical placement (FIXED — no routing needed)
-  %-38s  Physical/electrical/timing report
+  %-42s  Structural array Verilog netlist
+  %-42s  Physical placement (FIXED — no routing needed)
+  %-42s  Physical/electrical/timing report
 
-FLOW SCRIPTS
-  %-38s  LibreLane / OpenLane v1 configuration
-  %-38s  SDC timing constraints (BASE_SDC_FILE)
-  %-38s  Yosys hierarchy check
-  %-38s  KLayout DEF+LEF → GDSII stream-out
-  %-38s  OpenROAD placement validation
-  %-38s  Full flow orchestration (Yosys→KLayout→OpenROAD→LibreLane)
+FLOW SCRIPTS (physical design)
+  %-42s  LibreLane / OpenLane v2 configuration
+  %-42s  SDC timing constraints (BASE_SDC_FILE)
+  %-42s  Yosys hierarchy check
+  %-42s  KLayout DEF+LEF → GDSII stream-out
+  %-42s  OpenROAD placement validation
+  %-42s  OpenSTA standalone timing analysis
+  %-42s  OpenLane v1 config (legacy TCL format)
+  %-42s  OpenLane v1 macro placement constraints
+  %-42s  Full flow (Yosys→KLayout→OpenROAD→LibreLane)
+
+VERIFICATION SCRIPTS
+  %-42s  Magic DRC (Design Rule Check)
+  %-42s  Netgen LVS (Layout vs. Schematic)
+
+SIMULATION SCRIPTS
+  %-42s  CrossSim hardware-accurate MVM config
+  %-42s  CrossSim Python runner
+  %-42s  PySpice/Ngspice crossbar simulation
+  %-42s  OpenVAF Verilog-A L-K compact model
 
 METADATA
-  %-38s  Machine-readable design parameters (JSON)
-  %-38s  Setup instructions and quick start
+  %-42s  Machine-readable design parameters (JSON)
+  %-42s  Setup instructions and quick start
 
-TOTAL FILES: 14
+TOTAL FILES: 23  (3 cell library + 3 design + 9 flow + 2 verify + 4 sim + 2 meta)
 
 NOTES
   • Liberty timing values are structural placeholders.
@@ -549,7 +562,16 @@ NOTES
 		"synthesis.tcl",
 		"gen_gds.py",
 		"openroad_flow.tcl",
+		"opensta_check.tcl",
+		"config.tcl",
+		"macros.cfg",
 		"run_flow.sh",
+		"run_drc.sh",
+		"run_lvs.sh",
+		"crosssim.yaml",
+		"run_crosssim.py",
+		"run_pyspice.py",
+		"fecim_lk.va",
 		design+".json",
 		"README.md",
 		dir,

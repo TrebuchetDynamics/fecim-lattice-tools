@@ -343,14 +343,25 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 		// Show dominant level stats
 		counts := conductanceLevelCounts(m, quantLevels)
 		maxC, maxL := 0, 0
+		occupiedLevels := 0
+		var levelSum int
+		total := rows * cols
 		for l, c := range counts {
 			if c > maxC {
 				maxC, maxL = c, l
 			}
+			if c > 0 {
+				occupiedLevels++
+			}
+			levelSum += (l + 1) * c
+		}
+		meanLevel := 0.0
+		if total > 0 {
+			meanLevel = float64(levelSum) / float64(total)
 		}
 		infoLabel.SetText(fmt.Sprintf(
-			"Array: %d × %d  |  Cells: %d  |  Pattern: %s  |  Peak level: %d/%d (%d cells)",
-			rows, cols, rows*cols, patternSelect.Selected, maxL+1, quantLevels, maxC,
+			"Array: %d × %d  |  Cells: %d  |  Pattern: %s  |  Peak: L%d (%d cells)  |  Mean: L%.1f  |  Occupied: %d/%d levels",
+			rows, cols, total, patternSelect.Selected, maxL+1, maxC, meanLevel, occupiedLevels, quantLevels,
 		))
 	}
 
