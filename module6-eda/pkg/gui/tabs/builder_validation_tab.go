@@ -4,7 +4,9 @@
 package tabs
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -1309,6 +1311,71 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 	)
 	previewTabs.SetTabLocation(container.TabLocationTop)
 
+	// Save / Load Config buttons
+	saveConfigBtn := widget.NewButton("Save Config…", func() {
+		// Flush entry values into cfg before marshaling.
+		updateStats()
+		data, err := json.MarshalIndent(cfg, "", "  ")
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		dlg := dialog.NewFileSave(func(w fyne.URIWriteCloser, err error) {
+			if err != nil || w == nil {
+				return
+			}
+			defer w.Close()
+			if _, werr := w.Write(data); werr != nil {
+				dialog.ShowError(werr, window)
+			}
+		}, window)
+		dlg.SetFileName("fecim_array_config.json")
+		dlg.Show()
+	})
+	loadConfigBtn := widget.NewButton("Load Config…", func() {
+		dlg := dialog.NewFileOpen(func(r fyne.URIReadCloser, err error) {
+			if err != nil || r == nil {
+				return
+			}
+			defer r.Close()
+			raw, rerr := io.ReadAll(r)
+			if rerr != nil {
+				dialog.ShowError(rerr, window)
+				return
+			}
+			var newCfg config.ArrayConfig
+			if jerr := json.Unmarshal(raw, &newCfg); jerr != nil {
+				dialog.ShowError(jerr, window)
+				return
+			}
+			// Apply new config values into the shared cfg.
+			*cfg = newCfg
+			// Sync UI widgets so they reflect the loaded values.
+			rowsEntry.SetText(fmt.Sprintf("%d", cfg.Rows))
+			colsEntry.SetText(fmt.Sprintf("%d", cfg.Cols))
+			modeSelect.SetSelected(cfg.Mode)
+			widthEntry.SetText(fmt.Sprintf("%.3f", cfg.CellWidth))
+			heightEntry.SetText(fmt.Sprintf("%.3f", cfg.CellHeight))
+			// Update architecture toggle highlights.
+			archPassiveBtn.Importance = widget.LowImportance
+			arch1T1RBtn.Importance = widget.LowImportance
+			arch2T1RBtn.Importance = widget.LowImportance
+			switch cfg.Architecture {
+			case "1t1r":
+				arch1T1RBtn.Importance = widget.HighImportance
+			case "2t1r":
+				arch2T1RBtn.Importance = widget.HighImportance
+			default:
+				archPassiveBtn.Importance = widget.HighImportance
+			}
+			archPassiveBtn.Refresh()
+			arch1T1RBtn.Refresh()
+			arch2T1RBtn.Refresh()
+			updateStats()
+		}, window)
+		dlg.Show()
+	})
+
 	// Action buttons - highlight primary actions
 	generateAllBtn.Importance = widget.HighImportance
 	validateAllBtn.Importance = widget.MediumImportance
@@ -1316,6 +1383,9 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		generateAllBtn,
 		validateAllBtn,
 		exportPackageBtn,
+		widget.NewSeparator(),
+		saveConfigBtn,
+		loadConfigBtn,
 	)
 
 	// Builder action shortcuts:
