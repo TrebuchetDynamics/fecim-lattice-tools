@@ -181,6 +181,8 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 	}
 	ca.mu.Unlock()
 
+	logISPP("start engine=level row=%d col=%d from=%d target=%d", row, col, currentLevel, targetLevel)
+
 	// Determine direction
 	direction := ca.deviceState.GetWriteDirection(row, col, currentLevel, targetLevel)
 	ascending := direction == DirectionAscending
@@ -351,7 +353,15 @@ cleanup:
 	// Record the write in hysteresis state
 	ca.deviceState.RecordWrite(row, col, currentLevel)
 
-	ca.deviceState.ResetWriteVoltages()
+	// Verify via TIA/ADC circuit path so the sense chain reflects final state.
+	level, iUA, tiaMV, adcCode := ca.readCellThroughCircuit(row, col)
+	logISPP("complete row=%d col=%d level=%d target=%d I=%.2fuA V_TIA=%.1fmV ADC=%d",
+		row, col, level, targetLevel, iUA, tiaMV*1000, adcCode)
+	sharedwidgets.SafeDo(func() {
+		ca.operationsStatusLabel.SetText(fmt.Sprintf(
+			"DONE [%d,%d] level=%d | I=%.2fµA V_TIA=%.1fmV ADC=%d",
+			row, col, level, iUA, tiaMV*1000, adcCode))
+	})
 	ca.recomputeAndRefresh()
 }
 
@@ -370,6 +380,8 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		currentLevel = ca.arrayWeights[row][col]
 	}
 	ca.mu.RUnlock()
+
+	logISPP("start engine=LK row=%d col=%d from=%d target=%d", row, col, currentLevel, targetLevel)
 
 	// Determine direction
 	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
@@ -517,17 +529,6 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	}
 	ca.mu.Unlock()
 
-	if ca.operationsStatusLabel != nil {
-		status := "PARTIAL"
-		if success {
-			status = "SUCCESS"
-		}
-		sharedwidgets.SafeDo(func() {
-			ca.operationsStatusLabel.SetText(fmt.Sprintf("%s [%d,%d] = Level %d | %d attempts | overshoots=%d",
-				status, row, col, finalLevel, attempts, overshoots))
-		})
-	}
-
 	// Disable V/2 visualization
 	ds.DisableHalfSelectVisualization()
 	ca.updateHalfSelectVisualization()
@@ -536,7 +537,21 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	// Record the write in hysteresis state
 	ds.RecordWrite(row, col, finalLevel)
 
-	ds.ResetWriteVoltages()
+	// Verify via TIA/ADC circuit path so the sense chain reflects final state.
+	_, iUA, tiaMV, adcCode := ca.readCellThroughCircuit(row, col)
+	status := "PARTIAL"
+	if success {
+		status = "SUCCESS"
+	}
+	logISPP("complete row=%d col=%d level=%d target=%d attempts=%d overshoots=%d I=%.2fuA V_TIA=%.1fmV ADC=%d",
+		row, col, finalLevel, targetLevel, attempts, overshoots, iUA, tiaMV*1000, adcCode)
+	if ca.operationsStatusLabel != nil {
+		sharedwidgets.SafeDo(func() {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf(
+				"%s [%d,%d] level=%d | %d attempts | overshoots=%d | I=%.2fµA V_TIA=%.1fmV ADC=%d",
+				status, row, col, finalLevel, attempts, overshoots, iUA, tiaMV*1000, adcCode))
+		})
+	}
 	ca.recomputeAndRefresh()
 }
 

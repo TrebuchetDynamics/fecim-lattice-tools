@@ -183,6 +183,14 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 	defaultGeometry := arraysim.DefaultCellGeometry()
 	defaultGeometry.Film = sharedphysics.GeometryFromMaterial(defaultMaterial)
 
+	// Clone ADC so each DeviceState owns its own copy and can calibrate
+	// VrefHigh per-material without mutating the caller's shared ADC object.
+	var ownedADC *peripherals.ADC
+	if adc != nil {
+		cloned := *adc
+		ownedADC = &cloned
+	}
+
 	ds := &DeviceState{
 		rows:         rows,
 		cols:         cols,
@@ -202,7 +210,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		material:     defaultMaterial,         // Default to FeCIM material
 		calibParams:  loadCalibrationParams(), // Load from physics.yaml
 		tia:          tia,
-		adc:          adc,
+		adc:          ownedADC,
 		dac:          peripherals.DefaultDAC(),
 		// Default to Tier A so READ path uses coupled array-level simulation.
 		couplingMode:               arraysim.CouplingTierA,
@@ -277,6 +285,26 @@ func (ds *DeviceState) updateVoltageRanges() {
 		Max:       safeReadMax,
 		StepSize:  safeReadMax / float64(numLevels-1),
 		NumLevels: numLevels,
+	}
+
+	// Calibrate ADC VrefHigh to match the physical TIA output ceiling for this material.
+	// Default VrefHigh=1.0V is too high; actual max = G_max × V_read_max × Rf + V_offset.
+	// Only VrefHigh is updated — VrefLow stays at 0.0 to avoid false saturation at I=0.
+	//
+	// Use ds.material.Gmax directly rather than conductanceBounds(), because
+	// conductanceBounds() applies a cellGeometry cross-scale that can be stale when
+	// updateVoltageRanges() is called from SetMaterial() before cellGeometry.Film has
+	// been updated to match the new material (e.g. FeCIM → LS cross-scale ~2e-5×).
+	// The material's Gmax already encodes the device conductance in absolute units.
+	if ds.tia != nil && ds.adc != nil {
+		gmax := ds.material.Gmax
+		if gmax == 0 {
+			gmax = 100e-6 // fallback matching conductanceBounds default
+		}
+		vTIAmax := gmax * safeReadMax * ds.tia.Gain + ds.tia.OutputOffset
+		if vTIAmax > ds.tia.OutputOffset {
+			ds.adc.VrefHigh = vTIAmax
+		}
 	}
 
 	// Write range: bipolar and derived from material coercive voltage.

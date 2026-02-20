@@ -24,6 +24,12 @@ func logAction(format string, args ...interface{}) {
 	getCircuitsLog().Debug("ACTION: "+format, args...)
 }
 
+// logISPP logs an ISPP event at INFO level so it appears in logs regardless of
+// debug verbosity. Use for write start, completion, and circuit verify results.
+func logISPP(format string, args ...interface{}) {
+	getCircuitsLog().Info("ISPP: "+format, args...)
+}
+
 func logInput(format string, args ...interface{}) {
 	if !logging.IsVerbose(logging.VerbosityDebug) {
 		return

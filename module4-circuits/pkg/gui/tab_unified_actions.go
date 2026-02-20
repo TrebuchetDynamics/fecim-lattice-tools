@@ -54,6 +54,14 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 	selectedRow := ca.deviceState.GetSelectedRow()
 	selectedCol := ca.deviceState.GetSelectedCol()
 	logAction("write_start row=%d col=%d target=%d", selectedRow, selectedCol, targetLevel)
+	logISPP("start row=%d col=%d target=%d from=%d", selectedRow, selectedCol, targetLevel, func() int {
+		ca.mu.RLock()
+		defer ca.mu.RUnlock()
+		if selectedRow < len(ca.arrayWeights) && selectedCol < len(ca.arrayWeights[selectedRow]) {
+			return ca.arrayWeights[selectedRow][selectedCol]
+		}
+		return -1
+	}())
 
 	// H3 FIX: Save current state to undo history before modifying
 	ca.saveUndoHistory()

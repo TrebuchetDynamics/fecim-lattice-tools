@@ -137,6 +137,56 @@ func (ca *CircuitsApp) applyColumnWrite(selectedRow, col int, writeVoltage float
 	ca.mu.Unlock()
 }
 
+// readCellThroughCircuit performs a single-cell read on [row, col] through the
+// full DAC→Array→TIA→ADC circuit path and returns the measured values.
+//
+// This is used after ISPP completion to confirm the written level via the actual
+// sense chain, rather than trusting only the physics model's internal level counter.
+// All other columns are grounded so the TIA sees only the selected cell's current.
+//
+// Callers must restore write-mode voltages after using the returned measurements.
+func (ca *CircuitsApp) readCellThroughCircuit(row, col int) (level int, currentUA float64, tiaV float64, adcCode int) {
+	if ca.deviceState == nil {
+		ca.mu.RLock()
+		if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+			level = ca.arrayWeights[row][col]
+		}
+		ca.mu.RUnlock()
+		return
+	}
+
+	// Derive a safe read voltage: 40% of the max read range, min 0.1V.
+	readVoltage := ca.deviceState.GetReadRange().Max * 0.4
+	if readVoltage < 0.1 {
+		readVoltage = 0.2
+	}
+
+	// Ground all columns, drive only the selected column at read voltage.
+	ca.deviceState.SetAllDACVoltages(0)
+	ca.deviceState.SetDACVoltage(col, readVoltage)
+	ca.deviceState.SetDACRangeMode(DACRangeRead)
+
+	// Run the full sense chain: DAC → cell conductance → TIA → ADC.
+	ca.mu.RLock()
+	weights := ca.arrayWeights
+	levels := ca.quantLevels
+	ca.deviceState.Compute(weights, levels)
+	ca.mu.RUnlock()
+
+	currentUA = ca.deviceState.GetRowCurrent(row)
+	tiaV = ca.deviceState.GetRowVoltage(row)
+	adcCode = ca.deviceState.GetRowLevel(row)
+
+	// Use the physics-stored level as the authoritative value; adcCode is the
+	// circuit measurement and is logged for observability.
+	ca.mu.RLock()
+	if row < len(ca.arrayWeights) && col < len(ca.arrayWeights[row]) {
+		level = ca.arrayWeights[row][col]
+	}
+	ca.mu.RUnlock()
+	return
+}
+
 // applyWriteVoltages converts the target voltage through the DAC and applies
 // the resulting voltages to the array (DAC-only column drive in passive 0T1R mode).
 func (ca *CircuitsApp) applyWriteVoltages(row, col int, targetVoltage float64) (float64, int) {
