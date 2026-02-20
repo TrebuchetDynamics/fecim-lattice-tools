@@ -239,6 +239,50 @@ func TestArchitectureSwitch_UpdatesCellDimensions(t *testing.T) {
 	}
 }
 
+// TestMakeBuilderValidationTab_InitialNameMatchesArchitecture verifies that the
+// name entry is pre-populated with the correct per-architecture default when the
+// tab is first created, rather than always defaulting to "fecim_bitcell".
+func TestMakeBuilderValidationTab_InitialNameMatchesArchitecture(t *testing.T) {
+	cases := []struct {
+		arch     string
+		wantName string
+		width    float64
+		height   float64
+	}{
+		{"passive", "fecim_bitcell", 0.46, 2.72},
+		{"1t1r", "fecim_1t1r_bitcell", 0.92, 4.07},
+		{"2t1r", "fecim_2t1r_bitcell", 1.38, 4.07},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.arch, func(t *testing.T) {
+			app := test.NewApp()
+			defer app.Quit()
+			w := app.NewWindow(tc.arch)
+			defer w.Close()
+
+			cfg := &config.ArrayConfig{
+				Rows:         4,
+				Cols:         4,
+				Mode:         "storage",
+				Architecture: tc.arch,
+				Technology:   "sky130",
+				CellWidth:    tc.width,
+				CellHeight:   tc.height,
+			}
+			root := MakeBuilderValidationTab(cfg, w)
+			if root == nil {
+				t.Fatal("MakeBuilderValidationTab returned nil")
+			}
+
+			nameEntry := findEntryWithText(root, tc.wantName)
+			if nameEntry == nil {
+				t.Errorf("expected nameEntry to show %q for arch %q on initialization", tc.wantName, tc.arch)
+			}
+		})
+	}
+}
+
 func waitUntil(t *testing.T, timeout time.Duration, cond func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)

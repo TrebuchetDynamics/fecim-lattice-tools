@@ -43,13 +43,28 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// ========== CELL CONFIG SECTION ==========
 	nameEntry := widget.NewEntry()
-	nameEntry.SetText("fecim_bitcell")
+	switch cfg.Architecture {
+	case "1t1r":
+		nameEntry.SetText("fecim_1t1r_bitcell")
+	case "2t1r":
+		nameEntry.SetText("fecim_2t1r_bitcell")
+	default:
+		nameEntry.SetText("fecim_bitcell")
+	}
 
+	initWidth := cfg.CellWidth
+	if initWidth <= 0 {
+		initWidth = 0.460
+	}
+	initHeight := cfg.CellHeight
+	if initHeight <= 0 {
+		initHeight = 2.720
+	}
 	widthEntry := widget.NewEntry()
-	widthEntry.SetText("0.460")
+	widthEntry.SetText(fmt.Sprintf("%.3f", initWidth))
 
 	heightEntry := widget.NewEntry()
-	heightEntry.SetText("2.720")
+	heightEntry.SetText(fmt.Sprintf("%.3f", initHeight))
 
 	riseEntry := widget.NewEntry()
 	riseEntry.SetText("10.0")

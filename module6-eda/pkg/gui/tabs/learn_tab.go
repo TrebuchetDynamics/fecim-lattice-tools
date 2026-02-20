@@ -42,7 +42,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	topicData := []topicInfo{
 		{"Quick Start", "Get started in 5 steps"},
 		{"What is FeCIM EDA?", "Overview & OpenLane flow"},
-		{"Crossbar Architecture", "Passive vs 1T1R design"},
+		{"Crossbar Architecture", "Passive / 1T1R / 2T1R"},
 		{"EDA Files", "LEF, DEF, Verilog, SDC + more"},
 		{"FAQ", "Troubleshooting & tips"},
 	}
