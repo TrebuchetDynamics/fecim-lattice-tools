@@ -11,14 +11,11 @@ import (
 
 // Custom actions specific to EDA module.
 const (
-	actionGenerateAll keyboard.Action = "eda_generate_all"
-	actionValidateAll keyboard.Action = "eda_validate_all"
-	actionExportPkg   keyboard.Action = "eda_export_package"
-	actionJumpView1   keyboard.Action = "eda_view_1"
-	actionJumpView2   keyboard.Action = "eda_view_2"
-	actionJumpView3   keyboard.Action = "eda_view_3"
-	actionJumpView4   keyboard.Action = "eda_view_4"
-	actionJumpView5   keyboard.Action = "eda_view_5"
+	actionJumpView1 keyboard.Action = "eda_view_1"
+	actionJumpView2 keyboard.Action = "eda_view_2"
+	actionJumpView3 keyboard.Action = "eda_view_3"
+	actionJumpView4 keyboard.Action = "eda_view_4"
+	actionJumpView5 keyboard.Action = "eda_view_5"
 )
 
 // SetupKeyboard initializes keyboard shortcuts for the EDA window.
@@ -94,9 +91,11 @@ func SetupKeyboard(w fyne.Window, viewSelector *widget.Select) {
 		}
 	})
 
-	km.AddCustomShortcut(actionGenerateAll, fyne.KeyG, fyne.KeyModifierControl|fyne.KeyModifierShift, "Generate All")
-	km.AddCustomShortcut(actionValidateAll, fyne.KeyV, fyne.KeyModifierControl|fyne.KeyModifierShift, "Validate All")
-	km.AddCustomShortcut(actionExportPkg, fyne.KeyE, fyne.KeyModifierControl|fyne.KeyModifierShift, "Export Package")
+	// NOTE: Ctrl+Shift+G/V/E (Generate All / Validate All / Export Package) are
+	// registered directly by MakeBuilderValidationTab via window.Canvas().AddShortcut
+	// using fyne.KeyModifierShortcutDefault (Cmd on macOS, Ctrl on Linux/Windows).
+	// Do NOT add them here — duplicate Canvas.AddShortcut registrations overwrite
+	// the working handlers, breaking the shortcuts on Linux/Windows.
 
 	km.Register()
 }

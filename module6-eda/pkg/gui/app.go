@@ -16,7 +16,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	w := app.NewWindow("Module 6: FeCIM Design Suite - EDA")
 	w.Resize(fyne.NewSize(1600, 1000))
 
-	// Shared array configuration (used across tabs 2-7)
+	// Shared array configuration (used by Builder, Export Viewer, Layout Visualizer, and Flow Scripts tabs)
 	arrayConfig := &config.ArrayConfig{
 		Rows:         4,
 		Cols:         4,
