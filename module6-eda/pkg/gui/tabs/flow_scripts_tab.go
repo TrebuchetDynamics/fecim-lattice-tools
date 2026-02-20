@@ -10,6 +10,7 @@
 //   SDC               — timing constraints (required by OpenLane/LibreLane)
 //   LibreLane JSON    — extended config.json for LibreLane/OpenLane v2
 //   OpenLane v1 TCL   — config.tcl for OpenLane v1 (set ::env(...) format)
+//   OpenLane v1 macros— macros.cfg macro placement constraints (OpenLane v1)
 //   Shell runner      — orchestrates all steps
 //   Netgen LVS        — Layout vs. Schematic verification script
 //   Magic DRC         — Design Rule Check script

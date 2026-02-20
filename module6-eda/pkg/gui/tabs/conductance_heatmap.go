@@ -109,6 +109,24 @@ func makeConductanceChecker(rows, cols int) conductanceMatrix {
 	return m
 }
 
+// makeConductanceSineWave generates a 2D sine-wave conductance pattern.
+// v = 0.5 * (1 + sin(2π·row·cycles/rows) · sin(2π·col·cycles/cols))
+// Maps to [0,1]. Useful for showing how a smooth analog function is discretized
+// into 30 conductance levels by the crossbar write controller.
+func makeConductanceSineWave(rows, cols int) conductanceMatrix {
+	m := conductanceMatrix{Rows: rows, Cols: cols, Values: make([][]float64, rows)}
+	cycles := 2.0 // full periods across each axis
+	for i := range m.Values {
+		m.Values[i] = make([]float64, cols)
+		for j := range m.Values[i] {
+			sr := math.Sin(2 * math.Pi * float64(i) * cycles / math.Max(float64(rows), 1))
+			sc := math.Sin(2 * math.Pi * float64(j) * cycles / math.Max(float64(cols), 1))
+			m.Values[i][j] = 0.5 * (1 + sr*sc)
+		}
+	}
+	return m
+}
+
 // makeConductanceNeuralWeights simulates a trained neural network weight matrix.
 // Values follow a zero-centered Gaussian distribution (σ=0.18) mapped to [0,1],
 // illustrating how a weight distribution spanning G_min..G_max looks in a CIM array.
@@ -263,7 +281,7 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 		cfg = &config.ArrayConfig{Rows: 8, Cols: 8}
 	}
 
-	patterns := []string{"Gradient", "Random", "Checkerboard", "Uniform Hi", "Uniform Lo", "Neural Weights"}
+	patterns := []string{"Gradient", "Random", "Checkerboard", "Uniform Hi", "Uniform Lo", "Neural Weights", "Sine Wave"}
 	patternSelect := widget.NewSelect(patterns, nil)
 	patternSelect.SetSelected("Gradient")
 
@@ -307,6 +325,8 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 			m = makeConductanceUniform(rows, cols, 0.1)
 		case "Neural Weights":
 			m = makeConductanceNeuralWeights(rows, cols)
+		case "Sine Wave":
+			m = makeConductanceSineWave(rows, cols)
 		default: // Gradient
 			m = makeConductanceGradient(rows, cols)
 		}
@@ -348,7 +368,8 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 
 	descLabel := widget.NewLabelWithStyle(
 		"Note: Patterns are illustrative (not from device state). Blue = low conductance, Yellow = high. "+
-			"'Neural Weights' shows a Gaussian weight distribution (σ=0.18) typical after training — most cells cluster near mid-conductance.",
+			"'Neural Weights' shows a Gaussian weight distribution (σ=0.18) typical after training — most cells cluster near mid-conductance. "+
+			"'Sine Wave' shows a 2D sine function discretized to 30 levels, illustrating analog-to-discrete quantization.",
 		fyne.TextAlignLeading,
 		fyne.TextStyle{Italic: true},
 	)

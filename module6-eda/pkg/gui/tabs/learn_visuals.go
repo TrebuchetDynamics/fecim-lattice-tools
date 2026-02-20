@@ -71,7 +71,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 		{"Verilog", "Input", false, startX, startY},
 		{"Synthesis", "Yosys", false, startX + boxW + spacing, startY},
 		{"Floorplan", "OpenROAD", false, startX + 2*(boxW+spacing), startY},
-		{"Placement", "RePlAce", false, startX + 3*(boxW+spacing), startY},
+		{"Placement", "OpenROAD", false, startX + 3*(boxW+spacing), startY},
 	}
 
 	// Row 2 (reversed flow) - more vertical space
@@ -82,7 +82,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 		isOurs bool
 		x, y   float32
 	}{
-		{"CTS", "TritonCTS", false, startX + 3*(boxW+spacing), row2Y},
+		{"CTS", "OpenROAD", false, startX + 3*(boxW+spacing), row2Y},
 		{"Routing", "TritonRoute", false, startX + 2*(boxW+spacing), row2Y},
 		{"Signoff", "Magic/LVS", false, startX + boxW + spacing, row2Y},
 		{"GDSII", "Assembly", false, startX, row2Y},

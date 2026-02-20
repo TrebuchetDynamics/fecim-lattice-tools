@@ -484,6 +484,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 					archRecommLabel.SetText("✓ Good fit for 2T1R")
 				}
 			}
+			// Refresh the live layout canvas so it mirrors the new dimensions immediately.
+			layoutCanvas.Refresh()
 		})
 	}
 
@@ -1370,11 +1372,24 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		cellConfigGrid,
 	)
 
+	// Technology selector — controls site name in LEF/DEF/Liberty outputs.
+	initTech := cfg.Technology
+	if initTech == "" {
+		initTech = "SKY130"
+	}
+	techSelect := widget.NewSelect([]string{"SKY130", "GF180MCU", "IHP_SG13G2"}, func(s string) {
+		cfg.Technology = s
+	})
+	techSelect.SetSelected(initTech)
+	cfg.Technology = initTech // Ensure cfg reflects the initial selection.
+
 	// Ultra-compact array config - combine everything in single row
 	arrayConfigRow := container.NewHBox(
 		widget.NewLabel("Rows:"), rowsEntry,
 		widget.NewLabel("Cols:"), colsEntry,
 		widget.NewLabel("Mode:"), modeSelect,
+		widget.NewSeparator(),
+		widget.NewLabel("Tech:"), techSelect,
 		widget.NewSeparator(),
 		widget.NewLabel("Arch:"), archToggle,
 	)
@@ -1485,6 +1500,12 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 			modeSelect.SetSelected(cfg.Mode)
 			widthEntry.SetText(fmt.Sprintf("%.3f", cfg.CellWidth))
 			heightEntry.SetText(fmt.Sprintf("%.3f", cfg.CellHeight))
+			// Update technology selector.
+			loadedTech := cfg.Technology
+			if loadedTech == "" {
+				loadedTech = "SKY130"
+			}
+			techSelect.SetSelected(loadedTech)
 			// Update architecture toggle highlights.
 			archPassiveBtn.Importance = widget.LowImportance
 			arch1T1RBtn.Importance = widget.LowImportance

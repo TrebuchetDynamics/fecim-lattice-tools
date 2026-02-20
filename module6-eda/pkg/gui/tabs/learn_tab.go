@@ -166,9 +166,9 @@ func makeIntroContent() fyne.CanvasObject {
 	// Stages Explained section
 	stagesText := widget.NewLabel(`1. SYNTHESIS (Yosys) - Converts behavioral Verilog to gate-level netlist
 2. FLOORPLAN - Defines die area and I/O pin locations
-3. PLACEMENT (RePlAce + OpenDP) - Assigns X,Y coordinates to every cell
+3. PLACEMENT (OpenROAD) - Assigns X,Y coordinates to every cell
 4. CTS (Clock Tree Synthesis) - Distributes clock signal evenly (FeCIM arrays often skip this)
-5. ROUTING (TritonRoute) - Draws metal wire connections
+5. ROUTING (OpenROAD TritonRoute) - Draws metal wire connections
 6. SIGNOFF & GDSII - Assembly of pre-existing cell macros into final GDSII`)
 	stagesText.Wrapping = fyne.TextWrapWord
 	stagesCard := widget.NewCard("The Stages Explained", "", stagesText)
@@ -179,8 +179,10 @@ func makeIntroContent() fyne.CanvasObject {
 		"Generate Liberty files (timing - placeholder values)",
 		"Generate Verilog netlists (behavioral models)",
 		"Generate DEF files (physical placement)",
+		"Generate SPICE subcircuit netlists (ngspice/HSPICE compatible)",
+		"Generate simulation scripts (CrossSim YAML/Python, PySpice, OpenVAF Verilog-A)",
 		"Export LibreLane/OpenLane config + flow scripts (run_flow.sh, synthesis.tcl, ...)",
-		"Generate design_summary.txt + constraints.sdc")
+		"Generate design_summary.txt + constraints.sdc + CSV cell assignments")
 
 	dontList := makeBulletList("",
 		"We do NOT provide validated FeFET device models",
@@ -377,18 +379,40 @@ USING OPENROAD GUI:
 	imgText.Wrapping = fyne.TextWrapWord
 
 	// Section 4: File Format Summary
-	purposesText := widget.NewLabel(`LEF: Cell geometry (abstract view, no transistors)
-DEF: Physical placement with X,Y coordinates
-Verilog: Structural netlist (behavioral black boxes)
-Liberty: Timing info for synthesis (PLACEHOLDER values!)
-design_summary.txt: Human-readable design report (area, electrical, timing)
-constraints.sdc: Timing constraints for synthesis and STA
-config.json: LibreLane/OpenLane configuration with MACROS dict
-synthesis.tcl: Yosys synthesis script
-openroad_flow.tcl: OpenROAD place & route TCL script
-gen_gds.py: KLayout GDS export and PNG rendering script
-run_flow.sh: One-shot script to run the full ASIC flow
-{design}.json: Machine-readable design metadata (JSON)
+	purposesText := widget.NewLabel(`EDA LAYOUT / PHYSICAL:
+  LEF          : Cell geometry abstract (pin locations, obstruction area)
+  DEF          : Physical placement with FIXED X,Y coordinates
+  SVG          : Schematic layout diagram (browser/Inkscape viewable)
+
+RTL / NETLIST:
+  Verilog (.v) : Structural netlist — cell + array-level modules
+  SPICE (.sp)  : SPICE subcircuit netlist (ngspice/HSPICE compatible)
+  Liberty (.lib): Timing/power library (PLACEHOLDER values — not validated!)
+  SDC          : Synthesis timing constraints
+
+SIMULATION / ML:
+  CrossSim YAML: CrossSim simulator configuration
+  CrossSim .py : CrossSim Python import script
+  PySpice .py  : PySpice Python circuit builder script
+
+DESIGN DATA:
+  design_summary.txt: Human-readable area, electrical, and timing report
+  config.json  : LibreLane/OpenLane v2+ configuration (with MACROS dict)
+  config.tcl   : OpenLane v1 TCL configuration (set ::env(...) format)
+  macros.cfg   : OpenLane v1 macro placement constraints
+  {design}.json: Machine-readable design metadata
+
+VALIDATION SCRIPTS:
+  run_drc.sh   : Magic VLSI DRC runner (bash run_drc.sh)
+  run_lvs.sh   : Netgen LVS runner — compares SPICE netlist vs layout (bash run_lvs.sh)
+
+FLOW SCRIPTS:
+  synthesis.tcl      : Yosys hierarchy check / synthesis script
+  openroad_flow.tcl  : OpenROAD placement check + timing TCL script
+  opensta_check.tcl  : OpenSTA standalone timing analysis
+  gen_gds.py         : KLayout DEF+LEF → GDS II export and PNG rendering
+  run_flow.sh        : One-shot Yosys+KLayout+OpenROAD+LibreLane runner
+  CSV                : Tab-delimited cell conductance assignment table
 
 ⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
@@ -454,7 +478,7 @@ func makeFAQContent() fyne.CanvasObject {
 		widget.NewLabel("A: Common causes:\n• Missing cell files (run Generate All first)\n• Docker not running (needed for Yosys/OpenROAD)\n• Invalid array dimensions (must be > 0)"))
 
 	faq2 := widget.NewCard("Q: Why are images not generated?", "",
-		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull efabless/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
+		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull ghcr.io/the-openroad-project/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
 
 	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", "",
 		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays (risk grows as N×M). Literature recommends passive up to ~32×32; beyond that sneak currents typically dominate. 1T1R adds one access transistor per row to suppress row-direction sneak paths, enabling arrays to 128×128+. 2T1R adds a second transistor per column for full isolation, enabling up to ~512×512."))
@@ -475,13 +499,46 @@ func makeFAQContent() fyne.CanvasObject {
 			"• Power integrity (IR drop) — requires post-layout simulation with parasitics\n"+
 			"\nGenerated Liberty, LEF, and SDC files are structural templates, not signoff data."))
 
+	faq7 := widget.NewCard("Q: Which PDKs (process design kits) are supported?", "",
+		widget.NewLabel("A: Three open PDKs are supported via --tech flag:\n"+
+			"  • SKY130   — SkyWater 130 nm (default). Most mature open PDK; sky130_fd_sc_hd site.\n"+
+			"  • GF180MCU — GlobalFoundries 180 nm MCU. Larger cells; gf180mcu site.\n"+
+			"  • IHP_SG13G2 — IHP 130 nm SiGe BiCMOS. For RF/high-speed applications.\n\n"+
+			"Note: This tool generates structural LEF/DEF/Verilog templated for each PDK's site dimensions.\n"+
+			"No foundry PDK files are bundled — you need to install the PDK separately for real tape-out.\n"+
+			"  • SKY130:    pip install open_pdk  (or volare)\n"+
+			"  • GF180MCU:  pip install open_pdk\n"+
+			"  • IHP_SG13G2: https://github.com/IHP-GmbH/IHP-Open-PDK"))
+
+	faq8 := widget.NewCard("Q: How do I use the CLI (headless/batch mode)?", "",
+		widget.NewLabel("A: The CLI is at cmd/eda-cli/main.go. Build and run:\n"+
+			"  go build -o fecim-eda-cli ./module6-eda/cmd/eda-cli\n"+
+			"  ./fecim-eda-cli [flags]\n\n"+
+			"Key flags:\n"+
+			"  --mode     storage | memory | compute (default: compute)\n"+
+			"  --arch     passive | 1t1r | 2t1r      (default: passive)\n"+
+			"  --tech     SKY130 | GF180MCU | IHP_SG13G2 (default: SKY130)\n"+
+			"  --rows N   Array rows  (default: 128)\n"+
+			"  --cols N   Array cols  (default: 128)\n"+
+			"  --levels N Conductance levels (default: 30)\n"+
+			"  --output DIR  Output directory (default: data/)\n"+
+			"  --vdd V    Supply voltage (default: 1.8V)\n"+
+			"  --gmin μS  Min conductance (default: 10.0 μS)\n"+
+			"  --gmax μS  Max conductance (default: 100.0 μS)\n"+
+			"  --scripts  Export flow scripts (Yosys, OpenROAD, KLayout, SDC, LibreLane)\n"+
+			"  --quiet    Suppress informational output\n\n"+
+			"Note: Verilog, DEF, SPICE, JSON, and CSV are exported by default.\n"+
+			"Use --scripts=false or --spice=false to suppress specific outputs.\n\n"+
+			"Example — 64×64 1T1R compute array with flow scripts:\n"+
+			"  ./fecim-eda-cli --arch 1t1r --rows 64 --cols 64 --scripts --output results/"))
+
 	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		faq1, faq2, faq3, faq4, faq5, faq6,
+		faq1, faq2, faq3, faq4, faq5, faq6, faq7, faq8,
 		widget.NewSeparator(),
 		troubleCard,
 	)

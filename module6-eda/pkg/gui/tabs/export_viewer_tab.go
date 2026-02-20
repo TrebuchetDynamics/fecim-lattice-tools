@@ -184,18 +184,24 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 		return export.GenerateMultiCornerLiberty(cellCfg), "generated (in-memory, TT/SS/FF corners)"
 
 	case "Verilog":
-		p := filepath.Join(dataDir, design+".v")
-		if s, ok := tryRead(p); ok {
-			return s, p
+		// Check flat path (Generate All) then bundled path (Export Package).
+		for _, p := range []string{
+			filepath.Join(dataDir, design+".v"),
+			filepath.Join(dataDir, design, design+".v"),
+		} {
+			if s, ok := tryRead(p); ok {
+				return s, p
+			}
 		}
 		return export.GenerateArrayVerilog(*cfg), "generated (in-memory)"
 
 	case "DEF":
-		paths := []string{
+		// Check flat path (Generate All), legacy output/, then bundled path (Export Package).
+		for _, p := range []string{
 			filepath.Join(dataDir, design+".def"),
 			filepath.Join("output", design+".def"),
-		}
-		for _, p := range paths {
+			filepath.Join(dataDir, design, design+".def"),
+		} {
 			if s, ok := tryRead(p); ok {
 				return s, p
 			}
@@ -204,20 +210,39 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 		return generateBuilderDEF(*cfg), "generated (in-memory)"
 
 	case "Config (JSON)":
-		if s, ok := tryRead(filepath.Join(dataDir, "config.json")); ok {
-			return s, filepath.Join(dataDir, "config.json")
+		// Flat path written by Generate All; subdirectory path written by Export Package.
+		for _, p := range []string{
+			filepath.Join(dataDir, "config.json"),
+			filepath.Join(dataDir, design, "config.json"),
+		} {
+			if s, ok := tryRead(p); ok {
+				return s, p
+			}
 		}
 		return export.GenerateLibreLaneConfig(*cfg), "generated (in-memory)"
 
 	case "SDC":
-		if s, ok := tryRead(filepath.Join(dataDir, "constraints.sdc")); ok {
-			return s, filepath.Join(dataDir, "constraints.sdc")
+		// Flat path written by Generate All; subdirectory path written by Export Package.
+		for _, p := range []string{
+			filepath.Join(dataDir, "constraints.sdc"),
+			filepath.Join(dataDir, design, "constraints.sdc"),
+		} {
+			if s, ok := tryRead(p); ok {
+				return s, p
+			}
 		}
 		return export.GenerateSDC(*cfg), "generated (in-memory)"
 
 	case "Design Summary":
-		if s, ok := tryRead(filepath.Join(dataDir, "design_summary.txt")); ok {
-			return s, filepath.Join(dataDir, "design_summary.txt")
+		// Only Export Package writes this file (to the bundled subdirectory).
+		// Generate All does not write a design_summary.txt.
+		for _, p := range []string{
+			filepath.Join(dataDir, design, "design_summary.txt"),
+			filepath.Join(dataDir, "design_summary.txt"),
+		} {
+			if s, ok := tryRead(p); ok {
+				return s, p
+			}
 		}
 		return export.GenerateDesignSummary(*cfg), "generated (in-memory)"
 
