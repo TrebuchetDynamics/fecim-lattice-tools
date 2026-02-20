@@ -4,6 +4,7 @@
 package tabs
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
@@ -60,7 +61,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 
 		// WL label - moved further left to avoid overlap
 		if showLabels && i < rows {
-			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
+			label := canvas.NewText(fmt.Sprintf("WL%d", i), colorWL)
 			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-50, y1-5))
@@ -81,7 +82,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 
 		// BL label - moved higher to avoid overlap
 		if showLabels && j < cols {
-			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
+			label := canvas.NewText(fmt.Sprintf("BL%d", j), colorBL)
 			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-5, y1-35))
@@ -211,7 +212,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		objects = append(objects, line)
 
 		if i < rows {
-			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
+			label := canvas.NewText(fmt.Sprintf("WL%d", i), colorWL)
 			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-50, y1-5))
@@ -231,7 +232,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		objects = append(objects, line)
 
 		if j < cols {
-			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
+			label := canvas.NewText(fmt.Sprintf("BL%d", j), colorBL)
 			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-5, y1-35))
@@ -255,7 +256,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		objects = append(objects, line)
 
 		if j < cols {
-			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL)
+			label := canvas.NewText(fmt.Sprintf("SL%d", j), colorSL)
 			label.TextSize = 14
 			label.Move(fyne.NewPos(x2+8, y2-5))
 			objects = append(objects, label)
@@ -389,7 +390,7 @@ func Isometric2T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 		if i < rows {
-			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
+			label := canvas.NewText(fmt.Sprintf("WL%d", i), colorWL)
 			label.TextSize = 13
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-50, y1-5))
@@ -407,7 +408,7 @@ func Isometric2T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 		if j < cols {
-			label := canvas.NewText("CSL"+string(rune('0'+j)), colorCSL)
+			label := canvas.NewText(fmt.Sprintf("CSL%d", j), colorCSL)
 			label.TextSize = 13
 			label.Move(fyne.NewPos(x1-5, y1-28))
 			objects = append(objects, label)
@@ -424,7 +425,7 @@ func Isometric2T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 		if j < cols {
-			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL2)
+			label := canvas.NewText(fmt.Sprintf("SL%d", j), colorSL2)
 			label.TextSize = 13
 			label.Move(fyne.NewPos(x2+8, y2-5))
 			objects = append(objects, label)
@@ -441,7 +442,7 @@ func Isometric2T1RCrossbar(rows, cols int) fyne.CanvasObject {
 		line.Position2 = fyne.NewPos(x2, y2)
 		objects = append(objects, line)
 		if j < cols {
-			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
+			label := canvas.NewText(fmt.Sprintf("BL%d", j), colorBL)
 			label.TextSize = 13
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-5, y1-32))

@@ -101,6 +101,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	copySVGBtn := widget.NewButton("Copy SVG", func() {
 		if window != nil && svgData != "" {
 			window.Clipboard().SetContent(svgData)
+			status.SetText(fmt.Sprintf("Copied %d bytes to clipboard", len(svgData)))
 		}
 	})
 
