@@ -93,6 +93,12 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 		dlg.Show()
 	})
 
+	copySVGBtn := widget.NewButton("Copy SVG", func() {
+		if window != nil && svgData != "" {
+			window.Clipboard().SetContent(svgData)
+		}
+	})
+
 	showWL.OnChanged = func(bool) { updateContent() }
 	showBL.OnChanged = func(bool) { updateContent() }
 	showSL.OnChanged = func(bool) { updateContent() }
@@ -111,6 +117,7 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 			widget.NewSeparator(),
 			svgSourceBtn,
 			saveSVGBtn,
+			copySVGBtn,
 		),
 		container.NewHBox(status, widget.NewSeparator(), hintLabel),
 	)
