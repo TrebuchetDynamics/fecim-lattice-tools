@@ -218,7 +218,8 @@ func buildLayerSummary(svg string, f layerFilter, cfg *config.ArrayConfig) strin
 	}
 
 	sb.WriteString("\nKey SVG attributes:\n")
-	for _, marker := range []string{"viewBox=", "width=", "height=", "FeCIM", "WL[", "BL[", "SL["} {
+	// Use ">SL[" (with leading ">") to avoid matching "CSL[" which contains "SL[".
+	for _, marker := range []string{"viewBox=", "width=", "height=", "FeCIM", "WL[", "BL[", ">SL[", "CSL["} {
 		if i := strings.Index(svg, marker); i >= 0 {
 			start := i
 			end := i + 80
