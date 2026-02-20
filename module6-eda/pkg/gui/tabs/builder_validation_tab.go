@@ -1119,15 +1119,28 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			cellCfg := getCellConfig()
 
-			// Step 1: Cell library (LEF + Liberty + Verilog)
+			// Step 1: Cell library (LEF + Liberty + Verilog) — architecture-specific cell name
 			addLog("[1/8] Generating cell library...")
-			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.lef", []byte(export.GenerateLEF(cellCfg)), 0644); err != nil {
+			var exportCellName string
+			var exportLEFContent string
+			switch cfg.Architecture {
+			case "1t1r":
+				exportCellName = "fecim_1t1r_bitcell"
+				exportLEFContent = export.Generate1T1RLEF(cellCfg)
+			case "2t1r":
+				exportCellName = "fecim_2t1r_bitcell"
+				exportLEFContent = export.Generate2T1RLEF(cellCfg)
+			default:
+				exportCellName = "fecim_bitcell"
+				exportLEFContent = export.GenerateLEF(cellCfg)
+			}
+			if err := os.WriteFile(outputDir+"/cells/"+exportCellName+".lef", []byte(exportLEFContent), 0644); err != nil {
 				addLog("ERROR: Failed to write LEF: " + err.Error())
 			}
-			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.lib", []byte(export.GenerateLiberty(cellCfg)), 0644); err != nil {
+			if err := os.WriteFile(outputDir+"/cells/"+exportCellName+".lib", []byte(export.GenerateLiberty(cellCfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write LIB: " + err.Error())
 			}
-			if err := os.WriteFile(outputDir+"/cells/fecim_bitcell.v", []byte(export.GenerateCellVerilog(cellCfg)), 0644); err != nil {
+			if err := os.WriteFile(outputDir+"/cells/"+exportCellName+".v", []byte(export.GenerateCellVerilog(cellCfg)), 0644); err != nil {
 				addLog("ERROR: Failed to write cell Verilog: " + err.Error())
 			}
 			time.Sleep(100 * time.Millisecond)
