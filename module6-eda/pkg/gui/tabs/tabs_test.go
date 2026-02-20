@@ -163,6 +163,29 @@ func TestLoadFlowScriptContent_DesignSummary(t *testing.T) {
 	}
 }
 
+func TestLoadFlowScriptContent_AllFormats(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 4, Cols: 4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	for _, format := range flowScriptFormats {
+		t.Run(format, func(t *testing.T) {
+			content, desc := loadFlowScriptContent(format, cfg)
+			if content == "" {
+				t.Errorf("loadFlowScriptContent(%q) returned empty content", format)
+			}
+			if desc == "" {
+				t.Errorf("loadFlowScriptContent(%q) returned empty desc", format)
+			}
+		})
+	}
+}
+
 func TestFlowScriptExtension(t *testing.T) {
 	tests := []struct {
 		format string

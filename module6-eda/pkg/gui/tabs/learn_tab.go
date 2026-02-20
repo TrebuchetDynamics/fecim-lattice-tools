@@ -401,8 +401,10 @@ RTL / NETLIST:
 
 SIMULATION / ML:
   CrossSim YAML: CrossSim simulator configuration
-  CrossSim .py : CrossSim Python import script
-  PySpice .py  : PySpice Python circuit builder script
+  CrossSim .py : CrossSim runner — loads YAML config, runs AnalogCore MVM
+  PySpice .py  : PySpice/Ngspice resistive MVM netlist (DC analysis)
+  OpenVAF .va  : Verilog-A L-K compact model (compile with OpenVAF for Ngspice OSDI)
+  CSV          : Comma-separated conductance table (row,col,level,G_uS,R_ohm,V_prog)
 
 DESIGN DATA:
   design_summary.txt: Human-readable area, electrical, and timing report
@@ -421,7 +423,6 @@ FLOW SCRIPTS:
   opensta_check.tcl  : OpenSTA standalone timing analysis
   gen_gds.py         : KLayout DEF+LEF → GDS II export and PNG rendering
   run_flow.sh        : One-shot Yosys+KLayout+OpenROAD+LibreLane runner
-  CSV                : Tab-delimited cell conductance assignment table
 
 ⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
@@ -561,13 +562,37 @@ func makeFAQContent() fyne.CanvasObject {
 			"'Occupied levels' indicates how many bins are used — useful for seeing\n"+
 			"whether a weight distribution makes efficient use of analog states."))
 
+	faq10 := widget.NewCard("Q: What are the Flow Scripts and which tools do I need?", "",
+		widget.NewLabel("A: The Flow Scripts tab (Tab 5) previews 16 generated script formats:\n\n"+
+			"Physical Design Flow — run in order:\n"+
+			"  1. synthesis.tcl       → yosys synthesis.tcl\n"+
+			"  2. openroad_flow.tcl   → openroad -exit openroad_flow.tcl\n"+
+			"  3. gen_gds.py          → klayout -z -r gen_gds.py\n"+
+			"  4. opensta_check.tcl   → opensta < opensta_check.tcl\n"+
+			"  5. constraints.sdc     → used by OpenLane/LibreLane (BASE_SDC_FILE)\n"+
+			"  6. config.json         → librelane config.json\n"+
+			"  7. config.tcl          → OpenLane v1 (flow.tcl)\n"+
+			"  8. macros.cfg          → OpenLane v1 macro placement\n"+
+			"  9. run_flow.sh         → bash run_flow.sh  (runs all of the above)\n\n"+
+			"Verification Scripts:\n"+
+			"  10. run_lvs.sh         → bash run_lvs.sh  (Netgen LVS)\n"+
+			"  11. run_drc.sh         → bash run_drc.sh  (Magic DRC)\n\n"+
+			"Simulation Scripts:\n"+
+			"  12. crosssim.yaml      → python3 run_crosssim.py\n"+
+			"  13. run_crosssim.py    → python3 run_crosssim.py\n"+
+			"  14. run_pyspice.py     → python3 run_pyspice.py  (requires ngspice)\n"+
+			"  15. fecim_lk.va        → openvaf fecim_lk.va  (then ngspice with OSDI)\n"+
+			"  16. design_summary.txt → human-readable area/electrical report\n\n"+
+			"Each script auto-fills with your configured array parameters.\n"+
+			"Use 'Copy to Clipboard' or 'Save to File…' to extract individual scripts."))
+
 	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		faq1, faq2, faq3, faq4, faq5, faq6, faq7, faq8, faq9,
+		faq1, faq2, faq3, faq4, faq5, faq6, faq7, faq8, faq9, faq10,
 		widget.NewSeparator(),
 		troubleCard,
 	)
