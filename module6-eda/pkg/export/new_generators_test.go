@@ -300,6 +300,46 @@ func TestGenerateCrossSIMConfig_SneakPaths(t *testing.T) {
 	}
 }
 
+// TestGenerateCrossSIMConfig_WireResistanceDimensions verifies that WL resistance
+// uses cfg.Cols (WL spans horizontally across columns) and BL resistance uses
+// cfg.Rows (BL spans vertically across rows). For non-square arrays this matters.
+func TestGenerateCrossSIMConfig_WireResistanceDimensions(t *testing.T) {
+	// 3 rows × 8 cols: wlRes=8Ω, blRes=3Ω
+	cfg := config.ArrayConfig{Rows: 3, Cols: 8, Architecture: "passive"}
+	got := GenerateCrossSIMConfig(cfg)
+
+	// WL spans cols: 8 × 1Ω/cell = 8.00 Ω
+	if !strings.Contains(got, "r_wl_ohm: 8.00") {
+		t.Errorf("3×8 array: expected r_wl_ohm=8.00 (cols), got:\n%s", extractParasitics(got))
+	}
+	// BL spans rows: 3 × 1Ω/cell = 3.00 Ω
+	if !strings.Contains(got, "r_bl_ohm: 3.00") {
+		t.Errorf("3×8 array: expected r_bl_ohm=3.00 (rows), got:\n%s", extractParasitics(got))
+	}
+	// Comment must say cols for WL
+	if !strings.Contains(got, "8 cols") {
+		t.Errorf("3×8 array: WL comment should mention cols, got:\n%s", extractParasitics(got))
+	}
+	// Comment must say rows for BL
+	if !strings.Contains(got, "3 rows") {
+		t.Errorf("3×8 array: BL comment should mention rows, got:\n%s", extractParasitics(got))
+	}
+}
+
+func extractParasitics(yaml string) string {
+	lines := strings.Split(yaml, "\n")
+	for i, l := range lines {
+		if strings.Contains(l, "wire_resistance:") {
+			end := i + 6
+			if end > len(lines) {
+				end = len(lines)
+			}
+			return strings.Join(lines[i:end], "\n")
+		}
+	}
+	return "wire_resistance section not found"
+}
+
 func TestGenerateCrossSIMRunScript_Smoke(t *testing.T) {
 	cfg := config.DefaultArrayConfig()
 	got := GenerateCrossSIMRunScript(cfg)

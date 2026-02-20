@@ -69,7 +69,9 @@ func GenerateCrossSIMConfig(cfg config.ArrayConfig) string {
 	// IR drop parameters (line resistance increases with array size)
 	// Metal1 sheet resistance ~0.1 Ω/□ for thick metal
 	// For 0.46µm width × N cells: R_wire ≈ 0.1 * pitch/width * N ≈ 1Ω/cell
-	wireResOhm := float64(cfg.Rows) * 1.0 // Ω total word-line resistance
+	// WL is horizontal and spans cfg.Cols cells; BL is vertical and spans cfg.Rows cells.
+	wlResOhm := float64(cfg.Cols) * 1.0 // Ω total word-line resistance (WL traverses cols)
+	blResOhm := float64(cfg.Rows) * 1.0 // Ω total bit-line resistance  (BL traverses rows)
 
 	// Noise: typical FeCIM cycle-to-cycle variation ~2-5% of Grange
 	noiseSigmaUS := (gMaxUS - gMinUS) * 0.03
@@ -134,8 +136,8 @@ parasitics:
   # Word-line (row) resistance
   wire_resistance:
     model: lumped                  # lumped | distributed
-    r_wl_ohm: %.2f                 # Ω total word-line resistance (%d rows × 1Ω/cell)
-    r_bl_ohm: %.2f                 # Ω total bit-line resistance (similar)
+    r_wl_ohm: %.2f                 # Ω total word-line resistance (%d cols × 1Ω/cell)
+    r_bl_ohm: %.2f                 # Ω total bit-line resistance (%d rows × 1Ω/cell)
 
   # Sneak path (passive arrays only)
   sneak_paths:
@@ -174,8 +176,8 @@ output:
 		noiseSigmaUS,
 		dacBits, 1.8,
 		adcBits, 1.8,
-		wireResOhm, cfg.Rows,
-		wireResOhm,
+		wlResOhm, cfg.Cols,
+		blResOhm, cfg.Rows,
 		strings.ToLower(cfg.Architecture) == "passive")
 }
 
