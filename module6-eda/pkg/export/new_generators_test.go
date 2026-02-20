@@ -397,6 +397,33 @@ func TestGeneratePySpiceScript_ConductanceParams(t *testing.T) {
 	}
 }
 
+// TestGeneratePySpiceScript_WLResistanceUsesCols verifies that the PySpice
+// script models WL resistance proportional to cfg.Cols (not cfg.Rows).
+// A word line is horizontal, spanning all columns; for a 3×8 array the total
+// WL resistance is 8 Ω (8 cells × 1 Ω/cell), not 3 Ω.
+func TestGeneratePySpiceScript_WLResistanceUsesCols(t *testing.T) {
+	// 3 rows × 8 cols: WL resistance must be 8.00 Ω (cols), not 3.00 Ω (rows)
+	cfg := config.ArrayConfig{Rows: 3, Cols: 8, Architecture: "passive"}
+	got := GeneratePySpiceScript(cfg)
+
+	if !strings.Contains(got, "R_WIRE_OHM = 8.00") {
+		t.Errorf("3×8 array: expected WL resistance R_WIRE_OHM = 8.00 (8 cols), got unexpected value\n"+
+			"Check that wireResOhm uses cfg.Cols not cfg.Rows in GeneratePySpiceScript")
+	}
+	if strings.Contains(got, "R_WIRE_OHM = 3.00") {
+		t.Error("3×8 array: R_WIRE_OHM must not be 3.00 (that would be cfg.Rows — wrong)")
+	}
+
+	// Wire segment distribution must divide by COLS (segments per WL), not ROWS
+	if !strings.Contains(got, "R_WIRE_OHM / COLS") {
+		t.Error("3×8 array: wire segment must divide R_WIRE_OHM by COLS, not ROWS\n"+
+			"WL has COLS segments; distributing resistance along WL requires /COLS")
+	}
+	if strings.Contains(got, "R_WIRE_OHM / ROWS") {
+		t.Error("3×8 array: wire segment must not divide R_WIRE_OHM by ROWS")
+	}
+}
+
 // ── OpenVAF Verilog-A ─────────────────────────────────────────────────────
 
 func TestGenerateOpenVAFVerilogA_Smoke(t *testing.T) {

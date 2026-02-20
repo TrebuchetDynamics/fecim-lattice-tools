@@ -56,8 +56,9 @@ func GeneratePySpiceScript(cfg config.ArrayConfig) string {
 		gMaxUS = 10.0
 		gMinUS = 0.001
 	}
-	// Wire resistance per row (1 Ω/cell from metal sheet resistance)
-	wireResOhm := float64(cfg.Rows) * 1.0
+	// Wire resistance per word line (1 Ω/cell from metal sheet resistance).
+	// WL is horizontal, spanning cfg.Cols cells, so total WL resistance = cols × 1 Ω/cell.
+	wireResOhm := float64(cfg.Cols) * 1.0
 
 	return fmt.Sprintf(`#!/usr/bin/env python3
 # FeCIM PySpice Crossbar Simulation
@@ -140,7 +141,7 @@ for row in range(ROWS):
 for row in range(ROWS):
     for col in range(COLS):
         r_cell = R_matrix[row, col]
-        r_wire_seg = R_WIRE_OHM / ROWS  # Distribute wire R along row
+        r_wire_seg = R_WIRE_OHM / COLS  # Distribute wire R across WL (COLS segments per word line)
 
         # Word-line wire segment (parasitic)
         circuit.R(f'Rwire_{{row}}_{{col}}', f'WL{{row}}_{{col}}',
