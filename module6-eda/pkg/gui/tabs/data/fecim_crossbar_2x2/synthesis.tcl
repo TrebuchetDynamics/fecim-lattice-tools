@@ -24,7 +24,7 @@
 read_verilog -lib cells/fecim_bitcell/fecim_bitcell.v
 
 # ── Step 2: Read structural array netlist ────────────────────────────────────
-read_verilog output/fecim_crossbar_2x2.v
+read_verilog fecim_crossbar_2x2.v
 
 # ── Step 3: Hierarchy check ──────────────────────────────────────────────────
 # -check: assert all modules are defined

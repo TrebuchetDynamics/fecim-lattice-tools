@@ -388,6 +388,7 @@ synthesis.tcl: Yosys synthesis script
 openroad_flow.tcl: OpenROAD place & route TCL script
 gen_gds.py: KLayout GDS export and PNG rendering script
 run_flow.sh: One-shot script to run the full ASIC flow
+{design}.json: Machine-readable design metadata (JSON)
 
 ⚠️ WARNING: Liberty timing values are placeholders. Real fabrication requires SPICE characterization with validated FeFET models.`)
 	purposesText.Wrapping = fyne.TextWrapWord
@@ -429,7 +430,7 @@ func makeQuickStartContent() fyne.CanvasObject {
 		widget.NewLabel("Click 'Validate All' to run Yosys syntax check, DEF validation, and cross-check. Green checkmarks indicate success."))
 
 	step4 := widget.NewCard("Step 4: Export Package", "",
-		widget.NewLabel("Click 'Export Package' to bundle all files for LibreLane/OpenLane integration. The package includes LEF/LIB/V, design_summary.txt, config.json + constraints.sdc, flow scripts (synthesis.tcl, openroad_flow.tcl, gen_gds.py, run_flow.sh), and README.\n\nTo run the full flow:\n  cd <export_dir>/\n  bash run_flow.sh"))
+		widget.NewLabel("Click 'Export Package' to bundle all files for LibreLane/OpenLane integration. The package includes LEF/LIB/V, design_summary.txt, config.json + constraints.sdc, flow scripts (synthesis.tcl, openroad_flow.tcl, gen_gds.py, run_flow.sh), {design}.json metadata, and README.\n\nTo run the full flow:\n  cd data/{design}/\n  bash run_flow.sh"))
 
 	step5 := widget.NewCard("Step 5: View Layout", "",
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))

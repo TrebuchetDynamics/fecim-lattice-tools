@@ -1,6 +1,6 @@
 FeCIM Crossbar Design Summary — 2x2 (passive / sky130)
 ────────────────────────────────────────────────────────────
-Generated:  2026-02-20 14:05
+Generated:  2026-02-20 14:25
 Mode:       storage
 
 ── Physical ───────────────────────────────────────────

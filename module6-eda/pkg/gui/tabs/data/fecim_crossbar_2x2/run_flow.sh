@@ -29,7 +29,6 @@
 set -e
 DESIGN="fecim_crossbar_2x2"
 CELL="fecim_bitcell"
-OUTPUT="output"
 CELLS_DIR="cells/${CELL}"
 
 echo "==================================================="
@@ -40,7 +39,7 @@ echo ""
 # ── Step 1: Yosys hierarchy check ────────────────────────────────────────────
 echo "Step 1: Yosys hierarchy check..."
 if command -v yosys &>/dev/null; then
-    yosys -p "read_verilog -lib ${CELLS_DIR}/${CELL}.v; read_verilog ${OUTPUT}/${DESIGN}.v; hierarchy -check -top fecim_crossbar; check; stat" \
+    yosys -p "read_verilog -lib ${CELLS_DIR}/${CELL}.v; read_verilog ${DESIGN}.v; hierarchy -check -top fecim_crossbar; check; stat" \
         2>&1 | tee output/yosys_check.log
     echo "  ✓ Yosys check passed — see output/yosys_check.log"
 else
@@ -56,7 +55,7 @@ mkdir -p "${CELLS_DIR}"
 if command -v klayout &>/dev/null; then
     klayout -z -r gen_gds.py \
         -rd lef_file="${CELLS_DIR}/${CELL}.lef" \
-        -rd def_file="${OUTPUT}/${DESIGN}.def" \
+        -rd def_file="${DESIGN}.def" \
         -rd out_file="${CELLS_DIR}/${CELL}.gds" \
         2>&1 | tee output/klayout_gds.log
     echo "  ✓ GDS written: ${CELLS_DIR}/${CELL}.gds"
@@ -72,7 +71,7 @@ echo "Step 3: OpenROAD placement check..."
 mkdir -p output/openroad
 if command -v openroad &>/dev/null; then
     CELL_LEF="${CELLS_DIR}/${CELL}.lef" \
-    DEF_FILE="${OUTPUT}/${DESIGN}.def" \
+    DEF_FILE="${DESIGN}.def" \
     OUT_DIR="output/openroad" \
     openroad -no_splash -exit openroad_flow.tcl \
         2>&1 | tee output/openroad_check.log
@@ -95,7 +94,7 @@ elif [[ -n "${OPENLANE_ROOT}" ]] && [[ -f "${OPENLANE_ROOT}/flow.tcl" ]]; then
     echo "  Note: For new projects, use LibreLane (pip install librelane)"
     mkdir -p "${OPENLANE_ROOT}/designs/fecim_array/src"
     mkdir -p "${OPENLANE_ROOT}/designs/fecim_array/cells"
-    cp "${OUTPUT}/${DESIGN}.v" "${OPENLANE_ROOT}/designs/fecim_array/src/"
+    cp "${DESIGN}.v" "${OPENLANE_ROOT}/designs/fecim_array/src/"
     cp "config.json" "${OPENLANE_ROOT}/designs/fecim_array/"
     cp -r "${CELLS_DIR}" "${OPENLANE_ROOT}/designs/fecim_array/cells/" 2>/dev/null || true
     cd "${OPENLANE_ROOT}"
@@ -116,8 +115,8 @@ echo ""
 echo "==================================================="
 echo "Flow complete for ${DESIGN}"
 echo "Outputs:"
-echo "  Verilog: ${OUTPUT}/${DESIGN}.v"
-echo "  DEF:     ${OUTPUT}/${DESIGN}.def"
+echo "  Verilog: ${DESIGN}.v"
+echo "  DEF:     ${DESIGN}.def"
 echo "  GDS:     ${CELLS_DIR}/${CELL}.gds"
 echo "  Config:  config.json"
 echo "==================================================="

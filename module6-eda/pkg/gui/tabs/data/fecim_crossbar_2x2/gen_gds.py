@@ -17,7 +17,7 @@
 # Usage:
 #   klayout -z -r gen_gds.py \
 #     -rd lef_file=cells/fecim_bitcell/fecim_bitcell.lef \
-#     -rd def_file=output/fecim_crossbar_2x2.def \
+#     -rd def_file=fecim_crossbar_2x2.def \
 #     -rd out_file=cells/fecim_bitcell/fecim_bitcell.gds
 #
 #   Or with Docker (OpenLane image contains klayout + pya):
@@ -25,7 +25,7 @@
 #     ghcr.io/the-openroad-project/openlane:latest \
 #     klayout -z -r gen_gds.py \
 #       -rd lef_file=cells/fecim_bitcell/fecim_bitcell.lef \
-#       -rd def_file=output/fecim_crossbar_2x2.def \
+#       -rd def_file=fecim_crossbar_2x2.def \
 #       -rd out_file=cells/fecim_bitcell/fecim_bitcell.gds
 
 import os
@@ -53,7 +53,7 @@ except ImportError:
 # KLayout passes -rd NAME=VALUE as module-level variables.
 # Default values are provided for standalone testing.
 _lef_file = getattr(pya, 'lef_file', None) or lef_file if 'lef_file' in dir() else "cells/fecim_bitcell/fecim_bitcell.lef"
-_def_file = getattr(pya, 'def_file', None) or def_file if 'def_file' in dir() else "output/fecim_crossbar_2x2.def"
+_def_file = getattr(pya, 'def_file', None) or def_file if 'def_file' in dir() else "fecim_crossbar_2x2.def"
 _out_file = getattr(pya, 'out_file', None) or out_file if 'out_file' in dir() else "cells/fecim_bitcell/fecim_bitcell.gds"
 
 print(f"KLayout GDS generator")

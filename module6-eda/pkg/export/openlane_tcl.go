@@ -124,7 +124,7 @@ set ::env(STD_CELL_LIBRARY) sky130_fd_sc_hd`
 #   cd /path/to/design && flow.tcl -design . -tag run001 -overwrite
 #
 # Required files (pre-generate from fecim-eda CLI):
-#   design.v           — structural Verilog (array instantiation)
+#   <DESIGN_NAME>.v    — structural Verilog (array instantiation)
 #   %s.lef  — cell abstract (pins, boundary, obstruction)
 #   %s.spice — SPICE netlist (for LVS)
 #   constraints.sdc    — timing constraints
@@ -141,7 +141,7 @@ set ::env(PDK_VARIANT) "%s"
 %s
 
 # ── Input files ──────────────────────────────────────────────────────────────
-set ::env(VERILOG_FILES) "$::env(DESIGN_DIR)/design.v"
+set ::env(VERILOG_FILES) "$::env(DESIGN_DIR)/$::env(DESIGN_NAME).v"
 set ::env(BASE_SDC_FILE) "$::env(DESIGN_DIR)/constraints.sdc"
 
 # Hard macro (FeCIM cell is a pre-characterized GDS/LEF macro):

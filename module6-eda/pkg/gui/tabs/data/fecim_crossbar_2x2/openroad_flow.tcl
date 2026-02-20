@@ -13,7 +13,7 @@
 #
 # Environment variables (set via -rd or export before running):
 #   CELL_LEF  — path to FeCIM bitcell LEF (default: cells/fecim_bitcell/fecim_bitcell.lef)
-#   DEF_FILE  — path to pre-placed DEF (default: output/fecim_crossbar_2x2.def)
+#   DEF_FILE  — path to pre-placed DEF (default: fecim_crossbar_2x2.def)
 #
 # What this script does:
 #   1. Read custom FeCIM cell LEF (no PDK needed for array-only check)
@@ -24,7 +24,7 @@
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 set cell_lef  [expr {[info exists ::env(CELL_LEF)] ? $::env(CELL_LEF) : "cells/fecim_bitcell/fecim_bitcell.lef"}]
-set def_file  [expr {[info exists ::env(DEF_FILE)]  ? $::env(DEF_FILE)  : "output/fecim_crossbar_2x2.def"}]
+set def_file  [expr {[info exists ::env(DEF_FILE)]  ? $::env(DEF_FILE)  : "fecim_crossbar_2x2.def"}]
 set out_dir   [expr {[info exists ::env(OUT_DIR)]   ? $::env(OUT_DIR)   : "output/openroad"}]
 
 puts "OpenROAD FeCIM Flow"

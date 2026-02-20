@@ -8,7 +8,7 @@
   "DESIGN_NAME": "fecim_crossbar_2x2",
   "DESIGN_IS_CORE": 0,
 
-  "VERILOG_FILES": "dir::output/fecim_crossbar_2x2.v",
+  "VERILOG_FILES": "dir::fecim_crossbar_2x2.v",
   "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bitcell/fecim_bitcell.v",
 
   "BASE_SDC_FILE": "dir::constraints.sdc",
@@ -18,7 +18,7 @@
   "FP_SIZING": "absolute",
   "DIE_AREA": "0 0 2.920 7.440",
 
-  "FP_DEF_TEMPLATE": "dir::output/fecim_crossbar_2x2.def",
+  "FP_DEF_TEMPLATE": "dir::fecim_crossbar_2x2.def",
   "PL_SKIP_INITIAL_PLACEMENT": 1,
   "PL_TARGET_DENSITY": 0.6,
 
