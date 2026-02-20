@@ -2,6 +2,7 @@ package gui
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -555,4 +556,117 @@ func (a *App) recordDataSnapshot(dt float64) {
 	}
 
 	a.dataLogger.Record(snapshot)
+}
+
+// WriteReadDebugLog stores debug data for write/read operations
+type WriteReadDebugLog struct {
+	Timestamp string           `json:"timestamp"`
+	Material  string           `json:"material"`
+	Ec        float64          `json:"ec_v_per_m"`
+	EcMVcm    float64          `json:"ec_mv_per_cm"`
+	Ps        float64          `json:"ps_c_per_m2"`
+	Cycles    []WriteReadCycle `json:"cycles"`
+}
+
+// WriteReadCycle stores one complete write/read cycle
+type WriteReadCycle struct {
+	CycleNum    int              `json:"cycle_num"`
+	TargetLevel int              `json:"target_level"`
+	StartLevel  int              `json:"start_level"`
+	ReadLevel   int              `json:"read_level"`
+	Success     bool             `json:"success"`
+	Phases      []WriteReadPhase `json:"phases"`
+}
+
+// WriteReadPhase stores data for one phase of the write/read cycle
+type WriteReadPhase struct {
+	Phase       string           `json:"phase"`
+	Duration    float64          `json:"duration_s"`
+	EFieldStart float64          `json:"e_field_start_mv_cm"`
+	EFieldEnd   float64          `json:"e_field_end_mv_cm"`
+	EFieldPeak  float64          `json:"e_field_peak_mv_cm"`
+	PStart      float64          `json:"p_start_uc_cm2"`
+	PEnd        float64          `json:"p_end_uc_cm2"`
+	LevelStart  int              `json:"level_start"`
+	LevelEnd    int              `json:"level_end"`
+	Samples     []PhaseDataPoint `json:"samples,omitempty"`
+}
+
+// PhaseDataPoint stores a single data point during a phase
+type PhaseDataPoint struct {
+	Time  float64 `json:"t"`
+	E     float64 `json:"e"`
+	P     float64 `json:"p"`
+	Level int     `json:"level"`
+}
+
+// saveDebugLog saves the debug log to a JSON file
+// THREAD-SAFE: No UI updates - only file I/O operations. Safe to call from goroutines without fyne.Do().
+func (a *App) saveDebugLog() {
+	if a.wrdDebugLog == nil || len(a.wrdDebugLog.Cycles) == 0 {
+		return
+	}
+
+	// Create logs directory if it doesn't exist
+	logsDir := "logs"
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		log.Printf("Error creating logs dir: %v", err)
+		return
+	}
+
+	// Generate filename with timestamp
+	filename := filepath.Join(logsDir, fmt.Sprintf("hysteresis-%s.json",
+		time.Now().Format("2006-01-02T15-04-05")))
+
+	// Marshal to JSON
+	data, err := json.MarshalIndent(a.wrdDebugLog, "", "  ")
+	if err != nil {
+		log.Printf("Error marshaling debug log: %v", err)
+		return
+	}
+
+	// Write to file
+	if err := os.WriteFile(filename, data, 0644); err != nil {
+		log.Printf("Error writing debug log: %v", err)
+		return
+	}
+
+	log.Info("Debug log saved: %s", filename)
+}
+
+// initDebugLog initializes the debug log
+func (a *App) initDebugLog() {
+	// NOTE: Caller must hold a.mu.Lock() before calling this function
+	// Defensive: ensure material exists
+	materialName := "Unknown"
+	materialEc := 0.0
+	materialPs := 0.0
+	if a.material != nil {
+		materialName = a.material.Name
+		materialEc = a.material.Ec
+		materialPs = a.material.Ps
+	}
+
+	a.wrdDebugLog = &WriteReadDebugLog{
+		Timestamp: time.Now().Format(time.RFC3339),
+		Material:  materialName,
+		Ec:        materialEc,
+		EcMVcm:    materialEc / 1e8,
+		Ps:        materialPs,
+		Cycles:    make([]WriteReadCycle, 0),
+	}
+	// Clear previous log entries and add impressive startup banner
+	// Defensive: initialize logEntries if nil
+	if a.logEntries == nil {
+		a.logEntries = make([]string, 0, 12)
+	} else {
+		a.logEntries = a.logEntries[:0]
+	}
+	a.logEntries = append(a.logEntries, "══════════════════════")
+	a.logEntries = append(a.logEntries, "  FeCIM WRITE/READ    ")
+	a.logEntries = append(a.logEntries, "══════════════════════")
+	a.logEntries = append(a.logEntries, fmt.Sprintf("Material: %s", materialName))
+	a.logEntries = append(a.logEntries, fmt.Sprintf("Ec: %.1f MV/cm", materialEc/1e8))
+	a.logEntries = append(a.logEntries, fmt.Sprintf("%d LEVELS = %.2f bits/cell", a.numLevels, math.Log2(float64(a.numLevels))))
+	a.logEntries = append(a.logEntries, "──────────────────────")
 }

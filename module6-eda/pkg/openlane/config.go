@@ -136,6 +136,36 @@ func (c *Config) GetLibertyPath() string {
 	return filepath.Join(c.PDKRoot, c.PDKVariant, "libs.ref", c.SCLibrary, "lib", c.SCLibrary+"__tt_025C_1v80.lib")
 }
 
+// DefaultIHPConfig returns configuration with IHP SG13G2 defaults.
+// IHP SG13G2 uses OpenLane 2 (not volare) and has its own PDK directory structure.
+// PDK root typically: $IHP_PDK_ROOT or ~/ihp-sg13g2-pdk
+func DefaultIHPConfig() *Config {
+	pdkRoot := os.Getenv("IHP_PDK_ROOT")
+	if pdkRoot == "" {
+		pdkRoot = filepath.Join(os.Getenv("HOME"), "ihp-sg13g2-pdk")
+	}
+	return &Config{
+		PDKRoot:          pdkRoot,
+		PDKVariant:       "sg13g2",
+		SCLibrary:        "sg13g2_stdcell",
+		PreferredMode:    ModeDocker,
+		TimeoutPlacement: 5 * time.Minute,
+		TimeoutSynthesis: 10 * time.Minute,
+		TimeoutRouting:   15 * time.Minute,
+		DockerImage:      "ghcr.io/the-openroad-project/openlane:latest",
+	}
+}
+
+// GetIHPTechLEFPath returns path to IHP SG13G2 technology LEF.
+func (c *Config) GetIHPTechLEFPath() string {
+	return filepath.Join(c.PDKRoot, c.PDKVariant, "libs.ref", c.SCLibrary, "lef", c.SCLibrary+"_tech.lef")
+}
+
+// GetIHPCellLEFPath returns path to IHP SG13G2 standard cell LEF.
+func (c *Config) GetIHPCellLEFPath() string {
+	return filepath.Join(c.PDKRoot, c.PDKVariant, "libs.ref", c.SCLibrary, "lef", c.SCLibrary+".lef")
+}
+
 // GetVolareSetupInstructions returns volare setup instructions
 func GetVolareSetupInstructions() string {
 	return `To set up SKY130 PDK using volare:
@@ -151,5 +181,26 @@ func GetVolareSetupInstructions() string {
 
 4. (Optional) Add to shell profile:
    echo 'export PDK_ROOT=~/.volare' >> ~/.bashrc
+`
+}
+
+// GetIHPSetupInstructions returns IHP SG13G2 PDK setup instructions.
+func GetIHPSetupInstructions() string {
+	return `To set up IHP SG13G2 PDK:
+
+1. Clone the IHP-Open-PDK:
+   git clone https://github.com/IHP-GmbH/IHP-Open-PDK.git ~/ihp-sg13g2-pdk
+
+2. Set IHP_PDK_ROOT environment variable:
+   export IHP_PDK_ROOT=~/ihp-sg13g2-pdk
+
+3. (Optional) Add to shell profile:
+   echo 'export IHP_PDK_ROOT=~/ihp-sg13g2-pdk' >> ~/.bashrc
+
+4. Run LibreLane with IHP config:
+   python3 -m librelane --config-file config.json
+
+IHP Open MPW shuttles (active as of 2026):
+   See: https://www.ihp-microelectronics.com/services/research-and-prototyping-service/mpw-prototyping-service
 `
 }

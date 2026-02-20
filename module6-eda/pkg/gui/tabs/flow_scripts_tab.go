@@ -1,17 +1,21 @@
 // pkg/gui/tabs/flow_scripts_tab.go
-// Flow Scripts tab: shows generated Yosys/OpenROAD/KLayout/SDC/LibreLane scripts
+// Flow Scripts tab: shows generated EDA tool scripts for the open-source RTL-to-GDS flow.
 //
-// This tab provides ready-to-run scripts for the complete open-source
-// RTL-to-GDS flow. Users can copy scripts directly from the viewer.
-//
-// Scripts generated (all from pkg/export/scripts.go + sdc.go):
-//   Yosys TCL      — hierarchy check / synthesis (run: yosys synth.tcl)
-//   OpenROAD TCL   — placement check + timing (run: openroad -exit openroad_flow.tcl)
-//   KLayout Python — DEF+LEF → GDS II (run: klayout -z -r gen_gds.py)
-//   OpenSTA TCL    — timing analysis (run: opensta < opensta_check.tcl)
-//   SDC            — timing constraints (required by OpenLane/LibreLane)
-//   LibreLane JSON — extended config.json for LibreLane/OpenLane v1
-//   Shell runner   — orchestrates all steps (run: bash run_flow.sh)
+// Scripts generated cover:
+//   Yosys TCL         — hierarchy check / synthesis
+//   OpenROAD TCL      — placement check + timing
+//   KLayout Python    — DEF+LEF → GDS II
+//   OpenSTA TCL       — timing analysis
+//   SDC               — timing constraints (required by OpenLane/LibreLane)
+//   LibreLane JSON    — extended config.json for LibreLane/OpenLane v2
+//   OpenLane v1 TCL   — config.tcl for OpenLane v1 (set ::env(...) format)
+//   Shell runner      — orchestrates all steps
+//   Netgen LVS        — Layout vs. Schematic verification script
+//   Magic DRC         — Design Rule Check script
+//   CrossSim YAML     — CrossSim crossbar simulation config
+//   CrossSim Python   — CrossSim runner script
+//   PySpice Python    — Ngspice crossbar simulation via PySpice
+//   OpenVAF Verilog-A — FeCIM L-K compact model (compile with OpenVAF)
 package tabs
 
 import (
@@ -25,13 +29,24 @@ import (
 )
 
 var flowScriptFormats = []string{
+	// Physical design flow
 	"Yosys TCL (synthesis.tcl)",
 	"OpenROAD TCL (openroad_flow.tcl)",
 	"KLayout Python (gen_gds.py)",
 	"OpenSTA TCL (opensta_check.tcl)",
 	"SDC Constraints (constraints.sdc)",
 	"LibreLane JSON (config.json)",
+	"OpenLane v1 TCL (config.tcl)",
+	"OpenLane v1 Macro Placement (macros.cfg)",
 	"Shell Runner (run_flow.sh)",
+	// Verification
+	"Netgen LVS Script (run_lvs.sh)",
+	"Magic DRC Script (run_drc.sh)",
+	// Simulation
+	"CrossSim YAML (crosssim.yaml)",
+	"CrossSim Python (run_crosssim.py)",
+	"PySpice Simulation (run_pyspice.py)",
+	"OpenVAF Verilog-A (fecim_lk.va)",
 }
 
 // MakeFlowScriptsTab creates a tab that shows generated flow scripts.
@@ -69,7 +84,7 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 		dialog.ShowInformation("Copied", "Script copied to clipboard.", window)
 	})
 
-	toolNote := widget.NewLabel("Scripts require: yosys · klayout · openroad · librelane (pip install librelane)")
+	toolNote := widget.NewLabel("Tools: yosys · klayout · openroad · librelane · magic · netgen · ngspice · PySpice · CrossSim · openvaf")
 	toolNote.Wrapping = fyne.TextWrapWord
 
 	header := container.NewVBox(
@@ -91,7 +106,13 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 
 // loadFlowScriptContent generates or loads the script for the given format.
 func loadFlowScriptContent(format string, cfg *config.ArrayConfig) (content, desc string) {
+	// Default cell config used for single-cell generators (netgen, magic, OpenVAF)
+	cellCfg := config.DefaultCellConfig()
+	cellCfg.CellType = cfg.Architecture
+	cellCfg.Technology = cfg.Technology
+
 	switch format {
+	// ── Physical design flow ───────────────────────────────────────────────
 	case "Yosys TCL (synthesis.tcl)":
 		return export.GenerateSynthesisScript(*cfg),
 			"Yosys hierarchy check — validates structural Verilog (run: yosys synth.tcl)"
@@ -116,9 +137,43 @@ func loadFlowScriptContent(format string, cfg *config.ArrayConfig) (content, des
 		return export.GenerateLibreLaneConfig(*cfg),
 			"LibreLane config.json — recommended for new designs (pip install librelane)"
 
+	case "OpenLane v1 TCL (config.tcl)":
+		return export.GenerateOpenLaneTCLConfig(*cfg),
+			"OpenLane v1 config.tcl — set ::env() variable format for TCL-based flow.tcl (OpenLane v1)"
+
+	case "OpenLane v1 Macro Placement (macros.cfg)":
+		return export.GenerateOpenLaneTCLMacroPlacement(*cfg),
+			"OpenLane v1 macro placement constraints — pins FeCIM array at die center (MACRO_PLACEMENT_CFG)"
+
 	case "Shell Runner (run_flow.sh)":
 		return export.GenerateFlowRunner(*cfg),
 			"Shell runner — orchestrates Yosys → KLayout → OpenROAD → LibreLane (chmod +x run_flow.sh && ./run_flow.sh)"
+
+	// ── Verification ──────────────────────────────────────────────────────
+	case "Netgen LVS Script (run_lvs.sh)":
+		return export.GenerateNetgenLVSScript(cellCfg),
+			"Netgen LVS — compares schematic SPICE vs extracted layout SPICE (run: bash run_lvs.sh)"
+
+	case "Magic DRC Script (run_drc.sh)":
+		return export.GenerateMagicDRCScript(*cfg),
+			"Magic DRC — runs Design Rule Check on layout in batch mode (run: bash run_drc.sh)"
+
+	// ── Simulation ────────────────────────────────────────────────────────
+	case "CrossSim YAML (crosssim.yaml)":
+		return export.GenerateCrossSIMConfig(*cfg),
+			"CrossSim YAML config — hardware-accurate MVM simulation (Sandia CrossSim v3.1)"
+
+	case "CrossSim Python (run_crosssim.py)":
+		return export.GenerateCrossSIMRunScript(*cfg),
+			"CrossSim runner — loads YAML config and runs NumericCore MVM (run: python3 run_crosssim.py)"
+
+	case "PySpice Simulation (run_pyspice.py)":
+		return export.GeneratePySpiceScript(*cfg),
+			"PySpice/Ngspice crossbar simulation — builds resistive MVM netlist and runs DC analysis"
+
+	case "OpenVAF Verilog-A (fecim_lk.va)":
+		return export.GenerateOpenVAFVerilogA(cellCfg),
+			"Verilog-A L-K compact model — compile with OpenVAF for Ngspice OSDI simulation"
 
 	default:
 		return "", "unknown script format"

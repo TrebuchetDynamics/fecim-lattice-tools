@@ -70,6 +70,53 @@ func DefaultCellConfig() CellConfig {
 	}
 }
 
+// DefaultGF180CellConfig returns a cell configuration for GF180MCU technology.
+// Dimensions based on GF180MCU open PDK (gf180mcu_fd_sc_mcu9t5v0 standard cell library).
+// VDD = 1.8V (core digital); Metal1 min width = 0.23 µm.
+func DefaultGF180CellConfig() CellConfig {
+	return CellConfig{
+		Name:         "fecim_bitcell",
+		Width:        0.46,  // µm (standard cell X pitch)
+		Height:       3.75,  // µm (approx 9-track cell height)
+		CellType:     "passive",
+		Technology:   "GF180MCU",
+		Voltage:      1.8,
+		Temperature:  25.0,
+		Process:      1.0,
+		MetalPitch:   0.46,
+		MetalWidth:   0.23,
+		RiseTime:     50.0,
+		FallTime:     5.0,
+		InputCap:     0.018, // pF (slightly higher cap at 180nm)
+		LeakagePower: 0.0005,
+	}
+}
+
+// DefaultIHPCellConfig returns a cell configuration for IHP SG13G2 technology.
+// Dimensions measured from IHP-Open-PDK sg13g2_stdcell.lef:
+//   - CoreSite: SIZE 0.48 BY 3.78 µm
+//   - Metal1: PITCH 0.42, WIDTH 0.16 µm (from sg13g2_tech.lef)
+//
+// VDD = 1.5V (LV core supply).
+func DefaultIHPCellConfig() CellConfig {
+	return CellConfig{
+		Name:         "fecim_bitcell",
+		Width:        0.48,  // µm (IHP CoreSite X pitch, from sg13g2_stdcell.lef)
+		Height:       3.78,  // µm (IHP CoreSite height, from sg13g2_stdcell.lef)
+		CellType:     "passive",
+		Technology:   "IHP_SG13G2",
+		Voltage:      1.5,   // V (IHP SG13G2 LV core supply)
+		Temperature:  25.0,
+		Process:      1.0,
+		MetalPitch:   0.42, // µm (IHP Metal1 PITCH from sg13g2_tech.lef)
+		MetalWidth:   0.16, // µm (IHP Metal1 WIDTH from sg13g2_tech.lef)
+		RiseTime:     50.0,
+		FallTime:     5.0,
+		InputCap:     0.015,
+		LeakagePower: 0.0003,
+	}
+}
+
 // DefaultArrayConfig returns a default array configuration
 // Starts with minimal 4×4 array for testing
 func DefaultArrayConfig() ArrayConfig {

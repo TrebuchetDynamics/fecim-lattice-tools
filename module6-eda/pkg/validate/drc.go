@@ -25,6 +25,39 @@ func DefaultSKY130DRCRules() DRCRules {
 	}
 }
 
+// DefaultGF180MCUDRCRules provides GF180MCU conservative metal1 DRC rules.
+// Source: GF180MCU open PDK design rules (https://gf180mcu-pdk.readthedocs.io/).
+func DefaultGF180MCUDRCRules() DRCRules {
+	return DRCRules{
+		MinMetalWidth:   0.23,
+		MinMetalSpacing: 0.23,
+		MinViaEnclosure: 0.07,
+	}
+}
+
+// DefaultIHPSG13G2DRCRules provides IHP SG13G2 metal1 DRC rules.
+// Source: IHP-Open-PDK sg13g2_tech.lef — Metal1 PITCH=0.42, WIDTH=0.16.
+func DefaultIHPSG13G2DRCRules() DRCRules {
+	return DRCRules{
+		MinMetalWidth:   0.16,
+		MinMetalSpacing: 0.18, // Derived: pitch(0.42) - width(0.16) - margin
+		MinViaEnclosure: 0.06,
+	}
+}
+
+// DRCRulesForTechnology returns appropriate DRC rules for the given PDK name.
+// Falls back to SKY130 rules for unrecognized technology names.
+func DRCRulesForTechnology(tech string) DRCRules {
+	switch strings.ToUpper(strings.TrimSpace(tech)) {
+	case "GF180", "GF180MCU", "GF180MCU_3V3":
+		return DefaultGF180MCUDRCRules()
+	case "IHP", "IHP_SG13G2", "SG13G2", "IHP130", "SG13":
+		return DefaultIHPSG13G2DRCRules()
+	default:
+		return DefaultSKY130DRCRules()
+	}
+}
+
 type lefRect struct {
 	Layer string
 	X1    float64

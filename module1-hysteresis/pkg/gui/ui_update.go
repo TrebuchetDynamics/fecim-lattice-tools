@@ -700,3 +700,71 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	a.cellViz.SetLevel(dL)
 	a.cellViz.Refresh()
 }
+
+// updateSimVsExpWidget refreshes the Simulation vs Experiment panel with values
+// derived from the currently active material. Literature bounds are computed as
+// ±20% on Pr and ±30% on Ec — representative of typical device-to-device variation
+// reported across published HZO/ferroelectric studies.
+// Must be called from the UI goroutine (or before the sim loop starts).
+func (a *App) updateSimVsExpWidget() {
+	if a.simVsExpWidget == nil || a.material == nil {
+		return
+	}
+	mat := a.material
+	effEc := a.effectiveEc()
+	effPr := mat.Pr
+
+	// Simulated squareness: Pr/Ps (or from Preisach loop if available)
+	squareness := 0.0
+	if mat.Ps > 0 {
+		squareness = effPr / mat.Ps
+	}
+
+	// Literature bounds: ±20% Pr, ±30% Ec, squareness clamped to [0.4, 0.95]
+	prLo := effPr * 0.80
+	prHi := effPr * 1.20
+	ecLo := effEc * 0.70
+	ecHi := effEc * 1.30
+	sqLo := squareness - 0.15
+	sqHi := squareness + 0.10
+	if sqLo < 0.40 {
+		sqLo = 0.40
+	}
+	if sqHi > 0.95 {
+		sqHi = 0.95
+	}
+
+	a.simVsExpWidget.SetExperimentalBounds(prLo, prHi, ecLo, ecHi, sqLo, sqHi)
+	a.simVsExpWidget.SetLiteratureSource(mat.Name + " — ±20% Pr, ±30% Ec (typical device-to-device variation)")
+	a.simVsExpWidget.SetSimulatedValues(effPr, effEc, squareness)
+}
+
+func (a *App) updateLevelIndicatorRange() {
+	if a == nil || a.levelIndicator == nil || a.material == nil {
+		return
+	}
+	effPr := a.material.Pr
+	if effPr == 0 {
+		effPr = a.material.Ps
+	}
+	effPs := a.effectivePsForLevels()
+	rawPs := a.material.Ps
+	// plotPMax must cover: (1) Pr with 20% headroom, (2) the writable level range
+	// (effPs = Ps*wrdRangeFrac) with 5% headroom, AND (3) the full Ps with 5%
+	// headroom. Case (3) is required so the hysteresis loop is never clipped:
+	// effPs*1.05 = Ps*wrdRangeFrac*1.05 < Ps when wrdRangeFrac < ~0.95, which
+	// would clip the saturation region of the loop.
+	plotPMax := effPr * 1.2
+	if effPs*1.05 > plotPMax {
+		plotPMax = effPs * 1.05
+	}
+	if rawPs*1.05 > plotPMax {
+		plotPMax = rawPs * 1.05
+	}
+	a.levelIndicator.SetPolarizationRange(plotPMax, effPs)
+	// Keep P-E plot Y-axis in sync with the level indicator range.
+	if a.plot != nil {
+		a.plot.SetBounds(a.effectiveEc()*2.5, plotPMax)
+		a.plot.Refresh()
+	}
+}

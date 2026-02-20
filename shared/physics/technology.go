@@ -85,11 +85,55 @@ func Node14nm() TechnologyNode {
 	}
 }
 
+// NodeGF180MCU returns GlobalFoundries 180nm MCU process parameters.
+// Source: GF180MCU open PDK (https://gf180mcu-pdk.readthedocs.io/).
+// Cell dimensions based on gf180mcu_fd_sc_mcu9t5v0 standard cell library.
+// VDD = 1.8V (core digital) / 3.3V (I/O, not captured here).
+func NodeGF180MCU() TechnologyNode {
+	return TechnologyNode{
+		Name:             "GF180MCU",
+		FeatureSize:      180e-9,
+		MetalPitch:       0.46e-6, // Metal1 pitch (GF180MCU design rules)
+		MetalWidth:       0.23e-6, // Metal1 minimum width
+		MetalThickness:   0.40e-6,
+		MetalResistivity: 1.68e-8,
+		VDD:              1.8,
+		CellPitchX:       0.46e-6, // Standard cell X pitch
+		CellRowHeight:    3.75e-6, // 9-track height (approx)
+		Transistor:       TransistorModel{NMOSVth: 0.55, PMOSVth: -0.62, NMOSIon: 0.48e-3, PMOSIon: 0.30e-3, GateCapF: 1.3e-15},
+	}
+}
+
+// NodeIHPSG13G2 returns IHP SG13G2 130nm BiCMOS process parameters.
+// Cell dimensions measured directly from the IHP-Open-PDK LEF files:
+//   - CoreSite:  SIZE 0.48 BY 3.78 (µm)
+//   - Metal1:    PITCH 0.42, WIDTH 0.16 (µm)
+//
+// VDD = 1.5V (LV core digital); HV 3.3V not captured here.
+// Source: github.com/IHP-Open-PDK/IHP-Open-PDK (ihp-sg13g2 standard cell LEF).
+func NodeIHPSG13G2() TechnologyNode {
+	return TechnologyNode{
+		Name:             "IHP_SG13G2",
+		FeatureSize:      130e-9,
+		MetalPitch:       0.42e-6, // Metal1 PITCH from sg13g2_tech.lef
+		MetalWidth:       0.16e-6, // Metal1 WIDTH from sg13g2_tech.lef
+		MetalThickness:   0.35e-6,
+		MetalResistivity: 1.68e-8,
+		VDD:              1.5,   // LV core supply (SG13G2 1.5V domain)
+		CellPitchX:       0.48e-6, // CoreSite X pitch from sg13g2_stdcell.lef
+		CellRowHeight:    3.78e-6, // CoreSite height from sg13g2_stdcell.lef
+		Transistor:       TransistorModel{NMOSVth: 0.50, PMOSVth: -0.55, NMOSIon: 0.50e-3, PMOSIon: 0.29e-3, GateCapF: 1.1e-15},
+	}
+}
+
 // Backward-compatible aliases.
 func SKY130() TechnologyNode   { return Node130nm() }
 func TSMC28() TechnologyNode   { return Node28nm() }
 func TSMC14() TechnologyNode   { return Node14nm() }
-func GF180MCU() TechnologyNode { return Node130nm() }
+
+// GF180MCU returns the GF180MCU technology node with correct 180nm parameters.
+// Previously aliased incorrectly to Node130nm(); now uses NodeGF180MCU().
+func GF180MCU() TechnologyNode { return NodeGF180MCU() }
 
 func AllTechnologyNodes() []TechnologyNode {
 	return []TechnologyNode{Node130nm(), Node65nm(), Node28nm(), Node14nm()}
@@ -100,8 +144,12 @@ func AllTechnologyNodes() []TechnologyNode {
 func TechnologyNodeFromName(name string) TechnologyNode {
 	n := strings.ToUpper(strings.TrimSpace(name))
 	switch n {
-	case "130", "130NM", "SKY130", "SKY130A", "SKYWATER130", "GF180", "GF180MCU":
+	case "130", "130NM", "SKY130", "SKY130A", "SKYWATER130":
 		return Node130nm()
+	case "GF180", "GF180MCU", "GF180MCU_3V3":
+		return NodeGF180MCU()
+	case "IHP", "IHP_SG13G2", "SG13G2", "IHP130", "SG13":
+		return NodeIHPSG13G2()
 	case "65", "65NM", "N65", "TSMC65":
 		return Node65nm()
 	case "28", "28NM", "N28", "TSMC28":
