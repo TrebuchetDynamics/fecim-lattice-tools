@@ -986,6 +986,24 @@ func TestExportViewerArrayStatisticsFormat(t *testing.T) {
 	}
 }
 
+func TestExportViewerManifestFormat(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 8, Cols: 8, Architecture: "1t1r", CellWidth: 0.46, CellHeight: 4.07, Technology: "sky130",
+	}
+	content, source := loadExportPreviewContent("Export Manifest", cfg)
+	if content == "" {
+		t.Fatal("Export Manifest returned empty content")
+	}
+	if source != "generated (in-memory)" {
+		t.Errorf("unexpected source: %s", source)
+	}
+	for _, want := range []string{"fecim_crossbar_8x8", "run_flow.sh", "cells/fecim_1t1r_bitcell.lef", "TOTAL FILES"} {
+		if !findSubstring(content, want) {
+			t.Errorf("Export Manifest missing expected content: %q", want)
+		}
+	}
+}
+
 func TestExportViewerMultiCornerLiberty(t *testing.T) {
 	cfg := &config.ArrayConfig{
 		Rows: 4, Cols: 4, Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",

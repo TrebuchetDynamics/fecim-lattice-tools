@@ -14,7 +14,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics"}
+var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics", "Export Manifest"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -102,6 +102,8 @@ func formatExtension(format string) string {
 	case "SPICE":
 		return ".sp"
 	case "Array Statistics":
+		return ".txt"
+	case "Export Manifest":
 		return ".txt"
 	default:
 		return ".txt"
@@ -244,6 +246,9 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 	case "Array Statistics":
 		return generateArrayStatistics(cfg), "generated (in-memory)"
 
+	case "Export Manifest":
+		return generateExportManifest(cfg), "generated (in-memory)"
+
 	default:
 		return "", "unknown format"
 	}
@@ -369,6 +374,88 @@ NOTES
 		sneakRisk,
 		recMax,
 		quantLevels, bitsPerLevel,
+	)
+	return out
+}
+
+// generateExportManifest produces a human-readable list of all files that would
+// be created by "Export Package", grouped by category, with brief descriptions.
+// It uses the current cfg to derive design name, architecture, and technology.
+func generateExportManifest(cfg *config.ArrayConfig) string {
+	design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
+	dir := fmt.Sprintf("data/%s/", design)
+
+	tech := cfg.Technology
+	if tech == "" {
+		tech = "sky130"
+	}
+	arch := cfg.Architecture
+	if arch == "" {
+		arch = "passive"
+	}
+
+	cellName := "fecim_bitcell"
+	switch arch {
+	case "1t1r":
+		cellName = "fecim_1t1r_bitcell"
+	case "2t1r":
+		cellName = "fecim_2t1r_bitcell"
+	}
+
+	out := fmt.Sprintf(`Export Package Manifest
+═══════════════════════════════════════════════════════
+Design:      %s
+Technology:  %s
+Architecture: %s
+Output dir:  %s
+
+CELL LIBRARY  (cells/)
+  %-38s  Abstract view (MACRO, PIN, LAYER)
+  %-38s  Timing/power model (placeholder — not signoff)
+  %-38s  Behavioral Verilog (Yosys hierarchy blackbox)
+
+DESIGN FILES
+  %-38s  Structural array Verilog netlist
+  %-38s  Physical placement (FIXED — no routing needed)
+  %-38s  Physical/electrical/timing report
+
+FLOW SCRIPTS
+  %-38s  LibreLane / OpenLane v1 configuration
+  %-38s  SDC timing constraints (BASE_SDC_FILE)
+  %-38s  Yosys hierarchy check
+  %-38s  KLayout DEF+LEF → GDSII stream-out
+  %-38s  OpenROAD placement validation
+  %-38s  Full flow orchestration (Yosys→KLayout→OpenROAD→LibreLane)
+
+METADATA
+  %-38s  Machine-readable design parameters (JSON)
+  %-38s  Setup instructions and quick start
+
+TOTAL FILES: 14
+
+NOTES
+  • Liberty timing values are structural placeholders.
+    Real signoff requires SPICE characterization with a validated FeFET model.
+  • DEF placement is FIXED — no floorplan/placement run required.
+    OpenROAD validates the pre-placed structure only.
+  • Run:  cd %s && ./run_flow.sh
+`,
+		design, tech, arch, dir,
+		"cells/"+cellName+".lef",
+		"cells/"+cellName+".lib",
+		"cells/"+cellName+".v",
+		design+".v",
+		design+".def",
+		"design_summary.txt",
+		"config.json",
+		"constraints.sdc",
+		"synthesis.tcl",
+		"gen_gds.py",
+		"openroad_flow.tcl",
+		"run_flow.sh",
+		design+".json",
+		"README.md",
+		dir,
 	)
 	return out
 }
