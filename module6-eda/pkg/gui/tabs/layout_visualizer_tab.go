@@ -30,8 +30,6 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	content := widget.NewMultiLineEntry()
 	content.Wrapping = fyne.TextWrapOff
 	content.TextStyle.Monospace = true
-	content.Disable()
-
 	status := widget.NewLabel("Ready")
 
 	showWL := widget.NewCheck("WL", nil)
@@ -55,10 +53,11 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 		svgData, src = loadLayoutSVGContent(cfg)
 		status.SetText("Source: " + src)
 
+		var text string
 		if showSource {
-			content.SetText(svgData)
+			text = svgData
 		} else {
-			content.SetText(buildLayerSummary(svgData, layerFilter{
+			text = buildLayerSummary(svgData, layerFilter{
 				WL:     showWL.Checked,
 				BL:     showBL.Checked,
 				SL:     showSL.Checked,
@@ -66,8 +65,13 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 				Cells:  showCells.Checked,
 				Grid:   showGrid.Checked,
 				Legend: showLegend.Checked,
-			}, cfg))
+			}, cfg)
 		}
+		// Enable → SetText → Disable to work around Fyne 2.7.x behaviour where
+		// SetText on a disabled Entry may not update the rendered content.
+		content.Enable()
+		content.SetText(text)
+		content.Disable()
 	}
 
 	svgSourceBtn = widget.NewButton("View SVG Source", func() {

@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "module_name": "module4-circuits",
+    "exported_at": "2026-02-20T17:00:18.818354177-06:00",
+    "version": "1.0.0"
+  },
+  "array_config": {
+    "rows": 8,
+    "cols": 8,
+    "quant_levels": 30,
+    "architecture": "0T1R (Passive)"
+  },
+  "peripheral_config": {
+    "dac_bits": 5,
+    "adc_bits": 4,
+    "v_min": 2,
+    "v_max": 5,
+    "pulse_width_ns": 50,
+    "read_voltage": 0.5,
+    "tia_gain": 10
+  },
+  "simulation_state": {
+    "selected_row": 3,
+    "selected_col": 5,
+    "target_level": 15,
+    "current_level": 15,
+    "array_weights": [
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ]
+    ],
+    "input_vector": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "output_vector": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "timestamp": "2026-02-20T17:00:18.818354307-06:00"
+  },
+  "sneak_metrics": {
+    "total_sneak_current_a": 0.000028170786029864477,
+    "max_sneak_current_a": 0.0000035219781279474757,
+    "affected_cells": 63,
+    "half_select_cells": 14,
+    "sneak_only_cells": 49,
+    "top_affected_cells": [
+      {
+        "row": 0,
+        "col": 0,
+        "current_a": 0.0000035219781279474757
+      },
+      {
+        "row": 1,
+        "col": 0,
+        "current_a": 0.0000035217082451881106
+      },
+      {
+        "row": 2,
+        "col": 0,
+        "current_a": 0.0000035214769225963125
+      }
+    ]
+  },
+  "top_sneak_cells": [
+    {
+      "row": 0,
+      "col": 0,
+      "current_a": 0.0000035219781279474757
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "current_a": 0.0000035217082451881106
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "current_a": 0.0000035214769225963125
+    }
+  ]
+}

@@ -15,7 +15,6 @@ const (
 	actionJumpView2 keyboard.Action = "eda_view_2"
 	actionJumpView3 keyboard.Action = "eda_view_3"
 	actionJumpView4 keyboard.Action = "eda_view_4"
-	actionJumpView5 keyboard.Action = "eda_view_5"
 )
 
 // SetupKeyboard initializes keyboard shortcuts for the EDA window.
@@ -63,31 +62,24 @@ func SetupKeyboard(w fyne.Window, viewSelector *widget.Select) {
 		}
 	})
 
-	km.AddCustomShortcut(actionJumpView2, fyne.Key2, 0, "Go to Export Viewer")
+	km.AddCustomShortcut(actionJumpView2, fyne.Key2, 0, "Go to Layout Visualizer")
 	km.SetHandler(actionJumpView2, func() {
 		if viewSelector != nil && len(viewSelector.Options) > 1 {
 			viewSelector.SetSelected(viewSelector.Options[1])
 		}
 	})
 
-	km.AddCustomShortcut(actionJumpView3, fyne.Key3, 0, "Go to Layout Visualizer")
+	km.AddCustomShortcut(actionJumpView3, fyne.Key3, 0, "Go to Learn")
 	km.SetHandler(actionJumpView3, func() {
 		if viewSelector != nil && len(viewSelector.Options) > 2 {
 			viewSelector.SetSelected(viewSelector.Options[2])
 		}
 	})
 
-	km.AddCustomShortcut(actionJumpView4, fyne.Key4, 0, "Go to Learn")
+	km.AddCustomShortcut(actionJumpView4, fyne.Key4, 0, "Go to Flow Scripts")
 	km.SetHandler(actionJumpView4, func() {
 		if viewSelector != nil && len(viewSelector.Options) > 3 {
 			viewSelector.SetSelected(viewSelector.Options[3])
-		}
-	})
-
-	km.AddCustomShortcut(actionJumpView5, fyne.Key5, 0, "Go to Flow Scripts")
-	km.SetHandler(actionJumpView5, func() {
-		if viewSelector != nil && len(viewSelector.Options) > 4 {
-			viewSelector.SetSelected(viewSelector.Options[4])
 		}
 	})
 
@@ -115,16 +107,15 @@ func ShowKeyboardHelp(w fyne.Window) {
 				{Key: "←/→", Description: "Switch views"},
 				{Key: "Space", Description: "Cycle through views"},
 				{Key: "1", Description: "Go to Builder & Validation"},
-				{Key: "2", Description: "Go to Export Viewer"},
-				{Key: "3", Description: "Go to Layout Visualizer"},
-				{Key: "4", Description: "Go to Learn"},
-				{Key: "5", Description: "Go to Flow Scripts"},
+				{Key: "2", Description: "Go to Layout Visualizer"},
+				{Key: "3", Description: "Go to Learn"},
+				{Key: "4", Description: "Go to Flow Scripts"},
 			}},
 			{Title: "Data", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+S", Description: "Save (coming soon)"}, {Key: "Ctrl+E", Description: "Export (use tab buttons)"}, {Key: "Ctrl+R", Description: "Reset to first view"}}},
 			{Title: "Builder Actions", Shortcuts: []keyboard.ShortcutMetadata{{Key: "Ctrl+Shift+G", Description: "Generate All"}, {Key: "Ctrl+Shift+V", Description: "Validate All"}, {Key: "Ctrl+Shift+E", Description: "Export Package"}}},
 			{Title: "Help", Shortcuts: []keyboard.ShortcutMetadata{{Key: "/ or ?", Description: "Show this help dialog"}}},
 		},
-		Tips: []string{"Use number keys (1-5) to quickly jump to any view", "Each tab has its own export functionality", "Generated files are educational examples only"},
+		Tips: []string{"Use number keys (1-4) to quickly jump to any view", "Each tab has its own export functionality", "Generated files are educational examples only"},
 	})
 
 	keyboard.ShowHelpTextDialog(w, "Keyboard Shortcuts", helpText, 360, 320)

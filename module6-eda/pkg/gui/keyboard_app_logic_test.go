@@ -95,19 +95,18 @@ func TestSetupKeyboard_OnTypedKeyNavigation(t *testing.T) {
 	}
 }
 
-func TestSetupKeyboard_AllFiveViewShortcuts(t *testing.T) {
+func TestSetupKeyboard_AllFourViewShortcuts(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	w := app.NewWindow("keyboard5")
+	w := app.NewWindow("keyboard4")
 	defer w.Close()
 
 	views := []string{
 		"1. Builder & Validation",
-		"2. Export Viewer",
-		"3. Layout Visualizer",
-		"4. Learn",
-		"5. Flow Scripts",
+		"2. Layout Visualizer",
+		"3. Learn",
+		"4. Flow Scripts",
 	}
 	selector := widget.NewSelect(views, nil)
 	selector.SetSelected(views[0])
@@ -123,10 +122,9 @@ func TestSetupKeyboard_AllFiveViewShortcuts(t *testing.T) {
 		want string
 	}{
 		{fyne.Key1, "1. Builder & Validation"},
-		{fyne.Key2, "2. Export Viewer"},
-		{fyne.Key3, "3. Layout Visualizer"},
-		{fyne.Key4, "4. Learn"},
-		{fyne.Key5, "5. Flow Scripts"},
+		{fyne.Key2, "2. Layout Visualizer"},
+		{fyne.Key3, "3. Learn"},
+		{fyne.Key4, "4. Flow Scripts"},
 	}
 
 	for _, tc := range cases {
@@ -210,14 +208,14 @@ func TestCreateMainWindow_ViewSelectionTogglesVisibleContent(t *testing.T) {
 		t.Fatalf("same-selection should keep first view visible")
 	}
 
-	selectWidget.SetSelected("4. Learn")
-	if stack.Objects[0].Visible() || !stack.Objects[3].Visible() {
-		t.Fatalf("after selecting Learn: builder=%v learn=%v", stack.Objects[0].Visible(), stack.Objects[3].Visible())
+	selectWidget.SetSelected("3. Learn")
+	if stack.Objects[0].Visible() || !stack.Objects[2].Visible() {
+		t.Fatalf("after selecting Learn: builder=%v learn=%v", stack.Objects[0].Visible(), stack.Objects[2].Visible())
 	}
 
-	selectWidget.SetSelected("2. Export Viewer")
+	selectWidget.SetSelected("2. Layout Visualizer")
 	if !stack.Objects[1].Visible() {
-		t.Fatalf("after selecting Export Viewer: second view not visible")
+		t.Fatalf("after selecting Layout Visualizer: second view not visible")
 	}
 }
 

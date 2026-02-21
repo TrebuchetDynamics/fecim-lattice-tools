@@ -42,15 +42,23 @@ func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 
 	logging.GlobalDebug("[EDA] Module content created with %dx%d array config", arrayConfig.Rows, arrayConfig.Cols)
 
-	// All 5 views, matching the standalone EDA GUI (app.go)
+	// All 4 views, matching the standalone EDA GUI (app.go)
 	appTabs := container.NewAppTabs(
 		container.NewTabItem("1. Builder & Validation", tabs.MakeBuilderValidationTab(arrayConfig, window)),
-		container.NewTabItem("2. Export Viewer", tabs.MakeExportViewerTab(arrayConfig, window)),
-		container.NewTabItem("3. Layout Visualizer", tabs.MakeLayoutVisualizerTab(arrayConfig, window)),
-		container.NewTabItem("4. Learn", tabs.MakeLearnTab(nil, window)),
-		container.NewTabItem("5. Flow Scripts", tabs.MakeFlowScriptsTab(arrayConfig, window)),
+		container.NewTabItem("2. Layout Visualizer", tabs.MakeLayoutVisualizerTab(arrayConfig, window)),
+		container.NewTabItem("3. Learn", tabs.MakeLearnTab(nil, window)),
+		container.NewTabItem("4. Flow Scripts", tabs.MakeFlowScriptsTab(arrayConfig, window)),
 	)
 	appTabs.SetTabLocation(container.TabLocationTop)
+	// Re-render tab content when switching tabs. This is required because the
+	// tab content widgets are constructed (and SetText called) before they have
+	// been laid out in a window. The OnSelected callback guarantees Fyne
+	// performs a full layout+paint pass on the newly-visible content.
+	appTabs.OnSelected = func(tab *container.TabItem) {
+		if tab != nil && tab.Content != nil {
+			tab.Content.Refresh()
+		}
+	}
 	return appTabs
 }
 

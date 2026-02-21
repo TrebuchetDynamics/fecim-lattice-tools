@@ -16,7 +16,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	w := app.NewWindow("Module 6: FeCIM Design Suite - EDA")
 	w.Resize(fyne.NewSize(1600, 1000))
 
-	// Shared array configuration (used by Builder, Export Viewer, Layout Visualizer, and Flow Scripts tabs)
+	// Shared array configuration (used by Builder, Layout Visualizer, and Flow Scripts tabs)
 	arrayConfig := &config.ArrayConfig{
 		Rows:         4,
 		Cols:         4,
@@ -28,24 +28,21 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	}
 
 	// Create tab contents
-	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w) // Tab 1
-	exportViewerContent := tabs.MakeExportViewerTab(arrayConfig, w) // Tab 2
-	layoutVisualizerContent := tabs.MakeLayoutVisualizerTab(arrayConfig, w)
-	learnContent := tabs.MakeLearnTab(nil, w)                        // Tab 4
-	flowScriptsContent := tabs.MakeFlowScriptsTab(arrayConfig, w)    // Tab 5
+	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w)  // Tab 1
+	layoutVisualizerContent := tabs.MakeLayoutVisualizerTab(arrayConfig, w) // Tab 2
+	learnContent := tabs.MakeLearnTab(nil, w)                         // Tab 3
+	flowScriptsContent := tabs.MakeFlowScriptsTab(arrayConfig, w)     // Tab 4
 
 	// View names for selector
 	viewNames := []string{
 		"1. Builder & Validation",
-		"2. Export Viewer",
-		"3. Layout Visualizer",
-		"4. Learn",
-		"5. Flow Scripts",
+		"2. Layout Visualizer",
+		"3. Learn",
+		"4. Flow Scripts",
 	}
 
 	allViews := []fyne.CanvasObject{
 		builderContent,
-		exportViewerContent,
 		layoutVisualizerContent,
 		learnContent,
 		flowScriptsContent,

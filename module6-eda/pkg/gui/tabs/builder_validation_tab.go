@@ -1447,6 +1447,8 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		widget.NewSeparator(),
 		widget.NewLabel("Arch:"), archToggle,
 	)
+	arrayConfigScroll := container.NewHScroll(arrayConfigRow)
+	arrayConfigScroll.SetMinSize(fyne.NewSize(0, 38))
 
 	// Horizontal stats in two rows to fit within 1024px minimum width
 	statsRow1 := container.NewHBox(
@@ -1465,10 +1467,14 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		widget.NewLabel("|"),
 		archRecommLabel,
 	)
-	statsRow := container.NewVBox(statsRow1, statsRow2)
+	statsRow1Scroll := container.NewHScroll(statsRow1)
+	statsRow1Scroll.SetMinSize(fyne.NewSize(0, 24))
+	statsRow2Scroll := container.NewHScroll(statsRow2)
+	statsRow2Scroll.SetMinSize(fyne.NewSize(0, 24))
+	statsRow := container.NewVBox(statsRow1Scroll, statsRow2Scroll)
 
 	arrayPanel := container.NewVBox(
-		arrayConfigRow,
+		arrayConfigScroll,
 		modeHelpText,
 		statsRow,
 	)
@@ -1493,9 +1499,14 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 
 	// Layout tab with real EDA tool images only
 	layoutHelp := widget.NewLabel("KLayout: auto on Generate All | OpenROAD/Yosys: buttons above")
+	layoutHelp.Wrapping = fyne.TextWrapWord
+	layoutHelp.Truncation = fyne.TextTruncateEllipsis
+	layoutControlsRow := container.NewHBox(genSchematicBtn, genOpenROADBtn, layoutHelp)
+	layoutControlsScroll := container.NewHScroll(layoutControlsRow)
+	layoutControlsScroll.SetMinSize(fyne.NewSize(0, 40))
 	layoutScroll := container.NewScroll(layoutStack)
 	layoutTab := container.NewBorder(
-		container.NewHBox(genSchematicBtn, genOpenROADBtn, layoutHelp),
+		layoutControlsScroll,
 		nil, nil, nil,
 		layoutScroll,
 	)
@@ -1591,6 +1602,8 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		saveConfigBtn,
 		loadConfigBtn,
 	)
+	actionButtonsScroll := container.NewHScroll(actionButtons)
+	actionButtonsScroll.SetMinSize(fyne.NewSize(0, 40))
 
 	// Builder action shortcuts:
 	// Cmd/Ctrl+Shift+G => Generate All
@@ -1642,8 +1655,10 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		pdkStatus,
 		pullImageBtn,
 	)
+	validationHeaderScroll := container.NewHScroll(validationHeader)
+	validationHeaderScroll.SetMinSize(fyne.NewSize(0, 32))
 	validationRow := container.NewVBox(
-		validationHeader,
+		validationHeaderScroll,
 		container.NewHScroll(validationResultsGrid),
 	)
 
@@ -1675,18 +1690,21 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		widget.NewLabel("Export confidence:"),
 		sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated),
 	)
+	statusLabel.Truncation = fyne.TextTruncateEllipsis
 	statusBar := container.NewHBox(
 		widget.NewLabel("Status:"),
 		statusLabel,
 	)
+	statusBarScroll := container.NewHScroll(statusBar)
+	statusBarScroll.SetMinSize(fyne.NewSize(0, 28))
+	exportConfidenceScroll := container.NewHScroll(exportConfidence)
+	exportConfidenceScroll.SetMinSize(fyne.NewSize(0, 28))
 
-	// Top section: config + actions (compact)
-	actionsStatusRow := container.NewHBox(
-		actionButtons,
-		widget.NewSeparator(),
-		statusBar,
-		layout.NewSpacer(),
-		exportConfidence,
+	// Top section: config + actions.
+	// Keep rows readable at 1024px by allowing horizontal pan instead of overlap.
+	actionsStatusRow := container.NewVBox(
+		actionButtonsScroll,
+		container.NewHBox(statusBarScroll, layout.NewSpacer(), exportConfidenceScroll),
 	)
 	topSection := container.NewVBox(
 		configAccordion,

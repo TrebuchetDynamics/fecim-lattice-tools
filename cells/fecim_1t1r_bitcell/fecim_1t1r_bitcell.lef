@@ -1,3 +1,11 @@
+# CHARACTERIZATION PROVENANCE
+# CHAR_STATUS: ESTIMATED_SCALAR
+# WARNING: This Liberty file is generated from analytical models,
+# NOT from silicon measurement or SPICE post-layout simulation.
+# Timing values are estimated from Landau-Khalatnikov transient simulation.
+# NOT suitable for signoff or tapeout. Educational/research use only.
+# For production characterization, use Cadence Liberate or Synopsys SiliconSmart
+# with measured device data.
 VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
@@ -29,7 +37,7 @@ MACRO fecim_1t1r_bitcell
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.000 1.600 0.100 1.800 ;
+      RECT 0.000 1.600 0.140 1.800 ;
     END
   END WL
 
@@ -38,7 +46,7 @@ MACRO fecim_1t1r_bitcell
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.820 1.600 0.920 1.800 ;
+      RECT 0.780 1.600 0.920 1.800 ;
     END
   END BL
 
@@ -47,7 +55,7 @@ MACRO fecim_1t1r_bitcell
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.410 0.100 0.510 0.300 ;
+      RECT 0.390 0.100 0.530 0.300 ;
     END
   END SL
 
@@ -56,7 +64,7 @@ MACRO fecim_1t1r_bitcell
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 3.300 0.920 3.400 ;
+      RECT 0.000 3.930 0.920 4.070 ;
     END
   END VPWR
 
@@ -65,13 +73,13 @@ MACRO fecim_1t1r_bitcell
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 0.920 0.100 ;
+      RECT 0.000 0.000 0.920 0.140 ;
     END
   END VGND
 
   OBS
     LAYER met1 ;
-    RECT 0.100 0.300 0.820 3.300 ;
+    RECT 0.100 0.300 0.820 3.970 ;
   END
 
 END fecim_1t1r_bitcell

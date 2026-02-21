@@ -411,9 +411,11 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 			x2 := marginLeft + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
 			y2 := centerY - float32(r.plot.pData[i]/r.plot.pMax)*plotH/2
 
-			// Color based on age (fade effect)
-			age := float64(len(r.plot.eData)-i) / float64(len(r.plot.eData))
-			alpha := uint8(255 - age*205)
+			// Fade from transparent at oldest end to opaque at newest end.
+			// Starting at alpha=0 makes the oldest segments invisible, so the
+			// "wiggle" caused by old datapoints rolling off the ring buffer
+			// (changing the trail head position in P-E space) is not visible.
+			alpha := uint8(float64(i) / float64(len(r.plot.eData)) * 255)
 
 			var lineColor color.RGBA
 			if r.plot.pData[i] >= 0 {

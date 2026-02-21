@@ -73,11 +73,13 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 	preview := widget.NewMultiLineEntry()
 	preview.Wrapping = fyne.TextWrapOff
 	preview.TextStyle.Monospace = true
-	preview.Disable()
-
 	refresh := func() {
 		content, desc := loadFlowScriptContent(formatSelect.Selected, cfg)
+		// Enable → SetText → Disable to work around Fyne 2.7.x behaviour where
+		// SetText on a disabled Entry may not update the rendered content.
+		preview.Enable()
 		preview.SetText(content)
+		preview.Disable()
 		status.SetText(desc)
 	}
 

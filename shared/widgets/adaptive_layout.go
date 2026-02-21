@@ -391,6 +391,16 @@ func (r *adaptiveLayoutRenderer) Layout(size fyne.Size) {
 		r.layout.mu.Unlock()
 		r.lastSize = size
 		r.initialized = true
+		// If first render lands in a narrow breakpoint, switch immediately so
+		// content is not briefly stuck in desktop mode until a second resize.
+		if newBreakpoint == BreakpointSM || newBreakpoint == BreakpointMD {
+			if r.layout.switching.CompareAndSwap(false, true) {
+				fyne.Do(func() {
+					defer r.layout.switching.Store(false)
+					r.layout.switchToMobileInternal()
+				})
+			}
+		}
 		return
 	}
 

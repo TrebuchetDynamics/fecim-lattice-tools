@@ -311,7 +311,11 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// If we reached the target field (approx), switch to WAIT
 		if wc.PhaseTimer > pulseDur*0.4 && math.Abs(currentField-wc.CurrentField) < 0.01*wc.MaxField {
 			wc.stepFloor = 0
-			wc.GuardPulseCount = 0
+			// Do NOT reset GuardPulseCount here. The counter must accumulate across
+			// APPLY→WAIT transitions so the maxGuardPulses=2 limit actually triggers.
+			// GuardPulseCount is only reset (at line ~457) when the level changes
+			// away from the target (LastError != 0), which covers fresh convergence
+			// attempts after a non-guard pulse.
 			wc.CumulativeFluence += math.Abs(wc.CurrentField) * pulseDur
 			wc.State = StateWait
 			wc.PhaseTimer = 0
@@ -436,11 +440,24 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.NoImproveCount = 0
 			}
 			if wc.LastError == 0 && guardSign != 0 {
-				// Guard-band correction: the cell is at the target level but
-				// polarization is near a bin edge. Allow up to 2 guard pulses
-				// to nudge it toward center; after that, accept convergence
-				// to avoid catastrophic direction flips.
+				// Guard-band correction: P is at the target bin but near an edge.
+				//
+				// Stable guard (guardSign * writeDir > 0): P drifts toward bin
+				//   center at E=0 (e.g. ascending write lands P above center →
+				//   relaxation toward +Pr keeps it in bin). A small nudge suffices;
+				//   accept convergence after maxGuardPulses.
+				//
+				// Unstable guard (guardSign * writeDir ≤ 0): P drifts away from the
+				//   target bin at E=0 (e.g. ascending write to a high bin lands P
+				//   below center → relaxation toward Pr drops out of bin). Must
+				//   drive P deeper with real field pulses. Reset the counter so
+				//   pushing continues until E=0 verify naturally reads target.
 				const maxGuardPulses = 2
+				writeDir := 1
+				if wc.InitialLevel > wc.TargetLevel {
+					writeDir = -1
+				}
+				stableGuard := guardSign*writeDir > 0
 				wc.GuardPulseCount++
 				if wc.GuardPulseCount <= maxGuardPulses {
 					wc.LastError = guardSign
@@ -448,9 +465,20 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 					guardActive = true
 					log.Printf("ISPP GUARD: level=%d target=%d sign=%d guardPulse=%d/%d",
 						currentLevel, wc.TargetLevel, guardSign, wc.GuardPulseCount, maxGuardPulses)
-				} else {
-					log.Printf("ISPP GUARD ACCEPT: level=%d target=%d (guard limit reached, accepting convergence)",
+				} else if stableGuard {
+					// Stable side: P will stay in bin at E=0. Accept convergence.
+					log.Printf("ISPP GUARD ACCEPT: level=%d target=%d (stable guard limit, accepting)",
 						currentLevel, wc.TargetLevel)
+				} else {
+					// Unstable side: reset counter and keep pushing via calcLevel.
+					// Each cycle increments the field until P is deep enough in the
+					// target bin to survive E=0 relaxation.
+					wc.GuardPulseCount = 0
+					wc.LastError = guardSign
+					absErr = int(math.Abs(float64(wc.LastError)))
+					guardActive = true
+					log.Printf("ISPP GUARD PUSH CONTINUE: level=%d target=%d sign=%d (unstable, resetting counter)",
+						currentLevel, wc.TargetLevel, guardSign)
 				}
 			} else if wc.LastError != 0 {
 				// Reset guard pulse counter when not at target level.
@@ -574,13 +602,11 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 						wc.VMaxSet = true
 					}
 				}
-			} else {
-				// Zero-field verify: clear stale bounds so bisection restarts fresh
-				wc.VMin = 0
-				wc.VMax = wc.MaxField
-				wc.VMinSet = false
-				wc.VMaxSet = false
 			}
+			// Zero-field verify: skip bounds update; keep existing bracket intact
+			// so bisection resumes from the last valid [VMin, VMax] rather than
+			// restarting from [0, MaxField] and wasting pulses rediscovering the
+			// switching threshold.
 
 			// If bounds collapse or invert, widen the bracket minimally
 			// instead of discarding all convergence progress.
@@ -699,24 +725,59 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// Continue ISPP (Next Pulse)
 			wc.PulseCount++
 			wc.TotalPulses++
-			calcLevel := currentLevel
 			if guardActive {
-				// Guard correction: nudge calcLevel toward the side that needs
-				// more polarization, but NEVER flip the overall write direction.
-				// Flipping direction at the target level causes catastrophic overshoot.
-				candidateLevel := currentLevel + guardSign
-				prevDir := wc.directionToTarget(currentLevel)
-				candidateDir := wc.directionToTarget(candidateLevel)
-				if prevDir != 0 && candidateDir != 0 && candidateDir != prevDir {
-					// Would flip direction — keep calcLevel at currentLevel
-					// and let the small voltage increment handle it.
-					log.Printf("ISPP GUARD CLAMP: avoiding direction flip (current=%d candidate=%d target=%d)",
-						currentLevel, candidateLevel, wc.TargetLevel)
-				} else {
-					calcLevel = candidateLevel
+				// Determine write direction from initial state.
+				writeDir := 1
+				if wc.InitialLevel > wc.TargetLevel {
+					writeDir = -1
 				}
+				// Guard stability classification:
+				//   guardSign * writeDir > 0: P is on the "safe" side — at E=0 it
+				//     drifts back toward the bin center (e.g., ascending write landed
+				//     P above center → E=0 relaxation pulls P down, stays in bin).
+				//     A small nudge (or GUARD ACCEPT) is sufficient.
+				//   guardSign * writeDir < 0: P is on the "unstable" side — at E=0
+				//     it drifts AWAY from the target (e.g., ascending write landed
+				//     P below center of high bin → relaxation drops out of bin).
+				//     Need a real push in the write direction; may overshoot by one
+				//     level, triggering recovery from the opposite side (more stable).
+				stableGuard := guardSign*writeDir > 0
+
+				if stableGuard {
+					// Small fixed nudge: opposite to guardSign. Safe for both engines:
+					// Preisach responds to sub-coercive minor-loop fields; LK will do
+					// nothing at 0.10×Ec, but GUARD ACCEPT fires after maxGuardPulses.
+					// guardSign > 0: P near upper edge → push down (negative E)
+					// guardSign < 0: P near lower edge → push up (positive E)
+					nudgeDir := -guardSign
+					nudgeMag := 0.10 * wc.EcField
+					if wc.stepFloor > nudgeMag {
+						nudgeMag = wc.stepFloor
+					}
+					// Cap below the known switching threshold to avoid overshoot.
+					if wc.VMaxSet && wc.VMax > 0.02*wc.EcField && wc.VMax < nudgeMag {
+						nudgeMag = wc.VMax * 0.50
+					}
+					if nudgeMag < 0.02*wc.EcField {
+						nudgeMag = 0.02 * wc.EcField
+					}
+					wc.CurrentField = float64(nudgeDir) * nudgeMag
+					log.Printf("ISPP GUARD NUDGE: level=%d target=%d sign=%d field=%.3f×Ec",
+						currentLevel, wc.TargetLevel, guardSign, wc.CurrentField/wc.EcField)
+				} else {
+					// Unstable side: use the original level-based approach. Applying
+					// a field for calcLevel = currentLevel+guardSign pushes in the
+					// write direction. For high bins this often overshoots by one
+					// level, triggering the overshoot recovery path which approaches
+					// from the opposite direction — achieving a stable remanent state.
+					calcLevel := currentLevel + guardSign
+					wc.calculateNextField(calcLevel)
+					log.Printf("ISPP GUARD PUSH: level=%d target=%d sign=%d calcLevel=%d field=%.3f×Ec",
+						currentLevel, wc.TargetLevel, guardSign, calcLevel, wc.CurrentField/wc.EcField)
+				}
+			} else {
+				wc.calculateNextField(currentLevel)
 			}
-			wc.calculateNextField(calcLevel)
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 		}
@@ -889,6 +950,17 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			// Small overshoot errors (e.g. 1 level) must use tiny reverse nudges to
 			// avoid branch ping-pong near saturation.
 			minReverseField := 0.7 * wc.EcField
+			// If the forward-search VMax is known and smaller than the default floor,
+			// use it as the starting point.  The reverse correction needs a similar
+			// magnitude to the forward search (same hysteresis branch symmetry), so
+			// starting above VMax typically causes immediate overshoot.
+			if prevVoltage >= 0.3*wc.EcField {
+				// Previous field gives a reasonable starting estimate.
+				minReverseField = prevVoltage
+			}
+			if wc.VMaxSet && wc.VMax > 0.10*wc.EcField && wc.VMax < minReverseField {
+				minReverseField = wc.VMax
+			}
 			reverseStep := 0.05 * wc.EcField
 			maxReverseField := 1.5 * wc.EcField // Allow higher fields for L-K gradual switching
 
