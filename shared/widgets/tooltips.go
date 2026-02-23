@@ -106,18 +106,17 @@ var HysteresisTooltips = struct {
 		Title:       "ISPP Programming Method",
 		Description: "Algorithm for incremental step pulse programming. Different methods optimize for speed vs energy.",
 		Range:       "Linear (Standard), Logarithmic (A-ISPP), DCC (Future)",
-		Physics:     "Standard ISPP: Fixed step sizes (PMC 2023). A-ISPP (Adaptive): Large steps when far from target, small steps when close—literature state-of-the-art from Seoul National University. DCC (Displacement Current Control): One-shot programming optimized for FE polarization switching (PMC 2024).",
+		Physics:     "Standard ISPP: fixed step sizes. A-ISPP (Adaptive): larger steps when far from target and smaller steps near the target. DCC is a placeholder in this build (not active).",
 		Tips: []string{
 			"Linear is the baseline method (standard in literature)",
 			"Logarithmic (A-ISPP) uses adaptive steps for efficiency",
 			"Both use binary search refinement after establishing bounds",
-			"See docs/research/crossbar-circuits-literature-review-2025.md",
 		},
 	},
 	Levels: TooltipContent{
 		Title:       "Quantization Levels",
 		Description: "Number of discrete polarization states for multi-level storage. More levels = more bits per cell.",
-		Range:       "2-256 levels (1-8 bits/cell)",
+		Range:       "2-64 levels (1-6 bits/cell in this UI)",
 		Physics:     "Each level corresponds to a distinct remnant polarization value. Conference claims suggest 30 levels; peer-reviewed literature shows 32-140 levels depending on conditions.",
 		Tips: []string{
 			"30 levels ≈ 4.9 bits/cell (conference claim)",
@@ -128,7 +127,7 @@ var HysteresisTooltips = struct {
 	TargetRange: TooltipContent{
 		Title:       "Target Range",
 		Description: "Fraction of full polarization swing used for level mapping. Smaller range avoids saturation regions.",
-		Range:       "80-100% of Ps (saturation polarization)",
+		Range:       "50-100% of Ps (saturation polarization)",
 		Physics:     "Operating near saturation (Ps) gives maximum signal but risks distortion. Backing off to 85-95% improves linearity at cost of reduced signal margin.",
 		Tips: []string{
 			"95% is a good balance of range and linearity",
@@ -139,7 +138,7 @@ var HysteresisTooltips = struct {
 	EField: TooltipContent{
 		Title:       "Electric Field",
 		Description: "Applied electric field strength. Controls polarization switching in manual mode.",
-		Range:       "±1.5 × Ec (coercive field), typically ±1-3 MV/cm",
+		Range:       "±2.5 × Ec (coercive field), range updates per material",
 		Physics:     "E > Ec causes domain switching. The coercive field Ec is the field where polarization reverses. Ferroelectric memories operate by applying fields above/below Ec.",
 		Tips: []string{
 			"Drag slowly to trace the hysteresis loop",
@@ -150,7 +149,7 @@ var HysteresisTooltips = struct {
 	Frequency: TooltipContent{
 		Title:       "Drive Frequency",
 		Description: "Frequency of the periodic waveform (sine, triangle). Affects switching dynamics.",
-		Range:       "0.01 Hz - 1 GHz (display limited by time scale)",
+		Range:       "Slider: 0.01-1 Hz. Entry + unit selector: any positive value",
 		Physics:     "Real switching occurs on ns-µs timescales. Low frequencies let you observe quasi-static behavior; high frequencies reveal dynamic effects like viscous domain wall motion.",
 		Tips: []string{
 			"Use ~1 Hz with slow time scale to see smooth loops",
