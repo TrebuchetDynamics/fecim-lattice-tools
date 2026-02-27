@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
 	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
@@ -24,6 +25,7 @@ import (
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
+	"fecim-lattice-tools/shared/peripherals"
 )
 
 const playtestReportPath = "testdata/playtest-report.txt"
@@ -74,6 +76,10 @@ func TestPlaytestReport_Full(t *testing.T) {
 	if v := strings.TrimSpace(os.Getenv("FECIM_MNIST_PLAYTEST")); v != "" && v != "0" {
 		mnistEnabled = true
 	}
+
+	totalCritical := 0
+	totalWarning := 0
+	totalInfo := 0
 
 	modules := reportAllModules()
 	for _, m := range modules {
@@ -158,11 +164,13 @@ func TestPlaytestReport_Full(t *testing.T) {
 			}
 			unlabeled := findUnlabeledTappables(nodes)
 
-			report.WriteString(fmt.Sprintf("Widget tree: total=%d interactive=%d unlabeled=%d\n",
+			report.WriteString(fmt.Sprintf("[INFO] Widget tree: total=%d interactive=%d unlabeled=%d\n",
 				totalCount, interactiveCount, len(unlabeled)))
+			totalInfo++
 
 			if len(unlabeled) > 0 {
-				report.WriteString("Unlabeled tappable widgets:\n")
+				report.WriteString("[CRITICAL] Unlabeled tappable widgets:\n")
+				totalCritical += len(unlabeled)
 				for _, n := range unlabeled {
 					report.WriteString(fmt.Sprintf("  - %s at %.0f,%.0f (%.0fx%.0f)\n",
 						n.TypeName, n.Position.X, n.Position.Y, n.Size.Width, n.Size.Height))
@@ -184,7 +192,8 @@ func TestPlaytestReport_Full(t *testing.T) {
 				}
 			}
 			if smallTapTargets > 0 {
-				report.WriteString(fmt.Sprintf("Tap targets < 44dp: %d\n", smallTapTargets))
+				report.WriteString(fmt.Sprintf("[WARNING] Tap targets < 44dp: %d (Fyne theme limitation)\n", smallTapTargets))
+				totalWarning++
 			}
 
 			// Layout check at default size
@@ -194,9 +203,11 @@ func TestPlaytestReport_Full(t *testing.T) {
 			})
 			overlaps := detectOverlaps(entries)
 			if len(overlaps) > 0 {
-				report.WriteString(fmt.Sprintf("Layout overlaps at 1200x800: %d\n", len(overlaps)))
+				report.WriteString(fmt.Sprintf("[INFO] Layout overlaps at 1200x800: %d\n", len(overlaps)))
+				totalInfo++
 			} else {
-				report.WriteString("Layout overlaps at 1200x800: none\n")
+				report.WriteString("[INFO] Layout overlaps at 1200x800: none\n")
+				totalInfo++
 			}
 		} else {
 			report.WriteString("Widget tree: (skipped)\n")
@@ -210,6 +221,32 @@ func TestPlaytestReport_Full(t *testing.T) {
 
 		report.WriteString("\n")
 	}
+
+	report.WriteString(fmt.Sprintf("\nSummary: %d critical, %d warnings, %d info\n", totalCritical, totalWarning, totalInfo))
+
+	// Signal Chain Fidelity section
+	report.WriteString("\nSignal Chain Fidelity\n")
+	report.WriteString(strings.Repeat("-", 40) + "\n")
+
+	dac := peripherals.DefaultDAC()
+	adc := peripherals.DefaultADC()
+	sense := arraysim.SenseChain{
+		TIA: arraysim.TIAConfig{Rf: 10e3, Vref: 0.5, Vmin: 0, Vmax: 1.0},
+		ADC: arraysim.ADCConfig{Bits: adc.Bits, Vmin: adc.VrefLow, Vmax: adc.VrefHigh},
+	}
+	imin, imax := sense.CurrentRange()
+	lsb := sense.CurrentLSB()
+	enob := adc.ENOB()
+	effSNR := adc.EffectiveSNR()
+
+	report.WriteString(fmt.Sprintf("DAC: %d-bit (%d levels), range %.2fV to %.2fV\n",
+		dac.Bits, dac.Levels(), dac.VrefLow, dac.VrefHigh))
+	report.WriteString(fmt.Sprintf("ADC ENOB: %.2f bits (nominal %d-bit, INL=%.1f, DNL=%.2f)\n",
+		enob, adc.Bits, adc.INL, adc.DNL))
+	report.WriteString(fmt.Sprintf("Effective SNR: %.1f dB\n", effSNR))
+	report.WriteString(fmt.Sprintf("Sense chain current range: %.2f µA to %.2f µA\n",
+		imin*1e6, imax*1e6))
+	report.WriteString(fmt.Sprintf("Current LSB: %.2f nA\n", lsb*1e9))
 
 	report.WriteString("======================================\n")
 	report.WriteString("End of report\n")

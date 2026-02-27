@@ -264,12 +264,19 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			case "pzt2024_nano14050432_fig2_thinfilm",
 				"pzt2024_nano14050432_fig2_thinfilm_traceB",
 				"bto2021_cryst11101192_hysteresis",
-				"alscn2022_pmc9607415_fig6a_pt_200nm",
-				"park2015_hzo_10nm":
-				localPrTh = math.Max(localPrTh, 15.0)    // 15% Pr tolerance for placeholder
+				"alscn2022_pmc9607415_fig6a_pt_200nm":
+				localPrTh = math.Max(localPrTh, 15.0)     // 15% Pr tolerance for placeholder
 				localRMSETh = math.Max(localRMSETh, 0.20) // 20% RMSE/Ps tolerance for placeholder
 				localAreaTh = math.Max(localAreaTh, 200.0) // 200% area tolerance for placeholder shape mismatch
 				t.Logf("PLACEHOLDER_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%",
+					ds.MaterialID, localPrTh, localRMSETh, localAreaTh)
+			case "park2015_hzo_10nm":
+				// Park 2015 digitized loop is still a calibration reference; keep modestly
+				// relaxed tolerances until the Preisach tuning is updated.
+				localPrTh = math.Max(localPrTh, 15.0)
+				localRMSETh = math.Max(localRMSETh, 0.06)
+				localAreaTh = math.Max(localAreaTh, 60.0)
+				t.Logf("CALIBRATED_RELAXED_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%",
 					ds.MaterialID, localPrTh, localRMSETh, localAreaTh)
 			}
 
