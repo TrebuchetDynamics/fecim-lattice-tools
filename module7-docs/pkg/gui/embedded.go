@@ -150,6 +150,7 @@ func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 	app.pathMap = make(map[string]*docEntry)
 	app.buildPathMap(app.docs)
 	app.tree = app.createDocTree()
+	sharedWidgets.SetAccessibleLabel(app.tree, "Document navigation tree")
 
 	sidebarTop := container.NewVBox(
 		widget.NewLabelWithStyle("Curriculum", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
@@ -353,6 +354,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 			starBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 			starBtn.Importance = widget.LowImportance
 			starBtn.Hidden = true
+			sharedWidgets.SetAccessibleLabel(starBtn, "Toggle favorite")
 
 			center := container.NewHBox(badge, label)
 			return container.NewBorder(nil, nil, icon, starBtn, center)

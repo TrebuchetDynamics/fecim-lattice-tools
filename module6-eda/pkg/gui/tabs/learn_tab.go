@@ -72,6 +72,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	topicSelector.OnSelected = func(id widget.ListItemID) {
 		// Will be connected to content display
 	}
+	sharedwidgets.SetAccessibleLabel(topicSelector, "Learning center topics")
 
 	// Content area - increased width for better card layout
 	contentScroll := container.NewScroll(makeQuickStartContent())

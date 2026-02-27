@@ -1,0 +1,50 @@
+FeCIM Lattice Tools -- Playtest Report
+======================================
+Generated: 2026-02-27 14:24:59
+
+Module: hysteresis
+----------------------------------------
+Screenshot: testdata/playtest/screenshots/report_hysteresis.png
+Widget tree: total=160 interactive=34 unlabeled=0
+Tap targets < 44dp: 33
+Layout overlaps at 1200x800: 1825
+
+Module: crossbar
+----------------------------------------
+Status: SKIPPED (known test driver limitation)
+Reason: Bold+Monospace font crash in test.NewApp()
+
+Module: mnist
+----------------------------------------
+Status: SKIPPED (FECIM_MNIST_PLAYTEST not set)
+
+Module: circuits
+----------------------------------------
+Screenshot: testdata/playtest/screenshots/report_circuits.png
+Widget tree: total=192 interactive=58 unlabeled=0
+Tap targets < 44dp: 57
+Layout overlaps at 1200x800: 1512
+
+Module: comparison
+----------------------------------------
+Screenshot: testdata/playtest/screenshots/report_comparison.png
+Widget tree: total=82 interactive=9 unlabeled=0
+Tap targets < 44dp: 9
+Layout overlaps at 1200x800: 949
+
+Module: eda
+----------------------------------------
+Screenshot: testdata/playtest/screenshots/report_eda.png
+Widget tree: total=137 interactive=21 unlabeled=0
+Tap targets < 44dp: 19
+Layout overlaps at 1200x800: 263
+
+Module: docs
+----------------------------------------
+Screenshot: testdata/playtest/screenshots/report_docs.png
+Widget tree: total=32 interactive=8 unlabeled=0
+Tap targets < 44dp: 7
+Layout overlaps at 1200x800: 65
+
+======================================
+End of report

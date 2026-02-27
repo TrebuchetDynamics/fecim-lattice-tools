@@ -552,6 +552,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	logOutput := widget.NewMultiLineEntry()
 	logOutput.Wrapping = fyne.TextWrapWord
 	logOutput.TextStyle.Monospace = true
+	sharedwidgets.SetAccessibleLabel(logOutput, "Validation log output")
 
 	addLog := func(msg string) {
 		logging.GlobalInfo("%s", msg)

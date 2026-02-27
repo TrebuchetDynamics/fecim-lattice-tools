@@ -176,6 +176,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Create tappable array canvas
 	tappableArray := NewUnifiedTappableCanvas(ca, ca.drawUnifiedArray, ca.onUnifiedCellTapped)
 	tappableArray.SetMinSize(fyne.NewSize(400, 300)) // Reduced min size - will expand
+	sharedwidgets.SetAccessibleLabel(tappableArray, "Crossbar array visualization")
 	ca.sharedArrayCanvas = tappableArray.raster
 
 	// Initialize empty WL checks array (some code may reference it)
@@ -277,6 +278,7 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 				"COMPUTE: Applies input vector across all rows for MVM.", ca.window)
 	})
 	modeInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(modeInfo, "Operation modes info")
 
 	// Set initial highlight (READ mode by default)
 	ca.modeReadBtn.Importance = widget.HighImportance
@@ -314,6 +316,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays: full column write (all WL=0V, selected BL=−V_write).", ca.window)
 	})
 	programInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(programInfo, "Program cell info")
 
 	ca.actionComputeBtn = widget.NewButton(actionLabelCompute, func() {
 		ca.onUnifiedCompute()
@@ -466,6 +469,7 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 			"Ideal: no array parasitics (fastest).\n\nTier-A: approximate IR-drop + sneak coupling.\n\nTier-B: DC nodal reference solver (highest fidelity, slower, small arrays).", ca.window)
 	})
 	couplingInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(couplingInfo, "Fidelity tier info")
 	return container.NewHBox(widget.NewLabel("Fidelity:"), selector, couplingInfo)
 }
 
@@ -504,6 +508,7 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 			"Crossbar array dimensions (rows x columns).\nLarger arrays increase compute parallelism but worsen sneak-path and IR-drop effects.", ca.window)
 	})
 	sizeInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(sizeInfo, "Array size info")
 	return container.NewHBox(widget.NewLabel("Size:"), selector, sizeInfo)
 }
 
@@ -603,6 +608,7 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 			"Ferroelectric material preset.\nDetermines coercive voltage, remnant polarization, and write voltage range.", ca.window)
 	})
 	materialInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(materialInfo, "Material info")
 	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn, materialInfo)
 }
 
@@ -620,6 +626,7 @@ func (ca *CircuitsApp) createTechnologyNodeSelector() fyne.CanvasObject {
 			"Process node updates wire resistance, selector series resistance, and leakage assumptions used by the coupled read model.", ca.window)
 	})
 	info.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(info, "Technology node info")
 
 	return container.NewHBox(widget.NewLabel("Node:"), selector, info)
 }
@@ -722,6 +729,7 @@ func (ca *CircuitsApp) createDACBitsSelector() fyne.CanvasObject {
 			"Digital-to-analog converter bit width.\nHigher resolution improves write-voltage granularity but increases area and energy.", ca.window)
 	})
 	dacInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(dacInfo, "DAC resolution info")
 	return container.NewHBox(widget.NewLabel("DAC:"), selector, dacInfo)
 }
 
@@ -760,6 +768,7 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 			"Analog-to-digital converter bit width.\nHigher resolution distinguishes more conductance levels but increases area and power.", ca.window)
 	})
 	adcInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(adcInfo, "ADC resolution info")
 	return container.NewHBox(widget.NewLabel("ADC:"), selector, adcInfo)
 }
 
@@ -1712,6 +1721,7 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 				"2T1R: Two transistors; enables bidirectional programming.", ca.window)
 	})
 	archInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(archInfo, "Crossbar architecture info")
 	return container.NewHBox(archLabel, ca.archToggle, archInfo)
 }
 
@@ -1901,11 +1911,13 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 			"Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window)
 	})
 	rangeInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(rangeInfo, "Measurable current range info")
 	lsbInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("LSB Current",
 			"LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window)
 	})
 	lsbInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(lsbInfo, "Current LSB info")
 
 	rangeRow := container.NewGridWithColumns(2,
 		container.NewHBox(widget.NewLabel("Measurable I-range:"), ca.senseRangeLabel, rangeInfo),
@@ -1959,6 +1971,7 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 			dialog.ShowInformation(title, msg, ca.window)
 		})
 		info.Importance = widget.LowImportance
+		sharedwidgets.SetAccessibleLabel(info, title+" info")
 		labelRow := container.NewHBox(widget.NewLabel(label), info)
 		row := container.NewBorder(nil, nil, labelRow, nil, input)
 		return container.NewGridWrap(fyne.NewSize(260, 36), row)

@@ -22,6 +22,7 @@ func WithInfoButton(content fyne.CanvasObject, tc TooltipContent, window fyne.Wi
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 	return container.NewBorder(nil, nil, nil, infoBtn, content)
 }
 
@@ -31,6 +32,7 @@ func WithInfoButtonLeft(content fyne.CanvasObject, tc TooltipContent, window fyn
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 	return container.NewBorder(nil, nil, infoBtn, nil, content)
 }
 
@@ -46,6 +48,7 @@ func SliderWithTooltip(labelText string, slider *widget.Slider, valueLabel *widg
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 
 	label := widget.NewLabel(labelText)
 	header := container.NewHBox(label, infoBtn)
@@ -66,6 +69,7 @@ func SelectWithTooltip(label string, options []string, onChanged func(string), t
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 
 	labelWidget := widget.NewLabel(label)
 	return container.NewBorder(nil, nil, container.NewHBox(labelWidget, infoBtn), nil, sel)
@@ -78,6 +82,7 @@ func ButtonWithTooltip(label string, onTapped func(), tc TooltipContent, window 
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 	return container.NewHBox(btn, infoBtn)
 }
 
@@ -89,6 +94,7 @@ func EntryWithTooltip(placeholder string, tc TooltipContent, window fyne.Window)
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 	return entry, container.NewBorder(nil, nil, nil, infoBtn, entry)
 }
 
@@ -99,6 +105,7 @@ func CheckWithTooltip(label string, onChanged func(bool), tc TooltipContent, win
 		ShowTooltipDialog(tc, window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, tc.Title+" info")
 	return container.NewHBox(check, infoBtn)
 }
 
@@ -210,6 +217,7 @@ func (s *SectionWithTooltip) CreateRenderer() fyne.WidgetRenderer {
 		ShowTooltipDialog(s.tc, s.window)
 	})
 	infoBtn.Importance = widget.LowImportance
+	SetAccessibleLabel(infoBtn, s.tc.Title+" info")
 
 	titleLabel := widget.NewLabelWithStyle(s.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	header := container.NewBorder(nil, nil, titleLabel, infoBtn, nil)
