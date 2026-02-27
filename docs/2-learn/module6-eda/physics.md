@@ -67,7 +67,6 @@ The same physics assumptions must be tracked consistently as we move from archit
 
 ## References
 
-- `docs/eda/README.md`
-- `docs/eda/guides/integration.md`
-- `docs/eda/guides/fecim-to-wafer.md`
-- `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`
+- `docs/2-learn/module6-eda/README.md`
+- `module6-eda/README.md`
+- `docs/4-research/validation/eda-trust-boundary.md`

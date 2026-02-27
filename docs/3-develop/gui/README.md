@@ -210,7 +210,7 @@ Defaults used across modules are defined in `config/physics.yaml` and `shared/ph
 go test ./...
 
 # 2. Update any module documentation that changed
-# Edit docs/development/GUI/GUI.moduleX.md
+# Edit docs/3-develop/gui/GUI.moduleX.md
 
 # 3. Run the module to verify visually
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools

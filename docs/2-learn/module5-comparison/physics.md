@@ -79,4 +79,4 @@ Cost_per_inference($) = Energy_kWh * $/kWh
 ## Sources
 
 - `docs/4-research/honesty-audit.md`
-- `docs/development/SCRIPT_REFERENCE.md#demo-5-comparison-module5-comparison`
+- `docs/3-develop/api-reference.md`

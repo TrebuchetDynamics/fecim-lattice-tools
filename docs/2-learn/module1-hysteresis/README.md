@@ -130,7 +130,7 @@ See [Run Modes](./run-modes.md) for complete CLI reference.
 - **Modeled:** Equations, defaults, and performance estimates are simulator models unless explicitly tied to cited measured data
 - **Aspirational:** Production-scale or silicon-parity claims are roadmap intent and must not be reported as demonstrated results
 
-See [HONESTY_AUDIT.md](../../4-research/comparison/honesty-audit.md) for complete accuracy policy.
+See [honesty-audit.md](../../4-research/honesty-audit.md) for complete accuracy policy.
 
 ---
 

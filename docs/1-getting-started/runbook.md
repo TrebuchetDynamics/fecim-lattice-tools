@@ -430,11 +430,11 @@ chmod 755 screenshots recordings output logs
 
 | Issue Type | Resource |
 |------------|----------|
-| Build errors | `docs/development/WORKFLOWS.md#troubleshooting` |
-| Physics questions | `docs/cim/HONESTY_AUDIT.md` |
-| GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
-| Testing | `docs/development/TESTING.md` |
-| General development | `docs/../CONTRIBUTING.md` |
+| Build errors | `docs/3-develop/README.md` |
+| Physics questions | `docs/4-research/honesty-audit.md` |
+| GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Testing | `docs/3-develop/testing/TESTING.md` |
+| General development | `CONTRIBUTING.md` |
 | Project rules | `CLAUDE.md` |
 
 ---

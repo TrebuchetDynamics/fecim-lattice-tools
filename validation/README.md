@@ -76,7 +76,7 @@ Key test suites:
 
 ## Related Documentation
 
-- `docs/PHYSICS_VALIDATION_REPORT.md` — Validation results summary
-- `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md` — Pass/fail criteria
-- `docs/development/TESTING.md` — Testing conventions
-- `docs/comparison/HONESTY_AUDIT.md` — Claims verification
+- `docs/4-research/validation/` — Validation results and boundary docs
+- `docs/archive/old-structure/development/PHYSICS_ACCEPTANCE_CRITERIA.md` — Pass/fail criteria (archived)
+- `docs/3-develop/testing/TESTING.md` — Testing conventions
+- `docs/4-research/honesty-audit.md` — Claims verification

@@ -1117,8 +1117,8 @@ pip install --upgrade PySpice
 ### Key Papers & Resources
 
 - **SPICE Algorithm:** L. W. Nagel, D. O. Pederson (1973) - "SPICE (Simulation Program with Integrated Circuit Emphasis)"
-- **Ferroelectric Modeling:** Preisach, Tanh, and TDGL models in `docs/hysteresis/../hysteresis/hysteresis.physics.md`
-- **CIM Circuits:** `docs/peripheral-circuits/circuits.research.md`
+- **Ferroelectric Modeling:** Preisach, Tanh, and TDGL models in `docs/2-learn/module1-hysteresis/physics.md`
+- **CIM Circuits:** `docs/4-research/internal-analysis/circuits.CIM-fundamentals.md`
 
 ### Example Repositories
 

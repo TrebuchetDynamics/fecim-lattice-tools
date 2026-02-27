@@ -398,7 +398,7 @@ Ec(T) ∝ (Tc - T)     (roughly)
 - `module1-hysteresis/pkg/ferroelectric/preisach.go` - Tanh-based Preisach
 - `module1-hysteresis/pkg/ferroelectric/preisach_advanced.go` - Mayergoyz Preisach
 - `shared/physics/preisach.go` - Stack engine
-- `shared/physics/landau_khalatnikov.go` - L-K solver
+- `shared/physics/landau.go` - L-K solver
 
 ### Materials
 - `module1-hysteresis/pkg/ferroelectric/material.go` - Material parameter sets
@@ -431,17 +431,17 @@ Ec(T) ∝ (Tc - T)     (roughly)
 ## Sources and References
 
 ### Documentation
-- [hysteresis.physics.md](../../../hysteresis/hysteresis.physics.md) - Extended physics deep-dive
+- [hysteresis-physics.md](../../4-research/internal-analysis/hysteresis-physics.md) - Extended physics deep-dive
 - [materials.md](./materials.md) - Material parameter tables
 - [ELI5](./eli5.md) - Beginner-friendly explanation
 
 ### Code
-- `docs/development/SCRIPT_REFERENCE.md` - Function lookups
+- `docs/3-develop/api-reference.md` - Function lookups
 - Test files: `module1-hysteresis/pkg/controller/*_test.go`
 
 ### Literature
 - `docs/4-research/papers/by-topic/01-ferroelectric-materials/`
-- `docs/4-research/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/` (conference material)
+- `docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/` (conference material)
 - HZO P-E loop examples: DOI citations in material definitions
 
 ---

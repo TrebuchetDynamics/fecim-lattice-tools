@@ -252,7 +252,7 @@ Planned improvements make the coupling explicitly **architecture-aware** (0T1R v
 - **half-select disturb**,
 - **IR drop**.
 
-See: `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`.
+See: `docs/4-research/internal-analysis/MODULE4-PHYSICS-IMPROVEMENTS.md`.
 
 ## Signal Chain
 
@@ -339,7 +339,7 @@ All peripheral circuits include comprehensive tests.
 
 Testing is intentionally **headless** and should remain safe to run in CI (no GUI initialization). For new work (architecture-aware coupling, fidelity tiers), prefer **table-driven** tests (`[]struct{...}` + `t.Run`) so expected behavior is explicit and reviewable.
 
-See also: `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` (Testing Strategy section).
+See also: `docs/4-research/internal-analysis/MODULE4-PHYSICS-IMPROVEMENTS.md` (Testing Strategy section).
 
 
 
@@ -368,10 +368,9 @@ Run `go test ./shared/peripherals/peripherals_test.go` to see all 10+ test cases
 
 For deeper understanding of ferroelectric physics, architecture trade-offs, and design decisions:
 
-- **[Crossbar Operations Guide](../docs/peripheral-circuits/circuits.operations.md)** — 0T1R vs 1T1R architecture details, sneak path analysis
-- **[CIM Fundamentals](../docs/peripheral-circuits/circuits.CIM-fundamentals.md)** — Core concepts of compute-in-memory
-- **[Research Papers](../docs/peripheral-circuits/circuits.research.md)** — References for physics models and circuit design
-- **[ELI5 Explanation](../docs/peripheral-circuits/circuits.ELI5.md)** — Beginner-friendly introduction to peripheral circuits
+- **[CIM Fundamentals](../docs/4-research/internal-analysis/circuits.CIM-fundamentals.md)** — Core concepts of compute-in-memory
+- **[Module 4 ELI5](../docs/2-learn/module4-circuits/eli5.md)** — Beginner-friendly introduction to peripheral circuits
+- **[Module 4 Physics](../docs/2-learn/module4-circuits/physics.md)** — Physics equations and model details
 - **[Physics Configuration](../config/physics.yaml)** — Material properties and calibration parameters used for voltage range calculation
 
 ## Development Notes
@@ -383,9 +382,13 @@ For deeper understanding of ferroelectric physics, architecture trade-offs, and 
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
 - Test before committing: `go test ./...`
 
+### Note on 5-Bit Default
+
+Literature (including Lu 2021, Zidan 2018) finds 4-bit DAC/ADC optimal for analog CIM at current device variability levels; 5-bit is the current GUI default but is not claimed as hardware-validated. See `docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md` for context.
+
 ### Design Decisions
 
-1. **5-Bit DAC/ADC**: Minimal resolution for 30-level FeCIM (uses 30 of 32 codes)
+1. **5-Bit DAC/ADC (default)**: Selected for 30-level FeCIM demo (uses 30 of 32 codes); 4-bit is literature-optimal for current device variability
 2. **Dickson Charge Pump**: Simple, efficient topology suitable for CMOS integration
 3. **10 kΩ TIA Gain**: Balances speed (100 MHz) and noise (1 pA/√Hz)
 4. **Material/Geometry-Derived Ranges**: Voltage limits calculated from Ec and film thickness (via shared/physics.CellGeometry), not hardcoded
@@ -418,6 +421,6 @@ Part of fecim-lattice-tools. See repository LICENSE for details.
 
 ## Questions?
 
-- Check `docs/development/GUI/FYNE_NOTES.md` for Fyne-specific issues
-- See `docs/development/SCRIPT_REFERENCE.md` for function lookups
-- Review `docs/comparison/HONESTY_AUDIT.md` for physics verification
+- Check `docs/3-develop/gui/FYNE_NOTES.md` for Fyne-specific issues
+- See `docs/3-develop/api-reference.md` for function lookups
+- Review `docs/4-research/honesty-audit.md` for physics verification

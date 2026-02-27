@@ -341,6 +341,120 @@ type WriteVerifyStats struct {
 | `GetOvershootRate() float64` | Get overshoot rate |
 | `GetSummary() string` | Get human-readable summary |
 
+### World-Class Characterization APIs
+
+These APIs implement standard ferroelectric characterization techniques. All are in `shared/physics/worldclass_*.go`.
+
+#### PUND Measurement (`worldclass_pund.go`)
+
+Separates switching charge from non-switching (linear) charge using the P/U/N/D pulse sequence.
+
+```go
+type PUNDResult struct {
+    QP_C                float64 // Program pulse charge (C)
+    QU_C                float64 // Up baseline pulse charge (C)
+    QN_C                float64 // Negative pulse charge (C)
+    QD_C                float64 // Down baseline pulse charge (C)
+    SwitchingPositive_C float64 // QP - QU (ferroelectric contribution)
+    SwitchingNegative_C float64 // QN - QD
+}
+
+func AnalyzePUND(programP, upU, negativeN, downD []PulseSample) (PUNDResult, error)
+func IntegrateCurrent(samples []PulseSample) (float64, error)
+```
+
+#### Retention Model (`worldclass_retention.go`)
+
+Power-law and exponential retention decay models.
+
+```go
+type RetentionPoint struct {
+    TimeS           float64 // Hold time (s)
+    Polarization_Cm float64 // P at hold time (C/m²)
+}
+
+// P(t) = P0 * (t/t0)^(-beta).  beta ≈ 0.01-0.05 for HZO.
+func SimulateRetentionPowerLaw(P0_Cm, t0S, beta float64, timesS []float64) ([]RetentionPoint, error)
+
+// P(t) = Pinf + (P0-Pinf)*exp(-t/tau)
+func SimulateRetentionExponential(initialP_Cm, asymptoticP_Cm, tauS float64, timesS []float64) ([]RetentionPoint, error)
+
+func GenerateLogTimeSweep(tMinS, tMaxS float64, points int) ([]float64, error)
+```
+
+#### Wake-Up and Fatigue (`worldclass_wakeup.go`)
+
+Two-phase Pr(N) model: initial wake-up then slow fatigue.
+
+```go
+type WakeUpModelConfig struct {
+    PrInitial_Cm2      float64 // Pr before any cycling
+    WakeUpGainFraction float64 // Fractional Pr gain at full wake-up
+    WakeUpTauCycles    float64 // Wake-up characteristic cycle count
+    FatigueOnsetCycles float64 // Fatigue starts after this cycle count
+    FatigueTauCycles   float64 // Fatigue characteristic decay
+}
+
+func WakeUpPolarization(cycles float64, cfg WakeUpModelConfig) (float64, error)
+```
+
+#### FORC Analysis (`worldclass_forc.go`)
+
+First-order reversal curve (FORC) measurement and Preisach density extraction.
+
+```go
+type FORCResult struct {
+    Emax_Vm           float64
+    ReversalFields_Vm []float64
+    Curves            []FORCCurve
+    PreisachDensity   [][]float64  // rho(Ea,Eb) grid
+    ReversalPairs     [][2]float64
+}
+
+// Run FORC sweep on a PreisachStack model.
+func RunFORCSweep(model *PreisachStack, Emax float64, numReversals int) (FORCResult, error)
+
+// Extract Preisach density via -0.5 * d²P/(dEa dEb).
+func ComputeFORCDensity(results FORCResult) ([][]float64, [][2]float64)
+```
+
+#### Cycle-to-Cycle Variation (`worldclass_c2c.go`)
+
+State-dependent C2C conductance noise (higher noise at lower G).
+
+```go
+type StateDepC2CConfig struct {
+    AbsoluteNoiseSigma float64 // σ at G = G_ref
+    G_ref              float64 // Reference conductance (G_max)
+}
+
+// σ(G) = AbsoluteNoiseSigma * G_ref / G  (clamped to 0.5*G)
+func (c StateDepC2CConfig) C2CSigma(G float64) (float64, error)
+
+// Draw noisy sample for nominal conductance G.
+func ApplyStateDepC2C(G float64, cfg StateDepC2CConfig, rng *rand.Rand) (float64, error)
+
+// DefaultStateDepC2CConfig returns 5% noise at G_max, calibrated for HZO FeFET.
+func DefaultStateDepC2CConfig(G_max float64) StateDepC2CConfig
+```
+
+#### DCC Write (`dcc_write.go`)
+
+Direct Cell Control: single-pulse write without ISPP feedback loop.
+
+```go
+type DCCResult struct {
+    TargetPolarization_Cm float64
+    ActualPolarization_Cm float64
+    PulseAmplitude_Vm     float64
+    PulseWidth_s          float64
+    Success               bool
+}
+
+func NewDCCWriter(solver *LKSolver, mat *HZOMaterial) *DCCWriter
+func (w *DCCWriter) Write(targetLevel int) (DCCResult, error)
+```
+
 ### Usage Examples
 
 #### Example 1: Material + LK solver + write control
@@ -1955,5 +2069,5 @@ func main() {
 
 - [README.md](../../README.md) - Project overview
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
-- [docs/project/STATUS.md](../project/STATUS.md) - Project status
-- [docs/development/SCRIPT_REFERENCE.md](../development/SCRIPT_REFERENCE.md) - Function lookups and error resolution
+- [status.md](../../status.md) - Project status
+- [docs/4-research/honesty-audit.md](../4-research/honesty-audit.md) - Accuracy and honesty audit

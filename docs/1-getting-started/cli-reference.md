@@ -110,7 +110,7 @@ fecim-lattice-tools hysteresis [options]
 Mode precedence (if flags are combined): `--headless` → `--tui` → `--vulkan` → GUI default.
 
 For authoritative run-mode and Preisach/L-K default behavior, see:
-`docs/documentation/module1-hysteresis/RUN_MODES.md`.
+`docs/2-learn/module1-hysteresis/run-modes.md`.
 
 ### Examples
 
@@ -512,6 +512,6 @@ fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output | \
 
 ## See Also
 
-- [OpenLane CLI Reference](eda/references/cli-reference.md) - External EDA tools
+- [EDA Tools Guide](../2-learn/module6-eda/tools.md) - OpenLane integration
 - [API Documentation](../3-develop/api-reference.md) - Programmatic access
-- [Examples](../examples/) - Sample code and configs
+- [Module 6 EDA README](../2-learn/module6-eda/README.md) - EDA module overview

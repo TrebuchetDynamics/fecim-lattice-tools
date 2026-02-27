@@ -33,7 +33,7 @@ It provides:
 ### Physics Engines
 - `module1-hysteresis/pkg/ferroelectric/preisach.go` - Tanh-based Preisach
 - `module1-hysteresis/pkg/ferroelectric/preisach_advanced.go` - Mayergoyz Preisach
-- `shared/physics/landau_khalatnikov.go` - L-K solver
+- `shared/physics/landau.go` - L-K solver
 - `shared/physics/preisach.go` - Stack engine for turning points
 
 ### GUI/Visualization
@@ -179,6 +179,28 @@ See [materials.md](./materials.md) for complete parameter tables.
 | ACCEPT ±1 logic | ✅ | After 8+ overshoots (physics-limited) |
 | Reset shortcut | ✅ | Fast path when overshoot detected |
 | Verification logging | ✅ | Per-target metrics in UI |
+| DCC (Direct Cell Control) | ✅ | Single-pulse write, `shared/physics/dcc_write.go` |
+
+### World-Class Physics Features
+
+These features are implemented in `shared/physics/worldclass_*.go` and provide research-grade characterization:
+
+| Feature | Package | Description |
+|---------|---------|-------------|
+| **PUND measurement** | `worldclass_pund.go` | Separate switching from non-switching charge via P/U/N/D pulse sequence; uses trapezoidal current integration |
+| **Retention model** | `worldclass_retention.go` | Power-law decay P(t) = P₀(t/t₀)^(-β); β ≈ 0.01–0.05 for HZO; also exponential model for comparison |
+| **Wake-up + Fatigue** | `worldclass_wakeup.go` | Two-phase Pr(N) model: wake-up (exponential rise) then fatigue (exponential decay after onset threshold) |
+| **FORC density** | `worldclass_forc.go` | First-order reversal curve sweeps with Preisach density extraction via -½ d²P/(dEa dEb) |
+| **FORC raster GUI** | `module1-hysteresis/pkg/gui/forc_panel.go` | Interactive hot-colormap canvas.Raster visualization |
+| **C2C variation** | `worldclass_c2c.go` | State-dependent cycle-to-cycle noise: σ_G = k_abs × G_ref/G (higher noise at low G); calibrated for HZO FeFET |
+| **CV characterization** | `worldclass_cv.go` | Capacitance-voltage sweep simulation |
+| **Frequency dispersion** | `worldclass_frequency_dispersion.go` | Pr and Ec vs measurement frequency |
+
+**Key literature basis for world-class features:**
+- PUND: Standard characterization protocol (Merz 1954, Scott 2000)
+- Wake-up/Fatigue: Park et al., APL 2013; Yurchuk et al., IEEE TED 2014
+- C2C scaling: IEEE EDL 2023 (state-dependent 1/G scaling)
+- FORC density: Mayergoyz (1986), Roberts et al., J Appl. Phys. 2000
 
 ---
 
@@ -410,12 +432,15 @@ fecim-lattice-tools hysteresis --headless
 
 ## Future Enhancements (Roadmap)
 
-- [ ] FORC measurement import for calibrated Preisach distribution
+- [x] FORC measurement import for calibrated Preisach distribution — implemented in `worldclass_forc.go`
+- [x] Wake-up physics model — implemented in `worldclass_wakeup.go`
+- [x] C2C state-dependent variation — implemented in `worldclass_c2c.go`
+- [x] PUND characterization — implemented in `worldclass_pund.go`
+- [x] Retention power-law model — implemented in `worldclass_retention.go`
 - [ ] Domain wall dynamics visualization
 - [ ] Substrate strain effects
 - [ ] Multi-domain microstructure simulation
-- [ ] Wake-up physics model (not just UI placeholder)
-- [ ] Fatigue mechanism (oxygen vacancy migration)
+- [ ] Fatigue mechanism (oxygen vacancy migration) — placeholder only; no physics model yet
 - [ ] Piezoelectric coupling
 - [ ] Real-time switching dynamics (KAI model in viz loop)
 

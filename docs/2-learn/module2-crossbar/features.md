@@ -184,6 +184,25 @@ Accuracy evaluation:
 | **0T1R** (Passive) | None | Simple | Research, small arrays |
 | **1T1R** (1 Transistor) | 1000× | Moderate | Production systems |
 | **2T1R** (2 Transistors) | Complete | Complex | Premium applications |
+| **FeCAP** (Capacitive) | N/A | Medium | Charge-domain sensing, no sneak paths |
+
+### FeCAP Architecture (Capacitive Crossbar)
+
+FeCAP crossbars eliminate sneak paths and IR drop by operating entirely in the charge domain:
+
+- Charge sensing: `Q[col] = ΣC[row][col] × V[row]` (capacitive summation)
+- Displacement current: `I_disp = ΔQ/Δt` (no DC leakage path)
+- Implemented in `module2-crossbar/pkg/gui/tabs/fecap_tab.go`
+- GUI: Bar chart shows Q[col] per column; I_disp derived from ΔQ/Δt
+- See: `docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md` for literature context
+
+### Multi-Hop Sneak Path Analysis
+
+Beyond nearest-neighbor sneak paths, multi-hop sneak current flows through two or more intermediate cells:
+
+- Implemented in `shared/crossbar/sneak_multihop.go`
+- Severity increases with array size (scales roughly as N²)
+- Only relevant for passive (0T1R) arrays; 1T1R transistors eliminate all sneak paths
 
 ### Export Formats
 

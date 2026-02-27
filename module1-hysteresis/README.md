@@ -93,6 +93,6 @@ Key test suites:
 
 ## Related Documentation
 
-- `docs/documentation/module1-hysteresis/` — ELI5, features, physics, open-source tools
-- `docs/hysteresis/` — Preisach theory, L-K derivations, materials reference
-- `docs/CLI.md` — Command-line interface reference
+- `docs/2-learn/module1-hysteresis/` — ELI5, features, physics, open-source tools
+- `docs/2-learn/module1-hysteresis/physics.md` — Preisach theory, L-K derivations, materials reference
+- `docs/1-getting-started/cli-reference.md` — Command-line interface reference

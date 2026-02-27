@@ -2,7 +2,7 @@
 
 > **Note:** This file was previously located at `docs/comparison/HONESTY_AUDIT.md`. It has moved to `docs/4-research/honesty-audit.md`.
 
-**Version:** 4.0 | **Date:** 2026-02-03 | **Status:** Active (verified + unverified tagged)
+**Version:** 4.1 | **Date:** 2026-02-26 | **Status:** Active (verified + unverified tagged)
 
 ---
 
@@ -49,13 +49,15 @@ The following appear in historical docs, research notes, or prior drafts. They a
 Documents reviewed or historically containing claims:
 - `docs/README.md`
 - `README.md`
-- `docs/ELI5.md`
-- `docs/comparison/*`
-- `docs/crossbar/*`
-- `docs/hysteresis/*`
-- `docs/eda/*`
-- `docs/research-papers/*`
-- `docs/video-transcripts/*`
+- `docs/2-learn/` (module ELI5, features, physics guides)
+- `docs/4-research/` (literature reviews, internal analyses)
+- `docs/4-research/transcripts/` (conference transcripts)
+- `module*/README.md` (module-level documentation)
+- `docs/3-develop/api-reference.md` (API documentation)
+
+Legacy paths (archived, do not use):
+- `docs/comparison/`, `docs/crossbar/`, `docs/hysteresis/`, `docs/eda/`
+- `docs/research-papers/`, `docs/video-transcripts/`, `docs/ELI5.md`
 
 ---
 

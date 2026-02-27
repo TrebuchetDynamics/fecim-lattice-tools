@@ -599,9 +599,9 @@ SPICE (circuit verification)
 ## Documentation References
 
 ### Internal
-- `docs/development/SCRIPT_REFERENCE.md#demo-2-crossbar`
-- `docs/crossbar/reference/ARCHITECTURE.md`
-- `docs/crossbar/reference/API.md`
+- `docs/3-develop/api-reference.md#module-2-crossbar`
+- `docs/2-learn/module2-crossbar/architecture.md`
+- `docs/3-develop/api-reference.md`
 
 ### External
 - CrossSim documentation: https://cross-sim.sandia.gov/

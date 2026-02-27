@@ -103,6 +103,6 @@ Key test suites:
 
 ## Related Documentation
 
-- `docs/documentation/module3-mnist/` — ELI5, features, physics, open-source tools
-- `docs/neural-network/` — Architecture, API reference, development notes
-- `docs/CLI.md` — Command-line interface reference
+- `docs/2-learn/module3-mnist/` — ELI5, features, physics, open-source tools
+- `docs/3-develop/api-reference.md` — API reference and development notes
+- `docs/1-getting-started/cli-reference.md` — Command-line interface reference

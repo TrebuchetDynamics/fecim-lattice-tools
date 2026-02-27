@@ -42,7 +42,7 @@ Key test suite:
 
 ## Related Documentation
 
-- `docs/documentation/` — Module index and curriculum structure
-- `docs/documentation/module7-docs/` — ELI5, features
+- `docs/2-learn/` — Module index and curriculum structure
+- `docs/2-learn/module7-docs/` — ELI5, features
 - `docs/GLOSSARY.md` — Master glossary used by the integration layer
 - Repository root `README.md`

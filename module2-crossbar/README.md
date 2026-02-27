@@ -207,8 +207,8 @@ go test ./module2-crossbar/...
 
 ## Related Documentation
 
-- `docs/crossbar/` for educational notes
-- `docs/development/TESTING.md` for test conventions
+- `docs/2-learn/module2-crossbar/` for educational notes
+- `docs/3-develop/testing/TESTING.md` for test conventions
 - `CLAUDE.md` for project-wide guidance
 
-Note: Some research notes under `docs/` include external claims and literature summaries. Treat them as references only; verified claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.
+Note: Some research notes under `docs/` include external claims and literature summaries. Treat them as references only; verified claims are tracked in `docs/4-research/honesty-audit.md`.

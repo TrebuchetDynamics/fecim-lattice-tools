@@ -13,6 +13,6 @@
 
 ## Integration Notes
 
-- Viewer behavior is documented in `docs/development/GUI/GUI.module7.md`.
+- Viewer behavior is documented in `docs/3-develop/gui/GUI.module7.md`.
 - Search category rules live in `module7-docs/pkg/gui/search.go`.
-- Curriculum structure is defined in `docs/documentation/`.
+- Curriculum structure is defined in `docs/2-learn/`.

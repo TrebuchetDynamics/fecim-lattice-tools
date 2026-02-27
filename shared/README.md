@@ -149,6 +149,6 @@ go test -race ./shared/...
 
 ## Related Documentation
 
-- `docs/development/ARCHITECTURE.md` — Overall project architecture
-- `docs/development/TESTING.md` — Testing conventions
-- `docs/peripheral-circuits/` — Peripheral circuit design docs
+- `docs/3-develop/architecture/ARCHITECTURE.md` — Overall project architecture
+- `docs/3-develop/testing/TESTING.md` — Testing conventions
+- `docs/4-research/internal-analysis/circuits.CIM-fundamentals.md` — Peripheral circuit design docs

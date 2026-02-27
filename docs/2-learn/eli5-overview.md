@@ -304,7 +304,7 @@ See `docs/4-research/honesty-audit.md` for detailed audit of claims.
 
 ### Want to Contribute?
 
-Check `CONTRIBUTING.md` and `docs/development/SCRIPT_REFERENCE.md` for:
+Check `CONTRIBUTING.md` and `docs/3-develop/api-reference.md` for:
 - Code contribution guidelines
 - Module improvement ideas
 - Demo enhancement opportunities
@@ -365,10 +365,9 @@ This simulator helps imagine the destination and plan the journey!
 
 ### In This Repository
 
-- **Full Technical Guide:** [docs/ELI5.md](../../ELI5.md) (2100+ lines)
-- **Project Status:** [docs/project/STATUS.md](../../project/STATUS.md)
+- **Project Status:** [status.md](../../status.md)
 - **Accuracy Audit:** [docs/4-research/honesty-audit.md](../../4-research/honesty-audit.md)
-- **Development Guide:** [docs/development/SCRIPT_REFERENCE.md](../../development/SCRIPT_REFERENCE.md)
+- **Development Guide:** [docs/3-develop/api-reference.md](../../3-develop/api-reference.md)
 
 ### External Resources
 

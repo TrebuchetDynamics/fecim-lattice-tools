@@ -34,10 +34,29 @@
 - Adjust levels and noise from the UI (noise slider: `0.00-0.20`, clamped in core to match UI/docs).
 - Use drawing canvas for live digit input.
 
+## Accuracy Sweep Analysis (Analysis Tab)
+
+The "Analysis" tab provides three parameter sweeps for hardware-aware accuracy degradation studies:
+
+| Sweep | API | Description |
+|-------|-----|-------------|
+| Quantization levels | `SweepQuantizationLevels()` | Accuracy vs. number of conductance levels (2–30) |
+| ADC bits | `SweepADCBits()` | Accuracy vs. ADC resolution (1–8 bits) |
+| Noise level | `SweepNoiseLevel()` | Accuracy vs. relative noise (0–20%) |
+
+Located in `shared/neural/accuracy_sweep.go`. GUI in `module3-mnist/pkg/gui/accuracy_sweep_panel.go`.
+
+Results displayed as an ASCII bar chart in the GUI (no external dependencies required). Each sweep runs the inference engine with the parameter varied while holding other non-idealities at defaults.
+
+**Interpretation notes:**
+- Accuracy degradation is model-based and depends on network weights; not a silicon measurement.
+- The 30-level baseline is the simulator default, not a validated hardware claim.
+
 ## Extension Points
 
 - Add new weight files (QAT levels) and quantization schemes.
 - Extend visualization for more layers or metrics.
+- Add new sweep types to `accuracy_sweep.go` following the existing `SweepResult` pattern.
 - Integrate other datasets for comparison.
 
 ## Known Limitations
@@ -45,3 +64,4 @@
 - Training is offline; GUI focuses on inference.
 - Small network is chosen for interactivity, not SOTA accuracy.
 - Hardware non-idealities are simplified and modeled.
+- Accuracy sweep results are for the bundled pre-trained weights and may differ with retrained networks.

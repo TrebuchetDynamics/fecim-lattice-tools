@@ -57,5 +57,5 @@ NoisyValue = v + N(0,1) * |v| * sigma_over_mu
 
 ## Sources
 
-- `docs/development/SCRIPT_REFERENCE.md#demo-3-mnist-module3-mnist`
+- `docs/3-develop/api-reference.md`
 - `module3-mnist/pkg/core/network_inference.go`

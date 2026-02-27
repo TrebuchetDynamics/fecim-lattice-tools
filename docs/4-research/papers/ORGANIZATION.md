@@ -367,7 +367,7 @@ find downloaded -name "*.pdf" -exec mv {} ../by-topic/01-ferroelectric-materials
 - **`TOPIC_SUMMARIES.md`** - One-page topic overviews
 - **`RESEARCH_GAP_ANALYSIS.md`** - Coverage assessment and gaps
 - **Module READMEs** - How each module uses papers
-- **docs/development/SCRIPT_REFERENCE.md** - Code-to-paper connections
+- **docs/3-develop/api-reference.md** - Code-to-paper connections
 
 ---
 

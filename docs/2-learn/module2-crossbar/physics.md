@@ -391,9 +391,9 @@ Reference calculations verified against:
 - Cryogenic operation: Advanced Electronics Materials 2024
 
 ### Code References
-- `docs/development/SCRIPT_REFERENCE.md#demo-2-crossbar-module2-crossbar`
-- `docs/crossbar/reference/ARCHITECTURE.md` (comprehensive architecture doc)
-- `docs/crossbar/reference/PHYSICS.md` (detailed physics audit)
+- `docs/3-develop/api-reference.md` (API reference)
+- `docs/2-learn/module2-crossbar/architecture.md` (architecture overview)
+- `docs/4-research/internal-analysis/hysteresis-physics.md` (physics audit)
 
 ---
 

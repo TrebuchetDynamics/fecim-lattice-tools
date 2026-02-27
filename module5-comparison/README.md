@@ -70,5 +70,5 @@ Key test suites:
 
 ## Related Documentation
 
-- `docs/documentation/module5-comparison/` — ELI5, features, physics, open-source tools
-- `docs/comparison/` — Detailed physics/math comparisons, honesty audit
+- `docs/2-learn/module5-comparison/` — ELI5, features, physics, open-source tools
+- `docs/4-research/honesty-audit.md` — Accuracy policy and verified/unverified claims

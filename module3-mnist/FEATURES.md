@@ -53,4 +53,4 @@ Defaults are simulation inputs, not measured hardware values.
 ## Accuracy Notes
 
 - Reported accuracy is computed from the current weights and settings.
-- External benchmarks are treated as literature notes and are **not** simulator claims. See `docs/comparison/HONESTY_AUDIT.md`.
+- External benchmarks are treated as literature notes and are **not** simulator claims. See `docs/4-research/honesty-audit.md`.

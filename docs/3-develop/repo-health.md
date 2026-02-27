@@ -47,7 +47,7 @@
 
 ### Known skips / conditional test limitations
 
-From `docs/development/TESTING.md` and project TODO tracking:
+From `docs/3-develop/testing/TESTING.md` and project TODO tracking:
 
 - Display-dependent GUI checks are conditionally skipped or require Xvfb/display server.
 - Archived demo code under historical paths is intentionally excluded from active testing.

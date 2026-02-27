@@ -150,6 +150,7 @@ Markdown template:
 ### 1) Preisach Ferroelectric Model
 - Represents ferroelectric polarization as an ensemble of switching units (hysterons).
 - Captures hysteresis memory and minor-loop behavior.
+- Uses product-form Everett function for correct sub-coercive minor loops.
 - Used for P-E loop dynamics and state trajectory exploration.
 
 ### 2) Landau–Khalatnikov (LK) Dynamics
@@ -161,6 +162,14 @@ Markdown template:
 - Simulates finite wire resistance and voltage drops across rows/columns.
 - Quantifies effective cell bias distortion and MVM accuracy degradation.
 - Supports study of array scaling limits and compensation strategies.
+
+### 4) World-Class Characterization Physics
+- **PUND**: Separate switching from linear charge via P/U/N/D pulse sequence
+- **FORC**: First-order reversal curves + Preisach density extraction
+- **Retention**: Power-law P(t) decay model (β ≈ 0.01–0.05 for HZO)
+- **Wake-up/Fatigue**: Two-phase Pr(N) model over endurance cycling
+- **C2C variation**: State-dependent noise (σ ∝ 1/G) for passive arrays
+- All in `shared/physics/worldclass_*.go`
 
 ---
 

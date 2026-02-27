@@ -100,8 +100,7 @@ Minimum checks:
 
 ## References
 
-- `docs/eda/guides/integration.md`
-- `docs/eda/guides/fecim-to-wafer.md`
-- `docs/eda/README.md`
+- `docs/2-learn/module6-eda/README.md`
+- `docs/4-research/validation/eda-trust-boundary.md`
 - `module6-eda/pkg/export/`
 - `module6-eda/pkg/compiler/`

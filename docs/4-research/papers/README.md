@@ -179,16 +179,16 @@ Start with **[TOPIC_SUMMARIES.md](./TOPIC_SUMMARIES.md)** to understand what eac
 
 ### Creating an Index Link
 
-To link papers in `docs/documentation/` without duplicating files:
+To link papers in `docs/2-learn/` without duplicating files:
 
 ```markdown
 ## Ferroelectric Materials
 
-See papers in [research-papers/01-ferroelectric-materials/](../research-papers/by-topic/01-ferroelectric-materials/)
+See papers in [papers/by-topic/01-ferroelectric-materials/](../papers/by-topic/01-ferroelectric-materials/)
 
 Key papers:
-- [HZO Superlattice First-Principles](../research-papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
-- [Preisach Modeling](../research-papers/by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
+- [HZO Superlattice First-Principles](../papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
+- [Preisach Modeling](../papers/by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
 ```
 
 ### Organizing Downloaded Papers
@@ -343,11 +343,11 @@ Machine-readable `paper_metadata.json` includes:
 
 ## Related Resources
 
-- **Module documentation** — `docs/development/`
-- **Physics reference** — `docs/development/SCRIPT_REFERENCE.md`
-- **GUI analysis** — `docs/development/HYPER_ANALYSIS_REPORT.md`
-- **EDA guides** — `docs/eda/`
-- **Testing guide** — `docs/development/TESTING.md`
+- **Module documentation** — `docs/2-learn/` (per-module guides)
+- **Physics reference** — `docs/3-develop/api-reference.md`
+- **EDA guides** — `docs/2-learn/module6-eda/`
+- **Testing guide** — `docs/3-develop/testing/TESTING.md`
+- **Honesty audit** — `docs/4-research/honesty-audit.md`
 
 ---
 
