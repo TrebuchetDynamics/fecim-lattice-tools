@@ -307,6 +307,8 @@ type CircuitsApp struct {
 	senseSaturationLabel *widget.Label
 	senseRangeLabel      *widget.Label
 	senseLSBLabel        *widget.Label
+	senseENOBLabel       *widget.Label
+	senseEffSNRLabel     *widget.Label
 	senseRfEntry         *widget.Entry
 	senseAdcVminEntry    *widget.Entry
 	senseAdcVmaxEntry    *widget.Entry

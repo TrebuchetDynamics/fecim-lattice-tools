@@ -783,6 +783,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create level indicator (wider for better labels, clickable in Manual mode)
 	a.levelIndicator = widgets.NewLevelIndicator()
 	a.levelIndicator.SetMinSize(fyne.NewSize(70, 300))
+	sharedwidgets.SetAccessibleLabel(a.levelIndicator, "Polarization level indicator")
 	// Wire up click callback for Manual mode
 	a.levelIndicator.OnLevelClicked = func(targetLevel int) {
 		a.mu.Lock()

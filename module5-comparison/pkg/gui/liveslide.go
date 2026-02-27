@@ -283,8 +283,8 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 		title = "Real Impact"
 		content = "DATA CENTER SAVINGS\n\n" +
 			"At 10,000 inferences/sec:\n\n" +
-			"GPU: $X,XXX/month\n" +
-			"FeCIM: $XXX/month\n\n" +
+			"GPU: N/A (workload-dependent)\n" +
+			"FeCIM: N/A (workload-dependent)\n\n" +
 			"Try the calculator\n" +
 			"with your workload!"
 	}

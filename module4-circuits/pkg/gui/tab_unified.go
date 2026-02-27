@@ -1542,6 +1542,8 @@ func (ca *CircuitsApp) updateSensePanel() {
 	rangeText := "n/a"
 	lsbText := "n/a"
 	snrText := "n/a"
+	enobText := "n/a"
+	effSNRText := "n/a"
 	if sense, ok := ca.senseChainConfig(); ok {
 		imin, imax := sense.CurrentRange()
 		lsb := sense.CurrentLSB()
@@ -1556,6 +1558,12 @@ func (ca *CircuitsApp) updateSensePanel() {
 			snrText = "n/a"
 		} else {
 			snrText = fmt.Sprintf("%.1f dB", snrDB)
+		}
+		if ca.adc != nil {
+			enob := ca.adc.ENOB()
+			enobText = fmt.Sprintf("%.2f bits", enob)
+			effSNR := ca.adc.EffectiveSNR()
+			effSNRText = fmt.Sprintf("%.1f dB", effSNR)
 		}
 	}
 
@@ -1605,6 +1613,12 @@ func (ca *CircuitsApp) updateSensePanel() {
 		}
 		if ca.senseLSBLabel != nil {
 			ca.senseLSBLabel.SetText(lsbText)
+		}
+		if ca.senseENOBLabel != nil {
+			ca.senseENOBLabel.SetText(enobText)
+		}
+		if ca.senseEffSNRLabel != nil {
+			ca.senseEffSNRLabel.SetText(effSNRText)
 		}
 	})
 }
@@ -1924,6 +1938,21 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 		container.NewHBox(widget.NewLabel("Current LSB:"), ca.senseLSBLabel, lsbInfo),
 	)
 
+	ca.senseENOBLabel = widget.NewLabel("n/a")
+	ca.senseEffSNRLabel = widget.NewLabel("n/a")
+
+	enobInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("ENOB",
+			"Effective Number of Bits accounts for INL/DNL non-idealities.\nENOB = Bits - log\u2082(\u221a(1 + INL\u00b2 + DNL\u00b2)).\nIdeal ENOB equals ADC bits.", ca.window)
+	})
+	enobInfo.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(enobInfo, "ENOB info")
+
+	fidelityRow := container.NewGridWithColumns(2,
+		container.NewHBox(widget.NewLabel("ENOB:"), ca.senseENOBLabel, enobInfo),
+		container.NewHBox(widget.NewLabel("Effective SNR:"), ca.senseEffSNRLabel),
+	)
+
 	ca.senseRfEntry = widget.NewEntry()
 	ca.senseRfEntry.SetPlaceHolder("10.0")
 	if ca.tia != nil {
@@ -1994,6 +2023,7 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 		headerRow,
 		metricsRow,
 		rangeRow,
+		fidelityRow,
 		controlsScroll,
 	)
 }

@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,12 +29,15 @@ type GoldenLoopData struct {
 }
 
 func main() {
+	defaultOut := filepath.Join("module1-hysteresis", "pkg", "ferroelectric", "testdata")
+	outDir := flag.String("output", defaultOut, "output directory for golden loop JSON files")
+	flag.Parse()
+
 	materials := physics.AllMaterials()
 
 	fmt.Printf("Found %d materials\n", len(materials))
 
-	outDir := "<local-path>"
-	os.MkdirAll(outDir, 0755)
+	os.MkdirAll(*outDir, 0755)
 
 	for _, mat := range materials {
 		fmt.Printf("Processing: %s\n", mat.Name)
@@ -70,7 +74,7 @@ func main() {
 		goldenP.Data.E = E_p
 		goldenP.Data.P = P_p
 
-		pFile := filepath.Join(outDir, fmt.Sprintf("golden_loop_%s_preisach.json", safeName))
+		pFile := filepath.Join(*outDir, fmt.Sprintf("golden_loop_%s_preisach.json", safeName))
 		writeJSON(pFile, goldenP)
 		fmt.Printf("  ✓ Preisach: %s\n", filepath.Base(pFile))
 

@@ -122,6 +122,18 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 
 		time.AfterFunc(settle, func() {
 			fmt.Printf("[screenshotter] capturing now %s\n", fileBase)
+			if !waitForCanvasSize(w, size.Width, size.Height, 3*time.Second) {
+				err := fmt.Errorf("canvas size not ready for capture")
+				fyne.DoAndWait(func() {
+					module.Stop()
+					w.Close()
+				})
+				captured <- err
+				fyne.DoAndWait(func() {
+					a.Quit()
+				})
+				return
+			}
 			fyne.DoAndWait(func() {
 				filename := filepath.Join(outDir, fileBase+".png")
 				// Some widgets paint one frame late under headless/software rendering.
@@ -153,6 +165,22 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 	case <-time.After(settle + 10*time.Second):
 		return fmt.Errorf("timed out waiting for capture")
 	}
+}
+
+func waitForCanvasSize(w fyne.Window, wantW, wantH float32, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		var got fyne.Size
+		fyne.DoAndWait(func() {
+			got = w.Canvas().Size()
+		})
+		fmt.Printf("[screenshotter] canvas size %0.1fx%0.1f (want %0.1fx%0.1f)\n", got.Width, got.Height, wantW, wantH)
+		if got.Width >= wantW-2 && got.Height >= wantH-2 {
+			return true
+		}
+		time.Sleep(150 * time.Millisecond)
+	}
+	return false
 }
 
 func savePNG(filename string, img image.Image) error {

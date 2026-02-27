@@ -64,6 +64,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		d.Show()
 	})
 	matInfoBtn.Importance = widget.LowImportance
+	sharedwidgets.SetAccessibleLabel(matInfoBtn, "Show material properties")
 
 	// "MATERIAL" label left, info button right
 	materialHeader := container.NewBorder(
