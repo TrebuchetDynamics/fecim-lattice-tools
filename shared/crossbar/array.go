@@ -527,24 +527,30 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 
 // mvmCPU performs MVM using CPU implementation (original algorithm).
 func (a *Array) mvmCPU(input []float64) ([]float64, error) {
-	output := make([]float64, a.config.Rows)
+	cols := len(input)
+	rows := a.config.Rows
+	output := make([]float64, rows)
+
+	// Pre-quantize all DAC inputs once (avoids repeated quantization inside
+	// the inner loop which runs rows×cols times vs. cols times).
+	dacIn := make([]float64, cols)
+	for j := 0; j < cols; j++ {
+		dacIn[j] = a.quantizeDAC(input[j])
+	}
 
 	// Find max possible current for normalization
 	// This occurs when all weights = 1.0 and all inputs = 1.0
-	maxCurrent := float64(len(input)) // Theoretical maximum
+	maxCurrent := float64(cols) // Theoretical maximum
 
-	for i := 0; i < a.config.Rows; i++ {
+	for i := 0; i < rows; i++ {
 		var sum float64
-		for j := 0; j < len(input); j++ {
-			// Quantize input through DAC
-			vIn := a.quantizeDAC(input[j])
-
+		for j := 0; j < cols; j++ {
 			// Read conductance with device variation noise
 			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 
 			// Ohm's Law: I = G × V
 			// Accumulate current (physical summation via Kirchhoff's current law)
-			sum += g * vIn
+			sum += g * dacIn[j]
 		}
 
 		// Normalize by max possible current to keep in [0,1] range
@@ -553,8 +559,11 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 
 		// Quantize output through ADC
 		output[i] = a.quantizeADC(normalizedSum)
-		atomic.AddInt64(&a.totalReads, 1)
 	}
+
+	// Batch the read counter update — one atomic op per MVM call instead of
+	// one per row, which reduces contention on the cache line for the counter.
+	atomic.AddInt64(&a.totalReads, int64(rows))
 
 	return output, nil
 }
@@ -574,25 +583,34 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 		return nil, err
 	}
 
-	output := make([]float64, a.config.Cols)
+	rows := len(input)
+	cols := a.config.Cols
+	output := make([]float64, cols)
 
-	for j := 0; j < a.config.Cols; j++ {
+	// Pre-quantize all DAC inputs once (avoids repeated quantization inside
+	// the inner loop which runs cols×rows times vs. rows times).
+	dacIn := make([]float64, rows)
+	for i := 0; i < rows; i++ {
+		dacIn[i] = a.quantizeDAC(input[i])
+	}
+
+	for j := 0; j < cols; j++ {
 		var sum float64
-		for i := 0; i < len(input); i++ {
-			// Quantize input through DAC
-			quantizedInput := a.quantizeDAC(input[i])
-
+		for i := 0; i < rows; i++ {
 			// Read conductance with noise
 			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 
 			// Accumulate current
-			sum += g * quantizedInput
+			sum += g * dacIn[i]
 		}
 
 		// Quantize output through ADC
-		output[j] = a.quantizeADC(sum / float64(len(input)))
-		atomic.AddInt64(&a.totalReads, 1)
+		output[j] = a.quantizeADC(sum / float64(rows))
 	}
+
+	// Batch the read counter update — one atomic op per VMM call instead of
+	// one per column, reducing false-sharing contention on the counter.
+	atomic.AddInt64(&a.totalReads, int64(cols))
 
 	getLog().Calculation("VMM", map[string]interface{}{
 		"outputLen": len(output),

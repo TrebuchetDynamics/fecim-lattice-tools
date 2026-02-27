@@ -428,7 +428,7 @@ func BenchmarkAllMaterials(b *testing.B) {
 }
 
 // TestC2CVariation_DefaultHZO verifies state-dependent C2C variation model.
-// arXiv 2023: sigma(G) = sigma_base * Gmin * (G/Gmin)^0.5
+// Soliman 2023 / Reis 2023: sigma(G) = sigma_base * Gmin * (G/Gmin)^0.5
 func TestC2CVariation_DefaultHZO(t *testing.T) {
 	mat := DefaultHZO()
 

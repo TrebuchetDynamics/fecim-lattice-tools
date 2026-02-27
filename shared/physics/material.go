@@ -125,12 +125,19 @@ type HZOMaterial struct {
 
 	// State-dependent cycle-to-cycle (C2C) variation (LIT-P1-06/07)
 	// sigma(G) = C2CSigmaBase * (G / Gmin)^C2CExponent
-	// Calibrated from arXiv 2023 FeFET data (28nm fabricated devices):
+	// Inspired by 28nm HKMG FeFET characterization showing state-dependent C2C:
 	// - C2CSigmaBase ≈ 0.03 (3% base relative variation at Gmin state)
 	// - C2CExponent ≈ 0.5 (sqrt dependence, weaker variation at high G)
 	// - At HRS (Gmin): sigma = C2CSigmaBase * Gmin = 3% of Gmin
 	// - At LRS (Gmax): sigma = C2CSigmaBase * sqrt(Gmax/Gmin) * Gmin
-	// Ref: arXiv 2023 "State-dependent variability in 28nm FeFET arrays"
+	// Refs:
+	//   Soliman et al., Nature Commun. 14, 6348 (2023), doi:10.1038/s41467-023-42110-y
+	//     — 28nm HKMG FeFET crossbar, multi-level cell characterization
+	//   Reis et al., arXiv:2312.15444 (2023)
+	//     — state-dependent C2C/D2D variation model from 28nm FeFET measurements
+	// NOTE: sigma_base=0.03 and exponent=0.5 are representative educational defaults
+	// derived from the above papers' qualitative findings, not a direct numerical
+	// extraction. Treat as [CALIBRATION NEEDED] for quantitative use.
 	C2CSigmaBase float64 // Base relative C2C variation (dimensionless, typ. 0.02-0.05)
 	C2CExponent  float64 // State-dependence exponent (typ. 0.5 for sqrt, 1.0 for linear)
 
@@ -140,7 +147,14 @@ type HZOMaterial struct {
 	//   strainFactor ≈ 2 * Q11 * Ec / Ec = 2 * Q11 (simplified)
 	// Ref: Park et al., J. Appl. Phys. 117, 074103 (2015)
 	Q11 float64 // Longitudinal electrostrictive coefficient
-	Q12 float64 // Transverse electrostrictive coefficient
+	// Q12: transverse electrostrictive coefficient.
+	// Default -0.026 m⁴/C² is an empirical calibration value for the Ec(stress) scaling
+	// in updateEffectiveParameters(). DFT calculations for orthorhombic HfO2 report
+	// much larger magnitudes (|Q12| ~ 0.5 m⁴/C²; see Materlik et al. 2015 and
+	// Gong et al., arXiv:1811.09787). The smaller value here is retained because
+	// changing it would alter the stress-sensitivity of Ec by ~20x and requires
+	// re-validation of all temperature/stress sweep tests.
+	Q12 float64 // Transverse electrostrictive coefficient [CALIBRATION NEEDED vs HfO2 DFT]
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
@@ -164,8 +178,15 @@ func DefaultHZO() *HZOMaterial {
 		Tau0:            1e-13,   // Attempt frequency ~10 THz
 		Ea:              0.7,     // Activation energy ~0.7 eV
 		Alpha:           2.0,     // KAI exponent (2D growth)
-		CurieTemp:       723,     // ~450°C
-		CurieConst:      1.5e5,   // Curie constant (K)
+		// NOTE: CurieTemp and CurieConst here are empirical fits for the DefaultHZO
+		// Preisach temperature-scaling path and differ from the Materlik 2015 LGD
+		// values used in MaterlikHfO2() (Tc=598 K, C0=5.3e5 K). The Materlik values
+		// are for the orthorhombic Pca21 phase free-energy surface; these defaults
+		// are tuned for the phenomenological Curie-Weiss Ec(T)/Pr(T) scaling in
+		// updateEffectiveParameters() and should not be substituted without
+		// re-validating the temperature sweep behavior.
+		CurieTemp:  723,   // Empirical — differs from Materlik 2015 (Tc=598 K for o-HfO2)
+		CurieConst: 1.5e5, // Empirical — differs from Materlik 2015 (C0=5.3e5 K for o-HfO2)
 		TempCoeffEc:     -2e5,    // Ec decreases with T
 		TempCoeffPr:     -5e-5,   // Pr decreases with T
 		EnduranceCycles: 1e10,    // 10^10 cycles
@@ -178,7 +199,7 @@ func DefaultHZO() *HZOMaterial {
 		NLSSigma:        1.5,     // HfO2 log-normal spread (Guo et al., APL 2018)
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
-		C2CSigmaBase:    0.03,    // 3% base C2C variation (arXiv 2023 FeFET 28nm data)
+		C2CSigmaBase:    0.03,    // 3% base C2C variation (Soliman 2023 / Reis 2023; see struct comment)
 		C2CExponent:     0.5,     // sqrt(G/Gmin) scaling - weaker variation at high G
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
 		BetaLandau:          -6.720e8,
@@ -188,7 +209,7 @@ func DefaultHZO() *HZOMaterial {
 		K_dep:               2.5e8, // Depolarization factor for analog slope
 		StressGPa:           1.0,
 		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
-		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²); see struct Q12 comment re: DFT discrepancy
 	}
 }
 
@@ -340,7 +361,7 @@ func FeCIMMaterial() *HZOMaterial {
 		NLSSigma:        1.5,
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
-		C2CSigmaBase:    0.03,   // 3% base C2C variation (arXiv 2023 FeFET 28nm data)
+		C2CSigmaBase:    0.03,   // 3% base C2C variation (Soliman 2023 / Reis 2023; see struct comment)
 		C2CExponent:     0.5,    // sqrt(G/Gmin) scaling
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
 		BetaLandau:          -6.720e8,
@@ -350,7 +371,7 @@ func FeCIMMaterial() *HZOMaterial {
 		K_dep:               2.5e8,
 		StressGPa:           1.0,
 		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
-		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²); see struct Q12 comment re: DFT discrepancy
 	}
 }
 
@@ -552,6 +573,11 @@ func HZOCustom14() *HZOMaterial {
 
 // PZT returns parameters for Lead Zirconate Titanate (Pb[Zr_xTi_{1-x}]O3).
 // Included as a classic ferroelectric reference preset.
+//
+// NOTE: BetaLandau/GammaLandau are educational placeholders (not PZT-specific
+// calibrated values). Published PZT LGD coefficients vary widely with composition
+// (x in PbZr_xTi_{1-x}O3) and film orientation. For calibrated PZT LGD, see e.g.
+// Haun et al., J. Appl. Phys. 62, 3331 (1987) for bulk single-crystal values.
 func PZT() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "PZT",
@@ -580,8 +606,8 @@ func PZT() *HZOMaterial {
 		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                120e-6,
-		BetaLandau:          -2.0e8,
-		GammaLandau:         1.0e10,
+		BetaLandau:          -2.0e8,  // Educational placeholder — not PZT-calibrated (see func comment)
+		GammaLandau:         1.0e10,  // Educational placeholder — not PZT-calibrated (see func comment)
 		RhoViscosity:        0.05,
 		CurieConst:          1.0e5,
 		SeriesResistanceOhm: 50.0,
@@ -597,6 +623,8 @@ func PZT() *HZOMaterial {
 //
 // NOTE: This preset is **educational** until a DOI-backed calibration pack is added.
 // Values are representative room-temperature thin-film magnitudes.
+// BetaLandau/GammaLandau are educational placeholders shared with PZT (not BTO-specific).
+// For calibrated BTO LGD coefficients, see e.g. Li et al., J. Appl. Phys. 98, 064101 (2005).
 func BTO() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "BTO",
@@ -625,8 +653,8 @@ func BTO() *HZOMaterial {
 		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                100e-6,
-		BetaLandau:          -2.0e8,
-		GammaLandau:         1.0e10,
+		BetaLandau:          -2.0e8,  // Educational placeholder — not BTO-calibrated (see func comment)
+		GammaLandau:         1.0e10,  // Educational placeholder — not BTO-calibrated (see func comment)
 		RhoViscosity:        0.05,
 		CurieConst:          1.0e5,
 		SeriesResistanceOhm: 50.0,
@@ -975,10 +1003,12 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 //
 //	sigma(G) = C2CSigmaBase * Gmin * (G/Gmin)^C2CExponent
 //
-// Calibrated from arXiv 2023 FeFET data (28nm fabricated devices):
+// Inspired by 28nm HKMG FeFET data (Soliman et al., Nature Commun. 14, 6348, 2023;
+// Reis et al., arXiv:2312.15444, 2023):
 //   - At HRS (G=Gmin): sigma = C2CSigmaBase * Gmin  (base variation)
 //   - At LRS (G=Gmax): sigma = C2CSigmaBase * Gmin * (Gmax/Gmin)^0.5  (sqrt scaling)
 //   - Exponent 0.5 means weaker relative variation at high conductance states
+// NOTE: numerical defaults are educational; treat as [CALIBRATION NEEDED].
 //
 // If C2CSigmaBase is zero, returns 0 (no C2C variation modeled).
 func (m *HZOMaterial) C2CVariation(G float64) float64 {
@@ -987,7 +1017,7 @@ func (m *HZOMaterial) C2CVariation(G float64) float64 {
 	}
 	exp := m.C2CExponent
 	if exp == 0 {
-		exp = 0.5 // Default: sqrt dependence per arXiv 2023
+		exp = 0.5 // Default: sqrt dependence (Soliman 2023 / Reis 2023)
 	}
 	return m.C2CSigmaBase * m.Gmin * math.Pow(G/m.Gmin, exp)
 }

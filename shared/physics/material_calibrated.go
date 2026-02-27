@@ -15,7 +15,7 @@ func Park2015Fig2aHZO10nm() *HZOMaterial {
 	// Targets from digitized metrics used in validation suite.
 	m.Pr = 15.8e-2 // 15.8 uC/cm2
 	m.Ps = 19.4e-2 // 19.4 uC/cm2
-	m.Ec = 1.0e8   // 1.0 MV/cm
+	m.Ec = 0.93e8  // 0.93 MV/cm (digitized Ec)
 	m.Thickness = 10e-9
 	return m
 }
