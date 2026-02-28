@@ -1,17 +1,36 @@
 // Command fecim-screenshotter captures automated screenshots of the FeCIM GUI.
 //
 // Usage: fecim-screenshotter -module 1 -output screenshots/
+//
+// # Xwayland note
+//
+// If the session is running under Xwayland (XDG_SESSION_TYPE=wayland, X server
+// is "Xwayland :0 -rootless"), external X11 screenshot tools such as maim,
+// scrot, and xwd will always produce all-black images. This is an architectural
+// limitation: Xwayland composites X11 windows inside the Wayland compositor
+// buffer; the X11 root-window framebuffer is unmapped and contains no pixels.
+//
+// This tool is NOT affected by that limitation. It uses fyne.Canvas.Capture(),
+// which calls glReadPixels(GL_FRONT) on the application's own OpenGL context,
+// bypassing X11 screen capture entirely.
+//
+// For external capture on a Wayland session use grim(1):
+//
+//	grim /tmp/full-desktop.png
+//	grim -g "$(slurp)" /tmp/window.png
 package main
 
 import (
-	"flag"
 	"fmt"
 	"image"
 	"image/png"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"flag"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -44,6 +63,8 @@ func main() {
 	tag := flag.String("tag", "initial", "filename tag suffix (e.g. initial|after_badges)")
 	hysEngine := flag.String("hys-engine", "preisach", "hysteresis physics engine: preisach|lk")
 	flag.Parse()
+
+	checkDisplayBrightness()
 
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create out dir: %v\n", err)
@@ -144,6 +165,26 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 					img = w.Canvas().Capture()
 					time.Sleep(150 * time.Millisecond)
 				}
+
+				// Retry once on all-black result. Under Xwayland + Mesa exchange-swap the
+				// GL front buffer may be undefined immediately after the first SwapBuffers.
+				// A second Refresh + short sleep gives Mesa time to populate it.
+				if isImageAllBlack(img) {
+					fmt.Printf("[screenshotter] WARNING: Canvas().Capture() returned all-black for %s — retrying after extra refresh\n", fileBase)
+					if content := w.Content(); content != nil {
+						w.Canvas().Refresh(content)
+						time.Sleep(200 * time.Millisecond)
+						fallbackImg := w.Canvas().Capture()
+						if !isImageAllBlack(fallbackImg) {
+							fmt.Printf("[screenshotter] retry capture succeeded for %s\n", fileBase)
+							img = fallbackImg
+						} else {
+							diag := captureBlackDiagnostic()
+							fmt.Fprintf(os.Stderr, "[screenshotter] WARNING: capture still all-black for %s.\n%s\n", fileBase, diag)
+						}
+					}
+				}
+
 				module.Stop()
 				w.Close()
 				captured <- savePNG(filename, img)
@@ -190,4 +231,143 @@ func savePNG(filename string, img image.Image) error {
 	}
 	defer f.Close()
 	return png.Encode(f, img)
+}
+
+// isImageAllBlack returns true when every pixel in img has R=G=B=A=0.
+func isImageAllBlack(img image.Image) bool {
+	if img == nil {
+		return true
+	}
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, a := img.At(x, y).RGBA()
+			if r != 0 || g != 0 || b != 0 || a != 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// isXwaylandDisplay returns true when the process is running under Xwayland
+// (i.e. WAYLAND_DISPLAY is set and an Xwayland process is present).
+func isXwaylandDisplay() bool {
+	if os.Getenv("WAYLAND_DISPLAY") == "" {
+		return false
+	}
+	out, err := exec.Command("pgrep", "-x", "Xwayland").Output()
+	if err != nil {
+		return false
+	}
+	return len(strings.TrimSpace(string(out))) > 0
+}
+
+// checkDisplayBrightness warns when an xrandr output has brightness 0.0.
+// Under Xwayland this is a NOTE only — Canvas.Capture() is not affected by
+// xrandr brightness because it reads from the GL framebuffer, not from X11.
+// Under native X11 a brightness-0.0 output causes external capture tools
+// (maim, scrot, xwd) to return black images.
+func checkDisplayBrightness() {
+	onXwayland := isXwaylandDisplay()
+	outputs := parseXrandrBrightness()
+	for _, o := range outputs {
+		if o.connected && o.brightness == 0.0 {
+			if onXwayland {
+				fmt.Fprintf(os.Stderr,
+					"NOTE: Output %s has xrandr brightness 0.0 (Xwayland session)."+
+						" This does NOT affect Canvas.Capture() — it only affects external X11"+
+						" capture tools (maim/scrot/xwd), which always produce black images on"+
+						" Xwayland regardless of brightness. Use grim(1) for external window"+
+						" capture on Wayland: grim -g \"$(slurp)\" /tmp/capture.png\n", o.name)
+			} else {
+				fmt.Fprintf(os.Stderr,
+					"WARNING: Output %s has brightness 0.0 — captures via external X11 tools"+
+						" may be black. Run: xrandr --output %s --brightness 1.0\n",
+					o.name, o.name)
+			}
+		}
+	}
+}
+
+// captureBlackDiagnostic returns an environment-aware diagnostic string
+// explaining why Canvas().Capture() might have returned an all-black image.
+func captureBlackDiagnostic() string {
+	var sb strings.Builder
+	display := os.Getenv("DISPLAY")
+	wayland := os.Getenv("WAYLAND_DISPLAY")
+	sessionType := os.Getenv("XDG_SESSION_TYPE")
+	sb.WriteString("  Diagnostic:\n")
+	sb.WriteString(fmt.Sprintf("    DISPLAY=%s  WAYLAND_DISPLAY=%s  XDG_SESSION_TYPE=%s\n",
+		display, wayland, sessionType))
+	if isXwaylandDisplay() {
+		sb.WriteString("    Session type: Xwayland (X11-over-Wayland)\n")
+		sb.WriteString("    Canvas.Capture() uses glReadPixels(GL_FRONT) on the application's own\n")
+		sb.WriteString("    OpenGL context and is NOT affected by Xwayland root-window limitations.\n")
+		sb.WriteString("    A black result here likely means one of:\n")
+		sb.WriteString("      1. The window was not fully rendered before capture (timing issue).\n")
+		sb.WriteString("         Try increasing the -settle duration (e.g. -settle 3s).\n")
+		sb.WriteString("      2. Mesa GLX on Xwayland uses exchange-swap, leaving the GL front\n")
+		sb.WriteString("         buffer undefined immediately after the first SwapBuffers call.\n")
+		sb.WriteString("         The extra Refresh+sleep retry above should mitigate this.\n")
+		sb.WriteString("    Note: External tools (maim, scrot, xwd) ALWAYS produce black images\n")
+		sb.WriteString("    on Xwayland — this is a known architectural limitation of Xwayland.\n")
+		sb.WriteString("    Use grim(1) for external capture: grim -g \"$(slurp)\" /tmp/cap.png\n")
+	} else {
+		sb.WriteString("    Session type: native X11\n")
+		outputs := parseXrandrBrightness()
+		for _, o := range outputs {
+			if o.connected && o.brightness == 0.0 {
+				sb.WriteString(fmt.Sprintf("    Output %s has brightness 0.0 — run with xrandr --output %s --brightness 1.0\n",
+					o.name, o.name))
+			}
+		}
+		sb.WriteString("    If display brightness is fine, try increasing the -settle duration.\n")
+	}
+	return sb.String()
+}
+
+// xrandrOutput holds parsed state for one xrandr output.
+type xrandrOutput struct {
+	name       string
+	connected  bool
+	brightness float64
+}
+
+// parseXrandrBrightness runs xrandr --verbose and parses brightness values.
+// Returns an empty slice if xrandr is not available or parsing fails.
+func parseXrandrBrightness() []xrandrOutput {
+	out, err := exec.Command("xrandr", "--verbose").Output()
+	if err != nil {
+		return nil
+	}
+	var outputs []xrandrOutput
+	var current *xrandrOutput
+	for _, line := range strings.Split(string(out), "\n") {
+		// Detect "OUTPUT connected" lines.
+		if fields := strings.Fields(line); len(fields) >= 2 {
+			if fields[1] == "connected" {
+				outputs = append(outputs, xrandrOutput{name: fields[0], connected: true, brightness: 1.0})
+				current = &outputs[len(outputs)-1]
+				continue
+			}
+			if fields[1] == "disconnected" {
+				outputs = append(outputs, xrandrOutput{name: fields[0], connected: false, brightness: 1.0})
+				current = &outputs[len(outputs)-1]
+				continue
+			}
+		}
+		// Detect "\tBrightness: 0.00" lines.
+		trimmed := strings.TrimSpace(line)
+		if current != nil && strings.HasPrefix(trimmed, "Brightness:") {
+			parts := strings.Fields(trimmed)
+			if len(parts) == 2 {
+				var v float64
+				if _, err := fmt.Sscanf(parts[1], "%f", &v); err == nil {
+					current.brightness = v
+				}
+			}
+		}
+	}
+	return outputs
 }
