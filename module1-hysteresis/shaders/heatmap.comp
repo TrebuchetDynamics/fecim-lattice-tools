@@ -1,0 +1,100 @@
+#version 450
+
+// Crossbar heatmap compute shader.
+// Maps an NxN float32 conductance matrix to RGBA pixels using a colormap.
+// Each invocation handles one cell.
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// Parameters (std140 layout).
+layout(std140, binding = 0) uniform Params {
+    uint rows;
+    uint cols;
+    uint colormap;  // 0=viridis, 1=plasma, 2=fecim
+    uint _pad;
+};
+
+// Input: row-major conductance values normalised to [0,1].
+layout(std430, binding = 1) readonly buffer InputData {
+    float values[];
+};
+
+// Output: packed RGBA bytes (one uint32 per pixel, RGBA in byte order).
+layout(std430, binding = 2) writeonly buffer OutputData {
+    uint pixels[];
+};
+
+// ----- Colormap implementations -----
+
+// Viridis: perceptually-uniform, colorblind-safe.
+vec3 viridis(float t) {
+    t = clamp(t, 0.0, 1.0);
+    float r = 0.2777 - 0.0563*t + 2.4411*t*t - 5.9587*t*t*t + 4.3322*t*t*t*t;
+    float g = 0.0046 + 1.5230*t - 1.4266*t*t + 1.7166*t*t*t - 0.8530*t*t*t*t;
+    float b = 0.3292 + 1.1523*t - 3.5462*t*t + 5.4371*t*t*t - 3.3903*t*t*t*t;
+    return clamp(vec3(r, g, b), 0.0, 1.0);
+}
+
+// Plasma: perceptually-uniform alternative.
+vec3 plasma(float t) {
+    t = clamp(t, 0.0, 1.0);
+    float r = 0.05 + t * 0.89;
+    float g = 0.03 + t * 0.95 * t;
+    float b = 0.53 - t * 0.40;
+    return clamp(vec3(r, g, b), 0.0, 1.0);
+}
+
+// FeCIM custom branding colormap.
+vec3 fecimMap(float t) {
+    t = clamp(t, 0.0, 1.0);
+    vec3 c;
+    if (t < 0.2) {
+        float s = t * 5.0;
+        c = vec3((60.0 + s*20.0)/255.0, (s*100.0)/255.0, (120.0 + s*80.0)/255.0);
+    } else if (t < 0.4) {
+        float s = (t - 0.2) * 5.0;
+        c = vec3((80.0 - s*50.0)/255.0, (100.0 + s*155.0)/255.0, (200.0 - s*50.0)/255.0);
+    } else if (t < 0.6) {
+        float s = (t - 0.4) * 5.0;
+        c = vec3((30.0 + s*180.0)/255.0, 1.0, (150.0 - s*100.0)/255.0);
+    } else if (t < 0.8) {
+        float s = (t - 0.6) * 5.0;
+        c = vec3((210.0 + s*45.0)/255.0, (255.0 - s*100.0)/255.0, (50.0 - s*50.0)/255.0);
+    } else {
+        float s = (t - 0.8) * 5.0;
+        c = vec3(1.0, (155.0 - s*155.0)/255.0, 0.0);
+    }
+    return clamp(c, 0.0, 1.0);
+}
+
+// Pack a float [0,1] RGB colour into a uint32 RGBA (little-endian byte order: R,G,B,A).
+uint packRGBA(vec3 c) {
+    uint r = uint(c.r * 255.0);
+    uint g = uint(c.g * 255.0);
+    uint b = uint(c.b * 255.0);
+    uint a = 255u;
+    return r | (g << 8) | (b << 16) | (a << 24);
+}
+
+void main() {
+    uint col = gl_GlobalInvocationID.x;
+    uint row = gl_GlobalInvocationID.y;
+
+    if (row >= rows || col >= cols) {
+        return;
+    }
+
+    uint idx = row * cols + col;
+    float val = values[idx];
+
+    vec3 c;
+    if (colormap == 1u) {
+        c = plasma(val);
+    } else if (colormap == 2u) {
+        c = fecimMap(val);
+    } else {
+        c = viridis(val);
+    }
+
+    pixels[idx] = packRGBA(c);
+}

@@ -15,11 +15,16 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
+	gpurender "fecim-lattice-tools/shared/render"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // refreshMinInterval is the minimum time between heatmap refreshes (30 FPS max)
 const refreshMinInterval = 33 * time.Millisecond
+
+// gpuCellThreshold is the minimum number of cells (rows*cols) before the GPU
+// renderer is engaged. Below this threshold the software path is fast enough.
+const gpuCellThreshold = 4096 // 64x64
 
 // Compile-time interface checks
 var _ desktop.Hoverable = (*CrossbarHeatmap)(nil)
@@ -68,6 +73,12 @@ type CrossbarHeatmap struct {
 	useFixedScale bool
 	fixedMinVal   float64
 	fixedMaxVal   float64
+
+	// GPU rendering (L09). When non-nil the base heatmap image is produced
+	// by the GPU renderer; selection/animation overlays are still applied in
+	// software. Created lazily on first call to EnableGPURendering().
+	gpuRenderer *gpurender.GPUHeatmapRenderer
+	useGPU      bool // true when GPU rendering is enabled AND available
 }
 
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
@@ -88,6 +99,11 @@ func NewCrossbarHeatmap(rows, cols int) *CrossbarHeatmap {
 	for i := range h.data {
 		h.data[i] = make([]float64, cols)
 	}
+
+	// Try to initialise GPU renderer. If Vulkan is available, GPU rendering
+	// will be used automatically for arrays above gpuCellThreshold cells.
+	h.gpuRenderer = gpurender.NewGPUHeatmapRenderer()
+	h.useGPU = h.gpuRenderer.Available()
 
 	h.ExtendBaseWidget(h)
 	return h
@@ -202,6 +218,45 @@ func (h *CrossbarHeatmap) ClearFixedScale() {
 
 	h.useFixedScale = false
 	h.rateLimitedRefresh()
+}
+
+// SetGPUEnabled enables or disables GPU-accelerated heatmap rendering.
+// When enabled and Vulkan is available, heatmaps with more than
+// gpuCellThreshold cells are rendered on the GPU. The viridis colourmap is
+// used for GPU rendering regardless of the selected software colourmap.
+// Selection highlights, animation overlays, and grid lines are still
+// composited in software on top of the GPU-rendered base image.
+func (h *CrossbarHeatmap) SetGPUEnabled(enabled bool) {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+
+	if enabled {
+		if h.gpuRenderer == nil {
+			h.gpuRenderer = gpurender.NewGPUHeatmapRenderer()
+		}
+		h.useGPU = h.gpuRenderer.Available()
+	} else {
+		h.useGPU = false
+	}
+}
+
+// IsGPURenderingActive reports whether GPU rendering is currently in use.
+func (h *CrossbarHeatmap) IsGPURenderingActive() bool {
+	h.dataMu.RLock()
+	defer h.dataMu.RUnlock()
+	return h.useGPU
+}
+
+// DestroyGPURenderer releases GPU resources. Called when the widget is
+// no longer needed or the application is shutting down.
+func (h *CrossbarHeatmap) DestroyGPURenderer() {
+	h.dataMu.Lock()
+	defer h.dataMu.Unlock()
+	if h.gpuRenderer != nil {
+		h.gpuRenderer.Destroy()
+		h.gpuRenderer = nil
+	}
+	h.useGPU = false
 }
 
 // SetColormap changes the colormap.
@@ -425,22 +480,55 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 		highlightRowMap[row] = true
 	}
 
-	// Draw cells using batch draw operations
+	// GPU path: when GPU is available and the array is large enough, render
+	// the full-resolution heatmap via Vulkan offscreen rendering. The GPU uses
+	// the viridis colourmap. Selection, animation and grid overlays are still
+	// composited in software on top of the GPU image.
+	var gpuBaseImg *image.RGBA
+	cellCount := h.rows * h.cols
+	if h.useGPU && h.gpuRenderer != nil && cellCount >= gpuCellThreshold {
+		// Flatten and normalise data to [0,1] for GPU.
+		valRange := h.maxVal - h.minVal
+		if valRange <= 0 {
+			valRange = 1
+		}
+		flatValues := make([]float64, cellCount)
+		for i := 0; i < h.rows; i++ {
+			for j := 0; j < h.cols; j++ {
+				flatValues[i*h.cols+j] = (h.data[i][j] - h.minVal) / valRange
+			}
+		}
+		if gpuResult := h.gpuRenderer.RenderHeatmap(flatValues, h.rows, h.cols, w, h_size); gpuResult != nil {
+			if rgba, ok := gpuResult.(*image.RGBA); ok {
+				gpuBaseImg = rgba
+			}
+		}
+	}
+
+	// If GPU produced the base image, use it as the background (replaces
+	// cell-by-cell drawing below). Overlays are still applied in software.
+	if gpuBaseImg != nil {
+		copy(img.Pix, gpuBaseImg.Pix)
+	}
+
+	// Draw cells using batch draw operations.
+	// When GPU rendered the base image, skip per-cell colour fill (already in img)
+	// but still apply selection highlights and animation overlays.
 	for i := 0; i < h.rows; i++ {
 		for j := 0; j < h.cols; j++ {
-			// Normalize value
-			normVal := (h.data[i][j] - h.minVal) / (h.maxVal - h.minVal)
-			cellColor := h.valueToColor(normVal)
-
 			// Calculate cell position
 			x0 := int(20 + float64(j)*cellSize)
 			y0 := int(20 + float64(i)*cellSize)
 			x1 := int(20 + float64(j+1)*cellSize - 1)
 			y1 := int(20 + float64(i+1)*cellSize - 1)
 
-			// Draw cell using draw.Draw (batch operation)
-			cellRect := image.Rect(x0, y0, x1, y1)
-			draw.Draw(img, cellRect, &image.Uniform{cellColor}, image.Point{}, draw.Src)
+			// Software path: fill cell colour when GPU did not produce the image.
+			if gpuBaseImg == nil {
+				normVal := (h.data[i][j] - h.minVal) / (h.maxVal - h.minVal)
+				cellColor := h.valueToColor(normVal)
+				cellRect := image.Rect(x0, y0, x1, y1)
+				draw.Draw(img, cellRect, &image.Uniform{cellColor}, image.Point{}, draw.Src)
+			}
 
 			// Draw selection highlight using draw.Draw for borders
 			if h.showSelection && i == h.selectedRow && j == h.selectedCol {

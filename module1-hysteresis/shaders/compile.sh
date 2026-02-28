@@ -1,46 +1,65 @@
 #!/bin/bash
 # Compile GLSL shaders to SPIR-V for Vulkan
+#
+# Supports glslc (Vulkan SDK) or glslangValidator as a fallback.
+# Pre-compiled .spv files are checked in so this script only needs to be
+# re-run when shader sources change.
 
-# Check for glslc
-if ! command -v glslc &> /dev/null; then
-    echo "Error: glslc not found. Install Vulkan SDK."
-    echo "  Ubuntu: sudo apt install glslc"
-    exit 1
-fi
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Detect compiler.
+COMPILER=""
+if command -v glslc &> /dev/null; then
+    COMPILER="glslc"
+elif command -v glslangValidator &> /dev/null; then
+    COMPILER="glslangValidator"
+else
+    echo "Error: no GLSL compiler found. Install Vulkan SDK (glslc) or glslangValidator."
+    echo "  Ubuntu: sudo apt install glslc          # Vulkan SDK"
+    echo "          sudo apt install glslang-tools   # glslangValidator"
+    exit 1
+fi
+
+echo "Using compiler: $COMPILER"
+
+compile_shader() {
+    local src="$1"
+    local dst="${src}.spv"
+    if [ ! -f "$src" ]; then
+        return
+    fi
+    if [ "$COMPILER" = "glslc" ]; then
+        glslc "$src" -o "$dst"
+    else
+        glslangValidator -V "$src" -o "$dst"
+    fi
+    echo "  $src -> $dst"
+}
+
 echo "Compiling shaders..."
 
-# Compile compute shader
-if [ -f "preisach.comp" ]; then
-    glslc preisach.comp -o preisach.comp.spv
-    echo "  preisach.comp -> preisach.comp.spv"
-fi
+# Compute shaders
+compile_shader preisach.comp
+compile_shader heatmap.comp
 
-# Compile vertex shader (when available)
-if [ -f "cell.vert" ]; then
-    glslc cell.vert -o cell.vert.spv
-    echo "  cell.vert -> cell.vert.spv"
-fi
+# Cell shaders (module 1 lattice visualisation)
+compile_shader cell.vert
+compile_shader cell.frag
 
-# Compile fragment shader (when available)
-if [ -f "cell.frag" ]; then
-    glslc cell.frag -o cell.frag.spv
-    echo "  cell.frag -> cell.frag.spv"
-fi
+# Simple passthrough shaders
+compile_shader simple.vert
+compile_shader simple.frag
 
-# Compile hysteresis curve shaders
-if [ -f "hysteresis.vert" ]; then
-    glslc hysteresis.vert -o hysteresis.vert.spv
-    echo "  hysteresis.vert -> hysteresis.vert.spv"
-fi
+# Hysteresis curve shaders
+compile_shader hysteresis.vert
+compile_shader hysteresis.frag
 
-if [ -f "hysteresis.frag" ]; then
-    glslc hysteresis.frag -o hysteresis.frag.spv
-    echo "  hysteresis.frag -> hysteresis.frag.spv"
-fi
+# Heatmap shaders (L09 GPU crossbar rendering)
+compile_shader heatmap.vert
+compile_shader heatmap.frag
 
 echo "Done."
 echo ""
