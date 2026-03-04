@@ -266,17 +266,24 @@ func showDACDemo(level int) {
 	fmt.Printf("  With NL Error: %+.3f V (Δ = %.3f mV)\n", voltageNL, (voltageNL-voltage)*1000)
 	fmt.Println()
 
-	// Show voltage ladder
-	fmt.Println("Voltage Ladder (30 FeCIM levels, demo baseline):")
+	// Show voltage ladder mapped from 30 FeCIM levels onto DAC code space.
+	fmt.Println("Voltage Ladder (30 FeCIM levels mapped to DAC codes):")
 	fmt.Println()
 	for i := 0; i < 30; i++ {
-		v := dac.Convert(i)
+		dacCode := int(math.Round(float64(i) * float64(dac.Levels()-1) / 29.0))
+		v := dac.Convert(dacCode)
 		bar := int((v - dac.VrefLow) / (dac.VrefHigh - dac.VrefLow) * 40)
+		if bar < 0 {
+			bar = 0
+		}
+		if bar > 40 {
+			bar = 40
+		}
 		marker := " "
 		if i == level {
 			marker = "→"
 		}
-		fmt.Printf("  %s %2d: %+.2fV │%s│\n", marker, i, v, strings.Repeat("█", bar)+strings.Repeat("░", 40-bar))
+		fmt.Printf("  %s %2d (DAC %2d): %+.2fV │%s│\n", marker, i, dacCode, v, strings.Repeat("█", bar)+strings.Repeat("░", 40-bar))
 	}
 	fmt.Println()
 }
@@ -313,11 +320,15 @@ func showADCDemo(level int) {
 
 	// Show quantization
 	fmt.Println("Quantization Thresholds:")
-	for i := 0; i < 8; i++ {
+	maxShow := adc.Levels() - 1
+	if maxShow > 8 {
+		maxShow = 8
+	}
+	for i := 0; i < maxShow; i++ {
 		threshold := adc.VrefLow + float64(i+1)*adc.Resolution()
 		fmt.Printf("  Level %d-%d boundary: %.3fV\n", i, i+1, threshold)
 	}
-	fmt.Println("  ... (30 total thresholds)")
+	fmt.Printf("  ... (%d total thresholds for %d-bit ADC)\n", adc.Levels()-1, adc.Bits)
 	fmt.Println()
 }
 
@@ -390,15 +401,15 @@ func showISPPDemo(level int) {
 	}
 
 	controller := sharedphysics.NewWriteController(solver, mat)
-	controller.MaxIterations = 15
-	controller.Tolerance = 1.5e-6
-	controller.PulseWidth = mat.Tau
+	controller.MaxIterations = 50
+	controller.Tolerance = 0.03 * (gmax - gmin)
+	controller.PulseWidth = 20e-9
 	if mat.Ec > 0 && mat.Thickness > 0 {
-		controller.MaxVoltage = mat.Ec * mat.Thickness * 2.5
+		controller.MaxVoltage = mat.Ec * mat.Thickness * 3.5
 	}
 
 	targetG := mat.DiscreteLevel(level, numLevels)
-	attempts, success, overshoots := controller.WriteTargetWithReset(targetG, true)
+	attempts, success, overshoots := controller.WriteTargetWithReset(targetG, false)
 
 	finalP := solver.GetState()
 	finalG := sharedphysics.PolarizationToConductanceWithParams(finalP, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
@@ -512,12 +523,12 @@ func showLinearityAnalysis() {
 	fmt.Println("DAC Linearity (5-bit):")
 	fmt.Println()
 	fmt.Println("INL Plot (Integral Nonlinearity in LSB):")
-	showINLPlot(dacAnalysis.INLValues, 30)
+	showINLPlot(dacAnalysis.INLValues, len(dacAnalysis.INLValues))
 	fmt.Printf("  Max INL: %.3f LSB at code %d\n", dacAnalysis.MaxINL, dacAnalysis.WorstCode)
 	fmt.Println()
 
 	fmt.Println("DNL Plot (Differential Nonlinearity in LSB):")
-	showDNLPlot(dacAnalysis.DNLValues, 30)
+	showDNLPlot(dacAnalysis.DNLValues, len(dacAnalysis.DNLValues))
 	fmt.Printf("  Max DNL: +%.3f / %.3f LSB\n", dacAnalysis.MaxDNL, dacAnalysis.MinDNL)
 	fmt.Println()
 
@@ -526,12 +537,12 @@ func showLinearityAnalysis() {
 	fmt.Println("ADC Linearity (5-bit SAR):")
 	fmt.Println()
 	fmt.Println("INL Plot:")
-	showINLPlot(adcAnalysis.INLValues, 30)
+	showINLPlot(adcAnalysis.INLValues, len(adcAnalysis.INLValues))
 	fmt.Printf("  Max INL: %.3f LSB at code %d\n", adcAnalysis.MaxINL, adcAnalysis.WorstCode)
 	fmt.Println()
 
 	fmt.Println("DNL Plot:")
-	showDNLPlot(adcAnalysis.DNLValues, 30)
+	showDNLPlot(adcAnalysis.DNLValues, len(adcAnalysis.DNLValues))
 	fmt.Printf("  Max DNL: +%.3f / %.3f LSB\n", adcAnalysis.MaxDNL, adcAnalysis.MinDNL)
 	fmt.Println()
 
