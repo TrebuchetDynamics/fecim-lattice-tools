@@ -362,10 +362,10 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 					SampleSize: len(Edata),
 				},
 				Thresholds: peLoopThresholds{
-					PrErrPctMax:       thPrPct,
-					EcErrPctMax:       thEcPct,
-					RMSEOverPsMax:     thRMSEps,
-					LoopAreaErrPctMax: thAreaPct,
+					PrErrPctMax:       localPrTh,
+					EcErrPctMax:       localEcTh,
+					RMSEOverPsMax:     localRMSETh,
+					LoopAreaErrPctMax: localAreaTh,
 				},
 				Pass: pass,
 			}
