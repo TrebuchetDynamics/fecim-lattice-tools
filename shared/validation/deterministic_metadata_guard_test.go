@@ -9,7 +9,17 @@ import (
 
 func TestDeterministicMetadata_NoRuntimeTimestampsInRegressionTests(t *testing.T) {
 	repoRoot := filepath.Clean(filepath.Join("..", ".."))
-	roots := []string{"validation", "module4-circuits/pkg", "module6-eda/pkg", "shared/widgets"}
+	roots := []string{
+		"validation",
+		"module1-hysteresis",
+		"module2-crossbar",
+		"module3-mnist",
+		"module4-circuits/pkg",
+		"module5-comparison",
+		"module6-eda/pkg",
+		"module7-docs",
+		"shared/widgets",
+	}
 	bad := []string{"time.Now().UTC().Format(time.RFC3339)", "time.Now().Unix()"}
 
 	for _, rel := range roots {
