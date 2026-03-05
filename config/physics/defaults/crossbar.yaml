@@ -27,7 +27,7 @@ crossbar:
   device_variation: 0.05        # Device-to-device σ (5%)
   read_noise: 0.02              # Read noise σ (2%)
   write_noise: 0.03             # Write noise σ (3%)
-  # Note: Current-limited design achieves 97% MNIST vs 9.8% without [16]
+  # Note: External benchmark only: current-limited 28nm FeFET crossbar reached 97% MNIST vs 9.8% without limiter [16]
 
   # Line resistance (for IR drop simulation)
   word_line_resistance_ohm: 10  # Word line R per segment

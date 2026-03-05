@@ -2,7 +2,7 @@
 
 > **Note:** This file was previously located at `docs/comparison/HONESTY_AUDIT.md`. It has moved to `docs/4-research/honesty-audit.md`.
 
-**Version:** 4.1 | **Date:** 2026-02-26 | **Status:** Active (verified + unverified tagged)
+**Version:** 4.2 | **Date:** 2026-03-05 | **Status:** Active (verified + unverified tagged)
 
 ---
 
@@ -16,6 +16,10 @@ This repository is **simulation-only**. External scientific claims must be expli
 
 1. **98.24% MNIST accuracy** reported for **HZO ferroelectric tunnel junction (FTJ) reservoir computing** in *Journal of Alloys and Compounds* (2025), DOI: `10.1016/j.jallcom.2025.181869`.
    - **Scope note:** This is **not** a FeCIM device claim and should not be attributed to this simulator. It is a literature benchmark for a related ferroelectric device.
+
+2. **97% MNIST accuracy with a current limiter, vs 9.8% without it**, reported for a **28 nm HKMG-based current-limited FeFET crossbar array** in *IEEE Transactions on Electron Devices* (2022), DOI: `10.1109/TED.2022.3216973`.
+   - **Scope note:** This is an external device-paper benchmark, not a result produced by this simulator.
+   - **Boundary note:** Treat it as evidence that current limiting can materially change inference quality in FeFET crossbars, not as a blanket accuracy claim for all FeCIM arrays.
 
 ---
 

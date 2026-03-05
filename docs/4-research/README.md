@@ -33,13 +33,15 @@ See the full policy: [honesty-audit.md](honesty-audit.md)
 
 ### What Is Verified
 
-Only one external claim is currently verified in this project:
+Two external claims are currently verified in this project:
 
-**98.24% MNIST accuracy** — reported for HZO ferroelectric tunnel junction (FTJ) reservoir computing in *Journal of Alloys and Compounds* (2025), DOI: `10.1016/j.jallcom.2025.181869`.
+1. **98.24% MNIST accuracy** — reported for HZO ferroelectric tunnel junction (FTJ) reservoir computing in *Journal of Alloys and Compounds* (2025), DOI: `10.1016/j.jallcom.2025.181869`.
+   - This is **not** a FeCIM device claim.
+   - It must not be attributed to this simulator.
 
-- This is **not** a FeCIM device claim
-- Must not be attributed to this simulator
-- It is a literature benchmark for a related ferroelectric device
+2. **97% MNIST accuracy with a current limiter, vs 9.8% without it** — reported for a 28 nm HKMG-based current-limited FeFET crossbar array in *IEEE Transactions on Electron Devices* (2022), DOI: `10.1109/TED.2022.3216973`.
+   - This is an external hardware-paper benchmark.
+   - It supports the importance of current limiting in FeFET arrays, not a blanket performance claim for this repository.
 
 ### What Is Simulation Baseline
 

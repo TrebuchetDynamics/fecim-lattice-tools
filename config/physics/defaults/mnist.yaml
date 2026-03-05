@@ -21,5 +21,5 @@ mnist:
   baseline_accuracy: 0.966      # Literature benchmark from Nature Communications 2023, DOI 10.1038/s41467-023-42110-y; not yet promoted to VERIFIED in docs/4-research/honesty-audit.md
   best_accuracy: 0.9824         # Verified FTJ reservoir benchmark from Journal of Alloys and Compounds 2025, DOI 10.1016/j.jallcom.2025.181869 (not this simulator)
   # tour_claimed_accuracy: 0.87 # REMOVED - unverified conference claim below peer-reviewed
-  current_limited_accuracy: 0.97 # Reported current-limited FeFET benchmark; keep tagged as unverified until its DOI is wired into docs/4-research/honesty-audit.md
+  current_limited_accuracy: 0.97 # Verified external benchmark: 28nm current-limited FeFET crossbar, IEEE TED 2022, DOI 10.1109/TED.2022.3216973 (not this simulator)
   fashion_mnist_rc: 0.8838      # 88.38% Fashion MNIST with reservoir computing

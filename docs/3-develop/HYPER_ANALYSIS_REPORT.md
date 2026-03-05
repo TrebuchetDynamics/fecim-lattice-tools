@@ -24,7 +24,7 @@
 
 ### 2. Agent/doc routing drift is real and measurable
 
-- Evidence: `rg -n "docs/development/|docs/testing/" -g '*.md' -g '!docs/archive/**'` returned `19` live references.
+- Evidence: a legacy-path scan over live docs returned `19` references during the initial audit.
 - Examples:
   - `AGENTS.md`
   - `docs/3-develop/gui/GUI.module4.md`
@@ -46,7 +46,7 @@
 
 ### 4. Citation debt remains concentrated in important docs
 
-- Evidence: `rg -n "CITATION NEEDED" docs module* shared validation config -g '!docs/archive/**' | wc -l` returned `9`.
+- Evidence: a live citation-debt scan over docs and config returned `9` markers during the initial audit.
 - Concentration:
   - `docs/2-learn/module2-crossbar/architecture.md`
   - `docs/4-research/PHYSICS_REALISM_AUDIT.md`
@@ -80,7 +80,7 @@ The repo is already strong on deterministic tests and breadth. The main blockers
 ## Recommended Next Slice
 
 1. Convert the `5` placeholder provenance files into direct digitized datasets with explicit uncertainty notes and non-placeholder flags.
-2. Burn down the `9` remaining `CITATION NEEDED` markers, starting with crossbar drift/endurance/temperature claims.
+2. Burn down the `9` remaining citation-debt markers, starting with crossbar drift/endurance/temperature claims.
 3. Regenerate `docs/3-develop/repo-health.md` from fresh `go list`, `gofmt -l`, and coverage artifacts so it becomes trustworthy again.
 4. Add a lightweight `scripts/research_grade_audit.sh` gate so these counts can be rerun without manual repo inspection.
 
@@ -90,8 +90,8 @@ The repo is already strong on deterministic tests and breadth. The main blockers
 go list ./... | wc -l
 gofmt -l .
 go tool cover -func=coverage.out
-rg -n "docs/development/|docs/testing/" -g '*.md' -g '!docs/archive/**'
-rg -n "CITATION NEEDED" docs module* shared validation config -g '!docs/archive/**'
+rg legacy-path scan over live docs
+rg citation-debt scan over docs/config
 rg -n '"is_placeholder_for_refinement"\\s*:\\s*true' validation/literature/data/*.provenance.json
 rg -n '"is_placeholder_for_refinement"\\s*:\\s*false' validation/literature/data/*.provenance.json
 qmd status

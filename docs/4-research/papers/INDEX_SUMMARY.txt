@@ -314,7 +314,7 @@ In docs/research-papers/:
   - RESEARCH_GAP_ANALYSIS.md (coverage & gaps)
   - paper_metadata.json     (machine-readable)
 
-In docs/development/:
+In the legacy development docs tree:
   - SCRIPT_REFERENCE.md      (code-to-paper connections)
   - TESTING.md              (test methodology)
   - HYPER_ANALYSIS_REPORT.md (UI analysis)

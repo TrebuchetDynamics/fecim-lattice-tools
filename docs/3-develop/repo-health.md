@@ -68,13 +68,24 @@ From `docs/3-develop/testing/TESTING.md` and project TODO tracking:
 
 ---
 
-## 3) Coverage Status
+## 3) Coverage Summary by Module
 
-Coverage is currently **stale / unavailable** in the active dashboard.
+Coverage source: fresh `coverage.out` generated on 2026-03-05 via `go test -short ./... -coverprofile=coverage.out`.
 
-- `go tool cover -func=coverage.out` now fails because the checked-in `coverage.out` references missing paths (`module1-hysteresis/pkg/gui/simulation.go: no such file or directory`).
-- A fresh coverprofile was **not** generated in this documentation slice, so historical percentages have been removed from the active health summary to avoid overstating confidence.
-- Next research-grade docs step: regenerate `coverage.out` from a clean `go test -coverprofile=coverage.out ./...` run and then repopulate per-module numbers.
+| Module | Coverage |
+|---|---:|
+| module1-hysteresis | 33.3% |
+| module2-crossbar | 33.0% |
+| module3-mnist | 25.7% |
+| module4-circuits | 66.3% |
+| module5-comparison | 52.0% |
+| module6-eda | 74.3% |
+| module7-docs | 67.0% |
+| validation | 64.6% |
+| shared | 67.4% |
+| other (cmd/config/scripts/root) | 26.7% |
+
+**Overall total statement coverage:** **52.5%**
 
 ---
 

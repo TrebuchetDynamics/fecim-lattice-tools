@@ -75,7 +75,7 @@
 #
 # FeFET Crossbar:
 #   [15] Nature Commun. 2023, doi:10.1038/s41467-023-42110-y - MLC FeFET crossbar demo
-#   [16] IEEE 2023 - 28nm current-limited FeFET, 97% MNIST accuracy
+#   [16] IEEE TED 2022, doi:10.1109/TED.2022.3216973 - 28nm current-limited FeFET crossbar, 97% MNIST with limiter vs 9.8% without
 #
 # Tour Lab:
 #   [17] Dr. external research group, COSM 2025 - 30 discrete states, 87% MNIST (unverified)

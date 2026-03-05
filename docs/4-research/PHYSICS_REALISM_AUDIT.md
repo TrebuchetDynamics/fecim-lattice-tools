@@ -64,14 +64,14 @@ The L-K solver implements:
 - **NLS nucleation:** Empirical incubation with exp(−E_a/kT) Arrhenius activation
 
 Citation audit notes:
-- Golden Set I coefficients (β = −2.160e8, γ = 1.653e10, ρ = 0.05) are currently tracked as **[CITATION NEEDED]** pending a direct HZO fit citation (suggested: Materlik et al., *J. Appl. Phys.* 117, 134109 (2015) or equivalent).
-- k_dep = 2.5e8 V·m/C is currently a calibrated default; use stack-derived formula or measured extraction to remove **[CITATION NEEDED]** status.
+- Golden Set I coefficients (β = −2.160e8, γ = 1.653e10, ρ = 0.05) should be read as **repository calibration defaults**, not a verbatim coefficient tuple copied from a single paper. Their HZO free-energy context is anchored to Materlik et al., *Journal of Applied Physics* **117**, 134109 (2015), DOI `10.1063/1.4916229`, and the repo calibration pack in `validation/calibration/README.md`.
+- `k_dep = 2.5e8 V·m/C` is also a **repository calibration default**. It is kept for loop-shape matching, not because this exact value is directly reported as a universal device constant in the literature.
 
 | Simplification | Physical Impact | Upgrade Path |
 |----------------|----------------|--------------|
 | Single-domain 1D ODE — no spatial variation | Cannot represent polydomain nucleation, domain wall motion, or intermediate remanent states at E=0 | Implement polydomain ensemble model (LK-PD-3 in progress) with distributed coercive fields |
-| k_dep as a tuning knob for depolarization | Creates analog slope in P-E loop but does not model the actual interface depolarization field from dead layers | Model k_dep from dielectric stack: k_dep = (ε_FE · d_dead) / (ε_dead · d_FE); current 2.5e8 setting should be treated as **[CITATION NEEDED]** unless tied to a measured stack extraction |
-| Empirical NLS time constants | Nucleation delays are uncalibrated | Fit τ₀ and E_a to measured switching distributions (e.g., Muller et al. IEEE TED; Jo et al., Nano Lett. 2021); current defaults remain **[CITATION NEEDED]** |
+| k_dep as a tuning knob for depolarization | Creates analog slope in P-E loop but does not model the actual interface depolarization field from dead layers | Model k_dep from dielectric stack: k_dep = (ε_FE · d_dead) / (ε_dead · d_FE); until that extraction exists, the current `2.5e8` setting should be treated as a calibration constant rather than a measured stack parameter |
+| Empirical NLS time constants | Nucleation delays are uncalibrated | Fit τ₀ and E_a to measured switching distributions; current defaults are calibration values with qualitative context from Guo et al., *Applied Physics Letters* **112**, 262903 (2018), DOI `10.1063/1.5038038`, not a single extracted fit |
 | No polydomain — only 2 stable wells at E=0 | Cannot hold intermediate remanent polarization states needed for multilevel ISPP | Polydomain model (LK-PD-1 through LK-PD-6) is the top physics priority |
 
 **Validation status:** Equation identity and units verified against formulation (FOCUS-50 ✅). Solver kernel benchmarked at ~64 ns/op (FOCUS-49 ✅). Polydomain extension in progress (LK-PD-3 🔄).
