@@ -6,7 +6,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 func writeParityArtifact(t interface{ Logf(string, ...any) }, art *parityArtifact) {
@@ -39,7 +38,7 @@ func writeParityArtifact(t interface{ Logf(string, ...any) }, art *parityArtifac
 		art.Version = "v1"
 	}
 	if art.GeneratedUnix == 0 {
-		art.GeneratedUnix = time.Now().Unix()
+		art.GeneratedUnix = 0
 	}
 
 	b, err := json.MarshalIndent(art, "", "  ")

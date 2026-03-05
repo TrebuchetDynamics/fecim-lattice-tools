@@ -58,6 +58,7 @@ skills/
 
 # Generated exports and validation output
 /exports/
+cmd/fecim-lattice-tools/exports/
 /output/validation/
 
 # Validation report artifacts (generated per-run)
