@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
@@ -337,7 +336,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				Engine:           ds.Engine,
 				DOI:              ds.DOI,
 				Dataset:          ds.Name,
-				Generated:        time.Now().UTC().Format(time.RFC3339),
+				Generated:        sharedval.NewEnvelope("", "", true).TimestampUTC,
 				PrData_uC_cm2:    prData,
 				PrSim_uC_cm2:     prSim,
 				PrErrPct:         prErrPct,
