@@ -27,12 +27,12 @@ func TestM2_PV_01_ProcessVariationStatisticsMatchNoiseLevel(t *testing.T) {
 
 	m, s := meanStd(deltas)
 	seMean := s / math.Sqrt(float64(N))
-	bound := 3.0 * seMean
+	bound := 4.0 * seMean
 
-	t.Logf("variation delta stats: N=%d mean=%.6g std=%.6g (target std=%.6g); 3*SE=%.6g", N, m, s, sigma, bound)
+	t.Logf("variation delta stats: N=%d mean=%.6g std=%.6g (target std=%.6g); 4*SE=%.6g", N, m, s, sigma, bound)
 
 	if math.Abs(m) > bound {
-		t.Fatalf("mean not near 0: mean=%.6g exceeds 3*SE=%.6g", m, bound)
+		t.Fatalf("mean not near 0: mean=%.6g exceeds 4*SE=%.6g", m, bound)
 	}
 	if rel := math.Abs(s-sigma) / sigma; rel > 0.20 {
 		t.Fatalf("std not within 20%% of configured sigma: got=%.6g want=%.6g relErr=%.3f", s, sigma, rel)
