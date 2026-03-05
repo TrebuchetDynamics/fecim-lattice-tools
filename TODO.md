@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-02-28
+**Last Updated**: 2026-03-05
 
 **Phase**: Education (simulation-only). All pending items cleared. Eight world-class features deferred pending prerequisites.
 
@@ -13,7 +13,7 @@
 | Bucket | Count | Notes |
 |--------|-------|-------|
 | Pending | 0 | — |
-| Open Issues | 0 | — |
+| Open Issues | 1 | qmd cold-start/bootstrap blocker on this host |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
 | Completed | ~260+ | All items done including L09, L10 |
@@ -28,7 +28,13 @@ None.
 
 ### Open Issues
 
-None.
+[BLOCKED] qmd local knowledge search cold-start on this host — 2026-03-05 14:13 CST
+  blocker: `qmd` search/query workflow for repo and workspace markdown lookup
+  evidence: `qmd status` and `qmd query` trigger CUDA build attempts (`CUDA Toolkit not found`) and `qmd query` starts a 1.28 GB generation-model download before returning results
+  unblocks when: qmd can return collection search results within 5s on CPU-only startup without CUDA build retries or model bootstrap
+  owner: tooling/system
+  workaround/pivot: use `rg` plus direct reads; capture findings in `docs/3-develop/HYPER_ANALYSIS_REPORT.md`
+  next check: 2026-03-06 09:00 CST
 
 ### Resolved Issues
 

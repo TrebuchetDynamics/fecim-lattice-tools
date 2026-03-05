@@ -48,19 +48,21 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 
 ### Quick Reference
 
-**Full detailed API reference:** `docs/development/SCRIPT_REFERENCE.md`
+**Full detailed API reference:** `docs/archive/old-structure/development/SCRIPT_REFERENCE.md`
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function signature | `docs/development/SCRIPT_REFERENCE.md#quick-function-lookups` |
-| Understand an error | `docs/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
-| Implement a new feature | `docs/development/SCRIPT_REFERENCE.md#decision-trees` |
-| Check thread safety | `docs/development/SCRIPT_REFERENCE.md#thread-safety-guide` |
-| Fix Fyne GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
-| Run tests | `docs/development/TESTING.md` |
-| Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |
+| Find a function signature | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#quick-function-lookups` |
+| Understand an error | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
+| Implement a new feature | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#decision-trees` |
+| Check thread safety | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#thread-safety-guide` |
+| Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Run tests | `docs/3-develop/testing/TESTING.md` |
+| Review UI analysis | `docs/3-develop/HYPER_ANALYSIS_REPORT.md` |
 | Use EDA pipeline | `docs/eda/README.md` and `docs/eda/guides/integration.md` |
 | Access EDA CLI | `docs/eda/references/cli-reference.md` |
+
+If `qmd` emits CUDA build output or starts model downloads, stop using it for that cycle and fall back to `rg`/direct doc reads. Do not stall active validation on local-search bootstrap.
 
 ### Working in This Repository
 
@@ -112,7 +114,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 **GUI freeze diagnosis:**
 - Check `module1-hysteresis/pkg/gui/gui.go` and `simulation.go` for Fyne.Do wrapping
 - Check for blocking operations in render loops
-- See `docs/development/GUI/FYNE_NOTES.md` for Fyne threading model
+- See `docs/3-develop/gui/FYNE_NOTES.md` for Fyne threading model
 
 ### Commit Style
 
@@ -255,7 +257,7 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ## Common Tasks
 
 ### Add a New Feature
-1. **Plan:** Read `docs/development/SCRIPT_REFERENCE.md#decision-trees`
+1. **Plan:** Read `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#decision-trees`
 2. **Implement:** Follow module pattern; use `fyne.Do()` for UI updates
 3. **Test:** Add `*_test.go` with unit and integration tests
 4. **Verify:** `go test ./...` passes, `go test -race ./...` passes
@@ -264,8 +266,8 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ### Debug a GUI Freeze
 1. Check `shared/physics/` and module `pkg/gui/` for blocking operations
 2. Verify all UI updates use `fyne.Do(func() { ... })`
-3. See `docs/development/GUI/FYNE_NOTES.md`
-4. Review `docs/development/HYPER_ANALYSIS_REPORT.md` for UI critique
+3. See `docs/3-develop/gui/FYNE_NOTES.md`
+4. Review `docs/3-develop/HYPER_ANALYSIS_REPORT.md` for UI critique
 
 ### Fix a Physics Test Failure
 1. Read the test output — identify which material/level failed
