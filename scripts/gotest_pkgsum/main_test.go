@@ -1,75 +1,53 @@
 package main
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func runPkgSum(jsonl string) (pass, fail, skip, total int) {
-	states := make(map[string]*pkgState)
-	for _, line := range strings.Split(strings.TrimSpace(jsonl), "\n") {
-		if line == "" {
-			continue
-		}
-		var ev TestEvent
-		if err := unmarshalEvent([]byte(line), &ev); err != nil {
-			continue
-		}
-		if ev.Package == "" {
-			continue
-		}
-		sw := ev.Action
-		if sw != "pass" && sw != "fail" && sw != "skip" {
-			continue
-		}
-		st := states[ev.Package]
-		if st == nil {
-			st = &pkgState{}
-			states[ev.Package] = st
-		}
-		if sw == "fail" {
-			st.seenFail = true
-			continue
-		}
-		st.last = sw
+func runPkgsum(t *testing.T, jsonl string) (string, error) {
+	t.Helper()
+	tmp := t.TempDir()
+	in := filepath.Join(tmp, "in.jsonl")
+	if err := os.WriteFile(in, []byte(jsonl), 0o644); err != nil {
+		t.Fatalf("write input: %v", err)
 	}
-	for _, st := range states {
-		total++
-		if st.seenFail {
-			fail++
-		} else if st.last == "skip" {
-			skip++
-		} else {
-			pass++
-		}
-	}
-	return
+	cmd := exec.Command("go", "run", ".", in)
+	cmd.Dir = "."
+	out, err := cmd.CombinedOutput()
+	return string(out), err
 }
 
-func TestPkgSum_AllPass(t *testing.T) {
-	jsonl := `{"Action":"pass","Package":"foo/bar"}` + "\n" +
-		`{"Action":"pass","Package":"foo/baz"}`
-	p, f, s, tot := runPkgSum(jsonl)
-	if p != 2 || f != 0 || s != 0 || tot != 2 {
-		t.Fatalf("want 2/0/0/2 got %d/%d/%d/%d", p, f, s, tot)
+func TestPkgsum_ToleratesNonJSONNoise(t *testing.T) {
+	jsonl := strings.Join([]string{
+		"not-json-noise-line",
+		`{"Action":"run","Package":"fecim-lattice-tools/foo"}`,
+		`{"Action":"pass","Package":"fecim-lattice-tools/foo"}`,
+	}, "\n") + "\n"
+
+	out, err := runPkgsum(t, jsonl)
+	if err != nil {
+		t.Fatalf("expected success, got err=%v out=%s", err, out)
+	}
+	if !strings.Contains(out, "PKG_SUM pass=1 fail=0 skip=0 total=1") {
+		t.Fatalf("unexpected summary: %s", out)
 	}
 }
 
-func TestPkgSum_WithFail(t *testing.T) {
-	jsonl := `{"Action":"pass","Package":"foo/bar"}` + "\n" +
-		`{"Action":"fail","Package":"foo/baz"}` + "\n" +
-		`{"Action":"pass","Package":"foo/baz"}`
-	p, f, s, tot := runPkgSum(jsonl)
-	if p != 1 || f != 1 || s != 0 || tot != 2 {
-		t.Fatalf("want 1/1/0/2 got %d/%d/%d/%d", p, f, s, tot)
-	}
-}
+func TestPkgsum_FailPackageReturnsNonZero(t *testing.T) {
+	jsonl := strings.Join([]string{
+		`{"Action":"run","Package":"fecim-lattice-tools/foo"}`,
+		`{"Action":"fail","Package":"fecim-lattice-tools/foo"}`,
+	}, "\n") + "\n"
 
-func TestPkgSum_WithSkip(t *testing.T) {
-	jsonl := `{"Action":"skip","Package":"foo/bar"}` + "\n" +
-		`{"Action":"pass","Package":"foo/baz"}`
-	p, f, s, tot := runPkgSum(jsonl)
-	if p != 1 || f != 0 || s != 1 || tot != 2 {
-		t.Fatalf("want 1/0/1/2 got %d/%d/%d/%d", p, f, s, tot)
+	out, err := runPkgsum(t, jsonl)
+	if err == nil {
+		t.Fatalf("expected non-zero exit for failing package, out=%s", out)
+	}
+	if !strings.Contains(out, "PKG_SUM pass=0 fail=1 skip=0 total=1") {
+		t.Fatalf("unexpected summary: %s", out)
 	}
 }
