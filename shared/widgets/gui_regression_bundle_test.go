@@ -5,7 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
+
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 type guiRegressionReport struct {
@@ -18,7 +19,7 @@ type guiRegressionReport struct {
 
 func TestGUIRegressionBundleReport(t *testing.T) {
 	report := guiRegressionReport{
-		Timestamp:      time.Now().UTC().Format(time.RFC3339),
+		Timestamp:      sharedval.NewEnvelope("", "", true).TimestampUTC,
 		ScreenshotDiff: 0.0,
 		LayoutPass:     true,
 		MaxFrameMS:     12.3,
