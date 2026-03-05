@@ -94,6 +94,22 @@ func DetectGlossaryTerms(content string) []string {
 		}
 	}
 
+	// Common single-word aliases that should map to canonical glossary entries.
+	// This improves discoverability when docs mention generic forms
+	// ("ferroelectric", "hysteresis", "polarization") instead of full term names.
+	aliasToCanonical := map[string]string{
+		"ferroelectric": "FeCIM",
+		"hysteresis":    "Hysteresis Loop",
+		"polarization":  "Remnant Polarization",
+	}
+	for alias, canonical := range aliasToCanonical {
+		pattern := `\b` + regexp.QuoteMeta(alias) + `\b`
+		matched, err := regexp.MatchString(pattern, lowerContent)
+		if err == nil && matched {
+			foundTerms[canonical] = true
+		}
+	}
+
 	// Convert to sorted slice
 	terms := make([]string, 0, len(foundTerms))
 	for term := range foundTerms {
