@@ -10,7 +10,6 @@ package export
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/shared/logging"
@@ -48,13 +47,12 @@ func GenerateArrayVerilog(cfg config.ArrayConfig) string {
 	// Header with metadata
 	sb.WriteString(characterizationProvenanceBlockSlash)
 	sb.WriteString(fmt.Sprintf(`// FeCIM Crossbar Array - Auto-generated
-// Date: %s
+// Date: reproducible-build
 // Rows: %d, Cols: %d
 // Mode: %s
 // Architecture: %s
 // NOTE: Cell is placeholder. Real behavior requires FeFET model.
 `,
-		time.Now().Format("2006-01-02"),
 		cfg.Rows, cfg.Cols, cfg.Mode, cfg.Architecture))
 
 	if is1T1R {

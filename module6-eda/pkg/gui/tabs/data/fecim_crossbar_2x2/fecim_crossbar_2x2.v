@@ -7,7 +7,7 @@
 // For production characterization, use Cadence Liberate or Synopsys SiliconSmart
 // with measured device data.
 // FeCIM Crossbar Array - Auto-generated
-// Date: 2026-02-27
+// Date: reproducible-build
 // Rows: 2, Cols: 2
 // Mode: storage
 // Architecture: passive
