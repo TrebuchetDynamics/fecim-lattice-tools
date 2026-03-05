@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 type regressionTarget struct {
@@ -123,7 +123,7 @@ func TestHeadlessRegression_WRD_ISPP_Preisach(t *testing.T) {
 				Suite:     "headless-wrd-ispp-regression",
 				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
 				Model:     "preisach",
-				Timestamp: time.Now().Format(time.RFC3339),
+				Timestamp: sharedval.NewEnvelope("", "", true).TimestampUTC,
 				MaterialSnapshot: materialPhysicsSnapshot{
 					MaterialID:      tc.id,
 					MaterialName:    mat.Name,
@@ -265,7 +265,7 @@ func TestHeadlessRegression_WRD_ISPP_LK(t *testing.T) {
 				Suite:     "headless-wrd-ispp-regression",
 				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
 				Model:     "landau-khalatnikov",
-				Timestamp: time.Now().Format(time.RFC3339),
+				Timestamp: sharedval.NewEnvelope("", "", true).TimestampUTC,
 				MaterialSnapshot: materialPhysicsSnapshot{
 					MaterialID:      tc.id,
 					MaterialName:    mat.Name,
