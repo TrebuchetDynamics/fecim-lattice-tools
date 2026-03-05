@@ -68,6 +68,11 @@ const (
 	// Minimum supported GUI size (G13)
 	minWindowWidth  = 1024
 	minWindowHeight = 768
+
+	// Clamp restored preferences to the canonical UI audit envelope so stale
+	// desktop sizes do not relaunch off-screen in 1400x900 headless runs.
+	maxRestoredWindowWidth  = defaultWindowWidth
+	maxRestoredWindowHeight = defaultWindowHeight
 )
 
 // loadWindowSize loads saved window dimensions from preferences
@@ -81,6 +86,12 @@ func loadWindowSize(prefs fyne.Preferences) fyne.Size {
 	}
 	if h < minWindowHeight {
 		h = minWindowHeight
+	}
+	if w > maxRestoredWindowWidth {
+		w = maxRestoredWindowWidth
+	}
+	if h > maxRestoredWindowHeight {
+		h = maxRestoredWindowHeight
 	}
 
 	// Round to even integers and add 2-pixel buffer to prevent Fyne/Wayland
