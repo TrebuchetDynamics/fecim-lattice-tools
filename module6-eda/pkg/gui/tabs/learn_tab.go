@@ -107,8 +107,10 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Layout with sidebar - increased width and better spacing
 	sidebarTitle := widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	sidebarSpacer := widget.NewLabel("") // Add spacing after title
-	sidebarSpacer.Resize(fyne.NewSize(1, 8))
+	// widget.Label("") can collapse to 0 height inside managed layouts.
+	// Use a transparent rectangle with explicit min-size to guarantee vertical spacing.
+	sidebarSpacer := canvas.NewRectangle(nil)
+	sidebarSpacer.SetMinSize(fyne.NewSize(1, 8))
 
 	sidebar := container.NewBorder(
 		container.NewVBox(sidebarTitle, sidebarSpacer),
