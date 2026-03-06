@@ -86,3 +86,33 @@ func TestModule4KCLArtifacts_Contract(t *testing.T) {
 		}
 	}
 }
+
+func TestModule4KCLConvergence_BoundaryScalingInvariant(t *testing.T) {
+	repoRoot := filepath.Clean("..")
+	convPath := filepath.Join(repoRoot, "validation", "output", "validation", "module4", "kcl_convergence.json")
+
+	convBytes, err := os.ReadFile(convPath)
+	if err != nil {
+		t.Fatalf("read %s: %v", convPath, err)
+	}
+	var conv []kclConvergencePoint
+	if err := json.Unmarshal(convBytes, &conv); err != nil {
+		t.Fatalf("decode %s: %v", convPath, err)
+	}
+	if len(conv) < 2 {
+		t.Fatalf("%s expected >=2 points, got %d", convPath, len(conv))
+	}
+
+	for i := 1; i < len(conv); i++ {
+		prev, cur := conv[i-1], conv[i]
+		if cur.Size != prev.Size*2 {
+			t.Fatalf("size step mismatch at idx=%d: prev=%d cur=%d", i, prev.Size, cur.Size)
+		}
+		if cur.ExpectedN2E != prev.ExpectedN2E*4 {
+			t.Fatalf("expected_O_N2_eps scaling mismatch at idx=%d: prev=%g cur=%g (want 4x)", i, prev.ExpectedN2E, cur.ExpectedN2E)
+		}
+		if cur.MaxKCL < prev.MaxKCL {
+			t.Fatalf("max_kcl_A decreased at idx=%d: prev=%g cur=%g", i, prev.MaxKCL, cur.MaxKCL)
+		}
+	}
+}
