@@ -53,10 +53,17 @@ func TestModule4RegressionArtifacts_DeterministicMetadataContract(t *testing.T) 
 		if err := json.Unmarshal(b, &payload); err != nil {
 			t.Fatalf("decode %s: %v", p, err)
 		}
-		if len(payload) == 0 {
-			t.Fatalf("%s has no records", p)
+		expected := map[string]bool{
+			"TestTierBWriteBoundaryIntegrity_NoDirectInternalAssignmentPath":       true,
+			"TestTierBWriteBoundaryIntegrity_TopInjectedAndSolverDerivedInternals": true,
+		}
+		if len(payload) != len(expected) {
+			t.Fatalf("%s expected %d records, got %d", p, len(expected), len(payload))
 		}
 		for name, rec := range payload {
+			if !expected[name] {
+				t.Fatalf("%s unexpected record key %q", p, name)
+			}
 			if rec.Version != "v1" {
 				t.Fatalf("%s[%s] version=%q want v1", p, name, rec.Version)
 			}
@@ -65,6 +72,9 @@ func TestModule4RegressionArtifacts_DeterministicMetadataContract(t *testing.T) 
 			}
 			if rec.TestName == "" {
 				t.Fatalf("%s[%s] test_name empty", p, name)
+			}
+			if !rec.Pass {
+				t.Fatalf("%s[%s] pass=false", p, name)
 			}
 		}
 	})
