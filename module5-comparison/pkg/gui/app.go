@@ -417,27 +417,44 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		ca.exportReproducibilityPack()
 	}, ca.window)
 
-	// Use a wrapping grid so controls don't overflow at 1024px minimum width.
-	// Row 1: mode/scenario/workload selectors + calculate
-	controlsRow1 := container.NewHBox(
-		widget.NewLabel("Mode:"),
-		uiModeSelect,
-		widget.NewLabel("Scenario:"),
-		scenarioSelect,
-		widget.NewLabel("Workload:"),
-		ca.workloadSelect,
-		layout.NewSpacer(),
-		calcBtn,
+	// Build responsive controls that avoid clipping/truncation at smaller widths.
+	selectorBlock := func(label string, obj fyne.CanvasObject, minW float32) fyne.CanvasObject {
+		title := widget.NewLabelWithStyle(label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		box := container.NewVBox(title, obj)
+		boxWrap := container.NewGridWrap(fyne.NewSize(minW, 72), box)
+		return boxWrap
+	}
+
+	modeBlock := selectorBlock("Mode", uiModeSelect, 180)
+	scenarioBlock := selectorBlock("Scenario", scenarioSelect, 180)
+	workloadBlock := selectorBlock("Workload", ca.workloadSelect, 220)
+
+	calcBtnContainer := container.NewGridWrap(fyne.NewSize(140, 44), calcBtn)
+	controlsRow1 := container.NewVBox(
+		container.NewAdaptiveGrid(3, modeBlock, scenarioBlock, workloadBlock),
+		container.NewHBox(layout.NewSpacer(), calcBtnContainer),
 	)
-	// Row 2: slider label + slider + export buttons
+
+	// Row 2: inferences + slider + exports (responsive wraps).
 	ca.inferencesLabel.Truncation = fyne.TextTruncateEllipsis
-	controlsRow2 := container.NewHBox(
-		ca.inferencesLabel,
-		sliderContainer,
-		layout.NewSpacer(),
-		exportDataBtn,
-		exportImageBtn,
-		exportReproBtn,
+	ca.inferencesLabel.Wrapping = fyne.TextWrapWord
+	inferenceBlock := container.NewGridWrap(
+		fyne.NewSize(360, 72),
+		container.NewVBox(
+			widget.NewLabelWithStyle("Inference Load", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			container.NewHBox(ca.inferencesLabel, layout.NewSpacer()),
+			sliderContainer,
+		),
+	)
+
+	exportButtons := container.NewAdaptiveGrid(3,
+		container.NewGridWrap(fyne.NewSize(160, 44), exportDataBtn),
+		container.NewGridWrap(fyne.NewSize(160, 44), exportImageBtn),
+		container.NewGridWrap(fyne.NewSize(180, 44), exportReproBtn),
+	)
+	controlsRow2 := container.NewVBox(
+		inferenceBlock,
+		exportButtons,
 	)
 	configRow := container.NewVBox(controlsRow1, controlsRow2)
 	roiSection := container.NewVBox(
