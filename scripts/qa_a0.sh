@@ -10,14 +10,29 @@ cd "$(dirname "$0")/.."
 
 LIST_TOTAL=$(go list ./... | wc -l | tr -d ' ')
 
-JSON_PATH="${1:-/tmp/fecim_gotest.json}"
+if [[ $# -ge 1 ]]; then
+  JSON_PATH="$1"
+  CLEANUP_JSON=0
+else
+  JSON_PATH="$(mktemp /tmp/fecim_gotest.XXXXXX.json)"
+  CLEANUP_JSON=1
+fi
+
+cleanup() {
+  if [[ ${CLEANUP_JSON} -eq 1 ]]; then
+    rm -f "${JSON_PATH}"
+  fi
+}
+trap cleanup EXIT
 
 # Capture test exit code without aborting early so we can always emit PKG_SUM
 # and diagnostics for flaky/runner-side failures.
 set +e
 # Some GUI/test runners can emit occasional NUL bytes on stdout/stderr; strip
 # them so the JSON parser remains stable in unattended QA loops.
-go test -json ./... | tr -d '\000' > "$JSON_PATH"
+# Use -count=1 so env-gated or host-sensitive tests cannot replay stale cache
+# entries from a previous developer session.
+go test -count=1 -json ./... | tr -d '\000' > "$JSON_PATH"
 TEST_EC=$?
 set -e
 

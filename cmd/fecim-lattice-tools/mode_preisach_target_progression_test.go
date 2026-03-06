@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 func TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence(t *testing.T) {
@@ -80,7 +82,7 @@ func TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence(t *testing.T) {
 
 func newestHysteresisLogAfterWithTB(t *testing.T, after time.Time) string {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join("logs", "hysteresis-*.csv"))
+	paths, err := filepath.Glob(filepath.Join(logging.LogsDir(), "hysteresis-*.csv"))
 	if err != nil {
 		t.Fatalf("glob logs: %v", err)
 	}

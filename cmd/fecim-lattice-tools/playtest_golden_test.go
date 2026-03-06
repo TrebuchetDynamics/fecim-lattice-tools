@@ -5,6 +5,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -38,40 +39,14 @@ func playtestAssertGolden(t *testing.T, masterFilename string, o fyne.CanvasObje
 	t.Helper()
 
 	if playtestGoldenShouldUpdate() {
-		// Render to markup using a temp canvas, then write to master location.
-		c := test.NewCanvas()
-		c.SetPadded(false)
-		size := o.MinSize().Max(o.Size())
-		c.SetContent(o)
-		c.Resize(size)
-
-		// Use Fyne's internal snapshot function via AssertRendersToMarkup.
-		// On first run the master won't exist — it writes to testdata/failed/.
-		// We let the assertion "fail" (creating testdata/failed/<name>),
-		// then copy the failed output to the master location.
-		//
-		// Simpler: just call the assertion and let it create the master.
-		// If the file doesn't exist yet, Fyne writes to testdata/failed/
-		// and reports an error. We suppress the error and copy the file.
-		masterPath := "testdata/" + masterFilename
-		if err := os.MkdirAll("testdata/"+playtestGoldenDir, 0755); err != nil {
+		masterPath := filepath.Join("testdata", masterFilename)
+		if err := os.MkdirAll(filepath.Dir(masterPath), 0755); err != nil {
 			t.Logf("Warning: could not create golden dir: %v", err)
 		}
-
-		// Run the assertion — it will write testdata/failed/<name> if master missing.
-		passed := test.AssertRendersToMarkup(t, masterFilename, c)
-		if !passed {
-			// Copy from failed to master
-			failedPath := "testdata/failed/" + masterFilename
-			data, err := os.ReadFile(failedPath)
-			if err == nil {
-				if err := os.WriteFile(masterPath, data, 0644); err != nil {
-					t.Logf("Warning: could not write golden master: %v", err)
-				} else {
-					t.Logf("Golden master updated: %s", masterPath)
-				}
-			}
+		if err := os.WriteFile(masterPath, []byte(test.RenderObjectToMarkup(o)), 0644); err != nil {
+			t.Fatalf("Could not update golden master %s: %v", masterPath, err)
 		}
+		t.Logf("Golden master updated: %s", masterPath)
 		return
 	}
 
@@ -153,28 +128,6 @@ func TestPlaytestGolden_Docs(t *testing.T) {
 func testPlaytestGoldenModule(t *testing.T, name string, create func() (moduleLifecycle, error)) {
 	t.Helper()
 
-	fy := test.NewApp()
-	t.Cleanup(func() { fy.Quit() })
-
-	mod, err := create()
-	if err != nil {
-		t.Fatalf("Failed to create %s: %v", name, err)
-	}
-
-	var w fyne.Window
-	var content fyne.CanvasObject
-	fyne.DoAndWait(func() {
-		w = fy.NewWindow("Golden - " + name)
-		content = mod.BuildContent(fy, w)
-		w.SetContent(container.NewMax(content))
-		w.Show()
-	})
-	t.Cleanup(func() {
-		fyne.DoAndWait(func() { w.Close() })
-	})
-
-	// NO module.Start() — static state for determinism.
-
 	sizes := []struct {
 		label string
 		size  fyne.Size
@@ -186,8 +139,27 @@ func testPlaytestGoldenModule(t *testing.T, name string, create func() (moduleLi
 	for _, sz := range sizes {
 		sz := sz
 		t.Run(sz.label, func(t *testing.T) {
+			fy := test.NewApp()
+			t.Cleanup(func() { fy.Quit() })
+
+			mod, err := create()
+			if err != nil {
+				t.Fatalf("Failed to create %s: %v", name, err)
+			}
+
+			var (
+				w       fyne.Window
+				content fyne.CanvasObject
+			)
 			fyne.DoAndWait(func() {
+				w = fy.NewWindow("Golden - " + name + " - " + sz.label)
+				content = mod.BuildContent(fy, w)
+				w.SetContent(container.NewMax(content))
 				w.Resize(sz.size)
+				w.Show()
+			})
+			t.Cleanup(func() {
+				fyne.DoAndWait(func() { w.Close() })
 			})
 
 			goldenFile := playtestGoldenDir + "/" + name + "_" + sz.label + ".xml"

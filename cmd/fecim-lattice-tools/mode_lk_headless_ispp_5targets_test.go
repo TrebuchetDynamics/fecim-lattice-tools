@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 func TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent(t *testing.T) {
@@ -112,7 +114,7 @@ func TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent(t *testing
 
 func newestHysteresisCSVAfter(t *testing.T, before time.Time) string {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join("logs", "hysteresis-*.csv"))
+	paths, err := filepath.Glob(filepath.Join(logging.LogsDir(), "hysteresis-*.csv"))
 	if err != nil {
 		t.Fatalf("glob logs: %v", err)
 	}

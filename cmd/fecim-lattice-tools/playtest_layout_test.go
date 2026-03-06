@@ -36,8 +36,8 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 	seen := map[uintptr]bool{}
 	var entries []boundEntry
 
-	var walk func(o fyne.CanvasObject)
-	walk = func(o fyne.CanvasObject) {
+	var walk func(o fyne.CanvasObject, parentPos fyne.Position)
+	walk = func(o fyne.CanvasObject, parentPos fyne.Position) {
 		if o == nil {
 			return
 		}
@@ -54,6 +54,7 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 		}
 
 		pos := o.Position()
+		absPos := fyne.NewPos(parentPos.X+pos.X, parentPos.Y+pos.Y)
 		sz := o.Size()
 		if sz.Width > 0 && sz.Height > 0 {
 			typeName := fmt.Sprintf("%T", o)
@@ -63,8 +64,8 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 			entries = append(entries, boundEntry{
 				TypeName: typeName,
 				Text:     resolveText(o),
-				X:        pos.X,
-				Y:        pos.Y,
+				X:        absPos.X,
+				Y:        absPos.Y,
 				W:        sz.Width,
 				H:        sz.Height,
 			})
@@ -74,21 +75,21 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 		switch obj := o.(type) {
 		case *container.AppTabs:
 			for _, item := range obj.Items {
-				walk(item.Content)
+				walk(item.Content, absPos)
 			}
 			return
 		case *container.DocTabs:
 			for _, item := range obj.Items {
-				walk(item.Content)
+				walk(item.Content, absPos)
 			}
 			return
 		case *container.Split:
-			walk(obj.Leading)
-			walk(obj.Trailing)
+			walk(obj.Leading, absPos)
+			walk(obj.Trailing, absPos)
 			return
 		case *fyne.Container:
 			for _, child := range obj.Objects {
-				walk(child)
+				walk(child, absPos)
 			}
 			return
 		}
@@ -104,18 +105,50 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 					continue
 				}
 				if child, ok := f.Interface().(fyne.CanvasObject); ok {
-					walk(child)
+					walk(child, absPos)
 				} else if children, ok := f.Interface().([]fyne.CanvasObject); ok {
 					for _, child := range children {
-						walk(child)
+						walk(child, absPos)
 					}
 				}
 			}
 		}
 	}
 
-	walk(root)
+	walk(root, fyne.NewPos(0, 0))
 	return entries
+}
+
+func TestCollectBounds_UsesAbsolutePositions(t *testing.T) {
+	root := container.NewWithoutLayout()
+	parent := container.NewWithoutLayout()
+	parent.Move(fyne.NewPos(20, 30))
+	parent.Resize(fyne.NewSize(200, 150))
+
+	child := container.NewWithoutLayout()
+	child.Move(fyne.NewPos(15, 25))
+	child.Resize(fyne.NewSize(80, 60))
+
+	parent.Add(child)
+	root.Add(parent)
+
+	entries := collectBounds(root)
+	if len(entries) < 2 {
+		t.Fatalf("expected at least 2 entries, got %d", len(entries))
+	}
+
+	found := false
+	for _, entry := range entries {
+		if entry.W == 80 && entry.H == 60 {
+			found = true
+			if entry.X != 35 || entry.Y != 55 {
+				t.Fatalf("expected absolute child position 35x55, got %.0fx%.0f", entry.X, entry.Y)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected child entry not found")
+	}
 }
 
 // detectOverlaps checks all pairs of bound entries for bounding-box intersection.

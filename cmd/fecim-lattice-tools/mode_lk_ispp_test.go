@@ -7,6 +7,8 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 // TestHeadlessLKRun_EmitsISPPPhases ensures the LK headless run actually emits
@@ -24,7 +26,7 @@ func TestHeadlessLKRun_EmitsISPPPhases(t *testing.T) {
 	}
 
 	// Find newest hysteresis CSV written after the run.
-	paths, err := filepath.Glob(filepath.Join("logs", "hysteresis-*.csv"))
+	paths, err := filepath.Glob(filepath.Join(logging.LogsDir(), "hysteresis-*.csv"))
 	if err != nil {
 		t.Fatalf("glob logs: %v", err)
 	}

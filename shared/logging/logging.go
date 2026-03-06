@@ -367,6 +367,10 @@ func VerbosityString(level VerbosityLevel) string {
 
 // getLogsDir returns the logs directory path
 func getLogsDir() string {
+	if override := strings.TrimSpace(os.Getenv("FECIM_LOGS_DIR")); override != "" {
+		return override
+	}
+
 	// Try to find the logs directory relative to working directory
 	paths := []string{
 		"logs",

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 // Regression acceptance: LK ISPP converges 20 targets without timeout.
@@ -33,7 +35,7 @@ func TestHeadlessLKRun_ISPPConverges20Targets_NoTimeout(t *testing.T) {
 	}
 
 	// Find newest hysteresis CSV written after the run.
-	paths, err := filepath.Glob(filepath.Join("logs", "hysteresis-*.csv"))
+	paths, err := filepath.Glob(filepath.Join(logging.LogsDir(), "hysteresis-*.csv"))
 	if err != nil {
 		t.Fatalf("glob logs: %v", err)
 	}

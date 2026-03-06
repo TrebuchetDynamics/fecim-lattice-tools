@@ -46,6 +46,12 @@ func TestMain(m *testing.M) {
 	_ = os.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 	_ = os.Setenv("FECIM_DISABLE_STARTUP_CALIBRATION", "1")
 
+	logDir, err := os.MkdirTemp("", "fecim-cmd-logs-*")
+	if err == nil {
+		_ = os.Setenv("FECIM_LOGS_DIR", logDir)
+		defer os.RemoveAll(logDir)
+	}
+
 	// Fyne's GLFW driver requires app.Run() on the process main goroutine.
 	// Default to the safer mode (just run tests) unless explicitly opted-in.
 	// To force the real event loop (local dev only): set FECIM_GLFW_TESTMAIN=1.
