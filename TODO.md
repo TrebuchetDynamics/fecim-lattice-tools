@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-03-05
+**Last Updated**: 2026-03-06
 
 **Phase**: Education (simulation-only). All pending items cleared. Eight world-class features deferred pending prerequisites.
 
@@ -13,7 +13,7 @@
 | Bucket | Count | Notes |
 |--------|-------|-------|
 | Pending | 0 | — |
-| Open Issues | 1 | qmd cold-start/bootstrap blocker on this host |
+| Open Issues | 2 | qmd cold-start blocker + MNIST layout-audit hang |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
 | Completed | ~260+ | All items done including L09, L10 |
@@ -35,6 +35,14 @@ None.
   owner: tooling/system
   workaround/pivot: use `rg` plus direct reads; capture findings in `docs/3-develop/HYPER_ANALYSIS_REPORT.md`
   next check: 2026-03-06 09:00 CST
+
+[BLOCKED] Full all-module layout audit stalls at MNIST in headless test driver — 2026-03-06 15:11 CST
+  blocker: `TestLayoutAudit_AllModulesTabsAndSizes` does not advance after entering the `mnist` subtest
+  evidence: `timeout 180s env FECIM_LAYOUT_AUDIT=1 go test -count=1 -v ./cmd/fecim-lattice-tools -run 'TestLayoutAudit_AllModulesTabsAndSizes'` logged hysteresis captures, skipped crossbar, reached `=== RUN   TestLayoutAudit_AllModulesTabsAndSizes/mnist`, then exited `124`
+  unblocks when: MNIST can initialize under the headless layout-audit driver or is explicitly gated/skipped like crossbar
+  owner: agent:riju
+  workaround/pivot: continue with targeted playtest lanes (`OverlapDetection`, `MinSizeValidation`) and module-specific GUI tests while isolating the MNIST driver hang
+  next check: next UI reliability cycle
 
 ### Resolved Issues
 
