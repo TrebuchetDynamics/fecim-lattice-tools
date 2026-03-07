@@ -110,7 +110,7 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 // createUIComponents initializes all UI widgets
 func (app *EmbeddedDocsApp) createUIComponents() {
 	// Content viewer
-	app.contentText = widget.NewRichTextFromMarkdown("# FeCIM Curriculum\n\nSelect a document from the tree.")
+	app.contentText = widget.NewRichTextFromMarkdown("# FeCIM Curriculum\n\nSelect a page from **Curriculum Links** or the navigation tree on the left.\n\nQuick start:\n- Overview\n- Module Index\n- Research Index\n\nKeyboard: use **Ctrl+F** to search documentation.")
 	app.contentText.Wrapping = fyne.TextWrapWord
 	app.contentScroll = container.NewVScroll(app.contentText)
 
@@ -188,10 +188,11 @@ func (app *EmbeddedDocsApp) buildCurriculumLinks() fyne.CanvasObject {
 
 	for _, link := range links {
 		path := link.path
-		btn := widget.NewButton(link.label, func() {
+		btn := widget.NewButtonWithIcon(link.label, theme.DocumentIcon(), func() {
 			app.loadDocument(path)
 		})
-		btn.Importance = widget.LowImportance
+		// Keep quick links clearly readable in dark themes.
+		btn.Importance = widget.MediumImportance
 		if _, err := os.Stat(path); err != nil {
 			btn.Disable()
 		}
@@ -230,9 +231,12 @@ func (app *EmbeddedDocsApp) buildMainContent() fyne.CanvasObject {
 
 // buildTocSidebar creates the right ToC sidebar
 func (app *EmbeddedDocsApp) buildTocSidebar() fyne.CanvasObject {
+	helper := widget.NewLabel("Select a document to view section headings.")
+	helper.Wrapping = fyne.TextWrapWord
+
 	return container.NewBorder(
 		widget.NewLabelWithStyle("On This Page", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		nil, nil, nil,
+		helper, nil, nil,
 		app.toc,
 	)
 }
