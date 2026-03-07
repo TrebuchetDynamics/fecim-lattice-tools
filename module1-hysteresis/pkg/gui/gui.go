@@ -827,9 +827,9 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create controls panel
 	controls := a.createControlsPanel()
-	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 280}, controls)
+	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 300}, controls)
 	controlsScroll := container.NewVScroll(controlsContent)
-	controlsScroll.SetMinSize(fyne.NewSize(280, 0))
+	controlsScroll.SetMinSize(fyne.NewSize(300, 0))
 
 	// Create info panel
 	info := a.createInfoPanel()
@@ -866,23 +866,26 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	infoCard := widget.NewCard("Device Status", "", info)
 	literatureCard := a.createLiteratureOverlayPanel()
-	infoStack := container.NewVBox(
-		infoCard,
-		a.isppWidget,
-		a.simVsExpWidget,
-		literatureCard,
-	)
-	infoScroll := container.NewVScroll(infoStack)
-	infoScroll.SetMinSize(fyne.NewSize(220, 0))
 
-	leftSplit := container.NewVSplit(infoScroll, logPanel)
-	leftSplit.SetOffset(0.66)
+	sections := widget.NewAccordion(
+		widget.NewAccordionItem("Device Status", infoCard),
+		widget.NewAccordionItem("ISPP State", a.isppWidget),
+		widget.NewAccordionItem("Simulation vs Experiment", a.simVsExpWidget),
+		widget.NewAccordionItem("Literature Context", literatureCard),
+		widget.NewAccordionItem("Memory Log", logPanel),
+	)
+	sections.MultiOpen = true
+	sections.Open(0)
+	sections.Open(1)
+
+	infoScroll := container.NewVScroll(sections)
+	infoScroll.SetMinSize(fyne.NewSize(240, 0))
 
 	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(
 		cellDisplay,
 		nil, nil, nil,
-		container.NewPadded(leftSplit),
+		container.NewPadded(infoScroll),
 	)
 
 	// Right column: Controls only (compact)

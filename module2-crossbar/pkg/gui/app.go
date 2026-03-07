@@ -4,12 +4,14 @@ package gui
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"math/rand"
 	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -573,18 +575,35 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues
 	// Controls are fixed-height, only stats need scrolling
+	sectionTitle := func(text string) fyne.CanvasObject {
+		return widget.NewLabelWithStyle(text, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	}
+	sectionGap := func() fyne.CanvasObject {
+		gap := canvas.NewRectangle(color.Transparent)
+		gap.SetMinSize(fyne.NewSize(0, 8))
+		return gap
+	}
 	controlsBox := container.NewVBox(
+		sectionTitle("Array Setup"),
 		arraySizeRow,
+		sectionGap(),
 		widget.NewSeparator(),
+		sectionTitle("Architecture"),
 		archLabel,
 		ca.archToggle,
+		sectionGap(),
 		widget.NewSeparator(),
+		sectionTitle("Signal & Conversion"),
 		noiseRow,
 		adcRow,
 		tempRow,
+		sectionGap(),
 		widget.NewSeparator(),
+		sectionTitle("Display"),
 		colormapRow,
+		sectionGap(),
 		widget.NewSeparator(),
+		sectionTitle("Actions"),
 		actionButtons,
 	)
 
