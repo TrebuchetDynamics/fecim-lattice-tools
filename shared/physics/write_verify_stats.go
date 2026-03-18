@@ -38,6 +38,9 @@ type WriteVerifyStats struct {
 	OvershootCount int // Number of overshoots requiring reset
 	ResetCount     int // Number of reset operations
 
+	// Retention verify statistics
+	RetentionFailures int // Number of retention check failures
+
 	// Cycle-dependent failure tracking
 	CycleCount         int       // Total write cycles on array
 	FailureRateHistory []float64 // Failure rate at each 100-cycle checkpoint
@@ -94,6 +97,13 @@ func (s *WriteVerifyStats) RecordWrite(targetLevel int, pulsesUsed int, success 
 		failureRate := float64(s.FailedWrites) / float64(s.TotalWrites)
 		s.FailureRateHistory = append(s.FailureRateHistory, failureRate)
 	}
+}
+
+// RecordRetentionFailure records a retention check failure.
+func (s *WriteVerifyStats) RecordRetentionFailure() {
+	s.mu.Lock()
+	s.RetentionFailures++
+	s.mu.Unlock()
 }
 
 // RecordReset records a reset operation (due to overshoot).
@@ -315,6 +325,7 @@ func (s *WriteVerifyStats) Reset() {
 	s.PulsesHistogram = [10]int{}
 	s.OvershootCount = 0
 	s.ResetCount = 0
+	s.RetentionFailures = 0
 	s.CycleCount = 0
 	s.FailureRateHistory = make([]float64, 0, 100)
 	s.LevelAttempts = [256]int{}

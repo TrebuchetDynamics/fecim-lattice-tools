@@ -47,6 +47,12 @@ type WriteController struct {
 	// FailureReason is set when WriteTarget fails (e.g., unreachable due to bounds).
 	FailureReason string
 
+	// Post-write retention verification: after a successful verify, dwell at E=0
+	// for RetentionDwell seconds and check that polarization drift stays within
+	// RetentionTolerance (relative). Default 0 (disabled, backward-compatible).
+	RetentionDwell     float64 // Dwell time at E=0 after verify (s); 0 = disabled
+	RetentionTolerance float64 // Max relative drift |dP|/|P|; default 0.05 (5%)
+
 	// Optional hooks for headless diagnostics and CSV logging.
 	StepFunc  func(E, dt float64) float64
 	EventHook func(event WriteEvent)
@@ -71,15 +77,69 @@ type WriteEvent struct {
 
 func NewWriteController(solver *LKSolver, material *HZOMaterial) *WriteController {
 	return &WriteController{
-		Solver:        solver,
-		Material:      material,
-		MaxVoltage:    3.0,
-		MinVoltage:    0.0,
-		PulseWidth:    10e-9,
-		Tolerance:     0.01,
-		MaxIterations: 20,
-		MaxStep:       1e-12,
+		Solver:             solver,
+		Material:           material,
+		MaxVoltage:         3.0,
+		MinVoltage:         0.0,
+		PulseWidth:         10e-9,
+		Tolerance:          0.01,
+		MaxIterations:      20,
+		MaxStep:            1e-12,
+		RetentionTolerance: 0.05, // 5% default; set RetentionDwell > 0 to enable
 	}
+}
+
+// checkRetention performs a post-write retention check by dwelling at E=0 for
+// RetentionDwell seconds and measuring polarization drift. Returns true if drift
+// is within RetentionTolerance.
+func (c *WriteController) checkRetention(preDwellP float64, log *logging.Logger, attempt int, vPulse, vMin, vMax, targetP, targetG, currentG, error float64) bool {
+	if c.RetentionDwell <= 0 || c.Solver == nil {
+		return true
+	}
+
+	const retentionSubSteps = 100
+	dtDwell := c.RetentionDwell / float64(retentionSubSteps)
+	for j := 0; j < retentionSubSteps; j++ {
+		c.Solver.Step(0, dtDwell) // E=0 dwell
+	}
+
+	postDwellP := c.Solver.GetState()
+	drift := 0.0
+	if preDwellP != 0 {
+		drift = math.Abs(postDwellP-preDwellP) / math.Abs(preDwellP)
+	}
+
+	if drift > c.RetentionTolerance {
+		c.emitEvent(WriteEvent{
+			Phase:    "RetentionFail",
+			Attempt:  attempt,
+			VPulse:   vPulse,
+			VMin:     vMin,
+			VMax:     vMax,
+			TargetP:  targetP,
+			TargetG:  targetG,
+			CurrentP: postDwellP,
+			CurrentG: currentG,
+			Error:    error,
+		})
+		// Restore pre-dwell state so ISPP can retry
+		c.Solver.SetState(preDwellP)
+		return false
+	}
+
+	c.emitEvent(WriteEvent{
+		Phase:    "RetentionPass",
+		Attempt:  attempt,
+		VPulse:   vPulse,
+		VMin:     vMin,
+		VMax:     vMax,
+		TargetP:  targetP,
+		TargetG:  targetG,
+		CurrentP: postDwellP,
+		CurrentG: currentG,
+		Error:    error,
+	})
+	return true
 }
 
 func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bool, overshootCount int) {
@@ -338,6 +398,13 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		})
 
 		if math.Abs(error) < c.Tolerance {
+			// Post-write retention check (if enabled)
+			if c.RetentionDwell > 0 {
+				if !c.checkRetention(postP, log, i+1, vPulse, c.VMin, c.VMax, targetP, targetG, postG, error) {
+					continue // Retention failed — retry with next ISPP pulse
+				}
+			}
+
 			success = true
 			log.Input("WriteTarget", map[string]interface{}{
 				"status":     "Success",
