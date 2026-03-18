@@ -10,7 +10,7 @@ type comparisonMetricRow struct {
 	Label      string
 	LatencyNS  float64
 	EnergyPJ   float64
-	TOPSW      float64
+	GOPS       float64
 	EnergyOpPJ float64
 }
 
@@ -27,8 +27,9 @@ func computeComparisonMetrics(arraySize int) (comparisonMetricRow, comparisonMet
 
 	rows := []*comparisonMetricRow{&cpu, &gpu, &fefet}
 	for _, r := range rows {
+		// Throughput in GOPS (gigaops/sec), not energy efficiency
 		if r.LatencyNS > 0 {
-			r.TOPSW = (2.0 * macs) / r.LatencyNS / 1e3
+			r.GOPS = (2.0 * macs) / r.LatencyNS / 1e3
 		}
 		if macs > 0 {
 			r.EnergyOpPJ = r.EnergyPJ / macs
@@ -39,7 +40,7 @@ func computeComparisonMetrics(arraySize int) (comparisonMetricRow, comparisonMet
 
 func metricLatency(v float64) string { return fmt.Sprintf("%.0f ns", v) }
 func metricEnergy(v float64) string  { return fmt.Sprintf("%.1f pJ", v) }
-func metricTOPSW(v float64) string   { return fmt.Sprintf("%.3f", v) }
+func metricGOPS(v float64) string     { return fmt.Sprintf("%.3f GOPS", v) }
 
 // DesignSweepPoint is one design-space point for quick Pareto-style exploration.
 type DesignSweepPoint struct {
@@ -48,7 +49,7 @@ type DesignSweepPoint struct {
 	Device    string
 	LatencyNS float64
 	EnergyPJ  float64
-	TOPSW     float64
+	GOPS      float64
 }
 
 // MonteCarloStats contains summary stats for process-variation sampling.
@@ -91,7 +92,7 @@ func BuildDesignSpaceSweep(arraySizes, adcBits []int, devices []string) []Design
 					macs := float64(n * n)
 					topsw = (2.0 * macs) / (energy * 1e-12) / 1e12
 				}
-				out = append(out, DesignSweepPoint{ArraySize: n, ADCBits: bits, Device: d, LatencyNS: latency, EnergyPJ: energy, TOPSW: topsw})
+				out = append(out, DesignSweepPoint{ArraySize: n, ADCBits: bits, Device: d, LatencyNS: latency, EnergyPJ: energy, GOPS: topsw})
 			}
 		}
 	}

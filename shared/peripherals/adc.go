@@ -194,6 +194,10 @@ func (a *ADC) Resolution() float64 {
 }
 
 // ENOB estimates effective resolution (bits) after INL/DNL nonidealities.
+//
+// Static-error ENOB approximation (IEEE 1241 section 4.4.6 note):
+// ENOB = N - log2(1 + max(|INL|, |DNL|))
+// For the full SINAD-based ENOB, an FFT-based measurement would be required.
 func (a *ADC) ENOB() float64 {
 	log.Input("ADC.ENOB", map[string]interface{}{
 		"bits": a.Bits,
@@ -201,13 +205,12 @@ func (a *ADC) ENOB() float64 {
 		"dnl":  a.DNL,
 	})
 
-	// ENOB = Bits - log2(1 + INL^2 + DNL^2)^0.5
-	noiseFactorSq := 1.0 + a.INL*a.INL + a.DNL*a.DNL
-	enob := float64(a.Bits) - math.Log2(math.Sqrt(noiseFactorSq))
+	maxErr := math.Max(math.Abs(a.INL), math.Abs(a.DNL))
+	enob := float64(a.Bits) - math.Log2(1.0+maxErr)
 
 	log.Calculation("ADC.ENOB", map[string]interface{}{
-		"bits":            a.Bits,
-		"noise_factor_sq": noiseFactorSq,
+		"bits":    a.Bits,
+		"max_err": maxErr,
 	}, enob)
 
 	return enob
@@ -310,6 +313,8 @@ func (a *ADC) TheoreticalSNR() float64 {
 }
 
 // EffectiveSNR returns SNR accounting for nonlinearity.
+// Note: this is derived from the static ENOB estimate, not from an independent
+// SINAD measurement. For true EffectiveSNR, an FFT-based test signal would be needed.
 func (a *ADC) EffectiveSNR() float64 {
 	return 6.02*a.ENOB() + 1.76
 }

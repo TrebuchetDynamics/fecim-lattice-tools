@@ -55,7 +55,8 @@ func TestNoiseVsADC_M4INV04_TableAndCrossover(t *testing.T) {
 	flickerVar := FlickerNoisePower(flickerK, flickerFreqHz)
 
 	for _, bits := range bitsList {
-		lsb := vRange / math.Pow(2, float64(bits))
+		// LSB = vRange / (2^N - 1), matching ADC Resolution() convention
+		lsb := vRange / (math.Pow(2, float64(bits)) - 1)
 		quantVarFromLSB := (lsb * lsb) / 12.0
 		quantVar := QuantizationNoiseVariance(vRange, bits)
 		if math.Abs(quantVar-quantVarFromLSB) > 1e-18 {

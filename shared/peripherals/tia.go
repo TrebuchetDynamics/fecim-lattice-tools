@@ -68,17 +68,23 @@ func (t *TIA) Convert(current float64) float64 {
 	return output
 }
 
-// ConvertWithNoise returns converted output voltage (V) with a simple
-// input-referred noise model mapped through transimpedance gain and bandwidth.
+// ConvertWithNoise returns converted output voltage (V) with a noise model
+// that includes both input-referred op-amp noise and R_f Johnson noise,
+// combined via variance additivity.
 func (t *TIA) ConvertWithNoise(current float64) float64 {
 	idealOutput := t.Convert(current)
 
-	// Calculate RMS noise voltage
+	// Calculate input-referred RMS noise voltage
 	// Vnoise = Inoise * Gain * sqrt(BW)
 	noiseVoltage := t.InputNoiseRMS * t.Gain * math.Sqrt(t.Bandwidth)
 
+	// Include R_f Johnson noise: V_Rf = sqrt(4*kT*R_f*BW)
+	rfNoise := ThermalNoiseRMS(300.0, t.Gain, t.Bandwidth)
+	// Combine with input-referred noise via variance additivity
+	totalNoise := math.Sqrt(noiseVoltage*noiseVoltage + rfNoise*rfNoise)
+
 	// Deterministic RMS noise injection (non-random, for repeatable demos)
-	noiseContribution := noiseVoltage
+	noiseContribution := totalNoise
 
 	noisy := idealOutput + noiseContribution
 	if noisy < 0 {
@@ -92,6 +98,8 @@ func (t *TIA) ConvertWithNoise(current float64) float64 {
 }
 
 // SNR returns signal-to-noise ratio in dB for a specified input current (A).
+// The noise floor includes both the input-referred op-amp noise and the
+// Johnson noise of the feedback resistor R_f, combined via variance additivity.
 func (t *TIA) SNR(current float64) float64 {
 	log.Input("TIA.SNR", map[string]interface{}{
 		"current":   current,
@@ -102,16 +110,22 @@ func (t *TIA) SNR(current float64) float64 {
 	signal := current * t.Gain
 	noise := t.InputNoiseRMS * t.Gain * math.Sqrt(t.Bandwidth)
 
-	if noise == 0 {
+	// Include R_f Johnson noise: V_Rf = sqrt(4*kT*R_f*BW)
+	rfNoise := ThermalNoiseRMS(300.0, t.Gain, t.Bandwidth)
+	totalNoise := math.Sqrt(noise*noise + rfNoise*rfNoise)
+
+	if totalNoise == 0 {
 		return math.Inf(1)
 	}
 
-	snr := 20 * math.Log10(signal/noise) // dB
+	snr := 20 * math.Log10(signal/totalNoise) // dB
 
 	log.Calculation("TIA.SNR", map[string]interface{}{
-		"current": current,
-		"signal":  signal,
-		"noise":   noise,
+		"current":     current,
+		"signal":      signal,
+		"noise":       totalNoise,
+		"opamp_noise": noise,
+		"rf_noise":    rfNoise,
 	}, snr)
 
 	return snr

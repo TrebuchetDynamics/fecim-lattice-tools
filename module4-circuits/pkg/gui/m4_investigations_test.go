@@ -24,12 +24,12 @@ func TestM4INV03_HalfSelectDisturbBudget(t *testing.T) {
 }
 
 // M4-INV-06: dynamic metrics from current array configuration.
-func TestM4INV06_DynamicTOPSWMetrics(t *testing.T) {
+func TestM4INV06_DynamicGOPSMetrics(t *testing.T) {
 	for _, n := range []int{8, 16, 32, 64} {
 		_, _, fefet := computeComparisonMetrics(n)
-		t.Logf("array=%dx%d fefet latency=%.1fns energy=%.2fpJ TOPS/W=%.4f energy/op=%.4fpJ",
-			n, n, fefet.LatencyNS, fefet.EnergyPJ, fefet.TOPSW, fefet.EnergyOpPJ)
-		if fefet.TOPSW <= 0 || fefet.EnergyOpPJ <= 0 {
+		t.Logf("array=%dx%d fefet latency=%.1fns energy=%.2fpJ GOPS=%.4f energy/op=%.4fpJ",
+			n, n, fefet.LatencyNS, fefet.EnergyPJ, fefet.GOPS, fefet.EnergyOpPJ)
+		if fefet.GOPS <= 0 || fefet.EnergyOpPJ <= 0 {
 			t.Fatalf("invalid dynamic metrics at N=%d", n)
 		}
 	}

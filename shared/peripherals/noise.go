@@ -35,11 +35,16 @@ func ShotNoiseCurrentRMS(currentA, bandwidthHz float64) float64 {
 }
 
 // QuantizationNoiseVariance computes quantization noise variance for a uniform quantizer.
+// Uses lsb = vRefSpan / (2^N - 1) to match ADC Resolution() which maps
+// the reference span across (2^N - 1) intervals between 2^N levels.
 func QuantizationNoiseVariance(vRefSpan float64, bits int) float64 {
 	if bits <= 0 || vRefSpan <= 0 {
 		return 0
 	}
-	levels := math.Pow(2, float64(bits))
+	levels := math.Pow(2, float64(bits)) - 1
+	if levels <= 0 {
+		levels = 1
+	}
 	lsb := vRefSpan / levels
 	return (lsb * lsb) / 12.0
 }

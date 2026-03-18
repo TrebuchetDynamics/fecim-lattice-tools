@@ -385,8 +385,9 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 		tf.PumpVoltages[i] = boosted
 
 		// TIA (simulating read-back - current proportional to programmed level)
-		// Assume conductance proportional to level, Vread = 0.1V
-		Vread := 0.1
+		// Read voltage 0.5V fills ~50% of ADC range. For full utilization,
+		// increase TIA gain or use a PGA.
+		Vread := 0.5
 		Gmin := 1e-6   // 1 µS
 		Gmax := 100e-6 // 100 µS
 		G := Gmin + (Gmax-Gmin)*float64(i)/float64(levels-1)

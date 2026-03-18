@@ -362,10 +362,10 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	ca.compTableLabels = make([]*widget.Label, 16)
 	cpu, gpu, fefet := computeComparisonMetrics(8)
 
-	headers := []string{"", "Time", "Energy", "TOPS/W"}
-	cpuRow := []string{cpu.Label, metricLatency(cpu.LatencyNS), metricEnergy(cpu.EnergyPJ), metricTOPSW(cpu.TOPSW)}
-	gpuRow := []string{gpu.Label, metricLatency(gpu.LatencyNS), metricEnergy(gpu.EnergyPJ), metricTOPSW(gpu.TOPSW)}
-	fefetRow := []string{fefet.Label, metricLatency(fefet.LatencyNS), metricEnergy(fefet.EnergyPJ), metricTOPSW(fefet.TOPSW)}
+	headers := []string{"", "Time", "Energy", "GOPS"}
+	cpuRow := []string{cpu.Label, metricLatency(cpu.LatencyNS), metricEnergy(cpu.EnergyPJ), metricGOPS(cpu.GOPS)}
+	gpuRow := []string{gpu.Label, metricLatency(gpu.LatencyNS), metricEnergy(gpu.EnergyPJ), metricGOPS(gpu.GOPS)}
+	fefetRow := []string{fefet.Label, metricLatency(fefet.LatencyNS), metricEnergy(fefet.EnergyPJ), metricGOPS(fefet.GOPS)}
 
 	grid := container.NewGridWithColumns(4)
 	for i, h := range headers {
@@ -477,17 +477,17 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 	sharedwidgets.SafeDo(func() {
 		ca.compTableLabels[5].SetText(metricLatency(cpu.LatencyNS))
 		ca.compTableLabels[6].SetText(metricEnergy(cpu.EnergyPJ))
-		ca.compTableLabels[7].SetText(metricTOPSW(cpu.TOPSW))
+		ca.compTableLabels[7].SetText(metricGOPS(cpu.GOPS))
 
 		ca.compTableLabels[9].SetText(metricLatency(gpu.LatencyNS))
 		ca.compTableLabels[10].SetText(metricEnergy(gpu.EnergyPJ))
-		ca.compTableLabels[11].SetText(metricTOPSW(gpu.TOPSW))
+		ca.compTableLabels[11].SetText(metricGOPS(gpu.GOPS))
 
 		ca.compTableLabels[13].SetText(metricLatency(fefet.LatencyNS))
 		ca.compTableLabels[14].SetText(metricEnergy(fefet.EnergyPJ))
-		ca.compTableLabels[15].SetText(metricTOPSW(fefet.TOPSW))
+		ca.compTableLabels[15].SetText(metricGOPS(fefet.GOPS))
 
-		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d (%d MACs (Ops)): FeFET %.3f TOPS/W, %.3f pJ/op",
-			currentSize, currentSize, currentSize*currentSize, fefet.TOPSW, fefet.EnergyOpPJ))
+		ca.compStatusLabel.SetText(fmt.Sprintf("Scaled to %d×%d (%d MACs (Ops)): FeFET %.3f GOPS, %.3f pJ/op",
+			currentSize, currentSize, currentSize*currentSize, fefet.GOPS, fefet.EnergyOpPJ))
 	})
 }
