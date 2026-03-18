@@ -48,11 +48,8 @@ func TestTIAPowerConsumptionModel(t *testing.T) {
 	tia := DefaultTIA()
 	got := tia.PowerConsumption()
 
-	const (
-		kT         = 4.14e-21
-		efficiency = 0.1
-	)
-	want := 2 * kT * tia.Bandwidth * tia.Gain / efficiency
+	const efficiency = 0.1
+	want := 2 * kBT300 * tia.Bandwidth * tia.Gain / efficiency
 
 	if relErr(got, want) > 1e-15 {
 		t.Fatalf("TIA power mismatch: got=%e W want=%e W rel_err=%e", got, want, relErr(got, want))

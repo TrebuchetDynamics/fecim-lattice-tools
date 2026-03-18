@@ -4,6 +4,20 @@ import (
 	"math"
 )
 
+// Default TIA parameters for FeCIM crossbar sense chain.
+// These are heuristic baselines, not measured silicon values.
+const (
+	defaultTIAGainOhm     = 10e3   // 10 kOhm transimpedance
+	defaultTIABandwidthHz = 100e6  // 100 MHz -3dB bandwidth
+	defaultTIANoiseAPrtHz = 1e-12  // 1 pA/sqrt(Hz) input-referred noise
+	defaultTIAOffsetV     = 5e-3   // 5 mV output offset
+	defaultTIAMaxCurrentA = 100e-6 // 100 uA max input
+	defaultTIAMaxOutputV  = 1.0    // 1V max output
+)
+
+// kBT300 is the Boltzmann thermal energy at 300 K (room temperature).
+const kBT300 = 1.380649e-23 * 300.0 // kT at 300K (J)
+
 // TIA models a transimpedance amplifier used in the crossbar read chain to
 // convert summed column current (A) into a measurable voltage (V).
 //
@@ -24,12 +38,12 @@ type TIA struct {
 // the default ADC 0-1V range via Vout ~= Iin * 10kΩ.
 func DefaultTIA() *TIA {
 	tia := &TIA{
-		Gain:             10e3,   // 10 kΩ transimpedance (heuristic baseline)
-		Bandwidth:        100e6,  // 100 MHz bandwidth (heuristic baseline)
-		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) placeholder input-referred noise
-		OutputOffset:     5e-3,   // 5 mV output offset
-		MaxInputCurrent:  100e-6, // 100 µA max input
-		MaxOutputVoltage: 1.0,    // 1V max output (aligned with ADCVrefHigh)
+		Gain:             defaultTIAGainOhm,     // 10 kOhm transimpedance (heuristic baseline)
+		Bandwidth:        defaultTIABandwidthHz,  // 100 MHz bandwidth (heuristic baseline)
+		InputNoiseRMS:    defaultTIANoiseAPrtHz,  // 1 pA/sqrt(Hz) placeholder input-referred noise
+		OutputOffset:     defaultTIAOffsetV,      // 5 mV output offset
+		MaxInputCurrent:  defaultTIAMaxCurrentA,  // 100 uA max input
+		MaxOutputVoltage: defaultTIAMaxOutputV,   // 1V max output (aligned with ADC VrefHigh)
 	}
 	log.Calculation("DefaultTIA", map[string]interface{}{
 		"gain":               tia.Gain,
@@ -175,9 +189,8 @@ func (t *TIA) SettlingTime() float64 {
 
 // PowerConsumption estimates TIA power based on bandwidth and gain.
 func (t *TIA) PowerConsumption() float64 {
-	// Typical: P ≈ 2 * kT * BW * Gain / η
+	// Typical: P ~ 2 * kT * BW * Gain / eta
 	// Simplified estimate
-	kT := 4.14e-21 // kT at 300K
 	efficiency := 0.1
-	return 2 * kT * t.Bandwidth * t.Gain / efficiency
+	return 2 * kBT300 * t.Bandwidth * t.Gain / efficiency
 }

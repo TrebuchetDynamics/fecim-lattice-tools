@@ -4,6 +4,23 @@ import (
 	"math"
 )
 
+// ADC energy-per-conversion coefficients by architecture (Joules per bit or per level).
+// Sources: ISSCC 2022-2024 SAR ADC survey, Murmann ADC survey.
+const (
+	sarEnergyPerBitJ        = 5e-15   // ~5 fJ/bit for SAR (Walden FoM ~1 fJ/conv-step)
+	flashEnergyPerLevelJ    = 75e-15  // ~75 fJ/level for Flash (comparator-dominated)
+	sigmaDeltaEnergyPerBitJ = 100e-15 // ~100 fJ/bit for Sigma-Delta (oversampling overhead)
+	rampEnergyPerBitJ       = 3e-15   // ~3 fJ/bit for Ramp (counter-based)
+	comparatorEnergyJ       = 1e-15   // ~1 fJ fixed for single Comparator
+)
+
+// Ramp ADC conversion time: T_conv = T_ref * 2^N / N_ref
+// T_ref = 100 ns at N_ref = 16 levels (4-bit reference point)
+const (
+	rampRefConvTimeNS = 100.0
+	rampRefLevels     = 16.0
+)
+
 // ADC models the read-path analog-to-digital converter that maps sensed voltage
 // (V) into quantized digital codes used as compute/readout levels.
 //
@@ -56,7 +73,8 @@ type SARNoiseConfig struct {
 	EnableReferenceDrift bool
 }
 
-// ADCType specifies the ADC architecture.
+// ADCType specifies the ADC architecture used in the read path.
+// Each type trades off conversion speed, energy, area, and resolution.
 type ADCType int
 
 const (
@@ -117,7 +135,7 @@ func RampADC(bits int, columnsPerADC int) *ADC {
 	if columnsPerADC < 1 {
 		columnsPerADC = 4
 	}
-	convTime := 100.0 * math.Pow(2, float64(bits)) / 16.0 // Scales with levels: 4-bit=100ns, 8-bit=1600ns
+	convTime := rampRefConvTimeNS * math.Pow(2, float64(bits)) / rampRefLevels // Scales with levels: 4-bit=100ns, 8-bit=1600ns
 	return &ADC{
 		Bits:           bits,
 		VrefHigh:       1.0,
@@ -146,7 +164,8 @@ func ComparatorADC() *ADC {
 	}
 }
 
-// Levels returns the number of discrete output levels.
+// Levels returns the number of discrete output levels (2^Bits).
+// For example, a 6-bit ADC produces 64 levels.
 func (a *ADC) Levels() int {
 	return 1 << a.Bits
 }
@@ -222,23 +241,23 @@ func (a *ADC) EnergyPerConversion() float64 {
 	switch a.Type {
 	case ADCTypeSAR:
 		// SAR: ~1-10 fJ/conversion-step
-		return 5e-15 * float64(a.Bits) // ~30 fJ for 6-bit default
+		return sarEnergyPerBitJ * float64(a.Bits) // ~30 fJ for 6-bit default
 	case ADCTypeFlash:
 		// Flash: ~50-100 fJ/level (2^N comparators in parallel)
 		// Ref: ISSCC 2023 survey - high parallelism drives high energy
-		return 75e-15 * float64(a.Levels())
+		return flashEnergyPerLevelJ * float64(a.Levels())
 	case ADCTypeSigmaDelta:
 		// Sigma-Delta: higher due to oversampling ratio
-		return 100e-15 * float64(a.Bits)
+		return sigmaDeltaEnergyPerBitJ * float64(a.Bits)
 	case ADCTypeRamp:
 		// Ramp: very low energy - only 1 comparator + ramp generator
 		// ~1-5 fJ/conversion independent of resolution
 		// Ref: arXiv 2024 hardware-aware quantization for FeCIM
-		return 3e-15 * float64(a.Bits)
+		return rampEnergyPerBitJ * float64(a.Bits)
 	case ADCTypeComparator:
 		// Comparator-only: single comparison, minimal energy
 		// 28x lower than 7-bit ADC per arXiv 2024
-		return 1e-15 // ~1 fJ per comparison
+		return comparatorEnergyJ
 	default:
 		return 20e-15
 	}

@@ -33,6 +33,10 @@ func estimateLandauEc(alpha, beta, gamma, pr float64) float64 {
 	return maxAbs
 }
 
+// defaultLKViscosity is the baseline viscosity for 10 nm HfO2 in Ohm*m.
+// Ref: Materlik et al., J. Appl. Phys. 117, 134109 (2015).
+const defaultLKViscosity = 0.05
+
 // Package-level logger for Landau-Khalatnikov solver diagnostics.
 var lkLog *logging.Logger
 
@@ -135,7 +139,7 @@ func NewLKSolver() *LKSolver {
 		// ferroelectric HfO2 (orthorhombic Pca21) LGD coefficients.
 		Beta:   -6.720e8,
 		Gamma:  1.950e10,
-		Rho:    0.05,
+		Rho:    defaultLKViscosity,
 		Q12:    -0.026,
 		Stress: 1.0e9, // 1 GPa
 
@@ -529,223 +533,5 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	return s.P
 }
 
-func (s *LKSolver) updateNLSState(E, dt float64) {
-	const minField = 1.0e6 // 0.01 MV/cm threshold
-	if dt <= 0 {
-		return
-	}
-	if math.Abs(E) < minField {
-		s.nlsState.CumulativeTime = 0
-		s.nlsState.SwitchedFraction = 0
-		return
-	}
-	s.nlsState.CumulativeTime += dt
-	s.nlsState.SwitchedFraction = s.nlsSwitchedFraction(E, s.nlsState.CumulativeTime)
-}
-
-// nlsSwitchedFraction returns deterministic cumulative switched fraction under
-// field E and total stress time, using a log-normal distribution of switching
-// times (Guo et al., APL 112, 262903, 2018).
-func (s *LKSolver) nlsSwitchedFraction(E, totalTime float64) float64 {
-	E_mag := math.Abs(E)
-	if E_mag < 1e6 || totalTime <= 0 {
-		return 0
-	}
-	tauInf := s.TauInf
-	if tauInf <= 0 {
-		tauInf = 1e-10 // 100 ps macroscopic NLS attempt time; Guo et al. APL 112, 262903 (2018)
-	}
-	activationField := s.ActivationField
-	if activationField <= 0 {
-		activationField = 1.9e9
-	}
-	sigma := s.NLSSigma
-	if sigma <= 0 {
-		sigma = 1.5
-	}
-
-	// Gauss-Hermite-style quadrature over log-normal switching-time distribution.
-	// nlsQuadN: number of quadrature points (20 balances accuracy vs. speed;
-	//   convergence tests show <0.5% error vs. N=100 for typical ISPP parameters).
-	// nlsQuadSpan: integration range in multiples of sigma (±3σ covers 99.7%).
-	const (
-		nlsQuadN    = 20
-		nlsQuadSpan = 6.0 // total span = ±3σ
-	)
-
-	lnTauMean := math.Log(tauInf) + activationField/E_mag
-	f := 0.0
-	norm := 0.0
-	for i := 0; i < nlsQuadN; i++ {
-		x := lnTauMean + sigma*(float64(i)-float64(nlsQuadN-1)/2.0)*nlsQuadSpan/float64(nlsQuadN)
-		tau := math.Exp(x)
-		weight := math.Exp(-0.5 * math.Pow((x-lnTauMean)/sigma, 2))
-		f += weight * (1.0 - math.Exp(-totalTime/tau))
-		norm += weight
-	}
-	if norm > 0 {
-		f /= norm
-	}
-	if f < 0 {
-		return 0
-	}
-	if f > 1 {
-		return 1
-	}
-	return f
-}
-
-func (s *LKSolver) effectiveRho() float64 {
-	rhoEff := s.Rho
-	if s.UseEffectiveViscosity && s.SeriesResistance > 0 && s.Thickness > 0 && s.Area > 0 {
-		rhoEff += (s.SeriesResistance * s.Area / s.Thickness)
-	}
-	return rhoEff
-}
-
-func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
-	if !s.EnableNoise || dt <= 0 {
-		return 0
-	}
-
-	const kB = 1.380649e-23 // J/K
-	// Fluctuation-dissipation theorem for intensive polarization dynamics.
-	// sigma = sqrt(2*kB*T*rho / (dt * V_cell)) gives correct 1/sqrt(V) Landauer scaling.
-	vCell := s.Area * s.Thickness
-	if vCell <= 0 {
-		vCell = 45e-9 * 45e-9 * 10e-9 // fallback: default FeCIM cell
-	}
-	sigma := math.Sqrt(2 * kB * s.Temperature * rhoEff / (dt * vCell))
-	if s.rng != nil {
-		return s.rng.NormFloat64() * sigma
-	}
-	return rand.NormFloat64() * sigma
-}
-
-func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
-	if !logging.IsVerbose(logging.VerbosityTrace) {
-		return
-	}
-	if lkLog == nil {
-		lkLog = logging.NewLogger("lk-solver")
-	}
-	if lkLog == nil {
-		return
-	}
-	if s.logLimit > 0 && s.logCount >= s.logLimit {
-		return
-	}
-	s.logCount++
-
-	E_dep := s.K_dep * s.P
-	E_eff := E - E_dep
-	dG_dP := (2 * s.Alpha * s.P) + (4 * s.Beta * math.Pow(s.P, 3)) + (6 * s.Gamma * math.Pow(s.P, 5))
-
-	lkLog.Calculation("LKStep", map[string]interface{}{
-		"E_applied":   E,
-		"E_dep":       E_dep,
-		"E_eff":       E_eff,
-		"Alpha":       s.Alpha,
-		"Beta":        s.Beta,
-		"Gamma":       s.Gamma,
-		"K_dep":       s.K_dep,
-		"P":           s.P,
-		"dG_dP":       dG_dP,
-		"rho_eff":     rhoEff,
-		"noise":       noise,
-		"dt":          dt,
-		"Temperature": s.Temperature,
-		"Stress_Pa":   s.Stress,
-	}, dPdt)
-}
-
-func invalidFloat(v float64) bool {
-	return math.IsNaN(v) || math.IsInf(v, 0)
-}
-
-// pClampOvershootFactor allows 20% overshoot above PMax before hard-clamping.
-// This headroom lets the RK4 integrator make small excursions past saturation
-// without immediately hitting the hard wall, which would cause step-size hunting.
-const pClampOvershootFactor = 1.2
-
-func (s *LKSolver) clampP(P float64) float64 {
-	if s.PMax <= 0 {
-		return P
-	}
-	limit := s.PMax * pClampOvershootFactor
-	if limit <= 0 {
-		return P
-	}
-	if P > limit {
-		return limit
-	}
-	if P < -limit {
-		return -limit
-	}
-	return P
-}
-
-func (s *LKSolver) logNumericalIssue(stage string, E, dt, rhoEff, noise, prevP float64) {
-	if !logging.IsVerbose(logging.VerbosityDebug) {
-		return
-	}
-	if s.nanLimit > 0 && s.nanCount >= s.nanLimit {
-		return
-	}
-	s.nanCount++
-	if lkLog == nil {
-		lkLog = logging.NewLogger("lk-solver")
-	}
-	if lkLog == nil {
-		return
-	}
-	lkLog.Debug("LK numerical issue (%s): E=%.3e dt=%.3e P=%.3e rho=%.3e noise=%.3e alpha=%.3e beta=%.3e gamma=%.3e",
-		stage, E, dt, prevP, rhoEff, noise, s.Alpha, s.Beta, s.Gamma)
-}
-
-// SetState forcibly sets polarization state P (C/m^2), with NaN/Inf rejection
-// and solver clamp rules for numerical safety.
-//
-// In ensemble mode the requested state is broadcast to all domains.
-func (s *LKSolver) SetState(P float64) {
-	if invalidFloat(P) {
-		return
-	}
-	if s.polydomain != nil && s.polydomain.DomainCount() > 0 {
-		s.polydomain.SetState(P)
-		s.P = s.clampP(P)
-		return
-	}
-	s.P = s.clampP(P)
-}
-
-// GetState returns the current solver polarization P in C/m^2.
-func (s *LKSolver) GetState() float64 {
-	return s.P
-}
-
-// EnableEnsemble switches this solver into polydomain mode.
-func (s *LKSolver) EnableEnsemble(numDomains int, mat *HZOMaterial, seed uint64) {
-	if numDomains <= 1 {
-		s.polydomain = nil
-		s.ensembleSeed = 0
-		return
-	}
-	if mat == nil {
-		return
-	}
-	s.polydomain = NewPolydomainEnsemble(s, mat, numDomains, defaultPolydomainSigmaFrac, seed)
-	if s.polydomain == nil {
-		return
-	}
-	s.ensembleSeed = s.polydomain.Seed
-
-	initP := s.P
-	if initP == 0 {
-		initP = -math.Abs(mat.Pr)
-		if initP == 0 {
-			initP = -math.Abs(mat.Ps)
-		}
-	}
-	s.SetState(initP)
-}
+// Remaining LKSolver methods (NLS, noise, clamping, state, ensemble)
+// are in landau_util.go for maintainability (500-line limit).
