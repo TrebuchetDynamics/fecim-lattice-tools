@@ -223,7 +223,11 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 
 		// Start program-verify sequence for this iteration
 		ca.deviceState.StartWriteSequence(row, col, targetLevel, currentLevel)
-		go ca.animateWriteSequence()
+		if !ca.launchBackground(ca.animateWriteSequence) {
+			ca.deviceState.CancelWriteSequence()
+			ca.deviceState.CancelISPP()
+			return
+		}
 
 		// Apply write voltage via DAC for this pulse and update half-select neighbors.
 		appliedVoltage, _ := ca.applyWriteVoltages(row, col, isppStatus.Voltage)

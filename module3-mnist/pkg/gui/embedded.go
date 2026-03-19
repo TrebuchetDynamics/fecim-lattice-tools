@@ -19,11 +19,21 @@ import (
 type EmbeddedMNISTApp struct {
 	*MNISTApp
 	sharedwidgets.EmbeddedAppBase
+	initErr        error
+	startupWarning string
 }
 
 // NewEmbeddedMNISTApp creates a new embedded MNIST GUI application
 func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
-	ma := &MNISTApp{}
+	embedded := &EmbeddedMNISTApp{MNISTApp: &MNISTApp{}}
+	if err := embedded.initialize(); err != nil {
+		embedded.initErr = err
+	}
+	return embedded
+}
+
+func (e *EmbeddedMNISTApp) initialize() error {
+	ma := e.MNISTApp
 
 	// Find data directory
 	ma.dataDir = utils.FindModuleDataDir("module3-mnist", "pretrained_weights.json")
@@ -42,8 +52,7 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	}
 	layer1, err := crossbar.NewArray(layer1Config)
 	if err != nil {
-		fmt.Printf("Error: failed to create layer 1 crossbar: %v\n", err)
-		return nil
+		return fmt.Errorf("create MNIST hidden-layer crossbar: %w", err)
 	}
 
 	// Layer 2: 10 x hidden
@@ -56,8 +65,7 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	}
 	layer2, err := crossbar.NewArray(layer2Config)
 	if err != nil {
-		fmt.Printf("Error: failed to create layer 2 crossbar: %v\n", err)
-		return nil
+		return fmt.Errorf("create MNIST output-layer crossbar: %w", err)
 	}
 
 	// Create network
@@ -67,32 +75,41 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	weightsPath := filepath.Join(ma.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := ma.network.LoadWeights(weightsPath); err != nil {
-			fmt.Printf("Warning: failed to load pretrained weights from %s: %v\n", weightsPath, err)
+			e.startupWarning = fmt.Sprintf("Pretrained weights unavailable: %v", err)
 		}
 	}
 
-	return &EmbeddedMNISTApp{MNISTApp: ma}
+	return nil
 }
 
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedMNISTApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Create main layout
-	content := e.createMainLayout()
-	e.SetContent(content)
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		if e.initErr != nil {
+			return sharedwidgets.NewModuleErrorContent("MNIST", e.initErr)
+		}
 
-	// Initialize
-	e.updateStatus("Ready. Draw a digit or load test data.")
+		content := e.createMainLayout()
 
-	return content
+		status := "Ready. Draw a digit or load test data."
+		if e.startupWarning != "" {
+			status = e.startupWarning
+		}
+		e.updateStatus(status)
+
+		return content
+	})
 }
 
 // Start initializes anything that needs to run after UI is visible
 func (e *EmbeddedMNISTApp) Start() {
+	if e.initErr != nil {
+		return
+	}
 	e.EmbeddedAppBase.Start()
 	// Nothing to start - MNIST demo is event-driven
 }
@@ -117,10 +134,9 @@ func NewEmbeddedDualModeApp() *EmbeddedDualModeApp {
 // BuildContent creates the UI content for embedding in a tab.
 // The fyne.App instance must be provided by the parent.
 func (e *EmbeddedDualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
-	content := e.DualModeApp.BuildContent(fyneApp, parentWindow)
-	e.SetContent(content)
-	return content
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		return e.DualModeApp.BuildContent(fyneApp, parentWindow)
+	})
 }
 
 // Start initializes anything that needs to run after UI is visible.

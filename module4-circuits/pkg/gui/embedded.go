@@ -33,6 +33,7 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 		targetLevel:     15,
 		architecture:    sharedwidgets.Architecture0T1R, // Default to passive for educational demo
 		readOverlayMode: "Off",
+		stopChan:        make(chan struct{}),
 	}
 
 	// Initialize peripheral components
@@ -63,15 +64,12 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedCircuitsApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Create main tabbed layout (same as standalone)
-	content := e.createMainLayout()
-	e.SetContent(content)
-
-	return content
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		return e.createMainLayout()
+	})
 }
 
 // Start begins any background processes when the tab is selected
@@ -112,6 +110,8 @@ func (e *EmbeddedCircuitsApp) Start() {
 
 // Stop ends any background processes when the tab is deselected
 func (e *EmbeddedCircuitsApp) Stop() {
+	e.cancelPendingUIRefresh()
+
 	// Signal all goroutines to stop
 	e.mu.Lock()
 	if !e.stopped && e.stopChan != nil {
@@ -127,6 +127,7 @@ func (e *EmbeddedCircuitsApp) Stop() {
 		e.deviceState.CancelWriteSequence()
 		e.deviceState.CancelISPP()
 	}
+	e.backgroundWG.Wait()
 	e.EmbeddedAppBase.Stop()
 }
 

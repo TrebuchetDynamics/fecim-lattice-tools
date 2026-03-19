@@ -126,7 +126,8 @@ Always test with calibration data from `data/calibrations/`
 **Widget embedding** (see `widgets/embedded_base.go`):
 ```
 Module apps inherit EmbeddedAppBase
-Implement BuildContent(fyneApp, window) → fyne.CanvasObject
+Implement BuildContent(fyneApp, window) by delegating to EmbeddedAppBase.BuildOrReuseContent(...)
+BuildContent must be idempotent for the same fyne app/window pair and rebuild only when host context changes
 Implement Start() and Stop() for goroutine lifecycle
 ```
 
@@ -200,4 +201,3 @@ This updates `validation/testdata/physics_regression/preisach_loop_default_hzo.j
 - Check `accessibility/preferences.go` for user's font size, contrast preference
 - All widgets must respect `AccessibilityPrefs`
 - High-contrast theme in `themes/accessibility_theme.go`
-

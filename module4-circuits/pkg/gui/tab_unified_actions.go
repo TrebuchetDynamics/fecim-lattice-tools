@@ -61,7 +61,11 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 	ca.setProgrammingActive(true)
 
 	// Run Write-ReadVerify loop in background goroutine
-	go ca.runISPPWithAnimation(selectedRow, selectedCol, targetLevel)
+	if !ca.launchBackground(func() {
+		ca.runISPPWithAnimation(selectedRow, selectedCol, targetLevel)
+	}) {
+		ca.setProgrammingActive(false)
+	}
 }
 
 // writeReadVerifyLoop performs animated Write-ReadVerify iterations
@@ -299,7 +303,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 
 	ca.operationsStatusLabel.SetText("Animating...")
 
-	go func() {
+	if !ca.launchBackground(func() {
 		// Step 1: DAC
 		if ca.shouldStop() {
 			return
@@ -354,7 +358,12 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Complete in ~76ns")
 		})
-	}()
+	}) {
+		ca.mu.Lock()
+		ca.animationStep = 0
+		ca.animationActive = false
+		ca.mu.Unlock()
+	}
 }
 
 // onUnifiedReset resets the array to mid-level (neutral state)

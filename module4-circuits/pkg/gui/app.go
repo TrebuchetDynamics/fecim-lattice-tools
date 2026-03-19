@@ -49,6 +49,8 @@ type CircuitsApp struct {
 	uiUpdateMu         sync.Mutex
 	lastUIUpdate       time.Time
 	pendingUIUpd       bool
+	uiUpdateTimer      *time.Timer
+	suspendUIRefresh   bool
 	arrayRows          int
 	arrayCols          int
 	quantLevels        int
@@ -209,6 +211,7 @@ type CircuitsApp struct {
 	programmingActive bool
 	stopChan          chan struct{} // Closed to signal all goroutines to stop
 	stopped           bool          // True when Stop() has been called
+	backgroundWG      sync.WaitGroup
 
 	// Zoom state
 	zoomLevel  float64 // 1.0 = 100%, range 0.5 to 3.0

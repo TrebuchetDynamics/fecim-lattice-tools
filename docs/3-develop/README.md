@@ -287,8 +287,9 @@ type App struct {
 }
 
 func (a *App) BuildContent(fyneApp fyne.App, w fyne.Window) fyne.CanvasObject {
-    a.Init(fyneApp, w)
-    // build and return content
+    return a.EmbeddedAppBase.BuildOrReuseContent(fyneApp, w, func() fyne.CanvasObject {
+        // build and return content
+    })
 }
 
 func (a *App) Start() {

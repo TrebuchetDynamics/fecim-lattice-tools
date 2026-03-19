@@ -155,7 +155,7 @@ func TestComparisonTab(t *testing.T) {
 
 	// Test comparison actions
 	ca.onRunComparison()
-	if ca.compStatusLabel.Text == "" {
+	if uiRead(func() string { return ca.compStatusLabel.Text }) == "" {
 		t.Fatal("expected status message after running comparison")
 	}
 
@@ -227,7 +227,7 @@ func TestReferenceSpecsTab(t *testing.T) {
 
 	// Test comparison action
 	ca.onCompareToGPU()
-	if ca.specStatusLabel.Text == "" {
+	if uiRead(func() string { return ca.specStatusLabel.Text }) == "" {
 		t.Fatal("expected status message after GPU comparison")
 	}
 }
@@ -292,7 +292,7 @@ func TestUnifiedTabDeviceStateTransitions(t *testing.T) {
 		t.Fatal("expected initial READ mode")
 	}
 	ca.onUnifiedRead()
-	if ca.operationsStatusLabel.Text == "" {
+	if uiRead(func() string { return ca.operationsStatusLabel.Text }) == "" {
 		t.Fatal("expected status message after read")
 	}
 
@@ -501,7 +501,7 @@ func TestUnifiedTabMaterialSelector(t *testing.T) {
 	}
 
 	// Material picker requires window interaction - just verify button exists and has text
-	if ca.materialBtn.Text == "" {
+	if uiRead(func() string { return ca.materialBtn.Text }) == "" {
 		t.Fatal("expected material button to have text")
 	}
 }
@@ -570,7 +570,7 @@ func TestUnifiedTabCellSelection(t *testing.T) {
 	}
 
 	// Verify cell info label updated
-	if ca.sharedCellInfoLabel.Text == "" {
+	if uiRead(func() string { return ca.sharedCellInfoLabel.Text }) == "" {
 		t.Fatal("expected cell info label to have text after selection")
 	}
 }
@@ -592,23 +592,25 @@ func TestUnifiedTabCellInfoSignedToggle(t *testing.T) {
 	ca.onUnifiedCellTapped(0, 0)
 	ca.updateCellInfo()
 
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "V_cell (V):") {
-		t.Fatalf("expected explicit voltage label in default mode, got %q", ca.sharedCellInfoLabel.Text)
+	defaultCellInfo := uiRead(func() string { return ca.sharedCellInfoLabel.Text })
+	if !strings.Contains(defaultCellInfo, "V_cell (V):") {
+		t.Fatalf("expected explicit voltage label in default mode, got %q", defaultCellInfo)
 	}
-	if strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
-		t.Fatalf("did not expect current label in voltage mode, got %q", ca.sharedCellInfoLabel.Text)
+	if strings.Contains(defaultCellInfo, "I_cell (µA):") {
+		t.Fatalf("did not expect current label in voltage mode, got %q", defaultCellInfo)
 	}
-	if !(strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (mV):") || strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (V):")) || !strings.Contains(ca.sharedCellInfoLabel.Text, "ADC Code:") {
-		t.Fatalf("expected TIA/ADC labels, got %q", ca.sharedCellInfoLabel.Text)
+	if !(strings.Contains(defaultCellInfo, "V_TIA (mV):") || strings.Contains(defaultCellInfo, "V_TIA (V):")) || !strings.Contains(defaultCellInfo, "ADC Code:") {
+		t.Fatalf("expected TIA/ADC labels, got %q", defaultCellInfo)
 	}
 
 	test.Tap(ca.sharedCellDisplayToggle)
 	ca.updateCellInfo()
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
-		t.Fatalf("expected current label after toggle, got %q", ca.sharedCellInfoLabel.Text)
+	currentCellInfo := uiRead(func() string { return ca.sharedCellInfoLabel.Text })
+	if !strings.Contains(currentCellInfo, "I_cell (µA):") {
+		t.Fatalf("expected current label after toggle, got %q", currentCellInfo)
 	}
-	if strings.Contains(ca.sharedCellInfoLabel.Text, "V_cell (V):") {
-		t.Fatalf("did not expect voltage label in current mode, got %q", ca.sharedCellInfoLabel.Text)
+	if strings.Contains(currentCellInfo, "V_cell (V):") {
+		t.Fatalf("did not expect voltage label in current mode, got %q", currentCellInfo)
 	}
 }
 
@@ -650,11 +652,13 @@ func TestUnifiedTabSensePanel(t *testing.T) {
 	}
 
 	// Verify improved label formatting
-	if !strings.Contains(ca.senseVoltageLabel.Text, "TIA out") {
-		t.Fatalf("sense voltage label should show TIA context, got %q", ca.senseVoltageLabel.Text)
+	senseVoltageText := uiRead(func() string { return ca.senseVoltageLabel.Text })
+	if !strings.Contains(senseVoltageText, "TIA out") {
+		t.Fatalf("sense voltage label should show TIA context, got %q", senseVoltageText)
 	}
-	if !strings.Contains(ca.senseCodeLabel.Text, "Code") {
-		t.Fatalf("sense code label should show Code prefix, got %q", ca.senseCodeLabel.Text)
+	senseCodeText := uiRead(func() string { return ca.senseCodeLabel.Text })
+	if !strings.Contains(senseCodeText, "Code") {
+		t.Fatalf("sense code label should show Code prefix, got %q", senseCodeText)
 	}
 
 	// Test measurement preset application
@@ -814,7 +818,7 @@ func TestUnifiedTabWriteTargetLabel(t *testing.T) {
 	ca.onUnifiedCellTapped(testRow, testCol)
 
 	waitFor(t, 200*time.Millisecond, "target label updated", func() bool {
-		return ca.mfuxWriteTargetLabel.Text != ""
+		return uiRead(func() string { return ca.mfuxWriteTargetLabel.Text }) != ""
 	})
 }
 
@@ -1024,7 +1028,7 @@ func TestComparisonAnimateSteps(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Should update status label
-	if ca.compStatusLabel.Text == "" {
+	if uiRead(func() string { return ca.compStatusLabel.Text }) == "" {
 		t.Fatal("expected status message during animation")
 	}
 }
@@ -1055,7 +1059,7 @@ func TestTimingAnimateOperations(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 
 		// Should update status
-		if ca.timingStatusLabel.Text == "" {
+		if uiRead(func() string { return ca.timingStatusLabel.Text }) == "" {
 			t.Fatal("expected status message during timing animation")
 		}
 	}

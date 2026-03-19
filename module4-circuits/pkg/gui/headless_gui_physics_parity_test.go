@@ -197,7 +197,23 @@ func setParityInputs(ca *CircuitsApp, inputs []int) {
 }
 
 func newHeadlessParityState(ca *CircuitsApp, mat *sharedphysics.HZOMaterial, passive bool, coupling arraysim.CouplingMode) *DeviceState {
-	ds := NewDeviceState(ca.arrayRows, ca.arrayCols, ca.tia, ca.adc)
+	var tiaClone = ca.tia
+	if ca.tia != nil {
+		clonedTIA := *ca.tia
+		tiaClone = &clonedTIA
+	}
+
+	var adcClone = ca.adc
+	if ca.adc != nil {
+		clonedADC := *ca.adc
+		if ca.adc.NoiseConfig != nil {
+			clonedNoise := *ca.adc.NoiseConfig
+			clonedADC.NoiseConfig = &clonedNoise
+		}
+		adcClone = &clonedADC
+	}
+
+	ds := NewDeviceState(ca.arrayRows, ca.arrayCols, tiaClone, adcClone)
 	src := ca.deviceState
 
 	// Clone GUI device-state physics/peripheral configuration so headless path

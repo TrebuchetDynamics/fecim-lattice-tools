@@ -51,11 +51,9 @@ func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Use CreateModuleContent with full Learn tab
-	app.EmbeddedAppBase.Init(fyneApp, window)
-	content := CreateModuleContent(window)
-	app.SetContent(content)
-	return content
+	return app.EmbeddedAppBase.BuildOrReuseContent(fyneApp, window, func() fyne.CanvasObject {
+		return CreateModuleContent(window)
+	})
 }
 
 // Start is called when this demo tab is selected

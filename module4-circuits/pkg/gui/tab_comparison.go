@@ -438,7 +438,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 		"Animation complete: FeFET ≈6.6x faster than CPU (latency model)",
 	}
 
-	go func() {
+	ca.launchBackground(func() {
 		for i, step := range steps {
 			if ca.shouldStop() {
 				return
@@ -453,7 +453,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 				}
 			}
 		}
-	}()
+	})
 }
 
 func (ca *CircuitsApp) onScaleUpComparison() {

@@ -111,16 +111,12 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 		log = logging.NewLogger("hysteresis")
 	}
 
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
-
 	e.fyneApp = fyneApp
 	e.mainWindow = parentWindow
 
-	// Create UI components
-	content := e.createUI()
-	e.SetContent(content)
-
-	return content
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		return e.createUI()
+	})
 }
 
 // Start begins the simulation loop (call after BuildContent)

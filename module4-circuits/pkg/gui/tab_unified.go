@@ -173,6 +173,14 @@ func formatSignedScaled(value float64, units []scaledUnit) string {
 // createUnifiedView creates the unified device simulation view
 // Layout: Controls at TOP (toolbar), Array canvas in CENTER (expands), minimal status at BOTTOM
 func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
+	ca.beginUIRefreshSuspension()
+	resumeRefresh := true
+	defer func() {
+		if resumeRefresh {
+			ca.endUIRefreshSuspension()
+		}
+	}()
+
 	// Initialize device state
 	ca.deviceState = NewDeviceState(ca.arrayRows, ca.arrayCols, ca.tia, ca.adc)
 	ca.operationsStatusLabel = widget.NewLabel("Ready")
@@ -290,7 +298,10 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()
 	ca.updateModePanels(ca.deviceState.GetOperationMode())
-	ca.updateSensePanel()
+
+	ca.endUIRefreshSuspension()
+	resumeRefresh = false
+	ca.recomputeAndRefreshNow()
 
 	return container.NewBorder(
 		toolbarSection, // top: compact controls
@@ -1319,6 +1330,39 @@ func (ca *CircuitsApp) recomputeAndRefresh() {
 	ca.scheduleRecomputeAndRefresh(false)
 }
 
+func (ca *CircuitsApp) beginUIRefreshSuspension() {
+	ca.uiUpdateMu.Lock()
+	defer ca.uiUpdateMu.Unlock()
+
+	ca.suspendUIRefresh = true
+	ca.lastUIUpdate = time.Time{}
+	ca.pendingUIUpd = false
+	if ca.uiUpdateTimer != nil {
+		ca.uiUpdateTimer.Stop()
+		ca.uiUpdateTimer = nil
+	}
+}
+
+func (ca *CircuitsApp) endUIRefreshSuspension() {
+	ca.uiUpdateMu.Lock()
+	defer ca.uiUpdateMu.Unlock()
+
+	ca.suspendUIRefresh = false
+	ca.lastUIUpdate = time.Time{}
+}
+
+func (ca *CircuitsApp) cancelPendingUIRefresh() {
+	ca.uiUpdateMu.Lock()
+	defer ca.uiUpdateMu.Unlock()
+
+	ca.pendingUIUpd = false
+	ca.lastUIUpdate = time.Time{}
+	if ca.uiUpdateTimer != nil {
+		ca.uiUpdateTimer.Stop()
+		ca.uiUpdateTimer = nil
+	}
+}
+
 // recomputeAndRefreshNow forces an immediate recompute + UI refresh.
 func (ca *CircuitsApp) recomputeAndRefreshNow() {
 	// Hold the read lock for the duration of Compute() so concurrent writers
@@ -1342,13 +1386,24 @@ func (ca *CircuitsApp) recomputeAndRefreshNow() {
 }
 
 func (ca *CircuitsApp) scheduleRecomputeAndRefresh(force bool) {
+	ca.uiUpdateMu.Lock()
+	if ca.suspendUIRefresh {
+		ca.uiUpdateMu.Unlock()
+		return
+	}
 	if force {
+		ca.lastUIUpdate = time.Now()
+		ca.pendingUIUpd = false
+		if ca.uiUpdateTimer != nil {
+			ca.uiUpdateTimer.Stop()
+			ca.uiUpdateTimer = nil
+		}
+		ca.uiUpdateMu.Unlock()
 		ca.recomputeAndRefreshNow()
 		return
 	}
 
 	now := time.Now()
-	ca.uiUpdateMu.Lock()
 	if ca.lastUIUpdate.IsZero() || now.Sub(ca.lastUIUpdate) >= uiRefreshMinInterval {
 		ca.lastUIUpdate = now
 		ca.uiUpdateMu.Unlock()
@@ -1361,15 +1416,21 @@ func (ca *CircuitsApp) scheduleRecomputeAndRefresh(force bool) {
 	}
 	delay := uiRefreshMinInterval - now.Sub(ca.lastUIUpdate)
 	ca.pendingUIUpd = true
-	ca.uiUpdateMu.Unlock()
-
-	time.AfterFunc(delay, func() {
+	ca.uiUpdateTimer = time.AfterFunc(delay, func() {
 		ca.uiUpdateMu.Lock()
+		if ca.suspendUIRefresh {
+			ca.pendingUIUpd = false
+			ca.uiUpdateTimer = nil
+			ca.uiUpdateMu.Unlock()
+			return
+		}
 		ca.lastUIUpdate = time.Now()
 		ca.pendingUIUpd = false
+		ca.uiUpdateTimer = nil
 		ca.uiUpdateMu.Unlock()
 		ca.recomputeAndRefreshNow()
 	})
+	ca.uiUpdateMu.Unlock()
 }
 
 // refreshUnifiedArray refreshes the array canvas

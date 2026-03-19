@@ -71,8 +71,10 @@ func NewToolValidationWidgets(opts ToolValidationOptions) *ToolValidationWidgets
 		return ToolBusyText(name, opts.StatusLabelMode)
 	}
 
-	crosssimStatus := widget.NewLabel(statusText(validation.StatusUnknown, "CrossSim"))
-	badcrossbarStatus := widget.NewLabel(statusText(validation.StatusUnknown, "BadCrossbar"))
+	crosssimInfo := validation.CrossSimInfo()
+	badcrossbarInfo := validation.BadCrossbarInfo()
+	crosssimStatus := widget.NewLabel(statusText(crosssimInfo.Status, "CrossSim"))
+	badcrossbarStatus := widget.NewLabel(statusText(badcrossbarInfo.Status, "BadCrossbar"))
 	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
 	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
 
@@ -123,9 +125,6 @@ func NewToolValidationWidgets(opts ToolValidationOptions) *ToolValidationWidgets
 			}
 		}()
 	})
-
-	// Initial status check in background
-	go update()
 
 	return &ToolValidationWidgets{
 		CrossSimStatus:    crosssimStatus,

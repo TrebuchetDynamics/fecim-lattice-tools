@@ -41,19 +41,23 @@ import (
 //go:embed defaults/*.yaml
 var embeddedConfig embed.FS
 
+// ConfigVersion identifies the current split-config schema version.
+const ConfigVersion = "1.0.0"
+
 // Config holds all physics configuration aggregated from split YAML files.
 type Config struct {
-	Constants   Constants            `yaml:"constants"`
-	Materials   map[string]*Material `yaml:"materials"`
-	Crossbar    Crossbar             `yaml:"crossbar"`
-	Training    Training             `yaml:"training"`
-	Energy      Energy               `yaml:"energy"`
-	Timing      Timing               `yaml:"timing"`
-	Preisach    Preisach             `yaml:"preisach"`
-	Calibration Calibration          `yaml:"calibration"`
-	Simulation  Simulation           `yaml:"simulation"`
-	MNIST       MNIST                `yaml:"mnist"`
-	Benchmarks  map[string]any       `yaml:"benchmarks"`
+	LoadedVersion string               `yaml:"version,omitempty"`
+	Constants     Constants            `yaml:"constants"`
+	Materials     map[string]*Material `yaml:"materials"`
+	Crossbar      Crossbar             `yaml:"crossbar"`
+	Training      Training             `yaml:"training"`
+	Energy        Energy               `yaml:"energy"`
+	Timing        Timing               `yaml:"timing"`
+	Preisach      Preisach             `yaml:"preisach"`
+	Calibration   Calibration          `yaml:"calibration"`
+	Simulation    Simulation           `yaml:"simulation"`
+	MNIST         MNIST                `yaml:"mnist"`
+	Benchmarks    map[string]any       `yaml:"benchmarks"`
 }
 
 // Constants holds global physics constants.
@@ -623,7 +627,6 @@ func readConfigFile(root, filename string) ([]byte, error) {
 	return data, nil
 }
 
-
 // GetMaterial returns a material by name.
 // Valid names (all CMOS compatible):
 //   - "default_hzo"           - Baseline Si-doped HZO (30 states)
@@ -655,6 +658,40 @@ func (c *Config) MaterialNames() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+// Version returns the current config schema version implemented by the codebase.
+func (c *Config) Version() string {
+	return ConfigVersion
+}
+
+// ValidateVersion accepts legacy configs without a version and rejects only
+// major-version mismatches.
+func (c *Config) ValidateVersion() error {
+	if c == nil || c.LoadedVersion == "" {
+		return nil
+	}
+
+	loadedMajor, err := majorConfigVersion(c.LoadedVersion)
+	if err != nil {
+		return fmt.Errorf("invalid loaded config version %q: %w", c.LoadedVersion, err)
+	}
+	currentMajor, err := majorConfigVersion(ConfigVersion)
+	if err != nil {
+		return fmt.Errorf("invalid current config version %q: %w", ConfigVersion, err)
+	}
+	if loadedMajor != currentMajor {
+		return fmt.Errorf("config version %s is incompatible with current version %s", c.LoadedVersion, ConfigVersion)
+	}
+	return nil
+}
+
+func majorConfigVersion(version string) (int, error) {
+	var major int
+	if _, err := fmt.Sscanf(version, "%d.", &major); err != nil {
+		return 0, err
+	}
+	return major, nil
 }
 
 // --- Convenience methods on Material ---
@@ -699,7 +736,10 @@ func (m *Material) GetNumLevels(cfg *Config) int {
 
 // SaveToFile saves the current config to a YAML file.
 func (c *Config) SaveToFile(path string) error {
-	data, err := yaml.Marshal(c)
+	clone := *c
+	clone.LoadedVersion = ConfigVersion
+
+	data, err := yaml.Marshal(&clone)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}

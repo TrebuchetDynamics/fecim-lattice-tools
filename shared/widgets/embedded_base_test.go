@@ -4,6 +4,10 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 )
 
 func TestEmbeddedAppBaseInit(t *testing.T) {
@@ -158,6 +162,49 @@ func TestEmbeddedAppBaseShowNotification(t *testing.T) {
 
 	// ShowNotification should not panic with nil app
 	base.ShowNotification("Title", "Content")
+}
+
+func TestEmbeddedAppBaseBuildOrReuseContent(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window1 := testApp.NewWindow("one")
+	defer window1.Close()
+	window2 := testApp.NewWindow("two")
+	defer window2.Close()
+
+	base := &EmbeddedAppBase{}
+	var builds int32
+
+	content1 := base.BuildOrReuseContent(testApp, window1, func() fyne.CanvasObject {
+		atomic.AddInt32(&builds, 1)
+		return widget.NewLabel("first")
+	})
+	content2 := base.BuildOrReuseContent(testApp, window1, func() fyne.CanvasObject {
+		atomic.AddInt32(&builds, 1)
+		return widget.NewLabel("second")
+	})
+	content3 := base.BuildOrReuseContent(testApp, window2, func() fyne.CanvasObject {
+		atomic.AddInt32(&builds, 1)
+		return widget.NewLabel("third")
+	})
+
+	if atomic.LoadInt32(&builds) != 2 {
+		t.Fatalf("expected builder to run twice, ran %d times", builds)
+	}
+	if content1 != content2 {
+		t.Fatal("expected content to be reused for the same window")
+	}
+	if content3 == content1 {
+		t.Fatal("expected content to rebuild when the window changes")
+	}
+}
+
+func TestNewModuleErrorContent(t *testing.T) {
+	content := NewModuleErrorContent("Test", nil)
+	if content == nil {
+		t.Fatal("expected fallback error content")
+	}
 }
 
 func TestEmbeddedAppBaseConcurrency(t *testing.T) {

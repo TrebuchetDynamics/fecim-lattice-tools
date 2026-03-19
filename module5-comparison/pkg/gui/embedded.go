@@ -53,18 +53,18 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 
 // BuildContent creates the UI content for embedding in a tab
 func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	content := e.createMainLayout()
-	e.SetContent(content)
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		content := e.createMainLayout()
 
-	// Note: updateCalculations() is called via onWorkloadChanged when SetSelected triggers
-	// No need for explicit call here - it causes duplicate calculation
-	e.updateStatus("Ready. Select workload and adjust parameters.")
+		// Note: updateCalculations() is called via onWorkloadChanged when SetSelected triggers
+		// No need for explicit call here - it causes duplicate calculation
+		e.updateStatus("Ready. Select workload and adjust parameters.")
 
-	return content
+		return content
+	})
 }
 
 // Start begins any background processes (called when tab is selected)

@@ -558,7 +558,7 @@ func (ca *CircuitsApp) onAnimateTiming() {
 
 	ca.timingStatusLabel.SetText("Animating " + selectedOp + " timing...")
 
-	go func() {
+	ca.launchBackground(func() {
 		for i, step := range steps {
 			if ca.shouldStop() {
 				return
@@ -573,7 +573,7 @@ func (ca *CircuitsApp) onAnimateTiming() {
 				}
 			}
 		}
-	}()
+	})
 }
 
 func (ca *CircuitsApp) onExportTimingSVG() {

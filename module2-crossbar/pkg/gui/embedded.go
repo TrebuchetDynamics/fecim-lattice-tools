@@ -68,38 +68,37 @@ func (e *EmbeddedCrossbarApp) initArray() error {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.EmbeddedAppBase.Init(fyneApp, parentWindow)
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Lazily initialize the crossbar array on first BuildContent call
-	if err := e.initArray(); err != nil {
-		// Return error placeholder if init fails
-		return fyne.NewContainerWithLayout(nil)
-	}
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		// Lazily initialize the crossbar array on first BuildContent call
+		if err := e.initArray(); err != nil {
+			return sharedwidgets.NewModuleErrorContent("Crossbar", err)
+		}
 
-	// Create enhanced layout (embedded version always uses enhanced features)
-	content := e.createEnhancedMainLayout()
-	e.SetContent(content)
+		// Create enhanced layout (embedded version always uses enhanced features)
+		content := e.createEnhancedMainLayout()
 
-	// Initialize displays
-	e.updateConductanceDisplay()
-	e.updateStatus("Ready. Program weights and run MVM operations.")
+		// Initialize displays
+		e.updateConductanceDisplay()
+		e.updateStatus("Ready. Program weights and run MVM operations.")
 
-	// Set first-load onboarding content (same as standalone mode)
-	e.setEducationalContent("Quick Guide",
-		"Welcome to Crossbar!\n\n"+
-			"Quick Start:\n"+
-			"1. Hover over cells\n"+
-			"2. Click for details\n"+
-			"3. Use controls (right)\n"+
-			"4. Explore tabs\n\n"+
-			"Key Concepts:\n"+
-			"• 30 levels/cell (claim)\n"+
-			"• MVM = W × V\n"+
-			"• Parallel compute")
+		// Set first-load onboarding content (same as standalone mode)
+		e.setEducationalContent("Quick Guide",
+			"Welcome to Crossbar!\n\n"+
+				"Quick Start:\n"+
+				"1. Hover over cells\n"+
+				"2. Click for details\n"+
+				"3. Use controls (right)\n"+
+				"4. Explore tabs\n\n"+
+				"Key Concepts:\n"+
+				"• 30 levels/cell (claim)\n"+
+				"• MVM = W × V\n"+
+				"• Parallel compute")
 
-	return content
+		return content
+	})
 }
 
 // BuildContentStandard creates standard UI content for embedding (no enhanced features)
@@ -107,19 +106,21 @@ func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindo
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Lazily initialize the crossbar array on first BuildContent call
-	if err := e.initArray(); err != nil {
-		return fyne.NewContainerWithLayout(nil)
-	}
+	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+		// Lazily initialize the crossbar array on first BuildContent call
+		if err := e.initArray(); err != nil {
+			return sharedwidgets.NewModuleErrorContent("Crossbar", err)
+		}
 
-	// Create standard layout
-	content := e.createMainLayout()
+		// Create standard layout
+		content := e.createMainLayout()
 
-	// Initialize displays
-	e.updateConductanceDisplay()
-	e.updateStatus("Ready. Program weights and run MVM operations.")
+		// Initialize displays
+		e.updateConductanceDisplay()
+		e.updateStatus("Ready. Program weights and run MVM operations.")
 
-	return content
+		return content
+	})
 }
 
 // Start initializes anything that needs to run after UI is visible

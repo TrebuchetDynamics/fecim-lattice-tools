@@ -36,6 +36,14 @@ func waitFor(t *testing.T, timeout time.Duration, label string, cond func() bool
 	t.Fatalf("timeout waiting for %s", label)
 }
 
+func uiRead[T any](read func() T) T {
+	var value T
+	sharedwidgets.WithUILock(func() {
+		value = read()
+	})
+	return value
+}
+
 func TestUnifiedModeButtonsAndArchitecture(t *testing.T) {
 	embedded, app, win := setupUnifiedTestApp(t)
 	defer app.Quit()
@@ -212,7 +220,10 @@ func TestUnifiedActionButtons(t *testing.T) {
 	if ca.deviceState.GetOperationMode() != OpModeCompute {
 		t.Fatalf("mode after MVM: got %v, want %v", ca.deviceState.GetOperationMode(), OpModeCompute)
 	}
-	if ca.operationsStatusLabel != nil && !strings.HasPrefix(ca.operationsStatusLabel.Text, "MVM") {
-		t.Fatalf("expected MVM status message, got %q", ca.operationsStatusLabel.Text)
+	if ca.operationsStatusLabel != nil {
+		statusText := uiRead(func() string { return ca.operationsStatusLabel.Text })
+		if !strings.HasPrefix(statusText, "MVM") {
+			t.Fatalf("expected MVM status message, got %q", statusText)
+		}
 	}
 }

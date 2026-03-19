@@ -48,6 +48,24 @@ func (ca *CircuitsApp) shouldStop() bool {
 	}
 }
 
+// launchBackground runs module-owned goroutines under lifecycle tracking so
+// Stop() can wait for them to exit before returning.
+func (ca *CircuitsApp) launchBackground(fn func()) bool {
+	ca.mu.Lock()
+	if ca.stopped || ca.stopChan == nil {
+		ca.mu.Unlock()
+		return false
+	}
+	ca.backgroundWG.Add(1)
+	ca.mu.Unlock()
+
+	go func() {
+		defer ca.backgroundWG.Done()
+		fn()
+	}()
+	return true
+}
+
 // drawRoundedRect draws a filled rectangle with rounded corners.
 // cornerRadius specifies the radius of the corner rounding.
 func drawRoundedRect(img *image.RGBA, x, y, rectW, rectH, cornerRadius int, c color.Color) {

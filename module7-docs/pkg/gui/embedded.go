@@ -73,38 +73,39 @@ type docEntry struct {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	app.EmbeddedAppBase.Init(fyneApp, window)
 	app.window = window
-	app.docsPath = utils.FindDirectory(filepath.Join("docs", "documentation"))
-	if app.docsPath == "" {
-		app.docsPath = utils.FindDirectory("docs")
-	}
 
-	// Initialize search index
-	app.searchIndex = NewSearchIndex(app.docsPath)
+	return app.EmbeddedAppBase.BuildOrReuseContent(fyneApp, window, func() fyne.CanvasObject {
+		app.docsPath = utils.FindDirectory(filepath.Join("docs", "documentation"))
+		if app.docsPath == "" {
+			app.docsPath = utils.FindDirectory("docs")
+		}
 
-	// Initialize history persistence
-	app.history = NewDocsHistory()
+		// Initialize search index
+		app.searchIndex = NewSearchIndex(app.docsPath)
 
-	// Create all UI components
-	app.createUIComponents()
+		// Initialize history persistence
+		app.history = NewDocsHistory()
 
-	// Setup responsive layout
-	app.layoutManager = NewLayoutManager()
-	app.layoutManager.SetComponents(
-		app.buildSidebar(),     // tree + quick access
-		app.buildMainContent(), // breadcrumbs + metadata + content
-		app.buildTocSidebar(),  // table of contents
-		app.buildTopBar(),      // search button, title
-	)
+		// Create all UI components
+		app.createUIComponents()
 
-	content := app.layoutManager.BuildLayout()
-	app.SetContent(content)
+		// Setup responsive layout
+		app.layoutManager = NewLayoutManager()
+		app.layoutManager.SetComponents(
+			app.buildSidebar(),     // tree + quick access
+			app.buildMainContent(), // breadcrumbs + metadata + content
+			app.buildTocSidebar(),  // table of contents
+			app.buildTopBar(),      // search button, title
+		)
 
-	// Setup keyboard shortcut for search
-	SetupSearchShortcut(window, app.searchDialog)
+		content := app.layoutManager.BuildLayout()
 
-	return content
+		// Setup keyboard shortcut for search
+		SetupSearchShortcut(window, app.searchDialog)
+
+		return content
+	})
 }
 
 // createUIComponents initializes all UI widgets

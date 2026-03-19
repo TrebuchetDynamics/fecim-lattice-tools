@@ -260,15 +260,17 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 	}
 	probeResult := runCrossvalScript(t, probeInput)
 	hasBadcrossbar = probeResult.BadcrossbarAvailable
+	hasFallbackModel := !hasBadcrossbar && probeResult.IRDropOutput != nil
 
 	// Test increasing wire resistance values (all > 0 to engage badcrossbar)
 	resistances := []float64{0.01, 1.0, 5.0, 10.0, 50.0}
 
 	type result struct {
-		wireR      float64
-		output     []float64
-		outputNorm float64 // L2 norm of output vector
-		hasBCB     bool
+		wireR         float64
+		output        []float64
+		outputNorm    float64 // L2 norm of output vector
+		solver        string
+		irDropModeled bool
 	}
 
 	var results []result
@@ -285,10 +287,19 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 		}
 		pyResult := runCrossvalScript(t, cvInput)
 
-		// Use IR-drop output if badcrossbar is available, else ideal
+		// Prefer an IR-drop output whenever the oracle exposes one. This covers
+		// both the full badcrossbar solver and the local analytical fallback.
 		var output []float64
 		usedBCB := pyResult.BadcrossbarAvailable
-		if usedBCB && pyResult.IRDropOutput != nil {
+		usedFallback := !usedBCB && pyResult.IRDropOutput != nil
+		solver := "ideal"
+		switch {
+		case usedBCB:
+			solver = "badcrossbar"
+		case usedFallback:
+			solver = "analytical-fallback"
+		}
+		if pyResult.IRDropOutput != nil {
 			output = pyResult.IRDropOutput
 		} else {
 			output = pyResult.IdealOutput
@@ -302,30 +313,33 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 		norm = math.Sqrt(norm)
 
 		results = append(results, result{
-			wireR:      r,
-			output:     output,
-			outputNorm: norm,
-			hasBCB:     usedBCB,
+			wireR:         r,
+			output:        output,
+			outputNorm:    norm,
+			solver:        solver,
+			irDropModeled: usedBCB || usedFallback,
 		})
 	}
 
 	// Log results
 	if hasBadcrossbar {
 		t.Log("IR-drop direction test using badcrossbar (full resistor network solver)")
+	} else if hasFallbackModel {
+		t.Log("IR-drop direction test using analytical fallback (badcrossbar unavailable)")
 	} else {
 		t.Log("IR-drop direction test: badcrossbar not available, verifying ideal baseline")
 		t.Log("Without badcrossbar, ideal MVM is independent of wire resistance.")
 		t.Log("Test validates that the oracle pipeline works; IR-drop trend requires badcrossbar.")
 	}
 	t.Log("──────────────────────────────────────────────────────────────────")
-	t.Logf("%-12s  %-14s  %-10s", "Wire R (Ω)", "||output||₂", "BCB used")
+	t.Logf("%-12s  %-14s  %-20s", "Wire R (Ω)", "||output||₂", "Solver")
 	t.Log("──────────────────────────────────────────────────────────────────")
 	for _, r := range results {
-		t.Logf("%-12.2f  %-14.6f  %-10v", r.wireR, r.outputNorm, r.hasBCB)
+		t.Logf("%-12.2f  %-14.6f  %-20s", r.wireR, r.outputNorm, r.solver)
 	}
 
-	if hasBadcrossbar {
-		// With badcrossbar: verify monotonic decrease in output norm
+	if hasBadcrossbar || hasFallbackModel {
+		// With an IR-drop model: verify monotonic decrease in output norm
 		// as wire resistance increases (IR-drop reduces effective voltages)
 		t.Log("")
 		t.Log("Checking monotonic decrease in output magnitude with increasing wire R:")
@@ -352,7 +366,11 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 		if allDecreasing {
 			t.Log("PASS: output magnitude monotonically decreases with increasing wire resistance")
 		}
-		fmt.Printf("BADCROSSBAR_IRDROP: n=%d resistances=%v decreasing=%v\n", n, resistances, allDecreasing)
+		mode := "fallback"
+		if hasBadcrossbar {
+			mode = "badcrossbar"
+		}
+		fmt.Printf("BADCROSSBAR_IRDROP: n=%d mode=%s resistances=%v decreasing=%v\n", n, mode, resistances, allDecreasing)
 	} else {
 		// Without badcrossbar: verify ideal outputs are constant regardless of wire R
 		// (since ideal MVM ignores wire resistance)
@@ -381,7 +399,8 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 		artifactResults[i] = map[string]interface{}{
 			"wire_resistance_ohm": r.wireR,
 			"output_l2_norm":      r.outputNorm,
-			"badcrossbar_used":    r.hasBCB,
+			"solver":              r.solver,
+			"ir_drop_modeled":     r.irDropModeled,
 		}
 	}
 	artifact := map[string]interface{}{

@@ -12,7 +12,7 @@ func TestValidArraySizesIncludes128(t *testing.T) {
 }
 
 func TestResizeArraySupports128x128(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || raceEnabled {
 		t.Skip("skipping 128x128 GUI resize test in -short mode (>10 min)")
 	}
 	embedded, app, win := setupUnifiedTestApp(t)

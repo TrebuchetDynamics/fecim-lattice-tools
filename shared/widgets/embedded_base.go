@@ -18,9 +18,10 @@ import (
 //	}
 //
 //	func (app *EmbeddedMyApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-//	    app.Init(fyneApp, window)
-//	    // ... create content
-//	    return content
+//	    return app.EmbeddedAppBase.BuildOrReuseContent(fyneApp, window, func() fyne.CanvasObject {
+//	        // ... create content
+//	        return content
+//	    })
 //	}
 //
 //	func (app *EmbeddedMyApp) Start() {
@@ -43,12 +44,38 @@ type EmbeddedAppBase struct {
 }
 
 // Init initializes the base with the Fyne app and window.
-// Call this at the start of BuildContent().
+// Most embeddable modules should prefer BuildOrReuseContent; Init remains
+// available for tests and the few call sites that manage content manually.
 func (b *EmbeddedAppBase) Init(fyneApp fyne.App, window fyne.Window) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.fyneApp = fyneApp
 	b.window = window
+}
+
+// BuildOrReuseContent binds the current Fyne context and reuses the existing
+// content when the caller is building into the same app/window pair.
+// If the embedding context changes, the builder is invoked again and the stored
+// content is replaced with the newly built view.
+func (b *EmbeddedAppBase) BuildOrReuseContent(fyneApp fyne.App, window fyne.Window, build func() fyne.CanvasObject) fyne.CanvasObject {
+	b.mu.Lock()
+	reuse := b.content != nil && b.fyneApp == fyneApp && b.window == window
+	existing := b.content
+	b.fyneApp = fyneApp
+	b.window = window
+	b.mu.Unlock()
+
+	if reuse {
+		return existing
+	}
+
+	content := build()
+	if content == nil {
+		return nil
+	}
+
+	b.SetContent(content)
+	return content
 }
 
 // GetFyneApp returns the Fyne app instance.
@@ -73,7 +100,8 @@ func (b *EmbeddedAppBase) GetContent() fyne.CanvasObject {
 }
 
 // SetContent stores the content reference.
-// Call this at the end of BuildContent() before returning.
+// BuildOrReuseContent calls this automatically; manual builders can call it
+// when they need direct control over content creation.
 func (b *EmbeddedAppBase) SetContent(content fyne.CanvasObject) {
 	b.mu.Lock()
 	defer b.mu.Unlock()

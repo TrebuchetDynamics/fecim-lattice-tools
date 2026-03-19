@@ -149,7 +149,9 @@ All modules implement the same interface for seamless integration:
 ```go
 // Pseudo-interface (Go doesn't formalize this, but all modules follow it)
 type EmbeddedApp interface {
-    // BuildContent creates the UI once (called at app startup)
+    // BuildContent returns the module UI for the current host app/window.
+    // Implementations must be idempotent for the same embedding context and
+    // may rebuild when the host context changes.
     BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject
 
     // Start begins the module's main loop (called when tab becomes active)
@@ -200,7 +202,7 @@ demos := &DemoApp{
     // ...
 }
 
-// Build all UIs once
+// Bind each module to the current host app/window
 views := []fyne.CanvasObject{
     launcherContent,
     container.NewMax(demos.demo1.BuildContent(fyneApp, window)),
@@ -222,8 +224,12 @@ onViewChange = func(index int) {
 
 This pattern ensures:
 - **Isolation**: Each module manages its own state
+- **Stable embedding**: `BuildContent(...)` reuses existing content for the same host window and rebuilds only when embedding context changes
 - **Lazy execution**: Only active modules consume CPU
 - **Clean transitions**: Proper cleanup when switching tabs
+
+Most embedded modules implement this through `shared/widgets/EmbeddedAppBase.BuildOrReuseContent(...)`,
+which centralizes host-context tracking and keeps `BuildContent(...)` deterministic across repeated calls.
 
 ---
 
