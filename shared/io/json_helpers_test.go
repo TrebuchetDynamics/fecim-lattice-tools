@@ -447,6 +447,94 @@ func TestRoundTrip(t *testing.T) {
 	})
 }
 
+func TestValidatePath(t *testing.T) {
+	t.Run("rejects empty path", func(t *testing.T) {
+		_, err := ValidatePath("")
+		if err == nil {
+			t.Fatal("expected error for empty path")
+		}
+	})
+
+	t.Run("rejects whitespace-only path", func(t *testing.T) {
+		_, err := ValidatePath("   ")
+		if err == nil {
+			t.Fatal("expected error for whitespace-only path")
+		}
+	})
+
+	t.Run("rejects relative traversal", func(t *testing.T) {
+		traversals := []string{
+			"../escape.json",
+			"../../etc/passwd",
+			"../../../tmp/evil",
+		}
+		for _, p := range traversals {
+			_, err := ValidatePath(p)
+			if err == nil {
+				t.Fatalf("expected traversal rejection for %q", p)
+			}
+		}
+	})
+
+	t.Run("accepts valid relative path", func(t *testing.T) {
+		got, err := ValidatePath("data/output.json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != filepath.Clean("data/output.json") {
+			t.Fatalf("unexpected cleaned path: %s", got)
+		}
+	})
+
+	t.Run("accepts absolute path", func(t *testing.T) {
+		got, err := ValidatePath("/tmp/test.json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "/tmp/test.json" {
+			t.Fatalf("unexpected cleaned path: %s", got)
+		}
+	})
+
+	t.Run("accepts nested relative without traversal", func(t *testing.T) {
+		got, err := ValidatePath("exports/comparison/data.json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != filepath.Clean("exports/comparison/data.json") {
+			t.Fatalf("unexpected cleaned path: %s", got)
+		}
+	})
+}
+
+func TestSaveJSON_PathValidation(t *testing.T) {
+	t.Run("rejects empty path", func(t *testing.T) {
+		err := SaveJSON("", map[string]string{"k": "v"})
+		if err == nil {
+			t.Fatal("expected error for empty path")
+		}
+	})
+}
+
+func TestLoadJSON_PathValidation(t *testing.T) {
+	t.Run("rejects empty path", func(t *testing.T) {
+		var data map[string]string
+		err := LoadJSON("", &data)
+		if err == nil {
+			t.Fatal("expected error for empty path")
+		}
+	})
+}
+
+func TestSaveJSONCompact_PathValidation(t *testing.T) {
+	t.Run("rejects empty path", func(t *testing.T) {
+		err := SaveJSONCompact("", map[string]string{"k": "v"})
+		if err == nil {
+			t.Fatal("expected error for empty path")
+		}
+	})
+}
+
 func TestEdgeCases(t *testing.T) {
 	t.Run("handles empty struct", func(t *testing.T) {
 		tmpDir := t.TempDir()

@@ -73,6 +73,17 @@ func (a *App) ensureUIUpdateLoop() {
 	})
 }
 
+// closeUIUpdateLoop closes the uiUpdates channel so the uiUpdateLoop goroutine
+// exits cleanly. Safe to call even if the loop was never started, and safe to
+// call multiple times (only the first call closes the channel).
+func (a *App) closeUIUpdateLoop() {
+	a.uiCloseOnce.Do(func() {
+		if a.uiUpdates != nil {
+			close(a.uiUpdates)
+		}
+	})
+}
+
 // queueUIUpdate sends the latest UI snapshot without blocking physics.
 func (a *App) queueUIUpdate(snapshot uiSnapshot) {
 	a.ensureUIUpdateLoop()

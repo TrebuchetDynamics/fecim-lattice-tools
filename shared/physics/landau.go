@@ -183,6 +183,15 @@ func (s *LKSolver) UpdateParams() {
 		Eps0 = 8.854e-12 // Vacuum Permittivity (F/m)
 	)
 
+	// Guard: CurieConst must be positive for a valid Curie-Weiss contribution.
+	// A zero or negative value indicates an uncalibrated material; skip the
+	// Curie-Weiss term to avoid division-by-zero (Alpha stays at its current value).
+	if s.CurieConst <= 0 {
+		alphaMech := 2 * s.Q12 * s.Stress
+		s.Alpha = -alphaMech
+		return
+	}
+
 	// Thermodynamic contribution (Curie-Weiss)
 	alphaT := (s.Temperature - s.CurieTemp) / (2 * Eps0 * s.CurieConst)
 
@@ -334,6 +343,11 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 // E_depolarization = K_dep * P
 // dG/dP = 2*alpha*P + 4*beta*P^3 + 6*gamma*P^5
 func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
+	// Guard: rhoEff must be positive to avoid division-by-zero or sign inversion.
+	if rhoEff <= 0 {
+		return 0
+	}
+
 	// Depolarization Field: creates "slant" for 30-level analog operation
 	// This term opposes polarization, braking the switching to enable intermediate states
 	E_depolarization := s.K_dep * P

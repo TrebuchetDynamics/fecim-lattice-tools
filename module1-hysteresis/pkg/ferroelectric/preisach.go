@@ -128,7 +128,9 @@ type PreisachModel struct {
 	everett  *TanhEverett
 
 	Temperature float64
-	Stress      float64 // GPa
+	// NOTE: Preisach.Stress is in GPa (converted to Pa inline at calculation site).
+	// LKSolver.Stress stores Pa directly. Be careful when passing values between models.
+	Stress float64 // GPa
 
 	// Reversible (nonlinear) contribution derived from permittivity and Ec.
 	reversibleChi  float64 // C/(V*m)

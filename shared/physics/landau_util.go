@@ -83,6 +83,12 @@ func (s *LKSolver) effectiveRho() float64 {
 	if s.UseEffectiveViscosity && s.SeriesResistance > 0 && s.Thickness > 0 && s.Area > 0 {
 		rhoEff += (s.SeriesResistance * s.Area / s.Thickness)
 	}
+	// Guard: viscosity must be strictly positive for dP/dt = (...)/rhoEff.
+	// A zero or negative value would produce Inf/NaN; fall back to the
+	// literature default for 10 nm HfO2 (Materlik 2015).
+	if rhoEff <= 0 {
+		rhoEff = defaultLKViscosity
+	}
 	return rhoEff
 }
 
@@ -98,7 +104,13 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 	if vCell <= 0 {
 		vCell = 45e-9 * 45e-9 * 10e-9 // fallback: default FeCIM cell
 	}
-	sigma := math.Sqrt(2 * kB * s.Temperature * rhoEff / (dt * vCell))
+	// Guard: the sqrt argument must be non-negative. Negative temperature or
+	// negative rhoEff would produce NaN; clamp to zero noise in that case.
+	arg := 2 * kB * s.Temperature * rhoEff / (dt * vCell)
+	if arg <= 0 {
+		return 0
+	}
+	sigma := math.Sqrt(arg)
 	if s.rng != nil {
 		return s.rng.NormFloat64() * sigma
 	}

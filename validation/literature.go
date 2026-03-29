@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"strings"
 
-	"fecim-lattice-tools/shared/io"
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 // LoadLiteratureDataset loads a literature dataset from a JSON file.
 // Uses shared/io for consistent file handling across the codebase.
 func LoadLiteratureDataset(path string) (*LiteratureDataset, error) {
 	var dataset LiteratureDataset
-	if err := io.LoadJSON(path, &dataset); err != nil {
+	if err := sharedio.LoadJSON(path, &dataset); err != nil {
 		return nil, fmt.Errorf("failed to load literature dataset: %w", err)
 	}
 	return &dataset, nil
@@ -21,15 +22,32 @@ func LoadLiteratureDataset(path string) (*LiteratureDataset, error) {
 // SaveLiteratureDataset saves a literature dataset to a JSON file.
 // Uses shared/io for consistent file handling across the codebase.
 func SaveLiteratureDataset(dataset *LiteratureDataset, path string) error {
-	if err := io.SaveJSON(path, dataset); err != nil {
+	if dataset == nil {
+		return fmt.Errorf("dataset must not be nil")
+	}
+	if err := sharedio.SaveJSON(path, dataset); err != nil {
 		return fmt.Errorf("failed to save literature dataset: %w", err)
 	}
 	return nil
 }
 
-// LoadMultipleDatasets loads multiple literature datasets from a directory
+// LoadMultipleDatasets loads multiple literature datasets from a directory.
+// Both dir and pattern are validated: dir must not be empty and pattern
+// must not contain path-traversal sequences.
 func LoadMultipleDatasets(dir string, pattern string) ([]*LiteratureDataset, error) {
-	matches, err := filepath.Glob(filepath.Join(dir, pattern))
+	if strings.TrimSpace(dir) == "" {
+		return nil, fmt.Errorf("directory must not be empty")
+	}
+	if strings.TrimSpace(pattern) == "" {
+		return nil, fmt.Errorf("pattern must not be empty")
+	}
+	// Reject patterns that could escape the directory.
+	cleanPattern := filepath.Clean(pattern)
+	if cleanPattern == ".." || strings.HasPrefix(cleanPattern, ".."+string(filepath.Separator)) {
+		return nil, fmt.Errorf("pattern contains path traversal: %q", pattern)
+	}
+
+	matches, err := filepath.Glob(filepath.Join(dir, cleanPattern))
 	if err != nil {
 		return nil, fmt.Errorf("failed to glob pattern: %w", err)
 	}

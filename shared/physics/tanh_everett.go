@@ -30,7 +30,19 @@ type TanhEverett struct {
 // Calculate returns the Everett integral F(alpha, beta) for the half-plane
 // region defined by switching thresholds alpha (ascending) and beta (descending).
 // The result is in C/m^2 and is guaranteed non-negative by the product form.
+//
+// If Delta == 0 the distribution collapses to a delta function; the Everett
+// integral is Ps when both alpha > Ec and beta < -Ec, and 0 otherwise.
 func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
+	if t.Delta <= 0 {
+		// Degenerate case: infinitely sharp distribution (square loop).
+		// Delta <= 0 prevents NaN from 0/0 and sign-flipped tanh arguments.
+		if alpha > t.Ec && beta < -t.Ec {
+			return t.Ps
+		}
+		return 0
+	}
+
 	ascCDF := 1.0 + math.Tanh((alpha-t.Ec)/t.Delta)
 	descSurv := 1.0 - math.Tanh((beta+t.Ec)/t.Delta)
 

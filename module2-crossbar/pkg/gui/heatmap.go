@@ -66,6 +66,7 @@ type CrossbarHeatmap struct {
 	refreshMu      sync.Mutex
 	lastRefresh    time.Time
 	refreshPending bool
+	refreshTimer   *time.Timer // Reusable timer to avoid spawning goroutines per deferred refresh
 
 	// Data synchronization
 	dataMu sync.RWMutex
@@ -145,11 +146,14 @@ func (h *CrossbarHeatmap) rateLimitedRefresh() {
 
 	h.refreshPending = true
 	delay := refreshMinInterval - elapsed
-	h.refreshMu.Unlock()
 
-	// Schedule delayed refresh
-	go func() {
-		time.Sleep(delay)
+	// Reuse a single timer instead of spawning a goroutine per deferred refresh.
+	// If a timer is already pending, stop it and reset so we don't accumulate
+	// goroutines during rapid resize/update bursts.
+	if h.refreshTimer != nil {
+		h.refreshTimer.Stop()
+	}
+	h.refreshTimer = time.AfterFunc(delay, func() {
 		h.refreshMu.Lock()
 		h.refreshPending = false
 		h.lastRefresh = time.Now()
@@ -158,7 +162,8 @@ func (h *CrossbarHeatmap) rateLimitedRefresh() {
 		fyne.Do(func() {
 			h.BaseWidget.Refresh() // Call actual Fyne refresh
 		})
-	}()
+	})
+	h.refreshMu.Unlock()
 }
 
 // SetData updates the heatmap data.

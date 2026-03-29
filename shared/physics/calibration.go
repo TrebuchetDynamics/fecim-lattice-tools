@@ -34,7 +34,16 @@ type Calibrator struct {
 }
 
 // NewCalibrator creates a new calibrator for the given number of levels.
+// Returns nil if numLevels < 2 (need at least two levels for calibration)
+// or Ec <= 0 (need a positive coercive field for meaningful field constraints).
 func NewCalibrator(numLevels int, Ec float64) *Calibrator {
+	if numLevels < 2 {
+		return nil
+	}
+	if Ec <= 0 {
+		return nil
+	}
+
 	minStep := Ec * 0.02 // 2% of Ec
 	c := &Calibrator{
 		NumLevels:  numLevels,

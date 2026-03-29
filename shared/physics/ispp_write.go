@@ -75,7 +75,12 @@ type WriteEvent struct {
 	ResetField float64
 }
 
+// NewWriteController creates a WriteController for ISPP-based writes.
+// Returns nil if solver is nil (required for L-K integration).
 func NewWriteController(solver *LKSolver, material *HZOMaterial) *WriteController {
+	if solver == nil {
+		return nil
+	}
 	return &WriteController{
 		Solver:             solver,
 		Material:           material,
@@ -182,6 +187,12 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 	if c.Material == nil {
 		c.FailureReason = "material is nil"
 		log.Input("WriteTarget", map[string]interface{}{"status": "Failed", "reason": c.FailureReason})
+		c.emitEvent(WriteEvent{Phase: "Failed", Attempt: 0, TargetG: targetG})
+		return 0, false, 0
+	}
+	if c.Material.Thickness <= 0 {
+		c.FailureReason = "material thickness must be > 0 (division by thickness for field calculation)"
+		log.Input("WriteTarget", map[string]interface{}{"status": "Failed", "reason": c.FailureReason, "thickness": c.Material.Thickness})
 		c.emitEvent(WriteEvent{Phase: "Failed", Attempt: 0, TargetG: targetG})
 		return 0, false, 0
 	}

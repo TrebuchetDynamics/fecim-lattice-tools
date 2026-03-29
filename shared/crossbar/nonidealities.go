@@ -727,6 +727,7 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 			quantizedInput := a.quantizeDAC(effectiveV)
 
 			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
+			g *= a.applyStateDepC2CNoise(a.cells[i][j].Conductance)
 			sum += g * quantizedInput
 		}
 

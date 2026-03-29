@@ -735,7 +735,13 @@ func (m *Material) GetNumLevels(cfg *Config) int {
 }
 
 // SaveToFile saves the current config to a YAML file.
+// Returns an error if the path is empty or invalid.
 func (c *Config) SaveToFile(path string) error {
+	cleanPath, err := sharedio.ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid config save path: %w", err)
+	}
+
 	clone := *c
 	clone.LoadedVersion = ConfigVersion
 
@@ -744,12 +750,12 @@ func (c *Config) SaveToFile(path string) error {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(cleanPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(cleanPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 

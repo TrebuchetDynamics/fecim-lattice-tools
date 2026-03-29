@@ -326,6 +326,7 @@ type App struct {
 
 	// UI update loop (async UI updates from simulation goroutine)
 	uiUpdateOnce sync.Once
+	uiCloseOnce  sync.Once
 	uiUpdates    chan uiSnapshot
 
 	// Temperature-dependent metrics labels
@@ -733,10 +734,40 @@ func (a *App) run() error {
 	stopCh := make(chan struct{})
 	var simWG sync.WaitGroup
 
-	// Try to load saved calibration, or perform fresh calibration at room temp
+	// Try to load saved calibration, or perform fresh calibration at room temp.
+	// The goroutine checks stopCh so it exits promptly when the window closes.
+	var calibWG sync.WaitGroup
+	calibWG.Add(1)
 	go func() {
-		time.Sleep(100 * time.Millisecond) // Let UI settle
+		defer calibWG.Done()
+
+		timer := time.NewTimer(100 * time.Millisecond) // Let UI settle
+		defer timer.Stop()
+		select {
+		case <-stopCh:
+			return
+		case <-timer.C:
+		}
+
+		select {
+		case <-stopCh:
+			return
+		default:
+		}
+
 		a.mu.Lock()
+		defer a.mu.Unlock()
+
+		// Re-check after acquiring lock -- Stop() may have been called.
+		select {
+		case <-stopCh:
+			return
+		default:
+		}
+		if !a.running.Load() {
+			return
+		}
+
 		if !a.loadCalibration() {
 			// Calibrate at default room temperature (300K)
 			a.calibrateLevelsAtTemperature(300)
@@ -744,7 +775,6 @@ func (a *App) run() error {
 				log.Printf("Warning: failed to save calibration: %v", err)
 			}
 		}
-		a.mu.Unlock()
 	}()
 
 	simWG.Add(1)
@@ -757,6 +787,8 @@ func (a *App) run() error {
 	a.running.Store(false)
 	close(stopCh)
 	simWG.Wait()
+	calibWG.Wait()
+	a.closeUIUpdateLoop()
 	return nil
 }
 

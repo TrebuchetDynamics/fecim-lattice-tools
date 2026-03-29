@@ -202,18 +202,21 @@ func TestPreisachStack_InfInputs(t *testing.T) {
 }
 
 func TestPreisachStack_ZeroSaturation(t *testing.T) {
-	// Edge case: zero saturation field
-	defer func() {
-		if r := recover(); r != nil {
-			t.Logf("Expected panic with zero saturation: %v", r)
-		}
-	}()
-
+	// Edge case: zero saturation field should return nil
 	everett := simpleUniformEverett{sat: 0}
 	ps := NewPreisachStack(0, everett)
 
-	// This might cause division by zero or other issues
-	_ = ps.Update(0.1)
+	if ps != nil {
+		t.Fatalf("NewPreisachStack(0, ...) should return nil for non-positive saturationE")
+	}
+}
+
+func TestPreisachStack_NilEverett(t *testing.T) {
+	// Edge case: nil Everett function should return nil
+	ps := NewPreisachStack(1.0, nil)
+	if ps != nil {
+		t.Fatalf("NewPreisachStack(1.0, nil) should return nil for nil Everett")
+	}
 }
 
 func TestPreisachStack_LargeHistory(t *testing.T) {

@@ -73,11 +73,17 @@ func ComputeLogEnabled() bool {
 	return globalComputeLog.enabled
 }
 
-// SetComputeLogPath sets the path for the compute log file
-func SetComputeLogPath(path string) {
+// SetComputeLogPath sets the path for the compute log file.
+// Returns an error if the path is empty or contains traversal sequences.
+func SetComputeLogPath(path string) error {
+	cleanPath, err := sharedio.ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid compute log path: %w", err)
+	}
 	globalComputeLog.mu.Lock()
 	defer globalComputeLog.mu.Unlock()
-	globalComputeLog.filePath = path
+	globalComputeLog.filePath = cleanPath
+	return nil
 }
 
 // ClearComputeLog clears all logged entries

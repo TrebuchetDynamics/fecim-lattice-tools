@@ -207,7 +207,11 @@ type ISPPCalculator struct {
 
 // NewISPPCalculator creates an ISPP helper using default heuristic policy
 // parameters (start ratio, step percent, pulse cap, and safety limits).
+// Returns nil if ec <= 0 (zero Ec produces zero voltage steps) or numLevels < 2.
 func NewISPPCalculator(ec float64, numLevels int) *ISPPCalculator {
+	if ec <= 0 || numLevels < 2 {
+		return nil
+	}
 	return &ISPPCalculator{
 		Ec:        ec,
 		NumLevels: numLevels,
@@ -216,7 +220,11 @@ func NewISPPCalculator(ec float64, numLevels int) *ISPPCalculator {
 }
 
 // NewISPPCalculatorWithConfig creates a new calculator with custom config.
+// Returns nil if ec <= 0 or numLevels < 2.
 func NewISPPCalculatorWithConfig(ec float64, numLevels int, config ISPPConfig) *ISPPCalculator {
+	if ec <= 0 || numLevels < 2 {
+		return nil
+	}
 	return &ISPPCalculator{
 		Ec:        ec,
 		NumLevels: numLevels,

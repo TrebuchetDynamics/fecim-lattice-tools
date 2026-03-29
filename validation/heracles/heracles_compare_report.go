@@ -2,7 +2,11 @@ package heracles
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
+
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 type CurvePair struct {
@@ -33,11 +37,24 @@ type CompareReport struct {
 	Metrics    CompareMetrics `json:"metrics"`
 }
 
+// WriteCompareReport serializes the report as indented JSON and writes it
+// to the given path. Returns an error if the path is empty or invalid.
 func WriteCompareReport(path string, report CompareReport) error {
+	cleanPath, err := sharedio.ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid report path: %w", err)
+	}
+
 	blob, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		return err
 	}
 	blob = append(blob, '\n')
-	return os.WriteFile(path, blob, 0o644)
+
+	dir := filepath.Dir(cleanPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	return os.WriteFile(cleanPath, blob, 0o644)
 }

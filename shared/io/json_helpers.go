@@ -6,14 +6,51 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+// ValidatePath checks that a file path is non-empty and does not contain
+// path-traversal sequences. It returns the cleaned path or an error.
+// Use this at system boundaries where paths originate from user input,
+// configuration files, or external data.
+func ValidatePath(path string) (string, error) {
+	cleaned, err := validatePathNotEmpty(path)
+	if err != nil {
+		return "", err
+	}
+
+	// Reject paths that resolve to pure traversal (e.g. "../../../etc/passwd").
+	// We check the cleaned path for leading ".." components. Absolute paths
+	// are allowed because callers like SaveToFile legitimately use them.
+	if cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(os.PathSeparator)) {
+		return "", fmt.Errorf("path traversal detected: %q", path)
+	}
+
+	return cleaned, nil
+}
+
+// validatePathNotEmpty checks that a path is non-empty and returns the
+// cleaned version. It does not reject traversal so that internal callers
+// using legitimate relative paths (e.g. "../experimental-data/...") are
+// not blocked.
+func validatePathNotEmpty(path string) (string, error) {
+	if strings.TrimSpace(path) == "" {
+		return "", fmt.Errorf("file path must not be empty")
+	}
+	return filepath.Clean(path), nil
+}
 
 // SaveJSON writes data to a JSON file with pretty formatting.
 // Creates parent directories if they don't exist.
-// Returns an error if marshaling or writing fails.
+// Returns an error if the path is empty or if marshaling/writing fails.
 func SaveJSON(path string, data interface{}) error {
+	cleanPath, err := validatePathNotEmpty(path)
+	if err != nil {
+		return fmt.Errorf("invalid save path: %w", err)
+	}
+
 	// Ensure parent directory exists
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(cleanPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
@@ -25,23 +62,28 @@ func SaveJSON(path string, data interface{}) error {
 	}
 
 	// Write to file
-	if err := os.WriteFile(path, jsonBytes, 0644); err != nil {
-		return fmt.Errorf("failed to write file %s: %w", path, err)
+	if err := os.WriteFile(cleanPath, jsonBytes, 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", cleanPath, err)
 	}
 
 	return nil
 }
 
 // LoadJSON reads a JSON file and unmarshals it into the target.
-// Returns an error if reading or unmarshaling fails.
+// Returns an error if the path is empty or if reading/unmarshaling fails.
 func LoadJSON(path string, target interface{}) error {
-	jsonBytes, err := os.ReadFile(path)
+	cleanPath, err := validatePathNotEmpty(path)
 	if err != nil {
-		return fmt.Errorf("failed to read file %s: %w", path, err)
+		return fmt.Errorf("invalid load path: %w", err)
+	}
+
+	jsonBytes, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return fmt.Errorf("failed to read file %s: %w", cleanPath, err)
 	}
 
 	if err := json.Unmarshal(jsonBytes, target); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON from %s: %w", path, err)
+		return fmt.Errorf("failed to unmarshal JSON from %s: %w", cleanPath, err)
 	}
 
 	return nil
@@ -50,7 +92,12 @@ func LoadJSON(path string, target interface{}) error {
 // SaveJSONCompact writes data to a JSON file without formatting.
 // Useful for large data files where size matters more than readability.
 func SaveJSONCompact(path string, data interface{}) error {
-	dir := filepath.Dir(path)
+	cleanPath, err := validatePathNotEmpty(path)
+	if err != nil {
+		return fmt.Errorf("invalid save path: %w", err)
+	}
+
+	dir := filepath.Dir(cleanPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
@@ -60,8 +107,8 @@ func SaveJSONCompact(path string, data interface{}) error {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	if err := os.WriteFile(path, jsonBytes, 0644); err != nil {
-		return fmt.Errorf("failed to write file %s: %w", path, err)
+	if err := os.WriteFile(cleanPath, jsonBytes, 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", cleanPath, err)
 	}
 
 	return nil

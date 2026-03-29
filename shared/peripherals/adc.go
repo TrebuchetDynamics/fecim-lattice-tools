@@ -209,7 +209,11 @@ func (a *ADC) ConvertWithNonlinearity(voltage float64) int {
 }
 
 // Resolution returns nominal ADC step size (V/LSB).
+// GAP-09: guard against Bits==0 where Levels()==1 would cause division by zero.
 func (a *ADC) Resolution() float64 {
+	if a.Levels() <= 1 {
+		return 0
+	}
 	return (a.VrefHigh - a.VrefLow) / float64(a.Levels()-1)
 }
 

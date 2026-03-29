@@ -34,7 +34,14 @@ type PreisachStack struct {
 // saturation (-SaturationE). saturationE is the field magnitude in V/m needed
 // to reach saturated polarization, and everett provides the Everett integral
 // over Preisach plane regions.
+//
+// Returns nil if saturationE <= 0 or everett is nil, since both are required
+// for a physically meaningful Preisach model.
 func NewPreisachStack(saturationE float64, everett EverettFunction) *PreisachStack {
+	if saturationE <= 0 || everett == nil {
+		return nil
+	}
+
 	// Initial state: Deep negative saturation
 	// Stack has one point: {-Sat, Min}
 	ps := &PreisachStack{

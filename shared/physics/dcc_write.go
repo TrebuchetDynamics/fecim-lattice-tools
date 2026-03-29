@@ -121,6 +121,9 @@ func (d *DCCController) ProgramDCC(targetG float64, reset bool) DCCResult {
 	if d.Solver == nil {
 		return DCCResult{FailureReason: "solver is nil"}
 	}
+	if mat.Thickness <= 0 {
+		return DCCResult{FailureReason: "material thickness must be positive"}
+	}
 
 	// Map target conductance → target polarization.
 	targetP := ConductanceToPolarization(targetG, mat.Gmin, mat.Gmax, mat.Ps)

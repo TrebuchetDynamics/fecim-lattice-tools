@@ -120,7 +120,11 @@ func (d *DAC) VoltageRange() (min, max float64) {
 }
 
 // Resolution returns DAC output granularity in V/LSB.
+// GAP-09: guard against Bits==0 where Levels()==1 would cause division by zero.
 func (d *DAC) Resolution() float64 {
+	if d.Levels() <= 1 {
+		return 0
+	}
 	return (d.VrefHigh - d.VrefLow) / float64(d.Levels()-1)
 }
 
