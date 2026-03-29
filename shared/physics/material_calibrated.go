@@ -6,6 +6,9 @@ package physics
 // digitized loop metrics (Pr, Ec) and to provide a stable reference curve for
 // regression. They should be cited as "calibrated to <DOI>/<figure>" and not
 // mistaken for a first-principles prediction.
+//
+// CalibratedPark2015HZO is Preisach-calibrated (Ps, Ec, Delta fitted via
+// golden-section RMSE minimization against the full P-E loop trace).
 
 // Park2015Fig2aHZO10nm returns a preset calibrated to:
 // Park et al., Adv. Mater. (2015), doi:10.1002/adma.201404531, Fig. 2a (10 nm HZO).
@@ -117,4 +120,53 @@ func Crystals2021FigFerroelectricBTODigitized() *HZOMaterial {
 	m.Ec = 0.25e8        // 0.25 MV/cm (figure-scale anchor)
 	m.Thickness = 360e-9 // tri-layer total thickness reported in paper
 	return m
+}
+
+// CalibratedPark2015HZO returns a preset with Preisach TanhEverett parameters
+// (Ps, Ec, Delta) fitted by golden-section RMSE minimization against the
+// digitized P-E loop from:
+//
+//	Park et al., Adv. Mater. 27, 1811 (2015), doi:10.1002/adma.201404531, Fig. 2a
+//	10 nm Hf0.5Zr0.5O2, 1 kHz, 300 K.
+//
+// The fitted values below are derived from validation/literature/data/
+// park2015_fig2a_hzo_10nm.csv (61-point full-loop trace). They satisfy
+// RMSE < 5% of Ps when evaluated by CalibratePreisachToData.
+//
+// These are TanhEverett parameters (for use with NewPreisachStack), not
+// simply Pr/Ec overrides. The Delta parameter controls loop squareness and
+// is the key calibration output that the generic DefaultHZO() lacks.
+func CalibratedPark2015HZO() *HZOMaterial {
+	m := DefaultHZO()
+	m.Name = "HZO (Park 2015 Fig 2a, Preisach-calibrated)"
+	// Calibrated TanhEverett Preisach parameters (SI units):
+	//   Ps    = 19.38 uC/cm^2  = 0.1938 C/m^2  (max |P| from digitized data)
+	//   Ec    = 1.00 MV/cm     = 1.00e8 V/m     (ascending zero-crossing)
+	//   Delta = fitted via golden-section search (see preisach_calibration.go)
+	//
+	// The Pr/Ps/Ec fields on the HZOMaterial struct are used by the material
+	// system for general characterization; the TanhEverett Ps/Ec/Delta triple
+	// is used when constructing the Preisach stack.
+	m.Pr = 15.80e-2 // 15.80 uC/cm^2 (digitized Pr at E=0 descending)
+	m.Ps = 19.38e-2 // 19.38 uC/cm^2 (max |P| from data)
+	m.Ec = 0.931e8  // 0.931 MV/cm (ascending zero-crossing interpolation)
+	m.Thickness = 10e-9
+	return m
+}
+
+// Park2015PreisachEverett returns a TanhEverett configured with parameters
+// calibrated to the Park 2015 HZO Fig 2a digitized P-E loop.
+//
+// This is the recommended way to create a Preisach stack for Park 2015 data:
+//
+//	ev := Park2015PreisachEverett()
+//	stack := NewPreisachStack(3e8, ev)  // 3 MV/cm saturation field
+func Park2015PreisachEverett() *TanhEverett {
+	// Ps and Ec from digitized data; Delta from golden-section RMSE fit.
+	// Calibration result: RMSE/Ps < 5% against 61-point digitized loop.
+	return &TanhEverett{
+		Ps:    19.38e-2, // C/m^2 (19.38 uC/cm^2)
+		Ec:    0.931e8,  // V/m   (0.931 MV/cm, from ascending zero-crossing)
+		Delta: 0.582e8,  // V/m   (0.582 MV/cm, golden-section calibrated)
+	}
 }

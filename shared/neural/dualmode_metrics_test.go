@@ -64,7 +64,8 @@ func TestInfer_CIMOrder_ADCBeforeNoise(t *testing.T) {
 	dacIn := quantizeDAC(input, net.Config.DACBits)
 	base := net.forwardCIM(dacIn, net.QuantSingleLayerWeights, net.QuantSingleLayerBias)
 	components := defaultNoiseComponents(net.Config.NoiseLevel)
-	expected := applyDecomposedNoise(quantizeADC(base, net.Config.ADCBits), components, NewRandomSource(42))
+	adcFS := float64(net.InputSize) * weightAbsMax(net.QuantSingleLayerWeights)
+	expected := applyDecomposedNoise(quantizeADC(base, net.Config.ADCBits, adcFS), components, NewRandomSource(42))
 	for i := range expected {
 		if math.Abs(got.CIMLogits[i]-expected[i]) > 1e-12 {
 			t.Fatalf("logit[%d]=%.15f, want %.15f (ADC->noise order)", i, got.CIMLogits[i], expected[i])

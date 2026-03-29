@@ -274,6 +274,9 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 				G *= varFactor
 			}
 
+			// Apply state-dependent cycle-to-cycle variation (per-read noise).
+			G *= a.applyStateDepC2CNoise(a.cells[i][j].Conductance)
+
 			// Get effective input voltage (DAC quantized, IR drop affected)
 			vIn := a.quantizeDAC(input[j])
 			if opts.EnableIRDrop && i < len(effectiveVoltages) && j < len(effectiveVoltages[i]) {

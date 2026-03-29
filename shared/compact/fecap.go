@@ -47,7 +47,7 @@ type FeCapParams struct {
 // quantitative claims.
 func DefaultFeCapHZO() FeCapParams {
 	tFE := 10e-9   // 10 nm HZO
-	Ec := 1.0e6    // 1 MV/m coercive field
+	Ec := 1.0e8    // 1 MV/cm = 1e8 V/m coercive field (typical HZO)
 	Vc := Ec * tFE // ~1 V coercive voltage
 	return FeCapParams{
 		ThicknessFE: tFE,

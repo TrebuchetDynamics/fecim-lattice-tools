@@ -59,7 +59,8 @@ func TestCIMPath_Order_DACThenMVMThenADC_NoNoise(t *testing.T) {
 
 	dac := quantizeDAC(input, net.Config.DACBits)
 	mvm := net.forwardCIM(dac, net.QuantSingleLayerWeights, net.QuantSingleLayerBias)
-	want := quantizeADC(mvm, net.Config.ADCBits)
+	adcFS := float64(net.InputSize) * weightAbsMax(net.QuantSingleLayerWeights)
+	want := quantizeADC(mvm, net.Config.ADCBits, adcFS)
 
 	for i := range want {
 		if math.Abs(got.CIMLogits[i]-want[i]) > 1e-12 {

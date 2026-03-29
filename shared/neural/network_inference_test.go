@@ -427,8 +427,9 @@ func TestQuantizeADC_BitLevels(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(string(rune(tc.bits))+"bit", func(t *testing.T) {
-			input := []float64{-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0}
-			result := quantizeADC(input, tc.bits)
+			input := []float64{0.0, 0.5, 1.0, 1.5, 2.0, 3.5, 5.0}
+			fullScale := float64(len(input)) // fixed Vref range [0, 7]
+			result := quantizeADC(input, tc.bits, fullScale)
 
 			// Verify output has been quantized (discrete levels)
 			// and maintains the relative ordering
@@ -442,6 +443,13 @@ func TestQuantizeADC_BitLevels(t *testing.T) {
 					t.Errorf("Monotonicity violated at index %d: %f < %f", i, result[i], result[i-1])
 				}
 			}
+
+			// Verify output is within fixed ADC reference range [0, fullScale]
+			for i, v := range result {
+				if v < 0 || v > fullScale {
+					t.Errorf("Value[%d]=%f outside ADC Vref range [0, %.1f]", i, v, fullScale)
+				}
+			}
 		})
 	}
 }
@@ -449,7 +457,7 @@ func TestQuantizeADC_BitLevels(t *testing.T) {
 func TestQuantizeADC_EmptySlice(t *testing.T) {
 	// CRIT-002 regression test: empty slice should return empty slice
 	input := []float64{}
-	result := quantizeADC(input, 8)
+	result := quantizeADC(input, 8, 10.0)
 
 	if len(result) != 0 {
 		t.Errorf("Expected empty slice, got length %d", len(result))
@@ -458,9 +466,9 @@ func TestQuantizeADC_EmptySlice(t *testing.T) {
 
 func TestQuantizeADC_16BitPassthrough(t *testing.T) {
 	input := []float64{-1.0, -0.5, 0.0, 0.5, 1.0, 1.5}
-	result := quantizeADC(input, 16)
+	result := quantizeADC(input, 16, 10.0)
 
-	// 16-bit should return input unchanged
+	// 16-bit should return input unchanged (fullScale irrelevant for passthrough)
 	if len(result) != len(input) {
 		t.Errorf("Length mismatch: got %d, want %d", len(result), len(input))
 	}
@@ -472,30 +480,40 @@ func TestQuantizeADC_16BitPassthrough(t *testing.T) {
 	}
 }
 
-func TestQuantizeADC_RangeNormalization(t *testing.T) {
-	// Test that ADC properly handles different input ranges
+func TestQuantizeADC_FixedVrefClamping(t *testing.T) {
+	// Test that ADC uses fixed Vref range [0, fullScale] and clamps out-of-range
+	// values to the nearest rail, as a real ADC would.
+	fullScale := 10.0
 	testCases := []struct {
 		name  string
 		input []float64
 	}{
-		{"NegativeRange", []float64{-10.0, -5.0, -1.0}},
-		{"PositiveRange", []float64{1.0, 5.0, 10.0}},
-		{"MixedRange", []float64{-5.0, 0.0, 5.0}},
+		{"BelowVref", []float64{-10.0, -5.0, -1.0}},
+		{"WithinVref", []float64{1.0, 5.0, 9.0}},
+		{"MixedRange", []float64{-5.0, 0.0, 5.0, 15.0}},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := quantizeADC(tc.input, 8)
+			result := quantizeADC(tc.input, 8, fullScale)
 
 			if len(result) != len(tc.input) {
 				t.Errorf("Length mismatch: got %d, want %d", len(result), len(tc.input))
 			}
 
-			// Verify output is within input range
+			// Verify output is within fixed ADC reference range [0, fullScale]
 			for i, v := range result {
-				if v < tc.input[0] || v > tc.input[len(tc.input)-1] {
-					t.Errorf("Value[%d]=%f outside input range [%f, %f]",
-						i, v, tc.input[0], tc.input[len(tc.input)-1])
+				if v < 0 || v > fullScale {
+					t.Errorf("Value[%d]=%f outside ADC Vref range [0, %.1f]",
+						i, v, fullScale)
+				}
+			}
+
+			// Verify monotonicity is preserved
+			for i := 1; i < len(result); i++ {
+				if result[i] < result[i-1] {
+					t.Errorf("Monotonicity violated at index %d: %f < %f",
+						i, result[i], result[i-1])
 				}
 			}
 		})

@@ -49,7 +49,8 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		s.cimOutput = ensureLen(s.cimOutput, len(net.QuantSingleLayerBias))
 		net.forwardCIMConductanceInto(s.cimInput, net.QuantSingleLayerWeights, net.QuantSingleLayerBias, s.cimOutput)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantSingleLayerWeights))
-		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits)
+		adcFS := float64(net.InputSize) * weightAbsMax(net.QuantSingleLayerWeights)
+		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits, adcFS)
 		s.cimOutput = net.safeNoise(s.cimOutput, net.Config.NoiseLevel)
 		s.cimProbs = softmaxInto(s.cimProbs, s.cimOutput)
 	} else {
@@ -64,14 +65,16 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		s.cimHidden = ensureLen(s.cimHidden, len(net.QuantBias1))
 		net.forwardCIMConductanceInto(s.cimInput, net.QuantWeights1, net.QuantBias1, s.cimHidden)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights1))
-		s.cimHidden = quantizeADCInto(s.cimHidden, s.cimHidden, net.Config.ADCBits)
+		adcFS1 := float64(net.InputSize) * weightAbsMax(net.QuantWeights1)
+		s.cimHidden = quantizeADCInto(s.cimHidden, s.cimHidden, net.Config.ADCBits, adcFS1)
 		s.cimHidden = net.safeNoise(s.cimHidden, net.Config.NoiseLevel)
 		reluInPlace(s.cimHidden)
 
 		s.cimOutput = ensureLen(s.cimOutput, len(net.QuantBias2))
 		net.forwardCIMConductanceInto(s.cimHidden, net.QuantWeights2, net.QuantBias2, s.cimOutput)
 		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights2))
-		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits)
+		adcFS2 := float64(net.HiddenSize) * weightAbsMax(net.QuantWeights2)
+		s.cimOutput = quantizeADCInto(s.cimOutput, s.cimOutput, net.Config.ADCBits, adcFS2)
 		s.cimOutput = net.safeNoise(s.cimOutput, net.Config.NoiseLevel)
 		s.cimProbs = softmaxInto(s.cimProbs, s.cimOutput)
 	}
@@ -133,13 +136,15 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 
 	// Layer 1: Use QUANTIZED weights (30-level FeCIM quantization)
 	hidden := net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
-	hidden = quantizeADC(hidden, net.Config.ADCBits)
+	adcFS1 := float64(net.InputSize) * weightAbsMax(net.QuantWeights1)
+	hidden = quantizeADC(hidden, net.Config.ADCBits, adcFS1)
 	hidden = net.safeNoise(hidden, net.Config.NoiseLevel)
 	hidden = relu(hidden)
 
 	// Layer 2: Use QUANTIZED weights (30-level FeCIM quantization)
 	output := net.forwardCIM(hidden, net.QuantWeights2, net.QuantBias2)
-	output = quantizeADC(output, net.Config.ADCBits)
+	adcFS2 := float64(net.HiddenSize) * weightAbsMax(net.QuantWeights2)
+	output = quantizeADC(output, net.Config.ADCBits, adcFS2)
 	output = net.safeNoise(output, net.Config.NoiseLevel)
 	probs = softmax(output)
 	prediction = argmax(probs)
@@ -312,12 +317,31 @@ func quantizeDACInto(dst []float64, values []float64, bits int) []float64 {
 	return dst
 }
 
-// quantizeADC simulates N-bit ADC quantization of output currents.
-func quantizeADC(values []float64, bits int) []float64 {
-	return quantizeADCInto(nil, values, bits)
+// weightAbsMax returns the maximum absolute value in a weight matrix.
+func weightAbsMax(weights [][]float64) float64 {
+	wMax := 0.0
+	for i := range weights {
+		for j := range weights[i] {
+			a := math.Abs(weights[i][j])
+			if a > wMax {
+				wMax = a
+			}
+		}
+	}
+	return wMax
 }
 
-func quantizeADCInto(dst []float64, values []float64, bits int) []float64 {
+// quantizeADC simulates N-bit ADC quantization of MVM output currents.
+// fullScale is the fixed ADC reference voltage (Vref+), with Vref- = 0.
+// In a CIM crossbar the full-scale corresponds to numCols * wMax, the
+// maximum possible row output from the differential conductance MVM.
+// A real ADC has fixed reference voltages independent of the actual signal
+// values, so the quantization grid must not depend on the data.
+func quantizeADC(values []float64, bits int, fullScale float64) []float64 {
+	return quantizeADCInto(nil, values, bits, fullScale)
+}
+
+func quantizeADCInto(dst []float64, values []float64, bits int, fullScale float64) []float64 {
 	if len(values) == 0 {
 		return values
 	}
@@ -326,18 +350,17 @@ func quantizeADCInto(dst []float64, values []float64, bits int) []float64 {
 	}
 
 	levels := 1 << bits
-	vMin, vMax := values[0], values[0]
-	for _, v := range values {
-		if v < vMin {
-			vMin = v
-		}
-		if v > vMax {
-			vMax = v
-		}
-	}
 
+	// Fixed ADC reference range based on crossbar geometry.
+	// MVM output for one row = sum(weff_j * v_j) + bias, where weff is in
+	// [-wMax, +wMax] and v is in [0,1]. The maximum unsigned output is
+	// numCols * wMax, passed in as fullScale.
+	vMin := 0.0
+	vMax := fullScale
 	vRange := vMax - vMin
+
 	if vRange == 0 {
+		log.Warn("quantizeADCInto: vRange==0 (fullScale=%.6g), returning unquantized values", fullScale)
 		return values
 	}
 
