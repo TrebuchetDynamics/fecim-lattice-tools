@@ -79,6 +79,9 @@ func GenerateHeraclesFECapNetlist(config HeraclesNetlistConfig) string {
 	}
 
 	// Step voltage for the piecewise-linear sweep.
+	if config.Steps <= 0 {
+		config.Steps = 100
+	}
 	stepV := config.Vmax / float64(config.Steps)
 	var b strings.Builder
 

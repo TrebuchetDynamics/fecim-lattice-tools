@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"path/filepath"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -28,8 +29,11 @@ func savePNG(path string, img image.Image) error {
 }
 
 func main() {
-	outDir := "/tmp/write_proof"
-	os.MkdirAll(outDir, 0755)
+	outDir := filepath.Join(os.TempDir(), "write_proof")
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "error creating output directory: %v\n", err)
+		os.Exit(1)
+	}
 
 	a := app.NewWithID("com.fecim.write.proof")
 	a.Settings().SetTheme(&sharedtheme.FeCIMTheme{})

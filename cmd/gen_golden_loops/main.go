@@ -85,6 +85,9 @@ func main() {
 }
 
 func generatePreisachLoop(model *ferroelectric.PreisachModel, Emax float64, points int) ([]float64, []float64) {
+	if points <= 1 {
+		return nil, nil
+	}
 	E := make([]float64, points)
 	P := make([]float64, points)
 
