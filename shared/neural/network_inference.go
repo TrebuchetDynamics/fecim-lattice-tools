@@ -232,6 +232,14 @@ func softmaxInto(dst []float64, x []float64) []float64 {
 		expSum += e
 	}
 
+	// Guard: if all exponents underflowed to zero, use uniform distribution
+	if expSum == 0 {
+		uniform := 1.0 / float64(len(dst))
+		for i := range dst {
+			dst[i] = uniform
+		}
+		return dst
+	}
 	inv := 1.0 / expSum
 	for i := range dst {
 		dst[i] *= inv
@@ -281,6 +289,9 @@ func quantizeDACInto(dst []float64, values []float64, bits int) []float64 {
 	}
 
 	levels := 1 << bits
+	if levels < 2 {
+		return values // 0- or 1-bit DAC is pass-through
+	}
 	dst = ensureLen(dst, len(values))
 
 	outOfRangeCount := 0

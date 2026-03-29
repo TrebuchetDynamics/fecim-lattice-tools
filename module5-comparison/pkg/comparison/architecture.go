@@ -115,14 +115,21 @@ func FeCIMChip() *Architecture {
 
 // CustomArchitecture creates a custom architecture with specified parameters.
 func CustomArchitecture(name string, tops, power, area float64) *Architecture {
+	var topsPerWatt, topsPerMM2 float64
+	if power > 0 {
+		topsPerWatt = tops / power
+	}
+	if area > 0 {
+		topsPerMM2 = tops / area
+	}
 	return &Architecture{
 		Name:        name,
 		ProcessNode: 7,
 		ChipArea:    area,
 		TDP:         power,
 		PeakTOPS:    tops,
-		TOPSPerWatt: tops / power,
-		TOPSPerMM2:  tops / area,
+		TOPSPerWatt: topsPerWatt,
+		TOPSPerMM2:  topsPerMM2,
 	}
 }
 
@@ -282,7 +289,10 @@ func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Wo
 	result := arch.RunInference(workload.TotalOps, 1)
 
 	// Chips needed for target throughput
-	chipsRequired := int(math.Ceil(targetThroughput / result.Throughput))
+	chipsRequired := 1
+	if result.Throughput > 0 {
+		chipsRequired = int(math.Ceil(targetThroughput / result.Throughput))
+	}
 	if chipsRequired < 1 {
 		chipsRequired = 1
 	}
@@ -405,6 +415,14 @@ type FeCIMAdvantage struct {
 }
 
 // CalculateAdvantages calculates FeCIM advantages.
+// safeRatio returns a/b, or 0 if b is zero (prevents div-by-zero in comparisons).
+func safeRatio(a, b float64) float64 {
+	if b == 0 {
+		return 0
+	}
+	return a / b
+}
+
 func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
 	log.Input("CalculateAdvantages", map[string]interface{}{
 		"workload": comparison.Workload.Name,
@@ -433,22 +451,22 @@ func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
 		}
 	}
 
-	// vs CPU
+	// vs CPU (all ratios guarded against zero denominators)
 	if cpuArch != nil && fecimArch != nil {
-		adv.VsCPU.EnergyReduction = cpuResult.Energy / fecimResult.Energy
-		adv.VsCPU.LatencyReduction = cpuResult.Latency / fecimResult.Latency
-		adv.VsCPU.ThroughputIncrease = fecimResult.Throughput / cpuResult.Throughput
-		adv.VsCPU.PowerReduction = cpuArch.TDP / fecimArch.TDP
-		adv.VsCPU.CostReduction = cpuDC.TCO / fecimDC.TCO
+		adv.VsCPU.EnergyReduction = safeRatio(cpuResult.Energy, fecimResult.Energy)
+		adv.VsCPU.LatencyReduction = safeRatio(cpuResult.Latency, fecimResult.Latency)
+		adv.VsCPU.ThroughputIncrease = safeRatio(fecimResult.Throughput, cpuResult.Throughput)
+		adv.VsCPU.PowerReduction = safeRatio(cpuArch.TDP, fecimArch.TDP)
+		adv.VsCPU.CostReduction = safeRatio(cpuDC.TCO, fecimDC.TCO)
 	}
 
-	// vs GPU
+	// vs GPU (all ratios guarded against zero denominators)
 	if gpuArch != nil && fecimArch != nil {
-		adv.VsGPU.EnergyReduction = gpuResult.Energy / fecimResult.Energy
-		adv.VsGPU.LatencyReduction = gpuResult.Latency / fecimResult.Latency
-		adv.VsGPU.AreaReduction = gpuArch.ChipArea / fecimArch.ChipArea
-		adv.VsGPU.PowerReduction = gpuArch.TDP / fecimArch.TDP
-		adv.VsGPU.CostReduction = gpuDC.TCO / fecimDC.TCO
+		adv.VsGPU.EnergyReduction = safeRatio(gpuResult.Energy, fecimResult.Energy)
+		adv.VsGPU.LatencyReduction = safeRatio(gpuResult.Latency, fecimResult.Latency)
+		adv.VsGPU.AreaReduction = safeRatio(gpuArch.ChipArea, fecimArch.ChipArea)
+		adv.VsGPU.PowerReduction = safeRatio(gpuArch.TDP, fecimArch.TDP)
+		adv.VsGPU.CostReduction = safeRatio(gpuDC.TCO, fecimDC.TCO)
 	}
 
 	log.Calculation("CalculateAdvantages", map[string]interface{}{
