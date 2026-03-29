@@ -328,31 +328,45 @@ func DefaultHZOThermalModel() *ThermalPhysicsModel {
 // Uses empirical relation: Pr(T) = Pr(0) * (1 - T/Tc)^β
 // where β ≈ 0.5 for typical ferroelectrics.
 func (m *ThermalPhysicsModel) PrAtTemperature(tempK float64) float64 {
-	if tempK >= m.CurieTempK {
-		return 0 // Above Curie temperature
+	if tempK >= m.CurieTempK || m.CurieTempK <= 300 {
+		return 0 // Above Curie temperature or invalid Tc
 	}
 
 	// Reference Pr is at 300K, not 0K
 	// Pr(300K) = Pr(0K) * (1 - 300/Tc)^0.5
 	// So Pr(0K) = Pr(300K) / (1 - 300/Tc)^0.5
-	refFactor := math.Pow(1-300/m.CurieTempK, 0.5)
+	refArg := 1 - 300/m.CurieTempK
+	if refArg <= 0 {
+		return 0
+	}
+	refFactor := math.Sqrt(refArg)
+	if refFactor == 0 {
+		return 0
+	}
 	Pr0 := m.RefPr / refFactor
 
-	return Pr0 * math.Pow(1-tempK/m.CurieTempK, 0.5)
+	return Pr0 * math.Sqrt(1-tempK/m.CurieTempK)
 }
 
 // EcAtTemperature returns temperature-dependent coercive field.
 // Ec typically decreases with temperature due to thermal activation.
 // Uses: Ec(T) = Ec(0) * (1 - T/Tc)^0.5
 func (m *ThermalPhysicsModel) EcAtTemperature(tempK float64) float64 {
-	if tempK >= m.CurieTempK {
+	if tempK >= m.CurieTempK || m.CurieTempK <= 300 {
 		return 0
 	}
 
-	refFactor := math.Pow(1-300/m.CurieTempK, 0.5)
+	refArg := 1 - 300/m.CurieTempK
+	if refArg <= 0 {
+		return 0
+	}
+	refFactor := math.Sqrt(refArg)
+	if refFactor == 0 {
+		return 0
+	}
 	Ec0 := m.RefEc / refFactor
 
-	return Ec0 * math.Pow(1-tempK/m.CurieTempK, 0.5)
+	return Ec0 * math.Sqrt(1-tempK/m.CurieTempK)
 }
 
 // EffectiveLevelsAtTemperature estimates the number of distinguishable levels.
@@ -360,10 +374,19 @@ func (m *ThermalPhysicsModel) EcAtTemperature(tempK float64) float64 {
 func (m *ThermalPhysicsModel) EffectiveLevelsAtTemperature(tempK float64, nominalLevels int) int {
 	// At reference (300K), we have nominal levels
 	// Noise scales as sqrt(T), so level resolution degrades
-	noiseFactor := math.Sqrt(tempK / 300)
+	noiseFactor := 1.0
+	if tempK > 0 {
+		noiseFactor = math.Sqrt(tempK / 300)
+	}
+	if noiseFactor <= 0 {
+		noiseFactor = 1.0
+	}
 
 	// Also account for Pr reduction
-	prFactor := m.PrAtTemperature(tempK) / m.RefPr
+	prFactor := 0.0
+	if m.RefPr > 0 {
+		prFactor = m.PrAtTemperature(tempK) / m.RefPr
+	}
 	if prFactor < 0.1 {
 		prFactor = 0.1 // Minimum
 	}
