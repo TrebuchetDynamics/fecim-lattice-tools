@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 
 	sharedio "fecim-lattice-tools/shared/io"
+	sharedexport "fecim-lattice-tools/shared/export"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
@@ -277,9 +278,45 @@ func (a *App) exportPEData() {
 		return
 	}
 
+	// SVG vector export for publication-quality figures
+	svgFile := filepath.Join(dataDir, fmt.Sprintf("pe-loop-%s.svg", timestamp))
+	if err := a.exportPEDataToSVG(svgFile); err != nil {
+		log.Printf("Warning: SVG export failed: %v", err)
+		// Non-fatal — CSV/JSON already exported
+	}
+
 	fyne.Do(func() {
-		a.setStatus(fmt.Sprintf("Exported %d points to data/", dataPoints))
+		a.setStatus(fmt.Sprintf("Exported %d points to data/ (JSON+CSV+SVG)", dataPoints))
 	})
+}
+
+// exportPEDataToSVG exports a publication-quality SVG of the P-E hysteresis loop.
+func (a *App) exportPEDataToSVG(filename string) error {
+	a.mu.RLock()
+	eHist := make([]float64, len(a.eHistory))
+	pHist := make([]float64, len(a.pHistory))
+	copy(eHist, a.eHistory)
+	copy(pHist, a.pHistory)
+	matName := ""
+	if a.material != nil {
+		matName = a.material.Name
+	}
+	a.mu.RUnlock()
+
+	if len(eHist) < 2 {
+		return fmt.Errorf("not enough data points for SVG export")
+	}
+
+	cfg := sharedexport.DefaultSVGPlotConfig()
+	cfg.Title = fmt.Sprintf("P-E Hysteresis Loop — %s", matName)
+	cfg.Citation = fmt.Sprintf("FeCIM Lattice Tools | %s | %s", matName, time.Now().Format("2006-01-02"))
+
+	svgContent, err := sharedexport.GeneratePELoopSVG(eHist, pHist, cfg)
+	if err != nil {
+		return fmt.Errorf("SVG generation failed: %w", err)
+	}
+
+	return os.WriteFile(filename, []byte(svgContent), 0644)
 }
 
 // setStatus updates the status label (must be called from main UI thread via fyne.Do)

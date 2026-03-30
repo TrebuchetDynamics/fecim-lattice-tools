@@ -260,3 +260,9 @@ func newColorSwatch(c color.RGBA) fyne.CanvasObject {
 func (p *PUNDPanel) Content() fyne.CanvasObject {
 	return p.content
 }
+
+// createPUNDPanel creates the PUND measurement card for the controls panel.
+func (a *App) createPUNDPanel() fyne.CanvasObject {
+	panel := NewPUNDPanel()
+	return widget.NewCard("PUND Measurement", "Gold-standard ferroelectric characterization", panel.Content())
+}

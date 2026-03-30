@@ -758,6 +758,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			learnRow,
 		)),
 		a.createFORCPanel(),
+		a.createPUNDPanel(),
 	)
 
 	advanced := widget.NewAccordion(
