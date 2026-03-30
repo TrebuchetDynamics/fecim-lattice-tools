@@ -4,6 +4,7 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -73,7 +74,13 @@ func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne
 		// No need for explicit call here - it causes duplicate calculation
 		e.updateStatus("Ready. Select workload and adjust parameters.")
 
-		return content
+		// Add a Sensitivity tab alongside the main comparison view
+		sensitivityPanel := NewSensitivityPanel(e.lastRun, "tco_reduction_pct")
+		tabs := container.NewAppTabs(
+			container.NewTabItem("Comparison", content),
+			container.NewTabItem("Sensitivity", sensitivityPanel),
+		)
+		return tabs
 	})
 }
 

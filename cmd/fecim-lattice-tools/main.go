@@ -644,10 +644,13 @@ func main() {
 		rightButtons,       // Right side: buttons keep natural width
 	)
 
-	// Stack content with toolbar on top
+	// Simulation boundary banner (amber bar at the bottom)
+	simBanner := sharedwidgets.NewSimulationBanner()
+
+	// Stack content with toolbar on top, banner at bottom
 	fmt.Println("[STARTUP] Creating main content...")
 	mainContent := container.NewBorder(
-		toolbar, nil, nil, nil,
+		toolbar, simBanner, nil, nil,
 		contentStack,
 	)
 

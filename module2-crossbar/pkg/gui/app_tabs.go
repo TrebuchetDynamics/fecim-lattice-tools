@@ -125,6 +125,9 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	stack3dTab := tabs.NewStack3DTab()
 	stack3dContent := stack3dTab.Content()
 
+	// Literature overlay tab
+	literatureContent := ca.createLiteratureOverlayPanel()
+
 	// Create tabbed view with new tabs
 	ca.tabs = container.NewAppTabs(
 		container.NewTabItem("Conductance", condContent),
@@ -135,6 +138,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Accuracy Analysis", waterfallTab),
 		container.NewTabItem("FeCAP Mode", fecapContent),
 		container.NewTabItem("3D Stack", stack3dContent),
+		container.NewTabItem("Literature", literatureContent),
 	)
 
 	// Update educational panel based on selected tab and preserve selection

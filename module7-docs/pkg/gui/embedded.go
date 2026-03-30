@@ -109,12 +109,18 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 			app.buildTopBar(),      // search button, title
 		)
 
-		content := app.layoutManager.BuildLayout()
+		docsContent := app.layoutManager.BuildLayout()
 
 		// Setup keyboard shortcut for search
 		SetupSearchShortcut(window, app.searchDialog)
 
-		return content
+		// Wrap docs + validation dashboard in tabs
+		validationDash := sharedWidgets.NewValidationDashboard()
+		tabs := container.NewAppTabs(
+			container.NewTabItem("Documentation", docsContent),
+			container.NewTabItem("Validation", validationDash.Container),
+		)
+		return tabs
 	})
 }
 
