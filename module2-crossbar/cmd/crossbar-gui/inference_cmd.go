@@ -42,7 +42,7 @@ func RunInference(args []string) error {
 
 	arraySize := fs.Int("size", 64, "Crossbar array size (NxN)")
 	numLayers := fs.Int("layers", 3, "Number of neural network layers")
-	batchSize := fs.Int("batch", 1, "Inference batch size")
+	batchSize := fs.Int("batch-size", 1, "Inference batch size")
 	noiseLevel := fs.Float64("noise", 0.02, "Device noise level (0-1)")
 	adcBits := fs.Int("adc", 6, "ADC resolution in bits")
 	seed := fs.Int64("seed", 1, "Random seed for deterministic runs (0 = time-based)")
