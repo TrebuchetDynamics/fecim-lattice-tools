@@ -421,7 +421,7 @@ func main() {
 	fmt.Println("[STARTUP] Creating buttons...")
 
 	// Create screenshot button
-	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
+	screenshotBtn := widget.NewButtonWithIcon("", theme.MediaPhotoIcon(), func() {
 		log.Button("Screenshot")
 		// Get current section name from selected view
 		sectionName := sectionNameFromTab(viewNames[currentViewIndex])
@@ -434,7 +434,7 @@ func main() {
 
 	// Create record button with toggle functionality
 	// Use a separate label for recording time to prevent button resize
-	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
+	recordBtn := widget.NewButtonWithIcon("", theme.MediaRecordIcon(), nil)
 	recordTimeLabel := widget.NewLabel("")
 	recordTimeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	recordTimeLabel.Hide() // Hidden until recording starts
@@ -456,7 +456,7 @@ func main() {
 				return
 			}
 			log.Debug("Recording saved: %s", outputFile)
-			recordBtn.SetText("Record")
+			recordBtn.SetText("")
 			recordBtn.SetIcon(theme.MediaRecordIcon())
 			recordTimeLabel.Hide()
 			// Update mic indicator
@@ -481,7 +481,7 @@ func main() {
 				logging.Printf("Error starting recording: %v", err)
 				return
 			}
-			recordBtn.SetText("Stop")
+			recordBtn.SetText("")
 			recordBtn.SetIcon(theme.MediaStopIcon())
 			recordTimeLabel.Show()
 			// Update mic indicator to show recording state (red dot)
@@ -529,10 +529,12 @@ func main() {
 
 	// Create current module label (left-justified in toolbar)
 	// Truncation prevents it from pushing into the right-side buttons at narrow widths.
+	// GridWrap guarantees a minimum visible width so the label doesn't collapse to "...".
 	currentModuleLabel := widget.NewLabel("Home")
 	currentModuleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	currentModuleLabel.Truncation = fyne.TextTruncateEllipsis
 	currentModuleLabel.Wrapping = fyne.TextWrapOff
+	moduleLabelWrap := container.NewGridWrap(fyne.NewSize(180, 32), currentModuleLabel)
 
 	// Track current demo for start/stop
 	currentDemo := 0
@@ -598,7 +600,7 @@ func main() {
 	})
 
 	// L05: Unified "Learn More" entry point (About the Science)
-	learnMoreBtn := widget.NewButtonWithIcon("Learn More", theme.InfoIcon(), func() {
+	learnMoreBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		log.Button("LearnMore")
 		selectView(7)
 		// After switching to docs, navigate to the unified entry page.
@@ -633,24 +635,38 @@ func main() {
 		}
 	})
 
-	// Create toolbar with module label left, buttons aligned right.
-	// Border layout gives the right-side HBox its natural size first; the label
-	// fills remaining space and truncates if the window is narrow.
+	// Create toolbar with module label left, buttons grouped right.
+	// Visual separators break the button row into logical groups:
+	//   Navigation | Edit | Capture | Settings
 	fmt.Println("[STARTUP] Creating toolbar...")
-	rightButtons := container.NewHBox(homeBtn, docsBtn, learnMoreBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn)
+	sep1 := widget.NewSeparator()
+	sep2 := widget.NewSeparator()
+	sep3 := widget.NewSeparator()
+	rightButtons := container.NewHBox(
+		homeBtn, docsBtn, learnMoreBtn,
+		sep1,
+		undoToolbar,
+		sep2,
+		screenshotBtn, recordBtn, recordTimeLabel, micLevelWidget,
+		sep3,
+		themeToggleBtn, closeBtn,
+	)
 	toolbar := container.NewBorder(
 		nil, nil,
-		currentModuleLabel, // Left side: truncates when narrow
-		rightButtons,       // Right side: buttons keep natural width
+		moduleLabelWrap, // Left side: min 180px, truncates beyond
+		rightButtons,    // Right side: buttons keep natural width
 	)
 
 	// Simulation boundary banner (amber bar at the bottom)
 	simBanner := sharedwidgets.NewSimulationBanner()
 
+	// Thin separator line between toolbar and content for visual clarity
+	toolbarSep := widget.NewSeparator()
+
 	// Stack content with toolbar on top, banner at bottom
 	fmt.Println("[STARTUP] Creating main content...")
 	mainContent := container.NewBorder(
-		toolbar, simBanner, nil, nil,
+		container.NewVBox(toolbar, toolbarSep), simBanner, nil, nil,
 		contentStack,
 	)
 

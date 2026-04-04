@@ -15,10 +15,12 @@ import (
 // NewSimulationBanner returns a thin horizontal bar with an amber background
 // and white text reading "Simulation Only -- Not Validated Against Fabricated Devices".
 func NewSimulationBanner() *fyne.Container {
-	bg := canvas.NewRectangle(color.RGBA{210, 150, 30, 255})
-	bg.SetMinSize(fyne.NewSize(0, 22))
-	text := canvas.NewText("Simulation Only \u2014 Not Validated Against Fabricated Devices", color.White)
+	bg := canvas.NewRectangle(color.RGBA{180, 130, 20, 255})
+	bg.SetMinSize(fyne.NewSize(0, 24))
+	icon := canvas.NewText("\u26A0", color.RGBA{255, 230, 160, 255}) // Warning triangle
+	icon.TextSize = 12
+	text := canvas.NewText(" Simulation Only \u2014 Not Validated Against Fabricated Devices", color.RGBA{255, 245, 220, 255})
 	text.TextSize = 11
-	text.Alignment = fyne.TextAlignCenter
-	return container.NewStack(bg, container.NewCenter(text))
+	row := container.NewHBox(icon, text)
+	return container.NewStack(bg, container.NewCenter(row))
 }

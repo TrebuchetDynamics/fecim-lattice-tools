@@ -369,9 +369,12 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	// Header with peer-reviewed accuracy context (87% claim removed)
 	// C09: Distinguish verified literature results from simulated demo results
-	title := widget.NewLabel("FeCIM MNIST Demo | Lit: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: modeled")
+	title := widget.NewLabel("MNIST Neural Network Demo")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Truncation = fyne.TextTruncateEllipsis
+	subtitle := widget.NewLabel("Literature: 96-98% (non-FeCIM) | This demo: simulated")
+	subtitle.TextStyle = fyne.TextStyle{Italic: true}
+	subtitle.Truncation = fyne.TextTruncateEllipsis
 
 	// Quick Demo button - prominent call to action
 	quickDemoBtn := widget.NewButton("Quick Demo", func() {
@@ -397,7 +400,8 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	)
 
 	// Use Border layout so title takes remaining space (truncates) and buttons stay fixed
-	return container.NewBorder(nil, nil, nil, buttonRow, title)
+	titleBlock := container.NewVBox(title, subtitle)
+	return container.NewBorder(nil, nil, nil, buttonRow, titleBlock)
 }
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).

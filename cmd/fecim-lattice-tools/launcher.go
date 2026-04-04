@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -61,7 +62,7 @@ func GetDemos() []DemoInfo {
 			Number:      5,
 			Title:       "Comparison",
 			Subtitle:    "Technology Benchmarks",
-			Description: "Compare FeCIM to alternatives (with TRL caveats): energy, speed, and density vs NAND flash, DRAM, and emerging memory - all projections marked",
+			Description: "Compare FeCIM to alternatives with TRL caveats: energy, speed, and density vs NAND flash, DRAM, and emerging memory",
 			Icon:        "$",
 			Ready:       true,
 		},
@@ -69,7 +70,7 @@ func GetDemos() []DemoInfo {
 			Number:      6,
 			Title:       "EDA",
 			Subtitle:    "Chip Layout Tools",
-			Description: "Explore chip layout concepts: visualize placement, generate layouts from code, and learn industry-standard formats (educational, not tapeout-ready)",
+			Description: "Explore chip layout concepts: visualize placement, generate layouts from code, and learn industry-standard EDA formats",
 			Icon:        "L",
 			Ready:       true,
 			WIP:         true,
@@ -84,6 +85,7 @@ type DemoCard struct {
 	onTapped func()
 	minSize  fyne.Size
 	focused  bool
+	hovered  bool
 }
 
 // NewDemoCard creates a new demo card
@@ -108,6 +110,29 @@ func (c *DemoCard) Tapped(*fyne.PointEvent) {
 }
 
 func (c *DemoCard) TappedSecondary(*fyne.PointEvent) {}
+
+// MouseIn implements desktop.Hoverable for hover feedback.
+func (c *DemoCard) MouseIn(*desktop.MouseEvent) {
+	c.hovered = true
+	c.Refresh()
+}
+
+// MouseMoved implements desktop.Hoverable.
+func (c *DemoCard) MouseMoved(*desktop.MouseEvent) {}
+
+// MouseOut implements desktop.Hoverable.
+func (c *DemoCard) MouseOut() {
+	c.hovered = false
+	c.Refresh()
+}
+
+// Cursor returns a pointer cursor for clickable cards.
+func (c *DemoCard) Cursor() desktop.Cursor {
+	if c.info.Ready {
+		return desktop.PointerCursor
+	}
+	return desktop.DefaultCursor
+}
 
 // FocusGained implements fyne.Focusable.
 func (c *DemoCard) FocusGained() {
@@ -139,6 +164,7 @@ func (c *DemoCard) CreateRenderer() fyne.WidgetRenderer {
 }
 
 var _ fyne.Focusable = (*DemoCard)(nil)
+var _ desktop.Hoverable = (*DemoCard)(nil)
 
 type demoCardRenderer struct {
 	card    *DemoCard
@@ -194,6 +220,13 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 		subtitleColor = cyanColor
 		descColor = color.RGBA{180, 200, 220, 255}
 		numberBgColor = color.RGBA{0, 80, 160, 255}
+		// Hover: brighten background and border for visual feedback
+		if r.card.hovered {
+			bgColor = color.RGBA{0, 55, 105, 255}
+			headerBgColor = color.RGBA{0, 65, 125, 255}
+			borderColor = color.RGBA{80, 230, 255, 255}
+			numberBgColor = color.RGBA{0, 100, 190, 255}
+		}
 	} else {
 		borderColor = color.RGBA{80, 90, 100, 255}
 		bgColor = color.RGBA{30, 40, 50, 200}
@@ -218,6 +251,9 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	}
 
 	borderWidth := float32(2)
+	if r.card.hovered {
+		borderWidth = 3
+	}
 	cornerRadius := float32(8)
 	headerHeight := float32(50) * heightScale
 
@@ -273,39 +309,39 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 10*heightScale+titleSize+2))
 	r.objects = append(r.objects, subtitle)
 
-	// UI-004: Add sequence indicator (X/6) on all cards
-	// seqWidth := float32(50) * heightScale
-	// seqHeight := float32(22) * heightScale
-	// seqBg := canvas.NewRectangle(color.RGBA{0, 80, 120, 220})
-	// seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
-	// seqBg.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale, 10*heightScale))
-	// seqBg.CornerRadius = 4 * heightScale
-	// r.objects = append(r.objects, seqBg)
+	// UI-004: Sequence indicator (X/6) on all cards
+	seqWidth := float32(42) * heightScale
+	seqHeight := float32(20) * heightScale
+	seqBg := canvas.NewRectangle(color.RGBA{0, 70, 120, 200})
+	seqBg.Resize(fyne.NewSize(seqWidth, seqHeight))
+	seqBg.Move(fyne.NewPos(size.Width-seqWidth-8*heightScale, 8*heightScale))
+	seqBg.CornerRadius = 10 * heightScale // pill shape
+	r.objects = append(r.objects, seqBg)
 
-	// seqTextSize := float32(12) * heightScale
-	// seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{255, 255, 255, 255})
-	// seqText.TextSize = seqTextSize
-	// seqText.TextStyle = fyne.TextStyle{Bold: true}
-	// seqText.Move(fyne.NewPos(size.Width-seqWidth-10*heightScale+seqWidth/2-seqTextSize*1.2, 10*heightScale+seqHeight/2-seqTextSize*0.6))
-	// r.objects = append(r.objects, seqText)
+	seqTextSize := float32(11) * heightScale
+	seqText := canvas.NewText(string('0'+byte(info.Number))+"/6", color.RGBA{200, 220, 240, 220})
+	seqText.TextSize = seqTextSize
+	seqText.TextStyle = fyne.TextStyle{Bold: true}
+	seqText.Move(fyne.NewPos(size.Width-seqWidth-8*heightScale+seqWidth/2-seqTextSize*1.0, 8*heightScale+seqHeight/2-seqTextSize*0.55))
+	r.objects = append(r.objects, seqText)
 
-	// UI-004: Add "START HERE" badge for module 1
-	// if info.Number == 1 {
-	// 	startWidth := float32(100) * heightScale
-	// 	startHeight := float32(24) * heightScale
-	// 	startBg := canvas.NewRectangle(color.RGBA{50, 200, 50, 255})
-	// 	startBg.Resize(fyne.NewSize(startWidth, startHeight))
-	// 	startBg.Move(fyne.NewPos(size.Width-startWidth-10*heightScale, 10*heightScale+seqHeight+6*heightScale))
-	// 	startBg.CornerRadius = 4 * heightScale
-	// 	r.objects = append(r.objects, startBg)
+	// UI-004: "BEGIN" badge for module 1
+	if info.Number == 1 {
+		startWidth := float32(60) * heightScale
+		startHeight := float32(20) * heightScale
+		startBg := canvas.NewRectangle(color.RGBA{40, 180, 100, 240})
+		startBg.Resize(fyne.NewSize(startWidth, startHeight))
+		startBg.Move(fyne.NewPos(size.Width-seqWidth-startWidth-14*heightScale, 8*heightScale))
+		startBg.CornerRadius = 10 * heightScale
+		r.objects = append(r.objects, startBg)
 
-	// 	// startTextSize := float32(12) * heightScale
-	// 	// startText := canvas.NewText("START HERE", color.RGBA{255, 255, 255, 255})
-	// 	// startText.TextSize = startTextSize
-	// 	// startText.TextStyle = fyne.TextStyle{Bold: true}
-	// 	// startText.Move(fyne.NewPos(size.Width-startWidth-10*heightScale+startWidth/2-startTextSize*2.8, 10*heightScale+seqHeight+6*heightScale+startHeight/2-startTextSize*0.6))
-	// 	// r.objects = append(r.objects, startText)
-	// }
+		startTextSize := float32(10) * heightScale
+		startText := canvas.NewText("BEGIN", color.RGBA{255, 255, 255, 255})
+		startText.TextSize = startTextSize
+		startText.TextStyle = fyne.TextStyle{Bold: true}
+		startText.Move(fyne.NewPos(size.Width-seqWidth-startWidth-14*heightScale+startWidth/2-startTextSize*1.4, 8*heightScale+startHeight/2-startTextSize*0.55))
+		r.objects = append(r.objects, startText)
+	}
 
 	// Status indicator - WIP badge or green dot (scales with card)
 	if info.Ready {
@@ -337,48 +373,48 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	contentWidth := size.Width - borderWidth*2
 
 	// Preview thumbnail - scale with card size, positioned at bottom right
-	// Use ~28% of width and ~50% of content height for preview (reduced for more description space)
-	previewWidth := contentWidth * 0.28
-	if previewWidth < 70 {
-		previewWidth = 70
+	// Use ~22% of width to give descriptions more horizontal space
+	previewWidth := contentWidth * 0.22
+	if previewWidth < 60 {
+		previewWidth = 60
 	}
-	if previewWidth > 180 {
-		previewWidth = 180
+	if previewWidth > 150 {
+		previewWidth = 150
 	}
-	previewHeight := contentHeight * 0.5
-	if previewHeight < 45 {
-		previewHeight = 45
+	previewHeight := contentHeight * 0.45
+	if previewHeight < 40 {
+		previewHeight = 40
 	}
-	if previewHeight > 140 {
-		previewHeight = 140
+	if previewHeight > 120 {
+		previewHeight = 120
 	}
 	previewX := size.Width - previewWidth - 10
-	previewY := size.Height - previewHeight - 22
+	previewY := size.Height - previewHeight - 18
 	previewObjects := drawPreviewThumbnail(info.Number, previewX, previewY, previewWidth, previewHeight, cyanColor)
 	r.objects = append(r.objects, previewObjects...)
 
 	// Description - wrapped text below header, left of thumbnail area
 	desc := info.Description
-	descSize := float32(15) * heightScale // Slightly smaller for better fit
-	if descSize < 13 {
-		descSize = 13
+	descSize := float32(13) * heightScale
+	if descSize < 12 {
+		descSize = 12
 	}
-	if descSize > 18 {
-		descSize = 18
+	if descSize > 16 {
+		descSize = 16
 	}
-	maxWidth := size.Width - previewWidth - 24*heightScale // Reduced padding for more text space
-	lineY := headerHeight + borderWidth + 10*heightScale
-	lineHeight := descSize + 4*heightScale // Tighter line spacing
+	maxWidth := size.Width - previewWidth - 20*heightScale
+	lineY := headerHeight + borderWidth + 8*heightScale
+	lineHeight := descSize + 3*heightScale
 
 	// Calculate max lines based on available height
-	// Reserve space for: header (top) + description top padding (8) + hint text at bottom (18)
-	availableDescHeight := size.Height - headerHeight - borderWidth*2 - 8 - 18
+	// Reserve space for: header (top) + description top padding + hint text at bottom (16)
+	availableDescHeight := size.Height - headerHeight - borderWidth*2 - 6 - 16
 	maxLines := int(availableDescHeight / lineHeight)
 	if maxLines < 3 {
 		maxLines = 3
 	}
-	if maxLines > 6 {
-		maxLines = 6
+	if maxLines > 7 {
+		maxLines = 7
 	}
 
 	words := splitWords(desc)
@@ -417,6 +453,18 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	}
 	if hintSize > 14 {
 		hintSize = 14
+	}
+	if info.Ready {
+		hintColor := color.RGBA{120, 170, 210, 200}
+		hintStr := "Click to explore \u203A"
+		if r.card.hovered {
+			hintColor = color.RGBA{0, 212, 255, 255}
+			hintStr = "Click to explore \u2192"
+		}
+		hint := canvas.NewText(hintStr, hintColor)
+		hint.TextSize = hintSize
+		hint.Move(fyne.NewPos(14, size.Height-hintSize-6))
+		r.objects = append(r.objects, hint)
 	}
 
 	r.cache.MarkLayout(size)
@@ -1026,10 +1074,16 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	// Wrap grid in VScroll for small screens where content overflows
 	scrollableGrid := container.NewVScroll(container.NewPadded(grid))
 
-	// Use border layout with header only (footer removed - contained unverified claims)
+	// Learning-journey footer (verified content only, no performance claims)
+	journeyLabel := canvas.NewText("1 Physics  \u2192  2 Compute  \u2192  3 Application  \u2192  4 System  \u2192  5 Benchmarks  \u2192  6 Design", color.RGBA{0, 180, 220, 230})
+	journeyLabel.TextSize = 12
+	journeyLabel.Alignment = fyne.TextAlignCenter
+	journeySep := widget.NewSeparator()
+	footer := container.NewVBox(journeySep, container.NewCenter(container.NewPadded(journeyLabel)))
+
 	return container.NewBorder(
 		container.NewPadded(header),
-		nil,
+		footer,
 		nil, nil,
 		scrollableGrid,
 	)

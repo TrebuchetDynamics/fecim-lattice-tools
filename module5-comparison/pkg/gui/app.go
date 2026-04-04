@@ -444,12 +444,11 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		sliderContainer,
 	)
 
-	exportButtons := container.NewHScroll(container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(160, 44), exportDataBtn),
-		container.NewGridWrap(fyne.NewSize(160, 44), exportImageBtn),
-		container.NewGridWrap(fyne.NewSize(180, 44), exportReproBtn),
-	))
-	exportButtons.SetMinSize(fyne.NewSize(0, 52))
+	exportButtons := container.NewAdaptiveGrid(3,
+		container.NewGridWrap(fyne.NewSize(140, 40), exportDataBtn),
+		container.NewGridWrap(fyne.NewSize(140, 40), exportImageBtn),
+		container.NewGridWrap(fyne.NewSize(150, 40), exportReproBtn),
+	)
 	controlsRow2 := container.NewVBox(
 		container.NewPadded(inferenceBlock),
 		exportButtons,
@@ -476,6 +475,16 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		container.NewPadded(fabricationReality),
 	)
 
+	// Section quick-nav buttons so users can jump without scrolling
+	jumpEnergy := widget.NewButton("Energy", nil)
+	jumpEnergy.Importance = widget.LowImportance
+	jumpMarket := widget.NewButton("Market", nil)
+	jumpMarket.Importance = widget.LowImportance
+	jumpROI := widget.NewButton("ROI", nil)
+	jumpROI.Importance = widget.LowImportance
+	jumpFab := widget.NewButton("Fabrication", nil)
+	jumpFab.Importance = widget.LowImportance
+
 	// UNIFIED VIEW - Single scrollable container
 	unifiedContent := container.NewVBox(
 		energySection,
@@ -489,6 +498,12 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 
 	centerPanel := container.NewScroll(unifiedContent)
 
+	// Wire jump-to-section buttons after centerPanel exists
+	jumpEnergy.OnTapped = func() { centerPanel.ScrollToTop() }
+	jumpMarket.OnTapped = func() { centerPanel.Offset = fyne.NewPos(0, energySection.MinSize().Height+8); centerPanel.Refresh() }
+	jumpROI.OnTapped = func() { centerPanel.Offset = fyne.NewPos(0, energySection.MinSize().Height+marketSection.MinSize().Height+16); centerPanel.Refresh() }
+	jumpFab.OnTapped = func() { centerPanel.ScrollToBottom() }
+
 	// === FOOTER ===
 	footer := container.NewHBox(
 		ca.statusLabel,
@@ -500,7 +515,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	centerContainer := container.NewPadded(centerPanel)
 
 	mainContent := container.NewBorder(
-		container.NewVBox(warningBanner, header, widget.NewSeparator()),
+		container.NewVBox(warningBanner, header, container.NewHBox(jumpEnergy, jumpMarket, jumpROI, jumpFab, layout.NewSpacer()), widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), footer),
 		nil, // No left panel - config is in Calculator tab
 		nil, // No right panel
