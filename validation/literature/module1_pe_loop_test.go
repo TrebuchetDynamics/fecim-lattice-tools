@@ -87,6 +87,74 @@ const (
 	thAreaPct = 25.0 // loop area is a derived metric; keep pragmatic bound
 )
 
+type thresholdDecision struct {
+	PrPct   float64
+	EcPct   float64
+	RMSEps  float64
+	AreaPct float64
+	Mode    string
+	LogLine string
+}
+
+// thresholdPolicyForDataset resolves the effective per-dataset acceptance
+// thresholds and records how/why they differ from strict global defaults.
+func thresholdPolicyForDataset(ds peLoopDataset, prData, ecData, ps float64) (thresholdDecision, error) {
+	dec := thresholdDecision{
+		PrPct:   thPrPct,
+		EcPct:   thEcPct,
+		RMSEps:  thRMSEps,
+		AreaPct: thAreaPct,
+		Mode:    "strict",
+	}
+
+	switch ds.MaterialID {
+	case "pzt2024_nano14050432_fig2_thinfilm",
+		"pzt2024_nano14050432_fig2_thinfilm_traceB",
+		"bto2021_cryst11101192_hysteresis",
+		"alscn2022_pmc9607415_fig6a_pt_200nm":
+		dec.PrPct = math.Max(dec.PrPct, 15.0)
+		dec.RMSEps = math.Max(dec.RMSEps, 0.20)
+		dec.AreaPct = math.Max(dec.AreaPct, 200.0)
+		dec.Mode = "placeholder_relaxed"
+		dec.LogLine = fmt.Sprintf("PLACEHOLDER_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%", ds.MaterialID, dec.PrPct, dec.RMSEps, dec.AreaPct)
+	case "park2015_hzo_10nm":
+		dec.PrPct = math.Max(dec.PrPct, 15.0)
+		dec.RMSEps = math.Max(dec.RMSEps, 0.06)
+		dec.AreaPct = math.Max(dec.AreaPct, 60.0)
+		dec.Mode = "calibrated_relaxed"
+		dec.LogLine = fmt.Sprintf("CALIBRATED_RELAXED_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%", ds.MaterialID, dec.PrPct, dec.RMSEps, dec.AreaPct)
+	case "bto2021_cryst11101192_hysteresis_digitized":
+		unc, err := loadProvenanceUncertainty(ds.Provenance)
+		if err != nil {
+			return dec, fmt.Errorf("load uncertainty for %s: %w", ds.MaterialID, err)
+		}
+		sigmaPr := math.Hypot(unc.PixelQuantizationUCcm2, unc.PolarScaleUncertaintyUC)
+		sigmaEc := unc.FieldScaleUncertaintyMV
+		if prData > 0 {
+			dec.PrPct = math.Max(dec.PrPct, 300.0*sigmaPr/math.Abs(prData))
+		}
+		if ecData > 0 {
+			dec.EcPct = math.Max(dec.EcPct, 300.0*sigmaEc/math.Abs(ecData))
+		}
+		if ps > 0 {
+			dec.RMSEps = math.Max(dec.RMSEps, 3.0*sigmaPr/ps)
+		}
+		relPr := 0.0
+		relEc := 0.0
+		if prData > 0 {
+			relPr = sigmaPr / math.Abs(prData)
+		}
+		if ecData > 0 {
+			relEc = sigmaEc / math.Abs(ecData)
+		}
+		dec.AreaPct = math.Max(dec.AreaPct, 300.0*math.Hypot(relPr, relEc))
+		dec.Mode = "uncertainty_relaxed"
+		dec.LogLine = fmt.Sprintf("UNCERTAINTY_THRESHOLDS material=%s pr_th=%0.2f%% ec_th=%0.2f%% rmse_th=%0.4f area_th=%0.2f%% sigmaPr=%0.3f sigmaEc=%0.3f", ds.MaterialID, dec.PrPct, dec.EcPct, dec.RMSEps, dec.AreaPct, sigmaPr, sigmaEc)
+	}
+
+	return dec, nil
+}
+
 func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 	datasets := []peLoopDataset{
 		{
@@ -249,66 +317,16 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			ecErrPct := pctErr(ecSim, ecData)
 			areaErrPct := pctErr(areaSim, areaData)
 
-			localPrTh := thPrPct
-			localEcTh := thEcPct
-			localRMSETh := thRMSEps
-			localAreaTh := thAreaPct
-
-			// Calibrated-reference placeholder datasets use a relaxed RMSE/area
-			// threshold because the tanh Preisach model may not match the
-			// experimental loop shape for non-HZO materials (PZT, BTO).
-			// These are provisional entries pending direct pixel digitization;
-			// once replaced, the standard tight thresholds apply.
-			switch ds.MaterialID {
-			case "pzt2024_nano14050432_fig2_thinfilm",
-				"pzt2024_nano14050432_fig2_thinfilm_traceB",
-				"bto2021_cryst11101192_hysteresis",
-				"alscn2022_pmc9607415_fig6a_pt_200nm":
-				localPrTh = math.Max(localPrTh, 15.0)     // 15% Pr tolerance for placeholder
-				localRMSETh = math.Max(localRMSETh, 0.20) // 20% RMSE/Ps tolerance for placeholder
-				localAreaTh = math.Max(localAreaTh, 200.0) // 200% area tolerance for placeholder shape mismatch
-				t.Logf("PLACEHOLDER_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%",
-					ds.MaterialID, localPrTh, localRMSETh, localAreaTh)
-			case "park2015_hzo_10nm":
-				// Park 2015 digitized loop is still a calibration reference; keep modestly
-				// relaxed tolerances until the Preisach tuning is updated.
-				localPrTh = math.Max(localPrTh, 15.0)
-				localRMSETh = math.Max(localRMSETh, 0.06)
-				localAreaTh = math.Max(localAreaTh, 60.0)
-				t.Logf("CALIBRATED_RELAXED_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%",
-					ds.MaterialID, localPrTh, localRMSETh, localAreaTh)
+			decision, err := thresholdPolicyForDataset(ds, prData, ecData, ps)
+			if err != nil {
+				t.Fatalf("threshold policy resolution failed: %v", err)
 			}
-
-			// For direct pixel-digitized datasets, derive dataset-specific quality
-			// thresholds from provenance uncertainty bounds (3-sigma envelope) while
-			// keeping baseline global thresholds unchanged for all other datasets.
-			if ds.MaterialID == "bto2021_cryst11101192_hysteresis_digitized" {
-				unc, err := loadProvenanceUncertainty(ds.Provenance)
-				if err != nil {
-					t.Fatalf("load uncertainty for %s: %v", ds.MaterialID, err)
-				}
-				sigmaPr := math.Hypot(unc.PixelQuantizationUCcm2, unc.PolarScaleUncertaintyUC)
-				sigmaEc := unc.FieldScaleUncertaintyMV
-				if prData > 0 {
-					localPrTh = math.Max(localPrTh, 300.0*sigmaPr/math.Abs(prData))
-				}
-				if ecData > 0 {
-					localEcTh = math.Max(localEcTh, 300.0*sigmaEc/math.Abs(ecData))
-				}
-				if ps > 0 {
-					localRMSETh = math.Max(localRMSETh, 3.0*sigmaPr/ps)
-				}
-				relPr := 0.0
-				relEc := 0.0
-				if prData > 0 {
-					relPr = sigmaPr / math.Abs(prData)
-				}
-				if ecData > 0 {
-					relEc = sigmaEc / math.Abs(ecData)
-				}
-				localAreaTh = math.Max(localAreaTh, 300.0*math.Hypot(relPr, relEc))
-				t.Logf("UNCERTAINTY_THRESHOLDS material=%s pr_th=%0.2f%% ec_th=%0.2f%% rmse_th=%0.4f area_th=%0.2f%% sigmaPr=%0.3f sigmaEc=%0.3f",
-					ds.MaterialID, localPrTh, localEcTh, localRMSETh, localAreaTh, sigmaPr, sigmaEc)
+			localPrTh := decision.PrPct
+			localEcTh := decision.EcPct
+			localRMSETh := decision.RMSEps
+			localAreaTh := decision.AreaPct
+			if decision.LogLine != "" {
+				t.Logf("%s", decision.LogLine)
 			}
 
 			pass := true
