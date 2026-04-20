@@ -43,6 +43,19 @@ def tracked_files() -> list[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
+def tracked_pdfs() -> list[str]:
+    result = subprocess.run(
+        ["git", "ls-files", "*.pdf"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise SystemExit(result.stderr.strip() or "git ls-files failed")
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
 def load_pdf_decisions() -> dict[str, str]:
     if not AUDIT_PATH.exists():
         return {}
@@ -63,8 +76,13 @@ def main() -> int:
         if any(path.startswith(disallowed) for disallowed in DISALLOWED_PATHS):
             failures.append(f"Blocked tracked path: {path}")
 
-    for path, decision in load_pdf_decisions().items():
-        if path.endswith(".pdf") and decision not in {"keep", "keep-with-conditions"}:
+    pdf_decisions = load_pdf_decisions()
+    for path in tracked_pdfs():
+        decision = pdf_decisions.get(path)
+        if decision is None:
+            failures.append(f"Missing PDF audit row: {path}")
+            continue
+        if decision not in {"keep", "keep-with-conditions"}:
             failures.append(f"Blocked PDF decision: {path} -> {decision or '<missing>'}")
 
     scan = subprocess.run(
