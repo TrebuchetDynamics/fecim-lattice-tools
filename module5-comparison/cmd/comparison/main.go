@@ -189,7 +189,7 @@ func printHeader() {
 	fmt.Println("║  - Literature ranges for analog states/MNIST                 ║")
 	fmt.Println("║  - Public CPU/GPU datasheets                                 ║")
 	fmt.Println("║                                                              ║")
-		fmt.Println("║  See: docs/4-research/honesty-audit.md                       ║")
+	fmt.Println("║  See: docs/4-research/honesty-audit.md                       ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 }

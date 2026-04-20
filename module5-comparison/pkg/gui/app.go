@@ -501,7 +501,10 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// Wire jump-to-section buttons after centerPanel exists
 	jumpEnergy.OnTapped = func() { centerPanel.ScrollToTop() }
 	jumpMarket.OnTapped = func() { centerPanel.Offset = fyne.NewPos(0, energySection.MinSize().Height+8); centerPanel.Refresh() }
-	jumpROI.OnTapped = func() { centerPanel.Offset = fyne.NewPos(0, energySection.MinSize().Height+marketSection.MinSize().Height+16); centerPanel.Refresh() }
+	jumpROI.OnTapped = func() {
+		centerPanel.Offset = fyne.NewPos(0, energySection.MinSize().Height+marketSection.MinSize().Height+16)
+		centerPanel.Refresh()
+	}
 	jumpFab.OnTapped = func() { centerPanel.ScrollToBottom() }
 
 	// === FOOTER ===
