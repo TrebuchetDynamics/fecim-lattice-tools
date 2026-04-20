@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 )
 
 // Verbosity levels for logging
@@ -20,8 +22,91 @@ const (
 	VerbosityTrace VerbosityLevel = 3 // Trace (every UI update, simulation tick)
 )
 
-// Global verbosity level - set via SetVerbosity() uses manager.go
-// File logging control - uses manager.go
+var (
+	globalVerbosity VerbosityLevel = VerbosityOff
+	verbosityMu     sync.RWMutex
+
+	fileLoggingEnabled bool
+	fileLoggingMu      sync.RWMutex
+
+	sharedLogFile   *os.File
+	sharedLogWriter io.Writer
+	sharedLogMu     sync.Mutex
+	sharedLogPath   string
+
+	defaultLogger *Logger
+	once          sync.Once
+)
+
+// lazyWriter defers writes until a shared writer is initialized.
+type lazyWriter struct{}
+
+func (w *lazyWriter) Write(p []byte) (int, error) {
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+	if writer == nil {
+		return len(p), nil
+	}
+	return writer.Write(p)
+}
+
+func ensureSharedLogWriter() {
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+
+	if sharedLogWriter != nil {
+		return
+	}
+
+	logsDir := getLogsDir()
+	if err := os.MkdirAll(logsDir, 0o755); err != nil {
+		sharedLogWriter = os.Stdout
+		return
+	}
+
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	sharedLogPath = filepath.Join(logsDir, timestamp+"-fecim.log")
+
+	var err error
+	sharedLogFile, err = os.Create(sharedLogPath)
+	if err != nil {
+		sharedLogWriter = os.Stdout
+		sharedLogPath = ""
+		return
+	}
+
+	sharedLogWriter = io.MultiWriter(os.Stdout, sharedLogFile)
+}
+
+func SetVerbosity(level VerbosityLevel) {
+	verbosityMu.Lock()
+	globalVerbosity = level
+	verbosityMu.Unlock()
+}
+
+func GetVerbosity() VerbosityLevel {
+	verbosityMu.RLock()
+	defer verbosityMu.RUnlock()
+	return globalVerbosity
+}
+
+func IsVerbose(level VerbosityLevel) bool {
+	return GetVerbosity() >= level
+}
+
+func EnableFileLogging() {
+	fileLoggingMu.Lock()
+	fileLoggingEnabled = true
+	fileLoggingMu.Unlock()
+	ensureSharedLogWriter()
+}
+
+func IsFileLoggingEnabled() bool {
+	fileLoggingMu.RLock()
+	defer fileLoggingMu.RUnlock()
+	return fileLoggingEnabled
+}
 
 // Logger wraps log.Logger with demo-specific configuration and verbosity support
 type Logger struct {
@@ -80,7 +165,17 @@ func (l *Logger) Close() {
 	// No-op - shared log file is managed globally
 }
 
-// CloseShared removed - in manager.go
+func CloseShared() {
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+
+	if sharedLogFile != nil {
+		_ = sharedLogFile.Close()
+		sharedLogFile = nil
+	}
+	sharedLogWriter = nil
+	sharedLogPath = ""
+}
 
 // Info logs at INFO level (verbosity >= 1)
 func (l *Logger) Info(format string, args ...interface{}) {
@@ -332,7 +427,223 @@ func formatParams(params map[string]interface{}) string {
 	return strings.Join(parts, ", ")
 }
 
-// Global convenience functions now in manager.go
+func Init(demoName string, logPath string) error {
+	var err error
+	once.Do(func() {
+		if logPath == "" {
+			logsDir := getLogsDir()
+			if mkErr := os.MkdirAll(logsDir, 0o755); mkErr != nil {
+				logsDir = "."
+			}
+			timestamp := time.Now().Format("2006-01-02_15-04-05")
+			logPath = filepath.Join(logsDir, timestamp+"-"+demoName+".log")
+		} else if mkErr := os.MkdirAll(filepath.Dir(logPath), 0o755); mkErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create log directory: %v\n", mkErr)
+		}
+
+		var logFile *os.File
+		logFile, err = os.Create(logPath)
+		if err != nil {
+			return
+		}
+
+		multiWriter := io.MultiWriter(os.Stdout, logFile)
+		defaultLogger = &Logger{
+			Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
+			logFile:  logFile,
+			demoName: demoName,
+		}
+		defaultLogger.Printf("Logging initialized to: %s", logPath)
+	})
+	return err
+}
+
+func Printf(format string, v ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Printf(format, v...)
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	msg := fmt.Sprintf(format, v...)
+	if writer != nil {
+		fmt.Fprintf(writer, "%s %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		return
+	}
+	log.Printf("%s", msg)
+}
+
+func Println(v ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Println(v...)
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	if writer != nil {
+		fmt.Fprint(writer, time.Now().Format("2006/01/02 15:04:05")+" ")
+		fmt.Fprintln(writer, v...)
+		return
+	}
+	log.Println(v...)
+}
+
+func GlobalInfo(format string, args ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Info(format, args...)
+		return
+	}
+	if !IsVerbose(VerbosityInfo) {
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	msg := fmt.Sprintf(format, args...)
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [INFO] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		return
+	}
+	log.Printf("[INFO] %s", msg)
+}
+
+func GlobalDebug(format string, args ...interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Debug(format, args...)
+		return
+	}
+	if !IsVerbose(VerbosityDebug) {
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	msg := fmt.Sprintf(format, args...)
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [DEBUG] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		return
+	}
+	log.Printf("[DEBUG] %s", msg)
+}
+
+func GlobalError(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	AddToBuffer(NewEntry(LevelError, "global", msg))
+
+	if defaultLogger != nil {
+		defaultLogger.Printf("[ERROR] "+format, args...)
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [ERROR] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		return
+	}
+	log.Printf("[ERROR] %s", msg)
+}
+
+func GlobalWarn(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	AddToBuffer(NewEntry(LevelWarn, "global", msg))
+
+	if defaultLogger != nil {
+		defaultLogger.Printf("[WARN] "+format, args...)
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [WARN] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		return
+	}
+	log.Printf("[WARN] %s", msg)
+}
+
+func GlobalCalculation(funcName string, inputs map[string]interface{}, result interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Calculation(funcName, inputs, result)
+		return
+	}
+	if !IsVerbose(VerbosityDebug) {
+		return
+	}
+
+	safeInputs := sanitizeFields(inputs)
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [DEBUG] CALC: %s(%s) = %v\n", time.Now().Format("2006/01/02 15:04:05"), funcName, formatParams(safeInputs), result)
+		return
+	}
+	log.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(safeInputs), result)
+}
+
+func GlobalInput(funcName string, params map[string]interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Input(funcName, params)
+		return
+	}
+	if !IsVerbose(VerbosityDebug) {
+		return
+	}
+
+	safeParams := sanitizeFields(params)
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [DEBUG] INPUT: %s(%s)\n", time.Now().Format("2006/01/02 15:04:05"), funcName, formatParams(safeParams))
+		return
+	}
+	log.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(safeParams))
+}
+
+func GlobalOutput(funcName string, result interface{}) {
+	if defaultLogger != nil {
+		defaultLogger.Output(funcName, result)
+		return
+	}
+	if !IsVerbose(VerbosityTrace) {
+		return
+	}
+
+	sharedLogMu.Lock()
+	writer := sharedLogWriter
+	sharedLogMu.Unlock()
+	if writer != nil {
+		fmt.Fprintf(writer, "%s [TRACE] OUTPUT: %s -> %v\n", time.Now().Format("2006/01/02 15:04:05"), funcName, result)
+		return
+	}
+	log.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
+}
+
+func CloseGlobal() {
+	if defaultLogger != nil {
+		if defaultLogger.logFile != nil {
+			_ = defaultLogger.logFile.Close()
+		}
+		defaultLogger = nil
+	}
+	CloseShared()
+}
 
 func ParseVerbosityFlag(s string) VerbosityLevel {
 	switch s {
