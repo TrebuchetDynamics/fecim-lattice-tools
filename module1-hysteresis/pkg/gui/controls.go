@@ -214,7 +214,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.wrdLastBranch = 0
 			a.wrdForceReset = false
 			a.wrdSkipPrep = skipPrep
-			// Reset Dr. Tour demo metrics
+			// Reset write-verify demo metrics.
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
 			a.wrdTotalEnergyfJ = 0

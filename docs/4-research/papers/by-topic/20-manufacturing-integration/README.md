@@ -381,7 +381,7 @@ beol3d := ProcessConfig{
 
 ---
 
-## Key Takeaways for Dr. Tour Outreach
+## Project Takeaways
 
 1. **Manufacturing Readiness:** FeFET is production-ready at 22nm (GF) and 130nm (Fraunhofer)
 2. **Automotive Qualified:** Fraunhofer IPMS has Grade 0 certified process (see Topic 22)

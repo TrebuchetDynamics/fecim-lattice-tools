@@ -1,5 +1,5 @@
 // Package training provides neural network training for MNIST classification.
-// single_layer.go implements the single-layer (784→10) network matching Dr. Tour's demo.
+// single_layer.go implements the single-layer (784→10) network used for the conference-baseline demo.
 package training
 
 import (

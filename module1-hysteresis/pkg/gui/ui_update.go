@@ -427,7 +427,7 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		a.stabilityIndicator.SetLevel(dL+1, numLevels)
 	}
 
-	// Update wake-up/fatigue labels (Dr. Tour recommendation)
+	// Update wake-up/fatigue labels for the write-verify view.
 	cycles := a.wrdTotalWrites
 	wakeup := 1.0
 	degradation := 0.0

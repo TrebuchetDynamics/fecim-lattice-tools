@@ -39,11 +39,11 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 
 		// CRIT-003: Verification status section
 		widget.NewLabelWithStyle("⚠️ Verification Status", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("• Tour's 30-state claim: UNVERIFIED (COSM 2025, not peer-reviewed)"),
+		widget.NewLabel("• 30-state conference baseline: UNVERIFIED (2025 conference report, not peer-reviewed)"),
 		widget.NewLabel("• Peer-reviewed range: 32-140 states demonstrated"),
 		widget.NewLabel("  - 32 states: Oh et al., IEEE EDL 2017 (VERIFIED)"),
 		widget.NewLabel("  - 140 states: Song et al., Adv. Science 2024 (VERIFIED)"),
-		widget.NewLabel("• Conclusion: 30 states is a conference-claim baseline (plausible within demonstrated range)"),
+		widget.NewLabel("• Conclusion: 30 states is a demo baseline from a conference report (plausible within demonstrated range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Physics Justification", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -62,7 +62,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | Peer-reviewed"),
 		widget.NewLabel("FeFET (Oh 2017)| 32     | 5.0 bits  | IEEE EDL (VERIFIED)"),
 		widget.NewLabel("FeFET (Song'24)| 140    | 7.1 bits  | Adv. Science (VERIFIED)"),
-		widget.NewLabel("Tour FeCIM     | 30     | ~4.9 bits | COSM 2025 (UNVERIFIED, within 7-140 range)"),
+		widget.NewLabel("Conference ref.| 30     | ~4.9 bits | 2025 report (UNVERIFIED, within 32-140 range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Impact on MNIST Accuracy", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -244,7 +244,7 @@ func createAboutContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Key References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("• COSM 2025 (Ferroelectric CIM presentation)"),
+		widget.NewLabel("• 2025 conference presentation (ferroelectric CIM baseline notes)"),
 		widget.NewLabel("• Jerry et al., IEDM 2017 - FeFET Synapse (DOI: 10.1109/IEDM.2017.8268338)"),
 		widget.NewLabel("• MNIST Dataset - Yann LeCun et al. (http://yann.lecun.com/exdb/mnist/)"),
 		widget.NewSeparator(),

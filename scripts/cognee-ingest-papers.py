@@ -38,7 +38,7 @@ NEW_DOCS = [
     "docs/4-research/papers/PAPERS_INDEX.md",
     "docs/4-research/papers/ORGANIZATION.md",
     "docs/4-research/papers/NEW_PAPERS_2026-02-01.md",
-    # Tour lab research
+    # Superlattice and In2Se3 research
     "docs/4-research/papers/external-research/In2Se3_Landau_Coefficients_Research.md",
     # Validation results not yet ingested
     "docs/4-research/validation/BASELINE-2026-02-13.md",

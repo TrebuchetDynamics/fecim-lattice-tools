@@ -511,7 +511,7 @@ Screens:
           left: DoList (bullet list)
           right: DontList (bullet list)
       - DisclaimerCard (Card):
-          purpose: Show disclaimer about not being affiliated with Rice/Tour
+          purpose: Show disclaimer about not being affiliated with outside research groups
           file: tabs/learn_tab.go:157-158
 
   - name: LearnContent_Crossbar

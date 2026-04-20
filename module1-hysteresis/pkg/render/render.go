@@ -179,7 +179,7 @@ func (cd *CellDisplay) GetColor() Color {
 }
 
 // FeCIMLevels is re-exported from shared/physics for backward compatibility.
-// Conference claim (COSM 2025), pending peer review: "It's got 30 discrete states."
+// 30-level default follows the current conference-baseline assumption used by this demo.
 const FeCIMLevels = physics.DefaultLevels
 
 // LevelIndicator displays the 30 discrete FeCIM levels.

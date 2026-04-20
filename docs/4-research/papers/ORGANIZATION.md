@@ -170,7 +170,7 @@ Most downloaded papers have been categorized into their appropriate topic direct
 Three PDFs with read errors:
 - `IEEE_CIM_Survey_2023.pdf` - Re-download from IEEE
 - `Mayergoyz_IEEE_1986.pdf` - Classic paper, re-fetch
-- `Tour_In2Se3_ChemRxiv.pdf` - From external research group (ChemRxiv)
+- `Tour_In2Se3_ChemRxiv.pdf` - ChemRxiv version
 
 ---
 

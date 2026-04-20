@@ -471,7 +471,7 @@ New file: `data/calibrations/hzo_cryogenic.json`
 
 ---
 
-## Why This Matters for Dr. Tour Outreach
+## Why This Topic Matters
 
 ### 1. Blue Ocean Market (Zero Competition)
 - **DRAM/Flash fail at 4K:** FeCIM has monopoly on non-volatile cryo memory

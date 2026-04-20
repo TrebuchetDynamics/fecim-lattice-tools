@@ -6,7 +6,7 @@ import (
 )
 
 // TestQuantizeToLevelsProducesExactly30Values verifies FeCIM spec:
-// Conference claim (COSM 2025): "It's got 30 discrete states."
+// The 30-level default follows the conference-baseline assumption used by this demo.
 func TestQuantizeToLevelsProducesExactly30Values(t *testing.T) {
 	seen := make(map[float64]bool)
 

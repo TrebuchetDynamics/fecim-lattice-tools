@@ -66,7 +66,7 @@ func TestMaterial_LandauCoefficients(t *testing.T) {
 
 		t.Run(mat.Name, func(t *testing.T) {
 			// Beta must be negative for first-order ferroelectric phase transition
-			// Known issue: α-In₂Se₃ (Tour Lab) has BetaLandau=+3e9 (wrong sign)
+			// Known issue: the α-In₂Se₃ preset has BetaLandau=+3e9 (wrong sign)
 			if mat.BetaLandau > 0 {
 				t.Skipf("KNOWN ISSUE: %s has positive BetaLandau (%.6e), expected negative for first-order transition", mat.Name, mat.BetaLandau)
 			}

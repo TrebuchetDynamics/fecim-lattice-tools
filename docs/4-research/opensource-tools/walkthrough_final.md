@@ -1,7 +1,7 @@
 # Walkthrough - Research and Paper Downloads
 
 ## Accomplishments
-I have researched open source ferroelectric tools, additional papers by Dr. Tour/Jaeho Shin, competitor research, and HZO/SiO CMOS integration.
+This walkthrough summarizes open source ferroelectric tools, related papers from Rice/Jaeho Shin, competitor research, and HZO/SiO CMOS integration.
 
 ### Research Notes
 Detailed research notes have been compiled in [research_notes.md](./research_notes_final.md).
@@ -21,7 +21,7 @@ The following papers were successfully downloaded to `opensource/papers`:
 ### Manual Downloads Required
 The following high-impact papers were found but require manual download due to paywalls or bot protection:
 
-**Dr. Tour / Jaeho Shin (Rice Univ)**
+**Rice / Jaeho Shin**
 - [ ] **"In2Se3 Synthesized by the FWF Method..."** (Adv. Elec. Mat. 2025 / ChemRxiv)
     - [ChemRxiv Link](https://chemrxiv.org/engage/chemrxiv/article-details/659e5eff9138d234bd65842f)
 - [ ] **"Stoichiometric Engineering of Indium Selenide..."** (ACS Nano 2025)
@@ -48,7 +48,7 @@ The following high-impact papers were found but require manual download due to p
     - `Tsinghua_Face_Classification_NatureComms_2025.pdf` (Note: File name says 2025 but content is 2017 paper) ✅ Downloaded
 - [ ] **KAIST:** "Phase-Change Memory..." (Nature 2024)
     - [Nature Link](https://www.nature.com/articles/s41586-024-07230-5) (Paywalled)
-- [ ] **Tour/Rice:** "Ultrafast and scalable materials synthesis..." (Nature Chem 2024)
+- [ ] **Rice:** "Ultrafast and scalable materials synthesis..." (Nature Chem 2024)
     - [ChemRxiv Preprint](https://chemrxiv.org/engage/chemrxiv/article-details/659e5eff9138d234bd65842f) (Check ChemRxiv for free PDF)
 - [ ] **IMEC:** "La Doped HZO-Based 3D-Trench..." (IEEE EDL 2024)
     - [IEEE Link](https://ieeexplore.ieee.org/document/10433241)
@@ -93,4 +93,3 @@ The following high-impact papers were found but require manual download due to p
 - Confirmed file existence and size for successful downloads.
 - Verified transparency on manual download requirements for Nature/IEEE/ACS/AIP papers.
 - Updated links for immediate user access to paywalled resources.
-

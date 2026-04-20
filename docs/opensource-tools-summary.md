@@ -77,7 +77,7 @@ This document summarizes **65 open-source projects** cloned to `opensource/`, or
 |------|---------|-----------------|-------------|
 | **python-preisach** | MIT | 🔴 HIGH | Educational Preisach model implementation |
 | **Preisachmodel** | MIT | 🔴 HIGH | Full forward + inverse Preisach with data fitting |
-| **ferro_scripts** | MIT | 🔴 HIGH | Garrity/Tour P-E curves, YAML-configurable |
+| **ferro_scripts** | MIT | 🔴 HIGH | Garrity P-E curves, YAML-configurable |
 | **pyhist** | MIT | 🟡 MEDIUM | Generic hysteresis modeling |
 | **JAmodel** | MIT | 🟡 MEDIUM | Jiles-Atherton magnetic hysteresis (adaptable) |
 | **pyjam** | MIT | 🟡 MEDIUM | Jiles-Atherton with parameter optimization |

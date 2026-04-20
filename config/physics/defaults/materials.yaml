@@ -77,8 +77,8 @@
 #   [15] Nature Commun. 2023, doi:10.1038/s41467-023-42110-y - MLC FeFET crossbar demo
 #   [16] IEEE TED 2022, doi:10.1109/TED.2022.3216973 - 28nm current-limited FeFET crossbar, 97% MNIST with limiter vs 9.8% without
 #
-# Tour Lab:
-#   [17] Dr. external research group, COSM 2025 - 30 discrete states, 87% MNIST (unverified)
+# Conference / process reports:
+#   [17] COSM 2025 conference presentation - 30 discrete states, 87% MNIST (unverified)
 #   [18] Adv. Electron. Mater. 2024, doi:10.1002/aelm.202400603 - In2Se3 FWF synthesis
 #
 # Endurance & Reliability:
@@ -121,7 +121,7 @@
 # =============================================================================
 # Three-tier system:
 #   default_hzo: Baseline standard HZO from literature
-#   fecim_hzo: Dr. Tour's FeCIM demonstrated values (conservative)
+#   fecim_hzo: FeCIM HZO conference-baseline values (conservative)
 #   literature_superlattice: Best academic results (Cheema 2020)
 
 materials:
@@ -200,9 +200,9 @@ materials:
 
   fecim_hzo:
     name: "FeCIM HZO"  # Human-readable material/profile name.
-    description: "Dr. Tour's FeCIM - DEMONSTRATED values only"  # Short physical context and intended use-case.
-    reference: "Dr. external research group, COSM 2025 [17]"  # Primary literature/source backing this parameter set.
-    analog_states: 30           # 30 discrete states - VERIFIED (Dr. Tour)
+    description: "FeCIM HZO - conference-baseline values only"  # Short physical context and intended use-case.
+    reference: "COSM 2025 conference presentation [17]"  # Primary literature/source backing this parameter set.
+    analog_states: 30           # 30 discrete states - conference baseline (unverified)
     target_range_frac: 0.90    # Back-off from saturation for level mapping
 
     # Depolarization field (polycrystalline slant) [32][33][34]
@@ -226,7 +226,7 @@ materials:
     cell_pitch_nm: 45           # Cell pitch
 
     # Switching dynamics [17]
-    tau_s: 10.0e-9              # 10 ns (from Tour's slides, not 1ns)
+    tau_s: 10.0e-9              # 10 ns (conference slide estimate, not 1ns)
     tau0_s: 1.0e-13  # Attempt time constant in seconds for thermally activated switching.
     activation_energy_ev: 0.6  # Activation barrier for switching in eV (typ. ~0.4–1.2 eV).
     kai_exponent: 2.0  # KAI/Avrami exponent (domain-growth dimensionality, typ. 1–3).
@@ -271,8 +271,8 @@ materials:
 
   fecim_hzo_target:
     name: "FeCIM HZO (TARGET)"  # Human-readable material/profile name.
-    description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"  # Short physical context and intended use-case.
-    reference: "Dr. external research group, COSM 2025"  # Primary literature/source backing this parameter set.
+    description: "FeCIM HZO - aspirational conference targets (not demonstrated)"  # Short physical context and intended use-case.
+    reference: "COSM 2025 conference presentation"  # Primary literature/source backing this parameter set.
     analog_states: 30           # Same as FeCIM demonstrated
     target_range_frac: 0.90    # Back-off from saturation for level mapping
 

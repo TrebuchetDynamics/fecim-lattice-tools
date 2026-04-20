@@ -26,7 +26,7 @@ func init() {
 // THREE-TIER MATERIAL SYSTEM:
 //
 //	DefaultHZO()           - Baseline: Standard Si-doped HZO from literature
-//	FeCIMMaterial()        - FeCIM: Dr. Tour's DEMONSTRATED values (conservative)
+//	FeCIMMaterial()        - FeCIM: conference-baseline demonstrated values (conservative)
 //	FeCIMMaterialTarget()  - FeCIM: conference-claim targets (aspirational)
 //	LiteratureSuperlattice() - Academic: Best-case from Cheema et al. 2020
 //

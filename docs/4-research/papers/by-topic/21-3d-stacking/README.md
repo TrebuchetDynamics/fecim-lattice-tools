@@ -492,7 +492,7 @@ type ThermalManagement struct {
 
 ---
 
-## Why This Matters for Dr. Tour Outreach
+## Why This Topic Matters
 
 ### 1. Competitive Density Achieved (2025)
 - **Nature 2025 paper:** 256-layer demo at 25.6 Gb/mm² **matches 3D NAND production**

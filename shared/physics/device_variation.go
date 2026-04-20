@@ -1,7 +1,7 @@
 // Package physics provides shared physics utilities for FeCIM simulations.
 // This file implements device-to-device variation modeling for Ec and Pr parameters.
 //
-// C11: Per Dr. Tour critique - implement Gaussian Ec/Pr distribution to model
+// C11: Implement Gaussian Ec/Pr distributions to model
 // realistic device-to-device variation in manufactured FeFET arrays.
 //
 // Physics basis:

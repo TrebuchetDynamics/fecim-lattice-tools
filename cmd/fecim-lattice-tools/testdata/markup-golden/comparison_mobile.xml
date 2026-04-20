@@ -1286,7 +1286,7 @@
 				<container pos="0,77" size="367x36">
 					<widget size="201x36" type="*widget.Label">
 						<widget size="201x36" type="*widget.RichText">
-							<text pos="8,8" size="185x19">Dr. external research group | COSM 2025</text>
+							<text pos="8,8" size="185x19">FeCIM Comparison | Literature Context</text>
 						</widget>
 					</widget>
 					<spacer pos="205,0" size="106x36"/>

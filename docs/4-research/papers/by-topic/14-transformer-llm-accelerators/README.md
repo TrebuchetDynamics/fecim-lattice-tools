@@ -335,7 +335,7 @@ Example (LLaMA-7B, 2048 context):
 
 ---
 
-## Why This Matters for Dr. Tour
+## Why This Topic Matters
 
 1. **Hottest AI Application**: LLMs are the biggest AI trend
 2. **Memory-Bound Problem**: Perfect fit for FeCIM approach

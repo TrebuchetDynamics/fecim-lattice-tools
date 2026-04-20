@@ -13,7 +13,7 @@ import (
 // Note: logger is shared with network.go (var log = logging.NewLogger("mnist-core"))
 
 // FeCIMLevels is the baseline number of discrete conductance levels used in this demo.
-// Conference claim (COSM 2025), pending peer review; peer-reviewed devices show 32–140 states.
+// The 30-level default is a conference-baseline assumption; peer-reviewed devices show 32-140 states.
 // Re-exported from shared/physics for backward compatibility.
 const FeCIMLevels = physics.DefaultLevels
 

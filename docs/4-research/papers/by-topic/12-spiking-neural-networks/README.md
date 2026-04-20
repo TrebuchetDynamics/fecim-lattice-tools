@@ -255,7 +255,7 @@ func STDPUpdate(weight float64, preSpikeTime, postSpikeTime int) float64 {
 
 ---
 
-## Why This Matters for Dr. Tour
+## Why This Topic Matters
 
 1. **100× Energy Advantage**: SNNs on FeFET beat even FeCIM ANNs
 2. **Brain-like Computing**: Aligns with neuromorphic vision

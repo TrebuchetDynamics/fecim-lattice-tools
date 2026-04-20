@@ -1,7 +1,7 @@
 // Package crossbar implements ferroelectric crossbar array simulation.
 // This file implements write disturb (half-select stress) modeling.
 //
-// H10: Per Dr. Tour critique - add write disturb model for half-selected cells.
+// H10: Add write-disturb modeling for half-selected cells.
 //
 // Physics basis:
 //   - During crossbar write operations, the target cell receives full voltage

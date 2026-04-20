@@ -278,7 +278,7 @@ func UpdateWeights(weights, gradients [][]float64, lr float64) [][]float64 {
 
 ---
 
-## Why This Matters for Dr. Tour
+## Why This Topic Matters
 
 1. **Unique Capability**: Few CIM platforms support training
 2. **Edge AI Market**: On-device learning is $10B opportunity

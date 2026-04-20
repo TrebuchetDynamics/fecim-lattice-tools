@@ -25,7 +25,7 @@ func getLog() *logging.Logger {
 
 // DefaultQuantizationLevels is the standard number of discrete analog states.
 // Alias to shared/physics for backward compatibility.
-// Conference claim (COSM 2025), pending peer review: "It's got 30 discrete states."
+// The 30-level default follows the conference-baseline assumption used by this demo.
 const DefaultQuantizationLevels = physics.DefaultLevels
 
 // Conductance range constants (physical units) - aliases to shared/physics

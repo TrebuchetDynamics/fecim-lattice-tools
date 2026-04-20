@@ -1,7 +1,7 @@
 // Package physics provides shared physics utilities for FeCIM simulations.
 // This file implements write-verify statistics tracking for ISPP operations.
 //
-// C12: Per Dr. Tour critique - add write-verify statistics visualization
+// C12: Add write-verify statistics visualization
 // showing pulses to converge, failure rate vs cycles.
 //
 // Physics basis:

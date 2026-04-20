@@ -1,8 +1,8 @@
 {
   "version": "1.5.0",
-  "description": "Golden reference hysteresis loop for α-In₂Se₃ (Tour Lab) (Preisach engine)",
+  "description": "Golden reference hysteresis loop for α-In₂Se₃ (Preisach engine)",
   "generated": "2026-02-16",
-  "material": "α-In₂Se₃ (Tour Lab)",
+  "material": "α-In₂Se₃",
   "engine": "Preisach",
   "parameters": {
     "Ec_V_m": 300000000,

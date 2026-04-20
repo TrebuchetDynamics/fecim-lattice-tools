@@ -302,7 +302,7 @@ go fmt ./...
 - Crossbar non-idealities (IR drop, sneak paths) from literature
 
 **Removed/unverified claims:**
-- 30 analog states for Tour device (conference-only reference, not reported in literature)
+- 30 analog states from a conference-only baseline (not reported in literature)
 - 87% MNIST accuracy (conference-only reference)
 - Energy multipliers vs NAND/GPUs without published measurement evidence
 

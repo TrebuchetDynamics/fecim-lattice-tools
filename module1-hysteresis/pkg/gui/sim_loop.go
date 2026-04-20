@@ -862,7 +862,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					// Add comparison callout every 5 cycles
 					if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
 						fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
-						// NOTE: 10M× is Dr. Tour's unverified claim. Peer-reviewed: 25-100× (Samsung Nature 2025)
+						// NOTE: Ignore the 10M× conference claim here; peer-reviewed literature reports 25-100× (Samsung Nature 2025).
 						nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
 						dramEquiv := fecimEnergy * 1000 // 1000× worse
 						bitsStored := float64(a.wrdTotalWrites) * a.wrdBitsStored

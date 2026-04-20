@@ -35,7 +35,7 @@ Core physics package (80+ files, 90KB+) providing ferroelectric material models,
 For honest scientific communication:
 
 1. **DefaultHZO()** - Baseline Si-doped HfO2/ZrO2 from literature (Park et al., Müller et al.)
-2. **FeCIMMaterial()** - Conservative: Only values demonstrated in Dr. Tour's published work
+2. **FeCIMMaterial()** - Conservative: Only values supported by the current conference-baseline material notes
 3. **FeCIMMaterialTarget()** - Aspirational: Conference-claimed targets (not yet peer-reviewed)
 4. **LiteratureSuperlattice()** - Best-case: HfO2/ZrO2 superlattices (Cheema et al. Nature 2020)
 

@@ -145,7 +145,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 	}
 }
 
-// FeCIMMaterial returns parameters matching FeCIM specifications (Tour, Nov 2024).
+// FeCIMMaterial returns parameters matching the current FeCIM conference baseline.
 //
 // DEMONSTRATED: 30 states (COSM 2025, pending peer review), 10^9 endurance, 10^7s retention.
 // TARGET (not achieved): 10^12 endurance, 100y retention.
@@ -162,7 +162,7 @@ func FeCIMMaterial() *HZOMaterial {
 		LossAngle: 0.01,          // ESTIMATED
 		Thickness: 10e-9,         // ESTIMATED
 		Area:      45e-9 * 45e-9, // 45nm pitch - ESTIMATED
-		Tau:       10e-9,         // 10 ns (Tour's slides, not 1ns)
+		Tau:       10e-9,         // 10 ns (conference slide estimate, not 1ns)
 		Tau0:            1e-13,
 		Ea:              0.6,
 		Alpha:           2.0,
@@ -195,8 +195,7 @@ func FeCIMMaterial() *HZOMaterial {
 
 // FeCIMMaterialTarget returns FeCIM TARGET specifications.
 // WARNING: These are GOALS not demonstrated performance.
-// Dr. Tour explicitly stated: "We still have to get this up to the
-// required 10^12 cycles."
+// The 10^12-cycle point is an aspirational target, not demonstrated performance.
 func FeCIMMaterialTarget() *HZOMaterial {
 	mat := FeCIMMaterial()
 	mat.Name = "FeCIM HZO (TARGET - NOT DEMONSTRATED)"

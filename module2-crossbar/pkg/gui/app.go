@@ -94,7 +94,7 @@ type CrossbarApp struct {
 	irColormap    string
 	sneakColormap string
 
-	// Architecture toggle (Dr. Tour: clarify 0T1R vs 1T1R vs 2T1R)
+	// Architecture toggle clarifies 0T1R vs 1T1R vs 2T1R.
 	archToggle     *fyne.Container // Container with toggle buttons
 	archPassiveBtn *widget.Button
 	arch1T1RBtn    *widget.Button
@@ -370,7 +370,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.colormapSelect.SetSelected("fecim")
 
 	// Architecture toggle: 0T1R (passive) vs 1T1R (with access transistor) vs 2T1R (dual transistor)
-	// Dr. Tour recommendation: clarify sneak path behavior depends on architecture
+	// Clarify that sneak-path behavior depends on architecture.
 	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
 
 	// Create toggle buttons

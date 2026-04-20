@@ -136,7 +136,7 @@ func NewComparisonApp() *ComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Model input (COSM 2025 conference)",
+		Source:        "Model input (conference baseline)",
 		Verified:      false,
 		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
 	}

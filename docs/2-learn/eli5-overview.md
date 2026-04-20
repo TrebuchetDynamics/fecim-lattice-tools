@@ -373,7 +373,7 @@ This simulator helps imagine the destination and plan the journey!
 
 - **3Blue1Brown:** Neural Networks Playlist (visual, beautiful)
 - **IBM:** In-Memory Computing Overview
-- **Dr. external research group:** external research institution research
+- **external research institution research:** ferroelectric materials and compute-in-memory work
 
 ---
 

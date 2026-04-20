@@ -37,7 +37,7 @@ func TestFeCIMMaterial(t *testing.T) {
 	if mat.NumLevels != 30 {
 		t.Errorf("FeCIM should have 30 levels, got %d", mat.NumLevels)
 	}
-	// Verified values from Dr. Tour's presentation
+	// Conference-baseline values retained for the FeCIM preset.
 	if mat.EnduranceCycles != 1e9 {
 		t.Errorf("FeCIM demonstrated endurance should be 1e9, got %e", mat.EnduranceCycles)
 	}

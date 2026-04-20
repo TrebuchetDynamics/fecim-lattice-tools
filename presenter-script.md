@@ -1,7 +1,7 @@
 # FeCIM Lattice Tools — Presenter Script
 
 ## Title
-**From Hysteresis to EDA: A 7-Module Tour of Ferroelectric Compute-in-Memory**
+**From Hysteresis to EDA: A 7-Module Overview of Ferroelectric Compute-in-Memory**
 
 ## Recommended duration
 8–10 minutes
@@ -11,7 +11,7 @@
 ## 0) Opening (30–45s)
 Hello everyone, and welcome.
 
-Today I’ll show you **FeCIM Lattice Tools**, an educational and research-oriented software platform for understanding ferroelectric compute-in-memory systems.
+Today’s overview covers **FeCIM Lattice Tools**, an educational and research-oriented software platform for understanding ferroelectric compute-in-memory systems.
 
 The tour goes from device physics to system-level design:
 1. Hysteresis physics

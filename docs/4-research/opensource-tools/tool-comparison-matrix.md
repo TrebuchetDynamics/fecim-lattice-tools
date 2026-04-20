@@ -92,7 +92,7 @@ This document provides a comprehensive comparison across **50+ open-source tools
 | | | | | | | | | |
 | **python-preisach** | Hysteresis Models | MIT | HIGH | ⭐⭐⭐⭐ | ✅ | ✅ | ❌ | Educational Preisach model |
 | **Preisachmodel** | Hysteresis Models | MIT | HIGH | ⭐⭐⭐⭐ | ✅ | ✅ | ❌ | Forward + inverse Preisach |
-| **ferro_scripts** | Hysteresis Models | MIT | HIGH | ⭐⭐⭐⭐ | ✅ | ✅ | ❌ | Garrity/Tour P-E curves |
+| **ferro_scripts** | Hysteresis Models | MIT | HIGH | ⭐⭐⭐⭐ | ✅ | ✅ | ❌ | Published ferroelectric P-E curves |
 | **CIM.jl** | Hysteresis Models | MIT | MEDIUM | ⭐⭐⭐ | ⚠️ | ❌ | ❌ | Julia implementation |
 | | | | | | | | | |
 | **MemTorch** | Memristor/RRAM | GPL-3 | HIGH | ⭐⭐⭐ | ✅ | ✅ | ✅ | Device + array simulation |

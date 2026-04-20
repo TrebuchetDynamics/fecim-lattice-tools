@@ -12,7 +12,7 @@ import (
 // =============================================================================
 
 // TestFeCIM30LevelPhysics verifies that quantization matches FeCIM hardware specs.
-// Dr. Tour's research: HZO ferroelectric achieves 30 stable polarization states.
+// Conference-baseline FeCIM modeling uses 30 stable polarization states.
 func TestFeCIM30LevelPhysics(t *testing.T) {
 	// Test case: full range weights
 	weights := [][]float64{
@@ -128,7 +128,7 @@ func TestQuantizationSymmetry(t *testing.T) {
 }
 
 // TestQuantizationCliff validates the "quantization cliff" phenomenon.
-// Dr. Tour's insight: binary (2-level) weights destroy network accuracy.
+// Binary (2-level) weights create the expected quantization cliff in this model.
 func TestQuantizationCliff(t *testing.T) {
 	// Create varied weights
 	weights := [][]float64{

@@ -142,11 +142,11 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 
 ---
 
-## What Dr. Tour Will Notice
+## External Review Takeaways
 
 ### Strengths (Enhanced)
 
-- In₂Se₃ references (his latest work)
+- In₂Se₃ references (recent literature coverage)
 - **98.24% MNIST accuracy** (reported in literature, exceeds simulation baselines)
 - OpenLane integration (shows fab awareness)
 - Honest simulation-only disclaimer
@@ -169,7 +169,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 
 ## Action Plan (Revised)
 
-### Before Email to Dr. Tour (DONE)
+### Review Package Prepared (DONE)
 
 1. [x] Document top critical papers
 2. [x] Add manufacturing specs to documentation

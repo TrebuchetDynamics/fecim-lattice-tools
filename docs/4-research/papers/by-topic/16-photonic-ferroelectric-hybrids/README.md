@@ -409,7 +409,7 @@ func (p *PhotonicCrossbar) MVM(input []complex128) []complex128 {
 
 ---
 
-## Why This Matters for Dr. Tour
+## Why This Topic Matters
 
 1. **Next-Generation Architecture**: Beyond electrical CIM
 2. **1000× Bandwidth**: Critical for future AI models

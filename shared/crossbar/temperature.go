@@ -182,7 +182,7 @@ func (t *TemperatureEffects) GetAdjustedParams() *TemperatureAdjustedParams {
 
 // ============================================================================
 // H15: AUTOMOTIVE THERMAL PHYSICS (25°C to 85°C)
-// Per Dr. Tour critique - implement full thermal physics with retention curves
+// Implements full thermal physics with retention curves
 // ============================================================================
 
 // AutomotiveTemperatureGrades defines industry-standard temperature grades.

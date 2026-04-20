@@ -225,7 +225,7 @@ type App struct {
 	lastWrdBoundaryLog       time.Time
 	lastWrdBoundaryLogTarget int
 
-	// Dr. Tour Demo Metrics (impressive stats!)
+	// Demo metrics shown in the write-verify panel.
 	wrdTotalWrites   int     // Total write operations
 	wrdSuccessWrites int     // Successful writes (read matches target)
 	wrdTotalEnergyfJ float64 // Total energy consumed in femtojoules
@@ -318,7 +318,7 @@ type App struct {
 	statusLabel      *widget.Label
 	pauseBtn         *widget.Button
 
-	// Wake-up/Fatigue display labels (Dr. Tour recommendation)
+	// Wake-up/Fatigue display labels for write-verify behavior.
 	cyclesLabel     *widget.Label
 	wakeupLabel     *widget.Label
 	fatigueLabel    *widget.Label

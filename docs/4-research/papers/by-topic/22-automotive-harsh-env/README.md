@@ -377,7 +377,7 @@ Extend `data/calibrations/hzo_automotive.json`:
 
 ---
 
-## Why This Matters for Dr. Tour Outreach
+## Why This Topic Matters
 
 ### 1. Production-Ready for Automotive (2024)
 - **Fraunhofer IPMS:** AEC-Q100 Grade 0 certification is the gold standard

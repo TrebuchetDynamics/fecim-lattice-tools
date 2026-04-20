@@ -50,7 +50,7 @@ The file ships with 7 preset materials:
 | Key | Name | States | Description |
 |-----|------|--------|-------------|
 | `default_hzo` | HZO (Si-doped) | 30 | Baseline standard HZO from literature (Park 2015) |
-| `fecim_hzo` | FeCIM HZO | 30 | Dr. Tour's FeCIM demonstrated values (conservative) |
+| `fecim_hzo` | FeCIM HZO | 30 | FeCIM HZO conference-baseline values (conservative) |
 | `fecim_hzo_target` | FeCIM HZO (TARGET) | 30 | Aspirational targets (NOT demonstrated) |
 | `literature_superlattice` | Literature Superlattice | 64 | Best academic HfO2/ZrO2 superlattice (Cheema 2020) |
 | `cryogenic_hzo` | Cryogenic HZO | 48 | HZO at 4 K for quantum computing integration |

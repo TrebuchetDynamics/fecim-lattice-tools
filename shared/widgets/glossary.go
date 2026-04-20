@@ -117,7 +117,7 @@ var TermsData = []GlossaryEntry{
 	// Metrics
 	{
 		Term:       "TRL",
-		Definition: "Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status (Tour COSM 2025): TRL 4 (lab validation). Other ferroelectric memory technologies may be at higher TRLs; treat those as separate contexts.",
+		Definition: "Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). The FeCIM demo baseline used here is treated as TRL 4 (lab validation). Other ferroelectric memory technologies may be at higher TRLs; treat those as separate contexts.",
 		Category:   "Metrics",
 	},
 	{
@@ -127,7 +127,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "Bits per Cell",
-		Definition: "Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, simulation baseline (unverified conference reference)), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
+		Definition: "Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, simulation baseline from an unverified conference reference), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
 		Category:   "Metrics",
 	},
 	{
@@ -373,12 +373,6 @@ var ReferencesData = []ReferenceEntry{
 		URL:      "/docs/comparison/HONESTY_AUDIT.md",
 	},
 	{
-		Title:    "Dr. Tour COSM 2025 Transcript",
-		Citation: "Conference Transcript (Unverified)",
-		DOI:      "",
-		URL:      "/docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md",
-	},
-	{
 		Title:    "FeCIM Lattice Tools Repository",
 		Citation: "Open Source Project (GitHub)",
 		DOI:      "",
@@ -503,7 +497,7 @@ func CreateHelpMenuItems(parent fyne.Window) []*fyne.MenuItem {
 				widget.NewLabelWithStyle("FeCIM Lattice Tools", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 				widget.NewLabel("Ferroelectric Compute-in-Memory Simulation Suite"),
 				widget.NewSeparator(),
-				widget.NewLabel("Based on Dr. external research group's HfO₂-ZrO₂ superlattice research"),
+				widget.NewLabel("Built around literature-derived ferroelectric parameter sets"),
 				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell, simulation baseline (unverified conference reference))"),
 				layout.NewSpacer(),
 				newGitHubLink(),

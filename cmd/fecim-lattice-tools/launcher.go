@@ -818,7 +818,7 @@ func NewResponsiveHeader() *ResponsiveHeader {
 	h := &ResponsiveHeader{
 		titleText:    canvas.NewText("FeCIM Lattice Tools", color.RGBA{255, 255, 255, 255}),
 		subtitleText: canvas.NewText("Ferroelectric Compute-in-Memory Educational Suite", color.RGBA{0, 212, 255, 255}),
-		taglineText:  canvas.NewText("\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group", color.RGBA{180, 200, 220, 200}),
+		taglineText:  canvas.NewText("Physics-grounded ferroelectric memory and compute simulation.", color.RGBA{180, 200, 220, 200}),
 		separator:    widget.NewSeparator(),
 	}
 	h.titleText.TextStyle = fyne.TextStyle{Bold: true}
@@ -856,9 +856,9 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	showTagline := true
 
 	// Full tagline (shown at XL only), shortened variants at smaller sizes
-	const taglineFull = "\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group"
-	const taglineMD = "\"The same device does the memory and the computation.\" — Dr. external research group"
-	const taglineLG = "\"Same device: memory and computation.\" — Dr. external research group"
+	const taglineFull = "Physics-grounded ferroelectric memory and compute simulation."
+	const taglineMD = "Ferroelectric memory and compute simulation."
+	const taglineLG = "Physics-grounded FeCIM simulation."
 
 	switch bp {
 	case sharedwidgets.BreakpointSM:
