@@ -61,7 +61,7 @@ Build + run locally:
 ```bash
 # Build
 GOOS=js GOARCH=wasm go build -o web/fecim.wasm ./cmd/fecim-web
-cp /usr/lib/go-1.22/misc/wasm/wasm_exec.js web/
+cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" web/
 
 # Serve
 python3 -m http.server --directory web 8080

@@ -1,7 +1,7 @@
 # Hyper Analysis Report
 
 **Date:** 2026-03-05  
-**Repo path used:** `<local-path>`  
+**Repo path used:** local workspace checkout  
 **Purpose:** identify the highest-confidence gaps between the current repo state and a research-grade, agent-reliable FeCIM workflow.
 
 ## Verified baseline

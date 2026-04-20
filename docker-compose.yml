@@ -2,7 +2,7 @@
 #
 # Cognee knowledge engine on port 11002.
 # Pre-build the image from the cognee repo:
-#   cd <local-path>
+#   cd /path/to/cognee
 #   docker buildx build -t cognee-local -f Dockerfile --load .
 #
 # Then start:
