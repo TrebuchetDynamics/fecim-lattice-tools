@@ -917,6 +917,46 @@ func TestEnableFileLogging(t *testing.T) {
 	_ = wasEnabled
 }
 
+func TestCloseSharedRestoresStandardLoggerOutput(t *testing.T) {
+	t.Setenv("FECIM_LOGS_DIR", t.TempDir())
+
+	oldOutput := log.Writer()
+	oldFallback := stdLogFallback
+	oldHooked := stdLogHooked
+	oldEnabled := IsFileLoggingEnabled()
+	CloseShared()
+	log.SetOutput(oldOutput)
+
+	var buf strings.Builder
+	log.SetOutput(&buf)
+
+	fileLoggingMu.Lock()
+	fileLoggingEnabled = false
+	fileLoggingMu.Unlock()
+
+	t.Cleanup(func() {
+		CloseShared()
+		log.SetOutput(oldOutput)
+		sharedLogMu.Lock()
+		stdLogFallback = oldFallback
+		stdLogHooked = oldHooked
+		sharedLogMu.Unlock()
+		fileLoggingMu.Lock()
+		fileLoggingEnabled = oldEnabled
+		fileLoggingMu.Unlock()
+	})
+
+	EnableFileLogging()
+	_ = NewLogger("restore-standard-log")
+	CloseShared()
+
+	log.Print("after close")
+
+	if !strings.Contains(buf.String(), "after close") {
+		t.Fatalf("expected standard logger output to be restored, got %q", buf.String())
+	}
+}
+
 // TestFormatParams tests the formatParams helper
 func TestFormatParams(t *testing.T) {
 	tests := []struct {

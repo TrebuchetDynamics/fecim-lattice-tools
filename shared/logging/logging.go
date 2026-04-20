@@ -33,6 +33,8 @@ var (
 	sharedLogWriter io.Writer
 	sharedLogMu     sync.Mutex
 	sharedLogPath   string
+	stdLogFallback  io.Writer = os.Stderr
+	stdLogHooked    bool
 
 	defaultLogger *Logger
 	once          sync.Once
@@ -152,8 +154,7 @@ func NewLogger(demoName string) *Logger {
 		logger.Printf("Logging to: %s", firstPath)
 	}
 	if writerReady {
-		// Hook standard log package to write to the shared log file as well
-		log.SetOutput(&lazyWriter{})
+		hookStandardLogger()
 	}
 
 	return logger
@@ -175,6 +176,26 @@ func CloseShared() {
 	}
 	sharedLogWriter = nil
 	sharedLogPath = ""
+	restoreStandardLoggerLocked()
+}
+
+func hookStandardLogger() {
+	sharedLogMu.Lock()
+	defer sharedLogMu.Unlock()
+	if stdLogHooked {
+		return
+	}
+	stdLogFallback = log.Writer()
+	stdLogHooked = true
+	log.SetOutput(&lazyWriter{})
+}
+
+func restoreStandardLoggerLocked() {
+	if !stdLogHooked {
+		return
+	}
+	log.SetOutput(stdLogFallback)
+	stdLogHooked = false
 }
 
 // Info logs at INFO level (verbosity >= 1)

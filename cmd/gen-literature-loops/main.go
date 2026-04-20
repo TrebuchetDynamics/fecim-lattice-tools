@@ -1,6 +1,7 @@
-// Command gen-literature-loops digitizes published P-E loops from figures.
+// Command gen-literature-loops writes synthetic literature-reference P-E loops
+// from built-in material presets.
 //
-// Usage: gen-literature-loops -doi 10.1038/... -output data.csv
+// Usage: gen-literature-loops -preset park -out data.csv
 package main
 
 import (

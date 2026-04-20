@@ -1,6 +1,7 @@
 // Command calibrate-preisach fits Preisach model parameters to measured P-E loop data.
 //
-// Usage: calibrate-preisach -csv data.csv -material fecim_hzo -output calibration.json
+// Usage: calibrate-preisach -csv data.csv -preset default_hzo
+// Prints the best-fit summary to stdout.
 package main
 
 import (
@@ -113,15 +114,26 @@ func loadCSVLoop(path string) ([]float64, []float64, error) {
 		return nil, nil, err
 	}
 	defer f.Close()
-	rows, err := csv.NewReader(f).ReadAll()
+	reader := csv.NewReader(f)
+	reader.FieldsPerRecord = -1
+	rows, err := reader.ReadAll()
 	if err != nil {
 		return nil, nil, err
 	}
 	E := make([]float64, 0, len(rows)-1)
 	P := make([]float64, 0, len(rows)-1)
 	for i := 1; i < len(rows); i++ {
-		e, _ := strconv.ParseFloat(rows[i][0], 64)
-		p, _ := strconv.ParseFloat(rows[i][1], 64)
+		if len(rows[i]) < 2 {
+			return nil, nil, fmt.Errorf("row %d: expected at least 2 columns", i+1)
+		}
+		e, err := strconv.ParseFloat(rows[i][0], 64)
+		if err != nil {
+			return nil, nil, fmt.Errorf("row %d: parse E_MV_cm: %w", i+1, err)
+		}
+		p, err := strconv.ParseFloat(rows[i][1], 64)
+		if err != nil {
+			return nil, nil, fmt.Errorf("row %d: parse P_uC_cm2: %w", i+1, err)
+		}
 		E = append(E, e)
 		P = append(P, p)
 	}

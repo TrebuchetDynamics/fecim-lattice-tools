@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -35,4 +36,30 @@ func TestLoadCSVLoop(t *testing.T) {
 	if E[0] != -1.0 || P[2] != 10.0 {
 		t.Fatalf("unexpected parsed values E0=%v P2=%v", E[0], P[2])
 	}
+}
+
+func TestLoadCSVLoopRejectsMalformedRows(t *testing.T) {
+	t.Run("missing column", func(t *testing.T) {
+		d := t.TempDir()
+		p := filepath.Join(d, "loop.csv")
+		content := "E_MV_cm,P_uC_cm2\n-1.0\n"
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatalf("write csv: %v", err)
+		}
+		if _, _, err := loadCSVLoop(p); err == nil || !strings.Contains(err.Error(), "expected at least 2 columns") {
+			t.Fatalf("expected missing-column error, got %v", err)
+		}
+	})
+
+	t.Run("bad float", func(t *testing.T) {
+		d := t.TempDir()
+		p := filepath.Join(d, "loop.csv")
+		content := "E_MV_cm,P_uC_cm2\nabc,1.0\n"
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatalf("write csv: %v", err)
+		}
+		if _, _, err := loadCSVLoop(p); err == nil || !strings.Contains(err.Error(), "parse E_MV_cm") {
+			t.Fatalf("expected parse error, got %v", err)
+		}
+	})
 }
