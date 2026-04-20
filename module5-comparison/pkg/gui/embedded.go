@@ -27,9 +27,8 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 		currentInferences: 10000,
 	}
 
-	// Initialize energy specs using constants from app.go (model inputs)
-	// Source: docs/videos/ironlattice-youtube-script.md line 205
-	// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
+	// Initialize energy specs using constants from app.go (model inputs).
+	// See docs/4-research/honesty-audit.md for the current claim boundary.
 	ca.cpuSpec = EnergySpec{
 		Name:          "CPU + DRAM",
 		EnergyFJ:      cpuEnergyPJPerMAC * 1000, // 1,000,000 fJ/MAC

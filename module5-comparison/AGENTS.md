@@ -65,7 +65,7 @@ module5-comparison/
 
 **Task Pattern:**
 1. Read the energy model sources in `app.go` (constants like `cpuEnergyPJPerMAC`)
-2. Verify any new comparison data against `docs/comparison/HONESTY_AUDIT.md`
+2. Verify any new comparison data against `docs/4-research/honesty-audit.md`
 3. Test changes with `go test ./module5-comparison/...`
 4. Check hero visualization rendering with visual tests
 
