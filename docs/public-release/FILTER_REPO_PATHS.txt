@@ -300,6 +300,7 @@ module2-crossbar/pkg/crossbar/device_errors.go.bak
 module2-crossbar/pkg/crossbar/irdrop.go.bak
 module2-crossbar/pkg/crossbar/solver.go.bak
 module2-crossbar/pkg/crossbar/solver_test.go.bak
-output/
+output/ui_screenshots/
+output/validation/.gitkeep
 validation/literature/_incoming/alscn_pmc9607415.pdf
 validation/literature/_incoming/pzt_nano14050432.pdf
