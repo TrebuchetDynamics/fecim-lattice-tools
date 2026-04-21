@@ -48,9 +48,9 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Model input (conference baseline)",
+		Source:        "Model input (project baseline)",
 		Verified:      false,
-		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
+		SourceDetails: "Model input: under 1 picojoule per MAC (simulation baseline).",
 	}
 
 	return &EmbeddedComparisonApp{ComparisonApp: ca}

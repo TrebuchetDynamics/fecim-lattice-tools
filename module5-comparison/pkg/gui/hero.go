@@ -526,7 +526,7 @@ func (a *AnalogStatesComparison) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (a *AnalogStatesComparison) CreateRenderer() fyne.WidgetRenderer {
-	text := widget.NewLabel("30 Analog States (model input; conference claim) ≈ 4.9 bits/cell")
+	text := widget.NewLabel("30 Analog States (model input; simulation baseline) ≈ 4.9 bits/cell")
 	text.Alignment = fyne.TextAlignCenter
 	return widget.NewSimpleRenderer(container.NewCenter(text))
 }

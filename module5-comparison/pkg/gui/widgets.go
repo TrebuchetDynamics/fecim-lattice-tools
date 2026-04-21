@@ -482,7 +482,7 @@ func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
 	claimedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	claimed := container.NewVBox(
-		widget.NewLabel("  30 levels (conference claim)"),
+		widget.NewLabel("  30 levels (simulation baseline)"),
 		widget.NewLabel("  25-100× lower than NAND (scenario input)"),
 		widget.NewLabel("  1000× lower than DRAM (scenario input)"),
 		widget.NewLabel("  80-90% DC energy savings (scenario input)"),
