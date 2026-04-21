@@ -136,9 +136,9 @@ func NewComparisonApp() *ComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Model input (conference baseline)",
+		Source:        "Model input (project baseline)",
 		Verified:      false,
-		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
+		SourceDetails: "Model input: under 1 picojoule per MAC (simulation baseline).",
 	}
 
 	// Register with global preset manager
@@ -151,7 +151,7 @@ func NewComparisonApp() *ComparisonApp {
 // Run starts the GUI application.
 func (ca *ComparisonApp) Run() {
 	debug.Println("App: Creating window")
-	ca.window = ca.fyneApp.NewWindow("FeCIM Technical Briefing: Architecture Comparison")
+	ca.window = ca.fyneApp.NewWindow("FeCIM Architecture Comparison")
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	content := ca.createMainLayout()
@@ -596,7 +596,7 @@ func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 		int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC))
 
 	claimedLabel := widget.NewLabelWithStyle("SCENARIO INPUTS (NOT VALIDATED):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	claimedItems := widget.NewLabel("• 30 analog levels (conference claim)\n• 25-100× vs NAND (scenario input)\n• 1000× vs DRAM (scenario input)\n• 80-90% DC savings (scenario input)")
+	claimedItems := widget.NewLabel("• 30 analog levels (simulation baseline)\n• 25-100× vs NAND (scenario input)\n• 1000× vs DRAM (scenario input)\n• 80-90% DC savings (scenario input)")
 
 	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only) — model inputs only", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
 
