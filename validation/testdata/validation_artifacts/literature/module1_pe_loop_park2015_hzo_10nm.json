@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "park2015_hzo_10nm",
+  "material": "HZO (Park 2015 Fig 2a, calibrated)",
+  "engine": "preisach",
+  "doi": "10.1002/adma.201404531",
+  "dataset": "Park2015_Fig2a_HZO_10nm",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 15.8,
+  "pr_sim_uC_cm2": 17.7395921640898,
+  "pr_err_pct": 12.275899772720246,
+  "ec_data_MV_cm": 0.9310666085124053,
+  "ec_sim_MV_cm": 0.865806554651783,
+  "ec_err_pct": 7.009171337901414,
+  "rmse_uC_cm2": 1.0674005333087802,
+  "rmse_over_ps": 0.05502064604684433,
+  "ps_uC_cm2": 19.400000000000002,
+  "loop_area_data_J_m3": 64471281.49999999,
+  "loop_area_sim_J_m3": 64401662.11834362,
+  "loop_area_err_pct": 0.10798510598299658,
+  "metrics": {
+    "pr_err_pct": 12.275899772720246,
+    "ec_err_pct": 7.009171337901414,
+    "rmse_over_ps": 0.05502064604684433,
+    "loop_area_err_pct": 0.10798510598299658
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 61
+  },
+  "thresholds": {
+    "pr_err_pct_max": 15,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.06,
+    "loop_area_err_pct_max": 60
+  },
+  "pass": true
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "alscn2022_pmc9607415_fig6a_pt_200nm",
+  "material": "AlScN (Micromachines 2022 Fig 6a Pt, calibrated)",
+  "engine": "preisach",
+  "doi": "10.3390/mi13101629",
+  "dataset": "Micromachines2022_Fig6a_AlScN_Pt_200nm",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 100,
+  "pr_sim_uC_cm2": 100.62612039173102,
+  "pr_err_pct": 0.6261203917310212,
+  "ec_data_MV_cm": 2.039594620617571,
+  "ec_sim_MV_cm": 2.1883469533411364,
+  "ec_err_pct": 7.293230292915988,
+  "rmse_uC_cm2": 5.665274012540252,
+  "rmse_over_ps": 0.05395499059562144,
+  "ps_uC_cm2": 105,
+  "loop_area_data_J_m3": 284790247.6000001,
+  "loop_area_sim_J_m3": 289953259.78949374,
+  "loop_area_err_pct": 1.812917483306986,
+  "metrics": {
+    "pr_err_pct": 0.6261203917310212,
+    "ec_err_pct": 7.293230292915988,
+    "rmse_over_ps": 0.05395499059562144,
+    "loop_area_err_pct": 1.812917483306986
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 61
+  },
+  "thresholds": {
+    "pr_err_pct_max": 15,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.2,
+    "loop_area_err_pct_max": 200
+  },
+  "pass": true
+}

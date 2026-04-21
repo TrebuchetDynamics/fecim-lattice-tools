@@ -1,0 +1,14 @@
+{
+  "material_id": "park2015_hzo_10nm",
+  "material": "HZO (Park 2015 Fig 2a, calibrated)",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "ec_MV_cm": 0.93,
+  "frac_at_ec": 0.5598107582220666,
+  "frac_at_half_ec": 0.2124006870003998,
+  "frac_at_two_ec": 0.9829692290337084,
+  "monotonic": true,
+  "logistic_k": 4.1514304967648767e-16,
+  "logistic_ec_MV_cm": 0.8671709674063929,
+  "logistic_rmse": 0.025000026118430514,
+  "pass": true
+}

@@ -1,0 +1,38 @@
+{
+  "N_fatigue_cycles": 1000000000,
+  "doi": "10.1111/j.1151-2916.1996.tb08064.x",
+  "material": "DefaultHZO",
+  "results": [
+    {
+      "N_cycles": 1000,
+      "Pr_remaining_frac": 0.9999990000005,
+      "degradation_pct": 0.00009999994999843054
+    },
+    {
+      "N_cycles": 10000,
+      "Pr_remaining_frac": 0.9999900000499998,
+      "degradation_pct": 0.0009999950000172397
+    },
+    {
+      "N_cycles": 100000,
+      "Pr_remaining_frac": 0.9999000049998333,
+      "degradation_pct": 0.009999500016666385
+    },
+    {
+      "N_cycles": 1000000,
+      "Pr_remaining_frac": 0.999000499833375,
+      "degradation_pct": 0.09995001666249781
+    },
+    {
+      "N_cycles": 10000000,
+      "Pr_remaining_frac": 0.9900498337491681,
+      "degradation_pct": 0.9950166250831893
+    },
+    {
+      "N_cycles": 100000000,
+      "Pr_remaining_frac": 0.9048374180359595,
+      "degradation_pct": 9.51625819640405
+    }
+  ],
+  "test": "endurance_weibull"
+}

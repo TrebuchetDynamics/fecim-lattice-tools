@@ -23,7 +23,7 @@ type literaturePELoopArtifact struct {
 
 func TestLiteraturePELoopArtifactFamily_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	glob := filepath.Join(repoRoot, "output", "validation", "literature", "module1_pe_loop_*.json")
+	glob := validationArtifactGlob(repoRoot, "literature", "module1_pe_loop_*.json")
 	paths, err := filepath.Glob(glob)
 	if err != nil {
 		t.Fatalf("glob %s: %v", glob, err)

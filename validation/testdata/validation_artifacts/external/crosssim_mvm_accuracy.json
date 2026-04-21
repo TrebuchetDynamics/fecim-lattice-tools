@@ -1,0 +1,11 @@
+{
+  "cols": 4,
+  "max_rel_err": 2.649095328813694e-8,
+  "pass": true,
+  "rows": 4,
+  "source": "github.com/sandialabs/cross-sim",
+  "test": "crosssim_mvm_accuracy",
+  "threshold": 0.00001,
+  "tool": "CrossSim",
+  "version": "3.1.1"
+}

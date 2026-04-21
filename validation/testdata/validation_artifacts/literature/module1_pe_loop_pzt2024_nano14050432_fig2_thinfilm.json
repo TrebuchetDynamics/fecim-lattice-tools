@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "pzt2024_nano14050432_fig2_thinfilm",
+  "material": "PZT (Nanomaterials 2024 Fig 2, calibrated)",
+  "engine": "preisach",
+  "doi": "10.3390/nano14050432",
+  "dataset": "Nanomaterials2024_Fig2_PZT_ThinFilm",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 21.470443,
+  "pr_sim_uC_cm2": 24.036836195458587,
+  "pr_err_pct": 11.95314505368421,
+  "ec_data_MV_cm": 0.30000000000000004,
+  "ec_sim_MV_cm": 0.290197299385537,
+  "ec_err_pct": 3.2675668714876775,
+  "rmse_uC_cm2": 9.014903620392614,
+  "rmse_over_ps": 0.16098042179272523,
+  "ps_uC_cm2": 56.00000000000001,
+  "loop_area_data_J_m3": 25764531.599999998,
+  "loop_area_sim_J_m3": 69360847.9401669,
+  "loop_area_err_pct": 169.2105915877272,
+  "metrics": {
+    "pr_err_pct": 11.95314505368421,
+    "ec_err_pct": 3.2675668714876775,
+    "rmse_over_ps": 0.16098042179272523,
+    "loop_area_err_pct": 169.2105915877272
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 61
+  },
+  "thresholds": {
+    "pr_err_pct_max": 15,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.2,
+    "loop_area_err_pct_max": 200
+  },
+  "pass": true
+}

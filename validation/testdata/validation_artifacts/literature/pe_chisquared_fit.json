@@ -1,0 +1,85 @@
+{
+  "chi2r_pass": "\u003c20 (generous for educational Preisach model)",
+  "description": "Chi-squared goodness-of-fit: Preisach model vs experimental P-E data",
+  "results": [
+    {
+      "material": "park2015_hzo_10nm",
+      "doi": "10.1002/adma.201404531",
+      "n_points": 61,
+      "chi2": 461.658902440349,
+      "chi2_r": 7.8247271600059145,
+      "p_value": 0,
+      "mean_resid_uC_cm2": -0.000266659417292691,
+      "std_resid_uC_cm2": 1.0674005000001747,
+      "durbin_watson": 0.49694221572071523,
+      "shapiro_wilk_p": 0.0000016341418797832032,
+      "pass": true
+    },
+    {
+      "material": "cheema2020_superlattice_5nm",
+      "doi": "10.1038/s41586-020-2208-x",
+      "n_points": 61,
+      "chi2": 92.1930555804045,
+      "chi2_r": 1.5625941623797373,
+      "p_value": 0.003704918552844938,
+      "mean_resid_uC_cm2": -2.5155212688821765e-8,
+      "std_resid_uC_cm2": 0.8802321145223695,
+      "durbin_watson": 0.5634643333373573,
+      "shapiro_wilk_p": 3.378948822772372e-13,
+      "pass": true
+    },
+    {
+      "material": "mdpi2020_hzo_10nm_wakeup",
+      "doi": "10.3390/ma13132968",
+      "n_points": 59,
+      "chi2": 182.54762726458733,
+      "chi2_r": 3.202589952010304,
+      "p_value": 4.6629367034256575e-15,
+      "mean_resid_uC_cm2": -8.37062938737321e-10,
+      "std_resid_uC_cm2": 0.682486108369459,
+      "durbin_watson": 0.4552438834587099,
+      "shapiro_wilk_p": 2.9891498728582985e-12,
+      "pass": true
+    },
+    {
+      "material": "alscn_pt_200nm",
+      "doi": "10.3390/mi13101629",
+      "n_points": 61,
+      "chi2": 443.94900405147365,
+      "chi2_r": 7.524559390702943,
+      "p_value": 0,
+      "mean_resid_uC_cm2": 1.9687592908771003,
+      "std_resid_uC_cm2": 5.312185660511973,
+      "durbin_watson": 0.46073831102367696,
+      "shapiro_wilk_p": 0.00035179130858784235,
+      "pass": true
+    },
+    {
+      "material": "pzt2024_nano14050432_fig2_thinfilm",
+      "doi": "10.3390/nano14050432",
+      "n_points": 61,
+      "chi2": 3951.9911705859695,
+      "chi2_r": 66.98290119637237,
+      "p_value": 0,
+      "mean_resid_uC_cm2": 5.690621448109697,
+      "std_resid_uC_cm2": 6.991803402505093,
+      "durbin_watson": 0.6412995914927153,
+      "shapiro_wilk_p": 0.002274489060327092,
+      "pass": false
+    },
+    {
+      "material": "bto2021_cryst11101192_hysteresis",
+      "doi": "10.3390/cryst11101192",
+      "n_points": 61,
+      "chi2": 3382.228197816882,
+      "chi2_r": 57.325901657913256,
+      "p_value": 0,
+      "mean_resid_uC_cm2": 1.2573514879138872,
+      "std_resid_uC_cm2": 0.7980738009646919,
+      "durbin_watson": 0.1794503748249711,
+      "shapiro_wilk_p": 0.0000015667011650263322,
+      "pass": false
+    }
+  ],
+  "sigma_rule": "2% of Ps (digitization uncertainty)"
+}

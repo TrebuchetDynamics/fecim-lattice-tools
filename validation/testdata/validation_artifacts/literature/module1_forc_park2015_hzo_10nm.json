@@ -1,0 +1,15 @@
+{
+  "material_id": "park2015_hzo_10nm",
+  "material": "HZO (Park 2015 Fig 2a, calibrated)",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "ec_MV_cm": 0.93,
+  "ps_uC_cm2": 19.400000000000002,
+  "negative_fraction": 0.04329004329004329,
+  "peak_hc_MV_cm": 0.81375,
+  "peak_hu_MV_cm": 0,
+  "integral_uC_cm2": 18.1335173762444,
+  "integral_err_pct": 6.528260947193831,
+  "hc_err_pct": 12.500000000000009,
+  "hu_abs_MV_cm": 0,
+  "pass": true
+}

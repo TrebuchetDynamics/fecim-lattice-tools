@@ -1,0 +1,13 @@
+{
+  "E_field_V_m": 5000000,
+  "alpha": -281217871.315605,
+  "beta": -535516476.8740586,
+  "doi": "10.1103/PhysRevB.82.054107",
+  "gamma": 15539540623.577593,
+  "material": "FeCIM HZO",
+  "max_err_uC_cm2": 8.241546921213853,
+  "pass": true,
+  "rho": 0.05,
+  "tau_lin_s": 8.631696227083827e-12,
+  "test": "lk_small_signal_analytical"
+}

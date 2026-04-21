@@ -8,16 +8,16 @@ import (
 )
 
 type arrheniusSwitchPoint struct {
-	EOverEc  float64 `json:"E_over_Ec"`
-	TauSim   float64 `json:"tau_simulated_s"`
-	TauMerz  float64 `json:"tau_merz_law_s"`
-	ErrPct   float64 `json:"error_pct"`
+	EOverEc float64 `json:"E_over_Ec"`
+	TauSim  float64 `json:"tau_simulated_s"`
+	TauMerz float64 `json:"tau_merz_law_s"`
+	ErrPct  float64 `json:"error_pct"`
 }
 
 type arrheniusSwitchArtifact struct {
-	Material string              `json:"material"`
-	Tau0     float64             `json:"tau0_s"`
-	Ec       float64             `json:"ec_V_m"`
+	Material string                 `json:"material"`
+	Tau0     float64                `json:"tau0_s"`
+	Ec       float64                `json:"ec_V_m"`
 	Results  []arrheniusSwitchPoint `json:"results"`
 }
 
@@ -31,14 +31,14 @@ type arrheniusMaterialPoint struct {
 }
 
 type arrheniusMaterialArtifact struct {
-	Description string                  `json:"description"`
+	Description string                   `json:"description"`
 	Results     []arrheniusMaterialPoint `json:"results"`
 }
 
 func TestLiteratureArrheniusFamily_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	switchPath := filepath.Join(repoRoot, "output", "validation", "literature", "module1_arrhenius_switching.json")
-	multiPath := filepath.Join(repoRoot, "output", "validation", "literature", "module1_arrhenius_multimaterial.json")
+	switchPath := validationArtifactPath(repoRoot, "literature", "module1_arrhenius_switching.json")
+	multiPath := validationArtifactPath(repoRoot, "literature", "module1_arrhenius_multimaterial.json")
 
 	b1, err := os.ReadFile(switchPath)
 	if err != nil {

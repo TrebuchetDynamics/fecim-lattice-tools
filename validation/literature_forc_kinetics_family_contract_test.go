@@ -8,32 +8,32 @@ import (
 )
 
 type forcArtifact struct {
-	MaterialID      string  `json:"material_id"`
-	GeneratedAt     string  `json:"generated_at"`
-	IntegralErrPct  float64 `json:"integral_err_pct"`
-	HCErrPct        float64 `json:"hc_err_pct"`
-	NegativeFrac    float64 `json:"negative_fraction"`
-	Pass            bool    `json:"pass"`
+	MaterialID     string  `json:"material_id"`
+	GeneratedAt    string  `json:"generated_at"`
+	IntegralErrPct float64 `json:"integral_err_pct"`
+	HCErrPct       float64 `json:"hc_err_pct"`
+	NegativeFrac   float64 `json:"negative_fraction"`
+	Pass           bool    `json:"pass"`
 }
 
 type kineticsArtifact struct {
-	MaterialID    string  `json:"material_id"`
-	GeneratedAt   string  `json:"generated_at"`
-	Monotonic     bool    `json:"monotonic"`
-	LogisticRMSE  float64 `json:"logistic_rmse"`
-	FracAtHalfEc  float64 `json:"frac_at_half_ec"`
-	FracAtEc      float64 `json:"frac_at_ec"`
-	FracAtTwoEc   float64 `json:"frac_at_two_ec"`
-	Pass          bool    `json:"pass"`
+	MaterialID   string  `json:"material_id"`
+	GeneratedAt  string  `json:"generated_at"`
+	Monotonic    bool    `json:"monotonic"`
+	LogisticRMSE float64 `json:"logistic_rmse"`
+	FracAtHalfEc float64 `json:"frac_at_half_ec"`
+	FracAtEc     float64 `json:"frac_at_ec"`
+	FracAtTwoEc  float64 `json:"frac_at_two_ec"`
+	Pass         bool    `json:"pass"`
 }
 
 func TestLiteratureFORCAndKineticsFamily_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	forcPaths, err := filepath.Glob(filepath.Join(repoRoot, "output", "validation", "literature", "module1_forc_*.json"))
+	forcPaths, err := filepath.Glob(validationArtifactGlob(repoRoot, "literature", "module1_forc_*.json"))
 	if err != nil {
 		t.Fatalf("glob forc: %v", err)
 	}
-	kinPaths, err := filepath.Glob(filepath.Join(repoRoot, "output", "validation", "literature", "module1_switching_kinetics_*.json"))
+	kinPaths, err := filepath.Glob(validationArtifactGlob(repoRoot, "literature", "module1_switching_kinetics_*.json"))
 	if err != nil {
 		t.Fatalf("glob kinetics: %v", err)
 	}

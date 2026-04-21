@@ -1,0 +1,14 @@
+{
+  "material_id": "mdpi2020_hzo_10nm_wakeup",
+  "material": "HZO (MDPI 2020 Fig 3a, wake-up, calibrated)",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "ec_MV_cm": 0.9600000000000001,
+  "frac_at_ec": 0.5617378604455904,
+  "frac_at_half_ec": 0.13685546711231436,
+  "frac_at_two_ec": 0.9967193115051391,
+  "monotonic": true,
+  "logistic_k": 6.17660183795662e-16,
+  "logistic_ec_MV_cm": 0.9228375326012125,
+  "logistic_rmse": 0.019560004124539287,
+  "pass": true
+}

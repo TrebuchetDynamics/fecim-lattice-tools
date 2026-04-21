@@ -33,7 +33,7 @@ type enduranceArtifact struct {
 
 func TestLiteratureTemperatureAndEndurance_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	base := filepath.Join(repoRoot, "output", "validation", "literature")
+	base := validationArtifactPath(repoRoot, "literature")
 
 	// Temperature-dependent switching contract
 	{

@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "bto2021_cryst11101192_hysteresis",
+  "material": "BTO (Crystals 2021 hysteresis fig, calibrated)",
+  "engine": "preisach",
+  "doi": "10.3390/cryst11101192",
+  "dataset": "Crystals2021_BTO_Hysteresis",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 4.309904,
+  "pr_sim_uC_cm2": 4.600298309289065,
+  "pr_err_pct": 6.737837067578874,
+  "ec_data_MV_cm": 0.1314202989194605,
+  "ec_sim_MV_cm": 0.13606390726883205,
+  "ec_err_pct": 3.5334026688048685,
+  "rmse_uC_cm2": 1.4892463046606819,
+  "rmse_over_ps": 0.1489246304660682,
+  "ps_uC_cm2": 10,
+  "loop_area_data_J_m3": 2283346.6300000004,
+  "loop_area_sim_J_m3": 5799668.188544696,
+  "loop_area_err_pct": 153.9985875269711,
+  "metrics": {
+    "pr_err_pct": 6.737837067578874,
+    "ec_err_pct": 3.5334026688048685,
+    "rmse_over_ps": 0.1489246304660682,
+    "loop_area_err_pct": 153.9985875269711
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 61
+  },
+  "thresholds": {
+    "pr_err_pct_max": 15,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.2,
+    "loop_area_err_pct_max": 200
+  },
+  "pass": true
+}

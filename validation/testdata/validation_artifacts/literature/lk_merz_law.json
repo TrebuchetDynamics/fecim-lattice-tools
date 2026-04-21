@@ -1,0 +1,48 @@
+{
+  "Ea_err_pct": 70.40508228115046,
+  "Ea_fit_V_m": 355139012.6261944,
+  "Ea_mat_V_m": 1200000000,
+  "doi": "10.1103/PhysRev.95.690",
+  "material": "materlik_hzo2",
+  "monotone": false,
+  "n_points": 8,
+  "pass_Ea": false,
+  "pass_r2": true,
+  "points": [
+    {
+      "E_V_m": 180000000,
+      "E_frac_Ec": 1.2
+    },
+    {
+      "E_V_m": 210000000,
+      "E_frac_Ec": 1.4
+    },
+    {
+      "E_V_m": 240000000,
+      "E_frac_Ec": 1.6
+    },
+    {
+      "E_V_m": 270000000,
+      "E_frac_Ec": 1.8
+    },
+    {
+      "E_V_m": 300000000,
+      "E_frac_Ec": 2
+    },
+    {
+      "E_V_m": 330000000,
+      "E_frac_Ec": 2.2
+    },
+    {
+      "E_V_m": 375000000,
+      "E_frac_Ec": 2.5
+    },
+    {
+      "E_V_m": 450000000,
+      "E_frac_Ec": 3
+    }
+  ],
+  "r2": 0.9889183642884494,
+  "tau0_s": 1.8895775738040633e-10,
+  "test": "lk_merz_law_field_dependence"
+}

@@ -31,7 +31,7 @@ type peLoopArtifactContract struct {
 
 func TestLiteraturePELoop_ThresholdConsistencyContract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	paths, err := filepath.Glob(filepath.Join(repoRoot, "output", "validation", "literature", "module1_pe_loop_*.json"))
+	paths, err := filepath.Glob(validationArtifactGlob(repoRoot, "literature", "module1_pe_loop_*.json"))
 	if err != nil {
 		t.Fatalf("glob pe loop artifacts: %v", err)
 	}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "cheema2020_superlattice_5nm",
+  "material": "HZO superlattice (Cheema 2020 Fig 2c, calibrated)",
+  "engine": "preisach",
+  "doi": "10.1038/s41586-020-2208-x",
+  "dataset": "Cheema2020_Fig2c_HZO_Superlattice_5nm",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 30.5,
+  "pr_sim_uC_cm2": 32.923433275910305,
+  "pr_err_pct": 7.945682871837068,
+  "ec_data_MV_cm": 1.1514376698511923,
+  "ec_sim_MV_cm": 1.1513243549718084,
+  "ec_err_pct": 0.009841164862929528,
+  "rmse_uC_cm2": 0.8802321145223697,
+  "rmse_over_ps": 0.02458748923246843,
+  "ps_uC_cm2": 35.8,
+  "loop_area_data_J_m3": 146850309.46200004,
+  "loop_area_sim_J_m3": 151552928.58466864,
+  "loop_area_err_pct": 3.2023215612531444,
+  "metrics": {
+    "pr_err_pct": 7.945682871837068,
+    "ec_err_pct": 0.009841164862929528,
+    "rmse_over_ps": 0.02458748923246843,
+    "loop_area_err_pct": 3.2023215612531444
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 61
+  },
+  "thresholds": {
+    "pr_err_pct_max": 10,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.05,
+    "loop_area_err_pct_max": 25
+  },
+  "pass": true
+}

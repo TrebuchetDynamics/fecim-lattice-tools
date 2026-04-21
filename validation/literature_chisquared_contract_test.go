@@ -22,7 +22,7 @@ type chiSquaredArtifact struct {
 
 func TestLiteraturePEChiSquared_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	p := filepath.Join(repoRoot, "output", "validation", "literature", "pe_chisquared_fit.json")
+	p := validationArtifactPath(repoRoot, "literature", "pe_chisquared_fit.json")
 	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatalf("read %s: %v", p, err)

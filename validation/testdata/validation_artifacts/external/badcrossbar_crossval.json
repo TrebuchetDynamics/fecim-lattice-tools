@@ -1,0 +1,18 @@
+{
+  "G_base_S": 0.00002,
+  "cols": 5,
+  "doi": "10.1016/j.softx.2020.100617",
+  "pass": true,
+  "r_bl_ohm": 4.674999999999999,
+  "r_wl_ohm": 0.7906249999999999,
+  "rows": 5,
+  "test": "badcrossbar_crossval",
+  "tier1_max_A": 6.437450399132683e-20,
+  "tier1_pass": true,
+  "tier1_thr_A": 1e-11,
+  "tier2_max_A": 1.5508698925775777e-15,
+  "tier2_pass": true,
+  "tier2_thr_A": 1e-8,
+  "tool": "badcrossbar",
+  "version": "1.1.0"
+}

@@ -1,0 +1,14 @@
+{
+  "material_id": "cheema2020_superlattice_5nm",
+  "material": "HZO superlattice (Cheema 2020 Fig 2c, calibrated)",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "ec_MV_cm": 1.2,
+  "frac_at_ec": 0.5553821483880976,
+  "frac_at_half_ec": 0.1386820138728465,
+  "frac_at_two_ec": 0.9961220533707607,
+  "monotonic": true,
+  "logistic_k": 4.425672720092353e-16,
+  "logistic_ec_MV_cm": 1.152367181795037,
+  "logistic_rmse": 0.016502244208351582,
+  "pass": true
+}

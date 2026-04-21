@@ -11,7 +11,7 @@ func TestExternalValidationArtifacts_Contract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
 
 	t.Run("badcrossbar_crossval", func(t *testing.T) {
-		p := filepath.Join(repoRoot, "output", "validation", "external", "badcrossbar_crossval.json")
+		p := validationArtifactPath(repoRoot, "external", "badcrossbar_crossval.json")
 		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("read %s: %v", p, err)
@@ -29,7 +29,7 @@ func TestExternalValidationArtifacts_Contract(t *testing.T) {
 	})
 
 	t.Run("crosssim_mvm_accuracy", func(t *testing.T) {
-		p := filepath.Join(repoRoot, "output", "validation", "external", "crosssim_mvm_accuracy.json")
+		p := validationArtifactPath(repoRoot, "external", "crosssim_mvm_accuracy.json")
 		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("read %s: %v", p, err)
@@ -55,7 +55,7 @@ func TestExternalValidationArtifacts_Contract(t *testing.T) {
 	})
 
 	t.Run("lk_small_signal_analytical", func(t *testing.T) {
-		p := filepath.Join(repoRoot, "output", "validation", "external", "lk_small_signal_analytical.json")
+		p := validationArtifactPath(repoRoot, "external", "lk_small_signal_analytical.json")
 		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("read %s: %v", p, err)

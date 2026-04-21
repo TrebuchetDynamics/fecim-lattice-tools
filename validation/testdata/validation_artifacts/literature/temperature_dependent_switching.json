@@ -1,0 +1,50 @@
+{
+  "arrhenius_valid": true,
+  "doi": "10.1063/1.4916229",
+  "field_V_m": 180000000,
+  "field_frac_Ec": 1.5,
+  "material": "DefaultHZO",
+  "results": [
+    {
+      "T_K": 233,
+      "T_C": -40.14999999999998,
+      "alpha_J_m_C2": -382374329.4628811,
+      "Ec_theory_V_m": 0,
+      "tau_simulated_s": 1.5e-9,
+      "dPdt_at_equilibrium": 2352730549.576265
+    },
+    {
+      "T_K": 263,
+      "T_C": -10.149999999999977,
+      "alpha_J_m_C2": -382374329.4628811,
+      "Ec_theory_V_m": 0,
+      "tau_simulated_s": 1.5e-9,
+      "dPdt_at_equilibrium": 2352730549.576265
+    },
+    {
+      "T_K": 298,
+      "T_C": 24.850000000000023,
+      "alpha_J_m_C2": -382374329.4628811,
+      "Ec_theory_V_m": 0,
+      "tau_simulated_s": 1.5e-9,
+      "dPdt_at_equilibrium": 2352730549.576265
+    },
+    {
+      "T_K": 323,
+      "T_C": 49.85000000000002,
+      "alpha_J_m_C2": -382374329.4628811,
+      "Ec_theory_V_m": 0,
+      "tau_simulated_s": 1.5e-9,
+      "dPdt_at_equilibrium": 2352730549.576265
+    },
+    {
+      "T_K": 358,
+      "T_C": 84.85000000000002,
+      "alpha_J_m_C2": -382374329.4628811,
+      "Ec_theory_V_m": 0,
+      "tau_simulated_s": 1.5e-9,
+      "dPdt_at_equilibrium": 2352730549.576265
+    }
+  ],
+  "test": "temperature_dependent_switching"
+}

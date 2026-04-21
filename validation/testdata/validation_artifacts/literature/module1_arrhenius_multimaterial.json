@@ -1,0 +1,86 @@
+{
+  "description": "Arrhenius switching validation across materials",
+  "results": [
+    {
+      "name": "HZO (Si-doped, Park 2015 midpoint)",
+      "tau0_nls_s": 1e-10,
+      "ea_nls_V_m": 1200000000,
+      "ec_V_m": 120000000,
+      "tau_1Ec_sim_s": 0.0000022026465794806717,
+      "tau_1Ec_merz_s": 0.0000022026465794806717,
+      "error_pct": 0
+    },
+    {
+      "name": "FeCIM HZO",
+      "tau0_nls_s": 1e-10,
+      "ea_nls_V_m": 1200000000,
+      "ec_V_m": 100000000,
+      "tau_1Ec_sim_s": 0.000016275479141900393,
+      "tau_1Ec_merz_s": 0.000016275479141900393,
+      "error_pct": 0
+    },
+    {
+      "name": "FeCIM HZO (TARGET)",
+      "tau0_nls_s": 5e-11,
+      "ea_nls_V_m": 1000000000,
+      "ec_V_m": 100000000,
+      "tau_1Ec_sim_s": 0.0000011013232897403358,
+      "tau_1Ec_merz_s": 0.0000011013232897403358,
+      "error_pct": 0
+    },
+    {
+      "name": "Literature Superlattice",
+      "tau0_nls_s": 5e-11,
+      "ea_nls_V_m": 1000000000,
+      "ec_V_m": 85000000,
+      "tau_1Ec_sim_s": 0.000006431567770874543,
+      "tau_1Ec_merz_s": 0.000006431567770874543,
+      "error_pct": 0
+    },
+    {
+      "name": "Cryogenic HZO",
+      "tau0_nls_s": 2e-10,
+      "ea_nls_V_m": 1500000000,
+      "ec_V_m": 150000000,
+      "tau_1Ec_sim_s": 0.000004405293158961343,
+      "tau_1Ec_merz_s": 0.000004405293158961343,
+      "error_pct": 0
+    },
+    {
+      "name": "HZO Standard (32 states)",
+      "tau0_nls_s": 1e-10,
+      "ea_nls_V_m": 1200000000,
+      "ec_V_m": 100000000,
+      "tau_1Ec_sim_s": 0.000016275479141900393,
+      "tau_1Ec_merz_s": 0.000016275479141900393,
+      "error_pct": 0
+    },
+    {
+      "name": "HZO FTJ (140 states)",
+      "tau0_nls_s": 2e-10,
+      "ea_nls_V_m": 1000000000,
+      "ec_V_m": 120000000,
+      "tau_1Ec_sim_s": 8.320524010750114e-7,
+      "tau_1Ec_merz_s": 8.320524010750114e-7,
+      "error_pct": 0
+    },
+    {
+      "name": "AlScN (8-16 states)",
+      "tau0_nls_s": 1e-13,
+      "ea_nls_V_m": 2200000000,
+      "ec_V_m": 500000000,
+      "tau_1Ec_sim_s": 8.145086866496815e-12,
+      "tau_1Ec_merz_s": 8.145086866496815e-12,
+      "error_pct": 0
+    },
+    {
+      "name": "α-In₂Se₃",
+      "tau0_nls_s": 1e-12,
+      "ea_nls_V_m": 66000000,
+      "ec_V_m": 300000000,
+      "tau_1Ec_sim_s": 1.2460767305873807e-12,
+      "tau_1Ec_merz_s": 1.2460767305873807e-12,
+      "error_pct": 0
+    }
+  ]
+}

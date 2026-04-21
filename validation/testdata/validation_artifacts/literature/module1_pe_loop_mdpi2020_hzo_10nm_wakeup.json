@@ -1,0 +1,44 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-PHY-OBS-01",
+  "verdict": "pass",
+  "material_id": "mdpi2020_hzo_10nm_wakeup",
+  "material": "HZO (MDPI 2020 Fig 3a, wake-up, calibrated)",
+  "engine": "preisach",
+  "doi": "10.3390/ma13132968",
+  "dataset": "MDPI2020_Fig3a_HZO_10nm_Wakeup",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_data_uC_cm2": 16.238804,
+  "pr_sim_uC_cm2": 17.840233552356466,
+  "pr_err_pct": 9.861745682480482,
+  "ec_data_MV_cm": 0.9163995658361062,
+  "ec_sim_MV_cm": 0.9163995634210038,
+  "ec_err_pct": 2.635425015869324e-7,
+  "rmse_uC_cm2": 0.682486108369459,
+  "rmse_over_ps": 0.03517969630770407,
+  "ps_uC_cm2": 19.400000000000002,
+  "loop_area_data_J_m3": 62400831.1,
+  "loop_area_sim_J_m3": 65360234.09198032,
+  "loop_area_err_pct": 4.742569834106459,
+  "metrics": {
+    "pr_err_pct": 9.861745682480482,
+    "ec_err_pct": 2.635425015869324e-7,
+    "rmse_over_ps": 0.03517969630770407,
+    "loop_area_err_pct": 4.742569834106459
+  },
+  "uncertainty": {
+    "method": "analytical",
+    "confidence": 1,
+    "sample_size": 59
+  },
+  "thresholds": {
+    "pr_err_pct_max": 10,
+    "ec_err_pct_max": 10,
+    "rmse_over_ps_max": 0.05,
+    "loop_area_err_pct_max": 25
+  },
+  "pass": true
+}
