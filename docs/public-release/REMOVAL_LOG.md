@@ -7,7 +7,7 @@
 - `docs/4-research/transcripts/ironlattice-youtube-script.md` was removed as audience-specific outreach material.
 - `docs/4-research/tour-group-ironlattice-research.md` was removed as research planning and research planning material.
 - `docs/4-research/superlattice-material-analysis.md` was removed as speculative proprietary-material analysis.
-- Generated screenshots, recordings, logs, exports, and similar run artifacts remain outside the source-only boundary.
+- Generated screenshots, recordings, exports, `output/validation/` content, and nested module GUI log directories remain outside the source-only boundary and in the rewrite manifest.
 - Backup `.bak` files and scratch backup artifacts were removed from the public candidate and remain history rewrite targets where listed in `FILTER_REPO_PATHS.txt`.
 
 ## History Rewrite Targets

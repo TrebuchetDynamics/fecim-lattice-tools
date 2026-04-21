@@ -10,6 +10,8 @@ output/validation/
 recordings/
 screenshots/
 logs/
+module2-crossbar/pkg/gui/logs/
+module5-comparison/pkg/gui/logs/
 bin/
 build_errors.txt
 commit-push.log

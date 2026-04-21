@@ -15,7 +15,7 @@ Hand-authored code, documentation, scripts, audit records, and safe fixture data
 
 Generated outputs may not be tracked. Generated outputs include:
 - compiled binaries and packaged builds
-- logs, screenshots, recordings, and other run artifacts
+- logs, including nested module GUI log directories, screenshots, recordings, and other run artifacts
 - validation output, benchmark output, and exported reports
 - generated EDA and export files unless they are intentionally curated sample inputs or fixtures
 
