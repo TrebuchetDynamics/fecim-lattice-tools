@@ -4,6 +4,12 @@ docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/
 docs/4-research/transcripts/ironlattice-youtube-script.md
 docs/4-research/tour-group-ironlattice-research.md
 docs/4-research/superlattice-material-analysis.md
+artifacts/
+exports/
+output/validation/
+recordings/
+screenshots/
+logs/
 bin/
 build_errors.txt
 commit-push.log

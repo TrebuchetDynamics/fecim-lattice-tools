@@ -19,6 +19,8 @@ FIELDS = [
     "decision",
     "notes",
 ]
+DEFAULT_DECISION = "replace-with-link"
+DEFAULT_NOTES = "Explicit redistribution evidence is required before changing this row to keep."
 
 
 def tracked_pdfs() -> list[str]:
@@ -52,9 +54,9 @@ def build_row(path: str, existing: dict[str, str] | None = None) -> dict[str, st
     if not row["title"]:
         row["title"] = Path(path).stem
     if not row["decision"]:
-        row["decision"] = "replace-with-link"
+        row["decision"] = DEFAULT_DECISION
     if not row["notes"]:
-        row["notes"] = "Explicit redistribution evidence is required before changing this row to keep."
+        row["notes"] = DEFAULT_NOTES
     return row
 
 

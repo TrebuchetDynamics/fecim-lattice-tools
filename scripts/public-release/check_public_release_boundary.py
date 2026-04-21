@@ -10,16 +10,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 AUDIT_PATH = ROOT / "docs/public-release/THIRD_PARTY_PDF_AUDIT.csv"
-DISALLOWED_PATHS = [
+DISALLOWED_PATHS = (
     "docs/archive/",
     "docs/4-research/internal-analysis/",
     "docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/",
     "docs/4-research/transcripts/ironlattice-youtube-script.md",
     "docs/4-research/tour-group-ironlattice-research.md",
     "docs/4-research/superlattice-material-analysis.md",
-]
+)
+GENERATED_PATH_PREFIXES = (
+    "artifacts/",
+    "exports/",
+    "output/validation/",
+    "recordings/",
+    "screenshots/",
+)
 BAN_RE = re.compile(r"restricted|under nda|internal repo=|internal draft", re.IGNORECASE)
-SCAN_ROOTS = [
+SCAN_ROOTS = (
     "CLAUDE.md",
     "README.md",
     "docs/2-learn",
@@ -27,7 +34,7 @@ SCAN_ROOTS = [
     "docs/4-research",
     "module5-comparison",
     "module6-eda",
-]
+)
 
 
 def tracked_files() -> list[str]:
@@ -69,12 +76,27 @@ def load_pdf_decisions() -> dict[str, str]:
         return decisions
 
 
+def is_generated_output(path: str) -> bool:
+    if path.startswith(GENERATED_PATH_PREFIXES):
+        return True
+    if path.startswith("logs/"):
+        return True
+    if "/logs/" in path:
+        return True
+    if path.endswith(".log"):
+        return True
+    return False
+
+
 def main() -> int:
     failures: list[str] = []
+    tracked = tracked_files()
 
-    for path in tracked_files():
+    for path in tracked:
         if any(path.startswith(disallowed) for disallowed in DISALLOWED_PATHS):
             failures.append(f"Blocked tracked path: {path}")
+        if is_generated_output(path):
+            failures.append(f"Tracked generated output: {path}")
 
     pdf_decisions = load_pdf_decisions()
     for path in tracked_pdfs():
