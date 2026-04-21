@@ -54,6 +54,9 @@ a.md
 5module-plan.md
 skills/
 
+# Disposable public-release verification output
+/artifacts/
+
 # Generated exports and validation output
 /exports/
 cmd/fecim-lattice-tools/exports/
