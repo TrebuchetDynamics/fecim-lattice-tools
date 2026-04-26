@@ -171,7 +171,7 @@ Future enhancements to consider:
 
 ## Files Changed
 
-- `<local-path>` - Enhanced theme implementation
-- `<local-path>` - Updated tests
-- `<local-path>` - New documentation
-- `<local-path>` - This file
+- `<repo-root>/shared/theme/theme.go` - Enhanced theme implementation
+- `<repo-root>/shared/theme/theme_test.go` - Updated tests
+- `<repo-root>/shared/theme/THEME_GUIDE.md` - New documentation
+- `<repo-root>/shared/theme/IMPROVEMENTS.md` - This file

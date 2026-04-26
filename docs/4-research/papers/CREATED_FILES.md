@@ -67,7 +67,7 @@
 - Statistics section
 
 **Key Features:**
-- Absolute paths (all starting with `<local-path>`)
+- Absolute paths (all starting with `<user-home>`)
 - Organized by topic with paper counts
 - Key paper descriptions for each topic
 - Links to paper locations

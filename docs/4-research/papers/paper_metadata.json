@@ -10,7 +10,7 @@
     "source": "arxiv",
     "category": "core_ferroelectric",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/first_principles_HfO2_ferroelectric_2024.pdf",
     "notes": ""
   },
   {
@@ -24,7 +24,7 @@
     "source": "arxiv",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/ferroelectric_CIM_review_2023.pdf",
     "notes": ""
   },
   {
@@ -38,7 +38,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/ferrox_gpu_phasefield_2022.pdf",
     "notes": ""
   },
   {
@@ -52,7 +52,7 @@
     "source": "nature",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/nature/multilevel_fefet_crossbar_2023.pdf",
     "notes": ""
   },
   {
@@ -66,7 +66,7 @@
     "source": "nature",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/nature/fecap_fefet_cim_elements_2024.pdf",
     "notes": ""
   },
   {
@@ -80,7 +80,7 @@
     "source": "nature",
     "category": "core_ferroelectric",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/nature/adaptive_control_epitaxial_hfo2_zro2_2025.pdf",
     "notes": ""
   },
   {
@@ -94,7 +94,7 @@
     "source": "nature",
     "category": "memory",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/nature/dual_bit_fefet_enhanced_storage_2025.pdf",
     "notes": ""
   },
   {
@@ -108,7 +108,7 @@
     "source": "arxiv",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/hcim_adcless_hybrid_cim_2024.pdf",
     "notes": ""
   },
   {
@@ -122,7 +122,7 @@
     "source": "arxiv",
     "category": "compiler",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/compass_compiler_framework_2025.pdf",
     "notes": ""
   },
   {
@@ -136,7 +136,7 @@
     "source": "arxiv",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/simple_packing_algorithm_nvm_2024.pdf",
     "notes": ""
   },
   {
@@ -164,7 +164,7 @@
     "source": "frontiers",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/frontiers/sneak_path_self_rectifying_arrays_2022.pdf",
     "notes": ""
   },
   {
@@ -604,7 +604,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/ferrox_gpu_phasefield_2023.pdf",
     "notes": "AMReX-based, 15x GPU speedup"
   },
   {
@@ -632,7 +632,7 @@
     "source": "nature",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/nature/physical_reality_preisach_2018.pdf",
     "notes": ""
   },
   {
@@ -702,7 +702,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/transition_state_landau_ferroelectric_2024.pdf",
     "notes": "Connects Preisach, Landau, and NLS models"
   },
   {
@@ -716,7 +716,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/bspline_everett_preisach_2024.pdf",
     "notes": "B-spline Everett map construction for hysteresis"
   },
   {
@@ -730,7 +730,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/newton_secant_preisach_control_2024.pdf",
     "notes": "Iterative remnant control of Preisach operators"
   },
   {
@@ -814,7 +814,7 @@
     "source": "arxiv",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/memory_tech_crossbar_dnn_accuracy_2024.pdf",
     "notes": "FeFET vs SRAM vs ReRAM at 7nm, PWA accuracy boost 32.56%"
   },
   {
@@ -828,7 +828,7 @@
     "source": "arxiv",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/aimc_accuracy_post_training_2024.pdf",
     "notes": "Post-training optimization for analog in-memory computing"
   },
   {
@@ -842,7 +842,7 @@
     "source": "arxiv",
     "category": "cim",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/pruning_adc_efficiency_crossbar_2024.pdf",
     "notes": "7.13x ADC energy improvement with <1% accuracy drop"
   },
   {
@@ -856,7 +856,7 @@
     "source": "arxiv",
     "category": "review",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/cim_landscape_overview_2024.pdf",
     "notes": "Comprehensive compute-near-memory and CIM overview"
   },
   {
@@ -870,7 +870,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/landau_khalatnikov_circuit_model_2001.pdf",
     "notes": "Circuit equivalent of LK dynamical ferroelectric model"
   },
   {
@@ -884,7 +884,7 @@
     "source": "arxiv",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/atomistic_landau_ferroelectric_md_2022.pdf",
     "notes": "Atomistic and coarse-grained molecular dynamics"
   },
   {
@@ -954,7 +954,7 @@
     "source": "arxiv",
     "category": "core_ferroelectric",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/first_principles_hfo2_superlattice_2024.pdf",
     "notes": "Polar/antipolar superlattice design"
   },
   {
@@ -996,7 +996,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/neuromorphic_spintronics_review_2024.pdf",
     "notes": "Comprehensive MRAM neuromorphic overview"
   },
   {
@@ -1010,7 +1010,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/2d_spintronics_neuromorphic_2024.pdf",
     "notes": "MTJ skyrmion 2D spintronic devices"
   },
   {
@@ -1024,7 +1024,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/optical_computing_dnn_survey_2024.pdf",
     "notes": "Comprehensive photonic AI accelerator review"
   },
   {
@@ -1038,7 +1038,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/photonic_electronic_ai_accelerators_2024.pdf",
     "notes": "Hybrid photonic-electronic accelerator review"
   },
   {
@@ -1052,7 +1052,7 @@
     "source": "arxiv",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/photonic_dnn_architecture_modeling_2024.pdf",
     "notes": "CiM tools for photonic system modeling"
   },
   {
@@ -1066,7 +1066,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/photonic_neuromorphic_cnn_2024.pdf",
     "notes": "Silicon photonic mesh, 98.6% MNIST accuracy"
   },
   {
@@ -1080,7 +1080,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/mirage_rns_photonic_training_2024.pdf",
     "notes": "Residue Number System photonic training"
   },
   {
@@ -1150,7 +1150,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/tiki_taka_analog_training_2024.pdf",
     "notes": "Theoretical foundation for analog gradient descent"
   },
   {
@@ -1248,7 +1248,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/ferroelectric_synaptic_transistors_review_2024.pdf",
     "notes": "FTJ and FeFET synapse review"
   },
   {
@@ -1262,7 +1262,7 @@
     "source": "arxiv",
     "category": "neuromorphic",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/hfzro_ftj_polarization_2024.pdf",
     "notes": "BEOL thermal budget FTJ optimization"
   },
   {
@@ -1318,7 +1318,7 @@
     "source": "arxiv",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/memory_neural_accelerators_3d_2024.pdf",
     "notes": "3D memory neural network acceleration"
   },
   {
@@ -1332,7 +1332,7 @@
     "source": "arxiv",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/hbm_thermal_power_llm_2024.pdf",
     "notes": "3D stacked HBM thermal optimization"
   },
   {
@@ -1360,7 +1360,7 @@
     "source": "arxiv",
     "category": "crossbar",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/papers/downloaded/arxiv/3d_memory_side_acceleration_2024.pdf",
     "notes": "Processing-in-memory 3D design space"
   },
   {
@@ -2412,7 +2412,7 @@
     "source": "osti",
     "category": "foundational",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials/mayergoyz_mathematical_models_hysteresis_1992_osti.pdf",
     "notes": "Open report copy of the classic Preisach theory text"
   },
   {
@@ -2432,7 +2432,7 @@
     "source": "aip",
     "category": "simulation",
     "downloaded": true,
-    "local_path": "<local-path>",
+    "local_path": "<repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials/preisach_fecap_jap_2001.pdf",
     "notes": "J. Appl. Phys. 89(6), 2001"
   }
 ]

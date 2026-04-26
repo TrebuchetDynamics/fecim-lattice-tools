@@ -95,14 +95,14 @@ If added wall-time exceeds the cap, pipeline must reduce matrix breadth (not sam
 
 ## 4) Exact Commands (Canonical)
 
-Run from repo root: `<local-path>`
+Run from repo root: `<repo-root>`
 
 ## 4.0 Single-command Module 4 full automation (developer/triage lane)
 
 Use this lane when you need a deterministic, one-command **full Module 4** check before pushing.
 
 ```bash
-cd <local-path>
+cd <repo-root>
 unset DISPLAY WAYLAND_DISPLAY
 
 bash scripts/module4_automation.sh --full --json
@@ -116,7 +116,7 @@ Hard pass conditions:
 ## 4.1 PR Gate Commands (required)
 
 ```bash
-cd <local-path>
+cd <repo-root>
 unset DISPLAY WAYLAND_DISPLAY
 
 go build ./...
@@ -133,7 +133,7 @@ bash scripts/run_headless_ispp_regressions.sh
 ## 4.2 Nightly Gate Commands (required)
 
 ```bash
-cd <local-path>
+cd <repo-root>
 unset DISPLAY WAYLAND_DISPLAY
 
 bash scripts/ci/go-test-all.sh
@@ -147,7 +147,7 @@ go test -count=1 -v ./module4-circuits/pkg/arraysim/...
 ## 4.3 Release Gate Commands (required)
 
 ```bash
-cd <local-path>
+cd <repo-root>
 unset DISPLAY WAYLAND_DISPLAY
 
 bash scripts/ci/go-test-all.sh

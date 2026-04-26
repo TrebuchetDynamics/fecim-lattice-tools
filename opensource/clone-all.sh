@@ -3,7 +3,7 @@
 # Uses --depth 1 for shallow clones to save disk space
 set -e
 
-DEST="<local-path>"
+DEST="${DEST:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 cd "$DEST"
 
 repos=(

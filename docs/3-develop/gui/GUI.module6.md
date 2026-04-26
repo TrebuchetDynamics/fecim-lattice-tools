@@ -1226,13 +1226,13 @@ Based on comprehensive screenshot analysis of 11 UI states:
 
 #### Recommendations
 
-See: `<local-path>` for detailed improvement proposals.
+See: `<repo-root>/docs/eda/MODULE6_UI_IMPROVEMENTS.md` for detailed improvement proposals.
 
 #### Related Documentation
 
-- Mermaid diagrams: `<local-path>`
-- Architecture docs: `<local-path>`
-- Component index: `<local-path>`
+- Mermaid diagrams: `<repo-root>/docs/eda/GUI_DIAGRAM.md`
+- Architecture docs: `<repo-root>/docs/eda/GUI_ARCHITECTURE.md`
+- Component index: `<repo-root>/docs/eda/GUI_INDEX.md`
 
 ## UI Analysis Report (2026-01-30) - UPDATED
 

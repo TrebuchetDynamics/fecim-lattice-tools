@@ -146,7 +146,7 @@ Used by `lk_perf_evidence.sh`
 
 **Running Full Validation Locally:**
 ```bash
-cd <local-path>
+cd <repo-root>
 ./scripts/run_full_validation.sh
 ```
 Runs: physics regression, config validation, integration tests, determinism checks.

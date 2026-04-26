@@ -79,7 +79,7 @@
 - `berkeley_eecs_2025_13_future_computing.pdf`
 - `strain_antipolar_hafnia_sciadv_2022.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials/`
 
 ---
 
@@ -103,7 +103,7 @@
 - `tiki_taka_analog_training_2024.pdf`
 - `aimc_accuracy_post_training_2024.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/02-training-algorithms/`
 
 ---
 
@@ -129,7 +129,7 @@
 - `ferrox_hzo_polycrystalline_2024.pdf`
 - `neurosim_validation_2021.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/03-simulation-tools/`
 
 ---
 
@@ -170,7 +170,7 @@
 - `fecim_annealer_2024.pdf`
 - `charge_cam_oneshot_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/04-cim-architectures/`
 
 ---
 
@@ -192,7 +192,7 @@
 - `neuromorphic_spintronics_review_2024.pdf`
 - `synaptic_plasticity_review_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/05-neuromorphic/`
 
 ---
 
@@ -211,7 +211,7 @@
 - `photonic_neuromorphic_cnn_2024.pdf`
 - `mirage_rns_photonic_training_2024.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/06-photonic-computing/`
 
 ---
 
@@ -228,7 +228,7 @@
 - `3d_memory_side_acceleration_2024.pdf`
 - `memory_neural_accelerators_3d_2024.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/07-memory-architectures/`
 
 ---
 
@@ -247,7 +247,7 @@
 - `Edge_AI_Accelerators_Survey_arXiv.pdf`
 - `Tsinghua_Face_Classification_NatureComms_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/08-industry-reports/`
 
 ---
 
@@ -269,7 +269,7 @@
 - `fecim_applications_review_2025.pdf`
 - `fecap_memories_review_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/09-reviews-surveys/`
 
 ---
 
@@ -284,7 +284,7 @@
 - `compass_crossbar_compiler_2025.pdf`
 - `cim_explorer_bnn_tnn_rram_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/10-cim-compilers-mapping/`
 
 ---
 
@@ -301,7 +301,7 @@
 - `analog_rc_ferroelectric_mpb_transistors_2024.pdf`
 - `reservoir_computing_tunable_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/11-reservoir-computing/`
 
 ---
 
@@ -324,7 +324,7 @@
 - `spike_neuromorphic_computer_vision_2024.pdf`
 - `personalized_snn_eeg_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/12-spiking-neural-networks/`
 
 **README Available:** Yes - Details on STDP implementation and hardware
 
@@ -349,7 +349,7 @@
 - `analog_backprop_memristive_crossbar_2018.pdf`
 - `inmemory_differentiator_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/13-in-memory-training/`
 
 **README Available:** Yes - Details on backpropagation mechanisms
 
@@ -370,7 +370,7 @@
 - `famous_fpga_attention_accelerator_2024.pdf`
 - `memristor_transformer_self_attention_2024.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/14-transformer-llm-accelerators/`
 
 **README Available:** Yes - Details on CIM for transformers
 
@@ -395,7 +395,7 @@
 - `3d_feram_architectures_2025.pdf`
 - `nand_limits_ferroelectrics_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/15-3d-stacking-architectures/`
 
 ---
 
@@ -414,7 +414,7 @@
 - `optical_neural_networks_progress_2024.pdf`
 - `photonic_neural_networks_review_2023.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/16-photonic-ferroelectric-hybrids/`
 
 **README Available:** Yes - Details on FeFET optical modulators
 
@@ -431,7 +431,7 @@
 - `fefet_puf_charge_domain_computing_2025.pdf`
 - `memristor_puf_lightweight_crypto_2022.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/17-security-cryptography/`
 
 ---
 
@@ -452,7 +452,7 @@
 - `rapid_cooling_ultrathin_hzo_ald_2025.pdf`
 - `fefet_heterogeneous_codoped_hfo2_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/18-ald-process-control/`
 
 ---
 
@@ -471,7 +471,7 @@
 - `fefet_nvmemory_challenges_2023.pdf`
 - `igzo_fefet_retention_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/19-variability-yield/`
 
 ---
 
@@ -485,7 +485,7 @@
 - Thermal budget constraints (<500°C)
 - Wafer-scale manufacturing (200mm/300mm)
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/20-manufacturing-integration/README.md`
 
 ---
 
@@ -499,7 +499,7 @@
 - Density targets: 51.2 Gb/mm²
 - Comparison vs 3D NAND
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/21-3d-stacking/README.md`
 
 ---
 
@@ -513,7 +513,7 @@
 - $15B automotive market opportunity
 - Fraunhofer IPMS automotive qualification status
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/22-automotive-harsh-env/README.md`
 
 ---
 
@@ -533,7 +533,7 @@
 **Key Papers:**
 - `fesquid_cryo_cam_2025.pdf`
 
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/by-topic/23-cryogenic-operation/`
 
 **README Available:** Yes - Details on quantum computing applications
 
@@ -542,7 +542,7 @@
 ## Additional Paper Sources
 
 ### Downloaded Papers (Not Yet Organized)
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/_tools/downloaded/`
 
 **Status:** 26 papers were recently categorized and moved to by-topic directories (2026-02-02)
 
@@ -555,7 +555,7 @@
 - `science/` - Science family (empty)
 
 ### Corrupted PDFs
-**Location:** `<local-path>`
+**Location:** `<repo-root>/docs/research-papers/_corrupted/`
 
 Files needing recovery/re-download:
 - `IEEE_CIM_Survey_2023.pdf`
@@ -571,8 +571,8 @@ To create a topic-based index linking to these papers **without duplicating PDFs
 
 1. Use **absolute symlinks** to papers:
    ```bash
-   ln -s <local-path> \
-          <local-path>
+   ln -s <repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials/*.pdf \
+          <repo-root>/docs/documentation/research-papers/01-materials/
    ```
 
 2. Or create **markdown index files** linking to papers:
@@ -637,7 +637,7 @@ To create a topic-based index linking to these papers **without duplicating PDFs
 ## Metadata File
 
 For programmatic access to all papers:
-- **Location:** `<local-path>`
+- **Location:** `<repo-root>/docs/research-papers/paper_metadata.json`
 - **Format:** JSON with title, authors, year, DOI, keywords
 - **Size:** ~2401 lines
 - **Encoding:** UTF-8

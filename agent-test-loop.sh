@@ -7,7 +7,7 @@ set -e
 
 ITERATION=0
 LOG_DIR="./test_logs"
-PROJECT_DIR="<local-path>"
+PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 mkdir -p "$LOG_DIR"
 
 cd "$PROJECT_DIR"

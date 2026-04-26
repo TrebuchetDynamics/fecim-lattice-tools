@@ -203,8 +203,8 @@ To link papers in `docs/documentation/research-papers/` without duplicating file
 
 **Option B: Symbolic Links** (Unix/Linux)
 ```bash
-ln -s <local-path> \
-       <local-path>
+ln -s <repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials \
+       <repo-root>/docs/documentation/research-papers/01-materials
 ```
 
 **Option C: Web Service**

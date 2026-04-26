@@ -71,7 +71,7 @@ The visualization supports interactive simulation with a Mode-First UX that auto
 ### Build from Source
 
 ```bash
-cd <local-path>
+cd <repo-root>
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```

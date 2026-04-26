@@ -166,7 +166,7 @@ STRATEGIC PAPERS:
 PAPER ORGANIZATION STRUCTURE
 ================================================================================
 
-Location: <local-path>
+Location: <repo-root>/docs/research-papers/
 
 by-topic/
 ├── 01-ferroelectric-materials/     (30 PDFs)
@@ -245,8 +245,8 @@ Option A: Markdown index files (RECOMMENDED)
     - [HZO Superlattice](../../research-papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
 
 Option B: Symbolic links (for local development)
-  ln -s <local-path> \
-        <local-path>
+  ln -s <repo-root>/docs/research-papers/by-topic/01-ferroelectric-materials \
+        <repo-root>/docs/documentation/research-papers/01-materials
 
 Option C: Web service (for production)
   Use paper_metadata.json for API queries

@@ -5,7 +5,7 @@ Scope command requested:
 ```bash
 grep -rn "TODO\|FIXME\|HACK" \
   --include="*.go" --include="*.md" --include="*.yaml" --include="*.json" \
-  <local-path>
+  <repo-root>/
 ```
 
 ## Raw result summary

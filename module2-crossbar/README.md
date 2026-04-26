@@ -199,7 +199,7 @@ output, _ := diffArr.MVM(input)
 ## Testing
 
 ```bash
-cd <local-path>
+cd <repo-root>
 go test ./module2-crossbar/...
 ```
 

@@ -1,6 +1,6 @@
 # M1–M4 Claim Matrix (Code-Verified)
 
-Scope: `<local-path>`
+Scope: `<repo-root>`
 
 Status legend:
 - **TRUE**: implemented and directly evidenced in code/tests

@@ -93,7 +93,7 @@ upgraded for nightly/release lanes.
 Run from repo root:
 
 ```bash
-cd <local-path>
+cd <repo-root>
 export DISPLAY=
 export WAYLAND_DISPLAY=
 ```
