@@ -13,6 +13,8 @@ It is **not** a silicon measurement report, a product benchmark, a foundry PDK, 
 
 > A simulation-first desktop lab for learning, testing, and designing around ferroelectric compute-in-memory systems.
 
+Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 -- with core parameters cited or explicitly marked educational.
+
 ---
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
