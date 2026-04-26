@@ -171,7 +171,7 @@ This matrix links each core physics claim to an executable test and a concrete l
 | Add UI disclaimer on all simplified models | ✅ | `HONESTY_AUDIT.md`, CM-D1 |
 | Label "conference claim" values distinctly from literature | ✅ | `HONESTY_AUDIT.md` |
 | Document model limitations in tooltips per module | 🔄 | Tracked under PGAP documentation backlog; implementation progressing module-by-module |
-| Define per-module "physics accuracy" acceptance criteria | ✅ | CM-P1, `docs/archive/old-structure/development/PHYSICS_ACCEPTANCE_CRITERIA.md` |
+| Define per-module "physics accuracy" acceptance criteria | ✅ | CM-P1, `docs/4-research/physics-validation.md` |
 
 ### P1: Physics Quality (Medium Risk, High Value)
 

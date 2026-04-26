@@ -406,4 +406,4 @@ Extend `data/calibrations/hzo_automotive.json`:
 - **MRAM is expensive:** 10× cost per bit vs FeCIM
 - **FeCIM is unique:** Only technology meeting all automotive requirements
 
-**Technical Briefing:** Automotive is not just a market—it's the market. FeCIM is the only technology that can replace all memory types in cars, capturing a $18.6B opportunity with existing qualification (Fraunhofer). Plus, radiation hardness opens space/military markets at scenario modeling.
+**Research Framing:** Automotive is a useful stress-test domain because it combines temperature, endurance, retention, safety, and qualification constraints. FeCIM claims in this area should remain scenario-based unless backed by measured automotive-grade device data.

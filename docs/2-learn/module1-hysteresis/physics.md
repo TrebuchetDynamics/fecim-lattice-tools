@@ -441,7 +441,7 @@ Ec(T) ∝ (Tc - T)     (roughly)
 
 ### Literature
 - `docs/4-research/papers/by-topic/01-ferroelectric-materials/`
-- `docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/` (conference material)
+- `docs/4-research/honesty-audit.md` (claim boundary and evidence notes)
 - HZO P-E loop examples: DOI citations in material definitions
 
 ---

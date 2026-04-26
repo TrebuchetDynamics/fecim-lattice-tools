@@ -30,8 +30,6 @@ DOCS = [
     "status.md",
     # Research
     "docs/4-research/honesty-audit.md",
-    "docs/4-research/tour-group-ironlattice-research.md",
-    "docs/4-research/superlattice-material-analysis.md",
     # Literature reviews
     "docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md",
     "docs/4-research/literature-review/hzo-hysteresis-validation-data.md",
@@ -43,11 +41,6 @@ DOCS = [
     "docs/4-research/validation/M1-M4-physics-contract.md",
     "docs/4-research/validation/M4-M6-physics-depth-audit.md",
     "docs/4-research/validation/RESEARCH_GRADE_TESTING_STANDARDS.md",
-    # Internal analysis
-    "docs/4-research/internal-analysis/crossbar-arrays.md",
-    "docs/4-research/internal-analysis/hysteresis-physics.md",
-    "docs/4-research/internal-analysis/cim-circuits.md",
-    "docs/4-research/internal-analysis/circuits.CIM-fundamentals.md",
     # Learning / ELI5
     "docs/2-learn/module1-hysteresis/eli5.md",
     "docs/2-learn/module2-crossbar/eli5.md",

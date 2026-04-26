@@ -28,6 +28,12 @@ Deterministic validation fixtures that support tests may be tracked only under `
 - `docs/4-research/transcripts/ironlattice-youtube-script.md`
 - `docs/4-research/tour-group-ironlattice-research.md`
 - `docs/4-research/superlattice-material-analysis.md`
+- `docs/superpowers/**`
+- `docs/4-research/papers/external-research/**`
+- `docs/4-research/papers/DOWNLOAD_PLAN.md`
+- `docs/4-research/opensource-tools/research_notes_final.md`
+- `validation/literature/_incoming/**`
+- Repo-local test logs such as `module1-hysteresis/test_output*.txt`
 - Generated build or run artifacts such as binaries, logs, screenshots, recordings, and export output.
 - Runtime validation output directories outside `testdata/`, including root `output/`, `validation/output/`, and module-local `output/` trees.
 - Personal internal draft material, research planning, or restricted access/restricted material.

@@ -1063,8 +1063,10 @@ def download_arxiv(paper: Paper) -> bool:
 
 def try_unpaywall(doi: str) -> Optional[str]:
     """Try to get open access URL from Unpaywall."""
-    email = "ferroelectric-cim@example.com"
-    url = f"https://api.unpaywall.org/v2/{doi}?email={email}"
+    url = f"https://api.unpaywall.org/v2/{doi}"
+    email = os.environ.get("UNPAYWALL_EMAIL")
+    if email:
+        url = f"{url}?{urllib.parse.urlencode({'email': email})}"
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -1275,20 +1277,6 @@ def search_papers(query: str, limit: int = 10):
         print("No results found.")
 
 
-def search_tour_lab():
-    """Search for external research group lab papers."""
-    queries = [
-        "external research group ferroelectric HfO2 ZrO2",
-        "external research group neuromorphic computing",
-        "Jaeho Shin superlattice FeFET",
-        "external research institution ferroelectric memory",
-    ]
-
-    for query in queries:
-        print(f"\n{'=' * 60}")
-        search_papers(query, limit=5)
-
-
 def list_papers():
     """List all papers in the database."""
     print("\n" + "=" * 60)
@@ -1321,7 +1309,6 @@ def main():
 Examples:
   %(prog)s download          Download all papers
   %(prog)s search "query"    Search Semantic Scholar
-  %(prog)s tour              Search for Tour lab papers
   %(prog)s list              List all papers in database
         """
     )
@@ -1336,9 +1323,6 @@ Examples:
     search_parser.add_argument("query", help="Search query")
     search_parser.add_argument("-n", "--limit", type=int, default=10, help="Number of results")
 
-    # Tour lab search
-    subparsers.add_parser("tour", help="Search for external research group lab papers")
-
     # List papers
     subparsers.add_parser("list", help="List all papers in database")
 
@@ -1348,8 +1332,6 @@ Examples:
         download_all()
     elif args.command == "search":
         search_papers(args.query, args.limit)
-    elif args.command == "tour":
-        search_tour_lab()
     elif args.command == "list":
         list_papers()
     else:

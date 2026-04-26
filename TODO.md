@@ -137,7 +137,7 @@ None.
 | Hardware-accurate SPICE models | Requires proprietary foundry PDKs |
 | Real-time OS integration | Beyond educational scope |
 | Web-based collaboration | Single-user educational tool |
-| Investor pitch decks | Scientific tool, not marketing material |
+| Marketing decks | Scientific tool, not marketing material |
 | Cryptographic accelerators | Specialized application |
 
 ---

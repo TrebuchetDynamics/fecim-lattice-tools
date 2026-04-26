@@ -373,7 +373,7 @@ This simulator helps imagine the destination and plan the journey!
 
 - **3Blue1Brown:** Neural Networks Playlist (visual, beautiful)
 - **IBM:** In-Memory Computing Overview
-- **external research institution research:** ferroelectric materials and compute-in-memory work
+- **Ferroelectric CIM literature:** materials, devices, and compute-in-memory research
 
 ---
 

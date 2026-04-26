@@ -10,7 +10,7 @@ FeCIM vs CPU/GPU business-case visualization (model-based, not measured).
 - **Workload Library** - MNIST, ResNet-50, BERT-Base, GPT-2, LLM-70B
 - **Data-Center Scaling** - Power, cost, CO2 projections from model inputs
 - **Animated Visuals** - Energy race, market chart, ROI summary
-- **Presentation Modes** - Manual, Auto Demo, Investor, Engineer
+- **Presentation Modes** - Manual, Auto Demo, Briefing, Engineer
 
 ---
 

@@ -1,6 +1,6 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains hero visualizations for the comparison demo.
-// TECHNICAL BRIEFING DESIGN: Based on project literature review and model-input messaging.
+// Technical briefing design based on project literature review and model-input messaging.
 package gui
 
 import (
@@ -19,7 +19,7 @@ import (
 // estimatedColor is used for model-input values (amber)
 var estimatedColor = color.RGBA{255, 191, 0, 255}
 
-// Technical briefing colors
+// Briefing colors
 var (
 	heroTextColor  = color.RGBA{240, 244, 248, 255} // Off-white for maximum contrast
 	heroCyanColor  = color.RGBA{0, 212, 255, 255}   // FeCIM cyan accent
@@ -37,7 +37,7 @@ const (
 	fecimEnergyPJ = 1.0    // ~1 pJ/MAC (conservative estimate for claimed "<1 pJ")
 )
 
-// AnimatedEnergyRace shows the HERO energy comparison - investor grade.
+// AnimatedEnergyRace shows the HERO energy comparison - briefing grade.
 // HERO STATEMENT: "80-90% data center energy reduction" (model input headline)
 type AnimatedEnergyRace struct {
 	widget.BaseWidget
@@ -156,7 +156,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		container.NewCenter(e.heroSubtext),
 	)
 
-	// === BEFORE/AFTER COMPARISON: Prominent bars for investor impact ===
+	// === BEFORE/AFTER COMPARISON: Prominent bars for review impact ===
 	barWidth := float32(500)
 	barHeight := float32(32)
 
@@ -282,7 +282,7 @@ func (e *AnimatedEnergyRace) doRefresh() {
 		return
 	}
 
-	// Animate bar widths - prominent for investor impact
+	// Animate bar widths - prominent for review impact
 	barWidth := float32(500)
 	barHeight := float32(32)
 
@@ -346,7 +346,7 @@ func (e *AnimatedEnergyRace) Refresh() {
 }
 
 // PhasedStrategyDiagram shows the de-risking phased market entry strategy.
-// CRITICAL FOR INVESTORS: Shows NAND first, then DRAM, then full CIM
+// CRITICAL FOR REVIEWERS: Shows NAND first, then DRAM, then full CIM
 type PhasedStrategyDiagram struct {
 	widget.BaseWidget
 

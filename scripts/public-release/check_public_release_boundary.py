@@ -12,11 +12,16 @@ ROOT = Path(__file__).resolve().parents[2]
 AUDIT_PATH = ROOT / "docs/public-release/THIRD_PARTY_PDF_AUDIT.csv"
 DISALLOWED_PATHS = (
     "docs/archive/",
+    "docs/superpowers/",
     "docs/4-research/internal-analysis/",
     "docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/",
     "docs/4-research/transcripts/ironlattice-youtube-script.md",
     "docs/4-research/tour-group-ironlattice-research.md",
     "docs/4-research/superlattice-material-analysis.md",
+    "docs/4-research/papers/external-research/",
+    "docs/4-research/papers/DOWNLOAD_PLAN.md",
+    "docs/4-research/opensource-tools/research_notes_final.md",
+    "validation/literature/_incoming/",
 )
 GENERATED_PATH_PREFIXES = (
     "artifacts/",
@@ -37,10 +42,18 @@ GENERATED_EXACT_PATHS = (
     "hysteresis",
     "gen_golden_loops",
     "module1-hysteresis/hysteresis",
+    "module1-hysteresis/test_output.txt",
+    "module1-hysteresis/test_output_final.txt",
     "module2-crossbar/inference",
     "module3-mnist/mnist",
 )
-BAN_RE = re.compile(r"restricted|under nda|internal repo=|internal draft", re.IGNORECASE)
+BAN_RE = re.compile(
+    r"restricted|under nda|\bnda\b|internal repo\s*=|internal draft|"
+    r"internal draft|research planning|research planning|public summary candidate|"
+    r"james\s+tour|external-research|rice university|investor|technical briefing|technical briefing|"
+    r"active benchmark domain|scenario modeling",
+    re.IGNORECASE,
+)
 SCAN_ROOTS = (
     "CLAUDE.md",
     "README.md",

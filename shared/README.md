@@ -151,4 +151,4 @@ go test -race ./shared/...
 
 - `docs/3-develop/architecture/ARCHITECTURE.md` — Overall project architecture
 - `docs/3-develop/testing/TESTING.md` — Testing conventions
-- `docs/4-research/internal-analysis/circuits.CIM-fundamentals.md` — Peripheral circuit design docs
+- `docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md` — Peripheral circuit design context

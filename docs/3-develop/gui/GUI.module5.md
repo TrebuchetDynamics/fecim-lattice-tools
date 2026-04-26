@@ -452,7 +452,7 @@ Types:
       - animMu: RWMutex protecting animation state
       - running, paused: Animation control flags
       - simTime: Elapsed simulation time (seconds)
-      - presentationMode: Manual/Auto/Investor/Engineer
+      - presentationMode: Manual/Auto/Briefing/Engineer
       - currentPhase: Auto demo phase (if in auto mode)
       - phaseTimer: Time in current phase
       - energyRace, marketChart, etc.: Hero visualization widgets
@@ -473,7 +473,7 @@ Types:
   - Type: PresentationMode
     Purpose: Enum for presentation styles
     file: liveslide.go:42-64
-    Values: Manual, Auto, Investor, Engineer
+    Values: Manual, Auto, Briefing, Engineer
 
   - Type: AutoDemoPhase
     Purpose: Enum for auto-demo sequence phases
@@ -521,7 +521,7 @@ Notes:
   - Disclaimers: UI should clearly state "SIMULATION ONLY"
   - Calculator Scale: Uses 10,000 server data center as reference scale
   - Electricity Cost: $0.10/kWh used for all cost calculations
-  - Presentation Modes: Investor mode emphasizes business case, Engineer mode shows technical details
+  - Presentation Modes: Briefing mode emphasizes business case, Engineer mode shows technical details
   - Auto Demo: Cycles through phases with 10-15 second durations per phase
   - Fabless Model: Competitive matrix highlights capital-light NVIDIA-like approach
   - Market Sources: Combined WSTS and Gartner forecasts for addressable market

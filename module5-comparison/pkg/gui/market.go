@@ -1,6 +1,6 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains market analysis visualizations.
-// TECHNICAL BRIEFING DESIGN: Based on project literature review and model-input messaging.
+// Technical briefing design based on project literature review and model-input messaging.
 package gui
 
 import (
@@ -37,7 +37,7 @@ var marketData = []MarketSegment{
 	{Name: "AI Semiconductor", Y2024: 140, Y2026: 220, Y2030: 403, Color: color.RGBA{46, 204, 113, 255}}, // Green
 }
 
-// MarketOpportunityChart shows the HERO market opportunity - investor grade.
+// MarketOpportunityChart shows the HERO market opportunity - briefing grade.
 // HERO STATEMENT: "$721B ADDRESSABLE MARKET BY 2030"
 type MarketOpportunityChart struct {
 	widget.BaseWidget
@@ -336,7 +336,7 @@ func buildCompetitors() []Competitor {
 var competitors = buildCompetitors()
 
 // CompetitiveMatrix shows simplified competitive comparison (model inputs).
-// INVESTOR MESSAGE: "Only FeCIM has checkmarks in ALL categories" (model input)
+// Summary message: FeCIM scores across all modeled categories.
 type CompetitiveMatrix struct {
 	widget.BaseWidget
 }
@@ -406,7 +406,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 
 		row := container.NewGridWithColumns(6, rowWidgets...)
 
-		// Highlight FeCIM row with cyan background for investor visibility
+		// Highlight FeCIM row with cyan background for reviewer visibility
 		if comp.Highlight {
 			highlightBg := canvas.NewRectangle(color.RGBA{0, 212, 255, 40}) // Subtle cyan
 			highlightBg.CornerRadius = 4

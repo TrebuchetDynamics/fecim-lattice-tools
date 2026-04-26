@@ -39,7 +39,7 @@ type PresentationMode int
 const (
 	PresentationModeManual   PresentationMode = iota // User controls navigation
 	PresentationModeAuto                             // Self-running 30s per section
-	PresentationModeInvestor                         // Large numbers, minimal jargon
+	PresentationModeBriefing                         // Large numbers, minimal jargon
 	PresentationModeEngineer                         // Technical deep-dive
 )
 
@@ -49,8 +49,8 @@ func (p PresentationMode) String() string {
 		return "Manual"
 	case PresentationModeAuto:
 		return "Auto Demo"
-	case PresentationModeInvestor:
-		return "Investor"
+	case PresentationModeBriefing:
+		return "Briefing"
 	case PresentationModeEngineer:
 		return "Engineer"
 	default:
@@ -65,8 +65,8 @@ func PresentationModeFromString(s string) PresentationMode {
 		return PresentationModeManual
 	case "Auto Demo":
 		return PresentationModeAuto
-	case "Investor":
-		return PresentationModeInvestor
+	case "Briefing":
+		return PresentationModeBriefing
 	case "Engineer":
 		return PresentationModeEngineer
 	default:
@@ -167,14 +167,14 @@ func (e *ComparisonEducationalPanel) updateForMode() {
 	e.mu.RUnlock()
 
 	switch mode {
-	case PresentationModeInvestor:
+	case PresentationModeBriefing:
 		e.SetContent("Scenario Summary",
 			"THE OPPORTUNITY\n\n"+
 				"$721B addressable market by 2030 (model input)\n"+
 				"1000× energy reduction (model input)\n"+
 				"CMOS-compatible fabrication (assumption)\n"+
-				"Research pedigree (context only)\n\n"+
-				"COMMERCIALIZATION STRATEGY\n"+
+				"Literature context (not endorsement)\n\n"+
+				"IMPLEMENTATION SCENARIO\n"+
 				"Phase 1: NAND replacement\n"+
 				"  → Drop-in compatible design\n"+
 				"  → Minimal integration risk\n\n"+
@@ -223,7 +223,7 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 	switch phase {
 	case AutoDemoPhaseEnergyRace:
 		title = "Energy Comparison"
-		if mode == PresentationModeInvestor {
+		if mode == PresentationModeBriefing {
 			content = "THE HEADLINE\n\n" +
 				"1000× less energy (model input)\n" +
 				"than current CPUs\n" +

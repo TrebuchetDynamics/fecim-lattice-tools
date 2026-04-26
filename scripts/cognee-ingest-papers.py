@@ -38,8 +38,6 @@ NEW_DOCS = [
     "docs/4-research/papers/PAPERS_INDEX.md",
     "docs/4-research/papers/ORGANIZATION.md",
     "docs/4-research/papers/NEW_PAPERS_2026-02-01.md",
-    # Superlattice and In2Se3 research
-    "docs/4-research/papers/external-research/In2Se3_Landau_Coefficients_Research.md",
     # Validation results not yet ingested
     "docs/4-research/validation/BASELINE-2026-02-13.md",
     "docs/4-research/validation/compatibility-matrix.md",
@@ -62,11 +60,8 @@ NEW_DOCS = [
     # Opensource tools analysis
     "docs/4-research/opensource-tools/circuit-analysis-libraries.md",
     "docs/4-research/opensource-tools/data-acquisition-tools.md",
-    "docs/4-research/opensource-tools/research_notes_final.md",
     "docs/4-research/opensource-tools/walkthrough_final.md",
     "docs/4-research/opensource-tools/opensource-crossbar.md",
-    # Transcripts
-    "docs/4-research/transcripts/ironlattice-youtube-script.md",
     # Experimental data (JSON → treat as text)
     "experimental-data/README.md",
     "experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json",

@@ -252,7 +252,7 @@ Planned improvements make the coupling explicitly **architecture-aware** (0T1R v
 - **half-select disturb**,
 - **IR drop**.
 
-See: `docs/4-research/internal-analysis/MODULE4-PHYSICS-IMPROVEMENTS.md`.
+See: `docs/4-research/physics-validation.md`.
 
 ## Signal Chain
 
@@ -339,7 +339,7 @@ All peripheral circuits include comprehensive tests.
 
 Testing is intentionally **headless** and should remain safe to run in CI (no GUI initialization). For new work (architecture-aware coupling, fidelity tiers), prefer **table-driven** tests (`[]struct{...}` + `t.Run`) so expected behavior is explicit and reviewable.
 
-See also: `docs/4-research/internal-analysis/MODULE4-PHYSICS-IMPROVEMENTS.md` (Testing Strategy section).
+See also: `docs/4-research/physics-validation.md` (validation strategy).
 
 
 
@@ -368,7 +368,7 @@ Run `go test ./shared/peripherals/peripherals_test.go` to see all 10+ test cases
 
 For deeper understanding of ferroelectric physics, architecture trade-offs, and design decisions:
 
-- **[CIM Fundamentals](../docs/4-research/internal-analysis/circuits.CIM-fundamentals.md)** — Core concepts of compute-in-memory
+- **[Circuit Literature Review](../docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md)** — Core concepts of compute-in-memory circuits
 - **[Module 4 ELI5](../docs/2-learn/module4-circuits/eli5.md)** — Beginner-friendly introduction to peripheral circuits
 - **[Module 4 Physics](../docs/2-learn/module4-circuits/physics.md)** — Physics equations and model details
 - **[Physics Configuration](../config/physics/)** — Material properties and calibration parameters used for voltage range calculation

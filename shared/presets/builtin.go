@@ -193,12 +193,12 @@ func getHysteresisPresets() []*Preset {
 
 		// Demo presets
 		builtInPreset(
-			"hysteresis-investor-demo",
-			"Investor Demo",
+			"hysteresis-briefing-demo",
+			"Briefing Demo",
 			"Impressive visual demo for presentations",
 			ModuleHysteresis,
 			CategoryDemo,
-			[]string{"demo", "presentation", "investor"},
+			[]string{"demo", "presentation", "briefing"},
 			map[string]interface{}{
 				"waveform":       "Sine Wave",
 				"frequency":      0.3,
@@ -573,12 +573,12 @@ func getComparisonPresets() []*Preset {
 
 		// Demo presets
 		builtInPreset(
-			"comparison-investor-pitch",
-			"Technical Briefing",
-			"Key metrics for investor presentations",
+			"comparison-technical-brief",
+			"Technical Brief",
+			"Key metrics for technical briefings",
 			ModuleComparison,
 			CategoryDemo,
-			[]string{"demo", "investor", "business"},
+			[]string{"demo", "briefing", "business"},
 			map[string]interface{}{
 				"comparison_mode": "all",
 				"show_market":     true,

@@ -179,7 +179,7 @@ Full status: See [status.md](../status.md)
 
 ## 📚 Essential Concepts
 
-### The 60-Second Pitch
+### The 60-Second Overview
 
 **Problem:** AI wastes 90% of energy moving data between memory and processors.
 

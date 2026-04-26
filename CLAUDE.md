@@ -2,13 +2,13 @@
 
 ## For AI Agents
 
-**Full reference:** See `docs/archive/old-structure/development/SCRIPT_REFERENCE.md` for detailed lookups (legacy; paths inside may be stale).
+**Full reference:** See `docs/3-develop/api-reference.md` for detailed lookups.
 
 | I need to... | Look in |
 |--------------|---------|
 | Find a function | `docs/3-develop/api-reference.md` |
-| Fix an error | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
-| Add a feature | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#decision-trees` |
+| Fix an error | `docs/3-develop/testing/TESTING.md` |
+| Add a feature | `docs/3-develop/api-reference.md` |
 | Check thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
 | Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
 | Run/understand tests | `docs/3-develop/testing/TESTING.md` |
@@ -134,4 +134,4 @@ asyncio.run(main())
 
 ## Ignore
 
-- `logs/`, `output/`, `docs/archive/`
+- `logs/`, `output/`, generated artifacts

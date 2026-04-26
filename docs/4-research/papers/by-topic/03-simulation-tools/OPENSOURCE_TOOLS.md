@@ -187,7 +187,7 @@ Open-source MOOSE application for parallel mesoscale simulations of ferroic and 
 Massively parallel, 3D phase-field simulation framework for modeling ferroelectric materials based scalable logic devices. Self-consistently solves TDGL, Poisson's equation, and semiconductor charge equations.
 
 **GitHub:** https://github.com/AMReX-Microelectronics/FerroX
-**Contact:** Zhi (Jackie) Yao (jackie_zhiyao@lbl.gov), Andy Nonaka (ajnonaka@lbl.gov)
+**Maintainers:** See the upstream project metadata for current maintainer contacts.
 
 ### Key Features
 - Exascale Computing Project (ECP) framework (AMReX)

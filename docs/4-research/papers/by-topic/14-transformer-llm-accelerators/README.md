@@ -341,4 +341,4 @@ Example (LLaMA-7B, 2048 context):
 2. **Memory-Bound Problem**: Perfect fit for FeCIM approach
 3. **Edge LLM Vision**: Enable ChatGPT-on-device
 4. **Energy Efficiency**: 50-100× better than GPUs
-5. **Investor Interest**: LLM acceleration is active benchmark domain
+5. **Research Interest**: LLM acceleration is an active benchmark domain

@@ -244,7 +244,7 @@ The curriculum structure enables **progressive learning** through four distinct 
 Start with intuitive explanations without mathematics. Ideal for:
 - Non-technical stakeholders
 - Product managers
-- Investors
+- Briefings
 - Students new to ferroelectronics
 
 **Navigation:** Select any module, click "ELI5" button in Module Shortcuts Panel.

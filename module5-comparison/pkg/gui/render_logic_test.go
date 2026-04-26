@@ -35,10 +35,10 @@ func TestEducationalPanelModeAndPhaseContent(t *testing.T) {
 	defer a.Quit()
 
 	p := NewComparisonEducationalPanel()
-	p.SetPresentationMode(PresentationModeInvestor)
+	p.SetPresentationMode(PresentationModeBriefing)
 	title, _ := p.GetContent()
-	if !strings.Contains(title, "Investment") {
-		t.Fatalf("expected investor title, got %q", title)
+	if !strings.Contains(title, "Scenario") {
+		t.Fatalf("expected briefing title, got %q", title)
 	}
 	p.SetPresentationMode(PresentationModeEngineer)
 	title, _ = p.GetContent()

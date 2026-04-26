@@ -196,7 +196,7 @@ func makeIntroContent() fyne.CanvasObject {
 
 	// Disclaimer banner
 	disclaimerCard := widget.NewCard("⚠️ DISCLAIMER", "",
-		widget.NewLabel("This project is not affiliated with or endorsed by any university, company, or foundry."))
+		widget.NewLabel("This project has no university, company, or foundry affiliation."))
 
 	return container.NewVBox(
 		title,

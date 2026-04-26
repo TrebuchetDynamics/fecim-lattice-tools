@@ -393,7 +393,7 @@ Reference calculations verified against:
 ### Code References
 - `docs/3-develop/api-reference.md` (API reference)
 - `docs/2-learn/module2-crossbar/architecture.md` (architecture overview)
-- `docs/4-research/internal-analysis/hysteresis-physics.md` (physics audit)
+- `docs/4-research/physics-validation.md` (physics validation)
 
 ---
 

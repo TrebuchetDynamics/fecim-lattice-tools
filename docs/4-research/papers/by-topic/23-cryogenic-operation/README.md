@@ -29,7 +29,7 @@ Quantum computing represents the ultimate frontier in computing, but quantum bit
 
 - **Differentiation:** Zero competition (NAND/DRAM don't work at 4K)
 - **Future-proofing:** Quantum computing TAM = $2B by 2035 for memory alone
-- **Premium pricing:** Quantum customers pay 10-100× premium for enabling tech
+- **Scenario modeling:** Quantum-control memory requirements can stress volatility, power, and temperature assumptions
 - **Strategic positioning:** FeCIM as quantum-enabling technology
 
 ## Cross-References to Other Topics
@@ -306,11 +306,11 @@ temps := []float64{300, 77, 20, 4, 1} // K
 | **PsiQuantum** | Photonic | 1M+ (target) | 1M+ | Photonic routing tables |
 | **Quantinuum** | Trapped ion | 56 qubits | 1,000+ | High-fidelity control |
 
-### Quantum Computing End Users (Premium Customers)
+### Quantum Computing End Users
 
 | Sector | Application | Budget/System | FeCIM Opportunity |
 |--------|-------------|---------------|-------------------|
-| **Pharma** | Drug discovery | $100M+ | Premium pricing acceptable |
+| **Pharma** | Drug discovery | $100M+ | Reliability and accuracy constraints |
 | **Finance** | Risk modeling | $50M+ | Cost-insensitive |
 | **Materials** | Catalyst design | $75M+ | Performance priority |
 | **Cryptography** | Code breaking | $200M+ (gov) | Unlimited budget |
@@ -473,17 +473,17 @@ New file: `data/calibrations/hzo_cryogenic.json`
 
 ## Why This Topic Matters
 
-### 1. Blue Ocean Market (Zero Competition)
-- **DRAM/Flash fail at 4K:** FeCIM has monopoly on non-volatile cryo memory
+### 1. Cryogenic Memory Gap
+- **DRAM/Flash limits at 4K:** Cryogenic operation remains an active research constraint
 - **SRAM is volatile:** Cannot replace FeCIM for persistent storage
 - **MRAM too power-hungry:** 100× higher power than FeCIM
 - **First-mover advantage:** Patent position in quantum memory space
 
-### 2. Scenario Modeling Power
-- Quantum systems cost **$10-100M+** per installation
-- FeCIM memory subsystem: **$10-100k** (0.01-0.1% of system cost)
-- **No price sensitivity:** Performance and reliability matter, not cost
-- **10-100× profit margins** vs automotive/consumer
+### 2. System-Level Sensitivity
+- Quantum systems can impose strict temperature and power budgets
+- Memory subsystem assumptions should be modeled as scenarios, not product economics
+- Performance and reliability claims need device-level validation evidence
+- Cost estimates should remain parameterized until supported by production data
 
 ### 3. Strategic Positioning as Quantum Enabler
 - **IBM Quantum Roadmap:** 1M qubits by 2033 requires FeCIM-class memory
@@ -510,4 +510,4 @@ New file: `data/calibrations/hzo_cryogenic.json`
 - **3D stacking** (Topic 21) enables Gb-scale quantum memory
 - **Manufacturing** (Topic 20) ready for cryo-qualified production
 
-**Research Framing:** Cryogenic operation is FeCIM's ultimate differentiator. It's the only technology that gets **better** at extreme temperatures, opening markets (quantum, space) where NAND/DRAM fundamentally cannot compete. This is a **monopoly opportunity** with **scenario modeling** in the fastest-growing segment of computing.
+**Research Framing:** Cryogenic operation is a useful boundary condition for FeCIM modeling because temperature, volatility, power, and control-memory requirements interact. Public claims should be limited to literature-backed behavior and explicitly labeled scenarios.

@@ -13,7 +13,7 @@ grep -rn "TODO\|FIXME\|HACK" \
 - Dominant sources:
   - vendored/third-party trees under `opensource/`
   - historical reports under `.omc/`
-  - archive docs under `docs/archive/`
+  - historical docs excluded from the public source tree
   - references to the filename `TODO.md` in documentation text
 
 These are **intentional historical/vendor content**, not active code debt in first-party runtime/test paths.
@@ -35,5 +35,5 @@ Result: **0 hits**.
 - Remaining raw `TODO|FIXME|HACK` hits are documented as intentional and non-blocking:
   - vendor upstream code (`opensource/`)
   - historical reports (`.omc/`)
-  - archive narrative references (`docs/archive/`)
+  - historical narrative references excluded from the public source tree
   - textual mentions of `TODO.md` roadmap entries

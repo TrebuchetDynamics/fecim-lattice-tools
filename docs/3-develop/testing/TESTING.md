@@ -266,7 +266,7 @@ xvfb-run -a go test -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
 
 ### 5. Archived Demo Tests
 
-**Issue:** Demos in `docs/archive/removed-demos/` (demo5-thermal, demo6-multilayer, demo7-nonidealities) have broken imports after archiving.
+**Issue:** Removed historical demos (demo5-thermal, demo6-multilayer, demo7-nonidealities) had broken imports after archiving.
 
 **Design Decision:** Archived demos are historical reference only. Their functionality has been merged into active demos. Do not run tests on archived code.
 

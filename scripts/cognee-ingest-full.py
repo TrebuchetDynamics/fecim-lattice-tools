@@ -217,8 +217,6 @@ APP = [
 # ── Phase 12: All remaining docs (non-archive) ──
 DOCS_RESEARCH = [
     "docs/4-research/honesty-audit.md",
-    "docs/4-research/tour-group-ironlattice-research.md",
-    "docs/4-research/superlattice-material-analysis.md",
     "docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md",
     "docs/4-research/literature-review/hzo-hysteresis-validation-data.md",
     "docs/4-research/literature-review/world-class-gap-analysis.md",
@@ -229,17 +227,11 @@ DOCS_RESEARCH = [
     "docs/4-research/validation/M4-M6-physics-depth-audit.md",
     "docs/4-research/validation/RESEARCH_GRADE_TESTING_STANDARDS.md",
     "docs/4-research/validation/verification-vs-validation.md",
-    "docs/4-research/internal-analysis/crossbar-arrays.md",
-    "docs/4-research/internal-analysis/hysteresis-physics.md",
-    "docs/4-research/internal-analysis/cim-circuits.md",
-    "docs/4-research/internal-analysis/circuits.CIM-fundamentals.md",
     "docs/4-research/opensource-tools/tool-comparison-matrix.md",
     "docs/4-research/opensource-tools/memristor-rram-tools.md",
     "docs/4-research/opensource-tools/circuit-analysis-libraries.md",
     "docs/4-research/papers/TOPIC_SUMMARIES.md",
     "docs/4-research/papers/RESEARCH_GAP_ANALYSIS.md",
-    "docs/4-research/papers/external-research/README.md",
-    "docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md",
 ]
 
 DOCS_LEARN = [

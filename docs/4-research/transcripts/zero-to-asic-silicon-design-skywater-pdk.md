@@ -73,7 +73,7 @@ I can also ask Magic to `extract`. It looks at how everything is connected and e
 
 ## The Skywater PDK
 
-The Skywater 130nm process has been made available on an open source license. Previously you needed an restricted access. Now we can use this **PDK (Process Design Kit)** which contains:
+The Skywater 130nm process has been made available under open-source terms. That access model removes historical barriers to using the **PDK (Process Design Kit)**, which contains:
 - DRC rules
 - Behavioral models (SPICE)
 - **Standard Cells**

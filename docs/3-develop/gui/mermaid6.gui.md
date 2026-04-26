@@ -213,7 +213,7 @@ graph TD
         StagesExplained["StagesExplained Section<br/>6 stages in detail"]
         WhatWeDo["What We Do Bullets<br/>LEF/LIB/V/DEF/Config"]
         WhatWeDont["What We Don't Do Bullets<br/>Models/GDSII/Timing"]
-        Disclaimer["DisclaimerCard<br/>Not affiliated with Rice"]
+        Disclaimer["DisclaimerCard<br/>No affiliation claims"]
     end
 
     subgraph "Topic 1: Crossbar Architecture"
@@ -962,7 +962,7 @@ Generation/validation happen in background while UI remains responsive:
 
 ## Related Documentation
 
-- **Main Architecture**: `/docs/archive/old-structure/eda/GUI_ARCHITECTURE.md`
+- **Main Architecture**: `/docs/3-develop/gui/GUI.module6.md`
 - **Source Code Analysis**: `/docs/3-develop/gui/GUI.module6.md`
 - **Builder Tab**: 1286 lines of configuration, generation, and validation UI
 - **Learn Tab**: Educational content with 3 topics and interactive visuals

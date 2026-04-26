@@ -192,8 +192,8 @@ Topic 23 (Cryogenic)
 ✅ **$18.6B market** with no alternative technology meeting all requirements
 
 ### Cryogenic (Topic 23)
-✅ **Monopoly position** in quantum computing memory  
-✅ **Premium pricing** in $8B+ market with zero price sensitivity
+✅ **Open research question** for cryogenic non-volatile memory
+✅ **Scenario modeling** for quantum-control memory requirements
 
 ---
 

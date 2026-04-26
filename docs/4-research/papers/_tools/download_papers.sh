@@ -74,12 +74,16 @@ download_pdf() {
 try_unpaywall() {
     local doi="$1"
     local output="$2"
-    local email="ferroelectric-cim@example.com"
+    local email="${UNPAYWALL_EMAIL:-}"
 
     log_info "Checking Unpaywall for DOI: $doi"
 
     local response
-    response=$(curl -s "https://api.unpaywall.org/v2/$doi?email=$email" 2>/dev/null || echo "{}")
+    local url="https://api.unpaywall.org/v2/$doi"
+    if [ -n "$email" ]; then
+        url="${url}?email=${email}"
+    fi
+    response=$(curl -s "$url" 2>/dev/null || echo "{}")
 
     local oa_url
     oa_url=$(echo "$response" | jq -r '.best_oa_location.url_for_pdf // empty' 2>/dev/null)
@@ -449,7 +453,7 @@ download_all_papers() {
     echo ""
     echo "For paywalled papers, consider:"
     echo "  1. Institutional access via university library"
-    echo "  2. Contacting authors directly"
+    echo "  2. Checking publisher open-access and preprint links"
     echo "  3. Checking ResearchGate for author uploads"
     echo "  4. Using interlibrary loan services"
     echo ""
@@ -458,18 +462,6 @@ download_all_papers() {
 # ============================================================================
 # ADDITIONAL SEARCHES
 # ============================================================================
-
-search_tour_papers() {
-    echo ""
-    log_info "=== Searching for external research group Ferroelectric Papers ==="
-    echo ""
-
-    search_semantic_scholar "external research group ferroelectric HfO2" 10
-    echo ""
-    search_semantic_scholar "external research group neuromorphic computing" 10
-    echo ""
-    search_semantic_scholar "Jaeho Shin superlattice FeFET" 10
-}
 
 search_cim_papers() {
     echo ""
@@ -493,7 +485,6 @@ print_usage() {
     echo "Commands:"
     echo "  download    Download all papers (default)"
     echo "  search      Search for additional papers"
-    echo "  tour        Search for external research group papers"
     echo "  cim         Search for CIM papers"
     echo "  help        Show this help"
     echo ""
@@ -501,7 +492,6 @@ print_usage() {
     echo "  $0                    # Download all papers"
     echo "  $0 download           # Download all papers"
     echo "  $0 search \"query\"     # Search Semantic Scholar"
-    echo "  $0 tour               # Search for Tour lab papers"
     echo ""
 }
 
@@ -537,9 +527,6 @@ main() {
             else
                 echo "Usage: $0 search \"query\" [limit]"
             fi
-            ;;
-        tour)
-            search_tour_papers
             ;;
         cim)
             search_cim_papers

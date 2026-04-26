@@ -361,7 +361,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		resetBtn,
 	)
 
-	// === UNIFIED INVESTOR PITCH VIEW ===
+	// === UNIFIED TECHNICAL BRIEFING VIEW ===
 	// All sections in one scrollable view for seamless presentation
 
 	// SECTION 1: THE ENERGY PROBLEM

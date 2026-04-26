@@ -12,6 +12,7 @@
 - Root and module-local compiled binaries removed from the public candidate.
 - Demo recordings, screenshot frames, and dated root screenshot artifacts removed from the public candidate.
 - Deterministic validation JSON fixtures moved from runtime `output/` trees into `validation/testdata/release_artifacts/`.
+- Internal agent planning docs, internal draft/research planning research notes, Tour/Rice-specific research scratch files, repo-local test logs, and raw incoming literature caches were removed from the public candidate.
 
 ## History Rewrite Targets
 - All paths listed in `FILTER_REPO_PATHS.txt`.

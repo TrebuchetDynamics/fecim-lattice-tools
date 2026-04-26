@@ -237,34 +237,11 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 
 ---
 
-## Recommended Email Enhancement
+## Public Summary Candidate
 
-**Original:**
-> "I built a FeCIM visualizer with 6 modules."
+FeCIM Lattice Tools is a seven-module educational simulation suite for studying ferroelectric compute-in-memory concepts, including hysteresis modeling, crossbar simulation, neural-network inference examples, peripheral circuit abstractions, technology comparison, EDA export, and integrated documentation.
 
-**Enhanced:**
-> "I built a comprehensive FeCIM design suite with 7 modules covering:
->
-> **Three Operation Modes:**
-> - Storage: NAND Flash replacement (51.2 Gb/mm² density target)
-> - Memory: DRAM replacement (25-100× lower energy vs NAND)
-> - Compute: AI accelerator (98.24% MNIST reported in literature, LLM-ready)
->
-> **Key Differentiators:**
-> - Automotive-qualified operation (AEC-Q100 Grade 0: -40°C to 150°C)
-> - 3D stacking roadmap (512-layer path, Samsung Nature 2025)
-> - Cryogenic support (4K for quantum computing, Pr +30%)
-> - OpenLane EDA integration for shuttle runs
-> - Integrated documentation browser with 169 searchable papers
->
-> **Research Grounding:**
-> - 169 papers reviewed (88 reported in literature Tier 1-2)
-> - 135 papers from 2024-2025 (cutting-edge)
-> - Nature/Science-level references with DOIs
-> - Industry specs from Fraunhofer, Samsung, SK Hynix, CEA-Leti
->
-> This isn't a toy - it's pre-production tooling backed by
-> world-class research coverage and honest honesty audit."
+Claims in public summaries should stay tied to the honesty audit, cite literature where available, and avoid implying measured hardware performance unless the repository contains validation evidence.
 
 ---
 
