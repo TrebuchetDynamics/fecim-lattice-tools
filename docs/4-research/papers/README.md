@@ -25,6 +25,11 @@
    - Learn naming conventions
    - Contribute new papers
 
+4. **[FECIM_TOOLS_PAPER_ROADMAP.md](./FECIM_TOOLS_PAPER_ROADMAP.md)** — Tools-paper roadmap for this repository
+   - Plan the FeCIM Lattice Tools paper
+   - Keep claims tied to validation artifacts
+   - Track paper scope before submission
+
 ---
 
 ## What's Inside

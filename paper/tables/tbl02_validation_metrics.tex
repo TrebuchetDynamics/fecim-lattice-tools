@@ -1,0 +1,17 @@
+\begin{table}[ht]
+\centering
+\caption{Validation evidence planned for the paper. Numeric values must be filled only from reproducible artifacts.}
+\label{tab:validation-metrics}
+\begin{tabular}{p{0.20\linewidth}p{0.34\linewidth}p{0.34\linewidth}}
+\toprule
+Area & Evidence & Status \\
+\midrule
+Hysteresis & Literature-backed P-E loop comparison with RMSE and provenance. & Existing validation infrastructure; paper figure pending. \\
+Crossbar KCL & Deterministic random-array KCL residual with ampere threshold. & Public gate in progress; paper plot pending. \\
+SPICE & Exported array compared to ngspice currents. & Optional-tool harness exists; paper artifact pending. \\
+MNIST & Accuracy, per-digit metrics, and confusion matrix. & Do not publish number until artifact is complete. \\
+EDA & Verilog lint, Yosys/OpenLane smoke or flow status. & Syntax and optional external checks staged. \\
+\bottomrule
+\end{tabular}
+\end{table}
+

@@ -1,0 +1,180 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue
+}
+
+\newcommand{\project}{FeCIM Lattice Tools}
+\newcommand{\figplaceholder}[2]{%
+  \begin{figure}[ht]
+    \centering
+    \fbox{\begin{minipage}[c][1.6in][c]{0.88\linewidth}
+      \centering #1
+    \end{minipage}}
+    \caption{#2}
+  \end{figure}
+}
+
+\title{\project: An Open-Source Educational Framework for Ferroelectric Compute-in-Memory Simulation with Cross-Tool Validation}
+
+\author{
+  Author Name\\
+  Affiliation\\
+  Public contact email\\
+  \texttt{https://github.com/TrebuchetDynamics/fecim-lattice-tools}
+}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Ferroelectric compute-in-memory (FeCIM) is a candidate approach for reducing data movement in machine-learning inference and related matrix-vector workloads. However, researchers and students who want to study FeCIM often face a fragmented tool landscape: device-level hysteresis models, array-level non-idealities, peripheral circuit abstractions, neural-network demonstrations, and electronic design automation (EDA) exports are usually presented in separate tools or papers. This manuscript introduces \project, an open-source educational framework that integrates seven modules for ferroelectric hysteresis, crossbar simulation, MNIST-style inference, peripheral circuits, technology comparison, EDA export, and documentation. The framework is simulation-only and does not report new silicon measurements. Its physics defaults are tied to published ferroelectric and HfO$_2$/HZO literature where possible, while educational assumptions are marked explicitly. Validation is organized around three evidence layers: comparison to published literature data, conservation-law tests such as Kirchhoff's Current Law, and cross-tool checks against external simulators when available. The repository includes reproducibility scripts, validation fixtures, and public documentation intended to make assumptions inspectable. The goal of this paper is to describe the architecture, validation methodology, and educational use cases of the framework so that the project can be cited, reviewed, and extended as a research artifact.
+\end{abstract}
+
+\section{Introduction}
+
+Modern machine-learning workloads are often limited by data movement rather than arithmetic alone. Compute-in-memory (CIM) addresses this problem by moving selected computation closer to memory arrays, reducing traffic between memory and separate processing units. Ferroelectric compute-in-memory (FeCIM) is one branch of this design space that uses ferroelectric device behavior, including polarization switching and non-volatile state retention, as part of memory or analog-compute primitives.
+
+The educational barrier is high. A learner must connect ferroelectric material behavior, hysteresis models, crossbar non-idealities, quantization, peripheral circuits, neural-network mapping, and EDA artifacts. Existing tools are valuable, but they often focus on one layer of the stack, such as analog CIM accuracy simulation, phase-field modeling, or device-circuit-architecture benchmarking \citep{crosssim,neurosim,aihwkit,ferrox}. A single educational framework that exposes the full stack can help students and researchers reason about assumptions before moving to specialized tools.
+
+\project{} is designed for that role. It is a Go-based open-source framework with seven integrated modules and shared validation infrastructure. The repository is not a fabrication report and should not be read as a claim of measured device performance. Instead, it provides a reproducible environment for exploring FeCIM concepts, checking numerical behavior, and generating artifacts for discussion with researchers, students, and collaborators.
+
+This paper contributes:
+
+\begin{itemize}
+  \item an open-source seven-module framework for FeCIM education and simulation;
+  \item a validation methodology that separates literature comparison, conservation-law checks, and external-tool comparisons;
+  \item module-level visualizations for hysteresis, crossbar non-idealities, inference, peripheral circuits, and EDA export;
+  \item a reproducibility path that ties paper claims to commands, fixtures, or explicit limitations;
+  \item a public draft structure for turning the repository into a citable tools artifact.
+\end{itemize}
+
+\section{Related Work}
+
+\subsection{Analog CIM and Crossbar Simulators}
+
+CrossSim provides an important reference point for analog in-memory-computing accuracy simulation and crossbar mapping workflows \citep{crosssim2024,crosssimWebsite}. NeuroSim and DNN+NeuroSim provide device-circuit-architecture modeling for neural-network accelerators \citep{neurosim2021}. IBM AIHWKit provides hardware-aware training and inference utilities for analog AI studies \citep{aihwkit}. These tools motivate both the validation style and the need for fair comparison.
+
+\subsection{Ferroelectric Modeling}
+
+The hysteresis and switching context for this project draws from classical Preisach hysteresis modeling \citep{preisach1935,mayergoyz2003}, Landau-Khalatnikov dynamics \citep{khalatnikov1954}, and HfO$_2$/HZO ferroelectric literature \citep{park2015,materlik2015,alessandri2018,guo2018}. The repository distinguishes between parameters that are directly tied to literature references and parameters that are educational defaults.
+
+\subsection{Software Tools Papers}
+
+Scientific software papers are publishable when they clearly define the problem, describe the architecture, document validation, and provide reproducibility. NumPy and PyTorch are examples of software artifacts that became citable infrastructure for their communities \citep{harris2020numpy,paszke2019pytorch}. \project{} should follow this pattern: the paper should explain what the tool does, what it does not do, and how readers can reproduce its evidence.
+
+\section{System Architecture}
+
+\project{} is organized as a modular framework with shared infrastructure for physics, widgets, logging, utilities, and validation. Table~\ref{tab:module-summary} summarizes the current module map.
+
+\input{tables/tbl01_module_summary.tex}
+
+\figplaceholder{Architecture figure placeholder}{Planned architecture diagram for \project. The final figure should show the seven modules, shared packages, validation harnesses, and EDA/export paths.}
+
+\subsection{Module 1: Hysteresis}
+
+The hysteresis module exposes polarization-electric field (P-E) behavior through Preisach-style and Landau-Khalatnikov-oriented models. The intended educational role is to let users inspect loop shape, remnant polarization, coercive field, switching dynamics, and material presets. Literature-linked defaults should cite the corresponding source, while educational defaults should remain visibly labeled.
+
+\subsection{Module 2: Crossbar Arrays}
+
+The crossbar module models matrix-vector multiplication (MVM) with conductance states and array non-idealities. In the ideal case, each cell follows Ohm's law,
+\begin{equation}
+I_{ij} = G_{ij} V_j,
+\end{equation}
+and bit-line current is the column sum of device currents,
+\begin{equation}
+I_j = \sum_i G_{ij} V_j.
+\end{equation}
+With parasitics, effective device voltages are modified by row and column voltage drops. Conservation-law validation checks that the reconstructed row and column currents satisfy Kirchhoff's Current Law at each node.
+
+\subsection{Module 3: Inference Pipeline}
+
+The MNIST module demonstrates how quantized weights and inputs can be routed through a CIM-style MVM pipeline. Final accuracy numbers should only appear in this paper after the training data, quantization policy, inference command, and confusion matrix are reproducible from committed artifacts.
+
+\subsection{Module 4: Peripheral Circuits}
+
+The peripheral-circuit module models educational abstractions of digital-to-analog conversion (DAC), analog-to-digital conversion (ADC), transimpedance amplification (TIA), and write/read paths. Baseline relationships include
+\begin{equation}
+V_{\mathrm{DAC}} = V_{\mathrm{ref}} \frac{\mathrm{code}}{2^N - 1}
+\end{equation}
+and
+\begin{equation}
+V_{\mathrm{out}} = -I_{\mathrm{in}} R_f.
+\end{equation}
+The ADC signal-to-noise ratio reference for an ideal converter is
+\begin{equation}
+\mathrm{SNR}_{\mathrm{ADC}} = 6.02N + 1.76 \ \mathrm{dB}.
+\end{equation}
+
+\subsection{Module 6: EDA Export}
+
+The EDA module exports circuit and design artifacts such as SPICE, Verilog, Liberty, DEF, and LEF where supported by the current implementation. These exports are intended for workflow exploration and validation against syntax, lint, and optional downstream tools. They are not tape-out signoff claims.
+
+\section{Validation Methodology}
+
+Validation in this project is separate from ordinary unit testing. Unit tests show that code paths run. Validation asks whether a model respects published data, physical conservation laws, or an independent tool under a documented scope.
+
+The validation plan has three tiers:
+
+\begin{enumerate}
+  \item Literature comparison against digitized or curated reference data.
+  \item Physics-law checks such as Kirchhoff's Current Law and analytical limit cases.
+  \item Cross-tool comparisons against external tools such as ngspice, CrossSim-style references, or EDA tooling when installed.
+\end{enumerate}
+
+Table~\ref{tab:validation-metrics} lists the validation evidence that should be maintained for the paper.
+
+\input{tables/tbl02_validation_metrics.tex}
+
+\subsection{Hysteresis Literature Comparison}
+
+The current validation direction compares simulated P-E loops against published HZO/HfO$_2$ data, including Park et al. \citep{park2015} and Materlik et al. \citep{materlik2015} contexts. A final paper figure should be generated from committed data and scripts, include residuals, and report RMSE with units and the digitization uncertainty.
+
+\subsection{KCL Conservation}
+
+For crossbar arrays, KCL validation reconstructs cumulative row and column currents from solved device currents and checks current conservation at each node. The paper should report the number of deterministic random arrays, random seed, threshold in amperes, maximum observed residual, and artifact path.
+
+\figplaceholder{KCL residual plot placeholder}{Planned KCL validation figure. The final figure should plot the distribution of maximum residuals across deterministic random arrays and state the pass threshold.}
+
+\subsection{Cross-Tool SPICE Comparison}
+
+SPICE comparison should be included only when a reproducible script exports the same array configuration, runs ngspice or another documented simulator, parses currents, and reports absolute and relative deviation. Missing optional tools should be represented as skipped checks, not silent success.
+
+\section{Comparison to Alternatives}
+
+\input{tables/tbl03_comparison_to_alternatives.tex}
+
+\section{Educational Use Cases}
+
+The primary audience is educational and exploratory. Example use cases include graduate course modules on ferroelectric hysteresis, CIM array non-idealities, peripheral-circuit tradeoffs, and EDA export workflows. The visual nature of the framework is intended to make assumptions inspectable: users should be able to see how changing conductance quantization, parasitics, or circuit settings changes simulated behavior.
+
+\section{Limitations and Future Work}
+
+This project is simulation-only. It does not report new device measurements, tape-out results, or production signoff. Peripheral models are simplified for education. External-tool comparisons depend on installed tools and should be reported as optional checks. Large-array scalability, temperature/variability sweeps, and full physical-design closure remain future work.
+
+Future work should focus on measured-device data integration, stronger cross-tool validation, expanded figure generation from reproducible scripts, and a claim matrix that maps every paper result to a command and artifact.
+
+\section{Conclusion}
+
+\project{} packages ferroelectric hysteresis, crossbar simulation, inference demonstration, peripheral models, EDA export, and documentation into one educational framework. The key contribution is not a new device result, but a public, inspectable software artifact for studying FeCIM concepts.
+
+The paper will be ready for preprint only when its validation figures, numeric claims, and limitations are all tied to reproducible commands. Until then, this LaTeX source should be treated as a living draft that keeps the repository honest about what is proven and what remains planned.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}
