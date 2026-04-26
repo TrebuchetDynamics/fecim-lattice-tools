@@ -187,7 +187,7 @@ Full status: See [status.md](../status.md)
 
 **How:** Using special materials (HZO), we build memory cells that do matrix multiplication using physics (Ohm's Law). Current = Voltage × Conductance, so the current flowing IS the multiplication result.
 
-**Impact:** Potential for 1000× energy savings for AI inference (pending validation).
+**Impact:** Provides a simulator for studying energy and accuracy tradeoffs; any projected gains must be tied to explicit model assumptions and validation evidence.
 
 **Status:** This is an educational simulator. Real devices are in research phase.
 
@@ -202,14 +202,13 @@ See [GLOSSARY.md](GLOSSARY.md) for all terms.
 
 ---
 
-## 🎬 Demo Videos
+## Visual Walkthroughs
 
-Quick visual introductions (see [1-getting-started/demo-videos/](1-getting-started/demo-videos/)):
+Generated screenshots and videos are not tracked in the public source tree. To create a local documentation frame, run:
 
-1. **Hysteresis Loop** (2 min) - How materials remember
-2. **Crossbar Array** (3 min) - How grids compute
-3. **MNIST Recognition** (2 min) - How networks work
-4. **Full Workflow** (5 min) - End-to-end demonstration
+```bash
+go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+```
 
 ---
 

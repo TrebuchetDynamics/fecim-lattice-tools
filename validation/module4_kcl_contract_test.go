@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -14,12 +13,12 @@ type kclConvergencePoint struct {
 }
 
 type kclKvlRecord struct {
-	Name      string  `json:"name"`
-	Size      int     `json:"size"`
-	MaxKCL    float64 `json:"max_kcl_error_A"`
-	MaxKVL    float64 `json:"max_kvl_error_V"`
-	PassKCL   bool    `json:"pass_kcl"`
-	PassKVL   bool    `json:"pass_kvl"`
+	Name    string  `json:"name"`
+	Size    int     `json:"size"`
+	MaxKCL  float64 `json:"max_kcl_error_A"`
+	MaxKVL  float64 `json:"max_kvl_error_V"`
+	PassKCL bool    `json:"pass_kcl"`
+	PassKVL bool    `json:"pass_kvl"`
 }
 
 type kclKvlArtifact struct {
@@ -30,9 +29,8 @@ type kclKvlArtifact struct {
 }
 
 func TestModule4KCLArtifacts_Contract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	convPath := filepath.Join(repoRoot, "validation", "output", "validation", "module4", "kcl_convergence.json")
-	exhPath := filepath.Join(repoRoot, "validation", "output", "validation", "module4", "kcl_kvl_exhaustive.json")
+	convPath := releaseArtifactPath("validation", "output", "validation", "module4", "kcl_convergence.json")
+	exhPath := releaseArtifactPath("validation", "output", "validation", "module4", "kcl_kvl_exhaustive.json")
 
 	convBytes, err := os.ReadFile(convPath)
 	if err != nil {
@@ -88,8 +86,7 @@ func TestModule4KCLArtifacts_Contract(t *testing.T) {
 }
 
 func TestModule4KCLConvergence_BoundaryScalingInvariant(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	convPath := filepath.Join(repoRoot, "validation", "output", "validation", "module4", "kcl_convergence.json")
+	convPath := releaseArtifactPath("validation", "output", "validation", "module4", "kcl_convergence.json")
 
 	convBytes, err := os.ReadFile(convPath)
 	if err != nil {

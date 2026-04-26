@@ -11,8 +11,9 @@ import (
 	sharedval "fecim-lattice-tools/shared/validation"
 )
 
+var senseRegressionDir = releaseArtifactPath("validation", "output", "regression", "module4")
+
 const (
-	senseRegressionDir   = "output/regression/module4"
 	senseGoldenFile      = "sense_chain_4x4.json"
 	updateSenseGoldenEnv = "FECIM_UPDATE_SENSE_GOLDEN"
 )
@@ -86,9 +87,9 @@ func TestSenseChainRegression_4x4(t *testing.T) {
 	}
 
 	params := map[string]interface{}{
-		"rows":    4,
-		"cols":    4,
-		"tia_rf":  sense.TIA.Rf,
+		"rows":     4,
+		"cols":     4,
+		"tia_rf":   sense.TIA.Rf,
 		"tia_vref": sense.TIA.Vref,
 		"tia_vmin": sense.TIA.Vmin,
 		"tia_vmax": sense.TIA.Vmax,

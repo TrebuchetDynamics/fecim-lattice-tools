@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -14,8 +13,7 @@ type module4RootParityContract struct {
 }
 
 func TestModule4RootRegressionParity_MetadataContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	p := filepath.Join(repoRoot, "output", "regression", "module4", "gui_vs_headless_parity.json")
+	p := releaseArtifactPath("output", "regression", "module4", "gui_vs_headless_parity.json")
 	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatalf("read %s: %v", p, err)

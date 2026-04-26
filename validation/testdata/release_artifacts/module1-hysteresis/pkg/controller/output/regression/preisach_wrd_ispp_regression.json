@@ -1,0 +1,63 @@
+{
+  "suite": "headless-wrd-ispp-regression",
+  "material": "Literature Superlattice (Cheema 2020)",
+  "model": "preisach",
+  "timestamp": "1970-01-01T00:00:00Z",
+  "targets": [
+    {
+      "name": "LO",
+      "level": 3
+    },
+    {
+      "name": "MID",
+      "level": 15
+    },
+    {
+      "name": "HI",
+      "level": 27
+    }
+  ],
+  "cases": [
+    {
+      "name": "LO",
+      "target_level": 3,
+      "final_level": 3,
+      "level_error": 0,
+      "converged": true,
+      "reached_done": true,
+      "pulses": 11,
+      "overshoots": 2,
+      "retries": 0,
+      "total_iters": 1260,
+      "final_field_mv_cm": 0
+    },
+    {
+      "name": "MID",
+      "target_level": 15,
+      "final_level": 15,
+      "level_error": 0,
+      "converged": true,
+      "reached_done": true,
+      "pulses": 8,
+      "overshoots": 6,
+      "retries": 0,
+      "total_iters": 1010,
+      "final_field_mv_cm": 0
+    },
+    {
+      "name": "HI",
+      "target_level": 27,
+      "final_level": 27,
+      "level_error": 0,
+      "converged": true,
+      "reached_done": true,
+      "pulses": 10,
+      "overshoots": 0,
+      "retries": 0,
+      "total_iters": 1100,
+      "final_field_mv_cm": 0
+    }
+  ],
+  "all_pass": true,
+  "output_notes": "Set FECIM_REGRESSION_JSON_DIR to control output location. Default is $TMPDIR/fecim-regression."
+}

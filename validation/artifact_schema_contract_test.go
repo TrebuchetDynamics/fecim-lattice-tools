@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -18,16 +17,16 @@ func TestDeterministicArtifactEnvelope_TrackedOutputs(t *testing.T) {
 	}
 
 	paths := []string{
-		"output/write_stats/write_verify_stats_default_hzo.json",
-		"output/write_stats/write_verify_stats_fecim_hzo.json",
-		"output/write_stats/write_verify_stats_literature_superlattice.json",
-		"output/montecarlo/mc_pe_uncertainty_default_hzo.json",
+		releaseArtifactPath("validation", "output", "write_stats", "write_verify_stats_default_hzo.json"),
+		releaseArtifactPath("validation", "output", "write_stats", "write_verify_stats_fecim_hzo.json"),
+		releaseArtifactPath("validation", "output", "write_stats", "write_verify_stats_literature_superlattice.json"),
+		releaseArtifactPath("validation", "output", "montecarlo", "mc_pe_uncertainty_default_hzo.json"),
 	}
 
 	for _, rel := range paths {
 		rel := rel
 		t.Run(rel, func(t *testing.T) {
-			p := filepath.Join(rel)
+			p := rel
 			b, err := os.ReadFile(p)
 			if err != nil {
 				t.Fatalf("read %s: %v", p, err)

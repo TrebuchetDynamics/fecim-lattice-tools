@@ -40,8 +40,7 @@ func readModule2Crossval(t *testing.T, p string) module2CrossvalRecord {
 }
 
 func TestModule2CrossvalBoundaryInvariant_NScaling(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	base := filepath.Join(repoRoot, "validation", "output", "validation", "external")
+	base := releaseArtifactPath("validation", "output", "validation", "external")
 
 	r4 := readModule2Crossval(t, filepath.Join(base, "mvm_numpy_crossval_4x4.json"))
 	r8 := readModule2Crossval(t, filepath.Join(base, "mvm_numpy_crossval_8x8.json"))

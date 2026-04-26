@@ -1,0 +1,54 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-VAL-M1-04",
+  "verdict": "pass",
+  "material_id": "default_hzo",
+  "material": "HZO (Si-doped, Park 2015 midpoint)",
+  "dataset": "default_hzo_pe_mc",
+  "n_trials_pe": 200,
+  "n_trials_ispp": 50,
+  "seed": 42,
+  "sigma_frac": 0.05,
+  "generated_at": "1970-01-01T00:00:00Z",
+  "pr_stats": {
+    "mean": 0.22642870830158057,
+    "std": 0.02198414493992264,
+    "p5": 0.1876449698487142,
+    "p95": 0.2538980371141277,
+    "ci_width_frac": 0.2926001201984112
+  },
+  "ec_stats": {
+    "mean": 112932890.4216887,
+    "std": 5695163.2720653005,
+    "p5": 103699750.84150073,
+    "p95": 122698217.20848122,
+    "ci_width_frac": 0.16822792984435866
+  },
+  "area_stats": {
+    "mean": 117438956.23368078,
+    "std": 6134584.571319722,
+    "p5": 107988142.27375165,
+    "p95": 127940175.44811869,
+    "ci_width_frac": 0.16989280060243686
+  },
+  "seed_determinism_ok": true,
+  "metrics": {
+    "ci_width_pr": 0.2926001201984112,
+    "ci_width_ec": 0.16822792984435866,
+    "ci_width_area": 0.16989280060243686,
+    "seed_determinism_ok": true,
+    "ispp_convergence_frac": 0
+  },
+  "uncertainty": {
+    "method": "monte_carlo",
+    "confidence": 0.9,
+    "sample_size": 200
+  },
+  "thresholds": {
+    "ci_width_max": 0.6,
+    "ispp_convergence_min": 0.9
+  }
+}

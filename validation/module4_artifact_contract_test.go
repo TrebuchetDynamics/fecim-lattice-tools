@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -20,10 +19,8 @@ func TestModule4RegressionArtifacts_DeterministicMetadataContract(t *testing.T) 
 		Pass          bool   `json:"pass"`
 	}
 
-	repoRoot := filepath.Clean(filepath.Join(".."))
-
 	t.Run("gui_vs_headless_parity", func(t *testing.T) {
-		p := filepath.Join(repoRoot, "module4-circuits", "pkg", "gui", "output", "regression", "module4", "gui_vs_headless_parity.json")
+		p := releaseArtifactPath("module4-circuits", "pkg", "gui", "output", "regression", "module4", "gui_vs_headless_parity.json")
 		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("read %s: %v", p, err)
@@ -44,7 +41,7 @@ func TestModule4RegressionArtifacts_DeterministicMetadataContract(t *testing.T) 
 	})
 
 	t.Run("write_boundary_integrity", func(t *testing.T) {
-		p := filepath.Join(repoRoot, "module4-circuits", "pkg", "arraysim", "output", "regression", "module4", "write_boundary_integrity.json")
+		p := releaseArtifactPath("module4-circuits", "pkg", "arraysim", "output", "regression", "module4", "write_boundary_integrity.json")
 		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("read %s: %v", p, err)

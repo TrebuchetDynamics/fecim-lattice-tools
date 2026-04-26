@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -38,7 +37,6 @@ func mustReadBoundaryContract(t *testing.T, p string) boundaryRegressionContract
 }
 
 func TestRegressionBoundaryConsistency_RootVsControllerModule1(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	cases := []struct {
 		name string
 		root string
@@ -46,13 +44,13 @@ func TestRegressionBoundaryConsistency_RootVsControllerModule1(t *testing.T) {
 	}{
 		{
 			name: "lk_default_hzo",
-			root: filepath.Join(repoRoot, "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
-			ctl:  filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
+			root: releaseArtifactPath("output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
+			ctl:  releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
 		},
 		{
 			name: "preisach_default_hzo",
-			root: filepath.Join(repoRoot, "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
-			ctl:  filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
+			root: releaseArtifactPath("output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
+			ctl:  releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
 		},
 	}
 

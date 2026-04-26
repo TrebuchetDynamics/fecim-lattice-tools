@@ -1,0 +1,65 @@
+{
+  "schema_version": "v1",
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "commit": "reproducible-build",
+  "gate": "pr",
+  "test_id": "RG-VAL-M1-03",
+  "verdict": "pass",
+  "material_id": "fecim_hzo",
+  "material": "FeCIM HZO",
+  "dataset": "fecim_hzo_ispp_write_verify",
+  "num_levels": 30,
+  "generated_at": "1970-01-01T00:00:00Z",
+  "targets": [
+    {
+      "target": 5,
+      "final_level": 5,
+      "converged": true,
+      "total_pulses": 8,
+      "overshoot_count": 0,
+      "stuck_count": 0,
+      "guard_pulses": 0,
+      "retry_count": 0,
+      "cumulative_fluence": 263000
+    },
+    {
+      "target": 15,
+      "final_level": 15,
+      "converged": true,
+      "total_pulses": 8,
+      "overshoot_count": 2,
+      "stuck_count": 0,
+      "guard_pulses": 0,
+      "retry_count": 0,
+      "cumulative_fluence": 250250
+    },
+    {
+      "target": 25,
+      "final_level": 25,
+      "converged": true,
+      "total_pulses": 22,
+      "overshoot_count": 0,
+      "stuck_count": 0,
+      "guard_pulses": 0,
+      "retry_count": 0,
+      "cumulative_fluence": 732000
+    }
+  ],
+  "all_converge": true,
+  "metrics": {
+    "all_converge": true,
+    "max_pulses_observed": 22,
+    "max_overshoots_observed": 2
+  },
+  "uncertainty": {
+    "method": "none",
+    "confidence": 1,
+    "sample_size": 3
+  },
+  "thresholds": {
+    "max_pulses_per_target": 200,
+    "max_overshoots": 30,
+    "max_stuck_per_target": 5,
+    "max_guard_per_target": 10
+  }
+}

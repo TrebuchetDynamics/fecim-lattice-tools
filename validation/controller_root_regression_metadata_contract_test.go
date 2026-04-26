@@ -15,10 +15,9 @@ type controllerRootRegressionContract struct {
 }
 
 func TestControllerRootRegressionArtifacts_MetadataContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	paths := []string{
-		filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "lk_wrd_ispp_regression.json"),
-		filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "preisach_wrd_ispp_regression.json"),
+		releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "lk_wrd_ispp_regression.json"),
+		releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "preisach_wrd_ispp_regression.json"),
 	}
 
 	for _, p := range paths {

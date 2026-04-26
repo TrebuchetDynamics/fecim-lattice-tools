@@ -197,7 +197,7 @@ go test -bench=. ./module2-crossbar/pkg/crossbar
 | `module1-hysteresis/pkg/controller/*_test.go` | ISPP write controller (9 files) |
 | `cmd/fecim-lattice-tools/mode_engine_matrix_test.go` | Headless ISPP (9 materials × 2 engines) |
 | `cmd/fecim-lattice-tools/mode_preisach_target_progression_test.go` | Preisach state targeting |
-| `module4-circuits/pkg/arraysim/output/regression/` | Array simulation regression |
+| `module4-circuits/pkg/arraysim/*_test.go` | Array simulation regression |
 | `shared/physics/*_test.go` | Physics model unit tests |
 | `shared/peripherals/*_test.go` | Peripheral model unit tests |
 

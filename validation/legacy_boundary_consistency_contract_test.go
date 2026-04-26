@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -52,7 +51,6 @@ func readLegacyBoundaryContract(t *testing.T, p string) legacyBoundaryContract {
 }
 
 func TestLegacyRegressionBoundaryConsistency_RootVsController(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	cases := []struct {
 		name string
 		root string
@@ -60,13 +58,13 @@ func TestLegacyRegressionBoundaryConsistency_RootVsController(t *testing.T) {
 	}{
 		{
 			name: "lk_legacy",
-			root: filepath.Join(repoRoot, "output", "regression", "lk_wrd_ispp_regression.json"),
-			ctl:  filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "lk_wrd_ispp_regression.json"),
+			root: releaseArtifactPath("output", "regression", "lk_wrd_ispp_regression.json"),
+			ctl:  releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "lk_wrd_ispp_regression.json"),
 		},
 		{
 			name: "preisach_legacy",
-			root: filepath.Join(repoRoot, "output", "regression", "preisach_wrd_ispp_regression.json"),
-			ctl:  filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "preisach_wrd_ispp_regression.json"),
+			root: releaseArtifactPath("output", "regression", "preisach_wrd_ispp_regression.json"),
+			ctl:  releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "preisach_wrd_ispp_regression.json"),
 		},
 	}
 

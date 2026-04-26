@@ -16,12 +16,11 @@ type module1RegressionContract struct {
 }
 
 func TestModule1RegressionArtifacts_MetadataContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	paths := []string{
-		filepath.Join(repoRoot, "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
-		filepath.Join(repoRoot, "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
-		filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
-		filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "lk_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "module1", "preisach_wrd_ispp_regression_default_hzo.json"),
 	}
 
 	for _, p := range paths {

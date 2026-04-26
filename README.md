@@ -2,7 +2,7 @@
 
 **A scientific desktop application for ferroelectric compute-in-memory (FeCIM) research and education.** Simulates HZO/PZT/BTO ferroelectric devices across 7 integrated modules: hysteresis (Preisach + Landau-Khalatnikov), crossbar arrays with IR drop and sneak paths, MNIST inference at 80% accuracy through the full CIM pipeline, peripheral circuits (DAC/ADC/TIA), technology comparison, EDA export (SPICE/Verilog/Liberty/DEF/LEF), and interactive documentation.
 
-Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 — with core parameters cited or explicitly marked educational. Verified by 3717+ automated tests across 70 packages, Kirchhoff-law current verification, and cross-tool comparison harnesses. Reproducible: clone, run one script, verify internal model claims.
+Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 — with core parameters cited or explicitly marked educational. Verified by automated tests, Kirchhoff-law current checks, and cross-tool comparison harnesses. Reproducible: clone, run one script, verify internal model claims.
 
 **For:** Physics/EE researchers, graduate students, device engineers working on ferroelectric memory, neuromorphic computing, or compute-in-memory architectures.
 
@@ -10,13 +10,8 @@ Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Gu
 
 ---
 
-## Badges
-
-<!-- Replace with repo-specific badges when publishing/releasing -->
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Coverage](https://img.shields.io/badge/coverage-placeholder-lightgrey)](#)
 [![Go](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go)](https://go.dev)
-[![Fyne](https://img.shields.io/badge/Fyne-2.5.3%2B-5f5fff)](https://fyne.io)
+[![Fyne](https://img.shields.io/badge/Fyne-2.7.2-5f5fff)](https://fyne.io)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 ---
@@ -26,7 +21,6 @@ Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Gu
 - [Features (7 Modules)](#features-7-modules)
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
-- [Screenshot Placeholders](#screenshot-placeholders)
 - [Physics Models Overview](#physics-models-overview)
 - [Dependencies](#dependencies)
 - [Repository Layout](#repository-layout)
@@ -123,28 +117,6 @@ bash scripts/reproduce_validation.sh
 # bash scripts/reproduce_validation.sh > artifacts/repro-report.txt 2>&1
 ```
 
----
-
-## Screenshot Placeholders
-
-> Replace these with actual captures from each module.
-
-- `docs/assets/screenshots/module1-hysteresis.png`
-- `docs/assets/screenshots/module2-crossbar.png`
-- `docs/assets/screenshots/module3-mnist.png`
-- `docs/assets/screenshots/module4-circuits.png`
-- `docs/assets/screenshots/module5-comparison.png`
-- `docs/assets/screenshots/module6-eda.png`
-- `docs/assets/screenshots/module7-docs.png`
-
-Markdown template:
-
-```md
-![Module 1 Hysteresis Screenshot](docs/assets/screenshots/module1-hysteresis.png)
-```
-
----
-
 ## Physics Models Overview
 
 ### 1) Preisach Ferroelectric Model
@@ -176,7 +148,7 @@ Markdown template:
 ## Dependencies
 
 - **Go**: `1.24+`
-- **Fyne**: `2.5.3+`
+- **Fyne**: `2.7.2`
 
 See also:
 - [`go.mod`](./go.mod)

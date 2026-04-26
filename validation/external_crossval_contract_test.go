@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -18,11 +17,10 @@ type externalCrossvalRecord struct {
 }
 
 func TestExternalMVMCrossvalArtifacts_Contract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	paths := []string{
-		filepath.Join(repoRoot, "validation", "output", "validation", "external", "mvm_numpy_crossval_4x4.json"),
-		filepath.Join(repoRoot, "validation", "output", "validation", "external", "mvm_numpy_crossval_8x8.json"),
-		filepath.Join(repoRoot, "validation", "output", "validation", "external", "mvm_numpy_crossval_16x16.json"),
+		releaseArtifactPath("validation", "output", "validation", "external", "mvm_numpy_crossval_4x4.json"),
+		releaseArtifactPath("validation", "output", "validation", "external", "mvm_numpy_crossval_8x8.json"),
+		releaseArtifactPath("validation", "output", "validation", "external", "mvm_numpy_crossval_16x16.json"),
 	}
 	seen := map[int]bool{}
 	for _, p := range paths {

@@ -70,7 +70,7 @@ After installation, explore the documentation:
 
 ### For Learners
 1. Read [ELI5 Overview](../2-learn/eli5-overview.md)
-2. Watch [demo videos](demo-videos/)
+2. Run the app with the [Quick Start](../../README.md#quick-start)
 3. Try [Module 1: Hysteresis](../2-learn/module1-hysteresis/)
 4. Progress through modules 2-7
 
@@ -95,7 +95,6 @@ After installation, explore the documentation:
 | [installation.md](installation.md) | Detailed install instructions | 10 min |
 | [runbook.md](runbook.md) | Operations & troubleshooting | 15 min |
 | [cli-reference.md](cli-reference.md) | Command-line options | 5 min |
-| [demo-videos/](demo-videos/) | Visual walkthroughs | 15 min |
 
 ---
 
@@ -158,17 +157,13 @@ Full reference: [cli-reference.md](cli-reference.md)
 
 ---
 
-## 🎥 Video Tutorials
+## Local Demo Frames
 
-Visual guides for each module (see [demo-videos/](demo-videos/)):
+Screenshots and videos are generated artifacts, so they are not tracked in the public source tree. To generate a local documentation frame:
 
-| Video | Duration | Topic |
-|-------|----------|-------|
-| `01-hysteresis-loop.mp4` | 2 min | P-E curves and materials |
-| `02-crossbar-mvm.mp4` | 3 min | Matrix multiplication |
-| `03-mnist-inference.mp4` | 2 min | Neural network demo |
-| `04-circuits-dac-adc.mp4` | 3 min | Peripheral circuits |
-| `05-full-workflow.mp4` | 5 min | End-to-end walkthrough |
+```bash
+go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+```
 
 ---
 

@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -21,8 +20,7 @@ type module4KCLScenarioArtifact struct {
 }
 
 func TestModule4KCLKVLScenarioFamily_CompletenessContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	p := filepath.Join(repoRoot, "validation", "output", "validation", "module4", "kcl_kvl_exhaustive.json")
+	p := releaseArtifactPath("validation", "output", "validation", "module4", "kcl_kvl_exhaustive.json")
 	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatalf("read %s: %v", p, err)
@@ -36,18 +34,18 @@ func TestModule4KCLKVLScenarioFamily_CompletenessContract(t *testing.T) {
 	}
 
 	need := map[string]bool{
-		"uniform_4x4":      false,
-		"uniform_8x8":      false,
-		"uniform_16x16":    false,
-		"uniform_32x32":    false,
-		"random_4x4":       false,
-		"random_8x8":       false,
-		"random_16x16":     false,
-		"hi_contrast_8x8":  false,
+		"uniform_4x4":       false,
+		"uniform_8x8":       false,
+		"uniform_16x16":     false,
+		"uniform_32x32":     false,
+		"random_4x4":        false,
+		"random_8x8":        false,
+		"random_16x16":      false,
+		"hi_contrast_8x8":   false,
 		"hi_contrast_16x16": false,
-		"gradient_8x8":     false,
-		"gradient_16x16":   false,
-		"half_select_8x8":  false,
+		"gradient_8x8":      false,
+		"gradient_16x16":    false,
+		"half_select_8x8":   false,
 		"half_select_16x16": false,
 		"all_one_write_8x8": false,
 	}

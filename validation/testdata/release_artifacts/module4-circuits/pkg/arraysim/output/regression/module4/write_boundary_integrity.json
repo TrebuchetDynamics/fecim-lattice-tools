@@ -1,0 +1,22 @@
+{
+  "TestTierBWriteBoundaryIntegrity_NoDirectInternalAssignmentPath": {
+    "version": "v1",
+    "generated_unix": 0,
+    "test_name": "TestTierBWriteBoundaryIntegrity_NoDirectInternalAssignmentPath",
+    "max_node_delta": 0,
+    "top_node_delta": 0,
+    "far_end_shift": 0.19821389335359485,
+    "middle_shift": 0.11728495253479332,
+    "pass": true
+  },
+  "TestTierBWriteBoundaryIntegrity_TopInjectedAndSolverDerivedInternals": {
+    "far_end_shift": 0,
+    "generated_unix": 0,
+    "max_node_delta": 1.168284885499915e-9,
+    "middle_shift": 0,
+    "pass": true,
+    "test_name": "TestTierBWriteBoundaryIntegrity_TopInjectedAndSolverDerivedInternals",
+    "top_node_delta": 0.19614832146422967,
+    "version": "v1"
+  }
+}

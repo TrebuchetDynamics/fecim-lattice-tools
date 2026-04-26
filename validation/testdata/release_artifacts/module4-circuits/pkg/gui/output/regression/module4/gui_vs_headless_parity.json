@@ -1,0 +1,283 @@
+{
+  "version": "v1",
+  "profile": "pr",
+  "generated_unix": 0,
+  "records": [
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "0T1R",
+      "step_type": "WRITE_STEP",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "write",
+      "additional_metadata": "dacCode=21"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "fecim_hzo",
+      "scenario": "1T1R",
+      "step_type": "WRITE_STEP",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "write",
+      "additional_metadata": "dacCode=21"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "READ",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "0T1R",
+      "step_type": "WRITE_STEP",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "write",
+      "additional_metadata": "dacCode=9"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "READ",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "delta_kind": "voltage"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0.001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "current_ua"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "COMPUTE",
+      "tolerance": 0,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "level"
+    },
+    {
+      "material": "literature_superlattice",
+      "scenario": "1T1R",
+      "step_type": "WRITE_STEP",
+      "tolerance": 0.000001,
+      "max_observed_delta": 0,
+      "pass": true,
+      "failing_index": -1,
+      "delta_kind": "write",
+      "additional_metadata": "dacCode=9"
+    }
+  ]
+}

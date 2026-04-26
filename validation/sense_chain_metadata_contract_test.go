@@ -3,13 +3,11 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestSenseChainRegressionArtifact_MetadataContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	p := filepath.Join(repoRoot, "validation", "output", "regression", "module4", "sense_chain_4x4.json")
+	p := releaseArtifactPath("validation", "output", "regression", "module4", "sense_chain_4x4.json")
 	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatalf("read %s: %v", p, err)

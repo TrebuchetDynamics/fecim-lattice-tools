@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -13,10 +12,10 @@ type module1FamilyCase struct {
 }
 
 type module1FamilyRecord struct {
-	Suite     string            `json:"suite"`
-	Material  string            `json:"material"`
-	Model     string            `json:"model"`
-	Timestamp string            `json:"timestamp"`
+	Suite     string              `json:"suite"`
+	Material  string              `json:"material"`
+	Model     string              `json:"model"`
+	Timestamp string              `json:"timestamp"`
 	Cases     []module1FamilyCase `json:"cases"`
 }
 
@@ -60,7 +59,6 @@ func readModule1FamilyRecord(t *testing.T, p string) module1FamilyRecord {
 }
 
 func TestModule1RegressionFamily_CompletenessAndBoundaryConsistency(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	families := []struct {
 		model    string
 		material string
@@ -77,8 +75,8 @@ func TestModule1RegressionFamily_CompletenessAndBoundaryConsistency(t *testing.T
 		name := f.model + "_" + f.material
 		t.Run(name, func(t *testing.T) {
 			file := f.model + "_wrd_ispp_regression_" + f.material + ".json"
-			rootPath := filepath.Join(repoRoot, "output", "regression", "module1", file)
-			ctlPath := filepath.Join(repoRoot, "module1-hysteresis", "pkg", "controller", "output", "regression", "module1", file)
+			rootPath := releaseArtifactPath("output", "regression", "module1", file)
+			ctlPath := releaseArtifactPath("module1-hysteresis", "pkg", "controller", "output", "regression", "module1", file)
 
 			rootRec := readModule1FamilyRecord(t, rootPath)
 			ctlRec := readModule1FamilyRecord(t, ctlPath)

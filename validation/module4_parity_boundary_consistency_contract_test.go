@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -38,9 +37,8 @@ func readModule4ParityContract(t *testing.T, p string) module4ParityContract {
 }
 
 func TestModule4ParityBoundaryConsistency_RootVsModulePath(t *testing.T) {
-	repoRoot := filepath.Clean("..")
-	rootPath := filepath.Join(repoRoot, "output", "regression", "module4", "gui_vs_headless_parity.json")
-	modulePath := filepath.Join(repoRoot, "module4-circuits", "pkg", "gui", "output", "regression", "module4", "gui_vs_headless_parity.json")
+	rootPath := releaseArtifactPath("output", "regression", "module4", "gui_vs_headless_parity.json")
+	modulePath := releaseArtifactPath("module4-circuits", "pkg", "gui", "output", "regression", "module4", "gui_vs_headless_parity.json")
 
 	rootRec := readModule4ParityContract(t, rootPath)
 	moduleRec := readModule4ParityContract(t, modulePath)

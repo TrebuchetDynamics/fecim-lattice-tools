@@ -1,0 +1,39 @@
+{
+  "test_id": "polydomain_domain_count_convergence",
+  "material": "HZO (Si-doped, Park 2015 midpoint)",
+  "seed": 99,
+  "results": [
+    {
+      "domain_count": 5,
+      "pr_c_m2": -0.22761371667240288,
+      "ec_v_m": -79251018.30349572
+    },
+    {
+      "domain_count": 10,
+      "pr_c_m2": -0.22794354635126152,
+      "ec_v_m": -61719370.799101755
+    },
+    {
+      "domain_count": 20,
+      "pr_c_m2": -0.2280988137265047,
+      "ec_v_m": -61750003.080815025
+    },
+    {
+      "domain_count": 50,
+      "pr_c_m2": -0.2285494766921574,
+      "ec_v_m": -63693061.94110172
+    },
+    {
+      "domain_count": 100,
+      "pr_c_m2": -0.2279071900923392,
+      "ec_v_m": -62995703.61175247
+    },
+    {
+      "domain_count": 200,
+      "pr_c_m2": -0.22810526596503372,
+      "ec_v_m": -62018483.26526835
+    }
+  ],
+  "converged": true,
+  "delta_pr_frac": 0.0008683529152934278
+}

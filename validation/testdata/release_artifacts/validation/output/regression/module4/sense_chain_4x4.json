@@ -1,0 +1,40 @@
+{
+  "version": "v1",
+  "scenario": "sense_chain_4x4",
+  "description": "Golden sense chain regression: 4x4 MVM through TIA+ADC with fixed conductance matrix and input voltages.",
+  "generated_utc": "1970-01-01T00:00:00Z",
+  "parameters": {
+    "adc_bits": 4,
+    "adc_vmax": 1,
+    "adc_vmin": 0,
+    "cols": 4,
+    "rows": 4,
+    "tia_rf": 10000,
+    "tia_vmax": 1,
+    "tia_vmin": 0,
+    "tia_vref": 0.5
+  },
+  "results": {
+    "row_currents": [
+      0.0000206,
+      0.0000276,
+      0.0000339,
+      0.000037699999999999995
+    ],
+    "tia_voltages": [
+      0.706,
+      0.776,
+      0.839,
+      0.877
+    ],
+    "adc_codes": [
+      11,
+      12,
+      13,
+      13
+    ],
+    "current_range_min": -0.00005,
+    "current_range_max": 0.00005,
+    "current_lsb": 0.000006666666666666667
+  }
+}

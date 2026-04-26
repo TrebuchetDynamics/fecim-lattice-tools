@@ -4,6 +4,12 @@
 *.dll
 *.so
 *.dylib
+/crossbar
+/hysteresis
+/gen_golden_loops
+/module1-hysteresis/hysteresis
+/module2-crossbar/inference
+/module3-mnist/mnist
 
 # Test binaries
 *.test
@@ -15,6 +21,7 @@ shared/logging/
 /fecim-lattice-tools
 recordings/
 screenshots/
+20??-??-??_*.png
 train-network
 train-single-layer
 !module3-mnist/cmd/train-network/main_test.go
@@ -60,7 +67,15 @@ skills/
 # Generated exports and validation output
 /exports/
 cmd/fecim-lattice-tools/exports/
+/docs/1-getting-started/demo-videos/
+/output/
 /output/validation/
+/validation/output/
+/validation/literature/output/
+/shared/physics/output/
+/module1-hysteresis/pkg/controller/output/
+/module4-circuits/pkg/arraysim/output/
+/module4-circuits/pkg/gui/output/
 
 # Validation report artifacts (generated per-run)
 validation/calibration/*.json
@@ -84,7 +99,6 @@ cmd/fecim-lattice-tools/data/
 # Widget regression output
 shared/widgets/output/
 output/regression/
-module1-hysteresis/pkg/controller/output/
 web/fecim.wasm
 cmd/calibrate-preisach/
 cmd/gen-literature-loops/

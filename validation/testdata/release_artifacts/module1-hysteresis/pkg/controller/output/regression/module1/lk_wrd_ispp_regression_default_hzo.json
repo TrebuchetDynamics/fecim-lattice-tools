@@ -1,0 +1,78 @@
+{
+  "suite": "headless-wrd-ispp-regression",
+  "material": "HZO (Si-doped, Park 2015 midpoint) (default_hzo)",
+  "model": "landau-khalatnikov",
+  "timestamp": "1970-01-01T00:00:00Z",
+  "material_snapshot": {
+    "material_id": "default_hzo",
+    "material_name": "HZO (Si-doped, Park 2015 midpoint)",
+    "ec_v_per_m": 120000000,
+    "ec_mv_cm": 1.2,
+    "ps_c_per_m2": 0.3,
+    "ps_uc_per_cm2": 30,
+    "pr_c_per_m2": 0.245,
+    "pr_uc_per_cm2": 24.5,
+    "thickness_m": 1e-8,
+    "thickness_nm": 10,
+    "gmin_s": 0.000001,
+    "gmax_s": 0.0001,
+    "target_range_frac": 0.9
+  },
+  "targets": [
+    {
+      "name": "LO",
+      "level": 5
+    },
+    {
+      "name": "MID",
+      "level": 15
+    },
+    {
+      "name": "HI",
+      "level": 27
+    }
+  ],
+  "cases": [
+    {
+      "name": "LO",
+      "target_level": 5,
+      "final_level": 27,
+      "level_error": 22,
+      "converged": false,
+      "reached_done": true,
+      "pulses": 60,
+      "overshoots": 0,
+      "retries": 1,
+      "total_iters": 217,
+      "final_field_mv_cm": 0
+    },
+    {
+      "name": "MID",
+      "target_level": 15,
+      "final_level": 27,
+      "level_error": 12,
+      "converged": false,
+      "reached_done": true,
+      "pulses": 60,
+      "overshoots": 0,
+      "retries": 1,
+      "total_iters": 279,
+      "final_field_mv_cm": 0
+    },
+    {
+      "name": "HI",
+      "target_level": 27,
+      "final_level": 4,
+      "level_error": -23,
+      "converged": false,
+      "reached_done": true,
+      "pulses": 60,
+      "overshoots": 0,
+      "retries": 1,
+      "total_iters": 217,
+      "final_field_mv_cm": 0
+    }
+  ],
+  "all_pass": true,
+  "output_notes": "LK single-domain is expected to miss some intermediate targets; suite enforces bounded pulses/overshoots and deterministic completion."
+}

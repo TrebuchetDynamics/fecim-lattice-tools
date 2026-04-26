@@ -19,6 +19,8 @@ Generated outputs may not be tracked. Generated outputs include:
 - validation output, benchmark output, and exported reports
 - generated EDA and export files unless they are intentionally curated sample inputs or fixtures
 
+Deterministic validation fixtures that support tests may be tracked only under `testdata/` paths. They must not remain in runtime output directories such as `output/`, `validation/output/`, or module-local `output/` trees.
+
 ## Disallowed Material
 - `docs/archive/**`
 - `docs/4-research/internal-analysis/**`
@@ -27,5 +29,6 @@ Generated outputs may not be tracked. Generated outputs include:
 - `docs/4-research/tour-group-ironlattice-research.md`
 - `docs/4-research/superlattice-material-analysis.md`
 - Generated build or run artifacts such as binaries, logs, screenshots, recordings, and export output.
+- Runtime validation output directories outside `testdata/`, including root `output/`, `validation/output/`, and module-local `output/` trees.
 - Personal internal draft material, research planning, or restricted access/restricted material.
 - Third-party PDFs without explicit redistribution evidence recorded in the audit.

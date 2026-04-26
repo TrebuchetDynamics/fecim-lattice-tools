@@ -1,0 +1,27 @@
+[
+  {
+    "size": 4,
+    "max_kcl_A": 5.421010862427522e-20,
+    "expected_O_N2_eps": 3.52e-15
+  },
+  {
+    "size": 8,
+    "max_kcl_A": 2.168404344971009e-19,
+    "expected_O_N2_eps": 1.408e-14
+  },
+  {
+    "size": 16,
+    "max_kcl_A": 8.673617379884035e-19,
+    "expected_O_N2_eps": 5.632e-14
+  },
+  {
+    "size": 32,
+    "max_kcl_A": 6.938893903907228e-18,
+    "expected_O_N2_eps": 2.2528e-13
+  },
+  {
+    "size": 64,
+    "max_kcl_A": 2.7755575615628914e-17,
+    "expected_O_N2_eps": 9.0112e-13
+  }
+]

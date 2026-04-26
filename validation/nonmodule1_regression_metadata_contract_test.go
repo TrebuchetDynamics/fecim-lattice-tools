@@ -15,14 +15,13 @@ type nonModule1RegressionContract struct {
 }
 
 func TestNonModule1RegressionArtifacts_MetadataContract(t *testing.T) {
-	repoRoot := filepath.Clean("..")
 	paths := []string{
-		filepath.Join(repoRoot, "output", "regression", "lk_wrd_ispp_regression_default_hzo.json"),
-		filepath.Join(repoRoot, "output", "regression", "lk_wrd_ispp_regression_fecim_hzo.json"),
-		filepath.Join(repoRoot, "output", "regression", "lk_wrd_ispp_regression_literature_superlattice.json"),
-		filepath.Join(repoRoot, "output", "regression", "preisach_wrd_ispp_regression_default_hzo.json"),
-		filepath.Join(repoRoot, "output", "regression", "preisach_wrd_ispp_regression_fecim_hzo.json"),
-		filepath.Join(repoRoot, "output", "regression", "preisach_wrd_ispp_regression_literature_superlattice.json"),
+		releaseArtifactPath("output", "regression", "lk_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("output", "regression", "lk_wrd_ispp_regression_fecim_hzo.json"),
+		releaseArtifactPath("output", "regression", "lk_wrd_ispp_regression_literature_superlattice.json"),
+		releaseArtifactPath("output", "regression", "preisach_wrd_ispp_regression_default_hzo.json"),
+		releaseArtifactPath("output", "regression", "preisach_wrd_ispp_regression_fecim_hzo.json"),
+		releaseArtifactPath("output", "regression", "preisach_wrd_ispp_regression_literature_superlattice.json"),
 	}
 
 	for _, p := range paths {

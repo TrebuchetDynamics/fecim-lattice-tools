@@ -21,9 +21,24 @@ DISALLOWED_PATHS = (
 GENERATED_PATH_PREFIXES = (
     "artifacts/",
     "exports/",
-    "output/validation/",
+    "output/",
     "recordings/",
     "screenshots/",
+    "docs/1-getting-started/demo-videos/",
+    "validation/output/",
+    "validation/literature/output/",
+    "shared/physics/output/",
+    "module1-hysteresis/pkg/controller/output/",
+    "module4-circuits/pkg/arraysim/output/",
+    "module4-circuits/pkg/gui/output/",
+)
+GENERATED_EXACT_PATHS = (
+    "crossbar",
+    "hysteresis",
+    "gen_golden_loops",
+    "module1-hysteresis/hysteresis",
+    "module2-crossbar/inference",
+    "module3-mnist/mnist",
 )
 BAN_RE = re.compile(r"restricted|under nda|internal repo=|internal draft", re.IGNORECASE)
 SCAN_ROOTS = (
@@ -77,6 +92,8 @@ def load_pdf_decisions() -> dict[str, str]:
 
 
 def is_generated_output(path: str) -> bool:
+    if path in GENERATED_EXACT_PATHS:
+        return True
     if path.startswith(GENERATED_PATH_PREFIXES):
         return True
     if path.startswith("logs/"):
@@ -84,6 +101,10 @@ def is_generated_output(path: str) -> bool:
     if "/logs/" in path:
         return True
     if path.endswith(".log"):
+        return True
+    if path.endswith(".mp4"):
+        return True
+    if re.match(r"\d{4}-\d{2}-\d{2}.*\.png$", path):
         return True
     return False
 
