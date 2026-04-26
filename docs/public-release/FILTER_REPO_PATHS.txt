@@ -331,8 +331,8 @@ validation/literature/_incoming/pzt_fig2_crop.png
 validation/literature/_incoming/pzt_pe_loop_crop.png
 validation/literature/_incoming/pzt_nano14050432.pdf
 docs/superpowers/
-docs/research-papers/external-research/
-docs/4-research/papers/external-research/
+docs/research-papers/tourlab/
+docs/4-research/papers/tourlab/
 docs/4-research/papers/DOWNLOAD_PLAN.md
 docs/4-research/opensource-tools/research_notes_final.md
 demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go

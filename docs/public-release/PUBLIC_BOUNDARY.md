@@ -29,8 +29,8 @@ Deterministic validation fixtures that support tests may be tracked only under `
 - `docs/4-research/tour-group-ironlattice-research.md`
 - `docs/4-research/superlattice-material-analysis.md`
 - `docs/superpowers/**`
-- `docs/research-papers/external-research/**`
-- `docs/4-research/papers/external-research/**`
+- `docs/research-papers/tourlab/**`
+- `docs/4-research/papers/tourlab/**`
 - `demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
 - `module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
 - `docs/4-research/papers/DOWNLOAD_PLAN.md`
@@ -39,5 +39,5 @@ Deterministic validation fixtures that support tests may be tracked only under `
 - Repo-local test logs such as `module1-hysteresis/test_output*.txt`
 - Generated build or run artifacts such as binaries, logs, screenshots, recordings, and export output.
 - Runtime validation output directories outside `testdata/`, including root `output/`, `validation/output/`, and module-local `output/` trees.
-- Personal internal draft material, research planning, or restricted access/restricted material.
+- Personal roleplay material, outreach planning, or NDA/confidential material.
 - Third-party PDFs without explicit redistribution evidence recorded in the audit.

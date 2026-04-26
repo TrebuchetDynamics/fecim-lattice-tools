@@ -18,8 +18,8 @@ DISALLOWED_PATHS = (
     "docs/4-research/transcripts/ironlattice-youtube-script.md",
     "docs/4-research/tour-group-ironlattice-research.md",
     "docs/4-research/superlattice-material-analysis.md",
-    "docs/research-papers/external-research/",
-    "docs/4-research/papers/external-research/",
+    "docs/research-papers/tourlab/",
+    "docs/4-research/papers/tourlab/",
     "docs/4-research/papers/DOWNLOAD_PLAN.md",
     "docs/4-research/opensource-tools/research_notes_final.md",
     "demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go",
@@ -51,10 +51,10 @@ GENERATED_EXACT_PATHS = (
     "module3-mnist/mnist",
 )
 BAN_RE = re.compile(
-    r"restricted|under nda|\bnda\b|internal repo\s*=|internal draft|"
-    r"internal draft|research planning|research planning|public summary candidate|"
-    r"james\s+tour|external-research|rice university|investor|technical briefing|technical briefing|"
-    r"active benchmark domain|scenario modeling",
+    r"confidential|under nda|\bnda\b|private repo\s*=|fictional roleplay|"
+    r"personal roleplay|contact-strategy|outreach planning|recommended email enhancement|"
+    r"james\s+tour|tourlab|rice university|investor|investment pitch|investor pitch|"
+    r"highly fundable|premium pricing",
     re.IGNORECASE,
 )
 SCAN_ROOTS = (
