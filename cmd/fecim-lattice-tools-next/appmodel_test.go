@@ -15,8 +15,11 @@ func TestDefaultAppSpecNamesFutureDefaultShell(t *testing.T) {
 	if spec.Command != "fecim-lattice-tools-next" {
 		t.Fatalf("Command = %q, want fecim-lattice-tools-next", spec.Command)
 	}
-	if spec.Width < 1200 || spec.Height < 800 {
-		t.Fatalf("unexpected window size: %dx%d", spec.Width, spec.Height)
+	if spec.Width != 1400 {
+		t.Fatalf("Width = %d, want 1400", spec.Width)
+	}
+	if spec.Height != 900 {
+		t.Fatalf("Height = %d, want 900", spec.Height)
 	}
 }
 
@@ -35,8 +38,14 @@ func TestBuildPlaceholderPortsCoversAllKnownDescriptors(t *testing.T) {
 			t.Fatalf("port[%d] descriptor = %#v, want %#v", i, got, want)
 		}
 		snapshot := port.Snapshot()
+		if snapshot.Descriptor != want {
+			t.Fatalf("port[%d] snapshot descriptor = %#v, want %#v", i, snapshot.Descriptor, want)
+		}
 		if len(snapshot.Sections) == 0 {
 			t.Fatalf("port[%d] snapshot has no sections", i)
+		}
+		if err := port.ApplyAction(viewmodel.Action{ID: "unknown"}); err == nil {
+			t.Fatalf("port[%d] ApplyAction for unknown action returned nil error", i)
 		}
 	}
 }
