@@ -79,6 +79,22 @@ run_test "--check exits non-zero when generated adapter drifts" '
   ! ./install.sh --check
 '
 
+run_test "missing description frontmatter fails install" '
+  git init -q
+  mkdir -p tools/fecim-skills/broken
+  cat > tools/fecim-skills/broken/SKILL.md <<SKILL
+---
+name: broken
+---
+
+# broken
+SKILL
+  cp "$INSTALL_SCRIPT" install.sh
+  err=$(./install.sh 2>&1 || true)
+  echo "$err" | grep -q "missing .description:. frontmatter"
+  echo "$err" | grep -q "tools/fecim-skills/broken/SKILL.md"
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"
