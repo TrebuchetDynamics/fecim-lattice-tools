@@ -5,7 +5,7 @@ description: Migrates a Fyne tab/component to the gogpu/ui zero-CGO shell via th
 
 # fecim-gogpu-migrate
 
-Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel layer is the UI-neutral bridge — see `_shared/fecim-context.md` (UI boundary rule).
+Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel layer is the UI-neutral bridge — see `tools/fecim-skills/_shared/fecim-context.md` (UI boundary rule).
 
 ## Workflow
 
@@ -35,7 +35,7 @@ Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel
    go build ./cmd/fecim-lattice-tools && CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools-next
    ```
 
-7. **Output the TDD evidence block** per `_shared/tdd-evidence-template.md`.
+7. **Output the TDD evidence block** per `tools/fecim-skills/_shared/tdd-evidence-template.md`.
 
 ## Verification
 

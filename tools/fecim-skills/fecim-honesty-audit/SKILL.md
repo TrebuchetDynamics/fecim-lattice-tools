@@ -5,7 +5,7 @@ description: Enforces docs/4-research/honesty-audit.md policy by scanning PR dif
 
 # fecim-honesty-audit
 
-Scan a diff, README, or PR description for the project's removed/unverified claim list before it lands. See `_shared/fecim-context.md` (Honesty-audit policy).
+Scan a diff, README, or PR description for the project's removed/unverified claim list before it lands. See `tools/fecim-skills/_shared/fecim-context.md` (Honesty-audit policy).
 
 ## Workflow
 

@@ -5,7 +5,7 @@ description: Audits Go code for goroutine-to-widget access without fyne.Do(...) 
 
 # fecim-fyne-thread-check
 
-Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapping. See `_shared/fecim-context.md` (UI thread-safety rule).
+Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapping. See `tools/fecim-skills/_shared/fecim-context.md` (UI thread-safety rule).
 
 ## Workflow
 

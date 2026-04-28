@@ -48,4 +48,4 @@ See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the 
 
 ## TDD
 
-Build invocations are observation, not behavior change — `TDD: N/A`. Any code change discovered during triage triggers the project's TDD hard-rule. See `_shared/tdd-evidence-template.md`.
+Build invocations are observation, not behavior change — `TDD: N/A`. Any code change discovered during triage triggers the project's TDD hard-rule. See `tools/fecim-skills/_shared/tdd-evidence-template.md`.

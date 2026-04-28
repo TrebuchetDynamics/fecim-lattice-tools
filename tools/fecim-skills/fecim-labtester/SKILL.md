@@ -29,7 +29,7 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
    ```
    Diff `validation/testdata/physics_regression/` before committing — unintended changes are bugs.
 
-4. **Output the TDD evidence block** per `_shared/tdd-evidence-template.md`:
+4. **Output the TDD evidence block** per `tools/fecim-skills/_shared/tdd-evidence-template.md`:
    ```
    RED:  go test ./module1-hysteresis/... -run TestX
          FAIL TestX (Preisach Everett zero-clamp pattern)

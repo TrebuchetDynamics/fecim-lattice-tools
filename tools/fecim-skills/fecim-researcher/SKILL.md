@@ -34,7 +34,7 @@ Survey FeCIM literature and project knowledge to ground a design decision or ans
    ```
    Otherwise skip silently.
 
-4. **Cite findings** using the canonical short forms from `_shared/fecim-context.md`. Never invent a citation; if no source supports a claim, label it "no source found, requires verification".
+4. **Cite findings** using the canonical short forms from `tools/fecim-skills/_shared/fecim-context.md`. Never invent a citation; if no source supports a claim, label it "no source found, requires verification".
 
 5. **Output a structured note**:
    ```

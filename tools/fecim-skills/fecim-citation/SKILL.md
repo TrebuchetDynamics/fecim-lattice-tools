@@ -11,7 +11,7 @@ Validate any quantitative or device-physics claim before it lands in code, docs,
 
 1. **Parse the claim.** Extract: subject (e.g., HZO coercive field), value (e.g., 1.0 MV/cm), context (educational vs validated).
 
-2. **Match to canonical sources** (`_shared/fecim-context.md` table). If the claim corresponds to a published source, format as:
+2. **Match to canonical sources** (`tools/fecim-skills/_shared/fecim-context.md` table). If the claim corresponds to a published source, format as:
    ```
    <claim text> (Materlik 2015)
    ```
@@ -41,4 +41,4 @@ Validate any quantitative or device-physics claim before it lands in code, docs,
 
 ## TDD
 
-Citation review is observation — `TDD: N/A`. Code/doc edits triggered by review follow the project's TDD hard-rule per `_shared/tdd-evidence-template.md`.
+Citation review is observation — `TDD: N/A`. Code/doc edits triggered by review follow the project's TDD hard-rule per `tools/fecim-skills/_shared/tdd-evidence-template.md`.
