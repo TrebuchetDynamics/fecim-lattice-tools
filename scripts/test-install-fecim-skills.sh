@@ -95,6 +95,14 @@ SKILL
   echo "$err" | grep -q "tools/fecim-skills/broken/SKILL.md"
 '
 
+run_test "symlink failure falls back to copy with managed-block header" '
+  fixture_one_skill
+  FECIM_FORCE_NO_SYMLINK=1 ./install.sh
+  test -f .claude/skills/sample-skill/SKILL.md
+  test ! -L .claude/skills/sample-skill/SKILL.md
+  head -1 .claude/skills/sample-skill/SKILL.md | grep -q "generated-from"
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"

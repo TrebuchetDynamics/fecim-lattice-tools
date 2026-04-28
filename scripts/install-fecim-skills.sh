@@ -55,7 +55,7 @@ emit_claude_adapter() {
 
   mkdir -p "$(dirname "$target")"
   rm -f "$target"
-  if ln -s "$rel" "$target" 2>/dev/null; then
+  if [[ "${FECIM_FORCE_NO_SYMLINK:-0}" != "1" ]] && ln -s "$rel" "$target" 2>/dev/null; then
     return
   fi
   claude_copy_body "$skill_path" > "$target"
