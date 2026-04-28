@@ -103,6 +103,22 @@ run_test "symlink failure falls back to copy with managed-block header" '
   head -1 .claude/skills/sample-skill/SKILL.md | grep -q "generated-from"
 '
 
+run_test "opencode adapter has expected frontmatter and body" '
+  fixture_one_skill
+  ./install.sh
+  head -1 .opencode/command/sample-skill.md | grep -q "^---$"
+  grep -q "^description: A sample skill for testing.$" .opencode/command/sample-skill.md
+  grep -q "^agent: build$" .opencode/command/sample-skill.md
+  grep -q "tools/fecim-skills/sample-skill/SKILL.md" .opencode/command/sample-skill.md
+'
+
+run_test "claude adapter copy contains do-not-edit header" '
+  fixture_one_skill
+  FECIM_FORCE_NO_SYMLINK=1 ./install.sh
+  grep -q "do not edit" .claude/skills/sample-skill/SKILL.md
+  grep -q "name: sample-skill" .claude/skills/sample-skill/SKILL.md
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"
