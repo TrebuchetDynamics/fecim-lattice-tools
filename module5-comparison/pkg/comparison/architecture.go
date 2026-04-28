@@ -133,6 +133,17 @@ func CustomArchitecture(name string, tops, power, area float64) *Architecture {
 	}
 }
 
+// Architectures returns the canonical reference architecture set used for
+// comparison views. Each call returns a fresh slice with newly-constructed
+// architectures so callers may mutate without affecting subsequent calls.
+func Architectures() []*Architecture {
+	return []*Architecture{
+		TraditionalCPU(),
+		GPUAccelerator(),
+		FeCIMChip(),
+	}
+}
+
 // InferenceResult contains results from running inference on an architecture.
 type InferenceResult struct {
 	Architecture string  // Architecture name
