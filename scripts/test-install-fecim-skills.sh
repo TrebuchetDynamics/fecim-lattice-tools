@@ -72,6 +72,13 @@ run_test "codex install preserves user content outside markers" '
   grep -q "fecim-skills:start" .codex/AGENTS.md
 '
 
+run_test "--check exits non-zero when generated adapter drifts" '
+  fixture_one_skill
+  ./install.sh
+  echo "tampered" >> .opencode/command/sample-skill.md
+  ! ./install.sh --check
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"
