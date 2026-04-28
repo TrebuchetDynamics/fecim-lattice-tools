@@ -62,6 +62,16 @@ run_test "second install produces no diff against first install" '
   diff -r .opencode .opencode.bak
 '
 
+run_test "codex install preserves user content outside markers" '
+  fixture_one_skill
+  mkdir -p .codex
+  printf "Pre-existing line above\n\nAnother user line\n" > .codex/AGENTS.md
+  ./install.sh
+  grep -q "Pre-existing line above" .codex/AGENTS.md
+  grep -q "Another user line" .codex/AGENTS.md
+  grep -q "fecim-skills:start" .codex/AGENTS.md
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"
