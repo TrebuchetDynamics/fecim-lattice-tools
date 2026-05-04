@@ -127,17 +127,22 @@ func drawHysteresisOverlay(cc *gg.Context, points []design.PlotPoint, w, h int) 
 }
 
 func drawCrossbarOverlay(cc *gg.Context, rows, cols, w, h int) {
-	data := make([][]float64, rows)
-	for i := range rows {
-		data[i] = make([]float64, cols)
-		for j := range cols {
-			data[i][j] = float64((i*cols + j) % 30)
+	for _, port := range globalPorts {
+		if port.Descriptor().ID == viewmodel.ModuleCrossbar {
+			data := make([][]float64, rows)
+			for i := range rows {
+				data[i] = make([]float64, cols)
+				for j := range cols {
+					data[i][j] = float64(30 - ((i*cols+j)%30) + i)
+				}
+			}
+			fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
+				Data: data, X: 260, Y: 100, CellSize: 24,
+				Title: "Crossbar Conductance Matrix",
+			})
+			return
 		}
 	}
-	fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
-		Data: data, X: 260, Y: 100, CellSize: 24,
-		Title: "Crossbar Conductance Matrix",
-	})
 }
 
 func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Theme) widget.Widget {
