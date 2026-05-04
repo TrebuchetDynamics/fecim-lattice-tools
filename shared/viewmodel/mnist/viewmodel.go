@@ -1,6 +1,10 @@
 package mnist
 
-import "fecim-lattice-tools/shared/viewmodel"
+import (
+	"fmt"
+
+	"fecim-lattice-tools/shared/viewmodel"
+)
 
 type Module struct{ state MNISTState }
 
@@ -15,6 +19,19 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 	}
 }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
-func (m *Module) ApplyAction(viewmodel.Action) error { return viewmodel.ErrUnsupportedAction }
+func (m *Module) ApplyAction(action viewmodel.Action) error {
+	switch action.ID {
+	case "run_inference":
+		return nil
+	case "sweep_levels":
+		if levelS, ok := action.Payload["levels"]; ok {
+			fmt.Sscanf(levelS, "%d", &m.state.NumLevels)
+			return nil
+		}
+		return fmt.Errorf("mnist: levels required")
+	default:
+		return viewmodel.ErrUnsupportedAction
+	}
+}
 func (m *Module) Start()                             {}
 func (m *Module) Stop()                              {}

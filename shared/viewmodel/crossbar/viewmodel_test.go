@@ -63,6 +63,47 @@ func TestApplyActionUnsupported(t *testing.T) {
 	}
 }
 
+func TestApplyActionResize(t *testing.T) {
+	m := New(2, 2)
+	err := m.ApplyAction(viewmodel.Action{
+		ID: "resize", Kind: viewmodel.ActionCommand,
+		Payload: map[string]string{"rows": "8", "cols": "12"},
+	})
+	if err != nil {
+		t.Errorf("ApplyAction resize: %v", err)
+	}
+	s := m.Snapshot()
+	var rows, cols string
+	for _, metric := range s.Metrics {
+		if metric.ID == "rows" {
+			rows = metric.Value
+		}
+		if metric.ID == "cols" {
+			cols = metric.Value
+		}
+	}
+	if rows != "8" {
+		t.Errorf("rows = %s, want 8", rows)
+	}
+	if cols != "12" {
+		t.Errorf("cols = %s, want 12", cols)
+	}
+}
+
+func TestApplyActionRunMVM(t *testing.T) {
+	m := New(4, 4)
+	err := m.ApplyAction(viewmodel.Action{ID: "run_mvm", Kind: viewmodel.ActionCommand})
+	if err != nil {
+		t.Errorf("ApplyAction run_mvm: %v", err)
+	}
+}
+
+func TestApplyActionToggleIR(t *testing.T) {
+	m := New(4, 4)
+	m.ApplyAction(viewmodel.Action{ID: "toggle_ir", Kind: viewmodel.ActionToggle})
+	m.ApplyAction(viewmodel.Action{ID: "toggle_ir", Kind: viewmodel.ActionToggle})
+}
+
 func TestConductancesInitialized(t *testing.T) {
 	m := New(4, 4)
 	s := m.Snapshot()

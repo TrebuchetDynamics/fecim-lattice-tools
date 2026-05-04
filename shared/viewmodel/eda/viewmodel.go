@@ -1,6 +1,10 @@
 package eda
 
-import "fecim-lattice-tools/shared/viewmodel"
+import (
+	"fmt"
+
+	"fecim-lattice-tools/shared/viewmodel"
+)
 
 type Module struct{ state EDAState }
 
@@ -21,6 +25,21 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 	}
 }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
-func (m *Module) ApplyAction(viewmodel.Action) error { return viewmodel.ErrUnsupportedAction }
+func (m *Module) ApplyAction(action viewmodel.Action) error {
+	switch action.ID {
+	case "generate_all":
+		return nil
+	case "generate_spice":
+		return nil
+	case "set_design_name":
+		if name, ok := action.Payload["name"]; ok {
+			m.state.DesignName = name
+			return nil
+		}
+		return fmt.Errorf("eda: design name required")
+	default:
+		return viewmodel.ErrUnsupportedAction
+	}
+}
 func (m *Module) Start()                             {}
 func (m *Module) Stop()                              {}

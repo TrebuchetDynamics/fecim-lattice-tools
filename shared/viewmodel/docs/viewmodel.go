@@ -13,6 +13,20 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 	}
 }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
-func (m *Module) ApplyAction(viewmodel.Action) error { return viewmodel.ErrUnsupportedAction }
+func (m *Module) ApplyAction(action viewmodel.Action) error {
+	switch action.ID {
+	case "search":
+		if q, ok := action.Payload["query"]; ok {
+			m.state.SearchQuery = q
+			return nil
+		}
+		return viewmodel.ErrUnsupportedAction
+	case "start_curriculum":
+		m.state.ActivePage = "curriculum"
+		return nil
+	default:
+		return viewmodel.ErrUnsupportedAction
+	}
+}
 func (m *Module) Start()                             {}
 func (m *Module) Stop()                              {}

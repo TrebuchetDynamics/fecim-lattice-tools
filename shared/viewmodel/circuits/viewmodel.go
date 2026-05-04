@@ -18,6 +18,18 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 	}
 }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
-func (m *Module) ApplyAction(viewmodel.Action) error { return viewmodel.ErrUnsupportedAction }
+func (m *Module) ApplyAction(action viewmodel.Action) error {
+	switch action.ID {
+	case "run_read":
+		return nil
+	case "run_write":
+		return nil
+	case "toggle_ispp":
+		m.state.ISPPEnabled = !m.state.ISPPEnabled
+		return nil
+	default:
+		return viewmodel.ErrUnsupportedAction
+	}
+}
 func (m *Module) Start()                             {}
 func (m *Module) Stop()                              {}

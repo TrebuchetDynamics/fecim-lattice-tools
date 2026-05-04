@@ -45,10 +45,41 @@ func TestSnapshotHasSections(t *testing.T) {
 
 func TestApplyActionUnsupported(t *testing.T) {
 	m := New()
-	err := m.ApplyAction(viewmodel.Action{ID: "run_simulation", Kind: viewmodel.ActionCommand})
+	err := m.ApplyAction(viewmodel.Action{ID: "unknown", Kind: viewmodel.ActionCommand})
 	if err != viewmodel.ErrUnsupportedAction {
 		t.Errorf("ApplyAction error = %v, want %v", err, viewmodel.ErrUnsupportedAction)
 	}
+}
+
+func TestApplyActionSelectMaterial(t *testing.T) {
+	m := New()
+	matName := m.Descriptor().Title
+	_ = matName
+	s := m.Snapshot()
+	var firstMaterial string
+	for _, m := range s.Metrics {
+		if m.ID == "material" {
+			firstMaterial = m.Value
+			break
+		}
+	}
+	if firstMaterial == "" {
+		t.Fatal("no initial material found")
+	}
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSelectMaterial,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"material": firstMaterial},
+	})
+	if err != nil {
+		t.Fatalf("ApplyAction select_material(%q): %v", firstMaterial, err)
+	}
+}
+
+func TestApplyActionToggleSimulation(t *testing.T) {
+	m := New()
+	m.ApplyAction(viewmodel.Action{ID: EventToggleSimulation, Kind: viewmodel.ActionToggle})
+	m.ApplyAction(viewmodel.Action{ID: EventToggleSimulation, Kind: viewmodel.ActionToggle})
 }
 
 func TestMaterialSummary(t *testing.T) {
