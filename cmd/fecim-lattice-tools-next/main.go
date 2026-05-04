@@ -93,10 +93,15 @@ func main() {
 }
 
 func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Theme) widget.Widget {
+	descriptors := make([]viewmodel.ModuleDescriptor, len(ports))
+	for i, p := range ports {
+		descriptors[i] = p.Descriptor()
+	}
+	sidebar := buildSidebarMaterial(descriptors, 0, theme)
+
 	children := []widget.Widget{
-		primitives.Text(spec.Title).FontSize(28).Bold(),
-		primitives.Text("Future default gogpu/ui shell. Current module cards are placeholders until parity with the Fyne app is reached.").FontSize(15),
-		primitives.Text("Stable fallback remains: go run ./cmd/fecim-lattice-tools").FontSize(13),
+		primitives.Text(spec.Title).FontSize(22).Bold(),
+		primitives.Text("Simulation-first FeCIM design workspace").FontSize(14),
 	}
 
 	for _, port := range ports {
@@ -105,26 +110,31 @@ func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Them
 		case viewmodel.ModuleComparison:
 			children = append(children, buildComparisonView(snapshot, theme))
 		default:
-			children = append(children, moduleCard(snapshot, theme))
+			children = append(children, moduleCardEnhanced(snapshot, theme))
 		}
 	}
 
-	return primitives.Box(children...).
-		Padding(28).
-		Gap(14).
-		Background(theme.Colors.Surface)
+	content := primitives.Box(children...).Padding(24).Gap(14)
+	return primitives.Box(sidebar, content).Gap(0)
 }
 
-func moduleCard(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
+func moduleCardEnhanced(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
 	descriptor := snapshot.Descriptor
 	body := descriptor.Description
 	if len(snapshot.Sections) > 0 && snapshot.Sections[0].Body != "" {
 		body = body + "\n" + snapshot.Sections[0].Body
 	}
-
+	statusBadge := "PLACEHOLDER"
+	badgeColor := theme.Colors.OnSurfaceVariant
+	if descriptor.Status == viewmodel.StatusFunctional {
+		statusBadge = "FUNCTIONAL"
+		badgeColor = theme.Colors.Primary
+	}
 	return primitives.Box(
-		primitives.Text(descriptor.Title).FontSize(18).Bold(),
-		primitives.Text(string(descriptor.ID)+" | "+descriptor.Status).FontSize(12),
+		primitives.Box(
+			primitives.Text(descriptor.Title).FontSize(18).Bold(),
+			primitives.Text(statusBadge).FontSize(11).Color(badgeColor),
+		).Gap(8),
 		primitives.Text(body).FontSize(14),
 	).
 		Padding(16).
