@@ -2,9 +2,13 @@ package main
 
 import (
 	"fecim-lattice-tools/shared/viewmodel"
+	circuitsvm "fecim-lattice-tools/shared/viewmodel/circuits"
 	comparisonvm "fecim-lattice-tools/shared/viewmodel/comparison"
 	crossbarvm "fecim-lattice-tools/shared/viewmodel/crossbar"
+	docsvm "fecim-lattice-tools/shared/viewmodel/docs"
+	edavm "fecim-lattice-tools/shared/viewmodel/eda"
 	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
+	mnistvm "fecim-lattice-tools/shared/viewmodel/mnist"
 )
 
 type AppSpec struct {
@@ -34,6 +38,14 @@ func BuildPlaceholderPorts() []viewmodel.ModulePort {
 			ports = append(ports, hysteresisvm.New())
 		case viewmodel.ModuleCrossbar:
 			ports = append(ports, crossbarvm.New(8, 8))
+		case viewmodel.ModuleCircuits:
+			ports = append(ports, circuitsvm.New())
+		case viewmodel.ModuleEDA:
+			ports = append(ports, edavm.New())
+		case viewmodel.ModuleMNIST:
+			ports = append(ports, mnistvm.New())
+		case viewmodel.ModuleDocs:
+			ports = append(ports, docsvm.New())
 		default:
 			ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
 				{

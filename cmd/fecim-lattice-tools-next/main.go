@@ -113,6 +113,14 @@ func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Them
 			children = append(children, buildHysteresisView(snapshot, theme))
 		case viewmodel.ModuleCrossbar:
 			children = append(children, buildCrossbarView(snapshot, theme))
+		case viewmodel.ModuleCircuits:
+			children = append(children, buildCircuitsView(snapshot, theme))
+		case viewmodel.ModuleEDA:
+			children = append(children, buildEDAView(snapshot, theme))
+		case viewmodel.ModuleMNIST:
+			children = append(children, buildMNISTView(snapshot, theme))
+		case viewmodel.ModuleDocs:
+			children = append(children, buildDocsView(snapshot, theme))
 		default:
 			children = append(children, moduleCardEnhanced(snapshot, theme))
 		}
