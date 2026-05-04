@@ -22,6 +22,25 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 		{ID: "liberty_export", Title: "Liberty Timing", Body: fmt.Sprintf("Timing and power for %s process at TT/FF/SS corners.", state.ProcessNode)},
 		{ID: "physical_export", Title: "Physical Design (DEF/LEF)", Body: fmt.Sprintf("LEF macro for %d×%d array with placed cells and routed interconnect.", state.ArrayRows, state.ArrayCols)},
 	}
+	// Education layer
+	sections = append(sections, viewmodel.Section{
+		ID: "edu_spice", Title: "📖 What is SPICE?",
+		Body: "SPICE (Simulation Program with Integrated Circuit Emphasis) describes circuits as netlists — text files listing components and how they connect. SPICE simulators solve Kirchhoff's laws numerically. Our export generates a netlist with FeFET compact models.",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID: "edu_flow", Title: "📖 Design Flow",
+		Body: fmt.Sprintf("RTL → Synthesis → Floorplan → Place → Route → DRC/LVS → GDSII. Our %s flow targets OpenLane for open-source tapeout. SPICE for circuit simulation, Verilog for digital control, Liberty for timing closure.", state.ProcessNode),
+	})
+	// Research layer
+	sections = append(sections, viewmodel.Section{
+		ID: "research_validation", Title: "🔬 Validation Status",
+		Body: "Generated SPICE netlists validated with ngspice roundtrip tests. Netlist syntax checked against Verilog-A compact model. Liberty corners verified (TT/FF/SS). All exports are educational baselines — not validated against silicon measurements.",
+	})
+	// Design layer
+	sections = append(sections, viewmodel.Section{
+		ID: "design_workflow", Title: "⚙️ Design Composition",
+		Body: "Design wizard: Start with material selection (Module 1) → Array configuration (Module 2) → Peripheral specs (Module 4) → Export (here). Use parameter sweep to generate netlist families across voltage corners. All formats exportable in one step.",
+	})
 	actions := []viewmodel.Action{
 		{ID: "generate_all", Label: "Export All Formats", Kind: viewmodel.ActionCommand},
 		{ID: "generate_spice", Label: "Generate SPICE", Kind: viewmodel.ActionCommand},

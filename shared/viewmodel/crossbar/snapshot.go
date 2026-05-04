@@ -31,6 +31,29 @@ func buildSnapshot(state CrossbarState) viewmodel.ModuleSnapshot {
 			Body:  fmt.Sprintf("%d×%d matrix × %d-element input vector → %d-element output vector. I_out = G × V_in (Ohm's law + Kirchhoff current law).", state.Rows, state.Cols, state.Cols, state.Rows),
 		},
 	}
+	// Education layer
+	sections = append(sections, viewmodel.Section{
+		ID:    "edu_ohm",
+		Title: "📖 How Crossbars Compute",
+		Body:  "Each cell stores conductance G. When voltage V is applied to a row, current I = G × V flows (Ohm's law). All column currents sum at the output (Kirchhoff's current law), computing I = G × V in a single analog step — no digital multiply-accumulate needed.",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID:    "edu_irdrop",
+		Title: "📖 IR Drop Explained",
+		Body:  "The metal wires connecting cells have resistance. As current flows through them, voltage drops along the wire path, reducing the effective voltage at distant cells. This is IR drop — a key non-ideality that limits array size and accuracy.",
+	})
+	// Research layer
+	sections = append(sections, viewmodel.Section{
+		ID:    "research_drift",
+		Title: "🔬 Conductance Drift",
+		Body:  "Conductance values drift over time due to relaxation effects in ferroelectric domains. Drift is temperature- and time-dependent. Literature models: power-law drift G(t) = G₀·(t/t₀)^(−ν). Typical ν ≈ 0.01–0.05 for HZO.",
+	})
+	// Design layer
+	sections = append(sections, viewmodel.Section{
+		ID:    "design_array",
+		Title: "⚙️ Array Design Tradeoffs",
+		Body:  fmt.Sprintf("Larger arrays increase parallelism but worsen IR drop. Recommended: start at 8×8, validate non-idealities, then scale. Quantization: %d discrete levels of %d configurable. Cross-reference: Module 1 for material → conductance mapping; Module 6 for array → layout export.", state.Cols*state.Rows, 30),
+	})
 
 	actions := []viewmodel.Action{
 		{ID: "resize", Label: "Resize Array", Kind: viewmodel.ActionCommand},
