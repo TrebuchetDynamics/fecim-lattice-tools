@@ -71,3 +71,41 @@ func TestHysteresisPlotData(t *testing.T) {
 		t.Error("No pe_loop plot found in hysteresis snapshot")
 	}
 }
+
+func TestHysteresisRetention(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	found := false
+	for _, plot := range snapshot.Plots {
+		if plot.ID == "retention" {
+			found = true
+			if len(plot.Series) == 0 || len(plot.Series[0].Points) == 0 {
+				t.Error("Retention plot has no data points")
+			}
+		}
+	}
+	if !found {
+		t.Error("No retention plot found in hysteresis snapshot")
+	}
+}
+
+func TestHysteresisComputedMetrics(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	hasPr := false
+	hasEc := false
+	for _, m := range snapshot.Metrics {
+		if m.ID == "pr" {
+			hasPr = true
+		}
+		if m.ID == "ec_plus" {
+			hasEc = true
+		}
+	}
+	if !hasPr {
+		t.Error("No Pr metric in hysteresis snapshot")
+	}
+	if !hasEc {
+		t.Error("No Ec metric in hysteresis snapshot")
+	}
+}

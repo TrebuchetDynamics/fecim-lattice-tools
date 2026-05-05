@@ -89,6 +89,19 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			Series: []viewmodel.PlotSeries{{Name: "P-E", Points: pts}},
 		})
 	}
+	if len(state.RetentionTimes) > 0 && len(state.RetentionPr) > 0 {
+		pts := make([]viewmodel.PlotPoint, len(state.RetentionTimes))
+		for i := range state.RetentionTimes {
+			pts[i] = viewmodel.PlotPoint{X: state.RetentionTimes[i], Y: state.RetentionPr[i]}
+		}
+		plots = append(plots, viewmodel.PlotData{
+			ID:     "retention",
+			Title:  "Retention Prediction (Power-Law)",
+			XLabel: "Time (seconds)",
+			YLabel: "Pr (µC/cm²)",
+			Series: []viewmodel.PlotSeries{{Name: "retention", Points: pts}},
+		})
+	}
 
 	return viewmodel.ModuleSnapshot{
 		Descriptor: viewmodel.ModuleDescriptor{

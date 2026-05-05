@@ -19,6 +19,8 @@ type HysteresisState struct {
 	Psat             float64               `json:"psat"`
 	PsatNeg          float64               `json:"psat_neg"`
 	LoopArea         float64               `json:"loop_area"`
+	RetentionTimes   []float64             `json:"retention_times"`
+	RetentionPr      []float64             `json:"retention_pr"`
 }
 
 type FieldRange struct {

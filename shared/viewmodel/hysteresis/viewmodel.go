@@ -174,4 +174,17 @@ func (m *Module) computeLoopMetrics() {
 		area -= pts[j].Field * pts[i].Polarization
 	}
 	m.state.LoopArea = math.Abs(area) * 0.5
+
+	times := []float64{1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8}
+	m.state.RetentionTimes = times
+	m.state.RetentionPr = make([]float64, len(times))
+	if m.state.Pr > 0 {
+		prSI := m.state.Pr * 0.01
+		points, err := physics.SimulateRetentionPowerLaw(prSI, 1.0, 0.02, times)
+		if err == nil {
+			for i, p := range points {
+				m.state.RetentionPr[i] = p.Polarization_Cm * 100
+			}
+		}
+	}
 }
