@@ -16,6 +16,7 @@ func descriptor() viewmodel.ModuleDescriptor {
 		Title:       "FeCIM Comparison",
 		Description: "Evidence-first technology comparison and scenario analysis.",
 		Status:      viewmodel.StatusFunctional,
+		BoundaryNotice: "ESTIMATED DATA — Comparison benchmarks are educational estimates based on published architecture analyses. Not validated against production silicon measurements.",
 	}
 }
 
@@ -28,9 +29,10 @@ func buildSnapshot(archs []*pkg.Architecture) viewmodel.ModuleSnapshot {
 			continue
 		}
 		sections = append(sections, viewmodel.Section{
-			ID:    sectionID(a.Name),
-			Title: a.Name,
-			Body:  architectureBody(a),
+			ID:       sectionID(a.Name),
+			Title:    a.Name,
+			Body:     architectureBody(a),
+			Category: "comparison",
 		})
 	}
 	metrics := []viewmodel.Metric{

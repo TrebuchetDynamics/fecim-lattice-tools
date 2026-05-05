@@ -21,10 +21,11 @@ const (
 )
 
 type ModuleDescriptor struct {
-	ID          ModuleID
-	Title       string
-	Description string
-	Status      string
+	ID             ModuleID
+	Title          string
+	Description    string
+	Status         string
+	BoundaryNotice string
 }
 
 type Metric struct {
@@ -36,10 +37,39 @@ type Metric struct {
 }
 
 type Section struct {
-	ID    string
-	Title string
-	Body  string
+	ID       string
+	Title    string
+	Body     string
+	Category string
 }
+
+type PlotPoint struct {
+	X float64
+	Y float64
+}
+
+type PlotSeries struct {
+	Name   string
+	Points []PlotPoint
+}
+
+type PlotData struct {
+	ID       string
+	Title    string
+	XLabel   string
+	YLabel   string
+	Series   []PlotSeries
+}
+
+type EvidenceClass string
+
+const (
+	EvidenceSimulation   EvidenceClass = "simulation"
+	EvidenceLiterature   EvidenceClass = "literature-benchmark"
+	EvidenceMeasured     EvidenceClass = "measured-data"
+	EvidencePredicted    EvidenceClass = "predicted-structure"
+	EvidencePeerReviewed EvidenceClass = "peer-reviewed-model"
+)
 
 type ActionKind string
 
@@ -61,6 +91,7 @@ type ModuleSnapshot struct {
 	Metrics    []Metric
 	Sections   []Section
 	Actions    []Action
+	Plots      []PlotData
 	UpdatedAt  time.Time
 }
 
