@@ -10,6 +10,10 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 	metrics := []viewmodel.Metric{
 		{ID: "design", Label: "Design", Value: state.DesignName},
 		{ID: "process", Label: "Process Node", Value: state.ProcessNode},
+		{ID: "array", Label: "Array Size", Value: fmt.Sprintf("%d×%d", state.ArrayRows, state.ArrayCols)},
+		{ID: "cells", Label: "Total Cells", Value: fmt.Sprintf("%d", state.TotalCells)},
+		{ID: "area", Label: "Area", Value: fmt.Sprintf("%.3f mm²", state.AreaMM2)},
+		{ID: "power", Label: "Power", Value: fmt.Sprintf("%.1f mW", state.PowerMW)},
 		{ID: "spice", Label: "SPICE", Value: "ready"},
 		{ID: "verilog", Label: "Verilog", Value: "ready"},
 		{ID: "liberty", Label: "Liberty", Value: "ready"},
@@ -17,10 +21,39 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 		{ID: "lef", Label: "LEF", Value: "ready"},
 	}
 	sections := []viewmodel.Section{
-		{ID: "spice_export", Title: "SPICE Netlist", Body: fmt.Sprintf("Netlist for %d×%d FeCIM crossbar with FeFET compact model.", state.ArrayRows, state.ArrayCols), Category: "research"},
-		{ID: "verilog_export", Title: "Verilog Module", Body: "Behavioral model for digital control logic (WL decoder, BL multiplexer, read/write FSM).", Category: "research"},
-		{ID: "liberty_export", Title: "Liberty Timing", Body: fmt.Sprintf("Timing and power for %s process at TT/FF/SS corners.", state.ProcessNode), Category: "research"},
-		{ID: "physical_export", Title: "Physical Design (DEF/LEF)", Body: fmt.Sprintf("LEF macro for %d×%d array with placed cells and routed interconnect.", state.ArrayRows, state.ArrayCols), Category: "research"},
+		{ID: "design_stats", Title: "Design Statistics", Body: fmt.Sprintf("Generated %d×%d compute-mode design on %s.\nArea: %.3f mm²  |  Power: %.1f mW  |  Cells: %d", state.ArrayRows, state.ArrayCols, state.ProcessNode, state.AreaMM2, state.PowerMW, state.TotalCells), Category: "design"},
+	}
+	if state.SPICESnippet != "" {
+		sections = append(sections, viewmodel.Section{
+			ID:       "spice_content",
+			Title:    "SPICE Netlist (first 15 lines)",
+			Body:     state.SPICESnippet,
+			Category: "research",
+		})
+	}
+	if state.VerilogSnippet != "" {
+		sections = append(sections, viewmodel.Section{
+			ID:       "verilog_content",
+			Title:    "Verilog Module (first 15 lines)",
+			Body:     state.VerilogSnippet,
+			Category: "research",
+		})
+	}
+	if state.DEFSnippet != "" {
+		sections = append(sections, viewmodel.Section{
+			ID:       "def_content",
+			Title:    "DEF Layout (first 15 lines)",
+			Body:     state.DEFSnippet,
+			Category: "design",
+		})
+	}
+	if state.LEFSnippet != "" {
+		sections = append(sections, viewmodel.Section{
+			ID:       "lef_content",
+			Title:    "LEF Macro (first 15 lines)",
+			Body:     state.LEFSnippet,
+			Category: "design",
+		})
 	}
 	sections = append(sections, viewmodel.Section{
 		ID: "edu_spice", Title: "What is SPICE?",
