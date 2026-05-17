@@ -162,7 +162,7 @@ Full reference: [cli-reference.md](cli-reference.md)
 Screenshots and videos are generated artifacts, so they are not tracked in the public source tree. To generate a local documentation frame:
 
 ```bash
-go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
 ```
 
 ---

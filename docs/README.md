@@ -212,7 +212,7 @@ See [GLOSSARY.md](GLOSSARY.md) for all terms.
 Generated screenshots and videos are not tracked in the public source tree. To create a local documentation frame, run:
 
 ```bash
-go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
 ```
 
 ---

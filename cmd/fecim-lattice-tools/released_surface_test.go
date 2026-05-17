@@ -40,3 +40,17 @@ func TestReleasedCommandSurfaceDoesNotExposeModuleGUIWrappers(t *testing.T) {
 		}
 	}
 }
+
+func TestReleasedCommandSurfaceDoesNotExposeRetiredRedirectCommands(t *testing.T) {
+	root := filepath.Clean(filepath.Join("..", ".."))
+	retired := map[string]struct{}{
+		"fecim-lattice-tools/cmd/demo-frames": {},
+		"fecim-lattice-tools/cmd/fecim-web":   {},
+		"fecim-lattice-tools/cmd/write-proof": {},
+	}
+	for _, pkg := range listCommandPackages(t, root) {
+		if _, ok := retired[pkg]; ok {
+			t.Fatalf("released command surface must not expose retired redirect command %s", pkg)
+		}
+	}
+}

@@ -35,6 +35,15 @@ func TestDefaultRepoGraphDoesNotExposeLegacyFynePackages(t *testing.T) {
 	}
 }
 
+func TestDefaultRepoGraphDoesNotExposeTransitionRedirectPackages(t *testing.T) {
+	root := repoRootForRepoSurface()
+	for _, pkg := range listRepoPackages(t, root) {
+		if pkg == "fecim-lattice-tools/internal/gogpucommand" {
+			t.Fatalf("default repo graph must not expose transition redirect package %s", pkg)
+		}
+	}
+}
+
 func TestFyneImportsAreLegacyTagged(t *testing.T) {
 	root := repoRootForRepoSurface()
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
@@ -77,6 +86,8 @@ func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
 	root := repoRootForRepoSurface()
 	files := []string{
 		"CONTRIBUTING.md",
+		"docs/README.md",
+		"docs/1-getting-started/README.md",
 		"tools/fecim-skills/_shared/fecim-context.md",
 		"tools/fecim-skills/fecim-builder/SKILL.md",
 		"tools/fecim-skills/fecim-gogpu-migrate/SKILL.md",
@@ -91,6 +102,9 @@ func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
 		"Future shell",
 		"Legacy Fyne shell: `cmd/fecim-lattice-tools`",
 		"placeholder path until it reaches module parity",
+		"go run ./cmd/demo-frames",
+		"go run ./cmd/fecim-web",
+		"go run ./cmd/write-proof",
 	}
 	for _, file := range files {
 		body, err := os.ReadFile(filepath.Join(root, file))
