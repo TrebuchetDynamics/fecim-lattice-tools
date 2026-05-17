@@ -1,9 +1,13 @@
 package main
 
 import (
+	"go/parser"
+	"go/token"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -28,6 +32,44 @@ func TestDefaultRepoGraphDoesNotExposeLegacyFynePackages(t *testing.T) {
 		if isLegacyGraphicsPackage(pkg) {
 			t.Fatalf("default repo graph must not expose legacy Fyne package %s", pkg)
 		}
+	}
+}
+
+func TestFyneImportsAreLegacyTagged(t *testing.T) {
+	root := repoRootForRepoSurface()
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			if isSkippedRepoSurfaceDir(entry.Name()) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(path) != ".go" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		source := string(data)
+		importsFyne, err := fileImportsFyne(path, data)
+		if err != nil {
+			return err
+		}
+		if importsFyne && !hasLegacyFyneBuildTag(source) {
+			rel, relErr := filepath.Rel(root, path)
+			if relErr != nil {
+				rel = path
+			}
+			t.Errorf("Go file importing Fyne must be tagged legacy_fyne: %s", rel)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk repo source files: %v", err)
 	}
 }
 
@@ -95,6 +137,45 @@ func isLegacyGraphicsPackage(pkg string) bool {
 		}
 	}
 	return false
+}
+
+func isSkippedRepoSurfaceDir(name string) bool {
+	switch name {
+	case ".git", ".worktrees", "artifacts", "tmp":
+		return true
+	default:
+		return false
+	}
+}
+
+func hasLegacyFyneBuildTag(source string) bool {
+	for _, line := range strings.Split(source, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "package ") {
+			return false
+		}
+		if strings.HasPrefix(trimmed, "//go:build") {
+			return strings.Contains(trimmed, "legacy_fyne")
+		}
+	}
+	return false
+}
+
+func fileImportsFyne(path string, data []byte) (bool, error) {
+	file, err := parser.ParseFile(token.NewFileSet(), path, data, parser.ImportsOnly)
+	if err != nil {
+		return false, err
+	}
+	for _, imported := range file.Imports {
+		importPath, err := strconv.Unquote(imported.Path.Value)
+		if err != nil {
+			return false, err
+		}
+		if strings.HasPrefix(importPath, "fyne.io/"+"fyne/v2") {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func repoRootForRepoSurface() string {
