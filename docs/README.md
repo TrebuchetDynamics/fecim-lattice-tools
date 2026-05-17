@@ -215,6 +215,8 @@ Generated screenshots and videos are not tracked in the public source tree. To c
 CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
 ```
 
+The screenshotter captures real `gogpu/ui` app frames through `internal/gogpuapp`, not legacy Fyne windows or placeholder image fixtures. Without `-only`, it intentionally writes one PNG for every module returned by `shared/viewmodel.KnownDescriptors()`; adding a module also requires a screenshot filename mapping so documentation coverage cannot silently drift.
+
 ---
 
 ## 🛠️ Technology Stack
