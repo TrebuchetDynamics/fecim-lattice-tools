@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 // Package main provides visual regression tests for the FeCIM Lattice Tools application.
 // These tests capture screenshots and compare against golden images.

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Command demo-frames generates animated frame sequences for hysteresis visualization.
 //
 // Usage: demo-frames -output frames/

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Demo 3 GUI: MNIST Neural Network Visualization with Fyne
 //
 // This provides an interactive GUI for visualizing MNIST digit classification

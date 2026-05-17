@@ -22,3 +22,12 @@ func TestReleasedCommandSurfaceDoesNotExposeNextWrappers(t *testing.T) {
 		}
 	}
 }
+
+func TestReleasedCommandSurfaceDoesNotExposeLegacyFyneCommands(t *testing.T) {
+	root := filepath.Clean(filepath.Join("..", ".."))
+	for _, pkg := range listCommandPackages(t, root) {
+		if strings.Contains(pkg, "-fyne") {
+			t.Fatalf("released command surface must not expose legacy Fyne command %s", pkg)
+		}
+	}
+}

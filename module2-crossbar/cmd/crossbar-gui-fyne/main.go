@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Demo 2 GUI: Crossbar Array Visualization with Fyne
 //
 // This provides an interactive GUI for visualizing matrix-vector multiplication

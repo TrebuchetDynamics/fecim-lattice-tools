@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Demo 4 GUI: Peripheral Circuits for Ferroelectric CIM
 //
 // This demo visualizes the peripheral circuits required for a complete

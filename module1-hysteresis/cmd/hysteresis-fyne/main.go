@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Command hysteresis provides an interactive visualization of ferroelectric
 // hysteresis in HfO2-ZrO2 superlattice materials.
 //

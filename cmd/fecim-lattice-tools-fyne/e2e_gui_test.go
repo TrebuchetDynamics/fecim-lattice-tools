@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 // Package main provides GUI-based end-to-end tests for the FeCIM Lattice Tools application.
 // These tests require a display and are excluded from CI builds.

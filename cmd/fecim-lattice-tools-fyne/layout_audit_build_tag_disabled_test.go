@@ -1,5 +1,5 @@
-//go:build !layoutaudit
-// +build !layoutaudit
+//go:build legacy_fyne && !layoutaudit
+// +build legacy_fyne,!layoutaudit
 
 package main
 

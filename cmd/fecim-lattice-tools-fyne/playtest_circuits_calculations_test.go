@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 package main
 
@@ -21,10 +21,10 @@ func TestPlaytestCircuits_DACQuantization(t *testing.T) {
 		code  int
 		wantV float64
 	}{
-		{0, -1.5},                       // code 0 → VrefLow
-		{15, 1.5},                       // code 15 → VrefHigh
-		{7, -1.5 + 7.0/15.0*3.0},       // linear interpolation: ~-0.1
-		{8, -1.5 + 8.0/15.0*3.0},       // ~+0.1
+		{0, -1.5},                // code 0 → VrefLow
+		{15, 1.5},                // code 15 → VrefHigh
+		{7, -1.5 + 7.0/15.0*3.0}, // linear interpolation: ~-0.1
+		{8, -1.5 + 8.0/15.0*3.0}, // ~+0.1
 	}
 	for _, tc := range tests {
 		got := dac.Convert(tc.code)
@@ -51,8 +51,8 @@ func TestPlaytestCircuits_TIASenseChain(t *testing.T) {
 		wantVout float64
 		wantSat  bool
 	}{
-		{"10µA", 10e-6, 0.6, false},          // 0.5 + 10e-6*10e3 = 0.6
-		{"-10µA", -10e-6, 0.4, false},        // 0.5 - 0.1 = 0.4
+		{"10µA", 10e-6, 0.6, false},            // 0.5 + 10e-6*10e3 = 0.6
+		{"-10µA", -10e-6, 0.4, false},          // 0.5 - 0.1 = 0.4
 		{"100µA_saturated", 100e-6, 1.0, true}, // 0.5 + 1.0 = 1.5 → clamped to 1.0
 		{"-60µA_saturated", -60e-6, 0.0, true}, // 0.5 - 0.6 = -0.1 → clamped to 0
 	}
@@ -79,10 +79,10 @@ func TestPlaytestCircuits_ADCQuantization(t *testing.T) {
 	}{
 		{0.0, 0},
 		{1.0, 15},
-		{0.5, 8},   // round(0.5*15+0.5) = round(8.0) = 8
-		{0.1, 2},   // round(0.1*15+0.5) = round(2.0) = 2
-		{-0.1, 0},  // clamped to VrefLow
-		{1.5, 15},  // clamped to VrefHigh
+		{0.5, 8},  // round(0.5*15+0.5) = round(8.0) = 8
+		{0.1, 2},  // round(0.1*15+0.5) = round(2.0) = 2
+		{-0.1, 0}, // clamped to VrefLow
+		{1.5, 15}, // clamped to VrefHigh
 	}
 	for _, tc := range tests {
 		got := adc.Convert(tc.voltage)

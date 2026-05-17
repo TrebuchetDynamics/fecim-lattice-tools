@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 package main
 

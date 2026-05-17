@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Demo 8: Architecture Comparison GUI
 //
 // This demo provides an interactive comparison of FeCIM vs traditional

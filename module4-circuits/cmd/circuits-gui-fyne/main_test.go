@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package circuitsgui
 
 import "testing"

@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 // Package main provides comprehensive UI screenshot crawling for the FeCIM Lattice Tools application.
 // This test systematically captures screenshots of all UI states including tabs, dialogs, overlays, and tooltips.

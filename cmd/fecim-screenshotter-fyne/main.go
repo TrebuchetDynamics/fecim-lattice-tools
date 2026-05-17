@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Command fecim-screenshotter captures automated screenshots of the FeCIM GUI.
 //
 // Usage: fecim-screenshotter -module 1 -output screenshots/

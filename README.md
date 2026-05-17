@@ -97,7 +97,7 @@ Shared infrastructure lives in [`shared/`](./shared), and validation suites live
 - Go 1.25 or newer.
 - A desktop environment for the GUI.
 - The default app uses the zero-CGO `gogpu/ui` shell.
-- The legacy Fyne shell is still available for temporary parity checks and may require OpenGL/X11 headers on minimal Linux systems.
+- Legacy Fyne parity commands are excluded from default builds and require `-tags legacy_fyne` plus OpenGL/X11 headers on minimal Linux systems.
 
 ### Install and Run
 
@@ -109,10 +109,10 @@ cd fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
 ```
 
-The old Fyne GUI is kept as an explicit legacy command during parity cleanup:
+The old Fyne GUI is opt-in for temporary parity checks:
 
 ```bash
-go run ./cmd/fecim-lattice-tools-fyne
+go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne
 ```
 
 ### Build
@@ -153,7 +153,7 @@ Generate fresh README-style screenshots:
 CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
 ```
 
-The default screenshotter uses the gogpu rendering path. The old Fyne screenshot harness is kept as `cmd/fecim-screenshotter-fyne` for temporary parity checks.
+The default screenshotter uses the gogpu rendering path. The old Fyne screenshot harness is excluded from default builds and requires `-tags legacy_fyne` for temporary parity checks.
 
 See [CLI Reference](./docs/1-getting-started/cli-reference.md) for the full launcher and module command reference.
 

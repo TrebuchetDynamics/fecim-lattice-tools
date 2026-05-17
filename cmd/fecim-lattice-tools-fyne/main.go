@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Command fecim-lattice-tools provides a unified GUI application with all FeCIM demos.
 //
 // This is the main entry point for FeCIM Lattice Tools.

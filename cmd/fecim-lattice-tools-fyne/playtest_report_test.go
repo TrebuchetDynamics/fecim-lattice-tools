@@ -1,5 +1,5 @@
-//go:build !ci
-// +build !ci
+//go:build legacy_fyne && !ci
+// +build legacy_fyne,!ci
 
 package main
 
@@ -17,10 +17,10 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 
-	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
 	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
