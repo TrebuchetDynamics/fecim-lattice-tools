@@ -53,7 +53,7 @@ func TestStaticModuleSnapshotIsDeterministic(t *testing.T) {
 		{
 			ID:    "scope",
 			Title: "Scope",
-			Body:  "Placeholder card for future gogpu/ui module port.",
+			Body:  "Static card for default gogpu/ui module state.",
 		},
 	})
 

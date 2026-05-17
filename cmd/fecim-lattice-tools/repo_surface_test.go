@@ -95,10 +95,7 @@ func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
 	}
 	stalePhrases := []string{
 		"current default desktop app remains the Fyne shell",
-		"future zero-CGO",
-		"cmd/fecim-lattice-tools-next",
 		"make test-next-ui",
-		"Next gogpu/ui shell",
 		"Future shell",
 		"Legacy Fyne shell: `cmd/fecim-lattice-tools`",
 		"placeholder path until it reaches module parity",

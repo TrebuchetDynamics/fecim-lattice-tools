@@ -37,10 +37,10 @@ var staleGogpuMigrationDocPhrases = []string{
 
 func TestStaleGogpuMigrationDocWordingScannerFlagsLiveDocsAndIgnoresArchivedSpecs(t *testing.T) {
 	root := t.TempDir()
-	writeMarkdown(t, root, "go.mod", "module example.com/docguard\n")
-	writeMarkdown(t, root, "AGENTS.md", "Default UI work must not point at the future default gogpu shell.\n")
-	writeMarkdown(t, root, filepath.Join("docs", "superpowers", "plans", "old-plan.md"), "The future default gogpu shell was still planned here.\n")
-	writeMarkdown(t, root, filepath.Join("docs", "superpowers", "specs", "old-spec.md"), "The next shell was still planned here.\n")
+	writeTestFile(t, root, "go.mod", "module example.com/docguard\n")
+	writeTestFile(t, root, "AGENTS.md", "Default UI work must not point at the future default gogpu shell.\n")
+	writeTestFile(t, root, filepath.Join("docs", "superpowers", "plans", "old-plan.md"), "The future default gogpu shell was still planned here.\n")
+	writeTestFile(t, root, filepath.Join("docs", "superpowers", "specs", "old-spec.md"), "The next shell was still planned here.\n")
 
 	findings, err := staleGogpuMigrationDocWordingFindings(root)
 	if err != nil {
@@ -146,7 +146,7 @@ func shouldSkipDocDriftDir(rel string) bool {
 		rel == "docs/superpowers/specs"
 }
 
-func writeMarkdown(t *testing.T, root, rel, contents string) {
+func writeTestFile(t *testing.T, root, rel, contents string) {
 	t.Helper()
 	path := filepath.Join(root, rel)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
