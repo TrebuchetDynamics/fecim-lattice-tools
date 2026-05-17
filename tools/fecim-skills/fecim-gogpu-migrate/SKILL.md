@@ -1,11 +1,11 @@
 ---
 name: fecim-gogpu-migrate
-description: Migrates a Fyne tab/component to the gogpu/ui zero-CGO shell via the shared/viewmodel UI-neutral bridge. Use when porting a module from cmd/fecim-lattice-tools to cmd/fecim-lattice-tools-next, or when extracting UI-coupled logic into the viewmodel layer.
+description: Migrates a legacy Fyne tab/component to the canonical gogpu/ui zero-CGO shell via the shared/viewmodel UI-neutral bridge. Use when porting module UI into internal/gogpuapp or when extracting UI-coupled logic into the viewmodel layer.
 ---
 
 # fecim-gogpu-migrate
 
-Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel layer is the UI-neutral bridge — see `tools/fecim-skills/_shared/fecim-context.md` (UI boundary rule).
+Port a legacy Fyne tab/component to the canonical zero-CGO `gogpu/ui` shell. The viewmodel layer is the UI-neutral bridge — see `tools/fecim-skills/_shared/fecim-context.md` (UI boundary rule).
 
 ## Workflow
 
@@ -25,14 +25,15 @@ Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel
    - Drive events, assert on state.
    - This is RED-first per CLAUDE.md TDD hard-rule.
 
-4. **Reimplement the Fyne adapter** to render `state` and dispatch `events` to the viewmodel. Do not duplicate logic.
+4. **Keep any legacy Fyne adapter thin** if parity coverage still needs it. It should render `state` and dispatch `events` to the viewmodel without duplicating logic.
 
-5. **Add (or stub) the gogpu/ui adapter** at `cmd/fecim-lattice-tools-next/...` rendering the same viewmodel.
+5. **Add or update the gogpu/ui adapter** in `internal/gogpuapp/...` rendering the same viewmodel.
 
-6. **Verify both shells:**
+6. **Verify the canonical shell and any touched legacy parity path:**
    ```bash
-   go test ./shared/viewmodel/... && go test ./module*/pkg/gui/... && make test-next-ui
-   go build ./cmd/fecim-lattice-tools && CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools-next
+   go test ./shared/viewmodel/... && make test-gogpu-ui
+   CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools
+   make test-legacy-fyne   # only when tagged legacy Fyne code changed
    git diff --check
    ```
 

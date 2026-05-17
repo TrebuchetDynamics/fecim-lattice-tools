@@ -73,6 +73,39 @@ func TestFyneImportsAreLegacyTagged(t *testing.T) {
 	}
 }
 
+func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
+	root := repoRootForRepoSurface()
+	files := []string{
+		"CONTRIBUTING.md",
+		"tools/fecim-skills/_shared/fecim-context.md",
+		"tools/fecim-skills/fecim-builder/SKILL.md",
+		"tools/fecim-skills/fecim-gogpu-migrate/SKILL.md",
+		"tools/fecim-skills/fecim-labtester/SKILL.md",
+	}
+	stalePhrases := []string{
+		"current default desktop app remains the Fyne shell",
+		"future zero-CGO",
+		"cmd/fecim-lattice-tools-next",
+		"make test-next-ui",
+		"Next gogpu/ui shell",
+		"Future shell",
+		"Legacy Fyne shell: `cmd/fecim-lattice-tools`",
+		"placeholder path until it reaches module parity",
+	}
+	for _, file := range files {
+		body, err := os.ReadFile(filepath.Join(root, file))
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		text := string(body)
+		for _, phrase := range stalePhrases {
+			if strings.Contains(text, phrase) {
+				t.Errorf("%s contains stale gogpu/Fyne guidance %q", file, phrase)
+			}
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")

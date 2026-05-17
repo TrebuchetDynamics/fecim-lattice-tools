@@ -14,7 +14,8 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
    - Counted whole suite: `go test -json ./...` followed by a pass/fail/skip/package summary
    - Race detection: `go test -race ./...`
    - Module: `go test ./module1-hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
-   - Future shell: `make test-next-ui`
+   - Canonical gogpu/ui shell: `make test-gogpu-ui`
+   - Tagged legacy Fyne parity: `make test-legacy-fyne`
    - Coverage: `go test -cover ./...`
    - Diff hygiene: `git diff --check`
 

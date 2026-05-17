@@ -1,28 +1,28 @@
 ---
 name: fecim-builder
-description: Runs build flows for both UI paths (legacy Fyne and zero-CGO gogpu/ui shell) on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in cmd/fecim-lattice-tools or cmd/fecim-lattice-tools-next.
+description: Runs build flows for the canonical zero-CGO gogpu/ui shell and opt-in legacy Fyne parity commands on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in cmd/fecim-lattice-tools or tagged legacy Fyne commands.
 ---
 
 # fecim-builder
 
-Build the FeCIM Lattice Tools binary on either the legacy Fyne path or the zero-CGO gogpu/ui shell.
+Build the FeCIM Lattice Tools binary on the canonical zero-CGO gogpu/ui path, or run tagged legacy Fyne parity builds when explicitly needed.
 
 See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the canonical CGO/entry-point mapping.
 
 ## Workflow
 
 1. **Identify the target** — ask the user if unclear:
-   - Legacy Fyne shell: `cmd/fecim-lattice-tools`
-   - Next gogpu/ui shell: `cmd/fecim-lattice-tools-next`
+   - Canonical gogpu/ui shell: `cmd/fecim-lattice-tools`
+   - Opt-in legacy Fyne shell: `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`
 
 2. **Set the build environment:**
-   - Legacy: leave `CGO_ENABLED` at its default (`1`); if GLFW/X11 headers are missing, report the exact blocker. Do **not** install host packages yourself.
-   - Next: `export CGO_ENABLED=0`.
+   - Canonical: `export CGO_ENABLED=0`.
+   - Legacy Fyne: leave `CGO_ENABLED` at its host default; if GLFW/X11 headers are missing, report the exact blocker. Do **not** install host packages yourself.
 
 3. **Run the build:**
-   - Legacy single-binary: `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
-   - Legacy launch: `./launch.sh`
-   - Next: `CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next`
+   - Canonical single-binary: `CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`
+   - Canonical launch: `./launch.sh`
+   - Legacy Fyne parity: `go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne`
    - Whole repo: `go build ./...`
    - Preflight first: verify repo path, `go`, `git`, and `rg`/fallback using `_shared/fecim-context.md`.
 
@@ -38,13 +38,13 @@ See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the 
 
 5. **Verify:**
    - Binary exists and is executable.
-   - For Next path, confirm `CGO_ENABLED=0` was respected (`go env CGO_ENABLED` should print `0` in the same shell).
+   - For the canonical app, confirm `CGO_ENABLED=0` was respected (`go env CGO_ENABLED` should print `0` in the same shell).
 
 ## Verification
 
 - Input: "Build the legacy GUI."
-  Expected: runs `go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools`, reports success.
-- Input: "Build the next shell." with missing libvulkan-dev.
+  Expected: runs `go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne`, reports success or host graphics blockers.
+- Input: "Build the canonical shell." with missing libvulkan-dev.
   Expected: succeeds since libvulkan is optional, OR triages with the table above.
 
 ## TDD
