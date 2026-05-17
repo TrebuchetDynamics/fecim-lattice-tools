@@ -171,6 +171,39 @@ func TestPublicGettingStartedDocsPresentGogpuAsDefault(t *testing.T) {
 	}
 }
 
+func TestInstallationGuideScopesCgoToLegacyFyne(t *testing.T) {
+	root := repoRootForRepoSurface()
+	file := "docs/1-getting-started/installation.md"
+	body, err := os.ReadFile(filepath.Join(root, file))
+	if err != nil {
+		t.Fatalf("read %s: %v", file, err)
+	}
+	text := string(body)
+	defaultSection := strings.Split(text, "## Legacy Fyne parity only (`-tags legacy_fyne`)")[0]
+	mustContain := []string{
+		"The default gogpu/ui app requires Go and Git only; no CGO, C compiler, or OpenGL headers are required.",
+		"Legacy Fyne parity only (`-tags legacy_fyne`)",
+	}
+	staleDefaultGuidance := []string{
+		"- **C compiler** (gcc/clang) for CGO",
+		"- **OpenGL libraries**",
+		"sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev",
+		"sudo dnf install -y gcc mesa-libGL-devel",
+		"xcode-select --install  # Install command line tools",
+		"Install MSYS2 (https://www.msys2.org/) or TDM-GCC",
+	}
+	for _, phrase := range mustContain {
+		if !strings.Contains(text, phrase) {
+			t.Errorf("%s must present %q", file, phrase)
+		}
+	}
+	for _, phrase := range staleDefaultGuidance {
+		if strings.Contains(defaultSection, phrase) {
+			t.Errorf("%s presents CGO/OpenGL as default-app installation guidance %q", file, phrase)
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")
