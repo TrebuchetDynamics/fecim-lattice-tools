@@ -135,9 +135,9 @@ docs-overview_initial.png
 ```
 
 **Implementation:**
-- Renders via gogpu/gg drawing helpers
+- Renders real `gogpu/ui` app frames through `internal/gogpuapp`
 - Avoids Xvfb, OpenGL Fyne capture, and window-manager dependencies
-- Resizes output images when `-w` or `-h` differ from the design canvas
+- Uses the requested `-w` and `-h` as the headless app frame size
 - Saves deterministic PNG files for docs and visual review
 
 **Integration:**

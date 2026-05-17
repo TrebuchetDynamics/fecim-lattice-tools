@@ -3,6 +3,8 @@
 package gogpuapp
 
 import (
+	"fmt"
+	"image"
 	"log"
 
 	"fecim-lattice-tools/internal/gogpuapp/design"
@@ -100,6 +102,33 @@ func Run(options Options) error {
 	gpuApp.OnClose(func() { gg.CloseAccelerator() })
 
 	return gpuApp.Run()
+}
+
+func CaptureFrameImage(active viewmodel.ModuleID, w, h int) (image.Image, error) {
+	if w <= 0 || h <= 0 {
+		return nil, fmt.Errorf("capture frame dimensions must be positive, got %dx%d", w, h)
+	}
+
+	model := NewAppModel(active)
+	seed := widget.Hex(0x2F5D50)
+	appTheme := uitheme.DefaultLight()
+	appTheme.Colors.Primary = seed
+	appTheme.Colors.PrimaryDark = widget.Hex(0x1F463C)
+	appTheme.Colors.PrimaryLight = widget.Hex(0x6F9C8D)
+	materialTheme := material3.New(seed)
+
+	app := uiapp.New(uiapp.WithTheme(appTheme))
+	app.Window().HandleResize(w, h)
+	app.SetRoot(buildRoot(model, materialTheme))
+	app.Frame()
+
+	cc := gg.NewContext(w, h)
+	defer cc.Close()
+	drawAppFrame(cc, app, model.ActivePort(), w, h)
+	if err := cc.FlushGPU(); err != nil {
+		return nil, fmt.Errorf("capture frame flush: %w", err)
+	}
+	return cc.Image(), nil
 }
 
 func drawAppFrame(cc *gg.Context, app *uiapp.App, activePort viewmodel.ModulePort, w, h int) {
