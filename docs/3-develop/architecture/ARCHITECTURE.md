@@ -73,71 +73,46 @@ Each module demonstrates a layer in the FeCIM stack:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                        shared/                               │
-│    ┌─────────────────┬──────────────────┬───────────────┐   │
-│    │   theme         │    widgets       │   logging     │   │
-│    │   (colors)      │   (adaptive UI)  │   (verbosity) │   │
-│    └────────┬────────┴────────┬─────────┴───────┬───────┘   │
-└─────────────┼────────────────┼──────────────────┼────────────┘
-              │                │                  │
-    ┌─────────▼────────┐       │         ┌────────▼─────────────────┐
-    │  module1-hysteresis   │       │         │  module2-crossbar     │
-    │  ├─ ferroelectric/    │       │         │  ├─ crossbar/        │
-    │  │  ├─ material.go    │       │         │  │  ├─ array.go      │
-    │  │  ├─ preisach.go    │       │         │  │  ├─ irdrop.go     │
-    │  │  └─ render.go      │       │         │  │  ├─ sneak*.go     │
-    │  ├─ simulation/       │       │         │  │  ├─ drift.go       │
-    │  └─ gui/             │       │         │  │  └─ enhanced.go    │
-    │     └─ embedded.go    │       │         │  └─ gui/            │
-    └─────────────────────┘       │         │     └─ embedded.go    │
-                                  │         └──────────────────────┘
-                                  │
-                    ┌─────────────▼──────────────┐
-                    │  module3-mnist             │
-                    │  ├─ pkg/core/             │
-                    │  │  ├─ network.go         │
-                    │  │  ├─ network_inference.go│
-                    │  │  └─ quantize.go        │
-                    │  ├─ pkg/mnist/            │
-                    │  │  └─ loader.go          │
-                    │  └─ pkg/gui/              │
-                    │     └─ embedded.go        │
-                    └──────────────────────────┘
-                            │
-           ┌────────────────┴────────────────┐
-           │                                 │
-    ┌──────▼──────────────┐          ┌──────▼──────────────┐
-    │ module4-circuits    │          │ module5-comparison  │
-    │ ├─ gui/            │          │ ├─ data/           │
-    │ │  └─ embedded.go  │          │ ├─ metrics.go      │
-    │ └─ uses shared/    │          │ └─ gui/            │
-    │    peripherals     │          │    └─ embedded.go  │
-    └───────────────────┘          └─────────────────────┘
-            │
-            │
-    ┌───────▼──────────────┐
-    │ module6-eda          │
-    │ ├─ placement/        │
-    │ ├─ netlist/          │
-    │ └─ gui/              │
-    │    └─ embedded.go    │
-    └──────────────────────┘
-            │
-    ┌───────▼──────────────┐
-    │ module7-docs         │
-    │ └─ gui/              │
-    │    ├─ embedded.go    │
-    │    ├─ navigation.go  │
-    │    ├─ search.go      │
-    │    ├─ layout.go      │
-    │    ├─ persistence.go │
-    │    └─ glossary_int...│
-    └──────────────────────┘
+│                    cmd/fecim-lattice-tools                  │
+│                    default zero-CGO entry                   │
+└─────────────────────────────┬────────────────────────────────┘
+                              │
+┌─────────────────────────────▼────────────────────────────────┐
+│                       internal/gogpuapp                      │
+│              gogpu/ui shell, renderers, navigation           │
+└─────────────────────────────┬────────────────────────────────┘
+                              │
+┌─────────────────────────────▼────────────────────────────────┐
+│                       shared/viewmodel                       │
+│        UI-neutral snapshots, actions, and module state        │
+└─────────────────────────────┬────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+┌─────────▼─────────┐ ┌───────▼──────────┐ ┌──────▼────────────┐
+│ module1-hysteresis│ │ module2-crossbar │ │ module3-mnist     │
+│ ferroelectric/    │ │ network/weights  │ │ core/mnist        │
+│ controller/       │ │ visualization    │ │ training          │
+└───────────────────┘ └──────────────────┘ └───────────────────┘
+          │                   │                   │
+┌─────────▼─────────┐ ┌───────▼──────────┐ ┌──────▼────────────┐
+│ module4-circuits  │ │ module5-comparison│ │ module6-eda       │
+│ arraysim/gpuperiph│ │ comparison        │ │ compiler/export   │
+│ peripherals       │ │ metrics           │ │ layout/openlane   │
+└───────────────────┘ └──────────────────┘ └───────────────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │ module7-docs      │
+                    │ docs/navigation   │
+                    │ search/glossary   │
+                    └───────────────────┘
 ```
 
-**Key principle**: Each module is **independent**. Modules can use shared infrastructure (theme, logging, adaptive layouts) but don't depend on each other. This enables:
+Legacy Fyne adapters (`-tags legacy_fyne`) live under `module*/pkg/gui/embedded.go` and are not part of the default dependency graph.
 
-- Standalone execution or embedded tabs
+**Key principle**: Each module is **independent**. Modules expose UI-neutral state through `shared/viewmodel` and keep renderer-specific code in shell packages. This enables:
+
+- Standalone simulation and default shell rendering
 - Isolated development and testing
 - Easy refactoring without cascade effects
 - Clean separation of concerns
@@ -157,7 +132,7 @@ type ModuleViewModel interface {
 }
 ```
 
-Tagged legacy Fyne adapters keep the older embedded app lifecycle behind `-tags legacy_fyne` for parity checks:
+Legacy Fyne adapters (`-tags legacy_fyne`) keep the older embedded app lifecycle for parity checks:
 
 | Module | Type | Location |
 |--------|------|----------|
@@ -200,7 +175,7 @@ app.Run(demos.hysteresis, demos.crossbar, demos.mnist)
 
 This pattern ensures:
 - **Isolation**: Each module manages its own state
-- **Stable embedding**: `BuildContent(...)` reuses existing content for the same host window and rebuilds only when embedding context changes
+- **Stable snapshots**: shell renderers consume explicit state instead of reaching into module internals
 - **Lazy execution**: Only active modules consume CPU
 - **Clean transitions**: Proper cleanup when switching tabs
 

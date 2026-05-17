@@ -295,6 +295,71 @@ func TestArchitectureGuideScopesLegacyFyneThreading(t *testing.T) {
 	}
 }
 
+func TestArchitectureGraphShowsGogpuDefaultPath(t *testing.T) {
+	root := repoRootForRepoSurface()
+	file := "docs/3-develop/architecture/ARCHITECTURE.md"
+	body, err := os.ReadFile(filepath.Join(root, file))
+	if err != nil {
+		t.Fatalf("read %s: %v", file, err)
+	}
+	text := string(body)
+	graphStart := strings.Index(text, "## Module Dependency Graph")
+	if graphStart < 0 {
+		t.Fatalf("%s missing module dependency graph section", file)
+	}
+	codeStartRel := strings.Index(text[graphStart:], "```")
+	if codeStartRel < 0 {
+		t.Fatalf("%s missing module dependency graph code block", file)
+	}
+	codeStart := graphStart + codeStartRel + len("```")
+	codeEndRel := strings.Index(text[codeStart:], "```")
+	if codeEndRel < 0 {
+		t.Fatalf("%s missing module dependency graph code block end", file)
+	}
+	graph := text[codeStart : codeStart+codeEndRel]
+	mustContainInGraph := []string{
+		"cmd/fecim-lattice-tools",
+		"internal/gogpuapp",
+		"shared/viewmodel",
+	}
+	staleInGraph := []string{
+		"│                        shared/",
+		"theme",
+		"widgets",
+		"pkg/gui",
+		"embedded.go",
+	}
+	for _, phrase := range mustContainInGraph {
+		if !strings.Contains(graph, phrase) {
+			t.Errorf("%s module dependency graph must present %q", file, phrase)
+		}
+	}
+	for _, phrase := range staleInGraph {
+		if strings.Contains(graph, phrase) {
+			t.Errorf("%s module dependency graph presents legacy Fyne path %q as default", file, phrase)
+		}
+	}
+	mustContain := []string{
+		"Legacy Fyne adapters (`-tags legacy_fyne`)",
+		"module*/pkg/gui/embedded.go",
+		"Stable snapshots",
+	}
+	stale := []string{
+		"Standalone execution or embedded tabs",
+		"**Stable embedding**: `BuildContent(...)`",
+	}
+	for _, phrase := range mustContain {
+		if !strings.Contains(text, phrase) {
+			t.Errorf("%s must present %q", file, phrase)
+		}
+	}
+	for _, phrase := range stale {
+		if strings.Contains(text, phrase) {
+			t.Errorf("%s still presents legacy embedding as default architecture %q", file, phrase)
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")
