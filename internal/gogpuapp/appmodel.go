@@ -63,6 +63,17 @@ func (m AppModel) ActivePort() viewmodel.ModulePort {
 	return m.Ports[0]
 }
 
+func (m *AppModel) SelectModule(id viewmodel.ModuleID) bool {
+	for i, p := range m.Ports {
+		if p.Descriptor().ID == id {
+			m.ActiveIndex = i
+			m.ActiveModuleID = id
+			return true
+		}
+	}
+	return false
+}
+
 func BuildAppPorts() []viewmodel.ModulePort {
 	descriptors := viewmodel.KnownDescriptors()
 	ports := make([]viewmodel.ModulePort, 0, len(descriptors))

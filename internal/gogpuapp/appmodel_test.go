@@ -34,6 +34,27 @@ func TestAppModelSelectsRequestedModule(t *testing.T) {
 	}
 }
 
+func TestAppModelSelectModuleUpdatesActivePort(t *testing.T) {
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+
+	if !model.SelectModule(viewmodel.ModuleEDA) {
+		t.Fatal("SelectModule returned false for known module")
+	}
+	if model.ActiveModuleID != viewmodel.ModuleEDA {
+		t.Fatalf("ActiveModuleID = %q, want %q", model.ActiveModuleID, viewmodel.ModuleEDA)
+	}
+	if got := model.ActivePort().Descriptor().ID; got != viewmodel.ModuleEDA {
+		t.Fatalf("ActivePort descriptor ID = %q, want %q", got, viewmodel.ModuleEDA)
+	}
+
+	if model.SelectModule(viewmodel.ModuleID("missing")) {
+		t.Fatal("SelectModule returned true for unknown module")
+	}
+	if got := model.ActivePort().Descriptor().ID; got != viewmodel.ModuleEDA {
+		t.Fatalf("ActivePort changed after missing selection: %q", got)
+	}
+}
+
 func TestBuildAppPortsCoversAllKnownDescriptors(t *testing.T) {
 	ports := BuildAppPorts()
 	descriptors := viewmodel.KnownDescriptors()

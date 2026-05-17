@@ -48,7 +48,15 @@ func Run(options Options) error {
 		uiapp.WithEventSource(gpuApp.EventSource()),
 		uiapp.WithTheme(appTheme),
 	)
-	app.SetRoot(buildRoot(model, materialTheme))
+	var selectModule func(viewmodel.ModuleID)
+	selectModule = func(id viewmodel.ModuleID) {
+		if !model.SelectModule(id) {
+			return
+		}
+		activePort = model.ActivePort()
+		app.SetRoot(buildRootWithSelect(model, materialTheme, selectModule))
+	}
+	app.SetRoot(buildRootWithSelect(model, materialTheme, selectModule))
 
 	var canvas *ggcanvas.Canvas
 	gpuApp.OnDraw(func(dc *gogpu.Context) {
@@ -167,11 +175,15 @@ func drawCrossbarOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, rows
 }
 
 func buildRoot(model AppModel, theme *material3.Theme) widget.Widget {
+	return buildRootWithSelect(model, theme, nil)
+}
+
+func buildRootWithSelect(model AppModel, theme *material3.Theme, onSelect func(viewmodel.ModuleID)) widget.Widget {
 	descriptors := make([]viewmodel.ModuleDescriptor, len(model.Ports))
 	for i, p := range model.Ports {
 		descriptors[i] = p.Descriptor()
 	}
-	sidebar := buildSidebarMaterial(descriptors, model.ActiveIndex, theme)
+	sidebar := buildSidebarMaterialWithSelect(descriptors, model.ActiveIndex, theme, onSelect)
 
 	children := []widget.Widget{
 		primitives.Text(model.Spec.Title).FontSize(22).Bold(),
