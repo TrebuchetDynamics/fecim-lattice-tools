@@ -28,7 +28,7 @@ Module 5 provides structured comparisons between FeCIM (Ferroelectric Compute-in
 ### `cmd/` — Entry Points
 
 - **comparison/main.go** — CLI comparison runner
-- **comparison-gui/main.go** — Standalone GUI launcher
+- **../../cmd/fecim-lattice-tools** — Canonical gogpu/ui launcher (`comparison` subcommand or `--module comparison`)
 
 ## Key Types and Functions
 

@@ -31,3 +31,12 @@ func TestReleasedCommandSurfaceDoesNotExposeLegacyFyneCommands(t *testing.T) {
 		}
 	}
 }
+
+func TestReleasedCommandSurfaceDoesNotExposeModuleGUIWrappers(t *testing.T) {
+	root := filepath.Clean(filepath.Join("..", ".."))
+	for _, pkg := range listCommandPackages(t, root) {
+		if strings.HasSuffix(pkg, "-gui") {
+			t.Fatalf("released command surface must not expose retired module GUI wrapper %s", pkg)
+		}
+	}
+}

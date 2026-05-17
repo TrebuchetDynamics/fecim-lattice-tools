@@ -1,7 +1,7 @@
 ---
 Module: module4-circuits
 Name: Peripheral Circuits Visualizer
-Entry: cmd/circuits-gui/main.go
+Entry: ../../cmd/fecim-lattice-tools --module circuits
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface

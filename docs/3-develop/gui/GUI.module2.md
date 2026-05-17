@@ -1,7 +1,7 @@
 ---
 Module: module2-crossbar
 Name: "Crossbar Array MVM Visualization"
-Entry: cmd/crossbar-gui/main.go
+Entry: ../../cmd/fecim-lattice-tools --module crossbar
 Package: module2-crossbar/pkg/gui
 Last Updated: 2026-02-02
 Description: "Interactive visualization of FeCIM crossbar array matrix-vector multiplication with non-ideality analysis"

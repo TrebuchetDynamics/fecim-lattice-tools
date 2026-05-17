@@ -29,7 +29,6 @@ build_errors.txt
 commit-push.log
 compute_log.json
 2026-02-17_13-47.png
-crossbar-gui
 crossbar_mvm
 docs/1-getting-started/demo-videos/
 docs/2-learn/module2-crossbar/eli5.md.bak

@@ -1,7 +1,7 @@
 ---
 Module: module5-comparison
 Name: Technology Comparison & Technical Briefing
-Entry: cmd/comparison-gui/main.go
+Entry: ../../cmd/fecim-lattice-tools --module comparison
 Package: fecim-lattice-tools/module5-comparison/pkg/gui
 Last Updated: 2026-02-02
 Description: |

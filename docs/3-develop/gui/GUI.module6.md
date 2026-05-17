@@ -1,7 +1,7 @@
 ---
 Module: module6-eda
 Name: FeCIM Design Suite - EDA
-Entry: module6-eda/cmd/eda-gui/main.go
+Entry: ../../cmd/fecim-lattice-tools --module eda
 Package: fecim-lattice-tools/module6-eda/pkg/gui
 Last Updated: 2026-02-11
 Description: |
@@ -1035,9 +1035,9 @@ IntegrationPoints:
     file: embedded.go:44-60
     purpose: Embeds into unified visualizer (cmd/fecim-lattice-tools)
 
-  - name: Standalone Entry
-    file: cmd/eda-gui/main.go:10-14
-    purpose: Run as standalone app via CreateMainWindow()
+  - name: Canonical Entry
+    file: ../../cmd/fecim-lattice-tools
+    purpose: Run the EDA module via the gogpu/ui shell with `--module eda`
 
   - name: Export Package Integration
     purpose: Exported packages can be directly copied to OpenLane designs/

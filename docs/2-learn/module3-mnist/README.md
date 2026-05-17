@@ -35,11 +35,11 @@ module3-mnist/
 │   ├── quantize.go           # Weight/activation quantization
 │   └── energy.go             # Energy modeling
 ├── pkg/mnist/              # Dataset loader
-├── pkg/gui/                # Fyne visualization
+├── pkg/gui/                # Tagged legacy Fyne visualization
 │   ├── dualmode.go           # Side-by-side comparison UI
 │   └── drawing.go            # Interactive digit canvas
 ├── pkg/training/           # Offline training utilities
-├── cmd/mnist-gui/          # GUI entry point
+├── cmd/mnist/              # CLI entry point
 └── cmd/train-network/      # Training tools
 ```
 
@@ -49,7 +49,7 @@ module3-mnist/
 
 ### GUI Mode
 ```bash
-fecim-lattice-tools mnist
+CGO_ENABLED=0 fecim-lattice-tools mnist
 ```
 
 ### Headless Inference
