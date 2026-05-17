@@ -88,13 +88,7 @@ func Run(options Options) error {
 		}
 
 		if err := canvas.Draw(func(cc *gg.Context) {
-			cc.SetRGBA(0.96, 0.97, 0.96, 1)
-			cc.DrawRectangle(0, 0, float64(cw), float64(ch))
-			cc.Fill()
-			app.Window().DrawTo(uirender.NewCanvas(cc, cw, ch))
-			if activePort != nil {
-				drawModuleOverlays(cc, activePort.Snapshot(), cw, ch)
-			}
+			drawAppFrame(cc, app, activePort, cw, ch)
 		}); err != nil {
 			log.Printf("draw: %v", err)
 			return
@@ -106,6 +100,18 @@ func Run(options Options) error {
 	gpuApp.OnClose(func() { gg.CloseAccelerator() })
 
 	return gpuApp.Run()
+}
+
+func drawAppFrame(cc *gg.Context, app *uiapp.App, activePort viewmodel.ModulePort, w, h int) {
+	cc.SetRGBA(0.96, 0.97, 0.96, 1)
+	cc.DrawRectangle(0, 0, float64(w), float64(h))
+	cc.Fill()
+	if app != nil {
+		app.Window().DrawTo(uirender.NewCanvas(cc, w, h))
+	}
+	if activePort != nil {
+		drawModuleOverlays(cc, activePort.Snapshot(), w, h)
+	}
 }
 
 func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {

@@ -6,8 +6,6 @@ import (
 	"encoding/binary"
 	"hash/fnv"
 	"image"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/gogpu/gg"
@@ -174,6 +172,47 @@ func (h *headlessModuleSwitchHarness) renderSignature() uint64 {
 	return imageSignature(dc.Image())
 }
 
+func (h *headlessModuleSwitchHarness) renderActiveFrameSignature() uint64 {
+	h.t.Helper()
+	return h.renderFrame(func(dc *gg.Context) {
+		drawAppFrame(dc, h.app, h.model.ActivePort(), h.width, h.height)
+	})
+}
+
+func (h *headlessModuleSwitchHarness) renderFrameSignatureWithOverlays(ids ...viewmodel.ModuleID) uint64 {
+	h.t.Helper()
+	return h.renderFrame(func(dc *gg.Context) {
+		drawAppFrame(dc, h.app, nil, h.width, h.height)
+		for _, id := range ids {
+			drawModuleOverlays(dc, h.portFor(id).Snapshot(), h.width, h.height)
+		}
+	})
+}
+
+func (h *headlessModuleSwitchHarness) renderFrame(draw func(*gg.Context)) uint64 {
+	h.t.Helper()
+
+	h.app.Frame()
+	dc := gg.NewContext(h.width, h.height)
+	defer dc.Close()
+	draw(dc)
+	if err := dc.FlushGPU(); err != nil {
+		h.t.Fatalf("flush rendered frame: %v", err)
+	}
+	return imageSignature(dc.Image())
+}
+
+func (h *headlessModuleSwitchHarness) portFor(id viewmodel.ModuleID) viewmodel.ModulePort {
+	h.t.Helper()
+	for _, port := range h.model.Ports {
+		if port.Descriptor().ID == id {
+			return port
+		}
+	}
+	h.t.Fatalf("missing module port %q", id)
+	return nil
+}
+
 func imageSignature(img image.Image) uint64 {
 	bounds := img.Bounds()
 	hash := fnv.New64a()
@@ -195,33 +234,28 @@ func imageSignature(img image.Image) uint64 {
 	return hash.Sum64()
 }
 
-func TestOverlayRenderingUsesActiveModuleSnapshot(t *testing.T) {
-	body, err := os.ReadFile("main.go")
-	if err != nil {
-		t.Fatalf("read main.go: %v", err)
-	}
-	text := string(body)
+func TestDrawAppFrameUsesOnlyActiveModuleOverlay(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleDocs)
 
-	forbidden := []string{
-		"var globalPorts",
-		"globalPorts = model.Ports",
-		"for _, port := range globalPorts",
+	harness.clickSidebarModule(viewmodel.ModuleHysteresis)
+	hysteresisRoot := harness.renderSignature()
+	hysteresisActiveOverlay := harness.renderActiveFrameSignature()
+	hysteresisWithInactiveCrossbar := harness.renderFrameSignatureWithOverlays(viewmodel.ModuleHysteresis, viewmodel.ModuleCrossbar)
+	if hysteresisActiveOverlay == hysteresisRoot {
+		t.Fatal("hysteresis active frame did not draw a module overlay")
 	}
-	for _, phrase := range forbidden {
-		if strings.Contains(text, phrase) {
-			t.Errorf("overlay rendering must not use package-global module ports: found %q", phrase)
-		}
+	if hysteresisActiveOverlay == hysteresisWithInactiveCrossbar {
+		t.Fatal("hysteresis active frame matched a frame with the inactive crossbar overlay")
 	}
 
-	required := []string{
-		"activePort := model.ActivePort()",
-		"drawModuleOverlays(cc, activePort.Snapshot(), cw, ch)",
-		"func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int)",
-		"func drawCrossbarOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, rows, cols, w, h int)",
+	harness.clickSidebarModule(viewmodel.ModuleCrossbar)
+	crossbarRoot := harness.renderSignature()
+	crossbarActiveOverlay := harness.renderActiveFrameSignature()
+	crossbarWithInactiveHysteresis := harness.renderFrameSignatureWithOverlays(viewmodel.ModuleCrossbar, viewmodel.ModuleHysteresis)
+	if crossbarActiveOverlay == crossbarRoot {
+		t.Fatal("crossbar active frame did not draw a module overlay")
 	}
-	for _, phrase := range required {
-		if !strings.Contains(text, phrase) {
-			t.Errorf("overlay rendering must be active-snapshot scoped: missing %q", phrase)
-		}
+	if crossbarActiveOverlay == crossbarWithInactiveHysteresis {
+		t.Fatal("crossbar active frame matched a frame with the inactive hysteresis overlay")
 	}
 }
