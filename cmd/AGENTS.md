@@ -66,8 +66,8 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 - Legacy Fyne parity path: `cmd/fecim-lattice-tools-fyne`
 
 **State Management:**
-- Global UndoManager for parameter changes
-- Module-local state (each module manages own GUI state)
+- Shell navigation state in `internal/gogpuapp`
+- Module state exposed through `shared/viewmodel` snapshots/actions
 - Recording state: FFmpeg subprocess with pipe-based frame writing
 - Recent files tracking for quick access
 
@@ -84,10 +84,10 @@ Key test patterns:
 - UI state transitions and event handling
 
 **Common Tasks:**
-- Add new module: Import module GUI package, add tab to interface
+- Add new module: add a UI-neutral viewmodel, register its `ModulePort`, and add a renderer in `internal/gogpuapp`
 - Add CLI mode: Create new mode_*.go file with command handling
 - Fix physics bug: Update ISPP or material model, regenerate golden data (FECIM_UPDATE_PHYSICS_GOLDEN=1)
-- Improve UI: Modify tab layout or add new widgets
+- Improve UI: update the `gogpu/ui` renderer and dispatch typed actions through `shared/viewmodel`
 
 ---
 

@@ -30,7 +30,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | `module5-comparison/` | Technology comparison views across operating conditions, design assumptions, and performance metrics |
 | `module6-eda/` | EDA pipeline with OpenLane integration, SPICE/Verilog/Liberty/DEF/LEF export, netlist generation |
 | `module7-docs/` | Integrated documentation viewer, references, physics explanations, educational materials |
-| `shared/` | Common packages: theme (Fyne styling), widgets (custom UI components), physics (shared equations), logging, utilities |
+| `shared/` | Common packages: viewmodel contracts, physics (shared equations), logging, utilities, and tagged legacy Fyne theme/widgets |
 | `validation/` | Benchmarks, calibration data, regression test suite, golden files, physics validation harnesses |
 | `config/` | Physics configuration files, material property presets, simulation defaults |
 | `data/` | Calibration data, crossbar presets, Preisach state files, lookup tables |
@@ -55,8 +55,8 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | Find a function signature | `docs/3-develop/api-reference.md` |
 | Understand an error | `docs/3-develop/testing/TESTING.md` |
 | Implement a new feature | `docs/3-develop/api-reference.md` |
-| Check thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
-| Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Check legacy Fyne thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
+| Maintain legacy Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
 | Run tests | `docs/3-develop/testing/TESTING.md` |
 | Review UI analysis | `docs/3-develop/HYPER_ANALYSIS_REPORT.md` |
 | Use EDA pipeline | `docs/eda/README.md` and `docs/eda/guides/integration.md` |
@@ -84,9 +84,9 @@ go test ./module2-crossbar/...          # Module-scoped testing
 ```
 
 **Key Patterns:**
-- **All UI updates from goroutines:** Use `fyne.Do(func() { ... })` (non-blocking, thread-safe)
+- **Default UI state flow:** Publish immutable state through `shared/viewmodel`; tagged legacy Fyne goroutine widget updates must use `fyne.Do(func() { ... })`
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
-- **Module interface:** Every module implements `BuildContent()`, `Start()`, `Stop()` for embedded app integration
+- **Module UI contract:** Default shell modules expose `shared/viewmodel` snapshots/actions; `BuildContent()`, `Start()`, and `Stop()` are legacy Fyne adapter APIs
 - **UI boundary:** New UI-neutral, physics, simulation, validation, and export work must not add Fyne or `gogpu/ui` imports. Use `shared/viewmodel` as the UI-neutral bridge; Fyne and `gogpu/ui` imports belong in shell/UI packages. Existing legacy Fyne-coupled export or validation code should not be expanded.
 - **Physics simulation:** Material presets in `module1-hysteresis/pkg/ferroelectric/material.go`; crossbar defaults in `module2-crossbar/pkg/crossbar/array.go`
 - **Write control:** Module 1 and 4 both provide ISPP (In-Situ Pulse Programming) engines; see `MEMORY.md` for architecture
@@ -97,7 +97,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 - **Simulation baseline, not hardware claim:** The 30-level quantization and all material presets are for education and visualization. Not validated device measurements.
 - **Accuracy-first policy:** See `docs/4-research/honesty-audit.md` for verified claims and removed/unverified claims.
 - **TDD hard rule:** Any behavior change, bug fix, refactor, public API change, physics model change, GUI workflow change, or validation logic change must start with a failing automated test. Record the RED failure, make the minimum change to pass, then record GREEN verification.
-- **No blocking UI operations:** Never use `time.Sleep()` or blocking I/O on the Fyne main thread.
+- **No blocking UI operations:** Never use `time.Sleep()` or blocking I/O on the default shell render path or the tagged legacy Fyne main thread.
 - **Commit before pushing:** `go test ./...` must pass.
 
 ### Testing Requirements
@@ -122,9 +122,9 @@ go test ./module2-crossbar/...          # Module-scoped testing
 5. **Preisach Everett zero-clamp** — use product-form (always non-negative) instead of factorized (goes negative)
 
 **GUI freeze diagnosis:**
-- Check `module1-hysteresis/pkg/gui/gui.go` and `simulation.go` for Fyne.Do wrapping
+- Check `internal/gogpuapp` and `shared/viewmodel` for blocking work on the default shell render path
 - Check for blocking operations in render loops
-- See `docs/3-develop/gui/FYNE_NOTES.md` for Fyne threading model
+- For tagged legacy Fyne adapters only, verify goroutine widget mutations use `fyne.Do()`; see `docs/3-develop/gui/FYNE_NOTES.md`
 
 ### Commit Style
 
@@ -171,7 +171,7 @@ threshold interaction with guard-band logic.
 cmd/fecim-lattice-tools (default zero-CGO gogpu/ui shell)
 cmd/fecim-lattice-tools-fyne (tagged legacy Fyne shell; requires -tags legacy_fyne)
   ↓
-shared/ (theme, widgets, physics, logging, utilities)
+shared/ (viewmodel contracts, physics, logging, utilities, tagged legacy Fyne helpers)
   ↑
   ├─ module1-hysteresis (P-E, Preisach, LK, ISPP)
   ├─ module2-crossbar (MVM, IR drop, sneak paths)
@@ -206,16 +206,18 @@ module{N}-{name}/
   └─ *_test.go     (tests alongside source)
 ```
 
-**Shared interface:**
+**Canonical UI contract:**
 ```go
-type Tab interface {
-    BuildContent() fyne.CanvasObject
+type ModulePort interface {
+    Descriptor() ModuleDescriptor
+    Snapshot() ModuleSnapshot
+    ApplyAction(Action) error
     Start()
     Stop()
 }
 ```
 
-Every module tab in the GUI implements this interface for lifecycle management.
+Default `gogpu/ui` module work should expose UI-neutral viewmodel state and actions. Tagged legacy Fyne adapters may still use `BuildContent() fyne.CanvasObject`, `Start()`, and `Stop()` for parity maintenance, but that is not the default integration path.
 
 ## Physics Models Summary
 
@@ -271,15 +273,15 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ### Add a New Feature
 1. **Plan:** Read `docs/3-develop/api-reference.md` and the target module docs
 2. **RED:** Add or update the focused failing test first and record the expected failure
-3. **GREEN:** Implement the smallest change needed; use `fyne.Do()` for UI updates
+3. **GREEN:** Implement the smallest change needed; route default UI state through `shared/viewmodel`, and use `fyne.Do()` only for tagged legacy Fyne widget updates
 4. **REFACTOR:** Clean up only while targeted tests stay green
 5. **Verify:** `go test ./...` passes, `go test -race ./...` passes when the change touches concurrency or shared behavior
 6. **Commit:** `type: description` with RED/GREEN/verification evidence
 
 ### Debug a GUI Freeze
-1. Check `shared/physics/` and module `pkg/gui/` for blocking operations
-2. Verify all UI updates use `fyne.Do(func() { ... })`
-3. See `docs/3-develop/gui/FYNE_NOTES.md`
+1. Check `internal/gogpuapp`, `shared/viewmodel`, and long-running module work for blocking operations on the default shell render path
+2. For tagged legacy Fyne adapters only, verify goroutine widget updates use `fyne.Do(func() { ... })`
+3. See `docs/3-develop/gui/FYNE_NOTES.md` for legacy Fyne threading details
 4. Review `docs/3-develop/HYPER_ANALYSIS_REPORT.md` for UI critique
 
 ### Fix a Physics Test Failure

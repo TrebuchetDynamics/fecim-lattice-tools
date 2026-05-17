@@ -9,8 +9,8 @@
 | Find a function | `docs/3-develop/api-reference.md` |
 | Fix an error | `docs/3-develop/testing/TESTING.md` |
 | Add a feature | `docs/3-develop/api-reference.md` |
-| Check thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
-| Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Check legacy Fyne thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
+| Maintain legacy Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
 | Run/understand tests | `docs/3-develop/testing/TESTING.md` |
 | EDA documentation | `docs/2-learn/module6-eda/README.md` |
 
@@ -42,9 +42,9 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fec
 
 ### Do
 - Keep the default app on `gogpu/ui`; Fyne belongs only in explicitly tagged legacy paths such as `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`
-- Use `fyne.Do(func() { ... })` for legacy Fyne UI updates from goroutines
+- Route default UI state through `shared/viewmodel`; use `fyne.Do(func() { ... })` only for legacy Fyne widget updates from goroutines
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
-- Follow embedded app interface: `BuildContent()`, `Start()`, `Stop()`
+- Use viewmodel snapshots/actions for default module integration; `BuildContent()`, `Start()`, and `Stop()` are legacy Fyne adapter APIs
 - Run `go test ./...` before committing
 
 ### Don't
