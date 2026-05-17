@@ -1,3 +1,5 @@
+//go:build cgo
+
 // Package keyboard provides unified keyboard shortcut handling for all FeCIM modules.
 // It defines common shortcuts (Ctrl+S save, Ctrl+E export, Ctrl+R reset, Space pause/resume,
 // arrow keys for navigation) and provides helpers for registering them on Fyne windows.
@@ -13,22 +15,22 @@ type Action string
 
 // Common keyboard actions across all modules.
 const (
-	ActionSave          Action = "save"         // Ctrl+S: Save current state/data
-	ActionExport        Action = "export"       // Ctrl+E: Export data
-	ActionReset         Action = "reset"        // Ctrl+R: Reset simulation/view
-	ActionPauseResume   Action = "pause_resume" // Space: Toggle pause/resume
-	ActionNavigateUp    Action = "nav_up"       // Up arrow: Navigate up
-	ActionNavigateDown  Action = "nav_down"     // Down arrow: Navigate down
-	ActionNavigateLeft  Action = "nav_left"     // Left arrow: Navigate left/previous
-	ActionNavigateRight Action = "nav_right"    // Right arrow: Navigate right/next
-	ActionHelp          Action = "help"         // ? or /: Show keyboard help
-	ActionStepForward   Action = "step_forward" // ]: Step forward (animations)
-	ActionStepBack      Action = "step_back"    // [: Step backward (animations)
-	ActionIncrease      Action = "increase"     // +/=: Increase value
-	ActionDecrease      Action = "decrease"     // -: Decrease value
-	ActionNextTab              Action = "next_tab"              // Tab: Next tab
-	ActionPrevTab              Action = "prev_tab"              // Shift+Tab: Previous tab
-	ActionPresentationToggle   Action = "presentation_toggle"   // Ctrl+P: Toggle presentation mode
+	ActionSave               Action = "save"                // Ctrl+S: Save current state/data
+	ActionExport             Action = "export"              // Ctrl+E: Export data
+	ActionReset              Action = "reset"               // Ctrl+R: Reset simulation/view
+	ActionPauseResume        Action = "pause_resume"        // Space: Toggle pause/resume
+	ActionNavigateUp         Action = "nav_up"              // Up arrow: Navigate up
+	ActionNavigateDown       Action = "nav_down"            // Down arrow: Navigate down
+	ActionNavigateLeft       Action = "nav_left"            // Left arrow: Navigate left/previous
+	ActionNavigateRight      Action = "nav_right"           // Right arrow: Navigate right/next
+	ActionHelp               Action = "help"                // ? or /: Show keyboard help
+	ActionStepForward        Action = "step_forward"        // ]: Step forward (animations)
+	ActionStepBack           Action = "step_back"           // [: Step backward (animations)
+	ActionIncrease           Action = "increase"            // +/=: Increase value
+	ActionDecrease           Action = "decrease"            // -: Decrease value
+	ActionNextTab            Action = "next_tab"            // Tab: Next tab
+	ActionPrevTab            Action = "prev_tab"            // Shift+Tab: Previous tab
+	ActionPresentationToggle Action = "presentation_toggle" // Ctrl+P: Toggle presentation mode
 )
 
 // Handler is a function called when a keyboard action is triggered.

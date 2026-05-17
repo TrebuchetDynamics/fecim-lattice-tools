@@ -1,5 +1,4 @@
-//go:build !js
-// +build !js
+//go:build !js && cgo
 
 // Package render provides GPU-accelerated rendering backends for crossbar
 // array visualization. The GPUHeatmapRenderer uses headless Vulkan offscreen

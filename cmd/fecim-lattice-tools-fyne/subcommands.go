@@ -6,19 +6,20 @@ import (
 	"os"
 	"strings"
 
-	hysteresiscli "fecim-lattice-tools/module1-hysteresis/cmd/hysteresis"
-	crossbarcmd "fecim-lattice-tools/module2-crossbar/cmd/crossbar-gui"
+	hysteresiscli "fecim-lattice-tools/module1-hysteresis/cmd/hysteresis-fyne"
+	crossbarcli "fecim-lattice-tools/module2-crossbar/cmd/crossbar"
+	crossbarcmd "fecim-lattice-tools/module2-crossbar/cmd/crossbar-gui-fyne"
 	mnistcli "fecim-lattice-tools/module3-mnist/cmd/mnist"
-	mnistgui "fecim-lattice-tools/module3-mnist/cmd/mnist-gui"
+	mnistgui "fecim-lattice-tools/module3-mnist/cmd/mnist-gui-fyne"
 	mnisttrain "fecim-lattice-tools/module3-mnist/cmd/train-network"
 	mnisttrainptq "fecim-lattice-tools/module3-mnist/cmd/train-ptq"
 	mnisttrainsingle "fecim-lattice-tools/module3-mnist/cmd/train-single-layer"
 	circuitscli "fecim-lattice-tools/module4-circuits/cmd/circuits"
-	circuitsgui "fecim-lattice-tools/module4-circuits/cmd/circuits-gui"
+	circuitsgui "fecim-lattice-tools/module4-circuits/cmd/circuits-gui-fyne"
 	comparisoncli "fecim-lattice-tools/module5-comparison/cmd/comparison"
-	comparisongui "fecim-lattice-tools/module5-comparison/cmd/comparison-gui"
+	comparisongui "fecim-lattice-tools/module5-comparison/cmd/comparison-gui-fyne"
 	edacli "fecim-lattice-tools/module6-eda/cmd/eda-cli"
-	edagui "fecim-lattice-tools/module6-eda/cmd/eda-gui"
+	edagui "fecim-lattice-tools/module6-eda/cmd/eda-gui-fyne"
 	edahello "fecim-lattice-tools/module6-eda/cmd/hello"
 	edalattice "fecim-lattice-tools/module6-eda/cmd/lattice-gen"
 )
@@ -76,7 +77,7 @@ func runCrossbarSubcommand(args []string) error {
 
 	switch args[0] {
 	case "inference":
-		return crossbarcmd.RunInference(args[1:])
+		return crossbarcli.RunInference(args[1:])
 	default:
 		return fmt.Errorf("unknown crossbar subcommand %q", args[0])
 	}
