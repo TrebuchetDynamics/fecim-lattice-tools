@@ -125,7 +125,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics; use module1-hysteresis/cmd/hysteresis-fyne")
+	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical gogpu/ui shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {
@@ -237,14 +237,12 @@ func Run(args []string) error {
 	}
 
 	if *vulkan {
-		return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches Vulkan from the non-legacy command; use %q or %q",
-			"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis",
-			"go run ./module1-hysteresis/cmd/hysteresis-fyne --vulkan")
+		return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches Vulkan from the non-legacy command; use %q",
+			"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
 	}
 
-	return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches a graphical UI from the non-legacy command; use %q or %q",
-		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis",
-		"go run ./module1-hysteresis/cmd/hysteresis-fyne")
+	return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches a graphical UI from the non-legacy command; use %q",
+		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
 }
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {

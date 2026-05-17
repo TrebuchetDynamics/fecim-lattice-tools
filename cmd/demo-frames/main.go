@@ -1,11 +1,10 @@
 package main
 
-import "fecim-lattice-tools/internal/legacycommand"
+import "fecim-lattice-tools/internal/gogpucommand"
 
 func main() {
-	legacycommand.Exit(
+	gogpucommand.Exit(
 		"cmd/demo-frames",
 		"CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs",
-		"go run ./cmd/demo-frames-fyne",
 	)
 }

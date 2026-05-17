@@ -1,11 +1,10 @@
 package main
 
-import "fecim-lattice-tools/internal/legacycommand"
+import "fecim-lattice-tools/internal/gogpucommand"
 
 func main() {
-	legacycommand.Exit(
+	gogpucommand.Exit(
 		"cmd/write-proof",
 		"CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only circuits",
-		"go run ./cmd/write-proof-fyne",
 	)
 }
