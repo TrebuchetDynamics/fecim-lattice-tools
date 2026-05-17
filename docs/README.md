@@ -220,7 +220,7 @@ CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-f
 ## 🛠️ Technology Stack
 
 - **Language:** Go 1.25+
-- **GUI:** Fyne 2.7.2
+- **GUI:** `gogpu/ui` default zero-CGO shell; legacy Fyne 2.7.2 is opt-in with `-tags legacy_fyne`
 - **Build:** Standard Go toolchain
 - **Platform:** Linux, macOS, Windows
 - **Dependencies:** See [1-getting-started/installation.md](1-getting-started/installation.md)

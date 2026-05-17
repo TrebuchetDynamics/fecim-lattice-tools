@@ -120,6 +120,57 @@ func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
 	}
 }
 
+func TestPublicGettingStartedDocsPresentGogpuAsDefault(t *testing.T) {
+	root := repoRootForRepoSurface()
+	staleFyneImportError := "**Error:** `cannot find package \"" + "fyne.io/" + "fyne/v2\"`"
+	cases := map[string]struct {
+		mustContain []string
+		stale       []string
+	}{
+		"docs/README.md": {
+			mustContain: []string{
+				"gogpu/ui",
+				"legacy Fyne",
+			},
+			stale: []string{
+				"- **GUI:** Fyne 2.7.2",
+			},
+		},
+		"docs/1-getting-started/README.md": {
+			mustContain: []string{
+				"No C compiler is required for the default gogpu/ui app.",
+				"legacy_fyne",
+			},
+			stale: []string{
+				"- **GCC:** C compiler (for Fyne GUI)",
+				"sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev",
+				"**Error:** `gcc: command not found`",
+				staleFyneImportError,
+				"**Error:** `undefined: GL_VERSION`",
+				"FYNE_NO_GL=1 ./fecim-lattice-tools",
+				"GDK_BACKEND=x11 ./fecim-lattice-tools",
+			},
+		},
+	}
+	for file, tc := range cases {
+		body, err := os.ReadFile(filepath.Join(root, file))
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		text := string(body)
+		for _, phrase := range tc.mustContain {
+			if !strings.Contains(text, phrase) {
+				t.Errorf("%s must present %q", file, phrase)
+			}
+		}
+		for _, phrase := range tc.stale {
+			if strings.Contains(text, phrase) {
+				t.Errorf("%s presents stale default Fyne guidance %q", file, phrase)
+			}
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")
