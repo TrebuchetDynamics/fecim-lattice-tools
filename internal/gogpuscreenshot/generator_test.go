@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/png"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"fecim-lattice-tools/internal/gogpuapp"
@@ -47,6 +48,46 @@ func TestGenerateAllModulesWritesDistinctNonBlankPNGs(t *testing.T) {
 	}
 
 	assertAllModuleScreenshotsValid(t, opts)
+}
+
+func TestRunHonorsCLIScreenshotFlags(t *testing.T) {
+	outputDir := t.TempDir()
+	if err := Run([]string{
+		"-out", outputDir,
+		"-only", "docs",
+		"-tag", "cli-smoke",
+		"-w", "512",
+		"-h", "320",
+	}); err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+
+	assertTaggedCLIScreenshot(t, outputDir, "docs-overview_cli-smoke.png", 512, 320)
+}
+
+func assertTaggedCLIScreenshot(t *testing.T, outputDir, filename string, width, height int) {
+	t.Helper()
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		t.Fatalf("read output dir %s: %v", outputDir, err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("generated file count = %d, want 1", len(entries))
+	}
+	if entries[0].Name() != filename {
+		t.Fatalf("generated filename = %q, want %q", entries[0].Name(), filename)
+	}
+
+	img := readPNG(t, filepath.Join(outputDir, filename))
+	bounds := img.Bounds()
+	if bounds.Dx() != width || bounds.Dy() != height {
+		t.Fatalf("%s dimensions = %dx%d, want %dx%d", filename, bounds.Dx(), bounds.Dy(), width, height)
+	}
+	_, colorCount := imageSignatureAndColorCount(img)
+	if colorCount < 2 {
+		t.Fatalf("%s is blank: only %d unique colors", filename, colorCount)
+	}
 }
 
 func assertAllModuleScreenshotsValid(t *testing.T, opts Options) {
