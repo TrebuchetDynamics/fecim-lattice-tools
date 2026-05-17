@@ -115,8 +115,6 @@ The old Fyne GUI is kept as an explicit legacy command during parity cleanup:
 go run ./cmd/fecim-lattice-tools-fyne
 ```
 
-The compatibility `fecim-lattice-tools-next` command remains as a thin wrapper over the same gogpu/ui app for one transition period.
-
 ### Build
 
 ```bash
@@ -128,7 +126,7 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...
-make test-next-ui
+make test-gogpu-ui
 bash scripts/reproduce_validation.sh
 ```
 
@@ -189,7 +187,6 @@ High-level flow:
 
 ```text
 cmd/fecim-lattice-tools       default zero-CGO gogpu/ui shell
-cmd/fecim-lattice-tools-next  compatibility wrapper for gogpu/ui shell
 cmd/fecim-lattice-tools-fyne  legacy Fyne shell
         |
         v
@@ -221,7 +218,7 @@ Common checks:
 ```bash
 gofmt -w .
 go test ./...
-make test-next-ui
+make test-gogpu-ui
 go test -race -short ./shared/... ./validation/...
 ```
 

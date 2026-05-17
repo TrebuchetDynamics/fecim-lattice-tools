@@ -22,7 +22,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 
 | Directory | Purpose |
 |-----------|---------|
-| `cmd/` | CLI entry points: `fecim-lattice-tools` (current Fyne GUI), `fecim-lattice-tools-next` (future zero-CGO gogpu/ui shell), `fecim-screenshotter` (headless testing), `latex-svg` (doc rendering) |
+| `cmd/` | CLI entry points: `fecim-lattice-tools` (default zero-CGO gogpu/ui shell), `fecim-lattice-tools-fyne` (legacy Fyne GUI), `fecim-screenshotter` (headless gogpu/ui testing), `latex-svg` (doc rendering) |
 | `module1-hysteresis/` | P-E curves, Preisach model, Landau-Khalatnikov solver, ISPP write controller, material presets (HZO, BTO, PZT) |
 | `module2-crossbar/` | Crossbar array MVM (matrix-vector multiply), non-idealities (IR drop, sneak paths, conductance drift), device models |
 | `module3-mnist/` | End-to-end MNIST inference through CIM pipeline, 80% accuracy baseline, cross-validation with external benchmarks |
@@ -70,14 +70,14 @@ If `qmd` emits CUDA build output or starts model downloads, stop using it for th
 **Build:**
 ```bash
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
-CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools
 ./launch.sh
 ```
 
 **Test:**
 ```bash
 go test ./...                           # Full test suite
-make test-next-ui                       # Future zero-CGO gogpu/ui shell tests
+make test-gogpu-ui                      # Zero-CGO gogpu/ui shell tests
 go test -race ./...                     # Race condition detection
 go test ./module2-crossbar/...          # Module-scoped testing
 ```
@@ -167,8 +167,8 @@ threshold interaction with guard-band logic.
 ### Internal Relationships
 
 ```
-cmd/fecim-lattice-tools (current Fyne entrypoint)
-cmd/fecim-lattice-tools-next (future zero-CGO gogpu/ui shell)
+cmd/fecim-lattice-tools (default zero-CGO gogpu/ui shell)
+cmd/fecim-lattice-tools-fyne (legacy Fyne shell)
   ↓
 shared/ (theme, widgets, physics, logging, utilities)
   ↑
