@@ -126,7 +126,9 @@ Claim audit:
   packets can be reviewed over time.
 - `fecim-lattice-tools research evidence CLAIM_ID` saves the latest
   claim-linked search results to `evidence/CLAIM_ID.json` as candidate evidence
-  that still needs review before promotion.
+  that still needs review before promotion. It also writes a content-addressed
+  copy under `evidence/history/CLAIM_ID/RUN_ID.json` so candidate evidence
+  changes can be reviewed over time.
 - `make research-audit` also checks `evidence/*.json`: the ledger filename must
   match a known claim id, candidate counts must match the listed candidates, and
   chunk candidates must still point at existing repo-relative JSONL chunk ids

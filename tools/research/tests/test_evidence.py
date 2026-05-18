@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -41,6 +42,29 @@ class EvidenceTest(unittest.TestCase):
             self.assertEqual(evidence["claim"]["id"], "hzo-remanent-polarization-range")
             self.assertEqual(report["output"], "research/evidence/hzo-remanent-polarization-range.json")
             self.assertEqual(report["candidate_count"], 1)
+
+    def test_run_evidence_writes_content_addressed_claim_history(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            claim_id = "hzo-remanent-polarization-range"
+            self._write_search_report(root, claim_id=claim_id)
+
+            code = run_evidence(root, claim_id)
+
+            self.assertEqual(code, 0)
+            evidence_path = root / "research" / "evidence" / f"{claim_id}.json"
+            latest = json.loads(evidence_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            record_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(record_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/evidence/history/{claim_id}/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
     def test_run_evidence_rejects_search_report_for_different_claim(self):
         with tempfile.TemporaryDirectory() as td:

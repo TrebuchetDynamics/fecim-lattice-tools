@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .reporting import write_content_addressed_report
+
 
 SOURCE_REPORT = "research/reports/search-latest.json"
 
@@ -47,9 +49,14 @@ def run_evidence(root: Path, claim_id: str) -> int:
         )
         return 1
 
-    output = root / "research" / "evidence" / f"{claim_id}.json"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_rel = f"research/evidence/{claim_id}.json"
+    output = root / output_rel
+    record = write_content_addressed_report(
+        root,
+        output_rel,
+        f"research/evidence/history/{claim_id}",
+        record,
+    )
 
     summary = {
         "ok": True,
