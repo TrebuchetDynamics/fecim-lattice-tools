@@ -14,16 +14,21 @@ import (
 )
 
 type circuitsOverlayState struct {
-	rows          int
-	cols          int
-	mode          string
-	architecture  string
-	selectedRow   int
-	selectedCol   int
-	writeTarget   int
-	coupling      string
-	isppEngine    string
-	lastOperation string
+	rows            int
+	cols            int
+	mode            string
+	architecture    string
+	selectedRow     int
+	selectedCol     int
+	writeTarget     int
+	coupling        string
+	isppEngine      string
+	lastOperation   string
+	halfSelectState string
+	halfSelectCells int
+	disturbVoltage  string
+	stressBudget    string
+	stressPerPulse  string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -54,6 +59,7 @@ func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h
 	cc.Translate(panelX, panelY)
 	drawCircuitsPanelBackground(cc, panelW, panelH, state)
 	drawCircuitsGrid(cc, state, gridX, gridY, gridSize)
+	drawHalfSelectStressOverlay(cc, state, gridX, gridY, gridSize)
 	drawCircuitPathState(cc, state, gridX, gridY, gridSize, detailX, panelH)
 	drawCircuitsDetails(cc, state, detailX, 76, detailW, panelH-106)
 	cc.Pop()
@@ -76,16 +82,21 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		mode = "READ"
 	}
 	return circuitsOverlayState{
-		rows:          rows,
-		cols:          cols,
-		mode:          mode,
-		architecture:  valueOr(metrics["architecture"], "0T1R (Passive)"),
-		selectedRow:   clampInt(selectedRow, 0, rows-1),
-		selectedCol:   clampInt(selectedCol, 0, cols-1),
-		writeTarget:   target,
-		coupling:      valueOr(metrics["coupling"], "Tier-A"),
-		isppEngine:    valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
-		lastOperation: lastOperation,
+		rows:            rows,
+		cols:            cols,
+		mode:            mode,
+		architecture:    valueOr(metrics["architecture"], "0T1R (Passive)"),
+		selectedRow:     clampInt(selectedRow, 0, rows-1),
+		selectedCol:     clampInt(selectedCol, 0, cols-1),
+		writeTarget:     target,
+		coupling:        valueOr(metrics["coupling"], "Tier-A"),
+		isppEngine:      valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
+		lastOperation:   lastOperation,
+		halfSelectState: valueOr(metrics["half_select_state"], "inactive"),
+		halfSelectCells: parseLeadingInt(metrics["half_select_cells"]),
+		disturbVoltage:  valueOr(metrics["disturb_voltage"], "0.00 V"),
+		stressBudget:    valueOr(metrics["stress_budget"], "inactive"),
+		stressPerPulse:  valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
 	}
 }
 
@@ -154,6 +165,38 @@ func drawCircuitsGrid(cc *gg.Context, state circuitsOverlayState, x, y, size flo
 	}
 }
 
+func drawHalfSelectStressOverlay(cc *gg.Context, state circuitsOverlayState, x, y, size float64) {
+	if state.halfSelectCells <= 0 || state.halfSelectState == "inactive" || state.halfSelectState == "isolated" {
+		return
+	}
+	visibleRows := minInt(state.rows, 32)
+	visibleCols := minInt(state.cols, 32)
+	cell := size / float64(maxInt(visibleRows, visibleCols))
+	if cell < 4 {
+		cell = 4
+	}
+	displayCol := scaledIndex(state.selectedCol, state.cols, visibleCols)
+	displayRow := scaledIndex(state.selectedRow, state.rows, visibleRows)
+	colX := x + float64(displayCol)*cell
+
+	cc.SetRGBA(1.0, 0.66, 0.20, 0.16)
+	cc.DrawRectangle(colX+1, y+1, cell-2, float64(visibleRows)*cell-2)
+	cc.Fill()
+	cc.SetRGBA(1.0, 0.66, 0.20, 0.75)
+	cc.SetLineWidth(2)
+	cc.DrawRectangle(colX+1, y+1, cell-2, float64(visibleRows)*cell-2)
+	cc.Stroke()
+
+	cc.SetRGBA(1.0, 0.78, 0.32, 0.58)
+	for r := range visibleRows {
+		if r == displayRow {
+			continue
+		}
+		cc.DrawRectangle(colX+3, y+float64(r)*cell+3, cell-6, cell-6)
+		cc.Fill()
+	}
+}
+
 func drawCircuitPathState(cc *gg.Context, state circuitsOverlayState, gridX, gridY, gridSize, detailX, panelH float64) {
 	visibleRows := minInt(state.rows, 32)
 	visibleCols := minInt(state.cols, 32)
@@ -203,6 +246,9 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Target: L" + strconv.Itoa(state.writeTarget),
 		"Coupling: " + state.coupling,
 		"ISPP: " + compactISPPEngine(state.isppEngine),
+		"Stress: " + state.halfSelectState,
+		"Cells: " + strconv.Itoa(state.halfSelectCells),
+		"Budget: " + state.stressBudget,
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)
@@ -286,6 +332,18 @@ func parseCircuitTarget(value string) int {
 		return 15
 	}
 	return target
+}
+
+func parseLeadingInt(value string) int {
+	fields := strings.Fields(value)
+	if len(fields) == 0 {
+		return 0
+	}
+	parsed, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return 0
+	}
+	return parsed
 }
 
 func scaledIndex(index, total, visible int) int {

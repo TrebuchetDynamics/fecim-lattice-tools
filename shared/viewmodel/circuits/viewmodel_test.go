@@ -119,6 +119,83 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 	}
 }
 
+func TestSnapshotContainsHalfSelectStressState(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSelectCell,
+		Payload: map[string]string{"row": "3", "col": "4"},
+	}); err != nil {
+		t.Fatalf("select cell: %v", err)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"half_select_state":    "column-write active",
+		"half_select_cells":    "7 same-column cells",
+		"disturb_voltage":      "1.40 V",
+		"stress_budget":        "400 pulses/level",
+		"stress_per_pulse":     "0.002500 level/pulse",
+		"stress_selected_cell": "[3,4]",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	if !hasSection(s, "half_select_stress") {
+		t.Fatal("missing half-select stress section")
+	}
+}
+
+func TestHalfSelectStressBudgetFollowsArchitecture(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+
+	passive := m.Snapshot()
+	if got := metricValue(passive, "stress_budget"); got != "400 pulses/level" {
+		t.Fatalf("passive stress budget = %q, want 400 pulses/level", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetArchitecture,
+		Payload: map[string]string{"architecture": Architecture1T1R},
+	}); err != nil {
+		t.Fatalf("set 1T1R: %v", err)
+	}
+	oneT := m.Snapshot()
+	if got := metricValue(oneT, "half_select_state"); got != "attenuated residual" {
+		t.Fatalf("1T1R state = %q, want attenuated residual", got)
+	}
+	if got := metricValue(oneT, "stress_budget"); got != "8000 pulses/level" {
+		t.Fatalf("1T1R stress budget = %q, want 8000 pulses/level", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetArchitecture,
+		Payload: map[string]string{"architecture": Architecture2T1R},
+	}); err != nil {
+		t.Fatalf("set 2T1R: %v", err)
+	}
+	twoT := m.Snapshot()
+	if got := metricValue(twoT, "half_select_state"); got != "isolated" {
+		t.Fatalf("2T1R state = %q, want isolated", got)
+	}
+	if got := metricValue(twoT, "half_select_cells"); got != "0 cells" {
+		t.Fatalf("2T1R cells = %q, want 0 cells", got)
+	}
+}
+
 func metricValue(s viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range s.Metrics {
 		if metric.ID == id {

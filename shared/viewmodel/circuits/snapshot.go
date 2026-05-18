@@ -20,6 +20,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "write_target", Label: "Write Target", Value: fmt.Sprintf("%d/%d", state.WriteTargetLevel, quantLevels-1)},
 		{ID: "coupling", Label: "Coupling", Value: state.CouplingTier},
 		{ID: "ispp_engine", Label: "ISPP Engine", Value: state.ISPPEngine},
+		{ID: "half_select_state", Label: "Half-Select", Value: halfSelectStateValue(state)},
+		{ID: "half_select_cells", Label: "Disturbed Cells", Value: halfSelectCellsValue(state)},
+		{ID: "disturb_voltage", Label: "Disturb Voltage", Value: disturbVoltageValue(state)},
+		{ID: "stress_budget", Label: "Stress Budget", Value: stressBudgetValue(state)},
+		{ID: "stress_per_pulse", Label: "Stress/Pulse", Value: stressPerPulseValue(state)},
+		{ID: "stress_selected_cell", Label: "Stress Target", Value: fmt.Sprintf("[%d,%d]", state.SelectedRow, state.SelectedCol)},
 		{ID: "adc", Label: "ADC", Value: fmt.Sprintf("%d-bit SAR", state.ADCResolution)},
 		{ID: "dac", Label: "DAC", Value: fmt.Sprintf("%d-bit R-2R", state.DACResolution)},
 		{ID: "tia", Label: "TIA", Value: fmt.Sprintf("%.0f kΩ", state.TIAGain/1e3)},
@@ -70,6 +76,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "write_path", Title: "Write Path (ISPP)", Body: fmt.Sprintf("%d-stage charge pump → %d-bit DAC → ISPP pulse train.", state.ChargePumpStages, state.DACResolution), Category: "research"},
 	}
 	sections = append(sections, viewmodel.Section{
+		ID: "half_select_stress", Title: "Half-Select / Column Stress",
+		Body: fmt.Sprintf("%s: %s at %s. Budget: %s. This is a deterministic educational stress budget, not a calibrated endurance claim.",
+			halfSelectStateValue(state), halfSelectCellsValue(state), disturbVoltageValue(state), stressBudgetValue(state)),
+		Category: "research",
+	})
+	sections = append(sections, viewmodel.Section{
 		ID: "edu_adc", Title: "How SAR ADC Works",
 		Body:     fmt.Sprintf("Successive Approximation Register ADC: Binary search over %d levels. Each bit is tested: set bit, compare against input, keep or discard. %d clock cycles to complete. INL/DNL characterize deviation from ideal.", 1<<state.ADCResolution, state.ADCResolution),
 		Category: "education",
@@ -115,6 +127,48 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		Metrics: metrics, Sections: sections, Actions: actions,
 		Plots: buildISPPPlots(state),
 	}
+}
+
+func halfSelectStateValue(state CircuitsState) string {
+	if state.HalfSelectState == "" {
+		return HalfSelectStateInactive
+	}
+	return state.HalfSelectState
+}
+
+func halfSelectCellsValue(state CircuitsState) string {
+	switch state.HalfSelectState {
+	case HalfSelectStateColumnWriteActive:
+		return fmt.Sprintf("%d same-column cells", state.HalfSelectCells)
+	case HalfSelectStateAttenuated:
+		return fmt.Sprintf("%d gated cells", state.HalfSelectCells)
+	default:
+		return fmt.Sprintf("%d cells", state.HalfSelectCells)
+	}
+}
+
+func disturbVoltageValue(state CircuitsState) string {
+	if state.DisturbVoltage <= 0 {
+		return "0.00 V"
+	}
+	return fmt.Sprintf("%.2f V", state.DisturbVoltage)
+}
+
+func stressBudgetValue(state CircuitsState) string {
+	if state.StressCyclesToLevel <= 0 {
+		if halfSelectStateValue(state) == HalfSelectStateIsolated {
+			return "isolated"
+		}
+		return "inactive"
+	}
+	return fmt.Sprintf("%d pulses/level", state.StressCyclesToLevel)
+}
+
+func stressPerPulseValue(state CircuitsState) string {
+	if state.StressPerPulse <= 0 {
+		return "0.000000 level/pulse"
+	}
+	return fmt.Sprintf("%.6f level/pulse", state.StressPerPulse)
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {

@@ -24,6 +24,13 @@ const (
 )
 
 const (
+	HalfSelectStateInactive          = "inactive"
+	HalfSelectStateColumnWriteActive = "column-write active"
+	HalfSelectStateAttenuated        = "attenuated residual"
+	HalfSelectStateIsolated          = "isolated"
+)
+
+const (
 	ActionRunRead          = "run_read"
 	ActionRunWrite         = "run_write"
 	ActionRunCompute       = "run_compute"
@@ -41,6 +48,9 @@ const (
 )
 
 const DefaultQuantLevels = 30
+const DefaultDisturbVoltage = 1.4
+const PassiveStressPerPulse = 0.0025
+const OneTOneRStressAttenuation = 20.0
 
 var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64, 128}
 
@@ -56,6 +66,11 @@ type CircuitsState struct {
 	CouplingTier        string  `json:"coupling_tier"`
 	ISPPEngine          string  `json:"ispp_engine"`
 	LastOperationStatus string  `json:"last_operation_status"`
+	HalfSelectState     string  `json:"half_select_state"`
+	HalfSelectCells     int     `json:"half_select_cells"`
+	DisturbVoltage      float64 `json:"disturb_voltage"`
+	StressPerPulse      float64 `json:"stress_per_pulse"`
+	StressCyclesToLevel int     `json:"stress_cycles_to_level"`
 	ADCResolution       int     `json:"adc_resolution"`
 	DACResolution       int     `json:"dac_resolution"`
 	TIAGain             float64 `json:"tia_gain"`

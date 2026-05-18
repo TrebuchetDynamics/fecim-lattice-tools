@@ -24,6 +24,7 @@ func New() *Module {
 		ChargePumpStages: 4, SupplyVoltage: 1.8, ISPPEnabled: true,
 	}}
 	m.runISPPSimulation()
+	m.computeHalfSelectStress()
 	return m
 }
 
@@ -43,15 +44,18 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 	case ActionRunRead:
 		m.state.OperationMode = OperationRead
 		m.state.LastOperationStatus = fmt.Sprintf("READ cell [%d,%d] through %s", m.state.SelectedRow, m.state.SelectedCol, m.state.Architecture)
+		m.computeHalfSelectStress()
 		return nil
 	case ActionRunWrite:
 		m.state.OperationMode = OperationWrite
 		m.runISPPSimulation()
 		m.state.LastOperationStatus = fmt.Sprintf("WRITE level %d to cell [%d,%d] using %s", m.state.WriteTargetLevel, m.state.SelectedRow, m.state.SelectedCol, m.state.ISPPEngine)
+		m.computeHalfSelectStress()
 		return nil
 	case ActionRunCompute:
 		m.state.OperationMode = OperationCompute
 		m.state.LastOperationStatus = fmt.Sprintf("COMPUTE on %dx%d %s array", m.state.Rows, m.state.Cols, m.state.Architecture)
+		m.computeHalfSelectStress()
 		return nil
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
@@ -112,6 +116,7 @@ func (m *Module) resizeArray(payload map[string]string) error {
 	m.state.Cols = cols
 	m.clampSelectedCell()
 	m.state.LastOperationStatus = fmt.Sprintf("Array resized to %dx%d", rows, cols)
+	m.computeHalfSelectStress()
 	return nil
 }
 
@@ -125,6 +130,7 @@ func (m *Module) setOperationMode(payload map[string]string) error {
 	}
 	m.state.OperationMode = mode
 	m.state.LastOperationStatus = fmt.Sprintf("Operation mode set to %s", mode)
+	m.computeHalfSelectStress()
 	return nil
 }
 
@@ -138,6 +144,7 @@ func (m *Module) setArchitecture(payload map[string]string) error {
 	}
 	m.state.Architecture = architecture
 	m.state.LastOperationStatus = fmt.Sprintf("Architecture set to %s", architecture)
+	m.computeHalfSelectStress()
 	return nil
 }
 
@@ -156,6 +163,7 @@ func (m *Module) selectCell(payload map[string]string) error {
 	m.state.SelectedRow = row
 	m.state.SelectedCol = col
 	m.state.LastOperationStatus = fmt.Sprintf("Selected cell [%d,%d]", row, col)
+	m.computeHalfSelectStress()
 	return nil
 }
 
@@ -172,6 +180,7 @@ func (m *Module) setWriteTarget(payload map[string]string) error {
 	}
 	m.state.WriteTargetLevel = level
 	m.state.LastOperationStatus = fmt.Sprintf("Write target set to level %d", level)
+	m.computeHalfSelectStress()
 	return nil
 }
 
@@ -260,6 +269,39 @@ func (m *Module) clampSelectedCell() {
 	}
 }
 
+func (m *Module) computeHalfSelectStress() {
+	m.state.HalfSelectState = HalfSelectStateInactive
+	m.state.HalfSelectCells = 0
+	m.state.DisturbVoltage = 0
+	m.state.StressPerPulse = 0
+	m.state.StressCyclesToLevel = 0
+
+	if m.state.OperationMode != OperationWrite {
+		return
+	}
+
+	switch m.state.Architecture {
+	case ArchitecturePassive:
+		m.state.HalfSelectState = HalfSelectStateColumnWriteActive
+		m.state.HalfSelectCells = maxInt(0, m.state.Rows-1)
+		m.state.DisturbVoltage = DefaultDisturbVoltage
+		m.state.StressPerPulse = PassiveStressPerPulse
+	case Architecture1T1R:
+		m.state.HalfSelectState = HalfSelectStateAttenuated
+		m.state.HalfSelectCells = maxInt(0, m.state.Rows-1)
+		m.state.DisturbVoltage = DefaultDisturbVoltage / OneTOneRStressAttenuation
+		m.state.StressPerPulse = PassiveStressPerPulse / OneTOneRStressAttenuation
+	case Architecture2T1R:
+		m.state.HalfSelectState = HalfSelectStateIsolated
+		return
+	default:
+		return
+	}
+	if m.state.StressPerPulse > 0 {
+		m.state.StressCyclesToLevel = int(math.Ceil(1.0 / m.state.StressPerPulse))
+	}
+}
+
 func parsePayloadInt(payload map[string]string, key string) (int, error) {
 	value, ok := payload[key]
 	if !ok {
@@ -292,6 +334,13 @@ func validString(value string, validValues ...string) bool {
 		}
 	}
 	return false
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (m *Module) Start() {}

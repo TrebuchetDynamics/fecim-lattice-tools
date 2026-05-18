@@ -368,3 +368,29 @@ func TestCircuitsOverlayRespondsToViewmodelState(t *testing.T) {
 		t.Fatal("circuits overlay did not change after array, selected-cell, and mode state changed")
 	}
 }
+
+func TestCircuitsOverlayRespondsToHalfSelectStressState(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
+	port := harness.portFor(viewmodel.ModuleCircuits)
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+
+	passive := harness.renderActiveFrameSignature()
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetArchitecture,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"architecture": circuitsvm.Architecture2T1R},
+	}); err != nil {
+		t.Fatalf("set 2T1R: %v", err)
+	}
+	isolated := harness.renderActiveFrameSignature()
+
+	if isolated == passive {
+		t.Fatal("circuits overlay did not change after half-select stress state changed from passive to isolated")
+	}
+}

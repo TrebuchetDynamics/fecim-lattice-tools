@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, and a state-responsive unified canvas overlay. Half-select/stress/PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, and half-select/stress budget state. PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -172,7 +172,31 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
       ],
-      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, stress investigations, or reference-spec panels."
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, PVT investigations, or reference-spec panels."
+    },
+    {
+      "module": "circuits",
+      "feature": "Half-select / column-write stress state and educational stress budget",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/device_state_ispp.go",
+        "module4-circuits/pkg/gui/tab_unified_voltage.go",
+        "module4-circuits/pkg/gui/tab_unified_halfselect_voltage_test.go",
+        "module4-circuits/pkg/gui/tab_unified_halfselect_residue_test.go",
+        "module4-circuits/pkg/gui/retention_halfselect_stress_test.go",
+        "module4-circuits/pkg/gui/m4_investigations_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'HalfSelect|Stress' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesHalfSelectStress|CircuitsOverlayRespondsToHalfSelectStressState' -count=1"
+      ],
+      "notes": "This ports deterministic half-select/column-write stress summary state into gogpu. It does not claim full legacy residue evolution, retention drift fitting, or deep investigation-panel parity."
     },
     {
       "module": "comparison",
