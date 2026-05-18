@@ -84,7 +84,8 @@ Paper acquisition:
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.
 - OpenAlex JSON ledgers are audited against matching citation and acquisition
-  records, including DOI normalization and OpenAlex work ID consistency.
+  records, including DOI normalization, citation `**OpenAlex:**` fields, and
+  OpenAlex work ID consistency.
 - Acquisition YAML ledgers are audited: the `paper_key` must match the
   filename, citation paths must point at the matching citation record when
   present, and downloaded inbox PDFs must still match their SHA-256 digest.
@@ -120,7 +121,8 @@ Claim audit:
   citation path, PDF path, and PDF SHA-256 digest in sync with the repository.
 - OpenAlex ledgers in `sources/*.openalex.json` must remain valid JSON with a
   work ID, display name, and DOI identity that matches the citation and
-  acquisition ledgers when those fields exist.
+  acquisition ledgers when those fields exist. If a citation record has an
+  `**OpenAlex:**` field, it must match the tracked OpenAlex JSON `id`.
 - Source ledgers must not point at ignored `research/papers/...` inbox files;
   promote reviewed PDFs before treating them as canonical evidence inputs.
 - Acquisition ledgers in `sources/*.acquisition.yaml` are the exception for

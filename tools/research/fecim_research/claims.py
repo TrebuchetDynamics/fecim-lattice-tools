@@ -327,7 +327,14 @@ def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:
 
         citation_path = root / "citations" / "papers" / f"{expected_key}.md"
         if citation_path.is_file():
-            citation_doi = _parse_markdown_fields(citation_path).get("doi", "").strip()
+            citation_fields = _parse_markdown_fields(citation_path)
+            citation_openalex_id = citation_fields.get("openalex", "").strip()
+            if citation_openalex_id and openalex_id and openalex_id != citation_openalex_id:
+                errors.append(
+                    f"{rel_path} id {openalex_id} "
+                    f"does not match citation OpenAlex {citation_openalex_id}"
+                )
+            citation_doi = citation_fields.get("doi", "").strip()
             if citation_doi and openalex_doi and _normalize_doi(openalex_doi) != _normalize_doi(citation_doi):
                 errors.append(f"{rel_path} doi {openalex_doi} does not match citation DOI {citation_doi}")
 

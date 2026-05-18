@@ -373,6 +373,30 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_openalex_id_does_not_match_citation_record(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(
+                root,
+                "park2015_advmat_hzo",
+                doi="10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W999",
+            )
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W123",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json id https://openalex.org/W123 does not match citation OpenAlex https://openalex.org/W999",
+                "\n".join(report.errors),
+            )
+
     def test_audit_validates_pdf_promotion_review_ledgers(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -659,11 +683,22 @@ class ClaimsTest(unittest.TestCase):
             self.assertTrue(history_path.exists())
             self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
-    def _write_paper(self, root: Path, key: str, pdf: str = "not stored", doi: str = ""):
+    def _write_paper(
+        self,
+        root: Path,
+        key: str,
+        pdf: str = "not stored",
+        doi: str = "",
+        openalex_id: str = "",
+    ):
         path = root / "citations" / "papers" / f"{key}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         doi_line = f"**DOI:** `{doi}`\n" if doi else ""
-        path.write_text(f"**Key:** `{key}`\n{doi_line}**PDF:** `{pdf}`\n", encoding="utf-8")
+        openalex_line = f"**OpenAlex:** `{openalex_id}`\n" if openalex_id else ""
+        path.write_text(
+            f"**Key:** `{key}`\n{doi_line}{openalex_line}**PDF:** `{pdf}`\n",
+            encoding="utf-8",
+        )
 
     def _write_claim(
         self,
