@@ -41,6 +41,9 @@ func buildCircuitsViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *mate
 	}
 	children = append(children, primitives.Box(metricBoxes...).Gap(8))
 	children = append(children, buildCircuitControls(snapshot, theme, onAction))
+	if panel := buildReferenceTimingPanel(snapshot, theme); panel != nil {
+		children = append(children, panel)
+	}
 
 	eSections, rSections, dSections := partitionSections(snapshot.Sections)
 	children = appendSectionGroup(children, "Education", eSections, widget.Hex(0xE8EEF0), theme)
@@ -169,6 +172,80 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		controlRow("Logger", loggerButtons, theme),
 		isppToggle,
 	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
+}
+
+type referenceTimingPanelState struct {
+	available    bool
+	title        string
+	summary      string
+	signals      string
+	markers      string
+	phases       string
+	playback     string
+	playbackStep string
+	signalRows   []string
+}
+
+func referenceTimingPanelStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) referenceTimingPanelState {
+	metrics := map[string]string{}
+	for _, metric := range snapshot.Metrics {
+		metrics[metric.ID] = metric.Value
+	}
+	var panelPlot *viewmodel.PlotData
+	for i := range snapshot.Plots {
+		if snapshot.Plots[i].ID == "timing_waveform_panel" {
+			panelPlot = &snapshot.Plots[i]
+			break
+		}
+	}
+	if panelPlot == nil {
+		return referenceTimingPanelState{}
+	}
+	rows := make([]string, 0, len(panelPlot.Series))
+	for _, series := range panelPlot.Series {
+		rows = append(rows, series.Name+" · "+strconv.Itoa(len(series.Points))+" points")
+	}
+	return referenceTimingPanelState{
+		available:    true,
+		title:        panelPlot.Title,
+		summary:      valueOr(metrics["timing_waveform_panel"], panelPlot.Title),
+		signals:      valueOr(metrics["timing_waveform_panel_signals"], "not evaluated"),
+		markers:      valueOr(metrics["timing_waveform_panel_markers"], "not evaluated"),
+		phases:       valueOr(metrics["timing_waveform_panel_phases"], "not evaluated"),
+		playback:     valueOr(metrics["reference_timing_playback"], "not playing"),
+		playbackStep: valueOr(metrics["reference_timing_playback_step"], "0/0"),
+		signalRows:   rows,
+	}
+}
+
+func buildReferenceTimingPanel(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
+	state := referenceTimingPanelStateFromSnapshot(snapshot)
+	if !state.available {
+		return nil
+	}
+	rows := []widget.Widget{
+		primitives.Text(state.title).FontSize(16).Bold().Color(widget.Hex(0x183D34)),
+		primitives.Text(state.summary).FontSize(12).Color(theme.Colors.OnSurfaceVariant),
+		primitives.Text(state.signals).FontSize(12).Color(widget.Hex(0x44504B)),
+		primitives.Text(state.markers).FontSize(12).Color(widget.Hex(0x44504B)),
+		primitives.Text(state.phases).FontSize(12).Color(widget.Hex(0x44504B)),
+		primitives.Text("Playback " + state.playbackStep + " · " + state.playback).FontSize(12).Color(widget.Hex(0x44504B)),
+	}
+	signalBoxes := make([]widget.Widget, 0, len(state.signalRows))
+	for _, row := range state.signalRows {
+		signalBoxes = append(signalBoxes, primitives.Box(
+			primitives.Text(row).FontSize(11).Color(widget.Hex(0x24483E)),
+		).Padding(8).Background(widget.Hex(0xEEF5F1)).Rounded(6).BorderStyle(1, widget.Hex(0xD4DED8)))
+	}
+	if len(signalBoxes) > 0 {
+		rows = append(rows, primitives.Box(signalBoxes...).Gap(6))
+	}
+	return primitives.Box(rows...).
+		Padding(14).
+		Gap(8).
+		Background(widget.Hex(0xF6FAF7)).
+		Rounded(8).
+		BorderStyle(1, widget.Hex(0xC9D8D1))
 }
 
 func circuitButton(label string, active bool, action viewmodel.Action, theme *material3.Theme, onAction func(viewmodel.Action)) widget.Widget {

@@ -52,6 +52,10 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "timing_waveform_signals", Label: "Timing Waveform Signals", Value: timingWaveformSignalsValue(state)},
 		{ID: "timing_waveform_markers", Label: "Timing Waveform Markers", Value: timingWaveformMarkersValue(state)},
 		{ID: "timing_waveform_phases", Label: "Timing Waveform Phases", Value: timingWaveformPhasesValue(state)},
+		{ID: "timing_waveform_panel", Label: "Timing Waveform Panel", Value: timingWaveformPanelValue(state)},
+		{ID: "timing_waveform_panel_signals", Label: "Timing Waveform Panel Signals", Value: timingWaveformPanelSignalsValue(state)},
+		{ID: "timing_waveform_panel_markers", Label: "Timing Waveform Panel Markers", Value: timingWaveformPanelMarkersValue(state)},
+		{ID: "timing_waveform_panel_phases", Label: "Timing Waveform Panel Phases", Value: timingWaveformPanelPhasesValue(state)},
 		{ID: "reference_timing_export", Label: "Reference Timing Export", Value: referenceTimingExportStatusValue(state)},
 		{ID: "reference_timing_export_path", Label: "Reference Timing Export Target", Value: referenceTimingExportPathValue(state)},
 		{ID: "reference_timing_export_bytes", Label: "Reference Timing Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingExportBytes)},
@@ -143,6 +147,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Active waveform SVG export: %s. Playback: %s. Summary-level port of the legacy timing diagrams with deterministic playback state.",
 			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state),
 			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state), referenceTimingSVGExportStatusValue(state), referenceTimingPlaybackStatusValue(state)),
+		Category: "design",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID:       "reference_timing_waveform_panel",
+		Title:    "Reference Timing Waveform Panel",
+		Body:     referenceTimingWaveformPanelBody(state),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -434,6 +444,69 @@ func timingWaveformPhasesValue(state CircuitsState) string {
 	return fmt.Sprintf("%s phases: %s", waveform.Operation, strings.Join(phases, ", "))
 }
 
+func timingWaveformPanelValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%s panel / %d signals / %d markers / %d phases / %d ns",
+		waveform.Operation, len(waveform.Signals), len(waveform.TimeMarkers), len(waveform.PhaseMarkers), waveform.TotalNS)
+}
+
+func timingWaveformPanelSignalsValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.Signals) == 0 {
+		return "not evaluated"
+	}
+	signals := make([]string, 0, len(waveform.Signals))
+	for _, signal := range waveform.Signals {
+		signals = append(signals, fmt.Sprintf("%s[%s]", signal.Name, timingWindowCountValue(len(signal.HighWindows))))
+	}
+	return fmt.Sprintf("Signals (%d): %s", len(waveform.Signals), strings.Join(signals, ", "))
+}
+
+func timingWaveformPanelMarkersValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.TimeMarkers) == 0 {
+		return "not evaluated"
+	}
+	markers := make([]string, 0, len(waveform.TimeMarkers))
+	for _, marker := range waveform.TimeMarkers {
+		markers = append(markers, fmt.Sprintf("%s@%d%%", marker.Label, marker.Percent))
+	}
+	return fmt.Sprintf("Time markers (%d): %s", len(waveform.TimeMarkers), strings.Join(markers, ", "))
+}
+
+func timingWaveformPanelPhasesValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.PhaseMarkers) == 0 {
+		return "not evaluated"
+	}
+	phases := make([]string, 0, len(waveform.PhaseMarkers))
+	for _, phase := range waveform.PhaseMarkers {
+		phases = append(phases, fmt.Sprintf("%s %d-%d%% %dns", phase.Label, phase.StartPct, phase.EndPct, phase.DurationNS))
+	}
+	return fmt.Sprintf("Phases (%d): %s", len(waveform.PhaseMarkers), strings.Join(phases, ", "))
+}
+
+func timingWindowCountValue(count int) string {
+	if count == 1 {
+		return "1 window"
+	}
+	return fmt.Sprintf("%d windows", count)
+}
+
+func referenceTimingWaveformPanelBody(state CircuitsState) string {
+	return fmt.Sprintf("%s. %s. %s. %s. Playback: %s. Exports: JSON %s; SVG %s. Gogpu-native full waveform panel rendered from active waveform state; behavioral timing only, not calibrated silicon.",
+		timingWaveformPanelValue(state),
+		timingWaveformPanelSignalsValue(state),
+		timingWaveformPanelMarkersValue(state),
+		timingWaveformPanelPhasesValue(state),
+		referenceTimingPlaybackStatusValue(state),
+		referenceTimingExportStatusValue(state),
+		referenceTimingSVGExportStatusValue(state))
+}
+
 func activeTimingWaveform(state CircuitsState) (ReferenceTimingWaveform, bool) {
 	operation := state.TimingActiveOp
 	if operation == "" {
@@ -627,6 +700,7 @@ func buildCircuitPlots(state CircuitsState) []viewmodel.PlotData {
 	plots := []viewmodel.PlotData{}
 	if plot, ok := buildTimingWaveformPlot(state); ok {
 		plots = append(plots, plot)
+		plots = append(plots, buildTimingWaveformPanelPlot(plot))
 	}
 	plots = append(plots, buildISPPPlots(state)...)
 	return plots
@@ -651,6 +725,13 @@ func buildTimingWaveformPlot(state CircuitsState) (viewmodel.PlotData, bool) {
 		YLabel: "Signal row",
 		Series: series,
 	}, true
+}
+
+func buildTimingWaveformPanelPlot(plot viewmodel.PlotData) viewmodel.PlotData {
+	operation := strings.TrimSuffix(plot.Title, " Timing Waveform")
+	plot.ID = "timing_waveform_panel"
+	plot.Title = operation + " Reference Timing Panel"
+	return plot
 }
 
 func timingWaveformPlotPoints(signal ReferenceTimingSignal, row int) []viewmodel.PlotPoint {

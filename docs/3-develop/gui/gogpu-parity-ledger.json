@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, an independent reference timing operation selector, reference timing JSON export, reference timing SVG export, reference timing animation step state, deterministic reference timing playback controls, reference timing waveform metadata, a compact reference timing waveform strip, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, full waveform panels, raster waveform snapshots, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, an independent reference timing operation selector, reference timing JSON export, reference timing SVG export, reference timing animation step state, deterministic reference timing playback controls, reference timing waveform metadata, a compact reference timing waveform strip, a full reference timing waveform panel, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, raster waveform snapshots, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -280,7 +280,7 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTiming' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingSummaries|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
       ],
-      "notes": "This ports summary-level timing totals and active timing-operation phase durations into the gogpu snapshot and overlay. The active reference timing operation is selected independently from the simulation read/write/compute mode. JSON export, waveform metadata, and compact waveform rendering are tracked separately. It does not claim animation controls, SVG/PNG waveform export, or a dedicated reference timing panel."
+      "notes": "This ports summary-level timing totals and active timing-operation phase durations into the gogpu snapshot and overlay. The active reference timing operation is selected independently from the simulation read/write/compute mode. JSON export, waveform metadata, compact rendering, and the full waveform panel are tracked separately. It does not claim animation controls, SVG/PNG waveform export, or raster snapshots."
     },
     {
       "module": "circuits",
@@ -360,7 +360,7 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTimingPlayback|SnapshotContainsUnifiedCircuitControls' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingPlayback|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
       ],
-      "notes": "This ports the legacy timing playback affordance as gogpu-native play, pause, step, and reset actions. Playback follows the active timing operation, preserves a deterministic interval value, advances state without sleeping or mutating Fyne widgets, and exposes status in snapshots, controls, and the overlay. It does not claim real-time frame scheduling, PNG/raster export, or full waveform-panel parity."
+      "notes": "This ports the legacy timing playback affordance as gogpu-native play, pause, step, and reset actions. Playback follows the active timing operation, preserves a deterministic interval value, advances state without sleeping or mutating Fyne widgets, and exposes status in snapshots, controls, and the overlay. It does not claim real-time frame scheduling or PNG/raster export."
     },
     {
       "module": "circuits",
@@ -379,7 +379,7 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveform|ReferenceTimingSummary|ReferenceTimingExport' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingWaveformMetadata|CircuitsOverlayStateIncludesReferenceTimingSummaries' -count=1"
       ],
-      "notes": "This ports the legacy timing diagrams' signal names, percent-based high windows, time-axis markers, and phase markers into UI-neutral state plus gogpu snapshot/overlay summaries. Compact rendering, SVG export, and playback controls are tracked separately. It does not claim PNG/raster waveform export, full waveform-panel parity, or changes to the reference timing JSON export contract."
+      "notes": "This ports the legacy timing diagrams' signal names, percent-based high windows, time-axis markers, and phase markers into UI-neutral state plus gogpu snapshot/overlay summaries. Compact rendering, SVG export, playback controls, and the full waveform panel are tracked separately. It does not claim PNG/raster waveform export or changes to the reference timing JSON export contract."
     },
     {
       "module": "circuits",
@@ -396,7 +396,25 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveformPlot|ReferenceTimingWaveformMetadata' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TimingWaveformPlot|TimingWaveformStrip' -count=1"
       ],
-      "notes": "This exposes the active waveform as a UI-neutral timing_waveform_active plot and draws a compact gogpu strip in the circuits overlay. It is deterministic and read-only. It does not claim the full legacy reference timing panel, PNG/raster waveform export, or per-frame signal rendering."
+      "notes": "This exposes the active waveform as a UI-neutral timing_waveform_active plot and draws a compact gogpu strip in the circuits overlay. It is deterministic and read-only. The full waveform panel is tracked separately. It does not claim PNG/raster waveform export or per-frame signal rendering."
+    },
+    {
+      "module": "circuits",
+      "feature": "Full gogpu reference timing waveform panel for the active WRITE/READ/COMPUTE waveform",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveformPanel|ReferenceTimingWaveformPlot' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingPanel|CircuitsOverlayStateIncludesReferenceTimingPanelSummary' -count=1"
+      ],
+      "notes": "This ports a full gogpu waveform panel fed by active timing waveform state. The panel exposes signal rows, high-window counts, time markers, phase spans, playback state, and export status through snapshots and a gogpu card, while the overlay carries the panel summary. It does not claim PNG/raster waveform snapshots, real-time frame scheduling, or dialog parity."
     },
     {
       "module": "circuits",
@@ -416,7 +434,7 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTimingSVGExport|SnapshotContainsUnifiedCircuitControls' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingSVGExport|CircuitsViewActionButtonsDispatchActions' -count=1"
       ],
-      "notes": "This ports the legacy reference timing Export SVG affordance as deterministic gogpu/viewmodel state. The action follows the active timing operation, buffers SVG by default, writes the same SVG to a validated path when supplied, and exposes status in the gogpu controls and overlay. It does not claim dialog parity, PNG/raster export, or full waveform-panel parity."
+      "notes": "This ports the legacy reference timing Export SVG affordance as deterministic gogpu/viewmodel state. The action follows the active timing operation, buffers SVG by default, writes the same SVG to a validated path when supplied, and exposes status in the gogpu controls and overlay. It does not claim dialog parity or PNG/raster export."
     },
     {
       "module": "circuits",

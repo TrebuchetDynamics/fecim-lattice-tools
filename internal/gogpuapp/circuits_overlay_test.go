@@ -295,6 +295,22 @@ func TestCircuitsOverlayStateIncludesReferenceTimingPlaybackStatus(t *testing.T)
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingPanelSummary(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetTimingOperation,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.referenceTimingPanel != "COMPUTE panel / 6 signals / 5 markers / 3 phases / 76 ns" {
+		t.Fatalf("referenceTimingPanel = %q, want compute panel summary", state.referenceTimingPanel)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {

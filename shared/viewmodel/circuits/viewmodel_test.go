@@ -679,6 +679,56 @@ func TestReferenceTimingWaveformPlotFollowsActiveOperation(t *testing.T) {
 	}
 }
 
+func TestReferenceTimingWaveformPanelSummarizesActiveWaveform(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionPlayReferenceTiming}); err != nil {
+		t.Fatalf("play compute timing: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionStepReferenceTiming}); err != nil {
+		t.Fatalf("step compute timing: %v", err)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"timing_waveform_panel":         "COMPUTE panel / 6 signals / 5 markers / 3 phases / 76 ns",
+		"timing_waveform_panel_signals": "Signals (6): CLK[6 windows], INPUT_VALID[1 window], DAC_ALL[1 window], ARRAY_SETTLE[1 window], ADC_ALL[1 window], OUTPUT_VALID[1 window]",
+		"timing_waveform_panel_markers": "Time markers (5): 0ns@0%, 19ns@25%, 38ns@50%, 57ns@75%, 76ns@100%",
+		"timing_waveform_panel_phases":  "Phases (3): DAC 10-35% 10ns, Array 35-60% 5ns, TIA+ADC 55-90% 61ns",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+
+	body := sectionBody(s, "reference_timing_waveform_panel")
+	for _, want := range []string{
+		"COMPUTE panel / 6 signals / 5 markers / 3 phases / 76 ns",
+		"OUTPUT_VALID[1 window]",
+		"Time markers (5): 0ns@0%, 19ns@25%, 38ns@50%, 57ns@75%, 76ns@100%",
+		"Playback: playing COMPUTE timing playback step 2/6",
+		"Exports: JSON not exported; SVG not exported.",
+	} {
+		if !contains(body, want) {
+			t.Fatalf("reference timing waveform panel body missing %q:\n%s", want, body)
+		}
+	}
+
+	panelPlot := plotByID(t, s, "timing_waveform_panel")
+	if panelPlot.Title != "COMPUTE Reference Timing Panel" {
+		t.Fatalf("panel plot title = %q, want COMPUTE Reference Timing Panel", panelPlot.Title)
+	}
+	if len(panelPlot.Series) != 6 || panelPlot.Series[5].Name != "OUTPUT_VALID" {
+		t.Fatalf("panel plot series = %+v, want active compute signals", panelPlot.Series)
+	}
+}
+
 func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{

@@ -130,6 +130,55 @@ func TestCircuitsViewSelectorButtonsDispatchPayloads(t *testing.T) {
 	}
 }
 
+func TestReferenceTimingPanelStateFollowsSnapshot(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetTimingOperation,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionPlayReferenceTiming, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("play compute timing: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionStepReferenceTiming, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("step compute timing: %v", err)
+	}
+
+	state := referenceTimingPanelStateFromSnapshot(vm.Snapshot())
+	if !state.available {
+		t.Fatal("reference timing panel state should be available")
+	}
+	if state.title != "COMPUTE Reference Timing Panel" {
+		t.Fatalf("panel title = %q, want COMPUTE Reference Timing Panel", state.title)
+	}
+	if state.summary != "COMPUTE panel / 6 signals / 5 markers / 3 phases / 76 ns" {
+		t.Fatalf("panel summary = %q, want compute panel summary", state.summary)
+	}
+	if state.playbackStep != "2/6" {
+		t.Fatalf("playbackStep = %q, want 2/6", state.playbackStep)
+	}
+	if len(state.signalRows) != 6 || state.signalRows[5] != "OUTPUT_VALID · 5 points" {
+		t.Fatalf("signalRows = %+v, want OUTPUT_VALID row", state.signalRows)
+	}
+}
+
+func TestBuildCircuitsViewIncludesReferenceTimingPanel(t *testing.T) {
+	vm := circuitsvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+
+	panel := buildReferenceTimingPanel(snapshot, theme)
+	if panel == nil {
+		t.Fatal("buildReferenceTimingPanel returned nil")
+	}
+	w := buildCircuitsView(snapshot, theme)
+	if w == nil {
+		t.Fatal("buildCircuitsView returned nil")
+	}
+}
+
 func TestCircuitsViewCheckboxDispatchesToggle(t *testing.T) {
 	vm := circuitsvm.New()
 	snapshot := vm.Snapshot()

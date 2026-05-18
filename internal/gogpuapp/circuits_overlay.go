@@ -44,6 +44,7 @@ type circuitsOverlayState struct {
 	referenceTimingAnimation    string
 	referenceTimingPlayback     string
 	referenceTimingPlaybackStep string
+	referenceTimingPanel        string
 	timingActive                string
 	timingActivePhases          string
 	timingWaveformSignals       string
@@ -161,6 +162,7 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		referenceTimingAnimation:    valueOr(metrics["reference_timing_animation"], "not animated"),
 		referenceTimingPlayback:     valueOr(metrics["reference_timing_playback"], "not playing"),
 		referenceTimingPlaybackStep: valueOr(metrics["reference_timing_playback_step"], "0/0"),
+		referenceTimingPanel:        valueOr(metrics["timing_waveform_panel"], "not evaluated"),
 		timingActive:                valueOr(metrics["timing_active"], "not evaluated"),
 		timingActivePhases:          valueOr(metrics["timing_active_phases"], "not evaluated"),
 		timingWaveformSignals:       valueOr(metrics["timing_waveform_signals"], "not evaluated"),
@@ -412,6 +414,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Mark: " + compactTimingWaveform(state.timingWaveformMarkers),
 		"Anim: " + state.referenceTimingAnimation,
 		"Play: " + state.referenceTimingPlaybackStep,
+		"Panel: " + state.referenceTimingPanel,
 		"TimeX: " + state.referenceTimingExport,
 		"SvgX: " + state.referenceTimingSVGExport,
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),
