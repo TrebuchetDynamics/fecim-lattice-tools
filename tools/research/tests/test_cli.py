@@ -21,6 +21,7 @@ class CLITest(unittest.TestCase):
         self.assertIn("graph", text)
         self.assertIn("ingest", text)
         self.assertIn("index", text)
+        self.assertIn("missing", text)
         self.assertIn("register-pdfs", text)
         self.assertIn("rebuild", text)
         self.assertIn("search", text)
@@ -77,6 +78,7 @@ class CLITest(unittest.TestCase):
         import fecim_research.graphing
         import fecim_research.ingest
         import fecim_research.indexing
+        import fecim_research.missing
         import fecim_research.registration
         import fecim_research.rebuild
         import fecim_research.searching
@@ -90,6 +92,7 @@ class CLITest(unittest.TestCase):
         self.assertTrue(hasattr(fecim_research.graphing, "run_graph"))
         self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
         self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
+        self.assertTrue(hasattr(fecim_research.missing, "run_missing"))
         self.assertTrue(hasattr(fecim_research.registration, "run_register_pdfs"))
         self.assertTrue(hasattr(fecim_research.rebuild, "run_rebuild"))
         self.assertTrue(hasattr(fecim_research.searching, "run_search"))

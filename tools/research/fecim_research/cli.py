@@ -43,6 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--semantic", action="store_true", help="build local semantic index")
     index.add_argument("--embedding-model", default="", help="local embedding model name")
 
+    sub.add_parser("missing", help="write a local report of citation records without matched PDFs")
+
     register = sub.add_parser("register-pdfs", help="report or create reviewed stubs for local PDFs")
     register.add_argument("paths", nargs="*", help="optional extra PDF roots")
     register.add_argument("--write-stubs", action="store_true", help="write needs-review citation stubs")
@@ -104,6 +106,10 @@ def main(argv: list[str] | None = None) -> int:
         from .indexing import run_index
 
         return run_index(root=root, semantic=args.semantic, embedding_model=args.embedding_model)
+    if args.command == "missing":
+        from .missing import run_missing
+
+        return run_missing(root=root)
     if args.command == "register-pdfs":
         from .registration import run_register_pdfs
 

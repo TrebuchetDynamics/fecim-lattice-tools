@@ -32,6 +32,10 @@ Local-only input:
 
 Paper acquisition:
 
+- `fecim-lattice-tools research missing` writes
+  `reports/missing-papers-latest.json`, a local no-network inventory of
+  citation records that still lack a matched PDF, including acquisition
+  commands for records with DOI metadata.
 - `fecim-lattice-tools research acquire` checks citation records that do not
   have a matching local PDF and records any legal OpenAlex open-access PDF
   location it finds.
@@ -55,7 +59,7 @@ Tracked ledger outputs:
 - `graphs/`
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
-  claim-audit, claim-scan, cite, graph, and search JSON reports
+  claim-audit, claim-scan, cite, graph, missing-paper, and search JSON reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 

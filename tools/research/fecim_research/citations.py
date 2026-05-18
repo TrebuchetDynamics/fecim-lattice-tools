@@ -14,6 +14,7 @@ class CitationRecord:
     title: str = ""
     doi: str = ""
     arxiv_id: str = ""
+    pdf: str = ""
 
 
 def _fields(text: str) -> dict[str, str]:
@@ -45,5 +46,6 @@ def load_citation_records(root: Path) -> dict[str, CitationRecord]:
             title=fields.get("title", "") or _h1_title(text),
             doi=fields.get("doi", ""),
             arxiv_id=fields.get("arxiv", ""),
+            pdf=fields.get("pdf", ""),
         )
     return records
