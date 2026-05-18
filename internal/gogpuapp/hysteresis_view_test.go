@@ -144,6 +144,36 @@ func TestHysteresisViewActionButtonsDispatchActions(t *testing.T) {
 	}
 }
 
+func TestHysteresisViewDiagnosticExportButtonsDispatchActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 14 {
+		t.Fatalf("hysteresis button count = %d, want diagnostic export controls", len(buttons))
+	}
+
+	clickButton(buttons[10])
+	clickButton(buttons[11])
+	clickButton(buttons[12])
+	clickButton(buttons[13])
+
+	wantIDs := []string{"export_pund_csv", "export_forc_sweep_csv", "export_forc_matrix_csv", "export_forc_metadata_json"}
+	if len(actions) != len(wantIDs) {
+		t.Fatalf("dispatched action count = %d, want %d", len(actions), len(wantIDs))
+	}
+	for i, want := range wantIDs {
+		if actions[i].ID != want {
+			t.Fatalf("action[%d].ID = %q, want %q", i, actions[i].ID, want)
+		}
+	}
+}
+
 func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
 	vm := hysteresisvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {

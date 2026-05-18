@@ -92,6 +92,10 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 	diagnosticButtons := []widget.Widget{
 		circuitButton("Run PUND", false, actionOrDefault(actions, hysteresisvm.EventRunPUND, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Run FORC", false, actionOrDefault(actions, hysteresisvm.EventRunFORC, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("PUND CSV", false, actionOrDefault(actions, hysteresisvm.EventExportPUNDCSV, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("FORC Sweep", false, actionOrDefault(actions, hysteresisvm.EventExportFORCSweep, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("FORC Matrix", false, actionOrDefault(actions, hysteresisvm.EventExportFORCMatrix, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("FORC Meta", false, actionOrDefault(actions, hysteresisvm.EventExportFORCMeta, viewmodel.ActionCommand), theme, onAction),
 	}
 
 	return primitives.Box(

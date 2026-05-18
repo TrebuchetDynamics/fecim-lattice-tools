@@ -35,6 +35,13 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "pund_switching_negative", Label: "PUND Qsw-", Value: fmt.Sprintf("%.3e C", state.PUND.SwitchingNegative)},
 			viewmodel.Metric{ID: "pund_switching_ratio", Label: "PUND Ratio", Value: fmt.Sprintf("%.3f", state.PUND.SwitchingRatio)},
 		)
+		if state.PUND.ExportStatus != "" {
+			metrics = append(metrics,
+				viewmodel.Metric{ID: "pund_export", Label: "PUND Export", Value: state.PUND.ExportStatus},
+				viewmodel.Metric{ID: "pund_export_path", Label: "PUND Export Path", Value: state.PUND.ExportPath},
+				viewmodel.Metric{ID: "pund_export_bytes", Label: "PUND Export Bytes", Value: fmt.Sprintf("%d bytes", state.PUND.ExportBytes)},
+			)
+		}
 	}
 	if state.FORC.Available {
 		metrics = append(metrics,
@@ -42,6 +49,27 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "forc_density_peak", Label: "FORC Peak Density", Value: fmt.Sprintf("%.3e", state.FORC.PeakDensity)},
 			viewmodel.Metric{ID: "forc_density_location", Label: "FORC Peak Location", Value: fmt.Sprintf("Ea %.3e V/m, Eb %.3e V/m", state.FORC.PeakEa_Vm, state.FORC.PeakEb_Vm)},
 		)
+		if state.FORC.SweepExportStatus != "" {
+			metrics = append(metrics,
+				viewmodel.Metric{ID: "forc_sweep_export", Label: "FORC Sweep Export", Value: state.FORC.SweepExportStatus},
+				viewmodel.Metric{ID: "forc_sweep_export_path", Label: "FORC Sweep Export Path", Value: state.FORC.SweepExportPath},
+				viewmodel.Metric{ID: "forc_sweep_export_bytes", Label: "FORC Sweep Export Bytes", Value: fmt.Sprintf("%d bytes", state.FORC.SweepExportBytes)},
+			)
+		}
+		if state.FORC.MatrixExportStatus != "" {
+			metrics = append(metrics,
+				viewmodel.Metric{ID: "forc_matrix_export", Label: "FORC Matrix Export", Value: state.FORC.MatrixExportStatus},
+				viewmodel.Metric{ID: "forc_matrix_export_path", Label: "FORC Matrix Export Path", Value: state.FORC.MatrixExportPath},
+				viewmodel.Metric{ID: "forc_matrix_export_bytes", Label: "FORC Matrix Export Bytes", Value: fmt.Sprintf("%d bytes", state.FORC.MatrixExportBytes)},
+			)
+		}
+		if state.FORC.MetaExportStatus != "" {
+			metrics = append(metrics,
+				viewmodel.Metric{ID: "forc_metadata_export", Label: "FORC Metadata Export", Value: state.FORC.MetaExportStatus},
+				viewmodel.Metric{ID: "forc_metadata_export_path", Label: "FORC Metadata Export Path", Value: state.FORC.MetaExportPath},
+				viewmodel.Metric{ID: "forc_metadata_export_bytes", Label: "FORC Metadata Export Bytes", Value: fmt.Sprintf("%d bytes", state.FORC.MetaExportBytes)},
+			)
+		}
 	}
 
 	sections := []viewmodel.Section{}
@@ -114,6 +142,10 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: EventExportCSV, Label: "Export CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventRunPUND, Label: "Run PUND", Kind: viewmodel.ActionCommand},
 		{ID: EventRunFORC, Label: "Run FORC", Kind: viewmodel.ActionCommand},
+		{ID: EventExportPUNDCSV, Label: "Export PUND CSV", Kind: viewmodel.ActionCommand},
+		{ID: EventExportFORCSweep, Label: "Export FORC Sweep CSV", Kind: viewmodel.ActionCommand},
+		{ID: EventExportFORCMatrix, Label: "Export FORC Matrix CSV", Kind: viewmodel.ActionCommand},
+		{ID: EventExportFORCMeta, Label: "Export FORC Metadata JSON", Kind: viewmodel.ActionCommand},
 	}
 
 	plots := []viewmodel.PlotData{}

@@ -73,7 +73,7 @@
       "evidence": [
         "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
       ],
-      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, and summary-level PUND/FORC diagnostics exist in gogpu. Calibration dialogs, literature overlays, full PUND/FORC raster/export workflows, and several educational widgets need explicit gogpu parity or a better replacement."
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level PUND/FORC diagnostics, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Calibration dialogs, literature overlays, PUND waveform raster, FORC heatmap raster, and several educational widgets need explicit gogpu parity or a better replacement."
     },
     {
       "module": "hysteresis",
@@ -118,7 +118,29 @@
         "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesPUNDAndFORCActions|ApplyActionRunPUND|ApplyActionRunFORC)' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC|TestHysteresisViewActionButtonsDispatchActions' -count=1"
       ],
-      "notes": "This ports UI-neutral PUND switching-charge summaries and FORC density summaries into gogpu actions and diagnostic panels. It does not claim raster waveform parity, FORC heatmap parity, FORC CSV/metadata export parity, or legacy dialog parity."
+      "notes": "This ports UI-neutral PUND switching-charge summaries and FORC density summaries into gogpu actions and diagnostic panels. Diagnostic artifact exports are tracked separately. It does not claim raster waveform parity, FORC heatmap parity, or legacy dialog parity."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND summary CSV and FORC sweep, matrix, and metadata artifact exports",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesPUNDAndFORCActions|ApplyActionExportPUNDCSV|ApplyActionExportFORCArtifacts)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewDiagnosticExportButtonsDispatchActions|TestHysteresisViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports diagnostic artifact exports as buffered artifacts or validated-path files. PUND gets a gogpu-only summary CSV because the legacy PUND panel had no export; FORC ports the legacy sweep CSV, density matrix CSV, and metadata JSON export affordances. It does not claim PUND waveform raster or FORC heatmap raster parity."
     },
     {
       "module": "crossbar",

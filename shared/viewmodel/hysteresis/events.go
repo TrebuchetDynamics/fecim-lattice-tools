@@ -8,6 +8,10 @@ const (
 	EventExportCSV        = "export_csv"
 	EventRunPUND          = "run_pund"
 	EventRunFORC          = "run_forc"
+	EventExportPUNDCSV    = "export_pund_csv"
+	EventExportFORCSweep  = "export_forc_sweep_csv"
+	EventExportFORCMatrix = "export_forc_matrix_csv"
+	EventExportFORCMeta   = "export_forc_metadata_json"
 )
 
 const (

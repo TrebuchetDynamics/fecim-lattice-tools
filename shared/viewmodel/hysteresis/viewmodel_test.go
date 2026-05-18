@@ -108,6 +108,11 @@ func TestSnapshotExposesPUNDAndFORCActions(t *testing.T) {
 	if _, ok := actions["run_forc"]; !ok {
 		t.Fatalf("snapshot actions missing run_forc")
 	}
+	for _, id := range []string{"export_pund_csv", "export_forc_sweep_csv", "export_forc_matrix_csv", "export_forc_metadata_json"} {
+		if _, ok := actions[id]; !ok {
+			t.Fatalf("snapshot actions missing %s", id)
+		}
+	}
 }
 
 func TestApplyActionSetWaveformUpdatesSnapshotAndLoop(t *testing.T) {
@@ -254,6 +259,69 @@ func TestApplyActionRunFORCPopulatesDensitySummary(t *testing.T) {
 	section := snapshotSectionBody(s, "diagnostic_forc")
 	if !strings.Contains(section, "peak_density=") || !strings.Contains(section, "density_range=") {
 		t.Fatalf("FORC diagnostic section = %q, want density summary", section)
+	}
+}
+
+func TestApplyActionExportPUNDCSVBuffersSummary(t *testing.T) {
+	m := New()
+
+	if err := m.ApplyAction(viewmodel.Action{ID: "export_pund_csv", Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("ApplyAction export_pund_csv: %v", err)
+	}
+
+	s := m.Snapshot()
+	if got := snapshotMetricValue(s, "pund_export_path"); got != "artifact buffer" {
+		t.Fatalf("pund_export_path = %q, want artifact buffer", got)
+	}
+	if got := snapshotMetricValue(s, "pund_export"); !strings.Contains(got, "buffered") {
+		t.Fatalf("pund_export = %q, want buffered status", got)
+	}
+	if got := snapshotMetricValue(s, "pund_export_bytes"); got == "" || got == "0 bytes" {
+		t.Fatalf("pund_export_bytes = %q, want non-zero bytes", got)
+	}
+}
+
+func TestApplyActionExportFORCArtifactsWritesValidatedPaths(t *testing.T) {
+	m := New()
+	dir := t.TempDir()
+	sweepPath := filepath.Join(dir, "forc-sweep.csv")
+	matrixPath := filepath.Join(dir, "forc-matrix.csv")
+	metaPath := filepath.Join(dir, "forc-meta.json")
+
+	for _, tc := range []struct {
+		id     string
+		path   string
+		header string
+	}{
+		{"export_forc_sweep_csv", sweepPath, "reversal_field_vm,applied_field_vm,polarization_cm2\n"},
+		{"export_forc_matrix_csv", matrixPath, "Ea_Vm,Eb_Vm,density\n"},
+		{"export_forc_metadata_json", metaPath, "{\n"},
+	} {
+		if err := m.ApplyAction(viewmodel.Action{
+			ID:      tc.id,
+			Kind:    viewmodel.ActionCommand,
+			Payload: map[string]string{"path": tc.path, "reversals": "9"},
+		}); err != nil {
+			t.Fatalf("ApplyAction %s: %v", tc.id, err)
+		}
+		content, err := os.ReadFile(tc.path)
+		if err != nil {
+			t.Fatalf("read %s: %v", tc.path, err)
+		}
+		if !strings.HasPrefix(string(content), tc.header) {
+			t.Fatalf("%s header = %q, want prefix %q", tc.id, strings.SplitN(string(content), "\n", 2)[0], strings.TrimSpace(tc.header))
+		}
+	}
+
+	s := m.Snapshot()
+	if got := snapshotMetricValue(s, "forc_sweep_export_path"); got != sweepPath {
+		t.Fatalf("forc_sweep_export_path = %q, want %q", got, sweepPath)
+	}
+	if got := snapshotMetricValue(s, "forc_matrix_export_path"); got != matrixPath {
+		t.Fatalf("forc_matrix_export_path = %q, want %q", got, matrixPath)
+	}
+	if got := snapshotMetricValue(s, "forc_metadata_export_path"); got != metaPath {
+		t.Fatalf("forc_metadata_export_path = %q, want %q", got, metaPath)
 	}
 }
 

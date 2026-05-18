@@ -50,6 +50,10 @@ type PUNDSummary struct {
 	SwitchingRatio    float64 `json:"switching_ratio"`
 	SamplesPerPulse   int     `json:"samples_per_pulse"`
 	Summary           string  `json:"summary"`
+	ExportStatus      string  `json:"export_status"`
+	ExportPath        string  `json:"export_path"`
+	ExportBytes       int     `json:"export_bytes"`
+	ExportContent     string  `json:"export_content,omitempty"`
 }
 
 type FORCSummary struct {
@@ -63,6 +67,34 @@ type FORCSummary struct {
 	MinDensity  float64 `json:"min_density"`
 	MaxDensity  float64 `json:"max_density"`
 	Summary     string  `json:"summary"`
+
+	SweepSamples   []FORCSweepSample   `json:"sweep_samples,omitempty"`
+	DensitySamples []FORCDensitySample `json:"density_samples,omitempty"`
+
+	SweepExportStatus   string `json:"sweep_export_status"`
+	SweepExportPath     string `json:"sweep_export_path"`
+	SweepExportBytes    int    `json:"sweep_export_bytes"`
+	SweepExportContent  string `json:"sweep_export_content,omitempty"`
+	MatrixExportStatus  string `json:"matrix_export_status"`
+	MatrixExportPath    string `json:"matrix_export_path"`
+	MatrixExportBytes   int    `json:"matrix_export_bytes"`
+	MatrixExportContent string `json:"matrix_export_content,omitempty"`
+	MetaExportStatus    string `json:"meta_export_status"`
+	MetaExportPath      string `json:"meta_export_path"`
+	MetaExportBytes     int    `json:"meta_export_bytes"`
+	MetaExportContent   string `json:"meta_export_content,omitempty"`
+}
+
+type FORCSweepSample struct {
+	ReversalField_Vm float64 `json:"reversal_field_vm"`
+	AppliedField_Vm  float64 `json:"applied_field_vm"`
+	Polarization_Cm2 float64 `json:"polarization_cm2"`
+}
+
+type FORCDensitySample struct {
+	Ea_Vm   float64 `json:"ea_vm"`
+	Eb_Vm   float64 `json:"eb_vm"`
+	Density float64 `json:"density"`
 }
 
 func materialSummary(mat *physics.HZOMaterial) string {

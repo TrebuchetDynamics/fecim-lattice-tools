@@ -3,6 +3,7 @@ package hysteresis
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -81,6 +82,14 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.runPUND()
 	case EventRunFORC:
 		return m.runFORC(action.Payload)
+	case EventExportPUNDCSV:
+		return m.exportPUNDCSV(action.Payload["path"])
+	case EventExportFORCSweep:
+		return m.exportFORCSweepCSV(action.Payload)
+	case EventExportFORCMatrix:
+		return m.exportFORCMatrixCSV(action.Payload)
+	case EventExportFORCMeta:
+		return m.exportFORCMetadataJSON(action.Payload)
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
@@ -164,6 +173,23 @@ func writeTextArtifact(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
+func bufferOrWriteTextArtifact(path, content string) (statusVerb, exportPath string, err error) {
+	statusVerb = "buffered"
+	exportPath = "artifact buffer"
+	if trimmed := strings.TrimSpace(path); trimmed != "" {
+		cleanPath, err := sharedio.ValidatePath(trimmed)
+		if err != nil {
+			return "", "", err
+		}
+		if err := writeTextArtifact(cleanPath, content); err != nil {
+			return "", "", err
+		}
+		statusVerb = "wrote"
+		exportPath = cleanPath
+	}
+	return statusVerb, exportPath, nil
+}
+
 func (m *Module) runPUND() error {
 	mat := m.currentMaterial()
 	ec, ps, area := materialPUNDFORCParameters(mat)
@@ -202,6 +228,55 @@ func (m *Module) runPUND() error {
 	return nil
 }
 
+func (m *Module) exportPUNDCSV(path string) error {
+	if !m.state.PUND.Available {
+		if err := m.runPUND(); err != nil {
+			return err
+		}
+	}
+	content, err := buildPUNDCSV(m.state.PUND)
+	if err != nil {
+		return err
+	}
+	statusVerb, exportPath, err := bufferOrWriteTextArtifact(path, content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: export PUND CSV: %w", err)
+	}
+	m.state.PUND.ExportStatus = fmt.Sprintf("%s PUND CSV", statusVerb)
+	m.state.PUND.ExportPath = exportPath
+	m.state.PUND.ExportBytes = len(content)
+	m.state.PUND.ExportContent = content
+	return nil
+}
+
+func buildPUNDCSV(summary PUNDSummary) (string, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+	if err := writer.Write([]string{"metric", "value", "unit"}); err != nil {
+		return "", err
+	}
+	rows := [][]string{
+		{"QP", formatScientific(summary.QP_C), "C"},
+		{"QU", formatScientific(summary.QU_C), "C"},
+		{"QN", formatScientific(summary.QN_C), "C"},
+		{"QD", formatScientific(summary.QD_C), "C"},
+		{"Qsw_positive", formatScientific(summary.SwitchingPositive), "C"},
+		{"Qsw_negative", formatScientific(summary.SwitchingNegative), "C"},
+		{"switching_ratio", strconv.FormatFloat(summary.SwitchingRatio, 'f', 6, 64), ""},
+		{"samples_per_pulse", strconv.Itoa(summary.SamplesPerPulse), "count"},
+	}
+	for _, row := range rows {
+		if err := writer.Write(row); err != nil {
+			return "", err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 func (m *Module) runFORC(payload map[string]string) error {
 	mat := m.currentMaterial()
 	ec, ps, _ := materialPUNDFORCParameters(mat)
@@ -231,6 +306,147 @@ func (m *Module) runFORC(payload map[string]string) error {
 	}
 	m.state.FORC = summarizeFORCResult(result)
 	return nil
+}
+
+func (m *Module) exportFORCSweepCSV(payload map[string]string) error {
+	if !m.state.FORC.Available {
+		if err := m.runFORC(payload); err != nil {
+			return err
+		}
+	}
+	content, err := buildFORCSweepCSV(m.state.FORC.SweepSamples)
+	if err != nil {
+		return err
+	}
+	statusVerb, exportPath, err := bufferOrWriteTextArtifact(payload["path"], content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: export FORC sweep CSV: %w", err)
+	}
+	m.state.FORC.SweepExportStatus = fmt.Sprintf("%s %d FORC sweep samples", statusVerb, len(m.state.FORC.SweepSamples))
+	m.state.FORC.SweepExportPath = exportPath
+	m.state.FORC.SweepExportBytes = len(content)
+	m.state.FORC.SweepExportContent = content
+	return nil
+}
+
+func (m *Module) exportFORCMatrixCSV(payload map[string]string) error {
+	if !m.state.FORC.Available {
+		if err := m.runFORC(payload); err != nil {
+			return err
+		}
+	}
+	content, err := buildFORCMatrixCSV(m.state.FORC.DensitySamples)
+	if err != nil {
+		return err
+	}
+	statusVerb, exportPath, err := bufferOrWriteTextArtifact(payload["path"], content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: export FORC matrix CSV: %w", err)
+	}
+	m.state.FORC.MatrixExportStatus = fmt.Sprintf("%s %d FORC density samples", statusVerb, len(m.state.FORC.DensitySamples))
+	m.state.FORC.MatrixExportPath = exportPath
+	m.state.FORC.MatrixExportBytes = len(content)
+	m.state.FORC.MatrixExportContent = content
+	return nil
+}
+
+func (m *Module) exportFORCMetadataJSON(payload map[string]string) error {
+	if !m.state.FORC.Available {
+		if err := m.runFORC(payload); err != nil {
+			return err
+		}
+	}
+	metadata := forcMetadata{
+		Material:    m.state.SelectedMaterial,
+		Waveform:    m.state.Waveform,
+		FieldRange:  m.state.FieldRange,
+		Curves:      m.state.FORC.Curves,
+		DensityRows: m.state.FORC.DensityRows,
+		DensityCols: m.state.FORC.DensityCols,
+		PeakDensity: m.state.FORC.PeakDensity,
+		PeakEa_Vm:   m.state.FORC.PeakEa_Vm,
+		PeakEb_Vm:   m.state.FORC.PeakEb_Vm,
+		MinDensity:  m.state.FORC.MinDensity,
+		MaxDensity:  m.state.FORC.MaxDensity,
+		Boundary:    "SIMULATION OUTPUT — Not measured device data.",
+	}
+	raw, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return fmt.Errorf("hysteresis: marshal FORC metadata: %w", err)
+	}
+	content := string(raw) + "\n"
+	statusVerb, exportPath, err := bufferOrWriteTextArtifact(payload["path"], content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: export FORC metadata JSON: %w", err)
+	}
+	m.state.FORC.MetaExportStatus = fmt.Sprintf("%s FORC metadata JSON", statusVerb)
+	m.state.FORC.MetaExportPath = exportPath
+	m.state.FORC.MetaExportBytes = len(content)
+	m.state.FORC.MetaExportContent = content
+	return nil
+}
+
+type forcMetadata struct {
+	Material    string     `json:"material"`
+	Waveform    string     `json:"waveform"`
+	FieldRange  FieldRange `json:"field_range"`
+	Curves      int        `json:"curves"`
+	DensityRows int        `json:"density_rows"`
+	DensityCols int        `json:"density_cols"`
+	PeakDensity float64    `json:"peak_density"`
+	PeakEa_Vm   float64    `json:"peak_ea_vm"`
+	PeakEb_Vm   float64    `json:"peak_eb_vm"`
+	MinDensity  float64    `json:"min_density"`
+	MaxDensity  float64    `json:"max_density"`
+	Boundary    string     `json:"boundary"`
+}
+
+func buildFORCSweepCSV(samples []FORCSweepSample) (string, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+	if err := writer.Write([]string{"reversal_field_vm", "applied_field_vm", "polarization_cm2"}); err != nil {
+		return "", err
+	}
+	for _, sample := range samples {
+		if err := writer.Write([]string{
+			formatScientific(sample.ReversalField_Vm),
+			formatScientific(sample.AppliedField_Vm),
+			formatScientific(sample.Polarization_Cm2),
+		}); err != nil {
+			return "", err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func buildFORCMatrixCSV(samples []FORCDensitySample) (string, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+	if err := writer.Write([]string{"Ea_Vm", "Eb_Vm", "density"}); err != nil {
+		return "", err
+	}
+	for _, sample := range samples {
+		if err := writer.Write([]string{
+			formatScientific(sample.Ea_Vm),
+			formatScientific(sample.Eb_Vm),
+			formatScientific(sample.Density),
+		}); err != nil {
+			return "", err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func formatScientific(value float64) string {
+	return strconv.FormatFloat(value, 'e', 9, 64)
 }
 
 func materialPUNDFORCParameters(mat *physics.HZOMaterial) (ec, ps, area float64) {
@@ -292,18 +508,57 @@ func summarizeFORCResult(result physics.FORCResult) FORCSummary {
 		"curves=%d, density_grid=%dx%d, peak_density=%.3e at (Ea=%.3e V/m, Eb=%.3e V/m), density_range=[%.3e, %.3e]",
 		len(result.Curves), rows, cols, peak, peakEa, peakEb, minD, maxD,
 	)
+	sweepSamples := makeFORCSweepSamples(result)
+	densitySamples := makeFORCDensitySamples(result)
 	return FORCSummary{
-		Available:   true,
-		Curves:      len(result.Curves),
-		DensityRows: rows,
-		DensityCols: cols,
-		PeakDensity: peak,
-		PeakEa_Vm:   peakEa,
-		PeakEb_Vm:   peakEb,
-		MinDensity:  minD,
-		MaxDensity:  maxD,
-		Summary:     summary,
+		Available:      true,
+		Curves:         len(result.Curves),
+		DensityRows:    rows,
+		DensityCols:    cols,
+		PeakDensity:    peak,
+		PeakEa_Vm:      peakEa,
+		PeakEb_Vm:      peakEb,
+		MinDensity:     minD,
+		MaxDensity:     maxD,
+		Summary:        summary,
+		SweepSamples:   sweepSamples,
+		DensitySamples: densitySamples,
 	}
+}
+
+func makeFORCSweepSamples(result physics.FORCResult) []FORCSweepSample {
+	samples := []FORCSweepSample{}
+	for _, curve := range result.Curves {
+		for i, field := range curve.AppliedField_Vm {
+			if i >= len(curve.Polarization_Cm2) {
+				continue
+			}
+			samples = append(samples, FORCSweepSample{
+				ReversalField_Vm: curve.ReversalField_Vm,
+				AppliedField_Vm:  field,
+				Polarization_Cm2: curve.Polarization_Cm2[i],
+			})
+		}
+	}
+	return samples
+}
+
+func makeFORCDensitySamples(result physics.FORCResult) []FORCDensitySample {
+	samples := []FORCDensitySample{}
+	for i := range result.PreisachDensity {
+		eb := 0.0
+		if i < len(result.ReversalFields_Vm) {
+			eb = result.ReversalFields_Vm[i]
+		}
+		for j, density := range result.PreisachDensity[i] {
+			ea := 0.0
+			if j < len(result.ReversalFields_Vm) {
+				ea = result.ReversalFields_Vm[j]
+			}
+			samples = append(samples, FORCDensitySample{Ea_Vm: ea, Eb_Vm: eb, Density: density})
+		}
+	}
+	return samples
 }
 
 func (m *Module) currentMaterial() *physics.HZOMaterial {
