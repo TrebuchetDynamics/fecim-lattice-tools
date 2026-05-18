@@ -18,6 +18,7 @@ help:
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
 	@echo "  make test-mnist     Run tests for Module 3 (MNIST)"
 	@echo "  make test-circuits  Run tests for Module 4 (Circuits)"
+	@echo "  make test-research  Run research ingestion/audit command tests"
 	@echo "  make research-audit Run claim registry and provenance audit"
 	@echo "  make bench          Run all benchmarks"
 	@echo "  make vet            Run go vet"
@@ -117,7 +118,7 @@ clean:
 arch-check:
 	@bash scripts/check-architecture.sh
 
-ci: fmt vet test-short arch-check
+ci: fmt vet test-short arch-check test-research research-audit
 
 # Skills (FeCIM agent skills)
 install-skills:

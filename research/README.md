@@ -78,6 +78,8 @@ Claim audit:
   and digests.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
+- `make ci` runs `test-research` and `research-audit`, so PR CI verifies both
+  the research command behavior and the tracked provenance ledger.
 - `fecim-lattice-tools research claim-scan docs/ README.md` writes a
   report-first list of likely uncited scientific claims to
   `reports/claim-scan-latest.json`.
