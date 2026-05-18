@@ -140,9 +140,21 @@ class AcquisitionTest(unittest.TestCase):
             self.assertTrue((root / "research" / "papers" / f"{paper_key}.pdf").exists())
             self.assertTrue((root / "research" / "sources" / f"{paper_key}.openalex.json").exists())
             self.assertTrue((root / "research" / "sources" / f"{paper_key}.acquisition.yaml").exists())
+            citation_stub = root / "citations" / "papers" / f"{paper_key}.md"
+            self.assertTrue(citation_stub.exists())
+            stub_text = citation_stub.read_text(encoding="utf-8")
+            self.assertIn("# New open access FeCIM paper", stub_text)
+            self.assertIn(f"**Key:** `{paper_key}`", stub_text)
+            self.assertIn("**DOI:** `10.5555/New.Paper`", stub_text)
+            self.assertIn("**Year:** `2026`", stub_text)
+            self.assertIn("**Status:** `needs-review`", stub_text)
+            self.assertIn("**PDF:** `not stored`", stub_text)
+            self.assertIn("**OpenAlex:** `https://openalex.org/W555`", stub_text)
+            self.assertIn(f"`research/papers/{paper_key}.pdf`", stub_text)
             report = json.loads((root / "research" / "reports" / "acquisition-latest.json").read_text())
             self.assertEqual(report["downloaded"], 1)
             self.assertEqual(report["results"][0]["paper_key"], paper_key)
+            self.assertEqual(report["results"][0]["citation_path"], f"citations/papers/{paper_key}.md")
             self.assertIn("api.openalex.org/works/https://doi.org/10.5555/New.Paper", calls[0])
 
     def test_acquire_does_not_download_closed_or_missing_pdf_records(self):

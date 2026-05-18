@@ -46,6 +46,10 @@ Paper acquisition:
   open-access PDFs into `papers/`.
 - `fecim-lattice-tools research acquire --doi DOI --download` acquires a new
   open-access paper by DOI using a deterministic provisional `doi_*` key.
+- New DOI acquisition writes a `needs-review` citation stub under
+  `citations/papers/doi_*.md` and records the ignored local PDF path in the
+  acquisition notes. The canonical `**PDF:**` field remains `not stored` until
+  the paper is moved into a tracked PDF collection.
 - PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.

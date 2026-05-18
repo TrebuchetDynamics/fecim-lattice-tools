@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from urllib.parse import quote, urlencode
 import hashlib
@@ -37,6 +37,7 @@ class AcquisitionResult:
     paper_key: str
     status: str
     doi: str
+    citation_path: str = ""
     openalex_id: str = ""
     pdf_url: str = ""
     landing_page_url: str = ""
@@ -67,9 +68,11 @@ def run_acquire(
     for doi in sorted(dois or []):
         paper_key = provisional_key_for_doi(doi)
         result, work = _acquire_doi(root, paper_key, doi, download, opener)
-        results.append(result)
         if work:
             _write_openalex_record(root, paper_key, work)
+            citation_path = _write_provisional_citation_stub(root, paper_key, doi, work, result)
+            result = replace(result, citation_path=citation_path)
+        results.append(result)
         _write_acquisition_record(root, result)
 
     _write_report(root, results)
@@ -104,9 +107,19 @@ def _acquire_record(
     opener: Callable[..., object],
 ) -> tuple[AcquisitionResult, dict[str, object] | None]:
     if not record.doi:
-        return AcquisitionResult(record.key, "missing_doi", "", message="citation record has no DOI"), None
+        return (
+            AcquisitionResult(
+                record.key,
+                "missing_doi",
+                "",
+                citation_path=_rel(root, record.path),
+                message="citation record has no DOI",
+            ),
+            None,
+        )
 
-    return _acquire_doi(root, record.key, record.doi, download, opener)
+    result, work = _acquire_doi(root, record.key, record.doi, download, opener)
+    return replace(result, citation_path=_rel(root, record.path)), work
 
 
 def _acquire_doi(
@@ -250,6 +263,61 @@ def _write_acquisition_record(root: Path, result: AcquisitionResult) -> None:
     path.write_text(dumps_yaml(asdict(result)), encoding="utf-8")
 
 
+def _write_provisional_citation_stub(
+    root: Path,
+    paper_key: str,
+    doi: str,
+    work: dict[str, object],
+    result: AcquisitionResult,
+) -> str:
+    path = root / "citations" / "papers" / f"{paper_key}.md"
+    rel_path = _rel(root, path)
+    if path.exists():
+        return rel_path
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    title = _work_title(work, paper_key)
+    year = _code_value(work.get("publication_year"), "needs-review")
+    venue = _code_value(_venue_from_work(work), "needs-review")
+    openalex_id = _code_value(work.get("id"), "needs-review")
+    local_pdf = result.pdf_path or "not downloaded"
+    sha256 = result.sha256 or "not downloaded"
+    oa_pdf_url = result.pdf_url or "not found"
+    landing_page_url = result.landing_page_url or "not found"
+    license_value = result.license or "needs-review"
+    version = result.version or "needs-review"
+    text = (
+        f"# {title}\n\n"
+        f"**Key:** `{paper_key}`\n"
+        f"**Title:** `{_code_value(title, 'needs-review')}`\n"
+        f"**DOI:** `{_code_value(doi, 'needs-review')}`\n"
+        f"**Year:** `{year}`\n"
+        f"**Venue:** `{venue}`\n"
+        "**Authors:** `needs-review`\n"
+        "**Tags:** `#needs-review`\n"
+        "**Status:** `needs-review`\n"
+        "**PDF:** `not stored`\n"
+        f"**OpenAlex:** `{openalex_id}`\n"
+        "\n---\n\n"
+        "## Acquisition\n\n"
+        f"- **Status:** `{result.status}`\n"
+        f"- **Local PDF:** `{_code_value(local_pdf, 'not downloaded')}`\n"
+        f"- **SHA256:** `{_code_value(sha256, 'not downloaded')}`\n"
+        f"- **OA PDF URL:** `{_code_value(oa_pdf_url, 'not found')}`\n"
+        f"- **Landing page:** `{_code_value(landing_page_url, 'not found')}`\n"
+        f"- **License:** `{_code_value(license_value, 'needs-review')}`\n"
+        f"- **Version:** `{_code_value(version, 'needs-review')}`\n"
+        "\n## Review TODO\n\n"
+        "- [ ] Confirm bibliographic metadata.\n"
+        "- [ ] Add authors and venue details from the paper.\n"
+        "- [ ] Move the PDF into a tracked paper collection only if licensing permits.\n"
+        "- [ ] Add source notes only after reading the paper.\n"
+        "- [ ] Move evidence-bearing claims into `citations/claims/*.yaml`.\n"
+    )
+    path.write_text(text, encoding="utf-8")
+    return rel_path
+
+
 def _write_report(root: Path, results: list[AcquisitionResult]) -> None:
     path = root / "research" / "reports" / "acquisition-latest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -264,3 +332,47 @@ def _write_report(root: Path, results: list[AcquisitionResult]) -> None:
 
 def _is_http_url(url: str) -> bool:
     return url.startswith("https://") or url.startswith("http://")
+
+
+def _work_title(work: dict[str, object], fallback_key: str) -> str:
+    title = work.get("display_name")
+    if isinstance(title, str) and title.strip():
+        return title.strip()
+    return " ".join(
+        part.upper() if part in {"ai", "hzo", "hfo2", "cim"} else part.capitalize()
+        for part in fallback_key.split("_")
+    )
+
+
+def _venue_from_work(work: dict[str, object]) -> str:
+    locations: list[object] = []
+    best = work.get("best_oa_location")
+    if best is not None:
+        locations.append(best)
+    raw_locations = work.get("locations")
+    if isinstance(raw_locations, list):
+        locations.extend(raw_locations)
+    for location in locations:
+        if not isinstance(location, dict):
+            continue
+        source = location.get("source")
+        if not isinstance(source, dict):
+            continue
+        display_name = source.get("display_name")
+        if isinstance(display_name, str) and display_name.strip():
+            return display_name.strip()
+    return ""
+
+
+def _code_value(value: object, fallback: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        text = fallback
+    return text.replace("`", "'")
+
+
+def _rel(root: Path, path: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
