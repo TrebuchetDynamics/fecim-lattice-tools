@@ -1,6 +1,10 @@
 package circuits
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -72,6 +76,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"run_read",
 		"run_write",
 		"run_compute",
+		"export_operation_log",
 		"toggle_ispp",
 	} {
 		if !hasAction(s, id) {
@@ -397,6 +402,104 @@ func TestOperationLogKeepsMostRecentEntries(t *testing.T) {
 	}
 	if !contains(body, "control #15: Write target set to level 4") {
 		t.Fatalf("operation log section missing newest entry: %q", body)
+	}
+}
+
+func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
+		t.Fatalf("run compute: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportOperationLog}); err != nil {
+		t.Fatalf("export operation log: %v", err)
+	}
+
+	if m.state.OperationLogExportJSON == "" {
+		t.Fatal("expected buffered export JSON")
+	}
+	var payload struct {
+		Schema            string              `json:"schema"`
+		Module            string              `json:"module"`
+		OperationMode     string              `json:"operation_mode"`
+		Architecture      string              `json:"architecture"`
+		OperationLogTotal int                 `json:"operation_log_total"`
+		ExportedEntries   int                 `json:"exported_entries"`
+		Entries           []OperationLogEntry `json:"entries"`
+	}
+	if err := json.Unmarshal([]byte(m.state.OperationLogExportJSON), &payload); err != nil {
+		t.Fatalf("export JSON did not unmarshal: %v\n%s", err, m.state.OperationLogExportJSON)
+	}
+	if payload.Schema != "fecim.circuits.operation_log.v1" {
+		t.Fatalf("schema = %q, want operation-log schema", payload.Schema)
+	}
+	if payload.Module != "circuits" || payload.OperationMode != OperationCompute || payload.Architecture != ArchitecturePassive {
+		t.Fatalf("unexpected export context: %+v", payload)
+	}
+	if payload.OperationLogTotal != 1 || payload.ExportedEntries != 1 || len(payload.Entries) != 1 {
+		t.Fatalf("unexpected export counts: %+v", payload)
+	}
+	if payload.Entries[0].Message != "COMPUTE on 8x8 0T1R (Passive) array" {
+		t.Fatalf("export entry message = %q, want compute summary", payload.Entries[0].Message)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"operation_log_export":       "buffered 1 entries",
+		"operation_log_export_path":  "artifact buffer",
+		"operation_log_export_bytes": fmt.Sprintf("%d bytes", len(m.state.OperationLogExportJSON)),
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
+func TestOperationLogExportWritesValidatedPath(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunRead}); err != nil {
+		t.Fatalf("run read: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "circuits-operation-log.json")
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportOperationLog,
+		Payload: map[string]string{"path": path},
+	}); err != nil {
+		t.Fatalf("export operation log to path: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read exported file: %v", err)
+	}
+	if string(raw) != m.state.OperationLogExportJSON {
+		t.Fatalf("file export differs from buffered artifact")
+	}
+	if got := metricValue(m.Snapshot(), "operation_log_export"); got != "wrote 1 entries" {
+		t.Fatalf("operation_log_export metric = %q, want file-write status", got)
+	}
+	if got := metricValue(m.Snapshot(), "operation_log_export_path"); got != filepath.Clean(path) {
+		t.Fatalf("operation_log_export_path = %q, want cleaned path", got)
+	}
+}
+
+func TestOperationLogExportRejectsTraversalPath(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunRead}); err != nil {
+		t.Fatalf("run read: %v", err)
+	}
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportOperationLog,
+		Payload: map[string]string{"path": "../escape.json"},
+	})
+	if err == nil {
+		t.Fatal("expected traversal export path to fail")
+	}
+	if !contains(err.Error(), "path traversal") {
+		t.Fatalf("export path error = %v, want traversal rejection", err)
+	}
+	if m.state.OperationLogExportJSON != "" {
+		t.Fatal("export artifact should not be buffered after path validation failure")
 	}
 }
 

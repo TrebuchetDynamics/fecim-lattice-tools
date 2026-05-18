@@ -40,6 +40,7 @@ type circuitsOverlayState struct {
 	timingActivePhases string
 	operationLogLatest string
 	operationLogRecent string
+	operationLogExport string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -123,6 +124,7 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		timingActivePhases: valueOr(metrics["timing_active_phases"], "not evaluated"),
 		operationLogLatest: operationLogLatest,
 		operationLogRecent: valueOr(metrics["operation_log_recent"], "none"),
+		operationLogExport: valueOr(metrics["operation_log_export"], "not exported"),
 	}
 }
 
@@ -285,6 +287,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Time: " + state.timingActive,
 		"Phase: " + compactTimingPhases(state.timingActivePhases),
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),
+		"Export: " + state.operationLogExport,
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)

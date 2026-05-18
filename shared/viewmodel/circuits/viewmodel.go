@@ -1,17 +1,36 @@
 package circuits
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 
+	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
 type Module struct{ state CircuitsState }
+
+type OperationLogExport struct {
+	Schema              string              `json:"schema"`
+	Module              string              `json:"module"`
+	OperationMode       string              `json:"operation_mode"`
+	Architecture        string              `json:"architecture"`
+	Rows                int                 `json:"rows"`
+	Cols                int                 `json:"cols"`
+	SelectedRow         int                 `json:"selected_row"`
+	SelectedCol         int                 `json:"selected_col"`
+	WriteTargetLevel    int                 `json:"write_target_level"`
+	LastOperationStatus string              `json:"last_operation_status"`
+	OperationLogTotal   int                 `json:"operation_log_total"`
+	ExportedEntries     int                 `json:"exported_entries"`
+	Entries             []OperationLogEntry `json:"entries"`
+}
 
 func New() *Module {
 	m := &Module{state: CircuitsState{
@@ -64,6 +83,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		m.computeHalfSelectStress()
 		m.computeReferenceTiming()
 		return nil
+	case ActionExportOperationLog:
+		return m.exportOperationLog(action.Payload)
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
 		m.recordStatus("control", "ISPP enabled: %v", m.state.ISPPEnabled)
@@ -279,6 +300,56 @@ func (m *Module) recordStatus(kind, format string, args ...interface{}) {
 	m.state.OperationLog = append(m.state.OperationLog, entry)
 	if len(m.state.OperationLog) > OperationLogLimit {
 		m.state.OperationLog = m.state.OperationLog[len(m.state.OperationLog)-OperationLogLimit:]
+	}
+}
+
+func (m *Module) exportOperationLog(payload map[string]string) error {
+	exportPath := "artifact buffer"
+	path := strings.TrimSpace(payload["path"])
+	if path != "" {
+		cleanPath, err := sharedio.ValidatePath(path)
+		if err != nil {
+			return fmt.Errorf("circuits: invalid operation log export path: %w", err)
+		}
+		exportPath = cleanPath
+	}
+
+	export := m.operationLogExportPayload()
+	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	if err != nil {
+		return fmt.Errorf("circuits: marshal operation log export: %w", err)
+	}
+	if path != "" {
+		if err := sharedio.SaveJSON(exportPath, export); err != nil {
+			return fmt.Errorf("circuits: write operation log export: %w", err)
+		}
+		m.state.OperationLogExportStatus = fmt.Sprintf("wrote %d entries", export.ExportedEntries)
+	} else {
+		m.state.OperationLogExportStatus = fmt.Sprintf("buffered %d entries", export.ExportedEntries)
+	}
+	m.state.OperationLogExportPath = exportPath
+	m.state.OperationLogExportBytes = len(jsonBytes)
+	m.state.OperationLogExportJSON = string(jsonBytes)
+	return nil
+}
+
+func (m *Module) operationLogExportPayload() OperationLogExport {
+	entries := make([]OperationLogEntry, len(m.state.OperationLog))
+	copy(entries, m.state.OperationLog)
+	return OperationLogExport{
+		Schema:              "fecim.circuits.operation_log.v1",
+		Module:              string(viewmodel.ModuleCircuits),
+		OperationMode:       m.state.OperationMode,
+		Architecture:        m.state.Architecture,
+		Rows:                m.state.Rows,
+		Cols:                m.state.Cols,
+		SelectedRow:         m.state.SelectedRow,
+		SelectedCol:         m.state.SelectedCol,
+		WriteTargetLevel:    m.state.WriteTargetLevel,
+		LastOperationStatus: m.state.LastOperationStatus,
+		OperationLogTotal:   m.state.OperationLogTotal,
+		ExportedEntries:     len(entries),
+		Entries:             entries,
 	}
 }
 

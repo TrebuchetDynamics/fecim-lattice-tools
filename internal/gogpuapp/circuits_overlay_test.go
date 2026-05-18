@@ -97,3 +97,18 @@ func TestCircuitsOverlayStateIncludesOperationLogSummaries(t *testing.T) {
 		t.Fatalf("operationLogRecent = %q, want compact recent log", state.operationLogRecent)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesOperationLogExportStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run compute: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionExportOperationLog, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("export operation log: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.operationLogExport != "buffered 1 entries" {
+		t.Fatalf("operationLogExport = %q, want buffered export status", state.operationLogExport)
+	}
+}

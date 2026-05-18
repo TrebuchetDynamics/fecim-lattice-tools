@@ -46,6 +46,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "operation_log_count", Label: "Operation Log", Value: operationLogCountValue(state)},
 		{ID: "operation_log_latest", Label: "Latest Log Entry", Value: operationLogLatestValue(state.OperationLog)},
 		{ID: "operation_log_recent", Label: "Recent Log Entries", Value: operationLogRecentValue(state.OperationLog)},
+		{ID: "operation_log_export", Label: "Operation Log Export", Value: operationLogExportStatusValue(state)},
+		{ID: "operation_log_export_path", Label: "Export Target", Value: operationLogExportPathValue(state)},
+		{ID: "operation_log_export_bytes", Label: "Export Size", Value: fmt.Sprintf("%d bytes", state.OperationLogExportBytes)},
 	}
 	if state.LastOperationStatus != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "last_operation", Label: "Last Operation", Value: state.LastOperationStatus})
@@ -147,6 +150,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionRunRead, Label: "Simulate Read", Kind: viewmodel.ActionCommand},
 		{ID: ActionRunWrite, Label: "Simulate Write", Kind: viewmodel.ActionCommand},
 		{ID: ActionRunCompute, Label: "Simulate Compute", Kind: viewmodel.ActionCommand},
+		{ID: ActionExportOperationLog, Label: "Export Operation Log", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
 		{ID: ActionSetOperationMode, Label: "Operation Mode", Kind: viewmodel.ActionSelect, Payload: map[string]string{"mode": state.OperationMode}},
@@ -347,6 +351,20 @@ func operationLogEntryValue(entry OperationLogEntry) string {
 		kind = "event"
 	}
 	return fmt.Sprintf("%s #%d: %s", kind, entry.Sequence, entry.Message)
+}
+
+func operationLogExportStatusValue(state CircuitsState) string {
+	if state.OperationLogExportStatus == "" {
+		return "not exported"
+	}
+	return state.OperationLogExportStatus
+}
+
+func operationLogExportPathValue(state CircuitsState) string {
+	if state.OperationLogExportPath == "" {
+		return "none"
+	}
+	return state.OperationLogExportPath
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {
