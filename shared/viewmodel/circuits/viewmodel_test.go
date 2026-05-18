@@ -77,6 +77,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"run_write",
 		"run_compute",
 		"export_operation_log",
+		"export_reference_specs",
 		"toggle_ispp",
 	} {
 		if !hasAction(s, id) {
@@ -285,6 +286,102 @@ func TestReferenceSpecSummaryFollowsArrayAndDACBits(t *testing.T) {
 		if got := metricValue(s, id); got != want {
 			t.Errorf("%s metric = %q, want %q", id, got, want)
 		}
+	}
+}
+
+func TestReferenceSpecExportBuffersJSONArtifact(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportReferenceSpecs}); err != nil {
+		t.Fatalf("export reference specs: %v", err)
+	}
+
+	if m.state.ReferenceSpecExportJSON == "" {
+		t.Fatal("expected buffered reference spec export JSON")
+	}
+	var payload ReferenceSpecExport
+	if err := json.Unmarshal([]byte(m.state.ReferenceSpecExportJSON), &payload); err != nil {
+		t.Fatalf("reference spec export JSON did not unmarshal: %v\n%s", err, m.state.ReferenceSpecExportJSON)
+	}
+	if payload.Schema != "fecim.circuits.reference_specs.v1" {
+		t.Fatalf("schema = %q, want reference-spec schema", payload.Schema)
+	}
+	if payload.Module != "circuits" || payload.Rows != 8 || payload.Cols != 8 || payload.QuantLevels != DefaultQuantLevels {
+		t.Fatalf("unexpected reference spec context: %+v", payload)
+	}
+	if payload.Cells != 64 || payload.DACCount != 8 || payload.TIACount != 8 || payload.ADCCount != 8 {
+		t.Fatalf("unexpected component counts: %+v", payload)
+	}
+	if payload.DACCodes != 32 || payload.ADCCodes != 32 {
+		t.Fatalf("unexpected converter codes: DAC %d ADC %d", payload.DACCodes, payload.ADCCodes)
+	}
+	if !near(payload.BitsPerCell, 4.9068905956, 1e-9) {
+		t.Fatalf("bits/cell = %.10f, want log2(30)", payload.BitsPerCell)
+	}
+	if !near(payload.TotalPowerMW, 5.8, 1e-9) || !near(payload.LatencyNS, 76, 1e-9) {
+		t.Fatalf("unexpected power/latency: %+v", payload)
+	}
+	if !near(payload.ThroughputGOPS, 0.8421052632, 1e-9) || !near(payload.EfficiencyGOPSW, 145.1905626134, 1e-9) {
+		t.Fatalf("unexpected performance terms: %+v", payload)
+	}
+	if payload.Compliance != "OK: DAC/ADC cover 30 levels" {
+		t.Fatalf("compliance = %q, want OK summary", payload.Compliance)
+	}
+	if !contains(payload.BoundaryNotice, "educational") {
+		t.Fatalf("boundary notice = %q, want educational boundary", payload.BoundaryNotice)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"reference_spec_export":       "buffered 64 cells",
+		"reference_spec_export_path":  "artifact buffer",
+		"reference_spec_export_bytes": fmt.Sprintf("%d bytes", len(m.state.ReferenceSpecExportJSON)),
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
+func TestReferenceSpecExportWritesValidatedPath(t *testing.T) {
+	m := New()
+	path := filepath.Join(t.TempDir(), "circuits-reference-specs.json")
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceSpecs,
+		Payload: map[string]string{"path": path},
+	}); err != nil {
+		t.Fatalf("export reference specs to path: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read exported reference specs: %v", err)
+	}
+	if string(raw) != m.state.ReferenceSpecExportJSON {
+		t.Fatalf("file export differs from buffered reference spec artifact")
+	}
+	if got := metricValue(m.Snapshot(), "reference_spec_export"); got != "wrote 64 cells" {
+		t.Fatalf("reference_spec_export metric = %q, want file-write status", got)
+	}
+	if got := metricValue(m.Snapshot(), "reference_spec_export_path"); got != filepath.Clean(path) {
+		t.Fatalf("reference_spec_export_path = %q, want cleaned path", got)
+	}
+}
+
+func TestReferenceSpecExportRejectsTraversalPath(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceSpecs,
+		Payload: map[string]string{"path": "../escape.json"},
+	})
+	if err == nil {
+		t.Fatal("expected traversal export path to fail")
+	}
+	if !contains(err.Error(), "path traversal") {
+		t.Fatalf("reference spec export path error = %v, want traversal rejection", err)
+	}
+	if m.state.ReferenceSpecExportJSON != "" {
+		t.Fatal("reference spec export artifact should not be buffered after path validation failure")
 	}
 }
 

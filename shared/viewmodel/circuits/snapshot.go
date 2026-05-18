@@ -38,6 +38,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "spec_throughput", Label: "Spec Throughput", Value: specThroughputValue(state)},
 		{ID: "spec_resolution", Label: "Spec Resolution", Value: specResolutionValue(state, quantLevels)},
 		{ID: "spec_compliance", Label: "Spec Compliance", Value: specComplianceValue(state)},
+		{ID: "reference_spec_export", Label: "Reference Spec Export", Value: referenceSpecExportStatusValue(state)},
+		{ID: "reference_spec_export_path", Label: "Reference Spec Export Target", Value: referenceSpecExportPathValue(state)},
+		{ID: "reference_spec_export_bytes", Label: "Reference Spec Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceSpecExportBytes)},
 		{ID: "timing_write", Label: "Write Timing", Value: timingTotalValue(state.TimingWriteTotalNS)},
 		{ID: "timing_read", Label: "Read Timing", Value: timingTotalValue(state.TimingReadTotalNS)},
 		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
@@ -160,6 +163,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionRunWrite, Label: "Simulate Write", Kind: viewmodel.ActionCommand},
 		{ID: ActionRunCompute, Label: "Simulate Compute", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportOperationLog, Label: "Export Operation Log", Kind: viewmodel.ActionCommand},
+		{ID: ActionExportReferenceSpecs, Label: "Export Reference Specs", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
 		{ID: ActionSetOperationMode, Label: "Operation Mode", Kind: viewmodel.ActionSelect, Payload: map[string]string{"mode": state.OperationMode}},
@@ -294,6 +298,20 @@ func specComplianceValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return state.SpecCompliance
+}
+
+func referenceSpecExportStatusValue(state CircuitsState) string {
+	if state.ReferenceSpecExportStatus == "" {
+		return "not exported"
+	}
+	return state.ReferenceSpecExportStatus
+}
+
+func referenceSpecExportPathValue(state CircuitsState) string {
+	if state.ReferenceSpecExportPath == "" {
+		return "none"
+	}
+	return state.ReferenceSpecExportPath
 }
 
 func timingTotalValue(totalNS int) string {

@@ -60,20 +60,22 @@ func TestCircuitsViewActionButtonsDispatchActions(t *testing.T) {
 		actions = append(actions, action)
 	})
 	buttons := collectSidebarButtons(w)
-	if len(buttons) < 4 {
-		t.Fatalf("circuits button count = %d, want at least 4 command buttons", len(buttons))
+	if len(buttons) < 5 {
+		t.Fatalf("circuits button count = %d, want at least 5 command buttons", len(buttons))
 	}
 
 	clickButton(buttons[0])
 	clickButton(buttons[1])
 	clickButton(buttons[2])
 	clickButton(buttons[3])
+	clickButton(buttons[4])
 
 	wantIDs := []string{
 		circuitsvm.ActionRunRead,
 		circuitsvm.ActionRunWrite,
 		circuitsvm.ActionRunCompute,
 		circuitsvm.ActionExportOperationLog,
+		circuitsvm.ActionExportReferenceSpecs,
 	}
 	if len(actions) != len(wantIDs) {
 		t.Fatalf("dispatched action count = %d, want %d", len(actions), len(wantIDs))
@@ -95,12 +97,12 @@ func TestCircuitsViewSelectorButtonsDispatchPayloads(t *testing.T) {
 		actions = append(actions, action)
 	})
 	buttons := collectSidebarButtons(w)
-	if len(buttons) < 15 {
+	if len(buttons) < 17 {
 		t.Fatalf("circuits button count = %d, want selector buttons", len(buttons))
 	}
 
-	clickButton(buttons[5])
-	clickButton(buttons[15])
+	clickButton(buttons[6])
+	clickButton(buttons[16])
 
 	if got := actions[0]; got.ID != circuitsvm.ActionSetOperationMode || got.Payload["mode"] != circuitsvm.OperationWrite {
 		t.Fatalf("first selector action = %#v, want write mode action", got)

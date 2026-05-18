@@ -87,6 +87,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return nil
 	case ActionExportOperationLog:
 		return m.exportOperationLog(action.Payload)
+	case ActionExportReferenceSpecs:
+		return m.exportReferenceSpecs(action.Payload)
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
 		m.recordStatus("control", "ISPP enabled: %v", m.state.ISPPEnabled)
@@ -357,6 +359,64 @@ func (m *Module) operationLogExportPayload() OperationLogExport {
 		export.ComputeRun = cloneComputeRunLog(m.state.ComputeRunLog)
 	}
 	return export
+}
+
+func (m *Module) exportReferenceSpecs(payload map[string]string) error {
+	exportPath := "artifact buffer"
+	path := strings.TrimSpace(payload["path"])
+	if path != "" {
+		cleanPath, err := sharedio.ValidatePath(path)
+		if err != nil {
+			return fmt.Errorf("circuits: invalid reference spec export path: %w", err)
+		}
+		exportPath = cleanPath
+	}
+
+	export := m.referenceSpecExportPayload()
+	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	if err != nil {
+		return fmt.Errorf("circuits: marshal reference spec export: %w", err)
+	}
+	if path != "" {
+		if err := sharedio.SaveJSON(exportPath, export); err != nil {
+			return fmt.Errorf("circuits: write reference spec export: %w", err)
+		}
+		m.state.ReferenceSpecExportStatus = fmt.Sprintf("wrote %d cells", export.Cells)
+	} else {
+		m.state.ReferenceSpecExportStatus = fmt.Sprintf("buffered %d cells", export.Cells)
+	}
+	m.state.ReferenceSpecExportPath = exportPath
+	m.state.ReferenceSpecExportBytes = len(jsonBytes)
+	m.state.ReferenceSpecExportJSON = string(jsonBytes)
+	return nil
+}
+
+func (m *Module) referenceSpecExportPayload() ReferenceSpecExport {
+	m.computeReferenceSpecs()
+	quantLevels := m.state.QuantLevels
+	if quantLevels <= 0 {
+		quantLevels = DefaultQuantLevels
+	}
+	return ReferenceSpecExport{
+		Schema:          "fecim.circuits.reference_specs.v1",
+		Module:          string(viewmodel.ModuleCircuits),
+		Rows:            m.state.Rows,
+		Cols:            m.state.Cols,
+		QuantLevels:     quantLevels,
+		Cells:           m.state.SpecCells,
+		BitsPerCell:     m.state.SpecBitsPerCell,
+		DACCount:        m.state.SpecDACCount,
+		TIACount:        m.state.SpecTIACount,
+		ADCCount:        m.state.SpecADCCount,
+		DACCodes:        m.state.SpecDACCodes,
+		ADCCodes:        m.state.SpecADCCodes,
+		TotalPowerMW:    m.state.SpecTotalPowerMW,
+		LatencyNS:       m.state.SpecLatencyNS,
+		ThroughputGOPS:  m.state.SpecThroughputGOPS,
+		EfficiencyGOPSW: m.state.SpecEfficiencyGOPSW,
+		Compliance:      m.state.SpecCompliance,
+		BoundaryNotice:  "educational reference spec summary; power, latency, and throughput values are behavioral estimates, not calibrated silicon measurements.",
+	}
 }
 
 func (m *Module) latestOperationLogIsCompute() bool {

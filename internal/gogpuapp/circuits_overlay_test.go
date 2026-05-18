@@ -113,6 +113,18 @@ func TestCircuitsOverlayStateIncludesOperationLogExportStatus(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceSpecExportStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionExportReferenceSpecs, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("export reference specs: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.referenceSpecExport != "buffered 64 cells" {
+		t.Fatalf("referenceSpecExport = %q, want buffered export status", state.referenceSpecExport)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
