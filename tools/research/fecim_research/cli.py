@@ -16,6 +16,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("audit", help="validate reviewed claim registry and claim references")
 
+    cite = sub.add_parser("cite", help="build a git-trackable packet for one reviewed claim")
+    cite.add_argument("claim_id", help="claim id from citations/claims")
+    cite.add_argument("--json", action="store_true", help="emit JSON citation packet")
+
     claim_scan = sub.add_parser("claim-scan", help="report likely uncited scientific claims")
     claim_scan.add_argument("paths", nargs="*", help="files or directories to scan")
     claim_scan.add_argument("--fail-on-findings", action="store_true", help="return nonzero when findings exist")
@@ -50,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
         from .claims import run_audit
 
         return run_audit(root=root)
+    if args.command == "cite":
+        from .cite import run_cite
+
+        return run_cite(root=root, claim_id=args.claim_id, json_output=args.json)
     if args.command == "claim-scan":
         from .claimscan import run_claim_scan
 

@@ -43,6 +43,9 @@ Claim audit:
 
 - Reviewed claim records live in `citations/claims/*.yaml`.
 - Files listed in each record's `used_in` field must contain `[claim: id]`.
+- `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
+  packet to `reports/cite-latest.json`, resolving sources from
+  `citations/papers` first and tracked OpenAlex ledgers second.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
 - `fecim-lattice-tools research claim-scan docs/ README.md` writes a

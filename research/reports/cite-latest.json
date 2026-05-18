@@ -1,0 +1,37 @@
+{
+  "claim": {
+    "claim": "Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.",
+    "confidence": "medium",
+    "id": "hzo-remanent-polarization-range",
+    "path": "citations/claims/hzo-remanent-polarization-range.yaml",
+    "status": "literature-backed"
+  },
+  "missing_sources": [],
+  "sources": [
+    {
+      "arxiv_id": "",
+      "doi": "10.1002/adma.201404531",
+      "key": "park2015_advmat_hzo",
+      "path": "citations/papers/park2015_advmat_hzo.md",
+      "title": "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films",
+      "type": "citation"
+    }
+  ],
+  "used_in": [
+    {
+      "exists": true,
+      "path": "citations/facts.md",
+      "references_claim": true
+    },
+    {
+      "exists": true,
+      "path": "config/materials.yaml",
+      "references_claim": true
+    },
+    {
+      "exists": true,
+      "path": "docs/TRUST.md",
+      "references_claim": true
+    }
+  ]
+}
