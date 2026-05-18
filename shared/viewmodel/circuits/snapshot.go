@@ -43,6 +43,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
 		{ID: "timing_active", Label: "Active Timing", Value: timingActiveValue(state)},
 		{ID: "timing_active_phases", Label: "Timing Phases", Value: timingActivePhasesValue(state)},
+		{ID: "operation_log_count", Label: "Operation Log", Value: operationLogCountValue(state)},
+		{ID: "operation_log_latest", Label: "Latest Log Entry", Value: operationLogLatestValue(state.OperationLog)},
+		{ID: "operation_log_recent", Label: "Recent Log Entries", Value: operationLogRecentValue(state.OperationLog)},
 	}
 	if state.LastOperationStatus != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "last_operation", Label: "Last Operation", Value: state.LastOperationStatus})
@@ -112,6 +115,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		ID: "reference_timing", Title: "Reference Timing Summary",
 		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Summary-level port of the legacy timing diagrams; no waveform animation or SVG export is claimed.",
 			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state)),
+		Category: "design",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID:       "operation_log",
+		Title:    "Operation Log",
+		Body:     operationLogSectionBody(state),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -293,6 +302,51 @@ func timingActivePhasesValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return state.TimingActivePhases
+}
+
+func operationLogCountValue(state CircuitsState) string {
+	return fmt.Sprintf("%d total / %d shown", state.OperationLogTotal, len(state.OperationLog))
+}
+
+func operationLogLatestValue(log []OperationLogEntry) string {
+	if len(log) == 0 {
+		return "none"
+	}
+	return operationLogEntryValue(log[len(log)-1])
+}
+
+func operationLogRecentValue(log []OperationLogEntry) string {
+	if len(log) == 0 {
+		return "none"
+	}
+	start := len(log) - 3
+	if start < 0 {
+		start = 0
+	}
+	entries := make([]string, 0, len(log)-start)
+	for _, entry := range log[start:] {
+		entries = append(entries, operationLogEntryValue(entry))
+	}
+	return strings.Join(entries, " | ")
+}
+
+func operationLogSectionBody(state CircuitsState) string {
+	if len(state.OperationLog) == 0 {
+		return "No operation events recorded. Successful controls and operations will appear here."
+	}
+	lines := []string{operationLogCountValue(state)}
+	for _, entry := range state.OperationLog {
+		lines = append(lines, operationLogEntryValue(entry))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func operationLogEntryValue(entry OperationLogEntry) string {
+	kind := entry.Kind
+	if kind == "" {
+		kind = "event"
+	}
+	return fmt.Sprintf("%s #%d: %s", kind, entry.Sequence, entry.Message)
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {

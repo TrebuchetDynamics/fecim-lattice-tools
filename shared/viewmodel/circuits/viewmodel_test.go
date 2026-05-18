@@ -1,6 +1,8 @@
 package circuits
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 
 	"fecim-lattice-tools/shared/viewmodel"
@@ -332,6 +334,72 @@ func TestReferenceTimingSummaryFollowsOperationMode(t *testing.T) {
 	}
 }
 
+func TestOperationLogRecordsControlsAndOperations(t *testing.T) {
+	m := New()
+	actions := []viewmodel.Action{
+		{ID: ActionSetOperationMode, Payload: map[string]string{"mode": OperationWrite}},
+		{ID: ActionSelectCell, Payload: map[string]string{"row": "2", "col": "3"}},
+		{ID: ActionRunWrite},
+	}
+	for _, action := range actions {
+		if err := m.ApplyAction(action); err != nil {
+			t.Fatalf("ApplyAction(%s): %v", action.ID, err)
+		}
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"operation_log_count":  "3 total / 3 shown",
+		"operation_log_latest": "operation #3: WRITE level 15 to cell [2,3] using Preisach (Level-based)",
+		"operation_log_recent": "control #1: Operation mode set to write | control #2: Selected cell [2,3] | operation #3: WRITE level 15 to cell [2,3] using Preisach (Level-based)",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	body := sectionBody(s, "operation_log")
+	if body == "" {
+		t.Fatal("missing operation log section")
+	}
+	for _, want := range []string{
+		"control #1: Operation mode set to write",
+		"control #2: Selected cell [2,3]",
+		"operation #3: WRITE level 15 to cell [2,3] using Preisach (Level-based)",
+	} {
+		if !contains(body, want) {
+			t.Fatalf("operation log section missing %q in %q", want, body)
+		}
+	}
+}
+
+func TestOperationLogKeepsMostRecentEntries(t *testing.T) {
+	m := New()
+	for level := 0; level < 15; level++ {
+		if err := m.ApplyAction(viewmodel.Action{
+			ID:      ActionSetWriteTarget,
+			Payload: map[string]string{"level": strconv.Itoa(level % 10)},
+		}); err != nil {
+			t.Fatalf("set write target %d: %v", level, err)
+		}
+	}
+
+	s := m.Snapshot()
+	if got := metricValue(s, "operation_log_count"); got != "15 total / 12 shown" {
+		t.Fatalf("operation_log_count = %q, want retained count", got)
+	}
+	if got := metricValue(s, "operation_log_latest"); got != "control #15: Write target set to level 4" {
+		t.Fatalf("operation_log_latest = %q, want newest retained entry", got)
+	}
+	body := sectionBody(s, "operation_log")
+	if contains(body, "control #1:") {
+		t.Fatalf("operation log retained old entry: %q", body)
+	}
+	if !contains(body, "control #15: Write target set to level 4") {
+		t.Fatalf("operation log section missing newest entry: %q", body)
+	}
+}
+
 func metricValue(s viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range s.Metrics {
 		if metric.ID == id {
@@ -350,6 +418,15 @@ func hasSection(s viewmodel.ModuleSnapshot, id string) bool {
 	return false
 }
 
+func sectionBody(s viewmodel.ModuleSnapshot, id string) string {
+	for _, section := range s.Sections {
+		if section.ID == id {
+			return section.Body
+		}
+	}
+	return ""
+}
+
 func hasAction(s viewmodel.ModuleSnapshot, id string) bool {
 	for _, action := range s.Actions {
 		if action.ID == id {
@@ -357,4 +434,8 @@ func hasAction(s viewmodel.ModuleSnapshot, id string) bool {
 		}
 	}
 	return false
+}
+
+func contains(value, needle string) bool {
+	return strings.Contains(value, needle)
 }

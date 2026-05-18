@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, and reference timing summaries. Logs, reference export workflows, animated timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference timing summaries, and operation-log summaries. Compute-log file export, reference export workflows, animated timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -150,7 +150,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions. It does not claim parity for the animated circuit canvas, overlays, logs, or deep investigation panels tracked by the broader circuits gap entry."
+      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions. It does not claim parity for the animated circuit canvas, overlays, operation-log surfaces, or deep investigation panels tracked by the broader circuits gap entry."
     },
     {
       "module": "circuits",
@@ -172,7 +172,7 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
       ],
-      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, deep investigation panels, or reference animation/export panels."
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, compute-log file export, deep investigation panels, or reference animation/export panels."
     },
     {
       "module": "circuits",
@@ -261,6 +261,28 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingSummaries|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
       ],
       "notes": "This ports summary-level timing totals and active operation phase durations into the gogpu snapshot and overlay. It does not claim waveform drawing parity, animation controls, SVG/PNG timing export, or a dedicated reference timing panel."
+    },
+    {
+      "module": "circuits",
+      "feature": "Operation log summaries for successful read/write/compute runs and control changes",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/action_log.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go",
+        "module4-circuits/pkg/gui/tab_unified.go",
+        "module4-circuits/pkg/gui/compute_log.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'OperationLog' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogSummaries' -count=1"
+      ],
+      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim detailed per-row compute JSON logs, logger verbosity toggles, or file export parity."
     },
     {
       "module": "comparison",

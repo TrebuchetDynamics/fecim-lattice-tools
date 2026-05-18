@@ -75,3 +75,25 @@ func TestCircuitsOverlayStateIncludesReferenceTimingSummaries(t *testing.T) {
 		t.Fatalf("timingActivePhases = %q, want read timing phases", state.timingActivePhases)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesOperationLogSummaries(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunWrite, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run write: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.operationLogLatest != "operation #2: WRITE level 15 to cell [0,0] using Preisach (Level-based)" {
+		t.Fatalf("operationLogLatest = %q, want latest write entry", state.operationLogLatest)
+	}
+	if state.operationLogRecent != "control #1: Operation mode set to write | operation #2: WRITE level 15 to cell [0,0] using Preisach (Level-based)" {
+		t.Fatalf("operationLogRecent = %q, want compact recent log", state.operationLogRecent)
+	}
+}

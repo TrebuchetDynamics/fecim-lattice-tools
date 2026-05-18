@@ -38,6 +38,8 @@ type circuitsOverlayState struct {
 	specCompliance     string
 	timingActive       string
 	timingActivePhases string
+	operationLogLatest string
+	operationLogRecent string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -86,6 +88,10 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 	if lastOperation == "" {
 		lastOperation = "Ready"
 	}
+	operationLogLatest := metrics["operation_log_latest"]
+	if operationLogLatest == "" || operationLogLatest == "none" {
+		operationLogLatest = lastOperation
+	}
 	mode := strings.ToUpper(metrics["mode"])
 	if mode == "" {
 		mode = "READ"
@@ -115,6 +121,8 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		specCompliance:     valueOr(metrics["spec_compliance"], "not evaluated"),
 		timingActive:       valueOr(metrics["timing_active"], "not evaluated"),
 		timingActivePhases: valueOr(metrics["timing_active_phases"], "not evaluated"),
+		operationLogLatest: operationLogLatest,
+		operationLogRecent: valueOr(metrics["operation_log_recent"], "none"),
 	}
 }
 
@@ -276,6 +284,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Rule: " + compactSpecCompliance(state.specCompliance),
 		"Time: " + state.timingActive,
 		"Phase: " + compactTimingPhases(state.timingActivePhases),
+		"Log: " + compactOperationLogEntry(state.operationLogLatest),
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)
@@ -297,9 +306,9 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 	cc.DrawRoundedRectangle(x+12, statusY, width-24, 52, 8)
 	cc.Fill()
 	cc.SetRGBA(0.82, 0.92, 0.88, 1)
-	cc.DrawStringAnchored("Last operation", x+24, statusY+17, 0, 0.5)
+	cc.DrawStringAnchored("Operation log", x+24, statusY+17, 0, 0.5)
 	cc.SetRGBA(0.60, 0.70, 0.66, 1)
-	cc.DrawStringAnchored(elideCircuitStatus(state.lastOperation, 43), x+24, statusY+38, 0, 0.5)
+	cc.DrawStringAnchored(elideCircuitStatus(compactOperationLogEntry(state.operationLogLatest), 43), x+24, statusY+38, 0, 0.5)
 }
 
 func drawCircuitBlock(cc *gg.Context, x, y, w, h float64, label string, r, g, b float64) {
@@ -409,6 +418,13 @@ func compactSpecCompliance(value string) string {
 func compactTimingPhases(value string) string {
 	value = strings.TrimSuffix(value, " ns")
 	return strings.ReplaceAll(value, " / ", " ")
+}
+
+func compactOperationLogEntry(value string) string {
+	value = strings.TrimPrefix(value, "operation ")
+	value = strings.TrimPrefix(value, "control ")
+	value = strings.ReplaceAll(value, "Preisach (Level-based)", "Preisach")
+	return value
 }
 
 func elideCircuitStatus(status string, limit int) string {

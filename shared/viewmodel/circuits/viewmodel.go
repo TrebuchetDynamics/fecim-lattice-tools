@@ -47,26 +47,26 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 	switch action.ID {
 	case ActionRunRead:
 		m.state.OperationMode = OperationRead
-		m.state.LastOperationStatus = fmt.Sprintf("READ cell [%d,%d] through %s", m.state.SelectedRow, m.state.SelectedCol, m.state.Architecture)
+		m.recordStatus("operation", "READ cell [%d,%d] through %s", m.state.SelectedRow, m.state.SelectedCol, m.state.Architecture)
 		m.computeHalfSelectStress()
 		m.computeReferenceTiming()
 		return nil
 	case ActionRunWrite:
 		m.state.OperationMode = OperationWrite
 		m.runISPPSimulation()
-		m.state.LastOperationStatus = fmt.Sprintf("WRITE level %d to cell [%d,%d] using %s", m.state.WriteTargetLevel, m.state.SelectedRow, m.state.SelectedCol, m.state.ISPPEngine)
+		m.recordStatus("operation", "WRITE level %d to cell [%d,%d] using %s", m.state.WriteTargetLevel, m.state.SelectedRow, m.state.SelectedCol, m.state.ISPPEngine)
 		m.computeHalfSelectStress()
 		m.computeReferenceTiming()
 		return nil
 	case ActionRunCompute:
 		m.state.OperationMode = OperationCompute
-		m.state.LastOperationStatus = fmt.Sprintf("COMPUTE on %dx%d %s array", m.state.Rows, m.state.Cols, m.state.Architecture)
+		m.recordStatus("operation", "COMPUTE on %dx%d %s array", m.state.Rows, m.state.Cols, m.state.Architecture)
 		m.computeHalfSelectStress()
 		m.computeReferenceTiming()
 		return nil
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
-		m.state.LastOperationStatus = fmt.Sprintf("ISPP enabled: %v", m.state.ISPPEnabled)
+		m.recordStatus("control", "ISPP enabled: %v", m.state.ISPPEnabled)
 		return nil
 	case ActionResizeArray:
 		return m.resizeArray(action.Payload)
@@ -122,7 +122,7 @@ func (m *Module) resizeArray(payload map[string]string) error {
 	m.state.Rows = rows
 	m.state.Cols = cols
 	m.clampSelectedCell()
-	m.state.LastOperationStatus = fmt.Sprintf("Array resized to %dx%d", rows, cols)
+	m.recordStatus("control", "Array resized to %dx%d", rows, cols)
 	m.computeHalfSelectStress()
 	m.computeReferenceSpecs()
 	return nil
@@ -137,7 +137,7 @@ func (m *Module) setOperationMode(payload map[string]string) error {
 		return fmt.Errorf("circuits: invalid operation mode %q", mode)
 	}
 	m.state.OperationMode = mode
-	m.state.LastOperationStatus = fmt.Sprintf("Operation mode set to %s", mode)
+	m.recordStatus("control", "Operation mode set to %s", mode)
 	m.computeHalfSelectStress()
 	m.computeReferenceTiming()
 	return nil
@@ -152,7 +152,7 @@ func (m *Module) setArchitecture(payload map[string]string) error {
 		return fmt.Errorf("circuits: invalid architecture %q", architecture)
 	}
 	m.state.Architecture = architecture
-	m.state.LastOperationStatus = fmt.Sprintf("Architecture set to %s", architecture)
+	m.recordStatus("control", "Architecture set to %s", architecture)
 	m.computeHalfSelectStress()
 	return nil
 }
@@ -171,7 +171,7 @@ func (m *Module) selectCell(payload map[string]string) error {
 	}
 	m.state.SelectedRow = row
 	m.state.SelectedCol = col
-	m.state.LastOperationStatus = fmt.Sprintf("Selected cell [%d,%d]", row, col)
+	m.recordStatus("control", "Selected cell [%d,%d]", row, col)
 	m.computeHalfSelectStress()
 	return nil
 }
@@ -188,7 +188,7 @@ func (m *Module) setWriteTarget(payload map[string]string) error {
 		return fmt.Errorf("circuits: target level %d outside 0-%d", level, m.state.QuantLevels-1)
 	}
 	m.state.WriteTargetLevel = level
-	m.state.LastOperationStatus = fmt.Sprintf("Write target set to level %d", level)
+	m.recordStatus("control", "Write target set to level %d", level)
 	m.computeHalfSelectStress()
 	return nil
 }
@@ -203,7 +203,7 @@ func (m *Module) setDACBits(payload map[string]string) error {
 	}
 	m.state.DACResolution = bits
 	m.computeReferenceSpecs()
-	m.state.LastOperationStatus = fmt.Sprintf("DAC resolution set to %d bits", bits)
+	m.recordStatus("control", "DAC resolution set to %d bits", bits)
 	return nil
 }
 
@@ -218,7 +218,7 @@ func (m *Module) setADCBits(payload map[string]string) error {
 	m.state.ADCResolution = bits
 	m.computePVTCorners()
 	m.computeReferenceSpecs()
-	m.state.LastOperationStatus = fmt.Sprintf("ADC resolution set to %d bits", bits)
+	m.recordStatus("control", "ADC resolution set to %d bits", bits)
 	return nil
 }
 
@@ -237,7 +237,7 @@ func (m *Module) setTIAGain(payload map[string]string) error {
 	m.state.TIAGain = gain
 	m.computePVTCorners()
 	m.computeReferenceSpecs()
-	m.state.LastOperationStatus = fmt.Sprintf("TIA gain set to %.0f ohm", gain)
+	m.recordStatus("control", "TIA gain set to %.0f ohm", gain)
 	return nil
 }
 
@@ -250,7 +250,7 @@ func (m *Module) setCouplingTier(payload map[string]string) error {
 		return fmt.Errorf("circuits: invalid coupling tier %q", tier)
 	}
 	m.state.CouplingTier = tier
-	m.state.LastOperationStatus = fmt.Sprintf("Coupling tier set to %s", tier)
+	m.recordStatus("control", "Coupling tier set to %s", tier)
 	return nil
 }
 
@@ -263,8 +263,23 @@ func (m *Module) setISPPEngine(payload map[string]string) error {
 		return fmt.Errorf("circuits: invalid ISPP engine %q", engine)
 	}
 	m.state.ISPPEngine = engine
-	m.state.LastOperationStatus = fmt.Sprintf("ISPP engine set to %s", engine)
+	m.recordStatus("control", "ISPP engine set to %s", engine)
 	return nil
+}
+
+func (m *Module) recordStatus(kind, format string, args ...interface{}) {
+	status := fmt.Sprintf(format, args...)
+	m.state.LastOperationStatus = status
+	m.state.OperationLogTotal++
+	entry := OperationLogEntry{
+		Sequence: m.state.OperationLogTotal,
+		Kind:     kind,
+		Message:  status,
+	}
+	m.state.OperationLog = append(m.state.OperationLog, entry)
+	if len(m.state.OperationLog) > OperationLogLimit {
+		m.state.OperationLog = m.state.OperationLog[len(m.state.OperationLog)-OperationLogLimit:]
+	}
 }
 
 func (m *Module) clampSelectedCell() {
