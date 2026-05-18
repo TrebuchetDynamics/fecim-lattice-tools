@@ -98,7 +98,8 @@ Tracked ledger outputs:
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
   claim-audit, claim-scan, cite, graph, missing-paper, and search JSON reports
-  plus content-addressed acquisition and missing-paper history reports
+  plus content-addressed acquisition, missing-paper, search, and claim-audit
+  history reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 
@@ -130,6 +131,9 @@ Claim audit:
   and digests.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
+- Audit writes `reports/claim-audit-latest.json` plus a content-addressed
+  history copy under `reports/claim-audits/RUN_ID.json`, so CI provenance
+  changes can be reviewed over time.
 - `make ci` runs `test-research` and `research-audit`, so PR CI verifies both
   the research command behavior and the tracked provenance ledger.
 - `fecim-lattice-tools research claim-scan docs/ README.md` writes a

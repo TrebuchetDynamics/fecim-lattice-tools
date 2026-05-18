@@ -522,6 +522,36 @@ class ClaimsTest(unittest.TestCase):
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["claims_checked"], 1)
 
+    def test_run_audit_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+
+            code = run_audit(root)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "claim-audit-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/reports/claim-audits/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
+
     def _write_paper(self, root: Path, key: str, pdf: str = "not stored"):
         path = root / "citations" / "papers" / f"{key}.md"
         path.parent.mkdir(parents=True, exist_ok=True)

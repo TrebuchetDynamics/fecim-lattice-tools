@@ -6,6 +6,8 @@ import hashlib
 import json
 import re
 
+from .reporting import write_content_addressed_report
+
 
 CLAIM_REF_RE = re.compile(r"\[claim:\s*([a-z0-9][a-z0-9-]*)\]")
 PAPER_PDF_RE = re.compile(r"^\*\*PDF:\*\*\s*`([^`]+)`", re.MULTILINE)
@@ -589,9 +591,12 @@ def _sha256_file(path: Path) -> str:
 
 
 def _write_report(root: Path, report: ClaimAuditReport) -> None:
-    path = root / "research" / "reports" / "claim-audit-latest.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(report), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_content_addressed_report(
+        root,
+        "research/reports/claim-audit-latest.json",
+        "research/reports/claim-audits",
+        asdict(report),
+    )
 
 
 def _rel(root: Path, path: Path) -> str:
