@@ -69,6 +69,10 @@ Claim audit:
 - `fecim-lattice-tools research evidence CLAIM_ID` saves the latest
   claim-linked search results to `evidence/CLAIM_ID.json` as candidate evidence
   that still needs review before promotion.
+- `make research-audit` also checks `evidence/*.json`: the ledger filename must
+  match a known claim id, candidate counts must match the listed candidates, and
+  chunk candidates must still point at existing repo-relative JSONL chunk ids
+  and digests.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
 - `fecim-lattice-tools research claim-scan docs/ README.md` writes a

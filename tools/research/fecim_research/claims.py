@@ -90,6 +90,8 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
             if rel_path == "citations/facts.md" and record.status == "disputed":
                 errors.append(f"disputed claim {claim_id} is referenced from citations/facts.md")
 
+    _audit_evidence_ledgers(root, claims, errors)
+
     return ClaimAuditReport(
         ok=not errors,
         claims_checked=len(claims),
@@ -176,6 +178,123 @@ def _claim_reference_files(root: Path) -> list[str]:
 
 def _claim_refs(path: Path) -> list[str]:
     return CLAIM_REF_RE.findall(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def _audit_evidence_ledgers(
+    root: Path,
+    claims: dict[str, ClaimRecord],
+    errors: list[str],
+) -> None:
+    evidence_dir = root / "research" / "evidence"
+    if not evidence_dir.exists():
+        return
+    for path in sorted(evidence_dir.glob("*.json")):
+        rel_path = _rel(root, path)
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"{rel_path} invalid JSON: {exc}")
+            continue
+        if not isinstance(data, dict):
+            errors.append(f"{rel_path} must contain a JSON object")
+            continue
+
+        claim_id = _evidence_claim_id(data)
+        if not claim_id:
+            errors.append(f"{rel_path} missing claim id")
+        else:
+            if claim_id != path.stem:
+                errors.append(f"{rel_path} claim id {claim_id} must match filename {path.stem}")
+            if claim_id not in claims:
+                errors.append(f"{rel_path} references unknown claim {claim_id}")
+
+        if data.get("status") != "candidate-evidence":
+            errors.append(f"{rel_path} status must be candidate-evidence")
+
+        review = data.get("review")
+        if not isinstance(review, dict) or review.get("state") != "needs-review":
+            errors.append(f"{rel_path} review.state must be needs-review")
+
+        candidates = data.get("candidates", [])
+        if not isinstance(candidates, list):
+            errors.append(f"{rel_path} candidates must be a list")
+            continue
+
+        candidate_count = data.get("candidate_count")
+        if candidate_count != len(candidates):
+            errors.append(
+                f"{rel_path} candidate_count {candidate_count} "
+                f"does not match candidates length {len(candidates)}"
+            )
+
+        for index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                errors.append(f"{rel_path} candidate {index} must be a JSON object")
+                continue
+            _audit_evidence_candidate(root, rel_path, candidate, errors)
+
+
+def _evidence_claim_id(data: dict[str, object]) -> str:
+    claim = data.get("claim")
+    if not isinstance(claim, dict):
+        return ""
+    return str(claim.get("id", "")).strip()
+
+
+def _audit_evidence_candidate(
+    root: Path,
+    evidence_rel_path: str,
+    candidate: dict[str, object],
+    errors: list[str],
+) -> None:
+    docid = str(candidate.get("docid", "")).strip()
+    chunk_file = str(candidate.get("chunk_file", "")).strip()
+    if not docid:
+        errors.append(f"{evidence_rel_path} candidate missing docid")
+        return
+    if not chunk_file:
+        errors.append(f"{evidence_rel_path} candidate {docid} missing chunk_file")
+        return
+
+    chunk_rel_path = Path(chunk_file)
+    if chunk_rel_path.is_absolute() or ".." in chunk_rel_path.parts:
+        errors.append(f"{evidence_rel_path} candidate {docid} chunk_file must be repo-relative")
+        return
+
+    chunk_path = root / chunk_rel_path
+    if not chunk_path.exists():
+        errors.append(f"{evidence_rel_path} candidate {docid} missing chunk file {chunk_file}")
+        return
+
+    record = _find_chunk_record(chunk_path, docid)
+    if record is None:
+        errors.append(f"{evidence_rel_path} candidate {docid} missing from {chunk_file}")
+        return
+
+    candidate_sha = str(candidate.get("sha256", "")).strip()
+    chunk_sha = str(record.get("sha256", "")).strip()
+    if candidate_sha and chunk_sha and candidate_sha != chunk_sha:
+        errors.append(
+            f"{evidence_rel_path} candidate {docid} sha256 {candidate_sha} "
+            f"does not match chunk sha256 {chunk_sha}"
+        )
+
+
+def _find_chunk_record(path: Path, docid: str) -> dict[str, object] | None:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and data.get("id") == docid:
+            return data
+    return None
 
 
 def _write_report(root: Path, report: ClaimAuditReport) -> None:
