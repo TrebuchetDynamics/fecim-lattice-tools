@@ -94,4 +94,16 @@ type CircuitsState struct {
 	PVTSamples          int     `json:"pvt_samples"`
 	PVTENOBNoiseCeiling float64 `json:"pvt_enob_noise_ceiling"`
 	PVTENOBCeilingBits  int     `json:"pvt_enob_ceiling_bits"`
+	SpecCells           int     `json:"spec_cells"`
+	SpecBitsPerCell     float64 `json:"spec_bits_per_cell"`
+	SpecDACCount        int     `json:"spec_dac_count"`
+	SpecTIACount        int     `json:"spec_tia_count"`
+	SpecADCCount        int     `json:"spec_adc_count"`
+	SpecDACCodes        int     `json:"spec_dac_codes"`
+	SpecADCCodes        int     `json:"spec_adc_codes"`
+	SpecTotalPowerMW    float64 `json:"spec_total_power_mw"`
+	SpecLatencyNS       float64 `json:"spec_latency_ns"`
+	SpecThroughputGOPS  float64 `json:"spec_throughput_gops"`
+	SpecEfficiencyGOPSW float64 `json:"spec_efficiency_gops_w"`
+	SpecCompliance      string  `json:"spec_compliance"`
 }

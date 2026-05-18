@@ -32,6 +32,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "charge_pump", Label: "Charge Pump", Value: fmt.Sprintf("%d-stage Dickson", state.ChargePumpStages)},
 		{ID: "ispp", Label: "ISPP", Value: fmt.Sprintf("%v", state.ISPPEnabled)},
 		{ID: "supply", Label: "Vdd", Value: fmt.Sprintf("%.1f V", state.SupplyVoltage)},
+		{ID: "spec_storage", Label: "Spec Storage", Value: specStorageValue(state)},
+		{ID: "spec_components", Label: "Spec Components", Value: specComponentsValue(state)},
+		{ID: "spec_power_latency", Label: "Spec Power/Latency", Value: specPowerLatencyValue(state)},
+		{ID: "spec_throughput", Label: "Spec Throughput", Value: specThroughputValue(state)},
+		{ID: "spec_resolution", Label: "Spec Resolution", Value: specResolutionValue(state, quantLevels)},
+		{ID: "spec_compliance", Label: "Spec Compliance", Value: specComplianceValue(state)},
 	}
 	if state.LastOperationStatus != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "last_operation", Label: "Last Operation", Value: state.LastOperationStatus})
@@ -90,6 +96,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		Body: fmt.Sprintf("Temperature sweep: %s. Process-yield proxy: %s. Corner ENOB: %s. Thermal-noise ceiling: %s. These are educational summaries of existing Module 4 investigations, not calibrated silicon guarantees.",
 			pvtTemperatureSweepValue(state), pvtProcessYieldValue(state), pvtCornerENOBValue(state), pvtNoiseCeilingValue(state)),
 		Category: "research",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID: "reference_specs", Title: "Reference Spec / Compliance Summary",
+		Body: fmt.Sprintf("%s. %s. %s. %s. %s. Summary-level port of the legacy reference specs; power, area, and latency values are educational estimates.",
+			specStorageValue(state), specComponentsValue(state), specPowerLatencyValue(state), specThroughputValue(state), specComplianceValue(state)),
+		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "edu_adc", Title: "How SAR ADC Works",
@@ -207,6 +219,48 @@ func pvtNoiseCeilingValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return fmt.Sprintf("%.2f bits at %d-bit ADC", state.PVTENOBNoiseCeiling, state.PVTENOBCeilingBits)
+}
+
+func specStorageValue(state CircuitsState) string {
+	if state.SpecCells <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%d cells / %.2f bits/cell", state.SpecCells, state.SpecBitsPerCell)
+}
+
+func specComponentsValue(state CircuitsState) string {
+	if state.SpecDACCount <= 0 || state.SpecTIACount <= 0 || state.SpecADCCount <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("DAC %d / TIA %d / ADC %d", state.SpecDACCount, state.SpecTIACount, state.SpecADCCount)
+}
+
+func specPowerLatencyValue(state CircuitsState) string {
+	if state.SpecTotalPowerMW <= 0 || state.SpecLatencyNS <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%.1f mW / %.0f ns", state.SpecTotalPowerMW, state.SpecLatencyNS)
+}
+
+func specThroughputValue(state CircuitsState) string {
+	if state.SpecThroughputGOPS <= 0 || state.SpecEfficiencyGOPSW <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%.2f GOPS / %.0f GOPS/W", state.SpecThroughputGOPS, state.SpecEfficiencyGOPSW)
+}
+
+func specResolutionValue(state CircuitsState, quantLevels int) string {
+	if state.SpecDACCodes <= 0 || state.SpecADCCodes <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("DAC %d / ADC %d / %d levels", state.SpecDACCodes, state.SpecADCCodes, quantLevels)
+}
+
+func specComplianceValue(state CircuitsState) string {
+	if state.SpecCompliance == "" {
+		return "not evaluated"
+	}
+	return state.SpecCompliance
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {

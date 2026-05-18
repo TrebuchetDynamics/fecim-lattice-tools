@@ -48,3 +48,18 @@ func TestCircuitsOverlayStateIncludesPVTInvestigationSummaries(t *testing.T) {
 		t.Fatalf("pvtNoiseCeiling = %q, want thermal-noise ceiling", state.pvtNoiseCeiling)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesReferenceSpecSummaries(t *testing.T) {
+	vm := circuitsvm.New()
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+
+	if state.specPowerLatency != "5.8 mW / 76 ns" {
+		t.Fatalf("specPowerLatency = %q, want reference power/latency", state.specPowerLatency)
+	}
+	if state.specThroughput != "0.84 GOPS / 145 GOPS/W" {
+		t.Fatalf("specThroughput = %q, want reference throughput", state.specThroughput)
+	}
+	if state.specCompliance != "OK: DAC/ADC cover 30 levels" {
+		t.Fatalf("specCompliance = %q, want compliance summary", state.specCompliance)
+	}
+}

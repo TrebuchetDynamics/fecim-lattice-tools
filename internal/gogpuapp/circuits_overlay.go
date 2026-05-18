@@ -14,25 +14,28 @@ import (
 )
 
 type circuitsOverlayState struct {
-	rows            int
-	cols            int
-	mode            string
-	architecture    string
-	selectedRow     int
-	selectedCol     int
-	writeTarget     int
-	coupling        string
-	isppEngine      string
-	lastOperation   string
-	halfSelectState string
-	halfSelectCells int
-	disturbVoltage  string
-	stressBudget    string
-	stressPerPulse  string
-	pvtTempSweep    string
-	pvtProcessYield string
-	pvtCornerENOB   string
-	pvtNoiseCeiling string
+	rows             int
+	cols             int
+	mode             string
+	architecture     string
+	selectedRow      int
+	selectedCol      int
+	writeTarget      int
+	coupling         string
+	isppEngine       string
+	lastOperation    string
+	halfSelectState  string
+	halfSelectCells  int
+	disturbVoltage   string
+	stressBudget     string
+	stressPerPulse   string
+	pvtTempSweep     string
+	pvtProcessYield  string
+	pvtCornerENOB    string
+	pvtNoiseCeiling  string
+	specPowerLatency string
+	specThroughput   string
+	specCompliance   string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -86,25 +89,28 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		mode = "READ"
 	}
 	return circuitsOverlayState{
-		rows:            rows,
-		cols:            cols,
-		mode:            mode,
-		architecture:    valueOr(metrics["architecture"], "0T1R (Passive)"),
-		selectedRow:     clampInt(selectedRow, 0, rows-1),
-		selectedCol:     clampInt(selectedCol, 0, cols-1),
-		writeTarget:     target,
-		coupling:        valueOr(metrics["coupling"], "Tier-A"),
-		isppEngine:      valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
-		lastOperation:   lastOperation,
-		halfSelectState: valueOr(metrics["half_select_state"], "inactive"),
-		halfSelectCells: parseLeadingInt(metrics["half_select_cells"]),
-		disturbVoltage:  valueOr(metrics["disturb_voltage"], "0.00 V"),
-		stressBudget:    valueOr(metrics["stress_budget"], "inactive"),
-		stressPerPulse:  valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
-		pvtTempSweep:    valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
-		pvtProcessYield: valueOr(metrics["pvt_process_yield"], "not evaluated"),
-		pvtCornerENOB:   valueOr(metrics["pvt_corner_enob"], "not evaluated"),
-		pvtNoiseCeiling: valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
+		rows:             rows,
+		cols:             cols,
+		mode:             mode,
+		architecture:     valueOr(metrics["architecture"], "0T1R (Passive)"),
+		selectedRow:      clampInt(selectedRow, 0, rows-1),
+		selectedCol:      clampInt(selectedCol, 0, cols-1),
+		writeTarget:      target,
+		coupling:         valueOr(metrics["coupling"], "Tier-A"),
+		isppEngine:       valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
+		lastOperation:    lastOperation,
+		halfSelectState:  valueOr(metrics["half_select_state"], "inactive"),
+		halfSelectCells:  parseLeadingInt(metrics["half_select_cells"]),
+		disturbVoltage:   valueOr(metrics["disturb_voltage"], "0.00 V"),
+		stressBudget:     valueOr(metrics["stress_budget"], "inactive"),
+		stressPerPulse:   valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
+		pvtTempSweep:     valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
+		pvtProcessYield:  valueOr(metrics["pvt_process_yield"], "not evaluated"),
+		pvtCornerENOB:    valueOr(metrics["pvt_corner_enob"], "not evaluated"),
+		pvtNoiseCeiling:  valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
+		specPowerLatency: valueOr(metrics["spec_power_latency"], "not evaluated"),
+		specThroughput:   valueOr(metrics["spec_throughput"], "not evaluated"),
+		specCompliance:   valueOr(metrics["spec_compliance"], "not evaluated"),
 	}
 }
 
@@ -261,6 +267,9 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Temp: " + state.pvtTempSweep,
 		"ENOB: " + compactPVTENOB(state.pvtCornerENOB),
 		"Ceil: " + state.pvtNoiseCeiling,
+		"Spec: " + state.specPowerLatency,
+		"Perf: " + state.specThroughput,
+		"Rule: " + compactSpecCompliance(state.specCompliance),
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)
@@ -385,6 +394,10 @@ func compactPVTENOB(value string) string {
 	value = strings.TrimSuffix(value, " bits")
 	value = strings.ReplaceAll(value, " / ", " ")
 	return value
+}
+
+func compactSpecCompliance(value string) string {
+	return strings.TrimPrefix(value, "OK: ")
 }
 
 func elideCircuitStatus(status string, limit int) string {

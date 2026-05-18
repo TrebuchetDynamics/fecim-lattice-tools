@@ -229,6 +229,58 @@ func TestPVTInvestigationSummaryFollowsADCBits(t *testing.T) {
 	}
 }
 
+func TestSnapshotContainsReferenceSpecSummaries(t *testing.T) {
+	s := New().Snapshot()
+
+	wantMetrics := map[string]string{
+		"spec_storage":       "64 cells / 4.91 bits/cell",
+		"spec_components":    "DAC 8 / TIA 8 / ADC 8",
+		"spec_power_latency": "5.8 mW / 76 ns",
+		"spec_throughput":    "0.84 GOPS / 145 GOPS/W",
+		"spec_resolution":    "DAC 32 / ADC 32 / 30 levels",
+		"spec_compliance":    "OK: DAC/ADC cover 30 levels",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	if !hasSection(s, "reference_specs") {
+		t.Fatal("missing reference specs section")
+	}
+}
+
+func TestReferenceSpecSummaryFollowsArrayAndDACBits(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionResizeArray,
+		Payload: map[string]string{"rows": "32", "cols": "32"},
+	}); err != nil {
+		t.Fatalf("resize array: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetDACBits,
+		Payload: map[string]string{"bits": "4"},
+	}); err != nil {
+		t.Fatalf("set DAC bits: %v", err)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"spec_storage":       "1024 cells / 4.91 bits/cell",
+		"spec_components":    "DAC 32 / TIA 32 / ADC 32",
+		"spec_power_latency": "21.4 mW / 76 ns",
+		"spec_throughput":    "13.47 GOPS / 630 GOPS/W",
+		"spec_resolution":    "DAC 16 / ADC 32 / 30 levels",
+		"spec_compliance":    "CHECK: DAC 16 codes < 30 levels",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
 func metricValue(s viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range s.Metrics {
 		if metric.ID == id {

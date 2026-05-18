@@ -27,6 +27,7 @@ func New() *Module {
 	}}
 	m.runISPPSimulation()
 	m.computeHalfSelectStress()
+	m.computeReferenceSpecs()
 	return m
 }
 
@@ -119,6 +120,7 @@ func (m *Module) resizeArray(payload map[string]string) error {
 	m.clampSelectedCell()
 	m.state.LastOperationStatus = fmt.Sprintf("Array resized to %dx%d", rows, cols)
 	m.computeHalfSelectStress()
+	m.computeReferenceSpecs()
 	return nil
 }
 
@@ -195,6 +197,7 @@ func (m *Module) setDACBits(payload map[string]string) error {
 		return fmt.Errorf("circuits: DAC bits must be 4-8, got %d", bits)
 	}
 	m.state.DACResolution = bits
+	m.computeReferenceSpecs()
 	m.state.LastOperationStatus = fmt.Sprintf("DAC resolution set to %d bits", bits)
 	return nil
 }
@@ -209,6 +212,7 @@ func (m *Module) setADCBits(payload map[string]string) error {
 	}
 	m.state.ADCResolution = bits
 	m.computePVTCorners()
+	m.computeReferenceSpecs()
 	m.state.LastOperationStatus = fmt.Sprintf("ADC resolution set to %d bits", bits)
 	return nil
 }
@@ -227,6 +231,7 @@ func (m *Module) setTIAGain(payload map[string]string) error {
 	}
 	m.state.TIAGain = gain
 	m.computePVTCorners()
+	m.computeReferenceSpecs()
 	m.state.LastOperationStatus = fmt.Sprintf("TIA gain set to %.0f ohm", gain)
 	return nil
 }
@@ -407,6 +412,59 @@ func (m *Module) computePVTCorners() {
 
 	_ = lsb
 	_ = vref
+}
+
+func (m *Module) computeReferenceSpecs() {
+	quantLevels := m.state.QuantLevels
+	if quantLevels <= 0 {
+		quantLevels = DefaultQuantLevels
+	}
+	rows := maxInt(1, m.state.Rows)
+	cols := maxInt(1, m.state.Cols)
+	cells := rows * cols
+	dacCodes := 1 << m.state.DACResolution
+	adcCodes := 1 << m.state.ADCResolution
+
+	const (
+		arrayPowerMW       = 0.1
+		controlPowerMW     = 0.5
+		dacPowerPerColMW   = 0.1
+		tiaPowerPerRowMW   = 0.05
+		adcPowerPerRowMW   = 0.5
+		referenceLatencyNS = 76.0
+	)
+	totalPowerMW := arrayPowerMW + controlPowerMW +
+		dacPowerPerColMW*float64(cols) +
+		tiaPowerPerRowMW*float64(rows) +
+		adcPowerPerRowMW*float64(rows)
+	throughputGOPS := float64(cells) / referenceLatencyNS
+	efficiencyGOPSW := 0.0
+	if totalPowerMW > 0 {
+		efficiencyGOPSW = throughputGOPS * 1000 / totalPowerMW
+	}
+
+	m.state.SpecCells = cells
+	m.state.SpecBitsPerCell = math.Log2(float64(quantLevels))
+	m.state.SpecDACCount = cols
+	m.state.SpecTIACount = rows
+	m.state.SpecADCCount = rows
+	m.state.SpecDACCodes = dacCodes
+	m.state.SpecADCCodes = adcCodes
+	m.state.SpecTotalPowerMW = totalPowerMW
+	m.state.SpecLatencyNS = referenceLatencyNS
+	m.state.SpecThroughputGOPS = throughputGOPS
+	m.state.SpecEfficiencyGOPSW = efficiencyGOPSW
+	m.state.SpecCompliance = referenceSpecCompliance(dacCodes, adcCodes, quantLevels)
+}
+
+func referenceSpecCompliance(dacCodes, adcCodes, quantLevels int) string {
+	if dacCodes < quantLevels {
+		return fmt.Sprintf("CHECK: DAC %d codes < %d levels", dacCodes, quantLevels)
+	}
+	if adcCodes < quantLevels {
+		return fmt.Sprintf("CHECK: ADC %d codes < %d levels", adcCodes, quantLevels)
+	}
+	return fmt.Sprintf("OK: DAC/ADC cover %d levels", quantLevels)
 }
 
 func pvtTemperatureSweepStatus(mat *physics.HZOMaterial) string {
