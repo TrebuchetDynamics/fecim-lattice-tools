@@ -119,6 +119,8 @@ Claim audit:
 - Citation paper records with stored `**PDF:**` paths must point at existing
   repo-relative files, and source ledgers in `sources/*.yaml` must keep their
   citation path, PDF path, and PDF SHA-256 digest in sync with the repository.
+- Source ledger `citation_path` fields must point at the citation record with
+  the same filename stem as the source ledger.
 - OpenAlex ledgers in `sources/*.openalex.json` must remain valid JSON with a
   work ID, display name, and DOI identity that matches the citation and
   acquisition ledgers when those fields exist. If a citation record has an

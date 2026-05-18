@@ -277,7 +277,9 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
         elif paper_key != path.stem:
             errors.append(f"{rel_path} paper_key {paper_key} must match filename {path.stem}")
 
-        _audit_source_file_reference(root, rel_path, "citation_path", data.get("citation_path"), errors)
+        citation_file = _audit_source_file_reference(root, rel_path, "citation_path", data.get("citation_path"), errors)
+        if citation_file is not None and citation_file.stem != path.stem:
+            errors.append(f"{rel_path} citation_path must point at citations/papers/{path.stem}.md")
 
         pdf = data.get("pdf")
         if not isinstance(pdf, dict):

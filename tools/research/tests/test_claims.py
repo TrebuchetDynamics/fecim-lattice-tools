@@ -256,6 +256,34 @@ class ClaimsTest(unittest.TestCase):
 
             self.assertTrue(report.ok, report.errors)
 
+    def test_audit_fails_when_source_ledger_citation_path_points_to_wrong_record(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_paper(root, "wrong_record")
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/wrong_record.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml citation_path must point at citations/papers/park2015_advmat_hzo.md",
+                "\n".join(report.errors),
+            )
+
     def test_audit_fails_when_source_ledger_pdf_points_at_ignored_research_inbox(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
