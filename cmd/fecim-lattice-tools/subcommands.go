@@ -57,6 +57,8 @@ func dispatchSubcommand(args []string) error {
 		return runComparisonSubcommand(args[1:])
 	case "eda":
 		return runEDASubcommand(args[1:])
+	case "research":
+		return runResearchSubcommand(args[1:])
 	default:
 		return fmt.Errorf("unknown subcommand %q", args[0])
 	}
@@ -192,6 +194,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  circuits           gogpu/ui module or CLI")
 	fmt.Fprintln(w, "  comparison         gogpu/ui module or CLI")
 	fmt.Fprintln(w, "  eda                gogpu/ui module or CLI tools")
+	fmt.Fprintln(w, "  research           paper ingestion, indexing, and evidence search")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Examples:")
 	fmt.Fprintln(w, "  fecim-lattice-tools --module crossbar")
@@ -199,6 +202,8 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools crossbar inference -size=64 -show-mvm")
 	fmt.Fprintln(w, "  fecim-lattice-tools circuits cli -all")
 	fmt.Fprintln(w, "  fecim-lattice-tools eda cli -mode=compute -rows=128 -cols=128")
+	fmt.Fprintln(w, "  fecim-lattice-tools research ingest")
+	fmt.Fprintln(w, "  fecim-lattice-tools research search \"HZO coercive field Preisach\"")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "GUI flags:")
 	fmt.Fprintln(w, "  --module NAME       Start module: home,hysteresis,crossbar,mnist,circuits,comparison,eda,docs")
