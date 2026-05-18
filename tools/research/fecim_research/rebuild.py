@@ -121,6 +121,7 @@ def _stage_artifacts(stage: str) -> list[str]:
         "index": [
             "research/manifests/index-latest.json",
             "research/index/pyserini",
+            "research/index/lancedb",
         ],
         "cache": [
             "research/reports/cache-latest.json",

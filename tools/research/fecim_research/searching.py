@@ -8,9 +8,11 @@ from typing import Any
 from .chunking import chunk_markdown
 from .claims import ClaimRecord, load_claim_records
 from .indexing import _sha, collect_chunk_files
+from .semantic import DEFAULT_EMBEDDING_MODEL, VECTOR_CACHE, embed_text, load_vector_cache, search_vector_records
 
 
 STALE_INDEX_MESSAGE = "BM25 index is stale; rerun `fecim research index`"
+STALE_SEMANTIC_INDEX_MESSAGE = "semantic index is stale; rerun `fecim research index --semantic`"
 INBOX_SEARCH_BACKEND = "inbox-local-jsonl"
 
 
@@ -111,6 +113,15 @@ def index_is_stale(root: Path) -> bool:
     return sorted(current, key=lambda item: item["path"]) != sorted(expected, key=lambda item: item["path"])
 
 
+def _read_index_manifest(root: Path) -> dict[str, object]:
+    manifest_path = root / "research" / "manifests" / "index-latest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return manifest if isinstance(manifest, dict) else {}
+
+
 def render_text_results(rows: list[dict[str, object]]) -> str:
     if not rows:
         return ""
@@ -201,6 +212,44 @@ def search_inbox_chunks_locally(root: Path, query: str, limit: int) -> list[dict
     return _search_lookup(load_inbox_chunk_lookup(root), query, limit)
 
 
+def search_semantic_index(root: Path, query: str, limit: int) -> tuple[str, str, list[dict[str, object]]]:
+    manifest = _read_index_manifest(root)
+    model = str(manifest.get("embedding_model") or DEFAULT_EMBEDDING_MODEL)
+    backend = str(manifest.get("backend") or "local-vector-jsonl")
+    if backend == "lancedb":
+        rows = _search_lancedb_index(root, query, limit)
+        if rows:
+            return "lancedb", model, rows
+
+    scored = search_vector_records(load_vector_cache(root), query, limit, model)
+    rows = [_row(rank, round(score, 8), docid, record) for rank, (score, docid, record) in enumerate(scored, start=1)]
+    return "local-vector-jsonl", model, rows
+
+
+def _search_lancedb_index(root: Path, query: str, limit: int) -> list[dict[str, object]]:
+    try:
+        import lancedb
+
+        db = lancedb.connect(str(root / "research" / "index" / "lancedb"))
+        table = db.open_table("chunks")
+        records = table.search(embed_text(query)).limit(limit).to_list()
+    except Exception:
+        return []
+
+    rows: list[dict[str, object]] = []
+    for rank, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            continue
+        docid = str(record.get("id", ""))
+        raw_distance = record.get("_distance", 0.0)
+        try:
+            score = round(1.0 - float(raw_distance), 8)
+        except (TypeError, ValueError):
+            score = 0.0
+        rows.append(_row(rank, score, docid, record))
+    return rows
+
+
 def _search_lookup(lookup: dict[str, dict[str, object]], query: str, limit: int) -> list[dict[str, object]]:
     query_terms = _tokens(query)
     if not query_terms:
@@ -238,6 +287,8 @@ def write_search_report(
     claim: dict[str, object] | None = None,
     trust_state: str | None = None,
     review_required: bool | None = None,
+    semantic: bool | None = None,
+    embedding_model: str | None = None,
 ) -> Path:
     report_path = root / "research" / "reports" / "search-latest.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -254,6 +305,10 @@ def write_search_report(
         report["trust_state"] = trust_state
     if review_required is not None:
         report["review_required"] = review_required
+    if semantic is not None:
+        report["semantic"] = semantic
+    if embedding_model is not None:
+        report["embedding_model"] = embedding_model
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report_path
 
@@ -265,6 +320,7 @@ def run_search(
     json_output: bool,
     local: bool = False,
     inbox: bool = False,
+    semantic: bool = False,
     claim_id: str = "",
 ) -> int:
     if inbox and claim_id:
@@ -279,6 +335,22 @@ def run_search(
             return 1
         query = record.claim
         claim = _claim_context(root, record)
+
+    if semantic:
+        cache_path = root / VECTOR_CACHE
+        if not cache_path.is_file():
+            print("missing semantic index; run `fecim research index --semantic` first", file=sys.stderr)
+            return 1
+        if index_is_stale(root):
+            print(STALE_SEMANTIC_INDEX_MESSAGE, file=sys.stderr)
+            return 1
+        backend, model, rows = search_semantic_index(root, query, limit)
+        write_search_report(root, query, backend, rows, claim=claim, semantic=True, embedding_model=model)
+        if json_output:
+            print(json.dumps(rows, indent=2, sort_keys=True))
+        else:
+            sys.stdout.write(render_text_results(rows))
+        return 0
 
     if inbox:
         rows = search_inbox_chunks_locally(root, query, limit)

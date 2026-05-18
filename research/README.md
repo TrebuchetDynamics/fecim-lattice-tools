@@ -143,6 +143,13 @@ Search:
 
 - `fecim-lattice-tools research search --local "HZO coercive field"` searches
   tracked JSONL chunks without Pyserini, Java, or rebuildable index caches.
+- `fecim-lattice-tools research index --semantic` builds a local vector cache
+  under ignored `research/index/lancedb/`. When LanceDB is installed, the cache
+  includes a LanceDB table; otherwise it falls back to deterministic local
+  JSONL vectors using the `fecim-hashing-bow-v1` embedding model. No remote
+  embedding APIs are used.
+- `fecim-lattice-tools research search --semantic "HZO coercive field"`
+  searches the rebuildable vector cache and writes a reviewable search report.
 - `fecim-lattice-tools research search --claim CLAIM_ID --local` uses the
   reviewed claim text as the query and records claim metadata in
   `reports/search-latest.json`.

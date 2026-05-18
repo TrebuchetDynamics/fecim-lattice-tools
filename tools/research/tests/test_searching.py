@@ -1,9 +1,11 @@
 import json
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from fecim_research.searching import (
     _row,
@@ -156,6 +158,53 @@ class SearchingTest(unittest.TestCase):
             self.assertTrue(report["ok"])
             self.assertEqual(report["backend"], "local-jsonl")
             self.assertEqual(report["query"], "HZO coercive")
+            self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
+
+    def test_run_search_semantic_reads_rebuildable_vector_cache(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "papers.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-02::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "HZO coercive field and Preisach switching evidence.",
+                        "source_path": "research/parsed/park/marker.md",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "id": "control::sec-01::chunk-001",
+                        "paper_key": "control",
+                        "section": "Methods",
+                        "contents": "Silicon capacitor baseline.",
+                        "source_path": "research/parsed/control/marker.md",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            from fecim_research.indexing import run_index
+
+            with patch.dict(sys.modules, {"lancedb": None}):
+                code = run_index(root, semantic=True, embedding_model="")
+            self.assertEqual(code, 0)
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(root, "HZO coercive", 3, json_output=True, semantic=True)
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park::sec-02::chunk-001")
+            report = json.loads((root / "research" / "reports" / "search-latest.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["backend"], "local-vector-jsonl")
+            self.assertTrue(report["semantic"])
+            self.assertEqual(report["embedding_model"], "fecim-hashing-bow-v1")
             self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
 
     def test_run_search_inbox_reads_unreviewed_sidecar_markdown_and_marks_results(self):

@@ -1,9 +1,11 @@
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from fecim_research.indexing import collect_chunk_files, write_index_manifest
+from fecim_research.indexing import collect_chunk_files, run_index, write_index_manifest
 
 
 class IndexingTest(unittest.TestCase):
@@ -28,6 +30,44 @@ class IndexingTest(unittest.TestCase):
             self.assertEqual(data["backend"], "pyserini")
             self.assertFalse(data["semantic"])
             self.assertEqual(len(data["inputs"]), 1)
+
+    def test_run_index_semantic_writes_rebuildable_local_vector_cache_without_lancedb(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "park.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-01::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "HZO coercive field evidence.",
+                        "source_path": "research/parsed/park/marker.md",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with patch.dict(sys.modules, {"lancedb": None}):
+                code = run_index(root, semantic=True, embedding_model="")
+
+            self.assertEqual(code, 0)
+            cache = root / "research" / "index" / "lancedb" / "chunks.jsonl"
+            self.assertTrue(cache.exists())
+            rows = [json.loads(line) for line in cache.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(rows[0]["id"], "park::sec-01::chunk-001")
+            self.assertEqual(len(rows[0]["vector"]), 64)
+            self.assertEqual(rows[0]["embedding_model"], "fecim-hashing-bow-v1")
+            manifest = json.loads((root / "research" / "manifests" / "index-latest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["backend"], "local-vector-jsonl")
+            self.assertTrue(manifest["semantic"])
+            self.assertEqual(manifest["embedding_model"], "fecim-hashing-bow-v1")
+            self.assertEqual(manifest["embedding_provider"], "local-hashing")
+            self.assertFalse(manifest["external_ai"])
+            self.assertEqual(manifest["vector_dimension"], 64)
+            self.assertEqual(manifest["lancedb_index"], "research/index/lancedb")
 
 
 if __name__ == "__main__":

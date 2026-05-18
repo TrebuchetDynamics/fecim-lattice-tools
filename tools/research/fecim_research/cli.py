@@ -69,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("--json", action="store_true", help="emit JSON results")
     search.add_argument("--local", action="store_true", help="search tracked JSONL chunks without a rebuildable BM25 cache")
     search.add_argument("--inbox", action="store_true", help="search unreviewed local inbox sidecar Markdown only")
+    search.add_argument("--semantic", action="store_true", help="search the rebuildable local vector cache")
     search.add_argument("--limit", type=int, default=10)
 
     return parser
@@ -159,6 +160,7 @@ def main(argv: list[str] | None = None) -> int:
             json_output=args.json,
             local=args.local,
             inbox=args.inbox,
+            semantic=args.semantic,
             claim_id=args.claim,
         )
     parser.error(f"unknown command {args.command}")

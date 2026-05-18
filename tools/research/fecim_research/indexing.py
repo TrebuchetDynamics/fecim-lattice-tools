@@ -5,6 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from .semantic import (
+    EMBEDDING_PROVIDER,
+    VECTOR_DIMENSION,
+    build_vector_records,
+    effective_embedding_model,
+    write_vector_cache,
+)
+
 
 def collect_chunk_files(root: Path) -> list[Path]:
     chunk_dir = root / "research" / "chunks"
@@ -30,6 +38,10 @@ def write_index_manifest(
     inputs: list[Path],
     semantic: bool,
     embedding_model: str,
+    vector_dimension: int | None = None,
+    embedding_provider: str = "",
+    lancedb_index: str = "",
+    external_ai: bool = False,
 ) -> Path:
     manifest_path = root / "research" / "manifests" / "index-latest.json"
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,6 +49,8 @@ def write_index_manifest(
         "backend": backend,
         "semantic": semantic,
         "embedding_model": embedding_model,
+        "embedding_provider": embedding_provider,
+        "external_ai": external_ai,
         "inputs": [
             {
                 "path": _repo_relative(root, path),
@@ -46,14 +60,16 @@ def write_index_manifest(
         ],
         "pyserini_index": "research/index/pyserini",
     }
+    if semantic:
+        data["lancedb_index"] = lancedb_index or "research/index/lancedb"
+        data["vector_dimension"] = vector_dimension or VECTOR_DIMENSION
     manifest_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return manifest_path
 
 
 def run_index(root: Path, semantic: bool, embedding_model: str) -> int:
     if semantic:
-        print("semantic indexing is not implemented in the retrieval MVP", file=sys.stderr)
-        return 2
+        return _run_semantic_index(root, embedding_model)
 
     chunks = collect_chunk_files(root)
     if not chunks:
@@ -93,4 +109,44 @@ def run_index(root: Path, semantic: bool, embedding_model: str) -> int:
 
     write_index_manifest(root, "pyserini", chunks, semantic=False, embedding_model=embedding_model)
     print(f"indexed {len(chunks)} chunk file(s) into research/index/pyserini")
+    return 0
+
+
+def _run_semantic_index(root: Path, embedding_model: str) -> int:
+    chunks = collect_chunk_files(root)
+    if not chunks:
+        print("no chunk files found under research/chunks", file=sys.stderr)
+        return 1
+
+    index_dir = root / "research" / "index" / "lancedb"
+    if index_dir.exists():
+        shutil.rmtree(index_dir)
+    index_dir.mkdir(parents=True, exist_ok=True)
+
+    model = effective_embedding_model(embedding_model)
+    records = build_vector_records(root, chunks, model)
+    write_vector_cache(root, records)
+    backend = "local-vector-jsonl"
+
+    try:
+        import lancedb
+
+        db = lancedb.connect(str(index_dir))
+        db.create_table("chunks", data=records)
+        backend = "lancedb"
+    except Exception:
+        backend = "local-vector-jsonl"
+
+    write_index_manifest(
+        root,
+        backend,
+        chunks,
+        semantic=True,
+        embedding_model=model,
+        vector_dimension=VECTOR_DIMENSION,
+        embedding_provider=EMBEDDING_PROVIDER,
+        lancedb_index="research/index/lancedb",
+        external_ai=False,
+    )
+    print(f"indexed {len(chunks)} chunk file(s) into research/index/lancedb backend={backend}")
     return 0
