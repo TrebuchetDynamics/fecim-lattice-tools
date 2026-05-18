@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "module": "shell",
+      "feature": "Default application shell, module navigation, CLI modes, and lifecycle",
+      "status": "better",
+      "legacy_sources": [
+        "cmd/fecim-lattice-tools-fyne/launcher.go",
+        "cmd/fecim-lattice-tools-fyne/main.go",
+        "cmd/fecim-lattice-tools-fyne/mode.go",
+        "cmd/fecim-lattice-tools-fyne/module_lifecycle.go",
+        "cmd/fecim-lattice-tools-fyne/seed.go",
+        "cmd/fecim-lattice-tools-fyne/subcommands.go"
+      ],
+      "gogpu_surfaces": [
+        "cmd/fecim-lattice-tools",
+        "internal/gogpuapp",
+        "shared/viewmodel"
+      ],
+      "evidence": [
+        "make test-gogpu-ui",
+        "go test ./cmd/fecim-lattice-tools ./internal/gogpuapp ./shared/viewmodel"
+      ],
+      "notes": "The default app is zero-CGO gogpu/ui and no longer routes through the legacy Fyne tab lifecycle."
+    },
+    {
+      "module": "shell",
+      "feature": "Documentation screenshots and demo frame capture",
+      "status": "better",
+      "legacy_sources": [
+        "cmd/demo-frames-fyne/...",
+        "cmd/fecim-screenshotter-fyne/..."
+      ],
+      "gogpu_surfaces": [
+        "cmd/fecim-screenshotter",
+        "internal/gogpuscreenshot",
+        "internal/gogpuapp"
+      ],
+      "evidence": [
+        "CGO_ENABLED=0 go test ./internal/gogpuscreenshot ./cmd/fecim-screenshotter"
+      ],
+      "notes": "The gogpu screenshotter captures real app frames without Xvfb, OpenGL Fyne capture, or window-manager dependencies."
+    },
+    {
+      "module": "shell",
+      "feature": "Legacy visual crawler and recording helpers",
+      "status": "gap",
+      "legacy_sources": [
+        "cmd/fecim-lattice-tools-fyne/recording_helpers.go",
+        "cmd/fecim-lattice-tools-fyne/ui_crawler_helpers.go"
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuscreenshot"
+      ],
+      "evidence": [
+        "go test ./internal/gogpuscreenshot"
+      ],
+      "notes": "Static screenshot capture is covered by gogpu. Runtime recording and crawler-style interactive assertions still need an explicit gogpu replacement or a decision to retire them."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "P-E loop workspace, material controls, calibration, PUND/FORC, literature overlays, export dialogs, and custom hysteresis widgets",
+      "status": "gap",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/*.go",
+        "module1-hysteresis/pkg/gui/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
+      ],
+      "notes": "Core material selection and P-E loop state exist in gogpu. PUND, FORC, calibration dialogs, literature overlays, export workflows, and several educational widgets need explicit gogpu parity or a better replacement."
+    },
+    {
+      "module": "crossbar",
+      "feature": "Crossbar array controls, MVM heatmaps, IR drop, sneak paths, drift, FeCap/3D stack tabs, live slides, and comparison widgets",
+      "status": "gap",
+      "legacy_sources": [
+        "module2-crossbar/pkg/gui/*.go",
+        "module2-crossbar/pkg/gui/tabs/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/crossbar",
+        "internal/gogpuapp/crossbar_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/crossbar ./internal/gogpuapp -run Crossbar"
+      ],
+      "notes": "Core array size, MVM, IR toggle, and heatmap rendering exist in gogpu. Dedicated non-ideality tabs, live-slide flow, comparison widgets, and export validation need parity decisions."
+    },
+    {
+      "module": "mnist",
+      "feature": "MNIST inference dashboard, dual-mode demo, accuracy sweep, energy and quantization widgets, activation/weight views, dialogs, and export",
+      "status": "gap",
+      "legacy_sources": [
+        "module3-mnist/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/mnist",
+        "internal/gogpuapp/mnist_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/mnist ./internal/gogpuapp -run MNIST"
+      ],
+      "notes": "Core inference summary exists in gogpu. Dual-mode interactions, training/weight visualizations, detailed preprocessing, accuracy sweep controls, and export workflows need parity decisions."
+    },
+    {
+      "module": "circuits",
+      "feature": "Peripheral circuits workspace, unified array canvas, read/write/compute paths, ISPP, half-select stress, PVT, reference specs, comparison metrics, and overlays",
+      "status": "gap",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/*.go",
+        "module4-circuits/pkg/gui/unified/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits",
+        "internal/gogpuapp/circuits_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits ./internal/gogpuapp -run Circuits"
+      ],
+      "notes": "Gogpu exposes circuit metrics and sections. The full interactive unified canvas, ISPP controls, stress/PVT investigations, overlays, logs, and reference-spec workflows need parity decisions."
+    },
+    {
+      "module": "comparison",
+      "feature": "Technology comparison, evidence model, scenario profiles, sensitivity analysis, market/fabrication reality panels, hero cards, and export",
+      "status": "gap",
+      "legacy_sources": [
+        "module5-comparison/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/comparison",
+        "internal/gogpuapp/comparison_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/comparison ./internal/gogpuapp -run Comparison"
+      ],
+      "notes": "Canonical architecture comparison is ported. Scenario editing, sensitivity and market panels, fabrication reality messaging, and export need parity decisions."
+    },
+    {
+      "module": "eda",
+      "feature": "EDA design suite, builder validation, export viewer, layout visualization, learning center, visual explainers, and layout canvas",
+      "status": "gap",
+      "legacy_sources": [
+        "module6-eda/pkg/gui/*.go",
+        "module6-eda/pkg/gui/tabs/...",
+        "module6-eda/pkg/gui/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/eda",
+        "internal/gogpuapp/eda_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/eda ./internal/gogpuapp -run EDA"
+      ],
+      "notes": "Gogpu shows EDA summary, export formats, and representative generated text. The builder wizard, validation tab, layout viewer, learning center, and custom layout visuals need parity decisions."
+    },
+    {
+      "module": "docs",
+      "feature": "Documentation viewer, navigation, search, glossary integration, layout, and persistence",
+      "status": "gap",
+      "legacy_sources": [
+        "module7-docs/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/docs",
+        "internal/gogpuapp/docs_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/docs ./internal/gogpuapp -run Docs"
+      ],
+      "notes": "Gogpu exposes documentation sections and trust-boundary content. Search, glossary integration, navigation state, and persistence need parity decisions."
+    },
+    {
+      "module": "shared",
+      "feature": "Reusable legacy widgets, theme systems, keyboard help, and Fyne export helpers",
+      "status": "gap",
+      "legacy_sources": [
+        "shared/export/*.go",
+        "shared/keyboard/*.go",
+        "shared/theme/*.go",
+        "shared/themes/*.go",
+        "shared/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuapp/design",
+        "internal/gogpuapp/render"
+      ],
+      "evidence": [
+        "go test ./internal/gogpuapp/design ./internal/gogpuapp/render"
+      ],
+      "notes": "Gogpu has design tokens plus plot and heatmap renderers. Shared Fyne widgets and theme affordances need a mapped gogpu design-system replacement, retirement decision, or module-specific reimplementation."
+    }
+  ]
+}
