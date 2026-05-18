@@ -74,6 +74,10 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		circuitButton("Export Timing", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceTiming, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Export Timing SVG", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceTimingSVG, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Animate Timing", false, actionOrDefault(actions, circuitsvm.ActionAnimateReferenceTiming, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Play Timing", false, actionOrDefault(actions, circuitsvm.ActionPlayReferenceTiming, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Pause Timing", false, actionOrDefault(actions, circuitsvm.ActionPauseReferenceTiming, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Step Timing", false, actionOrDefault(actions, circuitsvm.ActionStepReferenceTiming, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Reset Timing", false, actionOrDefault(actions, circuitsvm.ActionResetReferenceTiming, viewmodel.ActionCommand), theme, onAction),
 	}
 
 	modeButtons := []widget.Widget{

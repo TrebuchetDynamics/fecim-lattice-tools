@@ -38,15 +38,16 @@ type OperationLogExport struct {
 func New() *Module {
 	m := &Module{state: CircuitsState{
 		Rows: 8, Cols: 8,
-		OperationMode:    OperationRead,
-		Architecture:     ArchitecturePassive,
-		WriteTargetLevel: DefaultQuantLevels / 2,
-		QuantLevels:      DefaultQuantLevels,
-		CouplingTier:     CouplingTierA,
-		ISPPEngine:       ISPPEngineLevel,
-		LoggerVerbosity:  "off",
-		TimingOperation:  "READ",
-		ADCResolution:    5, DACResolution: 5, TIAGain: 1e4,
+		OperationMode:            OperationRead,
+		Architecture:             ArchitecturePassive,
+		WriteTargetLevel:         DefaultQuantLevels / 2,
+		QuantLevels:              DefaultQuantLevels,
+		CouplingTier:             CouplingTierA,
+		ISPPEngine:               ISPPEngineLevel,
+		LoggerVerbosity:          "off",
+		TimingOperation:          "READ",
+		TimingPlaybackIntervalMS: DefaultTimingPlaybackIntervalMS,
+		ADCResolution:            5, DACResolution: 5, TIAGain: 1e4,
 		ChargePumpStages: 4, SupplyVoltage: 1.8, ISPPEnabled: true,
 	}}
 	m.runISPPSimulation()
@@ -99,6 +100,14 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.exportReferenceTimingSVG(action.Payload)
 	case ActionAnimateReferenceTiming:
 		return m.animateReferenceTiming()
+	case ActionPlayReferenceTiming:
+		return m.playReferenceTiming(action.Payload)
+	case ActionPauseReferenceTiming:
+		return m.pauseReferenceTiming()
+	case ActionStepReferenceTiming:
+		return m.stepReferenceTiming()
+	case ActionResetReferenceTiming:
+		return m.resetReferenceTiming()
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
 		m.recordStatus("control", "ISPP enabled: %v", m.state.ISPPEnabled)
@@ -663,6 +672,71 @@ func svgEscape(s string) string {
 }
 
 func (m *Module) animateReferenceTiming() error {
+	if err := m.ensureTimingPlaybackSteps(); err != nil {
+		return err
+	}
+	operation := m.state.TimingAnimationOperation
+	m.state.TimingAnimationStepIndex = 1
+	m.state.TimingAnimationCurrentStep = m.state.TimingAnimationSteps[0]
+	m.state.TimingAnimationStatus = fmt.Sprintf("%s timing animation step 1/%d: %s", operation, m.state.TimingAnimationStepTotal, m.state.TimingAnimationCurrentStep)
+	return nil
+}
+
+func (m *Module) playReferenceTiming(payload map[string]string) error {
+	if err := m.ensureTimingPlaybackSteps(); err != nil {
+		return err
+	}
+	interval, err := timingPlaybackInterval(payload, m.state.TimingPlaybackIntervalMS)
+	if err != nil {
+		return err
+	}
+	m.state.TimingPlaybackIntervalMS = interval
+	m.state.TimingPlaybackState = "playing"
+	m.state.TimingPlaybackStatus = timingPlaybackStatus(m.state, "playing")
+	return nil
+}
+
+func (m *Module) pauseReferenceTiming() error {
+	if err := m.ensureTimingPlaybackSteps(); err != nil {
+		return err
+	}
+	m.state.TimingPlaybackState = "paused"
+	m.state.TimingPlaybackStatus = timingPlaybackStatus(m.state, "paused")
+	return nil
+}
+
+func (m *Module) stepReferenceTiming() error {
+	if err := m.ensureTimingPlaybackSteps(); err != nil {
+		return err
+	}
+	if m.state.TimingAnimationStepIndex < m.state.TimingAnimationStepTotal {
+		m.state.TimingAnimationStepIndex++
+	}
+	m.state.TimingAnimationCurrentStep = m.state.TimingAnimationSteps[m.state.TimingAnimationStepIndex-1]
+	if m.state.TimingAnimationStepIndex >= m.state.TimingAnimationStepTotal {
+		m.state.TimingPlaybackState = "completed"
+		m.state.TimingPlaybackStatus = timingPlaybackStatus(m.state, "completed")
+		return nil
+	}
+	if m.state.TimingPlaybackState == "" || m.state.TimingPlaybackState == "stopped" || m.state.TimingPlaybackState == "completed" {
+		m.state.TimingPlaybackState = "paused"
+	}
+	m.state.TimingPlaybackStatus = timingPlaybackStatus(m.state, m.state.TimingPlaybackState)
+	return nil
+}
+
+func (m *Module) resetReferenceTiming() error {
+	if err := m.ensureTimingPlaybackSteps(); err != nil {
+		return err
+	}
+	m.state.TimingAnimationStepIndex = 1
+	m.state.TimingAnimationCurrentStep = m.state.TimingAnimationSteps[0]
+	m.state.TimingPlaybackState = "stopped"
+	m.state.TimingPlaybackStatus = timingPlaybackStatus(m.state, "reset")
+	return nil
+}
+
+func (m *Module) ensureTimingPlaybackSteps() error {
 	m.computeReferenceTiming()
 	operation := m.state.TimingActiveOp
 	if operation == "" {
@@ -670,15 +744,67 @@ func (m *Module) animateReferenceTiming() error {
 	}
 	steps := timingAnimationSteps(operation)
 	if len(steps) == 0 {
-		return fmt.Errorf("circuits: unsupported timing animation operation %q", operation)
+		return fmt.Errorf("circuits: unsupported timing playback operation %q", operation)
 	}
-	m.state.TimingAnimationOperation = operation
+	if m.state.TimingAnimationOperation != operation || len(m.state.TimingAnimationSteps) == 0 {
+		m.state.TimingAnimationOperation = operation
+		m.state.TimingAnimationSteps = append([]string(nil), steps...)
+		m.state.TimingAnimationStepIndex = 1
+		m.state.TimingAnimationStepTotal = len(steps)
+		m.state.TimingAnimationCurrentStep = steps[0]
+		return nil
+	}
 	m.state.TimingAnimationSteps = append([]string(nil), steps...)
-	m.state.TimingAnimationStepIndex = 1
 	m.state.TimingAnimationStepTotal = len(steps)
-	m.state.TimingAnimationCurrentStep = steps[0]
-	m.state.TimingAnimationStatus = fmt.Sprintf("%s timing animation step 1/%d: %s", operation, len(steps), steps[0])
+	if m.state.TimingAnimationStepIndex < 1 {
+		m.state.TimingAnimationStepIndex = 1
+	}
+	if m.state.TimingAnimationStepIndex > len(steps) {
+		m.state.TimingAnimationStepIndex = len(steps)
+	}
+	m.state.TimingAnimationCurrentStep = steps[m.state.TimingAnimationStepIndex-1]
 	return nil
+}
+
+func timingPlaybackInterval(payload map[string]string, current int) (int, error) {
+	interval := current
+	if interval <= 0 {
+		interval = DefaultTimingPlaybackIntervalMS
+	}
+	if value := strings.TrimSpace(payload["interval_ms"]); value != "" {
+		parsed, err := parseInt(value, "timing playback interval")
+		if err != nil {
+			return 0, err
+		}
+		if parsed <= 0 {
+			return 0, fmt.Errorf("circuits: invalid timing playback interval %d", parsed)
+		}
+		interval = parsed
+	}
+	return interval, nil
+}
+
+func timingPlaybackStatus(state CircuitsState, status string) string {
+	operation := state.TimingAnimationOperation
+	stepIndex := state.TimingAnimationStepIndex
+	stepTotal := state.TimingAnimationStepTotal
+	currentStep := state.TimingAnimationCurrentStep
+	interval := state.TimingPlaybackIntervalMS
+	if interval <= 0 {
+		interval = DefaultTimingPlaybackIntervalMS
+	}
+	switch status {
+	case "playing":
+		return fmt.Sprintf("playing %s timing playback step %d/%d every %dms: %s", operation, stepIndex, stepTotal, interval, currentStep)
+	case "paused":
+		return fmt.Sprintf("paused %s timing playback at step %d/%d: %s", operation, stepIndex, stepTotal, currentStep)
+	case "completed":
+		return fmt.Sprintf("completed %s timing playback at step %d/%d: %s", operation, stepIndex, stepTotal, currentStep)
+	case "reset":
+		return fmt.Sprintf("reset %s timing playback to step %d/%d: %s", operation, stepIndex, stepTotal, currentStep)
+	default:
+		return "not playing"
+	}
 }
 
 func timingAnimationSteps(operation string) []string {

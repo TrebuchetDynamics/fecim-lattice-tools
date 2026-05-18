@@ -14,44 +14,46 @@ import (
 )
 
 type circuitsOverlayState struct {
-	rows                     int
-	cols                     int
-	mode                     string
-	architecture             string
-	selectedRow              int
-	selectedCol              int
-	writeTarget              int
-	coupling                 string
-	isppEngine               string
-	loggerVerbosity          string
-	loggerDetail             string
-	lastOperation            string
-	halfSelectState          string
-	halfSelectCells          int
-	disturbVoltage           string
-	stressBudget             string
-	stressPerPulse           string
-	pvtTempSweep             string
-	pvtProcessYield          string
-	pvtCornerENOB            string
-	pvtNoiseCeiling          string
-	specPowerLatency         string
-	specThroughput           string
-	specCompliance           string
-	referenceSpecExport      string
-	referenceTimingExport    string
-	referenceTimingSVGExport string
-	referenceTimingAnimation string
-	timingActive             string
-	timingActivePhases       string
-	timingWaveformSignals    string
-	timingWaveformMarkers    string
-	timingWaveformPhases     string
-	operationLogLatest       string
-	operationLogRecent       string
-	operationLogExport       string
-	computeRun               string
-	computeRunPeak           string
+	rows                        int
+	cols                        int
+	mode                        string
+	architecture                string
+	selectedRow                 int
+	selectedCol                 int
+	writeTarget                 int
+	coupling                    string
+	isppEngine                  string
+	loggerVerbosity             string
+	loggerDetail                string
+	lastOperation               string
+	halfSelectState             string
+	halfSelectCells             int
+	disturbVoltage              string
+	stressBudget                string
+	stressPerPulse              string
+	pvtTempSweep                string
+	pvtProcessYield             string
+	pvtCornerENOB               string
+	pvtNoiseCeiling             string
+	specPowerLatency            string
+	specThroughput              string
+	specCompliance              string
+	referenceSpecExport         string
+	referenceTimingExport       string
+	referenceTimingSVGExport    string
+	referenceTimingAnimation    string
+	referenceTimingPlayback     string
+	referenceTimingPlaybackStep string
+	timingActive                string
+	timingActivePhases          string
+	timingWaveformSignals       string
+	timingWaveformMarkers       string
+	timingWaveformPhases        string
+	operationLogLatest          string
+	operationLogRecent          string
+	operationLogExport          string
+	computeRun                  string
+	computeRunPeak              string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -129,44 +131,46 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		mode = "READ"
 	}
 	return circuitsOverlayState{
-		rows:                     rows,
-		cols:                     cols,
-		mode:                     mode,
-		architecture:             valueOr(metrics["architecture"], "0T1R (Passive)"),
-		selectedRow:              clampInt(selectedRow, 0, rows-1),
-		selectedCol:              clampInt(selectedCol, 0, cols-1),
-		writeTarget:              target,
-		coupling:                 valueOr(metrics["coupling"], "Tier-A"),
-		isppEngine:               valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
-		loggerVerbosity:          valueOr(metrics["logger_verbosity"], "off"),
-		loggerDetail:             valueOr(metrics["logger_detail"], "off: file/debug logging disabled"),
-		lastOperation:            lastOperation,
-		halfSelectState:          valueOr(metrics["half_select_state"], "inactive"),
-		halfSelectCells:          parseLeadingInt(metrics["half_select_cells"]),
-		disturbVoltage:           valueOr(metrics["disturb_voltage"], "0.00 V"),
-		stressBudget:             valueOr(metrics["stress_budget"], "inactive"),
-		stressPerPulse:           valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
-		pvtTempSweep:             valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
-		pvtProcessYield:          valueOr(metrics["pvt_process_yield"], "not evaluated"),
-		pvtCornerENOB:            valueOr(metrics["pvt_corner_enob"], "not evaluated"),
-		pvtNoiseCeiling:          valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
-		specPowerLatency:         valueOr(metrics["spec_power_latency"], "not evaluated"),
-		specThroughput:           valueOr(metrics["spec_throughput"], "not evaluated"),
-		specCompliance:           valueOr(metrics["spec_compliance"], "not evaluated"),
-		referenceSpecExport:      valueOr(metrics["reference_spec_export"], "not exported"),
-		referenceTimingExport:    valueOr(metrics["reference_timing_export"], "not exported"),
-		referenceTimingSVGExport: valueOr(metrics["reference_timing_svg_export"], "not exported"),
-		referenceTimingAnimation: valueOr(metrics["reference_timing_animation"], "not animated"),
-		timingActive:             valueOr(metrics["timing_active"], "not evaluated"),
-		timingActivePhases:       valueOr(metrics["timing_active_phases"], "not evaluated"),
-		timingWaveformSignals:    valueOr(metrics["timing_waveform_signals"], "not evaluated"),
-		timingWaveformMarkers:    valueOr(metrics["timing_waveform_markers"], "not evaluated"),
-		timingWaveformPhases:     valueOr(metrics["timing_waveform_phases"], "not evaluated"),
-		operationLogLatest:       operationLogLatest,
-		operationLogRecent:       valueOr(metrics["operation_log_recent"], "none"),
-		operationLogExport:       valueOr(metrics["operation_log_export"], "not exported"),
-		computeRun:               valueOr(metrics["compute_run"], "not evaluated"),
-		computeRunPeak:           valueOr(metrics["compute_run_peak"], "not evaluated"),
+		rows:                        rows,
+		cols:                        cols,
+		mode:                        mode,
+		architecture:                valueOr(metrics["architecture"], "0T1R (Passive)"),
+		selectedRow:                 clampInt(selectedRow, 0, rows-1),
+		selectedCol:                 clampInt(selectedCol, 0, cols-1),
+		writeTarget:                 target,
+		coupling:                    valueOr(metrics["coupling"], "Tier-A"),
+		isppEngine:                  valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
+		loggerVerbosity:             valueOr(metrics["logger_verbosity"], "off"),
+		loggerDetail:                valueOr(metrics["logger_detail"], "off: file/debug logging disabled"),
+		lastOperation:               lastOperation,
+		halfSelectState:             valueOr(metrics["half_select_state"], "inactive"),
+		halfSelectCells:             parseLeadingInt(metrics["half_select_cells"]),
+		disturbVoltage:              valueOr(metrics["disturb_voltage"], "0.00 V"),
+		stressBudget:                valueOr(metrics["stress_budget"], "inactive"),
+		stressPerPulse:              valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
+		pvtTempSweep:                valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
+		pvtProcessYield:             valueOr(metrics["pvt_process_yield"], "not evaluated"),
+		pvtCornerENOB:               valueOr(metrics["pvt_corner_enob"], "not evaluated"),
+		pvtNoiseCeiling:             valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
+		specPowerLatency:            valueOr(metrics["spec_power_latency"], "not evaluated"),
+		specThroughput:              valueOr(metrics["spec_throughput"], "not evaluated"),
+		specCompliance:              valueOr(metrics["spec_compliance"], "not evaluated"),
+		referenceSpecExport:         valueOr(metrics["reference_spec_export"], "not exported"),
+		referenceTimingExport:       valueOr(metrics["reference_timing_export"], "not exported"),
+		referenceTimingSVGExport:    valueOr(metrics["reference_timing_svg_export"], "not exported"),
+		referenceTimingAnimation:    valueOr(metrics["reference_timing_animation"], "not animated"),
+		referenceTimingPlayback:     valueOr(metrics["reference_timing_playback"], "not playing"),
+		referenceTimingPlaybackStep: valueOr(metrics["reference_timing_playback_step"], "0/0"),
+		timingActive:                valueOr(metrics["timing_active"], "not evaluated"),
+		timingActivePhases:          valueOr(metrics["timing_active_phases"], "not evaluated"),
+		timingWaveformSignals:       valueOr(metrics["timing_waveform_signals"], "not evaluated"),
+		timingWaveformMarkers:       valueOr(metrics["timing_waveform_markers"], "not evaluated"),
+		timingWaveformPhases:        valueOr(metrics["timing_waveform_phases"], "not evaluated"),
+		operationLogLatest:          operationLogLatest,
+		operationLogRecent:          valueOr(metrics["operation_log_recent"], "none"),
+		operationLogExport:          valueOr(metrics["operation_log_export"], "not exported"),
+		computeRun:                  valueOr(metrics["compute_run"], "not evaluated"),
+		computeRunPeak:              valueOr(metrics["compute_run_peak"], "not evaluated"),
 	}
 }
 
@@ -407,6 +411,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Wave: " + compactTimingWaveform(state.timingWaveformSignals),
 		"Mark: " + compactTimingWaveform(state.timingWaveformMarkers),
 		"Anim: " + state.referenceTimingAnimation,
+		"Play: " + state.referenceTimingPlaybackStep,
 		"TimeX: " + state.referenceTimingExport,
 		"SvgX: " + state.referenceTimingSVGExport,
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),

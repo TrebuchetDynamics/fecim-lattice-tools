@@ -86,6 +86,10 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"export_reference_timing",
 		"export_reference_timing_svg",
 		"animate_reference_timing",
+		"play_reference_timing",
+		"pause_reference_timing",
+		"step_reference_timing",
+		"reset_reference_timing",
 		"toggle_ispp",
 	} {
 		if !hasAction(s, id) {
@@ -955,6 +959,104 @@ func TestReferenceTimingAnimationFollowsReadAndWriteModes(t *testing.T) {
 	}
 	if got := m.state.TimingAnimationSteps[5]; got != "Write complete: Total 203ns" {
 		t.Fatalf("write final step = %q, want completion step", got)
+	}
+}
+
+func TestReferenceTimingPlaybackControlsAdvanceDeterministically(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionPlayReferenceTiming,
+		Payload: map[string]string{"interval_ms": "750"},
+	}); err != nil {
+		t.Fatalf("play reference timing: %v", err)
+	}
+
+	if m.state.TimingPlaybackState != "playing" {
+		t.Fatalf("playback state = %q, want playing", m.state.TimingPlaybackState)
+	}
+	if m.state.TimingPlaybackIntervalMS != 750 {
+		t.Fatalf("playback interval = %d, want 750", m.state.TimingPlaybackIntervalMS)
+	}
+	if m.state.TimingAnimationOperation != "COMPUTE" || m.state.TimingAnimationStepIndex != 1 || m.state.TimingAnimationStepTotal != 6 {
+		t.Fatalf("playback animation state = %s %d/%d, want COMPUTE 1/6", m.state.TimingAnimationOperation, m.state.TimingAnimationStepIndex, m.state.TimingAnimationStepTotal)
+	}
+	wantPlay := "playing COMPUTE timing playback step 1/6 every 750ms: Phase 1: INPUT_VALID asserted (0ns)..."
+	if m.state.TimingPlaybackStatus != wantPlay {
+		t.Fatalf("playback status = %q, want %q", m.state.TimingPlaybackStatus, wantPlay)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"reference_timing_playback":          wantPlay,
+		"reference_timing_playback_step":     "1/6",
+		"reference_timing_playback_interval": "750 ms",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionStepReferenceTiming}); err != nil {
+		t.Fatalf("step reference timing: %v", err)
+	}
+	if m.state.TimingAnimationStepIndex != 2 {
+		t.Fatalf("step index = %d, want 2", m.state.TimingAnimationStepIndex)
+	}
+	if got := m.state.TimingAnimationCurrentStep; got != "Phase 2: DAC_ALL converts inputs (0-10ns)..." {
+		t.Fatalf("current step = %q, want compute step 2", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionPauseReferenceTiming}); err != nil {
+		t.Fatalf("pause reference timing: %v", err)
+	}
+	wantPause := "paused COMPUTE timing playback at step 2/6: Phase 2: DAC_ALL converts inputs (0-10ns)..."
+	if m.state.TimingPlaybackState != "paused" || m.state.TimingPlaybackStatus != wantPause {
+		t.Fatalf("pause state/status = %q / %q, want paused / %q", m.state.TimingPlaybackState, m.state.TimingPlaybackStatus, wantPause)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionResetReferenceTiming}); err != nil {
+		t.Fatalf("reset reference timing: %v", err)
+	}
+	wantReset := "reset COMPUTE timing playback to step 1/6: Phase 1: INPUT_VALID asserted (0ns)..."
+	if m.state.TimingPlaybackState != "stopped" || m.state.TimingAnimationStepIndex != 1 || m.state.TimingPlaybackStatus != wantReset {
+		t.Fatalf("reset state/index/status = %q / %d / %q, want stopped / 1 / %q", m.state.TimingPlaybackState, m.state.TimingAnimationStepIndex, m.state.TimingPlaybackStatus, wantReset)
+	}
+}
+
+func TestReferenceTimingPlaybackStepCompletesAtFinalStep(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "WRITE"},
+	}); err != nil {
+		t.Fatalf("set write timing operation: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionPlayReferenceTiming}); err != nil {
+		t.Fatalf("play write timing: %v", err)
+	}
+	if m.state.TimingPlaybackIntervalMS != 600 {
+		t.Fatalf("default playback interval = %d, want 600", m.state.TimingPlaybackIntervalMS)
+	}
+
+	for range 5 {
+		if err := m.ApplyAction(viewmodel.Action{ID: ActionStepReferenceTiming}); err != nil {
+			t.Fatalf("step write timing: %v", err)
+		}
+	}
+
+	if m.state.TimingAnimationStepIndex != 6 || m.state.TimingPlaybackState != "completed" {
+		t.Fatalf("final playback state = step %d / %q, want step 6 / completed", m.state.TimingAnimationStepIndex, m.state.TimingPlaybackState)
+	}
+	want := "completed WRITE timing playback at step 6/6: Write complete: Total 203ns"
+	if m.state.TimingPlaybackStatus != want {
+		t.Fatalf("completion status = %q, want %q", m.state.TimingPlaybackStatus, want)
 	}
 }
 

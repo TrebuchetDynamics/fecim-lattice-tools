@@ -61,6 +61,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "reference_timing_animation", Label: "Reference Timing Animation", Value: referenceTimingAnimationStatusValue(state)},
 		{ID: "reference_timing_animation_step", Label: "Reference Timing Animation Step", Value: referenceTimingAnimationStepValue(state)},
 		{ID: "reference_timing_animation_steps", Label: "Reference Timing Animation Steps", Value: referenceTimingAnimationStepsValue(state)},
+		{ID: "reference_timing_playback", Label: "Reference Timing Playback", Value: referenceTimingPlaybackStatusValue(state)},
+		{ID: "reference_timing_playback_step", Label: "Reference Timing Playback Step", Value: referenceTimingPlaybackStepValue(state)},
+		{ID: "reference_timing_playback_interval", Label: "Reference Timing Playback Interval", Value: referenceTimingPlaybackIntervalValue(state)},
 		{ID: "operation_log_count", Label: "Operation Log", Value: operationLogCountValue(state)},
 		{ID: "operation_log_latest", Label: "Latest Log Entry", Value: operationLogLatestValue(state.OperationLog)},
 		{ID: "operation_log_recent", Label: "Recent Log Entries", Value: operationLogRecentValue(state.OperationLog)},
@@ -137,9 +140,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "reference_timing", Title: "Reference Timing Summary",
-		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Active waveform SVG export: %s. Summary-level port of the legacy timing diagrams; no timed playback loop is claimed.",
+		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Active waveform SVG export: %s. Playback: %s. Summary-level port of the legacy timing diagrams with deterministic playback state.",
 			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state),
-			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state), referenceTimingSVGExportStatusValue(state)),
+			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state), referenceTimingSVGExportStatusValue(state), referenceTimingPlaybackStatusValue(state)),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -183,6 +186,10 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionExportReferenceTiming, Label: "Export Reference Timing", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceTimingSVG, Label: "Export Reference Timing SVG", Kind: viewmodel.ActionCommand},
 		{ID: ActionAnimateReferenceTiming, Label: "Animate Reference Timing", Kind: viewmodel.ActionCommand},
+		{ID: ActionPlayReferenceTiming, Label: "Play Reference Timing", Kind: viewmodel.ActionCommand, Payload: map[string]string{"interval_ms": fmt.Sprintf("%d", timingPlaybackIntervalValue(state))}},
+		{ID: ActionPauseReferenceTiming, Label: "Pause Reference Timing", Kind: viewmodel.ActionCommand},
+		{ID: ActionStepReferenceTiming, Label: "Step Reference Timing", Kind: viewmodel.ActionCommand},
+		{ID: ActionResetReferenceTiming, Label: "Reset Reference Timing", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
 		{ID: ActionSetOperationMode, Label: "Operation Mode", Kind: viewmodel.ActionSelect, Payload: map[string]string{"mode": state.OperationMode}},
@@ -487,6 +494,31 @@ func referenceTimingAnimationStepsValue(state CircuitsState) string {
 		return "0 steps"
 	}
 	return fmt.Sprintf("%d steps", state.TimingAnimationStepTotal)
+}
+
+func referenceTimingPlaybackStatusValue(state CircuitsState) string {
+	if state.TimingPlaybackStatus == "" {
+		return "not playing"
+	}
+	return state.TimingPlaybackStatus
+}
+
+func referenceTimingPlaybackStepValue(state CircuitsState) string {
+	if state.TimingAnimationStepTotal <= 0 || state.TimingAnimationStepIndex <= 0 {
+		return "0/0"
+	}
+	return fmt.Sprintf("%d/%d", state.TimingAnimationStepIndex, state.TimingAnimationStepTotal)
+}
+
+func referenceTimingPlaybackIntervalValue(state CircuitsState) string {
+	return fmt.Sprintf("%d ms", timingPlaybackIntervalValue(state))
+}
+
+func timingPlaybackIntervalValue(state CircuitsState) int {
+	if state.TimingPlaybackIntervalMS <= 0 {
+		return DefaultTimingPlaybackIntervalMS
+	}
+	return state.TimingPlaybackIntervalMS
 }
 
 func operationLogCountValue(state CircuitsState) string {

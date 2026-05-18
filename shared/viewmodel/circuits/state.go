@@ -39,6 +39,10 @@ const (
 	ActionExportReferenceTiming    = "export_reference_timing"
 	ActionExportReferenceTimingSVG = "export_reference_timing_svg"
 	ActionAnimateReferenceTiming   = "animate_reference_timing"
+	ActionPlayReferenceTiming      = "play_reference_timing"
+	ActionPauseReferenceTiming     = "pause_reference_timing"
+	ActionStepReferenceTiming      = "step_reference_timing"
+	ActionResetReferenceTiming     = "reset_reference_timing"
 	ActionToggleISPP               = "toggle_ispp"
 	ActionResizeArray              = "resize_array"
 	ActionSetOperationMode         = "set_operation_mode"
@@ -59,6 +63,7 @@ const DefaultDisturbVoltage = 1.4
 const PassiveStressPerPulse = 0.0025
 const OneTOneRStressAttenuation = 20.0
 const OperationLogLimit = 12
+const DefaultTimingPlaybackIntervalMS = 600
 
 var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64, 128}
 
@@ -216,6 +221,9 @@ type CircuitsState struct {
 	TimingAnimationStepTotal       int                       `json:"timing_animation_step_total"`
 	TimingAnimationCurrentStep     string                    `json:"timing_animation_current_step"`
 	TimingAnimationSteps           []string                  `json:"timing_animation_steps"`
+	TimingPlaybackState            string                    `json:"timing_playback_state"`
+	TimingPlaybackStatus           string                    `json:"timing_playback_status"`
+	TimingPlaybackIntervalMS       int                       `json:"timing_playback_interval_ms"`
 	HalfSelectState                string                    `json:"half_select_state"`
 	HalfSelectCells                int                       `json:"half_select_cells"`
 	DisturbVoltage                 float64                   `json:"disturb_voltage"`

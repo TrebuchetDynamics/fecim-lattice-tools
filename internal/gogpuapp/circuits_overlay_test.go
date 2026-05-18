@@ -268,6 +268,33 @@ func TestCircuitsOverlayStateIncludesReferenceTimingAnimationStatus(t *testing.T
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingPlaybackStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetTimingOperation,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionPlayReferenceTiming,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"interval_ms": "750"},
+	}); err != nil {
+		t.Fatalf("play reference timing: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	want := "playing COMPUTE timing playback step 1/6 every 750ms: Phase 1: INPUT_VALID asserted (0ns)..."
+	if state.referenceTimingPlayback != want {
+		t.Fatalf("referenceTimingPlayback = %q, want %q", state.referenceTimingPlayback, want)
+	}
+	if state.referenceTimingPlaybackStep != "1/6" {
+		t.Fatalf("referenceTimingPlaybackStep = %q, want 1/6", state.referenceTimingPlaybackStep)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
