@@ -50,15 +50,32 @@ func Run(options Options) error {
 		uiapp.WithEventSource(gpuApp.EventSource()),
 		uiapp.WithTheme(appTheme),
 	)
+	var rebuildRoot func()
 	var selectModule func(viewmodel.ModuleID)
+	var dispatchAction func(viewmodel.Action)
+	rebuildRoot = func() {
+		app.SetRoot(buildRootWithSelectAndActions(model, materialTheme, selectModule, dispatchAction))
+	}
 	selectModule = func(id viewmodel.ModuleID) {
 		if !model.SelectModule(id) {
 			return
 		}
 		activePort = model.ActivePort()
-		app.SetRoot(buildRootWithSelect(model, materialTheme, selectModule))
+		rebuildRoot()
 	}
-	app.SetRoot(buildRootWithSelect(model, materialTheme, selectModule))
+	dispatchAction = func(action viewmodel.Action) {
+		port := model.ActivePort()
+		if port == nil {
+			return
+		}
+		if err := port.ApplyAction(action); err != nil {
+			log.Printf("module action %s: %v", action.ID, err)
+			return
+		}
+		activePort = model.ActivePort()
+		rebuildRoot()
+	}
+	rebuildRoot()
 
 	var canvas *ggcanvas.Canvas
 	gpuApp.OnDraw(func(dc *gogpu.Context) {
@@ -214,6 +231,10 @@ func buildRoot(model AppModel, theme *material3.Theme) widget.Widget {
 }
 
 func buildRootWithSelect(model AppModel, theme *material3.Theme, onSelect func(viewmodel.ModuleID)) widget.Widget {
+	return buildRootWithSelectAndActions(model, theme, onSelect, nil)
+}
+
+func buildRootWithSelectAndActions(model AppModel, theme *material3.Theme, onSelect func(viewmodel.ModuleID), onAction func(viewmodel.Action)) widget.Widget {
 	descriptors := make([]viewmodel.ModuleDescriptor, len(model.Ports))
 	for i, p := range model.Ports {
 		descriptors[i] = p.Descriptor()
@@ -238,7 +259,7 @@ func buildRootWithSelect(model AppModel, theme *material3.Theme, onSelect func(v
 		case viewmodel.ModuleCrossbar:
 			children = append(children, buildCrossbarView(snapshot, theme))
 		case viewmodel.ModuleCircuits:
-			children = append(children, buildCircuitsView(snapshot, theme))
+			children = append(children, buildCircuitsViewWithActions(snapshot, theme, onAction))
 		case viewmodel.ModuleEDA:
 			children = append(children, buildEDAView(snapshot, theme))
 		case viewmodel.ModuleMNIST:

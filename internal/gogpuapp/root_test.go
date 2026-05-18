@@ -93,6 +93,35 @@ func TestHeadlessRootClickingSidebarSwitchesRenderedModule(t *testing.T) {
 	}
 }
 
+func TestHeadlessRootClickingCircuitsControlAppliesAction(t *testing.T) {
+	model := NewAppModel(viewmodel.ModuleCircuits)
+	theme := material3.New(widget.Hex(0x2F5D50))
+	app := uiapp.New()
+	var rebuildRoot func()
+	rebuildRoot = func() {
+		app.SetRoot(buildRootWithSelectAndActions(model, theme, nil, func(action viewmodel.Action) {
+			if err := model.ActivePort().ApplyAction(action); err != nil {
+				t.Fatalf("ApplyAction(%s): %v", action.ID, err)
+			}
+			rebuildRoot()
+		}))
+		app.Frame()
+	}
+	rebuildRoot()
+
+	buttons := collectSidebarButtons(app.Window().Root())
+	controlOffset := len(viewmodel.KnownDescriptors())
+	if len(buttons) <= controlOffset+2 {
+		t.Fatalf("root button count = %d, want sidebar buttons plus circuits controls", len(buttons))
+	}
+
+	clickButton(buttons[controlOffset+2])
+
+	if got := snapshotMetricValue(model.ActivePort().Snapshot(), "mode"); got != "COMPUTE" {
+		t.Fatalf("mode metric after clicking compute = %q, want COMPUTE", got)
+	}
+}
+
 type headlessModuleSwitchHarness struct {
 	t      *testing.T
 	app    *uiapp.App
@@ -136,8 +165,8 @@ func (h *headlessModuleSwitchHarness) clickSidebarModule(id viewmodel.ModuleID) 
 
 	buttons := collectSidebarButtons(h.app.Window().Root())
 	descriptors := viewmodel.KnownDescriptors()
-	if len(buttons) != len(descriptors) {
-		h.t.Fatalf("sidebar button count = %d, want %d", len(buttons), len(descriptors))
+	if len(buttons) < len(descriptors) {
+		h.t.Fatalf("button count = %d, want at least %d sidebar buttons", len(buttons), len(descriptors))
 	}
 
 	buttonIndex := -1
@@ -232,6 +261,15 @@ func imageSignature(img image.Image) uint64 {
 		}
 	}
 	return hash.Sum64()
+}
+
+func snapshotMetricValue(snapshot viewmodel.ModuleSnapshot, id string) string {
+	for _, metric := range snapshot.Metrics {
+		if metric.ID == id {
+			return metric.Value
+		}
+	}
+	return ""
 }
 
 func TestDrawAppFrameUsesOnlyActiveModuleOverlay(t *testing.T) {
