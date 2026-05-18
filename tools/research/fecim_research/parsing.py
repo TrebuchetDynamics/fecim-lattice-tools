@@ -80,9 +80,10 @@ def run_grobid_if_available(pdf: Path, out_tei: Path) -> ParseResult:
     try:
         boundary = "----fecimresearchboundary"
         data = pdf.read_bytes()
+        filename = _safe_multipart_filename(pdf.name)
         body = (
             f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="input"; filename="{pdf.name}"\r\n'
+            f'Content-Disposition: form-data; name="input"; filename="{filename}"\r\n'
             "Content-Type: application/pdf\r\n\r\n"
         ).encode("utf-8") + data + f"\r\n--{boundary}--\r\n".encode("utf-8")
         request = urllib.request.Request(
@@ -98,3 +99,7 @@ def run_grobid_if_available(pdf: Path, out_tei: Path) -> ParseResult:
     out_tei.parent.mkdir(parents=True, exist_ok=True)
     out_tei.write_text(text, encoding="utf-8")
     return ParseResult("", "grobid", "ok", str(out_tei), "grobid completed")
+
+
+def _safe_multipart_filename(name: str) -> str:
+    return name.replace('"', "_").replace("\r", "_").replace("\n", "_")

@@ -19,8 +19,13 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
     pdfs = discover_pdfs(root, extra_paths)
     processed = 0
     unmatched: list[dict[str, object]] = []
+    duplicates: list[dict[str, object]] = []
 
     for pdf in pdfs:
+        if pdf.duplicate_of is not None:
+            duplicates.append(_duplicate_record(root, pdf))
+            continue
+
         match = match_pdf_to_record(pdf, records)
         if match.paper_key is None:
             unmatched.append(_unmatched_record(root, pdf))
@@ -31,6 +36,7 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
 
         parsed_dir = root / "research" / "parsed" / paper_key
         marker_md = parsed_dir / "marker.md"
+        existing_marker = marker_md.exists()
         parse_results: list[ParseResult] = [
             run_grobid_if_available(pdf.path, parsed_dir / "grobid.tei.xml")
         ]
@@ -39,16 +45,33 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
         if marker_result.status != "ok":
             marker_result = run_marker_if_configured(pdf.path, marker_md)
         parse_results.append(marker_result)
-        write_parse_manifest(parsed_dir / "manifest.json", parse_results)
 
-        if marker_md.exists():
+        chunkable = marker_result.status == "ok"
+        if not chunkable and existing_marker:
+            reuse_result = ParseResult(
+                paper_key=paper_key,
+                parser="existing_markdown",
+                status="ok",
+                output_path=str(marker_md),
+                message="reused existing parsed markdown",
+            )
+            parse_results.append(reuse_result)
+            chunkable = True
+
+        write_parse_manifest(
+            parsed_dir / "manifest.json",
+            [_normalize_parse_result(root, result) for result in parse_results],
+        )
+
+        if chunkable and marker_md.exists():
             markdown = marker_md.read_text(encoding="utf-8", errors="replace")
             chunks = chunk_markdown(paper_key, markdown)
             write_chunks_jsonl(root / "research" / "chunks" / f"{paper_key}.jsonl", chunks)
             processed += 1
 
     _write_unmatched_report(root, unmatched)
-    _write_manifest(root, processed, len(unmatched))
+    _write_duplicate_report(root, duplicates)
+    _write_manifest(root, processed, len(unmatched), len(duplicates))
     print(f"ingest complete: processed={processed} unmatched={len(unmatched)}")
     return 0
 
@@ -88,10 +111,17 @@ def _write_unmatched_report(root: Path, unmatched: list[dict[str, object]]) -> N
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _write_manifest(root: Path, processed: int, unmatched: int) -> None:
+def _write_duplicate_report(root: Path, duplicates: list[dict[str, object]]) -> None:
+    path = root / "research" / "reports" / "duplicate-pdfs.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = {"duplicates": sorted(duplicates, key=lambda item: str(item["path"]))}
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_manifest(root: Path, processed: int, unmatched: int, duplicates: int) -> None:
     path = root / "research" / "manifests" / "ingest-latest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = {"processed": processed, "unmatched": unmatched}
+    data = {"duplicates": duplicates, "processed": processed, "unmatched": unmatched}
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -102,6 +132,36 @@ def _unmatched_record(root: Path, pdf: DiscoveredPDF) -> dict[str, object]:
         "size": pdf.size,
         "status": "unmatched",
     }
+
+
+def _duplicate_record(root: Path, pdf: DiscoveredPDF) -> dict[str, object]:
+    return {
+        "duplicate_of": _display_path(root, pdf.duplicate_of) if pdf.duplicate_of is not None else "",
+        "path": _display_path(root, pdf.path),
+        "sha256": pdf.sha256,
+        "size": pdf.size,
+        "status": "duplicate",
+    }
+
+
+def _normalize_parse_result(root: Path, result: ParseResult) -> ParseResult:
+    output_path = _display_path(root, Path(result.output_path))
+    return ParseResult(
+        paper_key=result.paper_key,
+        parser=result.parser,
+        status=result.status,
+        output_path=output_path,
+        message=_normalize_parse_message(root, result),
+    )
+
+
+def _normalize_parse_message(root: Path, result: ParseResult) -> str:
+    if result.parser == "sidecar_markdown" and result.status == "ok":
+        return f"copied {_display_path(root, Path(result.message.removeprefix('copied ')))}"
+    if result.parser == "sidecar_markdown" and result.status == "skipped":
+        return "sidecar markdown not found"
+    root_text = str(root)
+    return result.message.replace(root_text + "/", "").replace(root_text, ".")
 
 
 def _display_path(root: Path, path: Path) -> str:
