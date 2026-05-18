@@ -9,6 +9,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", type=Path, default=None)
     sub = parser.add_subparsers(dest="command", required=True)
 
+    acquire = sub.add_parser("acquire", help="plan or download legal OpenAlex OA PDFs for missing papers")
+    acquire.add_argument("keys", nargs="*", help="optional citation keys to acquire")
+    acquire.add_argument("--download", action="store_true", help="download OA PDFs into ignored research/papers")
+
     ingest = sub.add_parser("ingest", help="discover, parse, and chunk local papers")
     ingest.add_argument("paths", nargs="*", help="optional extra PDF roots")
 
@@ -29,6 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = args.repo_root.resolve() if args.repo_root else repo_root()
 
+    if args.command == "acquire":
+        from .acquisition import run_acquire
+
+        return run_acquire(root=root, keys=args.keys, download=args.download)
     if args.command == "ingest":
         from .ingest import run_ingest
 

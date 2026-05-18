@@ -12,6 +12,19 @@ Local-only input:
 - `papers/` stores source PDFs before parsing. PDF files are ignored so the
   repository does not accidentally commit paper artifacts.
 
+Paper acquisition:
+
+- `fecim-lattice-tools research acquire` checks citation records that do not
+  have a matching local PDF and records any legal OpenAlex open-access PDF
+  location it finds.
+- `fecim-lattice-tools research acquire --download` also downloads those
+  open-access PDFs into `papers/`.
+- PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
+  SHA-256 digest, and latest acquisition report are written under tracked
+  ledger paths so changes can be reviewed in git.
+- Set `FECIM_OPENALEX_API_KEY` for current OpenAlex API access. Optional
+  `FECIM_OPENALEX_MAILTO` is forwarded when present.
+
 Tracked ledger outputs:
 
 - `sources/`
