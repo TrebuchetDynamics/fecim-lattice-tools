@@ -54,6 +54,9 @@ Paper acquisition:
   `reports/missing-papers-latest.json`, a local no-network inventory of
   citation records that still lack a matched PDF, including acquisition
   commands for records with DOI metadata.
+- Missing-paper reports also write a content-addressed history copy under
+  `reports/missing-papers/RUN_ID.json`, so changes to the acquisition backlog
+  can be reviewed over time in git.
 - `fecim-lattice-tools research rebuild` refreshes this missing-paper report
   after ingestion so the paper acquisition queue stays reviewable in git.
 - `fecim-lattice-tools research acquire` checks citation records that do not
@@ -95,7 +98,7 @@ Tracked ledger outputs:
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
   claim-audit, claim-scan, cite, graph, missing-paper, and search JSON reports
-  plus content-addressed acquisition history reports
+  plus content-addressed acquisition and missing-paper history reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 

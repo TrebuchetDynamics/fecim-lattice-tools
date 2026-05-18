@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -43,6 +44,28 @@ class MissingPapersTest(unittest.TestCase):
             payload = json.loads(report_path.read_text())
             self.assertEqual(payload["missing"], 1)
             self.assertEqual(payload["items"][0]["paper_key"], "missing_with_doi")
+
+    def test_run_missing_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "missing_with_doi", doi="10.1000/missing")
+
+            code = run_missing(root)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "missing-papers-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/reports/missing-papers/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
     def test_explicit_existing_pdf_path_counts_as_stored_even_when_filename_differs(self):
         with tempfile.TemporaryDirectory() as td:

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-import json
 import re
 
 from .citations import CitationRecord, load_citation_records
 from .discovery import discover_pdfs, match_pdf_to_record
+from .reporting import write_content_addressed_report
 
 
 STATUS_RE = re.compile(r"^status:\s*(?P<status>.+)$", re.MULTILINE)
@@ -13,9 +13,12 @@ STATUS_RE = re.compile(r"^status:\s*(?P<status>.+)$", re.MULTILINE)
 
 def run_missing(root: Path) -> int:
     report = build_missing_report(root)
-    path = root / "research" / "reports" / "missing-papers-latest.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report = write_content_addressed_report(
+        root,
+        "research/reports/missing-papers-latest.json",
+        "research/reports/missing-papers",
+        report,
+    )
 
     print(
         "research missing complete: "
