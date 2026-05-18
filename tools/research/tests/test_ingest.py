@@ -198,6 +198,29 @@ class IngestTest(unittest.TestCase):
             )
             self.assertTrue((root / "research" / "chunks" / "park2015_advmat_hzo.jsonl").exists())
 
+    def test_missing_marker_command_is_recorded_as_parse_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
+
+            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf.parent.mkdir(parents=True)
+            pdf.write_bytes(b"%PDF fixture")
+
+            with mock.patch.dict(os.environ, {"FECIM_MARKER_CMD": "definitely-not-installed-marker"}, clear=False):
+                code = run_ingest(root=root, extra_paths=[])
+            self.assertEqual(code, 0)
+
+            manifest = json.loads(
+                (root / "research" / "parsed" / "park2015_advmat_hzo" / "manifest.json").read_text(encoding="utf-8")
+            )
+            marker_results = [result for result in manifest["results"] if result["parser"] == "marker"]
+            self.assertEqual(len(marker_results), 1)
+            self.assertEqual(marker_results[0]["status"], "failed")
+            self.assertIn("FECIM_MARKER_CMD executable not found", marker_results[0]["message"])
+
     def test_grobid_multipart_filename_is_sanitized(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -37,7 +37,16 @@ def run_marker_if_configured(pdf: Path, out_md: Path) -> ParseResult:
 
     out_md.parent.mkdir(parents=True, exist_ok=True)
     command = shlex.split(marker_cmd) + [str(pdf), str(out_md)]
-    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    try:
+        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        return ParseResult(
+            paper_key=paper_key,
+            parser="marker",
+            status="failed",
+            output_path=str(out_md),
+            message=f"FECIM_MARKER_CMD executable not found or not runnable: {exc}",
+        )
     status = "ok" if completed.returncode == 0 else "failed"
     return ParseResult(
         paper_key=paper_key,
