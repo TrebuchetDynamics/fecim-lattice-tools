@@ -9,6 +9,9 @@ import re
 
 CLAIM_REF_RE = re.compile(r"\[claim:\s*([a-z0-9][a-z0-9-]*)\]")
 PAPER_PDF_RE = re.compile(r"^\*\*PDF:\*\*\s*`([^`]+)`", re.MULTILINE)
+PDF_REVIEW_BACKLOG_PATH = Path("research/manifests/pdf-review-backlog.json")
+PDF_REVIEW_BACKLOG_SCHEMA = "fecim.pdf-review-backlog.v1"
+PDF_REVIEW_BACKLOG_STATUS = "legacy-needs-license-review"
 ALLOWED_STATUS = {
     "literature-backed",
     "validation-backed",
@@ -56,6 +59,7 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
     warnings: list[str] = []
     claims = load_claim_records(root, errors)
     source_keys = _source_keys(root)
+    pdf_review_backlog = _load_pdf_review_backlog(root, errors)
 
     for claim_id, record in sorted(claims.items()):
         if record.id != claim_id:
@@ -92,9 +96,10 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
             if rel_path == "citations/facts.md" and record.status == "disputed":
                 errors.append(f"disputed claim {claim_id} is referenced from citations/facts.md")
 
-    _audit_citation_pdf_paths(root, errors)
+    _audit_citation_pdf_paths(root, errors, pdf_review_backlog)
     _audit_source_ledgers(root, errors)
     _audit_promotion_ledgers(root, errors)
+    _audit_pdf_review_backlog(root, pdf_review_backlog, errors)
     _audit_evidence_ledgers(root, claims, errors)
 
     return ClaimAuditReport(
@@ -185,7 +190,11 @@ def _claim_refs(path: Path) -> list[str]:
     return CLAIM_REF_RE.findall(path.read_text(encoding="utf-8", errors="replace"))
 
 
-def _audit_citation_pdf_paths(root: Path, errors: list[str]) -> None:
+def _audit_citation_pdf_paths(
+    root: Path,
+    errors: list[str],
+    pdf_review_backlog: dict[str, dict[str, object]],
+) -> None:
     papers_dir = root / "citations" / "papers"
     if not papers_dir.exists():
         return
@@ -205,6 +214,14 @@ def _audit_citation_pdf_paths(root: Path, errors: list[str]) -> None:
             continue
         if not (root / pdf_path).is_file():
             errors.append(f"{rel_path} PDF path {pdf_path} does not exist")
+            continue
+        if not _has_promotion_ledger(root, path.stem):
+            backlog_entry = pdf_review_backlog.get(path.stem)
+            if not backlog_entry or str(backlog_entry.get("pdf_path", "")).strip() != pdf_path:
+                errors.append(
+                    f"{rel_path} PDF path {pdf_path} "
+                    "has no promotion ledger or legacy review backlog entry"
+                )
 
 
 def _citation_pdf_path(path: Path) -> str:
@@ -315,6 +332,85 @@ def _audit_promotion_ledgers(root: Path, errors: list[str]) -> None:
             actual_sha = _sha256_file(destination_file)
             if expected_sha != actual_sha:
                 errors.append(f"{rel_path} promotion sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _load_pdf_review_backlog(root: Path, errors: list[str]) -> dict[str, dict[str, object]]:
+    path = root / PDF_REVIEW_BACKLOG_PATH
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"{PDF_REVIEW_BACKLOG_PATH} invalid JSON: {exc}")
+        return {}
+    if not isinstance(data, dict):
+        errors.append(f"{PDF_REVIEW_BACKLOG_PATH} must contain a JSON object")
+        return {}
+    if data.get("schema") != PDF_REVIEW_BACKLOG_SCHEMA:
+        errors.append(f"{PDF_REVIEW_BACKLOG_PATH} schema must be {PDF_REVIEW_BACKLOG_SCHEMA}")
+    entries = data.get("entries", [])
+    if not isinstance(entries, list):
+        errors.append(f"{PDF_REVIEW_BACKLOG_PATH} entries must be a list")
+        return {}
+
+    backlog: dict[str, dict[str, object]] = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            errors.append(f"{PDF_REVIEW_BACKLOG_PATH} entry {index} must be a JSON object")
+            continue
+        paper_key = str(entry.get("paper_key", "")).strip()
+        if not paper_key:
+            errors.append(f"{PDF_REVIEW_BACKLOG_PATH} entry {index} missing paper_key")
+            continue
+        if paper_key in backlog:
+            errors.append(f"{PDF_REVIEW_BACKLOG_PATH} duplicate entry {paper_key}")
+            continue
+        backlog[paper_key] = entry
+    return backlog
+
+
+def _audit_pdf_review_backlog(
+    root: Path,
+    pdf_review_backlog: dict[str, dict[str, object]],
+    errors: list[str],
+) -> None:
+    for paper_key, entry in sorted(pdf_review_backlog.items()):
+        owner = f"{PDF_REVIEW_BACKLOG_PATH} entry {paper_key}"
+        if str(entry.get("status", "")).strip() != PDF_REVIEW_BACKLOG_STATUS:
+            errors.append(f"{owner} status must be {PDF_REVIEW_BACKLOG_STATUS}")
+        for field in ["citation_path", "pdf_path", "sha256", "note"]:
+            if not str(entry.get(field, "")).strip():
+                errors.append(f"{owner} missing {field}")
+
+        citation_path = str(entry.get("citation_path", "")).strip()
+        citation_file = _audit_source_file_reference(root, owner, "citation_path", citation_path, errors)
+        if citation_file is not None and citation_file.stem != paper_key:
+            errors.append(f"{owner} citation_path must point at citations/papers/{paper_key}.md")
+
+        pdf_path = str(entry.get("pdf_path", "")).strip()
+        if _is_ignored_pdf_inbox_path(pdf_path):
+            errors.append(f"{owner} pdf_path {pdf_path} points at ignored local inbox")
+            pdf_file = None
+        else:
+            pdf_file = _audit_source_file_reference(root, owner, "pdf_path", pdf_path, errors)
+
+        if citation_file is not None and pdf_path:
+            citation_pdf = _citation_pdf_path(citation_file)
+            if citation_pdf != pdf_path:
+                errors.append(
+                    f"{owner} citation PDF path {citation_pdf or 'not stored'} "
+                    f"does not match pdf_path {pdf_path}"
+                )
+
+        expected_sha = str(entry.get("sha256", "")).strip()
+        if expected_sha and pdf_file is not None:
+            actual_sha = _sha256_file(pdf_file)
+            if expected_sha != actual_sha:
+                errors.append(f"{owner} sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _has_promotion_ledger(root: Path, paper_key: str) -> bool:
+    return (root / "research" / "sources" / f"{paper_key}.promotion.yaml").is_file()
 
 
 def _audit_source_file_reference(

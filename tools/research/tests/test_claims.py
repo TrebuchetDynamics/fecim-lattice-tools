@@ -168,6 +168,56 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_tracked_citation_pdf_lacks_promotion_or_backlog(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nlegacy candidate\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path docs/4-research/papers/park2015_advmat_hzo.pdf has no promotion ledger or legacy review backlog entry",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_passes_for_legacy_pdf_review_backlog_entry(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nlegacy candidate\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_for_stale_legacy_pdf_review_backlog_entry(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nlegacy candidate\n")
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, "stale-digest")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/manifests/pdf-review-backlog.json entry park2015_advmat_hzo sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
     def test_audit_passes_for_source_ledger_with_existing_pdf_digest(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -176,12 +226,14 @@ class ClaimsTest(unittest.TestCase):
             pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(pdf_bytes)
-            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
             self._write_source_ledger(
                 root,
                 "park2015_advmat_hzo",
                 citation_path="citations/papers/park2015_advmat_hzo.md",
-                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
+                pdf_path=rel_pdf,
                 sha256=digest,
             )
 
@@ -525,6 +577,31 @@ class ClaimsTest(unittest.TestCase):
                     "backend": "local-jsonl",
                     "candidate_count": candidate_count,
                     "candidates": candidates,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_pdf_review_backlog(self, root: Path, paper_key: str, pdf_path: str, sha256: str):
+        path = root / "research" / "manifests" / "pdf-review-backlog.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "fecim.pdf-review-backlog.v1",
+                    "entries": [
+                        {
+                            "paper_key": paper_key,
+                            "citation_path": f"citations/papers/{paper_key}.md",
+                            "pdf_path": pdf_path,
+                            "sha256": sha256,
+                            "status": "legacy-needs-license-review",
+                            "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
+                        }
+                    ],
                 },
                 indent=2,
                 sort_keys=True,

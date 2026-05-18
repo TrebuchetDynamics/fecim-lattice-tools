@@ -106,6 +106,10 @@ Claim audit:
 - PDF promotion ledgers in `sources/*.promotion.yaml` are review evidence:
   audit checks their license metadata, citation path, destination PDF path, and
   SHA-256 digest.
+- Canonical citation `**PDF:**` paths must have either a promotion ledger or a
+  tracked `manifests/pdf-review-backlog.json` entry. The backlog exists only
+  for legacy tracked PDFs that still need explicit license review; new tracked
+  PDFs should use `promote-pdf` instead of expanding the backlog.
 - `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
   packet to `reports/cite-latest.json`, resolving sources from
   `citations/papers` first and tracked OpenAlex ledgers second.
