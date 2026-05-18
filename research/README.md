@@ -77,6 +77,10 @@ Paper acquisition:
 - PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.
+- Acquisition writes `reports/acquisition-latest.json` plus a content-addressed
+  copy under `reports/acquisitions/RUN_ID.json`. The run ID is derived from the
+  report payload, so identical acquisition outcomes do not create timestamp
+  churn.
 - Set `FECIM_OPENALEX_API_KEY` for current OpenAlex API access. Optional
   `FECIM_OPENALEX_MAILTO` is forwarded when present.
 
@@ -91,6 +95,7 @@ Tracked ledger outputs:
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
   claim-audit, claim-scan, cite, graph, missing-paper, and search JSON reports
+  plus content-addressed acquisition history reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 

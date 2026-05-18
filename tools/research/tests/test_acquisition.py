@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -100,6 +101,61 @@ class AcquisitionTest(unittest.TestCase):
             self.assertEqual(report["results"][0]["status"], "downloaded")
             self.assertEqual(report["results"][0]["paper_key"], "park2015_advmat_hzo")
             self.assertIn("api.openalex.org/works/https://doi.org/10.1002/adma.201404531", calls[0])
+
+    def test_acquire_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                "**DOI:** `10.1002/adma.201404531`\n"
+                "# Park 2015\n",
+                encoding="utf-8",
+            )
+
+            def opener(request, timeout):
+                url = request.full_url
+                if "api.openalex.org/works/" in url:
+                    return FakeResponse(
+                        json.dumps(
+                            {
+                                "id": "https://openalex.org/W123",
+                                "doi": "https://doi.org/10.1002/adma.201404531",
+                                "display_name": "Ferroelectric HZO",
+                                "open_access": {"is_oa": True, "oa_status": "gold"},
+                                "best_oa_location": {
+                                    "is_oa": True,
+                                    "pdf_url": "https://publisher.example/park.pdf",
+                                    "landing_page_url": "https://publisher.example/park",
+                                    "license": "cc-by",
+                                    "version": "publishedVersion",
+                                    "source": {"display_name": "Advanced Materials", "type": "journal"},
+                                },
+                            }
+                        ).encode("utf-8")
+                    )
+                if url == "https://publisher.example/park.pdf":
+                    return FakeResponse(b"%PDF-1.4\nfixture\n", {"content-type": "application/pdf"})
+                raise AssertionError(f"unexpected URL {url}")
+
+            code = run_acquire(root=root, keys=[], download=True, opener=opener)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "acquisition-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            history_path = root / latest["history_path"]
+            self.assertEqual(latest["history_path"], f"research/reports/acquisitions/{latest['run_id']}.json")
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
+            self.assertEqual(latest["results"][0]["paper_key"], "park2015_advmat_hzo")
 
     def test_acquire_downloads_new_doi_with_provisional_git_trackable_key(self):
         with tempfile.TemporaryDirectory() as td:

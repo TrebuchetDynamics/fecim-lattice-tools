@@ -320,15 +320,23 @@ def _write_provisional_citation_stub(
 
 
 def _write_report(root: Path, results: list[AcquisitionResult]) -> None:
-    path = root / "research" / "reports" / "acquisition-latest.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "checked": len(results),
         "planned": sum(1 for result in results if result.status in {"planned", "downloaded"}),
         "downloaded": sum(1 for result in results if result.status == "downloaded"),
         "results": [asdict(result) for result in sorted(results, key=lambda item: item.paper_key)],
     }
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    run_id = hashlib.sha256(canonical_payload).hexdigest()[:16]
+    history_path = f"research/reports/acquisitions/{run_id}.json"
+    payload = {**payload, "run_id": run_id, "history_path": history_path}
+    text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+
+    latest = root / "research" / "reports" / "acquisition-latest.json"
+    latest.parent.mkdir(parents=True, exist_ok=True)
+    (root / history_path).parent.mkdir(parents=True, exist_ok=True)
+    latest.write_text(text, encoding="utf-8")
+    (root / history_path).write_text(text, encoding="utf-8")
 
 
 def _refresh_missing_report(root: Path) -> None:
