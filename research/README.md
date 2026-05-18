@@ -35,6 +35,10 @@ Local-only input:
   `citations/papers/` for unmatched, non-duplicate PDFs.
 - Stubs generated from ignored inbox PDFs keep `**PDF:**` as `not stored` and
   record the local inbox path separately.
+- `fecim-lattice-tools research promote-pdf KEY --to docs/4-research/papers/.../KEY.pdf`
+  copies a reviewed inbox PDF into a tracked canonical PDF path, updates the
+  citation record's canonical `**PDF:**`, `**SHA256:**`, and `**Size:**`
+  fields, and writes `reports/pdf-promotion-latest.json`.
 - Registration refreshes `reports/missing-papers-latest.json` so new stubs and
   matched local PDFs are reflected in the acquisition queue immediately.
 
@@ -59,6 +63,9 @@ Paper acquisition:
   `citations/papers/doi_*.md` and records the ignored local PDF path in the
   acquisition notes. The canonical `**PDF:**` field remains `not stored` until
   the paper is moved into a tracked PDF collection.
+- Promotion is explicit: downloads remain in ignored `papers/` until review,
+  then `promote-pdf` copies them into `docs/4-research/papers/` or
+  `citations/pdfs/` and refreshes the missing-paper report.
 - PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.

@@ -208,6 +208,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools research cache")
 	fmt.Fprintln(w, "  fecim-lattice-tools research cache --clean")
 	fmt.Fprintln(w, "  fecim-lattice-tools research register-pdfs --write-stubs")
+	fmt.Fprintln(w, "  fecim-lattice-tools research promote-pdf park2015_advmat_hzo --to docs/4-research/papers/by-topic/01-ferroelectric-materials/park2015_advmat_hzo.pdf")
 	fmt.Fprintln(w, "  fecim-lattice-tools research audit")
 	fmt.Fprintln(w, "  fecim-lattice-tools research cite hzo-remanent-polarization-range")
 	fmt.Fprintln(w, "  fecim-lattice-tools research claim-scan docs/ README.md")

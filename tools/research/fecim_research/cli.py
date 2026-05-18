@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("missing", help="write a local report of citation records without matched PDFs")
 
+    promote = sub.add_parser("promote-pdf", help="promote a reviewed inbox PDF into a tracked canonical path")
+    promote.add_argument("key", help="citation key from citations/papers")
+    promote.add_argument("--to", required=True, help="tracked repo-relative PDF destination")
+    promote.add_argument("--source", default="", help="optional repo-relative source PDF; defaults to Local PDF")
+
     register = sub.add_parser("register-pdfs", help="report or create reviewed stubs for local PDFs")
     register.add_argument("paths", nargs="*", help="optional extra PDF roots")
     register.add_argument("--write-stubs", action="store_true", help="write needs-review citation stubs")
@@ -110,6 +115,10 @@ def main(argv: list[str] | None = None) -> int:
         from .missing import run_missing
 
         return run_missing(root=root)
+    if args.command == "promote-pdf":
+        from .promotion import run_promote_pdf
+
+        return run_promote_pdf(root=root, key=args.key, destination=args.to, source=args.source)
     if args.command == "register-pdfs":
         from .registration import run_register_pdfs
 
