@@ -66,12 +66,14 @@ func TestRunResearchToolFindsRepoRootWhenCalledOutsideRepo(t *testing.T) {
 	cwdPath := filepath.Join(t.TempDir(), "cwd.txt")
 	script := "#!/bin/sh\n" +
 		"test -f \"$1\" || exit 17\n" +
-		"pwd > \"$FECIM_FAKE_PYTHON_CWD\"\n"
+		"pwd > \"$FECIM_FAKE_PYTHON_CWD\"\n" +
+		"printf '%s\n' \"$@\" > \"$FECIM_FAKE_PYTHON_ARGS\"\n"
 	if err := os.WriteFile(fakePython, []byte(script), 0o755); err != nil {
 		t.Fatalf("write fake python: %v", err)
 	}
 	t.Setenv("FECIM_RESEARCH_PYTHON", fakePython)
 	t.Setenv("FECIM_FAKE_PYTHON_CWD", cwdPath)
+	t.Setenv("FECIM_FAKE_PYTHON_ARGS", filepath.Join(t.TempDir(), "args.txt"))
 
 	previousCwd, err := os.Getwd()
 	if err != nil {
@@ -96,5 +98,54 @@ func TestRunResearchToolFindsRepoRootWhenCalledOutsideRepo(t *testing.T) {
 	}
 	if strings.TrimSpace(string(cwd)) != root {
 		t.Fatalf("research tool cwd = %q, want %q", strings.TrimSpace(string(cwd)), root)
+	}
+}
+
+func TestRunResearchToolForwardsAbsoluteRepoRootWhenUserPassedRelativeRoot(t *testing.T) {
+	root, err := filepath.Abs(repoRoot())
+	if err != nil {
+		t.Fatalf("abs repo root: %v", err)
+	}
+	fakePython := filepath.Join(t.TempDir(), "fake-python")
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	script := "#!/bin/sh\n" +
+		"printf '%s\n' \"$@\" > \"$FECIM_FAKE_PYTHON_ARGS\"\n"
+	if err := os.WriteFile(fakePython, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake python: %v", err)
+	}
+	t.Setenv("FECIM_RESEARCH_PYTHON", fakePython)
+	t.Setenv("FECIM_FAKE_PYTHON_ARGS", argsPath)
+
+	previousCwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get cwd: %v", err)
+	}
+	outside := t.TempDir()
+	relativeRoot, err := filepath.Rel(outside, root)
+	if err != nil {
+		t.Fatalf("relative root: %v", err)
+	}
+	if err := os.Chdir(outside); err != nil {
+		t.Fatalf("chdir outside repo: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(previousCwd); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	}()
+
+	if err := runResearchTool([]string{"--repo-root", relativeRoot, "--help"}); err != nil {
+		t.Fatalf("run research tool outside repo: %v", err)
+	}
+	args, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatalf("read fake python args: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(args)), "\n")
+	if len(lines) < 3 {
+		t.Fatalf("forwarded args = %#v", lines)
+	}
+	if lines[1] != "--repo-root" || lines[2] != root {
+		t.Fatalf("forwarded repo root args = %#v, want --repo-root %q", lines, root)
 	}
 }

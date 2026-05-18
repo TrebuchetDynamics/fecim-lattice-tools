@@ -28,7 +28,7 @@ func runResearchTool(args []string) error {
 		return err
 	}
 	script := filepath.Join(root, "tools", "research", "research_cli.py")
-	cmdArgs := append([]string{script}, args...)
+	cmdArgs := append([]string{script}, normalizeResearchRepoRootArg(args, root)...)
 	cmd := exec.Command(python, cmdArgs...)
 	cmd.Dir = root
 	cmd.Stdout = os.Stdout
@@ -72,6 +72,24 @@ func repoRootFromResearchArgs(args []string) string {
 		}
 	}
 	return ""
+}
+
+func normalizeResearchRepoRootArg(args []string, root string) []string {
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--repo-root" && i+1 < len(args) {
+			out = append(out, arg, root)
+			i++
+			continue
+		}
+		if strings.HasPrefix(arg, "--repo-root=") {
+			out = append(out, "--repo-root="+root)
+			continue
+		}
+		out = append(out, arg)
+	}
+	return out
 }
 
 func validateResearchRepoRoot(root string) (string, error) {
