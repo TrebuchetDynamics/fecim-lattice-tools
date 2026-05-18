@@ -17,6 +17,7 @@ class DiscoveredPDF:
     path: Path
     sha256: str
     size: int
+    duplicate_of: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -48,10 +49,22 @@ def discover_pdfs(root: Path, extra_paths: list[Path]) -> list[DiscoveredPDF]:
         elif base.is_dir():
             paths.update(path for path in base.rglob("*") if path.suffix.lower() == ".pdf")
     out: list[DiscoveredPDF] = []
+    canonical_by_sha: dict[str, Path] = {}
     for path in sorted(paths):
         if not path.is_file():
             continue
-        out.append(DiscoveredPDF(path=path, sha256=sha256_file(path), size=path.stat().st_size))
+        digest = sha256_file(path)
+        duplicate_of = canonical_by_sha.get(digest)
+        if duplicate_of is None:
+            canonical_by_sha[digest] = path
+        out.append(
+            DiscoveredPDF(
+                path=path,
+                sha256=digest,
+                size=path.stat().st_size,
+                duplicate_of=duplicate_of,
+            )
+        )
     return out
 
 

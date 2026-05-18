@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fecim_research.citations import load_citation_records
 from fecim_research.discovery import discover_pdfs, match_pdf_to_record, sha256_file
+from fecim_research.yamlio import dumps_yaml
 
 
 class DiscoveryTest(unittest.TestCase):
@@ -61,6 +62,39 @@ class DiscoveryTest(unittest.TestCase):
 
             found = discover_pdfs(root, extra_paths=[])
             self.assertEqual([item.path for item in found], [pdf])
+
+    def test_discovers_relative_and_absolute_extra_path_directories(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            relative_pdf = root / "incoming" / "relative.pdf"
+            absolute_pdf = root / "outside" / "absolute.PDF"
+            relative_pdf.parent.mkdir(parents=True)
+            absolute_pdf.parent.mkdir(parents=True)
+            relative_pdf.write_bytes(b"%PDF relative")
+            absolute_pdf.write_bytes(b"%PDF absolute")
+
+            found = discover_pdfs(root, extra_paths=[Path("incoming"), absolute_pdf.parent])
+            self.assertEqual([item.path for item in found], [relative_pdf, absolute_pdf])
+
+    def test_marks_later_duplicate_pdf_hashes_with_canonical_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            first = root / "research" / "papers" / "a_first.pdf"
+            second = root / "research" / "papers" / "b_second.pdf"
+            first.parent.mkdir(parents=True)
+            first.write_bytes(b"%PDF duplicate")
+            second.write_bytes(b"%PDF duplicate")
+
+            found = discover_pdfs(root, extra_paths=[])
+            self.assertEqual([item.path for item in found], [first, second])
+            self.assertIsNone(found[0].duplicate_of)
+            self.assertEqual(found[1].duplicate_of, first)
+
+    def test_dumps_yaml_sorts_mapping_keys(self):
+        self.assertEqual(
+            dumps_yaml({"status": "matched", "paper_key": "park2015", "confidence": 0.95}),
+            "confidence: 0.95\npaper_key: park2015\nstatus: matched\n",
+        )
 
     def test_matches_pdf_filename_to_existing_citation_key(self):
         with tempfile.TemporaryDirectory() as td:
