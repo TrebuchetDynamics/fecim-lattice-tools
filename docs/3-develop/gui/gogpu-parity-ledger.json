@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, reference timing JSON export, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. Logger verbosity controls, animated timing diagrams, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, reference timing JSON export, reference timing animation step state, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. Logger verbosity controls, waveform drawing, timed playback loops, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -300,7 +300,27 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTimingExport|SnapshotContainsUnifiedCircuitControls' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
       ],
-      "notes": "This ports reference timing export for write, read, and compute totals plus structured phase durations and active-operation context. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. It does not claim animated timing diagrams, raster waveform snapshots, SVG/PNG waveform export, or dialog parity."
+      "notes": "This ports reference timing export for write, read, and compute totals plus structured phase durations and active-operation context. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Timing animation step state is tracked separately. It does not claim raster waveform snapshots, SVG/PNG waveform export, or dialog parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing animation step sequence and current status for write/read/compute operations",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingAnimation|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingAnimationStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports the legacy timing animation's deterministic status sequence into UI-neutral gogpu state. The action records the selected operation, all steps, current step 1/N, and overlay status without sleeps, goroutines, or Fyne widgets. It does not claim timed playback, waveform drawing, SVG/PNG export, or per-frame signal rendering."
     },
     {
       "module": "circuits",

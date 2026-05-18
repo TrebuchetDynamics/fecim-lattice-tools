@@ -31,23 +31,24 @@ const (
 )
 
 const (
-	ActionRunRead               = "run_read"
-	ActionRunWrite              = "run_write"
-	ActionRunCompute            = "run_compute"
-	ActionExportOperationLog    = "export_operation_log"
-	ActionExportReferenceSpecs  = "export_reference_specs"
-	ActionExportReferenceTiming = "export_reference_timing"
-	ActionToggleISPP            = "toggle_ispp"
-	ActionResizeArray           = "resize_array"
-	ActionSetOperationMode      = "set_operation_mode"
-	ActionSetArchitecture       = "set_architecture"
-	ActionSelectCell            = "select_cell"
-	ActionSetWriteTarget        = "set_write_target"
-	ActionSetDACBits            = "set_dac_bits"
-	ActionSetADCBits            = "set_adc_bits"
-	ActionSetTIAGain            = "set_tia_gain"
-	ActionSetCouplingTier       = "set_coupling_tier"
-	ActionSetISPPEngine         = "set_ispp_engine"
+	ActionRunRead                = "run_read"
+	ActionRunWrite               = "run_write"
+	ActionRunCompute             = "run_compute"
+	ActionExportOperationLog     = "export_operation_log"
+	ActionExportReferenceSpecs   = "export_reference_specs"
+	ActionExportReferenceTiming  = "export_reference_timing"
+	ActionAnimateReferenceTiming = "animate_reference_timing"
+	ActionToggleISPP             = "toggle_ispp"
+	ActionResizeArray            = "resize_array"
+	ActionSetOperationMode       = "set_operation_mode"
+	ActionSetArchitecture        = "set_architecture"
+	ActionSelectCell             = "select_cell"
+	ActionSetWriteTarget         = "set_write_target"
+	ActionSetDACBits             = "set_dac_bits"
+	ActionSetADCBits             = "set_adc_bits"
+	ActionSetTIAGain             = "set_tia_gain"
+	ActionSetCouplingTier        = "set_coupling_tier"
+	ActionSetISPPEngine          = "set_ispp_engine"
 )
 
 const DefaultQuantLevels = 30
@@ -169,6 +170,12 @@ type CircuitsState struct {
 	ReferenceTimingExportPath   string              `json:"reference_timing_export_path"`
 	ReferenceTimingExportBytes  int                 `json:"reference_timing_export_bytes"`
 	ReferenceTimingExportJSON   string              `json:"reference_timing_export_json"`
+	TimingAnimationOperation    string              `json:"timing_animation_operation"`
+	TimingAnimationStatus       string              `json:"timing_animation_status"`
+	TimingAnimationStepIndex    int                 `json:"timing_animation_step_index"`
+	TimingAnimationStepTotal    int                 `json:"timing_animation_step_total"`
+	TimingAnimationCurrentStep  string              `json:"timing_animation_current_step"`
+	TimingAnimationSteps        []string            `json:"timing_animation_steps"`
 	HalfSelectState             string              `json:"half_select_state"`
 	HalfSelectCells             int                 `json:"half_select_cells"`
 	DisturbVoltage              float64             `json:"disturb_voltage"`

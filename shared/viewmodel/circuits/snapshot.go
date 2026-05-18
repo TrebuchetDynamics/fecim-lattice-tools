@@ -49,6 +49,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "reference_timing_export", Label: "Reference Timing Export", Value: referenceTimingExportStatusValue(state)},
 		{ID: "reference_timing_export_path", Label: "Reference Timing Export Target", Value: referenceTimingExportPathValue(state)},
 		{ID: "reference_timing_export_bytes", Label: "Reference Timing Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingExportBytes)},
+		{ID: "reference_timing_animation", Label: "Reference Timing Animation", Value: referenceTimingAnimationStatusValue(state)},
+		{ID: "reference_timing_animation_step", Label: "Reference Timing Animation Step", Value: referenceTimingAnimationStepValue(state)},
+		{ID: "reference_timing_animation_steps", Label: "Reference Timing Animation Steps", Value: referenceTimingAnimationStepsValue(state)},
 		{ID: "operation_log_count", Label: "Operation Log", Value: operationLogCountValue(state)},
 		{ID: "operation_log_latest", Label: "Latest Log Entry", Value: operationLogLatestValue(state.OperationLog)},
 		{ID: "operation_log_recent", Label: "Recent Log Entries", Value: operationLogRecentValue(state.OperationLog)},
@@ -168,6 +171,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionExportOperationLog, Label: "Export Operation Log", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceSpecs, Label: "Export Reference Specs", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceTiming, Label: "Export Reference Timing", Kind: viewmodel.ActionCommand},
+		{ID: ActionAnimateReferenceTiming, Label: "Animate Reference Timing", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
 		{ID: ActionSetOperationMode, Label: "Operation Mode", Kind: viewmodel.ActionSelect, Payload: map[string]string{"mode": state.OperationMode}},
@@ -351,6 +355,27 @@ func referenceTimingExportPathValue(state CircuitsState) string {
 		return "none"
 	}
 	return state.ReferenceTimingExportPath
+}
+
+func referenceTimingAnimationStatusValue(state CircuitsState) string {
+	if state.TimingAnimationStatus == "" {
+		return "not animated"
+	}
+	return state.TimingAnimationStatus
+}
+
+func referenceTimingAnimationStepValue(state CircuitsState) string {
+	if state.TimingAnimationCurrentStep == "" {
+		return "none"
+	}
+	return state.TimingAnimationCurrentStep
+}
+
+func referenceTimingAnimationStepsValue(state CircuitsState) string {
+	if state.TimingAnimationStepTotal <= 0 {
+		return "0 steps"
+	}
+	return fmt.Sprintf("%d steps", state.TimingAnimationStepTotal)
 }
 
 func operationLogCountValue(state CircuitsState) string {

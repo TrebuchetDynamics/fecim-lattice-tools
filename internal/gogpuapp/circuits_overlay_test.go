@@ -137,6 +137,26 @@ func TestCircuitsOverlayStateIncludesReferenceTimingExportStatus(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingAnimationStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionAnimateReferenceTiming, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("animate reference timing: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	want := "COMPUTE timing animation step 1/6: Phase 1: INPUT_VALID asserted (0ns)..."
+	if state.referenceTimingAnimation != want {
+		t.Fatalf("referenceTimingAnimation = %q, want %q", state.referenceTimingAnimation, want)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {

@@ -79,6 +79,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"export_operation_log",
 		"export_reference_specs",
 		"export_reference_timing",
+		"animate_reference_timing",
 		"toggle_ispp",
 	} {
 		if !hasAction(s, id) {
@@ -546,6 +547,86 @@ func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
 	}
 	if m.state.ReferenceTimingExportJSON != "" {
 		t.Fatal("reference timing export artifact should not be buffered after path validation failure")
+	}
+}
+
+func TestReferenceTimingAnimationCapturesComputeSteps(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
+		t.Fatalf("animate reference timing: %v", err)
+	}
+
+	if m.state.TimingAnimationOperation != "COMPUTE" {
+		t.Fatalf("animation operation = %q, want COMPUTE", m.state.TimingAnimationOperation)
+	}
+	if m.state.TimingAnimationStepIndex != 1 || m.state.TimingAnimationStepTotal != 6 {
+		t.Fatalf("animation step = %d/%d, want 1/6", m.state.TimingAnimationStepIndex, m.state.TimingAnimationStepTotal)
+	}
+	if len(m.state.TimingAnimationSteps) != 6 {
+		t.Fatalf("animation steps len = %d, want 6", len(m.state.TimingAnimationSteps))
+	}
+	if got := m.state.TimingAnimationCurrentStep; got != "Phase 1: INPUT_VALID asserted (0ns)..." {
+		t.Fatalf("current step = %q, want compute phase 1", got)
+	}
+	if got := m.state.TimingAnimationSteps[3]; got != "Phase 4: TIA+ADC digitizes summed currents (15-76ns)..." {
+		t.Fatalf("compute step 4 = %q, want TIA+ADC step", got)
+	}
+	if got := m.state.TimingAnimationSteps[5]; got != "Compute complete: Total 76ns for full MVM" {
+		t.Fatalf("compute final step = %q, want completion step", got)
+	}
+	wantStatus := "COMPUTE timing animation step 1/6: Phase 1: INPUT_VALID asserted (0ns)..."
+	if m.state.TimingAnimationStatus != wantStatus {
+		t.Fatalf("animation status = %q, want %q", m.state.TimingAnimationStatus, wantStatus)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"reference_timing_animation":       wantStatus,
+		"reference_timing_animation_step":  "Phase 1: INPUT_VALID asserted (0ns)...",
+		"reference_timing_animation_steps": "6 steps",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
+func TestReferenceTimingAnimationFollowsReadAndWriteModes(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
+		t.Fatalf("animate default read timing: %v", err)
+	}
+	if m.state.TimingAnimationOperation != "READ" {
+		t.Fatalf("default animation operation = %q, want READ", m.state.TimingAnimationOperation)
+	}
+	if got := m.state.TimingAnimationSteps[1]; got != "Phase 2: Array settle (10-15ns)..." {
+		t.Fatalf("read step 2 = %q, want array settle", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
+		t.Fatalf("animate write timing: %v", err)
+	}
+	if m.state.TimingAnimationOperation != "WRITE" {
+		t.Fatalf("write animation operation = %q, want WRITE", m.state.TimingAnimationOperation)
+	}
+	if got := m.state.TimingAnimationSteps[1]; got != "Phase 2: Charge pump rise (10-98ns)..." {
+		t.Fatalf("write step 2 = %q, want charge pump step", got)
+	}
+	if got := m.state.TimingAnimationSteps[5]; got != "Write complete: Total 203ns" {
+		t.Fatalf("write final step = %q, want completion step", got)
 	}
 }
 
