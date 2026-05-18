@@ -7,6 +7,7 @@ from urllib.parse import quote, urlencode
 import hashlib
 import json
 import os
+import re
 import urllib.request
 
 from .citations import CitationRecord, load_citation_records
@@ -51,16 +52,24 @@ def run_acquire(
     keys: list[str],
     download: bool,
     opener: Callable[..., object] = urllib.request.urlopen,
+    dois: list[str] | None = None,
 ) -> int:
     records = load_citation_records(root)
     selected = _select_records(root, records, keys)
     results: list[AcquisitionResult] = []
 
     for record in selected:
-        result, work = _acquire_one(root, record, download, opener)
+        result, work = _acquire_record(root, record, download, opener)
         results.append(result)
         if work:
             _write_openalex_record(root, record.key, work)
+        _write_acquisition_record(root, result)
+    for doi in sorted(dois or []):
+        paper_key = provisional_key_for_doi(doi)
+        result, work = _acquire_doi(root, paper_key, doi, download, opener)
+        results.append(result)
+        if work:
+            _write_openalex_record(root, paper_key, work)
         _write_acquisition_record(root, result)
 
     _write_report(root, results)
@@ -88,7 +97,7 @@ def _existing_pdf_keys(root: Path, records: dict[str, CitationRecord]) -> set[st
     return keys
 
 
-def _acquire_one(
+def _acquire_record(
     root: Path,
     record: CitationRecord,
     download: bool,
@@ -97,18 +106,28 @@ def _acquire_one(
     if not record.doi:
         return AcquisitionResult(record.key, "missing_doi", "", message="citation record has no DOI"), None
 
+    return _acquire_doi(root, record.key, record.doi, download, opener)
+
+
+def _acquire_doi(
+    root: Path,
+    paper_key: str,
+    doi: str,
+    download: bool,
+    opener: Callable[..., object],
+) -> tuple[AcquisitionResult, dict[str, object] | None]:
     try:
-        work = fetch_openalex_work(record.doi, opener=opener)
+        work = fetch_openalex_work(doi, opener=opener)
     except Exception as exc:
-        return AcquisitionResult(record.key, "metadata_failed", record.doi, message=str(exc)), None
+        return AcquisitionResult(paper_key, "metadata_failed", doi, message=str(exc)), None
 
     candidate = best_oa_pdf_candidate(work)
     if candidate is None:
         return (
             AcquisitionResult(
-                paper_key=record.key,
+                paper_key=paper_key,
                 status="no_oa_pdf",
-                doi=record.doi,
+                doi=doi,
                 openalex_id=str(work.get("id", "")),
                 message="OpenAlex did not report an open-access PDF URL",
             ),
@@ -116,21 +135,21 @@ def _acquire_one(
         )
 
     result = AcquisitionResult(
-        paper_key=record.key,
+        paper_key=paper_key,
         status="planned",
-        doi=record.doi,
+        doi=doi,
         openalex_id=str(work.get("id", "")),
         pdf_url=str(candidate.get("pdf_url", "")),
         landing_page_url=str(candidate.get("landing_page_url", "")),
         license=str(candidate.get("license") or ""),
         version=str(candidate.get("version") or ""),
-        pdf_path=f"research/papers/{record.key}.pdf",
+        pdf_path=f"research/papers/{paper_key}.pdf",
         message="open-access PDF located via OpenAlex",
     )
     if not download:
         return result, work
 
-    pdf_path = root / "research" / "papers" / f"{record.key}.pdf"
+    pdf_path = root / "research" / "papers" / f"{paper_key}.pdf"
     try:
         digest = download_pdf(result.pdf_url, pdf_path, opener=opener)
     except Exception as exc:
@@ -179,6 +198,18 @@ def openalex_work_url(doi: str) -> str:
     if mailto:
         query["mailto"] = mailto
     return OPENALEX_WORKS_URL + quote(external_id, safe=":/") + "?" + urlencode(query)
+
+
+def provisional_key_for_doi(doi: str) -> str:
+    identifier = doi.strip()
+    if identifier.startswith("https://doi.org/"):
+        identifier = identifier.removeprefix("https://doi.org/")
+    elif identifier.startswith("doi:"):
+        identifier = identifier.removeprefix("doi:")
+    slug = re.sub(r"[^a-z0-9]+", "_", identifier.lower()).strip("_")
+    if not slug:
+        slug = "unknown"
+    return "doi_" + slug[:96]
 
 
 def best_oa_pdf_candidate(work: dict[str, object]) -> dict[str, object] | None:

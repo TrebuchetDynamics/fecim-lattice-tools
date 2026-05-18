@@ -11,6 +11,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     acquire = sub.add_parser("acquire", help="plan or download legal OpenAlex OA PDFs for missing papers")
     acquire.add_argument("keys", nargs="*", help="optional citation keys to acquire")
+    acquire.add_argument("--doi", dest="dois", action="append", default=[], help="acquire a new paper by DOI")
     acquire.add_argument("--download", action="store_true", help="download OA PDFs into ignored research/papers")
 
     ingest = sub.add_parser("ingest", help="discover, parse, and chunk local papers")
@@ -36,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "acquire":
         from .acquisition import run_acquire
 
-        return run_acquire(root=root, keys=args.keys, download=args.download)
+        return run_acquire(root=root, keys=args.keys, dois=args.dois, download=args.download)
     if args.command == "ingest":
         from .ingest import run_ingest
 

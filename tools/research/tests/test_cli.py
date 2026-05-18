@@ -17,6 +17,13 @@ class CLITest(unittest.TestCase):
         self.assertIn("index", text)
         self.assertIn("search", text)
 
+    def test_acquire_help_lists_doi_option(self):
+        out = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
+            main(["acquire", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("--doi", out.getvalue())
+
     def test_unknown_command_fails(self):
         with self.assertRaises(SystemExit) as ctx:
             main(["unknown"])

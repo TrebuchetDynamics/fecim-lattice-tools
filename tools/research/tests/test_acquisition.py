@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fecim_research.acquisition import best_oa_pdf_candidate, run_acquire
+from fecim_research.acquisition import best_oa_pdf_candidate, provisional_key_for_doi, run_acquire
 
 
 class FakeResponse:
@@ -100,6 +100,50 @@ class AcquisitionTest(unittest.TestCase):
             self.assertEqual(report["results"][0]["status"], "downloaded")
             self.assertEqual(report["results"][0]["paper_key"], "park2015_advmat_hzo")
             self.assertIn("api.openalex.org/works/https://doi.org/10.1002/adma.201404531", calls[0])
+
+    def test_acquire_downloads_new_doi_with_provisional_git_trackable_key(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calls = []
+
+            def opener(request, timeout):
+                url = request.full_url
+                calls.append(url)
+                if "api.openalex.org/works/" in url:
+                    return FakeResponse(
+                        json.dumps(
+                            {
+                                "id": "https://openalex.org/W555",
+                                "doi": "https://doi.org/10.5555/New.Paper",
+                                "display_name": "New open access FeCIM paper",
+                                "publication_year": 2026,
+                                "open_access": {"is_oa": True, "oa_status": "gold"},
+                                "best_oa_location": {
+                                    "is_oa": True,
+                                    "pdf_url": "https://repository.example/new.pdf",
+                                    "landing_page_url": "https://repository.example/new",
+                                    "license": "cc-by",
+                                    "version": "publishedVersion",
+                                },
+                            }
+                        ).encode("utf-8")
+                    )
+                if url == "https://repository.example/new.pdf":
+                    return FakeResponse(b"%PDF-1.7\nnew fixture\n")
+                raise AssertionError(f"unexpected URL {url}")
+
+            code = run_acquire(root=root, keys=[], dois=["10.5555/New.Paper"], download=True, opener=opener)
+
+            paper_key = "doi_10_5555_new_paper"
+            self.assertEqual(code, 0)
+            self.assertEqual(provisional_key_for_doi("10.5555/New.Paper"), paper_key)
+            self.assertTrue((root / "research" / "papers" / f"{paper_key}.pdf").exists())
+            self.assertTrue((root / "research" / "sources" / f"{paper_key}.openalex.json").exists())
+            self.assertTrue((root / "research" / "sources" / f"{paper_key}.acquisition.yaml").exists())
+            report = json.loads((root / "research" / "reports" / "acquisition-latest.json").read_text())
+            self.assertEqual(report["downloaded"], 1)
+            self.assertEqual(report["results"][0]["paper_key"], paper_key)
+            self.assertIn("api.openalex.org/works/https://doi.org/10.5555/New.Paper", calls[0])
 
     def test_acquire_does_not_download_closed_or_missing_pdf_records(self):
         with tempfile.TemporaryDirectory() as td:
