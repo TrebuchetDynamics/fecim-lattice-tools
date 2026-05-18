@@ -1,0 +1,12 @@
+citation_path: citations/papers/adc_precision_cim_accuracy_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: adc_precision_cim_accuracy_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/adc_precision_cim_accuracy_2024.pdf
+  sha256: fa4b5d183461915d1883b5a15a05cd6d10d83b2095ac9ccac93937527f2b2f44
+  size: 3489301
+title: Adc Precision CIM Accuracy 2024

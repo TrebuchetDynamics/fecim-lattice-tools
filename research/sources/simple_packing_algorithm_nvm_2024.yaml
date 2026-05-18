@@ -1,0 +1,12 @@
+citation_path: citations/papers/simple_packing_algorithm_nvm_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: simple_packing_algorithm_nvm_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/simple_packing_algorithm_nvm_2024.pdf
+  sha256: 6b740b1e1a3ebdabdd7707083066f035fd06c984cb4681390fe44adae1c01bf9
+  size: 1131246
+title: Simple Packing Algorithm Nvm 2024

@@ -1,0 +1,12 @@
+citation_path: citations/papers/pruning_adc_efficiency_crossbar_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: pruning_adc_efficiency_crossbar_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/pruning_adc_efficiency_crossbar_2024.pdf
+  sha256: 649eb9f34b2b8a59d44911882fd6a6b92cb3198087549da811a58527e02e0df8
+  size: 6279486
+title: Pruning Adc Efficiency Crossbar 2024

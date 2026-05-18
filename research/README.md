@@ -16,6 +16,10 @@ Local-only input:
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
 - Use `fecim-lattice-tools research rebuild --skip-index` for file-only CI
   checks or repositories that do not currently have chunk files.
+- `fecim-lattice-tools research register-pdfs` writes a report-only inventory
+  of local PDFs that still need canonical paper records.
+- Add `--write-stubs` to create `needs-review` records under
+  `citations/papers/` for unmatched, non-duplicate PDFs.
 
 Paper acquisition:
 

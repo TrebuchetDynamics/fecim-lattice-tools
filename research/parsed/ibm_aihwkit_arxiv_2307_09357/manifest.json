@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/ibm_aihwkit_arxiv_2307_09357/grobid.tei.xml",
+      "paper_key": "ibm_aihwkit_arxiv_2307_09357",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/ibm_aihwkit_arxiv_2307_09357/marker.md",
+      "paper_key": "ibm_aihwkit_arxiv_2307_09357",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

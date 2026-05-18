@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/neuromorphic_hardware_vision_systems_arxiv/grobid.tei.xml",
+      "paper_key": "neuromorphic_hardware_vision_systems_arxiv",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/neuromorphic_hardware_vision_systems_arxiv/marker.md",
+      "paper_key": "neuromorphic_hardware_vision_systems_arxiv",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

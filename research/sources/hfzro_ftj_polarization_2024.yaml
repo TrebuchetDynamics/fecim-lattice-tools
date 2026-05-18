@@ -1,0 +1,12 @@
+citation_path: citations/papers/hfzro_ftj_polarization_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: hfzro_ftj_polarization_2024
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/hfzro_ftj_polarization_2024.pdf
+  sha256: 344cb2b90972a82987fe916a343bd910eb6c463df92a515e1513f81bad096550
+  size: 593246
+title: Hfzro Ftj Polarization 2024

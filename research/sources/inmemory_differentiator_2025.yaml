@@ -1,0 +1,12 @@
+citation_path: citations/papers/inmemory_differentiator_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: inmemory_differentiator_2025
+pdf:
+  path: docs/4-research/papers/by-topic/13-in-memory-training/inmemory_differentiator_2025.pdf
+  sha256: df01c77234ddb7ef28e64b321732262cd623dee121e5889c6485a71c827b6701
+  size: 3519086
+title: Inmemory Differentiator 2025

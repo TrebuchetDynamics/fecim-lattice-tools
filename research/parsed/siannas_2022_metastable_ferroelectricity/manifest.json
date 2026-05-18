@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/siannas_2022_metastable_ferroelectricity/grobid.tei.xml",
+      "paper_key": "siannas_2022_metastable_ferroelectricity",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/siannas_2022_metastable_ferroelectricity/marker.md",
+      "paper_key": "siannas_2022_metastable_ferroelectricity",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

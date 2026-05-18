@@ -1,0 +1,12 @@
+citation_path: citations/papers/memristor_transformer_self_attention_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: memristor_transformer_self_attention_2024
+pdf:
+  path: docs/4-research/papers/by-topic/14-transformer-llm-accelerators/memristor_transformer_self_attention_2024.pdf
+  sha256: c1793406c9ecba212baf2a2cb608edfbead4039dc6dad30ab3012886650f6dd9
+  size: 4026605
+title: Memristor Transformer Self Attention 2024

@@ -151,6 +151,22 @@ class DiscoveryTest(unittest.TestCase):
             match = match_pdf_to_record(found, records)
             self.assertEqual(match.paper_key, "park2015_advmat_hzo")
 
+    def test_filename_matching_normalizes_case_and_punctuation(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            paper = root / "citations" / "papers" / "ibm_aihwkit_arxiv_2307_09357.md"
+            paper.parent.mkdir(parents=True)
+            paper.write_text("**Key:** `ibm_aihwkit_arxiv_2307_09357`\n", encoding="utf-8")
+            pdf = root / "research" / "papers" / "IBM_AIHWKit_arXiv_2307.09357.pdf"
+            pdf.parent.mkdir(parents=True)
+            pdf.write_bytes(b"%PDF fixture")
+
+            records = load_citation_records(root)
+            found = discover_pdfs(root, extra_paths=[])[0]
+            match = match_pdf_to_record(found, records)
+            self.assertEqual(match.paper_key, "ibm_aihwkit_arxiv_2307_09357")
+            self.assertEqual(match.status, "matched")
+
     def test_unmatched_pdf_is_quarantined(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

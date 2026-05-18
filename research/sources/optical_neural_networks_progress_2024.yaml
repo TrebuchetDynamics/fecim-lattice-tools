@@ -1,0 +1,12 @@
+citation_path: citations/papers/optical_neural_networks_progress_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: optical_neural_networks_progress_2024
+pdf:
+  path: docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/optical_neural_networks_progress_2024.pdf
+  sha256: cd505bd021c650a98698604b16b99f1279d034b0040edf1c102d2d801d8c137a
+  size: 7754059
+title: Optical Neural Networks Progress 2024

@@ -19,6 +19,7 @@ class CLITest(unittest.TestCase):
         self.assertIn("graph", text)
         self.assertIn("ingest", text)
         self.assertIn("index", text)
+        self.assertIn("register-pdfs", text)
         self.assertIn("rebuild", text)
         self.assertIn("search", text)
 
@@ -36,6 +37,13 @@ class CLITest(unittest.TestCase):
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--skip-index", out.getvalue())
 
+    def test_register_pdfs_help_lists_write_stubs_option(self):
+        out = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
+            main(["register-pdfs", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("--write-stubs", out.getvalue())
+
     def test_unknown_command_fails(self):
         with self.assertRaises(SystemExit) as ctx:
             main(["unknown"])
@@ -49,6 +57,7 @@ class CLITest(unittest.TestCase):
         import fecim_research.graphing
         import fecim_research.ingest
         import fecim_research.indexing
+        import fecim_research.registration
         import fecim_research.rebuild
         import fecim_research.searching
 
@@ -59,6 +68,7 @@ class CLITest(unittest.TestCase):
         self.assertTrue(hasattr(fecim_research.graphing, "run_graph"))
         self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
         self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
+        self.assertTrue(hasattr(fecim_research.registration, "run_register_pdfs"))
         self.assertTrue(hasattr(fecim_research.rebuild, "run_rebuild"))
         self.assertTrue(hasattr(fecim_research.searching, "run_search"))
 

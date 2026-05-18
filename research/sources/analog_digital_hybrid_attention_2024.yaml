@@ -1,0 +1,12 @@
+citation_path: citations/papers/analog_digital_hybrid_attention_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: analog_digital_hybrid_attention_2024
+pdf:
+  path: docs/4-research/papers/by-topic/14-transformer-llm-accelerators/analog_digital_hybrid_attention_2024.pdf
+  sha256: 991b792610c713a1071e1bbc13696960411d160048d662ad700aa592cfef242f
+  size: 1353770
+title: Analog Digital Hybrid Attention 2024

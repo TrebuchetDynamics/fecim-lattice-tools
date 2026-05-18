@@ -1,0 +1,12 @@
+citation_path: citations/papers/fefet_puf_charge_domain_computing_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fefet_puf_charge_domain_computing_2025
+pdf:
+  path: docs/4-research/papers/by-topic/17-security-cryptography/fefet_puf_charge_domain_computing_2025.pdf
+  sha256: 543443e696d222baeb68aa6a025d759b121fc50365eaddcc2e70bd8dd71ff48e
+  size: 2607647
+title: Fefet Puf Charge Domain Computing 2025

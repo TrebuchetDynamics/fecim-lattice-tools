@@ -1,0 +1,12 @@
+citation_path: citations/papers/analog_ai_accelerators_survey_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: analog_ai_accelerators_survey_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/Analog_AI_Accelerators_Survey_arXiv.pdf
+  sha256: a2173d556d4753794676f8ab17c832705436f9bf3e95d46039e4c22143448e02
+  size: 802853
+title: Analog AI Accelerators Survey Arxiv

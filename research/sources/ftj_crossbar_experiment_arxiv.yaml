@@ -1,0 +1,12 @@
+citation_path: citations/papers/ftj_crossbar_experiment_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: ftj_crossbar_experiment_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/FTJ_Crossbar_Experiment_arXiv.pdf
+  sha256: 974f398056fb5011a9813f0c3aa6a7d29bda4d40f5e35f10c60d47ed89eae293
+  size: 1685967
+title: Ftj Crossbar Experiment Arxiv

@@ -1,0 +1,12 @@
+citation_path: citations/papers/siannas_2022_metastable_ferroelectricity.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: siannas_2022_metastable_ferroelectricity
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf
+  sha256: cbf833703c3cb89599c2417a20adf50cb49eacf4acc06c57f751f67500ac51f0
+  size: 2808004
+title: Siannas 2022 Metastable Ferroelectricity

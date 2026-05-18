@@ -1,0 +1,12 @@
+citation_path: citations/papers/fecim_annealer_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fecim_annealer_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/fecim_annealer_2024.pdf
+  sha256: b76bf0c9518ce2463467088616654b9a117eeccd9f2d67c2b971ecbbb9d7d04f
+  size: 3711742
+title: Fecim Annealer 2024

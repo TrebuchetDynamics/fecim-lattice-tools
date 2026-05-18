@@ -1,0 +1,12 @@
+citation_path: citations/papers/memristor_puf_lightweight_crypto_2022.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: memristor_puf_lightweight_crypto_2022
+pdf:
+  path: docs/4-research/papers/by-topic/17-security-cryptography/memristor_puf_lightweight_crypto_2022.pdf
+  sha256: a54c9f30fe128e7594f0e8a542d711004f4fd2385ff87bc7c31d4111ee292461
+  size: 4511425
+title: Memristor Puf Lightweight Crypto 2022

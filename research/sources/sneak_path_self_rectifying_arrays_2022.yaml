@@ -1,0 +1,12 @@
+citation_path: citations/papers/sneak_path_self_rectifying_arrays_2022.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: sneak_path_self_rectifying_arrays_2022
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/sneak_path_self_rectifying_arrays_2022.pdf
+  sha256: 37e80924ca594714a7e17b4b8788d2fff70bd05171127c11eff901331b46f4b9
+  size: 2500777
+title: Sneak Path Self Rectifying Arrays 2022

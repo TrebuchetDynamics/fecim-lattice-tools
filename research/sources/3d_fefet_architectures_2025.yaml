@@ -1,0 +1,12 @@
+citation_path: citations/papers/3d_fefet_architectures_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: 3d_fefet_architectures_2025
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/3D_FeFET_Architectures_2025.pdf
+  sha256: 970c7f9f3ec6e5ed2722df6d23338f13fa73cd0639832d4b74bdedfed091f60b
+  size: 2405417
+title: 3d Fefet Architectures 2025

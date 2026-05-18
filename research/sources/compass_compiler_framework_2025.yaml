@@ -1,0 +1,12 @@
+citation_path: citations/papers/compass_compiler_framework_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: compass_compiler_framework_2025
+pdf:
+  path: docs/4-research/papers/by-topic/03-simulation-tools/compass_compiler_framework_2025.pdf
+  sha256: 2fd289c9b4e91717d747ba50262e769e590abe896059c101566abf412ca81081
+  size: 3130436
+title: Compass Compiler Framework 2025

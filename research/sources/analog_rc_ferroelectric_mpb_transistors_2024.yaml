@@ -1,0 +1,12 @@
+citation_path: citations/papers/analog_rc_ferroelectric_mpb_transistors_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: analog_rc_ferroelectric_mpb_transistors_2024
+pdf:
+  path: docs/4-research/papers/by-topic/11-reservoir-computing/analog_rc_ferroelectric_mpb_transistors_2024.pdf
+  sha256: bcdfb8912e2a8a6e3b323cb7278338fe119479fe3d201f2e5e9f266ec3fc7f88
+  size: 4680857
+title: Analog Rc Ferroelectric Mpb Transistors 2024

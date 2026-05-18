@@ -1,0 +1,12 @@
+citation_path: citations/papers/reservoir_computing_tunable_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: reservoir_computing_tunable_2025
+pdf:
+  path: docs/4-research/papers/by-topic/11-reservoir-computing/reservoir_computing_tunable_2025.pdf
+  sha256: 4cbefbc60f98a04a93e3b93456ba5e91a9266f7e88d7c42c7c06322366d661f5
+  size: 1895122
+title: Reservoir Computing Tunable 2025

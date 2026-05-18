@@ -1,0 +1,12 @@
+citation_path: citations/papers/dual_bit_fefet_enhanced_storage_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: dual_bit_fefet_enhanced_storage_2025
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/dual_bit_fefet_enhanced_storage_2025.pdf
+  sha256: 523224d895d2120d2390529a8f2dc3f09d0ecaf2cb67c20ffc78328bd3ebcd95
+  size: 1520683
+title: Dual Bit Fefet Enhanced Storage 2025

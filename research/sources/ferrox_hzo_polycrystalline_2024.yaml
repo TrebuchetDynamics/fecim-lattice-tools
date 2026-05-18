@@ -1,0 +1,12 @@
+citation_path: citations/papers/ferrox_hzo_polycrystalline_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: ferrox_hzo_polycrystalline_2024
+pdf:
+  path: docs/4-research/papers/by-topic/03-simulation-tools/ferrox_hzo_polycrystalline_2024.pdf
+  sha256: 61032d28bf22f516bed5d3648174d295ebb7c52f788fe9437708a398a99fb27d
+  size: 5417863
+title: Ferrox HZO Polycrystalline 2024

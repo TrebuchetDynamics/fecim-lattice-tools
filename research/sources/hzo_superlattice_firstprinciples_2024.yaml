@@ -1,0 +1,12 @@
+citation_path: citations/papers/hzo_superlattice_firstprinciples_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: hzo_superlattice_firstprinciples_2024
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/hzo_superlattice_firstprinciples_2024.pdf
+  sha256: c29c22c783b56d5a8cf6ac217e4d5960519c07472a8dd9b7ae08674d76e7b90d
+  size: 3524173
+title: HZO Superlattice Firstprinciples 2024

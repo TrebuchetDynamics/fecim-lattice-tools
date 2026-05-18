@@ -1,0 +1,12 @@
+citation_path: citations/papers/ann_photonic_algorithms_implementation_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: ann_photonic_algorithms_implementation_2024
+pdf:
+  path: docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/ann_photonic_algorithms_implementation_2024.pdf
+  sha256: 5d8df639220bc72c1c895b6e8554841c3b8b54a88a84396a8e904cdc5e7bcdcc
+  size: 2135123
+title: Ann Photonic Algorithms Implementation 2024

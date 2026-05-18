@@ -1,0 +1,12 @@
+citation_path: citations/papers/charge_cam_oneshot_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: charge_cam_oneshot_2025
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/charge_cam_oneshot_2025.pdf
+  sha256: 4f9ecca972a4e1c194a1c9b9df4c08ab6122480ca1dd2e2ca0165a654491a242
+  size: 1858515
+title: Charge Cam Oneshot 2025

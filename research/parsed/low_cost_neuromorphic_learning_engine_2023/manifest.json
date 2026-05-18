@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/low_cost_neuromorphic_learning_engine_2023/grobid.tei.xml",
+      "paper_key": "low_cost_neuromorphic_learning_engine_2023",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/low_cost_neuromorphic_learning_engine_2023/marker.md",
+      "paper_key": "low_cost_neuromorphic_learning_engine_2023",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

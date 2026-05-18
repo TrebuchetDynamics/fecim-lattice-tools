@@ -1,0 +1,12 @@
+citation_path: citations/papers/fecap_fefet_cim_elements_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fecap_fefet_cim_elements_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/fecap_fefet_cim_elements_2024.pdf
+  sha256: 706da94a0b5d1f753528cbb510924fac19e292a8bc8c972e89ce1dcacff2e863
+  size: 6603525
+title: Fecap Fefet CIM Elements 2024

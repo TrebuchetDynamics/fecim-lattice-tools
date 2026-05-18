@@ -106,10 +106,150 @@
       "type": "file"
     },
     {
+      "id": "paper:2d_ferroelectric_materials_review_arxiv",
+      "key": "2d_ferroelectric_materials_review_arxiv",
+      "path": "citations/papers/2d_ferroelectric_materials_review_arxiv.md",
+      "title": "2d Ferroelectric Materials Review Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:2d_spintronics_neuromorphic_2024",
+      "key": "2d_spintronics_neuromorphic_2024",
+      "path": "citations/papers/2d_spintronics_neuromorphic_2024.md",
+      "title": "2d Spintronics Neuromorphic 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:3d_fefet_architectures_2025",
+      "key": "3d_fefet_architectures_2025",
+      "path": "citations/papers/3d_fefet_architectures_2025.md",
+      "title": "3d Fefet Architectures 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:3d_memory_side_acceleration_2024",
+      "key": "3d_memory_side_acceleration_2024",
+      "path": "citations/papers/3d_memory_side_acceleration_2024.md",
+      "title": "3d Memory Side Acceleration 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:adaptive_control_epitaxial_hfo2_zro2_2025",
+      "key": "adaptive_control_epitaxial_hfo2_zro2_2025",
+      "path": "citations/papers/adaptive_control_epitaxial_hfo2_zro2_2025.md",
+      "title": "Adaptive Control Epitaxial HFO2 Zro2 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:adc_precision_cim_accuracy_2024",
+      "key": "adc_precision_cim_accuracy_2024",
+      "path": "citations/papers/adc_precision_cim_accuracy_2024.md",
+      "title": "Adc Precision CIM Accuracy 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:aimc_accuracy_post_training_2024",
+      "key": "aimc_accuracy_post_training_2024",
+      "path": "citations/papers/aimc_accuracy_post_training_2024.md",
+      "title": "Aimc Accuracy Post Training 2024",
+      "type": "paper"
+    },
+    {
       "id": "paper:alessandri2018_ieee_edl_switching",
       "key": "alessandri2018_ieee_edl_switching",
       "path": "citations/papers/alessandri2018_ieee_edl_switching.md",
       "title": "Switching Dynamics of Ferroelectric HZO",
+      "type": "paper"
+    },
+    {
+      "id": "paper:all_ferroelectric_reservoir_computing_2023",
+      "key": "all_ferroelectric_reservoir_computing_2023",
+      "path": "citations/papers/all_ferroelectric_reservoir_computing_2023.md",
+      "title": "All Ferroelectric Reservoir Computing 2023",
+      "type": "paper"
+    },
+    {
+      "id": "paper:analog_ai_accelerators_survey_arxiv",
+      "key": "analog_ai_accelerators_survey_arxiv",
+      "path": "citations/papers/analog_ai_accelerators_survey_arxiv.md",
+      "title": "Analog AI Accelerators Survey Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:analog_ai_promise_arxiv",
+      "key": "analog_ai_promise_arxiv",
+      "path": "citations/papers/analog_ai_promise_arxiv.md",
+      "title": "Analog AI Promise Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:analog_cim_energy_efficiency_arxiv",
+      "key": "analog_cim_energy_efficiency_arxiv",
+      "path": "citations/papers/analog_cim_energy_efficiency_arxiv.md",
+      "title": "Analog CIM Energy Efficiency Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:analog_digital_hybrid_attention_2024",
+      "key": "analog_digital_hybrid_attention_2024",
+      "path": "citations/papers/analog_digital_hybrid_attention_2024.md",
+      "title": "Analog Digital Hybrid Attention 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:analog_rc_ferroelectric_mpb_transistors_2024",
+      "key": "analog_rc_ferroelectric_mpb_transistors_2024",
+      "path": "citations/papers/analog_rc_ferroelectric_mpb_transistors_2024.md",
+      "title": "Analog Rc Ferroelectric Mpb Transistors 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:ann_photonic_algorithms_implementation_2024",
+      "key": "ann_photonic_algorithms_implementation_2024",
+      "path": "citations/papers/ann_photonic_algorithms_implementation_2024.md",
+      "title": "Ann Photonic Algorithms Implementation 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:atomistic_landau_ferroelectric_md_2022",
+      "key": "atomistic_landau_ferroelectric_md_2022",
+      "path": "citations/papers/atomistic_landau_ferroelectric_md_2022.md",
+      "title": "Atomistic Landau Ferroelectric Md 2022",
+      "type": "paper"
+    },
+    {
+      "id": "paper:charge_cam_oneshot_2025",
+      "key": "charge_cam_oneshot_2025",
+      "path": "citations/papers/charge_cam_oneshot_2025.md",
+      "title": "Charge Cam Oneshot 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:cim_landscape_overview_2024",
+      "key": "cim_landscape_overview_2024",
+      "path": "citations/papers/cim_landscape_overview_2024.md",
+      "title": "CIM Landscape Overview 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:compass_compiler_framework_2025",
+      "key": "compass_compiler_framework_2025",
+      "path": "citations/papers/compass_compiler_framework_2025.md",
+      "title": "Compass Compiler Framework 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:contemporary_spiking_bioinspired_2024",
+      "key": "contemporary_spiking_bioinspired_2024",
+      "path": "citations/papers/contemporary_spiking_bioinspired_2024.md",
+      "title": "Contemporary Spiking Bioinspired 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:crossbar_sneak_path_analysis_arxiv",
+      "key": "crossbar_sneak_path_analysis_arxiv",
+      "path": "citations/papers/crossbar_sneak_path_analysis_arxiv.md",
+      "title": "Crossbar Sneak Path Analysis Arxiv",
       "type": "paper"
     },
     {
@@ -120,6 +260,111 @@
       "type": "paper"
     },
     {
+      "id": "paper:dual_bit_fefet_enhanced_storage_2025",
+      "key": "dual_bit_fefet_enhanced_storage_2025",
+      "path": "citations/papers/dual_bit_fefet_enhanced_storage_2025.md",
+      "title": "Dual Bit Fefet Enhanced Storage 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:edge_ai_accelerators_survey_arxiv",
+      "key": "edge_ai_accelerators_survey_arxiv",
+      "path": "citations/papers/edge_ai_accelerators_survey_arxiv.md",
+      "title": "Edge AI Accelerators Survey Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:famous_fpga_attention_accelerator_2024",
+      "key": "famous_fpga_attention_accelerator_2024",
+      "path": "citations/papers/famous_fpga_attention_accelerator_2024.md",
+      "title": "Famous Fpga Attention Accelerator 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fast_robust_analog_inmem_training_2024",
+      "key": "fast_robust_analog_inmem_training_2024",
+      "path": "citations/papers/fast_robust_analog_inmem_training_2024.md",
+      "title": "Fast Robust Analog Inmem Training 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fecap_fefet_cim_elements_2024",
+      "key": "fecap_fefet_cim_elements_2024",
+      "path": "citations/papers/fecap_fefet_cim_elements_2024.md",
+      "title": "Fecap Fefet CIM Elements 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fecap_memories_review_2025",
+      "key": "fecap_memories_review_2025",
+      "path": "citations/papers/fecap_memories_review_2025.md",
+      "title": "Fecap Memories Review 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fecim_annealer_2024",
+      "key": "fecim_annealer_2024",
+      "path": "citations/papers/fecim_annealer_2024.md",
+      "title": "Fecim Annealer 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fecim_applications_review_2025",
+      "key": "fecim_applications_review_2025",
+      "path": "citations/papers/fecim_applications_review_2025.md",
+      "title": "Fecim Applications Review 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fefet_heterogeneous_codoped_hfo2_2025",
+      "key": "fefet_heterogeneous_codoped_hfo2_2025",
+      "path": "citations/papers/fefet_heterogeneous_codoped_hfo2_2025.md",
+      "title": "Fefet Heterogeneous Codoped HFO2 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fefet_puf_charge_domain_computing_2025",
+      "key": "fefet_puf_charge_domain_computing_2025",
+      "path": "citations/papers/fefet_puf_charge_domain_computing_2025.md",
+      "title": "Fefet Puf Charge Domain Computing 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:ferroelectric_synaptic_transistors_review_2024",
+      "key": "ferroelectric_synaptic_transistors_review_2024",
+      "path": "citations/papers/ferroelectric_synaptic_transistors_review_2024.md",
+      "title": "Ferroelectric Synaptic Transistors Review 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:ferrox_hzo_polycrystalline_2024",
+      "key": "ferrox_hzo_polycrystalline_2024",
+      "path": "citations/papers/ferrox_hzo_polycrystalline_2024.md",
+      "title": "Ferrox HZO Polycrystalline 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:fesquid_cryo_cam_2025",
+      "key": "fesquid_cryo_cam_2025",
+      "path": "citations/papers/fesquid_cryo_cam_2025.md",
+      "title": "Fesquid Cryo Cam 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:first_principles_hfo2_ferroelectric_2024",
+      "key": "first_principles_hfo2_ferroelectric_2024",
+      "path": "citations/papers/first_principles_hfo2_ferroelectric_2024.md",
+      "title": "First Principles HFO2 Ferroelectric 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:ftj_crossbar_experiment_arxiv",
+      "key": "ftj_crossbar_experiment_arxiv",
+      "path": "citations/papers/ftj_crossbar_experiment_arxiv.md",
+      "title": "Ftj Crossbar Experiment Arxiv",
+      "type": "paper"
+    },
+    {
       "id": "paper:guo2018_apl_nls",
       "key": "guo2018_apl_nls",
       "path": "citations/papers/guo2018_apl_nls.md",
@@ -127,10 +372,80 @@
       "type": "paper"
     },
     {
+      "id": "paper:hardware_acceleration_llm_survey_2024",
+      "key": "hardware_acceleration_llm_survey_2024",
+      "path": "citations/papers/hardware_acceleration_llm_survey_2024.md",
+      "title": "Hardware Acceleration Llm Survey 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:hfo2_computational_understanding_2024",
+      "key": "hfo2_computational_understanding_2024",
+      "path": "citations/papers/hfo2_computational_understanding_2024.md",
+      "title": "HFO2 Computational Understanding 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:hfzro_ftj_polarization_2024",
+      "key": "hfzro_ftj_polarization_2024",
+      "path": "citations/papers/hfzro_ftj_polarization_2024.md",
+      "title": "Hfzro Ftj Polarization 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:highly_scaled_3d_fefet_array_2023",
+      "key": "highly_scaled_3d_fefet_array_2023",
+      "path": "citations/papers/highly_scaled_3d_fefet_array_2023.md",
+      "title": "Highly Scaled 3d Fefet Array 2023",
+      "type": "paper"
+    },
+    {
+      "id": "paper:hzo_superlattice_firstprinciples_2024",
+      "key": "hzo_superlattice_firstprinciples_2024",
+      "path": "citations/papers/hzo_superlattice_firstprinciples_2024.md",
+      "title": "HZO Superlattice Firstprinciples 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:ibm_aihwkit_arxiv_2307_09357",
+      "key": "ibm_aihwkit_arxiv_2307_09357",
+      "path": "citations/papers/ibm_aihwkit_arxiv_2307_09357.md",
+      "title": "Ibm Aihwkit Arxiv 2307 09357",
+      "type": "paper"
+    },
+    {
+      "id": "paper:in2se3_silicon_compatible_2025",
+      "key": "in2se3_silicon_compatible_2025",
+      "path": "citations/papers/in2se3_silicon_compatible_2025.md",
+      "title": "In2se3 Silicon Compatible 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:in_memory_computing_dnn_survey_2023",
+      "key": "in_memory_computing_dnn_survey_2023",
+      "path": "citations/papers/in_memory_computing_dnn_survey_2023.md",
+      "title": "In Memory Computing Dnn Survey 2023",
+      "type": "paper"
+    },
+    {
+      "id": "paper:inmemory_differentiator_2025",
+      "key": "inmemory_differentiator_2025",
+      "path": "citations/papers/inmemory_differentiator_2025.md",
+      "title": "Inmemory Differentiator 2025",
+      "type": "paper"
+    },
+    {
       "id": "paper:khalatnikov1954_zheft_lk",
       "key": "khalatnikov1954_zheft_lk",
       "path": "citations/papers/khalatnikov1954_zheft_lk.md",
       "title": "On the Anomalous Absorption of Sound Near a Second Order Phase Transition Point",
+      "type": "paper"
+    },
+    {
+      "id": "paper:low_cost_neuromorphic_learning_engine_2023",
+      "key": "low_cost_neuromorphic_learning_engine_2023",
+      "path": "citations/papers/low_cost_neuromorphic_learning_engine_2023.md",
+      "title": "Low Cost Neuromorphic Learning Engine 2023",
       "type": "paper"
     },
     {
@@ -148,6 +463,76 @@
       "type": "paper"
     },
     {
+      "id": "paper:memory_tech_crossbar_dnn_accuracy_2024",
+      "key": "memory_tech_crossbar_dnn_accuracy_2024",
+      "path": "citations/papers/memory_tech_crossbar_dnn_accuracy_2024.md",
+      "title": "Memory Tech Crossbar Dnn Accuracy 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:memristor_cim_survey_arxiv",
+      "key": "memristor_cim_survey_arxiv",
+      "path": "citations/papers/memristor_cim_survey_arxiv.md",
+      "title": "Memristor CIM Survey Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:memristor_puf_lightweight_crypto_2022",
+      "key": "memristor_puf_lightweight_crypto_2022",
+      "path": "citations/papers/memristor_puf_lightweight_crypto_2022.md",
+      "title": "Memristor Puf Lightweight Crypto 2022",
+      "type": "paper"
+    },
+    {
+      "id": "paper:memristor_transformer_self_attention_2024",
+      "key": "memristor_transformer_self_attention_2024",
+      "path": "citations/papers/memristor_transformer_self_attention_2024.md",
+      "title": "Memristor Transformer Self Attention 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:mirage_rns_photonic_training_2024",
+      "key": "mirage_rns_photonic_training_2024",
+      "path": "citations/papers/mirage_rns_photonic_training_2024.md",
+      "title": "Mirage Rns Photonic Training 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:multi_level_fefet_programming_arxiv",
+      "key": "multi_level_fefet_programming_arxiv",
+      "path": "citations/papers/multi_level_fefet_programming_arxiv.md",
+      "title": "Multi Level Fefet Programming Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:multilevel_fefet_crossbar_2023",
+      "key": "multilevel_fefet_crossbar_2023",
+      "path": "citations/papers/multilevel_fefet_crossbar_2023.md",
+      "title": "Multilevel Fefet Crossbar 2023",
+      "type": "paper"
+    },
+    {
+      "id": "paper:neuromorphic_hardware_vision_systems_arxiv",
+      "key": "neuromorphic_hardware_vision_systems_arxiv",
+      "path": "citations/papers/neuromorphic_hardware_vision_systems_arxiv.md",
+      "title": "Neuromorphic Hardware Vision Systems Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:optical_computing_dnn_survey_2024",
+      "key": "optical_computing_dnn_survey_2024",
+      "path": "citations/papers/optical_computing_dnn_survey_2024.md",
+      "title": "Optical Computing Dnn Survey 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:optical_neural_networks_progress_2024",
+      "key": "optical_neural_networks_progress_2024",
+      "path": "citations/papers/optical_neural_networks_progress_2024.md",
+      "title": "Optical Neural Networks Progress 2024",
+      "type": "paper"
+    },
+    {
       "id": "paper:park2015_advmat_hzo",
       "key": "park2015_advmat_hzo",
       "path": "citations/papers/park2015_advmat_hzo.md",
@@ -155,10 +540,101 @@
       "type": "paper"
     },
     {
+      "id": "paper:photonic_dnn_architecture_modeling_2024",
+      "key": "photonic_dnn_architecture_modeling_2024",
+      "path": "citations/papers/photonic_dnn_architecture_modeling_2024.md",
+      "title": "Photonic Dnn Architecture Modeling 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:photonic_neural_networks_review_2023",
+      "key": "photonic_neural_networks_review_2023",
+      "path": "citations/papers/photonic_neural_networks_review_2023.md",
+      "title": "Photonic Neural Networks Review 2023",
+      "type": "paper"
+    },
+    {
+      "id": "paper:physical_reality_preisach_2018",
+      "key": "physical_reality_preisach_2018",
+      "path": "citations/papers/physical_reality_preisach_2018.md",
+      "title": "Physical Reality Preisach 2018",
+      "type": "paper"
+    },
+    {
       "id": "paper:preisach1935_zphys",
       "key": "preisach1935_zphys",
       "path": "citations/papers/preisach1935_zphys.md",
       "title": "Ueber die magnetische Nachwirkung",
+      "type": "paper"
+    },
+    {
+      "id": "paper:pruning_adc_efficiency_crossbar_2024",
+      "key": "pruning_adc_efficiency_crossbar_2024",
+      "path": "citations/papers/pruning_adc_efficiency_crossbar_2024.md",
+      "title": "Pruning Adc Efficiency Crossbar 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:reservoir_computing_tunable_2025",
+      "key": "reservoir_computing_tunable_2025",
+      "path": "citations/papers/reservoir_computing_tunable_2025.md",
+      "title": "Reservoir Computing Tunable 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:siannas_2022_metastable_ferroelectricity",
+      "key": "siannas_2022_metastable_ferroelectricity",
+      "path": "citations/papers/siannas_2022_metastable_ferroelectricity.md",
+      "title": "Siannas 2022 Metastable Ferroelectricity",
+      "type": "paper"
+    },
+    {
+      "id": "paper:simple_packing_algorithm_nvm_2024",
+      "key": "simple_packing_algorithm_nvm_2024",
+      "path": "citations/papers/simple_packing_algorithm_nvm_2024.md",
+      "title": "Simple Packing Algorithm Nvm 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:sliding_ferroelectrics_review_2025",
+      "key": "sliding_ferroelectrics_review_2025",
+      "path": "citations/papers/sliding_ferroelectrics_review_2025.md",
+      "title": "Sliding Ferroelectrics Review 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:sneak_path_self_rectifying_arrays_2022",
+      "key": "sneak_path_self_rectifying_arrays_2022",
+      "path": "citations/papers/sneak_path_self_rectifying_arrays_2022.md",
+      "title": "Sneak Path Self Rectifying Arrays 2022",
+      "type": "paper"
+    },
+    {
+      "id": "paper:snn_architecture_search_survey_2025",
+      "key": "snn_architecture_search_survey_2025",
+      "path": "citations/papers/snn_architecture_search_survey_2025.md",
+      "title": "Snn Architecture Search Survey 2025",
+      "type": "paper"
+    },
+    {
+      "id": "paper:tdgl_ferroelectric_domains_arxiv",
+      "key": "tdgl_ferroelectric_domains_arxiv",
+      "path": "citations/papers/tdgl_ferroelectric_domains_arxiv.md",
+      "title": "Tdgl Ferroelectric Domains Arxiv",
+      "type": "paper"
+    },
+    {
+      "id": "paper:transition_state_landau_ferroelectric_2024",
+      "key": "transition_state_landau_ferroelectric_2024",
+      "path": "citations/papers/transition_state_landau_ferroelectric_2024.md",
+      "title": "Transition State Landau Ferroelectric 2024",
+      "type": "paper"
+    },
+    {
+      "id": "paper:tsinghua_face_classification_naturecomms_2025",
+      "key": "tsinghua_face_classification_naturecomms_2025",
+      "path": "citations/papers/tsinghua_face_classification_naturecomms_2025.md",
+      "title": "Tsinghua Face Classification Naturecomms 2025",
       "type": "paper"
     }
   ]

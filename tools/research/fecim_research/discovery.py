@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 import hashlib
+import re
 
 from .citations import CitationRecord
 
@@ -70,10 +71,20 @@ def discover_pdfs(root: Path, extra_paths: list[Path]) -> list[DiscoveredPDF]:
 
 def match_pdf_to_record(pdf: DiscoveredPDF, records: dict[str, CitationRecord]) -> PDFMatch:
     stem = pdf.path.stem.lower()
+    normalized_stem = _normalize_key(pdf.path.stem)
     for key in sorted(records):
         if stem == key.lower():
+            return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
+    for key in sorted(records):
+        if normalized_stem == _normalize_key(key):
             return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
     for key in sorted(records, key=lambda item: (-len(item), item)):
         if key.lower() in stem:
             return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
+        if _normalize_key(key) in normalized_stem:
+            return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
     return PDFMatch(status="unmatched", paper_key=None, method="none", confidence=0.0)
+
+
+def _normalize_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")

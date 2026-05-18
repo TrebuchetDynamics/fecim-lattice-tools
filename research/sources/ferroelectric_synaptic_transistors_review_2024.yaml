@@ -1,0 +1,12 @@
+citation_path: citations/papers/ferroelectric_synaptic_transistors_review_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: ferroelectric_synaptic_transistors_review_2024
+pdf:
+  path: docs/4-research/papers/by-topic/05-neuromorphic/ferroelectric_synaptic_transistors_review_2024.pdf
+  sha256: 0d932d679ae53920d025a664b2eb4e3abafbe85d14fcf317457798a18b7d0132
+  size: 1055480
+title: Ferroelectric Synaptic Transistors Review 2024

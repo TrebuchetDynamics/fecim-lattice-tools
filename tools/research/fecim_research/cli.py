@@ -33,6 +33,10 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--semantic", action="store_true", help="build local semantic index")
     index.add_argument("--embedding-model", default="", help="local embedding model name")
 
+    register = sub.add_parser("register-pdfs", help="report or create reviewed stubs for local PDFs")
+    register.add_argument("paths", nargs="*", help="optional extra PDF roots")
+    register.add_argument("--write-stubs", action="store_true", help="write needs-review citation stubs")
+
     rebuild = sub.add_parser("rebuild", help="run ingestion, indexing, audit, and graph rebuild stages")
     rebuild.add_argument("paths", nargs="*", help="optional extra PDF roots")
     rebuild.add_argument("--skip-index", action="store_true", help="skip rebuildable search index generation")
@@ -80,6 +84,14 @@ def main(argv: list[str] | None = None) -> int:
         from .indexing import run_index
 
         return run_index(root=root, semantic=args.semantic, embedding_model=args.embedding_model)
+    if args.command == "register-pdfs":
+        from .registration import run_register_pdfs
+
+        return run_register_pdfs(
+            root=root,
+            extra_paths=[Path(p) for p in args.paths],
+            write_stubs=args.write_stubs,
+        )
     if args.command == "rebuild":
         from .rebuild import run_rebuild
 

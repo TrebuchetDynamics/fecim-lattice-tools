@@ -1,0 +1,12 @@
+citation_path: citations/papers/memory_tech_crossbar_dnn_accuracy_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: memory_tech_crossbar_dnn_accuracy_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/memory_tech_crossbar_dnn_accuracy_2024.pdf
+  sha256: ce931221e7fc677be8188d1798cc078d8f6eeadcae09252da9dbf6590f82a6b4
+  size: 600606
+title: Memory Tech Crossbar Dnn Accuracy 2024
