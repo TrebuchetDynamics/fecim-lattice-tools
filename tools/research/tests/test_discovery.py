@@ -113,6 +113,28 @@ class DiscoveryTest(unittest.TestCase):
             self.assertEqual(match.status, "matched")
             self.assertEqual(match.method, "filename")
 
+    def test_matches_explicit_citation_pdf_path_before_filename_heuristics(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            paper = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            paper.parent.mkdir(parents=True)
+            paper.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                "**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/Reviewed_Park_2015.pdf`\n",
+                encoding="utf-8",
+            )
+            pdf = root / "docs" / "4-research" / "papers" / "by-topic" / "01-ferroelectric-materials"
+            pdf.mkdir(parents=True)
+            reviewed = pdf / "Reviewed_Park_2015.pdf"
+            reviewed.write_bytes(b"%PDF fixture")
+
+            records = load_citation_records(root)
+            found = discover_pdfs(root, extra_paths=[])[0]
+            match = match_pdf_to_record(found, records)
+            self.assertEqual(match.paper_key, "park2015_advmat_hzo")
+            self.assertEqual(match.status, "matched")
+            self.assertEqual(match.method, "citation_pdf")
+
     def test_filename_matching_prefers_exact_key_before_substring(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

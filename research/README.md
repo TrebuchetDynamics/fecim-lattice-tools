@@ -18,6 +18,8 @@ Local-only input:
   inventory, index, claim-audit, and provenance-graph stages as the
   one-command corpus refresh.
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
+- When a citation record has a stored canonical `**PDF:**` path, ingestion
+  prefers that tracked PDF over duplicate local inbox copies.
 - Rebuild also emits the cache status report. Cache warnings are recorded in
   `reports/rebuild-latest.json` without turning a file-only refresh into a
   failed rebuild.

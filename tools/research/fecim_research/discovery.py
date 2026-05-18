@@ -73,6 +73,9 @@ def match_pdf_to_record(pdf: DiscoveredPDF, records: dict[str, CitationRecord]) 
     stem = pdf.path.stem.lower()
     normalized_stem = _normalize_key(pdf.path.stem)
     for key in sorted(records):
+        if _path_matches_record_pdf(pdf.path, records[key].pdf):
+            return PDFMatch(status="matched", paper_key=key, method="citation_pdf", confidence=1.0)
+    for key in sorted(records):
         if stem == key.lower():
             return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
     for key in sorted(records):
@@ -88,3 +91,12 @@ def match_pdf_to_record(pdf: DiscoveredPDF, records: dict[str, CitationRecord]) 
 
 def _normalize_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+
+
+def _path_matches_record_pdf(path: Path, record_pdf: str) -> bool:
+    pdf_path = record_pdf.strip()
+    if not pdf_path or pdf_path.lower() == "not stored":
+        return False
+    normalized = Path(pdf_path).as_posix()
+    candidate = path.as_posix()
+    return candidate == normalized or candidate.endswith("/" + normalized)

@@ -120,6 +120,44 @@ class IngestTest(unittest.TestCase):
             )
             self.assertEqual(unmatched_report["unmatched"], [])
 
+    def test_duplicate_canonical_prefers_promoted_citation_pdf_over_inbox_filename_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            tracked_path = (
+                "docs/4-research/papers/by-topic/01-ferroelectric-materials/Reviewed_Park_2015.pdf"
+            )
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                f"**PDF:** `{tracked_path}`\n"
+                "**Local PDF:** `research/papers/park2015_advmat_hzo.pdf`\n",
+                encoding="utf-8",
+            )
+
+            inbox_pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            inbox_pdf.parent.mkdir(parents=True)
+            inbox_pdf.write_bytes(b"%PDF promoted duplicate")
+            inbox_pdf.with_suffix(".md").write_text("## Results\n\nIgnored inbox evidence.", encoding="utf-8")
+            tracked_pdf = root / tracked_path
+            tracked_pdf.parent.mkdir(parents=True)
+            tracked_pdf.write_bytes(b"%PDF promoted duplicate")
+            tracked_pdf.with_suffix(".md").write_text("## Results\n\nTracked promoted evidence.", encoding="utf-8")
+
+            code = run_ingest(root=root, extra_paths=[])
+            self.assertEqual(code, 0)
+
+            source_text = (root / "research" / "sources" / "park2015_advmat_hzo.yaml").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn(f"path: {tracked_path}", source_text)
+            self.assertNotIn("path: research/papers/park2015_advmat_hzo.pdf", source_text)
+            chunk_text = (root / "research" / "chunks" / "park2015_advmat_hzo.jsonl").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Tracked promoted evidence", chunk_text)
+            self.assertNotIn("Ignored inbox evidence", chunk_text)
+
     def test_parse_manifest_uses_repo_relative_paths_and_messages(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

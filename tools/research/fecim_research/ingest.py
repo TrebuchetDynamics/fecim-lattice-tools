@@ -163,9 +163,11 @@ def _select_canonical_pdf(
 
 def _match_rank(match: PDFMatch, pdf: DiscoveredPDF) -> tuple[int, int]:
     if match.paper_key is None:
-        return (1, 1)
+        return (3, 1)
+    if match.method == "citation_pdf":
+        return (0, 0)
     exact = pdf.path.stem.lower() == match.paper_key.lower()
-    return (0, 0 if exact else 1)
+    return (1 if exact else 2, 0)
 
 
 def _normalize_parse_result(root: Path, result: ParseResult, paper_key: str) -> ParseResult:
