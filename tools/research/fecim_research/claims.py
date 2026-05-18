@@ -102,6 +102,7 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
     _audit_citation_pdf_paths(root, errors, pdf_review_backlog)
     _audit_citation_record_identity(root, errors)
     _audit_source_ledgers(root, errors)
+    _audit_acquisition_ledgers(root, errors)
     _audit_promotion_ledgers(root, errors)
     _audit_pdf_review_backlog(root, pdf_review_backlog, errors)
     _audit_evidence_ledgers(root, claims, errors)
@@ -296,6 +297,54 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
             actual_sha = _sha256_file(pdf_file)
             if expected_sha != actual_sha:
                 errors.append(f"{rel_path} pdf sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _audit_acquisition_ledgers(root: Path, errors: list[str]) -> None:
+    sources_dir = root / "research" / "sources"
+    if not sources_dir.exists():
+        return
+    for path in sorted(sources_dir.glob("*.acquisition.yaml")):
+        rel_path = _rel(root, path)
+        data = _parse_mapping_yaml(path)
+        expected_key = path.name.removesuffix(".acquisition.yaml")
+        paper_key = str(data.get("paper_key", "")).strip()
+        if not paper_key:
+            errors.append(f"{rel_path} missing paper_key")
+        elif paper_key != expected_key:
+            errors.append(f"{rel_path} paper_key {paper_key} must match filename {expected_key}")
+
+        citation_path = str(data.get("citation_path", "")).strip()
+        if citation_path:
+            citation_file = _audit_source_file_reference(root, rel_path, "citation_path", citation_path, errors)
+            if citation_file is not None and citation_file.stem != expected_key:
+                errors.append(f"{rel_path} citation_path must point at citations/papers/{expected_key}.md")
+
+        status = str(data.get("status", "")).strip()
+        pdf_path = str(data.get("pdf_path", "")).strip()
+        pdf_file: Path | None = None
+        if pdf_path:
+            if not _is_repo_relative_path(pdf_path):
+                errors.append(f"{rel_path} pdf_path must be repo-relative")
+            elif not _is_ignored_pdf_inbox_path(pdf_path):
+                errors.append(f"{rel_path} pdf_path {pdf_path} must point at ignored local inbox")
+            elif status == "downloaded":
+                pdf_file = root / pdf_path
+                if not pdf_file.is_file():
+                    errors.append(f"{rel_path} downloaded pdf_path {pdf_path} does not exist")
+                    pdf_file = None
+        elif status == "downloaded":
+            errors.append(f"{rel_path} downloaded acquisition missing pdf_path")
+
+        expected_sha = str(data.get("sha256", "")).strip()
+        if status == "downloaded":
+            if not expected_sha:
+                errors.append(f"{rel_path} downloaded acquisition missing sha256")
+            elif pdf_file is not None:
+                actual_sha = _sha256_file(pdf_file)
+                if expected_sha != actual_sha:
+                    errors.append(
+                        f"{rel_path} acquisition sha256 {expected_sha} does not match actual {actual_sha}"
+                    )
 
 
 def _audit_promotion_ledgers(root: Path, errors: list[str]) -> None:

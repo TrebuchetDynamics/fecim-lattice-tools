@@ -83,6 +83,9 @@ Paper acquisition:
 - PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.
+- Acquisition YAML ledgers are audited: the `paper_key` must match the
+  filename, citation paths must point at the matching citation record when
+  present, and downloaded inbox PDFs must still match their SHA-256 digest.
 - Acquisition writes `reports/acquisition-latest.json` plus a content-addressed
   copy under `reports/acquisitions/RUN_ID.json`. The run ID is derived from the
   report payload, so identical acquisition outcomes do not create timestamp
@@ -115,6 +118,9 @@ Claim audit:
   citation path, PDF path, and PDF SHA-256 digest in sync with the repository.
 - Source ledgers must not point at ignored `research/papers/...` inbox files;
   promote reviewed PDFs before treating them as canonical evidence inputs.
+- Acquisition ledgers in `sources/*.acquisition.yaml` are the exception for
+  ignored inbox paths: audit permits those paths there, but requires downloaded
+  files to exist locally and match the recorded SHA-256 digest.
 - PDF promotion ledgers in `sources/*.promotion.yaml` are review evidence:
   audit checks their license metadata, citation path, destination PDF path, and
   SHA-256 digest.

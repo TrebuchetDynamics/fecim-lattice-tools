@@ -281,6 +281,51 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_acquisition_ledger_key_does_not_match_filename(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="wrong_key",
+                status="planned",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.acquisition.yaml paper_key wrong_key must match filename park2015_advmat_hzo",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_downloaded_acquisition_digest_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\ndownloaded acquisition\n")
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="park2015_advmat_hzo",
+                status="downloaded",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="stale-digest",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.acquisition.yaml acquisition sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
     def test_audit_validates_pdf_promotion_review_ledgers(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -678,6 +723,27 @@ class ClaimsTest(unittest.TestCase):
             f"  sha256: {sha256}\n"
             "  size: 24\n"
             "title: Park HZO\n",
+            encoding="utf-8",
+        )
+
+    def _write_acquisition_ledger(
+        self,
+        root: Path,
+        filename_key: str,
+        paper_key: str,
+        status: str,
+        pdf_path: str,
+        sha256: str,
+    ):
+        path = root / "research" / "sources" / f"{filename_key}.acquisition.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"citation_path: citations/papers/{filename_key}.md\n"
+            "doi: 10.1002/adma.201404531\n"
+            f"paper_key: {paper_key}\n"
+            f"pdf_path: {pdf_path}\n"
+            f"sha256: {sha256}\n"
+            f"status: {status}\n",
             encoding="utf-8",
         )
 
