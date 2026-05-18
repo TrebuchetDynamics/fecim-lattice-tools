@@ -20,6 +20,7 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
     processed = 0
     unmatched: list[dict[str, object]] = []
     duplicates: list[dict[str, object]] = []
+    local_only: list[dict[str, object]] = []
 
     for group in _groups_by_sha(pdfs):
         selected_pdf, selected_match = _select_canonical_pdf(group, records)
@@ -34,6 +35,10 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
             continue
 
         paper_key = match.paper_key
+        if _is_ignored_pdf_inbox_path(_display_path(root, pdf.path)):
+            local_only.append(_local_inbox_record(root, pdf, paper_key, records[paper_key]))
+            continue
+
         _write_source(root, paper_key, pdf, match, records[paper_key])
 
         parsed_dir = root / "research" / "parsed" / paper_key
@@ -73,8 +78,9 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
 
     _write_unmatched_report(root, unmatched)
     _write_duplicate_report(root, duplicates)
-    _write_manifest(root, processed, len(unmatched), len(duplicates))
-    print(f"ingest complete: processed={processed} unmatched={len(unmatched)}")
+    _write_local_inbox_report(root, local_only)
+    _write_manifest(root, processed, len(unmatched), len(duplicates), len(local_only))
+    print(f"ingest complete: processed={processed} unmatched={len(unmatched)} local_only={len(local_only)}")
     return 0
 
 
@@ -120,10 +126,17 @@ def _write_duplicate_report(root: Path, duplicates: list[dict[str, object]]) -> 
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _write_manifest(root: Path, processed: int, unmatched: int, duplicates: int) -> None:
+def _write_local_inbox_report(root: Path, local_only: list[dict[str, object]]) -> None:
+    path = root / "research" / "reports" / "local-inbox-pdfs.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = {"local_only": sorted(local_only, key=lambda item: str(item["path"]))}
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_manifest(root: Path, processed: int, unmatched: int, duplicates: int, local_only: int) -> None:
     path = root / "research" / "manifests" / "ingest-latest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = {"duplicates": duplicates, "processed": processed, "unmatched": unmatched}
+    data = {"duplicates": duplicates, "local_only": local_only, "processed": processed, "unmatched": unmatched}
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -143,6 +156,18 @@ def _duplicate_record(root: Path, pdf: DiscoveredPDF, duplicate_of: Path) -> dic
         "sha256": pdf.sha256,
         "size": pdf.size,
         "status": "duplicate",
+    }
+
+
+def _local_inbox_record(root: Path, pdf: DiscoveredPDF, paper_key: str, record: CitationRecord) -> dict[str, object]:
+    return {
+        "action": "promote_pdf_first",
+        "citation_path": _display_path(root, record.path),
+        "paper_key": paper_key,
+        "path": _display_path(root, pdf.path),
+        "sha256": pdf.sha256,
+        "size": pdf.size,
+        "status": "needs_promotion",
     }
 
 
@@ -195,3 +220,7 @@ def _display_path(root: Path, path: Path) -> str:
         return str(path.relative_to(root))
     except ValueError:
         return str(path)
+
+
+def _is_ignored_pdf_inbox_path(path: str) -> bool:
+    return path == "research/papers" or path.startswith("research/papers/")

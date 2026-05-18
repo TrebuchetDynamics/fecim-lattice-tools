@@ -15,14 +15,20 @@ class IngestTest(unittest.TestCase):
             root = Path(td)
             citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
             citation.parent.mkdir(parents=True)
-            citation.write_text("**Key:** `park2015_advmat_hzo`\n**DOI:** `10.1002/adma.201404531`\n", encoding="utf-8")
+            citation.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                "**DOI:** `10.1002/adma.201404531`\n"
+                "**PDF:** `docs/4-research/papers/park2015_advmat_hzo.pdf`\n",
+                encoding="utf-8",
+            )
 
-            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf.parent.mkdir(parents=True)
             pdf.write_bytes(b"%PDF fixture")
             pdf.with_suffix(".md").write_text("## Results\n\nHZO coercive field evidence.", encoding="utf-8")
 
             unknown = root / "research" / "papers" / "unknown.pdf"
+            unknown.parent.mkdir(parents=True)
             unknown.write_bytes(b"%PDF unknown")
 
             code = run_ingest(root=root, extra_paths=[])
@@ -40,9 +46,13 @@ class IngestTest(unittest.TestCase):
             root = Path(td)
             citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
             citation.parent.mkdir(parents=True)
-            citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
+            citation.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                "**PDF:** `docs/4-research/papers/park2015_advmat_hzo.pdf`\n",
+                encoding="utf-8",
+            )
 
-            papers = root / "research" / "papers"
+            papers = root / "docs" / "4-research" / "papers"
             papers.mkdir(parents=True)
             canonical = papers / "park2015_advmat_hzo.pdf"
             duplicate = papers / "park2015_advmat_hzo_copy.pdf"
@@ -62,8 +72,8 @@ class IngestTest(unittest.TestCase):
                 {
                     "duplicates": [
                         {
-                            "duplicate_of": "research/papers/park2015_advmat_hzo.pdf",
-                            "path": "research/papers/park2015_advmat_hzo_copy.pdf",
+                            "duplicate_of": "docs/4-research/papers/park2015_advmat_hzo.pdf",
+                            "path": "docs/4-research/papers/park2015_advmat_hzo_copy.pdf",
                             "sha256": duplicate_report["duplicates"][0]["sha256"],
                             "size": 9,
                             "status": "duplicate",
@@ -86,7 +96,7 @@ class IngestTest(unittest.TestCase):
             citation.parent.mkdir(parents=True)
             citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
 
-            papers = root / "research" / "papers"
+            papers = root / "docs" / "4-research" / "papers"
             papers.mkdir(parents=True)
             unmatched = papers / "a_scan.pdf"
             matched = papers / "park2015_advmat_hzo.pdf"
@@ -109,10 +119,10 @@ class IngestTest(unittest.TestCase):
                 (root / "research" / "reports" / "duplicate-pdfs.json").read_text(encoding="utf-8")
             )
             self.assertEqual(len(duplicate_report["duplicates"]), 1)
-            self.assertEqual(duplicate_report["duplicates"][0]["path"], "research/papers/a_scan.pdf")
+            self.assertEqual(duplicate_report["duplicates"][0]["path"], "docs/4-research/papers/a_scan.pdf")
             self.assertEqual(
                 duplicate_report["duplicates"][0]["duplicate_of"],
-                "research/papers/park2015_advmat_hzo.pdf",
+                "docs/4-research/papers/park2015_advmat_hzo.pdf",
             )
 
             unmatched_report = json.loads(
@@ -158,6 +168,49 @@ class IngestTest(unittest.TestCase):
             self.assertIn("Tracked promoted evidence", chunk_text)
             self.assertNotIn("Ignored inbox evidence", chunk_text)
 
+    def test_ingest_reports_unpromoted_inbox_pdf_without_canonical_ledgers(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text(
+                "**Key:** `park2015_advmat_hzo`\n"
+                "**PDF:** `not stored`\n"
+                "**Local PDF:** `research/papers/park2015_advmat_hzo.pdf`\n",
+                encoding="utf-8",
+            )
+            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf.parent.mkdir(parents=True)
+            pdf.write_bytes(b"%PDF local inbox")
+            pdf.with_suffix(".md").write_text("## Results\n\nLocal inbox evidence.", encoding="utf-8")
+
+            code = run_ingest(root=root, extra_paths=[])
+            self.assertEqual(code, 0)
+
+            self.assertFalse((root / "research" / "sources" / "park2015_advmat_hzo.yaml").exists())
+            self.assertFalse((root / "research" / "chunks" / "park2015_advmat_hzo.jsonl").exists())
+            self.assertFalse((root / "research" / "parsed" / "park2015_advmat_hzo" / "marker.md").exists())
+            local_report = json.loads(
+                (root / "research" / "reports" / "local-inbox-pdfs.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                local_report["local_only"],
+                [
+                    {
+                        "action": "promote_pdf_first",
+                        "citation_path": "citations/papers/park2015_advmat_hzo.md",
+                        "paper_key": "park2015_advmat_hzo",
+                        "path": "research/papers/park2015_advmat_hzo.pdf",
+                        "sha256": local_report["local_only"][0]["sha256"],
+                        "size": 16,
+                        "status": "needs_promotion",
+                    }
+                ],
+            )
+            manifest = json.loads((root / "research" / "manifests" / "ingest-latest.json").read_text())
+            self.assertEqual(manifest["processed"], 0)
+            self.assertEqual(manifest["local_only"], 1)
+
     def test_parse_manifest_uses_repo_relative_paths_and_messages(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -165,7 +218,7 @@ class IngestTest(unittest.TestCase):
             citation.parent.mkdir(parents=True)
             citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
 
-            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf.parent.mkdir(parents=True)
             pdf.write_bytes(b"%PDF fixture")
             pdf.with_suffix(".md").write_text("## Results\n\nHZO evidence.", encoding="utf-8")
@@ -188,7 +241,7 @@ class IngestTest(unittest.TestCase):
             citation.parent.mkdir(parents=True)
             citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
 
-            pdf = root / "research" / "papers" / "scan_park2015_advmat_hzo.pdf"
+            pdf = root / "docs" / "4-research" / "papers" / "scan_park2015_advmat_hzo.pdf"
             pdf.parent.mkdir(parents=True)
             pdf.write_bytes(b"%PDF fixture")
             pdf.with_suffix(".md").write_text("## Results\n\nHZO evidence.", encoding="utf-8")
@@ -211,7 +264,7 @@ class IngestTest(unittest.TestCase):
             citation.parent.mkdir(parents=True)
             citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
 
-            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf.parent.mkdir(parents=True)
             pdf.write_bytes(b"%PDF fixture")
             marker = root / "research" / "parsed" / "park2015_advmat_hzo" / "marker.md"
@@ -243,7 +296,7 @@ class IngestTest(unittest.TestCase):
             citation.parent.mkdir(parents=True)
             citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
 
-            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf.parent.mkdir(parents=True)
             pdf.write_bytes(b"%PDF fixture")
 

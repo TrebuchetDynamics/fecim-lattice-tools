@@ -20,6 +20,9 @@ Local-only input:
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
 - When a citation record has a stored canonical `**PDF:**` path, ingestion
   prefers that tracked PDF over duplicate local inbox copies.
+- Matched PDFs that exist only in ignored `papers/` are reported in
+  `reports/local-inbox-pdfs.json` with `needs_promotion`; ingestion does not
+  write canonical source, parse, or chunk ledgers for them until promotion.
 - Rebuild also emits the cache status report. Cache warnings are recorded in
   `reports/rebuild-latest.json` without turning a file-only refresh into a
   failed rebuild.
