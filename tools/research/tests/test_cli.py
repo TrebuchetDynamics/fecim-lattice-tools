@@ -14,6 +14,7 @@ class CLITest(unittest.TestCase):
         text = out.getvalue()
         self.assertIn("acquire", text)
         self.assertIn("audit", text)
+        self.assertIn("cache", text)
         self.assertIn("cite", text)
         self.assertIn("claim-scan", text)
         self.assertIn("graph", text)
@@ -29,6 +30,13 @@ class CLITest(unittest.TestCase):
             main(["acquire", "--help"])
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--doi", out.getvalue())
+
+    def test_cache_help_mentions_rebuildable_status_report(self):
+        out = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
+            main(["cache", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("rebuildable", out.getvalue())
 
     def test_rebuild_help_lists_skip_index_option(self):
         out = io.StringIO()
@@ -51,6 +59,7 @@ class CLITest(unittest.TestCase):
 
     def test_core_commands_import_without_optional_dependencies(self):
         import fecim_research.acquisition
+        import fecim_research.cache
         import fecim_research.cite
         import fecim_research.claims
         import fecim_research.claimscan
@@ -62,6 +71,7 @@ class CLITest(unittest.TestCase):
         import fecim_research.searching
 
         self.assertTrue(hasattr(fecim_research.acquisition, "run_acquire"))
+        self.assertTrue(hasattr(fecim_research.cache, "run_cache"))
         self.assertTrue(hasattr(fecim_research.cite, "run_cite"))
         self.assertTrue(hasattr(fecim_research.claims, "run_audit"))
         self.assertTrue(hasattr(fecim_research.claimscan, "run_claim_scan"))

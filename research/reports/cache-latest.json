@@ -1,0 +1,77 @@
+{
+  "caches": [
+    {
+      "exists": false,
+      "ignored_by_policy": true,
+      "inputs": 0,
+      "kind": "bm25",
+      "manifest": "research/manifests/index-latest.json",
+      "manifest_exists": false,
+      "name": "pyserini",
+      "path": "research/index/pyserini",
+      "rebuild_command": "fecim research index",
+      "rebuildable": true,
+      "required": true,
+      "stale": false,
+      "stale_inputs": [],
+      "status": "missing"
+    },
+    {
+      "exists": false,
+      "ignored_by_policy": true,
+      "inputs": 0,
+      "kind": "semantic-vector",
+      "manifest": "research/manifests/index-latest.json",
+      "manifest_exists": false,
+      "name": "lancedb",
+      "path": "research/index/lancedb",
+      "rebuild_command": "fecim research index --semantic",
+      "rebuildable": true,
+      "required": false,
+      "stale": false,
+      "stale_inputs": [],
+      "status": "optional"
+    },
+    {
+      "exists": false,
+      "ignored_by_policy": true,
+      "inputs": 0,
+      "kind": "embedding-model-cache",
+      "manifest": "",
+      "manifest_exists": false,
+      "name": "models",
+      "path": "research/index/models",
+      "rebuild_command": "fecim research index --semantic",
+      "rebuildable": true,
+      "required": false,
+      "stale": false,
+      "stale_inputs": [],
+      "status": "optional"
+    },
+    {
+      "exists": false,
+      "ignored_by_policy": true,
+      "inputs": 0,
+      "kind": "tool-scratch",
+      "manifest": "",
+      "manifest_exists": false,
+      "name": "scratch",
+      "path": "research/.cache",
+      "rebuild_command": "fecim research rebuild",
+      "rebuildable": true,
+      "required": false,
+      "stale": false,
+      "stale_inputs": [],
+      "status": "optional"
+    }
+  ],
+  "ok": false,
+  "summary": {
+    "missing": 1,
+    "optional": 3,
+    "ready": 0,
+    "required": 1,
+    "stale": 0,
+    "total": 4
+  }
+}

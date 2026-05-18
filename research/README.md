@@ -16,6 +16,9 @@ Local-only input:
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
 - Use `fecim-lattice-tools research rebuild --skip-index` for file-only CI
   checks or repositories that do not currently have chunk files.
+- `fecim-lattice-tools research cache` writes
+  `reports/cache-latest.json`, a git-trackable status report for ignored
+  rebuildable caches such as the Pyserini index.
 - `fecim-lattice-tools research register-pdfs` writes a report-only inventory
   of local PDFs that still need canonical paper records.
 - Add `--write-stubs` to create `needs-review` records under
@@ -44,8 +47,8 @@ Tracked ledger outputs:
 - `extracted/`
 - `graphs/`
 - `manifests/`
-- `reports/` includes latest acquisition, rebuild, ingestion, claim-audit,
-  claim-scan, cite, and graph JSON reports
+- `reports/` includes latest acquisition, rebuild, ingestion, cache,
+  claim-audit, claim-scan, cite, and graph JSON reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 
@@ -79,3 +82,7 @@ Ignored rebuildable caches:
 - `index/lancedb/`
 - `index/models/`
 - `.cache/`
+
+The cache report records whether required cache inputs still match their
+tracked manifests. Cache directories remain ignored because they are derived
+artifacts, but manifest and report changes stay visible in git.
