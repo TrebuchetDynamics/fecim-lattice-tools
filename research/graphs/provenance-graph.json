@@ -1,0 +1,165 @@
+{
+  "edges": [
+    {
+      "from": "claim:hzo-remanent-polarization-range",
+      "relation": "used_in",
+      "to": "file:citations/facts.md"
+    },
+    {
+      "from": "claim:hzo-remanent-polarization-range",
+      "relation": "used_in",
+      "to": "file:config/materials.yaml"
+    },
+    {
+      "from": "claim:hzo-remanent-polarization-range",
+      "relation": "used_in",
+      "to": "file:docs/TRUST.md"
+    },
+    {
+      "from": "claim:materlik-lgd-coefficients",
+      "relation": "used_in",
+      "to": "file:citations/facts.md"
+    },
+    {
+      "from": "claim:materlik-lgd-coefficients",
+      "relation": "used_in",
+      "to": "file:config/materials.yaml"
+    },
+    {
+      "from": "claim:materlik-lgd-coefficients",
+      "relation": "used_in",
+      "to": "file:docs/TRUST.md"
+    },
+    {
+      "from": "file:citations/facts.md",
+      "relation": "references",
+      "to": "claim:hzo-remanent-polarization-range"
+    },
+    {
+      "from": "file:citations/facts.md",
+      "relation": "references",
+      "to": "claim:materlik-lgd-coefficients"
+    },
+    {
+      "from": "file:config/materials.yaml",
+      "relation": "references",
+      "to": "claim:hzo-remanent-polarization-range"
+    },
+    {
+      "from": "file:config/materials.yaml",
+      "relation": "references",
+      "to": "claim:materlik-lgd-coefficients"
+    },
+    {
+      "from": "file:docs/TRUST.md",
+      "relation": "references",
+      "to": "claim:hzo-remanent-polarization-range"
+    },
+    {
+      "from": "file:docs/TRUST.md",
+      "relation": "references",
+      "to": "claim:materlik-lgd-coefficients"
+    },
+    {
+      "from": "paper:materlik2015_jap_hfo2_origin",
+      "relation": "supports",
+      "to": "claim:materlik-lgd-coefficients"
+    },
+    {
+      "from": "paper:park2015_advmat_hzo",
+      "relation": "supports",
+      "to": "claim:hzo-remanent-polarization-range"
+    }
+  ],
+  "nodes": [
+    {
+      "claim": "Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.",
+      "confidence": "medium",
+      "id": "claim:hzo-remanent-polarization-range",
+      "key": "hzo-remanent-polarization-range",
+      "path": "citations/claims/hzo-remanent-polarization-range.yaml",
+      "status": "literature-backed",
+      "type": "claim"
+    },
+    {
+      "claim": "Materlik 2015 reports HfO2 LGD beta and gamma coefficients used as HZO Landau-Khalatnikov thermodynamic anchors.",
+      "confidence": "medium",
+      "id": "claim:materlik-lgd-coefficients",
+      "key": "materlik-lgd-coefficients",
+      "path": "citations/claims/materlik-lgd-coefficients.yaml",
+      "status": "literature-backed",
+      "type": "claim"
+    },
+    {
+      "id": "file:citations/facts.md",
+      "path": "citations/facts.md",
+      "type": "file"
+    },
+    {
+      "id": "file:config/materials.yaml",
+      "path": "config/materials.yaml",
+      "type": "file"
+    },
+    {
+      "id": "file:docs/TRUST.md",
+      "path": "docs/TRUST.md",
+      "type": "file"
+    },
+    {
+      "id": "paper:alessandri2018_ieee_edl_switching",
+      "key": "alessandri2018_ieee_edl_switching",
+      "path": "citations/papers/alessandri2018_ieee_edl_switching.md",
+      "title": "Switching Dynamics of Ferroelectric HZO",
+      "type": "paper"
+    },
+    {
+      "id": "paper:crosssim2024_sandia",
+      "key": "crosssim2024_sandia",
+      "path": "citations/papers/crosssim2024_sandia.md",
+      "title": "CrossSim: A Hardware/Software Co-Design Tool for Analog In-Memory Computing",
+      "type": "paper"
+    },
+    {
+      "id": "paper:guo2018_apl_nls",
+      "key": "guo2018_apl_nls",
+      "path": "citations/papers/guo2018_apl_nls.md",
+      "title": "Nucleation-Limited Polarization Switching in Ferroelectric HfO2 Capacitors",
+      "type": "paper"
+    },
+    {
+      "id": "paper:khalatnikov1954_zheft_lk",
+      "key": "khalatnikov1954_zheft_lk",
+      "path": "citations/papers/khalatnikov1954_zheft_lk.md",
+      "title": "On the Anomalous Absorption of Sound Near a Second Order Phase Transition Point",
+      "type": "paper"
+    },
+    {
+      "id": "paper:materlik2015_jap_hfo2_origin",
+      "key": "materlik2015_jap_hfo2_origin",
+      "path": "citations/papers/materlik2015_jap_hfo2_origin.md",
+      "title": "The Origin of Ferroelectricity in Hf1-xZrxO2: A Computational Investigation and a Surface Energy Model",
+      "type": "paper"
+    },
+    {
+      "id": "paper:mayergoyz2003_hysteresis_models",
+      "key": "mayergoyz2003_hysteresis_models",
+      "path": "citations/papers/mayergoyz2003_hysteresis_models.md",
+      "title": "Mathematical Models of Hysteresis and Their Applications",
+      "type": "paper"
+    },
+    {
+      "id": "paper:park2015_advmat_hzo",
+      "key": "park2015_advmat_hzo",
+      "path": "citations/papers/park2015_advmat_hzo.md",
+      "title": "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films",
+      "type": "paper"
+    },
+    {
+      "id": "paper:preisach1935_zphys",
+      "key": "preisach1935_zphys",
+      "path": "citations/papers/preisach1935_zphys.md",
+      "title": "Ueber die magnetische Nachwirkung",
+      "type": "paper"
+    }
+  ]
+}

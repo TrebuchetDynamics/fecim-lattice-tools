@@ -51,6 +51,15 @@ Claim audit:
 - Add `--fail-on-findings` only for narrow paths that have already been cleaned
   up; broad legacy scans are expected to produce review queues first.
 
+Graph export:
+
+- `fecim-lattice-tools research graph` writes the file-first provenance graph to
+  `graphs/provenance-graph.json` and a small summary to
+  `reports/graph-latest.json`.
+- The graph is an export over committed claim/source files, not an authority.
+  Rebuild it after changing `citations/papers`, `citations/claims`, or
+  `[claim: id]` references.
+
 Ignored rebuildable caches:
 
 - `index/pyserini/`
