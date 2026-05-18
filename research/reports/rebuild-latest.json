@@ -18,6 +18,14 @@
     },
     {
       "artifacts": [
+        "research/reports/missing-papers-latest.json"
+      ],
+      "exit_code": 0,
+      "stage": "missing",
+      "status": "ok"
+    },
+    {
+      "artifacts": [
         "research/manifests/index-latest.json",
         "research/index/pyserini"
       ],

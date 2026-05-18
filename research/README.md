@@ -11,8 +11,9 @@ Local-only input:
 
 - `papers/` stores source PDFs before parsing. PDF files are ignored so the
   repository does not accidentally commit paper artifacts.
-- `fecim-lattice-tools research rebuild` runs the local ingestion, index,
-  claim-audit, and provenance-graph stages as the one-command corpus refresh.
+- `fecim-lattice-tools research rebuild` runs local ingestion, missing-paper
+  inventory, index, claim-audit, and provenance-graph stages as the
+  one-command corpus refresh.
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
 - Rebuild also emits the cache status report. Cache warnings are recorded in
   `reports/rebuild-latest.json` without turning a file-only refresh into a
@@ -36,6 +37,8 @@ Paper acquisition:
   `reports/missing-papers-latest.json`, a local no-network inventory of
   citation records that still lack a matched PDF, including acquisition
   commands for records with DOI metadata.
+- `fecim-lattice-tools research rebuild` refreshes this missing-paper report
+  after ingestion so the paper acquisition queue stays reviewable in git.
 - `fecim-lattice-tools research acquire` checks citation records that do not
   have a matching local PDF and records any legal OpenAlex open-access PDF
   location it finds.

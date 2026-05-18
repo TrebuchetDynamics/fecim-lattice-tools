@@ -9,6 +9,7 @@ import json
 @dataclass(frozen=True)
 class RebuildStages:
     ingest: Callable[[], int]
+    missing: Callable[[], int]
     index: Callable[[], int]
     cache: Callable[[], int]
     audit: Callable[[], int]
@@ -28,6 +29,7 @@ def run_rebuild(
 
     stage_results: list[dict[str, object]] = []
     stage_results.append(_run_stage("ingest", stages.ingest))
+    stage_results.append(_run_stage("missing", stages.missing))
     if skip_index:
         stage_results.append(_skipped_stage("index"))
     else:
@@ -71,9 +73,11 @@ def _default_stages(root: Path, extra_paths: list[Path], semantic: bool, embeddi
     from .graphing import run_graph
     from .indexing import run_index
     from .ingest import run_ingest
+    from .missing import run_missing
 
     return RebuildStages(
         ingest=lambda: run_ingest(root=root, extra_paths=extra_paths),
+        missing=lambda: run_missing(root=root),
         index=lambda: run_index(root=root, semantic=semantic, embedding_model=embedding_model),
         cache=lambda: run_cache(root=root),
         audit=lambda: run_audit(root=root),
@@ -110,6 +114,9 @@ def _stage_artifacts(stage: str) -> list[str]:
             "research/manifests/ingest-latest.json",
             "research/reports/duplicate-pdfs.json",
             "research/reports/unmatched-pdfs.json",
+        ],
+        "missing": [
+            "research/reports/missing-papers-latest.json",
         ],
         "index": [
             "research/manifests/index-latest.json",

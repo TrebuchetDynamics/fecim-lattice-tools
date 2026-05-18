@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     register.add_argument("paths", nargs="*", help="optional extra PDF roots")
     register.add_argument("--write-stubs", action="store_true", help="write needs-review citation stubs")
 
-    rebuild = sub.add_parser("rebuild", help="run ingestion, indexing, audit, and graph rebuild stages")
+    rebuild = sub.add_parser("rebuild", help="run ingestion, missing-paper, indexing, audit, and graph stages")
     rebuild.add_argument("paths", nargs="*", help="optional extra PDF roots")
     rebuild.add_argument("--skip-index", action="store_true", help="skip rebuildable search index generation")
     rebuild.add_argument("--semantic", action="store_true", help="build local semantic index")
