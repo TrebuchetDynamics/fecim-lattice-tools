@@ -81,11 +81,11 @@ func TestCircuitsOverlayStateIncludesReferenceTimingSummaries(t *testing.T) {
 func TestCircuitsOverlayStateIncludesReferenceTimingWaveformMetadata(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{
-		ID:      circuitsvm.ActionSetOperationMode,
+		ID:      circuitsvm.ActionSetTimingOperation,
 		Kind:    viewmodel.ActionSelect,
-		Payload: map[string]string{"mode": circuitsvm.OperationCompute},
+		Payload: map[string]string{"operation": "COMPUTE"},
 	}); err != nil {
-		t.Fatalf("set compute mode: %v", err)
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 
 	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
@@ -103,11 +103,11 @@ func TestCircuitsOverlayStateIncludesReferenceTimingWaveformMetadata(t *testing.
 func TestCircuitsOverlayFindsActiveTimingWaveformPlot(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{
-		ID:      circuitsvm.ActionSetOperationMode,
+		ID:      circuitsvm.ActionSetTimingOperation,
 		Kind:    viewmodel.ActionSelect,
-		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+		Payload: map[string]string{"operation": "WRITE"},
 	}); err != nil {
-		t.Fatalf("set write mode: %v", err)
+		t.Fatalf("set write timing operation: %v", err)
 	}
 
 	plot := activeTimingWaveformPlot(vm.Snapshot())
@@ -232,11 +232,11 @@ func TestCircuitsOverlayStateIncludesReferenceTimingExportStatus(t *testing.T) {
 func TestCircuitsOverlayStateIncludesReferenceTimingAnimationStatus(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{
-		ID:      circuitsvm.ActionSetOperationMode,
+		ID:      circuitsvm.ActionSetTimingOperation,
 		Kind:    viewmodel.ActionSelect,
-		Payload: map[string]string{"mode": circuitsvm.OperationCompute},
+		Payload: map[string]string{"operation": "COMPUTE"},
 	}); err != nil {
-		t.Fatalf("set compute mode: %v", err)
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionAnimateReferenceTiming, Kind: viewmodel.ActionCommand}); err != nil {
 		t.Fatalf("animate reference timing: %v", err)

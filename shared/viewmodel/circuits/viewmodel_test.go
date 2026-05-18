@@ -49,6 +49,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"write_target",
 		"coupling",
 		"ispp_engine",
+		"timing_operation",
 		"logger_verbosity",
 		"logger_detail",
 		"adc",
@@ -75,6 +76,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"set_tia_gain",
 		"set_coupling_tier",
 		"set_ispp_engine",
+		"set_timing_operation",
 		"set_logger_verbosity",
 		"run_read",
 		"run_write",
@@ -105,6 +107,7 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 		{ID: "set_tia_gain", Payload: map[string]string{"gain_ohm": "50000"}},
 		{ID: "set_coupling_tier", Payload: map[string]string{"tier": "Tier-B"}},
 		{ID: "set_ispp_engine", Payload: map[string]string{"engine": "Landau-Khalatnikov (Physics ODE)"}},
+		{ID: "set_timing_operation", Payload: map[string]string{"operation": "WRITE"}},
 		{ID: "set_logger_verbosity", Payload: map[string]string{"verbosity": "trace"}},
 	}
 	for _, action := range actions {
@@ -125,6 +128,7 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 		"tia":              "50 kΩ",
 		"coupling":         "Tier-B",
 		"ispp_engine":      "Landau-Khalatnikov (Physics ODE)",
+		"timing_operation": "WRITE",
 		"logger_verbosity": "trace",
 		"logger_detail":    "trace: every UI update and simulation tick",
 	}
@@ -458,6 +462,7 @@ func TestSnapshotContainsReferenceTimingSummaries(t *testing.T) {
 		"timing_write":         "203 ns total",
 		"timing_read":          "76 ns total",
 		"timing_compute":       "76 ns total",
+		"timing_operation":     "READ",
 		"timing_active":        "READ 76 ns total",
 		"timing_active_phases": "DAC 10 / Array 5 / TIA 11 / ADC 50 ns",
 	}
@@ -471,34 +476,83 @@ func TestSnapshotContainsReferenceTimingSummaries(t *testing.T) {
 	}
 }
 
-func TestReferenceTimingSummaryFollowsOperationMode(t *testing.T) {
+func TestReferenceTimingSelectorIsIndependentFromOperationMode(t *testing.T) {
 	m := New()
-	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationWrite},
-	}); err != nil {
-		t.Fatalf("set write mode: %v", err)
-	}
-	write := m.Snapshot()
-	if got := metricValue(write, "timing_active"); got != "WRITE 203 ns total" {
-		t.Fatalf("write timing active = %q, want WRITE total", got)
-	}
-	if got := metricValue(write, "timing_active_phases"); got != "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns" {
-		t.Fatalf("write timing phases = %q, want write phase summary", got)
-	}
-
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetOperationMode,
 		Payload: map[string]string{"mode": OperationCompute},
 	}); err != nil {
 		t.Fatalf("set compute mode: %v", err)
 	}
+	computeMode := m.Snapshot()
+	if got := metricValue(computeMode, "mode"); got != "COMPUTE" {
+		t.Fatalf("mode = %q, want COMPUTE", got)
+	}
+	if got := metricValue(computeMode, "timing_operation"); got != "READ" {
+		t.Fatalf("timing operation after mode change = %q, want READ", got)
+	}
+	if got := metricValue(computeMode, "timing_active"); got != "READ 76 ns total" {
+		t.Fatalf("timing active after mode change = %q, want READ total", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "WRITE"},
+	}); err != nil {
+		t.Fatalf("set timing operation: %v", err)
+	}
+	writeTiming := m.Snapshot()
+	if got := metricValue(writeTiming, "mode"); got != "COMPUTE" {
+		t.Fatalf("mode after timing selector change = %q, want COMPUTE", got)
+	}
+	if got := metricValue(writeTiming, "timing_operation"); got != "WRITE" {
+		t.Fatalf("timing operation = %q, want WRITE", got)
+	}
+	if got := metricValue(writeTiming, "timing_active"); got != "WRITE 203 ns total" {
+		t.Fatalf("write timing active = %q, want WRITE total", got)
+	}
+	if got := metricValue(writeTiming, "timing_active_phases"); got != "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns" {
+		t.Fatalf("write timing phases = %q, want write phase summary", got)
+	}
+	if got := metricValue(writeTiming, "operation_log_latest"); got != "control #2: Timing operation set to WRITE" {
+		t.Fatalf("operation log latest = %q, want timing selector entry", got)
+	}
+}
+
+func TestReferenceTimingSelectorFollowsAllOperations(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "compute"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
 	compute := m.Snapshot()
+	if got := metricValue(compute, "timing_operation"); got != "COMPUTE" {
+		t.Fatalf("compute timing operation = %q, want COMPUTE", got)
+	}
 	if got := metricValue(compute, "timing_active"); got != "COMPUTE 76 ns total" {
 		t.Fatalf("compute timing active = %q, want COMPUTE total", got)
 	}
 	if got := metricValue(compute, "timing_active_phases"); got != "DAC 10 / Array 5 / TIA+ADC 61 ns" {
 		t.Fatalf("compute timing phases = %q, want compute phase summary", got)
+	}
+}
+
+func TestReferenceTimingSelectorRejectsUnknownOperation(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "erase"},
+	})
+	if err == nil {
+		t.Fatal("expected invalid timing operation to fail")
+	}
+	if !contains(err.Error(), "invalid timing operation") {
+		t.Fatalf("timing operation error = %v, want invalid timing operation rejection", err)
+	}
+	if got := metricValue(m.Snapshot(), "timing_operation"); got != "READ" {
+		t.Fatalf("timing operation changed after invalid input: %q", got)
 	}
 }
 
@@ -541,13 +595,13 @@ func TestReferenceTimingWaveformMetadataFollowsLegacySignals(t *testing.T) {
 	}
 }
 
-func TestReferenceTimingWaveformMetadataFollowsOperationMode(t *testing.T) {
+func TestReferenceTimingWaveformMetadataFollowsTimingOperation(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationWrite},
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "WRITE"},
 	}); err != nil {
-		t.Fatalf("set write mode: %v", err)
+		t.Fatalf("set write timing operation: %v", err)
 	}
 	write := m.Snapshot()
 	if got := metricValue(write, "timing_waveform_signals"); got != "WRITE: CLK, ROW_SEL, COL_SEL, DAC_EN, V_PROG, DONE" {
@@ -561,10 +615,10 @@ func TestReferenceTimingWaveformMetadataFollowsOperationMode(t *testing.T) {
 	}
 
 	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationCompute},
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
 	}); err != nil {
-		t.Fatalf("set compute mode: %v", err)
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 	compute := m.Snapshot()
 	if got := metricValue(compute, "timing_waveform_signals"); got != "COMPUTE: CLK, INPUT_VALID, DAC_ALL, ARRAY_SETTLE, ADC_ALL, OUTPUT_VALID" {
@@ -599,10 +653,10 @@ func TestReferenceTimingWaveformPlotFollowsActiveOperation(t *testing.T) {
 	}
 
 	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationCompute},
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
 	}); err != nil {
-		t.Fatalf("set compute mode: %v", err)
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 	compute := plotByID(t, m.Snapshot(), "timing_waveform_active")
 	if compute.Title != "COMPUTE Timing Waveform" {
@@ -627,6 +681,12 @@ func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
 		Payload: map[string]string{"mode": OperationCompute},
 	}); err != nil {
 		t.Fatalf("set compute mode: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportReferenceTiming}); err != nil {
 		t.Fatalf("export reference timing: %v", err)
@@ -735,10 +795,10 @@ func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
 func TestReferenceTimingAnimationCapturesComputeSteps(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationCompute},
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
 	}); err != nil {
-		t.Fatalf("set compute mode: %v", err)
+		t.Fatalf("set compute timing operation: %v", err)
 	}
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
 		t.Fatalf("animate reference timing: %v", err)
@@ -793,10 +853,10 @@ func TestReferenceTimingAnimationFollowsReadAndWriteModes(t *testing.T) {
 	}
 
 	if err := m.ApplyAction(viewmodel.Action{
-		ID:      ActionSetOperationMode,
-		Payload: map[string]string{"mode": OperationWrite},
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "WRITE"},
 	}); err != nil {
-		t.Fatalf("set write mode: %v", err)
+		t.Fatalf("set write timing operation: %v", err)
 	}
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
 		t.Fatalf("animate write timing: %v", err)

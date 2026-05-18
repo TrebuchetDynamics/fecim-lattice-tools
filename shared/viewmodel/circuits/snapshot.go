@@ -46,6 +46,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "timing_write", Label: "Write Timing", Value: timingTotalValue(state.TimingWriteTotalNS)},
 		{ID: "timing_read", Label: "Read Timing", Value: timingTotalValue(state.TimingReadTotalNS)},
 		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
+		{ID: "timing_operation", Label: "Timing Operation", Value: timingOperationValue(state)},
 		{ID: "timing_active", Label: "Active Timing", Value: timingActiveValue(state)},
 		{ID: "timing_active_phases", Label: "Timing Phases", Value: timingActivePhasesValue(state)},
 		{ID: "timing_waveform_signals", Label: "Timing Waveform Signals", Value: timingWaveformSignalsValue(state)},
@@ -189,6 +190,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionSetTIAGain, Label: "TIA Gain", Kind: viewmodel.ActionSelect, Payload: map[string]string{"gain_ohm": fmt.Sprintf("%.0f", state.TIAGain)}},
 		{ID: ActionSetCouplingTier, Label: "Coupling Tier", Kind: viewmodel.ActionSelect, Payload: map[string]string{"tier": state.CouplingTier}},
 		{ID: ActionSetISPPEngine, Label: "ISPP Engine", Kind: viewmodel.ActionSelect, Payload: map[string]string{"engine": state.ISPPEngine}},
+		{ID: ActionSetTimingOperation, Label: "Timing Operation", Kind: viewmodel.ActionSelect, Payload: map[string]string{"operation": timingOperationValue(state)}},
 		{ID: ActionSetLoggerVerbosity, Label: "Logger Verbosity", Kind: viewmodel.ActionSelect, Payload: map[string]string{"verbosity": loggerVerbosityValue(state)}},
 	}
 	return viewmodel.ModuleSnapshot{
@@ -354,6 +356,21 @@ func timingTotalValue(totalNS int) string {
 		return "not evaluated"
 	}
 	return fmt.Sprintf("%d ns total", totalNS)
+}
+
+func timingOperationValue(state CircuitsState) string {
+	operation := strings.ToUpper(strings.TrimSpace(state.TimingOperation))
+	if operation == "READ" || operation == "WRITE" || operation == "COMPUTE" {
+		return operation
+	}
+	switch state.OperationMode {
+	case OperationWrite:
+		return "WRITE"
+	case OperationCompute:
+		return "COMPUTE"
+	default:
+		return "READ"
+	}
 }
 
 func timingActiveValue(state CircuitsState) string {

@@ -53,6 +53,7 @@ func buildCircuitsViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *mate
 func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme, onAction func(viewmodel.Action)) widget.Widget {
 	actions := indexActions(snapshot.Actions)
 	mode := actionPayload(actions, circuitsvm.ActionSetOperationMode, "mode", circuitsvm.OperationRead)
+	timingOperation := actionPayload(actions, circuitsvm.ActionSetTimingOperation, "operation", "READ")
 	architecture := actionPayload(actions, circuitsvm.ActionSetArchitecture, "architecture", circuitsvm.ArchitecturePassive)
 	rows := actionPayload(actions, circuitsvm.ActionResizeArray, "rows", "8")
 	cols := actionPayload(actions, circuitsvm.ActionResizeArray, "cols", rows)
@@ -78,6 +79,12 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		circuitButton("READ", mode == circuitsvm.OperationRead, selectAction(circuitsvm.ActionSetOperationMode, "mode", circuitsvm.OperationRead), theme, onAction),
 		circuitButton("WRITE", mode == circuitsvm.OperationWrite, selectAction(circuitsvm.ActionSetOperationMode, "mode", circuitsvm.OperationWrite), theme, onAction),
 		circuitButton("COMPUTE", mode == circuitsvm.OperationCompute, selectAction(circuitsvm.ActionSetOperationMode, "mode", circuitsvm.OperationCompute), theme, onAction),
+	}
+
+	timingButtons := []widget.Widget{
+		circuitButton("READ", timingOperation == "READ", selectAction(circuitsvm.ActionSetTimingOperation, "operation", "READ"), theme, onAction),
+		circuitButton("WRITE", timingOperation == "WRITE", selectAction(circuitsvm.ActionSetTimingOperation, "operation", "WRITE"), theme, onAction),
+		circuitButton("COMPUTE", timingOperation == "COMPUTE", selectAction(circuitsvm.ActionSetTimingOperation, "operation", "COMPUTE"), theme, onAction),
 	}
 
 	architectureButtons := []widget.Widget{
@@ -144,6 +151,7 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		primitives.Text("Circuit Controls").FontSize(14).Bold(),
 		primitives.Box(commandButtons...).Gap(8),
 		controlRow("Mode", modeButtons, theme),
+		controlRow("Timing", timingButtons, theme),
 		controlRow("Architecture", architectureButtons, theme),
 		controlRow("Array", arrayButtons, theme),
 		controlRow("Cell", cellButtons, theme),

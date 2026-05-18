@@ -439,11 +439,11 @@ func TestCircuitsOverlayRespondsToReferenceTimingState(t *testing.T) {
 
 	before := harness.renderActiveFrameSignature()
 	if err := port.ApplyAction(viewmodel.Action{
-		ID:      circuitsvm.ActionSetOperationMode,
+		ID:      circuitsvm.ActionSetTimingOperation,
 		Kind:    viewmodel.ActionSelect,
-		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+		Payload: map[string]string{"operation": "WRITE"},
 	}); err != nil {
-		t.Fatalf("set write mode: %v", err)
+		t.Fatalf("set write timing operation: %v", err)
 	}
 	after := harness.renderActiveFrameSignature()
 

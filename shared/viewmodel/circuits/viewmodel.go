@@ -43,6 +43,7 @@ func New() *Module {
 		CouplingTier:     CouplingTierA,
 		ISPPEngine:       ISPPEngineLevel,
 		LoggerVerbosity:  "off",
+		TimingOperation:  "READ",
 		ADCResolution:    5, DACResolution: 5, TIAGain: 1e4,
 		ChargePumpStages: 4, SupplyVoltage: 1.8, ISPPEnabled: true,
 	}}
@@ -118,6 +119,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.setCouplingTier(action.Payload)
 	case ActionSetISPPEngine:
 		return m.setISPPEngine(action.Payload)
+	case ActionSetTimingOperation:
+		return m.setTimingOperation(action.Payload)
 	case ActionSetLoggerVerbosity:
 		return m.setLoggerVerbosity(action.Payload)
 	default:
@@ -171,7 +174,21 @@ func (m *Module) setOperationMode(payload map[string]string) error {
 	m.state.OperationMode = mode
 	m.recordStatus("control", "Operation mode set to %s", mode)
 	m.computeHalfSelectStress()
+	return nil
+}
+
+func (m *Module) setTimingOperation(payload map[string]string) error {
+	operation, ok := payload["operation"]
+	if !ok {
+		return fmt.Errorf("circuits: missing timing operation")
+	}
+	operation = strings.ToUpper(strings.TrimSpace(operation))
+	if !validString(operation, "READ", "WRITE", "COMPUTE") {
+		return fmt.Errorf("circuits: invalid timing operation %q", payload["operation"])
+	}
+	m.state.TimingOperation = operation
 	m.computeReferenceTiming()
+	m.recordStatus("control", "Timing operation set to %s", operation)
 	return nil
 }
 
@@ -932,12 +949,12 @@ func (m *Module) computeReferenceTiming() {
 	m.state.TimingComputeTotalNS = computeTotalNS
 	m.state.TimingWaveforms = referenceTimingWaveforms()
 
-	switch m.state.OperationMode {
-	case OperationWrite:
+	switch timingOperationValue(m.state) {
+	case "WRITE":
 		m.state.TimingActiveOp = "WRITE"
 		m.state.TimingActiveTotalNS = writeTotalNS
 		m.state.TimingActivePhases = "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns"
-	case OperationCompute:
+	case "COMPUTE":
 		m.state.TimingActiveOp = "COMPUTE"
 		m.state.TimingActiveTotalNS = computeTotalNS
 		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA+ADC 61 ns"

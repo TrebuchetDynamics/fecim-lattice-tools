@@ -125,11 +125,11 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, reference timing JSON export, reference timing animation step state, reference timing waveform metadata, a compact reference timing waveform strip, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, full waveform panels, timed playback loops, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, an independent reference timing operation selector, reference timing JSON export, reference timing animation step state, reference timing waveform metadata, a compact reference timing waveform strip, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, full waveform panels, timed playback loops, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
-      "feature": "Unified controls action contract for array size, operation mode, architecture, selected cell, write target, DAC/ADC/TIA, coupling tier, and ISPP engine",
+      "feature": "Unified controls action contract for array size, operation mode, architecture, selected cell, write target, DAC/ADC/TIA, coupling tier, ISPP engine, and timing operation",
       "status": "ported",
       "legacy_sources": [
         "module4-circuits/pkg/gui/tab_unified.go",
@@ -150,7 +150,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions. It does not claim parity for the animated circuit canvas, overlays, operation-log surfaces, or deep investigation panels tracked by the broader circuits gap entry."
+      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions, including the independent reference timing operation selector. It does not claim parity for the animated circuit canvas, overlays, operation-log surfaces, or deep investigation panels tracked by the broader circuits gap entry."
     },
     {
       "module": "circuits",
@@ -280,7 +280,7 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceTiming' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingSummaries|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
       ],
-      "notes": "This ports summary-level timing totals and active operation phase durations into the gogpu snapshot and overlay. JSON export, waveform metadata, and compact waveform rendering are tracked separately. It does not claim animation controls, SVG/PNG waveform export, or a dedicated reference timing panel."
+      "notes": "This ports summary-level timing totals and active timing-operation phase durations into the gogpu snapshot and overlay. The active reference timing operation is selected independently from the simulation read/write/compute mode. JSON export, waveform metadata, and compact waveform rendering are tracked separately. It does not claim animation controls, SVG/PNG waveform export, or a dedicated reference timing panel."
     },
     {
       "module": "circuits",
@@ -301,6 +301,26 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
       ],
       "notes": "This ports reference timing export for write, read, and compute totals plus structured phase durations and active-operation context. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Timing animation step state is tracked separately. It does not claim raster waveform snapshots, SVG/PNG waveform export, or dialog parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Independent reference timing operation selector for WRITE/READ/COMPUTE diagrams",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'TimingSelector|ReferenceTimingSelector|ReferenceTimingWaveform|ReferenceTimingAnimation|ReferenceTimingExport|SnapshotContainsUnifiedCircuitControls|ApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsViewSelectorButtonsDispatchPayloads|ReferenceTiming|TimingWaveform|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
+      ],
+      "notes": "This ports the legacy reference timing operation selector as set_timing_operation, independent from the simulation operation mode. It drives timing summaries, animation status, waveform metadata, and the compact waveform strip without changing read/write/compute simulation controls. It does not claim timed playback loops, dialog parity, or SVG/PNG waveform export."
     },
     {
       "module": "circuits",

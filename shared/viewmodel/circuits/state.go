@@ -49,6 +49,7 @@ const (
 	ActionSetTIAGain             = "set_tia_gain"
 	ActionSetCouplingTier        = "set_coupling_tier"
 	ActionSetISPPEngine          = "set_ispp_engine"
+	ActionSetTimingOperation     = "set_timing_operation"
 	ActionSetLoggerVerbosity     = "set_logger_verbosity"
 )
 
@@ -253,6 +254,7 @@ type CircuitsState struct {
 	TimingWriteTotalNS          int                       `json:"timing_write_total_ns"`
 	TimingReadTotalNS           int                       `json:"timing_read_total_ns"`
 	TimingComputeTotalNS        int                       `json:"timing_compute_total_ns"`
+	TimingOperation             string                    `json:"timing_operation"`
 	TimingActiveOp              string                    `json:"timing_active_op"`
 	TimingActiveTotalNS         int                       `json:"timing_active_total_ns"`
 	TimingActivePhases          string                    `json:"timing_active_phases"`

@@ -101,18 +101,22 @@ func TestCircuitsViewSelectorButtonsDispatchPayloads(t *testing.T) {
 		actions = append(actions, action)
 	})
 	buttons := collectSidebarButtons(w)
-	if len(buttons) < 19 {
+	if len(buttons) < 22 {
 		t.Fatalf("circuits button count = %d, want selector buttons", len(buttons))
 	}
 
 	clickButton(buttons[8])
-	clickButton(buttons[18])
+	clickButton(buttons[11])
+	clickButton(buttons[21])
 
 	if got := actions[0]; got.ID != circuitsvm.ActionSetOperationMode || got.Payload["mode"] != circuitsvm.OperationWrite {
 		t.Fatalf("first selector action = %#v, want write mode action", got)
 	}
-	if got := actions[1]; got.ID != circuitsvm.ActionResizeArray || got.Payload["rows"] != "32" || got.Payload["cols"] != "32" {
-		t.Fatalf("second selector action = %#v, want 32x32 resize action", got)
+	if got := actions[1]; got.ID != circuitsvm.ActionSetTimingOperation || got.Payload["operation"] != "WRITE" {
+		t.Fatalf("second selector action = %#v, want write timing operation action", got)
+	}
+	if got := actions[2]; got.ID != circuitsvm.ActionResizeArray || got.Payload["rows"] != "32" || got.Payload["cols"] != "32" {
+		t.Fatalf("third selector action = %#v, want 32x32 resize action", got)
 	}
 }
 
