@@ -29,6 +29,10 @@ type circuitsOverlayState struct {
 	disturbVoltage  string
 	stressBudget    string
 	stressPerPulse  string
+	pvtTempSweep    string
+	pvtProcessYield string
+	pvtCornerENOB   string
+	pvtNoiseCeiling string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -97,6 +101,10 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		disturbVoltage:  valueOr(metrics["disturb_voltage"], "0.00 V"),
 		stressBudget:    valueOr(metrics["stress_budget"], "inactive"),
 		stressPerPulse:  valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
+		pvtTempSweep:    valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
+		pvtProcessYield: valueOr(metrics["pvt_process_yield"], "not evaluated"),
+		pvtCornerENOB:   valueOr(metrics["pvt_corner_enob"], "not evaluated"),
+		pvtNoiseCeiling: valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
 	}
 }
 
@@ -249,15 +257,27 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Stress: " + state.halfSelectState,
 		"Cells: " + strconv.Itoa(state.halfSelectCells),
 		"Budget: " + state.stressBudget,
+		"PVT: " + state.pvtProcessYield,
+		"Temp: " + state.pvtTempSweep,
+		"ENOB: " + compactPVTENOB(state.pvtCornerENOB),
+		"Ceil: " + state.pvtNoiseCeiling,
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)
 	cc.SetRGBA(0.67, 0.76, 0.72, 1)
+	lineStep := 20.0
+	statusY := y + height - 76
+	maxLines := int((statusY - (y + 44)) / lineStep)
+	if maxLines < 1 {
+		maxLines = 1
+	}
+	if len(lines) > maxLines {
+		lines = lines[:maxLines]
+	}
 	for i, line := range lines {
-		cc.DrawStringAnchored(line, x+14, y+52+float64(i)*22, 0, 0.5)
+		cc.DrawStringAnchored(elideCircuitStatus(line, 46), x+14, y+52+float64(i)*lineStep, 0, 0.5)
 	}
 
-	statusY := y + height - 76
 	cc.SetRGBA(0.03, 0.05, 0.05, 1)
 	cc.DrawRoundedRectangle(x+12, statusY, width-24, 52, 8)
 	cc.Fill()
@@ -359,6 +379,12 @@ func compactISPPEngine(engine string) string {
 		return "L-K ODE"
 	}
 	return "Preisach"
+}
+
+func compactPVTENOB(value string) string {
+	value = strings.TrimSuffix(value, " bits")
+	value = strings.ReplaceAll(value, " / ", " ")
+	return value
 }
 
 func elideCircuitStatus(status string, limit int) string {

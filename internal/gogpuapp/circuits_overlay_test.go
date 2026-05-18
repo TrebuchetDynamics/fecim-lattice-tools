@@ -30,3 +30,21 @@ func TestCircuitsOverlayStateIncludesHalfSelectStress(t *testing.T) {
 		t.Fatalf("stressBudget = %q, want 400 pulses/level", state.stressBudget)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesPVTInvestigationSummaries(t *testing.T) {
+	vm := circuitsvm.New()
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+
+	if state.pvtProcessYield != "100.0% (20/20)" {
+		t.Fatalf("pvtProcessYield = %q, want 100.0%% (20/20)", state.pvtProcessYield)
+	}
+	if state.pvtTempSweep != "pass -40/25/85/125 C" {
+		t.Fatalf("pvtTempSweep = %q, want temperature sweep summary", state.pvtTempSweep)
+	}
+	if state.pvtCornerENOB != "FF 4.51 / TT 4.42 / SS 4.30 bits" {
+		t.Fatalf("pvtCornerENOB = %q, want FF/TT/SS summary", state.pvtCornerENOB)
+	}
+	if state.pvtNoiseCeiling != "13.61 bits at 16-bit ADC" {
+		t.Fatalf("pvtNoiseCeiling = %q, want thermal-noise ceiling", state.pvtNoiseCeiling)
+	}
+}

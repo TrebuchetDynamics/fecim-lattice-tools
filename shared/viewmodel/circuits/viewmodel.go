@@ -3,8 +3,10 @@ package circuits
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"strconv"
 
+	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
 )
@@ -224,6 +226,7 @@ func (m *Module) setTIAGain(payload map[string]string) error {
 		return fmt.Errorf("circuits: TIA gain must be positive, got %.3g", gain)
 	}
 	m.state.TIAGain = gain
+	m.computePVTCorners()
 	m.state.LastOperationStatus = fmt.Sprintf("TIA gain set to %.0f ohm", gain)
 	return nil
 }
@@ -385,6 +388,7 @@ func (m *Module) runISPPSimulation() {
 }
 
 func (m *Module) computePVTCorners() {
+	mat := physics.DefaultHZO()
 	vref := m.state.SupplyVoltage
 	bits := m.state.ADCResolution
 	lsb := vref / float64(int(1)<<bits)
@@ -397,7 +401,77 @@ func (m *Module) computePVTCorners() {
 	m.state.ENOBss = enobForINL(0.5 * 1.25)
 	m.state.ADCNoiseLSB = math.Sqrt(lsb * lsb / 12.0)
 	m.state.SNRdB = 6.02*float64(bits) + 1.76
+	m.state.PVTTemperatureSweep = pvtTemperatureSweepStatus(mat)
+	m.state.PVTProcessYield, m.state.PVTPassSamples, m.state.PVTSamples = pvtProcessYield(mat)
+	m.state.PVTENOBNoiseCeiling, m.state.PVTENOBCeilingBits = pvtNoiseLimitedENOBCeiling(m.state.TIAGain)
 
 	_ = lsb
 	_ = vref
+}
+
+func pvtTemperatureSweepStatus(mat *physics.HZOMaterial) string {
+	tempsC := []float64{-40, 25, 85, 125}
+	var prevEc, prevPr float64
+	for i, tempC := range tempsC {
+		tempK := tempC + 273.15
+		ec := mat.CoerciveFieldAtTemp(tempK)
+		pr := mat.PolarizationAtTemp(tempK)
+		if ec <= 0 || pr <= 0 || math.IsNaN(ec) || math.IsNaN(pr) || math.IsInf(ec, 0) || math.IsInf(pr, 0) {
+			return "check -40/25/85/125 C"
+		}
+		if i > 0 && (ec > prevEc || pr > prevPr) {
+			return "check -40/25/85/125 C"
+		}
+		prevEc, prevPr = ec, pr
+	}
+	return "pass -40/25/85/125 C"
+}
+
+func pvtProcessYield(mat *physics.HZOMaterial) (float64, int, int) {
+	const (
+		samples      = 20
+		sigmaEcFrac  = 0.03
+		sigmaPrFrac  = 0.03
+		accuracySpec = 0.90
+	)
+	rng := rand.New(rand.NewSource(42))
+	pass := 0
+	for i := 0; i < samples; i++ {
+		ec := mat.Ec * (1 + sigmaEcFrac*rng.NormFloat64())
+		pr := mat.Pr * (1 + sigmaPrFrac*rng.NormFloat64())
+		if ec <= 0 || pr <= 0 {
+			continue
+		}
+		normGain := (ec / mat.Ec) * (pr / mat.Pr)
+		accuracy := 1 - math.Abs(normGain-1)
+		if accuracy >= accuracySpec {
+			pass++
+		}
+	}
+	return float64(pass) / float64(samples), pass, samples
+}
+
+func pvtNoiseLimitedENOBCeiling(tiaGain float64) (float64, int) {
+	const (
+		vRange = 1.8
+		tempK  = 300.0
+		bwHz   = 10e6
+	)
+	if tiaGain <= 0 {
+		tiaGain = 10e3
+	}
+	thermalVar := math.Pow(peripherals.ThermalNoiseRMS(tempK, tiaGain, bwHz), 2)
+	signalRMS := vRange / (2 * math.Sqrt2)
+
+	bestENOB := 0.0
+	bestBits := 0
+	for bits := 6; bits <= 16; bits++ {
+		totalVar := thermalVar + peripherals.QuantizationNoiseVariance(vRange, bits)
+		enob := (peripherals.SNRDB(signalRMS, math.Sqrt(totalVar)) - 1.76) / 6.02
+		if enob > bestENOB {
+			bestENOB = enob
+			bestBits = bits
+		}
+	}
+	return bestENOB, bestBits
 }

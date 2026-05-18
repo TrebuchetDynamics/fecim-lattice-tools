@@ -394,3 +394,22 @@ func TestCircuitsOverlayRespondsToHalfSelectStressState(t *testing.T) {
 		t.Fatal("circuits overlay did not change after half-select stress state changed from passive to isolated")
 	}
 }
+
+func TestCircuitsOverlayRespondsToPVTInvestigationState(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
+	port := harness.portFor(viewmodel.ModuleCircuits)
+
+	before := harness.renderActiveFrameSignature()
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetADCBits,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"bits": "7"},
+	}); err != nil {
+		t.Fatalf("set ADC bits: %v", err)
+	}
+	after := harness.renderActiveFrameSignature()
+
+	if after == before {
+		t.Fatal("circuits overlay did not change after PVT ENOB summary changed")
+	}
+}

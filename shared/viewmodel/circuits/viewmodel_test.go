@@ -196,6 +196,39 @@ func TestHalfSelectStressBudgetFollowsArchitecture(t *testing.T) {
 	}
 }
 
+func TestSnapshotContainsPVTInvestigationSummaries(t *testing.T) {
+	s := New().Snapshot()
+
+	wantMetrics := map[string]string{
+		"pvt_temperature_sweep": "pass -40/25/85/125 C",
+		"pvt_process_yield":     "100.0% (20/20)",
+		"pvt_corner_enob":       "FF 4.51 / TT 4.42 / SS 4.30 bits",
+		"pvt_noise_ceiling":     "13.61 bits at 16-bit ADC",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	if !hasSection(s, "pvt_investigations") {
+		t.Fatal("missing PVT investigations section")
+	}
+}
+
+func TestPVTInvestigationSummaryFollowsADCBits(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetADCBits,
+		Payload: map[string]string{"bits": "7"},
+	}); err != nil {
+		t.Fatalf("set ADC bits: %v", err)
+	}
+
+	if got := metricValue(m.Snapshot(), "pvt_corner_enob"); got != "FF 6.51 / TT 6.42 / SS 6.30 bits" {
+		t.Fatalf("pvt corner ENOB = %q, want 7-bit summary", got)
+	}
+}
+
 func metricValue(s viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range s.Metrics {
 		if metric.ID == id {

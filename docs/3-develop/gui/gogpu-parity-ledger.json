@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, and half-select/stress budget state. PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, and PVT investigation summaries. Logs, reference-spec workflows, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -172,7 +172,7 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
       ],
-      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, PVT investigations, or reference-spec panels."
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, deep investigation panels, or reference-spec panels."
     },
     {
       "module": "circuits",
@@ -197,6 +197,30 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesHalfSelectStress|CircuitsOverlayRespondsToHalfSelectStressState' -count=1"
       ],
       "notes": "This ports deterministic half-select/column-write stress summary state into gogpu. It does not claim full legacy residue evolution, retention drift fitting, or deep investigation-panel parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "PVT investigation summaries for temperature sweep, process-yield proxy, corner ENOB, and thermal-noise ENOB ceiling",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/pvt_temperature_sweep_test.go",
+        "module4-circuits/pkg/gui/pvt_process_corners_test.go",
+        "module4-circuits/pkg/gui/device_state_pvt_test.go",
+        "shared/peripherals/pvt.go",
+        "shared/peripherals/analysis.go",
+        "shared/peripherals/m4_investigations_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'PVTInvestigation' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesPVTInvestigationSummaries|CircuitsOverlayRespondsToPVTInvestigationState' -count=1"
+      ],
+      "notes": "This ports summary-level PVT investigation state into the gogpu snapshot and overlay. It does not claim full legacy sweep plots, interactive PVT controls, retained result logs, or calibrated silicon-corner guarantees."
     },
     {
       "module": "comparison",

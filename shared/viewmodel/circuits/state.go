@@ -88,4 +88,10 @@ type CircuitsState struct {
 	ENOBss              float64 `json:"enob_ss"`
 	SNRdB               float64 `json:"snr_db"`
 	ADCNoiseLSB         float64 `json:"adc_noise_lsb"`
+	PVTTemperatureSweep string  `json:"pvt_temperature_sweep"`
+	PVTProcessYield     float64 `json:"pvt_process_yield"`
+	PVTPassSamples      int     `json:"pvt_pass_samples"`
+	PVTSamples          int     `json:"pvt_samples"`
+	PVTENOBNoiseCeiling float64 `json:"pvt_enob_noise_ceiling"`
+	PVTENOBCeilingBits  int     `json:"pvt_enob_ceiling_bits"`
 }

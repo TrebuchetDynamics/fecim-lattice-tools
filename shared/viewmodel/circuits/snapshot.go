@@ -48,6 +48,10 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "enob_ff", Label: "ENOB (FF)", Value: fmt.Sprintf("%.2f bits", state.ENOBff)},
 			viewmodel.Metric{ID: "enob_ss", Label: "ENOB (SS)", Value: fmt.Sprintf("%.2f bits", state.ENOBss)},
 			viewmodel.Metric{ID: "snr", Label: "Ideal SNR", Value: fmt.Sprintf("%.1f dB", state.SNRdB)},
+			viewmodel.Metric{ID: "pvt_temperature_sweep", Label: "PVT Temperature Sweep", Value: pvtTemperatureSweepValue(state)},
+			viewmodel.Metric{ID: "pvt_process_yield", Label: "PVT Process Yield", Value: pvtProcessYieldValue(state)},
+			viewmodel.Metric{ID: "pvt_corner_enob", Label: "PVT Corner ENOB", Value: pvtCornerENOBValue(state)},
+			viewmodel.Metric{ID: "pvt_noise_ceiling", Label: "Noise-Limited ENOB", Value: pvtNoiseCeilingValue(state)},
 		)
 	}
 	sections := []viewmodel.Section{
@@ -79,6 +83,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		ID: "half_select_stress", Title: "Half-Select / Column Stress",
 		Body: fmt.Sprintf("%s: %s at %s. Budget: %s. This is a deterministic educational stress budget, not a calibrated endurance claim.",
 			halfSelectStateValue(state), halfSelectCellsValue(state), disturbVoltageValue(state), stressBudgetValue(state)),
+		Category: "research",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID: "pvt_investigations", Title: "PVT Investigation Summaries",
+		Body: fmt.Sprintf("Temperature sweep: %s. Process-yield proxy: %s. Corner ENOB: %s. Thermal-noise ceiling: %s. These are educational summaries of existing Module 4 investigations, not calibrated silicon guarantees.",
+			pvtTemperatureSweepValue(state), pvtProcessYieldValue(state), pvtCornerENOBValue(state), pvtNoiseCeilingValue(state)),
 		Category: "research",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -169,6 +179,34 @@ func stressPerPulseValue(state CircuitsState) string {
 		return "0.000000 level/pulse"
 	}
 	return fmt.Sprintf("%.6f level/pulse", state.StressPerPulse)
+}
+
+func pvtTemperatureSweepValue(state CircuitsState) string {
+	if state.PVTTemperatureSweep == "" {
+		return "not evaluated"
+	}
+	return state.PVTTemperatureSweep
+}
+
+func pvtProcessYieldValue(state CircuitsState) string {
+	if state.PVTSamples <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%.1f%% (%d/%d)", 100*state.PVTProcessYield, state.PVTPassSamples, state.PVTSamples)
+}
+
+func pvtCornerENOBValue(state CircuitsState) string {
+	if state.ENOBtt <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("FF %.2f / TT %.2f / SS %.2f bits", state.ENOBff, state.ENOBtt, state.ENOBss)
+}
+
+func pvtNoiseCeilingValue(state CircuitsState) string {
+	if state.PVTENOBNoiseCeiling <= 0 || state.PVTENOBCeilingBits <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%.2f bits at %d-bit ADC", state.PVTENOBNoiseCeiling, state.PVTENOBCeilingBits)
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {
