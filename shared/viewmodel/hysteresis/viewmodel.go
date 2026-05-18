@@ -1,9 +1,16 @@
 package hysteresis
 
 import (
+	"bytes"
+	"encoding/csv"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 
+	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
 )
@@ -23,7 +30,7 @@ func New() *Module {
 			SelectedMaterial: defaultMat,
 			Materials:        materials,
 			FieldRange:       FieldRange{MinField: -3000, MaxField: 3000},
-			Waveform:         "sine",
+			Waveform:         WaveformSine,
 		},
 	}
 	m.computeLoopForCurrentMaterial()
@@ -66,6 +73,10 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		}
 		m.computeLoopForCurrentMaterial()
 		return nil
+	case EventSetWaveform:
+		return m.setWaveform(action.Payload["waveform"])
+	case EventExportCSV:
+		return m.exportCSV(action.Payload["path"])
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
@@ -73,6 +84,81 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
+
+func (m *Module) setWaveform(waveform string) error {
+	if !isValidWaveform(waveform) {
+		return fmt.Errorf("hysteresis: unsupported waveform %q", waveform)
+	}
+	m.state.Waveform = waveform
+	m.computeLoopForCurrentMaterial()
+	return nil
+}
+
+func isValidWaveform(waveform string) bool {
+	switch waveform {
+	case WaveformSine, WaveformTriangle, WaveformSquare, WaveformManual:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m *Module) exportCSV(path string) error {
+	content, err := buildLoopCSV(m.state.LoopPoints)
+	if err != nil {
+		return err
+	}
+
+	exportPath := "artifact buffer"
+	statusVerb := "buffered"
+	if trimmed := strings.TrimSpace(path); trimmed != "" {
+		cleanPath, err := sharedio.ValidatePath(trimmed)
+		if err != nil {
+			return fmt.Errorf("hysteresis: invalid CSV export path: %w", err)
+		}
+		if err := writeTextArtifact(cleanPath, content); err != nil {
+			return fmt.Errorf("hysteresis: write CSV export: %w", err)
+		}
+		exportPath = cleanPath
+		statusVerb = "wrote"
+	}
+
+	m.state.CSVExportStatus = fmt.Sprintf("%s %d points", statusVerb, len(m.state.LoopPoints))
+	m.state.CSVExportPath = exportPath
+	m.state.CSVExportBytes = len(content)
+	m.state.CSVExportContent = content
+	return nil
+}
+
+func buildLoopCSV(points []LoopPoint) (string, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+	if err := writer.Write([]string{"Index", "E_field_kV_cm", "Polarization_uC_cm2"}); err != nil {
+		return "", err
+	}
+	for i, point := range points {
+		if err := writer.Write([]string{
+			strconv.Itoa(i),
+			strconv.FormatFloat(point.Field, 'f', 6, 64),
+			strconv.FormatFloat(point.Polarization, 'f', 6, 64),
+		}); err != nil {
+			return "", err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func writeTextArtifact(path, content string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(content), 0644)
+}
 
 func (m *Module) computeLoopForCurrentMaterial() {
 	var mat *physics.HZOMaterial
@@ -101,16 +187,14 @@ func (m *Module) computeLoopForCurrentMaterial() {
 
 	for cycle := 0; cycle < 2; cycle++ {
 		for i := 0; i < numPoints; i++ {
-			t := float64(i) * 2 * math.Pi / float64(numPoints-1)
-			fieldSI := maxFieldSI * math.Sin(t)
+			fieldSI := waveformField(i, numPoints, maxFieldSI, m.state.Waveform)
 			solver.Step(fieldSI, dt)
 		}
 	}
 
 	pts := make([]LoopPoint, numPoints)
 	for i := 0; i < numPoints; i++ {
-		t := float64(i) * 2 * math.Pi / float64(numPoints-1)
-		fieldSI := maxFieldSI * math.Sin(t)
+		fieldSI := waveformField(i, numPoints, maxFieldSI, m.state.Waveform)
 		polSI := solver.Step(fieldSI, dt)
 		pts[i] = LoopPoint{
 			Field:        fieldSI * 1e-5, // V/m → kV/cm
@@ -119,6 +203,29 @@ func (m *Module) computeLoopForCurrentMaterial() {
 	}
 	m.state.LoopPoints = pts
 	m.computeLoopMetrics()
+}
+
+func waveformField(index, numPoints int, maxFieldSI float64, waveform string) float64 {
+	if numPoints <= 1 {
+		return 0
+	}
+	phase := float64(index) / float64(numPoints-1)
+	switch waveform {
+	case WaveformTriangle:
+		if phase <= 0.5 {
+			return maxFieldSI * (-1 + 4*phase)
+		}
+		return maxFieldSI * (3 - 4*phase)
+	case WaveformSquare:
+		if phase < 0.5 {
+			return maxFieldSI
+		}
+		return -maxFieldSI
+	case WaveformManual:
+		return 0
+	default:
+		return maxFieldSI * math.Sin(2*math.Pi*phase)
+	}
 }
 
 func (m *Module) computeLoopMetrics() {

@@ -5,6 +5,7 @@ package gogpuapp
 import (
 	"fecim-lattice-tools/internal/gogpuapp/design"
 	"fecim-lattice-tools/shared/viewmodel"
+	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 
 	"github.com/gogpu/ui/primitives"
 	"github.com/gogpu/ui/theme/material3"
@@ -12,6 +13,10 @@ import (
 )
 
 func buildHysteresisView(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
+	return buildHysteresisViewWithActions(snapshot, theme, nil)
+}
+
+func buildHysteresisViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme, onAction func(viewmodel.Action)) widget.Widget {
 	children := []widget.Widget{
 		primitives.Text(snapshot.Descriptor.Title).FontSize(22).Bold(),
 		primitives.Text(snapshot.Descriptor.Description).FontSize(13).Color(theme.Colors.OnSurfaceVariant),
@@ -38,6 +43,7 @@ func buildHysteresisView(snapshot viewmodel.ModuleSnapshot, theme *material3.The
 		)
 	}
 	children = append(children, primitives.Box(metricBoxes...).Gap(8))
+	children = append(children, buildHysteresisControls(snapshot, theme, onAction))
 
 	for _, plot := range snapshot.Plots {
 		plotData := design.NewPlotData(plot.Title, plot.XLabel, plot.YLabel)
@@ -56,24 +62,48 @@ func buildHysteresisView(snapshot viewmodel.ModuleSnapshot, theme *material3.The
 	children = appendSectionGroup(children, "Research", rSections, widget.Hex(0xEBF5F0), theme)
 	children = appendSectionGroup(children, "Design", dSections, widget.Hex(0xF5EEE8), theme)
 
-	actionBoxes := []widget.Widget{}
-	for _, action := range snapshot.Actions {
-		actionBoxes = append(actionBoxes, primitives.Box(
-			primitives.Text(action.Label).FontSize(13).Color(theme.Colors.OnPrimary),
-		).
-			Padding(10).
-			Background(theme.Colors.Primary).
-			Rounded(6),
-		)
-	}
-	if len(actionBoxes) > 0 {
-		children = append(children, primitives.Box(actionBoxes...).Gap(8))
-	}
-
 	return primitives.Box(children...).
 		Padding(24).
 		Gap(14).
 		Background(theme.Colors.Surface)
+}
+
+func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme, onAction func(viewmodel.Action)) widget.Widget {
+	actions := indexActions(snapshot.Actions)
+	waveform := actionPayload(actions, hysteresisvm.EventSetWaveform, "waveform", hysteresisvm.WaveformSine)
+
+	commandButtons := []widget.Widget{
+		circuitButton("Run/Pause", false, actionOrDefault(actions, hysteresisvm.EventToggleSimulation, viewmodel.ActionToggle), theme, onAction),
+		circuitButton("Export CSV", false, actionOrDefault(actions, hysteresisvm.EventExportCSV, viewmodel.ActionCommand), theme, onAction),
+	}
+	waveformButtons := []widget.Widget{
+		circuitButton("Sine", waveform == hysteresisvm.WaveformSine, selectAction(hysteresisvm.EventSetWaveform, "waveform", hysteresisvm.WaveformSine), theme, onAction),
+		circuitButton("Triangle", waveform == hysteresisvm.WaveformTriangle, selectAction(hysteresisvm.EventSetWaveform, "waveform", hysteresisvm.WaveformTriangle), theme, onAction),
+		circuitButton("Square", waveform == hysteresisvm.WaveformSquare, selectAction(hysteresisvm.EventSetWaveform, "waveform", hysteresisvm.WaveformSquare), theme, onAction),
+	}
+	fieldButtons := []widget.Widget{
+		circuitButton("+/-1500", false, fieldRangeAction("-1500", "1500"), theme, onAction),
+		circuitButton("+/-3000", false, fieldRangeAction("-3000", "3000"), theme, onAction),
+		circuitButton("+/-6000", false, fieldRangeAction("-6000", "6000"), theme, onAction),
+	}
+
+	return primitives.Box(
+		primitives.Text("Hysteresis Controls").FontSize(14).Bold(),
+		primitives.Box(commandButtons...).Gap(8),
+		controlRow("Waveform", waveformButtons, theme),
+		controlRow("Field", fieldButtons, theme),
+	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
+}
+
+func fieldRangeAction(min, max string) viewmodel.Action {
+	return viewmodel.Action{
+		ID:   hysteresisvm.EventSetFieldRange,
+		Kind: viewmodel.ActionCommand,
+		Payload: map[string]string{
+			"min": min,
+			"max": max,
+		},
+	}
 }
 
 func plotCard(data *design.PlotData, theme *material3.Theme) widget.Widget {

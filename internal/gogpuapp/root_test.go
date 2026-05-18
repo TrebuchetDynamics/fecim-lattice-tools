@@ -18,6 +18,7 @@ import (
 
 	"fecim-lattice-tools/shared/viewmodel"
 	circuitsvm "fecim-lattice-tools/shared/viewmodel/circuits"
+	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 )
 
 func TestBuildRootInstallsInHeadlessApp(t *testing.T) {
@@ -120,6 +121,35 @@ func TestHeadlessRootClickingCircuitsControlAppliesAction(t *testing.T) {
 
 	if got := snapshotMetricValue(model.ActivePort().Snapshot(), "mode"); got != "COMPUTE" {
 		t.Fatalf("mode metric after clicking compute = %q, want COMPUTE", got)
+	}
+}
+
+func TestHeadlessRootClickingHysteresisControlAppliesAction(t *testing.T) {
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	theme := material3.New(widget.Hex(0x2F5D50))
+	app := uiapp.New()
+	var rebuildRoot func()
+	rebuildRoot = func() {
+		app.SetRoot(buildRootWithSelectAndActions(model, theme, nil, func(action viewmodel.Action) {
+			if err := model.ActivePort().ApplyAction(action); err != nil {
+				t.Fatalf("ApplyAction(%s): %v", action.ID, err)
+			}
+			rebuildRoot()
+		}))
+		app.Frame()
+	}
+	rebuildRoot()
+
+	buttons := collectSidebarButtons(app.Window().Root())
+	controlOffset := len(viewmodel.KnownDescriptors())
+	if len(buttons) <= controlOffset+3 {
+		t.Fatalf("root button count = %d, want sidebar buttons plus hysteresis controls", len(buttons))
+	}
+
+	clickButton(buttons[controlOffset+3])
+
+	if got := snapshotMetricValue(model.ActivePort().Snapshot(), "waveform"); got != hysteresisvm.WaveformTriangle {
+		t.Fatalf("waveform metric after clicking triangle = %q, want %q", got, hysteresisvm.WaveformTriangle)
 	}
 }
 

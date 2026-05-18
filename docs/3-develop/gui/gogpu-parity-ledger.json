@@ -73,7 +73,30 @@
       "evidence": [
         "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
       ],
-      "notes": "Core material selection and P-E loop state exist in gogpu. PUND, FORC, calibration dialogs, literature overlays, export workflows, and several educational widgets need explicit gogpu parity or a better replacement."
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, and P-E CSV export exist in gogpu. PUND, FORC, calibration dialogs, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "P-E loop waveform controls, field-range presets, run/pause action, and CSV export",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/controls.go",
+        "module1-hysteresis/pkg/gui/export.go",
+        "module1-hysteresis/pkg/gui/sim_loop.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go",
+        "internal/gogpuapp/main.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesWaveformAndCSVExportActions|ApplyActionSetWaveform|ApplyActionExportCSV)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewActionButtonsDispatchActions|TestHeadlessRootClickingHysteresisControlAppliesAction' -count=1"
+      ],
+      "notes": "This ports the control/export action contract into the gogpu shell with buffered or validated-path CSV artifacts. It does not claim parity for PUND, FORC, calibration dialogs, literature overlays, or custom educational widgets tracked by the broader hysteresis gap entry."
     },
     {
       "module": "crossbar",

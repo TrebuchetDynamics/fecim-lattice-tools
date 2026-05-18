@@ -259,7 +259,7 @@ func buildRootWithSelectAndActions(model AppModel, theme *material3.Theme, onSel
 		case viewmodel.ModuleComparison:
 			children = append(children, buildComparisonView(snapshot, theme))
 		case viewmodel.ModuleHysteresis:
-			children = append(children, buildHysteresisView(snapshot, theme))
+			children = append(children, buildHysteresisViewWithActions(snapshot, theme, onAction))
 		case viewmodel.ModuleCrossbar:
 			children = append(children, buildCrossbarView(snapshot, theme))
 		case viewmodel.ModuleCircuits:

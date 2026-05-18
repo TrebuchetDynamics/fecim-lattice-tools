@@ -5,6 +5,7 @@ package gogpuapp
 import (
 	"testing"
 
+	"fecim-lattice-tools/shared/viewmodel"
 	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 
 	"github.com/gogpu/ui/theme/material3"
@@ -107,5 +108,37 @@ func TestHysteresisComputedMetrics(t *testing.T) {
 	}
 	if !hasEc {
 		t.Error("No Ec metric in hysteresis snapshot")
+	}
+}
+
+func TestHysteresisViewActionButtonsDispatchActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 4 {
+		t.Fatalf("hysteresis button count = %d, want command and waveform controls", len(buttons))
+	}
+
+	clickButton(buttons[0])
+	clickButton(buttons[1])
+	clickButton(buttons[3])
+
+	if len(actions) != 3 {
+		t.Fatalf("dispatched action count = %d, want 3", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventToggleSimulation {
+		t.Fatalf("action[0].ID = %q, want %q", actions[0].ID, hysteresisvm.EventToggleSimulation)
+	}
+	if actions[1].ID != hysteresisvm.EventExportCSV {
+		t.Fatalf("action[1].ID = %q, want %q", actions[1].ID, hysteresisvm.EventExportCSV)
+	}
+	if got := actions[2]; got.ID != hysteresisvm.EventSetWaveform || got.Payload["waveform"] != "triangle" {
+		t.Fatalf("action[2] = %#v, want triangle waveform action", got)
 	}
 }

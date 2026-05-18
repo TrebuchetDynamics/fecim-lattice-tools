@@ -7,3 +7,10 @@ const (
 	EventToggleSimulation = "toggle_simulation"
 	EventExportCSV        = "export_csv"
 )
+
+const (
+	WaveformSine     = "sine"
+	WaveformTriangle = "triangle"
+	WaveformSquare   = "square"
+	WaveformManual   = "manual"
+)

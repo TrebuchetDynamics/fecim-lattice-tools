@@ -21,6 +21,10 @@ type HysteresisState struct {
 	LoopArea         float64                `json:"loop_area"`
 	RetentionTimes   []float64              `json:"retention_times"`
 	RetentionPr      []float64              `json:"retention_pr"`
+	CSVExportStatus  string                 `json:"csv_export_status"`
+	CSVExportPath    string                 `json:"csv_export_path"`
+	CSVExportBytes   int                    `json:"csv_export_bytes"`
+	CSVExportContent string                 `json:"csv_export_content,omitempty"`
 }
 
 type FieldRange struct {

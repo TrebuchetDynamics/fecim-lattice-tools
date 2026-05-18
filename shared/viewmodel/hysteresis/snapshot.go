@@ -22,6 +22,13 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "loop_area", Label: "Loop Area", Value: fmt.Sprintf("%.1f J/m³", state.LoopArea)},
 		)
 	}
+	if state.CSVExportStatus != "" {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "csv_export", Label: "CSV Export", Value: state.CSVExportStatus},
+			viewmodel.Metric{ID: "csv_export_path", Label: "CSV Export Path", Value: state.CSVExportPath},
+			viewmodel.Metric{ID: "csv_export_bytes", Label: "CSV Export Bytes", Value: fmt.Sprintf("%d bytes", state.CSVExportBytes)},
+		)
+	}
 
 	sections := []viewmodel.Section{}
 	for _, mat := range state.Materials {
@@ -72,7 +79,9 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 	actions := []viewmodel.Action{
 		{ID: EventSelectMaterial, Label: "Change Material", Kind: viewmodel.ActionSelect},
 		{ID: EventSetFieldRange, Label: "Set Field Range", Kind: viewmodel.ActionCommand},
+		{ID: EventSetWaveform, Label: "Set Waveform", Kind: viewmodel.ActionSelect, Payload: map[string]string{"waveform": state.Waveform}},
 		{ID: EventToggleSimulation, Label: "Run/Pause", Kind: viewmodel.ActionToggle},
+		{ID: EventExportCSV, Label: "Export CSV", Kind: viewmodel.ActionCommand},
 	}
 
 	plots := []viewmodel.PlotData{}
