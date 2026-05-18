@@ -20,6 +20,8 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "write_target", Label: "Write Target", Value: fmt.Sprintf("%d/%d", state.WriteTargetLevel, quantLevels-1)},
 		{ID: "coupling", Label: "Coupling", Value: state.CouplingTier},
 		{ID: "ispp_engine", Label: "ISPP Engine", Value: state.ISPPEngine},
+		{ID: "logger_verbosity", Label: "Logger Verbosity", Value: loggerVerbosityValue(state)},
+		{ID: "logger_detail", Label: "Logger Detail", Value: loggerDetailValue(state)},
 		{ID: "half_select_state", Label: "Half-Select", Value: halfSelectStateValue(state)},
 		{ID: "half_select_cells", Label: "Disturbed Cells", Value: halfSelectCellsValue(state)},
 		{ID: "disturb_voltage", Label: "Disturb Voltage", Value: disturbVoltageValue(state)},
@@ -183,6 +185,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionSetTIAGain, Label: "TIA Gain", Kind: viewmodel.ActionSelect, Payload: map[string]string{"gain_ohm": fmt.Sprintf("%.0f", state.TIAGain)}},
 		{ID: ActionSetCouplingTier, Label: "Coupling Tier", Kind: viewmodel.ActionSelect, Payload: map[string]string{"tier": state.CouplingTier}},
 		{ID: ActionSetISPPEngine, Label: "ISPP Engine", Kind: viewmodel.ActionSelect, Payload: map[string]string{"engine": state.ISPPEngine}},
+		{ID: ActionSetLoggerVerbosity, Label: "Logger Verbosity", Kind: viewmodel.ActionSelect, Payload: map[string]string{"verbosity": loggerVerbosityValue(state)}},
 	}
 	return viewmodel.ModuleSnapshot{
 		Descriptor: viewmodel.ModuleDescriptor{
@@ -201,6 +204,26 @@ func halfSelectStateValue(state CircuitsState) string {
 		return HalfSelectStateInactive
 	}
 	return state.HalfSelectState
+}
+
+func loggerVerbosityValue(state CircuitsState) string {
+	if state.LoggerVerbosity == "" {
+		return "off"
+	}
+	return state.LoggerVerbosity
+}
+
+func loggerDetailValue(state CircuitsState) string {
+	switch loggerVerbosityValue(state) {
+	case "info":
+		return "info: startup and shutdown summaries"
+	case "debug":
+		return "debug: action and input events"
+	case "trace":
+		return "trace: every UI update and simulation tick"
+	default:
+		return "off: file/debug logging disabled"
+	}
 }
 
 func halfSelectCellsValue(state CircuitsState) string {

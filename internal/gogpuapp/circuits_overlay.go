@@ -23,6 +23,8 @@ type circuitsOverlayState struct {
 	writeTarget              int
 	coupling                 string
 	isppEngine               string
+	loggerVerbosity          string
+	loggerDetail             string
 	lastOperation            string
 	halfSelectState          string
 	halfSelectCells          int
@@ -112,6 +114,8 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		writeTarget:              target,
 		coupling:                 valueOr(metrics["coupling"], "Tier-A"),
 		isppEngine:               valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
+		loggerVerbosity:          valueOr(metrics["logger_verbosity"], "off"),
+		loggerDetail:             valueOr(metrics["logger_detail"], "off: file/debug logging disabled"),
 		lastOperation:            lastOperation,
 		halfSelectState:          valueOr(metrics["half_select_state"], "inactive"),
 		halfSelectCells:          parseLeadingInt(metrics["half_select_cells"]),
@@ -284,6 +288,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Target: L" + strconv.Itoa(state.writeTarget),
 		"Coupling: " + state.coupling,
 		"ISPP: " + compactISPPEngine(state.isppEngine),
+		"LogV: " + state.loggerVerbosity,
 		"Stress: " + state.halfSelectState,
 		"Cells: " + strconv.Itoa(state.halfSelectCells),
 		"Budget: " + state.stressBudget,

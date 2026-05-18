@@ -42,6 +42,7 @@ func New() *Module {
 		QuantLevels:      DefaultQuantLevels,
 		CouplingTier:     CouplingTierA,
 		ISPPEngine:       ISPPEngineLevel,
+		LoggerVerbosity:  "off",
 		ADCResolution:    5, DACResolution: 5, TIAGain: 1e4,
 		ChargePumpStages: 4, SupplyVoltage: 1.8, ISPPEnabled: true,
 	}}
@@ -117,6 +118,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.setCouplingTier(action.Payload)
 	case ActionSetISPPEngine:
 		return m.setISPPEngine(action.Payload)
+	case ActionSetLoggerVerbosity:
+		return m.setLoggerVerbosity(action.Payload)
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
@@ -293,6 +296,21 @@ func (m *Module) setISPPEngine(payload map[string]string) error {
 	}
 	m.state.ISPPEngine = engine
 	m.recordStatus("control", "ISPP engine set to %s", engine)
+	return nil
+}
+
+func (m *Module) setLoggerVerbosity(payload map[string]string) error {
+	verbosity, ok := payload["verbosity"]
+	if !ok {
+		return fmt.Errorf("circuits: missing logger verbosity")
+	}
+	level, label, err := parseLoggerVerbosity(verbosity)
+	if err != nil {
+		return err
+	}
+	m.state.LoggerVerbosity = label
+	m.state.LoggerVerbosityLevel = level
+	m.recordStatus("control", "Logger verbosity set to %s", label)
 	return nil
 }
 
@@ -763,6 +781,21 @@ func validString(value string, validValues ...string) bool {
 		}
 	}
 	return false
+}
+
+func parseLoggerVerbosity(value string) (int, string, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "0", "off", "none":
+		return 0, "off", nil
+	case "1", "info":
+		return 1, "info", nil
+	case "2", "debug":
+		return 2, "debug", nil
+	case "3", "trace", "all":
+		return 3, "trace", nil
+	default:
+		return 0, "", fmt.Errorf("circuits: invalid logger verbosity %q", value)
+	}
 }
 
 func maxInt(a, b int) int {

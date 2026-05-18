@@ -49,6 +49,7 @@ const (
 	ActionSetTIAGain             = "set_tia_gain"
 	ActionSetCouplingTier        = "set_coupling_tier"
 	ActionSetISPPEngine          = "set_ispp_engine"
+	ActionSetLoggerVerbosity     = "set_logger_verbosity"
 )
 
 const DefaultQuantLevels = 30
@@ -154,6 +155,8 @@ type CircuitsState struct {
 	QuantLevels                 int                 `json:"quant_levels"`
 	CouplingTier                string              `json:"coupling_tier"`
 	ISPPEngine                  string              `json:"ispp_engine"`
+	LoggerVerbosity             string              `json:"logger_verbosity"`
+	LoggerVerbosityLevel        int                 `json:"logger_verbosity_level"`
 	LastOperationStatus         string              `json:"last_operation_status"`
 	OperationLogTotal           int                 `json:"operation_log_total"`
 	OperationLog                []OperationLogEntry `json:"operation_log"`

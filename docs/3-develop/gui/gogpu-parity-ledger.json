@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, reference timing JSON export, reference timing animation step state, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. Logger verbosity controls, waveform drawing, timed playback loops, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, reference timing JSON export, reference timing animation step state, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, waveform drawing, timed playback loops, waveform/SVG export workflows, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -342,7 +342,7 @@
         "go test ./shared/viewmodel/circuits -run 'OperationLog' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogSummaries' -count=1"
       ],
-      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim compute-run detail payloads, logger verbosity toggles, or export parity."
+      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim compute-run detail payloads or export parity. Logger verbosity controls are tracked separately."
     },
     {
       "module": "circuits",
@@ -364,7 +364,7 @@
         "go test ./shared/viewmodel/circuits -run 'OperationLogExport|SnapshotContainsUnifiedCircuitControls' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
       ],
-      "notes": "This ports export for retained operation-log entries. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Detailed compute-run payloads are tracked separately; logger verbosity controls remain out of scope."
+      "notes": "This ports export for retained operation-log entries. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Detailed compute-run payloads and logger verbosity controls are tracked separately."
     },
     {
       "module": "circuits",
@@ -384,7 +384,30 @@
         "go test ./shared/viewmodel/circuits -run 'ComputeRun|OperationLogExport' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesComputeRunSummary|CircuitsOverlayStateIncludesOperationLogExportStatus' -count=1"
       ],
-      "notes": "This ports deterministic UI-neutral compute-run detail into gogpu snapshots and operation-log export when the latest operation is compute. It uses current viewmodel state and deterministic educational MVM terms; it does not claim legacy logger toggles, timestamps, or hardware-calibrated trace parity."
+      "notes": "This ports deterministic UI-neutral compute-run detail into gogpu snapshots and operation-log export when the latest operation is compute. It uses current viewmodel state and deterministic educational MVM terms. Logger verbosity controls are tracked separately; this does not claim timestamps or hardware-calibrated trace parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Logger verbosity controls for off/info/debug/trace levels",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/action_log.go",
+        "module4-circuits/cmd/circuits-gui-fyne/main.go",
+        "module4-circuits/cmd/circuits/main.go",
+        "shared/logging/logging.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'LoggerVerbosity|SnapshotContainsUnifiedCircuitControls|ApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesLoggerVerbosity|CircuitsViewSelectorButtonsDispatchPayloads|CircuitsViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports the legacy verbosity vocabulary into UI-neutral gogpu state and controls, including aliases 0/off/none, 1/info, 2/debug, and 3/trace/all. It surfaces the selected level and detail text in snapshots and the overlay. It does not enable file logging, mutate the process-global logger, or suppress the user-facing operation log."
     },
     {
       "module": "comparison",

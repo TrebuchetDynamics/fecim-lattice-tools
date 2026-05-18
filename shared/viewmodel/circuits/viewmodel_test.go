@@ -49,6 +49,8 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"write_target",
 		"coupling",
 		"ispp_engine",
+		"logger_verbosity",
+		"logger_detail",
 		"adc",
 		"dac",
 		"tia",
@@ -73,6 +75,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"set_tia_gain",
 		"set_coupling_tier",
 		"set_ispp_engine",
+		"set_logger_verbosity",
 		"run_read",
 		"run_write",
 		"run_compute",
@@ -102,6 +105,7 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 		{ID: "set_tia_gain", Payload: map[string]string{"gain_ohm": "50000"}},
 		{ID: "set_coupling_tier", Payload: map[string]string{"tier": "Tier-B"}},
 		{ID: "set_ispp_engine", Payload: map[string]string{"engine": "Landau-Khalatnikov (Physics ODE)"}},
+		{ID: "set_logger_verbosity", Payload: map[string]string{"verbosity": "trace"}},
 	}
 	for _, action := range actions {
 		if err := m.ApplyAction(action); err != nil {
@@ -111,21 +115,81 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 
 	s := m.Snapshot()
 	wantMetrics := map[string]string{
-		"array":         "32x32",
-		"mode":          "WRITE",
-		"architecture":  "1T1R (Transistor)",
-		"selected_cell": "[31,30]",
-		"write_target":  "17/29",
-		"adc":           "7-bit SAR",
-		"dac":           "8-bit R-2R",
-		"tia":           "50 kΩ",
-		"coupling":      "Tier-B",
-		"ispp_engine":   "Landau-Khalatnikov (Physics ODE)",
+		"array":            "32x32",
+		"mode":             "WRITE",
+		"architecture":     "1T1R (Transistor)",
+		"selected_cell":    "[31,30]",
+		"write_target":     "17/29",
+		"adc":              "7-bit SAR",
+		"dac":              "8-bit R-2R",
+		"tia":              "50 kΩ",
+		"coupling":         "Tier-B",
+		"ispp_engine":      "Landau-Khalatnikov (Physics ODE)",
+		"logger_verbosity": "trace",
+		"logger_detail":    "trace: every UI update and simulation tick",
 	}
 	for id, want := range wantMetrics {
 		if got := metricValue(s, id); got != want {
 			t.Errorf("%s metric = %q, want %q", id, got, want)
 		}
+	}
+}
+
+func TestLoggerVerbosityControlsFollowLegacyLevels(t *testing.T) {
+	m := New()
+
+	defaultSnapshot := m.Snapshot()
+	if got := metricValue(defaultSnapshot, "logger_verbosity"); got != "off" {
+		t.Fatalf("default logger verbosity = %q, want off", got)
+	}
+	if got := metricValue(defaultSnapshot, "logger_detail"); got != "off: file/debug logging disabled" {
+		t.Fatalf("default logger detail = %q, want off detail", got)
+	}
+
+	for _, tc := range []struct {
+		input      string
+		wantValue  string
+		wantDetail string
+	}{
+		{input: "1", wantValue: "info", wantDetail: "info: startup and shutdown summaries"},
+		{input: "debug", wantValue: "debug", wantDetail: "debug: action and input events"},
+		{input: "all", wantValue: "trace", wantDetail: "trace: every UI update and simulation tick"},
+		{input: "none", wantValue: "off", wantDetail: "off: file/debug logging disabled"},
+	} {
+		if err := m.ApplyAction(viewmodel.Action{
+			ID:      ActionSetLoggerVerbosity,
+			Payload: map[string]string{"verbosity": tc.input},
+		}); err != nil {
+			t.Fatalf("set logger verbosity %q: %v", tc.input, err)
+		}
+		s := m.Snapshot()
+		if got := metricValue(s, "logger_verbosity"); got != tc.wantValue {
+			t.Fatalf("logger_verbosity for %q = %q, want %q", tc.input, got, tc.wantValue)
+		}
+		if got := metricValue(s, "logger_detail"); got != tc.wantDetail {
+			t.Fatalf("logger_detail for %q = %q, want %q", tc.input, got, tc.wantDetail)
+		}
+	}
+
+	if got := metricValue(m.Snapshot(), "operation_log_latest"); got != "control #4: Logger verbosity set to off" {
+		t.Fatalf("operation_log_latest = %q, want logger verbosity event", got)
+	}
+}
+
+func TestLoggerVerbosityRejectsUnknownValue(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetLoggerVerbosity,
+		Payload: map[string]string{"verbosity": "loud"},
+	})
+	if err == nil {
+		t.Fatal("expected invalid logger verbosity to fail")
+	}
+	if !contains(err.Error(), "invalid logger verbosity") {
+		t.Fatalf("logger verbosity error = %v, want invalid verbosity rejection", err)
+	}
+	if got := metricValue(m.Snapshot(), "logger_verbosity"); got != "off" {
+		t.Fatalf("logger verbosity changed after invalid input: %q", got)
 	}
 }
 

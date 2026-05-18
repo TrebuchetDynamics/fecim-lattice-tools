@@ -61,6 +61,7 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 	tiaGain := actionPayload(actions, circuitsvm.ActionSetTIAGain, "gain_ohm", "10000")
 	coupling := actionPayload(actions, circuitsvm.ActionSetCouplingTier, "tier", circuitsvm.CouplingTierA)
 	isppEngine := actionPayload(actions, circuitsvm.ActionSetISPPEngine, "engine", circuitsvm.ISPPEngineLevel)
+	loggerVerbosity := actionPayload(actions, circuitsvm.ActionSetLoggerVerbosity, "verbosity", "off")
 	isppEnabled := actionPayload(actions, circuitsvm.ActionToggleISPP, "enabled", "true") == "true"
 
 	commandButtons := []widget.Widget{
@@ -120,6 +121,12 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		circuitButton("Preisach", isppEngine == circuitsvm.ISPPEngineLevel, selectAction(circuitsvm.ActionSetISPPEngine, "engine", circuitsvm.ISPPEngineLevel), theme, onAction),
 		circuitButton("L-K ODE", isppEngine == circuitsvm.ISPPEngineLK, selectAction(circuitsvm.ActionSetISPPEngine, "engine", circuitsvm.ISPPEngineLK), theme, onAction),
 	}
+	loggerButtons := []widget.Widget{
+		circuitButton("Off", loggerVerbosity == "off", selectAction(circuitsvm.ActionSetLoggerVerbosity, "verbosity", "off"), theme, onAction),
+		circuitButton("Info", loggerVerbosity == "info", selectAction(circuitsvm.ActionSetLoggerVerbosity, "verbosity", "info"), theme, onAction),
+		circuitButton("Debug", loggerVerbosity == "debug", selectAction(circuitsvm.ActionSetLoggerVerbosity, "verbosity", "debug"), theme, onAction),
+		circuitButton("Trace", loggerVerbosity == "trace", selectAction(circuitsvm.ActionSetLoggerVerbosity, "verbosity", "trace"), theme, onAction),
+	}
 	isppToggle := checkbox.New(
 		checkbox.Label("ISPP enabled"),
 		checkbox.Checked(isppEnabled),
@@ -146,6 +153,7 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		controlRow("TIA", tiaButtons, theme),
 		controlRow("Coupling", couplingButtons, theme),
 		controlRow("ISPP Engine", engineButtons, theme),
+		controlRow("Logger", loggerButtons, theme),
 		isppToggle,
 	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
 }

@@ -98,6 +98,25 @@ func TestCircuitsOverlayStateIncludesOperationLogSummaries(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesLoggerVerbosity(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetLoggerVerbosity,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"verbosity": "trace"},
+	}); err != nil {
+		t.Fatalf("set logger verbosity: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.loggerVerbosity != "trace" {
+		t.Fatalf("loggerVerbosity = %q, want trace", state.loggerVerbosity)
+	}
+	if state.loggerDetail != "trace: every UI update and simulation tick" {
+		t.Fatalf("loggerDetail = %q, want trace detail", state.loggerDetail)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesOperationLogExportStatus(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
