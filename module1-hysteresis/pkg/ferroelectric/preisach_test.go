@@ -816,6 +816,39 @@ func TestPreisachModel_ReversiblePolarization(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_GetEffectiveEcRejectsInvalidBinding(t *testing.T) {
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_everett", model: &PreisachModel{}},
+		{name: "zero_ec", model: &PreisachModel{everett: &TanhEverett{Ec: 0}}},
+		{name: "negative_ec", model: &PreisachModel{everett: &TanhEverett{Ec: -1e6}}},
+		{name: "nan_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.NaN()}}},
+		{name: "positive_inf_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.Inf(1)}}},
+		{name: "negative_inf_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.Inf(-1)}}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid effective-Ec binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.GetEffectiveEc()
+			if got != 0 {
+				t.Fatalf("expected invalid effective Ec to return 0 V/m, got %g V/m", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite effective Ec for invalid binding, got %g V/m", got)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_GetEffectiveEc tests effective coercive field getter.
 func TestPreisachModel_GetEffectiveEc(t *testing.T) {
 	t.Run("GetEffectiveEc", func(t *testing.T) {

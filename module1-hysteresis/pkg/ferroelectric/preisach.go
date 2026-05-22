@@ -521,6 +521,9 @@ func (p *PreisachModel) SetTemperature(tempK float64) {
 
 // GetEffectiveEc returns the current temperature-scaled Coercive Field.
 func (p *PreisachModel) GetEffectiveEc() float64 {
+	if p == nil || p.everett == nil || p.everett.Ec <= 0 || math.IsNaN(p.everett.Ec) || math.IsInf(p.everett.Ec, 0) {
+		return 0
+	}
 	return p.everett.Ec
 }
 
