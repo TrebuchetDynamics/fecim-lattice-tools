@@ -31,6 +31,9 @@ func NewMultiCellArray(rows, cols int, material *ferroelectric.HZOMaterial) (*Mu
 	if material == nil {
 		return nil, fmt.Errorf("material cannot be nil")
 	}
+	if material.Thickness <= 0 {
+		return nil, fmt.Errorf("material thickness must be > 0 m: got %.3e m", material.Thickness)
+	}
 	m := &MultiCellArray{rows: rows, cols: cols, material: material, models: make([][]*ferroelectric.PreisachModel, rows), states: make([][]CellState, rows)}
 	for r := 0; r < rows; r++ {
 		m.models[r] = make([]*ferroelectric.PreisachModel, cols)

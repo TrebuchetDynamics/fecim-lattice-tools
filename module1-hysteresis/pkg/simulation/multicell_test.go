@@ -7,6 +7,28 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
+func TestNewMultiCellArrayRejectsNonPhysicalThickness(t *testing.T) {
+	tests := []struct {
+		name      string
+		thickness float64
+	}{
+		{name: "zero thickness", thickness: 0},
+		{name: "negative thickness", thickness: -1e-9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			material := *ferroelectric.DefaultHZO()
+			material.Thickness = tt.thickness
+
+			_, err := NewMultiCellArray(1, 1, &material)
+			if err == nil {
+				t.Fatalf("expected error for thickness %.3e m", tt.thickness)
+			}
+		})
+	}
+}
+
 func TestMultiCellIndependentStates(t *testing.T) {
 	m, err := NewMultiCellArray(2, 2, ferroelectric.DefaultHZO())
 	if err != nil {
