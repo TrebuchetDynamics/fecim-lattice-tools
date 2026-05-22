@@ -292,11 +292,18 @@ func (p *PreisachModel) Update(E float64) float64 {
 	if p == nil {
 		return 0
 	}
-	if math.IsNaN(E) || math.IsInf(E, 0) {
+	fallbackPolarization := func() float64 {
 		if p.hasDynamicP && !math.IsNaN(p.dynamicP) && !math.IsInf(p.dynamicP, 0) {
 			return p.dynamicP
 		}
-		return p.Polarization()
+		pol := p.Polarization()
+		if math.IsNaN(pol) || math.IsInf(pol, 0) {
+			return 0
+		}
+		return pol
+	}
+	if math.IsNaN(E) || math.IsInf(E, 0) || p.material == nil || p.stack == nil || p.stack.Everett == nil || p.stack.SaturationE <= 0 || math.IsNaN(p.stack.SaturationE) || math.IsInf(p.stack.SaturationE, 0) || math.IsNaN(p.stack.LastE) || math.IsInf(p.stack.LastE, 0) {
+		return fallbackPolarization()
 	}
 
 	var P_start float64

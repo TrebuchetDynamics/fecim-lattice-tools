@@ -524,6 +524,83 @@ func TestPreisachModel_UpdateRejectsNonFiniteFields(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_UpdateRejectsInvalidBinding(t *testing.T) {
+	material := DefaultHZO()
+	validModel := NewPreisachModel(material)
+	validEverett := validModel.stack.Everett
+	const existingDynamicP = 0.012345
+
+	sameFloat := func(a, b float64) bool {
+		return a == b || (math.IsNaN(a) && math.IsNaN(b))
+	}
+
+	newInvalidModel := func(stack *sharedphysics.PreisachStack) *PreisachModel {
+		return &PreisachModel{
+			material:    material,
+			stack:       stack,
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_material", model: &PreisachModel{stack: sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett), everett: validModel.everett, dynamicP: existingDynamicP, hasDynamicP: true}},
+		{name: "nil_stack", model: newInvalidModel(nil)},
+		{name: "nil_stack_everett", model: newInvalidModel(&sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1, CurrentDir: 1})},
+		{name: "zero_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1})},
+		{name: "negative_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: -1, LastE: -1, CurrentDir: 1})},
+		{name: "nan_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN(), LastE: 0, CurrentDir: 1})},
+		{name: "positive_inf_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1), LastE: 0, CurrentDir: 1})},
+		{name: "nan_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN(), CurrentDir: 1})},
+		{name: "inf_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1), CurrentDir: 1})},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeDynamicP := tc.model.dynamicP
+			beforeHasDynamicP := tc.model.hasDynamicP
+			beforeLastE := 0.0
+			beforeDirection := 0
+			beforeStackLen := -1
+			if tc.model.stack != nil {
+				beforeLastE = tc.model.stack.LastE
+				beforeDirection = tc.model.stack.CurrentDir
+				beforeStackLen = len(tc.model.stack.Stack)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid update binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.Update(material.Ec)
+
+			if got != beforeDynamicP {
+				t.Fatalf("expected invalid update binding to return existing dynamic P %.6g C/m², got %.6g C/m²", beforeDynamicP, got)
+			}
+			if tc.model.dynamicP != beforeDynamicP || tc.model.hasDynamicP != beforeHasDynamicP {
+				t.Fatalf("expected invalid update binding to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", beforeDynamicP, beforeHasDynamicP, tc.model.dynamicP, tc.model.hasDynamicP)
+			}
+			if tc.model.stack != nil {
+				if !sameFloat(tc.model.stack.LastE, beforeLastE) {
+					t.Fatalf("expected invalid update binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
+				}
+				if tc.model.stack.CurrentDir != beforeDirection {
+					t.Fatalf("expected invalid update binding to preserve CurrentDir %d, got %d", beforeDirection, tc.model.stack.CurrentDir)
+				}
+				if len(tc.model.stack.Stack) != beforeStackLen {
+					t.Fatalf("expected invalid update binding to preserve turning-point count %d, got %d", beforeStackLen, len(tc.model.stack.Stack))
+				}
+			}
+		})
+	}
+}
+
 func TestPreisachModel_TimeStepRejectsNonPhysicalInputs(t *testing.T) {
 	t.Run("nil_receiver", func(t *testing.T) {
 		defer func() {
