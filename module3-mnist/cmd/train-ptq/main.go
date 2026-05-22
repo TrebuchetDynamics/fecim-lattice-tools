@@ -378,21 +378,18 @@ func Run(args []string) error {
 
 	dataDir := utils.FindModuleDataDir("module3-mnist", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
-		fmt.Println("Error: Could not find MNIST data directory")
-		os.Exit(1)
+		return fmt.Errorf("Could not find MNIST data directory")
 	}
 
 	fmt.Println("Loading MNIST data...")
 	trainImages, trainLabels, err := mnist.LoadMNIST(dataDir, true)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading training data: %w", err)
 	}
 
 	testImages, testLabels, err := mnist.LoadMNIST(dataDir, false)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading test data: %w", err)
 	}
 
 	fmt.Printf("Loaded %d train, %d test images\n\n", len(trainImages), len(testImages))
@@ -483,8 +480,7 @@ func Run(args []string) error {
 	weightsPath := filepath.Join(dataDir, "pretrained_weights_ptq.json")
 	fmt.Printf("\nSaving weights with PTQ config (30,30) to %s...\n", weightsPath)
 	if err := net.SavePTQ(weightsPath, PTQConfig{30, 30}); err != nil {
-		fmt.Printf("Error saving: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("saving PTQ weights: %w", err)
 	}
 
 	// Also save optimized configuration
