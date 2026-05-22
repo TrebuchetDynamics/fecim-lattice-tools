@@ -524,6 +524,76 @@ func TestPreisachModel_UpdateRejectsNonFiniteFields(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_TimeStepRejectsNonPhysicalInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver timestep to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		if got := model.TimeStep(0, 1e-9); got != 0 {
+			t.Fatalf("expected nil receiver timestep to return 0 C/m², got %.6g C/m²", got)
+		}
+	})
+
+	material := DefaultHZO()
+	cases := []struct {
+		name  string
+		field float64
+		dt    float64
+	}{
+		{name: "nan_field", field: math.NaN(), dt: 1e-9},
+		{name: "positive_inf_field", field: math.Inf(1), dt: 1e-9},
+		{name: "negative_inf_field", field: math.Inf(-1), dt: 1e-9},
+		{name: "nan_dt", field: material.Ec * 2, dt: math.NaN()},
+		{name: "positive_inf_dt", field: material.Ec * 2, dt: math.Inf(1)},
+		{name: "zero_dt", field: material.Ec * 2, dt: 0},
+		{name: "negative_dt", field: material.Ec * 2, dt: -1e-9},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			model := NewPreisachModel(material)
+			baseline := model.Update(material.Ec)
+			baselineDynamicP := model.dynamicP
+			baselineHasDynamicP := model.hasDynamicP
+			baselineLastE := model.stack.LastE
+			baselineDirection := model.stack.CurrentDir
+			baselineStackLen := len(model.stack.Stack)
+
+			if math.IsNaN(baseline) || math.IsInf(baseline, 0) {
+				t.Fatalf("baseline finite update produced non-finite polarization %.6g C/m²", baseline)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to be rejected without panic, got panic: %v", tc.field, tc.dt, r)
+				}
+			}()
+
+			got := model.TimeStep(tc.field, tc.dt)
+
+			if got != baselineDynamicP {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to return existing dynamic P %.6g C/m², got %.6g C/m²", tc.field, tc.dt, baselineDynamicP, got)
+			}
+			if model.dynamicP != baselineDynamicP || model.hasDynamicP != baselineHasDynamicP {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", tc.field, tc.dt, baselineDynamicP, baselineHasDynamicP, model.dynamicP, model.hasDynamicP)
+			}
+			if model.stack.LastE != baselineLastE {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve LastE %.6g V/m, got %.6g V/m", tc.field, tc.dt, baselineLastE, model.stack.LastE)
+			}
+			if model.stack.CurrentDir != baselineDirection {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve CurrentDir %d, got %d", tc.field, tc.dt, baselineDirection, model.stack.CurrentDir)
+			}
+			if len(model.stack.Stack) != baselineStackLen {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve turning-point count %d, got %d", tc.field, tc.dt, baselineStackLen, len(model.stack.Stack))
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Reset tests model reset functionality.
 func TestPreisachModel_Reset(t *testing.T) {
 	t.Run("ResetClearsHistory", func(t *testing.T) {

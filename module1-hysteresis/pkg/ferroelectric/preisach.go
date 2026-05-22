@@ -323,6 +323,16 @@ func (p *PreisachModel) Update(E float64) float64 {
 // TimeStep applies a constant electric field E for duration dt (seconds).
 // Returns the resulting polarization after relaxation.
 func (p *PreisachModel) TimeStep(E, dt float64) float64 {
+	if p == nil {
+		return 0
+	}
+	if math.IsNaN(E) || math.IsInf(E, 0) || dt <= 0 || math.IsNaN(dt) || math.IsInf(dt, 0) {
+		if p.hasDynamicP && !math.IsNaN(p.dynamicP) && !math.IsInf(p.dynamicP, 0) {
+			return p.dynamicP
+		}
+		return p.Polarization()
+	}
+
 	// 1. Calculate Static Equilibrium (Infinite Retention target)
 	// This updates the Preisach stack history to the new field level immediately,
 	// effectively determining WHERE the system would go if given infinite time.
