@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -66,5 +69,30 @@ func TestRenderMarkdownContainsSections(t *testing.T) {
 	}
 	if !strings.Contains(md, "100.0%") {
 		t.Error("markdown missing 100% coverage line")
+	}
+}
+
+func TestRunReportsOutputDirectoryError(t *testing.T) {
+	tmp := t.TempDir()
+	blockedDir := filepath.Join(tmp, "not-a-directory")
+	if err := os.WriteFile(blockedDir, []byte("not a directory"), 0o644); err != nil {
+		t.Fatalf("write placeholder: %v", err)
+	}
+	var stderr bytes.Buffer
+
+	code := runReleaseReport([]string{
+		"-in", filepath.Join(tmp, "missing-input-ok"),
+		"-out-json", filepath.Join(blockedDir, "report.json"),
+		"-out-md", filepath.Join(tmp, "report.md"),
+	}, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit code=%d, want 1; stderr=%q", code, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "prepare JSON output directory") {
+		t.Fatalf("stderr=%q, want JSON output directory context", stderr.String())
+	}
+	if strings.Contains(stderr.String(), "panic") {
+		t.Fatalf("stderr=%q, must not include panic output", stderr.String())
 	}
 }
