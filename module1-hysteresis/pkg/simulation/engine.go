@@ -157,16 +157,16 @@ func (e *Engine) Step() {
 	if !e.running || e.paused {
 		return
 	}
+	if e.material == nil || e.material.Thickness <= 0 {
+		e.state.ElectricField = 0
+		return
+	}
 
 	// Generate voltage based on waveform
 	e.state.Voltage = e.generateVoltage(e.state.Time)
 
-	// Convert voltage to electric field (guard against zero thickness)
-	if e.material.Thickness > 0 {
-		e.state.ElectricField = e.state.Voltage / e.material.Thickness
-	} else {
-		e.state.ElectricField = 0
-	}
+	// Convert voltage to electric field.
+	e.state.ElectricField = e.state.Voltage / e.material.Thickness
 
 	// Update polarization via Preisach model
 	e.state.Polarization = e.model.Update(e.state.ElectricField)

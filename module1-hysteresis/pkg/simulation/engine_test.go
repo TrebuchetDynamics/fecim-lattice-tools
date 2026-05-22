@@ -108,6 +108,38 @@ func TestEngineStep(t *testing.T) {
 	}
 }
 
+// TestEngineStepRejectsNonPhysicalThickness verifies invalid thickness prevents integration.
+func TestEngineStepRejectsNonPhysicalThickness(t *testing.T) {
+	tests := []struct {
+		name      string
+		thickness float64
+	}{
+		{name: "zero thickness", thickness: 0},
+		{name: "negative thickness", thickness: -1e-9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			material := *ferroelectric.DefaultHZO()
+			material.Thickness = tt.thickness
+			engine := NewEngine(&material)
+			engine.SetWaveform(WaveformManual)
+			engine.SetVoltage(0.5)
+			engine.Start()
+
+			engine.Step()
+
+			state := engine.State()
+			if state.Time != 0 {
+				t.Fatalf("expected no time integration for thickness %.3e m, got time %.3e s", tt.thickness, state.Time)
+			}
+			if len(state.VoltageHistory) != 0 || len(state.PolHistory) != 0 {
+				t.Fatalf("expected no history for thickness %.3e m, got voltage=%d polarization=%d", tt.thickness, len(state.VoltageHistory), len(state.PolHistory))
+			}
+		})
+	}
+}
+
 // TestEngineReset verifies reset clears state
 func TestEngineReset(t *testing.T) {
 	material := ferroelectric.DefaultHZO()
