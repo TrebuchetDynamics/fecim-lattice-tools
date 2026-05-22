@@ -515,6 +515,9 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 
 // SetTemperature updates the simulation temperature and scales material parameters.
 func (p *PreisachModel) SetTemperature(tempK float64) {
+	if p == nil || tempK <= 0 || math.IsNaN(tempK) || math.IsInf(tempK, 0) {
+		return
+	}
 	p.Temperature = tempK
 	p.updateEffectiveParameters()
 }

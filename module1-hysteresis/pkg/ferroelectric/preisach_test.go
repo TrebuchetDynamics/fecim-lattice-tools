@@ -760,6 +760,67 @@ func TestPreisachModel_SetTemperature(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_SetTemperatureRejectsNonPhysicalInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver temperature update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		model.SetTemperature(roomTemperatureK)
+	})
+
+	cases := []struct {
+		name string
+		temp float64
+	}{
+		{name: "nan", temp: math.NaN()},
+		{name: "positive_inf", temp: math.Inf(1)},
+		{name: "negative_inf", temp: math.Inf(-1)},
+		{name: "absolute_zero", temp: 0},
+		{name: "negative_kelvin", temp: -1},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			model.SetTemperature(350)
+			baselineTemp := model.Temperature
+			baselineEc := model.GetEffectiveEc()
+			baselinePs := model.effectivePs
+			baselineEverettEc := model.everett.Ec
+			baselineEverettDelta := model.everett.Delta
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical temperature %.3g K to be rejected without panic, got panic: %v", tc.temp, r)
+				}
+			}()
+
+			model.SetTemperature(tc.temp)
+
+			if model.Temperature != baselineTemp {
+				t.Fatalf("expected invalid temperature %.3g K to preserve %.3f K, got %.3f K", tc.temp, baselineTemp, model.Temperature)
+			}
+			if got := model.GetEffectiveEc(); got != baselineEc {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Ec %.6g V/m, got %.6g V/m", tc.temp, baselineEc, got)
+			}
+			if model.effectivePs != baselinePs {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Ps %.6g C/m², got %.6g C/m²", tc.temp, baselinePs, model.effectivePs)
+			}
+			if model.everett.Ec != baselineEverettEc {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Everett Ec %.6g V/m, got %.6g V/m", tc.temp, baselineEverettEc, model.everett.Ec)
+			}
+			if model.everett.Delta != baselineEverettDelta {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Everett Delta %.6g V/m, got %.6g V/m", tc.temp, baselineEverettDelta, model.everett.Delta)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_SetStress tests stress effects.
 func TestPreisachModel_SetStress(t *testing.T) {
 	t.Run("StressScaling", func(t *testing.T) {
