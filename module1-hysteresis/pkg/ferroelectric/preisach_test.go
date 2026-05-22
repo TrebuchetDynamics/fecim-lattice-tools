@@ -376,6 +376,42 @@ func TestPreisachModel_DiscreteStatesRejectsInvalidCounts(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_DiscreteStatesRejectsNonPhysicalMaterialBinding(t *testing.T) {
+	materialWithPs := func(ps float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ps = ps
+		return &material
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "zero_ps", model: &PreisachModel{material: materialWithPs(0)}},
+		{name: "negative_ps", model: &PreisachModel{material: materialWithPs(-0.3)}},
+		{name: "nan_ps", model: &PreisachModel{material: materialWithPs(math.NaN())}},
+		{name: "positive_inf_ps", model: &PreisachModel{material: materialWithPs(math.Inf(1))}},
+		{name: "negative_inf_ps", model: &PreisachModel{material: materialWithPs(math.Inf(-1))}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical material binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			states := tc.model.DiscreteStates(30)
+			if states != nil {
+				t.Fatalf("expected nil states for nonphysical material binding, got len=%d states=%#v", len(states), states)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Update tests field update and polarization calculation.
 func TestPreisachModel_Update(t *testing.T) {
 	t.Run("BasicUpdate", func(t *testing.T) {

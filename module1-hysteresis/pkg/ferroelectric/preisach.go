@@ -246,7 +246,7 @@ type DiscreteState struct {
 // DiscreteStates returns n evenly spaced polarization states from -Ps to +Ps.
 // Used for testing and visualization of programmable level distributions.
 func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
-	if n < 2 {
+	if p == nil || p.material == nil || p.material.Ps <= 0 || math.IsNaN(p.material.Ps) || math.IsInf(p.material.Ps, 0) || n < 2 {
 		return nil
 	}
 
