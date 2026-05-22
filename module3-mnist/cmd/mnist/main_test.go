@@ -1,7 +1,11 @@
 package mnistcli
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -132,5 +136,40 @@ func TestResolveWeightsPathExplicit(t *testing.T) {
 	}
 	if got != "/tmp/weights.json" {
 		t.Errorf("resolveWeightsPath: got %q, want %q", got, "/tmp/weights.json")
+	}
+}
+
+func TestRunMNISTCLIReportsFlagErrorToStderr(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("os.Getwd: %v", err)
+	}
+	tmp := t.TempDir()
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatalf("os.Chdir(temp): %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	err = runMNISTCLI([]string{"-definitely-not-a-flag"}, &stdout, &stderr)
+
+	if err == nil {
+		t.Fatal("runMNISTCLI error = nil, want invalid flag error")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout length = %d, want 0; stdout=%q", stdout.Len(), stdout.String())
+	}
+	text := stderr.String()
+	if !strings.Contains(text, "flag provided but not defined: -definitely-not-a-flag") {
+		t.Fatalf("stderr = %q, want invalid flag context", text)
+	}
+	if !strings.Contains(text, "Error:") {
+		t.Fatalf("stderr = %q, want top-level error prefix", text)
+	}
+	if !strings.Contains(text, "FeCIM MNIST CLI") {
+		t.Fatalf("stderr = %q, want CLI usage", text)
+	}
+	if _, err := os.Stat(filepath.Join(tmp, "logs")); !os.IsNotExist(err) {
+		t.Fatalf("invalid flag created logs directory; stat error = %v", err)
 	}
 }

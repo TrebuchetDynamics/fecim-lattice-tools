@@ -14,6 +14,7 @@ package mnistcli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -45,11 +46,12 @@ type EvaluationResult struct {
 }
 
 func Run(args []string) error {
-	logging.EnableFileLogging()
-	_ = logging.NewLogger("mnist-cli")
+	return runMNISTCLI(args, os.Stdout, os.Stderr)
+}
 
+func runMNISTCLI(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("mnist", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 
 	// Common CLI flags
 	commonFlags := cli.NewCommonFlags()
@@ -70,21 +72,11 @@ func Run(args []string) error {
 	exportLevels := fs.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
 	exportDir := fs.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths)")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM MNIST CLI")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools mnist cli [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-		fmt.Fprintln(out, cli.CommonUsage())
-	}
+	fs.Usage = func() { printMNISTUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printMNISTUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -92,7 +84,7 @@ func Run(args []string) error {
 	}
 
 	if commonFlags.WantsHelp() {
-		fs.Usage()
+		printMNISTUsage(fs, stdout)
 		return nil
 	}
 
@@ -114,6 +106,9 @@ func Run(args []string) error {
 			*epochs = cfg.Epochs
 		}
 	}
+
+	logging.EnableFileLogging()
+	_ = logging.NewLogger("mnist-cli")
 
 	// Create output writer
 	out, err := cli.NewOutputWriter(commonFlags)
@@ -235,4 +230,18 @@ func Run(args []string) error {
 	}
 
 	return nil
+}
+
+func printMNISTUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM MNIST CLI")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools mnist cli [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+	fmt.Fprintln(out, cli.CommonUsage())
 }
