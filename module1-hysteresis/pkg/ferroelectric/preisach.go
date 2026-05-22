@@ -535,6 +535,9 @@ func (p *PreisachModel) GetEffectiveEc() float64 {
 // Scaling Logic: Ec ~ sqrt(|Alpha|)
 // Alpha = AlphaT - 2*Q12*Stress
 func (p *PreisachModel) SetStress(stressGPa float64) {
+	if p == nil || math.IsNaN(stressGPa) || math.IsInf(stressGPa, 0) {
+		return
+	}
 	p.Stress = stressGPa
 
 	// Recalculate everything (Temperature and Stress)

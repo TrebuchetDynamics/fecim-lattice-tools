@@ -854,6 +854,65 @@ func TestPreisachModel_SetStress(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_SetStressRejectsInvalidInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver stress update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		model.SetStress(defaultStressGPa)
+	})
+
+	cases := []struct {
+		name      string
+		stressGPa float64
+	}{
+		{name: "nan", stressGPa: math.NaN()},
+		{name: "positive_inf", stressGPa: math.Inf(1)},
+		{name: "negative_inf", stressGPa: math.Inf(-1)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			model.SetStress(2)
+			baselineStress := model.Stress
+			baselineEc := model.GetEffectiveEc()
+			baselinePs := model.effectivePs
+			baselineEverettEc := model.everett.Ec
+			baselineEverettDelta := model.everett.Delta
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid stress %.3g GPa to be rejected without panic, got panic: %v", tc.stressGPa, r)
+				}
+			}()
+
+			model.SetStress(tc.stressGPa)
+
+			if model.Stress != baselineStress {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve %.3f GPa, got %.3f GPa", tc.stressGPa, baselineStress, model.Stress)
+			}
+			if got := model.GetEffectiveEc(); got != baselineEc {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Ec %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEc, got)
+			}
+			if model.effectivePs != baselinePs {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Ps %.6g C/m², got %.6g C/m²", tc.stressGPa, baselinePs, model.effectivePs)
+			}
+			if model.everett.Ec != baselineEverettEc {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Everett Ec %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEverettEc, model.everett.Ec)
+			}
+			if model.everett.Delta != baselineEverettDelta {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Everett Delta %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEverettDelta, model.everett.Delta)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_ReversiblePolarization tests the reversible component.
 func TestPreisachModel_ReversiblePolarization(t *testing.T) {
 	t.Run("ReversibleContribution", func(t *testing.T) {
