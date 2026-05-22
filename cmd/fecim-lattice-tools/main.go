@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	if maybeDispatchSubcommand(os.Args[1:]) {
+	if handled, code := maybeDispatchSubcommand(os.Args[1:]); handled {
+		if code != 0 {
+			os.Exit(code)
+		}
 		return
 	}
 	if err := runRoot(os.Args[1:]); err != nil {

@@ -20,24 +20,28 @@ import (
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
-func maybeDispatchSubcommand(args []string) bool {
+func maybeDispatchSubcommand(args []string) (bool, int) {
+	return runSubcommandDispatch(args, os.Stdout, os.Stderr)
+}
+
+func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) {
 	if len(args) == 0 {
-		return false
+		return false, 0
 	}
 	first := args[0]
 	if first == "-h" || first == "--help" || first == "help" {
-		printRootUsage(os.Stdout)
-		return true
+		printRootUsage(stdout)
+		return true, 0
 	}
 	if strings.HasPrefix(first, "-") {
-		return false
+		return false, 0
 	}
 	if err := dispatchSubcommand(args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		printRootUsage(os.Stderr)
-		os.Exit(1)
+		fmt.Fprintln(stderr, err)
+		printRootUsage(stderr)
+		return true, 1
 	}
-	return true
+	return true, 0
 }
 
 func dispatchSubcommand(args []string) error {
