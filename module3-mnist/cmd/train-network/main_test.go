@@ -1,6 +1,22 @@
 package mnisttrain
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestRunReportsMissingDataWithoutExiting(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	err := Run(nil)
+
+	if err == nil {
+		t.Fatal("Run() error = nil, want missing data error")
+	}
+	if !strings.Contains(err.Error(), "Could not find MNIST data directory") {
+		t.Fatalf("Run() error = %q, want missing data context", err.Error())
+	}
+}
 
 func TestQuantizeBounds(t *testing.T) {
 	q := quantize(2.0, -1.0, 1.0, 5)
