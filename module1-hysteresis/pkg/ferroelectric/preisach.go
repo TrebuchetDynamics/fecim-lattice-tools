@@ -192,7 +192,7 @@ type PreisachModel struct {
 
 // NewPreisachModel creates a new Preisach model with the given material.
 func NewPreisachModel(material *HZOMaterial) *PreisachModel {
-	if material == nil {
+	if material == nil || material.Ps <= 0 || math.IsNaN(material.Ps) || math.IsInf(material.Ps, 0) || material.Ec <= 0 || math.IsNaN(material.Ec) || math.IsInf(material.Ec, 0) {
 		return nil
 	}
 

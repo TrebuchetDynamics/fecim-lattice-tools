@@ -322,6 +322,45 @@ func TestPreisachModel_NewPreisachModelRejectsNilMaterial(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_NewPreisachModelRejectsNonPhysicalCoreMaterial(t *testing.T) {
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		material := *DefaultHZO()
+		mutator(&material)
+		return &material
+	}
+
+	cases := []struct {
+		name     string
+		material *HZOMaterial
+	}{
+		{name: "zero_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = 0 })},
+		{name: "negative_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = -0.3 })},
+		{name: "nan_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.NaN() })},
+		{name: "positive_inf_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(1) })},
+		{name: "negative_inf_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(-1) })},
+		{name: "zero_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = 0 })},
+		{name: "negative_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = -1e6 })},
+		{name: "nan_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() })},
+		{name: "positive_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(1) })},
+		{name: "negative_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(-1) })},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical core material to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			model := NewPreisachModel(tc.material)
+			if model != nil {
+				t.Fatalf("expected nil model for nonphysical core material, got %#v", model)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_DiscreteStates tests discrete state generation.
 func TestPreisachModel_DiscreteStates(t *testing.T) {
 	t.Run("GenerateStates", func(t *testing.T) {
