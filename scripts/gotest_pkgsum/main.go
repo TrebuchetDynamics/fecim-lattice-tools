@@ -32,12 +32,16 @@ func unmarshalEvent(line []byte, ev *TestEvent) error {
 }
 
 func main() {
-	var r io.Reader = os.Stdin
-	if len(os.Args) >= 2 && os.Args[1] != "-" {
-		f, err := os.Open(os.Args[1])
+	os.Exit(runPkgSum(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+}
+
+func runPkgSum(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	var r io.Reader = stdin
+	if len(args) >= 1 && args[0] != "-" {
+		f, err := os.Open(args[0])
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "open %s: %v\n", os.Args[1], err)
-			os.Exit(2)
+			fmt.Fprintf(stderr, "open %s: %v\n", args[0], err)
+			return 2
 		}
 		defer f.Close()
 		r = f
@@ -78,8 +82,8 @@ func main() {
 		st.last = sw
 	}
 	if err := s.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "scan: %v\n", err)
-		os.Exit(2)
+		fmt.Fprintf(stderr, "scan: %v\n", err)
+		return 2
 	}
 
 	pass := 0
@@ -102,15 +106,16 @@ func main() {
 	}
 
 	if invalidLines > 0 {
-		fmt.Fprintf(os.Stderr, "WARN: skipped %d non-JSON line(s) while aggregating go test -json output\n", invalidLines)
+		fmt.Fprintf(stderr, "WARN: skipped %d non-JSON line(s) while aggregating go test -json output\n", invalidLines)
 	}
 	if total == 0 {
-		fmt.Fprintf(os.Stderr, "ERROR: no package summaries parsed from go test -json stream\n")
-		os.Exit(2)
+		fmt.Fprintf(stderr, "ERROR: no package summaries parsed from go test -json stream\n")
+		return 2
 	}
 
-	fmt.Printf("PKG_SUM pass=%d fail=%d skip=%d total=%d\n", pass, fail, skip, total)
+	fmt.Fprintf(stdout, "PKG_SUM pass=%d fail=%d skip=%d total=%d\n", pass, fail, skip, total)
 	if fail > 0 {
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
