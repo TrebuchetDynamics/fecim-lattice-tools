@@ -1081,9 +1081,9 @@ func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 	validStack := func() *sharedphysics.PreisachStack {
 		return sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett)
 	}
-	materialWithEc := func(ec float64) *HZOMaterial {
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
 		m := *material
-		m.Ec = ec
+		mutator(&m)
 		return &m
 	}
 
@@ -1093,13 +1093,22 @@ func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 	}{
 		{name: "nil_receiver", model: nil},
 		{name: "nil_material", model: &PreisachModel{stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = -0.3 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = -0.2 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "pr_exceeds_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "nil_stack", model: &PreisachModel{material: material, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "nil_stack_everett", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
-		{name: "zero_ec", model: &PreisachModel{material: materialWithEc(0), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
-		{name: "negative_ec", model: &PreisachModel{material: materialWithEc(-1e6), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
-		{name: "nan_ec", model: &PreisachModel{material: materialWithEc(math.NaN()), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
-		{name: "positive_inf_ec", model: &PreisachModel{material: materialWithEc(math.Inf(1)), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
-		{name: "negative_inf_ec", model: &PreisachModel{material: materialWithEc(math.Inf(-1)), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = -1e6 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_inf_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(-1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 	}
 
 	for _, tc := range cases {
