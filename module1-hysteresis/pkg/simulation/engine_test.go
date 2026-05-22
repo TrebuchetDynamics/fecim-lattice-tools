@@ -342,6 +342,29 @@ func TestEngineWithDifferentMaterials(t *testing.T) {
 // HYSTERESIS DATA TESTS
 // =============================================================================
 
+func TestGetHysteresisDataRejectsNonPhysicalThickness(t *testing.T) {
+	tests := []struct {
+		name      string
+		thickness float64
+	}{
+		{name: "zero thickness", thickness: 0},
+		{name: "negative thickness", thickness: -1e-9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			material := *ferroelectric.DefaultHZO()
+			material.Thickness = tt.thickness
+			engine := NewEngine(&material)
+
+			E, P := engine.GetHysteresisData()
+			if len(E) != 0 || len(P) != 0 {
+				t.Fatalf("expected no hysteresis data for thickness %.3e m, got E=%d P=%d", tt.thickness, len(E), len(P))
+			}
+		})
+	}
+}
+
 // TestGetHysteresisData verifies loop data generation.
 func TestGetHysteresisData(t *testing.T) {
 	material := ferroelectric.DefaultHZO()

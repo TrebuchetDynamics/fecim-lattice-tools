@@ -300,6 +300,9 @@ func (e *Engine) Reset() {
 
 // GetHysteresisData returns P-E data for plotting the hysteresis loop.
 func (e *Engine) GetHysteresisData() ([]float64, []float64) {
+	if e.material == nil || e.material.Thickness <= 0 {
+		return nil, nil
+	}
 	Emax := e.amplitude / e.material.Thickness
 	return e.model.GetHysteresisLoop(Emax, 100)
 }
