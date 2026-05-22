@@ -490,6 +490,39 @@ func TestPreisachModel_GetHysteresisLoop(t *testing.T) {
 	})
 }
 
+// TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs verifies invalid loop requests return no data and preserve model state.
+func TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs(t *testing.T) {
+	material := DefaultHZO()
+	tests := []struct {
+		name   string
+		Emax   float64
+		points int
+	}{
+		{name: "zero field", Emax: 0, points: 50},
+		{name: "negative field", Emax: -material.Ec, points: 50},
+		{name: "nan field", Emax: math.NaN(), points: 50},
+		{name: "infinite field", Emax: math.Inf(1), points: 50},
+		{name: "zero points", Emax: material.Ec, points: 0},
+		{name: "negative points", Emax: material.Ec, points: -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := NewPreisachModel(material)
+			initialP := model.Update(2 * material.Ec)
+
+			E, P := model.GetHysteresisLoop(tt.Emax, tt.points)
+
+			if len(E) != 0 || len(P) != 0 {
+				t.Fatalf("expected no loop data for Emax=%.3e V/m points=%d, got E=%d P=%d", tt.Emax, tt.points, len(E), len(P))
+			}
+			if got := model.Polarization(); math.Abs(got-initialP) > 1e-12 {
+				t.Fatalf("invalid loop request changed polarization: got %.12e C/m² want %.12e C/m²", got, initialP)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_SetTemperature tests temperature effects.
 func TestPreisachModel_SetTemperature(t *testing.T) {
 	t.Run("TemperatureScaling", func(t *testing.T) {
