@@ -501,7 +501,7 @@ func (p *PreisachModel) updateReversibleParams() {
 
 // GetHysteresisLoop generates a full P-E hysteresis loop.
 func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, []float64) {
-	if p == nil || points <= 0 || Emax <= 0 || math.IsNaN(Emax) || math.IsInf(Emax, 0) {
+	if p == nil || points <= 0 || Emax <= 0 || math.IsNaN(Emax) || math.IsInf(Emax, 0) || p.material == nil || p.stack == nil || p.stack.Everett == nil || p.material.Ec <= 0 || math.IsNaN(p.material.Ec) || math.IsInf(p.material.Ec, 0) {
 		return nil, nil
 	}
 

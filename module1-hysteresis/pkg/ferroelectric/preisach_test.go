@@ -977,6 +977,90 @@ func TestPreisachModel_GetHysteresisLoop(t *testing.T) {
 	})
 }
 
+// TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding verifies invalid loop bindings return no data and preserve model state.
+func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
+	material := DefaultHZO()
+	validModel := NewPreisachModel(material)
+	validEverett := validModel.stack.Everett
+	validStack := func() *sharedphysics.PreisachStack {
+		return sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett)
+	}
+	materialWithEc := func(ec float64) *HZOMaterial {
+		m := *material
+		m.Ec = ec
+		return &m
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nil_stack", model: &PreisachModel{material: material, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nil_stack_everett", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_ec", model: &PreisachModel{material: materialWithEc(0), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_ec", model: &PreisachModel{material: materialWithEc(-1e6), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_ec", model: &PreisachModel{material: materialWithEc(math.NaN()), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_ec", model: &PreisachModel{material: materialWithEc(math.Inf(1)), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_inf_ec", model: &PreisachModel{material: materialWithEc(math.Inf(-1)), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeStack := (*sharedphysics.PreisachStack)(nil)
+			beforeLastE := 0.0
+			beforeDirection := 0
+			beforeStackLen := -1
+			beforeDynamicP := 0.0
+			beforeHasDynamicP := false
+			beforeLockDynamic := false
+			if tc.model != nil {
+				beforeStack = tc.model.stack
+				beforeDynamicP = tc.model.dynamicP
+				beforeHasDynamicP = tc.model.hasDynamicP
+				beforeLockDynamic = tc.model.lockDynamic
+				if tc.model.stack != nil {
+					beforeLastE = tc.model.stack.LastE
+					beforeDirection = tc.model.stack.CurrentDir
+					beforeStackLen = len(tc.model.stack.Stack)
+				}
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid loop binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			E, P := tc.model.GetHysteresisLoop(material.Ec, 10)
+
+			if len(E) != 0 || len(P) != 0 {
+				t.Fatalf("expected no loop data for invalid binding, got E=%d P=%d", len(E), len(P))
+			}
+			if tc.model != nil {
+				if tc.model.stack != beforeStack {
+					t.Fatalf("expected invalid loop binding to preserve stack pointer, before=%#v after=%#v", beforeStack, tc.model.stack)
+				}
+				if tc.model.dynamicP != beforeDynamicP || tc.model.hasDynamicP != beforeHasDynamicP || tc.model.lockDynamic != beforeLockDynamic {
+					t.Fatalf("expected invalid loop binding to preserve dynamic state P=%.6g has=%v lock=%v, got P=%.6g has=%v lock=%v", beforeDynamicP, beforeHasDynamicP, beforeLockDynamic, tc.model.dynamicP, tc.model.hasDynamicP, tc.model.lockDynamic)
+				}
+				if tc.model.stack != nil {
+					if tc.model.stack.LastE != beforeLastE {
+						t.Fatalf("expected invalid loop binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
+					}
+					if tc.model.stack.CurrentDir != beforeDirection {
+						t.Fatalf("expected invalid loop binding to preserve CurrentDir %d, got %d", beforeDirection, tc.model.stack.CurrentDir)
+					}
+					if len(tc.model.stack.Stack) != beforeStackLen {
+						t.Fatalf("expected invalid loop binding to preserve turning-point count %d, got %d", beforeStackLen, len(tc.model.stack.Stack))
+					}
+				}
+			}
+		})
+	}
+}
+
 // TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs verifies invalid loop requests return no data and preserve model state.
 func TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs(t *testing.T) {
 	material := DefaultHZO()
