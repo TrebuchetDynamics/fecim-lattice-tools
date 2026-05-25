@@ -15,7 +15,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	hysgui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
+	hysheadless "fecim-lattice-tools/module1-hysteresis/pkg/headless"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
 )
@@ -134,8 +134,8 @@ func runHysteresisMode(engine string) error {
 	}
 	effPs := mat.Ps * rangeFrac
 
-	var dataLogger *hysgui.HysteresisDataLogger
-	if logger, err := hysgui.NewHysteresisDataLogger(mat.Name); err != nil {
+	var dataLogger *hysheadless.HysteresisDataLogger
+	if logger, err := hysheadless.NewHysteresisDataLogger(mat.Name); err != nil {
 		log.Info("Headless CSV logging disabled: %v", err)
 	} else {
 		dataLogger = logger
@@ -872,7 +872,7 @@ func headlessPhaseForState(state, waveform string) (int, string) {
 }
 
 func recordHeadlessSnapshot(
-	logger *hysgui.HysteresisDataLogger,
+	logger *hysheadless.HysteresisDataLogger,
 	state headlessEngineState,
 	mat *physics.HZOMaterial,
 	effPs float64,
@@ -946,7 +946,7 @@ func recordHeadlessSnapshot(
 		wrdPhase, wrdPhaseName = headlessPhaseForState(stateLabel, waveform)
 	}
 
-	snapshot := hysgui.HysteresisSnapshot{
+	snapshot := hysheadless.HysteresisSnapshot{
 		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
 		SimTime:       state.time,
 		Dt:            dt,

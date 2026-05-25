@@ -82,7 +82,7 @@ Key capabilities:
 
 ### CLI Entry Points
 - `cmd/eda-cli/` - Command-line interface for batch design generation
-- `cmd/eda-gui/` - GUI launcher
+- `../../cmd/fecim-lattice-tools` - Canonical gogpu/ui launcher (`eda` subcommand or `--module eda`)
 - `cmd/hello/` - Hello world example
 - `cmd/lattice-gen/` - Standalone lattice generator
 
@@ -92,7 +92,6 @@ Key capabilities:
 module6-eda/
 ├── cmd/
 │   ├── eda-cli/                 # CLI tool
-│   ├── eda-gui/                 # GUI launcher
 │   ├── hello/                   # Example
 │   └── lattice-gen/             # Lattice generator
 ├── pkg/

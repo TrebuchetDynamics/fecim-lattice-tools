@@ -181,9 +181,9 @@ See [materials.md](./materials.md) for complete parameter tables.
 | Verification logging | ✅ | Per-target metrics in UI |
 | DCC (Direct Cell Control) | ✅ | Single-pulse write, `shared/physics/dcc_write.go` |
 
-### World-Class Physics Features
+### Literature-Style Characterization Features
 
-These features are implemented in `shared/physics/worldclass_*.go` and provide research-grade characterization:
+These features are implemented in legacy-named `shared/physics/worldclass_*.go` files and provide simulator characterization workflows:
 
 | Feature | Package | Description |
 |---------|---------|-------------|
@@ -196,7 +196,7 @@ These features are implemented in `shared/physics/worldclass_*.go` and provide r
 | **CV characterization** | `worldclass_cv.go` | Capacitance-voltage sweep simulation |
 | **Frequency dispersion** | `worldclass_frequency_dispersion.go` | Pr and Ec vs measurement frequency |
 
-**Key literature basis for world-class features:**
+**Key literature basis for characterization features:**
 - PUND: Standard characterization protocol (Merz 1954, Scott 2000)
 - Wake-up/Fatigue: Park et al., APL 2013; Yurchuk et al., IEEE TED 2014
 - C2C scaling: IEEE EDL 2023 (state-dependent 1/G scaling)
@@ -433,7 +433,7 @@ fecim-lattice-tools hysteresis --headless
 ## Future Enhancements (Roadmap)
 
 - [x] FORC measurement import for calibrated Preisach distribution — implemented in `worldclass_forc.go`
-- [x] Wake-up physics model — implemented in `worldclass_wakeup.go`
+- [x] Wake-up/fatigue simulator model — implemented in `worldclass_wakeup.go`
 - [x] C2C state-dependent variation — implemented in `worldclass_c2c.go`
 - [x] PUND characterization — implemented in `worldclass_pund.go`
 - [x] Retention power-law model — implemented in `worldclass_retention.go`

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import (
@@ -862,14 +864,15 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					// Add comparison callout every 5 cycles
 					if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
 						fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
-						// NOTE: Ignore the 10M× conference claim here; peer-reviewed literature reports 25-100× (Samsung Nature 2025).
-						nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
-						dramEquiv := fecimEnergy * 1000 // 1000× worse
+						// Illustrative comparison placeholders only; do not report as measured
+						// FeCIM-vs-memory advantages without cited device/circuit evidence.
+						nandEquiv := fecimEnergy * 50
+						dramEquiv := fecimEnergy * 1000
 						bitsStored := float64(a.wrdTotalWrites) * a.wrdBitsStored
-						a.addLogEntry("━━ ENERGY COMPARISON ━━")
-						a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
-						a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (~50× est.)", nandEquiv))
-						a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (~1000× est.)", dramEquiv))
+						a.addLogEntry("━━ ILLUSTRATIVE ENERGY SCALING ━━")
+						a.addLogEntry(fmt.Sprintf("FeCIM model: %.0f pJ total", fecimEnergy))
+						a.addLogEntry(fmt.Sprintf("NAND placeholder: %.0f pJ", nandEquiv))
+						a.addLogEntry(fmt.Sprintf("DRAM placeholder: %.0f pJ", dramEquiv))
 						a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.2f×binary)", bitsStored, a.wrdBitsStored))
 						a.addLogEntry("━━━━━━━━━━━━━━━━━━━━━━")
 					}
@@ -882,8 +885,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						a.addLogEntry(fmt.Sprintf("★★★ 25 ops! ~%.0f bits stored ★★★", 25*a.wrdBitsStored))
 					case 50:
 						a.addLogEntry(fmt.Sprintf("★★★★ 50 ops! ~%.0f bits stored ★★★★", 50*a.wrdBitsStored))
-						a.addLogEntry(fmt.Sprintf("Binary would need %.0f cells!", 50*a.wrdBitsStored))
-						a.addLogEntry("FeCIM: only 50 cells! (5× denser)")
+						a.addLogEntry(fmt.Sprintf("Binary-equivalent level count: %.0f cells", 50*a.wrdBitsStored))
+						a.addLogEntry("30-level density is a simulation-only equivalent")
 					case 100:
 						a.addLogEntry("★★★★★ 100 OPERATIONS! ★★★★★")
 						a.addLogEntry(fmt.Sprintf("~%.0f bits in 100 FeCIM cells", 100*a.wrdBitsStored))

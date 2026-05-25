@@ -1,3 +1,5 @@
+//go:build legacy_fyne && cgo
+
 package accessibility
 
 import "fyne.io/fyne/v2"

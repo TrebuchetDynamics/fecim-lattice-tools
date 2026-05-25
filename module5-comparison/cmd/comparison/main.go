@@ -3,6 +3,7 @@ package comparisoncli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -41,8 +42,12 @@ type AdvantagesResult struct {
 }
 
 func Run(args []string) error {
+	return runComparison(args, os.Stdout, os.Stderr)
+}
+
+func runComparison(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("comparison", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 
 	// Common CLI flags
 	commonFlags := cli.NewCommonFlags()
@@ -58,21 +63,11 @@ func Run(args []string) error {
 	targetTP := fs.Float64("throughput", 10000, "Target throughput (inferences/sec)")
 	noColor := fs.Bool("no-color", false, "Disable color output")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM Architecture Comparison CLI")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools comparison cli [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-		fmt.Fprintln(out, cli.CommonUsage())
-	}
+	fs.Usage = func() { printComparisonUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printComparisonUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -80,7 +75,7 @@ func Run(args []string) error {
 	}
 
 	if commonFlags.WantsHelp() {
-		fs.Usage()
+		printComparisonUsage(fs, stdout)
 		return nil
 	}
 
@@ -164,6 +159,20 @@ func Run(args []string) error {
 	printSummary(comp, advantages)
 
 	return nil
+}
+
+func printComparisonUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Architecture Comparison CLI")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools comparison cli [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+	fmt.Fprintln(out, cli.CommonUsage())
 }
 
 func printHeader() {

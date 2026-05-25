@@ -39,7 +39,7 @@ func TestFeCIMMaterial(t *testing.T) {
 	}
 	// Conference-baseline values retained for the FeCIM preset.
 	if mat.EnduranceCycles != 1e9 {
-		t.Errorf("FeCIM demonstrated endurance should be 1e9, got %e", mat.EnduranceCycles)
+		t.Errorf("FeCIM conference-baseline endurance assumption should be 1e9, got %e", mat.EnduranceCycles)
 	}
 }
 

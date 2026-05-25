@@ -1,0 +1,12 @@
+citation_path: citations/papers/2d_spintronics_neuromorphic_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: 2d_spintronics_neuromorphic_2024
+pdf:
+  path: docs/4-research/papers/by-topic/05-neuromorphic/2d_spintronics_neuromorphic_2024.pdf
+  sha256: 1f769ba6c6e4f4d82fac3397f8c400f4577ca73e3e8a93012f9ab76b116063f1
+  size: 9823933
+title: 2d Spintronics Neuromorphic 2024

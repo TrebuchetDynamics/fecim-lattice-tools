@@ -1,0 +1,12 @@
+citation_path: citations/papers/fefet_heterogeneous_codoped_hfo2_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fefet_heterogeneous_codoped_hfo2_2025
+pdf:
+  path: docs/4-research/papers/by-topic/18-ald-process-control/fefet_heterogeneous_codoped_hfo2_2025.pdf
+  sha256: 1b0955e4dd2faf3ad0406cc4033ed01c0d25582a2b3323a657c83d6256033424
+  size: 2828058
+title: Fefet Heterogeneous Codoped HFO2 2025

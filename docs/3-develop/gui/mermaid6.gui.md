@@ -956,7 +956,7 @@ Generation/validation happen in background while UI remains responsive:
 | Learn Center tab | `pkg/gui/tabs/learn_tab.go` |
 | Educational visuals | `pkg/gui/tabs/learn_visuals*.go` |
 | Layout canvas | `pkg/gui/widgets/layout_canvas.go` |
-| Command entry point | `cmd/eda-gui/main.go` |
+| Command entry point | `../../cmd/fecim-lattice-tools --module eda` |
 
 ---
 

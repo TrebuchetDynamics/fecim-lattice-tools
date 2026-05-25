@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/in_memory_computing_dnn_survey_2023/grobid.tei.xml",
+      "paper_key": "in_memory_computing_dnn_survey_2023",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/in_memory_computing_dnn_survey_2023/marker.md",
+      "paper_key": "in_memory_computing_dnn_survey_2023",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

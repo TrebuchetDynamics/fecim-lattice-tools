@@ -1,6 +1,6 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-next-ui bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared install-skills test-skills
+.PHONY: build test test-race test-short test-gogpu-ui test-next-ui test-legacy-fyne bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -10,12 +10,16 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
-	@echo "  make test-next-ui   Run zero-CGO tests for future gogpu/ui shell"
+	@echo "  make test-gogpu-ui  Run zero-CGO tests for the gogpu/ui shell"
+	@echo "  make test-next-ui   Alias for test-gogpu-ui"
+	@echo "  make test-legacy-fyne Run opt-in legacy Fyne package tests"
 	@echo "  make test-shared    Run tests for shared packages"
 	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
 	@echo "  make test-mnist     Run tests for Module 3 (MNIST)"
 	@echo "  make test-circuits  Run tests for Module 4 (Circuits)"
+	@echo "  make test-research  Run research ingestion/audit command tests"
+	@echo "  make research-audit Run claim registry and provenance audit"
 	@echo "  make bench          Run all benchmarks"
 	@echo "  make vet            Run go vet"
 	@echo "  make fmt            Run gofmt"
@@ -39,6 +43,13 @@ test-mnist:
 
 test-circuits:
 	$(GO) test ./module4-circuits/...
+
+test-research:
+	PYTHONPATH=tools/research python3 -m unittest discover -s tools/research/tests -v
+	CGO_ENABLED=0 $(GO) test ./cmd/fecim-lattice-tools -run 'TestResearch|TestDispatchResearch|TestRootUsageListsResearch' -count=1
+
+research-audit:
+	PYTHONPATH=tools/research python3 tools/research/research_cli.py audit
 
 qa-a0:
 	./scripts/qa_a0.sh
@@ -72,8 +83,13 @@ test-race:
 test-short:
 	$(GO) test -short ./...
 
-test-next-ui:
-	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./cmd/fecim-lattice-tools-next/...
+test-gogpu-ui:
+	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./internal/gogpuscreenshot/... ./cmd/fecim-lattice-tools ./cmd/fecim-screenshotter
+
+test-next-ui: test-gogpu-ui
+
+test-legacy-fyne:
+	$(GO) test -tags legacy_fyne ./...
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)
@@ -102,7 +118,7 @@ clean:
 arch-check:
 	@bash scripts/check-architecture.sh
 
-ci: fmt vet test-short arch-check
+ci: fmt vet test-short arch-check test-research research-audit
 
 # Skills (FeCIM agent skills)
 install-skills:

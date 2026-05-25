@@ -1,0 +1,12 @@
+citation_path: citations/papers/neuromorphic_hardware_vision_systems_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: neuromorphic_hardware_vision_systems_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/Neuromorphic_Hardware_Vision_Systems_arXiv.pdf
+  sha256: f84e194aea3cf6696ccdfd9edf2527ac65426854ce51605152dd9bab736e75a5
+  size: 387930
+title: Neuromorphic Hardware Vision Systems Arxiv

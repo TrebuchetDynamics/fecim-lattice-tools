@@ -1,0 +1,12 @@
+citation_path: citations/papers/photonic_neural_networks_review_2023.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: photonic_neural_networks_review_2023
+pdf:
+  path: docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/photonic_neural_networks_review_2023.pdf
+  sha256: ef12d8e2ede51ea3ba2eda33c8f96ee8208f9aaac2374d26184ae14250fe07d4
+  size: 1786187
+title: Photonic Neural Networks Review 2023

@@ -33,10 +33,18 @@ func run(out, errOut io.Writer, profile, mode, sep string) int {
 }
 
 func main() {
-	profile := flag.String("profile", "pr", "material profile: pr|nightly")
-	mode := flag.String("mode", "list", "mode: list|version")
-	sep := flag.String("sep", "\n", "separator for list output")
-	flag.Parse()
+	os.Exit(runMaterialProfile(os.Args[1:], os.Stdout, os.Stderr))
+}
 
-	os.Exit(run(os.Stdout, os.Stderr, *profile, *mode, *sep))
+func runMaterialProfile(args []string, out, errOut io.Writer) int {
+	flags := flag.NewFlagSet("material-profile", flag.ContinueOnError)
+	flags.SetOutput(errOut)
+	profile := flags.String("profile", "pr", "material profile: pr|nightly")
+	mode := flags.String("mode", "list", "mode: list|version")
+	sep := flags.String("sep", "\n", "separator for list output")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+
+	return run(out, errOut, *profile, *mode, *sep)
 }

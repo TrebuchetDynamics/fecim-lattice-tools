@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -55,18 +56,26 @@ type releaseReport struct {
 }
 
 func main() {
+	os.Exit(runReleaseReport(os.Args[1:], os.Stderr))
+}
+
+func runReleaseReport(args []string, stderr io.Writer) int {
 	var inDir string
 	var outJSON string
 	var outMD string
 	var materialsCSV string
 	var modelsCSV string
 
-	flag.StringVar(&inDir, "in", "", "input directory containing regression JSON artifacts")
-	flag.StringVar(&outJSON, "out-json", "", "output JSON path")
-	flag.StringVar(&outMD, "out-md", "", "output markdown path")
-	flag.StringVar(&materialsCSV, "materials", "fecim_hzo,literature_superlattice,default_hzo", "expected material ids (comma separated)")
-	flag.StringVar(&modelsCSV, "models", "preisach,landau-khalatnikov", "expected models (comma separated)")
-	flag.Parse()
+	flags := flag.NewFlagSet("release-report", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.StringVar(&inDir, "in", "", "input directory containing regression JSON artifacts")
+	flags.StringVar(&outJSON, "out-json", "", "output JSON path")
+	flags.StringVar(&outMD, "out-md", "", "output markdown path")
+	flags.StringVar(&materialsCSV, "materials", "fecim_hzo,literature_superlattice,default_hzo", "expected material ids (comma separated)")
+	flags.StringVar(&modelsCSV, "models", "preisach,landau-khalatnikov", "expected models (comma separated)")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
 
 	if inDir == "" {
 		// Prefer repo artifacts if present; otherwise, use $TMPDIR/fecim-regression.
@@ -183,25 +192,33 @@ func main() {
 		report.DOE.CoverageFrac = float64(report.DOE.FoundCombos) / float64(report.DOE.ExpectedCombos)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(outJSON), 0o755); err != nil {
-		fatal(err)
+	jsonDir := filepath.Dir(outJSON)
+	if err := os.MkdirAll(jsonDir, 0o755); err != nil {
+		fmt.Fprintf(stderr, "prepare JSON output directory %q: %v\n", jsonDir, err)
+		return 1
 	}
-	if err := os.MkdirAll(filepath.Dir(outMD), 0o755); err != nil {
-		fatal(err)
+	mdDir := filepath.Dir(outMD)
+	if err := os.MkdirAll(mdDir, 0o755); err != nil {
+		fmt.Fprintf(stderr, "prepare markdown output directory %q: %v\n", mdDir, err)
+		return 1
 	}
 
 	b, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
-		fatal(err)
+		fmt.Fprintf(stderr, "marshal release report: %v\n", err)
+		return 1
 	}
 	if err := os.WriteFile(outJSON, b, 0o644); err != nil {
-		fatal(err)
+		fmt.Fprintf(stderr, "write JSON report %q: %v\n", outJSON, err)
+		return 1
 	}
 
 	md := renderMarkdown(report, expectedMaterials, expectedModels)
 	if err := os.WriteFile(outMD, []byte(md), 0o644); err != nil {
-		fatal(err)
+		fmt.Fprintf(stderr, "write markdown report %q: %v\n", outMD, err)
+		return 1
 	}
+	return 0
 }
 
 func splitCSV(s string) []string {
@@ -279,9 +296,4 @@ func renderMarkdown(r releaseReport, expectedMaterials, expectedModels []string)
 	}
 
 	return sb.String()
-}
-
-func fatal(err error) {
-	fmt.Fprintln(os.Stderr, err)
-	os.Exit(1)
 }

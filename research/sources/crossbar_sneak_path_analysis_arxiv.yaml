@@ -1,0 +1,12 @@
+citation_path: citations/papers/crossbar_sneak_path_analysis_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: crossbar_sneak_path_analysis_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/Crossbar_Sneak_Path_Analysis_arXiv.pdf
+  sha256: fafece7a8477aeea47c261174ec3569515fcefc6eea7e11cca2f3ee4b1c69ada
+  size: 523405
+title: Crossbar Sneak Path Analysis Arxiv

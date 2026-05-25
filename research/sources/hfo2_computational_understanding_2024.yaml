@@ -1,0 +1,12 @@
+citation_path: citations/papers/hfo2_computational_understanding_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: hfo2_computational_understanding_2024
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/hfo2_computational_understanding_2024.pdf
+  sha256: 9a15f774d99eaf804a1eae57a080966b1aeb75f7de2bbb68b2eadbaa330fa7eb
+  size: 5601149
+title: HFO2 Computational Understanding 2024

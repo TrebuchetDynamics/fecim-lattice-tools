@@ -1,0 +1,12 @@
+citation_path: citations/papers/multilevel_fefet_crossbar_2023.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: multilevel_fefet_crossbar_2023
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/multilevel_fefet_crossbar_2023.pdf
+  sha256: 41a24a46198d94644faefd873c93bfd40b85a8cd6598629edd58f57a93fec63b
+  size: 1752495
+title: Multilevel Fefet Crossbar 2023

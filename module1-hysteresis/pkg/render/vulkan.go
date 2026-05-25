@@ -1,5 +1,4 @@
-//go:build !js
-// +build !js
+//go:build !js && cgo
 
 // Package render provides Vulkan-based visualization for ferroelectric simulations.
 package render

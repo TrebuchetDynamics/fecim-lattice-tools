@@ -1,0 +1,12 @@
+citation_path: citations/papers/contemporary_spiking_bioinspired_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: contemporary_spiking_bioinspired_2024
+pdf:
+  path: docs/4-research/papers/by-topic/12-spiking-neural-networks/contemporary_spiking_bioinspired_2024.pdf
+  sha256: 65e3863aba7b91ad8e63382d34cf82ba432cef4ea710d58cdfc7008397184325
+  size: 25182560
+title: Contemporary Spiking Bioinspired 2024

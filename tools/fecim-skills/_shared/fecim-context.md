@@ -33,9 +33,9 @@ Shared context referenced by FeCIM skills. Do not duplicate this content in indi
 4. **Zero-field bounds reset** — when `absField < 0.01*Ec`, reset to full `[0, MaxField]`.
 5. **Preisach Everett zero-clamp** — use product-form (always non-negative) instead of factorized (goes negative).
 
-## UI thread-safety rule (`docs/3-develop/gui/FYNE_NOTES.md`)
+## Legacy Fyne thread-safety rule (`docs/3-develop/gui/FYNE_NOTES.md`)
 
-All UI updates from goroutines MUST use `fyne.Do(func() { ... })`. Direct widget mutation from a non-main goroutine causes hangs and freezes. Common patterns to audit:
+Tagged legacy Fyne code must wrap UI updates from goroutines in `fyne.Do(func() { ... })`. Direct widget mutation from a non-main goroutine causes hangs and freezes. Common patterns to audit:
 
 ```go
 // WRONG
@@ -59,14 +59,28 @@ New UI-neutral, physics, simulation, validation, and export work must NOT add `f
 
 | Target | CGO | Entry | Use |
 |---|---|---|---|
-| Legacy | `CGO_ENABLED=1` (default) | `./cmd/fecim-lattice-tools` | Current Fyne GUI |
-| Next | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools-next` | Future zero-CGO gogpu/ui shell |
+| Default | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools` | Canonical gogpu/ui shell |
+| Legacy Fyne | host default CGO | `./cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne` | Opt-in parity checks only |
+
+## Host preflight and search fallback
+
+Before using any FeCIM skill, verify the active repo and tools:
+```bash
+pwd
+test -d /home/xel/git/sages-openclaw/workspace-riju/fecim-lattice-tools && echo "primary repo present" || echo "primary repo MISSING"
+command -v go && command -v git
+command -v rg >/dev/null 2>&1 || echo "rg missing; use grep or file-search fallback"
+git status --short --branch
+```
+Do not install host packages from a skill. Missing compilers, headers, qmd, agent-browser, or rg are blockers/fallbacks to report with exact evidence.
 
 ## Test invocations
 
-| Command | Use |
-|---|---|
-| `go test ./...` | Full suite |
-| `go test -race ./...` | Race detection (mandatory when changing concurrency) |
-| `make test-next-ui` | Future zero-CGO UI shell tests |
-| `FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...` | Regenerate physics regression goldens (only when divergence is intentional) |
+| Command | Use | Evidence to report |
+|---|---|---|
+| `go test ./...` | Full suite | exit code plus package/test pass/fail/skip counts |
+| `go test -json ./...` | Full-suite count extraction | summarized pass/fail/skip counts |
+| `go test -race ./...` | Race detection (mandatory when changing concurrency) | exit code plus package/test counts |
+| `make test-gogpu-ui` | Canonical zero-CGO UI shell tests | exit code and target output |
+| `make test-legacy-fyne` | Opt-in legacy Fyne package tests | exit code and target output |
+| `FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...` | Regenerate physics regression goldens (only when divergence is intentional) | written justification and golden diff |

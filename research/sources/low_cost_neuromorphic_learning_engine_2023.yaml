@@ -1,0 +1,12 @@
+citation_path: citations/papers/low_cost_neuromorphic_learning_engine_2023.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: low_cost_neuromorphic_learning_engine_2023
+pdf:
+  path: docs/4-research/papers/by-topic/12-spiking-neural-networks/low_cost_neuromorphic_learning_engine_2023.pdf
+  sha256: 9004760f3126ce80387bd64235c2e39bdb186fab6e8c5302835f86e8889d8d39
+  size: 2131281
+title: Low Cost Neuromorphic Learning Engine 2023

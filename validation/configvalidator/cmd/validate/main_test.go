@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"fecim-lattice-tools/validation/configvalidator"
@@ -43,6 +45,24 @@ func TestValidateFile_NonExistent(t *testing.T) {
 	_, err := configvalidator.ValidateFile("/nonexistent/path/config.json")
 	if err == nil {
 		t.Error("ValidateFile: expected error for non-existent path, got nil")
+	}
+}
+
+func TestRunValidateConfigReportsAccessError(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := runValidateConfig([]string{missing}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit code=%d, want 1; stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty output", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "cannot access "+missing) {
+		t.Fatalf("stderr=%q, want cannot-access context for %s", stderr.String(), missing)
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -49,5 +50,23 @@ func TestPkgsum_FailPackageReturnsNonZero(t *testing.T) {
 	}
 	if !strings.Contains(out, "PKG_SUM pass=0 fail=1 skip=0 total=1") {
 		t.Fatalf("unexpected summary: %s", out)
+	}
+}
+
+func TestRunPkgSumReportsOpenErrorWithoutExiting(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	missing := filepath.Join(t.TempDir(), "missing.jsonl")
+
+	code := runPkgSum([]string{missing}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("exit code=%d, want 2; stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty output", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "open "+missing) {
+		t.Fatalf("stderr=%q, want open error context for %s", stderr.String(), missing)
 	}
 }

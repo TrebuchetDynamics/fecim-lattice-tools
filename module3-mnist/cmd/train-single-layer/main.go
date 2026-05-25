@@ -22,22 +22,19 @@ func Run(args []string) error {
 	// Find data directory
 	dataDir := utils.FindDirectoryWithMarker("module3-mnist/data", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
-		fmt.Println("Error: Could not find MNIST data directory")
-		os.Exit(1)
+		return fmt.Errorf("Could not find MNIST data directory")
 	}
 
 	// Load MNIST data
 	fmt.Println("Loading MNIST data...")
 	trainImages, trainLabels, err := mnist.LoadMNIST(dataDir, true)
 	if err != nil {
-		fmt.Printf("Error loading training data: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading training data: %w", err)
 	}
 
 	testImages, testLabels, err := mnist.LoadMNIST(dataDir, false)
 	if err != nil {
-		fmt.Printf("Error loading test data: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading test data: %w", err)
 	}
 
 	fmt.Printf("Loaded %d training images, %d test images\n", len(trainImages), len(testImages))
@@ -46,8 +43,7 @@ func Run(args []string) error {
 	fmt.Println("\nTraining single-layer network...")
 	net, err := training.NewSingleLayerNetwork()
 	if err != nil {
-		fmt.Printf("Error creating single-layer network: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("creating single-layer network: %w", err)
 	}
 
 	// Train for 20 epochs with learning rate 0.1
@@ -60,8 +56,7 @@ func Run(args []string) error {
 	weightsPath := filepath.Join(dataDir, "single_layer_weights.json")
 	fmt.Printf("Saving weights to %s...\n", weightsPath)
 	if err := net.SaveWeights(weightsPath); err != nil {
-		fmt.Printf("Error saving weights: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("saving weights: %w", err)
 	}
 
 	// Also update the main pretrained_weights.json with single-layer weights

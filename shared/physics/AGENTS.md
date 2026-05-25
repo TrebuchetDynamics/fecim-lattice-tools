@@ -11,7 +11,7 @@ Core physics package (80+ files, 90KB+) providing ferroelectric material models,
 
 | File | Description |
 |------|-------------|
-| `material.go` | HZOMaterial type and factory functions (34KB). Pr, Ps, Ec, delta, alpha/beta/gamma coefficients. THREE-TIER SYSTEM: DefaultHZO, FeCIMMaterial (conservative), FeCIMMaterialTarget (aspirational), LiteratureSuperlattice (best-case). |
+| `material.go` | HZOMaterial type and factory functions (34KB). Pr, Ps, Ec, delta, alpha/beta/gamma coefficients. THREE-TIER SYSTEM: DefaultHZO, FeCIMMaterial (conference-baseline assumptions), FeCIMMaterialTarget (aspirational), LiteratureSuperlattice (cited superlattice scenario). |
 | `landau.go` | Landau-Khalatnikov solver (19KB). Runge-Kutta-4 integration of polarization dynamics under applied field. Nucleation-limited switching model. |
 | `ispp_write.go` | WriteController for ISPP (14KB). Binary search convergence, guard-band correction, overshoot recovery. Bridges module1 and module4. |
 | `preisach.go` | Preisach hysteresis adapter (6.3KB). Product-form Everett function (fixed in Feb 2026). Provides minor loop calculations. |
@@ -23,7 +23,7 @@ Core physics package (80+ files, 90KB+) providing ferroelectric material models,
 | `power.go` | Power dissipation calculation (3.6KB). From field, current, switching energy. |
 | `transfer.go` | Transfer function models for nonlinear device behavior (2.7KB). |
 | `units.go` | Unit conversion and scaling utilities (9.9KB). V↔V/m, SI unit conversions. |
-| `worldclass_*.go` | "World-class" performance benchmarks (8 files, ~9KB). CV, FORC, PUND, retention, frequency dispersion, wakeup validation. |
+| `worldclass_*.go` | Literature-style characterization helpers (8 files, ~9KB). CV, FORC, PUND, retention, frequency dispersion, wakeup checks. |
 | Extensive test suite | 80+ test files. Regression, golden data, property-based, stress, e2e pipeline tests. |
 
 ## For AI Agents
@@ -35,9 +35,9 @@ Core physics package (80+ files, 90KB+) providing ferroelectric material models,
 For honest scientific communication:
 
 1. **DefaultHZO()** - Baseline Si-doped HfO2/ZrO2 from literature (Park et al., Müller et al.)
-2. **FeCIMMaterial()** - Conservative: Only values supported by the current conference-baseline material notes
+2. **FeCIMMaterial()** - Conference-baseline simulation assumptions; label as unverified unless a citation is attached
 3. **FeCIMMaterialTarget()** - Aspirational: Conference-claimed targets (not yet peer-reviewed)
-4. **LiteratureSuperlattice()** - Best-case: HfO2/ZrO2 superlattices (Cheema et al. Nature 2020)
+4. **LiteratureSuperlattice()** - Cited superlattice scenario: HfO2/ZrO2 superlattices (Cheema et al. Nature 2020)
 
 Use FeCIMMaterial() for educational visualization. Use LiteratureSuperlattice() to show theoretical potential.
 
@@ -87,9 +87,9 @@ level = round((G - GMin) / (GMax - GMin) * 29)
 
 Inverse: `G = GMin + (GMax - GMin) * level / 29`
 
-**Worldclass Validation:**
+**Literature-Style Characterization Checks:**
 
-Eight worldclass benchmarks validate against literature claims:
+Eight characterization helpers compare simulator outputs against literature-context expectations:
 
 - CV (Capacitance-Voltage): Hysteresis shape, coercivity
 - FORC (First-Order Reversal Curves): Switching distribution
@@ -98,7 +98,7 @@ Eight worldclass benchmarks validate against literature claims:
 - Frequency dispersion: Frequency-dependent permittivity
 - Wakeup: Wake-up effect recovery over time
 
-Use for claims validation.
+Use as evidence gathering only; claim wording still needs the honesty-audit boundary check.
 
 ### Testing Requirements
 

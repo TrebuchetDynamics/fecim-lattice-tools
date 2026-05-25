@@ -1,0 +1,12 @@
+citation_path: citations/papers/fecim_applications_review_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fecim_applications_review_2025
+pdf:
+  path: docs/4-research/papers/by-topic/09-reviews-surveys/fecim_applications_review_2025.pdf
+  sha256: 9d7e92d1e2eac330fabdd81d0a5c05d2005ed58f865d90c437bfc315fedad3e4
+  size: 13115661
+title: Fecim Applications Review 2025

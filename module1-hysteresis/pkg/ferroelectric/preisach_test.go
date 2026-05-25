@@ -1,8 +1,11 @@
 package ferroelectric
 
 import (
+	"fmt"
 	"math"
 	"testing"
+
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // TestTanhEverett_Calculate_Positive tests that large positive alpha and large negative beta
@@ -288,8 +291,14 @@ func TestPreisachModel_NewPreisachModel(t *testing.T) {
 		if model == nil {
 			t.Fatal("Expected non-nil model")
 		}
-		if model.material != material {
-			t.Error("Model material not set correctly")
+		if model.material == nil {
+			t.Fatal("Model material not set")
+		}
+		if model.material == material {
+			t.Error("Model should snapshot material instead of retaining caller-owned pointer")
+		}
+		if model.material.Name != material.Name || model.material.Ps != material.Ps || model.material.Pr != material.Pr || model.material.Ec != material.Ec {
+			t.Error("Model material snapshot does not match construction input")
 		}
 		if model.stack == nil {
 			t.Error("Model stack not initialized")
@@ -304,6 +313,98 @@ func TestPreisachModel_NewPreisachModel(t *testing.T) {
 			t.Errorf("Expected default stress 1 GPa, got %f", model.Stress)
 		}
 	})
+}
+
+func TestPreisachModel_SnapshotsMaterialAtConstruction(t *testing.T) {
+	material := DefaultHZO()
+	originalPs := material.Ps
+	field := material.Ec * 2
+	model := NewPreisachModel(material)
+	if model == nil {
+		t.Fatal("expected model")
+	}
+
+	material.Ps = 0
+	material.Pr = 0
+	material.Ec = 0
+
+	states := model.DiscreteStates(3)
+	if len(states) != 3 {
+		t.Fatalf("expected construction-time material to preserve discrete states, got %d", len(states))
+	}
+	if math.Abs(states[0].Polarization+originalPs) > originalPs*1e-12 {
+		t.Fatalf("expected first state from construction-time Ps: got %.12e want %.12e", states[0].Polarization, -originalPs)
+	}
+
+	polarization := model.Update(field)
+	if math.IsNaN(polarization) || math.IsInf(polarization, 0) || math.Abs(polarization) == 0 {
+		t.Fatalf("expected construction-time material to preserve finite polarization response, got %.12e", polarization)
+	}
+
+	eFields, polarizations := model.GetHysteresisLoop(field, 8)
+	if len(eFields) == 0 || len(eFields) != len(polarizations) {
+		t.Fatalf("expected construction-time material to preserve hysteresis loop, got E=%d P=%d", len(eFields), len(polarizations))
+	}
+}
+
+func TestPreisachModel_NewPreisachModelRejectsNilMaterial(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("expected nil material to be rejected without panic, got panic: %v", r)
+		}
+	}()
+
+	model := NewPreisachModel(nil)
+	if model != nil {
+		t.Fatalf("expected nil model for nil material, got %#v", model)
+	}
+}
+
+func TestPreisachModel_NewPreisachModelRejectsNonPhysicalCoreMaterial(t *testing.T) {
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		material := *DefaultHZO()
+		mutator(&material)
+		return &material
+	}
+
+	cases := []struct {
+		name     string
+		material *HZOMaterial
+	}{
+		{name: "zero_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = 0 })},
+		{name: "negative_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = -0.3 })},
+		{name: "nan_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.NaN() })},
+		{name: "positive_inf_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(1) })},
+		{name: "negative_inf_ps", material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(-1) })},
+		{name: "zero_pr", material: materialWith(func(m *HZOMaterial) { m.Pr = 0 })},
+		{name: "negative_pr", material: materialWith(func(m *HZOMaterial) { m.Pr = -0.2 })},
+		{name: "pr_exceeds_ps", material: materialWith(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 })},
+		{name: "nan_pr", material: materialWith(func(m *HZOMaterial) { m.Pr = math.NaN() })},
+		{name: "positive_inf_pr", material: materialWith(func(m *HZOMaterial) { m.Pr = math.Inf(1) })},
+		{name: "negative_inf_pr", material: materialWith(func(m *HZOMaterial) { m.Pr = math.Inf(-1) })},
+		{name: "zero_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = 0 })},
+		{name: "negative_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = -1e6 })},
+		{name: "nan_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() })},
+		{name: "positive_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(1) })},
+		{name: "negative_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(-1) })},
+		{name: "overflowing_saturation_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.MaxFloat64 })},
+		{name: "overflowing_nls_activation_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.MaxFloat64 / nlsEaEcRatio * 1.1 })},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical core material to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			model := NewPreisachModel(tc.material)
+			if model != nil {
+				t.Fatalf("expected nil model for nonphysical core material, got %#v", model)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_DiscreteStates tests discrete state generation.
@@ -342,6 +443,60 @@ func TestPreisachModel_DiscreteStates(t *testing.T) {
 			t.Errorf("Expected last level to be %d, got %d", n, states[n-1].Level)
 		}
 	})
+}
+
+func TestPreisachModel_DiscreteStatesRejectsInvalidCounts(t *testing.T) {
+	model := NewPreisachModel(DefaultHZO())
+	for _, n := range []int{1, 0, -1, math.MaxInt} {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid count %d to be rejected without panic, got panic: %v", n, r)
+				}
+			}()
+
+			states := model.DiscreteStates(n)
+			if states != nil {
+				t.Fatalf("expected nil states for invalid count %d, got len=%d states=%#v", n, len(states), states)
+			}
+		})
+	}
+}
+
+func TestPreisachModel_DiscreteStatesRejectsNonPhysicalMaterialBinding(t *testing.T) {
+	materialWithPs := func(ps float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ps = ps
+		return &material
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "zero_ps", model: &PreisachModel{material: materialWithPs(0)}},
+		{name: "negative_ps", model: &PreisachModel{material: materialWithPs(-0.3)}},
+		{name: "nan_ps", model: &PreisachModel{material: materialWithPs(math.NaN())}},
+		{name: "positive_inf_ps", model: &PreisachModel{material: materialWithPs(math.Inf(1))}},
+		{name: "negative_inf_ps", model: &PreisachModel{material: materialWithPs(math.Inf(-1))}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical material binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			states := tc.model.DiscreteStates(30)
+			if states != nil {
+				t.Fatalf("expected nil states for nonphysical material binding, got len=%d states=%#v", len(states), states)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_Update tests field update and polarization calculation.
@@ -389,6 +544,387 @@ func TestPreisachModel_Update(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_UpdateRejectsNonFiniteFields(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		if got := model.Update(0); got != 0 {
+			t.Fatalf("expected nil receiver update to return 0 C/m², got %.6g C/m²", got)
+		}
+	})
+
+	cases := []struct {
+		name  string
+		field float64
+	}{
+		{name: "nan", field: math.NaN()},
+		{name: "positive_inf", field: math.Inf(1)},
+		{name: "negative_inf", field: math.Inf(-1)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			baseline := model.Update(material.Ec)
+			baselineDynamicP := model.dynamicP
+			baselineHasDynamicP := model.hasDynamicP
+			baselineLastE := model.stack.LastE
+			baselineDirection := model.stack.CurrentDir
+			baselineStackLen := len(model.stack.Stack)
+
+			if math.IsNaN(baseline) || math.IsInf(baseline, 0) {
+				t.Fatalf("baseline finite update produced non-finite polarization %.6g C/m²", baseline)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected non-finite field %.3g V/m to be rejected without panic, got panic: %v", tc.field, r)
+				}
+			}()
+
+			got := model.Update(tc.field)
+
+			if got != baselineDynamicP {
+				t.Fatalf("expected invalid field %.3g V/m to return existing dynamic P %.6g C/m², got %.6g C/m²", tc.field, baselineDynamicP, got)
+			}
+			if model.dynamicP != baselineDynamicP || model.hasDynamicP != baselineHasDynamicP {
+				t.Fatalf("expected invalid field %.3g V/m to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", tc.field, baselineDynamicP, baselineHasDynamicP, model.dynamicP, model.hasDynamicP)
+			}
+			if model.stack.LastE != baselineLastE {
+				t.Fatalf("expected invalid field %.3g V/m to preserve LastE %.6g V/m, got %.6g V/m", tc.field, baselineLastE, model.stack.LastE)
+			}
+			if model.stack.CurrentDir != baselineDirection {
+				t.Fatalf("expected invalid field %.3g V/m to preserve CurrentDir %d, got %d", tc.field, baselineDirection, model.stack.CurrentDir)
+			}
+			if len(model.stack.Stack) != baselineStackLen {
+				t.Fatalf("expected invalid field %.3g V/m to preserve turning-point count %d, got %d", tc.field, baselineStackLen, len(model.stack.Stack))
+			}
+		})
+	}
+}
+
+func TestPreisachModel_UpdateRejectsInvalidBinding(t *testing.T) {
+	material := DefaultHZO()
+	validModel := NewPreisachModel(material)
+	validEverett := validModel.stack.Everett
+	const existingDynamicP = 0.012345
+
+	sameFloat := func(a, b float64) bool {
+		return a == b || (math.IsNaN(a) && math.IsNaN(b))
+	}
+
+	newInvalidModel := func(stack *sharedphysics.PreisachStack) *PreisachModel {
+		return &PreisachModel{
+			material:    material,
+			stack:       stack,
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		m := *material
+		mutator(&m)
+		return &m
+	}
+	newInvalidMaterialModel := func(mutator func(*HZOMaterial)) *PreisachModel {
+		return &PreisachModel{
+			material:    materialWith(mutator),
+			stack:       sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett),
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_material", model: &PreisachModel{stack: sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett), everett: validModel.everett, dynamicP: existingDynamicP, hasDynamicP: true}},
+		{name: "zero_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = 0 })},
+		{name: "negative_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = -0.3 })},
+		{name: "nan_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = math.NaN() })},
+		{name: "zero_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = 0 })},
+		{name: "negative_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = -0.2 })},
+		{name: "pr_exceeds_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 })},
+		{name: "nan_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = math.NaN() })},
+		{name: "zero_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = 0 })},
+		{name: "negative_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = -1e6 })},
+		{name: "nan_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = math.NaN() })},
+		{name: "nil_stack", model: newInvalidModel(nil)},
+		{name: "nil_stack_everett", model: newInvalidModel(&sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1, CurrentDir: 1})},
+		{name: "zero_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1})},
+		{name: "negative_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: -1, LastE: -1, CurrentDir: 1})},
+		{name: "nan_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN(), LastE: 0, CurrentDir: 1})},
+		{name: "positive_inf_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1), LastE: 0, CurrentDir: 1})},
+		{name: "nan_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN(), CurrentDir: 1})},
+		{name: "inf_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1), CurrentDir: 1})},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeDynamicP := tc.model.dynamicP
+			beforeHasDynamicP := tc.model.hasDynamicP
+			beforeLastE := 0.0
+			beforeDirection := 0
+			beforeStackLen := -1
+			if tc.model.stack != nil {
+				beforeLastE = tc.model.stack.LastE
+				beforeDirection = tc.model.stack.CurrentDir
+				beforeStackLen = len(tc.model.stack.Stack)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid update binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.Update(material.Ec)
+
+			if got != beforeDynamicP {
+				t.Fatalf("expected invalid update binding to return existing dynamic P %.6g C/m², got %.6g C/m²", beforeDynamicP, got)
+			}
+			if tc.model.dynamicP != beforeDynamicP || tc.model.hasDynamicP != beforeHasDynamicP {
+				t.Fatalf("expected invalid update binding to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", beforeDynamicP, beforeHasDynamicP, tc.model.dynamicP, tc.model.hasDynamicP)
+			}
+			if tc.model.stack != nil {
+				if !sameFloat(tc.model.stack.LastE, beforeLastE) {
+					t.Fatalf("expected invalid update binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
+				}
+				if tc.model.stack.CurrentDir != beforeDirection {
+					t.Fatalf("expected invalid update binding to preserve CurrentDir %d, got %d", beforeDirection, tc.model.stack.CurrentDir)
+				}
+				if len(tc.model.stack.Stack) != beforeStackLen {
+					t.Fatalf("expected invalid update binding to preserve turning-point count %d, got %d", beforeStackLen, len(tc.model.stack.Stack))
+				}
+			}
+		})
+	}
+}
+
+func TestPreisachModel_UpdateIsIndependentOfMaterialNLSParameters(t *testing.T) {
+	fast := *DefaultHZO()
+	fast.Name = "fast NLS material"
+	fast.Tau0NLS = 1e-15
+	fast.EaNLS = fast.Ec
+
+	slow := *DefaultHZO()
+	slow.Name = "slow NLS material"
+	slow.Tau0NLS = 1.0
+	slow.EaNLS = slow.Ec * 100
+
+	field := fast.Ec * 2
+	fastP := NewPreisachModel(&fast).Update(field)
+	slowP := NewPreisachModel(&slow).Update(field)
+
+	if math.Abs(fastP-slowP) > 1e-12 {
+		t.Fatalf("expected quasi-static Update to be independent of material NLS parameters: fast %.12e C/m² slow %.12e C/m²", fastP, slowP)
+	}
+}
+
+func TestPreisachModel_TimeStepUsesMaterialNLSParameters(t *testing.T) {
+	fast := *DefaultHZO()
+	fast.Name = "fast NLS material"
+	fast.Tau0NLS = 1e-15
+	fast.EaNLS = fast.Ec
+
+	slow := *DefaultHZO()
+	slow.Name = "slow NLS material"
+	slow.Tau0NLS = 1.0
+	slow.EaNLS = slow.Ec * 100
+
+	field := fast.Ec * 2
+	dt := 1e-9
+	fastP := NewPreisachModel(&fast).TimeStep(field, dt)
+	slowP := NewPreisachModel(&slow).TimeStep(field, dt)
+
+	if fastP <= slowP+0.05*fast.Ps {
+		t.Fatalf("expected material NLS parameters to affect timestep response: fast %.12e C/m² slow %.12e C/m²", fastP, slowP)
+	}
+}
+
+func TestPreisachModel_TimeStepRejectsInvalidBinding(t *testing.T) {
+	material := DefaultHZO()
+	validModel := NewPreisachModel(material)
+	validEverett := validModel.stack.Everett
+	const existingDynamicP = 0.012345
+
+	sameFloat := func(a, b float64) bool {
+		return a == b || (math.IsNaN(a) && math.IsNaN(b))
+	}
+
+	newInvalidModel := func(stack *sharedphysics.PreisachStack) *PreisachModel {
+		return &PreisachModel{
+			material:    material,
+			stack:       stack,
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		m := *material
+		mutator(&m)
+		return &m
+	}
+	newInvalidMaterialModel := func(mutator func(*HZOMaterial)) *PreisachModel {
+		return &PreisachModel{
+			material:    materialWith(mutator),
+			stack:       sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett),
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_material", model: &PreisachModel{stack: sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett), everett: validModel.everett, dynamicP: existingDynamicP, hasDynamicP: true}},
+		{name: "zero_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = 0 })},
+		{name: "negative_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = -0.3 })},
+		{name: "nan_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = math.NaN() })},
+		{name: "positive_inf_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = math.Inf(1) })},
+		{name: "zero_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = 0 })},
+		{name: "negative_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = -0.2 })},
+		{name: "pr_exceeds_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 })},
+		{name: "nan_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = math.NaN() })},
+		{name: "positive_inf_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = math.Inf(1) })},
+		{name: "zero_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = 0 })},
+		{name: "negative_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = -1e6 })},
+		{name: "nan_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = math.NaN() })},
+		{name: "positive_inf_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = math.Inf(1) })},
+		{name: "nil_stack", model: newInvalidModel(nil)},
+		{name: "nil_stack_everett", model: newInvalidModel(&sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1, CurrentDir: 1})},
+		{name: "zero_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1})},
+		{name: "negative_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: -1, LastE: -1, CurrentDir: 1})},
+		{name: "nan_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN(), LastE: 0, CurrentDir: 1})},
+		{name: "positive_inf_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1), LastE: 0, CurrentDir: 1})},
+		{name: "nan_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN(), CurrentDir: 1})},
+		{name: "inf_last_field", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1), CurrentDir: 1})},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeDynamicP := tc.model.dynamicP
+			beforeHasDynamicP := tc.model.hasDynamicP
+			beforeLastE := 0.0
+			beforeDirection := 0
+			beforeStackLen := -1
+			if tc.model.stack != nil {
+				beforeLastE = tc.model.stack.LastE
+				beforeDirection = tc.model.stack.CurrentDir
+				beforeStackLen = len(tc.model.stack.Stack)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid timestep binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.TimeStep(material.Ec, 1e-9)
+
+			if got != beforeDynamicP {
+				t.Fatalf("expected invalid timestep binding to return existing dynamic P %.6g C/m², got %.6g C/m²", beforeDynamicP, got)
+			}
+			if tc.model.dynamicP != beforeDynamicP || tc.model.hasDynamicP != beforeHasDynamicP {
+				t.Fatalf("expected invalid timestep binding to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", beforeDynamicP, beforeHasDynamicP, tc.model.dynamicP, tc.model.hasDynamicP)
+			}
+			if tc.model.stack != nil {
+				if !sameFloat(tc.model.stack.LastE, beforeLastE) {
+					t.Fatalf("expected invalid timestep binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
+				}
+				if tc.model.stack.CurrentDir != beforeDirection {
+					t.Fatalf("expected invalid timestep binding to preserve CurrentDir %d, got %d", beforeDirection, tc.model.stack.CurrentDir)
+				}
+				if len(tc.model.stack.Stack) != beforeStackLen {
+					t.Fatalf("expected invalid timestep binding to preserve turning-point count %d, got %d", beforeStackLen, len(tc.model.stack.Stack))
+				}
+			}
+		})
+	}
+}
+
+func TestPreisachModel_TimeStepRejectsNonPhysicalInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver timestep to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		if got := model.TimeStep(0, 1e-9); got != 0 {
+			t.Fatalf("expected nil receiver timestep to return 0 C/m², got %.6g C/m²", got)
+		}
+	})
+
+	material := DefaultHZO()
+	cases := []struct {
+		name  string
+		field float64
+		dt    float64
+	}{
+		{name: "nan_field", field: math.NaN(), dt: 1e-9},
+		{name: "positive_inf_field", field: math.Inf(1), dt: 1e-9},
+		{name: "negative_inf_field", field: math.Inf(-1), dt: 1e-9},
+		{name: "nan_dt", field: material.Ec * 2, dt: math.NaN()},
+		{name: "positive_inf_dt", field: material.Ec * 2, dt: math.Inf(1)},
+		{name: "zero_dt", field: material.Ec * 2, dt: 0},
+		{name: "negative_dt", field: material.Ec * 2, dt: -1e-9},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			model := NewPreisachModel(material)
+			baseline := model.Update(material.Ec)
+			baselineDynamicP := model.dynamicP
+			baselineHasDynamicP := model.hasDynamicP
+			baselineLastE := model.stack.LastE
+			baselineDirection := model.stack.CurrentDir
+			baselineStackLen := len(model.stack.Stack)
+
+			if math.IsNaN(baseline) || math.IsInf(baseline, 0) {
+				t.Fatalf("baseline finite update produced non-finite polarization %.6g C/m²", baseline)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to be rejected without panic, got panic: %v", tc.field, tc.dt, r)
+				}
+			}()
+
+			got := model.TimeStep(tc.field, tc.dt)
+
+			if got != baselineDynamicP {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to return existing dynamic P %.6g C/m², got %.6g C/m²", tc.field, tc.dt, baselineDynamicP, got)
+			}
+			if model.dynamicP != baselineDynamicP || model.hasDynamicP != baselineHasDynamicP {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", tc.field, tc.dt, baselineDynamicP, baselineHasDynamicP, model.dynamicP, model.hasDynamicP)
+			}
+			if model.stack.LastE != baselineLastE {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve LastE %.6g V/m, got %.6g V/m", tc.field, tc.dt, baselineLastE, model.stack.LastE)
+			}
+			if model.stack.CurrentDir != baselineDirection {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve CurrentDir %d, got %d", tc.field, tc.dt, baselineDirection, model.stack.CurrentDir)
+			}
+			if len(model.stack.Stack) != baselineStackLen {
+				t.Fatalf("expected nonphysical timestep field=%.3g V/m dt=%.3g s to preserve turning-point count %d, got %d", tc.field, tc.dt, baselineStackLen, len(model.stack.Stack))
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Reset tests model reset functionality.
 func TestPreisachModel_Reset(t *testing.T) {
 	t.Run("ResetClearsHistory", func(t *testing.T) {
@@ -416,6 +952,105 @@ func TestPreisachModel_Reset(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_ResetUsesEffectiveCoerciveField(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+	model.SetStress(10.0)
+
+	model.Reset()
+
+	if got := model.NormalizedPolarization(); got > -0.95 {
+		t.Fatalf("expected reset after stress-scaled Ec to reach negative saturation, got normalized P %.6f", got)
+	}
+}
+
+func TestPreisachModel_ResetRejectsInvalidBinding(t *testing.T) {
+	materialWithEc := func(ec float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ec = ec
+		return &material
+	}
+	modelWithEc := func(ec float64) *PreisachModel {
+		model := NewPreisachModel(DefaultHZO())
+		model.material = materialWithEc(ec)
+		return model
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "nil_stack", model: &PreisachModel{material: DefaultHZO()}},
+		{name: "nil_everett", model: &PreisachModel{material: DefaultHZO(), stack: &sharedphysics.PreisachStack{}}},
+		{name: "zero_ec", model: modelWithEc(0)},
+		{name: "negative_ec", model: modelWithEc(-1e6)},
+		{name: "nan_ec", model: modelWithEc(math.NaN())},
+		{name: "positive_inf_ec", model: modelWithEc(math.Inf(1))},
+		{name: "negative_inf_ec", model: modelWithEc(math.Inf(-1))},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeStack := (*sharedphysics.PreisachStack)(nil)
+			if tc.model != nil {
+				beforeStack = tc.model.stack
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid reset binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			tc.model.Reset()
+			if tc.model != nil && tc.model.stack != beforeStack {
+				t.Fatalf("expected invalid reset binding to preserve existing stack, before=%#v after=%#v", beforeStack, tc.model.stack)
+			}
+		})
+	}
+}
+
+func TestPreisachModel_PolarizationRejectsInvalidBinding(t *testing.T) {
+	validModel := NewPreisachModel(DefaultHZO())
+	validEverett := validModel.stack.Everett
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_stack", model: &PreisachModel{}},
+		{name: "nil_everett", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1}}},
+		{name: "empty_stack", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, SaturationE: 1}}},
+		{name: "zero_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0}}},
+		{name: "negative_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 1, Type: -1}}, SaturationE: -1}}},
+		{name: "nan_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN()}}},
+		{name: "inf_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1)}}},
+		{name: "nan_last_field", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN()}}},
+		{name: "inf_last_field", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1)}}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid polarization binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.Polarization()
+			if got != 0 {
+				t.Fatalf("expected invalid polarization binding to return 0 C/m^2, got %g C/m^2", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite polarization for invalid binding, got %g C/m^2", got)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Polarization tests polarization query without mutation.
 func TestPreisachModel_Polarization(t *testing.T) {
 	t.Run("QueryPolarization", func(t *testing.T) {
@@ -432,6 +1067,47 @@ func TestPreisachModel_Polarization(t *testing.T) {
 			t.Errorf("Polarization query mismatch: Update=%f, Query=%f", P_update, P_query)
 		}
 	})
+}
+
+func TestPreisachModel_NormalizedPolarizationRejectsInvalidBinding(t *testing.T) {
+	materialWithPs := func(ps float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ps = ps
+		return &material
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "nil_material_positive_effective_ps", model: &PreisachModel{effectivePs: 0.2, dynamicP: 0.1, hasDynamicP: true}},
+		{name: "negative_effective_ps", model: &PreisachModel{material: DefaultHZO(), effectivePs: -0.2, dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_effective_ps", model: &PreisachModel{material: DefaultHZO(), effectivePs: math.NaN(), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "negative_material_ps", model: &PreisachModel{material: materialWithPs(-0.2), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_material_ps", model: &PreisachModel{material: materialWithPs(math.NaN()), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_dynamic_p", model: &PreisachModel{material: DefaultHZO(), effectivePs: 0.2, dynamicP: math.NaN(), hasDynamicP: true}},
+		{name: "inf_dynamic_p", model: &PreisachModel{material: DefaultHZO(), effectivePs: 0.2, dynamicP: math.Inf(1), hasDynamicP: true}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid normalized-polarization binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.NormalizedPolarization()
+			if got != 0 {
+				t.Fatalf("expected invalid normalized polarization to return 0, got %g", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite normalized polarization for invalid binding, got %g", got)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_NormalizedPolarization tests normalized polarization.
@@ -490,6 +1166,183 @@ func TestPreisachModel_GetHysteresisLoop(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_GetHysteresisLoopPreservesTrajectory(t *testing.T) {
+	material := DefaultHZO()
+	withLoop := NewPreisachModel(material)
+	control := NewPreisachModel(material)
+
+	initialFields := []float64{-2 * material.Ec, 0.75 * material.Ec, -0.25 * material.Ec, 1.25 * material.Ec}
+	for _, field := range initialFields {
+		withLoop.Update(field)
+		control.Update(field)
+	}
+
+	E, P := withLoop.GetHysteresisLoop(4*material.Ec, 50)
+	if len(E) == 0 || len(P) == 0 {
+		t.Fatal("expected hysteresis loop data")
+	}
+
+	probeField := -0.6 * material.Ec
+	got := withLoop.Update(probeField)
+	want := control.Update(probeField)
+	if math.Abs(got-want) > 1e-12 {
+		t.Fatalf("GetHysteresisLoop changed subsequent trajectory: got %.12e C/m² want %.12e C/m²", got, want)
+	}
+}
+
+// TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding verifies invalid loop bindings return no data and preserve model state.
+func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
+	material := DefaultHZO()
+	validModel := NewPreisachModel(material)
+	validEverett := validModel.stack.Everett
+	validStack := func() *sharedphysics.PreisachStack {
+		return sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett)
+	}
+	sameFloat := func(a, b float64) bool {
+		return a == b || (math.IsNaN(a) && math.IsNaN(b))
+	}
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		m := *material
+		mutator(&m)
+		return &m
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = -0.3 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ps = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = -0.2 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "pr_exceeds_ps", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nil_stack", model: &PreisachModel{material: material, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nil_stack_everett", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: -1, LastE: -1, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN(), LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1), LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_last_field", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN(), CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "inf_last_field", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1), CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = -1e6 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_inf_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(-1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeStack := (*sharedphysics.PreisachStack)(nil)
+			beforeLastE := 0.0
+			beforeDirection := 0
+			beforeStackLen := -1
+			beforeDynamicP := 0.0
+			beforeHasDynamicP := false
+			beforeLockDynamic := false
+			if tc.model != nil {
+				beforeStack = tc.model.stack
+				beforeDynamicP = tc.model.dynamicP
+				beforeHasDynamicP = tc.model.hasDynamicP
+				beforeLockDynamic = tc.model.lockDynamic
+				if tc.model.stack != nil {
+					beforeLastE = tc.model.stack.LastE
+					beforeDirection = tc.model.stack.CurrentDir
+					beforeStackLen = len(tc.model.stack.Stack)
+				}
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid loop binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			E, P := tc.model.GetHysteresisLoop(material.Ec, 10)
+
+			if len(E) != 0 || len(P) != 0 {
+				t.Fatalf("expected no loop data for invalid binding, got E=%d P=%d", len(E), len(P))
+			}
+			if tc.model != nil {
+				if tc.model.stack != beforeStack {
+					t.Fatalf("expected invalid loop binding to preserve stack pointer, before=%#v after=%#v", beforeStack, tc.model.stack)
+				}
+				if tc.model.dynamicP != beforeDynamicP || tc.model.hasDynamicP != beforeHasDynamicP || tc.model.lockDynamic != beforeLockDynamic {
+					t.Fatalf("expected invalid loop binding to preserve dynamic state P=%.6g has=%v lock=%v, got P=%.6g has=%v lock=%v", beforeDynamicP, beforeHasDynamicP, beforeLockDynamic, tc.model.dynamicP, tc.model.hasDynamicP, tc.model.lockDynamic)
+				}
+				if tc.model.stack != nil {
+					if !sameFloat(tc.model.stack.LastE, beforeLastE) {
+						t.Fatalf("expected invalid loop binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
+					}
+					if tc.model.stack.CurrentDir != beforeDirection {
+						t.Fatalf("expected invalid loop binding to preserve CurrentDir %d, got %d", beforeDirection, tc.model.stack.CurrentDir)
+					}
+					if len(tc.model.stack.Stack) != beforeStackLen {
+						t.Fatalf("expected invalid loop binding to preserve turning-point count %d, got %d", beforeStackLen, len(tc.model.stack.Stack))
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs verifies invalid loop requests return no data and preserve model state.
+func TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs(t *testing.T) {
+	material := DefaultHZO()
+	tests := []struct {
+		name   string
+		Emax   float64
+		points int
+	}{
+		{name: "zero field", Emax: 0, points: 50},
+		{name: "negative field", Emax: -material.Ec, points: 50},
+		{name: "nan field", Emax: math.NaN(), points: 50},
+		{name: "infinite field", Emax: math.Inf(1), points: 50},
+		{name: "overflowing finite field", Emax: math.MaxFloat64, points: 50},
+		{name: "zero points", Emax: material.Ec, points: 0},
+		{name: "negative points", Emax: material.Ec, points: -1},
+		{name: "overflowing point count", Emax: material.Ec, points: math.MaxInt},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := NewPreisachModel(material)
+			initialP := model.Update(2 * material.Ec)
+
+			E, P := model.GetHysteresisLoop(tt.Emax, tt.points)
+
+			if len(E) != 0 || len(P) != 0 {
+				t.Fatalf("expected no loop data for Emax=%.3e V/m points=%d, got E=%d P=%d", tt.Emax, tt.points, len(E), len(P))
+			}
+			if got := model.Polarization(); math.Abs(got-initialP) > 1e-12 {
+				t.Fatalf("invalid loop request changed polarization: got %.12e C/m² want %.12e C/m²", got, initialP)
+			}
+		})
+	}
+}
+
+func TestPreisachModel_DefaultTemperatureAndStressSettersAreIdempotent(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+	initialEc := model.GetEffectiveEc()
+
+	model.SetTemperature(roomTemperatureK)
+	if got := model.GetEffectiveEc(); math.Abs(got-initialEc) > math.Abs(initialEc)*1e-12 {
+		t.Fatalf("SetTemperature(room) changed default Ec: got %.12e V/m want %.12e V/m", got, initialEc)
+	}
+
+	model.SetStress(defaultStressGPa)
+	if got := model.GetEffectiveEc(); math.Abs(got-initialEc) > math.Abs(initialEc)*1e-12 {
+		t.Fatalf("SetStress(default) changed default Ec: got %.12e V/m want %.12e V/m", got, initialEc)
+	}
+}
+
 // TestPreisachModel_SetTemperature tests temperature effects.
 func TestPreisachModel_SetTemperature(t *testing.T) {
 	t.Run("TemperatureScaling", func(t *testing.T) {
@@ -529,6 +1382,69 @@ func TestPreisachModel_SetTemperature(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_SetTemperatureRejectsNonPhysicalInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver temperature update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		model.SetTemperature(roomTemperatureK)
+	})
+
+	cases := []struct {
+		name string
+		temp float64
+	}{
+		{name: "nan", temp: math.NaN()},
+		{name: "positive_inf", temp: math.Inf(1)},
+		{name: "negative_inf", temp: math.Inf(-1)},
+		{name: "overflowing_finite", temp: math.MaxFloat64},
+		{name: "saturation_field_overflow", temp: 1e202},
+		{name: "absolute_zero", temp: 0},
+		{name: "negative_kelvin", temp: -1},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			model.SetTemperature(350)
+			baselineTemp := model.Temperature
+			baselineEc := model.GetEffectiveEc()
+			baselinePs := model.effectivePs
+			baselineEverettEc := model.everett.Ec
+			baselineEverettDelta := model.everett.Delta
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected nonphysical temperature %.3g K to be rejected without panic, got panic: %v", tc.temp, r)
+				}
+			}()
+
+			model.SetTemperature(tc.temp)
+
+			if model.Temperature != baselineTemp {
+				t.Fatalf("expected invalid temperature %.3g K to preserve %.3f K, got %.3f K", tc.temp, baselineTemp, model.Temperature)
+			}
+			if got := model.GetEffectiveEc(); got != baselineEc {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Ec %.6g V/m, got %.6g V/m", tc.temp, baselineEc, got)
+			}
+			if model.effectivePs != baselinePs {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Ps %.6g C/m², got %.6g C/m²", tc.temp, baselinePs, model.effectivePs)
+			}
+			if model.everett.Ec != baselineEverettEc {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Everett Ec %.6g V/m, got %.6g V/m", tc.temp, baselineEverettEc, model.everett.Ec)
+			}
+			if model.everett.Delta != baselineEverettDelta {
+				t.Fatalf("expected invalid temperature %.3g K to preserve Everett Delta %.6g V/m, got %.6g V/m", tc.temp, baselineEverettDelta, model.everett.Delta)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_SetStress tests stress effects.
 func TestPreisachModel_SetStress(t *testing.T) {
 	t.Run("StressScaling", func(t *testing.T) {
@@ -562,6 +1478,67 @@ func TestPreisachModel_SetStress(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_SetStressRejectsInvalidInputs(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver stress update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		model.SetStress(defaultStressGPa)
+	})
+
+	cases := []struct {
+		name      string
+		stressGPa float64
+	}{
+		{name: "nan", stressGPa: math.NaN()},
+		{name: "positive_inf", stressGPa: math.Inf(1)},
+		{name: "negative_inf", stressGPa: math.Inf(-1)},
+		{name: "overflowing_finite", stressGPa: math.MaxFloat64},
+		{name: "saturation_field_overflow", stressGPa: 1e200},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			model.SetStress(2)
+			baselineStress := model.Stress
+			baselineEc := model.GetEffectiveEc()
+			baselinePs := model.effectivePs
+			baselineEverettEc := model.everett.Ec
+			baselineEverettDelta := model.everett.Delta
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid stress %.3g GPa to be rejected without panic, got panic: %v", tc.stressGPa, r)
+				}
+			}()
+
+			model.SetStress(tc.stressGPa)
+
+			if model.Stress != baselineStress {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve %.3f GPa, got %.3f GPa", tc.stressGPa, baselineStress, model.Stress)
+			}
+			if got := model.GetEffectiveEc(); got != baselineEc {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Ec %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEc, got)
+			}
+			if model.effectivePs != baselinePs {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Ps %.6g C/m², got %.6g C/m²", tc.stressGPa, baselinePs, model.effectivePs)
+			}
+			if model.everett.Ec != baselineEverettEc {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Everett Ec %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEverettEc, model.everett.Ec)
+			}
+			if model.everett.Delta != baselineEverettDelta {
+				t.Fatalf("expected invalid stress %.3g GPa to preserve Everett Delta %.6g V/m, got %.6g V/m", tc.stressGPa, baselineEverettDelta, model.everett.Delta)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_ReversiblePolarization tests the reversible component.
 func TestPreisachModel_ReversiblePolarization(t *testing.T) {
 	t.Run("ReversibleContribution", func(t *testing.T) {
@@ -583,6 +1560,39 @@ func TestPreisachModel_ReversiblePolarization(t *testing.T) {
 			t.Errorf("Reversible polarization not symmetric: +E=%f, -E=%f", P_rev_high, P_rev_neg)
 		}
 	})
+}
+
+func TestPreisachModel_GetEffectiveEcRejectsInvalidBinding(t *testing.T) {
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_everett", model: &PreisachModel{}},
+		{name: "zero_ec", model: &PreisachModel{everett: &TanhEverett{Ec: 0}}},
+		{name: "negative_ec", model: &PreisachModel{everett: &TanhEverett{Ec: -1e6}}},
+		{name: "nan_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.NaN()}}},
+		{name: "positive_inf_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.Inf(1)}}},
+		{name: "negative_inf_ec", model: &PreisachModel{everett: &TanhEverett{Ec: math.Inf(-1)}}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid effective-Ec binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.GetEffectiveEc()
+			if got != 0 {
+				t.Fatalf("expected invalid effective Ec to return 0 V/m, got %g V/m", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite effective Ec for invalid binding, got %g V/m", got)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_GetEffectiveEc tests effective coercive field getter.

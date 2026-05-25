@@ -1,0 +1,12 @@
+citation_path: citations/papers/edge_ai_accelerators_survey_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: edge_ai_accelerators_survey_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/08-industry-reports/Edge_AI_Accelerators_Survey_arXiv.pdf
+  sha256: 25b8c6360f1efb52843c836d9b2e6dbdcaf8c8c4f28dc787dfd36a9d70060740
+  size: 152966
+title: Edge AI Accelerators Survey Arxiv

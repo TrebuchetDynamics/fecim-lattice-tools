@@ -80,20 +80,30 @@ func (s *LKSolver) nlsSwitchedFraction(E, totalTime float64) float64 {
 
 func (s *LKSolver) effectiveRho() float64 {
 	rhoEff := s.Rho
+	if invalidFloat(rhoEff) || rhoEff > maxLKViscosity {
+		rhoEff = defaultLKViscosity
+	}
 	if s.UseEffectiveViscosity && s.SeriesResistance > 0 && s.Thickness > 0 && s.Area > 0 {
-		rhoEff += (s.SeriesResistance * s.Area / s.Thickness)
+		seriesTerm := s.SeriesResistance * s.Area / s.Thickness
+		if isValidLKRuntimeViscosity(seriesTerm) {
+			next := rhoEff + seriesTerm
+			if isValidLKRuntimeViscosity(next) {
+				rhoEff = next
+			}
+		}
 	}
 	// Guard: viscosity must be strictly positive for dP/dt = (...)/rhoEff.
-	// A zero or negative value would produce Inf/NaN; fall back to the
+	// A zero, negative, non-finite, or unrepresentably large value would produce
+	// Inf/NaN or effectively stall corrupted public state; fall back to the
 	// literature default for 10 nm HfO2 (Materlik 2015).
-	if rhoEff <= 0 {
+	if !isValidLKRuntimeViscosity(rhoEff) {
 		rhoEff = defaultLKViscosity
 	}
 	return rhoEff
 }
 
 func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
-	if !s.EnableNoise || dt <= 0 {
+	if !s.EnableNoise || dt <= 0 || invalidFloat(dt) || invalidFloat(rhoEff) {
 		return 0
 	}
 
@@ -101,20 +111,31 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 	// Fluctuation-dissipation theorem for intensive polarization dynamics.
 	// sigma = sqrt(2*kB*T*rho / (dt * V_cell)) gives correct 1/sqrt(V) Landauer scaling.
 	vCell := s.Area * s.Thickness
-	if vCell <= 0 {
+	if vCell <= 0 || invalidFloat(vCell) {
 		vCell = 45e-9 * 45e-9 * 10e-9 // fallback: default FeCIM cell
 	}
 	// Guard: the sqrt argument must be non-negative. Negative temperature or
 	// negative rhoEff would produce NaN; clamp to zero noise in that case.
 	arg := 2 * kB * s.Temperature * rhoEff / (dt * vCell)
-	if arg <= 0 {
+	if arg <= 0 || invalidFloat(arg) {
 		return 0
 	}
 	sigma := math.Sqrt(arg)
-	if s.rng != nil {
-		return s.rng.NormFloat64() * sigma
+	if invalidFloat(sigma) {
+		return 0
 	}
-	return rand.NormFloat64() * sigma
+	if s.rng != nil {
+		noise := s.rng.NormFloat64() * sigma
+		if invalidFloat(noise) {
+			return 0
+		}
+		return noise
+	}
+	noise := rand.NormFloat64() * sigma
+	if invalidFloat(noise) {
+		return 0
+	}
+	return noise
 }
 
 func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
@@ -132,9 +153,16 @@ func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
 	}
 	s.logCount++
 
-	E_dep := s.K_dep * s.P
+	P2 := s.P * s.P
+	P3 := P2 * s.P
+	P5 := P3 * P2
+	E_dep := lkRuntimeTerm(s.K_dep * s.P)
 	E_eff := E - E_dep
-	dG_dP := (2 * s.Alpha * s.P) + (4 * s.Beta * math.Pow(s.P, 3)) + (6 * s.Gamma * math.Pow(s.P, 5))
+	dG_dP := sumLKRuntimeTerms(
+		lkRuntimeTerm(2*s.Alpha*s.P),
+		lkRuntimeTerm(4*s.Beta*P3),
+		lkRuntimeTerm(6*s.Gamma*P5),
+	)
 
 	lkLog.Calculation("LKStep", map[string]interface{}{
 		"E_applied":   E,
@@ -156,6 +184,216 @@ func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
 
 func invalidFloat(v float64) bool {
 	return math.IsNaN(v) || math.IsInf(v, 0)
+}
+
+func lkRuntimeTerm(term float64) float64 {
+	if invalidFloat(term) {
+		return 0
+	}
+	return term
+}
+
+func isRepresentableLKRuntimeForceTerm(term, rhoEff float64) bool {
+	if invalidFloat(term) || rhoEff <= 0 || invalidFloat(rhoEff) {
+		return false
+	}
+	return !invalidFloat(term / rhoEff)
+}
+
+func lkRuntimeForceTerm(term, rhoEff float64) float64 {
+	if !isRepresentableLKRuntimeForceTerm(term, rhoEff) {
+		return 0
+	}
+	return term
+}
+
+func sumLKRuntimeTerms(terms ...float64) float64 {
+	total := 0.0
+	for _, term := range terms {
+		if invalidFloat(term) {
+			continue
+		}
+		next := total + term
+		if invalidFloat(next) {
+			return 0
+		}
+		total = next
+	}
+	return total
+}
+
+func (s *LKSolver) runtimeAlphaFor(temperature, stress float64) (float64, bool) {
+	if s == nil || invalidFloat(temperature) || invalidFloat(stress) || invalidFloat(s.Q12) || invalidFloat(s.CurieConst) {
+		return 0, false
+	}
+
+	alphaMech := 2 * s.Q12 * stress
+	if invalidFloat(alphaMech) {
+		return 0, false
+	}
+
+	alpha := -alphaMech
+	if s.CurieConst > 0 {
+		if invalidFloat(s.CurieTemp) {
+			return 0, false
+		}
+		const eps0 = 8.854e-12 // Vacuum Permittivity (F/m)
+		denom := 2 * eps0 * s.CurieConst
+		if denom == 0 || invalidFloat(denom) {
+			return 0, false
+		}
+		thermalNumerator := temperature - s.CurieTemp
+		if invalidFloat(thermalNumerator) {
+			return 0, false
+		}
+		alphaT := thermalNumerator / denom
+		if invalidFloat(alphaT) {
+			return 0, false
+		}
+		alpha = alphaT - alphaMech
+	}
+	if !s.isRepresentableRuntimeAlpha(alpha) {
+		return 0, false
+	}
+	return alpha, true
+}
+
+func (s *LKSolver) isRepresentableRuntimeAlpha(alpha float64) bool {
+	if s == nil || invalidFloat(alpha) {
+		return false
+	}
+	pScale := s.PMax
+	if pScale <= 0 || !isRepresentableLKPolarization(pScale) {
+		pScale = 1
+	}
+	force := 2 * alpha * pScale
+	if invalidFloat(force) {
+		return false
+	}
+	rhoEff := s.effectiveRho()
+	if rhoEff <= 0 || invalidFloat(rhoEff) {
+		return false
+	}
+	rate := force / rhoEff
+	return !invalidFloat(rate) && math.Abs(rate) <= maxAbsLKRate
+}
+
+func isValidLKStepInput(E, dt, currentTime, rhoEff float64) bool {
+	if invalidFloat(E) || invalidFloat(dt) || invalidFloat(currentTime) || currentTime < 0 || currentTime > maxLKSimulationTime || dt <= 0 || dt > maxLKTimestep {
+		return false
+	}
+	if !isRepresentableLKRuntimeForceTerm(E, rhoEff) {
+		return false
+	}
+	return !invalidFloat(currentTime + dt)
+}
+
+func isRepresentableLKMaterialScalar(value float64) bool {
+	return !invalidFloat(value) && math.Abs(value) <= maxLKMaterialScalarMagnitude
+}
+
+func isNonZeroFiniteLKMaterialValue(value float64) bool {
+	return value != 0 && isRepresentableLKMaterialScalar(value)
+}
+
+func isPositiveFiniteLKMaterialValue(value float64) bool {
+	return value > 0 && isRepresentableLKMaterialScalar(value)
+}
+
+func finiteScaledLKMaterialValue(value, scale float64) (float64, bool) {
+	if !isRepresentableLKMaterialScalar(value) || !isRepresentableLKMaterialScalar(scale) {
+		return 0, false
+	}
+	out := value * scale
+	if !isRepresentableLKMaterialScalar(out) {
+		return 0, false
+	}
+	return out, true
+}
+
+func (s *LKSolver) isRepresentableLKMaterialLandauScaling(mat *HZOMaterial) bool {
+	if s == nil || mat == nil {
+		return false
+	}
+	if mat.Pr == 0 || !isRepresentableLKPolarization(mat.Pr) {
+		return true
+	}
+
+	beta := s.Beta
+	if isNonZeroFiniteLKMaterialValue(mat.BetaLandau) {
+		beta = mat.BetaLandau
+	}
+	gamma := s.Gamma
+	if isNonZeroFiniteLKMaterialValue(mat.GammaLandau) {
+		gamma = mat.GammaLandau
+	}
+	if gamma == 0 {
+		return true
+	}
+
+	pr := math.Abs(mat.Pr)
+	alpha, ok := landauAlphaForPr(beta, gamma, pr)
+	if !ok || !isRepresentableLKMaterialScalar(alpha) {
+		return false
+	}
+	if !isPositiveFiniteLKMaterialValue(mat.Ec) {
+		return true
+	}
+
+	ecTheory := estimateLandauEc(alpha, beta, gamma, pr)
+	if invalidFloat(ecTheory) || math.Abs(ecTheory) > maxLKMaterialScalarMagnitude {
+		return false
+	}
+	if ecTheory <= 0 {
+		return true
+	}
+	scale := mat.Ec / ecTheory
+	if invalidFloat(scale) {
+		return false
+	}
+	if scale < 1e-3 {
+		scale = 1e-3
+	} else if scale > 1e3 {
+		scale = 1e3
+	}
+	return isRepresentableLKMaterialScalar(alpha*scale) &&
+		isRepresentableLKMaterialScalar(beta*scale) &&
+		isRepresentableLKMaterialScalar(gamma*scale)
+}
+
+func isRepresentableLKPolarization(value float64) bool {
+	return !invalidFloat(value) && math.Abs(value) <= maxLKPolarizationMagnitude
+}
+
+func isValidLKRuntimePMax(value float64) bool {
+	return value == 0 || (value > 0 && isRepresentableLKPolarization(value))
+}
+
+func isValidLKRuntimeViscosity(value float64) bool {
+	return value > 0 && !invalidFloat(value) && value <= maxLKViscosity
+}
+
+func recoveredLKRuntimePMax(currentP float64) float64 {
+	if isRepresentableLKPolarization(currentP) && currentP != 0 {
+		return math.Abs(currentP)
+	}
+	return defaultLKRuntimePMax
+}
+
+func landauAlphaForPr(beta, gamma, pr float64) (float64, bool) {
+	if invalidFloat(beta) || invalidFloat(gamma) || !isRepresentableLKPolarization(pr) {
+		return 0, false
+	}
+	p2 := pr * pr
+	p4 := p2 * p2
+	if invalidFloat(p2) || invalidFloat(p4) {
+		return 0, false
+	}
+	alpha := -2.0*beta*p2 - 3.0*gamma*p4
+	if invalidFloat(alpha) {
+		return 0, false
+	}
+	return alpha, true
 }
 
 // pClampOvershootFactor allows 20% overshoot above PMax before hard-clamping.
@@ -203,7 +441,7 @@ func (s *LKSolver) logNumericalIssue(stage string, E, dt, rhoEff, noise, prevP f
 //
 // In ensemble mode the requested state is broadcast to all domains.
 func (s *LKSolver) SetState(P float64) {
-	if invalidFloat(P) {
+	if s == nil || !isRepresentableLKPolarization(P) {
 		return
 	}
 	if s.polydomain != nil && s.polydomain.DomainCount() > 0 {
@@ -216,6 +454,9 @@ func (s *LKSolver) SetState(P float64) {
 
 // GetState returns the current solver polarization P in C/m^2.
 func (s *LKSolver) GetState() float64 {
+	if s == nil {
+		return 0
+	}
 	return s.P
 }
 
@@ -234,18 +475,27 @@ type StepWarning struct {
 //
 // Call this before Step() to get an advisory warning without modifying solver state.
 func (s *LKSolver) CheckTimestep(E, dt float64) *StepWarning {
-	if dt <= 0 || s.PMax <= 0 {
+	if s == nil || s.PMax <= 0 || !isRepresentableLKPolarization(s.PMax) || !isRepresentableLKPolarization(s.P) {
 		return nil
 	}
 	rhoEff := s.effectiveRho()
-	if rhoEff <= 0 {
+	if !isValidLKStepInput(E, dt, s.Time, rhoEff) {
 		return nil
 	}
 
 	// Estimate |dP| from the current dP/dt rate.
 	rate := s.dPdT(0, s.P, E, 0, rhoEff)
+	if invalidFloat(rate) {
+		return nil
+	}
 	absDeltaP := math.Abs(rate * dt)
+	if invalidFloat(absDeltaP) {
+		return nil
+	}
 	ratio := absDeltaP / s.PMax
+	if invalidFloat(ratio) {
+		return nil
+	}
 
 	const safeRatio = 0.1
 	if ratio <= safeRatio {
@@ -253,6 +503,9 @@ func (s *LKSolver) CheckTimestep(E, dt float64) *StepWarning {
 	}
 
 	recommended := dt * safeRatio / ratio
+	if invalidFloat(recommended) {
+		return nil
+	}
 	if recommended < 1e-15 {
 		recommended = 1e-15
 	}
@@ -265,27 +518,45 @@ func (s *LKSolver) CheckTimestep(E, dt float64) *StepWarning {
 
 // EnableEnsemble switches this solver into polydomain mode.
 func (s *LKSolver) EnableEnsemble(numDomains int, mat *HZOMaterial, seed uint64) {
+	if s == nil {
+		return
+	}
 	if numDomains <= 1 {
 		s.polydomain = nil
 		s.ensembleSeed = 0
 		return
 	}
-	if mat == nil {
+	if !isValidPolydomainMaterial(mat) || !isValidPolydomainDomainCount(numDomains) {
 		return
 	}
-	s.polydomain = NewPolydomainEnsemble(s, mat, numDomains, defaultPolydomainSigmaFrac, seed)
-	if s.polydomain == nil {
-		return
+	if !isValidLKRuntimePMax(s.PMax) {
+		s.PMax = recoveredLKRuntimePMax(s.P)
 	}
-	s.ensembleSeed = s.polydomain.Seed
-
 	initP := s.P
-	if initP == 0 {
-		initP = -math.Abs(mat.Pr)
-		if initP == 0 {
-			initP = -math.Abs(mat.Ps)
-		}
+	if !isRepresentableLKPolarization(initP) || initP == 0 {
+		initP = recoveredLKEnsembleInitialPolarization(mat, s.PMax)
 	}
+
+	ensemble := NewPolydomainEnsemble(s, mat, numDomains, defaultPolydomainSigmaFrac, seed)
+	if ensemble == nil {
+		return
+	}
+	s.polydomain = ensemble
+	s.ensembleSeed = s.polydomain.Seed
 	s.SetState(initP)
 }
 
+func recoveredLKEnsembleInitialPolarization(mat *HZOMaterial, pMax float64) float64 {
+	if mat != nil {
+		if mat.Pr != 0 && isRepresentableLKPolarization(mat.Pr) {
+			return -math.Abs(mat.Pr)
+		}
+		if mat.Ps != 0 && isRepresentableLKPolarization(mat.Ps) {
+			return -math.Abs(mat.Ps)
+		}
+	}
+	if pMax != 0 && isRepresentableLKPolarization(pMax) {
+		return -math.Abs(pMax)
+	}
+	return -defaultLKRuntimePMax
+}

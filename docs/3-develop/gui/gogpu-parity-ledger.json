@@ -1,0 +1,710 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "module": "shell",
+      "feature": "Default application shell, module navigation, CLI modes, and lifecycle",
+      "status": "better",
+      "legacy_sources": [
+        "cmd/fecim-lattice-tools-fyne/launcher.go",
+        "cmd/fecim-lattice-tools-fyne/main.go",
+        "cmd/fecim-lattice-tools-fyne/mode.go",
+        "cmd/fecim-lattice-tools-fyne/module_lifecycle.go",
+        "cmd/fecim-lattice-tools-fyne/seed.go",
+        "cmd/fecim-lattice-tools-fyne/subcommands.go"
+      ],
+      "gogpu_surfaces": [
+        "cmd/fecim-lattice-tools",
+        "internal/gogpuapp",
+        "shared/viewmodel"
+      ],
+      "evidence": [
+        "make test-gogpu-ui",
+        "go test ./cmd/fecim-lattice-tools ./internal/gogpuapp ./shared/viewmodel"
+      ],
+      "notes": "The default app is zero-CGO gogpu/ui and no longer routes through the legacy Fyne tab lifecycle."
+    },
+    {
+      "module": "shell",
+      "feature": "Documentation screenshots and demo frame capture",
+      "status": "better",
+      "legacy_sources": [
+        "cmd/demo-frames-fyne/...",
+        "cmd/fecim-screenshotter-fyne/..."
+      ],
+      "gogpu_surfaces": [
+        "cmd/fecim-screenshotter",
+        "internal/gogpuscreenshot",
+        "internal/gogpuapp"
+      ],
+      "evidence": [
+        "CGO_ENABLED=0 go test ./internal/gogpuscreenshot ./cmd/fecim-screenshotter"
+      ],
+      "notes": "The gogpu screenshotter captures real app frames without Xvfb, OpenGL Fyne capture, or window-manager dependencies."
+    },
+    {
+      "module": "shell",
+      "feature": "Legacy visual crawler and recording helpers",
+      "status": "gap",
+      "legacy_sources": [
+        "cmd/fecim-lattice-tools-fyne/recording_helpers.go",
+        "cmd/fecim-lattice-tools-fyne/ui_crawler_helpers.go"
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuscreenshot"
+      ],
+      "evidence": [
+        "go test ./internal/gogpuscreenshot"
+      ],
+      "notes": "Static screenshot capture is covered by gogpu. Runtime recording and crawler-style interactive assertions still need an explicit gogpu replacement or a decision to retire them."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "P-E loop workspace, material controls, calibration, PUND/FORC, literature overlays, export dialogs, and custom hysteresis widgets",
+      "status": "gap",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/*.go",
+        "module1-hysteresis/pkg/gui/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
+      ],
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level Level Calibration status/recalculation, explicit Level Calibration JSON export, summary-level PUND/FORC diagnostics, PUND current waveform rendering, FORC density heatmap rendering, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Detailed on-screen calibration lookup-table views, calibration import/reuse persistence, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "Level Calibration status, input presets, recalculation action, summary, stale/fresh state, and explicit JSON export",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/controls.go",
+        "module1-hysteresis/pkg/gui/calibration_runtime.go",
+        "module1-hysteresis/pkg/gui/calibration_store.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/physics/level_calibration.go",
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/physics -run 'TestCalibrateLevelsLK' -count=1",
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyAction(RunLevelCalibration|SetLevelCalibration|SelectMaterialResetsCalibration)' -count=1",
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyActionExportLevelCalibration' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewLevelCalibration' -count=1"
+      ],
+      "notes": "This ports the first Level Calibration Workflow slice into the default gogpu/viewmodel path: material-scoped inputs, level-count/target-range/temperature presets, explicit run action, not-calibrated/stale/fresh state, summary metrics, explicit JSON export of fresh calibration rows, and simulation-boundary language. It is in-memory and summary-level except for user-requested buffered or validated-path export; it does not claim parity for legacy automatic persisted calibration files, import/reuse cache behavior, full on-screen per-level lookup-table views, or manual write/read calibration dialogs."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "P-E loop waveform controls, field-range presets, run/pause action, and CSV export",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/controls.go",
+        "module1-hysteresis/pkg/gui/export.go",
+        "module1-hysteresis/pkg/gui/sim_loop.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go",
+        "internal/gogpuapp/main.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesWaveformAndCSVExportActions|ApplyActionSetWaveform|ApplyActionExportCSV)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewActionButtonsDispatchActions|TestHeadlessRootClickingHysteresisControlAppliesAction' -count=1"
+      ],
+      "notes": "This ports the control/export action contract into the gogpu shell with buffered or validated-path CSV artifacts. It does not claim parity for PUND, FORC, calibration dialogs, literature overlays, or custom educational widgets tracked by the broader hysteresis gap entry."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND and FORC diagnostic summary actions",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesPUNDAndFORCActions|ApplyActionRunPUND|ApplyActionRunFORC)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC|TestHysteresisViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports UI-neutral PUND switching-charge summaries and FORC density summaries into gogpu actions and diagnostic panels. Diagnostic artifact exports are tracked separately. It does not claim raster waveform parity, FORC heatmap parity, or legacy dialog parity."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND summary CSV and FORC sweep, matrix, and metadata artifact exports",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesPUNDAndFORCActions|ApplyActionExportPUNDCSV|ApplyActionExportFORCArtifacts)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewDiagnosticExportButtonsDispatchActions|TestHysteresisViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports diagnostic artifact exports as buffered artifacts or validated-path files. PUND gets a gogpu-only summary CSV because the legacy PUND panel had no export; FORC ports the legacy sweep CSV, density matrix CSV, and metadata JSON export affordances. It does not claim PUND waveform raster or FORC heatmap raster parity."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND current waveform raster and FORC density heatmap",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go",
+        "internal/gogpuapp/main.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyActionRun(PUNDExposesCurrentWaveformPlot|FORCExposesDensityHeatmapPlot)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisOverlayRespondsToDiagnosticVisuals|TestDrawModuleOverlaysDrawsHysteresisCanvas' -count=1"
+      ],
+      "notes": "PUND stores the P/U/N/D pulse current traces as UI-neutral plot series and the gogpu overlay renders them with the existing plot renderer. FORC stores the density grid as V-valued plot points and the gogpu overlay renders it with the existing heatmap renderer."
+    },
+    {
+      "module": "crossbar",
+      "feature": "Crossbar array controls, MVM heatmaps, IR drop, sneak paths, drift, FeCap/3D stack tabs, live slides, and comparison widgets",
+      "status": "gap",
+      "legacy_sources": [
+        "module2-crossbar/pkg/gui/*.go",
+        "module2-crossbar/pkg/gui/tabs/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/crossbar",
+        "internal/gogpuapp/crossbar_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/crossbar ./internal/gogpuapp -run Crossbar"
+      ],
+      "notes": "Core array size, MVM, IR toggle, and heatmap rendering exist in gogpu. Dedicated non-ideality tabs, live-slide flow, comparison widgets, and export validation need parity decisions."
+    },
+    {
+      "module": "mnist",
+      "feature": "MNIST inference dashboard, dual-mode demo, accuracy sweep, energy and quantization widgets, activation/weight views, dialogs, and export",
+      "status": "gap",
+      "legacy_sources": [
+        "module3-mnist/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/mnist",
+        "internal/gogpuapp/mnist_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/mnist ./internal/gogpuapp -run MNIST"
+      ],
+      "notes": "Core inference summary exists in gogpu. Dual-mode interactions, training/weight visualizations, detailed preprocessing, accuracy sweep controls, and export workflows need parity decisions."
+    },
+    {
+      "module": "circuits",
+      "feature": "Peripheral circuits workspace, unified array canvas, read/write/compute paths, ISPP, half-select stress, PVT, reference specs, comparison metrics, and overlays",
+      "status": "gap",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/*.go",
+        "module4-circuits/pkg/gui/unified/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
+      ],
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference-spec JSON export, reference timing summaries, an independent reference timing operation selector, reference timing JSON export, reference timing SVG export, reference timing animation step state, deterministic reference timing playback controls, reference timing waveform metadata, a compact reference timing waveform strip, a full reference timing waveform panel, logger verbosity controls, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. File logging/global logger wiring, raster waveform snapshots, deep investigation panels, and detailed visual interactions need parity decisions."
+    },
+    {
+      "module": "circuits",
+      "feature": "Unified controls action contract for array size, operation mode, architecture, selected cell, write target, DAC/ADC/TIA, coupling tier, ISPP engine, and timing operation",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_unified.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go",
+        "module4-circuits/pkg/gui/device_state.go",
+        "module4-circuits/pkg/gui/device_state_config.go",
+        "module4-circuits/pkg/gui/device_state_dac.go",
+        "module4-circuits/pkg/gui/device_state_ispp.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'TestSnapshotContainsUnifiedCircuitControls|TestApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "go test ./shared/viewmodel/circuits -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
+      ],
+      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions, including the independent reference timing operation selector. It does not claim parity for the animated circuit canvas, overlays, operation-log surfaces, or deep investigation panels tracked by the broader circuits gap entry."
+    },
+    {
+      "module": "circuits",
+      "feature": "Unified canvas overlay for selected array/cell, read/write/compute path state, and last-operation feedback",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_unified_canvas.go",
+        "module4-circuits/pkg/gui/tab_unified_drawing.go",
+        "module4-circuits/pkg/gui/drawing.go",
+        "module4-circuits/pkg/gui/overlay_helpers.go",
+        "module4-circuits/pkg/gui/unified/overlay/..."
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuapp/circuits_overlay.go",
+        "internal/gogpuapp/main.go",
+        "shared/viewmodel/circuits/snapshot.go"
+      ],
+      "evidence": [
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
+      ],
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logger verbosity controls, deep investigation panels, or reference animation/export panels."
+    },
+    {
+      "module": "circuits",
+      "feature": "Half-select / column-write stress state and educational stress budget",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/device_state_ispp.go",
+        "module4-circuits/pkg/gui/tab_unified_voltage.go",
+        "module4-circuits/pkg/gui/tab_unified_halfselect_voltage_test.go",
+        "module4-circuits/pkg/gui/tab_unified_halfselect_residue_test.go",
+        "module4-circuits/pkg/gui/retention_halfselect_stress_test.go",
+        "module4-circuits/pkg/gui/m4_investigations_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'HalfSelect|Stress' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesHalfSelectStress|CircuitsOverlayRespondsToHalfSelectStressState' -count=1"
+      ],
+      "notes": "This ports deterministic half-select/column-write stress summary state into gogpu. It does not claim full legacy residue evolution, retention drift fitting, or deep investigation-panel parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "PVT investigation summaries for temperature sweep, process-yield proxy, corner ENOB, and thermal-noise ENOB ceiling",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/pvt_temperature_sweep_test.go",
+        "module4-circuits/pkg/gui/pvt_process_corners_test.go",
+        "module4-circuits/pkg/gui/device_state_pvt_test.go",
+        "shared/peripherals/pvt.go",
+        "shared/peripherals/analysis.go",
+        "shared/peripherals/m4_investigations_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'PVTInvestigation' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesPVTInvestigationSummaries|CircuitsOverlayRespondsToPVTInvestigationState' -count=1"
+      ],
+      "notes": "This ports summary-level PVT investigation state into the gogpu snapshot and overlay. It does not claim full legacy sweep plots, interactive PVT controls, retained result logs, or calibrated silicon-corner guarantees."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference spec and compliance summaries for storage, component counts, power, latency, throughput, and DAC/ADC level coverage",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_specs.go",
+        "module4-circuits/pkg/gui/tab_reference_voltage.go",
+        "module4-circuits/pkg/gui/comparison_metrics.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceSpec' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceSpecSummaries|CircuitsOverlayRespondsToReferenceSpecState' -count=1"
+      ],
+      "notes": "This ports summary-level reference specs into the gogpu snapshot and overlay. JSON export is tracked separately. It does not claim full legacy reference tab parity, editable spec-only controls, or calibrated hardware compliance."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference spec JSON export as buffered artifact or validated-path JSON file",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_specs.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceSpecExport|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceSpecExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports reference-spec export for current viewmodel rows, columns, converter counts/codes, power, latency, throughput, efficiency, compliance, and educational boundary notice. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. It does not claim CSV export, dialog parity, waveform/SVG export, or full legacy reference-tab export UX."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing summaries for write/read/compute totals and active phase durations",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTiming' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingSummaries|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
+      ],
+      "notes": "This ports summary-level timing totals and active timing-operation phase durations into the gogpu snapshot and overlay. The active reference timing operation is selected independently from the simulation read/write/compute mode. JSON export, waveform metadata, compact rendering, and the full waveform panel are tracked separately. It does not claim animation controls, SVG/PNG waveform export, or raster snapshots."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing JSON export as buffered artifact or validated-path JSON file",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingExport|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports reference timing export for write, read, and compute totals plus structured phase durations and active-operation context. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Timing animation step state and SVG waveform export are tracked separately. It does not claim raster waveform snapshots, PNG waveform export, or dialog parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Independent reference timing operation selector for WRITE/READ/COMPUTE diagrams",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'TimingSelector|ReferenceTimingSelector|ReferenceTimingWaveform|ReferenceTimingAnimation|ReferenceTimingExport|SnapshotContainsUnifiedCircuitControls|ApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsViewSelectorButtonsDispatchPayloads|ReferenceTiming|TimingWaveform|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
+      ],
+      "notes": "This ports the legacy reference timing operation selector as set_timing_operation, independent from the simulation operation mode. It drives timing summaries, animation status, playback state, waveform metadata, and the compact waveform strip without changing read/write/compute simulation controls. It does not claim dialog parity or PNG/raster waveform export."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing animation step sequence and current status for write/read/compute operations",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingAnimation|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingAnimationStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports the legacy timing animation's deterministic status sequence into UI-neutral gogpu state. The action records the selected operation, all steps, current step 1/N, and overlay status without sleeps, goroutines, or Fyne widgets. Timed playback controls are tracked separately. It does not claim PNG/raster export, full waveform-panel parity, or per-frame signal rendering."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing playback controls and deterministic step state for WRITE/READ/COMPUTE diagrams",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingPlayback|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingPlayback|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports the legacy timing playback affordance as gogpu-native play, pause, step, and reset actions. Playback follows the active timing operation, preserves a deterministic interval value, advances state without sleeping or mutating Fyne widgets, and exposes status in snapshots, controls, and the overlay. It does not claim real-time frame scheduling or PNG/raster export."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing waveform metadata for write/read/compute signals, high windows, time markers, and phase markers",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveform|ReferenceTimingSummary|ReferenceTimingExport' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingWaveformMetadata|CircuitsOverlayStateIncludesReferenceTimingSummaries' -count=1"
+      ],
+      "notes": "This ports the legacy timing diagrams' signal names, percent-based high windows, time-axis markers, and phase markers into UI-neutral state plus gogpu snapshot/overlay summaries. Compact rendering, SVG export, playback controls, and the full waveform panel are tracked separately. It does not claim PNG/raster waveform export or changes to the reference timing JSON export contract."
+    },
+    {
+      "module": "circuits",
+      "feature": "Compact gogpu reference timing waveform strip rendered from active write/read/compute waveform plot data",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveformPlot|ReferenceTimingWaveformMetadata' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TimingWaveformPlot|TimingWaveformStrip' -count=1"
+      ],
+      "notes": "This exposes the active waveform as a UI-neutral timing_waveform_active plot and draws a compact gogpu strip in the circuits overlay. It is deterministic and read-only. The full waveform panel is tracked separately. It does not claim PNG/raster waveform export or per-frame signal rendering."
+    },
+    {
+      "module": "circuits",
+      "feature": "Full gogpu reference timing waveform panel for the active WRITE/READ/COMPUTE waveform",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingWaveformPanel|ReferenceTimingWaveformPlot' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingPanel|CircuitsOverlayStateIncludesReferenceTimingPanelSummary' -count=1"
+      ],
+      "notes": "This ports a full gogpu waveform panel fed by active timing waveform state. The panel exposes signal rows, high-window counts, time markers, phase spans, playback state, and export status through snapshots and a gogpu card, while the overlay carries the panel summary. It does not claim PNG/raster waveform snapshots, real-time frame scheduling, or dialog parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing SVG export for the active WRITE/READ/COMPUTE waveform",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTimingSVGExport|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'ReferenceTimingSVGExport|CircuitsViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports the legacy reference timing Export SVG affordance as deterministic gogpu/viewmodel state. The action follows the active timing operation, buffers SVG by default, writes the same SVG to a validated path when supplied, and exposes status in the gogpu controls and overlay. It does not claim dialog parity or PNG/raster export."
+    },
+    {
+      "module": "circuits",
+      "feature": "Operation log summaries for successful read/write/compute runs and control changes",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/action_log.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go",
+        "module4-circuits/pkg/gui/tab_unified.go",
+        "module4-circuits/pkg/gui/compute_log.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'OperationLog' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogSummaries' -count=1"
+      ],
+      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim compute-run detail payloads or export parity. Logger verbosity controls are tracked separately."
+    },
+    {
+      "module": "circuits",
+      "feature": "Operation log summary export as buffered JSON artifact or validated-path JSON file",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/action_log.go",
+        "module4-circuits/pkg/gui/compute_log.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'OperationLogExport|SnapshotContainsUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
+      ],
+      "notes": "This ports export for retained operation-log entries. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Detailed compute-run payloads and logger verbosity controls are tracked separately."
+    },
+    {
+      "module": "circuits",
+      "feature": "Detailed compute-run MVM log payload with input vector, weights, conductances, row ADC/TIA results, saturation flags, and per-cell current terms",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/compute_log.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ComputeRun|OperationLogExport' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesComputeRunSummary|CircuitsOverlayStateIncludesOperationLogExportStatus' -count=1"
+      ],
+      "notes": "This ports deterministic UI-neutral compute-run detail into gogpu snapshots and operation-log export when the latest operation is compute. It uses current viewmodel state and deterministic educational MVM terms. Logger verbosity controls are tracked separately; this does not claim timestamps or hardware-calibrated trace parity."
+    },
+    {
+      "module": "circuits",
+      "feature": "Logger verbosity controls for off/info/debug/trace levels",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/action_log.go",
+        "module4-circuits/cmd/circuits-gui-fyne/main.go",
+        "module4-circuits/cmd/circuits/main.go",
+        "shared/logging/logging.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'LoggerVerbosity|SnapshotContainsUnifiedCircuitControls|ApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesLoggerVerbosity|CircuitsViewSelectorButtonsDispatchPayloads|CircuitsViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports the legacy verbosity vocabulary into UI-neutral gogpu state and controls, including aliases 0/off/none, 1/info, 2/debug, and 3/trace/all. It surfaces the selected level and detail text in snapshots and the overlay. It does not enable file logging, mutate the process-global logger, or suppress the user-facing operation log."
+    },
+    {
+      "module": "comparison",
+      "feature": "Technology comparison, evidence model, scenario profiles, sensitivity analysis, market/fabrication reality panels, hero cards, and export",
+      "status": "gap",
+      "legacy_sources": [
+        "module5-comparison/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/comparison",
+        "internal/gogpuapp/comparison_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/comparison ./internal/gogpuapp -run Comparison"
+      ],
+      "notes": "Canonical architecture comparison is ported. Scenario editing, sensitivity and market panels, fabrication reality messaging, and export need parity decisions."
+    },
+    {
+      "module": "eda",
+      "feature": "EDA design suite, builder validation, export viewer, layout visualization, learning center, visual explainers, and layout canvas",
+      "status": "gap",
+      "legacy_sources": [
+        "module6-eda/pkg/gui/*.go",
+        "module6-eda/pkg/gui/tabs/...",
+        "module6-eda/pkg/gui/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/eda",
+        "internal/gogpuapp/eda_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/eda ./internal/gogpuapp -run EDA"
+      ],
+      "notes": "Gogpu shows EDA summary, export formats, and representative generated text. The builder wizard, validation tab, layout viewer, learning center, and custom layout visuals need parity decisions."
+    },
+    {
+      "module": "docs",
+      "feature": "Documentation viewer, navigation, search, glossary integration, layout, and persistence",
+      "status": "gap",
+      "legacy_sources": [
+        "module7-docs/pkg/gui/*.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/docs",
+        "internal/gogpuapp/docs_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/docs ./internal/gogpuapp -run Docs"
+      ],
+      "notes": "Gogpu exposes documentation sections and trust-boundary content. Search, glossary integration, navigation state, and persistence need parity decisions."
+    },
+    {
+      "module": "shared",
+      "feature": "Reusable legacy widgets, theme systems, keyboard help, and Fyne export helpers",
+      "status": "gap",
+      "legacy_sources": [
+        "shared/export/*.go",
+        "shared/keyboard/*.go",
+        "shared/theme/*.go",
+        "shared/themes/*.go",
+        "shared/widgets/..."
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuapp/design",
+        "internal/gogpuapp/render"
+      ],
+      "evidence": [
+        "go test ./internal/gogpuapp/design ./internal/gogpuapp/render"
+      ],
+      "notes": "Gogpu has design tokens plus plot and heatmap renderers. Shared Fyne widgets and theme affordances need a mapped gogpu design-system replacement, retirement decision, or module-specific reimplementation."
+    }
+  ]
+}

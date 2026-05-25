@@ -5,7 +5,7 @@ This file tracks validation work that should be visible to collaborators without
 ## Current Public Baseline
 
 - Keep `bash scripts/reproduce_validation.sh` as the single entry point for broad validation.
-- Keep Module 2 KCL conservation executable and artifact-producing.
+- Keep Module 2 KCL conservation, analytical-limit fixtures, and optional ngspice report generation executable and artifact-producing.
 - Keep README claims tied to simulation, education, and published references.
 - Avoid numeric performance or hardware claims unless a reproducible validation artifact exists.
 
@@ -14,8 +14,7 @@ This file tracks validation work that should be visible to collaborators without
 | Module | Work | Target Evidence |
 |---|---|---|
 | Module 1 hysteresis | Improve Park 2015 HZO overlay report and public plot export | RMSE table, source provenance, side-by-side P-E plot |
-| Module 2 crossbar | Promote SPICE comparison from harness to report | ngspice current comparison JSON and plot, target deviation below 1% for small arrays |
-| Module 2 crossbar | Add analytical-limit cases | Single-cell Ohm's law and 2x2 no-sneak fixtures |
+| Module 2 crossbar | Execute ngspice comparison report on a host with ngspice installed | `output/validation/module2/ngspice_comparison.json` and `.svg` with `comparison_executed=true`, `claim_supported=true`, and max relative error ≤1% for small arrays |
 | Module 3 MNIST | Publish inference artifact | accuracy, per-digit metrics, confusion matrix, quantization settings |
 | Module 4 peripherals | Add DAC/ADC/TIA validation report | INL/DNL, quantization error, SNR, and TIA transfer sweep |
 | Module 6 EDA | Expand EDA validation report | Yosys log, optional OpenLane result, DRC/LVS status when available |

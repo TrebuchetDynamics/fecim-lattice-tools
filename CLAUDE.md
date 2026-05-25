@@ -9,8 +9,8 @@
 | Find a function | `docs/3-develop/api-reference.md` |
 | Fix an error | `docs/3-develop/testing/TESTING.md` |
 | Add a feature | `docs/3-develop/api-reference.md` |
-| Check thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
-| Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Check legacy Fyne thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
+| Maintain legacy Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
 | Run/understand tests | `docs/3-develop/testing/TESTING.md` |
 | EDA documentation | `docs/2-learn/module6-eda/README.md` |
 
@@ -27,7 +27,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 ## Build & Run
 
 ```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
+CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Or: ./launch.sh
 ```
 
@@ -41,9 +41,10 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 - If a change cannot reasonably be test-first, stop and explain the blocker before coding. Documentation-only, comments-only, formatting-only, generated files, and release metadata may use `TDD: N/A` with a short reason.
 
 ### Do
-- Use `fyne.Do(func() { ... })` for all UI updates from goroutines
+- Keep the default app on `gogpu/ui`; Fyne belongs only in explicitly tagged legacy paths such as `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`
+- Route default UI state through `shared/viewmodel`; use `fyne.Do(func() { ... })` only for legacy Fyne widget updates from goroutines
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
-- Follow embedded app interface: `BuildContent()`, `Start()`, `Stop()`
+- Use viewmodel snapshots/actions for default module integration; `BuildContent()`, `Start()`, and `Stop()` are legacy Fyne adapter APIs
 - Run `go test ./...` before committing
 
 ### Don't
@@ -54,7 +55,8 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 ## Project Structure
 
 ```
-cmd/fecim-lattice-tools/     # Main unified app entry point
+cmd/fecim-lattice-tools/     # Default gogpu/ui app entry point
+cmd/fecim-lattice-tools-fyne/ # Legacy Fyne app entry point; requires -tags legacy_fyne
 module1-hysteresis/       # P-E curve, Preisach model
 module2-crossbar/         # Crossbar GUI (pkg/gui/)
 module3-mnist/            # Neural network digit recognition

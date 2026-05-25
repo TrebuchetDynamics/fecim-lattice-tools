@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/crossbar_sneak_path_analysis_arxiv/grobid.tei.xml",
+      "paper_key": "crossbar_sneak_path_analysis_arxiv",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/crossbar_sneak_path_analysis_arxiv/marker.md",
+      "paper_key": "crossbar_sneak_path_analysis_arxiv",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

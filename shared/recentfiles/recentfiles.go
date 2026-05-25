@@ -9,8 +9,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	"fyne.io/fyne/v2"
 )
 
 // FileType categorizes recent files
@@ -31,6 +29,14 @@ const (
 	maxTotalFiles      = 50 // Maximum total files across all types
 )
 
+// Preferences is the small persistence interface used by recent files.
+// Fyne preferences satisfy this interface, but the core manager does not
+// depend on Fyne.
+type Preferences interface {
+	String(key string) string
+	SetString(key string, value string)
+}
+
 // RecentFile represents a single recently accessed file
 type RecentFile struct {
 	Path       string    `json:"path"`
@@ -46,7 +52,7 @@ type RecentFile struct {
 type Manager struct {
 	mu       sync.RWMutex
 	files    []*RecentFile
-	prefs    fyne.Preferences
+	prefs    Preferences
 	onChange []func([]*RecentFile)
 }
 
@@ -58,7 +64,7 @@ type persistedData struct {
 
 // NewManager creates a new recent files manager
 // Pass nil for prefs to use in-memory only (for testing)
-func NewManager(prefs fyne.Preferences) *Manager {
+func NewManager(prefs Preferences) *Manager {
 	m := &Manager{
 		files: make([]*RecentFile, 0),
 		prefs: prefs,

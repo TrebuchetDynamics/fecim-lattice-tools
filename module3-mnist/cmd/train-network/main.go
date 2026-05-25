@@ -390,21 +390,18 @@ func Run(args []string) error {
 
 	dataDir := utils.FindDirectoryWithMarker("module3-mnist/data", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
-		fmt.Println("Error: Could not find MNIST data directory")
-		os.Exit(1)
+		return fmt.Errorf("Could not find MNIST data directory")
 	}
 
 	fmt.Println("Loading MNIST data...")
 	trainImages, trainLabels, err := mnist.LoadMNIST(dataDir, true)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading training data: %w", err)
 	}
 
 	testImages, testLabels, err := mnist.LoadMNIST(dataDir, false)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("loading test data: %w", err)
 	}
 
 	fmt.Printf("Loaded %d train, %d test images\n\n", len(trainImages), len(testImages))
@@ -434,8 +431,7 @@ func Run(args []string) error {
 	weightsPath := filepath.Join(dataDir, "pretrained_weights.json")
 	fmt.Printf("\nSaving to %s...\n", weightsPath)
 	if err := net.Save(weightsPath, 30); err != nil {
-		fmt.Printf("Error saving: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("saving weights: %w", err)
 	}
 
 	fmt.Println("\nDone! Weights saved. Quantization applied dynamically based on UI slider.")

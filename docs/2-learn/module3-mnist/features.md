@@ -16,9 +16,9 @@
 
 ### Core inference path (runtime)
 - `module3-mnist/pkg/core/` (dual-mode network, quantization, inference, energy model)
-- `module3-mnist/pkg/gui/` (Fyne apps/widgets)
+- `module3-mnist/pkg/gui/` (tagged legacy Fyne apps/widgets)
 - `module3-mnist/pkg/mnist/` (MNIST loader)
-- `module3-mnist/cmd/mnist-gui/main.go` (GUI entry)
+- `cmd/fecim-lattice-tools` (canonical gogpu/ui GUI entry; use `mnist` or `--module mnist`)
 - `module3-mnist/cmd/mnist/main.go` (CLI entry)
 
 ### Training/offline path

@@ -2,29 +2,39 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-03-06
-
-**Phase**: Education (simulation-only). All pending items cleared. Eight world-class features deferred pending prerequisites.
-
----
+**Last Updated**: 2026-05-03 | **gogpu/ui**: All 7 modules ported and functional
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 0 | — |
+| Pending | 9 | gogpu/ui integration + UX + screenshots |
 | Open Issues | 2 | qmd cold-start blocker + MNIST layout-audit hang |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All items done including L09, L10 |
+| Completed | ~260+ | All items done including gogpu/ui full migration |
 
 ---
 
 ## Active Items
 
-### Pending
+### Pending — gogpu/ui Integration & Polish
 
-None.
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| 1 | Live simulation data — Preisach/LK solvers + real conductances → viewmodels | High | **Done** |
+| 2 | Interactive ApplyAction — all 7 modules respond to actions (select, resize, MVM, export, etc.) | High | **Done** |
+| 3 | Cross-module design composition — Composition/Snapshot/ExportDesign | Medium | **Done** |
+| 4 | Generate screenshots — 5 PNGs generated via `cmd/fecim-screenshotter-next` | Medium | **Done** |
+| 5 | Interactive canvas events — drawModuleOverlays reads globalPorts for real data | Medium | **Done** |
+| 6 | Dependency upgrades — gg/gogpu/ui + transitive updated | Low | **Done** |
+| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
+| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
+| 6 | Dependency upgrades — gg v0.43.2→v0.44.1, gogpu v0.29.4→v0.31.0, ui v0.1.13→v0.1.18, plus transitive. Build + 37 tests pass. | Low | **Done** |
+| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
+| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 
 ### Open Issues
 
@@ -243,3 +253,11 @@ C01..C13, H01..H16, M01..M16 + security/architecture/test items — All simulati
 
 *This TODO prioritizes scientific rigor and educational honesty over promotional considerations.*
 *Restructured: 2026-02-27 | Original consolidated: 2026-02-07*
+
+[BLOCKED] Telegram media delivery for FeCIM screenshots — 2026-05-18 18:14:23 CST
+  blocker: OpenClaw telegram channel unavailable while sending captured PNG screenshots to Juan.
+  evidence: `openclaw message send --channel telegram --account riju --target 6586915095 --media /tmp/riju-fecim-screenshots/fecim-home.png ...` returned `Error: Channel is unavailable: telegram` for all 4 files.
+  unblocks when: Telegram channel/account is available in OpenClaw runtime or an alternate delivery channel is provided.
+  owner: system/OpenClaw channel configuration.
+  workaround/pivot: Keep absolute local artifact paths and report screenshot dimensions/filesizes in chat.
+  next check: 2026-05-18 19:14:23 CST.

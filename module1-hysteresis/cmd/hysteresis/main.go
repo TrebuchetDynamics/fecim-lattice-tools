@@ -4,10 +4,9 @@
 // This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
-//   - Default: Fyne GUI with real-time P-E curve animation (recommended)
+//   - Default: clear migration error; use the canonical gogpu/ui shell
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
-//   - --vulkan: Vulkan-based graphical interface (advanced)
 //
 // Common flags:
 //   - --json: Output results as JSON
@@ -23,8 +22,6 @@ import (
 	"os"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module1-hysteresis/pkg/gui"
-	"fecim-lattice-tools/module1-hysteresis/pkg/render"
 	"fecim-lattice-tools/module1-hysteresis/pkg/simulation"
 	"fecim-lattice-tools/module1-hysteresis/pkg/tui"
 	"fecim-lattice-tools/shared/cli"
@@ -128,7 +125,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
+	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical gogpu/ui shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {
@@ -240,38 +237,12 @@ func Run(args []string) error {
 	}
 
 	if *vulkan {
-		// Vulkan graphical mode
-		fmt.Println("===========================================")
-		fmt.Println("  FeCIM Hysteresis Visualizer")
-		fmt.Println("  Demo 1: Ferroelectric P-E Curve (Vulkan)")
-		fmt.Println("===========================================")
-		fmt.Println()
-		fmt.Printf("Using: %s\n", material.Name)
-
-		printMaterialInfo(material)
-		engine := simulation.NewEngine(material)
-		engine.SetFrequency(*freq)
-		runGraphical(engine, material)
-		return nil
+		return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches Vulkan from the non-legacy command; use %q",
+			"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
 	}
 
-	// Default: Fyne GUI mode (recommended)
-	// Pass the selected material name to the GUI
-	if err := gui.RunWithMaterial(material.Name); err != nil {
-		log.Printf("GUI error: %v\n", err)
-		fmt.Println("\nFalling back to TUI mode...")
-
-		if err := tui.RunWithMaterial(material.Name); err != nil {
-			log.Printf("TUI error: %v\n", err)
-			fmt.Println("\nFalling back to headless mode...")
-
-			engine := simulation.NewEngine(material)
-			engine.SetFrequency(*freq)
-			runHeadless(engine, material)
-		}
-	}
-
-	return nil
+	return fmt.Errorf("module1-hysteresis/cmd/hysteresis no longer launches a graphical UI from the non-legacy command; use %q",
+		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
 }
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {
@@ -320,72 +291,14 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	fmt.Printf("  Coercive Field: %.2f MV/cm\n", material.Ec/1e8)
 	fmt.Printf("  Switching Time: %.2f ns\n", material.Tau*1e9)
 	fmt.Printf("  Endurance: %.0e cycles\n", material.EnduranceCycles)
-	fmt.Printf("  30 Discrete States (conference-claim baseline): %.1f bits/cell\n", 4.91)
+	fmt.Printf("  30 Modeled Levels (simulation baseline): %.1f bits/cell equivalent\n", 4.91)
 	fmt.Println()
 	fmt.Println("─────────────────────────────────────────────────────────────")
-	fmt.Println("  Demo baseline note:")
-	fmt.Println("  30 discrete states are modeled here as a conference-baseline assumption.")
-	fmt.Println("  Peer-reviewed ferroelectric devices report roughly 32-140 states in related literature.")
+	fmt.Println("  Simulation baseline note:")
+	fmt.Println("  30 levels are an educational discretization, not a validated device claim.")
+	fmt.Println("  Attach a specific citation before reporting multi-level hardware capability.")
 	fmt.Println("─────────────────────────────────────────────────────────────")
 	fmt.Println()
-}
-
-func runGraphical(engine *simulation.Engine, material *ferroelectric.HZOMaterial) {
-	fmt.Println("Starting Vulkan-based graphical interface...")
-	fmt.Println("Press ESC or close window to exit.")
-	fmt.Println()
-
-	// Create Vulkan renderer
-	config := render.DefaultConfig()
-	renderer := render.NewVulkanRenderer(config)
-
-	// Create hysteresis plot
-	Emax := material.Ec * 1.5
-	Pmax := material.Ps * 1.2
-	plot := render.NewHysteresisPlot(Emax, Pmax)
-	renderer.SetHysteresisPlot(plot)
-
-	// Set up update callback
-	frameCount := 0
-	engine.Start()
-	renderer.SetUpdateCallback(func() {
-		// Step simulation
-		engine.Step()
-		state := engine.State()
-
-		// Update renderer with new polarization
-		renderer.UpdatePolarization(state.NormPol)
-
-		// Add point to plot
-		plot.AddPoint(state.ElectricField, state.Polarization)
-
-		frameCount++
-	})
-
-	// Initialize Vulkan
-	if err := renderer.Initialize(); err != nil {
-		log.Printf("Failed to initialize Vulkan renderer: %v", err)
-		fmt.Println()
-		fmt.Println("Vulkan initialization failed. Running in headless mode instead.")
-		fmt.Println()
-		runHeadless(engine, material)
-		os.Exit(0)
-	}
-	defer renderer.Cleanup()
-
-	// Run render loop
-	if err := renderer.Run(); err != nil {
-		fmt.Printf("\nRenderer error: %v\n", err)
-		fmt.Println("The visualization window encountered an error.")
-		fmt.Println("This may be due to:")
-		fmt.Println("  - Window was closed unexpectedly")
-		fmt.Println("  - GPU driver issues")
-		fmt.Println("  - Display server (X11/Wayland) disconnection")
-		fmt.Println("\nTry running with --headless flag for non-graphical output.")
-		os.Exit(1)
-	}
-
-	fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)
 }
 
 // buildMaterialResult creates a JSON-friendly result from a material.

@@ -1,0 +1,12 @@
+citation_path: citations/papers/optical_computing_dnn_survey_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: optical_computing_dnn_survey_2024
+pdf:
+  path: docs/4-research/papers/by-topic/06-photonic-computing/optical_computing_dnn_survey_2024.pdf
+  sha256: 61eb1332857f0bb077a55b824f46ecb24dd2bdc22d6d084d4612b970b8e56e0e
+  size: 4117902
+title: Optical Computing Dnn Survey 2024

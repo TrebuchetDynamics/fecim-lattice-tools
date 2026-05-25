@@ -1,0 +1,12 @@
+citation_path: citations/papers/memristor_cim_survey_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: memristor_cim_survey_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/Memristor_CIM_Survey_arXiv.pdf
+  sha256: e037745ba082946e77c74d5b75e4869eb4eb7d977cc7f02aea39de2857474e4c
+  size: 5315853
+title: Memristor CIM Survey Arxiv

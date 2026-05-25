@@ -182,7 +182,7 @@ func (cd *CellDisplay) GetColor() Color {
 // 30-level default follows the current conference-baseline assumption used by this demo.
 const FeCIMLevels = physics.DefaultLevels
 
-// LevelIndicator displays the 30 discrete FeCIM levels.
+// LevelIndicator displays the simulator's 30-level baseline discretization.
 type LevelIndicator struct {
 	// Position and size (normalized 0-1)
 	X, Y          float64
@@ -313,7 +313,7 @@ type Renderer struct {
 	config      *Config
 	plot        *HysteresisPlot
 	cell        *CellDisplay
-	levels      *LevelIndicator // 30-level indicator (conference-claim baseline)
+	levels      *LevelIndicator // simulator 30-level baseline indicator
 	running     atomic.Bool     // guarded: concurrent-safe stop/run signalling
 	initialized bool
 

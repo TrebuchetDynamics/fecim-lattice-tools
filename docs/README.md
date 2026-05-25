@@ -212,15 +212,17 @@ See [GLOSSARY.md](GLOSSARY.md) for all terms.
 Generated screenshots and videos are not tracked in the public source tree. To create a local documentation frame, run:
 
 ```bash
-go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
 ```
+
+The screenshotter captures real `gogpu/ui` app frames through `internal/gogpuapp`, not legacy Fyne windows or placeholder image fixtures. Without `-only`, it intentionally writes one PNG for every module returned by `shared/viewmodel.KnownDescriptors()`; adding a module also requires a screenshot filename mapping so documentation coverage cannot silently drift.
 
 ---
 
 ## 🛠️ Technology Stack
 
 - **Language:** Go 1.25+
-- **GUI:** Fyne 2.7.2
+- **GUI:** `gogpu/ui` default zero-CGO shell; legacy Fyne 2.7.2 is opt-in with `-tags legacy_fyne`
 - **Build:** Standard Go toolchain
 - **Platform:** Linux, macOS, Windows
 - **Dependencies:** See [1-getting-started/installation.md](1-getting-started/installation.md)

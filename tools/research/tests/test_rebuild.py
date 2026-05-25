@@ -1,0 +1,160 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from fecim_research.rebuild import RebuildStages, run_rebuild
+
+
+class RebuildTest(unittest.TestCase):
+    def test_run_rebuild_runs_stages_in_order_and_writes_trackable_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calls: list[str] = []
+
+            stages = RebuildStages(
+                ingest=lambda: self._stage(calls, "ingest", 0),
+                missing=lambda: self._stage(calls, "missing", 0),
+                index=lambda: self._stage(calls, "index", 0),
+                cache=lambda: self._stage(calls, "cache", 0),
+                audit=lambda: self._stage(calls, "audit", 0),
+                graph=lambda: self._stage(calls, "graph", 0),
+            )
+
+            code = run_rebuild(
+                root=root,
+                extra_paths=[Path("seed-pdfs")],
+                semantic=False,
+                embedding_model="",
+                skip_index=False,
+                stages=stages,
+            )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(calls, ["ingest", "missing", "index", "cache", "audit", "graph"])
+            report = json.loads((root / "research" / "reports" / "rebuild-latest.json").read_text())
+            self.assertTrue(report["ok"])
+            self.assertEqual(report["extra_paths"], ["seed-pdfs"])
+            self.assertEqual(
+                [stage["stage"] for stage in report["stages"]],
+                ["ingest", "missing", "index", "cache", "audit", "graph"],
+            )
+            self.assertEqual([stage["status"] for stage in report["stages"]], ["ok", "ok", "ok", "ok", "ok", "ok"])
+            self.assertIn("research/manifests/ingest-latest.json", report["stages"][0]["artifacts"])
+            self.assertIn("research/reports/missing-papers-latest.json", report["stages"][1]["artifacts"])
+            self.assertIn("research/manifests/index-latest.json", report["stages"][2]["artifacts"])
+            self.assertIn("research/reports/cache-latest.json", report["stages"][3]["artifacts"])
+            self.assertIn("research/reports/claim-audit-latest.json", report["stages"][4]["artifacts"])
+            self.assertIn("research/graphs/provenance-graph.json", report["stages"][5]["artifacts"])
+
+    def test_run_rebuild_can_skip_index_for_file_only_audits(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calls: list[str] = []
+
+            stages = RebuildStages(
+                ingest=lambda: self._stage(calls, "ingest", 0),
+                missing=lambda: self._stage(calls, "missing", 0),
+                index=lambda: self._stage(calls, "index", 99),
+                cache=lambda: self._stage(calls, "cache", 1),
+                audit=lambda: self._stage(calls, "audit", 0),
+                graph=lambda: self._stage(calls, "graph", 0),
+            )
+
+            code = run_rebuild(
+                root=root,
+                extra_paths=[],
+                semantic=False,
+                embedding_model="",
+                skip_index=True,
+                stages=stages,
+            )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(calls, ["ingest", "missing", "cache", "audit", "graph"])
+            report = json.loads((root / "research" / "reports" / "rebuild-latest.json").read_text())
+            self.assertTrue(report["ok"])
+            self.assertEqual(
+                [stage["stage"] for stage in report["stages"]],
+                ["ingest", "missing", "index", "cache", "audit", "graph"],
+            )
+            self.assertEqual(report["stages"][2]["status"], "skipped")
+            self.assertEqual(report["stages"][2]["exit_code"], 0)
+            self.assertEqual(report["stages"][3]["status"], "warning")
+            self.assertEqual(report["stages"][3]["exit_code"], 1)
+            self.assertEqual(report["warnings"], 1)
+
+    def test_run_rebuild_reports_failures_but_continues_later_file_stages(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calls: list[str] = []
+
+            stages = RebuildStages(
+                ingest=lambda: self._stage(calls, "ingest", 0),
+                missing=lambda: self._stage(calls, "missing", 0),
+                index=lambda: self._stage(calls, "index", 7),
+                cache=lambda: self._stage(calls, "cache", 1),
+                audit=lambda: self._stage(calls, "audit", 0),
+                graph=lambda: self._stage(calls, "graph", 0),
+            )
+
+            code = run_rebuild(
+                root=root,
+                extra_paths=[],
+                semantic=False,
+                embedding_model="",
+                skip_index=False,
+                stages=stages,
+            )
+
+            self.assertEqual(code, 7)
+            self.assertEqual(calls, ["ingest", "missing", "index", "cache", "audit", "graph"])
+            report = json.loads((root / "research" / "reports" / "rebuild-latest.json").read_text())
+            self.assertFalse(report["ok"])
+            self.assertEqual(report["stages"][2]["status"], "failed")
+            self.assertEqual(report["stages"][2]["exit_code"], 7)
+            self.assertEqual(report["failed"], 1)
+            self.assertEqual(report["warnings"], 1)
+
+    def test_run_rebuild_keeps_cache_miss_as_warning_not_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calls: list[str] = []
+
+            stages = RebuildStages(
+                ingest=lambda: self._stage(calls, "ingest", 0),
+                missing=lambda: self._stage(calls, "missing", 0),
+                index=lambda: self._stage(calls, "index", 0),
+                cache=lambda: self._stage(calls, "cache", 1),
+                audit=lambda: self._stage(calls, "audit", 0),
+                graph=lambda: self._stage(calls, "graph", 0),
+            )
+
+            code = run_rebuild(
+                root=root,
+                extra_paths=[],
+                semantic=False,
+                embedding_model="",
+                skip_index=False,
+                stages=stages,
+            )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(calls, ["ingest", "missing", "index", "cache", "audit", "graph"])
+            report = json.loads((root / "research" / "reports" / "rebuild-latest.json").read_text())
+            self.assertTrue(report["ok"])
+            self.assertEqual(report["failed"], 0)
+            self.assertEqual(report["warnings"], 1)
+            cache_stage = report["stages"][3]
+            self.assertEqual(cache_stage["stage"], "cache")
+            self.assertEqual(cache_stage["status"], "warning")
+            self.assertEqual(cache_stage["exit_code"], 1)
+            self.assertIn("research/reports/cache-latest.json", cache_stage["artifacts"])
+
+    def _stage(self, calls: list[str], name: str, code: int) -> int:
+        calls.append(name)
+        return code
+
+
+if __name__ == "__main__":
+    unittest.main()

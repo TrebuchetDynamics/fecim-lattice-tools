@@ -1,0 +1,12 @@
+citation_path: citations/papers/snn_architecture_search_survey_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: snn_architecture_search_survey_2025
+pdf:
+  path: docs/4-research/papers/by-topic/12-spiking-neural-networks/snn_architecture_search_survey_2025.pdf
+  sha256: dff492bb642b36fbd6d166200030a2df67d5b967cf27fb26951e79d052059876
+  size: 6834501
+title: Snn Architecture Search Survey 2025

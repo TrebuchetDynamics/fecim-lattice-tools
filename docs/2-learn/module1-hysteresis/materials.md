@@ -78,7 +78,7 @@ Where α₀, β, γ are Landau coefficients derived from material properties.
 ### `fecim_levels` (30)
 **Physical Meaning:** Number of discrete analog conductance states per memory cell.
 
-Each ferroelectric cell can be programmed to one of 30 distinct polarization states, corresponding to 30 different threshold voltages (VT) in a FeFET or 30 different tunneling resistances in an FTJ.
+The simulator can discretize a cell into 30 polarization/conductance levels for educational sweeps. This is a configurable modeling baseline, not a validated hardware-state claim for a specific FeCIM device.
 
 **Information Density:**
 ```
@@ -88,7 +88,7 @@ bits_per_cell = log₂(30) = 4.91 bits/cell
 Compare to:
 - NAND Flash MLC: 2 bits/cell (4 levels)
 - NAND Flash TLC: 3 bits/cell (8 levels)
-- FeCIM: 4.91 bits/cell (30-level baseline; simulation baseline)
+- Simulator 30-level baseline: 4.91 bits/cell equivalent (educational discretization, not a hardware guarantee)
 
 ### `boltzmann_ev` (8.617×10⁻⁵ eV/K)
 **Physical Meaning:** Boltzmann constant in electron-volt units.
@@ -509,7 +509,7 @@ where:
 |----------|-----------|-------|
 | NAND Flash | 10³-10⁴ | Very limited |
 | Standard HZO | 10¹⁰ | Verified |
-| FeCIM (demonstrated) | 10⁹ | Conservative |
+| FeCIM (conference-baseline assumption) | 10⁹ | Unverified simulation input |
 | FeCIM (target) | 10¹² | Aspirational |
 | V:HfO₂ | 10¹² | Vanadium-doped |
 
@@ -680,11 +680,12 @@ E_MAC = E_read + E_accumulate
 
 ### Energy Comparison
 
-| Operation | FeCIM | NAND | DRAM | SRAM |
-|-----------|-------|------|------|------|
-| Write | 10 fJ | 500 fJ | 5 pJ | 50 fJ |
-| Read | 1 fJ | 10 fJ | 5 pJ | 5 fJ |
-| Advantage | **1×** | 50× worse | 1000× worse | 5× worse |
+The values below are simulator inputs/placeholders for sensitivity studies. Do not report them as measured FeCIM-vs-memory advantages without a cited device and circuit measurement.
+
+| Operation | Simulator default | Status |
+|-----------|-------------------|--------|
+| Write | 10 fJ | Assumed educational input |
+| Read | 1 fJ | Assumed educational input |
 
 ### CIM Efficiency Metrics
 
@@ -694,10 +695,7 @@ Giga-operations per second per square millimeter.
 **`cim_energy_efficiency_tops_w`** (25.5 TOPS/W)
 Tera-operations per second per Watt.
 
-Compare to:
-- GPU: ~1 TOPS/W
-- TPU: ~5 TOPS/W
-- FeCIM: 25.5 TOPS/W (5× better than TPU)
+Comparison against GPUs, TPUs, NAND, DRAM, or SRAM requires a cited workload, array size, peripheral model, and measurement or calibrated circuit simulation. The default `25.5 TOPS/W` value is a simulator placeholder unless such evidence is attached.
 
 ---
 
@@ -773,7 +771,7 @@ Wake-up occurs because:
 **For lowest voltage:** Literature Superlattice (0.85 MV/cm)
 **For quantum computing:** Cryogenic HZO (enhanced Pr at 4K)
 **For high temperature:** AlScN (Tc > 1000°C)
-**For FeCIM simulation:** FeCIM HZO (demonstrated values)
+**For FeCIM simulation:** FeCIM HZO (conference-baseline assumptions; unverified unless separately cited)
 
 ---
 

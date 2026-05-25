@@ -41,6 +41,16 @@ const (
 	// Ref: Park et al., J. Appl. Phys. 117, 074103 (2015).
 	// See material.go Q12 field comment for calibration note vs DFT values.
 	defaultQ12HZO = -0.026
+
+	// maxHysteresisLoopPoints bounds public loop requests. Visualization and
+	// validation callers use hundreds of points; this still permits high-resolution
+	// offline loops while keeping allocation and integer arithmetic bounded.
+	maxHysteresisLoopPoints = 1_000_000
+
+	// maxDiscreteStateCount bounds programmable-state generation. Default use is
+	// tens of states; this upper bound keeps accidental allocation attacks from
+	// panicking while leaving ample room for offline sweeps.
+	maxDiscreteStateCount = 1_000_000
 )
 
 func init() {
@@ -144,7 +154,9 @@ func tuneDeltaForPr(ec, saturationE, psIrrev, targetPr float64) float64 {
 // ferroelectric materials, wrapping shared/physics.PreisachStack.
 //
 // The total polarization has two contributions:
-//   P_total(E) = P_irrev(E) + P_rev(E)
+//
+//	P_total(E) = P_irrev(E) + P_rev(E)
+//
 // where P_irrev comes from the Preisach stack (irreversible domain switching)
 // and P_rev = P_sat_rev * tanh(E/Ec) is a nonlinear reversible (dielectric)
 // contribution derived from the material's low-frequency permittivity.
@@ -188,42 +200,107 @@ type PreisachModel struct {
 	lockDynamic bool    // when true, skip dynamicP read/write (loop generation)
 }
 
+func isValidPreisachMaterial(material *HZOMaterial) bool {
+	if material == nil {
+		return false
+	}
+	return material.Ps > 0 && isFinite(material.Ps) &&
+		material.Pr > 0 && isFinite(material.Pr) && material.Pr <= material.Ps &&
+		isRepresentableCoerciveField(material.Ec)
+}
+
+func isFinite(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
+func isRepresentableCoerciveField(ec float64) bool {
+	return ec > 0 && isFinite(ec) &&
+		isFinite(ec*saturationFieldMultiplier) &&
+		isFinite(ec*nlsEaEcRatio)
+}
+
+func isRepresentableLoopField(maxField float64) bool {
+	return maxField > 0 && isFinite(maxField) && isFinite(2*maxField)
+}
+
+func isValidLoopPointCount(points int) bool {
+	return points > 0 && points <= maxHysteresisLoopPoints
+}
+
+func isValidDiscreteStateCount(n int) bool {
+	return n >= 2 && n <= maxDiscreteStateCount
+}
+
+func snapshotMaterial(material *HZOMaterial) *HZOMaterial {
+	if material == nil {
+		return nil
+	}
+	snapshot := *material
+	return &snapshot
+}
+
+func newNLSKineticsForMaterial(material *HZOMaterial) *physics.NLSKinetics {
+	nls := physics.NewNLSKinetics()
+	if material == nil {
+		return nls
+	}
+	if material.Tau0NLS > 0 && !math.IsNaN(material.Tau0NLS) && !math.IsInf(material.Tau0NLS, 0) {
+		nls.Tau0 = material.Tau0NLS
+	}
+	if material.EaNLS > 0 && !math.IsNaN(material.EaNLS) && !math.IsInf(material.EaNLS, 0) {
+		nls.Ea = material.EaNLS
+	} else if material.Ec > 0 {
+		// Fallback heuristic: Ea ≈ 10*Ec for materials without explicit NLS data.
+		nls.Ea = material.Ec * nlsEaEcRatio
+	}
+	return nls
+}
+
+func newQuasiStaticNLSForMaterial(material *HZOMaterial) *physics.NLSKinetics {
+	nls := physics.NewNLSKinetics()
+	if material != nil && material.Ec > 0 && !math.IsNaN(material.Ec) && !math.IsInf(material.Ec, 0) {
+		// Keep the quasi-static Update path independent of material time constants;
+		// TimeStep is the public interface for material-specific switching kinetics.
+		nls.Ea = material.Ec * nlsEaEcRatio
+	}
+	return nls
+}
+
 // NewPreisachModel creates a new Preisach model with the given material.
 func NewPreisachModel(material *HZOMaterial) *PreisachModel {
+	materialSnapshot := snapshotMaterial(material)
+	if !isValidPreisachMaterial(materialSnapshot) {
+		return nil
+	}
+
 	log.Input("NewPreisachModel", map[string]interface{}{
-		"material_name": material.Name,
-		"Ec":            material.Ec,
-		"Ps":            material.Ps,
+		"material_name": materialSnapshot.Name,
+		"Ec":            materialSnapshot.Ec,
+		"Ps":            materialSnapshot.Ps,
 	})
 
 	// Configure Everett function based on material
 	everett := &TanhEverett{
-		Ps:    material.Ps,
-		Ec:    material.Ec,
-		Delta: material.Ec * defaultDeltaFrac, // Initial guess; tuned to match Pr in updateReversibleParams
+		Ps:    materialSnapshot.Ps,
+		Ec:    materialSnapshot.Ec,
+		Delta: materialSnapshot.Ec * defaultDeltaFrac, // Initial guess; tuned to match Pr in updateReversibleParams
 	}
 
 	// E_saturation should be > Ec. typically 3-5x Ec.
-	E_sat := material.Ec * saturationFieldMultiplier
+	E_sat := materialSnapshot.Ec * saturationFieldMultiplier
+
+	nls := newNLSKineticsForMaterial(materialSnapshot)
 
 	model := &PreisachModel{
-		material:    material,
+		material:    materialSnapshot,
 		stack:       physics.NewPreisachStack(E_sat, everett),
 		everett:     everett,
 		Temperature: roomTemperatureK,
 		Stress:      defaultStressGPa,
-		effectivePs: material.Ps,
-		nls:         physics.NewNLSKinetics(),
+		effectivePs: materialSnapshot.Ps,
+		nls:         nls,
 	}
 	model.updateReversibleParams()
-
-	// Scale Ea based on Ec (empirical heuristic: Ea approx 10-20 * Ec)
-	// We'll trust the material Ec to be a proxy for the energy barrier.
-	// But NLSKinetics has a default Ea=8e8 (8 MV/cm).
-	// Let's adjust it if Ec is significantly different from typical 1 MV/cm.
-	if material.Ec > 0 {
-		model.nls.Ea = material.Ec * nlsEaEcRatio
-	}
 
 	return model
 }
@@ -240,6 +317,10 @@ type DiscreteState struct {
 // DiscreteStates returns n evenly spaced polarization states from -Ps to +Ps.
 // Used for testing and visualization of programmable level distributions.
 func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
+	if p == nil || p.material == nil || p.material.Ps <= 0 || math.IsNaN(p.material.Ps) || math.IsInf(p.material.Ps, 0) || !isValidDiscreteStateCount(n) {
+		return nil
+	}
+
 	states := make([]DiscreteState, n)
 	step := 2.0 * p.material.Ps / float64(n-1)
 	for i := 0; i < n; i++ {
@@ -258,105 +339,126 @@ func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
 // Reset clears the history and sets the model to negative saturation
 // (including the reversible dielectric contribution at -E_sat).
 func (p *PreisachModel) Reset() {
+	if p == nil || p.material == nil || p.stack == nil || p.stack.Everett == nil || p.material.Ec <= 0 || math.IsNaN(p.material.Ec) || math.IsInf(p.material.Ec, 0) {
+		return
+	}
+
 	// Re-initialize stack
-	E_sat := p.material.Ec * saturationFieldMultiplier
+	E_sat := p.saturationField()
 	everett := p.stack.Everett
-	p.stack = physics.NewPreisachStack(E_sat, everett)
+	newStack := physics.NewPreisachStack(E_sat, everett)
+	if newStack == nil {
+		return
+	}
+	p.stack = newStack
 }
 
+func (p *PreisachModel) saturationField() float64 {
+	if p == nil {
+		return 0
+	}
+	ec := 0.0
+	if p.everett != nil && p.everett.Ec > 0 && !math.IsNaN(p.everett.Ec) && !math.IsInf(p.everett.Ec, 0) {
+		ec = p.everett.Ec
+	} else if p.material != nil && p.material.Ec > 0 && !math.IsNaN(p.material.Ec) && !math.IsInf(p.material.Ec, 0) {
+		ec = p.material.Ec
+	}
+	return ec * saturationFieldMultiplier
+}
+
+type polarizationAdvanceMode int
+
+const (
+	advanceQuasiStatic polarizationAdvanceMode = iota
+	advanceTimed
+)
+
 // Update applies a new electric field and returns the resulting polarization.
-// This assumes quasi-static conditions (infinite time/instant switching).
-// Uses dynamicP as P_start (same as TimeStep) so that PREP-phase Reset() does
-// not cause a discontinuous jump in the plot dot. When lockDynamic is set
-// (GetHysteresisLoop), falls back to stack-based P_start and does not write
-// dynamicP, preserving the active simulation state across loop generation.
+// This uses the quasi-static Preisach path: material-specific switching kinetics
+// are reserved for TimeStep(), while Update() remains stable for loop generation
+// and GUI field scrubbing.
 func (p *PreisachModel) Update(E float64) float64 {
-	var P_start float64
-	if p.hasDynamicP && !p.lockDynamic {
-		P_start = p.dynamicP
-	} else {
-		P_start = p.Polarization()
-	}
-
-	Pirrev_target := p.stack.Update(E)
-	P_target := Pirrev_target + p.reversiblePolarization(E)
-
-	if p.nls == nil {
-		p.nls = physics.NewNLSKinetics()
-	}
-	P_final := p.nls.Relax(P_start, P_target, E, quasiStaticDt)
-	if !p.lockDynamic {
-		p.dynamicP = P_final
-		p.hasDynamicP = true
-	}
-	return P_final
+	return p.advancePolarization(E, quasiStaticDt, advanceQuasiStatic)
 }
 
 // TimeStep applies a constant electric field E for duration dt (seconds).
-// Returns the resulting polarization after relaxation.
+// Returns the resulting polarization after material-specific NLS relaxation.
 func (p *PreisachModel) TimeStep(E, dt float64) float64 {
-	// 1. Calculate Static Equilibrium (Infinite Retention target)
-	// This updates the Preisach stack history to the new field level immediately,
-	// effectively determining WHERE the system would go if given infinite time.
-	// This handles the "wipe-out" logic and minor loop nesting for the target state.
+	return p.advancePolarization(E, dt, advanceTimed)
+}
 
-	// We need the *previous* state P_old before moving the stack?
-	// Actually, the stack represents the Magnetic/Electric field history.
-	// We need to track the "dynamic" polarization separately if it lags the stack.
-	// For now, to keep it simple and stateless (w.r.t dynamic lag vars),
-	// we will calculate the static target, then assume we started from
-	// the *current* P value (calculated from previous history + previous lag?).
-	//
-	// Problem: The standard Preisach implementation here is stateful only in turning points.
-	// It doesn't store a "current P" that might be lagging behind the turning points.
-	// If we update the stack, we change the "static" P immediately.
-
-	// Approximaton:
-	// The stack represents the "Driving Force" history.
-	// P_eq is the result of `ps.stack.Update(E)`.
-	// Use NLS to relax towards P_eq.
-
-	// 1. Get current static state (before update)
-	// P_old_static := p.Polarization()
-
-	// Ideally we would carry a p.currentP_dynamic state.
-	// But for ISPP (step-and-hold), we usually start from a relaxed state.
-	// Let's assume P_start is the *previous* stack state (at LastE).
-	// Use dynamicP when available and not locked: it survives Reset() and holds
-	// the actual physical polarization, preventing the plot-dot teleportation
-	// that would otherwise occur because Reset() sets LastE=-saturationE (~-Ps).
-	// When lockDynamic is set (GetHysteresisLoop), fall back to stack P_start.
-	var P_start float64
-	if p.hasDynamicP && !p.lockDynamic {
-		P_start = p.dynamicP
-	} else {
-		P_start = p.Polarization()
+func (p *PreisachModel) advancePolarization(E, dt float64, mode polarizationAdvanceMode) float64 {
+	if p == nil {
+		return 0
+	}
+	if !p.canAdvancePolarization(E, dt, mode) {
+		return p.fallbackPolarization()
 	}
 
-	// 2. Update Stack to new Field E -> P_target
+	P_start := p.advanceStartPolarization()
 	Pirrev_target := p.stack.Update(E)
 	P_target := Pirrev_target + p.reversiblePolarization(E)
 
-	// 3. Relax P_start -> P_target
-	if p.nls == nil {
-		p.nls = physics.NewNLSKinetics()
+	P_final := P_target
+	if mode == advanceTimed {
+		if p.nls == nil {
+			p.nls = newNLSKineticsForMaterial(p.material)
+		}
+		P_final = p.nls.Relax(P_start, P_target, E, dt)
+		if logging.IsVerbose(logging.VerbosityTrace) {
+			log.Calculation("TimeStep", map[string]interface{}{
+				"E": E, "dt": dt, "P_start": P_start, "P_target": P_target, "P_final": P_final,
+			}, P_final)
+		}
+	} else {
+		P_final = newQuasiStaticNLSForMaterial(p.material).Relax(P_start, P_target, E, quasiStaticDt)
 	}
-	P_final := p.nls.Relax(P_start, P_target, E, dt)
 
-	if logging.IsVerbose(logging.VerbosityTrace) {
-		log.Calculation("TimeStep", map[string]interface{}{
-			"E": E, "dt": dt, "P_start": P_start, "P_target": P_target, "P_final": P_final,
-		}, P_final)
-	}
 	if !p.lockDynamic {
 		p.dynamicP = P_final
 		p.hasDynamicP = true
 	}
 	return P_final
+}
+
+func (p *PreisachModel) canAdvancePolarization(E, dt float64, mode polarizationAdvanceMode) bool {
+	if math.IsNaN(E) || math.IsInf(E, 0) {
+		return false
+	}
+	if mode == advanceTimed && (dt <= 0 || math.IsNaN(dt) || math.IsInf(dt, 0)) {
+		return false
+	}
+	return isValidPreisachMaterial(p.material) &&
+		p.stack != nil &&
+		p.stack.Everett != nil &&
+		p.stack.SaturationE > 0 && !math.IsNaN(p.stack.SaturationE) && !math.IsInf(p.stack.SaturationE, 0) &&
+		!math.IsNaN(p.stack.LastE) && !math.IsInf(p.stack.LastE, 0)
+}
+
+func (p *PreisachModel) advanceStartPolarization() float64 {
+	if p.hasDynamicP && !p.lockDynamic {
+		return p.dynamicP
+	}
+	return p.Polarization()
+}
+
+func (p *PreisachModel) fallbackPolarization() float64 {
+	if p.hasDynamicP && !math.IsNaN(p.dynamicP) && !math.IsInf(p.dynamicP, 0) {
+		return p.dynamicP
+	}
+	pol := p.Polarization()
+	if math.IsNaN(pol) || math.IsInf(pol, 0) {
+		return 0
+	}
+	return pol
 }
 
 // Polarization returns the current polarization state.
 func (p *PreisachModel) Polarization() float64 {
+	if p == nil || p.stack == nil || p.stack.Everett == nil || len(p.stack.Stack) == 0 || p.stack.SaturationE <= 0 || math.IsNaN(p.stack.SaturationE) || math.IsInf(p.stack.SaturationE, 0) || math.IsNaN(p.stack.LastE) || math.IsInf(p.stack.LastE, 0) {
+		return 0
+	}
+
 	// Compute polarization at current field without mutating history.
 	Pirrev := p.stack.ComputePolarization(p.stack.LastE)
 	return Pirrev + p.reversiblePolarization(p.stack.LastE)
@@ -364,17 +466,28 @@ func (p *PreisachModel) Polarization() float64 {
 
 // NormalizedPolarization returns polarization as fraction of Ps.
 func (p *PreisachModel) NormalizedPolarization() float64 {
+	if p == nil || p.material == nil {
+		return 0
+	}
+
 	denom := p.effectivePs
 	if denom == 0 {
 		denom = p.material.Ps
 	}
-	if denom == 0 {
+	if denom <= 0 || math.IsNaN(denom) || math.IsInf(denom, 0) {
 		return 0
 	}
 	if p.hasDynamicP {
+		if math.IsNaN(p.dynamicP) || math.IsInf(p.dynamicP, 0) {
+			return 0
+		}
 		return p.dynamicP / denom
 	}
-	return p.Polarization() / denom
+	pol := p.Polarization()
+	if math.IsNaN(pol) || math.IsInf(pol, 0) {
+		return 0
+	}
+	return pol / denom
 }
 
 // reversiblePolarization returns the nonlinear reversible (dielectric) contribution.
@@ -425,42 +538,30 @@ func (p *PreisachModel) updateReversibleParams() {
 	p.everett.Ps = psIrrev
 
 	// Tune Delta so that remanent polarization matches material Pr.
-	satE := p.everett.Ec * saturationFieldMultiplier
-	if p.stack != nil && p.stack.SaturationE > 0 {
-		satE = p.stack.SaturationE
-	}
-	p.everett.Delta = tuneDeltaForPr(p.everett.Ec, satE, p.everett.Ps, p.material.Pr)
+	p.everett.Delta = tuneDeltaForPr(p.everett.Ec, p.saturationField(), p.everett.Ps, p.material.Pr)
 }
 
 // GetHysteresisLoop generates a full P-E hysteresis loop.
 func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, []float64) {
-	// Temporarily reset stack to generate loop.
-	// Ideally we clone, but for GUI generation we typically want a fresh loop.
-	// Lock dynamicP and force stack-based P_start so the loop uses pure
-	// quasi-static Preisach behavior (matches golden reference, avoids NLS
-	// kinetic drift). The active simulation's physical polarization state is
-	// fully restored via defer before returning.
-	savedDynamicP := p.dynamicP
-	savedHasDynamicP := p.hasDynamicP
-	p.lockDynamic = true
-	p.hasDynamicP = false // force Polarization() fallback for loop steps
-	defer func() {
-		p.dynamicP = savedDynamicP
-		p.hasDynamicP = savedHasDynamicP
-		p.lockDynamic = false
-	}()
-	p.Reset()
+	if p == nil || !isValidLoopPointCount(points) || !isRepresentableLoopField(Emax) || !isValidPreisachMaterial(p.material) || p.stack == nil || p.stack.Everett == nil || p.stack.SaturationE <= 0 || math.IsNaN(p.stack.SaturationE) || math.IsInf(p.stack.SaturationE, 0) || math.IsNaN(p.stack.LastE) || math.IsInf(p.stack.LastE, 0) {
+		return nil, nil
+	}
+
+	loopModel := p.newLoopModel()
+	if loopModel == nil {
+		return nil, nil
+	}
 
 	E := make([]float64, 0, points*4)
 	PVal := make([]float64, 0, points*4) // renamed to avoid collision with P() method
 
 	// Saturation start
-	p.Update(-Emax)
+	loopModel.Update(-Emax)
 
 	// Ascending
 	for i := 0; i <= points*2; i++ {
 		e := -Emax + 2*Emax*float64(i)/float64(points*2)
-		pol := p.Update(e)
+		pol := loopModel.Update(e)
 		E = append(E, e)
 		PVal = append(PVal, pol)
 	}
@@ -468,7 +569,7 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 	// Descending
 	for i := 1; i <= points*2; i++ {
 		e := Emax - 2*Emax*float64(i)/float64(points*2)
-		pol := p.Update(e)
+		pol := loopModel.Update(e)
 		E = append(E, e)
 		PVal = append(PVal, pol)
 	}
@@ -476,14 +577,52 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 	return E, PVal
 }
 
+func (p *PreisachModel) newLoopModel() *PreisachModel {
+	loopEverett := &TanhEverett{
+		Ps:    p.everett.Ps,
+		Ec:    p.everett.Ec,
+		Delta: p.everett.Delta,
+	}
+	loopStack := physics.NewPreisachStack(p.saturationField(), loopEverett)
+	if loopStack == nil {
+		return nil
+	}
+	loopNLS := physics.NewNLSKinetics()
+	if p.nls != nil {
+		*loopNLS = *p.nls
+	}
+	return &PreisachModel{
+		material:       p.material,
+		stack:          loopStack,
+		everett:        loopEverett,
+		Temperature:    p.Temperature,
+		Stress:         p.Stress,
+		reversibleChi:  p.reversibleChi,
+		reversiblePSat: p.reversiblePSat,
+		effectivePs:    p.effectivePs,
+		nls:            loopNLS,
+		lockDynamic:    true,
+		hasDynamicP:    false,
+	}
+}
+
 // SetTemperature updates the simulation temperature and scales material parameters.
 func (p *PreisachModel) SetTemperature(tempK float64) {
+	if p == nil {
+		return
+	}
+	if _, _, ok := p.effectiveParametersFor(tempK, p.Stress); !ok {
+		return
+	}
 	p.Temperature = tempK
 	p.updateEffectiveParameters()
 }
 
 // GetEffectiveEc returns the current temperature-scaled Coercive Field.
 func (p *PreisachModel) GetEffectiveEc() float64 {
+	if p == nil || p.everett == nil || p.everett.Ec <= 0 || math.IsNaN(p.everett.Ec) || math.IsInf(p.everett.Ec, 0) {
+		return 0
+	}
 	return p.everett.Ec
 }
 
@@ -492,6 +631,12 @@ func (p *PreisachModel) GetEffectiveEc() float64 {
 // Scaling Logic: Ec ~ sqrt(|Alpha|)
 // Alpha = AlphaT - 2*Q12*Stress
 func (p *PreisachModel) SetStress(stressGPa float64) {
+	if p == nil {
+		return
+	}
+	if _, _, ok := p.effectiveParametersFor(p.Temperature, stressGPa); !ok {
+		return
+	}
 	p.Stress = stressGPa
 
 	// Recalculate everything (Temperature and Stress)
@@ -503,31 +648,73 @@ func (p *PreisachModel) SetStress(stressGPa float64) {
 //
 // Temperature: Ps(T) = Ps(300K) + TempCoeffPr * (T - 300)
 // Coercive field: Ec(T,sigma) scales as |alpha(T,sigma)/alpha_ref|^1.5
-//   where alpha(T) = (T - T_C) / (2*eps0*C)    (Curie-Weiss)
-//   and   alpha(T,sigma) = alpha(T) - 2*Q12*sigma  (electrostriction)
+//
+//	where alpha(T) = (T - T_C) / (2*eps0*C)    (Curie-Weiss)
+//	and   alpha(T,sigma) = alpha(T) - 2*Q12*sigma  (electrostriction)
+//
 // Q12 is the transverse electrostriction coefficient (default -0.026 for HZO).
 func (p *PreisachModel) updateEffectiveParameters() {
-	if p.material == nil || p.everett == nil {
+	if p == nil || p.everett == nil {
 		return
+	}
+
+	newEc, newPs, ok := p.effectiveParametersFor(p.Temperature, p.Stress)
+	if !ok {
+		return
+	}
+
+	p.everett.Ec = newEc
+	p.effectivePs = newPs
+	p.updateReversibleParams()
+}
+
+func (p *PreisachModel) effectiveParametersFor(tempK, stressGPa float64) (float64, float64, bool) {
+	if p == nil || p.material == nil || tempK <= 0 || !isFinite(tempK) || !isFinite(stressGPa) {
+		return 0, 0, false
 	}
 
 	const epsilon0 = 8.854e-12
 
 	newEc := p.material.Ec
-	newPs := p.material.Ps + p.material.TempCoeffPr*(p.Temperature-roomTemperatureK)
+	newPs := p.material.Ps + p.material.TempCoeffPr*(tempK-roomTemperatureK)
+	if !isFinite(newEc) || !isFinite(newPs) {
+		return 0, 0, false
+	}
 
 	if p.material.CurieConst != 0 {
-		alphaT := (p.Temperature - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
-		alphaRef := (roomTemperatureK - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
+		denom := 2 * epsilon0 * p.material.CurieConst
+		if denom == 0 || !isFinite(denom) {
+			return 0, 0, false
+		}
 
-		if alphaRef != 0 {
-			q12 := p.material.Q12
-			if q12 == 0 {
-				q12 = defaultQ12HZO
+		alphaT := (tempK - p.material.CurieTemp) / denom
+		alphaRef := (roomTemperatureK - p.material.CurieTemp) / denom
+		if !isFinite(alphaT) || !isFinite(alphaRef) {
+			return 0, 0, false
+		}
+
+		q12 := p.material.Q12
+		if q12 == 0 {
+			q12 = defaultQ12HZO
+		}
+		alphaRefStress := alphaRef - 2*q12*defaultStressGPa*1e9
+		if !isFinite(alphaRefStress) {
+			return 0, 0, false
+		}
+		if alphaRefStress != 0 {
+			stressTerm := 2 * q12 * stressGPa * 1e9
+			if !isFinite(stressTerm) {
+				return 0, 0, false
 			}
-			alphaStress := alphaT - 2*q12*p.Stress*1e9 // alpha(σ) = alpha(T) - 2*Q12*σ
-			ecRatio := math.Pow(math.Abs(alphaStress/alphaRef), 1.5)
+			alphaStress := alphaT - stressTerm // alpha(σ) = alpha(T) - 2*Q12*σ
+			if !isFinite(alphaStress) {
+				return 0, 0, false
+			}
+			ecRatio := math.Pow(math.Abs(alphaStress/alphaRefStress), 1.5)
 			newEc = p.material.Ec * ecRatio
+			if !isFinite(newEc) {
+				return 0, 0, false
+			}
 		}
 	}
 
@@ -537,8 +724,9 @@ func (p *PreisachModel) updateEffectiveParameters() {
 	if newPs < 1e-6 {
 		newPs = 1e-6
 	}
+	if !isRepresentableCoerciveField(newEc) || newPs <= 0 || !isFinite(newPs) {
+		return 0, 0, false
+	}
 
-	p.everett.Ec = newEc
-	p.effectivePs = newPs
-	p.updateReversibleParams()
+	return newEc, newPs, true
 }

@@ -56,7 +56,7 @@ upgraded for nightly/release lanes.
 - PR and nightly lanes pass with complete artifacts.
 - Artifact schema validates for every required run.
 
-**Status: ✅ Complete** — `make ci` enforces build+vet+test-short+arch-check on every push.
+**Status: ✅ Complete** — `make ci` enforces build+vet+test-short+arch-check plus research command tests and provenance audit on every push.
 
 ### P1 — Physics Falsification Core (primary gate)
 **Deliverables**
@@ -102,7 +102,7 @@ export WAYLAND_DISPLAY=
 **Runtime budget:** target `<= 12 min`, hard cap `15 min`.
 
 ```bash
-make ci                                        # fmt + vet + test-short + arch-check
+make ci                                        # fmt + vet + test-short + arch-check + research tests/audit
 FECIM_CI_GATE=pr go test -v -count=1 \
   ./validation/literature/... \
   -run TestModule1_PELoop_LiteratureBacked     # RG-PHY-OBS-01 with artifact emission

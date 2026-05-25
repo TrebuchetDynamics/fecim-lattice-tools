@@ -1,0 +1,12 @@
+citation_path: citations/papers/physical_reality_preisach_2018.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: physical_reality_preisach_2018
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/physical_reality_preisach_2018.pdf
+  sha256: 4f6bf7da2c40194902a3ad74169ef2bc9e0897bb0dc5d957425691a79b9c6aac
+  size: 1466632
+title: Physical Reality Preisach 2018

@@ -30,3 +30,19 @@ func TestRunUnknownMode(t *testing.T) {
 		t.Fatalf("stderr missing unknown mode: %q", errOut.String())
 	}
 }
+
+func TestRunMaterialProfileReportsFlagErrorWithoutExiting(t *testing.T) {
+	var out, errOut bytes.Buffer
+
+	code := runMaterialProfile([]string{"-definitely-not-a-flag"}, &out, &errOut)
+
+	if code != 2 {
+		t.Fatalf("code=%d, want 2; stderr=%q", code, errOut.String())
+	}
+	if out.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty output", out.String())
+	}
+	if !strings.Contains(errOut.String(), "flag provided but not defined") {
+		t.Fatalf("stderr=%q, want flag parse context", errOut.String())
+	}
+}

@@ -1,0 +1,407 @@
+//go:build !cgo
+
+package gogpuapp
+
+import (
+	"strings"
+	"testing"
+
+	"fecim-lattice-tools/shared/viewmodel"
+	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
+
+	uiapp "github.com/gogpu/ui/app"
+	"github.com/gogpu/ui/primitives"
+	"github.com/gogpu/ui/theme/material3"
+	"github.com/gogpu/ui/widget"
+)
+
+func TestBuildHysteresisView(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	w := buildHysteresisView(snapshot, theme)
+	if w == nil {
+		t.Fatal("buildHysteresisView returned nil")
+	}
+}
+
+func TestBuildHysteresisViewContainsMaterialSections(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	if len(snapshot.Sections) == 0 {
+		t.Error("No material sections in snapshot")
+	}
+}
+
+func TestDefaultHysteresisLoop(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	if len(snapshot.Plots) == 0 {
+		t.Error("No plots in hysteresis snapshot")
+		return
+	}
+	plot := snapshot.Plots[0]
+	if len(plot.Series) == 0 {
+		t.Error("No series in hysteresis plot")
+		return
+	}
+	points := plot.Series[0].Points
+	if len(points) != 200 {
+		t.Errorf("Loop points len = %d, want 200", len(points))
+	}
+}
+
+func TestHysteresisBoundaryNotice(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	if snapshot.Descriptor.BoundaryNotice == "" {
+		t.Error("Expected boundary notice in hysteresis descriptor")
+	}
+}
+
+func TestHysteresisOverlayLayoutLeavesHeaderAndAxisLabelSpace(t *testing.T) {
+	for _, tc := range []struct {
+		w, h int
+		minY int
+	}{
+		{w: 1280, h: 820, minY: 420},
+		{w: 1024, h: 768, minY: 410},
+		{w: 900, h: 640, minY: 400},
+	} {
+		x, y, width, height := hysteresisOverlayPlotRegion(tc.w, tc.h)
+		if y < float64(tc.minY) {
+			t.Fatalf("%dx%d hysteresis overlay y = %.1f, want at least %d so the module title and boundary notice remain visible", tc.w, tc.h, y, tc.minY)
+		}
+		if y+height > float64(tc.h-40) {
+			t.Fatalf("%dx%d hysteresis overlay bottom = %.1f, want <= %d", tc.w, tc.h, y+height, tc.h-40)
+		}
+		if x < 300 {
+			t.Fatalf("%dx%d hysteresis overlay x = %.1f, want at least 300 for sidebar and Y-axis label space", tc.w, tc.h, x)
+		}
+		if width > 940 {
+			t.Fatalf("%dx%d hysteresis overlay width = %.1f, want <= 940", tc.w, tc.h, width)
+		}
+	}
+}
+
+func TestCompactSimulationNoticeFitsDefaultScreenshotWidth(t *testing.T) {
+	notice := compactSimulationNotice()
+	if len([]rune(notice)) > 85 {
+		t.Fatalf("compact simulation notice is %d runes, want <= 85 for screenshot readability: %q", len([]rune(notice)), notice)
+	}
+	for _, want := range []string{"EDUCATIONAL SIMULATION", "Published", "not silicon measurements"} {
+		if !strings.Contains(notice, want) {
+			t.Fatalf("compact simulation notice missing %q: %q", want, notice)
+		}
+	}
+}
+
+func TestCompactBoundaryNoticeFitsModuleHeader(t *testing.T) {
+	vm := hysteresisvm.New()
+	notice := compactBoundaryNotice(vm.Snapshot().Descriptor.BoundaryNotice)
+	if len([]rune(notice)) > 90 {
+		t.Fatalf("compact boundary notice is %d runes, want <= 90 for Module 1 header readability: %q", len([]rune(notice)), notice)
+	}
+	for _, want := range []string{"SIMULATION OUTPUT", "not measured device data", "cite"} {
+		if !strings.Contains(notice, want) {
+			t.Fatalf("compact boundary notice missing %q: %q", want, notice)
+		}
+	}
+}
+
+func TestHysteresisPlotOverlayDoesNotCoverMaterialMetrics(t *testing.T) {
+	const width = 900
+	const height = 640
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	app := uiapp.New()
+	app.Window().HandleResize(width, height)
+	app.SetRoot(buildRoot(model, material3.New(widget.Hex(0x2F5D50))))
+	renderHeadlessAppFrameSignature(t, app, model.ActivePort())
+
+	_, plotY, _, _ := hysteresisOverlayPlotRegion(width, height)
+	materialLabel := findTextWidgetByContent(app.Window().Root(), "Material")
+	materialValue := findTextWidgetByPrefix(app.Window().Root(), "HZO (")
+	if materialLabel == nil || materialValue == nil {
+		t.Fatalf("could not find Material metric widgets: label=%v value=%v", materialLabel != nil, materialValue != nil)
+	}
+	metricBottom := materialValue.ScreenBounds().Max.Y
+	if labelBottom := materialLabel.ScreenBounds().Max.Y; labelBottom > metricBottom {
+		metricBottom = labelBottom
+	}
+	if metricBottom+8 > float32(plotY) {
+		t.Fatalf("Material metric bottom y=%.1f overlaps plot overlay y=%.1f; keep the P-E overlay below the metric summary", metricBottom, plotY)
+	}
+}
+
+func findTextWidgetByContent(root widget.Widget, content string) *primitives.TextWidget {
+	if text, ok := root.(*primitives.TextWidget); ok && text.Content() == content {
+		return text
+	}
+	for _, child := range root.Children() {
+		if found := findTextWidgetByContent(child, content); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func findTextWidgetByPrefix(root widget.Widget, prefix string) *primitives.TextWidget {
+	if text, ok := root.(*primitives.TextWidget); ok && strings.HasPrefix(text.Content(), prefix) {
+		return text
+	}
+	for _, child := range root.Children() {
+		if found := findTextWidgetByPrefix(child, prefix); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func TestHysteresisPlotData(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	found := false
+	for _, plot := range snapshot.Plots {
+		if plot.ID == "pe_loop" {
+			found = true
+			if plot.XLabel == "" || plot.YLabel == "" {
+				t.Error("Plot axis labels missing")
+			}
+		}
+	}
+	if !found {
+		t.Error("No pe_loop plot found in hysteresis snapshot")
+	}
+}
+
+func TestHysteresisRetention(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	found := false
+	for _, plot := range snapshot.Plots {
+		if plot.ID == "retention" {
+			found = true
+			if len(plot.Series) == 0 || len(plot.Series[0].Points) == 0 {
+				t.Error("Retention plot has no data points")
+			}
+		}
+	}
+	if !found {
+		t.Error("No retention plot found in hysteresis snapshot")
+	}
+}
+
+func TestHysteresisComputedMetrics(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	hasPr := false
+	hasEc := false
+	for _, m := range snapshot.Metrics {
+		if m.ID == "pr" {
+			hasPr = true
+		}
+		if m.ID == "ec_plus" {
+			hasEc = true
+		}
+	}
+	if !hasPr {
+		t.Error("No Pr metric in hysteresis snapshot")
+	}
+	if !hasEc {
+		t.Error("No Ec metric in hysteresis snapshot")
+	}
+}
+
+func TestHysteresisViewActionButtonsDispatchActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 4 {
+		t.Fatalf("hysteresis button count = %d, want command and waveform controls", len(buttons))
+	}
+
+	clickButton(buttons[0])
+	clickButton(buttons[1])
+	clickButton(buttons[3])
+
+	if len(actions) != 3 {
+		t.Fatalf("dispatched action count = %d, want 3", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventToggleSimulation {
+		t.Fatalf("action[0].ID = %q, want %q", actions[0].ID, hysteresisvm.EventToggleSimulation)
+	}
+	if actions[1].ID != hysteresisvm.EventExportCSV {
+		t.Fatalf("action[1].ID = %q, want %q", actions[1].ID, hysteresisvm.EventExportCSV)
+	}
+	if got := actions[2]; got.ID != hysteresisvm.EventSetWaveform || got.Payload["waveform"] != "triangle" {
+		t.Fatalf("action[2] = %#v, want triangle waveform action", got)
+	}
+}
+
+func TestHysteresisViewDiagnosticExportButtonsDispatchActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 14 {
+		t.Fatalf("hysteresis button count = %d, want diagnostic export controls", len(buttons))
+	}
+
+	clickButton(buttons[10])
+	clickButton(buttons[11])
+	clickButton(buttons[12])
+	clickButton(buttons[13])
+
+	wantIDs := []string{"export_pund_csv", "export_forc_sweep_csv", "export_forc_matrix_csv", "export_forc_metadata_json"}
+	if len(actions) != len(wantIDs) {
+		t.Fatalf("dispatched action count = %d, want %d", len(actions), len(wantIDs))
+	}
+	for i, want := range wantIDs {
+		if actions[i].ID != want {
+			t.Fatalf("action[%d].ID = %q, want %q", i, actions[i].ID, want)
+		}
+	}
+}
+
+func TestHysteresisViewLevelCalibrationButtonDispatchesRunAction(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 15 {
+		t.Fatalf("hysteresis button count = %d, want level calibration controls after diagnostics", len(buttons))
+	}
+
+	clickButton(buttons[14])
+
+	if len(actions) != 1 {
+		t.Fatalf("dispatched action count = %d, want 1", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventRunLevelCalibration {
+		t.Fatalf("action ID = %q, want %q", actions[0].ID, hysteresisvm.EventRunLevelCalibration)
+	}
+}
+
+func TestHysteresisViewLevelCalibrationPresetButtonsDispatchInputActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 21 {
+		t.Fatalf("hysteresis button count = %d, want level calibration input presets", len(buttons))
+	}
+
+	clickButton(buttons[15])
+	clickButton(buttons[17])
+	clickButton(buttons[20])
+
+	want := []viewmodel.Action{
+		{ID: hysteresisvm.EventSetLevelCalibrationLevelCount, Payload: map[string]string{"level_count": "16"}},
+		{ID: hysteresisvm.EventSetLevelCalibrationTargetRange, Payload: map[string]string{"target_range": "0.70"}},
+		{ID: hysteresisvm.EventSetLevelCalibrationTemperature, Payload: map[string]string{"temperature_k": "350"}},
+	}
+	if len(actions) != len(want) {
+		t.Fatalf("dispatched action count = %d, want %d", len(actions), len(want))
+	}
+	for i := range want {
+		if actions[i].ID != want[i].ID {
+			t.Fatalf("action[%d].ID = %q, want %q", i, actions[i].ID, want[i].ID)
+		}
+		for key, wantValue := range want[i].Payload {
+			if got := actions[i].Payload[key]; got != wantValue {
+				t.Fatalf("action[%d].Payload[%q] = %q, want %q", i, key, got, wantValue)
+			}
+		}
+	}
+}
+
+func TestHysteresisViewLevelCalibrationExportButtonDispatchesAction(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 22 {
+		t.Fatalf("hysteresis button count = %d, want level calibration export control", len(buttons))
+	}
+
+	clickButton(buttons[21])
+
+	if len(actions) != 1 {
+		t.Fatalf("dispatched action count = %d, want 1", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventExportLevelCalibration {
+		t.Fatalf("action ID = %q, want %q", actions[0].ID, hysteresisvm.EventExportLevelCalibration)
+	}
+}
+
+func TestHysteresisLevelCalibrationPanelStateFollowsDetailSection(t *testing.T) {
+	vm := hysteresisvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: hysteresisvm.EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	state := hysteresisLevelCalibrationPanelStateFromSnapshot(vm.Snapshot())
+	if !state.available {
+		t.Fatal("level calibration detail panel state unavailable")
+	}
+	if !strings.Contains(state.summary, "Representative rows") {
+		t.Fatalf("level calibration detail summary = %q, want representative rows", state.summary)
+	}
+	if !strings.Contains(state.summary, "not measured") {
+		t.Fatalf("level calibration detail summary = %q, want boundary notice", state.summary)
+	}
+}
+
+func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
+	vm := hysteresisvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run_pund: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      "run_forc",
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"reversals": "13"},
+	}); err != nil {
+		t.Fatalf("run_forc: %v", err)
+	}
+
+	state := hysteresisDiagnosticPanelStateFromSnapshot(vm.Snapshot())
+	if !state.pundAvailable {
+		t.Fatal("PUND diagnostic state unavailable")
+	}
+	if !state.forcAvailable {
+		t.Fatal("FORC diagnostic state unavailable")
+	}
+	if !strings.Contains(state.pundSummary, "Switching ratio") {
+		t.Fatalf("PUND summary = %q, want switching ratio", state.pundSummary)
+	}
+	if !strings.Contains(state.forcSummary, "peak_density=") {
+		t.Fatalf("FORC summary = %q, want peak density", state.forcSummary)
+	}
+}

@@ -2,8 +2,6 @@ package recentfiles
 
 import (
 	"sync"
-
-	"fyne.io/fyne/v2"
 )
 
 var (
@@ -28,7 +26,7 @@ func GetGlobalManager() *Manager {
 
 // InitGlobal initializes the global manager with the given preferences
 // This is a convenience function for app initialization
-func InitGlobal(prefs fyne.Preferences) *Manager {
+func InitGlobal(prefs Preferences) *Manager {
 	m := NewManager(prefs)
 	SetGlobalManager(m)
 	return m

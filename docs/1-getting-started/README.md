@@ -16,8 +16,9 @@
 ### Required Software
 
 - **Go:** Version 1.25 or later ([download](https://go.dev/dl/))
-- **GCC:** C compiler (for Fyne GUI)
 - **Git:** For cloning the repository
+
+No C compiler is required for the default gogpu/ui app. A C compiler and OpenGL/X11 headers are only needed for opt-in legacy Fyne parity builds with `-tags legacy_fyne`.
 
 See [installation.md](installation.md) for platform-specific instructions.
 
@@ -27,19 +28,16 @@ See [installation.md](installation.md) for platform-specific instructions.
 
 ### 1. Install Dependencies
 
+Install Go 1.25+ and Git using your platform package manager or the upstream installers.
+
 **Linux (Ubuntu/Debian):**
 ```bash
-sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+sudo apt-get install -y git
 ```
 
-**macOS:**
-```bash
-xcode-select --install
-```
+**macOS:** Install Go from [go.dev/dl](https://go.dev/dl/) and Git via Xcode Command Line Tools or your package manager.
 
-**Windows:**
-- Install TDM-GCC or MinGW-w64
-- See [installation.md](installation.md#windows) for details
+**Windows:** Install Go from [go.dev/dl](https://go.dev/dl/) and Git for Windows.
 
 ### 2. Clone Repository
 
@@ -162,7 +160,7 @@ Full reference: [cli-reference.md](cli-reference.md)
 Screenshots and videos are generated artifacts, so they are not tracked in the public source tree. To generate a local documentation frame:
 
 ```bash
-go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
 ```
 
 ---
@@ -171,25 +169,25 @@ go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
 
 ### Build Errors
 
-**Error:** `gcc: command not found`
-→ **Fix:** Install GCC (see [installation.md](installation.md))
+**Error:** `go: command not found`
+→ **Fix:** Install Go 1.25+ and confirm `go version` works in a new terminal.
 
-**Error:** `cannot find package "fyne.io/fyne/v2"`
+**Error:** missing module downloads
 → **Fix:** Run `go mod download`
 
-**Error:** `undefined: GL_VERSION`
-→ **Fix:** Install OpenGL dev packages (see [installation.md](installation.md))
+**Error:** legacy Fyne parity build fails with C compiler or OpenGL headers missing
+→ **Fix:** Install the platform CGO/OpenGL dependencies listed in [installation.md](installation.md), then rerun with `-tags legacy_fyne`.
 
 ### Runtime Issues
 
 **Problem:** Black screen on launch
-→ **Fix:** Try `FYNE_NO_GL=1 ./fecim-lattice-tools`
+→ **Fix:** Rebuild the default app and rerun from a terminal so startup errors are visible.
 
-**Problem:** Window resize loop (Wayland/Sway)
-→ **Fix:** Use `GDK_BACKEND=x11 ./fecim-lattice-tools`
+**Problem:** Module view does not change
+→ **Fix:** Relaunch with an explicit module, such as `./fecim-lattice-tools --module docs`.
 
 **Problem:** Font rendering issues
-→ **Fix:** Set `export FYNE_SCALE=1.0`
+→ **Fix:** Confirm the OS has standard sans-serif fonts installed and rerun the app.
 
 Full troubleshooting: [runbook.md#common-issues](runbook.md#common-issues)
 

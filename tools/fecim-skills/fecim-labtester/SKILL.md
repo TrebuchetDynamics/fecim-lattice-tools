@@ -11,10 +11,13 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
 
 1. **Pick scope** by the change being verified:
    - Whole suite: `go test ./...`
+   - Counted whole suite: `go test -json ./...` followed by a pass/fail/skip/package summary
    - Race detection: `go test -race ./...`
    - Module: `go test ./module1-hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
-   - Future shell: `make test-next-ui`
+   - Canonical gogpu/ui shell: `make test-gogpu-ui`
+   - Tagged legacy Fyne parity: `make test-legacy-fyne`
    - Coverage: `go test -cover ./...`
+   - Diff hygiene: `git diff --check`
 
 2. **For physics-regression failures**, classify against the 5 known patterns:
    1. Guard-band sign flip
@@ -35,7 +38,7 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
          FAIL TestX (Preisach Everett zero-clamp pattern)
    GREEN: go test ./module1-hysteresis/... -run TestX
           ok
-   VERIFY: go test ./... && go test -race ./...
+   VERIFY: go test ./... && go test -race ./... && git diff --check
    ```
 
 ## Verification

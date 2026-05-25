@@ -1,0 +1,12 @@
+citation_path: citations/papers/in2se3_silicon_compatible_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: in2se3_silicon_compatible_2025
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/in2se3_silicon_compatible_2025.pdf
+  sha256: 3620eb21aabf5d4a3eabdfae33c0d194b84bc4aa1295f406859f0aeda61c4ea7
+  size: 3639736
+title: In2se3 Silicon Compatible 2025

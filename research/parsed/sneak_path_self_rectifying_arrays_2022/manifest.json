@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/sneak_path_self_rectifying_arrays_2022/grobid.tei.xml",
+      "paper_key": "sneak_path_self_rectifying_arrays_2022",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/sneak_path_self_rectifying_arrays_2022/marker.md",
+      "paper_key": "sneak_path_self_rectifying_arrays_2022",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

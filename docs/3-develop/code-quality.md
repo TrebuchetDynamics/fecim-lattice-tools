@@ -125,10 +125,10 @@
 |--------|---------|
 | **module1-hysteresis** | `cmd/hysteresis`, `pkg/algo`, `pkg/controller`, `pkg/render`, `pkg/tui` |
 | **module2-crossbar** | `pkg/gui/tabs`, `pkg/visualization` |
-| **module3-mnist** | `cmd/mnist`, `cmd/mnist-gui`, `cmd/train-network`, `cmd/train-ptq`, `cmd/train-single-layer` |
-| **module4-circuits** | `cmd/circuits`, `cmd/circuits-gui` |
-| **module5-comparison** | `cmd/comparison`, `cmd/comparison-gui` |
-| **module6-eda** | `cmd/eda-cli`, `cmd/eda-gui`, `cmd/hello`, `cmd/lattice-gen`, `pkg/gui`, `pkg/gui/tabs`, `pkg/gui/widgets`, `pkg/layout`, `pkg/openlane`, `pkg/validate` |
+| **module3-mnist** | `cmd/mnist`, `cmd/train-network`, `cmd/train-ptq`, `cmd/train-single-layer` |
+| **module4-circuits** | `cmd/circuits` |
+| **module5-comparison** | `cmd/comparison` |
+| **module6-eda** | `cmd/eda-cli`, `cmd/hello`, `cmd/lattice-gen`, `pkg/gui`, `pkg/gui/tabs`, `pkg/gui/widgets`, `pkg/layout`, `pkg/openlane`, `pkg/validate` |
 | **module7-docs** | `pkg/gui` |
 
 ### Low Coverage (< 10%)
@@ -138,7 +138,6 @@
 | `module1-hysteresis/pkg/gui` | 0.6% | 2,991 LOC |
 | `module5-comparison/pkg/gui` | 1.7% | GUI code |
 | `module6-eda/pkg/validation` | 1.7% | Validation logic |
-| `module2-crossbar/cmd/crossbar-gui` | 2.7% | Entry point |
 | `module2-crossbar/pkg/gui` | 4.1% | GUI code |
 | `module3-mnist/pkg/gui` | 4.8% | GUI code |
 

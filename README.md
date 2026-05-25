@@ -19,7 +19,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
-[![Fyne](https://img.shields.io/badge/Fyne-2.7.2-5f5fff)](https://fyne.io)
+[![gogpu/ui](https://img.shields.io/badge/UI-gogpu%2Fui-2F5D50)](https://github.com/gogpu/ui)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 ![FeCIM Lattice Tools hysteresis module screenshot](./docs/assets/hysteresis_readme.png)
@@ -28,7 +28,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 
 | Question | Answer |
 |----------|--------|
-| What is it? | A Go/Fyne desktop app plus validation workspace for FeCIM simulation. |
+| What is it? | A Go `gogpu/ui` desktop app plus validation workspace for FeCIM simulation. |
 | Why use it? | To inspect how ferroelectric material assumptions, hysteresis models, crossbar effects, peripheral circuits, and EDA exports interact. |
 | What can I run? | Seven GUI modules, headless validation scripts, module tests, and EDA/export examples. |
 | What is the boundary? | Simulation and education only unless a claim is cited and covered by validation. |
@@ -96,16 +96,12 @@ Shared infrastructure lives in [`shared/`](./shared), and validation suites live
 
 - Go 1.25 or newer.
 - A desktop environment for the GUI.
-- On Ubuntu or other minimal Linux environments, the OpenGL/X11 headers used by Fyne:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y libgl1-mesa-dev xorg-dev
-```
+- The default app uses the zero-CGO `gogpu/ui` shell.
+- Legacy Fyne parity commands are excluded from default builds and require `-tags legacy_fyne` plus OpenGL/X11 headers on minimal Linux systems.
 
 ### Install and Run
 
-The current default desktop app remains the Fyne shell:
+The default desktop app is the zero-CGO `gogpu/ui` shell:
 
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
@@ -113,18 +109,16 @@ cd fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
 ```
 
-The future zero-CGO `gogpu/ui` shell is available as a placeholder path:
+The old Fyne GUI is opt-in for temporary parity checks:
 
 ```bash
-CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
+go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne
 ```
-
-The `next` shell is intended to become the default after it reaches parity. Current module parity remains in the Fyne app.
 
 ### Build
 
 ```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```
 
@@ -132,7 +126,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...
-make test-next-ui
+make test-gogpu-ui
 bash scripts/reproduce_validation.sh
 ```
 
@@ -156,8 +150,10 @@ go run ./cmd/fecim-lattice-tools --help
 Generate fresh README-style screenshots:
 
 ```bash
-go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
 ```
+
+The default screenshotter uses the gogpu rendering path. The old Fyne screenshot harness is excluded from default builds and requires `-tags legacy_fyne` for temporary parity checks.
 
 See [CLI Reference](./docs/1-getting-started/cli-reference.md) for the full launcher and module command reference.
 
@@ -183,15 +179,15 @@ For the full schema and loading behavior, read [Configuration Reference](./docs/
 Tech stack:
 
 - **Language:** Go 1.25+
-- **Desktop UI:** Fyne 2.7 remains the current default; `gogpu/ui` is the future zero-CGO shell path.
+- **Desktop UI:** `gogpu/ui` is the default zero-CGO shell; Fyne 2.7 is legacy only.
 - **Validation:** Go tests, golden data, literature range checks, and reproducibility scripts
 - **Exports:** SPICE, Verilog, Liberty, DEF, and LEF-oriented outputs
 
 High-level flow:
 
 ```text
-cmd/fecim-lattice-tools       current Fyne shell
-cmd/fecim-lattice-tools-next  future zero-CGO gogpu/ui shell
+cmd/fecim-lattice-tools       default zero-CGO gogpu/ui shell
+cmd/fecim-lattice-tools-fyne  legacy Fyne shell
         |
         v
 shared/ theme, widgets, physics, logging, utilities
@@ -222,7 +218,7 @@ Common checks:
 ```bash
 gofmt -w .
 go test ./...
-make test-next-ui
+make test-gogpu-ui
 go test -race -short ./shared/... ./validation/...
 ```
 

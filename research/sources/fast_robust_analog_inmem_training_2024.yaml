@@ -1,0 +1,12 @@
+citation_path: citations/papers/fast_robust_analog_inmem_training_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: fast_robust_analog_inmem_training_2024
+pdf:
+  path: docs/4-research/papers/by-topic/13-in-memory-training/fast_robust_analog_inmem_training_2024.pdf
+  sha256: dc968e85e46585fad97ed686edf521a3a0881b415d2669d0b575b9ca127079ff
+  size: 3292510
+title: Fast Robust Analog Inmem Training 2024

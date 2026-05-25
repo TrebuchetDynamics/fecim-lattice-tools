@@ -1,0 +1,12 @@
+citation_path: citations/papers/aimc_accuracy_post_training_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: aimc_accuracy_post_training_2024
+pdf:
+  path: docs/4-research/papers/by-topic/02-training-algorithms/aimc_accuracy_post_training_2024.pdf
+  sha256: a53cab2b5a31389fb7a953bdecc2e04292f3376fe3f5eb20ff69993dc1e6b1f8
+  size: 3077995
+title: Aimc Accuracy Post Training 2024

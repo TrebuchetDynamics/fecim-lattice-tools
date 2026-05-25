@@ -1,5 +1,9 @@
 package physics
 
+import "math"
+
+const maxPreisachFieldMagnitude = math.MaxFloat64 / 2
+
 // EverettFunction abstract interface for the density distribution
 type EverettFunction interface {
 	// Calculate returns the integral of density distribution over the region defined by alpha, beta
@@ -38,7 +42,7 @@ type PreisachStack struct {
 // Returns nil if saturationE <= 0 or everett is nil, since both are required
 // for a physically meaningful Preisach model.
 func NewPreisachStack(saturationE float64, everett EverettFunction) *PreisachStack {
-	if saturationE <= 0 || everett == nil {
+	if !isValidPreisachField(saturationE) || saturationE <= 0 || everett == nil {
 		return nil
 	}
 
@@ -64,6 +68,17 @@ func NewPreisachStack(saturationE float64, everett EverettFunction) *PreisachSta
 // This is the main dynamic entry point for rate-independent Preisach hysteresis
 // evolution when the excitation waveform is provided sample-by-sample.
 func (ps *PreisachStack) Update(E float64) float64 {
+	if ps == nil {
+		return 0
+	}
+	if !isValidPreisachField(E) {
+		return ps.ComputePolarization(ps.LastE)
+	}
+	if !isValidPreisachField(ps.LastE) {
+		ps.LastE = E
+		return ps.ComputePolarization(E)
+	}
+
 	// 1. Determine Direction
 	direction := 0
 	if E > ps.LastE {
@@ -139,6 +154,16 @@ func (ps *PreisachStack) Update(E float64) float64 {
 // The implementation follows the alternating-segment Preisach construction and
 // is allocation-free to support high-rate simulation loops.
 func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
+	if ps == nil || ps.Everett == nil || !isValidPreisachField(ps.SaturationE) {
+		return 0
+	}
+	if !isValidPreisachField(currentE) {
+		currentE = ps.LastE
+		if !isValidPreisachField(currentE) {
+			currentE = 0
+		}
+	}
+
 	// P = -Ps + 2 * Sum
 	// Sum = E(M1, m0) - E(M1, m1) + E(M2, m1) - E(M2, m2) + ...
 	//
@@ -158,21 +183,21 @@ func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 
 	// Initial branch: stack only has m0, so currentE acts as first max segment.
 	if n == 1 {
-		addCompensated(ps.Everett.Calculate(currentE, ps.Stack[0].E))
-		return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
+		addCompensated(ps.everettIntegral(currentE, ps.Stack[0].E))
+		return finitePreisachPolarization(-ps.everettIntegral(ps.SaturationE, -ps.SaturationE) + 2.0*sum)
 	}
 
 	// Stack points are [m0, M1, m1, M2, m2, ...]
 	for i := 1; i < n; i += 2 {
 		maxVal := ps.Stack[i].E
 		minPrev := ps.Stack[i-1].E
-		addCompensated(ps.Everett.Calculate(maxVal, minPrev))
+		addCompensated(ps.everettIntegral(maxVal, minPrev))
 
 		// Next min in stack, or currentE if this is the last max segment.
 		if i+1 < n {
-			addCompensated(-ps.Everett.Calculate(maxVal, ps.Stack[i+1].E))
+			addCompensated(-ps.everettIntegral(maxVal, ps.Stack[i+1].E))
 		} else {
-			addCompensated(-ps.Everett.Calculate(maxVal, currentE))
+			addCompensated(-ps.everettIntegral(maxVal, currentE))
 		}
 	}
 
@@ -185,8 +210,26 @@ func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 	// The n==1 case (initial ascending from m0) is handled by the early
 	// return above, so this only fires for n >= 3.
 	if n%2 == 1 {
-		addCompensated(ps.Everett.Calculate(currentE, ps.Stack[n-1].E))
+		addCompensated(ps.everettIntegral(currentE, ps.Stack[n-1].E))
 	}
 
-	return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
+	return finitePreisachPolarization(-ps.everettIntegral(ps.SaturationE, -ps.SaturationE) + 2.0*sum)
+}
+
+func (ps *PreisachStack) everettIntegral(alpha, beta float64) float64 {
+	if ps == nil || ps.Everett == nil || !isValidPreisachField(alpha) || !isValidPreisachField(beta) {
+		return 0
+	}
+	return finitePreisachPolarization(ps.Everett.Calculate(alpha, beta))
+}
+
+func finitePreisachPolarization(value float64) float64 {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0
+	}
+	return value
+}
+
+func isValidPreisachField(field float64) bool {
+	return !math.IsNaN(field) && !math.IsInf(field, 0) && math.Abs(field) <= maxPreisachFieldMagnitude
 }

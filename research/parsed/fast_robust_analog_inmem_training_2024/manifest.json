@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/fast_robust_analog_inmem_training_2024/grobid.tei.xml",
+      "paper_key": "fast_robust_analog_inmem_training_2024",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/fast_robust_analog_inmem_training_2024/marker.md",
+      "paper_key": "fast_robust_analog_inmem_training_2024",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

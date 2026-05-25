@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -28,22 +29,29 @@ type GoldenLoopData struct {
 	} `json:"data"`
 }
 
-func main() {
+func runGenGoldenLoops(args []string, stdout, stderr io.Writer) int {
 	defaultOut := filepath.Join("module1-hysteresis", "pkg", "ferroelectric", "testdata")
-	outDir := flag.String("output", defaultOut, "output directory for golden loop JSON files")
-	flag.Parse()
+	fs := flag.NewFlagSet("gen_golden_loops", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	outDir := fs.String("output", defaultOut, "output directory for golden loop JSON files")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	materials := physics.AllMaterials()
 
-	fmt.Printf("Found %d materials\n", len(materials))
+	fmt.Fprintf(stdout, "Found %d materials\n", len(materials))
 
-	os.MkdirAll(*outDir, 0755)
+	if err := os.MkdirAll(*outDir, 0755); err != nil {
+		fmt.Fprintf(stderr, "prepare output directory %q: %v\n", *outDir, err)
+		return 1
+	}
 
 	for _, mat := range materials {
-		fmt.Printf("Processing: %s\n", mat.Name)
+		fmt.Fprintf(stdout, "Processing: %s\n", mat.Name)
 
 		if mat.Ec <= 0 || mat.Ps <= 0 {
-			fmt.Printf("  SKIP: missing Ec or Ps\n")
+			fmt.Fprintln(stdout, "  SKIP: missing Ec or Ps")
 			continue
 		}
 
@@ -75,13 +83,21 @@ func main() {
 		goldenP.Data.P = P_p
 
 		pFile := filepath.Join(*outDir, fmt.Sprintf("golden_loop_%s_preisach.json", safeName))
-		writeJSON(pFile, goldenP)
-		fmt.Printf("  ✓ Preisach: %s\n", filepath.Base(pFile))
+		if err := writeJSON(pFile, goldenP); err != nil {
+			fmt.Fprintf(stderr, "write golden JSON %q: %v\n", pFile, err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "  ✓ Preisach: %s\n", filepath.Base(pFile))
 
-		fmt.Printf("  ○ LK: pending (see shared/physics/landau.go)\n")
+		fmt.Fprintln(stdout, "  ○ LK: pending (see shared/physics/landau.go)")
 	}
 
-	fmt.Println("\nDone! Golden loops generated.")
+	fmt.Fprintln(stdout, "\nDone! Golden loops generated.")
+	return 0
+}
+
+func main() {
+	os.Exit(runGenGoldenLoops(os.Args[1:], os.Stdout, os.Stderr))
 }
 
 func generatePreisachLoop(model *ferroelectric.PreisachModel, Emax float64, points int) ([]float64, []float64) {
@@ -116,17 +132,26 @@ func safeFilename(name string) string {
 	return string(result)
 }
 
-func writeJSON(path string, data GoldenLoopData) {
+func writeJSON(path string, data GoldenLoopData) error {
 	f, err := os.Create(path)
 	if err != nil {
-		fmt.Printf("ERROR creating %s: %v\n", path, err)
-		return
+		return fmt.Errorf("create: %w", err)
 	}
-	defer f.Close()
+	needsClose := true
+	defer func() {
+		if needsClose {
+			_ = f.Close()
+		}
+	}()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(data); err != nil {
-		fmt.Printf("ERROR encoding %s: %v\n", path, err)
+		return fmt.Errorf("encode: %w", err)
 	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close: %w", err)
+	}
+	needsClose = false
+	return nil
 }

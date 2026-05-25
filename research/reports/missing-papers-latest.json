@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "citation_path": "citations/papers/alessandri2018_ieee_edl_switching.md",
+      "doi": "10.1109/LED.2018.2872124",
+      "download_command": "fecim research acquire alessandri2018_ieee_edl_switching --download",
+      "last_acquisition_status": "",
+      "paper_key": "alessandri2018_ieee_edl_switching",
+      "status": "needs_acquire",
+      "title": "Switching Dynamics of Ferroelectric HZO"
+    },
+    {
+      "citation_path": "citations/papers/crosssim2024_sandia.md",
+      "doi": "10.2172/2563881",
+      "download_command": "fecim research acquire crosssim2024_sandia --download",
+      "last_acquisition_status": "",
+      "paper_key": "crosssim2024_sandia",
+      "status": "needs_acquire",
+      "title": "CrossSim: A Hardware/Software Co-Design Tool for Analog In-Memory Computing"
+    },
+    {
+      "citation_path": "citations/papers/guo2018_apl_nls.md",
+      "doi": "10.1063/1.5038038",
+      "download_command": "fecim research acquire guo2018_apl_nls --download",
+      "last_acquisition_status": "",
+      "paper_key": "guo2018_apl_nls",
+      "status": "needs_acquire",
+      "title": "Nucleation-Limited Polarization Switching in Ferroelectric HfO2 Capacitors"
+    },
+    {
+      "citation_path": "citations/papers/khalatnikov1954_zheft_lk.md",
+      "doi": "",
+      "download_command": "",
+      "last_acquisition_status": "",
+      "paper_key": "khalatnikov1954_zheft_lk",
+      "status": "missing_doi",
+      "title": "On the Anomalous Absorption of Sound Near a Second Order Phase Transition Point"
+    },
+    {
+      "citation_path": "citations/papers/materlik2015_jap_hfo2_origin.md",
+      "doi": "10.1063/1.4916229",
+      "download_command": "fecim research acquire materlik2015_jap_hfo2_origin --download",
+      "last_acquisition_status": "",
+      "paper_key": "materlik2015_jap_hfo2_origin",
+      "status": "needs_acquire",
+      "title": "The Origin of Ferroelectricity in Hf1-xZrxO2: A Computational Investigation and a Surface Energy Model"
+    },
+    {
+      "citation_path": "citations/papers/mayergoyz2003_hysteresis_models.md",
+      "doi": "",
+      "download_command": "",
+      "last_acquisition_status": "",
+      "paper_key": "mayergoyz2003_hysteresis_models",
+      "status": "missing_doi",
+      "title": "Mathematical Models of Hysteresis and Their Applications"
+    },
+    {
+      "citation_path": "citations/papers/park2015_advmat_hzo.md",
+      "doi": "10.1002/adma.201404531",
+      "download_command": "fecim research acquire park2015_advmat_hzo --download",
+      "last_acquisition_status": "",
+      "paper_key": "park2015_advmat_hzo",
+      "status": "needs_acquire",
+      "title": "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films"
+    },
+    {
+      "citation_path": "citations/papers/preisach1935_zphys.md",
+      "doi": "10.1007/BF01349418",
+      "download_command": "fecim research acquire preisach1935_zphys --download",
+      "last_acquisition_status": "",
+      "paper_key": "preisach1935_zphys",
+      "status": "needs_acquire",
+      "title": "Ueber die magnetische Nachwirkung"
+    }
+  ],
+  "missing": 8,
+  "missing_with_doi": 6,
+  "missing_without_doi": 2,
+  "stored": 68,
+  "total_records": 76
+}

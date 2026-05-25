@@ -332,7 +332,7 @@ Full major loop:              Minor loop:
 - Updates hysteron states based on current field vs history
 - Automatically creates correct minor loop shapes
 
-**Why it matters:** Real memory operations do partial writes. Physics must correctly predict intermediate states.
+**Why it matters:** Real memory operations can involve partial writes. The simulator should expose intermediate-state behavior clearly while keeping hardware-validation claims separate.
 
 ---
 
@@ -373,8 +373,8 @@ Ec(T) ∝ (Tc - T)     (roughly)
 | P from E | Preisach model (hysteron sum) | ✅ Model-based |
 | Hysteresis | Emergent from hysteron memory | ✅ Model-based |
 | Loop shape | Everett kernel + stack memory | ✅ Emergent |
-| 30 levels | Linear discretization of P | ✅ Simple & correct |
-| Minor loops | Implicit via hysteron states | ✅ Works correctly |
+| 30 levels | Linear discretization of P | ✅ Educational simulator baseline |
+| Minor loops | Implicit via hysteron states | ✅ Covered by regression tests |
 | Write/Read | Phase machine + controller | ✅ Implemented |
 | τ switching | Defined but not in viz | ⚠️ Quasistatic approx |
 | Temperature | Ec(T), Ps(T) scaling | ✅ Model-based |

@@ -26,13 +26,14 @@ func init() {
 // THREE-TIER MATERIAL SYSTEM:
 //
 //	DefaultHZO()           - Baseline: Standard Si-doped HZO from literature
-//	FeCIMMaterial()        - FeCIM: conference-baseline demonstrated values (conservative)
+//	FeCIMMaterial()        - FeCIM: conference-baseline assumptions (unverified)
 //	FeCIMMaterialTarget()  - FeCIM: conference-claim targets (aspirational)
-//	LiteratureSuperlattice() - Academic: Best-case from Cheema et al. 2020
+//	LiteratureSuperlattice() - Academic: literature-reported superlattice scenario
 //
-// For honest educational visualization, prefer FeCIMMaterial() which uses
-// only demonstrated values. Use LiteratureSuperlattice() to show what
-// superlattice engineering CAN theoretically achieve.
+// For honest educational visualization, prefer DefaultHZO() for literature-backed
+// HZO behavior, and use FeCIMMaterial() only with explicit conference-baseline /
+// simulation-assumption caveats. Use LiteratureSuperlattice() for a cited
+// superlattice parameter scenario, not as a FeCIM device-performance claim.
 //
 // References:
 // - Park et al., Adv. Mater. 2015 (HZO ferroelectricity)
@@ -460,6 +461,7 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 //   - At HRS (G=Gmin): sigma = C2CSigmaBase * Gmin  (base variation)
 //   - At LRS (G=Gmax): sigma = C2CSigmaBase * Gmin * (Gmax/Gmin)^0.5  (sqrt scaling)
 //   - Exponent 0.5 means weaker relative variation at high conductance states
+//
 // NOTE: numerical defaults are educational; treat as [CALIBRATION NEEDED].
 //
 // If C2CSigmaBase is zero, returns 0 (no C2C variation modeled).

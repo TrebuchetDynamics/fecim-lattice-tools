@@ -1,0 +1,12 @@
+citation_path: citations/papers/all_ferroelectric_reservoir_computing_2023.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: all_ferroelectric_reservoir_computing_2023
+pdf:
+  path: docs/4-research/papers/by-topic/11-reservoir-computing/all_ferroelectric_reservoir_computing_2023.pdf
+  sha256: 2a4ddd1ac3b609e09d84bd236965708a4d696f84639fac0151ba8dfc7257411e
+  size: 1450827
+title: All Ferroelectric Reservoir Computing 2023

@@ -31,8 +31,8 @@ func QuantizeToLevels(value float64, levels int) float64 {
 	return level / float64(levels-1)
 }
 
-// QuantizeTo30Levels quantizes a value to exactly 30 discrete FeCIM levels.
-// This is the standard quantization for FeCIM devices.
+// QuantizeTo30Levels quantizes a value to the 30-level simulator baseline.
+// This helper represents an educational discretization, not a validated device spec.
 //
 // Example:
 //
@@ -54,8 +54,8 @@ func GetLevel(conductance float64, levels int) int {
 	return int(math.Round(conductance * float64(levels-1)))
 }
 
-// GetLevelFor30 returns the discrete level (0-29) for a normalized conductance value.
-// This is the standard function for FeCIM devices with 30 levels.
+// GetLevelFor30 returns the baseline level (0-29) for a normalized conductance value.
+// This helper uses the simulator's default 30-level discretization.
 func GetLevelFor30(conductance float64) int {
 	return GetLevel(conductance, DefaultLevels)
 }

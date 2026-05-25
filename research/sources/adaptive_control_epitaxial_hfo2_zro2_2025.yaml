@@ -1,0 +1,12 @@
+citation_path: citations/papers/adaptive_control_epitaxial_hfo2_zro2_2025.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: adaptive_control_epitaxial_hfo2_zro2_2025
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/adaptive_control_epitaxial_hfo2_zro2_2025.pdf
+  sha256: 05c5f16d864a63784d95c4db0846489c41c2772f105c540d1089783675c4941a
+  size: 9046880
+title: Adaptive Control Epitaxial HFO2 Zro2 2025

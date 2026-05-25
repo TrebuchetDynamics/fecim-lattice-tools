@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "message": "FECIM_GROBID_URL is not set",
+      "output_path": "research/parsed/hfo2_computational_understanding_2024/grobid.tei.xml",
+      "paper_key": "hfo2_computational_understanding_2024",
+      "parser": "grobid",
+      "status": "skipped"
+    },
+    {
+      "message": "FECIM_MARKER_CMD is not set",
+      "output_path": "research/parsed/hfo2_computational_understanding_2024/marker.md",
+      "paper_key": "hfo2_computational_understanding_2024",
+      "parser": "marker",
+      "status": "skipped"
+    }
+  ]
+}

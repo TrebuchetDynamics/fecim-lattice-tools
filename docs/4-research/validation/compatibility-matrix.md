@@ -4,6 +4,7 @@
 |---|---|---|---|---|
 | Module 1 (Hysteresis / P-E) | Heracles | Quantitative (RMSE/MAE/max-error on P-E) | Partial | Uses digitized baseline CSV when Heracles binary is unavailable; model-parameter mismatch can dominate absolute error. |
 | Module 2 (Crossbar arrays) | CrossSim | Trend | No (conceptual-trend) | Different device compact-model internals and peripheral assumptions; compare monotonicity/sensitivity, not absolute currents. |
+| Module 2 (Crossbar arrays) | ngspice | Quantitative (small resistive-array current fixtures) | Yes for resistive netlist, Partial for FeFET behavior | Optional external-tool gate; validates circuit consistency of generated resistive fixtures, not calibrated FeFET compact-model behavior. |
 | Module 3 (MNIST inference) | CrossSim + NumPy/SciPy helpers | Trend / Conceptual | No (conceptual-trend) | Dataset pre/post-processing, quantization policy, and ADC/DAC noise models differ. |
 | Module 4 (Circuit-level integration) | ngspice | Quantitative (netlist-level sanity currents/voltages) | Partial | FeFET model abstraction in generated netlist is simplified and not foundry-calibrated. |
 | Module 6 (EDA export) | ngspice | Quantitative (SPICE round-trip) | Yes (syntax/parse), Partial (behavior) | Syntax and parser checks are apples-to-apples; transistor-level realism remains approximate. |

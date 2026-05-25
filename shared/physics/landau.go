@@ -37,6 +37,32 @@ func estimateLandauEc(alpha, beta, gamma, pr float64) float64 {
 // Ref: Materlik et al., J. Appl. Phys. 117, 134109 (2015).
 const defaultLKViscosity = 0.05
 
+// maxAbsLKRate caps |dP/dt| in the RK4 path to keep single-step updates finite.
+const maxAbsLKRate = 1e12 // C/(m^2·s)
+
+// maxLKViscosity keeps public Rho/effective-viscosity state within a range that
+// can still interact representably with the RK4 rate limiter.
+const maxLKViscosity = math.MaxFloat64 / (2 * maxAbsLKRate)
+
+// maxLKTimestep keeps dt-scaled RK4 arithmetic representable before rate clamps.
+const maxLKTimestep = math.MaxFloat64 / (2 * maxAbsLKRate)
+
+// maxLKSimulationTime keeps public Time state recoverable before additions lose
+// representability or overflow. It is intentionally far beyond real switching
+// simulations while rejecting corrupted public state such as math.MaxFloat64.
+const maxLKSimulationTime = maxLKTimestep
+
+// maxLKMaterialScalarMagnitude rejects corrupted material records whose finite
+// scalars are too large to participate safely in runtime LK arithmetic.
+const maxLKMaterialScalarMagnitude = math.MaxFloat64 / (2 * maxAbsLKRate)
+
+// defaultLKRuntimePMax is the fallback saturation clamp used when callers
+// corrupt the exported PMax state before a step.
+const defaultLKRuntimePMax = 0.30
+
+// maxLKPolarizationMagnitude keeps Landau P²/P⁴/P⁵ arithmetic representable.
+const maxLKPolarizationMagnitude = 1e60
+
 // Package-level logger for Landau-Khalatnikov solver diagnostics.
 var lkLog *logging.Logger
 
@@ -152,9 +178,9 @@ func NewLKSolver() *LKSolver {
 		K_dep: 2.5e8, // V*m/C - Default value (matches physics.yaml, within recommended 1-5×10⁸ range)
 
 		UseNLS:          true,
-		ActivationField: 1.9e9, // 19 MV/cm (Merz activation field)
+		ActivationField: 1.9e9,   // 19 MV/cm (Merz activation field)
 		TauInf:          1.0e-10, // 100 ps intrinsic attempt time; Guo et al. APL 112, 262903 (2018)
-		NLSSigma:        1.5, // HfO2 default (Guo et al., APL 112, 262903, 2018)
+		NLSSigma:        1.5,     // HfO2 default (Guo et al., APL 112, 262903, 2018)
 
 		CurieTemp:  723.0,
 		CurieConst: 1.5e5,
@@ -179,27 +205,9 @@ func NewLKSolver() *LKSolver {
 // UpdateParams recalculates Alpha based on current Temperature and Stress using
 // the Unified Coefficient Formula: alpha = alpha_t(T) - 2*Q12*Stress
 func (s *LKSolver) UpdateParams() {
-	const (
-		Eps0 = 8.854e-12 // Vacuum Permittivity (F/m)
-	)
-
-	// Guard: CurieConst must be positive for a valid Curie-Weiss contribution.
-	// A zero or negative value indicates an uncalibrated material; skip the
-	// Curie-Weiss term to avoid division-by-zero (Alpha stays at its current value).
-	if s.CurieConst <= 0 {
-		alphaMech := 2 * s.Q12 * s.Stress
-		s.Alpha = -alphaMech
-		return
+	if alpha, ok := s.runtimeAlphaFor(s.Temperature, s.Stress); ok {
+		s.Alpha = alpha
 	}
-
-	// Thermodynamic contribution (Curie-Weiss)
-	alphaT := (s.Temperature - s.CurieTemp) / (2 * Eps0 * s.CurieConst)
-
-	// Mechanical contribution (Electrostriction)
-	// Alpha(T,σ) = (T-Tc)/(2ε0C) - 2*Q12*σ
-	alphaMech := 2 * s.Q12 * s.Stress
-
-	s.Alpha = alphaT - alphaMech
 }
 
 // ConfigureFromMaterial maps an HZOMaterial data record into LK coefficients
@@ -211,64 +219,82 @@ func (s *LKSolver) UpdateParams() {
 // This is the key bridge between calibrated material datasets and dynamic
 // switching simulation; call it after NewLKSolver before stepping.
 func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
-	if mat == nil {
+	if s == nil || mat == nil {
+		return
+	}
+	if !s.isRepresentableLKMaterialLandauScaling(mat) {
 		return
 	}
 	// If configured previously in ensemble mode, rebuild domain configs from the new material.
 	if s.polydomain != nil && s.polydomain.DomainCount() > 0 {
 		n := s.polydomain.DomainCount()
+		if !isValidPolydomainMaterial(mat) || !isValidPolydomainDomainCount(n) {
+			return
+		}
 		seed := s.ensembleSeed
-		s.polydomain = nil
-		s.ensembleSeed = seed
-		s.EnableEnsemble(n, mat, seed)
+		if !isValidLKRuntimePMax(s.PMax) {
+			s.PMax = recoveredLKRuntimePMax(s.P)
+		}
+		initP := s.P
+		if !isRepresentableLKPolarization(initP) || initP == 0 {
+			initP = recoveredLKEnsembleInitialPolarization(mat, s.PMax)
+		}
+		ensemble := NewPolydomainEnsemble(s, mat, n, defaultPolydomainSigmaFrac, seed)
+		if ensemble == nil {
+			return
+		}
+		s.polydomain = ensemble
+		s.ensembleSeed = s.polydomain.Seed
+		s.SetState(initP)
 		return
 	}
 
-	if mat.BetaLandau != 0 {
+	if isNonZeroFiniteLKMaterialValue(mat.BetaLandau) {
 		s.Beta = mat.BetaLandau
 	}
-	if mat.GammaLandau != 0 {
+	if isNonZeroFiniteLKMaterialValue(mat.GammaLandau) {
 		s.Gamma = mat.GammaLandau
 	}
-	if mat.RhoViscosity != 0 {
+	if isNonZeroFiniteLKMaterialValue(mat.RhoViscosity) {
 		s.Rho = mat.RhoViscosity
 	}
-	if mat.Q12 != 0 {
+	if isNonZeroFiniteLKMaterialValue(mat.Q12) {
 		s.Q12 = mat.Q12
 	}
-	if mat.StressGPa != 0 {
-		s.Stress = mat.StressGPa * 1e9
+	if stress, ok := finiteScaledLKMaterialValue(mat.StressGPa, 1e9); ok && mat.StressGPa != 0 {
+		s.Stress = stress
 	}
-	if mat.K_dep > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.K_dep) {
 		s.K_dep = mat.K_dep
 	}
-	if mat.Thickness > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.Thickness) {
 		s.Thickness = mat.Thickness
 	}
-	if mat.Area > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.Area) {
 		s.Area = mat.Area
 	}
-	if mat.CurieTemp > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.CurieTemp) {
 		s.CurieTemp = mat.CurieTemp
 	}
-	if mat.CurieConst > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.CurieConst) {
 		s.CurieConst = mat.CurieConst
 	}
-	if mat.SeriesResistanceOhm > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.SeriesResistanceOhm) {
 		s.SeriesResistance = mat.SeriesResistanceOhm
 	}
-	if mat.Tau0NLS > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.Tau0NLS) {
 		s.TauInf = mat.Tau0NLS
 	}
-	if mat.EaNLS > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.EaNLS) {
 		s.ActivationField = mat.EaNLS
 	}
-	if mat.NLSSigma > 0 {
+	if isPositiveFiniteLKMaterialValue(mat.NLSSigma) {
 		s.NLSSigma = mat.NLSSigma
 	}
 
+	validPr := mat.Pr != 0 && isRepresentableLKPolarization(mat.Pr)
 	// Initialize P to negative remanent polarization if provided
-	if mat.Pr != 0 {
+	if validPr {
 		s.P = -math.Abs(mat.Pr)
 	}
 
@@ -278,40 +304,50 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	// Given dG/dP = 2αP + 4βP^3 + 6γP^5, enforcing dG/dP(P=Pr)=0 yields:
 	//   α = -2βPr^2 - 3γPr^4
 	// This improves consistency between the advertised Pr and the Landau potential.
-	if mat.Pr != 0 && s.Gamma != 0 {
+	if validPr && s.Gamma != 0 {
 		pr := math.Abs(mat.Pr)
-		s.Alpha = -2.0*s.Beta*pr*pr - 3.0*s.Gamma*math.Pow(pr, 4)
-		s.UseMaterialAlpha = true
+		if alpha, ok := landauAlphaForPr(s.Beta, s.Gamma, pr); ok {
+			s.Alpha = alpha
+			s.UseMaterialAlpha = true
 
-		// Optional LK04: scale Landau coefficients to match the material's advertised Ec.
-		// The raw (alpha,beta,gamma) sets often imply coercive fields far from mat.Ec,
-		// which makes the LK engine effectively unswitchable within the controller's MaxField.
-		//
-		// We compute a coarse theoretical coercive field from the Landau polynomial
-		// E_L(P) = dG/dP (without depolarization) and scale (alpha,beta,gamma) by a
-		// single factor so that Ec_theory ≈ mat.Ec while preserving Pr.
-		if mat.Ec > 0 {
-			ecTheory := estimateLandauEc(s.Alpha, s.Beta, s.Gamma, pr)
-			if ecTheory > 0 {
-				scale := mat.Ec / ecTheory
-				// Clamp to a sane range to avoid pathological configs.
-				if scale < 1e-3 {
-					scale = 1e-3
-				} else if scale > 1e3 {
-					scale = 1e3
+			// Optional LK04: scale Landau coefficients to match the material's advertised Ec.
+			// The raw (alpha,beta,gamma) sets often imply coercive fields far from mat.Ec,
+			// which makes the LK engine effectively unswitchable within the controller's MaxField.
+			//
+			// We compute a coarse theoretical coercive field from the Landau polynomial
+			// E_L(P) = dG/dP (without depolarization) and scale (alpha,beta,gamma) by a
+			// single factor so that Ec_theory ≈ mat.Ec while preserving Pr.
+			if isPositiveFiniteLKMaterialValue(mat.Ec) {
+				ecTheory := estimateLandauEc(s.Alpha, s.Beta, s.Gamma, pr)
+				if isPositiveFiniteLKMaterialValue(ecTheory) {
+					scale := mat.Ec / ecTheory
+					// Clamp to a sane range to avoid pathological configs.
+					if scale < 1e-3 {
+						scale = 1e-3
+					} else if scale > 1e3 {
+						scale = 1e3
+					}
+					if !invalidFloat(scale) && !invalidFloat(s.Beta*scale) && !invalidFloat(s.Gamma*scale) && !invalidFloat(s.Alpha*scale) {
+						s.Beta *= scale
+						s.Gamma *= scale
+						s.Alpha *= scale
+					}
 				}
-				s.Beta *= scale
-				s.Gamma *= scale
-				s.Alpha *= scale
 			}
 		}
 	}
 	// Configure saturation clamp using material Ps/Pr when available.
-	pMax := math.Max(math.Abs(mat.Ps), math.Abs(mat.Pr))
+	pMax := 0.0
+	if validPr {
+		pMax = math.Max(pMax, math.Abs(mat.Pr))
+	}
+	if isRepresentableLKPolarization(mat.Ps) {
+		pMax = math.Max(pMax, math.Abs(mat.Ps))
+	}
 	if pMax > 0 {
 		s.PMax = pMax
 	}
-	if s.PMax <= 0 {
+	if s.PMax <= 0 || invalidFloat(s.PMax) {
 		s.PMax = math.Abs(s.P)
 	}
 
@@ -349,8 +385,8 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 	}
 
 	// Depolarization Field: creates "slant" for 30-level analog operation
-	// This term opposes polarization, braking the switching to enable intermediate states
-	E_depolarization := s.K_dep * P
+	// This term opposes polarization, braking the switching to enable intermediate states.
+	E_depolarization := lkRuntimeForceTerm(s.K_dep*P, rhoEff)
 
 	// Effective Field
 	E_eff := E_applied - E_depolarization
@@ -359,7 +395,11 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 	P2 := P * P
 	P3 := P2 * P
 	P5 := P3 * P2
-	dG_dP := (2 * s.Alpha * P) + (4 * s.Beta * P3) + (6 * s.Gamma * P5)
+	dG_dP := sumLKRuntimeTerms(
+		lkRuntimeForceTerm(2*s.Alpha*P, rhoEff),
+		lkRuntimeForceTerm(4*s.Beta*P3, rhoEff),
+		lkRuntimeForceTerm(6*s.Gamma*P5, rhoEff),
+	)
 
 	rate := (E_eff + noise - dG_dP) / rhoEff
 	if s.UseNLS {
@@ -374,8 +414,13 @@ func (s *LKSolver) dFdP(P, rhoEff float64) float64 {
 	}
 	P2 := P * P
 	P4 := P2 * P2
-	d2G := (2 * s.Alpha) + (12 * s.Beta * P2) + (30 * s.Gamma * P4)
-	return -(s.K_dep + d2G) / rhoEff
+	d2G := sumLKRuntimeTerms(
+		lkRuntimeForceTerm(2*s.Alpha, rhoEff),
+		lkRuntimeForceTerm(12*s.Beta*P2, rhoEff),
+		lkRuntimeForceTerm(30*s.Gamma*P4, rhoEff),
+	)
+	kDep := lkRuntimeForceTerm(s.K_dep, rhoEff)
+	return -(kDep + d2G) / rhoEff
 }
 
 func (s *LKSolver) stepImplicit(prevP, E, dt, noise, rhoEff float64) (float64, bool) {
@@ -424,11 +469,25 @@ func (s *LKSolver) stepImplicit(prevP, E, dt, noise, rhoEff float64) (float64, b
 // stiff conditions, enforces physical clamps, and optionally includes NLS/noise
 // terms. In ensemble mode it returns the domain-averaged polarization.
 func (s *LKSolver) Step(E, dt float64) float64 {
+	if s == nil {
+		return 0
+	}
+	if !isValidLKRuntimePMax(s.PMax) {
+		s.PMax = recoveredLKRuntimePMax(s.P)
+	}
+	if invalidFloat(s.P) || !isRepresentableLKPolarization(s.P) {
+		s.P = -math.Abs(s.PMax)
+	}
+	if invalidFloat(s.Time) || s.Time < 0 || s.Time > maxLKSimulationTime {
+		s.Time = 0
+	}
+	rhoEff := s.effectiveRho()
+	if !isValidLKStepInput(E, dt, s.Time, rhoEff) {
+		return s.P
+	}
+
 	// Ensemble mode: average many LK domains with distributed coercive thresholds.
 	if s.polydomain != nil && s.polydomain.DomainCount() > 0 {
-		if dt <= 0 {
-			return s.P
-		}
 		s.P = s.polydomain.Step(s, E, dt)
 		s.Time += dt
 		return s.P
@@ -438,7 +497,6 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 		s.UpdateParams() // Ensure Alpha is current
 	}
 
-	rhoEff := s.effectiveRho()
 	noise := s.noiseTerm(dt, rhoEff)
 	if invalidFloat(s.P) {
 		s.logNumericalIssue("state", E, dt, rhoEff, noise, s.P)
@@ -483,16 +541,15 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	// Rate limiter: cap |dP/dt| with a fixed ceiling to avoid overflow without
 	// canceling the RK4 step (dt-scaled clamps can cause k1/k2 sign flipping).
 	//
-	// maxAbsRate = 1e12 C/(m^2·s) corresponds to ps-scale polarization evolution
-	// and is a conservative numerical guardrail.  At 0.3 C/m^2 and 1 ps timestep
-	// the full polarization reversal would take 0.3 ns, well within physical bounds.
-	const maxAbsRate = 1e12 // C/(m^2·s)
+	// maxAbsLKRate corresponds to ps-scale polarization evolution and is a
+	// conservative numerical guardrail.  At 0.3 C/m^2 and 1 ps timestep the full
+	// polarization reversal would take 0.3 ns, well within physical bounds.
 	clampRate := func(rate float64) float64 {
-		if rate > maxAbsRate {
-			return maxAbsRate
+		if rate > maxAbsLKRate {
+			return maxAbsLKRate
 		}
-		if rate < -maxAbsRate {
-			return -maxAbsRate
+		if rate < -maxAbsLKRate {
+			return -maxAbsLKRate
 		}
 		return rate
 	}

@@ -1,0 +1,12 @@
+citation_path: citations/papers/hardware_acceleration_llm_survey_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: hardware_acceleration_llm_survey_2024
+pdf:
+  path: docs/4-research/papers/by-topic/14-transformer-llm-accelerators/hardware_acceleration_llm_survey_2024.pdf
+  sha256: 74e752a314900246f74151ad052f8605744afba9a361da2450185d3bf209d7fa
+  size: 1199588
+title: Hardware Acceleration Llm Survey 2024

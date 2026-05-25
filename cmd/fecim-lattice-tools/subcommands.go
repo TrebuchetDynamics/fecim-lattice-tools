@@ -1,59 +1,60 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	hysteresiscli "fecim-lattice-tools/module1-hysteresis/cmd/hysteresis"
-	crossbarcmd "fecim-lattice-tools/module2-crossbar/cmd/crossbar-gui"
+	crossbarcli "fecim-lattice-tools/module2-crossbar/cmd/crossbar"
 	mnistcli "fecim-lattice-tools/module3-mnist/cmd/mnist"
-	mnistgui "fecim-lattice-tools/module3-mnist/cmd/mnist-gui"
 	mnisttrain "fecim-lattice-tools/module3-mnist/cmd/train-network"
 	mnisttrainptq "fecim-lattice-tools/module3-mnist/cmd/train-ptq"
 	mnisttrainsingle "fecim-lattice-tools/module3-mnist/cmd/train-single-layer"
 	circuitscli "fecim-lattice-tools/module4-circuits/cmd/circuits"
-	circuitsgui "fecim-lattice-tools/module4-circuits/cmd/circuits-gui"
 	comparisoncli "fecim-lattice-tools/module5-comparison/cmd/comparison"
-	comparisongui "fecim-lattice-tools/module5-comparison/cmd/comparison-gui"
 	edacli "fecim-lattice-tools/module6-eda/cmd/eda-cli"
-	edagui "fecim-lattice-tools/module6-eda/cmd/eda-gui"
 	edahello "fecim-lattice-tools/module6-eda/cmd/hello"
 	edalattice "fecim-lattice-tools/module6-eda/cmd/lattice-gen"
+	"fecim-lattice-tools/shared/viewmodel"
 )
 
-func maybeDispatchSubcommand(args []string) bool {
-	if len(args) == 0 {
-		return false
-	}
+func maybeDispatchSubcommand(args []string) (bool, int) {
+	return runSubcommandDispatch(args, os.Stdout, os.Stderr)
+}
 
+func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) {
+	if len(args) == 0 {
+		return false, 0
+	}
 	first := args[0]
 	if first == "-h" || first == "--help" || first == "help" {
-		printRootUsage(os.Stdout)
-		return true
+		printRootUsage(stdout)
+		return true, 0
 	}
-
 	if strings.HasPrefix(first, "-") {
-		return false
+		return false, 0
 	}
-
-	if err := dispatchSubcommand(args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		printRootUsage(os.Stderr)
-		os.Exit(1)
+	if err := dispatchSubcommandWithWriters(args, stdout, stderr); err != nil {
+		fmt.Fprintln(stderr, err)
+		printRootUsage(stderr)
+		return true, 1
 	}
-	return true
+	return true, 0
 }
 
 func dispatchSubcommand(args []string) error {
+	return dispatchSubcommandWithWriters(args, os.Stdout, os.Stderr)
+}
+
+func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		return nil
 	}
-
 	switch args[0] {
 	case "hysteresis":
-		return hysteresiscli.Run(args[1:])
+		return runHysteresisSubcommand(args[1:], stdout, stderr)
 	case "crossbar":
 		return runCrossbarSubcommand(args[1:])
 	case "mnist":
@@ -63,20 +64,74 @@ func dispatchSubcommand(args []string) error {
 	case "comparison":
 		return runComparisonSubcommand(args[1:])
 	case "eda":
-		return runEDASubcommand(args[1:])
+		return runEDASubcommand(args[1:], stdout)
+	case "research":
+		return runResearchSubcommand(args[1:])
 	default:
 		return fmt.Errorf("unknown subcommand %q", args[0])
 	}
 }
 
+func printHysteresisUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Hysteresis")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis gui")
+	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis --headless --engine lk")
+	fmt.Fprintln(out)
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+}
+
+func isHysteresisHelpArg(arg string) bool {
+	switch arg {
+	case "-h", "--help", "-help":
+		return true
+	default:
+		return false
+	}
+}
+
+func runHysteresisSubcommand(args []string, stdout, stderr io.Writer) error {
+	if len(args) == 0 || args[0] == "gui" {
+		return runModuleApp(viewmodel.ModuleHysteresis)
+	}
+	fs := flag.NewFlagSet("hysteresis", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	engine := fs.String("engine", "preisach", "Headless engine: preisach|lk")
+	headless := fs.Bool("headless", false, "Run headless hysteresis mode")
+	listMaterials := fs.Bool("list-materials", false, "List available materials and exit")
+	fs.Usage = func() { printHysteresisUsage(fs, fs.Output()) }
+	for _, arg := range args {
+		if isHysteresisHelpArg(arg) {
+			printHysteresisUsage(fs, stdout)
+			return nil
+		}
+	}
+	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+	if *listMaterials {
+		return runRoot([]string{"--list-materials"}, stdout, stderr)
+	}
+	if *headless {
+		return runMode("hysteresis", *engine)
+	}
+	return runModuleApp(viewmodel.ModuleHysteresis)
+}
+
 func runCrossbarSubcommand(args []string) error {
 	if len(args) == 0 || args[0] == "gui" {
-		return crossbarcmd.RunGUI(args[cmdSkip(args):])
+		return runModuleApp(viewmodel.ModuleCrossbar)
 	}
-
 	switch args[0] {
 	case "inference":
-		return crossbarcmd.RunInference(args[1:])
+		return crossbarcli.RunInference(args[1:])
 	default:
 		return fmt.Errorf("unknown crossbar subcommand %q", args[0])
 	}
@@ -84,9 +139,8 @@ func runCrossbarSubcommand(args []string) error {
 
 func runMNISTSubcommand(args []string) error {
 	if len(args) == 0 || args[0] == "gui" {
-		return mnistgui.Run(args[cmdSkip(args):])
+		return runModuleApp(viewmodel.ModuleMNIST)
 	}
-
 	switch args[0] {
 	case "cli":
 		return mnistcli.Run(args[1:])
@@ -103,9 +157,8 @@ func runMNISTSubcommand(args []string) error {
 
 func runCircuitsSubcommand(args []string) error {
 	if len(args) == 0 || args[0] == "gui" || strings.HasPrefix(args[0], "-") {
-		return circuitsgui.Run(args[cmdSkip(args):])
+		return runModuleApp(viewmodel.ModuleCircuits)
 	}
-
 	switch args[0] {
 	case "cli":
 		return circuitscli.Run(args[1:])
@@ -116,9 +169,8 @@ func runCircuitsSubcommand(args []string) error {
 
 func runComparisonSubcommand(args []string) error {
 	if len(args) == 0 || args[0] == "gui" {
-		return comparisongui.Run(args[cmdSkip(args):])
+		return runModuleApp(viewmodel.ModuleComparison)
 	}
-
 	switch args[0] {
 	case "cli":
 		return comparisoncli.Run(args[1:])
@@ -127,18 +179,17 @@ func runComparisonSubcommand(args []string) error {
 	}
 }
 
-func runEDASubcommand(args []string) error {
+func runEDASubcommand(args []string, stdout io.Writer) error {
 	if len(args) == 0 || args[0] == "gui" {
-		return edagui.Run(args[cmdSkip(args):])
+		return runModuleApp(viewmodel.ModuleEDA)
 	}
-
 	switch args[0] {
 	case "cli":
 		return edacli.Run(args[1:])
 	case "lattice-gen":
 		return edalattice.Run(args[1:])
 	case "hello":
-		return edahello.Run(args[1:])
+		return edahello.RunWithOutput(args[1:], stdout)
 	default:
 		return fmt.Errorf("unknown eda subcommand %q", args[0])
 	}
@@ -161,38 +212,44 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools [gui flags]")
 	fmt.Fprintln(w, "  fecim-lattice-tools <subcommand> [options]")
 	fmt.Fprintln(w)
+	fmt.Fprintln(w, "The default GUI is the zero-CGO gogpu/ui shell.")
+	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Subcommands:")
-	fmt.Fprintln(w, "  hysteresis         Hysteresis demo (GUI/TUI/headless via flags)")
-	fmt.Fprintln(w, "  crossbar           Crossbar GUI (default) or inference CLI")
-	fmt.Fprintln(w, "  mnist              MNIST GUI (default) or CLI/training tools")
-	fmt.Fprintln(w, "  circuits           Circuits GUI (default) or CLI")
-	fmt.Fprintln(w, "  comparison         Comparison GUI (default) or CLI")
-	fmt.Fprintln(w, "  eda                EDA GUI (default) or CLI tools")
+	fmt.Fprintln(w, "  hysteresis         gogpu/ui module or headless mode")
+	fmt.Fprintln(w, "  crossbar           gogpu/ui module or inference CLI")
+	fmt.Fprintln(w, "  mnist              gogpu/ui module or CLI/training tools")
+	fmt.Fprintln(w, "  circuits           gogpu/ui module or CLI")
+	fmt.Fprintln(w, "  comparison         gogpu/ui module or CLI")
+	fmt.Fprintln(w, "  eda                gogpu/ui module or CLI tools")
+	fmt.Fprintln(w, "  research           paper acquisition, ingestion, indexing, and evidence search")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Examples:")
-	fmt.Fprintln(w, "  fecim-lattice-tools")
+	fmt.Fprintln(w, "  fecim-lattice-tools --module crossbar")
+	fmt.Fprintln(w, "  fecim-lattice-tools --mode hysteresis --engine lk")
 	fmt.Fprintln(w, "  fecim-lattice-tools crossbar inference -size=64 -show-mvm")
-	fmt.Fprintln(w, "  fecim-lattice-tools mnist cli -evaluate")
 	fmt.Fprintln(w, "  fecim-lattice-tools circuits cli -all")
 	fmt.Fprintln(w, "  fecim-lattice-tools eda cli -mode=compute -rows=128 -cols=128")
+	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --download")
+	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --doi 10.1002/adma.201404531 --download")
+	fmt.Fprintln(w, "  fecim-lattice-tools research rebuild")
+	fmt.Fprintln(w, "  fecim-lattice-tools research cache")
+	fmt.Fprintln(w, "  fecim-lattice-tools research cache --clean")
+	fmt.Fprintln(w, "  fecim-lattice-tools research register-pdfs --write-stubs")
+	fmt.Fprintln(w, "  fecim-lattice-tools research promote-pdf park2015_advmat_hzo --to docs/4-research/papers/by-topic/01-ferroelectric-materials/park2015_advmat_hzo.pdf")
+	fmt.Fprintln(w, "  fecim-lattice-tools research audit")
+	fmt.Fprintln(w, "  fecim-lattice-tools research cite hzo-remanent-polarization-range")
+	fmt.Fprintln(w, "  fecim-lattice-tools research claim-scan docs/ README.md")
+	fmt.Fprintln(w, "  fecim-lattice-tools research evidence hzo-remanent-polarization-range")
+	fmt.Fprintln(w, "  fecim-lattice-tools research graph")
+	fmt.Fprintln(w, "  fecim-lattice-tools research ingest")
+	fmt.Fprintln(w, "  fecim-lattice-tools research search --local \"HZO coercive field Preisach\"")
+	fmt.Fprintln(w, "  fecim-lattice-tools research search --claim hzo-remanent-polarization-range --local")
+	fmt.Fprintln(w, "  fecim-lattice-tools research search \"HZO coercive field Preisach\"")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "GUI flags:")
+	fmt.Fprintln(w, "  --module NAME       Start module: home,hysteresis,crossbar,mnist,circuits,comparison,eda,docs")
 	fmt.Fprintln(w, "  --logger [LEVEL]    Enable file logging (debug|info|trace|off)")
 	fmt.Fprintln(w, "  --verbosity LEVEL   Logging verbosity (0|off,1|info,2|debug,3|trace)")
-	fmt.Fprintln(w, "  --module NAME       Start module: home,hysteresis,crossbar,mnist,circuits,comparison,eda,docs")
 	fmt.Fprintln(w, "  --calibrate         Run hysteresis calibration and exit")
 	fmt.Fprintln(w, "  --list-materials    List available materials and exit")
-	fmt.Fprintln(w, "  --screenshot-dir    Output directory for GUI screenshots (default: screenshots)")
-	fmt.Fprintln(w, "  --recording-dir     Output directory for GUI recordings (default: recordings)")
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "Headless hysteresis environment variables (--mode hysteresis):")
-	fmt.Fprintln(w, "  FECIM_MATERIAL")
-	fmt.Fprintln(w, "  FECIM_RANGE_FRAC")
-	fmt.Fprintln(w, "  FECIM_ISPP_STEPS_PER_PULSE")
-	fmt.Fprintln(w, "  FECIM_HEADLESS_FAST")
-	fmt.Fprintln(w, "  FECIM_ISPP_TARGETS")
-	fmt.Fprintln(w, "  FECIM_ISPP_TARGET_SEED")
-	fmt.Fprintln(w, "  FECIM_ISPP_TARGET_LEVELS")
-	fmt.Fprintln(w, "  FECIM_ISPP_MAX_PULSES")
-	fmt.Fprintln(w, "  FECIM_HEADLESS_ALLOW_TIMEOUT")
 }

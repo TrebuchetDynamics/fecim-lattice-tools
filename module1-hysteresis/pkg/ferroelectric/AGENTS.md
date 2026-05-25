@@ -76,7 +76,7 @@ go test ./module1-hysteresis/pkg/ferroelectric -run TestHysteresisLoop -v
 
 ### Common Patterns
 
-- **Material factory**: Use `DefaultHZO()` for baseline, `FeCIMMaterial()` for conservative demonstrated values, `LiteratureSuperlattice()` for best-case
+- **Material factory**: Use `DefaultHZO()` for literature-backed baseline behavior, `FeCIMMaterial()` only with conference-baseline simulation-assumption caveats, `LiteratureSuperlattice()` for cited superlattice scenario exploration
 - **Preisach tuning**: `tuneDeltaForPr()` adjusts Delta to match target Pr while keeping Ps fixed
 - **Loop rendering**: `render.go` provides canvas-based P-E curve visualization
 - **Everett calculation**: Always use product form; never revert to factorized-difference

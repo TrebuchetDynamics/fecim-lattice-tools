@@ -1,0 +1,12 @@
+citation_path: citations/papers/analog_cim_energy_efficiency_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: analog_cim_energy_efficiency_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/Analog_CIM_Energy_Efficiency_arXiv.pdf
+  sha256: 76465a0440df335b2c52c7e7e7fe3874840a012c9a52578eab00fe2e0c9cd77e
+  size: 3527800
+title: Analog CIM Energy Efficiency Arxiv

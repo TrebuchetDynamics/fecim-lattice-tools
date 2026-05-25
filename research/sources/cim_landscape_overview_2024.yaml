@@ -1,0 +1,12 @@
+citation_path: citations/papers/cim_landscape_overview_2024.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: cim_landscape_overview_2024
+pdf:
+  path: docs/4-research/papers/by-topic/04-cim-architectures/cim_landscape_overview_2024.pdf
+  sha256: 4c707de597e8039c4c0f4b14ee4e870d29f6ef9b7dccdc2326075d27c6286fc6
+  size: 20991665
+title: CIM Landscape Overview 2024

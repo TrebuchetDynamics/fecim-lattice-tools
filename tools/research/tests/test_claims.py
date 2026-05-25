@@ -1,0 +1,980 @@
+import json
+import hashlib
+import tempfile
+import unittest
+from pathlib import Path
+
+from fecim_research.claims import audit_claim_registry, load_claim_records, run_audit
+
+
+class ClaimsTest(unittest.TestCase):
+    def test_load_claim_records_reads_reviewed_yaml_files(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            claim_path = root / "citations" / "claims" / "hzo-remanent-polarization-range.yaml"
+            claim_path.parent.mkdir(parents=True)
+            claim_path.write_text(
+                "id: hzo-remanent-polarization-range\n"
+                "claim: HZO devices commonly report remanent polarization in a bounded literature range.\n"
+                "status: literature-backed\n"
+                "sources:\n"
+                "  - park2015_advmat_hzo\n"
+                "used_in:\n"
+                "  - config/materials.yaml\n"
+                "confidence: medium\n",
+                encoding="utf-8",
+            )
+
+            records = load_claim_records(root)
+
+            self.assertEqual(["hzo-remanent-polarization-range"], sorted(records))
+            self.assertEqual(records["hzo-remanent-polarization-range"].sources, ["park2015_advmat_hzo"])
+            self.assertEqual(records["hzo-remanent-polarization-range"].used_in, ["config/materials.yaml"])
+
+    def test_audit_passes_for_claim_with_existing_source_and_used_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+            (root / "citations" / "facts.md").write_text(
+                "- HZO Pr range is cited. [claim: hzo-remanent-polarization-range]\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+            self.assertEqual(report.claims_checked, 1)
+
+    def test_audit_fails_for_missing_source_or_used_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["missing_source"],
+                used_in=["config/missing.yaml"],
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn("missing source missing_source", "\n".join(report.errors))
+            self.assertIn("missing used_in path config/missing.yaml", "\n".join(report.errors))
+
+    def test_audit_fails_when_citation_key_field_does_not_match_filename(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            path.parent.mkdir(parents=True)
+            path.write_text("**Key:** `wrong_external_key`\n", encoding="utf-8")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md key wrong_external_key must match filename park2015_advmat_hzo",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_used_path_does_not_reference_claim_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# missing claim marker\n")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn("config/materials.yaml does not reference [claim: hzo-remanent-polarization-range]", "\n".join(report.errors))
+
+    def test_audit_fails_when_facts_reference_unknown_claim(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            facts = root / "citations" / "facts.md"
+            facts.parent.mkdir(parents=True)
+            facts.write_text("- A cited-looking fact. [claim: missing-claim]\n", encoding="utf-8")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn("unknown claim id missing-claim", "\n".join(report.errors))
+
+    def test_disputed_claims_cannot_be_promoted_to_facts(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "unstable-hzo-range",
+                status="disputed",
+                sources=["park2015_advmat_hzo"],
+                used_in=["citations/disputed.md"],
+            )
+            disputed = root / "citations" / "disputed.md"
+            disputed.parent.mkdir(parents=True, exist_ok=True)
+            disputed.write_text("- Disputed claim lives here. [claim: unstable-hzo-range]\n", encoding="utf-8")
+            (root / "citations" / "facts.md").write_text(
+                "- Disputed claim promoted. [claim: unstable-hzo-range]\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn("disputed claim unstable-hzo-range is referenced from citations/facts.md", "\n".join(report.errors))
+
+    def test_audit_fails_when_citation_record_pdf_path_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/missing.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path docs/4-research/papers/missing.pdf does not exist",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_citation_pdf_points_at_ignored_research_inbox(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path research/papers/park2015_advmat_hzo.pdf points at ignored local inbox; use not stored until promoted",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_citation_record_pdf_path_is_not_repo_relative(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf=str(pdf_path))
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path must be repo-relative",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_citation_pdf_metadata_is_stale(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\ncitation metadata\n"
+            actual_sha = hashlib.sha256(pdf_bytes).hexdigest()
+            actual_size = len(pdf_bytes)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(
+                root,
+                "park2015_advmat_hzo",
+                pdf=rel_pdf,
+                sha256="stale-digest",
+                size=str(actual_size + 1),
+            )
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, actual_sha)
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md SHA256 stale-digest does not match actual",
+                errors,
+            )
+            self.assertIn(
+                f"citations/papers/park2015_advmat_hzo.md Size {actual_size + 1} does not match actual {actual_size}",
+                errors,
+            )
+
+    def test_audit_fails_when_tracked_citation_pdf_lacks_promotion_or_backlog(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nlegacy candidate\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path docs/4-research/papers/park2015_advmat_hzo.pdf has no promotion ledger or legacy review backlog entry",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_passes_for_legacy_pdf_review_backlog_entry(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nlegacy candidate\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_for_stale_legacy_pdf_review_backlog_entry(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nlegacy candidate\n")
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, "stale-digest")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/manifests/pdf-review-backlog.json entry park2015_advmat_hzo sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_passes_for_source_ledger_with_existing_pdf_digest(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_when_source_ledger_citation_path_points_to_wrong_record(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_paper(root, "wrong_record")
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/wrong_record.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml citation_path must point at citations/papers/park2015_advmat_hzo.md",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_pdf_points_at_ignored_research_inbox(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml pdf path research/papers/park2015_advmat_hzo.pdf points at ignored local inbox; promote it before writing source ledgers",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_acquisition_ledger_key_does_not_match_filename(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="wrong_key",
+                status="planned",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.acquisition.yaml paper_key wrong_key must match filename park2015_advmat_hzo",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_downloaded_acquisition_digest_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\ndownloaded acquisition\n")
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="park2015_advmat_hzo",
+                status="downloaded",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="stale-digest",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.acquisition.yaml acquisition sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_openalex_doi_does_not_match_citation(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", doi="10.1002/adma.201404531")
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.9999/wrong",
+                openalex_id="https://openalex.org/W123",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json doi https://doi.org/10.9999/wrong does not match citation DOI 10.1002/adma.201404531",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_openalex_id_does_not_match_acquisition_ledger(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", doi="10.1002/adma.201404531")
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W123",
+            )
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="park2015_advmat_hzo",
+                status="planned",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="",
+                openalex_id="https://openalex.org/W999",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json id https://openalex.org/W123 does not match acquisition openalex_id https://openalex.org/W999",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_openalex_id_does_not_match_citation_record(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(
+                root,
+                "park2015_advmat_hzo",
+                doi="10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W999",
+            )
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W123",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json id https://openalex.org/W123 does not match citation OpenAlex https://openalex.org/W999",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_validates_pdf_promotion_review_ledgers(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\npromoted ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            ledger = root / "research" / "sources" / "park2015_advmat_hzo.promotion.yaml"
+            ledger.parent.mkdir(parents=True)
+            ledger.write_text(
+                "citation_path: citations/papers/park2015_advmat_hzo.md\n"
+                "destination_path: docs/4-research/papers/park2015_advmat_hzo.pdf\n"
+                "license: CC BY 4.0\n"
+                "license_url: https://example.org/license\n"
+                "paper_key: park2015_advmat_hzo\n"
+                "review_note: Publisher page shows redistribution-compatible license.\n"
+                f"sha256: {digest}\n"
+                "source_path: research/papers/park2015_advmat_hzo.pdf\n"
+                "status: promoted\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_for_incomplete_or_stale_pdf_promotion_ledger(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\npromoted ledger\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            ledger = root / "research" / "sources" / "park2015_advmat_hzo.promotion.yaml"
+            ledger.parent.mkdir(parents=True)
+            ledger.write_text(
+                "citation_path: citations/papers/park2015_advmat_hzo.md\n"
+                "destination_path: docs/4-research/papers/park2015_advmat_hzo.pdf\n"
+                "license: CC BY 4.0\n"
+                "license_url: ftp://example.org/license\n"
+                "paper_key: park2015_advmat_hzo\n"
+                "sha256: stale-digest\n"
+                "source_path: research/papers/park2015_advmat_hzo.pdf\n"
+                "status: promoted\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn("research/sources/park2015_advmat_hzo.promotion.yaml missing review_note", errors)
+            self.assertIn("license_url must be an http or https URL", errors)
+            self.assertIn("promotion sha256 stale-digest does not match actual", errors)
+
+    def test_audit_fails_when_source_ledger_pdf_digest_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nsource ledger\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
+                sha256="stale-digest",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml pdf sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_pdf_size_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            actual_size = len(pdf_bytes)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+                size=str(actual_size + 1),
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                f"research/sources/park2015_advmat_hzo.yaml pdf size {actual_size + 1} does not match actual {actual_size}",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_pdf_size_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+                size=None,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml missing pdf size",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_citation_path_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/missing.md",
+                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml citation_path citations/papers/missing.md does not exist",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_passes_for_candidate_evidence_with_existing_claim_and_chunk(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+            self._write_chunk(
+                root,
+                "research/chunks/park2015_advmat_hzo.jsonl",
+                {"id": "park2015_advmat_hzo::intro::chunk-001", "sha256": "chunk-digest"},
+            )
+            self._write_evidence(
+                root,
+                "hzo-remanent-polarization-range",
+                candidate_count=1,
+                candidates=[
+                    {
+                        "docid": "park2015_advmat_hzo::intro::chunk-001",
+                        "chunk_file": "research/chunks/park2015_advmat_hzo.jsonl",
+                        "sha256": "chunk-digest",
+                    }
+                ],
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_for_evidence_with_unknown_claim_and_missing_chunk(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_evidence(
+                root,
+                "missing-claim",
+                candidate_count=1,
+                candidates=[
+                    {
+                        "docid": "missing-claim::intro::chunk-001",
+                        "chunk_file": "research/chunks/missing.jsonl",
+                        "sha256": "chunk-digest",
+                    }
+                ],
+            )
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn("research/evidence/missing-claim.json references unknown claim missing-claim", errors)
+            self.assertIn("candidate missing-claim::intro::chunk-001 missing chunk file research/chunks/missing.jsonl", errors)
+
+    def test_audit_fails_for_evidence_candidate_count_or_digest_mismatch(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+            self._write_chunk(
+                root,
+                "research/chunks/park2015_advmat_hzo.jsonl",
+                {"id": "park2015_advmat_hzo::intro::chunk-001", "sha256": "actual-digest"},
+            )
+            self._write_evidence(
+                root,
+                "hzo-remanent-polarization-range",
+                candidate_count=2,
+                candidates=[
+                    {
+                        "docid": "park2015_advmat_hzo::intro::chunk-001",
+                        "chunk_file": "research/chunks/park2015_advmat_hzo.jsonl",
+                        "sha256": "stale-digest",
+                    }
+                ],
+            )
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn("candidate_count 2 does not match candidates length 1", errors)
+            self.assertIn("candidate park2015_advmat_hzo::intro::chunk-001 sha256 stale-digest does not match chunk sha256 actual-digest", errors)
+
+    def test_audit_fails_for_evidence_candidate_with_absolute_chunk_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+            rel_chunk_path = "research/chunks/park2015_advmat_hzo.jsonl"
+            self._write_chunk(
+                root,
+                rel_chunk_path,
+                {"id": "park2015_advmat_hzo::intro::chunk-001", "sha256": "chunk-digest"},
+            )
+            self._write_evidence(
+                root,
+                "hzo-remanent-polarization-range",
+                candidate_count=1,
+                candidates=[
+                    {
+                        "docid": "park2015_advmat_hzo::intro::chunk-001",
+                        "chunk_file": str(root / rel_chunk_path),
+                        "sha256": "chunk-digest",
+                    }
+                ],
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn("candidate park2015_advmat_hzo::intro::chunk-001 chunk_file must be repo-relative", "\n".join(report.errors))
+
+    def test_run_audit_writes_git_trackable_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+
+            code = run_audit(root)
+
+            self.assertEqual(code, 0)
+            report_path = root / "research" / "reports" / "claim-audit-latest.json"
+            self.assertTrue(report_path.exists())
+            payload = json.loads(report_path.read_text())
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["claims_checked"], 1)
+
+    def test_run_audit_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["config/materials.yaml"],
+            )
+            (root / "config").mkdir()
+            (root / "config" / "materials.yaml").write_text("# [claim: hzo-remanent-polarization-range]\n")
+
+            code = run_audit(root)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "claim-audit-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/reports/claim-audits/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
+
+    def _write_paper(
+        self,
+        root: Path,
+        key: str,
+        pdf: str = "not stored",
+        doi: str = "",
+        openalex_id: str = "",
+        sha256: str = "",
+        size: str = "",
+    ):
+        path = root / "citations" / "papers" / f"{key}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        doi_line = f"**DOI:** `{doi}`\n" if doi else ""
+        openalex_line = f"**OpenAlex:** `{openalex_id}`\n" if openalex_id else ""
+        sha256_line = f"**SHA256:** `{sha256}`\n" if sha256 else ""
+        size_line = f"**Size:** `{size}`\n" if size else ""
+        path.write_text(
+            f"**Key:** `{key}`\n{doi_line}{openalex_line}**PDF:** `{pdf}`\n{sha256_line}{size_line}",
+            encoding="utf-8",
+        )
+
+    def _write_claim(
+        self,
+        root: Path,
+        claim_id: str,
+        sources: list[str],
+        used_in: list[str],
+        status: str = "literature-backed",
+    ):
+        path = root / "citations" / "claims" / f"{claim_id}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"id: {claim_id}\n"
+            "claim: HZO devices commonly report remanent polarization in a bounded literature range.\n"
+            f"status: {status}\n"
+            "sources:\n"
+            + "".join(f"  - {source}\n" for source in sources)
+            + "used_in:\n"
+            + "".join(f"  - {item}\n" for item in used_in)
+            + "confidence: medium\n",
+            encoding="utf-8",
+        )
+
+    def _write_chunk(self, root: Path, rel_path: str, record: dict[str, object]):
+        path = root / rel_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+
+    def _write_evidence(
+        self,
+        root: Path,
+        claim_id: str,
+        candidate_count: int,
+        candidates: list[dict[str, object]],
+    ):
+        path = root / "research" / "evidence" / f"{claim_id}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "claim": {
+                        "id": claim_id,
+                        "claim": "HZO devices commonly report remanent polarization in a bounded literature range.",
+                    },
+                    "status": "candidate-evidence",
+                    "review": {"state": "needs-review"},
+                    "source_report": "research/reports/search-latest.json",
+                    "query": "HZO remanent polarization range",
+                    "backend": "local-jsonl",
+                    "candidate_count": candidate_count,
+                    "candidates": candidates,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_pdf_review_backlog(self, root: Path, paper_key: str, pdf_path: str, sha256: str):
+        path = root / "research" / "manifests" / "pdf-review-backlog.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "fecim.pdf-review-backlog.v1",
+                    "entries": [
+                        {
+                            "paper_key": paper_key,
+                            "citation_path": f"citations/papers/{paper_key}.md",
+                            "pdf_path": pdf_path,
+                            "sha256": sha256,
+                            "status": "legacy-needs-license-review",
+                            "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
+                        }
+                    ],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_source_ledger(
+        self,
+        root: Path,
+        paper_key: str,
+        citation_path: str,
+        pdf_path: str,
+        sha256: str,
+        size: str | None = "__auto__",
+    ):
+        path = root / "research" / "sources" / f"{paper_key}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if size == "__auto__":
+            full_pdf_path = root / pdf_path
+            size = str(full_pdf_path.stat().st_size) if full_pdf_path.is_file() else "0"
+        size_line = f"  size: {size}\n" if size is not None else ""
+        path.write_text(
+            f"citation_path: {citation_path}\n"
+            "doi: needs-review\n"
+            "match:\n"
+            "  confidence: 0.95\n"
+            "  method: filename\n"
+            "  status: matched\n"
+            f"paper_key: {paper_key}\n"
+            "pdf:\n"
+            f"  path: {pdf_path}\n"
+            f"  sha256: {sha256}\n"
+            f"{size_line}"
+            "title: Park HZO\n",
+            encoding="utf-8",
+        )
+
+    def _write_acquisition_ledger(
+        self,
+        root: Path,
+        filename_key: str,
+        paper_key: str,
+        status: str,
+        pdf_path: str,
+        sha256: str,
+        openalex_id: str = "https://openalex.org/W123",
+    ):
+        path = root / "research" / "sources" / f"{filename_key}.acquisition.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"citation_path: citations/papers/{filename_key}.md\n"
+            "doi: 10.1002/adma.201404531\n"
+            f"openalex_id: {openalex_id}\n"
+            f"paper_key: {paper_key}\n"
+            f"pdf_path: {pdf_path}\n"
+            f"sha256: {sha256}\n"
+            f"status: {status}\n",
+            encoding="utf-8",
+        )
+
+    def _write_openalex_ledger(self, root: Path, paper_key: str, doi: str, openalex_id: str):
+        path = root / "research" / "sources" / f"{paper_key}.openalex.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "id": openalex_id,
+                    "doi": doi,
+                    "display_name": "Ferroelectric HZO",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

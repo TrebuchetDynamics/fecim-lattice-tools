@@ -1,0 +1,12 @@
+citation_path: citations/papers/highly_scaled_3d_fefet_array_2023.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: highly_scaled_3d_fefet_array_2023
+pdf:
+  path: docs/4-research/papers/by-topic/15-3d-stacking-architectures/highly_scaled_3d_fefet_array_2023.pdf
+  sha256: de2c0f0516484bda58e591f77df61cb598b3620d2269e56a226ed22e9212070b
+  size: 1300625
+title: Highly Scaled 3d Fefet Array 2023

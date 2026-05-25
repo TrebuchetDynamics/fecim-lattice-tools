@@ -1,0 +1,12 @@
+citation_path: citations/papers/tdgl_ferroelectric_domains_arxiv.md
+doi: needs-review
+match:
+  confidence: 0.95
+  method: filename
+  status: matched
+paper_key: tdgl_ferroelectric_domains_arxiv
+pdf:
+  path: docs/4-research/papers/by-topic/01-ferroelectric-materials/TDGL_Ferroelectric_Domains_arXiv.pdf
+  sha256: 72d2099d61e52e05e5631de3494625ebb63163e1bd7097d0bc113e4db85736d2
+  size: 18592470
+title: Tdgl Ferroelectric Domains Arxiv

@@ -601,7 +601,7 @@ func (m Model) renderInfoPanel() string {
 // renderLevelBar renders the 30-level indicator bar
 func (m Model) renderLevelBar() string {
 	var sb strings.Builder
-	sb.WriteString("  30 Levels (claim)\n")
+	sb.WriteString("  30-Level Simulation Baseline\n")
 	sb.WriteString("  ┌─┐\n")
 
 	for i := 29; i >= 0; i-- {
