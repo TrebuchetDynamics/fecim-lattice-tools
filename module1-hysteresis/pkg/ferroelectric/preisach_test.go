@@ -291,8 +291,14 @@ func TestPreisachModel_NewPreisachModel(t *testing.T) {
 		if model == nil {
 			t.Fatal("Expected non-nil model")
 		}
-		if model.material != material {
-			t.Error("Model material not set correctly")
+		if model.material == nil {
+			t.Fatal("Model material not set")
+		}
+		if model.material == material {
+			t.Error("Model should snapshot material instead of retaining caller-owned pointer")
+		}
+		if model.material.Name != material.Name || model.material.Ps != material.Ps || model.material.Pr != material.Pr || model.material.Ec != material.Ec {
+			t.Error("Model material snapshot does not match construction input")
 		}
 		if model.stack == nil {
 			t.Error("Model stack not initialized")
@@ -307,6 +313,38 @@ func TestPreisachModel_NewPreisachModel(t *testing.T) {
 			t.Errorf("Expected default stress 1 GPa, got %f", model.Stress)
 		}
 	})
+}
+
+func TestPreisachModel_SnapshotsMaterialAtConstruction(t *testing.T) {
+	material := DefaultHZO()
+	originalPs := material.Ps
+	field := material.Ec * 2
+	model := NewPreisachModel(material)
+	if model == nil {
+		t.Fatal("expected model")
+	}
+
+	material.Ps = 0
+	material.Pr = 0
+	material.Ec = 0
+
+	states := model.DiscreteStates(3)
+	if len(states) != 3 {
+		t.Fatalf("expected construction-time material to preserve discrete states, got %d", len(states))
+	}
+	if math.Abs(states[0].Polarization+originalPs) > originalPs*1e-12 {
+		t.Fatalf("expected first state from construction-time Ps: got %.12e want %.12e", states[0].Polarization, -originalPs)
+	}
+
+	polarization := model.Update(field)
+	if math.IsNaN(polarization) || math.IsInf(polarization, 0) || math.Abs(polarization) == 0 {
+		t.Fatalf("expected construction-time material to preserve finite polarization response, got %.12e", polarization)
+	}
+
+	eFields, polarizations := model.GetHysteresisLoop(field, 8)
+	if len(eFields) == 0 || len(eFields) != len(polarizations) {
+		t.Fatalf("expected construction-time material to preserve hysteresis loop, got E=%d P=%d", len(eFields), len(polarizations))
+	}
 }
 
 func TestPreisachModel_NewPreisachModelRejectsNilMaterial(t *testing.T) {
@@ -349,6 +387,8 @@ func TestPreisachModel_NewPreisachModelRejectsNonPhysicalCoreMaterial(t *testing
 		{name: "nan_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() })},
 		{name: "positive_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(1) })},
 		{name: "negative_inf_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.Inf(-1) })},
+		{name: "overflowing_saturation_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.MaxFloat64 })},
+		{name: "overflowing_nls_activation_ec", material: materialWith(func(m *HZOMaterial) { m.Ec = math.MaxFloat64 / nlsEaEcRatio * 1.1 })},
 	}
 
 	for _, tc := range cases {
@@ -407,7 +447,7 @@ func TestPreisachModel_DiscreteStates(t *testing.T) {
 
 func TestPreisachModel_DiscreteStatesRejectsInvalidCounts(t *testing.T) {
 	model := NewPreisachModel(DefaultHZO())
-	for _, n := range []int{1, 0, -1} {
+	for _, n := range []int{1, 0, -1, math.MaxInt} {
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
@@ -670,6 +710,47 @@ func TestPreisachModel_UpdateRejectsInvalidBinding(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_UpdateIsIndependentOfMaterialNLSParameters(t *testing.T) {
+	fast := *DefaultHZO()
+	fast.Name = "fast NLS material"
+	fast.Tau0NLS = 1e-15
+	fast.EaNLS = fast.Ec
+
+	slow := *DefaultHZO()
+	slow.Name = "slow NLS material"
+	slow.Tau0NLS = 1.0
+	slow.EaNLS = slow.Ec * 100
+
+	field := fast.Ec * 2
+	fastP := NewPreisachModel(&fast).Update(field)
+	slowP := NewPreisachModel(&slow).Update(field)
+
+	if math.Abs(fastP-slowP) > 1e-12 {
+		t.Fatalf("expected quasi-static Update to be independent of material NLS parameters: fast %.12e C/m² slow %.12e C/m²", fastP, slowP)
+	}
+}
+
+func TestPreisachModel_TimeStepUsesMaterialNLSParameters(t *testing.T) {
+	fast := *DefaultHZO()
+	fast.Name = "fast NLS material"
+	fast.Tau0NLS = 1e-15
+	fast.EaNLS = fast.Ec
+
+	slow := *DefaultHZO()
+	slow.Name = "slow NLS material"
+	slow.Tau0NLS = 1.0
+	slow.EaNLS = slow.Ec * 100
+
+	field := fast.Ec * 2
+	dt := 1e-9
+	fastP := NewPreisachModel(&fast).TimeStep(field, dt)
+	slowP := NewPreisachModel(&slow).TimeStep(field, dt)
+
+	if fastP <= slowP+0.05*fast.Ps {
+		t.Fatalf("expected material NLS parameters to affect timestep response: fast %.12e C/m² slow %.12e C/m²", fastP, slowP)
+	}
+}
+
 func TestPreisachModel_TimeStepRejectsInvalidBinding(t *testing.T) {
 	material := DefaultHZO()
 	validModel := NewPreisachModel(material)
@@ -869,6 +950,18 @@ func TestPreisachModel_Reset(t *testing.T) {
 			t.Errorf("After reset and negative saturation, expected negative P, got %f", P_after_reset)
 		}
 	})
+}
+
+func TestPreisachModel_ResetUsesEffectiveCoerciveField(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+	model.SetStress(10.0)
+
+	model.Reset()
+
+	if got := model.NormalizedPolarization(); got > -0.95 {
+		t.Fatalf("expected reset after stress-scaled Ec to reach negative saturation, got normalized P %.6f", got)
+	}
 }
 
 func TestPreisachModel_ResetRejectsInvalidBinding(t *testing.T) {
@@ -1073,6 +1166,30 @@ func TestPreisachModel_GetHysteresisLoop(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_GetHysteresisLoopPreservesTrajectory(t *testing.T) {
+	material := DefaultHZO()
+	withLoop := NewPreisachModel(material)
+	control := NewPreisachModel(material)
+
+	initialFields := []float64{-2 * material.Ec, 0.75 * material.Ec, -0.25 * material.Ec, 1.25 * material.Ec}
+	for _, field := range initialFields {
+		withLoop.Update(field)
+		control.Update(field)
+	}
+
+	E, P := withLoop.GetHysteresisLoop(4*material.Ec, 50)
+	if len(E) == 0 || len(P) == 0 {
+		t.Fatal("expected hysteresis loop data")
+	}
+
+	probeField := -0.6 * material.Ec
+	got := withLoop.Update(probeField)
+	want := control.Update(probeField)
+	if math.Abs(got-want) > 1e-12 {
+		t.Fatalf("GetHysteresisLoop changed subsequent trajectory: got %.12e C/m² want %.12e C/m²", got, want)
+	}
+}
+
 // TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding verifies invalid loop bindings return no data and preserve model state.
 func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 	material := DefaultHZO()
@@ -1187,8 +1304,10 @@ func TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs(t *testing.T) {
 		{name: "negative field", Emax: -material.Ec, points: 50},
 		{name: "nan field", Emax: math.NaN(), points: 50},
 		{name: "infinite field", Emax: math.Inf(1), points: 50},
+		{name: "overflowing finite field", Emax: math.MaxFloat64, points: 50},
 		{name: "zero points", Emax: material.Ec, points: 0},
 		{name: "negative points", Emax: material.Ec, points: -1},
+		{name: "overflowing point count", Emax: material.Ec, points: math.MaxInt},
 	}
 
 	for _, tt := range tests {
@@ -1205,6 +1324,22 @@ func TestPreisachModel_GetHysteresisLoopRejectsNonPhysicalInputs(t *testing.T) {
 				t.Fatalf("invalid loop request changed polarization: got %.12e C/m² want %.12e C/m²", got, initialP)
 			}
 		})
+	}
+}
+
+func TestPreisachModel_DefaultTemperatureAndStressSettersAreIdempotent(t *testing.T) {
+	material := DefaultHZO()
+	model := NewPreisachModel(material)
+	initialEc := model.GetEffectiveEc()
+
+	model.SetTemperature(roomTemperatureK)
+	if got := model.GetEffectiveEc(); math.Abs(got-initialEc) > math.Abs(initialEc)*1e-12 {
+		t.Fatalf("SetTemperature(room) changed default Ec: got %.12e V/m want %.12e V/m", got, initialEc)
+	}
+
+	model.SetStress(defaultStressGPa)
+	if got := model.GetEffectiveEc(); math.Abs(got-initialEc) > math.Abs(initialEc)*1e-12 {
+		t.Fatalf("SetStress(default) changed default Ec: got %.12e V/m want %.12e V/m", got, initialEc)
 	}
 }
 
@@ -1266,6 +1401,8 @@ func TestPreisachModel_SetTemperatureRejectsNonPhysicalInputs(t *testing.T) {
 		{name: "nan", temp: math.NaN()},
 		{name: "positive_inf", temp: math.Inf(1)},
 		{name: "negative_inf", temp: math.Inf(-1)},
+		{name: "overflowing_finite", temp: math.MaxFloat64},
+		{name: "saturation_field_overflow", temp: 1e202},
 		{name: "absolute_zero", temp: 0},
 		{name: "negative_kelvin", temp: -1},
 	}
@@ -1360,6 +1497,8 @@ func TestPreisachModel_SetStressRejectsInvalidInputs(t *testing.T) {
 		{name: "nan", stressGPa: math.NaN()},
 		{name: "positive_inf", stressGPa: math.Inf(1)},
 		{name: "negative_inf", stressGPa: math.Inf(-1)},
+		{name: "overflowing_finite", stressGPa: math.MaxFloat64},
+		{name: "saturation_field_overflow", stressGPa: 1e200},
 	}
 
 	for _, tc := range cases {

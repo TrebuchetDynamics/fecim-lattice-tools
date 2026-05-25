@@ -1,6 +1,7 @@
 package physics
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -199,6 +200,55 @@ func TestPreisachStack_InfInputs(t *testing.T) {
 
 	P := ps.Update(math.Inf(1))
 	t.Logf("Update(+Inf) = %f", P)
+}
+
+func TestPreisachStackRejectsInvalidFieldInputsWithoutMutatingState(t *testing.T) {
+	ps := NewPreisachStack(1.0, simpleUniformEverett{sat: 1.0})
+	ps.Update(0.6)
+	ps.Update(0.2)
+
+	wantP := ps.ComputePolarization(ps.LastE)
+	wantLastE := ps.LastE
+	wantCurrentDir := ps.CurrentDir
+	wantStack := append([]TurningPoint(nil), ps.Stack...)
+
+	invalidFields := []float64{math.NaN(), math.Inf(1), math.Inf(-1), math.MaxFloat64, -math.MaxFloat64}
+	for _, field := range invalidFields {
+		t.Run(fmt.Sprintf("E=%g", field), func(t *testing.T) {
+			got := ps.Update(field)
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("Update(%g) returned non-finite polarization %g", field, got)
+			}
+			if got != wantP {
+				t.Fatalf("Update(%g) polarization = %g, want current-state polarization %g", field, got, wantP)
+			}
+			if ps.LastE != wantLastE {
+				t.Fatalf("Update(%g) mutated LastE to %g, want %g", field, ps.LastE, wantLastE)
+			}
+			if ps.CurrentDir != wantCurrentDir {
+				t.Fatalf("Update(%g) mutated CurrentDir to %d, want %d", field, ps.CurrentDir, wantCurrentDir)
+			}
+			if len(ps.Stack) != len(wantStack) {
+				t.Fatalf("Update(%g) mutated stack length to %d, want %d", field, len(ps.Stack), len(wantStack))
+			}
+			for i := range wantStack {
+				if ps.Stack[i] != wantStack[i] {
+					t.Fatalf("Update(%g) mutated stack[%d] to %+v, want %+v", field, i, ps.Stack[i], wantStack[i])
+				}
+			}
+		})
+	}
+}
+
+func TestNewPreisachStackRejectsUnrepresentableSaturation(t *testing.T) {
+	invalidSaturation := []float64{math.NaN(), math.Inf(1), math.Inf(-1), math.MaxFloat64, -math.MaxFloat64}
+	for _, saturation := range invalidSaturation {
+		t.Run(fmt.Sprintf("saturation=%g", saturation), func(t *testing.T) {
+			if ps := NewPreisachStack(saturation, simpleUniformEverett{sat: 1.0}); ps != nil {
+				t.Fatalf("NewPreisachStack(%g, everett) returned non-nil stack with SaturationE=%g", saturation, ps.SaturationE)
+			}
+		})
+	}
 }
 
 func TestPreisachStack_ZeroSaturation(t *testing.T) {

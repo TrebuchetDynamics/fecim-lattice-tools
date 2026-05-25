@@ -9,6 +9,8 @@ import (
 
 type CellCoord struct{ Row, Col int }
 
+const maxMultiCellCount = 1_000_000
+
 type CellState struct {
 	Voltage       float64
 	ElectricField float64
@@ -25,24 +27,37 @@ type MultiCellArray struct {
 }
 
 func NewMultiCellArray(rows, cols int, material *ferroelectric.HZOMaterial) (*MultiCellArray, error) {
-	if rows <= 0 || cols <= 0 {
+	if !isValidArrayDimensions(rows, cols) {
 		return nil, fmt.Errorf("invalid array dimensions: %dx%d", rows, cols)
 	}
-	if material == nil {
+	materialSnapshot := snapshotMaterial(material)
+	if materialSnapshot == nil {
 		return nil, fmt.Errorf("material cannot be nil")
 	}
-	if material.Thickness <= 0 {
-		return nil, fmt.Errorf("material thickness must be > 0 m: got %.3e m", material.Thickness)
+	if !isValidMaterialThickness(materialSnapshot.Thickness) {
+		return nil, fmt.Errorf("material thickness must be finite and > 0 m: got %.3e m", materialSnapshot.Thickness)
 	}
-	m := &MultiCellArray{rows: rows, cols: cols, material: material, models: make([][]*ferroelectric.PreisachModel, rows), states: make([][]CellState, rows)}
+	firstModel := ferroelectric.NewPreisachModel(materialSnapshot)
+	if firstModel == nil {
+		return nil, fmt.Errorf("material cannot initialize Preisach model: %s", materialSnapshot.Name)
+	}
+	m := &MultiCellArray{rows: rows, cols: cols, material: materialSnapshot, models: make([][]*ferroelectric.PreisachModel, rows), states: make([][]CellState, rows)}
 	for r := 0; r < rows; r++ {
 		m.models[r] = make([]*ferroelectric.PreisachModel, cols)
 		m.states[r] = make([]CellState, cols)
 		for c := 0; c < cols; c++ {
-			m.models[r][c] = ferroelectric.NewPreisachModel(material)
+			if r == 0 && c == 0 {
+				m.models[r][c] = firstModel
+				continue
+			}
+			m.models[r][c] = ferroelectric.NewPreisachModel(materialSnapshot)
 		}
 	}
 	return m, nil
+}
+
+func isValidArrayDimensions(rows, cols int) bool {
+	return rows > 0 && cols > 0 && rows <= maxMultiCellCount && cols <= maxMultiCellCount && cols <= maxMultiCellCount/rows
 }
 
 func (m *MultiCellArray) Size() (int, int) { m.mu.RLock(); defer m.mu.RUnlock(); return m.rows, m.cols }
@@ -52,6 +67,9 @@ func (m *MultiCellArray) StepCell(row, col int, voltage float64) (CellState, err
 	defer m.mu.Unlock()
 	if !m.inBounds(row, col) {
 		return CellState{}, fmt.Errorf("cell index out of bounds: (%d,%d)", row, col)
+	}
+	if err := validateAppliedVoltage(voltage, m.material.Thickness); err != nil {
+		return CellState{}, err
 	}
 	return m.stepCellLocked(row, col, voltage), nil
 }
@@ -65,6 +83,11 @@ func (m *MultiCellArray) StepWithVoltageMap(voltageMap [][]float64) error {
 	for r := range voltageMap {
 		if len(voltageMap[r]) != m.cols {
 			return fmt.Errorf("voltage map cols mismatch at row %d: got %d, want %d", r, len(voltageMap[r]), m.cols)
+		}
+		for c := range voltageMap[r] {
+			if err := validateAppliedVoltage(voltageMap[r][c], m.material.Thickness); err != nil {
+				return fmt.Errorf("voltage map cell (%d,%d): %w", r, c, err)
+			}
 		}
 	}
 	for r := 0; r < m.rows; r++ {
@@ -82,6 +105,11 @@ func (m *MultiCellArray) StepWithSelector(cells []CellCoord, voltage float64) er
 		if !m.inBounds(cell.Row, cell.Col) {
 			return fmt.Errorf("cell index out of bounds: (%d,%d)", cell.Row, cell.Col)
 		}
+	}
+	if err := validateAppliedVoltage(voltage, m.material.Thickness); err != nil {
+		return err
+	}
+	for _, cell := range cells {
 		m.stepCellLocked(cell.Row, cell.Col, voltage)
 	}
 	return nil
@@ -128,6 +156,17 @@ func (m *MultiCellArray) stepCellLocked(row, col int, voltage float64) CellState
 	m.states[row][col] = s
 	return s
 }
+
+func validateAppliedVoltage(voltage, thickness float64) error {
+	if !isFinite(voltage) {
+		return fmt.Errorf("voltage must be finite: got %.3g V", voltage)
+	}
+	if !isRepresentableField(voltage, thickness) {
+		return fmt.Errorf("voltage %.3g V overflows electric field for thickness %.3e m", voltage, thickness)
+	}
+	return nil
+}
+
 func (m *MultiCellArray) inBounds(row, col int) bool {
 	return row >= 0 && row < m.rows && col >= 0 && col < m.cols
 }

@@ -34,6 +34,9 @@ type TanhEverett struct {
 // If Delta == 0 the distribution collapses to a delta function; the Everett
 // integral is Ps when both alpha > Ec and beta < -Ec, and 0 otherwise.
 func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
+	if !t.hasValidBinding() || !isFiniteTanhEverettValue(alpha) || !isFiniteTanhEverettValue(beta) {
+		return 0
+	}
 	if t.Delta <= 0 {
 		// Degenerate case: infinitely sharp distribution (square loop).
 		// Delta <= 0 prevents NaN from 0/0 and sign-flipped tanh arguments.
@@ -47,8 +50,22 @@ func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
 	descSurv := 1.0 - math.Tanh((beta+t.Ec)/t.Delta)
 
 	val := ascCDF * descSurv * t.Ps * 0.25
+	if !isFiniteTanhEverettValue(val) || val < 0 {
+		return 0
+	}
 	if val > t.Ps {
 		return t.Ps
 	}
 	return val
+}
+
+func (t *TanhEverett) hasValidBinding() bool {
+	return t != nil &&
+		t.Ps > 0 && isFiniteTanhEverettValue(t.Ps) &&
+		t.Ec > 0 && isFiniteTanhEverettValue(t.Ec) &&
+		!math.IsNaN(t.Delta) && !math.IsInf(t.Delta, 0)
+}
+
+func isFiniteTanhEverettValue(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }

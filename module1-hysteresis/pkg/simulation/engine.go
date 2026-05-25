@@ -79,31 +79,42 @@ const (
 
 // NewEngine creates a new simulation engine.
 func NewEngine(material *ferroelectric.HZOMaterial) *Engine {
-	if material == nil {
-		return &Engine{
-			state:     newState(defaultMaxHistory),
-			dt:        defaultDt,
-			waveform:  WaveformSine,
-			frequency: defaultFrequencyHz,
-		}
+	e := newInertEngine()
+	materialSnapshot := snapshotMaterial(material)
+	if materialSnapshot == nil || !isValidMaterialThickness(materialSnapshot.Thickness) {
+		return e
 	}
 
-	model := ferroelectric.NewPreisachModel(material)
+	model := ferroelectric.NewPreisachModel(materialSnapshot)
+	if model == nil {
+		return e
+	}
 
-	e := &Engine{
-		model:     model,
-		material:  material,
+	e.model = model
+	e.material = materialSnapshot
+	e.amplitude = materialSnapshot.CoerciveVoltage() * amplitudeEcMultiplier
+
+	log.Debug("NewEngine: material=%s, dt=%.0f ns, freq=%.0f MHz, amplitude=%.2f V",
+		materialSnapshot.Name, e.dt*1e9, e.frequency/1e6, e.amplitude)
+
+	return e
+}
+
+func newInertEngine() *Engine {
+	return &Engine{
 		state:     newState(defaultMaxHistory),
 		dt:        defaultDt,
 		waveform:  WaveformSine,
 		frequency: defaultFrequencyHz,
-		amplitude: material.CoerciveVoltage() * amplitudeEcMultiplier,
 	}
+}
 
-	log.Debug("NewEngine: material=%s, dt=%.0f ns, freq=%.0f MHz, amplitude=%.2f V",
-		material.Name, e.dt*1e9, e.frequency/1e6, e.amplitude)
-
-	return e
+func snapshotMaterial(material *ferroelectric.HZOMaterial) *ferroelectric.HZOMaterial {
+	if material == nil {
+		return nil
+	}
+	snapshot := *material
+	return &snapshot
 }
 
 func newState(maxHistory int) *State {
@@ -112,6 +123,46 @@ func newState(maxHistory int) *State {
 		PolHistory:     make([]float64, 0, maxHistory),
 		MaxHistory:     maxHistory,
 	}
+}
+
+func isFinite(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
+func isValidMaterialThickness(thickness float64) bool {
+	return thickness > 0 && isFinite(thickness)
+}
+
+func isValidWaveformFrequency(frequency float64) bool {
+	return frequency >= 0 && isFinite(frequency) && isFinite(2*math.Pi*frequency)
+}
+
+func isValidWaveformAmplitude(amplitude float64) bool {
+	return amplitude >= 0 && isFinite(amplitude)
+}
+
+func isRepresentableField(voltage, thickness float64) bool {
+	return isFinite(voltage) && isValidMaterialThickness(thickness) && isFinite(voltage/thickness)
+}
+
+func isValidWaveformType(waveform WaveformType) bool {
+	switch waveform {
+	case WaveformSine, WaveformTriangle, WaveformSquare, WaveformManual:
+		return true
+	default:
+		return false
+	}
+}
+
+func realtimeFrameInterval(targetFPS int) time.Duration {
+	if targetFPS <= 0 {
+		return 0
+	}
+	interval := time.Second / time.Duration(targetFPS)
+	if interval <= 0 {
+		return 0
+	}
+	return interval
 }
 
 // Start begins the simulation loop.
@@ -166,7 +217,7 @@ func (e *Engine) Step() {
 	if !e.running || e.paused {
 		return
 	}
-	if e.material == nil || e.material.Thickness <= 0 {
+	if e.material == nil || e.model == nil || !isValidMaterialThickness(e.material.Thickness) {
 		e.state.ElectricField = 0
 		return
 	}
@@ -177,8 +228,8 @@ func (e *Engine) Step() {
 	// Convert voltage to electric field.
 	e.state.ElectricField = e.state.Voltage / e.material.Thickness
 
-	// Update polarization via Preisach model
-	e.state.Polarization = e.model.Update(e.state.ElectricField)
+	// Update polarization via Preisach model using the engine timestep.
+	e.state.Polarization = e.model.TimeStep(e.state.ElectricField, e.dt)
 	e.state.NormPol = e.model.NormalizedPolarization()
 
 	log.Calculation("Step", map[string]interface{}{
@@ -252,6 +303,9 @@ func (e *Engine) recordHistory() {
 func (e *Engine) SetVoltage(v float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if !isFinite(v) || (e.material != nil && !isRepresentableField(v, e.material.Thickness)) {
+		return
+	}
 	e.state.Voltage = v
 }
 
@@ -260,6 +314,9 @@ func (e *Engine) SetVoltage(v float64) {
 func (e *Engine) SetWaveform(w WaveformType) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if !isValidWaveformType(w) {
+		return
+	}
 	e.waveform = w
 	log.Debug("SetWaveform: %v", w)
 }
@@ -269,6 +326,9 @@ func (e *Engine) SetWaveform(w WaveformType) {
 func (e *Engine) SetFrequency(f float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if !isValidWaveformFrequency(f) {
+		return
+	}
 	e.frequency = f
 	log.Debug("SetFrequency: %.2f Hz", f)
 }
@@ -278,6 +338,9 @@ func (e *Engine) SetFrequency(f float64) {
 func (e *Engine) SetAmplitude(a float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if !isValidWaveformAmplitude(a) || (e.material != nil && !isRepresentableField(a, e.material.Thickness)) {
+		return
+	}
 	e.amplitude = a
 	log.Debug("SetAmplitude: %.2f V", a)
 }
@@ -315,7 +378,9 @@ func (e *Engine) Reset() {
 
 // GetHysteresisData returns P-E data for plotting the hysteresis loop.
 func (e *Engine) GetHysteresisData() ([]float64, []float64) {
-	if e.material == nil || e.material.Thickness <= 0 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if e.material == nil || e.model == nil || !isValidMaterialThickness(e.material.Thickness) {
 		return nil, nil
 	}
 	Emax := e.amplitude / e.material.Thickness
@@ -325,7 +390,12 @@ func (e *Engine) GetHysteresisData() ([]float64, []float64) {
 // RunRealtime runs the simulation in real-time with the given callback.
 // The callback receives a copy of the state to ensure thread safety.
 func (e *Engine) RunRealtime(updateCallback func(State), targetFPS int) {
-	ticker := time.NewTicker(time.Second / time.Duration(targetFPS))
+	frameInterval := realtimeFrameInterval(targetFPS)
+	if frameInterval == 0 {
+		return
+	}
+
+	ticker := time.NewTicker(frameInterval)
 	defer ticker.Stop()
 
 	stepsPerFrame := int(1.0 / (e.dt * float64(targetFPS)))
