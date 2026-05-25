@@ -78,6 +78,33 @@ func TestResponsivePlotMarginKeepsDefaultForLargePanel(t *testing.T) {
 	}
 }
 
+func TestPlotAxisTickLabelsIncludeScientificBounds(t *testing.T) {
+	data := design.NewPlotData("P-E", "Field", "P")
+	data.AddSeries("loop", []design.PlotPoint{{X: -3000, Y: -22.5}, {X: 3000, Y: 24.25}})
+	labels := plotAxisTickLabels(data)
+	if labels.XMin != "-3000" || labels.XMax != "3000" {
+		t.Fatalf("x tick labels = %q, %q; want -3000, 3000", labels.XMin, labels.XMax)
+	}
+	if labels.YMin != "-22.5" || labels.YMax != "24.2" {
+		t.Fatalf("y tick labels = %q, %q; want -22.5, 24.2", labels.YMin, labels.YMax)
+	}
+}
+
+func TestFormatAxisTickRoundsNearIntegerBounds(t *testing.T) {
+	for _, tc := range []struct {
+		value float64
+		want  string
+	}{
+		{36.0000000001, "36"},
+		{-36.0000000001, "-36"},
+		{24.25, "24.2"},
+	} {
+		if got := formatAxisTick(tc.value); got != tc.want {
+			t.Fatalf("formatAxisTick(%v) = %q, want %q", tc.value, got, tc.want)
+		}
+	}
+}
+
 func TestDrawHeatmap_NonNil(t *testing.T) {
 	data := [][]float64{
 		{1, 2, 3},

@@ -3,6 +3,7 @@
 package render
 
 import (
+	"fmt"
 	"math"
 
 	"fecim-lattice-tools/internal/gogpuapp/design"
@@ -133,8 +134,9 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 	dc.Pop()
 
 	// Labels
-	dc.SetRGBA(0.9, 0.9, 0.9, 1)
 	dc.SetLineWidth(1)
+	drawAxisTickLabels(dc, cfg.Data, margin, plotW, plotH, cfg.Height)
+	dc.SetRGBA(0.9, 0.9, 0.9, 1)
 	dc.DrawStringAnchored(cfg.Data.XLabel, margin+plotW/2, cfg.Height-10, 0.5, 1)
 	drawYAxisLabel(dc, cfg.Data.YLabel, margin, plotH)
 	dc.DrawStringAnchored(cfg.Data.Title, margin+plotW/2, 18, 0.5, 0)
@@ -148,6 +150,42 @@ type axisLabelPlacement struct {
 	Angle   float64
 	AnchorX float64
 	AnchorY float64
+}
+
+type axisTickLabels struct {
+	XMin string
+	XMax string
+	YMin string
+	YMax string
+}
+
+func drawAxisTickLabels(dc *gg.Context, data *design.PlotData, margin, plotW, plotH, panelHeight float64) {
+	labels := plotAxisTickLabels(data)
+	dc.SetRGBA(0.72, 0.76, 0.74, 1)
+	dc.DrawStringAnchored(labels.XMin, margin, panelHeight-margin+14, 0.5, 0)
+	dc.DrawStringAnchored(labels.XMax, margin+plotW, panelHeight-margin+14, 0.5, 0)
+	dc.DrawStringAnchored(labels.YMax, margin-8, margin, 1, 0.5)
+	dc.DrawStringAnchored(labels.YMin, margin-8, margin+plotH, 1, 0.5)
+}
+
+func plotAxisTickLabels(data *design.PlotData) axisTickLabels {
+	if data == nil {
+		return axisTickLabels{}
+	}
+	return axisTickLabels{
+		XMin: formatAxisTick(data.XMin),
+		XMax: formatAxisTick(data.XMax),
+		YMin: formatAxisTick(data.YMin),
+		YMax: formatAxisTick(data.YMax),
+	}
+}
+
+func formatAxisTick(value float64) string {
+	rounded := math.Round(value)
+	if math.Abs(value) >= 1000 || math.Abs(value-rounded) < 1e-6 {
+		return fmt.Sprintf("%.0f", rounded)
+	}
+	return fmt.Sprintf("%.1f", value)
 }
 
 func drawYAxisLabel(dc *gg.Context, label string, margin, plotH float64) {
