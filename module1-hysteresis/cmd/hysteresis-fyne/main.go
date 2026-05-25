@@ -6,10 +6,10 @@
 // This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
-//   - Default: Fyne GUI with real-time P-E curve animation (recommended)
+//   - Default: deprecated legacy Fyne GUI kept only behind -tags legacy_fyne
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
-//   - --vulkan: Vulkan-based graphical interface (advanced)
+//   - --vulkan: deprecated Vulkan fallback path
 //
 // Common flags:
 //   - --json: Output results as JSON
@@ -33,6 +33,8 @@ import (
 )
 
 // Available materials for --material flag
+const legacyFyneDeprecationNotice = "DEPRECATED legacy Fyne command. Use the default gogpu/ui shell instead: CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis"
+
 var materialNames = map[string]*ferroelectric.HZOMaterial{
 	"default":      nil, // Will use DefaultHZO()
 	"fecim":        nil, // Will use FeCIMMaterial()
@@ -136,6 +138,7 @@ func Run(args []string) error {
 	fs.Usage = func() {
 		out := fs.Output()
 		fmt.Fprintln(out, "FeCIM Hysteresis Visualizer")
+		fmt.Fprintln(out, legacyFyneDeprecationNotice)
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Usage:")
 		fmt.Fprintln(out, "  fecim-lattice-tools hysteresis [options]")
