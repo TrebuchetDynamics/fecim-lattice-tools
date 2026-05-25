@@ -23,7 +23,9 @@ type Module struct {
 func New() *Module {
 	materials := physics.AllMaterials()
 	defaultMat := "HZO (Si-doped, Park 2015 midpoint)"
+	var material *physics.HZOMaterial
 	if len(materials) > 0 && materials[0] != nil {
+		material = materials[0]
 		defaultMat = materials[0].Name
 	}
 	m := &Module{
@@ -32,6 +34,7 @@ func New() *Module {
 			Materials:        materials,
 			FieldRange:       FieldRange{MinField: -3000, MaxField: 3000},
 			Waveform:         WaveformSine,
+			LevelCalibration: defaultLevelCalibrationForMaterial(material),
 		},
 	}
 	m.computeLoopForCurrentMaterial()
@@ -56,6 +59,7 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 			for _, mat := range m.state.Materials {
 				if mat != nil && mat.Name == name {
 					m.state.SelectedMaterial = name
+					m.state.LevelCalibration = levelCalibrationForMaterialChange(mat, m.state.LevelCalibration)
 					m.computeLoopForCurrentMaterial()
 					return nil
 				}
@@ -82,6 +86,14 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.runPUND()
 	case EventRunFORC:
 		return m.runFORC(action.Payload)
+	case EventRunLevelCalibration:
+		return m.runLevelCalibration()
+	case EventSetLevelCalibrationLevelCount:
+		return m.setLevelCalibrationLevelCount(action.Payload["level_count"])
+	case EventSetLevelCalibrationTargetRange:
+		return m.setLevelCalibrationTargetRange(action.Payload["target_range"])
+	case EventSetLevelCalibrationTemperature:
+		return m.setLevelCalibrationTemperature(action.Payload["temperature_k"])
 	case EventExportPUNDCSV:
 		return m.exportPUNDCSV(action.Payload["path"])
 	case EventExportFORCSweep:
@@ -97,6 +109,115 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
+
+func defaultLevelCalibrationForMaterial(mat *physics.HZOMaterial) LevelCalibrationState {
+	levelCount := physics.DefaultLevels
+	targetRange := 0.90
+	if mat != nil {
+		levelCount = mat.GetNumLevels()
+		if levelCount < 2 || levelCount > 64 {
+			levelCount = physics.DefaultLevels
+		}
+		if mat.TargetRangeFrac >= 0.5 && mat.TargetRangeFrac <= 1.0 {
+			targetRange = mat.TargetRangeFrac
+		}
+	}
+	return LevelCalibrationState{
+		LevelCount:      levelCount,
+		TargetRangeFrac: targetRange,
+		TemperatureK:    300,
+		Status:          LevelCalibrationNotCalibrated,
+	}
+}
+
+func levelCalibrationForMaterialChange(mat *physics.HZOMaterial, previous LevelCalibrationState) LevelCalibrationState {
+	next := defaultLevelCalibrationForMaterial(mat)
+	if previous.TemperatureK >= 200 && previous.TemperatureK <= 700 && !math.IsNaN(previous.TemperatureK) && !math.IsInf(previous.TemperatureK, 0) {
+		next.TemperatureK = previous.TemperatureK
+	}
+	if previous.HasResult {
+		next.Result = previous.Result
+		next.HasResult = true
+		next.Status = LevelCalibrationStale
+	}
+	return next
+}
+
+func (m *Module) runLevelCalibration() error {
+	calibration := m.state.LevelCalibration
+	result, err := physics.CalibrateLevelsLK(physics.LevelCalibrationInput{
+		Material:        m.currentMaterial(),
+		LevelCount:      calibration.LevelCount,
+		TargetRangeFrac: calibration.TargetRangeFrac,
+		TemperatureK:    calibration.TemperatureK,
+	})
+	if err != nil {
+		m.state.LevelCalibration.Error = err.Error()
+		return nil
+	}
+	m.state.LevelCalibration.Result = result
+	m.state.LevelCalibration.HasResult = true
+	m.state.LevelCalibration.Status = LevelCalibrationFresh
+	m.state.LevelCalibration.Error = ""
+	return nil
+}
+
+func (m *Module) setLevelCalibrationLevelCount(raw string) error {
+	levelCount, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil {
+		return fmt.Errorf("hysteresis: invalid level calibration level count %q", raw)
+	}
+	if levelCount < 2 || levelCount > 64 {
+		return fmt.Errorf("hysteresis: level calibration level count %d outside [2,64]", levelCount)
+	}
+	if m.state.LevelCalibration.LevelCount == levelCount {
+		return nil
+	}
+	m.state.LevelCalibration.LevelCount = levelCount
+	m.markLevelCalibrationInputsChanged()
+	return nil
+}
+
+func (m *Module) setLevelCalibrationTargetRange(raw string) error {
+	targetRange, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
+	if err != nil {
+		return fmt.Errorf("hysteresis: invalid level calibration target range %q", raw)
+	}
+	if targetRange < 0.5 || targetRange > 1.0 || math.IsNaN(targetRange) || math.IsInf(targetRange, 0) {
+		return fmt.Errorf("hysteresis: level calibration target range %.3f outside [0.5,1.0]", targetRange)
+	}
+	if math.Abs(m.state.LevelCalibration.TargetRangeFrac-targetRange) < 1e-9 {
+		return nil
+	}
+	m.state.LevelCalibration.TargetRangeFrac = targetRange
+	m.markLevelCalibrationInputsChanged()
+	return nil
+}
+
+func (m *Module) setLevelCalibrationTemperature(raw string) error {
+	temperatureK, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
+	if err != nil {
+		return fmt.Errorf("hysteresis: invalid level calibration temperature %q", raw)
+	}
+	if temperatureK < 200 || temperatureK > 700 || math.IsNaN(temperatureK) || math.IsInf(temperatureK, 0) {
+		return fmt.Errorf("hysteresis: level calibration temperature %.1f K outside [200,700]", temperatureK)
+	}
+	if math.Abs(m.state.LevelCalibration.TemperatureK-temperatureK) < 1e-9 {
+		return nil
+	}
+	m.state.LevelCalibration.TemperatureK = temperatureK
+	m.markLevelCalibrationInputsChanged()
+	return nil
+}
+
+func (m *Module) markLevelCalibrationInputsChanged() {
+	if m.state.LevelCalibration.HasResult {
+		m.state.LevelCalibration.Status = LevelCalibrationStale
+	} else {
+		m.state.LevelCalibration.Status = LevelCalibrationNotCalibrated
+	}
+	m.state.LevelCalibration.Error = ""
+}
 
 func (m *Module) setWaveform(waveform string) error {
 	if !isValidWaveform(waveform) {

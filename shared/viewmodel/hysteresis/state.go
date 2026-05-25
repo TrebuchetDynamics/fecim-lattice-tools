@@ -27,6 +27,23 @@ type HysteresisState struct {
 	CSVExportPath    string                 `json:"csv_export_path"`
 	CSVExportBytes   int                    `json:"csv_export_bytes"`
 	CSVExportContent string                 `json:"csv_export_content,omitempty"`
+	LevelCalibration LevelCalibrationState  `json:"level_calibration"`
+}
+
+const (
+	LevelCalibrationNotCalibrated = "not calibrated"
+	LevelCalibrationStale         = "stale"
+	LevelCalibrationFresh         = "fresh"
+)
+
+type LevelCalibrationState struct {
+	LevelCount      int                            `json:"level_count"`
+	TargetRangeFrac float64                        `json:"target_range_frac"`
+	TemperatureK    float64                        `json:"temperature_k"`
+	Status          string                         `json:"status"`
+	Result          physics.LevelCalibrationResult `json:"result"`
+	Error           string                         `json:"error,omitempty"`
+	HasResult       bool                           `json:"has_result"`
 }
 
 type FieldRange struct {

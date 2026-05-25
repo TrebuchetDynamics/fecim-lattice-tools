@@ -115,6 +115,156 @@ func TestSnapshotExposesPUNDAndFORCActions(t *testing.T) {
 	}
 }
 
+func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
+	m := New()
+	before := m.Snapshot()
+	if got := snapshotMetricValue(before, "level_calibration_state"); got != "not calibrated" {
+		t.Fatalf("initial level_calibration_state = %q, want not calibrated", got)
+	}
+	if _, ok := snapshotActionsByID(before)[EventRunLevelCalibration]; !ok {
+		t.Fatalf("snapshot actions missing %q", EventRunLevelCalibration)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("ApplyAction run level calibration: %v", err)
+	}
+
+	after := m.Snapshot()
+	if got := snapshotMetricValue(after, "level_calibration_state"); got != "fresh" {
+		t.Fatalf("level_calibration_state after run = %q, want fresh", got)
+	}
+	if got := snapshotMetricValue(after, "level_calibration_method"); !strings.Contains(got, "LK quasi-static") {
+		t.Fatalf("level_calibration_method = %q, want LK quasi-static method", got)
+	}
+	if got := snapshotMetricValue(after, "level_calibration_entries"); !strings.Contains(got, "ascending") || !strings.Contains(got, "descending") {
+		t.Fatalf("level_calibration_entries = %q, want ascending/descending entry counts", got)
+	}
+	if got := snapshotMetricValue(after, "level_calibration_monotonicity"); got != "ascending/descending monotonic" {
+		t.Fatalf("level_calibration_monotonicity = %q, want ascending/descending monotonic", got)
+	}
+	section := snapshotSectionBody(after, "level_calibration_summary")
+	for _, want := range []string{"LK quasi-static", "Target range", "SIMULATION OUTPUT", "not measured"} {
+		if !strings.Contains(section, want) {
+			t.Fatalf("level calibration summary missing %q: %q", want, section)
+		}
+	}
+}
+
+func TestApplyActionSetLevelCalibrationLevelCountMarksFreshResultStale(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSetLevelCalibrationLevelCount,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"level_count": "16"},
+	}); err != nil {
+		t.Fatalf("set level calibration level count: %v", err)
+	}
+
+	snapshot := m.Snapshot()
+	if got := snapshotMetricValue(snapshot, "level_calibration_state"); got != "stale" {
+		t.Fatalf("level_calibration_state after level count change = %q, want stale", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_inputs"); !strings.Contains(got, "16 levels") {
+		t.Fatalf("level_calibration_inputs = %q, want 16 levels", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_entries"); !strings.Contains(got, "30 ascending") {
+		t.Fatalf("stale result entries = %q, want prior 30-level summary preserved", got)
+	}
+}
+
+func TestApplyActionSetLevelCalibrationTargetRangeMarksFreshResultStale(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSetLevelCalibrationTargetRange,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"target_range": "0.70"},
+	}); err != nil {
+		t.Fatalf("set level calibration target range: %v", err)
+	}
+
+	snapshot := m.Snapshot()
+	if got := snapshotMetricValue(snapshot, "level_calibration_state"); got != "stale" {
+		t.Fatalf("level_calibration_state after target range change = %q, want stale", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_inputs"); !strings.Contains(got, "target 70%") {
+		t.Fatalf("level_calibration_inputs = %q, want target 70%%", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_entries"); !strings.Contains(got, "30 ascending") {
+		t.Fatalf("stale result entries = %q, want prior summary preserved", got)
+	}
+}
+
+func TestApplyActionSetLevelCalibrationTemperatureMarksFreshResultStale(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSetLevelCalibrationTemperature,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"temperature_k": "350"},
+	}); err != nil {
+		t.Fatalf("set level calibration temperature: %v", err)
+	}
+
+	snapshot := m.Snapshot()
+	if got := snapshotMetricValue(snapshot, "level_calibration_state"); got != "stale" {
+		t.Fatalf("level_calibration_state after temperature change = %q, want stale", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_inputs"); !strings.Contains(got, "350 K") {
+		t.Fatalf("level_calibration_inputs = %q, want 350 K", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_entries"); !strings.Contains(got, "30 ascending") {
+		t.Fatalf("stale result entries = %q, want prior summary preserved", got)
+	}
+}
+
+func TestApplyActionSelectMaterialResetsCalibrationDefaultsAndPreservesTemperature(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+	for _, action := range []viewmodel.Action{
+		{ID: EventSetLevelCalibrationLevelCount, Kind: viewmodel.ActionCommand, Payload: map[string]string{"level_count": "16"}},
+		{ID: EventSetLevelCalibrationTargetRange, Kind: viewmodel.ActionCommand, Payload: map[string]string{"target_range": "0.70"}},
+		{ID: EventSetLevelCalibrationTemperature, Kind: viewmodel.ActionCommand, Payload: map[string]string{"temperature_k": "350"}},
+	} {
+		if err := m.ApplyAction(action); err != nil {
+			t.Fatalf("ApplyAction(%s): %v", action.ID, err)
+		}
+	}
+
+	newMaterial := secondSnapshotMaterialName(t, m.Snapshot(), snapshotMetricValue(m.Snapshot(), "material"))
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSelectMaterial,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"material": newMaterial},
+	}); err != nil {
+		t.Fatalf("select material %q: %v", newMaterial, err)
+	}
+
+	snapshot := m.Snapshot()
+	if got := snapshotMetricValue(snapshot, "level_calibration_state"); got != "stale" {
+		t.Fatalf("level_calibration_state after material change = %q, want stale because prior result no longer matches", got)
+	}
+	inputs := snapshotMetricValue(snapshot, "level_calibration_inputs")
+	if !strings.Contains(inputs, "350 K") {
+		t.Fatalf("level_calibration_inputs = %q, want preserved 350 K", inputs)
+	}
+	if strings.Contains(inputs, "16 levels") || strings.Contains(inputs, "target 70%") {
+		t.Fatalf("level_calibration_inputs = %q, want material-default level count and target range", inputs)
+	}
+}
+
 func TestApplyActionSetWaveformUpdatesSnapshotAndLoop(t *testing.T) {
 	m := New()
 	before := m.Snapshot()
@@ -421,6 +571,17 @@ func snapshotActionsByID(snapshot viewmodel.ModuleSnapshot) map[string]viewmodel
 		actions[action.ID] = action
 	}
 	return actions
+}
+
+func secondSnapshotMaterialName(t *testing.T, snapshot viewmodel.ModuleSnapshot, current string) string {
+	t.Helper()
+	for _, section := range snapshot.Sections {
+		if section.Category == "research" && strings.HasPrefix(section.ID, "material_") && section.Title != current {
+			return section.Title
+		}
+	}
+	t.Fatalf("no second material found in snapshot sections; current=%q", current)
+	return ""
 }
 
 func snapshotMetricValue(snapshot viewmodel.ModuleSnapshot, id string) string {

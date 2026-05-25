@@ -97,6 +97,15 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 		circuitButton("FORC Matrix", false, actionOrDefault(actions, hysteresisvm.EventExportFORCMatrix, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("FORC Meta", false, actionOrDefault(actions, hysteresisvm.EventExportFORCMeta, viewmodel.ActionCommand), theme, onAction),
 	}
+	calibrationButtons := []widget.Widget{
+		circuitButton("Run Level Calibration", false, actionOrDefault(actions, hysteresisvm.EventRunLevelCalibration, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("16 Levels", false, levelCalibrationLevelCountAction("16"), theme, onAction),
+		circuitButton("30 Levels", false, levelCalibrationLevelCountAction("30"), theme, onAction),
+		circuitButton("70% Range", false, levelCalibrationTargetRangeAction("0.70"), theme, onAction),
+		circuitButton("90% Range", false, levelCalibrationTargetRangeAction("0.90"), theme, onAction),
+		circuitButton("300 K", false, levelCalibrationTemperatureAction("300"), theme, onAction),
+		circuitButton("350 K", false, levelCalibrationTemperatureAction("350"), theme, onAction),
+	}
 
 	return primitives.Box(
 		primitives.Text("Hysteresis Controls").FontSize(14).Bold(),
@@ -104,6 +113,7 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 		controlRow("Waveform", waveformButtons, theme),
 		controlRow("Field", fieldButtons, theme),
 		controlRow("Diagnostics", diagnosticButtons, theme),
+		controlRow("Level Calibration", calibrationButtons, theme),
 	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
 }
 
@@ -166,6 +176,30 @@ func fieldRangeAction(min, max string) viewmodel.Action {
 			"min": min,
 			"max": max,
 		},
+	}
+}
+
+func levelCalibrationLevelCountAction(levelCount string) viewmodel.Action {
+	return viewmodel.Action{
+		ID:      hysteresisvm.EventSetLevelCalibrationLevelCount,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"level_count": levelCount},
+	}
+}
+
+func levelCalibrationTargetRangeAction(targetRange string) viewmodel.Action {
+	return viewmodel.Action{
+		ID:      hysteresisvm.EventSetLevelCalibrationTargetRange,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"target_range": targetRange},
+	}
+}
+
+func levelCalibrationTemperatureAction(temperatureK string) viewmodel.Action {
+	return viewmodel.Action{
+		ID:      hysteresisvm.EventSetLevelCalibrationTemperature,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"temperature_k": temperatureK},
 	}
 }
 

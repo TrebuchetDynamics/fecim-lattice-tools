@@ -274,6 +274,68 @@ func TestHysteresisViewDiagnosticExportButtonsDispatchActions(t *testing.T) {
 	}
 }
 
+func TestHysteresisViewLevelCalibrationButtonDispatchesRunAction(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 15 {
+		t.Fatalf("hysteresis button count = %d, want level calibration controls after diagnostics", len(buttons))
+	}
+
+	clickButton(buttons[14])
+
+	if len(actions) != 1 {
+		t.Fatalf("dispatched action count = %d, want 1", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventRunLevelCalibration {
+		t.Fatalf("action ID = %q, want %q", actions[0].ID, hysteresisvm.EventRunLevelCalibration)
+	}
+}
+
+func TestHysteresisViewLevelCalibrationPresetButtonsDispatchInputActions(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 21 {
+		t.Fatalf("hysteresis button count = %d, want level calibration input presets", len(buttons))
+	}
+
+	clickButton(buttons[15])
+	clickButton(buttons[17])
+	clickButton(buttons[20])
+
+	want := []viewmodel.Action{
+		{ID: hysteresisvm.EventSetLevelCalibrationLevelCount, Payload: map[string]string{"level_count": "16"}},
+		{ID: hysteresisvm.EventSetLevelCalibrationTargetRange, Payload: map[string]string{"target_range": "0.70"}},
+		{ID: hysteresisvm.EventSetLevelCalibrationTemperature, Payload: map[string]string{"temperature_k": "350"}},
+	}
+	if len(actions) != len(want) {
+		t.Fatalf("dispatched action count = %d, want %d", len(actions), len(want))
+	}
+	for i := range want {
+		if actions[i].ID != want[i].ID {
+			t.Fatalf("action[%d].ID = %q, want %q", i, actions[i].ID, want[i].ID)
+		}
+		for key, wantValue := range want[i].Payload {
+			if got := actions[i].Payload[key]; got != wantValue {
+				t.Fatalf("action[%d].Payload[%q] = %q, want %q", i, key, got, wantValue)
+			}
+		}
+	}
+}
+
 func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
 	vm := hysteresisvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {

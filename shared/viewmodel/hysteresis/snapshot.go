@@ -13,6 +13,7 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: "field_max", Label: "Max Field", Value: fmt.Sprintf("%.0f kV/cm", state.FieldRange.MaxField)},
 		{ID: "waveform", Label: "Waveform", Value: state.Waveform},
 	}
+	metrics = append(metrics, levelCalibrationMetrics(state.LevelCalibration)...)
 	if state.Pr > 0 {
 		metrics = append(metrics,
 			viewmodel.Metric{ID: "pr", Label: "Pr (P at E=0)", Value: fmt.Sprintf("%.1f µC/cm²", state.Pr)},
@@ -73,6 +74,14 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 	}
 
 	sections := []viewmodel.Section{}
+	if state.LevelCalibration.HasResult {
+		sections = append(sections, viewmodel.Section{
+			ID:       "level_calibration_summary",
+			Title:    "Level Calibration Summary",
+			Body:     levelCalibrationSummaryBody(state.LevelCalibration),
+			Category: "design",
+		})
+	}
 	if state.PUND.Available {
 		sections = append(sections, viewmodel.Section{
 			ID:       "diagnostic_pund",
@@ -142,6 +151,10 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: EventExportCSV, Label: "Export CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventRunPUND, Label: "Run PUND", Kind: viewmodel.ActionCommand},
 		{ID: EventRunFORC, Label: "Run FORC", Kind: viewmodel.ActionCommand},
+		{ID: EventRunLevelCalibration, Label: "Run Level Calibration", Kind: viewmodel.ActionCommand},
+		{ID: EventSetLevelCalibrationLevelCount, Label: "Set Level Count", Kind: viewmodel.ActionCommand},
+		{ID: EventSetLevelCalibrationTargetRange, Label: "Set Target Range", Kind: viewmodel.ActionCommand},
+		{ID: EventSetLevelCalibrationTemperature, Label: "Set Calibration Temperature", Kind: viewmodel.ActionCommand},
 		{ID: EventExportPUNDCSV, Label: "Export PUND CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventExportFORCSweep, Label: "Export FORC Sweep CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventExportFORCMatrix, Label: "Export FORC Matrix CSV", Kind: viewmodel.ActionCommand},
@@ -195,6 +208,57 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		Actions:  actions,
 		Plots:    plots,
 	}
+}
+
+func levelCalibrationMetrics(cal LevelCalibrationState) []viewmodel.Metric {
+	status := cal.Status
+	if status == "" {
+		status = LevelCalibrationNotCalibrated
+	}
+	metrics := []viewmodel.Metric{
+		{ID: "level_calibration_state", Label: "Level Calibration", Value: status},
+		{ID: "level_calibration_inputs", Label: "Level Calibration Inputs", Value: fmt.Sprintf("%d levels, target %.0f%%, %.0f K", cal.LevelCount, cal.TargetRangeFrac*100, cal.TemperatureK)},
+	}
+	if cal.Error != "" {
+		metrics = append(metrics, viewmodel.Metric{ID: "level_calibration_error", Label: "Level Calibration Error", Value: cal.Error})
+	}
+	if !cal.HasResult {
+		return metrics
+	}
+	result := cal.Result
+	metrics = append(metrics,
+		viewmodel.Metric{ID: "level_calibration_method", Label: "Level Calibration Method", Value: result.Method},
+		viewmodel.Metric{ID: "level_calibration_entries", Label: "Level Calibration Entries", Value: fmt.Sprintf("%d ascending / %d descending", len(result.AscendingFields), len(result.DescendingFields))},
+		viewmodel.Metric{ID: "level_calibration_field_range", Label: "Level Calibration Field Range", Value: fmt.Sprintf("asc %.0f..%.0f kV/cm, desc %.0f..%.0f kV/cm", result.AscendingMinField*1e-5, result.AscendingMaxField*1e-5, result.DescendingMinField*1e-5, result.DescendingMaxField*1e-5)},
+	)
+	monotonicity := "needs review"
+	if result.AscendingMonotonic && result.DescendingMonotonic {
+		monotonicity = "ascending/descending monotonic"
+	}
+	metrics = append(metrics, viewmodel.Metric{ID: "level_calibration_monotonicity", Label: "Level Calibration Monotonicity", Value: monotonicity})
+	return metrics
+}
+
+func levelCalibrationSummaryBody(cal LevelCalibrationState) string {
+	result := cal.Result
+	monotonicity := "needs review"
+	if result.AscendingMonotonic && result.DescendingMonotonic {
+		monotonicity = "ascending/descending monotonic"
+	}
+	return fmt.Sprintf("%s for %s: %d levels at %.0f K. Target range %.0f%%. Entries: %d ascending, %d descending. Field ranges: ascending %.0f..%.0f kV/cm, descending %.0f..%.0f kV/cm. Monotonicity: %s. SIMULATION OUTPUT — level mapping is not measured device calibration.",
+		result.Method,
+		result.MaterialName,
+		result.LevelCount,
+		result.TemperatureK,
+		result.TargetRangeFrac*100,
+		len(result.AscendingFields),
+		len(result.DescendingFields),
+		result.AscendingMinField*1e-5,
+		result.AscendingMaxField*1e-5,
+		result.DescendingMinField*1e-5,
+		result.DescendingMaxField*1e-5,
+		monotonicity,
+	)
 }
 
 func buildPUNDWaveformPlot(summary PUNDSummary) (viewmodel.PlotData, bool) {
