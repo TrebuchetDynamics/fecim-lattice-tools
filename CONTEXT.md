@@ -57,7 +57,7 @@ A user-visible explanation that a Level Calibration Workflow run could not produ
 _Avoid_: failed validation, failed measurement, invalid hardware
 
 **Level Calibration Export**:
-An explicit user action that writes Level Calibration Workflow artifacts for review or reuse. It is separate from running calibration and must carry the same simulation boundary language as the summary.
+An explicit user action that writes Level Calibration Workflow artifacts for review or reuse. It is separate from running calibration and must carry the same simulation boundary language as the summary. It exports only a fresh Level Calibration Summary whose results match the current inputs, and is the preferred way to expose detailed per-level mapping data before adding dense on-screen lookup tables.
 _Avoid_: automatic persistence, hidden cache write, measured calibration certificate
 
 **Educational Simulation Boundary**:

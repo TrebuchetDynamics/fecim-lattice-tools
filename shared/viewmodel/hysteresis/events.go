@@ -12,6 +12,7 @@ const (
 	EventSetLevelCalibrationLevelCount  = "set_level_calibration_level_count"
 	EventSetLevelCalibrationTargetRange = "set_level_calibration_target_range"
 	EventSetLevelCalibrationTemperature = "set_level_calibration_temperature"
+	EventExportLevelCalibration         = "export_level_calibration_json"
 	EventExportPUNDCSV                  = "export_pund_csv"
 	EventExportFORCSweep                = "export_forc_sweep_csv"
 	EventExportFORCMatrix               = "export_forc_matrix_csv"

@@ -1,6 +1,7 @@
 package hysteresis
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,8 +122,12 @@ func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
 	if got := snapshotMetricValue(before, "level_calibration_state"); got != "not calibrated" {
 		t.Fatalf("initial level_calibration_state = %q, want not calibrated", got)
 	}
-	if _, ok := snapshotActionsByID(before)[EventRunLevelCalibration]; !ok {
+	actions := snapshotActionsByID(before)
+	if _, ok := actions[EventRunLevelCalibration]; !ok {
 		t.Fatalf("snapshot actions missing %q", EventRunLevelCalibration)
+	}
+	if _, ok := actions[EventExportLevelCalibration]; !ok {
+		t.Fatalf("snapshot actions missing %q", EventExportLevelCalibration)
 	}
 
 	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
@@ -147,6 +152,98 @@ func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
 		if !strings.Contains(section, want) {
 			t.Fatalf("level calibration summary missing %q: %q", want, section)
 		}
+	}
+}
+
+func TestApplyActionExportLevelCalibrationBuffersFreshJSONArtifact(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: EventExportLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("export level calibration: %v", err)
+	}
+
+	snapshot := m.Snapshot()
+	if got := snapshotMetricValue(snapshot, "level_calibration_export_path"); got != "artifact buffer" {
+		t.Fatalf("level_calibration_export_path = %q, want artifact buffer", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_export"); !strings.Contains(got, "buffered") {
+		t.Fatalf("level_calibration_export = %q, want buffered status", got)
+	}
+	if got := snapshotMetricValue(snapshot, "level_calibration_export_bytes"); got == "" || got == "0 bytes" {
+		t.Fatalf("level_calibration_export_bytes = %q, want non-zero bytes", got)
+	}
+
+	content := levelCalibrationExportContent(t, m)
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(content), &payload); err != nil {
+		t.Fatalf("level calibration export JSON did not unmarshal: %v\n%s", err, content)
+	}
+	if got := payload["artifact_type"]; got != "level_calibration" {
+		t.Fatalf("artifact_type = %#v, want level_calibration", got)
+	}
+	if got := payload["status"]; got != "fresh" {
+		t.Fatalf("status = %#v, want fresh", got)
+	}
+	if got := payload["boundary_notice"]; !strings.Contains(got.(string), "not measured") {
+		t.Fatalf("boundary_notice = %#v, want simulation boundary", got)
+	}
+	levels, ok := payload["levels"].([]any)
+	if !ok || len(levels) != 30 {
+		t.Fatalf("levels length = %d ok=%v, want 30", len(levels), ok)
+	}
+	first, ok := levels[0].(map[string]any)
+	if !ok {
+		t.Fatalf("first level row type = %T, want object", levels[0])
+	}
+	for _, key := range []string{"level_index", "normalized_target", "ascending_field_vm", "descending_field_vm"} {
+		if _, ok := first[key]; !ok {
+			t.Fatalf("first level row missing %q: %#v", key, first)
+		}
+	}
+}
+
+func TestApplyActionExportLevelCalibrationRequiresFreshResult(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventExportLevelCalibration, Kind: viewmodel.ActionCommand}); err == nil || !strings.Contains(err.Error(), "run level calibration") {
+		t.Fatalf("export before calibration error = %v, want run-first error", err)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: EventSetLevelCalibrationLevelCount, Kind: viewmodel.ActionCommand, Payload: map[string]string{"level_count": "16"}}); err != nil {
+		t.Fatalf("set level count: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: EventExportLevelCalibration, Kind: viewmodel.ActionCommand}); err == nil || !strings.Contains(err.Error(), "rerun level calibration") {
+		t.Fatalf("export stale calibration error = %v, want rerun error", err)
+	}
+	if got := snapshotMetricValue(m.Snapshot(), "level_calibration_export"); got != "" {
+		t.Fatalf("level_calibration_export after rejected stale export = %q, want empty", got)
+	}
+}
+
+func TestApplyActionExportLevelCalibrationWritesValidatedPath(t *testing.T) {
+	m := New()
+	path := filepath.Join(t.TempDir(), "level-calibration.json")
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: EventExportLevelCalibration, Kind: viewmodel.ActionCommand, Payload: map[string]string{"path": path}}); err != nil {
+		t.Fatalf("export level calibration path: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read level calibration export: %v", err)
+	}
+	if string(raw) != m.state.LevelCalibration.ExportContent {
+		t.Fatalf("file content does not match buffered export content")
+	}
+	if got := snapshotMetricValue(m.Snapshot(), "level_calibration_export_path"); got != path {
+		t.Fatalf("level_calibration_export_path = %q, want %q", got, path)
 	}
 }
 
@@ -582,6 +679,14 @@ func secondSnapshotMaterialName(t *testing.T, snapshot viewmodel.ModuleSnapshot,
 	}
 	t.Fatalf("no second material found in snapshot sections; current=%q", current)
 	return ""
+}
+
+func levelCalibrationExportContent(t *testing.T, m *Module) string {
+	t.Helper()
+	if m.state.LevelCalibration.ExportContent == "" {
+		t.Fatal("level calibration export content is empty")
+	}
+	return m.state.LevelCalibration.ExportContent
 }
 
 func snapshotMetricValue(snapshot viewmodel.ModuleSnapshot, id string) string {

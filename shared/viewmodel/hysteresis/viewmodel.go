@@ -94,6 +94,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.setLevelCalibrationTargetRange(action.Payload["target_range"])
 	case EventSetLevelCalibrationTemperature:
 		return m.setLevelCalibrationTemperature(action.Payload["temperature_k"])
+	case EventExportLevelCalibration:
+		return m.exportLevelCalibrationJSON(action.Payload["path"])
 	case EventExportPUNDCSV:
 		return m.exportPUNDCSV(action.Payload["path"])
 	case EventExportFORCSweep:
@@ -217,6 +219,122 @@ func (m *Module) markLevelCalibrationInputsChanged() {
 		m.state.LevelCalibration.Status = LevelCalibrationNotCalibrated
 	}
 	m.state.LevelCalibration.Error = ""
+}
+
+func (m *Module) exportLevelCalibrationJSON(path string) error {
+	calibration := m.state.LevelCalibration
+	if !calibration.HasResult || calibration.Status == LevelCalibrationNotCalibrated {
+		return fmt.Errorf("hysteresis: run level calibration before export")
+	}
+	if calibration.Status != LevelCalibrationFresh {
+		return fmt.Errorf("hysteresis: rerun level calibration before export; current calibration is %s", calibration.Status)
+	}
+	content, err := buildLevelCalibrationJSON(calibration)
+	if err != nil {
+		return err
+	}
+	statusVerb, exportPath, err := bufferOrWriteTextArtifact(path, content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: export level calibration JSON: %w", err)
+	}
+	m.state.LevelCalibration.ExportStatus = fmt.Sprintf("%s Level Calibration JSON", statusVerb)
+	m.state.LevelCalibration.ExportPath = exportPath
+	m.state.LevelCalibration.ExportBytes = len(content)
+	m.state.LevelCalibration.ExportContent = content
+	return nil
+}
+
+func buildLevelCalibrationJSON(calibration LevelCalibrationState) (string, error) {
+	result := calibration.Result
+	levels := make([]levelCalibrationExportLevel, len(result.AscendingFields))
+	maxLevel := len(result.AscendingFields) - 1
+	if maxLevel < 1 {
+		maxLevel = 1
+	}
+	for idx := range result.AscendingFields {
+		descending := 0.0
+		if idx < len(result.DescendingFields) {
+			descending = result.DescendingFields[idx]
+		}
+		levels[idx] = levelCalibrationExportLevel{
+			LevelIndex:        idx,
+			NormalizedTarget:  -1.0 + 2.0*float64(idx)/float64(maxLevel),
+			AscendingFieldVM:  result.AscendingFields[idx],
+			DescendingFieldVM: descending,
+		}
+	}
+	monotonicity := "needs review"
+	if result.AscendingMonotonic && result.DescendingMonotonic {
+		monotonicity = "ascending/descending monotonic"
+	}
+	payload := levelCalibrationExportPayload{
+		SchemaVersion:  1,
+		ArtifactType:   "level_calibration",
+		BoundaryNotice: "SIMULATION OUTPUT — level mapping is not measured device calibration.",
+		Material:       result.MaterialName,
+		Inputs: levelCalibrationExportInputs{
+			LevelCount:      result.LevelCount,
+			TargetRangeFrac: result.TargetRangeFrac,
+			TemperatureK:    result.TemperatureK,
+		},
+		Method: result.Method,
+		Status: calibration.Status,
+		Units: map[string]string{
+			"normalized_target": "unitless_fraction_of_selected_target_range",
+			"field":             "V/m",
+		},
+		Summary: levelCalibrationExportSummary{
+			AscendingEntries:     len(result.AscendingFields),
+			DescendingEntries:    len(result.DescendingFields),
+			AscendingMinFieldVM:  result.AscendingMinField,
+			AscendingMaxFieldVM:  result.AscendingMaxField,
+			DescendingMinFieldVM: result.DescendingMinField,
+			DescendingMaxFieldVM: result.DescendingMaxField,
+			Monotonicity:         monotonicity,
+		},
+		Levels: levels,
+	}
+	raw, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("hysteresis: marshal level calibration JSON: %w", err)
+	}
+	return string(raw) + "\n", nil
+}
+
+type levelCalibrationExportPayload struct {
+	SchemaVersion  int                           `json:"schema_version"`
+	ArtifactType   string                        `json:"artifact_type"`
+	BoundaryNotice string                        `json:"boundary_notice"`
+	Material       string                        `json:"material"`
+	Inputs         levelCalibrationExportInputs  `json:"inputs"`
+	Method         string                        `json:"method"`
+	Status         string                        `json:"status"`
+	Units          map[string]string             `json:"units"`
+	Summary        levelCalibrationExportSummary `json:"summary"`
+	Levels         []levelCalibrationExportLevel `json:"levels"`
+}
+
+type levelCalibrationExportInputs struct {
+	LevelCount      int     `json:"level_count"`
+	TargetRangeFrac float64 `json:"target_range_frac"`
+	TemperatureK    float64 `json:"temperature_k"`
+}
+
+type levelCalibrationExportSummary struct {
+	AscendingEntries     int     `json:"ascending_entries"`
+	DescendingEntries    int     `json:"descending_entries"`
+	AscendingMinFieldVM  float64 `json:"ascending_min_field_vm"`
+	AscendingMaxFieldVM  float64 `json:"ascending_max_field_vm"`
+	DescendingMinFieldVM float64 `json:"descending_min_field_vm"`
+	DescendingMaxFieldVM float64 `json:"descending_max_field_vm"`
+	Monotonicity         string  `json:"monotonicity"`
+}
+
+type levelCalibrationExportLevel struct {
+	LevelIndex        int     `json:"level_index"`
+	NormalizedTarget  float64 `json:"normalized_target"`
+	AscendingFieldVM  float64 `json:"ascending_field_vm"`
+	DescendingFieldVM float64 `json:"descending_field_vm"`
 }
 
 func (m *Module) setWaveform(waveform string) error {

@@ -73,7 +73,32 @@
       "evidence": [
         "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
       ],
-      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level PUND/FORC diagnostics, PUND current waveform rendering, FORC density heatmap rendering, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Calibration dialogs, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level Level Calibration status/recalculation, explicit Level Calibration JSON export, summary-level PUND/FORC diagnostics, PUND current waveform rendering, FORC density heatmap rendering, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Detailed on-screen calibration lookup-table views, calibration import/reuse persistence, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "Level Calibration status, input presets, recalculation action, summary, stale/fresh state, and explicit JSON export",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/controls.go",
+        "module1-hysteresis/pkg/gui/calibration_runtime.go",
+        "module1-hysteresis/pkg/gui/calibration_store.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/physics/level_calibration.go",
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/physics -run 'TestCalibrateLevelsLK' -count=1",
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyAction(RunLevelCalibration|SetLevelCalibration|SelectMaterialResetsCalibration)' -count=1",
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyActionExportLevelCalibration' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewLevelCalibration' -count=1"
+      ],
+      "notes": "This ports the first Level Calibration Workflow slice into the default gogpu/viewmodel path: material-scoped inputs, level-count/target-range/temperature presets, explicit run action, not-calibrated/stale/fresh state, summary metrics, explicit JSON export of fresh calibration rows, and simulation-boundary language. It is in-memory and summary-level except for user-requested buffered or validated-path export; it does not claim parity for legacy automatic persisted calibration files, import/reuse cache behavior, full on-screen per-level lookup-table views, or manual write/read calibration dialogs."
     },
     {
       "module": "hysteresis",

@@ -336,6 +336,30 @@ func TestHysteresisViewLevelCalibrationPresetButtonsDispatchInputActions(t *test
 	}
 }
 
+func TestHysteresisViewLevelCalibrationExportButtonDispatchesAction(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	theme := material3.New(widget.Hex(0x2F5D50))
+	var actions []viewmodel.Action
+
+	w := buildHysteresisViewWithActions(snapshot, theme, func(action viewmodel.Action) {
+		actions = append(actions, action)
+	})
+	buttons := collectSidebarButtons(w)
+	if len(buttons) < 22 {
+		t.Fatalf("hysteresis button count = %d, want level calibration export control", len(buttons))
+	}
+
+	clickButton(buttons[21])
+
+	if len(actions) != 1 {
+		t.Fatalf("dispatched action count = %d, want 1", len(actions))
+	}
+	if actions[0].ID != hysteresisvm.EventExportLevelCalibration {
+		t.Fatalf("action ID = %q, want %q", actions[0].ID, hysteresisvm.EventExportLevelCalibration)
+	}
+}
+
 func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
 	vm := hysteresisvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {

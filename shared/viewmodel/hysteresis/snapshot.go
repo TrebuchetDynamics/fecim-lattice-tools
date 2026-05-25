@@ -155,6 +155,7 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: EventSetLevelCalibrationLevelCount, Label: "Set Level Count", Kind: viewmodel.ActionCommand},
 		{ID: EventSetLevelCalibrationTargetRange, Label: "Set Target Range", Kind: viewmodel.ActionCommand},
 		{ID: EventSetLevelCalibrationTemperature, Label: "Set Calibration Temperature", Kind: viewmodel.ActionCommand},
+		{ID: EventExportLevelCalibration, Label: "Export Level Calibration JSON", Kind: viewmodel.ActionCommand},
 		{ID: EventExportPUNDCSV, Label: "Export PUND CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventExportFORCSweep, Label: "Export FORC Sweep CSV", Kind: viewmodel.ActionCommand},
 		{ID: EventExportFORCMatrix, Label: "Export FORC Matrix CSV", Kind: viewmodel.ActionCommand},
@@ -221,6 +222,13 @@ func levelCalibrationMetrics(cal LevelCalibrationState) []viewmodel.Metric {
 	}
 	if cal.Error != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "level_calibration_error", Label: "Level Calibration Error", Value: cal.Error})
+	}
+	if cal.ExportStatus != "" {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "level_calibration_export", Label: "Level Calibration Export", Value: cal.ExportStatus},
+			viewmodel.Metric{ID: "level_calibration_export_path", Label: "Level Calibration Export Path", Value: cal.ExportPath},
+			viewmodel.Metric{ID: "level_calibration_export_bytes", Label: "Level Calibration Export Bytes", Value: fmt.Sprintf("%d bytes", cal.ExportBytes)},
+		)
 	}
 	if !cal.HasResult {
 		return metrics

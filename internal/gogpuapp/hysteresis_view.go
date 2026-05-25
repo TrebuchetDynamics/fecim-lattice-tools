@@ -105,6 +105,7 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 		circuitButton("90% Range", false, levelCalibrationTargetRangeAction("0.90"), theme, onAction),
 		circuitButton("300 K", false, levelCalibrationTemperatureAction("300"), theme, onAction),
 		circuitButton("350 K", false, levelCalibrationTemperatureAction("350"), theme, onAction),
+		circuitButton("Export Level Calibration", false, actionOrDefault(actions, hysteresisvm.EventExportLevelCalibration, viewmodel.ActionCommand), theme, onAction),
 	}
 
 	return primitives.Box(

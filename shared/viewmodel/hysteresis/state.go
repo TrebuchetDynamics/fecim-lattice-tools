@@ -44,6 +44,10 @@ type LevelCalibrationState struct {
 	Result          physics.LevelCalibrationResult `json:"result"`
 	Error           string                         `json:"error,omitempty"`
 	HasResult       bool                           `json:"has_result"`
+	ExportStatus    string                         `json:"export_status"`
+	ExportPath      string                         `json:"export_path"`
+	ExportBytes     int                            `json:"export_bytes"`
+	ExportContent   string                         `json:"export_content,omitempty"`
 }
 
 type FieldRange struct {
