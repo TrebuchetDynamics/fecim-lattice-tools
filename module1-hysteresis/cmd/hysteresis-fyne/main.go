@@ -132,7 +132,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
+	vulkan := fs.Bool("vulkan", false, "Deprecated Vulkan fallback path; use the default gogpu/ui shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {
@@ -184,6 +184,11 @@ func Run(args []string) error {
 		return err
 	}
 	defer out.Close()
+
+	if !commonFlags.JSON && !commonFlags.Quiet {
+		fmt.Println(legacyFyneDeprecationNotice)
+		fmt.Println()
+	}
 
 	// Handle batch processing
 	batch, err := cli.NewBatchProcessor(commonFlags.Batch)

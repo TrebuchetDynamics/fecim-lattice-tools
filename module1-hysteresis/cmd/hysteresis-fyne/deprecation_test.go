@@ -17,6 +17,32 @@ func TestLegacyFyneCommandHelpDeclaresDeprecation(t *testing.T) {
 		}
 	})
 
+	assertLegacyFyneDeprecationNotice(t, output)
+	for _, stale := range []string{
+		"recommended",
+		"GPU accelerated",
+	} {
+		if strings.Contains(output, stale) {
+			t.Fatalf("legacy Fyne help still markets deprecated UI with %q in output:\n%s", stale, output)
+		}
+	}
+}
+
+func TestLegacyFyneCommandListMaterialsDeclaresDeprecation(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"--list-materials"}); err != nil {
+			t.Fatalf("Run(--list-materials): %v", err)
+		}
+	})
+
+	assertLegacyFyneDeprecationNotice(t, output)
+	if !strings.Contains(output, "Available materials") {
+		t.Fatalf("list materials output missing material listing:\n%s", output)
+	}
+}
+
+func assertLegacyFyneDeprecationNotice(t *testing.T, output string) {
+	t.Helper()
 	for _, want := range []string{
 		"DEPRECATED",
 		"legacy Fyne",
@@ -24,7 +50,7 @@ func TestLegacyFyneCommandHelpDeclaresDeprecation(t *testing.T) {
 		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis",
 	} {
 		if !strings.Contains(output, want) {
-			t.Fatalf("legacy Fyne help missing %q in output:\n%s", want, output)
+			t.Fatalf("legacy Fyne output missing %q in output:\n%s", want, output)
 		}
 	}
 }
