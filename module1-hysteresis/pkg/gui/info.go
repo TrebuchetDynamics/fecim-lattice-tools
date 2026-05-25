@@ -53,10 +53,11 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 				"Pr (Remanent): %.0f µC/cm² [literature: %.0f–%.0f]\n"+
 				"Ps (Saturation): %.0f µC/cm² [±10%%]\n"+
 				"Ec (Coercive): %.2f MV/cm [literature: %.2f–%.2f]\n"+
-				"Endurance: %.0e cycles [demonstrated: 10⁹-10¹²]\n\n"+
+				"Endurance: %.0e cycles [preset; verify citation before reporting]\n\n"+
 				"Pr = polarization at E=0 (memory!)\n"+
 				"Ec = field needed to switch\n\n"+
-				"Note: Ranges from peer-reviewed literature.\n"+
+				"Note: Ranges shown here are illustrative literature-inspired presets;\n"+
+				"verify a specific citation before reporting values as measured.\n"+
 				"Actual values depend on process conditions.",
 				a.material.Name, a.material.Pr*100, a.material.Pr*80, a.material.Pr*120, a.material.Ps*100,
 				a.material.Ec/1e8, a.material.Ec*0.7/1e8, a.material.Ec*1.3/1e8, a.material.EnduranceCycles),
@@ -395,8 +396,8 @@ func (a *App) showELI5Dialog() {
 			"• When E = 0, P stays at ±Pr → MEMORY!\n\n" +
 			"🎚️ Why 30 Levels (Demo Baseline)?\n" +
 			"• Binary: Like a light switch (ON/OFF) = 1 bit\n" +
-			"• FeCIM: Like a dimmer with 30 positions = ~5 bits (conference claim)\n" +
-			"• Same chip, 5× more storage!\n\n" +
+			"• Simulator baseline: dimmer-like 30-level discretization ≈ 5 bits\n" +
+			"• Educational model assumption, not a hardware storage guarantee\n\n" +
 			"📝 Write vs Read:\n" +
 			"• WRITE: |E| > Ec → Data changes\n" +
 			"• READ: |E| < Ec → Data unchanged, just sense\n" +

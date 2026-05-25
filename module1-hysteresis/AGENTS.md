@@ -91,7 +91,7 @@ Key test files:
 Material parameters are defined in `shared/physics/hzo_materials.go`:
 - `DefaultHZO()` - Typical Si-doped HfO2 (Hf0.5Zr0.5O2)
 - `FeCIMMaterial()` - FeCIM specifications
-- `HZOStandard32()` - 32 analog states (conference demonstration)
+- `HZOStandard32()` - literature-reported 32-state HZO preset
 - Custom presets: `HZOCustom14()`, `CryogenicHZO()`, `HZOFJT140()`
 
 ISPP configuration in `WriteController`:

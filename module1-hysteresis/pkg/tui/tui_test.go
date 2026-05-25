@@ -562,8 +562,8 @@ func TestRenderLevelBar(t *testing.T) {
 	if levelBar == "" {
 		t.Error("Expected renderLevelBar to return non-empty string, got empty")
 	}
-	if !strings.Contains(levelBar, "30 Levels") {
-		t.Error("Expected level bar to mention '30 Levels'")
+	if !strings.Contains(levelBar, "30-Level Simulation Baseline") {
+		t.Error("Expected level bar to mention the 30-level simulation baseline")
 	}
 
 	// Test with different discrete levels

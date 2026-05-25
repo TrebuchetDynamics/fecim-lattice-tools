@@ -26,13 +26,14 @@ func init() {
 // THREE-TIER MATERIAL SYSTEM:
 //
 //	DefaultHZO()           - Baseline: Standard Si-doped HZO from literature
-//	FeCIMMaterial()        - FeCIM: conference-baseline demonstrated values (conservative)
+//	FeCIMMaterial()        - FeCIM: conference-baseline assumptions (unverified)
 //	FeCIMMaterialTarget()  - FeCIM: conference-claim targets (aspirational)
-//	LiteratureSuperlattice() - Academic: Best-case from Cheema et al. 2020
+//	LiteratureSuperlattice() - Academic: literature-reported superlattice scenario
 //
-// For honest educational visualization, prefer FeCIMMaterial() which uses
-// only demonstrated values. Use LiteratureSuperlattice() to show what
-// superlattice engineering CAN theoretically achieve.
+// For honest educational visualization, prefer DefaultHZO() for literature-backed
+// HZO behavior, and use FeCIMMaterial() only with explicit conference-baseline /
+// simulation-assumption caveats. Use LiteratureSuperlattice() for a cited
+// superlattice parameter scenario, not as a FeCIM device-performance claim.
 //
 // References:
 // - Park et al., Adv. Mater. 2015 (HZO ferroelectricity)

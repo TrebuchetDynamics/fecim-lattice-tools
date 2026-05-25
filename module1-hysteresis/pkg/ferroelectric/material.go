@@ -45,7 +45,7 @@ func CryogenicHZO() *HZOMaterial {
 	return sharedphysics.CryogenicHZO()
 }
 
-// HZOStandard32 returns parameters for standard HZO demonstrating 32 analog states.
+// HZOStandard32 returns parameters for a literature-reported 32-state HZO preset.
 // Re-exported from shared/physics for backward compatibility.
 func HZOStandard32() *HZOMaterial {
 	return sharedphysics.HZOStandard32()

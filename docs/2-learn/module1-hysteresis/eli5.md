@@ -83,9 +83,9 @@ Ferroelectric: Stop at different points on the loop!
               State 0 ●
               State 1 ●
               State 2 ●
-              ... (up to 30 states in demo baseline)
+              ... (30-level simulator baseline)
 
-More states per cell = store more information!
+More modeled levels per cell can represent more information in the simulation; real devices need separate validation.
 ```
 
 ---
@@ -157,7 +157,7 @@ When you run Module 1, you see:
    - Triangle: Linear up/down
    - Square: Snap to extremes
    - Manual: You control it
-4. **30 Discrete Levels**: Visualization of multi-level storage (demo baseline)
+4. **30-Level Baseline**: Visualization of configurable multi-level storage assumptions
 
 ---
 
@@ -177,7 +177,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 | **Polarization** | How separated the charges are (storage amount) |
 | **Hysteresis** | The loop shape shows memory (up ≠ down) |
 | **Coercive Field** | Voltage needed to flip (write effort) |
-| **30 Levels** | Demo baseline for discrete storage states |
+| **30 Levels** | Simulator baseline for configurable discrete storage assumptions |
 | **Preisach Model** | Simulates hysteresis using tiny hysterons |
 
 ---

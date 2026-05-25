@@ -399,9 +399,9 @@ func TestAllMaterialsPhysicsConsistency(t *testing.T) {
 				t.Logf("Warning: Endurance %.0e is unusual", mat.EnduranceCycles)
 			}
 
-			// Check 7: NumLevels is realistic (8-140 demonstrated in literature)
+			// Check 7: NumLevels remains inside the simulator's literature-context bounds.
 			if mat.GetNumLevels() < 8 || mat.GetNumLevels() > 140 {
-				t.Errorf("FAIL: NumLevels %d is outside demonstrated range [8, 140]",
+				t.Errorf("FAIL: NumLevels %d is outside literature-context simulator range [8, 140]",
 					mat.GetNumLevels())
 			}
 

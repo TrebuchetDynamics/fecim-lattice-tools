@@ -193,11 +193,11 @@ func (r *PERenderer) RenderDomainStates(alphas, betas []float64, states []int) s
 	return sb.String()
 }
 
-// RenderDiscreteStates renders the 30 programmable states.
+// RenderDiscreteStates renders the configured programmable-state baseline.
 func (r *PERenderer) RenderDiscreteStates(states []DiscreteState) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("%d Discrete Analog States (demo baseline; conference claim):\n", len(states)))
+	sb.WriteString(fmt.Sprintf("%d Discrete Analog Levels (simulation baseline; not hardware-validated):\n", len(states)))
 	sb.WriteString(strings.Repeat("═", 65) + "\n\n")
 
 	// Header
@@ -214,7 +214,7 @@ func (r *PERenderer) RenderDiscreteStates(states []DiscreteState) string {
 	}
 
 	sb.WriteString(strings.Repeat("─", 65) + "\n")
-	sb.WriteString(fmt.Sprintf("Total states: %d  (%.1f bits/cell)\n",
+	sb.WriteString(fmt.Sprintf("Total modeled levels: %d  (%.1f bits/cell equivalent; simulation only)\n",
 		len(states), math.Log2(float64(len(states)))))
 
 	return sb.String()

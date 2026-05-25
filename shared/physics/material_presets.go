@@ -36,7 +36,7 @@ func DefaultHZO() *HZOMaterial {
 		EnduranceCycles:     1e10,   // 10^10 cycles
 		RetentionTime:       3.15e9, // 100 years at 85°C
 		ImrintField:         1e6,
-		NumLevels:           30, // Conference claim; pending peer review
+		NumLevels:           30, // Simulation baseline; not a peer-reviewed device-state claim
 		TargetRangeFrac:     0.90,
 		Tau0NLS:             1e-10,    // 100 ps (HfO2 typical)
 		EaNLS:               12e8,     // 12 MV/cm
@@ -102,9 +102,9 @@ func MaterlikHfO2() *HZOMaterial {
 	}
 }
 
-// LiteratureSuperlattice returns THEORETICAL BEST values from published HfO2/ZrO2
-// superlattice research (NOT FeCIM demonstrated performance).
-// Best-in-class HZO/ZrO₂ nanolaminate (1nm layers); PMC 12254504; RSC Nanoscale 2025.
+// LiteratureSuperlattice returns a literature-reported HfO2/ZrO2 superlattice
+// parameter scenario (NOT FeCIM demonstrated performance).
+// HZO/ZrO₂ nanolaminate context (1nm layers); PMC 12254504; RSC Nanoscale 2025.
 func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "Literature Superlattice (HZO nanolaminate 2025)",
@@ -116,7 +116,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 		LossAngle:           0.015,
 		Thickness:           10e-9,
 		Area:                100e-12,
-		Tau:                 0.36e-9, // 360 ps RECORD (Purdue sub-µm arrays) [8]
+		Tau:                 0.36e-9, // 360 ps literature-reported value (Purdue sub-µm arrays) [8]
 		Tau0:                1e-13,
 		Ea:                  0.5, // Lower activation energy
 		Alpha:               2.5,
@@ -124,8 +124,8 @@ func LiteratureSuperlattice() *HZOMaterial {
 		CurieConst:          1.5e5,
 		TempCoeffEc:         -1.5e5,
 		TempCoeffPr:         -3e-5,
-		EnduranceCycles:     1e10,   // 10^10 verified; 10^12 (La-doped, ACS AMI 2024)
-		RetentionTime:       3.15e8, // 10y at 85°C verified
+		EnduranceCycles:     1e10,   // 10^10 literature-reported; 10^12 target/literature context (La-doped, ACS AMI 2024)
+		RetentionTime:       3.15e8, // 10y at 85°C literature-reported context
 		ImrintField:         0.5e6,
 		NumLevels:           64, // Enhanced superlattice
 		TargetRangeFrac:     0.90,
@@ -145,12 +145,13 @@ func LiteratureSuperlattice() *HZOMaterial {
 	}
 }
 
-// FeCIMMaterial returns parameters matching the current FeCIM conference baseline.
+// FeCIMMaterial returns parameters for the current FeCIM conference-baseline simulation.
 //
-// DEMONSTRATED: 30 states (COSM 2025, pending peer review), 10^9 endurance, 10^7s retention.
+// UNVERIFIED CONFERENCE CONTEXT: 30 states, 10^9 endurance, and 10^7 s retention
+// are retained as simulation assumptions, not peer-reviewed device facts.
 // TARGET (not achieved): 10^12 endurance, 100y retention.
 // ESTIMATED (not disclosed): Pr, Ps, Ec, most other params use HZO literature values.
-// See: opensource/papers/08_Documentation/HONESTY_AUDIT.md
+// See: docs/4-research/honesty-audit.md
 func FeCIMMaterial() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "FeCIM HZO",
@@ -170,10 +171,10 @@ func FeCIMMaterial() *HZOMaterial {
 		CurieConst:          1.5e5,
 		TempCoeffEc:         -1.8e5,
 		TempCoeffPr:         -4e-5,
-		EnduranceCycles:     1e9, // DEMONSTRATED (10^12 is TARGET)
-		RetentionTime:       1e7, // DEMONSTRATED (~116 days)
+		EnduranceCycles:     1e9, // Conference-baseline simulation assumption (10^12 is TARGET)
+		RetentionTime:       1e7, // Conference-baseline simulation assumption (~116 days)
 		ImrintField:         1e6,
-		NumLevels:           30, // Conference claim; pending peer review
+		NumLevels:           30, // Conference-baseline simulation assumption; not peer-reviewed
 		TargetRangeFrac:     0.90,
 		Tau0NLS:             1e-10,
 		EaNLS:               12e8,
@@ -201,7 +202,7 @@ func FeCIMMaterialTarget() *HZOMaterial {
 	mat.Name = "FeCIM HZO (TARGET - NOT DEMONSTRATED)"
 	mat.EnduranceCycles = 1e12 // TARGET - not yet achieved
 	mat.RetentionTime = 3.15e9 // TARGET - 100 years (not demonstrated)
-	mat.Tau = 1e-9             // TARGET - 1ns (demonstrated ~10ns)
+	mat.Tau = 1e-9             // TARGET - 1ns (conference-baseline context ~10ns)
 	mat.Tau0NLS = 0.5e-10      // 50 ps target
 	mat.EaNLS = 10e8           // 10 MV/cm target
 	return mat
@@ -212,7 +213,7 @@ func FeCIMMaterialTarget() *HZOMaterial {
 func CryogenicHZO() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "Cryogenic HZO (4K)",
-		Pr:                  75e-2, // 75 µC/cm² at 4K - RECORD
+		Pr:                  75e-2, // 75 µC/cm² at 4K - literature-reported context
 		Ps:                  80e-2,
 		Ec:                  1.5e8, // Higher Ec at cryo
 		Epsilon:             28,
@@ -272,7 +273,7 @@ func HZOStandard32() *HZOMaterial {
 		EnduranceCycles:     1e8,    // 10^8 cycles (2017 era)
 		RetentionTime:       3.15e8, // 10 years projected
 		ImrintField:         1e6,
-		NumLevels:           32, // VERIFIED (Oh et al. 2017)
+		NumLevels:           32, // Literature-reported (Oh et al. 2017)
 		TargetRangeFrac:     0.90,
 		Tau0NLS:             1e-10,
 		EaNLS:               12e8,
@@ -311,10 +312,10 @@ func HZOFJT140() *HZOMaterial {
 		CurieTemp:           723,
 		TempCoeffEc:         -2e5,
 		TempCoeffPr:         -5e-5,
-		EnduranceCycles:     1e7,    // 10^7 cycles demonstrated
+		EnduranceCycles:     1e7,    // 10^7 cycles literature-reported
 		RetentionTime:       3.15e8, // 10 years extrapolated
 		ImrintField:         1e6,
-		NumLevels:           140, // VERIFIED (Song et al. 2024)
+		NumLevels:           140, // Literature-reported (Song et al. 2024)
 		TargetRangeFrac:     0.90,
 		Tau0NLS:             2e-10,
 		EaNLS:               10e8,
