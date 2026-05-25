@@ -57,6 +57,22 @@ func TestHysteresisBoundaryNotice(t *testing.T) {
 	}
 }
 
+func TestHysteresisOverlayLayoutLeavesHeaderAndAxisLabelSpace(t *testing.T) {
+	x, y, width, height := hysteresisOverlayPlotRegion(1280, 820)
+	if y < 220 {
+		t.Fatalf("hysteresis overlay y = %.1f, want at least 220 so the module title and boundary notice remain visible", y)
+	}
+	if height > 500 {
+		t.Fatalf("hysteresis overlay height = %.1f, want <= 500 to avoid covering the full module surface", height)
+	}
+	if x < 300 {
+		t.Fatalf("hysteresis overlay x = %.1f, want at least 300 for sidebar and Y-axis label space", x)
+	}
+	if width > 940 {
+		t.Fatalf("hysteresis overlay width = %.1f, want <= 940 at 1280px capture width", width)
+	}
+}
+
 func TestHysteresisPlotData(t *testing.T) {
 	vm := hysteresisvm.New()
 	snapshot := vm.Snapshot()

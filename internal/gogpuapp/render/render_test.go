@@ -48,6 +48,16 @@ func TestDrawPlot_NegativeAxis(t *testing.T) {
 	DrawPlot(dc, PlotConfig{Data: data, X: 0, Y: 0, Width: 400, Height: 300})
 }
 
+func TestYAxisLabelAnchorStaysInsidePlotPanel(t *testing.T) {
+	x, anchor := yAxisLabelAnchor(defaultPlotMargin)
+	if x < defaultPlotMargin {
+		t.Fatalf("Y-axis label x = %.1f, want inside the left plot margin %.1f", x, defaultPlotMargin)
+	}
+	if anchor != 0 {
+		t.Fatalf("Y-axis label anchor = %.1f, want left-aligned text so it does not clip outside the panel", anchor)
+	}
+}
+
 func TestDrawHeatmap_NonNil(t *testing.T) {
 	data := [][]float64{
 		{1, 2, 3},

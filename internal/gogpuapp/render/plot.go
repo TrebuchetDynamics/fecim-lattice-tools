@@ -23,6 +23,7 @@ type PlotConfig struct {
 
 const defaultPlotBack = "#1A1C1A"
 const defaultPlotGrid = "#333533"
+const defaultPlotMargin = 60.0
 
 // DrawPlot renders a 2D line plot into the gg.Context at the specified region.
 func DrawPlot(dc *gg.Context, cfg PlotConfig) {
@@ -36,7 +37,7 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 		cfg.GridColor = defaultPlotGrid
 	}
 
-	margin := 60.0
+	margin := defaultPlotMargin
 	plotW := cfg.Width - margin*2
 	plotH := cfg.Height - margin*2
 	if plotW <= 0 || plotH <= 0 {
@@ -135,10 +136,15 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 	dc.SetRGBA(0.9, 0.9, 0.9, 1)
 	dc.SetLineWidth(1)
 	dc.DrawStringAnchored(cfg.Data.XLabel, margin+plotW/2, cfg.Height-10, 0.5, 1)
-	dc.DrawStringAnchored(cfg.Data.YLabel, 14, margin+plotH/2, 0.5, 0.5)
+	yLabelX, yLabelAnchor := yAxisLabelAnchor(margin)
+	dc.DrawStringAnchored(cfg.Data.YLabel, yLabelX, margin+plotH/2, yLabelAnchor, 0.5)
 	dc.DrawStringAnchored(cfg.Data.Title, margin+plotW/2, 18, 0.5, 0)
 
 	dc.Pop()
+}
+
+func yAxisLabelAnchor(margin float64) (x, anchor float64) {
+	return margin + 8, 0
 }
 
 func sineWave(start, stop float64, n int) []design.PlotPoint {

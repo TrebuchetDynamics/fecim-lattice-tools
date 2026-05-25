@@ -12,6 +12,7 @@ import (
 	uiapp "github.com/gogpu/ui/app"
 	"github.com/gogpu/ui/event"
 	"github.com/gogpu/ui/geometry"
+	"github.com/gogpu/ui/primitives"
 	uirender "github.com/gogpu/ui/render"
 	"github.com/gogpu/ui/theme/material3"
 	"github.com/gogpu/ui/widget"
@@ -31,6 +32,18 @@ func TestBuildRootInstallsInHeadlessApp(t *testing.T) {
 
 	if app.Window().Root() == nil {
 		t.Fatal("root widget was not installed")
+	}
+}
+
+func TestBuildRootLaysOutSidebarBesideContent(t *testing.T) {
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	root := buildRoot(model, material3.New(widget.Hex(0x2F5D50)))
+	box, ok := root.(*primitives.BoxWidget)
+	if !ok {
+		t.Fatalf("root widget type = %T, want *primitives.BoxWidget", root)
+	}
+	if got := box.ResolvedDirection(); got != primitives.DirectionHorizontal {
+		t.Fatalf("root layout direction = %v, want horizontal so the sidebar stays beside Module 1 content", got)
 	}
 }
 

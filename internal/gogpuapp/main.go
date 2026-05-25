@@ -194,16 +194,39 @@ func drawHysteresisOverlay(cc *gg.Context, points []design.PlotPoint, w, h int) 
 	if len(points) == 0 {
 		return
 	}
-	plotW := float64(w) - 300
-	plotH := float64(h) - 180
+	x, y, plotW, plotH := hysteresisOverlayPlotRegion(w, h)
 	if plotW < 100 || plotH < 100 {
 		return
 	}
 	data := design.NewPlotData("P-E Hysteresis Loop", "Field (kV/cm)", "P (µC/cm²)")
 	data.AddSeries("P-E", points)
 	fecimrender.DrawPlot(cc, fecimrender.PlotConfig{
-		Data: data, X: 260, Y: 100, Width: plotW, Height: plotH,
+		Data: data, X: x, Y: y, Width: plotW, Height: plotH,
 	})
+}
+
+func hysteresisOverlayPlotRegion(w, h int) (x, y, width, height float64) {
+	fw, fh := float64(w), float64(h)
+	x = 300
+	if fw < 900 {
+		x = 240
+	}
+	y = 230
+	if fh < 700 {
+		y = 170
+	}
+	if fh < 520 {
+		y = 120
+	}
+	width = fw - x - 40
+	if width > 940 {
+		width = 940
+	}
+	height = fh - y - 60
+	if height > 500 {
+		height = 500
+	}
+	return x, y, width, height
 }
 
 func drawPUNDWaveformOverlay(cc *gg.Context, plot viewmodel.PlotData, w, h int) {
@@ -394,7 +417,7 @@ func buildRootWithSelectAndActions(model AppModel, theme *material3.Theme, onSel
 	}
 
 	content := primitives.Box(children...).Padding(24).Gap(14)
-	return primitives.Box(sidebar, content).Gap(0)
+	return primitives.HBox(sidebar, content).Gap(0)
 }
 
 func moduleCardEnhanced(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
