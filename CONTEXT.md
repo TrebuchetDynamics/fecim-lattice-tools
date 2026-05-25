@@ -48,6 +48,10 @@ _Avoid_: qualified temperature, validated operating temperature
 A concise user-visible description of the current level calibration inputs, state, method, and result quality. It communicates that a simulation mapping was computed without exposing full per-level lookup tables as the primary workflow.
 _Avoid_: full calibration dataset, measured calibration report, device characterization table
 
+**Level Calibration Detail**:
+A compact user-visible explanation of a Level Calibration Summary, optionally including representative first, middle, and last level rows. It supports understanding and export confidence without becoming the authoritative full lookup table.
+_Avoid_: full lookup-table parity, measured calibration table, device characterization dataset
+
 **Level Calibration Method**:
 The declared simulation model used to compute a Level Calibration Summary. It must be visible enough that users do not confuse one simulated mapping method with another or with measured-device calibration.
 _Avoid_: hidden calibration path, measured method, device-proven method

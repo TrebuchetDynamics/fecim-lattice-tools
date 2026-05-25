@@ -360,6 +360,24 @@ func TestHysteresisViewLevelCalibrationExportButtonDispatchesAction(t *testing.T
 	}
 }
 
+func TestHysteresisLevelCalibrationPanelStateFollowsDetailSection(t *testing.T) {
+	vm := hysteresisvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: hysteresisvm.EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	state := hysteresisLevelCalibrationPanelStateFromSnapshot(vm.Snapshot())
+	if !state.available {
+		t.Fatal("level calibration detail panel state unavailable")
+	}
+	if !strings.Contains(state.summary, "Representative rows") {
+		t.Fatalf("level calibration detail summary = %q, want representative rows", state.summary)
+	}
+	if !strings.Contains(state.summary, "not measured") {
+		t.Fatalf("level calibration detail summary = %q, want boundary notice", state.summary)
+	}
+}
+
 func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
 	vm := hysteresisvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {

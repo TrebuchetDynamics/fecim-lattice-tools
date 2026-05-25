@@ -155,6 +155,20 @@ func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
 	}
 }
 
+func TestSnapshotLevelCalibrationDetailIncludesRepresentativeRows(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run level calibration: %v", err)
+	}
+
+	detail := snapshotSectionBody(m.Snapshot(), "level_calibration_detail")
+	for _, want := range []string{"Representative rows", "level 0", "level 15", "level 29", "ascending", "descending", "not measured"} {
+		if !strings.Contains(detail, want) {
+			t.Fatalf("level calibration detail missing %q: %q", want, detail)
+		}
+	}
+}
+
 func TestApplyActionExportLevelCalibrationBuffersFreshJSONArtifact(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: EventRunLevelCalibration, Kind: viewmodel.ActionCommand}); err != nil {

@@ -3,6 +3,7 @@ package hysteresis
 import (
 	"fmt"
 
+	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
@@ -79,6 +80,12 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			ID:       "level_calibration_summary",
 			Title:    "Level Calibration Summary",
 			Body:     levelCalibrationSummaryBody(state.LevelCalibration),
+			Category: "design",
+		})
+		sections = append(sections, viewmodel.Section{
+			ID:       "level_calibration_detail",
+			Title:    "Level Calibration Detail",
+			Body:     levelCalibrationDetailBody(state.LevelCalibration),
 			Category: "design",
 		})
 	}
@@ -267,6 +274,62 @@ func levelCalibrationSummaryBody(cal LevelCalibrationState) string {
 		result.DescendingMaxField*1e-5,
 		monotonicity,
 	)
+}
+
+func levelCalibrationDetailBody(cal LevelCalibrationState) string {
+	result := cal.Result
+	rows := representativeLevelCalibrationRows(result)
+	body := "Representative rows (not full lookup-table parity; not measured device calibration):"
+	for _, row := range rows {
+		body += fmt.Sprintf(" level %d target %.3f ascending %.0f kV/cm descending %.0f kV/cm;",
+			row.level,
+			row.normalizedTarget,
+			row.ascendingField*1e-5,
+			row.descendingField*1e-5,
+		)
+	}
+	if cal.ExportStatus != "" {
+		body += fmt.Sprintf(" Export: %s (%s).", cal.ExportStatus, cal.ExportPath)
+	}
+	return body
+}
+
+type representativeLevelCalibrationRow struct {
+	level            int
+	normalizedTarget float64
+	ascendingField   float64
+	descendingField  float64
+}
+
+func representativeLevelCalibrationRows(result physics.LevelCalibrationResult) []representativeLevelCalibrationRow {
+	count := len(result.AscendingFields)
+	if count == 0 {
+		return nil
+	}
+	indices := []int{0, count / 2, count - 1}
+	rows := make([]representativeLevelCalibrationRow, 0, len(indices))
+	maxLevel := count - 1
+	if maxLevel < 1 {
+		maxLevel = 1
+	}
+	seen := map[int]bool{}
+	for _, idx := range indices {
+		if idx < 0 || idx >= count || seen[idx] {
+			continue
+		}
+		seen[idx] = true
+		descending := 0.0
+		if idx < len(result.DescendingFields) {
+			descending = result.DescendingFields[idx]
+		}
+		rows = append(rows, representativeLevelCalibrationRow{
+			level:            idx,
+			normalizedTarget: -1.0 + 2.0*float64(idx)/float64(maxLevel),
+			ascendingField:   result.AscendingFields[idx],
+			descendingField:  descending,
+		})
+	}
+	return rows
 }
 
 func buildPUNDWaveformPlot(summary PUNDSummary) (viewmodel.PlotData, bool) {

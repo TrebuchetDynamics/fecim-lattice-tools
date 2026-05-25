@@ -44,6 +44,9 @@ func buildHysteresisViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *ma
 	}
 	children = append(children, primitives.Box(metricBoxes...).Gap(8))
 	children = append(children, buildHysteresisControls(snapshot, theme, onAction))
+	if panel := buildHysteresisLevelCalibrationPanel(snapshot, theme); panel != nil {
+		children = append(children, panel)
+	}
 	if panel := buildHysteresisDiagnosticPanels(snapshot, theme); panel != nil {
 		children = append(children, panel)
 	}
@@ -116,6 +119,36 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 		controlRow("Diagnostics", diagnosticButtons, theme),
 		controlRow("Level Calibration", calibrationButtons, theme),
 	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
+}
+
+type hysteresisLevelCalibrationPanelState struct {
+	available bool
+	summary   string
+}
+
+func hysteresisLevelCalibrationPanelStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) hysteresisLevelCalibrationPanelState {
+	for _, section := range snapshot.Sections {
+		if section.ID == "level_calibration_detail" {
+			return hysteresisLevelCalibrationPanelState{available: true, summary: section.Body}
+		}
+	}
+	return hysteresisLevelCalibrationPanelState{}
+}
+
+func buildHysteresisLevelCalibrationPanel(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
+	state := hysteresisLevelCalibrationPanelStateFromSnapshot(snapshot)
+	if !state.available {
+		return nil
+	}
+	return primitives.Box(
+		primitives.Text("Level Calibration Detail").FontSize(14).Bold().Color(widget.Hex(0x183D34)),
+		primitives.Text(state.summary).FontSize(11).Color(theme.Colors.OnSurfaceVariant),
+	).
+		Padding(12).
+		Gap(8).
+		Background(widget.Hex(0xF6FAF7)).
+		Rounded(8).
+		BorderStyle(1, widget.Hex(0xD4DED8))
 }
 
 type hysteresisDiagnosticPanelState struct {
