@@ -187,7 +187,7 @@ Prevents commits with invalid calibration files.
 ./scripts/screenshot_all.sh
 ```
 Captures GUI screenshots for all modules.
-Output: `output/screenshots/module*.png`
+Output: `docs/assets/screenshots/ui-review/module*.png`
 
 **Analysis of Validation Results:**
 ```bash

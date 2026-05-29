@@ -2,32 +2,28 @@
 
 package gui
 
-import "fmt"
+import guimetrics "fecim-lattice-tools/module4-circuits/pkg/gui/metrics"
 
 func formatMetricVTIAMV(voltageV float64) string {
-	return fmt.Sprintf("%+.2f V", voltageV)
+	return guimetrics.FormatVTIAMV(voltageV)
 }
 
 func formatMetricICellUA(currentUA float64) string {
-	return fmt.Sprintf("%+.2f µA", currentUA)
+	return guimetrics.FormatICellUA(currentUA)
 }
 
 func formatMetricADCCode(code int) string {
-	return fmt.Sprintf("%d", code)
+	return guimetrics.FormatADCCode(code)
 }
 
 func formatMetricConductanceUS(conductanceUS float64) string {
-	return fmt.Sprintf("%.1f µS", conductanceUS)
+	return guimetrics.FormatConductanceUS(conductanceUS)
 }
 
 func formatMetricLevel(level int) string {
-	return fmt.Sprintf("%d", level)
+	return guimetrics.FormatLevel(level)
 }
 
 func formatOverlayBottomValue(mode string, value float64) string {
-	if mode == "Icell" {
-		// value in A -> µA
-		return fmt.Sprintf("I: %+.2f µA", value*1e6)
-	}
-	return fmt.Sprintf("V: %+.2f V", value)
+	return guimetrics.FormatOverlayBottomValue(mode, value)
 }

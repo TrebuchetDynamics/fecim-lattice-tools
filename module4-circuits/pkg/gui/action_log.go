@@ -4,72 +4,31 @@
 package gui
 
 import (
-	"sync"
-
+	"fecim-lattice-tools/module4-circuits/pkg/gui/status"
+	"fecim-lattice-tools/module4-circuits/pkg/gui/uilog"
 	"fecim-lattice-tools/shared/logging"
 )
 
-var circuitsLogOnce sync.Once
-var circuitsLog *logging.Logger
-
 func getCircuitsLog() *logging.Logger {
-	circuitsLogOnce.Do(func() {
-		circuitsLog = logging.NewLogger("circuits")
-	})
-	return circuitsLog
+	return uilog.Logger()
 }
 
 func logAction(format string, args ...interface{}) {
-	if !logging.IsVerbose(logging.VerbosityDebug) {
-		return
-	}
-	getCircuitsLog().Debug("ACTION: "+format, args...)
+	uilog.Action(format, args...)
 }
 
 func logInput(format string, args ...interface{}) {
-	if !logging.IsVerbose(logging.VerbosityDebug) {
-		return
-	}
-	getCircuitsLog().Debug("INPUT: "+format, args...)
+	uilog.Input(format, args...)
 }
 
 func opModeLabel(mode OpMode) string {
-	switch mode {
-	case OpModeRead:
-		return "READ"
-	case OpModeWrite:
-		return "WRITE"
-	case OpModeCompute:
-		return "COMPUTE"
-	default:
-		return "IDLE"
-	}
+	return status.OpModeLabel(int(mode))
 }
 
 func dacModeLabel(mode DACMode) string {
-	switch mode {
-	case DACManual:
-		return "MANUAL"
-	case DACReadPreset:
-		return "READ_PRESET"
-	case DACWritePreset:
-		return "WRITE_PRESET"
-	case DACInputVector:
-		return "INPUT_VECTOR"
-	case DACRandom:
-		return "RANDOM"
-	default:
-		return "UNKNOWN"
-	}
+	return status.DACModeLabel(int(mode))
 }
 
 func dacRangeLabel(mode DACRangeMode) string {
-	switch mode {
-	case DACRangeRead:
-		return "READ"
-	case DACRangeWrite:
-		return "WRITE"
-	default:
-		return "UNKNOWN"
-	}
+	return status.DACRangeLabel(int(mode))
 }

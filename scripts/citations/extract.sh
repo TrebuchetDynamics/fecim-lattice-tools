@@ -17,4 +17,4 @@ if [[ ! -f "$paper_file" ]]; then
     exit 2
 fi
 
-bash scripts/citations/_run_agent.sh prompts/citations/03_extractor.md "$key"
+bash scripts/citations/_run_agent.sh tools/prompts/citations/03_extractor.md "$key"

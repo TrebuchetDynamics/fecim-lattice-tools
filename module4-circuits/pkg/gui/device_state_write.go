@@ -9,8 +9,9 @@
 package gui
 
 import (
-	"fmt"
 	"math"
+
+	"fecim-lattice-tools/module4-circuits/pkg/gui/writeseq"
 )
 
 // ============================================================================
@@ -248,7 +249,7 @@ type HysteresisState struct {
 
 // cellKey generates a map key for a cell coordinate
 func cellKey(row, col int) string {
-	return fmt.Sprintf("%d,%d", row, col)
+	return writeseq.CellKey(row, col)
 }
 
 // RecordWrite updates the hysteresis state after a successful write
@@ -456,38 +457,10 @@ func (ds *DeviceState) CancelWriteSequence() {
 
 // GetPhaseName returns a human-readable name for a write phase
 func GetPhaseName(phase WritePhase) string {
-	switch phase {
-	case PhaseIdle:
-		return "IDLE"
-	case PhaseReset:
-		return "RESET"
-	case PhaseHold1:
-		return "HOLD"
-	case PhaseWrite:
-		return "WRITE"
-	case PhaseHold2:
-		return "HOLD"
-	case PhaseVerify:
-		return "VERIFY"
-	default:
-		return "UNKNOWN"
-	}
+	return writeseq.PhaseName(int(phase))
 }
 
 // GetPhaseDuration returns the duration in nanoseconds for a phase
 func GetPhaseDuration(phase WritePhase) int {
-	switch phase {
-	case PhaseReset:
-		return PhaseResetDurationNs
-	case PhaseHold1:
-		return PhaseHold1DurationNs
-	case PhaseWrite:
-		return PhaseWriteDurationNs
-	case PhaseHold2:
-		return PhaseHold2DurationNs
-	case PhaseVerify:
-		return PhaseVerifyDurationNs
-	default:
-		return 0
-	}
+	return writeseq.PhaseDuration(int(phase))
 }

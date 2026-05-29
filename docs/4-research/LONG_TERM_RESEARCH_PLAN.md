@@ -23,7 +23,7 @@
 ### 1.1 Populate Citation Infrastructure
 
 The canonical `citations/papers/` directory is empty and must become populated. The
-`paper/refs.bib` has 12 canonical entries — promote these first.
+`docs/paper/refs.bib` has 12 canonical entries — promote these first.
 
 **Immediate (already have metadata)**:
 ```
@@ -300,7 +300,7 @@ Generate per-session reproducibility bundles:
 
 ### 7.1 Paper Draft
 
-Using `paper/refs.bib` as the foundation, draft a methods paper:
+Using `docs/paper/refs.bib` as the foundation, draft a methods paper:
 - Title: "FeCIM Lattice Tools: An Open-Source Simulation Framework for Ferroelectric Compute-in-Memory"
 - Target: JOSS (Journal of Open Source Software) or SoftwareX
 - Sections: Statement of Need, Architecture, Physics Models, Validation, Use Cases

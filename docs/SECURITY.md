@@ -245,9 +245,9 @@ decoder := json.NewDecoder(io.LimitReader(reader, maxSize))
 
 ## Informational Findings
 
-### 12. Shell Script Security (commit-push.sh)
+### 12. Shell Script Security (scripts/commit-push.sh)
 
-**File:** `commit-push.sh`
+**File:** `scripts/commit-push.sh`
 
 **Observations:**
 - ✅ Uses `"${BASH_SOURCE[0]}"` safely with quotes

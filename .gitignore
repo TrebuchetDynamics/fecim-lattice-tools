@@ -23,8 +23,12 @@ __pycache__/
 /logs
 shared/logging/
 /fecim-lattice-tools
+/fecim-lattice-tools-next
+/fecim-screenshotter
 recordings/
-screenshots/
+/screenshots/
+/docs/assets/screenshots/
+cmd/*/testdata/screenshots/
 20??-??-??_*.png
 train-network
 train-single-layer
@@ -113,9 +117,7 @@ cmd/gen-literature-loops/
 !cmd/gen-literature-loops/main.go
 !cmd/gen-literature-loops/main_test.go
 validation/literature/output/
-opensource/**
-!opensource/clone-all.sh
-!opensource/opensource-tools-summary.md
+/opensource/**
 
 # Secrets
 .env

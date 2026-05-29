@@ -5,7 +5,7 @@
 #     Optional shorthand: --logger debug|info|trace|off
 #   --verbosity LEVEL: Set logging verbosity (only used with --logger)
 #     LEVEL: 0|off, 1|info, 2|debug, 3|trace
-#   --clear: Delete logs/ and screenshots/ folders before running
+#   --clear: Delete logs/ and docs/assets/screenshots/ folders before running
 cd "$(dirname "$0")"
 
 # Check for --clear flag and remove it from args passed to the app
@@ -21,8 +21,8 @@ done
 
 # Clear logs and screenshots if requested
 if $CLEAR_FLAG; then
-    echo "Clearing logs/ and screenshots/ directories..."
-    rm -rf logs/ screenshots/
+    echo "Clearing logs/ and docs/assets/screenshots/ directories..."
+    rm -rf logs/ docs/assets/screenshots/
 fi
 rm -f fecim-lattice-tools
 echo "Building fecim-lattice-tools (gogpu/ui, zero-CGO)..."

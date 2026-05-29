@@ -42,7 +42,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | `examples/` | Example projects and use cases |
 | `references/` | Academic papers, simulation benchmarks, comparison harnesses |
 | `artifacts/` | Build outputs, logs (gitignored) |
-| `screenshots/` | UI screenshots and graphics |
+| `docs/assets/reference-screenshots/` | UI screenshots and graphics |
 
 ## For AI Agents
 

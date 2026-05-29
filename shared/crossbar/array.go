@@ -2,6 +2,7 @@
 package crossbar
 
 import (
+	"fecim-lattice-tools/shared/crossbar/levels"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/physics"
@@ -26,7 +27,7 @@ func getLog() *logging.Logger {
 // DefaultQuantizationLevels is the standard number of discrete analog states.
 // Alias to shared/physics for backward compatibility.
 // The 30-level default follows the conference-baseline assumption used by this demo.
-const DefaultQuantizationLevels = physics.DefaultLevels
+const DefaultQuantizationLevels = levels.DefaultQuantizationLevels
 
 // Conductance range constants (physical units) - aliases to shared/physics
 const (
@@ -477,7 +478,7 @@ func (a *Array) programWeightLocked(row, col int, weight float64) error {
 // This matches the demo 30-level baseline; simulation baseline (unverified conference reference).
 // Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
-	quantized := physics.QuantizeTo30Levels(value)
+	quantized := levels.QuantizeToDefaultLevels(value)
 	getLog().Calculation("QuantizeToLevels", map[string]interface{}{
 		"input": value,
 	}, quantized)
@@ -485,9 +486,9 @@ func QuantizeToLevels(value float64) float64 {
 }
 
 // GetLevel returns the discrete level (0 to N-1) for a conductance value.
-// Wrapper for shared/physics.GetLevelFor30 for backward compatibility.
+// Wrapper for shared/crossbar/levels.DefaultLevelFor for backward compatibility.
 func GetLevel(conductance float64) int {
-	return physics.GetLevelFor30(conductance)
+	return levels.DefaultLevelFor(conductance)
 }
 
 // GetPhysicalConductance converts normalized conductance [0,1] to physical units (Siemens).

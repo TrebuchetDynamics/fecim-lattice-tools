@@ -1957,7 +1957,7 @@ go run ./cmd/fecim-screenshotter -out screenshots -w 1400 -h 900 -tag gogpu-base
 - [ ] **Step 3: Commit**
 
 ```bash
-git add cmd/fecim-screenshotter/ screenshots/
+git add cmd/fecim-screenshotter/ docs/assets/screenshots/
 git commit -m "feat(screenshotter): add gogpu/ui headless capture support and baseline screenshots"
 ```
 

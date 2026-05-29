@@ -399,13 +399,13 @@ For long development sessions:
 
 ```bash
 # One-time commit in 12 hours
-./commit-push.sh -12
+./scripts/commit-push.sh -12
 
 # Hourly commits (background)
-./commit-push.sh --periodically
+./scripts/commit-push.sh --periodically
 
 # Stop hourly commits
-./commit-push.sh --stop
+./scripts/commit-push.sh --stop
 ```
 
 ## Security Notes

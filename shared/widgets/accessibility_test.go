@@ -210,18 +210,18 @@ func TestFocusIndicator(t *testing.T) {
 	fi := NewFocusIndicator(rect)
 
 	// Test initial state
-	if fi.focused {
+	if fi.IsFocused() {
 		t.Error("Initial focused state should be false")
 	}
 
 	// Test setting focused
-	fi.focused = true // Direct set to avoid Refresh() call without renderer
-	if !fi.focused {
+	fi.SetFocused(true)
+	if !fi.IsFocused() {
 		t.Error("Setting focused = true did not work")
 	}
 
-	fi.focused = false
-	if fi.focused {
+	fi.SetFocused(false)
+	if fi.IsFocused() {
 		t.Error("Setting focused = false did not work")
 	}
 }
@@ -268,7 +268,7 @@ func TestFocusIndicatorForwardsFocusableEvents(t *testing.T) {
 	ff := &fakeFocusable{}
 	fi := NewFocusIndicator(ff)
 	fi.FocusGained()
-	if !ff.focused || !fi.focused {
+	if !ff.focused || !fi.IsFocused() {
 		t.Fatal("focus gained should update wrapper and wrapped focusable")
 	}
 	fi.TypedKey(&fyne.KeyEvent{Name: fyne.KeyRight})
@@ -276,7 +276,7 @@ func TestFocusIndicatorForwardsFocusableEvents(t *testing.T) {
 		t.Fatalf("typed key was not forwarded: got %v", ff.typed)
 	}
 	fi.FocusLost()
-	if ff.focused || fi.focused {
+	if ff.focused || fi.IsFocused() {
 		t.Fatal("focus lost should clear wrapper and wrapped focusable")
 	}
 }

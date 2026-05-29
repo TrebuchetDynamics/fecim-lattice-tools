@@ -226,8 +226,7 @@
       "feature": "Peripheral circuits workspace, unified array canvas, read/write/compute paths, ISPP, half-select stress, PVT, reference specs, comparison metrics, and overlays",
       "status": "gap",
       "legacy_sources": [
-        "module4-circuits/pkg/gui/*.go",
-        "module4-circuits/pkg/gui/unified/..."
+        "module4-circuits/pkg/gui/..."
       ],
       "gogpu_surfaces": [
         "shared/viewmodel/circuits",

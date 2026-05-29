@@ -260,8 +260,9 @@ fecim-lattice-tools/
 ├── module6-eda/            # EDA export utilities
 ├── module7-docs/           # Integrated documentation viewer
 ├── shared/                 # Common physics, UI, logging, and utility code
-├── docs/                   # User, developer, and research documentation
+├── docs/                   # User, developer, research, paper, notebook, and presentation docs
 ├── data/                   # Simulation inputs and lookup data
+├── tools/                  # Developer/research tooling, prompts, and validation protocols
 └── validation/             # Regression, literature, and integration checks
 ```
 

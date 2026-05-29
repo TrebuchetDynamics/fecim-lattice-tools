@@ -68,6 +68,18 @@ _Avoid_: automatic persistence, hidden cache write, measured calibration certifi
 The rule that FeCIM results are model estimates for education and design exploration, not validated device or silicon measurements.
 _Avoid_: hardware proof, measured advantage, demonstrated device result
 
+**Purpose Directory**:
+A top-level repository directory whose name identifies one durable kind of project material: executable entry points, reusable simulation code, documentation, research evidence, configuration, curated data, validation, tools, scripts, or generated artifacts.
+_Avoid_: junk drawer, miscellaneous root folder, temporary bucket
+
+**Root Collateral**:
+Support material that does not need to be a root-level landmark, such as paper drafts, notebooks, screenshots, prompts, external-tool notes, or validation protocols. Root Collateral belongs under a Purpose Directory instead of directly under the repository root.
+_Avoid_: root docs pile, loose project files, top-level collateral
+
+**Public Module Directory**:
+A numbered `moduleN-*` top-level directory that is part of the educational product vocabulary and learning path. Public Module Directories remain stable landmarks while reusable implementation moves behind `shared/` seams.
+_Avoid_: internal package boundary, arbitrary folder number, disposable module path
+
 **ISPP Convergence Policy Module**:
 A UI-neutral module that owns shared ISPP write-verify convergence decisions such as bounds recovery, overshoot handling, guard acceptance, and convergence receipts. It is consumed by waveform-based Module 1 adapters and L-K physics adapters so bug fixes stay local.
 _Avoid_: duplicated writer heuristics, GUI-specific convergence logic, hidden controller tweak
@@ -86,3 +98,6 @@ Domain expert: "No. Screenshot readability helps, but Migration Parity means the
 
 Developer: "Can the Module 1 plot claim measured HZO behavior?"
 Domain expert: "No. Keep the Educational Simulation Boundary visible unless a validated measurement citation is attached."
+
+Developer: "Should we rename `module1-hysteresis` to `modules/hysteresis` during root cleanup?"
+Domain expert: "No. Treat it as a Public Module Directory; move Root Collateral into Purpose Directories first and keep module landmarks stable."

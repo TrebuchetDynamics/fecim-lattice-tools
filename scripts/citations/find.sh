@@ -9,4 +9,4 @@ fi
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-bash scripts/citations/_run_agent.sh prompts/citations/01_fetcher.md "Discover candidate sources for topic only; do not create files unless explicitly requested: $*"
+bash scripts/citations/_run_agent.sh tools/prompts/citations/01_fetcher.md "Discover candidate sources for topic only; do not create files unless explicitly requested: $*"

@@ -6,40 +6,25 @@ import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/widgets/display"
 )
 
-type ConfidenceLevel string
+// ConfidenceLevel identifies the confidence tier displayed in a badge.
+type ConfidenceLevel = display.ConfidenceLevel
 
 const (
-	Measured    ConfidenceLevel = "Measured"
-	Calibrated  ConfidenceLevel = "Calibrated"
-	Estimated   ConfidenceLevel = "Estimated"
-	Placeholder ConfidenceLevel = "Placeholder"
+	Measured    = display.Measured
+	Calibrated  = display.Calibrated
+	Estimated   = display.Estimated
+	Placeholder = display.Placeholder
 )
 
 func confidenceColor(level ConfidenceLevel) color.Color {
-	switch level {
-	case Measured:
-		return color.RGBA{60, 180, 75, 255} // green
-	case Calibrated:
-		return color.RGBA{70, 130, 255, 255} // blue
-	case Estimated:
-		return color.RGBA{240, 190, 60, 255} // yellow
-	default:
-		return color.RGBA{220, 80, 80, 255} // red
-	}
+	return display.ConfidenceColor(level)
 }
 
+// NewConfidenceBadge creates a compact color-dot + text confidence badge.
 func NewConfidenceBadge(level ConfidenceLevel) *fyne.Container {
-	if level == "" {
-		level = Placeholder
-	}
-	dot := canvas.NewCircle(confidenceColor(level))
-	dotWrap := container.NewGridWrap(fyne.NewSize(10, 10), dot)
-	label := widget.NewLabel(string(level))
-	label.TextStyle = fyne.TextStyle{Bold: true}
-	return container.NewHBox(dotWrap, label)
+	return display.NewConfidenceBadge(level)
 }

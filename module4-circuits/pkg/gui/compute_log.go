@@ -5,113 +5,53 @@ package gui
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"sync"
 	"time"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
-	sharedio "fecim-lattice-tools/shared/io"
-	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/module4-circuits/pkg/gui/computelog"
 )
 
-// ComputeLogEntry represents a single MVM compute operation
-type ComputeLogEntry struct {
-	Timestamp    string             `json:"timestamp"`
-	ArraySize    string             `json:"array_size"`
-	Material     string             `json:"material"`
-	QuantLevels  int                `json:"quant_levels"`
-	InputVector  []float64          `json:"input_vector_volts"`
-	Weights      [][]int            `json:"weight_matrix"`
-	Conductances [][]float64        `json:"conductance_matrix_uS"`
-	RowResults   []ComputeRowResult `json:"row_results"`
+type ComputeLogEntry = computelog.Entry
+type ComputeRowResult = computelog.RowResult
+type CellMVM = computelog.CellMVM
+
+type computeLogAdapter struct {
+	*computelog.Log
 }
 
-// ComputeRowResult holds the compute result for a single row
-type ComputeRowResult struct {
-	Row        int       `json:"row"`
-	Active     bool      `json:"active"`
-	CurrentUA  float64   `json:"current_uA"`
-	TIAVoltage float64   `json:"tia_voltage_V"`
-	ADCLevel   int       `json:"adc_level"`
-	Saturated  bool      `json:"saturated"`
-	CellDetail []CellMVM `json:"cell_details"`
-}
+var globalComputeLog = &computeLogAdapter{Log: computelog.New()}
 
-// CellMVM holds per-cell MVM calculation details
-type CellMVM struct {
-	Col           int     `json:"col"`
-	Weight        int     `json:"weight"`
-	ConductanceUS float64 `json:"conductance_uS"`
-	VoltageV      float64 `json:"voltage_V"`
-	CurrentUA     float64 `json:"current_uA"`
-}
-
-// ComputeLog manages the compute log file
-type ComputeLog struct {
-	mu       sync.Mutex
-	entries  []ComputeLogEntry
-	filePath string
-	enabled  bool
-}
-
-var globalComputeLog = &ComputeLog{
-	entries:  make([]ComputeLogEntry, 0),
-	filePath: filepath.Join(logging.LogsDir(), "compute_log.json"),
-	enabled:  os.Getenv("FECIM_CIRCUITS_COMPUTE_LOG") != "",
-}
-
-// EnableComputeLog enables or disables compute logging
+// EnableComputeLog enables or disables compute logging.
 func EnableComputeLog(enabled bool) {
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-	globalComputeLog.enabled = enabled
+	globalComputeLog.Enable(enabled)
 }
 
 // ComputeLogEnabled reports whether compute logging is currently enabled.
 func ComputeLogEnabled() bool {
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-	return globalComputeLog.enabled
+	return globalComputeLog.Enabled()
 }
 
 // SetComputeLogPath sets the path for the compute log file.
 // Returns an error if the path is empty or contains traversal sequences.
 func SetComputeLogPath(path string) error {
-	cleanPath, err := sharedio.ValidatePath(path)
-	if err != nil {
-		return fmt.Errorf("invalid compute log path: %w", err)
-	}
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-	globalComputeLog.filePath = cleanPath
-	return nil
+	return globalComputeLog.SetPath(path)
 }
 
-// ClearComputeLog clears all logged entries
+// ClearComputeLog clears all logged entries.
 func ClearComputeLog() {
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-	globalComputeLog.entries = make([]ComputeLogEntry, 0)
+	globalComputeLog.Clear()
 }
 
-// GetComputeLogEntries returns a copy of all logged entries
+// GetComputeLogEntries returns a copy of all logged entries.
 func GetComputeLogEntries() []ComputeLogEntry {
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-	result := make([]ComputeLogEntry, len(globalComputeLog.entries))
-	copy(result, globalComputeLog.entries)
-	return result
+	return globalComputeLog.Entries()
 }
 
-// LogCompute logs a compute operation (called from DeviceState.Compute)
+// LogCompute logs a compute operation (called from DeviceState.Compute).
 func (ds *DeviceState) LogCompute(weights [][]int, quantLevels int) {
-	if !globalComputeLog.enabled {
+	if !globalComputeLog.Enabled() {
 		return
 	}
-
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
 
 	entry := ComputeLogEntry{
 		Timestamp:   time.Now().Format("2006-01-02 15:04:05.000"),
@@ -200,44 +140,15 @@ func (ds *DeviceState) LogCompute(weights [][]int, quantLevels int) {
 		entry.RowResults[r] = result
 	}
 
-	globalComputeLog.entries = append(globalComputeLog.entries, entry)
-
-	// Keep only last 100 entries to prevent memory bloat
-	if len(globalComputeLog.entries) > 100 {
-		globalComputeLog.entries = globalComputeLog.entries[len(globalComputeLog.entries)-100:]
-	}
+	globalComputeLog.Append(entry, 100)
 }
 
-// SaveComputeLog saves all logged entries to the JSON file
+// SaveComputeLog saves all logged entries to the JSON file.
 func SaveComputeLog() error {
-	globalComputeLog.mu.Lock()
-	defer globalComputeLog.mu.Unlock()
-
-	if len(globalComputeLog.entries) == 0 {
-		return nil
-	}
-
-	if err := sharedio.SaveJSON(globalComputeLog.filePath, globalComputeLog.entries); err != nil {
-		return fmt.Errorf("failed to write compute log: %w", err)
-	}
-
-	return nil
+	return globalComputeLog.Save()
 }
 
-// SaveComputeLogTo saves all logged entries to a specific file
+// SaveComputeLogTo saves all logged entries to a specific file.
 func SaveComputeLogTo(path string) error {
-	globalComputeLog.mu.Lock()
-	entries := make([]ComputeLogEntry, len(globalComputeLog.entries))
-	copy(entries, globalComputeLog.entries)
-	globalComputeLog.mu.Unlock()
-
-	if len(entries) == 0 {
-		return nil
-	}
-
-	if err := sharedio.SaveJSON(path, entries); err != nil {
-		return fmt.Errorf("failed to write compute log: %w", err)
-	}
-
-	return nil
+	return globalComputeLog.SaveTo(path)
 }

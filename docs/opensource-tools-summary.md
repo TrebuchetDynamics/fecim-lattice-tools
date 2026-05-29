@@ -376,4 +376,4 @@ docker pull hpretl/iic-osic-tools:latest
   - [data-acquisition-tools.md](4-research/opensource-tools/data-acquisition-tools.md)
   - [tool-comparison-matrix.md](4-research/opensource-tools/tool-comparison-matrix.md)
   - [opensource-crossbar.md](4-research/opensource-tools/opensource-crossbar.md)
-- Clone script: [opensource/clone-all.sh](../opensource/clone-all.sh)
+- Clone script: [tools/opensource/clone-all.sh](../tools/opensource/clone-all.sh)

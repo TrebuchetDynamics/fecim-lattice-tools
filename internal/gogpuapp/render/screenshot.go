@@ -25,9 +25,9 @@ func CaptureAndSave(width, height int, draw func(*gg.Context), filename string) 
 	if draw != nil {
 		draw(dc)
 	}
-	if err := os.MkdirAll("screenshots", 0755); err != nil {
-		return fmt.Errorf("render: mkdir screenshots: %w", err)
+	if err := os.MkdirAll("docs/assets/screenshots", 0755); err != nil {
+		return fmt.Errorf("render: mkdir docs/assets/screenshots: %w", err)
 	}
-	path := "screenshots/" + filename
+	path := "docs/assets/screenshots/" + filename
 	return dc.SavePNG(path)
 }

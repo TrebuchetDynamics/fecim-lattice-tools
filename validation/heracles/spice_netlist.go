@@ -35,6 +35,8 @@ type HeraclesNetlistConfig struct {
 
 // DefaultHeraclesNetlistConfig returns a configuration matching the
 // Reference10nmHfO2_300K dataset: 10 nm HfO2 at 300 K swept to +/-3 V.
+const defaultHeraclesModelPath = "tools/opensource/heracles/heracles.va"
+
 func DefaultHeraclesNetlistConfig() HeraclesNetlistConfig {
 	return HeraclesNetlistConfig{
 		Vmax:        3.0,
@@ -42,7 +44,7 @@ func DefaultHeraclesNetlistConfig() HeraclesNetlistConfig {
 		Temperature: 300,
 		ThicknessNm: 10,
 		AreaUm2:     1.0,
-		ModelPath:   "opensource/heracles/heracles.va",
+		ModelPath:   defaultHeraclesModelPath,
 		OutputFile:  "heracles_pe.csv",
 	}
 }
@@ -72,7 +74,7 @@ func GenerateHeraclesFECapNetlist(config HeraclesNetlistConfig) string {
 		config.AreaUm2 = 1.0
 	}
 	if config.ModelPath == "" {
-		config.ModelPath = "opensource/heracles/heracles.va"
+		config.ModelPath = defaultHeraclesModelPath
 	}
 	if config.OutputFile == "" {
 		config.OutputFile = "heracles_pe.csv"

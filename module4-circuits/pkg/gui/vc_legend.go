@@ -7,16 +7,11 @@ import (
 	"image"
 	"image/color"
 	"math"
+
+	"fecim-lattice-tools/module4-circuits/pkg/gui/visual"
 )
 
-type vcLegendSpec struct {
-	Title    string
-	Min      float64
-	Max      float64
-	Ticks    []float64
-	TickText []string
-	SignText string
-}
+type vcLegendSpec = visual.VCellLegendSpec
 
 func (ca *CircuitsApp) currentVCLegendSpec() vcLegendSpec {
 	maxAbs := 1.0
@@ -52,62 +47,19 @@ func (ca *CircuitsApp) currentVCLegendSpec() vcLegendSpec {
 	_ = readMax
 	_ = mode
 
-	return vcLegendSpec{
-		Title:    "Cell Voltage (V)",
-		Min:      -maxAbs,
-		Max:      maxAbs,
-		Ticks:    []float64{-maxAbs, 0, maxAbs},
-		TickText: []string{"-Vmax", "0", "+Vmax"},
-		SignText: "+ = BL>WL", // negative implies WL>BL
-	}
+	return visual.NewVCellLegendSpec(maxAbs)
 }
 
 func vcOverlayColor(voltage, maxAbs float64) color.RGBA {
-	if maxAbs <= 0 {
-		maxAbs = 1.0
-	}
-	n := voltage / maxAbs
-	if n > 1 {
-		n = 1
-	}
-	if n < -1 {
-		n = -1
-	}
-
-	cool := color.RGBA{70, 130, 255, 255}     // blue: negative voltage
-	neutral := color.RGBA{255, 255, 255, 255} // white: zero voltage
-	warm := color.RGBA{255, 80, 80, 255}      // red: positive voltage
-
-	if n < 0 {
-		return lerpRGBA(neutral, cool, -n)
-	}
-	return lerpRGBA(neutral, warm, n)
+	return visual.VCellOverlayColor(voltage, maxAbs)
 }
 
 func lerpRGBA(a, b color.RGBA, t float64) color.RGBA {
-	if t < 0 {
-		t = 0
-	}
-	if t > 1 {
-		t = 1
-	}
-	mix := func(x, y uint8) uint8 {
-		return uint8(math.Round(float64(x) + (float64(y)-float64(x))*t))
-	}
-	return color.RGBA{mix(a.R, b.R), mix(a.G, b.G), mix(a.B, b.B), 255}
+	return visual.LerpRGBA(a, b, t)
 }
 
 func blendRGBA(base, overlay color.RGBA, alpha float64) color.RGBA {
-	if alpha < 0 {
-		alpha = 0
-	}
-	if alpha > 1 {
-		alpha = 1
-	}
-	mix := func(a, b uint8) uint8 {
-		return uint8(math.Round((1-alpha)*float64(a) + alpha*float64(b)))
-	}
-	return color.RGBA{mix(base.R, overlay.R), mix(base.G, overlay.G), mix(base.B, overlay.B), 255}
+	return visual.BlendRGBA(base, overlay, alpha)
 }
 
 func drawVCLegend(img *image.RGBA, x, y, w, h int, spec vcLegendSpec) {

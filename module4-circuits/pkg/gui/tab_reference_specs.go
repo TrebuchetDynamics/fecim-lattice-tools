@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module4-circuits/pkg/gui/reference"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -459,14 +460,9 @@ func (ca *CircuitsApp) updateSpecSummary() {
 	}
 
 	// Get current array size
-	var size int
-	fmt.Sscanf(ca.specArraySizeSelect.Selected, "%d", &size)
-	if size == 0 {
-		size = 32 // default
-	}
-
-	cells := size * size
-	throughput := float64(cells) / 76.0 // MACs per ns = GOPS
+	summary := reference.NewSpecSummary(reference.ParseArraySize(ca.specArraySizeSelect.Selected), 76)
+	size := summary.Size
+	cells := summary.Cells
 
 	// Component summary table
 	summaryGrid := container.NewGridWithColumns(5,
@@ -508,18 +504,18 @@ func (ca *CircuitsApp) updateSpecSummary() {
 
 		widget.NewLabelWithStyle("TOTAL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
-		widget.NewLabelWithStyle("21.4 mW", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("0.09 mm²", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("76 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(summary.TotalPowerText, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(summary.TotalAreaText, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(summary.TotalLatencyText, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
 
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs (Ops) / 76ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(summary.ThroughputText),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
+		widget.NewLabel(summary.EfficiencyText),
 	)
 
 	newContent := container.NewVBox(

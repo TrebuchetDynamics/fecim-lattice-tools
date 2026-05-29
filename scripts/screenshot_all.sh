@@ -15,7 +15,7 @@ if [ -e "/tmp/.X${DISPLAY_NUM}-lock" ]; then
         fi
     done
 fi
-SCREENSHOT_DIR="screenshots/ui-review"
+SCREENSHOT_DIR="docs/assets/screenshots/ui-review"
 APP_BIN="./bin/fecim-lattice-tools"
 WINDOW_W=1400
 WINDOW_H=900

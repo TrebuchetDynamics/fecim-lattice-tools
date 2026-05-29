@@ -145,7 +145,7 @@ Error:       #BA1A1A (warnings)
 ## Screenshot Generation
 
 - Extend `cmd/fecim-screenshotter` with gogpu/ui headless support
-- Generate `screenshots/` baseline per module state
+- Generate `docs/assets/screenshots/` baseline per module state
 - CI integration for visual regression detection
 
 ## TDD Discipline

@@ -509,7 +509,7 @@ func InstallToolsIfNeeded() []*InstallResult {
 			results = append(results, &InstallResult{
 				Tool:    "CrossSim",
 				Success: false,
-				Error:   fmt.Errorf("not installed and local clone not found at opensource/crossbar/cross-sim"),
+				Error:   fmt.Errorf("not installed and local clone not found at tools/opensource/crossbar/cross-sim"),
 			})
 		}
 	} else {
@@ -529,7 +529,7 @@ func InstallToolsIfNeeded() []*InstallResult {
 			results = append(results, &InstallResult{
 				Tool:    "BadCrossbar",
 				Success: false,
-				Error:   fmt.Errorf("not installed and local clone not found at opensource/crossbar/badcrossbar"),
+				Error:   fmt.Errorf("not installed and local clone not found at tools/opensource/crossbar/badcrossbar"),
 			})
 		}
 	} else {

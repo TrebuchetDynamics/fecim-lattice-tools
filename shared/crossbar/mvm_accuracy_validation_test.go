@@ -141,7 +141,7 @@ func TestMVMAccuracy_DACADCQuantizationSNR_M2MVM02(t *testing.T) {
 	if testing.Short() {
 		t.Skip("quantization SNR sweep is sensitive to rounding interactions; skip in -short")
 	}
-	rand.Seed(1)
+	rng := rand.New(rand.NewSource(1))
 	const n = 16
 
 	W := make([][]float64, n)
@@ -149,12 +149,12 @@ func TestMVMAccuracy_DACADCQuantizationSNR_M2MVM02(t *testing.T) {
 		W[i] = make([]float64, n)
 		for j := range W[i] {
 			// Keep away from rails to make quantization effects visible and stable.
-			W[i][j] = 0.15 + 0.7*rand.Float64()
+			W[i][j] = 0.15 + 0.7*rng.Float64()
 		}
 	}
 	x := make([]float64, n)
 	for i := range x {
-		x[i] = 0.1 + 0.8*rand.Float64()
+		x[i] = 0.1 + 0.8*rng.Float64()
 	}
 
 	ideal := manualMVMNormalized(W, x)
