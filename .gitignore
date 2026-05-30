@@ -96,6 +96,9 @@ MODULE5_DEEP_CRITIQUE*.md
 RIJU_ACTION_PLAN*.md
 full-test.md
 
+# AI session/folder-refactor state (never track)
+.pi/
+
 # Temporary probe/scratch files
 .tmp_*
 tmp_*
