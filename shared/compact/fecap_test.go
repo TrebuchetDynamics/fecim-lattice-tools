@@ -3,6 +3,8 @@ package compact
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 func defaultParams() FeCapParams {
@@ -46,7 +48,7 @@ func TestLinearCharge_Proportional(t *testing.T) {
 		t.Errorf("LinearCharge not proportional to V: ratio %.6f, want 2.0", q2/q1)
 	}
 	// Sanity: ε₀ × 30 × 1V / 10nm = 8.854e-12 × 30 / 10e-9 = 0.02656 C/m²
-	want := epsilon0 * p.EpsFEr * 1.0 / p.ThicknessFE
+	want := constants.VacuumPermittivityFPerM * p.EpsFEr * 1.0 / p.ThicknessFE
 	if math.Abs(q1-want) > 1e-15 {
 		t.Errorf("LinearCharge(1V): got %.4e, want %.4e", q1, want)
 	}

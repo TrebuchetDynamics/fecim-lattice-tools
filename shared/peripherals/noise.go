@@ -1,10 +1,9 @@
 package peripherals
 
-import "math"
+import (
+	"math"
 
-const (
-	boltzmannConstantJPerK = 1.380649e-23
-	electronChargeC        = 1.602176634e-19
+	"fecim-lattice-tools/shared/constants"
 )
 
 // ThermalNoiseRMS computes Johnson-Nyquist thermal noise voltage RMS: sqrt(4*k*T*R*BW).
@@ -12,7 +11,9 @@ func ThermalNoiseRMS(tempK, resistanceOhm, bandwidthHz float64) float64 {
 	if tempK <= 0 || resistanceOhm <= 0 || bandwidthHz <= 0 {
 		return 0
 	}
-	return math.Sqrt(4 * boltzmannConstantJPerK * tempK * resistanceOhm * bandwidthHz)
+	return math.Sqrt(4 * constants.BoltzmannConstantJPerK * tempK * resistanceOhm * bandwidthHz)
+
+
 }
 
 // FlickerNoisePower computes 1/f (flicker) noise power using K/f.
@@ -31,7 +32,7 @@ func ShotNoiseCurrentRMS(currentA, bandwidthHz float64) float64 {
 	if currentA == 0 || bandwidthHz <= 0 {
 		return 0
 	}
-	return math.Sqrt(2 * electronChargeC * currentA * bandwidthHz)
+	return math.Sqrt(2 * constants.ElectronChargeC * currentA * bandwidthHz)
 }
 
 // QuantizationNoiseVariance computes quantization noise variance for a uniform quantizer.

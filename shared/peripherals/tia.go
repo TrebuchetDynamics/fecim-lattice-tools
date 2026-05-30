@@ -2,6 +2,8 @@ package peripherals
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // Default TIA parameters for FeCIM crossbar sense chain.
@@ -16,7 +18,7 @@ const (
 )
 
 // kBT300 is the Boltzmann thermal energy at 300 K (room temperature).
-const kBT300 = 1.380649e-23 * 300.0 // kT at 300K (J)
+const kBT300 = constants.BoltzmannConstantJPerK * 300.0 // kT at 300K (J)
 
 // TIA models a transimpedance amplifier used in the crossbar read chain to
 // convert summed column current (A) into a measurable voltage (V).

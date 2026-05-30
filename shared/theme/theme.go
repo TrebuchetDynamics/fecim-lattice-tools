@@ -26,6 +26,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
+
+	"fecim-lattice-tools/shared/colorutil"
 )
 
 // FeCIM theme colors - shared across all demos
@@ -220,27 +222,13 @@ func (t *FeCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 
 // WithAlpha returns a new color with the specified alpha channel (0-255)
 func WithAlpha(c color.Color, alpha uint8) color.Color {
-	r, g, b, _ := c.RGBA()
-	return color.RGBA{
-		R: uint8(r >> 8),
-		G: uint8(g >> 8),
-		B: uint8(b >> 8),
-		A: alpha,
-	}
+	return colorutil.WithAlpha(c, alpha)
 }
 
 // GetContrastColor returns either ColorText or ColorBackground based on which
 // provides better contrast with the given background color
 func GetContrastColor(bgColor color.Color) color.Color {
-	r, g, b, _ := bgColor.RGBA()
-	// Convert to 0-255 range
-	r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
-
-	// Calculate relative luminance (simplified)
-	luminance := (0.299*float64(r8) + 0.587*float64(g8) + 0.114*float64(b8)) / 255.0
-
-	// Use white text on dark backgrounds, dark text on light backgrounds
-	if luminance < 0.5 {
+	if colorutil.Luminance(bgColor) < 0.5 {
 		return ColorText
 	}
 	return ColorBackground

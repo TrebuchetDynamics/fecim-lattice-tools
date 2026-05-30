@@ -1,6 +1,10 @@
 package crossbar
 
-import "math"
+import (
+	"math"
+
+	"fecim-lattice-tools/shared/constants"
+)
 
 // RetentionDatum is a measured retention point from literature.
 type RetentionDatum struct {
@@ -23,7 +27,7 @@ func retentionFromParams(t, tempK, coeff, exp, ea float64) float64 {
 	}
 	const tref = 3600.0
 	const Tref = 358.0
-	const kBeV = 8.617333262145e-5
+	const kBeV = constants.BoltzmannConstanteVPerK
 	accel := math.Exp((ea / kBeV) * (1.0/Tref - 1.0/tempK))
 	loss := coeff * math.Pow(t/tref, exp) * accel
 	r := 1.0 - loss

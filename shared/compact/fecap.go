@@ -14,6 +14,8 @@ package compact
 import (
 	"errors"
 	"math"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // ── FeCap model ───────────────────────────────────────────────────────────────
@@ -75,13 +77,11 @@ func (p *FeCapParams) SwitchingFunction(V, dir float64) float64 {
 
 // ── Linear dielectric contribution ───────────────────────────────────────────
 
-const epsilon0 = 8.854187817e-12 // F/m
-
 // LinearCharge returns the linear dielectric charge (C/m²) for voltage V.
 //
 //	Q_lin = ε₀ × εᵣ × V / tFE
 func (p *FeCapParams) LinearCharge(V float64) float64 {
-	return epsilon0 * p.EpsFEr * V / p.ThicknessFE
+	return constants.VacuumPermittivityFPerM * p.EpsFEr * V / p.ThicknessFE
 }
 
 // ── History-tracking FeCap instance ──────────────────────────────────────────
@@ -134,7 +134,7 @@ func (fc *FeCap) dTotalCharge(V float64) float64 {
 	arg := fc.p.A * (V - fc.dir*fc.p.CoerciveV)
 	sech2 := 1.0 / math.Cosh(arg)
 	sech2 *= sech2
-	return fc.p.Qs*fc.p.A*sech2 + epsilon0*fc.p.EpsFEr/fc.p.ThicknessFE
+	return fc.p.Qs*fc.p.A*sech2 + constants.VacuumPermittivityFPerM*fc.p.EpsFEr/fc.p.ThicknessFE
 }
 
 // SolveVFE finds the FE voltage V given a target total charge Qtarget (C/m²)

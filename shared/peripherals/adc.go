@@ -2,6 +2,8 @@ package peripherals
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // ADC energy-per-conversion coefficients by architecture (Joules per bit or per level).
@@ -425,8 +427,7 @@ func (a *ADC) GetThermalNoiseVoltage() float64 {
 		return 0
 	}
 
-	// Boltzmann constant
-	const kB = 1.380649e-23 // J/K
+	const kB = constants.BoltzmannConstantJPerK // J/K
 
 	// kT/C noise: Vrms = sqrt(kT/C)
 	T := a.NoiseConfig.TemperatureK
