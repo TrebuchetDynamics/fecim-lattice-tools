@@ -3,6 +3,8 @@ package ferroelectric
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // ============================================================================
@@ -322,7 +324,7 @@ func TestCapacitanceCalculation(t *testing.T) {
 		AlScN(),
 	}
 
-	epsilon0 := 8.854e-12 // F/m (vacuum permittivity)
+	epsilon0 := constants.VacuumPermittivityFPerM // F/m (vacuum permittivity)
 
 	for _, mat := range materials {
 		t.Run(mat.Name, func(t *testing.T) {
