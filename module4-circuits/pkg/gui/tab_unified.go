@@ -22,6 +22,7 @@ import (
 
 	configphysics "fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	unifiedsense "fecim-lattice-tools/module4-circuits/pkg/gui/unified/sense"
 	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
@@ -1226,18 +1227,7 @@ func (ca *CircuitsApp) applySenseADCRange() {
 
 	// Physics: ADC Vref window defines the measurable voltage span before quantization.
 	// Clamp to a realistic window and enforce a non-zero span.
-	if vmin < minSenseADCVref {
-		vmin = minSenseADCVref
-	}
-	if vmax > maxSenseADCVref {
-		vmax = maxSenseADCVref
-	}
-	if vmin > maxSenseADCVref-minSenseADCVrefSpan {
-		vmin = maxSenseADCVref - minSenseADCVrefSpan
-	}
-	if vmax <= vmin+minSenseADCVrefSpan {
-		vmax = vmin + minSenseADCVrefSpan
-	}
+	vmin, vmax = unifiedsense.ClampADCRange(vmin, vmax, minSenseADCVref, maxSenseADCVref, minSenseADCVrefSpan)
 
 	ca.adc.VrefLow = vmin
 	ca.adc.VrefHigh = vmax
