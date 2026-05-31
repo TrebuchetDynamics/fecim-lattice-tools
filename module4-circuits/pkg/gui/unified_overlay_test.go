@@ -94,13 +94,13 @@ func TestReadOverlayAffectsAllOperationModes(t *testing.T) {
 }
 
 func TestFormatSignedScaled(t *testing.T) {
-	if got := formatSignedScaled(0, []scaledUnit{{unit: "V", scale: 1}, {unit: "mV", scale: 1e-3}}); got != "0 V" {
+	if got := formatSignedScaled(0, []scaledUnit{{Unit: "V", Scale: 1}, {Unit: "mV", Scale: 1e-3}}); got != "0 V" {
 		t.Fatalf("zero format: got %q", got)
 	}
-	if got := formatSignedScaled(1.2e-3, []scaledUnit{{unit: "A", scale: 1}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}}); got != "+1.20 mA" {
+	if got := formatSignedScaled(1.2e-3, []scaledUnit{{Unit: "A", Scale: 1}, {Unit: "mA", Scale: 1e-3}, {Unit: "uA", Scale: 1e-6}}); got != "+1.20 mA" {
 		t.Fatalf("milli scaling: got %q", got)
 	}
-	if got := formatSignedScaled(-4.56e-6, []scaledUnit{{unit: "A", scale: 1}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}}); got != "-4.56 uA" {
+	if got := formatSignedScaled(-4.56e-6, []scaledUnit{{Unit: "A", Scale: 1}, {Unit: "mA", Scale: 1e-3}, {Unit: "uA", Scale: 1e-6}}); got != "-4.56 uA" {
 		t.Fatalf("sign handling: got %q", got)
 	}
 }

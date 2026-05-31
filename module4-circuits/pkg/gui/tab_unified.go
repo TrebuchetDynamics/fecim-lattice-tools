@@ -22,6 +22,7 @@ import (
 
 	configphysics "fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	guimetrics "fecim-lattice-tools/module4-circuits/pkg/gui/metrics"
 	unifiedsense "fecim-lattice-tools/module4-circuits/pkg/gui/unified/sense"
 	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/peripherals"
@@ -94,11 +95,11 @@ const (
 
 func formatCurrentA(currentA float64) string {
 	return formatSignedScaled(currentA, []scaledUnit{
-		{unit: "A", scale: 1.0},
-		{unit: "mA", scale: 1e-3},
-		{unit: "uA", scale: 1e-6},
-		{unit: "nA", scale: 1e-9},
-		{unit: "pA", scale: 1e-12},
+		{Unit: "A", Scale: 1.0},
+		{Unit: "mA", Scale: 1e-3},
+		{Unit: "uA", Scale: 1e-6},
+		{Unit: "nA", Scale: 1e-9},
+		{Unit: "pA", Scale: 1e-12},
 	})
 }
 
@@ -137,36 +138,10 @@ func parseBitsFromSelection(selected string) (int, bool) {
 	return bits, true
 }
 
-type scaledUnit struct {
-	unit  string
-	scale float64
-}
+type scaledUnit = guimetrics.ScaledUnit
 
 func formatSignedScaled(value float64, units []scaledUnit) string {
-	absValue := math.Abs(value)
-	if absValue < 1e-12 {
-		return fmt.Sprintf("0 %s", units[0].unit)
-	}
-
-	chosen := units[len(units)-1]
-	for _, candidate := range units {
-		if absValue >= candidate.scale {
-			chosen = candidate
-			break
-		}
-	}
-	scaled := value / chosen.scale
-	absScaled := math.Abs(scaled)
-	format := "%+.3f"
-	switch {
-	case absScaled >= 100:
-		format = "%+.0f"
-	case absScaled >= 10:
-		format = "%+.1f"
-	case absScaled >= 1:
-		format = "%+.2f"
-	}
-	return fmt.Sprintf(format+" %s", scaled, chosen.unit)
+	return guimetrics.FormatSignedScaled(value, units)
 }
 
 // ============================================================================

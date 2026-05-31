@@ -1,6 +1,17 @@
+//go:build legacy_fyne
+
 package metrics
 
 import "fmt"
+
+// ComponentRow contains one row in the reference component summary table.
+type ComponentRow struct {
+	Component string
+	Count     string
+	Power     string
+	Area      string
+	Latency   string
+}
 
 // SpecSummary contains derived values shown in the reference specification summary.
 type SpecSummary struct {
@@ -28,7 +39,18 @@ func ParseArraySize(selected string) int {
 	return size
 }
 
-// NewSpecSummary returns the derived summary values for an array size.
+// ComponentRows returns the canonical reference component summary rows for an array size.
+func ComponentRows(size int) []ComponentRow {
+	cells := size * size
+	return []ComponentRow{
+		{Component: "FeFET Array", Count: fmt.Sprintf("%d", cells), Power: "0.1 mW", Area: "0.01 mm²", Latency: "5 ns"},
+		{Component: "DACs", Count: fmt.Sprintf("%d", size), Power: "3.2 mW", Area: "0.02 mm²", Latency: "10 ns"},
+		{Component: "TIAs", Count: fmt.Sprintf("%d", size), Power: "1.6 mW", Area: "0.01 mm²", Latency: "11 ns"},
+		{Component: "ADCs", Count: fmt.Sprintf("%d", size), Power: "16 mW", Area: "0.04 mm²", Latency: "50 ns"},
+		{Component: "Control", Count: "1", Power: "0.5 mW", Area: "0.01 mm²", Latency: "2 ns"},
+	}
+}
+
 func NewSpecSummary(size int, latencyNS float64) SpecSummary {
 	if size <= 0 {
 		size = 32

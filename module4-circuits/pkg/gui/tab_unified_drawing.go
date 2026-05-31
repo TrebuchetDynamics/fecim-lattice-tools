@@ -239,7 +239,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 				overlayText := ""
 				overlayColor := color.RGBA{210, 235, 255, 220}
 				if overlayMode == "Vcell" {
-					overlayText = formatSignedScaled(vCell, []scaledUnit{{unit: "V", scale: 1.0}, {unit: "mV", scale: 1e-3}, {unit: "uV", scale: 1e-6}, {unit: "nV", scale: 1e-9}})
+					overlayText = formatSignedScaled(vCell, []scaledUnit{{Unit: "V", Scale: 1.0}, {Unit: "mV", Scale: 1e-3}, {Unit: "uV", Scale: 1e-6}, {Unit: "nV", Scale: 1e-9}})
 					overlayColor = color.RGBA{120, 220, 255, 220}
 				} else if overlayMode == "Icell" {
 					conductanceS := 0.0
@@ -250,7 +250,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 						conductanceS = (1.0 + float64(level)/float64(levels-1)*99.0) * 1e-6
 					}
 					iCell := conductanceS * vCell
-					overlayText = formatSignedScaled(iCell, []scaledUnit{{unit: "A", scale: 1.0}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}, {unit: "nA", scale: 1e-9}, {unit: "pA", scale: 1e-12}})
+					overlayText = formatSignedScaled(iCell, []scaledUnit{{Unit: "A", Scale: 1.0}, {Unit: "mA", Scale: 1e-3}, {Unit: "uA", Scale: 1e-6}, {Unit: "nA", Scale: 1e-9}, {Unit: "pA", Scale: 1e-12}})
 					overlayColor = color.RGBA{160, 255, 190, 220}
 				}
 				if overlayText != "" {
