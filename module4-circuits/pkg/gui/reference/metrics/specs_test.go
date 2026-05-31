@@ -1,6 +1,4 @@
-//go:build legacy_fyne
-
-package reference
+package metrics
 
 import "testing"
 

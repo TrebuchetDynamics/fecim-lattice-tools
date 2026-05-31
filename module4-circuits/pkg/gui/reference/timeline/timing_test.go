@@ -1,13 +1,11 @@
-//go:build legacy_fyne
-
-package reference
+package timeline
 
 import (
 	"strings"
 	"testing"
 )
 
-func TestTimingAnimationSteps_KnownOperations(t *testing.T) {
+func TestAnimationSteps_KnownOperations(t *testing.T) {
 	cases := []struct {
 		op        string
 		wantFinal string
@@ -17,7 +15,7 @@ func TestTimingAnimationSteps_KnownOperations(t *testing.T) {
 		{"COMPUTE", "Compute complete: Total 76ns for full MVM"},
 	}
 	for _, tc := range cases {
-		steps := TimingAnimationSteps(tc.op)
+		steps := AnimationSteps(tc.op)
 		if len(steps) != 6 {
 			t.Fatalf("%s: expected 6 steps, got %d", tc.op, len(steps))
 		}
@@ -30,8 +28,8 @@ func TestTimingAnimationSteps_KnownOperations(t *testing.T) {
 	}
 }
 
-func TestTimingAnimationSteps_UnknownOperation(t *testing.T) {
-	steps := TimingAnimationSteps("BAD")
+func TestAnimationSteps_UnknownOperation(t *testing.T) {
+	steps := AnimationSteps("BAD")
 	if len(steps) != 1 || steps[0] != "Select an operation to animate" {
 		t.Fatalf("unexpected fallback steps: %#v", steps)
 	}
