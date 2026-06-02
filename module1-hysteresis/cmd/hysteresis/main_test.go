@@ -1,7 +1,9 @@
 package hysteresiscli
 
 import (
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -289,6 +291,156 @@ func TestGetMaterial_AllKeys(t *testing.T) {
 
 func createTestHysteresisResult(m *ferroelectric.HZOMaterial) HysteresisResult {
 	return buildMaterialResult(m)
+}
+
+func TestRunE2EWideJSONBatchMaterialMatrix(t *testing.T) {
+	batchPath := filepath.Join(t.TempDir(), "materials.json")
+	outPath := filepath.Join(t.TempDir(), "hysteresis-batch.json")
+	if err := os.WriteFile(batchPath, []byte(`["default", "fecim", "superlattice", "cryogenic", "hzo32", "ftj140", "alscn", "unknown-key"]`), 0644); err != nil {
+		t.Fatalf("write batch: %v", err)
+	}
+
+	if err := Run([]string{"--json", "--batch", batchPath, "--output", outPath}); err != nil {
+		t.Fatalf("Run JSON batch: %v", err)
+	}
+	artifact := readHysteresisJSONFile[struct {
+		Total     int `json:"total"`
+		Succeeded int `json:"succeeded"`
+		Failed    int `json:"failed"`
+		Results   []struct {
+			Success bool `json:"success"`
+			Data    struct {
+				Material        string  `json:"material"`
+				RemanentPol     float64 `json:"remanent_polarization_uC_cm2"`
+				SaturationPol   float64 `json:"saturation_polarization_uC_cm2"`
+				CoerciveField   float64 `json:"coercive_field_MV_cm"`
+				CoerciveVoltage float64 `json:"coercive_voltage_V"`
+				Thickness       float64 `json:"thickness_nm"`
+				Permittivity    float64 `json:"permittivity"`
+				SwitchingTime   float64 `json:"switching_time_ns"`
+				EnduranceCycles float64 `json:"endurance_cycles"`
+				DiscreteLevels  int     `json:"discrete_levels"`
+				BitsPerCell     float64 `json:"bits_per_cell"`
+			} `json:"data"`
+		} `json:"results"`
+	}](t, outPath)
+	if artifact.Total != 8 || artifact.Succeeded != 8 || artifact.Failed != 0 || len(artifact.Results) != 8 {
+		t.Fatalf("batch summary = total %d succeeded %d failed %d results %d, want 8/8/0/8", artifact.Total, artifact.Succeeded, artifact.Failed, len(artifact.Results))
+	}
+	seen := map[string]bool{}
+	for i, result := range artifact.Results {
+		if !result.Success {
+			t.Fatalf("result %d not successful: %+v", i, result)
+		}
+		data := result.Data
+		if data.Material == "" || data.RemanentPol <= 0 || data.SaturationPol <= 0 || data.CoerciveField <= 0 || data.CoerciveVoltage <= 0 || data.Thickness <= 0 || data.Permittivity <= 0 || data.SwitchingTime <= 0 || data.EnduranceCycles <= 0 {
+			t.Fatalf("result %d has incomplete physical metrics: %+v", i, data)
+		}
+		if data.DiscreteLevels != 30 || data.BitsPerCell != 4.91 {
+			t.Fatalf("result %d level baseline = %d / %.2f, want 30 / 4.91", i, data.DiscreteLevels, data.BitsPerCell)
+		}
+		seen[data.Material] = true
+	}
+	for _, want := range []string{"HZO (Si-doped, Park 2015 midpoint)", "FeCIM HZO", "Literature Superlattice (HZO nanolaminate 2025)", "Cryogenic HZO (4K)", "HZO Standard (32 states)", "HZO FTJ (140 states)", "AlScN (8-16 states)"} {
+		if !seen[want] {
+			t.Fatalf("batch JSON did not include material %q; seen=%v", want, seen)
+		}
+	}
+}
+
+func TestRunE2EListMaterialsJSONAndOutputIsolation(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "materials.json")
+	stdout := captureStdout(func() {
+		if err := Run([]string{"--json", "--list-materials", "--output", outPath}); err != nil {
+			t.Fatalf("Run list materials JSON: %v", err)
+		}
+	})
+	if stdout != "" {
+		t.Fatalf("stdout = %q, want empty when --output captures JSON", stdout)
+	}
+	materials := readHysteresisJSONFile[[]struct {
+		Key  string `json:"key"`
+		Name string `json:"name"`
+	}](t, outPath)
+	if len(materials) < 7 {
+		t.Fatalf("materials length = %d, want broad material list", len(materials))
+	}
+	entries := map[string]string{}
+	for _, material := range materials {
+		if material.Key == "" || material.Name == "" {
+			t.Fatalf("material entry incomplete: %+v", material)
+		}
+		entries[material.Key+"|"+material.Name] = material.Name
+	}
+	for _, wantName := range []string{"FeCIM HZO", "Literature Superlattice", "Cryogenic HZO", "HZO Standard (32 states)", "HZO FTJ (140 states)", "AlScN (8-16 states)"} {
+		found := false
+		for _, gotName := range entries {
+			found = found || gotName == wantName
+		}
+		if !found {
+			t.Fatalf("JSON material listing missing material %q: %v", wantName, entries)
+		}
+	}
+}
+
+func TestRunE2EHeadlessConfigAndFrequencyWorkflow(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "hysteresis-config.json")
+	if err := os.WriteFile(configPath, []byte(`{"material":"cryogenic","frequency":2500000,"temperature":4}`), 0644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	out := captureStdout(func() {
+		if err := Run([]string{"--headless", "--config", configPath}); err != nil {
+			t.Fatalf("Run headless config: %v", err)
+		}
+	})
+	for _, want := range []string{"FeCIM Hysteresis Visualizer", "Cryogenic HZO (4K)", "P-E", "Discrete Analog Levels", "SIMULATION SUMMARY", "30 levels are an educational discretization"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("headless config output missing %q\n%s", want, out)
+		}
+	}
+}
+
+func TestRunE2EInvalidConfigAndBatchDoNotEmitJSONResults(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr string
+	}{
+		{name: "missing config", args: []string{"--config", filepath.Join(t.TempDir(), "missing.json"), "--headless"}, wantErr: "failed to load config"},
+		{name: "missing batch", args: []string{"--batch", filepath.Join(t.TempDir(), "missing-batch.json"), "--json"}, wantErr: "failed to load batch file"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			outPath := filepath.Join(t.TempDir(), "should-not-exist.json")
+			args := append([]string{}, tc.args...)
+			args = append(args, "--output", outPath)
+			stdout := captureStdout(func() {
+				err := Run(args)
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("Run error = %v, want containing %q", err, tc.wantErr)
+				}
+			})
+			if stdout != "" {
+				t.Fatalf("stdout = %q, want no output before invalid config/batch returns", stdout)
+			}
+			if data, err := os.ReadFile(outPath); err == nil && len(data) != 0 {
+				t.Fatalf("output file %s contains %q, want no JSON result on invalid input", outPath, string(data))
+			}
+		})
+	}
+}
+
+func readHysteresisJSONFile[T any](t *testing.T, path string) T {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	var value T
+	if err := json.Unmarshal(data, &value); err != nil {
+		t.Fatalf("decode %s: %v\n%s", path, err, string(data))
+	}
+	return value
 }
 
 func TestHysteresisResult_JSONMarshaling(t *testing.T) {
