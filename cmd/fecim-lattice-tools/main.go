@@ -14,6 +14,8 @@ import (
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
+var log *logging.Logger
+
 func main() {
 	os.Exit(runMain(os.Args[1:], os.Stdout, os.Stderr))
 }

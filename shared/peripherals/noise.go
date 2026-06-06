@@ -13,7 +13,6 @@ func ThermalNoiseRMS(tempK, resistanceOhm, bandwidthHz float64) float64 {
 	}
 	return math.Sqrt(4 * constants.BoltzmannConstantJPerK * tempK * resistanceOhm * bandwidthHz)
 
-
 }
 
 // FlickerNoisePower computes 1/f (flicker) noise power using K/f.

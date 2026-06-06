@@ -80,8 +80,8 @@ func (t *TemperatureEffects) AdjustedConductanceRange(gMin, gMax float64) (float
 // Reference: Thermal activation energy Ea ≈ 0.5 eV for typical ferroelectric switching.
 func (t *TemperatureEffects) AdjustedDriftRate(driftCoeff float64) float64 {
 	const kB = constants.BoltzmannConstantJPerK // J/K
-	const Ea = 0.5      // Activation energy (eV)
-	const eV = 1.6e-19  // Electron-volt to Joules
+	const Ea = 0.5                              // Activation energy (eV)
+	const eV = 1.6e-19                          // Electron-volt to Joules
 
 	// Reference rate at 300K
 	refRate := math.Exp(-Ea * eV / (kB * 300))
@@ -221,7 +221,7 @@ type RetentionCurve struct {
 //   - activationEV: Activation energy (eV), typically 1.0-1.2 for HZO
 func GenerateRetentionCurve(refRetentionS, activationEV float64) *RetentionCurve {
 	const kB = constants.BoltzmannConstanteVPerK // eV/K
-	const refTempK = 358.0 // 85°C reference
+	const refTempK = 358.0                       // 85°C reference
 
 	// Temperature points from 25°C to 150°C
 	temps := []float64{

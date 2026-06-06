@@ -393,7 +393,7 @@
       "status": "legacy-needs-license-review"
     },
     {
-      "citation_path": "citations/papers/mirage_rns_photonic_training_2024.md",
+      "citation_path": "citations/papers/photonic-computing/needs-review/training/mirage_rns_photonic_training_2024.md",
       "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
       "paper_key": "mirage_rns_photonic_training_2024",
       "pdf_path": "docs/4-research/papers/by-topic/06-photonic-computing/mirage_rns_photonic_training_2024.pdf",
@@ -425,7 +425,7 @@
       "status": "legacy-needs-license-review"
     },
     {
-      "citation_path": "citations/papers/optical_computing_dnn_survey_2024.md",
+      "citation_path": "citations/papers/photonic-computing/needs-review/surveys/optical_computing_dnn_survey_2024.md",
       "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
       "paper_key": "optical_computing_dnn_survey_2024",
       "pdf_path": "docs/4-research/papers/by-topic/06-photonic-computing/optical_computing_dnn_survey_2024.pdf",
@@ -441,7 +441,7 @@
       "status": "legacy-needs-license-review"
     },
     {
-      "citation_path": "citations/papers/photonic_dnn_architecture_modeling_2024.md",
+      "citation_path": "citations/papers/photonic-computing/needs-review/architectures/photonic_dnn_architecture_modeling_2024.md",
       "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
       "paper_key": "photonic_dnn_architecture_modeling_2024",
       "pdf_path": "docs/4-research/papers/by-topic/06-photonic-computing/photonic_dnn_architecture_modeling_2024.pdf",
@@ -449,7 +449,7 @@
       "status": "legacy-needs-license-review"
     },
     {
-      "citation_path": "citations/papers/photonic_neural_networks_review_2023.md",
+      "citation_path": "citations/papers/photonic-computing/needs-review/surveys/photonic_neural_networks_review_2023.md",
       "note": "Legacy tracked PDF predates promotion ledger; license review still required.",
       "paper_key": "photonic_neural_networks_review_2023",
       "pdf_path": "docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/photonic_neural_networks_review_2023.pdf",

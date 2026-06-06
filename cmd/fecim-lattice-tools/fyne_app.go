@@ -1,3 +1,5 @@
+//go:build cgo
+
 package main
 
 import (
@@ -44,9 +46,6 @@ func (noopModule) Stop()  {}
 
 // Global undo manager for parameter changes across all modules
 var undoManager *undo.Manager
-
-// Global logger for the main application
-var log *logging.Logger
 
 // Preference keys for window state persistence
 const (

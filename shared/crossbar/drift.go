@@ -233,8 +233,8 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 
 	// Thermal activation factor (Arrhenius-like acceleration)
 	kB := constants.BoltzmannConstantJPerK // J/K
-	Ea := 0.5      // Activation energy (eV) - typical order for FeFET retention physics
-	eV := 1.6e-19  // eV to J
+	Ea := 0.5                              // Activation energy (eV) - typical order for FeFET retention physics
+	eV := 1.6e-19                          // eV to J
 	temp := d.Temperature
 	if temp <= 0 {
 		temp = 300.0 // Fallback to room temperature to avoid div-by-zero

@@ -1,3 +1,5 @@
+//go:build cgo
+
 package main
 
 import sharedwidgets "fecim-lattice-tools/shared/widgets"
