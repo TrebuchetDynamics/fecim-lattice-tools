@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides custom GUI widgets for the hysteresis visualization.
 package widgets
 

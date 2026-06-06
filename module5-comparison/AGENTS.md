@@ -47,7 +47,6 @@ Key features:
 module5-comparison/
 ├── pkg/
 │   ├── comparison/          # Architecture analysis and comparison logic
-│   └── gui/                 # Fyne GUI components and application
 ├── README.md
 └── AGENTS.md               # This file
 ```
@@ -123,12 +122,9 @@ go test -v ./module5-comparison/pkg/gui       # GUI tests only
 
 **Internal:**
 - `shared/logging` - Logging infrastructure
-- `shared/theme` - Fyne theme and styling
-- `shared/widgets` - Reusable Fyne widgets
 - `shared/export` - Shared export utilities
 
 **External:**
-- `fyne.io/fyne/v2` - GUI framework
 - Standard Go packages (fmt, sync, time, math)
 
 ## MANUAL

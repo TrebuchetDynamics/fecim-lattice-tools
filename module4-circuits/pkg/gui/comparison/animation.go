@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package comparison
 
 // AnimationSteps returns the status messages for the CPU/GPU/FeFET comparison animation.

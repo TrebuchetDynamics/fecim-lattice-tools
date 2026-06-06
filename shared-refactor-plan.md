@@ -271,7 +271,6 @@ Per-file inventory of each module's `pkg/` directory, identifying what stays vs.
 | `ferroelectric/` | `material.go`, `preisach.go`, `level_bins.go`, `render.go` + 12 tests | `Material`, `PreisachModel`, `LevelBins` | `shared/physics/` (merge with existing `material.go`, `landau.go`) |
 | `algo/` | `calibration.go`, `doc.go` + 1 test | `CalibrationManager` | `shared/physics/calibration.go` (merge) |
 | `controller/` | 13 files | GUI controller logic | **Stays** in module (UI-specific) |
-| `gui/` | 55 files | Fyne UI screens | **Stays** in module |
 | `render/` | 7 files | Rendering pipeline | **Stays** in module |
 | `simulation/` | 5 files | Simulation runner | **Stays** (uses shared/physics) |
 | `tui/` | 2 files | Terminal UI | **Stays** in module |
@@ -281,7 +280,6 @@ Per-file inventory of each module's `pkg/` directory, identifying what stays vs.
 | Sub-package | Files | Key types | Migration target |
 |:---|:---|:---|:---|
 | `crossbar/` | **88 files** (18 src + 65 tests + extras) | `CrossbarArray`, `IRDropSimulator`, `SneakPathAnalyzer`, `DriftModel`, `FeCap`, `NonlinearIV` | **→ `shared/crossbar/`** (Phase 0) |
-| `gui/` | 39 files | Fyne UI, liveslide, tooltips, keyboard | **Stays** (update imports) |
 | `network/` | 2 files | Network layer bindings | **Stays** |
 | `training/` | 2 files | Training helpers | **Stays** |
 | `visualization/` | 2 files | Visualization utils | **Stays** |
@@ -292,7 +290,6 @@ Per-file inventory of each module's `pkg/` directory, identifying what stays vs.
 | Sub-package | Files | Key types | Migration target |
 |:---|:---|:---|:---|
 | `core/` | **46 files** (7 src + 39 tests) | `Network`, `QuantizationConfig`, `EnergyModel`, `CIMPhysics`, `DualModeMetrics` | **→ `shared/neural/`** (Phase 8) |
-| `gui/` | 30 files | Fyne UI screens | **Stays** in module |
 | `mnist/` | 3 files | MNIST data loader | **Stays** (dataset-specific) |
 | `training/` | 8 files | Training loops, single-layer | Reusable parts → `shared/neural/training/` |
 
@@ -316,7 +313,6 @@ Per-file inventory of each module's `pkg/` directory, identifying what stays vs.
 |:---|:---|:---|:---|
 | `arraysim/` | **56 files** (15 src + 38 tests + extras) | `TierA`, `TierB`, `SenseChain`, `RefSolveDense`, `SpiceExport`, `Transient`, `ProgramScheduler`, `DesignSpaceExploration`, `MixedPrecisionPlanner` | Most **stays** (M4-specific array sim); `refsolve_dense.go` candidates for `shared/crossbar/` |
 | `gpuperiph/` | 2 files | GPU peripheral acceleration | **Stays** |
-| `gui/` | 89 files | Fyne UI (largest GUI) | **Stays** |
 
 **arraysim source file breakdown:**
 - `tier_a.go` / `tier_b.go` — Tiered simulation strategies (M4-specific)
@@ -341,7 +337,6 @@ Per-file inventory of each module's `pkg/` directory, identifying what stays vs.
 | `compiler/` | 9 files | HDL compiler | **Stays** |
 | `config/` | 2 files | Config types | **Stays** |
 | `export/` | 54 files | Verilog/GDSII/LEF/DEF export | **Stays** (EDA-specific formats) |
-| `gui/` | 35 files | Fyne UI | **Stays** |
 | `layout/` | 5 files | Physical layout | **Stays** |
 | `openlane/` | 8 files | OpenLane integration | **Stays** |
 | `validate/` | 8 files | Design rule checks | **Stays** |
@@ -938,7 +933,6 @@ git mv module1/pkg/ferroelectric/preisach_test.go shared/physics/preisach_test.g
 
 **Statement:** The entire project uses **one** `go.mod` at the repo root. Do not create separate `go.mod` files per module.
 
-**Why this matters:** A single Go module means all packages share the same dependency versions — no version skew between modules. It enables `go build ./...` and `go test ./...` to compile and test the entire project in one command. Multi-module repos (separate `go.mod` per `moduleN/`) create dependency hell: Module 3 might use `fyne.io/fyne/v2@2.4.0` while Module 2 uses `v2.3.5`, causing subtle runtime bugs.
 
 **How to comply:**
 - Never add a `go.mod` inside any `moduleN-*/` or `shared/` directory.
@@ -973,7 +967,6 @@ go.mod   (at repo root, module path: fecim-lattice-tools)
 | `shared/physics` | Ferroelectric physics | Landau, Preisach, material defs, ISPP, calibration |
 | `shared/neural` | Neural network inference | Network, quantize, energy model, CIM physics |
 | `shared/peripherals` | ADC/DAC/TIA circuits | ADC, DAC, charge amp, noise, PVT |
-| `shared/widgets` | Fyne UI components | Mode indicator, educational panel, key stat |
 | `shared/export` | Data export | CSV, JSON, image, SPICE netlist |
 | `shared/keyboard` | Keyboard shortcuts | Common shortcuts, registration |
 | `shared/theme` | Visual theming | Colors, fonts, dark/light mode |
@@ -1149,7 +1142,6 @@ This table maps rule violations to the exact failure modes they cause — drawn 
 | **R1** No cross-module imports | `module3` imports `module2/pkg/crossbar` | Changing crossbar API silently breaks module3 in ways only discovered at compile time | High — audit 12+ files across a module boundary |
 | **R1** No cross-module imports | `module4` imports `module2/pkg/crossbar` | Module4 cannot be tested without compiling module2 | Medium — 1 file, but creates test isolation problem |
 | **R2** Tests with shared code | Code moved to `shared/` without tests | `shared/physics` regression introduced; bug affects 3+ modules before detection | High — debug across module boundaries with no test pinning the location |
-| **R3** Single `go.mod` | Separate `go.mod` per module | `fyne v2.4` in M2 vs `fyne v2.3` in M3 → runtime type mismatch panic | Very high — dependency conflicts are hard to diagnose |
 | **R4** Package naming | `shared/utils/` created | Unrelated code accumulates; contributors can't find functionality; duplication grows | Medium — requires audit and restructuring later |
 | **R5** Interface-first | Concrete type leaked into function signature | Switching implementations (e.g., behavioral → exact KCL) requires changing every caller | High — shotgun refactor across all consuming code |
 | **R6** YAML-configurable | Material Ec/Pr hardcoded | Simulation can only target HfO₂; comparing materials requires code changes + rebuild | Medium — requires per-material code branches |

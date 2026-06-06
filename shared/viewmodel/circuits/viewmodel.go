@@ -555,7 +555,7 @@ func buildReferenceTimingSVG(waveform ReferenceTimingWaveform) string {
   <rect class="bg" width="100%%" height="100%%"/>
   <rect class="panel" x="24" y="24" width="%d" height="%d" rx="8"/>
   <text class="title" x="44" y="58">%s Timing Waveform</text>
-  <text class="meta" x="44" y="78">Total %d ns; generated from gogpu/ui-neutral Module 4 timing state.</text>
+  <text class="meta" x="44" y="78">Total %d ns; generated from UI-neutral Module 4 timing state.</text>
 `, width, height, width, height, svgEscape(waveform.Operation), width-48, height-48, svgEscape(waveform.Operation), waveform.TotalNS))
 
 	for _, marker := range waveform.TimeMarkers {

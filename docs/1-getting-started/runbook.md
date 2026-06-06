@@ -139,7 +139,6 @@ kill $PID
 **Fixes:**
 ```bash
 # Try software rendering
-FYNE_NO_GL=1 ./fecim-lattice-tools
 
 # Check OpenGL support
 glxinfo | grep "OpenGL version"
@@ -187,15 +186,12 @@ gcc --version
 
 **Cause:** UI updated from non-main goroutine
 
-**Fix:** Wrap ALL UI updates in `fyne.Do()`:
 ```go
 // Find the offending code
 go build -race -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 # Race detector will print stack trace
 
-// Fix: wrap in fyne.Do()
-fyne.Do(func() {
     widget.SetText("value")
 })
 ```
@@ -223,8 +219,6 @@ ffmpeg -version
 
 **Fixes:**
 ```bash
-# Set DPI scaling (Fyne usually auto-detects)
-export FYNE_SCALE=1.5
 
 # Or force standard DPI
 export GDK_DPI_SCALE=1
@@ -335,10 +329,8 @@ git revert HEAD
 
 ```bash
 # Check current dependency versions
-go list -m all | grep fyne
 
 # Downgrade specific dependency
-go get fyne.io/fyne/v2@v2.7.0
 
 # Rebuild
 go build ./cmd/fecim-lattice-tools
@@ -432,11 +424,8 @@ chmod 755 screenshots recordings output logs
 |------------|----------|
 | Build errors | `docs/3-develop/README.md` |
 | Physics questions | `docs/4-research/honesty-audit.md` |
-| GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
 | Testing | `docs/3-develop/testing/TESTING.md` |
 | General development | `CONTRIBUTING.md` |
 | Project rules | `CLAUDE.md` |
 
 ---
-
-**Last Updated:** 2026-04-27 | **Go Version:** 1.25+ (toolchain go1.25.x) | **Fyne Version:** 2.7.2

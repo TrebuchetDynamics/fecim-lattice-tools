@@ -4,7 +4,7 @@
 // This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
-//   - Default: clear migration error; use the canonical gogpu/ui shell
+//   - Default: clear migration error; use the canonical Fyne shell
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
 //
@@ -128,7 +128,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical gogpu/ui shell")
+	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical Fyne shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {

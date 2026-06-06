@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package writeseq contains pure helpers for the module 4 write sequence state machine.
 package writeseq
 

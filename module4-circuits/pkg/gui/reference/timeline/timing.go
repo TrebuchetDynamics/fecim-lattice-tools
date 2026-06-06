@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package timeline contains pure helpers for module 4 reference timing content.
 package timeline
 

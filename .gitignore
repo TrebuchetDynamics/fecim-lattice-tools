@@ -91,7 +91,6 @@ validation/heracles/*.json
 
 # Temporary analysis docs in root
 EXPERT_CRITIQUE.md
-FYNE_GO_GUI_PERFORMANCE_RESEARCH.md
 MODULE5_DEEP_CRITIQUE*.md
 RIJU_ACTION_PLAN*.md
 full-test.md

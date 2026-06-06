@@ -51,6 +51,36 @@ func TestCheckMonotonicity(t *testing.T) {
 	}
 }
 
+func captureCircuitCLIStdoutE2E(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
+	os.Stdout = w
+	fn()
+	if err := w.Close(); err != nil {
+		t.Fatalf("close stdout pipe writer: %v", err)
+	}
+	os.Stdout = old
+	data, err := os.ReadFile(r.Name())
+	if err != nil {
+		// /proc/self/fd backed pipe paths are not portable; fall through to direct read below.
+	}
+	if len(data) == 0 {
+		buf := new(bytes.Buffer)
+		if _, copyErr := buf.ReadFrom(r); copyErr != nil {
+			t.Fatalf("read stdout pipe: %v", copyErr)
+		}
+		data = buf.Bytes()
+	}
+	if err := r.Close(); err != nil {
+		t.Fatalf("close stdout pipe reader: %v", err)
+	}
+	return string(data)
+}
+
 func TestRunCircuitsE2EWideJSONPeripheralMatrix(t *testing.T) {
 	cases := []struct {
 		name string
@@ -91,6 +121,42 @@ func TestRunCircuitsE2EWideJSONPeripheralMatrix(t *testing.T) {
 			}
 			if _, ok := result["adc"]; ok && result["adc"].(map[string]any)["enob"].(float64) <= 0 {
 				t.Fatalf("invalid ADC ENOB: %s", raw)
+			}
+		})
+	}
+}
+
+func TestRunCircuitsE2EWideTextVisualizationMatrix(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{name: "all", args: []string{"--all", "--level", "18"}, want: []string{"FeCIM Demo 4", "DAC", "ADC", "Power Breakdown", "Timing"}},
+		{name: "write_ispp", args: []string{"--dac", "--pump", "--ispp", "--level", "21"}, want: []string{"Charge Pump", "ISPP", "Write", "level"}},
+		{name: "read_timing_power", args: []string{"--adc", "--tia", "--timing", "--power", "--level", "3"}, want: []string{"ADC", "TIA", "Timing", "Power"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			global := captureCircuitCLIStdoutE2E(t, func() {
+				if err := runCircuits(tc.args, &stdout, &stderr); err != nil {
+					t.Fatalf("runCircuits(%v): %v stderr=%s", tc.args, err, stderr.String())
+				}
+			})
+			if stdout.Len() != 0 {
+				t.Fatalf("text path currently writes to global stdout, provided stdout should be empty: %q", stdout.String())
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr should be empty: %q", stderr.String())
+			}
+			for _, marker := range tc.want {
+				if !strings.Contains(global, marker) {
+					t.Fatalf("%s output missing %q:\n%s", tc.name, marker, global)
+				}
+			}
+			if !strings.Contains(global, "SIMULATION") && !strings.Contains(global, "Educational") && !strings.Contains(global, "ferroelectric") {
+				t.Fatalf("output missing educational/simulation context:\n%s", global)
 			}
 		})
 	}

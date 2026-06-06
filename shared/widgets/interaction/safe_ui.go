@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package interaction
 
 import "fyne.io/fyne/v2"

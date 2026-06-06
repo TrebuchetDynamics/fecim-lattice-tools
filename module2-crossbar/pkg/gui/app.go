@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 package gui
 
@@ -48,9 +46,11 @@ type CrossbarApp struct {
 	config *crossbar.Config
 
 	// GUI components
-	conductanceHeatmap *CrossbarHeatmap
-	irDropHeatmap      *CrossbarHeatmap
-	sneakPathHeatmap   *CrossbarHeatmap
+	conductanceHeatmap     *CrossbarHeatmap
+	irDropHeatmap          *CrossbarHeatmap
+	sneakPathHeatmap       *CrossbarHeatmap
+	conductanceMatrixModel *MatrixTableModel
+	conductanceMatrixTable *widget.Table
 
 	// Color legends for each heatmap
 	condLegend  *sharedwidgets.ColorLegend
@@ -769,13 +769,24 @@ func (ca *CrossbarApp) programRandomWeights() {
 // updateConductanceDisplay refreshes the conductance heatmap.
 func (ca *CrossbarApp) updateConductanceDisplay() {
 	matrix := ca.array.GetConductanceMatrix()
+	ca.updateConductanceMatrixTableModel(matrix)
 
 	// Conductance values are normalized [0,1] mapping to 30 discrete levels (0-29)
 	// Legend shows the level range (0-29) per FeCIM spec
 	fyne.Do(func() {
 		ca.conductanceHeatmap.SetData(matrix)
 		ca.condLegend.SetRange(0, float64(crossbar.DefaultQuantizationLevels-1))
+		if ca.conductanceMatrixTable != nil {
+			ca.conductanceMatrixTable.Refresh()
+		}
 	})
+}
+
+func (ca *CrossbarApp) updateConductanceMatrixTableModel(matrix [][]float64) {
+	if ca.conductanceMatrixModel == nil {
+		return
+	}
+	ca.conductanceMatrixModel.SetData(matrix)
 }
 
 // updateStatus updates the status label.

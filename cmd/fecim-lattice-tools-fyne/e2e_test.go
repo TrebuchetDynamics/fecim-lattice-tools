@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package main provides end-to-end tests for the FeCIM Lattice Tools unified application.
 // These tests verify complete application workflows including module lifecycle,
 // switching, and core functionality flows.

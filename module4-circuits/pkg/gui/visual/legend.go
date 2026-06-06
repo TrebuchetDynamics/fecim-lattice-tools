@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package visual
 
 // VCellLegendSpec describes the signed cell-voltage legend shown by the unified view.

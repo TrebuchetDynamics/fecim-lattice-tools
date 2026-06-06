@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides compute logging for debugging MVM operations.
 package gui
 

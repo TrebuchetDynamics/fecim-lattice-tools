@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package computelog contains compute-log storage and persistence helpers for module 4.
 package computelog
 

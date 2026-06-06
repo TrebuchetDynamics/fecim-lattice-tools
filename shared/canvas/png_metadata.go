@@ -134,7 +134,7 @@ func DefaultScreenshotMetadata(moduleName string) *PNGMetadata {
 	return &PNGMetadata{
 		Title:       "FeCIM Lattice Tools - " + moduleName,
 		Author:      "FeCIM Lattice Tools Project",
-		Software:    "FeCIM Lattice Tools v1.1 (Go 1.24/Fyne 2.7)",
+		Software:    "FeCIM Lattice Tools v1.1 (Go 1.25/Fyne)",
 		Timestamp:   time.Now(),
 		Description: "Ferroelectric Compute-in-Memory simulation and hardware validation screenshot",
 		CustomData: map[string]string{

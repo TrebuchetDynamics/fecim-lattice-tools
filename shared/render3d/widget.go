@@ -1,4 +1,4 @@
-//go:build legacy_fyne && cgo
+//go:build cgo
 
 package render3d
 

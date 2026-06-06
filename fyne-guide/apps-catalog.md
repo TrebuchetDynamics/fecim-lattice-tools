@@ -1,0 +1,222 @@
+# Fyne apps catalog notes
+
+Generated from apps.fyne.io sitemap/all.html on 2026-06-05.
+
+Indexed app pages: **219**. Pages with visible source/install command: **219**.
+
+## Site category counts
+
+- All: 216
+- Utility: 107
+- Productivity: 34
+- Games: 23
+- Entertainment: 18
+- Apple AppStore: 12
+- Development: 12
+- Google Play: 11
+- Graphics: 7
+- Education: 5
+- System: 4
+- Flathub: 3
+- Sport: 3
+- Finance: 2
+- Appimage: 1
+- Medical: 1
+
+## Parsed category sample
+
+- utility: 107
+- productivity: 34
+- games: 23
+- entertainment: 18
+- development: 12
+- graphics: 7
+- education: 5
+- system: 4
+- sport: 3
+- unknown: 3
+- finance: 2
+- medical: 1
+
+## Reference app candidates for FeCIM UI inspiration
+
+- **Spice Wallpaper Manager** (utility) — THE WORLD'S GREATEST ART ON YOUR DESKTOP Wake up to Monet. Work alongside Van Gogh. Wind down with Hokusai. Spice automatically cycles your Mac's wallpaper through curated masterpieces and stunning photography, delive...
+  - App page: https://apps.fyne.io/apps/com.dixieflatline76.spice/
+  - `fyne install github.com/dixieflatline76/Spice@latest`
+  - `https://github.com/dixieflatline76/Spice`
+- **swiftload-downloader** (utility) — A robust, cross-platform download manager with both CLI and GUI, featuring parallel chunked downloading, resume capability, and automatic retry. Built entirely in Go.
+  - App page: https://apps.fyne.io/apps/com.github.bhayanak.swiftload-downloader/
+  - `fyne install github.com/bhayanak/swiftload-downloader@latest`
+  - `https://github.com/bhayanak/swiftload-downloader`
+- **crocson** (utility) — croc is a tool that allows any two computers to simply and securely transfer files. allows any two computers to transfer data (using a relay) provides end-to-end encryption (using PAKE) enables easy cross-platform tra...
+  - App page: https://apps.fyne.io/apps/com.github.abakum.crocson/
+  - `fyne install github.com/abakum/crocson@latest`
+  - `https://github.com/abakum/crocson`
+- **Dcvix Stats** (utility) — Dcvix Stats is a Go application that provides a graphical user interface (GUI) to display statistics from a NICE DCV server log file. It uses the Fyne toolkit for the GUI and the go-charts library to render line chart...
+  - App page: https://apps.fyne.io/apps/net.cortassa.dcvix-stats/
+  - `fyne install github.com/dcvix/dcvix-stats@latest`
+  - `https://github.com/dcvix/dcvix-stats`
+- **Taras Messenger** (productivity) — Simple and clear interface Dark and light themes, message bubble customization Saving history Wallpaper support English, Ukrainian and Russian languages
+  - App page: https://apps.fyne.io/apps/org.limafresh.taras/
+  - `fyne install github.com/limafresh/TarasMessenger@latest`
+  - `https://github.com/limafresh/TarasMessenger`
+- **Tunnel Launcher** (utility) — A cross-platform tray-icon GUI for managing SSH tunnels (-L / -R / -D). Single statically-linked executable per platform (Linux / macOS / Windows).
+  - App page: https://apps.fyne.io/apps/com.tqdev.tunnel-launcher/
+  - `fyne install github.com/mevdschee/tunnel-launcher@latest`
+  - `https://github.com/mevdschee/tunnel-launcher`
+- **SshProxy** (utility) — SshProxy makes a SSH connection to a SSH server. Then it offers 2 proxies for tunneling traffic over the SSH connection. SOCKS proxy (TCP only) HTTP proxy
+  - App page: https://apps.fyne.io/apps/com.bytemystery.sshproxy/
+  - `fyne install github.com/bytemystery-com/sshproxy@latest`
+  - `https://github.com/bytemystery-com/sshproxy/`
+- **Image Compresser** (utility) — Its compress images in batch. Give the source and destination folder and set params you need. It will convert/compress all images
+  - App page: https://apps.fyne.io/apps/com.deepak.imageprocessor/
+  - `fyne install github.com/deepaksinghkushwah/image-compress@latest`
+  - `https://github.com/deepaksinghkushwah/image-compress`
+- **Eris** (utility) — Eris is a desktop PGP workstation written in Go with Fyne. It stores keys in an encrypted vault and gives you a clean UI for signing, encryption, decryption, and verification.
+  - App page: https://apps.fyne.io/apps/co.sibexi.eris/
+  - `fyne install github.com/sibexico/Eris@latest`
+  - `https://github.com/sibexico/Eris`
+- **Karma Manager** (entertainment) — "Karma Manager" is an anagram of "Anagram Maker". Anagrams are words or phrase the use the same letters as each other. Ever wonder what is hidden in your name? Your school's name? Your favorite saying? The phrase "A p...
+  - App page: https://apps.fyne.io/apps/io.patenaude.karmamanager/
+  - `fyne install github.com/pneumaticdeath/KarmaManager/@latest`
+  - `https://github.com/pneumaticdeath/KarmaManager/`
+- **Mandelbrot Background** (graphics) — This application creates interesting desktop backgrounds from images of the Mandelbrot set. The tool has several different templates, and lets the user configure the zoom location, color and position within the Mandel...
+  - App page: https://apps.fyne.io/apps/com.warnerbits.mandelbrotbackground/
+  - `fyne install github.com/craig-warner/mandelbrot-background@latest`
+  - `https://github.com/craig-warner/mandelbrot-background`
+- **yubisigner** (utility) — Hardware-based, multi-standard file signing with YubiKey. yubisign is a compact GUI program for signing and verifying files with YubiKey. It supports international cryptographic standards and offers maximum security t...
+  - App page: https://apps.fyne.io/apps/oc2mx.net.yubisigner/
+  - `fyne install github.com/Ch1ffr3punk/yubisigner@latest`
+  - `https://github.com/Ch1ffr3punk/yubisigner`
+- **SmartDiary** (productivity) — SmartDiary is a little diary application runnig on Anroid, Linux and Windows. For every day you can add a text entry. For highlighting entries you can choose between colors and symbols, every color can be labeled with...
+  - App page: https://apps.fyne.io/apps/com.bytemystery.smartdiary2.html
+  - `fyne install github.com/bytemystery-com/smartdiary@latest`
+  - `https://github.com/bytemystery-com/smartdiary`
+- **USM** (utility) — USM is a secrets manager designed to offer a secure and user-friendly solution for managing your digital data across multiple platforms, featuring modern encryption, making it an ideal tool for both personal and profe...
+  - App page: https://apps.fyne.io/apps/ai.z7.apps.usm.html
+  - `fyne install github.com/source-c/usm@latest`
+  - `https://github.com/source-c/usm`
+- **MicroCrypt** (utility) — MicroCrypt is a small, cross-platform symmetric encryption tool for mobile devices and desktop computers. It focuses on simplicity, portability, and modern cryptographic defaults while avoiding unnecessary metadata in...
+  - App page: https://apps.fyne.io/apps/oc2mx.net.microcrypt.html
+  - `fyne install github.com/Ch1ffr3punk/MicroCrypt@latest`
+  - `https://github.com/Ch1ffr3punk/MicroCrypt`
+- **PasswordSafe** (productivity) — PasswordSafe is an app runnig on Anroid, Linux and Windows. It stores you passwords in a SQLite database. For every entry you give a name (this name is not encrypted and searchable). For every entry you can define fil...
+  - App page: https://apps.fyne.io/apps/com.bytemystery.passwordsafe2.html
+  - `fyne install github.com/bytemystery-com/passwordsafe@latest`
+  - `https://github.com/bytemystery-com/passwordsafe`
+- **S3 Box** (utility) — S3-Box is designed for anyone who needs quick, intuitive access to S3 buckets—whether on AWS or any S3-compatible storage. With a clean interface and essential features, it simplifies browsing, editing, and managing y...
+  - App page: https://apps.fyne.io/apps/fr.scalde.s3box.html
+  - `fyne install github.com/thomas-marquis/s3-box@latest`
+  - `https://github.com/thomas-marquis/s3-box`
+- **DasherG** (utility) — DASHER D200 & D210 Emulation Serial interface support at 300, 1200, 2400, 4800, 9600 & 19200 baud, 7 or 8 data bits (defaults to 9600, 8, n, 1) BREAK key support for serial interface - permits use as master console Ne...
+  - App page: https://apps.fyne.io/apps/fr.merrony.dasherg.html
+  - `fyne install github.com/SMerrony/DasherG/cmd/DasherG@latest`
+  - `https://github.com/SMerrony/DasherG`
+- **Padelin** (sport) — The ultimate Padel scoreboard. Track scores, timer, and server. Supports 21-Point mode.
+  - App page: https://apps.fyne.io/apps/com.padelin.lite.html
+  - `fyne install github.com/rzkwsnj/padelin-fyne@latest`
+  - `https://github.com/rzkwsnj/padelin-fyne`
+- **VBoxSsh** (utility) — VBoxSsh is a graphical platform independent front end for managing and administrating VirtualBox instances in your network. VBoxSsh uses only SSH connections and VBoxManage - no need for a Webserver, additional servic...
+  - App page: https://apps.fyne.io/apps/com.bytemystery.vboxssh.html
+  - `fyne install github.com/bytemystery-com/vboxssh/@latest`
+  - `https://github.com/bytemystery-com/vboxssh/`
+- **Keep Command** (productivity) — Keep commands structured, searchable, and stress-free. Organize. Recall. Execute. The simplest way to manage your commands. What is Keep Command? # Keep Command is a simple command manager that allows you to create an...
+  - App page: https://apps.fyne.io/apps/com.keepcommand.aa.html
+  - `fyne install github.com/AlbertArakelyan/keep-command@latest`
+  - `https://github.com/AlbertArakelyan/keep-command`
+- **RegistryMate** (development) — A cross-platform GUI tool built with Go and Fyne to easily and correctly create Kubernetes ImagePullSecrets, ensuring accuracy and reducing common errors. The app focuses on usability, transparency, and reliability wh...
+  - App page: https://apps.fyne.io/apps/com.javaLux.registrymate.html
+  - `fyne install github.com/javaLux/registrymate@latest`
+  - `https://github.com/javaLux/registrymate`
+- **GitHub SSH Manager** (utility) — A cross-platform GUI tool built with Go and Fyne that allows you to manage multiple GitHub SSH keys effortlessly. Generate keys, view public keys, upload to GitHub, test SSH connections, and manage your ~/.ssh/config ...
+  - App page: https://apps.fyne.io/apps/com.sarwarhridoy4.github-ssh-manager.html
+  - `fyne install github.com/Sarwarhridoy4/github-ssh-manager@latest`
+  - `https://github.com/Sarwarhridoy4/github-ssh-manager`
+- **Bayan** (productivity) — Bayan is a lightweight, Git-based Content Management System built with Go, powered by Fyne for the Cross-Platform (Desktop, Mobile, Tablet) and Hugo for fast static site generation. Bayan is designed for writers, blog...
+  - App page: https://apps.fyne.io/apps/bayan.ghaznix.com.html
+  - `fyne install github.com/GopherGhaznix/Bayan@latest`
+  - `https://github.com/GopherGhaznix/Bayan`
+- **KetQuaXoSo** (finance) — Program to view Vietnam lottery results for Android, Linux, Windows View lottery results by region View lottery results by day Run cross-platform (Android, Linux, Windows) API support (API Key support)
+  - App page: https://apps.fyne.io/apps/com.dopaemon.ketquaxoso.html
+  - `fyne install github.com/dopaemon/KetQuaXoSo@latest`
+  - `https://github.com/dopaemon/KetQuaXoSo`
+- **TetherSSH** (system) — A Go-based SSH terminal emulator with session management, built on Fyne 2 GUI framework and the gopyte terminal emulation library. The first fully-functional Fyne-based SSH terminal with session management, scrollback...
+  - App page: https://apps.fyne.io/apps/com.github.scottpeterman.tetherssh.html
+  - `fyne install github.com/scottpeterman/tetherssh/cli@latest`
+  - `https://github.com/scottpeterman/tetherssh`
+- **gdi-conversion-GUI** (productivity) — GUI for gdi-conversion tool written in golang and fyne for windows. How to use?: Download "gdi-conversion-win-v1.2.0.exe" from here - https://github.com/sirconan/gdi-conversion/releases/tag/1.2.0 Put it in the same fo...
+  - App page: https://apps.fyne.io/apps/com.mpdev.gdi-conversion-GUI.html
+  - `fyne install github.com/maciej-piatek/gdi-conversion-GUI@latest`
+  - `https://github.com/maciej-piatek/gdi-conversion-GUI`
+- **picsort** (productivity) — Picsort is a desktop application designed to help you rapidly organize and classify large sets of pictures, primarily using your keyboard. While it was created to assist with sorting image datasets for training comput...
+  - App page: https://apps.fyne.io/apps/sh.coolapso.picsort.html
+  - `fyne install github.com/coolapso/picsort@latest`
+  - `https://github.com/coolapso/picsort`
+- **KV-Toolbox** (development) — This application provides a clean and intuitive graphical interface for working with embedded key-value databases such as LevelDB, Pebble, and Badger. You can easily explore, edit, or create databases anywhere on your...
+  - App page: https://apps.fyne.io/apps/com.DatabaseDB.KV-Toolbox.html
+  - `fyne install github.com/Mohsen20031203/KV-Toolbox/cmd/KV-Toolbox@latest`
+  - `https://github.com/Mohsen20031203/KV-Toolbox`
+- **MTP EasyTransfer** (utility) — MTP EasyTransfer is a simple and efficient macOS application that allows you to transfer files and folders between your Mac and any MTP-supported mobile device. It offers an easy-to-use interface for quickly importing...
+  - App page: https://apps.fyne.io/apps/com.orkunkaraduman.app.mtpxfer.html
+  - `fyne install @latest`
+- **NoCut Encoder** (utility) — NoCut Encoder is a powerful yet simple video encoding tool designed to help you save disk space without sacrificing quality. Whether you’re preparing videos for sharing, archiving, or playback on different devices, No...
+  - App page: https://apps.fyne.io/apps/com.orkunkaraduman.app.nocut-encoder.html
+  - `fyne install @latest`
+- **Supersonic** (entertainment) — Play music from your Navidrome, Jellyfin, or Subsonic instance! Note: this app requires libmpv installed in order to build and run
+  - App page: https://apps.fyne.io/apps/com.github.dweymouth.supersonic.html
+  - `fyne install github.com/dweymouth/supersonic@latest`
+  - `https://github.com/dweymouth/supersonic`
+- **YT Downloader** (utility) — yt-downloader is a GUI application written in Go using the Fyne toolkit. It downloads single videos and entire playlists from YouTube, shows live progress, and stores files in your Downloads folder by default. Purpose...
+  - App page: https://apps.fyne.io/apps/com.github.ytget.yt-downloader.html
+  - `fyne install github.com/ytget/yt-downloader@latest`
+  - `https://github.com/ytget/yt-downloader`
+- **Iridium Exif Cleaner** (utility) — Drag & Drop: Simply drop photos onto the app Real-time Processing: See files being cleaned as you drop them Privacy First: All processing happens locally on your computer Multiple Formats: Supports JPEG (.jpg, .jpeg) ...
+  - App page: https://apps.fyne.io/apps/com.iridium-works.exif-cleaner.html
+  - `fyne install github.com/Iridium-Works-GmbH/iridium-exif-cleaner@latest`
+  - `https://github.com/Iridium-Works-GmbH/iridium-exif-cleaner`
+- **Fyclip Advance Clipboard Manager** (utility) — The most advanced clipboard manager for power users. Keep track of everything you copy, search instantly, and boost your productivity.
+  - App page: https://apps.fyne.io/apps/com.sarwar.fyclip/
+  - `fyne install github.com/Sarwarhridoy4/FyClip---Advanced-Clipboard-Manager@latest`
+  - `https://github.com/Sarwarhridoy4/FyClip---Advanced-Clipboard-Manager`
+- **TFLanHttpDesktop** (development) — Transfer Files from LAN Http Desktop
+  - App page: https://apps.fyne.io/apps/com.github.mangenotwork.TFLanHttpDesktop.html
+  - `fyne install github.com/mangenotwork/TFLanHttpDesktop@latest`
+  - `https://github.com/mangenotwork/TFLanHttpDesktop`
+- **yubicrypt** (utility) — An easy to use public key encryption program for your YubiKey. Supported YubiKey algorithms: For encryption with slot 9d: RSA: 2048, 3072, 4096 bits For signing with slot 9c: ECC: P-256, P-384, Ed25519 Simply use Yubi...
+  - App page: https://apps.fyne.io/apps/oc2mx.net.yubicrypt.html
+  - `fyne install github.com/Ch1ffr3punk/yubicrypt@latest`
+  - `https://github.com/Ch1ffr3punk/yubicrypt`
+- **seced** (utility) — A barebones GUI Editor which always saves your files encrypted with a password, while using Argon2id and AES-256-GCM.
+  - App page: https://apps.fyne.io/apps/oc2mx.net.seced.html
+  - `fyne install github.com/Ch1ffr3punk/seced@latest`
+  - `https://github.com/Ch1ffr3punk/seced`
+- **wipe** (utility) — Delete a file securely by encrypting it first and then applying a Gutmann-35 pass.
+  - App page: https://apps.fyne.io/apps/oc2mx.net.wipe.html
+  - `fyne install github.com/Ch1ffr3punk/wipe@latest`
+  - `https://github.com/Ch1ffr3punk/wipe`
+- **Divide and Conquer: AGO Launcher** (games) — Official mod launcher for the popular Lord of the Rings mod "Divide and Conquer: AGO". Allows players to launch, configure and automatically download and install updates to the game modification.
+  - App page: https://apps.fyne.io/apps/divide.and.conquer.ago.launcher.html
+  - `fyne install github.com/Divide-and-Conquer-AGO/ago-launcher@latest`
+  - `https://github.com/Divide-and-Conquer-AGO/ago-launcher`
+- **Blockchain Demonstration** (education) — A graphical blockchain simulator built with Go and Fyne. Visualizes core concepts like Proof-of-Work, UTXO-based transactions, mining, mempool, wallets, and block structure in an interactive and educational way.
+  - App page: https://apps.fyne.io/apps/io.github.iliiasik.blockchain.html
+  - `fyne install github.com/Iliiasik/Blockchain@latest`
+  - `https://github.com/Iliiasik/Blockchain`
+- **ImageResizer** (utility) — An image resize application build in Go using Fyne. You can resize one or many images.
+  - App page: https://apps.fyne.io/apps/info.tiagomelo.imageresizer.html
+  - `fyne install github.com/tiagomelo/image-resizer@latest`
+  - `https://github.com/tiagomelo/image-resizer`
+- **Fynance** (finance) — Add income, expenses and the app produces monthly reports based on income and expenses.
+  - App page: https://apps.fyne.io/apps/com.moshecrafts.fynance.html
+  - `fyne install github.com/clinton-mwachia/Fynance@latest`
+  - `https://github.com/clinton-mwachia/Fynance`
+- **k9fyne** (development) — The user wants to develop a graphical desktop application using the Fyne toolkit in Go (Golang), which can be used to manage and interact with a Kubernetes (k8s) cluster. This implies building a GUI-based Kubernetes m...
+  - App page: https://apps.fyne.io/apps/com.github.andrewbytecoder.k9fyne.html
+  - `fyne install github.com/andrewbytecoder/k9fyne@latest`
+  - `https://github.com/andrewbytecoder/k9fyne`
+- **SLIDER** (entertainment) — A desktop slideshow of local JPEG and PNG files.
+  - App page: https://apps.fyne.io/apps/com.scsi.slider.html
+  - `fyne install github.com/shofster/slider@latest`
+  - `https://github.com/shofster/slider`
+
+Full machine-readable catalog: `generated/apps-index.json`.

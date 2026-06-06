@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package display provides shared display components for FeCIM visualizers.
 //
 // simulation_banner.go provides a thin amber banner reminding users that

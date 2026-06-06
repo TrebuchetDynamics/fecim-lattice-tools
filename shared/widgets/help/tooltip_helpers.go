@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides reusable UI components.
 // tooltip_helpers.go provides helper functions for adding tooltips to existing widgets.
 package help

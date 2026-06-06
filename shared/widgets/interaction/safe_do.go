@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package interaction
 
 // SafeDo executes fn in the Fyne runtime context (when available) and

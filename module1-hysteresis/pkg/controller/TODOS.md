@@ -36,8 +36,6 @@
 
 ## GUI / Rendering
 
-- [ ] **[OPEN]** Fyne legacy thread safety: `fyne.Do()` wrapper needed for all widget updates
-- [ ] **[OPEN]** Gogpu default path should replace Fyne as primary UI surface
 - [ ] **[OPEN]** Plot margin responsiveness: should resize with window
 - [x] Headless headless regression test suite runs via CLI
 
@@ -76,8 +74,7 @@
 ## Skills Required
 
 - **TDD (test-driven development)** — Needed for guard-logic fixes
-- **Fyne (legacy GUI)** — Thread safety documentation (if still maintained)
-- **gogpu (UI)** — Default interface path migration
+- **Fyne UI** — Default interface path
 - **Preisach physics** — Everett product-form understanding
 - **ISPP controller** — Guard band binary search stress convergence
 - **Physics golden regression** — One-time regeneration for new Everett form

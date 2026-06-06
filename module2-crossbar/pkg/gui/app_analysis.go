@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui - Analysis and metrics functions for crossbar app
 package gui
 

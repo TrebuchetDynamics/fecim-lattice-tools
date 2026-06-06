@@ -1,4 +1,4 @@
-//go:build legacy_fyne && race
+//go:build race
 
 package widgets
 

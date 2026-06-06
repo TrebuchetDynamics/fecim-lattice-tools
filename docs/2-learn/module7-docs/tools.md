@@ -9,7 +9,6 @@
 ## Used In This Module (Open-Source Dependencies)
 
 - Go toolchain (docs indexer + renderer)
-- Fyne (GUI)
 
 ## Integration Notes
 

@@ -14,7 +14,6 @@ Ferroelectric crossbar array simulation module. Implements matrix-vector multipl
 | `pkg/crossbar/array.go` | Main crossbar array data structure and MVM engine |
 | `pkg/crossbar/enhanced.go` | Non-ideality models (IR drop, sneak paths, drift) |
 | `pkg/crossbar/gpu_mvm.go` | GPU-accelerated MVM via Vulkan compute |
-| `pkg/gui/tabbed_app.go` | Fyne GUI with 4-tab interface (Ideal, IR Drop, Sneak, Drift) |
 | `pkg/network/network.go` | Network layer for chaining crossbars |
 
 ## Subdirectories
@@ -23,7 +22,6 @@ Ferroelectric crossbar array simulation module. Implements matrix-vector multipl
 |-----------|---------|-----------|
 | `cmd/crossbar/` | Standalone CLI entry point | `main.go` |
 | `pkg/crossbar/` | Core array simulation and non-idealities | `array.go` (46 files, extensive testing) |
-| `pkg/gui/` | Fyne GUI components and tabs | `tabbed_app.go`, `tabs/` subdirectory |
 | `pkg/gui/tabs/` | Individual tab implementations | `ideal_tab.go`, `irdrop_tab.go`, `sneak_tab.go`, `drift_tab.go` |
 | `pkg/network/` | Multi-layer network simulation | `network.go` (connects multiple arrays) |
 | `pkg/training/` | Weight training utilities | `trainer.go` |
@@ -90,7 +88,6 @@ Key test files (46 tests in pkg/crossbar/):
 
 ### External
 
-- Fyne v2 (`fyne.io/fyne/v2`) - Cross-platform native GUI
 - gonum (`gonum.org/v1/gonum`) - Linear algebra (matrix operations)
 - Vulkan SDK (optional, for GPU acceleration) - Compute shader compilation
 

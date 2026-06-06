@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // pkg/gui/embedded.go
 // Embeddable version of the EDA app for the unified visualizer
 package gui

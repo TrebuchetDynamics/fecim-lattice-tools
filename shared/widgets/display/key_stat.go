@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package display provides reusable display widgets for Fyne GUI development.
 package display
 

@@ -22,7 +22,7 @@ func TestListProjectsAndPresets(t *testing.T) {
 }
 
 func TestSaveAndLoad(t *testing.T) {
-	// Manager uses fyne.Preferences for persistence.
+	// Manager uses the Preferences interface for persistence.
 	// For testing, we use in-memory (nil prefs).
 	m := NewManager(nil)
 	m.AddConfig("/config.json", "test")

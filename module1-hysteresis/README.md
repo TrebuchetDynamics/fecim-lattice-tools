@@ -28,7 +28,6 @@ Module 1 is the physics core of fecim-lattice-tools. It models polarization–el
 
 - **calibration.go** — Automated calibration routines fitting model params to experimental data
 
-### `pkg/gui/` — Fyne GUI
 
 - **gui.go** — Main module GUI layout and lifecycle
 - **embedded.go** — Embeddable app for the unified launcher

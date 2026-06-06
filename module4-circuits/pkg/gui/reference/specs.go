@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package reference
 
 import "fecim-lattice-tools/module4-circuits/pkg/gui/reference/metrics"

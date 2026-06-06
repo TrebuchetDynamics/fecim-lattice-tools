@@ -35,7 +35,6 @@ module3-mnist/
 │   ├── quantize.go           # Weight/activation quantization
 │   └── energy.go             # Energy modeling
 ├── pkg/mnist/              # Dataset loader
-├── pkg/gui/                # Tagged legacy Fyne visualization
 │   ├── dualmode.go           # Side-by-side comparison UI
 │   └── drawing.go            # Interactive digit canvas
 ├── pkg/training/           # Offline training utilities

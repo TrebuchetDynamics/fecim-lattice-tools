@@ -40,7 +40,6 @@ module2-crossbar/
 │   ├── weights.go        # Format definitions
 │   └── serialization.go  # JSON/binary/NumPy export
 │
-├── pkg/gui/              # Fyne visualization
 │   ├── app.go            # Main application
 │   ├── heatmap.go        # Conductance/IR drop/sneak visualization
 │   ├── controls.go       # Control panels and sliders
@@ -786,7 +785,6 @@ Ideal Output
 **Key Constraints**:
 
 1. **No Locks**: Array implementation assumes single-threaded access
-2. **GUI Thread**: Fyne integration requires UI updates via `fyne.Do()`
 3. **Simulation**: Each simulation can run independently in separate goroutines
 
 **Safe Patterns**:
@@ -807,7 +805,6 @@ go func() {
 // Pattern 2: GUI updates from goroutine
 go func() {
     result, _ := array.MVMWithNonIdealities(input, opts)
-    fyne.Do(func() {
         updateLabel.SetText(fmt.Sprintf("RMSE: %.4f", result.RMSE))
     })
 }()
@@ -821,8 +818,6 @@ array.MVM(input2)      // ❌ Race condition!
 
 **GUI Integration Rules** (from CLAUDE.md):
 ```go
-// ✅ Correct: Use fyne.Do for UI updates from goroutines
-fyne.Do(func() {
     widget.SetText("Updated")
     heatmap.Refresh()
 })

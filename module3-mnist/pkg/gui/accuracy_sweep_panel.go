@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // accuracy_sweep_panel.go provides the accuracy-vs-parameter sweep analysis panel.
 package gui

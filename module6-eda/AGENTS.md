@@ -82,7 +82,7 @@ Key capabilities:
 
 ### CLI Entry Points
 - `cmd/eda-cli/` - Command-line interface for batch design generation
-- `../../cmd/fecim-lattice-tools` - Canonical gogpu/ui launcher (`eda` subcommand or `--module eda`)
+- `../../cmd/fecim-lattice-tools` - Canonical Fyne launcher (`eda` subcommand or `--module eda`)
 - `cmd/hello/` - Hello world example
 - `cmd/lattice-gen/` - Standalone lattice generator
 
@@ -98,7 +98,6 @@ module6-eda/
 │   ├── compiler/                # Core design compilation
 │   ├── config/                  # Configuration types
 │   ├── export/                  # Export generators (Verilog, DEF, etc)
-│   ├── gui/                     # Fyne GUI application
 │   ├── layout/                  # Placement and routing
 │   ├── openlane/                # OpenLane integration
 │   ├── validate/                # CLI validation tools
@@ -212,13 +211,10 @@ make -C module6-eda clean              # Remove artifacts
 
 **Internal:**
 - `shared/logging` - Logging infrastructure
-- `shared/theme` - Fyne theme and styling
-- `shared/widgets` - Reusable Fyne widgets
 - `shared/export` - Shared export utilities
 - `shared/utils` - Utility functions
 
 **External:**
-- `fyne.io/fyne/v2` - GUI framework
 - Standard Go packages (fmt, math, json, encoding/csv, os, path/filepath)
 
 **External Tools (Optional):**

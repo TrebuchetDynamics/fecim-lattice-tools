@@ -49,7 +49,6 @@ DOCS = [
     "docs/2-learn/module5-comparison/eli5.md",
     "docs/2-learn/module6-eda/eli5.md",
     # Dev guides
-    "docs/3-develop/gui/FYNE_NOTES.md",
     "docs/3-develop/testing/TESTING.md",
     "docs/3-develop/api-reference.md",
 ]

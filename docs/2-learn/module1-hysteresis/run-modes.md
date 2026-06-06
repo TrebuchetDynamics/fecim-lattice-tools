@@ -39,7 +39,6 @@ fecim-lattice-tools hysteresis [--headless] [--tui] [--vulkan] [--material ...] 
 ```
 
 ### Default mode (no mode flags)
-- Runs **Fyne GUI** (`gui.RunWithMaterial(...)`).
 - If GUI fails, fallback chain is:
   1. TUI (`tui.RunWithMaterial(...)`)
   2. Headless (`runHeadless(...)`)

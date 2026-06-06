@@ -5,7 +5,6 @@ description: Relentlessly interviews the user about a proposed FeCIM physics, si
 
 # fecim-grill
 
-Domain-specific design grill. Differs from generic grill skills: every branch ties back to FeCIM's TDD hard-rule, honesty-audit, and Fyne thread-safety. See `tools/fecim-skills/_shared/fecim-context.md`.
 
 ## Workflow
 
@@ -22,9 +21,7 @@ Use this only when Juan explicitly wants design interrogation or when a non-triv
 
 4. **TDD-RED test.** What is the focused failing test that proves the new behavior? Path + name. If the user can't name one, BLOCK until they can.
 
-5. **Thread-safety (Fyne).** If the change runs on a goroutine and touches `*widget.*`, `*canvas.*`, `*container.*`, confirm `fyne.Do(func() { ... })` will wrap the mutation.
 
-6. **UI boundary.** If the change touches `viewmodel/`, confirm zero `fyne.io/...` and `github.com/gogpu/ui` imports added.
 
 7. **Output a one-paragraph design summary** the user signs off before any code is written:
    ```

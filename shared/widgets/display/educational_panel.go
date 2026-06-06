@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package display provides shared display widgets for Fyne GUI development.
 // This file implements a reusable EducationalPanel widget for displaying
 // context-sensitive explanations in demo applications.

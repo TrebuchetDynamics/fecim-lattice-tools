@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package display
 
 // ShouldShowSelectedOnly returns true when overlay should show on the selected cell only.

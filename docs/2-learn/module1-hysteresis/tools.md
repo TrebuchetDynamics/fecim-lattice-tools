@@ -38,7 +38,6 @@ This document catalogs open-source tools for ferroelectric hysteresis modeling, 
 | Tool | Purpose | License |
 |------|---------|---------|
 | **Go toolchain** | Build/runtime for simulator | BSD-style |
-| **Fyne** | GUI rendering (default mode) | BSD-3-Clause |
 | **Bubble Tea** | TUI mode (terminal UI) | MIT |
 | **Vulkan-go** | Optional GPU renderer | MIT |
 
@@ -48,7 +47,6 @@ This document catalogs open-source tools for ferroelectric hysteresis modeling, 
 # Go (required)
 # See: https://go.dev/doc/install
 
-# Fyne dependencies (Linux)
 sudo apt-get install libgl1-mesa-dev xorg-dev
 
 # Vulkan SDK (optional, for GPU renderer)
@@ -354,7 +352,6 @@ double conductance = G_min + (G_max - G_min) * polarization_level / 29.0;
 
 ## Visualization Tools
 
-### 1. This Project's GUI (Fyne)
 
 **Location:** `module1-hysteresis/pkg/gui/`
 

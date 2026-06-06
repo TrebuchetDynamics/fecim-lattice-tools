@@ -5,7 +5,7 @@ This directory contains specifications, architecture guides, and troubleshooting
 ## Scope & Audience
 
 - Internal development reference for engineers maintaining legacy Fyne modules
-- Default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
+- Default UI work belongs in the Fyne shell and module `pkg/gui` adapters.
 - Legacy Fyne work requires `-tags legacy_fyne`.
 - File paths are repo-relative unless a module root is explicitly called out
 
@@ -185,7 +185,7 @@ Defaults used across modules are defined in `config/physics.yaml` and `shared/ph
 
 ### Before Maintaining Legacy Fyne Docs
 
-1. **Confirm the change is legacy Fyne-only** - Default shell work belongs in `internal/gogpuapp` and `shared/viewmodel`
+1. **Confirm the change is legacy Fyne-only** - Default shell work belongs in the Fyne shell and module `pkg/gui` adapters
 2. **Check the bug tracker** - Know which issues are already identified
 3. **Review FYNE_NOTES.md** - Refresh legacy Fyne thread safety and layout patterns
 4. **Run tagged tests** - Use `make test-legacy-fyne` when legacy adapters change

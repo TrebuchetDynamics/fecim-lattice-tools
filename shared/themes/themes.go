@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package themes provides multiple theme options (light, dark, high-contrast)
 // for the FeCIM Lattice Tools Fyne GUI applications.
 //

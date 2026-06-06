@@ -304,7 +304,6 @@ VPython / PyVista → 3D superlattice rendering
        ↓
 Matplotlib → Publication-quality static plots
        ↓
-module5-lattice (Go + Fyne) → Interactive 3D viewer
 ```
 
 ### Module 6: EDA / Chip Design

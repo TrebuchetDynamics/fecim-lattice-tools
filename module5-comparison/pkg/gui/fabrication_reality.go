@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file implements H08: Fabrication Reality section showing realistic
 // chip development timelines and costs.

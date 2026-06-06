@@ -154,7 +154,6 @@ OpenLane config generation and runner helpers.
 
 ### pkg/gui
 
-Fyne GUI for Builder & Validation + Learn views.
 
 ---
 

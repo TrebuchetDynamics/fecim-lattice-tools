@@ -39,7 +39,7 @@ rm -rf "$SCREENSHOT_DIR"
 mkdir -p "$SCREENSHOT_DIR"
 mkdir -p "$(dirname "$APP_BIN")"
 
-echo "Building gogpu/ui GUI binary ($APP_BIN)..."
+echo "Building Fyne GUI binary ($APP_BIN)..."
 CGO_ENABLED=0 go build -o "$APP_BIN" ./cmd/fecim-lattice-tools
 
 CAPTURED=0
@@ -85,7 +85,6 @@ for module in "${MODULES[@]}"; do
     done
 
     # In headless/Xvfb environments xdotool may fail to resolve a top-level window
-    # even when Fyne has rendered to the root display. Fall back to root capture.
     if [ "$FOUND" -eq 0 ]; then
         echo "WARNING: Window not found for module $module, falling back to root window capture"
         WID=$(xwininfo -root 2>/dev/null | awk '/Window id:/ {print $4}') || true

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package status
 
 // Operation mode values mirror gui.OpMode without importing the stateful gui package.

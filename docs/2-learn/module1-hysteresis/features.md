@@ -37,7 +37,6 @@ It provides:
 - `shared/physics/preisach.go` - Stack engine for turning points
 
 ### GUI/Visualization
-- `module1-hysteresis/pkg/gui/gui.go` - Fyne GUI initialization
 - `module1-hysteresis/pkg/gui/physics_engine.go` - Engine selector
 - `module1-hysteresis/pkg/gui/simulation.go` - Real-time update loop
 - `module1-hysteresis/pkg/render/plot.go` - P-E curve rendering

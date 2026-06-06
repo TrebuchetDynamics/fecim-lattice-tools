@@ -150,7 +150,6 @@ The circuits module is the primary target for comprehensive crawling because:
 Some modules have limitations in test environments:
 
 - **Crossbar Module**: Uses Bold+Monospace fonts not available in test theme
-- **MNIST Module**: Has infinite loop issues with `fyne.Do` in test driver
 - **Other Modules**: Generally compatible but may have specific quirks
 
 The crawler automatically skips problematic modules in comprehensive test runs.

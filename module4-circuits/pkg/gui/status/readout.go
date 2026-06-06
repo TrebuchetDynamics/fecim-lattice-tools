@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package status contains pure status-line formatting helpers for the module 4 GUI.
 package status
 

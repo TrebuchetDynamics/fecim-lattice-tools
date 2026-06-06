@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package gui
 
 import guimetrics "fecim-lattice-tools/module4-circuits/pkg/gui/metrics"

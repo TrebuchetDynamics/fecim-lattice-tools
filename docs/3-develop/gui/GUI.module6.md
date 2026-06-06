@@ -2,7 +2,7 @@
 Module: module6-eda
 Name: FeCIM Design Suite - EDA
 Scope: Legacy Fyne adapter documentation
-Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Default UI Path: Fyne shell and module `pkg/gui` adapters
 Legacy Build Tag: `legacy_fyne`
 Entry: ../../cmd/fecim-lattice-tools --module eda
 Package: fecim-lattice-tools/module6-eda/pkg/gui
@@ -17,7 +17,7 @@ Description: |
   Timing values are placeholders - real fabrication requires validated SPICE models.
 ---
 
-These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
+These notes describe the default Fyne module adapters; keep simulation state testable outside widget code where practical.
 
 Conventions:
   - File paths are relative to module6-eda unless noted
@@ -1042,7 +1042,7 @@ IntegrationPoints:
 
   - name: Canonical Entry
     file: ../../cmd/fecim-lattice-tools
-    purpose: Run the EDA module via the gogpu/ui shell with `--module eda`
+    purpose: Run the EDA module via the Fyne shell with `--module eda`
 
   - name: Export Package Integration
     purpose: Exported packages can be directly copied to OpenLane designs/

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package metrics contains pure formatting and readout helpers for the module 4 GUI.
 package metrics
 

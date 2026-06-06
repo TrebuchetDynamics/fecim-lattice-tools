@@ -1,12 +1,10 @@
-//go:build legacy_fyne
-
 // Command hysteresis provides an interactive visualization of ferroelectric
 // hysteresis in HfO2-ZrO2 superlattice materials.
 //
 // This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
-//   - Default: deprecated legacy Fyne GUI kept only behind -tags legacy_fyne
+//   - Default: Fyne GUI compatibility command
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
 //   - --vulkan: deprecated Vulkan fallback path
@@ -32,7 +30,7 @@ import (
 )
 
 // Available materials for --material flag
-const legacyFyneDeprecationNotice = "DEPRECATED legacy Fyne command. Use the default gogpu/ui shell instead: CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis"
+const legacyFyneDeprecationNotice = "Fyne compatibility command. The canonical desktop path is: go run ./cmd/fecim-lattice-tools --module hysteresis"
 
 var materialNames = map[string]*ferroelectric.HZOMaterial{
 	"default":      nil, // Will use DefaultHZO()
@@ -131,7 +129,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Deprecated Vulkan fallback path; use the default gogpu/ui shell")
+	vulkan := fs.Bool("vulkan", false, "Deprecated Vulkan fallback path; use the default Fyne shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {
@@ -264,8 +262,8 @@ func Run(args []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("legacy Fyne GUI launch is fully deprecated; use %q or pass --headless/--tui for this legacy command",
-		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
+	return fmt.Errorf("standalone hysteresis-fyne GUI is a compatibility shim; use %q or pass --headless/--tui for this command",
+		"go run ./cmd/fecim-lattice-tools --module hysteresis")
 }
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {

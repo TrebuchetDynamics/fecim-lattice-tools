@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides accessibility helper functions.
 package widgets
 

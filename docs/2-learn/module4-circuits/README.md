@@ -37,7 +37,6 @@ module4-circuits/
 │   ├── chargepump.go         # Voltage multiplier
 │   ├── analysis.go           # INL/DNL analysis
 │   └── defaults.go           # Default parameters
-├── pkg/gui/                  # Fyne visualization
 │   ├── app.go                # Main circuit GUI
 │   ├── tab_unified_voltage.go # Unified voltage/ISPP tab
 │   └── device_state.go       # Device state machine

@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools
 
-Shared language for the FeCIM Lattice Tools UI migration and scientific simulation workspace.
+Shared language for the FeCIM Lattice Tools default UI and scientific simulation workspace.
 
 ## Language
 
@@ -8,12 +8,12 @@ Shared language for the FeCIM Lattice Tools UI migration and scientific simulati
 The supported user-facing application surface for normal use, testing, screenshots, and documentation. It is the place where migrated module behavior must appear.
 _Avoid_: next UI, future shell, experimental shell
 
-**Legacy Fyne Surface**:
-The deprecated historical UI surface retained only as a temporary migration and parity reference. It must not be presented as the default, recommended, or released user path.
-_Avoid_: default GUI, recommended Fyne UI, current desktop app
+**Historical UI Surface**:
+Any removed pre-Fyne UI path. It must not be presented as a supported, recommended, or released user path.
+_Avoid_: default GUI, recommended legacy UI, current desktop app
 
-**Migration Parity**:
-A behavior is available in the Default UI Surface with equivalent user-observable workflow, state, controls, outputs, and boundary notices before the Legacy Fyne Surface is removed.
+**Default Surface Parity**:
+A behavior is available in the Default UI Surface with equivalent user-observable workflow, state, controls, outputs, and boundary notices.
 _Avoid_: visual similarity only, screenshot match, placeholder parity, computation-only parity
 
 **Level Calibration Workflow**:
@@ -22,7 +22,7 @@ _Avoid_: calibration proof, literature fitting, hardware calibration, measured-d
 
 **Level Calibration Engine**:
 A UI-neutral domain service responsible for computing Level Calibration Workflow data independently of any user interface surface. It provides deterministic, summary-oriented results before persisted calibration artifacts are part of the workflow.
-_Avoid_: Fyne-backed calibration, GUI service, hidden legacy dependency
+_Avoid_: GUI-backed calibration, hidden UI dependency, display-specific service
 
 **Level Calibration State**:
 The user-visible condition of the Level Calibration Workflow for the current material, level count, target range, and calibration temperature: not calibrated, stale, or fresh. Stale means a previous Level Calibration Summary no longer matches the current inputs.
@@ -90,11 +90,11 @@ _Avoid_: ad-hoc log-only decision, unexplained bounds mutation, silent convergen
 
 ## Example dialogue
 
-Developer: "Can we delete this Legacy Fyne Surface panel now?"
-Domain expert: "Only after the Default UI Surface has Migration Parity for its controls, plots, exports, and boundary notices."
+Developer: "Can we delete this historical UI panel now?"
+Domain expert: "Yes, once the Default UI Surface has equivalent controls, plots, exports, and boundary notices."
 
 Developer: "The screenshot looks better; is that parity?"
-Domain expert: "No. Screenshot readability helps, but Migration Parity means the same user-observable behavior is present in the Default UI Surface."
+Domain expert: "No. Screenshot readability helps, but Default Surface Parity means the same user-observable behavior is present in the Default UI Surface."
 
 Developer: "Can the Module 1 plot claim measured HZO behavior?"
 Domain expert: "No. Keep the Educational Simulation Boundary visible unless a validated measurement citation is attached."

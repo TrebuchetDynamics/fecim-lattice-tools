@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package gui
 
 // e2e_accuracy_test.go - Research-grade end-to-end accuracy tests for the circuits module.

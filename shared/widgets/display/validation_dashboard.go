@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides shared UI components for FeCIM visualizers.
 //
 // validation_dashboard.go implements a scrollable dashboard widget that displays

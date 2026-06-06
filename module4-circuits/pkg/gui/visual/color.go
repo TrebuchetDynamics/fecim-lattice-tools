@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package visual contains pure color and drawing-adjacent helpers for module 4 visualizations.
 package visual
 

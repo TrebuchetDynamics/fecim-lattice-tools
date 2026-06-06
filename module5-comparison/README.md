@@ -13,7 +13,6 @@ Module 5 provides structured comparisons between FeCIM (Ferroelectric Compute-in
 - **architecture.go** — Architecture definitions: FeCIM, SRAM-CIM, ReRAM, Flash, Digital. Stores specs (energy/op, density, endurance, retention, speed) and comparison scoring
 - **render.go** — Text/table rendering of comparison results for CLI output
 
-### `pkg/gui/` — Fyne GUI
 
 - **embedded.go** — Embeddable app for unified launcher
 - **app.go** — Main comparison GUI layout
@@ -28,7 +27,7 @@ Module 5 provides structured comparisons between FeCIM (Ferroelectric Compute-in
 ### `cmd/` — Entry Points
 
 - **comparison/main.go** — CLI comparison runner
-- **../../cmd/fecim-lattice-tools** — Canonical gogpu/ui launcher (`comparison` subcommand or `--module comparison`)
+- **../../cmd/fecim-lattice-tools** — Canonical Fyne launcher (`comparison` subcommand or `--module comparison`)
 
 ## Key Types and Functions
 

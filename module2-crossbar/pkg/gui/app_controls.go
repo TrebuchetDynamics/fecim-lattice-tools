@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui - Control panel and widget creation for crossbar app
 package gui
 

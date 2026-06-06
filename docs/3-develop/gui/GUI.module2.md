@@ -2,7 +2,7 @@
 Module: module2-crossbar
 Name: "Crossbar Array MVM Visualization"
 Scope: Legacy Fyne adapter documentation
-Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Default UI Path: Fyne shell and module `pkg/gui` adapters
 Legacy Build Tag: `legacy_fyne`
 Entry: ../../cmd/fecim-lattice-tools --module crossbar
 Package: module2-crossbar/pkg/gui
@@ -10,7 +10,7 @@ Last Updated: 2026-02-02
 Description: "Interactive visualization of FeCIM crossbar array matrix-vector multiplication with non-ideality analysis"
 ---
 
-These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
+These notes describe the default Fyne module adapters; keep simulation state testable outside widget code where practical.
 
 Conventions:
   - File paths are relative to module2-crossbar unless noted

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains physics validation tests for device_state.go
 package gui

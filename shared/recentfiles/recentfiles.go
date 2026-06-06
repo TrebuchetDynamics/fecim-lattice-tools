@@ -30,8 +30,8 @@ const (
 )
 
 // Preferences is the small persistence interface used by recent files.
-// Fyne preferences satisfy this interface, but the core manager does not
-// depend on Fyne.
+// Any UI or CLI preference store can satisfy this interface; the core manager
+// does not depend on a presentation framework.
 type Preferences interface {
 	String(key string) string
 	SetString(key string, value string)

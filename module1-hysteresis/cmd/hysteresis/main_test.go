@@ -137,7 +137,7 @@ func TestBuildMaterialResult_AllMaterials(t *testing.T) {
 }
 
 func TestRunWithNoArgs(t *testing.T) {
-	// Running with no args should return an error about gogpu migration
+	// Running with no args should return an error about Fyne shell migration
 	err := Run([]string{})
 	if err == nil {
 		t.Fatal("Run with no args should return an error")

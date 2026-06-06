@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package reference contains compatibility wrappers for module 4 reference-tab content.
 package reference
 

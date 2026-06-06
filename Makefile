@@ -1,6 +1,6 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-gogpu-ui test-next-ui test-legacy-fyne bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
+.PHONY: build test test-race test-short test-legacy-fyne bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -10,9 +10,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
-	@echo "  make test-gogpu-ui  Run zero-CGO tests for the gogpu/ui shell"
-	@echo "  make test-next-ui   Alias for test-gogpu-ui"
-	@echo "  make test-legacy-fyne Run opt-in legacy Fyne package tests"
+	@echo "  make test-legacy-fyne Run Fyne desktop GUI command/module tests"
 	@echo "  make test-shared    Run tests for shared packages"
 	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
@@ -83,13 +81,8 @@ test-race:
 test-short:
 	$(GO) test -short ./...
 
-test-gogpu-ui:
-	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./internal/gogpuscreenshot/... ./cmd/fecim-lattice-tools ./cmd/fecim-screenshotter
-
-test-next-ui: test-gogpu-ui
-
 test-legacy-fyne:
-	$(GO) test -tags legacy_fyne ./...
+	$(GO) test ./cmd/fecim-lattice-tools ./cmd/fecim-lattice-tools-fyne ./cmd/fecim-screenshotter-fyne ./module1-hysteresis/pkg/gui/... ./module2-crossbar/pkg/gui/... ./module3-mnist/pkg/gui/... ./module4-circuits/pkg/gui/... ./module5-comparison/pkg/gui/... ./module6-eda/pkg/gui/... ./module7-docs/pkg/gui/...
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)

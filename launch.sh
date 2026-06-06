@@ -25,7 +25,7 @@ if $CLEAR_FLAG; then
     rm -rf logs/ docs/assets/screenshots/
 fi
 rm -f fecim-lattice-tools
-echo "Building fecim-lattice-tools (gogpu/ui, zero-CGO)..."
+echo "Building fecim-lattice-tools (Fyne, Fyne desktop)..."
 if CGO_ENABLED=0 go build -v -o fecim-lattice-tools ./cmd/fecim-lattice-tools 2>&1; then
     echo "Build successful, launching..."
     ./fecim-lattice-tools "${ARGS[@]}"

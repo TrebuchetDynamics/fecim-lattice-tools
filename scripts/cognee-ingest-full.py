@@ -251,10 +251,6 @@ DOCS_LEARN = [
 ]
 
 DOCS_DEV = [
-    "docs/3-develop/gui/FYNE_NOTES.md",
-    "docs/3-develop/gui/GUI.module2.md",
-    "docs/3-develop/gui/GUI.module5.md",
-    "docs/3-develop/gui/GUI.module7.md",
     "docs/3-develop/testing/TESTING.md",
     "docs/3-develop/api-reference.md",
 ]

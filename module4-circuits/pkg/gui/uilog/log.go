@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package uilog contains module 4 UI logging helpers.
 package uilog
 

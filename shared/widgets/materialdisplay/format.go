@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package materialdisplay provides material-property display formatting helpers.
 package materialdisplay
 

@@ -13,7 +13,6 @@ Ferroelectric hysteresis simulation module. Implements P-E (polarization-electri
 |------|---------|
 | `pkg/ferroelectric/material.go` | Re-exports HZOMaterial types from shared/physics (backward compatibility) |
 | `pkg/controller/writer.go` | ISPP write controller state machine (APPLY→WAIT→VERIFY→loop) |
-| `pkg/gui/gui.go` | Fyne GUI entry point for hysteresis visualization |
 | `pkg/simulation/engine.go` | P-E curve simulation engine |
 | `pkg/render/render.go` | Canvas rendering for hysteresis plots |
 
@@ -25,7 +24,6 @@ Ferroelectric hysteresis simulation module. Implements P-E (polarization-electri
 | `pkg/algo/` | Binary search and convergence algorithms | `bsearch.go`, `convergence.go` |
 | `pkg/controller/` | ISPP write controller and state machine | `writer.go` (9 test files) |
 | `pkg/ferroelectric/` | Material models, Preisach model, Landau-Khalatnikov solver | Re-exports from shared/physics |
-| `pkg/gui/` | Fyne GUI for hysteresis visualization | `gui.go`, `widgets/`, `simulation.go` |
 | `pkg/render/` | Rendering utilities for plot canvas | `render.go` |
 | `pkg/simulation/` | Simulation engine and multi-cell support | `engine.go`, `multicell.go` |
 | `pkg/tui/` | Terminal UI (legacy) | TUI entry point |
@@ -83,7 +81,6 @@ Key test files:
 
 ### External
 
-- Fyne v2 (`fyne.io/fyne/v2`) - Cross-platform native GUI
 - gonum (`gonum.org/v1/gonum`) - Numerical computation (matrix operations, special functions)
 
 ## Configuration
@@ -104,7 +101,6 @@ ISPP configuration in `WriteController`:
 
 - ISPP convergence: ~5-20 pulses per level (material-dependent)
 - Preisach curve computation: ~1-2ms per point (depends on material sharpness)
-- GUI update rate: ~30-60 Hz (synced to Fyne render cycle)
 - Memory: ~10-50MB for typical plots (16×16 crossbar + history)
 
 <!-- MANUAL: -->

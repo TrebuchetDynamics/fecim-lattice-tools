@@ -25,7 +25,6 @@ This document catalogs open-source tools for crossbar array simulation, neural n
 | Tool | Purpose | License |
 |------|---------|---------|
 | **Go toolchain** | Build/runtime | BSD-style |
-| **Fyne** | GUI framework | BSD-3-Clause |
 
 ### Optional External Tools (Referenced)
 
@@ -309,7 +308,6 @@ plt.show()
 
 ---
 
-### 2. This Module's GUI (Fyne)
 
 **Built-in visualization:**
 - Conductance heatmap
