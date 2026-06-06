@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides UI components for the circuits module.
 package gui
 

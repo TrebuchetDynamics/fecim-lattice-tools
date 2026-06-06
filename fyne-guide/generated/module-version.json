@@ -1,0 +1,27 @@
+{
+  "current": {
+    "Dir": "/home/xel/go/pkg/mod/fyne.io/fyne/v2@v2.7.2",
+    "GoMod": "/home/xel/go/pkg/mod/cache/download/fyne.io/fyne/v2/@v/v2.7.2.mod",
+    "GoModSum": "h1:PXbqY3mQmJV3J1NRUR2VbVgUUx3vgvhuFJxyjRK/4Ug=",
+    "GoVersion": "1.19",
+    "Path": "fyne.io/fyne/v2",
+    "Sum": "h1:XiNpWkn0PzX43ZCjbb0QYGg1RCxVbugwfVgikWZBCMw=",
+    "Time": "2026-01-02T20:06:13Z",
+    "Version": "v2.7.2"
+  },
+  "update_check": {
+    "Dir": "/home/xel/go/pkg/mod/fyne.io/fyne/v2@v2.7.2",
+    "GoMod": "/home/xel/go/pkg/mod/cache/download/fyne.io/fyne/v2/@v/v2.7.2.mod",
+    "GoModSum": "h1:PXbqY3mQmJV3J1NRUR2VbVgUUx3vgvhuFJxyjRK/4Ug=",
+    "GoVersion": "1.19",
+    "Path": "fyne.io/fyne/v2",
+    "Sum": "h1:XiNpWkn0PzX43ZCjbb0QYGg1RCxVbugwfVgikWZBCMw=",
+    "Time": "2026-01-02T20:06:13Z",
+    "Update": {
+      "Path": "fyne.io/fyne/v2",
+      "Time": "2026-05-12T19:24:51Z",
+      "Version": "v2.7.4"
+    },
+    "Version": "v2.7.2"
+  }
+}

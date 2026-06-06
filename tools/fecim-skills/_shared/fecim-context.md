@@ -33,9 +33,7 @@ Shared context referenced by FeCIM skills. Do not duplicate this content in indi
 4. **Zero-field bounds reset** — when `absField < 0.01*Ec`, reset to full `[0, MaxField]`.
 5. **Preisach Everett zero-clamp** — use product-form (always non-negative) instead of factorized (goes negative).
 
-## Legacy Fyne thread-safety rule (`docs/3-develop/gui/FYNE_NOTES.md`)
 
-Tagged legacy Fyne code must wrap UI updates from goroutines in `fyne.Do(func() { ... })`. Direct widget mutation from a non-main goroutine causes hangs and freezes. Common patterns to audit:
 
 ```go
 // WRONG
@@ -47,20 +45,17 @@ go func() {
 // RIGHT
 go func() {
     result := compute()
-    fyne.Do(func() { label.SetText(result) })
 }()
 ```
 
 ## UI boundary rule (per `AGENTS.md`)
 
-New UI-neutral, physics, simulation, validation, and export work must NOT add `fyne.io/...` or `github.com/gogpu/ui` imports. Use `shared/viewmodel/` as the UI-neutral bridge. Fyne and gogpu/ui imports belong only in shell/UI packages.
 
 ## Build target matrix
 
 | Target | CGO | Entry | Use |
 |---|---|---|---|
-| Default | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools` | Canonical gogpu/ui shell |
-| Legacy Fyne | host default CGO | `./cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne` | Opt-in parity checks only |
+| Default | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools` | Canonical Fyne shell |
 
 ## Host preflight and search fallback
 
@@ -81,6 +76,5 @@ Do not install host packages from a skill. Missing compilers, headers, qmd, agen
 | `go test ./...` | Full suite | exit code plus package/test pass/fail/skip counts |
 | `go test -json ./...` | Full-suite count extraction | summarized pass/fail/skip counts |
 | `go test -race ./...` | Race detection (mandatory when changing concurrency) | exit code plus package/test counts |
-| `make test-gogpu-ui` | Canonical zero-CGO UI shell tests | exit code and target output |
-| `make test-legacy-fyne` | Opt-in legacy Fyne package tests | exit code and target output |
+| `make test-Fyne-ui` | Canonical Fyne desktop UI shell tests | exit code and target output |
 | `FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...` | Regenerate physics regression goldens (only when divergence is intentional) | written justification and golden diff |

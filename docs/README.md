@@ -85,7 +85,7 @@ Perfect for: Researchers, academics, verification
 | [Honesty Audit](4-research/honesty-audit.md) | Claims verification | All users |
 | [Trust Boundaries](TRUST.md) | What is validated, educational, planned, or not validated | All users |
 | [Citation System](../citations/README.md) | Source records, citable facts, and citation workflow | Researchers, contributors |
-| [The Crucible](../crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
+| [The Crucible](../tools/crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
 | [GLOSSARY](GLOSSARY.md) | Technical terms | All users |
 
 ---
@@ -122,7 +122,7 @@ Perfect for: Researchers, academics, verification
 1. Status: 4-research/honesty-audit.md
 2. Physics: 4-research/physics-validation.md
 3. Trust: TRUST.md
-4. Crucible: ../crucible/README.md
+4. Crucible: ../tools/crucible/README.md
 5. Citations: ../citations/README.md
 6. Literature: 4-research/papers/
 7. Tools: 4-research/opensource-tools/
@@ -212,17 +212,15 @@ See [GLOSSARY.md](GLOSSARY.md) for all terms.
 Generated screenshots and videos are not tracked in the public source tree. To create a local documentation frame, run:
 
 ```bash
-CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
+go run ./cmd/fecim-screenshotter-fyne -only docs -out /tmp/fecim-demo-frames
 ```
 
-The screenshotter captures real `gogpu/ui` app frames through `internal/gogpuapp`, not legacy Fyne windows or placeholder image fixtures. Without `-only`, it intentionally writes one PNG for every module returned by `shared/viewmodel.KnownDescriptors()`; adding a module also requires a screenshot filename mapping so documentation coverage cannot silently drift.
 
 ---
 
 ## 🛠️ Technology Stack
 
 - **Language:** Go 1.25+
-- **GUI:** `gogpu/ui` default zero-CGO shell; legacy Fyne 2.7.2 is opt-in with `-tags legacy_fyne`
 - **Build:** Standard Go toolchain
 - **Platform:** Linux, macOS, Windows
 - **Dependencies:** See [1-getting-started/installation.md](1-getting-started/installation.md)
@@ -285,7 +283,6 @@ See [../LICENSE](../LICENSE) in repository root.
 
 ### Common Issues
 - Build errors: [1-getting-started/runbook.md#common-issues](1-getting-started/runbook.md#common-issues)
-- GUI problems: [3-develop/gui/FYNE_NOTES.md](3-develop/gui/FYNE_NOTES.md)
 - Physics questions: [4-research/physics-validation.md](4-research/physics-validation.md)
 
 ### Ask Questions

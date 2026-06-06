@@ -24,11 +24,8 @@ import (
 	"fmt"
 	"math"
 	"sync/atomic"
-)
 
-const (
-	kBoltzmann = 1.380649e-23    // Boltzmann constant (J/K)
-	qElectron  = 1.602176634e-19 // Elementary charge (C)
+	"fecim-lattice-tools/shared/constants"
 )
 
 // FeFETIVParams holds parameters for the FeFET subthreshold I-V model.
@@ -52,7 +49,7 @@ func DefaultFeFETIVParams() *FeFETIVParams {
 
 // ThermalVoltage returns V_T = k_B × T / q (Volts).
 func (p *FeFETIVParams) ThermalVoltage() float64 {
-	return kBoltzmann * p.TempK / qElectron
+	return constants.BoltzmannConstantJPerK * p.TempK / constants.ElectronChargeC
 }
 
 // VSat returns the saturation voltage V_sat = n × V_T (Volts).

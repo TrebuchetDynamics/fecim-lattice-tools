@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // pkg/gui/tabs/learn_visuals.go
 // Visual components for the Learn tab - OpenLane flow diagram and file format previews
 

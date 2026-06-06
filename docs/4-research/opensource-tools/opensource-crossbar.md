@@ -258,7 +258,6 @@ CrossSimParameters
 | **Drift** | ❌ | ✅ | ⚠️ Later |
 | **ADC/DAC** | ❌ | ✅ 6 models | ✅ Quantizer |
 | **GPU Acceleration** | ❌ | ✅ CuPy | ✅ Vulkan |
-| **Visualization** | ✅ Vector PDF | ⚠️ Manual | ✅ Fyne |
 | **Code Clarity** | ✅ Excellent | ⚠️ Complex | ✅ |
 | **Scalability** | ⚠️ Poor | ✅ Good | ✅ |
 
@@ -399,7 +398,6 @@ func (adc *ADC) Convert(currents []float64) []float64 {
 ```
 
 ### Phase 4: GUI Integration
-**Goal:** Real-time visualization in Fyne
 
 - Integrate into existing Module 2
 - Add sliders: parasitic R, error σ, ADC bits

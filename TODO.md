@@ -2,38 +2,36 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-05-03 | **gogpu/ui**: All 7 modules ported and functional
+**Last Updated**: 2026-05-03 | **Fyne**: All 7 modules ported and functional
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 9 | gogpu/ui integration + UX + screenshots |
+| Pending | 9 | Fyne integration + UX + screenshots |
 | Open Issues | 2 | qmd cold-start blocker + MNIST layout-audit hang |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All items done including gogpu/ui full migration |
+| Completed | ~260+ | All items done including Fyne full migration |
 
 ---
 
 ## Active Items
 
-### Pending — gogpu/ui Integration & Polish
+### Pending — Fyne Integration & Polish
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
 | 1 | Live simulation data — Preisach/LK solvers + real conductances → viewmodels | High | **Done** |
 | 2 | Interactive ApplyAction — all 7 modules respond to actions (select, resize, MVM, export, etc.) | High | **Done** |
 | 3 | Cross-module design composition — Composition/Snapshot/ExportDesign | Medium | **Done** |
-| 4 | Generate screenshots — 5 PNGs generated via `cmd/fecim-screenshotter-next` | Medium | **Done** |
+| 4 | Generate screenshots — 5 PNGs generated via `cmd/fecim-screenshotter-fyne` | Medium | **Done** |
 | 5 | Interactive canvas events — drawModuleOverlays reads globalPorts for real data | Medium | **Done** |
-| 6 | Dependency upgrades — gg/gogpu/ui + transitive updated | Low | **Done** |
-| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
-| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 6 | Dependency upgrades — gg/Fyne + transitive updated | Low | **Done** |
+| 7 | Fyne Screenshotter CLI — `cmd/fecim-screenshotter-fyne/main.go` | Medium | **Done** |
 | 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
-| 6 | Dependency upgrades — gg v0.43.2→v0.44.1, gogpu v0.29.4→v0.31.0, ui v0.1.13→v0.1.18, plus transitive. Build + 37 tests pass. | Low | **Done** |
-| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
-| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 6 | Dependency upgrades — gg v0.43.2→v0.44.1, Fyne v0.29.4→v0.31.0, ui v0.1.13→v0.1.18, plus transitive. Build + 37 tests pass. | Low | **Done** |
+| 7 | Fyne Screenshotter CLI — `cmd/fecim-screenshotter-fyne/main.go` | Medium | **Done** |
 | 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 
 ### Open Issues
@@ -101,19 +99,18 @@
   - `go test -count=1 ./...` → PASS (exit 0)
 
 **2026-03-03: Display/session wiring missing for GUI screenshot + visual audit runs** (P1) — RESOLVED
-- Root cause: Real-driver paths (`cmd/fecim-screenshotter`, xvfb visual/crawler test lanes) required `DISPLAY` and failed/skipped when the shell had neither `DISPLAY` nor `WAYLAND_DISPLAY`.
+- Root cause: Real-driver paths (`cmd/fecim-screenshotter-fyne`, xvfb visual/crawler test lanes) required `DISPLAY` and failed/skipped when the shell had neither `DISPLAY` nor `WAYLAND_DISPLAY`.
 - Fix applied:
-  - `cmd/fecim-screenshotter/main.go`: added automatic Xvfb bootstrap (`-auto-xvfb` default true), display readiness checks, and teardown.
-  - `cmd/fecim-screenshotter/main.go`: when `Canvas().Capture()` is all-black under Xvfb, fallback to X11 window capture via `import -window <title>` to produce non-empty PNGs.
+  - `cmd/fecim-screenshotter-fyne/main.go`: added automatic Xvfb bootstrap (`-auto-xvfb` default true), display readiness checks, and teardown.
+  - `cmd/fecim-screenshotter-fyne/main.go`: when `Canvas().Capture()` is all-black under Xvfb, fallback to X11 window capture via `import -window <title>` to produce non-empty PNGs.
   - `cmd/fecim-lattice-tools/*_test.go`: added shared test helper to auto-start Xvfb in headless runs and wired graphical tests (`e2e_gui`, `e2e_visual_xvfb`, `ui_crawler_xvfb`, crawler setup) to use it.
   - `cmd/fecim-lattice-tools/*_test.go`: added shared X11 capture fallback for real-driver xvfb tests and fixed crawler capture sizing/initialization (module `Start()/Stop()` + unique window titles).
   - `cmd/fecim-lattice-tools/gui_test_main_test.go`: explicit cleanup of auto-started Xvfb at test process exit.
-- Validation: `env -u DISPLAY -u WAYLAND_DISPLAY go run ./cmd/fecim-screenshotter -only circuits ...` now starts Xvfb automatically, avoids GLFW initialization panic, and saves non-black images via fallback when needed.
+- Validation: `env -u DISPLAY -u WAYLAND_DISPLAY go run ./cmd/fecim-screenshotter-fyne -only circuits ...` now starts Xvfb automatically, avoids GLFW initialization panic, and saves non-black images via fallback when needed.
 
 **2026-02-27: Capture pipeline black-screen regression for MNIST GUI** (P2) — RESOLVED
 - Root cause: Session runs under **Xwayland** (`XDG_SESSION_TYPE=wayland`, X server is `Xwayland :0 -rootless`). External X11 screenshot tools (`maim`, `scrot`, `xwd`) produce all-black images on Xwayland because Xwayland composites X11 windows inside the Wayland compositor buffer, leaving the X11 root window unmapped. Setting `xrandr --brightness` does not fix this — it is an architectural limitation of Xwayland, not a software bug.
-- The `fecim-screenshotter` is **not affected**: it uses `Canvas().Capture()` (Fyne's `glReadPixels` on the GL framebuffer), which reads from the application's own OpenGL context and bypasses X11 screen capture entirely.
-- Fix applied (`cmd/fecim-screenshotter/main.go`): Added `isXwaylandDisplay()` detection; updated `checkDisplayBrightness()` to emit a NOTE (not a WARNING) under Xwayland, clarifying that `Canvas.Capture()` is unaffected; added `captureBlackDiagnostic()` with Xwayland-specific guidance including Mesa GL front-buffer timing issues and the `grim` alternative for external captures.
+- Fix applied (`cmd/fecim-screenshotter-fyne/main.go`): Added `isXwaylandDisplay()` detection; updated `checkDisplayBrightness()` to emit a NOTE (not a WARNING) under Xwayland, clarifying that `Canvas.Capture()` is unaffected; added `captureBlackDiagnostic()` with Xwayland-specific guidance including Mesa GL front-buffer timing issues and the `grim` alternative for external captures.
 - External capture workaround on Wayland: `grim(1)` (confirmed installed and working: captures non-black content). For window-specific: `grim -g "$(slurp)" /tmp/capture.png`.
 
 ### Scheduled

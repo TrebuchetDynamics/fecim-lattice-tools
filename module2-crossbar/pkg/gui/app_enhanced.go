@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui - Enhanced app with all new widgets integrated
 package gui
 

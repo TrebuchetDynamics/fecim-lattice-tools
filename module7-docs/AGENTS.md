@@ -5,7 +5,6 @@
 
 ## Purpose
 
-Module 7 provides an in-app documentation viewer integrated into the unified GUI. It presents project documentation, API references, tutorials, and educational content within the same Fyne application as the simulation modules.
 
 Key features:
 - File-tree based navigation through docs/ directory
@@ -45,7 +44,6 @@ Key features:
 ```
 module7-docs/
 ├── pkg/
-│   └── gui/                     # Fyne GUI components and application
 ├── README.md
 └── AGENTS.md                   # This file
 ```
@@ -78,7 +76,6 @@ module7-docs/
 - Search is async (non-blocking) with ranked results
 - History is bidirectional (back/forward) with current position tracking
 - Keyboard input processed via standard Go keyboard events
-- Content rendering uses Fyne RichText widget
 
 ### Testing
 
@@ -132,7 +129,6 @@ go test -v ./module7-docs/pkg/gui -run Integrity  # Integrity checks
 - Alt+Left / Alt+Right: Navigate back/forward
 - Escape: Close search or dialog
 - Enter: Navigate to selected search result
-- Tab: Move between UI elements (standard Fyne behavior)
 
 **Glossary Integration:**
 - Glossary terms extracted from docs/
@@ -148,7 +144,6 @@ go test -v ./module7-docs/pkg/gui -run Integrity  # Integrity checks
 - `shared/logging` - Logging infrastructure
 
 **External:**
-- `fyne.io/fyne/v2` - GUI framework (container, layout, widget, theme)
 - Standard Go packages (os, path/filepath, sort, strings, net/url)
 
 ## MANUAL
@@ -251,7 +246,6 @@ go test -v ./module7-docs/pkg/gui -run Integrity
        // State
    }
 
-   func (w *MyWidget) Render() fyne.CanvasObject {
        return container.NewVBox(...)
    }
    ```

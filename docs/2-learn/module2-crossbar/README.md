@@ -43,7 +43,6 @@ module2-crossbar/
 ├── pkg/network/          # Multi-layer neural networks
 ├── pkg/training/         # Hardware-aware backpropagation
 ├── pkg/weights/          # Weight serialization (JSON/NumPy/CSV)
-└── pkg/gui/              # Fyne visualization
 ```
 
 ---

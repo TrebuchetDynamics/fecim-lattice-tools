@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // weight_comparison.go implements FP vs Quantized weight visualization
 package gui

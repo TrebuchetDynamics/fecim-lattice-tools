@@ -4,7 +4,7 @@
 // This is Demo 1 of the FeCIM Visualizer project.
 //
 // Run modes:
-//   - Default: clear migration error; use the canonical gogpu/ui shell
+//   - Default: clear migration error; use the canonical Fyne shell
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
 //
@@ -67,14 +67,17 @@ func listMaterials() {
 }
 
 func getMaterialKey(m *ferroelectric.HZOMaterial) string {
+	if m == nil {
+		return "default"
+	}
 	switch m.Name {
-	case "HZO (Si-doped)":
+	case "HZO (Si-doped)", "HZO (Si-doped, Park 2015 midpoint)":
 		return "default"
 	case "FeCIM HZO":
 		return "fecim"
 	case "FeCIM HZO (TARGET - NOT DEMONSTRATED)":
 		return "fecim-target"
-	case "Literature Superlattice (Cheema 2020)":
+	case "Literature Superlattice (Cheema 2020)", "Literature Superlattice (HZO nanolaminate 2025)":
 		return "superlattice"
 	case "Cryogenic HZO (4K)":
 		return "cryogenic"
@@ -125,7 +128,7 @@ func Run(args []string) error {
 	freq := fs.Float64("freq", 1e6, "Waveform frequency in Hz")
 	headless := fs.Bool("headless", false, "Run in headless mode (static ASCII output)")
 	tuiMode := fs.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical gogpu/ui shell")
+	vulkan := fs.Bool("vulkan", false, "Legacy Vulkan graphics is disabled in this command; use the canonical Fyne shell")
 	listMats := fs.Bool("list-materials", false, "List available materials and exit")
 
 	fs.Usage = func() {
@@ -247,6 +250,12 @@ func Run(args []string) error {
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 	fmt.Println("\nMaterial Parameters:")
+	if m == nil {
+		fmt.Println("  (nil material)")
+		fmt.Println()
+		return
+	}
+	fmt.Printf("  Material: %s\n", m.Name)
 	fmt.Printf("  Remanent Polarization (Pr): %.1f μC/cm²\n", m.Pr*100)
 	fmt.Printf("  Saturation Polarization (Ps): %.1f μC/cm²\n", m.Ps*100)
 	fmt.Printf("  Coercive Field (Ec): %.2f MV/cm\n", m.Ec/1e8)
@@ -287,7 +296,7 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println()
 	fmt.Printf("  Material: %s\n", material.Name)
-	fmt.Printf("  Remanent Polarization: %.1f µC/cm²\n", material.Pr*100)
+	fmt.Printf("  Remanent Polarization: %.1f μC/cm²\n", material.Pr*100)
 	fmt.Printf("  Coercive Field: %.2f MV/cm\n", material.Ec/1e8)
 	fmt.Printf("  Switching Time: %.2f ns\n", material.Tau*1e9)
 	fmt.Printf("  Endurance: %.0e cycles\n", material.EnduranceCycles)

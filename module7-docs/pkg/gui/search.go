@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides the documentation viewer with search capabilities.
 package gui
 

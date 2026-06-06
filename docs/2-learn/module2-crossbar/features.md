@@ -53,7 +53,6 @@ Module 2 simulates crossbar array operations with:
 - `serialization.go` - JSON/binary/NumPy export
 
 ### Visualization (`pkg/gui/`)
-- `app.go` - Main Fyne application
 - `heatmap.go` - Conductance/IR drop/sneak visualization
 - `controls.go` - Control panels and sliders
 - `tabs/` - Specialized analysis tabs
@@ -260,11 +259,9 @@ func (a *Array) applyMyNewEffect(current []float64, opts *MVMOptions) []float64 
 
 type MyAnalysisTab struct {
     array  *crossbar.Array
-    canvas *fyne.Container
     // ... widgets
 }
 
-func (t *MyAnalysisTab) BuildContent() fyne.CanvasObject {
     // Create custom visualizations
 }
 ```

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides a Fyne-based graphical user interface for the hysteresis demo.
 package gui
 

@@ -19,7 +19,8 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
-[![gogpu/ui](https://img.shields.io/badge/UI-gogpu%2Fui-2F5D50)](https://github.com/gogpu/ui)
+[![Fyne](https://img.shields.io/badge/Desktop-Fyne-2F5D50)](https://fyne.io)
+[![Astro](https://img.shields.io/badge/Web-Astro-BC52EE?logo=astro)](https://astro.build)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 ![FeCIM Lattice Tools hysteresis module screenshot](./docs/assets/hysteresis_readme.png)
@@ -28,9 +29,9 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 
 | Question | Answer |
 |----------|--------|
-| What is it? | A Go `gogpu/ui` desktop app plus validation workspace for FeCIM simulation. |
+| What is it? | A Go Fyne desktop app, validation workspace, and Astro landing page for FeCIM simulation. |
 | Why use it? | To inspect how ferroelectric material assumptions, hysteresis models, crossbar effects, peripheral circuits, and EDA exports interact. |
-| What can I run? | Seven GUI modules, headless validation scripts, module tests, and EDA/export examples. |
+| What can I run? | Seven GUI modules, headless validation scripts, module tests, EDA/export examples, and the static Astro web landing page. |
 | What is the boundary? | Simulation and education only unless a claim is cited and covered by validation. |
 
 ## Table of Contents
@@ -41,6 +42,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 - [Modules](#modules)
 - [Getting Started](#getting-started)
 - [Main Commands](#main-commands)
+- [Web Landing Page](#web-landing-page)
 - [Configuration](#configuration)
 - [Technical Architecture](#technical-architecture)
 - [Development Standard](#development-standard)
@@ -95,13 +97,13 @@ Shared infrastructure lives in [`shared/`](./shared), and validation suites live
 ### Prerequisites
 
 - Go 1.25 or newer.
-- A desktop environment for the GUI.
-- The default app uses the zero-CGO `gogpu/ui` shell.
-- Legacy Fyne parity commands are excluded from default builds and require `-tags legacy_fyne` plus OpenGL/X11 headers on minimal Linux systems.
+- A desktop environment for the Fyne GUI.
+- CGO-capable Go toolchain/system graphics libraries for Fyne.
+- Node.js/npm only when developing, validating, or deploying the Astro web landing page.
 
 ### Install and Run
 
-The default desktop app is the zero-CGO `gogpu/ui` shell:
+The default desktop app is the restored Fyne shell:
 
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
@@ -109,16 +111,10 @@ cd fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
 ```
 
-The old Fyne GUI is opt-in for temporary parity checks:
-
-```bash
-go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne
-```
-
 ### Build
 
 ```bash
-CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```
 
@@ -126,7 +122,7 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...
-make test-gogpu-ui
+make test-legacy-fyne
 bash scripts/reproduce_validation.sh
 ```
 
@@ -150,16 +146,46 @@ go run ./cmd/fecim-lattice-tools --help
 Generate fresh README-style screenshots:
 
 ```bash
-CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
+go run ./cmd/fecim-screenshotter-fyne -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
 ```
 
-The default screenshotter uses the gogpu rendering path. The old Fyne screenshot harness is excluded from default builds and requires `-tags legacy_fyne` for temporary parity checks.
+The Fyne screenshotter follows the restored desktop path.
 
 See [CLI Reference](./docs/1-getting-started/cli-reference.md) for the full launcher and module command reference.
 
+## Web Landing Page
+
+The [`web/`](./web) folder is a static Astro site for the public project landing page. It is separate from the native Go/Fyne simulator. The old Go WASM/Fyne browser demo was retired; `web/` no longer loads `fecim.wasm`, `wasm_exec.js`, or `cmd/fecim-web-fyne`.
+
+Develop locally:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Validate and build:
+
+```bash
+cd web
+npm test
+npm run build
+npm run test:e2e   # optional browser layout gate when Chromium is available
+```
+
+Deploy with Cloudflare Wrangler:
+
+```bash
+cd web
+npm run deploy
+```
+
+`web/wrangler.toml` targets the Cloudflare Pages project `fecim` and publishes `web/dist`. Deployment requires Wrangler authentication, for example `wrangler login` or a `CLOUDFLARE_API_TOKEN` environment variable. Add native-app screenshots under `web/public/screenshots/` when they are ready.
+
 ## Configuration
 
-No API keys or cloud credentials are required for the default app, tests, or validation workflows.
+No API keys or cloud credentials are required for the default app, tests, or validation workflows. Cloudflare credentials are needed only for `cd web && npm run deploy`.
 
 Simulation settings live in YAML files under [`config/`](./config):
 
@@ -179,18 +205,18 @@ For the full schema and loading behavior, read [Configuration Reference](./docs/
 Tech stack:
 
 - **Language:** Go 1.25+
-- **Desktop UI:** `gogpu/ui` is the default zero-CGO shell; Fyne 2.7 is legacy only.
+- **Desktop UI:** Fyne is the default desktop shell.
+- **Web:** Astro static landing page in `web/`, deployed from `web/dist` through Cloudflare Pages.
 - **Validation:** Go tests, golden data, literature range checks, and reproducibility scripts
 - **Exports:** SPICE, Verilog, Liberty, DEF, and LEF-oriented outputs
 
 High-level flow:
 
 ```text
-cmd/fecim-lattice-tools       default zero-CGO gogpu/ui shell
-cmd/fecim-lattice-tools-fyne  legacy Fyne shell
+cmd/fecim-lattice-tools       default Fyne desktop shell
         |
         v
-shared/ theme, widgets, physics, logging, utilities
+shared/ viewmodel, physics, logging, rendering, utilities
         |
         +--> module1-hysteresis  --> ferroelectric model behavior
         +--> module2-crossbar    --> array MVM and non-idealities
@@ -218,7 +244,7 @@ Common checks:
 ```bash
 gofmt -w .
 go test ./...
-make test-gogpu-ui
+make test-legacy-fyne
 go test -race -short ./shared/... ./validation/...
 ```
 
@@ -260,8 +286,10 @@ fecim-lattice-tools/
 ├── module6-eda/            # EDA export utilities
 ├── module7-docs/           # Integrated documentation viewer
 ├── shared/                 # Common physics, UI, logging, and utility code
-├── docs/                   # User, developer, and research documentation
+├── web/                    # Astro landing page and Cloudflare Pages config
+├── docs/                   # User, developer, research, paper, notebook, and presentation docs
 ├── data/                   # Simulation inputs and lookup data
+├── tools/                  # Developer/research tooling, prompts, and validation protocols
 └── validation/             # Regression, literature, and integration checks
 ```
 
@@ -271,6 +299,7 @@ fecim-lattice-tools/
 - [Technical Architecture](./docs/3-develop/architecture/ARCHITECTURE.md)
 - [Configuration Reference](./docs/3-develop/config-reference.md)
 - [Testing Guide](./docs/3-develop/testing/TESTING.md)
+- [Web Landing Page](./web/README.md)
 - [Trust Boundaries](./docs/TRUST.md)
 - [Citation System](./citations/README.md)
 - [Scientific Honesty Audit](./docs/4-research/honesty-audit.md)

@@ -5,7 +5,6 @@
 
 ## Purpose
 
-Provides time-stepping simulation engine for hysteresis module. Integrates Preisach model over user-defined waveforms (sine, triangle, sawtooth), manages simulation lifecycle (play/pause/reset), and maintains state history for plotting. Runs in goroutine and communicates with GUI via channels or Fyne data binding.
 
 ## Key Files
 

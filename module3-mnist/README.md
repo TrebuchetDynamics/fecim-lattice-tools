@@ -34,7 +34,6 @@ Module 3 bridges neural network workloads with the ferroelectric crossbar simula
 - **trainer_foundation.go** — Foundation trainer with learning rate scheduling
 - **seed.go** — Reproducible random seeding
 
-### `pkg/gui/` — Tagged Legacy Fyne GUI
 
 - **embedded.go** — Embeddable app for unified launcher
 - **dualmode.go** — Dual-mode (FP vs CIM) comparison view
@@ -56,7 +55,7 @@ Module 3 bridges neural network workloads with the ferroelectric crossbar simula
 ### `cmd/` — Entry Points
 
 - **mnist/main.go** — CLI inference runner
-- **../../cmd/fecim-lattice-tools** — Canonical gogpu/ui launcher (`mnist` subcommand or `--module mnist`)
+- **../../cmd/fecim-lattice-tools** — Canonical Fyne launcher (`mnist` subcommand or `--module mnist`)
 - **train-network/main.go** — Full network training
 - **train-single-layer/main.go** — Single-layer training
 - **train-ptq/main.go** — Post-training quantization workflow

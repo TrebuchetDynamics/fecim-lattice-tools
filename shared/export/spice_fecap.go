@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"fecim-lattice-tools/shared/constants"
 	"fecim-lattice-tools/shared/physics"
 )
-
-const vacuumPermittivity = 8.8541878128e-12 // F/m
 
 // FECapParams contains parameters for Landau-Khalatnikov ferroelectric capacitor SPICE export.
 type FECapParams struct {
@@ -78,7 +77,7 @@ Rvisc n1 neg {rho*thick/area}
 * Nonlinear Landau voltage via ngspice B-source
 B_landau n1 neg V = -(2*alpha*v(n1)*thick + 4*beta*v(n1)**3*thick + 6*gamma*v(n1)**5*thick)
 .ends %s
-`, params.Name, params.Alpha, params.Beta, params.Gamma, params.Rho, params.Thick_m, params.Area_m2, vacuumPermittivity, params.EpsR, params.Name)
+`, params.Name, params.Alpha, params.Beta, params.Gamma, params.Rho, params.Thick_m, params.Area_m2, constants.VacuumPermittivityFPerM, params.EpsR, params.Name)
 }
 
 // Generate1T1RSubcircuit returns an ngspice 1T1R wrapper with one NMOS selector and one FeCap.

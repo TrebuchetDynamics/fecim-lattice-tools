@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools Paper Roadmap
 
-Status: planning guide only. Do not create the `paper/` source tree until the outreach email and demo work are complete.
+Status: planning guide only. Do not create the `docs/paper/` source tree until the outreach email and demo work are complete.
 
 Date note: this roadmap was saved on April 26, 2026. Older working notes that referenced January 30 and March 14 are stale. If the current outreach cycle is still active, the next Friday is May 1, 2026; otherwise update this file with the actual outreach and submission dates before execution.
 
@@ -64,7 +64,7 @@ Useful precedents to cite fairly:
 Create this only when the paper work starts:
 
 ```text
-paper/
+docs/paper/
   README.md
   PLAN.md
   main.md
@@ -266,8 +266,8 @@ Figure captions must be self-contained: describe the data, method, threshold, re
 
 ### Week 1: Skeleton, 4-6 hours
 
-- create `paper/` folder structure
-- write `paper/PLAN.md`
+- create `docs/paper/` folder structure
+- write `docs/paper/PLAN.md`
 - draft abstract
 - add section headers with one- or two-sentence summaries
 - list required figures
@@ -365,14 +365,14 @@ The command must be real before it appears in the paper. Placeholder example:
 go run ./cmd/fecim-lattice-tools \
   --module hysteresis \
   --material HZO \
-  --output paper/data/sim_hysteresis_hzo.csv
+  --output docs/paper/data/sim_hysteresis_hzo.csv
 ```
 
 If the CLI does not support the command, either implement it with tests or do not claim it.
 
 ### Step 3: Compare
 
-Use scripts under `paper/figures/source/` to:
+Use scripts under `docs/paper/figures/source/` to:
 
 - load reference and simulation data
 - interpolate to a common grid where justified
@@ -430,8 +430,8 @@ Before paper work:
 
 When paper work starts:
 
-- create `paper/` folder
-- write `paper/PLAN.md`
+- create `docs/paper/` folder
+- write `docs/paper/PLAN.md`
 - draft abstract
 - add section headers
 - list figures and references

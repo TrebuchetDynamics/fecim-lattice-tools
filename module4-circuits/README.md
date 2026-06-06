@@ -1,6 +1,5 @@
 # Module 4: Peripheral Circuits
 
-Peripheral circuit simulation for FeCIM (Ferroelectric Compute-in-Memory) crossbar arrays. This module models the signal chain required for integrated analog memory operations: Digital-to-Analog Conversion (DAC), Transimpedance Amplification (TIA), and Analog-to-Digital Conversion (ADC), with interactive Fyne-based visualization.
 
 ## Overview
 
@@ -150,9 +149,7 @@ Core peripheral circuit implementations with realistic behavior:
   - `AnalyzeTiming()`: Critical path analysis
   - `AnalyzePower()`: Energy breakdown across components
 
-### `pkg/gui/` — Fyne Visualization
 
-Interactive simulation interface built with Fyne v2:
 
 - **embedded.go** (99 lines)
   - `EmbeddedCircuitsApp`: Pluggable app for unified visualizer
@@ -378,7 +375,6 @@ For deeper understanding of ferroelectric physics, architecture trade-offs, and 
 ### Key Conventions
 
 - All voltages in volts (V), currents in amperes (A)
-- Use `fyne.Do()` for all UI updates from simulation threads
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
 - Test before committing: `go test ./...`
 
@@ -400,7 +396,6 @@ To add a new circuit model (e.g., multiplexer):
 
 1. Create `shared/peripherals/component.go` with struct and methods
 2. Add tests in `shared/peripherals/component_test.go`
-3. Create GUI in `pkg/gui/tab_component.go` with Fyne visualization
 4. Integrate into `device_state.go` if part of signal chain
 5. Add to README in this section
 
@@ -421,6 +416,5 @@ Part of fecim-lattice-tools. See repository LICENSE for details.
 
 ## Questions?
 
-- Check `docs/3-develop/gui/FYNE_NOTES.md` for Fyne-specific issues
 - See `docs/3-develop/api-reference.md` for function lookups
 - Review `docs/4-research/honesty-audit.md` for physics verification

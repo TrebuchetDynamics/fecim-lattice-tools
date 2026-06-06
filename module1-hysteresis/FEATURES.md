@@ -20,7 +20,6 @@ P-E curve simulator for ferroelectric memory physics.
 - **Material Presets** - HZO baseline, FeCIM baseline, superlattice, cryogenic HZO, 32-level HZO, 140-level FTJ, AlScN (all presets are illustrative)
 - **Temperature Control** - Temperature slider with calibration cache (range configurable in code)
 - **Waveform Modes** - Manual, sine, triangle, write/read demo, time-resolved switching
-- **Multi-Mode UI** - Fyne GUI, TUI, headless ASCII
 
 ---
 

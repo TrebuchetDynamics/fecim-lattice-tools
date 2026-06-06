@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // cmd/eda-gui/main.go
 package edagui
 

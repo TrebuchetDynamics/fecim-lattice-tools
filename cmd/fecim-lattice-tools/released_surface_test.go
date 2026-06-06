@@ -11,7 +11,7 @@ import (
 func TestReleasedCommandSurfaceDoesNotExposeNextWrappers(t *testing.T) {
 	cmd := exec.Command("go", "list", "-e", "./cmd/...")
 	cmd.Dir = filepath.Clean(filepath.Join("..", ".."))
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil && len(out) == 0 {
 		t.Fatalf("go list ./cmd/... failed: %v\n%s", err, out)
@@ -23,11 +23,15 @@ func TestReleasedCommandSurfaceDoesNotExposeNextWrappers(t *testing.T) {
 	}
 }
 
-func TestReleasedCommandSurfaceDoesNotExposeLegacyFyneCommands(t *testing.T) {
+func TestReleasedCommandSurfaceIncludesFyneDefaultAndCompatibilityCommand(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", ".."))
-	for _, pkg := range listCommandPackages(t, root) {
-		if strings.Contains(pkg, "-fyne") {
-			t.Fatalf("released command surface must not expose legacy Fyne command %s", pkg)
+	pkgs := listCommandPackages(t, root)
+	for _, want := range []string{
+		"fecim-lattice-tools/cmd/fecim-lattice-tools",
+		"fecim-lattice-tools/cmd/fecim-lattice-tools-fyne",
+	} {
+		if !containsExactPackage(pkgs, want) {
+			t.Fatalf("released command surface missing %s", want)
 		}
 	}
 }

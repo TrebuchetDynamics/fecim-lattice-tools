@@ -3,6 +3,8 @@ package physics
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // ============================================================================
@@ -97,8 +99,7 @@ func TestLKSolver_UpdateParams(t *testing.T) {
 
 	s.UpdateParams()
 
-	const Eps0 = 8.854e-12
-	expectedAlphaT := (s.Temperature - s.CurieTemp) / (2 * Eps0 * s.CurieConst)
+	expectedAlphaT := (s.Temperature - s.CurieTemp) / (2 * constants.VacuumPermittivityFPerM * s.CurieConst)
 	expectedAlphaMech := 2 * s.Q12 * s.Stress
 	expectedAlpha := expectedAlphaT - expectedAlphaMech
 

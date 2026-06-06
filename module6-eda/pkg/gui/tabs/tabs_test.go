@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // pkg/gui/tabs/tabs_test.go
 package tabs
 

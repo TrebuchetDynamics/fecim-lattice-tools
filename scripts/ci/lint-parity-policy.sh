@@ -3,11 +3,12 @@ set -euo pipefail
 
 # RG-PAR-05 parity policy (lint gate)
 #
-# Goal: prevent headless-only physics branches from silently diverging from GUI.
+# Goal: prevent headless-only physics branches from silently diverging from the
+# canonical Fyne workflow.
 #
 # Current implementation is intentionally conservative (heuristic):
 # - Detect headless-only conditionals via env flags in non-test physics code.
-# - Require a GUI/headless parity test to exist for the owning module.
+# - Require a public workflow parity test to exist for the owning module.
 #
 # This gate is cheap, headless-safe, and runs before go test.
 
@@ -27,7 +28,7 @@ require_parity_test() {
 }
 
 # Patterns that indicate headless-only branches.
-PATTERN='FECIM_HEADLESS|FECIM_HEADLESS_FAST|FECIM_FYNE_TEST'
+PATTERN='FECIM_HEADLESS|FECIM_HEADLESS_FAST'
 
 # Scan non-test Go files in physics-ish directories.
 # (Keep list explicit so we don't accidentally crawl vendor/.)
@@ -53,9 +54,8 @@ if [[ -n "$hits" ]]; then
   echo "[parity-policy] detected headless-branch markers:" >&2
   echo "$hits" >&2
 
-  # Required parity tests for known modules.
-  require_parity_test "module1-hysteresis" "module1-hysteresis/tests/gui_headless_parity_test.go"
-  require_parity_test "module4-circuits" "module4-circuits/pkg/gui/headless_gui_physics_parity_test.go"
+  # Required parity tests for known default-shell workflows.
+  require_parity_test "cmd/fecim-lattice-tools" "cmd/fecim-lattice-tools/mode_lk_headless_test.go"
 fi
 
 if [[ "$fail" -ne 0 ]]; then

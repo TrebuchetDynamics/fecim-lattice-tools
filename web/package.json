@@ -1,0 +1,21 @@
+{
+  "name": "fecim-lattice-tools-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name fecim --branch development --commit-dirty=true",
+    "test": "node --test test/**/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:build": "npm run build && npm run test:e2e"
+  },
+  "dependencies": {
+    "astro": "^6.4.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

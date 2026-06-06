@@ -45,7 +45,7 @@ const pushConstantsSize = 24
 //
 // It creates an offscreen framebuffer, draws instanced triangle-strip quads
 // (one per cell) coloured by a viridis polynomial in the fragment shader,
-// then reads back pixels into an image.RGBA compatible with Fyne canvas.Raster.
+// then reads back pixels into an image.RGBA for downstream renderers.
 //
 // If Vulkan initialisation fails, Available() returns false and RenderHeatmap
 // returns nil. The caller is expected to fall back to a software path.

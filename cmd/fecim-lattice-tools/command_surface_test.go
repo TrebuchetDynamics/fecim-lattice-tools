@@ -8,59 +8,27 @@ import (
 	"testing"
 )
 
-func TestNonLegacyCommandsDoNotDependOnLegacyGraphics(t *testing.T) {
+func TestCommandSurfaceExposesFyneEntrypoints(t *testing.T) {
 	root := repoRoot()
-	packages := listCommandPackages(t, root)
-	disallowed := []string{
-		"fyne.io/" + "fyne",
-		"github.com/go-gl/glfw",
-		"github.com/vulkan-go/vulkan",
-		"fecim-lattice-tools/internal/legacycommand",
-		"fecim-lattice-tools/shared/theme",
-		"fecim-lattice-tools/shared/themes",
-		"fecim-lattice-tools/shared/widgets",
+	pkgs := listCommandPackages(t, root)
+	want := []string{
+		"fecim-lattice-tools/cmd/fecim-lattice-tools",
+		"fecim-lattice-tools/cmd/fecim-lattice-tools-fyne",
+		"fecim-lattice-tools/module1-hysteresis/cmd/hysteresis-fyne",
+		"fecim-lattice-tools/module4-circuits/cmd/circuits-gui-fyne",
 	}
-	for _, pkg := range packages {
-		if isLegacyFyneCommand(pkg) {
-			continue
-		}
-		deps := listDeps(t, root, pkg)
-		for _, dep := range deps {
-			for _, needle := range disallowed {
-				if strings.HasPrefix(dep, needle) {
-					t.Fatalf("non-legacy command %s must not depend on legacy graphics surface %s", pkg, dep)
-				}
-			}
+	for _, pkg := range want {
+		if !containsExactPackage(pkgs, pkg) {
+			t.Fatalf("command surface missing Fyne entrypoint %s; packages=%v", pkg, pkgs)
 		}
 	}
 }
 
-func TestNonLegacyCommandsDoNotAdvertiseLegacyFyneEntrypoints(t *testing.T) {
+func TestDefaultCommandDoesNotDependOnGogpuApp(t *testing.T) {
 	root := repoRoot()
-	for _, pkg := range listCommandPackages(t, root) {
-		if isLegacyFyneCommand(pkg) {
-			continue
-		}
-		dir := packageDir(t, root, pkg)
-		err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-				return nil
-			}
-			body, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			text := string(body)
-			if strings.Contains(text, "-fyne") || strings.Contains(text, "legacy Fyne") {
-				t.Fatalf("non-legacy command %s must not advertise legacy Fyne entrypoints in %s", pkg, path)
-			}
-			return nil
-		})
-		if err != nil {
-			t.Fatal(err)
+	for _, dep := range listDeps(t, root, "fecim-lattice-tools/cmd/fecim-lattice-tools") {
+		if strings.HasPrefix(dep, "fecim-lattice-tools/internal/"+"go"+"gpuapp") {
+			t.Fatalf("default command must not depend on retired UI app surface after Fyne rollback; found %s", dep)
 		}
 	}
 }
@@ -80,7 +48,7 @@ func listCommandPackages(t *testing.T, root string) []string {
 	}
 	cmd := exec.Command("go", args...)
 	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil && len(out) == 0 {
 		t.Fatalf("go list command packages failed: %v\n%s", err, out)
@@ -92,7 +60,7 @@ func packageDir(t *testing.T, root string, pkg string) string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "-f", "{{.Dir}}", pkg)
 	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil && len(out) == 0 {
 		t.Fatalf("go list -f .Dir %s failed: %v\n%s", pkg, err, out)
@@ -104,7 +72,7 @@ func listDeps(t *testing.T, root string, pkg string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "-deps", pkg)
 	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil && len(out) == 0 {
 		t.Fatalf("go list -deps %s failed: %v\n%s", pkg, err, out)
@@ -112,8 +80,13 @@ func listDeps(t *testing.T, root string, pkg string) []string {
 	return strings.Fields(string(out))
 }
 
-func isLegacyFyneCommand(pkg string) bool {
-	return strings.Contains(pkg, "-fyne")
+func containsExactPackage(pkgs []string, want string) bool {
+	for _, pkg := range pkgs {
+		if pkg == want {
+			return true
+		}
+	}
+	return false
 }
 
 func repoRoot() string {

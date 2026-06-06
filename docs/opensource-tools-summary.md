@@ -304,7 +304,6 @@ VPython / PyVista → 3D superlattice rendering
        ↓
 Matplotlib → Publication-quality static plots
        ↓
-module5-lattice (Go + Fyne) → Interactive 3D viewer
 ```
 
 ### Module 6: EDA / Chip Design
@@ -376,4 +375,4 @@ docker pull hpretl/iic-osic-tools:latest
   - [data-acquisition-tools.md](4-research/opensource-tools/data-acquisition-tools.md)
   - [tool-comparison-matrix.md](4-research/opensource-tools/tool-comparison-matrix.md)
   - [opensource-crossbar.md](4-research/opensource-tools/opensource-crossbar.md)
-- Clone script: [opensource/clone-all.sh](../opensource/clone-all.sh)
+- Clone script: [tools/opensource/clone-all.sh](../tools/opensource/clone-all.sh)

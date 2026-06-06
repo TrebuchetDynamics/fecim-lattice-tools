@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 // callbacks.go contains event handlers for heatmap cell interactions.
 package gui

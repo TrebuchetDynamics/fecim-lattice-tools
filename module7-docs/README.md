@@ -4,11 +4,9 @@ In-app documentation browser and educational curriculum viewer for fecim-lattice
 
 ## Overview
 
-Module 7 embeds the project's documentation tree into the unified Fyne application. It renders Markdown content, supports full-text search, glossary cross-referencing, and persistent navigation state so users can explore ferroelectric CIM concepts without leaving the tool.
 
 ## Package Structure
 
-### `pkg/gui/` — Fyne Documentation Browser
 
 - **embedded.go** — Embeddable app for unified launcher
 - **layout.go** — Documentation viewer layout (sidebar + content pane)

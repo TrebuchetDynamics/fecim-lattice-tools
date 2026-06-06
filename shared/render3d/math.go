@@ -1,6 +1,6 @@
 // Package render3d provides a pure-Go software 3D renderer for multi-layer
 // FeCIM array stack visualization. It renders stacked crossbar layers with
-// isometric projection into standard Go images suitable for Fyne canvas.Raster.
+// isometric projection into standard Go images suitable for UI renderers.
 //
 // No external 3D libraries are used. All math is standard library only.
 package render3d

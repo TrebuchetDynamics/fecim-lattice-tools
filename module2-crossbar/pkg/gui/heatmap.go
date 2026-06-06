@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 package gui
 
@@ -171,7 +169,6 @@ func (h *CrossbarHeatmap) rateLimitedRefresh() {
 // SetData updates the heatmap data.
 func (h *CrossbarHeatmap) SetData(data [][]float64) {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
 
 	// Copy data
 	for i := 0; i < h.rows && i < len(data); i++ {
@@ -201,6 +198,7 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 		}
 	}
 
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
@@ -209,22 +207,20 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 // Use this for consistent comparison between different data sets.
 func (h *CrossbarHeatmap) SetFixedScale(min, max float64) {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
-
 	h.useFixedScale = true
 	h.fixedMinVal = min
 	h.fixedMaxVal = max
 	h.minVal = min
 	h.maxVal = max
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
 // ClearFixedScale disables fixed scale and reverts to auto-scaling.
 func (h *CrossbarHeatmap) ClearFixedScale() {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
-
 	h.useFixedScale = false
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
@@ -275,41 +271,42 @@ func (h *CrossbarHeatmap) DestroyGPURenderer() {
 //   - fecim: Custom FeCIM branding, not colorblind-safe
 func (h *CrossbarHeatmap) SetColormap(name string) {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
-
 	h.colormap = name
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
 // SetSelection highlights a specific cell.
 func (h *CrossbarHeatmap) SetSelection(row, col int) {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
-
 	h.selectedRow = row
 	h.selectedCol = col
 	h.showSelection = row >= 0 && col >= 0
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
 // ClearSelection removes cell selection highlight.
 func (h *CrossbarHeatmap) ClearSelection() {
+	h.dataMu.Lock()
 	h.showSelection = false
 	h.selectedRow = -1
 	h.selectedCol = -1
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
 // SetShowGridLines enables or disables grid line rendering.
 func (h *CrossbarHeatmap) SetShowGridLines(show bool) {
+	h.dataMu.Lock()
 	h.showGridLines = show
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 
 // SetDimensions changes the dimensions of the heatmap and reinitializes data.
 func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 	h.dataMu.Lock()
-	defer h.dataMu.Unlock()
 
 	h.rows = rows
 	h.cols = cols
@@ -332,6 +329,7 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 		h.data[i] = make([]float64, cols)
 	}
 
+	h.dataMu.Unlock()
 	h.rateLimitedRefresh()
 }
 

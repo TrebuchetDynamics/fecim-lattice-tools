@@ -1208,7 +1208,6 @@ module1-hysteresis/pkg/ferroelectric/
 ├── quantize.go              # 30-level discretization
 ├── fatigue.go               # Cycling degradation
 ├── wakeup.go                # Initial polarization recovery
-└── gui.go                   # Fyne visualization (our unique contribution)
 ```
 
 ### 10.2 Validation Against External Tools

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides GUI components for the hysteresis demo.
 // This file implements M12: State stability indicator with color-coded warnings.
 package widgets

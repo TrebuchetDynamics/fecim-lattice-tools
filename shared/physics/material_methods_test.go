@@ -3,6 +3,8 @@ package physics
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 const tolerance = 1e-6
@@ -164,8 +166,7 @@ func TestRemanentCharge(t *testing.T) {
 func TestCapacitance(t *testing.T) {
 	mat := DefaultHZO()
 	cap := mat.Capacitance()
-	epsilon0 := 8.854e-12
-	expected := epsilon0 * mat.Epsilon * mat.Area / mat.Thickness
+	expected := constants.VacuumPermittivityFPerM * mat.Epsilon * mat.Area / mat.Thickness
 	assertClose(t, cap, expected, "Capacitance")
 }
 
@@ -189,7 +190,7 @@ func TestSwitchingTime_RoomTemp(t *testing.T) {
 	}
 
 	// Verify formula: τ(T) = τ0 * exp(Ea / kT)
-	kB := 8.617e-5
+	kB := constants.BoltzmannConstanteVPerK
 	expected := mat.Tau0 * math.Exp(mat.Ea/(kB*T))
 	assertClose(t, switchTime, expected, "SwitchingTime at 300K")
 }

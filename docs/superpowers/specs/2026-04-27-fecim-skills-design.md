@@ -6,7 +6,6 @@
 
 ## Goal
 
-Author 8 FeCIM-specific agent skills, distributed across Claude Code, Codex, and opencode from a single source, that bake in this repo's domain conventions (TDD hard-rule, Fyne `fyne.Do()` threading, honesty-audit, ISPP guard-band patterns, Cognee KG, EDA export, gogpu/ui migration).
 
 ## Non-Goals
 
@@ -22,12 +21,8 @@ Each skill lives in `tools/fecim-skills/<name>/SKILL.md` with mattpocock-format 
 |---|---|---|---|
 | 1 | **fecim-researcher** | Surveys FeCIM domain knowledge by searching `references/`, `citations/`, `docs/4-research/`, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature. | Identify question and scope → search `references/`, `docs/4-research/`, `experimental-data/` → if Cognee env vars set, query KG via `scripts/cognee-search.py` (else skip) → cite findings using canonical short form (Materlik 2015, Park 2015, etc.) → output structured note: question, sources, finding, gaps, recommended next step. |
 | 2 | **fecim-citation** | Verifies and formats FeCIM physics/measurement claims against the project's published-source list and `docs/4-research/honesty-audit.md`. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages. | Parse claim → match to published-physics list (Materlik 2015, Park 2015, Alessandri 2018, Guo 2018, 2025 HZO FTJ paper) → check honesty-audit "removed/unverified" list (87% MNIST, 30-level-as-spec, NAND/GPU energy multipliers) → output citation in canonical format OR "needs rephrasing as educational" with suggested wording. |
-| 3 | **fecim-builder** | Runs build flows for both UI paths (legacy Fyne and zero-CGO `gogpu/ui` shell) on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in `cmd/fecim-lattice-tools` or `cmd/fecim-lattice-tools-next`. | Detect target (legacy vs next) → set CGO env (`CGO_ENABLED=1` legacy, `0` next) → run `go build` / `./launch.sh` / Makefile target → triage common failures: missing GLFW/X11 deps, Vulkan loader missing, CGO toolchain missing. |
 | 4 | **fecim-labtester** | Runs the FeCIM test matrix (full, race, module-scoped, coverage, golden regen) and interprets physics regression failures using the 5 known bug patterns. Use when running tests, debugging test failures, or regenerating physics golden files. | Pick scope (`./...`, module, package) → run with appropriate flags (`-race`, `-cover`, `FECIM_UPDATE_PHYSICS_GOLDEN=1`) → on failure, classify against 5 known patterns from `MEMORY.md` (guard-band sign flip, bounds collapse, ACCEPT ±1 interaction, zero-field bounds reset, Preisach Everett zero-clamp) → output RED/GREEN evidence block per CLAUDE.md TDD rule. |
-| 5 | **fecim-grill** | Relentlessly interviews the user about a proposed FeCIM physics, simulation, or GUI change before any code is written — covering source citation, educational-vs-validated framing, TDD-RED test, thread-safety, and honesty-audit alignment. Use when starting a non-trivial change to physics, ISPP, crossbar, or GUI logic. | Ask: what claim/behavior changes → source citation → educational or validated → failing test that proves the behavior → thread-safety (Fyne.Do) → honesty-audit alignment → loop until each branch resolves → output a one-paragraph design summary the user signs off before implementation. |
-| 6 | **fecim-fyne-thread-check** | Audits Go code for goroutine→widget access without `fyne.Do(...)` wrapping, the project's most common GUI freeze cause. Use when reviewing a PR that adds goroutines, async I/O, or simulation tickers in any `pkg/gui/` or shell package. | `rg "go func\("` in target paths → for each hit, check if body touches `*widget.*`, `*canvas.*`, `*container.*` → verify enclosing call chain uses `fyne.Do(func() { ... })` → cross-reference `docs/3-develop/gui/FYNE_NOTES.md` → output violation list with file:line and suggested wrap. |
 | 7 | **fecim-honesty-audit** | Enforces `docs/4-research/honesty-audit.md` policy by scanning PR diffs, READMEs, and presentation material for removed/unverified claims (87% MNIST, 30-states-as-fact, energy multipliers vs NAND/GPUs). Use before committing docs, PRs, or release notes that include accuracy or efficiency numbers. | Take diff or doc as input → regex-scan for trigger phrases + numeric patterns → for each hit, classify: verified / educational-default / removed-unverified → for removed-unverified, suggest the approved rephrasing pattern from the audit doc → output: pass / changes-requested with line-level annotations. |
-| 8 | **fecim-gogpu-migrate** | Migrates a Fyne tab/component to the `gogpu/ui` zero-CGO shell via the `shared/viewmodel` UI-neutral bridge. Use when porting a module from `cmd/fecim-lattice-tools` to `cmd/fecim-lattice-tools-next`, or when extracting UI-coupled logic into the viewmodel layer. | Identify Fyne-coupled file → extract pure-state and event interface into `shared/viewmodel/<name>` → confirm zero `fyne.io/...` and `github.com/gogpu/ui` imports in viewmodel → add `_test.go` covering viewmodel transitions → reimplement Fyne adapter against viewmodel → stub gogpu/ui adapter → run `make test-next-ui` and full `go test ./...`. |
 
 ### Cross-cutting conventions for all 8 skills
 
@@ -49,9 +44,8 @@ tools/fecim-skills/
 ├── fecim-builder/SKILL.md
 ├── fecim-labtester/SKILL.md
 ├── fecim-grill/SKILL.md
-├── fecim-fyne-thread-check/SKILL.md
 ├── fecim-honesty-audit/SKILL.md
-└── fecim-gogpu-migrate/SKILL.md
+└── fecim-fyne-maintain/SKILL.md
 
 scripts/install-fecim-skills.sh        # generates per-harness adapters (idempotent)
 scripts/test-install-fecim-skills.sh   # tests for the install script
@@ -159,11 +153,9 @@ Runs via `make test-skills` and in CI.
 
 Each `SKILL.md` also includes a "Verification" section listing 1–3 example invocations and expected behavior. These are documentation, not automated tests, but they keep skills auditable.
 
-Example for `fecim-fyne-thread-check`:
 ```markdown
 ## Verification
 - Input: a PR adding `go func() { mylabel.SetText("done") }()` in `module1-hysteresis/pkg/gui/`
-- Expected: skill flags the call, suggests wrapping in `fyne.Do(func() { mylabel.SetText("done") })`
 ```
 
 ## TDD Compliance per CLAUDE.md

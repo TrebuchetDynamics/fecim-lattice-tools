@@ -18,7 +18,6 @@
 - **Go:** Version 1.25 or later ([download](https://go.dev/dl/))
 - **Git:** For cloning the repository
 
-No C compiler is required for the default gogpu/ui app. A C compiler and OpenGL/X11 headers are only needed for opt-in legacy Fyne parity builds with `-tags legacy_fyne`.
 
 See [installation.md](installation.md) for platform-specific instructions.
 
@@ -160,7 +159,7 @@ Full reference: [cli-reference.md](cli-reference.md)
 Screenshots and videos are generated artifacts, so they are not tracked in the public source tree. To generate a local documentation frame:
 
 ```bash
-CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-frames
+go run ./cmd/fecim-screenshotter-fyne -only docs -out /tmp/fecim-demo-frames
 ```
 
 ---
@@ -175,8 +174,6 @@ CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -only docs -out /tmp/fecim-demo-f
 **Error:** missing module downloads
 → **Fix:** Run `go mod download`
 
-**Error:** legacy Fyne parity build fails with C compiler or OpenGL headers missing
-→ **Fix:** Install the platform CGO/OpenGL dependencies listed in [installation.md](installation.md), then rerun with `-tags legacy_fyne`.
 
 ### Runtime Issues
 

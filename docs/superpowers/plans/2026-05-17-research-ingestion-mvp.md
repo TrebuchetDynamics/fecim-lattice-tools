@@ -1718,4 +1718,4 @@ If Task 9 changed no files, do not create an empty commit. If Task 9 exposed a s
 - This plan intentionally avoids a mandatory Pyserini install in unit tests. The actual `index` and `search` commands require Pyserini at runtime and must fail with actionable messages when it is unavailable.
 - GROBID and Marker are optional during tests. Sidecar Markdown lets tests exercise deterministic chunking without requiring parser services.
 - Do not commit PDFs unless the repository policy changes. The ledger should commit metadata, parser outputs, chunks, manifests, and reports.
-- Do not modify unrelated dirty files. At plan time, unrelated dirty files were present in `data/calibrations/literature_superlattice.json`, `internal/gogpuapp/root_test.go`, `shared/viewmodel/circuits/*.go`, `shared/viewmodel/circuits/viewmodel_test.go`, and untracked binaries.
+- Do not modify unrelated dirty files. At plan time, unrelated dirty files were present in `data/calibrations/literature_superlattice.json`, `cmd/fecim-lattice-tools/root_test.go`, `shared/viewmodel/circuits/*.go`, `shared/viewmodel/circuits/viewmodel_test.go`, and untracked binaries.
