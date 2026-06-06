@@ -1,4 +1,5 @@
 ---
+description: Runs build flows for the canonical Fyne shell and module commands on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in cmd/fecim-lattice-tools or module GUI commands.
 agent: build
 ---
 
