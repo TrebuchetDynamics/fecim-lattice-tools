@@ -3,6 +3,7 @@
 **Prerequisites (all platforms):**
 - Go 1.25+ (https://go.dev/dl/)
 - Git
+- Node.js/npm (only for the Astro web landing page)
 
 **Linux additional deps:**
 ```bash
@@ -53,19 +54,21 @@ go test ./...
 # Expected: >=70 packages PASS, 0 FAIL
 ```
 
-### Web (WASM) demo (experimental)
-This repository includes an experimental WASM entrypoint:
-- `cmd/fecim-web` (currently loads Module 7 documentation viewer)
+### Web landing page (Astro)
+The `web/` folder is a static Astro landing page for the project website. It no longer uses the retired Go WASM/Fyne browser demo.
 
 Build + run locally:
 ```bash
-# Build
-GOOS=js GOARCH=wasm go build -o web/fecim.wasm ./cmd/fecim-web
-cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" web/
+cd web
+npm install
+npm run dev
+# Then open the local Astro URL printed by the dev server.
+```
 
-# Serve
-python3 -m http.server --directory web 8080
-# Then open: http://localhost:8080
+Production build:
+```bash
+cd web
+npm run build
 ```
 
 ### Minimum Hardware

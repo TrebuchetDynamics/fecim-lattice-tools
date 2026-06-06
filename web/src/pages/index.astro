@@ -1,0 +1,749 @@
+---
+const modules = [
+  {
+    number: '01',
+    title: 'Hysteresis Lab',
+    text: 'Explore Preisach and Landau-Khalatnikov ferroelectric switching with material presets for HZO, BTO, and PZT.',
+  },
+  {
+    number: '02',
+    title: 'Crossbar Array',
+    text: 'Simulate matrix-vector multiply with quantized conductance levels, IR drop, sneak paths, and drift.',
+  },
+  {
+    number: '03',
+    title: 'MNIST Pipeline',
+    text: 'Follow the full CIM inference path from input quantization through array computation and accuracy reporting.',
+  },
+  {
+    number: '04',
+    title: 'Peripheral Circuits',
+    text: 'Inspect DAC, ADC, TIA, read-path, and ISPP write-control behavior around ferroelectric memory cells.',
+  },
+  {
+    number: '05',
+    title: 'Technology Comparison',
+    text: 'Compare assumptions, operating points, and metrics across memory and compute-in-memory technologies.',
+  },
+  {
+    number: '06',
+    title: 'EDA Export',
+    text: 'Generate SPICE, Verilog, Liberty, DEF, and LEF artifacts for education-stage OpenLane experiments.',
+  },
+  {
+    number: '07',
+    title: 'Integrated Docs',
+    text: 'Keep physics explanations, references, module guides, and honesty notes connected to the simulator.',
+  },
+];
+
+const stats = [
+  ['7', 'integrated modules'],
+  ['30', 'default conductance levels'],
+  ['MIT', 'open-source license'],
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="FeCIM Lattice Tools is an education-phase simulator for ferroelectric compute-in-memory research, visualization, validation, and EDA export."
+    />
+    <title>FeCIM Lattice Tools | Ferroelectric CIM Simulator</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__grid" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="#main" aria-label="FeCIM Lattice Tools home">
+            <span class="brand__mark" aria-hidden="true">Fe</span>
+            <span>FeCIM Lattice Tools</span>
+          </a>
+          <div class="nav__links">
+            <a href="#modules">Modules</a>
+            <a href="#science">Science</a>
+            <a href="#start">Start</a>
+          </div>
+        </nav>
+
+        <div class="hero__content">
+          <p class="eyebrow">Ferroelectric compute-in-memory simulation suite</p>
+          <h1 id="hero-title">A lattice-scale playground for FeCIM physics, arrays, circuits, and EDA flows.</h1>
+          <p class="lede">
+            Explore hysteresis models, crossbar non-idealities, neural inference, peripheral circuits, technology
+            comparisons, and export-ready artifacts from one research-oriented toolkit.
+          </p>
+          <div class="hero__actions" aria-label="Primary calls to action">
+            <a class="button button--primary" href="#modules">Explore the modules</a>
+            <a class="button button--ghost" href="#start">Run locally</a>
+          </div>
+          <p class="honesty-pill">Education-phase simulation, not a hardware performance claim.</p>
+        </div>
+
+        <div class="hero__panel" aria-label="Simulation pipeline summary">
+          <div class="wafer" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <ol class="pipeline">
+            <li><strong>Model</strong><span>Preisach + Landau-Khalatnikov switching</span></li>
+            <li><strong>Map</strong><span>Conductance-quantized crossbar arrays</span></li>
+            <li><strong>Measure</strong><span>Accuracy, IR drop, drift, and circuit margins</span></li>
+            <li><strong>Export</strong><span>SPICE / Verilog / Liberty / DEF / LEF</span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Project highlights">
+        {stats.map(([value, label]) => (
+          <article>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </article>
+        ))}
+      </section>
+
+      <section id="modules" class="section" aria-labelledby="modules-title">
+        <div class="section__header">
+          <p class="eyebrow">Integrated workflow</p>
+          <h2 id="modules-title">Seven modules, one simulation story.</h2>
+          <p>
+            FeCIM Lattice Tools is organized so students and researchers can move from device physics to array behavior,
+            inference experiments, circuit constraints, and EDA artifacts without switching context.
+          </p>
+        </div>
+        <div class="module-grid">
+          {modules.map((module) => (
+            <article class="module-card">
+              <span>{module.number}</span>
+              <h3>{module.title}</h3>
+              <p>{module.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="science" class="section science" aria-labelledby="science-title">
+        <div>
+          <p class="eyebrow">Accuracy-first posture</p>
+          <h2 id="science-title">Built to teach the physics without overstating the hardware.</h2>
+        </div>
+        <div class="science__body">
+          <p>
+            Material presets and conductance levels are simulation defaults for visualization and education. Literature-backed
+            assumptions are surfaced plainly, while unverified device-performance claims stay out of the product story.
+          </p>
+          <ul>
+            <li>Published ferroelectric model families: Materlik, Park, Alessandri, and Guo.</li>
+            <li>Crossbar non-idealities include IR drop, sneak-path current, and conductance drift.</li>
+            <li>EDA outputs are designed for experimentation, validation, and reproducible teaching artifacts.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="start" class="section cta" aria-labelledby="start-title">
+        <p class="eyebrow">Run it locally</p>
+        <h2 id="start-title">Clone, test, and launch the simulator.</h2>
+        <pre><code>git clone https://github.com/your-org/fecim-lattice-tools.git
+cd fecim-lattice-tools
+go test ./...
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools</code></pre>
+        <p>
+          This Astro landing page is static and separate from the Go desktop simulator, so it can be deployed as a fast
+          project website while the simulator remains a native Go application.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  @layer reset, base, components;
+
+  @layer reset {
+    html {
+      box-sizing: border-box;
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit;
+    }
+
+    body,
+    h1,
+    h2,
+    h3,
+    p,
+    ol,
+    ul,
+    pre {
+      margin: 0;
+    }
+
+    a {
+      color: inherit;
+    }
+  }
+
+  @layer base {
+    :root {
+      --bg: #060912;
+      --bg-soft: #0b1220;
+      --surface: rgba(15, 23, 42, 0.76);
+      --surface-strong: rgba(15, 23, 42, 0.96);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #eef7ff;
+      --muted: #a8b4c7;
+      --accent: #58f6d6;
+      --accent-strong: #23c8ff;
+      --warm: #f6b35b;
+      --danger: #ff6b9f;
+      --shadow: 0 24px 90px rgba(0, 0, 0, 0.45);
+      --max: 1180px;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-block-size: 100dvh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(35, 200, 255, 0.22), transparent 34rem),
+        radial-gradient(circle at 84% 8%, rgba(88, 246, 214, 0.16), transparent 30rem),
+        linear-gradient(145deg, var(--bg), #101827 58%, #071016);
+      color: var(--text);
+      line-height: 1.6;
+      text-rendering: optimizeLegibility;
+    }
+
+    ::selection {
+      background: color-mix(in oklab, var(--accent) 36%, transparent);
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-inline-size: 12em;
+      font-size: clamp(2.35rem, 4.4vw, 4.25rem);
+    }
+
+    h2 {
+      font-size: clamp(2.25rem, 6vw, 4.8rem);
+    }
+
+    h3 {
+      font-size: clamp(1.25rem, 2vw, 1.55rem);
+    }
+
+    p {
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
+    pre {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      background: rgba(2, 6, 23, 0.78);
+      padding: 1.25rem;
+      color: #d9f99d;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  @layer components {
+    .skip-link {
+      position: fixed;
+      inset-block-start: 1rem;
+      inset-inline-start: 1rem;
+      z-index: 10;
+      translate: 0 -150%;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #03211b;
+      padding: 0.75rem 1rem;
+      font-weight: 800;
+      transition: translate 160ms ease;
+    }
+
+    .skip-link:focus {
+      translate: 0;
+    }
+
+    .hero,
+    .section,
+    .stats {
+      inline-size: min(var(--max), calc(100% - 2rem));
+      margin-inline: auto;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.78fr);
+      gap: clamp(2rem, 5vw, 5rem);
+      min-block-size: 100dvh;
+      overflow: clip;
+      padding-block: 1.25rem 5rem;
+      isolation: isolate;
+    }
+
+    .hero__grid {
+      position: absolute;
+      inset: 7rem -8vw 2rem;
+      z-index: -1;
+      overflow: clip;
+      border-radius: 2rem;
+      background:
+        linear-gradient(rgba(88, 246, 214, 0.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(35, 200, 255, 0.12) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+      mask-image: radial-gradient(circle at 40% 35%, black, transparent 72%);
+      opacity: 0.8;
+    }
+
+    .hero__grid span {
+      position: absolute;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 42px var(--accent);
+      inline-size: 0.65rem;
+      block-size: 0.65rem;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    .hero__grid span:nth-child(1) { inset: 20% auto auto 20%; }
+    .hero__grid span:nth-child(2) { inset: 34% 18% auto auto; animation-delay: 0.8s; background: var(--accent-strong); }
+    .hero__grid span:nth-child(3) { inset: auto auto 28% 42%; animation-delay: 1.4s; background: var(--warm); }
+    .hero__grid span:nth-child(4) { inset: auto 26% 18% auto; animation-delay: 2s; background: var(--danger); }
+
+    .nav {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6, 9, 18, 0.72);
+      padding: 0.55rem;
+      backdrop-filter: blur(18px);
+    }
+
+    .brand,
+    .nav__links,
+    .hero__actions,
+    .brand__mark {
+      display: flex;
+      align-items: center;
+    }
+
+    .brand {
+      gap: 0.7rem;
+      padding-inline: 0.65rem 1rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .brand__mark {
+      justify-content: center;
+      inline-size: 2.25rem;
+      block-size: 2.25rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #04111d;
+      font-size: 0.9rem;
+      box-shadow: 0 0 28px rgba(88, 246, 214, 0.36);
+    }
+
+    .nav__links {
+      gap: 0.25rem;
+    }
+
+    .nav__links a,
+    .button {
+      min-block-size: 2.75rem;
+      border-radius: 999px;
+      padding: 0.7rem 1rem;
+      text-decoration: none;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .nav__links a:hover,
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .nav__links a {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .nav__links a:hover {
+      color: var(--text);
+      background: rgba(148, 163, 184, 0.1);
+    }
+
+    .hero__content {
+      align-self: start;
+      padding-block: 2rem 2rem;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-inline-size: 47rem;
+      margin-block-start: 1.35rem;
+      color: #cbd5e1;
+      font-size: clamp(1.08rem, 2vw, 1.35rem);
+    }
+
+    .hero__actions {
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      margin-block-start: 2rem;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      font-weight: 900;
+    }
+
+    .button--primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #04111d;
+      box-shadow: 0 18px 54px rgba(35, 200, 255, 0.18);
+    }
+
+    .button--ghost {
+      background: rgba(15, 23, 42, 0.68);
+      color: var(--text);
+    }
+
+    .honesty-pill {
+      display: inline-flex;
+      margin-block-start: 1.15rem;
+      border: 1px solid rgba(246, 179, 91, 0.42);
+      border-radius: 999px;
+      background: rgba(246, 179, 91, 0.1);
+      padding: 0.5rem 0.8rem;
+      color: #fed7aa;
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .hero__panel {
+      align-self: center;
+      border: 1px solid var(--line);
+      border-radius: 2rem;
+      background: linear-gradient(180deg, var(--surface), rgba(2, 6, 23, 0.86));
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .wafer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+      border: 1px solid var(--line);
+      border-radius: 1.5rem;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(88, 246, 214, 0.22), transparent 48%),
+        rgba(2, 6, 23, 0.8);
+      padding: 1rem;
+      min-block-size: 16rem;
+    }
+
+    .wafer span {
+      border: 1px solid rgba(88, 246, 214, 0.24);
+      border-radius: 0.85rem;
+      background: linear-gradient(145deg, rgba(88, 246, 214, 0.2), rgba(35, 200, 255, 0.06));
+      box-shadow: inset 0 0 24px rgba(88, 246, 214, 0.08);
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 0.85rem;
+      margin-block-start: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .pipeline li,
+    .module-card,
+    .stats article,
+    .science,
+    .cta {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(16px);
+    }
+
+    .pipeline li {
+      display: grid;
+      gap: 0.15rem;
+      border-radius: 1rem;
+      padding: 0.9rem 1rem;
+    }
+
+    .pipeline strong {
+      color: var(--text);
+    }
+
+    .pipeline span {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-block: -3rem 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats article {
+      border-radius: 1.25rem;
+      padding: clamp(1rem, 3vw, 1.5rem);
+    }
+
+    .stats strong {
+      display: block;
+      color: var(--accent);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1;
+    }
+
+    .stats span {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .section {
+      padding-block: clamp(4rem, 9vw, 7rem);
+    }
+
+    .section__header {
+      max-inline-size: 54rem;
+      margin-block-end: 2rem;
+    }
+
+    .section__header p:last-child {
+      margin-block-start: 1rem;
+      font-size: 1.08rem;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .module-card {
+      min-block-size: 17rem;
+      border-radius: 1.5rem;
+      padding: 1.25rem;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .module-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(88, 246, 214, 0.48);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .module-card span {
+      display: inline-flex;
+      margin-block-end: 2rem;
+      border: 1px solid rgba(88, 246, 214, 0.32);
+      border-radius: 999px;
+      padding: 0.25rem 0.55rem;
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 0.78rem;
+    }
+
+    .module-card p {
+      margin-block-start: 0.8rem;
+    }
+
+    .science {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: clamp(1.5rem, 4vw, 4rem);
+      border-radius: 2rem;
+      padding: clamp(1.25rem, 5vw, 3rem);
+    }
+
+    .science__body {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .science ul {
+      display: grid;
+      gap: 0.75rem;
+      padding-inline-start: 1.2rem;
+      color: #dbeafe;
+    }
+
+    .cta {
+      border-radius: 2rem;
+      padding: clamp(1.25rem, 5vw, 3rem);
+      margin-block-end: 4rem;
+    }
+
+    .cta pre {
+      margin-block: 1.5rem;
+    }
+
+    .cta p:last-child {
+      max-inline-size: 58rem;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(0.8);
+        opacity: 0.55;
+      }
+      50% {
+        transform: scale(1.65);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .science {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-block-size: auto;
+      }
+
+      .hero__content {
+        padding-block-start: 2rem;
+      }
+
+      .module-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .stats,
+      .module-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        border-radius: 1.25rem;
+        padding: 0.6rem;
+      }
+
+      .brand {
+        justify-content: center;
+      }
+
+      .nav__links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem;
+      }
+
+      .nav__links a {
+        min-block-size: 2.4rem;
+        padding: 0.45rem 0.7rem;
+        text-align: center;
+      }
+
+      .hero__content {
+        padding-block-start: 1.25rem;
+      }
+
+      h1 {
+        font-size: clamp(2.1rem, 10vw, 2.65rem);
+      }
+
+      .lede {
+        margin-block-start: 1rem;
+        font-size: 1rem;
+      }
+
+      .hero__actions {
+        gap: 0.6rem;
+        margin-block-start: 1.25rem;
+      }
+
+      .button {
+        min-block-size: 2.65rem;
+        padding: 0.58rem 0.85rem;
+      }
+
+      .honesty-pill {
+        margin-block-start: 0.5rem;
+      }
+
+      .stats {
+        margin-block-start: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .hero__grid span,
+      .skip-link,
+      .nav__links a,
+      .button,
+      .module-card {
+        animation: none;
+        transition: none;
+      }
+    }
+  }
+</style>
