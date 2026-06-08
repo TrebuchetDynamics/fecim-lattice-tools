@@ -14,7 +14,6 @@ Peripheral circuits simulation module for ferroelectric compute-in-memory system
 | `pkg/gui/device_state.go` | Unified device state (68KB, core state machine) |
 | `pkg/gui/tab_unified.go` | Main simulation tab with voltage and waveform controls |
 | `pkg/gui/tab_unified_voltage.go` | Voltage mode selection and DAC/ADC configuration |
-| `pkg/gui/app.go` | Main Fyne app with 4-tab interface (Unified, Reference, Comparison, Analysis) |
 | `pkg/gpuperiph/gpu_peripherals.go` | GPU-accelerated DAC, ADC, TIA via Vulkan compute |
 | `pkg/arraysim/types.go` | Crossbar array simulation types and interfaces |
 
@@ -23,7 +22,6 @@ Peripheral circuits simulation module for ferroelectric compute-in-memory system
 | Directory | Purpose | Key Files |
 |-----------|---------|-----------|
 | `cmd/circuits/` | Standalone CLI entry point | `main.go` |
-| `pkg/gui/` | Fyne GUI components and unified simulation | `app.go`, `device_state.go` (69KB), `tab_*.go` (6 tabs) |
 | `pkg/gui/unified/` | Reusable unified simulation components | `renderer.go`, `state.go` |
 | `pkg/arraysim/` | Array simulation with ISPP and write verify | `types.go`, `tier_a.go`, `tier_b.go`, `array_ispp.go` (40+ files) |
 | `pkg/gpuperiph/` | GPU-accelerated peripheral circuits | `gpu_peripherals.go`, `gpu_peripherals_test.go` |
@@ -96,7 +94,6 @@ Pre-existing failures (do NOT fix, not in scope):
 
 ### External
 
-- Fyne v2 (`fyne.io/fyne/v2`) - Cross-platform native GUI
 - gonum (`gonum.org/v1/gonum`) - Linear algebra for array simulation
 - Vulkan SDK (optional, for GPU acceleration) - Compute shader compilation and device runtime
 
@@ -129,7 +126,6 @@ Peripheral config (from `pkg/gpuperiph`):
 - MVM with GPU: ~0.1-1ms per vector (Vulkan compute)
 - ISPP write: ~50-200ms per cell (level-based or L-K engine, material-dependent)
 - Peripheral simulation: ~0.1-1ms per conversion (CPU or GPU)
-- GUI update rate: ~30-60 Hz (synced to Fyne render cycle)
 - Memory: ~10-50MB for device state, array config, and history
 
 ## Module 4 Special Notes

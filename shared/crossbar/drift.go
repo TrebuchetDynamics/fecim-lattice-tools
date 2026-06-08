@@ -3,6 +3,8 @@ package crossbar
 import (
 	"math"
 	"math/rand"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 // DriftModel specifies the drift coefficient source.
@@ -230,9 +232,9 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 	d.Time += dt
 
 	// Thermal activation factor (Arrhenius-like acceleration)
-	kB := 1.38e-23 // Boltzmann constant (J/K)
-	Ea := 0.5      // Activation energy (eV) - typical order for FeFET retention physics
-	eV := 1.6e-19  // eV to J
+	kB := constants.BoltzmannConstantJPerK // J/K
+	Ea := 0.5                              // Activation energy (eV) - typical order for FeFET retention physics
+	eV := 1.6e-19                          // eV to J
 	temp := d.Temperature
 	if temp <= 0 {
 		temp = 300.0 // Fallback to room temperature to avoid div-by-zero
@@ -425,7 +427,7 @@ func (d *DriftSimulator) GetStats() DriftStats {
 	// Estimate 10-year retention (compact loss model)
 	// loss(t) = coeff*(t/tref)^ν*thermalFactor.
 	tenYearSeconds := 10 * 365.25 * 24 * 3600
-	kB := 1.38e-23
+	kB := constants.BoltzmannConstantJPerK
 	Ea := 0.5
 	eV := 1.6e-19
 	temp := d.Temperature

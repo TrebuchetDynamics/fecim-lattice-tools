@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package progress provides Fyne widgets for progress display.
 package progress
 
@@ -25,6 +23,8 @@ type ProgressWidget struct {
 	showCancel  bool
 	showDetails bool
 	compact     bool
+
+	bindings *ProgressBindings
 
 	// UI elements
 	titleLabel  *widget.Label
@@ -80,6 +80,8 @@ func NewProgressWidget(p *Progress, opts ...ProgressWidgetOption) *ProgressWidge
 		opt(w)
 	}
 
+	w.bindings = NewProgressBindings(p)
+
 	w.ExtendBaseWidget(w)
 	w.buildUI()
 
@@ -101,23 +103,21 @@ func (w *ProgressWidget) buildUI() {
 	w.statusIcon.TextStyle.Bold = true
 
 	// Title label
-	w.titleLabel = widget.NewLabelWithStyle(
-		w.progress.Operation(),
-		fyne.TextAlignLeading,
-		fyne.TextStyle{Bold: true},
-	)
+	w.titleLabel = widget.NewLabelWithData(w.bindings.Operation)
+	w.titleLabel.Alignment = fyne.TextAlignLeading
+	w.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Phase label
-	w.phaseLabel = widget.NewLabel("")
+	w.phaseLabel = widget.NewLabelWithData(w.bindings.Phase)
 	w.phaseLabel.TextStyle.Italic = true
 
 	// Progress bar
-	w.progressBar = widget.NewProgressBar()
+	w.progressBar = widget.NewProgressBarWithData(w.bindings.Fraction)
 	w.progressBar.Min = 0
 	w.progressBar.Max = 1
 
 	// Detail label
-	w.detailLabel = widget.NewLabel("")
+	w.detailLabel = widget.NewLabelWithData(w.bindings.Detail)
 	w.detailLabel.Wrapping = fyne.TextTruncate
 
 	// ETA label
@@ -219,6 +219,11 @@ func (w *ProgressWidget) buildFullLayout() *fyne.Container {
 	}
 
 	return content
+}
+
+// Bindings returns the Fyne data bindings that back the widget's core display.
+func (w *ProgressWidget) Bindings() *ProgressBindings {
+	return w.bindings
 }
 
 // Refresh updates the widget display

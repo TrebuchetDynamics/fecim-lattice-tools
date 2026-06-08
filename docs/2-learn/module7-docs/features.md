@@ -41,6 +41,5 @@
 
 ## Known Limitations
 
-- Markdown rendering is limited to supported Fyne widgets.
 - Search is in-memory and optimized for repo scale.
 - No external URLs are fetched or embedded.

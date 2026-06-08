@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // dualmode_weights.go provides weight visualization functionality.
 package gui

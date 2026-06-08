@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package main
 
 // globalSeed holds the --seed value for deterministic simulation replay.

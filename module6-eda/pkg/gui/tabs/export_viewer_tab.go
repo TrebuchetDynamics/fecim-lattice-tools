@@ -1,10 +1,9 @@
-//go:build legacy_fyne
-
 package tabs
 
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
@@ -32,13 +31,45 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, _ fyne.Window) fyne.CanvasObje
 	preview.TextStyle.Monospace = true
 	preview.Disable()
 
+	selectedArtifact := ""
 	refresh := func() {
 		content, source := loadExportPreviewContent(formatSelect.Selected, cfg)
 		preview.SetText(content)
+		if selectedArtifact != "" {
+			status.SetText("Artifact: " + selectedArtifact + " | Source: " + source)
+			return
+		}
 		status.SetText("Source: " + source)
 	}
 
-	formatSelect.OnChanged = func(string) { refresh() }
+	artifactModel := NewArtifactTreeModel(exportPreviewArtifactPaths(cfg))
+	formatChangeFromTree := false
+	formatSelect.OnChanged = func(string) {
+		if !formatChangeFromTree {
+			selectedArtifact = ""
+		}
+		refresh()
+	}
+
+	artifactTree := newExportArtifactTree(artifactModel, func(uid string) {
+		if artifactModel.IsBranch(uid) {
+			return
+		}
+		format := exportFormatForArtifactID(uid)
+		if format == "" {
+			return
+		}
+		selectedArtifact = uid
+		if formatSelect.Selected != format {
+			formatChangeFromTree = true
+			formatSelect.SetSelected(format)
+			formatChangeFromTree = false
+			return
+		}
+		refresh()
+	})
+	artifactTree.OpenBranch("cells")
+	artifactTree.OpenBranch("data")
 
 	refreshBtn := widget.NewButton("Refresh", refresh)
 
@@ -50,9 +81,72 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, _ fyne.Window) fyne.CanvasObje
 		status,
 	)
 
+	artifactBrowser := container.NewBorder(
+		widget.NewLabelWithStyle("Artifacts", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		nil,
+		nil,
+		nil,
+		container.NewScroll(artifactTree),
+	)
+	content := container.NewHSplit(artifactBrowser, container.NewScroll(preview))
+	content.Offset = 0.3
+
 	refresh()
 
-	return container.NewBorder(header, nil, nil, nil, container.NewScroll(preview))
+	return container.NewBorder(header, nil, nil, nil, content)
+}
+
+func exportPreviewArtifactPaths(cfg *config.ArrayConfig) []string {
+	design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
+	return []string{
+		path.Join("cells", "fecim_bitcell", "fecim_bitcell.lef"),
+		path.Join("cells", "fecim_bitcell", "fecim_bitcell.lib"),
+		path.Join("cells", "fecim_1t1r_bitcell", "fecim_1t1r_bitcell.lef"),
+		path.Join("cells", "fecim_1t1r_bitcell", "fecim_1t1r_bitcell.lib"),
+		path.Join("cells", "fecim_2t1r_bitcell", "fecim_2t1r_bitcell.lef"),
+		path.Join("cells", "fecim_2t1r_bitcell", "fecim_2t1r_bitcell.lib"),
+		path.Join("data", design+".v"),
+		path.Join("data", design+".sp"),
+		path.Join("data", "fecim_array.sp"),
+	}
+}
+
+func newExportArtifactTree(model *ArtifactTreeModel, onSelected func(string)) *widget.Tree {
+	tree := widget.NewTree(
+		model.ChildUIDs,
+		model.IsBranch,
+		func(bool) fyne.CanvasObject {
+			label := widget.NewLabel("artifact")
+			label.Truncation = fyne.TextTruncateEllipsis
+			return label
+		},
+		func(uid widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
+			label := node.(*widget.Label)
+			text := model.Label(uid)
+			if branch {
+				text = "▸ " + text
+			}
+			label.SetText(text)
+		},
+	)
+	tree.HideSeparators = true
+	tree.OnSelected = onSelected
+	return tree
+}
+
+func exportFormatForArtifactID(uid string) string {
+	switch path.Ext(uid) {
+	case ".lef":
+		return "LEF"
+	case ".lib":
+		return "Liberty"
+	case ".v":
+		return "Verilog"
+	case ".sp", ".spice":
+		return "SPICE"
+	default:
+		return ""
+	}
 }
 
 func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content string, source string) {

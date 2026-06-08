@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // This file implements the "Live Slide" pattern components for Demo 3.
 package gui

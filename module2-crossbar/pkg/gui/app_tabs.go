@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui - Tab creation and management for enhanced crossbar app
 package gui
 
@@ -84,6 +82,17 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		ca.conductanceHeatmap,
 	)
 
+	// Matrix table tab uses Fyne's virtualized table callbacks for a read-only
+	// numeric view of the same conductance matrix shown in the heatmap.
+	ca.conductanceMatrixModel = NewMatrixTableModel(ca.array.GetConductanceMatrix())
+	ca.conductanceMatrixTable = NewMatrixTable(ca.conductanceMatrixModel)
+	matrixTableContent := container.NewBorder(
+		widget.NewLabelWithStyle("Conductance Matrix Table", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Read-only view of normalized conductance values; refreshes after array updates"),
+		nil, nil,
+		ca.conductanceMatrixTable,
+	)
+
 	// IR Drop tab with legend
 	irContent := container.NewBorder(
 		nil, nil,
@@ -133,6 +142,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	// Create tabbed view with new tabs
 	ca.tabs = container.NewAppTabs(
 		container.NewTabItem("Conductance", condContent),
+		container.NewTabItem("Matrix Table", matrixTableContent),
 		container.NewTabItem("IR Drop", irContent),
 		container.NewTabItem("Sneak Paths", sneakContent),
 		container.NewTabItem("Input/Output", container.NewMax(ca.mvmVis)),
@@ -186,6 +196,17 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 					"30 levels (conference claim) = 4.9 bits/cell\n"+
 					"vs 1 bit for binary memory\n\n"+
 					"💡 Tip: Click ⓘ for physics details")
+		case "Matrix Table":
+			ca.setEducationalContent("Conductance Matrix Table",
+				"Read-only numeric view\n"+
+					"of the conductance matrix.\n\n"+
+					"Rows and columns map to\n"+
+					"crossbar word/bit lines.\n\n"+
+					"Fyne widget.Table virtualizes\n"+
+					"cells so large arrays avoid\n"+
+					"one widget per matrix entry.\n\n"+
+					"Values are normalized\n"+
+					"conductance weights [0,1].")
 		case "IR Drop":
 			ca.setEducationalContent("IR Drop Analysis",
 				"Voltage drops along wires.\n\n"+

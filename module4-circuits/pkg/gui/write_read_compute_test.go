@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package gui
 
 // write_read_compute_test.go - End-to-end write→read→compute pipeline tests

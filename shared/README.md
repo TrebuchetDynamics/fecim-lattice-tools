@@ -36,7 +36,6 @@ The `shared/` package prevents duplication by centralizing code used by two or m
 - **analysis.go** — INL/DNL, timing, power analysis
 - **defaults.go** — Default configurations
 
-### `widgets/` — Reusable Fyne Widgets
 
 - **glossary.go** — Glossary tooltip widget
 - **material_picker.go**, **material_card.go**, **material_table.go** — Material selection UI

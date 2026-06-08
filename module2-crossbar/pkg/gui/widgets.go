@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides custom widgets for crossbar visualization.
 package gui
 

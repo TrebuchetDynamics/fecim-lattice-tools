@@ -9,11 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"fecim-lattice-tools/internal/gogpuapp"
 	hysheadless "fecim-lattice-tools/module1-hysteresis/pkg/headless"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/viewmodel"
 )
+
+var log *logging.Logger
 
 func main() {
 	os.Exit(runMain(os.Args[1:], os.Stdout, os.Stderr))
@@ -59,8 +60,8 @@ func runRoot(args []string, stdout, stderr io.Writer) error {
 	modeFlag := fs.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
 	engineFlag := fs.String("engine", "", "Headless hysteresis engine for --mode hysteresis: preisach|lk (default: preisach)")
 	moduleFlag := fs.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
-	_ = fs.String("screenshot-dir", filepath.Clean("screenshots"), "Reserved for gogpu/ui screenshot capture")
-	_ = fs.String("recording-dir", filepath.Clean("recordings"), "Reserved for gogpu/ui recording capture")
+	screenshotDirFlag := fs.String("screenshot-dir", filepath.Clean(screenshotOutputDir), "Output directory for GUI screenshots")
+	recordingDirFlag := fs.String("recording-dir", filepath.Clean(recordingOutputDir), "Output directory for GUI recordings")
 
 	fs.Usage = func() { printRootUsage(fs.Output()) }
 	if err := fs.Parse(args); err != nil {
@@ -103,13 +104,22 @@ func runRoot(args []string, stdout, stderr io.Writer) error {
 		return nil
 	}
 
+	if dir := strings.TrimSpace(*screenshotDirFlag); dir != "" {
+		screenshotOutputDir = filepath.Clean(dir)
+	}
+	if dir := strings.TrimSpace(*recordingDirFlag); dir != "" {
+		recordingOutputDir = filepath.Clean(dir)
+	}
+
 	if *loggerFlag {
 		logging.EnableFileLogging()
 		verbosity := logging.ParseVerbosityFlag(*verbosityFlag)
 		logging.SetVerbosity(verbosity)
-		log := logging.NewLogger("fecim-lattice-tools")
+		log = logging.NewLogger("fecim-lattice-tools")
 		defer log.Close()
 		log.Info("FeCIM Lattice Tools starting with verbosity=%s", logging.VerbosityString(verbosity))
+	} else {
+		log = logging.NewNoOpLogger()
 	}
 
 	modeName := strings.TrimSpace(*modeFlag)
@@ -127,7 +137,7 @@ func runRoot(args []string, stdout, stderr io.Writer) error {
 }
 
 func runModuleApp(module viewmodel.ModuleID) error {
-	return gogpuapp.Run(gogpuapp.Options{ActiveModuleID: module})
+	return runFyneApp(module)
 }
 
 func moduleIDFromFlag(raw string) viewmodel.ModuleID {

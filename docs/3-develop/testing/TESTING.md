@@ -248,7 +248,6 @@ Headless ISPP tests in `cmd/fecim-lattice-tools/mode_engine_matrix_test.go` exer
 
 ### 1. GUI Tests Partially Automated
 
-**Issue:** Some Fyne GUI features require a display server or running Fyne app.
 
 **Solution:** Widget logic is tested without display. Animation-related features (like pulsing highlights) are skipped in tests.
 

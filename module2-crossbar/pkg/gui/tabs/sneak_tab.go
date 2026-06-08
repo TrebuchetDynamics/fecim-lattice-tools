@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package tabs provides individual tab components for the Demo 2 crossbar GUI.
 package tabs
 

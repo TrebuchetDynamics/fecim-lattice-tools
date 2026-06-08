@@ -233,7 +233,6 @@ Beyond open-source tools, see also:
 | `CLAUDE.md` | Project overview, physics constants, accuracy policy |
 | `docs/3-develop/api-reference.md` | Function lookup, API reference |
 | `docs/3-develop/testing/TESTING.md` | Test framework, running tests before commit |
-| `docs/3-develop/gui/FYNE_NOTES.md` | GUI framework notes for module updates |
 | `docs/4-research/honesty-audit.md` | Scientific accuracy verification for all claims |
 
 ---

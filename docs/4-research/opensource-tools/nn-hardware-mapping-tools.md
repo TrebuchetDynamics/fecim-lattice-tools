@@ -788,7 +788,6 @@ for name, imp in sorted(importance.items(), key=lambda x: x[1], reverse=True):
 | **Mixed-precision optimization** | HAWQ | Automatic per-layer bit allocation |
 | **Crossbar validation** | CrossSim | Reference implementation for benchmarking |
 | **TensorFlow workflows** | TF MOT | Official Google integration |
-| **Real-time GUI visualization** | FeCIM (ours) | Go + Fyne for interactive demos |
 
 ### Feature Comparison
 

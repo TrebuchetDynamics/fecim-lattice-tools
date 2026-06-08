@@ -17,7 +17,7 @@ const (
 const (
 	StatusPlaceholder = "placeholder"
 	StatusFunctional  = "functional"
-	StatusFallback    = "fyne-fallback"
+	StatusFallback    = "fallback"
 )
 
 type ModuleDescriptor struct {

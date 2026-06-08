@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // quantization_widget.go implements P1.1: Real-Time Quantization Visualization
 package gui

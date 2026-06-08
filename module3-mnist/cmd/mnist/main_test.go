@@ -139,6 +139,87 @@ func TestResolveWeightsPathExplicit(t *testing.T) {
 	}
 }
 
+func TestRunMNISTCLIE2EExportQuantizedWeightsMatrix(t *testing.T) {
+	tmp := t.TempDir()
+	outA := filepath.Join(tmp, "a")
+	outB := filepath.Join(tmp, "b")
+	var stdout, stderr bytes.Buffer
+	weights16 := filepath.Join("..", "..", "data", "pretrained_weights_16.json")
+	global := captureMNISTStdoutE2E(t, func() {
+		if err := runMNISTCLI([]string{"--export-levels", "4,8", "--export-dir", outA + "," + outB, "--hidden", "16", "--load", weights16}, &stdout, &stderr); err != nil {
+			t.Fatalf("export quantized weights: %v stderr=%s", err, stderr.String())
+		}
+	})
+	if !strings.Contains(global, "Export Quantized Weights") || !strings.Contains(global, "Export complete") {
+		t.Fatalf("export stdout missing markers: %q", global)
+	}
+	for _, dir := range []string{outA, outB} {
+		for _, name := range []string{"pretrained_weights.json", "pretrained_weights_4.json", "pretrained_weights_8.json"} {
+			raw, err := os.ReadFile(filepath.Join(dir, name))
+			if err != nil {
+				t.Fatalf("missing export %s/%s: %v", dir, name, err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(raw, &payload); err != nil {
+				t.Fatalf("invalid JSON export %s/%s: %v", dir, name, err)
+			}
+			if strings.Contains(name, "_4") && payload["quant_levels"].(float64) != 4 {
+				t.Fatalf("quant_levels for %s = %v", name, payload["quant_levels"])
+			}
+		}
+	}
+}
+
+func TestRunMNISTCLIE2EHelpConfigAndInvalidExportMatrix(t *testing.T) {
+	tmp := t.TempDir()
+	cfg := filepath.Join(tmp, "mnist.json")
+	if err := os.WriteFile(cfg, []byte(`{"hidden_size":16,"noise_level":0.01,"epochs":1}`), 0644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	out := filepath.Join(tmp, "help.txt")
+	var stdout, stderr bytes.Buffer
+	if err := runMNISTCLI([]string{"--help", "--output", out}, &stdout, &stderr); err != nil {
+		t.Fatalf("help: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "FeCIM MNIST CLI") || !strings.Contains(stdout.String(), "--json") {
+		t.Fatalf("help stdout missing usage: %q", stdout.String())
+	}
+	badOut := filepath.Join(tmp, "bad")
+	weights16 := filepath.Join("..", "..", "data", "pretrained_weights_16.json")
+	if err := runMNISTCLI([]string{"--config", cfg, "--export-levels", "1", "--export-dir", badOut, "--hidden", "16", "--load", weights16}, &stdout, &stderr); err == nil {
+		t.Fatal("export level <2 should fail")
+	}
+	if _, err := os.Stat(filepath.Join(badOut, "pretrained_weights_1.json")); !os.IsNotExist(err) {
+		t.Fatalf("invalid export should not write level file, stat=%v", err)
+	}
+	badConfig := filepath.Join(tmp, "bad.json")
+	if err := os.WriteFile(badConfig, []byte(`{"hidden_size":`), 0644); err != nil {
+		t.Fatalf("write bad config: %v", err)
+	}
+	if err := runMNISTCLI([]string{"--config", badConfig, "--export-levels", "4", "--export-dir", filepath.Join(tmp, "badcfg")}, &stdout, &stderr); err == nil {
+		t.Fatal("malformed config should fail")
+	}
+}
+
+func captureMNISTStdoutE2E(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	os.Stdout = w
+	fn()
+	_ = w.Close()
+	os.Stdout = old
+	buf := new(bytes.Buffer)
+	if _, err := buf.ReadFrom(r); err != nil {
+		t.Fatalf("read pipe: %v", err)
+	}
+	_ = r.Close()
+	return buf.String()
+}
+
 func TestRunMNISTCLIReportsFlagErrorToStderr(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cwd, err := os.Getwd()

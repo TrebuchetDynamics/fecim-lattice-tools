@@ -1,12 +1,11 @@
-// landau_util.go contains LKSolver helper methods: NLS switching statistics,
-// effective viscosity, noise, clamping, logging, state management, and ensemble
-// configuration. The core integration (Step, dPdT, RK4, implicit) lives in landau.go.
+// Package physics provides shared physics utilities for FeCIM simulations.
 package physics
 
 import (
 	"math"
 	"math/rand"
 
+	"fecim-lattice-tools/shared/constants"
 	"fecim-lattice-tools/shared/logging"
 )
 
@@ -107,7 +106,7 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 		return 0
 	}
 
-	const kB = 1.380649e-23 // J/K
+	const kB = constants.BoltzmannConstantJPerK // J/K
 	// Fluctuation-dissipation theorem for intensive polarization dynamics.
 	// sigma = sqrt(2*kB*T*rho / (dt * V_cell)) gives correct 1/sqrt(V) Landauer scaling.
 	vCell := s.Area * s.Thickness
@@ -237,7 +236,7 @@ func (s *LKSolver) runtimeAlphaFor(temperature, stress float64) (float64, bool) 
 		if invalidFloat(s.CurieTemp) {
 			return 0, false
 		}
-		const eps0 = 8.854e-12 // Vacuum Permittivity (F/m)
+		const eps0 = constants.VacuumPermittivityFPerM // F/m
 		denom := 2 * eps0 * s.CurieConst
 		if denom == 0 || invalidFloat(denom) {
 			return 0, false

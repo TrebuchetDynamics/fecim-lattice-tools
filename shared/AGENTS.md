@@ -44,7 +44,6 @@
 |-----------|---------|-------------|
 | `physics/` | Core physics engines: Preisach, Landau-K, ISPP, material params | 80+ Go files; regression test golden data |
 | `peripherals/` | Peripheral circuit models: ADC, DAC, TIA, charge pump | Circuit behavioral simulators + SPICE export |
-| `widgets/` | Reusable Fyne GUI components: material picker, tutorials, accessibility | 60+ UI widget files |
 | `presets/` | Preset system: CRUD, builtin definitions, per-module providers | Manager + registry |
 | `themes/` | Theme definitions: light, dark, high-contrast | `ThemeManager` |
 | `theme/` | Legacy single-file theme (deprecated) | — |
@@ -76,7 +75,6 @@
 
 **UI patterns:** When adding widgets:
 1. All widgets go in `widgets/`; follow the `EmbeddedAppBase` interface for module integration
-2. Use `fyne.Do(func() {...})` for all UI updates from goroutines (thread-safety is critical)
 3. Tooltips and glossary terms use `widgets/tooltips.go` and `widgets/glossary.go`
 
 **Presets:** When adding new preset types:
@@ -126,8 +124,6 @@ Always test with calibration data from `data/calibrations/`
 **Widget embedding** (see `widgets/embedded_base.go`):
 ```
 Module apps inherit EmbeddedAppBase
-Implement BuildContent(fyneApp, window) by delegating to EmbeddedAppBase.BuildOrReuseContent(...)
-BuildContent must be idempotent for the same fyne app/window pair and rebuild only when host context changes
 Implement Start() and Stop() for goroutine lifecycle
 ```
 
@@ -149,7 +145,6 @@ Presets are YAML/JSON in `config/` and cached in memory
 - `module6-eda/` — Uses validation and export
 
 ### External
-- `fyne.io/fyne/v2` — GUI framework (all widgets)
 - `golang.org/x/image` — Image processing
 - Standard library: `math`, `math/cmplx`, `sync`, `encoding/json`
 
@@ -169,7 +164,6 @@ This updates `validation/testdata/physics_regression/preisach_loop_default_hzo.j
 
 **Widget Thread Safety:**
 - NEVER call `widget.Refresh()` directly from goroutines
-- ALWAYS wrap UI updates in `fyne.Do(func() { widget.Refresh() })`
 - Use `widgets/ui_lock.go` for critical sections
 
 **Material Calibration:**

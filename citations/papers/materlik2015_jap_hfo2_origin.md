@@ -82,7 +82,7 @@ FeCIM LK solver uses β=-6.72e8 and γ=1.95e10 directly from this paper. The LK0
 
 ## Notes
 
-There is a DOI discrepancy in the codebase: `10.1063/1.4916229` (paper/refs.bib, landau.go) vs `10.1063/1.4916707` (calibration_targets.go). Both resolve to the same J. Appl. Phys. article. The primary DOI (1.4916229) is used here.
+There is a DOI discrepancy in the codebase: `10.1063/1.4916229` (docs/paper/refs.bib, landau.go) vs `10.1063/1.4916707` (calibration_targets.go). Both resolve to the same J. Appl. Phys. article. The primary DOI (1.4916229) is used here.
 
 ---
 

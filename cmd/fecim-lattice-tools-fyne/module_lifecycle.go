@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package main
 
 import sharedwidgets "fecim-lattice-tools/shared/widgets"

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 // analysis.go contains IR drop and sneak path analysis functions.
 package gui

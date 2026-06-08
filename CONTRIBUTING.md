@@ -15,22 +15,19 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
 3.  **Install prerequisites**:
     - Go 1.25+
     - No CGO graphics stack is required for the default desktop app.
-    - Fyne/OpenGL prerequisites are only needed for opt-in legacy parity checks.
     - Vulkan SDK (optional, for high-performance rendering).
     - FFmpeg (optional, for recording).
 
 4.  **Run the desktop shells**:
 
-    The default desktop app is the zero-CGO `gogpu/ui` shell:
+    The default desktop app is the Fyne desktop `Fyne` shell:
 
     ```bash
-    CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools
+    go run ./cmd/fecim-lattice-tools
     ```
 
-    The old Fyne shell is kept only for tagged parity checks:
 
     ```bash
-    go run -tags legacy_fyne ./cmd/fecim-lattice-tools-fyne
     ```
 
 ## Development Workflow
@@ -54,8 +51,7 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     ```bash
     make test
     make test-hys   # If working on Module 1
-    make test-gogpu-ui   # If touching the UI bridge or default gogpu/ui shell
-    make test-legacy-fyne   # If touching tagged legacy Fyne parity code
+    make test-Fyne-ui   # If touching the UI bridge or default Fyne shell
     ```
 5.  **Verify build**:
     ```bash

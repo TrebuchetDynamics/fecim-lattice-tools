@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides shared UI components for FeCIM visualizers.
 // tutorial_controller.go implements an interactive tutorial framework with
 // step-by-step explanations, highlighting, and progress tracking.

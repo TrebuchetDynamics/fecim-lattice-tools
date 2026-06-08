@@ -36,7 +36,6 @@ module1-hysteresis/
 ├── pkg/
 │   ├── ferroelectric/       # Physics models (Preisach, L-K)
 │   ├── controller/          # ISPP write controller
-│   ├── gui/                 # Fyne GUI implementation
 │   ├── tui/                 # Bubble Tea TUI
 │   └── render/              # Vulkan renderer (optional)
 └── docs/2-learn/module1-hysteresis/  # This documentation
@@ -105,7 +104,6 @@ See [Run Modes](./run-modes.md) for complete CLI reference.
 - **Temperature simulation** with calibration caching
 - **Physics engine selector**: Preisach (default) or Landau-Khalatnikov
 - **30-level quantization** (configurable baseline)
-- **Multi-platform**: GUI (Fyne), TUI (Bubble Tea), headless, Vulkan
 
 ---
 

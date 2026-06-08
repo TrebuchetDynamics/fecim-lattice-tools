@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides shared UI components for FeCIM visualizers.
 package widgets
 
@@ -7,8 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/widgets/interaction"
 )
 
 // StatusBar provides thread-safe status updates with cache prevention.
@@ -27,17 +26,7 @@ type StatusBar struct {
 // NOTE: In the Fyne test driver, fyne.Do() may execute functions in a way that
 // can appear concurrent to the race detector. We serialize UI mutations here to
 // keep tests race-clean.
-func safeUIUpdate(fn func()) {
-	defer func() {
-		if r := recover(); r != nil {
-			// No Fyne app running, execute directly.
-			WithUILock(fn)
-		}
-	}()
-	fyne.Do(func() {
-		WithUILock(fn)
-	})
-}
+func safeUIUpdate(fn func()) { interaction.SafeUIUpdate(fn) }
 
 // NewStatusBar creates a new status bar with an optional prefix.
 // Example: NewStatusBar("Status: ") creates a bar that displays "Status: Ready".

@@ -18,7 +18,7 @@ func heraclesModelPath() string {
 	if p := os.Getenv("HERACLES_MODEL_PATH"); p != "" {
 		return p
 	}
-	return "opensource/heracles/heracles.va"
+	return defaultHeraclesModelPath
 }
 
 // TestNgspiceRoundtrip_HeraclesVsLK runs the Heracles Verilog-A model inside

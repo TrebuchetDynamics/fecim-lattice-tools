@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains action handlers for the unified view.
 package gui
@@ -9,12 +7,12 @@ import (
 	"math/rand"
 	"time"
 
+	"fecim-lattice-tools/module4-circuits/pkg/gui/status"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 func formatReadStatusLine(row, col, level int, currentUA, tiaVoltageV float64, adcCode int) string {
-	return fmt.Sprintf("READ [%d,%d]: State=%d | I=%+.2f µA -> TIA=%+.2f V -> ADC=%d | ~76ns, ~46fJ",
-		row, col, level, currentUA, tiaVoltageV, adcCode)
+	return status.FormatReadStatusLine(row, col, level, currentUA, tiaVoltageV, adcCode)
 }
 
 // ============================================================================

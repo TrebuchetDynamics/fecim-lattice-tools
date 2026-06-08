@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package widgets
 
 import "testing"

@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 package gui
 
 import (
@@ -13,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module4-circuits/pkg/gui/comparison"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -431,14 +430,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 	// Animate the comparison showing CPU vs GPU vs FeFET timing step by step
 	ca.compStatusLabel.SetText("Animating comparison...")
 
-	steps := []string{
-		"Step 1: CPU loads data from DRAM (250ns)...",
-		"Step 2: CPU computes MVM (250ns)...",
-		"Step 3: GPU loads data from HBM (25ns)...",
-		"Step 4: GPU computes MVM (25ns)...",
-		"Step 5: FeFET performs in-memory compute (76ns)...",
-		"Animation complete: FeFET ≈6.6x faster than CPU (latency model)",
-	}
+	steps := comparison.AnimationSteps()
 
 	ca.launchBackground(func() {
 		for i, step := range steps {
@@ -461,16 +453,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 func (ca *CircuitsApp) onScaleUpComparison() {
 	logAction("comparison_scale_up")
 	// Cycle through array sizes and update comparison values
-	sizes := []int{8, 16, 32, 64}
-
-	// Find next size in cycle
-	currentSize := ca.compArraySize
-	for i, size := range sizes {
-		if size == currentSize {
-			currentSize = sizes[(i+1)%len(sizes)]
-			break
-		}
-	}
+	currentSize := comparison.NextScaleSize(ca.compArraySize)
 	ca.compArraySize = currentSize
 
 	cpu, gpu, fefet := computeComparisonMetrics(currentSize)

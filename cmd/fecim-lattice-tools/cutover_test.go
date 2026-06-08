@@ -1,44 +1,19 @@
 package main
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestCanonicalCommandDoesNotImportFyne(t *testing.T) {
-	needle := "fyne.io/" + "fyne"
-	err := filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || !strings.HasSuffix(path, ".go") {
-			return nil
-		}
-		body, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		if strings.Contains(string(body), needle) {
-			t.Fatalf("canonical command must not import Fyne; found import in %s", path)
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cmd := exec.Command("go", "list", "-deps", ".")
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+func TestCanonicalCommandImportsFyne(t *testing.T) {
+	cmd := exec.Command("go", "list", "-e", "-deps", "./cmd/fecim-lattice-tools")
+	cmd.Dir = repoRoot()
 	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("go list -deps failed: %v\n%s", err, out)
+	if err != nil && len(out) == 0 {
+		t.Fatalf("go list default command deps failed: %v\n%s", err, out)
 	}
-	for _, dep := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(dep, needle) {
-			t.Fatalf("canonical command must not depend on Fyne; found transitive dependency %s", dep)
-		}
+	if !strings.Contains(string(out), "fyne.io/fyne/v2") {
+		t.Fatalf("canonical command must depend on Fyne after the Fyne rollback; deps did not include fyne.io/fyne/v2")
 	}
 }

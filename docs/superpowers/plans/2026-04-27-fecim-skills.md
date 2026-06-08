@@ -2,7 +2,6 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Author 8 FeCIM-specific agent skills (`fecim-researcher`, `fecim-citation`, `fecim-builder`, `fecim-labtester`, `fecim-grill`, `fecim-fyne-thread-check`, `fecim-honesty-audit`, `fecim-gogpu-migrate`) distributed across Claude Code, Codex, and opencode from a single canonical SKILL.md per skill.
 
 **Architecture:** Canonical SKILL.md files at `tools/fecim-skills/<name>/SKILL.md` (mattpocock-format frontmatter). A bash install script (`scripts/install-fecim-skills.sh`) generates per-harness adapters: symlinks for Claude Code (`.claude/skills/<name>/SKILL.md`), a managed block in `.codex/AGENTS.md` for Codex, and command files for opencode (`.opencode/command/<name>.md`). Generated adapters are committed. Install script has full TDD via `scripts/test-install-fecim-skills.sh`. CI runs `--check` to catch drift.
 
@@ -22,7 +21,6 @@
 | `tools/fecim-skills/_shared/fecim-context.md` | FeCIM domain primer (citations, modules, honesty rules) | 1 |
 | `tools/fecim-skills/_shared/tdd-evidence-template.md` | RED/GREEN/verification block referenced by skills | 1 |
 | `tools/fecim-skills/fecim-builder/SKILL.md` | Build skill (legacy + next) | 1 |
-| `tools/fecim-skills/fecim-{researcher,citation,labtester,grill,fyne-thread-check,honesty-audit,gogpu-migrate}/SKILL.md` | Remaining 7 skills | 2 |
 | `scripts/install-fecim-skills.sh` | Generates per-harness adapters; supports `--check` | 1 |
 | `scripts/test-install-fecim-skills.sh` | Test harness for install script | 1 |
 | `.claude/skills/<name>/SKILL.md` | Generated Claude Code adapter (symlink or copy) | 1 (1 skill), 2 (rest) |
@@ -70,9 +68,7 @@ scripts/install-fecim-skills.sh --check    # CI sync check
 | `fecim-builder` | Building or debugging build failures |
 | `fecim-labtester` | Running tests, regenerating physics goldens |
 | `fecim-grill` | Starting a non-trivial physics/GUI change |
-| `fecim-fyne-thread-check` | Reviewing PRs that add goroutines in `pkg/gui/` |
 | `fecim-honesty-audit` | Committing docs/PRs with accuracy or efficiency numbers |
-| `fecim-gogpu-migrate` | Porting a Fyne tab to the gogpu/ui shell |
 
 ## Editing
 
@@ -117,9 +113,7 @@ Shared context referenced by FeCIM skills. Do not duplicate this content in indi
 4. **Zero-field bounds reset** — when `absField < 0.01*Ec`, reset to full `[0, MaxField]`.
 5. **Preisach Everett zero-clamp** — use product-form (always non-negative) instead of factorized (goes negative).
 
-## UI thread-safety rule (`docs/3-develop/gui/FYNE_NOTES.md`)
 
-All UI updates from goroutines MUST use `fyne.Do(func() { ... })`. Direct widget mutation from a non-main goroutine causes hangs and freezes. Common patterns to audit:
 
 ```go
 // WRONG
@@ -131,20 +125,17 @@ go func() {
 // RIGHT
 go func() {
     result := compute()
-    fyne.Do(func() { label.SetText(result) })
 }()
 ```
 
 ## UI boundary rule (per `AGENTS.md`)
 
-New UI-neutral, physics, simulation, validation, and export work must NOT add `fyne.io/...` or `github.com/gogpu/ui` imports. Use `shared/viewmodel/` as the UI-neutral bridge. Fyne and gogpu/ui imports belong only in shell/UI packages.
 
 ## Build target matrix
 
 | Target | CGO | Entry | Use |
 |---|---|---|---|
-| Legacy | `CGO_ENABLED=1` (default) | `./cmd/fecim-lattice-tools` | Current Fyne GUI |
-| Next | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools-next` | Future zero-CGO gogpu/ui shell |
+| Next | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools-next` | Future zero-CGO Fyne shell |
 
 ## Test invocations
 
@@ -152,7 +143,7 @@ New UI-neutral, physics, simulation, validation, and export work must NOT add `f
 |---|---|
 | `go test ./...` | Full suite |
 | `go test -race ./...` | Race detection (mandatory when changing concurrency) |
-| `make test-next-ui` | Future zero-CGO UI shell tests |
+| `make test-legacy-fyne` | Future zero-CGO UI shell tests |
 | `FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...` | Regenerate physics regression goldens (only when divergence is intentional) |
 ```
 
@@ -197,20 +188,17 @@ TDD: N/A (documentation/configuration only, no behavior)"
 ```markdown
 ---
 name: fecim-builder
-description: Runs build flows for both UI paths (legacy Fyne and zero-CGO gogpu/ui shell) on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in cmd/fecim-lattice-tools or cmd/fecim-lattice-tools-next.
 ---
 
 # fecim-builder
 
-Build the FeCIM Lattice Tools binary on either the legacy Fyne path or the zero-CGO gogpu/ui shell.
 
 See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the canonical CGO/entry-point mapping.
 
 ## Workflow
 
 1. **Identify the target** — ask the user if unclear:
-   - Legacy Fyne shell: `cmd/fecim-lattice-tools`
-   - Next gogpu/ui shell: `cmd/fecim-lattice-tools-next`
+   - Next Fyne shell: `cmd/fecim-lattice-tools-next`
 
 2. **Set the build environment:**
    - Legacy: leave `CGO_ENABLED` at its default (`1`); ensure GLFW/X11 deps installed (`sudo apt-get install -y libgl1-mesa-dev xorg-dev` on Linux).
@@ -229,8 +217,7 @@ See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the 
    | `fatal error: GL/gl.h: No such file` | Missing OpenGL headers | `sudo apt-get install -y libgl1-mesa-dev xorg-dev` |
    | `cannot find -lvulkan` | Vulkan loader missing | `sudo apt-get install -y libvulkan-dev` (optional dep, can be omitted) |
    | `gcc not found` | CGO toolchain missing | `sudo apt-get install -y gcc` |
-   | `package github.com/gogpu/ui: cannot find module` | gogpu/ui import in non-shell pkg | UI-boundary violation; move logic to `shared/viewmodel/` per AGENTS.md |
-   | `imports fyne.io/fyne/v2` from `viewmodel` | UI-boundary violation | Same — strip Fyne import, use viewmodel pure types |
+   | `package github.com/Fyne: cannot find module` | Fyne import in non-shell pkg | UI-boundary violation; move logic to `shared/viewmodel/` per AGENTS.md |
 
 5. **Verify:**
    - Binary exists and is executable.
@@ -1157,7 +1144,7 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
    - Whole suite: `go test ./...`
    - Race detection: `go test -race ./...`
    - Module: `go test ./module1-hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
-   - Future shell: `make test-next-ui`
+   - Future shell: `make test-legacy-fyne`
    - Coverage: `go test -cover ./...`
 
 2. **For physics-regression failures**, classify against the 5 known patterns:
@@ -1220,7 +1207,6 @@ description: Relentlessly interviews the user about a proposed FeCIM physics, si
 
 # fecim-grill
 
-Domain-specific design grill. Differs from generic grill skills: every branch ties back to FeCIM's TDD hard-rule, honesty-audit, and Fyne thread-safety. See `tools/fecim-skills/_shared/fecim-context.md`.
 
 ## Workflow
 
@@ -1237,9 +1223,7 @@ Ask each question one at a time. Do not move on until the user answers. Mark eac
 
 4. **TDD-RED test.** What is the focused failing test that proves the new behavior? Path + name. If the user can't name one, BLOCK until they can.
 
-5. **Thread-safety (Fyne).** If the change runs on a goroutine and touches `*widget.*`, `*canvas.*`, `*container.*`, confirm `fyne.Do(func() { ... })` will wrap the mutation.
 
-6. **UI boundary.** If the change touches `viewmodel/`, confirm zero `fyne.io/...` and `github.com/gogpu/ui` imports added.
 
 7. **Output a one-paragraph design summary** the user signs off before any code is written:
    ```
@@ -1274,22 +1258,16 @@ TDD: N/A (configuration only)"
 
 ---
 
-## Task 20: `fecim-fyne-thread-check`
 
 **Files:**
-- Create: `tools/fecim-skills/fecim-fyne-thread-check/SKILL.md`
 
 - [ ] **Step 1: Write the canonical skill**
 
 ```markdown
 ---
-name: fecim-fyne-thread-check
-description: Audits Go code for goroutine-to-widget access without fyne.Do(...) wrapping, the project's most common GUI freeze cause. Use when reviewing a PR that adds goroutines, async I/O, or simulation tickers in any pkg/gui/ or shell package.
 ---
 
-# fecim-fyne-thread-check
 
-Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapping. See `_shared/fecim-context.md` (UI thread-safety rule).
 
 ## Workflow
 
@@ -1307,21 +1285,16 @@ Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapp
    - `*widget.*` (e.g., `Label.SetText`, `Button.SetText`, `Entry.SetText`, `ProgressBar.SetValue`)
    - `*canvas.*` (e.g., `canvas.Refresh`, `*canvas.Image.Image = ...`)
    - `*container.*` (`Add`, `Remove`, `Refresh`)
-   - Direct field assignment to any `fyne.CanvasObject`
 
 4. **Verify the call is wrapped:**
-   - GOOD: `fyne.Do(func() { label.SetText("done") })`
    - GOOD: helper function whose body is itself wrapped
    - BAD: bare `label.SetText(...)` inside `go func()`
 
 5. **Output a violation list:**
    ```
-   <file>:<line>: <symbol>.<method>(...) inside goroutine — needs fyne.Do
      Suggested:
-       fyne.Do(func() { <symbol>.<method>(...) })
    ```
 
-6. **Cross-reference** `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` for nuanced cases (animation tickers, blocking dialogs).
 
 ## Verification
 
@@ -1338,8 +1311,6 @@ Audit is observation — `TDD: N/A`. Any code change made to fix a violation tri
 ```bash
 make install-skills
 scripts/install-fecim-skills.sh --check
-git add tools/fecim-skills/fecim-fyne-thread-check/ .claude/skills/fecim-fyne-thread-check/ .codex/AGENTS.md .opencode/command/fecim-fyne-thread-check.md
-git commit -m "feat(skills): add fecim-fyne-thread-check
 
 TDD: N/A (configuration only)"
 ```
@@ -1419,48 +1390,42 @@ TDD: N/A (configuration only)"
 
 ---
 
-## Task 22: `fecim-gogpu-migrate`
+## Task 22: `fecim-fyne-maintain`
 
 **Files:**
-- Create: `tools/fecim-skills/fecim-gogpu-migrate/SKILL.md`
+- Create: `tools/fecim-skills/fecim-fyne-maintain/SKILL.md`
 
 - [ ] **Step 1: Write the canonical skill**
 
 ```markdown
 ---
-name: fecim-gogpu-migrate
-description: Migrates a Fyne tab/component to the gogpu/ui zero-CGO shell via the shared/viewmodel UI-neutral bridge. Use when porting a module from cmd/fecim-lattice-tools to cmd/fecim-lattice-tools-next, or when extracting UI-coupled logic into the viewmodel layer.
+name: fecim-fyne-maintain
 ---
 
-# fecim-gogpu-migrate
+# fecim-fyne-maintain
 
-Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel layer is the UI-neutral bridge — see `_shared/fecim-context.md` (UI boundary rule).
 
 ## Workflow
 
-1. **Identify the Fyne-coupled file.** Read `module*/pkg/gui/<name>.go`. List which types touch `fyne.io/...` and which are pure data.
 
 2. **Extract pure state and event interface into `shared/viewmodel/<name>/`:**
    - `state.go` — typed snapshot of what the UI displays.
    - `events.go` — events the UI sends back (button presses, value changes).
    - `<name>.go` — the viewmodel: pure-Go reducer over events, returns new state.
 
-   No `fyne.io/...` or `github.com/gogpu/ui` imports allowed in `shared/viewmodel/`. Verify:
    ```bash
-   grep -r 'fyne.io\|gogpu/ui' shared/viewmodel/ && echo VIOLATION
    ```
 
 3. **Write a `_test.go` for the viewmodel:**
    - Drive events, assert on state.
    - This is RED-first per CLAUDE.md TDD hard-rule.
 
-4. **Reimplement the Fyne adapter** to render `state` and dispatch `events` to the viewmodel. Do not duplicate logic.
 
-5. **Add (or stub) the gogpu/ui adapter** at `cmd/fecim-lattice-tools-next/...` rendering the same viewmodel.
+5. **Add (or stub) the Fyne adapter** at `cmd/fecim-lattice-tools-next/...` rendering the same viewmodel.
 
 6. **Verify both shells:**
    ```bash
-   go test ./shared/viewmodel/... && go test ./module*/pkg/gui/... && make test-next-ui
+   go test ./shared/viewmodel/... && go test ./module*/pkg/gui/... && make test-legacy-fyne
    go build ./cmd/fecim-lattice-tools && CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools-next
    ```
 
@@ -1469,7 +1434,6 @@ Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel
 ## Verification
 
 - Input: "Migrate module1-hysteresis/pkg/gui/simulation.go to viewmodel."
-  Expected: lists Fyne types in scope; proposes `shared/viewmodel/hysteresis_simulation/` layout; writes failing viewmodel test first.
 
 ## TDD
 
@@ -1481,8 +1445,8 @@ Full TDD applies. Behavior change ≠ moving code only — the viewmodel test mu
 ```bash
 make install-skills
 scripts/install-fecim-skills.sh --check
-git add tools/fecim-skills/fecim-gogpu-migrate/ .claude/skills/fecim-gogpu-migrate/ .codex/AGENTS.md .opencode/command/fecim-gogpu-migrate.md
-git commit -m "feat(skills): add fecim-gogpu-migrate
+git add tools/fecim-skills/fecim-fyne-maintain/ .claude/skills/fecim-fyne-maintain/ .codex/AGENTS.md .opencode/command/fecim-fyne-maintain.md
+git commit -m "feat(skills): add fecim-fyne-maintain
 
 TDD: N/A (configuration only)"
 ```
@@ -1511,7 +1475,6 @@ ls .opencode/command/ | sort
 grep -c "^- \*\*fecim-" .codex/AGENTS.md
 ```
 Expected:
-- `.claude/skills/`: 8 directories (`fecim-builder`, `fecim-citation`, `fecim-fyne-thread-check`, `fecim-gogpu-migrate`, `fecim-grill`, `fecim-honesty-audit`, `fecim-labtester`, `fecim-researcher`).
 - `.opencode/command/`: 8 `.md` files.
 - `.codex/AGENTS.md`: `8`.
 
@@ -1522,7 +1485,6 @@ git push -u origin <branch>
 gh pr create --title "feat(skills): add remaining 7 fecim-skills" --body "$(cat <<'BODY'
 ## Summary
 
-- Adds canonical SKILL.md for: fecim-researcher, fecim-citation, fecim-labtester, fecim-grill, fecim-fyne-thread-check, fecim-honesty-audit, fecim-gogpu-migrate
 - Regenerates per-harness adapters via `make install-skills`
 
 ## Test plan

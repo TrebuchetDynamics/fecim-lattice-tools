@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // pkg/gui/widgets/layout_canvas.go
 // Interactive layout visualization widget for FeCIM crossbar arrays
 // Renders the array layout using Fyne canvas primitives

@@ -1,4 +1,4 @@
-//go:build legacy_fyne && cgo
+//go:build cgo
 
 // Package keyboard provides unified keyboard shortcut handling for all FeCIM modules.
 // It defines common shortcuts (Ctrl+S save, Ctrl+E export, Ctrl+R reset, Space pause/resume,

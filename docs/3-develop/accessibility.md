@@ -4,17 +4,14 @@
 
 **Date:** 2026-02-07  
 **Auditor:** OpenClaw Accessibility Audit  
-**Default UI:** `gogpu/ui`
-**Legacy Fyne audit:** applies to tagged adapters built with `-tags legacy_fyne`
+**Default UI:** `Fyne`
 **Standards:** WCAG 2.1 AA, Section 508
 
-Findings below apply to legacy Fyne adapters unless a section explicitly calls out the default shell.
 
 ---
 
 ## Executive Summary
 
-The legacy Fyne GUI has a solid accessibility foundation in `shared/widgets/accessibility.go` but the features are **underutilized** across the legacy adapters. Key issues include:
 
 - **Color Contrast:** Multiple color combinations fail WCAG AA (4.5:1 ratio)
 - **Font Sizes:** Several components use text below 14px minimum
@@ -109,12 +106,10 @@ Minimum text sizes:
 The `shared/widgets/accessibility.go` has placeholder functions:
 
 ```go
-// Placeholder: Fyne doesn't currently have direct screen reader support
 func Announce(message string) {
     _ = message  // No-op
 }
 
-func SetAccessibleLabel(obj fyne.CanvasObject, label string) {
     _ = obj
     _ = label  // No-op
 }
@@ -122,8 +117,6 @@ func SetAccessibleLabel(obj fyne.CanvasObject, label string) {
 
 ### 4.2 Limitations
 
-Fyne v2 does **not** provide native screen reader APIs. Options:
-1. Wait for Fyne v3 accessibility improvements
 2. Provide text-based alternative output (log panel, status bar)
 3. Generate accessible HTML reports for critical data
 
@@ -131,7 +124,6 @@ Fyne v2 does **not** provide native screen reader APIs. Options:
 
 - Status bar announces key operations
 - Operation log provides text history
-- Dialog content uses standard Fyne widgets (somewhat readable)
 
 ---
 
@@ -144,7 +136,6 @@ Fyne v2 does **not** provide native screen reader APIs. Options:
 ```go
 // In accessibility.go - exists but unused
 type HighContrastTheme struct {
-    fyne.Theme
 }
 
 var HighContrastColors = struct {
@@ -167,7 +158,6 @@ Add accessibility menu option:
 
 ### 6.1 Canvas-Based Widgets 🔴
 
-These widgets use `canvas.Raster` for custom rendering, bypassing Fyne's accessibility:
 
 | Widget | Purpose | Accessibility Issue |
 |--------|---------|---------------------|
@@ -180,9 +170,7 @@ These widgets use `canvas.Raster` for custom rendering, bypassing Fyne's accessi
 ### 6.2 Recommendations
 
 1. **Add keyboard handlers** to all tappable widgets
-2. **Implement `fyne.Focusable`** interface for focus management
 3. **Provide text alternatives** via status bar or tooltip
-4. **Add aria-like descriptions** when Fyne supports them
 
 ---
 
@@ -266,7 +254,6 @@ func TestContrastCompliance(t *testing.T) {
 1. **Keyboard-only navigation** - Complete all tasks without mouse
 2. **Screen magnification** - Test at 200% zoom
 3. **High contrast mode** - Verify readability
-4. **Screen reader** - Test with NVDA/VoiceOver (limited by Fyne)
 
 ---
 
@@ -290,7 +277,6 @@ func TestContrastCompliance(t *testing.T) {
    - Fixed grid color contrast: `(40,40,50)` → `(70,75,90)` (+3.1:1 ratio)
    - Added keyboard navigation: Arrow keys move cursor, Space/Enter draws
    - Added cursor visualization (yellow/orange border)
-   - Implemented `fyne.Focusable` interface
 
 2. **metrics.go**:
    - Fixed grid color contrast: `(60,60,70)` → `(85,90,100)` (+3.5:1 ratio)
@@ -324,16 +310,12 @@ func TestContrastCompliance(t *testing.T) {
 
 ---
 
-## Appendix B: Fyne Accessibility Limitations
 
-Fyne v2 has limited accessibility support:
 - No native screen reader integration
 - No `aria-label` equivalent
 - No role annotations
 - Focus management is manual
 
-**Fyne v3 Roadmap:** Expected improvements for desktop accessibility.
-See: https://github.com/fyne-io/fyne/issues/2649
 
 ---
 

@@ -373,7 +373,6 @@ Simulation runtime parameters for the GUI and waveform engine.
 
 | Field | YAML key | Type | Default | Unit | Simulation effect |
 |-------|----------|------|---------|------|-------------------|
-| FrameRateHz | `frame_rate_hz` | int | 60 | Hz | UI refresh rate. Controls how frequently the Fyne canvas redraws; higher values give smoother animation but cost more CPU. |
 | DtS | `dt_s` | float64 | 0.0167 | s | Simulation time step (1/60 s). The L-K solver and Preisach engine advance by this delta each frame. Smaller values improve accuracy but slow real-time playback. |
 | MaxHistoryPoints | `max_history_points` | int | 500 | -- | P-E plot trail length. Number of (E, P) samples retained for the hysteresis loop trace. Older points are discarded in FIFO order. |
 | DefaultFrequencyHz | `default_frequency_hz` | float64 | 0.5 | Hz | Default waveform frequency. The initial frequency of the applied electric field oscillation in the hysteresis module. |

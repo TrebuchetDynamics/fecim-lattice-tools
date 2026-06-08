@@ -23,8 +23,12 @@ __pycache__/
 /logs
 shared/logging/
 /fecim-lattice-tools
+/fecim-lattice-tools-next
+/fecim-screenshotter
 recordings/
-screenshots/
+/screenshots/
+/docs/assets/screenshots/
+cmd/*/testdata/screenshots/
 20??-??-??_*.png
 train-network
 train-single-layer
@@ -87,10 +91,13 @@ validation/heracles/*.json
 
 # Temporary analysis docs in root
 EXPERT_CRITIQUE.md
-FYNE_GO_GUI_PERFORMANCE_RESEARCH.md
 MODULE5_DEEP_CRITIQUE*.md
 RIJU_ACTION_PLAN*.md
 full-test.md
+
+# AI session/folder-refactor state (never track)
+.pi/
+.refactorignore
 
 # Temporary probe/scratch files
 .tmp_*
@@ -104,6 +111,11 @@ cmd/fecim-lattice-tools/data/
 shared/widgets/output/
 output/regression/
 web/fecim.wasm
+web/.astro/
+web/dist/
+web/node_modules/
+web/test-results/
+web/playwright-report/
 cmd/calibrate-preisach/
 cmd/gen-literature-loops/
 !cmd/calibrate-preisach/
@@ -113,9 +125,7 @@ cmd/gen-literature-loops/
 !cmd/gen-literature-loops/main.go
 !cmd/gen-literature-loops/main_test.go
 validation/literature/output/
-opensource/**
-!opensource/clone-all.sh
-!opensource/opensource-tools-summary.md
+/opensource/**
 
 # Secrets
 .env

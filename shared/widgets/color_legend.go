@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package widgets provides reusable UI components.
 package widgets
 
@@ -14,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/mathutil"
+	sharedrender "fecim-lattice-tools/shared/render"
 )
 
 // ColorLegend displays a gradient bar with min/max labels and optional units.
@@ -68,6 +67,17 @@ func NewColorLegendWithColormap(minValue, maxValue float64, units string, vertic
 	colorFunc := GetColormapFunc(colormapName)
 	cl := NewColorLegend(minValue, maxValue, units, vertical, colorFunc)
 	cl.colormapName = colormapName
+	return cl
+}
+
+// NewColorLegendWithPalette creates a ColorLegend using the shared visualization
+// palette heatmap ramp. This lets plot and heatmap widgets share the same
+// theme-derived color contract.
+func NewColorLegendWithPalette(minValue, maxValue float64, units string, vertical bool, palette sharedrender.VisualizationPalette) *ColorLegend {
+	cl := NewColorLegend(minValue, maxValue, units, vertical, func(t float64) color.RGBA {
+		return colorToRGBA(palette.HeatmapColor(t))
+	})
+	cl.colormapName = "visualization-palette"
 	return cl
 }
 
@@ -254,6 +264,11 @@ func (cl *ColorLegend) generateGradient(w, h int) image.Image {
 }
 
 // Standard colormap functions for convenience
+
+func colorToRGBA(c color.Color) color.RGBA {
+	r, g, b, a := c.RGBA()
+	return color.RGBA{R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(b >> 8), A: uint8(a >> 8)}
+}
 
 // ViridisColor returns a Viridis colormap color for normalized value t [0,1].
 func ViridisColor(t float64) color.RGBA {

@@ -9,8 +9,8 @@ import (
 
 func TestModule6ExportFixture_DeterministicMetadataContract(t *testing.T) {
 	repoRoot := filepath.Clean("..")
-	readme := filepath.Join(repoRoot, "module6-eda", "pkg", "gui", "tabs", "data", "fecim_crossbar_2x2", "README.md")
-	verilog := filepath.Join(repoRoot, "module6-eda", "pkg", "gui", "tabs", "data", "fecim_crossbar_2x2", "fecim_crossbar_2x2.v")
+	readme := filepath.Join(repoRoot, "module6-eda", "data", "export-fixtures", "fecim_crossbar_2x2", "README.md")
+	verilog := filepath.Join(repoRoot, "module6-eda", "data", "export-fixtures", "fecim_crossbar_2x2", "fecim_crossbar_2x2.v")
 
 	readmeBytes, err := os.ReadFile(readme)
 	if err != nil {

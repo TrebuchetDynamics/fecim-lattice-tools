@@ -187,7 +187,6 @@ go test -short ./... -coverprofile=coverage.out
 - `cmd/fecim-lattice-tools/e2e_test.go`
   - Headless workflow E2E: MVM flows, MNIST dual-path inference, quantization workflows, concurrency.
 - `cmd/fecim-lattice-tools/e2e_gui_test.go` (`!ci`)
-  - GUI lifecycle/switching/concurrency tests under Fyne test harness.
 - `cmd/fecim-lattice-tools/e2e_visual_xvfb_test.go`
   - Display-driver visual tests behind explicit env gating.
 
@@ -260,7 +259,6 @@ Current suites use explicit numerical acceptance bands rather than visual/manual
 
 ## 5) Known Limitations and Environment Constraints
 
-### Fyne harness limitations
 
 - Some GUI tests are skipped under `test.NewApp()` due to theme/font constraints and event-loop behavior.
 - Known examples include crossbar/MNIST GUI paths in `e2e_gui_test.go` and visual tests in `e2e_visual_test.go`.

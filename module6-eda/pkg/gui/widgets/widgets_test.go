@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // pkg/gui/widgets/widgets_test.go
 package widgets
 

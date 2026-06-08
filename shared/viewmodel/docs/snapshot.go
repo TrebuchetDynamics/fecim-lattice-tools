@@ -1,6 +1,10 @@
 package docs
 
-import "fecim-lattice-tools/shared/viewmodel"
+import (
+	"fmt"
+
+	"fecim-lattice-tools/shared/viewmodel"
+)
 
 func buildSnapshot(state DocsState) viewmodel.ModuleSnapshot {
 	sections := []viewmodel.Section{
@@ -10,6 +14,14 @@ func buildSnapshot(state DocsState) viewmodel.ModuleSnapshot {
 		{ID: "design_guide", Title: "Design Guide", Body: "Step-by-step accelerator design workflow. Cross-module integration: Material selection (M1) → Array configuration (M2) → Circuit specification (M4) → EDA export (M6). Design snapshot captures full system state.", Category: "design"},
 		{ID: "honesty", Title: "Honesty Audit", Body: "Verified claims (peer-reviewed): HZO parameters from Materlik 2015, Park 2015. Educational defaults: 30-level quantization, energy models. Not verified: accuracy/efficiency claims without published measurement evidence. Full audit at docs/4-research/honesty-audit.md.", Category: "research"},
 		{ID: "trust", Title: "Trust Boundaries", Body: "Each output is labeled: validated (golden data), literature-backed (cited), educational (simulation default), planned (not yet built), or not validated. See docs/TRUST.md for the full trust matrix.", Category: "research"},
+	}
+	if state.SearchQuery != "" {
+		sections = append([]viewmodel.Section{{
+			ID:       "search_results",
+			Title:    "Search Results",
+			Body:     fmt.Sprintf("Search query %q matched curriculum, design guide, glossary, and trust-boundary references for cross-module study.", state.SearchQuery),
+			Category: "education",
+		}}, sections...)
 	}
 	actions := []viewmodel.Action{
 		{ID: "search", Label: "Search Docs", Kind: viewmodel.ActionCommand},
@@ -22,10 +34,23 @@ func buildSnapshot(state DocsState) viewmodel.ModuleSnapshot {
 			Status:         viewmodel.StatusFunctional,
 			BoundaryNotice: "This documentation module does not produce simulation output. All references are cited and categorized by validation status.",
 		},
-		Metrics: []viewmodel.Metric{
-			{ID: "modules", Label: "Modules", Value: "7"},
-			{ID: "papers", Label: "References", Value: "230+"},
-		},
+		Metrics:  docsMetrics(state),
 		Sections: sections, Actions: actions,
 	}
+}
+
+func docsMetrics(state DocsState) []viewmodel.Metric {
+	activePage := state.ActivePage
+	if activePage == "" {
+		activePage = "overview"
+	}
+	metrics := []viewmodel.Metric{
+		{ID: "modules", Label: "Modules", Value: "7"},
+		{ID: "papers", Label: "References", Value: "230+"},
+		{ID: "active_page", Label: "Active Page", Value: activePage},
+	}
+	if state.SearchQuery != "" {
+		metrics = append(metrics, viewmodel.Metric{ID: "search_query", Label: "Search Query", Value: state.SearchQuery})
+	}
+	return metrics
 }

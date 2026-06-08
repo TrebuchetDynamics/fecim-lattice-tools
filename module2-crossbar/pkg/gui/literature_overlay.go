@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui - Literature overlay for crossbar MVM benchmarks
 package gui
 

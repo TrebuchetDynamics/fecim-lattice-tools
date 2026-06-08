@@ -1,4 +1,4 @@
-//go:build legacy_fyne && cgo
+//go:build cgo
 
 // Package export provides unified data export utilities for FeCIM tools.
 // This file provides Fyne widgets for export UI integration.

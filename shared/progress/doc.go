@@ -7,7 +7,6 @@
 //   - Detailed status messages (phase + detail)
 //   - Callbacks for progress updates, completion, and errors
 //   - CLI progress bars for terminal output
-//   - Fyne GUI widgets for graphical display
 //
 // Basic Usage:
 //
@@ -55,12 +54,6 @@
 //	    return nil
 //	})
 //
-// Fyne Widget:
-//
-//	p := progress.NewProgress("Simulation", 1000)
-//	widget := progress.NewProgressWidget(p, progress.WithCancel(true))
-//	// Add widget to your Fyne container
-//
 // ETA Calculation:
 //
 // The progress tracker maintains a ring buffer of recent progress samples
@@ -69,6 +62,5 @@
 //
 // Thread Safety:
 //
-// All Progress methods are safe for concurrent use. The widget uses
-// fyne.Do() to ensure UI updates happen on the main thread.
+// All Progress methods are safe for concurrent use.
 package progress

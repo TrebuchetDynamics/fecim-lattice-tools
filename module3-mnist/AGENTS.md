@@ -13,7 +13,6 @@ MNIST digit recognition module using ferroelectric crossbar arrays for inference
 |------|---------|
 | `pkg/core/network.go` | Network configuration and inference path |
 | `pkg/gui/dualmode_demo.go` | Quick demo (~30s) showing 30→2 level degradation |
-| `pkg/gui/gui.go` (DualModeApp) | Main Fyne app with training and inference tabs |
 | `pkg/training/network.go` | Full 2-layer network training (784→256→10) |
 | `pkg/training/single_layer.go` | Single-layer network (784→10) for hardware calibration |
 | `pkg/mnist/loader.go` | MNIST dataset loader |
@@ -24,7 +23,6 @@ MNIST digit recognition module using ferroelectric crossbar arrays for inference
 |-----------|---------|-----------|
 | `cmd/mnist/` | Standalone CLI entry point | `main.go` |
 | `pkg/core/` | Network configuration and inference interface | `network.go`, `inference.go` |
-| `pkg/gui/` | Fyne GUI for training and inference visualization | `dualmode_demo.go`, `dualmode_controls.go`, `keyboard.go` |
 | `pkg/mnist/` | MNIST dataset loading | `loader.go` (with bounds validation) |
 | `pkg/training/` | Network training (full and single-layer) | `network.go`, `single_layer.go`, `trainer_foundation.go` |
 | `data/` | MNIST dataset files (train/test CSV) | `mnist_train.csv`, `mnist_test.csv` |
@@ -91,7 +89,6 @@ Key test files:
 
 ### External
 
-- Fyne v2 (`fyne.io/fyne/v2`) - Cross-platform native GUI
 - gonum (`gonum.org/v1/gonum`) - Linear algebra (matrix-vector multiplication, activation functions)
 - Standard Go `math` package - Sigmoid and other nonlinearities
 

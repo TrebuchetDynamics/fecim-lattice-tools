@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"fecim-lattice-tools/config/physics"
+	"fecim-lattice-tools/shared/constants"
 	"fecim-lattice-tools/shared/logging"
 )
 
@@ -332,8 +333,7 @@ func (m *HZOMaterial) RemanentCharge() float64 {
 
 // Capacitance returns the capacitance of the ferroelectric layer.
 func (m *HZOMaterial) Capacitance() float64 {
-	epsilon0 := 8.854e-12 // F/m
-	return epsilon0 * m.Epsilon * m.Area / m.Thickness
+	return constants.VacuumPermittivityFPerM * m.Epsilon * m.Area / m.Thickness
 }
 
 // SwitchingEnergy returns the energy required for complete switching.
@@ -361,7 +361,7 @@ func (m *HZOMaterial) SwitchingEnergy() float64 {
 // SwitchingTime returns temperature-dependent switching time.
 // τ(T) = τ0 * exp(Ea / kT)
 func (m *HZOMaterial) SwitchingTime(T float64) float64 {
-	kB := 8.617e-5 // eV/K
+	kB := constants.BoltzmannConstanteVPerK // eV/K
 	return m.Tau0 * math.Exp(m.Ea/(kB*T))
 }
 
@@ -395,7 +395,7 @@ func (m *HZOMaterial) EnduranceAtCycles(N float64) float64 {
 func (m *HZOMaterial) RetentionAtTime(t, T float64) float64 {
 	// Acceleration factor for temperature
 	Tref := 358.0 // 85°C reference
-	kB := 8.617e-5
+	kB := constants.BoltzmannConstanteVPerK
 	Ea := 1.0 // Retention activation energy (eV)
 
 	accel := math.Exp(Ea / kB * (1/Tref - 1/T))

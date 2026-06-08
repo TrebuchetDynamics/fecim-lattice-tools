@@ -50,7 +50,7 @@ Do not add example numbers, inferred values, or remembered claims. If a fact has
 
 ## Agent Roles
 
-The agent prompts in `prompts/citations/` define five bounded roles:
+The agent prompts in `tools/prompts/citations/` define five bounded roles:
 
 - **Fetcher:** find metadata and create paper records.
 - **Summarizer:** summarize a paper's thesis and relevance.

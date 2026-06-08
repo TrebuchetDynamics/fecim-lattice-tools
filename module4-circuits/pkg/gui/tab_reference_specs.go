@@ -1,5 +1,3 @@
-//go:build legacy_fyne
-
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains the specifications section of the REFERENCE tab.
 package gui
@@ -13,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module4-circuits/pkg/gui/reference"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -384,6 +383,33 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 	)
 }
 
+func (ca *CircuitsApp) createSpecComponentGrid(rows []reference.ComponentRow, totalPower, totalArea, totalLatency string) *fyne.Container {
+	objects := []fyne.CanvasObject{
+		widget.NewLabelWithStyle("Component", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Count", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Power", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Area", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Latency", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+	}
+	for _, row := range rows {
+		objects = append(objects,
+			widget.NewLabel(row.Component),
+			widget.NewLabel(row.Count),
+			widget.NewLabel(row.Power),
+			widget.NewLabel(row.Area),
+			widget.NewLabel(row.Latency),
+		)
+	}
+	objects = append(objects,
+		widget.NewLabelWithStyle("TOTAL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel(""),
+		widget.NewLabelWithStyle(totalPower, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(totalArea, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(totalLatency, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+	)
+	return container.NewGridWithColumns(5, objects...)
+}
+
 func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
 	// Calculate initial summary based on default size (32x32)
 	size := 32
@@ -391,49 +417,7 @@ func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
 	throughput := float64(cells) / 20.0 // MACs per ns = GOPS
 
 	// Component summary table
-	summaryGrid := container.NewGridWithColumns(5,
-		widget.NewLabelWithStyle("Component", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Count", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Power", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Area", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Latency", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-
-		widget.NewLabel("FeFET Array"),
-		widget.NewLabel(fmt.Sprintf("%d", cells)),
-		widget.NewLabel("0.1 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("5 ns"),
-
-		widget.NewLabel("DACs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("3.2 mW"),
-		widget.NewLabel("0.02 mm²"),
-		widget.NewLabel("10 ns"),
-
-		widget.NewLabel("TIAs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("1.6 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("11 ns"),
-
-		widget.NewLabel("ADCs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("16 mW"),
-		widget.NewLabel("0.04 mm²"),
-		widget.NewLabel("50 ns"),
-
-		widget.NewLabel("Control"),
-		widget.NewLabel("1"),
-		widget.NewLabel("0.5 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("2 ns"),
-
-		widget.NewLabelWithStyle("TOTAL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(""),
-		widget.NewLabelWithStyle("21.4 mW", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("0.09 mm²", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("76 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-	)
+	summaryGrid := ca.createSpecComponentGrid(reference.ComponentRows(size), "21.4 mW", "0.09 mm²", "76 ns")
 
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
@@ -459,67 +443,19 @@ func (ca *CircuitsApp) updateSpecSummary() {
 	}
 
 	// Get current array size
-	var size int
-	fmt.Sscanf(ca.specArraySizeSelect.Selected, "%d", &size)
-	if size == 0 {
-		size = 32 // default
-	}
-
-	cells := size * size
-	throughput := float64(cells) / 76.0 // MACs per ns = GOPS
+	summary := reference.NewSpecSummary(reference.ParseArraySize(ca.specArraySizeSelect.Selected), 76)
+	size := summary.Size
 
 	// Component summary table
-	summaryGrid := container.NewGridWithColumns(5,
-		widget.NewLabelWithStyle("Component", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Count", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Power", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Area", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("Latency", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-
-		widget.NewLabel("FeFET Array"),
-		widget.NewLabel(fmt.Sprintf("%d", cells)),
-		widget.NewLabel("0.1 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("5 ns"),
-
-		widget.NewLabel("DACs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("3.2 mW"),
-		widget.NewLabel("0.02 mm²"),
-		widget.NewLabel("10 ns"),
-
-		widget.NewLabel("TIAs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("1.6 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("11 ns"),
-
-		widget.NewLabel("ADCs"),
-		widget.NewLabel(fmt.Sprintf("%d", size)),
-		widget.NewLabel("16 mW"),
-		widget.NewLabel("0.04 mm²"),
-		widget.NewLabel("50 ns"),
-
-		widget.NewLabel("Control"),
-		widget.NewLabel("1"),
-		widget.NewLabel("0.5 mW"),
-		widget.NewLabel("0.01 mm²"),
-		widget.NewLabel("2 ns"),
-
-		widget.NewLabelWithStyle("TOTAL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(""),
-		widget.NewLabelWithStyle("21.4 mW", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("0.09 mm²", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabelWithStyle("76 ns", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-	)
+	summaryGrid := ca.createSpecComponentGrid(reference.ComponentRows(size), summary.TotalPowerText, summary.TotalAreaText, summary.TotalLatencyText)
 
 	// Performance metrics
 	perfGrid := container.NewGridWithColumns(2,
 		widget.NewLabelWithStyle("Throughput:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%d MACs (Ops) / 76ns = %.1f GOPS", cells, throughput)),
+		widget.NewLabel(summary.ThroughputText),
 
 		widget.NewLabelWithStyle("Efficiency:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("%.1f GOPS / 21.4 mW = %d GOPS/W", throughput, int(throughput*1000/21.4))),
+		widget.NewLabel(summary.EfficiencyText),
 	)
 
 	newContent := container.NewVBox(

@@ -845,7 +845,6 @@ Import path:
 import "fecim-lattice-tools/shared/widgets"
 ```
 
-Reusable Fyne GUI components for FeCIM visualizers.
 
 ### Layout Components
 
@@ -858,15 +857,12 @@ type AdaptiveLayout struct {
     // Maintains desktop (splits) and mobile (tabs) layouts
 }
 
-func NewAdaptiveLayout(zones []fyne.CanvasObject, tabLabels []string) *AdaptiveLayout
 ```
 
 **Methods:**
 
 | Method | Description |
 |--------|-------------|
-| `SetDesktopLayout(builder func(zones []fyne.CanvasObject) fyne.CanvasObject)` | Set desktop layout builder |
-| `Content() fyne.CanvasObject` | Get the main content container |
 
 #### ResponsiveGridLayout
 
@@ -888,13 +884,11 @@ func NewResponsiveGridLayout() *ResponsiveGridLayout
 Fires callbacks when widget size changes.
 
 ```go
-func NewResizeDetector(onResize func(size fyne.Size)) *ResizeDetector
 ```
 
 **Example:**
 
 ```go
-detector := widgets.NewResizeDetector(func(size fyne.Size) {
     if size.Width < 768 {
         // Switch to mobile layout
     }
@@ -929,7 +923,6 @@ Displays educational content with title and scrollable body.
 type EducationalPanelConfig struct {
     Title   string
     Content string
-    MinSize fyne.Size
 }
 
 func NewEducationalPanel(config EducationalPanelConfig) *EducationalPanel
@@ -952,7 +945,6 @@ Displays a key statistic prominently (label + value).
 type KeyStatConfig struct {
     Label   string
     Value   string
-    MinSize fyne.Size
 }
 
 func NewKeyStat(config KeyStatConfig) *KeyStat
@@ -978,7 +970,6 @@ type ModeStyle struct {
 }
 
 type ModeIndicatorConfig struct {
-    MinSize      fyne.Size
     DefaultStyle ModeStyle
     Styles       map[int]ModeStyle
 }
@@ -1002,7 +993,6 @@ Displays timestamped operation history.
 type OperationLogConfig struct {
     Title      string
     MaxEntries int
-    MinSize    fyne.Size
 }
 
 func NewOperationLog(config OperationLogConfig) *OperationLog
@@ -1199,7 +1189,6 @@ Interface for embeddable module applications.
 
 ```go
 type EmbeddedApp interface {
-    BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject
     Start()
     Stop()
 }
@@ -1219,9 +1208,6 @@ type EmbeddedAppBase struct {
 
 | Method | Description |
 |--------|-------------|
-| `Init(fyneApp fyne.App, window fyne.Window)` | Initialize base |
-| `GetFyneApp() fyne.App` | Get Fyne app |
-| `GetWindow() fyne.Window` | Get parent window |
 | `SetStatusBar(status *StatusBar)` | Set status bar |
 | `UpdateStatus(msg string)` | Update status |
 | `Start()` | Mark as running |
@@ -1235,7 +1221,6 @@ type EmbeddedAppBase struct {
 Wraps a widget with visible focus indicator.
 
 ```go
-func NewFocusIndicator(content fyne.CanvasObject) *FocusIndicator
 ```
 
 **Methods:**
@@ -1266,17 +1251,13 @@ var AccessibleColors = struct {
 
 ```go
 // CreateLabeledBox creates a styled box with title and value
-func CreateLabeledBox(title, value string, bgColor color.Color) *fyne.Container
 
 // CreateLabeledBoxWithLabel creates box with dynamic label
 func CreateLabeledBoxWithLabel(title string, valueLbl *widget.Label,
-    bgColor color.Color) *fyne.Container
 
 // CreateSectionDivider creates a horizontal divider line
-func CreateSectionDivider(dividerColor color.Color) fyne.CanvasObject
 
 // CreateSectionHeader creates a bold header with separator
-func CreateSectionHeader(title string) *fyne.Container
 ```
 
 #### UI Helpers (Thread-Safe)
@@ -1289,19 +1270,14 @@ func SafeUpdateLabel(label *widget.Label, text string)
 func SafeUpdateProgress(progress *widget.ProgressBar, value float64)
 
 // SafeRefresh refreshes canvas object from any goroutine
-func SafeRefresh(obj fyne.CanvasObject)
 
 // SafeShow shows canvas object from any goroutine
-func SafeShow(obj fyne.CanvasObject)
 
 // SafeHide hides canvas object from any goroutine
-func SafeHide(obj fyne.CanvasObject)
 
 // SafeEnable enables widget from any goroutine
-func SafeEnable(w fyne.Disableable)
 
 // SafeDisable disables widget from any goroutine
-func SafeDisable(w fyne.Disableable)
 ```
 
 #### Colormap Functions
@@ -1973,9 +1949,6 @@ import (
     "fmt"
     "time"
 
-    "fyne.io/fyne/v2"
-    "fyne.io/fyne/v2/app"
-    "fyne.io/fyne/v2/container"
 
     "fecim-lattice-tools/shared/io"
     "fecim-lattice-tools/shared/physics"
@@ -1992,7 +1965,6 @@ func main() {
     // Track statistics
     stats := physics.NewWriteVerifyStats()
 
-    // Create Fyne app
     a := app.New()
     w := a.NewWindow("FeCIM Demo")
 
@@ -2013,11 +1985,9 @@ func main() {
             Name:     "Write Level 15",
             Duration: 2 * time.Second,
             Action: func() {
-                fyne.Do(func() { status.Update("Writing...") })
                 attempts, success, _ := ctrl.WriteTarget(mat.Gmin + (mat.Gmax-mat.Gmin)*0.5)
                 stats.RecordWrite(15, attempts, success, false)
 
-                fyne.Do(func() {
                     log.Add(fmt.Sprintf("Level 15: %v (%d pulses)", success, attempts))
                     keyStat.SetValue(fmt.Sprintf("%.1f%%", stats.GetSuccessRate()*100))
                     status.Update("Ready")
@@ -2034,7 +2004,6 @@ func main() {
     )
 
     w.SetContent(content)
-    w.Resize(fyne.NewSize(400, 300))
 
     // Start demo
     demo.SetLoop(true)
@@ -2060,7 +2029,6 @@ func main() {
 - This document intentionally focuses on **public, high-value API surfaces** and omits internal/private helpers.
 - All snippets are minimal and intended as starting points; production code should include validation, error handling, and deterministic seeds where applicable.
 - For package internals and implementation details, inspect source files directly in the corresponding package directories.
-- Widget APIs use Fyne 2.x primitives (`fyne.CanvasObject`, `fyne.App`, etc.)
 - Physics APIs follow physics conventions: fields in V/m, polarization in C/m², conductance in Siemens, time in seconds.
 
 ---

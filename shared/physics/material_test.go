@@ -3,6 +3,8 @@ package physics
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/constants"
 )
 
 func TestDefaultHZO(t *testing.T) {
@@ -244,8 +246,7 @@ func TestHZOMaterial_Capacitance(t *testing.T) {
 	}
 
 	// C = epsilon0 * epsilon * A / d
-	epsilon0 := 8.854e-12
-	expected := epsilon0 * mat.Epsilon * mat.Area / mat.Thickness
+	expected := constants.VacuumPermittivityFPerM * mat.Epsilon * mat.Area / mat.Thickness
 	if math.Abs(C-expected)/expected > 1e-10 {
 		t.Errorf("Capacitance() = %e, expected %e", C, expected)
 	}

@@ -9,7 +9,6 @@
 ## Used In This Module (Open-Source Dependencies)
 
 - Go toolchain (training/inference utilities in Go)
-- Fyne (GUI)
 
 ## Integration Notes
 

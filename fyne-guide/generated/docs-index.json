@@ -1,0 +1,3099 @@
+[
+  {
+    "h2": [
+      "Installing link",
+      "Diving Right In link"
+    ],
+    "path": "",
+    "section": "(root)",
+    "title": "Fyne Documentation",
+    "url": "https://docs.fyne.io/"
+  },
+  {
+    "h2": [],
+    "path": "started",
+    "section": "started",
+    "title": "Getting Started",
+    "url": "https://docs.fyne.io/started/"
+  },
+  {
+    "h2": [
+      "Prerequisites link",
+      "Debian, Ubuntu and Raspberry Pi OS link",
+      "Fedora link",
+      "Arch Linux link",
+      "Solus link",
+      "openSUSE link",
+      "Void Linux link",
+      "Alpine Linux link",
+      "NixOS link",
+      "FreeBSD link",
+      "OpenBSD link",
+      "NetBSD link"
+    ],
+    "path": "started/quick",
+    "section": "started",
+    "title": "Quick Start",
+    "url": "https://docs.fyne.io/started/quick/"
+  },
+  {
+    "h2": [],
+    "path": "started/hello",
+    "section": "started",
+    "title": "Creating your first Fyne app",
+    "url": "https://docs.fyne.io/started/hello/"
+  },
+  {
+    "h2": [
+      "Running link",
+      "Installing link",
+      "Exploring the code link"
+    ],
+    "path": "started/demo",
+    "section": "started",
+    "title": "Run Fyne Demo",
+    "url": "https://docs.fyne.io/started/demo/"
+  },
+  {
+    "h2": [],
+    "path": "started/apprun",
+    "section": "started",
+    "title": "Application and RunLoop",
+    "url": "https://docs.fyne.io/started/apprun/"
+  },
+  {
+    "h2": [
+      "Full example link"
+    ],
+    "path": "started/updating",
+    "section": "started",
+    "title": "Updating Content in your GUI",
+    "url": "https://docs.fyne.io/started/updating/"
+  },
+  {
+    "h2": [],
+    "path": "started/windows",
+    "section": "started",
+    "title": "Window Handling",
+    "url": "https://docs.fyne.io/started/windows/"
+  },
+  {
+    "h2": [
+      "Updating from a goroutine link",
+      "Waiting for the code to run link"
+    ],
+    "path": "started/goroutines",
+    "section": "started",
+    "title": "Using Goroutines",
+    "url": "https://docs.fyne.io/started/goroutines/"
+  },
+  {
+    "h2": [
+      "Example link"
+    ],
+    "path": "started/testing",
+    "section": "started",
+    "title": "Testing Graphical Apps",
+    "url": "https://docs.fyne.io/started/testing/"
+  },
+  {
+    "h2": [],
+    "path": "started/packaging",
+    "section": "started",
+    "title": "Packaging for Desktop",
+    "url": "https://docs.fyne.io/started/packaging/"
+  },
+  {
+    "h2": [],
+    "path": "started/mobile",
+    "section": "started",
+    "title": "Mobile Packaging",
+    "url": "https://docs.fyne.io/started/mobile/"
+  },
+  {
+    "h2": [
+      "Packaging for web distribution link",
+      "Demo link",
+      "Limitations link"
+    ],
+    "path": "started/webapp",
+    "section": "started",
+    "title": "Run in a Browser",
+    "url": "https://docs.fyne.io/started/webapp/"
+  },
+  {
+    "h2": [
+      "Basic configuration link",
+      "Linux & BSD configuration link"
+    ],
+    "path": "started/metadata",
+    "section": "started",
+    "title": "App Metadata",
+    "url": "https://docs.fyne.io/started/metadata/"
+  },
+  {
+    "h2": [
+      "macOS App Store (since fyne 1.4.2) link",
+      "Google Play Store (Android) link",
+      "iOS App Store (since fyne 1.4.1) link"
+    ],
+    "path": "started/distribution",
+    "section": "started",
+    "title": "Distributing to App Stores",
+    "url": "https://docs.fyne.io/started/distribution/"
+  },
+  {
+    "h2": [
+      "Compiling from a development computer link",
+      "Using a virtual environment link"
+    ],
+    "path": "started/cross-compiling",
+    "section": "started",
+    "title": "Compiling for different platforms",
+    "url": "https://docs.fyne.io/started/cross-compiling/"
+  },
+  {
+    "h2": [],
+    "path": "explore",
+    "section": "explore",
+    "title": "Exploring Fyne",
+    "url": "https://docs.fyne.io/explore/"
+  },
+  {
+    "h2": [
+      "Widget link"
+    ],
+    "path": "explore/canvas",
+    "section": "explore",
+    "title": "Canvas and CanvasObject",
+    "url": "https://docs.fyne.io/explore/canvas/"
+  },
+  {
+    "h2": [],
+    "path": "explore/container",
+    "section": "explore",
+    "title": "Container and Layouts",
+    "url": "https://docs.fyne.io/explore/container/"
+  },
+  {
+    "h2": [
+      "Standard Widgets (in widget package) link",
+      "Accordion link",
+      "Activity link",
+      "Button link",
+      "Card link",
+      "Check link",
+      "Entry link",
+      "FileIcon link",
+      "Form link",
+      "Hyperlink link",
+      "Icon link",
+      "Label link"
+    ],
+    "path": "explore/widgets",
+    "section": "explore",
+    "title": "Widget List",
+    "url": "https://docs.fyne.io/explore/widgets/"
+  },
+  {
+    "h2": [
+      "Standard Layouts link",
+      "Horizontal Box (HBox) link",
+      "Vertical Box (VBox) link",
+      "Border link",
+      "Center link",
+      "Form link",
+      "Grid link",
+      "GridWrap link",
+      "Padded link",
+      "RowWrap link",
+      "Stack (was Max) link",
+      "Combining Layouts link"
+    ],
+    "path": "explore/layouts",
+    "section": "explore",
+    "title": "Layout List",
+    "url": "https://docs.fyne.io/explore/layouts/"
+  },
+  {
+    "h2": [
+      "Standard Dialogs link",
+      "Color link",
+      "Confirm link",
+      "FileOpen link",
+      "Form link",
+      "Information link",
+      "Custom link"
+    ],
+    "path": "explore/dialogs",
+    "section": "explore",
+    "title": "Dialog List",
+    "url": "https://docs.fyne.io/explore/dialogs/"
+  },
+  {
+    "h2": [
+      "List link",
+      "Using other color sets link"
+    ],
+    "path": "explore/icons",
+    "section": "explore",
+    "title": "Theme Icons",
+    "url": "https://docs.fyne.io/explore/icons/"
+  },
+  {
+    "h2": [
+      "Registering with a Canvas link",
+      "Adding shortcuts to an Entry link"
+    ],
+    "path": "explore/shortcuts",
+    "section": "explore",
+    "title": "Adding Shortcuts to an App",
+    "url": "https://docs.fyne.io/explore/shortcuts/"
+  },
+  {
+    "h2": [],
+    "path": "explore/preferences",
+    "section": "explore",
+    "title": "Using the Preferences API",
+    "url": "https://docs.fyne.io/explore/preferences/"
+  },
+  {
+    "h2": [
+      "Setup link",
+      "Translation files link",
+      "Translation selection link",
+      "Plurals link"
+    ],
+    "path": "explore/translations",
+    "section": "explore",
+    "title": "Adding app translations",
+    "url": "https://docs.fyne.io/explore/translations/"
+  },
+  {
+    "h2": [
+      "Adding a System Tray menu link",
+      "Manage window lifecycle link",
+      "Complete app link"
+    ],
+    "path": "explore/systray",
+    "section": "explore",
+    "title": "System Tray Menu",
+    "url": "https://docs.fyne.io/explore/systray/"
+  },
+  {
+    "h2": [],
+    "path": "explore/binding",
+    "section": "explore",
+    "title": "Data Binding",
+    "url": "https://docs.fyne.io/explore/binding/"
+  },
+  {
+    "h2": [
+      "Build tags link"
+    ],
+    "path": "explore/compiling",
+    "section": "explore",
+    "title": "Compile Options",
+    "url": "https://docs.fyne.io/explore/compiling/"
+  },
+  {
+    "h2": [],
+    "path": "canvas",
+    "section": "canvas",
+    "title": "Drawing and Animation",
+    "url": "https://docs.fyne.io/canvas/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/rectangle",
+    "section": "canvas",
+    "title": "Rectangle",
+    "url": "https://docs.fyne.io/canvas/rectangle/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/text",
+    "section": "canvas",
+    "title": "Text",
+    "url": "https://docs.fyne.io/canvas/text/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/line",
+    "section": "canvas",
+    "title": "Line",
+    "url": "https://docs.fyne.io/canvas/line/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/circle",
+    "section": "canvas",
+    "title": "Circle",
+    "url": "https://docs.fyne.io/canvas/circle/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/image",
+    "section": "canvas",
+    "title": "Image",
+    "url": "https://docs.fyne.io/canvas/image/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/raster",
+    "section": "canvas",
+    "title": "Raster",
+    "url": "https://docs.fyne.io/canvas/raster/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/gradient",
+    "section": "canvas",
+    "title": "Gradient",
+    "url": "https://docs.fyne.io/canvas/gradient/"
+  },
+  {
+    "h2": [],
+    "path": "canvas/animation",
+    "section": "canvas",
+    "title": "Animation",
+    "url": "https://docs.fyne.io/canvas/animation/"
+  },
+  {
+    "h2": [],
+    "path": "container",
+    "section": "container",
+    "title": "Containers and Layout",
+    "url": "https://docs.fyne.io/container/"
+  },
+  {
+    "h2": [],
+    "path": "container/box",
+    "section": "container",
+    "title": "Box",
+    "url": "https://docs.fyne.io/container/box/"
+  },
+  {
+    "h2": [],
+    "path": "container/grid",
+    "section": "container",
+    "title": "Grid",
+    "url": "https://docs.fyne.io/container/grid/"
+  },
+  {
+    "h2": [],
+    "path": "container/gridwrap",
+    "section": "container",
+    "title": "Grid Wrap",
+    "url": "https://docs.fyne.io/container/gridwrap/"
+  },
+  {
+    "h2": [],
+    "path": "container/border",
+    "section": "container",
+    "title": "Border",
+    "url": "https://docs.fyne.io/container/border/"
+  },
+  {
+    "h2": [],
+    "path": "container/form",
+    "section": "container",
+    "title": "Form",
+    "url": "https://docs.fyne.io/container/form/"
+  },
+  {
+    "h2": [],
+    "path": "container/center",
+    "section": "container",
+    "title": "Center",
+    "url": "https://docs.fyne.io/container/center/"
+  },
+  {
+    "h2": [],
+    "path": "container/apptabs",
+    "section": "container",
+    "title": "AppTabs",
+    "url": "https://docs.fyne.io/container/apptabs/"
+  },
+  {
+    "h2": [],
+    "path": "container/stack",
+    "section": "container",
+    "title": "Stack",
+    "url": "https://docs.fyne.io/container/stack/"
+  },
+  {
+    "h2": [],
+    "path": "widget",
+    "section": "widget",
+    "title": "Widgets",
+    "url": "https://docs.fyne.io/widget/"
+  },
+  {
+    "h2": [],
+    "path": "widget/label",
+    "section": "widget",
+    "title": "Label",
+    "url": "https://docs.fyne.io/widget/label/"
+  },
+  {
+    "h2": [],
+    "path": "widget/button",
+    "section": "widget",
+    "title": "Button",
+    "url": "https://docs.fyne.io/widget/button/"
+  },
+  {
+    "h2": [],
+    "path": "widget/entry",
+    "section": "widget",
+    "title": "Entry",
+    "url": "https://docs.fyne.io/widget/entry/"
+  },
+  {
+    "h2": [],
+    "path": "widget/choices",
+    "section": "widget",
+    "title": "Choices",
+    "url": "https://docs.fyne.io/widget/choices/"
+  },
+  {
+    "h2": [],
+    "path": "widget/form",
+    "section": "widget",
+    "title": "Form",
+    "url": "https://docs.fyne.io/widget/form/"
+  },
+  {
+    "h2": [],
+    "path": "widget/progressbar",
+    "section": "widget",
+    "title": "ProgressBar",
+    "url": "https://docs.fyne.io/widget/progressbar/"
+  },
+  {
+    "h2": [],
+    "path": "widget/toolbar",
+    "section": "widget",
+    "title": "Toolbar",
+    "url": "https://docs.fyne.io/widget/toolbar/"
+  },
+  {
+    "h2": [],
+    "path": "collection",
+    "section": "collection",
+    "title": "Collections",
+    "url": "https://docs.fyne.io/collection/"
+  },
+  {
+    "h2": [],
+    "path": "collection/list",
+    "section": "collection",
+    "title": "List",
+    "url": "https://docs.fyne.io/collection/list/"
+  },
+  {
+    "h2": [],
+    "path": "collection/table",
+    "section": "collection",
+    "title": "Table",
+    "url": "https://docs.fyne.io/collection/table/"
+  },
+  {
+    "h2": [],
+    "path": "collection/tree",
+    "section": "collection",
+    "title": "Tree",
+    "url": "https://docs.fyne.io/collection/tree/"
+  },
+  {
+    "h2": [],
+    "path": "binding",
+    "section": "binding",
+    "title": "Data Binding",
+    "url": "https://docs.fyne.io/binding/"
+  },
+  {
+    "h2": [],
+    "path": "binding/data",
+    "section": "binding",
+    "title": "Data Binding",
+    "url": "https://docs.fyne.io/binding/data/"
+  },
+  {
+    "h2": [],
+    "path": "binding/simple",
+    "section": "binding",
+    "title": "Binding Simple Widgets",
+    "url": "https://docs.fyne.io/binding/simple/"
+  },
+  {
+    "h2": [],
+    "path": "binding/twoway",
+    "section": "binding",
+    "title": "Two-Way Binding",
+    "url": "https://docs.fyne.io/binding/twoway/"
+  },
+  {
+    "h2": [],
+    "path": "binding/conversion",
+    "section": "binding",
+    "title": "Data Conversion",
+    "url": "https://docs.fyne.io/binding/conversion/"
+  },
+  {
+    "h2": [],
+    "path": "binding/list",
+    "section": "binding",
+    "title": "List Data",
+    "url": "https://docs.fyne.io/binding/list/"
+  },
+  {
+    "h2": [],
+    "path": "extend",
+    "section": "extend",
+    "title": "Extending Fyne",
+    "url": "https://docs.fyne.io/extend/"
+  },
+  {
+    "h2": [],
+    "path": "extend/custom-layout",
+    "section": "extend",
+    "title": "Building a Custom Layout",
+    "url": "https://docs.fyne.io/extend/custom-layout/"
+  },
+  {
+    "h2": [
+      "fyne.Widget link",
+      "fyne.WidgetRenderer link",
+      "Bring it together link"
+    ],
+    "path": "extend/custom-widget",
+    "section": "extend",
+    "title": "Writing a Custom Widget",
+    "url": "https://docs.fyne.io/extend/custom-widget/"
+  },
+  {
+    "h2": [],
+    "path": "extend/bundle",
+    "section": "extend",
+    "title": "Bundling resources",
+    "url": "https://docs.fyne.io/extend/bundle/"
+  },
+  {
+    "h2": [
+      "Define your theme link",
+      "Load the theme link"
+    ],
+    "path": "extend/custom-theme",
+    "section": "extend",
+    "title": "Creating a Custom Theme",
+    "url": "https://docs.fyne.io/extend/custom-theme/"
+  },
+  {
+    "h2": [],
+    "path": "extend/extending-widgets",
+    "section": "extend",
+    "title": "Extending Widgets",
+    "url": "https://docs.fyne.io/extend/extending-widgets/"
+  },
+  {
+    "h2": [],
+    "path": "extend/numerical-entry",
+    "section": "extend",
+    "title": "Numerical Entry",
+    "url": "https://docs.fyne.io/extend/numerical-entry/"
+  },
+  {
+    "h2": [],
+    "path": "architecture",
+    "section": "architecture",
+    "title": "Architecture",
+    "url": "https://docs.fyne.io/architecture/"
+  },
+  {
+    "h2": [
+      "Position link",
+      "Pixel size link"
+    ],
+    "path": "architecture/geometry",
+    "section": "architecture",
+    "title": "Geometry",
+    "url": "https://docs.fyne.io/architecture/geometry/"
+  },
+  {
+    "h2": [],
+    "path": "architecture/scaling",
+    "section": "architecture",
+    "title": "Scaling",
+    "url": "https://docs.fyne.io/architecture/scaling/"
+  },
+  {
+    "h2": [
+      "Behaviour API link",
+      "Content Padding link"
+    ],
+    "path": "architecture/widgets",
+    "section": "architecture",
+    "title": "Widgets",
+    "url": "https://docs.fyne.io/architecture/widgets/"
+  },
+  {
+    "h2": [],
+    "path": "architecture/organisation",
+    "section": "architecture",
+    "title": "Organisation and Packages",
+    "url": "https://docs.fyne.io/architecture/organisation/"
+  },
+  {
+    "h2": [],
+    "path": "migrating",
+    "section": "migrating",
+    "title": "Migrating to Fyne",
+    "url": "https://docs.fyne.io/migrating/"
+  },
+  {
+    "h2": [],
+    "path": "migrating/guiintro",
+    "section": "migrating",
+    "title": "GUI Overview",
+    "url": "https://docs.fyne.io/migrating/guiintro/"
+  },
+  {
+    "h2": [],
+    "path": "faq",
+    "section": "faq",
+    "title": "Frequently Asked Questions",
+    "url": "https://docs.fyne.io/faq/"
+  },
+  {
+    "h2": [
+      "Move and Resize link",
+      "Containers and Layout link"
+    ],
+    "path": "faq/layout",
+    "section": "faq",
+    "title": "Layout and Widget Size",
+    "url": "https://docs.fyne.io/faq/layout/"
+  },
+  {
+    "h2": [
+      "Customisation link",
+      "Theme API link"
+    ],
+    "path": "faq/theme",
+    "section": "faq",
+    "title": "Theme and Customisation",
+    "url": "https://docs.fyne.io/faq/theme/"
+  },
+  {
+    "h2": [
+      "Opting in to a migration link",
+      "Testing a migration link"
+    ],
+    "path": "explore/migrations",
+    "section": "explore",
+    "title": "Migrations",
+    "url": "https://docs.fyne.io/explore/migrations/"
+  },
+  {
+    "h2": [],
+    "path": "api",
+    "section": "api",
+    "title": "API Documentation",
+    "url": "https://docs.fyne.io/api/"
+  },
+  {
+    "h2": [],
+    "path": "submit",
+    "section": "submit",
+    "title": "List My App",
+    "url": "https://docs.fyne.io/submit/"
+  },
+  {
+    "h2": [],
+    "path": "submit-addon",
+    "section": "submit-addon",
+    "title": "List My Addon",
+    "url": "https://docs.fyne.io/submit-addon/"
+  },
+  {
+    "h2": [],
+    "path": "tags/api",
+    "section": "tags",
+    "title": "Api",
+    "url": "https://docs.fyne.io/tags/api/"
+  },
+  {
+    "h2": [],
+    "path": "app",
+    "section": "app",
+    "title": "app",
+    "url": "https://docs.fyne.io/app/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/app/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/app/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/app/settingsschema",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/app/settingsschema/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/bool",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/bool/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/boollist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/boollist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/booltree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/booltree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/bytes",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/bytes/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/byteslist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/byteslist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/bytestree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/bytestree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/dataitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/dataitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/datalist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/datalist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/datalistener",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/datalistener/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/datamap",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/datamap/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/datatree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/datatree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalbool",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalbool/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalboollist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalboollist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalbooltree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalbooltree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalbytes",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalbytes/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalbyteslist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalbyteslist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalbytestree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalbytestree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalfloat",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalfloat/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalfloatlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalfloatlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalfloattree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalfloattree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalint",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalint/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalintlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalintlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalinttree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalinttree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externallist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externallist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalrune",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalrune/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalrunelist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalrunelist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalrunetree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalrunetree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalstring",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalstring/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalstringlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalstringlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalstringtree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalstringtree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaltree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaltree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluntyped",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluntyped/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluntypedlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluntypedlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluntypedmap",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluntypedmap/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluntypedtree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluntypedtree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluri",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluri/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externalurilist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externalurilist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/externaluritree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/externaluritree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/float",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/float/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/floatlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/floatlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/floattree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/floattree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/int",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/int/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/intlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/intlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/inttree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/inttree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/item",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/item/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/list",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/list/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/rune",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/rune/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/runelist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/runelist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/runetree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/runetree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/string",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/string/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/stringlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/stringlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/stringtree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/stringtree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/struct",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/struct/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/tree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/tree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/untyped",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/untyped/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/untypedlist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/untypedlist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/untypedmap",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/untypedmap/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/untypedtree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/untypedtree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/uri",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/uri/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/urilist",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/urilist/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/binding/uritree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/binding/uritree/"
+  },
+  {
+    "h2": [],
+    "path": "canvas",
+    "section": "canvas",
+    "title": "Drawing and Animation",
+    "url": "https://docs.fyne.io/canvas/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/arc",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/arc/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/circle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/circle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/image",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/image/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/imagefill",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/imagefill/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/imagescale",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/imagescale/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/line",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/line/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/lineargradient",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/lineargradient/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/polygon",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/polygon/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/radialgradient",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/radialgradient/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/raster",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/raster/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/rectangle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/rectangle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/canvas/text",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/canvas/text/"
+  },
+  {
+    "h2": [],
+    "path": "categories",
+    "section": "categories",
+    "title": "Categories",
+    "url": "https://docs.fyne.io/categories/"
+  },
+  {
+    "h2": [],
+    "path": "container",
+    "section": "container",
+    "title": "Containers and Layout",
+    "url": "https://docs.fyne.io/container/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/apptabs",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/apptabs/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/clip",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/clip/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/doctabs",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/doctabs/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/innerwindow",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/innerwindow/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/multiplewindows",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/multiplewindows/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/navigation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/navigation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/scroll",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/scroll/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/scrolldirection",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/scrolldirection/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/split",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/split/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/tabitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/tabitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/tablocation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/tablocation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/container/themeoverride",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/container/themeoverride/"
+  },
+  {
+    "h2": [],
+    "path": "data/binding",
+    "section": "data",
+    "title": "data/binding",
+    "url": "https://docs.fyne.io/data/binding/"
+  },
+  {
+    "h2": [],
+    "path": "data/validation",
+    "section": "data",
+    "title": "data/validation",
+    "url": "https://docs.fyne.io/data/validation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/app",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/app/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/canvas",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/canvas/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/cursor",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/cursor/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/cursorable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/cursorable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/customshortcut",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/customshortcut/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/driver",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/driver/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/hoverable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/hoverable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/keyable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/keyable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/modifier",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/modifier/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/mouseable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/mouseable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/mousebutton",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/mousebutton/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/mouseevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/mouseevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/desktop/standardcursor",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/desktop/standardcursor/"
+  },
+  {
+    "h2": [],
+    "path": "dialog",
+    "section": "dialog",
+    "title": "dialog",
+    "url": "https://docs.fyne.io/dialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/colorpickerdialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/colorpickerdialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/confirmdialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/confirmdialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/customdialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/customdialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/dialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/dialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/entrydialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/entrydialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/filedialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/filedialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/formdialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/formdialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/progressdialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/progressdialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/progressinfinitedialog",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/progressinfinitedialog/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/dialog/viewlayout",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/dialog/viewlayout/"
+  },
+  {
+    "h2": [],
+    "path": "docs",
+    "section": "docs",
+    "title": "Docs",
+    "url": "https://docs.fyne.io/docs/"
+  },
+  {
+    "h2": [],
+    "path": "driver",
+    "section": "driver",
+    "title": "driver",
+    "url": "https://docs.fyne.io/driver/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/androidcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/androidcontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/androidwindowcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/androidwindowcontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/macwindowcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/macwindowcontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/nativewindow",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/nativewindow/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/unknowncontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/unknowncontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/waylandwindowcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/waylandwindowcontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/windowswindowcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/windowswindowcontext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/x11windowcontext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/x11windowcontext/"
+  },
+  {
+    "h2": [],
+    "path": "driver/desktop",
+    "section": "driver",
+    "title": "driver/desktop",
+    "url": "https://docs.fyne.io/driver/desktop/"
+  },
+  {
+    "h2": [],
+    "path": "driver/embedded",
+    "section": "driver",
+    "title": "driver/embedded",
+    "url": "https://docs.fyne.io/driver/embedded/"
+  },
+  {
+    "h2": [],
+    "path": "driver/mobile",
+    "section": "driver",
+    "title": "driver/mobile",
+    "url": "https://docs.fyne.io/driver/mobile/"
+  },
+  {
+    "h2": [],
+    "path": "driver/software",
+    "section": "driver",
+    "title": "driver/software",
+    "url": "https://docs.fyne.io/driver/software/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/characterevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/characterevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/driver",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/driver/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/event",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/event/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/keydirection",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/keydirection/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/keyevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/keyevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/touchdownevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/touchdownevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/touchmoveevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/touchmoveevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/embedded/touchupevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/embedded/touchupevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/package/"
+  },
+  {
+    "h2": [],
+    "path": "fyne",
+    "section": "fyne",
+    "title": "Fyne API",
+    "url": "https://docs.fyne.io/fyne/"
+  },
+  {
+    "h2": [
+      "Installing link",
+      "Diving Right In link"
+    ],
+    "path": "",
+    "section": "(root)",
+    "title": "Fyne Documentation",
+    "url": "https://docs.fyne.io/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/animation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/animation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/animationcurve",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/animationcurve/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/app",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/app/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/appmetadata",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/appmetadata/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/buildtype",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/buildtype/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/canvas",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/canvas/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/canvasobject",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/canvasobject/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/clipboard",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/clipboard/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/cloudprovider",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/cloudprovider/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/cloudproviderpreferences",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/cloudproviderpreferences/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/cloudproviderstorage",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/cloudproviderstorage/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/container",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/container/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/delta",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/delta/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/device",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/device/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/deviceorientation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/deviceorientation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/disableable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/disableable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/doubletappable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/doubletappable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/dragevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/dragevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/draggable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/draggable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/driver",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/driver/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/focusable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/focusable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/hardwarekey",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/hardwarekey/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/keyboardshortcut",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/keyboardshortcut/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/keyevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/keyevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/keymodifier",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/keymodifier/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/keyname",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/keyname/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/layout",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/layout/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/legacytheme",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/legacytheme/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/lifecycle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/lifecycle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/listableuri",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/listableuri/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/locale",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/locale/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/mainmenu",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/mainmenu/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/menu",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/menu/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/menuitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/menuitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/notification",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/notification/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/overlaystack",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/overlaystack/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/pointevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/pointevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/position",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/position/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/preferences",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/preferences/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/resource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/resource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/scrollable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/scrollable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/scrolldirection",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/scrolldirection/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/scrollevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/scrollevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/secondarytappable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/secondarytappable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/settings",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/settings/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcut",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcut/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutcopy",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutcopy/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutcut",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutcut/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcuthandler",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcuthandler/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutpaste",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutpaste/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutredo",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutredo/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutselectall",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutselectall/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/shortcutundo",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/shortcutundo/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/size",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/size/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/staticresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/staticresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/storage",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/storage/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/stringvalidator",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/stringvalidator/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/tabbable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/tabbable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/tappable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/tappable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/textalign",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/textalign/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/textstyle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/textstyle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/texttruncation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/texttruncation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/textwrap",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/textwrap/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/theme",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/theme/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/themecolorname",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/themecolorname/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/themedresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/themedresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/themeiconname",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/themeiconname/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/themesizename",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/themesizename/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/themevariant",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/themevariant/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/uri",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/uri/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/urireadcloser",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/urireadcloser/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/uriwithicon",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/uriwithicon/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/uriwritecloser",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/uriwritecloser/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/validatable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/validatable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/vector2",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/vector2/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/widget",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/widget/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/widgetrenderer",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/widgetrenderer/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/fyne/window",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/fyne/window/"
+  },
+  {
+    "h2": [],
+    "path": "lang",
+    "section": "lang",
+    "title": "lang",
+    "url": "https://docs.fyne.io/lang/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/lang/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/lang/package/"
+  },
+  {
+    "h2": [],
+    "path": "layout",
+    "section": "layout",
+    "title": "layout",
+    "url": "https://docs.fyne.io/layout/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/layout/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/layout/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/layout/custompaddedlayout",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/layout/custompaddedlayout/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/layout/spacer",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/layout/spacer/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/layout/spacerobject",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/layout/spacerobject/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/device",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/device/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/driver",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/driver/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/keyboardable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/keyboardable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/keyboardtype",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/keyboardtype/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/touchable",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/touchable/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/mobile/touchevent",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/mobile/touchevent/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/appendablerepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/appendablerepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/copyablerepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/copyablerepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/customurirepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/customurirepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/deleteallrepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/deleteallrepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/hierarchicalrepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/hierarchicalrepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/listablerepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/listablerepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/movablerepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/movablerepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/repository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/repository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/repository/writablerepository",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/repository/writablerepository/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/driver/software/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/driver/software/package/"
+  },
+  {
+    "h2": [],
+    "path": "storage",
+    "section": "storage",
+    "title": "storage",
+    "url": "https://docs.fyne.io/storage/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/extensionfilefilter",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/extensionfilefilter/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/filefilter",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/filefilter/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/storage/mimetypefilefilter",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/storage/mimetypefilefilter/"
+  },
+  {
+    "h2": [],
+    "path": "storage/repository",
+    "section": "storage",
+    "title": "storage/repository",
+    "url": "https://docs.fyne.io/storage/repository/"
+  },
+  {
+    "h2": [],
+    "path": "tags",
+    "section": "tags",
+    "title": "Tags",
+    "url": "https://docs.fyne.io/tags/"
+  },
+  {
+    "h2": [],
+    "path": "test",
+    "section": "test",
+    "title": "test",
+    "url": "https://docs.fyne.io/test/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/test/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/test/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/test/softwarepainter",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/test/softwarepainter/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/test/windowlesscanvas",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/test/windowlesscanvas/"
+  },
+  {
+    "h2": [],
+    "path": "theme",
+    "section": "theme",
+    "title": "theme",
+    "url": "https://docs.fyne.io/theme/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/disabledresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/disabledresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/errorthemedresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/errorthemedresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/invertedthemedresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/invertedthemedresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/primarythemedresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/primarythemedresource/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/theme/themedresource",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/theme/themedresource/"
+  },
+  {
+    "h2": [
+      "Compiler Issues link",
+      "Distribution link"
+    ],
+    "path": "faq/troubleshoot",
+    "section": "faq",
+    "title": "Troubleshooting",
+    "url": "https://docs.fyne.io/faq/troubleshoot/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/data/validation/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/data/validation/package/"
+  },
+  {
+    "h2": [],
+    "path": "widget",
+    "section": "widget",
+    "title": "Widgets",
+    "url": "https://docs.fyne.io/widget/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/package",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/package/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/accordion",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/accordion/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/accordionitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/accordionitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/activity",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/activity/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/basewidget",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/basewidget/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/button",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/button/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/buttonalign",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/buttonalign/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/buttoniconplacement",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/buttoniconplacement/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/buttonimportance",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/buttonimportance/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/buttonstyle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/buttonstyle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/calendar",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/calendar/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/card",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/card/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/check",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/check/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/checkgroup",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/checkgroup/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/customtextgridstyle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/customtextgridstyle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/dateentry",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/dateentry/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/disableablewidget",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/disableablewidget/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/entry",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/entry/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/fileicon",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/fileicon/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/form",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/form/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/formitem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/formitem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/gridwrap",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/gridwrap/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/gridwrapitemid",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/gridwrapitemid/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/hyperlink",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/hyperlink/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/hyperlinksegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/hyperlinksegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/icon",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/icon/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/imagesegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/imagesegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/importance",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/importance/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/label",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/label/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/list",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/list/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/listitemid",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/listitemid/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/listsegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/listsegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/menu",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/menu/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/orientation",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/orientation/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/paragraphsegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/paragraphsegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/popup",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/popup/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/popupmenu",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/popupmenu/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/progressbar",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/progressbar/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/progressbarinfinite",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/progressbarinfinite/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/radiogroup",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/radiogroup/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/richtext",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/richtext/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/richtextblock",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/richtextblock/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/richtextsegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/richtextsegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/richtextstyle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/richtextstyle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/select",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/select/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/selectentry",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/selectentry/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/separator",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/separator/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/separatorsegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/separatorsegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/slider",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/slider/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/table",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/table/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/tablecellid",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/tablecellid/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/textgrid",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/textgrid/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/textgridcell",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/textgridcell/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/textgridrow",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/textgridrow/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/textgridstyle",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/textgridstyle/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/textsegment",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/textsegment/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/toolbar",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/toolbar/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/toolbaraction",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/toolbaraction/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/toolbaritem",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/toolbaritem/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/toolbarseparator",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/toolbarseparator/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/toolbarspacer",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/toolbarspacer/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/tree",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/tree/"
+  },
+  {
+    "h2": [],
+    "path": "api/v2/widget/treenodeid",
+    "section": "api",
+    "title": "",
+    "url": "https://docs.fyne.io/api/v2/widget/treenodeid/"
+  }
+]

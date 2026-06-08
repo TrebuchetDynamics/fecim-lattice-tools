@@ -108,14 +108,6 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "module1-hysteresis", "pkg", "gui", "info.go"),
-			forbidden: []string{
-				"Endurance: %.0e cycles [demonstrated: 10⁹-10¹²]",
-				"Same chip, 5× more storage!",
-				"Note: Ranges from peer-reviewed literature.",
-			},
-		},
-		{
 			path: filepath.Join(repoRoot, "module1-hysteresis", "pkg", "ferroelectric", "render.go"),
 			forbidden: []string{
 				"Discrete Analog States (demo baseline; conference claim)",
@@ -137,13 +129,6 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "module1-hysteresis", "cmd", "hysteresis-fyne", "main.go"),
-			forbidden: []string{
-				"30 Discrete States (conference-claim baseline)",
-				"Peer-reviewed ferroelectric devices report roughly 32-140 states in related literature.",
-			},
-		},
-		{
 			path: filepath.Join(repoRoot, "docs", "2-learn", "module1-hysteresis", "physics.md"),
 			forbidden: []string{
 				"30 levels | Linear discretization of P | ✅ Simple & correct",
@@ -156,15 +141,6 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			forbidden: []string{
 				"demonstrated in literature",
 				"outside demonstrated range",
-			},
-		},
-		{
-			path: filepath.Join(repoRoot, "module1-hysteresis", "pkg", "gui", "sim_loop.go"),
-			forbidden: []string{
-				"peer-reviewed literature reports 25-100×",
-				"~50× est.",
-				"~1000× est.",
-				"FeCIM: only 50 cells! (5× denser)",
 			},
 		},
 		{

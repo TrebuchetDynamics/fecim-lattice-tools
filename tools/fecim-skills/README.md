@@ -21,9 +21,7 @@ scripts/install-fecim-skills.sh --check    # CI sync check
 | `fecim-builder` | Building or debugging build failures |
 | `fecim-labtester` | Running tests, regenerating physics goldens |
 | `fecim-grill` | Starting a non-trivial physics/GUI change |
-| `fecim-fyne-thread-check` | Reviewing PRs that add goroutines in `pkg/gui/` |
 | `fecim-honesty-audit` | Committing docs/PRs with accuracy or efficiency numbers |
-| `fecim-gogpu-migrate` | Porting a Fyne tab to the gogpu/ui shell |
 
 ## Editing
 

@@ -9,7 +9,6 @@
 ## Used In This Module (Open-Source Dependencies)
 
 - Go toolchain (model calculations)
-- Fyne (GUI charts)
 
 ## Integration Notes
 

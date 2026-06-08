@@ -1,7 +1,11 @@
 // Package crossbar implements ferroelectric crossbar array simulation.
 package crossbar
 
-import "math"
+import (
+	"math"
+
+	"fecim-lattice-tools/shared/constants"
+)
 
 // TemperatureEffects models temperature-dependent physics effects.
 // FeFET devices show enhanced properties at cryogenic temperatures
@@ -75,9 +79,9 @@ func (t *TemperatureEffects) AdjustedConductanceRange(gMin, gMax float64) (float
 //
 // Reference: Thermal activation energy Ea ≈ 0.5 eV for typical ferroelectric switching.
 func (t *TemperatureEffects) AdjustedDriftRate(driftCoeff float64) float64 {
-	const kB = 1.38e-23 // Boltzmann constant (J/K)
-	const Ea = 0.5      // Activation energy (eV)
-	const eV = 1.6e-19  // Electron-volt to Joules
+	const kB = constants.BoltzmannConstantJPerK // J/K
+	const Ea = 0.5                              // Activation energy (eV)
+	const eV = 1.6e-19                          // Electron-volt to Joules
 
 	// Reference rate at 300K
 	refRate := math.Exp(-Ea * eV / (kB * 300))
@@ -92,7 +96,7 @@ func (t *TemperatureEffects) AdjustedDriftRate(driftCoeff float64) float64 {
 // Returns a factor to multiply the nominal retention time.
 // Lower temperature → exponentially better retention.
 func (t *TemperatureEffects) AdjustedRetention() float64 {
-	const kB = 1.38e-23
+	const kB = constants.BoltzmannConstantJPerK
 	const Ea = 0.5
 	const eV = 1.6e-19
 
@@ -216,8 +220,8 @@ type RetentionCurve struct {
 //   - refRetentionS: Reference retention time at 85°C (seconds)
 //   - activationEV: Activation energy (eV), typically 1.0-1.2 for HZO
 func GenerateRetentionCurve(refRetentionS, activationEV float64) *RetentionCurve {
-	const kB = 8.617e-5    // Boltzmann constant in eV/K
-	const refTempK = 358.0 // 85°C reference
+	const kB = constants.BoltzmannConstanteVPerK // eV/K
+	const refTempK = 358.0                       // 85°C reference
 
 	// Temperature points from 25°C to 150°C
 	temps := []float64{
@@ -255,7 +259,7 @@ func DefaultRetentionCurve() *RetentionCurve {
 
 // RetentionAt returns interpolated retention time at a given temperature.
 func (rc *RetentionCurve) RetentionAt(tempK float64) float64 {
-	const kB = 8.617e-5
+	const kB = constants.BoltzmannConstanteVPerK
 
 	// Use Arrhenius formula directly from reference point at 85°C
 	refTempK := 358.0
