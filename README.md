@@ -1,21 +1,8 @@
 # FeCIM Lattice Tools
 
-## Audience
+**Simulation-first desktop lab for ferroelectric compute-in-memory (FeCIM) systems.**
 
-FeCIM Lattice Tools is for people who need a practical, inspectable simulator for ferroelectric compute-in-memory (FeCIM) ideas:
-
-- **Students and instructors** learning hysteresis, crossbar arrays, non-idealities, and CIM system tradeoffs.
-- **Researchers** exploring FeCIM model behavior, validation workflows, and literature-backed assumptions.
-- **Device, circuit, and architecture designers** comparing how material choices, array effects, and peripheral assumptions affect a design.
-- **Open-source contributors** who want to improve a simulation-first tool with tests, documentation, and reproducible examples.
-
-It is **not** a silicon measurement report, a product benchmark, a foundry PDK, or proof that a specific device achieves a claimed accuracy, energy, endurance, or state-count result. Treat this repository as an education, research, and design workspace unless a claim is explicitly tied to a cited source and validation test.
-
-> A simulation-first desktop lab for learning, testing, and designing around ferroelectric compute-in-memory systems.
-
-Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 -- with core parameters cited or explicitly marked educational.
-
----
+FeCIM Lattice Tools combines a Go/Fyne desktop simulator, literature-aware validation workspace, EDA/export utilities, and a static Astro project site. It is built for learning and inspecting how ferroelectric device assumptions propagate through crossbar arrays, peripheral circuits, inference examples, and design artifacts.
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
@@ -25,17 +12,45 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 
 ![FeCIM Lattice Tools hysteresis module screenshot](./docs/assets/hysteresis_readme.png)
 
+## Quick Start
+
+```bash
+git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
+cd fecim-lattice-tools
+go run ./cmd/fecim-lattice-tools
+```
+
+Run checks:
+
+```bash
+go test ./...
+make test-legacy-fyne
+bash scripts/reproduce_validation.sh
+```
+
+## What This Repository Is
+
+| Use it for | Do not treat it as |
+|------------|--------------------|
+| Learning hysteresis, crossbar non-idealities, CIM tradeoffs, and EDA export flows. | A silicon measurement report, foundry PDK, product benchmark, or device performance claim. |
+| Comparing simulation assumptions across materials, arrays, circuits, and algorithms. | Proof that a specific device achieves a stated accuracy, energy, endurance, or analog state count. |
+| Building literature-backed validation checks and reproducible educational examples. | A source of uncited scientific facts. |
+
+Core physics references include Materlik 2015, Park 2015, Alessandri 2018, and Guo 2018. Parameters are either cited, range-checked, or explicitly labeled as educational defaults.
+
 ## At a Glance
 
 | Question | Answer |
 |----------|--------|
-| What is it? | A Go Fyne desktop app, validation workspace, and Astro landing page for FeCIM simulation. |
-| Why use it? | To inspect how ferroelectric material assumptions, hysteresis models, crossbar effects, peripheral circuits, and EDA exports interact. |
-| What can I run? | Seven GUI modules, headless validation scripts, module tests, EDA/export examples, and the static Astro web landing page. |
+| What is it? | A Go Fyne desktop app, validation workspace, EDA/export toolkit, and Astro landing page for FeCIM simulation. |
+| Who is it for? | Students, instructors, researchers, device/circuit/architecture designers, and open-source contributors. |
+| What can I run? | Seven GUI modules, headless validation scripts, module tests, EDA/export examples, and the static web landing page. |
 | What is the boundary? | Simulation and education only unless a claim is cited and covered by validation. |
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
+- [What This Repository Is](#what-this-repository-is)
 - [At a Glance](#at-a-glance)
 - [What You Can Do](#what-you-can-do)
 - [Scope and Claim Boundary](#scope-and-claim-boundary)
