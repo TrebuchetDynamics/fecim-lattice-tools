@@ -28,6 +28,70 @@ type RecoveryReceipt struct {
 	Reason           string
 }
 
+// GuardInput describes one guard-band decision at zero-field verify.
+type GuardInput struct {
+	LevelError      int
+	GuardSign       int
+	GuardPulseCount int
+	MaxGuardPulses  int
+}
+
+// GuardDecision reports whether a guard pulse should alter the effective error
+// or whether the exact target level should be accepted as converged.
+type GuardDecision struct {
+	EffectiveError      int
+	NextGuardPulseCount int
+	GuardActive         bool
+	Accepted            bool
+	Reason              string
+}
+
+// EvaluateGuardDecision applies the UI-neutral guard-band acceptance rule used
+// by ISPP adapters. When the verified level is already the target but a guard
+// sign indicates bin-edge risk, the policy allows a limited number of guard
+// corrections before accepting convergence to avoid direction flipping.
+func EvaluateGuardDecision(input GuardInput) GuardDecision {
+	maxGuardPulses := input.MaxGuardPulses
+	if maxGuardPulses <= 0 {
+		maxGuardPulses = 2
+	}
+
+	decision := GuardDecision{
+		EffectiveError:      input.LevelError,
+		NextGuardPulseCount: input.GuardPulseCount,
+	}
+
+	guardSign := 0
+	if input.GuardSign > 0 {
+		guardSign = 1
+	} else if input.GuardSign < 0 {
+		guardSign = -1
+	}
+
+	if input.LevelError == 0 && guardSign != 0 {
+		decision.NextGuardPulseCount++
+		if decision.NextGuardPulseCount <= maxGuardPulses {
+			decision.EffectiveError = guardSign
+			decision.GuardActive = true
+			decision.Reason = "guard correction within pulse limit"
+			return decision
+		}
+		decision.Accepted = true
+		decision.Reason = "guard pulse limit reached"
+		return decision
+	}
+
+	if input.LevelError != 0 {
+		decision.NextGuardPulseCount = 0
+		decision.Reason = "off target resets guard pulse count"
+		return decision
+	}
+
+	decision.Accepted = true
+	decision.Reason = "exact target without guard"
+	return decision
+}
+
 // RecoverCollapsedBounds widens a collapsed search interval using directional
 // evidence when available. It preserves locality for the ISPP guard rule that
 // collapsed bounds should be widened minimally, not reset to the full range.

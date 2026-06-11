@@ -483,26 +483,27 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			} else {
 				wc.NoImproveCount = 0
 			}
-			if wc.LastError == 0 && guardSign != 0 {
-				// Guard-band correction: the cell is at the target level but
-				// polarization is near a bin edge. Allow up to 2 guard pulses
-				// to nudge it toward center; after that, accept convergence
-				// to avoid catastrophic direction flips.
-				const maxGuardPulses = 2
-				wc.GuardPulseCount++
-				if wc.GuardPulseCount <= maxGuardPulses {
-					wc.LastError = guardSign
-					absErr = int(math.Abs(float64(wc.LastError)))
-					guardActive = true
-					log.Printf("ISPP GUARD: level=%d target=%d sign=%d guardPulse=%d/%d",
-						currentLevel, wc.TargetLevel, guardSign, wc.GuardPulseCount, maxGuardPulses)
-				} else {
-					log.Printf("ISPP GUARD ACCEPT: level=%d target=%d (guard limit reached, accepting convergence)",
-						currentLevel, wc.TargetLevel)
-				}
-			} else if wc.LastError != 0 {
-				// Reset guard pulse counter when not at target level.
-				wc.GuardPulseCount = 0
+			// Guard-band correction: the cell is at the target level but
+			// polarization is near a bin edge. Allow up to 2 guard pulses
+			// to nudge it toward center; after that, accept convergence
+			// to avoid catastrophic direction flips.
+			const maxGuardPulses = 2
+			guardDecision := isppconv.EvaluateGuardDecision(isppconv.GuardInput{
+				LevelError:      wc.LastError,
+				GuardSign:       guardSign,
+				GuardPulseCount: wc.GuardPulseCount,
+				MaxGuardPulses:  maxGuardPulses,
+			})
+			wc.GuardPulseCount = guardDecision.NextGuardPulseCount
+			wc.LastError = guardDecision.EffectiveError
+			absErr = int(math.Abs(float64(wc.LastError)))
+			guardActive = guardDecision.GuardActive
+			if guardDecision.GuardActive {
+				log.Printf("ISPP GUARD: level=%d target=%d sign=%d guardPulse=%d/%d",
+					currentLevel, wc.TargetLevel, guardSign, wc.GuardPulseCount, maxGuardPulses)
+			} else if guardDecision.Accepted && guardDecision.NextGuardPulseCount > maxGuardPulses {
+				log.Printf("ISPP GUARD ACCEPT: level=%d target=%d (guard limit reached, accepting convergence)",
+					currentLevel, wc.TargetLevel)
 			}
 			wc.LastAbsError = absErr
 			if wc.BestAbsError < 0 || absErr < wc.BestAbsError {
