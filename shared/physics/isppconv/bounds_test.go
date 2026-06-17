@@ -95,6 +95,33 @@ func TestRecoverCollapsedBoundsWidensDirectionallyWhenMoreFieldNeeded(t *testing
 	}
 }
 
+func TestRecoverCollapsedBoundsWidensDirectionallyWhenLessFieldNeeded(t *testing.T) {
+	bounds := Bounds{Min: 1.20, Max: 1.00, MinSet: true, MaxSet: true}
+
+	recovered := RecoverCollapsedBounds(bounds, RecoveryInput{
+		NeedLess:         true,
+		CurrentMagnitude: 1.10, // current is mid-range; should anchor max there
+		MaxMagnitude:     2.50,
+		MinimumWidth:     0.04,
+	})
+
+	if !recovered.Changed {
+		t.Fatal("expected collapsed bounds recovery to report a change")
+	}
+	if recovered.Bounds.Max > 1.10 {
+		t.Fatalf("recovered maximum = %.3f, want ≤ current magnitude 1.10 (less-field recovery)", recovered.Bounds.Max)
+	}
+	if recovered.Bounds.Max <= recovered.Bounds.Min {
+		t.Fatalf("recovered bounds still collapsed: min=%.3f max=%.3f", recovered.Bounds.Min, recovered.Bounds.Max)
+	}
+	if got := recovered.Bounds.Max - recovered.Bounds.Min; got < 0.04 {
+		t.Fatalf("recovered width = %.3f, want at least minimum width 0.04", got)
+	}
+	if recovered.ResetToFullRange {
+		t.Fatal("directional recovery must not reset to full range")
+	}
+}
+
 func TestRecoverCollapsedBoundsResetsToFullRangeWhenDirectionUnknown(t *testing.T) {
 	bounds := Bounds{Min: 1.20, Max: 1.00, MinSet: true, MaxSet: true}
 
