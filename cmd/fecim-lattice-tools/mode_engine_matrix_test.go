@@ -61,6 +61,7 @@ func TestHeadlessHysteresis_VerificationMatrix_NoNaNOrCrash(t *testing.T) {
 			material := material
 			name := engine + "/" + material
 			t.Run(name, func(t *testing.T) {
+				t.Setenv("FECIM_LOGS_DIR", t.TempDir()) // isolate logs per subtest
 				before := time.Now()
 				t.Setenv("FECIM_MATERIAL", material)
 				t.Setenv("FECIM_HEADLESS_FAST", "1")
@@ -110,6 +111,7 @@ func TestHeadlessLK_ISPPConvergenceMatrix_AllMaterials_LO_MID_HI(t *testing.T) {
 	for _, material := range materials {
 		material := material
 		t.Run(material, func(t *testing.T) {
+			t.Setenv("FECIM_LOGS_DIR", t.TempDir()) // isolate logs per subtest
 			before := time.Now()
 			t.Setenv("FECIM_MATERIAL", material)
 			t.Setenv("FECIM_HEADLESS_FAST", "1")
