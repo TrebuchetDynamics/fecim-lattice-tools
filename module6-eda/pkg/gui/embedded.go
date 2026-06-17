@@ -12,8 +12,6 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
-var log = logging.NewLogger("eda")
-
 // EmbeddedEDAApp is the embeddable version of the EDA app
 type EmbeddedEDAApp struct {
 	sharedwidgets.EmbeddedAppBase
