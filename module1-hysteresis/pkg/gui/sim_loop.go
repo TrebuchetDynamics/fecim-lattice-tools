@@ -12,7 +12,40 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// simulationLoop runs the main simulation loop at ~60 FPS
+// LK sub-step sizing constants (package scope so lkSubStepSize is unit-testable).
+const (
+	dtNominal     = 1e-4 // 0.1ms nominal physics step (good for ≤200 Hz waveforms)
+	dtMin         = 1e-6 // 1µs minimum near the coercive field (Ec proximity)
+	ecProximityFrac = 0.1 // |E−Ec| < ecProximityFrac×Ec triggers dtMin
+)
+
+// lkSubStepSize returns the physics sub-step size for the LK adaptive stepping loop.
+// Three rules apply in priority order:
+//  1. Near Ec (±ecProximityFrac × matEc): use dtMin to capture sharp switching.
+//  2. Periodic waveforms at high frequency: cap to T/50 to prevent aliasing when
+//     dtNominal covers many full periods (e.g. 1 MHz → sin(200πn)=0 every step).
+//  3. Otherwise: use dtNominal.
+func lkSubStepSize(frequency float64, waveform WaveformType, matEc, electricField float64) float64 {
+	step := dtNominal
+
+	if matEc > 0 {
+		distPlus := math.Abs(electricField - matEc)
+		distMinus := math.Abs(electricField + matEc)
+		if math.Min(distPlus, distMinus) < ecProximityFrac*matEc {
+			step = dtMin
+		}
+	}
+
+	if frequency > 0 && (waveform == WaveformSine || waveform == WaveformTriangle) {
+		waveformDt := math.Max(1.0/(50.0*frequency), dtMin)
+		if waveformDt < step {
+			step = waveformDt
+		}
+	}
+
+	return step
+}
+
 // simulationLoop runs the main simulation loop at ~60 FPS with adaptive physics stepping
 func (a *App) simulationLoop() {
 	// Recover from closed-channel panics during shutdown.
@@ -42,19 +75,10 @@ func (a *App) simulationLoop() {
 	perfEngine := "L-K"
 	perfDtMinHits := 0
 
-	// Adaptive Time-Stepping Constants
+	// Adaptive Time-Stepping Constants (package-level; also used by lkSubStepSize)
 	const (
 		dtMax         = 0.025 // 25ms cap to prevent explosion after pause
-		dtNominal     = 1e-4  // 0.1ms nominal physics step (good for standard loop)
-		dtMin         = 1e-6  // 1µs minimum step near critical field (Ec)
 		lkMaxSubSteps = 400
-
-		// ecProximityFrac is the fraction of Ec used as the switching-region threshold.
-		// When |E - Ec| < ecProximityFrac*Ec, the solver uses dtMin to capture sharp
-		// switching dynamics. 0.1 means ±10% of Ec (≈0.1 MV/cm for typical HZO).
-		// Material-relative scaling ensures correct behavior for high-Ec materials
-		// like AlScN (Ec ≈ 5 MV/cm) where a fixed 1e7 V/m threshold is too narrow.
-		ecProximityFrac = 0.1
 	)
 
 	resetPerfWindow := func(now time.Time) {
@@ -213,22 +237,7 @@ func (a *App) simulationLoop() {
 				// Determine step size based on physics state
 				// If E-field is near Ec, use smaller steps to capture switching dynamics.
 
-				currentStep := dtNominal
-				// Check proximity to Ec (switching region)
-				// Switching happens at +Ec (increasing) and -Ec (decreasing)
-				// But effective Ec varies. Use material Ec as baseline proxy.
-				if matEc > 0 {
-					distPlus := math.Abs(a.electricField - matEc)
-					distMinus := math.Abs(a.electricField + matEc)
-					minDist := math.Min(distPlus, distMinus)
-
-					// Use material-relative threshold: ecProximityFrac × Ec.
-					// This scales correctly for any ferroelectric (HZO, AlScN, PZT, etc.).
-					threshold := ecProximityFrac * matEc
-					if minDist < threshold {
-						currentStep = dtMin
-					}
-				}
+				currentStep := lkSubStepSize(a.frequency, a.waveform, matEc, a.electricField)
 
 				// Ensure we can consume the remaining time within our substep budget.
 				remainingBudget := maxSubSteps - subSteps
