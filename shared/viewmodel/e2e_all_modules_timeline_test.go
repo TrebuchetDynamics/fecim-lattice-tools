@@ -17,6 +17,9 @@ import (
 )
 
 func TestAllModulesE2ESnapshotTimelineStateTransitions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E timeline: runs full action sequences across all modules")
+	}
 	tmp := t.TempDir()
 	cases := []struct {
 		name     string

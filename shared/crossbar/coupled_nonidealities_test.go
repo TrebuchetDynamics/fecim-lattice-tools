@@ -385,6 +385,9 @@ func TestCoupledTemperatureEffects(t *testing.T) {
 //
 // Expected: System doesn't crash and produces bounded outputs
 func TestCoupledWorstCase(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 64×64 coupled worst-case: large array with full non-ideality coupling")
+	}
 	rand.Seed(789)
 
 	cfg := &Config{
@@ -492,6 +495,9 @@ func TestCoupledWorstCase(t *testing.T) {
 //
 // Expected: Relative error increases with array size
 func TestCoupledVsIdeal_ArraySizeScaling(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping coupled vs ideal array size scaling: sizes up to 64×64")
+	}
 	rand.Seed(1234)
 
 	sizes := []int{4, 8, 16, 32, 64}

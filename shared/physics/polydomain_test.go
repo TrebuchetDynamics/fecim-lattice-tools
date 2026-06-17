@@ -6,6 +6,9 @@ import (
 )
 
 func TestPolydomainEnsemble_IntermediateRemanentStates(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping polydomain intermediate-states sweep: multi-domain LK write loop")
+	}
 	mat := LiteratureSuperlattice()
 	s := NewLKSolver()
 	s.ConfigureFromMaterial(mat)
@@ -33,6 +36,9 @@ func TestPolydomainEnsemble_IntermediateRemanentStates(t *testing.T) {
 }
 
 func TestPolydomainEnsemble_30Levels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 30-level polydomain write sweep: 96 domains × 25 iterations each")
+	}
 	mat := LiteratureSuperlattice()
 	numLevels := 30
 	success := 0
@@ -65,6 +71,9 @@ func TestPolydomainEnsemble_30Levels(t *testing.T) {
 }
 
 func TestPolydomainEnsemble_ReproducibleWithSeed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping polydomain seed reproducibility: two full LK P-E loops with 96 domains")
+	}
 	mat := LiteratureSuperlattice()
 	mk := func() *LKSolver {
 		s := NewLKSolver()

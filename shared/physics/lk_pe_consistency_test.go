@@ -147,6 +147,9 @@ func extractPrEc(fields, pols []float64) (pr, ec float64, prOK, ecOK bool) {
 // polarization to its starting value. The start and end P must match within 1%
 // of Ps, confirming no net drift from numerical dissipation or asymmetry.
 func TestLK_LoopClosure(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping LK P-E loop closure: 3 materials × 200 LK steps/point")
+	}
 	for _, tc := range hzoMaterials() {
 		t.Run(tc.name, func(t *testing.T) {
 			mat := tc.mat
@@ -221,6 +224,9 @@ func TestLK_LoopClosure(t *testing.T) {
 //     Materials with low viscosity show larger Ec shifts because the solver
 //     switches faster. Assert within 50%.
 func TestLK_PrEcMeasurement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping LK Pr/Ec extraction: 3 materials × full P-E sweep")
+	}
 	for _, tc := range hzoMaterials() {
 		t.Run(tc.name, func(t *testing.T) {
 			mat := tc.mat
@@ -302,6 +308,9 @@ func TestLK_PrEcMeasurement(t *testing.T) {
 //   - Ec agreement within 30% (LK dynamic Ec depends on sweep rate; Preisach
 //     uses direct field-to-polarization mapping)
 func TestLK_PreisachConsistency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping LK vs Preisach consistency: full P-E sweep for both engines")
+	}
 	mat := physics.DefaultHZO()
 
 	// --- Preisach P-E loop ---

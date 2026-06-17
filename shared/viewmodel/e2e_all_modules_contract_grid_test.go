@@ -16,6 +16,9 @@ import (
 )
 
 func TestAllModulesE2ESnapshotContractGrid(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E contract grid: initializes all modules and runs PUND/FORC")
+	}
 	cases := []struct {
 		name           string
 		module         viewmodel.ModulePort

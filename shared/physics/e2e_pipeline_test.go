@@ -451,6 +451,9 @@ func TestE2E_EnduranceDegradationCurve(t *testing.T) {
 // TestE2E_WriteControllerFullPipeline tests the WriteController with full
 // reset and convergence verification.
 func TestE2E_WriteControllerFullPipeline(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full write-controller pipeline: 30-iteration LK convergence loop")
+	}
 	mat := DefaultHZO()
 	solver := NewLKSolver()
 	solver.ConfigureFromMaterial(mat)

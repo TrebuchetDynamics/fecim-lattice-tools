@@ -17,6 +17,9 @@ import (
 )
 
 func TestAllModulesE2EScenarioMatrixDescriptorCompositionAndTrust(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E scenario matrix: runs full descriptor composition across module configurations")
+	}
 	type scenario struct {
 		name         string
 		rows         string

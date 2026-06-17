@@ -17,6 +17,9 @@ import (
 )
 
 func TestAllModulesE2EAdvertisedActionCatalogExecutableOrClassified(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules action catalog E2E: initializes all modules and executes actions")
+	}
 	modules := []viewmodel.ModulePort{
 		hystvm.New(),
 		crossbarvm.New(8, 8),

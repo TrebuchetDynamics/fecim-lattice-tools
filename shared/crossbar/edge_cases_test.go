@@ -334,6 +334,9 @@ func TestThermalPhysicsModel_ExtremeTemperatures(t *testing.T) {
 // =============================================================================
 
 func TestNewArray_LargeArrays(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping large array allocation: sizes up to 1024×1024")
+	}
 	tests := []struct {
 		name    string
 		rows    int

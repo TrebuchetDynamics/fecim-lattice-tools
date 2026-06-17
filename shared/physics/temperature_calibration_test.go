@@ -46,6 +46,9 @@ func TestHZO10nmTemperatureCalibration_DataIntegrity(t *testing.T) {
 }
 
 func TestValidateTemperatureResponse_TrendCorrect(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping temperature calibration sweep: LK loop across 7 temperatures")
+	}
 	cal := HZO10nmTemperatureCalibration()
 	solver := NewLKSolver()
 
@@ -93,6 +96,9 @@ func TestValidateTemperatureResponse_TrendCorrect(t *testing.T) {
 }
 
 func TestValidateTemperatureResponse_ReasonableMismatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping temperature calibration sweep: LK loop across 7 temperatures")
+	}
 	cal := HZO10nmTemperatureCalibration()
 	solver := NewLKSolver()
 

@@ -40,6 +40,9 @@ type polyConvergenceReport struct {
 }
 
 func TestPolydomainEnsemble_DomainCountConvergence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping multi-domain convergence scan: runs up to 200 LK domains × 20k steps each")
+	}
 	mat := DefaultHZO()
 	const seed uint64 = 99
 	domainCounts := []int{5, 10, 20, 50, 100, 200}

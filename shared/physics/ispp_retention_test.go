@@ -117,6 +117,9 @@ func TestRetentionDwell_PassesForDefaultHZO(t *testing.T) {
 // coefficient causes measurable drift during the zero-field dwell,
 // triggering retention failures.
 func TestRetentionDwell_DetectsDrift(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping retention drift detection: multi-step LK dwell simulation")
+	}
 	mat := DefaultHZO()
 	// Dramatically increase depolarization to destabilize intermediate states.
 	// With K_dep >> Ec, intermediate polarization values are pushed toward

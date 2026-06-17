@@ -12,6 +12,9 @@ import (
 )
 
 func TestModule4CircuitsViewModelE2EParallelIndependentSessions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping E2E parallel sessions: full circuits viewmodel workflow per session")
+	}
 	cases := []struct {
 		name         string
 		rows         string
@@ -109,6 +112,9 @@ func TestModule4CircuitsViewModelE2EParallelIndependentSessions(t *testing.T) {
 }
 
 func TestModule4CircuitsViewModelE2EExportTraversalFailuresAreSideEffectSafe(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping E2E export failure traversal: full circuits module workflow")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
 		t.Fatalf("run compute: %v", err)

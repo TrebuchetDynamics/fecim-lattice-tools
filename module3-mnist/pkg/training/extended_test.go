@@ -12,6 +12,9 @@ import (
 
 // TestMNISTNetwork_Forward verifies forward pass produces valid outputs
 func TestMNISTNetwork_Forward(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping MNIST forward pass: creates 64×784 crossbar array under race overhead")
+	}
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 64, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})
@@ -59,6 +62,9 @@ func TestMNISTNetwork_Forward(t *testing.T) {
 
 // TestMNISTNetwork_Forward_WithScaleOffset tests forward pass with loaded weights
 func TestMNISTNetwork_Forward_WithScaleOffset(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping MNIST forward with scale offset: creates 32×784 crossbar array")
+	}
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 32, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})
@@ -184,6 +190,9 @@ func TestMNISTNetwork_SaveLoadWeights(t *testing.T) {
 
 // TestMNISTNetwork_GetBiases verifies bias accessors return correct shapes
 func TestMNISTNetwork_GetBiases(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping MNIST bias check: creates 64×784 crossbar array under race overhead")
+	}
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 64, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})
@@ -220,6 +229,9 @@ func TestMNISTNetwork_GetBiases(t *testing.T) {
 
 // TestMNISTNetwork_TrainingFlow verifies one training step produces valid loss
 func TestMNISTNetwork_TrainingFlow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping MNIST training flow: multi-batch crossbar MVM loop")
+	}
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 32, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
 	})

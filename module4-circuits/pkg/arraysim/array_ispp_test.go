@@ -16,6 +16,9 @@ func testArrayCfg(rows, cols int) ArrayConfig {
 }
 
 func TestArrayISPP_8x8_Checkerboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping array ISPP: programs multiple crossbar cells with LK write loops")
+	}
 	rows, cols := 8, 8
 	target := make([][]int, rows)
 	for r := 0; r < rows; r++ {
@@ -37,6 +40,9 @@ func TestArrayISPP_8x8_Checkerboard(t *testing.T) {
 }
 
 func TestArrayISPP_16x16_Gradient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping array ISPP: programs multiple crossbar cells with LK write loops")
+	}
 	rows, cols := 16, 16
 	target := make([][]int, rows)
 	for r := 0; r < rows; r++ {
@@ -58,6 +64,9 @@ func TestArrayISPP_16x16_Gradient(t *testing.T) {
 }
 
 func TestArrayISPP_DisturbDoesNotFlip(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping array ISPP: programs multiple crossbar cells with LK write loops")
+	}
 	rows, cols := 8, 8
 	target := make([][]int, rows)
 	for r := 0; r < rows; r++ {
@@ -81,6 +90,9 @@ func TestArrayISPP_DisturbDoesNotFlip(t *testing.T) {
 }
 
 func TestArrayISPP_ScalingNotQuartic(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping array ISPP: programs multiple crossbar cells with LK write loops")
+	}
 	mkTarget := func(n int) [][]int {
 		t := make([][]int, n)
 		for r := 0; r < n; r++ {

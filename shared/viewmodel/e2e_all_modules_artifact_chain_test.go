@@ -18,6 +18,9 @@ import (
 )
 
 func TestAllModulesE2EArtifactAndSnapshotChain(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E artifact chain: runs physics diagnostics and exports across all modules")
+	}
 	tmp := t.TempDir()
 
 	// Module 1: produce physics diagnostics and export artifacts.

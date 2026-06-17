@@ -11,6 +11,9 @@ import (
 )
 
 func TestModule4CircuitsViewModelE2EWideWorkflowArtifactMatrix(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping E2E wide workflow matrix: full circuits module action sequence")
+	}
 	m := New()
 	workflow := []viewmodel.Action{
 		{ID: ActionResizeArray, Payload: map[string]string{"rows": "16", "cols": "8"}},
@@ -108,6 +111,9 @@ func TestModule4CircuitsViewModelE2EWideWorkflowArtifactMatrix(t *testing.T) {
 }
 
 func TestModule4CircuitsViewModelE2EInvalidActionsPreserveState(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping E2E invalid-action state preservation: full circuits module sequence")
+	}
 	m := New()
 	valid := []viewmodel.Action{
 		{ID: ActionResizeArray, Payload: map[string]string{"rows": "8", "cols": "4"}},

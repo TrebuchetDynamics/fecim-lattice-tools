@@ -243,6 +243,9 @@ func TestConcurrentStressISPPDifferentCells(t *testing.T) {
 
 // (4) Verify memory usage stays bounded during concurrent access.
 func TestConcurrentStressMemoryBounded(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping concurrent stress: 32 goroutines × 1000 crossbar ops")
+	}
 	const size = 16
 	const goroutines = 32
 	const opsPerGoroutine = 1000

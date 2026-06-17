@@ -128,6 +128,9 @@ func collectCrossEngineSweep(t *testing.T) (temps, prPreisach, prLK, ecPreisach,
 }
 
 func TestCrossEngine_PrVsTemperature(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cross-engine temperature sweep: 11 temps × 193k LK steps each")
+	}
 	temps, prPreisach, prLK, _, _ := collectCrossEngineSweep(t)
 	for i := 1; i < len(temps); i++ {
 		if prPreisach[i] > prPreisach[i-1]+1e-9 {
@@ -140,6 +143,9 @@ func TestCrossEngine_PrVsTemperature(t *testing.T) {
 }
 
 func TestCrossEngine_EcVsTemperature(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cross-engine temperature sweep: 11 temps × 193k LK steps each")
+	}
 	temps, _, _, ecPreisach, ecLK := collectCrossEngineSweep(t)
 	for i := 1; i < len(temps); i++ {
 		if ecPreisach[i] > ecPreisach[i-1]+1e-6 {

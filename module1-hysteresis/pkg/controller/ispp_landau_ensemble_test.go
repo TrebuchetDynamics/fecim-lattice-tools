@@ -11,6 +11,9 @@ import (
 // converges on representative intermediate targets when LK is run in polydomain
 // ensemble mode.
 func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping LK polydomain ISPP ensemble: 3 materials × 8 levels × 30 iterations each")
+	}
 	materials := []struct {
 		id  string
 		mat *sharedphysics.HZOMaterial

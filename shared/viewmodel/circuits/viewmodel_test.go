@@ -13,6 +13,9 @@ import (
 )
 
 func TestModuleImplementsModulePort(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	var m viewmodel.ModulePort = New()
 	if m == nil {
 		t.Fatal("New() returned nil")
@@ -20,12 +23,18 @@ func TestModuleImplementsModulePort(t *testing.T) {
 }
 
 func TestDescriptorHasCorrectID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	if New().Descriptor().ID != viewmodel.ModuleCircuits {
 		t.Error("wrong ID")
 	}
 }
 
 func TestSnapshotContainsCircuitBlocks(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	s := New().Snapshot()
 	ids := map[string]bool{}
 	for _, m := range s.Metrics {
@@ -39,6 +48,9 @@ func TestSnapshotContainsCircuitBlocks(t *testing.T) {
 }
 
 func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	s := New().Snapshot()
 
 	for _, id := range []string{
@@ -99,6 +111,9 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 }
 
 func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 
 	actions := []viewmodel.Action{
@@ -145,6 +160,9 @@ func TestApplyActionUpdatesUnifiedCircuitControls(t *testing.T) {
 }
 
 func TestLoggerVerbosityControlsFollowLegacyLevels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 
 	defaultSnapshot := m.Snapshot()
@@ -186,6 +204,9 @@ func TestLoggerVerbosityControlsFollowLegacyLevels(t *testing.T) {
 }
 
 func TestLoggerVerbosityRejectsUnknownValue(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetLoggerVerbosity,
@@ -203,6 +224,9 @@ func TestLoggerVerbosityRejectsUnknownValue(t *testing.T) {
 }
 
 func TestSnapshotContainsHalfSelectStressState(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetOperationMode,
@@ -237,6 +261,9 @@ func TestSnapshotContainsHalfSelectStressState(t *testing.T) {
 }
 
 func TestHalfSelectStressBudgetFollowsArchitecture(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetOperationMode,
@@ -280,6 +307,9 @@ func TestHalfSelectStressBudgetFollowsArchitecture(t *testing.T) {
 }
 
 func TestSnapshotContainsPVTInvestigationSummaries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	s := New().Snapshot()
 
 	wantMetrics := map[string]string{
@@ -299,6 +329,9 @@ func TestSnapshotContainsPVTInvestigationSummaries(t *testing.T) {
 }
 
 func TestPVTInvestigationSummaryFollowsADCBits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetADCBits,
@@ -313,6 +346,9 @@ func TestPVTInvestigationSummaryFollowsADCBits(t *testing.T) {
 }
 
 func TestSnapshotContainsReferenceSpecSummaries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	s := New().Snapshot()
 
 	wantMetrics := map[string]string{
@@ -334,6 +370,9 @@ func TestSnapshotContainsReferenceSpecSummaries(t *testing.T) {
 }
 
 func TestReferenceSpecSummaryFollowsArrayAndDACBits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionResizeArray,
@@ -365,6 +404,9 @@ func TestReferenceSpecSummaryFollowsArrayAndDACBits(t *testing.T) {
 }
 
 func TestReferenceSpecExportBuffersJSONArtifact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportReferenceSpecs}); err != nil {
 		t.Fatalf("export reference specs: %v", err)
@@ -419,6 +461,9 @@ func TestReferenceSpecExportBuffersJSONArtifact(t *testing.T) {
 }
 
 func TestReferenceSpecExportWritesValidatedPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	path := filepath.Join(t.TempDir(), "circuits-reference-specs.json")
 	if err := m.ApplyAction(viewmodel.Action{
@@ -444,6 +489,9 @@ func TestReferenceSpecExportWritesValidatedPath(t *testing.T) {
 }
 
 func TestReferenceSpecExportRejectsTraversalPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionExportReferenceSpecs,
@@ -461,6 +509,9 @@ func TestReferenceSpecExportRejectsTraversalPath(t *testing.T) {
 }
 
 func TestSnapshotContainsReferenceTimingSummaries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	s := New().Snapshot()
 
 	wantMetrics := map[string]string{
@@ -482,6 +533,9 @@ func TestSnapshotContainsReferenceTimingSummaries(t *testing.T) {
 }
 
 func TestReferenceTimingSelectorIsIndependentFromOperationMode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetOperationMode,
@@ -525,6 +579,9 @@ func TestReferenceTimingSelectorIsIndependentFromOperationMode(t *testing.T) {
 }
 
 func TestReferenceTimingSelectorFollowsAllOperations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -545,6 +602,9 @@ func TestReferenceTimingSelectorFollowsAllOperations(t *testing.T) {
 }
 
 func TestReferenceTimingSelectorRejectsUnknownOperation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -562,6 +622,9 @@ func TestReferenceTimingSelectorRejectsUnknownOperation(t *testing.T) {
 }
 
 func TestReferenceTimingWaveformMetadataFollowsLegacySignals(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	s := m.Snapshot()
 
@@ -601,6 +664,9 @@ func TestReferenceTimingWaveformMetadataFollowsLegacySignals(t *testing.T) {
 }
 
 func TestReferenceTimingWaveformMetadataFollowsTimingOperation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -639,6 +705,9 @@ func TestReferenceTimingWaveformMetadataFollowsTimingOperation(t *testing.T) {
 }
 
 func TestReferenceTimingWaveformPlotFollowsActiveOperation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	read := plotByID(t, m.Snapshot(), "timing_waveform_active")
 	if read.Title != "READ Timing Waveform" {
@@ -680,6 +749,9 @@ func TestReferenceTimingWaveformPlotFollowsActiveOperation(t *testing.T) {
 }
 
 func TestReferenceTimingWaveformPanelSummarizesActiveWaveform(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -730,6 +802,9 @@ func TestReferenceTimingWaveformPanelSummarizesActiveWaveform(t *testing.T) {
 }
 
 func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetOperationMode,
@@ -806,6 +881,9 @@ func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
 }
 
 func TestReferenceTimingExportWritesValidatedPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	path := filepath.Join(t.TempDir(), "circuits-reference-timing.json")
 	if err := m.ApplyAction(viewmodel.Action{
@@ -831,6 +909,9 @@ func TestReferenceTimingExportWritesValidatedPath(t *testing.T) {
 }
 
 func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionExportReferenceTiming,
@@ -848,6 +929,9 @@ func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
 }
 
 func TestReferenceTimingSVGExportBuffersActiveWaveform(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -891,6 +975,9 @@ func TestReferenceTimingSVGExportBuffersActiveWaveform(t *testing.T) {
 }
 
 func TestReferenceTimingSVGExportWritesValidatedPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	path := filepath.Join(t.TempDir(), "circuits-reference-timing.svg")
 	if err := m.ApplyAction(viewmodel.Action{
@@ -916,6 +1003,9 @@ func TestReferenceTimingSVGExportWritesValidatedPath(t *testing.T) {
 }
 
 func TestReferenceTimingSVGExportRejectsTraversalPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionExportReferenceTimingSVG,
@@ -933,6 +1023,9 @@ func TestReferenceTimingSVGExportRejectsTraversalPath(t *testing.T) {
 }
 
 func TestReferenceTimingAnimationCapturesComputeSteps(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -981,6 +1074,9 @@ func TestReferenceTimingAnimationCapturesComputeSteps(t *testing.T) {
 }
 
 func TestReferenceTimingAnimationFollowsReadAndWriteModes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionAnimateReferenceTiming}); err != nil {
 		t.Fatalf("animate default read timing: %v", err)
@@ -1013,6 +1109,9 @@ func TestReferenceTimingAnimationFollowsReadAndWriteModes(t *testing.T) {
 }
 
 func TestReferenceTimingPlaybackControlsAdvanceDeterministically(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -1081,6 +1180,9 @@ func TestReferenceTimingPlaybackControlsAdvanceDeterministically(t *testing.T) {
 }
 
 func TestReferenceTimingPlaybackStepCompletesAtFinalStep(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionSetTimingOperation,
@@ -1111,6 +1213,9 @@ func TestReferenceTimingPlaybackStepCompletesAtFinalStep(t *testing.T) {
 }
 
 func TestOperationLogRecordsControlsAndOperations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	actions := []viewmodel.Action{
 		{ID: ActionSetOperationMode, Payload: map[string]string{"mode": OperationWrite}},
@@ -1150,6 +1255,9 @@ func TestOperationLogRecordsControlsAndOperations(t *testing.T) {
 }
 
 func TestOperationLogKeepsMostRecentEntries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	for level := 0; level < 15; level++ {
 		if err := m.ApplyAction(viewmodel.Action{
@@ -1177,6 +1285,9 @@ func TestOperationLogKeepsMostRecentEntries(t *testing.T) {
 }
 
 func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
 		t.Fatalf("run compute: %v", err)
@@ -1234,6 +1345,9 @@ func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
 }
 
 func TestComputeRunLogCapturesDetailedMVMSummary(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
 		ID:      ActionResizeArray,
@@ -1320,6 +1434,9 @@ func TestComputeRunLogCapturesDetailedMVMSummary(t *testing.T) {
 }
 
 func TestOperationLogExportOmitsComputeRunWhenLatestOperationIsNotCompute(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
 		t.Fatalf("run compute: %v", err)
@@ -1341,6 +1458,9 @@ func TestOperationLogExportOmitsComputeRunWhenLatestOperationIsNotCompute(t *tes
 }
 
 func TestOperationLogExportWritesValidatedPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunRead}); err != nil {
 		t.Fatalf("run read: %v", err)
@@ -1369,6 +1489,9 @@ func TestOperationLogExportWritesValidatedPath(t *testing.T) {
 }
 
 func TestOperationLogExportRejectsTraversalPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping circuits New(): runs ISPP simulation at construction time")
+	}
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunRead}); err != nil {
 		t.Fatalf("run read: %v", err)

@@ -402,6 +402,9 @@ func TestWriteController_Stress_PredictState(t *testing.T) {
 // ============================================================================
 
 func TestWriteController_Stress_RapidWrites(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping rapid writes stress: many sequential LK write-controller loops")
+	}
 	mat := DefaultHZO()
 	s := NewLKSolver()
 	s.ConfigureFromMaterial(mat)
@@ -510,6 +513,9 @@ func TestLKSolver_Stress_EdgeCases(t *testing.T) {
 }
 
 func TestWriteController_Stress_EdgeCases(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping write-controller edge-case stress: multiple LK write loops per case")
+	}
 	tests := []struct {
 		name      string
 		setupFunc func(*WriteController, *HZOMaterial)

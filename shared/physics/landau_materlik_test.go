@@ -30,6 +30,9 @@ func interpYAtX0(x1, y1, x2, y2 float64) (float64, bool) {
 }
 
 func TestLandauMaterlik_PELoop_PrEcAt300K10nm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full P-E loop trace: 300 × 3000 LK steps per half-sweep")
+	}
 	mat := MaterlikHfO2()
 
 	s := NewLKSolver()

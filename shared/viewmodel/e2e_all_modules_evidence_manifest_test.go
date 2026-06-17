@@ -36,6 +36,9 @@ type allModulesEvidenceRecordE2E struct {
 }
 
 func TestAllModulesE2EEvidenceManifestArtifactCoversTrustAndSurfaces(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E evidence manifest: traverses all module artifacts and trust surfaces")
+	}
 	modules := []viewmodel.ModulePort{
 		hystvm.New(),
 		crossbarvm.New(10, 6),

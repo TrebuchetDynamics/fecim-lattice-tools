@@ -11,6 +11,9 @@ import (
 )
 
 func TestE2E_M1GUISmoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping M1 GUI smoke: canvas.Capture() triggers race in Fyne v2.7.4 font cache under race detector")
+	}
 	t.Setenv("FECIM_DISABLE_CALIBRATION_SAVE", "1")
 	t.Setenv("FECIM_DISABLE_STARTUP_CALIBRATION", "1")
 

@@ -81,6 +81,9 @@ func postWriteConductance(solver *LKSolver, mat *HZOMaterial) float64 {
 // binary-search to converge (all correspond to negative target polarizations,
 // avoiding the steepest part of the hysteresis crossing).
 func TestISPP_ConvergesToTargetLevel(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full ISPP write-verify integration: 5 levels × 50 LK iterations each")
+	}
 	mat := DefaultHZO()
 	totalLevels := mat.GetNumLevels() // 30
 
@@ -129,6 +132,9 @@ func TestISPP_ConvergesToTargetLevel(t *testing.T) {
 // -Pr). This validates that the controller works across multiple write cycles
 // on the same solver instance.
 func TestISPP_ConvergesFromArbitraryState(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full ISPP multi-state write: two sequential LK write loops")
+	}
 	mat := DefaultHZO()
 	totalLevels := mat.GetNumLevels()
 
@@ -184,6 +190,9 @@ func TestISPP_ConvergesFromArbitraryState(t *testing.T) {
 // A very low MaxVoltage (well below coercive voltage) makes the target
 // conductance level impossible to reach.
 func TestISPP_FailsGracefully(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full ISPP failure path: 50 LK iterations exhausting max voltage")
+	}
 	mat := DefaultHZO()
 	totalLevels := mat.GetNumLevels()
 
@@ -219,6 +228,9 @@ func TestISPP_FailsGracefully(t *testing.T) {
 // viscosity amplifies the response to each programming pulse, making overshoot
 // likely for mid-range targets.
 func TestISPP_OvershootHandling(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping ISPP overshoot integration: 60 LK iterations with low viscosity")
+	}
 	mat := DefaultHZO()
 	totalLevels := mat.GetNumLevels()
 

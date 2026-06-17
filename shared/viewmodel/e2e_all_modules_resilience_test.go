@@ -17,6 +17,9 @@ import (
 )
 
 func TestAllModulesE2EInvalidActionMatrixPreservesCoreContracts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E resilience: runs valid+invalid action sequences across all modules")
+	}
 	cases := []struct {
 		name    string
 		module  viewmodel.ModulePort
@@ -56,6 +59,9 @@ func TestAllModulesE2EInvalidActionMatrixPreservesCoreContracts(t *testing.T) {
 }
 
 func TestAllModulesE2EParallelLifecycleAndActionStorm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E parallel lifecycle: concurrent goroutines storm all module actions")
+	}
 	cases := []struct {
 		name    string
 		factory func() viewmodel.ModulePort

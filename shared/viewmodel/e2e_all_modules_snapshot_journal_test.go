@@ -31,6 +31,9 @@ type snapshotJournalRecordE2E struct {
 }
 
 func TestAllModulesE2ESnapshotJournalRoundTripAndDeltas(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E journal: full snapshot round-trip across all modules")
+	}
 	cases := []struct {
 		name         string
 		module       viewmodel.ModulePort

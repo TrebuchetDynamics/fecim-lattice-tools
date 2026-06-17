@@ -16,6 +16,9 @@ import (
 )
 
 func TestAllModulesE2EWideViewModelWorkflowMatrix(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E wide workflow matrix: exercises all module action sequences")
+	}
 	mods := []struct {
 		name     string
 		module   viewmodel.ModulePort
@@ -69,6 +72,9 @@ func TestAllModulesE2EWideViewModelWorkflowMatrix(t *testing.T) {
 }
 
 func TestAllModulesE2EDesignCompositionPipeline(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-modules E2E design composition pipeline: full multi-module design flow")
+	}
 	h := hystvm.New()
 	x := crossbarvm.New(12, 10)
 	c := circuitsvm.New()

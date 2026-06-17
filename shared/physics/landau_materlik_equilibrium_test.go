@@ -21,6 +21,9 @@ import (
 // while real polycrystalline HfO₂ has higher Ec due to domain wall pinning and
 // grain boundaries. The ConfigureFromMaterial() rescaling addresses this gap.
 func TestLandauEquilibrium_Materlik2015_Analytical(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 6M-step L-K equilibrium trace: too slow under race detector")
+	}
 	// Raw Materlik 2015 LGD coefficients (Table I, orthorhombic Pca21 HfO₂).
 	// doi:10.1063/1.4916229
 	const (
@@ -366,6 +369,9 @@ func TestLandauEquilibrium_Materlik2015_AnalyticalCurve(t *testing.T) {
 // by ConfigureFromMaterial (with Ec-rescaling and Pr-matching).
 // This tests the full engine pipeline, not just the raw LGD math.
 func TestLandauEquilibrium_ConfiguredMaterial(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 3M-step equilibrium trace: takes 12s under race detector")
+	}
 	mat := MaterlikHfO2()
 
 	s := NewLKSolver()
