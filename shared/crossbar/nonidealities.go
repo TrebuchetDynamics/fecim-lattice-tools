@@ -477,33 +477,6 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 	}
 }
 
-// estimateCurrent estimates current draw for a word line.
-// Uses the configured conductance model (linear, exponential, or lookup).
-func (a *Array) estimateCurrent(row int, input []float64) float64 {
-	var current float64
-	for j := 0; j < len(input) && j < a.config.Cols; j++ {
-		// Use the new physics-aware conductance conversion
-		gPhys := a.GetPhysicalConductanceForCell(row, j)
-		// I = G * V
-		current += gPhys * input[j]
-	}
-	return current
-}
-
-// estimateColumnCurrent estimates current through a bit line column.
-// Uses the configured conductance model (linear, exponential, or lookup).
-func (a *Array) estimateColumnCurrent(col int, input []float64) float64 {
-	var current float64
-	for i := 0; i < a.config.Rows; i++ {
-		// Use the new physics-aware conductance conversion
-		gPhys := a.GetPhysicalConductanceForCell(i, col)
-		// I = G * V
-		if col < len(input) {
-			current += gPhys * input[col]
-		}
-	}
-	return current
-}
 
 // SneakPathAnalysis contains sneak path current analysis results.
 type SneakPathAnalysis struct {
