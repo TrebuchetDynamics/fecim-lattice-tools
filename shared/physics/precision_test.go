@@ -26,25 +26,6 @@ func (linearSymmetricEverett) Calculate(alpha, beta float64) float64 {
 	return 0.5 * (alpha - beta)
 }
 
-func computePolarizationNaive(ps *PreisachStack, currentE float64) float64 {
-	sum := 0.0
-	n := len(ps.Stack)
-	if n == 1 {
-		sum += ps.Everett.Calculate(currentE, ps.Stack[0].E)
-		return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
-	}
-	for i := 1; i < n; i += 2 {
-		maxVal := ps.Stack[i].E
-		minPrev := ps.Stack[i-1].E
-		sum += ps.Everett.Calculate(maxVal, minPrev)
-		if i+1 < n {
-			sum -= ps.Everett.Calculate(maxVal, ps.Stack[i+1].E)
-		} else {
-			sum -= ps.Everett.Calculate(maxVal, currentE)
-		}
-	}
-	return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
-}
 
 func computePolarizationBig(ps *PreisachStack, currentE float64) float64 {
 	prec := uint(256)
