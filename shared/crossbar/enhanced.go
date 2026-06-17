@@ -163,7 +163,7 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 	var effectiveVoltages [][]float64
 	if opts.EnableIRDrop {
 		params := DefaultWireParams()
-		archName := "1T1R"
+		var archName string
 
 		// Architecture affects IR drop via sneak current contribution:
 		// - 0T1R (passive): Highest IR drop due to full sneak currents

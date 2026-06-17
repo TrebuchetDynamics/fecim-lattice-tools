@@ -229,11 +229,10 @@ func (sp *SneakPathAnalyzer) AnalyzeWithMitigation(targetRow, targetCol int, vol
 
 			// Apply mitigation effects
 			effectiveVoltage := voltage
-			conductanceMultiplier := 1.0
 
 			if mit.UseSelector {
 				// Selector reduces off-path conductance
-				conductanceMultiplier = 1.0 / mit.SelectorOnOff
+				conductanceMultiplier := 1.0 / mit.SelectorOnOff
 				g1 *= conductanceMultiplier
 				g2 *= conductanceMultiplier
 				g3 *= conductanceMultiplier
