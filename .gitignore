@@ -24,6 +24,7 @@ __pycache__/
 shared/logging/
 /fecim-lattice-tools
 /fecim-lattice-tools-next
+/gotest_pkgsum
 /fecim-screenshotter
 recordings/
 /screenshots/
@@ -138,7 +139,6 @@ validation/literature/output/
 .claude-flow/
 .swarm/
 .mcp.json
-/graphify-out/
 2026-02-18_15-48.png
 
 .claude/*
