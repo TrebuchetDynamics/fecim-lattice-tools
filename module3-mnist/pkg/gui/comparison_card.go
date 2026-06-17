@@ -395,12 +395,6 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	return img
 }
 
-// drawPredictionCard draws a single prediction card (legacy).
-func (cc *ComparisonCard) drawPredictionCard(img *image.RGBA, x, y, w, h int,
-	title, subtitle string, prediction int, confidence float64, accentColor color.RGBA, probs []float64) {
-	cc.drawPredictionCardEnhanced(img, x, y, w, h, title, subtitle, prediction, confidence, accentColor, probs, 3)
-}
-
 // drawPredictionCardEnhanced draws a prediction card with configurable digit scale.
 func (cc *ComparisonCard) drawPredictionCardEnhanced(img *image.RGBA, x, y, w, h int,
 	title, subtitle string, prediction int, confidence float64, accentColor color.RGBA, probs []float64, digitScale int) {

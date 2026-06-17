@@ -121,18 +121,6 @@ func setInferenceExplanation(ep *sharedwidgets.EducationalPanel, phase int) {
 	ep.SetContent(title, content)
 }
 
-// setDrawingExplanation sets drawing mode content on the given panel.
-func setDrawingExplanation(ep *sharedwidgets.EducationalPanel) {
-	content := "Click and drag to draw.\n" +
-		"Right-click to clear.\n\n" +
-		"As you draw, the network\n" +
-		"runs inference instantly.\n\n" +
-		"28×28 = 784 inputs\n" +
-		"Normalized 0.0 to 1.0\n\n" +
-		"Watch the layers light up!"
-	ep.SetContent("Draw a Digit", content)
-}
-
 // setEvaluationExplanation sets evaluation content on the given panel.
 func setEvaluationExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "Testing on 1000 digits...\n\n" +
