@@ -13,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/physics"
@@ -429,20 +428,6 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		container.NewCenter(citation),
 	)
 	return widget.NewSimpleRenderer(content)
-}
-
-// createStatusLabel creates an icon showing status.
-func createStatusLabel(status int) fyne.CanvasObject {
-	var icon fyne.Resource
-	switch status {
-	case 0:
-		icon = theme.CancelIcon()
-	case 1:
-		icon = theme.WarningIcon()
-	case 2:
-		icon = theme.ConfirmIcon()
-	}
-	return widget.NewIcon(icon)
 }
 
 // formatNumberMarket formats numbers with commas.

@@ -4,14 +4,11 @@ package gui
 
 import (
 	"fmt"
-	"image"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"fyne.io/fyne/v2"
 
 	"fecim-lattice-tools/shared/export"
 )
@@ -162,84 +159,6 @@ func (ca *ComparisonApp) exportComparisonData() {
 // exportVisualization exports the current visualization as a PNG
 func (ca *ComparisonApp) exportVisualization() {
 	export.ExportVisualization(ca.window, "comparison", debug)
-}
-
-// createExportButtons creates the export button panel for comparison
-func (ca *ComparisonApp) createExportButtons() fyne.CanvasObject {
-	config := export.DefaultExportConfig("comparison")
-	config.OutputDir = filepath.Join("exports", "comparison")
-
-	return export.NewExportButtons(config, &comparisonExportProvider{app: ca}, ca.window)
-}
-
-// comparisonExportProvider implements export.ExportDataProvider for comparison
-type comparisonExportProvider struct {
-	app *ComparisonApp
-}
-
-// GetCSVData returns comparison data as CSV
-func (p *comparisonExportProvider) GetCSVData() (*export.CSVData, error) {
-	totalMACs := float64(p.app.currentInferences) * float64(getWorkloadMACs(p.app.currentWorkload))
-	cpuEnergy := totalMACs * p.app.cpuSpec.EnergyFJ / 1e15 / 3600
-	gpuEnergy := totalMACs * p.app.gpuSpec.EnergyFJ / 1e15 / 3600
-	fecimEnergy := totalMACs * p.app.fecimSpec.EnergyFJ / 1e15 / 3600
-
-	data := export.NewCSVData("Architecture", "Energy_FJ_per_MAC", "Energy_kWh_per_day", "Savings_percent")
-	data.AddRow("CPU + DRAM",
-		fmt.Sprintf("%.0f", p.app.cpuSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", cpuEnergy),
-		fmt.Sprintf("%.2f", (1-fecimEnergy/cpuEnergy)*100))
-	data.AddRow("GPU + HBM",
-		fmt.Sprintf("%.0f", p.app.gpuSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", gpuEnergy),
-		fmt.Sprintf("%.2f", (1-fecimEnergy/gpuEnergy)*100))
-	data.AddRow("FeCIM",
-		fmt.Sprintf("%.0f", p.app.fecimSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", fecimEnergy),
-		"0.00")
-
-	return data, nil
-}
-
-// GetJSONConfig returns comparison configuration as JSON-serializable data
-func (p *comparisonExportProvider) GetJSONConfig() (interface{}, error) {
-	config := ComparisonExportConfig{
-		Metadata: *export.NewExportMetadata("module5-comparison"),
-		WorkloadConfig: WorkloadConfig{
-			WorkloadName:     p.app.currentWorkload,
-			InferencesPerDay: int(p.app.currentInferences),
-			MACsPerInference: getWorkloadMACs(p.app.currentWorkload),
-		},
-		EnergySpecs: EnergySpecsExport{
-			CPUSpec: EnergySpecExport{
-				Name:     p.app.cpuSpec.Name,
-				EnergyFJ: p.app.cpuSpec.EnergyFJ,
-				Source:   p.app.cpuSpec.Source,
-				Verified: p.app.cpuSpec.Verified,
-			},
-			GPUSpec: EnergySpecExport{
-				Name:     p.app.gpuSpec.Name,
-				EnergyFJ: p.app.gpuSpec.EnergyFJ,
-				Source:   p.app.gpuSpec.Source,
-				Verified: p.app.gpuSpec.Verified,
-			},
-			FeCIMSpec: EnergySpecExport{
-				Name:     p.app.fecimSpec.Name,
-				EnergyFJ: p.app.fecimSpec.EnergyFJ,
-				Source:   p.app.fecimSpec.Source,
-				Verified: p.app.fecimSpec.Verified,
-			},
-		},
-	}
-	return config, nil
-}
-
-// GetVisualization returns the current visualization as an image
-func (p *comparisonExportProvider) GetVisualization() (image.Image, error) {
-	if p.app.window == nil {
-		return nil, fmt.Errorf("window not available")
-	}
-	return p.app.window.Canvas().Capture(), nil
 }
 
 // showExportError displays an export error dialog

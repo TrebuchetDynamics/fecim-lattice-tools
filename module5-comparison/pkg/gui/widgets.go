@@ -692,22 +692,7 @@ func (d *DataCenterTransformation) Refresh() {
 	}
 }
 
-// drawSimpleText draws text using a simple bitmap font.
-func drawSimpleText(img *image.RGBA, text string, x, y int, c color.RGBA) {
-	sharedutils.DrawSimpleText(img, text, x, y, c)
-}
-
-// drawSimpleChar draws a single character.
-func drawSimpleChar(img *image.RGBA, ch rune, x, y int, c color.RGBA) {
-	sharedutils.DrawSimpleChar(img, ch, x, y, c)
-}
-
 // drawScaledText draws text with a scaling factor.
 func drawScaledText(img *image.RGBA, text string, x, y int, scale int, c color.RGBA) {
 	sharedutils.DrawScaledText(img, text, x, y, scale, c)
-}
-
-// drawScaledChar draws a single character with scaling.
-func drawScaledChar(img *image.RGBA, ch rune, x, y int, scale int, c color.RGBA) {
-	sharedutils.DrawScaledChar(img, ch, x, y, scale, c)
 }
