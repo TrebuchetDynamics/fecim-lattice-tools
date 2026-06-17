@@ -229,42 +229,6 @@ func (n *MNISTNetwork) forwardOutput(hidden []float64) []float64 {
 	return output
 }
 
-func (n *MNISTNetwork) updateLayer2(hidden, grad []float64, lr float64) {
-	// Fetch matrix once
-	weights := n.layer2.GetConductanceMatrix()
-
-	// Update weights - gradient is in output space, need to scale to conductance space
-	// The forward pass scales by 4.0, so gradient needs inverse scaling: 1/4 = 0.25
-	for i := 0; i < 10; i++ {
-		for j := 0; j < n.hiddenSize; j++ {
-			w := weights[i][j]
-			dw := grad[i] * hidden[j] * lr * 0.25
-			newW := w - dw
-			// ProgramWeight handles quantization to 30 levels
-			n.layer2.ProgramWeight(i, j, newW)
-		}
-		// Update bias (no scaling needed)
-		n.biases2[i] -= grad[i] * lr
-	}
-}
-
-func (n *MNISTNetwork) updateLayer1(input, grad []float64, lr float64) {
-	// Fetch matrix once
-	weights := n.layer1.GetConductanceMatrix()
-
-	// Update weights - gradient is in hidden space, need to scale to conductance space
-	for i := 0; i < n.hiddenSize; i++ {
-		for j := 0; j < len(input); j++ {
-			w := weights[i][j]
-			dw := grad[i] * input[j] * lr * 0.25
-			newW := w - dw
-			// ProgramWeight handles quantization to 30 levels
-			n.layer1.ProgramWeight(i, j, newW)
-		}
-		// Update bias (no scaling needed)
-		n.biases1[i] -= grad[i] * lr
-	}
-}
 
 // Evaluate computes accuracy on a dataset.
 func (n *MNISTNetwork) Evaluate(images [][]float64, labels []int) float64 {
