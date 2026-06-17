@@ -49,15 +49,6 @@ type CalibrationData struct {
 
 const calibrationVersion = 4
 
-// Key temperatures for automotive range calibration (Kelvin)
-var keyTemperatures = []float64{
-	233, // -40C (automotive cold)
-	273, // 0C
-	300, // 27C (room temp, default)
-	373, // 100C
-	423, // 150C (automotive hot)
-}
-
 // temperatureTolerance is the max distance from a cached calibration to interpolate
 const temperatureTolerance = 25.0 // Kelvin
 const calibrationDir = "data/calibrations"

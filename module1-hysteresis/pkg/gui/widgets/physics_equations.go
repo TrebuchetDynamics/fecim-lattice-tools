@@ -683,13 +683,6 @@ func loadEquationSVGResource(eqID string) (fyne.Resource, bool) {
 	return entry.res, entry.ok
 }
 
-func loadEquationSVG(eqID string) *canvas.Image {
-	if res, ok := loadEquationSVGResource(eqID); ok {
-		return canvas.NewImageFromResource(res)
-	}
-	return nil
-}
-
 // PrefetchEquationAssets pre-warms the SVG recolor cache for the current theme.
 // Call from a background goroutine at app startup so the equations dialog opens instantly.
 func PrefetchEquationAssets() {

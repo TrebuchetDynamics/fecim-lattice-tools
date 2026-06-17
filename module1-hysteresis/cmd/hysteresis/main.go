@@ -27,16 +27,6 @@ import (
 	"fecim-lattice-tools/shared/cli"
 )
 
-// Available materials for --material flag
-var materialNames = map[string]*ferroelectric.HZOMaterial{
-	"default":      nil, // Will use DefaultHZO()
-	"fecim":        nil, // Will use FeCIMMaterial()
-	"superlattice": nil, // Will use LiteratureSuperlattice()
-	"cryogenic":    nil, // Will use CryogenicHZO()
-	"hzo32":        nil, // Will use HZOStandard32()
-	"ftj140":       nil, // Will use HZOFJT140()
-	"alscn":        nil, // Will use AlScN()
-}
 
 func getMaterial(name string) *ferroelectric.HZOMaterial {
 	switch name {
