@@ -88,11 +88,6 @@ type DualModeApp struct {
 	weightRangeLabel       *widget.Label
 	weightLevelsLabel      *widget.Label
 
-	// Quick test
-	testButton      *widget.Button
-	testResultLabel *widget.Label
-	testProgressBar *widget.ProgressBar
-
 	// Status
 	statusLabel *widget.Label
 	initialized bool // true after UI is fully built
