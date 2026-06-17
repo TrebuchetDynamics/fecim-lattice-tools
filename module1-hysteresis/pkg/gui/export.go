@@ -143,7 +143,6 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	ec := 0.0
 	ps := 0.0
 	pr := 0.0
-	temp := 300.0
 	numLevels := a.numLevels
 	waveform := a.waveform.String()
 	frequency := a.frequency
@@ -154,7 +153,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 		ps = a.material.Ps
 		pr = a.material.Pr
 	}
-	temp = a.currentTemperature()
+	temp := a.currentTemperature()
 	a.mu.RUnlock()
 
 	eFieldMVcm := make([]float64, len(eData))
