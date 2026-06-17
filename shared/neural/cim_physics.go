@@ -71,7 +71,8 @@ func (m TIAModel) TransimpedanceMag(freqHz float64) float64 {
 	}
 	fc := m.poleHz()
 	if !math.IsInf(fc, 1) && fc > 0 {
-		return m.RfOhm / math.Sqrt(1+math.Pow(freqHz/fc, 2))
+		ratio := freqHz / fc
+		return m.RfOhm / math.Sqrt(1+ratio*ratio)
 	}
 	return m.RfOhm
 }

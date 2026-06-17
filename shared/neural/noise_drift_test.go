@@ -317,9 +317,8 @@ func TestDrift_M3_NOISE_04_RefreshStrategy(t *testing.T) {
 
 	const driftCoefficient = 0.02
 	const timeConstantS = 3600.0
-	const refreshIntervalHours = 24.0 // Refresh every 24 hours
 
-	// Simulate 1 week with refresh every 24 hours
+	// Simulate 1 week; each loop iteration = 1 day = one refresh cycle
 	const totalDays = 7
 	results := make([]struct {
 		day      int
@@ -327,8 +326,8 @@ func TestDrift_M3_NOISE_04_RefreshStrategy(t *testing.T) {
 	}, totalDays+1)
 
 	for day := 0; day <= totalDays; day++ {
-		if day > 0 && day%1 == 0 {
-			// Refresh weights (reprogram array)
+		if day > 0 {
+			// Refresh weights (reprogram array) every 24 hours = every loop iteration
 			restoreWeightsFrom(net.QuantWeights1, refWeights1)
 			restoreWeightsFrom(net.QuantWeights2, refWeights2)
 			t.Logf("  Day %d: Refreshed weights", day)
