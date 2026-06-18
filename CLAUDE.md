@@ -2,15 +2,15 @@
 
 ## For AI Agents
 
-**Full reference:** See `docs/3-develop/api-reference.md` for detailed lookups.
+**Full reference:** See `docs/internals/api-reference.md` for detailed lookups.
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function | `docs/3-develop/api-reference.md` |
-| Fix an error | `docs/3-develop/testing/TESTING.md` |
-| Add a feature | `docs/3-develop/api-reference.md` |
-| Run/understand tests | `docs/3-develop/testing/TESTING.md` |
-| EDA documentation | `docs/2-learn/module6-eda/README.md` |
+| Find a function | `docs/internals/api-reference.md` |
+| Fix an error | `docs/internals/testing/TESTING.md` |
+| Add a feature | `docs/internals/api-reference.md` |
+| Run/understand tests | `docs/internals/testing/TESTING.md` |
+| EDA documentation | `docs/modules/eda/README.md` |
 
 ## Overview
 
@@ -72,7 +72,7 @@ The project includes **preset parameters** for education and visualization. Trea
 
 ## Accuracy & Honesty Policy
 
-Scientific accuracy over marketing claims. Full audit: `docs/4-research/honesty-audit.md`.
+Scientific accuracy over marketing claims. Full audit: `docs/research/honesty-audit.md`.
 
 ### Verified External Claim (Current Audit)
 
@@ -91,7 +91,7 @@ go test ./...                            # See CI for latest status
 go test ./shared/crossbar/...            # Crossbar only
 ```
 
-Full test documentation: `docs/3-develop/testing/TESTING.md`
+Full test documentation: `docs/internals/testing/TESTING.md`
 
 ## Cognee (Knowledge Engine)
 
