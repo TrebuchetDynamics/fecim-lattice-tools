@@ -1,0 +1,39 @@
+{
+  "question": "What does the peer-reviewed literature say about ferroelectric compute-in-memory devices and architectures, especially FeFET, FeTFT, FTJ, ferroelectric diode, HZO/HfO2, CAM/TCAM, neural accelerators, and evidence gaps?",
+  "sources": [
+    "rforge/openalex",
+    "rforge/arxiv",
+    "OpenAlex API"
+  ],
+  "queries": [
+    "ferroelectric compute-in-memory",
+    "FeFET compute-in-memory",
+    "ferroelectric field effect transistor compute in memory",
+    "ferroelectric tunnel junction in-memory computing",
+    "ferroelectric diode compute-in-memory",
+    "HZO ferroelectric memory in-memory computing",
+    "ferroelectric content addressable memory one-shot learning",
+    "ferroelectric synaptic array convolution neural network",
+    "ferroelectric compute-in-memory annealer"
+  ],
+  "timestamp": "2026-06-18T01:01:50Z",
+  "rforge_version": "rforge v0.1.1 (afd0801, 2026-06-18T01:03:31Z)",
+  "outputs": [
+    "report.md",
+    "provenance.json",
+    "evidence-grid.csv",
+    "selected-openalex-metadata.json"
+  ],
+  "notes": [
+    "No copyrighted full text was downloaded; metadata/abstract-level scan only.",
+    "rforge protocol compile indicated reviewer approval required before treating broad screening as final.",
+    "ArXiv searches mostly timed out or were rate-limited and produced empty files; OpenAlex searches succeeded for focused queries.",
+    "OpenAlex DOI metadata was fetched for 30 selected relevant records.",
+    "rforge OpenAlex citation expansion by DOI returned HTTP 404, so citation graph was not produced.",
+    "Initial pre-run version check reported rforge v0.1.0-2-g57be3e1-dirty; final verification reported rforge v0.1.1.",
+    "Committed literature-review copy includes curated report, provenance, evidence grid, and selected OpenAlex metadata; raw transient search files remain under ignored artifacts/ in the local working tree and are not part of this committed docs package."
+  ],
+  "human_gates": [
+    "Reviewer approval required before final systematic-review screening/inclusion decisions or full-text acquisition."
+  ]
+}
