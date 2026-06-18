@@ -79,7 +79,7 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "docs", "2-learn", "module1-hysteresis", "features.md"),
+			path: filepath.Join(repoRoot, "docs", "modules", "hysteresis", "features.md"),
 			forbidden: []string{
 				"World-Class Physics Features",
 				"research-grade characterization",
@@ -89,7 +89,7 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "docs", "2-learn", "module1-hysteresis", "materials.md"),
+			path: filepath.Join(repoRoot, "docs", "modules", "hysteresis", "materials.md"),
 			forbidden: []string{
 				"Each ferroelectric cell can be programmed to one of 30 distinct polarization states",
 				"FeCIM: 4.91 bits/cell",
@@ -100,7 +100,7 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "docs", "2-learn", "module1-hysteresis", "eli5.md"),
+			path: filepath.Join(repoRoot, "docs", "modules", "hysteresis", "eli5.md"),
 			forbidden: []string{
 				"More states per cell = store more information!",
 				"30 Discrete Levels",
@@ -129,7 +129,7 @@ func TestModule1MaterialClaimWordingAvoidsUnverifiedDemonstratedLanguage(t *test
 			},
 		},
 		{
-			path: filepath.Join(repoRoot, "docs", "2-learn", "module1-hysteresis", "physics.md"),
+			path: filepath.Join(repoRoot, "docs", "modules", "hysteresis", "physics.md"),
 			forbidden: []string{
 				"30 levels | Linear discretization of P | ✅ Simple & correct",
 				"Minor loops | Implicit via hysteron states | ✅ Works correctly",

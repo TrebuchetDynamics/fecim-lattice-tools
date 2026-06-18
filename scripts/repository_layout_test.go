@@ -19,7 +19,7 @@ func TestRepositoryRootKeepsCollateralUnderPurposeDirectories(t *testing.T) {
 		"crucible":            "tools/crucible",
 		"notebook":            "docs/notebook",
 		"opensource":          "tools/opensource",
-		"paper":               "docs/paper",
+		"paper":               "docs/research/paper",
 		"presenter-script.md": "docs/presentations/presenter-script.md",
 		"prompts":             "tools/prompts",
 		"screenshots":         "docs/assets/reference-screenshots",

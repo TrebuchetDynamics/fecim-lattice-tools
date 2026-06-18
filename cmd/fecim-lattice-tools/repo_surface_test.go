@@ -76,7 +76,7 @@ func TestLivingGuidanceDoesNotCallFyneRetired(t *testing.T) {
 		"README.md",
 		"CONTRIBUTING.md",
 		"docs/README.md",
-		"docs/1-getting-started/README.md",
+		"docs/guides/README.md",
 	}
 	stalePhrases := []string{
 		"removed legacy ui",
