@@ -51,15 +51,20 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fec
 
 ```
 cmd/fecim-lattice-tools/     # Default Fyne desktop app entry point
-module1-hysteresis/       # P-E curve, Preisach model
-module2-crossbar/         # Crossbar simulation and visualization state
-module3-mnist/            # Neural network digit recognition
-module4-circuits/         # DAC/ADC/TIA peripherals
-module5-comparison/       # Technology comparison
-module6-eda/              # EDA tools
-shared/                   # Fyne widgets/themes, viewmodel, rendering, logging, physics, crossbar core
-  crossbar/               # MVM, non-idealities (IR drop, sneak paths, drift)
-  physics/                # L-K solver, Preisach engine, ISPP write controller
+module1-hysteresis/          # P-E curve, Preisach model
+module2-crossbar/            # Crossbar simulation and visualization state
+module3-mnist/               # Neural network digit recognition
+module4-circuits/            # DAC/ADC/TIA peripherals
+module5-comparison/          # Technology comparison
+module6-eda/                 # EDA tools
+shared/                      # Fyne widgets/themes, viewmodel, rendering, logging, physics, crossbar core
+  crossbar/                  # MVM, non-idealities (IR drop, sneak paths, drift)
+  physics/                   # L-K solver, Preisach engine, ISPP write controller
+docs/
+  guides/                    # Installation, CLI reference, runbook, glossary, assets
+  modules/                   # Per-module educational docs (hysteresis, crossbar, mnist, circuits, comparison, eda)
+  internals/                 # API reference, architecture, testing, GUI specs, ADRs, audits
+  research/                  # Literature reviews, papers, physics validation, honesty audit
 ```
 
 ## Model Defaults (Simulation Parameters)
