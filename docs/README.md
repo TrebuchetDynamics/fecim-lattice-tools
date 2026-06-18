@@ -83,10 +83,10 @@ Perfect for: Researchers, academics, verification
 | [API Reference](internals/api-reference.md) | Package APIs | Developers |
 | [Physics Validation](research/physics-validation.md) | Scientific accuracy | Researchers |
 | [Honesty Audit](research/honesty-audit.md) | Claims verification | All users |
-| [Trust Boundaries](TRUST.md) | What is validated, educational, planned, or not validated | All users |
+| [Trust Boundaries](guides/trust.md) | What is validated, educational, planned, or not validated | All users |
 | [Citation System](../citations/README.md) | Source records, citable facts, and citation workflow | Researchers, contributors |
 | [The Crucible](../tools/crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
-| [GLOSSARY](GLOSSARY.md) | Technical terms | All users |
+| [GLOSSARY](guides/glossary.md) | Technical terms | All users |
 
 ---
 
@@ -125,7 +125,7 @@ Perfect for: Researchers, academics, verification
 4. Crucible: ../tools/crucible/README.md
 5. Citations: ../citations/README.md
 6. Literature: research/papers/
-7. Tools: research/opensource-tools/
+7. Tools: research/tools/
 ```
 
 ---
@@ -203,7 +203,7 @@ Full status: See [status.md](../status.md)
 - **MVM:** Matrix-vector multiplication in one step
 - **CIM:** Compute-in-Memory (physics does the math)
 
-See [GLOSSARY.md](GLOSSARY.md) for all terms.
+See [GLOSSARY.md](guides/glossary.md) for all terms.
 
 ---
 
@@ -244,7 +244,7 @@ go run ./cmd/fecim-screenshotter-fyne -only docs -out /tmp/fecim-demo-frames
 - [J. Alloys & Compounds: FTJ Reservoir](https://doi.org/10.1016/j.jallcom.2025.181869)
 
 ### Related Projects
-- See [research/opensource-tools/](research/opensource-tools/)
+- See [research/tools/](research/tools/)
 
 ### Video Transcripts
 - See [research/transcripts/](research/transcripts/)

@@ -10,7 +10,7 @@ FeCIM Lattice Tools combines a Go/Fyne desktop simulator, literature-aware valid
 [![Astro](https://img.shields.io/badge/Web-Astro-BC52EE?logo=astro)](https://astro.build)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-![FeCIM Lattice Tools hysteresis module screenshot](./docs/assets/hysteresis_readme.png)
+![FeCIM Lattice Tools hysteresis module screenshot](./docs/guides/assets/hysteresis_readme.png)
 
 ## Quick Start
 
@@ -85,13 +85,13 @@ FeCIM Lattice Tools keeps device, array, circuit, algorithm, and export assumpti
 
 This repository follows an accuracy-first documentation policy:
 
-- External scientific claims must be cited and listed in the [honesty audit](./docs/4-research/honesty-audit.md).
+- External scientific claims must be cited and listed in the [honesty audit](./docs/research/honesty-audit.md).
 - Simulation defaults must be described as defaults, placeholders, assumptions, or range-checked parameters.
 - Unverified conference, marketing, or talk claims must not be presented as technical facts.
 - Testable behavior should be covered by automated tests before implementation changes are accepted.
 - Source-backed facts should be recorded in the Markdown-native [citation system](./citations/README.md).
 
-For current verified claims, known gaps, and removed or restricted claims, read [Scientific Honesty Audit](./docs/4-research/honesty-audit.md).
+For current verified claims, known gaps, and removed or restricted claims, read [Scientific Honesty Audit](./docs/research/honesty-audit.md).
 
 ## Modules
 
@@ -166,7 +166,7 @@ go run ./cmd/fecim-screenshotter-fyne -out docs/assets -only hysteresis -tag rea
 
 The Fyne screenshotter follows the restored desktop path.
 
-See [CLI Reference](./docs/1-getting-started/cli-reference.md) for the full launcher and module command reference.
+See [CLI Reference](./docs/guides/cli-reference.md) for the full launcher and module command reference.
 
 ## Web Landing Page
 
@@ -213,7 +213,7 @@ Simulation settings live in YAML files under [`config/`](./config):
 | [`config/mnist.yaml`](./config/mnist.yaml) | Example inference experiment settings. |
 | [`config/energy.yaml`](./config/energy.yaml) | Educational energy model inputs. |
 
-For the full schema and loading behavior, read [Configuration Reference](./docs/3-develop/config-reference.md). Config values that are not externally validated must stay labeled as defaults or assumptions.
+For the full schema and loading behavior, read [Configuration Reference](./docs/internals/config-reference.md). Config values that are not externally validated must stay labeled as defaults or assumptions.
 
 ## Technical Architecture
 
@@ -263,7 +263,7 @@ make test-legacy-fyne
 go test -race -short ./shared/... ./validation/...
 ```
 
-See [Contributing](./CONTRIBUTING.md) and [Testing Guide](./docs/3-develop/testing/TESTING.md) for the full workflow.
+See [Contributing](./CONTRIBUTING.md) and [Testing Guide](./docs/internals/testing/TESTING.md) for the full workflow.
 
 ## Validation
 
@@ -279,7 +279,7 @@ Validation does not turn educational defaults into measured device claims. If a 
 
 ## Trust Boundaries
 
-Use [docs/TRUST.md](./docs/TRUST.md) to decide which outputs are highly validated, literature-backed, educational, planned, or not validated. Use [docs/HOW_TO_BREAK_THIS.md](./docs/HOW_TO_BREAK_THIS.md) and [docs/PREDICTIONS.md](./docs/PREDICTIONS.md) to review adversarial stress cases and pre-registered validation targets.
+Use [docs/guides/trust.md](./docs/guides/trust.md) to decide which outputs are highly validated, literature-backed, educational, planned, or not validated. Use [docs/internals/how-to-break-this.md](./docs/internals/how-to-break-this.md) and [docs/research/predictions.md](./docs/research/predictions.md) to review adversarial stress cases and pre-registered validation targets.
 
 ## Citation System
 
@@ -310,14 +310,14 @@ fecim-lattice-tools/
 
 ## Documentation
 
-- [Installation](./docs/1-getting-started/installation.md)
-- [Technical Architecture](./docs/3-develop/architecture/ARCHITECTURE.md)
-- [Configuration Reference](./docs/3-develop/config-reference.md)
-- [Testing Guide](./docs/3-develop/testing/TESTING.md)
+- [Installation](./docs/guides/installation.md)
+- [Technical Architecture](./docs/internals/architecture/ARCHITECTURE.md)
+- [Configuration Reference](./docs/internals/config-reference.md)
+- [Testing Guide](./docs/internals/testing/TESTING.md)
 - [Web Landing Page](./web/README.md)
-- [Trust Boundaries](./docs/TRUST.md)
+- [Trust Boundaries](./docs/guides/trust.md)
 - [Citation System](./citations/README.md)
-- [Scientific Honesty Audit](./docs/4-research/honesty-audit.md)
+- [Scientific Honesty Audit](./docs/research/honesty-audit.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
 
