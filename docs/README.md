@@ -312,6 +312,6 @@ See [../LICENSE](../LICENSE) in repository root.
 
 ---
 
-**Last Updated:** 2026-02-16
-**Version:** 1.0 (reorganized structure)
+**Last Updated:** 2026-06-17
+**Version:** 1.1 (semantic folder structure)
 **Maintainer:** See [../CONTRIBUTING.md](../CONTRIBUTING.md)
