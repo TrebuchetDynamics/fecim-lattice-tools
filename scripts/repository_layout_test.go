@@ -22,7 +22,7 @@ func TestRepositoryRootKeepsCollateralUnderPurposeDirectories(t *testing.T) {
 		"paper":               "docs/research/paper",
 		"presenter-script.md": "docs/presentations/presenter-script.md",
 		"prompts":             "tools/prompts",
-		"screenshots":         "docs/assets/reference-screenshots",
+		"screenshots":         "docs/guides/assets/",
 	}
 
 	for path := range tracked {
