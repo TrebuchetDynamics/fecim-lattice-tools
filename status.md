@@ -115,3 +115,39 @@ b04e623 — feat(a0): close all 5 remaining skips
 
 ## Next objective
 - Replace AlScN calibrated placeholders with **direct OA pixel-digitized points** (Fig 6a + Fig 6b) including uncertainty metadata, while keeping Tier-1 gates green and A0 at fail=0.
+
+---
+
+# Status — Docs Folder Restructure
+
+Date: 2026-06-17
+Repo HEAD: `61c6465`
+
+## Summary
+
+Removed all numeric directory prefixes from `docs/` and absorbed every orphan folder and loose top-level file into four semantic sections.
+
+## New layout
+
+```
+docs/
+├── guides/       ← 1-getting-started/ + assets/ + presentations/ + GLOSSARY.md + TRUST.md
+├── modules/      ← 2-learn/ (module subdirs renamed: moduleN-foo → foo)
+├── internals/    ← 3-develop/ + adr/ + notebook/ + public-release/ + superpowers/ + SECURITY.md + HOW_TO_BREAK_THIS.md
+└── research/     ← 4-research/ + paper/ + opensource-tools/ + PREDICTIONS.md
+```
+
+## Gates
+
+- `go build ./...` : PASS
+- `go test -short ./...` : PASS (6821 tests, 0 failures)
+- `find docs/ -type d | grep -E '/[1-4]-'` : no output (all numeric prefixes removed)
+- `find docs/ -type d | grep -E 'module[0-9]-'` : no output (all moduleN- prefixes removed)
+
+## Files updated
+
+- `CLAUDE.md` — 8 path references updated; docs/ block added to Project Structure
+- `README.md` — 8 stale path references fixed
+- `docs/README.md` — paths, last-updated, version updated
+- 81 markdown files — 121 broken links fixed by automated pass
+- 3 Go test files — hardcoded doc paths updated
