@@ -71,8 +71,8 @@ Target examples:
 
 ```bash
 go test ./shared/physics/...
-go test ./module2-crossbar/pkg/crossbar/...
-go test ./module6-eda/pkg/export/...
+go test ./crossbar/pkg/crossbar/...
+go test ./eda/pkg/export/...
 ```
 
 ### C. Integration tests
@@ -88,7 +88,7 @@ Important integration packages:
 ```bash
 go test -v ./cmd/fecim-lattice-tools/... -run Integration
 go test -v ./validation/... -run Integration
-go test -v ./module3-mnist/pkg/core/... -run Integration
+go test -v ./mnist/pkg/core/... -run Integration
 ```
 
 ### D. Physics regression tests
@@ -102,8 +102,8 @@ go test -v ./validation/... -run TestPhysicsRegressionCurves
 Related golden/stability suites:
 
 ```bash
-go test -v ./module1-hysteresis/pkg/ferroelectric/... -run Golden
-go test -v ./module1-hysteresis/pkg/controller/... -run HeadlessRegression
+go test -v ./hysteresis/pkg/ferroelectric/... -run Golden
+go test -v ./hysteresis/pkg/controller/... -run HeadlessRegression
 ```
 
 Update curve goldens (intentional updates only):
@@ -143,7 +143,7 @@ go test ./... -run '^$' -bench . -benchmem
 Targeted benchmarks (physics/crossbar hot paths):
 
 ```bash
-go test -run '^$' -bench . -benchmem ./shared/physics/... ./module2-crossbar/pkg/crossbar/...
+go test -run '^$' -bench . -benchmem ./shared/physics/... ./crossbar/pkg/crossbar/...
 ```
 
 ### H. E2E tests
@@ -321,11 +321,11 @@ go test -race ./...
 go test ./... && go test -race ./...
 
 # Physics-focused sweep
-go test -v ./shared/physics/... ./module1-hysteresis/pkg/ferroelectric/... ./validation/...
+go test -v ./shared/physics/... ./hysteresis/pkg/ferroelectric/... ./validation/...
 
 # E2E headless only
 go test -v ./cmd/fecim-lattice-tools/... -run E2E
 
 # Bench hot paths
-go test -run '^$' -bench . -benchmem ./shared/physics/... ./module2-crossbar/pkg/crossbar/...
+go test -run '^$' -bench . -benchmem ./shared/physics/... ./crossbar/pkg/crossbar/...
 ```

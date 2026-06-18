@@ -791,7 +791,7 @@ from .citations import CitationRecord
 
 
 DEFAULT_PDF_GLOBS = (
-    "docs/4-research/papers/**/*.pdf",
+    "docs/research/papers/**/*.pdf",
     "research/papers/**/*.pdf",
     "citations/pdfs/**/*.pdf",
 )

@@ -141,7 +141,7 @@ bash scripts/module4_automation.sh --full --json
 bash scripts/run_headless_module4_regressions.sh
 bash scripts/run_headless_ispp_regressions.sh
 
-go test -count=1 -v ./module4-circuits/pkg/arraysim/...
+go test -count=1 -v ./circuits/pkg/arraysim/...
 ```
 
 ## 4.3 Release Gate Commands (required)
@@ -157,7 +157,7 @@ bash scripts/run_headless_module4_regressions.sh
 bash scripts/run_headless_ispp_regressions.sh
 
 go test -count=1 -v ./validation/...
-go test -count=1 -v ./module4-circuits/pkg/arraysim/...
+go test -count=1 -v ./circuits/pkg/arraysim/...
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Module 2 Crossbar Array Architecture
 
-> **Citation policy:** Cross-check external numeric claims in this file against `docs/4-research/honesty-audit.md`. If a statement here lacks a DOI or an explicit `simulation default` / `assumption` label, treat it as documentation debt rather than evidence.
+> **Citation policy:** Cross-check external numeric claims in this file against `docs/research/honesty-audit.md`. If a statement here lacks a DOI or an explicit `simulation default` / `assumption` label, treat it as documentation debt rather than evidence.
 
 ## Overview
 
@@ -391,7 +391,7 @@ var FeFETDriftCoefficients = struct {
 }
 ```
 
-**Important Note**: The FeCIM drift coefficients in this repo are simulator coefficients, not directly measured FeCIM drift constants. `DriftModelLiterature` is a conservative value derived from long-retention targets and comparative memory literature; until a DOI-backed FeCIM drift dataset is wired into `validation/literature/`, treat it as a model assumption rather than a device measurement. See `docs/4-research/honesty-audit.md` for the current verification boundary.
+**Important Note**: The FeCIM drift coefficients in this repo are simulator coefficients, not directly measured FeCIM drift constants. `DriftModelLiterature` is a conservative value derived from long-retention targets and comparative memory literature; until a DOI-backed FeCIM drift dataset is wired into `validation/literature/`, treat it as a model assumption rather than a device measurement. See `docs/research/honesty-audit.md` for the current verification boundary.
 
 #### Drift Physics
 
@@ -975,16 +975,16 @@ EnergyEfficiency = GPUEnergy / FeCIMEnergy
 
 ```bash
 # Run all crossbar tests
-go test ./module2-crossbar/pkg/crossbar
+go test ./crossbar/pkg/crossbar
 
 # Run specific test file
-go test -run TestArrayMVM ./module2-crossbar/pkg/crossbar
+go test -run TestArrayMVM ./crossbar/pkg/crossbar
 
 # Verbose output
-go test -v ./module2-crossbar/pkg/crossbar
+go test -v ./crossbar/pkg/crossbar
 
 # With coverage
-go test -cover ./module2-crossbar/pkg/crossbar
+go test -cover ./crossbar/pkg/crossbar
 ```
 
 ---
@@ -1041,7 +1041,7 @@ go test -cover ./module2-crossbar/pkg/crossbar
 
 ### Physics Constants & Peer-Reviewed Data
 
-See `docs/4-research/honesty-audit.md` for the active external-claim boundary. Verified or DOI-backed sources used around this module include:
+See `docs/research/honesty-audit.md` for the active external-claim boundary. Verified or DOI-backed sources used around this module include:
 
 - **Multi-level FeFET crossbar demo**: Nature Communications 2023, DOI `10.1038/s41467-023-42110-y`
 - **Related ferroelectric benchmark (not this simulator, not a FeCIM crossbar claim)**: HZO FTJ reservoir computing at 98.24% MNIST accuracy, Journal of Alloys and Compounds 2025, DOI `10.1016/j.jallcom.2025.181869`

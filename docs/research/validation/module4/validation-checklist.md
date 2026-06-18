@@ -86,11 +86,11 @@
 - [ ] Buttons (run/stop/reset) wired to real actions; no dead controls.
 
 ### 4.2 GUI regression tests (headless)
-- [ ] `go test -count=1 ./module4-circuits/pkg/gui -run 'Parity|ReadChain|Layout'`
-- [ ] `go test -count=1 ./module4-circuits/pkg/gui/unified/...`
+- [ ] `go test -count=1 ./circuits/pkg/gui -run 'Parity|ReadChain|Layout'`
+- [ ] `go test -count=1 ./circuits/pkg/gui/unified/...`
 
 ### 4.3 Manual visual verification (screenshot-based evidence)
-- [ ] Layout aligns with GUI spec in `docs/3-develop/gui/GUI.module4*.md`.
+- [ ] Layout aligns with GUI spec in `docs/internals/gui/GUI.module4*.md`.
 - [ ] Legends/units shown (µS, V, ns, dB) and numerically consistent.
 - [ ] All tabs render, no blank panels.
 - [ ] Accessibility: text alternatives exist for plots; keyboard navigation works.
@@ -127,7 +127,7 @@
 ---
 
 ## 7) Pass/Fail Criteria
-- [ ] All thresholds from `docs/3-develop/automation/module4-automated-testing-plan.md` satisfied.
+- [ ] All thresholds from `docs/internals/automation/module4-automated-testing-plan.md` satisfied.
 - [ ] Any missing artifact or insufficient N → FAIL.
 - [ ] Any GUI control without model mapping → FAIL.
 

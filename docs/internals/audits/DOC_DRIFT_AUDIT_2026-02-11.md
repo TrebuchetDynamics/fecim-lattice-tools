@@ -1,6 +1,6 @@
 # GUI Documentation Drift Audit — 2026-02-11
 
-Scope: TODO G15 + G16 (docs drift mapping under the current `docs/3-develop/gui/` tree, with historical legacy-GUI doc references called out where they still appear), aligned with resize audit/fixes from G14.
+Scope: TODO G15 + G16 (docs drift mapping under the current `docs/internals/gui/` tree, with historical legacy-GUI doc references called out where they still appear), aligned with resize audit/fixes from G14.
 
 ## Code vs Docs Checks Performed
 
@@ -34,8 +34,8 @@ Scope: TODO G15 + G16 (docs drift mapping under the current `docs/3-develop/gui/
 - `module6-eda/pkg/gui/tabs/learn_tab_resize_test.go`
 
 ### Test commands executed
-- `go test ./module4-circuits/pkg/gui -run TestComparisonTab_HasScrollGuardsForResize`
-- `go test ./module6-eda/pkg/gui/tabs -run TestMakeLearnTab_ContentScrollUsesCompactMinSize -v`
+- `go test ./circuits/pkg/gui -run TestComparisonTab_HasScrollGuardsForResize`
+- `go test ./eda/pkg/gui/tabs -run TestMakeLearnTab_ContentScrollUsesCompactMinSize -v`
 
 Both tests passed after code updates.
 

@@ -1184,7 +1184,7 @@ Synthesize for target process
 ```
 Demo: Run this project (module1-hysteresis)
   ↓
-Explain: Read docs/2-learn/module1-hysteresis/physics.md
+Explain: Read docs/modules/hysteresis/physics.md
   ↓
 Implement: Code SimplePreisach in Python
   ↓
@@ -1355,9 +1355,9 @@ def apply_cycles(self, E_cycling, n_cycles=100):
 - **OpenVAF Docs:** https://openvaf.gitbookio.gitbook.io/
 
 ### Related Project Documentation
-- **[Module 1 Physics](../../2-learn/module1-hysteresis/physics.md)** - Physics fundamentals & equations
-- **[Module 1 ELI5](../../2-learn/module1-hysteresis/eli5.md)** - Beginner-friendly explanations
-- **[Module 1 Features](../../2-learn/module1-hysteresis/features.md)** - Preisach model and calibration
+- **[Module 1 Physics](../../modules/hysteresis/physics.md)** - Physics fundamentals & equations
+- **[Module 1 ELI5](../../modules/hysteresis/eli5.md)** - Beginner-friendly explanations
+- **[Module 1 Features](../../modules/hysteresis/features.md)** - Preisach model and calibration
 - **[Open-Source Tools Index](README.md)** - Index of all open-source tools
 
 ---
@@ -1368,12 +1368,12 @@ def apply_cycles(self, E_cycling, n_cycles=100):
 
 | Goal | Use This | Learn More |
 |------|----------|-----------|
-| **See hysteresis loops in real-time** | This project | docs/2-learn/module1-hysteresis/features.md |
-| **Understand Preisach theory** | python-preisach + tutorial | docs/2-learn/module1-hysteresis/physics.md |
+| **See hysteresis loops in real-time** | This project | docs/modules/hysteresis/features.md |
+| **Understand Preisach theory** | python-preisach + tutorial | docs/modules/hysteresis/physics.md |
 | **Fit my HfO₂ data** | hysteresis pkg + Heracles | Nature Comms. 2025 |
 | **Predict write speed** | NLS model + ngspice | AIP APL 2018 |
 | **Simulate domains** | FerroX or FERRET | arXiv:2210.15668 |
-| **Train ML with noise** | AIHWKIT | docs/2-learn/module2-crossbar/tools.md |
+| **Train ML with noise** | AIHWKIT | docs/modules/crossbar/tools.md |
 | **SPICE circuit design** | ngspice + OpenVAF | ngspice manual |
 | **Teach students** | FeroSim visualization | FerroSim GitHub |
 
@@ -1390,7 +1390,7 @@ def apply_cycles(self, E_cycling, n_cycles=100):
 | **HfO₂ devices** | Heracles + FerroX | Experimentally validated, state-of-the-art |
 | **Switching kinetics** | NLS model | Field of the art for hafnia |
 | **Circuit-level** | ngspice + OpenVAF | Industry standard workflow |
-| **Array-level** | CrossSim + NeuroSim | See docs/2-learn/module2-crossbar/tools.md |
+| **Array-level** | CrossSim + NeuroSim | See docs/modules/crossbar/tools.md |
 | **Domain dynamics** | FerroX or FERRET | Mesoscale physics, GPU-accelerated |
 | **Experimental analysis** | hysteresis pkg | Clean, robust, production-ready |
 
@@ -1416,4 +1416,4 @@ Contributions welcome! Areas of need:
 *Last Updated: January 27, 2026*
 **Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
 **Purpose:** Comprehensive catalog of open-source hysteresis modeling tools
-**Cross-References:** See [Module 2 Tools](../../2-learn/module2-crossbar/tools.md) for array-level tools, [Module 1 Physics](../../2-learn/module1-hysteresis/physics.md) for theory, [CLAUDE.md](../../../CLAUDE.md) for honesty policy.
+**Cross-References:** See [Module 2 Tools](../../modules/crossbar/tools.md) for array-level tools, [Module 1 Physics](../../modules/hysteresis/physics.md) for theory, [CLAUDE.md](../../../CLAUDE.md) for honesty policy.

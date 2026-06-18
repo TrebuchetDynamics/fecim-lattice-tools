@@ -217,9 +217,9 @@ Convergence typically 3-10 iterations
 
 ## Related Modules
 
-- **[Module 1: Hysteresis](../module1-hysteresis/README.md)** - FeFET device model
-- **[Module 2: Crossbar](../module2-crossbar/README.md)** - Uses DAC/ADC for I/O
-- **[Module 6: EDA](../module6-eda/README.md)** - Layout of peripheral circuits
+- **[Module 1: Hysteresis](../hysteresis/README.md)** - FeFET device model
+- **[Module 2: Crossbar](../crossbar/README.md)** - Uses DAC/ADC for I/O
+- **[Module 6: EDA](../eda/README.md)** - Layout of peripheral circuits
 
 ---
 
@@ -227,7 +227,7 @@ Convergence typically 3-10 iterations
 
 ```bash
 go test ./shared/peripherals
-go test ./module4-circuits/pkg/arraysim
+go test ./circuits/pkg/arraysim
 ```
 
 ---

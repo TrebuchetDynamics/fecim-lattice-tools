@@ -494,7 +494,7 @@ func LoadFORC(filename string) PreisachDistribution {
 ### Academic Papers (Open Access)
 - FerroX paper: arXiv:2210.15668
 - NeuroSim papers: Various arXiv
-- Preisach modeling: See `docs/4-research/papers/`
+- Preisach modeling: See `docs/research/papers/`
 
 ### Online Courses
 - "Ferroelectric Materials" (Coursera/edX)

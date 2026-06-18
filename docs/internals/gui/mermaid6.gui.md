@@ -962,7 +962,7 @@ Generation/validation happen in background while UI remains responsive:
 
 ## Related Documentation
 
-- **Main Architecture**: `/docs/3-develop/gui/GUI.module6.md`
-- **Source Code Analysis**: `/docs/3-develop/gui/GUI.module6.md`
+- **Main Architecture**: `/docs/internals/gui/GUI.module6.md`
+- **Source Code Analysis**: `/docs/internals/gui/GUI.module6.md`
 - **Builder Tab**: 1286 lines of configuration, generation, and validation UI
 - **Learn Tab**: Educational content with 3 topics and interactive visuals

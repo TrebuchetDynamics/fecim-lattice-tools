@@ -13,7 +13,7 @@ The repository already has a human-reviewed citation system:
 - `citations/facts.md` for citable facts
 - `citations/disputed.md` for weak, conflicting, or contested claims
 - `citations/pdfs/` as an optional local PDF drop zone
-- `docs/4-research/papers/` as an existing paper library
+- `docs/research/papers/` as an existing paper library
 - validation tests and experimental data tied to literature records
 
 The new research ingestion work must extend this trust model. It must not create a second canonical source of truth.
@@ -124,7 +124,7 @@ park2015_advmat_hzo::sec-03::chunk-002
 
 The MVP discovers PDFs from all existing and new local paper locations:
 
-- `docs/4-research/papers/**/*.pdf`
+- `docs/research/papers/**/*.pdf`
 - `research/papers/**/*.pdf`
 - `citations/pdfs/**/*.pdf`
 
@@ -471,7 +471,7 @@ Errors should be actionable and point to the relevant report path.
 The first milestone is complete when:
 
 1. A user can drop PDFs into `research/papers/`.
-2. Existing PDFs under `docs/4-research/papers/` are discovered.
+2. Existing PDFs under `docs/research/papers/` are discovered.
 3. `fecim research ingest` creates git-trackable metadata, parse outputs, chunks, manifests, and reports.
 4. Ambiguous PDFs are quarantined and excluded from default search.
 5. `fecim research index` builds a BM25 cache from committed chunks.

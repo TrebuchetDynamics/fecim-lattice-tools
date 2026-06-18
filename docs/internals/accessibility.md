@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools - Accessibility Audit Report
 
-> **Note:** This file was previously located at `docs/ACCESSIBILITY_AUDIT.md`. It has moved to `docs/3-develop/accessibility.md`.
+> **Note:** This file was previously located at `docs/ACCESSIBILITY_AUDIT.md`. It has moved to `docs/internals/accessibility.md`.
 
 **Date:** 2026-02-07  
 **Auditor:** OpenClaw Accessibility Audit  

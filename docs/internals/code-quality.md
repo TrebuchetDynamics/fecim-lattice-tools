@@ -1,6 +1,6 @@
 # Code Quality Report
 
-> **Note:** This file was previously located at `docs/CODE_QUALITY.md`. It has moved to `docs/3-develop/code-quality.md`.
+> **Note:** This file was previously located at `docs/CODE_QUALITY.md`. It has moved to `docs/internals/code-quality.md`.
 
 **Generated:** 2026-02-07  
 **Codebase:** FeCIM Lattice Tools  

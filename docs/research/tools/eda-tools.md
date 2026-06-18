@@ -1529,7 +1529,7 @@ EOF
 ### Related FeCIM Documentation
 
 - [Module 6: EDA Design Suite](../README.md)
-- [Module 6 EDA](../../2-learn/module6-eda/README.md) — EDA module overview and tools
+- [Module 6 EDA](../../modules/eda/README.md) — EDA module overview and tools
 
 ---
 

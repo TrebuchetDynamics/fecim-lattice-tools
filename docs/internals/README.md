@@ -176,7 +176,7 @@ code := adc.Convert(voltage)      // voltage → digital code
 go test ./...
 
 # Single package
-go test ./module2-crossbar/pkg/crossbar
+go test ./crossbar/pkg/crossbar
 
 # With race detector
 go test -race ./...
@@ -185,7 +185,7 @@ go test -race ./...
 go test -cover ./...
 
 # Run benchmarks
-go test -bench=. ./module2-crossbar/pkg/crossbar
+go test -bench=. ./crossbar/pkg/crossbar
 ```
 
 ### Test Structure
@@ -315,7 +315,7 @@ GUI development guide: [gui/](gui/)
 3. Register the default shell view in `internal/Fyneapp`
 4. Add package docs in `pkg/*/doc.go` files
 5. Write tests covering core functionality
-6. Document in `docs/2-learn/moduleN-name/`
+6. Document in `docs/modules/moduleN-name/`
 
 ### Add a New Non-Ideality
 
@@ -385,13 +385,13 @@ go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
 
 ```bash
 # Crossbar MVM benchmark
-go test -bench=BenchmarkMVM -benchmem ./module2-crossbar/pkg/crossbar
+go test -bench=BenchmarkMVM -benchmem ./crossbar/pkg/crossbar
 
 # Physics benchmark
 go test -bench=. -benchmem ./shared/physics
 
 # Profile a benchmark
-go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./module2-crossbar/pkg/crossbar
+go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./crossbar/pkg/crossbar
 go tool pprof cpu.prof
 ```
 
@@ -466,7 +466,7 @@ Full contribution guide: [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [Memory](memory-optimization.md) - Performance guide
 
 **Operations:**
-- [Runbook](../1-getting-started/runbook.md) - Build and ops
+- [Runbook](../guides/runbook.md) - Build and ops
 - [Repo Health](repo-health.md) - CI status
 - [Automation](automation/) - Build scripts
 

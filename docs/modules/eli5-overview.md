@@ -20,7 +20,7 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 
 This guide is organized into 6 modules plus an overview. Each module builds on the last:
 
-### [Module 1: Hysteresis](./module1-hysteresis/eli5.md) - The Memory Cell
+### [Module 1: Hysteresis](./hysteresis/eli5.md) - The Memory Cell
 
 **Focus:** How ferroelectric materials remember
 
@@ -35,7 +35,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 
 ---
 
-### [Module 2: Crossbar](./module2-crossbar/eli5.md) - Compute-in-Memory
+### [Module 2: Crossbar](./crossbar/eli5.md) - Compute-in-Memory
 
 **Focus:** How a grid of cells does matrix multiplication
 
@@ -50,7 +50,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 
 ---
 
-### [Module 3: MNIST](./module3-mnist/eli5.md) - AI Recognition
+### [Module 3: MNIST](./mnist/eli5.md) - AI Recognition
 
 **Focus:** Neural networks and handwritten digit recognition
 
@@ -65,7 +65,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 
 ---
 
-### [Module 4: Circuits](./module4-circuits/eli5.md) - Supporting Cast
+### [Module 4: Circuits](./circuits/eli5.md) - Supporting Cast
 
 **Focus:** The peripheral circuits that make it work
 
@@ -80,7 +80,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 
 ---
 
-### [Module 5: Comparison](./module5-comparison/eli5.md) - Why It Matters
+### [Module 5: Comparison](./comparison/eli5.md) - Why It Matters
 
 **Focus:** Comparing Ferroelectric CIM to other technologies
 
@@ -95,7 +95,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 
 ---
 
-### [Module 6: EDA](./module6-eda/eli5.md) - Design Tools
+### [Module 6: EDA](./eda/eli5.md) - Design Tools
 
 **Focus:** How chips are designed and manufactured
 
@@ -115,12 +115,12 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 ### By Learning Level
 
 **Beginner (Never heard of this):**
-1. Start with [Module 1: Hysteresis](./module1-hysteresis/eli5.md)
+1. Start with [Module 1: Hysteresis](./hysteresis/eli5.md)
 2. Watch the interactive demo
 3. Read the key takeaways
 
 **Intermediate (Understand the basics):**
-1. Read [Module 2: Crossbar](./module2-crossbar/eli5.md)
+1. Read [Module 2: Crossbar](./crossbar/eli5.md)
 2. Understand Ohm's Law and matrix multiplication
 3. Try the crossbar demo
 
@@ -135,19 +135,19 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 ### By Question
 
 **"What is Ferroelectric CIM?"**
-→ [Module 1: Hysteresis](./module1-hysteresis/eli5.md) + [Module 2: Crossbar](./module2-crossbar/eli5.md)
+→ [Module 1: Hysteresis](./hysteresis/eli5.md) + [Module 2: Crossbar](./crossbar/eli5.md)
 
 **"How does it recognize images?"**
-→ [Module 3: MNIST](./module3-mnist/eli5.md)
+→ [Module 3: MNIST](./mnist/eli5.md)
 
 **"What circuits does it need?"**
-→ [Module 4: Circuits](./module4-circuits/eli5.md)
+→ [Module 4: Circuits](./circuits/eli5.md)
 
 **"Is it better than GPUs?"**
-→ [Module 5: Comparison](./module5-comparison/eli5.md)
+→ [Module 5: Comparison](./comparison/eli5.md)
 
 **"How would engineers design it?"**
-→ [Module 6: EDA](./module6-eda/eli5.md)
+→ [Module 6: EDA](./eda/eli5.md)
 
 **"I want all the technical details"**
 → This document covers all modules (2100+ lines)
@@ -280,7 +280,7 @@ This project helps engineers and students **explore the design space**. Scientis
 
 Numeric/performance claims without DOI citations are illustrative. Before external use, add proper citations from peer-reviewed papers.
 
-See `docs/4-research/honesty-audit.md` for detailed audit of claims.
+See `docs/research/honesty-audit.md` for detailed audit of claims.
 
 ---
 
@@ -288,7 +288,7 @@ See `docs/4-research/honesty-audit.md` for detailed audit of claims.
 
 ### Ready to Learn?
 
-1. **Start with Module 1:** [Hysteresis](./module1-hysteresis/eli5.md)
+1. **Start with Module 1:** [Hysteresis](./hysteresis/eli5.md)
 2. **Follow the story arc** through all 6 modules
 3. **Run the demos** (interactive learning!)
 4. **Explore the full guide** for technical depth
@@ -303,7 +303,7 @@ See `docs/4-research/honesty-audit.md` for detailed audit of claims.
 
 ### Want to Contribute?
 
-Check `CONTRIBUTING.md` and `docs/3-develop/api-reference.md` for:
+Check `CONTRIBUTING.md` and `docs/internals/api-reference.md` for:
 - Code contribution guidelines
 - Module improvement ideas
 - Demo enhancement opportunities
@@ -365,8 +365,8 @@ This simulator helps imagine the destination and plan the journey!
 ### In This Repository
 
 - **Project Status:** [status.md](../../status.md)
-- **Accuracy Audit:** [docs/4-research/honesty-audit.md](../4-research/honesty-audit.md)
-- **Development Guide:** [docs/3-develop/api-reference.md](../3-develop/api-reference.md)
+- **Accuracy Audit:** [docs/research/honesty-audit.md](../research/honesty-audit.md)
+- **Development Guide:** [docs/internals/api-reference.md](../internals/api-reference.md)
 
 ### External Resources
 
@@ -412,12 +412,12 @@ No PhD required!
 
 Pick a module and dive in:
 
-- **[Module 1: Hysteresis](./module1-hysteresis/eli5.md)** ← Start here!
-- [Module 2: Crossbar](./module2-crossbar/eli5.md)
-- [Module 3: MNIST](./module3-mnist/eli5.md)
-- [Module 4: Circuits](./module4-circuits/eli5.md)
-- [Module 5: Comparison](./module5-comparison/eli5.md)
-- [Module 6: EDA](./module6-eda/eli5.md)
+- **[Module 1: Hysteresis](./hysteresis/eli5.md)** ← Start here!
+- [Module 2: Crossbar](./crossbar/eli5.md)
+- [Module 3: MNIST](./mnist/eli5.md)
+- [Module 4: Circuits](./circuits/eli5.md)
+- [Module 5: Comparison](./comparison/eli5.md)
+- [Module 6: EDA](./eda/eli5.md)
 
 Happy learning! 🎉
 

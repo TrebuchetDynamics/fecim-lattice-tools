@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools CLI Reference
 
-> **Note:** This file was previously located at `docs/CLI.md`. It has moved to `docs/1-getting-started/cli-reference.md`.
+> **Note:** This file was previously located at `docs/CLI.md`. It has moved to `docs/guides/cli-reference.md`.
 
 This document describes the command-line interface for all FeCIM Lattice Tools modules.
 
@@ -110,7 +110,7 @@ fecim-lattice-tools hysteresis [options]
 Mode precedence (if flags are combined): `--headless` → `--tui` → `--vulkan` → GUI default.
 
 For authoritative run-mode and Preisach/L-K default behavior, see:
-`docs/2-learn/module1-hysteresis/run-modes.md`.
+`docs/modules/hysteresis/run-modes.md`.
 
 ### Examples
 
@@ -512,6 +512,6 @@ fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output | \
 
 ## See Also
 
-- [EDA Tools Guide](../2-learn/module6-eda/tools.md) - OpenLane integration
-- [API Documentation](../3-develop/api-reference.md) - Programmatic access
-- [Module 6 EDA README](../2-learn/module6-eda/README.md) - EDA module overview
+- [EDA Tools Guide](../modules/eda/tools.md) - OpenLane integration
+- [API Documentation](../internals/api-reference.md) - Programmatic access
+- [Module 6 EDA README](../modules/eda/README.md) - EDA module overview

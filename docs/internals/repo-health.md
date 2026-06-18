@@ -1,6 +1,6 @@
 # Repository Health Dashboard
 
-> **Note:** This file was previously located at `docs/REPO_HEALTH.md`. It has moved to `docs/3-develop/repo-health.md`.
+> **Note:** This file was previously located at `docs/REPO_HEALTH.md`. It has moved to `docs/internals/repo-health.md`.
 
 **Project:** FeCIM Lattice Tools
 **Generated:** 2026-06-17
@@ -60,7 +60,7 @@
 
 ### Known skips / conditional test limitations
 
-From `docs/3-develop/testing/TESTING.md` and project TODO tracking:
+From `docs/internals/testing/TESTING.md` and project TODO tracking:
 
 - Display-dependent GUI checks are conditionally skipped or require Xvfb/display server.
 - Archived demo code under historical paths is intentionally excluded from active testing.
@@ -139,7 +139,7 @@ Physics validation status is **healthy** based on project validation reports and
 ### Blocked items currently tracked
 
 1. **Race-suite blocker (RESOLVED 2026-06-17):** `go test -race -short -timeout 30s ./...` now passes all 141 packages. 70+ slow tests in LK/ISPP/crossbar/viewmodel packages now guard with `testing.Short()`; 5 GUI-heavy packages use `TestMain`. Previous blocker (case mismatch in equation_dialog_test.go) was already resolved on current HEAD.
-2. **Fyne font-cache race (OPEN):** `go test -race ./module6-eda/pkg/gui/...` still fails due to concurrent writes in `go-text/typesetting` v0.3.4 font cache (Fyne v2.7.4 upstream bug). Workaround: tests skip in `-short` mode. Fix requires Fyne update.
+2. **Fyne font-cache race (OPEN):** `go test -race ./eda/pkg/gui/...` still fails due to concurrent writes in `go-text/typesetting` v0.3.4 font cache (Fyne v2.7.4 upstream bug). Workaround: tests skip in `-short` mode. Fix requires Fyne update.
 3. **Tooling/environment blocker:** LaTeX-based SVG regeneration pipeline blocked on missing host `latex` binary (`exec: "latex": executable file not found`).
 
 ---

@@ -14,7 +14,7 @@
 
 ## Model Honesty Labels (Reported vs Validated)
 
-Per `docs/4-research/honesty-audit.md`, this module is **simulation-only**:
+Per `docs/research/honesty-audit.md`, this module is **simulation-only**:
 
 - **Validated (code-level):** unit-consistent analytic models with regression tests (no SPICE deck equivalence is claimed).
 - **Assumed / illustrative (not silicon-validated):** default parameters and any "typical" ADC/DAC energy/timing numbers are teaching placeholders unless explicitly cited and verified.
@@ -106,5 +106,5 @@ Noise path (`ConvertWithNoise`):
 
 ## Sources
 
-- `docs/3-develop/api-reference.md`
+- `docs/internals/api-reference.md`
 - `shared/peripherals/analysis.go`

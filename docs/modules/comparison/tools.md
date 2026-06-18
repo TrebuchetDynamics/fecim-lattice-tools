@@ -12,5 +12,5 @@
 
 ## Integration Notes
 
-- Reference honesty constraints in `docs/4-research/honesty-audit.md`.
+- Reference honesty constraints in `docs/research/honesty-audit.md`.
 - Architecture definitions live in `module5-comparison/pkg/comparison/architecture.go`.

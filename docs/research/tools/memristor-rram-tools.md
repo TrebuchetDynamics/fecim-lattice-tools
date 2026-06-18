@@ -1466,8 +1466,8 @@ make -j$(nproc)
 
 ## Related Documentation
 
-- **[Module 2 Crossbar Physics](../../2-learn/module2-crossbar/physics.md)** - Physical principles
-- **[Module 3 MNIST](../../2-learn/module3-mnist/README.md)** - Neural network inference
+- **[Module 2 Crossbar Physics](../../modules/crossbar/physics.md)** - Physical principles
+- **[Module 3 MNIST](../../modules/mnist/README.md)** - Neural network inference
 - **[Project README](../README.md)** - FeCIM overview
 - **[Research Notes](./research_notes_final.md)** - Academic background
 

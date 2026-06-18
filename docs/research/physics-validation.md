@@ -1,6 +1,6 @@
 # FeCIM Physics Validation Report
 
-> **Note:** This file was previously located at `docs/PHYSICS_VALIDATION_REPORT.md`. It has moved to `docs/4-research/physics-validation.md`.
+> **Note:** This file was previously located at `docs/PHYSICS_VALIDATION_REPORT.md`. It has moved to `docs/research/physics-validation.md`.
 
 **Date:** 2026-02-07  
 **Validator:** FeCIM Physics Validator (Subagent)  

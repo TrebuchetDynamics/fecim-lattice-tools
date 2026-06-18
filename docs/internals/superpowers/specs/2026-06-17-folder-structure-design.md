@@ -141,9 +141,9 @@ The stray `docs/documentation/module4-circuits/M4-OBS-05-RESULTS.md` (orphan fol
 
 | Old path | New path |
 |---|---|
-| `docs/3-develop/api-reference.md` | `docs/internals/api-reference.md` |
-| `docs/3-develop/testing/TESTING.md` | `docs/internals/testing/TESTING.md` |
-| `docs/2-learn/module6-eda/README.md` | `docs/modules/eda/README.md` |
-| `docs/4-research/honesty-audit.md` | `docs/research/honesty-audit.md` |
+| `docs/internals/api-reference.md` | `docs/internals/api-reference.md` |
+| `docs/internals/testing/TESTING.md` | `docs/internals/testing/TESTING.md` |
+| `docs/modules/eda/README.md` | `docs/modules/eda/README.md` |
+| `docs/research/honesty-audit.md` | `docs/research/honesty-audit.md` |
 
 These four lines in `CLAUDE.md` must be updated as part of implementation.

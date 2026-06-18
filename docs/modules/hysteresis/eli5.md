@@ -184,6 +184,6 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ## Next Steps
 
-- **Want to see it compute?** Go to [Module 2: Crossbar](../module2-crossbar/eli5.md)
-- **Want to recognize digits?** Go to [Module 3: MNIST](../module3-mnist/eli5.md)
+- **Want to see it compute?** Go to [Module 2: Crossbar](../crossbar/eli5.md)
+- **Want to recognize digits?** Go to [Module 3: MNIST](../mnist/eli5.md)
 - **Back to overview?** See [ELI5 Overview](../eli5-overview.md)

@@ -142,4 +142,4 @@ Include your reproducibility pack as supplementary material. Reviewers can:
 3. **Reproduce exact results** using the seed, config, and Go version recorded
    in the pack.
 
-See also: `docs/4-research/honesty-audit.md` for the full accuracy policy.
+See also: `docs/research/honesty-audit.md` for the full accuracy policy.

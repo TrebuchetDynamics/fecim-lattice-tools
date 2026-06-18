@@ -193,7 +193,7 @@ FeCAP crossbars eliminate sneak paths and IR drop by operating entirely in the c
 - Displacement current: `I_disp = ΔQ/Δt` (no DC leakage path)
 - Implemented in `module2-crossbar/pkg/gui/tabs/fecap_tab.go`
 - GUI: Bar chart shows Q[col] per column; I_disp derived from ΔQ/Δt
-- See: `docs/4-research/literature-review/crossbar-circuits-literature-review-2025.md` for literature context
+- See: `docs/research/literature-review/crossbar-circuits-literature-review-2025.md` for literature context
 
 ### Multi-Hop Sneak Path Analysis
 
@@ -320,7 +320,7 @@ func (t *MyTrainer) Train(network *Network, dataset Dataset) error {
 # Use smaller arrays for quick iteration
 # Enable GPU acceleration for large MVMs
 
-go test -run TestArrayMVM -bench=. ./module2-crossbar/pkg/crossbar
+go test -run TestArrayMVM -bench=. ./crossbar/pkg/crossbar
 ```
 
 ### For Accuracy
@@ -332,7 +332,7 @@ go test -run TestArrayMVM -bench=. ./module2-crossbar/pkg/crossbar
 # Increase ADC/DAC resolution
 # Use write-verify programming
 
-go test -v ./module2-crossbar/pkg/crossbar
+go test -v ./crossbar/pkg/crossbar
 ```
 
 ---
@@ -394,41 +394,41 @@ std_weight = weights.std()
 
 ```bash
 # All crossbar tests
-go test ./module2-crossbar/pkg/crossbar
+go test ./crossbar/pkg/crossbar
 
 # Specific test categories
-go test -run TestPhysics ./module2-crossbar/pkg/crossbar
-go test -run TestNonIdealities ./module2-crossbar/pkg/crossbar
-go test -run TestImprovement ./module2-crossbar/pkg/crossbar
+go test -run TestPhysics ./crossbar/pkg/crossbar
+go test -run TestNonIdealities ./crossbar/pkg/crossbar
+go test -run TestImprovement ./crossbar/pkg/crossbar
 
 # With coverage
-go test -cover ./module2-crossbar/pkg/crossbar
+go test -cover ./crossbar/pkg/crossbar
 
 # Verbose output
-go test -v ./module2-crossbar/pkg/crossbar
+go test -v ./crossbar/pkg/crossbar
 ```
 
 ### Integration Tests
 
 ```bash
 # Network inference test
-go test -run TestNetworkForward ./module2-crossbar/pkg/network
+go test -run TestNetworkForward ./crossbar/pkg/network
 
 # Training test
-go test -run TestTrainer ./module2-crossbar/pkg/training
+go test -run TestTrainer ./crossbar/pkg/training
 
 # Weight export test
-go test -run TestExport ./module2-crossbar/pkg/weights
+go test -run TestExport ./crossbar/pkg/weights
 ```
 
 ### Benchmarks
 
 ```bash
 # MVM performance
-go test -bench=BenchmarkMVM ./module2-crossbar/pkg/crossbar
+go test -bench=BenchmarkMVM ./crossbar/pkg/crossbar
 
 # Non-ideality overhead
-go test -bench=BenchmarkNonIdealities ./module2-crossbar/pkg/crossbar
+go test -bench=BenchmarkNonIdealities ./crossbar/pkg/crossbar
 ```
 
 ---

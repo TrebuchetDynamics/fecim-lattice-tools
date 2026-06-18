@@ -184,7 +184,7 @@ Start with **[TOPIC_SUMMARIES.md](./TOPIC_SUMMARIES.md)** to understand what eac
 
 ### Creating an Index Link
 
-To link papers in `docs/2-learn/` without duplicating files:
+To link papers in `docs/modules/` without duplicating files:
 
 ```markdown
 ## Ferroelectric Materials
@@ -348,11 +348,11 @@ Machine-readable `paper_metadata.json` includes:
 
 ## Related Resources
 
-- **Module documentation** — `docs/2-learn/` (per-module guides)
-- **Physics reference** — `docs/3-develop/api-reference.md`
-- **EDA guides** — `docs/2-learn/module6-eda/`
-- **Testing guide** — `docs/3-develop/testing/TESTING.md`
-- **Honesty audit** — `docs/4-research/honesty-audit.md`
+- **Module documentation** — `docs/modules/` (per-module guides)
+- **Physics reference** — `docs/internals/api-reference.md`
+- **EDA guides** — `docs/modules/eda/`
+- **Testing guide** — `docs/internals/testing/TESTING.md`
+- **Honesty audit** — `docs/research/honesty-audit.md`
 
 ---
 

@@ -242,7 +242,7 @@ differences indicate Delta or K_dep need re-calibration.
 ## Publication Checklist
 
 - [ ] Material parameters traced to DOI-backed source
-- [ ] Approximations from [physics-models.md](../4-research/physics-models.md) Section 7 acknowledged
+- [ ] Approximations from [physics-models.md](../research/physics-models.md) Section 7 acknowledged
 - [ ] Pr/Ec validated against at least one literature data point
 - [ ] MVM accuracy verified against badcrossbar or ngspice
 - [ ] Monte Carlo confidence intervals reported (>= 100 trials)

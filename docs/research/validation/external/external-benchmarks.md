@@ -125,4 +125,4 @@ The following simulator defaults **lack** direct external measurement comparison
 1. When a new paper is published with measured data for a parameter we use, add a row to this document.
 2. Add a corresponding test case in `external_benchmarks_test.go`.
 3. If the simulator default falls outside the new measured range, open an issue and decide whether to update the default or document the divergence.
-4. Update the honesty audit (`docs/4-research/honesty-audit.md`) accordingly.
+4. Update the honesty audit (`docs/research/honesty-audit.md`) accordingly.

@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools API Reference
 
-> **Note:** This file was previously located at `docs/API.md` / `docs/API_REFERENCE.md`. It has moved to `docs/3-develop/api-reference.md`.
+> **Note:** This file was previously located at `docs/API.md` / `docs/API_REFERENCE.md`. It has moved to `docs/internals/api-reference.md`.
 
 Comprehensive API guide for the core simulation packages and GUI components.
 
@@ -2038,4 +2038,4 @@ func main() {
 - [README.md](../../README.md) - Project overview
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
 - [status.md](../../status.md) - Project status
-- [docs/4-research/honesty-audit.md](../4-research/honesty-audit.md) - Accuracy and honesty audit
+- [docs/research/honesty-audit.md](../research/honesty-audit.md) - Accuracy and honesty audit

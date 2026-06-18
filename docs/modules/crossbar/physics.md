@@ -355,16 +355,16 @@ Higher temperature → faster drift
 
 ```bash
 # Physics correctness tests
-go test -run TestArrayMVM ./module2-crossbar/pkg/crossbar
-go test -run TestQuantization ./module2-crossbar/pkg/crossbar
+go test -run TestArrayMVM ./crossbar/pkg/crossbar
+go test -run TestQuantization ./crossbar/pkg/crossbar
 
 # Non-ideality tests
-go test -run TestIRDrop ./module2-crossbar/pkg/crossbar
-go test -run TestSneakPaths ./module2-crossbar/pkg/crossbar
-go test -run TestVariation ./module2-crossbar/pkg/crossbar
+go test -run TestIRDrop ./crossbar/pkg/crossbar
+go test -run TestSneakPaths ./crossbar/pkg/crossbar
+go test -run TestVariation ./crossbar/pkg/crossbar
 
 # Temperature tests
-go test -run TestTemperature ./module2-crossbar/pkg/crossbar
+go test -run TestTemperature ./crossbar/pkg/crossbar
 ```
 
 ### Golden Values
@@ -391,9 +391,9 @@ Reference calculations verified against:
 - Cryogenic operation: Advanced Electronics Materials 2024
 
 ### Code References
-- `docs/3-develop/api-reference.md` (API reference)
-- `docs/2-learn/module2-crossbar/architecture.md` (architecture overview)
-- `docs/4-research/physics-validation.md` (physics validation)
+- `docs/internals/api-reference.md` (API reference)
+- `docs/modules/crossbar/architecture.md` (architecture overview)
+- `docs/research/physics-validation.md` (physics validation)
 
 ---
 

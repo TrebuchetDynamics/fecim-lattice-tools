@@ -13,10 +13,10 @@
 ### Task 1: Rename the four main sections
 
 **Files:**
-- Rename: `docs/1-getting-started/` → `docs/guides/`
-- Rename: `docs/2-learn/` → `docs/modules/`
-- Rename: `docs/3-develop/` → `docs/internals/`
-- Rename: `docs/4-research/` → `docs/research/`
+- Rename: `docs/guides/` → `docs/guides/`
+- Rename: `docs/modules/` → `docs/modules/`
+- Rename: `docs/internals/` → `docs/internals/`
+- Rename: `docs/research/` → `docs/research/`
 
 - [ ] **Step 1: Rename all four dirs**
 
@@ -45,13 +45,13 @@ git commit -m "docs: rename numbered sections to semantic names"
 ### Task 2: Rename module subdirs (drop moduleN- prefix)
 
 **Files:**
-- Rename: `docs/modules/module1-hysteresis/` → `docs/modules/hysteresis/`
-- Rename: `docs/modules/module2-crossbar/` → `docs/modules/crossbar/`
-- Rename: `docs/modules/module3-mnist/` → `docs/modules/mnist/`
-- Rename: `docs/modules/module4-circuits/` → `docs/modules/circuits/`
-- Rename: `docs/modules/module5-comparison/` → `docs/modules/comparison/`
-- Rename: `docs/modules/module6-eda/` → `docs/modules/eda/`
-- Rename: `docs/modules/module7-docs/` → `docs/modules/doc-viewer/`
+- Rename: `docs/modules/hysteresis/` → `docs/modules/hysteresis/`
+- Rename: `docs/modules/crossbar/` → `docs/modules/crossbar/`
+- Rename: `docs/modules/mnist/` → `docs/modules/mnist/`
+- Rename: `docs/modules/circuits/` → `docs/modules/circuits/`
+- Rename: `docs/modules/comparison/` → `docs/modules/comparison/`
+- Rename: `docs/modules/eda/` → `docs/modules/eda/`
+- Rename: `docs/modules/doc-viewer/` → `docs/modules/doc-viewer/`
 
 - [ ] **Step 1: Rename all module subdirs**
 
@@ -266,10 +266,10 @@ CLAUDE.md has 8 path references across 4 unique paths, all of which now point to
 - [ ] **Step 1: Apply all four substitutions**
 
 ```bash
-sed -i 's|docs/3-develop/api-reference.md|docs/internals/api-reference.md|g' CLAUDE.md
-sed -i 's|docs/3-develop/testing/TESTING.md|docs/internals/testing/TESTING.md|g' CLAUDE.md
-sed -i 's|docs/2-learn/module6-eda/README.md|docs/modules/eda/README.md|g' CLAUDE.md
-sed -i 's|docs/4-research/honesty-audit.md|docs/research/honesty-audit.md|g' CLAUDE.md
+sed -i 's|docs/internals/api-reference.md|docs/internals/api-reference.md|g' CLAUDE.md
+sed -i 's|docs/internals/testing/TESTING.md|docs/internals/testing/TESTING.md|g' CLAUDE.md
+sed -i 's|docs/modules/eda/README.md|docs/modules/eda/README.md|g' CLAUDE.md
+sed -i 's|docs/research/honesty-audit.md|docs/research/honesty-audit.md|g' CLAUDE.md
 ```
 
 - [ ] **Step 2: Verify all 8 references are updated**

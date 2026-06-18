@@ -51,7 +51,7 @@ const ConfigVersion = "1.1.0"
 1. Bump `ConfigVersion` to `"2.0.0"`
 2. Add migration function in `config/physics/migrate.go`
 3. Update `LoadWithDefaults()` to handle both versions
-4. Update `docs/3-develop/config-reference.md`
+4. Update `docs/internals/config-reference.md`
 5. Add test in `config/physics/physics_coverage_test.go`
 
 ## For Reproducibility Packs

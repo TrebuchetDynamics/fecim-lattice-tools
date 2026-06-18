@@ -938,7 +938,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...                            # All tests
-go test ./module1-hysteresis/pkg/...    # Module 1 only
+go test ./hysteresis/pkg/...    # Module 1 only
 go test -race ./...                      # Race condition detection
 ```
 

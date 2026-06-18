@@ -21,13 +21,13 @@
 
 | Module | Topic | ELI5 | Physics | Features | Tools |
 |--------|-------|-------|---------|----------|-------|
-| **[1](module1-hysteresis/)** | Hysteresis & Materials | [eli5](module1-hysteresis/eli5.md) | [physics](module1-hysteresis/physics.md) | [features](module1-hysteresis/features.md) | [tools](module1-hysteresis/tools.md) |
-| **[2](module2-crossbar/)** | Crossbar Arrays | [eli5](module2-crossbar/eli5.md) | [physics](module2-crossbar/physics.md) | [features](module2-crossbar/features.md) | [tools](module2-crossbar/tools.md) |
-| **[3](module3-mnist/)** | Neural Networks | [eli5](module3-mnist/eli5.md) | [physics](module3-mnist/physics.md) | [features](module3-mnist/features.md) | [tools](module3-mnist/tools.md) |
-| **[4](module4-circuits/)** | Peripheral Circuits | [eli5](module4-circuits/eli5.md) | [physics](module4-circuits/physics.md) | [features](module4-circuits/features.md) | [tools](module4-circuits/tools.md) |
-| **[5](module5-comparison/)** | Technology Comparison | [eli5](module5-comparison/eli5.md) | [physics](module5-comparison/physics.md) | [features](module5-comparison/features.md) | [tools](module5-comparison/tools.md) |
-| **[6](module6-eda/)** | EDA & Chip Design | [eli5](module6-eda/eli5.md) | [physics](module6-eda/physics.md) | [features](module6-eda/features.md) | [tools](module6-eda/tools.md) |
-| **[7](module7-docs/)** | Documentation Tools | [eli5](module7-docs/eli5.md) | [physics](module7-docs/physics.md) | [features](module7-docs/features.md) | [tools](module7-docs/tools.md) |
+| **[1](hysteresis/)** | Hysteresis & Materials | [eli5](hysteresis/eli5.md) | [physics](hysteresis/physics.md) | [features](hysteresis/features.md) | [tools](hysteresis/tools.md) |
+| **[2](crossbar/)** | Crossbar Arrays | [eli5](crossbar/eli5.md) | [physics](crossbar/physics.md) | [features](crossbar/features.md) | [tools](crossbar/tools.md) |
+| **[3](mnist/)** | Neural Networks | [eli5](mnist/eli5.md) | [physics](mnist/physics.md) | [features](mnist/features.md) | [tools](mnist/tools.md) |
+| **[4](circuits/)** | Peripheral Circuits | [eli5](circuits/eli5.md) | [physics](circuits/physics.md) | [features](circuits/features.md) | [tools](circuits/tools.md) |
+| **[5](comparison/)** | Technology Comparison | [eli5](comparison/eli5.md) | [physics](comparison/physics.md) | [features](comparison/features.md) | [tools](comparison/tools.md) |
+| **[6](eda/)** | EDA & Chip Design | [eli5](eda/eli5.md) | [physics](eda/physics.md) | [features](eda/features.md) | [tools](eda/tools.md) |
+| **[7](doc-viewer/)** | Documentation Tools | [eli5](doc-viewer/eli5.md) | [physics](doc-viewer/physics.md) | [features](doc-viewer/features.md) | [tools](doc-viewer/tools.md) |
 
 ---
 
@@ -46,7 +46,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** The material physically moves to remember!
 
-**Start Here:** [module1-hysteresis/README.md](module1-hysteresis/README.md)
+**Start Here:** [hysteresis/README.md](hysteresis/README.md)
 
 **Time:** 30-45 minutes
 
@@ -63,7 +63,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** Physics does matrix multiplication for free!
 
-**Start Here:** [module2-crossbar/README.md](module2-crossbar/README.md)
+**Start Here:** [crossbar/README.md](crossbar/README.md)
 
 **Time:** 45-60 minutes
 
@@ -80,7 +80,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** Two crossbar layers can recognize handwritten digits!
 
-**Start Here:** [module3-mnist/README.md](module3-mnist/README.md)
+**Start Here:** [mnist/README.md](mnist/README.md)
 
 **Time:** 30-45 minutes
 
@@ -97,7 +97,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** Tiny analog currents need support circuits to be useful!
 
-**Start Here:** [module4-circuits/README.md](module4-circuits/README.md)
+**Start Here:** [circuits/README.md](circuits/README.md)
 
 **Time:** 30-45 minutes
 
@@ -114,7 +114,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** FeCIM could be 1000× more efficient (projected, unverified).
 
-**Start Here:** [module5-comparison/README.md](module5-comparison/README.md)
+**Start Here:** [comparison/README.md](comparison/README.md)
 
 **Time:** 20-30 minutes
 
@@ -132,7 +132,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 
 **Key Insight:** Real chip design requires millions of automated decisions!
 
-**Start Here:** [module6-eda/README.md](module6-eda/README.md)
+**Start Here:** [eda/README.md](eda/README.md)
 
 **Time:** 30-45 minutes
 
@@ -147,7 +147,7 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 - Cross-reference navigation
 - How to contribute documentation
 
-**Start Here:** [module7-docs/README.md](module7-docs/README.md)
+**Start Here:** [doc-viewer/README.md](doc-viewer/README.md)
 
 **Time:** 10-15 minutes
 
@@ -160,47 +160,47 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 | Resource | Level | Description |
 |----------|-------|-------------|
 | [eli5-overview.md](eli5-overview.md) | Beginner | Full technology overview |
-| [module1-hysteresis/eli5.md](module1-hysteresis/eli5.md) | Beginner | Hysteresis explained simply |
-| [module1-hysteresis/physics.md](module1-hysteresis/physics.md) | Advanced | Landau-Khalatnikov equations |
-| [module1-hysteresis/materials.md](module1-hysteresis/materials.md) | Intermediate | All 8 materials compared |
+| [hysteresis/eli5.md](hysteresis/eli5.md) | Beginner | Hysteresis explained simply |
+| [hysteresis/physics.md](hysteresis/physics.md) | Advanced | Landau-Khalatnikov equations |
+| [hysteresis/materials.md](hysteresis/materials.md) | Intermediate | All 8 materials compared |
 
 ### Compute-in-Memory
 
 | Resource | Level | Description |
 |----------|-------|-------------|
-| [module2-crossbar/eli5.md](module2-crossbar/eli5.md) | Beginner | Crossbar explained simply |
-| [module2-crossbar/physics.md](module2-crossbar/physics.md) | Advanced | IR drop, sneak path math |
-| [module2-crossbar/architecture.md](module2-crossbar/architecture.md) | Intermediate | 1T1R vs 0T1R vs 2T1R |
+| [crossbar/eli5.md](crossbar/eli5.md) | Beginner | Crossbar explained simply |
+| [crossbar/physics.md](crossbar/physics.md) | Advanced | IR drop, sneak path math |
+| [crossbar/architecture.md](crossbar/architecture.md) | Intermediate | 1T1R vs 0T1R vs 2T1R |
 
 ### Neural Networks
 
 | Resource | Level | Description |
 |----------|-------|-------------|
-| [module3-mnist/eli5.md](module3-mnist/eli5.md) | Beginner | Neural networks explained simply |
-| [module3-mnist/physics.md](module3-mnist/physics.md) | Advanced | CIM inference physics |
-| [module3-mnist/features.md](module3-mnist/features.md) | Intermediate | FP32 vs CIM mode comparison |
+| [mnist/eli5.md](mnist/eli5.md) | Beginner | Neural networks explained simply |
+| [mnist/physics.md](mnist/physics.md) | Advanced | CIM inference physics |
+| [mnist/features.md](mnist/features.md) | Intermediate | FP32 vs CIM mode comparison |
 
 ### Circuit Design
 
 | Resource | Level | Description |
 |----------|-------|-------------|
-| [module4-circuits/eli5.md](module4-circuits/eli5.md) | Beginner | DAC/ADC/TIA explained simply |
-| [module4-circuits/physics.md](module4-circuits/physics.md) | Advanced | Circuit non-idealities |
-| [module4-circuits/features.md](module4-circuits/features.md) | Intermediate | All peripheral models |
+| [circuits/eli5.md](circuits/eli5.md) | Beginner | DAC/ADC/TIA explained simply |
+| [circuits/physics.md](circuits/physics.md) | Advanced | Circuit non-idealities |
+| [circuits/features.md](circuits/features.md) | Intermediate | All peripheral models |
 
 ### Technology Comparison
 
 | Resource | Level | Description |
 |----------|-------|-------------|
-| [module5-comparison/eli5.md](module5-comparison/eli5.md) | Beginner | Why FeCIM matters |
-| [module5-comparison/physics.md](module5-comparison/physics.md) | Advanced | Energy/speed analysis |
+| [comparison/eli5.md](comparison/eli5.md) | Beginner | Why FeCIM matters |
+| [comparison/physics.md](comparison/physics.md) | Advanced | Energy/speed analysis |
 
 ### EDA & Manufacturing
 
 | Resource | Level | Description |
 |----------|-------|-------------|
-| [module6-eda/eli5.md](module6-eda/eli5.md) | Beginner | Chip design explained simply |
-| [module6-eda/physics.md](module6-eda/physics.md) | Advanced | VLSI physical design |
+| [eda/eli5.md](eda/eli5.md) | Beginner | Chip design explained simply |
+| [eda/physics.md](eda/physics.md) | Advanced | VLSI physical design |
 
 ---
 
@@ -211,9 +211,9 @@ Follow this order to build a complete understanding of FeCIM. Each module builds
 Start here if you have no background in electronics or materials science:
 
 1. [eli5-overview.md](eli5-overview.md) - 60-second pitch and story arc
-2. [module1-hysteresis/eli5.md](module1-hysteresis/eli5.md) - Memory cell in simple terms
-3. [module2-crossbar/eli5.md](module2-crossbar/eli5.md) - How math happens in hardware
-4. [module3-mnist/eli5.md](module3-mnist/eli5.md) - Neural networks in simple terms
+2. [hysteresis/eli5.md](hysteresis/eli5.md) - Memory cell in simple terms
+3. [crossbar/eli5.md](crossbar/eli5.md) - How math happens in hardware
+4. [mnist/eli5.md](mnist/eli5.md) - Neural networks in simple terms
 
 **Goal:** Understand what FeCIM is and why it matters.
 
@@ -221,10 +221,10 @@ Start here if you have no background in electronics or materials science:
 
 Recommended if you have undergraduate-level physics or engineering background:
 
-1. [module1-hysteresis/features.md](module1-hysteresis/features.md) - Preisach model and calibration
-2. [module2-crossbar/architecture.md](module2-crossbar/architecture.md) - Array architectures
-3. [module4-circuits/features.md](module4-circuits/features.md) - DAC/ADC non-idealities
-4. [module5-comparison/features.md](module5-comparison/features.md) - Quantitative comparisons
+1. [hysteresis/features.md](hysteresis/features.md) - Preisach model and calibration
+2. [crossbar/architecture.md](crossbar/architecture.md) - Array architectures
+3. [circuits/features.md](circuits/features.md) - DAC/ADC non-idealities
+4. [comparison/features.md](comparison/features.md) - Quantitative comparisons
 
 **Goal:** Build and modify the simulation tools.
 
@@ -232,10 +232,10 @@ Recommended if you have undergraduate-level physics or engineering background:
 
 Recommended if you have graduate-level materials or circuit background:
 
-1. [module1-hysteresis/physics.md](module1-hysteresis/physics.md) - Landau-Khalatnikov dynamics
-2. [module2-crossbar/physics.md](module2-crossbar/physics.md) - Parasitic solver mathematics
-3. [module4-circuits/physics.md](module4-circuits/physics.md) - Circuit physics models
-4. [../4-research/physics-validation.md](../4-research/physics-validation.md) - Validation methodology
+1. [hysteresis/physics.md](hysteresis/physics.md) - Landau-Khalatnikov dynamics
+2. [crossbar/physics.md](crossbar/physics.md) - Parasitic solver mathematics
+3. [circuits/physics.md](circuits/physics.md) - Circuit physics models
+4. [../research/physics-validation.md](../research/physics-validation.md) - Validation methodology
 
 **Goal:** Evaluate scientific accuracy and contribute physics improvements.
 
@@ -305,7 +305,7 @@ Hour 2:
 - Week 1: Modules 1-2 (material science + computation)
 - Week 2: Modules 3-4 (neural networks + circuits)
 - Week 3: Modules 5-6 (comparison + design)
-- Week 4: Research papers in [../4-research/](../4-research/)
+- Week 4: Research papers in [../research/](../research/)
 
 ---
 
@@ -324,7 +324,7 @@ This is an **educational simulator**. Before drawing conclusions:
 - **98.24% MNIST accuracy** - HZO FTJ reservoir computing (J. Alloys & Compounds 2025)
 - **885 TOPS/W** - Multi-level FeFET crossbar (Nature Comms 2023)
 
-Full details: [../4-research/honesty-audit.md](../4-research/honesty-audit.md)
+Full details: [../research/honesty-audit.md](../research/honesty-audit.md)
 
 ---
 
@@ -332,16 +332,16 @@ Full details: [../4-research/honesty-audit.md](../4-research/honesty-audit.md)
 
 **Start Learning:**
 - [ELI5 Overview](eli5-overview.md) - Start here!
-- [Module 1](module1-hysteresis/README.md) - First module
+- [Module 1](hysteresis/README.md) - First module
 
 **Go Deeper:**
-- [Research Papers](../4-research/papers/) - 230+ papers
-- [Physics Validation](../4-research/physics-validation.md) - Accuracy report
-- [API Reference](../3-develop/api-reference.md) - Code docs
+- [Research Papers](../research/papers/) - 230+ papers
+- [Physics Validation](../research/physics-validation.md) - Accuracy report
+- [API Reference](../internals/api-reference.md) - Code docs
 
 **Reference:**
 - [Glossary](../GLOSSARY.md) - All terms
-- [Honesty Audit](../4-research/honesty-audit.md) - Claims status
+- [Honesty Audit](../research/honesty-audit.md) - Claims status
 
 ---
 

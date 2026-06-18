@@ -223,9 +223,9 @@ Efficiency gain: ~1000× (model-based)
 
 ## Related Modules
 
-- **[Module 1: Hysteresis](../module1-hysteresis/README.md)** - Conductance levels for weights
-- **[Module 2: Crossbar](../module2-crossbar/README.md)** - MVM hardware for layer computation
-- **[Module 5: Comparison](../module5-comparison/README.md)** - Architecture-level benchmarks
+- **[Module 1: Hysteresis](../hysteresis/README.md)** - Conductance levels for weights
+- **[Module 2: Crossbar](../crossbar/README.md)** - MVM hardware for layer computation
+- **[Module 5: Comparison](../comparison/README.md)** - Architecture-level benchmarks
 
 ---
 
@@ -233,13 +233,13 @@ Efficiency gain: ~1000× (model-based)
 
 ```bash
 # Run inference tests
-go test ./module3-mnist/pkg/core
+go test ./mnist/pkg/core
 
 # Test quantization
-go test -run TestQuantization ./module3-mnist/pkg/core
+go test -run TestQuantization ./mnist/pkg/core
 
 # Full integration test
-go test ./module3-mnist/...
+go test ./mnist/...
 ```
 
 ---

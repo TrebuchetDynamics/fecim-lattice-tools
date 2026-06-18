@@ -23,20 +23,20 @@ Deterministic validation fixtures that support tests may be tracked only under `
 
 ## Disallowed Material
 - `docs/archive/**`
-- `docs/4-research/internal-analysis/**`
-- `docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/**`
-- `docs/4-research/transcripts/ironlattice-youtube-script.md`
-- `docs/4-research/tour-group-ironlattice-research.md`
-- `docs/4-research/superlattice-material-analysis.md`
+- `docs/research/internal-analysis/**`
+- `docs/research/transcripts/COSM_2025_AI_Hardware_Breakthrough/**`
+- `docs/research/transcripts/ironlattice-youtube-script.md`
+- `docs/research/tour-group-ironlattice-research.md`
+- `docs/research/superlattice-material-analysis.md`
 - `docs/superpowers/**`
 - `docs/research-papers/tourlab/**`
-- `docs/4-research/papers/tourlab/**`
+- `docs/research/papers/tourlab/**`
 - `demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
 - `demo2-crossbar/pkg/layers/kvcache_fjh.go`
 - `demo2-inference/pkg/layers/kvcache_fjh.go`
 - `module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
-- `docs/4-research/papers/DOWNLOAD_PLAN.md`
-- `docs/4-research/opensource-tools/research_notes_final.md`
+- `docs/research/papers/DOWNLOAD_PLAN.md`
+- `docs/research/opensource-tools/research_notes_final.md`
 - `validation/literature/_incoming/**`
 - Repo-local test logs such as `module1-hysteresis/test_output*.txt`
 - Generated build or run artifacts such as binaries, logs, screenshots, recordings, and export output.

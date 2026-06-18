@@ -66,22 +66,22 @@ The GUI will launch with 7 interactive modules!
 After installation, explore the documentation:
 
 ### For Learners
-1. Read [ELI5 Overview](../2-learn/eli5-overview.md)
+1. Read [ELI5 Overview](../modules/eli5-overview.md)
 2. Run the app with the [Quick Start](../../README.md#quick-start)
-3. Try [Module 1: Hysteresis](../2-learn/module1-hysteresis/)
+3. Try [Module 1: Hysteresis](../modules/hysteresis/)
 4. Progress through modules 2-7
 
 ### For Developers
-1. Read [API Reference](../3-develop/api-reference.md)
-2. Study [Architecture](../3-develop/architecture/)
-3. Review [Testing Guide](../3-develop/testing/)
-4. Check [Code Quality](../3-develop/code-quality.md)
+1. Read [API Reference](../internals/api-reference.md)
+2. Study [Architecture](../internals/architecture/)
+3. Review [Testing Guide](../internals/testing/)
+4. Check [Code Quality](../internals/code-quality.md)
 
 ### For Researchers
-1. Review [Honesty Audit](../4-research/honesty-audit.md)
-2. Read [Physics Validation](../4-research/physics-validation.md)
-3. Browse [Research Papers](../4-research/papers/)
-4. Check [Literature Reviews](../4-research/literature-review/)
+1. Review [Honesty Audit](../research/honesty-audit.md)
+2. Read [Physics Validation](../research/physics-validation.md)
+3. Browse [Research Papers](../research/papers/)
+4. Check [Literature Reviews](../research/literature-review/)
 
 ---
 
@@ -252,18 +252,18 @@ Full troubleshooting: [runbook.md#common-issues](runbook.md#common-issues)
 
 ### Explore the Modules
 
-- **[Module 1: Hysteresis](../2-learn/module1-hysteresis/)** - Start here!
-- **[Module 2: Crossbar](../2-learn/module2-crossbar/)** - See computation
-- **[Module 3: MNIST](../2-learn/module3-mnist/)** - Try recognition
-- **[Module 4: Circuits](../2-learn/module4-circuits/)** - Learn peripherals
-- **[Module 5: Comparison](../2-learn/module5-comparison/)** - Compare tech
-- **[Module 6: EDA](../2-learn/module6-eda/)** - Design chips
+- **[Module 1: Hysteresis](../modules/hysteresis/)** - Start here!
+- **[Module 2: Crossbar](../modules/crossbar/)** - See computation
+- **[Module 3: MNIST](../modules/mnist/)** - Try recognition
+- **[Module 4: Circuits](../modules/circuits/)** - Learn peripherals
+- **[Module 5: Comparison](../modules/comparison/)** - Compare tech
+- **[Module 6: EDA](../modules/eda/)** - Design chips
 
 ### Dig Deeper
 
-- **[Learn Section](../2-learn/)** - Educational content
-- **[Develop Section](../3-develop/)** - API and architecture
-- **[Research Section](../4-research/)** - Papers and validation
+- **[Learn Section](../modules/)** - Educational content
+- **[Develop Section](../internals/)** - API and architecture
+- **[Research Section](../research/)** - Papers and validation
 
 ---
 
@@ -273,7 +273,7 @@ Full troubleshooting: [runbook.md#common-issues](runbook.md#common-issues)
 
 - **[GLOSSARY](../GLOSSARY.md)** - Technical terms explained
 - **[FAQ](runbook.md#common-issues)** - Common questions
-- **[API Docs](../3-develop/api-reference.md)** - Package reference
+- **[API Docs](../internals/api-reference.md)** - Package reference
 
 ### Community
 
@@ -338,16 +338,16 @@ GOOS=windows GOARCH=amd64 go build -o fecim.exe ./cmd/fecim-lattice-tools
 - [CLI Reference](cli-reference.md)
 
 **Learning:**
-- [ELI5 Overview](../2-learn/eli5-overview.md)
-- [Module Documentation](../2-learn/)
+- [ELI5 Overview](../modules/eli5-overview.md)
+- [Module Documentation](../modules/)
 
 **Development:**
-- [API Reference](../3-develop/api-reference.md)
-- [Architecture](../3-develop/architecture/)
+- [API Reference](../internals/api-reference.md)
+- [Architecture](../internals/architecture/)
 
 **Research:**
-- [Honesty Audit](../4-research/honesty-audit.md)
-- [Physics Validation](../4-research/physics-validation.md)
+- [Honesty Audit](../research/honesty-audit.md)
+- [Physics Validation](../research/physics-validation.md)
 
 ---
 

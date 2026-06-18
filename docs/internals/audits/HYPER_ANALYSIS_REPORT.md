@@ -27,10 +27,10 @@
 - Evidence: a legacy-path scan over live docs returned `19` references during the initial audit.
 - Examples:
   - `AGENTS.md`
-  - `docs/3-develop/gui/GUI.module4.md`
-  - `docs/3-develop/gui/GUI.module6.md`
+  - `docs/internals/gui/GUI.module4.md`
+  - `docs/internals/gui/GUI.module6.md`
 - Impact: agents and maintainers are routed to stale paths during debugging, testing, and UI review.
-- Action taken on 2026-03-05: `AGENTS.md` now points at current `docs/3-develop/...` paths and the archived script reference that still exists.
+- Action taken on 2026-03-05: `AGENTS.md` now points at current `docs/internals/...` paths and the archived script reference that still exists.
 
 ### 3. Literature reproducibility is not yet fully direct-data backed
 
@@ -48,14 +48,14 @@
 
 - Evidence: a live citation-debt scan over docs and config returned `9` markers during the initial audit.
 - Concentration:
-  - `docs/2-learn/module2-crossbar/architecture.md`
-  - `docs/4-research/PHYSICS_REALISM_AUDIT.md`
+  - `docs/modules/crossbar/architecture.md`
+  - `docs/research/PHYSICS_REALISM_AUDIT.md`
 - Impact: some explanatory or numerical claims still outrun DOI-backed provenance, especially around drift, endurance, temperature, and calibrated physics defaults.
 
 ### 5. Repository health dashboard is stale enough to mislead
 
 - Evidence from current commands:
-  - `go list ./... | wc -l` returned `107`, while `docs/3-develop/repo-health.md` still reports `85`.
+  - `go list ./... | wc -l` returned `107`, while `docs/internals/repo-health.md` still reports `85`.
   - `gofmt -l .` currently returned `17` paths, while the dashboard still reports `5`.
   - `go tool cover -func=coverage.out` fails because the existing `coverage.out` references missing paths (`module1-hysteresis/pkg/gui/simulation.go: no such file or directory`).
 - Impact: the dashboard is no longer a trustworthy release gate or planning source until it is regenerated from a fresh run.
@@ -81,7 +81,7 @@ The repo is already strong on deterministic tests and breadth. The main blockers
 
 1. Convert the `5` placeholder provenance files into direct digitized datasets with explicit uncertainty notes and non-placeholder flags.
 2. Burn down the `9` remaining citation-debt markers, starting with crossbar drift/endurance/temperature claims.
-3. Regenerate `docs/3-develop/repo-health.md` from fresh `go list`, `gofmt -l`, and coverage artifacts so it becomes trustworthy again.
+3. Regenerate `docs/internals/repo-health.md` from fresh `go list`, `gofmt -l`, and coverage artifacts so it becomes trustworthy again.
 4. Add a lightweight `scripts/research_grade_audit.sh` gate so these counts can be rerun without manual repo inspection.
 
 ## Commands Used

@@ -1,6 +1,6 @@
 # Known Limitations
 
-Honest documentation of current simulator limitations. See also: `docs/4-research/honesty-audit.md`.
+Honest documentation of current simulator limitations. See also: `docs/research/honesty-audit.md`.
 
 ## Physics Model Limitations
 

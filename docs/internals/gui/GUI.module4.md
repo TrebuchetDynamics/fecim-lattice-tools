@@ -19,7 +19,7 @@ Conventions:
   - Bindings list event handlers or UI update calls impacting the component
 
 Related (authoritative) control semantics:
-- **Unified GUI control contract (semantics + units + clamping):** `docs/3-develop/gui/GUI.module4.unified-controls.md`
+- **Unified GUI control contract (semantics + units + clamping):** `docs/internals/gui/GUI.module4.unified-controls.md`
 
 ## Bugs Summary
 
@@ -1137,14 +1137,14 @@ If material selector fails to load or material is nil:
 
 ### Unit Test Strategy for DeviceState Methods
 
-Test structure follows `docs/3-develop/testing/TESTING.md` patterns:
+Test structure follows `docs/internals/testing/TESTING.md` patterns:
 
 ```bash
 # Run peripheral circuit tests (includes device state logic)
 go test -v ./shared/peripherals
 
 # Run GUI tests (headless widget tests)
-go test -v ./module4-circuits/pkg/gui
+go test -v ./circuits/pkg/gui
 ```
 
 **DeviceState Method Testing Approach**:
@@ -1671,7 +1671,7 @@ ca.materialSelector = widget.NewSelect(materialNames, func(s string) {
 2. Verify materials are registered in material initialization code
 3. Test AllMaterials() directly:
    ```bash
-   go test -run TestMaterialSelection ./module4-circuits/pkg/gui/...
+   go test -run TestMaterialSelection ./circuits/pkg/gui/...
    ```
 4. Check if ferroelectric package import is correct: `"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"`
 

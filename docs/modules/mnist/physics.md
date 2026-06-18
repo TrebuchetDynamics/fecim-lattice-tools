@@ -57,5 +57,5 @@ NoisyValue = v + N(0,1) * |v| * sigma_over_mu
 
 ## Sources
 
-- `docs/3-develop/api-reference.md`
+- `docs/internals/api-reference.md`
 - `shared/neural/network_inference.go`

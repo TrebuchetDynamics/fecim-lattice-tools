@@ -1,6 +1,6 @@
 # Memory Leak Fixes (2026-02-07)
 
-> **Note:** This file was previously located at `docs/MEMORY_LEAK_FIXES.md`. It has moved to `docs/3-develop/memory-optimization.md`.
+> **Note:** This file was previously located at `docs/MEMORY_LEAK_FIXES.md`. It has moved to `docs/internals/memory-optimization.md`.
 
 This document records memory leaks identified and fixed in the FeCIM Lattice Tools codebase.
 

@@ -38,7 +38,7 @@ module1-hysteresis/
 │   ├── controller/          # ISPP write controller
 │   ├── tui/                 # Bubble Tea TUI
 │   └── render/              # Vulkan renderer (optional)
-└── docs/2-learn/module1-hysteresis/  # This documentation
+└── docs/modules/hysteresis/  # This documentation
 ```
 
 ---
@@ -126,15 +126,15 @@ See [Run Modes](./run-modes.md) for complete CLI reference.
 - **Modeled:** Equations, defaults, and performance estimates are simulator models unless explicitly tied to cited measured data
 - **Aspirational:** Production-scale or silicon-parity claims are roadmap intent and must not be reported as demonstrated results
 
-See [honesty-audit.md](../../4-research/honesty-audit.md) for complete accuracy policy.
+See [honesty-audit.md](../../research/honesty-audit.md) for complete accuracy policy.
 
 ---
 
 ## Related Modules
 
-- **[Module 2: Crossbar](../module2-crossbar/README.md)** - Uses conductance from hysteresis model
-- **[Module 3: MNIST](../module3-mnist/README.md)** - Uses quantized states from hysteresis
-- **[Module 4: Circuits](../module4-circuits/README.md)** - DAC/ADC peripherals for programming
+- **[Module 2: Crossbar](../crossbar/README.md)** - Uses conductance from hysteresis model
+- **[Module 3: MNIST](../mnist/README.md)** - Uses quantized states from hysteresis
+- **[Module 4: Circuits](../circuits/README.md)** - DAC/ADC peripherals for programming
 
 ---
 

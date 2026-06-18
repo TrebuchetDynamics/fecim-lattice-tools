@@ -178,16 +178,16 @@ See [architecture.md](./architecture.md) for detailed voltage schemes.
 - **Modeled:** Equations, defaults, and performance estimates are simulator models unless explicitly tied to cited measured data
 - **Aspirational:** Production-scale or silicon-parity claims are roadmap intent and must not be reported as demonstrated results
 
-See [Physics Audit](../../4-research/honesty-audit.md) for complete accuracy policy.
+See [Physics Audit](../../research/honesty-audit.md) for complete accuracy policy.
 
 ---
 
 ## Related Modules
 
-- **[Module 1: Hysteresis](../module1-hysteresis/README.md)** - Provides conductance-polarization relationship
-- **[Module 3: MNIST](../module3-mnist/README.md)** - Uses crossbar arrays for neural network inference
-- **[Module 4: Circuits](../module4-circuits/README.md)** - DAC/ADC peripherals for crossbar I/O
-- **[Module 6: EDA](../module6-eda/README.md)** - Layout generation for crossbar arrays
+- **[Module 1: Hysteresis](../hysteresis/README.md)** - Provides conductance-polarization relationship
+- **[Module 3: MNIST](../mnist/README.md)** - Uses crossbar arrays for neural network inference
+- **[Module 4: Circuits](../circuits/README.md)** - DAC/ADC peripherals for crossbar I/O
+- **[Module 6: EDA](../eda/README.md)** - Layout generation for crossbar arrays
 
 ---
 
@@ -249,15 +249,15 @@ Typical 128×128 array, 6-bit ADC:
 
 ```bash
 # Run all crossbar tests
-go test ./module2-crossbar/pkg/crossbar
+go test ./crossbar/pkg/crossbar
 
 # Test specific functionality
-go test -run TestArrayMVM ./module2-crossbar/pkg/crossbar
-go test -run TestIRDrop ./module2-crossbar/pkg/crossbar
-go test -run TestSneakPaths ./module2-crossbar/pkg/crossbar
+go test -run TestArrayMVM ./crossbar/pkg/crossbar
+go test -run TestIRDrop ./crossbar/pkg/crossbar
+go test -run TestSneakPaths ./crossbar/pkg/crossbar
 
 # With coverage
-go test -cover ./module2-crossbar/pkg/crossbar
+go test -cover ./crossbar/pkg/crossbar
 ```
 
 ---

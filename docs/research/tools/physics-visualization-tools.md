@@ -1395,9 +1395,9 @@ plotter.add_volume(grid, scalars='data', resolution=128)
 
 ## Related FeCIM Documentation
 
-- **Module 1 (Hysteresis):** See `docs/2-learn/module1-hysteresis/physics.md`
-- **Module 2 (Crossbar):** See `docs/2-learn/module2-crossbar/physics.md`
-- **API Reference:** See `docs/3-develop/api-reference.md`
+- **Module 1 (Hysteresis):** See `docs/modules/hysteresis/physics.md`
+- **Module 2 (Crossbar):** See `docs/modules/crossbar/physics.md`
+- **API Reference:** See `docs/internals/api-reference.md`
 
 ---
 

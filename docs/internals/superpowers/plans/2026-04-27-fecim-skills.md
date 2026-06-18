@@ -29,7 +29,7 @@
 | `Makefile` | Add `install-skills`, `test-skills` targets | 1 |
 | `.github/workflows/ci.yml` | Add sync-check step | 1 |
 | `AGENTS.md` | One-line pointer to fecim-skills | 1 |
-| `docs/3-develop/README.md` | One-line pointer to fecim-skills | 1 |
+| `docs/internals/README.md` | One-line pointer to fecim-skills | 1 |
 
 ---
 
@@ -92,7 +92,7 @@ Shared context referenced by FeCIM skills. Do not duplicate this content in indi
 | Guo 2018 | Guo et al., Nano Lett. 18, 1727 (2018) | Crossbar device characterization |
 | HZO FTJ 2025 | J. Alloys Compd. (2025) | 98.24% MNIST reservoir computing — NOT a FeCIM device claim |
 
-## Honesty-audit policy (`docs/4-research/honesty-audit.md`)
+## Honesty-audit policy (`docs/research/honesty-audit.md`)
 
 **Verified claims (peer-reviewed):** 98.24% MNIST in HZO FTJ reservoir computing — must be attributed to HZO FTJ 2025 paper, NOT this simulator.
 
@@ -894,11 +894,11 @@ TDD: N/A (CI glue)"
 
 ---
 
-## Task 14: Update `AGENTS.md` and `docs/3-develop/README.md` pointers
+## Task 14: Update `AGENTS.md` and `docs/internals/README.md` pointers
 
 **Files:**
 - Modify: `AGENTS.md`
-- Modify: `docs/3-develop/README.md`
+- Modify: `docs/internals/README.md`
 
 - [ ] **Step 1: Add row to the AGENTS.md "Quick Reference" table**
 
@@ -908,9 +908,9 @@ In `AGENTS.md`, locate the `### Quick Reference` table. Insert a row before the 
 | Use a FeCIM skill (researcher, builder, etc.) | `tools/fecim-skills/README.md` |
 ```
 
-- [ ] **Step 2: Add a one-line bullet to `docs/3-develop/README.md` Documentation Index**
+- [ ] **Step 2: Add a one-line bullet to `docs/internals/README.md` Documentation Index**
 
-Open `docs/3-develop/README.md`, locate `## 📖 Documentation Index`. Add immediately under that heading (or at the end of its first list, whichever the file structure has — read first to confirm exact location):
+Open `docs/internals/README.md`, locate `## 📖 Documentation Index`. Add immediately under that heading (or at the end of its first list, whichever the file structure has — read first to confirm exact location):
 
 ```markdown
 - **FeCIM Skills:** `tools/fecim-skills/README.md` — agent skills for Claude Code, Codex, opencode
@@ -919,7 +919,7 @@ Open `docs/3-develop/README.md`, locate `## 📖 Documentation Index`. Add immed
 - [ ] **Step 3: Commit**
 
 ```bash
-git add AGENTS.md docs/3-develop/README.md
+git add AGENTS.md docs/internals/README.md
 git commit -m "docs: point AGENTS.md and dev guide to fecim-skills
 
 TDD: N/A (documentation only)"
@@ -986,7 +986,7 @@ Each task in this phase has the same shape: write the canonical SKILL.md, run in
 ```markdown
 ---
 name: fecim-researcher
-description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/4-research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
+description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
 ---
 
 # fecim-researcher
@@ -998,12 +998,12 @@ Survey FeCIM literature and project knowledge to ground a design decision or ans
 1. **Define the question.** Write it in one sentence. If it has multiple sub-questions, split them and run the workflow per sub-question.
 
 2. **Search local sources** in this order:
-   - `docs/4-research/` (audits, validation notes, error propagation)
+   - `docs/research/` (audits, validation notes, error propagation)
    - `references/` (academic papers, simulation benchmarks)
    - `citations/` (project's citation registry, if present)
    - `experimental-data/` (HZO, HfO2, crossbar characterization)
 
-   Use `rg` with focused patterns (e.g., `rg -i "preisach" docs/4-research/ references/`).
+   Use `rg` with focused patterns (e.g., `rg -i "preisach" docs/research/ references/`).
 
 3. **If Cognee is configured locally** (`.env` has `LLM_API_KEY`, `.cognee_system/` exists), query the KG:
    ```bash
@@ -1064,7 +1064,7 @@ TDD: N/A (configuration only)"
 ```markdown
 ---
 name: fecim-citation
-description: Verifies and formats FeCIM physics/measurement claims against the project's published-source list and docs/4-research/honesty-audit.md. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages.
+description: Verifies and formats FeCIM physics/measurement claims against the project's published-source list and docs/research/honesty-audit.md. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages.
 ---
 
 # fecim-citation
@@ -1143,7 +1143,7 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
 1. **Pick scope** by the change being verified:
    - Whole suite: `go test ./...`
    - Race detection: `go test -race ./...`
-   - Module: `go test ./module1-hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
+   - Module: `go test ./hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
    - Future shell: `make test-legacy-fyne`
    - Coverage: `go test -cover ./...`
 
@@ -1162,9 +1162,9 @@ Pick the right test invocation, run it, and triage failures against the 5 known 
 
 4. **Output the TDD evidence block** per `_shared/tdd-evidence-template.md`:
    ```
-   RED:  go test ./module1-hysteresis/... -run TestX
+   RED:  go test ./hysteresis/... -run TestX
          FAIL TestX (Preisach Everett zero-clamp pattern)
-   GREEN: go test ./module1-hysteresis/... -run TestX
+   GREEN: go test ./hysteresis/... -run TestX
           ok
    VERIFY: go test ./... && go test -race ./...
    ```
@@ -1327,7 +1327,7 @@ TDD: N/A (configuration only)"
 ```markdown
 ---
 name: fecim-honesty-audit
-description: Enforces docs/4-research/honesty-audit.md policy by scanning PR diffs, READMEs, and presentation material for removed/unverified claims (87% MNIST, 30-states-as-fact, energy multipliers vs NAND/GPUs). Use before committing docs, PRs, or release notes that include accuracy or efficiency numbers.
+description: Enforces docs/research/honesty-audit.md policy by scanning PR diffs, READMEs, and presentation material for removed/unverified claims (87% MNIST, 30-states-as-fact, energy multipliers vs NAND/GPUs). Use before committing docs, PRs, or release notes that include accuracy or efficiency numbers.
 ---
 
 # fecim-honesty-audit

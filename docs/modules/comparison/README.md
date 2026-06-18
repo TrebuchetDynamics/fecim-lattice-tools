@@ -22,7 +22,7 @@ Module 5 provides architecture-level comparison between CPU, GPU, and FeCIM tech
 - **[Features](./features.md)** - Workload library, visualization
 
 ### For Researchers
-- **[Honesty Audit](../../4-research/honesty-audit.md)** - Validation status of all claims
+- **[Honesty Audit](../../research/honesty-audit.md)** - Validation status of all claims
 
 ---
 
@@ -198,7 +198,7 @@ All FeCIM values are **model-based projections**, not measured hardware:
 
 ### Validation Status
 
-See `docs/4-research/honesty-audit.md` for complete validation status of all claims.
+See `docs/research/honesty-audit.md` for complete validation status of all claims.
 
 **Demonstrated:** Simulation framework, comparison methodology
 **Modeled:** Performance estimates, energy calculations
@@ -213,22 +213,22 @@ See `docs/4-research/honesty-audit.md` for complete validation status of all cla
 | [eli5.md](./eli5.md) | Why compare? | Beginners |
 | [physics.md](./physics.md) | Equations, ROI math | Developers |
 | [features.md](./features.md) | Workloads, visualizations | All |
-| [honesty-audit.md](../../4-research/honesty-audit.md) | Validation status | Researchers |
+| [honesty-audit.md](../../research/honesty-audit.md) | Validation status | Researchers |
 
 ---
 
 ## Related Modules
 
-- **[Module 2: Crossbar](../module2-crossbar/README.md)** - FeCIM energy model source
-- **[Module 3: MNIST](../module3-mnist/README.md)** - Benchmark workload
-- **[Module 6: EDA](../module6-eda/README.md)** - Area estimates
+- **[Module 2: Crossbar](../crossbar/README.md)** - FeCIM energy model source
+- **[Module 3: MNIST](../mnist/README.md)** - Benchmark workload
+- **[Module 6: EDA](../eda/README.md)** - Area estimates
 
 ---
 
 ## Testing
 
 ```bash
-go test ./module5-comparison/pkg/comparison
+go test ./comparison/pkg/comparison
 ```
 
 ---

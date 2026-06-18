@@ -17,7 +17,7 @@ This page describes trust boundaries for FeCIM Lattice Tools. It should be updat
 | Claim | Status | Evidence |
 |---|---|---|
 | Module 2 KCL conservation can be checked on deterministic random arrays. | Highly validated | `go test -v ./validation/module2/...` emits `output/validation/module2/kcl_conservation.json`. |
-| The repository distinguishes simulation claims from device-measurement claims. | Documentation-backed | `README.md`, `validation/README.md`, `docs/4-research/honesty-audit.md`. |
+| The repository distinguishes simulation claims from device-measurement claims. | Documentation-backed | `README.md`, `validation/README.md`, `docs/research/honesty-audit.md`. |
 | The project has an MIT license. | Repository-backed | `LICENSE`. |
 
 ## Literature-Backed Areas

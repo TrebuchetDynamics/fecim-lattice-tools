@@ -51,5 +51,5 @@ reading_time_minutes = ceil(word_count / 200)
 
 ## Sources
 
-- `docs/3-develop/gui/GUI.module7.md`
-- `docs/3-develop/api-reference.md`
+- `docs/internals/gui/GUI.module7.md`
+- `docs/internals/api-reference.md`

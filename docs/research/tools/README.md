@@ -231,9 +231,9 @@ Beyond open-source tools, see also:
 | Document | Purpose |
 |----------|---------|
 | `CLAUDE.md` | Project overview, physics constants, accuracy policy |
-| `docs/3-develop/api-reference.md` | Function lookup, API reference |
-| `docs/3-develop/testing/TESTING.md` | Test framework, running tests before commit |
-| `docs/4-research/honesty-audit.md` | Scientific accuracy verification for all claims |
+| `docs/internals/api-reference.md` | Function lookup, API reference |
+| `docs/internals/testing/TESTING.md` | Test framework, running tests before commit |
+| `docs/research/honesty-audit.md` | Scientific accuracy verification for all claims |
 
 ---
 
@@ -306,7 +306,7 @@ For GPU acceleration (CUDA), see individual tool documentation.
 ### Integration questions?
 - See "Recommended Workflows" in each tool's documentation
 - Study code examples in this documentation
-- Check `docs/3-develop/api-reference.md` for module APIs
+- Check `docs/internals/api-reference.md` for module APIs
 
 ### Need help?
 - Tool-specific GitHub issues (most active)

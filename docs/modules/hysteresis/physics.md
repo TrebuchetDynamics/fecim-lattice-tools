@@ -431,17 +431,17 @@ Ec(T) ∝ (Tc - T)     (roughly)
 ## Sources and References
 
 ### Documentation
-- [hysteresis-physics.md](../../4-research/internal-analysis/hysteresis-physics.md) - Extended physics deep-dive
+- [hysteresis-physics.md](../../research/internal-analysis/hysteresis-physics.md) - Extended physics deep-dive
 - [materials.md](./materials.md) - Material parameter tables
 - [ELI5](./eli5.md) - Beginner-friendly explanation
 
 ### Code
-- `docs/3-develop/api-reference.md` - Function lookups
+- `docs/internals/api-reference.md` - Function lookups
 - Test files: `module1-hysteresis/pkg/controller/*_test.go`
 
 ### Literature
-- `docs/4-research/papers/by-topic/01-ferroelectric-materials/`
-- `docs/4-research/honesty-audit.md` (claim boundary and evidence notes)
+- `docs/research/papers/by-topic/01-ferroelectric-materials/`
+- `docs/research/honesty-audit.md` (claim boundary and evidence notes)
 - HZO P-E loop examples: DOI citations in material definitions
 
 ---

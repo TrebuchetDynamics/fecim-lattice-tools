@@ -1,6 +1,6 @@
 # Scientific Honesty Audit: FeCIM Lattice Tools
 
-> **Note:** This file was previously located at `docs/comparison/HONESTY_AUDIT.md`. It has moved to `docs/4-research/honesty-audit.md`.
+> **Note:** This file was previously located at `docs/comparison/HONESTY_AUDIT.md`. It has moved to `docs/research/honesty-audit.md`.
 
 **Version:** 4.2 | **Date:** 2026-03-05 | **Status:** Active (verified + unverified tagged)
 
@@ -64,11 +64,11 @@ The following appear in historical docs, research notes, or prior drafts. They a
 Documents reviewed or historically containing claims:
 - `docs/README.md`
 - `README.md`
-- `docs/2-learn/` (module ELI5, features, physics guides)
-- `docs/4-research/` (literature reviews, internal analyses)
-- `docs/4-research/transcripts/` (conference transcripts)
+- `docs/modules/` (module ELI5, features, physics guides)
+- `docs/research/` (literature reviews, internal analyses)
+- `docs/research/transcripts/` (conference transcripts)
 - `module*/README.md` (module-level documentation)
-- `docs/3-develop/api-reference.md` (API documentation)
+- `docs/internals/api-reference.md` (API documentation)
 
 Legacy paths (archived, do not use):
 - `docs/comparison/`, `docs/crossbar/`, `docs/hysteresis/`, `docs/eda/`
@@ -113,7 +113,7 @@ Test suite: `validation/literature/external_benchmarks_test.go`
 - **Exact match**: Simulator value must match the published value within floating-point tolerance (relative error < 1e-6). Used for coefficients taken directly from a paper.
 - **RMSE**: Root mean squared error against digitized experimental curves (used by existing `TestExperimentalDataValidation`).
 
-Full benchmark reference: `docs/4-research/validation/external/external-benchmarks.md`
+Full benchmark reference: `docs/research/validation/external/external-benchmarks.md`
 
 ---
 

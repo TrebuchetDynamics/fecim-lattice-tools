@@ -1552,9 +1552,9 @@ For ferroelectric compute-in-memory research, recommend:
 ---
 
 **Related FeCIM Documentation:**
-- `docs/2-learn/module1-hysteresis/physics.md` - Preisach model details
-- `docs/2-learn/module2-crossbar/physics.md` - Array physics
-- `docs/4-research/honesty-audit.md` - FeCIM parameter verification policy
+- `docs/modules/hysteresis/physics.md` - Preisach model details
+- `docs/modules/crossbar/physics.md` - Array physics
+- `docs/research/honesty-audit.md` - FeCIM parameter verification policy
 - `CLAUDE.md` - Project development guidelines
 
 **Last Updated:** January 27, 2026

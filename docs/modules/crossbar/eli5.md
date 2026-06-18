@@ -306,7 +306,7 @@ Ferroelectric CIM uses the same techniques!
 
 ## Next Steps
 
-- **Want to see it recognize digits?** Go to [Module 3: MNIST](../module3-mnist/eli5.md)
-- **Want to learn about the circuits?** Go to [Module 4: Circuits](../module4-circuits/eli5.md)
-- **Back to Module 1?** See [Module 1: Hysteresis](../module1-hysteresis/eli5.md)
+- **Want to see it recognize digits?** Go to [Module 3: MNIST](../mnist/eli5.md)
+- **Want to learn about the circuits?** Go to [Module 4: Circuits](../circuits/eli5.md)
+- **Back to Module 1?** See [Module 1: Hysteresis](../hysteresis/eli5.md)
 - **Back to overview?** See [ELI5 Overview](../eli5-overview.md)

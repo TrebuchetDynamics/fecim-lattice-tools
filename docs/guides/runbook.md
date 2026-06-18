@@ -1,6 +1,6 @@
 # Operations Runbook - FeCIM Lattice Tools
 
-> **Note:** This file was previously located at `docs/RUNBOOK.md`. It has moved to `docs/1-getting-started/runbook.md`.
+> **Note:** This file was previously located at `docs/RUNBOOK.md`. It has moved to `docs/guides/runbook.md`.
 
 > **Purpose:** Deployment procedures, monitoring, common issues, and rollback procedures
 
@@ -290,7 +290,7 @@ wget -q http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
 wget -q http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
 
 # Or use the training script (auto-downloads)
-./module3-mnist/scripts/train_all_sizes.sh
+./mnist/scripts/train_all_sizes.sh
 ```
 
 ### Issue: Module 6 EDA Tools Not Working
@@ -355,10 +355,10 @@ go build -a ./cmd/fecim-lattice-tools
 
 ```bash
 # Run benchmarks
-go test -bench=. ./module2-crossbar/pkg/crossbar
+go test -bench=. ./crossbar/pkg/crossbar
 
 # With memory allocation stats
-go test -bench=. -benchmem ./module2-crossbar/pkg/crossbar
+go test -bench=. -benchmem ./crossbar/pkg/crossbar
 ```
 
 ### Optimize Hot Paths
@@ -370,7 +370,7 @@ go test -bench=. -benchmem ./module2-crossbar/pkg/crossbar
 
 **Profile before optimizing:**
 ```bash
-go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./module2-crossbar/pkg/crossbar
+go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./crossbar/pkg/crossbar
 go tool pprof cpu.prof
 ```
 
@@ -378,7 +378,7 @@ go tool pprof cpu.prof
 
 ```bash
 # Run comparison benchmark against literature
-./module3-mnist/scripts/benchmark.sh
+./mnist/scripts/benchmark.sh
 
 # Expected results:
 # Output depends on dataset, weights, and configuration.
@@ -422,9 +422,9 @@ chmod 755 screenshots recordings output logs
 
 | Issue Type | Resource |
 |------------|----------|
-| Build errors | `docs/3-develop/README.md` |
-| Physics questions | `docs/4-research/honesty-audit.md` |
-| Testing | `docs/3-develop/testing/TESTING.md` |
+| Build errors | `docs/internals/README.md` |
+| Physics questions | `docs/research/honesty-audit.md` |
+| Testing | `docs/internals/testing/TESTING.md` |
 | General development | `CONTRIBUTING.md` |
 | Project rules | `CLAUDE.md` |
 

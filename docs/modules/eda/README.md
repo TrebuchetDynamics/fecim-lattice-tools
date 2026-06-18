@@ -338,17 +338,17 @@ netgen -batch lvs netlist.sp layout.extracted.sp
 
 ## Related Modules
 
-- **[Module 2: Crossbar](../module2-crossbar/README.md)** - Array source for layout
-- **[Module 4: Circuits](../module4-circuits/README.md)** - Peripheral circuits for export
+- **[Module 2: Crossbar](../crossbar/README.md)** - Array source for layout
+- **[Module 4: Circuits](../circuits/README.md)** - Peripheral circuits for export
 
 ---
 
 ## Testing
 
 ```bash
-go test ./module6-eda/pkg/compiler
-go test ./module6-eda/pkg/export
-go test ./module6-eda/pkg/validation
+go test ./eda/pkg/compiler
+go test ./eda/pkg/export
+go test ./eda/pkg/validation
 ```
 
 ---

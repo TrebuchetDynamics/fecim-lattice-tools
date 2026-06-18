@@ -1,6 +1,6 @@
 # Installation
 
-> **Note:** This file was previously located at `docs/INSTALLATION.md`. It has moved to `docs/1-getting-started/installation.md`.
+> **Note:** This file was previously located at `docs/INSTALLATION.md`. It has moved to `docs/guides/installation.md`.
 
 This document lists required prerequisites and optional dependencies for specific features.
 

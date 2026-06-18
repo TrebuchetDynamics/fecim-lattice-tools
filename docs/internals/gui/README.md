@@ -214,7 +214,7 @@ go test ./...
 make test-legacy-fyne
 
 # 3. Update any legacy module documentation that changed
-# Edit docs/3-develop/gui/GUI.moduleX.md
+# Edit docs/internals/gui/GUI.moduleX.md
 
 # 4. Run the default shell to verify visually
 CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module docs

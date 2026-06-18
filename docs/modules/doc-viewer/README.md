@@ -27,7 +27,7 @@ Module 7 provides an in-app documentation browser with search, table of contents
 ## Module Contents
 
 ```
-module7-docs/
+doc-viewer/
 ├── pkg/browser/
 │   ├── browser.go            # Main browser logic
 │   ├── search.go             # Full-text search
@@ -103,19 +103,19 @@ fecim-lattice-tools docs --topic module1/physics
 
 ```
 docs/
-├── 1-getting-started/
+├── guides/
 │   └── Quick start guides
-├── 2-learn/
-│   ├── module1-hysteresis/
-│   ├── module2-crossbar/
-│   ├── module3-mnist/
-│   ├── module4-circuits/
-│   ├── module5-comparison/
-│   ├── module6-eda/
-│   └── module7-docs/
-├── 3-develop/
+├── modules/
+│   ├── hysteresis/
+│   ├── crossbar/
+│   ├── mnist/
+│   ├── circuits/
+│   ├── comparison/
+│   ├── eda/
+│   └── doc-viewer/
+├── internals/
 │   └── Developer guides
-└── 4-research/
+└── research/
     └── Research papers and references
 ```
 
@@ -185,8 +185,8 @@ All modules integrate with the documentation browser.
 ## Testing
 
 ```bash
-go test ./module7-docs/pkg/browser
-go test ./module7-docs/pkg/search
+go test ./doc-viewer/pkg/browser
+go test ./doc-viewer/pkg/search
 ```
 
 ---
