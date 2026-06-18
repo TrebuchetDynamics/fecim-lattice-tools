@@ -1,8 +1,10 @@
 # Docs Folder Structure Revamp Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Remove all numeric directory prefixes from `docs/`, absorb all orphan folders and loose top-level files into four clean semantic sections.
+
+**Status:** Completed 2026-06-17
 
 **Architecture:** Pure filesystem restructure using `git mv` to preserve history. No production Go code is modified. CLAUDE.md updated at the end to fix the four broken path references. TDD: N/A — documentation-only change with no production-code behavior change.
 
@@ -13,12 +15,12 @@
 ### Task 1: Rename the four main sections
 
 **Files:**
-- Rename: `docs/guides/` → `docs/guides/`
-- Rename: `docs/modules/` → `docs/modules/`
-- Rename: `docs/internals/` → `docs/internals/`
-- Rename: `docs/research/` → `docs/research/`
+- Rename: `docs/1-getting-started/` → `docs/guides/`
+- Rename: `docs/2-learn/` → `docs/modules/`
+- Rename: `docs/3-develop/` → `docs/internals/`
+- Rename: `docs/4-research/` → `docs/research/`
 
-- [ ] **Step 1: Rename all four dirs**
+- [x] **Step 1: Rename all four dirs**
 
 ```bash
 git mv docs/1-getting-started docs/guides
@@ -27,14 +29,14 @@ git mv docs/3-develop docs/internals
 git mv docs/4-research docs/research
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 ```bash
 ls docs/
 ```
 Expected: `guides/  internals/  modules/  research/` visible alongside the remaining orphan dirs and loose files.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "docs: rename numbered sections to semantic names"
@@ -45,15 +47,15 @@ git commit -m "docs: rename numbered sections to semantic names"
 ### Task 2: Rename module subdirs (drop moduleN- prefix)
 
 **Files:**
-- Rename: `docs/modules/hysteresis/` → `docs/modules/hysteresis/`
-- Rename: `docs/modules/crossbar/` → `docs/modules/crossbar/`
-- Rename: `docs/modules/mnist/` → `docs/modules/mnist/`
-- Rename: `docs/modules/circuits/` → `docs/modules/circuits/`
-- Rename: `docs/modules/comparison/` → `docs/modules/comparison/`
-- Rename: `docs/modules/eda/` → `docs/modules/eda/`
-- Rename: `docs/modules/doc-viewer/` → `docs/modules/doc-viewer/`
+- Rename: `docs/modules/module1-hysteresis/` → `docs/modules/hysteresis/`
+- Rename: `docs/modules/module2-crossbar/` → `docs/modules/crossbar/`
+- Rename: `docs/modules/module3-mnist/` → `docs/modules/mnist/`
+- Rename: `docs/modules/module4-circuits/` → `docs/modules/circuits/`
+- Rename: `docs/modules/module5-comparison/` → `docs/modules/comparison/`
+- Rename: `docs/modules/module6-eda/` → `docs/modules/eda/`
+- Rename: `docs/modules/module7-docs/` → `docs/modules/doc-viewer/`
 
-- [ ] **Step 1: Rename all module subdirs**
+- [x] **Step 1: Rename all module subdirs**
 
 ```bash
 git mv docs/modules/module1-hysteresis docs/modules/hysteresis
@@ -65,14 +67,14 @@ git mv docs/modules/module6-eda docs/modules/eda
 git mv docs/modules/module7-docs docs/modules/doc-viewer
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 ```bash
 ls docs/modules/
 ```
 Expected: `README.md  circuits/  comparison/  crossbar/  doc-viewer/  eda/  eli5-overview.md  hysteresis/  mnist/`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "docs: drop moduleN- prefix from module subdirs"
@@ -93,7 +95,7 @@ Merge both `assets/` subdirs into a single flat `guides/assets/`, move presentat
 - Move: `docs/TRUST.md` → `docs/guides/trust.md`
 - Delete: empty `docs/assets/` dir
 
-- [ ] **Step 1: Merge assets into guides/assets/**
+- [x] **Step 1: Merge assets into guides/assets/**
 
 ```bash
 mkdir -p docs/guides/assets
@@ -112,7 +114,7 @@ git mv docs/assets/screenshots/hysteresis_fyne.png docs/guides/assets/
 git mv docs/assets/screenshots/mnist-accuracy-sweep.png docs/guides/assets/
 ```
 
-- [ ] **Step 2: Move presentations and loose top-level files**
+- [x] **Step 2: Move presentations and loose top-level files**
 
 ```bash
 git mv docs/presentations docs/guides/presentations
@@ -120,13 +122,13 @@ git mv docs/GLOSSARY.md docs/guides/glossary.md
 git mv docs/TRUST.md docs/guides/trust.md
 ```
 
-- [ ] **Step 3: Remove now-empty assets subdirs**
+- [x] **Step 3: Remove now-empty assets subdirs**
 
 ```bash
 rmdir docs/assets/reference-screenshots docs/assets/screenshots docs/assets
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 ls docs/guides/assets/
@@ -134,7 +136,7 @@ ls docs/guides/presentations/
 ```
 Expected: 13 image files in `docs/guides/assets/`. `presenter-script.md` in `docs/guides/presentations/`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "docs: absorb assets, presentations, glossary, trust into guides/"
@@ -157,7 +159,7 @@ git commit -m "docs: absorb assets, presentations, glossary, trust into guides/"
 - Move: `docs/internals/AUTOIMPROVEMENT-KG-PROMPT.md` → `docs/internals/audits/`
 - Move: `docs/internals/gui/DOC_DRIFT_AUDIT_2026-02-11.md` → `docs/internals/audits/`
 
-- [ ] **Step 1: Move orphan dirs into internals/**
+- [x] **Step 1: Move orphan dirs into internals/**
 
 ```bash
 git mv docs/adr docs/internals/adr
@@ -166,14 +168,14 @@ git mv docs/public-release docs/internals/release
 git mv docs/superpowers docs/internals/superpowers
 ```
 
-- [ ] **Step 2: Move loose top-level files into internals/**
+- [x] **Step 2: Move loose top-level files into internals/**
 
 ```bash
 git mv docs/SECURITY.md docs/internals/security.md
 git mv docs/HOW_TO_BREAK_THIS.md docs/internals/how-to-break-this.md
 ```
 
-- [ ] **Step 3: Create audits/ and move stray session-artifact files**
+- [x] **Step 3: Create audits/ and move stray session-artifact files**
 
 ```bash
 mkdir -p docs/internals/audits
@@ -183,7 +185,7 @@ git mv docs/internals/AUTOIMPROVEMENT-KG-PROMPT.md docs/internals/audits/
 git mv docs/internals/gui/DOC_DRIFT_AUDIT_2026-02-11.md docs/internals/audits/
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 ls docs/internals/
@@ -191,7 +193,7 @@ ls docs/internals/audits/
 ```
 Expected: `adr/  api-reference.md  architecture/  audits/  automation/  gui/  journal/  release/  superpowers/  testing/  ...` in `docs/internals/`. Four files in `docs/internals/audits/`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "docs: absorb adr, notebook, public-release, superpowers, security into internals/"
@@ -211,35 +213,35 @@ git commit -m "docs: absorb adr, notebook, public-release, superpowers, security
 - Move: `docs/documentation/module4-circuits/M4-OBS-05-RESULTS.md` → `docs/research/validation/module4/observations/`
 - Delete: empty `docs/documentation/` dir
 
-- [ ] **Step 1: Move paper/ and rename opensource-tools/**
+- [x] **Step 1: Move paper/ and rename opensource-tools/**
 
 ```bash
 git mv docs/paper docs/research/paper
 git mv docs/research/opensource-tools docs/research/tools
 ```
 
-- [ ] **Step 2: Move loose top-level files into research/**
+- [x] **Step 2: Move loose top-level files into research/**
 
 ```bash
 git mv docs/opensource-tools-summary.md docs/research/tools/summary.md
 git mv docs/PREDICTIONS.md docs/research/predictions.md
 ```
 
-- [ ] **Step 3: Move physics audit files into validation/**
+- [x] **Step 3: Move physics audit files into validation/**
 
 ```bash
 git mv docs/research/PHYSICS_REALISM_AUDIT.md docs/research/validation/
 git mv docs/research/PHYSICS_REALISM_AUDIT_ADDENDUM_2026-02.md docs/research/validation/
 ```
 
-- [ ] **Step 4: Move stray documentation/ file and remove empty dir**
+- [x] **Step 4: Move stray documentation/ file and remove empty dir**
 
 ```bash
 git mv docs/documentation/module4-circuits/M4-OBS-05-RESULTS.md docs/research/validation/module4/observations/
 rmdir docs/documentation/module4-circuits docs/documentation
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 ```bash
 ls docs/research/
@@ -248,7 +250,7 @@ ls docs/research/validation/ | head -5
 ```
 Expected: `paper/` and `tools/` present in `docs/research/`. `tools/` contains former opensource-tools content plus `summary.md`. `PHYSICS_REALISM_AUDIT*.md` files present in `docs/research/validation/`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "docs: absorb paper, tools, predictions, physics audits into research/"
@@ -263,16 +265,16 @@ git commit -m "docs: absorb paper, tools, predictions, physics audits into resea
 
 CLAUDE.md has 8 path references across 4 unique paths, all of which now point to moved locations.
 
-- [ ] **Step 1: Apply all four substitutions**
+- [x] **Step 1: Apply all four substitutions**
 
 ```bash
-sed -i 's|docs/internals/api-reference.md|docs/internals/api-reference.md|g' CLAUDE.md
-sed -i 's|docs/internals/testing/TESTING.md|docs/internals/testing/TESTING.md|g' CLAUDE.md
-sed -i 's|docs/modules/eda/README.md|docs/modules/eda/README.md|g' CLAUDE.md
-sed -i 's|docs/research/honesty-audit.md|docs/research/honesty-audit.md|g' CLAUDE.md
+sed -i 's|docs/3-develop/api-reference.md|docs/internals/api-reference.md|g' CLAUDE.md
+sed -i 's|docs/3-develop/testing/TESTING.md|docs/internals/testing/TESTING.md|g' CLAUDE.md
+sed -i 's|docs/2-learn/module6-eda/README.md|docs/modules/eda/README.md|g' CLAUDE.md
+sed -i 's|docs/4-research/honesty-audit.md|docs/research/honesty-audit.md|g' CLAUDE.md
 ```
 
-- [ ] **Step 2: Verify all 8 references are updated**
+- [x] **Step 2: Verify all 8 references are updated**
 
 ```bash
 grep "docs/" CLAUDE.md
@@ -289,7 +291,7 @@ Expected output (8 lines, no `docs/1-`, `docs/2-`, `docs/3-`, `docs/4-` remainin
 Full test documentation: `docs/internals/testing/TESTING.md`
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add CLAUDE.md
@@ -300,35 +302,35 @@ git commit -m "docs: update CLAUDE.md path references after restructure"
 
 ### Task 7: Verify and final cleanup
 
-- [ ] **Step 1: Confirm no old numbered prefixes remain**
+- [x] **Step 1: Confirm no old numbered prefixes remain**
 
 ```bash
 find docs/ -type d | grep -E '/[1-4]-'
 ```
 Expected: no output.
 
-- [ ] **Step 2: Confirm no stray top-level content remains**
+- [x] **Step 2: Confirm no stray top-level content remains**
 
 ```bash
 ls docs/
 ```
 Expected: exactly `README.md  guides/  internals/  modules/  research/`
 
-- [ ] **Step 3: Confirm no moduleN- dirs remain**
+- [x] **Step 3: Confirm no moduleN- dirs remain**
 
 ```bash
 find docs/ -type d | grep -E 'module[0-9]-'
 ```
 Expected: no output.
 
-- [ ] **Step 4: Run tests to confirm nothing broke**
+- [x] **Step 4: Run tests to confirm nothing broke**
 
 ```bash
 go test ./... -short -timeout 60s 2>&1 | tail -5
 ```
 Expected: all packages PASS. (The restructure touches no Go source — this is a sanity check that no test fixture paths reference the old doc locations.)
 
-- [ ] **Step 5: Final commit if any cleanup needed**
+- [x] **Step 5: Final commit if any cleanup needed**
 
 ```bash
 git status
