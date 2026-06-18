@@ -17,10 +17,9 @@ func TestRepositoryRootKeepsCollateralUnderPurposeDirectories(t *testing.T) {
 		"agent-test-loop.sh":  "scripts/agent-test-loop.sh",
 		"commit-push.sh":      "scripts/commit-push.sh",
 		"crucible":            "tools/crucible",
-		"notebook":            "docs/notebook",
 		"opensource":          "tools/opensource",
 		"paper":               "docs/research/paper",
-		"presenter-script.md": "docs/presentations/presenter-script.md",
+		"presenter-script.md": "docs/guides/presentations/presenter-script.md",
 		"prompts":             "tools/prompts",
 		"screenshots":         "docs/guides/assets/",
 	}
