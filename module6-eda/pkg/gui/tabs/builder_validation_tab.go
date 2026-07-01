@@ -189,21 +189,21 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	klayoutImage.FillMode = canvas.ImageFillContain
 	klayoutImage.SetMinSize(fyne.NewSize(600, 450))
 	klayoutLabel := widget.NewLabelWithStyle("KLayout", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	klayoutStatus := widget.NewLabel("Not generated")
+	klayoutStatus := widget.NewLabel(edaStatusPending("Not generated"))
 
 	// 2. OpenROAD image (placement visualization)
 	openroadImage := canvas.NewImageFromFile("")
 	openroadImage.FillMode = canvas.ImageFillContain
 	openroadImage.SetMinSize(fyne.NewSize(600, 450))
 	openroadLabel := widget.NewLabelWithStyle("OpenROAD", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	openroadStatus := widget.NewLabel("Not generated")
+	openroadStatus := widget.NewLabel(edaStatusPending("Not generated"))
 
 	// 3. Yosys schematic image (circuit diagram - PNG converted from DOT)
 	yosysImage := canvas.NewImageFromFile("")
 	yosysImage.FillMode = canvas.ImageFillContain
 	yosysImage.SetMinSize(fyne.NewSize(600, 450))
 	yosysLabel := widget.NewLabelWithStyle("Yosys Schematic", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	yosysStatus := widget.NewLabel("Not generated")
+	yosysStatus := widget.NewLabel(edaStatusPending("Not generated"))
 
 	// Create zoomable image tabs
 	klayoutTab := makeZoomableImageTab(klayoutImage, klayoutLabel, klayoutStatus)
@@ -227,7 +227,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			sharedwidgets.SafeDo(func() {
 				klayoutImage.File = absPath
 				klayoutImage.Resource = nil
-				klayoutStatus.SetText("Generated: " + filepath.Base(pngPath))
+				klayoutStatus.SetText(edaStatusSuccess("Generated", filepath.Base(pngPath)))
 				klayoutImage.Refresh()
 			})
 		}
@@ -242,7 +242,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			sharedwidgets.SafeDo(func() {
 				yosysImage.File = absPath
 				yosysImage.Resource = nil
-				yosysStatus.SetText("Generated: " + filepath.Base(pngPath))
+				yosysStatus.SetText(edaStatusSuccess("Generated", filepath.Base(pngPath)))
 				yosysImage.Refresh()
 			})
 			return
@@ -252,7 +252,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		dotAbs, _ := filepath.Abs(dotPath)
 		if sharedio.FileExists(dotAbs) {
 			sharedwidgets.SafeDo(func() {
-				yosysStatus.SetText("DOT only (install graphviz)")
+				yosysStatus.SetText(edaStatusWarning("DOT only", "install graphviz"))
 			})
 		}
 	}
@@ -265,7 +265,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			sharedwidgets.SafeDo(func() {
 				openroadImage.File = absPath
 				openroadImage.Resource = nil
-				openroadStatus.SetText("Generated: " + filepath.Base(pngPath))
+				openroadStatus.SetText(edaStatusSuccess("Generated", filepath.Base(pngPath)))
 				openroadImage.Refresh()
 			})
 		}
@@ -441,7 +441,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	genSchematicBtn := widget.NewButton("Gen Schematic (Yosys)", func() {
 		logging.GlobalInfo("[EDA-Builder] Yosys schematic generation started")
 		sharedwidgets.SafeDo(func() {
-			yosysStatus.SetText("Generating...")
+			yosysStatus.SetText(edaStatusRunning("Generating"))
 		})
 		go func() {
 			verilogPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
@@ -470,7 +470,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 						rawOutput = result.RawOutput
 					}
 					logging.GlobalError("[EDA-Builder] Yosys schematic generation failed: %s", errMsg)
-					yosysStatus.SetText("Failed: " + errMsg)
+					yosysStatus.SetText(edaStatusFailure("Failed", errMsg))
 					// Show detailed error with raw output
 					detailMsg := fmt.Sprintf("Schematic generation failed: %s", errMsg)
 					if rawOutput != "" {
@@ -486,7 +486,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	genOpenROADBtn := widget.NewButton("Gen Layout (OpenROAD)", func() {
 		logging.GlobalInfo("[EDA-Builder] OpenROAD layout generation started")
 		sharedwidgets.SafeDo(func() {
-			openroadStatus.SetText("Generating...")
+			openroadStatus.SetText(edaStatusRunning("Generating"))
 		})
 		go func() {
 			defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
@@ -523,7 +523,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 						rawOutput = result.RawOutput
 					}
 					logging.GlobalError("[EDA-Builder] OpenROAD layout generation failed: %s", errMsg)
-					openroadStatus.SetText("Failed: " + errMsg)
+					openroadStatus.SetText(edaStatusFailure("Failed", errMsg))
 					// Show detailed error with raw output
 					detailMsg := fmt.Sprintf("Layout generation failed: %s", errMsg)
 					if rawOutput != "" {
@@ -539,9 +539,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	defStatsLabel := widget.NewLabel("DEF: Pending")
 
 	// ========== VALIDATION SECTION ==========
-	yosysResult := widget.NewLabel("Not validated")
-	defResult := widget.NewLabel("Not validated")
-	crossResult := widget.NewLabel("Not validated")
+	yosysResult := widget.NewLabel(edaStatusPending("Not validated"))
+	defResult := widget.NewLabel(edaStatusPending("Not validated"))
+	crossResult := widget.NewLabel(edaStatusPending("Not validated"))
 	validationSummary := widget.NewLabel("")
 	validationSummary.TextStyle.Bold = true
 	logOutput := widget.NewMultiLineEntry()
@@ -561,17 +561,21 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	})
 
 	// ========== OPENLANE STATUS SECTION ==========
-	dockerStatus := widget.NewLabel("Checking...")
-	pdkStatus := widget.NewLabel("Checking...")
-	placementResult := widget.NewLabel("Not validated")
+	dockerStatus := widget.NewLabel(edaStatusRunning("Checking"))
+	pdkStatus := widget.NewLabel(edaStatusRunning("Checking"))
+	placementResult := widget.NewLabel(edaStatusPending("Not validated"))
 
-	// Pull Docker Image button (only shown when needed)
+	// Pull Docker Image button (only shown when needed). validationHeader is
+	// the row pullImageBtn lives in (assigned further down once built); it's
+	// forward-declared so the Show()/Hide() sites below can force that row
+	// to relayout via showRelayout/hideRelayout once it exists.
 	var pullImageBtn *widget.Button
+	var validationHeader *fyne.Container
 	pullImageBtn = widget.NewButton("Pull OpenLane Image", func() {
 		logging.GlobalInfo("[EDA-Builder] Docker image pull started")
 		go func() {
 			sharedwidgets.SafeDo(func() {
-				dockerStatus.SetText("Pulling image...")
+				dockerStatus.SetText(edaStatusRunning("Pulling image"))
 			})
 			addLog("=== Pulling OpenLane Docker Image ===")
 			addLog("This may take several minutes...")
@@ -583,14 +587,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err != nil {
 				logging.GlobalError("[EDA-Builder] Docker image pull failed: %v", err)
 				sharedwidgets.SafeDo(func() {
-					dockerStatus.SetText("✗ Pull failed: " + err.Error())
+					dockerStatus.SetText(edaStatusFailure("Pull failed", err.Error()))
 				})
 				addLog("ERROR: " + err.Error())
 			} else {
 				logging.GlobalInfo("[EDA-Builder] Docker image pull completed successfully")
 				sharedwidgets.SafeDo(func() {
-					dockerStatus.SetText("✓ Docker image ready")
-					pullImageBtn.Hide()
+					dockerStatus.SetText(edaStatusSuccess("Docker image ready", ""))
+					hideRelayout(pullImageBtn, validationHeader)
 				})
 				addLog("Docker image pulled successfully")
 			}
@@ -606,32 +610,32 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		sharedwidgets.SafeDo(func() {
 			if mode == openlane.ModeDocker {
 				if manager.IsDockerImagePulled() {
-					dockerStatus.SetText("✓ Docker image ready")
-					pullImageBtn.Hide()
+					dockerStatus.SetText(edaStatusSuccess("Docker image ready", ""))
+					hideRelayout(pullImageBtn, validationHeader)
 				} else {
 					// Should not happen with current DetectMode logic, but for safety
-					dockerStatus.SetText("○ Docker image not pulled")
-					pullImageBtn.Show()
+					dockerStatus.SetText(edaStatusPending("Docker image not pulled"))
+					showRelayout(pullImageBtn, validationHeader)
 				}
 			} else if mode == openlane.ModeNative {
-				dockerStatus.SetText("✓ Native tools detected")
-				pullImageBtn.Hide()
+				dockerStatus.SetText(edaStatusSuccess("Native tools detected", ""))
+				hideRelayout(pullImageBtn, validationHeader)
 			} else {
 				// ModeNone
 				if manager.IsDockerAvailable() {
-					dockerStatus.SetText("○ Docker found, image missing")
-					pullImageBtn.Show()
+					dockerStatus.SetText(edaStatusPending("Docker found, image missing"))
+					showRelayout(pullImageBtn, validationHeader)
 					pullImageBtn.Enable()
 				} else {
-					dockerStatus.SetText("✗ OpenLane/Docker not available")
+					dockerStatus.SetText(edaStatusFailure("OpenLane/Docker not available", ""))
 					pullImageBtn.Disable()
 				}
 			}
 
 			if manager.IsPDKInstalled() {
-				pdkStatus.SetText("✓ SKY130A PDK available (optional)")
+				pdkStatus.SetText(edaStatusSuccess("SKY130A PDK available", "optional"))
 			} else {
-				pdkStatus.SetText("○ Not needed - uses FeCIM cell library")
+				pdkStatus.SetText(edaStatusPending("Not needed - uses FeCIM cell library"))
 			}
 		})
 	}()
@@ -748,7 +752,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if window == nil {
 				addLog("  Skipped KLayout generation (headless mode)")
 				sharedwidgets.SafeDo(func() {
-					klayoutStatus.SetText("Skipped (headless)")
+					klayoutStatus.SetText(edaStatusSkipped("Skipped", "headless"))
 				})
 			} else {
 				// Determine LEF path based on architecture
@@ -765,7 +769,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				imgManager := openlane.NewManager()
 				imgConfig := openlane.DefaultConfig()
 				sharedwidgets.SafeDo(func() {
-					klayoutStatus.SetText("Generating...")
+					klayoutStatus.SetText(edaStatusRunning("Generating"))
 				})
 				if validation.IsKLayoutAvailable(imgManager) {
 					imgResult, err := validation.GenerateLayoutImage(
@@ -799,7 +803,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 						}
 						addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
 						sharedwidgets.SafeDo(func() {
-							klayoutStatus.SetText("Failed: " + errMsg)
+							klayoutStatus.SetText(edaStatusFailure("Failed", errMsg))
 						})
 					}
 				} else {
@@ -1273,7 +1277,7 @@ Date: reproducible-build
 			placementResult,
 		),
 	)
-	validationHeader := container.NewHBox(
+	validationHeader = container.NewHBox(
 		widget.NewLabelWithStyle("Validation Results:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		validationSummary,
 		layout.NewSpacer(),

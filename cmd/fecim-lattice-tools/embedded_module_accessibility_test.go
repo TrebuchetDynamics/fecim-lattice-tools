@@ -66,11 +66,15 @@ func TestEmbeddedModulesLayoutAccessibilitySmoke(t *testing.T) {
 						if node.obj == nil || !node.obj.Visible() {
 							continue
 						}
-						if _, ok := node.obj.(fyne.Widget); ok {
-							s := node.obj.Size()
-							if s.Width <= 0 || s.Height <= 0 {
-								t.Fatalf("zero-size visible widget %T", node.obj)
+						if w, ok := node.obj.(fyne.Widget); ok && widgetMissingLayoutSize(w) {
+							extra := ""
+							if lbl, ok := node.obj.(*widget.Label); ok {
+								extra = fmt.Sprintf(" text=%q", lbl.Text)
 							}
+							if btn, ok := node.obj.(*widget.Button); ok {
+								extra = fmt.Sprintf(" text=%q", btn.Text)
+							}
+							t.Fatalf("zero-size visible widget %T%s", node.obj, extra)
 						}
 						if label, ok := node.obj.(*widget.Label); ok && isLongUnboundedLabel(label) {
 							t.Fatalf("long visible label lacks wrapping/truncation: %q", label.Text)
@@ -141,7 +145,12 @@ func flattenLayoutNodes(root fyne.CanvasObject) []layoutNode {
 		}
 		if accordion, ok := o.(*widget.Accordion); ok {
 			for _, item := range accordion.Items {
-				walk(item.Detail)
+				// A closed item's Detail is never laid out by Fyne (its
+				// layout only touches Detail when Open), so it legitimately
+				// stays at zero size. Walking it would be a false positive.
+				if item.Open {
+					walk(item.Detail)
+				}
 			}
 			return
 		}
@@ -165,4 +174,21 @@ func canvasObjectPointer(o fyne.CanvasObject) uintptr {
 
 func isLongUnboundedLabel(label *widget.Label) bool {
 	return len(label.Text) > 80 && label.Wrapping == fyne.TextWrapOff && label.Truncation == fyne.TextTruncateOff
+}
+
+// widgetMissingLayoutSize reports whether w wanted layout space (non-zero
+// MinSize) but its actual rendered Size is zero on that axis — a real
+// layout bug. A widget whose own MinSize is legitimately zero (e.g. an
+// empty optional row with nothing to show yet) collapsing to zero size is
+// expected, not a bug.
+func widgetMissingLayoutSize(w fyne.Widget) bool {
+	min := w.MinSize()
+	s := w.Size()
+	if min.Width > 0 && s.Width <= 0 {
+		return true
+	}
+	if min.Height > 0 && s.Height <= 0 {
+		return true
+	}
+	return false
 }
