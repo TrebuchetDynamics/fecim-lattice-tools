@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // onDigitChanged handles canvas drawing updates.
@@ -261,7 +262,7 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	weightsPath := filepath.Join(app.weightsDir(), weightsFile)
 
 	// Show loading progress
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		app.statusLabel.SetText(fmt.Sprintf("Loading weights for hidden size %d...", size))
 	})
 
@@ -269,14 +270,14 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
 		// Try default weights file
 		weightsPath = filepath.Join(app.weightsDir(), "pretrained_weights.json")
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
 		})
 	}
 
 	err := app.network().LoadWeights(weightsPath)
 	if err != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			app.statusLabel.SetText(fmt.Sprintf("Error changing hidden size: %v", err))
 			if app.window != nil {
 				dialog.ShowError(fmt.Errorf("Failed to change hidden size: %w", err), app.window)
@@ -291,7 +292,7 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 		app.runInference(app.lastPixels)
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		app.statusLabel.SetText(fmt.Sprintf("Loaded network with hidden size %d", size))
 	})
 }

@@ -114,6 +114,9 @@ clean:
 arch-check:
 	@bash scripts/check-architecture.sh
 
+fyne-thread-check:
+	$(GO) run ./tools/fyne-thread-check
+
 ci: fmt vet test-short arch-check test-research research-audit
 
 # Skills (FeCIM agent skills)

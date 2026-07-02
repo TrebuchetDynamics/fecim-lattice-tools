@@ -9,36 +9,43 @@ Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapp
 
 ## Workflow
 
-1. **Define audit scope.** Default: `module*/pkg/gui/`, `cmd/fecim-lattice-tools/`. Narrow to changed files for PR review:
+1. **Run the automated guardrail first.** It scans default Fyne GUI scopes and exits non-zero on direct mutation-like widget calls inside goroutine literals without `fyne.Do`/`fyne.DoAndWait`:
+   ```bash
+   make fyne-thread-check
+   # or scoped:
+   go run ./tools/fyne-thread-check module6-eda/pkg/gui/tabs/builder_validation_tab.go
+   ```
+
+2. **Define audit scope.** Default: `module*/pkg/gui/`, `cmd/fecim-lattice-tools/`. Narrow to changed files for PR review:
    ```bash
    git diff --name-only main...HEAD | grep '\.go$' | grep -E 'pkg/gui|cmd/fecim'
    ```
    Use `rg` if available; on this host it may be missing, so `grep` is the default-safe fallback.
 
-2. **Find goroutine launches:**
+3. **Find goroutine launches:**
    ```bash
    rg -nU 'go func\(' <scope> 2>/dev/null || grep -RIn 'go func(' <scope>
    ```
 
-3. **For each match, examine the body** for direct mutation of:
+4. **For each match, examine the body** for direct mutation of:
    - `*widget.*` (e.g., `Label.SetText`, `Button.SetText`, `Entry.SetText`, `ProgressBar.SetValue`)
    - `*canvas.*` (e.g., `canvas.Refresh`, `*canvas.Image.Image = ...`)
    - `*container.*` (`Add`, `Remove`, `Refresh`)
    - Direct field assignment to any `fyne.CanvasObject`
 
-4. **Verify the call is wrapped:**
+5. **Verify the call is wrapped:**
    - GOOD: `fyne.Do(func() { label.SetText("done") })`
    - GOOD: helper function whose body is itself wrapped
    - BAD: bare `label.SetText(...)` inside `go func()`
 
-5. **Output a violation list:**
+6. **Output a violation list:**
    ```
    <file>:<line>: <symbol>.<method>(...) inside goroutine — needs fyne.Do
      Suggested:
        fyne.Do(func() { <symbol>.<method>(...) })
    ```
 
-6. **Cross-reference** `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` for nuanced cases (animation tickers, blocking dialogs).
+7. **Cross-reference** `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` for nuanced cases (animation tickers, blocking dialogs).
 
 ## Verification
 
