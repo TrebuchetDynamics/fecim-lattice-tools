@@ -204,5 +204,8 @@ func walkObjects(obj fyne.CanvasObject, visit func(fyne.CanvasObject)) {
 		for _, item := range v.Items {
 			walkObjects(item.Detail, visit)
 		}
+	case *container.Split:
+		walkObjects(v.Leading, visit)
+		walkObjects(v.Trailing, visit)
 	}
 }

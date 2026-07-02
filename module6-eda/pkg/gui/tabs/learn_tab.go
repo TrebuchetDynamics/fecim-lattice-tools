@@ -156,15 +156,15 @@ func makeIntroContent() fyne.CanvasObject {
 
 	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files for assembling FeCIM crossbar arrays within the OpenLane flow. It automates the placement (DEF) and connectivity (Verilog) of pre-existing FeFET cell macros. It does NOT draw transistors from scratch.`)
 	intro.Wrapping = fyne.TextWrapWord
-	introCard := widget.NewCard("Overview", "", intro)
+	introCard := widget.NewCard("Overview", " ", intro)
 
 	// Operation modes visual
 	modesContainer := sizedContainer(OperationModesVisual(), 620, 230)
-	modesCard := widget.NewCard("FeCIM Operation Modes", "", modesContainer)
+	modesCard := widget.NewCard("FeCIM Operation Modes", " ", modesContainer)
 
 	// OpenLane flow diagram
 	flowContainer := sizedContainer(OpenLaneFlowDiagram(), 760, 290)
-	flowCard := widget.NewCard("OpenLane RTL-to-GDSII Assembly", "", flowContainer)
+	flowCard := widget.NewCard("OpenLane RTL-to-GDSII Assembly", " ", flowContainer)
 
 	// Stages Explained section
 	stagesText := widget.NewLabel(`1. SYNTHESIS (Yosys) - Converts behavioral Verilog to gate-level netlist
@@ -174,7 +174,7 @@ func makeIntroContent() fyne.CanvasObject {
 5. ROUTING (TritonRoute) - Draws metal wire connections
 6. SIGNOFF & GDSII - Assembly of pre-existing cell macros into final GDSII`)
 	stagesText.Wrapping = fyne.TextWrapWord
-	stagesCard := widget.NewCard("The Stages Explained", "", stagesText)
+	stagesCard := widget.NewCard("The Stages Explained", " ", stagesText)
 
 	// Two-column do/don't layout
 	doList := makeBulletList("",
@@ -190,12 +190,12 @@ func makeIntroContent() fyne.CanvasObject {
 		"We do NOT characterize real timing values",
 		"We do NOT fabricate chips")
 
-	doCard := widget.NewCard("✓ WHAT WE DO", "", doList)
-	dontCard := widget.NewCard("✗ WHAT WE DON'T DO", "", dontList)
+	doCard := widget.NewCard("✓ WHAT WE DO", " ", doList)
+	dontCard := widget.NewCard("✗ WHAT WE DON'T DO", " ", dontList)
 	doColumns := container.NewGridWithColumns(2, doCard, dontCard)
 
 	// Disclaimer banner
-	disclaimerCard := widget.NewCard("⚠️ DISCLAIMER", "",
+	disclaimerCard := widget.NewCard("⚠️ DISCLAIMER", " ",
 		widget.NewLabel("This project has no university, company, or foundry affiliation."))
 
 	return container.NewVBox(
@@ -291,7 +291,7 @@ func makeFilesContent() fyne.CanvasObject {
 		VerilogPreviewCard(),
 		LibertyPreviewCard(),
 	)
-	filePreviewsCard := widget.NewCard("File Format Examples", "", cardsGrid)
+	filePreviewsCard := widget.NewCard("File Format Examples", " ", cardsGrid)
 
 	// === Collapsible sections using Accordion ===
 
@@ -383,7 +383,7 @@ Config.json: OpenLane configuration pointing to our files
 	accordion.Open(0)
 
 	// References section
-	refsCard := widget.NewCard("References", "", ReferencesCard())
+	refsCard := widget.NewCard("References", " ", ReferencesCard())
 
 	return container.NewVBox(
 		title,
@@ -399,22 +399,22 @@ Config.json: OpenLane configuration pointing to our files
 func makeQuickStartContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("Quick Start Guide", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	step1 := widget.NewCard("Step 1: Configure Array", "",
+	step1 := widget.NewCard("Step 1: Configure Array", " ",
 		widget.NewLabel("Set Rows, Cols, Mode (storage/memory/compute), and Architecture (passive/1T1R/2T1R) in the Builder tab."))
 
-	step2 := widget.NewCard("Step 2: Generate Files", "",
+	step2 := widget.NewCard("Step 2: Generate Files", " ",
 		widget.NewLabel("Click 'Generate All' to create Verilog, DEF, LEF, and Liberty files. Files are saved to the data/ directory."))
 
-	step3 := widget.NewCard("Step 3: Validate", "",
+	step3 := widget.NewCard("Step 3: Validate", " ",
 		widget.NewLabel("Click 'Validate All' to run Yosys syntax check, DEF validation, and cross-check. Green checkmarks indicate success."))
 
-	step4 := widget.NewCard("Step 4: Export Package", "",
+	step4 := widget.NewCard("Step 4: Export Package", " ",
 		widget.NewLabel("Click 'Export Package' to bundle all files for OpenLane integration. The package includes README with usage instructions."))
 
-	step5 := widget.NewCard("Step 5: View Layout", "",
+	step5 := widget.NewCard("Step 5: View Layout", " ",
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))
 
-	tipCard := widget.NewCard("💡 Tips", "",
+	tipCard := widget.NewCard("💡 Tips", " ",
 		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation"))
 
 	return container.NewVBox(
@@ -429,22 +429,22 @@ func makeQuickStartContent() fyne.CanvasObject {
 func makeFAQContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("FAQ & Troubleshooting", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	faq1 := widget.NewCard("Q: Why do validations fail?", "",
+	faq1 := widget.NewCard("Q: Why do validations fail?", " ",
 		widget.NewLabel("A: Common causes:\n• Missing cell files (run Generate All first)\n• Docker not running (needed for Yosys/OpenROAD)\n• Invalid array dimensions (must be > 0)"))
 
-	faq2 := widget.NewCard("Q: Why are images not generated?", "",
+	faq2 := widget.NewCard("Q: Why are images not generated?", " ",
 		widget.NewLabel("A: Image generation requires Docker with OpenLane image. Run 'docker pull efabless/openlane:latest' or click 'Pull OpenLane Image' button if shown."))
 
-	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", "",
+	faq3 := widget.NewCard("Q: What's the difference between passive and 1T1R?", " ",
 		widget.NewLabel("A: Passive arrays are simpler but suffer from sneak path currents in larger arrays. 1T1R adds a transistor per cell to isolate read/write operations, enabling larger arrays (64x64+)."))
 
-	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", "",
+	faq4 := widget.NewCard("Q: Are Liberty timing values accurate?", " ",
 		widget.NewLabel("A: NO! Liberty values are placeholders. Real fabrication requires SPICE characterization with validated FeFET device models from a foundry."))
 
-	faq5 := widget.NewCard("Q: How do I use the generated files with OpenLane?", "",
+	faq5 := widget.NewCard("Q: How do I use the generated files with OpenLane?", " ",
 		widget.NewLabel("A: Export Package creates a ready-to-use directory. Copy it to OpenLane's designs/ folder and run: flow.tcl -design <your_design_name>"))
 
-	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
+	troubleCard := widget.NewCard("🔧 Troubleshooting", " ",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
 
 	return container.NewVBox(

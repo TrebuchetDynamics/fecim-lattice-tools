@@ -183,8 +183,12 @@ func (wcw *WeightComparisonWidget) MinSize() fyne.Size {
 func (wcw *WeightComparisonWidget) CreateRenderer() fyne.WidgetRenderer {
 	wcw.raster = canvas.NewRaster(wcw.generateImage)
 
-	// Mode selector
-	modeSelect := widget.NewSelect([]string{"FP (Float32)", "Quantized", "Difference"}, func(s string) {
+	// Mode selector. Set the initial selected value before installing OnChanged;
+	// otherwise renderer construction triggers SetShowMode -> Refresh -> renderer
+	// construction recursion under the Fyne test driver.
+	modeSelect := widget.NewSelect([]string{"FP (Float32)", "Quantized", "Difference"}, nil)
+	modeSelect.Selected = "Difference"
+	modeSelect.OnChanged = func(s string) {
 		switch s {
 		case "FP (Float32)":
 			wcw.SetShowMode(0)
@@ -193,8 +197,7 @@ func (wcw *WeightComparisonWidget) CreateRenderer() fyne.WidgetRenderer {
 		case "Difference":
 			wcw.SetShowMode(2)
 		}
-	})
-	modeSelect.SetSelected("Difference")
+	}
 
 	controlRow := container.NewHBox(
 		widget.NewLabel("View:"),

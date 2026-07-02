@@ -254,7 +254,7 @@ func (lm *LayoutManager) buildMobileLayout() *fyne.Container {
 	// Overlay sidebar if visible
 	if lm.sidebarVisible && lm.sidebar != nil {
 		// Create a semi-transparent backdrop
-		backdrop := widget.NewCard("", "", lm.sidebar)
+		backdrop := widget.NewCard("", " ", lm.sidebar)
 		mainContent = container.NewStack(
 			lm.content,
 			backdrop,

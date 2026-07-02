@@ -893,7 +893,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(a.cellViz),
 	)
 
-	infoCard := widget.NewCard("Device Status", "", info)
+	infoCard := widget.NewCard("Device Status", " ", info)
 	literatureCard := a.createLiteratureOverlayPanel()
 
 	sections := widget.NewAccordion(

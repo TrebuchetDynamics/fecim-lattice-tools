@@ -286,7 +286,7 @@ func FileFormatCard(title, format, content string) fyne.CanvasObject {
 	codeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Use widget.Card for proper layout and MinSize reporting
-	card := widget.NewCard(title+" (."+format+")", "", codeLabel)
+	card := widget.NewCard(title+" (."+format+")", " ", codeLabel)
 
 	return card
 }
@@ -348,19 +348,19 @@ func ReferencesCard() fyne.CanvasObject {
 	refs1 := widget.NewLabel(`[1] M. Shalan et al., "OpenLANE: Digital ASIC Flow," WOSET, 2020.
 [2] LEF/DEF 5.8 Specification, Si2 Coalition.`)
 	refs1.Wrapping = fyne.TextWrapWord
-	card1 := widget.NewCard("EDA / OpenLane", "", refs1)
+	card1 := widget.NewCard("EDA / OpenLane", " ", refs1)
 
 	// Category 2: FeCIM Device Physics
 	refs2 := widget.NewLabel(`[3] S. Shin et al., "Flash In2Se3," Adv. Electron. Mater., 2025.
 [4] U. Schroeder et al., "Roadmap Ferroelectric HfZrO," APL Mater., 2023.`)
 	refs2.Wrapping = fyne.TextWrapWord
-	card2 := widget.NewCard("FeCIM Device Physics", "", refs2)
+	card2 := widget.NewCard("FeCIM Device Physics", " ", refs2)
 
 	// Category 3: CIM Architecture
 	refs3 := widget.NewLabel(`[5] Y. Chen, "Sneak Path Solutions," RSC Nanoscale Adv., 2020.
 [6] P. Chen, NeuroSim, Georgia Tech, 2021.`)
 	refs3.Wrapping = fyne.TextWrapWord
-	card3 := widget.NewCard("CIM Architecture", "", refs3)
+	card3 := widget.NewCard("CIM Architecture", " ", refs3)
 
 	return container.NewVBox(card1, card2, card3)
 }

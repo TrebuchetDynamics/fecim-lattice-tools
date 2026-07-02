@@ -68,6 +68,10 @@ _Avoid_: automatic persistence, hidden cache write, measured calibration certifi
 The rule that FeCIM results are model estimates for education and design exploration, not validated device or silicon measurements.
 _Avoid_: hardware proof, measured advantage, demonstrated device result
 
+**UI Stabilization Pass**:
+A bounded bug-hunting and hardening slice for the Default UI Surface that checks Fyne thread safety, module lifecycle cleanup, layout stability, scroll behavior, accessibility modes, and supported window sizes before visual polish. It produces focused failing tests for confirmed bugs before production fixes.
+_Avoid_: redesign sprint, subjective polish pass, untested GUI cleanup
+
 **Purpose Directory**:
 A top-level repository directory whose name identifies one durable kind of project material: executable entry points, reusable simulation code, documentation, research evidence, configuration, curated data, validation, tools, scripts, or generated artifacts.
 _Avoid_: junk drawer, miscellaneous root folder, temporary bucket

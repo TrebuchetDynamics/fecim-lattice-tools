@@ -129,7 +129,7 @@ func CreateTooltipCard(title string, tc TooltipContent, window fyne.Window, cont
 	infoBtn.Importance = widget.LowImportance
 
 	// Add info button to the right of the title using subtitle hack
-	card := widget.NewCard(title, "", container.NewVBox(content...))
+	card := widget.NewCard(title, " ", container.NewVBox(content...))
 	return card
 }
 
@@ -365,5 +365,5 @@ func QuickReferenceCard(tc TooltipContent) *widget.Card {
 	label := widget.NewLabel(summary)
 	label.Wrapping = fyne.TextWrapWord
 
-	return widget.NewCard(tc.Title, "", label)
+	return widget.NewCard(tc.Title, " ", label)
 }

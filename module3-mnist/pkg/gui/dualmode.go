@@ -293,7 +293,7 @@ func (app *DualModeApp) Stop() {
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Status label must be created first (used by callbacks in controls zone)
 	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random' to load a test sample from the MNIST dataset.")
-	app.statusLabel.Truncation = fyne.TextTruncateEllipsis
+	app.statusLabel.Truncation = fyne.TextTruncateClip
 
 	// Header
 	header := app.createHeader()

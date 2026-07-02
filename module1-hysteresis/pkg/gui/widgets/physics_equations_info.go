@@ -38,13 +38,13 @@ type termDetailPanel struct {
 func newTermDetailPanel() (*termDetailPanel, fyne.CanvasObject) {
 	panel := &termDetailPanel{
 		titleLabel:   widget.NewLabel("Tap a term to see its details."),
-		equation:     widget.NewLabel(""),
-		meaning:      widget.NewLabel(""),
-		units:        widget.NewLabel(""),
-		defaultValue: widget.NewLabel(""),
-		codeRef:      widget.NewLabel(""),
-		references:   widget.NewLabel(""),
-		notes:        widget.NewLabel(""),
+		equation:     widget.NewLabel(" "),
+		meaning:      widget.NewLabel(" "),
+		units:        widget.NewLabel(" "),
+		defaultValue: widget.NewLabel(" "),
+		codeRef:      widget.NewLabel(" "),
+		references:   widget.NewLabel(" "),
+		notes:        widget.NewLabel(" "),
 	}
 
 	panel.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
@@ -69,7 +69,7 @@ func newTermDetailPanel() (*termDetailPanel, fyne.CanvasObject) {
 		fieldBlock("Notes", panel.notes),
 	)
 
-	card := widget.NewCard("Selected Term", "", content)
+	card := widget.NewCard("Selected Term", " ", content)
 	return panel, card
 }
 
@@ -77,13 +77,13 @@ func (p *termDetailPanel) SetDetail(termID, fallback string) {
 	detail, ok := termDetails()[termID]
 	if !ok {
 		p.titleLabel.SetText("Selected Term")
-		p.equation.SetText("")
+		p.equation.SetText(" ")
 		p.meaning.SetText(fallback)
-		p.units.SetText("")
-		p.defaultValue.SetText("")
-		p.codeRef.SetText("")
-		p.references.SetText("")
-		p.notes.SetText("")
+		p.units.SetText(" ")
+		p.defaultValue.SetText(" ")
+		p.codeRef.SetText(" ")
+		p.references.SetText(" ")
+		p.notes.SetText(" ")
 		return
 	}
 
@@ -574,14 +574,14 @@ func tableFromRows(rows [][]string, colWidths []float32) fyne.CanvasObject {
 			return rowCount, colCount
 		},
 		func() fyne.CanvasObject {
-			label := widget.NewLabel("")
+			label := widget.NewLabel(" ")
 			label.Wrapping = fyne.TextWrapWord
 			return label
 		},
 		func(id widget.TableCellID, cell fyne.CanvasObject) {
 			label := cell.(*widget.Label)
 			if id.Row >= rowCount || id.Col >= colCount {
-				label.SetText("")
+				label.SetText(" ")
 				return
 			}
 			label.SetText(rows[id.Row][id.Col])

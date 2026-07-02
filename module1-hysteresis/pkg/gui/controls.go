@@ -738,22 +738,22 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	tips := sharedwidgets.HysteresisTooltips
 
 	mainSections := container.NewVBox(
-		widget.NewCard("Material & Mode", "", container.NewVBox(
+		widget.NewCard("Material & Mode", " ", container.NewVBox(
 			withInfo(a.materialBtn, tips.Material),
 			withInfo(a.waveformSelect, tips.Waveform),
 			withInfo(a.physicsSelect, tips.PhysicsEngine),
 			withInfo(a.isppMethodSelect, tips.ISPPMethod),
 		)),
-		widget.NewCard("Levels & Range", "", container.NewVBox(
+		widget.NewCard("Levels & Range", " ", container.NewVBox(
 			withInfo(levelsGrid, tips.Levels),
 			withInfo(rangeGrid, tips.TargetRange),
 		)),
-		widget.NewCard("Drive & Timing", "", container.NewVBox(
+		widget.NewCard("Drive & Timing", " ", container.NewVBox(
 			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider, a.eFieldRangeLabel), tips.EField),
 			withInfo(container.NewVBox(freqLabel, freqSlider, freqEntryRow), tips.Frequency),
 			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider), tips.TimeScale),
 		)),
-		widget.NewCard("Run", "", container.NewVBox(
+		widget.NewCard("Run", " ", container.NewVBox(
 			actionRow,
 			learnRow,
 		)),

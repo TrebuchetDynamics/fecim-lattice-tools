@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
 )
 
 // ScaledTheme wraps a base theme and scales text/control sizes.
@@ -32,5 +33,11 @@ func (t *ScaledTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 }
 
 func (t *ScaledTheme) Size(name fyne.ThemeSizeName) float32 {
-	return t.base.Size(name) * t.scale
+	base := t.base.Size(name)
+	switch name {
+	case theme.SizeNameText, theme.SizeNameHeadingText, theme.SizeNameSubHeadingText, theme.SizeNameCaptionText, theme.SizeNameLineSpacing:
+		return base * t.scale
+	default:
+		return base
+	}
 }
