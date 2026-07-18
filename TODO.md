@@ -2,23 +2,23 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-05-03 | **Fyne**: All 7 modules ported and functional
+**Last Updated**: 2026-07-17 | **Fyne**: All 7 modules ported and functional
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 9 | Fyne integration + UX + screenshots |
-| Open Issues | 2 | qmd cold-start blocker + MNIST layout-audit hang |
-| Scheduled | 1 | Quarterly Literature Review — April 2026 |
+| Pending | 0 | No active implementation tasks |
+| Open Issues | 2 | qmd cold-start + Telegram delivery blockers |
+| Scheduled | 1 | Quarterly Literature Review — overdue since April 2026; last audit 2026-03-05 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All items done including Fyne full migration |
+| Completed | ~260+ | All Fyne integration tasks resolved; archive below |
 
 ---
 
-## Active Items
+## Task Status
 
-### Pending — Fyne Integration & Polish
+### Completed — Fyne Integration & Polish (8 unique tasks)
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
@@ -27,32 +27,46 @@
 | 3 | Cross-module design composition — Composition/Snapshot/ExportDesign | Medium | **Done** |
 | 4 | Generate screenshots — 5 PNGs generated via `cmd/fecim-screenshotter-fyne` | Medium | **Done** |
 | 5 | Interactive canvas events — drawModuleOverlays reads globalPorts for real data | Medium | **Done** |
-| 6 | Dependency upgrades — gg/Fyne + transitive updated | Low | **Done** |
-| 7 | Fyne Screenshotter CLI — `cmd/fecim-screenshotter-fyne/main.go` | Medium | **Done** |
-| 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 | 6 | Dependency upgrades — gg v0.43.2→v0.44.1, Fyne v0.29.4→v0.31.0, ui v0.1.13→v0.1.18, plus transitive. Build + 37 tests pass. | Low | **Done** |
 | 7 | Fyne Screenshotter CLI — `cmd/fecim-screenshotter-fyne/main.go` | Medium | **Done** |
 | 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 
 ### Open Issues
 
-[BLOCKED] qmd local knowledge search cold-start on this host — 2026-03-05 14:13 CST
+[BLOCKED] qmd local knowledge search cold-start on this host — evidence last validated 2026-03-05 14:13 CST
   blocker: `qmd` search/query workflow for repo and workspace markdown lookup
   evidence: `qmd status` and `qmd query` trigger CUDA build attempts (`CUDA Toolkit not found`) and `qmd query` starts a 1.28 GB generation-model download before returning results
   unblocks when: qmd can return collection search results within 5s on CPU-only startup without CUDA build retries or model bootstrap
   owner: tooling/system
-  workaround/pivot: use `rg` plus direct reads; capture findings in `docs/3-develop/HYPER_ANALYSIS_REPORT.md`
-  next check: 2026-03-06 09:00 CST
+  workaround/pivot: use `rg` plus direct reads; capture findings in `docs/internals/audits/HYPER_ANALYSIS_REPORT.md`
+  next check: owner-triggered; the previous 2026-03-06 09:00 CST check date elapsed without recorded revalidation
 
-[BLOCKED] Full all-module layout audit stalls at MNIST in headless test driver — 2026-03-06 15:11 CST
-  blocker: `TestLayoutAudit_AllModulesTabsAndSizes` does not advance after entering the `mnist` subtest
-  evidence: `timeout 180s env FECIM_LAYOUT_AUDIT=1 go test -count=1 -v ./cmd/fecim-lattice-tools -run 'TestLayoutAudit_AllModulesTabsAndSizes'` logged hysteresis captures, skipped crossbar, reached `=== RUN   TestLayoutAudit_AllModulesTabsAndSizes/mnist`, then exited `124`
-  unblocks when: MNIST can initialize under the headless layout-audit driver or is explicitly gated/skipped like crossbar
-  owner: agent:riju
-  workaround/pivot: continue with targeted playtest lanes (`OverlapDetection`, `MinSizeValidation`) and module-specific GUI tests while isolating the MNIST driver hang
-  next check: next UI reliability cycle
+[BLOCKED] Telegram media delivery for FeCIM screenshots — evidence last validated 2026-05-18 18:14:23 CST
+  blocker: OpenClaw telegram channel unavailable while sending captured PNG screenshots to Juan.
+  evidence: `openclaw message send --channel telegram --account riju --target 6586915095 --media /tmp/riju-fecim-screenshots/fecim-home.png ...` returned `Error: Channel is unavailable: telegram` for all 4 files.
+  unblocks when: Telegram channel/account is available in OpenClaw runtime or an alternate delivery channel is provided.
+  owner: system/OpenClaw channel configuration.
+  workaround/pivot: Keep absolute local artifact paths and report screenshot dimensions/filesizes in chat.
+  next check: owner-triggered when Telegram availability changes; the previous 2026-05-18 19:14:23 CST check date elapsed without recorded revalidation.
 
 ### Resolved Issues
+
+**2026-07-16: Crossbar layout audit panic under the headless Fyne driver** (P1) — RESOLVED
+- Root cause: matrix-table headers requested an unsupported bold+monospace test font, then transparent resize-detector rectangles used a nil fill color that crashed the software painter during capture.
+- RED: enabling the crossbar layout subtest panicked first in `loadMeasureFont`, then in `image.(*Uniform).RGBA64At`.
+- Fix applied: use bold headers and `color.Transparent` detector fills; crossbar now captures both desktop and mobile layouts.
+- GREEN: `FECIM_LAYOUT_AUDIT=1 go test -count=1 -v ./cmd/fecim-lattice-tools-fyne -run '^TestLayoutAudit_AllModulesTabsAndSizes$/crossbar$'` passes.
+
+**2026-07-16: Scientific research audit broken by documentation folder migration** (P1) — RESOLVED
+- Root cause: citation records, source ledgers, and the PDF-review manifest still referenced the removed `docs/4-research/`, `docs/3-develop/`, and `docs/TRUST.md` paths.
+- Fix applied: updated all research metadata to the canonical `docs/research/`, `docs/internals/`, and `docs/guides/trust.md` locations.
+- RED: `make ci` failed in `research-audit` with 202 missing-path errors.
+- GREEN: `PYTHONPATH=tools/research python3 tools/research/research_cli.py audit` reports `claims=2 errors=0`.
+- Follow-up: sampled seven representative citation/source pairs, checked all 68 ledger pairs plus backlog entries, and added an audit regression that rejects mismatched paired PDF paths.
+
+**2026-07-16: MNIST headless layout-audit hang** (P1) — RESOLVED
+- The audit moved to `cmd/fecim-lattice-tools-fyne`; the current deterministic Fyne test driver initializes and captures MNIST at desktop and mobile sizes.
+- Validation: `timeout 180s env FECIM_LAYOUT_AUDIT=1 go test -count=1 -v ./cmd/fecim-lattice-tools-fyne -run '^TestLayoutAudit_AllModulesTabsAndSizes$'` passed in 4.22s; crossbar was subsequently enabled and fixed.
 
 **2026-03-05: Full-gate blocker — flaky crossbar/recording tests in qa-a0 chain** (P1) — RESOLVED
 - Blocker type: `bug`
@@ -115,8 +129,11 @@
 
 ### Scheduled
 
-**Quarterly Literature Review** — Due: April 2026 | Priority: Medium
-- Update HONESTY_AUDIT.md with 2026 Q1 publications.
+**Quarterly Literature Review** — Due: April 2026 (overdue; no completion evidence as of 2026-07-17) | Priority: Medium
+- Update `docs/research/honesty-audit.md` with 2026 Q1 publications.
+- Reschedule: owner decision required; retain the original deadline until a replacement is assigned.
+- PDF review state: 68 legacy tracked PDFs remain `legacy-needs-license-review`; their citation records remain `needs-review`, so this backlog is not completion evidence for the quarterly review.
+- Claim review state: Park 2015 and Materlik 2015 are `deep-read`/`literature-backed`, but their PDFs are not stored and they are correctly absent from the tracked-PDF backlog; primary-PDF re-verification remains human-gated.
 - Search: IEEE Xplore (IEDM, ISSCC, VLSI), Nature family, ACS, arXiv.
 
 ---
@@ -250,11 +267,3 @@ C01..C13, H01..H16, M01..M16 + security/architecture/test items — All simulati
 
 *This TODO prioritizes scientific rigor and educational honesty over promotional considerations.*
 *Restructured: 2026-02-27 | Original consolidated: 2026-02-07*
-
-[BLOCKED] Telegram media delivery for FeCIM screenshots — 2026-05-18 18:14:23 CST
-  blocker: OpenClaw telegram channel unavailable while sending captured PNG screenshots to Juan.
-  evidence: `openclaw message send --channel telegram --account riju --target 6586915095 --media /tmp/riju-fecim-screenshots/fecim-home.png ...` returned `Error: Channel is unavailable: telegram` for all 4 files.
-  unblocks when: Telegram channel/account is available in OpenClaw runtime or an alternate delivery channel is provided.
-  owner: system/OpenClaw channel configuration.
-  workaround/pivot: Keep absolute local artifact paths and report screenshot dimensions/filesizes in chat.
-  next check: 2026-05-18 19:14:23 CST.
