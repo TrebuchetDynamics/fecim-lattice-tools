@@ -2,6 +2,8 @@
 package widgets
 
 import (
+	"image/color"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
@@ -46,7 +48,7 @@ func NewResizeDetector(onResize ResizeCallback) *ResizeDetector {
 // CreateRenderer implements fyne.Widget.
 func (rd *ResizeDetector) CreateRenderer() fyne.WidgetRenderer {
 	// Create a fully transparent rectangle as the visual element
-	rect := canvas.NewRectangle(nil) // nil color = fully transparent
+	rect := canvas.NewRectangle(color.Transparent)
 	return &resizeDetectorRenderer{
 		detector: rd,
 		rect:     rect,
@@ -184,7 +186,7 @@ func NewResponsiveDetector(onBreakpointChange ResponsiveCallback) *ResponsiveDet
 
 // CreateRenderer implements fyne.Widget.
 func (rd *ResponsiveDetector) CreateRenderer() fyne.WidgetRenderer {
-	rect := canvas.NewRectangle(nil)
+	rect := canvas.NewRectangle(color.Transparent)
 	return &responsiveDetectorRenderer{
 		detector: rd,
 		rect:     rect,

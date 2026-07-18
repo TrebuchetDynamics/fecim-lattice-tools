@@ -107,7 +107,7 @@ func NewMatrixTable(model *MatrixTableModel) *widget.Table {
 	table.CreateHeader = func() fyne.CanvasObject {
 		label := widget.NewLabel("")
 		label.Alignment = fyne.TextAlignCenter
-		label.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+		label.TextStyle = fyne.TextStyle{Bold: true}
 		return label
 	}
 	table.UpdateHeader = func(id widget.TableCellID, cell fyne.CanvasObject) {

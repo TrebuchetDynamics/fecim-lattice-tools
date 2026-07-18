@@ -23,6 +23,7 @@ import (
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
 	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // moduleLifecycle is the package-local alias for shared/widgets.EmbeddedApp.
@@ -41,9 +42,15 @@ const (
 	layoutAuditOverlayCloseDelay = 60 * time.Millisecond
 )
 
+func layoutAuditDoAndWait(fn func()) {
+	sharedwidgets.WithUILock(func() {
+		fyne.DoAndWait(fn)
+	})
+}
+
 // TestLayoutAudit_AllModulesTabsAndSizes runs the full layout audit.
-// Run with: FECIM_LAYOUT_AUDIT=1 go test -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
-// Or with build tag: go test -tags layoutaudit -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
+// Run with: FECIM_LAYOUT_AUDIT=1 go test -v ./cmd/fecim-lattice-tools-fyne -run LayoutAudit
+// Or with build tag: go test -tags layoutaudit -v ./cmd/fecim-lattice-tools-fyne -run LayoutAudit
 func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 	if !layoutAuditEnabled() {
 		t.Skipf("Skipping layout audit: set %s=1 or use -tags layoutaudit", layoutAuditEnvVar)
@@ -78,9 +85,6 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 	for _, m := range modules {
 		m := m
 		t.Run(m.name, func(t *testing.T) {
-			if m.name == "crossbar" {
-				t.Skip("Skipping crossbar in layout audit: test-driver hang under headless mode")
-			}
 			mod, err := m.create()
 			if err != nil {
 				t.Fatalf("Failed to create %s module: %v", m.name, err)
@@ -90,20 +94,20 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 			}
 
 			var w fyne.Window
-			fyne.DoAndWait(func() {
+			layoutAuditDoAndWait(func() {
 				w = fy.NewWindow("LayoutAudit - " + m.name)
 			})
 			if w == nil {
 				t.Fatalf("%s window creation failed", m.name)
 			}
 			t.Cleanup(func() {
-				fyne.DoAndWait(func() {
+				layoutAuditDoAndWait(func() {
 					w.Close()
 				})
 			})
 
 			var content fyne.CanvasObject
-			fyne.DoAndWait(func() {
+			layoutAuditDoAndWait(func() {
 				content = mod.BuildContent(fy, w)
 				w.SetContent(container.NewMax(content))
 				w.Show()
@@ -117,14 +121,14 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 
 			for _, sz := range sizes {
 				sz := sz
-				fyne.DoAndWait(func() {
+				layoutAuditDoAndWait(func() {
 					w.Resize(fyne.NewSize(sz.w, sz.h))
 				})
 				time.Sleep(layoutAuditResizeDelay)
 
 				baseName := fmt.Sprintf("layout_%s_%dx%d_base", m.name, int(sz.w), int(sz.h))
 				var img image.Image
-				fyne.DoAndWait(func() {
+				layoutAuditDoAndWait(func() {
 					img = captureWindow(w)
 				})
 				saveTestScreenshot(t, img, baseName)
@@ -141,17 +145,17 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 
 				// Traverse all AppTabs (including nested). For each tab set, capture each tab.
 				var tabSets []*container.AppTabs
-				fyne.DoAndWait(func() {
+				layoutAuditDoAndWait(func() {
 					tabSets = findAllAppTabs(content)
 				})
 				for k, tabs := range tabSets {
 					var itemCount int
-					fyne.DoAndWait(func() {
+					layoutAuditDoAndWait(func() {
 						itemCount = len(tabs.Items)
 					})
 					for i := 0; i < itemCount; i++ {
 						var tabText string
-						fyne.DoAndWait(func() {
+						layoutAuditDoAndWait(func() {
 							tabs.SelectIndex(i)
 							if i < len(tabs.Items) {
 								tabText = strings.TrimSpace(tabs.Items[i].Text)
@@ -167,7 +171,7 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 						}
 
 						name := fmt.Sprintf("layout_%s_%dx%d_tabs%d_i%d_%s", m.name, int(sz.w), int(sz.h), k, i, safeName(tabText))
-						fyne.DoAndWait(func() {
+						layoutAuditDoAndWait(func() {
 							img = captureWindow(w)
 						})
 						saveTestScreenshot(t, img, name)
@@ -272,7 +276,7 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 
 	snapshotButtons := func() []buttonInfo {
 		var infos []buttonInfo
-		fyne.DoAndWait(func() {
+		layoutAuditDoAndWait(func() {
 			buttons := findAllButtons(root)
 			infos = make([]buttonInfo, 0, len(buttons))
 			for _, b := range buttons {
@@ -302,7 +306,7 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 			continue
 		}
 		// Trigger overlay
-		fyne.DoAndWait(func() {
+		layoutAuditDoAndWait(func() {
 			if b.button.OnTapped != nil {
 				b.button.OnTapped()
 			}
@@ -313,7 +317,7 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 		seenLabel[norm] = idx + 1
 		name := fmt.Sprintf("layout_%s_%dx%d_overlay_%s_%s_%d", module, w, h, safeName(norm), safeName(phase), idx)
 		var img image.Image
-		fyne.DoAndWait(func() {
+		layoutAuditDoAndWait(func() {
 			img = captureWindow(win)
 		})
 		saveTestScreenshot(t, img, name)
@@ -323,7 +327,7 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 		for _, cb := range snapshotButtons() {
 			cl := strings.ToLower(cb.label)
 			if closeWords[cl] && cb.hasAction {
-				fyne.DoAndWait(func() {
+				layoutAuditDoAndWait(func() {
 					if cb.button.OnTapped != nil {
 						cb.button.OnTapped()
 					}
