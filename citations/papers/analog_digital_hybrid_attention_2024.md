@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/14-transformer-llm-accelerators/analog_digital_hybrid_attention_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/14-transformer-llm-accelerators/analog_digital_hybrid_attention_2024.pdf`
 **SHA256:** `991b792610c713a1071e1bbc13696960411d160048d662ad700aa592cfef242f`
 **Size:** `1353770`
 

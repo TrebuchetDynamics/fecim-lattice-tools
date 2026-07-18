@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/03-simulation-tools/compass_compiler_framework_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/03-simulation-tools/compass_compiler_framework_2025.pdf`
 **SHA256:** `2fd289c9b4e91717d747ba50262e769e590abe896059c101566abf412ca81081`
 **Size:** `3130436`
 

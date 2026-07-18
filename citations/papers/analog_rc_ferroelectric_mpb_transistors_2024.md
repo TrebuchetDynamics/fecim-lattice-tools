@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/11-reservoir-computing/analog_rc_ferroelectric_mpb_transistors_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/11-reservoir-computing/analog_rc_ferroelectric_mpb_transistors_2024.pdf`
 **SHA256:** `bcdfb8912e2a8a6e3b323cb7278338fe119479fe3d201f2e5e9f266ec3fc7f88`
 **Size:** `4680857`
 

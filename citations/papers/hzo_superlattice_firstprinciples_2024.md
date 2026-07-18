@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/hzo_superlattice_firstprinciples_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/hzo_superlattice_firstprinciples_2024.pdf`
 **SHA256:** `c29c22c783b56d5a8cf6ac217e4d5960519c07472a8dd9b7ae08674d76e7b90d`
 **Size:** `3524173`
 

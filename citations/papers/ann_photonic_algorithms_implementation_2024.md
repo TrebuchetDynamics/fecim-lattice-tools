@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/ann_photonic_algorithms_implementation_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/16-photonic-ferroelectric-hybrids/ann_photonic_algorithms_implementation_2024.pdf`
 **SHA256:** `5d8df639220bc72c1c895b6e8554841c3b8b54a88a84396a8e904cdc5e7bcdcc`
 **Size:** `2135123`
 

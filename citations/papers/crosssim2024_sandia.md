@@ -43,9 +43,9 @@ Iterative SOR solver for crossbar MVM with IR drop. Nonlinear device models (I-V
 ## Cited In
 
 - [ ] `shared/crossbar/solver.go` - SOR solver port
-- [ ] `validation/external/crosssim_interop_test.go` - Interop test harness
+- [ ] `validation/external/interop/crosssim_interop_test.go` - Interop test harness
 - [ ] `validation/testdata/literature/crosssim_reference_8x8.json` - Reference vectors
-- [ ] `docs/4-research/opensource-tools/opensource-crossbar.md` - Analysis doc
+- [ ] `docs/research/tools/opensource-crossbar.md` - Analysis doc
 
 ## Related Sources
 

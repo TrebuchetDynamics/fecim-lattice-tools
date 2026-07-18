@@ -42,7 +42,7 @@ Theoretical physics. Derives the time-dependent Landau equation by adding a diss
 
 - [ ] `shared/physics/landau.go` - LK solver implementation
 - [ ] `shared/viewmodel/hysteresis/viewmodel.go` - LK solver integration
-- [ ] `docs/3-develop/known-limitations.md`
+- [ ] `docs/internals/known-limitations.md`
 
 ## Related Sources
 

@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/photonic_neural_networks_review_2023.pdf`
+**PDF:** `docs/research/papers/by-topic/16-photonic-ferroelectric-hybrids/photonic_neural_networks_review_2023.pdf`
 **SHA256:** `ef12d8e2ede51ea3ba2eda33c8f96ee8208f9aaac2374d26184ae14250fe07d4`
 **Size:** `1786187`
 

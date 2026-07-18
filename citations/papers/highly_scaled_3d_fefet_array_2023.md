@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/15-3d-stacking-architectures/highly_scaled_3d_fefet_array_2023.pdf`
+**PDF:** `docs/research/papers/by-topic/15-3d-stacking-architectures/highly_scaled_3d_fefet_array_2023.pdf`
 **SHA256:** `de2c0f0516484bda58e591f77df61cb598b3620d2269e56a226ed22e9212070b`
 **Size:** `1300625`
 

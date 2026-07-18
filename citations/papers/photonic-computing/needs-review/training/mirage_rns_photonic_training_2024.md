@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/06-photonic-computing/mirage_rns_photonic_training_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/06-photonic-computing/mirage_rns_photonic_training_2024.pdf`
 **SHA256:** `60a769c3a30c0e045b0dd088bc021102b0be9edadb2ed3d482259690e6daee42`
 **Size:** `933067`
 

@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/02-training-algorithms/aimc_accuracy_post_training_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/02-training-algorithms/aimc_accuracy_post_training_2024.pdf`
 **SHA256:** `a53cab2b5a31389fb7a953bdecc2e04292f3376fe3f5eb20ff69993dc1e6b1f8`
 **Size:** `3077995`
 

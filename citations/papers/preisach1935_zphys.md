@@ -50,7 +50,7 @@ Purely theoretical/mathematical. Defines the Preisach operator as an integral ov
 - [ ] `shared/physics/preisach.go`
 - [ ] `module1-hysteresis/pkg/ferroelectric/preisach.go`
 - [ ] `shared/physics/tanh_everett.go`
-- [ ] `docs/3-develop/known-limitations.md`
+- [ ] `docs/internals/known-limitations.md`
 
 ## Related Sources
 

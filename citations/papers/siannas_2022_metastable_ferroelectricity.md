@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf`
 **SHA256:** `cbf833703c3cb89599c2417a20adf50cb49eacf4acc06c57f751f67500ac51f0`
 **Size:** `2808004`
 

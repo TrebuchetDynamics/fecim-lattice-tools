@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/fecim_annealer_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/fecim_annealer_2024.pdf`
 **SHA256:** `b76bf0c9518ce2463467088616654b9a117eeccd9f2d67c2b971ecbbb9d7d04f`
 **Size:** `3711742`
 

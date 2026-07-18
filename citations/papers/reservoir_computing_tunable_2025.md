@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/11-reservoir-computing/reservoir_computing_tunable_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/11-reservoir-computing/reservoir_computing_tunable_2025.pdf`
 **SHA256:** `4cbefbc60f98a04a93e3b93456ba5e91a9266f7e88d7c42c7c06322366d661f5`
 **Size:** `1895122`
 

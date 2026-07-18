@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/hfo2_computational_understanding_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/hfo2_computational_understanding_2024.pdf`
 **SHA256:** `9a15f774d99eaf804a1eae57a080966b1aeb75f7de2bbb68b2eadbaa330fa7eb`
 **Size:** `5601149`
 

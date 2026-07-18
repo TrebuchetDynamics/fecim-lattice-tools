@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/sliding_ferroelectrics_review_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/sliding_ferroelectrics_review_2025.pdf`
 **SHA256:** `eed4aec2826b9a7fd30f00b5284036fbc5a52560a33d0e6e3c87c0a6461bc2de`
 **Size:** `4376065`
 

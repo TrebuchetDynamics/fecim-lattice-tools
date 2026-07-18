@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/17-security-cryptography/memristor_puf_lightweight_crypto_2022.pdf`
+**PDF:** `docs/research/papers/by-topic/17-security-cryptography/memristor_puf_lightweight_crypto_2022.pdf`
 **SHA256:** `a54c9f30fe128e7594f0e8a542d711004f4fd2385ff87bc7c31d4111ee292461`
 **Size:** `4511425`
 

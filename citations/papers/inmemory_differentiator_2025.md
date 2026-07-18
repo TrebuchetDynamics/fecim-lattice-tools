@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/13-in-memory-training/inmemory_differentiator_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/13-in-memory-training/inmemory_differentiator_2025.pdf`
 **SHA256:** `df01c77234ddb7ef28e64b321732262cd623dee121e5889c6485a71c827b6701`
 **Size:** `3519086`
 

@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/atomistic_landau_ferroelectric_md_2022.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/atomistic_landau_ferroelectric_md_2022.pdf`
 **SHA256:** `cd60a86aac1ed866bd7388ad053c05bcfd9929e282051a26699d0821c3df9dbd`
 **Size:** `23078200`
 

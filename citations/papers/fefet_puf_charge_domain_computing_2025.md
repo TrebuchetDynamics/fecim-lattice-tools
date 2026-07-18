@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/17-security-cryptography/fefet_puf_charge_domain_computing_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/17-security-cryptography/fefet_puf_charge_domain_computing_2025.pdf`
 **SHA256:** `543443e696d222baeb68aa6a025d759b121fc50365eaddcc2e70bd8dd71ff48e`
 **Size:** `2607647`
 

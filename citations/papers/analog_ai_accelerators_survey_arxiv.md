@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Analog_AI_Accelerators_Survey_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Analog_AI_Accelerators_Survey_arXiv.pdf`
 **SHA256:** `a2173d556d4753794676f8ab17c832705436f9bf3e95d46039e4c22143448e02`
 **Size:** `802853`
 

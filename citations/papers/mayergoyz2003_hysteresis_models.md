@@ -42,7 +42,7 @@ Mathematical. Covers Preisach model definition, identification from experimental
 
 - [ ] `shared/physics/preisach.go` - Preisach model implementation
 - [ ] `shared/physics/tanh_everett.go` - Everett function adapter
-- [ ] `docs/3-develop/known-limitations.md`
+- [ ] `docs/internals/known-limitations.md`
 
 ## Related Sources
 

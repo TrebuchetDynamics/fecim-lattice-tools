@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Analog_AI_Promise_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Analog_AI_Promise_arXiv.pdf`
 **SHA256:** `b7409bda04a0f2a8ed48feb254985d647b731cee79670b264ac1dda15b6c085e`
 **Size:** `507634`
 

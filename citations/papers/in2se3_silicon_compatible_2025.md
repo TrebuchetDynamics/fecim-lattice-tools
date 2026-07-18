@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/in2se3_silicon_compatible_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/in2se3_silicon_compatible_2025.pdf`
 **SHA256:** `3620eb21aabf5d4a3eabdfae33c0d194b84bc4aa1295f406859f0aeda61c4ea7`
 **Size:** `3639736`
 

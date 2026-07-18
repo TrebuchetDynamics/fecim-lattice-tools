@@ -288,6 +288,43 @@ class ClaimsTest(unittest.TestCase):
 
             self.assertTrue(report.ok, report.errors)
 
+    def test_audit_fails_when_source_and_citation_pdf_paths_differ(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\npaired record\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            citation_rel = "docs/research/papers/citation.pdf"
+            source_rel = "docs/research/papers/source.pdf"
+            for rel_path in (citation_rel, source_rel):
+                pdf_path = root / rel_path
+                pdf_path.parent.mkdir(parents=True, exist_ok=True)
+                pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(
+                root,
+                "park2015_advmat_hzo",
+                pdf=citation_rel,
+                sha256=digest,
+                size=str(len(pdf_bytes)),
+            )
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", citation_rel, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=source_rel,
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml pdf path "
+                "docs/research/papers/source.pdf does not match citation PDF path "
+                "docs/research/papers/citation.pdf",
+                "\n".join(report.errors),
+            )
+
     def test_audit_checks_source_ledger_grouped_under_topic_subdirectory(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

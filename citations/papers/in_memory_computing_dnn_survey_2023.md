@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/09-reviews-surveys/in_memory_computing_dnn_survey_2023.pdf`
+**PDF:** `docs/research/papers/by-topic/09-reviews-surveys/in_memory_computing_dnn_survey_2023.pdf`
 **SHA256:** `79f029d8f29cf6ecdd5c25b251a7a6c23cebb71e174f927197d98d9449e2cf7b`
 **Size:** `3803727`
 

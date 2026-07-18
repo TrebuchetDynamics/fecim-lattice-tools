@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Neuromorphic_Hardware_Vision_Systems_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Neuromorphic_Hardware_Vision_Systems_arXiv.pdf`
 **SHA256:** `f84e194aea3cf6696ccdfd9edf2527ac65426854ce51605152dd9bab736e75a5`
 **Size:** `387930`
 

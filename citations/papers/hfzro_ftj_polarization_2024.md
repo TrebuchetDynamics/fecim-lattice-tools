@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/01-ferroelectric-materials/hfzro_ftj_polarization_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/01-ferroelectric-materials/hfzro_ftj_polarization_2024.pdf`
 **SHA256:** `344cb2b90972a82987fe916a343bd910eb6c463df92a515e1513f81bad096550`
 **Size:** `593246`
 

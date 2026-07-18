@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/pruning_adc_efficiency_crossbar_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/pruning_adc_efficiency_crossbar_2024.pdf`
 **SHA256:** `649eb9f34b2b8a59d44911882fd6a6b92cb3198087549da811a58527e02e0df8`
 **Size:** `6279486`
 

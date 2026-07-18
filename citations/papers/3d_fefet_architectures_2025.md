@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/3D_FeFET_Architectures_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/3D_FeFET_Architectures_2025.pdf`
 **SHA256:** `970c7f9f3ec6e5ed2722df6d23338f13fa73cd0639832d4b74bdedfed091f60b`
 **Size:** `2405417`
 

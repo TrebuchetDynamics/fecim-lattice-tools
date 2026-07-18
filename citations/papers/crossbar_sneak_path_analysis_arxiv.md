@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Crossbar_Sneak_Path_Analysis_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Crossbar_Sneak_Path_Analysis_arXiv.pdf`
 **SHA256:** `fafece7a8477aeea47c261174ec3569515fcefc6eea7e11cca2f3ee4b1c69ada`
 **Size:** `523405`
 

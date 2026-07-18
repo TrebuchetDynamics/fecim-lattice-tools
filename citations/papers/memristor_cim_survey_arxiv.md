@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Memristor_CIM_Survey_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Memristor_CIM_Survey_arXiv.pdf`
 **SHA256:** `e037745ba082946e77c74d5b75e4869eb4eb7d977cc7f02aea39de2857474e4c`
 **Size:** `5315853`
 

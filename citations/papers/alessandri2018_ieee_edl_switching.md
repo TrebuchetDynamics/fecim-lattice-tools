@@ -56,7 +56,7 @@ Pulse-switching measurements on TiN/HZO/TiN capacitors. NLS model (Merz law) fit
 
 - [ ] `shared/physics/landau.go:154-158` - NLS defaults
 - [ ] `shared/physics/nls.go` - NLS model implementation
-- [ ] `docs/3-develop/known-limitations.md` - Cited as NLS source
+- [ ] `docs/internals/known-limitations.md` - Cited as NLS source
 
 ## Related Sources
 

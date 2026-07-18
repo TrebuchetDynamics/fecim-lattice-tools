@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/08-industry-reports/Tsinghua_Face_Classification_NatureComms_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/08-industry-reports/Tsinghua_Face_Classification_NatureComms_2025.pdf`
 **SHA256:** `3a30b441b17251529143924da18c03bf83c4307f84aaf59d833b595df5ba11a4`
 **Size:** `1741699`
 

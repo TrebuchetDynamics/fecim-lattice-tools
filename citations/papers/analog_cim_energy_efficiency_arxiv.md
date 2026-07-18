@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Analog_CIM_Energy_Efficiency_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Analog_CIM_Energy_Efficiency_arXiv.pdf`
 **SHA256:** `76465a0440df335b2c52c7e7e7fe3874840a012c9a52578eab00fe2e0c9cd77e`
 **Size:** `3527800`
 

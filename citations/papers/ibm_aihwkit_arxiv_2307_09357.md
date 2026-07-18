@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/03-simulation-tools/IBM_AIHWKit_arXiv_2307.09357.pdf`
+**PDF:** `docs/research/papers/by-topic/03-simulation-tools/IBM_AIHWKit_arXiv_2307.09357.pdf`
 **SHA256:** `6dafcc472dc8c933c5012a197f9da463eacadadddabdae861543aaf155a8a44f`
 **Size:** `11650561`
 

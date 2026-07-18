@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/Multi_Level_FeFET_Programming_arXiv.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/Multi_Level_FeFET_Programming_arXiv.pdf`
 **SHA256:** `a8d4027beb4a32d01b4f1e4d20bfae46c404344b3d13d9fdff23cdc09952eaba`
 **Size:** `2769040`
 

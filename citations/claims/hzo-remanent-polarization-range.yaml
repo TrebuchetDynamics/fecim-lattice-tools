@@ -1,10 +1,10 @@
 id: hzo-remanent-polarization-range
-claim: Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.
+claim: Park 2015 Fig. 2a reports Pr near 24 µC/cm² and Ec near 1.0 MV/cm for a 10 nm Hf0.5Zr0.5O2 film at 300 K and 1 kHz; the repository uses broader Pr=15–34 µC/cm² and Ec=0.8–1.5 MV/cm values as project-level simulation-validation bounds compiled from literature notes, not as a range attributed to Fig. 2a, a single device, or independently validated measurements.
 status: literature-backed
 sources:
   - park2015_advmat_hzo
 used_in:
   - citations/facts.md
   - config/materials.yaml
-  - docs/TRUST.md
+  - docs/guides/trust.md
 confidence: medium

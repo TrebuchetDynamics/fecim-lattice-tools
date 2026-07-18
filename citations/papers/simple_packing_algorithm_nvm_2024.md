@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/simple_packing_algorithm_nvm_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/simple_packing_algorithm_nvm_2024.pdf`
 **SHA256:** `6b740b1e1a3ebdabdd7707083066f035fd06c984cb4681390fe44adae1c01bf9`
 **Size:** `1131246`
 

@@ -307,6 +307,13 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
             errors.append(f"{rel_path} missing pdf metadata")
             continue
         source_pdf_path = str(pdf.get("path", "")).strip()
+        if citation_file is not None:
+            citation_pdf_path = _citation_pdf_path(citation_file)
+            if citation_pdf_path and source_pdf_path != citation_pdf_path:
+                errors.append(
+                    f"{rel_path} pdf path {source_pdf_path} "
+                    f"does not match citation PDF path {citation_pdf_path}"
+                )
         if _is_ignored_pdf_inbox_path(source_pdf_path):
             errors.append(
                 f"{rel_path} pdf path {source_pdf_path} points at ignored local inbox; "

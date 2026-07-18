@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/multilevel_fefet_crossbar_2023.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/multilevel_fefet_crossbar_2023.pdf`
 **SHA256:** `41a24a46198d94644faefd873c93bfd40b85a8cd6598629edd58f57a93fec63b`
 **Size:** `1752495`
 

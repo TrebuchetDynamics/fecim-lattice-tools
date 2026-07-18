@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/07-memory-architectures/3d_memory_side_acceleration_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/07-memory-architectures/3d_memory_side_acceleration_2024.pdf`
 **SHA256:** `24c2f6cd134d80c5aec303ac115018ef255573b52791a5f8c128cb21d89ef253`
 **Size:** `260739`
 

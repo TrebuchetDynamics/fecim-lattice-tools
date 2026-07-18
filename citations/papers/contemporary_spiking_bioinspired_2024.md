@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/12-spiking-neural-networks/contemporary_spiking_bioinspired_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/12-spiking-neural-networks/contemporary_spiking_bioinspired_2024.pdf`
 **SHA256:** `65e3863aba7b91ad8e63382d34cf82ba432cef4ea710d58cdfc7008397184325`
 **Size:** `25182560`
 

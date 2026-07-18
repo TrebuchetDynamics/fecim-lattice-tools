@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/memory_tech_crossbar_dnn_accuracy_2024.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/memory_tech_crossbar_dnn_accuracy_2024.pdf`
 **SHA256:** `ce931221e7fc677be8188d1798cc078d8f6eeadcae09252da9dbf6590f82a6b4`
 **Size:** `600606`
 

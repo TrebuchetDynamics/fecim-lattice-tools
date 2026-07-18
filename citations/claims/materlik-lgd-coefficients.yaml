@@ -1,10 +1,10 @@
 id: materlik-lgd-coefficients
-claim: Materlik 2015 reports HfO2 LGD beta and gamma coefficients used as HZO Landau-Khalatnikov thermodynamic anchors.
+claim: Materlik 2015 Table I reports, for its orthorhombic Pca2₁ HfO₂ 0 K DFT free-energy convention, LGD β=-6.720e8 J·m⁵/C⁴ and γ=1.950e10 J·m⁹/C⁶; the project reuses them as HZO Landau-Khalatnikov thermodynamic simulation anchors, not as a measured HZO thin-film fit or device-validation claim.
 status: literature-backed
 sources:
   - materlik2015_jap_hfo2_origin
 used_in:
   - citations/facts.md
   - config/materials.yaml
-  - docs/TRUST.md
+  - docs/guides/trust.md
 confidence: medium

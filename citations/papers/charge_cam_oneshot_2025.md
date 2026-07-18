@@ -8,7 +8,7 @@
 **Authors:** `needs-review`
 **Tags:** `#needs-review`
 **Status:** `needs-review`
-**PDF:** `docs/4-research/papers/by-topic/04-cim-architectures/charge_cam_oneshot_2025.pdf`
+**PDF:** `docs/research/papers/by-topic/04-cim-architectures/charge_cam_oneshot_2025.pdf`
 **SHA256:** `4f9ecca972a4e1c194a1c9b9df4c08ab6122480ca1dd2e2ca0165a654491a242`
 **Size:** `1858515`
 
