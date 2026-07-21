@@ -33,6 +33,30 @@ func TestDefaultCommandDoesNotDependOnGogpuApp(t *testing.T) {
 	}
 }
 
+func TestReleasedCommandSurfaceDocumentsResearchDesignWorkbench(t *testing.T) {
+	root := repoRoot()
+	paths := []string{"README.md", "docs/guides/research-design-workbench.md"}
+	required := []string{
+		"research and design workbench",
+		"project validate",
+		"experiment run",
+		"report generate",
+		"literature-calibrated pre-silicon",
+	}
+	for _, name := range paths {
+		body, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatalf("read %s: %v", name, err)
+		}
+		text := strings.ToLower(string(body))
+		for _, phrase := range required {
+			if !strings.Contains(text, phrase) {
+				t.Fatalf("%s missing %q", name, phrase)
+			}
+		}
+	}
+}
+
 func listCommandPackages(t *testing.T, root string) []string {
 	t.Helper()
 	args := []string{

@@ -2,13 +2,13 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-07-17 | **Fyne**: All 7 modules ported and functional
+**Last Updated**: 2026-07-19 | **Fyne**: All 7 expert modules functional; workflow-first workbench pending
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 0 | No active implementation tasks |
+| Pending | 2 | Fyne workbench parity + selected-run EDA export |
 | Open Issues | 2 | qmd cold-start + Telegram delivery blockers |
 | Scheduled | 1 | Quarterly Literature Review — overdue since April 2026; last audit 2026-03-05 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
@@ -17,6 +17,13 @@
 ---
 
 ## Task Status
+
+### Pending — Research and Design Workbench
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Pending** |
+| RDW-EDA-01 | Export one selected immutable successful run through existing Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Pending** |
 
 ### Completed — Fyne Integration & Polish (8 unique tasks)
 
@@ -50,6 +57,14 @@
   next check: owner-triggered when Telegram availability changes; the previous 2026-05-18 19:14:23 CST check date elapsed without recorded revalidation.
 
 ### Resolved Issues
+
+**2026-07-19: Module-first architecture lacked a reproducible design-research workflow** (P1) — CORE SLICE RESOLVED
+- Product decision: research and design are primary; education explains models and evidence.
+- Added strict file-based project bundles, deterministic parameter sweeps, immutable runs, bounded execution, cancellation/resume, feasibility and Pareto analysis, and deterministic JSON/CSV/Markdown reports.
+- Added `project validate`, `experiment run`, and `report generate` to the existing CLI plus `examples/research-design-workbench/`.
+- RED: focused packages and command surfaces failed because the workbench types, evaluator, persistence, reports, and commands did not exist.
+- GREEN: focused workbench, race, CLI, report, and deterministic reproduction checks pass.
+- Remaining scope: RDW-UI-01 and RDW-EDA-01 above; current expert modules remain available.
 
 **2026-07-16: Crossbar layout audit panic under the headless Fyne driver** (P1) — RESOLVED
 - Root cause: matrix-table headers requested an unsupported bold+monospace test font, then transparent resize-detector rectangles used a nil fill color that crashed the software painter during capture.
