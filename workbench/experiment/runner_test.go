@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -138,6 +139,114 @@ func TestRunRejectsCorruptRunPath(t *testing.T) {
 	}))
 	if err == nil || !strings.Contains(err.Error(), "not a directory") {
 		t.Fatalf("err=%v want corruption", err)
+	}
+}
+
+func TestRunWorkerDeterminism(t *testing.T) {
+	one := runnerBundle(t, 4)
+	four := one
+	four.Root = t.TempDir()
+	eval := func(_ context.Context, _ project.Design, seed int64) (Result, error) {
+		return successResult(float64(seed)), nil
+	}
+	oneOpts := deterministicRunOptions(eval)
+	oneOpts.Workers = 1
+	fourOpts := deterministicRunOptions(eval)
+	fourOpts.Workers = 4
+	first, err := Run(context.Background(), one, oneOpts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := Run(context.Background(), four, fourOpts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(first.Runs, second.Runs) {
+		t.Fatalf("worker count changed ordered results:\n1=%+v\n4=%+v", first.Runs, second.Runs)
+	}
+}
+
+func TestRunBoundsConcurrentEvaluatorCalls(t *testing.T) {
+	bundle := runnerBundle(t, 4)
+	started := make(chan struct{}, 4)
+	release := make(chan struct{}, 4)
+	eval := func(_ context.Context, _ project.Design, seed int64) (Result, error) {
+		started <- struct{}{}
+		<-release
+		return successResult(float64(seed)), nil
+	}
+	opts := deterministicRunOptions(eval)
+	opts.Workers = 2
+	done := make(chan error, 1)
+	go func() {
+		_, err := Run(context.Background(), bundle, opts)
+		done <- err
+	}()
+	<-started
+	select {
+	case <-started:
+	case <-time.After(100 * time.Millisecond):
+		// Drain a sequential implementation before failing RED so no goroutine leaks.
+		for i := 0; i < 4; i++ {
+			release <- struct{}{}
+		}
+		<-done
+		t.Fatal("runner did not start two workers")
+	}
+	select {
+	case <-started:
+		t.Fatal("runner exceeded worker limit")
+	case <-time.After(25 * time.Millisecond):
+	}
+	for i := 0; i < 2; i++ {
+		release <- struct{}{}
+	}
+	for i := 0; i < 2; i++ {
+		select {
+		case <-started:
+		case <-time.After(500 * time.Millisecond):
+			t.Fatal("runner did not schedule remaining work")
+		}
+		release <- struct{}{}
+	}
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRunCancellationPreservesAndReusesCommittedRuns(t *testing.T) {
+	bundle := runnerBundle(t, 4)
+	ctx, cancel := context.WithCancel(context.Background())
+	var calls atomic.Int32
+	eval := func(ctx context.Context, _ project.Design, seed int64) (Result, error) {
+		if calls.Add(1) == 3 {
+			cancel()
+			return Result{}, ctx.Err()
+		}
+		return successResult(float64(seed)), nil
+	}
+	opts := deterministicRunOptions(eval)
+	opts.Workers = 1
+	partial, err := Run(ctx, bundle, opts)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err=%v want context.Canceled", err)
+	}
+	if len(partial.Runs) != 2 {
+		t.Fatalf("partial runs=%d want 2", len(partial.Runs))
+	}
+
+	var resumedCalls atomic.Int32
+	resumeOpts := deterministicRunOptions(func(_ context.Context, _ project.Design, seed int64) (Result, error) {
+		resumedCalls.Add(1)
+		return successResult(float64(seed)), nil
+	})
+	resumeOpts.Workers = 2
+	resumed, err := Run(context.Background(), bundle, resumeOpts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resumed.Runs) != 4 || resumedCalls.Load() != 2 || !resumed.Runs[0].Reused || !resumed.Runs[1].Reused {
+		t.Fatalf("resumed=%+v calls=%d", resumed.Runs, resumedCalls.Load())
 	}
 }
 
