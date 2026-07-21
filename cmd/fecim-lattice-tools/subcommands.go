@@ -67,6 +67,12 @@ func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) erro
 		return runEDASubcommand(args[1:], stdout)
 	case "research":
 		return runResearchSubcommand(args[1:])
+	case "project":
+		return runProjectSubcommand(args[1:], stdout, stderr)
+	case "experiment":
+		return runExperimentSubcommand(args[1:], stdout, stderr)
+	case "report":
+		return runReportSubcommand(args[1:], stdout, stderr)
 	default:
 		return fmt.Errorf("unknown subcommand %q", args[0])
 	}
@@ -222,6 +228,9 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  comparison         Fyne module or CLI")
 	fmt.Fprintln(w, "  eda                Fyne module or CLI tools")
 	fmt.Fprintln(w, "  research           paper acquisition, ingestion, indexing, and evidence search")
+	fmt.Fprintln(w, "  project            initialize or validate a research-design project")
+	fmt.Fprintln(w, "  experiment         run a reproducible design sweep")
+	fmt.Fprintln(w, "  report             regenerate reports from committed runs")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Examples:")
 	fmt.Fprintln(w, "  fecim-lattice-tools --module crossbar")
@@ -229,6 +238,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools crossbar inference -size=64 -show-mvm")
 	fmt.Fprintln(w, "  fecim-lattice-tools circuits cli -all")
 	fmt.Fprintln(w, "  fecim-lattice-tools eda cli -mode=compute -rows=128 -cols=128")
+	fmt.Fprintln(w, "  fecim-lattice-tools experiment run examples/research-design-workbench -workers 2")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --download")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --doi 10.1002/adma.201404531 --download")
 	fmt.Fprintln(w, "  fecim-lattice-tools research rebuild")

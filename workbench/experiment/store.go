@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strings"
 )
 
 var runIDRE = regexp.MustCompile(`^[0-9a-f]{64}$`)
@@ -86,6 +88,42 @@ func (s store) commit(record RunRecord) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 	return record, nil
+}
+
+func LoadRuns(root string) ([]RunRecord, error) {
+	runsDir := filepath.Join(root, "runs")
+	entries, err := os.ReadDir(runsDir)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	storage := store{root: root}
+	runs := make([]RunRecord, 0, len(entries))
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".tmp-") {
+			continue
+		}
+		if !entry.IsDir() {
+			return nil, fmt.Errorf("run path %s is not a directory", filepath.Join(runsDir, entry.Name()))
+		}
+		record, ok, err := storage.load(entry.Name())
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("run %s disappeared while loading", entry.Name())
+		}
+		runs = append(runs, record)
+	}
+	sort.Slice(runs, func(i, j int) bool {
+		if runs[i].Manifest.PointIndex == runs[j].Manifest.PointIndex {
+			return runs[i].Manifest.RunID < runs[j].Manifest.RunID
+		}
+		return runs[i].Manifest.PointIndex < runs[j].Manifest.PointIndex
+	})
+	return runs, nil
 }
 
 func writeJSON(path string, value any) error {
