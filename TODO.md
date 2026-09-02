@@ -2,17 +2,17 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-09-01 | **Program status**: Technical recovery active; release-facing feature work gated by Phase 1
+**Last Updated**: 2026-09-02 | **Program status**: Technical recovery active; Phase 1 complete, Phase 2 queued, and release readiness not yet established
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| P0 recovery | 5 | Correctness, provenance, serialization, EDA execution, external validation |
-| P1 recovery | 5 | Executable bundles, committed results, claims, supply chain, CI hygiene |
-| Architecture recovery | 3 | Launcher consolidation, UI seam convergence, electrical solver ownership |
-| Operations/governance | 4 | Log retention, docs drift, PDF licensing, evidence-based health metrics |
-| Feature work gated | 2 | Fyne workbench parity + selected-run EDA export resume after Phase 1 |
+| Phase 1 recovery completed | 5 | Correctness, provenance, serialization, EDA execution, and gating external validation closed with reviewed receipts |
+| P1 recovery open | 5 | Phase 2: executable bundles, committed results, claims, supply chain, and CI hygiene |
+| Architecture recovery open | 3 | Launcher consolidation, UI seam convergence, electrical solver ownership |
+| Operations/governance open | 4 | Log retention, docs drift, PDF licensing, evidence-based health metrics |
+| Feature work | 2 | Fyne workbench parity is queued/unblocked; selected-run EDA export remains gated by TR-RUN-01 |
 | Open tooling issues | 2 | qmd cold-start + Telegram delivery blockers |
 | Scheduled research | 1 | Quarterly Literature Review overdue; last audit 2026-03-05 |
 | Existing deferred work | 8 | Historical prerequisite-blocked items remain in the deferred section below |
@@ -28,15 +28,15 @@
 
 ### Phase 1 — Critical correctness and trust hardening
 
-These items block release-readiness claims and the two feature items below. Each requires recorded RED, GREEN, focused verification, and the applicable race/external/repository gate.
+Phase 1 is complete. These five items have reviewed RED/GREEN receipts, focused gates, the local aggregate, and required external-validation CI evidence. This closes the Phase 1 feature gate only; it does not complete the recovery roadmap or establish release readiness.
 
 | ID | Task | Priority | Status |
 |----|------|----------|--------|
-| TR-COR-01 | Correct charge-amplifier noise to use signed Gaussian samples and clip after noise | P0 | **Planned** |
-| TR-PROV-01 | Reject cached runs whose schema, identity, design, or result integrity cannot be verified | P0 | **Planned** |
-| TR-SER-01 | Reject ragged weight matrices and bound every binary-model allocation | P0 | **Planned** |
-| TR-EDA-01 | Remove dynamic data interpolation from OpenROAD/KLayout Docker shell programs | P0 | **Planned** |
-| TR-VAL-01 | Replace no-op Verilog sanity logging with a real, required iverilog CI gate | P0 | **Planned** |
+| TR-COR-01 | Correct charge-amplifier noise to use signed Gaussian samples and clip after noise | P0 | **Done** ([`090562d`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/090562d96683da125e08110b104e770d38801db5); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-PROV-01 | Reject cached runs whose schema, identity, design, or result integrity cannot be verified | P0 | **Done** ([`d4f8305`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/d4f8305e5bde754aa352b643126f9e1c5a2c2986); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-SER-01 | Reject ragged weight matrices and bound every binary-model allocation | P0 | **Done** ([`cd7c03e`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/cd7c03ecbbe8532f03e358a1d391811b5526296f); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-EDA-01 | Remove dynamic data interpolation from OpenROAD/KLayout Docker shell programs | P0 | **Done** ([`adcc525`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/adcc525e1a3a14e025154626ccf61d541b95a764); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-VAL-01 | Replace no-op Verilog sanity logging with a real, required iverilog CI gate | P0 | **Done** ([`bde96d0`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/bde96d080fed9fb1ec393140419b2a16da7614ff); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating job PASS](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506/job/100292070256)) |
 
 ### Phase 2 — Trust invariant completion
 
@@ -69,8 +69,8 @@ These items block release-readiness claims and the two feature items below. Each
 
 | ID | Task | Priority | Status |
 |----|------|----------|--------|
-| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Gated by Phase 1** |
-| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Gated by Phase 1 and TR-RUN-01** |
+| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Queued — Phase 1 gate cleared** |
+| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Gated by TR-RUN-01** |
 
 ### Completed — Fyne Integration & Polish (8 unique tasks)
 
