@@ -1,8 +1,8 @@
 # Technical Recovery Roadmap
 
-**Date:** 2026-09-01; Phase 1 receipts updated 2026-09-02
+**Date:** 2026-09-01; Phase 1 and TR-RUN-01 receipts updated 2026-09-02
 
-**Status:** Active — Phase 1 complete; Phase 2 queued; overall recovery and release gates remain open
+**Status:** Active — Phase 1 complete; Phase 2 active with TR-RUN-01 done and four P1 items queued; overall recovery and release gates remain open
 **Scope:** Scientific correctness, provenance, serialization, EDA execution, external validation, architecture, operations, and documentation  
 **TDD:** N/A — this is a documentation-only evidence/status update and cannot change runtime behavior; every future behavior change remains separately gated by RED → GREEN → REFACTOR.
 
@@ -18,7 +18,7 @@ Treat FeCIM Lattice Tools as a capable research prototype under hardening—not 
 
 The recovery policy is:
 
-1. **Keep release readiness gated by the remaining roadmap.** Phase 1 exited green on 2026-09-02, which unblocks queuing RDW-UI-01; RDW-EDA-01 remains gated by TR-RUN-01.
+1. **Keep release readiness gated by the remaining roadmap.** Phase 1 and TR-RUN-01 have exited green, so RDW-UI-01 and RDW-EDA-01 are queued/unblocked; four Phase 2 items and later release gates remain open.
 2. **Repair observable correctness before architecture.** Fix charge noise, cached-run integrity, binary serialization, EDA command construction, and real external validation first.
 3. **Make validation semantics honest.** A skipped or no-op external test is not validation. A locally cached file is not immutable merely because it lives under a SHA-named directory.
 4. **Deepen existing seams rather than creating parallel systems.** Project loading should guarantee an executable bundle; committed runs should be structurally valid; the default UI and its tests should eventually cross the same state seam.
@@ -26,7 +26,7 @@ The recovery policy is:
 
 ## Evidence summary
 
-The first five rows preserve the pre-recovery baseline that motivated Phase 1. They are historical defect evidence, not descriptions of current live behavior; their closure receipts are recorded below. The remaining rows are still-open recovery risks.
+Rows explicitly labeled pre-recovery preserve historical defect evidence and are not descriptions of current live behavior; their closure receipts are recorded below. Unlabeled rows remain open recovery risks.
 
 | Risk | Baseline/open evidence | Baseline or current consequence |
 |---|---|---|
@@ -36,7 +36,7 @@ The first five rows preserve the pre-recovery baseline that motivated Phase 1. T
 | **Pre-recovery:** Docker EDA wrappers interpolated data into `sh -c` | Historical anchor: `module6-eda/pkg/openlane/runner.go:53-81,165-192` | Before TR-EDA-01, metacharacters in public arguments could be interpreted in a container with a writable project mount |
 | **Pre-recovery:** Verilog “sanity” validation performed no validation | Historical anchors: `validation/external/eda/verilog_sanity_test.go:9-30`; `.github/workflows/ci.yml:65-117` | Before TR-VAL-01, CI could report success while no simulator or linter executed |
 | `project validate` accepts bundles that `experiment run` rejects | `workbench/project/load.go:65-72`; `workbench/experiment/sweep.go:10-56,59-142`; `cmd/fecim-lattice-tools/workbench_subcommand.go:81-96` | User-visible validate/run semantic mismatch |
-| Structurally invalid successful results can be persisted | `workbench/experiment/runner.go:147-170`; `workbench/experiment/analyze.go:50-79` | Duplicate, missing, or unit-invalid metrics become immutable before rejection |
+| **Pre-TR-RUN-01:** structurally invalid successful results could be persisted | Historical anchors: `workbench/experiment/runner.go:147-170`; delayed rejection in `workbench/experiment/analyze.go:50-79` | Before TR-RUN-01, duplicate, missing, non-finite, provenance-incomplete, or unit-invalid metrics could become immutable before rejection |
 | The default UI and headless UI model use parallel interfaces | `shared/viewmodel/types.go:99-105`; `cmd/fecim-lattice-tools/fyne_app.go:159-201,248-256` | Headless tests can pass without exercising the application users run |
 | Launcher implementation is duplicated | `cmd/fecim-lattice-tools/fyne_launcher.go`; `cmd/fecim-lattice-tools-fyne/launcher.go` | Claim, accessibility, and behavior fixes must be duplicated |
 | File logging grows without filesystem retention | `module1-hysteresis/pkg/gui/data_logger.go:105-147,438-466` | The audited checkout accumulated 6,144 CSV files and approximately 50 GB |
@@ -62,7 +62,7 @@ Documentation and UI copy must state which threat is covered. “Immutable” me
 
 ## Recovery item register
 
-This register is authoritative for scope. For completed Phase 1 items, the original evidence paths are pre-recovery anchors and the receipts below are authoritative completion evidence; open-item evidence remains a live-code lead to verify before implementation.
+This register is authoritative for scope. For completed items, the original evidence paths are pre-recovery anchors and the receipts below are authoritative completion evidence; open-item evidence remains a live-code lead to verify before implementation.
 
 ### TR-COR-01 — Charge-amplifier noise
 
@@ -114,11 +114,11 @@ This register is authoritative for scope. For completed Phase 1 items, the origi
 
 ### TR-RUN-01 — Pre-commit result validity
 
-- **Priority / status / owner:** P1 / Queued / workbench experiment owner plus scientific-honesty review.
-- **Evidence:** `workbench/experiment/runner.go:147-170`; delayed rejection in `workbench/experiment/analyze.go:50-79`.
-- **Dependencies:** TR-PROV-01 and a single reusable result validator.
-- **Acceptance gate:** Duplicate metrics, missing objectives/constraints, non-finite values, and unit mismatches fail before immutable commit.
-- **Non-goals:** Changing objective ranking or Pareto algorithms.
+- **Priority / status / owner:** P1 / Done ([`b5f14295926983e5da5350cb4730294a116fe6ec`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/b5f14295926983e5da5350cb4730294a116fe6ec)) / workbench experiment owner; two independent follow-up reviews clean.
+- **Baseline evidence:** Before the fix, `workbench/experiment/runner.go:147-170` could commit invalid successful results before the defense-in-depth checks in `workbench/experiment/analyze.go:50-79`.
+- **Dependencies:** TR-PROV-01 and a single reusable result validator; satisfied for this item.
+- **Acceptance gate:** Fresh and cached successful results validate before commit/reuse; duplicate or blank metrics, missing objectives/constraints, non-finite values, incomplete metric provenance, and exact constraint-unit mismatches return recognizable `ErrInvalidResult` systemic errors.
+- **Non-goals/deferred:** Changing objective ranking or Pareto algorithms; assigning unit authority to `Objective`; deciding failed-result partial-metric policy; enforcing `Project.ModelVersion`/evaluator agreement; or adding derived-metric source fields.
 
 ### TR-CLAIM-01 — Claim policy enforcement
 
@@ -311,21 +311,34 @@ The external sanity test in the first command explicitly skipped locally because
 - CI validated both the legacy generator/stub and the production GUI array/cell pair. This evidence is syntax/elaboration only.
 - The version was resolved through apt and recorded, but apt resolution is not immutable pinning. TR-CI-01 and TR-SUPPLY-01 remain open.
 
-Phase 1 completion clears the Phase 1 gate for RDW-UI-01, which is now queued/unblocked. RDW-EDA-01 remains gated by TR-RUN-01.
+Phase 1 completion cleared the Phase 1 gate for both feature items. TR-RUN-01 has now also cleared RDW-EDA-01's remaining recovery gate; RDW-UI-01 and RDW-EDA-01 are queued/unblocked.
 
-### Phase 2 — Trust invariant completion
+### Phase 2 — Trust invariant completion — Active
 
-**Objective:** Make successful interfaces carry useful guarantees.
+**Objective:** Make successful interfaces carry useful guarantees. TR-RUN-01 is complete; four P1 items remain queued, so Phase 2 and release readiness remain open.
 
-| ID | Recommendation | Locality/leverage result |
-|---|---|---|
-| TR-PRJ-01 | Make `project.Load` guarantee that the sweep is executable | `project validate`, run, report, and future Fyne callers share one validity definition |
-| TR-RUN-01 | Validate successful results before immutable commit | Evaluators, cache reuse, analysis, and reports inherit one structural-result invariant |
-| TR-CLAIM-01 | Add a source-backed claim registry contract for launcher/comparison copy | Unverified figures cannot reappear without evidence labels |
-| TR-SUPPLY-01 | Pin OpenLane by immutable version/digest and record it in provenance | Same source resolves to the same tool image |
-| TR-CI-01 | Add non-mutating formatting checks, `govulncheck`, and scheduled dependency review | CI detects formatting drift and known Go vulnerabilities instead of rewriting or ignoring them |
+| ID | Status | Recommendation | Locality/leverage result |
+|---|---|---|---|
+| TR-PRJ-01 | Queued | Make `project.Load` guarantee that the sweep is executable | `project validate`, run, report, and future Fyne callers share one validity definition |
+| TR-RUN-01 | **Done** | Validate fresh and cached successful results before immutable commit/reuse | Evaluators, cache reuse, analysis, and reports inherit one structural-result invariant |
+| TR-CLAIM-01 | Queued | Add a source-backed claim registry contract for launcher/comparison copy | Unverified figures cannot reappear without evidence labels |
+| TR-SUPPLY-01 | Queued | Pin OpenLane by immutable version/digest and record it in provenance | Same source resolves to the same tool image |
+| TR-CI-01 | Queued | Add non-mutating formatting checks, `govulncheck`, and scheduled dependency review | CI detects formatting drift and known Go vulnerabilities instead of rewriting or ignoring them |
 
-**Exit gate:** `project validate` cannot succeed for a bundle that fails deterministic expansion; invalid successful results cannot be committed; launcher claims satisfy the honesty audit; toolchain identity is recorded.
+#### Phase 2 progress receipt — TR-RUN-01
+
+- **Implementation and review:** [`b5f14295926983e5da5350cb4730294a116fe6ec`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/b5f14295926983e5da5350cb4730294a116fe6ec) changed exactly `workbench/experiment/runner.go` and `workbench/experiment/runner_test.go`. [PR #12](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/12) passed [workflow 33651992963](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33651992963) and its [CI job 100321043703](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33651992963/job/100321043703). Two independent implementation follow-up reviews were clean.
+- **Invariant now enforced:** Every fresh or cached `StatusSuccess` result validates against the active project before commit or reuse. Success carries no `Failure`; metric names are globally unique and nonblank; values are finite; every metric has a nonblank unit/model/assumption and recognized evidence classification; configured objectives and constraints are present; and constraint units match exactly. Violations return recognizable `ErrInvalidResult` and are treated as systemic runner errors.
+- **Preserved behavior:** A structurally valid constraint violation still commits and `Analyze` marks it infeasible. Cached `StatusFailed` results remain reusable without evaluator execution. Rejected cached successful artifacts remain byte-for-byte unchanged.
+- **Historical cache behavior:** Existing invalid historical caches are rejected when `Run` attempts reuse under the current project rules; they are not rewritten or deleted.
+- **Original RED/GREEN slices:** The commit receipt records focused RED then GREEN commands for success carrying `Failure`, blank/duplicate metric names, non-finite values, missing unit/model/nonblank assumption, invalid evidence, missing objective/constraint metrics, and exact constraint-unit mismatch. It also records GREEN controls for structurally valid results, valid-infeasible constraint violations, scheduling stop/preserved prior completions, and no commits for rejected/later points. See the linked commit body for every exact command and failure summary.
+- **Review mutation receipts:** `TestRunRejectsDuplicateOptionalMetricNames` was GREEN on correct production, RED against a temporary objective-only uniqueness mutant, and GREEN after restoration. `go test -count=1 ./workbench/experiment -run '^TestRunRejectsCachedSuccessMissingNewObjective$'` was RED when cache reuse bypassed project-aware validation and GREEN after the shared validator was applied. `TestRunRejectsCachedSuccessWithChangedConstraintUnit` was GREEN after the fix, RED against the original cache-bypass mutant, then GREEN after restoration. `TestRunStillReusesCachedDesignFailure` remained GREEN. No mutant was retained.
+- **Focused/final implementation gates:** The combined review selection, `go test -count=1 ./workbench/experiment`, `go test -race -count=1 ./workbench/experiment`, `go test -count=1 ./workbench/...`, focused `workbench/fecim`/`workbench/report`, the clean index-only CLI end-to-end test, `go vet ./workbench/...`, and `git diff --check` all passed as recorded in the implementation commit.
+- **Parent local aggregate:** `go test -count=1 ./workbench/...`; `go test -race -count=1 ./workbench/experiment`; `go vet ./...`; `go test ./...`; `bash scripts/check-architecture.sh`; and `git diff --check d4e0b6b8..b5f14295` each exited 0.
+- **CI external evidence:** [external-validation job 100321043492](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33651992963/job/100321043492) passed. Its optional ngspice step skipped because ngspice was unavailable; that remains missing optional evidence and is not counted as success.
+- **Deferred boundaries:** `Objective` has no unit-authority field; failed-result partial-metric policy is undecided; `Project.ModelVersion`/evaluator agreement and derived-metric source fields remain separate work. Unsigned caches remain outside malicious coherent-rewrite resistance. `Analyze` remains defense in depth for external/manual records rather than the first validation point for runner-managed successful results.
+
+**Exit gate:** `project validate` still must be made unable to accept a bundle that fails deterministic expansion; launcher claims must satisfy the honesty audit; and toolchain identity must be recorded. TR-RUN-01 has closed the invalid-successful-result commit/reuse portion only.
 
 ### Phase 3 — Architecture convergence
 
@@ -356,14 +369,15 @@ A release candidate is not “research-ready” unless all applicable gates are 
 - [x] Full Go test suite passes from a clean checkout (first gating CI workflow).
 - [x] Focused race gates pass for changed concurrency/state packages.
 - [x] Cached-run corruption tests pass.
+- [x] Fresh and cached successful results validate before immutable commit/reuse.
 - [x] Model binary malformed-input tests pass.
 - [x] Required Verilog external validation ran; executable and version are recorded.
 - [ ] OpenLane image is pinned and included in provenance when used.
 - [ ] Quantitative launcher/report claims pass the honesty contract.
 - [x] Skipped validations are listed as missing evidence, not success.
-- [x] RED/GREEN/final verification receipts are attached to every Phase 1 behavior change.
+- [x] RED/GREEN/final verification receipts are attached to every completed recovery behavior change.
 
-The unchecked immutable OpenLane pinning and quantitative-claim contract gates keep release readiness open; Phase 1 completion is not release approval.
+The unchecked immutable OpenLane pinning and quantitative-claim contract gates keep release readiness open; Phase 1 and TR-RUN-01 completion do not constitute release approval.
 
 ## Work acceptance rules
 
