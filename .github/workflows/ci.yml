@@ -65,16 +65,15 @@ jobs:
   external-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install GUI build dependencies
+      - name: Install GUI and external validation dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev iverilog
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -82,7 +81,13 @@ jobs:
           go-version: '1.25'
           cache: true
 
-      - name: Detect optional external tools
+      - name: Record Icarus Verilog version
+        run: iverilog -V
+
+      - name: Run required external Verilog validation
+        run: go test -v -count=1 ./validation/external/eda -run TestVerilogSanityCheck
+
+      - name: Detect optional ngspice
         id: tools
         shell: bash
         run: |
@@ -91,27 +96,15 @@ jobs:
             echo "ngspice detected"
           else
             echo "has_ngspice=false" >> "$GITHUB_OUTPUT"
-            echo "ngspice missing; external validation tests will be skipped"
+            echo "ngspice missing; optional ngspice validation tests will be skipped"
           fi
 
-          if command -v iverilog >/dev/null 2>&1; then
-            echo "has_iverilog=true" >> "$GITHUB_OUTPUT"
-            echo "iverilog detected"
-          else
-            echo "has_iverilog=false" >> "$GITHUB_OUTPUT"
-            echo "iverilog missing; verilog simulation checks will be skipped"
-          fi
-
-      - name: Run ngspice external validation tests
+      - name: Run optional ngspice external validation tests
         if: steps.tools.outputs.has_ngspice == 'true'
-        run: go test -v ./validation/... -run 'NGSpice|Spice|External'
+        run: go test -v ./validation/external/circuit -run '^TestNgspiceCrossbar_'
 
-      - name: Run iverilog external validation tests
-        if: steps.tools.outputs.has_iverilog == 'true'
-        run: go test -v ./validation/... -run 'Verilog|Icarus|External'
-
-      - name: Summary for skipped optional checks
-        if: steps.tools.outputs.has_ngspice != 'true' || steps.tools.outputs.has_iverilog != 'true'
+      - name: Summary for skipped optional ngspice checks
+        if: steps.tools.outputs.has_ngspice != 'true'
         run: |
-          echo "Optional external validation checks were skipped due to missing toolchain components."
-          echo "This is non-fatal by policy."
+          echo "Optional ngspice validation checks were skipped because ngspice is unavailable."
+          echo "Only the ngspice checks are non-fatal by policy."
