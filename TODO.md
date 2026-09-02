@@ -2,28 +2,75 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-07-19 | **Fyne**: All 7 expert modules functional; workflow-first workbench pending
+**Last Updated**: 2026-09-01 | **Program status**: Technical recovery active; release-facing feature work gated by Phase 1
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 2 | Fyne workbench parity + selected-run EDA export |
-| Open Issues | 2 | qmd cold-start + Telegram delivery blockers |
-| Scheduled | 1 | Quarterly Literature Review — overdue since April 2026; last audit 2026-03-05 |
-| Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All Fyne integration tasks resolved; archive below |
+| P0 recovery | 5 | Correctness, provenance, serialization, EDA execution, external validation |
+| P1 recovery | 5 | Executable bundles, committed results, claims, supply chain, CI hygiene |
+| Architecture recovery | 3 | Launcher consolidation, UI seam convergence, electrical solver ownership |
+| Operations/governance | 4 | Log retention, docs drift, PDF licensing, evidence-based health metrics |
+| Feature work gated | 2 | Fyne workbench parity + selected-run EDA export resume after Phase 1 |
+| Open tooling issues | 2 | qmd cold-start + Telegram delivery blockers |
+| Scheduled research | 1 | Quarterly Literature Review overdue; last audit 2026-03-05 |
+| Existing deferred work | 8 | Historical prerequisite-blocked items remain in the deferred section below |
+| Completed archive | ~260+ | Historical work remains below; counts are not release evidence |
+
+**Authoritative recovery roadmap:** [`docs/internals/audits/2026-09-01-technical-recovery-roadmap.md`](docs/internals/audits/2026-09-01-technical-recovery-roadmap.md)
+
+**Executable Phase 1 plan:** [`docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md`](docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md)
 
 ---
 
 ## Task Status
 
-### Pending — Research and Design Workbench
+### Phase 1 — Critical correctness and trust hardening
+
+These items block release-readiness claims and the two feature items below. Each requires recorded RED, GREEN, focused verification, and the applicable race/external/repository gate.
 
 | ID | Task | Priority | Status |
 |----|------|----------|--------|
-| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Pending** |
-| RDW-EDA-01 | Export one selected immutable successful run through existing Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Pending** |
+| TR-COR-01 | Correct charge-amplifier noise to use signed Gaussian samples and clip after noise | P0 | **Planned** |
+| TR-PROV-01 | Reject cached runs whose schema, identity, design, or result integrity cannot be verified | P0 | **Planned** |
+| TR-SER-01 | Reject ragged weight matrices and bound every binary-model allocation | P0 | **Planned** |
+| TR-EDA-01 | Remove dynamic data interpolation from OpenROAD/KLayout Docker shell programs | P0 | **Planned** |
+| TR-VAL-01 | Replace no-op Verilog sanity logging with a real, required iverilog CI gate | P0 | **Planned** |
+
+### Phase 2 — Trust invariant completion
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-PRJ-01 | Make `project.Load` guarantee a deterministically expandable project bundle | P1 | **Queued** |
+| TR-RUN-01 | Reject structurally invalid successful evaluator results before immutable commit | P1 | **Queued** |
+| TR-CLAIM-01 | Enforce honesty-audit classification for quantitative launcher and report claims | P1 | **Queued** |
+| TR-SUPPLY-01 | Pin OpenLane by immutable version/digest and record it in provenance | P1 | **Queued** |
+| TR-CI-01 | Add non-mutating formatting, `govulncheck`, and scheduled dependency review gates | P1 | **Queued** |
+
+### Phase 3 — Architecture convergence
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-ARCH-01 | Replace the two near-identical Fyne launcher implementations with one owned module | P2 | **Queued** |
+| TR-ARCH-02 | Pilot one adapter joining `ModulePort` state to the default Fyne shell | P2 | **Needs design checkpoint** |
+| TR-ARCH-03 | Move reusable Tier-A/Tier-B electrical array solving behind a shared seam | P2 | **Queued** |
+
+### Phase 4 — Operations and governance
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-OPS-01 | Add tested age/size/count retention for generated simulation CSV logs | P3 | **Queued** |
+| TR-DOC-01 | Repair stale commands and intended-vs-live architecture documentation | P3 | **Queued** |
+| TR-LICENSE-01 | Record redistribution rights for tracked research PDFs or replace them with citation metadata | P3 | **Owner/legal decision required** |
+| TR-METRIC-01 | Replace test-count health claims with explicit trust-surface and skip evidence | P3 | **Queued** |
+
+### Feature work — gated by recovery
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Gated by Phase 1** |
+| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Gated by Phase 1 and TR-RUN-01** |
 
 ### Completed — Fyne Integration & Polish (8 unique tasks)
 
@@ -185,7 +232,7 @@
 
 ### Agent Work Policy
 
-**This file is the single source of truth for all tasks.** No separate prompt files.
+**This file is the task-status ledger.** The linked technical recovery roadmap owns recovery scope and gates; executable plans under `docs/internals/superpowers/plans/` own task-by-task implementation details.
 
 Any agent tackling a task from this TODO **must**:
 
@@ -210,7 +257,7 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
-**Scientific accuracy**: All claims must be verified per `HONESTY_AUDIT.md` standards.
+**Scientific accuracy**: All claims must be verified per [`docs/research/honesty-audit.md`](docs/research/honesty-audit.md).
 
 ---
 
