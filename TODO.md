@@ -2,17 +2,17 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-09-02 | **Program status**: Technical recovery active; Phase 1 complete, Phase 2 queued, and release readiness not yet established
+**Last Updated**: 2026-09-02 | **Program status**: Technical recovery active; Phase 1 complete, Phase 2 active with four P1 items queued, and release readiness not yet established
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
 | Phase 1 recovery completed | 5 | Correctness, provenance, serialization, EDA execution, and gating external validation closed with reviewed receipts |
-| P1 recovery open | 5 | Phase 2: executable bundles, committed results, claims, supply chain, and CI hygiene |
+| P1 recovery open | 4 | Phase 2: executable bundles, claims, supply chain, and CI hygiene remain queued; pre-commit result validity is complete |
 | Architecture recovery open | 3 | Launcher consolidation, UI seam convergence, electrical solver ownership |
 | Operations/governance open | 4 | Log retention, docs drift, PDF licensing, evidence-based health metrics |
-| Feature work | 2 | Fyne workbench parity is queued/unblocked; selected-run EDA export remains gated by TR-RUN-01 |
+| Feature work | 2 | Fyne workbench parity and selected-run EDA export are queued/unblocked from their recovery gates |
 | Open tooling issues | 2 | qmd cold-start + Telegram delivery blockers |
 | Scheduled research | 1 | Quarterly Literature Review overdue; last audit 2026-03-05 |
 | Existing deferred work | 8 | Historical prerequisite-blocked items remain in the deferred section below |
@@ -40,10 +40,12 @@ Phase 1 is complete. These five items have reviewed RED/GREEN receipts, focused 
 
 ### Phase 2 — Trust invariant completion
 
+Phase 2 is active: TR-RUN-01 is complete and four P1 recovery items remain queued. This is progress evidence, not Phase 2 completion or release readiness.
+
 | ID | Task | Priority | Status |
 |----|------|----------|--------|
 | TR-PRJ-01 | Make `project.Load` guarantee a deterministically expandable project bundle | P1 | **Queued** |
-| TR-RUN-01 | Reject structurally invalid successful evaluator results before immutable commit | P1 | **Queued** |
+| TR-RUN-01 | Reject structurally invalid successful evaluator results before immutable commit or cache reuse | P1 | **Done** ([`b5f1429`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/b5f14295926983e5da5350cb4730294a116fe6ec); [PR #12](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/12); [CI PASS](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33651992963/job/100321043703)) |
 | TR-CLAIM-01 | Enforce honesty-audit classification for quantitative launcher and report claims | P1 | **Queued** |
 | TR-SUPPLY-01 | Pin OpenLane by immutable version/digest and record it in provenance | P1 | **Queued** |
 | TR-CI-01 | Add non-mutating formatting, `govulncheck`, and scheduled dependency review gates | P1 | **Queued** |
@@ -70,7 +72,7 @@ Phase 1 is complete. These five items have reviewed RED/GREEN receipts, focused 
 | ID | Task | Priority | Status |
 |----|------|----------|--------|
 | RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Queued — Phase 1 gate cleared** |
-| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Gated by TR-RUN-01** |
+| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Queued — Phase 1 and TR-RUN-01 gates cleared** |
 
 ### Completed — Fyne Integration & Polish (8 unique tasks)
 
