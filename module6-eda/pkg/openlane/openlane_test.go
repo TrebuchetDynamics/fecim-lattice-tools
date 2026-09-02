@@ -2,9 +2,9 @@ package openlane
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -565,25 +565,134 @@ func TestKLayoutCommandConstruction(t *testing.T) {
 	}
 }
 
-// TestXvfbCommandConstruction tests Xvfb wrapper construction
-func TestXvfbCommandConstruction(t *testing.T) {
-	scriptName := "test.tcl"
+func valueAfterArg(t *testing.T, args []string, token string) string {
+	t.Helper()
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] == token {
+			return args[i+1]
+		}
+	}
+	t.Fatalf("argument %q not found in %q", token, args)
+	return ""
+}
 
-	// Test Xvfb command construction
-	xvfbCmd := fmt.Sprintf("Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & sleep 1 && export DISPLAY=:99 && openroad -no_splash -exit /design/%s", scriptName)
+func TestDockerOpenROADArgsKeepDynamicValuesOutOfFixedShellProgram(t *testing.T) {
+	const shellProgram = `Xvfb :99 -screen 0 1024x768x24 -nolisten tcp >/dev/null 2>&1 & sleep 1; export DISPLAY=:99; exec openroad -no_splash -exit "$1"`
+	image := "image;$(touch IMAGE)"
+	workDir := "/tmp/work;$(touch WORKDIR)"
+	script := "/tmp/layout;$(touch SCRIPT).tcl"
+	envVars := map[string]string{
+		"Z;KEY": "$(touch ZVALUE)",
+		"A_KEY": ";touch AVALUE",
+	}
 
-	// Verify key components
-	if !strings.Contains(xvfbCmd, "Xvfb :99") {
-		t.Error("Xvfb command missing Xvfb invocation")
+	args := dockerOpenROADArgs(image, workDir, script, envVars)
+	want := []string{
+		"run", "--rm", "--entrypoint", "sh",
+		"-v", workDir + ":/design", "-w", "/design",
+		"-e", "A_KEY=;touch AVALUE",
+		"-e", "Z;KEY=$(touch ZVALUE)",
+		image, "-c", shellProgram, "fecim-openroad", "/design/layout;$(touch SCRIPT).tcl",
 	}
-	if !strings.Contains(xvfbCmd, "DISPLAY=:99") {
-		t.Error("Xvfb command missing DISPLAY export")
+	if !slices.Equal(args, want) {
+		t.Fatalf("dockerOpenROADArgs()=%q\nwant %q", args, want)
 	}
-	if !strings.Contains(xvfbCmd, scriptName) {
-		t.Error("Xvfb command missing script name")
+
+	gotProgram := valueAfterArg(t, args, "-c")
+	if gotProgram != shellProgram {
+		t.Fatalf("shell program=%q want exact fixed program %q", gotProgram, shellProgram)
 	}
-	if !strings.Contains(xvfbCmd, "sleep 1") {
-		t.Error("Xvfb command missing sleep delay")
+	for _, dynamic := range []string{image, workDir, script, "Z;KEY", envVars["Z;KEY"], "A_KEY", envVars["A_KEY"]} {
+		if strings.Contains(gotProgram, dynamic) {
+			t.Fatalf("dynamic value %q interpolated into shell program %q", dynamic, gotProgram)
+		}
+	}
+}
+
+func TestDockerKLayoutArgsKeepDynamicValuesOutOfFixedShellProgram(t *testing.T) {
+	const shellProgram = `Xvfb :99 -screen 0 1024x768x24 -nolisten tcp >/dev/null 2>&1 & sleep 1; export DISPLAY=:99; exec klayout "$@"`
+	image := "image;$(touch IMAGE)"
+	workDir := "/tmp/work;$(touch WORKDIR)"
+	script := "/tmp/layout;$(touch SCRIPT).rb"
+	rdVars := map[string]string{
+		"z;key": "$(touch ZVALUE)",
+		"a_key": ";touch AVALUE",
+	}
+
+	args := dockerKLayoutArgs(image, workDir, script, rdVars)
+	want := []string{
+		"run", "--rm", "--entrypoint", "sh",
+		"-v", workDir + ":/design", "-w", "/design",
+		image, "-c", shellProgram, "fecim-klayout",
+		"-z",
+		"-rd", "a_key=;touch AVALUE",
+		"-rd", "z;key=$(touch ZVALUE)",
+		"-r", "/design/layout;$(touch SCRIPT).rb",
+	}
+	if !slices.Equal(args, want) {
+		t.Fatalf("dockerKLayoutArgs()=%q\nwant %q", args, want)
+	}
+
+	gotProgram := valueAfterArg(t, args, "-c")
+	if gotProgram != shellProgram {
+		t.Fatalf("shell program=%q want exact fixed program %q", gotProgram, shellProgram)
+	}
+	for _, dynamic := range []string{image, workDir, script, "z;key", rdVars["z;key"], "a_key", rdVars["a_key"]} {
+		if strings.Contains(gotProgram, dynamic) {
+			t.Fatalf("dynamic value %q interpolated into shell program %q", dynamic, gotProgram)
+		}
+	}
+}
+
+func TestDockerToolArgsMapScriptsInsideDesignMount(t *testing.T) {
+	const invalidPath = "/design/__invalid_script__"
+	tests := []struct {
+		name           string
+		openroadScript string
+		klayoutScript  string
+		wantOpenROAD   string
+		wantKLayout    string
+	}{
+		{
+			name:           "safe nested relative",
+			openroadScript: "scripts/check.tcl",
+			klayoutScript:  "scripts/render.rb",
+			wantOpenROAD:   "/design/scripts/check.tcl",
+			wantKLayout:    "/design/scripts/render.rb",
+		},
+		{
+			name:           "cleaned safe relative",
+			openroadScript: "scripts/../check.tcl",
+			klayoutScript:  "scripts/../render.rb",
+			wantOpenROAD:   "/design/check.tcl",
+			wantKLayout:    "/design/render.rb",
+		},
+		{
+			name:           "absolute compatibility",
+			openroadScript: "/tmp/scripts/check.tcl",
+			klayoutScript:  "/tmp/scripts/render.rb",
+			wantOpenROAD:   "/design/check.tcl",
+			wantKLayout:    "/design/render.rb",
+		},
+		{name: "traversal", openroadScript: "../../escape.tcl", klayoutScript: "../../escape.rb", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "nested traversal", openroadScript: "scripts/../../escape.tcl", klayoutScript: "scripts/../../escape.rb", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "dot", openroadScript: ".", klayoutScript: ".", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "cleaned dot", openroadScript: "scripts/..", klayoutScript: "scripts/..", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "dot dot", openroadScript: "..", klayoutScript: "..", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "empty", openroadScript: "", klayoutScript: "", wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+		{name: "absolute root", openroadScript: string(filepath.Separator), klayoutScript: string(filepath.Separator), wantOpenROAD: invalidPath, wantKLayout: invalidPath},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			openroadArgs := dockerOpenROADArgs("image", "/tmp/work", test.openroadScript, nil)
+			if got := openroadArgs[len(openroadArgs)-1]; got != test.wantOpenROAD {
+				t.Errorf("OpenROAD positional script=%q want confined path %q", got, test.wantOpenROAD)
+			}
+			klayoutArgs := dockerKLayoutArgs("image", "/tmp/work", test.klayoutScript, nil)
+			if got := klayoutArgs[len(klayoutArgs)-1]; got != test.wantKLayout {
+				t.Errorf("KLayout positional script=%q want confined path %q", got, test.wantKLayout)
+			}
+		})
 	}
 }
 
