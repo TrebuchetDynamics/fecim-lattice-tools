@@ -1,8 +1,8 @@
 # FeCIM Lattice Tools
 
-**Simulation-first desktop lab for ferroelectric compute-in-memory (FeCIM) systems.**
+**Literature-calibrated pre-silicon research and design workbench for ferroelectric compute-in-memory (FeCIM) systems.**
 
-FeCIM Lattice Tools combines a Go/Fyne desktop simulator, literature-aware validation workspace, EDA/export utilities, and a static Astro project site. It is built for learning and inspecting how ferroelectric device assumptions propagate through crossbar arrays, peripheral circuits, inference examples, and design artifacts.
+FeCIM Lattice Tools combines a reproducible headless design-sweep core, Go/Fyne desktop workspaces, literature-aware validation, EDA/export utilities, and a static Astro project site. Research and design are primary; educational views explain how ferroelectric device assumptions propagate through arrays, peripheral circuits, inference examples, and design artifacts.
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
@@ -28,6 +28,19 @@ make test-legacy-fyne
 bash scripts/reproduce_validation.sh
 ```
 
+## Research and Design Workbench
+
+Run the checked-in literature-calibrated pre-silicon example from a disposable copy:
+
+```bash
+cp -R examples/research-design-workbench /tmp/fecim-study
+go run ./cmd/fecim-lattice-tools project validate /tmp/fecim-study -citation-dir citations/papers
+go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study -workers 2 -citation-dir citations/papers
+go run ./cmd/fecim-lattice-tools report generate /tmp/fecim-study -citation-dir citations/papers
+```
+
+The workflow persists immutable runs and generates JSON, CSV, and Markdown trade-off reports. See [Research and Design Workbench](./docs/guides/research-design-workbench.md).
+
 ## What This Repository Is
 
 | Use it for | Do not treat it as |
@@ -50,6 +63,7 @@ Core physics references include Materlik 2015, Park 2015, Alessandri 2018, and G
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Research and Design Workbench](#research-and-design-workbench)
 - [What This Repository Is](#what-this-repository-is)
 - [At a Glance](#at-a-glance)
 - [What You Can Do](#what-you-can-do)

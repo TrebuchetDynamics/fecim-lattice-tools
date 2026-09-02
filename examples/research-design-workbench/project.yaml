@@ -1,0 +1,17 @@
+schema_version: 1
+id: hzo-study
+name: HZO Device-Array-Circuit Study
+hypothesis: Increasing ADC resolution trades area and energy for readout fidelity.
+model_version: fecim-system-v1
+objectives:
+  - metric: energy_pj
+    direction: minimize
+  - metric: latency_ns
+    direction: minimize
+constraints:
+  - metric: area_um2
+    operator: <=
+    value: 5000
+    unit: um2
+citations:
+  - park2015_advmat_hzo

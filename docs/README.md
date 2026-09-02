@@ -84,6 +84,8 @@ Perfect for: Researchers, academics, verification
 | [Physics Validation](research/physics-validation.md) | Scientific accuracy | Researchers |
 | [Honesty Audit](research/honesty-audit.md) | Claims verification | All users |
 | [Trust Boundaries](guides/trust.md) | What is validated, educational, planned, or not validated | All users |
+| [Technical Recovery Roadmap](internals/audits/2026-09-01-technical-recovery-roadmap.md) | Active correctness, provenance, validation, and architecture recovery gates | Maintainers, reviewers |
+| [Critical Hardening Plan](internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md) | Executable TDD plan for the five highest-risk defects | Implementers |
 | [Citation System](../citations/README.md) | Source records, citable facts, and citation workflow | Researchers, contributors |
 | [The Crucible](../tools/crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
 | [GLOSSARY](guides/glossary.md) | Technical terms | All users |
@@ -121,7 +123,7 @@ Perfect for: Researchers, academics, verification
 ```
 1. Status: research/honesty-audit.md
 2. Physics: research/physics-validation.md
-3. Trust: TRUST.md
+3. Trust: [guides/trust.md](guides/trust.md)
 4. Crucible: ../tools/crucible/README.md
 5. Citations: ../citations/README.md
 6. Literature: research/papers/
@@ -269,7 +271,7 @@ If you use this simulator in research:
 @software{fecim_lattice_tools,
   title = {FeCIM Lattice Tools: Educational Ferroelectric CIM Simulator},
   year = {2026},
-  url = {https://github.com/[your-repo]},
+  url = {https://github.com/TrebuchetDynamics/fecim-lattice-tools},
   note = {Educational simulation tool - not validated hardware}
 }
 ```
@@ -282,11 +284,11 @@ See [../LICENSE](../LICENSE) in repository root.
 ## 🆘 Getting Help
 
 ### Common Issues
-- Build errors: [guides/runbook.md#common-issues](guides/runbook.md#common-issues)
+- Build errors: [guides/runbook.md#common-issues--fixes](guides/runbook.md#common-issues--fixes)
 - Physics questions: [research/physics-validation.md](research/physics-validation.md)
 
 ### Ask Questions
-- Check [GLOSSARY.md](GLOSSARY.md) first
+- Check [GLOSSARY.md](guides/glossary.md) first
 - Read relevant module documentation
 - Search existing issues
 - Open new issue with details

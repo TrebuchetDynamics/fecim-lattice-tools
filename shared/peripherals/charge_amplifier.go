@@ -16,7 +16,10 @@ package peripherals
 // Reference: Adv. Intell. Syst. 2022 (128×128 FeCAP), IEDM 2020 (FeCAP array
 // with 0.5 fF/cell, charge-domain sensing).
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 // DefaultCfb is the default feedback capacitance for FeCAP array sensing.
 // Chosen so that a full-scale row-sum (64 rows × 2 fF × 1 V = 128 fC) maps
@@ -38,7 +41,7 @@ type ChargeAmplifier struct {
 	// Limits the maximum column charge rate during a WL pulse.
 	Bandwidth float64
 
-	// InputChargeNoiseRMS is the input-referred charge noise (C/sqrt(Hz)).
+	// InputChargeNoiseRMS is the integrated input-referred charge noise (C/sample).
 	// Typical: kT·C noise floor ~ sqrt(kT·Cfb) per sample.
 	InputChargeNoiseRMS float64
 
@@ -56,21 +59,21 @@ type ChargeAmplifier struct {
 // Defaults:
 //   - Cfb = 128 fF  (maps 128 fC full-scale to 1 V)
 //   - BW  = 500 MHz (fast enough for 10 ns WL pulses)
-//   - Noise ≈ kT/Cfb floor ≈ sqrt(4e-21/128e-15) ≈ 5.6 aC/sqrt(Hz)
+//   - Noise ≈ sqrt(kT·Cfb) ≈ 23 aC per sample at 300 K
 //   - MaxQ = 128 fC  (Cmax × Vmax × rows = 2 fF × 1 V × 64)
 func DefaultChargeAmplifier() *ChargeAmplifier {
 	cfb := DefaultCfb
 	ca := &ChargeAmplifier{
 		Cfb:                 cfb,
-		Bandwidth:           500e6,   // 500 MHz
-		InputChargeNoiseRMS: 5.6e-18, // ~sqrt(kT*Cfb) ≈ 5.6 aC/sqrt(Hz)
-		MaxInputCharge:      128e-15, // 128 fC
-		MaxOutputVoltage:    1.0,     // 1 V (matches ADC Vref)
+		Bandwidth:           500e6,                   // 500 MHz
+		InputChargeNoiseRMS: math.Sqrt(kBT300 * cfb), // integrated kT/C charge noise per sample
+		MaxInputCharge:      128e-15,                 // 128 fC
+		MaxOutputVoltage:    1.0,                     // 1 V (matches ADC Vref)
 	}
 	log.Calculation("DefaultChargeAmplifier", map[string]interface{}{
 		"cfb_fF":              ca.Cfb * 1e15,
 		"bandwidth_MHz":       ca.Bandwidth * 1e-6,
-		"noise_aC_per_sqrtHz": ca.InputChargeNoiseRMS * 1e18,
+		"noise_aC_per_sample": ca.InputChargeNoiseRMS * 1e18,
 		"max_charge_fC":       ca.MaxInputCharge * 1e15,
 	}, ca)
 	return ca
@@ -95,34 +98,43 @@ func (ca *ChargeAmplifier) Sense(totalCharge float64) float64 {
 
 // SenseWithNoise adds kT/C thermal noise to the output.
 //
-// Integrated charge noise over bandwidth BW: σ_Q = InputChargeNoiseRMS × sqrt(BW).
-// Output noise: σ_V = σ_Q / Cfb.
+// Integrated per-sample charge noise is σ_Q = InputChargeNoiseRMS.
+// Output noise is σ_V = σ_Q / Cfb. The signal-plus-noise result is clipped to
+// the configured output rails. Bandwidth governs settling and power, not this
+// integrated kT/C sample-noise floor.
 //
-// Note: this uses math/rand via the package-level source; for reproducible
-// tests seed the global source before calling.
+// This simulation default uses math/rand's package-level Gaussian source; it
+// is not measured hardware calibration. Package tests inject deterministic
+// Gaussian samples through the private helper.
 func (ca *ChargeAmplifier) SenseWithNoise(totalCharge float64) float64 {
-	vOut := ca.Sense(totalCharge)
-	if ca.InputChargeNoiseRMS > 0 && ca.Bandwidth > 0 && ca.Cfb > 0 {
-		sigmaQ := ca.InputChargeNoiseRMS * math.Sqrt(ca.Bandwidth)
-		sigmaV := sigmaQ / ca.Cfb
-		// Gaussian noise — use Box-Muller approximation.
-		vOut += sigmaV * math.Sqrt(-2*math.Log(0.5+1e-12)) // simplified; see noise.go for full impl
+	return ca.senseWithGaussian(totalCharge, rand.NormFloat64)
+}
+
+func (ca *ChargeAmplifier) senseWithGaussian(totalCharge float64, gaussian func() float64) float64 {
+	if ca.Cfb <= 0 {
+		return 0
+	}
+	vOut := totalCharge / ca.Cfb
+	if gaussian != nil && ca.InputChargeNoiseRMS > 0 {
+		vOut += (ca.InputChargeNoiseRMS / ca.Cfb) * gaussian()
+	}
+	if vOut > ca.MaxOutputVoltage {
+		return ca.MaxOutputVoltage
+	}
+	if vOut < -ca.MaxOutputVoltage {
+		return -ca.MaxOutputVoltage
 	}
 	return vOut
 }
 
 // SNR returns the signal-to-noise ratio (linear) for a given input charge.
 //
-//	SNR = Q_signal / σ_Q,  σ_Q = InputChargeNoiseRMS × sqrt(BW)
+//	SNR = Q_signal / σ_Q,  σ_Q = InputChargeNoiseRMS
 func (ca *ChargeAmplifier) SNR(totalCharge float64) float64 {
-	if ca.InputChargeNoiseRMS <= 0 || ca.Bandwidth <= 0 {
+	if ca.InputChargeNoiseRMS <= 0 {
 		return math.Inf(1)
 	}
-	sigmaQ := ca.InputChargeNoiseRMS * math.Sqrt(ca.Bandwidth)
-	if sigmaQ == 0 {
-		return math.Inf(1)
-	}
-	return math.Abs(totalCharge) / sigmaQ
+	return math.Abs(totalCharge) / ca.InputChargeNoiseRMS
 }
 
 // SettlingTime returns the time required for the output to settle to 0.1%
@@ -141,15 +153,12 @@ func (ca *ChargeAmplifier) SettlingTime() float64 {
 // Heuristic: P ≈ 2 × kT × BW / η, with η=0.5 (noise efficiency factor).
 // At 500 MHz: P ≈ 2 × 4e-21 × 500e6 / 0.5 ≈ 8 µW per column (placeholder).
 func (ca *ChargeAmplifier) PowerConsumption() float64 {
-	const (
-		kT  = 4.14e-21 // k_B × T at 300 K (J)
-		eta = 0.5      // noise efficiency factor (heuristic)
-	)
-	return 2 * kT * ca.Bandwidth / eta
+	const eta = 0.5 // noise efficiency factor (heuristic)
+	return 2 * kBT300 * ca.Bandwidth / eta
 }
 
-// MinDetectableCharge returns the minimum detectable charge (Coulombs) for
-// SNR = 1 over the amplifier bandwidth.
+// MinDetectableCharge returns the integrated per-sample charge noise
+// (Coulombs), corresponding to SNR = 1.
 func (ca *ChargeAmplifier) MinDetectableCharge() float64 {
-	return ca.InputChargeNoiseRMS * math.Sqrt(ca.Bandwidth)
+	return ca.InputChargeNoiseRMS
 }

@@ -8,7 +8,7 @@
 
 ```bash
 # Clone
-git clone https://github.com/[your-repo]/fecim-lattice-tools.git
+git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
 
 # Install dev dependencies (Linux)
@@ -24,7 +24,7 @@ go test ./...
 go test -race ./...
 ```
 
-Default UI shell: `Fyne`. The canonical app builds with `CGO_ENABLED=0` and routes UI state through `shared/viewmodel`.
+Default UI shell: `Fyne`. The live shell currently embeds concrete GUI modules directly; `shared/viewmodel.ModulePort` is a headless state/lifecycle seam that is not yet the production shell boundary. See recovery item TR-ARCH-02 before extending that seam.
 
 
 ---
@@ -38,11 +38,21 @@ Default UI shell: `Fyne`. The canonical app builds with `CGO_ENABLED=0` and rout
 | [memory-optimization.md](memory-optimization.md) | Memory profiling and tuning | Performance |
 | [accessibility.md](accessibility.md) | UI accessibility standards | GUI developers |
 | [repo-health.md](repo-health.md) | CI status and health metrics | Maintainers |
+| [Technical Recovery Roadmap](audits/2026-09-01-technical-recovery-roadmap.md) | Active correctness, trust, architecture, and governance recovery program | Maintainers, reviewers |
+| [Critical Hardening Plan](superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md) | Executable TDD plan for the five P0 recovery items | Implementers |
 | [architecture/](architecture/) | System architecture docs | All developers |
 | [automation/](automation/) | Build and CI automation | DevOps |
 | [gui/](gui/) | GUI development guides | GUI developers |
 | [testing/](testing/) | Testing methodology | All developers |
 | [**FeCIM Skills**](../../tools/fecim-skills/README.md) | Agent skills for Claude Code, Codex, opencode | All developers |
+
+---
+
+## 🚧 Current Recovery Program
+
+Release-facing feature work is gated by Phase 1 of the [Technical Recovery Roadmap](audits/2026-09-01-technical-recovery-roadmap.md). Start implementation with the [Critical Correctness and Trust Hardening Plan](superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md), which covers charge-amplifier noise, cached-run integrity, bounded model serialization, safe EDA command construction, and required external Verilog validation.
+
+A passing test count alone is not release evidence. Recovery work must record focused RED/GREEN results, applicable race gates, full-suite verification, and the exact external tool/version when external validation is claimed.
 
 ---
 
@@ -80,16 +90,21 @@ fecim-lattice-tools/
 
 ### Key Design Patterns
 
-**UI Boundary**
+**UI Boundary — current and intended**
 
-Every module exposes UI-neutral state through `shared/viewmodel`. The default `Fyne` shell renders those state snapshots and dispatches actions back to the viewmodel layer:
+`shared/viewmodel.ModulePort` defines a UI-neutral state/lifecycle contract:
 
 ```go
-type ModuleViewModel interface {
-    Snapshot() ModuleState
-    Dispatch(action ModuleAction) error
+type ModulePort interface {
+    Descriptor() ModuleDescriptor
+    Snapshot() ModuleSnapshot
+    ApplyAction(Action) error
+    Start()
+    Stop()
 }
 ```
+
+The headless viewmodel tests use this seam, but the live Fyne shell still constructs and embeds concrete GUI module apps. Treat `ModulePort` as an architecture candidate—not a completed production boundary—until recovery item TR-ARCH-02 proves one production adapter and resolves state ownership.
 
 
 **Thread-Safe UI State**
@@ -98,6 +113,7 @@ type ModuleViewModel interface {
 ```go
 go func() {
     result := heavyComputation()
+    fyne.Do(func() {
         label.SetText(result)
     })
 }()
@@ -115,7 +131,7 @@ The default simulation baseline uses 30 discrete conductance levels:
 
 ```go
 // Quantize a normalized value [0,1] to 30 levels
-quantized := crossbar.QuantizeTo30Levels(value)
+quantized := physics.QuantizeTo30Levels(value)
 ```
 
 This is configurable per material. See [api-reference.md#quantization-functions](api-reference.md#quantization-functions).
@@ -133,7 +149,7 @@ This is configurable per material. See [api-reference.md#quantization-functions]
 | `shared/io` | `fecim-lattice-tools/shared/io` | JSON and file utilities |
 | `shared/viewmodel` | `fecim-lattice-tools/shared/viewmodel` | UI-neutral state and actions |
 | `ferroelectric` | `fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric` | Hysteresis, Preisach model |
-| `crossbar` | `fecim-lattice-tools/module2-crossbar/pkg/crossbar` | Crossbar array simulation |
+| `crossbar` | `fecim-lattice-tools/shared/crossbar` | Crossbar array simulation |
 | `core` (MNIST) | `fecim-lattice-tools/module3-mnist/pkg/core` | Neural network inference |
 
 Full API documentation: [api-reference.md](api-reference.md)
@@ -176,7 +192,7 @@ code := adc.Convert(voltage)      // voltage → digital code
 go test ./...
 
 # Single package
-go test ./crossbar/pkg/crossbar
+go test ./shared/crossbar
 
 # With race detector
 go test -race ./...
@@ -185,7 +201,7 @@ go test -race ./...
 go test -cover ./...
 
 # Run benchmarks
-go test -bench=. ./crossbar/pkg/crossbar
+go test -bench=. ./shared/crossbar
 ```
 
 ### Test Structure
@@ -231,8 +247,8 @@ go test -race ./...
 
 ### Key Rules
 
-2. **30-level quantization:** Use `crossbar.QuantizeTo30Levels(value)` for canonical form
-3. **Default shell:** Implement new UI behavior in `internal/Fyneapp` using `shared/viewmodel`
+2. **30-level quantization:** Use `physics.QuantizeTo30Levels(value)` for canonical form
+3. **Default shell:** Keep simulation/business state outside `cmd/fecim-lattice-tools`; the live shell still embeds concrete module apps, while `ModulePort` production convergence remains TR-ARCH-02
 5. **No binaries committed:** Never commit compiled binaries
 
 ### Commit Format
@@ -256,24 +272,22 @@ Full standards: [code-quality.md](code-quality.md)
 
 ### Default Fyne Rules
 
-The canonical shell lives under `internal/Fyneapp` and renders state from `shared/viewmodel`. New UI work should keep business logic and simulation state out of shell packages.
-
-
+The live shell is assembled in `cmd/fecim-lattice-tools/fyne_app.go` and currently embeds concrete module GUI apps. New UI work must keep business logic and simulation state out of the command shell. Do not claim `shared/viewmodel` is the production boundary until TR-ARCH-02 proves the adapter.
 
 ```go
 // The safe pattern for long-running goroutines:
 go func() {
     result := computeHeavyThing()
-
+    fyne.Do(func() {
         myLabel.SetText(result)
         myProgressBar.SetValue(1.0)
     })
 }()
 ```
 
-### Module Viewmodel Pattern
+### Headless Viewmodel Pattern
 
-Each module's canonical UI state belongs in `shared/viewmodel/<module>/`. The standard shape is:
+Headless state adapters live under `shared/viewmodel/MODULE_NAME/`. They are useful test seams, but are not yet the canonical production UI state owner. The standard shape is:
 
 ```go
 type State struct {
@@ -310,16 +324,16 @@ GUI development guide: [gui/](gui/)
 
 ### Add a New Module
 
-1. Create `moduleN-name/` directory with standard structure
-2. Add a UI-neutral viewmodel under `shared/viewmodel/<module>/`
-3. Register the default shell view in `internal/Fyneapp`
-4. Add package docs in `pkg/*/doc.go` files
-5. Write tests covering core functionality
-6. Document in `docs/modules/moduleN-name/`
+1. Create `moduleN-name/` with a headless simulation core and focused tests
+2. Add the concrete Fyne module app without placing simulation state in the command shell
+3. Register the module in `cmd/fecim-lattice-tools/fyne_app.go`
+4. Add a `shared/viewmodel` adapter only when it has an identified production or headless client
+5. Add package documentation and lifecycle/race tests
+6. Document the module in `docs/modules/moduleN-name/`
 
 ### Add a New Non-Ideality
 
-1. Implement effect in `module2-crossbar/pkg/crossbar/`
+1. Implement effect in `shared/crossbar/`
 2. Add to `MVMOptions` struct
 3. Update `MVMWithNonIdealities()` pipeline
 4. Add regression test with golden data
@@ -385,13 +399,13 @@ go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
 
 ```bash
 # Crossbar MVM benchmark
-go test -bench=BenchmarkMVM -benchmem ./crossbar/pkg/crossbar
+go test -bench=BenchmarkMVM -benchmem ./shared/crossbar
 
 # Physics benchmark
 go test -bench=. -benchmem ./shared/physics
 
 # Profile a benchmark
-go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./crossbar/pkg/crossbar
+go test -cpuprofile=cpu.prof -bench=BenchmarkMVM ./shared/crossbar
 go tool pprof cpu.prof
 ```
 

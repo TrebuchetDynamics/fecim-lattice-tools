@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -48,36 +50,61 @@ func (r *Runner) RunOpenROAD(scriptName string, workDir string, envVars map[stri
 	}
 }
 
-// runDockerOpenROAD runs OpenROAD in Docker container with Xvfb for headless image export
-// Uses Xvfb (virtual framebuffer) to enable save_image without X11 forwarding
+const (
+	xvfbPrefix            = `Xvfb :99 -screen 0 1024x768x24 -nolisten tcp >/dev/null 2>&1 & sleep 1; export DISPLAY=:99; `
+	dockerOpenROADProgram = xvfbPrefix + `exec openroad -no_splash -exit "$1"`
+	dockerKLayoutProgram  = xvfbPrefix + `exec klayout "$@"`
+)
+
+func dockerDesignScriptPath(scriptPath string) string {
+	const invalidPath = "/design/__invalid_script__"
+	if scriptPath == "" {
+		return invalidPath
+	}
+
+	cleaned := filepath.Clean(scriptPath)
+	if filepath.IsAbs(cleaned) {
+		base := filepath.Base(cleaned)
+		if base == "." || base == ".." || base == string(filepath.Separator) {
+			return invalidPath
+		}
+		return "/design/" + filepath.ToSlash(base)
+	}
+	if cleaned == "." || cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {
+		return invalidPath
+	}
+	return "/design/" + filepath.ToSlash(cleaned)
+}
+
+func dockerOpenROADArgs(image, absWorkDir, scriptName string, envVars map[string]string) []string {
+	args := []string{
+		"run", "--rm",
+		"--entrypoint", "sh",
+		"-v", absWorkDir + ":/design",
+		"-w", "/design",
+	}
+	keys := make([]string, 0, len(envVars))
+	for key := range envVars {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		args = append(args, "-e", key+"="+envVars[key])
+	}
+	return append(args,
+		image,
+		"-c", dockerOpenROADProgram,
+		"fecim-openroad", dockerDesignScriptPath(scriptName),
+	)
+}
+
+// runDockerOpenROAD runs OpenROAD in Docker container with Xvfb for headless image export.
 func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars map[string]string) (*Result, error) {
-	// Docker requires absolute paths for volume mounts
 	absWorkDir, err := filepath.Abs(workDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
-
-	// Build Docker command with --entrypoint sh to run Xvfb wrapper
-	args := []string{
-		"run", "--rm",
-		"--entrypoint", "sh",
-		"-v", fmt.Sprintf("%s:/design", absWorkDir),
-		"-w", "/design",
-	}
-
-	// Add environment variables (caller provides CELL_LEF, DEF_FILE, etc.)
-	for k, v := range envVars {
-		args = append(args, "-e", fmt.Sprintf("%s=%s", k, v))
-	}
-
-	// Add image
-	args = append(args, r.manager.GetDockerImage())
-	args = append(args, "-c")
-
-	// Build OpenROAD command with Xvfb wrapper for headless operation
-	xvfbCmd := fmt.Sprintf("Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & sleep 1 && export DISPLAY=:99 && openroad -no_splash -exit /design/%s", scriptName)
-	args = append(args, xvfbCmd)
-
+	args := dockerOpenROADArgs(r.manager.GetDockerImage(), absWorkDir, scriptName, envVars)
 	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
 }
 
@@ -159,36 +186,34 @@ func (r *Runner) RunKLayout(scriptPath string, workDir string, envVars map[strin
 	}
 }
 
-// runDockerKLayout runs KLayout in Docker container with Xvfb for headless image export
-// Uses -rd flags to pass variables to scripts (standard KLayout pattern)
-// Uses Xvfb (virtual framebuffer) for headless GUI operations
+func dockerKLayoutArgs(image, absWorkDir, scriptPath string, envVars map[string]string) []string {
+	args := []string{
+		"run", "--rm",
+		"--entrypoint", "sh",
+		"-v", absWorkDir + ":/design",
+		"-w", "/design",
+		image,
+		"-c", dockerKLayoutProgram,
+		"fecim-klayout", "-z",
+	}
+	keys := make([]string, 0, len(envVars))
+	for key := range envVars {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		args = append(args, "-rd", key+"="+envVars[key])
+	}
+	return append(args, "-r", dockerDesignScriptPath(scriptPath))
+}
+
+// runDockerKLayout runs KLayout in Docker container with Xvfb for headless image export.
 func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
 	absWorkDir, err := filepath.Abs(workDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
-
-	// Build Docker command with --entrypoint sh to run Xvfb wrapper
-	args := []string{
-		"run", "--rm",
-		"--entrypoint", "sh",
-		"-v", fmt.Sprintf("%s:/design", absWorkDir),
-		"-w", "/design",
-		r.manager.GetDockerImage(),
-		"-c",
-	}
-
-	// Build KLayout command with Xvfb wrapper for headless operation
-	// Xvfb :99 creates virtual display, sleep ensures it's ready, then run klayout
-	klayoutArgs := "-z"
-	for k, v := range envVars {
-		klayoutArgs += fmt.Sprintf(" -rd %s=%s", k, v)
-	}
-	klayoutArgs += fmt.Sprintf(" -r /design/%s", filepath.Base(scriptPath))
-
-	xvfbCmd := fmt.Sprintf("Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & sleep 1 && export DISPLAY=:99 && klayout %s", klayoutArgs)
-	args = append(args, xvfbCmd)
-
+	args := dockerKLayoutArgs(r.manager.GetDockerImage(), absWorkDir, scriptPath, envVars)
 	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
 }
 

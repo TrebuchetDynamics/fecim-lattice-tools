@@ -1,0 +1,15 @@
+schema_version: 1
+device:
+  material: HZO
+  conductance_levels: 30
+  g_min_s: 0.000001
+  g_max_s: 0.00003
+array:
+  rows: 32
+  cols: 32
+  read_voltage_v: 0.2
+circuit:
+  adc_bits: 6
+  dac_bits: 4
+  tia_gain_ohm: 10000
+  tech_node: 65nm

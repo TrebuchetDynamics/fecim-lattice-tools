@@ -2,21 +2,75 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-07-17 | **Fyne**: All 7 modules ported and functional
+**Last Updated**: 2026-09-02 | **Program status**: Technical recovery active; Phase 1 complete, Phase 2 queued, and release readiness not yet established
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 0 | No active implementation tasks |
-| Open Issues | 2 | qmd cold-start + Telegram delivery blockers |
-| Scheduled | 1 | Quarterly Literature Review — overdue since April 2026; last audit 2026-03-05 |
-| Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All Fyne integration tasks resolved; archive below |
+| Phase 1 recovery completed | 5 | Correctness, provenance, serialization, EDA execution, and gating external validation closed with reviewed receipts |
+| P1 recovery open | 5 | Phase 2: executable bundles, committed results, claims, supply chain, and CI hygiene |
+| Architecture recovery open | 3 | Launcher consolidation, UI seam convergence, electrical solver ownership |
+| Operations/governance open | 4 | Log retention, docs drift, PDF licensing, evidence-based health metrics |
+| Feature work | 2 | Fyne workbench parity is queued/unblocked; selected-run EDA export remains gated by TR-RUN-01 |
+| Open tooling issues | 2 | qmd cold-start + Telegram delivery blockers |
+| Scheduled research | 1 | Quarterly Literature Review overdue; last audit 2026-03-05 |
+| Existing deferred work | 8 | Historical prerequisite-blocked items remain in the deferred section below |
+| Completed archive | ~260+ | Historical work remains below; counts are not release evidence |
+
+**Authoritative recovery roadmap:** [`docs/internals/audits/2026-09-01-technical-recovery-roadmap.md`](docs/internals/audits/2026-09-01-technical-recovery-roadmap.md)
+
+**Executable Phase 1 plan:** [`docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md`](docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md)
 
 ---
 
 ## Task Status
+
+### Phase 1 — Critical correctness and trust hardening
+
+Phase 1 is complete. These five items have reviewed RED/GREEN receipts, focused gates, the local aggregate, and required external-validation CI evidence. This closes the Phase 1 feature gate only; it does not complete the recovery roadmap or establish release readiness.
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-COR-01 | Correct charge-amplifier noise to use signed Gaussian samples and clip after noise | P0 | **Done** ([`090562d`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/090562d96683da125e08110b104e770d38801db5); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-PROV-01 | Reject cached runs whose schema, identity, design, or result integrity cannot be verified | P0 | **Done** ([`d4f8305`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/d4f8305e5bde754aa352b643126f9e1c5a2c2986); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-SER-01 | Reject ragged weight matrices and bound every binary-model allocation | P0 | **Done** ([`cd7c03e`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/cd7c03ecbbe8532f03e358a1d391811b5526296f); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-EDA-01 | Remove dynamic data interpolation from OpenROAD/KLayout Docker shell programs | P0 | **Done** ([`adcc525`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/adcc525e1a3a14e025154626ccf61d541b95a764); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506)) |
+| TR-VAL-01 | Replace no-op Verilog sanity logging with a real, required iverilog CI gate | P0 | **Done** ([`bde96d0`](https://github.com/TrebuchetDynamics/fecim-lattice-tools/commit/bde96d080fed9fb1ec393140419b2a16da7614ff); [PR #11](https://github.com/TrebuchetDynamics/fecim-lattice-tools/pull/11); [gating job PASS](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/runs/33643451506/job/100292070256)) |
+
+### Phase 2 — Trust invariant completion
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-PRJ-01 | Make `project.Load` guarantee a deterministically expandable project bundle | P1 | **Queued** |
+| TR-RUN-01 | Reject structurally invalid successful evaluator results before immutable commit | P1 | **Queued** |
+| TR-CLAIM-01 | Enforce honesty-audit classification for quantitative launcher and report claims | P1 | **Queued** |
+| TR-SUPPLY-01 | Pin OpenLane by immutable version/digest and record it in provenance | P1 | **Queued** |
+| TR-CI-01 | Add non-mutating formatting, `govulncheck`, and scheduled dependency review gates | P1 | **Queued** |
+
+### Phase 3 — Architecture convergence
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-ARCH-01 | Replace the two near-identical Fyne launcher implementations with one owned module | P2 | **Queued** |
+| TR-ARCH-02 | Pilot one adapter joining `ModulePort` state to the default Fyne shell | P2 | **Needs design checkpoint** |
+| TR-ARCH-03 | Move reusable Tier-A/Tier-B electrical array solving behind a shared seam | P2 | **Queued** |
+
+### Phase 4 — Operations and governance
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| TR-OPS-01 | Add tested age/size/count retention for generated simulation CSV logs | P3 | **Queued** |
+| TR-DOC-01 | Repair stale commands and intended-vs-live architecture documentation | P3 | **Queued** |
+| TR-LICENSE-01 | Record redistribution rights for tracked research PDFs or replace them with citation metadata | P3 | **Owner/legal decision required** |
+| TR-METRIC-01 | Replace test-count health claims with explicit trust-surface and skip evidence | P3 | **Queued** |
+
+### Feature work — gated by recovery
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| RDW-UI-01 | Add Fyne Define → Simulate → Analyze → Validate workflow over the headless workbench core, with cancellation and CLI run-ID parity | High | **Queued — Phase 1 gate cleared** |
+| RDW-EDA-01 | Export one selected verified successful run through Module 6 SPICE/Verilog/Liberty/DEF/LEF paths without rerunning models | High | **Gated by TR-RUN-01** |
 
 ### Completed — Fyne Integration & Polish (8 unique tasks)
 
@@ -50,6 +104,14 @@
   next check: owner-triggered when Telegram availability changes; the previous 2026-05-18 19:14:23 CST check date elapsed without recorded revalidation.
 
 ### Resolved Issues
+
+**2026-07-19: Module-first architecture lacked a reproducible design-research workflow** (P1) — CORE SLICE RESOLVED
+- Product decision: research and design are primary; education explains models and evidence.
+- Added strict file-based project bundles, deterministic parameter sweeps, immutable runs, bounded execution, cancellation/resume, feasibility and Pareto analysis, and deterministic JSON/CSV/Markdown reports.
+- Added `project validate`, `experiment run`, and `report generate` to the existing CLI plus `examples/research-design-workbench/`.
+- RED: focused packages and command surfaces failed because the workbench types, evaluator, persistence, reports, and commands did not exist.
+- GREEN: focused workbench, race, CLI, report, and deterministic reproduction checks pass.
+- Remaining scope: RDW-UI-01 and RDW-EDA-01 above; current expert modules remain available.
 
 **2026-07-16: Crossbar layout audit panic under the headless Fyne driver** (P1) — RESOLVED
 - Root cause: matrix-table headers requested an unsupported bold+monospace test font, then transparent resize-detector rectangles used a nil fill color that crashed the software painter during capture.
@@ -170,7 +232,7 @@
 
 ### Agent Work Policy
 
-**This file is the single source of truth for all tasks.** No separate prompt files.
+**This file is the task-status ledger.** The linked technical recovery roadmap owns recovery scope and gates; executable plans under `docs/internals/superpowers/plans/` own task-by-task implementation details.
 
 Any agent tackling a task from this TODO **must**:
 
@@ -195,7 +257,7 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
-**Scientific accuracy**: All claims must be verified per `HONESTY_AUDIT.md` standards.
+**Scientific accuracy**: All claims must be verified per [`docs/research/honesty-audit.md`](docs/research/honesty-audit.md).
 
 ---
 
