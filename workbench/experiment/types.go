@@ -62,6 +62,8 @@ type RunManifest struct {
 	StartedAt          time.Time               `json:"started_at"`
 	CompletedAt        time.Time               `json:"completed_at"`
 	Status             Status                  `json:"status"`
+	ArtifactSHA256     map[string]string       `json:"artifact_sha256"`
+	RecordSHA256       string                  `json:"record_sha256"`
 }
 
 type RunRecord struct {

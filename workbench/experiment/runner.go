@@ -153,7 +153,7 @@ func evaluateJob(ctx context.Context, storage store, bundle project.Bundle, opts
 	}
 	record := RunRecord{
 		Manifest: RunManifest{
-			SchemaVersion:      1,
+			SchemaVersion:      2,
 			RunID:              job.point.RunID,
 			PointIndex:         job.point.Index,
 			Seed:               job.point.Seed,
