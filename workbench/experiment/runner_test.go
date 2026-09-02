@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -29,7 +31,10 @@ func runnerBundle(t *testing.T, points int) project.Bundle {
 }
 
 func successResult(value float64) Result {
-	return Result{Status: StatusSuccess, Metrics: []Metric{{Name: "energy_pj", Value: value, Unit: "pJ", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived}}}
+	return Result{Status: StatusSuccess, Metrics: []Metric{
+		{Name: "energy_pj", Value: value, Unit: "pJ", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived},
+		{Name: "latency_ns", Value: value, Unit: "ns", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived},
+	}}
 }
 
 func deterministicRunOptions(eval Evaluator) RunOptions {
@@ -41,6 +46,347 @@ func deterministicRunOptions(eval Evaluator) RunOptions {
 		Now: func() time.Time {
 			return time.Date(2026, 7, 19, 12, 0, 0, 0, time.UTC)
 		},
+	}
+}
+
+func assertRejectedResult(t *testing.T, bundle project.Bundle, result Result, reason string) {
+	t.Helper()
+	points, err := Expand(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := ID(points[0], "test-v1", bundle.Inputs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return result, nil
+	}))
+	if !errors.Is(err, ErrInvalidResult) || !strings.Contains(err.Error(), "run "+runID) || !strings.Contains(err.Error(), reason) {
+		t.Fatalf("Run error=%v want ErrInvalidResult with run %s and reason %q", err, runID, reason)
+	}
+	if len(summary.Runs) != 0 {
+		t.Fatalf("summary runs=%d want 0", len(summary.Runs))
+	}
+	if _, statErr := os.Stat(filepath.Join(bundle.Root, "runs")); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("runs directory exists after rejected result: %v", statErr)
+	}
+	assertNoTempRuns(t, bundle.Root)
+}
+
+func TestRunRejectsSuccessCarryingFailure(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	result.Failure = &Failure{Kind: "unexpected", Message: "must not persist"}
+
+	assertRejectedResult(t, bundle, result, "success carrying failure")
+}
+
+func TestRunRejectsInvalidMetricNames(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Result)
+		reason string
+	}{
+		{name: "blank", mutate: func(result *Result) { result.Metrics[0].Name = " \t" }, reason: "blank metric name"},
+		{name: "duplicate", mutate: func(result *Result) { result.Metrics[1].Name = "energy_pj" }, reason: "duplicate metric energy_pj"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bundle := runnerBundle(t, 1)
+			result := successResult(1)
+			test.mutate(&result)
+			assertRejectedResult(t, bundle, result, test.reason)
+		})
+	}
+}
+
+func TestRunRejectsDuplicateOptionalMetricNames(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	optional := Metric{Name: "temperature_c", Value: 25, Unit: "C", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived}
+	result.Metrics = append(result.Metrics, optional, optional)
+
+	assertRejectedResult(t, bundle, result, "duplicate metric temperature_c")
+}
+
+func TestRunRejectsNonFiniteMetricValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		value float64
+	}{
+		{name: "NaN", value: math.NaN()},
+		{name: "positive infinity", value: math.Inf(1)},
+		{name: "negative infinity", value: math.Inf(-1)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bundle := runnerBundle(t, 1)
+			result := successResult(1)
+			result.Metrics[0].Value = test.value
+			assertRejectedResult(t, bundle, result, "metric energy_pj has non-finite value")
+		})
+	}
+}
+
+func TestRunRejectsMetricMissingUnit(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	result.Metrics[0].Unit = " \t"
+
+	assertRejectedResult(t, bundle, result, "metric energy_pj missing unit")
+}
+
+func TestRunRejectsMetricMissingModel(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	result.Metrics[0].Model = " \t"
+
+	assertRejectedResult(t, bundle, result, "metric energy_pj missing model")
+}
+
+func TestRunRejectsMetricMissingNonblankAssumption(t *testing.T) {
+	tests := []struct {
+		name        string
+		assumptions []string
+	}{
+		{name: "absent"},
+		{name: "blank only", assumptions: []string{"", " \t"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bundle := runnerBundle(t, 1)
+			result := successResult(1)
+			result.Metrics[0].Assumptions = test.assumptions
+			assertRejectedResult(t, bundle, result, "metric energy_pj missing nonblank assumption")
+		})
+	}
+}
+
+func TestRunRejectsInvalidMetricEvidence(t *testing.T) {
+	for _, evidence := range []Evidence{"", "expert-opinion"} {
+		t.Run(string(evidence), func(t *testing.T) {
+			bundle := runnerBundle(t, 1)
+			result := successResult(1)
+			result.Metrics[0].Evidence = evidence
+			assertRejectedResult(t, bundle, result, fmt.Sprintf("metric energy_pj has invalid evidence %q", evidence))
+		})
+	}
+}
+
+func TestRunRejectsMissingObjectiveMetric(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	result.Metrics = result.Metrics[:1]
+
+	assertRejectedResult(t, bundle, result, "missing objective metric latency_ns")
+}
+
+func TestRunRejectsMissingConstraintMetric(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	bundle.Project.Constraints = []project.Constraint{{Metric: "area_um2", Operator: "<=", Value: 5000, Unit: "um2"}}
+
+	assertRejectedResult(t, bundle, successResult(1), "missing constraint metric area_um2")
+}
+
+func TestRunRejectsConstraintMetricUnitMismatch(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	bundle.Project.Constraints = []project.Constraint{{Metric: "area_um2", Operator: "<=", Value: 5000, Unit: "um2"}}
+	result := successResult(1)
+	result.Metrics = append(result.Metrics, Metric{Name: "area_um2", Value: 100, Unit: "mm2", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived})
+
+	assertRejectedResult(t, bundle, result, "constraint metric area_um2 unit mm2 does not match um2")
+}
+
+func TestRunCommitsStructurallyValidResult(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	result := successResult(1)
+	result.Metrics[0].Evidence = EvidenceLiterature
+	result.Metrics[1].Evidence = EvidenceExperiment
+	result.Metrics = append(result.Metrics, Metric{Name: "extra", Value: 3, Unit: "ratio", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDefault})
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return result, nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(summary.Runs) != 1 {
+		t.Fatalf("summary runs=%d want 1", len(summary.Runs))
+	}
+	if _, err := os.Stat(filepath.Join(bundle.Root, "runs", summary.Runs[0].Manifest.RunID)); err != nil {
+		t.Fatalf("committed run directory: %v", err)
+	}
+}
+
+func TestRunCommitsConstraintViolationForInfeasibleAnalysis(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	bundle.Project.Constraints = []project.Constraint{{Metric: "area_um2", Operator: "<=", Value: 50, Unit: "um2"}}
+	result := successResult(1)
+	result.Metrics = append(result.Metrics, Metric{Name: "area_um2", Value: 100, Unit: "um2", Model: "test", Assumptions: []string{"test"}, Evidence: EvidenceDerived})
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return result, nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	analysis := Analyze(bundle, summary.Runs)
+	if len(summary.Runs) != 1 || len(analysis.Runs) != 1 || analysis.Runs[0].Feasible || analysis.Counts["infeasible"] != 1 {
+		t.Fatalf("summary=%+v analysis=%+v want committed infeasible run", summary, analysis)
+	}
+}
+
+func TestRunInvalidResultStopsSchedulingAndPreservesCompletedRuns(t *testing.T) {
+	bundle := runnerBundle(t, 3)
+	points, err := Expand(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rejectedRunID, err := ID(points[1], "test-v1", bundle.Inputs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var calls atomic.Int32
+	eval := func(_ context.Context, _ project.Design, seed int64) (Result, error) {
+		calls.Add(1)
+		result := successResult(float64(seed))
+		if seed == bundle.Sweep.Seed+1 {
+			result.Metrics = result.Metrics[:1]
+		}
+		return result, nil
+	}
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(eval))
+	if !errors.Is(err, ErrInvalidResult) || !strings.Contains(err.Error(), "run "+rejectedRunID) || !strings.Contains(err.Error(), "missing objective metric latency_ns") {
+		t.Fatalf("Run error=%v want rejected run context", err)
+	}
+	if len(summary.Runs) != 1 || calls.Load() != 2 {
+		t.Fatalf("summary runs=%d evaluator calls=%d want 1 and 2", len(summary.Runs), calls.Load())
+	}
+	if _, statErr := os.Stat(filepath.Join(bundle.Root, "runs", rejectedRunID)); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("rejected run directory exists: %v", statErr)
+	}
+	assertNoTempRuns(t, bundle.Root)
+}
+
+func snapshotRunFiles(t *testing.T, dir string) map[string][]byte {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := make(map[string][]byte, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			t.Fatalf("unexpected directory in cached run: %s", entry.Name())
+		}
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files[entry.Name()] = data
+	}
+	return files
+}
+
+func TestRunRejectsCachedSuccessMissingNewObjective(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	initial, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return successResult(1), nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(initial.Runs) != 1 || initial.Runs[0].Manifest.SchemaVersion != 2 {
+		t.Fatalf("initial cache=%+v want one schema-2 run", initial)
+	}
+	runID := initial.Runs[0].Manifest.RunID
+	runDir := filepath.Join(bundle.Root, "runs", runID)
+	before := snapshotRunFiles(t, runDir)
+	bundle.Project.Objectives = append(bundle.Project.Objectives, project.Objective{Metric: "throughput_ops", Direction: project.Maximize})
+	var calls atomic.Int32
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		calls.Add(1)
+		return successResult(2), nil
+	}))
+	if !errors.Is(err, ErrInvalidResult) || !strings.Contains(err.Error(), "run "+runID) || !strings.Contains(err.Error(), "missing objective metric throughput_ops") {
+		t.Fatalf("Run error=%v want ErrInvalidResult with cached run %s and missing objective reason", err, runID)
+	}
+	if len(summary.Runs) != 0 {
+		t.Fatalf("summary runs=%d want no reused record", len(summary.Runs))
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("evaluator calls=%d want 0 during invalid reuse check", calls.Load())
+	}
+	if after := snapshotRunFiles(t, runDir); !reflect.DeepEqual(after, before) {
+		t.Fatalf("cached artifacts changed:\nbefore=%v\nafter=%v", before, after)
+	}
+	assertNoTempRuns(t, bundle.Root)
+}
+
+func TestRunRejectsCachedSuccessWithChangedConstraintUnit(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	bundle.Project.Constraints = []project.Constraint{{Metric: "energy_pj", Operator: "<=", Value: 10, Unit: "pJ"}}
+	initial, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return successResult(1), nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(initial.Runs) != 1 || initial.Runs[0].Manifest.SchemaVersion != 2 {
+		t.Fatalf("initial cache=%+v want one schema-2 run", initial)
+	}
+	runID := initial.Runs[0].Manifest.RunID
+	runDir := filepath.Join(bundle.Root, "runs", runID)
+	before := snapshotRunFiles(t, runDir)
+	bundle.Project.Constraints[0].Unit = "fJ"
+	var calls atomic.Int32
+
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		calls.Add(1)
+		return successResult(2), nil
+	}))
+	if !errors.Is(err, ErrInvalidResult) || !strings.Contains(err.Error(), "run "+runID) || !strings.Contains(err.Error(), "constraint metric energy_pj unit pJ does not match fJ") {
+		t.Fatalf("Run error=%v want ErrInvalidResult with cached run %s and unit mismatch reason", err, runID)
+	}
+	if len(summary.Runs) != 0 {
+		t.Fatalf("summary runs=%d want no reused record", len(summary.Runs))
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("evaluator calls=%d want 0 during invalid reuse check", calls.Load())
+	}
+	if after := snapshotRunFiles(t, runDir); !reflect.DeepEqual(after, before) {
+		t.Fatalf("cached artifacts changed:\nbefore=%v\nafter=%v", before, after)
+	}
+	assertNoTempRuns(t, bundle.Root)
+}
+
+func TestRunStillReusesCachedDesignFailure(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	failed := Result{Status: StatusFailed, Failure: &Failure{Kind: "model-domain", Message: "outside domain"}}
+	initial, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return failed, nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var calls atomic.Int32
+
+	reused, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		calls.Add(1)
+		return successResult(1), nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(initial.Runs) != 1 || len(reused.Runs) != 1 || reused.Runs[0].Result.Status != StatusFailed || !reused.Runs[0].Reused {
+		t.Fatalf("initial=%+v reused=%+v want reused design failure", initial, reused)
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("evaluator calls=%d want 0", calls.Load())
 	}
 }
 
@@ -112,7 +458,9 @@ func TestRunRejectsOversizedArtifactsBeforeCreatingRunStorage(t *testing.T) {
 			artifact: "result.json",
 			prepare: func(_ *project.Bundle, opts *RunOptions) {
 				opts.Evaluator = func(_ context.Context, _ project.Design, _ int64) (Result, error) {
-					return Result{Status: StatusSuccess, Warnings: []string{large}}, nil
+					result := successResult(1)
+					result.Warnings = []string{large}
+					return result, nil
 				}
 			},
 		},
