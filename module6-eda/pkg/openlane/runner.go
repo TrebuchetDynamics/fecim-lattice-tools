@@ -14,10 +14,11 @@ import (
 
 // Result contains the output of a tool execution
 type Result struct {
-	Stdout   string
-	Stderr   string
-	ExitCode int
-	Duration time.Duration
+	Stdout    string
+	Stderr    string
+	ExitCode  int
+	Duration  time.Duration
+	Toolchain string
 }
 
 // Runner executes OpenLane tools in Docker or native mode
@@ -105,7 +106,7 @@ func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars ma
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 	args := dockerOpenROADArgs(r.manager.GetDockerImage(), absWorkDir, scriptName, envVars)
-	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
+	return r.runDockerWithTimeout(args, workDir, r.config.TimeoutPlacement)
 }
 
 // runNativeOpenROAD runs OpenROAD directly
@@ -161,7 +162,7 @@ func (r *Runner) runDockerYosys(yosysCmd string, workDir string) (*Result, error
 	args = append(args, r.manager.GetDockerImage())
 	args = append(args, "-p", yosysCmd)
 
-	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutSynthesis)
+	return r.runDockerWithTimeout(args, workDir, r.config.TimeoutSynthesis)
 }
 
 // runNativeYosys runs Yosys directly
@@ -214,7 +215,7 @@ func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 	args := dockerKLayoutArgs(r.manager.GetDockerImage(), absWorkDir, scriptPath, envVars)
-	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
+	return r.runDockerWithTimeout(args, workDir, r.config.TimeoutPlacement)
 }
 
 // runNativeKLayout runs KLayout directly
@@ -235,6 +236,14 @@ func (r *Runner) runNativeKLayout(scriptPath string, workDir string, envVars map
 }
 
 // runWithTimeout executes a command with timeout
+func (r *Runner) runDockerWithTimeout(args []string, workDir string, timeout time.Duration) (*Result, error) {
+	result, err := r.runWithTimeout("docker", args, workDir, timeout)
+	if result != nil {
+		result.Toolchain = r.manager.GetDockerImage()
+	}
+	return result, err
+}
+
 func (r *Runner) runWithTimeout(command string, args []string, workDir string, timeout time.Duration) (*Result, error) {
 	return r.runWithTimeoutEnv(command, args, workDir, timeout, nil)
 }

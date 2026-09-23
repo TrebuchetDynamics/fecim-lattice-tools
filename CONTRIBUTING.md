@@ -26,8 +26,8 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     go run ./cmd/fecim-lattice-tools
     ```
 
-
     ```bash
+
     ```
 
 ## Development Workflow
@@ -45,14 +45,16 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     - REFACTOR: clean up only while the targeted test stays green.
 
     Documentation-only, comments-only, formatting-only, generated files, and release metadata changes may use `TDD: N/A`, but the pull request must say why no behavior can change.
+
 3.  **Make changes**. Conform to the existing code style (standard Go formatting).
 4.  **Run tests** to ensure no regressions:
 
     ```bash
     make test
     make test-hys   # If working on Module 1
-    make test-Fyne-ui   # If touching the UI bridge or default Fyne shell
+    make test-next-ui   # If touching the UI bridge or default Fyne shell
     ```
+
 5.  **Verify build**:
     ```bash
     make build

@@ -6,17 +6,19 @@
 **Generated:** 2026-06-17
 **Scope:** Build quality, test posture, coverage, performance, physics validation, and tracked blockers
 
+> **Freshness warning (checked 2026-09-22):** This is a historical snapshot, not a current health report. The current checkout lists 161 Go packages; build/test status, coverage, benchmarks, and blocker details below have not been regenerated. Re-run the commands before using those values for release decisions.
+
 ---
 
 ## 1) Build Status
 
 ### Build pipeline checks
 
-| Check | Command | Status | Notes |
-|---|---|---|---|
-| Build | `go build ./...` | ✅ PASS | Revalidated on 2026-03-05 |
-| Vet | `go vet ./...` | ✅ PASS | Revalidated on 2026-03-05 |
-| Format | `gofmt -l .` | ⚠️ Needs formatting | 18 files reported on 2026-03-05 |
+| Check  | Command          | Status              | Notes                           |
+| ------ | ---------------- | ------------------- | ------------------------------- |
+| Build  | `go build ./...` | ✅ PASS             | Revalidated on 2026-03-05       |
+| Vet    | `go vet ./...`   | ✅ PASS             | Revalidated on 2026-03-05       |
+| Format | `gofmt -l .`     | ⚠️ Needs formatting | 18 files reported on 2026-03-05 |
 
 ### Files currently not gofmt-clean
 
@@ -73,18 +75,18 @@ From `docs/internals/testing/TESTING.md` and project TODO tracking:
 
 Coverage source: fresh `coverage.out` generated on 2026-03-05 via `go test -short ./... -coverprofile=coverage.out`.
 
-| Module | Coverage |
-|---|---:|
-| module1-hysteresis | 33.3% |
-| module2-crossbar | 33.0% |
-| module3-mnist | 25.7% |
-| module4-circuits | 66.4% |
-| module5-comparison | 52.0% |
-| module6-eda | 74.3% |
-| module7-docs | 67.0% |
-| validation | 64.6% |
-| shared | 67.4% |
-| other (cmd/config/scripts/root) | 26.7% |
+| Module                          | Coverage |
+| ------------------------------- | -------: |
+| module1-hysteresis              |    33.3% |
+| module2-crossbar                |    33.0% |
+| module3-mnist                   |    25.7% |
+| module4-circuits                |    66.4% |
+| module5-comparison              |    52.0% |
+| module6-eda                     |    74.3% |
+| module7-docs                    |    67.0% |
+| validation                      |    64.6% |
+| shared                          |    67.4% |
+| other (cmd/config/scripts/root) |    26.7% |
 
 **Overall total statement coverage:** **52.5%**
 

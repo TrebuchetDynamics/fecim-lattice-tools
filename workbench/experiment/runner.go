@@ -171,6 +171,7 @@ func evaluateJob(ctx context.Context, storage store, bundle project.Bundle, opts
 			RunID:              job.point.RunID,
 			PointIndex:         job.point.Index,
 			Seed:               job.point.Seed,
+			ModelVersion:       bundle.Project.ModelVersion,
 			EvaluatorVersion:   opts.EvaluatorVersion,
 			RepositoryRevision: opts.RepositoryRevision,
 			Inputs:             bundle.Inputs,

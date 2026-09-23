@@ -42,7 +42,7 @@ func NewManager() *Manager {
 		pdkRoot = filepath.Join(os.Getenv("HOME"), ".volare")
 	}
 	return &Manager{
-		dockerImage: "ghcr.io/the-openroad-project/openlane:latest",
+		dockerImage: defaultDockerImage,
 		pdkRoot:     pdkRoot,
 	}
 }
@@ -109,6 +109,9 @@ func (m *Manager) PullDockerImage(progress func(string)) error {
 
 // GetDockerImageVersion returns the image tag/version
 func (m *Manager) GetDockerImageVersion() (string, error) {
+	if at := strings.LastIndex(m.dockerImage, "@"); at >= 0 {
+		return m.dockerImage[at+1:], nil
+	}
 	parts := strings.Split(m.dockerImage, ":")
 	if len(parts) >= 2 {
 		return parts[1], nil

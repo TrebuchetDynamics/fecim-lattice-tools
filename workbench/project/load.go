@@ -89,6 +89,9 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 		return Bundle{}, err
 	}
 	bundle.Inputs = inputs
+	if _, err := Expand(bundle); err != nil {
+		return Bundle{}, fmt.Errorf("sweep: %w", err)
+	}
 	return bundle, nil
 }
 

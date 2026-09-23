@@ -1,12 +1,35 @@
+//go:build cgo
+
 package main
 
 import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestDefaultLauncherFooterKeepsSimulationBoundary(t *testing.T) {
+	footer := NewResponsiveFooter()
+	renderer := footer.CreateRenderer()
+	for _, width := range []float32{360, 800, 1400} {
+		renderer.Layout(fyne.NewSize(width, 80))
+		for _, object := range renderer.Objects() {
+			text, ok := object.(*canvas.Text)
+			if !ok {
+				continue
+			}
+			for _, claim := range []string{"30 States", "96-98%", "25-100", "10⁹ Cycles", "TRL 4"} {
+				if strings.Contains(text.Text, claim) {
+					t.Errorf("width %v footer presents unverified claim %q: %q", width, claim, text.Text)
+				}
+			}
+		}
+	}
+}
 
 func TestDefaultCommandUsesFyneUISurface(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", ".."))

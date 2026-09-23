@@ -1,6 +1,6 @@
 # FeCIM Research and Design Workbench
 
-FeCIM Lattice Tools is a **literature-calibrated pre-silicon research and design workbench**. It turns a device/array/circuit hypothesis into reproducible parameter sweeps, feasibility results, Pareto trade-offs, and inspectable reports.
+FeCIM Lattice Tools is a **simulation-only research and design workbench**. It turns a device/array/circuit hypothesis into reproducible parameter sweeps, feasibility results, Pareto trade-offs, and inspectable reports. Current energy, area, and peripheral models are simplified literature-informed estimates, not a calibrated device/layout prediction.
 
 The outputs are simulation estimates. They are not measured silicon, foundry sign-off, or proof that a fabricated device will meet the reported metrics.
 
@@ -22,6 +22,10 @@ go run ./cmd/fecim-lattice-tools report generate /tmp/fecim-study \
 ```
 
 The experiment command also generates reports after a successful sweep. The separate report command regenerates them from committed runs without rerunning models.
+
+### Desktop starter workflow
+
+In the Fyne workbench, choose an empty folder and select **Configure starter sweep…**. Enter comma-separated values for conductance levels (2–64), array rows (1–4096), and ADC bits (1–16), then create and validate the project before running it. Each list is limited to 16 values and the Cartesian sweep to 10,000 points. Project creation refuses non-empty folders; it does not overwrite existing files. Existing studies can still be opened and validated, but their YAML is not edited by the GUI.
 
 ## Project Bundle
 
@@ -72,7 +76,7 @@ circuit.tia_gain_ohm
 
 ## Run Identity and Reuse
 
-A run ID is a SHA-256 hash of its resolved design, seed, evaluator version, schema version, and input hashes. Identical behavior-affecting inputs produce the same ID regardless of worker count.
+A run ID is a SHA-256 hash of its resolved design, seed, project model version, evaluator version, schema version, and input hashes. Bump `model_version` when a study's model assumptions change and bump the evaluator version when evaluator behavior changes. Identical behavior-affecting inputs produce the same ID regardless of worker count.
 
 Completed successful and model-domain-failed runs are immutable. Repeating an experiment reuses them. Cancellation preserves committed runs; running the command again resumes the missing points.
 
@@ -90,6 +94,8 @@ Runtime timestamps and repository revision remain in run provenance but do not c
 Failures are preserved instead of silently disappearing. Constraints do not turn a valid simulation into an execution failure.
 
 ## Reports
+
+Markdown reports include the project model version, run evaluator/revision metadata, input paths and hashes, citation keys, and each metric's model and assumptions.
 
 Each experiment writes:
 
@@ -109,25 +115,33 @@ Evidence levels distinguish `literature-backed`, `experiment-calibrated`, `simul
 
 ## Trust Boundary
 
-The evaluator composes existing system and peripheral models. It provides literature-calibrated pre-silicon estimates for comparison, not hardware guarantees. Quantitative design claims require calibration against suitable experimental data and independent validation.
+The evaluator composes existing system and peripheral models using documented defaults and scaling approximations. Its results support exploratory comparison only, not measured hardware claims or foundry sign-off. The literature P–E suite includes provisional model-generated curves and a directly digitized BTO curve with uncertainty-relaxed thresholds; a green suite is not held-out validation of the HZO workbench evaluator. Quantitative design claims require device- and circuit-specific calibration against suitable experimental data and independent validation.
 
 Input files must remain inside the project directory, pass their declared SHA-256 hash, and use recognized evidence labels. YAML rejects unknown fields and non-finite physical values.
+
+## Selected-run EDA export
+
+After `experiment run` has committed successful runs, export one by its full run ID:
+
+```bash
+fecim-lattice-tools export /path/to/study -run <64-character-run-id>
+```
+
+The command verifies the stored run identity and artifact hashes, rejects failed/tampered runs, and writes SPICE, Verilog, DEF, LEF, Liberty, and a SHA-256 export manifest to `exports/<run-id>/`. It never reruns the simulation and never overwrites an existing export directory. The existing EDA cell/layout generators use their default SKY130 assumptions; the manifest records that the source `tech_node` is not mapped to a foundry PDK. These outputs are design artifacts for exploration, not foundry sign-off.
 
 ## Current Scope
 
 Implemented:
 
-- Strict project validation
-- Deterministic finite sweeps
-- Device/array/circuit evaluation
-- Bounded parallel execution, cancellation, resume, and reuse
-- Feasibility and Pareto analysis
+- Strict project validation, including sweep expansion and limits
+- Deterministic finite sweeps and bounded parallel execution, cancellation, resume, and reuse
+- Device/array/circuit evaluation, feasibility and Pareto analysis
 - JSON, CSV, and Markdown reports
-- CLI workflow
+- CLI and Fyne Configure starter sweep → Validate → Simulate → Analyze → run-integrity/provenance validation workflow over shared study operations
+- Integrity-checked selected-run SPICE, Verilog, DEF, LEF, and Liberty export
+- Standalone Preisach calibration with a hashed JSON fit artifact ([guide](calibration-workflow.md))
 
 Deferred:
 
-- Fyne Define/Simulate/Analyze/Validate workflow and CLI parity checks
-- Exporting one selected immutable run through the existing SPICE, Verilog, Liberty, DEF, and LEF tools
-- Experimental-data calibration workflows
+- Automatically applying Preisach calibration artifacts to the workbench evaluator; calibration outputs must currently be applied explicitly
 - Optimizer frameworks, remote services, databases, distributed execution, and Rust kernels

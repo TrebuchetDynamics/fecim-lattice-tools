@@ -8,20 +8,20 @@ This document describes the command-line interface for all FeCIM Lattice Tools m
 
 The primary binary exposes these flags:
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--logger` | Enable file logging (or pass level token) | `false` |
-| `--verbosity` | Log level (`off\|info\|debug\|trace`) when logger is enabled | `info` |
-| `--calibrate` | Run hysteresis calibration and exit | `false` |
-| `--material` | Material to calibrate (`all` or explicit name) | `all` |
-| `--force` | Force recalibration even if cache exists | `false` |
-| `--verify` | Verify calibration quality after calibration | `false` |
-| `--list-materials` | Print available materials and exit | `false` |
-| `--mode` | Run headless mode and exit (for example `hysteresis`) | empty |
-| `--engine` | Headless hysteresis engine: `preisach` or `lk` | `preisach` |
-| `--screenshot-dir` | Output directory for GUI screenshots | `screenshots` |
-| `--recording-dir` | Output directory for GUI recordings | `recordings` |
-| `--module` | Initial module (`home`, `hysteresis`, `crossbar`, `mnist`, `circuits`, `comparison`, `eda`, `docs`) | `home` |
+| Flag               | Description                                                                                         | Default       |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ------------- |
+| `--logger`         | Enable file logging (or pass level token)                                                           | `false`       |
+| `--verbosity`      | Log level (`off\|info\|debug\|trace`) when logger is enabled                                        | `info`        |
+| `--calibrate`      | Run hysteresis calibration and exit                                                                 | `false`       |
+| `--material`       | Material to calibrate (`all` or explicit name)                                                      | `all`         |
+| `--force`          | Force recalibration even if cache exists                                                            | `false`       |
+| `--verify`         | Verify calibration quality after calibration                                                        | `false`       |
+| `--list-materials` | Print available materials and exit                                                                  | `false`       |
+| `--mode`           | Run headless mode and exit (for example `hysteresis`)                                               | empty         |
+| `--engine`         | Headless hysteresis engine: `preisach` or `lk`                                                      | `preisach`    |
+| `--screenshot-dir` | Output directory for GUI screenshots                                                                | `screenshots` |
+| `--recording-dir`  | Output directory for GUI recordings                                                                 | `recordings`  |
+| `--module`         | Initial module (`home`, `hysteresis`, `crossbar`, `mnist`, `circuits`, `comparison`, `eda`, `docs`) | `home`        |
 
 Use `fecim-lattice-tools --help` for the canonical, runtime-generated list.
 
@@ -29,20 +29,21 @@ Use `fecim-lattice-tools --help` for the canonical, runtime-generated list.
 
 All CLI commands support these common flags:
 
-| Flag | Description |
-|------|-------------|
-| `--json` | Output results as JSON instead of human-readable text |
-| `-q, --quiet` | Suppress informational output (only show results/errors) |
-| `-c, --config FILE` | Load configuration from YAML or JSON file |
-| `--batch FILE` | Process multiple items from a batch file |
-| `-o, --output FILE` | Write output to file (default: stdout) |
-| `-h, --help` | Show help message |
+| Flag                | Description                                              |
+| ------------------- | -------------------------------------------------------- |
+| `--json`            | Output results as JSON instead of human-readable text    |
+| `-q, --quiet`       | Suppress informational output (only show results/errors) |
+| `-c, --config FILE` | Load configuration from YAML or JSON file                |
+| `--batch FILE`      | Process multiple items from a batch file                 |
+| `-o, --output FILE` | Write output to file (default: stdout)                   |
+| `-h, --help`        | Show help message                                        |
 
 ## Configuration Files
 
 All CLI commands support loading configuration from YAML or JSON files via the `--config` flag.
 
 ### Example YAML Config (hysteresis.yaml)
+
 ```yaml
 material: superlattice
 frequency: 1000000
@@ -50,6 +51,7 @@ temperature: 300
 ```
 
 ### Example JSON Config (mnist.json)
+
 ```json
 {
   "hidden_size": 128,
@@ -64,6 +66,7 @@ temperature: 300
 Use the `--batch` flag to process multiple items from a file. Batch files can be:
 
 1. **Line-based** (one item per line, `#` for comments):
+
 ```
 superlattice
 fecim
@@ -73,6 +76,7 @@ hzo32
 ```
 
 2. **JSON array**:
+
 ```json
 ["superlattice", "fecim", "cryogenic", "hzo32"]
 ```
@@ -84,21 +88,24 @@ hzo32
 Visualize ferroelectric hysteresis in HfO2-ZrO2 superlattice materials.
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools hysteresis [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--material NAME` | Material type | superlattice |
-| `--freq HZ` | Waveform frequency | 1e6 |
-| `--headless` | Static ASCII output | false |
-| `--tui` | Terminal UI mode | false |
-| `--vulkan` | Vulkan graphics mode | false |
-| `--list-materials` | List available materials | - |
+
+| Flag               | Description              | Default      |
+| ------------------ | ------------------------ | ------------ |
+| `--material NAME`  | Material type            | superlattice |
+| `--freq HZ`        | Waveform frequency       | 1e6          |
+| `--headless`       | Static ASCII output      | false        |
+| `--tui`            | Terminal UI mode         | false        |
+| `--vulkan`         | Vulkan graphics mode     | false        |
+| `--list-materials` | List available materials | -            |
 
 ### Available Materials
+
 - `default` - HZO (Si-doped)
 - `fecim` - FeCIM HZO
 - `superlattice` - Literature Superlattice (Cheema 2020)
@@ -115,22 +122,26 @@ For authoritative run-mode and Preisach/L-K default behavior, see:
 ### Examples
 
 List materials as JSON:
+
 ```bash
 fecim-lattice-tools hysteresis --list-materials --json
 ```
 
 Headless mode with JSON output:
+
 ```bash
 fecim-lattice-tools hysteresis --headless --json --material superlattice
 ```
 
 Batch process multiple materials:
+
 ```bash
 echo -e "superlattice\nfecim\ncryogenic" > materials.txt
 fecim-lattice-tools hysteresis --headless --batch materials.txt --json
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools hysteresis --config hysteresis.yaml --headless
 ```
@@ -142,35 +153,39 @@ fecim-lattice-tools hysteresis --config hysteresis.yaml --headless
 Crossbar array matrix-vector multiplication (MVM) visualization.
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools crossbar inference [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--size N` | Array size (NxN) | 64 |
-| `--layers N` | Neural network layers | 3 |
-| `--batch N` | Inference batch size | 1 |
-| `--noise LEVEL` | Device noise level (0-1) | 0.02 |
-| `--adc BITS` | ADC resolution | 6 |
-| `--seed N` | Random seed (0=time) | 1 |
-| `--no-color` | Disable colored output | false |
-| `--benchmark` | Run benchmark | false |
-| `--show-array` | Show array state | false |
-| `--show-mvm` | Show MVM operation | false |
-| `--show-irdrop` | Show IR drop analysis | false |
-| `--show-sneak` | Show sneak path analysis | false |
-| `--show-nonidealities` | Show all effects | false |
+
+| Flag                   | Description              | Default |
+| ---------------------- | ------------------------ | ------- |
+| `--size N`             | Array size (NxN)         | 64      |
+| `--layers N`           | Neural network layers    | 3       |
+| `--batch N`            | Inference batch size     | 1       |
+| `--noise LEVEL`        | Device noise level (0-1) | 0.02    |
+| `--adc BITS`           | ADC resolution           | 6       |
+| `--seed N`             | Random seed (0=time)     | 1       |
+| `--no-color`           | Disable colored output   | false   |
+| `--benchmark`          | Run benchmark            | false   |
+| `--show-array`         | Show array state         | false   |
+| `--show-mvm`           | Show MVM operation       | false   |
+| `--show-irdrop`        | Show IR drop analysis    | false   |
+| `--show-sneak`         | Show sneak path analysis | false   |
+| `--show-nonidealities` | Show all effects         | false   |
 
 ### Examples
 
 Run MVM with JSON output:
+
 ```bash
 fecim-lattice-tools crossbar inference --show-mvm --json --size 32
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools crossbar inference --config crossbar.yaml
 ```
@@ -182,39 +197,44 @@ fecim-lattice-tools crossbar inference --config crossbar.yaml
 MNIST digit recognition on ferroelectric crossbar arrays.
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools mnist cli [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--train` | Train the network | false |
-| `--evaluate` | Evaluate on test set | false |
-| `--interactive` | Interactive mode | false |
-| `--epochs N` | Training epochs | 5 |
-| `--hidden N` | Hidden layer size | 128 |
-| `--noise LEVEL` | Device noise (0-1) | 0.02 |
-| `--load FILE` | Load weights from file | - |
-| `--save FILE` | Save weights to file | - |
-| `--core-eval` | Dual-mode evaluation (FP vs CIM) | false |
-| `--core-samples N` | Samples for core-eval | 1000 |
-| `--core-levels LIST` | Comma-separated levels | - |
-| `--export-levels LIST` | Export quantized weights | - |
+
+| Flag                   | Description                      | Default |
+| ---------------------- | -------------------------------- | ------- |
+| `--train`              | Train the network                | false   |
+| `--evaluate`           | Evaluate on test set             | false   |
+| `--interactive`        | Interactive mode                 | false   |
+| `--epochs N`           | Training epochs                  | 5       |
+| `--hidden N`           | Hidden layer size                | 128     |
+| `--noise LEVEL`        | Device noise (0-1)               | 0.02    |
+| `--load FILE`          | Load weights from file           | -       |
+| `--save FILE`          | Save weights to file             | -       |
+| `--core-eval`          | Dual-mode evaluation (FP vs CIM) | false   |
+| `--core-samples N`     | Samples for core-eval            | 1000    |
+| `--core-levels LIST`   | Comma-separated levels           | -       |
+| `--export-levels LIST` | Export quantized weights         | -       |
 
 ### Examples
 
 Evaluate with JSON output:
+
 ```bash
 fecim-lattice-tools mnist cli --evaluate --json --load weights.json
 ```
 
 Core evaluation with level sweep:
+
 ```bash
 fecim-lattice-tools mnist cli --core-eval --core-levels 8,16,24,31 --json
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools mnist cli --config mnist.yaml --evaluate
 ```
@@ -226,39 +246,44 @@ fecim-lattice-tools mnist cli --config mnist.yaml --evaluate
 Peripheral circuits visualization (DAC, ADC, TIA, Charge Pump).
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools circuits cli [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--dac` | Show DAC details | false |
-| `--adc` | Show ADC details | false |
-| `--tia` | Show TIA details | false |
-| `--pump` | Show Charge Pump details | false |
-| `--all` | Show all circuits | false |
-| `--linearity` | Show INL/DNL analysis | false |
-| `--timing` | Show timing diagrams | false |
-| `--power` | Show power breakdown | false |
-| `--ispp` | Run ISPP demo | false |
-| `--level N` | Demo level (0-29) | 15 |
-| `--logger` | Enable file logging | false |
-| `--verbosity N` | Log verbosity (0-3) | 2 |
+
+| Flag            | Description              | Default |
+| --------------- | ------------------------ | ------- |
+| `--dac`         | Show DAC details         | false   |
+| `--adc`         | Show ADC details         | false   |
+| `--tia`         | Show TIA details         | false   |
+| `--pump`        | Show Charge Pump details | false   |
+| `--all`         | Show all circuits        | false   |
+| `--linearity`   | Show INL/DNL analysis    | false   |
+| `--timing`      | Show timing diagrams     | false   |
+| `--power`       | Show power breakdown     | false   |
+| `--ispp`        | Run ISPP demo            | false   |
+| `--level N`     | Demo level (0-29)        | 15      |
+| `--logger`      | Enable file logging      | false   |
+| `--verbosity N` | Log verbosity (0-3)      | 2       |
 
 ### Examples
 
 Get all circuit specs as JSON:
+
 ```bash
 fecim-lattice-tools circuits cli --all --json
 ```
 
 Show specific circuits with JSON output:
+
 ```bash
 fecim-lattice-tools circuits cli --dac --adc --json
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools circuits cli --config circuits.yaml --all
 ```
@@ -270,23 +295,26 @@ fecim-lattice-tools circuits cli --config circuits.yaml --all
 Architecture comparison (CPU vs GPU vs FeCIM).
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools comparison cli [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--all` | Show all comparisons | true |
-| `--specs` | Show architecture specs | false |
-| `--inference` | Show inference comparison | false |
-| `--datacenter` | Show datacenter comparison | false |
-| `--advantages` | Show FeCIM advantages | false |
-| `--workload NAME` | Workload type | mnist |
-| `--throughput N` | Target throughput (inf/sec) | 10000 |
-| `--no-color` | Disable colored output | false |
+
+| Flag              | Description                 | Default |
+| ----------------- | --------------------------- | ------- |
+| `--all`           | Show all comparisons        | true    |
+| `--specs`         | Show architecture specs     | false   |
+| `--inference`     | Show inference comparison   | false   |
+| `--datacenter`    | Show datacenter comparison  | false   |
+| `--advantages`    | Show FeCIM advantages       | false   |
+| `--workload NAME` | Workload type               | mnist   |
+| `--throughput N`  | Target throughput (inf/sec) | 10000   |
+| `--no-color`      | Disable colored output      | false   |
 
 ### Workloads
+
 - `mnist` - MNIST digit recognition
 - `resnet` - ResNet-50 image classification
 - `bert` - BERT-base NLP
@@ -296,16 +324,19 @@ fecim-lattice-tools comparison cli [options]
 ### Examples
 
 Compare architectures with JSON output:
+
 ```bash
 fecim-lattice-tools comparison cli --all --json --workload resnet
 ```
 
 Specific comparisons:
+
 ```bash
 fecim-lattice-tools comparison cli --specs --advantages --json
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools comparison cli --config comparison.yaml
 ```
@@ -317,47 +348,52 @@ fecim-lattice-tools comparison cli --config comparison.yaml
 EDA design generation and export.
 
 ### Basic Usage
+
 ```bash
 fecim-lattice-tools eda cli [options]
 ```
 
 ### Options
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--mode MODE` | Operation mode (storage/memory/compute) | compute |
-| `--input FILE` | Input weights JSON | - |
-| `--output DIR` | Output directory | data |
-| `--name NAME` | Design name | fecim_array |
-| `--rows N` | Array rows | 128 |
-| `--cols N` | Array columns | 128 |
-| `--levels N` | Conductance levels (2-30) | 30 |
-| `--tech NAME` | Technology (SKY130/GF180MCU/IHP_SG13G2) | SKY130 |
-| `--arch TYPE` | Architecture (passive/1T1R) | passive |
-| `--vdd V` | Supply voltage | 1.8 |
-| `--gmin US` | Min conductance (μS) | 10.0 |
-| `--gmax US` | Max conductance (μS) | 100.0 |
-| `--export-json` | Export JSON mapping | true |
-| `--csv` | Export CSV | true |
-| `--spice` | Export SPICE netlist | true |
-| `--verilog` | Export Verilog | true |
-| `--def` | Export DEF placement | true |
-| `--json-output` | Output results as JSON | false |
-| `--quiet` | Suppress output | false |
-| `--config FILE` | Config file | - |
+
+| Flag            | Description                             | Default     |
+| --------------- | --------------------------------------- | ----------- |
+| `--mode MODE`   | Operation mode (storage/memory/compute) | compute     |
+| `--input FILE`  | Input weights JSON                      | -           |
+| `--output DIR`  | Output directory                        | data        |
+| `--name NAME`   | Design name                             | fecim_array |
+| `--rows N`      | Array rows                              | 128         |
+| `--cols N`      | Array columns                           | 128         |
+| `--levels N`    | Conductance levels (2-30)               | 30          |
+| `--tech NAME`   | Technology (SKY130/GF180MCU/IHP_SG13G2) | SKY130      |
+| `--arch TYPE`   | Architecture (passive/1T1R)             | passive     |
+| `--vdd V`       | Supply voltage                          | 1.8         |
+| `--gmin US`     | Min conductance (μS)                    | 10.0        |
+| `--gmax US`     | Max conductance (μS)                    | 100.0       |
+| `--export-json` | Export JSON mapping                     | true        |
+| `--csv`         | Export CSV                              | true        |
+| `--spice`       | Export SPICE netlist                    | true        |
+| `--verilog`     | Export Verilog                          | true        |
+| `--def`         | Export DEF placement                    | true        |
+| `--json-output` | Output results as JSON                  | false       |
+| `--quiet`       | Suppress output                         | false       |
+| `--config FILE` | Config file                             | -           |
 
 ### Examples
 
 Generate design with JSON result:
+
 ```bash
 fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output
 ```
 
 Compute mode with weights:
+
 ```bash
 fecim-lattice-tools eda cli --mode compute --input weights.json --json-output
 ```
 
 Using config file:
+
 ```bash
 fecim-lattice-tools eda cli --config eda.yaml --json-output
 ```
@@ -367,6 +403,7 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 ## JSON Output Examples
 
 ### Hysteresis Material Info
+
 ```json
 {
   "material": "Literature Superlattice (Cheema 2020)",
@@ -384,6 +421,7 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 ```
 
 ### Circuits Result
+
 ```json
 {
   "dac": {
@@ -405,6 +443,7 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 ```
 
 ### Comparison Result
+
 ```json
 {
   "workload": "mnist",
@@ -429,6 +468,7 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 ```
 
 ### EDA Result
+
 ```json
 {
   "design_name": "fecim_array",
@@ -456,6 +496,7 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 ## Scripting Examples
 
 ### Batch Processing Script
+
 ```bash
 #!/bin/bash
 # Process all materials and collect results
@@ -470,6 +511,7 @@ done
 ```
 
 ### JSON Processing with jq
+
 ```bash
 # Get all material properties
 fecim-lattice-tools hysteresis --list-materials --json | jq '.[].name'
@@ -483,6 +525,7 @@ fecim-lattice-tools comparison cli --json | \
 ```
 
 ### Pipeline Example
+
 ```bash
 # Generate design, validate, and report
 fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output | \
@@ -491,22 +534,45 @@ fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output | \
 
 ---
 
+## Research and Design Workbench
+
+Use the checked-in project bundle or initialize a new one:
+
+```bash
+fecim-lattice-tools project init ./my-study
+fecim-lattice-tools project validate ./my-study
+fecim-lattice-tools experiment run ./my-study -workers 2
+fecim-lattice-tools report generate ./my-study
+```
+
+Export one successful immutable run without rerunning it:
+
+```bash
+fecim-lattice-tools export ./my-study -run <64-character-run-id>
+```
+
+Exports are written to `./my-study/exports/<run-id>/`; the manifest records hashes and the EDA technology assumptions. Existing exports are not overwritten. See the [workbench guide](research-design-workbench.md).
+
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Invalid arguments |
+| Code | Meaning           |
+| ---- | ----------------- |
+| 0    | Success           |
+| 1    | General error     |
+| 2    | Invalid arguments |
 
 ---
 
+## Hysteresis CSV log retention
+
+New `hysteresis-*.csv` data logs are subject to conservative retention: 180 days, 100 files, and 2 GiB total, pruning at most once per day. Active logs and files newer than one day are not removed. On first use, a baseline marker protects every existing hysteresis CSV in that directory; this deliberately preserves pre-upgrade user data, even when it exceeds the limits. Other application logs are not affected.
+
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `FECIM_LOG_LEVEL` | Logging level (debug/info/warn/error) |
-| `FECIM_CONFIG_DIR` | Default config directory |
+| Variable           | Description                           |
+| ------------------ | ------------------------------------- |
+| `FECIM_LOG_LEVEL`  | Logging level (debug/info/warn/error) |
+| `FECIM_CONFIG_DIR` | Default config directory              |
 
 ---
 

@@ -76,7 +76,7 @@ func (w *levelCalibrationWorkflow) markInputsChanged() {
 }
 
 func (w levelCalibrationWorkflow) run() (LevelCalibrationState, error) {
-	result, err := physics.CalibrateLevelsLK(physics.LevelCalibrationInput{
+	result, err := physics.EstimateUniformLevelFields(physics.LevelCalibrationInput{
 		Material:        w.material,
 		LevelCount:      w.state.LevelCount,
 		TargetRangeFrac: w.state.TargetRangeFrac,

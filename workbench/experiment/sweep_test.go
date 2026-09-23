@@ -52,6 +52,9 @@ func TestExpandDeterministicCartesianOrder(t *testing.T) {
 	}
 	got := make([]string, 0, len(points))
 	for _, point := range points {
+		if point.ModelVersion != fixtureBundle().Project.ModelVersion {
+			t.Fatalf("expanded point model version=%q, want %q", point.ModelVersion, fixtureBundle().Project.ModelVersion)
+		}
 		got = append(got, fmt.Sprintf("%d/%d/%d/%d", point.Design.Device.ConductanceLevels, point.Design.Array.Rows, point.Design.Circuit.ADCBits, point.Seed))
 	}
 	want := []string{"16/16/4/17", "16/16/6/18", "16/32/4/19", "16/32/6/20", "30/16/4/21", "30/16/6/22", "30/32/4/23", "30/32/6/24"}

@@ -14,22 +14,22 @@ This repository is **simulation-only**. External scientific claims must be expli
 
 ## Verified Claims (External)
 
-1. **98.24% MNIST accuracy** reported for **HZO ferroelectric tunnel junction (FTJ) reservoir computing** in *Journal of Alloys and Compounds* (2025), DOI: `10.1016/j.jallcom.2025.181869`.
+1. **98.24% MNIST accuracy** reported for **HZO ferroelectric tunnel junction (FTJ) reservoir computing** in _Journal of Alloys and Compounds_ (2025), DOI: `10.1016/j.jallcom.2025.181869`.
    - **Scope note:** This is **not** a FeCIM device claim and should not be attributed to this simulator. It is a literature benchmark for a related ferroelectric device.
 
-2. **97% MNIST accuracy with a current limiter, vs 9.8% without it**, reported for a **28 nm HKMG-based current-limited FeFET crossbar array** in *IEEE Transactions on Electron Devices* (2022), DOI: `10.1109/TED.2022.3216973`.
+2. **97% MNIST accuracy with a current limiter, vs 9.8% without it**, reported for a **28 nm HKMG-based current-limited FeFET crossbar array** in _IEEE Transactions on Electron Devices_ (2022), DOI: `10.1109/TED.2022.3216973`.
    - **Scope note:** This is an external device-paper benchmark, not a result produced by this simulator.
    - **Boundary note:** Treat it as evidence that current limiting can materially change inference quality in FeFET crossbars, not as a blanket accuracy claim for all FeCIM arrays.
 
-3. **96.64% MNIST accuracy (4-state FeFET, sigma=40mV)** reported for **28nm HKMG multi-level FeFET crossbar** in *Nature Communications* 14, 6348 (2023), DOI: `10.1038/s41467-023-42110-y`.
+3. **96.64% MNIST accuracy (4-state FeFET, sigma=40mV)** reported for **28nm HKMG multi-level FeFET crossbar** in _Nature Communications_ 14, 6348 (2023), DOI: `10.1038/s41467-023-42110-y`.
    - **Scope note:** 32x32 array, 2-bit MAC, 885 TOPS/W. External benchmark — not this simulator.
    - **Key detail:** Vth sigma=38mV, 4 conductance states, <1 fJ write energy.
 
-4. **90 conductance states, 99.8% tracking accuracy** reported for **2D ferroelectric-gated hybrid CIM** in *Science Advances* (2024), DOI: `10.1126/sciadv.adp0174`.
+4. **90 conductance states, 99.8% tracking accuracy** reported for **2D ferroelectric-gated hybrid CIM** in _Science Advances_ (2024), DOI: `10.1126/sciadv.adp0174`.
    - **Scope note:** HZO 20nm + MoS2 channel, 2Pr=49.5 µC/cm², ON/OFF >10^7, C2C variation 0.3%.
    - **Key detail:** 26.3 TOPS/W, >10^12 endurance cycles, 3 fJ/bit programming.
 
-5. **Automated Preisach parameter extraction** for fluorite ferroelectrics validated against experimental HZO P-E data in *Scientific Reports* (2021), DOI: `10.1038/s41598-021-91492-w`.
+5. **Automated Preisach parameter extraction** for fluorite ferroelectrics validated against experimental HZO P-E data in _Scientific Reports_ (2021), DOI: `10.1038/s41598-021-91492-w`.
    - **Scope note:** Methodology paper for calibrating Preisach models to measured hysteresis loops.
 
 ---
@@ -53,6 +53,8 @@ The following appear in historical docs, research notes, or prior drafts. They a
 ## Policy
 
 - **Only VERIFIED claims may be presented as facts.**
+- Parameter range checks establish plausibility only; they do not validate model dynamics or predictive accuracy. Model-generated placeholder curves must not count as empirical validation.
+- Workbench energy, area, and peripheral metrics are simplified pre-silicon estimates. The level-field workflow currently returns uniform field spacing scaled by material coercive field; it does not simulate LK switching.
 - **Assumed** values must be labeled as simulation defaults or placeholders.
 - **Unverified** claims may appear only as historical context with explicit labels.
 - **Marketing or talk claims** are not acceptable as technical facts.
@@ -62,6 +64,7 @@ The following appear in historical docs, research notes, or prior drafts. They a
 ## Scope
 
 Documents reviewed or historically containing claims:
+
 - `docs/README.md`
 - `README.md`
 - `docs/modules/` (module ELI5, features, physics guides)
@@ -71,6 +74,7 @@ Documents reviewed or historically containing claims:
 - `docs/internals/api-reference.md` (API documentation)
 
 Legacy paths (archived, do not use):
+
 - `docs/comparison/`, `docs/crossbar/`, `docs/hysteresis/`, `docs/eda/`
 - `docs/research-papers/`, `docs/video-transcripts/`, `docs/ELI5.md`
 
@@ -82,30 +86,30 @@ This section documents which internal simulator parameters have been systematica
 
 ### Validated Against External Data
 
-| Parameter | Preset | Our Value | Literature Range | Source DOI | Method |
-|-----------|--------|-----------|-----------------|------------|--------|
-| Pr | DefaultHZO | 24.5 uC/cm^2 | 15--34 uC/cm^2 | 10.1002/adma.201404531 | Range check |
-| Ec | DefaultHZO | 1.2 MV/cm | 0.8--1.5 MV/cm | 10.1002/adma.201404531 | Range check |
-| Pr | FeCIMMaterial | 30 uC/cm^2 | 15--40 uC/cm^2 | 10.1002/adma.201404531 | Range check |
-| Endurance | DefaultHZO | 10^10 | 10^9--10^12 | 10.1109/IEDM.2013.6724605 | Range check |
-| C2C sigma | DefaultHZO | 3% | 1--8% | 10.1038/s41467-023-42110-y | Range check |
-| beta (LGD) | DefaultHZO | -6.72e8 | -6.72e8 (exact) | 10.1063/1.4916229 | Exact match |
-| gamma (LGD) | DefaultHZO | 1.95e10 | 1.95e10 (exact) | 10.1063/1.4916229 | Exact match |
-| Pr | MaterlikHfO2 | 20 uC/cm^2 | 10--30 uC/cm^2 | 10.1063/1.4916229 | Range check |
+| Parameter   | Preset        | Our Value    | Literature Range | Source DOI                 | Method      |
+| ----------- | ------------- | ------------ | ---------------- | -------------------------- | ----------- |
+| Pr          | DefaultHZO    | 24.5 uC/cm^2 | 15--34 uC/cm^2   | 10.1002/adma.201404531     | Range check |
+| Ec          | DefaultHZO    | 1.2 MV/cm    | 0.8--1.5 MV/cm   | 10.1002/adma.201404531     | Range check |
+| Pr          | FeCIMMaterial | 30 uC/cm^2   | 15--40 uC/cm^2   | 10.1002/adma.201404531     | Range check |
+| Endurance   | DefaultHZO    | 10^10        | 10^9--10^12      | 10.1109/IEDM.2013.6724605  | Range check |
+| C2C sigma   | DefaultHZO    | 3%           | 1--8%            | 10.1038/s41467-023-42110-y | Range check |
+| beta (LGD)  | DefaultHZO    | -6.72e8      | -6.72e8 (exact)  | 10.1063/1.4916229          | Exact match |
+| gamma (LGD) | DefaultHZO    | 1.95e10      | 1.95e10 (exact)  | 10.1063/1.4916229          | Exact match |
+| Pr          | MaterlikHfO2  | 20 uC/cm^2   | 10--30 uC/cm^2   | 10.1063/1.4916229          | Range check |
 
 Test suite: `validation/literature/external_benchmarks_test.go`
 
 ### Still Lacking External Validation
 
-| Parameter | Preset | Current Value | Gap Reason |
-|-----------|--------|---------------|------------|
-| Retention time | DefaultHZO | 3.15e9 s (100 yr) | Extrapolated; no single paper covers this timescale |
-| Imprint field | All | 1 MV/m | Educational default; device-specific |
-| NLS Tau0, Ea | DefaultHZO | 1e-10, 12e8 | Typical values, not calibrated to a specific device |
-| Viscosity (rho) | DefaultHZO | 0.05 | Within Alessandri 2018 range but not validated against specific device |
-| Q12 | DefaultHZO | -0.026 | Known DFT discrepancy |
-| NumLevels | FeCIMMaterial | 30 | Conference claim (COSM 2025); pending peer review |
-| Switching time | FeCIMMaterial | 10 ns | Conference claim; not published in literature |
+| Parameter       | Preset        | Current Value     | Gap Reason                                                             |
+| --------------- | ------------- | ----------------- | ---------------------------------------------------------------------- |
+| Retention time  | DefaultHZO    | 3.15e9 s (100 yr) | Extrapolated; no single paper covers this timescale                    |
+| Imprint field   | All           | 1 MV/m            | Educational default; device-specific                                   |
+| NLS Tau0, Ea    | DefaultHZO    | 1e-10, 12e8       | Typical values, not calibrated to a specific device                    |
+| Viscosity (rho) | DefaultHZO    | 0.05              | Within Alessandri 2018 range but not validated against specific device |
+| Q12             | DefaultHZO    | -0.026            | Known DFT discrepancy                                                  |
+| NumLevels       | FeCIMMaterial | 30                | Conference claim (COSM 2025); pending peer review                      |
+| Switching time  | FeCIMMaterial | 10 ns             | Conference claim; not published in literature                          |
 
 ### Methodology
 

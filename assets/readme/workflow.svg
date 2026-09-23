@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="title desc">
+  <title id="title">FeCIM research workflow</title>
+  <desc id="desc">Plain YAML inputs expand into deterministic runs, FeCIM model evaluations, feasibility and Pareto analysis, then JSON, CSV, and Markdown reports.</desc>
+
+  <rect width="1200" height="330" rx="20" fill="#F4F1E8"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#64716A" letter-spacing="1.2">
+    <text x="48" y="38">REPRODUCIBLE STUDY PIPELINE</text>
+    <text x="1152" y="38" text-anchor="end">FILES IN / EVIDENCE OUT</text>
+  </g>
+
+  <g transform="translate(48 76)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <g>
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#111815">01 / DEFINE</text>
+      <text x="0" y="31" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">project.yaml</text>
+      <text x="0" y="55" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">design.yaml</text>
+      <text x="0" y="79" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">sweep.yaml</text>
+      <text x="0" y="113" font-size="13" fill="#64716A">citations · constraints · hashes</text>
+    </g>
+
+    <path d="M188 54H238" stroke="#3F8C78" stroke-width="2"/>
+    <path d="M230 47L238 54 230 61" fill="none" stroke="#3F8C78" stroke-width="2"/>
+
+    <g transform="translate(260 0)">
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#111815">02 / SWEEP</text>
+      <g transform="translate(0 28)" fill="#3F8C78">
+        <circle cx="7" cy="7" r="7"/><circle cx="39" cy="7" r="7"/><circle cx="71" cy="7" r="7"/><circle cx="103" cy="7" r="7"/>
+        <circle cx="7" cy="39" r="7"/><circle cx="39" cy="39" r="7"/><circle cx="71" cy="39" r="7"/><circle cx="103" cy="39" r="7"/>
+      </g>
+      <text x="0" y="101" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#31403A">SHA-256 run IDs</text>
+      <text x="0" y="125" font-size="13" fill="#64716A">bounded · resumable · reusable</text>
+    </g>
+
+    <path d="M432 54H482" stroke="#3F8C78" stroke-width="2"/>
+    <path d="M474 47L482 54 474 61" fill="none" stroke="#3F8C78" stroke-width="2"/>
+
+    <g transform="translate(504 0)">
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#111815">03 / SIMULATE</text>
+      <text x="0" y="34" font-size="14" fill="#31403A">Device + array + circuits</text>
+      <text x="0" y="60" font-size="14" fill="#31403A">Energy · latency · area · SNR</text>
+      <g transform="translate(0 82)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">
+        <rect width="154" height="24" rx="12" fill="#DDE7E2"/>
+        <text x="77" y="16" text-anchor="middle" fill="#245C4D">REUSED MODEL PACKAGES</text>
+      </g>
+    </g>
+
+    <path d="M714 54H764" stroke="#3F8C78" stroke-width="2"/>
+    <path d="M756 47L764 54 756 61" fill="none" stroke="#3F8C78" stroke-width="2"/>
+
+    <g transform="translate(786 0)">
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#111815">04 / ANALYZE</text>
+      <g transform="translate(0 28)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">
+        <text x="0" y="0" fill="#3F8C78">● FEASIBLE</text>
+        <text x="0" y="26" fill="#C66B62">○ INFEASIBLE</text>
+        <text x="0" y="52" fill="#B37B12">◎ PARETO</text>
+      </g>
+      <text x="0" y="112" font-size="13" fill="#64716A">direction-aware objectives</text>
+    </g>
+
+    <path d="M948 54H998" stroke="#3F8C78" stroke-width="2"/>
+    <path d="M990 47L998 54 990 61" fill="none" stroke="#3F8C78" stroke-width="2"/>
+
+    <g transform="translate(1020 0)">
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#111815">05 / REPORT</text>
+      <text x="0" y="35" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">results.json</text>
+      <text x="0" y="59" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">results.csv</text>
+      <text x="0" y="83" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#31403A">report.md</text>
+      <text x="0" y="113" font-size="13" fill="#64716A">stable output</text>
+    </g>
+  </g>
+
+  <g transform="translate(48 246)">
+    <path d="M0 0H1104" stroke="#C8D0CB"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">
+      <text x="0" y="34" fill="#64716A">EVIDENCE</text>
+      <text x="92" y="34" fill="#111815">LITERATURE-BACKED</text>
+      <circle cx="235" cy="30" r="3" fill="#3F8C78"/>
+      <text x="252" y="34" fill="#111815">EXPERIMENT-CALIBRATED</text>
+      <circle cx="432" cy="30" r="3" fill="#3F8C78"/>
+      <text x="449" y="34" fill="#111815">SIMULATION-DEFAULT</text>
+      <circle cx="606" cy="30" r="3" fill="#3F8C78"/>
+      <text x="623" y="34" fill="#111815">DERIVED</text>
+      <text x="1104" y="34" text-anchor="end" fill="#B0524B">NOT SILICON SIGN-OFF</text>
+    </g>
+  </g>
+</svg>

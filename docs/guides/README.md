@@ -18,7 +18,6 @@
 - **Go:** Version 1.25 or later ([download](https://go.dev/dl/))
 - **Git:** For cloning the repository
 
-
 See [installation.md](installation.md) for platform-specific instructions.
 
 ---
@@ -30,6 +29,7 @@ See [installation.md](installation.md) for platform-specific instructions.
 Install Go 1.25+ and Git using your platform package manager or the upstream installers.
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install -y git
 ```
@@ -41,7 +41,7 @@ sudo apt-get install -y git
 ### 2. Clone Repository
 
 ```bash
-git clone https://github.com/[your-repo]/fecim-lattice-tools.git
+git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
 ```
 
@@ -66,32 +66,37 @@ The GUI will launch with 7 interactive modules!
 After installation, explore the documentation:
 
 ### For Learners
+
 1. Read [ELI5 Overview](../modules/eli5-overview.md)
 2. Run the app with the [Quick Start](../../README.md#quick-start)
 3. Try [Module 1: Hysteresis](../modules/hysteresis/)
 4. Progress through modules 2-7
 
 ### For Developers
+
 1. Read [API Reference](../internals/api-reference.md)
 2. Study [Architecture](../internals/architecture/)
 3. Review [Testing Guide](../internals/testing/)
 4. Check [Code Quality](../internals/code-quality.md)
 
 ### For Researchers
-1. Review [Honesty Audit](../research/honesty-audit.md)
-2. Read [Physics Validation](../research/physics-validation.md)
-3. Browse [Research Papers](../research/papers/)
-4. Check [Literature Reviews](../research/literature-review/)
+
+1. Run the [Research and Design Workbench](research-design-workbench.md) example
+2. Fit a loop with the [Preisach P–E calibration workflow](calibration-workflow.md)
+3. Review the [Honesty Audit](../research/honesty-audit.md) and [Physics Validation](../research/physics-validation.md)
+4. Browse [Research Papers](../research/papers/) and [Literature Reviews](../research/literature-review/)
 
 ---
 
 ## 📖 Documentation Map
 
-| Document | Purpose | Time |
-|----------|---------|------|
-| [installation.md](installation.md) | Detailed install instructions | 10 min |
-| [runbook.md](runbook.md) | Operations & troubleshooting | 15 min |
-| [cli-reference.md](cli-reference.md) | Command-line options | 5 min |
+| Document                                                     | Purpose                                   | Time   |
+| ------------------------------------------------------------ | ----------------------------------------- | ------ |
+| [installation.md](installation.md)                           | Detailed install instructions             | 10 min |
+| [runbook.md](runbook.md)                                     | Operations & troubleshooting              | 15 min |
+| [cli-reference.md](cli-reference.md)                         | Command-line options                      | 5 min  |
+| [research-design-workbench.md](research-design-workbench.md) | Reproducible parameter sweeps and reports | 15 min |
+| [calibration-workflow.md](calibration-workflow.md)           | Fit a Preisach model to a P–E loop        | 10 min |
 
 ---
 
@@ -110,14 +115,14 @@ Visualize how ferroelectric materials remember:
 
 ### Demo 2: Crossbar Computation (3 minutes)
 
-Watch matrix multiplication happen in hardware:
+Explore simulated matrix multiplication:
 
 1. Select **Module 2: Crossbar**
 2. Click "Load MNIST Weights"
 3. Apply input vector
-4. See output currents compute instantly
+4. Inspect the simulated output currents
 
-**What you'll see:** Real-time MVM with IR drop visualization.
+**What you'll see:** Simulated matrix-vector multiplication with IR-drop visualization; this is not a hardware measurement.
 
 ### Demo 3: MNIST Recognition (2 minutes)
 
@@ -173,7 +178,6 @@ go run ./cmd/fecim-screenshotter-fyne -only docs -out /tmp/fecim-demo-frames
 
 **Error:** missing module downloads
 → **Fix:** Run `go mod download`
-
 
 ### Runtime Issues
 
@@ -304,16 +308,19 @@ If all checked, you're ready to explore! 🎉
 ## 📝 Build Options
 
 ### Standard Build
+
 ```bash
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ### Optimized Release Build
+
 ```bash
 go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ### Cross-Compilation
+
 ```bash
 # Linux
 GOOS=linux GOARCH=amd64 go build -o fecim-linux ./cmd/fecim-lattice-tools
@@ -333,19 +340,23 @@ GOOS=windows GOARCH=amd64 go build -o fecim.exe ./cmd/fecim-lattice-tools
 ## 🎯 Quick Links
 
 **Essential:**
+
 - [Installation Guide](installation.md)
 - [Operations Runbook](runbook.md)
 - [CLI Reference](cli-reference.md)
 
 **Learning:**
+
 - [ELI5 Overview](../modules/eli5-overview.md)
 - [Module Documentation](../modules/)
 
 **Development:**
+
 - [API Reference](../internals/api-reference.md)
 - [Architecture](../internals/architecture/)
 
 **Research:**
+
 - [Honesty Audit](../research/honesty-audit.md)
 - [Physics Validation](../research/physics-validation.md)
 

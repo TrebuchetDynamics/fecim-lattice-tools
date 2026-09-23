@@ -45,10 +45,11 @@ type Result struct {
 }
 
 type DesignPoint struct {
-	Index  int            `json:"index"`
-	Design project.Design `json:"design"`
-	Seed   int64          `json:"seed"`
-	RunID  string         `json:"run_id,omitempty"`
+	Index        int            `json:"index"`
+	ModelVersion string         `json:"model_version,omitempty"`
+	Design       project.Design `json:"design"`
+	Seed         int64          `json:"seed"`
+	RunID        string         `json:"run_id,omitempty"`
 }
 
 type RunManifest struct {
@@ -56,6 +57,7 @@ type RunManifest struct {
 	RunID              string                  `json:"run_id"`
 	PointIndex         int                     `json:"point_index"`
 	Seed               int64                   `json:"seed"`
+	ModelVersion       string                  `json:"model_version,omitempty"`
 	EvaluatorVersion   string                  `json:"evaluator_version"`
 	RepositoryRevision string                  `json:"repository_revision,omitempty"`
 	Inputs             []project.ResolvedInput `json:"inputs"`

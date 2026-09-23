@@ -14,12 +14,14 @@ func ID(point DesignPoint, evaluatorVersion string, inputs []project.ResolvedInp
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	payload := struct {
 		SchemaVersion    int                     `json:"schema_version"`
+		ModelVersion     string                  `json:"model_version,omitempty"`
 		Design           project.Design          `json:"design"`
 		Seed             int64                   `json:"seed"`
 		EvaluatorVersion string                  `json:"evaluator_version"`
 		Inputs           []project.ResolvedInput `json:"inputs"`
 	}{
 		SchemaVersion:    1,
+		ModelVersion:     point.ModelVersion,
 		Design:           point.Design,
 		Seed:             point.Seed,
 		EvaluatorVersion: evaluatorVersion,

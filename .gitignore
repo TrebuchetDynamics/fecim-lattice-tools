@@ -21,7 +21,8 @@ __pycache__/
 # Output of go coverage
 *.out
 /logs
-shared/logging/
+/shared/logging/*
+!/shared/logging/*.go
 /fecim-lattice-tools
 /fecim-lattice-tools-next
 /gotest_pkgsum

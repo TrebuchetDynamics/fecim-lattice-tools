@@ -55,6 +55,7 @@ func assertRejectedResult(t *testing.T, bundle project.Bundle, result Result, re
 	if err != nil {
 		t.Fatal(err)
 	}
+	points[0].ModelVersion = bundle.Project.ModelVersion
 	runID, err := ID(points[0], "test-v1", bundle.Inputs)
 	if err != nil {
 		t.Fatal(err)
@@ -73,6 +74,31 @@ func assertRejectedResult(t *testing.T, bundle project.Bundle, result Result, re
 		t.Fatalf("runs directory exists after rejected result: %v", statErr)
 	}
 	assertNoTempRuns(t, bundle.Root)
+}
+
+func TestLoadRunRequiresVerifiedSuccessfulRun(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+		return successResult(1), nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID := summary.Runs[0].Manifest.RunID
+	loaded, err := LoadRun(bundle.Root, runID)
+	if err != nil || loaded.Manifest.RunID != runID || loaded.Result.Status != StatusSuccess {
+		t.Fatalf("LoadRun=(%+v,%v), want verified successful run %s", loaded, err, runID)
+	}
+	if _, err := LoadRun(bundle.Root, strings.Repeat("0", 64)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("missing run error=%v, want os.ErrNotExist", err)
+	}
+	resultPath := filepath.Join(bundle.Root, "runs", runID, "result.json")
+	if err := os.WriteFile(resultPath, []byte(`{"status":"success"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadRun(bundle.Root, runID); !errors.Is(err, ErrUnverifiableRun) {
+		t.Fatalf("tampered run error=%v, want ErrUnverifiableRun", err)
+	}
 }
 
 func TestRunRejectsSuccessCarryingFailure(t *testing.T) {
@@ -244,6 +270,7 @@ func TestRunInvalidResultStopsSchedulingAndPreservesCompletedRuns(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	points[1].ModelVersion = bundle.Project.ModelVersion
 	rejectedRunID, err := ID(points[1], "test-v1", bundle.Inputs)
 	if err != nil {
 		t.Fatal(err)
@@ -387,6 +414,30 @@ func TestRunStillReusesCachedDesignFailure(t *testing.T) {
 	}
 	if calls.Load() != 0 {
 		t.Fatalf("evaluator calls=%d want 0", calls.Load())
+	}
+}
+
+func TestRunDoesNotReuseResultsAfterModelVersionChanges(t *testing.T) {
+	bundle := runnerBundle(t, 1)
+	var calls atomic.Int32
+	evaluator := func(context.Context, project.Design, int64) (Result, error) {
+		calls.Add(1)
+		return successResult(1), nil
+	}
+	first, err := Run(context.Background(), bundle, deterministicRunOptions(evaluator))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle.Project.ModelVersion = "fecim-system-v2"
+	second, err := Run(context.Background(), bundle, deterministicRunOptions(evaluator))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls.Load() != 2 || second.Runs[0].Reused || first.Runs[0].Manifest.RunID == second.Runs[0].Manifest.RunID {
+		t.Fatalf("model-version change reused old result: calls=%d first=%s second=%s reused=%v", calls.Load(), first.Runs[0].Manifest.RunID, second.Runs[0].Manifest.RunID, second.Runs[0].Reused)
+	}
+	if second.Runs[0].Manifest.ModelVersion != bundle.Project.ModelVersion {
+		t.Fatalf("manifest model version=%q want %q", second.Runs[0].Manifest.ModelVersion, bundle.Project.ModelVersion)
 	}
 }
 
@@ -805,6 +856,7 @@ func TestStoreCommitPropagatesUnverifiableRenameWinner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	points[0].ModelVersion = bundle.Project.ModelVersion
 	id, err := ID(points[0], "test-v1", bundle.Inputs)
 	if err != nil {
 		t.Fatal(err)
@@ -816,6 +868,7 @@ func TestStoreCommitPropagatesUnverifiableRenameWinner(t *testing.T) {
 			RunID:            id,
 			PointIndex:       points[0].Index,
 			Seed:             points[0].Seed,
+			ModelVersion:     bundle.Project.ModelVersion,
 			EvaluatorVersion: "test-v1",
 			Inputs:           bundle.Inputs,
 			StartedAt:        now,
@@ -891,6 +944,7 @@ func TestRunRejectsCorruptRunPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	point[0].ModelVersion = bundle.Project.ModelVersion
 	id, err := ID(point[0], "test-v1", nil)
 	if err != nil {
 		t.Fatal(err)

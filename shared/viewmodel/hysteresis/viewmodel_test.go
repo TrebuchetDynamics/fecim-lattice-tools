@@ -138,8 +138,8 @@ func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
 	if got := snapshotMetricValue(after, "level_calibration_state"); got != "fresh" {
 		t.Fatalf("level_calibration_state after run = %q, want fresh", got)
 	}
-	if got := snapshotMetricValue(after, "level_calibration_method"); !strings.Contains(got, "LK quasi-static") {
-		t.Fatalf("level_calibration_method = %q, want LK quasi-static method", got)
+	if got := snapshotMetricValue(after, "level_calibration_method"); !strings.Contains(got, "uniform field-spacing estimate") {
+		t.Fatalf("level_calibration_method = %q, want uniform field-spacing estimate", got)
 	}
 	if got := snapshotMetricValue(after, "level_calibration_entries"); !strings.Contains(got, "ascending") || !strings.Contains(got, "descending") {
 		t.Fatalf("level_calibration_entries = %q, want ascending/descending entry counts", got)
@@ -148,7 +148,7 @@ func TestApplyActionRunLevelCalibrationPublishesFreshSummary(t *testing.T) {
 		t.Fatalf("level_calibration_monotonicity = %q, want ascending/descending monotonic", got)
 	}
 	section := snapshotSectionBody(after, "level_calibration_summary")
-	for _, want := range []string{"LK quasi-static", "Target range", "SIMULATION OUTPUT", "not measured"} {
+	for _, want := range []string{"uniform field-spacing estimate", "Target range", "SIMULATION OUTPUT", "not measured"} {
 		if !strings.Contains(section, want) {
 			t.Fatalf("level calibration summary missing %q: %q", want, section)
 		}

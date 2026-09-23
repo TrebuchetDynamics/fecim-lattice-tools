@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">FeCIM Lattice Tools</title>
+  <desc id="desc">A simulation-only research workbench, illustrated with a reproducible eight-point HZO model sweep. Values are estimates, not measurements.</desc>
+
+  <rect width="1200" height="420" rx="20" fill="#111815"/>
+  <path d="M0 54H1200M724 54V420" stroke="#31403A" stroke-width="1"/>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#9DA9A3" letter-spacing="1.5">
+    <text x="52" y="34">FERROELECTRIC COMPUTE-IN-MEMORY</text>
+    <text x="1148" y="34" text-anchor="end">GO 1.25+ / SIMULATION ONLY</text>
+  </g>
+
+  <g transform="translate(52 96)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <text x="0" y="61" font-size="68" font-weight="760" fill="#F4F1E8" letter-spacing="-2">FeCIM</text>
+    <text x="0" y="114" font-size="48" font-weight="560" fill="#F4F1E8" letter-spacing="-1">Lattice Tools</text>
+    <text x="2" y="165" font-size="22" fill="#C6CEC9">From cited assumptions to reproducible</text>
+    <text x="2" y="195" font-size="22" fill="#C6CEC9">pre-silicon trade-offs.</text>
+
+    <g transform="translate(2 245)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="600">
+      <text x="0" y="0" fill="#F4F1E8">DEFINE</text>
+      <path d="M62 -5H98" stroke="#3F8C78"/>
+      <path d="M94 -9L98 -5 94 -1" fill="none" stroke="#3F8C78"/>
+      <text x="114" y="0" fill="#F4F1E8">SWEEP</text>
+      <path d="M173 -5H209" stroke="#3F8C78"/>
+      <path d="M205 -9L209 -5 205 -1" fill="none" stroke="#3F8C78"/>
+      <text x="225" y="0" fill="#F4F1E8">ANALYZE</text>
+      <path d="M299 -5H335" stroke="#3F8C78"/>
+      <path d="M331 -9L335 -5 331 -1" fill="none" stroke="#3F8C78"/>
+      <text x="351" y="0" fill="#F4F1E8">REPORT</text>
+    </g>
+  </g>
+
+  <g transform="translate(760 82)">
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+      <text x="0" y="0" font-size="13" fill="#9DA9A3" letter-spacing="1.2">HZO STUDY / 8-POINT SWEEP</text>
+      <text x="386" y="0" text-anchor="end" font-size="12" fill="#E2A93B">REAL EXAMPLE OUTPUT</text>
+    </g>
+
+    <g transform="translate(0 28)">
+      <rect width="386" height="194" rx="12" fill="#18221E" stroke="#31403A"/>
+      <g stroke="#31403A" stroke-width="1">
+        <path d="M48 28V158M130 28V158M212 28V158M294 28V158M342 28V158"/>
+        <path d="M48 28H342M48 71H342M48 114H342M48 158H342"/>
+      </g>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7F8D86">
+        <text x="48" y="176">25.5</text>
+        <text x="342" y="176" text-anchor="end">28.0 ns</text>
+        <text x="18" y="34">42</text>
+        <text x="12" y="160">102</text>
+      </g>
+      <path d="M61 40L117 55L121 116L328 120L334 157" fill="none" stroke="#3F8C78" stroke-width="2" opacity="0.8"/>
+      <g fill="#8EB5A9" stroke="#18221E" stroke-width="3">
+        <circle cx="61" cy="40" r="7"/>
+        <circle cx="304" cy="42" r="7"/>
+        <circle cx="119" cy="112" r="7"/>
+        <circle cx="326" cy="114" r="7"/>
+        <circle cx="65" cy="58" r="7"/>
+        <circle cx="308" cy="61" r="7"/>
+        <circle cx="123" cy="151" r="7"/>
+        <circle cx="334" cy="155" r="7"/>
+      </g>
+      <g fill="none" stroke="#C66B62" stroke-width="2">
+        <circle cx="326" cy="114" r="10"/>
+        <circle cx="334" cy="155" r="10"/>
+      </g>
+      <circle cx="61" cy="40" r="11" fill="none" stroke="#E2A93B" stroke-width="3"/>
+      <path d="M69 34L101 20" stroke="#E2A93B"/>
+      <text x="106" y="20" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#E2A93B">PARETO</text>
+      <text x="196" y="190" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#9DA9A3">LATENCY → / ENERGY ↓</text>
+    </g>
+
+    <g transform="translate(0 240)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+      <g>
+        <text x="0" y="24" font-size="28" font-weight="700" fill="#F4F1E8">8</text>
+        <text x="0" y="45" font-size="12" fill="#9DA9A3">RUNS</text>
+      </g>
+      <g transform="translate(98 0)">
+        <text x="0" y="24" font-size="28" font-weight="700" fill="#F4F1E8">6</text>
+        <text x="0" y="45" font-size="12" fill="#9DA9A3">FEASIBLE</text>
+      </g>
+      <g transform="translate(220 0)">
+        <text x="0" y="24" font-size="28" font-weight="700" fill="#E2A93B">1</text>
+        <text x="0" y="45" font-size="12" fill="#9DA9A3">PARETO</text>
+      </g>
+      <g transform="translate(0 64)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">
+        <text x="0" y="0" fill="#9DA9A3">RUN</text>
+        <text x="36" y="0" fill="#F4F1E8">ff2ffd8a56b1</text>
+        <text x="150" y="0" fill="#3F8C78">IMMUTABLE / REUSABLE</text>
+      </g>
+    </g>
+  </g>
+</svg>

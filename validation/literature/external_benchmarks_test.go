@@ -1,13 +1,10 @@
 package literature
 
-// external_benchmarks_test.go validates simulator material presets against
-// published measured data. Each test cites a specific DOI and checks that
-// our default parameter falls within the reported experimental range.
-//
-// Methodology: range-check (value within [min, max] from the paper).
-// This is the simplest defensible validation: if a parameter is within the
-// published measured spread, we do not claim accuracy but we do confirm
-// the simulator is not divergent from reality.
+// external_benchmarks_test.go checks whether selected preset parameters fall
+// within ranges reported by cited papers. These range checks establish parameter
+// plausibility only; they do not validate simulated loop shapes or establish
+// predictive accuracy. Curve-level validation is maintained separately in
+// TestModule1_PELoop_LiteratureBacked with provenance and dataset-specific gates.
 
 import (
 	"math"

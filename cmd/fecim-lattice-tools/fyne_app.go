@@ -388,6 +388,13 @@ func runFyneApp(module viewmodel.ModuleID) error {
 		selectView(0)
 	})
 
+	researchBtn := widget.NewButton("Research", func() {
+		researchWindow := fyneApp.NewWindow("Research and Design Workbench")
+		researchWindow.SetContent(CreateResearchWorkbenchContent(researchWindow))
+		researchWindow.Resize(fyne.NewSize(980, 700))
+		researchWindow.Show()
+	})
+
 	// Create current module label (left-justified in toolbar)
 	// Truncation prevents it from pushing into the right-side buttons at narrow widths.
 	// GridWrap guarantees a minimum visible width so the label doesn't collapse to "...".
@@ -504,7 +511,7 @@ func runFyneApp(module viewmodel.ModuleID) error {
 	sep2 := widget.NewSeparator()
 	sep3 := widget.NewSeparator()
 	rightButtons := container.NewHBox(
-		homeBtn, docsBtn, learnMoreBtn,
+		homeBtn, docsBtn, learnMoreBtn, researchBtn,
 		sep1,
 		undoToolbar,
 		sep2,

@@ -82,7 +82,7 @@ func (s store) load(id string) (RunRecord, bool, error) {
 	if err := verifyArtifact("result.json", resultBytes, record.Manifest); err != nil {
 		return RunRecord{}, false, err
 	}
-	expectedID, err := ID(DesignPoint{Design: record.Design, Seed: record.Manifest.Seed}, record.Manifest.EvaluatorVersion, record.Manifest.Inputs)
+	expectedID, err := ID(DesignPoint{Design: record.Design, ModelVersion: record.Manifest.ModelVersion, Seed: record.Manifest.Seed}, record.Manifest.EvaluatorVersion, record.Manifest.Inputs)
 	if err != nil {
 		return RunRecord{}, false, fmt.Errorf("%w: recompute run %s identity: %v", ErrUnverifiableRun, id, err)
 	}
@@ -153,7 +153,7 @@ func (s store) commit(record RunRecord) (RunRecord, error) {
 	if err != nil {
 		return RunRecord{}, err
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	if err := writeExclusive(filepath.Join(tempDir, "manifest.json"), manifestBytes); err != nil {
 		return RunRecord{}, fmt.Errorf("write manifest.json: %w", err)
 	}

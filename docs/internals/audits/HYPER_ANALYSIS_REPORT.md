@@ -1,5 +1,7 @@
 # Hyper Analysis Report
 
+> **Superseded:** This is a historical report dated 2026-03-05. Use the [2026-09 technical recovery roadmap](2026-09-01-technical-recovery-roadmap.md) for current findings and priorities; its later receipts supersede status claims below.
+
 **Date:** 2026-03-05  
 **Repo path used:** local workspace checkout  
 **Purpose:** identify the highest-confidence gaps between the current repo state and a research-grade, agent-reliable FeCIM workflow.

@@ -1,6 +1,6 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-legacy-fyne test-next-ui bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
+.PHONY: build test test-race test-short test-legacy-fyne test-next-ui bench vet fmt fmt-check lint govulncheck coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -96,6 +96,12 @@ vet:
 fmt:
 	$(GOFMT) -w .
 
+fmt-check:
+	@test -z "$$($(GOFMT) -l .)"
+
+govulncheck:
+	$(GO) run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+
 lint:
 	@if command -v $(GOLANGCI_LINT) >/dev/null 2>&1; then \
 		$(GOLANGCI_LINT) run; \
@@ -117,7 +123,7 @@ arch-check:
 fyne-thread-check:
 	$(GO) run ./tools/fyne-thread-check
 
-ci: fmt vet test-short arch-check test-research research-audit
+ci: fmt-check vet govulncheck test-short arch-check test-research research-audit
 
 # Skills (FeCIM agent skills)
 install-skills:

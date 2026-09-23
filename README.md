@@ -1,163 +1,107 @@
 # FeCIM Lattice Tools
 
-**Literature-calibrated pre-silicon research and design workbench for ferroelectric compute-in-memory (FeCIM) systems.**
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="FeCIM Lattice Tools turns cited device assumptions into reproducible pre-silicon trade-off studies">
+</p>
 
-FeCIM Lattice Tools combines a reproducible headless design-sweep core, Go/Fyne desktop workspaces, literature-aware validation, EDA/export utilities, and a static Astro project site. Research and design are primary; educational views explain how ferroelectric device assumptions propagate through arrays, peripheral circuits, inference examples, and design artifacts.
+<p align="center">
+  <a href="https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml"><img src="https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go" alt="Go 1.25 or newer"></a>
+  <a href="https://fyne.io"><img src="https://img.shields.io/badge/Desktop-Fyne-2F5D50" alt="Fyne desktop interface"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-3F8C78" alt="MIT license"></a>
+</p>
 
-[![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
-[![Fyne](https://img.shields.io/badge/Desktop-Fyne-2F5D50)](https://fyne.io)
-[![Astro](https://img.shields.io/badge/Web-Astro-BC52EE?logo=astro)](https://astro.build)
-[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+FeCIM Lattice Tools is a **simulation-only research and design workbench** for ferroelectric compute-in-memory systems. Its headless Go core resolves device, array, and circuit assumptions into deterministic sweeps; its Fyne expert workspaces expose the underlying physics and design modules. Current energy, area, and peripheral models are simplified literature-informed estimates, not calibrated device/layout predictions.
 
-![FeCIM Lattice Tools hysteresis module screenshot](./docs/guides/assets/hysteresis_readme.png)
+> [!IMPORTANT]
+> Outputs are simulation estimates—not measured silicon, foundry sign-off, or proof that a fabricated device will meet a reported metric. Every quantitative result must retain its model, assumptions, evidence level, and source run.
 
-## Quick Start
+## Proof before promises
 
-```bash
-git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
-cd fecim-lattice-tools
-go run ./cmd/fecim-lattice-tools
+The checked-in HZO example expands three parameters into eight immutable runs. On the current models it produces six feasible points and one Pareto point:
+
+```console
+$ go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study \
+    -workers 2 -citation-dir citations/papers
+total=8 reused=0 failed=0 feasible=6 pareto=1
+
+$ go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study \
+    -workers 4 -citation-dir citations/papers
+total=8 reused=8 failed=0 feasible=6 pareto=1
 ```
 
-Run checks:
+The second invocation reuses the same SHA-256-addressed runs. Worker count does not alter run identity or report content. Generated artifacts are plain files:
 
-```bash
-go test ./...
-make test-legacy-fyne
-bash scripts/reproduce_validation.sh
+```text
+runs/<sha256>/
+├── manifest.json        resolved identity and provenance
+├── resolved-design.json exact evaluated design
+└── result.json          metrics, units, models, assumptions, evidence
+
+reports/
+├── results.json         structured study output
+├── results.csv          stable tabular metrics
+└── report.md            readable trade-off report
 ```
 
-## Research and Design Workbench
+## One study, five explicit stages
 
-Run the checked-in literature-calibrated pre-silicon example from a disposable copy:
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="YAML project inputs flow through deterministic sweeps, FeCIM simulation, feasibility and Pareto analysis, then JSON, CSV, and Markdown reports">
+</p>
 
-```bash
-cp -R examples/research-design-workbench /tmp/fecim-study
-go run ./cmd/fecim-lattice-tools project validate /tmp/fecim-study -citation-dir citations/papers
-go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study -workers 2 -citation-dir citations/papers
-go run ./cmd/fecim-lattice-tools report generate /tmp/fecim-study -citation-dir citations/papers
-```
+| Stage        | What stays inspectable                                                                    |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| **Define**   | Hypothesis, citations, objectives, constraints, physical units, and input hashes in YAML. |
+| **Sweep**    | Finite Cartesian points, deterministic seeds, stable run IDs, and bounded concurrency.    |
+| **Simulate** | Device, array, DAC/ADC/TIA, energy, latency, area, and SNR model provenance.              |
+| **Analyze**  | Successful, failed, feasible, infeasible, unusable, and direction-aware Pareto states.    |
+| **Report**   | Deterministic JSON, CSV, and Markdown without runtime timestamps contaminating results.   |
 
-The workflow persists immutable runs and generates JSON, CSV, and Markdown trade-off reports. See [Research and Design Workbench](./docs/guides/research-design-workbench.md).
+Read the [workbench guide](./docs/guides/research-design-workbench.md) for the bundle schema, supported sweep paths, run reuse, and result semantics.
 
-## What This Repository Is
+The repository exposes both a local CLI workbench and a Fyne desktop shell. Use the CLI for repeatable studies; use the Fyne workbench’s **Configure starter sweep…** action to create an HZO study without hand-editing YAML. Other workspaces expose device, array, circuit, inference, comparison, EDA, and documentation behavior.
 
-| Use it for | Do not treat it as |
-|------------|--------------------|
-| Learning hysteresis, crossbar non-idealities, CIM tradeoffs, and EDA export flows. | A silicon measurement report, foundry PDK, product benchmark, or device performance claim. |
-| Comparing simulation assumptions across materials, arrays, circuits, and algorithms. | Proof that a specific device achieves a stated accuracy, energy, endurance, or analog state count. |
-| Building literature-backed validation checks and reproducible educational examples. | A source of uncited scientific facts. |
-
-Core physics references include Materlik 2015, Park 2015, Alessandri 2018, and Guo 2018. Parameters are either cited, range-checked, or explicitly labeled as educational defaults.
-
-## At a Glance
-
-| Question | Answer |
-|----------|--------|
-| What is it? | A Go Fyne desktop app, validation workspace, EDA/export toolkit, and Astro landing page for FeCIM simulation. |
-| Who is it for? | Students, instructors, researchers, device/circuit/architecture designers, and open-source contributors. |
-| What can I run? | Seven GUI modules, headless validation scripts, module tests, EDA/export examples, and the static web landing page. |
-| What is the boundary? | Simulation and education only unless a claim is cited and covered by validation. |
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Research and Design Workbench](#research-and-design-workbench)
-- [What This Repository Is](#what-this-repository-is)
-- [At a Glance](#at-a-glance)
-- [What You Can Do](#what-you-can-do)
-- [Scope and Claim Boundary](#scope-and-claim-boundary)
-- [Modules](#modules)
-- [Getting Started](#getting-started)
-- [Main Commands](#main-commands)
-- [Web Landing Page](#web-landing-page)
-- [Configuration](#configuration)
-- [Technical Architecture](#technical-architecture)
-- [Development Standard](#development-standard)
-- [Validation](#validation)
-- [Trust Boundaries](#trust-boundaries)
-- [Citation System](#citation-system)
-- [Repository Layout](#repository-layout)
-- [Documentation](#documentation)
-- [Contributing and Support](#contributing-and-support)
-- [License](#license)
-
-## What You Can Do
-
-FeCIM Lattice Tools keeps device, array, circuit, algorithm, and export assumptions in one inspectable tool. Use it to:
-
-- Visualize P-E loops, coercive-field behavior, remanent polarization, and minor loops.
-- Compare Preisach and Landau-Khalatnikov hysteresis behavior under different material presets.
-- Study how conductance quantization, IR drop, sneak paths, and drift affect crossbar MVM.
-- Run example inference experiments to see how CIM constraints change algorithm behavior.
-- Explore peripheral read/program paths, DAC/ADC/TIA abstractions, and ISPP write control.
-- Generate EDA-oriented artifacts for SPICE, Verilog, Liberty, DEF, and LEF-style flows.
-- Reproduce internal validation checks and extend them with literature-backed tests.
-
-## Scope and Claim Boundary
-
-This repository follows an accuracy-first documentation policy:
-
-- External scientific claims must be cited and listed in the [honesty audit](./docs/research/honesty-audit.md).
-- Simulation defaults must be described as defaults, placeholders, assumptions, or range-checked parameters.
-- Unverified conference, marketing, or talk claims must not be presented as technical facts.
-- Testable behavior should be covered by automated tests before implementation changes are accepted.
-- Source-backed facts should be recorded in the Markdown-native [citation system](./citations/README.md).
-
-For current verified claims, known gaps, and removed or restricted claims, read [Scientific Honesty Audit](./docs/research/honesty-audit.md).
-
-## Modules
-
-| Module | Directory | Purpose |
-|--------|-----------|---------|
-| 1 | [`module1-hysteresis/`](./module1-hysteresis) | P-E curves, Preisach modeling, LK dynamics, material presets, and ISPP write behavior. |
-| 2 | [`module2-crossbar/`](./module2-crossbar) | Crossbar MVM, conductance levels, IR drop, sneak paths, drift, and array effects. |
-| 3 | [`module3-mnist/`](./module3-mnist) | Example inference pipeline for studying algorithm behavior under CIM constraints. |
-| 4 | [`module4-circuits/`](./module4-circuits) | Peripheral circuit abstractions for DAC, ADC, TIA, read paths, and program paths. |
-| 5 | [`module5-comparison/`](./module5-comparison) | Comparison views for assumptions, metrics, and operating conditions. |
-| 6 | [`module6-eda/`](./module6-eda) | EDA export and integration utilities for design-oriented workflows. |
-| 7 | [`module7-docs/`](./module7-docs) | Integrated documentation, references, and educational material. |
-
-Shared infrastructure lives in [`shared/`](./shared), and validation suites live in [`validation/`](./validation).
-
-## Getting Started
+## Run your first study
 
 ### Prerequisites
 
-- Go 1.25 or newer.
-- A desktop environment for the Fyne GUI.
-- CGO-capable Go toolchain/system graphics libraries for Fyne.
-- Node.js/npm only when developing, validating, or deploying the Astro web landing page.
+- Go 1.25 or newer
+- A CGO-capable desktop toolchain only when running the Fyne interface
+- No API keys, cloud services, database, or daemon
 
-### Install and Run
+### 1. Copy the reproducible example
 
-The default desktop app is the restored Fyne shell:
+Generated runs are intentionally not committed into the example directory:
 
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
+cp -R examples/research-design-workbench /tmp/fecim-study
+```
+
+### 2. Validate, run, and regenerate
+
+```bash
+go run ./cmd/fecim-lattice-tools project validate /tmp/fecim-study \
+  -citation-dir citations/papers
+
+go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study \
+  -workers 2 -citation-dir citations/papers
+
+go run ./cmd/fecim-lattice-tools report generate /tmp/fecim-study \
+  -citation-dir citations/papers
+```
+
+`experiment run` already writes reports. `report generate` rebuilds them later from committed runs without rerunning the models.
+
+### 3. Open the desktop workspaces
+
+```bash
 go run ./cmd/fecim-lattice-tools
 ```
 
-### Build
-
-```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
-./fecim-lattice-tools
-```
-
-### Verify
-
-```bash
-go test ./...
-make test-legacy-fyne
-bash scripts/reproduce_validation.sh
-```
-
-## Main Commands
-
-Open a specific GUI module:
+Open a specific module directly:
 
 ```bash
 go run ./cmd/fecim-lattice-tools --module hysteresis
@@ -165,196 +109,124 @@ go run ./cmd/fecim-lattice-tools --module crossbar
 go run ./cmd/fecim-lattice-tools --module eda
 ```
 
-Inspect available materials and launcher flags:
+## Expert workspaces
 
-```bash
-go run ./cmd/fecim-lattice-tools --list-materials
-go run ./cmd/fecim-lattice-tools --help
-```
+The desktop app keeps existing model surfaces available for inspection and teaching while the headless workbench owns reproducibility. The original hysteresis workspace is shown below; the module table is the fastest route to the other surfaces.
 
-Generate fresh README-style screenshots:
+<p align="center">
+  <img src="./docs/guides/assets/hysteresis_readme.png" width="100%" alt="Fyne hysteresis workspace showing an HZO polarization-field loop, conductance levels, and ISPP controls">
+</p>
 
-```bash
-go run ./cmd/fecim-screenshotter-fyne -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
-```
+| Workspace                          | Inspect and model                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| [Hysteresis](./module1-hysteresis) | Preisach and Landau–Khalatnikov behavior, P–E loops, material presets, and ISPP writes.  |
+| [Crossbar](./module2-crossbar)     | Matrix-vector multiplication, conductance quantization, IR drop, sneak paths, and drift. |
+| [MNIST](./module3-mnist)           | Example inference behavior under quantization and array constraints.                     |
+| [Circuits](./module4-circuits)     | DAC, ADC, TIA, read/program paths, PVT exploration, and ISPP control.                    |
+| [Comparison](./module5-comparison) | Evidence-aware technology and architecture comparisons.                                  |
+| [EDA](./module6-eda)               | SPICE, Verilog, Liberty, DEF, LEF, and OpenLane-oriented exports.                        |
+| [Documentation](./module7-docs)    | Integrated references, model explanations, and educational material.                     |
 
-The Fyne screenshotter follows the restored desktop path.
+## Scientific trust model
 
-See [CLI Reference](./docs/guides/cli-reference.md) for the full launcher and module command reference.
+Results carry one of four evidence labels:
 
-## Web Landing Page
+| Evidence                | Meaning                                                         |
+| ----------------------- | --------------------------------------------------------------- |
+| `literature-backed`     | Parameter or relationship is tied to a reviewed source record.  |
+| `experiment-calibrated` | Value was calibrated against identified experimental input.     |
+| `simulation-default`    | Explicit educational or exploratory default; not a measurement. |
+| `derived`               | Computed from other recorded model inputs and assumptions.      |
 
-The [`web/`](./web) folder is a static Astro site for the public project landing page. It is separate from the native Go/Fyne simulator. The old Go WASM/Fyne browser demo was retired; `web/` no longer loads `fecim.wasm`, `wasm_exec.js`, or `cmd/fecim-web-fyne`.
+The repository enforces these boundaries:
 
-Develop locally:
+- External scientific claims belong in the Markdown-native [citation system](./citations/README.md).
+- Verified, disputed, and removed claims are tracked in the [scientific honesty audit](./docs/research/honesty-audit.md).
+- Project inputs stay inside their bundle and may be SHA-256 verified before use.
+- YAML rejects unknown fields and non-finite physical values.
+- Model-domain failures are preserved as results rather than silently discarded.
+- The educational 30-level conductance baseline is configurable and is not presented as a validated device claim.
 
-```bash
-cd web
-npm install
-npm run dev
-```
+Use the tool to compare assumptions, test research hypotheses, and create reviewable pre-silicon studies. Do not use it as a foundry PDK, product benchmark, or substitute for device characterization.
 
-Validate and build:
-
-```bash
-cd web
-npm test
-npm run build
-npm run test:e2e   # optional browser layout gate when Chromium is available
-```
-
-Deploy with Cloudflare Wrangler:
-
-```bash
-cd web
-npm run deploy
-```
-
-`web/wrangler.toml` targets the Cloudflare Pages project `fecim` and publishes `web/dist`. Deployment requires Wrangler authentication, for example `wrangler login` or a `CLOUDFLARE_API_TOKEN` environment variable. Add native-app screenshots under `web/public/screenshots/` when they are ready.
-
-## Configuration
-
-No API keys or cloud credentials are required for the default app, tests, or validation workflows. Cloudflare credentials are needed only for `cd web && npm run deploy`.
-
-Simulation settings live in YAML files under [`config/`](./config):
-
-| File | Purpose |
-|------|---------|
-| [`config/materials.yaml`](./config/materials.yaml) | Material presets and ferroelectric parameters. |
-| [`config/constants.yaml`](./config/constants.yaml) | Shared physical constants and default level assumptions. |
-| [`config/simulation.yaml`](./config/simulation.yaml) | Simulation time-step and solver defaults. |
-| [`config/crossbar.yaml`](./config/crossbar.yaml) | Crossbar geometry and array assumptions. |
-| [`config/mnist.yaml`](./config/mnist.yaml) | Example inference experiment settings. |
-| [`config/energy.yaml`](./config/energy.yaml) | Educational energy model inputs. |
-
-For the full schema and loading behavior, read [Configuration Reference](./docs/internals/config-reference.md). Config values that are not externally validated must stay labeled as defaults or assumptions.
-
-## Technical Architecture
-
-Tech stack:
-
-- **Language:** Go 1.25+
-- **Desktop UI:** Fyne is the default desktop shell.
-- **Web:** Astro static landing page in `web/`, deployed from `web/dist` through Cloudflare Pages.
-- **Validation:** Go tests, golden data, literature range checks, and reproducibility scripts
-- **Exports:** SPICE, Verilog, Liberty, DEF, and LEF-oriented outputs
-
-High-level flow:
+## Architecture
 
 ```text
-cmd/fecim-lattice-tools       default Fyne desktop shell
-        |
-        v
-shared/ viewmodel, physics, logging, rendering, utilities
-        |
-        +--> module1-hysteresis  --> ferroelectric model behavior
-        +--> module2-crossbar    --> array MVM and non-idealities
-        +--> module3-mnist       --> example inference experiment
-        +--> module4-circuits    --> read/program path abstractions
-        +--> module5-comparison  --> assumption and metric comparison
-        +--> module6-eda         --> design/export artifacts
-        +--> module7-docs        --> integrated documentation
-        |
-        v
-validation/ regression, literature, and integration checks
+                         plain project bundle
+                    project / design / sweep YAML
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ headless workbench core                                         │
+│ strict load → deterministic expansion → bounded run execution   │
+│             → feasibility / Pareto → stable reports             │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ thin adapters
+             ┌─────────────────┼─────────────────┐
+             ▼                 ▼                 ▼
+      shared/system     shared/peripherals    existing modules
+      area · energy     DAC · ADC · TIA      device · array · EDA
+             └─────────────────┬─────────────────┘
+                               ▼
+                  immutable runs + JSON/CSV/MD
+
+Fyne desktop shell ──► seven expert workspaces
+validation/        ──► regression, literature, and integration checks
 ```
 
-## Development Standard
+The core is local and file-based by design: no database, remote service, distributed scheduler, optimizer framework, or Rust rewrite. See the [architecture documentation](./docs/internals/architecture/ARCHITECTURE.md) and [workbench design](./docs/internals/superpowers/specs/2026-07-19-research-design-workbench-architecture-design.md).
 
-This project uses test-driven development for code changes:
+## Validation and development
 
-- Write or update a failing test before changing behavior.
-- Keep tests tied to observable physics, CLI, GUI, export, or validation behavior.
-- Label simulation assumptions clearly in code and docs.
-- Run formatting and tests before pushing.
-
-Common checks:
+Behavior changes follow RED → GREEN → REFACTOR. The smallest complete verification set is:
 
 ```bash
-gofmt -w .
+go fmt ./...
 go test ./...
 make test-legacy-fyne
-go test -race -short ./shared/... ./validation/...
+bash scripts/reproduce_validation.sh
 ```
 
-See [Contributing](./CONTRIBUTING.md) and [Testing Guide](./docs/internals/testing/TESTING.md) for the full workflow.
+Concurrency-sensitive workbench code also runs under the race detector:
 
-## Validation
+```bash
+go test -race ./workbench/...
+```
 
-The validation layer checks internal model behavior and selected literature-backed ranges. Current validation includes:
+Validation includes physics golden data, literature range checks, crossbar Kirchhoff-law checks, GUI integration tests, deterministic report checks, and CI on `main`. Passing validation does not promote a simulation default into measured evidence.
 
-- Physics regression tests and golden data.
-- Literature range checks for selected HZO and ferroelectric parameters.
-- Kirchhoff-law checks for crossbar current behavior.
-- Integration tests for module-level behavior.
-- CI enforcement on `main`.
-
-Validation does not turn educational defaults into measured device claims. If a parameter is not validated against a specific paper or dataset, it must remain labeled as an assumption or default.
-
-## Trust Boundaries
-
-Use [docs/guides/trust.md](./docs/guides/trust.md) to decide which outputs are highly validated, literature-backed, educational, planned, or not validated. Use [docs/internals/how-to-break-this.md](./docs/internals/how-to-break-this.md) and [docs/research/predictions.md](./docs/research/predictions.md) to review adversarial stress cases and pre-registered validation targets.
-
-## Citation System
-
-Citations live in plain Markdown under [citations/](./citations). Each source gets a reviewable paper record, verified facts are promoted into [citations/facts.md](./citations/facts.md), and unresolved conflicts are tracked in [citations/disputed.md](./citations/disputed.md).
-
-Use the citation system before adding external scientific claims to code, documentation, validation reports, or the paper draft.
-
-## Repository Layout
+## Project map
 
 ```text
-fecim-lattice-tools/
-├── cmd/                    # GUI and utility entrypoints
-├── citations/              # Markdown-native source records and facts database
-├── module1-hysteresis/     # Ferroelectric hysteresis and switching models
-├── module2-crossbar/       # Crossbar simulation and non-idealities
-├── module3-mnist/          # Example inference pipeline
-├── module4-circuits/       # Peripheral circuit abstractions
-├── module5-comparison/     # Technology and assumption comparison
-├── module6-eda/            # EDA export utilities
-├── module7-docs/           # Integrated documentation viewer
-├── shared/                 # Common physics, UI, logging, and utility code
-├── web/                    # Astro landing page and Cloudflare Pages config
-├── docs/                   # User, developer, research, paper, notebook, and presentation docs
-├── data/                   # Simulation inputs and lookup data
-├── tools/                  # Developer/research tooling, prompts, and validation protocols
-└── validation/             # Regression, literature, and integration checks
+workbench/              headless project, experiment, evaluator, and report core
+cmd/                    desktop, CLI, and utility entry points
+module1-hysteresis/     ferroelectric behavior and write control
+module2-crossbar/       array simulation and non-idealities
+module3-mnist/          constrained inference example
+module4-circuits/       peripheral circuit models
+module5-comparison/     evidence-aware comparisons
+module6-eda/            EDA generation and integration
+module7-docs/           integrated documentation viewer
+shared/                 reused physics, system, peripheral, UI, and utility code
+validation/             regression, literature, and integration checks
+citations/              reviewable source records and fact registry
+examples/               runnable project bundles and use cases
+web/                    separate static Astro project site
 ```
 
 ## Documentation
 
-- [Installation](./docs/guides/installation.md)
-- [Technical Architecture](./docs/internals/architecture/ARCHITECTURE.md)
-- [Configuration Reference](./docs/internals/config-reference.md)
-- [Testing Guide](./docs/internals/testing/TESTING.md)
-- [Web Landing Page](./web/README.md)
-- [Trust Boundaries](./docs/guides/trust.md)
-- [Citation System](./citations/README.md)
-- [Scientific Honesty Audit](./docs/research/honesty-audit.md)
-- [Contributing](./CONTRIBUTING.md)
-- [Changelog](./CHANGELOG.md)
+- **Use:** [Installation](./docs/guides/installation.md) · [CLI reference](./docs/guides/cli-reference.md) · [Workbench guide](./docs/guides/research-design-workbench.md)
+- **Understand:** [Architecture](./docs/internals/architecture/ARCHITECTURE.md) · [Configuration](./docs/internals/config-reference.md) · [Trust boundaries](./docs/guides/trust.md)
+- **Validate:** [Testing](./docs/internals/testing/TESTING.md) · [Citation system](./citations/README.md) · [Honesty audit](./docs/research/honesty-audit.md)
+- **Build:** [Contributing](./CONTRIBUTING.md) · [EDA integration](./module6-eda/examples/03-openlane-integration/README.md) · [Web project](./web/README.md)
 
-Module READMEs:
+## Contributing
 
-- [Module 1 - Hysteresis](./module1-hysteresis/README.md)
-- [Module 2 - Crossbar](./module2-crossbar/README.md)
-- [Module 3 - MNIST](./module3-mnist/README.md)
-- [Module 4 - Circuits](./module4-circuits/README.md)
-- [Module 5 - Comparison](./module5-comparison/README.md)
-- [Module 6 - EDA](./module6-eda/README.md)
-- [Module 7 - Docs](./module7-docs/README.md)
+Issues and pull requests are welcome for stronger validation, experimental calibration, clearer model provenance, reproducible examples, and focused usability improvements. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) and keep quantitative claims source-backed.
 
-## Contributing and Support
-
-Use GitHub issues for bugs, research gaps, documentation problems, and feature proposals:
-
-- Repository: [TrebuchetDynamics/fecim-lattice-tools](https://github.com/TrebuchetDynamics/fecim-lattice-tools)
-- Contribution guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Pull request checklist: [`.github/pull_request_template.md`](./.github/pull_request_template.md)
-
-Useful roadmap directions are tracked through issues and PRs. High-value contributions include stronger validation coverage, clearer educational examples, improved screenshots and demos, better EDA export examples, and documentation that labels assumptions precisely.
+The separate [`web/`](./web) folder contains the Astro landing page; the Go/Fyne app and the research workbench remain the primary local tools.
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+[MIT](./LICENSE) © Trebuchet Dynamics contributors.

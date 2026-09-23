@@ -31,6 +31,8 @@ type configJSON struct {
 	DockerImage      string `json:"docker_image"`
 }
 
+const defaultDockerImage = "ghcr.io/the-openroad-project/openlane:latest@sha256:832662c878405772fdb759a11daf21c32fd50072be6b6f4305ca377b4650779a"
+
 // DefaultConfig returns configuration with SKY130 defaults
 func DefaultConfig() *Config {
 	pdkRoot := os.Getenv("PDK_ROOT")
@@ -45,7 +47,7 @@ func DefaultConfig() *Config {
 		TimeoutPlacement: 5 * time.Minute,
 		TimeoutSynthesis: 10 * time.Minute,
 		TimeoutRouting:   15 * time.Minute,
-		DockerImage:      "ghcr.io/the-openroad-project/openlane:latest",
+		DockerImage:      defaultDockerImage,
 	}
 }
 

@@ -3,6 +3,7 @@ package report
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,25 +17,31 @@ import (
 )
 
 type reportRun struct {
-	RunID          string                         `json:"run_id"`
-	Status         experiment.Status              `json:"status"`
-	Design         project.Design                 `json:"design"`
-	Result         experiment.Result              `json:"result"`
-	Feasible       bool                           `json:"feasible"`
-	Pareto         bool                           `json:"pareto"`
-	UnusableReason string                         `json:"unusable_reason,omitempty"`
-	Constraints    []experiment.ConstraintOutcome `json:"constraints"`
+	RunID              string                         `json:"run_id"`
+	ModelVersion       string                         `json:"model_version,omitempty"`
+	EvaluatorVersion   string                         `json:"evaluator_version"`
+	RepositoryRevision string                         `json:"repository_revision,omitempty"`
+	Inputs             []project.ResolvedInput        `json:"inputs,omitempty"`
+	Status             experiment.Status              `json:"status"`
+	Design             project.Design                 `json:"design"`
+	Result             experiment.Result              `json:"result"`
+	Feasible           bool                           `json:"feasible"`
+	Pareto             bool                           `json:"pareto"`
+	UnusableReason     string                         `json:"unusable_reason,omitempty"`
+	Constraints        []experiment.ConstraintOutcome `json:"constraints"`
 }
 
 type reportData struct {
-	Counts map[string]int `json:"counts"`
-	Runs   []reportRun    `json:"runs"`
+	ModelVersion string         `json:"model_version"`
+	Citations    []string       `json:"citations,omitempty"`
+	Counts       map[string]int `json:"counts"`
+	Runs         []reportRun    `json:"runs"`
 }
 
-func WriteJSON(writer io.Writer, analysis experiment.Analysis) error {
+func WriteJSON(writer io.Writer, bundle project.Bundle, analysis experiment.Analysis) error {
 	encoder := json.NewEncoder(writer)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(projectAnalysis(analysis))
+	return encoder.Encode(projectAnalysis(bundle, analysis))
 }
 
 func WriteCSV(writer io.Writer, analysis experiment.Analysis) error {
@@ -74,35 +81,81 @@ func WriteCSV(writer io.Writer, analysis experiment.Analysis) error {
 }
 
 func WriteMarkdown(writer io.Writer, bundle project.Bundle, analysis experiment.Analysis) error {
-	if _, err := fmt.Fprintln(writer, "> Simulation-only, literature-calibrated pre-silicon estimates. Not measured silicon or foundry sign-off."); err != nil {
+	if _, err := fmt.Fprintln(writer, "> Simplified simulation-only pre-silicon estimates. Not measured silicon or foundry sign-off."); err != nil {
 		return err
 	}
-	fmt.Fprintf(writer, "\n# %s Trade-off Report\n\n", bundle.Project.Name)
-	fmt.Fprintf(writer, "**Hypothesis:** %s\n\n", bundle.Project.Hypothesis)
-	fmt.Fprintln(writer, "## Summary")
-	fmt.Fprintln(writer)
+	if _, err := fmt.Fprintf(writer, "\n# %s Trade-off Report\n\n", bundle.Project.Name); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(writer, "**Hypothesis:** %s\n\n", bundle.Project.Hypothesis); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(writer, "**Model version:** `%s`\n\n", bundle.Project.ModelVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer, "## Summary"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer); err != nil {
+		return err
+	}
 	for _, key := range []string{"success", "failed", "feasible", "infeasible", "unusable", "pareto"} {
-		fmt.Fprintf(writer, "- %s: %d\n", key, analysis.Counts[key])
+		if _, err := fmt.Fprintf(writer, "- %s: %d\n", key, analysis.Counts[key]); err != nil {
+			return err
+		}
 	}
-	fmt.Fprintln(writer, "\n## Objectives")
-	fmt.Fprintln(writer)
+	if _, err := fmt.Fprintln(writer, "\n## Objectives"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer); err != nil {
+		return err
+	}
 	for _, objective := range bundle.Project.Objectives {
-		fmt.Fprintf(writer, "- `%s`: %s\n", objective.Metric, objective.Direction)
+		if _, err := fmt.Fprintf(writer, "- `%s`: %s\n", objective.Metric, objective.Direction); err != nil {
+			return err
+		}
 	}
-	fmt.Fprintln(writer, "\n## Runs")
-	fmt.Fprintln(writer)
-	fmt.Fprintln(writer, "| Run | Status | Feasible | Pareto | Metrics | Evidence | Warnings |")
-	fmt.Fprintln(writer, "|---|---|---:|---:|---|---|---|")
+	if _, err := fmt.Fprintln(writer, "\n## Inputs and citations"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer); err != nil {
+		return err
+	}
+	for _, input := range bundle.Inputs {
+		if _, err := fmt.Fprintf(writer, "- `%s` — sha256 `%s`; evidence `%s`; citation `%s`\n", input.Path, input.SHA256, input.Evidence, input.Citation); err != nil {
+			return err
+		}
+	}
+	for _, citation := range bundle.Project.Citations {
+		if _, err := fmt.Fprintf(writer, "- Citation: `%s`\n", citation); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(writer, "\n## Runs"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer, "| Run | Status | Feasible | Pareto | Metrics | Evidence | Warnings |"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(writer, "|---|---|---:|---:|---|---|---|"); err != nil {
+		return err
+	}
 	for _, analyzed := range analysis.Runs {
 		metricText := make([]string, 0, len(analyzed.Run.Result.Metrics))
 		evidence := make([]string, 0, len(analyzed.Run.Result.Metrics))
 		for _, metric := range analyzed.Run.Result.Metrics {
-			metricText = append(metricText, fmt.Sprintf("%s=%s %s", metric.Name, strconv.FormatFloat(metric.Value, 'g', -1, 64), metric.Unit))
+			metricText = append(metricText, fmt.Sprintf("%s=%s %s (model: %s; assumptions: %s)", metric.Name, strconv.FormatFloat(metric.Value, 'g', -1, 64), metric.Unit, metric.Model, strings.Join(metric.Assumptions, ", ")))
 			evidence = append(evidence, string(metric.Evidence))
 		}
-		fmt.Fprintf(writer, "| `%s` | %s | %t | %t | %s | %s | %s |\n",
-			shortID(analyzed.Run.Manifest.RunID), analyzed.Run.Result.Status, analyzed.Feasible, analyzed.Pareto,
-			strings.Join(metricText, "<br>"), strings.Join(evidence, "<br>"), strings.Join(analyzed.Run.Result.Warnings, "<br>"))
+		if _, err := fmt.Fprintf(writer, "| `%s`<br>model `%s`<br>evaluator `%s`<br>revision `%s` | %s | %t | %t | %s | %s | %s |\n",
+			shortID(analyzed.Run.Manifest.RunID), analyzed.Run.Manifest.ModelVersion, analyzed.Run.Manifest.EvaluatorVersion, analyzed.Run.Manifest.RepositoryRevision,
+			analyzed.Run.Result.Status, analyzed.Feasible, analyzed.Pareto,
+			strings.Join(metricText, "<br>"), strings.Join(evidence, "<br>"), strings.Join(analyzed.Run.Result.Warnings, "<br>")); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -116,7 +169,7 @@ func Generate(root string, bundle project.Bundle, analysis experiment.Analysis) 
 		name  string
 		write func(io.Writer) error
 	}{
-		{"results.json", func(w io.Writer) error { return WriteJSON(w, analysis) }},
+		{"results.json", func(w io.Writer) error { return WriteJSON(w, bundle, analysis) }},
 		{"results.csv", func(w io.Writer) error { return WriteCSV(w, analysis) }},
 		{"report.md", func(w io.Writer) error { return WriteMarkdown(w, bundle, analysis) }},
 	}
@@ -128,18 +181,22 @@ func Generate(root string, bundle project.Bundle, analysis experiment.Analysis) 
 	return nil
 }
 
-func projectAnalysis(analysis experiment.Analysis) reportData {
-	data := reportData{Counts: analysis.Counts, Runs: make([]reportRun, len(analysis.Runs))}
+func projectAnalysis(bundle project.Bundle, analysis experiment.Analysis) reportData {
+	data := reportData{ModelVersion: bundle.Project.ModelVersion, Citations: append([]string(nil), bundle.Project.Citations...), Counts: analysis.Counts, Runs: make([]reportRun, len(analysis.Runs))}
 	for index, analyzed := range analysis.Runs {
 		data.Runs[index] = reportRun{
-			RunID:          analyzed.Run.Manifest.RunID,
-			Status:         analyzed.Run.Result.Status,
-			Design:         analyzed.Run.Design,
-			Result:         analyzed.Run.Result,
-			Feasible:       analyzed.Feasible,
-			Pareto:         analyzed.Pareto,
-			UnusableReason: analyzed.UnusableReason,
-			Constraints:    analyzed.Constraints,
+			RunID:              analyzed.Run.Manifest.RunID,
+			ModelVersion:       analyzed.Run.Manifest.ModelVersion,
+			EvaluatorVersion:   analyzed.Run.Manifest.EvaluatorVersion,
+			RepositoryRevision: analyzed.Run.Manifest.RepositoryRevision,
+			Inputs:             analyzed.Run.Manifest.Inputs,
+			Status:             analyzed.Run.Result.Status,
+			Design:             analyzed.Run.Design,
+			Result:             analyzed.Run.Result,
+			Feasible:           analyzed.Feasible,
+			Pareto:             analyzed.Pareto,
+			UnusableReason:     analyzed.UnusableReason,
+			Constraints:        analyzed.Constraints,
 		}
 	}
 	return data
@@ -166,14 +223,12 @@ func writeAtomic(dir, name string, write func(io.Writer) error) error {
 		return err
 	}
 	temp := file.Name()
-	defer os.Remove(temp)
+	defer func() { _ = os.Remove(temp) }()
 	if err := write(file); err != nil {
-		file.Close()
-		return err
+		return errors.Join(err, file.Close())
 	}
 	if err := file.Sync(); err != nil {
-		file.Close()
-		return err
+		return errors.Join(err, file.Close())
 	}
 	if err := file.Close(); err != nil {
 		return err

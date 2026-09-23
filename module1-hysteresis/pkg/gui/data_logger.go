@@ -118,8 +118,12 @@ func NewHysteresisDataLogger(materialName string) (*HysteresisDataLogger, error)
 	filename := fmt.Sprintf("hysteresis-%s-%s.csv", safeMaterial, timestamp)
 	path := filepath.Join(logsDir, filename)
 
+	if err := logging.RegisterHysteresisLog(path); err != nil {
+		return nil, fmt.Errorf("prepare data log retention: %w", err)
+	}
 	file, err := os.Create(path)
 	if err != nil {
+		logging.UnregisterHysteresisLog(path)
 		return nil, fmt.Errorf("create data log file: %w", err)
 	}
 
@@ -214,6 +218,7 @@ func (l *HysteresisDataLogger) Close() error {
 	}
 	close(l.rows)
 	l.wg.Wait()
+	defer logging.UnregisterHysteresisLog(l.path)
 	if err := l.file.Close(); err != nil {
 		return fmt.Errorf("close data log file: %w", err)
 	}

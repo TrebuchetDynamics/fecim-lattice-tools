@@ -146,6 +146,15 @@ func TestLoadRejectsInputSymlinkEscapingProject(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsUnexpandableSweep(t *testing.T) {
+	root := t.TempDir()
+	badSweep := strings.Replace(validSweepYAML, "device.conductance_levels", "device.unsupported", 1)
+	writeBundle(t, root, validProjectYAML, validDesignYAML, badSweep)
+	if _, err := Load(root, LoadOptions{}); err == nil || !strings.Contains(err.Error(), "unsupported sweep path") {
+		t.Fatalf("Load error=%v, want unsupported sweep path", err)
+	}
+}
+
 func TestLoadRejectsInvalidDesignTrustBoundary(t *testing.T) {
 	root := t.TempDir()
 	bad := strings.Replace(validDesignYAML, "g_max_s: 0.00003", "g_max_s: .nan", 1)

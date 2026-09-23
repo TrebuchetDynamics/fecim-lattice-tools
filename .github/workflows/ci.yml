@@ -14,6 +14,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Test and build web app
+        run: npm ci && npm test && npm run build
+        working-directory: web
+
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update

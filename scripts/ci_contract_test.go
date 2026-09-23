@@ -28,10 +28,62 @@ type ciJob struct {
 }
 
 type ciStep struct {
-	Name            string    `yaml:"name"`
-	Run             string    `yaml:"run"`
-	If              yaml.Node `yaml:"if"`
-	ContinueOnError yaml.Node `yaml:"continue-on-error"`
+	Name             string    `yaml:"name"`
+	Run              string    `yaml:"run"`
+	WorkingDirectory string    `yaml:"working-directory"`
+	If               yaml.Node `yaml:"if"`
+	ContinueOnError  yaml.Node `yaml:"continue-on-error"`
+}
+
+func TestCIChecksFormattingWithoutMutatingFiles(t *testing.T) {
+	makefile := readFile(t, filepath.Join(repoRoot(t), "Makefile"))
+	ciLine := "ci: fmt-check vet govulncheck test-short arch-check test-research research-audit"
+	if !strings.Contains(makefile, ciLine) {
+		t.Fatalf("ci target must use %q", ciLine)
+	}
+	if strings.Contains(makefile, "ci: fmt vet") {
+		t.Fatal("ci target must not run the mutating fmt target")
+	}
+	if !strings.Contains(makefile, "fmt-check:\n\t@test -z \"$$($(GOFMT) -l .)\"") {
+		t.Fatal("fmt-check must fail on gofmt output without modifying files")
+	}
+}
+
+func TestCIRequiresVulnerabilityScanAndScheduledDependencyUpdates(t *testing.T) {
+	root := repoRoot(t)
+	makefile := readFile(t, filepath.Join(root, "Makefile"))
+	if !strings.Contains(makefile, "ci: fmt-check vet govulncheck test-short") || !strings.Contains(makefile, "govulncheck:\n\t$(GO) run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...") {
+		t.Fatal("CI must run the pinned govulncheck tool")
+	}
+	dependabot := readFile(t, filepath.Join(root, ".github", "dependabot.yml"))
+	for _, ecosystem := range []string{"gomod", "github-actions"} {
+		if !strings.Contains(dependabot, "package-ecosystem: "+ecosystem) {
+			t.Errorf("scheduled dependency updates missing ecosystem %q", ecosystem)
+		}
+	}
+	if !strings.Contains(dependabot, "interval: weekly") {
+		t.Fatal("dependency updates must be scheduled weekly")
+	}
+}
+
+func TestFyneLaunchersUseOneCanonicalImplementation(t *testing.T) {
+	root := repoRoot(t)
+	shared := filepath.Join(root, "internal", "launcher", "launcher.go")
+	body := readFile(t, shared)
+	for _, symbol := range []string{"type DemoInfo struct", "func CreateLauncherContent", "func DrawPreviewThumbnail"} {
+		if !strings.Contains(body, symbol) {
+			t.Errorf("shared launcher missing %q", symbol)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(root, "cmd", "fecim-lattice-tools-fyne", "launcher.go"),
+		filepath.Join(root, "cmd", "fecim-lattice-tools", "fyne_launcher.go"),
+	} {
+		adapter := readFile(t, path)
+		if !strings.Contains(adapter, `"fecim-lattice-tools/internal/launcher"`) || strings.Contains(adapter, "type demoCardRenderer struct") {
+			t.Errorf("%s must delegate to the shared launcher rather than retain its implementation", path)
+		}
+	}
 }
 
 func TestCIRequiresRealExternalVerilogValidation(t *testing.T) {
@@ -186,7 +238,7 @@ func validateExternalValidationWorkflow(data string) error {
 			return fmt.Errorf("required %s step masks command failure", requirement.name)
 		}
 	}
-	if !(requiredIndices[0] < requiredIndices[1] && requiredIndices[1] < requiredIndices[2]) {
+	if requiredIndices[0] >= requiredIndices[1] || requiredIndices[1] >= requiredIndices[2] {
 		return fmt.Errorf("external-validation requires install, version, then Verilog test step order")
 	}
 
@@ -268,4 +320,24 @@ func replaceOnce(t *testing.T, input, old, replacement string) string {
 		t.Fatalf("mutation target count for %q = %d, want 1", old, strings.Count(input, old))
 	}
 	return strings.Replace(input, old, replacement, 1)
+}
+
+func TestCIRunsWebTestsAndProductionBuild(t *testing.T) {
+	workflow := readFile(t, filepath.Join(repoRoot(t), ".github", "workflows", "ci.yml"))
+	var parsed ciWorkflow
+	if err := yaml.Unmarshal([]byte(workflow), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	for _, step := range parsed.Jobs["ci"].Steps {
+		if step.Name == "Test and build web app" {
+			if step.Run != "npm ci && npm test && npm run build" || step.WorkingDirectory != "web" {
+				t.Fatalf("web CI command=%q working-directory=%q", step.Run, step.WorkingDirectory)
+			}
+			if nodePresent(step.ContinueOnError) {
+				t.Fatal("web checks must be required")
+			}
+			return
+		}
+	}
+	t.Fatal("CI is missing required web tests/build")
 }

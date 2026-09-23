@@ -1,11 +1,35 @@
-package main
+package launcher
 
 import (
+	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
 )
+
+func TestResponsiveFooterDoesNotPresentUnverifiedMetricsAsFacts(t *testing.T) {
+	footer := NewResponsiveFooter()
+	renderer := footer.CreateRenderer().(*responsiveFooterRenderer)
+	for _, width := range []float32{360, 800, 1400} {
+		renderer.layoutWithSize(fyne.NewSize(width, 80))
+		for _, claim := range []string{"30 States", "96-98%", "25-100", "10⁹ Cycles", "TRL 4"} {
+			if strings.Contains(footer.metricsText.Text, claim) {
+				t.Errorf("width %v footer presents unverified claim %q: %q", width, claim, footer.metricsText.Text)
+			}
+		}
+	}
+}
+
+func TestLauncherDescriptionsAvoidUnverifiedQuantitativeClaims(t *testing.T) {
+	for _, demo := range GetDemos() {
+		for _, claim := range []string{"30-level conference claim", "32-140 peer-reviewed", "96-98%"} {
+			if strings.Contains(demo.Description, claim) {
+				t.Errorf("demo %q description includes unsupported quantitative claim %q", demo.Title, claim)
+			}
+		}
+	}
+}
 
 func TestGetDemos(t *testing.T) {
 	demos := GetDemos()
@@ -176,16 +200,16 @@ func TestSplitWords(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := splitWords(tt.input)
+		result := SplitWords(tt.input)
 
 		if len(result) != len(tt.expected) {
-			t.Errorf("splitWords(%q) = %v, want %v", tt.input, result, tt.expected)
+			t.Errorf("SplitWords(%q) = %v, want %v", tt.input, result, tt.expected)
 			continue
 		}
 
 		for i, word := range result {
 			if word != tt.expected[i] {
-				t.Errorf("splitWords(%q)[%d] = %q, want %q", tt.input, i, word, tt.expected[i])
+				t.Errorf("SplitWords(%q)[%d] = %q, want %q", tt.input, i, word, tt.expected[i])
 			}
 		}
 	}
@@ -241,7 +265,7 @@ func TestDrawPreviewThumbnail(t *testing.T) {
 
 	// Test preview thumbnail generation for all 6 demos
 	for demoNum := 1; demoNum <= 6; demoNum++ {
-		objects := drawPreviewThumbnail(demoNum, 10, 10, 100, 70, accentColor)
+		objects := DrawPreviewThumbnail(demoNum, 10, 10, 100, 70, accentColor)
 
 		// Each preview should generate multiple canvas objects
 		if len(objects) < 3 {
@@ -263,13 +287,13 @@ func TestDrawPreviewThumbnailEdgeCases(t *testing.T) {
 	accentColor := struct{ R, G, B, A uint8 }{0, 212, 255, 255}
 
 	// Test with different sizes
-	objects := drawPreviewThumbnail(1, 0, 0, 50, 50, accentColor)
+	objects := DrawPreviewThumbnail(1, 0, 0, 50, 50, accentColor)
 	if len(objects) == 0 {
 		t.Error("Preview should generate objects even with small size")
 	}
 
 	// Test with larger size
-	objects = drawPreviewThumbnail(2, 100, 100, 200, 150, accentColor)
+	objects = DrawPreviewThumbnail(2, 100, 100, 200, 150, accentColor)
 	if len(objects) == 0 {
 		t.Error("Preview should generate objects with larger size")
 	}

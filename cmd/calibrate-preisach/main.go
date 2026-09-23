@@ -5,17 +5,52 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/csv"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
+
+type calibrationFit struct {
+	Ec, Ps, Pr float64
+	RMSEFS     float64
+	PrErrPct   float64
+	EcErrPct   float64
+	AreaErrPct float64
+}
+
+type calibrationArtifact struct {
+	SchemaVersion int    `json:"schema_version"`
+	Model         string `json:"model"`
+	Preset        string `json:"preset"`
+	Input         struct {
+		File   string `json:"file"`
+		SHA256 string `json:"sha256"`
+		Units  string `json:"units"`
+	} `json:"input"`
+	Fit struct {
+		EcVM       float64 `json:"ec_v_m"`
+		PsCM2      float64 `json:"ps_c_m2"`
+		PrCM2      float64 `json:"pr_c_m2"`
+		RMSEFS     float64 `json:"rmse_fs"`
+		PrErrPct   float64 `json:"pr_error_percent"`
+		EcErrPct   float64 `json:"ec_error_percent"`
+		AreaErrPct float64 `json:"area_error_percent"`
+	} `json:"fit"`
+	Boundary string `json:"boundary"`
+}
 
 func main() {
 	os.Exit(runCalibratePreisach(os.Args[1:], os.Stdout, os.Stderr))
@@ -26,23 +61,37 @@ func runCalibratePreisach(args []string, stdout, stderr io.Writer) int {
 	flags.SetOutput(stderr)
 	csvPath := flags.String("csv", "", "CSV with E_MV_cm,P_uC_cm2")
 	preset := flags.String("preset", "default_hzo", "base preset: default_hzo|literature_superlattice")
+	output := flags.String("out", "", "optional new JSON calibration artifact path")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
 	if *csvPath == "" {
-		fmt.Fprintln(stderr, "-csv is required")
+		if _, err := fmt.Fprintln(stderr, "-csv is required"); err != nil {
+			return 2
+		}
 		return 2
 	}
 
-	E, P, err := loadCSVLoop(*csvPath)
+	inputBytes, err := os.ReadFile(*csvPath)
 	if err != nil {
-		fmt.Fprintf(stderr, "load csv: %v\n", err)
+		if _, writeErr := fmt.Fprintf(stderr, "load csv: %v\n", err); writeErr != nil {
+			return 1
+		}
+		return 1
+	}
+	E, P, err := parseCSVLoop(inputBytes)
+	if err != nil {
+		if _, writeErr := fmt.Fprintf(stderr, "load csv: %v\n", err); writeErr != nil {
+			return 1
+		}
 		return 1
 	}
 
 	base := baseMaterial(*preset)
 	if base == nil {
-		fmt.Fprintf(stderr, "unknown preset %q\n", *preset)
+		if _, writeErr := fmt.Fprintf(stderr, "unknown preset %q\n", *preset); writeErr != nil {
+			return 1
+		}
 		return 1
 	}
 
@@ -53,14 +102,7 @@ func runCalibratePreisach(args []string, stdout, stderr io.Writer) int {
 		targetFS = 1
 	}
 
-	type best struct {
-		Ec, Ps, Pr float64
-		RMSEFS     float64
-		PrErrPct   float64
-		EcErrPct   float64
-		AreaErrPct float64
-	}
-	b := best{RMSEFS: math.Inf(1)}
+	b := calibrationFit{RMSEFS: math.Inf(1)}
 
 	// Reference metrics from digitized curve using same estimators.
 	prRef := estimatePrAtZeroField(P, E)
@@ -95,18 +137,55 @@ func runCalibratePreisach(args []string, stdout, stderr io.Writer) int {
 				bestScore := b.RMSEFS + 0.01*b.PrErrPct/100.0 + 0.01*b.EcErrPct/100.0 + 0.005*b.AreaErrPct/100.0
 
 				if score < bestScore {
-					b = best{Ec: m.Ec, Ps: m.Ps, Pr: m.Pr, RMSEFS: rmseFS, PrErrPct: prErr, EcErrPct: ecErr, AreaErrPct: areaErr}
+					b = calibrationFit{Ec: m.Ec, Ps: m.Ps, Pr: m.Pr, RMSEFS: rmseFS, PrErrPct: prErr, EcErrPct: ecErr, AreaErrPct: areaErr}
 				}
 			}
 		}
 	}
 
-	fmt.Fprintf(stdout, "best Ec=%0.3e V/m (%0.3f MV/cm)\n", b.Ec, b.Ec/1e8)
-	fmt.Fprintf(stdout, "best Ps=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Ps, b.Ps*1e2)
-	fmt.Fprintf(stdout, "best Pr=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Pr, b.Pr*1e2)
-	fmt.Fprintf(stdout, "metrics: rmseFS=%0.4f prErr=%0.2f%% ecErr=%0.2f%% areaErr=%0.2f%%\n", b.RMSEFS, b.PrErrPct, b.EcErrPct, b.AreaErrPct)
-	fmt.Fprintf(stdout, "ref: pr=%0.3f uC/cm2 ec=%0.3f MV/cm area=%0.3e J/m3\n", prRef, ecRef, areaRef)
+	if _, err := fmt.Fprintf(stdout, "best Ec=%0.3e V/m (%0.3f MV/cm)\nbest Ps=%0.3e C/m2 (%0.3f uC/cm2)\nbest Pr=%0.3e C/m2 (%0.3f uC/cm2)\nmetrics: rmseFS=%0.4f prErr=%0.2f%% ecErr=%0.2f%% areaErr=%0.2f%%\nref: pr=%0.3f uC/cm2 ec=%0.3f MV/cm area=%0.3e J/m3\n", b.Ec, b.Ec/1e8, b.Ps, b.Ps*1e2, b.Pr, b.Pr*1e2, b.RMSEFS, b.PrErrPct, b.EcErrPct, b.AreaErrPct, prRef, ecRef, areaRef); err != nil {
+		return 1
+	}
+	if *output != "" {
+		if err := writeCalibrationArtifact(*output, *csvPath, *preset, b, inputBytes); err != nil {
+			if _, writeErr := fmt.Fprintf(stderr, "write calibration artifact: %v\n", err); writeErr != nil {
+				return 1
+			}
+			return 1
+		}
+	}
 	return 0
+}
+
+func writeCalibrationArtifact(path, inputPath, preset string, fit calibrationFit, input []byte) error {
+	artifact := calibrationArtifact{SchemaVersion: 1, Model: "Preisach", Preset: preset, Boundary: "fit to supplied P-E data; simulation calibration, not device validation"}
+	artifact.Input.File = filepath.Base(inputPath)
+	digest := sha256.Sum256(input)
+	artifact.Input.SHA256 = hex.EncodeToString(digest[:])
+	artifact.Input.Units = "E_MV_cm,P_uC_cm2"
+	artifact.Fit.EcVM = fit.Ec
+	artifact.Fit.PsCM2 = fit.Ps
+	artifact.Fit.PrCM2 = fit.Pr
+	artifact.Fit.RMSEFS = fit.RMSEFS
+	artifact.Fit.PrErrPct = fit.PrErrPct
+	artifact.Fit.EcErrPct = fit.EcErrPct
+	artifact.Fit.AreaErrPct = fit.AreaErrPct
+	blob, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return err
+	}
+	blob = append(blob, '\n')
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		return err
+	}
+	if _, err := file.Write(blob); err != nil {
+		return errors.Join(err, file.Close(), os.Remove(path))
+	}
+	if err := file.Close(); err != nil {
+		return errors.Join(err, os.Remove(path))
+	}
+	return nil
 }
 
 func baseMaterial(name string) *sharedphysics.HZOMaterial {
@@ -121,16 +200,22 @@ func baseMaterial(name string) *sharedphysics.HZOMaterial {
 }
 
 func loadCSVLoop(path string) ([]float64, []float64, error) {
-	f, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer f.Close()
-	reader := csv.NewReader(f)
+	return parseCSVLoop(data)
+}
+
+func parseCSVLoop(data []byte) ([]float64, []float64, error) {
+	reader := csv.NewReader(bytes.NewReader(data))
 	reader.FieldsPerRecord = -1
 	rows, err := reader.ReadAll()
 	if err != nil {
 		return nil, nil, err
+	}
+	if len(rows) < 2 {
+		return nil, nil, fmt.Errorf("CSV must contain a header and at least one data row")
 	}
 	E := make([]float64, 0, len(rows)-1)
 	P := make([]float64, 0, len(rows)-1)
@@ -145,6 +230,9 @@ func loadCSVLoop(path string) ([]float64, []float64, error) {
 		p, err := strconv.ParseFloat(rows[i][1], 64)
 		if err != nil {
 			return nil, nil, fmt.Errorf("row %d: parse P_uC_cm2: %w", i+1, err)
+		}
+		if math.IsNaN(e) || math.IsInf(e, 0) || math.IsNaN(p) || math.IsInf(p, 0) {
+			return nil, nil, fmt.Errorf("row %d: field and polarization must be finite", i+1)
 		}
 		E = append(E, e)
 		P = append(P, p)

@@ -6,63 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"runtime/debug"
 
-	"fecim-lattice-tools/workbench/experiment"
-	workbenchfecim "fecim-lattice-tools/workbench/fecim"
-	workbenchproject "fecim-lattice-tools/workbench/project"
-	"fecim-lattice-tools/workbench/report"
+	"fecim-lattice-tools/workbench/study"
 )
-
-const defaultProjectYAML = `schema_version: 1
-id: hzo-study
-name: HZO Device-Array-Circuit Study
-hypothesis: Increasing ADC resolution trades area and energy for readout fidelity.
-model_version: fecim-system-v1
-objectives:
-  - metric: energy_pj
-    direction: minimize
-  - metric: latency_ns
-    direction: minimize
-constraints:
-  - metric: area_um2
-    operator: <=
-    value: 5000
-    unit: um2
-citations:
-  - park2015_advmat_hzo
-`
-
-const defaultDesignYAML = `schema_version: 1
-device:
-  material: HZO
-  conductance_levels: 30
-  g_min_s: 0.000001
-  g_max_s: 0.00003
-array:
-  rows: 32
-  cols: 32
-  read_voltage_v: 0.2
-circuit:
-  adc_bits: 6
-  dac_bits: 4
-  tia_gain_ohm: 10000
-  tech_node: 65nm
-`
-
-const defaultSweepYAML = `schema_version: 1
-seed: 17
-max_points: 32
-parameters:
-  - path: device.conductance_levels
-    values: [16, 30]
-  - path: array.rows
-    values: [32, 64]
-  - path: circuit.adc_bits
-    values: [4, 6]
-`
 
 func runProjectSubcommand(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
@@ -76,8 +24,8 @@ func runProjectSubcommand(args []string, stdout, stderr io.Writer) error {
 		if err := initProject(args[1]); err != nil {
 			return err
 		}
-		fmt.Fprintf(stdout, "initialized: %s\n", filepath.Clean(args[1]))
-		return nil
+		_, err := fmt.Fprintf(stdout, "initialized: %s\n", filepath.Clean(args[1]))
+		return err
 	case "validate":
 		if len(args) < 2 {
 			return errors.New("usage: fecim-lattice-tools project validate DIRECTORY [-citation-dir PATH]")
@@ -88,18 +36,22 @@ func runProjectSubcommand(args []string, stdout, stderr io.Writer) error {
 		if err := fs.Parse(args[2:]); err != nil {
 			return err
 		}
-		bundle, err := workbenchproject.Load(args[1], workbenchproject.LoadOptions{CitationDir: *citationDir})
+		bundle, _, err := study.ValidateProject(args[1], *citationDir)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(stdout, "valid: %s\n", bundle.Project.ID)
-		return nil
+		_, err = fmt.Fprintf(stdout, "valid: %s\n", bundle.Project.ID)
+		return err
 	default:
 		return fmt.Errorf("unknown project subcommand %q", args[0])
 	}
 }
 
 func runExperimentSubcommand(args []string, stdout, stderr io.Writer) error {
+	return runExperimentSubcommandContext(context.Background(), args, stdout, stderr)
+}
+
+func runExperimentSubcommandContext(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 || args[0] != "run" {
 		if len(args) > 0 {
 			return fmt.Errorf("unknown experiment subcommand %q", args[0])
@@ -119,31 +71,47 @@ func runExperimentSubcommand(args []string, stdout, stderr io.Writer) error {
 	if *workers < 1 {
 		return errors.New("workers must be at least 1")
 	}
-	bundle, err := workbenchproject.Load(args[1], workbenchproject.LoadOptions{CitationDir: *citationDir})
-	if err != nil {
-		return err
-	}
-	summary, err := experiment.Run(context.Background(), bundle, experiment.RunOptions{
-		Evaluator:          workbenchfecim.Evaluate,
-		EvaluatorVersion:   workbenchfecim.EvaluatorVersion,
+	outcome, err := study.Run(ctx, args[1], study.RunOptions{
 		Workers:            *workers,
+		CitationDir:        *citationDir,
 		RepositoryRevision: buildRevision(),
 	})
 	if err != nil {
 		return err
 	}
-	analysis := experiment.Analyze(bundle, summary.Runs)
-	if err := report.Generate(bundle.Root, bundle, analysis); err != nil {
-		return err
-	}
+	summary, analysis := outcome.Summary, outcome.Analysis
 	reused := 0
 	for _, run := range summary.Runs {
 		if run.Reused {
 			reused++
 		}
 	}
-	fmt.Fprintf(stdout, "total=%d reused=%d failed=%d feasible=%d pareto=%d\n", len(summary.Runs), reused, analysis.Counts["failed"], analysis.Counts["feasible"], analysis.Counts["pareto"])
-	return nil
+	_, err = fmt.Fprintf(stdout, "total=%d reused=%d failed=%d feasible=%d pareto=%d\n", len(summary.Runs), reused, analysis.Counts["failed"], analysis.Counts["feasible"], analysis.Counts["pareto"])
+	return err
+}
+
+func runExportSubcommand(args []string, stdout, stderr io.Writer) error {
+	if len(args) == 0 {
+		return errors.New("usage: fecim-lattice-tools export DIRECTORY -run RUN_ID")
+	}
+	fs := flag.NewFlagSet("export", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	runID := fs.String("run", "", "successful immutable run ID to export")
+	if err := fs.Parse(args[1:]); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		return fmt.Errorf("unexpected export argument %q", fs.Arg(0))
+	}
+	if *runID == "" {
+		return errors.New("-run is required")
+	}
+	outputDir, err := study.ExportRun(args[0], *runID)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(stdout, "exported: %s\n", outputDir)
+	return err
 }
 
 func runReportSubcommand(args []string, stdout, stderr io.Writer) error {
@@ -162,82 +130,19 @@ func runReportSubcommand(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args[2:]); err != nil {
 		return err
 	}
-	bundle, err := workbenchproject.Load(args[1], workbenchproject.LoadOptions{CitationDir: *citationDir})
+	if _, err := study.GenerateReport(args[1], *citationDir); err != nil {
+		return err
+	}
+	root, err := filepath.Abs(args[1])
 	if err != nil {
 		return err
 	}
-	runs, err := experiment.LoadRuns(bundle.Root)
-	if err != nil {
-		return err
-	}
-	if len(runs) == 0 {
-		return errors.New("project has no committed runs")
-	}
-	analysis := experiment.Analyze(bundle, runs)
-	if err := report.Generate(bundle.Root, bundle, analysis); err != nil {
-		return err
-	}
-	fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(bundle.Root, "reports"))
-	return nil
+	_, err = fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(root, "reports"))
+	return err
 }
 
 func initProject(dir string) error {
-	info, err := os.Stat(dir)
-	createdDir := false
-	switch {
-	case errors.Is(err, os.ErrNotExist):
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return err
-		}
-		createdDir = true
-	case err != nil:
-		return err
-	case !info.IsDir():
-		return fmt.Errorf("project path %s is not a directory", dir)
-	default:
-		entries, err := os.ReadDir(dir)
-		if err != nil {
-			return err
-		}
-		if len(entries) != 0 {
-			return fmt.Errorf("project directory %s is not empty", dir)
-		}
-	}
-
-	files := []struct {
-		name string
-		body string
-	}{{"project.yaml", defaultProjectYAML}, {"design.yaml", defaultDesignYAML}, {"sweep.yaml", defaultSweepYAML}}
-	created := make([]string, 0, len(files))
-	for _, file := range files {
-		path := filepath.Join(dir, file.name)
-		handle, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
-		if err != nil {
-			rollbackProjectInit(created, dir, createdDir)
-			return err
-		}
-		_, writeErr := io.WriteString(handle, file.body)
-		closeErr := handle.Close()
-		if writeErr != nil || closeErr != nil {
-			os.Remove(path)
-			rollbackProjectInit(created, dir, createdDir)
-			if writeErr != nil {
-				return writeErr
-			}
-			return closeErr
-		}
-		created = append(created, path)
-	}
-	return nil
-}
-
-func rollbackProjectInit(paths []string, dir string, createdDir bool) {
-	for _, path := range paths {
-		_ = os.Remove(path)
-	}
-	if createdDir {
-		_ = os.Remove(dir)
-	}
+	return study.CreateStarterProject(dir, study.DefaultStarterSweepOptions())
 }
 
 func buildRevision() string {

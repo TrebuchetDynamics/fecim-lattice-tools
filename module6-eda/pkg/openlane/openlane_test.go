@@ -42,7 +42,7 @@ func TestNewManager(t *testing.T) {
 		if m.pdkRoot != "/test/pdk" {
 			t.Errorf("NewManager().pdkRoot = %q, want %q", m.pdkRoot, "/test/pdk")
 		}
-		if m.dockerImage != "ghcr.io/the-openroad-project/openlane:latest" {
+		if m.dockerImage != defaultDockerImage {
 			t.Errorf("NewManager().dockerImage = %q, want default image", m.dockerImage)
 		}
 	})
@@ -83,6 +83,7 @@ func TestGetDockerImageVersion(t *testing.T) {
 		{"ghcr.io/repo/openlane:v1.2.3", "v1.2.3"},
 		{"openlane:2024.01", "2024.01"},
 		{"openlane", "latest"}, // No colon defaults to latest
+		{"repo/openlane:latest@sha256:abcd", "sha256:abcd"},
 	}
 
 	for _, tt := range tests {
@@ -118,6 +119,34 @@ func TestGetPDKSetupInstructions(t *testing.T) {
 }
 
 // TestDefaultConfig tests default configuration creation
+func TestDockerRunResultRecordsPinnedToolchain(t *testing.T) {
+	dir := t.TempDir()
+	docker := filepath.Join(dir, "docker")
+	if err := os.WriteFile(docker, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	manager := &Manager{dockerImage: "example/openlane:stable@sha256:0123456789abcdef"}
+	runner := NewRunner(manager, &Config{TimeoutPlacement: time.Second})
+	result, err := runner.runDockerOpenROAD("design.tcl", t.TempDir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Toolchain != manager.GetDockerImage() {
+		t.Fatalf("result toolchain=%q, want exact image ref %q", result.Toolchain, manager.GetDockerImage())
+	}
+}
+
+func TestDefaultDockerImageIsDigestPinned(t *testing.T) {
+	const digest = "@sha256:832662c878405772fdb759a11daf21c32fd50072be6b6f4305ca377b4650779a"
+	if !strings.HasSuffix(DefaultConfig().DockerImage, digest) {
+		t.Fatalf("default config image %q does not use inspected digest %q", DefaultConfig().DockerImage, digest)
+	}
+	if !strings.HasSuffix(NewManager().GetDockerImage(), digest) {
+		t.Fatalf("default manager image %q does not use inspected digest %q", NewManager().GetDockerImage(), digest)
+	}
+}
+
 func TestDefaultConfig(t *testing.T) {
 	// Save original PDK_ROOT
 	origPDKRoot := os.Getenv("PDK_ROOT")
@@ -148,7 +177,7 @@ func TestDefaultConfig(t *testing.T) {
 		if cfg.TimeoutRouting != 15*time.Minute {
 			t.Errorf("DefaultConfig().TimeoutRouting = %v, want %v", cfg.TimeoutRouting, 15*time.Minute)
 		}
-		if cfg.DockerImage != "ghcr.io/the-openroad-project/openlane:latest" {
+		if cfg.DockerImage != defaultDockerImage {
 			t.Errorf("DefaultConfig().DockerImage = %q, want default", cfg.DockerImage)
 		}
 	})

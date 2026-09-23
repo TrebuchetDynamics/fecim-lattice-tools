@@ -5,7 +5,10 @@ import (
 	"math"
 )
 
-const LevelCalibrationMethodLKQuasiStatic = "LK quasi-static simulation"
+const LevelCalibrationMethodUniformFieldSpacing = "uniform field-spacing estimate"
+
+// Deprecated: this label previously overstated the uniform field-spacing estimate.
+const LevelCalibrationMethodLKQuasiStatic = LevelCalibrationMethodUniformFieldSpacing
 
 // LevelCalibrationInput describes the UI-neutral inputs for simulated level calibration.
 type LevelCalibrationInput struct {
@@ -35,9 +38,9 @@ type LevelCalibrationResult struct {
 	DescendingMonotonic bool
 }
 
-// CalibrateLevelsLK computes a deterministic, UI-neutral simulated level mapping
-// using the same LK-oriented material path as the default hysteresis viewmodel.
-func CalibrateLevelsLK(input LevelCalibrationInput) (LevelCalibrationResult, error) {
+// EstimateUniformLevelFields computes a deterministic field-spacing estimate
+// scaled by the material coercive field. It does not simulate LK switching.
+func EstimateUniformLevelFields(input LevelCalibrationInput) (LevelCalibrationResult, error) {
 	if input.Material == nil {
 		return LevelCalibrationResult{}, fmt.Errorf("level calibration: material is required")
 	}
@@ -86,7 +89,7 @@ func CalibrateLevelsLK(input LevelCalibrationInput) (LevelCalibrationResult, err
 		LevelCount:          input.LevelCount,
 		TargetRangeFrac:     input.TargetRangeFrac,
 		TemperatureK:        input.TemperatureK,
-		Method:              LevelCalibrationMethodLKQuasiStatic,
+		Method:              LevelCalibrationMethodUniformFieldSpacing,
 		AscendingFields:     ascending,
 		DescendingFields:    descending,
 		AscendingMinField:   ascending[0],
@@ -96,6 +99,14 @@ func CalibrateLevelsLK(input LevelCalibrationInput) (LevelCalibrationResult, err
 		AscendingMonotonic:  isMonotonicNonDecreasing(ascending),
 		DescendingMonotonic: isMonotonicNonDecreasing(descending),
 	}, nil
+}
+
+// CalibrateLevelsLK is retained for source compatibility. It estimates uniform
+// field spacing and does not perform an LK simulation.
+//
+// Deprecated: use EstimateUniformLevelFields.
+func CalibrateLevelsLK(input LevelCalibrationInput) (LevelCalibrationResult, error) {
+	return EstimateUniformLevelFields(input)
 }
 
 func levelCalibrationEffectiveEc(mat *HZOMaterial, temperatureK float64) float64 {

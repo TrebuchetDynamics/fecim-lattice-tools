@@ -20,10 +20,6 @@ import (
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
-func maybeDispatchSubcommand(args []string) (bool, int) {
-	return runSubcommandDispatch(args, os.Stdout, os.Stderr)
-}
-
 func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) {
 	if len(args) == 0 {
 		return false, 0
@@ -37,7 +33,7 @@ func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) 
 		return false, 0
 	}
 	if err := dispatchSubcommandWithWriters(args, stdout, stderr); err != nil {
-		fmt.Fprintln(stderr, err)
+		_, _ = fmt.Fprintln(stderr, err)
 		printRootUsage(stderr)
 		return true, 1
 	}
@@ -73,18 +69,20 @@ func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) erro
 		return runExperimentSubcommand(args[1:], stdout, stderr)
 	case "report":
 		return runReportSubcommand(args[1:], stdout, stderr)
+	case "export":
+		return runExportSubcommand(args[1:], stdout, stderr)
 	default:
 		return fmt.Errorf("unknown subcommand %q", args[0])
 	}
 }
 
 func printHysteresisUsage(fs *flag.FlagSet, out io.Writer) {
-	fmt.Fprintln(out, "FeCIM Hysteresis")
-	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Usage:")
-	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis gui")
-	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis --headless --engine lk")
-	fmt.Fprintln(out)
+	_, _ = fmt.Fprintln(out, "FeCIM Hysteresis")
+	_, _ = fmt.Fprintln(out)
+	_, _ = fmt.Fprintln(out, "Usage:")
+	_, _ = fmt.Fprintln(out, "  fecim-lattice-tools hysteresis gui")
+	_, _ = fmt.Fprintln(out, "  fecim-lattice-tools hysteresis --headless --engine lk")
+	_, _ = fmt.Fprintln(out)
 	previous := fs.Output()
 	fs.SetOutput(out)
 	fs.PrintDefaults()
@@ -231,6 +229,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  project            initialize or validate a research-design project")
 	fmt.Fprintln(w, "  experiment         run a reproducible design sweep")
 	fmt.Fprintln(w, "  report             regenerate reports from committed runs")
+	_, _ = fmt.Fprintln(w, "  export             export one verified successful run to EDA formats")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Examples:")
 	fmt.Fprintln(w, "  fecim-lattice-tools --module crossbar")
@@ -239,6 +238,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools circuits cli -all")
 	fmt.Fprintln(w, "  fecim-lattice-tools eda cli -mode=compute -rows=128 -cols=128")
 	fmt.Fprintln(w, "  fecim-lattice-tools experiment run examples/research-design-workbench -workers 2")
+	_, _ = fmt.Fprintln(w, "  fecim-lattice-tools export examples/research-design-workbench -run RUN_ID")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --download")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --doi 10.1002/adma.201404531 --download")
 	fmt.Fprintln(w, "  fecim-lattice-tools research rebuild")

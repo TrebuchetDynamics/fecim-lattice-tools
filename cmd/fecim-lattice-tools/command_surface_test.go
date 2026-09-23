@@ -41,7 +41,8 @@ func TestReleasedCommandSurfaceDocumentsResearchDesignWorkbench(t *testing.T) {
 		"project validate",
 		"experiment run",
 		"report generate",
-		"literature-calibrated pre-silicon",
+		"simulation-only research and design workbench",
+		"simulation estimates",
 	}
 	for _, name := range paths {
 		body, err := os.ReadFile(filepath.Join(root, name))
