@@ -2037,5 +2037,5 @@ func main() {
 
 - [README.md](../../README.md) - Project overview
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
-- [status.md](../../status.md) - Project status
+- [status.md](status.md) - Project status
 - [docs/research/honesty-audit.md](../research/honesty-audit.md) - Accuracy and honesty audit

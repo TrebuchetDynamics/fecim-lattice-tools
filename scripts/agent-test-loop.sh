@@ -107,7 +107,7 @@ while true; do
     echo "  - Increase test coverage for untested packages"
     echo "  - Add edge case tests for physics functions"
     echo "  - Profile hot paths (go test -bench=.)"
-    echo "  - Review TODO.md for next priority item"
+    echo "  - Review docs/internals/TODO.md for next priority item"
   else
     echo "==========================================="
     echo "  ✗ ISSUES FOUND"

@@ -261,8 +261,8 @@ DOCS_ROOT = [
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "AGENTS.md",
-    "TODO.md",
-    "status.md",
+    "docs/internals/TODO.md",
+    "docs/internals/status.md",
 ]
 
 # ── Phase 13: Paper topic summaries (by-topic READMEs) ──

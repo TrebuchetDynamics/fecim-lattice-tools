@@ -18,9 +18,9 @@
 | Existing deferred work     | 8     | Historical prerequisite-blocked items remain in the deferred section below                                                             |
 | Completed archive          | ~260+ | Historical work remains below; counts are not release evidence                                                                         |
 
-**Authoritative recovery roadmap:** [`docs/internals/audits/2026-09-01-technical-recovery-roadmap.md`](docs/internals/audits/2026-09-01-technical-recovery-roadmap.md)
+**Authoritative recovery roadmap:** [`docs/internals/audits/2026-09-01-technical-recovery-roadmap.md`](audits/2026-09-01-technical-recovery-roadmap.md)
 
-**Executable Phase 1 plan:** [`docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md`](docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md)
+**Executable Phase 1 plan:** [`docs/internals/superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md`](superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md)
 
 ---
 
@@ -271,7 +271,7 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
-**Scientific accuracy**: All claims must be verified per [`docs/research/honesty-audit.md`](docs/research/honesty-audit.md).
+**Scientific accuracy**: All claims must be verified per [`docs/research/honesty-audit.md`](../research/honesty-audit.md).
 
 ---
 

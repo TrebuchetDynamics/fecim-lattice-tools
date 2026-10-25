@@ -5,7 +5,7 @@ package peripherals
 //
 // Inspired by CrossSim's IADC hierarchy (SAR, ramp, pipeline, cyclic, quantizer).
 // Current implementation: *ADC (flash ADC, optionally with SAR noise model).
-// Future implementations (see Phase 9 of shared-refactor-plan.md):
+// Future implementations (see Phase 9 of docs/internals/architecture/shared-refactor-plan.md):
 //   - SarADC      — successive-approximation; best accuracy/power tradeoff
 //   - PipelineADC — high throughput for column-parallel readout
 //   - RampADC     — simplest, lowest area, worst speed

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/check-architecture.sh
-# Enforces the 7 architectural rules from shared-refactor-plan.md.
+# Enforces the 7 architectural rules from docs/internals/architecture/shared-refactor-plan.md.
 # Exit code 0 = passing, 1 = violations found.
 #
 # Usage:
