@@ -1327,3 +1327,101 @@ After this plan is green:
 
 1. Write a Fyne workflow plan using `experiment.Run`, `experiment.Analyze`, and persisted report DTOs; it must include UI-thread safety, cancellation, and CLI/Fyne run-ID parity.
 2. Write a selected-run export plan that maps one immutable successful run into existing Module 6 compiler/export types without rerunning models.
+
+## Accepted lifecycle reliability frontier
+
+Status: Accepted
+
+### Authority and project model — discovery 2026-10-25
+
+This is **planner-derived engineering work inside the approved core cancellation/results contract**, not a new product strategy or authority to execute. Sources of intent: the [core architecture](../specs/2026-07-19-research-design-workbench-architecture-design.md)'s concurrency/failure contracts and the user's approval of requested-versus-finished cancellation and result-bearing completion messages. Standalone Plan For Me authorizes saving this batch only. **No implementation, worker dispatch, services, commits or push.** Written browser-design approval and scientific/publication approval are not inferred.
+
+Product: simulation-only FeCIM study software for researchers, graduate students and device engineers. Journeys: define/validate bundles; execute/reuse immutable runs; analyze feasibility/Pareto/evidence; report/export. Go owns scientific state; CLI/Fyne consume its headless operations. The static marketing site is separate. The proposed browser client is not implemented by this plan.
+
+### Evidence, goal classes and existing backlog
+
+Baseline: HEAD `816d17c7`, plus the dirty working tree inspected 2026-10-25. Extensive staged, unstaged and untracked edits belong to existing work; HEAD is not a content fingerprint for them. Historic receipts are not rerun results.
+
+| Requirement / goal | Classification and evidence | Disposition |
+|---|---|---|
+| Deterministic core, immutable committed records, cancellation/resume | DOCUMENTED: core architecture; OBSERVED: experiment runner/store/analysis and serial cancellation/reuse test | Implemented core with source-level cancellation-delivery risk; partial-result reconciliation below is a bounded engineering repair. |
+| Retaining available study results on error | OBSERVED: `workbench/study/study.go:184-211` returns empty outcome on runner/report error | Partially implemented; new `T-006-d5e490fd`. Source-observed, not yet reproduced by a new test. |
+| Truthful Fyne terminal status/counts | DOCUMENTED: approved completion/cancellation additions; OBSERVED: `workbench_fyne.go:95-140,220-234,264-269` drops error outcomes and classifies errors from context state | New `T-005-2f8387e5`, dependent on typed study availability. |
+| Recovery Phases 1–2, launcher/log retention, RDW-UI-01 and RDW-EDA-01 | DOCUMENTED: current legacy backlog and recovery roadmap say done/done locally; OBSERVED: current shared launcher, loader, study and export source | Do not duplicate implementation or close historical work. Current full verification UNKNOWN in this pass. |
+| `TR-ARCH-02` / `TR-ARCH-03` | DOCUMENTED: legacy UI seam needs design checkpoint; electrical solver queued | Existing IDs retained, outside this frontier. |
+| `TR-DOC-01` / `TR-METRIC-01` | DOCUMENTED: legacy backlog; OBSERVED: roadmap's register has queued entries later marked done locally | Known drift, existing owners/IDs retained; lower-priority than truthful runtime outcomes. |
+| `TR-LICENSE-01` | DOCUMENTED: owner/legal decision required | Remains owner-gated; no licensing assertion or acquisition. |
+| Browser foundations | OBSERVED: concurrently created `BWC-FOUNDATIONS` goal, tasks T-001..T-004 and [their plan](2026-10-25-browser-core-prerequisites.md) | Reuse existing root/progress/speech contracts. T-004 was narrowed during this pass to progress forwarding only; it is NOT the partial-result producer. |
+| HZO reference work | OBSERVED: concurrent `HZO-REF` goal/tasks and their source owner | Preserve untouched. Earlier research stop/rights/scientific approvals are not lifted by this lifecycle plan. No scholarly APIs or claim repairs here. |
+| Browser views, YAML patches/ETags, compare and plots | DOCUMENTED: [browser design](../specs/2026-10-25-accessible-browser-workbench-design.md) and [12 Orca scripts](../specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md) | Approved direction, consolidated written design awaiting review; not this execution frontier. |
+| Canonical queue | OBSERVED: prepare API 4; initially NO_STORE, then a concurrent pass created the store; no active repository runner reported | Re-read/reconcile rather than duplicate. This pass adds one goal and two tasks only; legacy TODO bytes/history are not migrated or overwritten. |
+
+High confidence applies to inspected control flow, not a new runtime measurement. **No product tests, race tests or manual Orca tasks were run in this pass.** Another planner's baseline notes remain attributed to that planner.
+
+### Findings and chosen design
+
+1. In `workbench/experiment/runner.go:106-121`, cancellation can win the outcome-send select after `storage.commit`. **INFERRED risk:** a settled disk record can be absent from the returned summary. Existing serial cancellation/reuse coverage does not establish absence of that concurrent case. The study repair must reconcile persisted expected IDs, not assume a returned summary inventories every settled record.
+2. `study.Run` discards partial summaries on runner errors and complete computed outcomes on report-write errors. Preserve results **alongside** errors; never return nil merely to expose partial data.
+3. The Fyne simulation callback returns empty details on study errors. Generic terminal handling uses `ctx.Err()` instead of the operation error. Retain the requested phase; classify the terminal outcome from the returned error and render actual Go-owned results.
+4. A zero map lookup cannot distinguish missing analysis from legitimate zeros. This matters for integrity failures and complete compute followed by report failure. An explicit additive, in-memory availability contract is required.
+
+**Planner's calls:** fix the existing pipeline; no browser service/new runtime/database. Preserve public `study.Run` and Fyne constructor signatures, immutable artifact schemas/run IDs, scientific numbers and evidence. Add only source-compatible in-memory outcome metadata and a narrow verified exact-ID loader.
+
+Alternatives rejected: frontend-only counts duplicate Go authority; context cancellation is not proof of completed work; treating partial data as success hides failures; a full browser implementation crosses unresolved written-design/transport choices. Using export-only `experiment.LoadRun` for reconciliation rejects legitimate failed records; broad `LoadRuns` lets unrelated old/corrupt directories affect the active sweep.
+
+### Exact producer/consumer contract
+
+New producer `T-006-d5e490fd` adds:
+- `experiment.LoadRunRecord(root, runID) (RunRecord, bool, error)`, a thin wrapper over verified `store.load`. It accepts successful **and failed** committed records; missing records return false. Existing export-only `LoadRun` behavior remains unchanged.
+- `RunOutcome.ResultsState OutcomeResultsState`, with `ResultsUnavailable = "unavailable"`, `ResultsPartial = "partial"`, `ResultsComplete = "complete"`.
+- `RunOutcome.AnalysisAvailable bool`. No persisted manifest/result field is changed.
+
+State conventions:
+- Invalid options/project or no trustworthy result set: unavailable, false; unknown/zero state is treated as unavailable by consumers.
+- Valid empty cancellation snapshot: partial, true, with explicit zero keys from core Analyze.
+- Verified collected subset after runner error: partial, true after successful reconciliation; Pareto/feasibility is explicitly subset-only.
+- Integrity/reconciliation error: retain independently trusted current-sweep records as partial if possible, but false/empty Analysis; unavailable values are not fabricated zeros.
+- All current-sweep points verified/collected: complete, true, **even if report generation later fails**. Return that report error. If cancellation arrives after every point commits, data completeness and terminal operation error remain separate facts.
+
+Derive expected IDs from the expanded active sweep, evaluator version and inputs. Snapshot verified expected IDs before execution for reuse accounting; after runner quiescence reload only expected IDs, union trusted records, retain reuse flags and join integrity errors. Ignore unrelated old records rather than counting them or letting their corruption silently define active-sweep results. Normal reports are not regenerated after runner cancellation/systemic failure. A private evaluator/report-writer injection seam provides deterministic tests; public Run uses real defaults.
+
+Consumer `T-005-2f8387e5` adds private `formatWorkbenchOutcome(study.RunOutcome, error) (status, details string)` in Go-only command code. Read ResultsState/AnalysisAvailable, not missing-map-as-zero. Show trustworthy record totals even when analysis is unavailable; feasible/Pareto values then say unavailable. Mixed cancellation/non-cancellation errors are failures. A nil operation error after a late cancel remains finished. Error text and available results coexist. Fyne retains requested status until its operation returns; widget updates stay on established `fyne.Do` dispatch. No native Orca pass is claimed.
+
+### Saved batch, dependencies and ownership
+
+| ID | Outcome | Placement / actual prerequisite | Expected writes |
+|---|---|---|---|
+| `T-006-d5e490fd` | Preserve/reconcile study outcomes with explicit availability | Now; no dependency | study.go / study_test.go; experiment/load.go / runner_test.go |
+| `T-005-2f8387e5` | Truthful result-bearing Fyne terminal status | Next; depends on T-006's result/availability contract | Fyne adapter; Go-only status helper/test; existing Fyne test; workbench guide |
+
+Both new tasks serve `RDW-LIFECYCLE` (priority 5, focus false). The goal represents partially implemented existing lifecycle behavior, not completed repairs. No task is marked done and no qualification/receipt is invented.
+
+Existing independent Now lanes remain `T-001-6be26d93` (root-scoped loading), `T-002-39b1f21c` (runner progress/accounting), `T-003-81f43547` (Go display/speech). The existing T-002 → T-004 progress dependency remains untouched. T-004's study files overlap T-006; this is merge/review coordination, **not** a semantic dependency. T-002 owns the runner/progress seam; T-006 owns the exact-ID loader and its focused regression. Preserve ordinary merge/review coordination where tests or producer changes meet, without inventing an exclusive resource. No task requires a device/fixed port/account; resource lists are empty.
+
+The new pair has a real one-link dependency: the Fyne consumer cannot infer availability or retain results until the producer exposes them. No closing planning task is needed; the known frontier is fully recorded. Browser expansion stays deferred to written-design review rather than an unbounded planning chain.
+
+### Acceptance, verification and guard
+
+Qualitative target: eliminate lost/misclassified available outcomes while preserving deterministic science and error identity. No performance metric/baseline or artificial numeric target is invented. Future workers use a bounded focused RED/GREEN/refactor cycle, not unlimited autoresearch.
+
+T-006's first RED is `TestRunRetainsPartialOutcome`; its exact-ID loader also gets `TestLoadRunRecordForStudyReconciliation`. They cover cancellation/systemic/report failures, valid empty snapshots, integrity-unavailable analysis, unrelated cache records, reuse identity and success compatibility. T-005 starts with `TestWorkbenchTerminalOutcome`, then deterministic `TestWorkbenchCancellationLifecycle` using a private injected study runner and channel barriers, not sleeps. Exact focused commands are in the task records, all **proposed/unrun**. Go and xvfb-run were located, not qualified by a GUI pass.
+
+Future closeout preserves required package tests, affected race tests, Fyne/display checks and repository `go test ./...` obligations. Do not change golden physics/tolerances or claim an affected-only pass as a full-suite pass. A missing runtime dependency is a reported gate, not permission to install during planning.
+
+Invariants: no changed equations/scientific values/run identity or persisted format; preserve atomic committed records and error identity; no untrusted numerical claims; no overwritten unrelated dirty work; no accessibility/publication certification.
+
+Pre-mortem: lost post-commit summary → exact-ID reconciliation regression; partial data masquerading as success → returned-error/availability cases; missing map values or report errors mislabelled as partial/zero → explicit state and Fyne formatting cases. Any needed prerequisite repair is bounded in the producer's declared loader/study write set.
+
+### Outcome coverage and open choices
+
+This discovery's runtime findings map to T-006 → T-005. Existing progress/root/speech requirements map to T-001..T-004. The approved navigation focus, unit/exponent speech, text conflicts, Go node-tree/no-op editing, 2–4-run comparison, one-stop plots and complete browser announcements retain their exact specification owners and twelve manual tasks; **none is silently claimed delivered by this pair**. Written browser review/transport scope, legal rights and final scientific-source decisions remain owner gates, not dependencies artificially blocking these core repairs.
+
+### Handoff, concurrency and check results
+
+Task/goal paths: `tasks/goals/RDW-LIFECYCLE.md`, `tasks/items/T-006-d5e490fd.md`, `tasks/items/T-005-2f8387e5.md`; saved only through supported `autowork tasks` commands. Existing other IDs/contracts/ranks were preserved.
+
+During discovery a concurrent queue appeared. An initially created lifecycle goal temporarily had focus; this pass removed its own focus and placed its priority after existing goals. A first attempt to reuse T-004 was invalidated when its owning planner narrowed it to progress forwarding and explicitly assigned partial repair here. Builder review caught that mismatch before handoff. The current two-task ownership and availability convention resolve it; no duplicate runner/progress task was added. An attempted literal-JSON field update with an extra positional repository argument was refused without a task write; corrected commands used the current directory and fresh record_revision guards.
+
+Builder check: first fresh reviewer identified the concurrent producer-ownership mismatch and absence of an availability signal; both were resolved in the saved records. A second fresh reviewer read the revised records/source and reported **“nothing important left”**, confirming the real T-006 → T-005 dependency and independent T-004 progress lane. This is source/planning review, not execution qualification. Final `autowork tasks validate --worktree .`, source/link/readback and whitespace checks are the handoff checks; their final results are recorded below. All new product checks remain unrun. The existing queue's first Now task remains T-001; this goal's independent next action is T-006's focused failing test **only after separate execution authorization**. No worker/service or commit was started/created, and HEAD-only consumer delivery is not claimed.
+
+Final handoff checks: `autowork tasks validate --worktree .` **PASS** (11 tasks, 3 goals, no drafts; all task records remain pending/uncommitted). Readback/static checks **PASS** for both new task contracts, exact dependency, availability ownership, at most five touched files/three acceptance criteria, empty resources/live denied, new-section links and unfocused priority-5 goal. Scoped `git diff --check` **PASS**. HEAD remained `816d17c7`. These receipts qualify planning consistency only; production/GUI/race/Orca checks remain proposed/unrun. The required planning commit is intentionally not made because the user's explicit no-commit restriction takes precedence.

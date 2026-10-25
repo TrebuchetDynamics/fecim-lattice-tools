@@ -3,6 +3,8 @@
 Date: 2026-07-19
 Status: Approved for implementation planning
 
+> **2026-10-25 browser-client companion (design only):** The [accessible browser workbench design](2026-10-25-accessible-browser-workbench-design.md) consolidates the approved table-first direction and seven accessibility/editing additions. Its [numbered Orca acceptance tasks](2026-10-25-accessible-browser-workbench-orca-acceptance.md) are unexecuted human gates. It proposes a local browser adapter as an additive exception to this original first slice's no-HTTP-service non-goal; it does not replace CLI/Fyne or claim an implemented browser client. Written-design review is pending; no implementation or commits are authorized.
+
 ## Context
 
 FeCIM Lattice Tools currently presents itself as an educational simulator, research-validation workspace, EDA toolkit, and public showcase. That breadth obscures the primary product and leaves the seven application modules as separate destinations rather than parts of one reproducible design workflow.
