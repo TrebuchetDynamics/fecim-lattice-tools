@@ -59,7 +59,7 @@ func TestScreenshotterFailureStopsAutomaticDisplay(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, binary, "-out", outDir, "-only", only)
-			cmd.Env = append(os.Environ(), "DISPLAY=", "WAYLAND_DISPLAY=", "PATH="+binDir+":"+os.Getenv("PATH"), "FECIM_TEST_XVFB_PID="+pidFile, "FECIM_TEST_REAL_XVFB="+xvfb)
+			cmd.Env = append(os.Environ(), "DISPLAY=", "WAYLAND_DISPLAY=", "PATH="+binDir+":"+os.Getenv("PATH"), "FECIM_TEST_XVFB_PID="+pidFile, "FECIM_TEST_REAL_XVFB="+xvfb, "FECIM_DISABLE_CALIBRATION_SAVE=1")
 			output, err := cmd.CombinedOutput()
 			if ctx.Err() != nil {
 				t.Fatalf("command timed out: %s", output)
