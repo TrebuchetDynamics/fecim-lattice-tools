@@ -16,9 +16,9 @@ FeCIM Lattice Tools is a **simulation-only research and design workbench** for f
 > [!IMPORTANT]
 > Outputs are simulation estimates—not measured silicon, foundry sign-off, or proof that a fabricated device will meet a reported metric. Every quantitative result must retain its model, assumptions, evidence level, and source run.
 
-## Proof before promises
+## Reproducibility demonstration
 
-The checked-in HZO example expands three parameters into eight immutable runs. On the current models it produces six feasible points and one Pareto point:
+The checked-in HZO example expands three parameters into eight immutable runs. On the current models it produces six feasible points and one Pareto point. **This demonstrates repeatable execution and run reuse—not physics validation, hardware performance, or an experimentally established optimum.** Feasibility and Pareto status are relative to the example’s configured constraints, objectives, and simplified models:
 
 ```console
 $ go run ./cmd/fecim-lattice-tools experiment run /tmp/fecim-study \
@@ -220,6 +220,10 @@ web/                    separate static Astro project site
 - **Understand:** [Architecture](./docs/internals/architecture/ARCHITECTURE.md) · [Configuration](./docs/internals/config-reference.md) · [Trust boundaries](./docs/guides/trust.md)
 - **Validate:** [Testing](./docs/internals/testing/TESTING.md) · [Citation system](./citations/README.md) · [Honesty audit](./docs/research/honesty-audit.md)
 - **Build:** [Contributing](./CONTRIBUTING.md) · [EDA integration](./module6-eda/examples/03-openlane-integration/README.md) · [Web project](./web/README.md)
+
+## Citing this software
+
+Citation metadata is provided in [`CITATION.cff`](./CITATION.cff). Until an archived release is published, record the exact Git commit alongside your project bundle and reports. No software DOI or JOSS acceptance is claimed.
 
 ## Contributing
 
