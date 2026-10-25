@@ -1,6 +1,7 @@
 package project
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -25,14 +26,37 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 	if err != nil {
 		return Bundle{}, err
 	}
-	bundle := Bundle{Root: abs}
-	if err := decodeStrict(filepath.Join(abs, "project.yaml"), &bundle.Project); err != nil {
+	projectRoot, err := os.OpenRoot(abs)
+	if err != nil {
+		return Bundle{}, err
+	}
+	defer projectRoot.Close()
+	var citations *os.Root
+	if opts.CitationDir != "" {
+		citations, err = os.OpenRoot(opts.CitationDir)
+		if err != nil {
+			return Bundle{}, err
+		}
+		defer citations.Close()
+	}
+	return LoadRoot(projectRoot, citations)
+}
+
+// LoadRoot reads a bundle using only the supplied directory handles. The caller
+// owns both handles; nil citations skips citation existence checks. Bundle.Root
+// is descriptive metadata, not authority for subsequent filesystem access.
+func LoadRoot(root, citations *os.Root) (Bundle, error) {
+	if root == nil {
+		return Bundle{}, errors.New("project root is required")
+	}
+	bundle := Bundle{Root: root.Name()}
+	if err := decodeRoot(root, "project.yaml", &bundle.Project); err != nil {
 		return Bundle{}, fmt.Errorf("project.yaml: %w", err)
 	}
-	if err := decodeStrict(filepath.Join(abs, "design.yaml"), &bundle.Design); err != nil {
+	if err := decodeRoot(root, "design.yaml", &bundle.Design); err != nil {
 		return Bundle{}, fmt.Errorf("design.yaml: %w", err)
 	}
-	if err := decodeStrict(filepath.Join(abs, "sweep.yaml"), &bundle.Sweep); err != nil {
+	if err := decodeRoot(root, "sweep.yaml", &bundle.Sweep); err != nil {
 		return Bundle{}, fmt.Errorf("sweep.yaml: %w", err)
 	}
 	if bundle.Project.SchemaVersion != 1 || bundle.Design.SchemaVersion != 1 || bundle.Sweep.SchemaVersion != 1 {
@@ -72,19 +96,19 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 		return Bundle{}, errors.New("sweep requires at least one parameter")
 	}
 
-	citations := append([]string(nil), bundle.Project.Citations...)
-	citations = append(citations, inputCitations(bundle.Project.Inputs)...)
-	for _, key := range citations {
+	keys := append([]string(nil), bundle.Project.Citations...)
+	keys = append(keys, inputCitations(bundle.Project.Inputs)...)
+	for _, key := range keys {
 		if !citationRE.MatchString(key) {
 			return Bundle{}, fmt.Errorf("invalid citation key %q", key)
 		}
-		if opts.CitationDir != "" {
-			if _, err := os.Stat(filepath.Join(opts.CitationDir, key+".md")); err != nil {
+		if citations != nil {
+			if _, err := citations.Stat(key + ".md"); err != nil {
 				return Bundle{}, fmt.Errorf("citation %s: %w", key, err)
 			}
 		}
 	}
-	inputs, err := resolveInputs(abs, bundle.Project.Inputs)
+	inputs, err := resolveInputs(root, bundle.Project.Inputs)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -95,21 +119,33 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 	return bundle, nil
 }
 
-func decodeStrict(path string, dst any) error {
-	info, err := os.Stat(path)
+func decodeRoot(root *os.Root, path string, dst any) error {
+	file, err := root.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	info, err := file.Stat()
 	if err != nil {
 		return err
 	}
 	if info.Size() > maxProjectFileBytes {
 		return fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
 	}
-	file, err := os.Open(path)
+	return decodeStrict(file, dst)
+}
+
+func decodeStrict(reader io.Reader, dst any) error {
+	// Bound the actual bytes, too: an opened file can grow after Stat, and YAML
+	// comments/whitespace beyond the limit must not look like a valid EOF.
+	data, err := io.ReadAll(io.LimitReader(reader, maxProjectFileBytes+1))
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	decoder := yaml.NewDecoder(io.LimitReader(file, maxProjectFileBytes+1))
+	if int64(len(data)) > maxProjectFileBytes {
+		return fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(dst); err != nil {
 		return err
@@ -139,22 +175,14 @@ func ValidateDesign(design Design) error {
 	return nil
 }
 
-func resolveInputs(root string, refs []InputRef) ([]ResolvedInput, error) {
+func resolveInputs(root *os.Root, refs []InputRef) ([]ResolvedInput, error) {
 	out := make([]ResolvedInput, 0, len(refs))
 	for _, ref := range refs {
 		clean := filepath.Clean(ref.Path)
 		if filepath.IsAbs(clean) || clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
 			return nil, fmt.Errorf("unsafe input path %q", ref.Path)
 		}
-		resolved, err := filepath.EvalSymlinks(filepath.Join(root, clean))
-		if err != nil {
-			return nil, err
-		}
-		rel, err := filepath.Rel(root, resolved)
-		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			return nil, fmt.Errorf("input escapes project root: %q", ref.Path)
-		}
-		data, err := os.ReadFile(resolved)
+		data, err := root.ReadFile(clean)
 		if err != nil {
 			return nil, err
 		}
