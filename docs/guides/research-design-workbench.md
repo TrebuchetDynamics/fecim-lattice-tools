@@ -82,16 +82,22 @@ Completed successful and model-domain-failed runs are immutable. Repeating an ex
 
 Runtime timestamps and repository revision remain in run provenance but do not change deterministic report content.
 
-### Go runner progress
+### Go runner and study progress
 
-Direct callers of `experiment.Run` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
+Direct callers of `experiment.Run` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Callers of [`study.Run`](../../workbench/study/study.go) can set `study.RunOptions.Progress` to the same channel type; study forwards it unchanged, preserving existing outcome, error, and report behavior. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
 
-Snapshots contain only `total`, `completed`, `reused`, `failed`, and `cancelled` JSON counts. `total` is the expanded candidate count. `completed` includes reused and failed committed points; `reused` and `failed` are overlapping subsets of `completed`. After caller-context cancellation, `cancelled` counts unresolved candidates only once all workers settle. Committed points remain completed, and systemic errors alone do not count unresolved work as cancelled. Notifications do not change run IDs, artifact bytes, or ordered outcomes. This is a runner API, not a CLI or Fyne progress display.
+Snapshots contain only `total`, `completed`, `reused`, `failed`, and `cancelled` JSON counts. `total` is the expanded candidate count. `completed` includes reused and failed committed points; `reused` and `failed` are overlapping subsets of `completed`. After caller-context cancellation, `cancelled` counts unresolved candidates only once all workers settle. Committed points remain completed, and systemic errors alone do not count unresolved work as cancelled. Notifications do not change run IDs, artifact bytes, or ordered outcomes. This is a Go runner/study API, not a CLI or Fyne progress display.
 
 `workbench/experiment/progress_test.go::TestRunProgressCounts` covers count bounds, reuse, settled cancellation, observer backpressure, and artifact/outcome equivalence under different worker counts. Run its headless regression checks with:
 
 ```bash
 CGO_ENABLED=0 go test ./workbench/experiment -run 'TestRunProgressCounts|TestRunWorkerDeterminism|TestRunCancellationPreservesAndReusesCommittedRuns' -count=1
+```
+
+[`TestRunForwardsProgress`](../../workbench/study/study_test.go) covers study-level count forwarding, reuse, model failures, cancellation, cache-error identity, observer backpressure, and caller channel ownership. The existing structured-outcome test guards successful report generation:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/study -run 'TestRunForwardsProgress|TestRunAndGenerateReportUseStructuredStudyOutcome' -count=1
 ```
 
 ## Result States

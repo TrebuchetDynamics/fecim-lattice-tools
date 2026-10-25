@@ -32,6 +32,12 @@ type RunOptions struct {
 	Workers            int
 	CitationDir        string
 	RepositoryRevision string
+
+	// Progress forwards best-effort, nonblocking experiment count snapshots.
+	// Nil disables notifications; even the final snapshot may be dropped.
+	// The caller owns the channel and must not close it during Run; Run never
+	// closes it. The returned outcome/error and committed runs are authoritative.
+	Progress chan<- experiment.ProgressSnapshot
 }
 
 // OutcomeResultsState describes collection completeness, independently of operation errors.
@@ -222,6 +228,11 @@ func run(ctx context.Context, root string, opts RunOptions, evaluate experiment.
 		}
 		_, ok, err := experiment.LoadRunRecord(bundle.Root, id)
 		if err != nil {
+			// Preserve the runner's nonblocking total snapshot on preflight failure.
+			select {
+			case opts.Progress <- experiment.ProgressSnapshot{Total: len(points)}:
+			default:
+			}
 			return outcome, err
 		}
 		ids[i] = id
@@ -233,6 +244,7 @@ func run(ctx context.Context, root string, opts RunOptions, evaluate experiment.
 		EvaluatorVersion:   fecim.EvaluatorVersion,
 		Workers:            opts.Workers,
 		RepositoryRevision: opts.RepositoryRevision,
+		Progress:           opts.Progress,
 	})
 	// Run has joined its workers. Its delivered records are independently
 	// trusted; reload expected IDs to recover commits lost during cancellation.
