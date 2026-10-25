@@ -4,7 +4,7 @@ package literature
 // within ranges reported by cited papers. These range checks establish parameter
 // plausibility only; they do not validate simulated loop shapes or establish
 // predictive accuracy. Curve-level validation is maintained separately in
-// TestModule1_PELoop_LiteratureBacked with provenance and dataset-specific gates.
+// TestModule1_PELoop_ReferenceRegression; synthetic fixtures do not establish experimental agreement.
 
 import (
 	"math"

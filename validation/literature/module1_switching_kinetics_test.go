@@ -35,18 +35,21 @@ import (
 // quasi-static Preisach does not capture true kinetics – only shape.
 
 type switchingKineticsMetrics struct {
-	MaterialID   string  `json:"material_id"`
-	Material     string  `json:"material"`
-	Generated    string  `json:"generated_at"`
-	Ec_MV_cm     float64 `json:"ec_MV_cm"`
-	FracAtEc     float64 `json:"frac_at_ec"`
-	FracAtHalfEc float64 `json:"frac_at_half_ec"`
-	FracAtTwoEc  float64 `json:"frac_at_two_ec"`
-	Monotonic    bool    `json:"monotonic"`
-	LogisticK    float64 `json:"logistic_k"`        // fitted slope (MV/cm)^-1
-	LogisticEc   float64 `json:"logistic_ec_MV_cm"` // fitted midpoint
-	LogisticRMSE float64 `json:"logistic_rmse"`
-	Pass         bool    `json:"pass"`
+	ComparisonKind         string  `json:"comparison_kind"`
+	Evidence               string  `json:"evidence"`
+	ExperimentalValidation bool    `json:"experimental_validation"`
+	MaterialID             string  `json:"material_id"`
+	Material               string  `json:"material"`
+	Generated              string  `json:"generated_at"`
+	Ec_MV_cm               float64 `json:"ec_MV_cm"`
+	FracAtEc               float64 `json:"frac_at_ec"`
+	FracAtHalfEc           float64 `json:"frac_at_half_ec"`
+	FracAtTwoEc            float64 `json:"frac_at_two_ec"`
+	Monotonic              bool    `json:"monotonic"`
+	LogisticK              float64 `json:"logistic_k"`        // fitted slope (MV/cm)^-1
+	LogisticEc             float64 `json:"logistic_ec_MV_cm"` // fitted midpoint
+	LogisticRMSE           float64 `json:"logistic_rmse"`
+	Pass                   bool    `json:"pass"`
 }
 
 // Thresholds for switching kinetics invariants.
@@ -63,7 +66,7 @@ func TestModule1_SwitchingKinetics_Falsification(t *testing.T) {
 		ID  string
 		Mat *sharedphysics.HZOMaterial
 	}{
-		{"park2015_hzo_10nm", sharedphysics.Park2015Fig2aHZO10nm()},
+		{"park2015_synthetic_shape", sharedphysics.Park2015Fig2aHZO10nm()},
 		{"cheema2020_superlattice_5nm", sharedphysics.Cheema2020Fig2cHZOSuperlattice5nm()},
 		{"mdpi2020_hzo_10nm_wakeup", sharedphysics.MDPI2020Fig3aHZO10nmWakeup()},
 	}
@@ -84,6 +87,10 @@ func TestModule1_SwitchingKinetics_Falsification(t *testing.T) {
 		tc := tc
 		t.Run(tc.ID, func(t *testing.T) {
 			m := computeSwitchingKineticsMetrics(t, tc.ID, tc.Mat)
+			m.ComparisonKind, m.Evidence = "reference-regression", "unverified"
+			if tc.ID == "park2015_synthetic_shape" {
+				m.ComparisonKind, m.Evidence = "synthetic-regression", "simulation-default"
+			}
 
 			outPath := filepath.Join(outDir, fmt.Sprintf("module1_switching_kinetics_%s.json", tc.ID))
 			b, _ := json.MarshalIndent(m, "", "  ")

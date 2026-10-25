@@ -185,7 +185,7 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 
 ## 10. Investigation & Planned Enhancements
 
-See `TODO.md` sections:
+See [`docs/internals/TODO.md`](../../internals/TODO.md) sections:
 - **M4-CMOS-01..06**: MOSFET selector, cell footprint, technology scaling, gate capacitance
 - **M6-TECH-01**: Shared TechnologyNode type
 - **M6-POWER-01**: Dynamic power model feeding back into Module 4 displays

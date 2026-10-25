@@ -1,9 +1,12 @@
 {
   "chi2r_pass": "\u003c20 (generous for educational Preisach model)",
-  "description": "Chi-squared goodness-of-fit: Preisach model vs experimental P-E data",
+  "description": "Reference residual diagnostics including synthetic fixtures; not experimental validation",
   "results": [
     {
-      "material": "park2015_hzo_10nm",
+      "material": "park2015_synthetic_shape",
+      "comparison_kind": "synthetic-regression",
+      "evidence": "simulation-default",
+      "experimental_validation": false,
       "doi": "10.1002/adma.201404531",
       "n_points": 61,
       "chi2": 461.658902440349,
@@ -81,5 +84,5 @@
       "pass": false
     }
   ],
-  "sigma_rule": "2% of Ps (digitization uncertainty)"
+  "sigma_rule": "2% of Ps diagnostic scale; not measured uncertainty"
 }

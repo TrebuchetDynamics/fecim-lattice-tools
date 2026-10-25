@@ -137,7 +137,7 @@ Output JSON:
 Module 1, hysteresis:
 
 - generate P-E loop with HZO parameters
-- compare to Park 2015 digitized data
+- compare to independently verified measured data; the current Park-context fixture is synthetic and ineligible for experimental validation
 - compute RMSE
 - verify symmetry of major loop where model assumptions require it
 - verify minor loops stay inside the major loop

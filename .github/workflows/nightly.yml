@@ -21,12 +21,12 @@ jobs:
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Build & vet
@@ -41,12 +41,12 @@ jobs:
       - name: Architecture check
         run: make arch-check
 
-      - name: Literature P-E loop validation (RG-PHY-OBS-01)
+      - name: P-E reference regression (RG-PHY-OBS-01)
         env:
           FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/validation/literature
         run: |
           mkdir -p output/validation/literature
-          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_LiteratureBacked
+          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_ReferenceRegression
 
       - name: Full literature validation suite
         env:

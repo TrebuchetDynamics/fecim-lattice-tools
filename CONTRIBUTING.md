@@ -13,8 +13,8 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     ```
 
 3.  **Install prerequisites**:
-    - Go 1.25+
-    - No CGO graphics stack is required for the default desktop app.
+    - Go 1.26.10+ (the patched minimum in `go.mod`; CI uses the same version)
+    - CGO, a C compiler, and platform graphics development libraries are required for the current default Fyne desktop app; see [installation](docs/guides/installation.md).
     - Vulkan SDK (optional, for high-performance rendering).
     - FFmpeg (optional, for recording).
 

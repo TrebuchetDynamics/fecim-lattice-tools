@@ -209,6 +209,7 @@ func loadCSVLoop(path string) ([]float64, []float64, error) {
 
 func parseCSVLoop(data []byte) ([]float64, []float64, error) {
 	reader := csv.NewReader(bytes.NewReader(data))
+	reader.Comment = '#'
 	reader.FieldsPerRecord = -1
 	rows, err := reader.ReadAll()
 	if err != nil {

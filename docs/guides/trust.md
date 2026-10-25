@@ -25,7 +25,7 @@ This page describes trust boundaries for FeCIM Lattice Tools. It should be updat
 | Area | Status | Boundary |
 |---|---|---|
 | HZO/HfO2 material context | Literature-backed | Parameters and loop comparisons depend on source-specific assumptions and digitized data quality. [claim: hzo-remanent-polarization-range] |
-| Park 2015 P-E loop comparison | In progress | Existing validation infrastructure exists; paper-ready plot and final metric still need promotion. |
+| Park-context P-E shape | Synthetic regression only | The retained shape is not digitized Park data. It cannot establish experimental agreement. BTO extraction is separately excluded; see [correction audit](../research/validation/park-reference-correction.md). |
 | Materlik 2015 coefficient context | Literature-backed | Use exact source-specific presets for quantitative comparisons. [claim: materlik-lgd-coefficients] |
 
 ## Educational-Only Areas

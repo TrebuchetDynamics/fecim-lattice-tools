@@ -10,7 +10,7 @@ func TestLiteratureValidation(t *testing.T) {
 		name string
 		fn   func(*testing.T)
 	}{
-		{name: "TestPreisachLoop_VsPark2015", fn: runPreisachLoopVsPark2015},
+		{name: "TestPreisachLoop_SyntheticAnchors", fn: runPreisachLoopSyntheticAnchors},
 		{name: "TestLKSwitchingTime_VsTrentzsch2016", fn: runLKSwitchingTimeVsTrentzsch2016},
 		{name: "TestConductanceWindow_VsJerry2017", fn: runConductanceWindowVsJerry2017},
 		{name: "TestNLS_VsGuo2018", fn: runNLSVsGuo2018},
@@ -21,13 +21,13 @@ func TestLiteratureValidation(t *testing.T) {
 	}
 }
 
-func TestPreisachLoop_VsPark2015(t *testing.T)         { runPreisachLoopVsPark2015(t) }
+func TestPreisachLoop_SyntheticAnchors(t *testing.T)   { runPreisachLoopSyntheticAnchors(t) }
 func TestLKSwitchingTime_VsTrentzsch2016(t *testing.T) { runLKSwitchingTimeVsTrentzsch2016(t) }
 func TestConductanceWindow_VsJerry2017(t *testing.T)   { runConductanceWindowVsJerry2017(t) }
 func TestNLS_VsGuo2018(t *testing.T)                   { runNLSVsGuo2018(t) }
 func TestCurieWeiss_VsLiterature(t *testing.T)         { runCurieWeissVsLiterature(t) }
 
-func runPreisachLoopVsPark2015(t *testing.T) {
+func runPreisachLoopSyntheticAnchors(t *testing.T) {
 	mat := DefaultHZO()
 	satE := 3.0e8 // 3 MV/cm
 	ps := NewPreisachStack(satE, simpleUniformEverett{sat: satE})
@@ -37,8 +37,8 @@ func runPreisachLoopVsPark2015(t *testing.T) {
 		PLit  float64 // µC/cm²
 	}
 
-	// Approximate anchor points digitized from Park et al. Adv. Mater. 27, 1811 (2015)
-	// for a typical major loop shape in doped HZO films.
+	// Hand-constructed synthetic anchors without verified extraction provenance.
+	// Numerical regression only, not agreement with a published measurement.
 	points := []point{
 		{-3.0, -24.0},
 		{-2.0, -16.0},
@@ -58,7 +58,7 @@ func runPreisachLoopVsPark2015(t *testing.T) {
 		pSimC := ps.Update(E) * mat.Pr
 		pSimUC := pSimC * 100.0 // C/m² -> µC/cm²
 		deltaPct := 100.0 * (pSimUC - p.PLit) / p.PLit
-		t.Logf("E = %.1f MV/cm → P_sim = %.2f µC/cm², P_lit = %.2f µC/cm² (Δ = %+.1f%%)", p.EMVCm, pSimUC, p.PLit, deltaPct)
+		t.Logf("E = %.1f MV/cm → P_sim = %.2f µC/cm², P_synthetic = %.2f µC/cm² (Δ = %+.1f%%)", p.EMVCm, pSimUC, p.PLit, deltaPct)
 		d := pSimUC - p.PLit
 		sumSq += d * d
 	}
@@ -68,7 +68,7 @@ func runPreisachLoopVsPark2015(t *testing.T) {
 	norm := rms / prUC
 	t.Logf("RMS error = %.3f µC/cm² (%.2f%% of Pr = %.2f µC/cm²)", rms, norm*100.0, prUC)
 	if norm >= 0.10 {
-		t.Fatalf("Preisach-vs-Park RMS = %.2f%% of Pr, want < 10%%", norm*100.0)
+		t.Fatalf("Preisach synthetic-anchor RMS = %.2f%% of Pr, want < 10%%", norm*100.0)
 	}
 }
 

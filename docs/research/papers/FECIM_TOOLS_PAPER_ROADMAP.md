@@ -80,7 +80,7 @@ docs/paper/
     fig06_eda_workflow.png
     source/
   data/
-    park2015_hysteresis.csv
+    future_verified_measurement.csv
     validation_results.json
     README.md
   tables/
@@ -202,7 +202,7 @@ Use a three-tier validation strategy:
 Planned subsections:
 
 - validation methodology and reproducibility statement
-- comparison to published hysteresis data, including Park 2015 HZO where provenance is documented
+- comparison to published hysteresis data, only after independently verifying measurement extraction; current Park-context synthetic fixture and quarantined BTO are ineligible
 - KCL conservation for Module 2 crossbars, including the 100-case deterministic random-array gate
 - SPICE/ngspice comparison when available
 - MNIST artifact only when the full training/inference setup and confusion matrix are reproducible
@@ -286,7 +286,7 @@ Figure captions must be self-contained: describe the data, method, threshold, re
 
 - finish validation folder gaps
 - promote Module 2 KCL report into paper data
-- generate Park 2015 overlay only from documented provenance
+- independently digitize and verify Park measurements before an experimental overlay; never substitute the synthetic reference
 - generate first validation figures
 - compute metrics for tables
 - commit: `docs(paper): add validation artifacts`

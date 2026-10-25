@@ -9,7 +9,7 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// Gap 7: Preisach FORC validation against measured / literature data
+// Preisach FORC numerical/qualitative regression checks; HZO targets are synthetic.
 // ---------------------------------------------------------------------------
 
 // forcDensityPoint stores a single FORC density sample in coercivity-interaction

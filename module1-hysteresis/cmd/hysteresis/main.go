@@ -27,7 +27,6 @@ import (
 	"fecim-lattice-tools/shared/cli"
 )
 
-
 func getMaterial(name string) *ferroelectric.HZOMaterial {
 	switch name {
 	case "fecim":

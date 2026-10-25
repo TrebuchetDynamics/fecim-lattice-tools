@@ -98,7 +98,7 @@ func TestLoadCSVLoopRejectsMalformedRows(t *testing.T) {
 }
 
 func TestRunCalibratePreisachWritesProvenancedJSONArtifact(t *testing.T) {
-	input := filepath.Join("..", "..", "validation", "literature", "data", "park2015_fig2a_hzo_10nm.csv")
+	input := filepath.Join("..", "..", "validation", "literature", "data", "park2015_synthetic_shape.csv")
 	output := filepath.Join(t.TempDir(), "calibration.json")
 	var stdout, stderr bytes.Buffer
 	code := runCalibratePreisach([]string{"-csv", input, "-preset", "default_hzo", "-out", output}, &stdout, &stderr)
@@ -174,7 +174,7 @@ func TestCalibrationArtifactDoesNotOverwriteExistingFile(t *testing.T) {
 	if err := os.WriteFile(path, original, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	input := filepath.Join("..", "..", "validation", "literature", "data", "park2015_fig2a_hzo_10nm.csv")
+	input := filepath.Join("..", "..", "validation", "literature", "data", "park2015_synthetic_shape.csv")
 	if err := writeCalibrationArtifact(path, input, "default_hzo", calibrationFit{}, []byte("input")); err == nil {
 		t.Fatal("writing over an existing artifact unexpectedly succeeded")
 	}

@@ -14,9 +14,9 @@ import (
 
 // LK sub-step sizing constants (package scope so lkSubStepSize is unit-testable).
 const (
-	dtNominal     = 1e-4 // 0.1ms nominal physics step (good for ≤200 Hz waveforms)
-	dtMin         = 1e-6 // 1µs minimum near the coercive field (Ec proximity)
-	ecProximityFrac = 0.1 // |E−Ec| < ecProximityFrac×Ec triggers dtMin
+	dtNominal       = 1e-4 // 0.1ms nominal physics step (good for ≤200 Hz waveforms)
+	dtMin           = 1e-6 // 1µs minimum near the coercive field (Ec proximity)
+	ecProximityFrac = 0.1  // |E−Ec| < ecProximityFrac×Ec triggers dtMin
 )
 
 // lkSubStepSize returns the physics sub-step size for the LK adaptive stepping loop.

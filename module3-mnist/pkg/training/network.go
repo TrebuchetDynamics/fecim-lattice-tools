@@ -229,7 +229,6 @@ func (n *MNISTNetwork) forwardOutput(hidden []float64) []float64 {
 	return output
 }
 
-
 // Evaluate computes accuracy on a dataset.
 func (n *MNISTNetwork) Evaluate(images [][]float64, labels []int) float64 {
 	correct := 0

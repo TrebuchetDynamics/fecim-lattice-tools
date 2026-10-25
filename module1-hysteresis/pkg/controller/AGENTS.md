@@ -95,4 +95,4 @@ cd /home/xel/git/fecim-lattice-tools && go build -o /tmp/hysteresis-stress ./mod
 - `writer_extended_test.go` — Extended write tests beyond golden
 - `writer_stress_test.go` — Extreme overshoot regression offline tool
 - `AGENTS.md` — This agent file for overshoot coordination
-- `CONTEXT.md` — Physics context and workflow rules
+- `docs/internals/CONTEXT.md` — Physics context and workflow rules

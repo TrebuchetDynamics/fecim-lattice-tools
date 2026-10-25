@@ -339,4 +339,3 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 		}
 	})
 }
-

@@ -2,13 +2,27 @@
 
 > **Note:** This file was previously located at `docs/comparison/HONESTY_AUDIT.md`. It has moved to `docs/research/honesty-audit.md`.
 
-**Version:** 4.2 | **Date:** 2026-03-05 | **Status:** Active (verified + unverified tagged)
+**Version:** 4.3 | **Date:** 2026-10-25 | **Status:** Active (verified + unverified tagged)
 
 ---
 
 ## Summary
 
 This repository is **simulation-only**. External scientific claims must be explicitly verified before being presented as facts. If a claim is not listed in **Verified Claims** below, treat it as **unverified** or **assumed** and label it accordingly.
+
+---
+
+## Corrected claims — 2026-10-25
+
+**Park reference correction:** the former `park2015_fig2a_hzo_10nm.csv` was described as a digitized Park 2015 loop and used in literature-agreement/calibration wording. That provenance is not established. It is now `validation/literature/data/park2015_synthetic_shape.csv`, labeled **synthetic regression data**, with a provenance header and sidecar. Numeric samples are unchanged. The related generator is model-based; its exact historical revision is unknown, and today's generator does not reproduce the polarization samples exactly. Do not describe a small residual as measured Park agreement.
+
+A distinct illustrative JSON, formerly `validation/testdata/literature/park_2015_hzo_pe_loop.json`, also claimed published Figure 2a data. It is now explicitly synthetic/non-experimental numerical-fit regression data with unverified historical origin, named `park2015_synthetic_calibration_shape.json`. Its tanh-fit test and physics-realism audit no longer claim published HZO agreement; its origin is not assumed identical to the CSV.
+
+Corrected consumers include fitting tests, legacy preset display names/comments, FORC targets, P–E and chi-squared reports, committed regression artifacts, citation notes, guides, and both manuscript drafts. Derived artifacts explicitly distinguish numerical regression success from experimental validation. Genuine scalar literature-range checks are separate plausibility checks, not authentication of the synthetic curve.
+
+A separate Park figure-metrics JSON had unsupported extraction provenance and different scalar values; it is **unverified**, not presumed identical to the synthetic CSV, and is quarantined outside experimental-data ingestion. The BTO pixel-extracted trace has large within-branch jumps and is **excluded pending independent re-digitization**. Its numerical samples are retained unchanged; smoothing is not an acceptable correction.
+
+See [the full inventory and evidence boundary](validation/park-reference-correction.md). No experimental validation claim is reinstated by these corrections.
 
 ---
 
@@ -84,7 +98,7 @@ Legacy paths (archived, do not use):
 
 This section documents which internal simulator parameters have been systematically compared against published measured data, and which still lack such comparison.
 
-### Validated Against External Data
+### Literature-context scalar checks (not independent curve validation)
 
 | Parameter   | Preset        | Our Value    | Literature Range | Source DOI                 | Method      |
 | ----------- | ------------- | ------------ | ---------------- | -------------------------- | ----------- |
@@ -115,7 +129,7 @@ Test suite: `validation/literature/external_benchmarks_test.go`
 
 - **Range check**: Simulator value must fall within the minimum--maximum spread reported in the cited paper. This is the weakest form of validation but confirms non-divergence.
 - **Exact match**: Simulator value must match the published value within floating-point tolerance (relative error < 1e-6). Used for coefficients taken directly from a paper.
-- **RMSE**: Root mean squared error against digitized experimental curves (used by existing `TestExperimentalDataValidation`).
+- **RMSE**: A residual measure whose interpretation depends on source provenance. RMSE against the Park synthetic fixture is regression-only, not experimental agreement. The unsupported Park scalar JSON and disputed BTO trace are excluded; remaining experimental-data checks require their own source review.
 
 Full benchmark reference: `docs/research/validation/external/external-benchmarks.md`
 

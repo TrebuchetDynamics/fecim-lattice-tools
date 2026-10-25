@@ -56,6 +56,11 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+// Return before exiting so deferred display cleanup runs on every error path.
+func run() int {
 	outDir := flag.String("out", "cmd/fecim-lattice-tools/testdata/screenshots", "output directory for screenshots")
 	sizeW := flag.Int("w", 1200, "window width")
 	sizeH := flag.Int("h", 800, "window height")
@@ -71,7 +76,7 @@ func main() {
 	cleanupDisplay, err := ensureDisplayForCapture(*autoXvfb, *xvfbScreen, *xvfbDisplayStart, *xvfbDisplayEnd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to initialize graphical display: %v\n", err)
-		os.Exit(2)
+		return 2
 	}
 	if cleanupDisplay != nil {
 		defer cleanupDisplay()
@@ -81,7 +86,7 @@ func main() {
 
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create out dir: %v\n", err)
-		os.Exit(2)
+		return 2
 	}
 
 	mods := []struct {
@@ -100,8 +105,23 @@ func main() {
 		{"docs", 900 * time.Millisecond, false, func() (sharedwidgets.EmbeddedApp, error) { return demo7gui.NewEmbeddedDocsApp(), nil }},
 	}
 
+	if *only == "" {
+		// Each Fyne desktop app owns a process-global current driver. Running a
+		// fresh app for every module in this process lets late callbacks from the
+		// previous driver reach the next one and crash inside Fyne's GL loop.
+		// Keep the display, filesystem, and CLI contract here, but isolate each
+		// module's app lifecycle in a child process.
+		for _, m := range mods {
+			if err := runSingleCapture(os.Args[0], *outDir, m.name, *sizeW, *sizeH, *tag, *hysEngine); err != nil {
+				fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
+				return 1
+			}
+		}
+		return 0
+	}
+
 	for _, m := range mods {
-		if *only != "" && m.name != *only {
+		if m.name != *only {
 			continue
 		}
 		fmt.Printf("[screenshotter] capturing %s...\n", m.name)
@@ -115,8 +135,29 @@ func main() {
 		fileBase := m.name + "_" + strings.TrimSpace(*tag)
 		if err := captureOne(*outDir, fileBase, fyne.NewSize(float32(*sizeW), float32(*sizeH)), settle, m.start, *hysEngine, m.create); err != nil {
 			fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
+			return 1
 		}
+		return 0
 	}
+	fmt.Fprintf(os.Stderr, "[screenshotter] unknown module %q\n", *only)
+	return 2
+}
+
+func runSingleCapture(binary, outDir, module string, width, height int, tag, hysEngine string) error {
+	args := []string{
+		"-out", outDir,
+		"-w", strconv.Itoa(width),
+		"-h", strconv.Itoa(height),
+		"-only", module,
+		"-tag", tag,
+		"-hys-engine", hysEngine,
+		"-auto-xvfb=false",
+	}
+	cmd := exec.Command(binary, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+	return cmd.Run()
 }
 
 func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, start bool, hysEngine string, create func() (sharedwidgets.EmbeddedApp, error)) error {

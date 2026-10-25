@@ -208,7 +208,8 @@ func goldenSectionMinimize(a, b float64, f func(float64) float64, maxIter int) (
 }
 
 // LoadPELoopCSV loads a two-column CSV file (E_MV_cm, P_uC_cm2) and converts
-// to SI PEPoints. The first line is treated as a header and skipped.
+// to SI PEPoints. Lines beginning with # are provenance comments; the first
+// non-comment line is treated as the column header and skipped.
 //
 // Unit conversions applied:
 //   - E: MV/cm -> V/m (multiply by 1e8)
@@ -222,6 +223,7 @@ func LoadPELoopCSV(csvPath string) ([]PEPoint, error) {
 	defer f.Close()
 
 	reader := csv.NewReader(f)
+	reader.Comment = '#'
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("parse PE-loop CSV: %w", err)
