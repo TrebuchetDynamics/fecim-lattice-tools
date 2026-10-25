@@ -3,7 +3,7 @@ schema = 1
 id = "HZO-REF-3"
 title = "Independently digitize the published HZO reference markers"
 short = "Digitize published reference markers"
-status = "open"
+status = "done"
 goal = "HZO-REF"
 section = "Next"
 rank = 3000
@@ -16,6 +16,8 @@ scope = "Independently select visible red Ref. marker centres from Kim 2020 Figu
 acceptance = ["Given the committed raw pixel CSV and admitted profile, when regenerated, then loop.csv is byte-identical and profile/pixel/physical hashes and counts agree; TestHZOIndependentDigitization proves the reproducibility contract.", "Given each branch, when validated, then indices/order are consistent, there are at least 10 finite distinct-field markers with both signs of E/P and preserved zero crossings, and invalid coverage is rejected; TestHZOIndependentDigitization proves the structural contract.", "Given this new dataset, when its integrity test runs, then the source ID/hash remains the independently pinned primary source and no old synthetic/unverified sample file is used or rewritten; TestHZOIndependentDigitization proves the input boundary."]
 checks = ["go test ./validation/literature -run '^TestHZOIndependentDigitization$' -count=1"]
 exclusions = ["No changes to existing model equations, coefficients, presets, synthetic/quarantined fixtures or legacy validation counts.", "No unrelated staged/unstaged edits, commits without owner diff approval, dispatch, publication, deployment, credentials, new dependencies, manifests or CI changes."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HZO-REF-3.toml"
 +++
 Sources: docs/research/validation/landing-page-figure-readiness.md#experimental-hzo-evidence-frontier
 
@@ -24,3 +26,4 @@ Consumes: qualified HZO-REF-1 source profile and HZO-REF-2 digitizer. Produces: 
 Next action: write TestHZOIndependentDigitization for missing/unproven new input and record expected RED before adding numeric fixtures. Checks are proposed/unrun. Extract lower branch in ascending E and upper in descending E; disclose that direction is conventional quasi-static assignment, not measured timing. Stop on ambiguous evidence rather than silently changing to another source or making up points.
 
 Non-automated qualification: independent source-image review must compare markers/calibration against the original before any public measured-data promotion. Automated structure/hash checks do not establish trace fidelity; record actual review evidence, never invented human approval. Required review and public promotion remain existing gates, not new worker authority.
+- Pending live: Independent human source/trace-fidelity qualification against the pinned original Figure 3 raster before public promotion; AI visual review does not replace this gate.

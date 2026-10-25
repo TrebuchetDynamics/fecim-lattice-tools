@@ -1,0 +1,9 @@
+schema = 1
+task = "HZO-REF-3"
+candidate = "731cc67b957585a684f0727b41da8169cd2a3529"
+integration = "6888ab7731d76dc017653ebcedb0f6a4f9350f73"
+tree = "77b40f0286ecf45c0df45817dd1bad12e4e0da23"
+contract_hash = "5496aaddf76126118964d5847970c826bbc7fe199644c3c940477776db984f0e"
+checks = ["<path>", "<path>", "--verify", "<path>", "HZO-REF-3"]
+result = "pass"
+review = "passed"
