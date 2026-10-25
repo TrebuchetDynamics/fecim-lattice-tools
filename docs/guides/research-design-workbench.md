@@ -117,7 +117,11 @@ Evidence levels distinguish `literature-backed`, `experiment-calibrated`, `simul
 
 The evaluator composes existing system and peripheral models using documented defaults and scaling approximations. Its results support exploratory comparison only, not measured hardware claims or foundry sign-off. The literature P–E suite includes provisional model-generated curves and a directly digitized BTO curve with uncertainty-relaxed thresholds; a green suite is not held-out validation of the HZO workbench evaluator. Quantitative design claims require device- and circuit-specific calibration against suitable experimental data and independent validation.
 
-Input files must remain inside the project directory, pass their declared SHA-256 hash, and use recognized evidence labels. YAML rejects unknown fields and non-finite physical values.
+Input files must remain inside the project directory, pass their declared SHA-256 hash, and use recognized evidence labels. YAML rejects unknown fields and non-finite physical values; each YAML file is limited to 1 MiB.
+
+[Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
+
+This boundary covers project loading only. It does not establish confinement for project creation, run storage, reports, or exports.
 
 ## Selected-run EDA export
 
