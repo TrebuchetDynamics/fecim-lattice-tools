@@ -1,1 +1,0 @@
-../../../tools/fecim-skills/fecim-gogpu-migrate/SKILL.md
