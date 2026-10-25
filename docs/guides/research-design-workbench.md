@@ -102,13 +102,31 @@ A patch permits at most 64 changes, with each scalar input limited to 4096 UTF-8
 
 `PreparedConfiguration.Changed()` is false for empty or semantically unchanged patches. These retain the original bytes and revision without encoding, including CRLF, quotes/comments and a missing final newline. Changed candidates preserve comments, ordering and unexposed supported values through YAML nodes; only the edited document may normalize layout. The other two documents remain byte-identical.
 
-This is a Go preparation primitive, not a saver, CLI/GUI editor or browser API. It does not check a revision against later disk changes or provide atomic persistence/concurrency protection. It adds no confinement claim for runs, reports or exports and no native screen-reader qualification.
+Preparation alone performs no persistence or later-disk revision check. The Go save primitive below adds guarded persistence, not a CLI/GUI editor or browser API.
 
 The table-driven `workbench/project/configuration_test.go::TestPrepareConfiguration` covers preparation, preservation and rejection cases. Focused offline regression checks are:
 
 ```bash
 CGO_ENABLED=0 go test ./workbench/project -run 'TestPrepareConfiguration|TestLoad' -count=1
 go test -race ./workbench/project -run 'TestPrepareConfiguration|TestLoadRootConfinement' -count=1
+```
+
+### Go revision-checked configuration saves
+
+[`project.NewConfigurationEditor(root, citations)`](../../workbench/project/configuration_save.go) borrows the same caller-owned roots. Keep them open while the editor is in use, and share **one editor per project handle** among participating saves. `editor.Save(ctx, expectedRevision, document, changes)` applies the preparation rules above and returns `ConfigurationSaveResult{Revision, Changed}`. It changes only the named configuration document; it does not change scientific defaults, run identities or artifacts.
+
+Pass the exact quoted strong revision from `ReadConfiguration`. Even no-ops require it. `ErrRevisionRequired` distinguishes a missing revision; `ErrInvalidRevision` rejects weak, wildcard, unquoted, list and malformed revisions. A stale save returns `*ConfigurationConflict` with `CurrentRevision` and an ordered item for each attempted field: `Path`, literal `Yours`, raw scalar `OnDisk`, `OnDiskAvailable` and `Reason`. Missing, nonscalar or ambiguous on-disk values are unavailable with an explanation, not zero. Review/reapply against a freshly read revision; no force-save bypass is provided. These scalar strings are not yet accessible labels, units or speech forms.
+
+A valid no-op leaves all three files' bytes and modification times unchanged and creates no temporary file. A changed save validates before writing, exclusively creates an unpredictable regular temporary file inside the same root, writes it, preserves the target's permission bits, syncs and closes it, then rechecks all three documents and cancellation immediately before replacing the named file through `root.Rename`. It refuses observed permission changes rather than broadening access. Ownership, ACLs and special mode bits are not preserved. Precommit failures remove only the call's owned temporary file, leaving the original document intact. Successful rename is the commit point: a later cancellation does not turn the committed save into a cancellation error. Callers retain ownership of both handles on success and failure.
+
+The editor mutex serializes participating saves **within that editor only**. Use external coordination or stop other editors while saving: a nonparticipating writer can still change files between the last revision check and rename. This is **not cross-process compare-and-swap**, and reading the three files is not a transactional filesystem snapshot. Replacement behavior is qualified for local Linux filesystems only; no power-loss durability, directory-sync, WASM or other-filesystem guarantee is made. Configuration I/O is root-confined, but this does not establish full confinement for project creation, runs, reports or exports. There is no delivered browser editor, HTTP status mapping or Orca qualification in this primitive.
+
+`workbench/project/configuration_save_test.go::TestSaveConfiguration` covers exact no-op preservation (including CRLF and missing final newline), revision/conflict handling, deterministic concurrent/external edits, root ownership and confinement, persistence faults and commit-point cancellation. Offline checks:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/project -run '^TestSaveConfiguration$' -count=1
+go test -race ./workbench/project -run 'TestSaveConfiguration|TestPrepareConfiguration|TestLoadRootConfinement' -count=1
+CGO_ENABLED=0 go test ./workbench/project -count=1
 ```
 
 ## Run Identity and Reuse
@@ -188,7 +206,7 @@ Input files must remain inside the project directory, pass their declared SHA-25
 
 [Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
 
-This boundary covers project loading only. It does not establish confinement for project creation, run storage, reports, or exports.
+This boundary covers project loading and the configuration preparation/save primitives described above. It does not establish confinement for project creation, run storage, reports, or exports.
 
 ## Selected-run EDA export
 
