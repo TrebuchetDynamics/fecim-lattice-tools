@@ -477,7 +477,6 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 	}
 }
 
-
 // SneakPathAnalysis contains sneak path current analysis results.
 type SneakPathAnalysis struct {
 	// Sneak current map (normalized)

@@ -26,7 +26,6 @@ func (linearSymmetricEverett) Calculate(alpha, beta float64) float64 {
 	return 0.5 * (alpha - beta)
 }
 
-
 func computePolarizationBig(ps *PreisachStack, currentE float64) float64 {
 	prec := uint(256)
 	newF := func(v float64) *big.Float { return new(big.Float).SetPrec(prec).SetFloat64(v) }
