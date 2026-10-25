@@ -18,8 +18,11 @@ func main() {
 }
 
 func run(args []string, stderr io.Writer) error {
+	if len(args) > 0 && args[0] == "compare" {
+		return runCompare(args[1:], stderr)
+	}
 	if len(args) == 0 || args[0] != "digitize" {
-		return fmt.Errorf("usage: pe-reference digitize --profile PATH --pixels PATH --out PATH")
+		return fmt.Errorf("usage: pe-reference digitize --profile PATH --pixels PATH --out PATH; pe-reference compare --profile PATH --data PATH --out-dir PATH")
 	}
 	flags := flag.NewFlagSet("digitize", flag.ContinueOnError)
 	flags.SetOutput(stderr)

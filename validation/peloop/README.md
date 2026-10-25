@@ -47,7 +47,12 @@ Measured polarization is checked for validity but never drives the model. Numeri
 conditioning is not measured wake-up cycling. Constructor temperature/stress are
 not inferred measurement conditions. This protocol does **not** reproduce 10 kHz
 measurement dynamics or wake-up dynamics, and no residual threshold establishes
-success. Independent digitization and reproducible report export are separate work.
+success. The [independent extraction](../literature/data/experimental/kim2020_fig3a_ref_digitized/extraction.md)
+and the offline `pe-reference compare --profile PATH --data PATH --out-dir PATH`
+command now provide a reproducible local comparison bundle. See the
+[report workflow and evidence limits](../../docs/research/validation/landing-page-figure-readiness.md#reproducible-local-hzo-comparison-implemented)
+for prerequisites, JSON/SVG/caption contents, atomic no-replace publication and
+verification. A report is an **unfitted baseline**, not experimental validation.
 
 ## Offline verification
 
