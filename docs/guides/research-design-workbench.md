@@ -93,6 +93,18 @@ Runtime timestamps and repository revision remain in run provenance but do not c
 
 Failures are preserved instead of silently disappearing. Constraints do not turn a valid simulation into an execution failure.
 
+### Go study outcomes
+
+`study.Run` returns a `RunOutcome` alongside its error. Inspect both: cancellation or a systemic execution error can retain verified current-sweep records, and a report-write error retains the computed results.
+
+- `ResultsUnavailable`: no trusted result set, including option, configuration, or initial record-load failures. Treat zero or unknown `ResultsState` values as unavailable too.
+- `ResultsPartial`: a trusted collected subset, possibly empty after cancellation.
+- `ResultsComplete`: all current-sweep points collected, even if a late cancellation or report-write error is returned.
+
+Use `AnalysisAvailable` before reading analysis counts. Valid empty partial results have explicit zero counts. Reconciliation integrity errors retain independently trusted records when possible but leave analysis empty and unavailable; missing counts are not zeros. Partial feasibility and Pareto results describe only the collected subset, not the full experiment.
+
+The study snapshots verified expected IDs before execution and reloads only those IDs after workers settle. Unrelated old runs do not enter the outcome or prevent collection. `experiment.LoadRunRecord` verifies an exact committed successful or failed record and distinguishes absence from corruption; export-only `LoadRun` still rejects failed records. Cancellation and systemic execution errors do not regenerate aggregate reports. These availability fields are in-memory Go API metadata, not persisted scientific schema changes.
+
 ## Reports
 
 Markdown reports include the project model version, run evaluator/revision metadata, input paths and hashes, citation keys, and each metric's model and assumptions.
