@@ -322,4 +322,6 @@ MIT License — see `LICENSE`
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
 
+Full check: env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m
+
 Internal notes moved out of the root: [terminology](docs/internals/CONTEXT.md), [work queue](docs/internals/TODO.md), [historical status](docs/internals/status.md), [shared refactor plan](docs/internals/architecture/shared-refactor-plan.md), and [Fyne notes](docs/internals/gui/fyne-guide/README.md). Keep this file and `CLAUDE.md` at the root for instruction discovery. See [publication readiness](docs/internals/release/research-software-readiness.md) before making release, DOI, or JOSS claims.

@@ -12,11 +12,11 @@ import (
 // at every integer step n → E-field appears frozen. Fix: cap step to T/50=20ns.
 func TestLKSubStepSize_FrequencyAdaptiveCap(t *testing.T) {
 	tests := []struct {
-		name       string
-		freq       float64
-		waveform   WaveformType
-		wantStep   float64
-		desc       string
+		name     string
+		freq     float64
+		waveform WaveformType
+		wantStep float64
+		desc     string
 	}{
 		{
 			name:     "1MHz_sine_capped_to_dtMin",

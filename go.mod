@@ -50,10 +50,10 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
-	github.com/yuin/goldmark v1.7.8 // indirect
-	golang.org/x/image v0.39.0 // indirect
+	github.com/yuin/goldmark v1.7.17 // indirect
+	golang.org/x/image v0.43.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 )

@@ -5,13 +5,13 @@
 - Git
 - Node.js/npm (only for the Astro web landing page)
 
-The default desktop app is the Fyne desktop `Fyne` shell; no C compiler or OpenGL development headers are required for the standard build.
+The Fyne desktop app requires CGO, a C compiler, and native graphics development libraries. See [desktop build dependencies](docs/guides/installation.md#desktop-build-dependencies). This page contains source-build instructions, not an announcement of a published release. See the [release and JOSS readiness checklist](docs/internals/release/research-software-readiness.md) for publication gates.
 
 ### Build & Run
 ```bash
-git clone https://github.com/your-org/fecim-lattice-tools.git
+git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
-CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```
 
