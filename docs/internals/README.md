@@ -29,6 +29,16 @@ Default UI shell: `Fyne`. The live shell currently embeds concrete GUI modules d
 
 ---
 
+## Internal notes and publication preparation
+
+- [Shared terminology](CONTEXT.md)
+- [Work queue and recovery receipts](TODO.md)
+- [Historical status reports](status.md) — dated snapshots, not current verification
+- [Shared refactor plan](architecture/shared-refactor-plan.md)
+- [Fyne research notes](gui/fyne-guide/README.md)
+
+Root `AGENTS.md` and `CLAUDE.md` remain instruction-discovery entry points. The generated adapters in `.claude/`, `.codex/`, and `.opencode/` remain tracked because CI checks them against `tools/fecim-skills/`. Local `.pi/` state and `.vscode/` settings are ignored and no longer tracked. Older plans and status records may mention the former root note locations; the links above are canonical.
+
 ## 📖 Documentation Index
 
 | Document | Purpose | Audience |

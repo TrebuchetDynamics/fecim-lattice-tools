@@ -1,6 +1,6 @@
 # Fyne mega-improvement implementation roadmap
 
-Source inputs: `fyne-guide/improvement-backlog.md`, `module-opportunity-map.md`, `version-and-upgrade-notes.md`, `docs-deep-notes.md`, `github-source-notes.md`.
+Source inputs: `improvement-backlog.md`, `module-opportunity-map.md`, `version-and-upgrade-notes.md`, `docs-deep-notes.md`, `github-source-notes.md`.
 
 This roadmap is sorted from easiest/safest to hardest/highest-risk. Every behavior or dependency change must follow repo TDD policy.
 

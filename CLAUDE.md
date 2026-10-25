@@ -16,7 +16,7 @@
 
 Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualization and simulation. It includes configurable material presets, crossbar models, and an educational EDA pipeline.
 
-**Status**: Education phase (simulation-only). See `status.md`.
+**Status**: Education phase (simulation-only). See [internal status history](docs/internals/status.md). Shared terminology lives in [CONTEXT.md](docs/internals/CONTEXT.md); current priorities and recovery receipts are in [TODO.md](docs/internals/TODO.md).
 
 **Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 

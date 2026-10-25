@@ -156,7 +156,7 @@ Perfect for: Researchers, academics, verification
 ⚠️ Performance comparisons (pending silicon)
 ⚠️ Device parameters (literature ranges)
 
-Full status: See [status.md](../status.md)
+Full status: See [internal status history](internals/status.md)
 
 ---
 
