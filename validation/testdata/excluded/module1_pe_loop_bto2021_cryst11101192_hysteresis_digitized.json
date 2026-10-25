@@ -1,5 +1,8 @@
 {
   "schema_version": "v1",
+  "status": "excluded_pending_redigitization",
+  "experimental_validation": false,
+  "notes": "Historical numerical result preserved for audit only; pass=true below is not accepted validation. Original trace has branch jumps and is excluded.",
   "timestamp_utc": "1970-01-01T00:00:00Z",
   "commit": "reproducible-build",
   "gate": "pr",

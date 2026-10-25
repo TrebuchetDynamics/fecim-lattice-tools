@@ -2,6 +2,8 @@
 
 This directory contains the in-repository LaTeX draft for the FeCIM Lattice Tools tools paper.
 
+A separate [JOSS working draft](joss/README.md) is available for software-publication preparation. It is unsubmitted and has explicit eligibility and author-review blockers.
+
 ## Status
 
 Current status: early scaffold. The draft is intentionally conservative: unsupported numeric claims are described as validation targets or omitted until a reproducible artifact exists.
@@ -9,7 +11,7 @@ Current status: early scaffold. The draft is intentionally conservative: unsuppo
 ## Build
 
 ```bash
-bash docs/paper/build.sh
+bash docs/research/paper/build.sh
 ```
 
 The build script prefers `latexmk`. If `latexmk` is unavailable, it falls back to `pdflatex` plus `bibtex`.
@@ -17,7 +19,7 @@ The build script prefers `latexmk`. If `latexmk` is unavailable, it falls back t
 Output:
 
 ```text
-docs/paper/main.pdf
+docs/research/paper/main.pdf
 ```
 
 ## Source Files
@@ -42,4 +44,4 @@ docs/paper/main.pdf
 
 ## Citation Source Of Truth
 
-The long-term source of truth for bibliography work is [citations/](../../citations/README.md). The current `docs/paper/refs.bib` file is a seed bibliography for the early LaTeX draft; migrate durable source records into `citations/papers/` before relying on them for final paper claims.
+The long-term source of truth for bibliography work is [citations/](../../../citations/README.md). The current `docs/research/paper/refs.bib` file is a seed bibliography for the early LaTeX draft; migrate durable source records into `citations/papers/` before relying on them for final paper claims.

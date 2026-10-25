@@ -37,19 +37,22 @@ import (
 // We use central-difference finite differences on a 25×25 grid of FORC curves.
 
 type forcMetrics struct {
-	MaterialID      string  `json:"material_id"`
-	Material        string  `json:"material"`
-	Generated       string  `json:"generated_at"`
-	Ec_MV_cm        float64 `json:"ec_MV_cm"`
-	Ps_uC_cm2       float64 `json:"ps_uC_cm2"`
-	NegativeFrac    float64 `json:"negative_fraction"` // fraction of ρ < 0 (must be ~0)
-	PeakHc_MV_cm    float64 `json:"peak_hc_MV_cm"`     // peak of ρ in Hc (expect ≈ Ec)
-	PeakHu_MV_cm    float64 `json:"peak_hu_MV_cm"`     // peak of ρ in Hu (expect ≈ 0)
-	Integral_uC_cm2 float64 `json:"integral_uC_cm2"`   // ∫∫ρ dHc dHu (expect ≈ Ps)
-	IntegralErrPct  float64 `json:"integral_err_pct"`
-	HcErrPct        float64 `json:"hc_err_pct"`
-	HuAbsMV_cm      float64 `json:"hu_abs_MV_cm"` // |peak Hu| (expect ≈ 0)
-	Pass            bool    `json:"pass"`
+	ComparisonKind         string  `json:"comparison_kind"`
+	Evidence               string  `json:"evidence"`
+	ExperimentalValidation bool    `json:"experimental_validation"`
+	MaterialID             string  `json:"material_id"`
+	Material               string  `json:"material"`
+	Generated              string  `json:"generated_at"`
+	Ec_MV_cm               float64 `json:"ec_MV_cm"`
+	Ps_uC_cm2              float64 `json:"ps_uC_cm2"`
+	NegativeFrac           float64 `json:"negative_fraction"` // fraction of ρ < 0 (must be ~0)
+	PeakHc_MV_cm           float64 `json:"peak_hc_MV_cm"`     // peak of ρ in Hc (expect ≈ Ec)
+	PeakHu_MV_cm           float64 `json:"peak_hu_MV_cm"`     // peak of ρ in Hu (expect ≈ 0)
+	Integral_uC_cm2        float64 `json:"integral_uC_cm2"`   // ∫∫ρ dHc dHu (expect ≈ Ps)
+	IntegralErrPct         float64 `json:"integral_err_pct"`
+	HcErrPct               float64 `json:"hc_err_pct"`
+	HuAbsMV_cm             float64 `json:"hu_abs_MV_cm"` // |peak Hu| (expect ≈ 0)
+	Pass                   bool    `json:"pass"`
 }
 
 // Thresholds for FORC invariants.
@@ -65,7 +68,7 @@ func TestModule1_FORC_Falsification(t *testing.T) {
 		ID  string
 		Mat *sharedphysics.HZOMaterial
 	}{
-		{"park2015_hzo_10nm", sharedphysics.Park2015Fig2aHZO10nm()},
+		{"park2015_synthetic_shape", sharedphysics.Park2015Fig2aHZO10nm()},
 		{"cheema2020_superlattice_5nm", sharedphysics.Cheema2020Fig2cHZOSuperlattice5nm()},
 	}
 
@@ -85,6 +88,10 @@ func TestModule1_FORC_Falsification(t *testing.T) {
 		tc := tc
 		t.Run(tc.ID, func(t *testing.T) {
 			m := computeFORCMetrics(t, tc.ID, tc.Mat)
+			m.ComparisonKind, m.Evidence = "reference-regression", "unverified"
+			if tc.ID == "park2015_synthetic_shape" {
+				m.ComparisonKind, m.Evidence = "synthetic-regression", "simulation-default"
+			}
 
 			outPath := filepath.Join(outDir, fmt.Sprintf("module1_forc_%s.json", tc.ID))
 			b, _ := json.MarshalIndent(m, "", "  ")

@@ -64,7 +64,8 @@ NEW_DOCS = [
     "docs/4-research/opensource-tools/opensource-crossbar.md",
     # Experimental data (JSON → treat as text)
     "experimental-data/README.md",
-    "experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json",
+    # Park figure-metrics JSON excluded: extraction provenance is unverified.
+    "docs/research/validation/park-reference-correction.md",
     "experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json",
     "experimental-data/hzo/switching-time/jerry2017_iedm_fefet_synapse_switching.json",
     # Key validation Go source (contract tests, literature tests)

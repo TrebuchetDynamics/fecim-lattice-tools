@@ -9,17 +9,20 @@ import (
 )
 
 type peDataset struct {
-	Data struct {
+	ComparisonKind         string `json:"comparison_kind"`
+	ExperimentalValidation *bool  `json:"experimental_validation"`
+	Data                   struct {
 		E []float64 `json:"E_MV_cm"`
 		P []float64 `json:"P_uC_cm2"`
 	} `json:"data"`
 	Derived struct {
-		Pr float64 `json:"Pr_uC_cm2"`
+		Scale float64 `json:"normalization_scale_uC_cm2"`
 	} `json:"derived_values"`
 }
 
-func TestCalibratePreisachToPublishedHZOData_RMSBelow10PercentPr(t *testing.T) {
-	path := filepath.Join("..", "..", "..", "validation", "testdata", "literature", "park_2015_hzo_pe_loop.json")
+// Numerical tanh-fit regression, not a Preisach prediction or a measured-data fit.
+func TestFitSyntheticReference_RMSBelow10PercentScale(t *testing.T) {
+	path := filepath.Join("..", "..", "..", "validation", "testdata", "literature", "park2015_synthetic_calibration_shape.json")
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -27,6 +30,9 @@ func TestCalibratePreisachToPublishedHZOData_RMSBelow10PercentPr(t *testing.T) {
 	var d peDataset
 	if err := json.Unmarshal(b, &d); err != nil {
 		t.Fatal(err)
+	}
+	if d.ComparisonKind != "synthetic-regression" || d.ExperimentalValidation == nil || *d.ExperimentalValidation {
+		t.Fatal("unsupported reference must be explicitly synthetic/non-experimental")
 	}
 
 	bestRMS := math.Inf(1)
@@ -61,10 +67,10 @@ func TestCalibratePreisachToPublishedHZOData_RMSBelow10PercentPr(t *testing.T) {
 		}
 	}
 
-	norm := bestRMS / d.Derived.Pr
-	t.Logf("Calibrated HZO fit: Ps=%.2f uC/cm^2 Ec=%.3f MV/cm Delta=%.3f MV/cm gamma=%.2f RMS=%.3f uC/cm^2 (%.2f%% of Pr=%.2f)",
-		bestPs, bestEc, bestDelta, bestGamma, bestRMS, norm*100, d.Derived.Pr)
+	norm := bestRMS / d.Derived.Scale
+	t.Logf("Synthetic numerical fit: Ps=%.2f uC/cm^2 Ec=%.3f MV/cm Delta=%.3f MV/cm gamma=%.2f RMS=%.3f uC/cm^2 (%.2f%% of arbitrary scale=%.2f; not measured Pr)",
+		bestPs, bestEc, bestDelta, bestGamma, bestRMS, norm*100, d.Derived.Scale)
 	if norm >= 0.10 {
-		t.Fatalf("RMS %.2f%% of Pr exceeds 10%% target", norm*100)
+		t.Fatalf("RMS %.2f%% of normalization scale exceeds regression target", norm*100)
 	}
 }

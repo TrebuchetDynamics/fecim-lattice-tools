@@ -94,7 +94,7 @@ relError := math.Abs(PrSim-mat.Pr) / mat.Pr * 100
 fmt.Printf("Pr error: %.1f%%\n", relError)
 ```
 
-Chi-squared test against digitized experimental data:
+Reference-residual diagnostics (including synthetic fixtures, not independent experimental goodness-of-fit):
 
 ```go
 chiSq := 0.0

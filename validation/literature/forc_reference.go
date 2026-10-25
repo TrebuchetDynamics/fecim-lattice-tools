@@ -1,7 +1,7 @@
 package literature
 
-// FORCReferenceData contains expected FORC characteristics from published
-// literature for validation of the Preisach FORC implementation.
+// FORCReferenceData contains qualitative/theoretical regression expectations.
+// Inspect Source and Notes: DOI context does not establish measured FORC data.
 //
 // The FORC (First-Order Reversal Curve) density rho(Hc, Hu) is the mixed second
 // derivative of polarization with respect to reversal and measurement fields.
@@ -55,12 +55,11 @@ type FORCReferenceData struct {
 	Notes string
 }
 
-// HZO10nm_FORCReference returns expected FORC metrics for 10nm HZO thin films.
+// HZO10nm_FORCReference returns synthetic/theoretical FORC regression targets.
+// The Park DOI is background context only; these are not published measured
+// FORC values. Ec and Pr inherit the synthetic P-E shape fixture.
 //
-// Reference: Park et al., Adv. Mater. 27, 1811 (2015)
-// "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films"
-//
-// The FORC density for HZO is expected to show:
+// The model's FORC density is expected to show:
 //   - Peak density concentrated near the coercive field (~0.93 MV/cm for 10nm films)
 //   - Narrow distribution along Hc (FWHM ~ 0.3-0.5 MV/cm), reflecting the
 //     relatively narrow switching-field distribution of polycrystalline HZO
@@ -68,8 +67,8 @@ type FORCReferenceData struct {
 //   - Pr ~ 15-16 uC/cm2 extractable from FORC integration
 func HZO10nm_FORCReference() FORCReferenceData {
 	return FORCReferenceData{
-		MaterialName:        "HZO 10nm (Park 2015)",
-		Source:              "Park et al., Adv. Mater. 27, 1811 (2015)",
+		MaterialName:        "HZO 10nm (synthetic regression)",
+		Source:              "Synthetic shape and Preisach theoretical expectations; Park DOI is context only",
 		DOI:                 "10.1002/adma.201404531",
 		PeakHc_MVcm:         0.93,
 		PeakHcTolerance_pct: 20.0,
@@ -78,7 +77,7 @@ func HZO10nm_FORCReference() FORCReferenceData {
 		SymmetryTolerance:   0.5,
 		ExpectedPr_uCcm2:    15.8,
 		ExpectedEc_MVcm:     0.93,
-		Notes: "Calibrated to Park 2015 Fig 2a digitized loop. " +
+		Notes: "Synthetic regression targets; not digitized Park measurements. " +
 			"FWHM and symmetry are qualitative expectations from " +
 			"Preisach density theory for polycrystalline HZO. " +
 			"Symmetry tolerance is widened to 0.5 because the FORC " +

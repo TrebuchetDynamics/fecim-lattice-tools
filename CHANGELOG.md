@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — evidence correction (2026-10-25)
+
+- Reclassified the Park-context curve and derived reports/presets as synthetic regression evidence, not a digitized measurement or literature agreement.
+- Quarantined the unsupported Park scalar JSON and disputed BTO pixel-extraction trace; no samples were smoothed or retuned.
+- Historical validation claims below are superseded by [the correction audit](docs/research/validation/park-reference-correction.md).
+
 All notable changes to this project are documented here.
 
 ## [2026-02-18] Tier-1 BTO Digitization + Release-Readiness Refresh

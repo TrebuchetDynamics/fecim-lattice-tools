@@ -1,3 +1,8 @@
+# SYNTHETIC regression fixture; not experimental Park 2015 data.
+# Historical model-shape samples retained unchanged; exact generator revision unknown.
+# Related generator: go run ./cmd/gen-literature-loops -preset park -out scratch.csv
+# Method: NewPreisachModel(preset), Reset, 31 fields -3..3 then 30 fields back to -3 MV/cm.
+# Polarization conversion: model.Update(E*1e8)*1e2 in uC/cm2. Current preset is not byte-identical.
 E_MV_cm,P_uC_cm2
 -3.000,-19.383799
 -2.800,-19.375860

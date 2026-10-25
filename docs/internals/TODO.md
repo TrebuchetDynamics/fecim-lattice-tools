@@ -208,7 +208,7 @@ next check: owner-triggered when Telegram availability changes; the previous 202
 - Update `docs/research/honesty-audit.md` with 2026 Q1 publications.
 - Reschedule: owner decision required; retain the original deadline until a replacement is assigned.
 - PDF review state: 68 legacy tracked PDFs remain `legacy-needs-license-review`; their citation records remain `needs-review`, so this backlog is not completion evidence for the quarterly review.
-- Claim review state: Park 2015 and Materlik 2015 are `deep-read`/`literature-backed`, but their PDFs are not stored and they are correctly absent from the tracked-PDF backlog; primary-PDF re-verification remains human-gated.
+- Claim review state corrected 2026-10-25: Park 2015 needs primary-source re-review; fixture-specific claims are not validated. Materlik 2015 remains recorded `deep-read`/`literature-backed`, but their PDFs are not stored and they are correctly absent from the tracked-PDF backlog; primary-PDF re-verification remains human-gated.
 - Search: IEEE Xplore (IEDM, ISSCC, VLSI), Nature family, ACS, arXiv.
 
 ---
@@ -353,7 +353,7 @@ OST-01..15 — External tool inventory, tool checker, install helpers, Heracles 
 
 ### Experimental Data (5 items)
 
-EXP-01..05 — Dataset directory, schema guidance, literature datasets (Park/Materlik/Jerry), calibration citation anchoring, experimental data validation tests.
+EXP-01..05 — Historical dataset/schema/calibration work. Corrected 2026-10-25: Park-context shape data is synthetic; unsupported Park scalar extraction and disputed BTO digitization are quarantined. Historical completion is not independent experimental validation; see [the correction inventory](../research/validation/park-reference-correction.md).
 
 ### MNIST Module Legacy Fixes (46 items)
 

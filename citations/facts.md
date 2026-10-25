@@ -1,7 +1,7 @@
 # Citable Facts Database
 
 **Last updated:** 2026-05-04
-**Total verified facts:** 28
+**Verification state:** source-specific; historical Park figure-specific notes below are unverified and must not be cited as established measurements.
 
 This file is the cross-paper index for facts used by FeCIM Lattice Tools. Facts added only after reading the source and recording the same fact in `citations/papers/{key}.md`.
 
@@ -24,23 +24,25 @@ This file is the cross-paper index for facts used by FeCIM Lattice Tools. Facts 
 
 ## Ferroelectric Material Properties
 
-### HZO (Si-doped, 10nm, Park 2015)
+### Park-context figure notes — unverified correction (2026-10-25)
 
-- **Pr** = `24` `µC/cm²` [claim: hzo-remanent-polarization-range]
+The scalar entries below are historical leads, not verified citable facts. Their extraction provenance is unsupported; the separate JSON is quarantined, and the 61-point curve is synthetic regression data. See [the correction audit](../docs/research/validation/park-reference-correction.md).
+
+- **Pr** = `24` `µC/cm²` **[VERIFY: figure-specific attribution]** [claim: hzo-remanent-polarization-range]
   - Source: Park et al., Adv. Mater. 27, 1811 (2015), Fig 2a
   - Conditions: 10 nm, TiN electrodes, Si-doped, RT, 1 kHz
-  - Evidence: peer-reviewed
+  - Evidence: unverified historical attribution; do not cite as a measurement
   - FeCIM DefaultHZO uses 24.5 µC/cm² (conservative midpoint)
 
-- **Ec** = `1.0` `MV/cm`
+- **Ec** = `1.0` `MV/cm` **[VERIFY: figure-specific attribution]**
   - Source: Park et al., Adv. Mater. 27, 1811 (2015), Fig 2a
   - Conditions: same as Pr
-  - Evidence: peer-reviewed
+  - Evidence: unverified historical attribution; do not cite as a measurement
   - Literature range: 0.8-1.5 MV/cm
 
 - **Pr/Ec range** = `Pr: 15-34 µC/cm², Ec: 0.8-1.5 MV/cm` [claim: hzo-remanent-polarization-range]
   - Source: Park et al., Adv. Mater. 27, 1811 (2015) — doping/temperature study
-  - Evidence: peer-reviewed
+  - Evidence: unverified historical attribution; do not cite as a measurement
 
 ### HZO LGD Coefficients (Materlik 2015)
 

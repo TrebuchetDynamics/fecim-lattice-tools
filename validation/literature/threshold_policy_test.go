@@ -13,7 +13,7 @@ func TestThresholdPolicyForDataset_ClassificationIsExplicit(t *testing.T) {
 		mode       string
 		provenance string
 	}{
-		{materialID: "park2015_hzo_10nm", mode: "calibrated_relaxed", provenance: filepath.Join("data", "park2015_fig2a_hzo_10nm.provenance.json")},
+		{materialID: "park2015_synthetic_shape", mode: "synthetic_regression", provenance: filepath.Join("data", "park2015_synthetic_shape.provenance.json")},
 		{materialID: "cheema2020_superlattice_5nm", mode: "strict", provenance: filepath.Join("data", "cheema2020_fig2c_hzo_superlattice_5nm.provenance.json")},
 		{materialID: "mdpi2020_hzo_10nm_wakeup", mode: "strict", provenance: filepath.Join("data", "mdpi2020_ma13132968_fig3a_hzo_10nm_wakeup.provenance.json")},
 		{materialID: "alscn2022_pmc9607415_fig6a_pt_200nm", mode: "placeholder_relaxed", provenance: filepath.Join("data", "alscn2022_pmc9607415_fig6a_pt_200nm.provenance.json")},
@@ -21,7 +21,6 @@ func TestThresholdPolicyForDataset_ClassificationIsExplicit(t *testing.T) {
 		{materialID: "pzt2024_nano14050432_fig2_thinfilm", mode: "placeholder_relaxed", provenance: filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm.provenance.json")},
 		{materialID: "pzt2024_nano14050432_fig2_thinfilm_traceB", mode: "placeholder_relaxed", provenance: filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm_traceB.provenance.json")},
 		{materialID: "bto2021_cryst11101192_hysteresis", mode: "placeholder_relaxed", provenance: filepath.Join("data", "bto2021_cryst11101192_hysteresis.provenance.json")},
-		{materialID: "bto2021_cryst11101192_hysteresis_digitized", mode: "uncertainty_relaxed", provenance: filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.provenance.json")},
 	}
 
 	for _, tc := range cases {

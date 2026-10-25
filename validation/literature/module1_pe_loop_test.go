@@ -60,7 +60,11 @@ type peLoopMetrics struct {
 	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
 	Thresholds  peLoopThresholds              `json:"thresholds"`
 
-	Pass bool `json:"pass"`
+	ComparisonKind         string `json:"comparison_kind"`
+	Evidence               string `json:"evidence"`
+	ExperimentalValidation bool   `json:"experimental_validation"`
+	Notes                  string `json:"notes"`
+	Pass                   bool   `json:"pass"`
 }
 
 // peLoopMetricsBlock mirrors key scalar metrics for machine-readable validation.
@@ -117,57 +121,32 @@ func thresholdPolicyForDataset(ds peLoopDataset, prData, ecData, ps float64) (th
 		dec.AreaPct = math.Max(dec.AreaPct, 200.0)
 		dec.Mode = "placeholder_relaxed"
 		dec.LogLine = fmt.Sprintf("PLACEHOLDER_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%", ds.MaterialID, dec.PrPct, dec.RMSEps, dec.AreaPct)
-	case "park2015_hzo_10nm":
+	case "park2015_synthetic_shape":
 		dec.PrPct = math.Max(dec.PrPct, 15.0)
 		dec.RMSEps = math.Max(dec.RMSEps, 0.06)
 		dec.AreaPct = math.Max(dec.AreaPct, 60.0)
-		dec.Mode = "calibrated_relaxed"
-		dec.LogLine = fmt.Sprintf("CALIBRATED_RELAXED_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%", ds.MaterialID, dec.PrPct, dec.RMSEps, dec.AreaPct)
+		dec.Mode = "synthetic_regression"
+		dec.LogLine = fmt.Sprintf("SYNTHETIC_REGRESSION_THRESHOLDS material=%s pr_th=%.1f%% rmse_th=%.4f area_th=%.1f%%", ds.MaterialID, dec.PrPct, dec.RMSEps, dec.AreaPct)
 	case "bto2021_cryst11101192_hysteresis_digitized":
-		unc, err := loadProvenanceUncertainty(ds.Provenance)
-		if err != nil {
-			return dec, fmt.Errorf("load uncertainty for %s: %w", ds.MaterialID, err)
-		}
-		sigmaPr := math.Hypot(unc.PixelQuantizationUCcm2, unc.PolarScaleUncertaintyUC)
-		sigmaEc := unc.FieldScaleUncertaintyMV
-		if prData > 0 {
-			dec.PrPct = math.Max(dec.PrPct, 300.0*sigmaPr/math.Abs(prData))
-		}
-		if ecData > 0 {
-			dec.EcPct = math.Max(dec.EcPct, 300.0*sigmaEc/math.Abs(ecData))
-		}
-		if ps > 0 {
-			dec.RMSEps = math.Max(dec.RMSEps, 3.0*sigmaPr/ps)
-		}
-		relPr := 0.0
-		relEc := 0.0
-		if prData > 0 {
-			relPr = sigmaPr / math.Abs(prData)
-		}
-		if ecData > 0 {
-			relEc = sigmaEc / math.Abs(ecData)
-		}
-		dec.AreaPct = math.Max(dec.AreaPct, 300.0*math.Hypot(relPr, relEc))
-		dec.Mode = "uncertainty_relaxed"
-		dec.LogLine = fmt.Sprintf("UNCERTAINTY_THRESHOLDS material=%s pr_th=%0.2f%% ec_th=%0.2f%% rmse_th=%0.4f area_th=%0.2f%% sigmaPr=%0.3f sigmaEc=%0.3f", ds.MaterialID, dec.PrPct, dec.EcPct, dec.RMSEps, dec.AreaPct, sigmaPr, sigmaEc)
+		return dec, errors.New("excluded BTO digitization cannot supply acceptance thresholds")
 	}
 
 	return dec, nil
 }
 
-func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
+func TestModule1_PELoop_ReferenceRegression(t *testing.T) {
 	datasets := []peLoopDataset{
 		{
-			Name:       "Park2015_Fig2a_HZO_10nm",
+			Name:       "Park2015_SyntheticShape",
 			DOI:        "10.1002/adma.201404531",
-			SourceCSV:  filepath.Join("data", "park2015_fig2a_hzo_10nm.csv"),
-			Provenance: filepath.Join("data", "park2015_fig2a_hzo_10nm.provenance.json"),
-			MaterialID: "park2015_hzo_10nm",
+			SourceCSV:  filepath.Join("data", "park2015_synthetic_shape.csv"),
+			Provenance: filepath.Join("data", "park2015_synthetic_shape.provenance.json"),
+			MaterialID: "park2015_synthetic_shape",
 			Material:   sharedphysics.Park2015Fig2aHZO10nm(),
 			Engine:     "preisach",
 			FieldUnit:  "MV/cm",
 			PolarUnit:  "uC/cm2",
-			Notes:      "Digitized representative loop from Park et al. 2015 Fig 2a. Used as literature-backed loop-shape validation.",
+			Notes:      "Synthetic model-shape regression fixture, not digitized Park measurements or independent experimental validation.",
 		},
 		{
 			Name:       "Cheema2020_Fig2c_HZO_Superlattice_5nm",
@@ -253,18 +232,6 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			PolarUnit:  "uC/cm2",
 			Notes:      "BTO-containing trilayer hysteresis dataset from Crystals 2021 DOI context; provisional calibrated reference curve for Tier-1 pipeline extension.",
 		},
-		{
-			Name:       "Crystals2021_BTO_Hysteresis_Digitized",
-			DOI:        "10.3390/cryst11101192",
-			SourceCSV:  filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.csv"),
-			Provenance: filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.provenance.json"),
-			MaterialID: "bto2021_cryst11101192_hysteresis_digitized",
-			Material:   sharedphysics.Crystals2021FigFerroelectricBTODigitized(),
-			Engine:     "preisach",
-			FieldUnit:  "MV/cm",
-			PolarUnit:  "uC/cm2",
-			Notes:      "Direct pixel-digitized BTO Figure 7 trace with uncertainty metadata for Tier-1 data-quality expansion.",
-		},
 	}
 
 	outDir := os.Getenv("FECIM_LITERATURE_JSON_DIR")
@@ -347,26 +314,34 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				t.Errorf("loop area error too large: area_sim=%0.3e area_data=%0.3e err=%0.2f%% (th=%0.1f%%)", areaSim, areaData, areaErrPct, localAreaTh)
 			}
 
+			kind, evidence := "reference-regression", "unverified"
+			if ds.MaterialID == "park2015_synthetic_shape" {
+				kind, evidence = "synthetic-regression", "simulation-default"
+			}
 			m := peLoopMetrics{
-				ArtifactEnvelope: sharedval.NewEnvelope("RG-PHY-OBS-01", "", pass),
-				MaterialID:       ds.MaterialID,
-				Material:         ds.Material.Name,
-				Engine:           ds.Engine,
-				DOI:              ds.DOI,
-				Dataset:          ds.Name,
-				Generated:        sharedval.NewEnvelope("", "", true).TimestampUTC,
-				PrData_uC_cm2:    prData,
-				PrSim_uC_cm2:     prSim,
-				PrErrPct:         prErrPct,
-				EcData_MV_cm:     ecData,
-				EcSim_MV_cm:      ecSim,
-				EcErrPct:         ecErrPct,
-				RMSE_uC_cm2:      rmse,
-				RMSEOverPs:       rmsePs,
-				Ps_uC_cm2:        ps,
-				LoopAreaData:     areaData,
-				LoopAreaSim:      areaSim,
-				LoopAreaErrPct:   areaErrPct,
+				ComparisonKind:         kind,
+				Evidence:               evidence,
+				ExperimentalValidation: false,
+				Notes:                  ds.Notes,
+				ArtifactEnvelope:       sharedval.NewEnvelope("RG-PHY-OBS-01", "", pass),
+				MaterialID:             ds.MaterialID,
+				Material:               ds.Material.Name,
+				Engine:                 ds.Engine,
+				DOI:                    ds.DOI,
+				Dataset:                ds.Name,
+				Generated:              sharedval.NewEnvelope("", "", true).TimestampUTC,
+				PrData_uC_cm2:          prData,
+				PrSim_uC_cm2:           prSim,
+				PrErrPct:               prErrPct,
+				EcData_MV_cm:           ecData,
+				EcSim_MV_cm:            ecSim,
+				EcErrPct:               ecErrPct,
+				RMSE_uC_cm2:            rmse,
+				RMSEOverPs:             rmsePs,
+				Ps_uC_cm2:              ps,
+				LoopAreaData:           areaData,
+				LoopAreaSim:            areaSim,
+				LoopAreaErrPct:         areaErrPct,
 				Metrics: peLoopMetricsBlock{
 					PrErrPct:       prErrPct,
 					EcErrPct:       ecErrPct,
@@ -374,8 +349,8 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 					LoopAreaErrPct: areaErrPct,
 				},
 				Uncertainty: sharedval.ArtifactUncertainty{
-					Method:     "analytical",
-					Confidence: 1.0,
+					Method:     "regression-tolerance; not measurement uncertainty",
+					Confidence: 0.0,
 					SampleSize: len(Edata),
 				},
 				Thresholds: peLoopThresholds{
@@ -392,13 +367,16 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 				t.Fatalf("write %s: %v", outPath, err)
 			}
 
-			t.Logf("LITERATURE_METRICS material=%s doi=%s pr_sim=%0.3f pr_data=%0.3f err=%0.2f%%(th=%0.1f%%) ec_sim=%0.3f ec_data=%0.3f err=%0.2f%%(th=%0.1f%%) rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f(th=%0.4f) areaErr=%0.2f%%(th=%0.1f%%) pass=%v artifact=%s",
+			t.Logf("REFERENCE_REGRESSION_METRICS material=%s doi=%s pr_sim=%0.3f pr_data=%0.3f err=%0.2f%%(th=%0.1f%%) ec_sim=%0.3f ec_data=%0.3f err=%0.2f%%(th=%0.1f%%) rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f(th=%0.4f) areaErr=%0.2f%%(th=%0.1f%%) pass=%v artifact=%s",
 				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, localPrTh, ecSim, ecData, ecErrPct, localEcTh, rmse, ps, rmsePs, localRMSETh, areaErrPct, localAreaTh, pass, outPath)
 		})
 	}
 }
 
 func validateStrictProvenance(ds peLoopDataset) error {
+	if ds.MaterialID == "bto2021_cryst11101192_hysteresis_digitized" {
+		return errors.New("excluded BTO extraction: branch jumps require independent re-digitization; do not smooth")
+	}
 	if ds.Provenance == "" {
 		return errors.New("dataset must declare provenance JSON path")
 	}
@@ -472,26 +450,6 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		if !prov.Digitization.IsPlaceholderForRefinement {
 			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=true until direct pixel digitization is committed", ds.MaterialID)
 		}
-	case "bto2021_cryst11101192_hysteresis_digitized":
-		// Direct pixel-digitized BTO dataset must carry uncertainty and be marked non-placeholder.
-		if prov.Status != "pixel_digitized_curve" {
-			return fmt.Errorf("%s provenance status must be pixel_digitized_curve, got %q", ds.MaterialID, prov.Status)
-		}
-		if prov.Tier != "candidate_tier1" {
-			return fmt.Errorf("%s provenance tier must be candidate_tier1, got %q", ds.MaterialID, prov.Tier)
-		}
-		if prov.Digitization.PointCount < 100 {
-			return fmt.Errorf("%s provenance point_count too small: got %d want >= 100", ds.MaterialID, prov.Digitization.PointCount)
-		}
-		if prov.Digitization.Method == "" {
-			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
-		}
-		if prov.Digitization.IsPlaceholderForRefinement {
-			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=false for pixel-digitized dataset", ds.MaterialID)
-		}
-		if prov.Uncertainty.FieldScaleUncertaintyMV <= 0 || prov.Uncertainty.PolarScaleUncertaintyUC <= 0 {
-			return fmt.Errorf("%s provenance uncertainty bounds must be positive (field=%g, polar=%g)", ds.MaterialID, prov.Uncertainty.FieldScaleUncertaintyMV, prov.Uncertainty.PolarScaleUncertaintyUC)
-		}
 	case "alscn2022_pmc9607415_fig6a_pt_200nm", "alscn2022_pmc9607415_fig6b_mo_200nm":
 		// AlScN two-condition expansion: enforce explicit provenance contract for both
 		// Pt and Mo electrode condition datasets until pixel-digitized replacements land.
@@ -550,6 +508,7 @@ func loadCSVLoop(path string) ([]float64, []float64, error) {
 	defer f.Close()
 
 	r := csv.NewReader(f)
+	r.Comment = '#'
 	recs, err := r.ReadAll()
 	if err != nil {
 		return nil, nil, err

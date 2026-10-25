@@ -1,0 +1,25 @@
+{
+  "dataset_id": "park2015_synthetic_shape",
+  "status": "synthetic_regression",
+  "evidence": "simulation-default",
+  "experimental_validation": false,
+  "reference": {
+    "doi": "10.1002/adma.201404531",
+    "role": "background context only; not the origin of measured samples"
+  },
+  "units": {
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2"
+  },
+  "generation": {
+    "method": "Retained historical model-shape fixture. Related workflow: NewPreisachModel(Park2015Fig2aHZO10nm()), Reset(), 31 fields -3..3 MV/cm and 30 fields back, P=model.Update(E*1e8)*1e2 uC/cm2.",
+    "historical_revision": "unknown",
+    "related_command": "go run ./cmd/gen-literature-loops -preset park -out scratch.csv",
+    "current_generator_reproduces_exact_samples": false,
+    "point_count": 61,
+    "original_numeric_csv_sha256": "8987dce34a3239d0587326820ad168772d85af72aacd6da4bb5e5bff78141f1b",
+    "notes": "Numeric samples preserved. Classified synthetic/non-experimental; no source-pixel extraction provenance. Current generator has the same field grid but different polarization values."
+  },
+  "correction_date": "2026-10-25",
+  "previous_filename": "park2015_fig2a_hzo_10nm.csv"
+}
