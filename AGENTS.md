@@ -65,7 +65,7 @@ If `qmd` emits CUDA build output or starts model downloads, stop using it for th
 
 ### Working in This Repository
 
-**Build:**
+**Build (current legacy Fyne executable; not a React launch):**
 ```bash
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
@@ -81,7 +81,8 @@ go test ./module2-crossbar/...          # Module-scoped testing
 ```
 
 **Key Patterns:**
-- **Default UI:** Fyne is the primary desktop shell. GUI packages build by default; do not reintroduce `legacy_fyne` gates.
+- **Primary UI target:** React web is the primary target for new UI work; Fyne is deprecated compatibility, not a required path for new demos/features. React is not an already-shipped client. Follow the [approved browser workbench design](docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#architecture-and-scope): React owns presentation and interaction; Go retains scientific computation, values, evidence and identities through the planned thin local API. Keep the Go core/CLI intact.
+- **Current launch availability:** The existing executable and `launch.sh` still open legacy Fyne by default. Keep entry points and regression guards working until replacements pass the approved behavioral and accessibility gates. GUI packages still build by default; do not reintroduce `legacy_fyne` gates or change launch defaults as part of this policy.
 - **Fyne thread safety:** widget mutations from goroutines must use `fyne.Do(func() { ... })`; see `docs/3-develop/gui/FYNE_NOTES.md`.
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
 - **Physics simulation:** Material presets in `module1-hysteresis/pkg/ferroelectric/material.go`; crossbar defaults in `module2-crossbar/pkg/crossbar/array.go`
@@ -144,7 +145,7 @@ threshold interaction with guard-band logic.
 - **Go 1.25.0+** (toolchain 1.25.x)
 
 ### External (Direct)
-- **fyne.io/fyne/v2** v2.7.2 — Default desktop GUI framework
+- **fyne.io/fyne/v2** v2.7.2 — Current legacy desktop GUI framework (deprecated)
 - **github.com/Fyne** — Compatibility/offscreen UI shell path
 - **github.com/charmbracelet/bubbles** v0.20.0 — TUI component library
 - **github.com/charmbracelet/bubbletea** v1.2.4 — TUI framework (CLI support)
@@ -263,9 +264,9 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ## Common Tasks
 
 ### Add a New Feature
-1. **Plan:** Read `docs/3-develop/api-reference.md` and the target module docs
+1. **Plan:** Read `docs/3-develop/api-reference.md` and the target module docs; direct new UI work to the approved React/Go boundary above, without requiring a new Fyne feature path
 2. **RED:** Add or update the focused failing test first and record the expected failure
-3. **GREEN:** Implement the smallest change needed; keep Fyne widget updates on the Fyne UI thread with `fyne.Do` when needed
+3. **GREEN:** Implement the smallest change needed; when maintaining legacy Fyne, keep widget updates on the Fyne UI thread with `fyne.Do` when needed
 4. **REFACTOR:** Clean up only while targeted tests stay green
 5. **Verify:** `go test ./...` passes, `go test -race ./...` passes when the change touches concurrency or shared behavior
 6. **Commit:** `type: description` with RED/GREEN/verification evidence
