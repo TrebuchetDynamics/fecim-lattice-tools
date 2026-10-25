@@ -3,7 +3,7 @@ schema = 1
 id = "HZO-REF-1"
 title = "Verify the HZO source and calibrate its plot axes"
 short = "Verify source and calibrate axes"
-status = "open"
+status = "done"
 goal = "HZO-REF"
 section = "Now"
 rank = 4000
@@ -16,6 +16,8 @@ scope = "Implement a fail-closed SourceProfile reader and record the actual Kim 
 acceptance = ["Given the qualified primary-source profile, when ReadSourceProfile is called, then it preserves exact DOI/figure/trace, source SHA/dimensions, license evidence, conditions and two anchors per axis; TestSourceProfileAdmission proves admission of that contract.", "Given missing/wrong trace, missing license/hash/conditions/calibration, nonfinite/degenerate anchors or unsupported units, when read, then reject rather than borrowing model defaults; the table-driven negative cases in TestSourceProfileAdmission prove this.", "Given measurement fields not reported in the inspected source, when admitted, then retain explicit not-reported status and a documented pixel selection bound, never anneal-as-measurement temperature or a fitted uncertainty; TestSourceProfileAdmission proves preservation."]
 checks = ["go test ./validation/peloop -run '^TestSourceProfileAdmission$' -count=1"]
 exclusions = ["No changes to existing model equations, coefficients, presets, synthetic/quarantined fixtures or legacy validation counts.", "No unrelated staged/unstaged edits, commits without owner diff approval, dispatch, publication, deployment, credentials, new dependencies, manifests or CI changes."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HZO-REF-1.toml"
 +++
 Sources: docs/research/validation/landing-page-figure-readiness.md#experimental-hzo-evidence-frontier
 
@@ -24,3 +26,4 @@ Produces: SourceProfile; ReadSourceProfile(io.Reader) (SourceProfile, error), ex
 Next action: write TestSourceProfileAdmission first and record expected RED before production changes. Checks are proposed/unrun. The source raster may be reacquired read-only from the pinned public URL into temporary scratch; verify SHA before using pixels. If the asset changed or rights cannot be established, stop and record the evidence blocker; do not silently change source.
 
 Qualification: automated profile checks do not certify visual trace fidelity or authorize public promotion. No original image/PDF is committed. Implementation/commit permission remains separately gated.
+- Pending live: Independent human visual source/trace-fidelity qualification against the pinned original raster remains required before public promotion of a future extracted curve. Automated metadata admission and the read-only code review do not certify marker selection or experimental agreement. No polarization samples were extracted in this task.
