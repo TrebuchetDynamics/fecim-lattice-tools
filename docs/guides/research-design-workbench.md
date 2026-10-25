@@ -27,6 +27,24 @@ The experiment command also generates reports after a successful sweep. The sepa
 
 In the Fyne workbench, choose an empty folder and select **Configure starter sweep…**. Enter comma-separated values for conductance levels (2–64), array rows (1–4096), and ADC bits (1–16), then create and validate the project before running it. Each list is limited to 16 values and the Cartesian sweep to 10,000 points. Project creation refuses non-empty folders; it does not overwrite existing files. Existing studies can still be opened and validated, but their YAML is not edited by the GUI.
 
+### Desktop simulation results and cancellation
+
+**Cancel simulation** changes the status to **Cancel requested**, not a terminal result. Simulation and other work actions remain disabled until the study operation returns; Cancel is disabled after the request. Committed runs are preserved for resume.
+
+After the operation returns, the status and details show its actual outcome and Go-owned `total`, `reused`, `failed`, `feasible`, and `pareto` counts. `total` counts trusted current-sweep records, including reused and model-domain-failed records; unevaluated points are not failed runs. **Partial** results describe only the collected subset, including subset-only feasibility and Pareto analysis. Missing or integrity-invalid analysis displays `unavailable`, not zero; valid empty partial analysis displays explicit zeros. If no trusted result set is available, record counts also display `unavailable`.
+
+A systemic or report-write error remains **failed**, even if Cancel was also requested. Available results and the error remain readable together. A report-write failure can retain **complete** results and is not labelled partial. Conversely, a late Cancel request does not turn a successful operation return into cancellation.
+
+`TestWorkbenchTerminalOutcome` covers result availability and terminal formatting. `TestWorkbenchCancellationLifecycle` uses a blocked study operation and deterministic barriers to check requested-versus-terminal cancellation, duplicate-work protection, and final counts/details. Run their offline checks with:
+
+```bash
+CGO_ENABLED=0 go test ./cmd/fecim-lattice-tools -run '^TestWorkbenchTerminalOutcome$' -count=1
+xvfb-run -a go test ./cmd/fecim-lattice-tools -run 'TestWorkbenchCancellationLifecycle|TestResearchWorkbenchContentRenders|TestParseSweepValues' -count=1
+xvfb-run -a go test -race ./cmd/fecim-lattice-tools -run 'TestWorkbenchCancellationLifecycle|TestWorkbenchTerminalOutcome' -count=1
+```
+
+These automated checks do not establish native screen-reader or Orca acceptance.
+
 ## Project Bundle
 
 A project is a plain directory:
