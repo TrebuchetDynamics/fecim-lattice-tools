@@ -8,7 +8,7 @@
 
 **Venue:** *Materials* 13(13), 2968 (2020)
 
-**Status:** Source and axis calibration inspected 2026-10-25; no polarization samples extracted and no experimental validation claimed.
+**Status:** Source and axis calibration inspected 2026-10-25; [independent marker extraction](../../validation/literature/data/experimental/kim2020_fig3a_ref_digitized/extraction.md) records 26 selected points, omissions, selection bounds and reproducibility hashes. No experimental validation is claimed; independent human trace-fidelity qualification remains pending.
 
 ## Selected evidence
 
@@ -64,7 +64,7 @@ Coordinates are **zero-based original-image pixels**, origin at the top-left; x 
 
 The profile uses machine-readable units `MV/cm` and `uC/cm2`. The two axes define independent affine calibrations; the polarization slope is negative because image y is inverted. Tick-label values are calibration metadata, **not digitized P–E observations**.
 
-A conservative **±2 original pixels per selected coordinate** covers the approximately 3–5-pixel tick-stroke width, antialiasing and manual centre ambiguity. This is an extraction-selection bound, not a fitted standard deviation, measurement uncertainty, or percentage of a model's Ps. Future marker selection needs its own documented bounds and independent visual qualification; this task establishes neither marker accuracy nor trace fidelity.
+A conservative **±2 original pixels per selected coordinate** covers the approximately 3–5-pixel tick-stroke width, antialiasing and manual centre ambiguity. This is an extraction-selection bound, not a fitted standard deviation, measurement uncertainty, or percentage of a model's Ps. The [marker extraction](../../validation/literature/data/experimental/kim2020_fig3a_ref_digitized/extraction.md) documents separate centre-selection bounds and unresolved overlaps. Axis admission alone establishes neither marker accuracy nor trace fidelity.
 
 ## Attribution and license evidence
 
@@ -84,4 +84,4 @@ Focused admission check:
 go test ./validation/peloop -run '^TestSourceProfileAdmission$' -count=1
 ```
 
-Update this page and the profile together if the source identity, rights evidence, measurement evidence, calibration, or admission contract changes. Independent visual review against the pinned original remains required before public promotion of any future extracted curve.
+Update this page and the profile together if the source identity, rights evidence, measurement evidence, calibration, or admission contract changes. Independent visual review against the pinned original remains required before public promotion of the extracted curve.
