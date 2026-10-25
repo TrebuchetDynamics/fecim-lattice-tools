@@ -20,6 +20,12 @@ type RunOptions struct {
 	Workers            int
 	RepositoryRevision string
 	Now                func() time.Time
+
+	// Progress optionally receives best-effort count snapshots. Sends never block;
+	// even the final snapshot may be dropped. Use the returned summary/error and
+	// committed state as authoritative. The caller owns the channel and must not
+	// close it during Run; Run never closes it. Nil disables notifications.
+	Progress chan<- ProgressSnapshot
 }
 
 type runJob struct {
@@ -48,9 +54,32 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 		return Summary{}, err
 	}
 
+	progress := ProgressSnapshot{Total: len(points)}
+	progress.send(opts.Progress)
+	defer func() {
+		// All started workers have settled before Run returns. Only cancellation
+		// of the caller's context, not internal error shutdown, cancels points.
+		if ctx.Err() != nil {
+			progress.Cancelled = progress.Total - progress.Completed
+		}
+		progress.send(opts.Progress)
+	}()
+
 	storage := store{root: bundle.Root}
 	records := make([]RunRecord, len(points))
 	complete := make([]bool, len(points))
+	recordComplete := func(index int, record RunRecord) {
+		records[index] = record
+		complete[index] = true
+		progress.Completed++
+		if record.Reused {
+			progress.Reused++
+		}
+		if record.Result.Status == StatusFailed {
+			progress.Failed++
+		}
+		progress.send(opts.Progress)
+	}
 	jobsToRun := make([]runJob, 0, len(points))
 	for index, point := range points {
 		if err := ctx.Err(); err != nil {
@@ -70,8 +99,7 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 				}
 			}
 			existing.Reused = true
-			records[index] = existing
-			complete[index] = true
+			recordComplete(index, existing)
 		} else {
 			jobsToRun = append(jobsToRun, runJob{index: index, point: point})
 		}
@@ -94,17 +122,9 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 			defer workers.Done()
 			for job := range jobs {
 				outcome := evaluateJob(workerCtx, storage, bundle, opts, job)
-				select {
-				case outcomes <- outcome:
-				case <-workerCtx.Done():
-					if outcome.err != nil {
-						select {
-						case outcomes <- outcome:
-						default:
-						}
-					}
-					return
-				}
+				// The collector drains until every worker settles, even on error or
+				// cancellation. Never discard an already committed outcome.
+				outcomes <- outcome
 				if outcome.err != nil {
 					return
 				}
@@ -135,8 +155,7 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 			}
 			continue
 		}
-		records[outcome.index] = outcome.record
-		complete[outcome.index] = true
+		recordComplete(outcome.index, outcome.record)
 	}
 	summary := orderedSummary(records, complete)
 	if err := ctx.Err(); err != nil {
