@@ -3,7 +3,7 @@ schema = 1
 id = "HZO-REF-5"
 title = "Export a reproducible HZO comparison report"
 short = "Export a reproducible HZO report"
-status = "open"
+status = "done"
 goal = "HZO-REF"
 section = "Next"
 rank = 4000
@@ -16,6 +16,8 @@ scope = "Integrate pe-reference compare --profile PATH --data PATH --out-dir PAT
 acceptance = ["Given the new measured extraction and unchanged baseline, when compare runs, then the bundle contains reproducible metrics, hashes, branch counts, RMSE units/normalizer and the same scientific values in JSON/SVG/caption; TestCompareCommandEvidenceBoundary proves the end-to-end consistency.", "Given any residual size, when reporting, then preserve the mismatch, unfitted-baseline and experimental_validation=false plus unknown measurement temperature/waveform and quasi-static/10kHz limits; TestCompareCommandEvidenceBoundary proves that low error never promotes predictive validity.", "Given invalid input or an existing output path, when compare runs, then return nonzero, leave no newly published partial/success bundle and preserve pre-existing paths; TestCompareCommandEvidenceBoundary proves the rejection boundary."]
 checks = ["go test ./cmd/pe-reference -run '^TestCompareCommandEvidenceBoundary$' -count=1", "go test ./validation/peloop ./cmd/pe-reference -count=1", "go test -race ./validation/peloop ./cmd/pe-reference -count=1"]
 exclusions = ["No changes to existing model equations, coefficients, presets, synthetic/quarantined fixtures or legacy validation counts.", "No unrelated staged/unstaged edits, commits without owner diff approval, dispatch, publication, deployment, credentials, new dependencies, manifests or CI changes."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HZO-REF-5.toml"
 +++
 Sources: docs/research/validation/landing-page-figure-readiness.md#experimental-hzo-evidence-frontier
 
@@ -24,3 +26,4 @@ Consumes: HZO-REF-2 command seam; HZO-REF-3 source/pixel/physical extraction art
 Next action: write TestCompareCommandEvidenceBoundary and record expected RED. All checks are proposed/unrun. main.go is also owned by HZO-REF-2, already ordered by the real command-seam dependency. Keep model/data fingerprints honest for dirty runs; HEAD alone is insufficient. No raw source images/PDFs enter the bundle.
 
 Qualification: update readiness only from actual extraction/review/run evidence; no automatic README/deployment, experimental-validation counter increment, research-use assertion or JOSS eligibility claim. Repository full-suite and required independent review run once at eventual integrated closeout under separately authorized execution. Focused package/race tests do not substitute for that full gate.
+- Pending live: Independent human source/trace-fidelity qualification against the pinned original remains required before any public promotion. This task neither claims experimental validation nor publishes/deploys a headline overlay.
